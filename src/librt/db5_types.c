@@ -629,50 +629,65 @@ db5_sync_comb_to_attr(const struct rt_comb_internal *comb, struct bu_attribute_v
     RT_CK_COMB(comb);
     bu_vls_init(&newval);
 
+    /* Region */
     if (comb->region_flag) {
-	    (void)bu_avs_add(avs, "region", "R");
+	    (void)bu_avs_add(avs, db5_standard_attribute(ATTR_REGION), "R");
     } else {
-	    bu_avs_remove(avs, "region");
+	    bu_avs_remove(avs, db5_standard_attribute(ATTR_REGION));
     }
+
+    /* Region ID */
     if (comb->region_flag && (comb->region_id >=0 || comb->region_id == -1)) {
 	    bu_vls_sprintf(&newval, "%d", comb->region_id);
-	    (void)bu_avs_add_vls(avs, "region_id", &newval);
+	    (void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_REGION_ID), &newval);
     } else {
-	    bu_avs_remove(avs, "region_id");
+	    bu_avs_remove(avs, db5_standard_attribute(ATTR_REGION_ID));
     }
+
+    /* Material ID */
     if (comb->GIFTmater >= 0) {
 	    bu_vls_sprintf(&newval, "%d", comb->GIFTmater);
-	    (void)bu_avs_add_vls(avs, "material_id", &newval);
+	    (void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_MATERIAL_ID), &newval);
     } else {
-	    bu_avs_remove(avs, "material_id");
+	    bu_avs_remove(avs, db5_standard_attribute(ATTR_MATERIAL_ID));
     }
+
+    /* Air */
     if (comb->aircode) {
 	    bu_vls_sprintf(&newval, "%d", comb->aircode);
-	    (void)bu_avs_add_vls(avs, "air", &newval);
+	    (void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_AIR), &newval);
     } else {
-	    bu_avs_remove(avs, "air");
+	    bu_avs_remove(avs, db5_standard_attribute(ATTR_AIR));
     }
+
+    /* LOS */
     if (comb->los) {
 	    bu_vls_sprintf(&newval, "%d", comb->los);
-	    (void)bu_avs_add_vls(avs, "los", &newval);
+	    (void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_LOS), &newval);
     } else {
-	    bu_avs_remove(avs, "los");
+	    bu_avs_remove(avs, db5_standard_attribute(ATTR_LOS));
     }
-    if (bu_avs_get(avs, "rgb") || !(comb->rgb[0] == 0 && comb->rgb[1] == 0 && comb->rgb[2] == 0)) {
+
+    /* Color */
+    if (bu_avs_get(avs, db5_standard_attribute(ATTR_COLOR)) || !(comb->rgb[0] == 0 && comb->rgb[1] == 0 && comb->rgb[2] == 0)) {
 	    bu_vls_sprintf(&newval, "%d/%d/%d", comb->rgb[0], comb->rgb[1], comb->rgb[2]);
-	    (void)bu_avs_add_vls(avs, "rgb", &newval);
+	    (void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_COLOR), &newval);
     }
+
+    /* Shader */
     if (!BU_STR_EQUAL(bu_vls_addr(&comb->shader), "")) {
 	    bu_vls_sprintf(&newval, "%s", bu_vls_addr(&comb->shader));
-	    (void)bu_avs_add_vls(avs, "oshader", &newval);
+	    (void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_SHADER), &newval);
     } else {
-	    bu_avs_remove(avs, "oshader");
+	    bu_avs_remove(avs, db5_standard_attribute(ATTR_SHADER));
     }
+
+    /* Inherit */
     if (comb->inherit) {
 	    bu_vls_sprintf(&newval, "%d", comb->inherit);
-	    (void)bu_avs_add_vls(avs, "inherit", &newval);
+	    (void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_INHERIT), &newval);
     } else {
-	    bu_avs_remove(avs, "inherit");
+	    bu_avs_remove(avs, db5_standard_attribute(ATTR_INHERIT));
     }
     bu_vls_free(&newval);
 }
