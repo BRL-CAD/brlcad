@@ -6105,12 +6105,12 @@ RT_EXPORT BU_EXTERN(int db5_standardize_attribute, (const char *attr));
  * PRIVATE: this is new API and should be considered private for the
  * time being.
  */
-RT_EXPORT BU_EXTERN(void db5_apply_std_attributes, (struct db_i *dbip, struct directory *dp, struct rt_comb_internal *comb));
+RT_EXPORT BU_EXTERN(void db5_sync_attr_to_comb, (const struct bu_attribute_value_set *avs, struct rt_comb_internal *comb, const char *name));
 /**
  * PRIVATE: this is new API and should be considered private for the
  * time being.
  */
-RT_EXPORT BU_EXTERN(void db5_update_std_attributes, (struct db_i *dbip, struct directory *dp, const struct rt_comb_internal *comb));
+RT_EXPORT BU_EXTERN(void db5_sync_comb_to_attr, (const struct rt_comb_internal *comb, struct bu_attribute_value_set *avs));
 
 
 #endif
@@ -6144,40 +6144,6 @@ RT_EXPORT BU_EXTERN(int rt_bot_decimate,
 		     fastf_t max_chord_error,
 		     fastf_t max_normal_error,
 		     fastf_t min_edge_length));
-
-/*
- *  Utility functions for standard attributes
- */
-
-/**
- * D B 5  _ A P P L Y _ S T D _ A T T R I B U T E S
- *
- * Because standard attributes in BRL-CAD databases may involve
- * more data and structures than just the avs, provide a helper
- * function that checks the avs structures associated with a
- * comb and automatically syncs any other relevant data structures
- * to conform to the attribute values on the comb.  When using this
- * function, attribute/value pairs are "senior" to other values
- * and other values will be updated to match the attributes.
- */
-RT_EXPORT BU_EXTERN(void db5_apply_std_attributes,
-                         (struct db_i *dbip, struct directory *dp, struct rt_comb_internal *comb));
-
-
-/**
- * D B 5  _ U P D A T E _ S T D _ A T T R I B U T E S
- *
- * Because standard attributes in BRL-CAD databases may involve
- * more data and structures than just the avs, provide a helper
- * function that checks the avs structures associated with a
- * comb and automatically syncs any other relevant data structures
- * to conform to the attribute values on the comb.  When using this
- * function, attribute/value pairs are "junior" to other values
- * and attributes will be updated to reflect those values.
- */
-RT_EXPORT BU_EXTERN(void db5_update_std_attributes,
-                         (struct db_i *dbip, struct directory *dp, const struct rt_comb_internal *comb));
-
 
 /*
  *  Constants provided and used by the RT library.

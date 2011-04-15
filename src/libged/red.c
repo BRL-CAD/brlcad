@@ -36,14 +36,6 @@
 
 #include "./ged_private.h"
 
-
-/* FIXME: Accessing unpublished functions.  this should be hidden
- * behind the scenes, not be an API function. should eliminate direct
- * calls to these functions.
- */
-extern int db5_is_standard_attribute(const char *attr_want);
-
-
 /* also accessed by put_comb.c */
 char _ged_tmpfil[MAXPATHLEN] = {0};
 
@@ -580,14 +572,14 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
     db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip);
     
     comb = (struct rt_comb_internal *)localintern.idb_ptr;
-    db5_apply_std_attributes(gedp->ged_wdbp->dbip, dp, comb);
+    db5_standardize_avs(&avs);
+    db5_sync_attr_to_comb((const struct bu_attribute_value_set *)&avs, comb, dp->d_namep);
 
     bu_avs_free(&avs);
     return node_count;
 }
 
 
-/* !!! FIXME: this routine edits the dbip and comb but should not */
 HIDDEN int
 write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 {
@@ -598,20 +590,14 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     struct directory *dp;
     FILE *fp;
     size_t i, j, maxlength;
+    int hasattr;
     size_t node_count;
     size_t actual_count;
     struct bu_vls spacer;
-    char *standard_attributes[8];
-    standard_attributes[0] = "region";
-    standard_attributes[1] = "region_id";
-    standard_attributes[2] = "material_id";
-    standard_attributes[3] = "los";
-    standard_attributes[4] = "air";
-    standard_attributes[5] = "rgb";
-    standard_attributes[6] = "oshader";
-    standard_attributes[7] = "inherit";
+    const char *attr;
 
     bu_avs_init_empty(&avs);
+
 
     bu_vls_init(&spacer);
     bu_vls_trunc(&spacer, 0);
@@ -629,9 +615,9 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     }
 
     maxlength = 0;
-    for (i = 0; i < sizeof(standard_attributes)/sizeof(char *); i++) {
-	if (strlen(standard_attributes[i]) > maxlength) 
-	    maxlength = strlen(standard_attributes[i]);
+    for (i=0; (attr = db5_standard_attribute(i)) != NULL; i++) {
+	if (strlen(attr) > maxlength) 
+	    maxlength = strlen(attr);
     }
 	
     if (!comb) {
@@ -640,12 +626,12 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 	    bu_vls_printf(&spacer, " ");
 	}
 	fprintf(fp, "name%s= %s\n", bu_vls_addr(&spacer), name);
-	for (i = 0; i < sizeof(standard_attributes)/sizeof(char *); i++) {
+	for (i=0; (attr = db5_standard_attribute(i)) != NULL; i++) {
 	    bu_vls_trunc(&spacer, 0);
-	    for (j = 0; j < maxlength - strlen(standard_attributes[i]); j++) {
+	    for (j = 0; j < maxlength - strlen(attr); j++) {
 		bu_vls_printf(&spacer, " ");
 	    }
-	    fprintf(fp, "%s%s = \n", standard_attributes[i], bu_vls_addr(&spacer));
+	    fprintf(fp, "%s%s = \n", attr, bu_vls_addr(&spacer));
 	}
 	fprintf(fp, "%s", combseparator);
 	fclose(fp);
@@ -669,22 +655,12 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 	actual_count = 0;
     }
 
-    db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp);
+    hasattr = db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp);
+    db5_standardize_avs(&avs);
+    db5_sync_attr_to_comb((const struct bu_attribute_value_set *)&avs, comb, dp->d_namep);
+    db5_sync_comb_to_attr((const struct rt_comb_internal *)comb, &avs);
 
-    /* !!! FIXME: this modifies the comb but red shouldn't be
-     * modifying the comb in here ... we're just writing out.  may
-     * need to make a copy.
-     */
-    db5_apply_std_attributes(gedp->ged_wdbp->dbip, dp, comb);
-
-    /* !!! FIXME: this modifies the dbip but red shouldn't be
-     * modifying anything in here ... we're just writing out.  may
-     * need to make a copy.
-     */
-    db5_update_std_attributes(gedp->ged_wdbp->dbip, dp, comb);
-
-    if (!db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
-	db5_standardize_avs(&avs);
+    if (!hasattr) {
 	avpp = avs.avp;
 	for (i=0; i < avs.count; i++, avpp++) {
 	    if (strlen(avpp->name) > maxlength) 
@@ -695,15 +671,15 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 	    bu_vls_printf(&spacer, " ");
 	}
 	fprintf(fp, "name%s= %s\n", bu_vls_addr(&spacer), name);
-	for (i = 0; i < sizeof(standard_attributes)/sizeof(char *); i++) {
+	for (i=0; (attr = db5_standard_attribute(i)) != NULL; i++) {
 	    bu_vls_trunc(&spacer, 0);
-	    for (j = 0; j < maxlength - strlen(standard_attributes[i]) + 1; j++) {
+	    for (j = 0; j < maxlength - strlen(attr) + 1; j++) {
 		bu_vls_printf(&spacer, " ");
 	    }
-	    if (bu_avs_get(&avs, standard_attributes[i])) {
-		fprintf(fp, "%s%s= %s\n", standard_attributes[i], bu_vls_addr(&spacer),  bu_avs_get(&avs, standard_attributes[i]));
+	    if (bu_avs_get(&avs, attr)) {
+		fprintf(fp, "%s%s= %s\n", attr, bu_vls_addr(&spacer),  bu_avs_get(&avs, attr));
 	    } else {
-		fprintf(fp, "%s%s= \n", standard_attributes[i], bu_vls_addr(&spacer));
+		fprintf(fp, "%s%s= \n", attr, bu_vls_addr(&spacer));
 	    }
 	}
 	avpp = avs.avp;
