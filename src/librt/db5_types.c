@@ -518,6 +518,7 @@ db5_sync_attr_to_comb(const struct bu_attribute_value_set *avs, struct rt_comb_i
 {
     size_t i;
     long int attr_num_val;
+    /*double attr_float_val;*/
     char *endptr;
     int color[3];
     struct bu_vls newval;
@@ -538,42 +539,60 @@ db5_sync_attr_to_comb(const struct bu_attribute_value_set *avs, struct rt_comb_i
     /* region_id */
     bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_REGION_ID)));
     bu_vls_trimspace(&newval);
-    attr_num_val = strtol(bu_vls_addr(&newval), &endptr, 0);
-    if (endptr == bu_vls_addr(&newval) + strlen(bu_vls_addr(&newval))) {
-	    comb->region_id = attr_num_val;
-    } else {
-	    bu_log("Warning - invalid region_id value %s on comb %s - comb->region_id remains at %d\n", bu_vls_addr(&newval), name, comb->region_id);
+    if (bu_str_true(bu_vls_addr(&newval)) != 0) {
+	    attr_num_val = strtol(bu_vls_addr(&newval), &endptr, 0);
+	    if (endptr == bu_vls_addr(&newval) + strlen(bu_vls_addr(&newval))) {
+		    comb->region_id = attr_num_val;
+	    } else {
+		    bu_log("Warning - invalid region_id value %s on comb %s - comb->region_id remains at %d\n", bu_vls_addr(&newval), name, comb->region_id);
+	    }
     }
 
     /* material_id */
     bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_MATERIAL_ID)));
     bu_vls_trimspace(&newval);
-    attr_num_val = atoi(bu_vls_addr(&newval));
-    if (attr_num_val >= 0) {
-	    comb->GIFTmater = attr_num_val;
-    } else {
-	    bu_log("Warning - invalid material_id value on comb %s - comb->GIFTmater remains at %d\n", name, comb->GIFTmater);
+    if (bu_str_true(bu_vls_addr(&newval)) != 0) {
+	    attr_num_val = strtol(bu_vls_addr(&newval), &endptr, 0);
+	    if (endptr == bu_vls_addr(&newval) + strlen(bu_vls_addr(&newval))) {
+		    comb->GIFTmater = attr_num_val;
+	    } else {
+		    bu_log("Warning - invalid material_id value %s on comb %s - comb->GIFTmater remains at %d\n", bu_vls_addr(&newval), name, comb->GIFTmater);
+	    }
     }
 
     /* air */
-    /* TODO - AIR CODE IS NOT BOOLEAN!  Need to look for integers here!!! */
     bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_AIR)));
-    attr_num_val = atoi(bu_vls_addr(&newval));
-    if (attr_num_val == 0 || attr_num_val == 1) {
-	    comb->aircode = attr_num_val;
-    } else {
-	    bu_log("Warning - invalid Air Code value on comb %s - comb->aircode remains at %d\n", name, comb->aircode);
+    bu_vls_trimspace(&newval);
+    if (bu_str_true(bu_vls_addr(&newval)) != 0) {
+	    attr_num_val = strtol(bu_vls_addr(&newval), &endptr, 0);
+	    if (endptr == bu_vls_addr(&newval) + strlen(bu_vls_addr(&newval))) {
+		    comb->aircode = attr_num_val;
+	    } else {
+		    bu_log("Warning - invalid Air Code value %s on comb %s - comb->aircode remains at %d\n", bu_vls_addr(&newval), name, comb->aircode);
+	    }
     }
 
     /* los */
     bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_LOS)));
-    attr_num_val = atoi(bu_vls_addr(&newval)); /* Is LOS really limited to integer values?? - also, need some sanity checking */
-    comb->los = attr_num_val;
+    bu_vls_trimspace(&newval);
+    if (bu_str_true(bu_vls_addr(&newval)) != 0) {
+	    /* Currently, struct rt_comb_internal lists los as a long.  Probably should allow
+	     * floating point, but as it's DEPRECATED anyway I suppose we can wait for that? */ 
+	    /* attr_float_val = strtod(bu_vls_addr(&newval), &endptr); */
+	    attr_num_val = strtol(bu_vls_addr(&newval), &endptr, 0);
+	    if (endptr == bu_vls_addr(&newval) + strlen(bu_vls_addr(&newval))) {
+		    comb->los = attr_num_val;
+	    } else {
+		    bu_log("Warning - invalid LOS value %s on comb %s - comb->los remains at %d\n", bu_vls_addr(&newval), name, comb->los);
+	    }
+    }
+
 
     /* color */
     bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_COLOR)));
-    if (bu_avs_get(avs, "rgb")) {
-	    if (sscanf(bu_vls_addr(&newval), "%i%*c%i%*c%i", color+0, color+1, color+2) == 3) {
+    bu_vls_trimspace(&newval);
+    if (bu_str_true(bu_vls_addr(&newval)) != 0) {
+	    if (sscanf(bu_vls_addr(&newval), "%3i%*c%3i%*c%3i", color+0, color+1, color+2) == 3) {
 		    for (i = 0; i < 3; i++) {
 			    if (color[i] > 255) color[i] = 255;
 			    if (color[i] < 0) color[i] = 0;
