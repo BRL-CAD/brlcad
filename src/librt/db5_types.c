@@ -309,7 +309,7 @@ db5_standard_attribute(int idx)
 	case ATTR_COLOR:
 	    return "rgb";
 	case ATTR_SHADER:
-	    return "oshader";
+	    return "shader";
 	case ATTR_INHERIT:
 	    return "inherit";
 	case ATTR_NULL:
@@ -393,6 +393,8 @@ db5_standardize_attribute(const char *attr)
     if (BU_STR_EQUAL(attr, "RGB"))
 	return ATTR_COLOR;
 
+    if (BU_STR_EQUAL(attr, "shader"))
+	return ATTR_SHADER;
     if (BU_STR_EQUAL(attr, "oshader"))
 	return ATTR_SHADER;
     if (BU_STR_EQUAL(attr, "SHADER"))
@@ -605,7 +607,8 @@ db5_sync_attr_to_comb(const struct bu_attribute_value_set *avs, struct rt_comb_i
 	    }
     }
 
-    /* oshader */
+    /* shader */
+    bu_vls_trunc(&comb->shader, 0);
     bu_vls_strcpy(&comb->shader, bu_avs_get(avs, db5_standard_attribute(ATTR_SHADER)));
 
     /* inherit */
