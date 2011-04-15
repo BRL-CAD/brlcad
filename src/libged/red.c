@@ -601,15 +601,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     size_t node_count;
     size_t actual_count;
     struct bu_vls spacer;
-    char *standard_attributes[8];
-    standard_attributes[0] = "region";
-    standard_attributes[1] = "region_id";
-    standard_attributes[2] = "material_id";
-    standard_attributes[3] = "los";
-    standard_attributes[4] = "air";
-    standard_attributes[5] = "rgb";
-    standard_attributes[6] = "oshader";
-    standard_attributes[7] = "inherit";
+    const char *attr;
 
     bu_avs_init_empty(&avs);
 
@@ -629,9 +621,9 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     }
 
     maxlength = 0;
-    for (i = 0; i < sizeof(standard_attributes)/sizeof(char *); i++) {
-	if (strlen(standard_attributes[i]) > maxlength) 
-	    maxlength = strlen(standard_attributes[i]);
+    for (i=0; (attr = db5_standard_attribute(i)) != NULL; i++) {
+	if (strlen(attr) > maxlength) 
+	    maxlength = strlen(attr);
     }
 	
     if (!comb) {
@@ -640,12 +632,12 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 	    bu_vls_printf(&spacer, " ");
 	}
 	fprintf(fp, "name%s= %s\n", bu_vls_addr(&spacer), name);
-	for (i = 0; i < sizeof(standard_attributes)/sizeof(char *); i++) {
+	for (i=0; (attr = db5_standard_attribute(i)) != NULL; i++) {
 	    bu_vls_trunc(&spacer, 0);
-	    for (j = 0; j < maxlength - strlen(standard_attributes[i]); j++) {
+	    for (j = 0; j < maxlength - strlen(attr); j++) {
 		bu_vls_printf(&spacer, " ");
 	    }
-	    fprintf(fp, "%s%s = \n", standard_attributes[i], bu_vls_addr(&spacer));
+	    fprintf(fp, "%s%s = \n", attr, bu_vls_addr(&spacer));
 	}
 	fprintf(fp, "%s", combseparator);
 	fclose(fp);
@@ -695,15 +687,15 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 	    bu_vls_printf(&spacer, " ");
 	}
 	fprintf(fp, "name%s= %s\n", bu_vls_addr(&spacer), name);
-	for (i = 0; i < sizeof(standard_attributes)/sizeof(char *); i++) {
+	for (i=0; (attr = db5_standard_attribute(i)) != NULL; i++) {
 	    bu_vls_trunc(&spacer, 0);
-	    for (j = 0; j < maxlength - strlen(standard_attributes[i]) + 1; j++) {
+	    for (j = 0; j < maxlength - strlen(attr) + 1; j++) {
 		bu_vls_printf(&spacer, " ");
 	    }
-	    if (bu_avs_get(&avs, standard_attributes[i])) {
-		fprintf(fp, "%s%s= %s\n", standard_attributes[i], bu_vls_addr(&spacer),  bu_avs_get(&avs, standard_attributes[i]));
+	    if (bu_avs_get(&avs, attr)) {
+		fprintf(fp, "%s%s= %s\n", attr, bu_vls_addr(&spacer),  bu_avs_get(&avs, attr));
 	    } else {
-		fprintf(fp, "%s%s= \n", standard_attributes[i], bu_vls_addr(&spacer));
+		fprintf(fp, "%s%s= \n", attr, bu_vls_addr(&spacer));
 	    }
 	}
 	avpp = avs.avp;
