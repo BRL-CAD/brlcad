@@ -580,7 +580,6 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
 }
 
 
-/* !!! FIXME: this routine edits the dbip and comb but should not */
 HIDDEN int
 write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 {
