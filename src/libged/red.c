@@ -569,12 +569,14 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
      * the attribute logic - this apparently must come after the rt_db_put_internal */
     GED_DB_GET_INTERNAL(gedp, &localintern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
 
-    db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip);
     
     comb = (struct rt_comb_internal *)localintern.idb_ptr;
     db5_standardize_avs(&avs);
     db5_sync_attr_to_comb((const struct bu_attribute_value_set *)&avs, comb, dp->d_namep);
+    db5_sync_comb_to_attr((const struct rt_comb_internal *)comb, &avs);
 
+    db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip);
+    
     bu_avs_free(&avs);
     return node_count;
 }

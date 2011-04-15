@@ -517,7 +517,8 @@ void
 db5_sync_attr_to_comb(const struct bu_attribute_value_set *avs, struct rt_comb_internal *comb, const char *name)
 {
     size_t i;
-    long attr_num_val;
+    long int attr_num_val;
+    char *endptr;
     int color[3];
     struct bu_vls newval;
     bu_vls_init(&newval);
@@ -527,6 +528,7 @@ db5_sync_attr_to_comb(const struct bu_attribute_value_set *avs, struct rt_comb_i
 
     /* region flag */
     bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_REGION)));
+    bu_vls_trimspace(&newval);
     if (bu_str_true(bu_vls_addr(&newval))) {
 	    comb->region_flag = 1;
     } else {
@@ -535,15 +537,17 @@ db5_sync_attr_to_comb(const struct bu_attribute_value_set *avs, struct rt_comb_i
 
     /* region_id */
     bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_REGION_ID)));
-    attr_num_val = atoi(bu_vls_addr(&newval));
-    if (attr_num_val >= 0 || attr_num_val == -1) {
+    bu_vls_trimspace(&newval);
+    attr_num_val = strtol(bu_vls_addr(&newval), &endptr, 0);
+    if (endptr == bu_vls_addr(&newval) + strlen(bu_vls_addr(&newval))) {
 	    comb->region_id = attr_num_val;
     } else {
-	    bu_log("Warning - invalid region_id value on comb %s - comb->region_id remains at %d\n", name, comb->region_id);
+	    bu_log("Warning - invalid region_id value %s on comb %s - comb->region_id remains at %d\n", bu_vls_addr(&newval), name, comb->region_id);
     }
 
     /* material_id */
     bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_MATERIAL_ID)));
+    bu_vls_trimspace(&newval);
     attr_num_val = atoi(bu_vls_addr(&newval));
     if (attr_num_val >= 0) {
 	    comb->GIFTmater = attr_num_val;
