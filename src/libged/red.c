@@ -580,7 +580,8 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
     db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip);
     
     comb = (struct rt_comb_internal *)localintern.idb_ptr;
-    db5_apply_std_attributes(gedp->ged_wdbp->dbip, dp, comb);
+    db5_standardize_avs(&avs);
+    db5_sync_attr_to_comb((const struct bu_attribute_value_set *)&avs, comb, dp->d_namep);
 
     bu_avs_free(&avs);
     return node_count;
@@ -598,12 +599,14 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     struct directory *dp;
     FILE *fp;
     size_t i, j, maxlength;
+    int hasattr;
     size_t node_count;
     size_t actual_count;
     struct bu_vls spacer;
     const char *attr;
 
     bu_avs_init_empty(&avs);
+
 
     bu_vls_init(&spacer);
     bu_vls_trunc(&spacer, 0);
@@ -661,22 +664,12 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 	actual_count = 0;
     }
 
-    db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp);
+    hasattr = db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp);
+    db5_standardize_avs(&avs);
+    db5_sync_attr_to_comb((const struct bu_attribute_value_set *)&avs, comb, dp->d_namep);
+    db5_sync_comb_to_attr((const struct rt_comb_internal *)comb, &avs);
 
-    /* !!! FIXME: this modifies the comb but red shouldn't be
-     * modifying the comb in here ... we're just writing out.  may
-     * need to make a copy.
-     */
-    db5_apply_std_attributes(gedp->ged_wdbp->dbip, dp, comb);
-
-    /* !!! FIXME: this modifies the dbip but red shouldn't be
-     * modifying anything in here ... we're just writing out.  may
-     * need to make a copy.
-     */
-    db5_update_std_attributes(gedp->ged_wdbp->dbip, dp, comb);
-
-    if (!db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
-	db5_standardize_avs(&avs);
+    if (!hasattr) {
 	avpp = avs.avp;
 	for (i=0; i < avs.count; i++, avpp++) {
 	    if (strlen(avpp->name) > maxlength) 
