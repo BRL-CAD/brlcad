@@ -303,7 +303,7 @@ db5_standard_attribute(int idx)
 	case ATTR_MATERIAL_ID:
 	    return "material_id";
 	case ATTR_AIR:
-	    return "air";
+	    return "aircode";
 	case ATTR_LOS:
 	    return "los";
 	case ATTR_COLOR:
@@ -378,6 +378,9 @@ db5_standardize_attribute(const char *attr)
 	return ATTR_AIR;
     if (BU_STR_EQUAL(attr, "AIRCODE"))
 	return ATTR_AIR;
+    if (BU_STR_EQUAL(attr, "aircode"))
+	return ATTR_AIR;
+
 
     if (BU_STR_EQUAL(attr, "los"))
 	return ATTR_LOS;
@@ -541,43 +544,58 @@ db5_sync_attr_to_comb(const struct bu_attribute_value_set *avs, struct rt_comb_i
     /* region_id */
     bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_REGION_ID)));
     bu_vls_trimspace(&newval);
-    if (bu_str_true(bu_vls_addr(&newval)) != 0) {
+    if (bu_vls_strlen(&newval) != 0 && !BU_STR_EQUAL(bu_vls_addr(&newval), "(null)")) {
 	    attr_num_val = strtol(bu_vls_addr(&newval), &endptr, 0);
 	    if (endptr == bu_vls_addr(&newval) + strlen(bu_vls_addr(&newval))) {
 		    comb->region_id = attr_num_val;
 	    } else {
 		    bu_log("Warning - invalid region_id value %s on comb %s - comb->region_id remains at %d\n", bu_vls_addr(&newval), name, comb->region_id);
+		    bu_vls_sprintf(&newval, "%d", comb->region_id);
+		    (void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_REGION_ID), &newval);
 	    }
+    } else {
+	    /* remove region_id  */
+	    comb->region_id = 0;
     }
 
     /* material_id */
     bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_MATERIAL_ID)));
     bu_vls_trimspace(&newval);
-    if (bu_str_true(bu_vls_addr(&newval)) != 0) {
+    if (bu_vls_strlen(&newval) != 0 && !BU_STR_EQUAL(bu_vls_addr(&newval), "(null)")) {
 	    attr_num_val = strtol(bu_vls_addr(&newval), &endptr, 0);
 	    if (endptr == bu_vls_addr(&newval) + strlen(bu_vls_addr(&newval))) {
 		    comb->GIFTmater = attr_num_val;
 	    } else {
 		    bu_log("Warning - invalid material_id value %s on comb %s - comb->GIFTmater remains at %d\n", bu_vls_addr(&newval), name, comb->GIFTmater);
+		    bu_vls_sprintf(&newval, "%d", comb->GIFTmater);
+		    (void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_MATERIAL_ID), &newval);
 	    }
+    } else {
+	    /* empty - set to zero */
+	    comb->GIFTmater = 0;
     }
 
-    /* air */
+    /* aircode */
     bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_AIR)));
     bu_vls_trimspace(&newval);
-    if (bu_str_true(bu_vls_addr(&newval)) != 0) {
+    if (bu_vls_strlen(&newval) != 0 && !BU_STR_EQUAL(bu_vls_addr(&newval), "(null)")) {
 	    attr_num_val = strtol(bu_vls_addr(&newval), &endptr, 0);
 	    if (endptr == bu_vls_addr(&newval) + strlen(bu_vls_addr(&newval))) {
 		    comb->aircode = attr_num_val;
 	    } else {
 		    bu_log("Warning - invalid Air Code value %s on comb %s - comb->aircode remains at %d\n", bu_vls_addr(&newval), name, comb->aircode);
+		    bu_vls_sprintf(&newval, "%d", comb->aircode);
+		    (void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_AIR), &newval);
 	    }
+    } else {
+	    /* not air */
+	    comb->aircode = 0;
     }
 
     /* los */
     bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_LOS)));
     bu_vls_trimspace(&newval);
-    if (bu_str_true(bu_vls_addr(&newval)) != 0) {
+    if (bu_vls_strlen(&newval) != 0 && !BU_STR_EQUAL(bu_vls_addr(&newval), "(null)")) {
 	    /* Currently, struct rt_comb_internal lists los as a long.  Probably should allow
 	     * floating point, but as it's DEPRECATED anyway I suppose we can wait for that? */ 
 	    /* attr_float_val = strtod(bu_vls_addr(&newval), &endptr); */
@@ -586,14 +604,19 @@ db5_sync_attr_to_comb(const struct bu_attribute_value_set *avs, struct rt_comb_i
 		    comb->los = attr_num_val;
 	    } else {
 		    bu_log("Warning - invalid LOS value %s on comb %s - comb->los remains at %d\n", bu_vls_addr(&newval), name, comb->los);
+		    bu_vls_sprintf(&newval, "%d", comb->los);
+		    (void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_LOS), &newval); 
 	    }
+    } else {
+	    /* no los */
+	    comb->los = 0;
     }
 
 
     /* color */
     bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_COLOR)));
     bu_vls_trimspace(&newval);
-    if (bu_str_true(bu_vls_addr(&newval)) != 0) {
+    if (bu_vls_strlen(&newval) != 0 && !BU_STR_EQUAL(bu_vls_addr(&newval), "(null)")) {
 	    if (sscanf(bu_vls_addr(&newval), "%3i%*c%3i%*c%3i", color+0, color+1, color+2) == 3) {
 		    for (i = 0; i < 3; i++) {
 			    if (color[i] > 255) color[i] = 255;
@@ -604,12 +627,22 @@ db5_sync_attr_to_comb(const struct bu_attribute_value_set *avs, struct rt_comb_i
 		    comb->rgb[2] = color[2];
 	    } else {
 		    bu_log("Warning - color string on comb %s does not match the R/G/B pattern - color remains at %d/%d/%d\n", name, comb->rgb[0], comb->rgb[1], comb->rgb[2]);
+		    bu_vls_sprintf(&newval, "%d/%d/%d", comb->rgb[0], comb->rgb[1], comb->rgb[2]);
+		    (void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_COLOR), &newval); 
 	    }
+    } else {
+	    comb->rgb[0] = 0;
+	    comb->rgb[1] = 0;
+	    comb->rgb[2] = 0;
     }
 
-    /* shader */
-    bu_vls_trunc(&comb->shader, 0);
-    bu_vls_strcpy(&comb->shader, bu_avs_get(avs, db5_standard_attribute(ATTR_SHADER)));
+    /* shader - this may actually be unnecessary, depending on the internal handling of comb - 
+     * shaders are stored as vls */
+    bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_SHADER)));
+    bu_vls_trimspace(&newval);
+    if (bu_vls_strlen(&newval) != 0 && !BU_STR_EQUAL(bu_vls_addr(&newval), "(null)")) {
+	    bu_vls_sprintf(&comb->shader, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_SHADER)));
+    }
 
     /* inherit */
     bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_INHERIT)));
@@ -677,8 +710,8 @@ db5_sync_comb_to_attr(const struct rt_comb_internal *comb, struct bu_attribute_v
 	    (void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_COLOR), &newval);
     }
 
-    /* Shader */
-    if (!BU_STR_EQUAL(bu_vls_addr(&comb->shader), "")) {
+    /* Shader - may be redundant */
+    if (bu_vls_strlen(&comb->shader) != 0 && !BU_STR_EQUAL(bu_vls_addr(&newval), "(null)")) {
 	    bu_vls_sprintf(&newval, "%s", bu_vls_addr(&comb->shader));
 	    (void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_SHADER), &newval);
     } else {

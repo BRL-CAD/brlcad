@@ -325,7 +325,7 @@
 		"inherit" -
 		"material_id" -
 		"los" -
-		"oshader" -
+		"shader" -
 		"region" -
 		"region_id" -
 		"rgb" {
