@@ -607,7 +607,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     standard_attributes[2] = "material_id";
     standard_attributes[3] = "los";
     standard_attributes[4] = "air";
-    standard_attributes[5] = "color";
+    standard_attributes[5] = "rgb";
     standard_attributes[6] = "oshader";
     standard_attributes[7] = "inherit";
 

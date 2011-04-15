@@ -307,9 +307,9 @@ db5_standard_attribute(int idx)
 	case ATTR_LOS:
 	    return "los";
 	case ATTR_COLOR:
-	    return "color";
+	    return "rgb";
 	case ATTR_SHADER:
-	    return "shader";
+	    return "oshader";
 	case ATTR_INHERIT:
 	    return "inherit";
 	case ATTR_NULL:
@@ -579,8 +579,8 @@ db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb
 
 	/* color */
 	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, db5_standard_attribute(ATTR_COLOR)));
-	if (bu_avs_get(&avs, "color")) {
-	    if (sscanf(bu_vls_addr(&newval), "%i/%i/%i", color+0, color+1, color+2) == 3) {
+	if (bu_avs_get(&avs, "rgb")) {
+	    if (sscanf(bu_vls_addr(&newval), "%i%*c%i%*c%i", color+0, color+1, color+2) == 3) {
 		for (i = 0; i < 3; i++) {
 		    if (color[i] > 255) color[i] = 255;
 		    if (color[i] < 0) color[i] = 0;
@@ -655,9 +655,9 @@ db5_update_std_attributes(struct db_i *dbip, struct directory *dp, const struct 
 	} else {
 	    bu_avs_remove(&avs, "los");
 	}
-	if (bu_avs_get(&avs, "color") || !(comb->rgb[0] == 0 && comb->rgb[1] == 0 && comb->rgb[2] == 0)) {
+	if (bu_avs_get(&avs, "rgb") || !(comb->rgb[0] == 0 && comb->rgb[1] == 0 && comb->rgb[2] == 0)) {
 	    bu_vls_sprintf(&newval, "%d/%d/%d", comb->rgb[0], comb->rgb[1], comb->rgb[2]);
-	    (void)bu_avs_add_vls(&avs, "color", &newval);
+	    (void)bu_avs_add_vls(&avs, "rgb", &newval);
 	}
 	if (!BU_STR_EQUAL(bu_vls_addr(&comb->shader), "")) {
 	    bu_vls_sprintf(&newval, "%s", bu_vls_addr(&comb->shader));
