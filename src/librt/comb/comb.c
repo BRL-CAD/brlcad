@@ -399,9 +399,9 @@ rt_comb_export5(
 
     /* optical shader string goes in an attribute */
     if (bu_vls_strlen(&comb->shader) > 0)
-	bu_avs_add_vls(avsp, "oshader", &comb->shader);
+	bu_avs_add_vls(avsp, "shader", &comb->shader);
     else
-	bu_avs_remove(avsp, "oshader");
+	bu_avs_remove(avsp, "shader");
 
     /* GIFT compatability */
     if (comb->region_id != 0) {
@@ -771,7 +771,7 @@ finish:
 	    comb->los = atol(ap);
 	}
     }
-    if ((ap = bu_avs_get(&ip->idb_avs, "oshader")) != NULL) {
+    if ((ap = bu_avs_get(&ip->idb_avs, "shader")) != NULL) {
 	bu_vls_strcat(&comb->shader, ap);
     }
 

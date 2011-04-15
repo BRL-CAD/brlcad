@@ -83,7 +83,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tcl85.lib libz.lib libpng.lib libbu.lib libbn.lib librt.lib libgcv.lib libtie.lib"
+				AdditionalDependencies="tcl85.lib libz.lib libpng.lib libbu.lib libbn.lib librt.lib libgcv.lib"
 				OutputFile=".\$(PlatformName)\$(ConfigurationName)/librender.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"

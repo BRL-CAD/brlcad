@@ -558,22 +558,17 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
 	comb->tree = NULL;
     }
     comb->tree = tp;
-
+    
+    db5_standardize_avs(&avs);
+    db5_sync_attr_to_comb((const struct bu_attribute_value_set *)&avs, comb, dp->d_namep);
+   
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "build_comb %s: Cannot apply tree\n", dp->d_namep);
 	bu_avs_free(&avs);
 	return -1;
     }
 
-    /* Now that the tree is handled, get the current data structure pointers and apply
-     * the attribute logic - this apparently must come after the rt_db_put_internal */
-    GED_DB_GET_INTERNAL(gedp, &localintern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
-
     db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip);
-    
-    comb = (struct rt_comb_internal *)localintern.idb_ptr;
-    db5_standardize_avs(&avs);
-    db5_sync_attr_to_comb((const struct bu_attribute_value_set *)&avs, comb, dp->d_namep);
 
     bu_avs_free(&avs);
     return node_count;
@@ -657,7 +652,6 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 
     hasattr = db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp);
     db5_standardize_avs(&avs);
-    db5_sync_attr_to_comb((const struct bu_attribute_value_set *)&avs, comb, dp->d_namep);
     db5_sync_comb_to_attr((const struct rt_comb_internal *)comb, &avs);
 
     if (!hasattr) {
