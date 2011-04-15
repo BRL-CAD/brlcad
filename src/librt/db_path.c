@@ -25,6 +25,8 @@
 #  include <sys/param.h>
 #endif
 
+#include "raytrace.h"
+
 
 /* Most of db_normalize is a subset of NetBSD's realpath function:
  *
