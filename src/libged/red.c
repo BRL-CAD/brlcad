@@ -36,14 +36,6 @@
 
 #include "./ged_private.h"
 
-
-/* FIXME: Accessing unpublished functions.  this should be hidden
- * behind the scenes, not be an API function. should eliminate direct
- * calls to these functions.
- */
-extern int db5_is_standard_attribute(const char *attr_want);
-
-
 /* also accessed by put_comb.c */
 char _ged_tmpfil[MAXPATHLEN] = {0};
 
