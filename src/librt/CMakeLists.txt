@@ -21,7 +21,7 @@ set(LIBRT_SOURCES
     db_corrupt.c
     db_flags.c
     db_flip.c
-	 db_fullpath.c
+    db_fullpath.c
     db_inmem.c
     db_io.c
     db_lookup.c
@@ -202,7 +202,7 @@ set(LIBRT_SOURCES
     primitives/vol/vol_mirror.c
     regionfix.c
     roots.c
-	 search.c
+    search.c
     shoot.c
     spectrum.c
     tcl.c
@@ -215,32 +215,32 @@ set(LIBRT_SOURCES
 )
 
 set(librt_ignored_files
-	brep_test.cpp
-	columnparse.c
-	librt.3
-	librt_private.h
-	namegen.c
-	opennurbs_ext.h
-	parse.c
-	pmalloc.c
-	prcomb.c
-	primitives/bot/btg.h
-	primitives/bot/g_bot_include.c
-	primitives/bot/tieprivate.h
-	primitives/bot/tie.c
-	primitives/bot/tie_kdtree.c
-	primitives/brep/brep_debug.h
-	primitives/fixpt.h
-	primitives/metaball/metaball.h
-	primitives/nmg/nmg_junk.c
-	primitives/revolve/revolve.h
-	primitives/xxx
-	search.h
-	timer-nt.c
-	timer52brl.c
-	timerhep.c
-	timerunix.c
-	uvpoints.cpp
+    brep_test.cpp
+    columnparse.c
+    librt.3
+    librt_private.h
+    namegen.c
+    opennurbs_ext.h
+    parse.c
+    pmalloc.c
+    prcomb.c
+    primitives/bot/btg.h
+    primitives/bot/g_bot_include.c
+    primitives/bot/tieprivate.h
+    primitives/bot/tie.c
+    primitives/bot/tie_kdtree.c
+    primitives/brep/brep_debug.h
+    primitives/fixpt.h
+    primitives/metaball/metaball.h
+    primitives/nmg/nmg_junk.c
+    primitives/revolve/revolve.h
+    primitives/xxx
+    search.h
+    timer-nt.c
+    timer52brl.c
+    timerhep.c
+    timerunix.c
+    uvpoints.cpp
 )
 CMAKEFILES(${librt_ignored_files})
 
@@ -248,29 +248,29 @@ BRLCAD_ADDFILE(nurb_example.c sample_applications)
 BRLCAD_ADDFILE(raydebug.tcl sample_applications)
 
 if(MSVC)
-    set(LIBRT_SOURCES ${LIBRT_SOURCES}	timer-nt.c)
+    set(LIBRT_SOURCES ${LIBRT_SOURCES}    timer-nt.c)
 else(MSVC)
-    set(LIBRT_SOURCES ${LIBRT_SOURCES}	timer42.c)
+    set(LIBRT_SOURCES ${LIBRT_SOURCES}    timer42.c)
 endif(MSVC)
 
 include_directories(
-	 ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
     ${REGEX_INCLUDE_DIR}
     ${ZLIB_INCLUDE_DIR}
     ${OPENNURBS_INCLUDE_DIR}
-	 ${TCL_INCLUDE_DIRS}
-	 ${TNT_INCLUDE_DIR}
+    ${TCL_INCLUDE_DIRS}
+    ${TNT_INCLUDE_DIR}
 )
 
 if(MSVC)
-	SET(WIN32LIBS "${WINSOCK_LIB} Rpcrt4.lib")
-   add_definitions(
-       -DON_DLL_IMPORTS
-		 -DDB5_EXPORT_DLL
-   )
+    SET(WIN32LIBS "${WINSOCK_LIB} Rpcrt4.lib")
+    add_definitions(
+	-DON_DLL_IMPORTS
+	-DDB5_EXPORT_DLL
+    )
 endif(MSVC)
 add_definitions(
-	-DOBJ_BREP=1
+    -DOBJ_BREP=1
 )
 
 BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "libbn libbu ${OPENNURBS_LIBRARY} ${REGEX_LIBRARY} ${ZLIB_LIBRARY} ${WIN32LIBS}")
