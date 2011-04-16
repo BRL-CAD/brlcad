@@ -307,7 +307,7 @@ db5_standard_attribute(int idx)
 	case ATTR_LOS:
 	    return "los";
 	case ATTR_COLOR:
-	    return "rgb";
+	    return "color";
 	case ATTR_SHADER:
 	    return "shader";
 	case ATTR_INHERIT:
@@ -626,14 +626,19 @@ db5_sync_attr_to_comb(const struct bu_attribute_value_set *avs, struct rt_comb_i
 		    comb->rgb[1] = color[1];
 		    comb->rgb[2] = color[2];
 	    } else {
+		if (comb->rgb[0] == 0 && comb->rgb[1] == 0 && comb->rgb[2] == 0) {
+		    bu_avs_remove(avs, db5_standard_attribute(ATTR_COLOR));
+		} else {
 		    bu_log("Warning - color string on comb %s does not match the R/G/B pattern - color remains at %d/%d/%d\n", name, comb->rgb[0], comb->rgb[1], comb->rgb[2]);
 		    bu_vls_sprintf(&newval, "%d/%d/%d", comb->rgb[0], comb->rgb[1], comb->rgb[2]);
 		    (void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_COLOR), &newval); 
+		}
 	    }
     } else {
-	    comb->rgb[0] = 0;
-	    comb->rgb[1] = 0;
-	    comb->rgb[2] = 0;
+	bu_avs_remove(avs, db5_standard_attribute(ATTR_COLOR));
+	comb->rgb[0] = 0;
+	comb->rgb[1] = 0;
+	comb->rgb[2] = 0;
     }
 
     /* shader - this may actually be unnecessary, depending on the internal handling of comb - 
