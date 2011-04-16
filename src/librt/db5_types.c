@@ -673,7 +673,7 @@ db5_sync_comb_to_attr(const struct rt_comb_internal *comb, struct bu_attribute_v
     }
 
     /* Region ID */
-    if (comb->region_flag && (comb->region_id >=0 || comb->region_id == -1)) {
+    if (comb->region_flag) {
 	    bu_vls_sprintf(&newval, "%d", comb->region_id);
 	    (void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_REGION_ID), &newval);
     } else {
@@ -681,7 +681,7 @@ db5_sync_comb_to_attr(const struct rt_comb_internal *comb, struct bu_attribute_v
     }
 
     /* Material ID */
-    if (comb->GIFTmater >= 0) {
+    if (comb->GIFTmater != 0) {
 	    bu_vls_sprintf(&newval, "%d", comb->GIFTmater);
 	    (void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_MATERIAL_ID), &newval);
     } else {
