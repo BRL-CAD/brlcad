@@ -521,6 +521,7 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
 void
 db5_sync_attr_to_comb(const struct bu_attribute_value_set *avs, struct rt_comb_internal *comb, const char *name)
 {
+    int ret;
     size_t i;
     long int attr_num_val;
     /*double attr_float_val;*/
@@ -617,7 +618,8 @@ db5_sync_attr_to_comb(const struct bu_attribute_value_set *avs, struct rt_comb_i
     bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_COLOR)));
     bu_vls_trimspace(&newval);
     if (bu_vls_strlen(&newval) != 0 && !BU_STR_EQUAL(bu_vls_addr(&newval), "(null)") && !BU_STR_EQUAL(bu_vls_addr(&newval), "del")) {
-	    if (sscanf(bu_vls_addr(&newval), "%3i%*c%3i%*c%3i", color+0, color+1, color+2) == 3) {
+	ret = sscanf(bu_vls_addr(&newval), "%3i%*c%3i%*c%3i", color+0, color+1, color+2);
+	    if (ret == 3) {
 		if (color[0] < 0 || color[1] < 0 || color[2] < 0) {
 		    bu_avs_remove(avs, db5_standard_attribute(ATTR_COLOR));
 		    comb->rgb_valid = 0;
@@ -630,9 +632,12 @@ db5_sync_attr_to_comb(const struct bu_attribute_value_set *avs, struct rt_comb_i
 		    comb->rgb[2] = color[2];
 		    comb->rgb_valid = 1;
 		}
+	    } else if (ret == 1 && color[0] < 0) {
+		comb->rgb_valid = 0;
+		bu_avs_remove(avs, db5_standard_attribute(ATTR_COLOR));
 	    } else {
 	        if(comb->rgb_valid) {
-		    bu_log("Warning - color string on comb %s does not match the R/G/B pattern - color remains at %d/%d/%d\n", name, comb->rgb[0], comb->rgb[1], comb->rgb[2]);
+		    bu_log("WARNING: [%s] color does not match an R/G/B pattern\nColor remains unchanged at %d/%d/%d\n", name, V3ARGS(comb->rgb));
 		    bu_vls_sprintf(&newval, "%d/%d/%d", comb->rgb[0], comb->rgb[1], comb->rgb[2]);
 		    (void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_COLOR), &newval); 
 		} else {
