@@ -143,6 +143,7 @@ _ged_do_list(struct ged *gedp, struct directory *dp, int verbose)
 	    bu_vls_printf(&gedp->ged_result_str, "Cannot get attributes for %s\n", dp->d_namep);
 	    return;
 	}
+/* !!! left off here*/
 	for (BU_AVS_FOR( avp, &avs)) {
 	    if (BU_STR_EQUAL(avp->name, "units")) {
 		double conv;
