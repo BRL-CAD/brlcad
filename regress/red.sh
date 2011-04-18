@@ -420,8 +420,8 @@ echo "END of known bug"
 # shader #
 ##########
 
-init "Changing oshader to safe" red.shader.safe.out
-cat $SAMPLE | sed 's/oshader.*=.*/oshader = plastic/g' > $REDFILE
+init "Changing shader to safe" red.shader.safe.out
+cat $SAMPLE | sed 's/shader.*=.*/shader = plastic/g' > $REDFILE
 assert_different
 edit_and_dump sph.r $REDFILE.new
 # !!!!!!!!!
@@ -434,8 +434,8 @@ echo "END of known bug"
 cat $REDFILE.new | sed 's/plastic//g' > $REDFILE.test
 should_be_same $SAMPLE $REDFILE.test
 
-init "Changing oshader to empty" red.shader.empty.out
-cat $SAMPLE | sed 's/oshader.*=.*/oshader =/g' > $REDFILE
+init "Changing shader to empty" red.shader.empty.out
+cat $SAMPLE | sed 's/shader.*=.*/shader =/g' > $REDFILE
 assert_different
 edit_and_dump sph.r $REDFILE.new
 should_be_different $SAMPLE $REDFILE.new
@@ -448,8 +448,8 @@ echo "BEGIN known bug:"
 should_be_different $SAMPLE $REDFILE.test
 echo "END of known bug"
 
-init "Changing oshader to unsafe" red.shader.unsafe.out
-cat $SAMPLE | sed 's/oshader.*=.*/oshader = 1234567890/g' > $REDFILE
+init "Changing shader to unsafe" red.shader.unsafe.out
+cat $SAMPLE | sed 's/shader.*=.*/shader = 1234567890/g' > $REDFILE
 assert_different
 edit_and_dump sph.r $REDFILE.new
 # !!!!!!!!!
