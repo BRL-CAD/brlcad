@@ -616,15 +616,14 @@ db5_sync_attr_to_comb(const struct bu_attribute_value_set *avs, struct rt_comb_i
     /* color */
     bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_COLOR)));
     bu_vls_trimspace(&newval);
-    if (bu_vls_strlen(&newval) != 0 && !BU_STR_EQUAL(bu_vls_addr(&newval), "(null)")) {
+    if (bu_vls_strlen(&newval) != 0 && !BU_STR_EQUAL(bu_vls_addr(&newval), "(null)") && !BU_STR_EQUAL(bu_vls_addr(&newval), "del")) {
 	    if (sscanf(bu_vls_addr(&newval), "%3i%*c%3i%*c%3i", color+0, color+1, color+2) == 3) {
-		if (color[0] == -1 && color[1] == -1 && color[2] == -1) {
+		if (color[0] < 0 && color[1] < 0 && color[2] < 0) {
 		    bu_avs_remove(avs, db5_standard_attribute(ATTR_COLOR));
 		    comb->rgb_valid = 0;
 		} else {
 		    for (i = 0; i < 3; i++) {
 			if (color[i] > 255) color[i] = 255;
-			    if (color[i] < 0) color[i] = 0;
 		    }
 		    comb->rgb[0] = color[0];
 		    comb->rgb[1] = color[1];
@@ -714,7 +713,7 @@ db5_sync_comb_to_attr(const struct rt_comb_internal *comb, struct bu_attribute_v
     }
 
     /* Color */
-    if (bu_avs_get(avs, db5_standard_attribute(ATTR_COLOR)) || !(comb->rgb[0] == 0 && comb->rgb[1] == 0 && comb->rgb[2] == 0)) {
+    if (comb->rgb_valid) {
 	    bu_vls_sprintf(&newval, "%d/%d/%d", comb->rgb[0], comb->rgb[1], comb->rgb[2]);
 	    (void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_COLOR), &newval);
     }
