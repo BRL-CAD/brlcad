@@ -561,6 +561,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
     
     db5_standardize_avs(&avs);
     db5_sync_attr_to_comb(comb, &avs, dp->d_namep);
+    db5_sync_comb_to_attr(&avs, comb);
    
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "build_comb %s: Cannot apply tree\n", dp->d_namep);
