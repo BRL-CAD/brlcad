@@ -77,7 +77,12 @@ fi
 
 # test if in debian like system
 if test ! -e /etc/debian_version ; then
-    ferror "Refusing to build on a non-debian system."
+    ferror "Refusing to build on a non-debian system." "Exiting..."
+fi
+
+# test if configure script exist
+if test ! -f configure ;then
+    ferror "Missing \"configure\" script. Execute \"./autogen.sh\" first." "Exiting..."
 fi
 
 # check needed packages

@@ -204,7 +204,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
     int nonsubs=0;
     union tree *tp;
     int tree_index=0;
-    struct rt_db_internal intern, localintern;
+    struct rt_db_internal intern;
     struct rt_tree_array *rt_tree_array;
     const char *currptr; 
     regex_t nonwhitespace_regex, attr_regex, combtree_regex, combtree_op_regex;

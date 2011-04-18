@@ -6112,6 +6112,9 @@ RT_EXPORT BU_EXTERN(void db5_sync_attr_to_comb, (const struct bu_attribute_value
  */
 RT_EXPORT BU_EXTERN(void db5_sync_comb_to_attr, (const struct rt_comb_internal *comb, struct bu_attribute_value_set *avs));
 
+/* Convenience macros */
+#define ATTR_STD(attr) db5_standard_attribute(db5_standardize_attribute(attr))
+
 
 #endif
 

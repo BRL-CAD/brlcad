@@ -1,3 +1,9 @@
+brlcad (7.18.6-0) unstable; urgency=low
+
+  - new BRL-CAD release
+
+ -- Jordi Sayol <g.sayol@yahoo.es>  Sat, 16 Apr 2011 14:41:48 +0200
+
 brlcad (7.18.4-0) unstable; urgency=low
 
   * add magic mime-type association for geometry db file v.4 and v.5
