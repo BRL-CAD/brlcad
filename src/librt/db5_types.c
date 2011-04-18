@@ -525,7 +525,7 @@ db5_sync_attr_to_comb(const struct bu_attribute_value_set *avs, struct rt_comb_i
     long int attr_num_val;
     /*double attr_float_val;*/
     char *endptr;
-    int color[3];
+    int color[3] = {-1, -1, -1};
     struct bu_vls newval;
     bu_vls_init(&newval);
 
@@ -618,7 +618,7 @@ db5_sync_attr_to_comb(const struct bu_attribute_value_set *avs, struct rt_comb_i
     bu_vls_trimspace(&newval);
     if (bu_vls_strlen(&newval) != 0 && !BU_STR_EQUAL(bu_vls_addr(&newval), "(null)") && !BU_STR_EQUAL(bu_vls_addr(&newval), "del")) {
 	    if (sscanf(bu_vls_addr(&newval), "%3i%*c%3i%*c%3i", color+0, color+1, color+2) == 3) {
-		if (color[0] < 0 && color[1] < 0 && color[2] < 0) {
+		if (color[0] < 0 || color[1] < 0 || color[2] < 0) {
 		    bu_avs_remove(avs, db5_standard_attribute(ATTR_COLOR));
 		    comb->rgb_valid = 0;
 		} else {
