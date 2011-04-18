@@ -29,7 +29,6 @@
 #include "vmath.h"
 #include "bn.h"
 
-static char *usage="Usage: bntester [-l test_case_line_number] [-f function_number] -i input_file [-o output_file]\n";
 
 int
 parse_case(char *buf_p, int *i, long *l, double *d, unsigned long *u, char *fmt_str, unsigned long line_num, FILE *stream)
@@ -136,14 +135,19 @@ parse_case(char *buf_p, int *i, long *l, double *d, unsigned long *u, char *fmt_
 int
 main(int argc, char **argv)
 {
-    char buf[BUFSIZ];
-    FILE *fp_in = NULL; 
+    static char *usage="Usage: bntester [-l test_case_line_number] [-f function_number] -i input_file [-o output_file]\n";
+
+    /* static to prevent longjmp clobber warning */
     static FILE *stream = NULL;
-    char *endp = NULL;
     static unsigned long line_num = 0; 
     static unsigned long failed_cnt = 0;
     static unsigned long bomb_cnt = 0;
     static unsigned long success_cnt = 0;
+    static int ret = 0;
+
+    char buf[BUFSIZ];
+    FILE *fp_in = NULL; 
+    char *endp = NULL;
     int string_length;
     int argv_idx;
     int c;
@@ -151,13 +155,12 @@ main(int argc, char **argv)
     char *buf_p1;
     char *buf_p;
     struct bn_tol tol;
-    static int ret = 0;
 
     /* command line parameters */
+    static unsigned long test_case_line_num = 0; /* static due to longjmp */
+    static unsigned long function_num = 0; /* static due to longjmp */
     char input_file_name[BUFSIZ] = {0};
     char output_file_name[BUFSIZ] = {0};
-    static unsigned long test_case_line_num = 0;
-    static unsigned long function_num = 0;
 
     /* function parameter arrays */
     int i[50] = {0};
@@ -166,10 +169,10 @@ main(int argc, char **argv)
     unsigned long u[50] = {0};
 
     /* boolean variables */
+    static int output_file_name_defined = 0; /* static due to longjmp */
+    static int process_single_test_case = 0; /* static due to longjmp */
+    static int process_single_function = 0; /* static due to longjmp */
     int input_file_name_defined = 0;
-    static int output_file_name_defined = 0;
-    static int process_single_test_case = 0;
-    static int process_single_function = 0;
     int valid_function_number = 0;
     int process_test_case = 0;
     int early_exit = 0;
