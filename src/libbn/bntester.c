@@ -138,12 +138,12 @@ main(int argc, char **argv)
 {
     char buf[BUFSIZ];
     FILE *fp_in = NULL; 
-    FILE *stream = NULL;
+    static FILE *stream = NULL;
     char *endp = NULL;
-    unsigned long line_num = 0; 
-    unsigned long failed_cnt = 0;
-    unsigned long bomb_cnt = 0;
-    unsigned long success_cnt = 0;
+    static unsigned long line_num = 0; 
+    static unsigned long failed_cnt = 0;
+    static unsigned long bomb_cnt = 0;
+    static unsigned long success_cnt = 0;
     int string_length;
     int argv_idx;
     int c;
@@ -151,13 +151,13 @@ main(int argc, char **argv)
     char *buf_p1;
     char *buf_p;
     struct bn_tol tol;
-    int ret = 0;
+    static int ret = 0;
 
     /* command line parameters */
     char input_file_name[BUFSIZ] = {0};
     char output_file_name[BUFSIZ] = {0};
-    unsigned long test_case_line_num = 0;
-    unsigned long function_num = 0;
+    static unsigned long test_case_line_num = 0;
+    static unsigned long function_num = 0;
 
     /* function parameter arrays */
     int i[50] = {0};
@@ -167,9 +167,9 @@ main(int argc, char **argv)
 
     /* boolean variables */
     int input_file_name_defined = 0;
-    int output_file_name_defined = 0;
-    int process_single_test_case = 0;
-    int process_single_function = 0;
+    static int output_file_name_defined = 0;
+    static int process_single_test_case = 0;
+    static int process_single_function = 0;
     int valid_function_number = 0;
     int process_test_case = 0;
     int early_exit = 0;
