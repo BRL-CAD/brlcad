@@ -235,25 +235,13 @@ init "Changing region to no" red.region.no.out
 cat $SAMPLE | sed 's/region[^_].*=.*/region = no/g' > $REDFILE
 assert_different
 edit_and_dump sph.r $REDFILE.new
-# !!!!!!!!!
-# !!!BUG!!!
-# !!!!!!!!!
-# FIXME: sph.r is still a region after setting region flag to no
-echo "BEGIN known bug:"
 should_be_different $SAMPLE $REDFILE.new
-echo "END of known bug"
 
 init "Changing region to 0" red.region.zero.out
 cat $SAMPLE | sed 's/region[^_].*=.*/region = 0/g' > $REDFILE
 assert_different
 edit_and_dump sph.r $REDFILE.new
-# !!!!!!!!!
-# !!!BUG!!!
-# !!!!!!!!!
-# FIXME: sph.r is still a region after setting region flag to 0
-echo "BEGIN known bug:"
 should_be_different $SAMPLE $REDFILE.new
-echo "END of known bug"
 
 #############
 # region_id #
@@ -377,13 +365,7 @@ assert_different
 edit_and_dump sph.r $REDFILE.new
 should_be_different $SAMPLE $REDFILE.new
 cat $REDFILE.new | sed 's/255.255.255//g' > $REDFILE.test
-# !!!!!!!!!
-# !!!BUG!!!
-# !!!!!!!!!
-# FIXME: color value didn't get set properly with comma delimeter
-echo "BEGIN known bug:"
 should_be_same $SAMPLE $REDFILE.test
-echo "END of known bug"
 
 init "Changing color to empty" red.color.empty.out
 cat $SAMPLE | sed 's/color.*=.*/color = /g' > $REDFILE
@@ -393,14 +375,7 @@ should_be_same $SAMPLE $REDFILE.new
 cat $SAMPLE | sed 's/color.*=.*/color =/g' > $REDFILE
 assert_different
 edit_and_dump sph.r $REDFILE.new
-# !!!!!!!!!
-# !!!BUG!!!
-# !!!!!!!!!
-# FIXME: color value didn't get set properly
-# FIXME: bad regex edge case, air gets set to color
-echo "BEGIN known bug:"
 should_be_same $SAMPLE $REDFILE.new
-echo "END of known bug"
 
 init "Changing color to unsafe" red.color.unsafe.out
 cat $SAMPLE | sed 's/color.*=.*/color = -123/g' > $REDFILE
@@ -408,13 +383,7 @@ assert_different
 edit_and_dump sph.r $REDFILE.new
 should_be_different $SAMPLE $REDFILE.new
 cat $REDFILE.new | sed 's/-123//g' > $REDFILE.test
-# !!!!!!!!!
-# !!!BUG!!!
-# !!!!!!!!!
-# FIXME: color value didn't get set properly, black is no good
-echo "BEGIN known bug:"
 should_be_same $SAMPLE $REDFILE.test
-echo "END of known bug"
 
 ##########
 # shader #
@@ -424,13 +393,7 @@ init "Changing shader to safe" red.shader.safe.out
 cat $SAMPLE | sed 's/shader.*=.*/shader = plastic/g' > $REDFILE
 assert_different
 edit_and_dump sph.r $REDFILE.new
-# !!!!!!!!!
-# !!!BUG!!!
-# !!!!!!!!!
-# FIXME: modifies sph.r when saving to sph_new.r
-echo "BEGIN known bug:"
 should_be_different $SAMPLE $REDFILE.new
-echo "END of known bug"
 cat $REDFILE.new | sed 's/plastic//g' > $REDFILE.test
 should_be_same $SAMPLE $REDFILE.test
 
@@ -444,13 +407,7 @@ init "Changing shader to unsafe" red.shader.unsafe.out
 cat $SAMPLE | sed 's/shader.*=.*/shader = 1234567890/g' > $REDFILE
 assert_different
 edit_and_dump sph.r $REDFILE.new
-# !!!!!!!!!
-# !!!BUG!!!
-# !!!!!!!!!
-# FIXME: modifies sph.r when saving to sph_new.r
-echo "BEGIN known bug:"
 should_be_different $SAMPLE $REDFILE.new
-echo "END of known bug"
 cat $REDFILE.new | sed 's/1234567890//g' > $REDFILE.test
 should_be_same $SAMPLE $REDFILE.test
 
@@ -486,13 +443,7 @@ init "Changing name to safe name" red.name.safe.out
 cat $SAMPLE | sed 's/sph.r/sph_new.r/g' > $REDFILE
 assert_different
 edit_and_dump sph.r $REDFILE.new
-# !!!!!!!!!
-# !!!BUG!!!
-# !!!!!!!!!
-# FIXME: modifies sph.r when saving to sph_new.r
-echo "BEGIN known bug:"
 should_be_same $SAMPLE $REDFILE.new
-echo "END of known bug"
 dump sph_new.r $REDFILE.new
 should_be_same $REDFILE $REDFILE.new
 should_be_different $SAMPLE $REDFILE.new
@@ -503,13 +454,7 @@ init "Changing name to safe name with extra edit" red.name.safe.out
 cat $SAMPLE | sed 's/sph.r/sph_new.r/g' | sed 's/1000/2000/g' > $REDFILE
 assert_different
 edit_and_dump sph.r $REDFILE.new
-# !!!!!!!!!
-# !!!BUG!!!
-# !!!!!!!!!
-# FIXME: modifies sph.r when saving to sph_new.r
-echo "BEGIN known bug:"
 should_be_same $SAMPLE $REDFILE.new
-echo "END of known bug"
 dump sph_new.r $REDFILE.new
 should_be_different $SAMPLE $REDFILE.new
 cat $REDFILE.new | sed 's/sph_new.r/sph.r/g' | sed 's/2000/1000/g' > $REDFILE.test
@@ -527,13 +472,7 @@ cat $SAMPLE | sed 's/sph.r//g' | sed 's/1000/2000/g' > $REDFILE
 assert_different
 edit_and_dump sph.r $REDFILE.new
 should_be_different $REDFILE $REDFILE.new # empty name
-# !!!!!!!!!
-# !!!BUG!!!
-# !!!!!!!!!
-# FIXME: modifies sph.r region ID when name is empty
-echo "BEGIN known bug:"
 should_be_same $SAMPLE $REDFILE.new
-echo "END of known bug"
 
 init "Changing name to unsafe name" red.name.unsafe.out
 cat $SAMPLE | sed 's/sph.r/hps.r/g' > $REDFILE
