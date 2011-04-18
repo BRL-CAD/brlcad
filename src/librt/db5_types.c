@@ -550,9 +550,7 @@ db5_sync_attr_to_comb(const struct bu_attribute_value_set *avs, struct rt_comb_i
 	    if (endptr == bu_vls_addr(&newval) + strlen(bu_vls_addr(&newval))) {
 		    comb->region_id = attr_num_val;
 	    } else {
-		    bu_log("Warning - invalid region_id value %s on comb %s - comb->region_id remains at %d\n", bu_vls_addr(&newval), name, comb->region_id);
-		    bu_vls_sprintf(&newval, "%d", comb->region_id);
-		    (void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_REGION_ID), &newval);
+		bu_log("WARNING: [%s] has invalid region_id value [%s]\nregion_id remains at %d\n", name, bu_vls_addr(&newval), comb->region_id);
 	    }
     } else {
 	    /* remove region_id  */
@@ -567,9 +565,7 @@ db5_sync_attr_to_comb(const struct bu_attribute_value_set *avs, struct rt_comb_i
 	    if (endptr == bu_vls_addr(&newval) + strlen(bu_vls_addr(&newval))) {
 		    comb->GIFTmater = attr_num_val;
 	    } else {
-		    bu_log("Warning - invalid material_id value %s on comb %s - comb->GIFTmater remains at %d\n", bu_vls_addr(&newval), name, comb->GIFTmater);
-		    bu_vls_sprintf(&newval, "%d", comb->GIFTmater);
-		    (void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_MATERIAL_ID), &newval);
+		bu_log("WARNING: [%s] has invalid material_id value [%s]\nmateriel_id remains at %d\n", name, bu_vls_addr(&newval), comb->GIFTmater);
 	    }
     } else {
 	    /* empty - set to zero */
@@ -584,9 +580,7 @@ db5_sync_attr_to_comb(const struct bu_attribute_value_set *avs, struct rt_comb_i
 	    if (endptr == bu_vls_addr(&newval) + strlen(bu_vls_addr(&newval))) {
 		    comb->aircode = attr_num_val;
 	    } else {
-		    bu_log("Warning - invalid Air Code value %s on comb %s - comb->aircode remains at %d\n", bu_vls_addr(&newval), name, comb->aircode);
-		    bu_vls_sprintf(&newval, "%d", comb->aircode);
-		    (void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_AIR), &newval);
+		bu_log("WARNING: [%s] has invalid aircode value [%s]\naircode remains at %d\n", name, bu_vls_addr(&newval), comb->aircode);
 	    }
     } else {
 	    /* not air */
@@ -604,9 +598,7 @@ db5_sync_attr_to_comb(const struct bu_attribute_value_set *avs, struct rt_comb_i
 	    if (endptr == bu_vls_addr(&newval) + strlen(bu_vls_addr(&newval))) {
 		    comb->los = attr_num_val;
 	    } else {
-		    bu_log("Warning - invalid LOS value %s on comb %s - comb->los remains at %d\n", bu_vls_addr(&newval), name, comb->los);
-		    bu_vls_sprintf(&newval, "%d", comb->los);
-		    (void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_LOS), &newval); 
+		bu_log("WARNING: [%s] has invalid los value\nlos remains at %d\n", name, bu_vls_addr(&newval), comb->los);
 	    }
     } else {
 	    /* no los */
@@ -638,8 +630,6 @@ db5_sync_attr_to_comb(const struct bu_attribute_value_set *avs, struct rt_comb_i
 	    } else {
 	        if(comb->rgb_valid) {
 		    bu_log("WARNING: [%s] color does not match an R/G/B pattern\nColor remains unchanged at %d/%d/%d\n", name, V3ARGS(comb->rgb));
-		    bu_vls_sprintf(&newval, "%d/%d/%d", comb->rgb[0], comb->rgb[1], comb->rgb[2]);
-		    (void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_COLOR), &newval); 
 		} else {
 		    bu_avs_remove(avs, db5_standard_attribute(ATTR_COLOR));
 		}
