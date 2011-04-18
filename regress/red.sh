@@ -438,15 +438,7 @@ init "Changing shader to empty" red.shader.empty.out
 cat $SAMPLE | sed 's/shader.*=.*/shader =/g' > $REDFILE
 assert_different
 edit_and_dump sph.r $REDFILE.new
-should_be_different $SAMPLE $REDFILE.new
-cat $REDFILE.new | sed 's/0\/0\/0//g' > $REDFILE.test
-# !!!!!!!!!
-# !!!BUG!!!
-# !!!!!!!!!
-# FIXME: modifies sph.r when saving to sph_new.r
-echo "BEGIN known bug:"
-should_be_different $SAMPLE $REDFILE.test
-echo "END of known bug"
+should_be_same $SAMPLE $REDFILE.new
 
 init "Changing shader to unsafe" red.shader.unsafe.out
 cat $SAMPLE | sed 's/shader.*=.*/shader = 1234567890/g' > $REDFILE
