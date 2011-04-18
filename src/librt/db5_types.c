@@ -617,7 +617,6 @@ db5_sync_attr_to_comb(const struct bu_attribute_value_set *avs, struct rt_comb_i
 	ret = sscanf(bu_vls_addr(&newval), "%3i%*c%3i%*c%3i", color+0, color+1, color+2);
 	if (ret == 3) {
 	    if (color[0] < 0 || color[1] < 0 || color[2] < 0) {
-		bu_avs_remove(avs, db5_standard_attribute(ATTR_COLOR));
 		comb->rgb_valid = 0;
 	    } else {
 		for (i = 0; i < 3; i++) {
@@ -630,17 +629,13 @@ db5_sync_attr_to_comb(const struct bu_attribute_value_set *avs, struct rt_comb_i
 	    }
 	} else if (ret == 1 && color[0] < 0) {
 	    comb->rgb_valid = 0;
-	    bu_avs_remove(avs, db5_standard_attribute(ATTR_COLOR));
 	} else {
 	    if (comb->rgb_valid) {
 		bu_log("WARNING: [%s] color does not match an R/G/B pattern\nColor remains unchanged at %d/%d/%d\n", name, V3ARGS(comb->rgb));
-	    } else {
-		bu_avs_remove(avs, db5_standard_attribute(ATTR_COLOR));
 	    }
 	}
     } else {
 	comb->rgb_valid = 0;
-	bu_avs_remove(avs, db5_standard_attribute(ATTR_COLOR));
     }
 
     /* shader - this may actually be unnecessary, depending on the internal handling of comb - 
