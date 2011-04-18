@@ -25,16 +25,27 @@
  *   annotate all.g -n my.note -p 0 0 0 -m "This is a tank."
  *   annotate -p 10 0 0 -m "This geometry is unclassified."
  *   annotate sph.r -t leader -p 10 10 10
+ *   annotate all.g
  *
- * Design options to consider:
+ * DESIGN OPTIONS TO CONSIDER:
  *
- * Types: text, leader, angular, radial, aligned, ordinate, linear
- * Modes: normal, horizontal, vertical, above, below, inline
+ * Types: text (see Text), leader, angular, radial, aligned, ordinate, linear
+ *
+ * Extended types: note, label, table, dimension, tolerance, box (see Box), axes, plane
+ *
+ * Orientation: auto, horizontal, vertical, above, below, inline
+ *
  * Align: auto, model, view
  *
- * scale, orientation
- * fontname, fontsize
- * arrowlength, arrowwidth, arrowtype
+ * Text: fontname, fontsize, fontstyle (regular, italic, bold), linespacing, justification
+ *
+ * Box: empty, hatch, gradient, solid
+ *
+ * Placement: scale, orientation/rotation/twist
+ *
+ * Leader: linelength, linewidth, type (no head, arrow head, round head, square head)
+ *
+ * Visibility: auto, wireframe, render, both
  *
  * linearformat: "%.2f"
  * linearunits: mm, m, in, ft, etc
