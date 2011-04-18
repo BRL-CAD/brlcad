@@ -65,7 +65,6 @@ get_attr_val_pair(char *line, struct bu_vls *attr, struct bu_vls *val)
     /* Grab the attribute value */
     bu_vls_strcpy(val, ptr1);
     bu_vls_trimspace(val);
-    if (bu_vls_strlen(val) == 0) return 0;
 
     return 1;
 }
@@ -339,12 +338,12 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
 	    bu_vls_trunc(&current_substring, 0);
 	    bu_vls_strncpy(&current_substring, currptr + attrstart, attrend - attrstart);
 	    if (get_attr_val_pair(bu_vls_addr(&current_substring), &attr_vls, &val_vls)) {
-		if (!BU_STR_EQUAL(bu_vls_addr(&val_vls), "") && BU_STR_EQUAL(bu_vls_addr(&attr_vls), "name")) {
-		    bu_vls_sprintf(target_name, "%s", bu_vls_addr(&val_vls));
-		    (*final_name) = target_name;
-		}
-		if (!BU_STR_EQUAL(bu_vls_addr(&val_vls), "") && !BU_STR_EQUAL(bu_vls_addr(&attr_vls), "name"))
-		    (void)bu_avs_add(&avs, bu_vls_addr(&attr_vls), bu_vls_addr(&val_vls)); 
+		    if (BU_STR_EQUAL(bu_vls_addr(&attr_vls), "name")) {
+			    bu_vls_sprintf(target_name, "%s", bu_vls_addr(&val_vls));
+			    (*final_name) = target_name;
+		    }
+		    if (!BU_STR_EQUAL(bu_vls_addr(&val_vls), "") && !BU_STR_EQUAL(bu_vls_addr(&attr_vls), "name"))
+			    (void)bu_avs_add(&avs, bu_vls_addr(&attr_vls), bu_vls_addr(&val_vls)); 
 	    }
 	    currptr = currptr + attrend;
 	}
@@ -939,16 +938,23 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_init(final_name);
 		bu_vls_sprintf(final_name, "%s", bu_vls_addr(&comb_name));
 	}
+	/* if we ended up with an empty final name, print an error message and head for cleanup */
+	if (strlen(bu_vls_addr(final_name)) == 0) {
+		bu_vls_printf(&gedp->ged_result_str, "%s: Error - no target name supplied\n", *argv);
+		goto cleanup;
+	}
 
 	/* it worked - kill the original and put the updated copy in
 	 * its place if a pre-existing comb was being edited -
 	 * otherwise just move temp_name to final_name.
 	 */
 	if (!BU_STR_EQUAL(bu_vls_addr(&comb_name), bu_vls_addr(&temp_name))) {
-	    av[0] = "kill";
-	    av[1] = bu_vls_addr(&comb_name);
-	    av[2] = NULL;
-	    (void)ged_kill(gedp, 2, (const char **)av);
+		if (BU_STR_EQUAL(bu_vls_addr(&comb_name), bu_vls_addr(final_name))) {
+			av[0] = "kill";
+			av[1] = bu_vls_addr(&comb_name);
+			av[2] = NULL;
+			(void)ged_kill(gedp, 2, (const char **)av);
+		}
 	} 
 	av[0] = "mv";
 	av[1] = bu_vls_addr(&temp_name);
