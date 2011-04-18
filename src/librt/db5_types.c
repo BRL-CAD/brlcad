@@ -523,7 +523,7 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
 
 
 void
-db5_sync_attr_to_comb(const struct bu_attribute_value_set *avs, struct rt_comb_internal *comb, const char *name)
+db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_value_set *avs, const char *name)
 {
     int ret;
     size_t i;
@@ -659,7 +659,7 @@ db5_sync_attr_to_comb(const struct bu_attribute_value_set *avs, struct rt_comb_i
 
 
 void
-db5_sync_comb_to_attr(const struct rt_comb_internal *comb, struct bu_attribute_value_set *avs)
+db5_sync_comb_to_attr( struct bu_attribute_value_set *avs, const struct rt_comb_internal *comb)
 {
     struct bu_vls newval;
 
