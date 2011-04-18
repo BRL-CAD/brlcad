@@ -638,12 +638,13 @@ db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_v
 	comb->rgb_valid = 0;
     }
 
-    /* shader - this may actually be unnecessary, depending on the internal handling of comb - 
-     * shaders are stored as vls */
+    /* shader */
     bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_SHADER)));
     bu_vls_trimspace(&newval);
     if (bu_vls_strlen(&newval) != 0 && !BU_STR_EQUAL(bu_vls_addr(&newval), "(null)")) {
 	bu_vls_sprintf(&comb->shader, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_SHADER)));
+    } else {
+	bu_vls_trunc(&comb->shader, 0);
     }
 
     /* inherit */
