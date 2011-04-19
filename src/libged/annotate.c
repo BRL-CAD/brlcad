@@ -22,11 +22,25 @@
  * The annotate command.
  *
  * Examples:
- *   annotate -m "Hello, World!"
- *   annotate all.g
- *   annotate all.g -n my.note -p 0 0 0 -m "This is a tank."
- *   annotate -t box -m "This geometry is unclassified."
- *   annotate sph.r -t leader -p 10 10 10
+ *
+ *   annotate
+ *            [text {string}]
+ *            [as label|leader|angular|radial|dimension|table|note|box [named {name}]]
+ *            [on|for {object1} [and {object2}] [and {...}]]
+ *            [to|thru|at {point|plane} [offset {distance|vector}]]
+ *            [positioned auto|fixed|absolute|relative]]
+ *            [align auto|model|view]
+ *
+ *            [help]
+ *            [list {name}]
+ *            [get {key} from {name}]
+ *            [set {key=value} on {name}]
+ *
+ *   annotate help
+ *   annotate text "Hello, World!"
+ *   annotate for all.g
+ *   annotate as label named my.note for all.g text "This is a tank."
+ *   annotate as box text "This geometry is unclassified."
  *
  * DESIGN OPTIONS TO CONSIDER:
  *
@@ -97,7 +111,7 @@
 void
 annotate_help(struct bu_vls *result, const char *cmd)
 {
-    static const char *usage = "[object(s)] [-n name] [-p x y z] [-t type] [-m message]";
+    static const char *usage = "[object(s)] [-n name] [-p x y z]";
 
     bu_vls_printf(result, "Usage: %s %s", cmd, usage);
 }
