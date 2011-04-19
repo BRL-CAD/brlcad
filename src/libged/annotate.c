@@ -25,11 +25,12 @@
  *
  *   annotate
  *            [text {string}]
- *            [as label|leader|angular|radial|dimension|table|note|box [named {name}]]
+ *            [as label|leader|angular|radial|dimension|table|note|box|axes|plane [named {name}]]
  *            [on|for {object1} [and {object2}] [and {...}]]
  *            [to|thru|at {point|plane} [offset {distance|vector}]]
- *            [positioned auto|fixed|absolute|relative]]
  *            [align auto|model|view]
+ *            [position auto|fixed|absolute|relative]
+ *            [visible always|never|rendering|wireframe]
  *
  *            [help]
  *            [list {name}]
