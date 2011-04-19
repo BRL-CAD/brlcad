@@ -396,6 +396,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\db_fullpath.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\db_inmem.c"
 				>
 			</File>
