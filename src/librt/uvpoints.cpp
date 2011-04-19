@@ -36,7 +36,7 @@
 using namespace std;
 
 /* Number of subdivisions to perform */
-#define MAX_TREE_DEPTH 6
+/*#define MAX_TREE_DEPTH 6*/
 #define TREE_DEBUG 0
 int rejected = 0;
 int counting = 0;
@@ -140,9 +140,9 @@ class UVKeyComp {
 
 class QuadNode {
 	public:
-		void SubDivide();
+		void SubDivide(int MAX_TREE_DEPTH);
 		set<UVKey, UVKeyComp> *keys;
-		void AppendKeys(set <UVKey, UVKeyComp> *keys);
+		void AppendKeys(set <UVKey, UVKeyComp> *keys, int MAX_TREE_DEPTH);
 		size_t PU[9];
 		size_t PV[9];
 		int depth;
@@ -157,7 +157,7 @@ class QuadNode {
                 }
 };	
 
-int ints_to_key(string *cppstr, int left, int right) 
+int ints_to_key(string *cppstr, int left, int right, int MAX_TREE_DEPTH) 
 {
 	char formatstring[20];
 	char maxkeystr[20];
@@ -172,7 +172,7 @@ int ints_to_key(string *cppstr, int left, int right)
 }
 
 
-void QuadNode::AppendKeys(set <UVKey, UVKeyComp> *keys)
+void QuadNode::AppendKeys(set <UVKey, UVKeyComp> *keys, int MAX_TREE_DEPTH)
 {
 	UVKey *point;
 	set<UVKey, UVKeyComp>::iterator item;
@@ -180,7 +180,7 @@ void QuadNode::AppendKeys(set <UVKey, UVKeyComp> *keys)
 	int i;
 	for( int i = 0; i < 9; i++ ) {
 		counting++;
-		ints_to_key(&keystring, PU[i], PV[i]);
+		ints_to_key(&keystring, PU[i], PV[i], MAX_TREE_DEPTH);
 		item = keys->find(keystring);
 		if(item == keys->end()) {
 			point = new UVKey(keystring);
@@ -221,7 +221,7 @@ void QuadNode::AppendKeys(set <UVKey, UVKeyComp> *keys)
  *        Quadrant 0            Quadrant 1
  */
 
-void QuadNode::SubDivide()
+void QuadNode::SubDivide(int MAX_TREE_DEPTH)
 {
 	int i;
 		/* Quadrant 0 */
@@ -246,7 +246,7 @@ void QuadNode::SubDivide()
 		Children[0]->PV[7] = Children[0]->PV[5];
 		Children[0]->PU[8] = Children[0]->PU[7];
 		Children[0]->PV[8] = Children[0]->PV[6];
-		Children[0]->AppendKeys(keys);
+		Children[0]->AppendKeys(keys, MAX_TREE_DEPTH);
 #if TREE_DEBUG
 		cout << "Q0 Depth: " << depth + 1 << "\n";
 		cout << "PU: {";
@@ -261,7 +261,7 @@ void QuadNode::SubDivide()
 		cout << "}\n";
 #endif
 		if (Children[0]->depth < MAX_TREE_DEPTH)
-			Children[0]->SubDivide();
+			Children[0]->SubDivide(MAX_TREE_DEPTH);
 
 
 		/* Quadrant 1 */
@@ -286,7 +286,7 @@ void QuadNode::SubDivide()
 		Children[1]->PV[7] = Children[1]->PV[5];                            
 		Children[1]->PU[8] = Children[1]->PU[7];                            
 		Children[1]->PV[8] = Children[1]->PV[6];                            
-		Children[1]->AppendKeys(keys);
+		Children[1]->AppendKeys(keys, MAX_TREE_DEPTH);
 #if TREE_DEBUG
 		cout << "Q1 Depth: " << depth + 1 << "\n";
 		cout << "PU: {";
@@ -301,7 +301,7 @@ void QuadNode::SubDivide()
 		cout << "}\n";
 #endif
 		if (Children[1]->depth < MAX_TREE_DEPTH)
-			Children[1]->SubDivide();
+			Children[1]->SubDivide(MAX_TREE_DEPTH);
 	
 		/* Quadrant 2 */
 		Children[2] = new QuadNode();
@@ -325,7 +325,7 @@ void QuadNode::SubDivide()
 		Children[2]->PV[7] = Children[2]->PV[5];
 		Children[2]->PU[8] = Children[2]->PU[7];
 		Children[2]->PV[8] = Children[2]->PV[6];
-		Children[2]->AppendKeys(keys);
+		Children[2]->AppendKeys(keys, MAX_TREE_DEPTH);
 #if TREE_DEBUG
 		cout << "Q2 Depth: " << depth + 1 << "\n";
 		cout << "PU: {";
@@ -341,7 +341,7 @@ void QuadNode::SubDivide()
 #endif
 
 		if (Children[2]->depth < MAX_TREE_DEPTH)
-		Children[2]->SubDivide();
+		Children[2]->SubDivide(MAX_TREE_DEPTH);
 
 		/* Quadrant 3 */
 		Children[3] = new QuadNode();
@@ -365,7 +365,7 @@ void QuadNode::SubDivide()
 		Children[3]->PV[7] = Children[3]->PV[5];
 		Children[3]->PU[8] = Children[3]->PU[7];
 		Children[3]->PV[8] = Children[3]->PV[6];
-		Children[3]->AppendKeys(keys);
+		Children[3]->AppendKeys(keys, MAX_TREE_DEPTH);
 #if TREE_DEBUG
 		cout << "Q3 Depth: " << depth + 1 << "\n";
 		cout << "PU: {";
@@ -381,7 +381,7 @@ void QuadNode::SubDivide()
 #endif
 
 		if (Children[3]->depth < MAX_TREE_DEPTH)
-		Children[3]->SubDivide();
+		Children[3]->SubDivide(MAX_TREE_DEPTH);
 	
 }
 
@@ -393,11 +393,11 @@ void QuadNode::SubDivide()
  */
 class UVKeyQuadTree {
 	public:
-		UVKeyQuadTree(set<UVKey, UVKeyComp> *keys);
+		UVKeyQuadTree(set<UVKey, UVKeyComp> *keys, int MAX_TREE_DEPTH);
 		QuadNode *root;
 };
 
-UVKeyQuadTree::UVKeyQuadTree(set<UVKey, UVKeyComp> *keys)
+UVKeyQuadTree::UVKeyQuadTree(set<UVKey, UVKeyComp> *keys, int MAX_TREE_DEPTH)
 {
 	UVKey *point;
 	set<UVKey, UVKeyComp>::iterator item;
@@ -430,7 +430,7 @@ UVKeyQuadTree::UVKeyQuadTree(set<UVKey, UVKeyComp> *keys)
 	for( int i = 0; i < 9; i++ ) {
 		counting++;
 		cout << root->PU[i] << "," << root->PV[i] << "\n";
-		ints_to_key(&keynum, root->PU[i], root->PV[i]);
+		ints_to_key(&keynum, root->PU[i], root->PV[i], MAX_TREE_DEPTH);
 		item = keys->find(keynum);
 		if(item == keys->end()) {
 			point = new UVKey(keynum);
@@ -440,9 +440,11 @@ UVKeyQuadTree::UVKeyQuadTree(set<UVKey, UVKeyComp> *keys)
 	}	
 }
 
-int main()
+int main(int argc, char **argv)
 {
 	int matsize;
+	printf("argv[1]: %s\n", argv[1]);
+	int MAX_TREE_DEPTH = atoi(argv[1]);
 	matsize = pow(2, MAX_TREE_DEPTH + 1) + 1;
 	vector<vector<int> > matitems ( matsize , vector<int> ( matsize ) );
 	int k = 0;
@@ -465,8 +467,8 @@ int main()
 
 	set <UVKey, UVKeyComp> keys;
 	set<UVKey, UVKeyComp>::iterator keyiterator;
-	UVKeyQuadTree *testtree = new UVKeyQuadTree(&keys);
-	testtree->root->SubDivide();
+	UVKeyQuadTree *testtree = new UVKeyQuadTree(&keys, MAX_TREE_DEPTH);
+	testtree->root->SubDivide(MAX_TREE_DEPTH);
 
 /*	for(keyiterator = keys.begin(); keyiterator != keys.end(); keyiterator++) {
 		cout << "Key: " << keyiterator->getKey()  << "\n";
