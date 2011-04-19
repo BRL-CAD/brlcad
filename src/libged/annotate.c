@@ -39,9 +39,11 @@
  *
  * Text: fontname, fontsize, fontstyle (regular, italic, bold), linespacing, justification
  *
+ * Decoration: leader line, box (see Box) around target, box around annotation
+ *
  * Box: empty, hatch, gradient, solid
  *
- * Placement: scale, orientation/rotation/twist
+ * Placement: position (relative, absolute), scale, orientation/rotation/twist
  *
  * Leader: linelength, linewidth, type (no head, arrow head, round head, square head)
  *
