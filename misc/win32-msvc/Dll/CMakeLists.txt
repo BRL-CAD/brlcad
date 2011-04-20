@@ -21,7 +21,6 @@ file(WRITE ../../../../rt^3/include/brlcad/brlcadversion.h
 # for all targets
 include_directories(
     ../../../include
-    ../../../src/other/libregex
     ../../../src/other/tcl/generic
 )
 
@@ -43,7 +42,7 @@ target_link_libraries(BrlcadCore
     librt
     libsysv
     libwdb
-    libz
+    zlib
     openNURBS
     tcl85
 )
@@ -67,7 +66,6 @@ set(BRLCAD_HEADERS
     ../../../include/db.h
     ../../../include/db5.h
     ../../../include/magic.h
-    ../../../include/opennurbs_ext.h
     ../../../include/nmg.h
     ../../../include/nurb.h
     ../../../include/pc.h
@@ -131,7 +129,7 @@ target_link_libraries(brlcad
     librt
     libsysv
     libwdb
-    libz
+    zlib
     openNURBS
 )
 
