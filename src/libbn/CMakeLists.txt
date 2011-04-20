@@ -1,3 +1,7 @@
+include_directories(
+    ${TCL_INCLUDE_DIRS}
+)
+
 set(LIBBN_SOURCES
     anim.c
     axis.c
@@ -30,21 +34,17 @@ set(LIBBN_SOURCES
     wavelet.c
 )
 
-include_directories(
-    ../../include
-    ../other/tcl/generic
-)
+IF(MSVC)
+    add_definitions(
+	    -DBN_EXPORT_DLL
+	 )
+ENDIF(MSVC)
 
-add_definitions(
-    -DHAVE_CONFIG_H
-    -DBRLCADBUILD
-)
+BRLCAD_ADDLIB(libbn "${LIBBN_SOURCES}" libbu)
+SET_TARGET_PROPERTIES(libbn PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
-add_library(libbn ${LIBBN_SOURCES})
+ADD_MAN_PAGE(3 libplot3.3)
 
-set(BNTESTER_SOURCES
-    bntester.c
-)
-
-add_executable(bntester ${BNTESTER_SOURCES})
+add_executable(bntester bntester.c)
 target_link_libraries(bntester libbu libbn)
+CMAKEFILES(bntester.dat ulp.c)

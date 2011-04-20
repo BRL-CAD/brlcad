@@ -1,0 +1,26 @@
+include_directories(
+  ${X11_INCLUDE_DIR}
+  ${TCL_INCLUDE_DIRS}
+  ${TK_INCLUDE_PATH}
+)
+
+IF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_TK)
+	FOREACH(xlib ${X11_LIBRARIES})
+		SET(RTTHERM_XLIBS "${RTTHERM_XLIBS} ${xlib}")
+	ENDFOREACH(xlib ${X11_LIBRARIES})
+	BRLCAD_ADDEXEC(ssampview "spectrum.c ssampview.c" "libfb liboptical ${TCL_TK_LIBRARY} ${RTTHERM_XLIBS}")
+ENDIF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_TK)
+
+BRLCAD_ADDEXEC(rttherm "spectrum.c viewtherm.c" "libged libfb librttherm libmultispectral liboptical")
+SET_TARGET_PROPERTIES(rttherm PROPERTIES COMPILE_DEFINITIONS "RT_MULTISPECTRAL")
+INSTALL(PROGRAMS ssampview.tcl DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_BIN_DIR})
+
+BRLCAD_ADDEXEC(ssamp-bw ssamp-bw.c "liboptical")
+
+set(rttherm_MANS
+  rttherm.1
+  ssamp-bw.1
+)
+ADD_MAN_PAGES(1 rttherm_MANS)
+
+CMAKEFILES(pixtest.c ssampview.tcl std_day_1km.dat test.sh)

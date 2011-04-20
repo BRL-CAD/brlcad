@@ -3,14 +3,8 @@ set(LIBICV_SOURCES
 )
 
 include_directories(
-    ../../include
-    ../other
-    ../other/tcl/generic
+    ${TCL_INCLUDE_DIRS}
 )
 
-add_definitions(
-    -DHAVE_CONFIG_H
-    -DBRLCADBUILD
-)
-
-add_library(libicv ${LIBICV_SOURCES})
+BRLCAD_ADDLIB(libicv "${LIBICV_SOURCES}" libbu)
+SET_TARGET_PROPERTIES(libicv PROPERTIES VERSION 19.0.1 SOVERSION 19)

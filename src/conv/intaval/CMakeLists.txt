@@ -1,24 +1,29 @@
 include_directories(
-    ../../../include
-    ../../other/libz
-    ../../other/openNURBS
-    ../../other/libregex
-    ../../other/tcl/generic
+	${ZLIB_INCLUDE_DIR}
+	${OPENNURBS_INCLUDE_DIR}
+	${REGEX_INCLUDE_DIR}
+	${TCL_INCLUDE_DIRS}
 )
 
+IF(MSVC)
 add_definitions(
-    -DBRLCAD_DLL
-    -DHAVE_CONFIG_H
-    -DBRLCADBUILD
     -DON_DLL_IMPORTS
 )
+ENDIF(MSVC)
 
-add_executable(tgf-g
-    read_dra.cpp
+SET(tgf_SRCS
+	 read_dra.cpp
     regtab.cpp
     tgf-g.cpp
     write_brl.cpp
 )
-target_link_libraries(tgf-g
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(tgf-g "${tgf_SRCS}" "libwdb librt libbu")
+
+SET(intaval_ignore_files
+	glob.h
+	read_dra.h
+	readme.txt
+	regtab.h
+	write_brl.h
+	)
+CMAKEFILES(${intaval_ignore_files})

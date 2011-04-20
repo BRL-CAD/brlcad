@@ -1,19 +1,11 @@
 include_directories(
-    ../../include
-    ../other/libz
-    ../other/openNURBS
-    ../other/libregex
-    ../other/tcl/generic
+    ${ZLIB_INCLUDE_DIR}
+    ${OPENNURBS_INCLUDE_DIR}
+	 ${REGEX_INCLUDE_DIR}
+    ${TCL_INCLUDE_DIRS}
 )
 
-add_definitions(
-    -DBRLCAD_DLL
-    -DHAVE_CONFIG_H
-    -DBRLCADBUILD
-    -DON_DLL_IMPORTS
-)
-
-add_executable(nirt
+SET(NIRT_SRCS
     nirt.c
     command.c
     conversion.c
@@ -24,13 +16,26 @@ add_executable(nirt
     str_manip.c
     parse_fmt.c
 )
-target_link_libraries(nirt
-    BrlcadCore
-)
 
-add_executable(showshot
-    showshot.c
+BRLCAD_ADDEXEC(nirt "${NIRT_SRCS}" "librt libfb")
+SET_TARGET_PROPERTIES(nirt PROPERTIES COMPILE_DEFINITIONS "DFLT_SHELL=\"/bin/sh\"")
+
+BRLCAD_ADDEXEC(showshot showshot.c libbn)
+ADD_MAN_PAGE(1 showshot.1)
+
+SET(nirt_sfiles
+  sfiles/csv.nrt 
+  sfiles/csv-gap.nrt 
+  sfiles/default.nrt 
+  sfiles/entryexit.nrt 
+  sfiles/gap1.nrt 
+  sfiles/gap2.nrt
 )
-target_link_libraries(showshot
-    BrlcadCore
-)
+BRLCAD_ADDDATA(nirt_sfiles nirt)
+
+SET(nirt_ignore_files
+	dist_def.c
+	nirt.h
+	usrfmt.h
+	)
+CMAKEFILES(${nirt_ignore_files})

@@ -1,30 +1,28 @@
 include_directories(
-    ../../../include
-    ../../other/libz
-    ../../other/openNURBS
-    ../../other/libregex
-    ../../other/tcl/generic
+	${ZLIB_INCLUDE_DIR}
+	${OPENNURBS_INCLUDE_DIR}
+	${REGEX_INCLUDE_DIR}
+	${TCL_INCLUDE_DIRS}
 )
 
-add_definitions(
-    -DBRLCAD_DLL
-    -DHAVE_CONFIG_H
-    -DBRLCADBUILD
-    -DON_DLL_IMPORTS
-)
+IF(MSVC)
+	SET(WIN32LIBS ${WINSOCK_LIB} Rpcrt4.lib)
+	add_definitions(
+		-DON_DLL_IMPORTS
+		)
+ENDIF(MSVC)
 
-add_executable(iges
-    BrepHandler.cpp
-    brlcad_brep.cpp
-    n_iges.cpp
-    n_main.cpp
-)
-target_link_libraries(iges
-    BrlcadCore
-    openNURBS
-)
 
-add_executable(iges-g
+#add_executable(iges
+#    BrepHandler.cpp
+#    brlcad_brep.cpp
+#    n_iges.cpp
+#    n_main.cpp
+#)
+#target_link_libraries(iges libwdb librt libbu ${OPENNURBS_LIBRARY} ${WIN32LIBS})
+#INSTALL(TARGETS iges RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+
+SET(iges-g_SRCS
     add_face.c
     add_inner_shell.c
     add_loop.c
@@ -97,14 +95,39 @@ add_executable(iges-g
     usage.c
     wedge.c
 )
-target_link_libraries(iges-g
-    BrlcadCore
-)
+BRLCAD_ADDEXEC(iges-g "${iges-g_SRCS}" "libwdb librt libbn libbu")
 
-add_executable(g-iges
-    g-iges.c
-    iges.c
+BRLCAD_ADDEXEC(g-iges "g-iges.c iges.c" "librt libbu")
+
+SET(iges_MANS
+  g-iges.1
+  iges-g.1
 )
-target_link_libraries(g-iges
-    BrlcadCore
-)
+ADD_MAN_PAGES(1 iges_MANS)
+
+SET(iges_ignore_files
+	BrepHandler.cpp
+	PullbackCurve.cpp
+	PullbackCurve.h
+	add_face.cpp
+	arrange.c
+	brep.cpp
+	brlcad_brep.cpp
+	brlcad_brep.hpp
+	bubbleup.c
+	copytree.c
+	ge6.igs
+	get_outer_shell.cpp
+	iges.h
+	iges_extern.h
+	iges_struct.h
+	iges_types.h
+	n_iges.cpp
+	n_iges.hpp
+	n_main.cpp
+	spl.c
+	treecheck.c
+	wing128.igs
+	woodie.igs
+	)
+CMAKEFILES(${iges_ignore_files})

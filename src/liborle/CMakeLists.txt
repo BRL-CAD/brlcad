@@ -1,0 +1,12 @@
+set(LIBORLE_SOURCES
+    rle.c
+)
+
+include_directories(
+    ${UTAHRLE_INCLUDE_DIR}
+)
+
+BRLCAD_ADDLIB(liborle "${LIBORLE_SOURCES}" "NONE")
+SET_TARGET_PROPERTIES(liborle PROPERTIES VERSION 19.0.1 SOVERSION 19)
+
+ADD_MAN_PAGE(3 liborle.3)

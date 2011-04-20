@@ -69,7 +69,7 @@ set(LIBGED_SOURCES
     eye.c
     eye_pos.c
     facetize.c
-    fb2pix.c
+	 fb2pix.c
     find.c
     form.c
     fracture.c
@@ -140,7 +140,7 @@ set(LIBGED_SOURCES
     pathlist.c
     pathsum.c
     perspective.c
-    pix2fb.c
+	 pix2fb.c
     plot.c
     pmat.c
     pmodel2view.c
@@ -262,17 +262,19 @@ set(LIBGED_SOURCES
 )
 
 include_directories(
-    ../../include
-    ../other/libpng
-    ../other/libregex
-    ../other/libz
-    ../other/tcl/generic
-    ../other/tcl/win
+    ${PNG_INCLUDE_DIR}
+    ${ZLIB_INCLUDE_DIR}
+    ${REGEX_INCLUDE_DIR}
+    ${TCL_INCLUDE_DIRS}
 )
 
-add_definitions(
-    -DHAVE_CONFIG_H
-    -DBRLCADBUILD
-)
+BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb librt libfb libbu libanalyze ${REGEX_LIBRARY} ${WINSOCK_LIB}")
+SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
-add_library(libged ${LIBGED_SOURCES})
+SET(ged_ignore_files
+	ged_private.h
+	qray.h
+	subtype.c
+	wdb_qray.h
+	)
+CMAKEFILES(${ged_ignore_files})

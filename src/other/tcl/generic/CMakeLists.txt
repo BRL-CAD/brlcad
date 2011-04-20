@@ -77,3 +77,4 @@ set(TCL_GENERIC_HEADERS
     generic/tclDecls.h
     generic/tclPlatDecls.h
 )
+FILE(COPY ${TCL_GENERIC_HEADERS} DESTINATION ${CMAKE_BINARY_DIR}/include)
