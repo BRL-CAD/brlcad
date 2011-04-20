@@ -355,6 +355,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
     int rflag = 0;		/* print regions */
     int sflag = 0;		/* print solids */
     int lflag = 0;		/* use long format */
+    int qflag = 0;		/* quiet flag - do a quiet lookup */
     int attr_flag = 0;		/* arguments are attribute name/value pairs */
     int or_flag = 0;		/* flag indicating that any one attribute match is sufficient
 				 * default is all attributes must match.
@@ -372,7 +373,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
     bu_vls_init(&vls);
 
     bu_optind = 1;	/* re-init bu_getopt() */
-    while ((c = bu_getopt(argc, (char * const *)argv, "acrslopA")) != -1) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "acrslopqA")) != -1) {
 	switch (c) {
 	    case 'A':
 		attr_flag = 1;
@@ -385,6 +386,9 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    case 'c':
 		cflag = 1;
+		break;
+	    case 'q':
+		qflag = 1;
 		break;
 	    case 'r':
 		rflag = 1;
@@ -460,7 +464,12 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 	 * Verify the names, and add pointers to them to the array.
 	 */
 	for (i = 0; i < (size_t)argc; i++) {
-	    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
+	    if (qflag) {	
+		    dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_QUIET);
+	    } else {
+		    dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY);
+	    }
+	    if (dp  == RT_DIR_NULL)
 		continue;
 	    *dirp++ = dp;
 	}
