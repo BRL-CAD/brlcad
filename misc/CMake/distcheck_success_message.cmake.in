@@ -1,0 +1,3 @@
+MESSAGE("--- distcheck succeeded ---")
+MESSAGE("")
+MESSAGE("archives ready for distribution")

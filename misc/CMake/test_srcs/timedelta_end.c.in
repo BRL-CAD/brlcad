@@ -1,0 +1,74 @@
+#include <time.h>
+#include <stdio.h>
+int main(void) {
+  FILE *infp = NULL;
+  FILE *outfp = NULL;
+  time_t t, ts, te;
+  struct tm *currenttime;
+  struct tm starttime;
+  int tdiff, d_mins, d_hrs, d_days;
+  t = time(NULL);
+  currenttime = localtime(&t);
+  infp = fopen("${DELTA_START}", "r");
+  outfp = fopen("${DELTA_END}", "w");
+/*  starttime.tm_zone = currenttime->tm_zone;
+  starttime.tm_gmtoff = currenttime->tm_gmtoff;*/
+  if(!fscanf(infp, "%d/%d/%d/%d/%d/%d/%d/%d/%d", &(starttime.tm_sec), &(starttime.tm_min), &(starttime.tm_hour), &(starttime.tm_mday), &(starttime.tm_mon), &(starttime.tm_year), &(starttime.tm_wday), &(starttime.tm_yday), &(starttime.tm_isdst)))
+    printf("scan error\n");
+  fclose(infp);
+  
+  ts = mktime(&starttime); 
+  te = mktime(currenttime); 
+ 
+  tdiff = (int)difftime(te, ts);
+  d_days = 0; 
+  d_hrs = 0; 
+  d_mins = 0; 
+  if (tdiff > 86400) {/* get days */
+     d_days = tdiff / 86400;
+     tdiff = tdiff % 86400;
+  }
+  if (tdiff > 3600) { /* get hours */
+     d_hrs = tdiff / 3600;
+     tdiff = tdiff % 3600;
+  }
+  if (tdiff > 60) {  /* get minutes */
+     d_mins = tdiff / 60;
+     tdiff = tdiff % 60;
+  }
+  if (d_days > 0) {
+     if (d_days == 1) {
+        fprintf(outfp,"%d day ", d_days);
+     } else {
+        fprintf(outfp,"%d days ", d_days);
+     }
+  }
+  if (d_hrs> 0) {
+     if (d_hrs == 1) {
+        fprintf(outfp,"%d hour ", d_hrs);
+     } else {
+        fprintf(outfp,"%d hours ", d_hrs);
+     }
+  }
+  if (d_mins > 0) {
+     if (d_mins == 1) {
+        fprintf(outfp,"%d minute ", d_mins);
+     } else {
+        fprintf(outfp,"%d minutes ", d_mins);
+     }
+  }
+  if (tdiff > 0) {
+     if (tdiff == 1) {
+        fprintf(outfp,"%d second ", tdiff);
+     } else {
+        fprintf(outfp,"%d seconds ", tdiff);
+     }
+  } 
+ 
+  if (tdiff == 0 && d_mins == 0 && d_hrs == 0 && d_days == 0) {
+     fprintf(outfp,"0 seconds ");
+  }
+
+  fclose(outfp);
+  return 0;
+}
