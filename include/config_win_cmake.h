@@ -89,6 +89,7 @@
 
 #define fb_log bu_log
 
+#define HAVE_TK 1
 #define HAVE_X11_TYPES 1
 
 #define YY_NO_UNISTD_H		1
@@ -134,9 +135,7 @@
 #define fileno _fileno
 #define fstat _fstat
 #define getpid _getpid
-#if (_MSC_VER < 1600)
-#  define hypot _hypot
-#endif
+#define hypot _hypot
 #define isascii __isascii
 #define pclose _pclose
 #define popen _popen
