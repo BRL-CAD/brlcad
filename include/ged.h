@@ -74,6 +74,7 @@ __BEGIN_DECLS
 #define GED_DISPLAY_LIST_NULL (struct ged_display_list *)0
 #define GED_DRAWABLE_NULL (struct ged_drawable *)0
 #define GED_VIEW_NULL (struct ged_view *)0
+#define GED_DM_VIEW_NULL (struct ged_dm_view *)0
 #define GED_OBJ_NULL (struct ged_obj *)0
 
 #define GED_VIEW_OBJ_NULL ((struct view_obj *)0)
