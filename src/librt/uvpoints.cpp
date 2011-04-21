@@ -30,6 +30,7 @@
 #include <set>
 #include <list>
 #include <math.h>
+#include <time.h>
 
 #define POOL_SIZE 1024
 
@@ -443,8 +444,15 @@ UVKeyQuadTree::UVKeyQuadTree(set<UVKey, UVKeyComp> *keys, int MAX_TREE_DEPTH)
 int main(int argc, char **argv)
 {
 	int matsize;
-	printf("argv[1]: %s\n", argv[1]);
-	int MAX_TREE_DEPTH = atoi(argv[1]);
+	time_t t0, t1;
+	int MAX_TREE_DEPTH, tdiff;
+	if(argc == 1) {
+		MAX_TREE_DEPTH = 2;
+	} else {
+		MAX_TREE_DEPTH = atoi(argv[1]);
+	}
+	t0 = time(NULL);
+	t1 = time(NULL);
 	matsize = pow(2, MAX_TREE_DEPTH + 1) + 1;
 	vector<vector<int> > matitems ( matsize , vector<int> ( matsize ) );
 	int k = 0;
@@ -465,10 +473,15 @@ int main(int argc, char **argv)
 	cout<<'\n';
 	}
 
+
 	set <UVKey, UVKeyComp> keys;
 	set<UVKey, UVKeyComp>::iterator keyiterator;
 	UVKeyQuadTree *testtree = new UVKeyQuadTree(&keys, MAX_TREE_DEPTH);
 	testtree->root->SubDivide(MAX_TREE_DEPTH);
+	t1 = time(NULL);
+	tdiff = (int)difftime(t1,t0);
+	printf("subdivide: %d sec\n", tdiff);
+	t0 = time(NULL);
 
 /*	for(keyiterator = keys.begin(); keyiterator != keys.end(); keyiterator++) {
 		cout << "Key: " << keyiterator->getKey()  << "\n";
