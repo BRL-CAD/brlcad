@@ -1940,7 +1940,7 @@ proc_box(int cnt)
 
     vect_t abi = VINIT_ZERO;
     vect_t aci = VINIT_ZERO;
-    vect_t adi = VINIT_ZERO;;
+    vect_t adi = VINIT_ZERO;
 
     fastf_t len, leni;			/* box edge lengths */
     int valid;				/* valid inside box? */
