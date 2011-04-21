@@ -583,11 +583,14 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
     register ssize_t i;
     static const int IN = 0;
     static const int OUT = 1;
+    /* TODO: review the use of a signed tmp var. Var i was changed to be signed in
+     * r44239 as a bug in another project was segfaulting. */
+    ssize_t snhits = (ssize_t)nhits;
 
     RT_CK_SOLTAB(stp);
 
     if (bot->bot_mode == RT_BOT_SURFACE) {
-	for (i=0; i<nhits; i++) {
+	for (i=0; i<snhits; i++) {
 	    XGLUE(tri_specific_, TRI_TYPE) *trip=(XGLUE(tri_specific_, TRI_TYPE) *)hits[i].hit_private;
 
 	    RT_GET_SEG(segp, ap->a_resource);
@@ -603,13 +606,13 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 	    BU_LIST_INSERT(&(seghead->l), &(segp->l));
 	}
 	/* Every hit turns into two, and makes a seg.  No leftovers */
-	return nhits*2;
+	return snhits*2;
     }
 
     BU_ASSERT(bot->bot_mode == RT_BOT_SOLID);
 
     if (bot->bot_orientation == RT_BOT_UNORIENTED) {
-	return rt_bot_unoriented_segs(hits, nhits, stp, rp, ap, seghead, bot);
+	return rt_bot_unoriented_segs(hits, snhits, stp, rp, ap, seghead, bot);
     }
 
     /*
@@ -622,7 +625,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
     {
 	register ssize_t j, k, l;
 
-	for (i=0; i<nhits-1; i++) {
+	for (i=0; i<snhits-1; i++) {
 	    fastf_t dist;
 	    fastf_t dn;
 
@@ -634,7 +637,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 	    /* count number of hits at this distance */
 	    while (NEAR_ZERO(dist, ap->a_rt_i->rti_tol.dist)) {
 		k++;
-		if (k > nhits - 1)
+		if (k > snhits - 1)
 		    break;
 		dist = hits[i].hit_dist - hits[k].hit_dist;
 	    }
@@ -642,12 +645,12 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 	    if ((k - i) == 2 && dn * hits[i+1].hit_vpriv[X] > 0) {
 		/* a pair of hits at the same distance and both are exits or entrances,
 		 * likely an edge hit, remove one */
-		for (j=i; j<nhits-1; j++)
+		for (j=i; j<snhits-1; j++)
 		    hits[j] = hits[j+1];
 		if (psp) {
 		    psp->htab.end--;
 		}
-		nhits--;
+		snhits--;
 		i--;
 		continue;
 	    } else if ((k - i) > 2) {
@@ -771,12 +774,12 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 			    /* eliminate all but one entrance or exit */
 			    for (j=k-1; j>i; j--) {
 				/* delete this hit */
-				for (l=j; l<nhits-1; l++)
+				for (l=j; l<snhits-1; l++)
 				    hits[l] = hits[l+1];
 				if (psp) {
 				    psp->htab.end--;
 				}
-				nhits--;
+				snhits--;
 			    }
 			    i--;
 			}
@@ -785,12 +788,12 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 			for (j=k-1; j>=i; j--) {
 			    if (j != keep1 && j != keep2) {
 				/* delete this hit */
-				for (l=j; l<nhits-1; l++)
+				for (l=j; l<snhits-1; l++)
 				    hits[l] = hits[l+1];
 				if (psp) {
 				    psp->htab.end--;
 				}
-				nhits--;
+				snhits--;
 			    }
 			}
 			i--;
@@ -837,20 +840,20 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 	 *           |                                   |
 	 *
 	 */
-	for (i=0; i<nhits-1; i++) {
+	for (i=0; i<snhits-1; i++) {
 	    if (hits[i].hit_vpriv[X] < 0.0) { /* entering */
 		k = i + 1;
-		while ((k < nhits) && (hits[k].hit_vpriv[X] < 0.0)) {
-		    for (j=i; j<nhits-1; j++)
+		while ((k < snhits) && (hits[k].hit_vpriv[X] < 0.0)) {
+		    for (j=i; j<snhits-1; j++)
 			hits[j] = hits[j+1];
-		    nhits--;
+		    snhits--;
 		}
 	    } else if (hits[i].hit_vpriv[X] > 0.0) { /* exiting */
 		k = i + 1;
-		while ((k < nhits) && (hits[k].hit_vpriv[X] > 0.0)) {
-		    for (j=i+1; j<nhits-1; j++)
+		while ((k < snhits) && (hits[k].hit_vpriv[X] > 0.0)) {
+		    for (j=i+1; j<snhits-1; j++)
 			hits[j] = hits[j+1];
-		    nhits--;
+		    snhits--;
 		}
 	    }
 	}
@@ -891,21 +894,21 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
      * the corresponding entrance not being processed (this is OK, but
      * we need to eliminate the stray exit hit)
      */
-    while (nhits > 0 && hits[0].hit_vpriv[X] > 0.0) {
-	size_t j;
+    while (snhits > 0 && hits[0].hit_vpriv[X] > 0.0) {
+	ssize_t j;
 
-	for (j=1; j<nhits; j++) {
+	for (j=1; j<snhits; j++) {
 	    hits[j-1] = hits[j];
 	}
-	nhits--;
+	snhits--;
     }
 
     /* similar for trailing entrance hits */
-    while (nhits > 0 && hits[nhits-1].hit_vpriv[X] < 0.0) {
-	nhits--;
+    while (snhits > 0 && hits[snhits-1].hit_vpriv[X] < 0.0) {
+	snhits--;
     }
 
-    if ((nhits&1)) {
+    if ((snhits&1)) {
 	/*
 	 * If this condition exists, it is almost certainly due to the
 	 * dn==0 check above.  Thus, we will make the last surface
@@ -913,9 +916,9 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 	 * solid known.  There may be something better we can do.
 	 */
 
-	if (nhits > 2) {
+	if (snhits > 2) {
 	    fastf_t dot1, dot2;
-	    size_t j;
+	    ssize_t j;
 
 	    /* likely an extra hit, look for consecutive entrances or
 	     * exits.
@@ -923,7 +926,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 
 	    dot2 = 1.0;
 	    i = 0;
-	    while (i<nhits) {
+	    while (i<snhits) {
 		dot1 = dot2;
 		dot2 = hits[i].hit_vpriv[X];
 		if (dot1 > 0.0 && dot2 > 0.0) {
@@ -935,18 +938,18 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 			/* using pieces */
 			(void)rt_htbl_get(&psp->htab);	/* make sure space exists in the hit array */
 			hits = psp->htab.hits;
-		    } else if (nhits + 1 >= MAXHITS) {
+		    } else if (snhits + 1 >= MAXHITS) {
 			/* not using pieces */
 			bu_log("rt_bot_makesegs: too many hits on %s\n", stp->st_dp->d_namep);
 			i++;
 			continue;
 		    }
-		    for (j=nhits; j>i; j--)
+		    for (j=snhits; j>i; j--)
 			hits[j] = hits[j-1];	/* struct copy */
 
 		    hits[i].hit_vpriv[X] = -hits[i].hit_vpriv[X];
 		    dot2 = hits[i].hit_vpriv[X];
-		    nhits++;
+		    snhits++;
 		    bu_log("\t\tadding fictitious entry at %f (%s)\n", hits[i].hit_dist, stp->st_name);
 		    bu_log("\t\t\tray = (%g %g %g) -> (%g %g %g)\n", V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir));
 		} else if (dot1 < 0.0 && dot2 < 0.0) {
@@ -961,19 +964,19 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 			/* using pieces */
 			(void)rt_htbl_get(&psp->htab);	/* make sure space exists in the hit array */
 			hits = psp->htab.hits;
-		    } else if (nhits + 1 >= MAXHITS) {
+		    } else if (snhits + 1 >= MAXHITS) {
 			/* not using pieces */
 			bu_log("rt_bot_makesegs: too many hits on %s\n", stp->st_dp->d_namep);
 			i++;
 			continue;
 		    }
-		    for (j=nhits; j>i; j--)
+		    for (j=snhits; j>i; j--)
 			hits[j] = hits[j-1];	/* struct copy */
 
 		    hits[i] = hits[i-1];	/* struct copy */
 		    hits[i].hit_vpriv[X] = -hits[i].hit_vpriv[X];
 		    dot2 = hits[i].hit_vpriv[X];
-		    nhits++;
+		    snhits++;
 		    bu_log("\t\tadding fictitious exit at %f (%s)\n", hits[i].hit_dist, stp->st_name);
 		    bu_log("\t\t\tray = (%g %g %g) -> (%g %g %g)\n", V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir));
 		}
@@ -982,24 +985,24 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 	}
     }
 
-    if ((nhits&1)) {
+    if ((snhits&1)) {
 	/* XXX This consumes an extra hit structure in the array */
 	if (psp) {
 	    (void)rt_htbl_get(&psp->htab);	/* make sure space exists in the hit array */
 	    hits = psp->htab.hits;
 	}
-	if (!psp && (nhits + 1 >= MAXHITS)) {
+	if (!psp && (snhits + 1 >= MAXHITS)) {
 	    bu_log("rt_bot_makesegs: too many hits on %s\n", stp->st_dp->d_namep);
-	    nhits--;
+	    snhits--;
 	} else {
-	    hits[nhits] = hits[nhits-1];	/* struct copy */
-	    hits[nhits].hit_vpriv[X] = -hits[nhits].hit_vpriv[X];
-	    nhits++;
+	    hits[snhits] = hits[snhits-1];	/* struct copy */
+	    hits[snhits].hit_vpriv[X] = -hits[snhits].hit_vpriv[X];
+	    snhits++;
 	}
     }
 
-    /* nhits is even, build segments */
-    for (i=0; i < nhits; i += 2) {
+    /* snhits is even, build segments */
+    for (i=0; i < snhits; i += 2) {
 	XGLUE(tri_specific_, TRI_TYPE) *trip;
 
 	RT_GET_SEG(segp, ap->a_resource);
@@ -1013,7 +1016,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
 
-    return nhits;			/* HIT */
+    return snhits;			/* HIT */
 }
 
 
