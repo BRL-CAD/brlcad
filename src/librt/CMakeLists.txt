@@ -234,7 +234,8 @@ set(librt_ignored_files
     primitives/metaball/metaball.h
     primitives/nmg/nmg_junk.c
     primitives/revolve/revolve.h
-    primitives/xxx
+    primitives/xxx/xxx.c
+    primitives/xxx/xxx.h
     search.h
     timer-nt.c
     timer52brl.c
