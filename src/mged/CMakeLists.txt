@@ -11,6 +11,8 @@ include_directories(
   ${OPENGL_INCLUDE_DIR_GLX}
   ${TCL_INCLUDE_DIRS}
   ${TK_INCLUDE_PATH}
+  ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itcl/generic
+  ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itk/generic
 )
 
 # process.h in points dir makes Windows unhappy,
@@ -113,9 +115,9 @@ IF(NOT WIN32)
 ENDIF(NOT WIN32)
 
 IF(NOT WIN32)
-	BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad libged libwdb libdm libtermio ${pointstarget}")
+	BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad libged libwdb libdm libtermio ${pointstarget} itcl itk")
 ELSE(NOT WIN32)
-	BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad libged libwdb libdm ws2_32.lib opengl32.lib")
+	BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad libged libwdb libdm itcl itk ws2_32.lib opengl32.lib")
 ENDIF(NOT WIN32)
 IF(${ITCL_LIBRARY} MATCHES "itcl")
 	ADD_DEPENDENCIES(mged itcl)

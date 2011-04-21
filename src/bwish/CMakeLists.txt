@@ -3,23 +3,25 @@ include_directories(
   ${X11_INCLUDE_DIR}
   ${TCL_INCLUDE_DIRS}
   ${TK_INCLUDE_PATH}
+  ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itcl/generic
+  ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itk/generic
 )
 
 IF(WIN32)
-	BRLCAD_ADDEXEC(btclsh "cadAppInit.c consoleMain.c" "libtclcad libged")
+	BRLCAD_ADDEXEC(btclsh "cadAppInit.c consoleMain.c" "libtclcad libged itcl")
 	CMAKEFILES(cmd.c input.c main.c tcl.c)
 ELSE(WIN32)
-	BRLCAD_ADDEXEC(btclsh "cmd.c input.c main.c tcl.c" "libbu libtclcad libtermio")
+	BRLCAD_ADDEXEC(btclsh "cmd.c input.c main.c tcl.c" "libbu libtclcad libtermio itcl")
 	CMAKEFILES(cadAppInit.c consoleMain.c)
 ENDIF(WIN32)
 
 IF(BRLCAD-ENABLE_TK)
 	IF(WIN32)
 		add_executable(bwish WIN32 cadAppInit.c winMain.c)
-		target_link_libraries(bwish libtclcad libdm imm32.lib comctl32.lib)
+		target_link_libraries(bwish libtclcad libdm imm32.lib comctl32.lib itcl itk)
 		CMAKEFILES(cmd.c input.c main.c tcl.c)
 	ELSE(WIN32)
-		BRLCAD_ADDEXEC(bwish "cmd.c input.c main.c tcl.c" "libtclcad libdm libtermio ${X11_LIBRARIES} ${X11_Xi_LIB} libdm")
+		BRLCAD_ADDEXEC(bwish "cmd.c input.c main.c tcl.c" "libtclcad libdm libtermio ${X11_LIBRARIES} ${X11_Xi_LIB} libdm itcl itk")
 		CMAKEFILES(winMain.c)
 	ENDIF(WIN32)
 	SET_TARGET_PROPERTIES(bwish PROPERTIES COMPILE_DEFINITIONS "BWISH=1")
