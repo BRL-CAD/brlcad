@@ -233,6 +233,7 @@ SET(utahrle_ignore_files
 	rle_row_free.3
 	rle_skiprow.3
 	scanargs.3
+	CMake
 	)
 DISTCHECK_IGNORE(libutahrle utahrle_ignore_files)
 
@@ -773,6 +774,7 @@ SET(tkhtml_ignore_files
 	src/tkhtml.tcl
 	src/tokenlist.txt
 	tclconfig
+	CMake
 	)
 DISTCHECK_IGNORE(tkhtml tkhtml_ignore_files)
 
@@ -791,6 +793,7 @@ SET(tkpng_ignore_files
 	README
 	license.terms
 	pkgIndex.tcl.in
+	CMake
 	)
 DISTCHECK_IGNORE(tkpng tkpng_ignore_files)
 
@@ -827,6 +830,7 @@ SET(tktable_ignore_files
 	tests
 	unix
 	win
+	CMake
 	)
 DISTCHECK_IGNORE(tktable tktable_ignore_files)
 
