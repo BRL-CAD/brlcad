@@ -87,7 +87,7 @@ MemoryManager QuadMemoryManager;
 class UVKey {
 	public:
 		UVKey(string newkey);
-		string getKey() const;
+		const string& getKey() const;
 	private:
 		string key;
 };
@@ -97,9 +97,10 @@ UVKey::UVKey(string newkey)
 	key.assign(newkey);
 }
 
-string UVKey::getKey() const
+const string& UVKey::getKey() const
 {
-	return key;
+	const string& keyref = key;
+	return keyref;
 }
 
 /**
