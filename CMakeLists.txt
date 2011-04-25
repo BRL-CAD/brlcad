@@ -880,9 +880,9 @@ BRLCAD_CHECK_LIBRARY(GEN gen basename)
 # Tests for standard functionality based on AC_HEADER_* macros  (see
 # http://www.gnu.org/software/hello/manual/autoconf/Particular-Headers.html)
 # AC_HEADER_STDC
-CMAKE_HEADER_STDC()
+BRLCAD_HEADER_STDC()
 # AC_HEADER_SYS_WAIT
-CMAKE_HEADER_SYS_WAIT()
+BRLCAD_HEADER_SYS_WAIT()
 # dirent.h is POSIX.1, but not present on Windows (grr)
 # so we need to check for it
 BRLCAD_INCLUDE_FILE(dirent.h HAVE_DIRENT_H)
@@ -948,8 +948,8 @@ BRLCAD_INCLUDE_FILE_CXX(limits HAVE_LIMITS)
 BRLCAD_INCLUDE_FILE_CXX(istream HAVE_ISTREAM)
 
 # Other special-case tests that need custom macros
-CHECK_BASENAME()
-CHECK_DIRNAME()
+BRLCAD_CHECK_BASENAME()
+BRLCAD_CHECK_DIRNAME()
 
 # *******************************************************************
 # ***         Check for Types/Structures - Stage 5 of 9           ***
@@ -979,7 +979,7 @@ BRLCAD_TYPE_SIZE("sig_t" SIG "signal.h")
 # *******************************************************************
 
 # ALLOCA test - based on AC_FUNC_ALLOCA
-CMAKE_ALLOCA()
+BRLCAD_ALLOCA()
 
 BRLCAD_FUNCTION_EXISTS(XQueryExtension HAVE_XQUERYEXTENSION)
 BRLCAD_FUNCTION_EXISTS(alarm HAVE_ALARM)

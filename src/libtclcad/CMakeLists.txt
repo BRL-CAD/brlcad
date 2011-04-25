@@ -22,6 +22,8 @@ include_directories(
   ${OPENGL_INCLUDE_DIR_GLX}
   ${TCL_INCLUDE_DIRS}
   ${TK_INCLUDE_PATH}
+  ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itcl/generic
+  ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itk/generic
 )
 
 add_definitions(
