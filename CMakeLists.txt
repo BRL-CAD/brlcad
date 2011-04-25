@@ -1447,6 +1447,7 @@ SET(toplevel_ignore_files
 	m4
 	INSTALL.cmake
 	README.cmake
+	HACKING.cmake
 	)
 CMAKEFILES(${toplevel_ignore_files})
 
