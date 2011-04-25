@@ -92,7 +92,9 @@ ENDMACRO(BRLCAD_CHECK_DIRNAME var)
 INCLUDE (CheckPrototypeExists)
 INCLUDE (CheckCFileRuns)
 # Based on AC_HEADER_STDC - using the source code for ctype
-# checking found in the generated configure file
+# checking found in the generated configure file.  Named using
+# BRL-CAD prefix to avoid any confusion with similar tests in
+# other directories, which may get loaded first.
 MACRO(BRLCAD_HEADER_STDC)
   CHECK_INCLUDE_FILE(stdlib.h HAVE_STDLIB_H)
   FILE(APPEND ${CONFIG_H_FILE} "#cmakedefine HAVE_STDLIB_H 1\n")
