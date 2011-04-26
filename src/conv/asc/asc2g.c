@@ -43,6 +43,7 @@
 #include "ged.h"
 #include "wdb.h"
 #include "mater.h"
+#include "tclcad.h"
 
 
 /* maximum input line buffer size */
@@ -1761,23 +1762,36 @@ main(int argc, char *argv[])
 
 	/* this is a Tcl script */
 
-
         rewind(ifp);
         bu_vls_trunc( &line, 0);
-	/* No longer need ifp
-	fclose(ifp); ifp = NULL;  */
-
 	BU_LIST_INIT(&rt_g.rtg_headwdb.l);
 
 	interp = Tcl_CreateInterp();
-	if (wdb_init_obj(interp, ofp, db_name) != TCL_OK ||
-	    wdb_create_cmd(interp, ofp, db_name) != TCL_OK) {
-	    bu_exit(1, "Failed to initialize wdb_obj!\n");
+	Go_Init(interp);
+	wdb_close(ofp);
+
+	{
+	    int ac = 4;
+	    const char *av[5];
+
+	    av[0] = "to_open";
+	    av[1] = db_name;
+	    av[2] = "db";
+	    av[3] = argv[2];
+	    av[4] = (char *)0;
+
+	    if (to_open_tcl((ClientData)0, interp, ac, av) != TCL_OK) {
+		fclose(ifp);
+		bu_log("Failed to initialize tclcad_obj!\n");
+		Tcl_Exit(1);
+	    }
 	}
 
 	/* Create the safe interpreter */
 	if ((safe_interp = Tcl_CreateSlave(interp, slave_name, 1)) == NULL) {
-	    bu_exit(1, "Failed to create safe interpreter");
+	    fclose(ifp);
+	    bu_log("Failed to create safe interpreter");
+	    Tcl_Exit(1);
 	}
 
 	/* Create aliases */
@@ -1799,6 +1813,7 @@ main(int argc, char *argv[])
         while ((gettclblock(&line,ifp)) >= 0)
         {
 	    if (Tcl_Eval(safe_interp, (const char *)bu_vls_addr(&line)) != TCL_OK) {
+		fclose(ifp);
 	        bu_log("Failed to process input file (%s)!\n", argv[1]);
 	        bu_log("%s\n", Tcl_GetStringResult(safe_interp));
 	        Tcl_Exit(1);
@@ -1807,11 +1822,11 @@ main(int argc, char *argv[])
         }
 
 	/* free up our resources */
-	mk_write_color_table(ofp);
-	wdb_close(ofp); ofp = NULL;
         bu_vls_free(&line);
         bu_vls_free(&str_title);
         bu_vls_free(&str_put);
+
+	fclose(ifp);
 
 	Tcl_Exit(0);
     } else {
@@ -1935,7 +1950,7 @@ main(int argc, char *argv[])
     fclose(ifp); ifp = NULL;
     wdb_close(ofp); ofp = NULL;
 
-    Tcl_Exit(0);
+    bu_exit(0, "");
     return 0;
 }
 

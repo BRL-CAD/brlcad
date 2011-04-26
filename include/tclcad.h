@@ -74,9 +74,14 @@ TCLCAD_EXPORT TCLCAD_EXTERN(void tclcad_auto_path, (Tcl_Interp *interp));
 TCLCAD_EXPORT TCLCAD_EXTERN(void tclcad_tcl_library, (Tcl_Interp *interp));
 TCLCAD_EXPORT TCLCAD_EXTERN(int Tclcad_Init, (Tcl_Interp *interp));
 
-/* defined in tcl.c */
+/* defined in tclcad_obj.c */
 TCLCAD_EXPORT BU_EXTERN(int Go_Init,
 			(Tcl_Interp *interp));
+TCLCAD_EXPORT BU_EXTERN(int to_open_tcl,
+			(ClientData UNUSED(clientData),
+			 Tcl_Interp *interp,
+			 int argc,
+			 const char **argv));
 
 
 __END_DECLS

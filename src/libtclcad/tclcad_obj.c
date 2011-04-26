@@ -96,10 +96,6 @@ GED_EXPORT BU_EXTERN(void go_refresh_draw,
 		     (struct ged_obj *gop,
 		      struct ged_dm_view *gdvp));
 
-HIDDEN int to_open_tcl(ClientData clientData,
-		       Tcl_Interp *interp,
-		       int argc,
-		       const char **argv);
 HIDDEN int to_autoview(struct ged *gedp,
 		       int argc,
 		       const char *argv[],
@@ -1168,7 +1164,7 @@ to_create_cmd(Tcl_Interp *interp,
  *@n db get white.r
  *@n db close
  */
-HIDDEN int
+int
 to_open_tcl(ClientData UNUSED(clientData),
 	    Tcl_Interp *interp,
 	    int argc,
