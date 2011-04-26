@@ -136,6 +136,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    (void)bu_avs_add(&avs, argv[i], argv[i+1]);
 	    i += 2;
 	}
+	db5_standardize_avs(&avs);
 	if (db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
 	    bu_vls_printf(&gedp->ged_result_str,
 			  "Error: failed to update attributes\n");
