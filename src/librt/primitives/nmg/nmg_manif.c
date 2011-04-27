@@ -134,7 +134,7 @@ nmg_dangling_face(const struct faceuse *fu, register const char *manifolds)
  * "Paint" the elements of a face with a meaning.  For example
  * mark everything in a face as being part of a 2-manifold
  */
-static void paint_face(struct faceuse *fu, char *paint_table, int paint_color, char *paint_meaning, char *tbl)
+static void paint_face(struct faceuse *fu, long *paint_table, long paint_color, char *paint_meaning, char *tbl)
 {
     struct faceuse *newfu;
     struct loopuse *lu;
@@ -142,7 +142,7 @@ static void paint_face(struct faceuse *fu, char *paint_table, int paint_color, c
     const struct edgeuse *eur;
 
     if (rt_g.NMG_debug & DEBUG_MANIF)
-	bu_log("nmg_paint_face(%08x, %d)\n", fu, paint_color);
+	bu_log("nmg_paint_face(%08x, %ld)\n", fu, paint_color);
 
     if (NMG_INDEX_VALUE(paint_table, fu->index) != 0)
 	return;
@@ -262,8 +262,9 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
     struct edgeuse *eu_p;
     struct loopuse *lu_p;
     struct faceuse *fu_p;
-    char *paint_meaning, *paint_table;
-    unsigned int paint_color;
+    char *paint_meaning;
+    long *paint_table;
+    long paint_color;
     int found;
 
     if (rt_g.NMG_debug & DEBUG_MANIF)
@@ -353,8 +354,8 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
     if (rt_g.NMG_debug & DEBUG_MANIF)
 	bu_log("starting to paint non-dangling faces\n");
 
-    paint_meaning = bu_calloc(256, 1, "paint meaning table");
-    paint_table = bu_calloc(sp->r_p->m_p->maxindex, 1, "paint table");
+    paint_meaning = (char *)bu_calloc(sp->r_p->m_p->maxindex, sizeof(char), "paint meaning table");
+    paint_table = (long *)bu_calloc(sp->r_p->m_p->maxindex, sizeof(long), "paint table");
     paint_color = 1;
 
     for (BU_LIST_FOR(fu_p, faceuse, &sp->fu_hd)) {
@@ -368,7 +369,6 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
 	paint_color++;
     }
 
-
     if (rt_g.NMG_debug & DEBUG_MANIF)
 	bu_log("painting done, looking at colors\n");
 
@@ -378,12 +378,14 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
      */
     for (BU_LIST_FOR(fu_p, faceuse, &sp->fu_hd)) {
 	BU_LIST_LINK_CHECK(&fu_p->l);
-
-	paint_color = NMG_INDEX_VALUE((unsigned char *)paint_table, fu_p->index);
+	paint_color = NMG_INDEX_VALUE((long *)paint_table, fu_p->index);
 
 	/* this should never trigger. */
-	if (paint_color > 255) {
-	    bu_log("ERROR: color index out of range (%d > %d)\n", paint_color, 255);
+        /* it is easier to compare against the max model index */
+	if (paint_color > sp->r_p->m_p->maxindex - 1) {
+	    bu_log("nmg_shell_manifolds(): ERROR, color index out of range (%ld > %ld)\n",
+                   paint_color, sp->r_p->m_p->maxindex - 1);
+	    bu_bomb("nmg_shell_manifolds(): ERROR, color index out of range\n");
 	    break;
 	}
 
