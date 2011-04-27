@@ -349,7 +349,7 @@ nmg_class_pt_e(struct neighbor *closest, const fastf_t *pt, const struct edgeuse
 	goto out;
     }
 
-    if (dot >= 0.0) {
+    if (dot > -SMALL_FASTF) {
 	closest->dist = dist;
 	closest->p.eu = eu;
 	closest->class = NMG_CLASS_AinB;
@@ -1160,11 +1160,12 @@ nmg_2lu_identical(const struct edgeuse *eu1, const struct edgeuse *eu2)
 	/* Drop back to using a geometric calculation */
 	if (fu1->orientation != fu2->orientation)
 	    NMG_GET_FU_NORMAL(fu2_norm, fu2->fumate_p)
-		else
-		    NMG_GET_FU_NORMAL(fu2_norm, fu2)
+	else
+	    NMG_GET_FU_NORMAL(fu2_norm, fu2)
 
-			NMG_GET_FU_NORMAL(fu1_norm, fu1);
-	if (VDOT(fu1_norm, fu2_norm) < 0.0)
+	NMG_GET_FU_NORMAL(fu1_norm, fu1);
+
+	if (VDOT(fu1_norm, fu2_norm) < -SMALL_FASTF)
 	    ret = 2;	/* ON anti-shared */
 	else
 	    ret = 1;	/* ON shared */
@@ -1349,7 +1350,7 @@ class_shared_lu(const struct loopuse *lu, const struct loopuse *lu_ref, const st
 	bu_bomb("class_shared_lu() couldn't get a left vector for EU\n");
     }
 
-    if (VDOT(left, left_ref) > 0.0) {
+    if (VDOT(left, left_ref) > SMALL_FASTF) {
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 	    bu_log("eu x%x goes form v x%x to v x%x\n", eu, eu->vu_p->v_p, eu->eumate_p->vu_p->v_p);
 	    bu_log("eu_ref x%x goes form v x%x to v x%x\n", eu_ref, eu_ref->vu_p->v_p, eu_ref->eumate_p->vu_p->v_p);
@@ -2258,11 +2259,7 @@ nmg_classify_lu_lu(const struct loopuse *lu1, const struct loopuse *lu2, const s
 		if (lu2->orientation == OT_OPPOSITE)
 		    VREVERSE(inward2, inward2);
 
-#ifdef TRI_PROTOTYPE
 		if (VDOT(inward1, inward2) < -SMALL_FASTF)
-#else
-		if (VDOT(inward1, inward2) < 0.0)
-#endif
 		    return NMG_CLASS_AoutB;
 		else
 		    return NMG_CLASS_AinB;
