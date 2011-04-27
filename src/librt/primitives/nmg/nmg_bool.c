@@ -553,9 +553,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     int i;
     int nelem;
     long *classlist[8];
-#ifdef TRI_PROTOTYPE
     long *classlist_base;
-#endif
     FILE *fd, *fp;
     struct model *m;
     struct nmgregion *rA;
@@ -675,21 +673,15 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
      * XXX not a long*.
      */
 
-#ifdef TRI_PROTOTYPE
+    /* It needs to be determined how much extra space is needed.
+     * Maybe space can be increased as necessary.
+     */
     nelem = (m->maxindex)*10+1;		/* includes extra space */
     classlist_base = (long *)bu_calloc(8 * nelem + 1,
 				     sizeof(long), "nmg_bool classlist_base");
     for (i = 0; i < 8; i++) {
 	classlist[i] = classlist_base + 8 + (i * nelem);
     }
-#else
-    nelem = (m->maxindex)*4+1;		/* includes extra space */
-    classlist[0] = (long *)bu_calloc(8 * nelem + 1,
-				     sizeof(long), "nmg_bool classlist[8]");
-    for (i = 1; i < 8; i++) {
-	classlist[i] = classlist[0] + i * nelem;
-    }
-#endif
 
     nmg_classify_shared_edges_verts(sA, sB, classlist);
 
@@ -931,11 +923,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	}
     }
 
-#ifdef TRI_PROTOTYPE
     bu_free((char *)classlist_base, "nmg_bool classlist_base");
-#else
-    bu_free((char *)classlist[0], "nmg_bool classlist[8]");
-#endif
 
     if (rt_g.NMG_debug & DEBUG_BOOL) {
 	bu_log("Returning from NMG_BOOL\n");
