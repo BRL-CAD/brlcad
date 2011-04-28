@@ -1152,9 +1152,8 @@ nmg_ck_fu_verts(struct faceuse *fu1, struct face *f2, const struct bn_tol *tol)
 		    PLPRINT(" fg2", fg2->N);
 		}
 		count++;
-		if (dist < 0.0) {
-		    dist = (-dist);
-		}
+
+                dist = fabs(dist);
 		if (dist > worst) {
 		    worst = dist;
 		}
@@ -1180,9 +1179,8 @@ nmg_ck_fu_verts(struct faceuse *fu1, struct face *f2, const struct bn_tol *tol)
 		    PLPRINT(" fg2", fg2->N);
 		}
 		count++;
-		if (dist < 0.0) {
-		    dist = (-dist);
-		}
+
+                dist = fabs(dist);
 		if (dist > worst) {
 		    worst = dist;
 		}
@@ -1330,7 +1328,7 @@ nmg_two_face_fuse(struct face *f1, struct face *f2, const struct bn_tol *tol)
 	       f1, f2, code, flip2);
     }
 #else
-    if (VDOT(fg1->N, fg2->N) > 0.0)
+    if (VDOT(fg1->N, fg2->N) > SMALL_FASTF)
 	flip2 = 0;
     else
 	flip2 = 1;
@@ -1956,6 +1954,10 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
     if (rt_g.NMG_debug & DEBUG_BASIC || rt_g.NMG_debug & DEBUG_MESH_EU)
 	bu_log("nmg_radial_build_list(existing=%d, eu=x%x)\n", existing, eu);
 
+    if (ZERO(MAGSQ(xvec)) || ZERO(MAGSQ(yvec)) || ZERO(MAGSQ(zvec))) {
+        bu_log("nmg_radial_build_list(): one or more input vector(s) 'xvec', 'yvec', 'zvec' is zero magnitude.\n");
+    }
+
     amin = 64;
     amax = -64;
 
@@ -1968,13 +1970,22 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
 	if (rad->fu) {
 	    /* We depend on ang being strictly in the range 0..2pi */
 	    rad->ang = nmg_measure_fu_angle(teu, xvec, yvec, zvec);
+
+            if (rad->ang < -SMALL_FASTF) {
+                bu_bomb("nmg_radial_build_list(): fu_angle should not be negative\n");
+            }
+            if (rad->ang > (bn_twopi + SMALL_FASTF)) {
+                bu_bomb("nmg_radial_build_list(): fu_angle should not be > 2pi\n");
+            }
+
 	    non_wire_edges++;
 
-	    if (rad->ang < amin) {
+	    if ((rad->ang < amin) || (ZERO(rad->ang - amin))) {
 		amin = rad->ang;
 		rmin = rad;
 	    }
-	    if (rad->ang > amax) {
+
+            if ((rad->ang > amax) || (ZERO(rad->ang - amax))) {
 		amax = rad->ang;
 		rmax = rad;
 	    }
@@ -2035,7 +2046,8 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
 	do {
 	    next = BU_LIST_PNEXT_CIRC(nmg_radial, next);
 	} while (next->fu == (struct faceuse *)NULL);
-	if (next->ang >= amax) {
+
+	if ((next->ang > amax) || (ZERO(next->ang - amax))) {
 	    rmax = next;		/* a repeated max */
 	    if (rmax == first)	/* we have gone all the way around (All angles are same) */
 		break;
@@ -2050,7 +2062,7 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
 	while ((next = BU_LIST_PPREV_CIRC(nmg_radial, rmin))->fu == (struct faceuse *)NULL)
 	    rmin = next;
 	next = BU_LIST_PPREV_CIRC(nmg_radial, rmin);
-	if (next->ang <= amin) {
+	if ((next->ang < amin) || (ZERO(next->ang - amin))) {
 	    rmin = next;		/* a repeated min */
 	    if (rmin == first) {
 		/* all the way round again (All angles are same) */
@@ -2912,12 +2924,12 @@ nmg_do_radial_join(struct bu_list *hd, struct edgeuse *eu1ref, fastf_t *xvec, fa
 	    continue;
 	}
 
-	if (VDOT(dest_dir, ref_dir) < 0.0)
+	if (VDOT(dest_dir, ref_dir) < -SMALL_FASTF)
 	    dest = prev->eu->eumate_p;
 	else
 	    dest = prev->eu;
 
-	if (VDOT(src_dir, ref_dir) > 0.0)
+	if (VDOT(src_dir, ref_dir) > SMALL_FASTF)
 	    src = rad->eu->eumate_p;
 	else
 	    src = rad->eu;
@@ -2928,12 +2940,12 @@ nmg_do_radial_join(struct bu_list *hd, struct edgeuse *eu1ref, fastf_t *xvec, fa
 	    nmg_pr_radial("prev:", prev);
 	    nmg_pr_radial(" rad:", rad);
 
-	    if (VDOT(dest_dir, ref_dir) < 0.0)
+	    if (VDOT(dest_dir, ref_dir) < -SMALL_FASTF)
 		bu_log("dest_dir disagrees with eu1ref\n");
 	    else
 		bu_log("dest_dir agrees with eu1ref\n");
 
-	    if (VDOT(src_dir, ref_dir) < 0.0)
+	    if (VDOT(src_dir, ref_dir) < -SMALL_FASTF)
 		bu_log("src_dir disagrees with eu1ref\n");
 	    else
 		bu_log("src_dir agrees with eu1ref\n");
