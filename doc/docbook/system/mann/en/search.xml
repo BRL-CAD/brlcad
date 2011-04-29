@@ -197,42 +197,42 @@
 		<row>
 		  <entry>ars</entry>
 		  <entry>bot</entry>
+		  <entry>brep</entry>
 		  <entry>cline</entry>
 		  <entry>dsp</entry>
 		  <entry>ebm</entry>
-		  <entry>ehy</entry>
 		</row>
 		<row>
+	          <entry>ehy</entry>
 		  <entry>ell</entry>
 		  <entry>epa</entry>
 		  <entry>eto</entry>
 		  <entry>extrude</entry>
 		  <entry>grip</entry>
-		  <entry>half</entry>
-		</row>
+		 </row>
 		<row>
+	          <entry>half</entry>
 		  <entry>hf</entry>
 		  <entry>joint</entry>
 		  <entry>nmg</entry>
 		  <entry>part</entry>
 		  <entry>pipe</entry>
-		  <entry>poly</entry>
-		</row>
+		  </row>
 		<row>
+	          <entry>poly</entry>
 		  <entry>rec</entry>
 		  <entry>rhc</entry>
 		  <entry>rpc</entry>
 		  <entry>sketch</entry>
 		  <entry>sph</entry>
-		  <entry>spline</entry>
-		</row>
+		  </row>
 		<row>
+	          <entry>spline</entry>
 		  <entry>submodel</entry>
 		  <entry>tgc</entry>
 		  <entry>tor</entry>
 		  <entry>vol</entry>
-		  <entry/>
-		  <entry/>
+		  <entry><entry/>
 		</row>
 	      </tbody>
 	    </tgroup>
