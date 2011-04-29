@@ -1901,7 +1901,7 @@ mged&gt;  dbconcat [-s, -p] filename.g [prefix]
 	  <itemizedlist>
 	    <listitem>
 	      <para>
-		<emphasis>comb</emphasis>b - creates a combination using Boolean expressions in GIFT
+		<emphasis>comb</emphasis> - creates a combination using Boolean expressions in GIFT
 		<footnote><para>Geometric information for targets (GIFT) is the single-level operator 
 		hierarchy format that is the traditional (and default)
 		notation used in BRL-CAD.</para></footnote> format.
