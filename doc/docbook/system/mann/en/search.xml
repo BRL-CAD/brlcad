@@ -217,7 +217,7 @@
 		  <entry>nmg</entry>
 		  <entry>part</entry>
 		  <entry>pipe</entry>
-		  </row>
+		</row>
 		<row>
 	          <entry>poly</entry>
 		  <entry>rec</entry>
@@ -225,14 +225,14 @@
 		  <entry>rpc</entry>
 		  <entry>sketch</entry>
 		  <entry>sph</entry>
-		  </row>
+		</row>
 		<row>
 	          <entry>spline</entry>
 		  <entry>submodel</entry>
 		  <entry>tgc</entry>
 		  <entry>tor</entry>
 		  <entry>vol</entry>
-		  <entry><entry/>
+		  <entry></entry>
 		</row>
 	      </tbody>
 	    </tgroup>
