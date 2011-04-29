@@ -82,6 +82,11 @@ TCLCAD_EXPORT BU_EXTERN(int to_open_tcl,
 			 Tcl_Interp *interp,
 			 int argc,
 			 const char **argv));
+TCLCAD_EXPORT BU_EXTERN(struct application *to_rt_gettrees_application,
+			(struct ged *gedp,
+			 int argc,
+			 const char *argv[]));
+
 
 
 __END_DECLS
