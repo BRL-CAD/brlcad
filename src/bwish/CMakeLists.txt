@@ -2,6 +2,7 @@ include_directories(
   ${PNG_INCLUDE_DIR}
   ${X11_INCLUDE_DIR}
   ${TCL_INCLUDE_DIRS}
+  ${CMAKE_SOURCE_DIR}/src/other/tcl/generic
   ${TK_INCLUDE_PATH}
   ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itcl/generic
   ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itk/generic
