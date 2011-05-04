@@ -208,7 +208,7 @@ ged_editit(struct ged *gedp, int argc, const char *argv[])
 	return TCL_ERROR;
     } else {
 	char *edstr = bu_strdup((char *)argv[2]);
-        ret = _ged_editit((char *)argv[2], argv[4]);
+	ret = _ged_editit(edstr, argv[4]);
 	bu_free(edstr, "free tmp editstring copy");
 	return ret;
     }
