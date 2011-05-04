@@ -812,7 +812,7 @@ addarbn(struct bu_vls *v, struct rt_arbn_internal *gp, char *name, int num )
 
 
 static void
-vls_solid_pts(struct bu_vls *v, const point_t pts[], int npts, const char *name, int num, const char *kind )
+vls_solid_pts(struct bu_vls *v, const point_t *pts, int npts, const char *name, int num, const char *kind )
 {
     int	i;
 
@@ -864,21 +864,21 @@ addarb(struct bu_vls *v, struct rt_arb_internal *gp, char *name, int num )
     /* Print the solid parameters.					*/
     switch ( cgtype )  {
 	case 8:
-	    vls_solid_pts( v, (const point_t *)pts, 8, name, num, "arb8 " );
+	    vls_solid_pts( v, (const point_t *)&pts, 8, name, num, "arb8 " );
 	    break;
 	case 7:
-	    vls_solid_pts( v, (const point_t *)pts, 7, name, num, "arb7 " );
+	    vls_solid_pts( v, (const point_t *)&pts, 7, name, num, "arb7 " );
 	    break;
 	case 6:
 	    VMOVE( pts[5], pts[6] );
-	    vls_solid_pts( v, (const point_t *)pts, 6, name, num, "arb6 " );
+	    vls_solid_pts( v, (const point_t *)&pts, 6, name, num, "arb6 " );
 	    break;
 	case 5:
-	    vls_solid_pts( v, (const point_t *)pts, 5, name, num, "arb5 " );
+	    vls_solid_pts( v, (const point_t *)&pts, 5, name, num, "arb5 " );
 	    break;
 	case 4:
 	    VMOVE( pts[3], pts[4] );
-	    vls_solid_pts( v, (const point_t *)pts, 4, name, num, "arb4 " );
+	    vls_solid_pts( v, (const point_t *)&pts, 4, name, num, "arb4 " );
 	    break;
 
 	    /* Currently, cgarbs() will not return RAW, BOX, or RPP */
