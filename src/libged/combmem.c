@@ -886,6 +886,8 @@ combmem_set_sca(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	point_t key_pt;
 	hvect_t svec;
 
+	HSETALL(svec, 0);
+
 	COMBMEM_SET_PART_II(gedp, argv, op, i, rt_tree_array, tree_index, mat);
 
 	if (sscanf(argv[i+2], "%lf", &sa) == 1 &&

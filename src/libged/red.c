@@ -213,8 +213,9 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
     int attrstart, attrend, attrcumulative, name_start, name_end, treecumulative;
     int ret, gedret, combtagstart, combtagend;
     struct bu_attribute_value_set avs;
-    matp_t matrix;
+    matp_t matrix = {0};
     struct bu_vls *target_name = bu_malloc(sizeof(struct bu_vls), "target vls");
+
     bu_vls_init(target_name);
 
     rt_tree_array = (struct rt_tree_array *)NULL;
