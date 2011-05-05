@@ -1,5 +1,6 @@
 include_directories(
   ${TCL_INCLUDE_DIRS}
+  ${OPENGL_INCLUDE_DIR_GL}
   ${BRLCAD_SOURCE_DIR}/src/adrt
   ${BRLCAD_SOURCE_DIR}/src/adrt/libcommon
   ${BRLCAD_SOURCE_DIR}/src/adrt/librender
