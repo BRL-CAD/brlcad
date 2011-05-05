@@ -67,6 +67,7 @@ SET(tie_HDRS
 INSTALL(FILES ${tie_HDRS} DESTINATION include/tie)
 CMAKEFILES(${tie_HDRS})
 
+# Tcl/Tk based ISST
 INCLUDE_DIRECTORIES(
 	${TOGL_INCLUDE_DIRS}
 	${CMAKE_CURRENT_BINARY_DIR}/../other/togl/src
@@ -77,15 +78,18 @@ ADD_DEFINITIONS(
 IF(TOGL_LIBRARIES)
 	add_library(issttcltk isst_tcltk.c)
 	target_link_libraries(issttcltk librender ${TCL_LIBRARIES} ${TOGL_LIBRARIES})
-	INSTALL(TARGETS issttcltk DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_LIB_DIR})
-	SET_TARGET_PROPERTIES(issttcltk PROPERTIES SUFFIX ".plugin")
-	SET_TARGET_PROPERTIES(issttcltk PROPERTIES LINK_FLAGS "-module")
+	INSTALL(TARGETS issttcltk DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_LIB_DIR}/isst0.1)
+	GET_TARGET_PROPERTY(ISSTTCL_LIBLOCATION issttcltk LOCATION_${CMAKE_BUILD_TYPE})
+	GET_FILENAME_COMPONENT(ISSTTCL_LIBNAME ${ISSTTCL_LIBLOCATION} NAME)
+	FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded isst	0.1 [list load [file join $dir .. .. ${LIB_DIR} ${ISSTTCL_LIBNAME}]]")
+	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION lib/isst0.1)
+	FILE(WRITE ${CMAKE_BINARY_DIR}/lib/isst0.1/pkgIndex.tcl "package ifneeded isst 0.1 [list load [file join $dir ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}	${ISSTTCL_LIBNAME}] isst]")
+	configure_file(isst ${CMAKE_BINARY_DIR}/bin/isst COPYONLY)
 ENDIF(TOGL_LIBRARIES)
 
 SET(adrt_ignore_files
 	isst.h
-	isst.tcl
-	isst_tcltk.c
+	isst
 	load.h
 	master
 	slave

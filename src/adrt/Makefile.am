@@ -79,7 +79,7 @@ pkglibdir = $(libdir)/isst
 
 EXTRA_DIST = \
 	isst.h \
-	isst.tcl \
+	isst \
 	isst_tcltk.c \
 	master/compnet.h \
 	master/master.h \
