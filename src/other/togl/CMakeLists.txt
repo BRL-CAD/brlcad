@@ -65,7 +65,7 @@ OPTION(USE_TK_STUBS "Use Tk Stubs" ON)
 #cmakedefine TCL_WIDE_INT_IS_LONG 
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/togl_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/togl_config.h)
-
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/config.h)
 
 SET(TOGL_PKGNAME Togl)
 SET(TOGL_PKGVERSION "2.1")

@@ -1005,6 +1005,8 @@ MARK_AS_ADVANCED(TNT_INCLUDE_DIR)
 # For now only turn on Togl for X11, but will need it everywhere eventually.  Will need
 # some logic to both look for package require and the C library, as both APIs will be needed.
 IF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)
+	SET(TOGL_LIBRARIES togl CACHE STRING "TOGL_LIBRARIES" FORCE)
+	SET(TOGL_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/togl/include;${CMAKE_CURRENT_SOURCE_DIR}/togl/include" CACHE STRING "Togl include path" FORCE)
    ADD_SUBDIRECTORY(togl)
 	SET(togl_ignore_files
 		CMake

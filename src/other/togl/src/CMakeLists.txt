@@ -33,7 +33,8 @@ SET(TOGL_DECLS_H_TXT "
 /* !END!: Do not edit above this line. */
 
 #endif
-		")
+
+")
 FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/toglDecls.h "${TOGL_DECLS_H_TXT}")
 
 SET(TOGL_STUB_INIT_TXT "
@@ -53,7 +54,8 @@ extern const ToglStubs toglStubs;
 
 
 /* !END!: Do not edit above this line. */
-		")
+
+")
 FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/toglStubInit.c "${TOGL_STUB_INIT_TXT}")
 
 ADD_CUSTOM_COMMAND(
