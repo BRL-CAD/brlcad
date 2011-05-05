@@ -66,6 +66,22 @@ SET(tie_HDRS
 )
 INSTALL(FILES ${tie_HDRS} DESTINATION include/tie)
 CMAKEFILES(${tie_HDRS})
+
+INCLUDE_DIRECTORIES(
+	${TOGL_INCLUDE_DIRS}
+	${CMAKE_CURRENT_BINARY_DIR}/../other/togl/src
+	)
+ADD_DEFINITIONS(
+	-DTOGL_USE_EXTERNAL_CONFIG_H=1
+	)
+IF(TOGL_LIBRARIES)
+	add_library(issttcltk isst_tcltk.c)
+	target_link_libraries(issttcltk librender ${TCL_LIBRARIES} ${TOGL_LIBRARIES})
+	INSTALL(TARGETS issttcltk DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_LIB_DIR})
+	SET_TARGET_PROPERTIES(issttcltk PROPERTIES SUFFIX ".plugin")
+	SET_TARGET_PROPERTIES(issttcltk PROPERTIES LINK_FLAGS "-module")
+ENDIF(TOGL_LIBRARIES)
+
 SET(adrt_ignore_files
 	isst.h
 	isst.tcl
