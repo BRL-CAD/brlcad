@@ -1,6 +1,7 @@
 SET(brlcadinclude_required
 	RtServerImpl.h 
-	bn.h 
+	bn.h
+	${CMAKE_CURRENT_BINARY_DIR}/brlcad_config.h
 	bu.h 
 	common.h 
 	config_win_cmake.h 
@@ -61,6 +62,7 @@ SET(brlcadinclude_wanted
 	solid.h 
 	spectrum.h 
 	spm.h 
+	tie.h
 	vectfont.h 
 	vector_fpu.h 
 	vector_x86.h 
