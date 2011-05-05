@@ -228,6 +228,12 @@ proc ::isst::RotMove2 {x y W} {
 if { [info script] == $argv0 } {
     global az el oglwin
     ::isst::setup
+    if {$argc == 1} {
+       ::isst::geomlist [lindex $argv 0]
+    }
+    if {$argc == 2} {
+       load_g $oglwin [lindex $argv 0] [lindex $argv 1]
+    }
     # Do a couple operations to make sure 
     # the view is properly initialized on OSX
     update
