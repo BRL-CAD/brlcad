@@ -1004,10 +1004,12 @@ MARK_AS_ADVANCED(TNT_INCLUDE_DIR)
 
 # For now only turn on Togl for X11, but will need it everywhere eventually.  Will need
 # some logic to both look for package require and the C library, as both APIs will be needed.
-IF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)
+IF(BRLCAD-ENABLE_OPENGL)
 	SET(TOGL_LIBRARIES togl CACHE STRING "TOGL_LIBRARIES" FORCE)
 	SET(TOGL_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/togl/include;${CMAKE_CURRENT_SOURCE_DIR}/togl/include" CACHE STRING "Togl include path" FORCE)
-   ADD_SUBDIRECTORY(togl)
+	MARK_AS_ADVANCED(TOGL_LIBRARIES)
+	MARK_AS_ADVANCED(TOGL_INCLUDE_DIRS)
+	ADD_SUBDIRECTORY(togl)
 	SET(togl_ignore_files
 		CMake
 		LICENSE
@@ -1017,7 +1019,7 @@ IF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)
 		doc
 		include
 		tools
-		)
+	)
 	DISTCHECK_IGNORE(togl togl_ignore_files)
 	SET(togl_src_ignore_files
 		Togl.py
@@ -1029,7 +1031,7 @@ IF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)
 		toglGLX.c
 		toglNSOpenGL.c
 		toglWGL.c
-		)
+	)
 	DISTCHECK_IGNORE(togl/src togl_src_ignore_files)
 	SET(togl_demo_ignore_files
 		ben.rgb
@@ -1049,11 +1051,11 @@ IF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)
 		texture.c
 		texture.tcl
 		tree2.rgba
-		)
+	)
 	DISTCHECK_IGNORE(togl/demo togl_demo_ignore_files)
-ELSE(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)
+ELSE(BRLCAD-ENABLE_OPENGL)
 	DISTCHECK_IGNORE_ITEM(togl)
-ENDIF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)
+ENDIF(BRLCAD-ENABLE_OPENGL)
 
 # jove editor - technically this isn't a library,
 # but traditionally it's grouped into the "enable-all"
