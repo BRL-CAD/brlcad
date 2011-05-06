@@ -86,7 +86,11 @@ IF(TOGL_LIBRARIES)
 	FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded isst	0.1 [list load [file join $dir .. .. ${LIB_DIR} ${ISSTTCL_LIBNAME}]]")
 	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION lib/isst0.1)
 	FILE(WRITE ${CMAKE_BINARY_DIR}/lib/isst0.1/pkgIndex.tcl "package ifneeded isst 0.1 [list load [file join $dir ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}	${ISSTTCL_LIBNAME}] isst]")
+	# TODO - need to make this configure line into a real target ala
+	# BRLCAD_ADDDATA in order for the build dir copy to be updated when it
+   # is changed.	
 	configure_file(isst ${CMAKE_BINARY_DIR}/bin/isst COPYONLY)
+	install(FILES isst DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
 ENDIF(TOGL_LIBRARIES)
 
 SET(adrt_ignore_files
