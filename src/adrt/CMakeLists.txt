@@ -90,7 +90,7 @@ IF(TOGL_LIBRARIES)
 	# BRLCAD_ADDDATA in order for the build dir copy to be updated when it
    # is changed.	
 	configure_file(isst ${CMAKE_BINARY_DIR}/bin/isst COPYONLY)
-	install(FILES isst DESTINATION ${BRLCAD_INSTALL_LIB_DIR})
+	install(FILES isst DESTINATION ${BRLCAD_INSTALL_BIN_DIR})
 ENDIF(TOGL_LIBRARIES)
 
 SET(adrt_ignore_files
