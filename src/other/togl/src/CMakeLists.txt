@@ -99,7 +99,11 @@ SET(TOGL_SRCS
 
 add_library(togl SHARED ${TOGL_SRCS})
 ADD_DEPENDENCIES(togl togl_stubs_gen)
-target_link_libraries(togl ${TCL_LIBRARY} ${TK_LIBRARY} ${X11_LIBRARIES} ${OPENGL_LIBRARIES})
+IF(WIN32)
+	target_link_libraries(togl ${TCL_STUB_LIBRARIES} ${X11_LIBRARIES} ${OPENGL_LIBRARIES})
+ELSE(WIN32)
+	target_link_libraries(togl ${TCL_LIBRARIES} ${X11_LIBRARIES} ${OPENGL_LIBRARIES})
+ENDIF(WIN32)
 install(TARGETS togl DESTINATION lib)
 
 # Create the pkgIndex.tcl file.
