@@ -102,6 +102,7 @@ ENDIF(TOGL_LIBRARIES)
 SET(adrt_ignore_files
 	isst.h
 	isst
+	isst.bat
 	load.h
 	master
 	slave
