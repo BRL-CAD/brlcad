@@ -89,8 +89,14 @@ IF(TOGL_LIBRARIES)
 	# TODO - need to make this configure line into a real target ala
 	# BRLCAD_ADDDATA in order for the build dir copy to be updated when it
    # is changed.	
-	configure_file(isst ${CMAKE_BINARY_DIR}/bin/isst COPYONLY)
-	install(PROGRAMS isst DESTINATION bin)
+	IF(WIN32)
+		configure_file(isst.bat ${CMAKE_BINARY_DIR}/bin/isst.bat COPYONLY)
+		INSTALL(PROGRAMS isst.bat DESTINATION bin)
+	ELSE(WIN32)
+		configure_file(isst ${CMAKE_BINARY_DIR}/bin/isst COPYONLY)
+		install(PROGRAMS isst DESTINATION bin)
+	ENDIF(WIN32)
+
 ENDIF(TOGL_LIBRARIES)
 
 SET(adrt_ignore_files
