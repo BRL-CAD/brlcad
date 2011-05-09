@@ -22,7 +22,7 @@
 #ifdef HAVE_GL_WGLEXT_H
 # include <GL/wglext.h>
 #else
-# include "./wglext.h"
+# include "GL/wglext.h"
 #endif
 
 #ifndef PFD_SUPPORT_COMPOSITION

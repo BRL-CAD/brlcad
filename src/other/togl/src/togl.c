@@ -21,7 +21,7 @@
 #ifdef HAVE_GL_GLEXT_H
 # include <GL/glext.h>
 #else
-# include "./glext.h"
+# include "GL/glext.h"
 #endif
 #include <tclInt.h>
 #include <tkInt.h>
