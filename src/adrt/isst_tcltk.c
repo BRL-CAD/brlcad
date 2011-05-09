@@ -122,10 +122,10 @@ isst_load_g(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc,
     int argc;
     double az, el;
     struct bu_vls tclstr;
-    bu_vls_init(&tclstr);    
-
     vect_t vec;
     Togl   *togl;
+
+    bu_vls_init(&tclstr);    
 
     if (objc < 4) {
         Tcl_WrongNumArgs(interp, 1, objv, "load_g pathname object");
@@ -287,7 +287,7 @@ set_resolution(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_
        resolution = 20;
        isst->gs = 0;
     } else {
-       isst->gs = (int)trunc(isst->w * .05 * resolution);
+       isst->gs = (int)floor(isst->w * .05 * resolution);
     }
     resize_isst(isst);
 
