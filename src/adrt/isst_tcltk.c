@@ -621,8 +621,9 @@ aerotate(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
     isst->dirty = 1;
     return TCL_OK;
 }
+
 int
-Isst_Init(Tcl_Interp *interp)
+Issttcltk_Init(Tcl_Interp *interp)
 {
     if (Tcl_PkgProvide(interp, "isst", "0.1") != TCL_OK) {
         return TCL_ERROR;
