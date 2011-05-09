@@ -31,6 +31,8 @@
 
 #include "togl.h"
 
+#include "bu.h"
+
 #include "tie.h"
 #include "adrt.h"
 #include "adrt_struct.h"
@@ -41,11 +43,6 @@
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
-
-#ifdef HAVE_SYS_TIME_H
-#  include <sys/time.h>
-#endif
-
 
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -172,8 +169,8 @@ isst_load_g(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc,
 
     resize_isst(isst);
 
-    gettimeofday(&(isst->t1), NULL);
-    gettimeofday(&(isst->t2), NULL);
+    isst->t1 = bu_gettime();
+    isst->t2 = bu_gettime();
 
     return TCL_OK;
 }
@@ -229,17 +226,17 @@ paint_window(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Ob
     
     isst = (struct isst_s *) Togl_GetClientData(togl);
 
-    gettimeofday(&(isst->t2), NULL);
+    isst->t2 = bu_gettime();
 
-    dt = (((double)isst->t2.tv_sec+(double)isst->t2.tv_usec/(double)1e6) - ((double)isst->t1.tv_sec+(double)isst->t1.tv_usec/(double)1e6));
+    dt = isst->t2 - isst->t1;
 
-    if (dt > 0.08 && isst->dirty) {
+    if (dt > 1e6*0.08 && isst->dirty) {
     isst->buffer_image.ind = 0;
 
     render_camera_prep(&isst->camera);
     render_camera_render(&isst->camera, isst->tie, &isst->tile, &isst->buffer_image);
 
-    gettimeofday(&(isst->t1), NULL);
+    isst->t1 = bu_gettime();
 
     glClear(glclrbts);
     glLoadIdentity();
