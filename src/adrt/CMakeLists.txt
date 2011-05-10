@@ -96,10 +96,9 @@ IF(TOGL_LIBRARIES)
 	IF(WIN32)
 		configure_file(isst.bat ${CMAKE_BINARY_DIR}/bin/isst.bat COPYONLY)
 		INSTALL(PROGRAMS isst.bat DESTINATION bin)
-	ELSE(WIN32)
-		configure_file(isst ${CMAKE_BINARY_DIR}/bin/isst COPYONLY)
-		install(PROGRAMS isst DESTINATION bin)
 	ENDIF(WIN32)
+	configure_file(isst ${CMAKE_BINARY_DIR}/bin/isst COPYONLY)
+	install(PROGRAMS isst DESTINATION bin)
 
 ENDIF(TOGL_LIBRARIES)
 
