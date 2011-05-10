@@ -103,7 +103,7 @@ PROJECT(BRLCAD)
 # http://www.cmake.org/pipermail/cmake/2010-October/040292.html
 #
 # We'll go one step further, addressing all of the variables 
-# mentioned in cmDocumentVariables.cxx line 575 (as of CMake 2.8.4)
+# mentioned in cmDocumentVariables.cxx line 618 (as of CMake 2.8.4)
 # CMAKE_SYSTEM_PREFIX_PATH seems to be enough on some systems, but
 # problems are still seen on Windows even after it is altered.
 # 
