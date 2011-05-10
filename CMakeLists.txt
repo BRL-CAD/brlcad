@@ -97,11 +97,16 @@ PROJECT(BRLCAD)
 # CMake's standard behavior is to add a CMAKE_INSTALL_PREFIX to the
 # search path once defined, resulting in (for us) an unexpected behavior
 # of returning old installed libraries when CMake is re-run in a
-# directory.  To work around this, alter the CMAKE_SYSTEM_PREFIX_PATH
-# variable identified by Maik Beckmann:
+# directory.  To work around this, follow the route identified by
+# by Maik Beckmann for CMAKE_SYSTEM_PREFIX_PATH:
 #
 # http://www.cmake.org/pipermail/cmake/2010-October/040292.html
 #
+# We'll go one step further, addressing all of the variables 
+# mentioned in cmDocumentVariables.cxx line 575 (as of CMake 2.8.4)
+# CMAKE_SYSTEM_PREFIX_PATH seems to be enough on some systems, but
+# problems are still seen on Windows even after it is altered.
+# 
 # The complication is if we are installing to a "legitimate" system
 # search path - i.e. our CMAKE_INSTALL_PREFIX value is standard
 # enough that it is a legitimate search target for find_package.
@@ -124,30 +129,36 @@ PROJECT(BRLCAD)
 # To ensure the previous (and internally set) CMAKE_INSTALL_PREFIX value
 # is available, BRLCAD_PREFIX is used to store the value in the cache.)
 
-IF(CMAKE_INSTALL_PREFIX OR BRLCAD_PREFIX)
-	IF(BRLCAD_PREFIX)
-		IF(NOT ${BRLCAD_PREFIX} STREQUAL "/usr" AND NOT ${BRLCAD_PREFIX} STREQUAL "/usr/local")
-			LIST(FIND CMAKE_SYSTEM_PREFIX_PATH ${BRLCAD_PREFIX} BRLCAD_PREFIX_IN_SEARCH)
-			IF(BRLCAD_PREFIX_IN_SEARCH)
-				LIST(REMOVE_AT CMAKE_SYSTEM_PREFIX_PATH ${BRLCAD_PREFIX_IN_SEARCH})
-				SET(CMAKE_SYSTEM_PREFIX_PATH ${CMAKE_SYSTEM_PREFIX_PATH} CACHE STRING "Tweaked to avoid inconsistent search results")
-			ENDIF(BRLCAD_PREFIX_IN_SEARCH)
-		ENDIF(NOT ${BRLCAD_PREFIX} STREQUAL "/usr" AND NOT ${BRLCAD_PREFIX} STREQUAL "/usr/local")
-	ENDIF(BRLCAD_PREFIX)
-	IF(CMAKE_INSTALL_PREFIX)
-		IF(NOT ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr" AND NOT ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/local")
-			LIST(FIND CMAKE_SYSTEM_PREFIX_PATH ${CMAKE_INSTALL_PREFIX} CMAKE_INSTALL_PREFIX_IN_SEARCH)
-			IF(CMAKE_INSTALL_PREFIX_IN_SEARCH)
-				LIST(REMOVE_AT CMAKE_SYSTEM_PREFIX_PATH ${CMAKE_INSTALL_PREFIX_IN_SEARCH})
-				SET(CMAKE_SYSTEM_PREFIX_PATH ${CMAKE_SYSTEM_PREFIX_PATH} CACHE STRING "Tweaked to avoid inconsistent search results")
-			ENDIF(CMAKE_INSTALL_PREFIX_IN_SEARCH)
-		ENDIF(NOT ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr" AND NOT ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/local")
-	ENDIF(CMAKE_INSTALL_PREFIX)
-ELSE(CMAKE_INSTALL_PREFIX OR BRLCAD_PREFIX)
-	SET(CMAKE_SYSTEM_PREFIX_PATH ${CMAKE_SYSTEM_PREFIX_PATH} CACHE STRING "Tweaked to avoid inconsistent search results")
-ENDIF(CMAKE_INSTALL_PREFIX OR BRLCAD_PREFIX)
-MARK_AS_ADVANCED(CMAKE_SYSTEM_PREFIX_PATH)
+# Utility macro for path list pruning
+MACRO(PATH_REMOVE pathlist prunepath)
+	IF(NOT ${${prunepath}} STREQUAL "/usr" AND NOT ${${prunepath}} STREQUAL "/usr/local")
+		LIST(FIND ${pathlist} ${${prunepath}} PREFIX_IN_SEARCH)
+		IF(NOT PREFIX_IN_SEARCH STREQUAL "-1")
+			LIST(REMOVE_AT ${pathlist} ${PREFIX_IN_SEARCH})
+			SET(${pathlist} ${${pathlist}} CACHE STRING "Tweaked to avoid inconsistent search results")
+		ELSE(NOT PREFIX_IN_SEARCH STREQUAL "-1")
+			SET(${pathlist} ${${pathlist}} CACHE STRING "Cached at beginning of CMake run")
+		ENDIF(NOT PREFIX_IN_SEARCH STREQUAL "-1")
+	ENDIF(NOT ${${prunepath}} STREQUAL "/usr" AND NOT ${${prunepath}} STREQUAL "/usr/local")
+	MARK_AS_ADVANCED(${pathlist})
+ENDMACRO()
 
+
+IF(CMAKE_INSTALL_PREFIX)
+	PATH_REMOVE(CMAKE_PREFIX_PATH CMAKE_INSTALL_PREFIX)
+	PATH_REMOVE(CMAKE_SYSTEM_PREFIX_PATH CMAKE_INSTALL_PREFIX)
+	PATH_REMOVE(CMAKE_INCLUDE_PATH CMAKE_INSTALL_PREFIX)
+	PATH_REMOVE(CMAKE_LIBRARY_PATH CMAKE_INSTALL_PREFIX)
+	PATH_REMOVE(CMAKE_PROGRAM_PATH CMAKE_INSTALL_PREFIX)
+ENDIF(CMAKE_INSTALL_PREFIX)
+IF(BRLCAD_PREFIX)
+	PATH_REMOVE(CMAKE_PREFIX_PATH BRLCAD_PREFIX)
+	PATH_REMOVE(CMAKE_SYSTEM_PREFIX_PATH BRLCAD_PREFIX)
+	PATH_REMOVE(CMAKE_INCLUDE_PATH BRLCAD_PREFIX)
+	PATH_REMOVE(CMAKE_LIBRARY_PATH BRLCAD_PREFIX)
+	PATH_REMOVE(CMAKE_PROGRAM_PATH BRLCAD_PREFIX)
+ENDIF(BRLCAD_PREFIX)
+  
 #---------------------------------------------------------------------
 # By default (as of version 2.8.2) CMake does not provide access to 
 # global lists of executable and library targets.  This is useful
