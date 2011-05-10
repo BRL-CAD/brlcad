@@ -24,8 +24,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * investigate tesselation issues on optimized build (linux64/fbsd32).
 
-* fix OpenNURBS and UtahRLE detection issues when already installed
-
 * test CMake build in multiple configurations on multiple platforms
   (Release/Debug, linux/mac/win/fbsd, x86/x86_64/ppc64/sparc)
 
