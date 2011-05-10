@@ -11,11 +11,28 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 2011-05-XX  Release 7.18.6                                     ---
+--- 2011-05-1X  Release 7.18.6                                     ---
 ----------------------------------------------------------------------
 
-* awesomeness
+All hail cmake, some kind of silver bullet. The TCL/TK variant of ISST
+is now part of BRL-CAD proper. I could go for some tacos.
 
+* updated search to use . and / correctly - Cliff Yapp
+* fix search output order - Cliff Yapp
+* add LIBRT_BOT_MINTIE environment variable - Sean Morrison
+* search assumes cwd if not given path - Cliff Yapp
+* full path resolving added to search - Cliff Yapp
+* segment splitting bug fixed for tesselation - Richard Weiss
+* cut splitting order fixed, may effect axis order - Sean Morrison
+* libtie merged into librt - Erik Greenwald
+* attribute syncing improved, hardcoded names removed  - Cliff Yapp
+* color attribute handling improved - Cliff Yapp
+* This is madness. THIS IS CMAKE! - Cliff Yapp/Sean Morrison
+* facetization crash fixed for large models - Richard Weiss
+* removed -t and -m from annotate command - Sean Morrison
+* Zoom out keybinding fixed on Linux/*BSD - Cliff Yapp
+* TCL/TK ISST enabled for 64b platforms - Cliff Yapp/Erik Greenwald
+* TOGL (TCL/TK OpenGL) enabled by default - Cliff Yapp
 
 ----------------------------------------------------------------------
 --- 2011-04-12  Release 7.18.4                                     ---
