@@ -106,6 +106,10 @@ ELSE(WIN32)
 ENDIF(WIN32)
 install(TARGETS togl DESTINATION lib)
 
+add_library(toglstub STATIC ${CMAKE_CURRENT_BINARY_DIR}/toglStubInit.c toglStubLib.c)
+ADD_DEPENDENCIES(toglstub togl_stubs_gen)
+install(TARGETS toglstub DESTINATION lib)
+
 # Create the pkgIndex.tcl file.
 FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded ${TOGL_PKGNAME} ${TOGL_PKGVERSION} [list load [file join $dir .. libtogl${CMAKE_SHARED_LIBRARY_SUFFIX}] togl]")
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION lib/${TOGL_PKGNAME}${TOGL_PKGVERSION})
