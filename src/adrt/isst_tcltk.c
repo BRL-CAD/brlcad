@@ -623,6 +623,44 @@ aerotate(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
 }
 
 int
+Isst_Init(Tcl_Interp *interp)
+{
+    if (Tcl_PkgProvide(interp, "isst", "0.1") != TCL_OK) {
+        return TCL_ERROR;
+    }
+
+    /* 
+     * Initialize Tcl and the Togl widget module.
+     */
+    if (Tcl_InitStubs(interp, "8.1", 0) == NULL
+            || Togl_InitStubs(interp, "2.0", 0) == NULL) {
+        return TCL_ERROR;
+    }
+
+    /* 
+     * Specify the C callback functions for widget creation, display,
+     * and reshape.
+     */
+    Tcl_CreateObjCommand(interp, "isst_init", isst_init, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "isst_zap", isst_zap, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "refresh_ogl", paint_window, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "reshape", reshape, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "load_g", isst_load_g, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "list_g", list_geometry, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "idle", idle, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "aetolookat", aetolookat, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "aerotate", aerotate, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "walk", move_walk, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "strafe", move_strafe, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "float", move_float, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "reset", zero_view, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "set_resolution", set_resolution, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "render_mode", render_mode, NULL, NULL);
+
+    return TCL_OK;
+}
+
+int
 Issttcltk_Init(Tcl_Interp *interp)
 {
     if (Tcl_PkgProvide(interp, "isst", "0.1") != TCL_OK) {
