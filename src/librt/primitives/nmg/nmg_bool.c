@@ -119,7 +119,7 @@ nmg_has_dangling_faces(unsigned long *magic_p, const char *manifolds)
  * edge.
  */
 void
-nmg_show_each_loop(struct shell *s, long int **classlist, int new, int fancy, const char *str)
+nmg_show_each_loop(struct shell *s, size_t **classlist, int new, int fancy, const char *str)
 
 
     /* non-zero means flush previous vlist */
@@ -343,7 +343,7 @@ nmg_kill_non_common_cracks(struct shell *sA, struct shell *sB)
  */
 
 static void
-nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, long int **classlist)
+nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, size_t **classlist)
 {
     struct bu_ptbl verts;
     struct bu_ptbl edges;
@@ -551,9 +551,9 @@ nmg_kill_wire_edges(struct shell *s)
 static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int oper, const struct bn_tol *tol)
 {
     int i;
-    int nelem;
-    long *classlist[8];
-    long *classlist_base;
+    size_t nelem;
+    size_t *classlist[8];
+    size_t *classlist_base;
     FILE *fd, *fp;
     struct model *m;
     struct nmgregion *rA;
@@ -677,8 +677,8 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
      * Maybe space can be increased as necessary.
      */
     nelem = (m->maxindex)*10+1;		/* includes extra space */
-    classlist_base = (long *)bu_calloc(8 * nelem + 1,
-				     sizeof(long), "nmg_bool classlist_base");
+    classlist_base = (size_t *)bu_calloc(8 * nelem + 1,
+				     sizeof(size_t), "nmg_bool classlist_base");
     for (i = 0; i < 8; i++) {
 	classlist[i] = classlist_base + 8 + (i * nelem);
     }
@@ -815,12 +815,12 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
      * A -vs- B live in classlist[0..3], B -vs- A live in classlist[4..7].
      */
     nmg_class_shells(sA, sB, &classlist[0], tol);
-    memcpy((char *)classlist[4+NMG_CLASS_AonBshared],
-	   (char *)classlist[0+NMG_CLASS_AonBshared],
-	   nelem*sizeof(long));
-    memcpy((char *)classlist[4+NMG_CLASS_AonBanti],
-	   (char *)classlist[0+NMG_CLASS_AonBanti],
-	   nelem*sizeof(long));
+    memcpy((size_t *)classlist[4+NMG_CLASS_AonBshared],
+	   (size_t *)classlist[0+NMG_CLASS_AonBshared],
+	   nelem*sizeof(size_t *));
+    memcpy((size_t *)classlist[4+NMG_CLASS_AonBanti],
+	   (size_t *)classlist[0+NMG_CLASS_AonBanti],
+	   nelem*sizeof(size_t *));
     nmg_class_shells(sB, sA, &classlist[4], tol);
 
     if (rt_g.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) {
@@ -923,7 +923,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	}
     }
 
-    bu_free((char *)classlist_base, "nmg_bool classlist_base");
+    bu_free((size_t *)classlist_base, "nmg_bool classlist_base");
 
     if (rt_g.NMG_debug & DEBUG_BOOL) {
 	bu_log("Returning from NMG_BOOL\n");

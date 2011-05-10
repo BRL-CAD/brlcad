@@ -5245,7 +5245,7 @@ RT_EXPORT BU_EXTERN(void nmg_pl_2fu,
 /* graphical display of classifier results */
 RT_EXPORT BU_EXTERN(void nmg_show_broken_classifier_stuff,
 		    (unsigned long	*p,
-		     long	*classlist[4],
+		     size_t	*classlist[4],
 		     int	all_new,
 		     int	fancy,
 		     const char	*a_string));
@@ -5354,7 +5354,7 @@ RT_EXPORT BU_EXTERN(int nmg_boolean,
 RT_EXPORT BU_EXTERN(void nmg_class_shells,
 		    (struct shell *sA,
 		     struct shell *sB,
-		     long *classlist[4],
+		     size_t *classlist[4],
 		     const struct bn_tol *tol));
 
 /* from nmg_fcut.c */
@@ -5414,7 +5414,7 @@ RT_EXPORT BU_EXTERN(void nmg_evaluate_boolean,
 		    (struct shell	*sA,
 		     struct shell	*sB,
 		     int		op,
-		     long		*classlist[8],
+		     size_t		*classlist[8],
 		     const struct bn_tol	*tol));
 
 /* The following functions cannot be publicly declared because struct
