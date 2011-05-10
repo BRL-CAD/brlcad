@@ -59,6 +59,10 @@ extern mat_t model2view;
 extern void grid_setup(void);
 extern void worker(int cpu, genptr_t arg);
 
+/***** variables shared with opt.c *****/
+extern int	orientflag;		/* 1 means orientation has been set */
+/***** end variables shared with opt.c *****/
+
 /***** variables shared with rt.c *****/
 extern char *string_pix_start;	/* string spec of starting pixel */
 extern char *string_pix_end;	/* string spec of ending pixel */
@@ -285,6 +289,7 @@ int cm_orientation(int argc, char **argv)
     for (i=0; i<4; i++)
 	quat[i] = atof(argv[i+1]);
     quat_quat2mat(Viewrotscale, quat);
+    orientflag = 1;
     return 0;
 }
 

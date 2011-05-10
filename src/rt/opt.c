@@ -107,6 +107,7 @@ int		pix_end = 0;		/* pixel to end at */
 int		nobjs = 0;		/* Number of cmd-line treetops */
 char		**objtab = (char **)NULL;	/* array of treetop strings */
 int		matflag = 0;		/* read matrix from stdin */
+int		orientflag = 0;		/* 1 means orientation has been set */
 int		desiredframe = 0;	/* frame to start at */
 int		finalframe = -1;	/* frame to halt at */
 int		curframe = 0;		/* current frame number,

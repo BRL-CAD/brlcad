@@ -82,6 +82,7 @@ long		n_malloc;		/* Totals at last check */
 long		n_free;
 long		n_realloc;
 extern int	matflag;		/* read matrix from stdin */
+extern int	orientflag;		/* 1 means orientation has been set */
 extern int	desiredframe;		/* frame to start at */
 extern int	curframe;		/* current frame number,
 					 * also shared with view.c */
@@ -452,8 +453,11 @@ int main(int argc, const char **argv)
 
     if (!matflag) {
 	int frame_retval;
+
 	def_tree(rtip);		/* Load the default trees */
-	do_ae(azimuth, elevation);
+	/* orientation command has not been used */	
+	if (!orientflag)
+	    do_ae(azimuth, elevation);
 	frame_retval = do_frame(curframe);
 	if (frame_retval != 0) {
 	    /* Release the framebuffer, if any */
