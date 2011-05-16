@@ -17,13 +17,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* fix lights regression failure (cd regress && make lights) the
-  db5_types.c change from oshader to shader (and possibly rgb to
-  color) is making the shader string get ignored.  setting the old
-  names should still work too.
-
-* investigate tesselation issues on optimized build (linux64/fbsd32).
-
 * test CMake build in multiple configurations on multiple platforms
   (Release/Debug, linux/mac/win/fbsd, x86/x86_64/ppc64/sparc)
 
