@@ -104,11 +104,11 @@ IF(WIN32)
 ELSE(WIN32)
 	target_link_libraries(togl ${TCL_LIBRARIES} ${X11_LIBRARIES} ${OPENGL_LIBRARIES})
 ENDIF(WIN32)
-install(TARGETS togl DESTINATION lib)
+install(TARGETS togl DESTINATION ${LIB_DIR})
 
 add_library(toglstub STATIC ${CMAKE_CURRENT_BINARY_DIR}/toglStubInit.c toglStubLib.c)
 ADD_DEPENDENCIES(toglstub togl_stubs_gen)
-install(TARGETS toglstub DESTINATION lib)
+install(TARGETS toglstub DESTINATION ${LIB_DIR})
 MARK_AS_ADVANCED(TOGL_STUB_LIBRARIES)
 
 # Create the pkgIndex.tcl file.
