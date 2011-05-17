@@ -13,7 +13,7 @@ find_package(TCL)
 
 IF(NOT LIB_DIR)
 	SET(LIB_DIR lib)
-ENDIF(LIB_DIR)
+ENDIF(NOT LIB_DIR)
 
 # If we have only a target and not a full working exec, it's up to
 # a parent CMake system to define TK_SYSTEM_GRAPHICS
