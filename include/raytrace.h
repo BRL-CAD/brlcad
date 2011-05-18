@@ -6054,6 +6054,24 @@ RT_EXPORT BU_EXTERN(size_t db5_type_sizeof_n_binu,
 
 
 /**
+ * Define standard attribute types in BRL-CAD geometry. (See the
+ * gattributes manual page) these should be a collective enumeration
+ * starting from 0 and increasing without any gaps in the numbers so
+ * db5_standard_attribute() can be used as an index-based iterator.
+ */
+enum {
+    ATTR_REGION = 0,
+    ATTR_REGION_ID,
+    ATTR_MATERIAL_ID,
+    ATTR_AIR,
+    ATTR_LOS,
+    ATTR_COLOR,
+    ATTR_SHADER,
+    ATTR_INHERIT,
+    ATTR_NULL
+};
+
+/**
  * D B 5 _ S T A N D A R D _ A T T R I B U T E
  *
  * Function returns the string name for a given standard attribute

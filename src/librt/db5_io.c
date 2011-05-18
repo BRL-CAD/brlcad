@@ -1014,6 +1014,8 @@ rt_db_external5_to_internal5(
 		   name);
 	    return -8;
 	}
+
+	(void)db5_standardize_avs(&ip->idb_avs);
     }
 
     if (!raw.body.ext_buf) {

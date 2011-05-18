@@ -37,25 +37,6 @@
 #include "db5.h"
 #include "raytrace.h"
 
-/**
- * Define standard attribute types in BRL-CAD geometry. (See the
- * gattributes manual page) these should be a collective enumeration
- * starting from 0 and increasing without any gaps in the numbers so
- * db5_standard_attribute() can be used as an index-based iterator.
- */
-
-enum {
-    ATTR_REGION = 0,
-    ATTR_REGION_ID,
-    ATTR_MATERIAL_ID,
-    ATTR_AIR,
-    ATTR_LOS,
-    ATTR_COLOR,
-    ATTR_SHADER,
-    ATTR_INHERIT,
-    ATTR_NULL
-};
-
 
 struct db5_type {
     int major_code;
