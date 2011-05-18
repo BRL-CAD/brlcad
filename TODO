@@ -17,6 +17,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* solids regression is failing, at least on OSX - 3 off by many. 
+
 * test CMake build in multiple configurations on multiple platforms
   (Release/Debug, linux/mac/win/fbsd, x86/x86_64/ppc64/sparc)
 
