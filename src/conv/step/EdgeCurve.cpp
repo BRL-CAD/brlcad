@@ -75,10 +75,16 @@ EdgeCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 		SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"edge_geometry");
 		edge_geometry = dynamic_cast<Curve *>(Factory::CreateObject(sw,entity)); //CreateCurveObject(sw,entity));
 	}
-	edge_geometry->Start(edge_start);
-	edge_geometry->End(edge_end);
 
 	same_sense = step->getBooleanAttribute(sse,"same_sense");
+
+	if (same_sense) {
+		edge_geometry->Start(edge_start);
+		edge_geometry->End(edge_end);
+	} else {
+		edge_geometry->Start(edge_end);
+		edge_geometry->End(edge_start);
+	}
 
 	return true;
 }
