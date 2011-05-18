@@ -11,28 +11,39 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 2011-05-1X  Release 7.18.6                                     ---
+--- 2011-05-1x  Release 7.20.0                                     ---
 ----------------------------------------------------------------------
 
-All hail cmake, some kind of silver bullet. The TCL/TK variant of ISST
-is now part of BRL-CAD proper. I could go for some tacos.
+This release marks the introduction into BRL-CAD of a new build system
+based on CMake, a cross platform tool that is capable of generating
+native build logic for OSX, Windows and various Unix/Linux systems.
+Cliff Yapp has been working on this conversion for a number of months
+in order to simplify the task of building BRL-CAD on multiple 
+platforms.  Previously, there were two build sytems in BRL-CAD - 
+one based on GNU Autotools, used for OSX and Unix/Linux platforms, and
+the other based on Microsoft Visual Studio.  CMake will allow one
+set of build rules to handle all supported platforms, eliminating the
+need to manually update the Windows build logic at release time.
 
-* updated search to use . and / correctly - Cliff Yapp
-* fix search output order - Cliff Yapp
-* add LIBRT_BOT_MINTIE environment variable - Sean Morrison
-* search assumes cwd if not given path - Cliff Yapp
-* full path resolving added to search - Cliff Yapp
+* TCL/TK ISST on 64b platforms (CMake only) - C. Yapp/E. Greenwald
+* zoom out keybinding fixed on Linux/*BSD - Cliff Yapp
+* improve search handling of multiple paths - Cliff Yapp
 * segment splitting bug fixed for tesselation - Richard Weiss
-* cut splitting order fixed, may effect axis order - Sean Morrison
-* libtie merged into librt - Erik Greenwald
-* attribute syncing improved, hardcoded names removed  - Cliff Yapp
-* color attribute handling improved - Cliff Yapp
-* This is madness. THIS IS CMAKE! - Cliff Yapp/Sean Morrison
 * facetization crash fixed for large models - Richard Weiss
+* improve asc2g handling of attributes - Bob Parker
+* review and merge CMake build logic into main branch - Sean Morrison
 * removed -t and -m from annotate command - Sean Morrison
-* Zoom out keybinding fixed on Linux/*BSD - Cliff Yapp
-* TCL/TK ISST enabled for 64b platforms - Cliff Yapp/Erik Greenwald
-* TOGL (TCL/TK OpenGL) enabled by default - Cliff Yapp
+* add -q "quiet lookup" option to the ls command - Cliff Yapp
+* fix a variety of bugs in the red command - Cliff Yapp/Sean Morrison
+* add "attribute standardization" logic - Cliff Yapp
+* cut splitting order fixed in librt, may impact results - S. Morrison
+* add LIBRT_BOT_MINTIE environment variable - Sean Morrison
+* libtie merged into librt - Erik Greenwald
+* improve path resolution logic for search paths - Cliff Yapp
+* change search output order to shallow followed by deep - Cliff Yapp
+* use . and / to request list/full patch search results - Cliff Yapp
+* add -f flag to red for overwriting pre-existing comb - Sean Morrison
+
 
 ----------------------------------------------------------------------
 --- 2011-04-12  Release 7.18.4                                     ---
