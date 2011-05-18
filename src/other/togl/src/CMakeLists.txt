@@ -16,27 +16,6 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/../include/tcltk/tk${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}
 	)
 
-SET(TOGL_DECLS_H_TXT "
-#ifndef ToglDecls_H
-#  define ToglDecls_H
-
-/* 
- * Togl - a Tk OpenGL widget
- *
- * Copyright (C) 1996-2002  Brian Paul and Ben Bederson
- * Copyright (C) 2005-2009  Greg Couch
- * See the LICENSE file for copyright details.
- */
-
-/* !BEGIN!: Do not edit below this line. */
-
-/* !END!: Do not edit above this line. */
-
-#endif
-
-")
-FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/toglDecls.h "${TOGL_DECLS_H_TXT}")
-
 SET(TOGL_STUB_INIT_TXT "
 /* 
  * Togl - a Tk OpenGL widget
@@ -67,13 +46,6 @@ ADD_CUSTOM_COMMAND(
 ADD_CUSTOM_TARGET(togl_stubs_gen ALL DEPENDS
 	${CMAKE_CURRENT_BINARY_DIR}/STUBSDONE
 )
-
-SET(TOGL_HDRS
-	${CMAKE_CURRENT_SOURCE_DIR}/../include/togl.h
-	${CMAKE_CURRENT_BINARY_DIR}/../include/togl_config.h
-	${CMAKE_CURRENT_BINARY_DIR}/toglDecls.h
-	)
-install(FILES ${TOGL_HDRS} DESTINATION include/togl)
 
 # If we re-run cmake, need to ensure we re-run togl_stubs_gen too
 FILE(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/STUBSDONE)
