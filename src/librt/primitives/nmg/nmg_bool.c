@@ -119,7 +119,7 @@ nmg_has_dangling_faces(unsigned long *magic_p, const char *manifolds)
  * edge.
  */
 void
-nmg_show_each_loop(struct shell *s, short **classlist, int new, int fancy, const char *str)
+nmg_show_each_loop(struct shell *s, char **classlist, int new, int fancy, const char *str)
 
 
     /* non-zero means flush previous vlist */
@@ -343,7 +343,7 @@ nmg_kill_non_common_cracks(struct shell *sA, struct shell *sB)
  */
 
 static void
-nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, short **classlist)
+nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, char **classlist)
 {
     struct bu_ptbl verts;
     struct bu_ptbl edges;
@@ -552,7 +552,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 {
     int i;
     long nelem;
-    short *classlist[8];
+    char *classlist[8];
     FILE *fd, *fp;
     struct model *m;
     struct nmgregion *rA;
@@ -661,16 +661,14 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 
     nmg_m_reindex(m, 0);
 
-    /* Allocate storage for classlist[].
-     * Allocate each of the 8 class lists one at a time. This will
-     * assist with debugging to determine if each array read/write
-     * is within its allocated space. The datatype needs to accommodate
-     * values -1 thru 7 therefore a signed datatype is necessary.
+    /* Allocate storage for classlist[]. Allocate each of the 8 class
+     * lists one at a time. This will assist with debugging to
+     * determine if each array read/write is within its allocated space.
      */
 
     nelem = m->maxindex;
     for (i = 0; i < 8; i++) {
-        classlist[i] = (short *)bu_calloc(nelem, sizeof(short), "nmg_bool classlist_base");
+        classlist[i] = (char *)bu_calloc(nelem, sizeof(char), "nmg_bool classlist");
     }
 
     nmg_classify_shared_edges_verts(sA, sB, classlist);
@@ -804,12 +802,12 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
      * A -vs- B live in classlist[0..3], B -vs- A live in classlist[4..7].
      */
     nmg_class_shells(sA, sB, &classlist[0], tol);
-    memcpy((short *)classlist[4+NMG_CLASS_AonBshared],
-	   (short *)classlist[0+NMG_CLASS_AonBshared],
-	   nelem*sizeof(short *));
-    memcpy((short *)classlist[4+NMG_CLASS_AonBanti],
-	   (short *)classlist[0+NMG_CLASS_AonBanti],
-	   nelem*sizeof(short *));
+    memcpy((char *)classlist[4+NMG_CLASS_AonBshared],
+	   (char *)classlist[0+NMG_CLASS_AonBshared],
+	   nelem*sizeof(char));
+    memcpy((char *)classlist[4+NMG_CLASS_AonBanti],
+	   (char *)classlist[0+NMG_CLASS_AonBanti],
+	   nelem*sizeof(char));
     nmg_class_shells(sB, sA, &classlist[4], tol);
 
     if (rt_g.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) {
@@ -913,7 +911,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     }
 
     for (i = 0; i < 8; i++) {
-        bu_free((short *)classlist[i], "nmg_bool classlist");
+        bu_free((char *)classlist[i], "nmg_bool classlist");
     }
 
     if (rt_g.NMG_debug & DEBUG_BOOL) {

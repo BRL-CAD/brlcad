@@ -43,7 +43,7 @@ struct nmg_bool_state {
     struct shell *bs_dest;
     struct shell *bs_src;
     int bs_isA;		/* true if A, else doing B */
-    short **bs_classtab;
+    char **bs_classtab;
     const int *bs_actions;
     const struct bn_tol *bs_tol;
 };
@@ -193,7 +193,7 @@ static const int intersect_actions[8] = {
  *
  */
 void
-nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, short **classlist, const struct bn_tol *tol)
+nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlist, const struct bn_tol *tol)
 {
     int const *actions;
     struct nmg_bool_state bool_state;
