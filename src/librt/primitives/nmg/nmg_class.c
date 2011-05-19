@@ -80,13 +80,13 @@ static void nmg_class_pt_l BU_ARGS((struct neighbor *closest,
 				    const point_t pt, const struct loopuse *lu,
 				    const struct bn_tol *tol));
 static int class_vu_vs_s BU_ARGS((struct vertexuse *vu, struct shell *sB,
-				  size_t *classlist[4], const struct bn_tol *tol));
+				  short **classlist, const struct bn_tol *tol));
 static int class_eu_vs_s BU_ARGS((struct edgeuse *eu, struct shell *s,
-				  size_t *classlist[4], const struct bn_tol *tol));
+				  short **classlist, const struct bn_tol *tol));
 static int class_lu_vs_s BU_ARGS((struct loopuse *lu, struct shell *s,
-				  size_t *classlist[4], const struct bn_tol *tol));
+				  short **classlist, const struct bn_tol *tol));
 static void class_fu_vs_s BU_ARGS((struct faceuse *fu, struct shell *s,
-				   size_t *classlist[4], const struct bn_tol *tol));
+				   short **classlist, const struct bn_tol *tol));
 
 /**
  * N M G _ C L A S S _ S T A T U S
@@ -744,7 +744,7 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
  * Classify a loopuse/vertexuse from shell A WRT shell B.
  */
 static int
-class_vu_vs_s(struct vertexuse *vu, struct shell *sB, size_t **classlist, const struct bn_tol *tol)
+class_vu_vs_s(struct vertexuse *vu, struct shell *sB, short **classlist, const struct bn_tol *tol)
 {
     struct vertexuse *vup;
     pointp_t pt;
@@ -864,7 +864,7 @@ class_vu_vs_s(struct vertexuse *vu, struct shell *sB, size_t **classlist, const 
  * C L A S S _ E U _ V S _ S
  */
 static int
-class_eu_vs_s(struct edgeuse *eu, struct shell *s, size_t **classlist, const struct bn_tol *tol)
+class_eu_vs_s(struct edgeuse *eu, struct shell *s, short **classlist, const struct bn_tol *tol)
 {
     int euv_cl, matev_cl;
     int status = 0;
@@ -1209,7 +1209,7 @@ nmg_2lu_identical(const struct edgeuse *eu1, const struct edgeuse *eu2)
  * "newclass" should only be AonBshared or AonBanti.
  */
 void
-nmg_reclassify_lu_eu(struct loopuse *lu, size_t **classlist, int newclass)
+nmg_reclassify_lu_eu(struct loopuse *lu, short **classlist, int newclass)
 {
     struct vertexuse *vu;
     struct edgeuse *eu;
@@ -1454,7 +1454,7 @@ class_shared_lu(const struct loopuse *lu, const struct loopuse *lu_ref, const st
  * class_fu_vs_s
  */
 static int
-class_lu_vs_s(struct loopuse *lu, struct shell *s, size_t **classlist, const struct bn_tol *tol)
+class_lu_vs_s(struct loopuse *lu, struct shell *s, short **classlist, const struct bn_tol *tol)
 {
     int class;
     unsigned int in, outside, on;
@@ -1838,7 +1838,7 @@ class_lu_vs_s(struct loopuse *lu, struct shell *s, size_t **classlist, const str
  *	nmg_class_shells()
  */
 static void
-class_fu_vs_s(struct faceuse *fu, struct shell *s, size_t **classlist, const struct bn_tol *tol)
+class_fu_vs_s(struct faceuse *fu, struct shell *s, short **classlist, const struct bn_tol *tol)
 {
     struct loopuse *lu;
     plane_t n;
@@ -1872,7 +1872,7 @@ class_fu_vs_s(struct faceuse *fu, struct shell *s, size_t **classlist, const str
  * nmg_bool.c
  */
 void
-nmg_class_shells(struct shell *sA, struct shell *sB, size_t **classlist, const struct bn_tol *tol)
+nmg_class_shells(struct shell *sA, struct shell *sB, short **classlist, const struct bn_tol *tol)
 {
     struct faceuse *fu;
     struct loopuse *lu;

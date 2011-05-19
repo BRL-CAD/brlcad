@@ -119,7 +119,7 @@ nmg_has_dangling_faces(unsigned long *magic_p, const char *manifolds)
  * edge.
  */
 void
-nmg_show_each_loop(struct shell *s, size_t **classlist, int new, int fancy, const char *str)
+nmg_show_each_loop(struct shell *s, short **classlist, int new, int fancy, const char *str)
 
 
     /* non-zero means flush previous vlist */
@@ -343,7 +343,7 @@ nmg_kill_non_common_cracks(struct shell *sA, struct shell *sB)
  */
 
 static void
-nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, size_t **classlist)
+nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, short **classlist)
 {
     struct bu_ptbl verts;
     struct bu_ptbl edges;
@@ -551,9 +551,8 @@ nmg_kill_wire_edges(struct shell *s)
 static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int oper, const struct bn_tol *tol)
 {
     int i;
-    size_t nelem;
-    size_t *classlist[8];
-    size_t *classlist_base;
+    long nelem;
+    short *classlist[8];
     FILE *fd, *fp;
     struct model *m;
     struct nmgregion *rA;
@@ -662,25 +661,16 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 
     nmg_m_reindex(m, 0);
 
-    /*
-     * Allocate storage for classlist[].
-     * Get all 8 lists at once, and just build pointers for the rest.
-     * XXX In some cases, number of items may grow
-     * XXX (e.g. added vu's, loops) as things are demoted, etc.
-     * XXX Try to accomodate here by reserving some extra table space.
-     *
-     * XXX The classlist really only needs to be an unsigned char,
-     * XXX not a long*.
+    /* Allocate storage for classlist[].
+     * Allocate each of the 8 class lists one at a time. This will
+     * assist with debugging to determine if each array read/write
+     * is within its allocated space. The datatype needs to accommodate
+     * values -1 thru 7 therefore a signed datatype is necessary.
      */
 
-    /* It needs to be determined how much extra space is needed.
-     * Maybe space can be increased as necessary.
-     */
-    nelem = (m->maxindex)*10+1;		/* includes extra space */
-    classlist_base = (size_t *)bu_calloc(8 * nelem + 1,
-				     sizeof(size_t), "nmg_bool classlist_base");
+    nelem = m->maxindex;
     for (i = 0; i < 8; i++) {
-	classlist[i] = classlist_base + 8 + (i * nelem);
+        classlist[i] = (short *)bu_calloc(nelem, sizeof(short), "nmg_bool classlist_base");
     }
 
     nmg_classify_shared_edges_verts(sA, sB, classlist);
@@ -803,8 +793,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 
     nmg_class_nothing_broken = 1;
     if (rt_g.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) {
-	nmg_show_broken_classifier_stuff((unsigned long *)sA, &classlist[0],
-					 nmg_class_nothing_broken, 1, "unclassed sA");
+	nmg_show_broken_classifier_stuff((unsigned long *)sA, &classlist[0], nmg_class_nothing_broken, 1, "unclassed sA");
 	nmg_show_broken_classifier_stuff((unsigned long *)sB, &classlist[4], 1, 1, "unclassed sB");
     }
 
@@ -815,12 +804,12 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
      * A -vs- B live in classlist[0..3], B -vs- A live in classlist[4..7].
      */
     nmg_class_shells(sA, sB, &classlist[0], tol);
-    memcpy((size_t *)classlist[4+NMG_CLASS_AonBshared],
-	   (size_t *)classlist[0+NMG_CLASS_AonBshared],
-	   nelem*sizeof(size_t *));
-    memcpy((size_t *)classlist[4+NMG_CLASS_AonBanti],
-	   (size_t *)classlist[0+NMG_CLASS_AonBanti],
-	   nelem*sizeof(size_t *));
+    memcpy((short *)classlist[4+NMG_CLASS_AonBshared],
+	   (short *)classlist[0+NMG_CLASS_AonBshared],
+	   nelem*sizeof(short *));
+    memcpy((short *)classlist[4+NMG_CLASS_AonBanti],
+	   (short *)classlist[0+NMG_CLASS_AonBanti],
+	   nelem*sizeof(short *));
     nmg_class_shells(sB, sA, &classlist[4], tol);
 
     if (rt_g.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) {
@@ -923,7 +912,9 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	}
     }
 
-    bu_free((size_t *)classlist_base, "nmg_bool classlist_base");
+    for (i = 0; i < 8; i++) {
+        bu_free((short *)classlist[i], "nmg_bool classlist");
+    }
 
     if (rt_g.NMG_debug & DEBUG_BOOL) {
 	bu_log("Returning from NMG_BOOL\n");

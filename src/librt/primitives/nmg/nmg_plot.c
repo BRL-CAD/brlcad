@@ -1515,7 +1515,7 @@ nmg_pl_2fu(const char *str, const struct faceuse *fu1, const struct faceuse *fu2
  ************************************************************************/
 
 int nmg_class_nothing_broken=1;
-static size_t **global_classlist;
+static short **global_classlist;
 static long *broken_tab;
 static int broken_tab_len;
 static int broken_color;
@@ -1528,7 +1528,7 @@ static unsigned char broken_colors[][3] = {
     { 255, 255, 125 }	/* no classification list (cyan) */
 };
 #define PICK_BROKEN_COLOR(p) { \
-	if (global_classlist == (size_t **)NULL) { \
+	if (global_classlist == (short **)NULL) { \
 		broken_color = 5; \
 	} else if (NMG_INDEX_TEST(global_classlist[NMG_CLASS_AinB], (p))) \
 		broken_color = NMG_CLASS_AinB; \
@@ -1808,7 +1808,7 @@ nmg_plot_sigstepalong(int UNUSED(i))
  * that this is a graphical display of classifier operation.
  */
 void
-nmg_show_broken_classifier_stuff(unsigned long *p, size_t **classlist, int all_new, int fancy, const char *a_string)
+nmg_show_broken_classifier_stuff(unsigned long *p, short **classlist, int all_new, int fancy, const char *a_string)
 {
     static struct bn_vlblock *vbp = (struct bn_vlblock *)NULL;
     struct model *m;
