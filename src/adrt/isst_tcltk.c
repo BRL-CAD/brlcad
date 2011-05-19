@@ -622,6 +622,9 @@ aerotate(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
     return TCL_OK;
 }
 
+#if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
+#  __declspec(dllexport)
+#endif
 int
 Isst_Init(Tcl_Interp *interp)
 {
@@ -660,6 +663,9 @@ Isst_Init(Tcl_Interp *interp)
     return TCL_OK;
 }
 
+#if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
+#  __declspec(dllexport)
+#endif
 int
 Issttcltk_Init(Tcl_Interp *interp)
 {
