@@ -157,6 +157,8 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     Tcl_HashTable *tbl = (Tcl_HashTable *)client_data;
     Tcl_HashEntry *entry;
     matp_t inv_mat;
+    struct bu_attribute_value_set avs;
+    struct bu_attribute_value_pair *avpp;
 
     RT_CK_DBI(tsp->ts_dbip);
     RT_CK_FULL_PATH(pathp);
@@ -178,10 +180,18 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     rp->reg_gmater = tsp->ts_gmater;
     rp->reg_los = tsp->ts_los;
 
-    bu_avs_init_empty(&(rp->attr_values));
-    if (tsp->ts_attrs.count && tsp->ts_attrs.avp) {
-	    bu_avs_merge(&(rp->attr_values), &(tsp->ts_attrs));
-    }
+    dp = (struct directory *)DB_FULL_PATH_CUR_DIR(pathp);
+    if (dp) {
+       printf("name: %s\n", dp->d_namep);
+       bu_avs_init_empty(&avs); 
+       if (!db5_get_attributes(tsp->ts_dbip, &avs, dp)) {
+          bu_avs_print(&avs, "db5_get_attribute results:");
+          bu_avs_init_empty(&(rp->attr_values));
+          for(BU_AVS_FOR(avpp, &(tsp->ts_attrs))) {
+		bu_avs_add(&(rp->attr_values), avpp->name, bu_avs_get(&avs, avpp->name));
+          }
+        }
+     }
 
     rp->reg_mater = tsp->ts_mater; /* struct copy */
     if (tsp->ts_mater.ma_shader)
@@ -193,7 +203,6 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 
     rp->reg_name = db_path_to_string(pathp);
 
-    dp = (struct directory *)DB_FULL_PATH_CUR_DIR(pathp);
 
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	bu_log("_rt_gettree_region_end() %s\n", rp->reg_name);
