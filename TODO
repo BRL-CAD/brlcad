@@ -17,8 +17,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* solids regression is failing, at least on OSX - 3 off by many. 
-
 * test CMake build in multiple configurations on multiple platforms
   (Release/Debug, linux/mac/win/fbsd, x86/x86_64/ppc64/sparc)
 
@@ -67,6 +65,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* solids regression is failing in optimized builds  - 3 off by many. 
+  Looks to be floating fuzz overlap/pick issue? pixel 131329.
 
 * restore libged axis/grid commands code made in r44153 but with
   libged decoupled from libdm/libfb.
