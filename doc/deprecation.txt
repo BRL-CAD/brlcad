@@ -45,6 +45,12 @@ new names should be listed for reference.
 * DEPRECATED *
 **************
 
+7.20
+----
+
+raytrace.h
+	rt_load_attrs()
+
 7.18
 ----
 

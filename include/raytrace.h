@@ -2443,7 +2443,7 @@ RT_EXPORT BU_EXTERN(int rt_gettrees_muves,
 		     int argc,
 		     const char **argv,
 		     int ncpus));
-RT_EXPORT BU_EXTERN(int rt_load_attrs,
+DEPRECATED RT_EXPORT BU_EXTERN(int rt_load_attrs,
 		    (struct rt_i *rtip,
 		     char **attrs));
 /* Print seg struct */
