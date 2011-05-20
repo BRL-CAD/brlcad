@@ -962,36 +962,41 @@ wgl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 	register int	nused = tvp->nused;
 	register int	*cmd = tvp->cmd;
 	register point_t *pt = tvp->pt;
+	GLdouble glpt[3];
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    if (dmp->dm_debugLevel > 2)
 		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(pt));
 	    switch (*cmd) {
 		case BN_VLIST_LINE_MOVE:
+		case BN_VLIST_LINE_DRAW:
 		    break;
 		case BN_VLIST_POLY_START:
 		    /* Start poly marker & normal */
 		    if (first == 0)
 			glEnd();
+		    first = 0;
 
 		    glBegin(GL_POLYGON);
 		    /* Set surface normal (vl_pnt points outward) */
-		    glNormal3dv(*pt);
-		    break;
-		case BN_VLIST_LINE_DRAW:
+		    VMOVE(glpt, *pt);
+		    glNormal3dv(glpt);
 		    break;
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_POLY_DRAW:
-		    glVertex3dv(*pt);
+		    VMOVE(glpt, *pt);
+		    glVertex3dv(glpt);
 		    break;
 		case BN_VLIST_POLY_END:
 		    /* Draw, End Polygon */
-		    glVertex3dv(*pt);
+		    VMOVE(glpt, *pt);
+		    glVertex3dv(glpt);
 		    glEnd();
 		    first = 1;
 		    break;
 		case BN_VLIST_POLY_VERTNORM:
 		    /* Set per-vertex normal.  Given before vert. */
-		    glNormal3dv(*pt);
+		    VMOVE(glpt, *pt);
+		    glNormal3dv(glpt);
 		    break;
 	    }
 	}
@@ -999,7 +1004,6 @@ wgl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 
     if (first == 0)
 	glEnd();
-
 
     /* Last, draw wireframe/edges. */
 
@@ -1013,6 +1017,7 @@ wgl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 	register int	nused = tvp->nused;
 	register int	*cmd = tvp->cmd;
 	register point_t *pt = tvp->pt;
+	GLdouble glpt[3];
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    if (dmp->dm_debugLevel > 2)
 		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(pt));
@@ -1024,28 +1029,33 @@ wgl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 		    first = 0;
 
 		    glBegin(GL_LINE_STRIP);
-		    glVertex3dv(*pt);
+		    VMOVE(glpt, *pt);
+		    glVertex3dv(glpt);
 		    break;
 		case BN_VLIST_POLY_START:
 		    /* Start poly marker & normal */
 		    if (first == 0)
 			glEnd();
+		    first = 0;
 
 		    glBegin(GL_LINE_STRIP);
 		    break;
 		case BN_VLIST_LINE_DRAW:
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_POLY_DRAW:
-		    glVertex3dv(*pt);
+		    VMOVE(glpt, *pt);
+		    glVertex3dv(glpt);
 		    break;
 		case BN_VLIST_POLY_END:
 		    /* Draw, End Polygon */
-		    glVertex3dv(*pt);
+		    VMOVE(glpt, *pt);
+		    glVertex3dv(glpt);
 		    glEnd();
 		    first = 1;
 		    break;
 		case BN_VLIST_POLY_VERTNORM:
 		    /* Set per-vertex normal.  Given before vert. */
+		    VMOVE(glpt, glpt);
 		    glNormal3dv(*pt);
 		    break;
 	    }
@@ -1088,10 +1098,11 @@ wgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
     /* Viewing region is from -1.0 to +1.0 */
     first = 1;
     for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
-	int	i;
-	int	nused = tvp->nused;
-	int	*cmd = tvp->cmd;
-	point_t *pt = tvp->pt;
+	register int	i;
+	register int	nused = tvp->nused;
+	register int	*cmd = tvp->cmd;
+	register point_t *pt = tvp->pt;
+	GLdouble glpt[3];
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    if (dmp->dm_debugLevel > 2)
 		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(pt));
@@ -1114,12 +1125,14 @@ wgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    }
 
 		    glBegin(GL_LINE_STRIP);
-		    glVertex3dv(*pt);
+		    VMOVE(glpt, *pt);
+		    glVertex3dv(glpt);
 		    break;
 		case BN_VLIST_POLY_START:
 		    /* Start poly marker & normal */
 		    if (first == 0)
 			glEnd();
+		    first = 0;
 
 		    if (dmp->dm_light && mflag) {
 			mflag = 0;
@@ -1139,22 +1152,26 @@ wgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
 		    glBegin(GL_POLYGON);
 		    /* Set surface normal (vl_pnt points outward) */
-		    glNormal3dv(*pt);
+		    VMOVE(glpt, *pt);
+		    glNormal3dv(glpt);
 		    break;
 		case BN_VLIST_LINE_DRAW:
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_POLY_DRAW:
-		    glVertex3dv(*pt);
+		    VMOVE(glpt, *pt);
+		    glVertex3dv(glpt);
 		    break;
 		case BN_VLIST_POLY_END:
 		    /* Draw, End Polygon */
-		    glVertex3dv(*pt);
+		    VMOVE(glpt, *pt);
+		    glVertex3dv(glpt);
 		    glEnd();
 		    first = 1;
 		    break;
 		case BN_VLIST_POLY_VERTNORM:
 		    /* Set per-vertex normal.  Given before vert. */
-		    glNormal3dv(*pt);
+		    VMOVE(glpt, *pt);
+		    glNormal3dv(glpt);
 		    break;
 	    }
 	}
