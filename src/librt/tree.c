@@ -190,6 +190,7 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
         i++;
     }
     if (dp && region_found) {
+	printf("full path: %s\n", db_path_to_string(pathp));
 	printf("name: %s\n", dp->d_namep);
 	bu_avs_init_empty(&avs); 
 	if (!db5_get_attributes(tsp->ts_dbip, &avs, dp)) {
