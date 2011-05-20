@@ -582,9 +582,7 @@ struct region {
 #define REGION_NON_FASTGEN	0
 #define REGION_FASTGEN_PLATE	1
 #define REGION_FASTGEN_VOLUME	2
-    struct bu_mro **	attr_values;	/**< @brief Null terminated array of MRO structs
-					 * Each containing a value for the corresponding
-					 * attribute name passed to rt_gettrees_and_attrs() */
+    struct bu_attribute_value_set attr_values;	/**< @brief Attribute/value set */
 };
 #define REGION_NULL	((struct region *)0)
 #define RT_CK_REGION(_p)	BU_CKMAG(_p, RT_REGION_MAGIC, "struct region")

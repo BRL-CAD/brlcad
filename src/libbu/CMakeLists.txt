@@ -46,7 +46,6 @@ set(LIBBU_SOURCES
     malloc.c
     mappedfile.c
     mread.c
-    mro.c
     observer.c
     parallel.c
     parse.c

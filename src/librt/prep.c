@@ -941,15 +941,7 @@ rt_clean(register struct rt_i *rtip)
 	    bu_free((genptr_t)regp->reg_mater.ma_shader, "ma_shader");
 	    regp->reg_mater.ma_shader = (char *)NULL;
 	}
-	if (regp->attr_values) {
-	    i = 0;
-	    while (regp->attr_values[i]) {
-		bu_mro_free(regp->attr_values[i]);
-		bu_free(regp->attr_values[i], "rp->attr_values[i]");
-		i++;
-	    }
-	    bu_free((char *)regp->attr_values, "regp->attr_values");
-	}
+	bu_avs_free(&(regp->attr_values));
 	bu_free((genptr_t)regp, "struct region");
     }
     rtip->nregions = 0;
@@ -1104,14 +1096,7 @@ rt_del_regtree(struct rt_i *rtip, register struct region *delregp, struct resour
     delregp->reg_treetop = TREE_NULL;
     bu_free((char *)delregp->reg_name, "region name str");
     delregp->reg_name = (char *)0;
-    if (delregp->attr_values) {
-	int i=0;
-	while (delregp->attr_values[i]) {
-	    bu_mro_free(delregp->attr_values[i]);
-	    i++;
-	}
-	bu_free((char *)delregp->attr_values, "delregp->attr_values");
-    }
+    bu_avs_free(&(delregp->attr_values));
     bu_free((char *)delregp, "struct region");
     return 0;
 }
@@ -1202,7 +1187,6 @@ rt_ck(register struct rt_i *rtip)
 
 }
 
-
 /**
  * R T _ L O A D _ A T T R S
  *
@@ -1221,76 +1205,47 @@ int rt_load_attrs(struct rt_i *rtip, char **attrs)
     const char *reg_name;
     const char *attr;
     int attr_count=0;
-    int mro_count;
-    int did_set;
     int region_count=0;
-    int i;
+    int did_set, i;
 
     RT_CHECK_RTI(rtip);
     RT_CK_DBI(rtip->rti_dbip);
 
     if (db_version(rtip->rti_dbip) < 5)
-	return 0;
+        return 0;
 
     while (attrs[attr_count])
-	attr_count++;
+        attr_count++;
 
     for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
-	RT_CK_REGION(regp);
+        RT_CK_REGION(regp);
 
 	did_set = 0;
-	mro_count = 0;
-	while (regp->attr_values[mro_count])
-	    mro_count++;
+        if ((reg_name=strrchr(regp->reg_name, '/')) == NULL)
+            reg_name = regp->reg_name;
+        else
+            reg_name++;
 
-	if (mro_count < attr_count) {
-	    /* don't have enough to store all the values */
-	    for (i=0; i<mro_count; i++) {
-		bu_mro_free(regp->attr_values[i]);
-		bu_free((char *)regp->attr_values[i], "regp->attr_values[i]");
-	    }
-	    if (mro_count)
-		bu_free((char *)regp->attr_values, "regp->attr_values");
-	    regp->attr_values = (struct bu_mro **)bu_calloc(attr_count + 1,
-							    sizeof(struct bu_mro *), "regp->attr_values");
-	    for (i=0; i<attr_count; i++) {
-		regp->attr_values[i] = bu_malloc(sizeof(struct bu_mro),
-						 "regpp->attr_values[i]");
-		bu_mro_init(regp->attr_values[i]);
-	    }
-	} else if (mro_count > attr_count) {
-	    /* just reuse what we have */
-	    for (i=attr_count; i<mro_count; i++) {
-		bu_mro_free(regp->attr_values[i]);
-		bu_free((char *)regp->attr_values[i], "regp->attr_values[i]");
-	    }
-	    regp->attr_values[attr_count] = (struct bu_mro *)NULL;
-	}
+        if ((dp=db_lookup(rtip->rti_dbip, reg_name, LOOKUP_NOISY)) == RT_DIR_NULL)
+            continue;
 
-	if ((reg_name=strrchr(regp->reg_name, '/')) == NULL)
-	    reg_name = regp->reg_name;
-	else
-	    reg_name++;
+        bu_avs_init_empty(&avs);
+        if (db5_get_attributes(rtip->rti_dbip, &avs, dp)) {
+            bu_log("rt_load_attrs: Failed to get attributes for region %s\n", reg_name);
+            continue;
+        }
 
-	if ((dp=db_lookup(rtip->rti_dbip, reg_name, LOOKUP_NOISY)) == RT_DIR_NULL)
-	    continue;
-
-	bu_avs_init_empty(&avs);
-	if (db5_get_attributes(rtip->rti_dbip, &avs, dp)) {
-	    bu_log("rt_load_attrs: Failed to get attributes for region %s\n", reg_name);
-	    continue;
-	}
-
+        bu_avs_init_empty(&(regp->attr_values));
 	for (i=0; i<attr_count; i++) {
-	    if ((attr = bu_avs_get(&avs, attrs[i])) == NULL)
-		continue;
+		if ((attr = bu_avs_get(&avs, attrs[i])) == NULL)
+			continue;
 
-	    bu_mro_set(regp->attr_values[i], attr);
-	    did_set = 1;
+		bu_avs_add(&(regp->attr_values), attrs[i], attr);
+		did_set = 1;
 	}
 
 	if (did_set)
-	    region_count++;
+		region_count++;
 
 	bu_avs_free(&avs);
     }
@@ -1708,14 +1663,7 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 	    bu_free((genptr_t)rp->reg_mater.ma_shader, "ma_shader");
 	    rp->reg_mater.ma_shader = (char *)NULL;
 	}
-	if (rp->attr_values) {
-	    i = 0;
-	    while (rp->attr_values[i]) {
-		bu_mro_free(rp->attr_values[i]);
-		i++;
-	    }
-	    bu_free((char *)rp->attr_values, "rp->attr_values");
-	}
+	bu_avs_free(&(rp->attr_values));
 	bu_free((genptr_t)rp, "struct region");
     }
 
