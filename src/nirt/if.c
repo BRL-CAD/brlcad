@@ -63,7 +63,6 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
     struct bu_vls claimant_list;	/* Names of the claiming regions */
     int need_to_free = 0;	/* Clean up the bu_vls? */
     fastf_t get_obliq(fastf_t *ray, fastf_t *normal);
-    struct bu_vls *vls;
     struct bu_vls attr_vls;
     char regionPN[512] = {0};
     struct bu_attribute_value_pair *avpp;
