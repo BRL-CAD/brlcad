@@ -51,7 +51,6 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "{set|get|show|rm|append} object [key [value] ... ]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
@@ -120,6 +119,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	bu_avs_free(&avs);
 
     } else if (BU_STR_EQUAL(argv[1], "set")) {
+	GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 	/* setting attribute/value pairs */
 	if ((argc - 3) % 2) {
 	    bu_vls_printf(&gedp->ged_result_str,
@@ -147,6 +147,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	/* avs is freed by db5_update_attributes() */
 
     } else if (BU_STR_EQUAL(argv[1], "rm")) {
+	GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 	i = 3;
 	while (i < (size_t)argc) {
     	    if (BU_STR_EQUAL(argv[i], "region")) {
@@ -165,6 +166,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	/* avs is freed by db5_replace_attributes() */
 
     } else if (BU_STR_EQUAL(argv[1], "append")) {
+	GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 	if ((argc-3)%2) {
 	    bu_vls_printf(&gedp->ged_result_str,
 			  "Error: attribute names and values must be in pairs!!!\n");
