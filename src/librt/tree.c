@@ -159,8 +159,6 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     matp_t inv_mat;
     struct bu_attribute_value_set avs;
     struct bu_attribute_value_pair *avpp;
-    int i = 0;
-    int region_found = 0;
 
     RT_CK_DBI(tsp->ts_dbip);
     RT_CK_FULL_PATH(pathp);
@@ -182,23 +180,12 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     rp->reg_gmater = tsp->ts_gmater;
     rp->reg_los = tsp->ts_los;
 
-    while (pathp->fp_len - i > 0 && !region_found) {
-	dp = (struct directory *)DB_FULL_PATH_GET(pathp, i);
-        if (dp->d_flags & RT_DIR_REGION) {
-            region_found = 1;
-        }
-        i++;
-    }
-    if (dp && region_found) {
-	printf("full path: %s\n", db_path_to_string(pathp));
-	printf("name: %s\n", dp->d_namep);
-	bu_avs_init_empty(&avs); 
-	if (!db5_get_attributes(tsp->ts_dbip, &avs, dp)) {
-	    bu_avs_print(&avs, "db5_get_attribute results:");
-	    bu_avs_init_empty(&(rp->attr_values));
-	    for(BU_AVS_FOR(avpp, &(tsp->ts_attrs))) {
-		bu_avs_add(&(rp->attr_values), avpp->name, bu_avs_get(&avs, avpp->name));
-	    }
+    dp = (struct directory *)DB_FULL_PATH_CUR_DIR(pathp);
+    bu_avs_init_empty(&avs); 
+    if (!db5_get_attributes(tsp->ts_dbip, &avs, dp)) {
+	bu_avs_init_empty(&(rp->attr_values));
+	for(BU_AVS_FOR(avpp, &(tsp->ts_attrs))) {
+	    bu_avs_add(&(rp->attr_values), avpp->name, bu_avs_get(&avs, avpp->name));
 	}
     }
 
