@@ -60,10 +60,6 @@ main(int argc, char *argv[])
 	}
     }
 
-    if (count <= 0) {
-	bu_exit(EXIT_FAILURE, "ERROR: count must be greater than zero");
-    }
-
     if (bu_file_exists(outfile)) {
 	bu_exit(EXIT_FAILURE, "ERROR: %s already exists.  Remove file and try again.", outfile);
     }
