@@ -40,11 +40,11 @@
 # Usual options.
 #
 itk::usual Scrolledtext {
-    keep -activebackground -activerelief -background -borderwidth -cursor \
-	 -elementborderwidth -foreground -highlightcolor -highlightthickness \
+    keep -background -borderwidth -cursor \
+	 -foreground -highlightcolor -highlightthickness \
 	 -insertbackground -insertborderwidth -insertofftime -insertontime \
-	 -insertwidth -jump -labelfont -selectbackground -selectborderwidth \
-	 -selectforeground -textbackground -textfont -troughcolor 
+	 -insertwidth -labelfont -selectbackground -selectborderwidth \
+	 -selectforeground -textbackground -textfont
 }
 
 # ------------------------------------------------------------------

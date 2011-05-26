@@ -38,10 +38,10 @@
 # Usual options.
 #
 itk::usual Fileselectiondialog {
-    keep -activebackground -activerelief -background -borderwidth -cursor \
-	 -elementborderwidth -foreground -highlightcolor -highlightthickness \
+    keep -background -borderwidth -cursor \
+	 -foreground -highlightcolor -highlightthickness \
 	 -insertbackground -insertborderwidth -insertofftime -insertontime \
-	 -insertwidth -jump -labelfont -modality -selectbackground \
+	 -insertwidth -labelfont -modality -selectbackground \
 	 -selectborderwidth -textbackground -textfont 
 }
 
