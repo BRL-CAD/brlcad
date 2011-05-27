@@ -710,7 +710,7 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
  * same edge.
  *
  */
-HIDDEN void make_near_list(struct edge_info *edge_list, struct bu_list *near1)
+HIDDEN void make_near_list(struct edge_info *edge_list, struct bu_list *near1, const struct bn_tol *tol)
 {
     struct edge_info *ei;
     struct edge_info *ei_p;
@@ -772,7 +772,7 @@ HIDDEN void make_near_list(struct edge_info *edge_list, struct bu_list *near1)
     for (BU_LIST_FOR(ei, edge_info, &edge_list->l)) {
 	NMG_CK_EI(ei);
 	NMG_CK_VED(ei->ved_p);
-	if (ZERO(ei->ved_p->dist - dist)) {
+	if (NEAR_ZERO(ei->ved_p->dist - dist, tol->dist_sq)) {
 	    ei_p = BU_LIST_PLAST(edge_info, &ei->l);
 	    BU_LIST_DEQUEUE(&ei->l);
 	    BU_LIST_APPEND(near1, &ei->l);
@@ -901,7 +901,7 @@ compute_loop_class(struct fpi *fpi,
      * the pt WRT the loop
      */
     while (BU_LIST_IS_EMPTY(&near1) && BU_LIST_NON_EMPTY(&edge_list->l)) {
-	make_near_list(edge_list, &near1);
+	make_near_list(edge_list, &near1, fpi->tol);
     }
 
     if (BU_LIST_IS_EMPTY(&near1)) {

@@ -23,7 +23,7 @@
 # rtwizard wrapper script to make things seem normal
 #
 # The trailing backslash forces tcl to skip the next line \
-STARTUP_HOME=`dirname $0`/../..
+STARTUP_HOME=`dirname $0`/..
 #\
 export STARTUP_HOME
 # restart using bwish \

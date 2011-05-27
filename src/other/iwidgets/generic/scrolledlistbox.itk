@@ -38,10 +38,10 @@
 # Usual options.
 #
 itk::usual Scrolledlistbox {
-    keep -activebackground -activerelief -background -borderwidth -cursor \
-     -elementborderwidth -foreground -highlightcolor -highlightthickness \
-     -jump -labelfont -selectbackground -selectborderwidth \
-     -selectforeground -textbackground -textfont -troughcolor 
+    keep -background -borderwidth -cursor \
+     -foreground -highlightcolor -highlightthickness \
+     -labelfont -selectbackground -selectborderwidth \
+     -selectforeground -textbackground -textfont
 }
 
 # ------------------------------------------------------------------

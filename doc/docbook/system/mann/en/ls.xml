@@ -21,7 +21,7 @@ command.  If the object argument is supplied, only those objects are listed.
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
     <command>ls</command>    
-      <arg choice="opt" rep="norepeat">-A -o -a -c -r -s -p -l</arg>
+      <arg choice="opt" rep="norepeat">-A -o -a -c -r -s -p -l -q</arg>
     	<arg choice="opt" rep="norepeat"><replaceable>objects</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
@@ -61,6 +61,10 @@ command.  If the object argument is supplied, only those objects are listed.
  <para>l -- Use long format showing object name, object type, major type, minor type, and
    length.
  </para>
+</listitem>
+<listitem>
+	<para>q -- Suppress informational output messages during database lookup process
+	</para>
 </listitem>
 </itemizedlist>
 

@@ -48,6 +48,8 @@ bench_dirs = \
 	libged \
 	liboptical \
 	liborle \
+	libdm \
+	libtclcad \
 	conv \
 	fbserv \
 	rt
@@ -55,11 +57,9 @@ bench_dirs = \
 # anything not included from above
 kitchensink_dirs = \
 	libcursor \
-	libdm \
 	libfft \
 	libicv \
 	libmultispectral \
-	libtclcad \
 	libtermio \
 	adrt \
 	anim \

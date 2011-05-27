@@ -70,17 +70,18 @@ __BEGIN_DECLS
 #define INV_GED_V 0.00048828125
 #define INV_4096_V 0.000244140625
 
-#define GED_NULL (struct ged *)0
-#define GED_DISPLAY_LIST_NULL (struct ged_display_list *)0
-#define GED_DRAWABLE_NULL (struct ged_drawable *)0
-#define GED_VIEW_NULL (struct ged_view *)0
-#define GED_OBJ_NULL (struct ged_obj *)0
+#define GED_NULL ((struct ged *)0)
+#define GED_DISPLAY_LIST_NULL ((struct ged_display_list *)0)
+#define GED_DRAWABLE_NULL ((struct ged_drawable *)0)
+#define GED_VIEW_NULL ((struct ged_view *)0)
+#define GED_DM_VIEW_NULL ((struct ged_dm_view *)0)
+#define GED_OBJ_NULL ((struct ged_obj *)0)
 
 #define GED_VIEW_OBJ_NULL ((struct view_obj *)0)
 #define GED_RESULT_NULL ((void *)0)
 
-#define GED_FUNC_PTR_NULL (ged_func_ptr)0
-#define GED_REFRESH_CALLBACK_PTR_NULL (ged_refresh_callback_ptr)0
+#define GED_FUNC_PTR_NULL ((ged_func_ptr)0)
+#define GED_REFRESH_CALLBACK_PTR_NULL ((ged_refresh_callback_ptr)0)
 
 #define GED_IDLE_MODE 0
 #define GED_ROTATE_MODE 1

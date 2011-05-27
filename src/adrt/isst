@@ -1,6 +1,48 @@
 #!/bin/sh
-# the next line restarts using bwish \
-exec bwish "$0" "$@"
+# Copyright (c) 2002-2011 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public License
+# version 2.1 as published by the Free Software Foundation.
+#
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this file; see the file named COPYING for more
+# information.
+#
+#\
+ISST_HOME=`dirname $0`/..
+#\
+export ISST_HOME
+# restart using bwish \
+WISH="bwish"
+#\
+for ish in bwish bwish_d ; do
+# see if we're installed \
+    if test -f ${ISST_HOME}/bin/$ish ; then
+#\
+        WISH="${ISST_HOME}/bin/$ish"
+#\
+        break;
+#\
+    fi
+# see if we're not installed yet \
+    if test -f ${ISST_HOME}/bwish/$ish ; then
+#\
+        WISH="${ISST_HOME}/bwish/$ish"
+#\
+        break;
+#\
+    fi
+#\
+done
+#\
+exec $WISH $0 $@
 
 package require Togl
 package require isst
@@ -186,6 +228,12 @@ proc ::isst::RotMove2 {x y W} {
 if { [info script] == $argv0 } {
     global az el oglwin
     ::isst::setup
+    if {$argc == 1} {
+       ::isst::geomlist [lindex $argv 0]
+    }
+    if {$argc == 2} {
+       load_g $oglwin [lindex $argv 0] [lindex $argv 1]
+    }
     # Do a couple operations to make sure 
     # the view is properly initialized on OSX
     update

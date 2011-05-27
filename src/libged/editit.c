@@ -196,6 +196,7 @@ _ged_editit(char *editstring, const char *filename)
 int
 ged_editit(struct ged *gedp, int argc, const char *argv[])
 {
+    int ret = 0;
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
@@ -205,9 +206,12 @@ ged_editit(struct ged *gedp, int argc, const char *argv[])
     if (argc != 5) {
 	bu_vls_printf(&gedp->ged_result_str, "Internal Error: \"%s -e editstring -f tmpfile\" is malformed (argc == %d)", argv[0], argc);
 	return TCL_ERROR;
+    } else {
+	char *edstr = bu_strdup((char *)argv[2]);
+	ret = _ged_editit(edstr, argv[4]);
+	bu_free(edstr, "free tmp editstring copy");
+	return ret;
     }
-
-    return _ged_editit((char *)argv[2], argv[4]);
 }
 
 

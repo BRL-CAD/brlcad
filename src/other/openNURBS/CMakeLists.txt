@@ -1,3 +1,9 @@
+# build shared libs by default
+OPTION(BUILD_SHARED_LIBS "Build shared libraries" ON)
+
+# build static libs by default
+OPTION(BUILD_STATIC_LIBS "Build static libraries" ON)
+
 set(OPENNURBS_SOURCES
     opennurbs_3dm_attributes.cpp
     opennurbs_3dm_properties.cpp
@@ -106,21 +112,150 @@ set(OPENNURBS_SOURCES
     opennurbs_zlib.cpp
 )
 
-file(GLOB OPENNURBS_HEADERS *.h)
+SET(OPENNURBS_HEADERS
+	opennurbs.h
+	opennurbs_3dm.h
+	opennurbs_3dm_attributes.h
+	opennurbs_3dm_properties.h
+	opennurbs_3dm_settings.h
+	opennurbs_annotation.h
+	opennurbs_annotation2.h
+	opennurbs_arc.h
+	opennurbs_arccurve.h
+	opennurbs_archive.h
+	opennurbs_array.h
+	opennurbs_array_defs.h
+	opennurbs_base32.h
+	opennurbs_base64.h
+	opennurbs_beam.h
+	opennurbs_bezier.h
+	opennurbs_bitmap.h
+	opennurbs_bounding_box.h
+	opennurbs_box.h
+	opennurbs_brep.h
+	opennurbs_circle.h
+	opennurbs_color.h
+	opennurbs_cone.h
+	opennurbs_crashtest.h
+	opennurbs_crc.h
+	opennurbs_curve.h
+	opennurbs_curveonsurface.h
+	opennurbs_curveproxy.h
+	opennurbs_cylinder.h
+	opennurbs_defines.h
+	opennurbs_detail.h
+	opennurbs_dimstyle.h
+	opennurbs_ellipse.h
+	opennurbs_error.h
+	opennurbs_evaluate_nurbs.h
+	opennurbs_extensions.h
+	opennurbs_font.h
+	opennurbs_fpoint.h
+	opennurbs_geometry.h
+	opennurbs_gl.h
+	opennurbs_group.h
+	opennurbs_hatch.h
+	opennurbs_instance.h
+	opennurbs_intersect.h
+	opennurbs_knot.h
+	opennurbs_layer.h
+	opennurbs_light.h
+	opennurbs_line.h
+	opennurbs_linecurve.h
+	opennurbs_linestyle.h
+	opennurbs_linetype.h
+	opennurbs_lookup.h
+	opennurbs_mapchan.h
+	opennurbs_massprop.h
+	opennurbs_material.h
+	opennurbs_math.h
+	opennurbs_matrix.h
+	opennurbs_memory.h
+	opennurbs_mesh.h
+	opennurbs_nurbscurve.h
+	opennurbs_nurbssurface.h
+	opennurbs_object.h
+	opennurbs_object_history.h
+	opennurbs_objref.h
+	opennurbs_offsetsurface.h
+	opennurbs_optimize.h
+	opennurbs_plane.h
+	opennurbs_planesurface.h
+	opennurbs_pluginlist.h
+	opennurbs_point.h
+	opennurbs_pointcloud.h
+	opennurbs_pointgeometry.h
+	opennurbs_pointgrid.h
+	opennurbs_polycurve.h
+	opennurbs_polyedgecurve.h
+	opennurbs_polyline.h
+	opennurbs_polylinecurve.h
+	opennurbs_quaternion.h
+	opennurbs_rand.h
+	opennurbs_rendering.h
+	opennurbs_revsurface.h
+	opennurbs_rtree.h
+	opennurbs_sphere.h
+	opennurbs_staticlib_linking_pragmas.h
+	opennurbs_string.h
+	opennurbs_sumsurface.h
+	opennurbs_surface.h
+	opennurbs_surfaceproxy.h
+	opennurbs_system.h
+	opennurbs_textlog.h
+	opennurbs_texture.h
+	opennurbs_texture_mapping.h
+	opennurbs_torus.h
+	opennurbs_userdata.h
+	opennurbs_uuid.h
+	opennurbs_version.h
+	opennurbs_viewport.h
+	opennurbs_workspace.h
+	opennurbs_x.h
+	opennurbs_xform.h
+	opennurbs_zlib.h
+	)
+
+SET(ON_DLL_HEADERS
+	opennurbs_dll_resource.h
+)
+
+INCLUDE(CheckIncludeFiles)
+CHECK_INCLUDE_FILE(emmintrin.h HAVE_EMMINTRIN_H)
+CHECK_INCLUDE_FILE(ieeefp.h HAVE_IEEEFP_H)
+CHECK_INCLUDE_FILE(sys/stat.h HAVE_SYS_STAT_H)
+if(HAVE_EMMINTRIN_H)
+	add_definitions(-DHAVE_EMMINTRIN_H)
+endif(HAVE_EMMINTRIN_H)
+if(HAVE_IEEEFP_H)
+	add_definitions(-DHAVE_IEEEFP_H)
+endif(HAVE_IEEEFP_H)
+if(HAVE_SYS_STAT_H)
+	add_definitions(-DHAVE_SYS_STAT_H)
+endif(HAVE_SYS_STAT_H)
 
 set(OPENNURBS_LINKLIBRARIES
-    zlib
+    ${ZLIB_LIBRARY}
 )
 
+# Ideally, we should only need ZLIB here
 include_directories(
-    ../../../include
-    ../libz
+	${${CMAKE_PROJECT_NAME}_SOURCE_DIR}/include
+    ${ZLIB_INCLUDE_DIR}
 )
 
-add_definitions(
-   -DON_COMPILING_OPENNURBS
-   -DON_DLL_EXPORTS
-)
+if (MSVC)
+   add_definitions(
+      -DON_COMPILING_OPENNURBS
+       -DON_DLL_EXPORTS
+   )
+	SET(OPENNURBS_HEADERS "${OPENNURBS_HEADERS};${ON_DLL_HEADERS}")
+else (MSVC)
+   add_definitions(
+       -DON_COMPILING_OPENNURBS
+   )
+endif(MSVC)
+
 
 if(MSVC)
     add_definitions(
@@ -133,15 +268,22 @@ if(MSVC)
     )
 endif(MSVC)
 
-add_library(openNURBS SHARED ${OPENNURBS_SOURCES})
+IF(BUILD_SHARED_LIBS)
+  add_library(openNURBS SHARED ${OPENNURBS_SOURCES})
+  target_link_libraries(openNURBS ${OPENNURBS_LINKLIBRARIES})
+  set_property(TARGET openNURBS PROPERTY LINK_INTERFACE_LIBRARIES "")
+  SET_TARGET_PROPERTIES(openNURBS PROPERTIES VERSION "2010.04.95")
+  install(TARGETS openNURBS DESTINATION ${LIB_DIR})
+ENDIF(BUILD_SHARED_LIBS)
+IF(NOT MSVC)
+   IF(BUILD_STATIC_LIBS)
+	add_library(openNURBS-static STATIC ${OPENNURBS_SOURCES})
+	target_link_libraries(openNURBS-static ${OPENNURBS_LINKLIBRARIES})
+	IF(NOT WIN32)
+		SET_TARGET_PROPERTIES(openNURBS-static PROPERTIES OUTPUT_NAME "openNURBS")
+	ENDIF(NOT WIN32)
+	install(TARGETS openNURBS-static ARCHIVE DESTINATION ${LIB_DIR})
+   ENDIF(BUILD_STATIC_LIBS)
+ENDIF(NOT MSVC)
 
-target_link_libraries(openNURBS ${OPENNURBS_LINKLIBRARIES})
-
-set_property(TARGET openNURBS PROPERTY LINK_INTERFACE_LIBRARIES "")
-
-install(TARGETS openNURBS
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-)
-
-install(FILES ${OPENNURBS_HEADERS} DESTINATION include)
+install(FILES ${OPENNURBS_HEADERS} DESTINATION include/openNURBS)

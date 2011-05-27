@@ -1194,6 +1194,7 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
 
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB(comb);
+        db5_sync_attr_to_comb(comb, &intern.idb_avs, dp->d_namep);
 	if ((is_region = db_apply_state_from_comb(&nts, pathp, comb)) < 0) {
 	    db_free_db_tree_state(&nts);
 	    curtree = TREE_NULL;		/* FAIL */

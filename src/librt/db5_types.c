@@ -37,25 +37,6 @@
 #include "db5.h"
 #include "raytrace.h"
 
-/**
- * Define standard attribute types in BRL-CAD geometry. (See the
- * gattributes manual page) these should be a collective enumeration
- * starting from 0 and increasing without any gaps in the numbers so
- * db5_standard_attribute() can be used as an index-based iterator.
- */
-
-enum {
-    ATTR_REGION = 0,
-    ATTR_REGION_ID,
-    ATTR_MATERIAL_ID,
-    ATTR_AIR,
-    ATTR_LOS,
-    ATTR_COLOR,
-    ATTR_SHADER,
-    ATTR_INHERIT,
-    ATTR_NULL
-};
-
 
 struct db5_type {
     int major_code;
@@ -303,7 +284,7 @@ db5_standard_attribute(int idx)
 	case ATTR_MATERIAL_ID:
 	    return "material_id";
 	case ATTR_AIR:
-	    return "air";
+	    return "aircode";
 	case ATTR_LOS:
 	    return "los";
 	case ATTR_COLOR:
@@ -378,6 +359,9 @@ db5_standardize_attribute(const char *attr)
 	return ATTR_AIR;
     if (BU_STR_EQUAL(attr, "AIRCODE"))
 	return ATTR_AIR;
+    if (BU_STR_EQUAL(attr, "aircode"))
+	return ATTR_AIR;
+
 
     if (BU_STR_EQUAL(attr, "los"))
 	return ATTR_LOS;
@@ -393,6 +377,8 @@ db5_standardize_attribute(const char *attr)
     if (BU_STR_EQUAL(attr, "RGB"))
 	return ATTR_COLOR;
 
+    if (BU_STR_EQUAL(attr, "shader"))
+	return ATTR_SHADER;
     if (BU_STR_EQUAL(attr, "oshader"))
 	return ATTR_SHADER;
     if (BU_STR_EQUAL(attr, "SHADER"))
@@ -404,6 +390,36 @@ db5_standardize_attribute(const char *attr)
 	return ATTR_INHERIT;
 
     return ATTR_NULL;
+}
+
+
+int
+db5_is_boolean_attribute(int attr) {
+    if (attr == ATTR_REGION) 
+	return 1;
+    if (attr == ATTR_INHERIT)
+	return 1;
+    return 0;
+}
+
+
+void
+db_attr_add(struct bu_attribute_value_set *newavs, int attr_type, const char *stdattr, const char *value)
+{   
+    if (db5_is_boolean_attribute(attr_type)) {
+	if (bu_str_true(value)) {
+	    /* Use R for region, otherwise go with 1 */
+	    if (attr_type == ATTR_REGION) {
+		(void)bu_avs_add(newavs, stdattr, "R\0");
+	    } else {
+		(void)bu_avs_add(newavs, stdattr, "1\0");
+	    }
+	} else {
+	    (void)bu_avs_remove(newavs, stdattr);
+	}
+    } else {
+	(void)bu_avs_add(newavs, stdattr, value);
+    }
 }
 
 
@@ -439,7 +455,7 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
 
 	/* name is already in standard form, add it */
 	if (attr_type != ATTR_NULL && BU_STR_EQUAL(stdattr, avpp->name))
-	    (void)bu_avs_add(&newavs, stdattr, avpp->value);
+	    (void)db_attr_add(&newavs, attr_type, stdattr, avpp->value);
     }
 
     /* SECOND PASS: check for duplicates and non-standard
@@ -459,7 +475,7 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
 
 	    /* case 1: name is "standardizable" and not added */
 
-	    (void)bu_avs_add(&newavs, stdattr, avpp->value);
+	    (void)db_attr_add(&newavs, attr_type, stdattr, avpp->value);
 	} else if (attr_type != ATTR_NULL && BU_STR_EQUAL(added, avpp->value)) {
 
 	    /* case 2: name is "standardizable", but we already added the same value */
@@ -470,13 +486,13 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
 	    /* case 3: name is "standardizable", but we already added something else */
 
 	    /* preserve the conflict, keep the old value too */
-	    (void)bu_avs_add(&newavs, avpp->name, avpp->value);
+	    (void)db_attr_add(&newavs, attr_type, avpp->name, avpp->value);
 	    conflict++;
 	} else {
 
 	    /* everything else: add it */
 
-	    (void)bu_avs_add(&newavs, avpp->name, avpp->value);
+	    (void)db_attr_add(&newavs, attr_type, avpp->name, avpp->value);
 	}
     }
     bu_avs_free(avs);
@@ -488,163 +504,210 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
 
 
 void
-db5_apply_std_attributes(struct db_i *dbip, struct directory *dp, struct rt_comb_internal *comb)
+db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_value_set *avs, const char *name)
 {
+    int ret;
     size_t i;
-    long attr_num_val;
-    int color[3];
-    struct bu_attribute_value_set avs;
+    long int attr_num_val;
+    /*double attr_float_val;*/
+    char *endptr;
+    int color[3] = {-1, -1, -1};
     struct bu_vls newval;
     bu_vls_init(&newval);
 
     /* check inputs */
-    RT_CK_DBI(dbip);
-    RT_CK_DIR(dp);
     RT_CK_COMB(comb);
 
-    bu_avs_init_empty(&avs);
+    /* region flag */
+    bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_REGION)));
+    bu_vls_trimspace(&newval);
+    if (bu_str_true(bu_vls_addr(&newval))) {
+	comb->region_flag = 1;
+    } else {
+	comb->region_flag = 0;
+    }
 
-    if (!db5_get_attributes(dbip, &avs, dp)) {
-
-	db5_standardize_avs(&avs);
-
-	/* region flag */
-	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, db5_standard_attribute(ATTR_REGION)));
-	if (bu_str_true(bu_vls_addr(&newval))) {
-	    comb->region_flag = 1;
-	    dp->d_flags |= RT_DIR_REGION;
-	} else {
-	    comb->region_flag = 0;
-	    dp->d_flags &= ~RT_DIR_REGION;
-	}
-
-	/* region_id */
-	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, db5_standard_attribute(ATTR_REGION_ID)));
-	attr_num_val = atoi(bu_vls_addr(&newval));
-	if (attr_num_val >= 0 || attr_num_val == -1) {
+    /* region_id */
+    bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_REGION_ID)));
+    bu_vls_trimspace(&newval);
+    if (bu_vls_strlen(&newval) != 0 && !BU_STR_EQUAL(bu_vls_addr(&newval), "(null)") && !BU_STR_EQUAL(bu_vls_addr(&newval), "del")) {
+	attr_num_val = strtol(bu_vls_addr(&newval), &endptr, 0);
+	if (endptr == bu_vls_addr(&newval) + strlen(bu_vls_addr(&newval))) {
 	    comb->region_id = attr_num_val;
 	} else {
-	    bu_log("Warning - invalid region_id value on comb %s - comb->region_id remains at %d\n", dp->d_namep, comb->region_id);
+	    bu_log("WARNING: [%s] has invalid region_id value [%s]\nregion_id remains at %d\n", name, bu_vls_addr(&newval), comb->region_id);
 	}
+    } else {
+	/* remove region_id  */
+	comb->region_id = 0;
+    }
 
-	/* material_id */
-	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, db5_standard_attribute(ATTR_MATERIAL_ID)));
-	attr_num_val = atoi(bu_vls_addr(&newval));
-	if (attr_num_val >= 0) {
+    /* material_id */
+    bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_MATERIAL_ID)));
+    bu_vls_trimspace(&newval);
+    if (bu_vls_strlen(&newval) != 0 && !BU_STR_EQUAL(bu_vls_addr(&newval), "(null)") && !BU_STR_EQUAL(bu_vls_addr(&newval), "del")) {
+	attr_num_val = strtol(bu_vls_addr(&newval), &endptr, 0);
+	if (endptr == bu_vls_addr(&newval) + strlen(bu_vls_addr(&newval))) {
 	    comb->GIFTmater = attr_num_val;
 	} else {
-	    bu_log("Warning - invalid material_id value on comb %s - comb->GIFTmater remains at %d\n", dp->d_namep, comb->GIFTmater);
+	    bu_log("WARNING: [%s] has invalid material_id value [%s]\nmateriel_id remains at %d\n", name, bu_vls_addr(&newval), comb->GIFTmater);
 	}
+    } else {
+	/* empty - set to zero */
+	comb->GIFTmater = 0;
+    }
 
-	/* air */
-	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, db5_standard_attribute(ATTR_AIR)));
-	attr_num_val = atoi(bu_vls_addr(&newval));
-	if (attr_num_val == 0 || attr_num_val == 1) {
+    /* aircode */
+    bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_AIR)));
+    bu_vls_trimspace(&newval);
+    if (bu_vls_strlen(&newval) != 0 && !BU_STR_EQUAL(bu_vls_addr(&newval), "(null)") && !BU_STR_EQUAL(bu_vls_addr(&newval), "del")) {
+	attr_num_val = strtol(bu_vls_addr(&newval), &endptr, 0);
+	if (endptr == bu_vls_addr(&newval) + strlen(bu_vls_addr(&newval))) {
 	    comb->aircode = attr_num_val;
 	} else {
-	    bu_log("Warning - invalid Air Code value on comb %s - comb->aircode remains at %d\n", dp->d_namep, comb->aircode);
+	    bu_log("WARNING: [%s] has invalid aircode value [%s]\naircode remains at %d\n", name, bu_vls_addr(&newval), comb->aircode);
 	}
+    } else {
+	/* not air */
+	comb->aircode = 0;
+    }
 
-	/* los */
-	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, db5_standard_attribute(ATTR_LOS)));
-	attr_num_val = atoi(bu_vls_addr(&newval)); /* Is LOS really limited to integer values?? - also, need some sanity checking */
-	comb->los = attr_num_val;
+    /* los */
+    bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_LOS)));
+    bu_vls_trimspace(&newval);
+    if (bu_vls_strlen(&newval) != 0 && !BU_STR_EQUAL(bu_vls_addr(&newval), "(null)") && !BU_STR_EQUAL(bu_vls_addr(&newval), "del")) {
+	/* Currently, struct rt_comb_internal lists los as a long.  Probably should allow
+	 * floating point, but as it's DEPRECATED anyway I suppose we can wait for that? */ 
+	/* attr_float_val = strtod(bu_vls_addr(&newval), &endptr); */
+	attr_num_val = strtol(bu_vls_addr(&newval), &endptr, 0);
+	if (endptr == bu_vls_addr(&newval) + strlen(bu_vls_addr(&newval))) {
+	    comb->los = attr_num_val;
+	} else {
+	    bu_log("WARNING: [%s] has invalid los value\nlos remains at %d\n", name, bu_vls_addr(&newval), comb->los);
+	}
+    } else {
+	/* no los */
+	comb->los = 0;
+    }
 
-	/* color */
-	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, db5_standard_attribute(ATTR_COLOR)));
-	if (bu_avs_get(&avs, "color")) {
-	    if (sscanf(bu_vls_addr(&newval), "%i/%i/%i", color+0, color+1, color+2) == 3) {
+
+    /* color */
+    bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_COLOR)));
+    bu_vls_trimspace(&newval);
+    if (bu_vls_strlen(&newval) != 0 && !BU_STR_EQUAL(bu_vls_addr(&newval), "(null)") && !BU_STR_EQUAL(bu_vls_addr(&newval), "del")) {
+	ret = sscanf(bu_vls_addr(&newval), "%3i%*c%3i%*c%3i", color+0, color+1, color+2);
+	if (ret == 3) {
+	    if (color[0] < 0 || color[1] < 0 || color[2] < 0) {
+		comb->rgb_valid = 0;
+	    } else {
 		for (i = 0; i < 3; i++) {
 		    if (color[i] > 255) color[i] = 255;
-		    if (color[i] < 0) color[i] = 0;
 		}
 		comb->rgb[0] = color[0];
 		comb->rgb[1] = color[1];
 		comb->rgb[2] = color[2];
-	    } else {
-		bu_log("Warning - color string on comb %s does not match the R/G/B pattern - color remains at %d/%d/%d\n", dp->d_namep, comb->rgb[0], comb->rgb[1], comb->rgb[2]);
+		comb->rgb_valid = 1;
+	    }
+	} else if (ret == 1 && color[0] < 0) {
+	    comb->rgb_valid = 0;
+	} else {
+	    if (comb->rgb_valid) {
+		bu_log("WARNING: [%s] color does not match an R/G/B pattern\nColor remains unchanged at %d/%d/%d\n", name, V3ARGS(comb->rgb));
 	    }
 	}
-
-	/* oshader */
-	bu_vls_strcpy(&comb->shader, bu_avs_get(&avs, db5_standard_attribute(ATTR_SHADER)));
-
-	/* inherit */
-	bu_vls_sprintf(&newval, "%s", bu_avs_get(&avs, db5_standard_attribute(ATTR_INHERIT)));
-	if (bu_str_true(bu_vls_addr(&newval))) {
-	    comb->inherit = 1;
-	} else {
-	    comb->inherit = 0;
-	}
-
-	db5_update_attributes(dp, &avs, dbip);
+    } else {
+	comb->rgb_valid = 0;
     }
+
+    /* shader */
+    bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_SHADER)));
+    bu_vls_trimspace(&newval);
+    if (bu_vls_strlen(&newval) != 0 && !BU_STR_EQUAL(bu_vls_addr(&newval), "(null)") && !BU_STR_EQUAL(bu_vls_addr(&newval), "del")) {
+	bu_vls_sprintf(&comb->shader, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_SHADER)));
+    } else {
+	bu_vls_trunc(&comb->shader, 0);
+    }
+
+    /* inherit */
+    bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_INHERIT)));
+    if (bu_str_true(bu_vls_addr(&newval))) {
+	comb->inherit = 1;
+    } else {
+	comb->inherit = 0;
+    }
+
     bu_vls_free(&newval);
 }
 
 
 void
-db5_update_std_attributes(struct db_i *dbip, struct directory *dp, const struct rt_comb_internal *comb)
+db5_sync_comb_to_attr( struct bu_attribute_value_set *avs, const struct rt_comb_internal *comb)
 {
-    struct bu_attribute_value_set avs;
     struct bu_vls newval;
 
     /* check inputs */
-    RT_CK_DBI(dbip);
-    RT_CK_DIR(dp);
     RT_CK_COMB(comb);
-
-    bu_avs_init_empty(&avs);
     bu_vls_init(&newval);
 
-    if (!db5_get_attributes(dbip, &avs, dp)) {
-	db5_standardize_avs(&avs);
-	if (comb->region_flag) {
-	    (void)bu_avs_add(&avs, "region", "R");
-	} else {
-	    bu_avs_remove(&avs, "region");
-	}
-	if (comb->region_flag && (comb->region_id >=0 || comb->region_id == -1)) {
-	    bu_vls_sprintf(&newval, "%d", comb->region_id);
-	    (void)bu_avs_add_vls(&avs, "region_id", &newval);
-	} else {
-	    bu_avs_remove(&avs, "region_id");
-	}
-	if (comb->GIFTmater >= 0) {
-	    bu_vls_sprintf(&newval, "%d", comb->GIFTmater);
-	    (void)bu_avs_add_vls(&avs, "material_id", &newval);
-	} else {
-	    bu_avs_remove(&avs, "material_id");
-	}
-	if (comb->aircode) {
-	    bu_vls_sprintf(&newval, "%d", comb->aircode);
-	    (void)bu_avs_add_vls(&avs, "air", &newval);
-	} else {
-	    bu_avs_remove(&avs, "air");
-	}
-	if (comb->los) {
-	    bu_vls_sprintf(&newval, "%d", comb->los);
-	    (void)bu_avs_add_vls(&avs, "los", &newval);
-	} else {
-	    bu_avs_remove(&avs, "los");
-	}
-	if (bu_avs_get(&avs, "color") || !(comb->rgb[0] == 0 && comb->rgb[1] == 0 && comb->rgb[2] == 0)) {
-	    bu_vls_sprintf(&newval, "%d/%d/%d", comb->rgb[0], comb->rgb[1], comb->rgb[2]);
-	    (void)bu_avs_add_vls(&avs, "color", &newval);
-	}
-	if (!BU_STR_EQUAL(bu_vls_addr(&comb->shader), "")) {
-	    bu_vls_sprintf(&newval, "%s", bu_vls_addr(&comb->shader));
-	    (void)bu_avs_add_vls(&avs, "oshader", &newval);
-	} else {
-	    bu_avs_remove(&avs, "oshader");
-	}
-	if (comb->inherit) {
-	    bu_vls_sprintf(&newval, "%d", comb->inherit);
-	    (void)bu_avs_add_vls(&avs, "inherit", &newval);
-	} else {
-	    bu_avs_remove(&avs, "inherit");
-	}
-	db5_update_attributes(dp, &avs, dbip);
+    /* Region */
+    if (comb->region_flag) {
+	(void)bu_avs_add(avs, db5_standard_attribute(ATTR_REGION), "R");
+    } else {
+	bu_avs_remove(avs, db5_standard_attribute(ATTR_REGION));
+    }
+
+    /* Region ID */
+    if (comb->region_flag) {
+	bu_vls_sprintf(&newval, "%d", comb->region_id);
+	(void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_REGION_ID), &newval);
+    } else {
+	bu_avs_remove(avs, db5_standard_attribute(ATTR_REGION_ID));
+    }
+
+    /* Material ID */
+    if (comb->GIFTmater != 0) {
+	bu_vls_sprintf(&newval, "%d", comb->GIFTmater);
+	(void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_MATERIAL_ID), &newval);
+    } else {
+	bu_avs_remove(avs, db5_standard_attribute(ATTR_MATERIAL_ID));
+    }
+
+    /* Air */
+    if (comb->aircode) {
+	bu_vls_sprintf(&newval, "%d", comb->aircode);
+	(void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_AIR), &newval);
+    } else {
+	bu_avs_remove(avs, db5_standard_attribute(ATTR_AIR));
+    }
+
+    /* LOS */
+    if (comb->los) {
+	bu_vls_sprintf(&newval, "%d", comb->los);
+	(void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_LOS), &newval);
+    } else {
+	bu_avs_remove(avs, db5_standard_attribute(ATTR_LOS));
+    }
+
+    /* Color */
+    if (comb->rgb_valid) {
+	bu_vls_sprintf(&newval, "%d/%d/%d", comb->rgb[0], comb->rgb[1], comb->rgb[2]);
+	(void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_COLOR), &newval);
+    }
+
+    /* Shader - may be redundant */
+    if (bu_vls_strlen(&comb->shader) != 0 && !BU_STR_EQUAL(bu_vls_addr(&newval), "(null)")) {
+	bu_vls_sprintf(&newval, "%s", bu_vls_addr(&comb->shader));
+	(void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_SHADER), &newval);
+    } else {
+	bu_avs_remove(avs, db5_standard_attribute(ATTR_SHADER));
+    }
+
+    /* Inherit */
+    if (comb->inherit) {
+	bu_vls_sprintf(&newval, "%d", comb->inherit);
+	(void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_INHERIT), &newval);
+    } else {
+	bu_avs_remove(avs, db5_standard_attribute(ATTR_INHERIT));
     }
     bu_vls_free(&newval);
 }

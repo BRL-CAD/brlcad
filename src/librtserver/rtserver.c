@@ -201,20 +201,22 @@ get_muves_components()
 	/* visit each region in this rt_i */
 	for ( j=0; j<rtip->nregions; j++ ) {
 	    struct region *rp=rtip->Regions[j];
-	    struct bu_mro *attrs=rp->attr_values[0];
 	    int new;
+	    const char *attrget;
 	    CLIENTDATA_INT idx=0;
 
-	    if ( !rp || BU_MRO_STRLEN(attrs) < 1 ) {
+	    attrget = bu_avs_get(&(rp->attr_values), "MUVES_Component");
+	    
+	    if ( attrget == NULL ) {
 		/* not a region, or does not have a MUVES_Component attribute */
 		continue;
 	    }
 
 	    /* create an entry for this MUVES_Component name */
-	    name_entry = Tcl_CreateHashEntry( &name_tbl, BU_MRO_GETSTRING( attrs ), &new );
+	    name_entry = Tcl_CreateHashEntry( &name_tbl, attrget, &new );
 	    if ( verbose ) {
 		fprintf( stderr, "region %s, name = %s\n",
-			 rp->reg_name, BU_MRO_GETSTRING( attrs ) );
+			 rp->reg_name, attrget );
 	    }
 	    /* set value to next index */
 	    if ( new ) {

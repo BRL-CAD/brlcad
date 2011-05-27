@@ -1698,43 +1698,6 @@ struct bu_vlb {
 BU_EXPORT extern int bu_setjmp_valid;		/* !0 = bu_jmpbuf is valid */
 BU_EXPORT extern jmp_buf bu_jmpbuf;			/* for BU_SETJMP() */
 /** @} */
-/*-------------------------------------------------------------------------*/
-/** @addtogroup mro */
-/** @{ */
-/**
- * B U _ M R O
- *
- * Support for Multiply Represented Objects
- */
-
-struct bu_mro {
-    unsigned long magic;
-    struct bu_vls string_rep;
-    char long_rep_is_valid;
-    long long_rep;
-    char double_rep_is_valid;
-    double double_rep;
-};
-
-#define BU_CK_MRO(_vp)		BU_CKMAG(_vp, BU_MRO_MAGIC, "bu_mro")
-
-#define BU_MRO_INVALIDATE(_p) {\
-	_p->long_rep_is_valid = '\0';\
-	_p->double_rep_is_valid = '\0';\
-}
-
-#define BU_MRO_GETDOUBLE(_p) (_p->double_rep_is_valid ? _p->double_rep : \
-	(_p->double_rep = strtod(bu_vls_addr(&_p->string_rep), NULL), \
-	(_p->double_rep_is_valid='y', _p->double_rep)))
-
-#define BU_MRO_GETLONG(_p) (_p->long_rep_is_valid ? _p->long_rep : \
-	(_p->long_rep = strtol(bu_vls_addr(&_p->string_rep), NULL, 10), \
-	(_p->long_rep_is_valid='y', _p->long_rep)))
-
-#define BU_MRO_GETSTRING(_p) bu_vls_addr(&_p->string_rep)
-
-#define BU_MRO_STRLEN(_p) bu_vls_strlen(&_p->string_rep)
-/** @} */
 
 /*----------------------------------------------------------------------*/
 /**
@@ -5880,28 +5843,6 @@ BU_EXPORT BU_EXTERN(int bu_lex,
  */
 BU_EXPORT BU_EXTERN(long int bu_mread,
 		    (int fd, void *bufp, long int n));
-
-/** @} */
-
-/** @addtogroup mro */
-/** @{ */
-/** @file mro.c
- *
- * @brief
- * The Multiply Represented Object package.
- *
- */
-
-BU_EXPORT BU_EXTERN(void bu_mro_init_with_string,
-		    (struct bu_mro *mrop, const char *string));
-BU_EXPORT BU_EXTERN(void bu_mro_set,
-		    (struct bu_mro *mrop,
-		     const char *string));
-BU_EXPORT BU_EXTERN(void bu_mro_init,
-		    (struct bu_mro *mrop));
-BU_EXPORT BU_EXTERN(void bu_mro_free,
-		    (struct bu_mro *mrop));
-
 
 /** @} */
 

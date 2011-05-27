@@ -1933,7 +1933,15 @@ proc_box(int cnt)
 {
     point_t pt8[8];
     int k;
-    vect_t ab, ac, ad, abi, aci, adi;
+
+    vect_t ab = VINIT_ZERO;
+    vect_t ac = VINIT_ZERO;
+    vect_t ad = VINIT_ZERO;
+
+    vect_t abi = VINIT_ZERO;
+    vect_t aci = VINIT_ZERO;
+    vect_t adi = VINIT_ZERO;
+
     fastf_t len, leni;			/* box edge lengths */
     int valid;				/* valid inside box? */
     char shflg='\0', mrflg, ctflg;

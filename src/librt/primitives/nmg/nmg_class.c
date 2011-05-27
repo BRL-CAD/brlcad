@@ -80,13 +80,13 @@ static void nmg_class_pt_l BU_ARGS((struct neighbor *closest,
 				    const point_t pt, const struct loopuse *lu,
 				    const struct bn_tol *tol));
 static int class_vu_vs_s BU_ARGS((struct vertexuse *vu, struct shell *sB,
-				  long *classlist[4], const struct bn_tol *tol));
+				  char **classlist, const struct bn_tol *tol));
 static int class_eu_vs_s BU_ARGS((struct edgeuse *eu, struct shell *s,
-				  long *classlist[4], const struct bn_tol *tol));
+				  char **classlist, const struct bn_tol *tol));
 static int class_lu_vs_s BU_ARGS((struct loopuse *lu, struct shell *s,
-				  long *classlist[4], const struct bn_tol *tol));
+				  char **classlist, const struct bn_tol *tol));
 static void class_fu_vs_s BU_ARGS((struct faceuse *fu, struct shell *s,
-				   long *classlist[4], const struct bn_tol *tol));
+				   char **classlist, const struct bn_tol *tol));
 
 /**
  * N M G _ C L A S S _ S T A T U S
@@ -349,7 +349,7 @@ nmg_class_pt_e(struct neighbor *closest, const fastf_t *pt, const struct edgeuse
 	goto out;
     }
 
-    if (dot >= 0.0) {
+    if (dot > -SMALL_FASTF) {
 	closest->dist = dist;
 	closest->p.eu = eu;
 	closest->class = NMG_CLASS_AinB;
@@ -744,7 +744,7 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
  * Classify a loopuse/vertexuse from shell A WRT shell B.
  */
 static int
-class_vu_vs_s(struct vertexuse *vu, struct shell *sB, long int **classlist, const struct bn_tol *tol)
+class_vu_vs_s(struct vertexuse *vu, struct shell *sB, char **classlist, const struct bn_tol *tol)
 {
     struct vertexuse *vup;
     pointp_t pt;
@@ -864,7 +864,7 @@ class_vu_vs_s(struct vertexuse *vu, struct shell *sB, long int **classlist, cons
  * C L A S S _ E U _ V S _ S
  */
 static int
-class_eu_vs_s(struct edgeuse *eu, struct shell *s, long int **classlist, const struct bn_tol *tol)
+class_eu_vs_s(struct edgeuse *eu, struct shell *s, char **classlist, const struct bn_tol *tol)
 {
     int euv_cl, matev_cl;
     int status = 0;
@@ -1160,11 +1160,12 @@ nmg_2lu_identical(const struct edgeuse *eu1, const struct edgeuse *eu2)
 	/* Drop back to using a geometric calculation */
 	if (fu1->orientation != fu2->orientation)
 	    NMG_GET_FU_NORMAL(fu2_norm, fu2->fumate_p)
-		else
-		    NMG_GET_FU_NORMAL(fu2_norm, fu2)
+	else
+	    NMG_GET_FU_NORMAL(fu2_norm, fu2)
 
-			NMG_GET_FU_NORMAL(fu1_norm, fu1);
-	if (VDOT(fu1_norm, fu2_norm) < 0.0)
+	NMG_GET_FU_NORMAL(fu1_norm, fu1);
+
+	if (VDOT(fu1_norm, fu2_norm) < -SMALL_FASTF)
 	    ret = 2;	/* ON anti-shared */
 	else
 	    ret = 1;	/* ON shared */
@@ -1208,7 +1209,7 @@ nmg_2lu_identical(const struct edgeuse *eu1, const struct edgeuse *eu2)
  * "newclass" should only be AonBshared or AonBanti.
  */
 void
-nmg_reclassify_lu_eu(struct loopuse *lu, long int **classlist, int newclass)
+nmg_reclassify_lu_eu(struct loopuse *lu, char **classlist, int newclass)
 {
     struct vertexuse *vu;
     struct edgeuse *eu;
@@ -1349,7 +1350,7 @@ class_shared_lu(const struct loopuse *lu, const struct loopuse *lu_ref, const st
 	bu_bomb("class_shared_lu() couldn't get a left vector for EU\n");
     }
 
-    if (VDOT(left, left_ref) > 0.0) {
+    if (VDOT(left, left_ref) > SMALL_FASTF) {
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 	    bu_log("eu x%x goes form v x%x to v x%x\n", eu, eu->vu_p->v_p, eu->eumate_p->vu_p->v_p);
 	    bu_log("eu_ref x%x goes form v x%x to v x%x\n", eu_ref, eu_ref->vu_p->v_p, eu_ref->eumate_p->vu_p->v_p);
@@ -1453,7 +1454,7 @@ class_shared_lu(const struct loopuse *lu, const struct loopuse *lu_ref, const st
  * class_fu_vs_s
  */
 static int
-class_lu_vs_s(struct loopuse *lu, struct shell *s, long int **classlist, const struct bn_tol *tol)
+class_lu_vs_s(struct loopuse *lu, struct shell *s, char **classlist, const struct bn_tol *tol)
 {
     int class;
     unsigned int in, outside, on;
@@ -1837,7 +1838,7 @@ class_lu_vs_s(struct loopuse *lu, struct shell *s, long int **classlist, const s
  *	nmg_class_shells()
  */
 static void
-class_fu_vs_s(struct faceuse *fu, struct shell *s, long int **classlist, const struct bn_tol *tol)
+class_fu_vs_s(struct faceuse *fu, struct shell *s, char **classlist, const struct bn_tol *tol)
 {
     struct loopuse *lu;
     plane_t n;
@@ -1871,7 +1872,7 @@ class_fu_vs_s(struct faceuse *fu, struct shell *s, long int **classlist, const s
  * nmg_bool.c
  */
 void
-nmg_class_shells(struct shell *sA, struct shell *sB, long int **classlist, const struct bn_tol *tol)
+nmg_class_shells(struct shell *sA, struct shell *sB, char **classlist, const struct bn_tol *tol)
 {
     struct faceuse *fu;
     struct loopuse *lu;
@@ -2258,11 +2259,7 @@ nmg_classify_lu_lu(const struct loopuse *lu1, const struct loopuse *lu2, const s
 		if (lu2->orientation == OT_OPPOSITE)
 		    VREVERSE(inward2, inward2);
 
-#ifdef TRI_PROTOTYPE
 		if (VDOT(inward1, inward2) < -SMALL_FASTF)
-#else
-		if (VDOT(inward1, inward2) < 0.0)
-#endif
 		    return NMG_CLASS_AoutB;
 		else
 		    return NMG_CLASS_AinB;

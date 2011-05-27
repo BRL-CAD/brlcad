@@ -177,7 +177,6 @@ BU_EXTERN(int f_slewview, (ClientData, Tcl_Interp *, int, const char *[]));
 BU_EXTERN(int f_status, (ClientData, Tcl_Interp *, int, const char *[]));
 BU_EXTERN(int f_svbase, (ClientData, Tcl_Interp *, int, const char *[]));
 BU_EXTERN(int f_t_muves, (ClientData, Tcl_Interp *, int, const char *[]));
-BU_EXTERN(int f_tables, (ClientData, Tcl_Interp *, int, const char *[]));
 BU_EXTERN(int f_tedit, (ClientData, Tcl_Interp *, int, const char *[]));
 BU_EXTERN(int f_tie, (ClientData, Tcl_Interp *, int, const char *[]));
 BU_EXTERN(int f_tr_obj, (ClientData, Tcl_Interp *, int, const char *[]));

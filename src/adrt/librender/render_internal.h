@@ -26,6 +26,18 @@
 
 #include "tie.h"
 
+#ifndef RENDER_EXPORT
+#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
+#    ifdef RENDER_EXPORT_DLL
+#      define RENDER_EXPORT __declspec(dllexport)
+#    else
+#      define RENDER_EXPORT __declspec(dllimport)
+#    endif
+#  else
+#    define RENDER_EXPORT
+#  endif
+#endif
+
 #define RENDER_METHOD_COMPONENT	0x01
 #define RENDER_METHOD_CUT	0x02
 #define RENDER_METHOD_DEPTH	0x03
@@ -44,7 +56,7 @@
 #define RENDER_MAX_DEPTH	24
 
 
-#define RENDER_SHADER(name) BU_EXTERN(int render_##name##_init, (render_t *, const char *))
+#define RENDER_SHADER(name) RENDER_EXPORT BU_EXTERN(int render_##name##_init, (render_t *, const char *))
 
 struct render_s;
 typedef void render_work_t(struct render_s *render, struct tie_s *tie, struct tie_ray_s *ray, vect_t *pixel);

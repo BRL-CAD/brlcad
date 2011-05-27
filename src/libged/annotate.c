@@ -22,19 +22,69 @@
  * The annotate command.
  *
  * Examples:
- *   annotate all.g -n my.note -p 0 0 0 -m "This is a tank."
- *   annotate -p 10 0 0 -m "This geometry is unclassified."
- *   annotate sph.r -t leader -p 10 10 10
  *
- * Design options to consider:
+ *   annotate
+ *            [text {string}]
+ *            [as label|leader|angular|radial|dimension|table|note|box|axes|plane [named {name}]]
+ *            [on|for {object1} [and {object2}] [and {...}]]
+ *            [to|thru|at {point|plane} [offset {distance|vector}]]
+ *            [align auto|model|view]
+ *            [position auto|fixed|absolute|relative]
+ *            [visible always|never|rendering|wireframe]
  *
- * Types: text, leader, angular, radial, aligned, ordinate, linear
- * Modes: normal, horizontal, vertical, above, below, inline
+ *            [help]
+ *            [list {name}]
+ *            [get {key} from {name}]
+ *            [set {key=value} on {name}]
+ *
+ *   annotate help
+ *   annotate text "Hello, World!"
+ *   annotate for all.g
+ *   annotate as label named my.note for all.g text "This is a tank."
+ *   annotate as box text "This geometry is unclassified."
+ *
+ * DESIGN OPTIONS TO CONSIDER:
+ *
+ * Types: text (see Text), leader, angular, radial, aligned, ordinate, linear
+ *
+ * Extended types: note, label, table, dimension, tolerance, box (see Box), axes, plane
+ *
+ * Orientation: auto, horizontal, vertical, above, below, inline
+ *
  * Align: auto, model, view
  *
- * scale, orientation
- * fontname, fontsize
- * arrowlength, arrowwidth, arrowtype
+ * Text: fontname, fontsize, fontstyle (regular, italic, bold), linespacing, justification
+ *   Justification:
+ *     undefined
+ *     left
+ *     center
+ *     right
+ *     bottom
+ *     middle
+ *     top
+ *     bottomleft
+ *     bottomcenter
+ *     bottomright
+ *     middleleft
+ *     middlecenter
+ *     middleright
+ *     topleft
+ *     topcenter
+ *     topright
+ *
+ * Decoration: color, leader line, box (see Box) around target, box around annotation
+ *
+ * Box: empty, hatch, gradient, solid
+ *
+ * Placement: position (auto/fixed/relative/absolute), scale, orientation/rotation/twist, head/tail
+ *   auto is automatic static placement
+ *   fixed is 2d coordinate relative to view
+ *   absolute is 2d coordinate relative to world center or global 3d position
+ *   relative is 2d coordinate relative to view center or 3d offset distance from target center
+ *
+ * Leader: linelength, linewidth, type (no head, arrow head, round head, square head)
+ *
+ * Visibility: auto, wireframe, render, both
  *
  * linearformat: "%.2f"
  * linearunits: mm, m, in, ft, etc
@@ -42,6 +92,14 @@
  * angularformat: "%.2f"
  * angularunits: degrees, radians
  *
+ * struct parameters:
+ * type
+ * plane
+ * point list
+ * text?
+ * color?
+ * visibility?
+ * 
  */
 
 #include "common.h"
@@ -54,7 +112,7 @@
 void
 annotate_help(struct bu_vls *result, const char *cmd)
 {
-    static const char *usage = "[object(s)] [-n name] [-p x y z] [-t type] [-m message]";
+    static const char *usage = "[object(s)] [-n name] [-p x y z]";
 
     bu_vls_printf(result, "Usage: %s %s", cmd, usage);
 }

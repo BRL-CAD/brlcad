@@ -29,6 +29,7 @@ bin_PROGRAMS = \
 	pix2g \
 	pyramid \
 	rawbot \
+	ringworld \
 	room \
 	sketch \
 	sphflake \
@@ -94,6 +95,7 @@ pipetest_SOURCES = pipetest.c
 pix2g_SOURCES = pix2g.c
 pyramid_SOURCES = pyramid.c
 rawbot_SOURCES = rawbot.c
+ringworld_SOURCES = ringworld.c
 room_SOURCES = room.c common.c
 sketch_SOURCES = sketch.c
 sphflake_SOURCES = sphflake.c
@@ -143,6 +145,7 @@ FAST_OBJECTS = \
 	$(pix2g_OBJECTS) \
 	$(pyramid_OBJECTS) \
 	$(rawbot_OBJECTS) \
+	$(ringworld_OBJECTS) \
 	$(room_OBJECTS) \
 	$(sketch_OBJECTS) \
 	$(sphflake_OBJECTS) \

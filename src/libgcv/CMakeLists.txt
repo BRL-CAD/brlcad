@@ -4,14 +4,11 @@ set(LIBGCV_SOURCES
 )
 
 include_directories(
-    ../../include
-    ../other
-    ../other/tcl/generic
+	 ${REGEX_INCLUDE_DIR}
+    ${TCL_INCLUDE_DIRS}
 )
 
-add_definitions(
-    -DHAVE_CONFIG_H
-    -DBRLCADBUILD
-)
+BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt libbu")
+SET_TARGET_PROPERTIES(libgcv PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
-add_library(libgcv ${LIBGCV_SOURCES})
+CMAKEFILES(NOTES wfobj)

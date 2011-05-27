@@ -1,0 +1,90 @@
+IF(WIN32 AND BRLCAD-ENABLE_OPENGL)
+	SET(DM_DEFINES "${DM_DEFINES} -DDM_WGL -DIF_WGL")
+	SET(dmw32_srcs dm-wgl.c)
+ENDIF(WIN32 AND BRLCAD-ENABLE_OPENGL)
+
+IF(BRLCAD-ENABLE_X11)
+	SET(DM_DEFINES  "${DM_DEFINES} -DDM_X -DIF_X") 
+	SET(dmx11_srcs dm-X.c)
+ENDIF(BRLCAD-ENABLE_X11)
+
+IF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)
+	SET(DM_DEFINES "${DM_DEFINES} -DDM_OGL -DIF_OGL")
+	SET(dmogl_srcs dm-ogl.c)
+ENDIF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)
+
+IF(BRLCAD-ENABLE_RTGL)
+	SET(DM_DEFINES "${DM_DEFINES} -DDM_RTGL -DIF_RTGL")
+	SET(dmrtgl_srcs dm-rtgl.c)
+ENDIF(BRLCAD-ENABLE_RTGL)
+
+IF(BRLCAD-ENABLE_TK AND NOT MSVC)
+	SET(DM_DEFINES "${DM_DEFINES} -DDM_TK -DIF_TK")
+	SET(DM_TKLIB ${TCL_TK_LIBRARY})
+	SET(dmtk_srcs dm-tk.c)
+ENDIF(BRLCAD-ENABLE_TK AND NOT MSVC)
+
+SET(LIBDM_SRCS
+	${dmx11_srcs}
+	${dmw32_srcs}
+	${dmogl_srcs}
+	${dmrtgl_srcs}
+	${dmtk_srcs}
+	adc.c 
+	axes.c 
+	clip.c 
+	color.c 
+	dm-Null.c 
+	dm-generic.c 
+	dm-plot.c 
+	dm-ps.c 
+	dm_obj.c 
+	focus.c 
+	grid.c 
+	knob.c 
+	labels.c 
+	options.c 
+	query.c 
+	rect.c 
+	scale.c 
+	tcl.c 
+	vers.c
+)
+IF(HAVE_TERMLIB)
+	include_directories(${TERMLIB_INCLUDE_DIR})
+ENDIF(HAVE_TERMLIB)
+
+include_directories(
+	${ZLIB_INCLUDE_DIR}
+	${PNG_INCLUDE_DIR}
+	${X11_INCLUDE_DIR}
+	${OPENGL_INCLUDE_DIR_GL}
+	${OPENGL_INCLUDE_DIR_GLX}
+	${TCL_INCLUDE_DIRS}
+	${TK_INCLUDE_PATH}
+)
+
+add_definitions(
+	${DM_DEFINES}
+	${C99_FLAG}
+)
+
+FOREACH(xlib ${X11_LIBRARIES})
+	SET(DM_XLIBS "${DM_XLIBS} ${xlib}")
+ENDFOREACH(xlib ${X11_LIBRARIES})
+
+BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "libged librt libfb ${DM_XLIBS} ${X11_Xi_LIB} ${DM_TKLIB} ${Carbon_LIBRARIES}")
+SET_TARGET_PROPERTIES(libdm PROPERTIES VERSION 19.0.1 SOVERSION 19)
+IF(BRLCAD_BUILD_LOCAL_TK AND BRLCAD-ENABLE_TK)
+	ADD_DEPENDENCIES(libdm tk)
+ENDIF(BRLCAD_BUILD_LOCAL_TK AND BRLCAD-ENABLE_TK)
+SET(libdm_ignore_files
+	dm-wgl.c
+	dm-X.c
+	dm-ogl.c
+	dm-rtgl.c
+	dm-tk.c
+	libdm.dsp
+	TODO
+	)
+CMAKEFILES(${libdm_ignore_files})

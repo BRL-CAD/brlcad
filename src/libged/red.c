@@ -36,14 +36,6 @@
 
 #include "./ged_private.h"
 
-
-/* FIXME: Accessing unpublished functions.  this should be hidden
- * behind the scenes, not be an API function. should eliminate direct
- * calls to these functions.
- */
-extern int db5_is_standard_attribute(const char *attr_want);
-
-
 /* also accessed by put_comb.c */
 char _ged_tmpfil[MAXPATHLEN] = {0};
 
@@ -52,7 +44,7 @@ static const char *combtree_header = "---*[[:space:]]*Combination Tree[[:space:]
 
 
 static int
-get_attr_val_pair(char *line, struct bu_vls *attr, struct bu_vls *val) 
+get_attr_val_pair(char *line, struct bu_vls *attr, struct bu_vls *val)
 {
     char *ptr1;
 
@@ -69,11 +61,10 @@ get_attr_val_pair(char *line, struct bu_vls *attr, struct bu_vls *val)
     if (bu_vls_strlen(attr) == 0) return 0;
 
     ++ptr1;
-	
+
     /* Grab the attribute value */
     bu_vls_strcpy(val, ptr1);
     bu_vls_trimspace(val);
-    if (bu_vls_strlen(val) == 0) return 0;
 
     return 1;
 }
@@ -109,7 +100,7 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
     regmatch_t *float_locations;
     struct bu_vls current_substring, matrix_substring;
     int floatcnt, tail_start;
-    const char *floatptr; 
+    const char *floatptr;
     const char *float_string = "[+-]?[0-9]*[.]?[0-9]+([eE][+-]?[0-9]+)?";
 
     bu_vls_init(&current_substring);
@@ -124,9 +115,9 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
 		   "{15}(%s)", float_string, float_string);
     regcomp(&full_matrix, bu_vls_addr(&current_substring), REG_EXTENDED);
     regcomp(&nonwhitespace_regex, "([^[:blank:]])", REG_EXTENDED);
-    
+
     float_locations = (regmatch_t *)bu_calloc(full_matrix.re_nsub, sizeof(regmatch_t), "array to hold answers from regex");
- 
+
     floatcnt = 0;
     float_locations[0].rm_so = 0;
     float_locations[0].rm_eo = strlength;
@@ -160,14 +151,14 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
 		    /* matched */
 		    bu_vls_trunc(&current_substring, 0);
 		    bu_vls_strncpy(&current_substring, currptr + float_locations[0].rm_so, float_locations[0].rm_eo - float_locations[0].rm_so);
-		    (*matrix)[floatcnt] = atof(floatptr); 
+		    (*matrix)[floatcnt] = atof(floatptr);
 		    floatptr = floatptr + float_locations[0].rm_eo;
 		    float_locations[0].rm_so = 0;
 		    float_locations[0].rm_eo = strlen(floatptr);
 		    floatcnt++;
 		} else {
 		    bu_vls_sprintf(&current_substring, "%s", floatptr);
-		    (*matrix)[floatcnt] = atof(bu_vls_addr(&current_substring)); 
+		    (*matrix)[floatcnt] = atof(bu_vls_addr(&current_substring));
 		    floatcnt++;
 		}
 	    }
@@ -177,7 +168,7 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
 	    /* Need to check for non-whitespace in the distance-from-end zone */
 	    if (regexec(&nonwhitespace_regex, bu_vls_addr(&current_substring), nonwhitespace_regex.re_nsub, float_locations, 0) == 0) {
 		/* matched */
-	        bu_vls_printf(&gedp->ged_result_str, "Saw something other than whitespace after matrix - error!\n");
+		bu_vls_printf(&gedp->ged_result_str, "Saw something other than whitespace after matrix - error!\n");
 		ret = -1;
 	    } else {
 		ret = 0;
@@ -212,9 +203,9 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
     int nonsubs=0;
     union tree *tp;
     int tree_index=0;
-    struct rt_db_internal intern, localintern;
+    struct rt_db_internal intern;
     struct rt_tree_array *rt_tree_array;
-    const char *currptr; 
+    const char *currptr;
     regex_t nonwhitespace_regex, attr_regex, combtree_regex, combtree_op_regex;
     regmatch_t *result_locations;
     struct bu_vls current_substring, attr_vls, val_vls, curr_op_vls, next_op_vls;
@@ -222,12 +213,13 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
     int attrstart, attrend, attrcumulative, name_start, name_end, treecumulative;
     int ret, gedret, combtagstart, combtagend;
     struct bu_attribute_value_set avs;
-    matp_t matrix;
+    matp_t matrix = {0};
     struct bu_vls *target_name = bu_malloc(sizeof(struct bu_vls), "target vls");
+
     bu_vls_init(target_name);
- 
+
     rt_tree_array = (struct rt_tree_array *)NULL;
- 
+
     /* Standard sanity checks */
     if (gedp->ged_wdbp->dbip == DBI_NULL)
 	return -1;
@@ -250,11 +242,11 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
 
     /* Set up the regular expressions */
     regcomp(&nonwhitespace_regex, "([^[:space:]])", REG_EXTENDED);
-    regcomp(&attr_regex, "(.+[[:space:]]+=[[:blank:]]+.*)", REG_EXTENDED|REG_NEWLINE);
+    regcomp(&attr_regex, "(.+[[:space:]]+=.*)", REG_EXTENDED|REG_NEWLINE);
     bu_vls_sprintf(&current_substring, "(%s)", combtree_header);
     regcomp(&combtree_regex, bu_vls_addr(&current_substring), REG_EXTENDED);
     regcomp(&combtree_op_regex, "([[:blank:]]+[[.-.][.+.]u][[:blank:]]+)", REG_EXTENDED);
-    
+
 
     /* Need somewhere to hold the results - initially, size according to attribute regex */
     result_locations = (regmatch_t *)bu_calloc(attr_regex.re_nsub, sizeof(regmatch_t), "array to hold answers from regex");
@@ -323,10 +315,10 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
 	} else {
 	    /* matched */
 
-	    /* If an attribute line is found, set the attr pointers and look for the next attribute, if any.  Multi-line attribute values 
-	     * are supported, but only if the line does not itself match the format for an attribute (i.e. no equal sign 
-	     * surrounded by spaces or tabs. 
-	     */ 
+	    /* If an attribute line is found, set the attr pointers and look for the next attribute, if any.  Multi-line attribute values
+	     * are supported, but only if the line does not itself match the format for an attribute (i.e. no equal sign
+	     * surrounded by spaces or tabs.
+	     */
 	    attrstart = result_locations[0].rm_so;
 	    attrend = result_locations[0].rm_eo;
 	    attrcumulative += attrend;
@@ -334,7 +326,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
 		/* matched */
 
 		if (attrcumulative + result_locations[0].rm_eo < combtagstart) {
-		    attrend += result_locations[0].rm_so - 1; 
+		    attrend += result_locations[0].rm_so - 1;
 		    attrcumulative += result_locations[0].rm_so - 1;
 		} else {
 		    attrend = attrend + (combtagstart - attrcumulative);
@@ -343,23 +335,23 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
 	    } else {
 		attrend = attrend + (combtagstart - attrcumulative);
 		attrcumulative = combtagstart;
-	    } 
+	    }
 	    bu_vls_trunc(&current_substring, 0);
 	    bu_vls_strncpy(&current_substring, currptr + attrstart, attrend - attrstart);
 	    if (get_attr_val_pair(bu_vls_addr(&current_substring), &attr_vls, &val_vls)) {
-		if (!BU_STR_EQUAL(bu_vls_addr(&val_vls), "") && BU_STR_EQUAL(bu_vls_addr(&attr_vls), "name")) {
-		    bu_vls_sprintf(target_name, "%s", bu_vls_addr(&val_vls));
-		    (*final_name) = target_name;
-		}
-		if (!BU_STR_EQUAL(bu_vls_addr(&val_vls), "") && !BU_STR_EQUAL(bu_vls_addr(&attr_vls), "name"))
-		    (void)bu_avs_add(&avs, bu_vls_addr(&attr_vls), bu_vls_addr(&val_vls)); 
+		    if (BU_STR_EQUAL(bu_vls_addr(&attr_vls), "name")) {
+			    bu_vls_sprintf(target_name, "%s", bu_vls_addr(&val_vls));
+			    (*final_name) = target_name;
+		    }
+		    if (!BU_STR_EQUAL(bu_vls_addr(&val_vls), "") && !BU_STR_EQUAL(bu_vls_addr(&attr_vls), "name"))
+			    (void)bu_avs_add(&avs, bu_vls_addr(&attr_vls), bu_vls_addr(&val_vls));
 	    }
 	    currptr = currptr + attrend;
 	}
     }
 
     db5_standardize_avs(&avs);
- 
+
     bu_vls_free(&attr_vls);
     bu_vls_free(&val_vls);
 
@@ -384,7 +376,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
     if (ret == 0) {
 	/* matched */
 
-        /* Check for non-whitespace garbage between first operator and start of comb tree definition */
+	/* Check for non-whitespace garbage between first operator and start of comb tree definition */
 	result_locations[0].rm_eo = result_locations[0].rm_so;
 	result_locations[0].rm_so = 0;
 	if (regexec(&nonwhitespace_regex, currptr, nonwhitespace_regex.re_nsub, result_locations, REG_STARTEND) == 0) {
@@ -404,7 +396,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
 
 	    return GED_ERROR;
 	}
-        ret = regexec(&combtree_op_regex, currptr, combtree_op_regex.re_nsub , result_locations, 0);
+	ret = regexec(&combtree_op_regex, currptr, combtree_op_regex.re_nsub , result_locations, 0);
 	bu_vls_trunc(&next_op_vls, 0);
 	bu_vls_strncpy(&next_op_vls, currptr + result_locations[0].rm_so, result_locations[0].rm_eo - result_locations[0].rm_so);
 	bu_vls_trimspace(&next_op_vls);
@@ -440,8 +432,8 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
 
 		return GED_ERROR;
 
-	    } 
-	    /* We have a string - now check for a matrix and build it if present 
+	    }
+	    /* We have a string - now check for a matrix and build it if present
 	     * Otherwise, set matrix to NULL */
 	    gedret = _ged_find_matrix(gedp, currptr, name_end, &matrix, &name_end);
 	    if (gedret) {
@@ -528,7 +520,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
   bu_avs_print(&avs, "Regex based avs build\n");
   printf("\n");
   int i, m;
-  fastf_t tmp; 
+  fastf_t tmp;
   for (i=0; i<tree_index; i++) {
   char op;
 
@@ -567,27 +559,23 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
     }
     comb->tree = tp;
 
+    db5_standardize_avs(&avs);
+    db5_sync_attr_to_comb(comb, &avs, dp->d_namep);
+    db5_sync_comb_to_attr(&avs, comb);
+
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "build_comb %s: Cannot apply tree\n", dp->d_namep);
 	bu_avs_free(&avs);
 	return -1;
     }
 
-    /* Now that the tree is handled, get the current data structure pointers and apply
-     * the attribute logic - this apparently must come after the rt_db_put_internal */
-    GED_DB_GET_INTERNAL(gedp, &localintern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
-
     db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip);
-    
-    comb = (struct rt_comb_internal *)localintern.idb_ptr;
-    db5_apply_std_attributes(gedp->ged_wdbp->dbip, dp, comb);
 
     bu_avs_free(&avs);
     return node_count;
 }
 
 
-/* !!! FIXME: this routine edits the dbip and comb but should not */
 HIDDEN int
 write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 {
@@ -598,20 +586,14 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     struct directory *dp;
     FILE *fp;
     size_t i, j, maxlength;
+    int hasattr;
     size_t node_count;
     size_t actual_count;
     struct bu_vls spacer;
-    char *standard_attributes[8];
-    standard_attributes[0] = "region";
-    standard_attributes[1] = "region_id";
-    standard_attributes[2] = "material_id";
-    standard_attributes[3] = "los";
-    standard_attributes[4] = "air";
-    standard_attributes[5] = "color";
-    standard_attributes[6] = "oshader";
-    standard_attributes[7] = "inherit";
+    const char *attr;
 
     bu_avs_init_empty(&avs);
+
 
     bu_vls_init(&spacer);
     bu_vls_trunc(&spacer, 0);
@@ -629,23 +611,23 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     }
 
     maxlength = 0;
-    for (i = 0; i < sizeof(standard_attributes)/sizeof(char *); i++) {
-	if (strlen(standard_attributes[i]) > maxlength) 
-	    maxlength = strlen(standard_attributes[i]);
+    for (i=0; (attr = db5_standard_attribute(i)) != NULL; i++) {
+	if (strlen(attr) > maxlength)
+	    maxlength = strlen(attr);
     }
-	
+
     if (!comb) {
 	bu_vls_trunc(&spacer, 0);
 	for (j = 0; j < maxlength - 4 + 1; j++) {
 	    bu_vls_printf(&spacer, " ");
 	}
 	fprintf(fp, "name%s= %s\n", bu_vls_addr(&spacer), name);
-	for (i = 0; i < sizeof(standard_attributes)/sizeof(char *); i++) {
+	for (i=0; (attr = db5_standard_attribute(i)) != NULL; i++) {
 	    bu_vls_trunc(&spacer, 0);
-	    for (j = 0; j < maxlength - strlen(standard_attributes[i]); j++) {
+	    for (j = 0; j < maxlength - strlen(attr); j++) {
 		bu_vls_printf(&spacer, " ");
 	    }
-	    fprintf(fp, "%s%s = \n", standard_attributes[i], bu_vls_addr(&spacer));
+	    fprintf(fp, "%s%s = \n", attr, bu_vls_addr(&spacer));
 	}
 	fprintf(fp, "%s", combseparator);
 	fclose(fp);
@@ -669,25 +651,14 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 	actual_count = 0;
     }
 
-    db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp);
+    hasattr = db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp);
+    db5_standardize_avs(&avs);
+    db5_sync_comb_to_attr(&avs, comb);
 
-    /* !!! FIXME: this modifies the comb but red shouldn't be
-     * modifying the comb in here ... we're just writing out.  may
-     * need to make a copy.
-     */
-    db5_apply_std_attributes(gedp->ged_wdbp->dbip, dp, comb);
-
-    /* !!! FIXME: this modifies the dbip but red shouldn't be
-     * modifying anything in here ... we're just writing out.  may
-     * need to make a copy.
-     */
-    db5_update_std_attributes(gedp->ged_wdbp->dbip, dp, comb);
-
-    if (!db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
-	db5_standardize_avs(&avs);
+    if (!hasattr) {
 	avpp = avs.avp;
 	for (i=0; i < avs.count; i++, avpp++) {
-	    if (strlen(avpp->name) > maxlength) 
+	    if (strlen(avpp->name) > maxlength)
 		maxlength = strlen(avpp->name);
 	}
 	bu_vls_trunc(&spacer, 0);
@@ -695,15 +666,15 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 	    bu_vls_printf(&spacer, " ");
 	}
 	fprintf(fp, "name%s= %s\n", bu_vls_addr(&spacer), name);
-	for (i = 0; i < sizeof(standard_attributes)/sizeof(char *); i++) {
+	for (i=0; (attr = db5_standard_attribute(i)) != NULL; i++) {
 	    bu_vls_trunc(&spacer, 0);
-	    for (j = 0; j < maxlength - strlen(standard_attributes[i]) + 1; j++) {
+	    for (j = 0; j < maxlength - strlen(attr) + 1; j++) {
 		bu_vls_printf(&spacer, " ");
 	    }
-	    if (bu_avs_get(&avs, standard_attributes[i])) {
-		fprintf(fp, "%s%s= %s\n", standard_attributes[i], bu_vls_addr(&spacer),  bu_avs_get(&avs, standard_attributes[i]));
+	    if (bu_avs_get(&avs, attr)) {
+		fprintf(fp, "%s%s= %s\n", attr, bu_vls_addr(&spacer),  bu_avs_get(&avs, attr));
 	    } else {
-		fprintf(fp, "%s%s= \n", standard_attributes[i], bu_vls_addr(&spacer));
+		fprintf(fp, "%s%s= \n", attr, bu_vls_addr(&spacer));
 	    }
 	}
 	avpp = avs.avp;
@@ -968,22 +939,29 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_init(final_name);
 		bu_vls_sprintf(final_name, "%s", bu_vls_addr(&comb_name));
 	}
+	/* if we ended up with an empty final name, print an error message and head for cleanup */
+	if (strlen(bu_vls_addr(final_name)) == 0) {
+		bu_vls_printf(&gedp->ged_result_str, "%s: Error - no target name supplied\n", *argv);
+		goto cleanup;
+	}
 
 	/* it worked - kill the original and put the updated copy in
 	 * its place if a pre-existing comb was being edited -
 	 * otherwise just move temp_name to final_name.
 	 */
 	if (!BU_STR_EQUAL(bu_vls_addr(&comb_name), bu_vls_addr(&temp_name))) {
-	    av[0] = "kill";
-	    av[1] = bu_vls_addr(&comb_name);
-	    av[2] = NULL;
-	    (void)ged_kill(gedp, 2, (const char **)av);
-	} 
+		if (BU_STR_EQUAL(bu_vls_addr(&comb_name), bu_vls_addr(final_name))) {
+			av[0] = "kill";
+			av[1] = bu_vls_addr(&comb_name);
+			av[2] = NULL;
+			(void)ged_kill(gedp, 2, (const char **)av);
+		}
+	}
 	av[0] = "mv";
 	av[1] = bu_vls_addr(&temp_name);
 	av[2] = bu_vls_addr(final_name);
 	(void)ged_move(gedp, 3, (const char **)av);
-    
+
     }
     /* if we have reached cleanup by now, everything was fine */
     ret = GED_OK;

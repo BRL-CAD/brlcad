@@ -12,12 +12,18 @@
 
 /* TODO: fullscreen support */
 
+#include "brlcad_config.h"
+
 #include <windows.h>
 #include <GL/gl.h>
 #include <wingdi.h>
 #include <tk.h>
 #include <tkPlatDecls.h>
-#include <GL/wglext.h>
+#ifdef HAVE_GL_WGLEXT_H
+# include <GL/wglext.h>
+#else
+# include "GL/wglext.h"
+#endif
 
 #ifndef PFD_SUPPORT_COMPOSITION
 /* for Vista -- not needed because we don't use PFD_SUPPORT_GDI/BITMAP */

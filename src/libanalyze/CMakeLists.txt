@@ -1,15 +1,11 @@
 set(LIBANALYZE_SOURCES
+    density.c
     overlaps.c
 )
 
 include_directories(
-    ../../include
-    ../other/tcl/generic
+    ${TCL_INCLUDE_DIRS}
 )
 
-add_definitions(
-    -DHAVE_CONFIG_H
-    -DBRLCADBUILD
-)
-
-add_library(libanalyze ${LIBANALYZE_SOURCES})
+BRLCAD_ADDLIB(libanalyze "${LIBANALYZE_SOURCES}" libbu)
+SET_TARGET_PROPERTIES(libanalyze PROPERTIES VERSION 19.0.1 SOVERSION 19)

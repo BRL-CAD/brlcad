@@ -1,0 +1,10 @@
+# This file is configured at cmake time, and loaded at cpack time.
+# To pass variables to cpack from cmake, they must be configured
+# in this file.  
+
+# Don't want to use the install prefix when we're making source
+# tarballs
+IF(CPACK_GENERATOR MATCHES "ZIP" OR CPACK_GENERATOR MATCHES "TGZ" OR CPACK_GENERATOR MATCHES "TBZ2" )
+	SET(CPACK_PACKAGING_INSTALL_PREFIX "")
+ENDIF(CPACK_GENERATOR MATCHES "ZIP" OR CPACK_GENERATOR MATCHES "TGZ" OR CPACK_GENERATOR MATCHES "TBZ2" )
+

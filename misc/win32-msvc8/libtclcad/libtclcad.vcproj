@@ -230,11 +230,11 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat;f90;for;f;fpp"
 			>
 			<File
-				RelativePath="..\..\..\src\libtclcad\ged_obj.c"
+				RelativePath="..\..\..\src\libtclcad\tclcad.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\libtclcad\tclcad.c"
+				RelativePath="..\..\..\src\libtclcad\tclcad_obj.c"
 				>
 			</File>
 			<File

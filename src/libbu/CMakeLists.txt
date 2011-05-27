@@ -1,3 +1,9 @@
+include_directories(
+    ${PNG_INCLUDE_DIR}
+    ${ZLIB_INCLUDE_DIR}
+    ${TCL_INCLUDE_DIRS}
+)
+
 set(LIBBU_SOURCES
     argv.c
     avs.c
@@ -6,7 +12,7 @@ set(LIBBU_SOURCES
     basename.c
     bitv.c
     bomb.c
-    booleanize.c
+	 booleanize.c
     brlcad_path.c
     cmd.c
     cmdhist.c
@@ -40,7 +46,6 @@ set(LIBBU_SOURCES
     malloc.c
     mappedfile.c
     mread.c
-    mro.c
     observer.c
     parallel.c
     parse.c
@@ -64,7 +69,7 @@ set(LIBBU_SOURCES
     str.c
     tcl.c
     temp.c
-    timer.c
+	 timer.c
     units.c
     vers.c
     vfont.c
@@ -75,35 +80,34 @@ set(LIBBU_SOURCES
     xdr.c
 )
 
-include_directories(
-    ../../include
-    ../other/libpng
-    ../other/libz
-    ../other/tcl/generic
-)
+IF(MSVC)
+	 SET(WIN32LIBS ${WINSOCK_LIB})
+    add_definitions(
+	    -DBU_EXPORT_DLL
+	 )    
+ENDIF(MSVC)
 
-add_definitions(
-    -DHAVE_CONFIG_H
-    -DBRLCADBUILD
-)
+BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT} ${PNG_LIBRARY} ${TCL_LIBRARY} ${WIN32LIBS}")
+SET_TARGET_PROPERTIES(libbu PROPERTIES VERSION 19.0.1 SOVERSION 19)
+IF(BRLCAD_BUILD_LOCAL_TCL)
+	ADD_DEPENDENCIES(libbu tcl)
+ENDIF(BRLCAD_BUILD_LOCAL_TCL)
 
-add_library(libbu ${LIBBU_SOURCES})
+add_executable(htester htester.c)
+target_link_libraries(htester ${CMAKE_THREAD_LIBS_INIT} ${PNG_LIBRARY} libbu)
 
-#
-# some library-testing tools
-#
-set(HTESTER_SOURCES
-    htester.c
-)
-add_executable(htester ${HTESTER_SOURCES})
-target_link_libraries(htester
-    libbu
-)
+add_executable(timetester timetester.c)
+target_link_libraries(timetester libbu)
 
-set(TIMETESTER_SOURCES
-    timetester.c
+set(bu_MAN3
+  htond.3
+  libbu.3
+  redblack.3
 )
-add_executable(timetester ${TIMETESTER_SOURCES})
-target_link_libraries(timetester
-    libbu
-)
+ADD_MAN_PAGES(3 bu_MAN3)
+
+set(bu_ignore_files
+	rb_internals.h
+	uce-dirent.h
+	)
+CMAKEFILES(${bu_ignore_files})

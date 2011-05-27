@@ -1,0 +1,98 @@
+#include <time.h>
+#include <stdio.h>
+void printtime(int tdiff) {
+  int d_mins, d_hrs, d_days;
+  d_days = 0; 
+  d_hrs = 0; 
+  d_mins = 0; 
+  if (tdiff > 86400) {/* get days */
+     d_days = tdiff / 86400;
+     tdiff = tdiff % 86400;
+  }
+  if (tdiff > 3600) { /* get hours */
+     d_hrs = tdiff / 3600;
+     tdiff = tdiff % 3600;
+  }
+  if (tdiff > 60) {  /* get minutes */
+     d_mins = tdiff / 60;
+     tdiff = tdiff % 60;
+  }
+  if (d_days > 0) {
+     if (d_days == 1) {
+        printf("%d day ", d_days);
+     } else {
+        printf("%d days ", d_days);
+     }
+  }
+  if (d_hrs > 0) {
+     if (d_hrs == 1) {
+        printf("%d hour ", d_hrs);
+     } else {
+        printf("%d hours ", d_hrs);
+     }
+  }
+  if (d_mins > 0) {
+     if (d_mins == 1) {
+        printf("%d minute ", d_mins);
+     } else {
+        printf("%d minutes ", d_mins);
+     }
+  }
+  if (tdiff > 0) {
+     if (tdiff == 1) {
+        printf("%d second ", tdiff);
+     } else {
+        printf("%d seconds ", tdiff);
+     }
+  } 
+ 
+  if (tdiff == 0 && d_mins == 0 && d_hrs == 0 && d_days == 0) {
+     printf("0 seconds ");
+  }
+}
+
+int main(void) {
+  FILE *infp = NULL;
+  time_t t, ts, te;
+  struct tm *currenttime;
+  struct tm starttime;
+  int tdiff;
+  t = time(NULL);
+  currenttime = localtime(&t);
+  infp = fopen("${BUILD_DELTA_START}", "r");
+/*  starttime.tm_zone = currenttime->tm_zone;
+  starttime.tm_gmtoff = currenttime->tm_gmtoff;*/
+  if(!fscanf(infp, "%d/%d/%d/%d/%d/%d/%d/%d/%d", &(starttime.tm_sec), &(starttime.tm_min), &(starttime.tm_hour), &(starttime.tm_mday), &(starttime.tm_mon), &(starttime.tm_year), &(starttime.tm_wday), &(starttime.tm_yday), &(starttime.tm_isdst))) 
+     printf("scan error\n");
+  fclose(infp);
+  
+  ts = mktime(&starttime); 
+  te = mktime(currenttime); 
+
+  printf("Done.\n\n");
+ 
+  printf("BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE}\n\n");
+  
+  printf("Elapsed compilation time: ");
+
+  tdiff = (int)difftime(te, ts);
+
+  printtime(tdiff);
+
+  printf("\nElapsed time since configuration: ");
+  
+  infp = fopen("${DELTA_START}", "r");
+  if(!fscanf(infp, "%d/%d/%d/%d/%d/%d/%d/%d/%d", &(starttime.tm_sec), &(starttime.tm_min), &(starttime.tm_hour), &(starttime.tm_mday), &(starttime.tm_mon), &(starttime.tm_year), &(starttime.tm_wday), &(starttime.tm_yday), &(starttime.tm_isdst)))
+     printf("scan error\n");
+  fclose(infp);
+  ts = mktime(&starttime); 
+  tdiff = (int)difftime(te, ts);
+  printtime(tdiff);
+  printf("\n---\n");
+
+  printf("Run 'make install' to begin installation into ${CMAKE_INSTALL_PREFIX}\n");
+  printf("Run 'make benchmark' to run the BRL-CAD Benchmark Suite\n");
+  printf("\n");
+
+  return 0;
+}

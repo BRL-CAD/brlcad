@@ -185,7 +185,7 @@ __BEGIN_DECLS
  * Tessellation (geometric) tolerances, different beasts than the
  * calcuation tolerance in bn_tol.
  */
-struct rt_tess_tol  {
+struct rt_tess_tol {
     unsigned long	magic;
     double		abs;			/**< @brief absolute dist tol */
     double		rel;			/**< @brief rel dist tol */
@@ -199,7 +199,7 @@ struct rt_tess_tol  {
  *
  * A handle on the internal format of an MGED database object.
  */
-struct rt_db_internal  {
+struct rt_db_internal {
     unsigned long	idb_magic;
     int			idb_major_type;
     int			idb_minor_type;		/**< @brief ID_xxx */
@@ -563,7 +563,7 @@ struct mater_info {
  *
  * The region structure.
  */
-struct region  {
+struct region {
     struct bu_list	l;		/**< @brief magic # and doubly linked list */
     const char *	reg_name;	/**< @brief Identifying string */
     union tree *	reg_treetop;	/**< @brief Pointer to boolean tree */
@@ -582,9 +582,7 @@ struct region  {
 #define REGION_NON_FASTGEN	0
 #define REGION_FASTGEN_PLATE	1
 #define REGION_FASTGEN_VOLUME	2
-    struct bu_mro **	attr_values;	/**< @brief Null terminated array of MRO structs
-					 * Each containing a value for the corresponding
-					 * attribute name passed to rt_gettrees_and_attrs() */
+    struct bu_attribute_value_set attr_values;	/**< @brief Attribute/value set */
 };
 #define REGION_NULL	((struct region *)0)
 #define RT_CK_REGION(_p)	BU_CKMAG(_p, RT_REGION_MAGIC, "struct region")
@@ -720,21 +718,21 @@ struct partition_bundle {
  * If a solid has 'pieces', it will be listed either in bn_list
  * (initially), or in bn_piecelist, but not both.
  */
-union cutter  {
+union cutter {
 #define CUT_CUTNODE	1
 #define CUT_BOXNODE	2
 #define CUT_NUGRIDNODE	3
 #define	CUT_MAXIMUM	3
     int	cut_type;
     union cutter *cut_forw;		/**< @brief Freelist forward link */
-    struct cutnode  {
+    struct cutnode {
 	int		cn_type;
 	int		cn_axis;	/**< @brief 0, 1, 2 = cut along X, Y, Z */
 	fastf_t		cn_point;	/**< @brief cut through axis==point */
 	union cutter *	cn_l;		/**< @brief val < point */
 	union cutter *	cn_r;		/**< @brief val >= point */
     } cn;
-    struct boxnode  {
+    struct boxnode {
 	int		bn_type;
 	fastf_t		bn_min[3];
 	fastf_t		bn_max[3];
@@ -798,7 +796,7 @@ struct mem_map {
  * texture-maps).  The array and strings are all dynamically
  * allocated.
  */
-struct db_i  {
+struct db_i {
     unsigned long dbi_magic;		/**< @brief magic number */
 
     /* THESE ELEMENTS ARE AVAILABLE FOR APPLICATIONS TO READ */
@@ -859,7 +857,7 @@ struct db_i  {
  * based on new hash.  This should be followed by rt_db_put_internal()
  * on the object to modify the on-disk name.
  */
-struct directory  {
+struct directory {
     unsigned long d_magic;	/**< @brief Magic number */
     char * d_namep;		/**< @brief pointer to name string */
     union {
@@ -950,7 +948,7 @@ struct directory  {
  * (Regions and Groups are both a kind of Combination).  Perhaps move
  * to wdb.h or rtgeom.h?
  */
-struct rt_comb_internal  {
+struct rt_comb_internal {
     unsigned long	magic;
     union tree *	tree;		/**< @brief Leading to tree_db_leaf leaves */
     char		region_flag;	/**< @brief !0 ==> this COMB is a REGION */
@@ -1160,7 +1158,7 @@ union tree {
 	const char *td_name;		/**< @brief  If non-null, dynamic string describing heritage of this region */
 	struct nmgregion *td_r;		/**< @brief  ptr to NMG region */
     } tr_d;
-    struct tree_db_leaf  {
+    struct tree_db_leaf {
 	unsigned long magic;
 	int tl_op;			/**< @brief  leaf, OP_DB_LEAF */
 	matp_t tl_mat;			/**< @brief  xform matp, NULL ==> identity */
@@ -1251,7 +1249,7 @@ struct rt_tree_array
  * Many different access styles are supported.
  */
 
-struct rt_wdb  {
+struct rt_wdb {
     struct bu_list	l;
     int			type;
     struct db_i	*	dbip;
@@ -1370,7 +1368,7 @@ struct rt_htbl {
  * The array is subscripted by st_piecestate_num.
  * The bit vector is subscripted by values found in rt_piecelist pieces[].
  */
-struct rt_piecestate  {
+struct rt_piecestate {
     unsigned long	magic;
     long		ray_seqno;	/**< @brief  res_nshootray */
     struct soltab *	stp;
@@ -1399,7 +1397,7 @@ struct rt_piecestate  {
  * The values (subscripts) in pieces[] are specific to a single solid
  * (stp).
  */
-struct rt_piecelist  {
+struct rt_piecelist {
     unsigned long	magic;
     size_t		npieces;	/**< @brief  number of pieces in pieces[] array */
     long		*pieces;	/**< @brief  pieces[npieces], piece indices */
@@ -1581,7 +1579,7 @@ struct pixel_ext {
  *  zero, BRL-CAD does not support any such machines, so this is a
  *  moot issue.
  */
-struct application  {
+struct application {
     unsigned long	a_magic;
     /* THESE ELEMENTS ARE MANDATORY */
     struct xray		a_ray;		/**< @brief  Actual ray to be shot */
@@ -1671,6 +1669,7 @@ struct application_bundle
     int b_return;
 };
 
+#define RT_APPLICATION_NULL ((struct application *)0)
 #define RT_AFN_NULL	((int (*)(struct application *, struct partition *, struct region *, struct region *, struct partition *))NULL)
 #define RT_CK_AP(_p)	BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
 #define RT_CK_APPLICATION(_p)	BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
@@ -2444,7 +2443,7 @@ RT_EXPORT BU_EXTERN(int rt_gettrees_muves,
 		     int argc,
 		     const char **argv,
 		     int ncpus));
-RT_EXPORT BU_EXTERN(int rt_load_attrs,
+DEPRECATED RT_EXPORT BU_EXTERN(int rt_load_attrs,
 		    (struct rt_i *rtip,
 		     char **attrs));
 /* Print seg struct */
@@ -5244,7 +5243,7 @@ RT_EXPORT BU_EXTERN(void nmg_pl_2fu,
 /* graphical display of classifier results */
 RT_EXPORT BU_EXTERN(void nmg_show_broken_classifier_stuff,
 		    (unsigned long	*p,
-		     long	*classlist[4],
+		     char	**classlist,
 		     int	all_new,
 		     int	fancy,
 		     const char	*a_string));
@@ -5353,7 +5352,7 @@ RT_EXPORT BU_EXTERN(int nmg_boolean,
 RT_EXPORT BU_EXTERN(void nmg_class_shells,
 		    (struct shell *sA,
 		     struct shell *sB,
-		     long *classlist[4],
+		     char **classlist,
 		     const struct bn_tol *tol));
 
 /* from nmg_fcut.c */
@@ -5413,7 +5412,7 @@ RT_EXPORT BU_EXTERN(void nmg_evaluate_boolean,
 		    (struct shell	*sA,
 		     struct shell	*sB,
 		     int		op,
-		     long		*classlist[8],
+		     char		**classlist,
 		     const struct bn_tol	*tol));
 
 /* The following functions cannot be publicly declared because struct
@@ -6053,6 +6052,24 @@ RT_EXPORT BU_EXTERN(size_t db5_type_sizeof_n_binu,
 
 
 /**
+ * Define standard attribute types in BRL-CAD geometry. (See the
+ * gattributes manual page) these should be a collective enumeration
+ * starting from 0 and increasing without any gaps in the numbers so
+ * db5_standard_attribute() can be used as an index-based iterator.
+ */
+enum {
+    ATTR_REGION = 0,
+    ATTR_REGION_ID,
+    ATTR_MATERIAL_ID,
+    ATTR_AIR,
+    ATTR_LOS,
+    ATTR_COLOR,
+    ATTR_SHADER,
+    ATTR_INHERIT,
+    ATTR_NULL
+};
+
+/**
  * D B 5 _ S T A N D A R D _ A T T R I B U T E
  *
  * Function returns the string name for a given standard attribute
@@ -6105,12 +6122,15 @@ RT_EXPORT BU_EXTERN(int db5_standardize_attribute, (const char *attr));
  * PRIVATE: this is new API and should be considered private for the
  * time being.
  */
-RT_EXPORT BU_EXTERN(void db5_apply_std_attributes, (struct db_i *dbip, struct directory *dp, struct rt_comb_internal *comb));
+RT_EXPORT BU_EXTERN(void db5_sync_attr_to_comb, (struct rt_comb_internal *comb, const struct bu_attribute_value_set *avs, const char *name));
 /**
  * PRIVATE: this is new API and should be considered private for the
  * time being.
  */
-RT_EXPORT BU_EXTERN(void db5_update_std_attributes, (struct db_i *dbip, struct directory *dp, const struct rt_comb_internal *comb));
+RT_EXPORT BU_EXTERN(void db5_sync_comb_to_attr, (struct bu_attribute_value_set *avs, const struct rt_comb_internal *comb));
+
+/* Convenience macros */
+#define ATTR_STD(attr) db5_standard_attribute(db5_standardize_attribute(attr))
 
 
 #endif
@@ -6144,40 +6164,6 @@ RT_EXPORT BU_EXTERN(int rt_bot_decimate,
 		     fastf_t max_chord_error,
 		     fastf_t max_normal_error,
 		     fastf_t min_edge_length));
-
-/*
- *  Utility functions for standard attributes
- */
-
-/**
- * D B 5  _ A P P L Y _ S T D _ A T T R I B U T E S
- *
- * Because standard attributes in BRL-CAD databases may involve
- * more data and structures than just the avs, provide a helper
- * function that checks the avs structures associated with a
- * comb and automatically syncs any other relevant data structures
- * to conform to the attribute values on the comb.  When using this
- * function, attribute/value pairs are "senior" to other values
- * and other values will be updated to match the attributes.
- */
-RT_EXPORT BU_EXTERN(void db5_apply_std_attributes,
-                         (struct db_i *dbip, struct directory *dp, struct rt_comb_internal *comb));
-
-
-/**
- * D B 5  _ U P D A T E _ S T D _ A T T R I B U T E S
- *
- * Because standard attributes in BRL-CAD databases may involve
- * more data and structures than just the avs, provide a helper
- * function that checks the avs structures associated with a
- * comb and automatically syncs any other relevant data structures
- * to conform to the attribute values on the comb.  When using this
- * function, attribute/value pairs are "junior" to other values
- * and attributes will be updated to reflect those values.
- */
-RT_EXPORT BU_EXTERN(void db5_update_std_attributes,
-                         (struct db_i *dbip, struct directory *dp, const struct rt_comb_internal *comb));
-
 
 /*
  *  Constants provided and used by the RT library.

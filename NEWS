@@ -11,10 +11,39 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 2011-05-XX  Release 7.18.6                                     ---
+--- 2011-05-1x  Release 7.20.0                                     ---
 ----------------------------------------------------------------------
 
-* awesomeness
+This release marks the introduction of our new build system based on 
+CMake, a cross platform tool that is capable of generating
+native build logic for a wide variety of operating systems.
+Cliff Yapp has been working on this conversion for a number of months
+in order to simplify the task of building BRL-CAD on multiple 
+platforms.  Previously, there were two build sytems in BRL-CAD - 
+one based on GNU Autotools for Unix/Linux platforms (including
+Mac OSX), and the Microsoft Visual Studio files for Windows.  CMake 
+will allow one set of build rules to handle all supported platforms, 
+eliminating the need to manually update the Windows build logic at 
+release time.
+
+* TCL/TK ISST on 64b platforms (CMake only) - C. Yapp/E. Greenwald
+* zoom out keybinding fixed on Linux/*BSD - Cliff Yapp
+* improve search handling of multiple paths - Cliff Yapp
+* segment splitting bug fixed for tesselation - Richard Weiss
+* facetization crash fixed for large models - Richard Weiss
+* improve asc2g handling of attributes - Bob Parker
+* review and merge CMake build logic into main branch - Sean Morrison
+* removed -t and -m from annotate command - Sean Morrison
+* add -q "quiet lookup" option to the ls command - Cliff Yapp
+* fix a variety of bugs in the red command - Cliff Yapp/Sean Morrison
+* add "attribute standardization" logic - Cliff Yapp
+* cut splitting order fixed in librt, may impact results - S. Morrison
+* add LIBRT_BOT_MINTIE environment variable - Sean Morrison
+* libtie merged into librt - Erik Greenwald
+* improve path resolution logic for search paths - Cliff Yapp
+* change search output order to shallow followed by deep - Cliff Yapp
+* use . and / to request list/full patch search results - Cliff Yapp
+* add -f flag to red for overwriting pre-existing comb - Sean Morrison
 
 
 ----------------------------------------------------------------------

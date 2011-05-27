@@ -157,7 +157,7 @@ db_fullpath_traverse_subtree(union tree *tp,
     switch (tp->tr_op) {
 
 	case OP_DB_LEAF:
-	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
+	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 		return;
 	    } else {
 		db_add_node_to_full_path(dfp, dp);
@@ -224,7 +224,7 @@ db_fullpath_traverse(struct db_i *dbip,
 	    /* recurse */
 	    for (i=1; i < dp->d_len; i++) {
 		if ((mdp = db_lookup(dbip, rp[i].M.m_instname,
-				     LOOKUP_NOISY)) == RT_DIR_NULL) {
+				     LOOKUP_QUIET)) == RT_DIR_NULL) {
 		    continue;
 		} else {
 		    db_add_node_to_full_path(dfp, mdp);
@@ -443,7 +443,7 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
     switch (tp->tr_op) {
 
 	case OP_DB_LEAF:
-	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
+	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 		return 0;
 	    } else {
 		db_add_node_to_full_path(dfp, dp);
@@ -526,7 +526,7 @@ db_fullpath_stateful_traverse(struct db_i *dbip, struct rt_wdb *wdbp, struct db_
 	    /* recurse */
 	    for (i=1; i < dp->d_len; i++) {
 		if ((mdp = db_lookup(dbip, rp[i].M.m_instname,
-				     LOOKUP_NOISY)) == RT_DIR_NULL) {
+				     LOOKUP_QUIET)) == RT_DIR_NULL) {
 		    continue;
 		} else {
 		    db_add_node_to_full_path(dfp, mdp);

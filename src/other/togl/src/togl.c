@@ -14,9 +14,15 @@
  * Currently we support X11, Win32 and Mac OS X only
  */
 
+#include "brlcad_config.h"
+
 #define USE_TOGL_STUB_PROCS
 #include "togl.h"
-#include <GL/glext.h>
+#ifdef HAVE_GL_GLEXT_H
+# include <GL/glext.h>
+#else
+# include "GL/glext.h"
+#endif
 #include <tclInt.h>
 #include <tkInt.h>
 #include <limits.h>

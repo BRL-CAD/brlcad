@@ -1,0 +1,38 @@
+#cmakedefine HAVE_TERMLIB_H
+#cmakedefine HAVE_NCURSES_H
+#cmakedefine HAVE_CURSES_H 
+#cmakedefine HAVE_TERMCAP_H
+#cmakedefine HAVE_TERMINFO_H
+#cmakedefine HAVE_TINFO_H
+#ifdef HAVE_TERMLIB_H
+#  include <termlib.h>
+#else
+#  ifdef HAVE_NCURSES_H
+#    include <ncurses.h>
+#  else
+#    ifdef HAVE_CURSES_H
+#      include <curses.h>
+#    else
+#      ifdef HAVE_TERMCAP_H
+#        include <termcap.h>
+#      else
+#        ifdef HAVE_TERMINFO_H
+#          include <terminfo.h>
+#        else
+#          ifdef HAVE_TINFO_H
+#            include <tinfo.h>
+#          endif
+#        endif
+#      endif
+#    endif
+#  endif
+#  ifdef HAVE_TERM_H
+#    include <term.h>
+#  endif
+#endif
+int main () {
+	char buffer[2048] = {0};
+	int result = tgetent(buffer, "vt100");
+	return 0;
+}
+

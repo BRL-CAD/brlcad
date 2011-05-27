@@ -63,10 +63,9 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
     struct bu_vls claimant_list;	/* Names of the claiming regions */
     int need_to_free = 0;	/* Clean up the bu_vls? */
     fastf_t get_obliq(fastf_t *ray, fastf_t *normal);
-    struct bu_vls *vls;
     struct bu_vls attr_vls;
-    struct bu_mro **attr_values;
     char regionPN[512] = {0};
+    struct bu_attribute_value_pair *avpp;
 
     /* quellage */
     finished_segs = finished_segs;
@@ -184,16 +183,10 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 
 	/* format up the attribute strings into a single string */
 	bu_vls_init(&attr_vls);
-	attr_values = part->pt_regionp->attr_values;
-	for (i=0; i < a_tab.attrib_use; i++) {
-
-	    BU_CK_MRO(attr_values[i]);
-	    vls = &attr_values[i]->string_rep;
-
-	    if (bu_vls_strlen(vls) > 0) {
-		/* XXX only print attributes that actually were set */
-		bu_vls_printf(&attr_vls, "%s=%V ", a_tab.attrib[i], vls);
-	    }
+	for (BU_AVS_FOR(avpp, &(part->pt_regionp->attr_values))) {
+		if (avpp->value)
+			if (strlen(avpp->value) != 0)
+				bu_vls_printf(&attr_vls, "%s=%s", avpp->name, avpp->value);
 	}
 
 	ValTab[VTI_ATTRIBUTES].value.sval = bu_vls_addr(&attr_vls);

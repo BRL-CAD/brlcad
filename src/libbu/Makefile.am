@@ -46,7 +46,6 @@ libbu_nil_la_SOURCES = \
 	malloc.c \
 	mappedfile.c \
 	mread.c \
-	mro.c \
 	observer.c \
 	parallel.c \
 	parse.c \

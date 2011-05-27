@@ -57,8 +57,6 @@ bu_identify_magic(register unsigned long magic)
 	    return "bu_list";
 	case BU_MAPPED_FILE_MAGIC:
 	    return "bu_mapped_file";
-	case BU_MRO_MAGIC:
-	    return "bu_mro";
 	case BU_PTBL_MAGIC:
 	    return "bu_ptbl";
 	case BU_RB_LIST_MAGIC:

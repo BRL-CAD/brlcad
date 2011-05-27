@@ -49,7 +49,7 @@ extern int rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *ave
 void
 usage(const char *argv0)
 {
-    bu_log("Usage:  rtshot [options] model.g objects...\n", argv0);
+    bu_log("Usage:  %s [options] model.g objects...\n", argv0);
     bu_log(" -U #		Set reporting of air regions (default=1)\n");
     bu_log(" -u #		Set libbu debug flag\n");
     bu_log(" -x #		Set librt debug flags\n");
@@ -539,14 +539,14 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	    if (ap->attrs) {
 		bu_log("\tattribute values:\n");
 		i = 0;
-		while (ap->attrs[i] && regp->attr_values[i]) {
+		while (ap->attrs[i] && regp->attr_values.count) {
 		    bu_log("\t\t%s:\n", ap->attrs[i]);
 		    bu_log("\t\t\tstring rep = %s\n",
-			   BU_MRO_GETSTRING(regp->attr_values[i]));
-		    bu_log("\t\t\tlong rep = %d\n",
+			   bu_avs_get(&(regp->attr_values), ap->attrs[i]));
+		  /*  bu_log("\t\t\tlong rep = %d\n",
 			   BU_MRO_GETLONG(regp->attr_values[i]));
 		    bu_log("\t\t\tdouble rep = %f\n",
-			   BU_MRO_GETDOUBLE(regp->attr_values[i]));
+			   BU_MRO_GETDOUBLE(regp->attr_values[i]));*/
 		    i++;
 		}
 	    }
@@ -696,18 +696,18 @@ int bundle_hit(register struct application_bundle *bundle, struct partition_bund
 		int i;
 
 		if (pl->ap->attrs) {
-		    bu_log("\tattribute values:\n");
-		    i = 0;
-		    while (pl->ap->attrs[i] && regp->attr_values[i]) {
-			bu_log("\t\t%s:\n", pl->ap->attrs[i]);
-			bu_log("\t\t\tstring rep = %s\n", BU_MRO_GETSTRING(
-				   regp->attr_values[i]));
-			bu_log("\t\t\tlong rep = %d\n", BU_MRO_GETLONG(
-				   regp->attr_values[i]));
-			bu_log("\t\t\tdouble rep = %f\n", BU_MRO_GETDOUBLE(
-				   regp->attr_values[i]));
-			i++;
-		    }
+			bu_log("\tattribute values:\n");
+			i = 0;
+			while (pl->ap->attrs[i] && regp->attr_values.count) {
+				bu_log("\t\t%s:\n", pl->ap->attrs[i]);
+				bu_log("\t\t\tstring rep = %s\n",
+						bu_avs_get(&(regp->attr_values), pl->ap->attrs[i]));
+				/*  bu_log("\t\t\tlong rep = %d\n",
+				    BU_MRO_GETLONG(regp->attr_values[i]));
+				    bu_log("\t\t\tdouble rep = %f\n",
+				    BU_MRO_GETDOUBLE(regp->attr_values[i]));*/
+				i++;
+			}
 		}
 	    }
 	}

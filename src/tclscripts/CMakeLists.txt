@@ -1,0 +1,57 @@
+# Convenience macros for building pkgIndex.tcl and tclIndex files
+
+MACRO(pkgIndex_BUILD name targetdir)
+	STRING(REGEX REPLACE "/" "_" targetprefix ${targetdir})
+	ADD_CUSTOM_COMMAND(
+		OUTPUT ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/pkgIndex.tcl
+		COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ampi.tcl ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}
+		DEPENDS btclsh ${targetprefix}.sentinel
+		)
+	ADD_CUSTOM_TARGET(${name}_pkgIndex.tcl ALL DEPENDS ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/pkgIndex.tcl)
+	INSTALL(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/pkgIndex.tcl DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/${targetdir})
+ENDMACRO(pkgIndex_BUILD name targetdir)
+
+MACRO(tclIndex_BUILD name targetdir)
+	STRING(REGEX REPLACE "/" "_" targetprefix ${targetdir})
+	ADD_CUSTOM_COMMAND(
+		OUTPUT ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/tclIndex
+		COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ami.tcl ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir} 
+		DEPENDS btclsh ${targetprefix}.sentinel
+		)
+	ADD_CUSTOM_TARGET(${name}_tclIndex ALL DEPENDS ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/tclIndex)
+	INSTALL(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/tclIndex DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/${targetdir})
+ENDMACRO(tclIndex_BUILD name targetdir)
+
+
+# Now that the macros are defined, we can add tclscript subdirs
+ADD_SUBDIRECTORY(archer)
+ADD_SUBDIRECTORY(boteditor)
+ADD_SUBDIRECTORY(geometree)
+ADD_SUBDIRECTORY(hv3)
+ADD_SUBDIRECTORY(lib)
+ADD_SUBDIRECTORY(mged)
+ADD_SUBDIRECTORY(pl-dm)
+ADD_SUBDIRECTORY(rtwizard)
+ADD_SUBDIRECTORY(sdialogs)
+ADD_SUBDIRECTORY(swidgets)
+ADD_SUBDIRECTORY(util)
+
+SET(tclscripts_TCLSCRIPTS
+	ami.tcl 
+	ampi.tcl 
+	cad_clrpick.tcl 
+	cad_dialog.tcl 
+	chkexterns.tcl 
+	fs_dialog.tk 
+	helpcomm.tcl 
+	helplib.tcl 
+	hoc.tcl 
+	html_library.tcl 
+	libdm.tcl 
+	menu_override.tcl 
+	mouse.tcl 
+	vmath.tcl
+)
+BRLCAD_ADDDATA(tclscripts_TCLSCRIPTS tclscripts)
+pkgIndex_BUILD(tclscripts tclscripts)
+tclIndex_BUILD(tclscripts tclscripts)

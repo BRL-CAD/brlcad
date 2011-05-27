@@ -1,0 +1,12 @@
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${TCL_INCLUDE_DIRS}
+)
+
+BRLCAD_ADDLIB(libvfont getfont.c libbu)
+SET_TARGET_PROPERTIES(libvfont PROPERTIES VERSION 19.0.1 SOVERSION 19)
+
+BRLCAD_ADDFILE(fix.6r vfont)
+BRLCAD_ADDFILE(nonie.r.12 vfont)
+
+CMAKEFILES(vfont.h)

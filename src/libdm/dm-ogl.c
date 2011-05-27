@@ -1464,18 +1464,17 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(pt));
 	    switch (*cmd) {
 		case BN_VLIST_LINE_MOVE:
+		case BN_VLIST_LINE_DRAW:
 		    break;
 		case BN_VLIST_POLY_START:
-
 		    /* Start poly marker & normal */
 		    if (first == 0)
 			glEnd();
+		    first = 0;
 
 		    glBegin(GL_POLYGON);
 		    /* Set surface normal (vl_pnt points outward) */
 		    glNormal3dv(*pt);
-		    break;
-		case BN_VLIST_LINE_DRAW:
 		    break;
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_POLY_DRAW:
@@ -1528,6 +1527,7 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 		    /* Start poly marker & normal */
 		    if (first == 0)
 			glEnd();
+		    first = 0;
 
 		    glBegin(GL_LINE_STRIP);
 		    break;
@@ -1618,6 +1618,7 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    /* Start poly marker & normal */
 		    if (first == 0)
 			glEnd();
+		    first = 0;
 
 		    if (dmp->dm_light && mflag) {
 			mflag = 0;

@@ -11,6 +11,10 @@ find_package(X11)
 find_package(GL)
 find_package(TCL)
 
+IF(NOT LIB_DIR)
+	SET(LIB_DIR lib)
+ENDIF(NOT LIB_DIR)
+
 # If we have only a target and not a full working exec, it's up to
 # a parent CMake system to define TK_SYSTEM_GRAPHICS
 get_filename_component(FULL_EXEC_PATH ${TCL_WISH_EXECUTABLE} ABSOLUTE)
@@ -65,11 +69,12 @@ OPTION(USE_TK_STUBS "Use Tk Stubs" ON)
 #cmakedefine TCL_WIDE_INT_IS_LONG 
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/togl_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/togl_config.h)
-
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/config.h)
 
 SET(TOGL_PKGNAME Togl)
 SET(TOGL_PKGVERSION "2.1")
 
+ADD_SUBDIRECTORY(include)
 ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(demo)
 

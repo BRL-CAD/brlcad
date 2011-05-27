@@ -399,9 +399,9 @@ rt_comb_export5(
 
     /* optical shader string goes in an attribute */
     if (bu_vls_strlen(&comb->shader) > 0)
-	bu_avs_add_vls(avsp, "oshader", &comb->shader);
+	bu_avs_add_vls(avsp, "shader", &comb->shader);
     else
-	bu_avs_remove(avsp, "oshader");
+	bu_avs_remove(avsp, "shader");
 
     /* GIFT compatability */
     if (comb->region_id != 0) {
@@ -722,7 +722,8 @@ finish:
 
     /* Unpack the attributes */
     comb->rgb_valid = 0;
-    if ((ap = bu_avs_get(&ip->idb_avs, "rgb")) != NULL) {
+    
+    if ((ap = bu_avs_get(&ip->idb_avs, db5_standard_attribute(ATTR_COLOR))) != NULL) {
 	int ibuf[3];
 	if (sscanf(ap, "%d/%d/%d", ibuf, ibuf+1, ibuf+2) == 3) {
 	    VMOVE(comb->rgb, ibuf);
@@ -731,10 +732,10 @@ finish:
 	    bu_log("unable to parse 'rgb' attribute '%s'\n", ap);
 	}
     }
-    if ((ap = bu_avs_get(&ip->idb_avs, "inherit")) != NULL) {
+    if ((ap = bu_avs_get(&ip->idb_avs, db5_standard_attribute(ATTR_INHERIT))) != NULL) {
 	comb->inherit = atoi(ap);
     }
-    if ((ap = bu_avs_get(&ip->idb_avs, "region")) != NULL) {
+    if ((ap = bu_avs_get(&ip->idb_avs, db5_standard_attribute(ATTR_REGION))) != NULL) {
 	/* Presence of this attribute implies it is a region */
 	comb->region_flag = 1;
 
@@ -758,20 +759,20 @@ finish:
 	}
 
 	/* get the other GIFT "region" attributes */
-	if ((ap = bu_avs_get(&ip->idb_avs, "region_id")) != NULL) {
+	if ((ap = bu_avs_get(&ip->idb_avs, db5_standard_attribute(ATTR_REGION_ID))) != NULL) {
 	    comb->region_id = atol(ap);
 	}
-	if ((ap = bu_avs_get(&ip->idb_avs, "aircode")) != NULL) {
+	if ((ap = bu_avs_get(&ip->idb_avs, db5_standard_attribute(ATTR_AIR))) != NULL) {
 	    comb->aircode = atol(ap);
 	}
-	if ((ap = bu_avs_get(&ip->idb_avs, "material_id")) != NULL) {
+	if ((ap = bu_avs_get(&ip->idb_avs, db5_standard_attribute(ATTR_MATERIAL_ID))) != NULL) {
 	    comb->GIFTmater = atol(ap);
 	}
-	if ((ap = bu_avs_get(&ip->idb_avs, "los")) != NULL) {
+	if ((ap = bu_avs_get(&ip->idb_avs, db5_standard_attribute(ATTR_LOS))) != NULL) {
 	    comb->los = atol(ap);
 	}
     }
-    if ((ap = bu_avs_get(&ip->idb_avs, "oshader")) != NULL) {
+    if ((ap = bu_avs_get(&ip->idb_avs, db5_standard_attribute(ATTR_SHADER))) != NULL) {
 	bu_vls_strcat(&comb->shader, ap);
     }
 

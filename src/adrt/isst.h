@@ -36,8 +36,8 @@ struct isst_s {
     void *texdata;
     vect_t camera_pos_init;
     vect_t camera_focus_init;
-    struct timeval t1;
-    struct timeval t2;
+    int64_t t1;
+    int64_t t2;
     int dirty;
 };
 

@@ -38,11 +38,11 @@
 # Usual options.
 #
 itk::usual Fileselectionbox {
-    keep -activebackground -activerelief -background -borderwidth -cursor \
-         -elementborderwidth -foreground -highlightcolor -highlightthickness \
+    keep -background -borderwidth -cursor \
+         -foreground -highlightcolor -highlightthickness \
          -insertbackground -insertborderwidth -insertofftime -insertontime \
-         -insertwidth -jump -labelfont -selectbackground -selectborderwidth \
-         -textbackground -textfont -troughcolor
+         -insertwidth -labelfont -selectbackground -selectborderwidth \
+         -textbackground -textfont
 }
 
 # ------------------------------------------------------------------

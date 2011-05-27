@@ -16,26 +16,6 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/../include/tcltk/tk${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}
 	)
 
-SET(TOGL_DECLS_H_TXT "
-#ifndef ToglDecls_H
-#  define ToglDecls_H
-
-/* 
- * Togl - a Tk OpenGL widget
- *
- * Copyright (C) 1996-2002  Brian Paul and Ben Bederson
- * Copyright (C) 2005-2009  Greg Couch
- * See the LICENSE file for copyright details.
- */
-
-/* !BEGIN!: Do not edit below this line. */
-
-/* !END!: Do not edit above this line. */
-
-#endif
-		")
-FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/toglDecls.h "${TOGL_DECLS_H_TXT}")
-
 SET(TOGL_STUB_INIT_TXT "
 /* 
  * Togl - a Tk OpenGL widget
@@ -53,7 +33,8 @@ extern const ToglStubs toglStubs;
 
 
 /* !END!: Do not edit above this line. */
-		")
+
+")
 FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/toglStubInit.c "${TOGL_STUB_INIT_TXT}")
 
 ADD_CUSTOM_COMMAND(
@@ -65,13 +46,6 @@ ADD_CUSTOM_COMMAND(
 ADD_CUSTOM_TARGET(togl_stubs_gen ALL DEPENDS
 	${CMAKE_CURRENT_BINARY_DIR}/STUBSDONE
 )
-
-SET(TOGL_HDRS
-	${CMAKE_CURRENT_SOURCE_DIR}/../include/togl.h
-	${CMAKE_CURRENT_BINARY_DIR}/../include/togl_config.h
-	${CMAKE_CURRENT_BINARY_DIR}/toglDecls.h
-	)
-install(FILES ${TOGL_HDRS} DESTINATION include/togl)
 
 # If we re-run cmake, need to ensure we re-run togl_stubs_gen too
 FILE(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/STUBSDONE)
@@ -97,8 +71,17 @@ SET(TOGL_SRCS
 
 add_library(togl SHARED ${TOGL_SRCS})
 ADD_DEPENDENCIES(togl togl_stubs_gen)
-target_link_libraries(togl ${TCL_LIBRARY} ${TK_LIBRARY} ${X11_LIBRARIES} ${OPENGL_LIBRARIES})
-install(TARGETS togl DESTINATION lib)
+IF(WIN32)
+	target_link_libraries(togl ${TCL_STUB_LIBRARIES} ${X11_LIBRARIES} ${OPENGL_LIBRARIES})
+ELSE(WIN32)
+	target_link_libraries(togl ${TCL_LIBRARIES} ${X11_LIBRARIES} ${OPENGL_LIBRARIES})
+ENDIF(WIN32)
+install(TARGETS togl DESTINATION ${LIB_DIR})
+
+add_library(toglstub STATIC ${CMAKE_CURRENT_BINARY_DIR}/toglStubInit.c toglStubLib.c)
+ADD_DEPENDENCIES(toglstub togl_stubs_gen)
+install(TARGETS toglstub DESTINATION ${LIB_DIR})
+MARK_AS_ADVANCED(TOGL_STUB_LIBRARIES)
 
 # Create the pkgIndex.tcl file.
 FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded ${TOGL_PKGNAME} ${TOGL_PKGVERSION} [list load [file join $dir .. libtogl${CMAKE_SHARED_LIBRARY_SUFFIX}] togl]")

@@ -58,13 +58,47 @@ multiprocessor systems, you can enjoy the benefits of decreased
 compile times by utilizing the "-j" option to make.  After running
 configure, run "make -j2" to build on a 2-processor system.
 
-Universal Builds and 64-bit Compilation
----------------------------------------
+Universal Builds 
+----------------
 
 Universal builds have not been fully vetted due to how BRL-CAD
 serializes data to disk.  It is possible to make a universal build,
 but whether the build behaves correctly has not yet been validated and
 as such is not recommended.
+
+CMake and Mac OSX
+-----------------
+
+On a default configuration, CMake has some problems performing parallel
+builds on OSX - typically this will manifest itself as a series of 
+"too many open files" errors.  So far, the way to work around this in
+OSX 10.5 is to set the following system control variables to 50,000:
+
+kern.maxfiles
+kern.maxfilesperproc
+
+(check the current values using "sysctl <variable>" on the command line)
+
+and up the maxfiles limit in /etc/launchd.conf:
+
+limit maxfiles 50000 unlimited
+
+This is not widely tested, and OSX has quite a few limit settings that
+may or may not apply (and may change from one version to the next.)  As
+we get a better feel for various platforms we can assemble a table of
+required settings.  Other programs have this issue as well, so searching
+online may prove fruitful.
+
+So far, if parallel building doesn't work due to the above issue a 
+non-parallel build will still succeed.  Another workaround is to build
+just subdirectories (e.g. src/other, doc, etc.) individually and then
+do a toplevel make in non-parallel mode to finalize the build.
+
+
+64-bit Compilation
+------------------
+
+TODO - verify proper behavior on the CMake build for 64 bit OSX.
 
 Compiling 64-bit on Mac OS X is possible but will not occur by merely
 specifying the --enable-64-bit configure flag.  You must specify

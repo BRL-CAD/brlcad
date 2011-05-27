@@ -2252,7 +2252,8 @@ hold_point_location(fastf_t *loc, struct hold_point *hp)
 double
 hold_eval(struct hold *hp)
 {
-    vect_t e_loc, o_loc;
+    vect_t e_loc = VINIT_ZERO;
+    vect_t o_loc = VINIT_ZERO;
     double value;
 
     /*
@@ -3085,7 +3086,7 @@ hold_point_to_string(struct hold_point *hp)
 #define HOLD_POINT_TO_STRING_LEN 1024
     char *text = bu_malloc(HOLD_POINT_TO_STRING_LEN, "hold_point_to_string");
     char *path;
-    vect_t loc;
+    vect_t loc = VINIT_ZERO;
 
     switch (hp->type) {
 	case ID_FIXED:

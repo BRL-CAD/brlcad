@@ -89,7 +89,6 @@
 
 #define fb_log bu_log
 
-#define HAVE_TK 1
 #define HAVE_X11_TYPES 1
 
 #define YY_NO_UNISTD_H		1

@@ -125,7 +125,7 @@ endif
 
 asc2g_SOURCES = asc/asc2g.c
 asc2g_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
-asc2g_LDADD = ${WDB} ${GED}
+asc2g_LDADD = ${WDB} ${TCLCAD} ${GED}
 # static is required to avoid MIPSpro 7.3 long rpath linker bug
 if LINK_STATIC_REQUIRED
 asc2g_LDFLAGS = -static
