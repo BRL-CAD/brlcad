@@ -211,6 +211,10 @@ include/raytrace.h
 * OBSOLETE *
 ************
 
+7.20.0
+------
+	bu_mro and related macros -> bu_attribute_value_set
+
 7.18.2
 ------
 	RT_HIT_NORM -> RT_HIT_NORMAL [deprecated pre-7.0]
