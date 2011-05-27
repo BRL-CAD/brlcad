@@ -1130,8 +1130,8 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
     struct nmgregion *reg;
     int op;
     const char *op_str;
-    char *name;
     size_t rem;
+    char *name;
 
     RT_CK_TREE(tp);
     BN_CK_TOL(tol);
@@ -1139,7 +1139,7 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
 
     switch (tp->tr_op) {
 	case OP_NOP:
-	    return 0;
+	    return tp;
 	case OP_NMG_TESS:
 	    /* Hit a tree leaf */
 	    if (rt_g.NMG_debug & DEBUG_VERIFY) {
@@ -1159,47 +1159,99 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
 	    op_str = " - ";
 	    break;
 	default:
-	    bu_log("nmg_booltree_evaluate: bad op %d\n", tp->tr_op);
-	    return 0;
+	    bu_bomb("nmg_booltree_evaluate(): bad op\n");
     }
+
     /* Handle a boolean operation node.  First get its leaves. */
     tl = nmg_booltree_evaluate(tp->tr_b.tb_left, tol, resp);
     tr = nmg_booltree_evaluate(tp->tr_b.tb_right, tol, resp);
-    if (tl == 0 || !tl->tr_d.td_r) {
-	if (tr == 0 || !tr->tr_d.td_r)
-	    return 0;
-	if (op == NMG_BOOL_ADD)
-	    return tr;
-	/* For sub and intersect, if lhs is 0, result is null */
-	db_free_tree(tr, resp);
-	tp->tr_b.tb_right = TREE_NULL;
-	tp->tr_op = OP_NOP;
-	return 0;
-    }
-    if (tr == 0 || !tr->tr_d.td_r) {
-	if (tl == 0 || !tl->tr_d.td_r)
-	    return 0;
-	if (op == NMG_BOOL_ISECT) {
-	    db_free_tree(tl, resp);
-	    tp->tr_b.tb_left = TREE_NULL;
-	    tp->tr_op = OP_NOP;
-	    return 0;
-	}
-	/* For sub and add, if rhs is 0, result is lhs */
-	return tl;
-    }
-    if (tl->tr_op != OP_NMG_TESS) bu_bomb("nmg_booltree_evaluate() bad left tree\n");
-    if (tr->tr_op != OP_NMG_TESS) bu_bomb("nmg_booltree_evaluate() bad right tree\n");
 
-    if (! nmg_bool_eval_silent)
+    RT_CK_TREE(tl);
+    RT_CK_TREE(tr);
+
+    if ((!tl->tr_d.td_r) && (!tr->tr_d.td_r)) {
+        /* left-r == null && right-r == null */
+        tl->tr_d.td_r = (struct nmgregion *)NULL; /* sanity */
+        tr->tr_d.td_r = (struct nmgregion *)NULL; /* sanity */
+        db_free_tree(tl, resp);
+        db_free_tree(tr, resp);
+        tp->tr_b.tb_left = TREE_NULL;
+        tp->tr_b.tb_right = TREE_NULL;
+        tp->tr_d.td_r = (struct nmgregion *)NULL;
+        tp->tr_d.td_name = (char *)NULL;
+        tp->tr_op = OP_NOP;
+        RT_CK_TREE(tp);
+        return tp;
+    }
+
+    if ((tl->tr_d.td_r) && (!tr->tr_d.td_r)) {
+        /* left-r != null && right-r == null */
+        NMG_CK_REGION(tl->tr_d.td_r);
+        if ( op == NMG_BOOL_ISECT ) {
+            /* OP_INTERSECT '+' */
+            tl->tr_d.td_r = (struct nmgregion *)NULL; /* sanity */
+            tr->tr_d.td_r = (struct nmgregion *)NULL; /* sanity */
+            db_free_tree(tl, resp);
+            db_free_tree(tr, resp);
+            tp->tr_b.tb_left = TREE_NULL;
+            tp->tr_b.tb_right = TREE_NULL;
+            tp->tr_d.td_r = (struct nmgregion *)NULL;
+            tp->tr_d.td_name = (char *)NULL;
+            tp->tr_op = OP_NOP;
+            RT_CK_TREE(tp);
+            return tp;
+        } else {
+            tl->tr_op = OP_NMG_TESS; /* sanity, should already be this */
+            return tl;
+        }
+    }
+
+    if ((!tl->tr_d.td_r) && (tr->tr_d.td_r)) {
+        /* left-r == null && right-r != null */
+        NMG_CK_REGION(tr->tr_d.td_r); 
+        if ( op == NMG_BOOL_ADD ) {
+            /* OP_UNION 'u' */
+            tr->tr_op = OP_NMG_TESS; /* sanity, should already be this */
+            return tr;
+        } else if ((op == NMG_BOOL_SUB) || (op == NMG_BOOL_ISECT)) {
+            /* For sub and intersect, if left-hand-side is null, result is null */
+            tl->tr_d.td_r = (struct nmgregion *)NULL; /* sanity */
+            tr->tr_d.td_r = (struct nmgregion *)NULL; /* sanity */
+            db_free_tree(tl, resp);
+            db_free_tree(tr, resp);
+            tp->tr_b.tb_left = TREE_NULL;
+            tp->tr_b.tb_right = TREE_NULL;
+            tp->tr_d.td_r = (struct nmgregion *)NULL;
+            tp->tr_d.td_name = (char *)NULL;
+            tp->tr_op = OP_NOP;
+            RT_CK_TREE(tp);
+            return tp;
+        } else {
+            bu_bomb("nmg_booltree_evaluate(): error, unknown operation\n");
+        }
+    }
+
+    if (tl->tr_op != OP_NMG_TESS) {
+        bu_bomb("nmg_booltree_evaluate(): bad left tree\n");
+    }
+    if (tr->tr_op != OP_NMG_TESS) {
+        bu_bomb("nmg_booltree_evaluate(): bad right tree\n");
+    }
+
+    if (!nmg_bool_eval_silent) {
 	bu_log(" {%s}%s{%s}\n", tl->tr_d.td_name, op_str, tr->tr_d.td_name);
+    }
 
     NMG_CK_REGION(tr->tr_d.td_r);
     NMG_CK_REGION(tl->tr_d.td_r);
-    if (nmg_ck_closed_region(tr->tr_d.td_r, tol) != 0)
-	bu_log("nmg_booltree_evaluate:  WARNING, non-closed shell (r), barging ahead\n");
-    if (nmg_ck_closed_region(tl->tr_d.td_r, tol) != 0)
-	bu_log("nmg_booltree_evaluate:  WARNING, non-closed shell (l), barging ahead\n");
+
+    if (nmg_ck_closed_region(tr->tr_d.td_r, tol)) {
+	bu_bomb("nmg_booltree_evaluate(): ERROR, non-closed shell (r)\n");
+    }
+    if (nmg_ck_closed_region(tl->tr_d.td_r, tol)) {
+	bu_bomb("nmg_booltree_evaluate(): ERROR, non-closed shell (l)\n");
+    }
+
     nmg_r_radial_check(tr->tr_d.td_r, tol);
     nmg_r_radial_check(tl->tr_d.td_r, tol);
 
@@ -1211,8 +1263,9 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
     }
 
     /* move operands into the same model */
-    if (tr->tr_d.td_r->m_p != tl->tr_d.td_r->m_p)
+    if (tr->tr_d.td_r->m_p != tl->tr_d.td_r->m_p) {
 	nmg_merge_models(tl->tr_d.td_r->m_p, tr->tr_d.td_r->m_p);
+    }
 
     /* The 'nmg_model_fuse' function is best to be run here, i.e. just before
      * the actual boolean operation is performed because at this point all
@@ -1227,28 +1280,33 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
 
     /* input r1 and r2 are destroyed, output is new region */
     reg = nmg_do_bool(tl->tr_d.td_r, tr->tr_d.td_r, op, tol);
-    tl->tr_d.td_r = NULL;
-    tr->tr_d.td_r = NULL;
+
+    /* Build string of result name */
+    rem = strlen(tl->tr_d.td_name) + 3 + strlen(tr->tr_d.td_name) + 2 + 1;
+    name = (char *)bu_calloc(rem, sizeof(char), "nmg_booltree_evaluate name");
+    snprintf(name, rem, "(%s%s%s)", tl->tr_d.td_name, op_str, tr->tr_d.td_name);
+
+    /* Convert argument binary node into a result node */
     if (reg) {
 	NMG_CK_REGION(reg);
 	nmg_r_radial_check(reg, tol);
+        tp->tr_op = OP_NMG_TESS;
 
 	if (rt_g.NMG_debug & DEBUG_VERIFY) {
 	    nmg_vshell(&reg->s_hd, reg);
 	}
+    } else {
+        /* resulting region was null */
+        tp->tr_op = OP_NOP;
     }
 
-    /* Build string of result name */
-    rem = strlen(tl->tr_d.td_name)+3+strlen(tr->tr_d.td_name)+2+1;
-    name = (char *)bu_malloc(rem, "nmg_booltree_evaluate name");
-    snprintf(name, rem, "(%s%s%s)", tl->tr_d.td_name, op_str, tr->tr_d.td_name);
-
     /* Clean up child tree nodes (and their names) */
+    tl->tr_d.td_r = (struct nmgregion *)NULL;
+    tr->tr_d.td_r = (struct nmgregion *)NULL;
     db_free_tree(tl, resp);
     db_free_tree(tr, resp);
-
-    /* Convert argument binary node into a result node */
-    tp->tr_op = OP_NMG_TESS;
+    tp->tr_b.tb_left = TREE_NULL;
+    tp->tr_b.tb_right = TREE_NULL;
     tp->tr_d.td_r = reg;
     tp->tr_d.td_name = name;
 
@@ -1304,19 +1362,29 @@ nmg_boolean(union tree *tp, struct model *m, const struct bn_tol *tol, struct re
      * only a single region remains.
      */
     result = nmg_booltree_evaluate(tp, tol, resp);
-    RT_CK_TREE(result);
-    if (result != tp) bu_bomb("nmg_boolean() result of nmg_booltree_evaluate() isn't tp\n");
-    if (tp->tr_op != OP_NMG_TESS) {
-	bu_log("nmg_boolean() result of nmg_booltree_evaluate() op != OP_NMG_TESS\n");
+
+    if (result == TREE_NULL) {
+        bu_log("nmg_boolean(): result of nmg_booltree_evaluate() is NULL\n");
 	rt_pr_tree(tp, 0);
 	ret = 1;
 	goto out;
     }
+
+    RT_CK_TREE(result);
+ 
+    if (tp->tr_op != OP_NMG_TESS) {
+	bu_log("nmg_boolean(): result of nmg_booltree_evaluate() op != OP_NMG_TESS\n");
+	rt_pr_tree(tp, 0);
+	ret = 1;
+	goto out;
+    }
+
     if (tp->tr_d.td_r == (struct nmgregion *)NULL) {
 	/* Pointers are all OK, but boolean produced null set */
 	ret = 1;
 	goto out;
     }
+
     /* move result into correct model */
     nmg_merge_models(m, tp->tr_d.td_r->m_p);
     ret = 0;
@@ -1326,6 +1394,7 @@ nmg_boolean(union tree *tp, struct model *m, const struct bn_tol *tol, struct re
 	bu_log("nmg_boolean(tp=x%x, m=x%x) END, ret=%d\n\n",
 	       tp, m, ret);
     }
+
     return ret;
 }
 /** @} */
@@ -1339,3 +1408,7 @@ nmg_boolean(union tree *tp, struct model *m, const struct bn_tol *tol, struct re
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+
+
+
+
