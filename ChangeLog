@@ -1,3 +1,1637 @@
+2011-05-27 22:16  starseeker
+
+	* [r44708] README, include/conf/MINOR, include/conf/PATCH:
+	  Here we got - bump the version numbers.
+
+2011-05-27 22:07  starseeker
+
+	* [r44707] doc/deprecation.txt:
+	  Abrupt, but close to minimal and what appears to be the least
+	  painful way forward - mro is going, all hail
+	  bu_attribute_value_set.
+
+2011-05-27 20:32  r_weiss
+
+	* [r44706] src/librt/primitives/nmg/nmg_bool.c:
+	  Corrected logic in functions 'nmg_booltree_evaluate' and
+	  'nmg_boolean' within file 'nmg_bool.c'. This fix stops the error
+	  'nmg_boolean() result of nmg_booltree_evaluate() isn't tp' which
+	  occurs occasionally when performing nmg boolean operations such
+	  as when using the mged 'facetize' command. This change also
+	  allows boolean operations to return a null result without
+	  failing.
+
+2011-05-26 20:38  bob1961
+
+	* [r44700] src/other/iwidgets/generic/fileselectionbox.itk,
+	  src/other/iwidgets/generic/fileselectiondialog.itk,
+	  src/other/iwidgets/generic/scrolledlistbox.itk,
+	  src/other/iwidgets/generic/scrolledtext.itk:
+	  Temporarily deleted a few troublesome options that currently
+	  break things like iwidgets::fileselectionbox and rtwizard. Need
+	  to find out what's really going on here.
+
+2011-05-26 18:05  starseeker
+
+	* [r44699] src/librt/CMakeLists.txt:
+	  Use the same trick for librt as librt-static - Wno-error due to
+	  Mac OSX warning
+
+2011-05-26 18:04  erikgreenwald
+
+	* [r44698] include/config_win_cmake.h:
+	  remove duplicate WITH_TK definition
+
+2011-05-26 15:13  erikgreenwald
+
+	* [r44697] src/proc-db/ringworld.c:
+	  remove 'count' check, since that doesn't exist.
+
+2011-05-26 11:39  erikgreenwald
+
+	* [r44696] src/proc-db/CMakeLists.txt, src/proc-db/Makefile.am,
+	  src/proc-db/ringworld.c:
+	  Stub Niven's "ringworld" structure as a proc-db. It'd be an
+	  awesome stress test.
+
+2011-05-25 19:02  starseeker
+
+	* [r44691] src/tclscripts/rtwizard/rtwizard.tcl:
+	  Make rtwizard's dirname line match archer's...
+
+2011-05-24 20:24  starseeker
+
+	* [r44674] src/adrt/isst_tcltk.c:
+	  Use TIE_EXPORT instead of manually calling out the _declspec
+	  statements in the .c file (VS2010 Express doesn't seem to like
+	  that...)
+
+2011-05-24 15:43  r_weiss
+
+	* [r44657] src/librt/primitives/nmg/nmg_pt_fu.c:
+	  Updated functions 'compute_loop_class' and 'make_near_list'
+	  within file 'nmg_pt_fu.c'. Passed bn_tol into function
+	  'make_near_list' to be used in a compare. This change reduces the
+	  number of 'dangling face' errors during nmg boolean operations
+	  such as when running the mged 'facetize' command.
+
+2011-05-24 14:43  starseeker
+
+	* [r44656] src/fb/CMakeLists.txt, src/util/CMakeLists.txt:
+	  Add LINKER_LANGUAGE specifications for fbthreadtest and pldebug
+	  (from Guilherme Kunigami)
+
+2011-05-23 19:52  starseeker
+
+	* [r44653] src/librt/tree.c:
+	  OK, .g file with bad attributes was causing problems - revert
+	  silly hunt for region in path.
+
+2011-05-20 18:52  starseeker
+
+	* [r44650] src/librt/db_tree.c, src/librt/tree.c:
+	  Try to make sure the comb data structure reflects the attributes.
+
+2011-05-20 18:31  starseeker
+
+	* [r44649] src/librt/tree.c:
+	  Well... grab the attributes from the first region in the path and
+	  use them... does this get us what we need?
+
+2011-05-20 17:37  starseeker
+
+	* [r44648] src/librt/tree.c:
+	  Hrm. Don't want to do a straight-up copy if the tree avs - that's
+	  got NULLs, not actual values. Probably need to pull in the
+	  attributes from elsewhere, but this isn't quite right - it's
+	  looking at primitives and the attributes in question appear to be
+	  higher in the path.
+
+2011-05-20 17:31  starseeker
+
+	* [r44647] src/libged/attr.c:
+	  attr get and show should work in read-only databases - it's only
+	  when we actually try to change something that we need to care
+	  about read-only.
+
+2011-05-20 15:19  erikgreenwald
+
+	* [r44646] TODO:
+	  solids regression fails on optimized builds and goes back quite a
+	  ways (further than 7.16.8). Bump it to unscheduled and add notes.
+
+2011-05-20 13:18  bob1961
+
+	* [r44645] src/libdm/dm-wgl.c:
+	  Copy points/vectors to an array of GLdouble before sending to
+	  OpenGL. This seems to have remedied a bit of strange behavior
+	  seen only on windows (i.e. data arrows were sometimes being drawn
+	  incorrectly).
+
+2011-05-20 13:13  bob1961
+
+	* [r44644] src/libdm/dm-ogl.c:
+	  Minor mod.
+
+2011-05-20 12:03  erikgreenwald
+
+	* [r44643] src/tab/Makefile.am:
+	  disable strict flags, some lexers mix signed/unsigned.
+
+2011-05-20 11:10  erikgreenwald
+
+	* [r44642] src/nirt/if.c:
+	  remove unused variable
+
+2011-05-20 11:07  erikgreenwald
+
+	* [r44641] doc/deprecation.txt, include/raytrace.h:
+	  mark rt_load_attrs deprecated
+
+2011-05-20 10:51  erikgreenwald
+
+	* [r44640] src/libbu/Makefile.am:
+	  reflect mro.c removal
+
+2011-05-20 00:44  starseeker
+
+	* [r44639] include/bu.h, include/magic.h, include/raytrace.h,
+	  src/libbu/CMakeLists.txt, src/libbu/magic.c, src/libbu/mro.c,
+	  src/librt/prep.c, src/librt/tree.c, src/librtserver/rtserver.c,
+	  src/nirt/if.c, src/rt/rtshot.c:
+	  Take a stab at switching from bu_mro (??) to
+	  bu_attribute_value_set - this will need a lot more testing
+	  (certainly of nirt and raytracing) to make sure nothing got
+	  busted.
+
+2011-05-19 22:19  starseeker
+
+	* [r44638] CMakeLists.txt:
+	  Maybe someday this will work, or I'll figure out why I'm doing it
+	  wrong - CMAKE_SYSTEM_IGNORE_PATH should be ideal for excluding
+	  the install dir from Find results, but it doesn't seem to.
+
+2011-05-19 22:07  r_weiss
+
+	* [r44637] include/raytrace.h, src/librt/primitives/nmg/nmg_bool.c,
+	  src/librt/primitives/nmg/nmg_class.c,
+	  src/librt/primitives/nmg/nmg_eval.c,
+	  src/librt/primitives/nmg/nmg_plot.c:
+	  Updated nmg boolean functions using the classlist array. Changed
+	  the classlist from 'short' to 'char'.
+
+2011-05-19 19:23  erikgreenwald
+
+	* [r44636] src/adrt/isst_tcltk.c:
+	  export init functions for msvc
+
+2011-05-19 15:45  r_weiss
+
+	* [r44633] include/raytrace.h, src/librt/primitives/nmg/nmg_bool.c,
+	  src/librt/primitives/nmg/nmg_class.c,
+	  src/librt/primitives/nmg/nmg_eval.c,
+	  src/librt/primitives/nmg/nmg_plot.c:
+	  Updated nmg boolean functions using the classlist array. Changed
+	  the classlist type from 'size_t' to 'short'.
+
+2011-05-18 22:13  starseeker
+
+	* [r44632] TODO:
+	  Sigh - solids regression is having a problem. Not sure when this
+	  started up.
+
+2011-05-18 20:01  starseeker
+
+	* [r44631] NEWS:
+	  Tweak NEWS
+
+2011-05-18 19:37  bob1961
+
+	* [r44630] include/raytrace.h, src/librt/comb/comb.c,
+	  src/librt/db5_io.c, src/librt/db5_types.c:
+	  Colors were not getting imported for combinations. Standardized
+	  attributes on import before calling object specific import func.
+	  Moved ATTR enum definitions from db5_types.c to raytrace.h
+
+2011-05-18 16:58  indianlarry
+
+	* [r44629] src/conv/step/EdgeCurve.cpp,
+	  src/conv/step/OpenNurbsInterfaces.cpp:
+	  Generalized curve generation for the ellipse and circle entity
+	  loadBrep code; also added curve reverse and start/stop point swap
+	  for entity 'edge_curve' based on 'same_sense' boolean variable.
+	  This basically fixed some issues with ellipse and circle conics.
+
+2011-05-18 15:26  starseeker
+
+	* [r44628] NEWS:
+	  Refine the NEWS file items.
+
+2011-05-18 14:37  starseeker
+
+	* [r44627] TODO:
+	  *hopefully* we've now squashed all the red bugs.
+
+2011-05-18 14:35  starseeker
+
+	* [r44626] src/other/togl/CMakeLists.txt,
+	  src/other/togl/include/CMakeLists.txt,
+	  src/other/togl/src/CMakeLists.txt:
+	  Install glew.h, break out header and src logic.
+
+2011-05-18 11:41  indianlarry
+
+	* [r44625] src/conv/step/PullbackCurve.cpp:
+	  Fixed array overrun in cubic interpolation routine
+
+2011-05-17 20:15  starseeker
+
+	* [r44624] src/other/togl/CMakeLists.txt:
+	  whoops, typo.
+
+2011-05-17 19:41  starseeker
+
+	* [r44623] src/other/togl/CMakeLists.txt,
+	  src/other/togl/src/CMakeLists.txt:
+	  Use LIB_DIR variable for install, so Windows gets things where it
+	  expects them.
+
+2011-05-16 18:11  erikgreenwald
+
+	* [r44620] misc/CMake/FindOPENNURBS.cmake:
+	  Clean up debug message
+
+2011-05-16 18:08  erikgreenwald
+
+	* [r44619] misc/CMake/FindOPENNURBS.cmake,
+	  misc/CMake/FindUTAHRLE.cmake:
+	  Expand on the OpenNURBS and Utah find routines a big - not making
+	  much use of these yet, but the expanded tests happen to fail on
+	  Windows for the installed BRL-CAD, which avoids some configure
+	  problems. Still haven't found a good way yet to forcibly exclude
+	  the installed directory from the search on Windows. (starseeker)
+
+2011-05-16 18:06  erikgreenwald
+
+	* [r44618] CMakeLists.txt:
+	  Don't try the math expression if we don't have a void pointer
+	  size (???) (starseeker)
+
+2011-05-16 17:33  starseeker
+
+	* [r44616] misc/CMake/FindOPENNURBS.cmake:
+	  See if this helps on Windows...
+
+2011-05-16 15:50  erikgreenwald
+
+	* [r44614] TODO:
+	  lights-regress seems to work now. tesselation issue on optimized
+	  build was due to -ffast-math, so Cliff removed the flag.
+
+2011-05-12 12:04  erikgreenwald
+
+	* [r44611] src/other/togl/demo/CMakeLists.txt:
+	  disable gears demo, fails on windows
+
+2011-05-10 22:05  starseeker
+
+	* [r44610] misc/CMake/CompilerFlags.cmake:
+	  ffast-math is causing tessellation failures on some platforms.
+
+2011-05-10 20:56  starseeker
+
+	* [r44609] CMakeLists.txt:
+	  Fix comment's line number reference
+
+2011-05-10 20:54  starseeker
+
+	* [r44608] CMakeLists.txt:
+	  Go for the SYSTEM paths - they aren't intended to be modified by
+	  the project according to CMake, but until we find another way to
+	  avoid searching CMAKE_INSTALL_PREFIX we seem to have little
+	  choice. Need to test this on Windows to see if it helps there.
+
+2011-05-10 20:35  starseeker
+
+	* [r44607] CMakeLists.txt:
+	  Make a stab at broader coverage for the 'searching in install
+	  paths' issue - don't know if this fully works as yet.
+
+2011-05-10 20:33  r_weiss
+
+	* [r44606] include/raytrace.h, src/librt/primitives/nmg/nmg_bool.c,
+	  src/librt/primitives/nmg/nmg_class.c,
+	  src/librt/primitives/nmg/nmg_eval.c,
+	  src/librt/primitives/nmg/nmg_plot.c:
+	  Updated nmg boolean functions using the classlist array. Changed
+	  the classlist type from 'long' to 'size_t'.
+
+2011-05-10 20:00  bob1961
+
+	* [r44605] src/rt/do.c, src/rt/main.c, src/rt/opt.c:
+	  Fix rt commands use of "-c orientation" subcommand.
+
+2011-05-10 19:28  starseeker
+
+	* [r44604] src/adrt/isst_tcltk.c:
+	  Linux needs Isst_Init
+
+2011-05-10 19:25  starseeker
+
+	* [r44603] src/adrt/CMakeLists.txt:
+	  Restore in-build-tree pkgIndex.tcl setup for isst.
+
+2011-05-10 19:16  erikgreenwald
+
+	* [r44602] src/adrt/CMakeLists.txt:
+	  add opengl libraries
+
+2011-05-10 19:11  starseeker
+
+	* [r44601] src/adrt/CMakeLists.txt:
+	  Still need isst script on WIN32
+
+2011-05-10 18:25  starseeker
+
+	* [r44600] CMakeLists.txt:
+	  Er, oops - turn 64 bit off for 32bit compiler...
+
+2011-05-10 17:27  starseeker
+
+	* [r44599] TODO:
+	  fixed detection issue
+
+2011-05-10 14:59  starseeker
+
+	* [r44598] CMakeLists.txt:
+	  Make the logic to prevent CMake from searching in
+	  CMAKE_INSTALL_PREFIX more robust.
+
+2011-05-10 14:56  starseeker
+
+	* [r44597] misc/CMake/ThirdParty.cmake:
+	  Add some comments to the third party logic.
+
+2011-05-10 13:25  erikgreenwald
+
+	* [r44596] src/other/togl/src/CMakeLists.txt:
+	  TOGL_STUB_LIBRARIES should be marked "advanced" to avoid
+	  cmake-gui clutter
+
+2011-05-10 13:16  erikgreenwald
+
+	* [r44595] NEWS:
+	  catch up on some news items
+
+2011-05-10 13:08  starseeker
+
+	* [r44594] src/adrt/CMakeLists.txt, src/other/CMakeLists.txt,
+	  src/other/togl/src/CMakeLists.txt:
+	  See if a togl stub library works for Windows.
+
+2011-05-09 20:50  erikgreenwald
+
+	* [r44593] src/adrt/librender/render.h,
+	  src/adrt/librender/render_internal.h:
+	  define RENDER_EXPORT for dll export/import
+
+2011-05-09 20:36  erikgreenwald
+
+	* [r44592] TODO:
+	  add some items for next release
+
+2011-05-09 20:17  erikgreenwald
+
+	* [r44591] src/adrt/CMakeLists.txt:
+	  fix path info for pkgIndex.tcl
+
+2011-05-09 20:14  erikgreenwald
+
+	* [r44590] src/adrt/isst_tcltk.c:
+	  Should be Issttcltk_Init, not Isst_Init.
+
+2011-05-09 19:55  erikgreenwald
+
+	* [r44589] src/adrt/isst_tcltk.c:
+	  move variable declarations to beginning of block. Change trunc()
+	  to floor().
+
+2011-05-09 19:53  starseeker
+
+	* [r44588] src/adrt/CMakeLists.txt:
+	  Ignore the bat file too.
+
+2011-05-09 19:52  starseeker
+
+	* [r44587] src/other/togl/include/GL/glext.h,
+	  src/other/togl/include/GL/wglext.h, src/other/togl/src/glext.h,
+	  src/other/togl/src/togl.c, src/other/togl/src/toglWGL.c,
+	  src/other/togl/src/wglext.h:
+	  See if we can avoid putting headers in the src directory...
+
+2011-05-09 19:45  starseeker
+
+	* [r44586] misc/CMake/test_srcs/time.c.in:
+	  whoops - need the zero on the ninth too
+
+2011-05-09 19:12  erikgreenwald
+
+	* [r44585] src/adrt/isst.h, src/adrt/isst_tcltk.c:
+	  use bu_gettime() instead of gettimeofday
+
+2011-05-09 19:08  starseeker
+
+	* [r44584] src/adrt/CMakeLists.txt, src/adrt/isst.bat:
+	  Add .bat file for isst on Windows.
+
+2011-05-06 21:13  erikgreenwald
+
+	* [r44582] src/adrt/CMakeLists.txt:
+	  install as an executable instead of plain file
+
+2011-05-06 21:04  erikgreenwald
+
+	* [r44581] src/adrt/CMakeLists.txt:
+	  put isst in bin/ instead of lib/
+
+2011-05-06 20:59  erikgreenwald
+
+	* [r44580] src/adrt/isst:
+	  add a shebang
+
+2011-05-06 20:52  starseeker
+
+	* [r44579] src/other/togl/src/CMakeLists.txt:
+	  Use stubs on win32
+
+2011-05-06 20:42  starseeker
+
+	* [r44578] src/adrt/CMakeLists.txt:
+	  Add an install line for isst
+
+2011-05-05 21:28  erikgreenwald
+
+	* [r44577] src/adrt/CMakeLists.txt:
+	  add opengl include path
+
+2011-05-05 21:20  erikgreenwald
+
+	* [r44576] CMakeLists.txt:
+	  Define _FILE_OFFSET_BITS and _LARGEFILE64_SOURCE to 32b
+	  filesystem access to work around zlib's "little trick" that
+	  causes havoc with -Wundef.
+
+2011-05-05 20:58  erikgreenwald
+
+	* [r44575] CMakeLists.txt, src/other/togl/src/toglWGL.c:
+	  wire in wglext.h if possible
+
+2011-05-05 20:58  erikgreenwald
+
+	* [r44574] src/other/togl/src/wglext.h:
+	  add local copy of wglext.h (msvc8 seems... lacking)
+
+2011-05-05 20:37  erikgreenwald
+
+	* [r44573] src/other/togl/src/togl.c:
+	  use system glext if possible, local copy if not
+
+2011-05-05 20:37  erikgreenwald
+
+	* [r44572] src/other/togl/src/glext.h:
+	  add the SGI reference glext.h
+
+2011-05-05 20:35  erikgreenwald
+
+	* [r44571] src/other/CMakeLists.txt:
+	  allow togl on non-X11 platforms. Mark TOGL_LIBRARIES and
+	  TOGL_INCLUDE_DIRS as advanced.
+
+2011-05-05 20:34  erikgreenwald
+
+	* [r44570] CMakeLists.txt:
+	  look for GL/glext.h
+
+2011-05-05 19:23  starseeker
+
+	* [r44569] src/adrt/isst:
+	  Add rudimentry ability to specify model and object on isst
+	  command line.
+
+2011-05-05 18:33  erikgreenwald
+
+	* [r44568] src/adrt/CMakeLists.txt:
+	  add X11 include dir
+
+2011-05-05 18:26  starseeker
+
+	* [r44567] src/adrt/isst:
+	  Borrow archer's set-up for running wish. Got successful startup
+	  of isst.
+
+2011-05-05 18:21  starseeker
+
+	* [r44566] src/adrt/CMakeLists.txt, src/adrt/Makefile.am,
+	  src/adrt/isst, src/adrt/isst.tcl:
+	  Start setting up the actual Tcl/Tk application for isst.
+
+2011-05-05 18:03  starseeker
+
+	* [r44565] src/adrt/CMakeLists.txt, src/adrt/isst_tcltk.c:
+	  Tweak isst code for changes and strict build - not tested yet.
+
+2011-05-05 17:42  starseeker
+
+	* [r44564] src/other/CMakeLists.txt, src/other/togl/CMakeLists.txt,
+	  src/other/togl/include/config.h.in,
+	  src/other/togl/include/togl_config.h.in,
+	  src/other/togl/src/CMakeLists.txt:
+	  Try a setup to allow brlcad_config.h and togl_config.h to
+	  co-exist.
+
+2011-05-05 12:09  starseeker
+
+	* [r44560] include/CMakeLists.txt:
+	  Add a couple headers.
+
+2011-05-04 21:05  erikgreenwald
+
+	* [r44559] src/libged/combmem.c, src/libged/red.c:
+	  quell warnings
+
+2011-05-04 18:13  starseeker
+
+	* [r44557] src/mged/cmd.h, src/mged/utility1.c:
+	  f_tables doesn't appear to be used, and looks like it lives in
+	  libged now.
+
+2011-05-04 17:48  starseeker
+
+	* [r44556] src/libged/editit.c:
+	  er - how about using the copy while we're at it.
+
+2011-05-04 17:38  starseeker
+
+	* [r44555] src/libged/editit.c:
+	  make a copy of the edit string to avoid const issues
+
+2011-05-04 17:19  starseeker
+
+	* [r44554] src/mged/animedit.c:
+	  Add a few initializations.
+
+2011-05-04 17:06  starseeker
+
+	* [r44553] src/libged/tables.c:
+	  More warnings on BSD - could also use a second opinion here.
+
+2011-05-04 16:57  starseeker
+
+	* [r44552] src/vdeck/vdeck.c:
+	  Strict warning in vdeck on BSD - I think this is the fix?
+
+2011-05-04 16:47  starseeker
+
+	* [r44551] src/librt/CMakeLists.txt:
+	  Won't be a librt-static target unless static libs are being
+	  built.
+
+2011-05-04 16:39  starseeker
+
+	* [r44550] src/librt/CMakeLists.txt:
+	  Whoops - fix silly typos
+
+2011-05-04 13:46  starseeker
+
+	* [r44549] src/librt/CMakeLists.txt:
+	  Try not to error out on the librt-static build when optimized -
+	  metaballs are triggering some subtle problem either with the code
+	  or possibly the older compiler used for the test.
+
+2011-05-03 19:40  starseeker
+
+	* [r44547] src/bwish/CMakeLists.txt, src/libtclcad/CMakeLists.txt,
+	  src/mged/CMakeLists.txt:
+	  Need unix dir too...
+
+2011-05-03 19:21  starseeker
+
+	* [r44546] misc/CMake/FindTCL.cmake, src/bwish/CMakeLists.txt,
+	  src/libtclcad/CMakeLists.txt, src/mged/CMakeLists.txt:
+	  Gah. More consequences of our using Itcl/Itk internal headers.
+	  Also fix FindTCL to not return any sort of generic dir (correct
+	  or otherwise.)
+
+2011-05-03 16:07  starseeker
+
+	* [r44545] src/tclscripts/mged/bindings.tcl:
+	  Don't do the mac keybinding fixes unless we're on Mac - they
+	  break zooming out on Linux.
+
+2011-05-02 14:58  starseeker
+
+	* [r44543] src/librt/search.c:
+	  Go with QUIET instead of NOISY for search db_lookup calls.
+
+2011-04-29 21:59  bob1961
+
+	* [r44540] include/tclcad.h, src/libtclcad/tclcad_obj.c:
+	  Refactor a big chunk of to_rt_gettrees into
+	  to_rt_gettrees_application.
+
+2011-04-29 20:27  starseeker
+
+	* [r44539] src/libged/search.c:
+	  Make a stab at improving behavior of search when multiple paths
+	  are supplied.
+
+2011-04-29 20:12  bob1961
+
+	* [r44538] include/ged.h:
+	  Add enclosing parens to a few NULL macros.
+
+2011-04-29 20:10  bob1961
+
+	* [r44537] include/raytrace.h:
+	  Added RT_APPLICATION_NULL macro.
+
+2011-04-29 20:07  bob1961
+
+	* [r44536] src/Makefile.am:
+	  Promote libdm and libtclcad from kitchensink_dirs to bench_dirs.
+	  Reason - asc2g needs libtclcad.
+
+2011-04-29 19:59  starseeker
+
+	* [r44535] doc/docbook/system/mann/en/search.xml:
+	  Whoops, how about valid xml.
+
+2011-04-29 17:54  starseeker
+
+	* [r44534] doc/docbook/system/mann/en/search.xml:
+	  Add brep to the search primitive types list.
+
+2011-04-29 15:36  tbrowder2
+
+	* [r44533]
+	  doc/docbook/books/en/BRL-CAD_Tutorial_Series-VolumeIII.xml:
+	  delete spurious 'b'
+
+2011-04-28 14:22  r_weiss
+
+	* [r44528] src/librt/primitives/nmg/nmg_fuse.c:
+	  Updated functions 'nmg_do_radial_join', 'nmg_radial_build_list',
+	  'nmg_two_face_fuse' and 'nmg_ck_fu_verts' within file
+	  'nmg_fuse.c'. For function 'nmg_do_radial_join', changed tests
+	  for greater-than or less-than '0.0' to comparing with
+	  SMALL_FASTF. For function 'nmg_radial_build_list', changed
+	  several float compares using equal to use ZERO macro. Added test
+	  for return value from function 'nmg_measure_fu_angle' being
+	  out-of-range. Added test for zero magnitude of xvec, yvec and
+	  zvec vectors. For function 'nmg_two_face_fuse', changed tests for
+	  greater-than or less-than '0.0' to comparing with SMALL_FASTF.
+	  For function 'nmg_ck_fu_verts', changed code to use 'fabs' to
+	  find the absolute value instead of negating the value if less
+	  than zero.
+
+2011-04-27 17:38  r_weiss
+
+	* [r44527] src/librt/primitives/nmg/nmg_tri.c:
+	  Updated the prototype version of function 'nmg_triangulate_fu'
+	  doing some cleanup and re-factoring. The re-factoring created
+	  function 'nmg_isect_lseg3_eu' to test if a line segment
+	  intersects with any edgeuse within a faceuse. Updated the
+	  function 'nmg_triangulate_rm_degen_loopuse' adding code to verify
+	  each loopuse has at least 3 unique vertices. The functions
+	  'nmg_isect_lseg3_eu' and 'nmg_triangulate_rm_degen_loopuse'
+	  support the new prototype function 'nmg_triangulate_fu' (nmg
+	  triangulate faceuse). Preprocessor commands were added so these
+	  updates/additions are disabled by default. This code is a work in
+	  progress.
+
+2011-04-27 16:46  r_weiss
+
+	* [r44525] src/librt/primitives/nmg/nmg_class.c:
+	  Updated functions 'nmg_class_pt_e', 'nmg_2lu_identical',
+	  'class_shared_lu' and 'nmg_classify_lu_lu' within file
+	  'nmg_class.c'. Changes were made to compare against SMALL_FASTF
+	  instead of '0.0'.
+
+2011-04-27 15:03  r_weiss
+
+	* [r44524] src/librt/primitives/nmg/nmg_bool.c:
+	  Updated function 'nmg_bool' within file 'nmg_bool.c'. Moved this
+	  change from the triangulation prototype code to the main code.
+	  This change corrects a corruption problem with the class list
+	  array. This will improve the sucess of boolean operations on
+	  facetized cgs geometry.
+
+2011-04-27 14:51  r_weiss
+
+	* [r44522] src/librt/primitives/nmg/nmg_manif.c:
+	  Updated functions 'paint_face' and 'nmg_shell_manifolds' within
+	  file 'nmg_manif.c'. There was a datatype mismatch in the function
+	  parameters and some array datatypes were incorrect and there size
+	  was incorrect. This fix stops a seg fault when running facetize
+	  on large models. This also improves the boolean operations of
+	  facetized cgs geometry.
+
+2011-04-26 19:28  bob1961
+
+	* [r44516] include/tclcad.h, src/conv/CMakeLists.txt,
+	  src/conv/Makefile.am, src/conv/asc/asc2g.c,
+	  src/libtclcad/tclcad_obj.c:
+	  Modify asc2g to use libtclcad.
+
+2011-04-26 13:56  starseeker
+
+	* [r44502] src/libged/attr.c:
+	  Standardize the avs used by attr set - this still isn't fixing
+	  asc2g, which uses an older style API of some sort.
+
+2011-04-25 21:02  starseeker
+
+	* [r44493] CMakeLists.txt, misc/CMake/BRLCAD_CPackOptions.cmake.in:
+	  Take a stab at using CPack options to get the directory structure
+	  we want.
+
+2011-04-25 19:21  starseeker
+
+	* [r44490] CMakeLists.txt:
+	  Ignore new hacking file
+
+2011-04-25 19:04  starseeker
+
+	* [r44489] src/other/tcl/unix/tclUnixPort.h:
+	  Not sure why these are if instead of ifdef?
+
+2011-04-25 18:51  starseeker
+
+	* [r44488] misc/CMake/BRLCAD_CheckFunctions.cmake:
+	  Whoops, spoke too soon on CMake macro behavior. Looks like it may
+	  actually be another consequence of loading src/other prior to
+	  processing toplevel settings - .cmake files with conflicting
+	  definitions for macros in src/other will be loaded first.
+
+2011-04-25 17:45  starseeker
+
+	* [r44487] CMakeLists.txt, misc/CMake/BRLCAD_CheckFunctions.cmake,
+	  src/libtclcad/CMakeLists.txt, src/other/CMakeLists.txt:
+	  Ah, interesting. There is a subtle point with the CMake macros
+	  that hadn't previously been triggered - if a subdirectory build
+	  runs a macro, a parent directory will not re-run that macro.
+	  Makes sense if the macros only job is to set CMake variables -
+	  we're doing more by having the macro write out to a config file.
+	  As a consequence, when a subconfigure uses a macro that puts an
+	  entry into CONFIG_H in a subdir, the parent directory won't be
+	  able to run that macro. Need to refactor to do this right - the
+	  building of the various CONFIG_H files needs to be explicit and
+	  not contained in macro calls.
+
+2011-04-22 00:31  starseeker
+
+	* [r44486] src/librt/uvpoints.cpp:
+	  Try returning a reference
+
+2011-04-21 23:00  starseeker
+
+	* [r44485] src/librt/uvpoints.cpp:
+	  Add some timing and defaults.
+
+2011-04-21 22:10  brlcad
+
+	* [r44484] src/librt/Makefile.am:
+	  ditto for now
+
+2011-04-21 21:42  starseeker
+
+	* [r44483] src/librt/CMakeLists.txt:
+	  Erik restored the strict building.
+
+2011-04-21 19:24  starseeker
+
+	* [r44480] HACKING.cmake:
+	  Add a cmake version of HACKING
+
+2011-04-21 19:23  starseeker
+
+	* [r44479] doc/README.MacOSX:
+	  Document the issue CMake has with parallel builds and OSX open
+	  file limits
+
+2011-04-21 18:58  starseeker
+
+	* [r44478] src/other/CMakeLists.txt:
+	  Add a few dirs to the ignore list
+
+2011-04-21 17:42  starseeker
+
+	* [r44477] misc/CMake/BRLCAD_Util.cmake, src/librt/CMakeLists.txt:
+	  Add the ability to specify a NOSTRICT compile when adding a
+	  library.
+
+2011-04-21 17:33  erikgreenwald
+
+	* [r44476] src/librt/primitives/nmg/nmg.c:
+	  bu_glong -> ntohl (only tested on v5)
+
+2011-04-21 17:24  erikgreenwald
+
+	* [r44475] src/librt/primitives/bot/g_bot_include.c:
+	  use temporary signed variables to quell the signed/unsigned
+	  warning. Add a TODO: requesting review down the road.
+
+2011-04-21 17:21  starseeker
+
+	* [r44474] src/bwish/CMakeLists.txt, src/mged/CMakeLists.txt:
+	  Until we get it sorted out, add in the logic needed for
+	  btclsh/bwish and mged to find the itcl.h and itk.h headers.
+
+2011-04-21 17:06  starseeker
+
+	* [r44473] doc/docbook/system/mann/en/CMakeLists.txt:
+	  Remove early experiment with file-checking code
+
+2011-04-21 04:51  brlcad
+
+	* [r44472] src/librt/CMakeLists.txt:
+	  deterministic behavior still applies, ignore individual
+	  'extra_dist' files.
+
+2011-04-21 04:38  brlcad
+
+	* [r44471] TODO:
+	  aha, found the cause. the lights test calls 'put' and sets
+	  attributes directly including several old attribute names such as
+	  rgb and .. oshader. this makes the shader string get ignored
+	  which makes the test blow up. the old name should still work, it
+	  just gets converted the next time it's written through a standard
+	  interface.
+
+2011-04-21 04:34  brlcad
+
+	* [r44470] TODO:
+	  light regression is failing, need to investigate and fix. don't
+	  know when it broke.
+
+2011-04-21 04:19  brlcad
+
+	* [r44469] src/conv/patch/patch-g.c:
+	  oops, double semi
+
+2011-04-21 03:37  brlcad
+
+	* [r44468] src/other/togl/CMake/CheckFunctions.cmake:
+	  this just very well may be the last sync needed to merge cmake
+	  branch to trunk.
+
+2011-04-21 03:33  brlcad
+
+	* [r44467] misc/archlinux/brlcad.install:
+	  remove the rcs id var to minimize branch diff. add /bin/sh header
+	  for source scanners since it looks like proper syntax.
+
+2011-04-21 03:21  brlcad
+
+	* [r44466] src/conv/patch/patch-g.c:
+	  quell strict compilation warning reported by evander via irc.
+	  compiler wasn't smart enough to figure out that use prior to init
+	  isn't possible (valid is false).
+
+2011-04-20 20:26  brlcad
+
+	* [r44465] src/other/incrTcl/itcl/CMake,
+	  src/other/incrTcl/itk/CMake, src/other/libutahrle/CMake,
+	  src/other/tcl/CMake, src/other/tk/CMake, src/other/tkhtml/CMake,
+	  src/other/tkpng/CMake, src/other/tktable/CMake:
+	  likewise with the src/other CMake dirs
+
+2011-04-20 20:15  brlcad
+
+	* [r44464] src/librt/db5_types.c:
+	  really 'del' means the same for any of the attributes. it's our
+	  old-style convention meant to remove/disable an value or option.
+
+2011-04-20 20:00  brlcad
+
+	* [r44463] configure.cmake.sh, misc/CMake, misc/Doxyfile.in:
+	  add new files coming from the cmake branch: support
+	  infrastructure, templatized Doxyfile, and a fake configure
+	  wrapper
+
+2011-04-20 18:39  brlcad
+
+	* [r44461] CMakeLists.txt, bench/CMakeLists.txt, db/CMakeLists.txt,
+	  doc/CMakeLists.txt, doc/docbook/CMakeLists.txt,
+	  doc/docbook/articles/CMakeLists.txt,
+	  doc/docbook/articles/en/CMakeLists.txt,
+	  doc/docbook/books/CMakeLists.txt,
+	  doc/docbook/books/en/CMakeLists.txt,
+	  doc/docbook/lessons/CMakeLists.txt,
+	  doc/docbook/lessons/en/CMakeLists.txt,
+	  doc/docbook/lessons/es/CMakeLists.txt,
+	  doc/docbook/specifications/CMakeLists.txt,
+	  doc/docbook/specifications/en/CMakeLists.txt,
+	  doc/docbook/system/CMakeLists.txt,
+	  doc/docbook/system/man1/CMakeLists.txt,
+	  doc/docbook/system/man1/en/CMakeLists.txt,
+	  doc/docbook/system/man3/CMakeLists.txt,
+	  doc/docbook/system/man3/en/CMakeLists.txt,
+	  doc/docbook/system/man5/CMakeLists.txt,
+	  doc/docbook/system/man5/en/CMakeLists.txt,
+	  doc/docbook/system/mann/CMakeLists.txt,
+	  doc/docbook/system/mann/en/CMakeLists.txt,
+	  doc/html/CMakeLists.txt, doc/legal/CMakeLists.txt,
+	  include/CMakeLists.txt, misc/CMakeLists.txt,
+	  misc/enigma/CMakeLists.txt, misc/pkgconfig/CMakeLists.txt,
+	  pix/CMakeLists.txt, regress/CMakeLists.txt, sh/CMakeLists.txt,
+	  src/CMakeLists.txt, src/adrt/CMakeLists.txt,
+	  src/anim/CMakeLists.txt, src/archer/CMakeLists.txt,
+	  src/brlman/CMakeLists.txt, src/burst/CMakeLists.txt,
+	  src/bwish/CMakeLists.txt, src/canon/CMakeLists.txt,
+	  src/conv/CMakeLists.txt, src/conv/iges/CMakeLists.txt,
+	  src/conv/intaval/CMakeLists.txt, src/conv/step/CMakeLists.txt,
+	  src/external/CMakeLists.txt, src/fb/CMakeLists.txt,
+	  src/fbed/CMakeLists.txt, src/fbserv/CMakeLists.txt,
+	  src/gtools/CMakeLists.txt, src/halftone/CMakeLists.txt,
+	  src/irprep/CMakeLists.txt, src/lgt/CMakeLists.txt,
+	  src/libanalyze/CMakeLists.txt, src/libbn/CMakeLists.txt,
+	  src/libbu/CMakeLists.txt, src/libcursor/CMakeLists.txt,
+	  src/libdm/CMakeLists.txt, src/libfb/CMakeLists.txt,
+	  src/libfft/CMakeLists.txt, src/libgcv/CMakeLists.txt,
+	  src/libged/CMakeLists.txt, src/libicv/CMakeLists.txt,
+	  src/libmultispectral/CMakeLists.txt,
+	  src/liboptical/CMakeLists.txt, src/liborle/CMakeLists.txt,
+	  src/libpc/CMakeLists.txt, src/libpkg/CMakeLists.txt,
+	  src/librt/CMakeLists.txt, src/librtserver/CMakeLists.txt,
+	  src/libsysv/CMakeLists.txt, src/libtclcad/CMakeLists.txt,
+	  src/libtermio/CMakeLists.txt, src/libwdb/CMakeLists.txt,
+	  src/mged/CMakeLists.txt, src/mged/points/CMakeLists.txt,
+	  src/nirt/CMakeLists.txt, src/other/CMakeLists.txt,
+	  src/other/URToolkit/CMakeLists.txt,
+	  src/other/URToolkit/cnv/CMakeLists.txt,
+	  src/other/URToolkit/man/CMakeLists.txt,
+	  src/other/URToolkit/tools/CMakeLists.txt,
+	  src/other/URToolkit/tools/clock/CMakeLists.txt,
+	  src/other/incrTcl/itcl/CMakeLists.txt,
+	  src/other/incrTcl/itk/CMakeLists.txt,
+	  src/other/iwidgets/CMakeLists.txt, src/other/jove/CMakeLists.txt,
+	  src/other/libpng/CMakeLists.txt,
+	  src/other/libregex/CMakeLists.txt,
+	  src/other/libtermlib/CMakeLists.txt,
+	  src/other/libutahrle/CMakeLists.txt,
+	  src/other/libz/CMakeLists.txt,
+	  src/other/openNURBS/CMakeLists.txt, src/other/tcl/CMakeLists.txt,
+	  src/other/tcl/doc/CMakeLists.txt,
+	  src/other/tcl/generic/CMakeLists.txt,
+	  src/other/tcl/library/CMakeLists.txt,
+	  src/other/tk/CMakeLists.txt, src/other/tk/doc/CMakeLists.txt,
+	  src/other/tk/library/CMakeLists.txt,
+	  src/other/tkhtml/CMakeLists.txt, src/other/tkpng/CMakeLists.txt,
+	  src/other/tktable/CMakeLists.txt, src/other/tnt/CMakeLists.txt,
+	  src/proc-db/CMakeLists.txt, src/remrt/CMakeLists.txt,
+	  src/rt/CMakeLists.txt, src/rttherm/CMakeLists.txt,
+	  src/shapes/CMakeLists.txt, src/sig/CMakeLists.txt,
+	  src/tab/CMakeLists.txt, src/tclscripts/CMakeLists.txt,
+	  src/tclscripts/archer/CMakeLists.txt,
+	  src/tclscripts/archer/images/CMakeLists.txt,
+	  src/tclscripts/boteditor/CMakeLists.txt,
+	  src/tclscripts/geometree/CMakeLists.txt,
+	  src/tclscripts/hv3/CMakeLists.txt,
+	  src/tclscripts/lib/CMakeLists.txt,
+	  src/tclscripts/mged/CMakeLists.txt,
+	  src/tclscripts/pl-dm/CMakeLists.txt,
+	  src/tclscripts/rtwizard/CMakeLists.txt,
+	  src/tclscripts/rtwizard/lib/CMakeLists.txt,
+	  src/tclscripts/sdialogs/CMakeLists.txt,
+	  src/tclscripts/sdialogs/scripts/CMakeLists.txt,
+	  src/tclscripts/swidgets/CMakeLists.txt,
+	  src/tclscripts/swidgets/images/CMakeLists.txt,
+	  src/tclscripts/swidgets/scripts/CMakeLists.txt,
+	  src/tclscripts/util/CMakeLists.txt, src/util/CMakeLists.txt,
+	  src/vdeck/CMakeLists.txt, src/vfont/CMakeLists.txt:
+	  sync all of the CMakeLists.txt files from the cmake branch to
+	  trunk, preserving history via svn cp for the new additions and
+	  copying for the rest.
+
+2011-04-20 16:53  starseeker
+
+	* [r44460] src/libged/ls.c:
+	  whoops, update usage too.
+
+2011-04-20 15:07  brlcad
+
+	* [r44459] INSTALL.cmake, README.cmake, TODO.cmake:
+	  sync the cmake top-level docs from the cmake branch
+
+2011-04-20 15:01  starseeker
+
+	* [r44458] doc/docbook/system/mann/en/ls.xml, src/libged/ls.c:
+	  Add a -q option to ls to do a quiet db_lookup instead of a noisy
+	  one (useful for scripting)
+
+2011-04-20 13:16  brlcad
+
+	* [r44450] src/other/libz/contrib/masmx64/gvmat64.asm,
+	  src/other/libz/contrib/masmx64/inffasx64.asm:
+	  more prop syncing
+
+2011-04-20 13:13  brlcad
+
+	* [r44449] src/other/libz/contrib/masmx86/inffas32.asm:
+	  set props to match branch
+
+2011-04-20 06:36  brlcad
+
+	* [r44448] src/other/libz/contrib/dotzlib/DotZLib.build,
+	  src/other/libz/contrib/dotzlib/DotZLib/DotZLib.csproj:
+	  merge from cmake branch to trunk, setting mime-type and eol-style
+	  on a few miles
+
+2011-04-19 18:03  bob1961
+
+	* [r44446] include/ged.h:
+	  Added GED_DM_VIEW_NULL.
+
+2011-04-19 15:53  starseeker
+
+	* [r44444] src/librt/uvpoints.cpp:
+	  Oops, that should have been in trunk.
+
+2011-04-19 11:55  erikgreenwald
+
+	* [r44441] misc/win32-msvc8/libtclcad/libtclcad.vcproj:
+	  ged_obj.c is now tclcad_obj.c
+
+2011-04-19 11:50  erikgreenwald
+
+	* [r44440] misc/win32-msvc8/librt/librt.vcproj:
+	  add db_fullpath.c
+
+2011-04-19 06:03  brlcad
+
+	* [r44439] src/libged/annotate.c:
+	  lied, lil more thinking
+
+2011-04-19 05:42  brlcad
+
+	* [r44438] src/libged/annotate.c:
+	  considerable thought put into formalizing the command design so
+	  that it's descriptive yet reads naturally. enough hours thinking
+	  and designing for now, time to start coding.
+
+2011-04-19 02:33  brlcad
+
+	* [r44437] src/libged/annotate.c:
+	  expand examples, notes on justification, placement, and initial
+	  thoughts on required struct members
+
+2011-04-19 02:29  brlcad
+
+	* [r44436] src/libged/annotate.c:
+	  position placement, decoration
+
+2011-04-18 23:08  starseeker
+
+	* [r44434] regress/red.sh:
+	  Clear out the bug report messages.
+
+2011-04-18 22:37  starseeker
+
+	* [r44433] regress/red.sh:
+	  Urm. Shader is empty in test file, so this should be the same...
+
+2011-04-18 22:24  starseeker
+
+	* [r44432] src/libged/red.c, src/librt/db5_types.c:
+	  Try taking the requirement for the space out of the attribute
+	  regex, trunk the shader if it's been cleared out
+
+2011-04-18 21:59  starseeker
+
+	* [r44431] src/libged/red.c:
+	  ws
+
+2011-04-18 21:58  starseeker
+
+	* [r44430] src/libged/red.c:
+	  Fix up the rename behavior for red.
+
+2011-04-18 18:57  brlcad
+
+	* [r44429] src/libged/annotate.c:
+	  more notes on design considerations
+
+2011-04-18 16:12  starseeker
+
+	* [r44427] src/libged/red.c:
+	  Probably want to sync both ways here, if attr_to_comb isn't
+	  scrubbing avs.
+
+2011-04-18 16:02  brlcad
+
+	* [r44426] include/raytrace.h, src/libged/list.c, src/libged/red.c,
+	  src/librt/db5_types.c:
+	  swap the arguments for db5_sync_attr_to_comb() and
+	  db5_sync_comb_to_attr() so that the value being set is first and
+	  values being read follow. this follows common stdlib non-varargs
+	  convention (e.g., memcpy) and is more amenable to having multiple
+	  read args. casts on use shouldn't be necessary.
+
+2011-04-18 15:53  brlcad
+
+	* [r44425] src/librt/db5_types.c:
+	  no longer should be removing avs values too. sync comb to attr
+	  will do that.
+
+2011-04-18 15:51  brlcad
+
+	* [r44424] src/librt/db5_types.c:
+	  ws consistency
+
+2011-04-18 15:51  brlcad
+
+	* [r44423] src/librt/db5_types.c:
+	  clean up the other warning messages too, make a little more
+	  concise. also shouldn't add to the avs any more -- it's const.
+
+2011-04-18 15:47  starseeker
+
+	* [r44422] regress/red.sh:
+	  It's shader instead of oshader now.
+
+2011-04-18 15:45  brlcad
+
+	* [r44421] src/librt/db5_types.c:
+	  we need to check if '-1' is the color too, so check sscanf result
+	  of 1 instead of 3. reword warning for consistency
+
+2011-04-18 15:39  brlcad
+
+	* [r44420] src/librt/db5_types.c:
+	  if any color value is negative, the color is invalid
+
+2011-04-18 15:26  starseeker
+
+	* [r44419] src/librt/db5_types.c:
+	  More color scan tweaking - make better use of rgb_valid, check
+	  for del, any negative color value means unset.
+
+2011-04-18 15:04  brlcad
+
+	* [r44417] src/libbn/bntester.c:
+	  move usage down into main, leave a comment why the other vars are
+	  static.
+
+2011-04-18 14:52  erikgreenwald
+
+	* [r44416] src/libbn/bntester.c:
+	  set some variables to static to avoid longjmp clobbering
+
+2011-04-18 14:08  erikgreenwald
+
+	* [r44415] src/libged/red.c:
+	  remove unused variable
+
+2011-04-17 13:05  starseeker
+
+	* [r44414] src/librt/db5_types.c:
+	  Try using comb->rgb_valid, use -1,-1,-1 as the key to remove the
+	  attribute (aside from a blank line).
+
+2011-04-16 23:26  starseeker
+
+	* [r44413] src/librt/db5_types.c:
+	  Don't add an attribute if color is 0/0/0.
+
+2011-04-16 23:05  starseeker
+
+	* [r44412] include/raytrace.h:
+	  Looks like we'll probably need this macro.
+
+2011-04-16 15:02  starseeker
+
+	* [r44411] src/librt/db5_types.c:
+	  Ah, was too aggressive about checking things on import.
+
+2011-04-16 12:54  jordisayol
+
+	* [r44410] misc/debian/changelog:
+	  Update debian/changelog to the next BRL-CAD release.
+
+2011-04-16 12:37  jordisayol
+
+	* [r44409] misc/debian/rules, sh/make_deb.sh:
+	  Properly handle errors during GNU/Linux packages building
+	  Check if "configure" script exist.
+
+2011-04-15 22:56  starseeker
+
+	* [r44407] src/libged/red.c, src/librt/comb/comb.c,
+	  src/librt/db5_types.c,
+	  src/tclscripts/archer/AttrGroupsDisplayUtility.tcl,
+	  src/tclscripts/mged/comb.tcl:
+	  OK, starting to simply down a bit - add 'empty means set to zero'
+	  logic to other cases for attr->comb. only call what syncs are
+	  needed. more oshader->shader changes. Need to go with aircode as
+	  std for now, apparently - that one should be fine, just change
+	  standard report.
+
+2011-04-15 20:43  starseeker
+
+	* [r44406] src/librt/db5_types.c:
+	  Start going with shader instead of oshader. Also, clear out old
+	  strings for shaders - clearing a shahder setting is a valid
+	  operation for attribute -> comb syncing.
+
+2011-04-15 20:35  starseeker
+
+	* [r44405] src/librt/db5_types.c:
+	  Remove more hardcoded attribute names.
+
+2011-04-15 20:21  starseeker
+
+	* [r44404] src/librt/db5_types.c:
+	  This should improve the robustness of the attr validation,
+	  including fixing an outright bug in air code handling.
+
+2011-04-15 19:37  starseeker
+
+	* [r44403] src/libged/red.c, src/librt/db5_types.c:
+	  reorder/rework the attribute syncing for build comb in light of
+	  the current function behavior. Give strtol a try.
+
+2011-04-15 19:20  erikgreenwald
+
+	* [r44402] misc/win32-msvc8/librender/librender.vcproj:
+	  remove libtie, the functions are in librt now.
+
+2011-04-15 18:44  starseeker
+
+	* [r44400] src/libged/red.c:
+	  Not calling db_update_attributes anymore in the sync routines.
+
+2011-04-15 18:38  starseeker
+
+	* [r44399] src/libged/red.c:
+	  Shouldn't need to call this out anymore
+
+2011-04-15 18:31  starseeker
+
+	* [r44398] include/raytrace.h, src/libged/red.c,
+	  src/librt/db5_types.c:
+	  Rework the attribute sync logic - more to do for validation. Note
+	  that this isn't syncing the dp->d_flags anymore so if that's
+	  needed functions will have to do it manually.
+
+2011-04-15 16:49  starseeker
+
+	* [r44396] src/libged/red.c:
+	  bye bye standard_attributes array, all hail
+	  db5_standard_attribute iteration
+
+2011-04-15 16:07  starseeker
+
+	* [r44394] src/libged/red.c, src/librt/db5_types.c:
+	  Ah - rgb, not color. This is a 'quick fix' - need to avoid
+	  editing the original data and rework write_comb to have no
+	  internal knowledge of the details of standard attributes - use
+	  librt functions.
+
+2011-04-15 09:12  d_rossberg
+
+	* [r44393] src/librt/CMakeLists.txt:
+	  synced with Makefile.am (db_fullpath.c)
+
+2011-04-15 09:10  d_rossberg
+
+	* [r44392] src/librt/db_path.c:
+	  included raytrace.h because of the function's prototype and
+	  MAXPATHLEN via bu.h
+
+2011-04-14 21:58  r_weiss
+
+	* [r44391] src/librt/primitives/nmg/nmg_bool.c:
+	  Updated function 'nmg_bool' in file 'nmg_bool.c'. This update
+	  supports the new prototype function 'nmg_triangulate_fu' (nmg
+	  triangulate faceuse) and is disabled by default since it is
+	  untested in the production code. This update corrects potential
+	  corruption in the classlist array. This update is a work in
+	  progress.
+
+2011-04-14 21:28  starseeker
+
+	* [r44390] src/librt/db5_types.c:
+	  Might as well be general here - do what we did in color.c in
+	  libged
+
+2011-04-14 20:30  starseeker
+
+	* [r44388] src/librt/db5_types.c:
+	  Air isn't boolean, it's just a number
+
+2011-04-14 20:15  starseeker
+
+	* [r44387] src/librt/db5_types.c:
+	  Make a stab at a more general solution to handling boolean
+	  strings for regions that expect them.
+
+2011-04-14 18:04  brlcad
+
+	* [r44385] src/librt/cut.c:
+	  increment axis AFTER the end of the loop, not as the first
+	  statement, so that the iteration is XYZXYZXYZ instead of
+	  YZXYZXYZX. this unfortunately may impact selection results for
+	  MUVES and other overlap handlers (once again), but it's more
+	  consistent with the intent.
+
+2011-04-14 13:58  bob1961
+
+	* [r44383] src/libdm/dm-wgl.c:
+	  RECT has no width/height members.
+
+2011-04-14 04:36  brlcad
+
+	* [r44374] bench/pixcmp.c, src/anim/anim_cascade.c,
+	  src/anim/anim_fly.c, src/anim/anim_hardtrack.c,
+	  src/anim/anim_keyread.c, src/anim/anim_lookat.c,
+	  src/anim/anim_offset.c, src/anim/anim_script.c,
+	  src/anim/anim_sort.c, src/anim/anim_time.c,
+	  src/anim/anim_track.c, src/anim/anim_turn.c, src/burst/burst.c,
+	  src/canon/canonlib.c, src/conv/3dm/3dm-g.cpp,
+	  src/conv/bot_dump.c, src/conv/bot_shell-vtk.c,
+	  src/conv/comgeom/cvt.c, src/conv/dxf/bot-bldxf.c,
+	  src/conv/dxf/dxf-g.c, src/conv/dxf/g-dxf.c, src/conv/enf-g.c,
+	  src/conv/euclid/euclid-g.c, src/conv/euclid/g-euclid.c,
+	  src/conv/euclid/g-euclid1.c, src/conv/fast4-g.c,
+	  src/conv/g-acad.c, src/conv/g-egg.c, src/conv/g-nff.c,
+	  src/conv/g-obj.c, src/conv/g-shell-rect.c, src/conv/g-var.c,
+	  src/conv/g-vrml.c, src/conv/g-x3d.c, src/conv/g-xxx.c,
+	  src/conv/g-xxx_facets.c, src/conv/iges/g-iges.c,
+	  src/conv/iges/main.c, src/conv/jack/g-jack.c,
+	  src/conv/jack/jack-g.c, src/conv/nastran-g.c,
+	  src/conv/nmg/g-nmg.c, src/conv/nmg/nmg-rib.c,
+	  src/conv/nmg/nmg-sgp.c, src/conv/obj-g.c, src/conv/obj-g_new.c,
+	  src/conv/off/g-off.c, src/conv/patch/patch-g.c,
+	  src/conv/patch/rpatch.c, src/conv/ply-g.c, src/conv/proe-g.c,
+	  src/conv/shp/shp-g.c, src/conv/step/step-g.cpp,
+	  src/conv/stl/g-stl.c, src/conv/stl/stl-g.c,
+	  src/conv/tankill/g-tankill.c, src/conv/tankill/tankill-g.c,
+	  src/conv/viewpoint-g.c, src/conv/walk_example.c,
+	  src/external/Unigraphics/ug-g.c, src/fb/bw-fb.c, src/fb/cat-fb.c,
+	  src/fb/cell-fb.c, src/fb/fb-bw.c, src/fb/fb-fb.c,
+	  src/fb/fb-orle.c, src/fb/fb-pix.c, src/fb/fb-png.c,
+	  src/fb/fb-rle.c, src/fb/fbanim.c, src/fb/fbcbars.c,
+	  src/fb/fbclear.c, src/fb/fbcmap.c, src/fb/fbcmrot.c,
+	  src/fb/fbcolor.c, src/fb/fbfade.c, src/fb/fbframe.c,
+	  src/fb/fbfree.c, src/fb/fbgamma.c, src/fb/fbgammamod.c,
+	  src/fb/fbgrid.c, src/fb/fbhelp.c, src/fb/fblabel.c,
+	  src/fb/fbline.c, src/fb/fbscanplot.c, src/fb/fbstretch.c,
+	  src/fb/fbthreadtest.c, src/fb/fbzoom.c, src/fb/gif-fb.c,
+	  src/fb/gif2fb.c, src/fb/orle-fb.c, src/fb/pix-fb.c,
+	  src/fb/pixautosize.c, src/fb/pixflip-fb.c, src/fb/pl-fb.c,
+	  src/fb/png-fb.c, src/fb/rle-fb.c, src/fb/spm-fb.c,
+	  src/fbed/fbed.c, src/fbserv/fbserv.c, src/gtools/beset/beset.c,
+	  src/gtools/g_diff.c, src/gtools/g_lint.c, src/gtools/g_qa.c,
+	  src/gtools/g_transfer.c, src/gtools/remapid.c,
+	  src/halftone/main.c, src/libbn/bntester.c, src/libdm/options.c,
+	  src/libfb/fb_obj.c, src/libged/bb.c, src/libged/bev.c,
+	  src/libged/bigE.c, src/libged/bo.c, src/libged/bot_decimate.c,
+	  src/libged/bot_dump.c, src/libged/clone.c, src/libged/color.c,
+	  src/libged/comb_std.c, src/libged/combmem.c, src/libged/concat.c,
+	  src/libged/dg_obj.c, src/libged/draw.c, src/libged/edcodes.c,
+	  src/libged/edmater.c, src/libged/facetize.c, src/libged/fb2pix.c,
+	  src/libged/find.c, src/libged/get_autoview.c, src/libged/gqa.c,
+	  src/libged/human.c, src/libged/keep.c, src/libged/kill.c,
+	  src/libged/killtree.c, src/libged/ls.c, src/libged/make.c,
+	  src/libged/mirror.c, src/libged/move_all.c, src/libged/pix2fb.c,
+	  src/libged/png.c, src/libged/preview.c, src/libged/ps.c,
+	  src/libged/push.c, src/libged/red.c, src/libged/saveview.c,
+	  src/libged/tops.c, src/libged/tree.c, src/libged/wdb_bigE.c,
+	  src/libged/wdb_comb_std.c, src/libged/wdb_obj.c,
+	  src/libicv/rot.c, src/libpkg/tpkg.c, src/mged/animedit.c,
+	  src/mged/cad_boundp.c, src/mged/cad_parea.c, src/mged/chgview.c,
+	  src/mged/cmd.c, src/mged/dodraw.c, src/mged/mged.c,
+	  src/nirt/nirt.c, src/proc-db/brickwall.c, src/proc-db/masonry.c,
+	  src/proc-db/nmgmodel.c, src/proc-db/tea.c, src/proc-db/tea_nmg.c,
+	  src/proc-db/wavy.c, src/rt/opt.c, src/rt/rtwalk.c,
+	  src/rttherm/ssamp-bw.c, src/rttherm/ssampview.c,
+	  src/shapes/fence.c, src/sig/dfft.c, src/sig/dmod.c,
+	  src/sig/imod.c, src/sig/istats.c, src/sig/smod.c, src/sig/umod.c,
+	  src/sig/ustats.c, src/tab/scriptsort.c, src/tab/tabinterp.c,
+	  src/util/azel.c, src/util/bary.c, src/util/bw-a.c,
+	  src/util/bw-imp.c, src/util/bw-png.c, src/util/bw-ps.c,
+	  src/util/bw-rle.c, src/util/bwfilter.c, src/util/bwmod.c,
+	  src/util/bwrot.c, src/util/bwscale.c, src/util/bwshrink.c,
+	  src/util/dbcp.c, src/util/double-asc.c, src/util/dsp_add.c,
+	  src/util/dunnsnap.c, src/util/fix_polysolids.c, src/util/hex.c,
+	  src/util/imgdims.c, src/util/mac-pix.c, src/util/orle-pix.c,
+	  src/util/pix-alias.c, src/util/pix-orle.c, src/util/pix-png.c,
+	  src/util/pix-ppm.c, src/util/pix-ps.c, src/util/pix-rle.c,
+	  src/util/pix-sun.c, src/util/pix-yuv.c, src/util/pix3filter.c,
+	  src/util/pixbackgnd.c, src/util/pixbgstrip.c,
+	  src/util/pixblend.c, src/util/pixborder.c, src/util/pixclump.c,
+	  src/util/pixcolors.c, src/util/pixcount.c, src/util/pixcut.c,
+	  src/util/pixdsplit.c, src/util/pixelswap.c, src/util/pixembed.c,
+	  src/util/pixfade.c, src/util/pixfields.c, src/util/pixfieldsep.c,
+	  src/util/pixfilter.c, src/util/pixhalve.c,
+	  src/util/pixinterp2x.c, src/util/pixmatte.c, src/util/pixmerge.c,
+	  src/util/pixmorph.c, src/util/pixpaste.c, src/util/pixrect.c,
+	  src/util/pixrot.c, src/util/pixscale.c, src/util/pixshrink.c,
+	  src/util/pixtile.c, src/util/pixuntile.c, src/util/pl-dm.c,
+	  src/util/pl-ps.c, src/util/plrot.c, src/util/png-pix.c,
+	  src/util/random.c, src/util/rle-pix.c, src/util/sun-pix.c,
+	  src/util/terrain.c, src/util/texturescale.c, src/util/wavelet.c,
+	  src/util/yuv-pix.c, src/vdeck/parsarg.c:
+	  bu_getopt() function used to return EOF instead of -1. For
+	  getopt(), this was changed by IEEE Std 1003.2-1992 (POSIX.2'') to
+	  decouple getopt() from <stdio.h>. We did the same for bu_getopt()
+	  to be consistent so update to -1 accordingly.
+
+2011-04-14 04:12  brlcad
+
+	* [r44373] include/bu.h:
+	  document the complex return values that may result from
+	  bu_getopt() (borrowed and adapted from the getopt() manual)
+
+2011-04-14 04:06  brlcad
+
+	* [r44372] src/libbu/getopt.c:
+	  The getopt() function was once specified to return EOF instead of
+	  -1. This was changed by IEEE Std 1003.2-1992 (POSIX.2'') to
+	  decouple getopt() from <stdio.h>. Do what POSIX did and return -1
+	  instead of EOF for bu_getopt() too.
+
+2011-04-14 04:05  brlcad
+
+	* [r44371] src/libbn/bntester.c:
+	  ws indent consistency cleanup
+
+2011-04-14 04:04  brlcad
+
+	* [r44370] src/libbn/bntester.c:
+	  there is no reason for these variables to be declared static.
+	  main() is not reentrant or used recursively.
+
+2011-04-14 04:01  brlcad
+
+	* [r44369] src/libbn/bntester.c:
+	  bu_getopt() returns an int, not a char -- should resolve
+	  'comparison is always true' failure (strict catches another bug).
+
+2011-04-13 21:26  starseeker
+
+	* [r44368] src/libged/search.c:
+	  remove debug line
+
+2011-04-13 21:15  starseeker
+
+	* [r44366] src/librt/db_path.c:
+	  Opps, headers are a good thing.
+
+2011-04-13 21:05  starseeker
+
+	* [r44365] include/bu.h, include/raytrace.h,
+	  src/libbu/brlcad_path.c, src/libged/search.c,
+	  src/librt/Makefile.am, src/librt/db_fullpath.c,
+	  src/librt/db_path.c:
+	  Take a stab at making bu_normalize into db_normalize
+
+2011-04-13 20:56  starseeker
+
+	* [r44364] include/raytrace.h, src/librt/Makefile.am,
+	  src/librt/db_fullpath.c, src/librt/db_path.c:
+	  Move db_path.c to db_fullpath.c
+
+2011-04-13 20:39  starseeker
+
+	* [r44362] include/bu.h, src/libbu/brlcad_path.c,
+	  src/libged/search.c:
+	  Try again, this time with a realpath based path normalization
+
+2011-04-13 19:12  starseeker
+
+	* [r44359] include/bu.h, src/libbu/vls.c, src/libged/search.c:
+	  OK, no halfway measures. Going to need a full-on path resolution
+	  function.
+
+2011-04-13 18:06  r_weiss
+
+	* [r44357] src/libbn/plane.c:
+	  Corrected a bug in function 'bn_isect_lseg3_lseg3_new' in file
+	  'plane.c' within the libbn library. This is a prototype version
+	  of the function 'bn_isect_lseg3_lseg3'. Preprocessor commands
+	  were added so this prototype version is disabled by default. The
+	  bug was when line segments are colinear, dist[1] returned from
+	  this function has an alternate meaning, it is the distance along
+	  the 'p' line segment (not 'q') therefore it must be scaled by the
+	  magnitude of the 'p' line segment (i.e. pmag), not the magnitude
+	  of the 'q' line segment. Added/updated/moved bu_log messages for
+	  debugging, added/updated comments. This prototype function
+	  supports the new prototype function 'nmg_triangulate_fu' (nmg
+	  triangulate faceuse). At some point the new and original version
+	  of 'bn_isect_lseg3_lseg3' will be consolidated. This code is a
+	  work in progress.
+
+2011-04-13 16:13  starseeker
+
+	* [r44355] doc/docbook/system/mann/en/search.xml:
+	  Update search documentation
+
+2011-04-13 15:33  starseeker
+
+	* [r44353] src/libged/search.c:
+	  Unlike find, we won't insist on a path if we're given options -
+	  if we have options but no path, assume '.'
+
+2011-04-13 13:52  erikgreenwald
+
+	* [r44348] src/libged/search.c:
+	  hoise declarations before body, C90 does not allow mixing.
+
+2011-04-13 13:50  erikgreenwald
+
+	* [r44347] src/librt/dir.c:
+	  if the LIBRT_BOT_MINTIE environment variable is set, try to
+	  update the corrosponding global (direct email request to brlcad@
+
+2011-04-13 13:39  brlcad
+
+	* [r44344] TODO:
+	  already a request from a user to test out the BoT TIE
+	  integration, via rtg3 or covart, so add a LIBRT_BOT_MINTIE
+	  environment variable as a means to enable it pervasively.
+
+2011-04-13 13:08  starseeker
+
+	* [r44342] src/libged/search.c:
+	  Hmm - that only worked on the Mac. Go the safe route and put
+	  basename into a tmp string.
+
+2011-04-13 12:39  starseeker
+
+	* [r44339] include/raytrace.h:
+	  whoops - helps to check in the headers too
+
+2011-04-12 23:44  starseeker
+
+	* [r44336] include/bu.h, src/libbu/vls.c, src/libged/search.c:
+	  Try some scrubbing on user supplied paths. Not sure this is
+	  correct yet, but it does handle some cases.
+
+2011-04-12 21:32  starseeker
+
+	* [r44334] src/libged/search.c:
+	  While I'm at it, fix the print order of the results - toplevel
+	  first, then children.
+
+2011-04-12 21:19  starseeker
+
+	* [r44331] src/libged/search.c:
+	  Take a stab at using . and / prefixes to denote lists or full
+	  paths. This is a significant change to the search syntax and
+	  functionality, needs testing. Doesn't yet use the canonical logic
+	  to simplify paths.
+
+2011-04-12 18:58  starseeker
+
+	* [r44330] src/libged/search.c:
+	  This needs more testing, but search . and the conversion.sh
+	  script seem to run with this change...
+
+2011-04-12 18:40  brlcad
+
+	* [r44329] NEWS, README, include/conf/PATCH:
+	  final testing of source tarball under way, bump to 7.18.5 in
+	  anticipation of 7.18.6 next month.
+
+2011-04-12 18:26  brlcad
+
+	* [r44327] HACKING:
+	  add diagnostic lines to echo the PREV and CURR values so we know
+	  if anything changes
+
+2011-04-12 18:04  brlcad
+
+	* [r44324] HACKING:
+	  requesting a specific log revision, -rHEAD, results in empty
+	  output so don't use it
+
+2011-04-12 17:55  erikgreenwald
+
+	* [r44322] src/other/libpng/Makefile.am:
+	  add an empty depends rule
+
+2011-04-12 17:05  brlcad
+
+	* [r44320] NEWS:
+	  typo
+
+2011-04-12 16:31  brlcad
+
+	* [r44319] ChangeLog:
+	  update changelog for 7.18.4
+
 2011-04-12 16:26  brlcad
 
 	* [r44318] NEWS, include/conf/PATCH:
@@ -41,3742 +1675,4 @@
 	  add an extensive test of the mged 'red' command due to repeat
 	  failures. regression unveils at least 11 other bugs, quality, and
 	  robustness issues still remaining.
-
-2011-04-11 09:24  jordisayol
-
-	* [r44293] sh/make_deb.sh, sh/make_rpm.sh:
-	  Properly handle errors during GNU/Linux packages building.
-
-2011-04-08 20:03  erikgreenwald
-
-	* [r44288] db/bldg391.asc:
-	  remove references to nonexistent regions (midwall.r equip)
-
-2011-04-08 19:35  erikgreenwald
-
-	* [r44286] src/libged/search.c:
-	  some notes on the workaround for the "search ." bug
-
-2011-04-08 19:31  erikgreenwald
-
-	* [r44284] sh/conversion.sh:
-	  force posix output from time(1)
-
-2011-04-08 19:09  erikgreenwald
-
-	* [r44283] sh/conversion.sh:
-	  If no OBJECTS are set, pass an explicit "-print" to search. This
-	  may be a bug in the ged_search implementation ("search ." is no
-	  longer legitimate).
-
-2011-04-08 15:14  r_weiss
-
-	* [r44280] include/raytrace.h:
-	  Updated the header file 'raytrace.h' to include the definition of
-	  a new prototype function 'nmg_dump_model'. This new function is
-	  located in file 'nmg_tri.c'. This update supports the new
-	  prototype function 'nmg_triangulate_fu' (nmg triangulate
-	  faceuse). Preprocessor commands were added to disable this change
-	  by default. This code is a work in progress.
-
-2011-04-08 15:06  r_weiss
-
-	* [r44279] include/bn.h:
-	  Updated the header file for libbn (i.e. bn.h) to include the
-	  definition of new prototype versions of the functions
-	  'bn_isect_lseg3_lseg3' and 'bn_isect_line3_line3' located in the
-	  file 'plane.c'. The names of these new function are
-	  'bn_isect_lseg3_lseg3_new' and 'bn_isect_line3_line3_new'. These
-	  functions support the new prototype function 'nmg_triangulate_fu'
-	  (nmg triangulate faceuse). Preprocessor commands were added to
-	  disable these changes by default. This code is a work in
-	  progress.
-
-2011-04-08 15:00  r_weiss
-
-	* [r44278] src/libbn/plane.c:
-	  Added new prototype versions of the functions
-	  'bn_isect_lseg3_lseg3' and 'bn_isect_line3_line3' to the file
-	  'plane.c'. The names of these new function are
-	  'bn_isect_lseg3_lseg3_new' and 'bn_isect_line3_line3_new'. These
-	  functions support the new prototype function 'nmg_triangulate_fu'
-	  (nmg triangulate faceuse). At some point the new and original
-	  version of these functions will be consolidated. Preprocessor
-	  commands were added so these new function are disabled by
-	  default. This code is a work in progress.
-
-2011-04-08 03:37  brlcad
-
-	* [r44277] src/other/incrTcl/itcl/generic/itclInt.h:
-	  revert r44259
-
-2011-04-07 21:34  r_weiss
-
-	* [r44269] src/librt/primitives/nmg/nmg_inter.c:
-	  Updated function 'nmg_isect_eu_fu' within file 'nmg_inter.c'.
-	  This update supports the new prototype function
-	  'nmg_triangulate_fu' (nmg triangulate faceuse) and is disabled by
-	  default since it is untested in the production code. This update
-	  changes a floating point compare against 0.0 to -SMALL_FASTF
-	  which should produce a more reliable result. This update is a
-	  work in progress.
-
-2011-04-07 21:23  r_weiss
-
-	* [r44268] src/librt/primitives/nmg/nmg_mod.c:
-	  Updated function 'nmg_lu_reorient' within file 'nmg_mod.c'. This
-	  update supports the new prototype function 'nmg_triangulate_fu'
-	  (nmg triangulate faceuse) and is disabled by default since it is
-	  untested in the production code. This update changes a floating
-	  point compare against 0.0 to -SMALL_FASTF which should produce a
-	  more reliable result. This update is a work in progress.
-
-2011-04-07 21:05  r_weiss
-
-	* [r44267] src/librt/primitives/nmg/nmg_info.c:
-	  Updated function 'nmg_2edgeuse_g_coincident' within file
-	  'nmg_info.c'. This update supports the new prototype function
-	  'nmg_triangulate_fu' (nmg triangulate faceuse) and is disabled by
-	  default since it is untested in the production code. The original
-	  code appears to contain a bug where it assumes 'edge geometries
-	  are everywhere coincident' when all previous checks are
-	  inconclusive. This update is a work in progress.
-
-2011-04-07 20:38  r_weiss
-
-	* [r44266] src/librt/primitives/nmg/nmg_class.c:
-	  Updated function 'nmg_classify_lu_lu' within file 'nmg_class.c'.
-	  This update supports the new prototype function
-	  'nmg_triangulate_fu' (nmg triangulate faceuse) and is disabled by
-	  default since it is untested in the production code. The update
-	  changes a floating point compare against 0.0 to -SMALL_FASTF
-	  which should produce a more reliable result. This update is a
-	  work in progress.
-
-2011-04-07 20:13  r_weiss
-
-	* [r44265] src/librt/primitives/nmg/nmg_mod.c:
-	  Updated function 'nmg_cut_loop' within file 'nmg_mod.c'. This
-	  update supports the new prototype function 'nmg_triangulate_fu'
-	  (nmg triangulate faceuse) and is disabled by default since it is
-	  untested in the production code. This code was updated since the
-	  2nd parameter passed into 'nmg_split_lu_at_vu' is added to the
-	  new loopuse created by 'nmg_split_lu_at_vu'. Because of this, the
-	  2nd parameter should be vu2 because when 'nmg_cut_loop' is called
-	  and returns, it is expected that vu1 remain within the same
-	  loopuse as when 'nmg_cut_loop' was called. This change corrected
-	  a problem within the function 'cut_unimonotone' within the while
-	  (verts > 3) loop where after a cut when the to/from vertex is the
-	  same, the 'nmg_cut_loop' would return with the 1st parameter
-	  (vu1) returning being associated with the new loopuse (i.e. with
-	  3 vertices) instead of the old loopuse which we need to finish
-	  cutting. The while (verts > 3) loop moves to the next cut based
-	  on the loopuse associated with the 1st parameter (vu1) so when
-	  the loopuse of vu1 changes the logic breaks in the while (verts >
-	  3) loop. This update is a work in progress.
-
-2011-04-07 19:39  r_weiss
-
-	* [r44264] src/librt/primitives/nmg/nmg_tri.c:
-	  Updated function 'is_convex' within file 'nmg_tri.c'. This update
-	  supports the new prototype function 'nmg_triangulate_fu' (nmg
-	  triangulate faceuse) and is disabled by default since it is
-	  untested in the production code. This code was updated since
-	  during loopuse triangulation, sometimes it is necessary to allow
-	  degenerate triangles (i.e. zero area). Because of this, we need
-	  to allow the definition of convex to include 0 and 180 degree
-	  angles. The original code here contains a bug since the units of
-	  'angle' is radians but the units of 'tol->perp' is not. Since
-	  changing any tolerances related to nmg triangulation seem to have
-	  both negative and positive impacts, I decided not to arbitrarily
-	  correct this bug. This update is a work in progress.
-
-2011-04-07 19:12  r_weiss
-
-	* [r44263] src/librt/primitives/nmg/nmg_tri.c:
-	  Updated function 'pick_pt2d_for_cutjoin' within file 'nmg_tri.c'.
-	  This update supports the new prototype function
-	  'nmg_triangulate_fu' (nmg triangulate faceuse) and is disabled by
-	  default since it is untested in the production code. The purpose
-	  of the 'pick_pt2d_for_cutjoin' function is to select which
-	  vertexuse will be used when performing a cut/join between two
-	  loopuse within a faceuse. This update was made since if the
-	  'from' and 'to' cut vertexuse are in the same loopuse, it should
-	  be safe to assume the current pt2d records for these vertexuse
-	  are correct for the cut. Therefore, do not search for other pt2d
-	  vertexuse records, just exit this function using the vertexuse
-	  pt2d records passed into this function. If we allow this function
-	  to continue and search for alternate vertexuse, sometimes,
-	  depending on the number of vertexuse at the cut points, and the
-	  complexity of the angles between the edges at the cuts, an
-	  incorrect vertexuse is often chosen. This change avoids the error
-	  prone logic when we can assume the vertexuse passed into this
-	  function are the correct vertexuse for the cut, i.e. when the two
-	  vertexuse are in the same loopuse. This update is a work in
-	  progress.
-
-2011-04-07 18:42  r_weiss
-
-	* [r44262] src/librt/primitives/nmg/nmg_tri.c:
-	  Added a new prototype version of the function 'cut_unimonotone'
-	  to the file 'nmg_tri.c'. This function supports the new prototype
-	  function 'nmg_triangulate_fu' (nmg triangulate faceuse). This
-	  function performs a triangulation of a outer loop (OT_SAME
-	  loopuse) by using ear clipping. This function will be renamed
-	  later since it is not triangulating/cutting a unimonotone
-	  polygon. Preprocessor commands were added so this new function is
-	  disabled by default. This code is a work in progress.
-
-2011-04-07 18:14  r_weiss
-
-	* [r44261] src/librt/primitives/nmg/nmg_tri.c:
-	  Added the functions 'nmg_plot_fu', 'nmg_triangulate_rm_holes',
-	  'nmg_triangulate_rm_degen_loopuse', and 'nmg_dump_model' to the
-	  file 'nmg_tri.c'. These are prototype functions that support the
-	  new prototype function 'nmg_triangulate_fu' (nmg triangulate
-	  faceuse). The function 'nmg_plot_fu' creates a plot file for each
-	  loopuse in a faceuse and color codes each edgeuse. The function
-	  'nmg_triangulate_rm_holes' removes holes (OT_OPPOSITE loopuse) in
-	  a faceuse by joining them with outer loops (OT_SAME loopuse). The
-	  function 'nmg_triangulate_rm_degen_loopuse' removes degenerate
-	  (i.e. < 3 vertices) loopuse from a faceuse. The function
-	  'nmg_dump_model' write all the vertex coordinates in an nmg model
-	  to a log file. Preprocessor commands were added so these new
-	  functions are disabled by default. This code is a work in
-	  progress.
-
-2011-04-07 17:33  r_weiss
-
-	* [r44260] src/librt/primitives/nmg/nmg_tri.c:
-	  Added a prototype version of the function 'nmg_triangulate_fu'
-	  (nmg triangulate faceuse) to the file 'nmg_tri.c'. Added
-	  preprocessor commands to, by default, disable the new function
-	  and retain the original version. This code is a work in progress.
-
-2011-04-07 16:54  brlcad
-
-	* [r44259] src/other/incrTcl/itcl/generic/itclInt.h:
-	  is the common.h header necessary here? builds clean without
-
-2011-04-07 16:26  r_weiss
-
-	* [r44257] src/librt/primitives/nmg/nmg_tri.c:
-	  Added preprocessor commands to optionally disable nmg
-	  triangulation functions within nmg_tri.c that are not needed when
-	  new 'prototype' nmg triangulation code is enabled. The functions
-	  to be disabled are print_2d_eu, print_trap, print_tlist, vtype2d,
-	  poly_start_vertex, poly_side_vertex, poly_end_vertex,
-	  hole_start_vertex, hole_end_vertex, nmg_trap_face, skip_cut,
-	  cut_diagonals, cut_unimonotone, nmg_plot_flat_face. By default,
-	  existing code will not be disabled and new prototype code will
-	  not be enabled.
-
-2011-04-07 16:23  brlcad
-
-	* [r44256] src/libbn:
-	  ignore bntester binary
-
-2011-04-07 16:23  brlcad
-
-	* [r44255] src/libpc:
-	  ignore pc_test binary
-
-2011-04-07 16:22  brlcad
-
-	* [r44254] src/libbu:
-	  timetester binary
-
-2011-04-07 01:19  brlcad
-
-	* [r44246] src/librt/opennurbs_ext.h:
-	  use the new __BU_ATTR_ALWAYS_INLINE define so that we get forced
-	  inline behavior for newer gcc or forced off if older. the
-	  'inline' keyword may be superfluous or even problematic, but
-	  keeping for now given it's the original intent.
-
-2011-04-07 01:17  brlcad
-
-	* [r44245] include/bu.h, include/common.h:
-	  add __BU_ATTR_ALWAYS_INLINE with a protection for gcc 3.4 and
-	  earlier where the always_inline attribute wasn't yet fully
-	  implemented (reportedly still works for some optimization
-	  options)
-
-2011-04-06 18:13  erikgreenwald
-
-	* [r44241] src/librt/opennurbs_ext.h:
-	  remove inline calls that cause gcc3.4.6 to fail (needs review)
-
-2011-04-06 16:34  indianlarry
-
-	* [r44239] src/librt/primitives/bot/g_bot_include.c:
-	  Having issues with 'size_t' declaration of some variables within
-	  function rt_bot_makesegs_(). Variables need signed values so
-	  converted to 'ssize_t'. Only looked at this function due to a bug
-	  report but may need to look over all 'size_t' changes.
-
-2011-04-06 15:02  bob1961
-
-	* [r44237] src/tclscripts/mged/openw.tcl:
-	  Added a wrapper for the call to dbupgrade from the Tools menu.
-	  This catches the call and prints the results to the command
-	  window. The catch prevents a possible error window popping up.
-
-2011-04-05 19:26  brlcad
-
-	* [r44233] TODO:
-	  red is looking better, doesn't seem to list rgb/color attributes
-	  multiple times any more, but now seems to be wiping out the
-	  shader and region_id at least when set to plastic and -1
-	  respectively.
-
-2011-04-05 19:20  brlcad
-
-	* [r44232] TODO:
-	  red matrix edit works!
-
-2011-04-05 18:44  brlcad
-
-	* [r44231] TODO:
-	  file node entity type support to libbu
-
-2011-04-05 18:09  brlcad
-
-	* [r44226] TODO:
-	  libged encapsulation issue reverted for release, schedule backlog
-	  task to restore with libdm/libfb decoupling addressed. similar
-	  decouple needed for screengrab command (though that command may
-	  just end up migrating?).
-
-2011-04-05 18:04  brlcad
-
-	* [r44225] NEWS:
-	  bob found/fixed a bug with the title command. presumably, this
-	  would convert the working units to mm if you tried to set the
-	  title via the units command. looks like the bug is very old
-	  dating back to July 2000, r18822, when a db_v4_get_units_code()
-	  snippet was converted to a db_update_ident() parameter.
-
-2011-04-05 17:53  brlcad
-
-	* [r44224] src/libged/wdb_obj.c:
-	  if ged_title() is wrong, then this one is probably wrong too
-	  since it's the daddy. make title not clobber units.
-
-2011-04-05 17:44  erikgreenwald
-
-	* [r44221] src/conv/g-egg.c:
-	  quell warning that showed up on fbsd but not mac
-
-2011-04-05 17:37  erikgreenwald
-
-	* [r44220] configure.ac, src/Makefile.am, src/java:
-	  no implementation, abandoned 8 years ago, unused, gone.
-
-2011-04-05 16:55  erikgreenwald
-
-	* [r44218] src/conv/g-egg.c:
-	  eliminate as many globals as possible. pack the rest in the
-	  global struct.
-
-2011-04-04 22:46  bob1961
-
-	* [r44198] src/libged/title.c:
-	  Should be using local2base instead of base2local here.
-
-2011-04-04 19:16  bob1961
-
-	* [r44192] include/ged.h, include/tclcad.h,
-	  src/libtclcad/tclcad_obj.c:
-	  Mods to get libtclcad compiling again.
-
-2011-04-04 14:27  bob1961
-
-	* [r44181] src/libged/ged.c:
-	  typo in comment
-
-2011-04-04 14:18  brlcad
-
-	* [r44180] src/libdm/Makefile.am, src/libdm/adc.c,
-	  src/libdm/axes.c, src/libdm/grid.c, src/libdm/labels.c,
-	  src/libdm/rect.c, src/libdm/scale.c:
-	  rest of revert to r44152. helps to be fully up-to-date during
-	  merge. continuation of r44179.
-
-2011-04-04 13:35  brlcad
-
-	* [r44179] include/ged.h, include/tclcad.h, src/libged/Makefile.am,
-	  src/libged/adc.c, src/libged/axes.c, src/libged/go_refresh.c,
-	  src/libged/grid.c, src/libged/label.c, src/libged/rect.c,
-	  src/libged/scale.c:
-	  I get it. It was an April Fool's Joke, right?? Revert to r44152
-	  since it makes all sorts of calls to LIBDM macros and the dm
-	  struct, requires libdm header. Mostly because this is right in
-	  the middle of source tarball preparations, even if it's a
-	  work-in-progress, to be sorted out after the sources are tagged
-	  for release. otherwise, release testing would have to start all
-	  over again. Design-wise, LIBGED shouldn't be
-	  calling/using/touching LIBDM (or LIBFB), shouldn't be using
-	  'objects' as in the ged_obj from libtclcad or various 'go_'
-	  routines, nor adding to ged public API that doesn't fit the
-	  command format.
-
-2011-04-04 13:25  brlcad
-
-	* [r44178] TODO:
-	  if we do the subdir, then there's risk of people going lazy and
-	  including via subdir. add a regression to make sure it's clean
-	  code using CPPFLAGS.
-
-2011-04-04 13:21  brlcad
-
-	* [r44177] TODO:
-	  help cliff not go bald.
-
-2011-04-04 13:20  brlcad
-
-	* [r44176] TODO:
-	  need to group together library headers into public subdirs. will
-	  need to set up proper cppflags as well similar to the LIBS flags.
-
-2011-04-04 12:51  brlcad
-
-	* [r44175] TODO:
-	  cliff added support for name changes on red (needs NEWS). still
-	  need to indep test matrix edit. more importantly, need to undo
-	  the mess added to libged.
-
-2011-04-04 12:34  brlcad
-
-	* [r44174] src/libged/Makefile.am:
-	  gah, as expected, this introduced a new dependency. regression
-	  fail. maybe need a test to prevent this from occurring on all the
-	  core libraries (making calls to libraries that shouldn't be
-	  linked.
-
-2011-04-04 12:33  brlcad
-
-	* [r44173] src/libged/screengrab.c:
-	  identify that this is a major encapsulation problem. this
-	  introduced a new dependency on libdm/libfb, which totally sucks
-	  and blows library encapsulation. this may not be an appropriate
-	  place for screen capture logic -- perhaps libdm API.
-
-2011-04-01 20:23  erikgreenwald
-
-	* [r44156] src/libged/red.c:
-	  quell uninitialized variable warning
-
-2011-04-01 19:13  bob1961
-
-	* [r44154] src/libtclcad/Makefile.am, src/libtclcad/ged_obj.c,
-	  src/libtclcad/tclcad_obj.c:
-	  Move ged_obj.c to tclcad_obj.c in libtclcad.
-
-2011-04-01 19:03  bob1961
-
-	* [r44153] include/ged.h, include/tclcad.h, src/libdm/Makefile.am,
-	  src/libdm/adc.c, src/libdm/axes.c, src/libdm/grid.c,
-	  src/libdm/labels.c, src/libdm/rect.c, src/libdm/scale.c,
-	  src/libged/Makefile.am, src/libged/adc.c, src/libged/axes.c,
-	  src/libged/go_refresh.c, src/libged/grid.c, src/libged/label.c,
-	  src/libged/rect.c, src/libged/scale.c, src/libtclcad/ged_obj.c:
-	  Begin refactoring relevant code in libtclcad and libdm to live in
-	  libged.
-
-2011-04-01 16:12  bob1961
-
-	* [r44151] include/dm.h, src/libdm/dm-Null.c, src/libdm/dm-X.c,
-	  src/libdm/dm-ogl.c, src/libdm/dm-plot.c, src/libdm/dm-ps.c,
-	  src/libdm/dm-rtgl.c, src/libdm/dm-tk.c, src/libdm/dm-wgl.c:
-	  Added the dm_reshape function to struct dm. This splits out the
-	  bits of code in dm-ogl and dm-wgl that reconfigure the openGL
-	  window after a resize.
-
-2011-03-31 04:24  brlcad
-
-	* [r44105] include/bu.h:
-	  add parens
-
-2011-03-31 04:09  brlcad
-
-	* [r44104] include/bu.h:
-	  attempt to quell warning about stack avs reference address always
-	  evaluating as true.
-
-2011-03-30 22:01  brlcad
-
-	* [r44100] src/librt/db5_types.c:
-	  check our inputs for sanity on all the avs standard attribute
-	  functions
-
-2011-03-30 20:13  brlcad
-
-	* [r44095] src/librt/db5_types.c:
-	  use db5_standard_attribute() instead of hard-coding the standard
-	  attribute names in db5_apply_std_attributes(). also check our
-	  inputs in db5_standardize_avs().
-
-2011-03-30 20:10  brlcad
-
-	* [r44094] include/bu.h:
-	  tweakage
-
-2011-03-30 20:07  brlcad
-
-	* [r44093] include/bu.h:
-	  document BU_AVS_FOR() macro with an example code snippet.
-
-2011-03-30 20:01  brlcad
-
-	* [r44092] include/bu.h:
-	  go a step further and don't try to dereference the avs if we get
-	  handed a NULL pointer. one more example of the lengths we go to
-	  for you. because we care.
-
-2011-03-30 19:56  brlcad
-
-	* [r44090] include/bu.h:
-	  need to make sure we don't enter the loop with that NULL pointer.
-	  halt if iterator or target is NULL
-
-2011-03-30 19:38  brlcad
-
-	* [r44085] include/bu.h:
-	  bad AVS, no donut for you. BU_AVS_FOR() macro iterator starts
-	  from the end of the avs to the beginning. however, if the avs is
-	  empty, this would result in indexing into a -1 index and
-	  potentially cause a segfault. make the loop safe by setting it to
-	  null if count is zero, so it should kick right out of the loop.
-
-2011-03-30 19:37  starseeker
-
-	* [r44084] TODO:
-	  r_weiss fixed dem-g crashes
-
-2011-03-30 19:33  starseeker
-
-	* [r44083] src/libged/red.c:
-	  Add the ability for changing name assignment in the red.c text
-	  file to rename the comb being edited.
-
-2011-03-30 18:32  brlcad
-
-	* [r44080] include/raytrace.h:
-	  private funcs till names get changed
-
-2011-03-30 18:31  brlcad
-
-	* [r44079] include/raytrace.h:
-	  add the other 'new' attr funcs that are needed for the symbols to
-	  get published. still a work-in-progress.
-
-2011-03-30 17:43  erikgreenwald
-
-	* [r44076] src/libged/red.c:
-	  include raytrace.h for prototype. remove extern func decl
-
-2011-03-30 17:26  starseeker
-
-	* [r44075] src/libged/red.c:
-	  Looks like this might be the culprit - combtree_op_regex with
-	  blank seems to work for matricies
-
-2011-03-30 16:25  brlcad
-
-	* [r44073] include/raytrace.h, src/librt/db5_types.c:
-	  document the db5_standard* functions, pulling comments from
-	  source to header and expanding with a note that they're
-	  new/private. reimplement db5_standardize_avs() using simple
-	  two-pass logic so standard attributes take precedence. use
-	  db5_standard_attribute() in conjunction with
-	  db5_standardize_attribute() in leu of tables so we don't have to
-	  repeat any values or even be aware of what is standard or not.
-
-2011-03-30 14:39  starseeker
-
-	* [r44071] src/libged/red.c:
-	  fix red.c extern too
-
-2011-03-30 14:33  starseeker
-
-	* [r44070] include/raytrace.h:
-	  Update db5_is_standard_attribute in raytrace.h
-
-2011-03-30 14:05  brlcad
-
-	* [r44069] src/librt/db5_types.c:
-	  update comment for db5_standardize_avs(). is my understanding
-	  correct?
-
-2011-03-30 13:55  brlcad
-
-	* [r44067] src/librt/db5_types.c:
-	  shorten to attr
-
-2011-03-30 13:50  brlcad
-
-	* [r44066] src/librt/db5_types.c:
-	  simplify db5_standardize_attribute() by unrolling the loops. we
-	  have to perform all the comparisons anyways until we get a match,
-	  so just list them.
-
-2011-03-30 13:38  brlcad
-
-	* [r44065] src/librt/db5_types.c:
-	  document the need for these needing to not have gaps in their
-	  value. only specify the starting point to make is less error
-	  prone. add null case so gcc thinks we're covering all our bases.
-
-2011-03-30 13:34  brlcad
-
-	* [r44064] src/librt/db5_types.c:
-	  even better, make the index-based lookup exactly match the ATTR_*
-	  index value. convert to an enum for proper numeric indexing.
-
-2011-03-30 13:27  brlcad
-
-	* [r44063] src/librt/db5_types.c:
-	  swap los and air so that the index coincidentally matches the
-	  ATTR_* returned from db5_standardize_attribute()
-
-2011-03-30 13:22  brlcad
-
-	* [r44062] src/librt/db5_types.c:
-	  add a new routine that will return a standard attribute name by
-	  an index number, so that we have a way to iterate over all the
-	  standard attribute names. this simplifies
-	  db5_is_standard_attribut() iteration and lets us reuse the
-	  iteration elsewhere.
-
-2011-03-30 03:41  brlcad
-
-	* [r44056] NEWS:
-	  with r44022, richard fixed two memory management issues
-	  introduced during a code audit that reduced the size of an
-	  allocation after a conversion from bu_malloc to bu_calloc as well
-	  as double-free on exit.
-
-2011-03-30 03:29  brlcad
-
-	* [r44055] src/libged/red.c:
-	  ouch. write_comb() needs a rewrite. it's modifying data it should
-	  not be modifying at this point in our processing. just asking for
-	  trouble.
-
-2011-03-30 03:06  brlcad
-
-	* [r44054] src/libged/red.c:
-	  if the regex is going to have the newline, make the separator
-	  have it too
-
-2011-03-30 03:05  brlcad
-
-	* [r44053] src/libged/red.c:
-	  delims was moved to put_comb, not used here. refactor the
-	  Combination Tree separator so it's only in one place. put the
-	  matching regexp up next to it so changes to one can be reflected
-	  in the other, otherwise will be brittle to future edits.
-
-2011-03-30 03:04  brlcad
-
-	* [r44052] src/libged/ged_private.h, src/libged/put_comb.c:
-	  delims is only used in put_comb.c so it doesn't need to be an
-	  extern'd global. same for ged_tmpcomb.
-
-2011-03-30 03:01  brlcad
-
-	* [r44051] TODO:
-	  note a few of the red issues remaining
-
-2011-03-30 02:31  brlcad
-
-	* [r44049] src/libged/red.c:
-	  another attempt at a logic cleanup, this time consolidating the
-	  memory cleanup and unlinking of the temp file to one place so
-	  that the file is consistently closed. some conditions weren't
-	  closing the file. this only modifies ged_red() and shouldn't be a
-	  change to flow logic.
-
-2011-03-30 02:30  brlcad
-
-	* [r44048] include/bu.h:
-	  document the behavior on empty strings
-
-2011-03-30 02:26  brlcad
-
-	* [r44047] src/libbu/stat.c:
-	  treat empty strings the same as null, i.e., a special case
-	  similar to NaN implying not a file so never will match true even
-	  if stat() might. similarly, for comparing to files, empty strings
-	  should never match. (two empty string filenames are not the same
-	  file, they are no file).
-
-2011-03-30 01:00  brlcad
-
-	* [r44046] TODO:
-	  keep seems to be working, red is no longer crashing but isn't
-	  editing matrices either
-
-2011-03-30 00:34  brlcad
-
-	* [r44045] src/conv/euclid/g-euclid.c, src/conv/euclid/g-euclid1.c,
-	  src/conv/g-acad.c, src/conv/g-nff.c, src/conv/g-obj.c,
-	  src/conv/g-vrml.c, src/conv/g-x3d.c, src/conv/g-xxx_facets.c,
-	  src/conv/iges/g-iges.c, src/conv/iges/readtree.c,
-	  src/conv/jack/g-jack.c, src/conv/nmg/g-nmg.c,
-	  src/conv/off/g-off.c, src/conv/tankill/g-tankill.c,
-	  src/libgcv/region_end.c, src/libged/bev.c, src/libged/comb_std.c,
-	  src/libged/combmem.c, src/libged/facetize.c,
-	  src/libged/put_comb.c, src/libged/red.c, src/libged/track.c,
-	  src/libged/wdb_comb_std.c, src/libged/wdb_obj.c,
-	  src/libged/wdb_track.c, src/libwdb/dynamic_geometry.c,
-	  src/libwdb/reg.c, src/mged/animedit.c, src/mged/dodraw.c,
-	  src/vdeck/vdeck.c:
-	  consistently call BU_GETUNION() to allocate a new union tree node
-	  and RT_INIT_TREE() to initialize that node instead of setting the
-	  magic value directly.
-
-2011-03-30 00:07  starseeker
-
-	* [r44044] src/libged/red.c:
-	  Rename to avoid confusion - the point of that regex is to look
-	  for anything except whitespace, not whitespace.
-
-2011-03-29 23:20  brlcad
-
-	* [r44043] src/libged/red.c:
-	  aha, source of the errant space. auto-formatting sees the ){ and
-	  wants to clean up the formatting. break up the string.
-
-2011-03-29 23:16  brlcad
-
-	* [r44042] src/libged/red.c:
-	  functions that use zero for success result in reverse boolean
-	  expressions. less error-prone to explicitly test for zero. go a
-	  step further and document intent with matched/no match labels.
-
-2011-03-29 23:05  brlcad
-
-	* [r44041] src/libged/bot_dump.c, src/libged/comb.c,
-	  src/libged/comb_std.c, src/libged/dg_obj.c, src/libged/draw.c,
-	  src/libged/push.c, src/libged/wdb_comb_std.c,
-	  src/libged/wdb_obj.c:
-	  no longer need to set RT_TREE_MAGIC in here too now that
-	  RT_GET_TREE() sets the magic.
-
-2011-03-29 23:04  brlcad
-
-	* [r44040] src/librt/comb/comb.c, src/librt/comb/db_comb.c,
-	  src/librt/primitives/nmg/nmg_bool.c,
-	  src/librt/primitives/submodel/submodel.c:
-	  no longer need to set RT_TREE_MAGIC now that RT_GET_TREE() sets
-	  it.
-
-2011-03-29 22:34  brlcad
-
-	* [r44039] src/librt/comb/db_comb.c, src/librt/db_tree.c,
-	  src/librt/tree.c:
-	  now that RT_GET_TREE initializes, we don't need to manually set
-	  RT_TREE_MAGIC any more. should also help guarantee that reused
-	  tree nodes have zero'd memory.
-
-2011-03-29 22:33  brlcad
-
-	* [r44038] include/raytrace.h:
-	  yay understanding. document how RT_GET_TREE() and RT_FREE_TREE()
-	  are/were working. it's basically a linked list that reuses free'd
-	  tree items so we never allocate more than the largest amount in
-	  use at any one time. pretty nifty. (allocating in batches might
-	  be even better) add a new RT_INIT_TREE macro that will initialize
-	  a union tree to zero with the magic set, make RT_GET_TREE init
-	  every tree returned so callers never have to deal with the magic
-	  number directly.
-
-2011-03-29 21:19  brlcad
-
-	* [r44037] src/librt/comb/comb.c:
-	  check in the order passed
-
-2011-03-29 20:08  starseeker
-
-	* [r44034] src/libged/red.c:
-	  Ooops. one logical if statement error and a stray space in the
-	  full_matrix regex string
-
-2011-03-29 19:57  brlcad
-
-	* [r44033] src/librt/db5_io.c:
-	  cleanup rt_db_cvt_to_external5(). make sure we check all inputs
-	  and initialize our bu_externals.
-
-2011-03-29 19:39  brlcad
-
-	* [r44032] src/librt/dir.c:
-	  ws cleanup
-
-2011-03-29 19:38  brlcad
-
-	* [r44031] src/librt/db5_io.c:
-	  ws
-
-2011-03-29 19:36  brlcad
-
-	* [r44030] src/librt/dir.c:
-	  save some time, don't init until we need to
-
-2011-03-29 19:36  brlcad
-
-	* [r44029] src/librt/db5_io.c:
-	  init the external before trying to fill it. random stack memory
-	  is evil.
-
-2011-03-29 19:18  brlcad
-
-	* [r44028] src/libged/red.c:
-	  return the value that was set
-
-2011-03-29 19:09  starseeker
-
-	* [r44027] src/libged/red.c:
-	  Take another stab at the refactor - this seems to work, but needs
-	  more testing
-
-2011-03-29 18:46  brlcad
-
-	* [r44025] src/libged/red.c:
-	  revert r43832 since it reportedly is causing red to crash. needs
-	  more investigating since this should have been a safe refactoring
-	  change.
-
-2011-03-29 18:11  brlcad
-
-	* [r44024] TODO:
-	  two issues to resolve now
-
-2011-03-29 17:27  brlcad
-
-	* [r44023] doc/deprecation.txt, include/raytrace.h:
-	  formally deprecate the GIFT field elements on rt_comb_internal
-	  objects: region_id, aircode, GIFTmater, and los. they are now
-	  stored as attributes.
-
-2011-03-29 16:51  r_weiss
-
-	* [r44022] src/conv/dem-g.c:
-	  Fixed two bugs in the dem-g converter which were introduced in
-	  recent edits. One was a correction to the parameters for
-	  'bu_calloc/bu_malloc' and the other was several duplicate
-	  'bu_free'.
-
-2011-03-29 14:45  brlcad
-
-	* [r44018] TODO:
-	  there is a pending patch from Guilherme Kunigami (kunigami-dev)
-	  that should fix this issue, so remove the todo on bu_basename()
-
-2011-03-28 18:07  brlcad
-
-	* [r43993] src/librt/comb/comb.c:
-	  use atol() instead of atoi() since the fields are long. adjust
-	  printing routines to print long too.
-
-2011-03-25 19:03  bob1961
-
-	* [r43967] src/libged/ged.c:
-	  Initialize libged's _FreeSolid list if not already initialized.
-
-2011-03-23 23:03  brlcad
-
-	* [r43947] NEWS:
-	  bob added pix2fb and corresponding fb2pix commands to archer as a
-	  means to capture the contents of the framebuffer to a pix image
-	  file. useful for screenshots and image overlaying
-
-2011-03-23 23:00  brlcad
-
-	* [r43946] src/libged/search.c:
-	  call db_search_free() to release our dbplan allocations. this
-	  should prevent/reduce memory leakness across subsequent calls.
-	  untested but testing now.
-
-2011-03-23 22:57  brlcad
-
-	* [r43945] include/raytrace.h, src/librt/search.c:
-	  implement a db_search_freeplan() to go with the
-	  db_search_formplan() function. releases the allocated db_plan_t
-	  linked list structures acquired during a given plan formulation.
-	  looks like the original source code for find never bothered to
-	  release any memory, but we have to be more careful since we're in
-	  a library.
-
-2011-03-23 22:23  brlcad
-
-	* [r43943] src/burst/grid.c:
-	  VINIT_ZERO instead of constant init.
-
-2011-03-23 22:20  brlcad
-
-	* [r43942] NEWS:
-	  per r43399, bob fixed a bug in the wgl display manager where it
-	  was broken when drawing strings with line breaks in them. now
-	  skips no pixels or rows.
-
-2011-03-23 21:21  brlcad
-
-	* [r43939] HACKING:
-	  add CADCAM insider to our distribution list
-
-2011-03-23 21:13  bob1961
-
-	* [r43938] src/tclscripts/lib/Ged.tcl:
-	  Minor mod to Ged::handle_data_move to not load data for _pane.
-
-2011-03-23 04:13  brlcad
-
-	* [r43928] src/proc-db/clutter.c:
-	  clear a strict compilation warning from gcc 4.5.1 (reported by
-	  bhinesley via irc) where a warning about an operation within the
-	  random number generator may be undefined. it's undoubtedly due to
-	  multiple increment calls being passed as function args, so
-	  evaluation order might not be what one would expect. simple
-	  enough to get the random number prior to the function.
-
-2011-03-22 18:14  starseeker
-
-	* [r43921] NEWS:
-	  edcolor was removing old color tables and not accepting new ones
-	  - fixed scan logic to expect the actual number of digits being
-	  scanned for.
-
-2011-03-22 18:11  starseeker
-
-	* [r43920] src/libged/color.c:
-	  edcolor was eating the colors - check for the right number of
-	  digits in the scan line
-
-2011-03-22 17:42  starseeker
-
-	* [r43916] src/libbu/booleanize.c, src/libged/red.c:
-	  Two things to fix red behavior - need blank and not space in one
-	  place in the regex matching, and recognize (null) as a boolean 0
-	  in bu_str_true
-
-2011-03-21 17:12  starseeker
-
-	* [r43897] BUGS:
-	  Need to do some testing and confirm this, but have a report that
-	  keep is changing units to unknown on output files and dbconcating
-	  a file with unknown units wipes out the units in the parent .g
-
-2011-03-21 13:38  brlcad
-
-	* [r43891] include/bu.h, src/libbu/vlb.c:
-	  add a new bu_pr_vlb() routine for printing out diagnostic
-	  information for vlb structures. optionally prefixed with a title,
-	  this prints out each byte as a space-separated hex value. could
-	  probably use some pretty printing to group together for
-	  readability, but go simple for starters.
-
-2011-03-21 13:35  brlcad
-
-	* [r43890] src/libbu/bitv.c:
-	  don't try to cat the str/title if it is null
-
-2011-03-18 15:21  starseeker
-
-	* [r43888] src/tclscripts/archer/ArcherCore.tcl:
-	  Enable 'q' for quit in Archer
-
-2011-03-17 21:56  starseeker
-
-	* [r43886] src/other/iwidgets/generic/scrolledwidget.itk:
-	  Use ttk scrollbars in iwidgets
-
-2011-03-17 15:04  starseeker
-
-	* [r43883] src/libdm/focus.c:
-	  Hmm - looks like we need the workaround in focus.c too
-
-2011-03-17 14:45  starseeker
-
-	* [r43882] src/other/tk/unix/configure.in:
-	  Remove this flag from tk too.
-
-2011-03-17 14:41  starseeker
-
-	* [r43881] TODO:
-	  need to fix dem-g...
-
-2011-03-17 14:39  starseeker
-
-	* [r43880] src/other/tcl/unix/configure.in:
-	  This flag apparently isn't supported by some versions of gcc on
-	  OSX...
-
-2011-03-17 13:49  starseeker
-
-	* [r43879] src/other/tcl/macosx/tclMacOSXBundle.c,
-	  src/other/tcl/macosx/tclMacOSXNotify.c,
-	  src/other/tcl/unix/tclUnixInit.c:
-	  Try and work around
-	  http://gcc.gnu.org/bugzilla/show_bug.cgi?id=44981 for Tcl
-
-2011-03-16 18:23  bob1961
-
-	* [r43877] src/libged/rt.c:
-	  Fixed a Windows related bug in _ged_run_rt (i.e. no longer using
-	  a fixed size char array to hold the command for CreateProcess.
-
-2011-03-16 14:58  davidloman
-
-	* [r43870] .:
-	  Add some IDE (Eclipse) config files to svn:ignore. They are
-	  personal prefs and don't belong in the repo... ever.
-
-2011-03-12 00:10  brlcad
-
-	* [r43854] TODO:
-	  update to openNURBS 5.0
-
-2011-03-11 20:52  jordisayol
-
-	* [r43852] misc/debian/rules, sh/make_deb.sh, sh/make_rpm.sh:
-	  update "make" simultaneous jobs, during deb/rpm building process
-
-2011-03-11 20:01  jordisayol
-
-	* [r43851] sh/make_deb.sh, sh/make_rpm.sh:
-	  modify deb/rpm building packages dependencies
-
-2011-03-11 16:51  brlcad
-
-	* [r43850] NEWS:
-	  cliff and I apparently (hopefully) squished the 'red' command bug
-	  where it wasn't working on windows. the problem was two-fold. the
-	  regex code wasn't breaking on newlines and (apparently) libbu's
-	  mapped_file fallback support had an off-by-one error where it
-	  wasn't terminating the mapped file with a zero byte. that was
-	  causing regex to scan beyond the buffer extent. that issue very
-	  likely affects other tools and interfaces that use our mapped
-	  file support on windows, but nothing specifically confirmed.
-
-2011-03-11 16:45  brlcad
-
-	* [r43849] AUTHORS, NEWS:
-	  Dongxu Li implemented support for applying matrix transformations
-	  (scale, translate, rotate) to the revolve primitive. promote him
-	  up from the special thanks section to being recognized as a code
-	  contributor.
-
-2011-03-11 16:40  brlcad
-
-	* [r43848] src/librt/primitives/table.c:
-	  dli implemented rt_revolve_xform and it compiles, so turn it on
-	  for testing
-
-2011-03-11 16:39  brlcad
-
-	* [r43847] src/librt/primitives/revolve/revolve.c:
-	  eip/eop was specific to extrude. use rip/rop for revolve.
-
-2011-03-11 16:38  brlcad
-
-	* [r43846] src/librt/primitives/revolve/revolve.c:
-	  doxygen + ws
-
-2011-03-11 16:34  brlcad
-
-	* [r43845] src/librt/primitives/revolve/revolve.c:
-	  and then merge in his version that reportedly works with a couple
-	  changes. we do need a copy of the bu_vls, so init and cat
-	  accordingly. skt was apparently a typo and MAT4X3VEC instead of
-	  MAT4X3PNT is probably what got it working.
-
-2011-03-11 16:22  brlcad
-
-	* [r43844] src/librt/primitives/revolve/revolve.c:
-	  move up in order to compare patch
-
-2011-03-11 16:18  brlcad
-
-	* [r43843] src/librt/primitives/revolve/revolve.c:
-	  apply an initial (reportedly non-working) version of
-	  rt_revolve_xform() from dli
-
-2011-03-10 01:48  brlcad
-
-	* [r43834] src/libged/red.c:
-	  ws cleanup
-
-2011-03-10 01:43  brlcad
-
-	* [r43832] src/libged/red.c:
-	  semper fi, er, simplify. let things fall through so there is only
-	  one copy of the cleanup code and a consolidated simplified return
-	  location.
-
-2011-03-10 01:34  brlcad
-
-	* [r43830] src/libged/red.c:
-	  simplify with the [:space:] character class which already
-	  includes newline and carriage return. [:blank:] is a gnu
-	  extension and won't necessarily be supported for a given vendor
-	  regex library. also fix a missed character class '?' inclusion
-	  with the [:space:] swappage.
-
-2011-03-10 01:30  starseeker
-
-	* [r43828] src/libged/red.c:
-	  Tweak the regex expressions for carriage return correctness -
-	  hopefully that's closer
-
-2011-03-10 01:13  brlcad
-
-	* [r43826] src/libbu/mappedfile.c:
-	  make sure the buffers zero-terminate in case the files being
-	  mapped do not
-
-2011-03-09 23:01  starseeker
-
-	* [r43824] src/libged/red.c:
-	  Bah. Windows complicates our matching - need to allow for
-	  carriage returns as well as newlines. This exposes other
-	  problems, as apparently red was never able to successfully parse
-	  a Windows text file.
-
-2011-03-09 13:20  starseeker
-
-	* [r43815] src/librt/search.c, src/librt/search.h:
-	  Whoops, looks like I only committed the global variable removal
-	  to cmake branch. Silly me.
-
-2011-03-09 13:15  starseeker
-
-	* [r43814] src/librt/search.c, src/librt/search.h:
-	  yipe, stray librt/search code got sucked in by mistake
-
-2011-03-09 13:13  starseeker
-
-	* [r43813] configure.ac, include/bu.h, src/librt/search.c,
-	  src/librt/search.h:
-	  Sigh. %V is a pain, but we do want the warnings if -Werror isn't
-	  around.
-
-2011-03-09 00:10  brlcad
-
-	* [r43803] TODO:
-	  parametric material properties. need a mechanism for representing
-	  materials that don't have a uniform density.
-
-2011-03-09 00:06  brlcad
-
-	* [r43800] TODO:
-	  another biggie, offset surfaces. be able to automatically split
-	  geometry into multiple objects without changing the overall
-	  volume.
-
-2011-03-09 00:00  brlcad
-
-	* [r43799] TODO:
-	  add a couple tasks I've had squirreled away for a couple years,
-	  visualization requests from external application devs
-
-2011-03-08 23:13  starseeker
-
-	* [r43796] configure.ac, include/bu.h:
-	  STRICT_FLAGS -> WARNING_FLAGS - just a rename as far as autotools
-	  is concerned, no behavior change
-
-2011-03-08 21:19  brlcad
-
-	* [r43793] src/libged/gqa.c:
-	  add some error recovery to gqa so that we don't bomb out during
-	  bu_malloc/bu_calloc when passed a zero size allocation. probably
-	  means something earlier went awry but check here regardless so we
-	  can be more graceful about halting.
-
-2011-03-08 21:01  bob1961
-
-	* [r43791] src/tclscripts/lib/TkTable.tcl:
-	  Added a TkTable::see method.
-
-2011-03-08 20:49  jordisayol
-
-	* [r43790] misc/debian/brlcad.postinst, misc/debian/brlcad.postrm,
-	  sh/make_rpm.sh:
-	  add an "update gtk icon cache" and some minor improvements on
-	  "install" and "remove" scripts of deb/rpm packages
-
-2011-03-08 15:04  brlcad
-
-	* [r43780] misc/Makefile.am:
-	  debian/application-x-brlcad.png was replaced with two v4/v5 png
-	  files
-
-2011-03-08 13:50  jordisayol
-
-	* [r43779] misc/debian/rules, sh/make_rpm.sh:
-	  change the number of simultaneous jobs on "make", during deb/rpm
-	  building process
-
-2011-03-08 06:12  brlcad
-
-	* [r43777] TODO:
-	  huzzah! .. looks like the nmg failures were related to one of the
-	  other failures (probably nmg) because now everything is working
-	  again.
-
-2011-03-08 06:09  erikgreenwald
-
-	* [r43776] TODO:
-	  note 32b issue for bottie
-
-2011-03-08 06:01  brlcad
-
-	* [r43775] src/librt/primitives/bot/bot.c:
-	  since it's disabled by default, is there really any point in
-	  requiring normals and orientation? tested on several unoriented
-	  and normal-free bots with success too.
-
-2011-03-08 05:58  brlcad
-
-	* [r43774] TODO:
-	  peformance tested, results very promising
-
-2011-03-08 05:55  brlcad
-
-	* [r43773] NEWS:
-	  looks like today is the day. reword the BoT-TIE metrics having
-	  directly observed (valid) performance from 40% to 20x faster.
-	  include details that the acceleration is presently disabled by
-	  default.
-
-2011-03-08 03:17  brlcad
-
-	* [r43772] src/librt/primitives/half/half.c:
-	  oops, wrong cast
-
-2011-03-08 02:48  brlcad
-
-	* [r43771] TODO:
-	  technically unbusted though only because it's half-reverted.
-	  still investigating the cause, but todo is todone.
-
-2011-03-08 02:47  brlcad
-
-	* [r43770] NEWS:
-	  inadvertently reviewing and fixing bugs for release, fixed a
-	  never-implemented feature of halfspaces. if you put them into a
-	  combination and apply a matrix to the combination, librt would
-	  bomb with an invalid magic error. the half primitive was updated
-	  to handle that case which is used by mged to apply matrices to
-	  wireframes without writing to a disk record.
-
-2011-03-07 23:43  brlcad
-
-	* [r43768] src/librt/primitives/half/half.c:
-	  how did this ever work? if the out pointer is null, we need to
-	  initialize and create one. nearly identical to what extrude does
-	  now.
-
-2011-03-07 22:38  brlcad
-
-	* [r43767] src/fbed/Makefile.am:
-	  per-target cppflags wasn't added until 1.7+ so use AM_CPPFLAGS
-	  instead
-
-2011-03-07 22:21  brlcad
-
-	* [r43766] src/librt/Makefile.am, src/librt/primitives/nmg/nmg.c:
-	  partial revert of the ntohl/htonl conversions made to NMG since
-	  they cause a crash. turn off strict since we're temporarily
-	  reverting back to bu xdr routines.
-
-2011-03-07 20:49  erikgreenwald
-
-	* [r43764] src/librt/primitives/bot/tie_kdtree.c:
-	  clean up #if0 blocks, commented out printfs, etc
-
-2011-03-07 20:01  jordisayol
-
-	* [r43763] misc/debian/brlcad.sh:
-	  add brlcad man path to manpath env. variable in GNU/Linux
-
-2011-03-07 19:46  brlcad
-
-	* [r43762] src/librt/primitives/nmg/nmg.c:
-	  unnecessary cast
-
-2011-03-07 18:58  brlcad
-
-	* [r43751] TODO:
-	  write up a bunch of archer to-do tasks that are necessary before
-	  archer can go into beta (some are even alpha blockers). mostly
-	  focusing on usability and migration.
-
-2011-03-07 18:57  brlcad
-
-	* [r43750] BUGS:
-	  archer's kill command seems to be working better now
-
-2011-03-07 16:31  brlcad
-
-	* [r43748] src/libfb/tcl.c:
-	  expand the function declarations from K&R form to complete 'real'
-	  prototypes. these probably belong in a lifb_private.h header or
-	  (better) wrapped into a callback btable.
-
-2011-03-07 15:49  erikgreenwald
-
-	* [r43747] misc/win32-msvc8/librt/librt.vcproj:
-	  add search.c
-
-2011-03-07 04:43  brlcad
-
-	* [r43742] TODO:
-	  search seems to be working much better now, but noticed several
-	  non-critical test failures that current usage docs (and
-	  reasonable expectations) indicate they should work. most are
-	  pretty simple.
-
-2011-03-07 04:26  brlcad
-
-	* [r43741] NEWS:
-	  may or may not be specific to Mac OS X, but the bug report and
-	  confirmation were both on Mac OS X. the bug prevented both archer
-	  and rtwizard (both bwish-based) from running. they'd abort out
-	  during initialization with a multiple class error. problem was
-	  isolated as a change to the way bwish initialized. thanks to vtts
-	  for reporting the related combination editor bug via IRC. Runtime
-	  release testing for the previous release presumably happened on
-	  Linux, so this may be a platform-specific issue.
-
-2011-03-07 04:19  brlcad
-
-	* [r43740] src/bwish/cadAppInit.c, src/bwish/main.c:
-	  same patch applied to mged for unbreaking the Combination Editor
-	  applies here. confirmed that archer and rtwizard were
-	  non-functional, would not start, due to multiple class errors.
-	  this reverts the package require back to an Itcl_Init(), itk too.
-	  archer/rtwizard now start up again.
-
-2011-03-07 04:08  brlcad
-
-	* [r43739] src/tclscripts/rtwizard/rtwizard.tcl:
-	  use the same initialization approach archer uses so rtwizard will
-	  run prior to installation
-
-2011-03-07 04:02  brlcad
-
-	* [r43738] src/util:
-	  rtwizard moved to tclscripts
-
-2011-03-07 03:56  brlcad
-
-	* [r43737] NEWS, TODO, src/mged/setup.c:
-	  fixed the combination editor. didn't achieve understanding into
-	  the underlying cause (left as an exercise to the reader), but
-	  changing Itcl_Init() to a 'package require Itcl' was not
-	  equivalent. iwidgets ends up attempting to create a class twice
-	  (LabeledFrame) causing a runtime error. changed back so release
-	  can progres.
-
-2011-03-05 22:22  jordisayol
-
-	* [r43736] misc/debian/application-x-brlcad-v4.png,
-	  misc/debian/application-x-brlcad-v5.png,
-	  misc/debian/application-x-brlcad.png,
-	  misc/debian/application-x-brlcad.xml, misc/debian/brlcad.install,
-	  misc/debian/changelog, misc/debian/copyright,
-	  misc/debian/source/include-binaries, sh/make_deb.sh,
-	  sh/make_rpm.sh:
-	  add new GNU/Linux mime-type icons for geometry db file v.4 and
-	  v.5
-
-2011-03-05 11:13  jordisayol
-
-	* [r43734] sh/make_deb.sh, sh/make_rpm.sh:
-	  update copyright to 2011
-
-2011-03-05 08:37  brlcad
-
-	* [r43733] NEWS, TODO:
-	  bob reportedly fixed the bug causing nirt to not work on windows.
-	  user reported that nirt on windows was failing if run in a
-	  command window. bob found a problem where it was getting tripped
-	  up on objects with '-e' in their name.
-
-2011-03-05 08:32  brlcad
-
-	* [r43732] TODO:
-	  mater now properly prompts for missing parameters interactively
-
-2011-03-05 08:30  brlcad
-
-	* [r43731] doc/docbook/lessons/en/mged11_refining_mug.xml:
-	  update tutorial example interactive output for the mater command
-	  to reflect new form
-
-2011-03-05 08:29  brlcad
-
-	* [r43730] src/libged/mater.c:
-	  tweak the usage, let user know which channel is teh suck
-
-2011-03-05 08:17  brlcad
-
-	* [r43729] src/libged/mater.c:
-	  offset pushing towards the wrong direction, be positive. also
-	  catch the error case where color has been deleted but then later
-	  is 'skipped'.
-
-2011-03-05 08:01  brlcad
-
-	* [r43728] src/libged/mater.c:
-	  fix the prompt if we're skipping/deleting the color, account for
-	  an offset of two.
-
-2011-03-05 07:59  brlcad
-
-	* [r43727] src/libged/mater.c:
-	  further efforts to mime the old behavior or better. make the g
-	  and b color components optional once again if the color is being
-	  deleted. add back support for deleting the shader string and
-	  color setting. use '.' to skip parameters (here we deviate from
-	  original since we can't yet set default more parameters.
-
-2011-03-05 06:59  brlcad
-
-	* [r43726] src/libged/mater.c:
-	  go ahead and expand the green and blue component values. also
-	  make it clear that the values being shown are the current values.
-
-2011-03-05 06:52  brlcad
-
-	* [r43725] src/libged/mater.c:
-	  restore the previous mater command behavior to report the current
-	  values being set when prompting the user for new values.
-	  approximate the old text not worry too much about getting a
-	  perfect match.
-
-2011-03-05 06:23  brlcad
-
-	* [r43724] NEWS:
-	  restored interactive prompting for mged's 'mater' command, which
-	  was functionality lost during the migration to libged.this
-	  feature was prompted after discussions with ezzieyguywuf via IRC
-	  and after having run into the problem myself several times while
-	  modeling. tutorial documentation was inconsistent as it relied on
-	  the interactive prompting for instruction.
-
-2011-03-05 06:18  brlcad
-
-	* [r43723] src/libged/mater.c:
-	  restore incremental prompting functionality to the mater command.
-	  even better than before. leverage GED_MORE for additional
-	  prompting for any unspecified arguments. also takes advantage of
-	  bu_str_true()'s ability to detect input exceptions. this feature
-	  was prompted by discussions with ezzieyguywuf via IRC and having
-	  run into the problem myself several times, where mater
-	  unintentionally stopped prompting for missing arguments when it
-	  was migrated to libged. the documentation was also inconsistent
-	  since it referred to previous interactive prompting.
-
-2011-03-05 06:13  brlcad
-
-	* [r43722] NEWS:
-	  with the automatic redraw code now in the base wrapper, about 120
-	  mged commands will potentially refresh the display that would
-	  have otherwise including dozens that modify geometry. display
-	  updates on changes should improve usability, reduce confusion,
-	  and help mged be more consistent
-
-2011-03-05 06:09  brlcad
-
-	* [r43721] src/mged/cmd.c:
-	  implement some nifty redraw code that looks at what objects are
-	  displayed and what command-line arguments were specified. if
-	  displayed objects are being listed on the command line, then they
-	  are potentially being edited so go ahead and redraw them. while
-	  this might cause redraw lag for huge models on commands that are
-	  merely read-only, the more common problem is the display not
-	  being refreshed when it should for commands that DO edit the
-	  geometry, leading to user confusion and mistakes. consider the
-	  latter the more prevalent failure and negative user experience of
-	  the two, so redraw. this should more universally and consistently
-	  update the display list and allow some of the other wrappers to
-	  be eliminated.
-
-2011-03-05 05:24  brlcad
-
-	* [r43720] src/mged/cmd.c:
-	  even with the plain wrapper, if the ged func returns GED_MORE,
-	  respect its authoritah
-
-2011-03-05 04:52  brlcad
-
-	* [r43719] include/bu.h:
-	  document that callers can distinguish potential exceptions with
-	  return values >1
-
-2011-03-05 04:51  brlcad
-
-	* [r43718] src/libbu/booleanize.c:
-	  expand on bu_str_true() so that we can distinguish more strongly
-	  between values that seem to be false or true and 'everything
-	  else'. Unrecognized responses still return as true, but should
-	  return as >1 so callers can distinguish yes/no from possible
-	  input exceptions. return the first character as the exception
-	  value for posterity.
-
-2011-03-05 00:43  brlcad
-
-	* [r43716] src/librt/db5_types.c:
-	  ws cleanup
-
-2011-03-05 00:30  bob1961
-
-	* [r43715] src/libged/nirt.c:
-	  Fixed a bug in libged/nirt.c that was tripping in the /* skip
-	  commands */ section of the windows specific code when an object
-	  being passed to nirt contained -e in its name.
-
-2011-03-05 00:28  brlcad
-
-	* [r43714] src/librt/db5_types.c:
-	  put bu_vls_true() to use so that we can more robustly detect
-	  true/false string values for standard attributes. note that the
-	  bu_str_true() will match 'R' as true too since only clearly
-	  negative values constitute false.
-
-2011-03-04 23:59  starseeker
-
-	* [r43713] src/librt/search.c:
-	  Looks like that doggone global was stuck in 'on', and because it
-	  started that way the plans never formed properly - they assumed
-	  no output command was needed when it was. The global was
-	  inherited from the design of find, and I never cared for it, but
-	  it'll be a bit of work to do it any other way so for now just
-	  make sure it's zero before we start forming plans.
-
-2011-03-04 23:43  brlcad
-
-	* [r43712] TODO:
-	  yet another, gqa gets in line
-
-2011-03-04 22:24  erikgreenwald
-
-	* [r43710] include/tie.h, src/librt/primitives/bot/btgf.c,
-	  src/librt/primitives/bot/tie.c,
-	  src/librt/primitives/bot/tie_kdtree.c:
-	  shift tie min/max to point_t
-
-2011-03-04 22:21  brlcad
-
-	* [r43709] TODO:
-	  combination editor bug confirmed, mged init on mac DISPLAY issue
-	  wasn't specific to mged so not a show-stopper (mged stall if
-	  started from Terminal, restarting X11 fixed it)
-
-2011-03-04 22:08  starseeker
-
-	* [r43708] src/libged/search.c:
-	  Catch another odd input case
-
-2011-03-04 22:07  erikgreenwald
-
-	* [r43707] include/tie.h, src/librt/primitives/bot/btgf.c,
-	  src/librt/primitives/bot/tie.c,
-	  src/librt/primitives/bot/tie_kdtree.c,
-	  src/librt/primitives/bot/tieprivate.h:
-	  revert to 43698, caused weird errors in output
-
-2011-03-04 22:02  starseeker
-
-	* [r43706] src/libged/search.c, src/librt/search.c:
-	  Variety of fixes to both libged and librt search logic.
-
-2011-03-04 21:36  erikgreenwald
-
-	* [r43705] src/librt/primitives/bot/tie_kdtree.c:
-	  clean up #if 0 stuff
-
-2011-03-04 20:27  erikgreenwald
-
-	* [r43699] include/tie.h, src/librt/primitives/bot/btgf.c,
-	  src/librt/primitives/bot/tie.c,
-	  src/librt/primitives/bot/tie_kdtree.c,
-	  src/librt/primitives/bot/tieprivate.h:
-	  more tfloat->fastf_t/TIE_3->vect_t|point_t conversion
-
-2011-03-04 19:34  starseeker
-
-	* [r43697] TODO:
-	  Got a report of nirt not working correctly on Windows - Bob has
-	  reproduced this and is working on it
-
-2011-03-04 19:30  brlcad
-
-	* [r43696] TODO:
-	  resizing embedded framebuffer sucks, fix it
-
-2011-03-04 19:16  erikgreenwald
-
-	* [r43695] src/librt/primitives/bot/bot.c:
-	  we actually trigger this correctly now, so remove the extra
-	  debugging info
-
-2011-03-04 18:48  brlcad
-
-	* [r43694] TODO:
-	  mater command lost interactive functionality, need to restore
-
-2011-03-04 18:36  brlcad
-
-	* [r43693]
-	  doc/docbook/lessons/en/mged01_creating_primitive_shapes.xml,
-	  doc/docbook/lessons/en/mged02_learning_viewing_options.xml,
-	  doc/docbook/lessons/en/mged04_assign_mat_prop_rt.xml,
-	  doc/docbook/lessons/en/mged05_learning_boolean_expressions.xml,
-	  doc/docbook/lessons/en/mged06_creating_a_goblet.xml,
-	  doc/docbook/lessons/en/mged07_goblet_material_properties.xml,
-	  doc/docbook/lessons/en/mged08_goblet_material_properties2.xml,
-	  doc/docbook/lessons/en/mged09_globe_in_display_box.xml,
-	  doc/docbook/lessons/en/mged14_placing_shapes_in_3d_2.xml,
-	  doc/docbook/lessons/en/mged15_creating_a_toy_truck.xml:
-	  select menu items instead of clicking on them. subtle but
-	  references the general action that is also applicable to keyboard
-	  users and other forms of navigation. keep click when specifically
-	  referring to buttons or the mouse
-
-2011-03-04 18:36  erikgreenwald
-
-	* [r43692] src/librt/primitives/bot/btg.c:
-	  bump ray back a tiny bit, to avoid missing the inpoint
-
-2011-03-04 18:14  brlcad
-
-	* [r43691] doc/docbook/lessons/en/mged13_placing_shapes_in_3d.xml,
-	  doc/docbook/lessons/en/mged15_creating_a_toy_truck.xml:
-	  update other references to Accept on the edit menu, change click
-	  to select
-
-2011-03-04 18:10  brlcad
-
-	* [r43690] doc/docbook/lessons/en/mged06_creating_a_goblet.xml,
-	  doc/docbook/lessons/en/mged09_globe_in_display_box.xml:
-	  apply suggestion from ezzieyguywuf to make sure we refer to the
-	  Edit *Menu* when telling then to select Accept.
-
-2011-03-04 17:04  brlcad
-
-	* [r43689] TODO:
-	  torus bend pipe failure should be working now, needs one final
-	  test on the platform that had the float fail.
-
-2011-03-04 16:06  brlcad
-
-	* [r43688] src/librt/primitives/pipe/pipe.c:
-	  um, call CLAMP() dummy
-
-2011-03-04 16:00  brlcad
-
-	* [r43687] src/librt/primitives/pipe/pipe.c:
-	  daniel has a good point, they're already unit so no harm saying
-	  anything outside of range is clamped to the range limit
-
-2011-03-04 15:44  brlcad
-
-	* [r43686] src/librt/primitives/pipe/pipe.c:
-	  still need the lengths of v1/v2 for subsequent input validation
-
-2011-03-04 15:39  brlcad
-
-	* [r43685] src/librt/primitives/pipe/pipe.c:
-	  why there are custom blocks of code to unitize the vector instead
-	  of calling VUNITIZE() is curious and potentially related to the
-	  fuzzy instability. regardless, tweak the dot product result if it
-	  just barely over/under-shoots due to precision problems. using
-	  NEAR_ZERO/NEAR_EQUAL here isn't optimal since it'll clamp values
-	  already within the valid [1.0,-1.0] range to the limit of that
-	  range.
-
-2011-03-04 15:22  bob1961
-
-	* [r43684] src/libtclcad/ged_obj.c:
-	  Fixed a problem with rect_mode that was causing an offset
-	  rectangle to be drawn.
-
-2011-03-04 14:45  brlcad
-
-	* [r43683] TODO:
-	  report that comb editor isn't working and jeep conversion failure
-
-2011-03-04 14:15  starseeker
-
-	* [r43682] src/librt/primitives/pipe/pipe.c:
-	  acos isn't happy if we go outside the domain -1,1 and it looks
-	  like floating point fuzz is taking us inside in some cases and
-	  out in others - peg it to -1 or 1 if we're within VUNITIZE_TOL to
-	  avoid uncertainty principle effects in conversion behavior
-
-2011-03-04 04:44  brlcad
-
-	* [r43680] src/librt/primitives/extrude/extrude.c:
-	  pull the declaration of center2d (and his friends) up to the top
-	  scope to make sure the warning reflects the current file state.
-	  preprocessor directive in that function was missing a semicolon,
-	  so perhaps that was confusing gcc? see if we still get an
-	  uninitialized use warning now that it's outside of the loop.
-
-2011-03-03 21:35  erikgreenwald
-
-	* [r43676] src/librt/primitives/bot/tie_kdtree.c:
-	  check alignment on kd nodes
-
-2011-03-03 21:11  erikgreenwald
-
-	* [r43674] src/librt/primitives/bot/tie_kdtree.c,
-	  src/librt/primitives/bot/tieprivate.h:
-	  de-magic the haschildren/leafnode bit and comment some on
-	  bitpacking
-
-2011-03-03 20:59  erikgreenwald
-
-	* [r43673] src/librt/primitives/bot/tie.c:
-	  indent
-
-2011-03-03 20:31  starseeker
-
-	* [r43671] TODO:
-	  The reported red failure was due to disabling compile of local
-	  regex, resulting in interference from tcl regex. After commit
-	  43259, this is no longer occurring and proper behavior is
-	  restored.
-
-2011-03-03 15:49  d_rossberg
-
-	* [r43670] misc/win32-msvc/Dll/BrlcadCore.def:
-	  export rt_bot_mintie() for nirt
-
-2011-03-03 15:23  erikgreenwald
-
-	* [r43669] src/librt/primitives/extrude/extrude.c:
-	  get_indices can't be static, it's also used in sketch
-
-2011-03-03 15:21  brlcad
-
-	* [r43668] src/librt/primitives/extrude/extrude.c:
-	  init ra/rb to zero too, pull them back up to the top scope since
-	  they're double-declared in the same function.
-
-2011-03-03 15:09  brlcad
-
-	* [r43667] src/librt/primitives/extrude/extrude.c:
-	  slew of functions not marked static that should be static. make
-	  the compiler's job easier, those functions don't need to be
-	  exported.
-
-2011-03-03 15:08  erikgreenwald
-
-	* [r43666] src/librt/primitives/bot/tie.c:
-	  reincorporate lost changes
-
-2011-03-03 15:06  brlcad
-
-	* [r43665] src/librt/primitives/extrude/extrude.c:
-	  initialize a few 2d vars to zero, just because we like it that
-	  way
-
-2011-03-03 15:05  brlcad
-
-	* [r43664] include/vmath.h:
-	  add missing V2INITALL and V2INIT_ZERO macros providing the 2D
-	  versions of VINITALL and VINIT_ZERO
-
-2011-03-03 14:37  brlcad
-
-	* [r43662] src/librt/primitives/nmg/nmg_misc.c:
-	  pl is a plane_t, fix a couple places where it's being treated
-	  like it's a vect_t.
-
-2011-03-03 14:11  starseeker
-
-	* [r43661] src/librt/CMakeLists.txt:
-	  Sync autotools branch CMakeLists.txt file
-
-2011-03-03 12:59  starseeker
-
-	* [r43659] include/raytrace.h, src/libged/search.c,
-	  src/librt/search.c:
-	  Ah, that's better - don't wipe out the path name list passed to
-	  the search functions - that's the responsibility of the function
-	  that created the list. provide db_free_full_path_list to make
-	  that easier.
-
-2011-03-03 12:14  starseeker
-
-	* [r43657] include/raytrace.h:
-	  comment tweak
-
-2011-03-03 12:11  starseeker
-
-	* [r43656] src/librt/primitives/bot/tie_kdtree.c:
-	  whoops, that should have been in trunk - init min and max
-
-2011-03-03 10:20  d_rossberg
-
-	* [r43652] misc/win32-msvc/CMakeLists.txt,
-	  misc/win32-msvc/Dll/CMakeLists.txt, src/libgcv/CMakeLists.txt,
-	  src/libwdb/CMakeLists.txt:
-	  fixed release 43577 changes "back to not needing libregex search
-	  dir"
-	  - re-enabled the libregex build
-	  - removed the unnecessary libregex search dirs
-
-2011-03-03 02:05  starseeker
-
-	* [r43649] src/libged/search.c, src/librt/search.c:
-	  Shift responsibility for making the default toplevel list of
-	  objects to librt from libged - this is sensible default behavior
-	  and will save doing this every time search logic is used to
-	  search the whole database.
-
-2011-03-03 01:28  starseeker
-
-	* [r43646] include/raytrace.h, src/libged/search.c,
-	  src/librt/search.c:
-	  Move the unique object logic out of libged into a librt function.
-	  renaming and cleanup for clarity, more comments in raytrace.h
-	  header.
-
-2011-03-03 00:21  starseeker
-
-	* [r43644] src/libged/combmem.c:
-	  This does it - init 'em all
-
-2011-03-03 00:16  starseeker
-
-	* [r43643] src/libged/combmem.c:
-	  Do some initializations for combmem.c, but it's not enough -
-	  getting some more of the weird complaints that identify line
-	  numbers that don't seem directly related to uninitialized aetvec
-	  and tvec
-
-2011-03-02 18:26  erikgreenwald
-
-	* [r43637] src/librt/primitives/bot/tie_kdtree.c:
-	  reincorporate some of the lost changes
-
-2011-03-02 17:43  erikgreenwald
-
-	* [r43636] src/librt/primitives/bot/btg.c:
-	  rewrite prep to be correct and only make one tie_push call
-
-2011-03-02 17:09  brlcad
-
-	* [r43635] src/librt/primitives/nmg/nmg_misc.c:
-	  same with HINIT_ZERO for 4D vector initialization.
-
-2011-03-02 17:08  brlcad
-
-	* [r43634] src/librt/primitives/nmg/nmg_plot.c:
-	  use VINIT_ZERO macro symbol instead of {0.0, 0.0, 0.0} for
-	  point_t/vect_t. less error-prone, less typing, and supports
-	  converion to fixed point arithmetic down the road.
-
-2011-03-02 15:31  tbrowder2
-
-	* [r43631] src/tab/script.l:
-	  eliminate unused function warning
-
-2011-03-02 13:48  starseeker
-
-	* [r43629] src/util/pixborder.c:
-	  initialize for pixborder
-
-2011-03-02 13:45  starseeker
-
-	* [r43628] src/shapes/picket_fence.c:
-	  initialize matrix
-
-2011-03-02 13:42  starseeker
-
-	* [r43627] src/gtools/remapid.c:
-	  initialization for remapid
-
-2011-03-02 13:41  starseeker
-
-	* [r43626] src/fbed/fbed.c:
-	  initializations for fbed
-
-2011-03-02 13:37  erikgreenwald
-
-	* [r43625] include/raytrace.h:
-	  set RT_DEFAULT_MINTIE to 0 (disabled)
-
-2011-03-02 13:36  starseeker
-
-	* [r43624] src/burst/grid.c:
-	  initialization for burst
-
-2011-03-02 13:31  erikgreenwald
-
-	* [r43623] src/librt/primitives/bot/btg.c:
-	  woops, point_t, not TIE_3
-
-2011-03-02 13:31  starseeker
-
-	* [r43622] src/anim/anim_hardtrack.c:
-	  initializations for anim
-
-2011-03-02 13:26  starseeker
-
-	* [r43621] src/librtserver/rtserverTest.c:
-	  Quell a few warnings - rts_clean doesn't seem to be defined
-	  anywhere
-
-2011-03-02 13:20  starseeker
-
-	* [r43620] src/conv/iges/conv_drawings.c, src/conv/iges/trimsurf.c:
-	  initializations for iges
-
-2011-03-02 13:13  erikgreenwald
-
-	* [r43618] include/tie.h, src/librt/primitives/bot/btg.c,
-	  src/librt/primitives/bot/tie_kdtree.c:
-	  revive the actual min/max (amin/amax)
-
-2011-03-02 13:11  starseeker
-
-	* [r43617] src/conv/nastran-g.c:
-	  initializations
-
-2011-03-02 13:05  erikgreenwald
-
-	* [r43615] include/tie.h, src/librt/primitives/bot/tie_kdtree.c:
-	  remove obsolete kdtree cache stuff
-
-2011-03-02 12:57  starseeker
-
-	* [r43614] src/liboptical/sh_toyota.c:
-	  another initialization
-
-2011-03-02 12:33  starseeker
-
-	* [r43611] src/librt/search.c:
-	  initialize new to NULL
-
-2011-03-02 12:28  starseeker
-
-	* [r43610] src/librt/primitives/nmg/nmg_misc.c:
-	  whoops, plane not point
-
-2011-03-02 12:27  erikgreenwald
-
-	* [r43609] src/librt/primitives/bot/tie_kdtree.c:
-	  force cmin/cmax using VSETALL. This should be unnecessary, but
-	  some compiler/OS combinations aren't smart enough to catch "int
-	  a; if(something) a=0; else a=1;" and assume a is unset.
-
-2011-03-02 12:26  starseeker
-
-	* [r43608] src/librt/primitives/nmg/nmg_plot.c:
-	  another initialization
-
-2011-03-02 12:25  starseeker
-
-	* [r43607] src/librt/primitives/nmg/nmg_misc.c:
-	  More initializations (why doesn't VSETALL get old_pl[3]??)
-
-2011-03-02 11:45  starseeker
-
-	* [r43606] src/librt/primitives/dsp/dsp.c:
-	  initalize points in dsp
-
-2011-03-02 11:43  starseeker
-
-	* [r43605] src/librt/primitives/bot/tie_kdtree.c:
-	  gentoo seems to want cmax initialized - hopefully max is ok...
-
-2011-03-02 11:36  starseeker
-
-	* [r43604] src/rt/do.c:
-	  Comment needs terminating
-
-2011-03-02 07:52  brlcad
-
-	* [r43600] src/rt/do.c:
-	  add a sanity check in case code ends up computing an empty
-	  bounding box, so we don't bomb out during bn_mat_inv(). make sure
-	  the viewsize is at least not zero.
-
-2011-03-02 07:44  brlcad
-
-	* [r43599] src/librt/primitives/bot/btg.c:
-	  not sure if this is right, but it takes care of rt bombing out
-	  with a bad matrix during do_ae() due to zero-sized bounding box
-
-2011-03-02 06:52  brlcad
-
-	* [r43598] TODO:
-	  bio.h header was de-netted, bin.h added. found a few other
-	  show-stoppers, though. nmg is busted due to a host/net bug. have
-	  to test tie optimization for release notes (as it's the major
-	  highlight). search implements '.' so it needs a quick test. and
-	  finally, verify red/ted work since tom is reporting a failure in
-	  .2 with red.
-
-2011-03-02 05:54  bharder
-
-	* [r43597] configure.ac:
-	  Direct use of interp->result is deprecated; Use
-	  Tcl_GetStringResult().
-
-2011-03-02 04:51  brlcad
-
-	* [r43596] src/librt/primitives/bot/bot.c:
-	  commit the debug code so it's clear what's going on with the tie
-	  integration
-
-2011-03-02 04:09  brlcad
-
-	* [r43595] BUGS:
-	  encountered an infinite loop bug trying to smooth a bot. might be
-	  the same traversal bug encountered earlier, but needs testing /
-	  investigating.
-
-2011-03-02 03:51  brlcad
-
-	* [r43594] NEWS:
-	  release write-up on the integration of TIE with LIBRT and the new
-	  shp-g shapefile importer.
-
-2011-03-02 00:28  starseeker
-
-	* [r43593] src/libged/search.c:
-	  gentoo wants search_results initialized
-
-2011-03-01 22:19  brlcad
-
-	* [r43591] src/librt/primitives/bot/bot.c:
-	  quell unused var warnings for the non-optimized case. split vars
-	  across impls.
-
-2011-03-01 22:13  starseeker
-
-	* [r43590] src/librt/primitives/bot/bot.c:
-	  Clear some warnings on bot.c
-
-2011-03-01 22:01  brlcad
-
-	* [r43589] TODO:
-	  resolve the crash post-release
-
-2011-03-01 21:59  brlcad
-
-	* [r43588] src/librt/primitives/bot/bot.c:
-	  damnits, found a bug during release testing. disable the
-	  optimization so release can proceed.
-
-2011-03-01 21:55  brlcad
-
-	* [r43587] src/conv/patch/patch-g.c:
-	  curious that thick_no only shows up as a potential longjmp
-	  clobber var when compiling in 32-bit mode
-
-2011-03-01 21:55  starseeker
-
-	* [r43586] src/libged/search.c:
-	  Re-add support for the '.' option (e.g. search . -name s*) but
-	  this time do it at the ged level with post-processing of the full
-	  search. Also doesn't print the leading '/' character for the '.'
-	  searches.
-
-2011-03-01 20:48  starseeker
-
-	* [r43584] include/raytrace.h, src/libged/Makefile.am,
-	  src/libged/search.c, src/libged/search.h, src/librt/Makefile.am,
-	  src/librt/search.c, src/librt/search.h:
-	  Put the new search routines into trunk
-
-2011-03-01 19:02  brlcad
-
-	* [r43578] NEWS:
-	  reword tie integration from user-visible perspective. erik
-	  integrated the former 'libtie' high-performance triangle
-	  intersection engine (tie) into librt as a way to get optimized
-	  BoT raytracing. initial results showing a halfing reduction of
-	  raytrace time for models at 2k+ triangles. erik added an
-	  'rt_bot_mintie' option (exposed via mged and rt -c) for toggling
-	  when the optimization kicks in. currently set really high at 4M
-	  until further testing and improvements are made.
-
-2011-03-01 18:47  brlcad
-
-	* [r43577] misc/win32-msvc/CMakeLists.txt:
-	  back to not needing libregex search dir
-
-2011-03-01 18:46  brlcad
-
-	* [r43576] src/rt/do.c:
-	  expand the comment now that the cause is known. need to set
-	  during runtime, not compiletime.
-
-2011-03-01 18:43  brlcad
-
-	* [r43575] NEWS:
-	  added -T and bot_mintie options to nirt that correspond with
-	  controlling when erik's new support for optimized BoT raytacing
-	  kicks on
-
-2011-03-01 18:36  brlcad
-
-	* [r43574] src/nirt/command.c, src/nirt/nirt.c, src/nirt/nirt.h:
-	  add support for setting rt_bot_mintie from within nirt, similar
-	  to rt_bot_minpieces. add new -T option in addition to new
-	  bot_mintie nirt command.
-
-2011-03-01 18:26  erikgreenwald
-
-	* [r43573] misc/win32-msvc8/asc2g/asc2g.vcproj,
-	  misc/win32-msvc8/g2asc/g2asc.vcproj,
-	  misc/win32-msvc8/g2stl/g2stl.vcproj,
-	  misc/win32-msvc8/poly2bot/poly2bot.vcproj,
-	  misc/win32-msvc8/stl2g/stl2g.vcproj:
-	  link ws2_32.lib for ntohl/htonl
-
-2011-03-01 18:26  brlcad
-
-	* [r43572] src/rt/do.c:
-	  add support for -c rt_bot_mintie
-
-2011-03-01 18:20  erikgreenwald
-
-	* [r43571] src/remrt/remrt.c:
-	  fdset uses unsigned, so fix if we need FD_MOVE defined
-
-2011-03-01 18:16  erikgreenwald
-
-	* [r43570] include/raytrace.h:
-	  remove regex.h for now, windows would need most vcproj files
-	  updated.
-
-2011-03-01 18:06  erikgreenwald
-
-	* [r43569] include/raytrace.h:
-	  conditionalize regex.h
-
-2011-03-01 17:53  erikgreenwald
-
-	* [r43568] src/librt/primitives/bot/bot.c:
-	  rt_bot_mintie=0 now means do not use tie
-
-2011-03-01 17:51  brlcad
-
-	* [r43567] TODO:
-	  WE ARE FREE OF COMPILATION WARNINGS! woot.
-
-2011-03-01 17:47  brlcad
-
-	* [r43566] TODO:
-	  attr command now sorts alphabetically, but then other users
-	  reportedly also/still want sorting based on creation order
-	  (because it makes it easy to diff and/or find new additions. need
-	  a sorting option. kicking off an EDITOR should now be better too
-	  now that the invocation has been re-reviewed recently.
-
-2011-03-01 17:23  brlcad
-
-	* [r43565] src/other/tkhtml/Makefile.am:
-	  the clean rule was overriding autoconf's default clean rule,
-	  which calls clean-am. this should fix the build where you follow
-	  a 32-bit build with a 64-bit built and vice versa. stale .o build
-	  files were getting left in the .libs dir causing the build to
-	  halt.
-
-2011-03-01 17:16  brlcad
-
-	* [r43564] doc/README.Linux:
-	  include instructions to force 32-bit on platforms that default to
-	  64-bit as well.
-
-2011-03-01 16:07  erikgreenwald
-
-	* [r43561] src/proc-db/vegetation.c:
-	  size_t cast fix
-
-2011-03-01 16:00  erikgreenwald
-
-	* [r43560] src/mged/fbserv.c:
-	  Move the forward declaration into the #if section that uses it,
-	  to avoid the "declared 'static' but never defined" error.
-
-2011-03-01 15:54  erikgreenwald
-
-	* [r43559] src/mged/edsol.c, src/mged/mged.h:
-	  de-const due to possible deletion
-
-2011-03-01 14:51  erikgreenwald
-
-	* [r43558] src/mged/dm-ogl.c:
-	  fill out entire struct in table
-
-2011-03-01 14:51  erikgreenwald
-
-	* [r43557] src/mged/clone.c:
-	  size_t casting
-
-2011-03-01 14:47  erikgreenwald
-
-	* [r43556] src/irprep/ir-X.c:
-	  size_t casting fixes
-
-2011-03-01 14:25  erikgreenwald
-
-	* [r43554] src/libfb/if_ogl.c:
-	  event is a struct, not a pointer
-
-2011-03-01 13:09  starseeker
-
-	* [r43552] src/mged/chgview.c:
-	  Don't shadow basename
-
-2011-03-01 12:47  starseeker
-
-	* [r43551] src/lgt/hmenu.c, src/lgt/lgt.c:
-	  Remove defined-but-unused functions causing lgt failures.
-
-2011-03-01 12:45  starseeker
-
-	* [r43550] src/fbserv/fbserv.c:
-	  Shadowing a global - fixed
-
-2011-03-01 11:49  d_rossberg
-
-	* [r43549] misc/win32-msvc/Dll/CMakeLists.txt,
-	  src/libgcv/CMakeLists.txt, src/libwdb/CMakeLists.txt:
-	  raytrace.h got a regex.h include -- added the corresponding
-	  search path
-
-2011-03-01 11:46  d_rossberg
-
-	* [r43548] include/bin.h:
-	  undef some windows defines which are used in an other context
-	  here
-	  (same as in bio.h)
-
-2011-03-01 07:10  brlcad
-
-	* [r43547] src/librt/primitives/table.c:
-	  tested and rt_generic_xform() is NOT sufficient. wrong plot and
-	  trace with loads of error.
-
-2011-03-01 07:07  brlcad
-
-	* [r43546] NEWS:
-	  fixed a problem being able to zoom in with the default x11.app
-	  configuration where you could zoom out, but not back in without
-	  enabling 3-button emulation. this binds command+button1 the same
-	  as button3. couldn't get option+button1 to behave as button2
-	  though.
-
-2011-03-01 07:00  brlcad
-
-	* [r43545] src/tclscripts/mged/bindings.tcl:
-	  fix mged zoom bindings on mac os x with default X11 (where
-	  3-button mouse emulation is disabled) so that you can actually
-	  zoom out. make cmd-click behave the same as button-3.
-	  unfortunately, the same binding does not seem possible with
-	  option-click for mouse 2 (in fact, option seems to act like mod2
-	  aka the command-key. none of the other mod types seem to help.
-
-2011-03-01 06:09  brlcad
-
-	* [r43544] src/libfb/if_ogl.c:
-	  do the same mouse-3 binding for ogl
-
-2011-03-01 06:08  brlcad
-
-	* [r43543] src/libfb/if_X24.c:
-	  fix keybindings on Mac OS X so that cmd-click will produce button
-	  3 events (so we can close framebuffers) without needing the user
-	  to set X11.app to emulate a three button mouse.
-
-2011-03-01 04:50  brlcad
-
-	* [r43542] src/irprep/all_sf.c, src/irprep/firpass.c,
-	  src/irprep/ir-X.c, src/irprep/irdisp.c, src/irprep/secpass.c,
-	  src/irprep/shapefact.c, src/irprep/showtherm.c, src/mged/mged.c,
-	  src/nirt/command.c, src/proc-db/molecule.c, src/proc-db/tube.c,
-	  src/remrt/remrt.c, src/remrt/rtsrv.c, src/rt/do.c,
-	  src/rt/viewrad.c, src/rt/viewsil.c, src/rt/viewxray.c,
-	  src/shapes/bolt.c, src/shapes/gastank.c, src/shapes/handle.c,
-	  src/shapes/window.c, src/shapes/window_frame.c,
-	  src/shapes/wire.c:
-	  categorically check return values for some of the stdio and
-	  stdlib routines (e.g. fwrite, scanf, system, dup, pipe, ...). not
-	  willing to put forth time/effort to do anything more than print
-	  the error since would have to evaluate each call on a case by
-	  case basis (and that's not fun).
-
-2011-03-01 04:45  brlcad
-
-	* [r43541] src/mged/points/points_scan.l, src/tab/script.l:
-	  quell flex lameness where fwrite() is being called without
-	  checking the return value. this quiets the compiler.
-
-2011-03-01 04:44  brlcad
-
-	* [r43540] src/mged/points/points_parse.y:
-	  bison is being stupid with some output code generating size_t
-	  comparisons against >= 0. quell that warning along with a couple
-	  other preprocessor symbols that are not defined but being used in
-	  expressions.
-
-2011-03-01 04:39  brlcad
-
-	* [r43539] src/proc-db/brepintersect.cpp:
-	  compiler is complaining about the first param to
-	  SegmentPolylineIntersect possibly being NULL. as this is dev
-	  code, just comment out for now in leu of removing the code.
-
-2011-03-01 04:35  brlcad
-
-	* [r43538] src/sig/a-d.c, src/sig/bw-d.c, src/sig/c-d.c,
-	  src/sig/d-bw.c, src/sig/d-f.c, src/sig/d-i.c, src/sig/d-u.c,
-	  src/sig/d2-c.c, src/sig/damdf.c, src/sig/dauto.c,
-	  src/sig/dauto2.c, src/sig/dconv.c, src/sig/dfft.c,
-	  src/sig/dmod.c, src/sig/dpeak.c, src/sig/dsel.c, src/sig/dwin.c,
-	  src/sig/f-d.c, src/sig/f-i.c, src/sig/i-d.c, src/sig/i-f.c,
-	  src/sig/syn.c, src/sig/u-d.c, src/sig/u-f.c:
-	  check fwrite return values for failure
-
-2011-03-01 04:33  brlcad
-
-	* [r43537] src/rttherm/pixtest.c:
-	  check fwrite return value
-
-2011-03-01 02:00  brlcad
-
-	* [r43536] src/bwish/cadAppInit.c:
-	  include bin.h instead of winsock2.h
-
-2011-02-28 23:16  starseeker
-
-	* [r43527] src/librt/Makefile.am, src/librt/search.c,
-	  src/librt/search.h:
-	  Add work done so far on search move to librt - not being added to
-	  the compile until after the release.
-
-2011-02-28 23:13  starseeker
-
-	* [r43526] include/raytrace.h:
-	  search will need regex.h once it is moved to librt
-
-2011-02-28 23:02  brlcad
-
-	* [r43525] src/conv/Makefile.am:
-	  missing the shapefil.h header
-
-2011-02-28 21:54  brlcad
-
-	* [r43524] src/remrt/ihost.c:
-	  replace the net headers with bin.h
-
-2011-02-28 21:48  brlcad
-
-	* [r43523] src/fbed/Makefile.am, src/fbserv/Makefile.am,
-	  src/gtools/Makefile.am, src/gtools/beset/Makefile.am,
-	  src/irprep/Makefile.am, src/lgt/Makefile.am,
-	  src/libmultispectral/Makefile.am, src/librtserver/Makefile.am,
-	  src/mged/Makefile.am, src/nirt/Makefile.am,
-	  src/proc-db/Makefile.am, src/remrt/Makefile.am,
-	  src/rt/Makefile.am, src/rttherm/Makefile.am,
-	  src/shapes/Makefile.am, src/tab/Makefile.am:
-	  enable the remainder of strict flags now that the build is
-	  verified across mac and linux. now all of brl-cad's source code
-	  builds strict-clean for improved security, maintainability,
-	  conformance compliance, stability, reliability, and more.
-
-2011-02-28 21:35  brlcad
-
-	* [r43522] src/tab/script.l:
-	  overcome flex stupidities, define undefined to false in order to
-	  appease preprocessor logic.
-
-2011-02-28 21:21  brlcad
-
-	* [r43521] src/libfb/if_ogl.c:
-	  no longer need the __BSD_VISIBLE/__USE_XOPEN/__USE_BSD hacking to
-	  get the extension decls with configure using gnu99.
-
-2011-02-28 21:10  brlcad
-
-	* [r43520] src/util/dunncomm.c:
-	  wrong comment
-
-2011-02-28 20:55  brlcad
-
-	* [r43519] configure.ac:
-	  there's no reason to leave out the gnu extensions other than to
-	  try and avoid non-standard functions. in practice, however, c99
-	  compliance means we also don't get the posix functions, which is
-	  somewhat problematic. change the compliance from std99 to gnu99.
-
-2011-02-28 20:52  brlcad
-
-	* [r43518] src/mged/attach.c:
-	  include bin.h instead of including winsock2.h directly
-
-2011-02-28 19:24  erikgreenwald
-
-	* [r43516] include/bin.h:
-	  #define <winsock2.h> doesn't quite work
-
-2011-02-28 19:15  erikgreenwald
-
-	* [r43515] include/bin.h:
-	  need sys/types.h for netinet/tcp.h
-
-2011-02-28 18:41  brlcad
-
-	* [r43513] src/conv/stl/stl-g.c:
-	  nope, missed one
-
-2011-02-28 18:36  brlcad
-
-	* [r43511] src/conv/asc/asc2g.c, src/conv/asc/g2asc.c,
-	  src/conv/poly-bot.c, src/conv/stl/g-stl.c:
-	  and maybe the last batch of bin.h inclusions needed.
-
-2011-02-28 18:34  brlcad
-
-	* [r43510] src/librt/primitives/arbn/arbn.c,
-	  src/librt/primitives/ars/ars.c, src/librt/primitives/bot/bot.c,
-	  src/librt/primitives/bspline/bspline.cpp,
-	  src/librt/primitives/dsp/dsp.c,
-	  src/librt/primitives/extrude/extrude.c,
-	  src/librt/primitives/metaball/metaball.c,
-	  src/librt/primitives/nmg/nmg.c, src/librt/primitives/pipe/pipe.c,
-	  src/librt/primitives/sketch/sketch.c, src/librt/vlist.c:
-	  promulgation continues, switch from bio.h to bin.h where
-	  byteorder functions are being used.
-
-2011-02-28 18:34  brlcad
-
-	* [r43509] src/libged/bot_dump.c:
-	  need networking and i/o functions here, so also include bin.h
-
-2011-02-28 18:29  brlcad
-
-	* [r43508] src/librt/db_scan.c:
-	  ditto, bio.h -> bin.h for networking
-
-2011-02-28 18:28  brlcad
-
-	* [r43507] src/librt/db5_io.c:
-	  need bin.h instead of bio.h
-
-2011-02-28 18:22  brlcad
-
-	* [r43506] include/bio.h:
-	  remove inclusion of arpa/inet.h from bio.h since it's not
-	  desirable to bundle networking routines in with the input/output
-	  routines. this is in part due to the implied dependency on the
-	  windows socket library on the windows platform, which isn't
-	  necessarily true for inclusions only needing standard i/o. the
-	  new bin.h internet networking header now covers networking.
-
-2011-02-28 18:20  brlcad
-
-	* [r43505] src/librt/primitives/pnts/pnts.c:
-	  include bin.h instead of bio.h for htonl and friends
-
-2011-02-28 18:16  brlcad
-
-	* [r43504] src/librtserver/rtserver.c:
-	  include headers for htonl
-
-2011-02-28 18:14  brlcad
-
-	* [r43503] src/librt/Makefile.am:
-	  missing the tieprivate.h header
-
-2011-02-28 18:11  brlcad
-
-	* [r43502] include/Makefile.am, include/bin.h:
-	  add an initial corrollary header file similar to bio.h but for
-	  internet networking instead of input/output. it's similarly a
-	  'private' self-contained header (so no HAVE_* defines), but
-	  should help consolidate the header preprocessor logic into one
-	  place. this header is effectively treated as a system header
-	  coming before inclusions of brl-cad public/private headers.
-
-2011-02-28 17:18  jordisayol
-
-	* [r43501] misc/debian/changelog:
-	  update debian changelog
-
-2011-02-28 17:04  brlcad
-
-	* [r43500] src/libged/CMakeLists.txt:
-	  add fb2pix.c and pix2fb.c
-
-2011-02-28 16:36  brlcad
-
-	* [r43499] TODO:
-	  release tasks were not completed by the end of the month, so push
-	  to the next iteration. only remaining task that comes to mind is
-	  removing the network dep from bio.h (need a separate header since
-	  it's just for standard i/o)
-
-2011-02-28 16:04  d_rossberg
-
-	* [r43497] src/conv/CMakeLists.txt, src/conv/stl/stl-g.c,
-	  src/librt/CMakeLists.txt:
-	  ntohl(): missing includes and libraries for the MSVC CMake build
-	  (needs WinSock 2)
-
-2011-02-28 16:01  starseeker
-
-	* [r43496] src/canon/canonize.c, src/librtserver/rtserver.c,
-	  src/rt/view.c, src/sig/fhor.c:
-	  Various quellage
-
-2011-02-28 06:10  brlcad
-
-	* [r43488] include/vmath.h, src/proc-db/surfaceintersect.cpp:
-	  minimally impacting API change, rename V2APPROXEQUAL to
-	  V2NEAR_EQUAL so the api is more self-consistent.
-
-2011-02-28 06:05  brlcad
-
-	* [r43487] doc/deprecation.txt:
-	  minimally impacting change, renaming V2APPROXEQUAL() to
-	  V2NEAR_EQUAL() in order to match the other *NEAR_EQUAL() macros.
-
-2011-02-28 06:04  brlcad
-
-	* [r43486] src/librt/primitives/bspline/bspline.cpp:
-	  convert from xdr to standard byteorder functions casting
-	  accordingly.
-
-2011-02-28 05:55  brlcad
-
-	* [r43485] include/bu.h, src/librt/db5_io.c:
-	  formally deprecate the old eXternal Data Representation (XDR)
-	  functions via API markers. all of the bu_p(long|short|etc) and
-	  bu_g(long|short|etc) functions have comparable byteorder
-	  functions provided standard via posix.1 as hton(l|s) and
-	  ntoh(l|s). the one exception is support for converting 64-bit
-	  long long types, so use the recently added configure.ac tests and
-	  define htonll() and ntohll() respectively as macros supporting
-	  big and little endian platforms.
-
-2011-02-28 05:51  brlcad
-
-	* [r43484] include/raytrace.h:
-	  now that all usages should be weeded out, formally deprecate
-	  rt_fdiff() and rt_reldiff() in the header. not 100% equivalent,
-	  so use with caution, but recommend most conversions change to
-	  NEAR_EQUAL(a,b,0.001) and EQUAL(a,b) respectively.
-
-2011-02-28 05:49  brlcad
-
-	* [r43483] src/libged/bot_dump.c:
-	  convert from xdr bu_plong() to byteorder htonl()
-
-2011-02-28 05:31  brlcad
-
-	* [r43482] src/gtools/g_transfer.c, src/remrt/rtsrv.c:
-	  since ext_buf buffers are now uint8_t*'s we need to cast them to
-	  char*'s for libpkg (until libpkg is upgraded).
-
-2011-02-28 05:23  brlcad
-
-	* [r43481] src/librtserver/rtserver.c:
-	  more xdr to posix.1 byteorder function conversions, bu_plong to
-	  htonl
-
-2011-02-28 05:20  brlcad
-
-	* [r43480] src/rt/viewray.c:
-	  call NEAR_EQUAL() instead of rt_fdiff()
-
-2011-02-28 05:10  brlcad
-
-	* [r43479] src/conv/asc/asc2g.c, src/conv/asc/g2asc.c,
-	  src/conv/poly-bot.c, src/conv/stl/g-stl.c, src/conv/stl/stl-g.c:
-	  convert converters using the libbu xdr routines to using the
-	  posix.1 byteorder functions, using hton*/ntoh*
-
-2011-02-28 04:50  brlcad
-
-	* [r43478] src/libfb/if_remote.c:
-	  convert libfb's remote framebuffer from using libbu's xdr
-	  routines to using the posix.1 byteorder functions, using
-	  hton*/ntoh*
-
-2011-02-24 23:37  r_weiss
-
-	* [r43454] src/libbn/bntester.c:
-	  Updates to bntester.c for testing functions bn_isect_line3_line3
-	  and bn_isect_lseg3_lseg3.
-
-2011-02-24 19:28  erikgreenwald
-
-	* [r43452] misc/win32-msvc8/librt/librt.vcproj:
-	  Add winsock library for htonl/ntohl/etc. Add tie/btg files.
-
-2011-02-24 19:23  erikgreenwald
-
-	* [r43451] misc/win32-msvc8/Makefile.am:
-	  automake should probably know that libtie.vcproj isn't around,
-	  too...
-
-2011-02-24 19:18  erikgreenwald
-
-	* [r43450] misc/win32-msvc8/brlcad/brlcad.sln,
-	  misc/win32-msvc8/libtie:
-	  libtie no longer exists, it's now part of librt
-
-2011-02-24 19:11  erikgreenwald
-
-	* [r43449] misc/win32-msvc8/libged/libged.vcproj:
-	  add fb2pix.c, pix2fb.c and libfb.lib
-
-2011-02-24 19:03  erikgreenwald
-
-	* [r43448] include/bio.h:
-	  winsock.h gets included via the windows.h megaheader, don't need
-	  to explicitly #include
-
-2011-02-24 14:56  erikgreenwald
-
-	* [r43447] include/bio.h, src/librt/primitives/pnts/pnts.c:
-	  include headers for hton[ls]/ntoh[ls] family
-
-2011-02-24 14:35  bob1961
-
-	* [r43446] src/tclscripts/lib/TkTable.tcl:
-	  Added cadwidgets::TkTable::handleEnter and -entercommand
-
-2011-02-24 06:26  brlcad
-
-	* [r43445] include/rtfunc.h:
-	  a callback for requesting an objects 'class' was never
-	  implemented. formally mark deprecation in header with compiler
-	  hints so warnings are issued on used.
-
-2011-02-24 06:25  brlcad
-
-	* [r43444] include/db.h:
-	  formally deprecate the flip functions as API: rt_fastf_float(),
-	  rt_mat_dbmat(), and rt_dbmat_mat().
-
-2011-02-24 06:20  brlcad
-
-	* [r43443] src/librt/primitives/tor/tor.c:
-	  torus also needs the private header and makes a call to the
-	  deprecated rt_fdiff() function. this becomes a simple loose
-	  tolerance comparison for equality.
-
-2011-02-24 06:19  brlcad
-
-	* [r43442] src/librt/primitives/tgc/tgc.c:
-	  need librt_private.h for private flip func, also change call from
-	  rt_reldiff() to a NEAR_EQUAL() due to deprecation. benchmark
-	  validation required but the use here seems to be a fairly safe
-	  since we're considerably tightening the test whether the vectors
-	  reduces the ellipse equation down to quadratic form. might affect
-	  worst case performance but should provide the same results.
-
-2011-02-24 06:02  brlcad
-
-	* [r43441] src/librt/primitives/sketch/sketch.c:
-	  update the last of the xdr to posix.1 byteorder function
-	  conversions. increment using our SIZEOF constants instead of
-	  hard-coding sizes too.
-
-2011-02-24 05:53  brlcad
-
-	* [r43440] src/librt/primitives/nmg/nmg.c:
-	  by far the most complex to date, deprecation conversion away from
-	  using xdr routines to using posix.1 ntohl/htonl and friends. take
-	  care to increment as char pointers and not long pointers. nmg
-	  apparently requires a LOT of conversions...
-
-2011-02-24 05:02  brlcad
-
-	* [r43439] src/librt/primitives/bot/bot.c:
-	  big deprecation conversion from xdr routines to posix.1 byteorder
-	  functions. taking the address of element zero isn't strictly
-	  necessary but does make the code more self-consistent given the
-	  slew of face and normal arrays that do require element indexing.
-
-2011-02-24 04:59  brlcad
-
-	* [r43438] src/librt/primitives/metaball/metaball.c:
-	  more conversion from xdr routines to ntohl()/htonl() being
-	  careful to increment the buffer as char pointers, not as uint32_t
-	  pointers.
-
-2011-02-24 04:56  brlcad
-
-	* [r43437] src/librt/primitives/ars/ars.c:
-	  more conversion from xdr routines to ntohl()/htonl()
-
-2011-02-24 04:55  brlcad
-
-	* [r43436] src/librt/primitives/dsp/dsp.c,
-	  src/librt/primitives/pipe/pipe.c,
-	  src/librt/primitives/pnts/pnts.c:
-	  more conversion from xdr routines to ntohl()/htonl()
-
-2011-02-24 04:53  brlcad
-
-	* [r43435] src/librt/primitives/arbn/arbn.c:
-	  convert from bu xdr routines to ntohl()/htonl()
-
-2011-02-24 04:50  brlcad
-
-	* [r43434] src/librt/primitives/extrude/extrude.c:
-	  convert from bu xdr routines to ntohl()/htonl()
-
-2011-02-24 04:43  brlcad
-
-	* [r43433] src/librt/primitives/arb8/arb8.c,
-	  src/librt/primitives/ehy/ehy.c, src/librt/primitives/ell/ell.c,
-	  src/librt/primitives/epa/epa.c, src/librt/primitives/eto/eto.c,
-	  src/librt/primitives/grip/grip.c,
-	  src/librt/primitives/half/half.c,
-	  src/librt/primitives/poly/poly.c, src/librt/primitives/rhc/rhc.c,
-	  src/librt/primitives/rpc/rpc.c,
-	  src/librt/primitives/superell/superell.c,
-	  src/librt/primitives/tgc/tgc.c, src/librt/primitives/tor/tor.c:
-	  call flip_fastf_float() instead of rt_fastf_float() so we can
-	  deprecate the old rt api routine. include private header as
-	  needed.
-
-2011-02-24 04:39  brlcad
-
-	* [r43432] src/librt/db_scan.c:
-	  progressive conversion of libbu xdr routines over to posix.1
-	  byteorder functions. simple conversion when getting (net -> host)
-	  values.
-
-2011-02-24 04:34  brlcad
-
-	* [r43431] src/librt/vlist.c:
-	  progressive conversion of libbu xdr routines over to posix.1
-	  byteorder functions. note an abuse of vls in here, being used as
-	  a byte buffer.
-
-2011-02-23 20:39  brlcad
-
-	* [r43429] include/bu.h, src/conv/poly-bot.c,
-	  src/librt/constraint.c, src/librt/db5_io.c, src/librt/db5_scan.c,
-	  src/librt/primitives/brep/brep.cpp,
-	  src/librt/primitives/bspline/bspline.cpp,
-	  src/librt/primitives/ebm/ebm.c, src/librt/primitives/nmg/nmg.c,
-	  src/librt/primitives/submodel/submodel.c,
-	  src/librt/primitives/vol/vol.c:
-	  convert the bu_external byte buffer from being a genptr_t (i.e.,
-	  void*) array to being a uint8_t* array. this fixes some coercion
-	  problems attempting to pass data through a void pointer and, more
-	  importantly, better reflects the intent of the container.
-
-2011-02-23 17:17  brlcad
-
-	* [r43428] src/librt/binunif/db5_bin.c:
-	  typo, supposed to be a pointer. odd.
-
-2011-02-23 14:25  brlcad
-
-	* [r43427] src/librt/binunif/db5_bin.c:
-	  this might have worked, but it was a bad way. don't work with
-	  truncated values, cast the char array to the corresponding type
-	  being read/written
-
-2011-02-23 05:00  brlcad
-
-	* [r43426] include/bu.h:
-	  not true, they expect pointers
-
-2011-02-22 17:13  brlcad
-
-	* [r43425] configure.ac:
-	  check for htonll() and ntohll() functions since they're not
-	  included in posix.1 with the other byteorder functions.
-
-2011-02-22 17:11  brlcad
-
-	* [r43424] src/librt/db_corrupt.c:
-	  call new private flip_mat_dbmat() function instead of deprecated
-	  rt_mat_dbmat()
-
-2011-02-22 17:11  brlcad
-
-	* [r43423] src/librt/primitives/table.c:
-	  will rt_generic_xform() work here?
-
-2011-02-18 19:11  erikgreenwald
-
-	* [r43421] src/gtools/g_diff.c, src/libmultispectral/sh_temp.c,
-	  src/mged/points/points_parse.y, src/proc-db/tube.c,
-	  src/remrt/remrt.c, src/rt/main.c, src/rt/viewpp.c,
-	  src/rttherm/ssampview.c:
-	  warning quellage
-
-2011-02-18 19:00  erikgreenwald
-
-	* [r43420] src/gtools/remapid.c:
-	  remove function defined as static but never used
-
-2011-02-18 17:09  bob1961
-
-	* [r43419] src/tclscripts/archer/Makefile.am,
-	  src/tclscripts/archer/cursor.tcl, src/tclscripts/archer/tclIndex,
-	  src/tclscripts/lib/Makefile.am, src/tclscripts/lib/cursor.tcl,
-	  src/tclscripts/lib/tclIndex:
-	  Moved cursor.tcl from archer to lib.
-
-2011-02-18 16:43  bob1961
-
-	* [r43418] src/libtclcad/ged_obj.c:
-	  Minor tweak to go_refresh_view().
-
-2011-02-18 04:54  brlcad
-
-	* [r43414] configure.ac:
-	  want to enable strict building on all sources now that all dirs
-	  are passing, but can't due to src/other needing -w .. and passing
-	  that cleanly to the subconfigures is a bit of suckage. maybe
-	  something cmake can handle better
-
-2011-02-18 04:37  brlcad
-
-	* [r43413] src/other/URToolkit/cnv/rletorla.c:
-	  check if defined before checking value
-
-2011-02-17 23:19  r_weiss
-
-	* [r43412] src/libbn/bntester.c:
-	  Updates to bntester.c for testing function bn_isect_lseg3_lseg3.
-
-2011-02-17 22:21  brlcad
-
-	* [r43411] NEWS:
-	  minor, but unfortunately user visible. removed the txyz-pl tool
-	  because it is a redundant minor variation of our xyz-pl tool
-	  easily replaced with an awk, sed, or cut pipe.
-
-2011-02-17 22:17  brlcad
-
-	* [r43410] src/tab/Makefile.am, src/tab/txyz-pl.c:
-	  remove the txyz-pl program outright as it is nearly identical to
-	  the util/xyz-pl program. it merely parses and ignores an
-	  additional starting column. trivially achieved with cut, awk, or
-	  other tools, so remove this deviant in favor of the one in util
-	  where it more appropriately belongs anyways.
-
-2011-02-17 22:12  brlcad
-
-	* [r43409] src/tab/txyz-pl.c:
-	  de-k&r, use argv and remove authorship
-
-2011-02-17 22:09  brlcad
-
-	* [r43408] src/tab/script.l:
-	  squelch warning about not using yyunput() by not outputting that
-	  function
-
-2011-02-17 22:05  brlcad
-
-	* [r43407] src/sig/butter.c, src/sig/bw-d.c, src/sig/c-d.c,
-	  src/sig/d-bw.c, src/sig/d-f.c, src/sig/d-i.c, src/sig/d-u.c,
-	  src/sig/d2-c.c, src/sig/damdf.c, src/sig/dauto2.c,
-	  src/sig/ddisp.c, src/sig/dmod.c, src/sig/dpeak.c, src/sig/f-d.c,
-	  src/sig/f-i.c, src/sig/fhor.c, src/sig/i-d.c, src/sig/i-f.c,
-	  src/sig/imod.c, src/sig/smod.c, src/sig/u-bw.c, src/sig/u-d.c,
-	  src/sig/u-f.c, src/sig/umod.c:
-	  squelch the quellch. simple floating point exactness conversions.
-
-2011-02-17 21:51  brlcad
-
-	* [r43406] src/shapes/picket_fence.c:
-	  quellage, shadow on osx
-
-2011-02-17 21:50  brlcad
-
-	* [r43405] src/shapes/wire.c:
-	  make sure there aren't unexpected params
-
-2011-02-17 21:47  brlcad
-
-	* [r43404] src/shapes/coil.c, src/shapes/fence.c:
-	  handle a slew of exact floating point comparisons for zero and
-	  equality
-
-2011-02-17 21:34  brlcad
-
-	* [r43403] src/rttherm/pixtest.c, src/rttherm/spectrum.c,
-	  src/rttherm/ssampview.c:
-	  remove dead code, remove rt_ prefix on functions that aren't
-	  actually in librt (curiously relevent to librt/spectrum.c but not
-	  librt api nonetheless).
-
-2011-02-17 19:38  bob1961
-
-	* [r43400] src/tclscripts/lib/RtControl.tcl:
-	  Accommodate possible spaces in .
-
-2011-02-17 19:24  bob1961
-
-	* [r43399] src/libfb/if_wgl.c:
-	  This fixes a bug on windows where drawing strings breaks.
-
-2011-02-17 19:05  brlcad
-
-	* [r43398] src/rttherm/viewtherm.c:
-	  usage is no longer static
-
-2011-02-17 18:27  brlcad
-
-	* [r43397] src/rttherm/viewtherm.c:
-	  missed one. quellage cleanup including version conversion.
-
-2011-02-17 18:14  brlcad
-
-	* [r43396] src/remrt/protocol.h, src/remrt/rtsrv.c, src/rt/do.c,
-	  src/rt/ext.h, src/rt/heatgraph.c, src/rt/main.c,
-	  src/rt/reshoot.c, src/rt/rtscale.c, src/rt/rtshot.c,
-	  src/rt/scanline.c, src/rt/scanline.h, src/rt/view.c,
-	  src/rt/view_bot_faces.c, src/rt/viewarea.c, src/rt/viewcell.c,
-	  src/rt/viewcheck.c, src/rt/viewedge.c, src/rt/viewfrac.c,
-	  src/rt/viewg3.c, src/rt/viewhide.c, src/rt/viewmlt.c,
-	  src/rt/viewpp.c, src/rt/viewrad.c, src/rt/viewrange.c,
-	  src/rt/viewray.c, src/rt/viewsil.c, src/rt/viewweight.c,
-	  src/rt/viewxray.c, src/rt/worker.c:
-	  major quellage cleanup including missing struct elements, unused
-	  parameters, exact floating point comparisons, unused vars, and
-	  much more. big honkin commit because of two changes that ripple
-	  through. ap global changed to APP so that params passing an ap
-	  can use ap for the param name. also replaced convention of using
-	  a version char* global with a version() function.
-
-2011-02-17 15:33  erikgreenwald
-
-	* [r43395] src/librt/binunif/db5_bin.c:
-	  add arpa/inet.h for ntohl/htonl
-
-2011-02-17 15:17  brlcad
-
-	* [r43394] src/librt/db_flip.c:
-	  not return, just run the function
-
-2011-02-17 14:43  brlcad
-
-	* [r43393] src/rt/Makefile.am, src/rt/hurt.c:
-	  hurt is hurting no more. remove the research project since it's
-	  inactive and a maintenance burden to bring up to strictness
-	  standards.
-
-2011-02-17 14:27  d_rossberg
-
-	* [r43392] misc/win32-msvc/Dll/brlcad.def:
-	  there was a request to export some additional functions
-
-2011-02-17 05:50  brlcad
-
-	* [r43391] src/nirt/showshot.c:
-	  more VINIT_ZERO love
-
-2011-02-17 05:49  brlcad
-
-	* [r43390] src/lgt/ir.c:
-	  VINIT_ZERO love
-
-2011-02-17 05:49  brlcad
-
-	* [r43389] src/proc-db/brepintersect.cpp, src/proc-db/lens.c,
-	  src/proc-db/surfaceintersect.cpp:
-	  init before use
-
-2011-02-17 05:48  brlcad
-
-	* [r43388] src/irprep/irdisp.c:
-	  init before use
-
-2011-02-17 05:47  brlcad
-
-	* [r43387] src/rttherm/spectrum.c:
-	  more ZERO() conversion for exact floating point comparisons
-
-2011-02-16 22:49  starseeker
-
-	* [r43386] include/raytrace.h, src/libged/Makefile.am,
-	  src/libged/search.c, src/libged/search.h, src/librt/Makefile.am,
-	  src/librt/search.c, src/librt/search.h:
-	  Sigh. Put search back in libged for now - need to split out the
-	  argument parsing logic into libged and the backend logic into
-	  librt first.
-
-2011-02-16 22:18  starseeker
-
-	* [r43383] src/librt/search.c:
-	  Add logic to append directory pointer entries to a list - will
-	  allow for manipulation of objects found in C code without having
-	  to re-parse string. For now, only return pointer to leaf node of
-	  path - could conceivably be expanded if there is a need.
-
-2011-02-16 21:42  brlcad
-
-	* [r43382] src/librt/comb/db_comb.c:
-	  call the new private flip funcs instead of the deprecated api.
-
-2011-02-16 21:42  brlcad
-
-	* [r43381] src/librt/binunif/db5_bin.c:
-	  call ntohl() and htonl() instead of the deprecated libbu
-	  functions.
-
-2011-02-16 21:41  brlcad
-
-	* [r43380] src/librt/librt_private.h:
-	  declare the new flip functions
-
-2011-02-16 21:41  brlcad
-
-	* [r43379] src/librt/db_flip.c:
-	  use a bridge pattern to separate the deprecated function logic
-	  into new private functions. this lets us continue to be able to
-	  flip v4 files, even after the deprecated rt_* functions become
-	  obsolete, yet allows for the API to continue working for now.
-
-2011-02-16 21:38  brlcad
-
-	* [r43377] src/librt/bool.c:
-	  call NEAR_EQUAL() with a 0.001 tolerance instead of rt_fdiff()
-	  since that function is deprecated. this potentially affects
-	  fastgen platemode overlap reporting since it's no longer
-	  performing a relative tolerance comparison, but the impact
-	  shouldn't be too significant since the absolute tolerance is
-	  rather loose at 0.001
-
-2011-02-16 21:33  starseeker
-
-	* [r43375] src/librt/search.c:
-	  Fix order of inputs, UNUSED some inputs
-
-2011-02-16 21:01  starseeker
-
-	* [r43373] include/raytrace.h, src/libged/Makefile.am,
-	  src/libged/search.c, src/libged/search.h, src/librt/Makefile.am,
-	  src/librt/search.c, src/librt/search.h:
-	  Make a stab at moving search logic to librt
-
-2011-02-16 20:31  jordisayol
-
-	* [r43372] misc/debian/control, sh/make_deb.sh:
-	  modify dependencies to build deb packages
-
-2011-02-16 16:52  brlcad
-
-	* [r43371] src/remrt/remrt.c, src/remrt/rtsrv.c:
-	  mark unused params, check argc params, terminal sentinel with
-	  NULL instead of 0, and other quellage
-
-2011-02-16 16:51  brlcad
-
-	* [r43370] src/remrt/ihost.h:
-	  include the headers this header requires, self containment
-
-2011-02-16 16:21  brlcad
-
-	* [r43369] src/remrt/ihost.c:
-	  if DEFINED, not if NOT defined
-
-2011-02-16 15:53  r_weiss
-
-	* [r43368] src/libbn/bntester.c:
-	  Added to 'bntester' support for testing function
-	  'bn_isect_lseg3_lseg3'.
-
-2011-02-16 15:26  brlcad
-
-	* [r43366] src/proc-db/brepintersect.cpp,
-	  src/proc-db/breplicator.cpp, src/proc-db/clutter.c,
-	  src/proc-db/contours.c, src/proc-db/csgbrep.cpp,
-	  src/proc-db/pipe.c, src/proc-db/pipetest.c, src/proc-db/pix2g.c,
-	  src/proc-db/room.c, src/proc-db/sketch.c, src/proc-db/sphflake.c,
-	  src/proc-db/surfaceintersect.cpp, src/proc-db/torii.c,
-	  src/proc-db/tube.c, src/proc-db/vegetation.c,
-	  src/proc-db/vegetation.h:
-	  quell verbose compilation warnings mostly related to unused
-	  params and vars, shadowings, and checking usage.
-
-2011-02-16 15:25  brlcad
-
-	* [r43365] src/proc-db/kurt.c:
-	  !EQUAL instead of != for floating point comparison
-
-2011-02-16 15:24  brlcad
-
-	* [r43364] src/proc-db/brickwall.c, src/proc-db/masonry.c:
-	  quell warnings, exact floating point comparisons
-
-2011-02-16 14:58  brlcad
-
-	* [r43363] src/nirt/showshot.c:
-	  convert %F to %lf. not optimal, but gefn
-
-2011-02-16 14:54  brlcad
-
-	* [r43362] src/nirt/command.c, src/nirt/interact.c,
-	  src/nirt/nirt.c, src/nirt/nirt.h, src/nirt/parse_fmt.c,
-	  src/nirt/read_mat.c:
-	  eliminate the rtip global. propagate api changes throughout.
-
-2011-02-16 14:36  brlcad
-
-	* [r43361] src/lgt/do_options.c, src/lgt/execshell.c:
-	  need to include unistd.h
-
-2011-02-16 14:32  brlcad
-
-	* [r43360] src/irprep/firpass.c, src/irprep/ir-X.c,
-	  src/irprep/secpass.c, src/irprep/shapefact.c:
-	  quell verbose warnings. mark unused params, size_t signage
-	  promotions, index shadows, and exact floating point comparisons.
-
-2011-02-16 14:30  brlcad
-
-	* [r43359] src/irprep/ir-sgi.c:
-	  HAS_SGIGL .. isn't going to be around much longer. but test for
-	  it being set instead of being true until it's gone.
-
-2011-02-16 04:39  brlcad
-
-	* [r43358] TODO:
-	  consolidate the other conversion tasks
-
-2011-02-16 01:35  brlcad
-
-	* [r43357] TODO:
-	  list the slew of requested and useful converters including step
-	  export, dae, x3d, g-code, u3d, 3D pdf, sat, ply, json, and xml
-	  formats
-
-2011-02-15 20:33  bob1961
-
-	* [r43347] src/archer/archer.bat, src/mged/mged.bat,
-	  src/tclscripts/rtwizard/rtwizard.bat:
-	  Tweaks to get the windows batch files working better. That is,
-	  they can handle filenames with spaces and the windows prompt gets
-	  removed from the screen.
-
-2011-02-15 12:59  d_rossberg
-
-	* [r43316] src/librt/CMakeLists.txt:
-	  synced with Makefile.am: "bottie modifications moved to trunk"
-
-2011-02-15 12:56  d_rossberg
-
-	* [r43315] src/libged/CMakeLists.txt:
-	  there are references to libregex here
-	  added libregex headers search path
-
-2011-02-15 07:25  brlcad
-
-	* [r43311] src/rt/heatgraph.c:
-	  technically more simple to just test for less than zero .. though
-	  unsafe. (some comparisons need to compare against +-SMALL_FASTF
-	  instead of 0)
-
-2011-02-15 07:22  brlcad
-
-	* [r43310] src/rt/heatgraph.c:
-	  <= and >= are still comparing floating point values for equality,
-	  which is not reliable. call EQUAL() and ZERO() accordingly.
-
-2011-02-15 07:19  brlcad
-
-	* [r43309] src/sig/dmod.c:
-	  prefer ZERO() over NEAR_ZERO() when the tol is merely FLT_MIN or
-	  (better) SMALL_FASTF.
-
-2011-02-15 07:18  brlcad
-
-	* [r43308] src/irprep/firpass.c:
-	  replace all of the NEAR_*() calls with an arbitrary FLT_MIN
-	  (which is basically one ulp step up from 0) to their
-	  corresponding ZERO() and EQUAL() calls. FLT_MIN shouldn't be used
-	  anyways unless 1ulp is the goal (in which case there's a libbn
-	  function for it), SMALL_FASTF is our base computation tolerance.
-
-2011-02-14 20:35  jordisayol
-
-	* [r43302] sh/make_rpm.sh:
-	  corrects wrong mged icon file name
-
-2011-02-14 20:11  starseeker
-
-	* [r43301] src/other/step/CMakeLists.txt,
-	  src/other/step/include/conf,
-	  src/other/step/include/scl_cf_cmake.h.in:
-	  Fix step files in trunk
-
-2011-02-14 18:32  jordisayol
-
-	* [r43298] sh/make_rpm.sh:
-	  add magic mime-type for geometry db files v4 on rpm packages
-
-2011-02-14 18:22  tbrowder2
-
-	* [r43297] src/irprep/firpass.c:
-	  more space formatting per HACKING
-
-2011-02-14 18:17  tbrowder2
-
-	* [r43296] src/irprep/firpass.c:
-	  use float equality comparison macros (with some space formatting
-	  along the way)
-
-2011-02-14 16:58  tbrowder2
-
-	* [r43295] src/sig/dmod.c:
-	  need comparisin of NEAR_ZERO with FLT_MIN
-
-2011-02-14 16:48  tbrowder2
-
-	* [r43294] src/sig/dmod.c:
-	  need definition of NEAR_ZERO macro
-
-2011-02-14 16:41  tbrowder2
-
-	* [r43293] src/rt/heatgraph.c:
-	  correct check for minimum floating point value
-
-2011-02-14 16:39  tbrowder2
-
-	* [r43292] src/rt/heatgraph.c:
-	  C90 prohibits mixed declarations and code
-
-2011-02-14 16:38  tbrowder2
-
-	* [r43291] src/rt/heatgraph.c:
-	  C90 prohibits mixed declarations and code
-
-2011-02-14 16:36  tbrowder2
-
-	* [r43290] src/rt/heatgraph.c:
-	  correct check for non-negative floating point value
-
-2011-02-14 16:18  tbrowder2
-
-	* [r43289] src/sig/dpeak.c:
-	  clean up space format per HACKING
-
-2011-02-14 16:10  tbrowder2
-
-	* [r43288] src/sig/dpeak.c:
-	  clean up space format per HACKING
-
-2011-02-14 16:10  tbrowder2
-
-	* [r43287] src/sig/dpeak.c:
-	  clean up space format per HACKING
-
-2011-02-14 16:09  tbrowder2
-
-	* [r43286] src/sig/dpeak.c:
-	  clean up space format per HACKING
-
-2011-02-14 16:09  tbrowder2
-
-	* [r43285] src/sig/dpeak.c:
-	  clean up space format per HACKING
-
-2011-02-14 15:34  erikgreenwald
-
-	* [r43283] src/nirt/nirt.c:
-	  There is no USAGE or USAGE2 defined, assuming it's broken to the
-	  set of bu_log calls.
-
-2011-02-14 15:31  erikgreenwald
-
-	* [r43282] src/rt/main.c:
-	  fix various cast issues and a missing paren.
-
-2011-02-14 15:20  brlcad
-
-	* [r43281] src/adrt/librender/path.c,
-	  src/adrt/librender/texture_internal.h, src/burst/gridrotate.c,
-	  src/conv/bot_shell-vtk.c, src/conv/comgeom/mat.c,
-	  src/conv/cy-g.c, src/conv/dem-g.c, src/conv/g-shell-rect.c,
-	  src/conv/g-vrml.c, src/conv/g-x3d.c, src/conv/iges/b-spline.c,
-	  src/conv/iges/cone.c, src/conv/iges/conv_drawings.c,
-	  src/conv/iges/cyl.c, src/conv/iges/extrudcirc.c,
-	  src/conv/iges/extrudcon.c, src/conv/iges/getcurve.c,
-	  src/conv/iges/readglobal.c, src/conv/iges/revolve.c,
-	  src/conv/iges/splinef.c, src/conv/patch/patch-g.c,
-	  src/conv/proe-g.c, src/conv/stl/stl-g.c,
-	  src/external/ProEngineer/proe-brl.c,
-	  src/external/Unigraphics/ug-g.c, src/fb/cell-fb.c,
-	  src/fb/polar-fb.c, src/gtools/beset/population.h,
-	  src/gtools/g_diff.c, src/halftone/sharpen.c, src/irprep/all_sf.c,
-	  src/lgt/do_options.c, src/lgt/ir.c, src/lgt/lgt.c,
-	  src/lgt/octree.c, src/lgt/reflect.c, src/libanalyze/overlaps.c,
-	  src/libdm/dm_obj.c, src/libdm/grid.c, src/libdm/rect.c,
-	  src/libicv/rot.c, src/liboptical/refract.c,
-	  src/liboptical/sh_air.c, src/liboptical/sh_brdf.c,
-	  src/liboptical/sh_points.c, src/liboptical/sh_prj.c,
-	  src/liboptical/sh_treetherm.c, src/libpc/pcMathVM.cpp,
-	  src/libpc/pcVariable.h, src/libpc/pc_constraints.c,
-	  src/libtclcad/ged_obj.c, src/mged/adc.c, src/mged/arbs.c,
-	  src/mged/chgview.c, src/mged/clone.c, src/mged/dm-generic.c,
-	  src/mged/edarb.c, src/mged/edsol.c, src/mged/grid.c,
-	  src/mged/rect.c, src/nirt/conversion.c, src/rt/hurt.c,
-	  src/rt/opt.c, src/rt/viewarea.c, src/rt/viewweight.c,
-	  src/rt/worker.c, src/tab/tabinterp.c, src/util/bwmod.c,
-	  src/util/bwrot.c, src/util/loop.c, src/util/pix-bw.c,
-	  src/util/pixbackgnd.c, src/util/pixborder.c, src/util/pl-ps.c,
-	  src/vdeck/vdeck.c:
-	  convert the remaining NEAR_ZERO(val, SMALL_FASTF) callers to
-	  ZERO(val) since the tolerance bound is minimally-defined. lower
-	  maintenance, easier to read.
-
-2011-02-14 13:58  jordisayol
-
-	* [r43279] misc/debian/rules, sh/make_deb.sh, sh/make_rpm.sh:
-	  switch to build-in for all libraries in deb/rpm packages
-
-2011-02-14 13:47  jordisayol
-
-	* [r43278] misc/debian/application-x-brlcad.xml,
-	  misc/debian/brlcad-archer.desktop,
-	  misc/debian/brlcad-mged.desktop,
-	  misc/debian/brlcad-rtwizard.desktop, misc/debian/brlcad.postinst,
-	  misc/debian/brlcad.postrm:
-	  add magic mime-type for geometry db files v4 on deb/rpm packages
-
-2011-02-14 13:31  tbrowder2
-
-	* [r43277] src/rt/reshoot.c:
-	  eliminate unused variable\nclean up space format per HACKING
-
-2011-02-14 13:26  tbrowder2
-
-	* [r43276] src/rt/heatgraph.c:
-	  eliminate unused variable
-
-2011-02-14 06:41  brlcad
-
-	* [r43273] NEWS, src/conv, src/conv/Makefile.am, src/conv/shp,
-	  src/conv/shp/README, src/conv/shp/shapelib,
-	  src/conv/shp/shapelib/LICENSE.LGPL,
-	  src/conv/shp/shapelib/license.html,
-	  src/conv/shp/shapelib/safileio.c,
-	  src/conv/shp/shapelib/shapefil.h,
-	  src/conv/shp/shapelib/shpopen.c, src/conv/shp/shp-g.c:
-	  implement an initial shp-g shapefile importer for BRL-CAD. this
-	  was developed in less than a day during Civic Hack Day in order
-	  to visualize Baltimore City data made available to the public.
-	  the converter takes the shapefile input (using shapelib) and
-	  imports the data as sketch/extrude geomettry. sketches working
-	  great, extrudes need some debugging love.
-
-2011-02-13 23:34  tbrowder2
-
-	* [r43272] src/rt/main.c:
-	  cleanup format spacing per HACKING
-
-2011-02-13 23:11  tbrowder2
-
-	* [r43271] src/librt/primitives/metaball/metaball_tri.c:
-	  cleanup format spacing per HACKING
-
-2011-02-13 18:32  brlcad
-
-	* [r43270] src/irprep/firpass.c:
-	  index->idx
-
-2011-02-13 18:29  brlcad
-
-	* [r43269] src/conv/Makefile.am:
-	  alpha order
-
-2011-02-13 18:25  brlcad
-
-	* [r43268] src/conv/Makefile.am:
-	  make iges and intaval dirs set through a variable so that they
-	  can be overridden (and skipped) during make
-
-2011-02-13 12:32  tbrowder2
-
-	* [r43267] include/tie.h:
-	  correct macro for externing an int (tie_check_degenerate is not a
-	  function)
-
-2011-02-13 12:13  tbrowder2
-
-	* [r43266] src/nirt/nirt.c:
-	  quash C90 too-long-stringg warnings
-
-2011-02-12 22:10  brlcad
-
-	* [r43265] include/vmath.h:
-	  big cleanup adding in missing 2D 'V2' and 4D 'H' macros that
-	  correspond with the 3D 'V' macros. incomplete, but adds a dozen
-	  or so that were missing.
-
-2011-02-12 19:33  brlcad
-
-	* [r43264] include/vmath.h:
-	  add corresponding hvect_t initialization macros HINITALL() and
-	  HINIT_ZERO() that are functionally equivalent to calling
-	  VSETALLN(), yet these are suitable for declaration
-	  initialization.
-
-2011-02-12 15:45  brlcad
-
-	* [r43263] src/libtclcad/Makefile.am:
-	  if ogl is enabled, then we need --std=c99 .. go ahead and enable
-	  for everything even when ogl is not enabled.
-
-2011-02-12 02:35  starseeker
-
-	* [r43262] src/libfb/fb_generic.c:
-	  More things clang is complaining about - primarily size_t
-	  (unsigned long) and int comparisons
-
-2011-02-12 00:47  starseeker
-
-	* [r43259] src/other/tcl/generic/regcustom.h,
-	  src/other/tcl/generic/regex.h, src/other/tcl/generic/regextcl.h,
-	  src/other/tcl/generic/tclRegexp.h,
-	  src/other/tcl/unix/Makefile.in:
-	  Fights between the system regex.h and tcl's aren't worth it -
-	  simple rename to avoid conflict.
-
-2011-02-12 00:38  starseeker
-
-	* [r43256] src/other/tnt/tnt_array1d.h,
-	  src/other/tnt/tnt_fortran_array1d.h, src/other/tnt/tnt_matrix.h:
-	  tnt fixes for clang
-
-2011-02-12 00:37  starseeker
-
-	* [r43255] src/other/togl/CMake/FindTCL.cmake,
-	  src/other/togl/CMakeLists.txt, src/other/togl/demo/gears.tcl,
-	  src/other/togl/include/GL/glew.h,
-	  src/other/togl/include/GL/glext.h,
-	  src/other/togl/include/GL/glxew.h,
-	  src/other/togl/include/GL/glxext.h,
-	  src/other/togl/include/GL/wglew.h,
-	  src/other/togl/include/GL/wglext.h,
-	  src/other/togl/include/togl.h, src/other/togl/src/CMakeLists.txt,
-	  src/other/togl/src/glew, src/other/togl/src/glew/glew.c,
-	  src/other/togl/src/togl.c:
-	  Sync trunk copy of togl to the CMake branch - we aren't building
-	  togl with autotools, so no reason for any differences here
-
-2011-02-12 00:35  starseeker
-
-	* [r43254] src/other/step/CMake,
-	  src/other/step/CMake/CheckCFileRuns.cmake,
-	  src/other/step/CMake/FindLEX.cmake,
-	  src/other/step/CMake/FindYACC.cmake,
-	  src/other/step/CMake/SCL_Utils.cmake,
-	  src/other/step/CMake/test_srcs,
-	  src/other/step/CMake/test_srcs/sys_wait_test.c,
-	  src/other/step/CMakeLists.txt, src/other/step/configure.ac,
-	  src/other/step/data/CMakeLists.txt,
-	  src/other/step/doc/CMakeLists.txt,
-	  src/other/step/include/CMakeLists.txt,
-	  src/other/step/include/Makefile.am, src/other/step/include/conf,
-	  src/other/step/include/scl_cf_cmake.h.in,
-	  src/other/step/src/cldai/CMakeLists.txt,
-	  src/other/step/src/cleditor/CMakeLists.txt,
-	  src/other/step/src/cleditor/dispnodelist.cc,
-	  src/other/step/src/cleditor/mgrnode.cc,
-	  src/other/step/src/cleditor/mgrnodelist.cc,
-	  src/other/step/src/clstepcore/CMakeLists.txt,
-	  src/other/step/src/clstepcore/ExpDict.cc,
-	  src/other/step/src/clstepcore/STEPaggregate.cc,
-	  src/other/step/src/clstepcore/sdai.h,
-	  src/other/step/src/clutils/CMakeLists.txt,
-	  src/other/step/src/clutils/dirobj.cc,
-	  src/other/step/src/clutils/gennodearray.cc,
-	  src/other/step/src/clutils/gennodelist.cc,
-	  src/other/step/src/clutils/scl_char_str_list.cc,
-	  src/other/step/src/exppp/CMakeLists.txt,
-	  src/other/step/src/express/CMakeLists.txt,
-	  src/other/step/src/fedex_plus/CMakeLists.txt:
-	  We should have a working autotools build with the step tweaks now
-	  - make trunk step directory match that from CMake. Since there is
-	  no previous CMake build for the step subdirectory, go ahead and
-	  put everything here.
-
-2011-02-11 23:46  starseeker
-
-	* [r43250] src/other/openNURBS/opennurbs_array_defs.h,
-	  src/other/openNURBS/opennurbs_math.h,
-	  src/other/openNURBS/opennurbs_string.cpp,
-	  src/other/openNURBS/opennurbs_system.h:
-	  openNURBS tweaks for clang and Sun Studio
-
-2011-02-11 23:39  starseeker
-
-	* [r43248] src/mged/attach.c:
-	  If we have a situation where Tk is completely not part of the
-	  compile, we won't have Tk_GenericProc
-
-2011-02-11 23:33  starseeker
-
-	* [r43247] src/irprep/subroutines.c:
-	  Use vmath here for M_PI
-
-2011-02-11 20:23  bob1961
-
-	* [r43237] include/fb.h, include/fbserv_obj.h, include/ged.h,
-	  src/libfb/fb_generic.c, src/libged/Makefile.am,
-	  src/libged/fb2pix.c, src/libged/pix2fb.c,
-	  src/libtclcad/ged_obj.c, src/tclscripts/lib/Ged.tcl:
-	  Added pix2fb and fb2pix to libged.
-
-2011-02-11 20:11  brlcad
-
-	* [r43236] TODO:
-	  demote platemode nurbs back down with the other nurbs tasks even
-	  though it's still possible within two months.
-
-2011-02-11 20:09  brlcad
-
-	* [r43235] ., src/adrt/load.c, src/adrt/load.h,
-	  src/adrt/master/tienet_master.c, src/adrt/master/tienet_master.h,
-	  src/adrt/slave/tienet_slave.c, src/adrt/slave/tienet_slave.h,
-	  src/burst/prnt.c, src/conv/dem-g.c, src/conv/tankill/tankill-g.c,
-	  src/libbn/randmt.c, src/libbn/tcl.c, src/libbu/cmdhist_obj.c,
-	  src/libbu/list.c, src/libbu/tcl.c, src/libfb/fbserv_obj.c,
-	  src/libged/tables.c, src/liboptical/shade.c,
-	  src/libpc/pcMathLF.h, src/libpc/pcVCSet.cpp, src/libpc/pcVCSet.h,
-	  src/libpkg/pkg.c, src/librt/bool.c, src/librt/constraint.c,
-	  src/librt/opennurbs_ext.h, src/librt/primitives/arb8/arb8.c,
-	  src/librt/primitives/arbn/arbn.c, src/librt/primitives/ars/ars.c,
-	  src/librt/primitives/cline/cline.c,
-	  src/librt/primitives/grip/grip.c,
-	  src/librt/primitives/half/half.c, src/librt/primitives/hf/hf.c,
-	  src/librt/primitives/hyp/hyp.c,
-	  src/librt/primitives/metaball/metaball.c,
-	  src/librt/primitives/nmg/nmg.c,
-	  src/librt/primitives/nmg/nmg_extrude.c,
-	  src/librt/primitives/nmg/nmg_tri_mc.c,
-	  src/librt/primitives/part/part.c,
-	  src/librt/primitives/pipe/pipe.c,
-	  src/librt/primitives/poly/poly.c, src/librt/primitives/rec/rec.c,
-	  src/librt/primitives/rhc/rhc.c, src/librt/primitives/rpc/rpc.c,
-	  src/librt/primitives/sketch/sketch.c,
-	  src/librt/primitives/sph/sph.c,
-	  src/librt/primitives/submodel/submodel.c,
-	  src/librt/primitives/superell/superell.c,
-	  src/librt/primitives/tgc/tgc.c, src/librt/primitives/tor/tor.c,
-	  src/librt/primitives/vol/vol.c, src/libsysv/tcl.c,
-	  src/util/pc_test.c:
-	  minimize differences, merge r43219 from cmake branch. provides
-	  lots of quellage goodness that was caught by the llvm compiler,
-	  but that should've been applied to trunk instead of branch.
-
-2011-02-11 14:32  brlcad
-
-	* [r43216] src/libged/3ptarb.c, src/libged/adc.c,
-	  src/libged/bigE.c, src/libged/bot_dump.c, src/libged/clone.c,
-	  src/libged/combmem.c, src/libged/get_comb.c, src/libged/gqa.c,
-	  src/libged/grid.c, src/libged/inside.c, src/libged/png.c,
-	  src/libged/ps.c, src/libged/rect.c, src/libged/red.c,
-	  src/libged/rfarb.c, src/libged/scale_tgc.c, src/libged/size.c,
-	  src/libged/solids_on_ray.c, src/libged/tire.c,
-	  src/libged/view_obj.c, src/libged/wdb_bigE.c:
-	  another conversion from NEAR_ZERO() to ZERO() where SMALL,
-	  SMALL_FASTF, and sometimes where SQRT_SMALL_FASTF is used.
-	  simplify. reduction also made where intent seems to be a
-	  zero-test for a subsequent division.
-
-2011-02-11 05:34  brlcad
-
-	* [r43214] src/librt/bezier_2d_isect.c, src/librt/bool.c,
-	  src/librt/comb/db_comb.c, src/librt/db_anim.c,
-	  src/librt/oslo_calc.c, src/librt/primitives/arb8/arb8.c,
-	  src/librt/primitives/arbn/arbn.c, src/librt/primitives/bot/bot.c,
-	  src/librt/primitives/bot/g_bot_include.c,
-	  src/librt/primitives/bot/tie.c,
-	  src/librt/primitives/brep/brep.cpp,
-	  src/librt/primitives/bspline/bspline.cpp,
-	  src/librt/primitives/bspline/nurb_basis.c,
-	  src/librt/primitives/bspline/nurb_bezier.c,
-	  src/librt/primitives/bspline/nurb_bound.c,
-	  src/librt/primitives/bspline/nurb_diff.c,
-	  src/librt/primitives/bspline/nurb_eval.c,
-	  src/librt/primitives/bspline/nurb_knot.c,
-	  src/librt/primitives/bspline/nurb_norm.c,
-	  src/librt/primitives/bspline/nurb_split.c,
-	  src/librt/primitives/bspline/nurb_tess.c,
-	  src/librt/primitives/bspline/nurb_trim.c,
-	  src/librt/primitives/dsp/dsp.c, src/librt/primitives/ebm/ebm.c,
-	  src/librt/primitives/ehy/ehy.c, src/librt/primitives/epa/epa.c,
-	  src/librt/primitives/extrude/extrude.c,
-	  src/librt/primitives/hf/hf.c, src/librt/primitives/hyp/hyp.c,
-	  src/librt/primitives/metaball/metaball.c,
-	  src/librt/primitives/nmg/nmg.c,
-	  src/librt/primitives/nmg/nmg_ck.c,
-	  src/librt/primitives/nmg/nmg_extrude.c,
-	  src/librt/primitives/nmg/nmg_fcut.c,
-	  src/librt/primitives/nmg/nmg_fuse.c,
-	  src/librt/primitives/nmg/nmg_inter.c,
-	  src/librt/primitives/nmg/nmg_misc.c,
-	  src/librt/primitives/nmg/nmg_pt_fu.c,
-	  src/librt/primitives/nmg/nmg_rt_isect.c,
-	  src/librt/primitives/part/part.c,
-	  src/librt/primitives/pipe/pipe.c, src/librt/primitives/rec/rec.c,
-	  src/librt/primitives/revolve/revolve.c,
-	  src/librt/primitives/rhc/rhc.c,
-	  src/librt/primitives/submodel/submodel.c,
-	  src/librt/primitives/tgc/tgc.c, src/librt/primitives/vol/vol.c,
-	  src/librt/roots.c, src/librt/vshoot.c:
-	  convert from NEAR_ZERO() to ZERO() where SMALL, SMALL_FASTF, and
-	  sometimes even where SQRT_SMALL_FASTF is used. simplify.
-	  reduction also made where intent seems to be a zero-test for a
-	  subsequent division.
-
-2011-02-11 05:27  brlcad
-
-	* [r43213] src/anim/anim_fly.c, src/anim/anim_hardtrack.c:
-	  start of larger covnersion over to new ZERO() macro.
-
-2011-02-11 05:26  brlcad
-
-	* [r43212] src/libbn/anim.c, src/libbn/axis.c, src/libbn/complex.c,
-	  src/libbn/mat.c, src/libbn/noise.c, src/libbn/plane.c,
-	  src/libbn/poly.c, src/libbn/tabdata.c, src/libbn/vector.c:
-	  lots of conversions from NEAR_ZERO() to the new ZERO() macro
-	  where the tolerance test is merely against SMALL_FASTF or used to
-	  test for zero-division.
-
-2011-02-11 05:25  brlcad
-
-	* [r43211] src/libbu/units.c:
-	  convert from NEAR_ZERO() to ZERO()
-
-2011-02-11 05:08  brlcad
-
-	* [r43210] include/vmath.h:
-	  provide a ZERO() macro that corresponds with the EQUAL() macro.
-	  tolerance is defined at compile-time so it's not the best to use,
-	  but still more reliable than exact floating point comparisons.
-	  it'll also permit cleaning up numerous NEAR_ZERO() callers that
-	  arbitrarily use SMALL, SMALL_FASTF, and SQRT_SMALL_FASTF when the
-	  intent is just a nearness to zero.
-
-2011-02-11 05:06  brlcad
-
-	* [r43209] doc/deprecation.txt:
-	  SMALL was deprecated a long time ago, but is a minimally
-	  impacting change
-
-2011-02-11 00:21  jordisayol
-
-	* [r43208] sh/make_deb.sh, sh/make_rpm.sh:
-	  correct an error on deb and rpm scripts
-
-2011-02-10 18:15  bob1961
-
-	* [r43201] src/tclscripts/archer/Archer.tcl:
-	  Reset output handler when going to/from a separate command window
-	  configuration.
-
-2011-02-10 07:11  jordisayol
-
-	* [r43199] misc/Makefile.am,
-	  misc/debian/application-x-brlcad-extension.png,
-	  misc/debian/application-x-brlcad-extension.xml,
-	  misc/debian/application-x-brlcad.png,
-	  misc/debian/application-x-brlcad.xml,
-	  misc/debian/brlcad-archer.desktop, misc/debian/brlcad-db.desktop,
-	  misc/debian/brlcad-doc-animation.desktop,
-	  misc/debian/brlcad-doc-mged.desktop,
-	  misc/debian/brlcad-doc.desktop, misc/debian/brlcad-mged.desktop,
-	  misc/debian/brlcad-mged.png, misc/debian/brlcad-rtwizard.desktop,
-	  misc/debian/brlcad.directory, misc/debian/brlcad.install,
-	  misc/debian/brlcad.png, misc/debian/brlcad.postinst,
-	  misc/debian/brlcad.postrm, misc/debian/changelog,
-	  misc/debian/source/include-binaries, sh/make_rpm.sh:
-	  add magic mime-type association to geometry db file in GNU/Linux
-
-2011-02-09 22:31  erikgreenwald
-
-	* [r43195] NEWS, TODO, include/Makefile.am, include/bot.h,
-	  include/raytrace.h, include/rtgeom.h, include/tie.h,
-	  src/adrt/Makefile.am, src/adrt/libtie, src/adrt/load.c,
-	  src/adrt/load_g.c, src/librt/Makefile.am, src/librt/globals.c,
-	  src/librt/primitives/bot/bot.c, src/librt/primitives/bot/btg.c,
-	  src/librt/primitives/bot/btg.h, src/librt/primitives/bot/btgf.c,
-	  src/librt/primitives/bot/tie.c,
-	  src/librt/primitives/bot/tie_kdtree.c,
-	  src/librt/primitives/bot/tieprivate.h, src/librt/tcl.c,
-	  src/other/togl/src/CMakeLists.txt:
-	  bottie modifications moved to trunk.
-
-2011-02-09 21:53  brlcad
-
-	* [r43193] NEWS, README:
-	  prepare for next expected 7.18.4 release
-
-2011-02-09 21:53  brlcad
-
-	* [r43192] include/conf/PATCH:
-	  release is tagged, bump to 7.18.3
-
-2011-02-09 20:20  brlcad
-
-	* [r43185] src/libfb/if_ogl.c:
-	  it actually needs __USE_XOPEN and __USE_BSD to get to the decl,
-	  so add them both with ifndef protection. this suckage belongs in
-	  libbu.
-
-2011-02-09 19:59  brlcad
-
-	* [r43181] src/libfb/if_ogl.c:
-	  linux is using __USE_BSD and __USE_XOPEN_EXTENDED in order to get
-	  to the getpagesize() declaration.
-
-2011-02-09 14:41  brlcad
-
-	* [r43159] misc/debian/application-x-brlcad-extension.xml:
-	  set eol-style
-
-2011-02-09 05:32  brlcad
-
-	* [r43155] ChangeLog:
-	  update ChangeLog for release 7.18.2
-
-2011-02-09 05:31  brlcad
-
-	* [r43154] include/conf/PATCH:
-	  bump patch to .2 for release 7.18.2, final stages
-
-2011-02-09 05:27  brlcad
-
-	* [r43153] NEWS:
-	  jordi also improved platform support on Fedora, so call it out.
-	  leave openSUSE for the next release since it's not as
-	  well-tested.
-
-2011-02-09 05:26  brlcad
-
-	* [r43152] NEWS:
-	  include write-up highlights for 7.18.2 emphasizing the v4
-	  compatibility work along with the platform integration efforts
-	  from new contributor jordi sayol.
 
