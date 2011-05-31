@@ -4969,6 +4969,12 @@ BU_EXPORT BU_EXTERN(void bu_vls_prepend,
  * given an input string, wrap the string in double quotes if there is
  * a space.  escape any existing double quotes.
  *
+ * TODO: consider a specifiable quote character and octal encoding
+ * instead of double quote wrapping.  perhaps specifiable encode type:
+ *   BU_ENCODE_QUOTE
+ *   BU_ENCODE_OCTAL
+ *   BU_ENCODE_XML
+ *
  * the behavior of this routine is subject to change but should remain
  * a reversible operation when used in conjunction with
  * bu_vls_decode().
