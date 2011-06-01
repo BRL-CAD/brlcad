@@ -3180,6 +3180,8 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::init_view_bindings {{_type default}} {
+    global tcl_platform
+
     switch -- $_type {
 	brlcad {
 	    foreach pane {ul ur ll lr} {
@@ -3196,6 +3198,15 @@ package provide cadwidgets::Ged 1.0
 		bind $win <2> {}
 		bind $win <3> {}
 	    }
+	}
+    }
+
+    # Turn off <Enter> bindings. This fixes the problem where various
+    # various dialogs disappear when the mouse enters the geometry
+    # window when on the "windows" platform.
+    if {$tcl_platform(platform) == "windows"} {
+	foreach dm {ur ul ll lr} {
+	    bind $itk_component($dm) <Enter> {}
 	}
     }
 }
