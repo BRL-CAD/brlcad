@@ -670,6 +670,8 @@ Popup Menu    Right or Ctrl-Left
 	variable mNodeDrawList
 	variable mAffectedNodeList ""
 
+	variable mCoreCmdLevel 0
+
 	# init functions
 	method initImages {}
 	method initTree          {}
@@ -2844,8 +2846,8 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    set arg1 [lindex $args 1]
     if {$cmd == "info"} {
+	set arg1 [lindex $args 1]
 	switch $arg1 {
 	    function {
 		if {[llength $args] == 3} {
@@ -2872,7 +2874,7 @@ Popup Menu    Right or Ctrl-Left
     set i [lsearch -exact $mArcherCoreCommands $cmd]
     if {$i != -1} {
 	addHistory $args
-	return [eval $args]
+	return [uplevel $mCoreCmdLevel $args]
     }
 
     set i [lsearch -exact $mUnwrappedDbCommands $cmd]

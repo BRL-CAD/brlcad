@@ -110,6 +110,15 @@ package provide Archer 1.0
     } {}
     destructor {}
 
+
+    # Dynamically load methods
+    if {$Archer::methodDecls != ""} {
+	foreach meth $::Archer::methodDecls {
+	    eval $meth
+	}
+    }
+
+
     public {
 	# Public Class Variables
 	common LEDGER_ENTRY_OUT_OF_SYNC_ATTR "Ledger_Entry_Out_Of_Sync"
@@ -158,6 +167,7 @@ package provide Archer 1.0
 	method raytracePlus {}
 
 	# ArcherCore Override Section
+	method cmd                 {args}
 	method 3ptarb              {args}
 	method attr                {args}
 	method bo                  {args}
@@ -496,7 +506,11 @@ package provide Archer 1.0
 #                      CONSTRUCTOR
 # ------------------------------------------------------------
 ::itcl::body Archer::constructor {{_viewOnly 0} {_noCopy 0} args} {
+
     # Append a few more commands
+    if {$Archer::extraMgedCommands != ""} {
+	eval lappend mArcherCoreCommands $Archer::extraMgedCommands
+    }
     lappend mArcherCoreCommands importFg4Sections
 
     if {!$mViewOnly} {
@@ -980,6 +994,15 @@ package provide Archer 1.0
     }
 
     return 0
+}
+
+
+::itcl::body Archer::cmd {args} {
+    set mCoreCmdLevel 1
+    set ret [eval ArcherCore::cmd $args]
+    set mCoreCmdLevel 0
+
+    return $ret
 }
 
 
