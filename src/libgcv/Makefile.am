@@ -23,7 +23,8 @@ AM_CPPFLAGS = \
 
 libgcv_nil_la_SOURCES = \
 	region_end.c \
-	region_end_mc.c
+	region_end_mc.c \
+	bottess.c
 
 EXTRA_DIST = \
 	CMakeLists.txt \
