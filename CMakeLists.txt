@@ -515,9 +515,9 @@ FILE(APPEND ${CONFIG_H_FILE} "#define BRLCAD_ROOT \"${CMAKE_INSTALL_PREFIX}\"\n"
 FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_VERSION \"${BRLCAD_VERSION}\"\n")
 FILE(APPEND ${CONFIG_H_FILE} "#define VERSION \"${BRLCAD_VERSION}\"\n")
 
-IF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
+IF("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
 	FILE(APPEND ${CONFIG_H_FILE} "#define DEBUG 1\n")
-ENDIF()
+ENDIF("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
 
 # *******************************************************************
 # ***        Top Level Configure Options - Stage 1 of 9           ***
@@ -544,9 +544,9 @@ IF(CMAKE_BUILD_TYPE)
 	# they're specifically asked for (i.e. there is a situation where
 	# the developer wants to look into the static libs specifically.
 	# Note that this won't turn off libs that are built ONLY as static
-	IF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND NOT MSVC)
+	IF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
 		OPTION(BUILD_STATIC_LIBS "Build static libraries" OFF)
-	ENDIF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND NOT MSVC)
+	ENDIF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
 ELSE(CMAKE_BUILD_TYPE)
 	OPTION(BUILD_STATIC_LIBS "Build static libraries" ON)
 ENDIF(CMAKE_BUILD_TYPE)
@@ -563,7 +563,7 @@ OPTION(BRLCAD-ENABLE_RTSERVER "Enable the librtserver target." ON)
 OPTION(BRLCAD-ENABLE_SYSTEM_LIBS_ONLY "Use only the system's libraries." OFF)
 OPTION(BRLCAD-ENABLE_ALL_LOCAL_LIBS "Build all the local copies of libraries." OFF)
 IF(BRLCAD-ENABLE_SYSTEM_LIBS_ONLY AND BRLCAD-ENABLE_ALL_LOCAL_LIBS)
-	MESSAGE("Both ENABLE and DISABLE all local libs set - using ENABLE")
+	MESSAGE(WARNING "Both ENABLE and DISABLE all local libs set - using ENABLE")
 	SET(BRLCAD-ENABLE_SYSTEM_LIBS_ONLY OFF CACHE BOOL "Use only the system's libraries." FORCE)
 ENDIF(BRLCAD-ENABLE_SYSTEM_LIBS_ONLY AND BRLCAD-ENABLE_ALL_LOCAL_LIBS)
 
@@ -578,17 +578,17 @@ MARK_AS_ADVANCED(BRLCAD-ENABLE_AQUA)
 OPTION(BRLCAD-INSTALL_EXAMPLE_GEOMETRY "Install the example BRL-CAD geometry files." ON)
 
 # Enable features requiring X11
-if(WIN32)
+IF(WIN32)
 	OPTION(BRLCAD-ENABLE_X11 "Use X11." OFF)
-elseif(BRLCAD-ENABLE_AQUA)
+ELSEIF(BRLCAD-ENABLE_AQUA)
 	OPTION(BRLCAD-ENABLE_X11 "Use X11." OFF)
-else(WIN32)
+ELSE(WIN32)
 	OPTION(BRLCAD-ENABLE_X11 "Use X11." ON)
-endif(WIN32)
-if (BRLCAD-ENABLE_X11)
+ENDIF(WIN32)
+IF(BRLCAD-ENABLE_X11)
 	SET(BRLCAD-ENABLE_AQUA OFF CACHE STRING "Don't use Aqua if we're doing X11" FORCE)
 	SET(OPENGL_USE_AQUA OFF CACHE STRING "Don't use Aqua if we're doing X11" FORCE)
-endif (BRLCAD-ENABLE_X11)
+ENDIF(BRLCAD-ENABLE_X11)
 IF(NOT APPLE)
 	MARK_AS_ADVANCED(OPENGL_USE_AQUA)
 ENDIF(NOT APPLE)
@@ -628,7 +628,7 @@ IF(NOT BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_RTGL)
 	SET(BRLCAD-ENABLE_RTGL OFF CACHE BOOL "Enable experimental RTGL code." FORCE)
 ENDIF(NOT BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_RTGL)
 IF(BRLCAD-ENABLE_AQUA)
-	SET(OPENGL_USE_AQUA ON CACHE STRING "Don't use Aqua if we're doing X11" FORCE)
+	SET(OPENGL_USE_AQUA ON CACHE STRING "Aqua enabled - use Aqua OpenGL" FORCE)
 ENDIF(BRLCAD-ENABLE_AQUA)
 
 
@@ -748,14 +748,14 @@ FILE(APPEND  ${CONFIG_H_FILE} "#define _LARGEFILE64_SOURCE 0\n")
 
 # Take advantage of parallel processors if available - highly recommended
 OPTION(BRLCAD-ENABLE_SMP "Enable SMP architecture parallel computation support" ON)
-IF(WIN32)
+IF(WIN32 AND BRLCAD-ENABLE_SMP)
 	MESSAGE("SMP Support is not ready on Windows - disabling")
 	SET(BRLCAD-ENABLE_SMP OFF)
-ENDIF(WIN32)
+ENDIF(WIN32 AND BRLCAD-ENABLE_SMP)
 MARK_AS_ADVANCED(BRLCAD-ENABLE_SMP)
-if (BRLCAD-ENABLE_SMP)
+IF(BRLCAD-ENABLE_SMP)
 	FILE(APPEND  ${CONFIG_H_FILE} "#define PARALLEL 1\n")
-endif (BRLCAD-ENABLE_SMP)
+ENDIF(BRLCAD-ENABLE_SMP)
 
 # *******************************************************************
 # ***            Check for Programs - Stage 2 of 9                ***
@@ -775,22 +775,21 @@ INCLUDE(${BRLCAD_CMAKE_DIR}/FindYACC.cmake)
 
 # If building extra docs, need to look for XSLTPROC and possibly
 # Apache FOP.  Based on what is found, turn on/off Docbook settings
-if (BRLCAD-BUILD_EXTRADOCS)
+IF(BRLCAD-BUILD_EXTRADOCS)
 	INCLUDE(${BRLCAD_CMAKE_DIR}/FindXSLT.cmake)
 	IF(NOT XSLTPROC_EXEC)
 		MESSAGE("Extra doc build requested, but xsltproc not found - disabling.")
 		SET(BRLCAD-BUILD_EXTRADOCS OFF)
 	ENDIF(NOT XSLTPROC_EXEC)
 	IF(BRLCAD-BUILD_EXTRADOCS_PDF)
-	INCLUDE(${BRLCAD_CMAKE_DIR}/FindFOP.cmake)
-	IF(NOT APACHE_FOP)
-		MESSAGE("Extra doc PDF build requested, but Apache FOP not found - disabling.")
-		SET(BRLCAD-BUILD_EXTRADOCS_PDF OFF)
-		SET(BRLCAD-BUILD_EXTRADOCS_PDF_MAN OFF)
-	ENDIF(NOT APACHE_FOP)
-
+		INCLUDE(${BRLCAD_CMAKE_DIR}/FindFOP.cmake)
+		IF(NOT APACHE_FOP)
+			MESSAGE("Extra doc PDF build requested, but Apache FOP not found - disabling.")
+			SET(BRLCAD-BUILD_EXTRADOCS_PDF OFF)
+			SET(BRLCAD-BUILD_EXTRADOCS_PDF_MAN OFF)
+		ENDIF(NOT APACHE_FOP)
 	ENDIF(BRLCAD-BUILD_EXTRADOCS_PDF)
-endif (BRLCAD-BUILD_EXTRADOCS)
+ENDIF(BRLCAD-BUILD_EXTRADOCS)
 
 # If using dtrace, we will need to find it
 IF(BRLCAD-ENABLE_DTRACE)
