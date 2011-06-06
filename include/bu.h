@@ -3382,6 +3382,9 @@ BU_EXPORT BU_EXTERN(char *bu_dirname,
  * Given a string containing slashes such as a pathname, return a
  * pointer to the first character after the last slash.
  *
+ * It is the caller's responsibility to bu_free() the pointer returned
+ * from this routine. Examples of strings returned:
+ *
  *	/usr/dir/file	file
  * @n	/usr/dir/	dir
  * @n	/usr/		usr
@@ -3392,8 +3395,9 @@ BU_EXPORT BU_EXTERN(char *bu_dirname,
  * @n	usr		usr
  * @n	a/b		b
  * @n	a/		a
+ * @n	///		/
  */
-BU_EXPORT BU_EXTERN(const char *bu_basename,
+BU_EXPORT BU_EXTERN(char *bu_basename,
 		    (const char *cp));
 
 /** @} */

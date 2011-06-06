@@ -88,6 +88,7 @@ int parse_args(int ac, char *av[])
 {
     int  c;
     char *strrchr();
+    char *tmp_basename = NULL;
 
     /* Turn off bu_getopt's error messages */
     bu_opterr = 0;
@@ -101,7 +102,9 @@ int parse_args(int ac, char *av[])
 	    case '?':
 	    case 'h':
 	    default:
-		usage(bu_basename(av[0]), "Bad or help flag specified\n");
+                tmp_basename = bu_basename(av[0]);
+		usage(tmp_basename, "Bad or help flag specified\n");
+		bu_free(tmp_basename, "tmp_basename free");
 		break;
 	}
     }
@@ -251,6 +254,7 @@ int main(int ac, char *av[])
     struct db_tree_state init_state; /* state table for the heirarchy walker */
     char idbuf[1024] = {0};		/* Database title */
     int arg_count;
+    char *tmp_basename;
 
     /** @struct user_data
      * This is an example structure.
@@ -264,7 +268,9 @@ int main(int ac, char *av[])
     arg_count = parse_args(ac, av);
 
     if ((ac - arg_count) < 1) {
-	usage(bu_basename(av[0]), "bad arugment count");
+	tmp_basename = bu_basename(av[0]);
+	usage(tmp_basename, "bad arugment count");
+	bu_free(tmp_basename, "tmp_basename free");
     }
 
     /*

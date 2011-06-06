@@ -2676,15 +2676,17 @@ rt_shader_mat(
     mat_t m_tmp;
     vect_t v_tmp;
     struct rt_i *my_rtip;
-    const char *reg_name;
+    char *reg_name;
 
     RT_CK_RTI(rtip);
     RT_CK_RESOURCE(resp);
 
     reg_name = bu_basename(rp->reg_name);
     /* get model-to-region space mapping */
-    if (db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name, resp) < 0)
+    if (db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name, resp) < 0){
+	bu_free(reg_name, "reg_name free");
 	return -1;
+    }
 
     if (VEQUAL(p_min, p_max)) {
 	/* User/shader did not specify bounding box, obtain bounding
@@ -2722,6 +2724,9 @@ rt_shader_mat(
     MAT_IDN(m_scale);
     MAT_SCALE_VEC(m_scale, v_tmp);
     bn_mat_mul(model_to_shader, m_scale, m_tmp);
+
+    bu_free(reg_name, "reg_name free");
+
     return 0;
 }
 

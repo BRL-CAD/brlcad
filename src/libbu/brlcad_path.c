@@ -206,9 +206,14 @@ bu_argv0_full_path(void)
 const char *
 bu_getprogname(void) {
     const char *name = NULL;
+    static char buffer[MAXPATHLEN] = {0};
+    char *tmp_basename;
 
     if (bu_progname[0] != '\0') {
-	return bu_basename(bu_progname);
+	tmp_basename = bu_basename(bu_progname);
+	bu_strlcpy(buffer, tmp_basename, strlen(tmp_basename)+1);
+	bu_free(buffer, "tmp_basename free");
+	return buffer;
     }
 
 #ifdef HAVE_GETPROGNAME
@@ -221,7 +226,10 @@ bu_getprogname(void) {
 
     snprintf(bu_progname, MAXPATHLEN, "%s", name);
 
-    return bu_basename(bu_progname);
+    tmp_basename = bu_basename(bu_progname);
+    bu_strlcpy(buffer, tmp_basename, strlen(tmp_basename)+1);
+    bu_free(buffer, "tmp_basename free");
+    return buffer;
 }
 
 
