@@ -48,6 +48,9 @@ new names should be listed for reference.
 7.20
 ----
 
+autogen.sh && configure
+        GNU Autotools build system -> CMake build system
+        ./configure -> cmake .
 raytrace.h
 	rt_load_attrs()
 
