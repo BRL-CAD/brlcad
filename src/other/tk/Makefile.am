@@ -191,7 +191,8 @@ EXTRA_DIST = \
 	unix/tkUnixWm.c \
 	unix/tkUnixXId.c \
 	win \
-	xlib
+	xlib \
+	CMakeLists.txt
 
 DISTCLEANFILES = \
 	unix/autom4te.cache \

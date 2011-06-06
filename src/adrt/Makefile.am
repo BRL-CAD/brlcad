@@ -92,7 +92,8 @@ EXTRA_DIST = \
 	slave/tienet_slave.h \
 	slave/slave.h \
 	slave/slave.c \
-	slave/tienet_slave.c
+	slave/tienet_slave.c \
+	CMakeLists.txt
 
 LINT=splint $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES)
 lint:

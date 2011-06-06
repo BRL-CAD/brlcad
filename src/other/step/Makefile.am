@@ -30,7 +30,8 @@ EXTRA_DIST = \
 	ChangeLog \
 	libtool \
 	configure.ac \
-	TODO
+	TODO \
+	CMakeLists.txt
 
 DISTCLEANFILES = \
 	$(CONFIG_CACHE) \

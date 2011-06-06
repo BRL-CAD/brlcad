@@ -95,7 +95,8 @@ EXTRA_DIST = \
 	spdi.sh \
 	spdipix.asc \
 	testlib.c \
-	weight.sh
+	weight.sh \
+	CMakeLists.txt
 
 CLEANFILES = \
 	$(MOSTLYCLEANFILES) \
@@ -181,7 +182,8 @@ CLEANFILES = \
 	weight.mged \
 	weight.out \
 	weight.ref \
-	wgt.out
+	wgt.out \
+	CMakeLists.txt
 
 MOSTLYCLEANFILES = \
 	fastgen.log \

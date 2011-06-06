@@ -68,7 +68,8 @@ BUILT_SOURCES = \
 EXTRA_DIST = \
 	$(BUILT_SOURCES) \
 	README \
-	Changes
+	Changes \
+	CMakeLists.txt
 
 DISTCLEANFILES = $(BUILT_SOURCES)
 

@@ -6,6 +6,6 @@ tcl_SCRIPTS = \
 	botPropertyBox.tcl \
 	botTools.tcl
 
-EXTRA_DIST = $(tcl_SCRIPTS)
+EXTRA_DIST = $(tcl_SCRIPTS) CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs

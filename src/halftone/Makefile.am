@@ -19,7 +19,7 @@ halftone_LDADD = \
 
 man_MANS = halftone.1
 
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = $(man_MANS) CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs
 

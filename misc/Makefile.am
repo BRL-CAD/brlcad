@@ -75,7 +75,8 @@ EXTRA_DIST = \
 	win32-msvc/Dll/CMakeLists.txt \
 	win32-msvc/Dll/brlcad.def \
 	win32-msvc/Dll/brlcad.rc \
-	win32-msvc/Dll/TclDummies.c
+	win32-msvc/Dll/TclDummies.c \
+	CMakeLists.txt
 
 
 datafilesdir = $(BRLCAD_DATA)/data

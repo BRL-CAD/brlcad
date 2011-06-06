@@ -7,6 +7,6 @@ liborle_la_LDFLAGS = -version-info 19:1 -no-undefined
 
 AM_CFLAGS = ${STRICT_FLAGS}
 
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = $(man_MANS) CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs

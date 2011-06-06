@@ -11,6 +11,6 @@ libcursor_la_LIBADD = ${CURSOR_LIBS}
 AM_CPPFLAGS = ${TERMLIB_CPPFLAGS}
 AM_CFLAGS = ${STRICT_FLAGS}
 
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = $(man_MANS) CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs

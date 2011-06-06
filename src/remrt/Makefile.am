@@ -27,6 +27,8 @@ rtsrv_SOURCES = \
 
 noinst_HEADERS = ihost.h protocol.h
 
+EXTRA_DIST = CMakeLists.txt
+
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \

@@ -46,6 +46,7 @@ noinst_HEADERS = \
 	s_HEADER_SCHEMA.h \
 	seeinfodefault.h
 
+EXTRA_DIST = CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs
 

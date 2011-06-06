@@ -645,7 +645,8 @@ EXTRA_DIST = \
 	${BOMBARDIER_EXTRA} \
 	${PC_TEST_EXTRA} \
 	${PL_DM_EXTRA} \
-	${PL_X_EXTRA}
+	${PL_X_EXTRA} \
+	CMakeLists.txt
 
 DEPENDS = src/liborle src/libdm src/libfb src/libpc
 

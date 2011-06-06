@@ -173,7 +173,8 @@ endif
 
 EXTRA_DIST = \
 	boost \
-	togl
+	togl \
+	CMakeLists.txt
 
 # FIXME: need to only traverse tcl/tk if configured
 DIST_SUBDIRS = \

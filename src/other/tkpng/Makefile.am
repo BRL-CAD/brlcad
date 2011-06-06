@@ -26,6 +26,7 @@ DISTCLEANFILES = \
 EXTRA_DIST = \
 	README \
 	ChangeLog \
-	license.terms
+	license.terms \
+	CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs

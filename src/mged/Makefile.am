@@ -207,7 +207,8 @@ EXTRA_DIST = \
 	fbserv_win32.c \
 	mged.bat \
 	mged.dsp \
-	red.c
+	red.c \
+	CMakeLists.txt
 
 DEPENDS = src/libtermio src/libwdb src/libdm src/other/incrTcl src/libtclcad
 

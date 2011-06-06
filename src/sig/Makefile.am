@@ -155,6 +155,8 @@ dauto2_LDADD = ${BU}
 ihist_SOURCES = ihist.c
 ihist_LDADD = ${BU}
 
+EXTRA_DIST = CMakeLists.txt
+
 DEPENDS = src/libfb src/libfft
 
 include $(top_srcdir)/misc/Makefile.defs

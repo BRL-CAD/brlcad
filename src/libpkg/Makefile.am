@@ -24,7 +24,7 @@ tpkg_LDADD = \
 sample_applicationsdir=$(SAMPLE_APPLICATIONS_DIR)
 sample_applications_DATA = tpkg.c
 
-EXTRA_DIST = libpkg.dsp
+EXTRA_DIST = libpkg.dsp CMakeLists.txt
 
 DEPENDS = src/libbu
 

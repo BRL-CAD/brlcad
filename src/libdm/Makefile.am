@@ -84,7 +84,8 @@ libdm_la_LIBADD = \
 
 EXTRA_DIST = \
 	TODO \
-	libdm.dsp
+	libdm.dsp \
+	CMakeLists.txt
 
 DEPENDS = src/librt src/libfb src/libged
 

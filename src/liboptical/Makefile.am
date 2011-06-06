@@ -61,7 +61,8 @@ librtms_la_SOURCES = \
 	shade.c
 
 EXTRA_DIST = \
-	liboptical.dsp
+	liboptical.dsp \
+	CMakeLists.txt
 
 DEPENDS = src/librt
 

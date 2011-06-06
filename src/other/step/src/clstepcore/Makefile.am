@@ -77,7 +77,8 @@ EXTRA_DIST = \
 	ExpDict.h.s \
 	README \
 	dict-pic.txt \
-	notes.txt
+	notes.txt \
+	CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs
 

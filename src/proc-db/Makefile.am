@@ -118,7 +118,8 @@ noinst_HEADERS = \
 EXTRA_DIST = \
 	metaballs.pl \
 	sgi.sh \
-	spiral.pl
+	spiral.pl \
+	CMakeLists.txt
 
 DEPENDS = src/libwdb
 

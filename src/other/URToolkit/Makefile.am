@@ -12,7 +12,8 @@ EXTRA_DIST = \
 	MANIFEST \
 	README \
 	blurb \
-	copyright
+	copyright \
+	CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs
 

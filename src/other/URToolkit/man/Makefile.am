@@ -96,7 +96,8 @@ man_MANS = \
 	wasatchrle.1
 
 EXTRA_DIST = \
-	$(man_MANS)
+	$(man_MANS) \
+	CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs
 

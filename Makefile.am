@@ -99,7 +99,8 @@ EXTRA_DIST = \
 	ChangeLog \
 	TODO \
 	autogen.sh \
-	libtool
+	libtool \
+	CMakeLists.txt
 
 DISTCLEANFILES = \
 	$(CONFIG_CACHE) \

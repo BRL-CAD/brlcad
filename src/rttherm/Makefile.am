@@ -69,7 +69,8 @@ EXTRA_DIST = \
 	$(man_MANS) \
 	${SSAMPVIEW_EXTRA} \
 	std_day_1km.dat \
-	test.sh
+	test.sh \
+	CMakeLists.txt
 
 DEPENDS = src/rt src/libged src/libmultispectral
 

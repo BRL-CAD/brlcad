@@ -84,7 +84,8 @@ dist_man_MANS = libfb.3
 
 EXTRA_DIST = \
 	if_TEMPLATE.c \
-	libfb.dsp
+	libfb.dsp \
+	CMakeLists.txt
 
 DEPENDS = src/libpkg
 

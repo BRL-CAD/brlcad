@@ -18,3 +18,5 @@ libmultispectral_la_SOURCES = \
 DEPENDS = src/librt src/liboptical
 
 include $(top_srcdir)/misc/Makefile.defs
+
+EXTRA_DIST = CMakeLists.txt

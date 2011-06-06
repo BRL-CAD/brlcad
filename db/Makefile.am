@@ -72,7 +72,8 @@ MODELS = \
 EXTRA_DIST = \
 	${MODELS} \
 	db.php \
-	terra.dsp
+	terra.dsp \
+	CMakeLists.txt
 
 dbdir = $(BRLCAD_DATA)/db
 

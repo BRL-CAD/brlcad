@@ -32,7 +32,8 @@ EXTRA_DIST = \
 	${BENCHMARK_PIX} \
 	${PIX} \
 	${LOG} \
-	${SAVEVIEWS}
+	${SAVEVIEWS} \
+	CMakeLists.txt
 
 pixdir = $(BRLCAD_DATA)/pix
 pix_DATA = \

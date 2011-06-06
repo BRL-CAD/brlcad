@@ -33,7 +33,7 @@ man_MANS = \
 	g_lint.1 \
 	remapid.1
 
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = $(man_MANS) CMakeLists.txt
 
 sample_applicationsdir=$(SAMPLE_APPLICATIONS_DIR)
 sample_applications_DATA = g_transfer.c

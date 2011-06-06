@@ -116,6 +116,25 @@ EXTRA_DIST = \
 	system/mann/mged_cmd_template.xml \
 	system/man3/en/Makefile.am \
 	system/man5/en/Makefile.am \
-	system/mann/en/Makefile.am
+	system/mann/en/Makefile.am \
+	CMakeLists.txt \
+	articles/CMakeLists.txt \
+	articles/en/CMakeLists.txt \
+	specifications/CMakeLists.txt \
+	specifications/en/CMakeLists.txt \
+	lessons/CMakeLists.txt \
+	lessons/en/CMakeLists.txt \
+	lessons/es/CMakeLists.txt \
+	books/CMakeLists.txt \
+	books/en/CMakeLists.txt \
+	system/man1/CMakeLists.txt \
+	system/man1/en/CMakeLists.txt \
+	system/man5/CMakeLists.txt \
+	system/man5/en/CMakeLists.txt \
+	system/CMakeLists.txt \
+	system/mann/CMakeLists.txt \
+	system/mann/en/CMakeLists.txt \
+	system/man3/CMakeLists.txt \
+	system/man3/en/CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs

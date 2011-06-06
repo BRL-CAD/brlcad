@@ -522,7 +522,8 @@ EXTRA_DIST = \
 	src/tkhtml.tcl \
 	src/tokenlist.txt \
 	tclconfig/README.txt \
-	tclconfig/tcl.m4
+	tclconfig/tcl.m4 \
+	CMakeLists.txt
 
 .PHONY: all binaries clean depend distclean doc install libraries test
 

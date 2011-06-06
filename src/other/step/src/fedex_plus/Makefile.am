@@ -52,6 +52,8 @@ noinst_HEADERS = \
 	classes.h \
 	complexSupport.h
 
+EXTRA_DIST = CMakeLists.txt
+
 DEPS = \
 	src/express \
 	src/exppp

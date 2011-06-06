@@ -40,6 +40,8 @@ wire_SOURCES = wire.c
 
 noinst_HEADERS = fence.h
 
+EXTRA_DIST = CMakeLists.txt
+
 DEPENDS = src/libged src/libwdb
 
 include $(top_srcdir)/misc/Makefile.defs

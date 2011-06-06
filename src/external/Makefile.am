@@ -53,7 +53,8 @@ EXTRA_DIST = \
 	README \
 	$(CUBIT_FILES) \
 	$(PROE_FILES) \
-	$(UG_FILES)
+	$(UG_FILES) \
+	CMakeLists.txt
 
 DIST_SUBDIRS = \
 	Cubit \

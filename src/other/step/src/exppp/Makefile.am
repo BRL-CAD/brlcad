@@ -27,7 +27,8 @@ libexppp_la_LIBADD = \
 	libexppp_nil.la
 
 EXTRA_DIST = \
-	README
+	README \
+	CMakeLists.txt
 
 DEPS = src/express
 

@@ -226,7 +226,7 @@ man_MANS = \
 	pp-fb.1 \
 	rle-fb.1
 
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = $(man_MANS) CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs
 
