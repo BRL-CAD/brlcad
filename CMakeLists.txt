@@ -209,9 +209,11 @@ IF(NOT BRLCAD-IS_SUBBUILD)
 	define_property(GLOBAL PROPERTY CMAKE_LIBRARY_TARGET_LIST BRIEF_DOCS "libtarget list" FULL_DOCS "Library target list")
 	define_property(GLOBAL PROPERTY CMAKE_EXEC_TARGET_LIST BRIEF_DOCS "exec target list" FULL_DOCS "Executable target list")
 	define_property(GLOBAL PROPERTY CMAKE_CUSTOM_TARGET_LIST BRIEF_DOCS "custom target list" FULL_DOCS "Custom target list")
+	define_property(GLOBAL PROPERTY DISTCHECK_DIRS BRIEF_DOCS "check during distcheck" FULL_DOCS "List of directories to check during make distcheck")
 	MARK_AS_ADVANCED(CMAKE_LIBRARY_TARGET_LIST)
 	MARK_AS_ADVANCED(CMAKE_EXEC_TARGET_LIST)
 	MARK_AS_ADVANCED(CMAKE_CUSTOM_TARGET_LIST)
+	MARK_AS_ADVANCED(DISTCHECK_DIRS)
 
 	# Override and wrap add_library.  While we're at it, avoid doubling up
 	# on the lib prefix for libraries if the target name is lib<target>
@@ -240,10 +242,18 @@ IF(NOT BRLCAD-IS_SUBBUILD)
 		set_property(GLOBAL APPEND PROPERTY CMAKE_CUSTOM_TARGET_LIST ${name})
 	endfunction(add_custom_target)
 
-	# Some additional logic is needed in the case of directories
-	define_property(DIRECTORY PROPERTY DIR_TARGET_LIST BRIEF_DOCS "dir list" FULL_DOCS "Directory target list")
-	define_property(GLOBAL PROPERTY DISTCHECK_DIRS BRIEF_DOCS "check during distcheck" FULL_DOCS "List of directories to check during make distcheck")
+	# We want to check the top directory in distcheck, but it won't be added by
+	# add_subdirectory - add it manually
 	set_property(GLOBAL PROPERTY DISTCHECK_DIRS "${CMAKE_CURRENT_SOURCE_DIR}")
+ 
+	# The toplevel dir doesn't invoke add_subdirectory on itself,
+	# so remove any old cmakefiles.cmake file manually
+	FILE(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/cmakefiles.cmake)
+	FILE(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/cmakepaths.cmake)
+  
+	# The add_subdirectory wrapper must clear old files holding distcheck lists
+	# to avoid continually growing files over multiple configure runs, as well
+	# as adding directories to distcheck.
 	function(add_subdirectory name)
 		FILE(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/${name}/cmakefiles.cmake)
 		FILE(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/${name}/cmakepaths.cmake)
@@ -252,11 +262,6 @@ IF(NOT BRLCAD-IS_SUBBUILD)
 		GET_FILENAME_COMPONENT(ITEM_NAME ${name} NAME)
 		FILE(APPEND ${CMAKE_CURRENT_BINARY_DIR}/cmakefiles.cmake	"\\${ITEM_NAME}")
 	endfunction(add_subdirectory)
-
-	# The toplevel dir doesn't invoke add_subdirectory on itself,
-	# so remove any old cmakefiles.cmake file manually
-	FILE(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/cmakefiles.cmake)
-	FILE(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/cmakepaths.cmake)
 ENDIF(NOT BRLCAD-IS_SUBBUILD)
 
 
