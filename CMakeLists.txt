@@ -169,6 +169,13 @@ ENDIF(CMAKE_SYSTEM_IGNORE_PATH)
 # of the parent build as well, and disables the mechanism for ensuring
 # that the timing code runs at the correct points during the build.
 
+# Also in this logic, we need to provide bookkeeping logic for the
+# distribution verification or "distcheck" routines that will check
+# the state of the source tree against that expected and accounted
+# for in the build files.  The global coverage needed for the purpose
+# results in the command override mechanism needed for target ordering
+# needing to serve two purposes at once.
+
 # First, define a macro for building lists of files.  Distcheck needs 
 # to know what files are "supposed" to be present in order to make 
 # sure the source tree is clean prior to building a distribution 
