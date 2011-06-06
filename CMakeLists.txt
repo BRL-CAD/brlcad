@@ -97,29 +97,34 @@ PROJECT(BRLCAD)
 # CMake's standard behavior is to add a CMAKE_INSTALL_PREFIX to the
 # search path once defined, resulting in (for us) an unexpected behavior
 # of returning old installed libraries when CMake is re-run in a
-# directory.  To work around this, follow the route identified by
-# by Maik Beckmann for CMAKE_SYSTEM_PREFIX_PATH:
+# directory.  
+
+# To work around this, there are two possible approaches.  One,
+# identified by Maik Beckmann, operates on CMAKE_SYSTEM_PREFIX_PATH:
 #
 # http://www.cmake.org/pipermail/cmake/2010-October/040292.html
 #
-# We'll go one step further, addressing all of the variables 
-# mentioned in cmDocumentVariables.cxx line 618 (as of CMake 2.8.4)
-# CMAKE_SYSTEM_PREFIX_PATH seems to be enough on some systems, but
-# problems are still seen on Windows even after it is altered.
-# 
-# The complication is if we are installing to a "legitimate" system
-# search path - i.e. our CMAKE_INSTALL_PREFIX value is standard
-# enough that it is a legitimate search target for find_package.
-# In this case, we can't exclude accidental hits on our libraries
-# without also excluding legitimate find_package results.  So the net
-# results are:
+# The other, pointed out by Michael Hertling, uses the
+# CMake_[SYSTEM_]IGNORE_PATH variables.
+#
+# http://www.cmake.org/pipermail/cmake/2011-May/044503.html
+#
+# BRL-CAD initially operated on CMAKE_SYSTEM_PREFIX_PATH, but has
+# switched to using the *_IGNORE_PATH variables.
+#
+# The complication with ignoring install paths is if we are 
+# installing to a "legitimate" system search path - i.e. our 
+# CMAKE_INSTALL_PREFIX value is standard enough that it is a legitimate 
+# search target for find_package. In this case, we can't exclude 
+# accidental hits on our libraries without also excluding legitimate 
+# find_package results.  So the net results are:
 #
 # 1.  If you are planning to install to a system directory (typically
 #     a bad idea but the settings are legal) clean out the old system
 #     first or accept that the old libraries will be found and used.
 #
-# 2.  For more custom paths, the logic below will strip out the value
-#     of CMAKE_INSTALL_PREFIX to avoid its use in find_package searches
+# 2.  For more custom paths, the logic below will avoid the value
+#     of CMAKE_INSTALL_PREFIX in find_package searches
 #
 # (Note:  CMAKE_INSTALL_PREFIX must be checked in the case where someone
 # sets it on the command line prior to CMake being run.  BRLCAD_PREFIX
@@ -129,53 +134,22 @@ PROJECT(BRLCAD)
 # To ensure the previous (and internally set) CMAKE_INSTALL_PREFIX value
 # is available, BRLCAD_PREFIX is used to store the value in the cache.)
 
-# Utility macro for path list pruning
-MACRO(PATH_REMOVE pathlist prunepath)
-	IF(NOT ${${prunepath}} STREQUAL "/usr" AND NOT ${${prunepath}} STREQUAL "/usr/local")
-		LIST(FIND ${pathlist} ${${prunepath}} PREFIX_IN_SEARCH)
-		IF(NOT PREFIX_IN_SEARCH STREQUAL "-1")
-			LIST(REMOVE_AT ${pathlist} ${PREFIX_IN_SEARCH})
-			SET(${pathlist} ${${pathlist}} CACHE STRING "Tweaked to avoid inconsistent search results")
-		ELSE(NOT PREFIX_IN_SEARCH STREQUAL "-1")
-			SET(${pathlist} ${${pathlist}} CACHE STRING "Cached at beginning of CMake run")
-		ENDIF(NOT PREFIX_IN_SEARCH STREQUAL "-1")
-	ENDIF(NOT ${${prunepath}} STREQUAL "/usr" AND NOT ${${prunepath}} STREQUAL "/usr/local")
-	MARK_AS_ADVANCED(${pathlist})
-ENDMACRO()
-
-
 IF(CMAKE_INSTALL_PREFIX)
-	PATH_REMOVE(CMAKE_SYSTEM_PREFIX_PATH CMAKE_INSTALL_PREFIX)
-	PATH_REMOVE(CMAKE_SYSTEM_INCLUDE_PATH CMAKE_INSTALL_PREFIX)
-	PATH_REMOVE(CMAKE_SYSTEM_LIBRARY_PATH CMAKE_INSTALL_PREFIX)
-	PATH_REMOVE(CMAKE_SYSTEM_PROGRAM_PATH CMAKE_INSTALL_PREFIX)
+	IF(NOT ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr" AND NOT ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/local")
+		get_filename_component(PATH_NORMALIZED ${CMAKE_INSTALL_PREFIX}/lib ABSOLUTE)
+		SET(CMAKE_SYSTEM_IGNORE_PATH ${PATH_NORMALIZED};${CMAKE_SYSTEM_IGNORE_PATH} CACHE STRING "Added CMAKE_INSTALL_PREFIX to avoid inconsistent search results")
+	ENDIF(NOT ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr" AND NOT ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/local")
 ENDIF(CMAKE_INSTALL_PREFIX)
 IF(BRLCAD_PREFIX)
-	PATH_REMOVE(CMAKE_SYSTEM_PREFIX_PATH BRLCAD_PREFIX)
-	PATH_REMOVE(CMAKE_SYSTEM_INCLUDE_PATH BRLCAD_PREFIX)
-	PATH_REMOVE(CMAKE_SYSTEM_LIBRARY_PATH BRLCAD_PREFIX)
-	PATH_REMOVE(CMAKE_SYSTEM_PROGRAM_PATH BRLCAD_PREFIX)
+	IF(NOT ${BRLCAD_PREFIX} STREQUAL "/usr" AND NOT ${BRLCAD_PREFIX} STREQUAL "/usr/local")
+		get_filename_component(PATH_NORMALIZED ${BRLCAD_PREFIX}/lib ABSOLUTE)
+		SET(CMAKE_SYSTEM_IGNORE_PATH ${PATH_NORMALIZED};${CMAKE_SYSTEM_IGNORE_PATH} CACHE STRING "Added CMAKE_INSTALL_PREFIX to avoid inconsistent search results")
+	ENDIF(NOT ${BRLCAD_PREFIX} STREQUAL "/usr" AND NOT ${BRLCAD_PREFIX} STREQUAL "/usr/local")
 ENDIF(BRLCAD_PREFIX)
-
-IF(0)
-	# ignore would be better, but it doesn't seem to work 
-	IF(CMAKE_INSTALL_PREFIX)
-		IF(NOT ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr" AND NOT ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/local")
-			get_filename_component(PATH_NORMALIZED ${CMAKE_INSTALL_PREFIX}/lib ABSOLUTE)
-			SET(CMAKE_SYSTEM_IGNORE_PATH ${PATH_NORMALIZED};${CMAKE_SYSTEM_IGNORE_PATH} CACHE STRING "Added CMAKE_INSTALL_PREFIX to avoid inconsistent search results")
-		ENDIF(NOT ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr" AND NOT ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/local")
-	ENDIF(CMAKE_INSTALL_PREFIX)
-	IF(BRLCAD_PREFIX)
-		IF(NOT ${BRLCAD_PREFIX} STREQUAL "/usr" AND NOT ${BRLCAD_PREFIX} STREQUAL "/usr/local")
-			get_filename_component(PATH_NORMALIZED ${BRLCAD_PREFIX}/lib ABSOLUTE)
-			SET(CMAKE_SYSTEM_IGNORE_PATH ${PATH_NORMALIZED};${CMAKE_SYSTEM_IGNORE_PATH} CACHE STRING "Added CMAKE_INSTALL_PREFIX to avoid inconsistent search results")
-		ENDIF(NOT ${BRLCAD_PREFIX} STREQUAL "/usr" AND NOT ${BRLCAD_PREFIX} STREQUAL "/usr/local")
-	ENDIF(BRLCAD_PREFIX)
-	IF(CMAKE_SYSTEM_IGNORE_PATH)
-		LIST(REMOVE_DUPLICATES CMAKE_SYSTEM_IGNORE_PATH)
-	ENDIF(CMAKE_SYSTEM_IGNORE_PATH)
-	MESSAGE("CMAKE_SYSTEM_IGNORE_PATH: ${CMAKE_SYSTEM_IGNORE_PATH}")
-ENDIF(0)
+IF(CMAKE_SYSTEM_IGNORE_PATH)
+	LIST(REMOVE_DUPLICATES CMAKE_SYSTEM_IGNORE_PATH)
+ENDIF(CMAKE_SYSTEM_IGNORE_PATH)
+MESSAGE("CMAKE_SYSTEM_IGNORE_PATH: ${CMAKE_SYSTEM_IGNORE_PATH}")
 
 
 #---------------------------------------------------------------------
