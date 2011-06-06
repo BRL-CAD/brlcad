@@ -8,7 +8,7 @@ MACRO(pkgIndex_BUILD name targetdir)
 		DEPENDS btclsh ${targetprefix}.sentinel
 		)
 	ADD_CUSTOM_TARGET(${name}_pkgIndex.tcl ALL DEPENDS ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/pkgIndex.tcl)
-	INSTALL(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/pkgIndex.tcl DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/${targetdir})
+	INSTALL(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/pkgIndex.tcl DESTINATION ${DATA_DIR}/${targetdir})
 ENDMACRO(pkgIndex_BUILD name targetdir)
 
 MACRO(tclIndex_BUILD name targetdir)
@@ -19,7 +19,7 @@ MACRO(tclIndex_BUILD name targetdir)
 		DEPENDS btclsh ${targetprefix}.sentinel
 		)
 	ADD_CUSTOM_TARGET(${name}_tclIndex ALL DEPENDS ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/tclIndex)
-	INSTALL(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/tclIndex DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/${targetdir})
+	INSTALL(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/tclIndex DESTINATION ${DATA_DIR}/${targetdir})
 ENDMACRO(tclIndex_BUILD name targetdir)
 
 

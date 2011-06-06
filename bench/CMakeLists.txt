@@ -19,7 +19,7 @@ ENDIF(MSVC)
 BRLCAD_ADDEXEC(pixcmp pixcmp.c libbu)
 
 configure_file(run.sh ${CMAKE_BINARY_DIR}/bin/benchmark COPYONLY)
-INSTALL(PROGRAMS ${CMAKE_BINARY_DIR}/bin/benchmark DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_BIN_DIR})
+INSTALL(PROGRAMS ${CMAKE_BINARY_DIR}/bin/benchmark DESTINATION ${BIN_DIR})
 
 FILE(WRITE ${CMAKE_BINARY_DIR}/CMakeTmp/benchmsg.cmake "MESSAGE(\"---\")\n")
 FILE(APPEND ${CMAKE_BINARY_DIR}/CMakeTmp/benchmsg.cmake "MESSAGE(\"Run 'make benchmark-clean' in the bench directory to delete the logic\")\n")

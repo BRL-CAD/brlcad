@@ -114,7 +114,7 @@ MACRO(THIRD_PARTY_CONFIGURE_EXTERNAL_PROJECT upper projname projpath srcpath ext
 			CONFIGURE_COMMAND mkdir -p
 			${${CMAKE_PROJECT_NAME}_BINARY_DIR}/${projpath}/ && cd
 			${${CMAKE_PROJECT_NAME}_BINARY_DIR}/${projpath}/ &&
-			<SOURCE_DIR>/configure --prefix=${${CMAKE_PROJECT_NAME}_PREFIX} --exec-prefix=${${CMAKE_PROJECT_NAME}_PREFIX} --mandir=${${CMAKE_PROJECT_NAME}_INSTALL_MAN_DIR} ${extraopts}
+			<SOURCE_DIR>/configure --prefix=${${CMAKE_PROJECT_NAME}_PREFIX} --exec-prefix=${${CMAKE_PROJECT_NAME}_PREFIX} --mandir=${MAN_DIR} ${extraopts}
 			BUILD_COMMAND cd ${${CMAKE_PROJECT_NAME}_BINARY_DIR}/${projpath}/ && $(MAKE)
 			INSTALL_COMMAND  cd ${${CMAKE_PROJECT_NAME}_BINARY_DIR}/${projpath}/ && $(MAKE) install
 			)
@@ -133,7 +133,7 @@ MACRO(THIRD_PARTY_AUTOCONF_EXTERNAL_PROJECT upper projname projpath srcpath extr
 			<SOURCE_DIR>/configure <SOURCE_DIR>/configure.in && mkdir -p
 			${${CMAKE_PROJECT_NAME}_BINARY_DIR}/${projpath}/ && cd
 			${${CMAKE_PROJECT_NAME}_BINARY_DIR}/${projpath}/ &&
-			<SOURCE_DIR>/configure --prefix=${${CMAKE_PROJECT_NAME}_PREFIX} --exec-prefix=${${CMAKE_PROJECT_NAME}_PREFIX} --mandir=${${CMAKE_PROJECT_NAME}_INSTALL_MAN_DIR} ${extraopts}
+			<SOURCE_DIR>/configure --prefix=${${CMAKE_PROJECT_NAME}_PREFIX} --exec-prefix=${${CMAKE_PROJECT_NAME}_PREFIX} --mandir=${MAN_DIR} ${extraopts}
 			BUILD_COMMAND cd ${${CMAKE_PROJECT_NAME}_BINARY_DIR}/${projpath}/ && $(MAKE)
 			INSTALL_COMMAND  cd ${${CMAKE_PROJECT_NAME}_BINARY_DIR}/${projpath}/ && $(MAKE) install
 			)
@@ -152,7 +152,7 @@ MACRO(THIRD_PARTY_AUTORECONF_EXTERNAL_PROJECT upper projname projpath srcpath ex
 			CONFIGURE_COMMAND cd <SOURCE_DIR> && autoreconf -i -f && mkdir -p
 			${${CMAKE_PROJECT_NAME}_BINARY_DIR}/${projpath}/ && cd
 			${${CMAKE_PROJECT_NAME}_BINARY_DIR}/${projpath}/ &&
-			<SOURCE_DIR>/configure --prefix=${${CMAKE_PROJECT_NAME}_PREFIX} --exec-prefix=${${CMAKE_PROJECT_NAME}_PREFIX} --mandir=${${CMAKE_PROJECT_NAME}_INSTALL_MAN_DIR} ${extraopts}
+			<SOURCE_DIR>/configure --prefix=${${CMAKE_PROJECT_NAME}_PREFIX} --exec-prefix=${${CMAKE_PROJECT_NAME}_PREFIX} --mandir=${MAN_DIR} ${extraopts}
 			BUILD_COMMAND cd ${${CMAKE_PROJECT_NAME}_BINARY_DIR}/${projpath}/ && $(MAKE)
 			INSTALL_COMMAND  cd ${${CMAKE_PROJECT_NAME}_BINARY_DIR}/${projpath}/ && $(MAKE) install
 			)

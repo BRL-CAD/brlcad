@@ -437,43 +437,53 @@ FOREACH(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 ENDFOREACH()
 
 #---------------------------------------------------------------------
-# Configure install locations.  It may be that this should be made
-# into its own .cmake file and included in each library, to allow
-# for more flexibility in using individual libraries in other projects.
-MACRO(INSTALL_DIR upper suffix)
-	IF(NOT ${CMAKE_PROJECT_NAME}_INSTALL_${upper}_DIR)
-		SET(${CMAKE_PROJECT_NAME}_INSTALL_${upper}_DIR ${suffix})
-		SET(${upper}_DIR ${suffix})
-	ENDIF(NOT ${CMAKE_PROJECT_NAME}_INSTALL_${upper}_DIR)
-ENDMACRO(INSTALL_DIR upper suffix)
+# Configure install locations.  Don't set these if they have already
+# been set by some other means (like a higher level CMakeLists.txt file
+# including this one.)
 
 # The location in which to install BRLCAD executables.
-INSTALL_DIR(BIN bin)
+IF(NOT BIN_DIR)
+	SET(BIN_DIR bin)
+ENDIF(NOT BIN_DIR)
 
 # The location in which to install BRLCAD header files.
-INSTALL_DIR(INCLUDE include)
+IF(NOT INCLUDE_DIR)
+	SET(INCLUDE_DIR include)
+ENDIF(NOT INCLUDE_DIR)
 
 # The location in which to install BRL-CAD libraries.
-IF(NOT WIN32)
-   INSTALL_DIR(LIB lib)
-ELSE(NOT WIN32)
-   INSTALL_DIR(LIB bin)
-ENDIF(NOT WIN32)
+IF(NOT LIB_DIR)
+	IF(NOT WIN32)
+		SET(LIB_DIR lib)
+	ELSE(NOT WIN32)
+		SET(LIB_DIR bin)
+	ENDIF(NOT WIN32)
+ENDIF(NOT LIB_DIR)
 
 # The location in which to install BRL-CAD configuration files.
-INSTALL_DIR(CONF etc)
+IF(NOT CONF_DIR)
+	SET(CONF_DIR etc)
+ENDIF(NOT CONF_DIR)
 
 # The location in which to install CMake scripts for packaging BRLCAD.
-INSTALL_DIR(PACKAGE lib)
+IF(NOT PACKAGE_DIR)
+	SET(PACKAGE_DIR lib)
+ENDIF(NOT PACKAGE_DIR)
 
 # The location in which to install BRL-CAD data files 
-INSTALL_DIR(DATA "share/brlcad/${BRLCAD_VERSION}")
+IF(NOT DATA_DIR)
+	SET(DATA_DIR "share/brlcad/${BRLCAD_VERSION}")
+ENDIF(NOT DATA_DIR)
 
 # The location in which to install BRL-CAD Manual pages
-INSTALL_DIR(MAN ${DATA_DIR}/man)
+IF(NOT MAN_DIR)
+	SET(MAN_DIR man)
+ENDIF(NOT MAN_DIR)
 
 # The location in which to install BRL-CAD documentation files 
-INSTALL_DIR(DOC ${DATA_DIR}/doc)
+IF(NOT DOC_DIR)
+	SET(DOC_DIR ${DATA_DIR}/doc)
+ENDIF(NOT DOC_DIR)
 
 #---------------------------------------------------------------------
 # We will need a brlcad_config.h.in file to hold all the #cmakedefine 
@@ -500,7 +510,7 @@ FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_BUGREPORT \"http://brlcad.org\"\n"
 FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_NAME \"BRL-CAD\"\n")
 FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_STRING \"BRL-CAD ${BRLCAD_VERSION}\"\n")
 FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_TARNAME \"brlcad\"\n")
-FILE(APPEND ${CONFIG_H_FILE} "#define BRLCAD_DATA \"${CMAKE_INSTALL_PREFIX}/${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}\"\n")
+FILE(APPEND ${CONFIG_H_FILE} "#define BRLCAD_DATA \"${CMAKE_INSTALL_PREFIX}/${DATA_DIR}\"\n")
 FILE(APPEND ${CONFIG_H_FILE} "#define BRLCAD_ROOT \"${CMAKE_INSTALL_PREFIX}\"\n")
 FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_VERSION \"${BRLCAD_VERSION}\"\n")
 FILE(APPEND ${CONFIG_H_FILE} "#define VERSION \"${BRLCAD_VERSION}\"\n")
@@ -1137,11 +1147,11 @@ if(BRLCAD_PRINT_VERBOSE_SUMMARY)
 	# Directory settings
 
 	SET(CMAKE_INSTALL_PREFIX_LABEL "Prefix")
-	SET(${CMAKE_PROJECT_NAME}_INSTALL_BIN_DIR_LABEL "Binaries")
-	SET(${CMAKE_PROJECT_NAME}_INSTALL_MAN_DIR_LABEL "Manual pages")
-	SET(${CMAKE_PROJECT_NAME}_INSTALL_CONF_DIR_LABEL "Configration files")
-	SET(${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR_LABEL "Data resource files")
-	SET(PATHLABELS CMAKE_INSTALL_PREFIX ${CMAKE_PROJECT_NAME}_INSTALL_BIN_DIR ${CMAKE_PROJECT_NAME}_INSTALL_MAN_DIR ${CMAKE_PROJECT_NAME}_INSTALL_CONF_DIR ${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR)
+	SET(BIN_DIR_LABEL "Binaries")
+	SET(MAN_DIR_LABEL "Manual pages")
+	SET(CONF_DIR_LABEL "Configration files")
+	SET(DATA_DIR_LABEL "Data resource files")
+	SET(PATHLABELS CMAKE_INSTALL_PREFIX BIN_DIR MAN_DIR CONF_DIR DATA_DIR)
 	SET(PATHLABELLENGTH 0)
 	FOREACH(path_label ${PATHLABELS})
 		STRING(LENGTH ${${path_label}_LABEL} CURRENTLENGTH)
@@ -1440,7 +1450,7 @@ SET(toplevel_DOCFILES
   README
 )
 FILE(COPY ${toplevel_DOCFILES} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR})
-INSTALL(FILES ${toplevel_DOCFILES} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR})
+INSTALL(FILES ${toplevel_DOCFILES} DESTINATION ${DATA_DIR})
 
 
 # CPack is used to produce tgz files, RPMS, etc.  If SUBBUILD is enabled this

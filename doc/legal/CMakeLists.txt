@@ -4,4 +4,4 @@ set(doc_legal
 	lgpl.txt
 )
 
-install(FILES ${doc_legal} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/doc/legal)
+install(FILES ${doc_legal} DESTINATION ${DATA_DIR}/doc/legal)
