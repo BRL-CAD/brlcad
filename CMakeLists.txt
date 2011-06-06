@@ -815,7 +815,7 @@ ADD_SUBDIRECTORY(src/other)
 
 # While the primary purpose of this section is to identify libraries,
 # some of the headers we are looking for are associated with the
-# libraries checked here.  In those cases, we will hand the header 
+# libraries checked here.  In those cases, we will handle the header 
 # logic here as opposed to separating the header logic from the 
 # find_package call.
 
@@ -834,10 +834,17 @@ BRLCAD_CHECK_LIBRARY(BSD c daemon)
 
 # Check for CoreFoundation, Carbon and Cocoa on Apple
 IF(APPLE)
-	find_library(COREFOUNDATION_FRAMEWORK CoreFoundation)
-	INCLUDE(${BRLCAD_CMAKE_DIR}/FindCarbon.cmake)
-	INCLUDE(${BRLCAD_CMAKE_DIR}/FindCocoa.cmake)
+	INCLUDE(CMakeFindFrameworks)
+	FIND_LIBRARY(COREFOUNDATION_FRAMEWORK CoreFoundation)
+	CMAKE_FIND_FRAMEWORKS(Carbon)
+	IF(Carbon_FRAMEWORKS)
+		SET(Carbon_LIBRARIES "-framework Carbon" CACHE FILEPATH "Carbon framework" FORCE)
+	ENDIF(Carbon_FRAMEWORKS)
 	BRLCAD_INCLUDE_FILE(Carbon/Carbon.h HAVE_CARBON_CARBON_H) 
+	CMAKE_FIND_FRAMEWORKS(Cocoa)
+	IF(Cocoa_FRAMEWORKS)
+		SET(Cocoa_LIBRARIES "-framework Cocoa" CACHE FILEPATH "Cocoa framework" FORCE)
+	ENDIF(Cocoa_FRAMEWORKS)
 ENDIF(APPLE)
 
 # crypt library (needed on some platforms for enigma)
