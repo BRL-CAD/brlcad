@@ -66,6 +66,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* make bu_basename/bu_dirname not allocation memory.  have caller pass
+  buffer in as a parameter with size ala snprintf/memcpy.
+
 * solids regression is failing in optimized builds  - 3 off by many. 
   Looks to be floating fuzz overlap/pick issue? pixel 131329.
 
