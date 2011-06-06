@@ -1239,7 +1239,7 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 		    /* Calculate the number of lines needed */
 		    /*
 		     * If we are zoomed, then it is possable that not
-		     * all of that zoomed pixel will be showned.  y1ht
+		     * all of that zoomed pixel will be shown.  y1ht
 		     * is the number of lines allocated for the bottom
 		     * most line.  y2ht is the number of lines for the
 		     * top most line.  if_yzoom is for everything
