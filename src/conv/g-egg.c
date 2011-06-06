@@ -46,6 +46,8 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
+extern union tree *gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+
 struct gcv_data {
     void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
     FILE *fp;
@@ -197,7 +199,7 @@ main(int argc, char *argv[])
 
 
     double percent;
-    int i, use_mc=0;
+    int i, use_mc=0, use_bottess=1;
 
     bu_setlinebuf(stderr);
 
@@ -272,6 +274,8 @@ main(int argc, char *argv[])
 	    case '8':
 		use_mc = 1;
 		break;
+	    case '9':
+		use_bottess = 1;
 	    case '?':
 		bu_log("Unknown argument: \"%c\"\n", i);
 	    default:
@@ -337,7 +341,7 @@ main(int argc, char *argv[])
 			    1,		/* ncpu */
 			    &tree_state,	/* state */
 			    NULL,		/* start func */
-			    use_mc?gcv_region_end_mc:gcv_region_end,	/* end func */
+			    use_mc?gcv_region_end_mc:use_bottess?gcv_bottess_region_end:gcv_region_end,	/* end func */
 			    use_mc?NULL:nmg_booltree_leaf_tess, /* leaf func */
 			    (genptr_t)&gcvwriter);  /* client_data */
 	fprintf(gcvwriter.fp, "}\n");
