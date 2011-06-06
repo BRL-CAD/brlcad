@@ -10,7 +10,8 @@
 
 
 /* Test against basename UNIX tool */
-void automatic_test(const char *input)
+void
+automatic_test(const char *input)
 {
 
     char *ans, buf_input[1000];
@@ -39,7 +40,8 @@ void automatic_test(const char *input)
 }
 
 
-int main(int ac, char *av[])
+int
+main(int ac, char *av[])
 {
     char input[1000] = {0};
 
@@ -64,7 +66,7 @@ int main(int ac, char *av[])
     automatic_test(NULL);
 
     /* user tests */
-    if (ac > 0) {
+    if (ac > 1) {
 	printf("Enter a string:\n");
 	fgets(input, 1000, stdin);
 	if (strlen(input) > 0)
