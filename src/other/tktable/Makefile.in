@@ -487,6 +487,9 @@ dist: dist-clean
 	mkdir $(DIST_DIR)/misc
 	cp -p $(srcdir)/misc/tkTable_header.tcl $(DIST_DIR)/misc/
 
+	mkdir ${DIST_DIR}/CMake
+	cp -p $(srcdir)/CMake/Find*.cmake $(DIST_DIR)/CMake/
+
 distdir: dist
 
 #appease dvi-recursive rule from the top-level Makefile so this works as a SUBDIR 

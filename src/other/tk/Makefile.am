@@ -192,7 +192,14 @@ EXTRA_DIST = \
 	unix/tkUnixXId.c \
 	win \
 	xlib \
-	CMakeLists.txt
+	CMakeLists.txt \
+	CMake/CheckCFileRuns.cmake \
+	CMake/CheckPrototypeExists.cmake \
+	CMake/CheckSystemFunctionality.cmake \
+	CMake/FindX11.cmake \
+	CMake/ResolveCompilerPaths.cmake \
+	CMake/ac_std_funcs.cmake \
+	CMake/tcl.cmake
 
 DISTCLEANFILES = \
 	unix/autom4te.cache \
