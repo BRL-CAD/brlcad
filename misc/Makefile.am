@@ -76,8 +76,52 @@ EXTRA_DIST = \
 	win32-msvc/Dll/brlcad.def \
 	win32-msvc/Dll/brlcad.rc \
 	win32-msvc/Dll/TclDummies.c \
-	CMakeLists.txt
-
+	CMakeLists.txt \
+	CMake/BRLCAD_CPackOptions.cmake.in \
+	CMake/BRLCAD_CheckFunctions.cmake \
+	CMake/BRLCAD_Dependent_Options.cmake \
+	CMake/BRLCAD_Util.cmake \
+	CMake/CheckCFileRuns.cmake \
+	CMake/CheckPrototypeExists.cmake \
+	CMake/CompilerFlags.cmake \
+	CMake/FindCarbon.cmake \
+	CMake/FindCocoa.cmake \
+	CMake/FindFOP.cmake \
+	CMake/FindGL.cmake \
+	CMake/FindLEX.cmake \
+	CMake/FindOPENNURBS.cmake \
+	CMake/FindPkgMacros.cmake \
+	CMake/FindREGEX.cmake \
+	CMake/FindSCL.cmake \
+	CMake/FindShellDeps.cmake \
+	CMake/FindTCL.cmake \
+	CMake/FindTERMLIB.cmake \
+	CMake/FindTclPackage.cmake \
+	CMake/FindUTAHRLE.cmake \
+	CMake/FindX11.cmake \
+	CMake/FindXSLT.cmake \
+	CMake/FindYACC.cmake \
+	CMake/FindZLIB.cmake \
+	CMake/NSIS.template.in \
+	CMake/ResolveCompilerPaths.cmake \
+	CMake/ThirdParty.cmake \
+	CMake/distcheck_buildsys.cmake.in \
+	CMake/distcheck_success_message.cmake.in \
+	CMake/svncheck.cmake.in \
+	CMake/test_srcs/alloca_header_test.c \
+	CMake/test_srcs/alloca_test.c \
+	CMake/test_srcs/builddelta_end.c.in \
+	CMake/test_srcs/builddelta_start.c.in \
+	CMake/test_srcs/ctypes_test.c \
+	CMake/test_srcs/lex_test.l \
+	CMake/test_srcs/print_timestamp.c \
+	CMake/test_srcs/report_hostname.c.in \
+	CMake/test_srcs/report_username.c.in \
+	CMake/test_srcs/sys_wait_test.c \
+	CMake/test_srcs/termlib.c.in \
+	CMake/test_srcs/time.c.in \
+	CMake/test_srcs/timedelta_end.c.in \
+	CMake/test_srcs/timedelta_start.c.in
 
 datafilesdir = $(BRLCAD_DATA)/data
 
