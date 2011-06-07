@@ -66,12 +66,10 @@ IF(BRLCAD-ENABLE_OSL)
     message("Oslcomp: ${OSLCOMP_LIBRARY}")
     message("Oslquery: ${OSLQUERY_LIBRARY}")
 
-    #add_library(osl-renderer osl-renderer.c)
-    set (OSLRT_SOURCES osl-renderer.c)
+    set (OSLRT_SOURCES osl-renderer.cpp)
     set (OSLRT_LIBS ${OSLEXEC_LIBRARY}
 	${OSLCOMP_LIBRARY} ${OSLQUERY_LIBRARY} ${OPENIMAGEIO_LIBRARY}
 	${Boost_LIBRARIES})
-    #target_link_libraries(osl-renderer )
 
     BRLCAD_ADDLIB(osl-renderer ${OSLRT_SOURCES} ${OSLRT_LIBS})
 

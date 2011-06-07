@@ -3,6 +3,15 @@
 
 #include "vmath.h"
 
-int Renderer(point_t *b);
+#ifdef __cplusplus
+extern "C" {
+#endif
+  int Renderer(point_t *b);
+#ifdef __cplusplus
+}
+#endif
+
+
+
 
 #endif
