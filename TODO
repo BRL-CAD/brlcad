@@ -23,24 +23,21 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * fix Archer features using search command (looks like the
   syntax change broke 'em)
 
+* fix bottie crash on 32b builds
+
+* upgrade source repository back-end to the latest SVN 1.5 so we can
+  benefit from proper merge tracking.
+
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
-* environment variable (LIBRT_BOT_MINTIE) override so any librt
-  application can attempt tie evaluation.
-
 * implement support for the other file entity types to libbu
-
-* fix bottie crash on 32b builds
 
 * resolve bot bin sort optimization crash, disabled during release
 
 * implement new makesegs for tie
 
 * png support in rtwizard
-
-* upgrade source repository back-end to the latest SVN 1.5 so we can
-  benefit from proper merge tracking.
 
 * annotation primitive.  specifically a means to create an object in
   the database that can optionally be associated with an object and/or
