@@ -119,9 +119,7 @@ static int sh_stk_dosetup(char *cp, struct region *rp, char **dpp, char **mpp, s
 
 {
     register struct mfuncs *mfp;
-#ifdef HAVE_DLOPEN
     register struct mfuncs *mfp_new;
-#endif
     struct bu_vls arg;
     char matname[32];
     int ret;
@@ -145,16 +143,14 @@ static int sh_stk_dosetup(char *cp, struct region *rp, char **dpp, char **mpp, s
     }
     matname[i] = '\0';	/* ensure null termination */
 
-#ifdef HAVE_DLOPEN
 retry:
-#endif
     for (mfp = *headp; mfp != MF_NULL; mfp = mfp->mf_forw) {
 	if (matname[0] != mfp->mf_name[0]  ||
 	    !BU_STR_EQUAL(matname, mfp->mf_name))
 	    continue;
 	goto found;
     }
-#ifdef HAVE_DLOPEN
+
     /* If we get here, then the shader wasn't found in the list of
      * compiled-in (or previously loaded) shaders.  See if we can
      * dynamically load it.
@@ -166,10 +162,6 @@ retry:
 	mlib_add_shader(headp, mfp_new);
 	goto retry;
     }
-#else
-    bu_log("****** dynamic shader loading not available ******\n");
-#endif
-
 
     bu_log("stack_setup(%s):  material not known\n",
 	   matname);
