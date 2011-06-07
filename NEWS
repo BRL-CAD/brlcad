@@ -35,7 +35,7 @@ eliminating the need to manually update the Windows build logic at
 release time.
 
 * cross-platform 64-bit ISST (cmake-only) - Cliff Yapp, Erik Greenwald
-* zoom out keybinding fixed on Linux/*BSD - Cliff Yapp
+* fixed mged zoom out mouse binding on Linux/*BSD - Cliff Yapp
 * improve search handling of multiple paths - Cliff Yapp
 * segment splitting bug fixed for tesselation - Richard Weiss
 * facetization crash fixed for large models - Richard Weiss
