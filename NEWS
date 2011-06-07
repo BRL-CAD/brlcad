@@ -48,7 +48,7 @@ improves BRL-CAD cross-platform maintainability.
 	- Cliff Yapp, Sean Morrison
 * modification of LIBRT spatial partition traversal ordering
 	- Sean Morrison, Keith Bowman
-* added LIBRT_BOT_MINTIE environment variable override - Sean Morrison
+* new LIBRT_BOT_MINTIE environment variable override - Erik Greenwald
 * changed search output order to shallow followed by deep - Cliff Yapp
 * added search support for '.' object list search results - Cliff Yapp
 * red -f flag to force overwriting pre-existing combs - Sean Morrison
