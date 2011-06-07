@@ -40,14 +40,10 @@ release time.
 * fixed segment splitting tessellation conversion bug - Richard Weiss
 * fixed crash during facetization of large models - Richard Weiss
 * fixed asc2g bug importing color and other attributes - Bob Parker
-* removed -t and -m from annotate command - Sean Morrison
 * add -q "quiet lookup" option to the ls command - Cliff Yapp
 * fix a variety of bugs in the red command - Cliff Yapp/Sean Morrison
-* add "attribute standardization" logic - Cliff Yapp
 * cut splitting order fixed in librt, may impact results - S. Morrison
 * add LIBRT_BOT_MINTIE environment variable - Sean Morrison
-* libtie merged into librt - Erik Greenwald
-* improve path resolution logic for search paths - Cliff Yapp
 * change search output order to shallow followed by deep - Cliff Yapp
 * use . and / to request list/full patch search results - Cliff Yapp
 * add -f flag to red for overwriting pre-existing comb - Sean Morrison
