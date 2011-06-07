@@ -30,7 +30,6 @@
 #include <string.h>
 #ifdef HAVE_SYS_PARAM_H
 #  include <sys/param.h>
-#  include <dlfcn.h>
 #endif
 #include "bio.h"
 
@@ -63,7 +62,6 @@ mlib_add_shader(struct mfuncs **headp, struct mfuncs *mfp1)
 }
 
 
-#ifdef HAVE_DLOPEN
 /**
  * T R Y _ L O A D
  *
@@ -191,7 +189,6 @@ done:
 
     return shader_mfuncs;
 }
-#endif
 
 
 /**
@@ -207,9 +204,7 @@ mlib_setup(struct mfuncs **headp,
 	   register struct region *rp,
 	   struct rt_i *rtip)
 {
-#ifdef HAVE_DLOPEN
     struct mfuncs *mfp_new = NULL;
-#endif
 
     const struct mfuncs *mfp;
     int ret;
@@ -247,7 +242,6 @@ retry:
 	goto found;
     }
 
-#ifdef HAVE_DLOPEN
     /* If we get here, then the shader wasn't found in the list of
      * compiled-in (or previously loaded) shaders.  See if we can
      * dynamically load it.
@@ -260,9 +254,6 @@ retry:
 	bu_log("retrying\n");
 	goto retry;
     }
-#else
-    bu_log("****** dynamic shader loading not available ******\n");
-#endif
 
 
     /* If we get here, then the shader was not found at all (either in
