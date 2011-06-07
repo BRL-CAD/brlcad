@@ -24,7 +24,7 @@ rm -rf *cache*   # remove any previous configure results
 --------------
 
 rm -rf *cache*   # remove any previous configure results
-../configure --prefix=/usr/brlcad/rel-MAJOR.MINOR.PATCH --enable-all --disable-64bit-build CFLAGS=-m32 LDFLAGS=-m32 CXXFLAGS=-m32
+./configure --prefix=/usr/brlcad/rel-MAJOR.MINOR.PATCH --enable-all --disable-64bit-build CFLAGS=-m32 LDFLAGS=-m32 CXXFLAGS=-m32
 
 
 Arch Linux
