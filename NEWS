@@ -48,7 +48,7 @@ release time.
 * added LIBRT_BOT_MINTIE environment variable override - Sean Morrison
 * changed search output order to shallow followed by deep - Cliff Yapp
 * added search support for '.' object list search results - Cliff Yapp
-* add -f flag to red for overwriting pre-existing comb - Sean Morrison
+* red -f flag to force overwriting pre-existing combs - Sean Morrison
 
 
 ----------------------------------------------------------------------
