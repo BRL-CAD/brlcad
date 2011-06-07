@@ -193,7 +193,7 @@ static unsigned short *hl_dstmap = NULL;
 		}\
 	}
 
-static bool hi_Obliq(RGBpixel (*pix));
+static int hi_Obliq(RGBpixel (*pix));
 
 static fastf_t myIpow(fastf_t d, int n);
 static fastf_t correct_Lgt(struct application *ap, struct partition *pp, Lgt_Source *lgt_entry);
@@ -655,7 +655,7 @@ f_HL_Hit(struct application *ap, struct partition *pt_headp, struct seg *unused)
 #define MA_WHITESP ", \t"	/* seperators for parameter list */
 #define MA_MID	   "mid"
 /*
-  bool getMaMID( struct mater_info *map, int *id )
+  int getMaMID( struct mater_info *map, int *id )
 
   This is a kludge to permit material ids to be assigned to groups
   in 'mged'.  Since the mater_info struct can be inherited down the
@@ -663,7 +663,7 @@ f_HL_Hit(struct application *ap, struct partition *pt_headp, struct seg *unused)
   ma_matparm array, we will assign those digits to the material id
   of this region.
 */
-static bool
+static int
 getMaMID(struct mater_info *map, int *id)
 {
     char *copy;
@@ -1828,7 +1828,7 @@ prnt_Pixel(RGBpixel (*pixelp), int x, int y)
     return;
 }
 
-static bool
+static int
 hi_Obliq(RGBpixel (*pix))
 {
     fastf_t	dir[3];
@@ -1904,7 +1904,7 @@ hl_Postprocess(void)
 		xi < grid_sz && ! user_interrupt;
 		xi++ )
 	{
-	    bool on = false;
+	    int on = false;
 	    /* Output pixel based on bitmap value.  If bit is
 	       ON, pixel should be ON. */
 	    if ( anti_aliasing )

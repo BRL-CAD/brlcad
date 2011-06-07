@@ -85,10 +85,8 @@ typedef struct structure {
 #define TRUE 1
 #define FALSE 0
 
-typedef unsigned char bool;
-
 typedef struct growthPoint {
-    bool alive;
+    char alive;
     unsigned int growthEnergy;
     int growthEnergyDelta; /* amount growth energy changes per age */
     double length;

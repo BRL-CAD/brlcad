@@ -154,7 +154,6 @@ typedef char tiny;		/* for very small numbers */
 typedef short tiny;		/* for very small numbers */
 #endif
 
-typedef int bool;		/* boolean data type */
 #define false 0
 #define true 1
 
@@ -171,7 +170,7 @@ typedef struct descr {
     coords pixel;		/* starting scan, nib */
     tiny xsign;			/* 0 or +1 */
     tiny ysign;			/* -1, 0, or +1 */
-    bool ymajor; 		/* true iff Y is major dir. */
+    int ymajor; 		/* true iff Y is major dir. */
 #undef major
 #undef minor
     short major;		/* major dir delta (nonneg) */
@@ -434,7 +433,7 @@ Raster(stroke *vp, struct band *np)
 /*
  * OutBuild - rasterize all strokes into raster frame image
  */
-static bool
+static int
 OutBuild(void)				/* returns true if successful */
 {
     struct band *hp;	/* *hp -> head of descr list */
@@ -696,7 +695,7 @@ prep_dda(stroke *vp, coords *pt1, coords *pt2)
  * banded buffered mode, we link the descriptor(s) into its starting
  * point band(s).
  */
-static bool
+static int
 BuildStr(coords *pt1, coords *pt2)		/* returns true or dies */
     /* endpoints */
 {
@@ -749,7 +748,7 @@ BuildStr(coords *pt1, coords *pt2)		/* returns true or dies */
 }
 
 
-static bool
+static int
 GetCoords(coords *coop)
     /* -> input coordinates */
 {
@@ -791,10 +790,10 @@ GetCoords(coords *coop)
 /*
   GetCoords - input x, y coordinates and scale into pixels
 */
-bool Get3Coords(coords *coop)
+int Get3Coords(coords *coop)
 {
     char trash[2];
-    bool ret;
+    int ret;
 
     ret = GetCoords(coop);
     if (fread(trash, sizeof(trash), 1, pfin) != 1)
@@ -805,7 +804,7 @@ bool Get3Coords(coords *coop)
 
 
 /* IEEE coordinates */
-bool Get3DCoords(coords *coop)
+int Get3DCoords(coords *coop)
 {
     static unsigned char in[3*8];
     static double out[2];
@@ -842,7 +841,7 @@ bool Get3DCoords(coords *coop)
 }
 
 
-bool
+int
 GetDCoords(coords *coop)
     /* -> input coordinates */
 {
@@ -956,13 +955,13 @@ put_vector_char(char c, coords *pos)
 static int
 DoFile(void)	/* returns vpl status code */
 {
-    bool plotted;	/* false => empty frame image */
+    int plotted;	/* false => empty frame image */
     int c;		/* input character */
     static coords newpos; 	/* current input coordinates */
     static coords virpos; 	/* virtual pen position */
     static unsigned char buf3[6*2];
     static unsigned char buf2[4*2];
-    static bool firsterase = true;
+    static int firsterase = true;
 
     /* process each frame into a raster image file */
 

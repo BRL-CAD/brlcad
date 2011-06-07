@@ -40,7 +40,6 @@
 #define NULL	0			/* null pointer, all types */
 #endif
 
-typedef int bool;			/* Boolean data */
 #define 	false	0
 #define 	true	1
 
