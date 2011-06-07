@@ -45,7 +45,7 @@ release time.
 	- Cliff Yapp, Sean Morrison
 * modification of LIBRT spatial partition traversal ordering
 	- Sean Morrison, Keith Bowman
-* add LIBRT_BOT_MINTIE environment variable - Sean Morrison
+* added LIBRT_BOT_MINTIE environment variable override - Sean Morrison
 * change search output order to shallow followed by deep - Cliff Yapp
 * use . and / to request list/full patch search results - Cliff Yapp
 * add -f flag to red for overwriting pre-existing comb - Sean Morrison
