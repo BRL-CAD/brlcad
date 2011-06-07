@@ -38,6 +38,8 @@ bu_dlopen(const char *path, int mode)
 {
 #ifdef HAVE_DLOPEN
     return dlopen(path, mode);
+#elif defined(WIN32)
+    return LoadLibrary(path);
 #else
     bu_log("dlopen not supported\n");
     return NULL;
@@ -49,6 +51,8 @@ bu_dlsym(void *handle, const char *symbol)
 {
 #ifdef HAVE_DLOPEN
     return dlsym(handle, symbol);
+#elif defined(WIN32)
+    return GetProcAddress(path, symbol);
 #else
     bu_log("dlsym not supported\n");
     return NULL;
@@ -60,6 +64,8 @@ bu_dlclose(void *handle)
 {
 #ifdef HAVE_DLOPEN
     return dlclose(handle);
+#elif defined(WIN32)
+    return 0;
 #else
     bu_log("dlclose not supported\n");
     return 0;
@@ -71,6 +77,10 @@ bu_dlerror(void)
 {
 #ifdef HAVE_DLOPEN
     return dlerror();
+#elif defined(WIN32)
+    static char buf[BUFSIZ];
+    FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(), &buf, 0, NULL);
+    return (const char *)buf;
 #else
     bu_log("dlerror not supported\n");
     return NULL;
