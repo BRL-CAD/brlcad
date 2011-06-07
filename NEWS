@@ -38,7 +38,7 @@ release time.
 * fixed mged zoom out mouse binding on Linux/*BSD - Cliff Yapp
 * improved multiple path handling for search command - Cliff Yapp
 * fixed segment splitting tessellation conversion bug - Richard Weiss
-* facetization crash fixed for large models - Richard Weiss
+* fixed crash during facetization of large models - Richard Weiss
 * improve asc2g handling of attributes - Bob Parker
 * review and merge CMake build logic into main branch - Sean Morrison
 * removed -t and -m from annotate command - Sean Morrison
