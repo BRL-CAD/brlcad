@@ -27,6 +27,7 @@ scripties = \
 	hoc.tcl \
 	html_library.tcl \
 	libdm.tcl \
+	man_browser.tcl \
 	menu_override.tcl \
 	mouse.tcl \
 	vmath.tcl

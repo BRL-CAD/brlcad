@@ -48,6 +48,7 @@ SET(tclscripts_TCLSCRIPTS
 	hoc.tcl 
 	html_library.tcl 
 	libdm.tcl 
+        menu_override.tcl
 	menu_override.tcl 
 	mouse.tcl 
 	vmath.tcl
