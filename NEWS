@@ -39,8 +39,7 @@ release time.
 * improved multiple path handling for search command - Cliff Yapp
 * fixed segment splitting tessellation conversion bug - Richard Weiss
 * fixed crash during facetization of large models - Richard Weiss
-* improve asc2g handling of attributes - Bob Parker
-* review and merge CMake build logic into main branch - Sean Morrison
+* fixed asc2g bug importing color and other attributes - Bob Parker
 * removed -t and -m from annotate command - Sean Morrison
 * add -q "quiet lookup" option to the ls command - Cliff Yapp
 * fix a variety of bugs in the red command - Cliff Yapp/Sean Morrison
