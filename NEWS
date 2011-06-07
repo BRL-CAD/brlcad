@@ -2074,7 +2074,7 @@ Subversion revision control on Sourceforge.
 
 NEWS items should be formatted to column 70 (default M-q in Emacs),
 include credits to all significant contributors, and be descriptively
-succient.  NEWS items should be ONE LINE per user-visible change with
+succinct.  NEWS items should be ONE LINE per user-visible change with
 the description not exceeding column 70.  Multiple contributors may be
 listed on the same or following line, separated by commas.  Items
 should be written in plain English using the past tense or as a
