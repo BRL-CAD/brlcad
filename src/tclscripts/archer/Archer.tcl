@@ -3272,6 +3272,7 @@ proc title_node_handler {node} {
     global archer_help_data
     global manhtmlviewer
     global manhtml
+    global mancmds [list]
 
     itk_component add archerMan {
 	::iwidgets::dialog $itk_interior.archerMan \
@@ -3309,7 +3310,7 @@ proc title_node_handler {node} {
 	} {}
 
     itk_component add mantree {
-        ::tk::listbox $itk_component(archerManToC).mantree -bd 2 -width 16 -exportselection false -yscroll "$itk_component(archerManS) set"
+        ::tk::listbox $itk_component(archerManToC).mantree -bd 2 -width 16 -exportselection false -yscroll "$itk_component(archerManS) set" -listvariable mancmds
     } {}
 
     $itk_component(archerManS) configure -command "$itk_component(mantree) yview"
@@ -3323,20 +3324,15 @@ proc title_node_handler {node} {
 
 	# List of available help documents
 	set cmdfiles [glob -directory [file join [bu_brlcad_data "html"] mann en] *.html ]
-	set cmds [list ]
 	foreach cmdfile $cmdfiles {
 	    regexp {(.+/)(.+)(.html)} $cmdfile -> url cmdrootname htmlsuffix
 	    if {[string compare $cmdrootname "Introduction"]} {
-		set cmds [concat $cmds [list $cmdrootname]]
+		set mancmds [concat $mancmds [list $cmdrootname]]
 	    }
 	}
-	set cmds [lsort $cmds]
-	foreach cmd $cmds {
-	    $itk_component(mantree) insert end $cmd
-	}
+	set mancmds [lsort $mancmds]
 
 	pack $itk_component(archerManToC) -side left -expand no -fill y
-
 
 	# Main HTML window
 
@@ -3361,7 +3357,10 @@ proc title_node_handler {node} {
 
 	pack $itk_component(archerManF) -side left -expand yes -fill both
     }
-    bind $itk_component(mantree) <Button-1> {handle_select %W %y; Archer::get_html_man_data [%W get [%W curselection]]; Archer::html_man_display $manhtml}
+    bind $itk_component(mantree) <<ListboxSelect>> {
+        Archer::get_html_man_data [%W get [%W curselection]]
+        Archer::html_man_display $manhtml
+    }
 
     wm geometry $itk_component(archerMan) "800x600"
 }

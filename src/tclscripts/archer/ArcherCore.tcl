@@ -193,6 +193,7 @@ namespace eval ArcherCore {
 	method make		   {args}
 	method make_bb             {args}
 	method make_pnts           {args}
+	method man                 {args}
 	method mater               {args}
 	method mirror              {args}
 	method move                {args}
@@ -443,7 +444,7 @@ namespace eval ArcherCore {
 					   edmater erase erase_all ev exit facetize fracture \
 					   g group hide human i importFg4Section \
 					   in inside item kill killall killrefs killtree ls \
-					   make make_bb make_pnts mater mirror move move_arb_edge move_arb_face \
+					   make make_bb make_pnts man mater mirror move move_arb_edge move_arb_face \
 					   mv mvall nmg_collapse nmg_simplify \
 					   ocenter opendb orotate oscale otranslate p q packTree prefix protate pscale ptranslate \
 					   push put put_comb putmat pwd r rcodes red rfarb rm rmater \
@@ -5166,6 +5167,46 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::make_pnts {args} {
     eval gedWrapper make_pnts 0 1 1 1 $args
+}
+
+::itcl::body ArcherCore::man {args} {
+    global mancmds
+
+    set len [llength $args]
+    if {$len != 0 && $len != 1} {
+	return "Usage: man cmdname"
+    }
+
+    if {$args != {}} {
+	set cmd $args
+        set manPage [file join [bu_brlcad_data html] mann en $cmd.html]
+
+        if {![file exists $manPage]} {
+            error "No man page found for $cmd"
+        } else {
+	    set toc $itk_component(mantree)
+
+            # Deselect all
+	    $toc selection clear 0 [$toc index end]
+
+	    # Select the requested man page (shouldn't fail, since file exists)
+	    set idx [lsearch -sorted -exact $mancmds $cmd]
+	    if {$idx == -1} {
+		error "man page for $cmd was found, but there was problem loading it"
+	    }
+	    $toc selection set $idx
+	    $toc activate $idx
+	    $toc see $idx
+
+	    # Open the man page browser and load the selected man page
+	    $itk_component(archerMan) activate
+	    event generate $itk_component(mantree) <<ListboxSelect>>
+
+        }
+    } else {
+	# Open the man page browser without loading a man page
+	$itk_component(archerMan) activate
+    }
 }
 
 ::itcl::body ArcherCore::mater {args} {
