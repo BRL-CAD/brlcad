@@ -47,7 +47,7 @@ release time.
 	- Sean Morrison, Keith Bowman
 * added LIBRT_BOT_MINTIE environment variable override - Sean Morrison
 * changed search output order to shallow followed by deep - Cliff Yapp
-* use . and / to request list/full patch search results - Cliff Yapp
+* added search support for '.' object list search results - Cliff Yapp
 * add -f flag to red for overwriting pre-existing comb - Sean Morrison
 
 
