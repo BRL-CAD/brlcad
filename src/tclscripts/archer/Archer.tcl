@@ -318,7 +318,6 @@ package provide Archer 1.0
 	method buildViewAxesPreferences {}
 	method doAboutArcher {}
 	method doarcherHelp {}
-	method doarcherMan {}
 	method handleConfigure {}
 	method launchDisplayMenuBegin {_dm _m _x _y}
 	method launchDisplayMenuEnd {}
@@ -4533,7 +4532,7 @@ proc title_node_handler {node} {
     }
     $itk_component(${_prefix}helpmenu) add command \
 	-label "Archer Man Pages..." \
-	-command [::itcl::code $this doarcherMan]
+	-command [::itcl::code $this man]
     $itk_component(${_prefix}helpmenu) add command \
 	-label "Archer Help..." \
 	-command [::itcl::code $this doarcherHelp]
@@ -4660,17 +4659,6 @@ proc title_node_handler {node} {
     ::update
     $itk_component(aboutDialog) activate
 }
-
-
-::itcl::body Archer::doarcherMan {} {
-    global tcl_platform
-
-    $itk_component(archerMan) center [namespace tail $this]
-    ::update
-    $itk_component(archerMan) activate
-
-}
-
 
 ::itcl::body Archer::doarcherHelp {} {
     global tcl_platform
