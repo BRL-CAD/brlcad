@@ -100,6 +100,7 @@ namespace eval Archer {
 LoadArcherLibs
 package require ArcherCore 1.0
 catch {package require Tktable 2.10} tktable
+package require ManBrowser 1.0
 package provide Archer 1.0
 
 ::itcl::class Archer {
@@ -3267,6 +3268,12 @@ proc title_node_handler {node} {
 
 
 ::itcl::body Archer::buildarcherMan {} {
+    # Testing ManBrowser mega-widget
+    #set asdf [ManBrowser $itk_interior.archerMan2 Archer]
+    #return "testing"
+
+
+
     global env
     global archer_help_data
     global manhtmlviewer
