@@ -67,7 +67,7 @@
 #include <math.h>
 #include <string.h>
 
-#include <osl-renderer.h>
+#include "./osl-renderer.h"
 
 #include "vmath.h"
 #include "raytrace.h"
@@ -150,6 +150,8 @@ struct mfuncs osl_mfuncs[] = {
     {0,		(char *)0,	0,		0,		0,     0,		0,		0,		0 }
 };
 
+/* Osl renderer system */
+OSLRenderer* oslr;
 
 /* X X X _ S E T U P
  *
@@ -215,6 +217,8 @@ osl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
      *
      */
 
+    oslr = oslrenderer_init();
+
     if (rdebug&RDEBUG_SHADE) {
 	bu_struct_print(" Parameters:", osl_print_tab, (char *)osl_sp);
 	bn_mat_print("m_to_sh", osl_sp->osl_m_to_sh);
@@ -240,6 +244,7 @@ osl_print(register struct region *rp, char *dp)
 HIDDEN void
 osl_free(char *cp)
 {
+    oslrenderer_free(&oslr);
     bu_free(cp, "osl_specific");
 }
 
@@ -261,6 +266,7 @@ osl_render(struct application *ap, struct partition *pp, struct shadework *swp, 
     register struct osl_specific *osl_sp =
 	(struct osl_specific *)dp;
     point_t pt;
+
     VSETALL(pt, 0);
 
     /* check the validity of the arguments we got */
@@ -283,8 +289,9 @@ osl_render(struct application *ap, struct partition *pp, struct shadework *swp, 
      V3ARGS(pt));
      }
     */
-
-    Renderer2(swp->sw_color);
+    oslrenderer_query_color(oslr, pt);
+    VMOVE(swp->sw_color, pt);
+    
 
     /* OSL perform shading operations here */
 
