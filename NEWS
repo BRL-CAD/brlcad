@@ -34,7 +34,7 @@ will allow one set of build rules to handle all supported platforms,
 eliminating the need to manually update the Windows build logic at 
 release time.
 
-* TCL/TK ISST on 64b platforms (CMake only) - C. Yapp/E. Greenwald
+* cross-platform 64-bit ISST (cmake-only) - Cliff Yapp, Erik Greenwald
 * zoom out keybinding fixed on Linux/*BSD - Cliff Yapp
 * improve search handling of multiple paths - Cliff Yapp
 * segment splitting bug fixed for tesselation - Richard Weiss
