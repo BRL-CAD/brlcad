@@ -87,6 +87,11 @@ optical_shader_init(struct mfuncs **headp)
     MFUNCS(flat_mfuncs);
     MFUNCS(bbd_mfuncs);
     MFUNCS(toon_mfuncs);
+
+#ifdef OSL_ENABLED
+    /* This shader requires OSL, so it won't be compiled if this library was not enabled */
+    MFUNCS(osl_mfuncs);
+#endif
 }
 
 

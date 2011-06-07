@@ -1,4 +1,5 @@
 set(LIBOPTICAL_SOURCES
+
 	init.c
 	material.c
 	photonmap.c
@@ -44,7 +45,52 @@ include_directories(
     ${TCL_INCLUDE_DIRS}
 )
 
-BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt libbn libbu")
+IF(BRLCAD-ENABLE_OSL)
+
+    message("[Kunigami] OSL was enabled. Will compile shader OSL...")
+    
+    ##########################################
+    # Build OSL-renderer
+    ##########################################
+
+    # Find dependencies (TODO: build this altogether)
+    include(FindOSL)
+
+    # NOTE(boulos): Boost can only detect that you've disabled RTTI for
+    # gcc >= 4.3. My poor mac doesn't have that.
+    add_definitions("-fno-rtti -DBOOST_NO_RTTI -DBOOST_NO_TYPEID -Wno-error -no-pedantic -DOSL_ENABLED")
+
+    include_directories(${OSL_INCLUDES} ${OPENIMAGEIO_INCLUDES})
+
+    message("Oslexec: ${OSLEXEC_LIBRARY}")
+    message("Oslcomp: ${OSLCOMP_LIBRARY}")
+    message("Oslquery: ${OSLQUERY_LIBRARY}")
+
+    #add_library(osl-renderer osl-renderer.c)
+    set (OSLRT_SOURCES osl-renderer.c)
+    set (OSLRT_LIBS ${OSLEXEC_LIBRARY}
+	${OSLCOMP_LIBRARY} ${OSLQUERY_LIBRARY} ${OPENIMAGEIO_LIBRARY}
+	${Boost_LIBRARIES})
+    #target_link_libraries(osl-renderer )
+
+    BRLCAD_ADDLIB(osl-renderer ${OSLRT_SOURCES} ${OSLRT_LIBS})
+
+    ##########################################
+    # OSL Shader 
+    ##########################################
+
+    # Add the osl shader to the list of shaders
+    set(LIBOPTICAL_SOURCES ${LIBOPTICAL_SOURCES} sh_osl.c)
+
+    # Link liboptical with osl-renderer library
+    BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt libbn libbu osl-renderer")
+
+ELSE(BRLCAD-ENABLE_OSL)
+
+    BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt libbn libbu")
+
+ENDIF(BRLCAD-ENABLE_OSL)
+
 SET_TARGET_PROPERTIES(liboptical PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
 SET(LIBRTMS_SRCS
