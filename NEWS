@@ -40,7 +40,7 @@ release time.
 * fixed segment splitting tessellation conversion bug - Richard Weiss
 * fixed crash during facetization of large models - Richard Weiss
 * fixed asc2g bug importing color and other attributes - Bob Parker
-* add -q "quiet lookup" option to the ls command - Cliff Yapp
+* added -q "quiet lookup" option to the 'ls' command - Cliff Yapp
 * fix a variety of bugs in the red command - Cliff Yapp/Sean Morrison
 * cut splitting order fixed in librt, may impact results - S. Morrison
 * add LIBRT_BOT_MINTIE environment variable - Sean Morrison
