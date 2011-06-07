@@ -60,18 +60,26 @@ IF(BRLCAD-ENABLE_OSL)
     # gcc >= 4.3. My poor mac doesn't have that.
     add_definitions("-fno-rtti -DBOOST_NO_RTTI -DBOOST_NO_TYPEID -Wno-error -no-pedantic -DOSL_ENABLED")
 
-    include_directories(${OSL_INCLUDES} ${OPENIMAGEIO_INCLUDES})
+    include_directories(
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${OSL_INCLUDES} 
+	${OPENIMAGEIO_INCLUDES})
 
     message("Oslexec: ${OSLEXEC_LIBRARY}")
     message("Oslcomp: ${OSLCOMP_LIBRARY}")
     message("Oslquery: ${OSLQUERY_LIBRARY}")
 
-    set (OSLRT_SOURCES osl-renderer.cpp)
-    set (OSLRT_LIBS ${OSLEXEC_LIBRARY}
-	${OSLCOMP_LIBRARY} ${OSLQUERY_LIBRARY} ${OPENIMAGEIO_LIBRARY}
-	${Boost_LIBRARIES})
+    set (OSLRT_SOURCES osl-renderer.cpp render_svc.cpp)
+    #set (OSLRT_LIBS ${OSLEXEC_LIBRARY} ${OSLCOMP_LIBRARY} ${OSLQUERY_LIBRARY} ${OPENIMAGEIO_LIBRARY} ${Boost_LIBRARIES})
 
-    BRLCAD_ADDLIB(osl-renderer ${OSLRT_SOURCES} ${OSLRT_LIBS})
+    message("OSLRT_SOURCES: ${OSLRT_SOURCES}")
+    message("OSLRT_LIBRARIES: ${OSLRT_LIBS}")
+
+   # BRLCAD_ADDLIB(osl-renderer "${OSLRT_SOURCES}" "${OSLRT_LIBS}")
+
+    BRLCAD_ADDLIB(osl-renderer "${OSLRT_SOURCES}" "/Users/kunigami/dev/osl/dist/macosx/lib/liboslexec.dylib /Users/kunigami/dev/osl/dist/macosx/lib/liboslcomp.dylib /Users/kunigami/dev/osl/dist/macosx/lib/liboslquery.dylib /Users/kunigami/dev/oiio/dist/macosx/lib/libOpenImageIO.dylib /opt/local/lib/libboost_filesystem-mt.dylib /opt/local/lib/libboost_regex-mt.dylib /opt/local/lib/libboost_system-mt.dylib /opt/local/lib/libboost_thread-mt.dylib")
+
+    #BRLCAD_ADDLIB(osl-renderer "${OSLRT_SOURCES}" "/Users/kunigami/dev/osl/dist/macosx/lib/liboslexec.dylib;/Users/kunigami/dev/osl/dist/macosx/lib/liboslcomp.dylib;/Users/kunigami/dev/osl/dist/macosx/lib/liboslquery.dylib;/Users/kunigami/dev/oiio/dist/macosx/lib/libOpenImageIO.dylib;/opt/local/lib/libboost_filesystem-mt.dylib;/opt/local/lib/libboost_regex-mt.dylib;/opt/local/lib/libboost_system-mt.dylib;/opt/local/lib/libboost_thread-mt.dylib")
 
     ##########################################
     # OSL Shader 

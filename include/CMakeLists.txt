@@ -71,12 +71,6 @@ SET(brlcadinclude_wanted
 	wdb.h
 )
 
-# Just add the osl-renderer.h if we are going to enable OSL
-IF(BRLCAD-ENABLE_OSL)
-    SET(brlcadinclude_wanted ${brlcadinclude_wanted} osl-renderer.h)
-ENDIF(BRLCAD-ENABLE_OSL)
-
-
 # headers used by multiple packages but still considered private.
 # public headers should NOT include these headers.
 SET(brlcadnoinst_HEADERS

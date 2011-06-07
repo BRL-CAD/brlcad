@@ -284,7 +284,7 @@ osl_render(struct application *ap, struct partition *pp, struct shadework *swp, 
      }
     */
 
-    Renderer(swp->sw_color);
+    Renderer2(swp->sw_color);
 
     /* OSL perform shading operations here */
 
