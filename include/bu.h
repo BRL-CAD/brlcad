@@ -6248,6 +6248,29 @@ BU_EXPORT BU_EXTERN(int64_t bu_gettime, ());
 
 /** @} */
 
+/** @addtogroup file */
+/** @{ */
+/** @file dlfcn.c
+ * Dynamic Library functionality
+ */
+#ifdef HAVE_DLOPEN
+# define BU_RTLD_LAZY RTLD_LAZY
+# define BU_RTLD_NOW RTLD_NOW
+# define BU_RTLD_GLOBAL RTLD_GLOBAL
+# define BU_RTLD_LOCAL RTLD_LOCAL
+#else
+# define BU_RTLD_LAZY 1
+# define BU_RTLD_NOW 2
+# define BU_RTLD_GLOBAL 0x100
+# define BU_RTLD_LOCAL 0
+#endif
+BU_EXPORT BU_EXTERN(void *bu_dlopen, (const char *path, int mode));
+BU_EXPORT BU_EXTERN(void *bu_dlsym, (void *path, const char *symbol));
+BU_EXPORT BU_EXTERN(int bu_dlclose, (void *handle));
+BU_EXPORT BU_EXTERN(const char *bu_dlerror, ());
+
+/** @} */
+
 
 __END_DECLS
 

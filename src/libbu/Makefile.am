@@ -22,6 +22,7 @@ libbu_nil_la_SOURCES = \
 	crashreport.c \
 	dirent.c \
 	dirname.c \
+	dlfcn.c \
 	endian.c \
 	fchmod.c \
 	fgets.c \

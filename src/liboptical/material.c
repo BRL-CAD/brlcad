@@ -80,9 +80,9 @@ try_load(const char *path, const char *material, const char *shader_name)
     const char *dl_error_str;
     char sym[MAXPATHLEN];
 
-    if (! (handle = dlopen(path, RTLD_NOW))) {
+    if (! (handle = bu_dlopen(path, BU_RTLD_NOW))) {
 	if (R_DEBUG&RDEBUG_MATERIAL)
-	    bu_log("dlopen failed on \"%s\"\n", path);
+	    bu_log("bu_dlopen failed on \"%s\"\n", path);
 	return (struct mfuncs *)NULL;
     } else if (R_DEBUG&RDEBUG_MATERIAL) {
 	bu_log("%s open... ", path);
@@ -90,18 +90,18 @@ try_load(const char *path, const char *material, const char *shader_name)
 
     /* Find the {shader}_mfuncs symbol in the library */
     snprintf(sym, MAXPATHLEN, "%s_mfuncs", shader_name);
-    shader_mfuncs = dlsym(handle, sym);
-    if ((dl_error_str=dlerror()) == (char *)NULL) goto found;
+    shader_mfuncs = bu_dlsym(handle, sym);
+    if ((dl_error_str=bu_dlerror()) == (char *)NULL) goto found;
 
 
     /* We didn't find a {shader}_mfuncs symbol, so
      * try the generic "shader_mfuncs" symbol.
      */
-    shader_mfuncs = dlsym(handle, "shader_mfuncs");
-    if ((dl_error_str=dlerror()) != (char *)NULL) {
+    shader_mfuncs = bu_dlsym(handle, "shader_mfuncs");
+    if ((dl_error_str=bu_dlerror()) != (char *)NULL) {
 	/* didn't find anything appropriate, give up */
 	if (R_DEBUG&RDEBUG_MATERIAL) bu_log("%s has no %s table, %s\n", material, sym, dl_error_str);
-	dlclose(handle);
+	bu_dlclose(handle);
 	return (struct mfuncs *)NULL;
     }
 
@@ -120,7 +120,7 @@ found:
     if (R_DEBUG&RDEBUG_MATERIAL) bu_log("shader '%s' not found in library\n", shader_name);
 
     /* found the library, but not the shader */
-    dlclose(handle);
+    bu_dlclose(handle);
     return (struct mfuncs *)NULL;
 }
 
