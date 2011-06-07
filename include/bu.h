@@ -185,6 +185,10 @@ __BEGIN_DECLS
 #  include <stdint.h> /* for [u]int[16|32|64]_t */
 #endif
 
+#ifdef HAVE_DLFCN_H
+#  include <dlfcn.h>	/* for RTLD_* */
+#endif
+
 /* common interface headers */
 #include "tcl.h"	/* Included for Tcl_Interp definition */
 #include "magic.h"
