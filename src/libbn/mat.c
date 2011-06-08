@@ -128,9 +128,9 @@ bn_atan2(double y, double x)
     if (x > -1.0e-20 && x < 1.0e-20) {
 	/* X is equal to zero, check Y */
 	if (y < -1.0e-20)
-	    return -3.14159265358979323/2;
+	    return -M_PI_2;
 	if (y > 1.0e-20)
-	    return 3.14159265358979323/2;
+	    return M_PI_2;
 	return 0.0;
     }
     return atan2(y, x);
