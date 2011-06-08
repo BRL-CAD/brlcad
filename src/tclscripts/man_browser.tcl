@@ -44,12 +44,11 @@ package provide ManBrowser 1.0
     public {	
 	variable path
 	variable parentName
-	variable selection
 
 	method get		{option}        
         method setCmdNames	{}
-	#proc loadPage		{pageName w} ;# For binding & internal use
 	method loadPage		{pageName}
+	method select		{cmdName}
     }
  
     private {
@@ -94,23 +93,32 @@ package provide ManBrowser 1.0
     set commands [lsort $commands]
 }
 
-::itcl::configbody ManBrowser::selection {
-    #set toc $itk_component(toc_listbox)
-#    $toc selection set $idx
-#    $toc activate $idx
-#    $toc see $idx
-    #set path 
-    #puts [$this cget -path]
+::itcl::body ManBrowser::select {cmdName} {
+    # Select the requested man page 
+    set idx [lsearch -sorted -exact $commands $cmdName]
+
+    if {$idx != -1} {
+        set result True
+	set toc $itk_component(toc_listbox)
+
+	# Deselect previous selection
+	$toc selection clear 0 [$toc index end]
+
+        # Select cmdName in table of contents
+	$toc selection set $idx
+	$toc activate $idx
+	$toc see $idx
+
+	loadPage $cmdName
+    } else {
+	set result False
+    }
     
-    #ManBrowser::loadPage $selection $this
-    
-#return status
+    return result
 }
 
-#proc ManBrowser::loadPage {pageName w} {
 ::itcl::body ManBrowser::loadPage {pageName} {
     # Get page
-    #set pathname [file join [$w get path] $pageName.html]
     set pathname [file join $path $pageName.html]
     set htmlFile [open $pathname]
     set pageData [read $htmlFile]
@@ -193,9 +201,9 @@ package provide ManBrowser 1.0
 
     # Load Introduction.html if it's there, otherwise load first command
     if {[file exists [file join $path Introduction.html]]} {
-        loadPage Introduction ;# $this
+        loadPage Introduction
     } else {
-        #loadPage [lindex $commands 0] $this
+        loadPage [lindex $commands 0]
     }
 
     bind $toc.toc_listbox <<ListboxSelect>> {
@@ -203,8 +211,8 @@ package provide ManBrowser 1.0
 	$mb loadPage [%W get [%W curselection]]
     }
 
-    #center [namespace tail $this]
-    #::update
+    center [namespace tail $this]
+    ::update
 
     eval itk_initialize $args
     configure -height 600 -width 800
