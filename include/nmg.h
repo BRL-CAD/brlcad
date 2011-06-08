@@ -729,13 +729,11 @@ struct nmg_struct_counts {
 }
 
 /* flags for manifold-ness */
-#define NMG_3MANIFOLD 16
-#define NMG_2MANIFOLD  4
-#define NMG_1MANIFOLD  2
 #define NMG_0MANIFOLD  1
-#if 0
-# define NMG_DANGLING  8 /* NMG_2MANIFOLD + 4th bit for special cond */
-#endif
+#define NMG_1MANIFOLD  2
+#define NMG_2MANIFOLD  4
+#define NMG_DANGLING   8 /* NMG_2MANIFOLD + 4th bit for special cond (UNUSED) */
+#define NMG_3MANIFOLD 16
 
 #define NMG_SET_MANIFOLD(_t, _p, _v) NMG_INDEX_OR(_t, _p, _v)
 #define NMG_MANIFOLDS(_t, _p)        NMG_INDEX_VALUE(_t, (_p)->index)
