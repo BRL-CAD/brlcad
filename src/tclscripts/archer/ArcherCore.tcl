@@ -5170,43 +5170,20 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::man {args} {
-    global mancmds
+    set archerMan [ManBrowser::getBrowser]
 
     set len [llength $args]
     if {$len != 0 && $len != 1} {
-	return "Usage: man cmdname"
+	return "Usage: man cmdName"
     }
 
     if {$args != {}} {
-	set cmd $args
-        set manPage [file join [bu_brlcad_data html] mann en $cmd.html]
-
-        if {![file exists $manPage]} {
+	set page $args
+        if {![$archerMan select $page]} {
             error "No man page found for $cmd"
-        } else {
-	    set toc $itk_component(mantree)
-
-            # Deselect all
-	    $toc selection clear 0 [$toc index end]
-
-	    # Select the requested man page (shouldn't fail, since file exists)
-	    set idx [lsearch -sorted -exact $mancmds $cmd]
-	    if {$idx == -1} {
-		error "man page for $cmd was found, but there was problem loading it"
-	    }
-	    $toc selection set $idx
-	    $toc activate $idx
-	    $toc see $idx
-
-	    # Open the man page browser and load the selected man page
-	    $itk_component(archerMan) activate
-	    event generate $itk_component(mantree) <<ListboxSelect>>
-
         }
-    } else {
-	# Open the man page browser without loading a man page
-	$itk_component(archerMan) activate
     }
+    $archerMan activate
 }
 
 ::itcl::body ArcherCore::mater {args} {

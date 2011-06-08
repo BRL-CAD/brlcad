@@ -302,7 +302,6 @@ package provide Archer 1.0
 	# Miscellaneous Section
 	method buildAboutDialog {}
 	method buildarcherHelp {}
-	method buildarcherMan {}
 	method buildCommandViewNew {_mflag}
 	method buildDisplayPreferences {}
 	method buildGeneralPreferences {}
@@ -3266,115 +3265,6 @@ proc title_node_handler {node} {
     wm geometry $itk_component(archerHelp) "1100x800"
 }
 
-
-::itcl::body Archer::buildarcherMan {} {
-    # Testing ManBrowser mega-widget
-    #set disabledPages [list journal oed rcc-blend rcc-cap rcc-tor rcc-tgc reset status ill sill rot orot rotobj qorot mrot vrot]
-    #set archerMan [ManBrowser $itk_interior.archerMan2 -parentName Archer \
-                   -disabledPages $disabledPages]
-    #$archerMan activate
-    #puts "selecing make: [$archerMan select make]"
-
-
-
-    global env
-    global archer_help_data
-    global manhtmlviewer
-    global manhtml
-    global mancmds [list]
-
-    itk_component add archerMan {
-	::iwidgets::dialog $itk_interior.archerMan \
-	    -modality none \
-	    -title "MGED Manual Page Browser" \
-	    -background $SystemButtonFace
-    } {}
-    $itk_component(archerMan) hide 1
-    $itk_component(archerMan) hide 2
-    $itk_component(archerMan) hide 3
-    $itk_component(archerMan) configure \
-	-thickness 2 \
-	-buttonboxpady 0
-    $itk_component(archerMan) buttonconfigure 0 \
-	-defaultring yes \
-	-defaultringpad 3 \
-	-borderwidth 1 \
-	-pady 0
-
-    # ITCL can be nasty
-    set win [$itk_component(archerMan) component bbox component OK component hull]
-    after idle "$win configure -relief flat"
-
-    set tlparent [$itk_component(archerMan) childsite]
-
-    # Table of Contents
-    itk_component add archerManToC {
-	::tk::frame $tlparent.archerManToC
-    } {}
-    
-    set sfcstoc $itk_component(archerManToC)
-
-    itk_component add archerManS {
-	::ttk::scrollbar $itk_component(archerManToC).archerManS \
-	} {}
-
-    itk_component add mantree {
-        ::tk::listbox $itk_component(archerManToC).mantree -bd 2 -width 16 -exportselection false -yscroll "$itk_component(archerManS) set" -listvariable mancmds
-    } {}
-
-    $itk_component(archerManS) configure -command "$itk_component(mantree) yview"
-
-    grid $itk_component(mantree) $itk_component(archerManS) -sticky nsew -in $sfcstoc
-
-    grid columnconfigure $sfcstoc 0 -weight 1
-    grid rowconfigure $sfcstoc 0 -weight 1
-
-    if {[file exists [file join [bu_brlcad_data "html"] mann en Introduction.html]]} {
-
-	# List of available help documents
-	set cmdfiles [glob -directory [file join [bu_brlcad_data "html"] mann en] *.html ]
-	foreach cmdfile $cmdfiles {
-	    regexp {(.+/)(.+)(.html)} $cmdfile -> url cmdrootname htmlsuffix
-	    if {[string compare $cmdrootname "Introduction"]} {
-		set mancmds [concat $mancmds [list $cmdrootname]]
-	    }
-	}
-	set mancmds [lsort $mancmds]
-
-	pack $itk_component(archerManToC) -side left -expand no -fill y
-
-	# Main HTML window
-
-	itk_component add archerManF {
-	    ::tk::frame $tlparent.archerManF
-	} {}
-	set sfcsman $itk_component(archerManF)
-	pack $sfcsman -expand yes -fill both 
-	
-	# HTML widget
-	set manhtmlviewer [::hv3::hv3 $sfcsman.htmlview]
-	set manhtml [$manhtmlviewer html]
-	$manhtml configure -parsemode html 
-	set help_fd [lindex [list [file join [bu_brlcad_data "html"] mann en Introduction.html]] 0]
-	get_html_data $help_fd
-	$manhtml parse $archer_help_data
-
-	grid $manhtmlviewer -sticky nsew -in $sfcsman
-
-	grid columnconfigure $sfcsman 0 -weight 1
-	grid rowconfigure $sfcsman 0 -weight 1
-
-	pack $itk_component(archerManF) -side left -expand yes -fill both
-    }
-    bind $itk_component(mantree) <<ListboxSelect>> {
-        Archer::get_html_man_data [%W get [%W curselection]]
-        Archer::html_man_display $manhtml
-    }
-
-    wm geometry $itk_component(archerMan) "800x600"
-}
-
-
 ::itcl::body Archer::buildDisplayPreferences {} {
     set oglParent $itk_component(preferenceTabs)
     itk_component add displayF {
@@ -3890,7 +3780,12 @@ proc title_node_handler {node} {
 
     buildAboutDialog
     buildarcherHelp
-    buildarcherMan
+
+    # Build manual browser
+    set disabledPages [list]
+    global archerMan [ManBrowser $itk_interior.archerMan2 -parentName Archer \
+                   -disabledPages $disabledPages]
+
     buildMouseOverridesDialog
     #    buildInfoDialog mouseOverridesDialog \
 	"Mouse Overrides" $mMouseOverrideInfo \
