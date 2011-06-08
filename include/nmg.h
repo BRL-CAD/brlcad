@@ -58,7 +58,7 @@
 #define DEBUG_MESH_EU   0x00001000	/**< @brief 13 nmg_mesh: list edges meshed */
 #define DEBUG_POLYTO    0x00002000	/**< @brief 14 nmg_misc: polytonmg */
 #define DEBUG_LABEL_PTS 0x00004000	/**< @brief 15 label points in plot files */
-#define DEBUG_UNUSED1   0x00008000	/**< @brief 16 UNUSED */
+#define NMG_DEBUG_UNUSED1   0x00008000	/**< @brief 16 UNUSED */
 #define DEBUG_NMGRT     0x00010000	/**< @brief 17 ray tracing */
 #define DEBUG_FINDEU    0x00020000	/**< @brief 18 nmg_mod: nmg_findeu() */
 #define DEBUG_CMFACE    0x00040000	/**< @brief 19 nmg_mod: nmg_cmface() */
@@ -70,11 +70,11 @@
 #define DEBUG_TRI       0x01000000	/**< @brief 25 nmg_tri */
 #define DEBUG_PT_FU     0x02000000	/**< @brief 26 nmg_pt_fu */
 #define DEBUG_MANIF     0x04000000	/**< @brief 27 nmg_manif */
-#define DEBUG_UNUSED2   0x08000000	/**< @brief 28 UNUSED */
-#define DEBUG_UNUSED3   0x10000000	/**< @brief 29 UNUSED */
-#define DEBUG_UNUSED4   0x20000000	/**< @brief 30 UNUSED */
-#define DEBUG_UNUSED5   0x40000000	/**< @brief 31 UNUSED */
-#define DEBUG_UNUSED6   0x80000000	/**< @brief 32 UNUSED */
+#define NMG_DEBUG_UNUSED2   0x08000000	/**< @brief 28 UNUSED */
+#define NMG_DEBUG_UNUSED3   0x10000000	/**< @brief 29 UNUSED */
+#define NMG_DEBUG_UNUSED4   0x20000000	/**< @brief 30 UNUSED */
+#define NMG_DEBUG_UNUSED5   0x40000000	/**< @brief 31 UNUSED */
+#define NMG_DEBUG_UNUSED6   0x80000000	/**< @brief 32 UNUSED */
 #define NMG_DEBUG_FORMAT \
 "\020\033MANIF\032PTFU\031TRIANG\030RT_ISECT\
 \027RT_SEGS\026FCUT\025VU_SORT\024CUTLOOP\023CMFACE\022FINDEU\021RT_ISECT\020(FREE)\
