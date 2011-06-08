@@ -89,12 +89,15 @@ EXTRA_DIST = \
 	CMake/FindFOP.cmake \
 	CMake/FindGL.cmake \
 	CMake/FindLEX.cmake \
+	CMake/FindOIIO.cmake \
+	CMake/FindOpenEXR.cmake \
 	CMake/FindOPENNURBS.cmake \
 	CMake/FindOSL.cmake \
 	CMake/FindPkgMacros.cmake \
 	CMake/FindREGEX.cmake \
 	CMake/FindSCL.cmake \
 	CMake/FindShellDeps.cmake \
+	CMake/FindTBB.cmake \
 	CMake/FindTCL.cmake \
 	CMake/FindTERMLIB.cmake \
 	CMake/FindTclPackage.cmake \
