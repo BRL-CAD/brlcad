@@ -17,9 +17,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* test CMake build in multiple configurations on multiple platforms
-  (Release/Debug, linux/mac/win/fbsd, x86/x86_64/ppc64/sparc)
-
 * fix Archer features using search command (looks like the
   syntax change broke 'em)
 
@@ -27,6 +24,8 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * upgrade source repository back-end to the latest SVN 1.5 so we can
   benefit from proper merge tracking.
+
+* fix osX link line to stop mixing X libs (causes segfault on GL stuff)
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
