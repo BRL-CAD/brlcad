@@ -19,7 +19,6 @@ EXTRA_DIST= \
 	bw2pix/bw2pix.vcproj \
 	bwish/bwish.vcproj \
 	bwmod/bwmod.vcproj \
-	cat2fb/cat2fb.vcproj \
 	cell2fb/cell2fb.vcproj \
 	clutter/clutter.vcproj \
 	cmap2fb/cmap2fb.vcproj \
