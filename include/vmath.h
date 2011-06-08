@@ -179,15 +179,12 @@ __BEGIN_DECLS
 
 /** @brief # of fastf_t's per point_t */
 #define ELEMENTS_PER_POINT	3
-#define ELEMENTS_PER_PT		ELEMENTS_PER_POINT /**< DEPRECATED */
 
 /** @brief # of fastf_t's per hvect_t (homogeneous vector) */
 #define ELEMENTS_PER_HVECT	4
-#define HVECT_LEN		ELEMENTS_PER_HVECT /**< DEPRECATED */
 
 /** @brief # of fastf_t's per hpt_t (homogeneous point) */
 #define ELEMENTS_PER_HPOINT	4
-#define HPT_LEN			ELEMENTS_PER_HPOINT /**< DEPRECATED */
 
 /** @brief # of fastf_t's per plane_t */
 #define ELEMENTS_PER_PLANE	4
