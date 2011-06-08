@@ -27,6 +27,7 @@
 #    -Add method for disabling a list of commands passed in
 #    -While we're at it, add method for enabling only commands passed in
 #    -Add method for retrieving the list of commands
+#    -Add ability to add >1 path (like {{mann/en/} {man/en/archer}}
 #    -Document the interface
 #    -Resizing window could be improved (i.e. limited).
 #    -It would be nice if clicking html text would bring you to
@@ -38,151 +39,171 @@ package require hv3
 package provide ManBrowser 1.0
 
 ::itcl::class ::ManBrowser {
-    inherit itk::Toplevel
-
-    constructor {title args} {}
-
-    private {
-	variable commands [list]
-	variable data
-    }
+    inherit iwidgets::Dialog
 
     public {	
 	variable path
-	variable title
+	variable parentName
+	variable selection
 
-	method activate		{}
-	method showPage		{cmdName}
+	method get		{option}        
+        method setCmdNames	{}
+	proc loadPage		{pageName w} ;# For binding & internal use
     }
+ 
+    private {
+	common commands [list]
+	variable pageData
+    }
+
+    constructor {args} {}
 }
 
 ::itcl::configbody ManBrowser::path {
-    if ($path == {} || ![file isdirectory $path]) {
-	set path [file join [bu_brlcad_data "html"] mann en]]
+    if {![info exists path] || ![file isdirectory $path]} {
+	set path [file join [bu_brlcad_data "html"] mann en]
     }
 }
 
-::itcl::configbody ManBrowser::title {
-    if ($title == {} || ![string is wordchar -strict $title]) {
-	set title BRLCAD
+::itcl::configbody ManBrowser::parentName {
+    if {![info exists parentName] || ![string is print -strict $parentName]} {
+	set parentName BRLCAD
     }
+    configure -title "[string trim $parentName] Manual Page Browser"
 }
 
-::itcl::body ManBrowser::activate {} {
-    #center [namespace tail $this]
-    #::update
-    #$itk_component($this) activate
+::itcl::body ManBrowser::get {option} {
+    switch -- $option {
+	path {if {[info exists path]} {return $path}}
+    }
+    error "bad option \"$option\""
 }
 
-::itcl::body ManBrowser::showPage {cmdName} {
-    #set help_fd [open [file join [bu_brlcad_data "html"] mann en $cmdName.html]]
-    #set manData [read $help_fd]
-    #close $help_fd
-
-    #$w reset;
-    #$w configure -parsemode html
-    #$w parse $manData
+::itcl::body ManBrowser::setCmdNames {} {
+    set manFiles [glob -directory $path *.html ]
+    foreach manFile $manFiles {
+        # FIXME: should use [file rootname], etc rather than regexp
+        # FIXME: string comparison with Introduction should be removed in favor
+        #        of a mechanism for excluding a list of rootnames (commands)
+	regexp {(.+/)(.+)(.html)} $manFile -> url rootName htmlSuffix
+	if {[string compare $rootName Introduction]} {
+	    set commands [concat $commands [list $rootName]]
+	}
+    }
+    set commands [lsort $commands]
 }
 
-::itcl::body ManBrowser::constructor {title args} {
-    global env
-    global manhtmlviewer
-    global manhtml
-
-    return $this ;# XXXXXXXXXXXXXXXX BROKEN BROKEN BROKEN BROKEN BROKEN BROKEN
+::itcl::configbody ManBrowser::selection {
+    #set toc $itk_component(toc_listbox)
+#    $toc selection set $idx
+#    $toc activate $idx
+#    $toc see $idx
+    #set path 
+    #puts [$this cget -path]
     
-    #itk_component add $this { 
-    #    ::iwidgets::dialog $itk_interior.$this \
-    #        -modality none \
-    #        -title "$title Manual Page Browser" \
-    #        -background $SystemButtonFace
-    #} {}
-    #$itk_component($this) hide 1
-    #$itk_component($this) hide 2
-    #$itk_component($this) hide 3
-    #$itk_component($this) configure \
-    #    -thickness 2 \
-    #    -buttonboxpady 0
-    #$itk_component($this) buttonconfigure 0 \
-    #    -defaultring yes \
-    #    -defaultringpad 3 \
-    #    -borderwidth 1 \
-    #    -pady 0
+    #ManBrowser::loadPage $selection $this
 
-    $this configure -title "$title Manual Page Browser"
+}
+
+proc ManBrowser::loadPage {pageName w} {
+    # Get page
+    set path [file join [$w get path] $pageName.html]
+    set htmlFile [open $path]
+    set pageData [read $htmlFile]
+    close $htmlFile
+
+    # Display page
+    set htmlview [[$w childsite].browser.htmlview html]
+    $htmlview reset
+    $htmlview configure -parsemode html
+    $htmlview parse $pageData
+}
+
+::itcl::body ManBrowser::constructor {args} {
+
+    # Set default path if user didn't pass one
+    set path [file join [bu_brlcad_data "html"] mann en]
+    #if {![info exists path]} {configure -path {}}
+
+    $this hide 1
+    $this hide 2
+    $this hide 3
+    $this configure \
+        -modality none \
+        -thickness 2 \
+        -buttonboxpady 0
+       #-background $SystemButtonFace
+    $this buttonconfigure 0 \
+        -defaultring yes \
+        -defaultringpad 3 \
+        -borderwidth 1 \
+        -pady 0
     
     # ITCL can be nasty
-    set win [$itk_component($this) component bbox component OK component hull]
+    set win [$this component bbox component OK component hull]
     after idle "$win configure -relief flat"
 
-    set tlparent [$itk_component($this) childsite]
+    set parent [$this childsite]
 
     # Table of Contents
-    itk_component add ToC {
-        ::tk::frame $tlparent.ToC
+    itk_component add toc {
+        ::tk::frame $parent.toc
     } {}
 
-    set sfcsToC $itk_component(ToC)
+    set toc $itk_component(toc)
 
-    itk_component add ToC_scrollbar {
-        ::ttk::scrollbar $itk_component(ToC).ToC_scrollbar \
-        } {}
-
-    itk_component add mantree {
-        ::tk::listbox $itk_component(ToC).mantree -bd 2 -width 16 -exportselection false -yscroll "$itk_component(ToC_scrollbar) set" -listvariable mancmds
+    itk_component add toc_scrollbar {
+        ::ttk::scrollbar $toc.toc_scrollbar
     } {}
 
-    $itk_component(ToC_scrollbar) configure -command "$itk_component(mantree) yview"
+    setCmdNames
+    itk_component add toc_listbox {
+        ::tk::listbox $toc.toc_listbox -bd 2 -width 16 -exportselection false -yscroll "$toc.toc_scrollbar set" -listvariable [scope commands]
+    } {}
 
-    grid $itk_component(mantree) $itk_component(ToC_scrollbar) -sticky nsew -in $sfcsToC
+    $toc.toc_scrollbar configure -command "$toc.toc_listbox yview"
 
-    grid columnconfigure $sfcsToC 0 -weight 1
-    grid rowconfigure $sfcsToC 0 -weight 1
+    grid $toc.toc_listbox $toc.toc_scrollbar -sticky nsew -in $toc
 
-    if {[file exists [file join [bu_brlcad_data "html"] mann en Introduction.html]]} {
+    grid columnconfigure $toc 0 -weight 1
+    grid rowconfigure $toc 0 -weight 1
 
-        # List of available help documents
-        set cmdfiles [glob -directory [file join [bu_brlcad_data "html"] mann en] *.html ]
-        foreach cmdfile $cmdfiles {
-            regexp {(.+/)(.+)(.html)} $cmdfile -> url cmdrootname htmlsuffix
-            if {[string compare $cmdrootname "Introduction"]} {
-                set mancmds [concat $mancmds [list $cmdrootname]]
-            }
-        }
-        set mancmds [lsort $mancmds]
+    pack $toc -side left -expand no -fill y
 
-        pack $itk_component(ToC) -side left -expand no -fill y
+    # Main HTML window
+    itk_component add browser {
+	::tk::frame $parent.browser
+    } {}
+    set sfcsman $itk_component(browser)
+    pack $sfcsman -expand yes -fill both
 
-        # Main HTML window
-        itk_component add browser {
-            ::tk::frame $tlparent.browser
-        } {}
-        set sfcsman $itk_component(browser)
-        pack $sfcsman -expand yes -fill both
+    # HTML widget
+    set manhtmlviewer [::hv3::hv3 $sfcsman.htmlview]
+    set manhtml [$manhtmlviewer html]
 
-        # HTML widget
-        set manhtmlviewer [::hv3::hv3 $sfcsman.htmlview]
-        set manhtml [$manhtmlviewer html]
-        $manhtml configure -parsemode html
-        set help_fd [lindex [list [file join [bu_brlcad_data "html"] mann en Introduction.html]] 0]
-        get_html_data $help_fd
-        $manhtml parse $manData
+    grid $manhtmlviewer -sticky nsew -in $sfcsman
 
-        grid $manhtmlviewer -sticky nsew -in $sfcsman
+    grid columnconfigure $sfcsman 0 -weight 1
+    grid rowconfigure $sfcsman 0 -weight 1
 
-        grid columnconfigure $sfcsman 0 -weight 1
-        grid rowconfigure $sfcsman 0 -weight 1
+    pack $itk_component(browser) -side left -expand yes -fill both
 
-        pack $itk_component(browser) -side left -expand yes -fill both
-    }
-    bind $itk_component(mantree) <<ListboxSelect>> {
-        Archer::get_html_man_data [%W get [%W curselection]]
-        Archer::html_man_display $manhtml
+    # Load Introduction.html if it's there, otherwise load first command
+    if {[file exists [file join $path Introduction.html]]} {
+        loadPage Introduction $this
+    } else {
+        #loadPage [lindex $commands 0] $this
     }
 
-    wm geometry $itk_component($this) "800x600"
+    bind $toc.toc_listbox <<ListboxSelect>> {
+	ManBrowser::loadPage [%W get [%W curselection]] %W
+    }
 
-    eval configure $args
+    #center [namespace tail $this]
+    #::update
+
+    eval itk_initialize $args
+    configure -height 600 -width 800
     return $this
 }
 
