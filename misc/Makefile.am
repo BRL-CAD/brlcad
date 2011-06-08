@@ -90,6 +90,7 @@ EXTRA_DIST = \
 	CMake/FindGL.cmake \
 	CMake/FindLEX.cmake \
 	CMake/FindOPENNURBS.cmake \
+	CMake/FindOSL.cmake \
 	CMake/FindPkgMacros.cmake \
 	CMake/FindREGEX.cmake \
 	CMake/FindSCL.cmake \
