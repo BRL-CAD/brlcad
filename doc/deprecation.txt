@@ -190,10 +190,6 @@ include/vmath.h
 ----
 include/raytrace.h
 	rt_functab size -> growing ft_label and new callbacks [deprecated 7.12]
-include/vmath.h
-	ELEMENTS_PER_PT -> ELEMENTS_PER_POINT
-	HVECT_LEN -> ELEMENTS_PER_HVECT
-	HPT_LEN -> ELEMENTS_PER_HPOINT
 srt/librt/cmd.c
 	rt_split_cmd() -> bu_argv_from_string() [deprecated 7.12]
 src/rt/viewarea.c
@@ -216,11 +212,18 @@ include/raytrace.h
 
 7.20.0
 ------
+include/vmath.h
+	ELEMENTS_PER_PT -> ELEMENTS_PER_POINT [deprecated 7.12]
+	HVECT_LEN -> ELEMENTS_PER_HVECT [deprecated 7.12]
+	HPT_LEN -> ELEMENTS_PER_HPOINT [deprecated 7.12]
+include/bu.h
 	bu_mro and related macros -> bu_attribute_value_set
 
 7.18.2
 ------
+include/raytrace.h
 	RT_HIT_NORM -> RT_HIT_NORMAL [deprecated pre-7.0]
+g-shell.rect
 	g-shell.rect renamed to g-shell-rect [minor tool rename]
 
 7.18.0
