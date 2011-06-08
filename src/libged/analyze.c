@@ -456,8 +456,6 @@ ged_find_vol(int loc, struct rt_arb_internal *arb, struct bn_tol *tol)
     return vol;
 }
 
-static double pi = 3.1415926535898;
-
 
 /*	analyze a torus	*/
 static void
@@ -471,8 +469,8 @@ ged_tor_anal(struct ged *gedp, const struct rt_db_internal *ip)
     r1 = tor->r_a;
     r2 = tor->r_h;
 
-    vol = 2.0 * pi * pi * r1 * r2 * r2;
-    sur_area = 4.0 * pi * pi * r1 * r2;
+    vol = 2.0 * M_PI * M_PI * r1 * r2 * r2;
+    sur_area = 4.0 * M_PI * M_PI * r1 * r2;
 
     bu_vls_printf(&gedp->ged_result_str, "TOR Vol = %.8f (%.8f gal)   Surface Area = %.8f\n",
 		  vol*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
@@ -509,14 +507,14 @@ ged_ell_anal(struct ged *gedp, const struct rt_db_internal *ip)
 
     type = 0;
 
-    vol = 4.0 * pi * ma * mb * mc / 3.0;
+    vol = 4.0 * M_PI * ma * mb * mc / 3.0;
     bu_vls_printf(&gedp->ged_result_str, "ELL Volume = %.8f (%.8f gal)",
 		  vol*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
 		  vol/GALLONS_TO_MM3);
 
     if ( fabs(ma-mb) < .00001 && fabs(mb-mc) < .00001 ) {
 	/* have a sphere */
-	sur_area = 4.0 * pi * ma * ma;
+	sur_area = 4.0 * M_PI * ma * ma;
 	bu_vls_printf(&gedp->ged_result_str, "   Surface Area = %.8f\n",
 		      sur_area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
 	return;
@@ -574,11 +572,11 @@ ged_ell_anal(struct ged *gedp, const struct rt_db_internal *ip)
 	    }
     ecc = sqrt(major*major - minor*minor) / major;
     if ( type == PROLATE ) {
-	sur_area = 2.0 * pi * minor * minor +
-	    (2.0 * pi * (major*minor/ecc) * asin(ecc));
+	sur_area = 2.0 * M_PI * minor * minor +
+	    (2.0 * M_PI * (major*minor/ecc) * asin(ecc));
     } else if ( type == OBLATE ) {
-	sur_area = 2.0 * pi * major * major +
-	    (pi * (minor*minor/ecc) * log( (1.0+ecc)/(1.0-ecc) ));
+	sur_area = 2.0 * M_PI * major * major +
+	    (M_PI * (minor*minor/ecc) * log( (1.0+ecc)/(1.0-ecc) ));
     } else {
 	sur_area = 0.0;
     }
@@ -612,14 +610,14 @@ ged_superell_anal(struct ged *gedp, const struct rt_db_internal *ip)
 
     type = 0;
 
-    vol = 4.0 * pi * ma * mb * mc / 3.0;
+    vol = 4.0 * M_PI * ma * mb * mc / 3.0;
     bu_vls_printf(&gedp->ged_result_str, "SUPERELL Volume = %.8f (%.8f gal)",
 		  vol*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
 		  vol/GALLONS_TO_MM3);
 
     if ( fabs(ma-mb) < .00001 && fabs(mb-mc) < .00001 ) {
 	/* have a sphere */
-	sur_area = 4.0 * pi * ma * ma;
+	sur_area = 4.0 * M_PI * ma * ma;
 	bu_vls_printf(&gedp->ged_result_str, "   Surface Area = %.8f\n",
 		      sur_area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
 	return;
@@ -677,11 +675,11 @@ ged_superell_anal(struct ged *gedp, const struct rt_db_internal *ip)
 	    }
     ecc = sqrt(major*major - minor*minor) / major;
     if ( type == PROLATE ) {
-	sur_area = 2.0 * pi * minor * minor +
-	    (2.0 * pi * (major*minor/ecc) * asin(ecc));
+	sur_area = 2.0 * M_PI * minor * minor +
+	    (2.0 * M_PI * (major*minor/ecc) * asin(ecc));
     } else if ( type == OBLATE ) {
-	sur_area = 2.0 * pi * major * major +
-	    (pi * (minor*minor/ecc) * log( (1.0+ecc)/(1.0-ecc) ));
+	sur_area = 2.0 * M_PI * major * major +
+	    (M_PI * (minor*minor/ecc) * log( (1.0+ecc)/(1.0-ecc) ));
     } else {
 	sur_area = 0.0;
     }
@@ -737,27 +735,27 @@ ged_tgc_anal(struct ged *gedp, const struct rt_db_internal *ip)
     switch ( cgtype ) {
 
 	case GED_ANAL_RCC:
-	    area_base = pi * ma * ma;
+	    area_base = M_PI * ma * ma;
 	    area_top = area_base;
-	    area_side = 2.0 * pi * ma * mh;
-	    vol = pi * ma * ma * mh;
+	    area_side = 2.0 * M_PI * ma * mh;
+	    vol = M_PI * ma * ma * mh;
 	    bu_vls_printf(&gedp->ged_result_str, "RCC ");
 	    break;
 
 	case GED_ANAL_TRC:
-	    area_base = pi * ma * ma;
-	    area_top = pi * mc * mc;
-	    area_side = pi * (ma+mc) * sqrt((ma-mc)*(ma-mc)+(mh*mh));
-	    vol = pi * mh * (ma*ma + mc*mc + ma*mc) / 3.0;
+	    area_base = M_PI * ma * ma;
+	    area_top = M_PI * mc * mc;
+	    area_side = M_PI * (ma+mc) * sqrt((ma-mc)*(ma-mc)+(mh*mh));
+	    vol = M_PI * mh * (ma*ma + mc*mc + ma*mc) / 3.0;
 	    bu_vls_printf(&gedp->ged_result_str, "TRC ");
 	    break;
 
 	case GED_ANAL_REC:
-	    area_base = pi * ma * mb;
-	    area_top = pi * mc * md;
+	    area_base = M_PI * ma * mb;
+	    area_top = M_PI * mc * md;
 	    /* approximate */
-	    area_side = 2.0 * pi * mh * sqrt(0.5 * (ma*ma + mb*mb));
-	    vol = pi * ma * mb * mh;
+	    area_side = 2.0 * M_PI * mh * sqrt(0.5 * (ma*ma + mb*mb));
+	    vol = M_PI * ma * mb * mh;
 	    bu_vls_printf(&gedp->ged_result_str, "REC ");
 	    break;
 
