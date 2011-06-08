@@ -52,15 +52,6 @@ class OSLRenderer {
     ThreadInfo thread_info;
     ShadingAttribStateRef shaderstate;
 
-    /* Convert a point_t to Vec3  */
-    void PointTtoVec3(point_t p, Vec3 &v){
-	v[0] = p[0]; v[1] = p[1]; v[2] = p[2];
-    }
-    /* Convert a Vec3 to floatf_t[3] */
-    void Vec3toPointT(Vec3 &v, point_t p){
-	p[0] = v[0]; p[1] = v[1]; p[2] = v[2];
-    }
-
     /* Load OSL shaders 
        FIXME: Add support for any osl shader */
     void InitShaders();

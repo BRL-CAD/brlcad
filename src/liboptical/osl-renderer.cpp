@@ -93,19 +93,18 @@ void OSLRenderer::InitShaders(){
     shadingsys->clear_state();
 }
 ClosureColor * OSLRenderer::ExecuteShaders(ShaderGlobals globals, RenderInfo *info){
-    
-    PointTtoVec3(info->P, globals.P);
-    PointTtoVec3(info->I, globals.I);
-    PointTtoVec3(info->N, globals.Ng);
+    VMOVE(globals.P, info->P);
+    VMOVE(globals.I, info->I);
+    VMOVE(globals.Ng, info->N);
     globals.N = globals.Ng;    
     
     // u-v coordinates
     globals.u = info->u;
     globals.v = info->v;
 
-    // tangents
-    PointTtoVec3(info->dPdu, globals.dPdu);
-    PointTtoVec3(info->dPdv, globals.dPdv);
+    // u-v tangents
+    VMOVE(globals.dPdu, info->dPdu);
+    VMOVE(globals.dPdv, info->dPdv);
 
     // other
     globals.raytype |= ((info->depth == 0) & (1 << 1));
