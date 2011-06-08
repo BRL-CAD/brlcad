@@ -19,7 +19,6 @@
  */
 /** @file tie.h
  *
- * Brief description
  *
  */
 

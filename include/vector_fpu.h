@@ -19,7 +19,6 @@
  */
 /** @file vector_fpu.h
  *
- * Brief description
  *
  */
 

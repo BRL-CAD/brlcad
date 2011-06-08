@@ -17,11 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file search.h
- *
- * Brief description
- *
- */
 
 /* Includes code from OpenBSD's find command:
  *

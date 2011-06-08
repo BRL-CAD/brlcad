@@ -19,7 +19,6 @@
  */
 /** @file adrt_struct.h
  *
- * Brief description
  *
  */
 

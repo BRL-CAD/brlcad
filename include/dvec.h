@@ -19,7 +19,6 @@
  */
 /** @file dvec.h
  *
- * Brief description
  *
  */
 

@@ -19,7 +19,6 @@
  */
 /** @file vector_x86.h
  *
- * Brief description
  *
  */
 

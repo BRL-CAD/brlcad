@@ -20,7 +20,6 @@
 
 /** @file adrt.h
  *
- * Brief description
  *
  */
 
