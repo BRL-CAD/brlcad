@@ -2,7 +2,6 @@
 # Find OSL Dependences
 # ================================================
 include(util_macros)
-include(boost)
 include(FindOpenEXR)
 include(FindTBB)
 include(FindOIIO)
