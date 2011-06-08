@@ -210,12 +210,17 @@ include/raytrace.h
 * OBSOLETE *
 ************
 
-7.20.0
+7.20.2
 ------
+cat-fb
+        obsolete hardware
 include/vmath.h
 	ELEMENTS_PER_PT -> ELEMENTS_PER_POINT [deprecated 7.12]
 	HVECT_LEN -> ELEMENTS_PER_HVECT [deprecated 7.12]
 	HPT_LEN -> ELEMENTS_PER_HPOINT [deprecated 7.12]
+
+7.20.0
+------
 include/bu.h
 	bu_mro and related macros -> bu_attribute_value_set
 
