@@ -96,7 +96,7 @@ documentation_DATA = \
 EXTRA_DIST = \
 	$(documentation_DATA) \
 	BUGS \
-	CMakeLists.txt
+	CMakeLists.txt \
 	ChangeLog \
 	HACKING.cmake \
 	INSTALL.cmake \
@@ -104,7 +104,7 @@ EXTRA_DIST = \
 	TODO \
 	TODO.cmake \
 	autogen.sh \
-	libtool \
+	libtool
 
 DISTCLEANFILES = \
 	$(CONFIG_CACHE) \
