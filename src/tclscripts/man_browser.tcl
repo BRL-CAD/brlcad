@@ -23,11 +23,8 @@
 #    Man page browser
 #
 # To do:
-#    -Get it working!
-#    -Add method for disabling a list of commands passed in
-#    -While we're at it, add method for enabling only commands passed in
-#    -Add method for retrieving the list of commands
 #    -Add ability to add >1 path (like {{mann/en/} {man/en/archer}}
+#    -Add method for retrieving the list of commands
 #    -Document the interface
 #    -Resizing window could be improved (i.e. limited).
 #    -It would be nice if clicking html text would bring you to
@@ -44,15 +41,16 @@ package provide ManBrowser 1.0
     public {	
 	variable path
 	variable parentName
+	variable disabledPages
+	variable enabledPages
 
-	method get		{option}        
-        method setCmdNames	{}
+        method setPageNames	{}
 	method loadPage		{pageName}
-	method select		{cmdName}
+	method select		{pageName}
     }
  
     private {
-	common commands [list]
+	common pages [list]
 	variable pageData
     }
 
@@ -72,30 +70,65 @@ package provide ManBrowser 1.0
     configure -title "[string trim $parentName] Manual Page Browser"
 }
 
-::itcl::body ManBrowser::get {option} {
-    switch -- $option {
-	#path {if {[info exists path]} {return $path}}
+::itcl::configbody ManBrowser::disabledPages {
+    # Page names added to this list are always disabled
+    set disabledByDefault [list Introduction]
+
+    if {![info exists disabledPages] || ![string is list $disabledPages]} {
+    	set disabledPages $disabledByDefault
+    } else {
+	lappend disabledPages $disabledByDefault
     }
-    error "bad option \"$option\""
+    set disabledPages [lsort $disabledPages]
+
+    # Reset pages list
+    if {[info exists pages] && $pages != {}} {
+	setPageNames
+    }
 }
 
-::itcl::body ManBrowser::setCmdNames {} {
+::itcl::configbody ManBrowser::enabledPages {
+    if {![info exists enabledPages] || ![string is list $enabledPages]} {
+    	set enabledPages [list]
+    }
+    set enabledPages [lsort $enabledPages]
+
+    # Reset pages list
+    if {[info exists pages] && $pages != {}} {
+	setPageNames
+    }
+}
+
+::itcl::body ManBrowser::setPageNames {} {
     set manFiles [glob -directory $path *.html ]
+
+    set pages [list]
     foreach manFile $manFiles {
-        # FIXME: should use [file rootname], etc rather than regexp
-        # FIXME: string comparison with Introduction should be removed in favor
-        #        of a mechanism for excluding a list of rootnames (commands)
-	regexp {(.+/)(.+)(.html)} $manFile -> url rootName htmlSuffix
-	if {[string compare $rootName Introduction]} {
-	    set commands [concat $commands [list $rootName]]
+	set rootName [file rootname [file tail $manFile]]
+
+	# If the page exists in disabledPages, disable it 
+	set isDisabled [expr [lsearch -sorted -exact \
+			      $disabledPages $rootName] != -1]
+
+	# If enabledPages is defined and the page exists, enable it
+	if {$enabledPages != {}} {
+	    set isEnabled [expr [lsearch -sorted -exact \
+				 $enabledPages $rootName] != -1]
+	} else {
+	    set isEnabled 1
+	}
+
+	# Obviously, if the page is both disabled/enabled, it will be disabled
+	if {!$isDisabled && $isEnabled} {
+	    lappend pages $rootName
 	}
     }
-    set commands [lsort $commands]
+    set pages [lsort $pages]
 }
 
-::itcl::body ManBrowser::select {cmdName} {
+::itcl::body ManBrowser::select {pageName} {
     # Select the requested man page 
-    set idx [lsearch -sorted -exact $commands $cmdName]
+    set idx [lsearch -sorted -exact $pages $pageName]
 
     if {$idx != -1} {
         set result True
@@ -104,17 +137,17 @@ package provide ManBrowser 1.0
 	# Deselect previous selection
 	$toc selection clear 0 [$toc index end]
 
-        # Select cmdName in table of contents
+        # Select pageName in table of contents
 	$toc selection set $idx
 	$toc activate $idx
 	$toc see $idx
 
-	loadPage $cmdName
+	loadPage $pageName
     } else {
 	set result False
     }
     
-    return result
+    return $result
 }
 
 ::itcl::body ManBrowser::loadPage {pageName} {
@@ -132,10 +165,16 @@ package provide ManBrowser 1.0
 }
 
 ::itcl::body ManBrowser::constructor {args} {
-    # Set default path if user didn't pass one
-    set path [file join [bu_brlcad_data "html"] mann en]
-    #if {![info exists path]} {configure -path {}}
+    eval itk_initialize $args
 
+    # Trigger configbody defaults if user didn't pass them
+    set opts {{path} {parentName} {disabledPages} {enabledPages}}
+    foreach o $opts {
+	if {![info exists $o]} {eval itk_initialize {-$o {}}}
+    }
+
+    setPageNames
+    
     $this hide 1
     $this hide 2
     $this hide 3
@@ -167,9 +206,12 @@ package provide ManBrowser 1.0
         ::ttk::scrollbar $toc.toc_scrollbar
     } {}
 
-    setCmdNames
     itk_component add toc_listbox {
-        ::tk::listbox $toc.toc_listbox -bd 2 -width 16 -exportselection false -yscroll "$toc.toc_scrollbar set" -listvariable [scope commands]
+        ::tk::listbox $toc.toc_listbox -bd 2 \
+ 				       -width 16 \
+                                       -exportselection false \
+	                               -yscroll "$toc.toc_scrollbar set" \
+				       -listvariable [scope pages]
     } {}
 
     $toc.toc_scrollbar configure -command "$toc.toc_listbox yview"
@@ -199,11 +241,11 @@ package provide ManBrowser 1.0
 
     pack $itk_component(browser) -side left -expand yes -fill both
 
-    # Load Introduction.html if it's there, otherwise load first command
+    # Load Introduction.html if it's there, otherwise load first page
     if {[file exists [file join $path Introduction.html]]} {
         loadPage Introduction
     } else {
-        loadPage [lindex $commands 0]
+        loadPage [lindex $pages 0]
     }
 
     bind $toc.toc_listbox <<ListboxSelect>> {
@@ -211,10 +253,9 @@ package provide ManBrowser 1.0
 	$mb loadPage [%W get [%W curselection]]
     }
 
-    center [namespace tail $this]
-    ::update
+    #center [namespace tail $this]
+    #::update
 
-    eval itk_initialize $args
     configure -height 600 -width 800
     return $this
 }

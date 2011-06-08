@@ -3269,8 +3269,11 @@ proc title_node_handler {node} {
 
 ::itcl::body Archer::buildarcherMan {} {
     # Testing ManBrowser mega-widget
-    #set asdf [ManBrowser $itk_interior.archerMan2 Archer]
-    #return "testing"
+    #set disabledPages [list journal oed rcc-blend rcc-cap rcc-tor rcc-tgc reset status ill sill rot orot rotobj qorot mrot vrot]
+    #set archerMan [ManBrowser $itk_interior.archerMan2 -parentName Archer \
+                   -disabledPages $disabledPages]
+    #$archerMan activate
+    #puts "selecing make: [$archerMan select make]"
 
 
 
