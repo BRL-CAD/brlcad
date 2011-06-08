@@ -809,7 +809,6 @@ MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts,
     size_t i;
     struct bu_vls str;
     struct bu_vls str2;
-    point2d_t tmpvert[] = {{0, 0}};
 
     bu_vls_init(&str);
     bu_vls_init(&str2);
@@ -830,9 +829,9 @@ MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts,
     skt->vert_count = vertcount;
     skt->verts = (point2d_t *)bu_calloc(skt->vert_count, sizeof( point2d_t ), "verts");
     for (i = 0; i < skt->vert_count; i++ ) {
-	tmpvert[0][0] = verts[i][0] * patternwidth2 - patternwidth2 / 2;
-	tmpvert[0][1] = verts[i][1] * tirewidth;
-	V2MOVE( skt->verts[i], tmpvert[0] );
+	V2SET(skt->verts[i],
+	      verts[i][0] * patternwidth2 - patternwidth2 / 2,
+	      verts[i][1] * tirewidth);
     }
 
     /* Specify number of segments and allocate memory for reverse??
