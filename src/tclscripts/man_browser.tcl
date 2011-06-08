@@ -47,6 +47,8 @@ package provide ManBrowser 1.0
         method setPageNames	{}
 	method loadPage		{pageName}
 	method select		{pageName}
+
+	proc getBrowser		{}
     }
  
     private {
@@ -150,6 +152,10 @@ package provide ManBrowser 1.0
     return $result
 }
 
+::itcl::body ManBrowser::getBrowser {} {
+    return [itcl_info objects -class ManBrowser]
+}
+
 ::itcl::body ManBrowser::loadPage {pageName} {
     # Get page
     set pathname [file join $path $pageName.html]
@@ -249,7 +255,7 @@ package provide ManBrowser 1.0
     }
 
     bind $toc.toc_listbox <<ListboxSelect>> {
-	set mb [itcl_info objects -class ManBrowser]
+	set mb [ManBrowser::getBrowser]
 	$mb loadPage [%W get [%W curselection]]
     }
 
