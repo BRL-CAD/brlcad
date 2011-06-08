@@ -266,6 +266,7 @@ osl_render(struct application *ap, struct partition *pp, struct shadework *swp, 
     register struct osl_specific *osl_sp =
 	(struct osl_specific *)dp;
     point_t pt;
+    RenderInfo info;
 
     VSETALL(pt, 0);
 
@@ -289,10 +290,26 @@ osl_render(struct application *ap, struct partition *pp, struct shadework *swp, 
      V3ARGS(pt));
      }
     */
-    oslrenderer_query_color(oslr, pt);
-    VMOVE(swp->sw_color, pt);
-    
 
+    /* Fill in all necessary information for the OSL renderer */
+    VMOVE(info.P, swp->sw_hit.hit_point);
+    VMOVE(info.N, swp->sw_hit.hit_normal);
+    VMOVE(info.I, ap->a_inv_dir);
+    info.u = swp->sw_uv.uv_u;
+    info.v = swp->sw_uv.uv_v;
+    info.screen_x = ap->a_x;
+    info.screen_y = ap->a_y;
+
+    /* FIXME */
+    VSETALL(info.dPdu, 0.0f);
+    VSETALL(info.dPdv, 0.0f);
+    info.depth = 0;
+    info.isbackfacing = 0;
+    info.surfacearea = 1.0f;
+    
+    oslrenderer_query_color(oslr, &info);
+    VMOVE(swp->sw_color, info.pc);
+    
     /* OSL perform shading operations here */
 
     /* shader must perform transmission/reflection calculations
