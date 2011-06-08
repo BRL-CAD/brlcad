@@ -48,7 +48,8 @@ package provide ManBrowser 1.0
 
 	method get		{option}        
         method setCmdNames	{}
-	proc loadPage		{pageName w} ;# For binding & internal use
+	#proc loadPage		{pageName w} ;# For binding & internal use
+	method loadPage		{pageName}
     }
  
     private {
@@ -74,7 +75,7 @@ package provide ManBrowser 1.0
 
 ::itcl::body ManBrowser::get {option} {
     switch -- $option {
-	path {if {[info exists path]} {return $path}}
+	#path {if {[info exists path]} {return $path}}
     }
     error "bad option \"$option\""
 }
@@ -102,25 +103,27 @@ package provide ManBrowser 1.0
     #puts [$this cget -path]
     
     #ManBrowser::loadPage $selection $this
-
+    
+#return status
 }
 
-proc ManBrowser::loadPage {pageName w} {
+#proc ManBrowser::loadPage {pageName w} {
+::itcl::body ManBrowser::loadPage {pageName} {
     # Get page
-    set path [file join [$w get path] $pageName.html]
-    set htmlFile [open $path]
+    #set pathname [file join [$w get path] $pageName.html]
+    set pathname [file join $path $pageName.html]
+    set htmlFile [open $pathname]
     set pageData [read $htmlFile]
     close $htmlFile
 
     # Display page
-    set htmlview [[$w childsite].browser.htmlview html]
+    set htmlview [[$this childsite].browser.htmlview html]
     $htmlview reset
     $htmlview configure -parsemode html
     $htmlview parse $pageData
 }
 
 ::itcl::body ManBrowser::constructor {args} {
-
     # Set default path if user didn't pass one
     set path [file join [bu_brlcad_data "html"] mann en]
     #if {![info exists path]} {configure -path {}}
@@ -190,13 +193,14 @@ proc ManBrowser::loadPage {pageName w} {
 
     # Load Introduction.html if it's there, otherwise load first command
     if {[file exists [file join $path Introduction.html]]} {
-        loadPage Introduction $this
+        loadPage Introduction ;# $this
     } else {
         #loadPage [lindex $commands 0] $this
     }
 
     bind $toc.toc_listbox <<ListboxSelect>> {
-	ManBrowser::loadPage [%W get [%W curselection]] %W
+	set mb [itcl_info objects -class ManBrowser]
+	$mb loadPage [%W get [%W curselection]]
     }
 
     #center [namespace tail $this]
