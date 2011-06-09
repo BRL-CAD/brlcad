@@ -132,10 +132,6 @@ view_eol(struct application *UNUSED(ap))
 	if (ret < (size_t)width)
 	    perror("fwrite");
     }
-#if 0
-    else if ( fbp != FBIO_NULL )
-	fb_write( fbp, 0, ap->a_y, scanbuf, width );
-#endif
     bu_semaphore_release( BU_SEM_SYSCALL );
 }
 

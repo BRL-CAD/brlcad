@@ -3305,11 +3305,6 @@ main( int argc, char *argv[] )
                 mk_sketch(out_fp, name, skt);
                 (void) mk_addmember(name, &head, NULL, WMOP_UNION);
             }
-#if 0
-	    sprintf( name, "nmg.%d", i );
-	    mk_nmg( out_fp, name, layers[i]->m );
-	    (void)mk_addmember( name, &head, NULL, WMOP_UNION );
-#endif
 	}
 
 	if ( layers[i]->line_count ) {

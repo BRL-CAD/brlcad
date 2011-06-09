@@ -244,10 +244,6 @@ main( int argc, char *argv[] )
 
     toc();		/* Build table of contents from directory.	*/
 
-#if 0
-    rt_g.debug |= DEBUG_TREEWALK;
-#endif
-
     /*      C o m m a n d   I n t e r p r e t e r			*/
     (void) setjmp( env );/* Point of re-entry from aborted command.	*/
     prompt( CMD_PROMPT );

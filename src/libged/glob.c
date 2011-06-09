@@ -110,11 +110,6 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_putc( &word, *end++ );
 	}
 
-#if 0
-	if (firstword)
-	    regexp = 0;
-#endif
-
 	/* Now, if the word was suspected of being a wildcard, try to match
 	   it to the database. */
 

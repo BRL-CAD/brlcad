@@ -1035,10 +1035,6 @@ res_pr(void)
 		res->re_seglen, res->re_segget, res->re_segfree);
 	fprintf(stderr, "partition len=%10ld get=%10ld free=%10ld\n",
 		res->re_partlen, res->re_partget, res->re_partfree);
-#if 0
-	fprintf(stderr, "bitv_elem len=%10ld get=%10ld free=%10ld\n",
-		res->re_bitvlen, res->re_bitvget, res->re_bitvfree);
-#endif
 	fprintf(stderr, "boolstack len=%10ld\n",
 		res->re_boolslen);
     }

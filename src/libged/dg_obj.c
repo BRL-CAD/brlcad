@@ -2737,33 +2737,6 @@ dgo_shaded_mode_tcl(ClientData	clientData,
 }
 
 
-#if 0
-/* skeleton functions for dg_obj methods */
-int
-dgo__cmd(struct dg_obj	*dgop,
-	 Tcl_Interp	*interp,
-	 int		argc,
-	 char 		*argv[])
-{
-}
-
-
-/*
- * Usage:
- *        procname
- */
-static int
-dgo__tcl(ClientData	clientData,
-	 Tcl_Interp	*interp,
-	 int		argc,
-	 char		*argv[])
-{
-    struct dg_obj *dgop = (struct dg_obj *)clientData;
-
-    return dgo__cmd(dgop, interp, argc-1, argv+1);
-}
-#endif
-
 /****************** Utility Routines ********************/
 
 static union tree *
@@ -3319,17 +3292,10 @@ dgo_drawtrees(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char *argv[], i
 		int  i;
 		int  ac = 1;
 		char *av[2];
-#if 0
-		struct directory *dp;
-#endif
 
 		av[1] = (char *)0;
 
 		for (i = 0; i < argc; ++i) {
-#if 0
-		    if ((dp = db_lookup(dgop->dgo_wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
-			continue;
-#endif
 
 		    av[0] = argv[i];
 
@@ -3655,19 +3621,6 @@ dgo_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *
 	BU_LIST_APPEND(dgcdp->dgop->dgo_headSolid.back, &sp->l);
 	bu_semaphore_release(RT_SEM_MODEL);
     }
-
-#if 0
-    /* Solid is successfully drawn */
-    if (!existing_sp) {
-	/* Add to linked list of solid structs */
-	bu_semaphore_acquire(RT_SEM_MODEL);
-	BU_LIST_APPEND(dgcdp->dgop->dgo_headSolid.back, &sp->l);
-	bu_semaphore_release(RT_SEM_MODEL);
-    } else {
-	/* replacing existing solid -- struct already linked in */
-	sp->s_flag = UP;
-    }
-#endif
 }
 
 
@@ -3713,12 +3666,6 @@ dgo_eraseobjpath(struct dg_obj	*dgop,
     struct directory *dp;
     int i;
     struct bu_vls vls;
-#if 0
-    Tcl_Obj *save_result;
-
-    save_result = Tcl_GetObjResult(interp);
-    Tcl_IncrRefCount(save_result);
-#endif
 
     bu_vls_init(&vls);
     for (i = 0; i < argc; i++) {
@@ -3728,14 +3675,6 @@ dgo_eraseobjpath(struct dg_obj	*dgop,
 	char **av, **av_orig;
 	struct directory **dpp = (struct directory **)0;
 
-#if 0
-	bu_vls_trunc(&vls, 0);
-	bu_vls_printf(&vls, "split %s /", argv[i]);
-	if (Tcl_Eval(interp, bu_vls_addr(&vls)) != TCL_OK) {
-	    continue;
-	}
-	list = Tcl_GetStringResult(interp);
-#else
 	{
 	    char *begin;
 	    char *end;
@@ -3753,7 +3692,7 @@ dgo_eraseobjpath(struct dg_obj	*dgop,
 	    free((void *)newstr);
 	}
 	list = bu_vls_addr(&vls);
-#endif
+
 	if (Tcl_SplitList(interp, list, &ac, (const char ***)&av_orig) != TCL_OK)
 	    continue;
 
@@ -3795,10 +3734,6 @@ dgo_eraseobjpath(struct dg_obj	*dgop,
     }
     bu_vls_free(&vls);
 
-#if 0
-    Tcl_SetObjResult(interp, save_result);
-    Tcl_DecrRefCount(save_result);
-#endif
 }
 
 

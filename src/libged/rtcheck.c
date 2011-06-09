@@ -405,10 +405,6 @@ ged_rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 	    _ged_wait_status(&rtcp->gedp->ged_result_str, retcode);
 	}
 
-#if 0
-	dgo_notify(rtcp->dgop, rtcp->interp);
-#endif
-
 	/* free rtcp */
 	bu_free((genptr_t)rtcp, "ged_rtcheck_vector_handler: rtcp");
 
@@ -487,10 +483,6 @@ ged_rtcheck_vector_handler(ClientData clientData, int mask)
 
 	/* wait for the forked process */
 	WaitForSingleObject( rtcp->hProcess, INFINITE );
-
-#if 0
-	dgo_notify(rtcp->dgop, rtcp->interp);
-#endif
 
 	/* free rtcp */
 	bu_free((genptr_t)rtcp, "ged_rtcheck_vector_handler: rtcp");

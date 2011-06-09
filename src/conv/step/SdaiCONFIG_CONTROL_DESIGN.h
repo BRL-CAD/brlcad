@@ -5606,16 +5606,6 @@ class SdaiCartesian_transformation_operator  :    public SdaiGeometric_represent
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
 
-#if 0
-	const SdaiLabel name_() const;
-	void name_ (const SdaiLabel x);
-
-	const SdaiText description_() const;
-	void description_ (const SdaiText x);
-
-
-#endif
-
 #ifdef __OSTORE__
 	static os_typespec* get_os_typespec();
 	virtual void Access_hook_in(void *object,
@@ -12545,13 +12535,6 @@ class SdaiEdge_loop  :    public SdaiLoop  {
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
 
-#if 0
-	const EntityAggregate_ptr edge_list_() const;
-	void edge_list_ (const EntityAggregate_ptr x);
-
-
-#endif
-
 #ifdef __OSTORE__
 	static os_typespec* get_os_typespec();
 	virtual void Access_hook_in(void *object,
@@ -13174,10 +13157,6 @@ class SdaiBounded_pcurve  :    public SdaiPcurve  {
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
 
-#if 0
-
-#endif
-
 #ifdef __OSTORE__
 	static os_typespec* get_os_typespec();
 	virtual void Access_hook_in(void *object,
@@ -13429,10 +13408,6 @@ class SdaiBounded_surface_curve  :    public SdaiSurface_curve  {
 	int opcode ()  { return 127 ; }
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
-
-#if 0
-
-#endif
 
 #ifdef __OSTORE__
 	static os_typespec* get_os_typespec();
@@ -15390,10 +15365,6 @@ class SdaiFace_surface  :    public SdaiFace  {
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
 
-#if 0
-
-#endif
-
 #ifdef __OSTORE__
 	static os_typespec* get_os_typespec();
 	virtual void Access_hook_in(void *object,
@@ -15640,10 +15611,6 @@ class SdaiEdge_curve  :    public SdaiEdge  {
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
-
-#if 0
-
-#endif
 
 #ifdef __OSTORE__
 	static os_typespec* get_os_typespec();
@@ -20411,10 +20378,6 @@ class SdaiVertex_point  :    public SdaiVertex  {
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
 
-#if 0
-
-#endif
-
 #ifdef __OSTORE__
 	static os_typespec* get_os_typespec();
 	virtual void Access_hook_in(void *object,
@@ -20913,10 +20876,6 @@ class SdaiPoly_loop  :    public SdaiLoop  {
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
-
-#if 0
-
-#endif
 
 #ifdef __OSTORE__
 	static os_typespec* get_os_typespec();

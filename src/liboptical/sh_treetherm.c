@@ -467,9 +467,6 @@ tthrm_print(register struct region *UNUSED(rp), char *dp)
 
     bu_log("%s\n", tthrm_sp->tt_name);
     bn_mat_print("m_to_sh", tthrm_sp->tthrm_m_to_sh);
-#if 0
-    bu_struct_print(rp->reg_name, tthrm_print_tab, (char *)dp);
-#endif
 }
 
 

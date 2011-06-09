@@ -269,9 +269,7 @@ bn_poly_quadratic_roots(register struct bn_complex *roots, register const struct
 
     discrim = quadrat->cf[1]*quadrat->cf[1] - 4.0* quadrat->cf[0]*quadrat->cf[2];
     denom = 0.5 / quadrat->cf[0];
-#if 0
-    bu_log("discrim=%.20f cf0=%.20f cf1=%.20f cf2=%.20f; ", discrim, quadrat->cf[0], quadrat->cf[1], quadrat->cf[2]);
-#endif
+
     if (discrim > 0.0) {
 	rad = sqrt(discrim);
 

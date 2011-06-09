@@ -84,11 +84,6 @@ ged_adjust(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-#if 0
-    /* notify observers */
-    bu_observer_notify(interp, &wdbp->wdb_observers, bu_vls_addr(&wdbp->wdb_name));
-#endif
-
     return GED_OK;
 }
 

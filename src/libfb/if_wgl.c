@@ -542,6 +542,7 @@ MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    break;
 	case WM_SIZE:
 	    {
+		/* WIP */
 #if 0
 		if (conf->width == WGL(ifp)->win_width &&
 		    conf->height == WGL(ifp)->win_height)

@@ -326,25 +326,6 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
     }
 
     return 1;
-#if 0
-err:
-    for (i=0; i<no_of_edges; i++) {
-	struct iges_param_curve *crv;
-
-	crv = edge_uses[i].root;
-	while (crv) {
-	    struct iges_param_curve *tmp_crv;
-
-	    tmp_crv = crv;
-	    crv = crv->next;
-	    bu_free((char *)tmp_crv, "Add_nurb_loop_to_face: tmp_crv");
-	}
-    }
-    bu_free((char *)edge_uses, "Add_nurb_loop_to_face: (edge list)");
-    bu_free((char *)verts, "Add_nurb_loop_to_face: (vertex list)");
-
-    return 0;
-#endif
 }
 
 

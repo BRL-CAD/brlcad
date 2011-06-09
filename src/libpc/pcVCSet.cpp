@@ -66,17 +66,6 @@ VCSet::~VCSet()
 }
 
 
-#if 0
-void VCSet::pushVar()
-{
-    Variable<double> *v = new Variable<double>(name, value);
-    v->addInterval(Interval<double>(-std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), 0.00001));
-    Vars.push_back(v);
-    /*addVariable<double>(name, value);*/
-    name.clear();
-} 
-#endif
-
 void VCSet::addConstraint(std::string cid, std::string cexpr, functor f, int count, ...)
 {
     va_list args;

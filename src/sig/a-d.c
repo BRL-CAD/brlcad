@@ -43,55 +43,49 @@ int main(int argc, char **argv)
     int	i;
     size_t ret;
 
-    if ( isatty(fileno(stdout)) ) {
+    if (isatty(fileno(stdout))) {
 	bu_exit(1, "Usage: a-d [values] < ascii > doubles\n");
     }
 
-    if ( argc > 1 ) {
+    if (argc > 1) {
 	/* get them from the command line */
-	for ( i = 1; i < argc; i++ ) {
-	    d = atof( argv[i] );
-	    ret = fwrite( &d, sizeof(d), 1, stdout );
+	for (i = 1; i < argc; i++) {
+	    d = atof(argv[i]);
+	    ret = fwrite(&d, sizeof(d), 1, stdout);
 	    if (ret != 1)
 		perror("fwrite");
 	}
     } else {
 	/* get them from stdin */
-#if 0
-	char	s[80];
-	while ( bu_fgets(s, 80, stdin) != NULL ) {
-	    d = atof( s );
-#else
-	    /* XXX This one is slower but allows more than 1 per line */
-	    while (1) {
-		int	ch;
+	while (1) {
+	    int	ch;
 
-		while (isspace(ch = getchar()))
+	    while (isspace(ch = getchar()))
+		;
+	    if (ch == COMMENT_CHAR) {
+		while (((ch = getchar()) != '\n') && (ch != EOF))
 		    ;
-		if (ch == COMMENT_CHAR) {
-		    while (((ch = getchar()) != '\n') && (ch != EOF))
-			;
-		}
-		if (ch == EOF)
-		    bu_exit(0, NULL);
-		else
-		    ungetc(ch, stdin);
+	    }
+	    if (ch == EOF)
+		bu_exit(0, NULL);
+	    else
+		ungetc(ch, stdin);
 
-		if ( scanf("%lf", &d) == 1 ) {
-#endif
-		    ret = fwrite( &d, sizeof(d), 1, stdout );
-		    if (ret != 1)
-			perror("fwrite");
-		}
-		else if (feof(stdin))
-		    bu_exit(0, NULL);
-		else {
-		    bu_exit(1, "Error in input stream\n");
-		}
+	    if (scanf("%lf", &d) == 1) {
+		ret = fwrite(&d, sizeof(d), 1, stdout);
+		if (ret != 1)
+		    perror("fwrite");
+	    }
+	    else if (feof(stdin))
+		bu_exit(0, NULL);
+	    else {
+		bu_exit(1, "Error in input stream\n");
 	    }
 	}
-	return 0;
     }
+    return 0;
+}
+
 
 /*
  * Local Variables:

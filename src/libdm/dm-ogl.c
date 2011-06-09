@@ -429,17 +429,6 @@ ogl_reshape(struct dm *dmp, int width, int height)
     }
 
     glViewport(0, 0, dmp->dm_width, dmp->dm_height);
-#if 0
-    glScissor(0,  0, (dmp->dm_width)+1,
-	      (dmp->dm_height)+1);
-#endif
-
-#if 0
-    if (dmp->dm_zbuffer)
-	ogl_setZBuffer(dmp, dmp->dm_zbuffer);
-
-    ogl_setLight(dmp, dmp->dm_light);
-#endif
 
     glClearColor(((struct ogl_vars *)dmp->dm_vars.priv_vars)->r,
 		 ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g,
@@ -488,9 +477,6 @@ ogl_setLight(struct dm *dmp, int lighting_on)
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, amb_three);
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
 
-#if 0
-	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-#endif
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
 	glLightfv(GL_LIGHT0, GL_SPECULAR, light0_diffuse);
 
@@ -662,10 +648,6 @@ ogl_close(struct dm *dmp)
 
 	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)
 	    Tk_DestroyWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
-
-#if 0
-	XCloseDisplay(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy);
-#endif
     }
 
     bu_vls_free(&dmp->dm_pathName);

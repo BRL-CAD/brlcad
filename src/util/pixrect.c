@@ -174,11 +174,6 @@ get_args(int argc, char **argv)
 	}
     }
 
-#if 0
-    if (argc > ++bu_optind)
-	fprintf(stderr, "pixrect: excess argument(s) ignored\n");
-#endif
-
     return 1;		/* OK */
 }
 

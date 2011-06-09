@@ -897,19 +897,12 @@ overlap(struct application *ap,
     }
 
     if (analysis_flags & ANALYSIS_OVERLAPS) {
-#if 0
-	struct region_pair *rp =
-#endif
-	    add_unique_pair(&overlapList, reg1, reg2, depth, ihit);
+	add_unique_pair(&overlapList, reg1, reg2, depth, ihit);
 
 	if (plot_overlaps) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    pl_color(plot_overlaps, V3ARGS(overlap_color));
 	    pdv_3line(plot_overlaps, ihit, ohit);
-#if 0
-	    pdv_3line(plot_overlaps, ihit, rp->coord);
-	    pdv_3line(plot_overlaps, ihit, rp->coord);
-#endif
 	    bu_semaphore_release(BU_SEM_SYSCALL);
 	}
     } else {
@@ -1296,11 +1289,6 @@ miss(struct application *ap)
 {
     RT_CK_APPLICATION(ap);
 
-#if 0
-    bu_semaphore_acquire(GED_SEM_WORKER);
-    bu_vls_printf(&_ged_current_gedp->ged_result_str, "missed\n");
-    bu_semaphore_release(GED_SEM_WORKER);
-#endif
     return 0;
 }
 

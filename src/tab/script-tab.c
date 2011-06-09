@@ -312,9 +312,6 @@ main(int argc, char **argv)
      * called by rt_do_cmd().
      */
     while ((buf = rt_read_cmd(stdin)) != (char *)0) {
-#if 0
-	fprintf(stderr, "cmd: %s\n", buf);
-#endif
 	ret = rt_do_cmd(NULL, buf, rt_cmdtab);
 	if (ret < 0) {
 	    bu_log("Command failure on '%s'\n", buf);

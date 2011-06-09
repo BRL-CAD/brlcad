@@ -941,17 +941,6 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
     VSCALE(dy3, dy_model, 0.375);
     VSCALE(dx3, dx_model, 0.375);
 
-#if 0
-    fprintf(stderr, "\n(X, Y) = (%d, %d)\n", ap->a_x, ap->a_y);
-    VPRINT("dy_model", dy_model);
-    VPRINT("dx_model", dx_model);
-    VPRINT("dy", dy);
-    VPRINT("dx", dx);
-    VPRINT("dy3", dy3);
-    VPRINT("dx3", dx3);
-    VPRINT("PT", ap->a_ray.r_pt);
-#endif
-
     /* setup */
     aaap.a_hit = rayhit2;
     aaap.a_miss = raymiss2;

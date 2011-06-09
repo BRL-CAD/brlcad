@@ -104,7 +104,10 @@ int create_torii(int level, int currentLevel, torusLevels_t *torii, point_t posi
 	}
 
     } else {
+
 #if 0
+	/* TESTING DYNAMIC RECURSION */
+
 	torusArray_t *ta = &torii->level[currentLevel];
 	/* base case */
 	printf("base case (%d levels deep)\n", currentLevel);

@@ -248,31 +248,6 @@ vo_open_tcl(ClientData UNUSED(clientData),
 
 /****************** View Object Methods ********************/
 
-#if 0
-/* skeleton functions for view_obj methods */
-int
-vo__cmd(struct view_obj	*vop,
-	Tcl_Interp	*interp,
-	int		argc,
-	char 		*argv[])
-{
-}
-
-/*
- * Usage:
- *        procname
- */
-static int
-vo__tcl(ClientData	clientData,
-	Tcl_Interp	*interp,
-	int		argc,
-	char		*argv[])
-{
-    struct view_obj *vop = (struct view_obj *)clientData;
-
-    return vo__cmd(vop, interp, argc-1, argv+1);
-}
-#endif
 
 void
 vo_size(struct view_obj	*vop,
@@ -2788,32 +2763,6 @@ vo_dir2ae_tcl(ClientData	clientData,
     return vo_dir2ae_cmd(vop, interp, argc-1, argv+1);
 }
 
-
-#if 0
-/* skeleton functions for view_obj methods */
-int
-vo__cmd(struct view_obj	*vop,
-	Tcl_Interp	*interp,
-	int		argc,
-	char 		*argv[])
-{
-}
-
-/*
- * Usage:
- *        procname
- */
-static int
-vo__tcl(ClientData	clientData,
-	Tcl_Interp	*interp,
-	int		argc,
-	char		*argv[])
-{
-    struct view_obj *vop = (struct view_obj *)clientData;
-
-    return vo__cmd(vop, interp, argc-1, argv+1);
-}
-#endif
 
 /****************** Utility Routines ********************/
 void

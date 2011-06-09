@@ -180,13 +180,6 @@ ps_drawVList(struct dm *dmp, struct bn_vlist *vp)
     if (!((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp)
 	return TCL_ERROR;
 
-#if 0
-    if (linestyle)
-	fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "DDV ");		/* Dot-dashed vectors */
-    else
-	fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp, "NV ");		/* Normal vectors */
-#endif
-
     /* delta is used in clipping to insure clipped endpoint is slightly
      * in front of eye plane (perspective mode only).
      * This value is a SWAG that seems to work OK.
@@ -495,11 +488,7 @@ ps_setWinBounds(struct dm *dmp, int *w)
     dmp->dm_clipmin[1] = w[2] / 2048.;
     dmp->dm_clipmax[1] = w[3] / 2047.;
 
-#if 0
-    if (((struct ps_vars *)dmp->dm_vars.priv_vars)->zclip) {
-#else
 	if (dmp->dm_zclip) {
-#endif
 	    dmp->dm_clipmin[2] = w[4] / 2048.;
 	    dmp->dm_clipmax[2] = w[5] / 2047.;
 	} else {
@@ -715,11 +704,7 @@ ps_open(Tcl_Interp *interp, int argc, const char *argv[])
 		}
 		break;
 	    case 'z':
-#if 0
-		((struct ps_vars *)dmp->dm_vars.priv_vars)->zclip = 1;
-#else
 		dmp->dm_zclip = 1;
-#endif
 		break;
 	    default:
 		Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);

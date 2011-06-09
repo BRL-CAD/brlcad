@@ -74,35 +74,14 @@ BRLCADBrepHandler::write(const string& filename) {
 		ON_Curve* curveA = _brep->m_C2[curveAIndex];
 		ON_Curve* curveB = _brep->m_C2[curveBIndex];
 
-#if 0
-		debug("CURVE A");
-		curveA->Dump(tl);
-		debug("CURVE B");
-		curveB->Dump(tl);
-#endif
-
 		curveB->SetStartPoint(curveA->PointAtEnd());
-//		    if (curveA->PointAtEnd().DistanceTo(curveB->PointAtStart()) < 1e-1) {
-//			curveB->SetStartPoint(curveA->PointAtEnd());
-//		    } else {
-//			curveB->SetStartPoint(curveA->PointAtEnd());
-//			assert(false);
-//			continue;
-//		    }
 	    }
 	}
     }
 
-/*
-  _brep->m_T[130] = _brep->m_T[129];
-  _brep->m_T[130].m_trim_index = 130;
-*/
     _brep->DeleteFace(_brep->m_F[56], true);
     _brep->DeleteTrim(_brep->m_T[29], true);
     _brep->DeleteTrim(_brep->m_T[30], true);
-
-//	_brep->m_T[28].SetEndPoint(_brep->m_T[31].PointAtStart());
-//	_brep->m_T[31].SetStartPoint(_brep->m_T[28].PointAtEnd());
 
     string sol = geom_name+".s";
     string reg = geom_name+".r";

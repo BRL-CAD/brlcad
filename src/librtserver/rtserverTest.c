@@ -187,19 +187,6 @@ main( int argc, char *argv[] )
         bu_mem_barriercheck();
     }
 
-#if 0
-    get_muves_components();
-
-    if ( verbose ) {
-	fprintf( stderr, "MUVES Component List: (%d components)\n", comp_count );
-	i = 0;
-	while ( names[i] ) {
-	    fprintf( stderr, "\t%d - %s\n", i, names[i] );
-	    i++;
-	}
-    }
-#endif
-
 
     /* shoot a ray ten times, cleaning and loading geometry each time */
     for(i=0 ; i<10 ; i++) {

@@ -77,11 +77,7 @@ char dmy_eos = '\0';
 REMAPID_FILE bu_iob[1] = {
     {
 	REMAPID_FILE_MAGIC,
-#if 0
-	stdin,		/* this won't work on Linux, others */
-#else
 	NULL,
-#endif
 	"stdin",
 	{
 	    BU_VLS_MAGIC, (char *) 0, 0, 0, 0

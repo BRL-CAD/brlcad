@@ -122,11 +122,6 @@ ged_oscale(struct ged *gedp, int argc, const char *argv[])
     RT_CK_DB_INTERNAL(&intern);
     GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
 
-#if 0
-    /* notify observers */
-    bu_observer_notify(interp, &gedp->wdb_observers, bu_vls_addr(&gedp->wdb_name));
-#endif
-
     return GED_OK;
 }
 

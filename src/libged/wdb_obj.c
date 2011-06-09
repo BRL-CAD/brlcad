@@ -573,13 +573,6 @@ wdb_open_tcl(ClientData UNUSED(clientData),
     }
 
     if (argc < 3 || 4 < argc) {
-#if 0
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib wdb_open");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-#else
 	Tcl_AppendResult(interp, "\
 Usage: wdb_open\n\
        wdb_open newprocname file filename\n\
@@ -591,7 +584,6 @@ Usage: wdb_open\n\
        wdb_open newprocname filename\n",
 			 NULL);
 	return TCL_ERROR;
-#endif
     }
 
     /* Delete previous proc (if any) to release all that memory, first */

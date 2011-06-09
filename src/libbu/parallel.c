@@ -600,15 +600,6 @@ _bu_parallel_interface(void)
 {
     register int cpu;		/* our CPU (thread) number */
 
-#if 0
-#ifdef HAVE_PTHREAD_H
-    {
-	pthread_t pt;
-	pt = pthread_self();
-	fprintf(stderr, "_bu_parallel_interface, Thread ID = 0x%x\n", (unsigned int)pt);
-    }
-#endif
-#endif
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     cpu = _bu_nthreads_started++;
     bu_semaphore_release(BU_SEM_SYSCALL);

@@ -454,9 +454,6 @@ struct ged_drawable {
     struct ged_qray_color	gd_qray_void_color;
     struct ged_qray_color	gd_qray_overlap_color;
     int				gd_shaded_mode;		/**< @brief  1 - draw bots shaded by default */
-#if 0
-    struct bu_observer		gd_observers;
-#endif
 };
 
 struct ged_view {
@@ -476,9 +473,6 @@ struct ged_view {
     mat_t			gv_pmodel2view;
     mat_t			gv_view2model;
     mat_t			gv_pmat;		/**< @brief  perspective matrix */
-#if 0
-    struct bu_observer		gv_observers;
-#endif
     void 			(*gv_callback)();	/**< @brief  called in ged_view_update with gvp and gv_clientData */
     genptr_t			gv_clientData;		/**< @brief  passed to gv_callback */
     fastf_t			gv_prevMouseX;

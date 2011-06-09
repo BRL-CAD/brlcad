@@ -258,9 +258,6 @@ drop_client(int sub)
     FD_CLR( fd, &select_list );
     pkg_close( clients[sub] );
     clients[sub] = PKC_NULL;
-#if 0
-    (void)close( fd );			/* double-safety */
-#endif
 }
 
 /*

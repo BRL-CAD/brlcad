@@ -249,24 +249,6 @@ dimen_hook(register const struct bu_structparse *sdp, register const char *UNUSE
 }
 
 
-#if 0
-HIDDEN void
-noop_hook(sdp, name, base, value)
-    register const struct bu_structparse *sdp;	/* structure description */
-    register const char *name;	/* struct member name */
-    char *base;	/* begining of structure */
-    const char *value;	/* string containing value */
-{
-    struct img_specific *img_sp = (struct img_specific *)base;
-
-    BU_CK_LIST_HEAD(&img_sp->l);
-
-    bu_log("%s \"%s\"\n", sdp->sp_name, value);
-
-    BU_CK_VLS(&img_sp->i_name);
-}
-#endif
-
 /**
  * This routine is responsible for duplicating the image list head to make
  * a new list element.  It used to read in pixel data for an image (this is
@@ -334,10 +316,6 @@ orient_hook(register const struct bu_structparse *UNUSED(sdp), register const ch
     if (rdebug&RDEBUG_SHADE) {
 	point_t pt;
 
-#if 0
-	img_new->i_plane[H] =
-	    VDOT(img_new->i_plane, img_new->i_eye_pt);
-#endif
 	prj_sp = (struct prj_specific *)
 	    (base - (bu_offsetof(struct prj_specific, prj_images)));
 	CK_prj_SP(prj_sp);
@@ -450,9 +428,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 {
     struct prj_specific *prj_sp;
     struct img_specific *img_sp;
-#if 0
-    char * fname;
-#endif
+
     struct bu_vls parameter_data;
     struct bu_mapped_file *parameter_file;
 
@@ -481,13 +457,6 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 	prj_sp->prj_plfd = (FILE *)NULL;
     }
 
-#if 0
-    fname = bu_vls_addr(matparm);
-    if (! isspace(*fname))
-	bu_log("------ Stack shader fixed?  Remove hack from prj shader ----\n");
-    while (isspace(*fname)) fname++; /* XXX Hack till stack shader fixed */
-
-#endif
     if (! *(bu_vls_addr(matparm))) {
 	bu_log("ERROR: Null projection shader file or options?\n");
 	return -1;
@@ -639,40 +608,7 @@ prj_free(char *cp)
 HIDDEN const double cs = (1.0/255.0);
 HIDDEN const point_t delta = {0.5, 0.5, 0.0};
 
-#if 0
-HIDDEN int
-project_antialiased(point_t sh_color,
-		    const struct img_specific *img_sp,
-		    const struct prj_specific *prj_sp,
-		    const struct application *ap,
-		    const struct pixel_ext *r_pe, /* pts on plane of hit */
-		    const plane_t br_N,
-		    const point_t r_pt)
-{
-    int i, x, y;
-    point_t sh_pts[CORNER_PTS];
-    struct pixel_ext pe;
 
-    /* project hit plane corner points into image space */
-    for (i=0; i < CORNER_PTS; i++) {
-	MAT4X3PNT(sh_pts[i], img_sp->i_sh_to_img,
-		  pe.corner[i].r_pt);
-	/* compute image coordinates */
-
-	sh_pts[i][Z] = 0.0;
-	VADD2(sh_pts[i], sh_pts[i], delta);
-
-
-	sh_pts[i][X] *= img_sp->i_width - 1;
-	sh_pts[i][Y] *= img_sp->i_height - 1;
-	x = sh_pts[i][X];
-	y = sh_pts[i][Y];
-	sh_pts[i][X] = x;
-	sh_pts[i][y] = y;
-    }
-    return 0;
-}
-#endif
 HIDDEN int
 project_point(point_t sh_color, struct img_specific *img_sp, struct prj_specific *prj_sp, point_t r_pt)
 {
@@ -846,23 +782,9 @@ prj_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 	    continue;
 	}
 
-#if 0
-	if (img_sp->i_antialias == '1') {
-	    if (ap->a_pixelext)
-		bu_bomb("pixel corners structure not set\n");
-
-	    if (project_antialiased(sh_color, img_sp, prj_sp,
-				    ap, &r_pe, r_N, r_pt))
-		continue;
-
-	} else {
-	    if (project_point(sh_color, img_sp, prj_sp, r_pt))
-		continue;
-	}
-#else
 	if (project_point(sh_color, img_sp, prj_sp, r_pt))
 	    continue;
-#endif
+
 	VSCALE(sh_color, sh_color, cs);
 	weight = VDOT(r_N, img_sp->i_plane);
 	if (img_sp->i_through != '0')

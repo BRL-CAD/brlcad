@@ -628,11 +628,8 @@ plot_open(Tcl_Interp *interp, int argc, const char *argv[])
 	    case 'Z':
 		/* Enable Z clipping */
 		Tcl_AppendStringsToObj(obj, "Clipped in Z to viewing cube\n", (char *)NULL);
-#if 0
-		((struct plot_vars *)dmp->dm_vars.priv_vars)->zclip = 1;
-#else
+
 		dmp->dm_zclip = 1;
-#endif
 		break;
 	    default:
 		Tcl_AppendStringsToObj(obj, "bad PLOT option ", argv[0], "\n", (char *)NULL);

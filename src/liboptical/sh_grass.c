@@ -696,52 +696,6 @@ hit_blade(const struct blade *UNUSED(bl), struct grass_ray *r, struct shadework 
 
     r->occlusion = 1.0;
     return;
-
-#if 0
-    if (ldist[0] < r->hit.hit_dist) {
-
-	/* we're the closest hit on the cell */
-	r->hit.hit_dist = ldist[0];
-	VJOIN1(r->hit.hit_point, r->r.r_pt, ldist[0], r->r.r_dir);
-
-	if (VDOT(bl->leaf[seg].N, r->r.r_dir) > 0.0) {
-	    VREVERSE(r->hit.hit_normal, bl->leaf[seg].N);
-	} else {
-	    VMOVE(r->hit.hit_normal, bl->leaf[seg].N);
-	}
-
-	if (blade_num == BLADE_LAST) {
-	    vect_t brown;
-	    double d;
-
-	    d = (1.0-fract) * .4;
-	    VSCALE(swp->sw_color, swp->sw_color, d);
-	    d = 1.0 - d;
-
-	    VSCALE(brown, grass_sp->brown, d);
-
-	    VADD2(swp->sw_color, swp->sw_color, brown);
-	}
-	fract = fract * 0.25 + .75;
-	VSCALE(swp->sw_color, swp->sw_color, fract);
-
-	if (rdebug&RDEBUG_SHADE) {
-	    bu_log("  New closest hit %g < %g\n",
-		   ldist[0], r->hit.hit_dist);
-	    bu_log("  pt:(%g %g %g)\n  Normal:(%g %g %g)\n",
-		   V3ARGS(r->hit.hit_point),
-		   V3ARGS(r->hit.hit_normal));
-	}
-
-
-	return /* SHADE_ABORT_GRASS */;
-    } else {
-	if (rdebug&RDEBUG_SHADE)
-	    bu_log("abandon hit in cell: %g > %g\n",
-		   ldist[0], r->hit.hit_dist);
-    }
-    return /* SHADE_CONT */;
-#endif
 }
 
 
@@ -945,14 +899,10 @@ stat_cell(fastf_t *UNUSED(cell_pos), struct grass_ray *r, struct grass_specific 
 	swp->sw_transmit -= ratio;
     }
 
-#if 0
-    bn_noise_vec(cell_pos, r->hit.hit_normal);
-    r->hit.hit_normal[Z] += 1.0;
-#else
     VADD2(tmp, r->hit.hit_point, grass_sp->delta);
     bn_noise_vec(tmp, r->hit.hit_normal);
     if (r->hit.hit_normal[Z] < 0.0) r->hit.hit_normal[Z] *= -1.0;
-#endif
+
     VUNITIZE(r->hit.hit_normal);
     if (VDOT(r->hit.hit_normal, r->r.r_dir) > 0.0) {
 	VREVERSE(r->hit.hit_normal, r->hit.hit_normal);

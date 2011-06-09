@@ -27,14 +27,6 @@
 
 #include "common.h"
 
-#if 0
-#ifdef DEBUG
-#define TRACE(arg) std::cerr << arg << std::endl
-#else
-#define TRACE(arg)
-#endif
-#endif
-
 #ifdef DEBUG
 #define ERROR(arg) std::cerr << __FILE__ << ":" << __LINE__ << ":" << __func__ << ":" << arg << std::endl
 #else

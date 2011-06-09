@@ -460,13 +460,8 @@ marble_render(struct application *ap, struct partition *pp, struct shadework *sw
     val = bn_noise_turb(pt, camo_sp->noise_h_val,
 			camo_sp->noise_lacunarity, camo_sp->noise_octaves);
 
-#if 0
-    val *= 2.0;
-    CLAMP(val, 0.0, 1.0);
-#else
     val = sin(val*M_PI);
 
-#endif
     inv_val = 1.0 - val;
 
 #ifdef RT_MULTISPECTRAL

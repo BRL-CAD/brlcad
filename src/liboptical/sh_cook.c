@@ -339,17 +339,12 @@ cook_render(register struct application *ap, struct partition *pp, struct shadew
 	a = acos(n_dot_h);		/*XXXXXX*/
 	D = beckmann(a, ps->m2);	/*XXX Sum k[i]*beck(a, m[i]) */
 	e_dot_h = -VDOT(ap->a_ray.r_dir, h);
-#if 0
-	F = fresnel(e_dot_h, ps->n[0]);
-#endif
+
 	Fv[0] = fresnel(e_dot_h, ps->n[0]);
 	Fv[1] = fresnel(e_dot_h, ps->n[1]);
 	Fv[2] = fresnel(e_dot_h, ps->n[2]);
 	G = 1.0;			/*XXXXXX*/
 
-#if 0
-	rs = F * G * D / n_dot_e;
-#endif
 	rd = n_dot_l;			/*XXX ? */
 
 	/* diffuse */

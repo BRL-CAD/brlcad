@@ -166,10 +166,6 @@ OPTICAL_EXPORT extern struct bn_tabdata *background;
 OPTICAL_EXPORT extern vect_t background;
 #endif
 
-#if 0
-OPTICAL_EXPORT
-OPTICAL_EXPORT extern
-#endif
 /* defined in sh_text.c */
 OPTICAL_EXPORT extern struct region env_region; /* environment map region */
 

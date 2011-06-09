@@ -382,18 +382,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 
     dfirst = -(PartHeadp->pt_forw->pt_inhit->hit_dist + dcorrection);
     dlast = -(PartHeadp->pt_back->pt_outhit->hit_dist + dcorrection);
-#if 0
-    /* This code is to note any occurances of negative distances. */
-    if ( PartHeadp->pt_forw->pt_inhit->hit_dist < 0)  {
-	bu_log("ERROR: dfirst=%g at partition x%x\n", dfirst, PartHeadp->pt_forw );
-	bu_log("\tdcorrection = %f\n", dcorrection );
-	bu_log("\tray start point is ( %f %f %f ) in direction ( %f %f %f )\n", V3ARGS( ap->a_ray.r_pt ), V3ARGS( ap->a_ray.r_dir ) );
-	VJOIN1( PartHeadp->pt_forw->pt_inhit->hit_point, ap->a_ray.r_pt, PartHeadp->pt_forw->pt_inhit->hit_dist, ap->a_ray.r_dir );
-	VJOIN1( PartHeadp->pt_back->pt_outhit->hit_point, ap->a_ray.r_pt, PartHeadp->pt_forw->pt_outhit->hit_dist, ap->a_ray.r_dir );
-	rt_pr_partitions(ap->a_rt_i, PartHeadp, "Defective partion:");
-    }
-    /* End of bug trap. */
-#endif
+
     /*
      *  Output the ray header.  The GIFT statements that
      *  would have generated this are:
@@ -817,19 +806,9 @@ part_compact(register struct application *ap, register struct partition *PartHea
 	continue;
     }
 
-    /* Eliminate the gap by collapsing the two partitions
-     * into one.  The below lines have been commented out but
-     * should be retained for debugging purposes.
-     */
-#if 0
-    bu_log("part_comp: collapsing gap of %e mm between id=%d and id=%d air=%d and air=%d\n",
-	   gap, pp->pt_regionp->reg_regionid,
-	   nextpp->pt_regionp->reg_regionid, pp->pt_regionp->reg_aircode, nextpp->pt_regionp->reg_aircode);
-#endif
     pp->pt_outseg = nextpp->pt_outseg;
     pp->pt_outhit = nextpp->pt_outhit;
     pp->pt_outflip = nextpp->pt_outflip;
-
 
     /*
      *  Dequeue and free the unwanted partition structure.

@@ -134,11 +134,6 @@ ged_rect(struct ged	*gedp,
 
 	    ged_rect_image2view(&gedp->ged_gvp->gv_rect);
 
-#if 0
-	    if (gedp->ged_gvp->gv_rect.grs_draw)
-		return BRLCAD_REFRESH;
-#endif
-
 	    return GED_OK;
 	}
 
@@ -157,11 +152,6 @@ ged_rect(struct ged	*gedp,
 	    gedp->ged_gvp->gv_rect.grs_dim[Y] = user_pt[Y];
 
 	    ged_rect_image2view(&gedp->ged_gvp->gv_rect);
-
-#if 0
-	    if (gedp->ged_gvp->gv_rect.grs_draw)
-		return BRLCAD_REFRESH;
-#endif
 
 	    return GED_OK;
 	}
@@ -182,11 +172,6 @@ ged_rect(struct ged	*gedp,
 
 	    ged_rect_image2view(&gedp->ged_gvp->gv_rect);
 
-#if 0
-	    if (gedp->ged_gvp->gv_rect.grs_draw)
-		return BRLCAD_REFRESH;
-#endif
-
 	    return GED_OK;
 	}
 
@@ -205,11 +190,6 @@ ged_rect(struct ged	*gedp,
 	    gedp->ged_gvp->gv_rect.grs_bg[0] = (int)user_pt[X];
 	    gedp->ged_gvp->gv_rect.grs_bg[1] = (int)user_pt[Y];
 	    gedp->ged_gvp->gv_rect.grs_bg[2] = (int)user_pt[Z];
-
-#if 0
-	    if (gedp->ged_gvp->gv_rect.grs_draw)
-		return BRLCAD_REFRESH;
-#endif
 
 	    return GED_OK;
 	}
@@ -230,11 +210,6 @@ ged_rect(struct ged	*gedp,
 	    gedp->ged_gvp->gv_rect.grs_color[1] = (int)user_pt[Y];
 	    gedp->ged_gvp->gv_rect.grs_color[2] = (int)user_pt[Z];
 
-#if 0
-	    if (gedp->ged_gvp->gv_rect.grs_draw)
-		return BRLCAD_REFRESH;
-#endif
-
 	    return GED_OK;
 	}
 
@@ -254,11 +229,6 @@ ged_rect(struct ged	*gedp,
 	    else
 		gedp->ged_gvp->gv_rect.grs_line_style = 1;
 
-#if 0
-	    if (gedp->ged_gvp->gv_rect.grs_draw)
-		return BRLCAD_REFRESH;
-#endif
-
 	    return GED_OK;
 	}
 
@@ -277,11 +247,6 @@ ged_rect(struct ged	*gedp,
 		gedp->ged_gvp->gv_rect.grs_line_width = 0;
 	    else
 		gedp->ged_gvp->gv_rect.grs_line_width = i;
-
-#if 0
-	    if (gedp->ged_gvp->gv_rect.grs_draw)
-		return BRLCAD_REFRESH;
-#endif
 
 	    return GED_OK;
 	}

@@ -139,22 +139,6 @@ add_solid(const struct directory *dp,
 	rt_db_free_internal(&intern);
 	return eptr;
     }
-#if 0
-    if (id == ID_BOT) {
-	struct rt_bot_internal *bot = (struct rt_bot_internal *)intern.idb_ptr;
-
-	/* if this is a plate mode BOT, lie to the tesselator to get
-	 * an approximation
-	 */
-
-	RT_BOT_CK_MAGIC(bot);
-
-	if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
-	    solid_is_plate_mode_bot = 1;
-	    bot->mode = RT_BOT_SOLID;
-	}
-    }
-#endif
     if (id == ID_HALF) {
 	eptr->l.m = NULL;
 	dgcdp->num_halfs++;
@@ -2108,11 +2092,6 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
     for (i = 0; i < argc; ++i) {
 	ged_erasePathFromDisplay(gedp, argv[i], 0);
 	dgcdp->gdlp = ged_addToDisplay(dgcdp->gedp, argv[i]);
-
-#if 0
-	gedp->ged_wdbp->wdb_ttol.magic = RT_TESS_TOL_MAGIC;
-	gedp->ged_wdbp->wdb_ttol.rel = 0.01;
-#endif
 
 	dgcdp->ap = (struct application *)bu_malloc(sizeof(struct application), "Big E app");
 	RT_APPLICATION_INIT(dgcdp->ap);

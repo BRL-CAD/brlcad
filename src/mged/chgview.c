@@ -1436,12 +1436,6 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	    if (argc - 1) {
 		i = atoi(argv[1]);
 		f = atof(argv[1]);
-#if 0
-		if (f < -1.0)
-		    f = -1.0;
-		else if (f > 1.0)
-		    f = 1.0;
-#endif
 	    } else
 		goto usage;
 
@@ -1449,12 +1443,6 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	    ++argv;
 
 	    if (cmd[1] == '\0') {
-#if 0
-		if (f < -1.0)
-		    f = -1.0;
-		else if (f > 1.0)
-		    f = 1.0;
-#endif
 
 		switch (cmd[0]) {
 		    case 'x':

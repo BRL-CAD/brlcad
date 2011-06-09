@@ -1871,13 +1871,6 @@ wgl_reshape(struct dm *dmp, int width, int height)
 
     glViewport(0, 0, dmp->dm_width, dmp->dm_height);
 
-#if 0
-    if (dmp->dm_zbuffer)
-	wgl_setZBuffer(dmp, dmp->dm_zbuffer);
-
-    wgl_setLight(dmp, dmp->dm_light);
-#endif
-
     glClearColor(((struct wgl_vars *)dmp->dm_vars.priv_vars)->r,
 		 ((struct wgl_vars *)dmp->dm_vars.priv_vars)->g,
 		 ((struct wgl_vars *)dmp->dm_vars.priv_vars)->b,
@@ -1924,9 +1917,6 @@ wgl_setLight(struct dm *dmp, int lighting_on)
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, amb_three);
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
 
-#if 0
-	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-#endif
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
 	glLightfv(GL_LIGHT0, GL_SPECULAR, light0_diffuse);
 

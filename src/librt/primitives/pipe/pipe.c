@@ -1501,20 +1501,7 @@ rt_pipe_free(struct soltab *stp)
     if (!stp)
 	return;
 
-#if 0
-    struct bu_list *head = (struct bu_list *)stp->st_specific;
-    
-    /* free linked list */
-    while (BU_LIST_NON_EMPTY(&head->id.l)) {
-        struct bu_list *pipe_ptr;
-        
-        pipe_ptr = (struct bu_list *)(&head->id.l)->forw;
-        bu_free((char *)pipe_ptr, "pipe_specific");
-    }
-    
-    /* free list head */
-    bu_free((char *)head, "pipe_specific head");
-#endif
+    /* FIXME: make sure we're not leaking memory here */
 }
 
 

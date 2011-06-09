@@ -388,12 +388,7 @@ view_pixel(register struct application *ap)
 		    ap->a_dist, ap->a_ray.r_dir );
 	    fp->ff_regp = (struct region *)ap->a_uptr;
 	    RT_CK_REGION(fp->ff_regp);
-#if 0
-	    {
-		point_t	new_view_pt;
-		MAT4X3PNT( new_view_pt, model2view, fp->ff_hitpt );
-	    }
-#endif
+
 	    /*
 	     *  This pixel was just computed.
 	     *  Look at next pixel on scanline,

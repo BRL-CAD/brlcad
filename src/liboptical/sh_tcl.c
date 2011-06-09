@@ -149,16 +149,6 @@ tcl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
     if (bu_struct_parse(matparm, tcl_parse_tab, (char *)tcl_sp) < 0)
 	return -1;
 
-#if 0
-    tcl_sp->tcl_mp = bu_open_mapped_file(bu_vls_addr(tcl_sp->tcl_file),
-					 "tclShader");
-    if (!tcl_sp->tcl_mp) {
-	bu_log("Error opening Tcl shader file \"%s\"\n",
-	       bu_vls_addr(tcl_sp->tcl_file));
-	bu_bomb("");
-    }
-#endif
-
     for (cpu=0; cpu < MAX_PSW; cpu++) {
 	tcl_sp->tcl_interp[cpu] = Tcl_CreateInterp();
 	Tcl_Init(tcl_sp->tcl_interp[cpu]);

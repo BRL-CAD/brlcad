@@ -143,13 +143,6 @@ struct pixel *lookup_pixel(bu_rb_tree *palette, unsigned char *color)
     struct pixel *qpp = NULL;	/* The query */
     struct pixel *pp = NULL;	/* Value to return */
 
-#if 0
-    bu_log("lookup_pixel(");
-    for (i = 0; i < pixel_size; ++i)
-	bu_log("%3d ", color[i]);
-    bu_log(")...");
-#endif
-
     /*
      * Prepare the palette query
      */
@@ -163,16 +156,10 @@ struct pixel *lookup_pixel(bu_rb_tree *palette, unsigned char *color)
      */
     switch (rc = bu_rb_insert(palette, (void *) qpp)) {
 	case -1:
-#if 0
-	    bu_log(" already existed\n");
-#endif
 	    pp = (struct pixel *) bu_rb_curr1(palette);
 	    free_pixel(qpp);
 	    break;
 	case 0:
-#if 0
-	    bu_log(" newly added\n");
-#endif
 	    pp = qpp;
 	    break;
 	default:

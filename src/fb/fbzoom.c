@@ -83,14 +83,7 @@ main(int argc, char **argv)
 	fb_view(fbp, xPan, yPan, xZoom, yZoom);
     }
 
-#if 0
-    xZoom = 1;
-    yZoom = 1;
-    xPan = fb_getwidth(fbp)/2;
-    yPan = fb_getheight(fbp)/2;
-#else
     fb_getview(fbp, &xPan, &yPan, &xZoom, &yZoom);
-#endif
 
     /* Set RAW mode */
     save_Tty(0);

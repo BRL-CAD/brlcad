@@ -159,35 +159,6 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
 		ged_add_nmg_part(gedp, newname, new_model);
 		if (frac_stat) return GED_ERROR;
 	    }
-#if 0
-	    while (BU_LIST_NON_EMPTY(&s->lu_hd)) {
-		lu = BU_LIST_FIRST(loopuse, &s->lu_hd);
-		new_model = nmg_mm();
-		r = nmg_mrsv(new_model);
-		new_s = BU_LIST_FIRST(shell, &r->s_hd);
-
-		nmg_dup_loop(lu, new_s);
-		nmg_klu(lu);
-
-		snprintf(newname, 32, "%s%0*d", prefix, maxdigits, i++);
-		ged_add_nmg_part(gedp, newname, new_model);
-		if (frac_stat) return GED_ERROR;
-	    }
-	    while (BU_LIST_NON_EMPTY(&s->eu_hd)) {
-		eu = BU_LIST_FIRST(edgeuse, &s->eu_hd);
-		new_model = nmg_mm();
-		r = nmg_mrsv(new_model);
-		new_s = BU_LIST_FIRST(shell, &r->s_hd);
-
-		nmg_dup_edge(eu, new_s);
-		nmg_keu(eu);
-
-		snprintf(newname, 32, "%s%0*d", prefix, maxdigits, i++);
-
-		ged_add_nmg_part(gedp, newname, new_model);
-		if (frac_stat) return GED_ERROR;
-	    }
-#endif
 	}
     }
 

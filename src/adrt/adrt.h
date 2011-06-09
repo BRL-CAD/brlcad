@@ -56,20 +56,6 @@ enum
     ADRT_WORK_END
 };
 
-#if 0
-/* FIXME: unused, remove? */
-static char *adrt_work_table[20] = {
-    "ADRT_WORK_INIT",
-    "ADRT_WORK_STATUS",
-    "ADRT_WORK_FRAME_ATTR",
-    "ADRT_WORK_FRAME",
-    "ADRT_WORK_SHOTLINE",
-    "ADRT_WORK_SPALL",
-    "ADRT_WORK_SELECT",
-    "ADRT_WORK_MINMAX",
-    NULL};
-#endif
-
 
 #define ADRT_NETOP_BASE 0x20
 /* top level messages */
@@ -86,19 +72,6 @@ enum
     ADRT_NETOP_END
 };
 
-#if 0
-/* FIXME: unused, remove? */
-static char *adrt_netop_table[20] = {
-    "ADRT_NETOP_NOP",
-    "ADRT_NETOP_INIT",
-    "ADRT_NETOP_REQWID",
-    "ADRT_NETOP_LOAD",
-    "ADRT_NETOP_WORK",
-    "ADRT_NETOP_MESG",
-    "ADRT_NETOP_QUIT",
-    "ADRT_NETOP_SHUTDOWN",
-    NULL};
-#endif
 
 /* fill in a human readable version of the adrt op (for debugging) */
 #define ADRT_MESSAGE_NAME(op) \

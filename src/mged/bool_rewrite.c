@@ -284,9 +284,6 @@ int cvt_to_gift_bool (struct bool_tree_node *rp)
 
     for (cnr = 0; nr = _cvt_to_gift_bool(rp); cnr += nr) {
 	;
-#if 0
-	show_tree (rp, 1);
-#endif
     }
 
     return cnr;
