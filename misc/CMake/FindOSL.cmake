@@ -21,13 +21,13 @@ message("OSL_HOME = ${OSLHOME}")
 
 # Find OSL library and its dependencies
 FIND_LIBRARY(OSLEXEC_LIBRARY 
-	NAMES liboslexec.dylib
+	NAMES oslexec
 	PATHS ${OSLHOME}/lib)
 FIND_LIBRARY(OSLCOMP_LIBRARY 
-	NAMES liboslcomp.dylib
+	NAMES oslcomp
 	PATHS ${OSLHOME}/lib)
 FIND_LIBRARY(OSLQUERY_LIBRARY 
-	NAMES liboslquery.dylib
+	NAMES oslquery
 	PATHS ${OSLHOME}/lib)
 
 FIND_PATH (OSL_INCLUDES
