@@ -164,9 +164,6 @@
 #include "../../librt_private.h"
 
 
-extern fastf_t rt_ell_ang(fastf_t *, fastf_t, fastf_t, fastf_t, fastf_t);
-
-
 struct ehy_specific {
     point_t ehy_V;	/* vector to ehy origin */
     vect_t ehy_Hunit;	/* unit H vector */

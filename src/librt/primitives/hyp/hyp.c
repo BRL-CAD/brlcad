@@ -44,8 +44,7 @@
 #include "raytrace.h"
 #include "rtgeom.h"
 
-
-extern fastf_t rt_ell_ang(fastf_t *, fastf_t, fastf_t, fastf_t, fastf_t);
+#include "../../librt_private.h"
 
 
 /* ray tracing form of solid, including precomputed terms */
