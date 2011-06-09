@@ -365,6 +365,12 @@ Included in following are various minimally impacting API changes that
 have been identified in reverse chronological order.  As expressions
 are not extensively tested, use with caution.
 
+s/RT_CK_SPM/BN_CK_SPM_MAP/g
+        RT_CK_SPM macro renamed to BN_CK_SPM MAP [7.20]
+
+s/spm_\([^)]*\)/bn_spm_\1/g
+        spm functions and types renamed to bn_spm [7.20]
+
 s/V2APPROXEQUAL(/V2NEAR_EQUAL(/g
         V2APPROXEQUAL() renamed to V2NEAR_EQUAL() [7.18]
 
