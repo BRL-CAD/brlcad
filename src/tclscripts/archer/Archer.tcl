@@ -3782,7 +3782,7 @@ proc title_node_handler {node} {
     buildarcherHelp
 
     # Build manual browser
-    ManBrowser $itk_interior.archerMan2 -parentName Archer
+    ManBrowser $itk_interior.archerMan -parentName Archer
 
     buildMouseOverridesDialog
     #    buildInfoDialog mouseOverridesDialog \
