@@ -30,6 +30,7 @@
 #  define HAVE_DLOPEN 1
 # endif
 #endif
+#include "bio.h"
 
 #include "bu.h"
 
@@ -52,7 +53,7 @@ bu_dlsym(void *handle, const char *symbol)
 #ifdef HAVE_DLOPEN
     return dlsym(handle, symbol);
 #elif defined(WIN32)
-    return GetProcAddress(path, symbol);
+    return GetProcAddress(handle, symbol);
 #else
     bu_log("dlsym not supported\n");
     return NULL;
@@ -79,7 +80,7 @@ bu_dlerror(void)
     return dlerror();
 #elif defined(WIN32)
     static char buf[BUFSIZ];
-    FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(), &buf, 0, NULL);
+    FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(), LANG_NEUTRAL, buf, BUFSIZ, NULL);
     return (const char *)buf;
 #else
     bu_log("dlerror not supported\n");
