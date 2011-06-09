@@ -1680,7 +1680,7 @@ rt_ell_params(struct pc_pc_set *pcs, const struct rt_db_internal *ip)
  * Used by EHY, EPA, HYP.  See librt_private.h for details.
  */
 fastf_t
-rt_ell_ang(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
+ell_angle(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
 {
     fastf_t dist, intr, m, theta0, theta1;
     point_t mpt, p0;
@@ -1708,7 +1708,7 @@ rt_ell_ang(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
     /* split segment at widest point if not within error tolerances */
     if (dist > dtol || theta0 > ntol || theta1 > ntol) {
 	/* split segment */
-	return rt_ell_ang(mpt, a, b, dtol, ntol);
+	return ell_angle(mpt, a, b, dtol, ntol);
     } else
 	return(acos(VDOT(p0, p1)
 		    / (MAGNITUDE(p0) * MAGNITUDE(p1))));
