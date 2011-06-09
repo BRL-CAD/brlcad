@@ -16,7 +16,7 @@ changes made.  See document footer for additional details.
 * improved archer/mged manual page browser behavior - Brandon Hinesley
 * added man documentation command to archer - Brandon Hinesley
 * improved File->New dialog in mged - Brandon Hinesley
-* all cmake files now included - Erik Greenwald, Sean Morrison
+* all cmake files now included in dist - Erik Greenwald, Sean Morrison
  
 
 ----------------------------------------------------------------------
