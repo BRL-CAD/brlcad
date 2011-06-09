@@ -93,11 +93,12 @@ void OSLRenderer::InitShaders(){
     shadingsys->clear_state();
 }
 ClosureColor * OSLRenderer::ExecuteShaders(ShaderGlobals globals, RenderInfo *info){
+
+    memset(&globals, 0, sizeof(globals));
+
     VMOVE(globals.P, info->P);
     VMOVE(globals.I, info->I);
     VMOVE(globals.Ng, info->N);
-
-    memset(&globals, 0, sizeof(globals));
 
     globals.N = globals.Ng;    
     

@@ -62,9 +62,13 @@ librtms_la_SOURCES = \
 
 EXTRA_DIST = \
 	CMakeLists.txt \
+	constantpool.h \
 	liboptical.dsp \
+	oslexec_pvt.h \
 	osl-renderer.cpp \
 	osl-renderer.h \
+	render_svc.cpp \
+	render_svc.h \
 	sh_osl.c
 
 DEPENDS = src/librt
