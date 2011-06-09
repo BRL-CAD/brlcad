@@ -69,17 +69,33 @@ IF(BRLCAD-ENABLE_OSL)
     message("Oslcomp: ${OSLCOMP_LIBRARY}")
     message("Oslquery: ${OSLQUERY_LIBRARY}")
 
-    set (OSLRT_SOURCES osl-renderer.cpp)
+    
+    set (OSLRT_SOURCES osl-renderer.cpp render_svc.cpp)
+
     #set (OSLRT_LIBS ${OSLEXEC_LIBRARY} ${OSLCOMP_LIBRARY} ${OSLQUERY_LIBRARY} ${OPENIMAGEIO_LIBRARY} ${Boost_LIBRARIES})
-
     message("OSLRT_SOURCES: ${OSLRT_SOURCES}")
-    message("OSLRT_LIBRARIES: ${OSLRT_LIBS}")
+    #find_package(Boost)
 
-   # BRLCAD_ADDLIB(osl-renderer "${OSLRT_SOURCES}" "${OSLRT_LIBS}")
+    # Try to find BOOST
+    set (Boost_COMPONENTS filesystem regex system thread)
+    find_package (Boost 1.46 REQUIRED 
+      COMPONENTS ${Boost_COMPONENTS})
+    # If it was not found, check if BOOST_ROOT was set
+    IF(NOT Boost_FILESYSTEM_LIBRARY)
+      message("Cheking if BOOST ROOT was FOUND")
+    ENDIF()
 
-    BRLCAD_ADDLIB(osl-renderer "${OSLRT_SOURCES}" "/Users/kunigami/dev/osl/dist/macosx/lib/liboslexec.dylib /Users/kunigami/dev/osl/dist/macosx/lib/liboslcomp.dylib /Users/kunigami/dev/osl/dist/macosx/lib/liboslquery.dylib /Users/kunigami/dev/oiio/dist/macosx/lib/libOpenImageIO.dylib /opt/local/lib/libboost_filesystem-mt.dylib /opt/local/lib/libboost_regex-mt.dylib /opt/local/lib/libboost_system-mt.dylib /opt/local/lib/libboost_thread-mt.dylib")
+    message("Boost filesystem: ${Boost_FILESYSTEM_LIBRARY}")
+    message("Boost regex: ${Boost_REGEX_LIBRARY}")
+    message("Boost system: ${Boost_SYSTEM_LIBRARY}")
+    message("Boost thread: ${Boost_THREAD_LIBRARY}")
 
-    #BRLCAD_ADDLIB(osl-renderer "${OSLRT_SOURCES}" "/Users/kunigami/dev/osl/dist/macosx/lib/liboslexec.dylib;/Users/kunigami/dev/osl/dist/macosx/lib/liboslcomp.dylib;/Users/kunigami/dev/osl/dist/macosx/lib/liboslquery.dylib;/Users/kunigami/dev/oiio/dist/macosx/lib/libOpenImageIO.dylib;/opt/local/lib/libboost_filesystem-mt.dylib;/opt/local/lib/libboost_regex-mt.dylib;/opt/local/lib/libboost_system-mt.dylib;/opt/local/lib/libboost_thread-mt.dylib")
+    set(OSLRT_LIBS "${OSLEXEC_LIBRARY} ${OSLCOMP_LIBRARY} ${OSLQUERY_LIBRARY} ${OPENIMAGEIO_LIBRARY} ${Boost_LIBRARIES} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY}")
+    
+    STRING(REGEX REPLACE ";" " " OSLRT_LIBS2 "${OSLRT_LIBS}")
+    message("novas bibliotecas: ${OSLRT_LIBS2}")
+
+    BRLCAD_ADDLIB(osl-renderer "${OSLRT_SOURCES}" "${OSLRT_LIBS2}")
 
     ##########################################
     # OSL Shader 
