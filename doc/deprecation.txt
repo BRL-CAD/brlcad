@@ -365,6 +365,12 @@ Included in following are various minimally impacting API changes that
 have been identified in reverse chronological order.  As expressions
 are not extensively tested, use with caution.
 
+s/SPM_NULL/BN_SPM_MAP_NULL/g
+        SPM_NULL renamed to BN_SPM_MAP_NULL [7.20]
+
+s/SPM_MAGIC/BN_SPM_MAGIC/g
+        SPM_MAGIC renamed to BN_SPM_MAGIC [7.20]
+
 s/RT_CK_SPM/BN_CK_SPM_MAP/g
         RT_CK_SPM macro renamed to BN_CK_SPM MAP [7.20]
 
