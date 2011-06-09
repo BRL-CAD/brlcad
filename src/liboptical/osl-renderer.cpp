@@ -28,8 +28,8 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info){
     thread_info.Xi[0] = 0;
     thread_info.Xi[1] = 0;
     thread_info.Xi[2] = y*y*y;
-    
-    // execute shader
+
+        // execute shader
     ShaderGlobals globals;
     ClosureColor *closure = ExecuteShaders(globals, info);
 
@@ -96,6 +96,9 @@ ClosureColor * OSLRenderer::ExecuteShaders(ShaderGlobals globals, RenderInfo *in
     VMOVE(globals.P, info->P);
     VMOVE(globals.I, info->I);
     VMOVE(globals.Ng, info->N);
+
+    memset(&globals, 0, sizeof(globals));
+
     globals.N = globals.Ng;    
     
     // u-v coordinates
@@ -114,6 +117,8 @@ ClosureColor * OSLRenderer::ExecuteShaders(ShaderGlobals globals, RenderInfo *in
 
     // execute shader
     thread_info.ctx->execute(ShadUseSurface, *shaderstate, globals);
+
+
 
     return globals.Ci;
 }

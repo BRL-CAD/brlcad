@@ -58,7 +58,7 @@ IF(BRLCAD-ENABLE_OSL)
 
     # NOTE(boulos): Boost can only detect that you've disabled RTTI for
     # gcc >= 4.3. My poor mac doesn't have that.
-    add_definitions("-fno-rtti -DBOOST_NO_RTTI -DBOOST_NO_TYPEID -Wno-error -no-pedantic -DOSL_ENABLED")
+    add_definitions("-fno-rtti -DBOOST_NO_RTTI -DBOOST_NO_TYPEID -DOSL_ENABLED")
 
     include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
