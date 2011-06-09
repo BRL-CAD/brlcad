@@ -933,49 +933,6 @@ rt_ell(fastf_t *ov, const fastf_t *V, const fastf_t *A, const fastf_t *B, int si
 
 
 /**
- * R T _ E L L _ A N G
- *
- * Return angle required for smallest side to fall within tolerances
- * for ellipse.  Smallest side is a side with an endpoint at (a, 0, 0)
- * where a is the semi-major axis.
- */
-fastf_t
-rt_ell_ang(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
-{
-    fastf_t dist, intr, m, theta0, theta1;
-    point_t mpt, p0;
-    vect_t norm_line, norm_ell;
-
-    VSET(p0, a, 0., 0.);
-    /* slope and intercept of segment */
-    m = (p1[Y] - p0[Y]) / (p1[X] - p0[X]);
-    intr = p0[Y] - m * p0[X];
-    /* point on ellipse with max dist between ellipse and line */
-    mpt[X] = a / sqrt(b*b / (m*m*a*a) + 1);
-    mpt[Y] = b * sqrt(1 - mpt[X] * mpt[X] / (a*a));
-    mpt[Z] = 0;
-    /* max distance between that point and line */
-    dist = fabs(m * mpt[X] - mpt[Y] + intr) / sqrt(m * m + 1);
-    /* angles between normal of line and of ellipse at line endpoints */
-    VSET(norm_line, m, -1., 0.);
-    VSET(norm_ell, b * b * p0[X], a * a * p0[Y], 0.);
-    VUNITIZE(norm_line);
-    VUNITIZE(norm_ell);
-    theta0 = fabs(acos(VDOT(norm_line, norm_ell)));
-    VSET(norm_ell, b * b * p1[X], a * a * p1[Y], 0.);
-    VUNITIZE(norm_ell);
-    theta1 = fabs(acos(VDOT(norm_line, norm_ell)));
-    /* split segment at widest point if not within error tolerances */
-    if (dist > dtol || theta0 > ntol || theta1 > ntol) {
-	/* split segment */
-	return rt_ell_ang(mpt, a, b, dtol, ntol);
-    } else
-	return(acos(VDOT(p0, p1)
-		    / (MAGNITUDE(p0) * MAGNITUDE(p1))));
-}
-
-
-/**
  * R T _ E P A _ T E S S
  *
  * Returns -
