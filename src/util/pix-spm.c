@@ -37,16 +37,16 @@ int
 main(int argc, char **argv)
 {
     int size;
-    spm_map_t *mp;
+    bn_spm_map_t *mp;
 
     if (argc != 3) {
 	bu_exit(1, "usage: pix-spm file.pix size > file.spm\n");
     }
 
     size = atoi(argv[2]);
-    mp = spm_init(size, sizeof(RGBpixel));
-    spm_pix_load(mp, argv[1], size, size);
-    spm_save(mp, "-");
+    mp = bn_spm_init(size, sizeof(RGBpixel));
+    bn_spm_pix_load(mp, argv[1], size, size);
+    bn_spm_save(mp, "-");
 
     return 0;
 }

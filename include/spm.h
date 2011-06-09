@@ -41,7 +41,6 @@
 #  endif
 #endif
 
-/* FIXME: These should all have bn_ prefixes */
 
 typedef struct {
     unsigned long magic;
@@ -50,12 +49,10 @@ typedef struct {
     int elsize;		/**< @brief Size of each bin element */
     unsigned char **xbin;	/**< @brief staring addresses of "x" bins */
     unsigned char *_data;	/**< @brief For freeing purposes, start of data */
-} spm_map_t;
+} bn_spm_map_t;
 
-#define SPM_NULL (spm_map_t *)0
-
-#define RT_CK_SPM(smp) BU_CKMAG(smp, SPM_MAGIC, "spm_map_t")
-#define BN_CK_SPM(smp) BU_CKMAG(smp, SPM_MAGIC, "spm_map_t")
+#define BN_SPM_MAP_NULL (bn_spm_map_t *)0
+#define BN_CK_SPM_MAP(_p) BU_CKMAG(_p, BN_SPM_MAGIC, "bn_spm_map_t")
 
 
 /**
@@ -68,16 +65,16 @@ typedef struct {
  * ring of "triangular" pixels at the poles.  An alternative would be
  * to have the pole region map to a single pixel.
  *
- * Returns SPM_NULL on error.
+ * Returns BN_SPM_NULL on error.
  */
-BN_EXPORT extern spm_map_t *spm_init(int N, int elsize);
+BN_EXPORT extern bn_spm_map_t *bn_spm_init(int N, int elsize);
 
 /**
  * S P M _ F R E E
  *@brief
  * Free the storage associated with a sphere structure.
  */
-BN_EXPORT extern void spm_free(spm_map_t *mp);
+BN_EXPORT extern void bn_spm_free(bn_spm_map_t *mp);
 
 /**
  * S P M _ R E A D
@@ -88,7 +85,7 @@ BN_EXPORT extern void spm_free(spm_map_t *mp);
  *@n 0.0 <= u < 1.0 Left to Right
  *@n 0.0 <= v < 1.0 Bottom to Top
  */
-BN_EXPORT extern void spm_read(register spm_map_t *mapp, register unsigned char *valp, double u, double v);
+BN_EXPORT extern void bn_spm_read(register bn_spm_map_t *mapp, register unsigned char *valp, double u, double v);
 
 /**
  * S P M _ W R I T E
@@ -99,7 +96,7 @@ BN_EXPORT extern void spm_read(register spm_map_t *mapp, register unsigned char 
  *@n 0.0 <= u < 1.0 Left to Right
  *@n 0.0 <= v < 1.0 Bottom to Top
  */
-BN_EXPORT extern void spm_write(register spm_map_t *mapp, register unsigned char *valp, double u, double v);
+BN_EXPORT extern void bn_spm_write(register bn_spm_map_t *mapp, register unsigned char *valp, double u, double v);
 
 /**
  * S P M _ G E T
@@ -110,7 +107,7 @@ BN_EXPORT extern void spm_write(register spm_map_t *mapp, register unsigned char
  *@n 0.0 <= u < 1.0 Left to Right
  *@n 0.0 <= v < 1.0 Bottom to Top
  */
-BN_EXPORT extern char *spm_get(register spm_map_t *mapp, double u, double v);
+BN_EXPORT extern char *bn_spm_get(register bn_spm_map_t *mapp, double u, double v);
 
 /**
  * S P M _ L O A D
@@ -120,7 +117,7 @@ BN_EXPORT extern char *spm_get(register spm_map_t *mapp, double u, double v);
  *
  * @return -1 on error, else 0.
  */
-BN_EXPORT extern int spm_load(spm_map_t *mapp, char *filename);
+BN_EXPORT extern int bn_spm_load(bn_spm_map_t *mapp, char *filename);
 
 /**
  * S P M _ S A V E
@@ -128,7 +125,7 @@ BN_EXPORT extern int spm_load(spm_map_t *mapp, char *filename);
  * Write a loaded sphere map to the given file ("-" for stdout).
  * Returns -1 on error, else 0.
  */
-BN_EXPORT extern int spm_save(spm_map_t *mapp, char *filename);
+BN_EXPORT extern int bn_spm_save(bn_spm_map_t *mapp, char *filename);
 
 /**
  * S P M _ P I X _ L O A D
@@ -138,7 +135,7 @@ BN_EXPORT extern int spm_save(spm_map_t *mapp, char *filename);
  *
  * @return -1 on error, else 0.
  */
-BN_EXPORT extern int spm_pix_load(spm_map_t *mapp, char *filename, int nx, int ny);
+BN_EXPORT extern int bn_spm_pix_load(bn_spm_map_t *mapp, char *filename, int nx, int ny);
 
 /**
  * S P M _ P I X _ S A V E
@@ -146,14 +143,14 @@ BN_EXPORT extern int spm_pix_load(spm_map_t *mapp, char *filename, int nx, int n
  * Save a sphere structure as an 'nx' by 'ny' pix file.
  * @return -1 on error, else 0.
  */
-BN_EXPORT extern int spm_pix_save(spm_map_t *mapp, char *filename, int nx, int ny);
+BN_EXPORT extern int bn_spm_pix_save(bn_spm_map_t *mapp, char *filename, int nx, int ny);
 
 /**
  * S P M _ D U M P
  *@brief
  * Display a sphere structure on stderr.  Used for debugging.
  */
-BN_EXPORT extern void spm_dump(spm_map_t *mp, int verbose);
+BN_EXPORT extern void bn_spm_dump(bn_spm_map_t *mp, int verbose);
 
 #endif /* __SPM_H__ */
 

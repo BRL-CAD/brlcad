@@ -40,7 +40,7 @@
 struct spm_specific {
     char sp_file[SPM_NAME_LEN];	/* Filename */
     int sp_w;		/* Width: number of pixels around equator */
-    spm_map_t *sp_map;	/* stuff */
+    bn_spm_map_t *sp_map;	/* stuff */
 };
 #define SP_NULL ((struct spm_specific *)0)
 #define SP_O(m) bu_offsetof(struct spm_specific, m)
@@ -76,7 +76,7 @@ spm_render(struct application *UNUSED(ap), struct partition *UNUSED(pp), struct 
     int x, y;
     register unsigned char *cp;
 
-    /** spm_read(spp->sp_map, xxx); **/
+    /** bn_spm_read(spp->sp_map, xxx); **/
     /* Limits checking? */
     y = swp->sw_uv.uv_v * spp->sp_map->ny;
     x = swp->sw_uv.uv_u * spp->sp_map->nx[y];
@@ -86,6 +86,19 @@ spm_render(struct application *UNUSED(ap), struct partition *UNUSED(pp), struct 
 	 ((double)cp[GRN])/256.,
 	 ((double)cp[BLU])/256.);
     return 1;
+}
+
+
+HIDDEN void
+spm_mfree(char *cp)
+{
+    struct spm_specific *spm;
+
+    spm = (struct spm_specific *)cp;
+
+    if (spm->sp_map) bn_spm_free(spm->sp_map);
+    spm->sp_map = BN_SPM_MAP_NULL;
+    bu_free(cp, "spm_specific");
 }
 
 
@@ -117,9 +130,9 @@ spm_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, char **dpp
     if (spp->sp_w < 0) spp->sp_w = 512;
     if (spp->sp_file[0] == '\0')
 	goto fail;
-    if ((spp->sp_map = spm_init(spp->sp_w, sizeof(RGBpixel))) == SPM_NULL)
+    if ((spp->sp_map = bn_spm_init(spp->sp_w, sizeof(RGBpixel))) == BN_SPM_MAP_NULL)
 	goto fail;
-    if (spm_load(spp->sp_map, spp->sp_file) < 0)
+    if (bn_spm_load(spp->sp_map, spp->sp_file) < 0)
 	goto fail;
     return 1;
 fail:
@@ -140,21 +153,9 @@ spm_print(register struct region *rp, char *dp)
 
     bu_log("spm_print(rp=x%x, dp=x%x)\n", rp, dp);
     (void)bu_struct_print("spm_print", spm_parse, (char *)dp);
-    if (spm->sp_map) spm_dump(spm->sp_map, 0);
+    if (spm->sp_map) bn_spm_dump(spm->sp_map, 0);
 }
 
-
-HIDDEN void
-spm_mfree(char *cp)
-{
-    struct spm_specific *spm;
-
-    spm = (struct spm_specific *)cp;
-
-    if (spm->sp_map) spm_free(spm->sp_map);
-    spm->sp_map = NULL;
-    bu_free(cp, "spm_specific");
-}
 
 
 /*

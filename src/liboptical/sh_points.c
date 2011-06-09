@@ -48,7 +48,7 @@
 struct points_specific {
     char pt_file[PT_NAME_LEN];	/* Filename */
     int pt_size;	/* number of bins around equator */
-    spm_map_t *pt_map;	/* stuff */
+    bn_spm_map_t *pt_map;	/* stuff */
 };
 #define POINTS_NULL ((struct points_specific *)0)
 #define POINTS_O(m) bu_offsetof(struct points_specific, m)
@@ -112,7 +112,7 @@ points_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, char **
 	bu_strlcpy(ptp->pt_file, "points.ascii", sizeof(ptp->pt_file));
 
     /* create a spherical data structure to bin point lists into */
-    if ((ptp->pt_map = spm_init(ptp->pt_size, sizeof(struct points))) == SPM_NULL)
+    if ((ptp->pt_map = bn_spm_init(ptp->pt_size, sizeof(struct points))) == BN_SPM_MAP_NULL)
 	goto fail;
 
     /* read in the data */
@@ -136,7 +136,7 @@ points_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, char **
 	pp->color[2] = mag;
 
 	/* find a home for it */
-	headp = (struct points *)spm_get(ptp->pt_map, u, v);
+	headp = (struct points *)bn_spm_get(ptp->pt_map, u, v);
 	pp->next = headp->next;
 	headp->next = pp;
     }
@@ -161,7 +161,7 @@ points_render(struct application *ap, struct partition *UNUSED(partp), struct sh
 {
     register struct points_specific *ptp =
 	(struct points_specific *)dp;
-    register spm_map_t *mapp;
+    register bn_spm_map_t *mapp;
     fastf_t umin, umax, vmin, vmax;
     int xmin, xmax, ymin, ymax;
     register int x, y;
@@ -233,7 +233,7 @@ HIDDEN void
 points_mfree(char *cp)
 {
     /* XXX - free linked lists in every bin! */
-    spm_free((spm_map_t *)cp);
+    bn_spm_free((bn_spm_map_t *)cp);
 }
 
 
