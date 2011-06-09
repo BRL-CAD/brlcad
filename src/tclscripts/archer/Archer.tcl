@@ -3782,9 +3782,7 @@ proc title_node_handler {node} {
     buildarcherHelp
 
     # Build manual browser
-    set disabledPages [list]
-    global archerMan [ManBrowser $itk_interior.archerMan2 -parentName Archer \
-                   -disabledPages $disabledPages]
+    ManBrowser $itk_interior.archerMan2 -parentName Archer
 
     buildMouseOverridesDialog
     #    buildInfoDialog mouseOverridesDialog \
