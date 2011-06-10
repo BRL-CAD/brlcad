@@ -17,8 +17,13 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* fix Archer features using search command (looks like the
-  syntax change broke 'em)
+* rtwizard wipes out on a .g file when unknown units are present in the .g
+  Shouldn't crash - looks like libged function vo_units_cmd is returning
+  TCL_ERROR and that's enough to hault things.  Perhaps units should be
+  validated on .g read and set to mm if they aren't known?
+
+* some sort of invalid free going on in dmo_deleteProc line 220 for at least
+  some .g files with rtwizard - doesn't appear to be consistent.
 
 * fix bottie crash on 32b builds
 
