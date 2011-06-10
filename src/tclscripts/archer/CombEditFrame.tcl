@@ -794,7 +794,7 @@
     # Is the cell indicated by _index empty?
     set tname [lindex $mMemberDataOrder $_type]
     set anames [lsort -dictionary [array names mMemberData$tname]]
-    set i [lsearch $anames $_index]
+    set i [lsearch -sorted $anames $_index]
     if {$i == -1} {
 	set cellEmpty 1
     } else {

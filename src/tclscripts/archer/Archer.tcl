@@ -2616,7 +2616,7 @@ package provide Archer 1.0
 
     # If an item is in both sublists, remove it from mlist.
     foreach item $klist {
-	set l [lsearch -all $mlist $item]
+	set l [lsearch -all -sorted $mlist $item]
 	set l [lsort -decreasing $l]
 	foreach i $l {
 	    # Delete the item (i.e. it no longer exists)
@@ -2750,7 +2750,7 @@ package provide Archer 1.0
 	set mSelectedObj $new_name
 	checkpoint $mSelectedObj $LEDGER_MODIFY
 	regsub {([^/]+)$} $mSelectedObjPath $new_name mSelectedObjPath
-    } elseif {[lsearch $mlist $mSelectedObj] != -1} {
+    } elseif {[lsearch -sorted $mlist $mSelectedObj] != -1} {
 	checkpoint $mSelectedObj $LEDGER_MODIFY
     }
 
