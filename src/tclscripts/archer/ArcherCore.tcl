@@ -460,14 +460,13 @@ namespace eval ArcherCore {
 	    dbip open rtabort shaded_mode
 	}
 
-	variable mMouseOverrideInfo "
-Translate     Shift-Right
-Rotate        Shift-Left
-Scale         Shift-Middle
-Center        Shift-Ctrl-Right
-Popup Menu    Right or Ctrl-Left
-"
-
+	variable mMouseOverrideInfo "\
+	    \nTranslate     Shift-Right\
+	    \nRotate        Shift-Left\
+	    \nScale         Shift-Middle\
+	    \nCenter        Shift-Ctrl-Right\
+	    \nPopup Menu    Right or Ctrl-Left\
+	    \n"
 	variable mColorList {Grey Black Navy Blue Cyan Green Magenta Red White Yellow Triple}
 	variable mColorListNoTriple {Grey Black Navy Blue Cyan Green Magenta Red White Yellow}
 	variable mDefaultNodeColor {150 150 150}
