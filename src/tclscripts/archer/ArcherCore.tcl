@@ -438,21 +438,19 @@ namespace eval ArcherCore {
 	# This is mostly a list of wrapped Ged commands. However, it also contains
 	# a few commands that are implemented here in ArcherCore.
 	variable mArcherCoreCommands { \
-					   3ptarb adjust arced attr bb bev blast bo \
-					   bot bot_condense bot_decimate bot_face_fuse \
-					   bot_face_sort bot_flip bot_merge bot_smooth bot_split bot_sync bot_vertex_fuse \
-					   c cd clear clone closedb color comb comb_color combmem copy copyeval copymat \
-					   cp cpi dbconcat dbExpand decompose delete draw E edcodes edcolor edcomb \
-					   edmater erase erase_all ev exit facetize fracture \
-					   g group hide human i importFg4Section \
-					   in inside item kill killall killrefs killtree ls \
-					   make make_bb make_pnts man mater mirror move move_arb_edge move_arb_face \
-					   mv mvall nmg_collapse nmg_simplify \
-					   ocenter opendb orotate oscale otranslate p q quit packTree prefix protate pscale ptranslate \
-					   push put put_comb putmat pwd r rcodes red rfarb rm rmater \
-					   rotate_arb_face search sed shader shells tire title track \
-					   unhide units unpackTree \
-					   vmake wmater xpush Z zap
+	    3ptarb adjust arced attr bb bev blast bo bot bot_condense \
+	    bot_decimate bot_face_fuse bot_face_sort bot_flip bot_merge \
+	    bot_smooth bot_split bot_sync bot_vertex_fuse c cd clear clone \
+	    closedb color comb comb_color combmem copy copyeval copymat cp \
+	    cpi dbconcat dbExpand decompose delete draw E edcodes edcolor \
+	    edcomb edmater erase erase_all ev exit facetize fracture g group \
+	    hide human i importFg4Section in inside item kill killall \
+	    killrefs killtree ls make make_bb make_pnts man mater mirror move \
+	    move_arb_edge move_arb_face mv mvall nmg_collapse nmg_simplify \
+	    ocenter opendb orotate oscale otranslate p q quit packTree prefix \
+	    protate pscale ptranslate push put put_comb putmat pwd r rcodes \
+	    red rfarb rm rmater rotate_arb_face search sed shader shells tire \
+	    title track unhide units unpackTree vmake wmater xpush Z zap
 	}
 
 	# Commands in this list get passed directly to the Ged object
