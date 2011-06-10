@@ -107,6 +107,13 @@ IF(BRLCAD-ENABLE_OSL)
     # Link liboptical with osl-renderer library
     BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt libbn libbu osl-renderer")
 
+    ##########################################
+    # Renderer test 
+    ##########################################
+
+    BRLCAD_ADDEXEC(osl_rt "osl_rt.cpp" "osl-renderer ${OSLRT_LIBS2}")
+    
+
 ELSE(BRLCAD-ENABLE_OSL)
 
     BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt libbn libbu")

@@ -56,7 +56,13 @@ class OSLRenderer {
        FIXME: Add support for any osl shader */
     void InitShaders();
     /* Build the closure tree */
-    ClosureColor *ExecuteShaders(ShaderGlobals globals, RenderInfo *info);
+    //static const ClosureColor *ExecuteShaders(ShaderGlobals &globals, RenderInfo *info);
+
+    static const ClosureColor 
+        *ExecuteShaders(ThreadInfo &thread_info,
+                        ShaderGlobals &globals, RenderInfo *info,
+                        ShadingAttribStateRef shaderstate);
+
     /* Sample a primitive from the shaders group */
     const ClosurePrimitive* SamplePrimitive(Color3& weight, const ClosureColor *closure, float r);
     /* Helper function for SamplePrimitive */

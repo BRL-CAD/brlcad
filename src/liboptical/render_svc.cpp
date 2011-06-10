@@ -1,6 +1,5 @@
 #include "render_svc.h"
 
-#include "render_svc.h"
 using namespace OSL;
 
 #ifdef OSL_NAMESPACE

@@ -6,7 +6,6 @@ OSLRenderer::OSLRenderer(){
     
     InitShaders();
 
-
     ssi = (ShadingSystemImpl *)shadingsys;
     thread_info.handle = ssi->create_thread_info();
     thread_info.ctx = ssi->get_context(thread_info.handle);
@@ -29,13 +28,17 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info){
     thread_info.Xi[1] = 0;
     thread_info.Xi[2] = y*y*y;
 
-        // execute shader
+    // execute shader
     ShaderGlobals globals;
-    ClosureColor *closure = ExecuteShaders(globals, info);
+    const ClosureColor *closure = ExecuteShaders(thread_info, globals, info,
+                                                 shaderstate);
 
     // sample primitive from closure tree
-    Color3 weight;
-    const ClosurePrimitive *prim = SamplePrimitive(weight, closure, erand48(thread_info.Xi));
+    Color3 weight = Color3(0.0f);
+    //erand48(thread_info.Xi)
+    const ClosurePrimitive *prim = SamplePrimitive(weight, closure, 0.5);
+
+    //printf("Color: %.2lf %.2lf %.2lf\n", weight[0], weight[1], weight[2]);
 
     if(prim) {
         if(prim->category() == OSL::ClosurePrimitive::BSDF) {
@@ -48,9 +51,8 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info){
             bsdf->sample(globals.Ng, globals.I, zero, zero, erand48(thread_info.Xi), erand48(thread_info.Xi),
 			 omega_in, zero, zero, pdf, eval);
 	    
-	    printf("Weight: %.2lf %.2lf %.2lf -- pdf: %.2lf\n", weight[0], weight[1], weight[2], pdf);
+	    //printf("Weight: %.2lf %.2lf %.2lf -- pdf: %.2lf\n", weight[0], weight[1], weight[2], pdf);
 	    if (pdf <= 1e-4){
-		printf("Error\n");
 		return Color3(0.0f);
 	    }
 	    return weight*eval/pdf;
@@ -92,7 +94,10 @@ void OSLRenderer::InitShaders(){
     
     shadingsys->clear_state();
 }
-ClosureColor * OSLRenderer::ExecuteShaders(ShaderGlobals globals, RenderInfo *info){
+const ClosureColor * OSLRenderer::
+ExecuteShaders(ThreadInfo &thread_info,
+               ShaderGlobals &globals, RenderInfo *info,
+               ShadingAttribStateRef shaderstate){
 
     memset(&globals, 0, sizeof(globals));
 
@@ -120,7 +125,6 @@ ClosureColor * OSLRenderer::ExecuteShaders(ShaderGlobals globals, RenderInfo *in
     thread_info.ctx->execute(ShadUseSurface, *shaderstate, globals);
 
 
-
     return globals.Ci;
 }
 
@@ -139,7 +143,9 @@ const ClosurePrimitive * OSLRenderer::SamplePrimitive(Color3& weight, const Clos
 }
 void OSLRenderer::SamplePrimitiveRecurse(const ClosurePrimitive*& r_prim, Color3& r_weight, const ClosureColor *closure,
                                      const Color3& weight, float& totw, float& r){
+
     if(closure->type == ClosureColor::COMPONENT) {
+
         ClosureComponent *comp = (ClosureComponent*)closure;
         ClosurePrimitive *prim = (ClosurePrimitive*)comp->data();
         float p, w = fabsf(weight[0]) + fabsf(weight[1]) + fabsf(weight[2]);
@@ -155,13 +161,14 @@ void OSLRenderer::SamplePrimitiveRecurse(const ClosurePrimitive*& r_prim, Color3
             r_weight = weight/w;
         }
         else {
+
             p = w/totw;
 
             if(r < p) {
                 // pick other primitive
                 r_prim = prim;
                 r_weight = weight/w;
-
+                
                 r = r/p;
             }
             else {
