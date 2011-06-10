@@ -61,8 +61,8 @@ main(int argc, char **argv)
 	{ 200, 200 }	/* 9 */
     };
 
-    if (argc > 0)
-	bu_log("Usage: %s\n", argv[0]);
+    if (argc > 1)
+	bu_log("Usage: %s\nWarning - ignored unsupported argument \"%s\"\n", argv[0], argv[1]);
 
     VSET(V, 10, 20, 30);
     VSET(u_vec, 1, 0, 0);
