@@ -719,7 +719,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     r3 = r1 / c;
     /* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0, c > 0 */
     if (NEAR_ZERO(mag_h, RT_LEN_TOL)
-	|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
+	|| !NEAR_EQUAL(mag_a, 1.0, RT_LEN_TOL)
 	|| r1 <= 0.0 || r2 <= 0.0 || c <= 0.) {
 	return 1;		/* BAD */
     }

@@ -228,7 +228,7 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     r2 = xip->epa_r2;
     /* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0 */
     if (NEAR_ZERO(mag_h, RT_LEN_TOL)
-	|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
+	|| !NEAR_EQUAL(mag_a, 1.0, RT_LEN_TOL)
 	|| r1 < 0.0 || r2 < 0.0) {
 	return 1;		/* BAD, too small */
     }
@@ -646,7 +646,7 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     r2 = xip->epa_r2;
     /* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0 */
     if (NEAR_ZERO(mag_h, RT_LEN_TOL)
-	|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
+	|| !NEAR_EQUAL(mag_a, 1.0, RT_LEN_TOL)
 	|| r1 <= 0.0 || r2 <= 0.0) {
 	return -2;		/* BAD */
     }
@@ -975,7 +975,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     r2 = xip->epa_r2;
     /* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0 */
     if (NEAR_ZERO(mag_h, RT_LEN_TOL)
-	|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
+	|| !NEAR_EQUAL(mag_a, 1.0, RT_LEN_TOL)
 	|| r1 <= 0.0 || r2 <= 0.0) {
 	return -2;		/* BAD */
     }
@@ -1484,7 +1484,7 @@ rt_epa_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     epa->s.s_id = ID_SOLID;
     epa->s.s_type = EPA;
 
-    if (!NEAR_ZERO(MAGNITUDE(xip->epa_Au) - 1., RT_LEN_TOL)) {
+    if (!NEAR_EQUAL(MAGNITUDE(xip->epa_Au), 1.0, RT_LEN_TOL)) {
 	bu_log("rt_epa_export4: Au not a unit vector!\n");
 	return -1;
     }
@@ -1590,7 +1590,7 @@ rt_epa_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 11;
     ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "epa external");
 
-    if (!NEAR_ZERO(MAGNITUDE(xip->epa_Au) - 1., RT_LEN_TOL)) {
+    if (!NEAR_EQUAL(MAGNITUDE(xip->epa_Au), 1.0, RT_LEN_TOL)) {
 	bu_log("rt_epa_export4: Au not a unit vector!\n");
 	return -1;
     }

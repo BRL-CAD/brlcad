@@ -772,7 +772,7 @@ HIDDEN void make_near_list(struct edge_info *edge_list, struct bu_list *near1, c
     for (BU_LIST_FOR(ei, edge_info, &edge_list->l)) {
 	NMG_CK_EI(ei);
 	NMG_CK_VED(ei->ved_p);
-	if (NEAR_ZERO(ei->ved_p->dist - dist, tol->dist_sq)) {
+	if (NEAR_EQUAL(ei->ved_p->dist, dist, tol->dist_sq)) {
 	    ei_p = BU_LIST_PLAST(edge_info, &ei->l);
 	    BU_LIST_DEQUEUE(&ei->l);
 	    BU_LIST_APPEND(near1, &ei->l);

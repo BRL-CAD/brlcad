@@ -107,7 +107,7 @@ rt_mirror(struct db_i *dbip,
     RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
 
-    if (!NEAR_ZERO(MAGSQ(mirror_dir) - 1.0, tol_dist_sq)) {
+    if (!NEAR_EQUAL(MAGSQ(mirror_dir), 1.0, tol_dist_sq)) {
 	bu_log("ERROR: mirror direction is invalid\n");
 	return NULL;
     }

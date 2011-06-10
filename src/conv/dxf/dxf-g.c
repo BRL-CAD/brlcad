@@ -1566,7 +1566,8 @@ process_ellipse_entities_code( int code )
 	    VSET( zdir, 0, 0, 1 );
 	    VCROSS( ydir, zdir, xdir );
 
-	    if ( NEAR_ZERO( endAngle - startAngle, 0.001 ) ) {
+	    /* FIXME: arbitrary undefined tolerance */
+	    if ( NEAR_EQUAL( endAngle, startAngle, 0.001 ) ) {
 		fullCircle = 1;
 	    } else {
 		fullCircle = 0;

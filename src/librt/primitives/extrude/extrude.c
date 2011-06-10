@@ -290,7 +290,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 		fastf_t max_radius;
 
 		max_radius = sqrt(magsq_s2m);
-		if (NEAR_ZERO(max_radius - csg_extr->radius, RT_LEN_TOL)) {
+		if (NEAR_EQUAL(max_radius, csg_extr->radius, RT_LEN_TOL)) {
 		    csg_extr->radius = max_radius;
 		} else {
 		    bu_log("Impossible radius for circular arc in extrusion (%s), is %g, cannot be more than %g!\n",

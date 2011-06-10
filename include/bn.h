@@ -111,11 +111,11 @@ struct bn_tol {
 };
 #define BN_CK_TOL(_p)	BU_CKMAG(_p, BN_TOL_MAGIC, "bn_tol")
 
-#define BN_VECT_ARE_PARALLEL(_dot, _tol)		\
-	(((_dot) <= -SMALL_FASTF) ? (NEAR_ZERO((_dot) + 1.0, (_tol)->perp)) : (NEAR_ZERO((_dot) - 1.0, (_tol)->perp)))
+#define BN_VECT_ARE_PARALLEL(_dot, _tol)				\
+    (((_dot) <= -SMALL_FASTF) ? (NEAR_EQUAL((_dot), -1.0, (_tol)->perp)) : (NEAR_EQUAL((_dot), 1.0, (_tol)->perp)))
 
-#define BN_VECT_ARE_PERP(_dot, _tol)		\
-	(((_dot) < 0) ? ((-(_dot))<=(_tol)->perp) : ((_dot) <= (_tol)->perp))
+#define BN_VECT_ARE_PERP(_dot, _tol)					\
+    (((_dot) < 0) ? ((-(_dot))<=(_tol)->perp) : ((_dot) <= (_tol)->perp))
 
 #define BN_APPROXEQUAL(_a, _b, _tol) (fabs((_a) - (_b)) <= _tol->dist)
 

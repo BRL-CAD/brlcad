@@ -859,7 +859,7 @@ utah_newton_solver_test(const BBNode* sbv, const ON_Surface* surf, const ON_Ray&
 	    if (sbv->m_u.Includes(uv.x) && sbv->m_v.Includes(uv.y)) {
 		bool new_point = true;
 		for (int j=0;j<count;j++) {
-		    if (NEAR_ZERO(uv.x - ouv[j].x, 0.0001) && NEAR_ZERO(uv.y - ouv[j].y, 0.0001)) {
+		    if (NEAR_EQUAL(uv.x, ouv[j].x, 0.0001) && NEAR_EQUAL(uv.y, ouv[j].y, 0.0001)) {
 			new_point = false;
 		    }
 		}
@@ -991,19 +991,19 @@ lines_intersect(double x1, double y1, double x2, double y2, double x3, double y3
 	    return true;
 	}
 
-	if (NEAR_ZERO(x-x1, tol) && NEAR_ZERO(y-y1, tol)) {
+	if (NEAR_EQUAL(x, x1, tol) && NEAR_EQUAL(y, y1, tol)) {
 	    return true;
 	}
 
-	if (NEAR_ZERO(x-x2, tol) && NEAR_ZERO(y-y2, tol)) {
+	if (NEAR_EQUAL(x, x2, tol) && NEAR_EQUAL(y, y2, tol)) {
 	    return true;
 	}
 
-	if (NEAR_ZERO(x-x3, tol) && NEAR_ZERO(y-y3, tol)) {
+	if (NEAR_EQUAL(x, x3, tol) && NEAR_EQUAL(y, y3, tol)) {
 	    return true;
 	}
 
-	if (NEAR_ZERO(x-x4, tol) && NEAR_ZERO(y-y4, tol)) {
+	if (NEAR_EQUAL(x, x4, tol) && NEAR_EQUAL(y, y4, tol)) {
 	    return true;
 	}
     }

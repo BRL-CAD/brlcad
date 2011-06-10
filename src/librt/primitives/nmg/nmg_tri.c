@@ -43,13 +43,13 @@
 /* XXX maybe should use near zero tolerance instead */
 #define TOL_2D 1.0e-10
 #define P_GT_V(_p, _v) \
-	(((_p)->coord[Y] - (_v)->coord[Y]) > TOL_2D || (NEAR_ZERO((_p)->coord[Y] - (_v)->coord[Y], TOL_2D) && (_p)->coord[X] < (_v)->coord[X]))
+    (((_p)->coord[Y] - (_v)->coord[Y]) > TOL_2D || (NEAR_EQUAL((_p)->coord[Y], (_v)->coord[Y], TOL_2D) && (_p)->coord[X] < (_v)->coord[X]))
 #define P_LT_V(_p, _v) \
-	(((_p)->coord[Y] - (_v)->coord[Y]) < (-TOL_2D) || (NEAR_ZERO((_p)->coord[Y] - (_v)->coord[Y], TOL_2D) && (_p)->coord[X] > (_v)->coord[X]))
+    (((_p)->coord[Y] - (_v)->coord[Y]) < (-TOL_2D) || (NEAR_EQUAL((_p)->coord[Y], (_v)->coord[Y], TOL_2D) && (_p)->coord[X] > (_v)->coord[X]))
 #define P_GE_V(_p, _v) \
-	(((_p)->coord[Y] - (_v)->coord[Y]) > TOL_2D || (NEAR_ZERO((_p)->coord[Y] - (_v)->coord[Y], TOL_2D) && (_p)->coord[X] <= (_v)->coord[X]))
+    (((_p)->coord[Y] - (_v)->coord[Y]) > TOL_2D || (NEAR_EQUAL((_p)->coord[Y], (_v)->coord[Y], TOL_2D) && (_p)->coord[X] <= (_v)->coord[X]))
 #define P_LE_V(_p, _v) \
-	(((_p)->coord[Y] - (_v)->coord[Y]) < (-TOL_2D) || (NEAR_ZERO((_p)->coord[Y] - (_v)->coord[Y], TOL_2D) && (_p)->coord[X] >= (_v)->coord[X]))
+    (((_p)->coord[Y] - (_v)->coord[Y]) < (-TOL_2D) || (NEAR_EQUAL((_p)->coord[Y], (_v)->coord[Y], TOL_2D) && (_p)->coord[X] >= (_v)->coord[X]))
 
 #define NMG_PT2D_MAGIC 0x2d2d2d2d
 #define NMG_TRAP_MAGIC 0x1ab1ab
@@ -2738,7 +2738,7 @@ nmg_isect_lseg3_eu(struct vertexuse *vu1, struct vertexuse *vu2, struct faceuse 
 
                 if (((NEAR_ZERO(dist[0], SMALL_FASTF) && NEAR_ZERO(dist[1], SMALL_FASTF))
                     != (vu2->v_p == eu->vu_p->v_p)) ||
-                    ((NEAR_ZERO(dist[0] - 1.0, SMALL_FASTF) && NEAR_ZERO(dist[1], SMALL_FASTF))
+                    ((NEAR_EQUAL(dist[0], 1.0, SMALL_FASTF) && NEAR_ZERO(dist[1], SMALL_FASTF))
                     != (vu1->v_p == eu->vu_p->v_p))) {
                     bu_bomb("nmg_isect_lseg3_eu(): logic error possibly in 'bn_isect_lseg3_lseg3_new'\n");
                 }
@@ -2753,9 +2753,9 @@ nmg_isect_lseg3_eu(struct vertexuse *vu1, struct vertexuse *vu2, struct faceuse 
                  * everywhere else for intersections.
                  */
                 if ((NEAR_ZERO(dist[0], SMALL_FASTF) && NEAR_ZERO(dist[1], SMALL_FASTF)) || 
-                    (NEAR_ZERO(dist[0] - 1.0, SMALL_FASTF) && NEAR_ZERO(dist[1], SMALL_FASTF)) ||
-                    (NEAR_ZERO(dist[0], SMALL_FASTF) && NEAR_ZERO(dist[1] - 1.0, SMALL_FASTF)) ||
-                    (NEAR_ZERO(dist[0] - 1.0, SMALL_FASTF) && NEAR_ZERO(dist[1] - 1.0, SMALL_FASTF))) {
+                    (NEAR_EQUAL(dist[0], 1.0, SMALL_FASTF) && NEAR_ZERO(dist[1], SMALL_FASTF)) ||
+                    (NEAR_ZERO(dist[0], SMALL_FASTF) && NEAR_EQUAL(dist[1], 1.0, SMALL_FASTF)) ||
+                    (NEAR_EQUAL(dist[0], 1.0, SMALL_FASTF) && NEAR_EQUAL(dist[1], 1.0, SMALL_FASTF))) {
                 } else {
                     /* Set hit true so elsewhere logic can skip this
                      * pot-cut and try the next one.

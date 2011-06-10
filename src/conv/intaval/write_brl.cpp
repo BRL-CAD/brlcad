@@ -340,9 +340,9 @@ void writeRingModeBox
         // outer
         // search for duplicate vertex
         for(; i < num_vertices; ++i) {
-            if (NEAR_ZERO(outer[i3][0] - vertices[3 * i], VUNITIZE_TOL) &&
-                NEAR_ZERO(outer[i3][1] - vertices[3 * i + 1], VUNITIZE_TOL) &&
-                NEAR_ZERO(outer[i3][2] - vertices[3 * i + 2], VUNITIZE_TOL)) {
+          if (NEAR_EQUAL(outer[i3][0], vertices[3 * i], VUNITIZE_TOL) &&
+              NEAR_EQUAL(outer[i3][1], vertices[3 * i + 1], VUNITIZE_TOL) &&
+              NEAR_EQUAL(outer[i3][2], vertices[3 * i + 2], VUNITIZE_TOL)) {
                 outer_i[i3] = i;
                 break;
             }
@@ -361,9 +361,9 @@ void writeRingModeBox
         // inner
         // search for duplicate vertex
         for(i = 0; i < num_vertices; ++i) {
-            if (NEAR_ZERO(inner[i3][0] - vertices[3 * i], VUNITIZE_TOL) &&
-                NEAR_ZERO(inner[i3][1] - vertices[3 * i + 1], VUNITIZE_TOL) &&
-                NEAR_ZERO(inner[i3][2] - vertices[3 * i + 2], VUNITIZE_TOL)) {
+            if (NEAR_EQUAL(inner[i3][0], vertices[3 * i], VUNITIZE_TOL) &&
+                NEAR_EQUAL(inner[i3][1], vertices[3 * i + 1], VUNITIZE_TOL) &&
+                NEAR_EQUAL(inner[i3][2], vertices[3 * i + 2], VUNITIZE_TOL)) {
                 inner_i[i3] = i;
                 break;
             }

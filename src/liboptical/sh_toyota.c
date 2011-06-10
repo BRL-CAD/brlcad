@@ -2194,7 +2194,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
     alpha_c *= DEG2RAD;			/* radians. */
 
     /* Find horizontal component of reflected light. */
-    if (!NEAR_ZERO(VDOT(swp->sw_hit.hit_normal, Refl)-1, MIKE_TOL)) {
+    if (!NEAR_EQUAL(VDOT(swp->sw_hit.hit_normal, Refl), 1.0, MIKE_TOL)) {
 	VCROSS(Yaxis, swp->sw_hit.hit_normal, Refl);
     } else {
  	/* R and N are the same vector. */

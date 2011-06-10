@@ -506,11 +506,11 @@ bn_aet_vec(fastf_t *az, fastf_t *el, fastf_t *twist, fastf_t *vec_ae, fastf_t *v
 
     /* stabilize fluctuation bewteen 0 and 360
      * change azimuth near 360 to 0 */
-    if (NEAR_ZERO(*az - 360.0, accuracy))
+    if (NEAR_EQUAL(*az, 360.0, accuracy))
 	*az = 0.0;
 
     /* if elevation is +/-90 set twist to zero and calculate azimuth */
-    if (NEAR_ZERO(*el - 90.0, accuracy) || NEAR_ZERO(*el + 90.0, accuracy)) {
+    if (NEAR_EQUAL(*el, 90.0, accuracy) || NEAR_ZERO(*el + 90.0, accuracy)) {
 	*twist = 0.0;
 	*az = bn_atan2(-vec_twist[X], vec_twist[Y]) * bn_radtodeg;
     } else {
@@ -524,7 +524,7 @@ bn_aet_vec(fastf_t *az, fastf_t *el, fastf_t *twist, fastf_t *vec_ae, fastf_t *v
 	*twist = bn_atan2(VDOT(vec_twist, ninety_twist), VDOT(vec_twist, zero_twist)) * bn_radtodeg;
 
 	/* stabilize flutter between +/- 180 */
-	if (NEAR_ZERO(*twist + 180.0, accuracy))
+	if (NEAR_EQUAL(*twist, -180.0, accuracy))
 	    *twist = 180.0;
     }
 }

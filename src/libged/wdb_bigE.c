@@ -1654,9 +1654,7 @@ wdb_Eplot(union E_tree *eptr,
 		    BU_LIST_INIT(B);
 
 		    for (i=1; i<hit_count1; i += 2) {
-			fastf_t distdiff;
-			distdiff = dists1[i] - dists1[i-1];
-			if (NEAR_ZERO(distdiff, tol->dist)) {
+			if (NEAR_EQUAL(dists1[i], dists1[i-1], tol->dist)) {
 			    continue;
 			}
 			RT_GET_SEG(aseg, dgcdp->ap->a_resource);
@@ -1671,9 +1669,7 @@ wdb_Eplot(union E_tree *eptr,
 		    }
 
 		    for (i=1; i<hit_count2; i += 2) {
-			fastf_t distdiff;
-			distdiff = dists2[i] - dists2[i-1];
-			if (NEAR_ZERO(distdiff, tol->dist)) {
+			if (NEAR_EQUAL(dists2[i], dists2[i-1], tol->dist)) {
 			    continue;
 			}
 			RT_GET_SEG(aseg, dgcdp->ap->a_resource);

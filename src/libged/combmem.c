@@ -115,20 +115,20 @@ combmem_disassemble_rmat(matp_t matp, fastf_t *az, fastf_t *el, fastf_t *tw)
 	sin_tw = -matp[6] / cos_el;
     }
 
-    if (NEAR_ZERO(cos_az-1.0, 0.000001) ||
-	NEAR_ZERO(cos_az+1.0, 0.000001)) {
+    if (NEAR_EQUAL(cos_az, 1.0, 0.000001) ||
+	NEAR_EQUAL(cos_az, -1.0, 0.000001)) {
 	*az= 0.0;
     } else
 	*az = acos(cos_az);
 
-    if (NEAR_ZERO(cos_el-1.0, 0.000001) ||
-	NEAR_ZERO(cos_el+1.0, 0.000001)) {
+    if (NEAR_EQUAL(cos_el, 1.0, 0.000001) ||
+	NEAR_EQUAL(cos_el, -1.0, 0.000001)) {
 	*el= 0.0;
     } else
 	*el = acos(cos_el);
 
-    if (NEAR_ZERO(cos_tw-1.0, 0.000001) ||
-	NEAR_ZERO(cos_tw+1.0, 0.000001)) {
+    if (NEAR_EQUAL(cos_tw, 1.0, 0.000001) ||
+	NEAR_EQUAL(cos_tw, -1.0, 0.000001)) {
 	*tw= 0.0;
     } else
 	*tw = acos(cos_tw);
@@ -163,19 +163,19 @@ combmem_disassemble_mat(matp_t matp, fastf_t *az, fastf_t *el, fastf_t *tw, fast
     *sy = sqrt(m[1]*m[1] + m[5]*m[5] + m[9]*m[9]);
     *sz = sqrt(m[2]*m[2] + m[6]*m[6] + m[10]*m[10]);
 
-    if (!NEAR_ZERO(*sx-1.0, VUNITIZE_TOL)) {
+    if (!NEAR_EQUAL(*sx, 1.0, VUNITIZE_TOL)) {
 	m[0] /= *sx;
 	m[4] /= *sx;
 	m[8] /= *sx;
     }
 
-    if (!NEAR_ZERO(*sy-1.0, VUNITIZE_TOL)) {
+    if (!NEAR_EQUAL(*sy, 1.0, VUNITIZE_TOL)) {
 	m[1] /= *sy;
 	m[5] /= *sy;
 	m[9] /= *sy;
     }
 
-    if (!NEAR_ZERO(*sz-1.0, VUNITIZE_TOL)) {
+    if (!NEAR_EQUAL(*sz, 1.0, VUNITIZE_TOL)) {
 	m[2] /= *sz;
 	m[6] /= *sz;
 	m[10] /= *sz;
@@ -237,26 +237,26 @@ combmem_assemble_mat(matp_t matp, vect_t aetvec, vect_t tvec, hvect_t svec, poin
     MAT_IDN(mat_scale);
 
     if (sflag) {
-	if (!NEAR_ZERO(svec[X]-1.0, VUNITIZE_TOL)) {
+	if (!NEAR_EQUAL(svec[X], 1.0, VUNITIZE_TOL)) {
 	    mat_scale[0] *= svec[X];
 	    mat_scale[4] *= svec[X];
 	    mat_scale[8] *= svec[X];
 	}
 
-	if (!NEAR_ZERO(svec[Y]-1.0, VUNITIZE_TOL)) {
+	if (!NEAR_EQUAL(svec[Y], 1.0, VUNITIZE_TOL)) {
 	    mat_scale[1] *= svec[Y];
 	    mat_scale[5] *= svec[Y];
 	    mat_scale[9] *= svec[Y];
 	}
 
-	if (!NEAR_ZERO(svec[Z]-1.0, VUNITIZE_TOL)) {
+	if (!NEAR_EQUAL(svec[Z], 1.0, VUNITIZE_TOL)) {
 	    mat_scale[2] *= svec[Z];
 	    mat_scale[6] *= svec[Z];
 	    mat_scale[10] *= svec[Z];
 	}
     }
 
-    if (!NEAR_ZERO(svec[W]-1.0, VUNITIZE_TOL)) {
+    if (!NEAR_EQUAL(svec[W], 1.0, VUNITIZE_TOL)) {
 	mat_scale[MSA] *= 1.0 / svec[W];
     }
 

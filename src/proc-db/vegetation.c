@@ -488,7 +488,7 @@ static void growPlant(plant_t *plant) {
 
 	    point->length -= point->length * point->lengthDecay;
 	    /* jitter next segment length */
-	    if (!NEAR_ZERO(plant->characteristic->lengthMaxVariation - plant->characteristic->lengthMinVariation, ZERO_TOLERANCE)) {
+	    if (!NEAR_EQUAL(plant->characteristic->lengthMaxVariation, plant->characteristic->lengthMinVariation, ZERO_TOLERANCE)) {
 		point->length += (drand48() * (plant->characteristic->lengthMaxVariation - plant->characteristic->lengthMinVariation)) + plant->characteristic->lengthMinVariation;
 	    }
 	    /* clamp the length to positive values */
@@ -502,7 +502,7 @@ static void growPlant(plant_t *plant) {
 
 	    point->radius -= point->radius * point->radiusDecay;
 	    /* jitter next radius */
-	    if (!NEAR_ZERO(plant->characteristic->radiusMaxVariation - plant->characteristic->radiusMinVariation, ZERO_TOLERANCE)) {
+	    if (!NEAR_EQUAL(plant->characteristic->radiusMaxVariation, plant->characteristic->radiusMinVariation, ZERO_TOLERANCE)) {
 		point->radius += (drand48() * (plant->characteristic->radiusMaxVariation - plant->characteristic->radiusMinVariation)) + plant->characteristic->radiusMinVariation;
 	    }
 	    /* clamp the radius to positive values */

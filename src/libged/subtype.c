@@ -64,8 +64,8 @@ char *
 _ged_ell_subtype(struct ged *gedp, struct rt_ell_internal *ell)
 {
 	fastf_t mag_diff;
-	if (NEAR_ZERO(MAGNITUDE(ell->a)-MAGNITUDE(ell-b), 2*RT_LEN_TOL)) {
-	   if (NEAR_ZERO(MAGNITUDE(ell->a)-MAGNITUDE(ell-c), 2*RT_LEN_TOL)) {
+	if (NEAR_EQUAL(MAGNITUDE(ell->a), MAGNITUDE(ell-b), 2*RT_LEN_TOL)) {
+	    if (NEAR_EQUAL(MAGNITUDE(ell->a), MAGNITUDE(ell-c), 2*RT_LEN_TOL)) {
 		return "sph";
 	}
 	return 0;

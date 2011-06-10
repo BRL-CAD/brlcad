@@ -326,27 +326,27 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * within a specified absolute tolerance.
  */
 #define VNEAR_EQUAL(_a, _b, _tol) \
-	(NEAR_ZERO((_a)[X]-(_b)[X], (_tol)) \
-	 && NEAR_ZERO((_a)[Y]-(_b)[Y], (_tol)) \
-	 && NEAR_ZERO((_a)[Z]-(_b)[Z], (_tol)))
+    (NEAR_EQUAL((_a)[X], (_b)[X], (_tol)) \
+     && NEAR_EQUAL((_a)[Y], (_b)[Y], (_tol)) \
+     && NEAR_EQUAL((_a)[Z], (_b)[Z], (_tol)))
 
 /**
  * Return truthfully whether two 2D vectors are approximately equal,
  * within a specified absolute tolerance.
  */
-#define V2NEAR_EQUAL(a, b, tol)	(\
-	NEAR_ZERO((a)[X]-(b)[X], tol) && \
-	NEAR_ZERO((a)[Y]-(b)[Y], tol))
+#define V2NEAR_EQUAL(a, b, tol) \
+    (NEAR_EQUAL((a)[X], (b)[X], tol) \
+     && NEAR_EQUAL((a)[Y], (b)[Y], tol))
 
 /**
  * Return truthfully whether two 4D vectors are approximately equal,
  * within a specified absolute tolerance.
  */
 #define HNEAR_EQUAL(_a, _b, _tol) \
-	(NEAR_ZERO((_a)[X]-(_b)[X], (_tol)) \
-	 && NEAR_ZERO((_a)[Y]-(_b)[Y], (_tol)) \
-	 && NEAR_ZERO((_a)[Z]-(_b)[Z], (_tol)) \
-	 && NEAR_ZERO((_a)[W]-(_b)[W], (_tol)))
+    (NEAR_EQUAL((_a)[X], (_b)[X], (_tol)) \
+     && NEAR_EQUAL((_a)[Y], (_b)[Y], (_tol)) \
+     && NEAR_EQUAL((_a)[Z], (_b)[Z], (_tol)) \
+     && NEAR_EQUAL((_a)[W], (_b)[W], (_tol)))
 
 /**
  * Return truthfully whether two values are within a minimum
@@ -928,7 +928,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 /** @brief Normalize vector `a' to be a unit vector. */
 #define VUNITIZE(a) { \
 	register double _f = MAGSQ(a); \
-	if (! NEAR_ZERO(_f-1.0, VUNITIZE_TOL)) { \
+	if (! NEAR_EQUAL(_f, 1.0, VUNITIZE_TOL)) { \
 		_f = sqrt(_f); \
 		if (_f < VDIVIDE_TOL) { \
 			VSETALL((a), 0.0); \
@@ -1196,7 +1196,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * replaced universally with fastf_t's since their epsilon is
  * considerably less than that of a double.
  */
-#define INTCLAMP(_a) (NEAR_ZERO((_a) - rint(_a), VUNITIZE_TOL) ? (double)(long)rint(_a) : (_a))
+#define INTCLAMP(_a) (NEAR_EQUAL((_a), rint(_a), VUNITIZE_TOL) ? (double)(long)rint(_a) : (_a))
 
 /** @brief integer clamped versions of the previous arg macros. */
 #define V2INTCLAMPARGS(a) INTCLAMP((a)[X]), INTCLAMP((a)[Y])

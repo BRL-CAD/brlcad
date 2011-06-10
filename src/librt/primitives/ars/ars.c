@@ -967,11 +967,8 @@ rt_ars_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	}
 
 	for (i=0; i<nhits-1; i++) {
-	    fastf_t dist;
-
 	    RT_HIT_NORMAL(NULL, &hits[i+1], stp, 0, 0);
-	    dist = hits[i].hit_dist - hits[i+1].hit_dist;
-	    if (NEAR_ZERO(dist, ap->a_rt_i->rti_tol.dist) &&
+	    if (NEAR_EQUAL(hits[i].hit_dist, hits[i+1].hit_dist, ap->a_rt_i->rti_tol.dist) &&
 		VDOT(hits[i].hit_normal, rp->r_dir) *
 		VDOT(hits[i+1].hit_normal, rp->r_dir) > 0)
 	    {

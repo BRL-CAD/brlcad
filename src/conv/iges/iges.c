@@ -2381,8 +2381,8 @@ tgc_to_iges(ip, name, fp_dir, fp_param)
 	return nmg_to_iges(ip, name, fp_dir, fp_param);
     }
 
-    if (NEAR_ZERO(a_len-b_len, tol.dist) &&
-	NEAR_ZERO(c_len-d_len, tol.dist)) {
+    if (NEAR_EQUAL(a_len, b_len, tol.dist) &&
+	NEAR_EQUAL(c_len, d_len, tol.dist)) {
 	/* this tgc is either an rcc or a trc */
 
 	/* write name entity */
@@ -2394,7 +2394,7 @@ tgc_to_iges(ip, name, fp_dir, fp_param)
 	for (i=0; i<21; i++)
 	    dir_entry[i] = DEFAULT;
 
-	if (NEAR_ZERO(a_len-c_len, tol.dist)) {
+	if (NEAR_EQUAL(a_len, c_len, tol.dist)) {
 	    /* its an rcc */
 	    iges_type = 154;
 	    bu_vls_printf(&str, "154, %g, %g, %g, %g, %g, %g, %g, %g" ,

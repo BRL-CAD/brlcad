@@ -187,15 +187,15 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_specific = (genptr_t)nurbs;
 
     /* zero thickness will get missed by the raytracer */
-    if (NEAR_ZERO(stp->st_min[X] - stp->st_max[X], los)) {
+    if (NEAR_EQUAL(stp->st_min[X], stp->st_max[X], los)) {
 	stp->st_min[X] -= los;
 	stp->st_max[X] += los;
     }
-    if (NEAR_ZERO(stp->st_min[Y] - stp->st_max[Y], los)) {
+    if (NEAR_EQUAL(stp->st_min[Y], stp->st_max[Y], los)) {
 	stp->st_min[Y] -= los;
 	stp->st_max[Y] += los;
     }
-    if (NEAR_ZERO(stp->st_min[Z] - stp->st_max[Z], los)) {
+    if (NEAR_EQUAL(stp->st_min[Z], stp->st_max[Z], los)) {
 	stp->st_min[Z] -= los;
 	stp->st_max[Z] += los;
     }

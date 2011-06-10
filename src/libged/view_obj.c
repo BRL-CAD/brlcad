@@ -2796,8 +2796,8 @@ vo_update(struct view_obj	*vop,
 	       temp, temp1, (fastf_t)0.005);
 
     /* Force azimuth range to be [0, 360] */
-    if ((NEAR_ZERO(vop->vo_aet[1] - 90.0, (fastf_t)0.005) ||
-	 NEAR_ZERO(vop->vo_aet[1] + 90.0, (fastf_t)0.005)) &&
+    if ((NEAR_EQUAL(vop->vo_aet[1], 90.0, (fastf_t)0.005) ||
+	 NEAR_EQUAL(vop->vo_aet[1], -90.0, (fastf_t)0.005)) &&
 	vop->vo_aet[0] < 0 &&
 	!NEAR_ZERO(vop->vo_aet[0], (fastf_t)0.005))
 	vop->vo_aet[0] += 360.0;

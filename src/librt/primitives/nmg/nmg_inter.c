@@ -1134,8 +1134,8 @@ nmg_break_eg_on_v(const struct edge_g_lseg *eg, struct vertex *v, const struct b
 	}
 	a = bn_dist_pt3_along_line3(eg->e_pt, dir, va->vg_p->coord);
 	b = bn_dist_pt3_along_line3(eg->e_pt, dir, vb->vg_p->coord);
-	if (NEAR_ZERO(a-vdist, tol->dist)) continue;
-	if (NEAR_ZERO(b-vdist, tol->dist)) continue;
+	if (NEAR_EQUAL(a, vdist, tol->dist)) continue;
+	if (NEAR_EQUAL(b, vdist, tol->dist)) continue;
 	if (!bn_between(a, vdist, b, tol)) continue;
 	new_eu = nmg_ebreaker(v, *eup, tol);
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
@@ -5667,13 +5667,13 @@ nmg_isect_coplanar_edges(struct nmg_inter_struct *is, struct bu_ptbl *eu1_list, 
 		dist1[0] = VDOT(tmp_vect, vt1);
 		if (NEAR_ZERO(dist1[0], is->tol.dist))
 		    dist1[0] = 0.0;
-		else if (NEAR_ZERO(dist1[0] - len_vt1, is->tol.dist))
+		else if (NEAR_EQUAL(dist1[0], len_vt1, is->tol.dist))
 		    dist1[0] = len_vt1;
 		VSUB2(tmp_vect, vg2b->coord, vg1a->coord);
 		dist1[1] = VDOT(tmp_vect, vt1);
 		if (NEAR_ZERO(dist1[1], is->tol.dist))
 		    dist1[1] = 0.0;
-		else if (NEAR_ZERO(dist1[1] - len_vt1, is->tol.dist))
+		else if (NEAR_EQUAL(dist1[1], len_vt1, is->tol.dist))
 		    dist1[1] = len_vt1;
 
 		if ((dist1[0] >= 0.0 && dist1[0] <= len_vt1)) {
@@ -5696,11 +5696,11 @@ nmg_isect_coplanar_edges(struct nmg_inter_struct *is, struct bu_ptbl *eu1_list, 
 	    } else {
 		if (NEAR_ZERO(dist[0], is->tol.dist))
 		    dist[0] = 0.0;
-		else if (NEAR_ZERO(dist[0] - len_vt1, is->tol.dist))
+		else if (NEAR_EQUAL(dist[0], len_vt1, is->tol.dist))
 		    dist[0] = len_vt1;
 		if (NEAR_ZERO(dist[1], is->tol.dist))
 		    dist[1] = 0.0;
-		else if (NEAR_ZERO(dist[1] - len_vt2, is->tol.dist))
+		else if (NEAR_EQUAL(dist[1], len_vt2, is->tol.dist))
 		    dist[1] = len_vt2;
 		if (dist[0] < 0.0 || dist[0] > len_vt1)
 		    continue;

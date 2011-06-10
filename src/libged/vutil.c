@@ -56,8 +56,8 @@ ged_view_update(struct ged_view	*gvp)
 	       temp, temp1, (fastf_t)0.005);
 
     /* Force azimuth range to be [0, 360] */
-    if ((NEAR_ZERO(gvp->gv_aet[1] - 90.0, (fastf_t)0.005) ||
-	 NEAR_ZERO(gvp->gv_aet[1] + 90.0, (fastf_t)0.005)) &&
+    if ((NEAR_EQUAL(gvp->gv_aet[1], 90.0, (fastf_t)0.005) ||
+	 NEAR_EQUAL(gvp->gv_aet[1], -90.0, (fastf_t)0.005)) &&
 	gvp->gv_aet[0] < 0 &&
 	!NEAR_ZERO(gvp->gv_aet[0], (fastf_t)0.005))
 	gvp->gv_aet[0] += 360.0;

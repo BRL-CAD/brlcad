@@ -1406,7 +1406,7 @@ proc_plate(int cnt)
 
 		found_thick = 0;
 		for (thick_no=0; thick_no < nthicks; thick_no++) {
-		    if (NEAR_ZERO(list[k].thick - thicks[thick_no], TOL.dist)) {
+		    if (NEAR_EQUAL(list[k].thick, thicks[thick_no], TOL.dist)) {
 			list[k].thick = thicks[thick_no];
 			found_thick = 1;
 			break;

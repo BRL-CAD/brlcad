@@ -523,9 +523,9 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 	    continue;
 	vg = v->vg_p;
 
-	if ( (ap->a_user == X || NEAR_ZERO( ap->a_ray.r_pt[X] - vg->coord[X], tol.dist )) &&
-	     (ap->a_user == Y || NEAR_ZERO( ap->a_ray.r_pt[Y] - vg->coord[Y], tol.dist )) &&
-	     (ap->a_user == Z || NEAR_ZERO( ap->a_ray.r_pt[Z] - vg->coord[Z], tol.dist )) )
+	if ( (ap->a_user == X || NEAR_EQUAL( ap->a_ray.r_pt[X], vg->coord[X], tol.dist )) &&
+	     (ap->a_user == Y || NEAR_EQUAL( ap->a_ray.r_pt[Y], vg->coord[Y], tol.dist )) &&
+	     (ap->a_user == Z || NEAR_EQUAL( ap->a_ray.r_pt[Z], vg->coord[Z], tol.dist )) )
 	{
 	    dist = vg->coord[ap->a_user] - ap->a_ray.r_pt[ap->a_user];
 	    if ( dist < extreme_dist1 )

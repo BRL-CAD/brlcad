@@ -1850,12 +1850,12 @@ rt_dist_line3_line3(fastf_t *dist, const fastf_t *p1, const fastf_t *d1, const f
     else
 	tol_dist_sq = tol_dist * tol_dist;
 
-    if (!NEAR_ZERO(MAGSQ(d1) - 1.0, tol_dist_sq)) {
+    if (!NEAR_EQUAL(MAGSQ(d1), 1.0, tol_dist_sq)) {
 	bu_log("rt_dist_line3_line3: non-unit length direction vector (%f %f %f)\n", V3ARGS(d1));
 	bu_bomb("rt_dist_line3_line3\n");
     }
 
-    if (!NEAR_ZERO(MAGSQ(d2) - 1.0, tol_dist_sq)) {
+    if (!NEAR_EQUAL(MAGSQ(d2), 1.0, tol_dist_sq)) {
 	bu_log("rt_dist_line3_line3: non-unit length direction vector (%f %f %f)\n", V3ARGS(d2));
 	bu_bomb("rt_dist_line3_line3\n");
     }
@@ -5042,7 +5042,7 @@ nmg_simple_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, const
 	    fp2 = (struct face *)BU_PTBL_GET(faces, 1);
 
 	    pl_dot = VDOT(fp1->g.plane_p->N, fp2->g.plane_p->N);
-	    if (NEAR_ZERO(pl_dot - 1.0, tol->perp) || NEAR_ZERO(pl_dot + 1.0, tol->perp)) {
+	    if (NEAR_EQUAL(pl_dot, 1.0, tol->perp) || NEAR_EQUAL(pl_dot, -1.0, tol->perp)) {
 		vect_t move_vect;
 
 		/* treat as a single plane */
@@ -9149,7 +9149,7 @@ rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point
     }
 
     /* make sure radii are consistent */
-    if (!NEAR_ZERO(radius - tmp_radius, tol->dist)) {
+    if (!NEAR_EQUAL(radius, tmp_radius, tol->dist)) {
 	bu_log("rt_arc2d_to_cnurb: distances from center to start and center to end are different\n");
 	bu_log("                        (%g and %g)\n", radius, tmp_radius);
 	return (struct edge_g_cnurb *)NULL;
@@ -9452,7 +9452,7 @@ Shell_is_arb(struct shell *s, struct bu_ptbl *tab)
 
 		dot = VDOT(norm_radial, fu_norm);
 
-		if (!NEAR_ZERO(dot - 1.0, 0.00001)) {
+		if (!NEAR_EQUAL(dot, 1.0, 0.00001)) {
 
 		    VCROSS(cross, fu_norm, norm_radial);
 
@@ -9908,7 +9908,7 @@ nmg_to_tgc(
 	(base_vert_count*2 != three_vert_faces))
 	return 0;
 
-    if (!NEAR_ZERO(1.0 + VDOT(top_pl, base_pl), tol->perp))
+    if (!NEAR_EQUAL(VDOT(top_pl, base_pl), -1.0, tol->perp))
 	return 0;
 
     /* This looks like a good candidate,
