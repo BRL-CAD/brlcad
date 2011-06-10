@@ -151,6 +151,7 @@ namespace eval ArcherCore {
 	method cd                  {args}
 	method clear               {args}
 	method clone               {args}
+	method closedb             {args}
 	method color               {args}
 	method comb                {args}
 	method comb_color          {args}
@@ -439,7 +440,7 @@ namespace eval ArcherCore {
 					   3ptarb adjust arced attr bb bev blast bo \
 					   bot bot_condense bot_decimate bot_face_fuse \
 					   bot_face_sort bot_flip bot_merge bot_smooth bot_split bot_sync bot_vertex_fuse \
-					   c cd clear clone color comb comb_color combmem copy copyeval copymat \
+					   c cd clear clone closedb color comb comb_color combmem copy copyeval copymat \
 					   cp cpi dbconcat dbExpand decompose delete draw E edcodes edcolor edcomb \
 					   edmater erase erase_all ev exit facetize fracture \
 					   g group hide human i importFg4Section \
@@ -4851,6 +4852,14 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::clone {args} {
     eval gedWrapper clone 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::closedb {args} {
+    Load ""
+
+    if {[llength $args] != 0} {
+        return "Usage: closedb\nWarning - ignored unsupported argument(s) \"$args\""
+    }
 }
 
 ::itcl::body ArcherCore::color {args} {
