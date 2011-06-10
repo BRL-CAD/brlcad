@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* opening a database in archer with the same name as a command doesn't
+  work.
+
 * both left and right mouse buttons in mged reportedly zoom in after a
   recent change.
 
