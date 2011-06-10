@@ -362,13 +362,17 @@ removing unused parameters.
 Basically, the impact can usually be considered minor if a static
 regular expression search-and-replace is all that is needed to update.
 Included in following are various minimally impacting API changes that
-have been identified in reverse chronological order.  As expressions
-are not extensively tested, use with caution.
+have been identified in reverse chronological order.  As expressions are
+not extensively tested, use with caution.
 
-s/BU_ARGS(\([^)]*\))/\1/mg
+Expressions are shown using Perl syntax and may need adjustment
+(particularly quoting of '(', ')', and '|') for other environments.
+Most expressions will apply with: perl -007 -pi -e 'EXPRESSION' FILE
+
+s/[[:space:]]BU_ARGS[[:space:]]*\([[:space:]]*([^)]*[[:space:]]*)[[:space:]]*\)/\1/g
         BU_ARGS() no longer necessary due to C89 minimum, list args [7.20]
 
-s/BU_EXTERN[[:space:]]*([[:space:]]*\(.*\)[[:space:]]*,[[:space:]]*([[:space:]]*\(.*\)[[:space:]]*)[[:space:]]*)/extern \1(\2)/mg
+s/BU_EXTERN[[:space:]]*\([[:space:]]*(.*)[[:space:]]*,[[:space:]]*\([[:space:]]*(.*)[[:space:]]*\)[[:space:]]*\)/extern \1(\2)/mg
         BU_EXTERN() no longer necessary due to C89 minimum, use extern [7.20]
 
 s/SPM_NULL/BN_SPM_MAP_NULL/g
