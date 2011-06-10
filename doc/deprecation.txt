@@ -365,6 +365,12 @@ Included in following are various minimally impacting API changes that
 have been identified in reverse chronological order.  As expressions
 are not extensively tested, use with caution.
 
+s/BU_ARGS(\([^)]*\))/\1/g
+        BU_ARGS() no longer necessary due to C89 minimum, list args [7.20]
+
+s/BU_EXTERN/extern/g
+        BU_EXTERN no longer necessary due to C89 minimum, use extern [7.20]
+
 s/SPM_NULL/BN_SPM_MAP_NULL/g
         SPM_NULL renamed to BN_SPM_MAP_NULL [7.20]
 
