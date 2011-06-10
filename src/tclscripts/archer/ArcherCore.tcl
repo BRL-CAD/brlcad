@@ -3914,8 +3914,9 @@ Popup Menu    Right or Ctrl-Left
 
     if {$mEnableListView} {
 	if {$mEnableListViewAllAffected} {
-	    foreach path [string trim [gedCmd search -name $mSelectedObj]] {
+	    foreach path [string trim [gedCmd search / -name $mSelectedObj]] {
 		set path [regsub {^/} $path {}]
+		puts $path
 		foreach obj [split $path /] {
 		    if {$obj == $mSelectedObj} {
 			continue
@@ -3934,7 +3935,7 @@ Popup Menu    Right or Ctrl-Left
 	    }
 	}
     } else {
-	foreach path [string trim [gedCmd search -name $mSelectedObj]] {
+	foreach path [string trim [gedCmd search / -name $mSelectedObj]] {
 	    set path [regsub {^/} $path {}]
 	    set pathNodes [getTreeNodes $path]
 	    set pnodes [lreverse [lindex $pathNodes 0]]
@@ -4037,7 +4038,7 @@ Popup Menu    Right or Ctrl-Left
 	if {$mEnableListView} {
 	    selectTreePath $mSelectedObj
 	} else {
-	    set paths [gedCmd search -name $mSelectedObj]
+	    set paths [gedCmd search / -name $mSelectedObj]
 	    if {[llength $paths]} {
 		selectTreePath [lindex $paths 0]
 	    }
@@ -5431,7 +5432,7 @@ Popup Menu    Right or Ctrl-Left
 	return "Usage: sed prim"
     }
 
-    set paths [gedCmd search -name $_prim]
+    set paths [gedCmd search / -name $_prim]
 #    $itk_component(tree) selectpaths $paths
 
 #    $itk_component(tree) selectitem $_prim
