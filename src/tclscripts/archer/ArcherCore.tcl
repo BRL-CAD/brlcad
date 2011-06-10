@@ -5234,13 +5234,15 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::opendb {args} {
-    set len [llength $args]
+    set ret ""
 
-    if {$len != 1} {
-	return "Usage: opendb dbfile"
+    switch [llength $args] {
+        0 {set ret $mTarget}
+        1 {Load [lindex $args 0]}
+        default {set ret "Usage: opendb \[database.g\]"}
     }
 
-    Load [lindex $args 0]
+    return $ret
 }
 
 ::itcl::body ArcherCore::orotate {args} {
