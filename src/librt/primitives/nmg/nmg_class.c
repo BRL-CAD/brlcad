@@ -73,20 +73,20 @@ struct neighbor {
 };
 
 
-static void nmg_class_pt_e BU_ARGS((struct neighbor *closest,
+static void nmg_class_pt_e(struct neighbor *closest,
 				    const point_t pt, const struct edgeuse *eu,
-				    const struct bn_tol *tol));
-static void nmg_class_pt_l BU_ARGS((struct neighbor *closest,
+				    const struct bn_tol *tol);
+static void nmg_class_pt_l(struct neighbor *closest,
 				    const point_t pt, const struct loopuse *lu,
-				    const struct bn_tol *tol));
-static int class_vu_vs_s BU_ARGS((struct vertexuse *vu, struct shell *sB,
-				  char **classlist, const struct bn_tol *tol));
-static int class_eu_vs_s BU_ARGS((struct edgeuse *eu, struct shell *s,
-				  char **classlist, const struct bn_tol *tol));
-static int class_lu_vs_s BU_ARGS((struct loopuse *lu, struct shell *s,
-				  char **classlist, const struct bn_tol *tol));
-static void class_fu_vs_s BU_ARGS((struct faceuse *fu, struct shell *s,
-				   char **classlist, const struct bn_tol *tol));
+				    const struct bn_tol *tol);
+static int class_vu_vs_s(struct vertexuse *vu, struct shell *sB,
+				  char **classlist, const struct bn_tol *tol);
+static int class_eu_vs_s(struct edgeuse *eu, struct shell *s,
+				  char **classlist, const struct bn_tol *tol);
+static int class_lu_vs_s(struct loopuse *lu, struct shell *s,
+				  char **classlist, const struct bn_tol *tol);
+static void class_fu_vs_s(struct faceuse *fu, struct shell *s,
+				   char **classlist, const struct bn_tol *tol);
 
 /**
  * N M G _ C L A S S _ S T A T U S

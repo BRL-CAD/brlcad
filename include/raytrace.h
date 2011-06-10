@@ -1040,21 +1040,21 @@ struct db_tree_state {
     struct bu_attribute_value_set	ts_attrs;	/**< @brief attribute/value structure */
 
     int			ts_stop_at_regions;	/**< @brief else stop at solids */
-    int			(*ts_region_start_func) BU_ARGS((struct db_tree_state * /**< @brief tsp*/,
+    int			(*ts_region_start_func)(struct db_tree_state * /**< @brief tsp*/,
 							 const struct db_full_path * /**< @brief pathp*/,
 							 const struct rt_comb_internal * /**< @brief combp */,
 							 genptr_t client_data
-							    ));
-    union tree *	(*ts_region_end_func) BU_ARGS((struct db_tree_state * /**< @brief tsp*/,
+							    );
+    union tree *	(*ts_region_end_func)(struct db_tree_state * /**< @brief tsp*/,
 						       const struct db_full_path * /**< @brief pathp*/,
 						       union tree * /**< @brief curtree*/,
 						       genptr_t client_data
-							  ));
-    union tree *	(*ts_leaf_func) BU_ARGS((struct db_tree_state * /**< @brief tsp*/,
+							  );
+    union tree *	(*ts_leaf_func)(struct db_tree_state * /**< @brief tsp*/,
 						 const struct db_full_path * /**< @brief pathp*/,
 						 struct rt_db_internal * /**< @brief ip*/,
 						 genptr_t client_data
-						    ));
+						    );
     const struct rt_tess_tol *	ts_ttol;	/**< @brief  Tessellation tolerance */
     const struct bn_tol	*	ts_tol;		/**< @brief  Math tolerance */
     struct model **		ts_m;		/**< @brief  ptr to ptr to NMG "model" */
@@ -1978,96 +1978,96 @@ struct rt_functab {
     char ft_name[16];
     char ft_label[8];
     int ft_use_rpp;
-    int (*ft_prep) BU_ARGS((struct soltab * /**< @brief stp*/,
+    int (*ft_prep)(struct soltab * /**< @brief stp*/,
 			    struct rt_db_internal * /**< @brief ip*/,
-			    struct rt_i * /**< @brief rtip*/));
-    int (*ft_shot) BU_ARGS((struct soltab * /**< @brief stp*/,
+			    struct rt_i * /**< @brief rtip*/);
+    int (*ft_shot)(struct soltab * /**< @brief stp*/,
 			    struct xray * /**< @brief rp*/,
 			    struct application * /**< @brief ap*/,	/**< @brief  has resource */
-			    struct seg * /**< @brief seghead*/));
-    void (*ft_print) BU_ARGS((const struct soltab * /**< @brief stp*/));
-    void (*ft_norm) BU_ARGS((struct hit * /**< @brief hitp*/,
+			    struct seg * /**< @brief seghead*/);
+    void (*ft_print)(const struct soltab * /**< @brief stp*/);
+    void (*ft_norm)(struct hit * /**< @brief hitp*/,
 			     struct soltab * /**< @brief stp*/,
-			     struct xray * /**< @brief rp*/));
-    int (*ft_piece_shot) BU_ARGS((struct rt_piecestate * /**< @brief psp*/,
+			     struct xray * /**< @brief rp*/);
+    int (*ft_piece_shot)(struct rt_piecestate * /**< @brief psp*/,
 				  struct rt_piecelist * /**< @brief plp*/,
 				  double /**< @brief  dist_correction to apply to hit distances */,
 				  struct xray * /**< @brief  ray transformed to be near cut cell */,
 				  struct application * /**< @brief ap*/,	/**< @brief  has resource */
-				  struct seg * /**< @brief seghead*/));	/**< @brief  used only for PLATE mode hits */
-    void (*ft_piece_hitsegs) BU_ARGS((struct rt_piecestate * /**< @brief psp*/,
+				  struct seg * /**< @brief seghead*/);	/**< @brief  used only for PLATE mode hits */
+    void (*ft_piece_hitsegs)(struct rt_piecestate * /**< @brief psp*/,
 				      struct seg * /**< @brief seghead*/,
-				      struct application * /**< @brief ap*/));	/**< @brief  has resource */
-    void (*ft_uv) BU_ARGS((struct application * /**< @brief ap*/,	/**< @brief  has resource */
+				      struct application * /**< @brief ap*/);	/**< @brief  has resource */
+    void (*ft_uv)(struct application * /**< @brief ap*/,	/**< @brief  has resource */
 			   struct soltab * /**< @brief stp*/,
 			   struct hit * /**< @brief hitp*/,
-			   struct uvcoord * /**< @brief uvp*/));
-    void (*ft_curve) BU_ARGS((struct curvature * /**< @brief cvp*/,
+			   struct uvcoord * /**< @brief uvp*/);
+    void (*ft_curve)(struct curvature * /**< @brief cvp*/,
 			      struct hit * /**< @brief hitp*/,
-			      struct soltab * /**< @brief stp*/));
-    int (*ft_classify) BU_ARGS((const struct soltab * /*stp*/, const vect_t /*min*/, const vect_t /*max*/, const struct bn_tol * /*tol*/));
-    void (*ft_free) BU_ARGS((struct soltab * /*stp*/));
-    int (*ft_plot) BU_ARGS((struct bu_list * /*vhead*/,
+			      struct soltab * /**< @brief stp*/);
+    int (*ft_classify)(const struct soltab * /*stp*/, const vect_t /*min*/, const vect_t /*max*/, const struct bn_tol * /*tol*/);
+    void (*ft_free)(struct soltab * /*stp*/);
+    int (*ft_plot)(struct bu_list * /*vhead*/,
 			    struct rt_db_internal * /*ip*/,
 			    const struct rt_tess_tol * /*ttol*/,
-			    const struct bn_tol * /*tol*/));
-    void (*ft_vshot) BU_ARGS((struct soltab * /*stp*/[],
+			    const struct bn_tol * /*tol*/);
+    void (*ft_vshot)(struct soltab * /*stp*/[],
 			      struct xray *[] /*rp*/,
 			      struct seg * /*segp*/,
 			      int /*n*/,
-			      struct application * /*ap*/));
-    int (*ft_tessellate) BU_ARGS((struct nmgregion ** /*r*/,
+			      struct application * /*ap*/);
+    int (*ft_tessellate)(struct nmgregion ** /*r*/,
 				  struct model * /*m*/,
 				  struct rt_db_internal * /*ip*/,
 				  const struct rt_tess_tol * /*ttol*/,
-				  const struct bn_tol * /*tol*/));
-    int (*ft_tnurb) BU_ARGS((struct nmgregion ** /*r*/,
+				  const struct bn_tol * /*tol*/);
+    int (*ft_tnurb)(struct nmgregion ** /*r*/,
 			     struct model * /*m*/,
 			     struct rt_db_internal * /*ip*/,
-			     const struct bn_tol * /*tol*/));
-    void (*ft_brep) BU_ARGS((ON_Brep ** /*b*/,
+			     const struct bn_tol * /*tol*/);
+    void (*ft_brep)(ON_Brep ** /*b*/,
 			    struct rt_db_internal * /*ip*/,
-			    const struct bn_tol * /*tol*/));
-    int (*ft_import5) BU_ARGS((struct rt_db_internal * /*ip*/,
+			    const struct bn_tol * /*tol*/);
+    int (*ft_import5)(struct rt_db_internal * /*ip*/,
 			       const struct bu_external * /*ep*/,
 			       const mat_t /*mat*/,
 			       const struct db_i * /*dbip*/,
-			       struct resource * /*resp*/));
-    int (*ft_export5) BU_ARGS((struct bu_external * /*ep*/,
+			       struct resource * /*resp*/);
+    int (*ft_export5)(struct bu_external * /*ep*/,
 			       const struct rt_db_internal * /*ip*/,
 			       double /*local2mm*/,
 			       const struct db_i * /*dbip*/,
-			       struct resource * /*resp*/));
-    int (*ft_import4) BU_ARGS((struct rt_db_internal * /*ip*/,
+			       struct resource * /*resp*/);
+    int (*ft_import4)(struct rt_db_internal * /*ip*/,
 			      const struct bu_external * /*ep*/,
 			      const mat_t /*mat*/,
 			      const struct db_i * /*dbip*/,
-			      struct resource * /*resp*/));
-    int	(*ft_export4) BU_ARGS((struct bu_external * /*ep*/,
+			      struct resource * /*resp*/);
+    int	(*ft_export4)(struct bu_external * /*ep*/,
 			      const struct rt_db_internal * /*ip*/,
 			      double /*local2mm*/,
 			      const struct db_i * /*dbip*/,
-			      struct resource * /*resp*/));
-    void (*ft_ifree) BU_ARGS((struct rt_db_internal * /*ip*/));
-    int	(*ft_describe) BU_ARGS((struct bu_vls * /*str*/,
+			      struct resource * /*resp*/);
+    void (*ft_ifree)(struct rt_db_internal * /*ip*/);
+    int	(*ft_describe)(struct bu_vls * /*str*/,
 				const struct rt_db_internal * /*ip*/,
 				int /*verbose*/,
 				double /*mm2local*/,
 				struct resource * /*resp*/,
-				struct db_i *));
-    int	(*ft_xform) BU_ARGS((struct rt_db_internal * /*op*/,
+				struct db_i *);
+    int	(*ft_xform)(struct rt_db_internal * /*op*/,
 			     const mat_t /*mat*/, struct rt_db_internal * /*ip*/,
 			     int /*free*/, struct db_i * /*dbip*/,
-			     struct resource * /*resp*/));
+			     struct resource * /*resp*/);
     const struct bu_structparse *ft_parsetab;	/**< @brief  rt_xxx_parse */
     size_t ft_internal_size;	/**< @brief  sizeof(struct rt_xxx_internal) */
     unsigned long ft_internal_magic;	/**< @brief  RT_XXX_INTERNAL_MAGIC */
-    int	(*ft_get) BU_ARGS((struct bu_vls *, const struct rt_db_internal *, const char *item));
-    int	(*ft_adjust) BU_ARGS((struct bu_vls *, struct rt_db_internal *, int /*argc*/, const char ** /*argv*/));
-    int	(*ft_form) BU_ARGS((struct bu_vls *, const struct rt_functab *));
+    int	(*ft_get)(struct bu_vls *, const struct rt_db_internal *, const char *item);
+    int	(*ft_adjust)(struct bu_vls *, struct rt_db_internal *, int /*argc*/, const char ** /*argv*/);
+    int	(*ft_form)(struct bu_vls *, const struct rt_functab *);
 
-    void (*ft_make) BU_ARGS((const struct rt_functab *, struct rt_db_internal */*ip*/));
-    int (*ft_params) BU_ARGS((struct pc_pc_set *, const struct rt_db_internal */*ip*/));
+    void (*ft_make)(const struct rt_functab *, struct rt_db_internal */*ip*/);
+    int (*ft_params)(struct pc_pc_set *, const struct rt_db_internal */*ip*/);
 };
 
 RT_EXPORT extern const struct rt_functab rt_functab[];

@@ -46,7 +46,7 @@ struct rt_many_internal {
     long			max_index;
     const struct application *proto_ap;
     struct resource		*resources;
-    int			(*callback) BU_ARGS((struct application *, int index));
+    int			(*callback)(struct application *, int index);
     int			stop_worker;
     int			sem_chunk;
 };

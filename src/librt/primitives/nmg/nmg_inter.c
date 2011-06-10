@@ -80,9 +80,9 @@ struct ee_2d_state {
 };
 
 
-static int nmg_isect_edge2p_face2p BU_ARGS((struct nmg_inter_struct *is,
+static int nmg_isect_edge2p_face2p(struct nmg_inter_struct *is,
 						 struct edgeuse *eu, struct faceuse *fu,
-						 struct faceuse *eu_fu));
+						 struct faceuse *eu_fu);
 
 
 static struct nmg_inter_struct *nmg_hack_last_is;	/* see nmg_isect2d_final_cleanup() */

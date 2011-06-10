@@ -135,7 +135,7 @@ BU_EXTERN(void Print_stats, (FILE *));
 
 struct iges_functab
 {
-    int (*do_iges_write) BU_ARGS((struct rt_db_internal *, char *, FILE *, FILE *));
+    int (*do_iges_write)(struct rt_db_internal *, char *, FILE *, FILE *);
 };
 
 

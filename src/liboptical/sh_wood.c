@@ -86,10 +86,10 @@ extern fastf_t turb_table[20][20][20];
 
 HIDDEN int wood_init(void), wood_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), wood_render(struct application *ap, struct partition *partp, struct shadework *swp, char *dp);
 HIDDEN void wood_print(register struct region *rp);
-HIDDEN void wood_free BU_ARGS((char *));
+HIDDEN void wood_free(char *);
 
-HIDDEN void wood_V_set BU_ARGS((const struct bu_structparse *, const char *, const char *, char *));
-HIDDEN void wood_D_set BU_ARGS((const struct bu_structparse *, const char *, const char *, char *));
+HIDDEN void wood_V_set(const struct bu_structparse *, const char *, const char *, char *);
+HIDDEN void wood_D_set(const struct bu_structparse *, const char *, const char *, char *);
 
 /*
  * functions block for the shader
@@ -154,7 +154,7 @@ struct wood_specific {
 };
 
 
-HIDDEN void wood_setup_2 BU_ARGS((struct wood_specific *));
+HIDDEN void wood_setup_2(struct wood_specific *);
 
 /*
  * Flags and useful offset declarations

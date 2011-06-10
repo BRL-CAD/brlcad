@@ -49,8 +49,8 @@ struct nmg_bool_state {
 };
 
 
-HIDDEN void nmg_eval_shell BU_ARGS((struct shell *s, struct nmg_bool_state *bs));
-HIDDEN void nmg_eval_plot BU_ARGS((struct nmg_bool_state *bs, int num));
+HIDDEN void nmg_eval_shell(struct shell *s, struct nmg_bool_state *bs);
+HIDDEN void nmg_eval_plot(struct nmg_bool_state *bs, int num);
 
 
 #define BACTION_KILL 1

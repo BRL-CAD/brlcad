@@ -48,15 +48,15 @@
 #include "plot3.h"
 
 
-HIDDEN int rt_ck_overlap BU_ARGS((const vect_t min, const vect_t max, const struct soltab *stp, const struct rt_i *rtip));
-HIDDEN int rt_ct_box BU_ARGS((struct rt_i *rtip, union cutter *cutp, int axis, double where, int force));
-HIDDEN void rt_ct_optim BU_ARGS((struct rt_i *rtip, union cutter *cutp, size_t depth));
-HIDDEN void rt_ct_free BU_ARGS((struct rt_i *rtip, union cutter *cutp));
-HIDDEN void rt_ct_release_storage BU_ARGS((union cutter *cutp));
+HIDDEN int rt_ck_overlap(const vect_t min, const vect_t max, const struct soltab *stp, const struct rt_i *rtip);
+HIDDEN int rt_ct_box(struct rt_i *rtip, union cutter *cutp, int axis, double where, int force);
+HIDDEN void rt_ct_optim(struct rt_i *rtip, union cutter *cutp, size_t depth);
+HIDDEN void rt_ct_free(struct rt_i *rtip, union cutter *cutp);
+HIDDEN void rt_ct_release_storage(union cutter *cutp);
 
-HIDDEN void rt_ct_measure BU_ARGS((struct rt_i *rtip, union cutter *cutp, int depth));
-HIDDEN union cutter *rt_ct_get BU_ARGS((struct rt_i *rtip));
-HIDDEN void rt_plot_cut BU_ARGS((FILE *fp, struct rt_i *rtip, union cutter *cutp, int lvl));
+HIDDEN void rt_ct_measure(struct rt_i *rtip, union cutter *cutp, int depth);
+HIDDEN union cutter *rt_ct_get(struct rt_i *rtip);
+HIDDEN void rt_plot_cut(FILE *fp, struct rt_i *rtip, union cutter *cutp, int lvl);
 
 BU_EXTERN(void rt_pr_cut_info, (const struct rt_i *rtip, const char *str));
 HIDDEN int rt_ct_old_assess(register union cutter *, register int, double *, double *);
@@ -167,12 +167,12 @@ rt_cut_optimize_parallel(int cpu, genptr_t arg)
 	(*(const struct soltab **)(_p2))->_memb[_ind] ? 1 : 0
 
 /* Functions for use with qsort */
-HIDDEN int rt_projXmin_comp BU_ARGS((const void * p1, const void * p2));
-HIDDEN int rt_projXmax_comp BU_ARGS((const void * p1, const void * p2));
-HIDDEN int rt_projYmin_comp BU_ARGS((const void * p1, const void * p2));
-HIDDEN int rt_projYmax_comp BU_ARGS((const void * p1, const void * p2));
-HIDDEN int rt_projZmin_comp BU_ARGS((const void * p1, const void * p2));
-HIDDEN int rt_projZmax_comp BU_ARGS((const void * p1, const void * p2));
+HIDDEN int rt_projXmin_comp(const void * p1, const void * p2);
+HIDDEN int rt_projXmax_comp(const void * p1, const void * p2);
+HIDDEN int rt_projYmin_comp(const void * p1, const void * p2);
+HIDDEN int rt_projYmax_comp(const void * p1, const void * p2);
+HIDDEN int rt_projZmin_comp(const void * p1, const void * p2);
+HIDDEN int rt_projZmax_comp(const void * p1, const void * p2);
 
 HIDDEN int
 rt_projXmin_comp(const void *p1, const void *p2)
@@ -211,8 +211,8 @@ rt_projZmax_comp(const void *p1, const void *p2)
 }
 
 HIDDEN struct cmp_pair {
-    int (*cmp_min) BU_ARGS((const void *, const void *));
-    int (*cmp_max) BU_ARGS((const void *, const void *));
+    int (*cmp_min)(const void *, const void *);
+    int (*cmp_max)(const void *, const void *);
 } pairs[] = {
     { rt_projXmin_comp, rt_projXmax_comp },
     { rt_projYmin_comp, rt_projYmax_comp },

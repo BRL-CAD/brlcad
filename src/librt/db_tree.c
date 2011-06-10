@@ -2071,7 +2071,7 @@ HIDDEN void
 _db_walk_subtree(
     union tree *tp,
     struct combined_tree_state **region_start_statepp,
-    union tree *(*leaf_func) BU_ARGS((struct db_tree_state *, const struct db_full_path *, struct rt_db_internal *, void *)),
+    union tree *(*leaf_func)(struct db_tree_state *, const struct db_full_path *, struct rt_db_internal *, void *),
     genptr_t client_data,
     struct resource *resp)
 {

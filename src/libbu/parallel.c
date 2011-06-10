@@ -577,7 +577,7 @@ extern int bu_pid_of_initiating_thread;
 static int _bu_nthreads_started = 0;	/* # threads started */
 static int _bu_nthreads_finished = 0;	/* # threads properly finished */
 static genptr_t _bu_parallel_arg;	/* User's arg to his threads */
-static void (*_bu_parallel_func) BU_ARGS((int, genptr_t));	/* user function to run in parallel */
+static void (*_bu_parallel_func)(int, genptr_t);	/* user function to run in parallel */
 
 
 /**
