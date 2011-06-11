@@ -74,19 +74,19 @@ struct neighbor {
 
 
 static void nmg_class_pt_e(struct neighbor *closest,
-				    const point_t pt, const struct edgeuse *eu,
-				    const struct bn_tol *tol);
+			   const point_t pt, const struct edgeuse *eu,
+			   const struct bn_tol *tol);
 static void nmg_class_pt_l(struct neighbor *closest,
-				    const point_t pt, const struct loopuse *lu,
-				    const struct bn_tol *tol);
+			   const point_t pt, const struct loopuse *lu,
+			   const struct bn_tol *tol);
 static int class_vu_vs_s(struct vertexuse *vu, struct shell *sB,
-				  char **classlist, const struct bn_tol *tol);
+			 char **classlist, const struct bn_tol *tol);
 static int class_eu_vs_s(struct edgeuse *eu, struct shell *s,
-				  char **classlist, const struct bn_tol *tol);
+			 char **classlist, const struct bn_tol *tol);
 static int class_lu_vs_s(struct loopuse *lu, struct shell *s,
-				  char **classlist, const struct bn_tol *tol);
+			 char **classlist, const struct bn_tol *tol);
 static void class_fu_vs_s(struct faceuse *fu, struct shell *s,
-				   char **classlist, const struct bn_tol *tol);
+			  char **classlist, const struct bn_tol *tol);
 
 /**
  * N M G _ C L A S S _ S T A T U S
@@ -363,7 +363,7 @@ nmg_class_pt_e(struct neighbor *closest, const fastf_t *pt, const struct edgeuse
 	    bu_log("\t\tpt is right of edge, OUTSIDE loop\n");
     }
 
- out:
+out:
     /* XXX Temporary addition for chasing bug in Bradley r5 */
     /* XXX Should at least add DEBUG_PLOTEM check, later */
     if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
@@ -536,7 +536,7 @@ nmg_class_lu_fu(const struct loopuse *lu, const struct bn_tol *tol)
 	vu = eu->vu_p;
     }
     eu_first = eu;
- again:
+again:
     NMG_CK_VERTEXUSE(vu);
     NMG_CK_VERTEX(vu->v_p);
     vg = vu->v_p->vg_p;
@@ -706,7 +706,7 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
 
     /* Choose an unlikely direction */
     try = 0;
- retry:
+retry:
     {
 	const point_t *pp = &nmg_good_dirs[try];
 	VMOVE(projection_dir, *pp);
@@ -727,7 +727,7 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
     class = nmg_class_ray_vs_shell(&rp, s, in_or_out_only, tol);
     if (class == NMG_CLASS_Unknown) goto retry;
 
- out:
+out:
     if (!in_or_out_only)
 	bu_free((char *)faces_seen, "nmg_class_pt_s faces_seen[]");
 
@@ -851,7 +851,7 @@ class_vu_vs_s(struct vertexuse *vu, struct shell *sB, char **classlist, const st
 	bu_bomb("class_vu_vs_s: nmg_class_pt_s() failure\n");
     }
 
- out:
+out:
     if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 	bu_log("class_vu_vs_s(vu=x%x) return %s because %s\n",
 	       vu, nmg_class_status(status), reason);
@@ -1077,7 +1077,7 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, char **classlist, const struc
     bu_log("eu's vert is %s, mate's vert is %s\n",
 	   nmg_class_status(euv_cl), nmg_class_status(matev_cl));
     bu_bomb("class_eu_vs_s() inconsistent edgeuse\n");
- out:
+out:
     if (rt_g.NMG_debug & DEBUG_GRAPHCL)
 	nmg_show_broken_classifier_stuff((unsigned long *)eu, classlist, nmg_class_nothing_broken, 0, (char *)NULL);
     if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
@@ -1160,10 +1160,10 @@ nmg_2lu_identical(const struct edgeuse *eu1, const struct edgeuse *eu2)
 	/* Drop back to using a geometric calculation */
 	if (fu1->orientation != fu2->orientation)
 	    NMG_GET_FU_NORMAL(fu2_norm, fu2->fumate_p)
-	else
-	    NMG_GET_FU_NORMAL(fu2_norm, fu2)
+	    else
+		NMG_GET_FU_NORMAL(fu2_norm, fu2)
 
-	NMG_GET_FU_NORMAL(fu1_norm, fu1);
+		    NMG_GET_FU_NORMAL(fu1_norm, fu1);
 
 	if (VDOT(fu1_norm, fu2_norm) < -SMALL_FASTF)
 	    ret = 2;	/* ON anti-shared */
@@ -1188,7 +1188,7 @@ nmg_2lu_identical(const struct edgeuse *eu1, const struct edgeuse *eu2)
 	ret = 2;		/* ON anti-shared */
     else
 	ret = 1;		/* ON shared */
- out:
+out:
     if (rt_g.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_2lu_identical(eu1=x%x, eu2=x%x) ret=%d\n",
 	       eu1, eu2, ret);
@@ -1534,7 +1534,7 @@ class_lu_vs_s(struct loopuse *lu, struct shell *s, char **classlist, const struc
     }
 
     /* loop is collection of edgeuses */
- retry:
+retry:
     in = outside = on = 0;
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 	/* Classify each edgeuse */
@@ -1822,7 +1822,7 @@ class_lu_vs_s(struct loopuse *lu, struct shell *s, char **classlist, const struc
     reason = "loopuse is ON a wire loop in the shell";
     class = NMG_CLASS_AoutB;
     status = OUTSIDE;
- out:
+out:
     if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 	bu_log("class_lu_vs_s(lu=x%x) return %s (%s) because %s\n",
 	       lu, nmg_class_status(status), nmg_class_name(class), reason);

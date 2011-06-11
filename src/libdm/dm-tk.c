@@ -72,7 +72,6 @@ static fastf_t max_short = (fastf_t)SHRT_MAX;
 extern int vectorThreshold;	/* defined in libdm/tcl.c */
 
 
-
 /**
  * @proc tk_close
  *
@@ -109,6 +108,7 @@ tk_close(struct dm *dmp)
 
     return TCL_OK;
 }
+
 
 /**
  * @proc tk_drawBegin
@@ -800,7 +800,6 @@ tk_setZBuffer(struct dm *dmp, int zbuffer_on)
 }
 
 
-
 struct dm dm_tk = {
     tk_close,
     tk_drawBegin,
@@ -842,8 +841,8 @@ struct dm dm_tk = {
     1,
     0,
     0,
-    0,/* bytes per pixel */
-    0,/* bits per channel */
+    0, /* bytes per pixel */
+    0, /* bits per channel */
     0,
     0,
     1.0, /* aspect ratio */
@@ -867,7 +866,6 @@ struct dm dm_tk = {
     0,                          /* not overriding the auto font size */
     0				/* Tcl interpreter */
 };
-
 
 
 struct dm *tk_open_dm(Tcl_Interp *interp, int argc, char **argv);
@@ -1089,8 +1087,6 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
     return dmp;
 }
-
-
 
 
 #endif /* DM_TK */

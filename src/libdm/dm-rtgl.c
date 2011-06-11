@@ -128,8 +128,8 @@ struct dm dm_rtgl = {
     1,
     0,
     0,
-    0,/* bytes per pixel */
-    0,/* bits per channel */
+    0, /* bytes per pixel */
+    0, /* bits per channel */
     0,
     0,
     1.0, /* aspect ratio */

@@ -480,8 +480,8 @@ bu_get_public_cpus(void)
 	if (ret != 1)
 	    public_cpus = 1;
 	fclose(fp);
-	if (public_cpus < 0)  public_cpus = avail_cpus + public_cpus;
-	if (public_cpus > avail_cpus)  public_cpus = avail_cpus;
+	if (public_cpus < 0) public_cpus = avail_cpus + public_cpus;
+	if (public_cpus > avail_cpus) public_cpus = avail_cpus;
 	return public_cpus;
     }
 
@@ -521,6 +521,7 @@ bu_set_realtime(void)
 #	endif
     return 0;
 }
+
 
 /**********************************************************************/
 
@@ -1115,6 +1116,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 
     return;
 }
+
 
 /** @} */
 

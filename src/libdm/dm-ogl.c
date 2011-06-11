@@ -176,8 +176,8 @@ struct dm dm_ogl = {
     1,
     0,
     0,
-    0,/* bytes per pixel */
-    0,/* bits per channel */
+    0, /* bytes per pixel */
+    0, /* bits per channel */
     0,
     0,
     1.0, /* aspect ratio */
@@ -202,6 +202,7 @@ struct dm dm_ogl = {
     0				/* Tcl interpreter */
 };
 
+
 static fastf_t default_viewscale = 1000.0;
 static double xlim_view = 1.0;	/* args for glOrtho*/
 static double ylim_view = 1.0;
@@ -216,7 +217,6 @@ static float ambientColor[4];
 static float specularColor[4];
 static float diffuseColor[4];
 static float backColor[] = {1.0, 1.0, 0.0, 1.0}; /* yellow */
-
 
 
 void
@@ -705,8 +705,8 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     *dmp = dm_ogl; /* struct copy */
     dmp->dm_interp = interp;
     dmp->dm_lineWidth = 1;
-	dmp->dm_bytes_per_pixel = sizeof(GLuint);
-	dmp->dm_bits_per_channel = 8;
+    dmp->dm_bytes_per_pixel = sizeof(GLuint);
+    dmp->dm_bits_per_channel = 8;
 
     dmp->dm_vars.pub_vars = (genptr_t)bu_calloc(1, sizeof(struct dm_xvars), "ogl_open: dm_xvars");
     if (dmp->dm_vars.pub_vars == (genptr_t)NULL) {
@@ -1022,6 +1022,7 @@ Done:
 
     return dmp;
 }
+
 
 /*
  */
@@ -1431,8 +1432,8 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 
     /* Set color to background color for drawing polygons. */
     glColor3f(((struct ogl_vars *)dmp->dm_vars.priv_vars)->r,
-	       ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g,
-	       ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b);
+	      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g,
+	      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b);
 
     /* Viewing region is from -1.0 to +1.0 */
     first = 1;
@@ -1549,6 +1550,7 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 
     return TCL_OK;
 }
+
 
 /*
  * O G L _ D R A W V L I S T
@@ -2038,6 +2040,7 @@ ogl_setDepthMask(struct dm *dmp,
     return TCL_OK;
 }
 
+
 HIDDEN int
 ogl_setZBuffer(struct dm *dmp, int zbuffer_on)
 {
@@ -2069,6 +2072,7 @@ ogl_setZBuffer(struct dm *dmp, int zbuffer_on)
     return TCL_OK;
 }
 
+
 HIDDEN int
 ogl_beginDList(struct dm *dmp, unsigned int list)
 {
@@ -2086,6 +2090,7 @@ ogl_beginDList(struct dm *dmp, unsigned int list)
     return TCL_OK;
 }
 
+
 HIDDEN int
 ogl_endDList(struct dm *dmp)
 {
@@ -2096,6 +2101,7 @@ ogl_endDList(struct dm *dmp)
     return TCL_OK;
 }
 
+
 HIDDEN int
 ogl_drawDList(struct dm *dmp, unsigned int list)
 {
@@ -2105,6 +2111,7 @@ ogl_drawDList(struct dm *dmp, unsigned int list)
     glCallList(dmp->dm_displaylist + list);
     return TCL_OK;
 }
+
 
 HIDDEN int
 ogl_freeDLists(struct dm *dmp, unsigned int list, int range)
@@ -2123,6 +2130,7 @@ ogl_freeDLists(struct dm *dmp, unsigned int list, int range)
     return TCL_OK;
 }
 
+
 HIDDEN int
 ogl_getDisplayImage(struct dm *dmp, unsigned char **image)
 {
@@ -2137,7 +2145,7 @@ ogl_getDisplayImage(struct dm *dmp, unsigned char **image)
     unsigned int green_mask = 0x00ff0000;
     unsigned int blue_mask = 0x0000ff00;
     unsigned int alpha_mask = 0x000000ff;
-    int h,w;
+    int h, w;
     int big_endian, swap_bytes;
 
     if ((bu_byteorder() == BU_BIG_ENDIAN))
@@ -2183,34 +2191,34 @@ ogl_getDisplayImage(struct dm *dmp, unsigned char **image)
 	    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, pixels);
 #endif
 
-	    idata = (unsigned char *)bu_calloc(height * width * bytes_per_pixel,sizeof(unsigned char),"rgb data");
+	    idata = (unsigned char *)bu_calloc(height * width * bytes_per_pixel, sizeof(unsigned char), "rgb data");
 	    *image = idata;
 
 	    for (h = 0; h < height; h++) {
-		    for (w = 0; w < width; w++) {
-		    	int i = h*width + w;
-		    	int i_h_inv = (height - h - 1)*width + w;
-		    	int j = i*bytes_per_pixel;
-				unsigned char *value = (unsigned char *)(idata + j);
-				unsigned char alpha;
-				pixel = pixels[i_h_inv];
+		for (w = 0; w < width; w++) {
+		    int i = h*width + w;
+		    int i_h_inv = (height - h - 1)*width + w;
+		    int j = i*bytes_per_pixel;
+		    unsigned char *value = (unsigned char *)(idata + j);
+		    unsigned char alpha;
+		    pixel = pixels[i_h_inv];
 
-				value[0] = (pixel & red_mask) >> 24;
-				value[1] = (pixel & green_mask) >> 16;
-				value[2] = (pixel & blue_mask) >> 8;
-				alpha = pixel & alpha_mask;
+		    value[0] = (pixel & red_mask) >> 24;
+		    value[1] = (pixel & green_mask) >> 16;
+		    value[2] = (pixel & blue_mask) >> 8;
+		    alpha = pixel & alpha_mask;
 #if defined(DM_WGL)
-				if (swap_bytes) {
-					unsigned char tmp_byte;
+		    if (swap_bytes) {
+			unsigned char tmp_byte;
 
-					value[0] = alpha;
-					/* swap byte1 and byte2 */
-					tmp_byte = value[1];
-					value[1] = value[2];
-					value[2] = tmp_byte;
-				}
+			value[0] = alpha;
+			/* swap byte1 and byte2 */
+			tmp_byte = value[1];
+			value[1] = value[2];
+			value[2] = tmp_byte;
+		    }
 #endif
-			}
+		}
 
 	    }
 
@@ -2223,6 +2231,7 @@ ogl_getDisplayImage(struct dm *dmp, unsigned char **image)
 
     return TCL_OK; /* caller will need to bu_free(idata, "image data"); */
 }
+
 
 #endif /* DM_OGL */
 

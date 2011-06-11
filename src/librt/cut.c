@@ -152,7 +152,7 @@ rt_cut_optimize_parallel(int cpu, genptr_t arg)
 	bu_semaphore_release(RT_SEM_WORKER);
 	i -= 1;				/* change to last used index */
 
-	if (i < 0)  break;
+	if (i < 0) break;
 
 	cp = (union cutter *)BU_PTBL_GET(&rtip->rti_cuts_waiting, i);
 
@@ -160,11 +160,12 @@ rt_cut_optimize_parallel(int cpu, genptr_t arg)
     }
 }
 
+
 #define CMP(_p1, _p2, _memb, _ind) \
-	(*(const struct soltab **)(_p1))->_memb[_ind] < \
-	(*(const struct soltab **)(_p2))->_memb[_ind] ? -1 : \
-	(*(const struct soltab **)(_p1))->_memb[_ind] > \
-	(*(const struct soltab **)(_p2))->_memb[_ind] ? 1 : 0
+    (*(const struct soltab **)(_p1))->_memb[_ind] < \
+    (*(const struct soltab **)(_p2))->_memb[_ind] ? -1 : \
+    (*(const struct soltab **)(_p1))->_memb[_ind] > \
+    (*(const struct soltab **)(_p2))->_memb[_ind] ? 1 : 0
 
 /* Functions for use with qsort */
 HIDDEN int rt_projXmin_comp(const void * p1, const void * p2);
@@ -180,11 +181,13 @@ rt_projXmin_comp(const void *p1, const void *p2)
     return CMP(p1, p2, st_min, X);
 }
 
+
 HIDDEN int
 rt_projXmax_comp(const void *p1, const void *p2)
 {
     return CMP(p1, p2, st_max, X);
 }
+
 
 HIDDEN int
 rt_projYmin_comp(const void *p1, const void *p2)
@@ -192,11 +195,13 @@ rt_projYmin_comp(const void *p1, const void *p2)
     return CMP(p1, p2, st_min, Y);
 }
 
+
 HIDDEN int
 rt_projYmax_comp(const void *p1, const void *p2)
 {
     return CMP(p1, p2, st_max, Y);
 }
+
 
 HIDDEN int
 rt_projZmin_comp(const void *p1, const void *p2)
@@ -204,11 +209,13 @@ rt_projZmin_comp(const void *p1, const void *p2)
     return CMP(p1, p2, st_min, Z);
 }
 
+
 HIDDEN int
 rt_projZmax_comp(const void *p1, const void *p2)
 {
     return CMP(p1, p2, st_max, Z);
 }
+
 
 HIDDEN struct cmp_pair {
     int (*cmp_min)(const void *, const void *);
@@ -267,7 +274,7 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
      * Presumably the caller will have set rtip->rti_nu_gfactor to
      * RT_NU_GFACTOR_DEFAULT (although it may change it depending on
      * the user's wishes or what it feels will be optimal for this
-     * model.)  The default value was computed in the following
+     * model.) The default value was computed in the following
      * fashion: Suppose the ratio of the running times of ft_shot and
      * rt_advance_to_next_cell is K, i.e.,
      *
@@ -343,8 +350,8 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 	 i++, stpp++) {
 	register struct soltab *stp = *stpp;
 	RT_CK_SOLTAB(stp);
-	if (stp->st_aradius <= 0)  continue;
-	if (stp->st_aradius >= INFINITY)  continue;
+	if (stp->st_aradius <= 0) continue;
+	if (stp->st_aradius >= INFINITY) continue;
 	for (j=0; j<3; j++) {
 	    BU_HIST_TALLY(&start_hist[j], stp->st_min[j]);
 	    BU_HIST_TALLY(&end_hist[j],  stp->st_max[j]);
@@ -385,7 +392,7 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 	pos = shp->hg_min;
 	nugnp->nu_axis[i][axi].nu_spos = pos;
 	for (hindex = 0; hindex < shp->hg_nbins; hindex++) {
-	    if (pos > shp->hg_max)  break;
+	    if (pos > shp->hg_max) break;
 	    /* Advance interval one more histogram entry */
 	    /* NOTE:  Peeks into histogram structures! */
 	    nstart += shp->hg_bins[hindex];
@@ -523,16 +530,16 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 
     /* For debugging */
     if (RT_G_DEBUG&DEBUG_CUT) for (i=0; i<3; i++) {
-	register int j;
-	bu_log("NUgrid %c axis:  %d cells\n", "XYZ*"[i],
-	       nugnp->nu_cells_per_axis[i]);
-	for (j=0; j<nugnp->nu_cells_per_axis[i]; j++) {
-	    bu_log("  %g .. %g, w=%g\n",
-		   nugnp->nu_axis[i][j].nu_spos,
-		   nugnp->nu_axis[i][j].nu_epos,
-		   nugnp->nu_axis[i][j].nu_width);
+	    register int j;
+	    bu_log("NUgrid %c axis:  %d cells\n", "XYZ*"[i],
+		   nugnp->nu_cells_per_axis[i]);
+	    for (j=0; j<nugnp->nu_cells_per_axis[i]; j++) {
+		bu_log("  %g .. %g, w=%g\n",
+		       nugnp->nu_axis[i][j].nu_spos,
+		       nugnp->nu_axis[i][j].nu_epos,
+		       nugnp->nu_axis[i][j].nu_width);
+	    }
 	}
-    }
 
     /* If we were just asked to collect info, we are done.  The binary
      * space partioning algorithm (sometimes) needs just this.
@@ -679,6 +686,7 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
     bu_free((genptr_t)nu_ybox.bn_list, "nu_ybox bn_list[]");
     bu_free((genptr_t)nu_xbox.bn_list, "nu_xbox bn_list[]");
 }
+
 
 int
 rt_split_mostly_empty_cells(struct rt_i *rtip, union cutter *cutp)
@@ -827,7 +835,7 @@ rt_cut_it(register struct rt_i *rtip, int ncpu)
 
     RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
 	/* Ignore "dead" solids in the list.  (They failed prep) */
-	if (stp->st_aradius <= 0)  continue;
+	if (stp->st_aradius <= 0) continue;
 
 	/* Infinite and finite solids all get lumpped together */
 	rt_cut_extend(finp, stp, rtip);
@@ -844,9 +852,9 @@ rt_cut_it(register struct rt_i *rtip, int ncpu)
      */
     rtip->rti_cutlen = (int)log((double)(rtip->nsolids+1));  /* ln ~= log2, nsolids+1 to avoid log(0) */
     rtip->rti_cutdepth = 2 * rtip->rti_cutlen;
-    if (rtip->rti_cutlen < 3)  rtip->rti_cutlen = 3;
-    if (rtip->rti_cutdepth < 12)  rtip->rti_cutdepth = 12;
-    if (rtip->rti_cutdepth > 24)  rtip->rti_cutdepth = 24;     /* !! */
+    if (rtip->rti_cutlen < 3) rtip->rti_cutlen = 3;
+    if (rtip->rti_cutdepth < 12) rtip->rti_cutdepth = 12;
+    if (rtip->rti_cutdepth > 24) rtip->rti_cutdepth = 24;     /* !! */
     if (RT_G_DEBUG&DEBUG_CUT)
 	bu_log("Before Space Partitioning: Max Tree Depth=%d, Cuttoff primitive count=%d\n",
 	       rtip->rti_cutdepth, rtip->rti_cutlen);
@@ -1033,6 +1041,7 @@ rt_cut_extend(register union cutter *cutp, struct soltab *stp, const struct rt_i
     cutp->bn.bn_list[cutp->bn.bn_len++] = stp;
 }
 
+
 #ifdef NEW_WAY
 /**
  * R T _ C T _ P L A N
@@ -1072,14 +1081,14 @@ rt_ct_plan(struct rt_i *rtip, union cutter *cutp)
 	best = -1;
 	bestoff = INFINITY;
 	for (axis = X; axis <= Z; axis++) {
-	    if (status[axis] <= 0)  continue;
-	    if (offcenter[axis] >= bestoff)  continue;
+	    if (status[axis] <= 0) continue;
+	    if (offcenter[axis] >= bestoff) continue;
 	    /* This one is better than previous ones */
 	    best = axis;
 	    bestoff = offcenter[axis];
 	}
 
-	if (best < 0)  return -1;	/* No cut is possible */
+	if (best < 0) return -1;	/* No cut is possible */
 
 	if (rt_ct_box(rtip, cutp, best, where[best], 0) > 0)
 	    return 0;		/* OK */
@@ -1115,7 +1124,7 @@ rt_ct_assess(register union cutter *cutp, register int axis, double *where_p, do
     register double middle;		/* midpoint */
     register double left, right;
 
-    if (cutp->bn.bn_len <= 1)  return 0;		/* Forget it */
+    if (cutp->bn.bn_len <= 1) return 0;		/* Forget it */
 
     /*
      * In absolute terms, each box must be at least 1mm wide after
@@ -1147,7 +1156,7 @@ rt_ct_assess(register union cutter *cutp, register int axis, double *where_p, do
 	val = cutp->bn.bn_list[i]->st_min[axis];
 	if (val > left && val < right) {
 	    register double d;
-	    if ((d = val - middle) < 0)  d = (-d);
+	    if ((d = val - middle) < 0) d = (-d);
 	    if (d < offcenter) {
 		offcenter = d;
 		where = val;
@@ -1157,7 +1166,7 @@ rt_ct_assess(register union cutter *cutp, register int axis, double *where_p, do
 	val = cutp->bn.bn_list[i]->st_max[axis];
 	if (val > left && val < right) {
 	    register double d;
-	    if ((d = val - middle) < 0)  d = (-d);
+	    if ((d = val - middle) < 0) d = (-d);
 	    if (d < offcenter) {
 		offcenter = d;
 		where = val;
@@ -1212,7 +1221,7 @@ rt_ct_populate_box(union cutter *outp, const union cutter *inp, struct rt_i *rti
 		continue;
 	    outp->bn.bn_list[outp->bn.bn_len++] = stp;
 	}
-	if (outp->bn.bn_len < inp->bn.bn_len)  success = 1;
+	if (outp->bn.bn_len < inp->bn.bn_len) success = 1;
     } else {
 	outp->bn.bn_list = (struct soltab **)NULL;
     }
@@ -1432,7 +1441,7 @@ rt_ck_overlap(register const fastf_t *min, register const fastf_t *max, register
 	VPRINT(" sol max", stp->st_max);
     }
     /* Ignore "dead" solids in the list.  (They failed prep) */
-    if (stp->st_aradius <= 0)  return 0;
+    if (stp->st_aradius <= 0) return 0;
 
     /* Only check RPP on finite solids */
     if (stp->st_aradius < INFINITY) {
@@ -1452,7 +1461,7 @@ rt_ck_overlap(register const fastf_t *min, register const fastf_t *max, register
 
     return 1;
 
- fail:
+fail:
     if (RT_G_DEBUG&DEBUG_BOXING)
 	bu_log("rt_ck_overlap:  FALSE\n");
 
@@ -1475,7 +1484,7 @@ rt_ct_piececount(const union cutter *cutp)
 
     count = cutp->bn.bn_len;
 
-    if (cutp->bn.bn_piecelen <= 0)  return count;
+    if (cutp->bn.bn_piecelen <= 0) return count;
 
     for (i = cutp->bn.bn_piecelen-1; i >= 0; i--) {
 	count += cutp->bn.bn_piecelist[i].npieces;
@@ -1517,7 +1526,7 @@ rt_ct_optim(struct rt_i *rtip, register union cutter *cutp, size_t depth)
      */
     if (oldlen <= 1)
 	return;		/* this box is already optimal */
-    if (depth > rtip->rti_cutdepth)  return;		/* too deep */
+    if (depth > rtip->rti_cutdepth) return;		/* too deep */
 
     /* Attempt to subdivide finer than rtip->rti_cutlen near treetop */
     /**** XXX This test can be improved ****/
@@ -1644,7 +1653,7 @@ rt_ct_old_assess(register union cutter *cutp, register int axis, double *where_p
 	if (val < min) min = val;
 	if (val > max) max = val;
 	d = val - middle;
-	if (d < 0)  d = (-d);
+	if (d < 0) d = (-d);
 	if (d < offcenter) {
 	    offcenter = d;
 	    where = val-0.1;
@@ -1653,7 +1662,7 @@ rt_ct_old_assess(register union cutter *cutp, register int axis, double *where_p
 	if (val < min) min = val;
 	if (val > max) max = val;
 	d = val - middle;
-	if (d < 0)  d = (-d);
+	if (d < 0) d = (-d);
 	if (d < offcenter) {
 	    offcenter = d;
 	    where = val+0.1;
@@ -1675,7 +1684,7 @@ rt_ct_old_assess(register union cutter *cutp, register int axis, double *where_p
 	    if (val < min) min = val;
 	    if (val > max) max = val;
 	    d = val - middle;
-	    if (d < 0)  d = (-d);
+	    if (d < 0) d = (-d);
 	    if (d < offcenter) {
 		offcenter = d;
 		where = val-0.1;
@@ -1684,7 +1693,7 @@ rt_ct_old_assess(register union cutter *cutp, register int axis, double *where_p
 	    if (val < min) min = val;
 	    if (val > max) max = val;
 	    d = val - middle;
-	    if (d < 0)  d = (-d);
+	    if (d < 0) d = (-d);
 	    if (d < offcenter) {
 		offcenter = d;
 		where = val+0.1;
@@ -2275,6 +2284,7 @@ rt_pr_cut_info(const struct rt_i *rtip, const char *str)
     }
 }
 
+
 void
 remove_from_bsp(struct soltab *stp, union cutter *cutp, struct bn_tol *tol)
 {
@@ -2353,6 +2363,7 @@ remove_from_bsp(struct soltab *stp, union cutter *cutp, struct bn_tol *tol)
 	    bu_bomb("remove_from_bsp(): unrecognized cut type in BSP!\n");
     }
 }
+
 
 #define PIECE_BLOCK 512
 
@@ -2453,6 +2464,7 @@ insert_in_bsp(struct soltab *stp, union cutter *cutp)
 
 }
 
+
 void
 fill_out_bsp(struct rt_i *rtip, union cutter *cutp, struct resource *resp, fastf_t bb[6])
 {
@@ -2488,6 +2500,7 @@ fill_out_bsp(struct rt_i *rtip, union cutter *cutp, struct resource *resp, fastf
     }
 
 }
+
 
 /*
  * Local Variables:

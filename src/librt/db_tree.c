@@ -2683,7 +2683,7 @@ rt_shader_mat(
 
     reg_name = bu_basename(rp->reg_name);
     /* get model-to-region space mapping */
-    if (db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name, resp) < 0){
+    if (db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name, resp) < 0) {
 	bu_free(reg_name, "reg_name free");
 	return -1;
     }

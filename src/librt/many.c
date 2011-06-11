@@ -51,7 +51,7 @@ struct rt_many_internal {
     int			sem_chunk;
 };
 #define RT_MANY_INTERNAL_MAGIC	0x526d6970	/* Rmip */
-#define RT_CK_RMI(_p)	BU_CKMAG(_p, RT_MANY_INTERNAL_MAGIC, "rt_many_internal")
+#define RT_CK_RMI(_p) BU_CKMAG(_p, RT_MANY_INTERNAL_MAGIC, "rt_many_internal")
 
 /**
  * R T _ S H O O T _ M A N Y _ R A Y S _ W O R K E R
@@ -85,7 +85,7 @@ rt_shoot_many_rays_worker(int cpu, genptr_t arg)
 	register long	index;
 	register long	lim;
 
-	if (rmip->stop_worker)  break;
+	if (rmip->stop_worker) break;
 
 	bu_semaphore_acquire(RT_SEM_WORKER);
 	index = rmip->cur_index;
@@ -94,7 +94,7 @@ rt_shoot_many_rays_worker(int cpu, genptr_t arg)
 
 	lim = index + rmip->sem_chunk;
 	for (; index < lim; index++) {
-	    if (index >= rmip->max_index)  return;
+	    if (index >= rmip->max_index) return;
 
 	    /*
 	     * a_x is set here to get differentiated LIBRT debugging
@@ -178,6 +178,7 @@ rt_shoot_many_rays(const struct application *proto_ap, int (*callback) (struct a
 	bu_parallel(rt_shoot_many_rays_worker, ncpus, (genptr_t)&rmi);
     }
 }
+
 
 /*
  * Local Variables:

@@ -342,7 +342,7 @@ nmg_eval_action(unsigned long *ptr, register struct nmg_bool_state *bs)
 	   ptr, bu_identify_magic(*((long *)ptr)));
     class = NMG_CLASS_BAD;
     ret = BACTION_RETAIN;
- out:
+out:
     if (rt_g.NMG_debug & DEBUG_BOOLEVAL) {
 	bu_log("nmg_eval_action(ptr=x%x) index=%d %s %s %s %s\n",
 	       ptr, index,

@@ -488,16 +488,16 @@ ps_setWinBounds(struct dm *dmp, int *w)
     dmp->dm_clipmin[1] = w[2] / 2048.;
     dmp->dm_clipmax[1] = w[3] / 2047.;
 
-	if (dmp->dm_zclip) {
-	    dmp->dm_clipmin[2] = w[4] / 2048.;
-	    dmp->dm_clipmax[2] = w[5] / 2047.;
-	} else {
-	    dmp->dm_clipmin[2] = -1.0e20;
-	    dmp->dm_clipmax[2] = 1.0e20;
-	}
-
-	return TCL_OK;
+    if (dmp->dm_zclip) {
+	dmp->dm_clipmin[2] = w[4] / 2048.;
+	dmp->dm_clipmax[2] = w[5] / 2047.;
+    } else {
+	dmp->dm_clipmin[2] = -1.0e20;
+	dmp->dm_clipmax[2] = 1.0e20;
     }
+
+    return TCL_OK;
+}
 
 
 struct dm dm_ps = {
@@ -541,8 +541,8 @@ struct dm dm_ps = {
     0,
     0,
     0,
-    0,/* bytes per pixel */
-    0,/* bits per channel */
+    0, /* bytes per pixel */
+    0, /* bits per channel */
     0,
     0,
     1.0, /* aspect ratio */

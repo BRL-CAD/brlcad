@@ -501,7 +501,6 @@ plot_setWinBounds(struct dm *dmp, int *w)
 }
 
 
-
 struct dm dm_plot = {
     plot_close,
     plot_drawBegin,
@@ -543,8 +542,8 @@ struct dm dm_plot = {
     0,
     0,
     0,
-    0,/* bytes per pixel */
-    0,/* bits per channel */
+    0, /* bytes per pixel */
+    0, /* bits per channel */
     0,
     0,
     1.0, /* aspect ratio */
@@ -568,6 +567,7 @@ struct dm dm_plot = {
     0,                          /* not overriding the auto font size */
     0				/* Tcl interpreter */
 };
+
 
 /*
  * P L O T _ O P E N

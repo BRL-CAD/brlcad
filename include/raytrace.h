@@ -119,7 +119,7 @@ __BEGIN_DECLS
 
 /** Format string for bu_printb() */
 #define DEBUG_FORMAT	\
-"\020\040PLOTBOX\
+    "\020\040PLOTBOX\
 \037PLOTSOLIDS\
 \033HF\032EBM\031MATH\030ADVANCE\
 \027TESTING\026TREEWALK\025CUTDETAIL\024PARALLEL\023FDIFF\022MEM_FULL\
@@ -191,7 +191,7 @@ struct rt_tess_tol {
     double		rel;			/**< @brief rel dist tol */
     double		norm;			/**< @brief normal tol */
 };
-#define RT_CK_TESS_TOL(_p)	BU_CKMAG(_p, RT_TESS_TOL_MAGIC, "rt_tess_tol")
+#define RT_CK_TESS_TOL(_p) BU_CKMAG(_p, RT_TESS_TOL_MAGIC, "rt_tess_tol")
 
 
 /**
@@ -215,8 +215,8 @@ struct rt_db_internal {
 	(_p)->idb_meth = (const struct rt_functab *) GENPTR_NULL; \
 	(_p)->idb_ptr = GENPTR_NULL; \
 	bu_avs_init_empty(&(_p)->idb_avs); \
-}
-#define RT_CK_DB_INTERNAL(_p)	BU_CKMAG(_p, RT_DB_INTERNAL_MAGIC, "rt_db_internal")
+    }
+#define RT_CK_DB_INTERNAL(_p) BU_CKMAG(_p, RT_DB_INTERNAL_MAGIC, "rt_db_internal")
 
 /**
  * D B _ F U L L _ P A T H
@@ -231,10 +231,10 @@ struct db_full_path {
 };
 #define DB_FULL_PATH_POP(_pp) { \
 	(_pp)->fp_len--; \
-}
+    }
 #define DB_FULL_PATH_CUR_DIR(_pp) ((_pp)->fp_names[(_pp)->fp_len-1])
 #define DB_FULL_PATH_GET(_pp, _i) ((_pp)->fp_names[(_i)])
-#define RT_CK_FULL_PATH(_p)       BU_CKMAG(_p, DB_FULL_PATH_MAGIC, "db_full_path")
+#define RT_CK_FULL_PATH(_p) BU_CKMAG(_p, DB_FULL_PATH_MAGIC, "db_full_path")
 
 /**
  * X R A Y
@@ -251,7 +251,7 @@ struct xray {
     fastf_t		r_max;		/**< @brief exit dist from bounding sphere */
 };
 #define RAY_NULL	((struct xray *)0)
-#define RT_CK_RAY(_p)	BU_CKMAG(_p, RT_RAY_MAGIC, "struct xray");
+#define RT_CK_RAY(_p) BU_CKMAG(_p, RT_RAY_MAGIC, "struct xray");
 
 /**
  * X R A Y S
@@ -266,6 +266,7 @@ struct xrays
     struct bu_list l;
     struct xray ray;
 };
+
 
 /**
  * H I T
@@ -290,7 +291,7 @@ struct hit {
     struct xray	*	hit_rayp;	/**< @brief pointer to defining ray */
 };
 #define HIT_NULL	((struct hit *)0)
-#define RT_CK_HIT(_p)	BU_CKMAG(_p, RT_HIT_MAGIC, "struct hit")
+#define RT_CK_HIT(_p) BU_CKMAG(_p, RT_HIT_MAGIC, "struct hit")
 
 /**
  * Compute normal into (_hitp)->hit_normal.  Set flip-flag accordingly
@@ -302,24 +303,24 @@ struct hit {
  * Return the post-boolean normal into caller-provided _normal vector.
  */
 #define RT_HIT_NORMAL(_normal, _hitp, _stp, _unused, _flipflag) { \
-    RT_CK_HIT(_hitp); \
-    RT_CK_SOLTAB(_stp); \
-    RT_CK_FUNCTAB((_stp)->st_meth); \
-    { \
-	void *_n = (void *)_normal; \
-	if ((_stp)->st_meth->ft_norm) { \
-	    (_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
-	} \
-	if (_n != NULL) { \
-	    int _f = (int)_flipflag; \
-	    if (_f) { \
-		VREVERSE((fastf_t *)_normal, (_hitp)->hit_normal); \
-	    } else { \
-		VMOVE((fastf_t *)_normal, (_hitp)->hit_normal); \
+	RT_CK_HIT(_hitp); \
+	RT_CK_SOLTAB(_stp); \
+	RT_CK_FUNCTAB((_stp)->st_meth); \
+	{ \
+	    void *_n = (void *)_normal; \
+	    if ((_stp)->st_meth->ft_norm) { \
+		(_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
+	    } \
+	    if (_n != NULL) { \
+		int _f = (int)_flipflag; \
+		if (_f) { \
+		    VREVERSE((fastf_t *)_normal, (_hitp)->hit_normal); \
+		} else { \
+		    VMOVE((fastf_t *)_normal, (_hitp)->hit_normal); \
+		} \
 	    } \
 	} \
-    } \
- }
+    }
 
 /* A more powerful interface would be: */
 /* RT_GET_NORMAL(_normal, _partition, inhit/outhit flag, ap) */
@@ -355,13 +356,13 @@ struct curvature {
 	RT_CK_SOLTAB(_stp); \
 	RT_CK_FUNCTAB((_stp)->st_meth); \
 	if ((_stp)->st_meth->ft_curve) { \
-		(_stp)->st_meth->ft_curve(_curvp, _hitp, _stp); \
+	    (_stp)->st_meth->ft_curve(_curvp, _hitp, _stp); \
 	} \
 	if (_flipflag) { \
-		(_curvp)->crv_c1 = - (_curvp)->crv_c1; \
-		(_curvp)->crv_c2 = - (_curvp)->crv_c2; \
+	    (_curvp)->crv_c1 = - (_curvp)->crv_c1; \
+	    (_curvp)->crv_c2 = - (_curvp)->crv_c2; \
 	} \
- }
+    }
 
 /* A more powerful interface would be: */
 /* RT_GET_CURVATURE(_curvp, _partition, inhit/outhit flag, ap) */
@@ -382,9 +383,10 @@ struct uvcoord {
 	RT_CK_SOLTAB(_stp); \
 	RT_CK_FUNCTAB((_stp)->st_meth); \
 	if ((_stp)->st_meth->ft_uv) { \
- 		(_stp)->st_meth->ft_uv(ap, _stp, _hitp, uvp); \
+	    (_stp)->st_meth->ft_uv(ap, _stp, _hitp, uvp); \
 	} \
-}
+    }
+
 
 /* A more powerful interface would be: */
 /* RT_GET_UVCOORD(_uvp, _partition, inhit/outhit flag, ap) */
@@ -408,23 +410,25 @@ struct seg {
 };
 #define RT_SEG_NULL	((struct seg *)0)
 
-#define RT_CHECK_SEG(_p)	BU_CKMAG(_p, RT_SEG_MAGIC, "struct seg")
-#define RT_CK_SEG(_p)		BU_CKMAG(_p, RT_SEG_MAGIC, "struct seg")
+#define RT_CHECK_SEG(_p) BU_CKMAG(_p, RT_SEG_MAGIC, "struct seg")
+#define RT_CK_SEG(_p) BU_CKMAG(_p, RT_SEG_MAGIC, "struct seg")
 
 #define RT_GET_SEG(p, res) { \
 	while (!BU_LIST_WHILE((p), seg, &((res)->re_seg)) || !(p)) \
-		rt_alloc_seg_block(res); \
+	    rt_alloc_seg_block(res); \
 	BU_LIST_DEQUEUE(&((p)->l)); \
 	(p)->l.forw = (p)->l.back = BU_LIST_NULL; \
 	(p)->seg_in.hit_magic = (p)->seg_out.hit_magic = RT_HIT_MAGIC; \
 	res->re_segget++; \
-}
+    }
+
 
 #define RT_FREE_SEG(p, res) { \
 	RT_CHECK_SEG(p); \
 	BU_LIST_INSERT(&((res)->re_seg), &((p)->l)); \
 	res->re_segfree++; \
-}
+    }
+
 
 /**
  * This could be
@@ -434,10 +438,11 @@ struct seg {
 #define RT_FREE_SEG_LIST(_segheadp, _res) { \
 	register struct seg *_a; \
 	while (BU_LIST_WHILE(_a, seg, &((_segheadp)->l))) { \
-		BU_LIST_DEQUEUE(&(_a->l)); \
-		RT_FREE_SEG(_a, _res); \
+	    BU_LIST_DEQUEUE(&(_a->l)); \
+	    RT_FREE_SEG(_a, _res); \
 	} \
-}
+    }
+
 
 /**
  * Macros to operate on Right Rectangular Parallelpipeds (RPPs).
@@ -482,8 +487,8 @@ struct soltab {
 #define RT_SOLTAB_NULL	((struct soltab *)0)
 #define	SOLTAB_NULL	RT_SOLTAB_NULL		/**< @brief backwards compat */
 
-#define RT_CHECK_SOLTAB(_p)	BU_CKMAG(_p, RT_SOLTAB_MAGIC, "struct soltab")
-#define RT_CK_SOLTAB(_p)	BU_CKMAG(_p, RT_SOLTAB_MAGIC, "struct soltab")
+#define RT_CHECK_SOLTAB(_p) BU_CKMAG(_p, RT_SOLTAB_MAGIC, "struct soltab")
+#define RT_CK_SOLTAB(_p) BU_CKMAG(_p, RT_SOLTAB_MAGIC, "struct soltab")
 
 /*
  * Values for Solid ID.
@@ -558,6 +563,7 @@ struct mater_info {
     char	*ma_shader;	/**< @brief shader name & parms */
 };
 
+
 /**
  * R E G I O N
  *
@@ -585,7 +591,7 @@ struct region {
     struct bu_attribute_value_set attr_values;	/**< @brief Attribute/value set */
 };
 #define REGION_NULL	((struct region *)0)
-#define RT_CK_REGION(_p)	BU_CKMAG(_p, RT_REGION_MAGIC, "struct region")
+#define RT_CK_REGION(_p) BU_CKMAG(_p, RT_REGION_MAGIC, "struct region")
 
 /**
  * P A R T I T I O N
@@ -616,16 +622,16 @@ struct partition {
 };
 #define PT_NULL		((struct partition *)0)
 
-#define RT_CHECK_PT(_p)	RT_CK_PT(_p)	/**< @brief compat */
-#define RT_CK_PT(_p)	BU_CKMAG(_p, PT_MAGIC, "struct partition")
-#define RT_CK_PARTITION(_p)	BU_CKMAG(_p, PT_MAGIC, "struct partition")
-#define RT_CK_PT_HD(_p)	BU_CKMAG(_p, PT_HD_MAGIC, "struct partition list head")
+#define RT_CHECK_PT(_p) RT_CK_PT(_p)	/**< @brief compat */
+#define RT_CK_PT(_p) BU_CKMAG(_p, PT_MAGIC, "struct partition")
+#define RT_CK_PARTITION(_p) BU_CKMAG(_p, PT_MAGIC, "struct partition")
+#define RT_CK_PT_HD(_p) BU_CKMAG(_p, PT_HD_MAGIC, "struct partition list head")
 
 /* Macros for copying only the essential "middle" part of a partition struct */
 #define RT_PT_MIDDLE_START	pt_inseg		/**< @brief 1st elem to copy */
 #define RT_PT_MIDDLE_END	pt_seglist.l.magic	/**< @brief copy up to this elem (non-inclusive) */
 #define RT_PT_MIDDLE_LEN(p) \
-	(((char *)&(p)->RT_PT_MIDDLE_END) - ((char *)&(p)->RT_PT_MIDDLE_START))
+    (((char *)&(p)->RT_PT_MIDDLE_END) - ((char *)&(p)->RT_PT_MIDDLE_START))
 
 #define RT_DUP_PT(ip, new, old, res) { \
 	GET_PT(ip, new, res); \
@@ -640,43 +646,43 @@ struct partition {
 
 #define GET_PT(ip, p, res) { \
 	if (BU_LIST_NON_EMPTY_P(p, partition, &res->re_parthead)) { \
-		BU_LIST_DEQUEUE((struct bu_list *)(p)); \
-		bu_ptbl_reset(&(p)->pt_seglist); \
+	    BU_LIST_DEQUEUE((struct bu_list *)(p)); \
+	    bu_ptbl_reset(&(p)->pt_seglist); \
 	} else { \
-		(p) = (struct partition *)bu_calloc(1, sizeof(struct partition), "struct partition"); \
-		(p)->pt_magic = PT_MAGIC; \
-		bu_ptbl_init(&(p)->pt_seglist, 42, "pt_seglist ptbl"); \
-		(res)->re_partlen++; \
+	    (p) = (struct partition *)bu_calloc(1, sizeof(struct partition), "struct partition"); \
+	    (p)->pt_magic = PT_MAGIC; \
+	    bu_ptbl_init(&(p)->pt_seglist, 42, "pt_seglist ptbl"); \
+	    (res)->re_partlen++; \
 	} \
 	res->re_partget++; }
 
 #define FREE_PT(p, res) { \
 	BU_LIST_APPEND(&(res->re_parthead), (struct bu_list *)(p)); \
 	if ((p)->pt_overlap_reg) { \
-		bu_free((genptr_t)((p)->pt_overlap_reg), "pt_overlap_reg");\
-		(p)->pt_overlap_reg = NULL; \
+	    bu_free((genptr_t)((p)->pt_overlap_reg), "pt_overlap_reg");\
+	    (p)->pt_overlap_reg = NULL; \
 	} \
 	res->re_partfree++; }
 
 #define RT_FREE_PT_LIST(_headp, _res) { \
-		register struct partition *_pp, *_zap; \
-		for (_pp = (_headp)->pt_forw; _pp != (_headp);) { \
-			_zap = _pp; \
-			_pp = _pp->pt_forw; \
-			BU_LIST_DEQUEUE((struct bu_list *)(_zap)); \
-			FREE_PT(_zap, _res); \
-		} \
-		(_headp)->pt_forw = (_headp)->pt_back = (_headp); \
-	}
+	register struct partition *_pp, *_zap; \
+	for (_pp = (_headp)->pt_forw; _pp != (_headp);) { \
+	    _zap = _pp; \
+	    _pp = _pp->pt_forw; \
+	    BU_LIST_DEQUEUE((struct bu_list *)(_zap)); \
+	    FREE_PT(_zap, _res); \
+	} \
+	(_headp)->pt_forw = (_headp)->pt_back = (_headp); \
+    }
 
 /** Insert "new" partition in front of "old" partition.  Note order change */
-#define INSERT_PT(_new, _old)	BU_LIST_INSERT((struct bu_list *)_old, (struct bu_list *)_new)
+#define INSERT_PT(_new, _old) BU_LIST_INSERT((struct bu_list *)_old, (struct bu_list *)_new)
 
 /** Append "new" partition after "old" partition.  Note arg order change */
-#define APPEND_PT(_new, _old)	BU_LIST_APPEND((struct bu_list *)_old, (struct bu_list *)_new)
+#define APPEND_PT(_new, _old) BU_LIST_APPEND((struct bu_list *)_old, (struct bu_list *)_new)
 
 /** Dequeue "cur" partition from doubly-linked list */
-#define DEQUEUE_PT(_cur)	BU_LIST_DEQUEUE((struct bu_list *)_cur)
+#define DEQUEUE_PT(_cur) BU_LIST_DEQUEUE((struct bu_list *)_cur)
 
 /**
  * P A R T I T I O N _ L I S T
@@ -693,6 +699,7 @@ struct partition_list {
     genptr_t		userptr;
 };
 
+
 /**
  * P A R T I T I O N _ B U N D L E
  *
@@ -706,6 +713,7 @@ struct partition_bundle {
     struct partition_list *list;
     struct application	*ap;
 };
+
 
 /**
  * C U T
@@ -755,6 +763,7 @@ union cutter {
 	union cutter *nu_grid;		/**< @brief 3-D array of boxnodes */
     } nugn;
 };
+
 
 #define CUTTER_NULL	((union cutter *)0)
 
@@ -824,10 +833,10 @@ struct db_i {
     struct rt_wdb * dbi_wdbp;		/**< @brief PRIVATE: ptr back to containing rt_wdb */
 };
 #define DBI_NULL ((struct db_i *)0)
-#define RT_CHECK_DBI(_p)		BU_CKMAG(_p, DBI_MAGIC, "struct db_i")
-#define RT_CHECK_DBI_TCL(_interp, _p)	BU_CKMAG_TCL(_interp, _p, DBI_MAGIC, "struct db_i")
-#define RT_CK_DBI(_p)			RT_CHECK_DBI(_p)
-#define RT_CK_DBI_TCL(_interp, _p)	RT_CHECK_DBI_TCL(_interp, _p)
+#define RT_CHECK_DBI(_p) BU_CKMAG(_p, DBI_MAGIC, "struct db_i")
+#define RT_CHECK_DBI_TCL(_interp, _p) BU_CKMAG_TCL(_interp, _p, DBI_MAGIC, "struct db_i")
+#define RT_CK_DBI(_p) RT_CHECK_DBI(_p)
+#define RT_CK_DBI_TCL(_interp, _p) RT_CHECK_DBI_TCL(_interp, _p)
 
 
 /**
@@ -876,7 +885,7 @@ struct directory {
     char d_shortname[16];	/**< @brief Stash short names locally */
 };
 #define RT_DIR_NULL	((struct directory *)0)
-#define RT_CK_DIR(_dp)	BU_CKMAG(_dp, RT_DIR_MAGIC, "(librt)directory")
+#define RT_CK_DIR(_dp) BU_CKMAG(_dp, RT_DIR_MAGIC, "(librt)directory")
 
 #define d_addr	d_un.file_offset
 #define RT_DIR_PHONY_ADDR	((off_t)-1)	/**< @brief Special marker for d_addr field */
@@ -907,16 +916,16 @@ struct directory {
 
 #define FOR_ALL_DIRECTORY_START(_dp, _dbip) { int _i; \
 	for (_i = RT_DBNHASH-1; _i >= 0; _i--) { \
-		for ((_dp) = (_dbip)->dbi_Head[_i]; (_dp); (_dp) = (_dp)->d_forw) {
+	    for ((_dp) = (_dbip)->dbi_Head[_i]; (_dp); (_dp) = (_dp)->d_forw) {
 
 #define FOR_ALL_DIRECTORY_END	}}}
 
 #define RT_DIR_SET_NAMEP(_dp, _name) { \
 	if (strlen(_name) < sizeof((_dp)->d_shortname)) {\
-		bu_strlcpy((_dp)->d_shortname, (_name), sizeof((_dp)->d_shortname)); \
-		(_dp)->d_namep = (_dp)->d_shortname; \
+	    bu_strlcpy((_dp)->d_shortname, (_name), sizeof((_dp)->d_shortname)); \
+	    (_dp)->d_namep = (_dp)->d_shortname; \
 	} else { \
-		(_dp)->d_namep = bu_strdup(_name); /* Calls bu_malloc() */ \
+	    (_dp)->d_namep = bu_strdup(_name); /* Calls bu_malloc() */ \
 	} }
 
 
@@ -926,7 +935,7 @@ struct directory {
  */
 #define RT_DIR_FREE_NAMEP(_dp) { \
 	if ((_dp)->d_namep != (_dp)->d_shortname)  \
-		bu_free((_dp)->d_namep, "d_namep"); \
+	    bu_free((_dp)->d_namep, "d_namep"); \
 	(_dp)->d_namep = NULL; }
 
 
@@ -936,7 +945,7 @@ struct directory {
  */
 #define RT_GET_DIRECTORY(_p, _res) { \
 	while (((_p) = (_res)->re_directory_hd) == NULL) \
-		db_alloc_directory_block(_res); \
+	    db_alloc_directory_block(_res); \
 	(_res)->re_directory_hd = (_p)->d_forw; \
 	(_p)->d_forw = NULL; }
 
@@ -966,10 +975,10 @@ struct rt_comb_internal {
     struct bu_vls	material;
     char		inherit;
 };
-#define RT_CHECK_COMB(_p)		BU_CKMAG(_p, RT_COMB_MAGIC, "rt_comb_internal")
-#define RT_CK_COMB(_p)			RT_CHECK_COMB(_p)
-#define RT_CHECK_COMB_TCL(_interp, _p)	BU_CKMAG_TCL(interp, _p, RT_COMB_MAGIC, "rt_comb_internal")
-#define RT_CK_COMB_TCL(_interp, _p)	RT_CHECK_COMB_TCL(_interp, _p)
+#define RT_CHECK_COMB(_p) BU_CKMAG(_p, RT_COMB_MAGIC, "rt_comb_internal")
+#define RT_CK_COMB(_p) RT_CHECK_COMB(_p)
+#define RT_CHECK_COMB_TCL(_interp, _p) BU_CKMAG_TCL(interp, _p, RT_COMB_MAGIC, "rt_comb_internal")
+#define RT_CK_COMB_TCL(_interp, _p) RT_CHECK_COMB_TCL(_interp, _p)
 
 
 /**
@@ -995,10 +1004,10 @@ struct rt_binunif_internal {
 	unsigned long	*uint64;
     } u;
 };
-#define RT_CHECK_BINUNIF(_p)			BU_CKMAG(_p, RT_BINUNIF_INTERNAL_MAGIC, "rt_binunif_internal")
-#define RT_CK_BINUNIF(_p)			RT_CHECK_BINUNIF(_p)
-#define RT_CHECK_BINUNIF_TCL(_interp, _p)	BU_CKMAG_TCL(interp, _p, RT_BINUNIF_MAGIC, "rt_binunif_internal")
-#define RT_CK_BINUNIF_TCL(_interp, _p)		RT_CHECK_BINUNIF_TCL(_interp, _p)
+#define RT_CHECK_BINUNIF(_p) BU_CKMAG(_p, RT_BINUNIF_INTERNAL_MAGIC, "rt_binunif_internal")
+#define RT_CK_BINUNIF(_p) RT_CHECK_BINUNIF(_p)
+#define RT_CHECK_BINUNIF_TCL(_interp, _p) BU_CKMAG_TCL(interp, _p, RT_BINUNIF_MAGIC, "rt_binunif_internal")
+#define RT_CK_BINUNIF_TCL(_interp, _p) RT_CHECK_BINUNIF_TCL(_interp, _p)
 
 
 /**
@@ -1013,8 +1022,9 @@ struct rt_constraint_internal {
     struct bu_vls expression;
 };
 
-#define RT_CHECK_CONSTRAINT(_p)		BU_CKMAG(_p, PC_CONSTRAINT_MAGIC, "pc_constraint_internal")
-#define RT_CK_CONSTRAINT(_p)		PC_CHECK_CONSTRAINT(_p)
+
+#define RT_CHECK_CONSTRAINT(_p) BU_CKMAG(_p, PC_CONSTRAINT_MAGIC, "pc_constraint_internal")
+#define RT_CK_CONSTRAINT(_p) PC_CHECK_CONSTRAINT(_p)
 
 
 /**
@@ -1041,20 +1051,20 @@ struct db_tree_state {
 
     int			ts_stop_at_regions;	/**< @brief else stop at solids */
     int			(*ts_region_start_func)(struct db_tree_state * /**< @brief tsp*/,
-							 const struct db_full_path * /**< @brief pathp*/,
-							 const struct rt_comb_internal * /**< @brief combp */,
-							 genptr_t client_data
-							    );
+						const struct db_full_path * /**< @brief pathp*/,
+						const struct rt_comb_internal * /**< @brief combp */,
+						genptr_t client_data
+	);
     union tree *	(*ts_region_end_func)(struct db_tree_state * /**< @brief tsp*/,
-						       const struct db_full_path * /**< @brief pathp*/,
-						       union tree * /**< @brief curtree*/,
-						       genptr_t client_data
-							  );
+					      const struct db_full_path * /**< @brief pathp*/,
+					      union tree * /**< @brief curtree*/,
+					      genptr_t client_data
+	);
     union tree *	(*ts_leaf_func)(struct db_tree_state * /**< @brief tsp*/,
-						 const struct db_full_path * /**< @brief pathp*/,
-						 struct rt_db_internal * /**< @brief ip*/,
-						 genptr_t client_data
-						    );
+					const struct db_full_path * /**< @brief pathp*/,
+					struct rt_db_internal * /**< @brief ip*/,
+					genptr_t client_data
+	);
     const struct rt_tess_tol *	ts_ttol;	/**< @brief  Tessellation tolerance */
     const struct bn_tol	*	ts_tol;		/**< @brief  Math tolerance */
     struct model **		ts_m;		/**< @brief  ptr to ptr to NMG "model" */
@@ -1065,7 +1075,7 @@ struct db_tree_state {
 #define TS_SOFAR_INTER	2	/**< @brief  Intersection encountered above */
 #define TS_SOFAR_REGION	4	/**< @brief  Region encountered above */
 
-#define RT_CK_DBTS(_p)	BU_CKMAG(_p, RT_DBTS_MAGIC, "db_tree_state")
+#define RT_CK_DBTS(_p) BU_CKMAG(_p, RT_DBTS_MAGIC, "db_tree_state")
 
 /**
  * D B _ T R A V E R S E
@@ -1105,7 +1115,7 @@ struct combined_tree_state {
     struct db_tree_state	cts_s;
     struct db_full_path		cts_p;
 };
-#define RT_CK_CTS(_p)	BU_CKMAG(_p, RT_CTS_MAGIC, "combined_tree_state")
+#define RT_CK_CTS(_p) BU_CKMAG(_p, RT_CTS_MAGIC, "combined_tree_state")
 
 /**
  * T R E E
@@ -1170,7 +1180,7 @@ union tree {
 #define tr_regionp	tr_a.tu_regionp
 
 #define TREE_NULL	((union tree *)0)
-#define RT_CK_TREE(_p)	BU_CKMAG(_p, RT_TREE_MAGIC, "union tree")
+#define RT_CK_TREE(_p) BU_CKMAG(_p, RT_TREE_MAGIC, "union tree")
 
 /**
  * initialize a union tree to zero without a node operation set.  Use
@@ -1236,6 +1246,7 @@ struct rt_tree_array
     int		tl_op;
 };
 
+
 #define TREE_LIST_NULL	((struct tree_list *)0)
 
 /* FIXME: this is a dubious define that should be removed */
@@ -1276,10 +1287,11 @@ struct rt_wdb {
 
 };
 
-#define RT_CHECK_WDB(_p)		BU_CKMAG(_p, RT_WDB_MAGIC, "rt_wdb")
-#define RT_CHECK_WDB_TCL(_interp, _p)	BU_CKMAG_TCL(_interp, _p, RT_WDB_MAGIC, "rt_wdb")
-#define RT_CK_WDB(_p)			RT_CHECK_WDB(_p)
-#define RT_CK_WDB_TCL(_interp, _p)	RT_CHECK_WDB_TCL(_interp, _p)
+
+#define RT_CHECK_WDB(_p) BU_CKMAG(_p, RT_WDB_MAGIC, "rt_wdb")
+#define RT_CHECK_WDB_TCL(_interp, _p) BU_CKMAG_TCL(_interp, _p, RT_WDB_MAGIC, "rt_wdb")
+#define RT_CK_WDB(_p) RT_CHECK_WDB(_p)
+#define RT_CK_WDB_TCL(_interp, _p) RT_CHECK_WDB_TCL(_interp, _p)
 #define RT_WDB_NULL		((struct rt_wdb *)NULL)
 #define RT_WDB_TYPE_DB_DISK			2
 #define RT_WDB_TYPE_DB_DISK_APPEND_ONLY		3
@@ -1317,11 +1329,12 @@ struct rt_anim_property {
 };
 #define RT_ANP_REPLACE	1		/**< @brief  Replace shader string */
 #define RT_ANP_APPEND	2		/**< @brief  Append to shader string */
-#define RT_CK_ANP(_p)	BU_CKMAG((_p), RT_ANP_MAGIC, "rt_anim_property")
+#define RT_CK_ANP(_p) BU_CKMAG((_p), RT_ANP_MAGIC, "rt_anim_property")
 
 struct rt_anim_color {
     int anc_rgb[3];			/**< @brief  New color */
 };
+
 
 struct animate {
     unsigned long	magic;		/**< @brief  magic number */
@@ -1342,7 +1355,7 @@ struct animate {
 #define RT_AN_TEMPERATURE 5		/**< @brief  Region temperature */
 
 #define ANIM_NULL	((struct animate *)0)
-#define RT_CK_ANIMATE(_p)	BU_CKMAG((_p), ANIMATE_MAGIC, "animate")
+#define RT_CK_ANIMATE(_p) BU_CKMAG((_p), ANIMATE_MAGIC, "animate")
 
 /**
  * R T _ H T B L
@@ -1356,7 +1369,7 @@ struct rt_htbl {
     int			blen;	/**< @brief  # of struct's of storage at *hits */
     struct hit *	hits;	/**< @brief  hits[blen] data storage area */
 };
-#define RT_CK_HTBL(_p)	BU_CKMAG(_p, RT_HTBL_MAGIC, "rt_htbl")
+#define RT_CK_HTBL(_p) BU_CKMAG(_p, RT_HTBL_MAGIC, "rt_htbl")
 
 /**
  * R T _ P I E C E S T A T E
@@ -1378,7 +1391,7 @@ struct rt_piecestate {
     struct rt_htbl	htab;		/**< @brief  accumulating hits here */
     const union cutter *cutp;		/**< @brief  current bounding volume */
 };
-#define RT_CK_PIECESTATE(_p)	BU_CKMAG(_p, RT_PIECESTATE_MAGIC, "struct rt_piecestate")
+#define RT_CK_PIECESTATE(_p) BU_CKMAG(_p, RT_PIECESTATE_MAGIC, "struct rt_piecestate")
 
 /**
  * R T _ P I E C E L I S T
@@ -1403,7 +1416,7 @@ struct rt_piecelist {
     long		*pieces;	/**< @brief  pieces[npieces], piece indices */
     struct soltab	*stp;		/**< @brief  ref back to solid */
 };
-#define RT_CK_PIECELIST(_p)	BU_CKMAG(_p, RT_PIECELIST_MAGIC, "struct rt_piecelist")
+#define RT_CK_PIECELIST(_p) BU_CKMAG(_p, RT_PIECELIST_MAGIC, "struct rt_piecelist")
 
 /* Used to set globals declared in bot.c */
 #define RT_DEFAULT_MINPIECES		32
@@ -1480,7 +1493,7 @@ struct resource {
 };
 RT_EXPORT extern struct resource rt_uniresource;	/**< @brief  default.  Defined in librt/globals.c */
 #define RESOURCE_NULL	((struct resource *)0)
-#define RT_CK_RESOURCE(_p)	BU_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
+#define RT_CK_RESOURCE(_p) BU_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
 
 
 /**
@@ -1524,7 +1537,7 @@ struct pixel_ext {
     struct xray	corner[CORNER_PTS];
 };
 /* This should have had an RT_ prefix */
-#define BU_CK_PIXEL_EXT(_p)	BU_CKMAG(_p, PIXEL_EXT_MAGIC, "struct pixel_ext")
+#define BU_CK_PIXEL_EXT(_p) BU_CKMAG(_p, PIXEL_EXT_MAGIC, "struct pixel_ext")
 
 /**
  * A P P L I C A T I O N
@@ -1537,15 +1550,15 @@ struct pixel_ext {
  *
  *	- a_ray.r_pt	Starting point of ray to be fired
  *	- a_ray.r_dir	UNIT VECTOR with direction to fire in (dir cosines)
- *	- a_hit()		Routine to call when something is hit
- *	- a_miss()	Routine to call when ray misses everything
+ *	- a_hit() Routine to call when something is hit
+ *	- a_miss() Routine to call when ray misses everything
  *	- a_rt_i		Must be set to the value returned by rt_dirbuild().
  *
  * In addition, these fields are used by the library.  If they are set
  * to zero, default behavior will be used.
  *
  *	- a_resource	Pointer to CPU-specific resources.  Multi-CPU only.
- *	- a_overlap()	DEPRECATED, set a_multioverlap() instead.
+ *	- a_overlap() DEPRECATED, set a_multioverlap() instead.
  *			If non-null, this routine will be called to
  *			handle overlap conditions.  See librt/bool.c
  *			for calling sequence.
@@ -1628,6 +1641,7 @@ struct application {
     int			a_zero2;	/**< @brief  must be zero (sanity check) */
 };
 
+
 /**
  * A P P L I C A T I O N _ B U N D L E
  *
@@ -1645,8 +1659,8 @@ struct application {
  *	 		partition_bundle structure. Users can still override this default
  *	 		functionality but have to make sure to move the partition and
  *	 		segment list to the new partition_bundle structure.
- *	- b_hit()	Routine to call when something is hit by the ray bundle.
- *	- b_miss()	Routine to call when ray bundle misses everything.
+ *	- b_hit() Routine to call when something is hit by the ray bundle.
+ *	- b_miss() Routine to call when ray bundle misses everything.
  *
  *  Note that rt_shootrays() returns the (int) return of the
  *  b_hit()/b_miss() function called, as well as placing it in
@@ -1669,23 +1683,24 @@ struct application_bundle
     int b_return;
 };
 
+
 #define RT_APPLICATION_NULL ((struct application *)0)
 #define RT_AFN_NULL	((int (*)(struct application *, struct partition *, struct region *, struct region *, struct partition *))NULL)
-#define RT_CK_AP(_p)	BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
-#define RT_CK_APPLICATION(_p)	BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
-#define RT_CK_AP_TCL(_interp, _p)	BU_CKMAG_TCL(_interp, _p, RT_AP_MAGIC, "struct application")
+#define RT_CK_AP(_p) BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
+#define RT_CK_APPLICATION(_p) BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
+#define RT_CK_AP_TCL(_interp, _p) BU_CKMAG_TCL(_interp, _p, RT_AP_MAGIC, "struct application")
 #define RT_APPLICATION_INIT(_p) { \
-		memset((char *)(_p), 0, sizeof(struct application)); \
-		(_p)->a_magic = RT_AP_MAGIC; \
-	}
+	memset((char *)(_p), 0, sizeof(struct application)); \
+	(_p)->a_magic = RT_AP_MAGIC; \
+    }
 
 
 #ifdef NO_BOMBING_MACROS
 #  define RT_AP_CHECK(_ap)
 #else
 #  define RT_AP_CHECK(_ap)	\
-	{if ((_ap)->a_zero1||(_ap)->a_zero2) \
-		bu_bomb("corrupt application struct"); }
+    {if ((_ap)->a_zero1||(_ap)->a_zero2) \
+	    bu_bomb("corrupt application struct"); }
 #endif
 
 /**
@@ -1824,15 +1839,16 @@ struct rt_i {
     struct bu_ptbl	rti_new_solids;
 };
 
+
 #define RT_NU_GFACTOR_DEFAULT	1.5	 /**< @brief  see rt_cut_it() for a description
 					    of this */
 
 #define RTI_NULL	((struct rt_i *)0)
 
-#define RT_CHECK_RTI(_p)		BU_CKMAG(_p, RTI_MAGIC, "struct rt_i")
-#define RT_CHECK_RTI_TCL(_interp, _p)	BU_CKMAG_TCL(_interp, _p, RTI_MAGIC, "struct rt_i")
-#define RT_CK_RTI(_p)			RT_CHECK_RTI(_p)
-#define RT_CK_RTI_TCL(_interp, _p)	RT_CHECK_RTI_TCL(_interp, _p)
+#define RT_CHECK_RTI(_p) BU_CKMAG(_p, RTI_MAGIC, "struct rt_i")
+#define RT_CHECK_RTI_TCL(_interp, _p) BU_CKMAG_TCL(_interp, _p, RTI_MAGIC, "struct rt_i")
+#define RT_CK_RTI(_p) RT_CHECK_RTI(_p)
+#define RT_CK_RTI_TCL(_interp, _p) RT_CHECK_RTI_TCL(_interp, _p)
 
 #define	RT_PART_NUBSPT	0
 #define RT_PART_NUGRID	1
@@ -1847,7 +1863,7 @@ struct rt_i {
 #define RT_VISIT_ALL_SOLTABS_START(_s, _rti) { \
 	register struct bu_list	*_head = &((_rti)->rti_solidheads[0]); \
 	for (; _head < &((_rti)->rti_solidheads[RT_DBNHASH]); _head++) \
-		for (BU_LIST_FOR(_s, soltab, _head)) {
+	    for (BU_LIST_FOR(_s, soltab, _head)) {
 
 #define RT_VISIT_ALL_SOLTABS_END	} }
 
@@ -1859,12 +1875,12 @@ struct rt_i {
  *
  * Note that RT_GET_VLIST and RT_FREE_VLIST are non-PARALLEL.
  */
-#define RT_GET_VLIST(p)		BN_GET_VLIST(&rt_g.rtg_vlfree, p)
+#define RT_GET_VLIST(p) BN_GET_VLIST(&rt_g.rtg_vlfree, p)
 
 /** Place an entire chain of bn_vlist structs on the freelist */
-#define RT_FREE_VLIST(hd)	BN_FREE_VLIST(&rt_g.rtg_vlfree, hd)
+#define RT_FREE_VLIST(hd) BN_FREE_VLIST(&rt_g.rtg_vlfree, hd)
 
-#define RT_ADD_VLIST(hd, pnt, draw)  BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, pnt, draw)
+#define RT_ADD_VLIST(hd, pnt, draw) BN_ADD_VLIST(&rt_g.rtg_vlfree, hd, pnt, draw)
 
 
 /*
@@ -1873,9 +1889,9 @@ struct rt_i {
 #undef V2PRINT
 #undef VPRINT
 #undef HPRINT
-#define V2PRINT(a, b)	bu_log("%s (%g, %g)\n", a, (b)[0], (b)[1]);
-#define VPRINT(a, b)	bu_log("%s (%g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2])
-#define HPRINT(a, b)	bu_log("%s (%g, %g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2], (b)[3])
+#define V2PRINT(a, b) bu_log("%s (%g, %g)\n", a, (b)[0], (b)[1]);
+#define VPRINT(a, b) bu_log("%s (%g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2])
+#define HPRINT(a, b) bu_log("%s (%g, %g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2], (b)[3])
 
 /**
  * C O M M A N D _ T A B
@@ -1891,6 +1907,7 @@ struct command_tab {
     int	ct_max;		/**< @brief  max number of words in cmd */
 };
 
+
 /**
  * R T _ P O I N T _ L A B E L S
  *
@@ -1900,6 +1917,7 @@ struct rt_point_labels {
     char str[8];
     point_t pt;
 };
+
 
 /**
  * R T _ P T _ N O D E
@@ -1924,6 +1942,7 @@ struct line_seg		/**< @brief  line segment */
     int			start, end;	/**< @brief  indices into sketch's array of vertices */
 };
 
+
 struct carc_seg		/**< @brief  circular arc segment */
 {
     unsigned long	magic;
@@ -1937,6 +1956,7 @@ struct carc_seg		/**< @brief  circular arc segment */
     int			center;		/**< @brief  index of vertex at center of arc (only used by rt_extrude_prep and rt_extrude_shot) */
 };
 
+
 struct nurb_seg		/**< @brief  NURB curve segment */
 {
     unsigned long	magic;
@@ -1948,12 +1968,14 @@ struct nurb_seg		/**< @brief  NURB curve segment */
     fastf_t		*weights;	/**< @brief  array of weights for control points (NULL if non_rational) */
 };
 
+
 struct bezier_seg	/**< @brief  Bezier curve segment */
 {
     unsigned long	magic;
     int			degree;		/**< @brief  degree of curve (number of control points - 1) */
     int			*ctl_points;	/**< @brief  array of indices for control points */
 };
+
 
 /**
  * R T _ F U N C T A B
@@ -1979,86 +2001,86 @@ struct rt_functab {
     char ft_label[8];
     int ft_use_rpp;
     int (*ft_prep)(struct soltab * /**< @brief stp*/,
-			    struct rt_db_internal * /**< @brief ip*/,
-			    struct rt_i * /**< @brief rtip*/);
+		   struct rt_db_internal * /**< @brief ip*/,
+		   struct rt_i * /**< @brief rtip*/);
     int (*ft_shot)(struct soltab * /**< @brief stp*/,
-			    struct xray * /**< @brief rp*/,
-			    struct application * /**< @brief ap*/,	/**< @brief  has resource */
-			    struct seg * /**< @brief seghead*/);
+		   struct xray * /**< @brief rp*/,
+		   struct application * /**< @brief ap*/,	/**< @brief  has resource */
+		   struct seg * /**< @brief seghead*/);
     void (*ft_print)(const struct soltab * /**< @brief stp*/);
     void (*ft_norm)(struct hit * /**< @brief hitp*/,
-			     struct soltab * /**< @brief stp*/,
-			     struct xray * /**< @brief rp*/);
+		    struct soltab * /**< @brief stp*/,
+		    struct xray * /**< @brief rp*/);
     int (*ft_piece_shot)(struct rt_piecestate * /**< @brief psp*/,
-				  struct rt_piecelist * /**< @brief plp*/,
-				  double /**< @brief  dist_correction to apply to hit distances */,
-				  struct xray * /**< @brief  ray transformed to be near cut cell */,
-				  struct application * /**< @brief ap*/,	/**< @brief  has resource */
-				  struct seg * /**< @brief seghead*/);	/**< @brief  used only for PLATE mode hits */
+			 struct rt_piecelist * /**< @brief plp*/,
+			 double /**< @brief  dist_correction to apply to hit distances */,
+			 struct xray * /**< @brief  ray transformed to be near cut cell */,
+			 struct application * /**< @brief ap*/,	/**< @brief  has resource */
+			 struct seg * /**< @brief seghead*/);	/**< @brief  used only for PLATE mode hits */
     void (*ft_piece_hitsegs)(struct rt_piecestate * /**< @brief psp*/,
-				      struct seg * /**< @brief seghead*/,
-				      struct application * /**< @brief ap*/);	/**< @brief  has resource */
+			     struct seg * /**< @brief seghead*/,
+			     struct application * /**< @brief ap*/);	/**< @brief  has resource */
     void (*ft_uv)(struct application * /**< @brief ap*/,	/**< @brief  has resource */
-			   struct soltab * /**< @brief stp*/,
-			   struct hit * /**< @brief hitp*/,
-			   struct uvcoord * /**< @brief uvp*/);
+		  struct soltab * /**< @brief stp*/,
+		  struct hit * /**< @brief hitp*/,
+		  struct uvcoord * /**< @brief uvp*/);
     void (*ft_curve)(struct curvature * /**< @brief cvp*/,
-			      struct hit * /**< @brief hitp*/,
-			      struct soltab * /**< @brief stp*/);
+		     struct hit * /**< @brief hitp*/,
+		     struct soltab * /**< @brief stp*/);
     int (*ft_classify)(const struct soltab * /*stp*/, const vect_t /*min*/, const vect_t /*max*/, const struct bn_tol * /*tol*/);
     void (*ft_free)(struct soltab * /*stp*/);
     int (*ft_plot)(struct bu_list * /*vhead*/,
-			    struct rt_db_internal * /*ip*/,
-			    const struct rt_tess_tol * /*ttol*/,
-			    const struct bn_tol * /*tol*/);
+		   struct rt_db_internal * /*ip*/,
+		   const struct rt_tess_tol * /*ttol*/,
+		   const struct bn_tol * /*tol*/);
     void (*ft_vshot)(struct soltab * /*stp*/[],
-			      struct xray *[] /*rp*/,
-			      struct seg * /*segp*/,
-			      int /*n*/,
-			      struct application * /*ap*/);
+		     struct xray *[] /*rp*/,
+		     struct seg * /*segp*/,
+		     int /*n*/,
+		     struct application * /*ap*/);
     int (*ft_tessellate)(struct nmgregion ** /*r*/,
-				  struct model * /*m*/,
-				  struct rt_db_internal * /*ip*/,
-				  const struct rt_tess_tol * /*ttol*/,
-				  const struct bn_tol * /*tol*/);
+			 struct model * /*m*/,
+			 struct rt_db_internal * /*ip*/,
+			 const struct rt_tess_tol * /*ttol*/,
+			 const struct bn_tol * /*tol*/);
     int (*ft_tnurb)(struct nmgregion ** /*r*/,
-			     struct model * /*m*/,
-			     struct rt_db_internal * /*ip*/,
-			     const struct bn_tol * /*tol*/);
+		    struct model * /*m*/,
+		    struct rt_db_internal * /*ip*/,
+		    const struct bn_tol * /*tol*/);
     void (*ft_brep)(ON_Brep ** /*b*/,
-			    struct rt_db_internal * /*ip*/,
-			    const struct bn_tol * /*tol*/);
+		    struct rt_db_internal * /*ip*/,
+		    const struct bn_tol * /*tol*/);
     int (*ft_import5)(struct rt_db_internal * /*ip*/,
-			       const struct bu_external * /*ep*/,
-			       const mat_t /*mat*/,
-			       const struct db_i * /*dbip*/,
-			       struct resource * /*resp*/);
+		      const struct bu_external * /*ep*/,
+		      const mat_t /*mat*/,
+		      const struct db_i * /*dbip*/,
+		      struct resource * /*resp*/);
     int (*ft_export5)(struct bu_external * /*ep*/,
-			       const struct rt_db_internal * /*ip*/,
-			       double /*local2mm*/,
-			       const struct db_i * /*dbip*/,
-			       struct resource * /*resp*/);
+		      const struct rt_db_internal * /*ip*/,
+		      double /*local2mm*/,
+		      const struct db_i * /*dbip*/,
+		      struct resource * /*resp*/);
     int (*ft_import4)(struct rt_db_internal * /*ip*/,
-			      const struct bu_external * /*ep*/,
-			      const mat_t /*mat*/,
-			      const struct db_i * /*dbip*/,
-			      struct resource * /*resp*/);
+		      const struct bu_external * /*ep*/,
+		      const mat_t /*mat*/,
+		      const struct db_i * /*dbip*/,
+		      struct resource * /*resp*/);
     int	(*ft_export4)(struct bu_external * /*ep*/,
-			      const struct rt_db_internal * /*ip*/,
-			      double /*local2mm*/,
-			      const struct db_i * /*dbip*/,
-			      struct resource * /*resp*/);
+		      const struct rt_db_internal * /*ip*/,
+		      double /*local2mm*/,
+		      const struct db_i * /*dbip*/,
+		      struct resource * /*resp*/);
     void (*ft_ifree)(struct rt_db_internal * /*ip*/);
     int	(*ft_describe)(struct bu_vls * /*str*/,
-				const struct rt_db_internal * /*ip*/,
-				int /*verbose*/,
-				double /*mm2local*/,
-				struct resource * /*resp*/,
-				struct db_i *);
+		       const struct rt_db_internal * /*ip*/,
+		       int /*verbose*/,
+		       double /*mm2local*/,
+		       struct resource * /*resp*/,
+		       struct db_i *);
     int	(*ft_xform)(struct rt_db_internal * /*op*/,
-			     const mat_t /*mat*/, struct rt_db_internal * /*ip*/,
-			     int /*free*/, struct db_i * /*dbip*/,
-			     struct resource * /*resp*/);
+		    const mat_t /*mat*/, struct rt_db_internal * /*ip*/,
+		    int /*free*/, struct db_i * /*dbip*/,
+		    struct resource * /*resp*/);
     const struct bu_structparse *ft_parsetab;	/**< @brief  rt_xxx_parse */
     size_t ft_internal_size;	/**< @brief  sizeof(struct rt_xxx_internal) */
     unsigned long ft_internal_magic;	/**< @brief  RT_XXX_INTERNAL_MAGIC */
@@ -2070,9 +2092,10 @@ struct rt_functab {
     int (*ft_params)(struct pc_pc_set *, const struct rt_db_internal */*ip*/);
 };
 
+
 RT_EXPORT extern const struct rt_functab rt_functab[];
 
-#define RT_CK_FUNCTAB(_p)	BU_CKMAG(_p, RT_FUNCTAB_MAGIC, "functab");
+#define RT_CK_FUNCTAB(_p) BU_CKMAG(_p, RT_FUNCTAB_MAGIC, "functab");
 
 
 /**
@@ -2105,21 +2128,22 @@ struct rt_shootray_status {
     int			box_num;	/**< @brief  which cell along ray */
 };
 
+
 #define NUGRID_T_SETUP(_ax, _cval, _cno) \
-	if (ssp->rstep[_ax] > 0) { \
-		ssp->tv[_ax] = t0 + (nu_axis[_ax][_cno].nu_epos - _cval) * \
-					    ssp->inv_dir[_ax]; \
-	} else if (ssp->rstep[_ax] < 0) { \
-		ssp->tv[_ax] = t0 + (nu_axis[_ax][_cno].nu_spos - _cval) * \
-					    ssp->inv_dir[_ax]; \
-	} else { \
-		ssp->tv[_ax] = INFINITY; \
-	}
+    if (ssp->rstep[_ax] > 0) { \
+	ssp->tv[_ax] = t0 + (nu_axis[_ax][_cno].nu_epos - _cval) * \
+	    ssp->inv_dir[_ax]; \
+    } else if (ssp->rstep[_ax] < 0) { \
+	ssp->tv[_ax] = t0 + (nu_axis[_ax][_cno].nu_spos - _cval) * \
+	    ssp->inv_dir[_ax]; \
+    } else { \
+	ssp->tv[_ax] = INFINITY; \
+    }
 #define NUGRID_T_ADV(_ax, _cno) \
-	if (ssp->rstep[_ax] != 0) { \
-		ssp->tv[_ax] += nu_axis[_ax][_cno].nu_width * \
-			ssp->abs_inv_dir[_ax]; \
-	}
+    if (ssp->rstep[_ax] != 0) { \
+	ssp->tv[_ax] += nu_axis[_ax][_cno].nu_width * \
+	    ssp->abs_inv_dir[_ax]; \
+    }
 
 #define BACKING_DIST	(-2.0)		/**< @brief  mm to look behind start point */
 #define OFFSET_DIST	0.01		/**< @brief  mm to advance point into box */
@@ -2183,30 +2207,31 @@ struct hitmiss {
 					 */
 };
 
+
 #ifdef NO_BOMBING_MACROS
 #  define NMG_CK_HITMISS(hm)
 #else
 #  define NMG_CK_HITMISS(hm) \
     {\
 	switch (hm->l.magic) { \
-	case NMG_RT_HIT_MAGIC: \
-	case NMG_RT_HIT_SUB_MAGIC: \
-	case NMG_RT_MISS_MAGIC: \
+	    case NMG_RT_HIT_MAGIC: \
+	    case NMG_RT_HIT_SUB_MAGIC: \
+	    case NMG_RT_MISS_MAGIC: \
 		break; \
-	case NMG_MISS_LIST: \
+	    case NMG_MISS_LIST: \
 		bu_log(BU_FLSTR ": struct hitmiss has NMG_MISS_LIST magic #\n"); \
 		bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
-	case NMG_HIT_LIST: \
+	    case NMG_HIT_LIST: \
 		bu_log(BU_FLSTR ": struct hitmiss has NMG_MISS_LIST magic #\n"); \
 		bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
-	default: \
+	    default: \
 		bu_log(BU_FLSTR ": bad struct hitmiss magic: %u:(0x%08x)\n", \
-			hm->l.magic, hm->l.magic); \
+		       hm->l.magic, hm->l.magic); \
 		bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
 	}\
 	if (!hm->hit.hit_private) { \
-		bu_log(BU_FLSTR ": NULL hit_private in hitmiss struct\n"); \
-		bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
+	    bu_log(BU_FLSTR ": NULL hit_private in hitmiss struct\n"); \
+	    bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
 	} \
     }
 #endif
@@ -2288,6 +2313,7 @@ struct ray_data {
     int			classifying_ray;
 };
 
+
 #define NMG_PCA_EDGE	1
 #define NMG_PCA_EDGE_VERTEX 2
 #define NMG_PCA_VERTEX 3
@@ -2297,15 +2323,17 @@ struct ray_data {
 #define NMG_GET_HITMISS(_p, _ap) { \
 	(_p) = BU_LIST_FIRST(hitmiss, &((_ap)->a_resource->re_nmgfree)); \
 	if (BU_LIST_IS_HEAD((_p), &((_ap)->a_resource->re_nmgfree))) \
-		(_p) = (struct hitmiss *)bu_calloc(1, sizeof(struct hitmiss), "hitmiss "BU_FLSTR); \
+	    (_p) = (struct hitmiss *)bu_calloc(1, sizeof(struct hitmiss), "hitmiss "BU_FLSTR); \
 	else \
-		BU_LIST_DEQUEUE(&((_p)->l)); \
-}
+	    BU_LIST_DEQUEUE(&((_p)->l)); \
+    }
+
 
 #define NMG_FREE_HITLIST(_p, _ap) { \
 	BU_CK_LIST_HEAD((_p)); \
 	BU_LIST_APPEND_LIST(&((_ap)->a_resource->re_nmgfree), (_p)); \
-}
+    }
+
 
 #define HIT 1	/**< @brief  a hit on a face */
 #define MISS 0	/**< @brief  a miss on the face */
@@ -2323,7 +2351,7 @@ struct ray_data {
 	nmg_isect_ray_model(rd); \
 	(void) nmg_ray_segs(rd); \
 	bu_bomb("Should have bombed before this\n"); \
-   }
+    }
 #endif
 
 
@@ -2338,7 +2366,7 @@ struct nmg_radial {
     int			needs_flip;	/**< @brief  Insert eumate, not eu */
     fastf_t		ang;		/**< @brief  angle, in radians.  0 to 2pi */
 };
-#define NMG_CK_RADIAL(_p)	NMG_CKMAG(_p, NMG_RADIAL_MAGIC, "nmg_radial")
+#define NMG_CK_RADIAL(_p) NMG_CKMAG(_p, NMG_RADIAL_MAGIC, "nmg_radial")
 
 struct nmg_inter_struct {
     unsigned long	magic;
@@ -2363,7 +2391,7 @@ struct nmg_inter_struct {
     mat_t		proj;		/**< @brief  Matrix to project onto XY plane */
     const long 		*twod;		/**< @brief  ptr to face/edge of 2d projection */
 };
-#define NMG_CK_INTER_STRUCT(_p)	NMG_CKMAG(_p, NMG_INTER_STRUCT_MAGIC, "nmg_inter_struct")
+#define NMG_CK_INTER_STRUCT(_p) NMG_CKMAG(_p, NMG_INTER_STRUCT_MAGIC, "nmg_inter_struct")
 
 /*****************************************************************
  *                                                               *
@@ -2444,8 +2472,8 @@ RT_EXPORT BU_EXTERN(int rt_gettrees_muves,
 		     const char **argv,
 		     int ncpus));
 DEPRECATED RT_EXPORT BU_EXTERN(int rt_load_attrs,
-		    (struct rt_i *rtip,
-		     char **attrs));
+			       (struct rt_i *rtip,
+				char **attrs));
 /* Print seg struct */
 RT_EXPORT BU_EXTERN(void rt_pr_seg,
 		    (const struct seg *segp));
@@ -2517,12 +2545,12 @@ RT_EXPORT BU_EXTERN(int rt_boolfinal,
 RT_EXPORT BU_EXTERN(void rt_grow_boolstack,
 		    (struct resource *res));
 
-/* DEPRECATED: Approx Floating compare (use NEAR_EQUAL(a,b,0.001)) */
+/* DEPRECATED: Approx Floating compare (use NEAR_EQUAL(a, b, 0.001)) */
 DEPRECATED RT_EXPORT BU_EXTERN(int rt_fdiff,
-		    (double a, double b));
-/* DEPRECATED: Relative Difference (use EQUAL(a,b)) */
+			       (double a, double b));
+/* DEPRECATED: Relative Difference (use EQUAL(a, b)) */
 DEPRECATED RT_EXPORT BU_EXTERN(double rt_reldiff,
-		    (double a, double b));
+			       (double a, double b));
 
 /* Print a soltab */
 RT_EXPORT BU_EXTERN(void rt_pr_soltab,
@@ -2825,18 +2853,19 @@ RT_EXPORT BU_EXTERN(int db_full_path_search,
 /* search.c */
 
 struct db_full_path_list {
-	struct bu_list l;
-	struct db_full_path *path;
-	int local;
+    struct bu_list l;
+    struct db_full_path *path;
+    int local;
 };
 
+
 RT_EXPORT BU_EXTERN(void db_free_full_path_list,
-                (struct db_full_path_list *path_list));
+		    (struct db_full_path_list *path_list));
 
 RT_EXPORT BU_EXTERN(void *db_search_formplan,
-		(char **argv,
-		 struct db_i *dbip,
-		 struct rt_wdb *wdbp));
+		    (char **argv,
+		     struct db_i *dbip,
+		     struct rt_wdb *wdbp));
 
 /**
  * release memory for the formulated plan returned by
@@ -2845,16 +2874,16 @@ RT_EXPORT BU_EXTERN(void *db_search_formplan,
 RT_EXPORT BU_EXTERN(void db_search_freeplan, (void **plan));
 
 RT_EXPORT BU_EXTERN(struct db_full_path_list *db_search_full_paths,
-		(void *searchplan,
-		 struct db_full_path_list *path_list,
-		 struct db_i *dbip,
-		 struct rt_wdb *wdbp));
+		    (void *searchplan,
+		     struct db_full_path_list *path_list,
+		     struct db_i *dbip,
+		     struct rt_wdb *wdbp));
 
 RT_EXPORT BU_EXTERN(struct bu_ptbl *db_search_unique_objects,
-		(void *searchplan,
-		 struct db_full_path_list *path_list,
-		 struct db_i *dbip,
-		 struct rt_wdb *wdbp));
+		    (void *searchplan,
+		     struct db_full_path_list *path_list,
+		     struct db_i *dbip,
+		     struct rt_wdb *wdbp));
 
 /* db_open.c */
 RT_EXPORT BU_EXTERN(void db_sync,
@@ -3128,11 +3157,11 @@ RT_EXPORT BU_EXTERN(int db_put_external,
 RT_EXPORT BU_EXTERN(int db_scan,
 		    (struct db_i *,
 		     int (*handler)(struct db_i *,
-					    const char *name,
-					    off_t addr,
-					    size_t nrec,
-					    int flags,
-					    genptr_t client_data),
+				    const char *name,
+				    off_t addr,
+				    size_t nrec,
+				    int flags,
+				    genptr_t client_data),
 		     int do_old_matter,
 		     genptr_t client_data));
 /* update db unit conversions */
@@ -4091,7 +4120,7 @@ RT_EXPORT BU_EXTERN(int nmg_demote_eu,
 RT_EXPORT BU_EXTERN(void nmg_movevu,
 		    (struct vertexuse *vu,
 		     struct vertex *v));
-#define nmg_moveeu(a, b)		nmg_je(a, b)
+#define nmg_moveeu(a, b) nmg_je(a, b)
 RT_EXPORT BU_EXTERN(void nmg_je,
 		    (struct edgeuse *eudst,
 		     struct edgeuse *eusrc));
@@ -4884,7 +4913,7 @@ RT_EXPORT BU_EXTERN(int rt_bot_find_v_nearest_pt2,
 RT_EXPORT BU_EXTERN(int rt_bot_find_e_nearest_pt2, (int *vert1, int *vert2, const struct rt_bot_internal *bot, const point_t pt2, const mat_t mat));
 RT_EXPORT BU_EXTERN(fastf_t rt_bot_propget,
 		    (struct rt_bot_internal *bot,
-		    const char *property));
+		     const char *property));
 RT_EXPORT BU_EXTERN(int rt_bot_vertex_fuse,
 		    (struct rt_bot_internal *bot));
 RT_EXPORT BU_EXTERN(int rt_bot_face_fuse,
@@ -5400,7 +5429,7 @@ RT_EXPORT BU_EXTERN(int nmg_insert_vu_if_on_edge,
 		     struct bn_tol *tol));
 /* nmg_face_state_transition */
 
-#define nmg_mev(_v, _u)	nmg_me((_v), (struct vertex *)NULL, (_u))
+#define nmg_mev(_v, _u) nmg_me((_v), (struct vertex *)NULL, (_u))
 
 /* From nmg_eval.c */
 RT_EXPORT BU_EXTERN(void nmg_ck_lu_orientation,
@@ -6068,6 +6097,7 @@ enum {
     ATTR_INHERIT,
     ATTR_NULL
 };
+
 
 /**
  * D B 5 _ S T A N D A R D _ A T T R I B U T E
