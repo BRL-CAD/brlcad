@@ -111,7 +111,7 @@ HIDDEN int ogl_drawLines3D(struct dm *dmp, int npoints, point_t *points);
 HIDDEN int ogl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
 HIDDEN int ogl_drawVList(struct dm *dmp, register struct bn_vlist *vp);
 HIDDEN int ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp);
-HIDDEN int ogl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data);
+HIDDEN int ogl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data);
 HIDDEN int ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
 HIDDEN int ogl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
 HIDDEN int ogl_setLineAttr(struct dm *dmp, int width, int style);
@@ -1653,7 +1653,7 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
  *
  */
 HIDDEN int
-ogl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data)
+ogl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {

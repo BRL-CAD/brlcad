@@ -296,7 +296,7 @@ ps_drawVList(struct dm *dmp, struct bn_vlist *vp)
  */
 /* ARGSUSED */
 HIDDEN int
-ps_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data)
+ps_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {

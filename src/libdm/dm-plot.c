@@ -309,7 +309,7 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
  * P L O T _ D R A W
  */
 HIDDEN int
-plot_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data)
+plot_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {

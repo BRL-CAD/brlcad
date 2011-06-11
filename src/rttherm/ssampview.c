@@ -95,8 +95,8 @@ Tk_Window tkwin;
 
 int doit(ClientData cd, Tcl_Interp *interp, int argc, char **argv), doit1(ClientData cd, Tcl_Interp *interp, int argc, char **argv);
 void find_minmax(void);
-void rescale(BU_ARGS(int wav));
-void show_color(BU_ARGS(int off));
+void rescale(int wav);
+void show_color(int off);
 
 char *first_command = "no_command?";
 

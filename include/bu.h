@@ -138,7 +138,6 @@ __BEGIN_DECLS
  * argument list given for "args" be enclosed in parens.
  */
 #define BU_EXTERN(type_and_name, args) extern type_and_name args
-#define BU_ARGS(args) args
 
 /**
  * shorthand declaration of a printf-style functions
@@ -1532,7 +1531,7 @@ struct bu_mapped_file {
 /*----------------------------------------------------------------------*/
 
 /* formerly rt_g.rtg_logindent, now use bu_log_indent_delta() */
-typedef int (*bu_hook_t)BU_ARGS((genptr_t, genptr_t));
+typedef int (*bu_hook_t)(genptr_t, genptr_t);
 
 struct bu_hook_list {
     struct bu_list l; /**< @brief linked list */
@@ -3609,7 +3608,7 @@ BU_EXPORT BU_EXTERN(int bu_set_realtime, ());
  * on.  The registers are not shared.
  */
 BU_EXPORT BU_EXTERN(void bu_parallel,
-		    (void (*func)BU_ARGS((int ncpu, genptr_t arg)),
+		    (void (*func)(int ncpu, genptr_t arg),
 		     int ncpu,
 		     genptr_t arg));
 

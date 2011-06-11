@@ -1583,17 +1583,17 @@ struct application {
     unsigned long	a_magic;
     /* THESE ELEMENTS ARE MANDATORY */
     struct xray		a_ray;		/**< @brief  Actual ray to be shot */
-    int			(*a_hit)BU_ARGS((struct application *, struct partition *, struct seg *));	/**< @brief  called when shot hits model */
-    int			(*a_miss)BU_ARGS((struct application *));	/**< @brief  called when shot misses */
+    int			(*a_hit)(struct application *, struct partition *, struct seg *);	/**< @brief  called when shot hits model */
+    int			(*a_miss)(struct application *);	/**< @brief  called when shot misses */
     int			a_onehit;	/**< @brief  flag to stop on first hit */
     fastf_t		a_ray_length;	/**< @brief  distance from ray start to end intersections */
     struct rt_i	*	a_rt_i;		/**< @brief  this librt instance */
     int			a_zero1;	/**< @brief  must be zero (sanity check) */
     /* THESE ELEMENTS ARE USED BY THE LIBRARY, BUT MAY BE LEFT ZERO */
     struct resource *	a_resource;	/**< @brief  dynamic memory resources */
-    int			(*a_overlap)BU_ARGS((struct application *, struct partition *, struct region *, struct region *, struct partition *));	/**< @brief  DEPRECATED */
-    void		(*a_multioverlap)BU_ARGS((struct application *, struct partition *, struct bu_ptbl *, struct partition *));	/**< @brief  called to resolve overlaps */
-    void		(*a_logoverlap)BU_ARGS((struct application *, const struct partition *, const struct bu_ptbl *, const struct partition *));	/**< @brief  called to log overlaps */
+    int			(*a_overlap)(struct application *, struct partition *, struct region *, struct region *, struct partition *);	/**< @brief  DEPRECATED */
+    void		(*a_multioverlap)(struct application *, struct partition *, struct bu_ptbl *, struct partition *);	/**< @brief  called to resolve overlaps */
+    void		(*a_logoverlap)(struct application *, const struct partition *, const struct bu_ptbl *, const struct partition *);	/**< @brief  called to log overlaps */
     int			a_level;	/**< @brief  recursion level (for printing) */
     int			a_x;		/**< @brief  Screen X of ray, if applicable */
     int			a_y;		/**< @brief  Screen Y of ray, if applicable */
@@ -1662,8 +1662,8 @@ struct application_bundle
     /* THESE ELEMENTS ARE MANDATORY */
     struct xrays b_rays; /**< @brief  Actual bundle of rays to be shot */
     struct application b_ap; /**< @brief  application setting to be applied to each ray */
-    int (*b_hit)BU_ARGS((struct application_bundle *, struct partition_bundle *)); /**< @brief  called when bundle hits model */
-    int (*b_miss)BU_ARGS((struct application_bundle *)); /**< @brief  called when entire bundle misses */
+    int (*b_hit)(struct application_bundle *, struct partition_bundle *); /**< @brief  called when bundle hits model */
+    int (*b_miss)(struct application_bundle *); /**< @brief  called when entire bundle misses */
     int b_user; /**< @brief  application_bundle-specific value */
     genptr_t b_uptr; /**< @brief  application_bundle-specific pointer */
     int b_return;
@@ -3127,12 +3127,12 @@ RT_EXPORT BU_EXTERN(int db_put_external,
 /* read db (to build directory) */
 RT_EXPORT BU_EXTERN(int db_scan,
 		    (struct db_i *,
-		     int (*handler)BU_ARGS((struct db_i *,
+		     int (*handler)(struct db_i *,
 					    const char *name,
 					    off_t addr,
 					    size_t nrec,
 					    int flags,
-					    genptr_t client_data)),
+					    genptr_t client_data),
 		     int do_old_matter,
 		     genptr_t client_data));
 /* update db unit conversions */

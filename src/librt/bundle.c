@@ -583,8 +583,8 @@ int rt_shootrays(struct application_bundle *bundle)
     struct partition_bundle *pb = NULL;
     genptr_t a_uptr_backup = NULL;
     struct xray a_ray;
-    int (*a_hit)BU_ARGS((struct application *, struct partition *, struct seg *));
-    int	(*a_miss)BU_ARGS((struct application *));
+    int (*a_hit)(struct application *, struct partition *, struct seg *);
+    int	(*a_miss)(struct application *);
 
     struct application *ray_ap = NULL;
     int hit;
