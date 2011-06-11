@@ -75,8 +75,7 @@ db_open(const char *name, const char *mode)
 {
     register struct db_i	*dbip = DBI_NULL;
     register int		i;
-    char *argv[3] = {NULL, NULL, NULL, NULL};
-    char *dirpath = NULL;
+    char **argv;
 
     if (RT_G_DEBUG & DEBUG_DB) {
 	bu_log("db_open(%s, %s)\n", name, mode);
@@ -157,6 +156,7 @@ db_open(const char *name, const char *mode)
     dbip->dbi_uses = 1;
 
     /* XXX At some point, expand with getenv("BRLCAD_FILE_PATH"); */
+    argv = (char **)bu_malloc(3 * sizeof(char *), "dbi_filepath[3]");
     argv[0] = bu_strdup(".");
     argv[1] = bu_dirname(name);
     argv[2] = NULL;
@@ -184,6 +184,7 @@ db_open(const char *name, const char *mode)
 	    }
 
 	    bu_free((genptr_t)argv[0], "db_open: argv[0]");
+	    bu_free((genptr_t)argv, "db_open: argv");
 	    bu_free((char *)dbip, "struct db_i");
 
 	    return DBI_NULL;
