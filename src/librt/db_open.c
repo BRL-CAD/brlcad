@@ -155,10 +155,17 @@ db_open(const char *name, const char *mode)
     dbip->dbi_title = (char *)0;
     dbip->dbi_uses = 1;
 
-    /* XXX At some point, expand with getenv("BRLCAD_FILE_PATH"); */
+    /* FIXME: At some point, expand argv search paths with
+     * getenv("BRLCAD_FILE_PATH") paths
+     */
+
+    /* intentionally acquiring dynamic memory here since we set
+     * dbip->dbi_filepath to argv.  arg values and array memory are
+     * released during db_close.
+     */
     argv = (char **)bu_malloc(3 * sizeof(char *), "dbi_filepath[3]");
-    argv[0] = bu_strdup(".");
-    argv[1] = bu_dirname(name);
+    argv[0] = bu_dirname(name);
+    argv[1] = bu_strdup(".");
     argv[2] = NULL;
     dbip->dbi_filepath = argv;
 
