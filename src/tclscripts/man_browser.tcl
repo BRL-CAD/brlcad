@@ -52,7 +52,7 @@ package provide ManBrowser 1.0
     }
  
     private {
-	common pages [list]
+	common pages
 	variable pageData
     }
 
@@ -84,7 +84,7 @@ package provide ManBrowser 1.0
     set disabledPages [lsort $disabledPages]
 
     # Reset pages list
-    if {[info exists pages] && $pages != {}} {
+    if {[info exists pages($this)] && $pages($this) != {}} {
 	setPageNames
     }
 }
@@ -96,7 +96,7 @@ package provide ManBrowser 1.0
     set enabledPages [lsort $enabledPages]
 
     # Reset pages list
-    if {[info exists pages] && $pages != {}} {
+    if {[info exists pages($this)] && $pages($this) != {}} {
 	setPageNames
     }
 }
@@ -104,7 +104,7 @@ package provide ManBrowser 1.0
 ::itcl::body ManBrowser::setPageNames {} {
     set manFiles [glob -directory $path *.html ]
 
-    set pages [list]
+    set pages($this) [list]
     foreach manFile $manFiles {
 	set rootName [file rootname [file tail $manFile]]
 
@@ -122,15 +122,15 @@ package provide ManBrowser 1.0
 
 	# Obviously, if the page is both disabled/enabled, it will be disabled
 	if {!$isDisabled && $isEnabled} {
-	    lappend pages $rootName
+	    lappend pages($this) $rootName
 	}
     }
-    set pages [lsort $pages]
+    set pages($this) [lsort $pages($this)]
 }
 
 ::itcl::body ManBrowser::select {pageName} {
     # Select the requested man page 
-    set idx [lsearch -sorted -exact $pages $pageName]
+    set idx [lsearch -sorted -exact $pages($this) $pageName]
 
     if {$idx != -1} {
         set result True
@@ -217,7 +217,7 @@ package provide ManBrowser 1.0
  				       -width 16 \
                                        -exportselection false \
 	                               -yscroll "$toc.toc_scrollbar set" \
-				       -listvariable [scope pages]
+				       -listvariable [scope pages($this)]
     } {}
 
     $toc.toc_scrollbar configure -command "$toc.toc_listbox yview"
@@ -251,7 +251,7 @@ package provide ManBrowser 1.0
     if {[file exists [file join $path Introduction.html]]} {
         loadPage Introduction
     } else {
-        loadPage [lindex $pages 0]
+        loadPage [lindex $pages($this) 0]
     }
 
     bind $toc.toc_listbox <<ListboxSelect>> {
