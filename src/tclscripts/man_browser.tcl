@@ -22,13 +22,14 @@
 # Description:
 #    Man page browser
 #
-# To do:
+# To-do/ideas:
 #    -Add ability to add >1 path (like {{mann/en/} {man/en/archer}}
-#    -Add method for retrieving the list of commands
-#    -Document the interface
+#    -Add method for retrieving the list of commands displayed
 #    -Resizing window could be improved (i.e. limited).
 #    -It would be nice if clicking html text would bring you to
 #     the clicked cmd's man page, like an href. May be difficult.
+#    -Add support for args like "*make*", returning >1 results in browser pane
+#    -Make a parent class; then a HelpBrowser sibling (removes much duplication)
 
 package require Tk
 package require Itcl
@@ -47,24 +48,30 @@ package provide ManBrowser 1.0
         method setPageNames	{}
 	method loadPage		{pageName}
 	method select		{pageName}
+    }
 
-	proc getBrowser		{}
-    }
- 
-    private {
-	common pages
-	variable pageData
-    }
+    # List of pages loaded into ToC listbox
+    private common pages
 
     constructor {args} {}
 }
 
+# ------------------------------------------------------------
+#                      OPTIONS
+# ------------------------------------------------------------
+
+##
+# Path to HTML manual pages
+#
 ::itcl::configbody ManBrowser::path {
     if {![info exists path] || ![file isdirectory $path]} {
 	set path [file join [bu_brlcad_data "html"] mann en]
     }
 }
 
+##
+# Used in window title string
+#
 ::itcl::configbody ManBrowser::parentName {
     if {![info exists parentName] || ![string is print -strict $parentName]} {
 	set parentName BRLCAD
@@ -72,8 +79,10 @@ package provide ManBrowser 1.0
     configure -title "[string trim $parentName] Manual Page Browser"
 }
 
+##
+# Page names in disabledByDefault and those added to this list are *always*
+# disabled.
 ::itcl::configbody ManBrowser::disabledPages {
-    # Page names added to this list are always disabled
     set disabledByDefault [list Introduction]
 
     if {![info exists disabledPages] || ![string is list $disabledPages]} {
@@ -89,6 +98,9 @@ package provide ManBrowser 1.0
     }
 }
 
+##
+# All pages are enabled by default. If this list is defined, page names added
+# to it are the only ones that may be enabled.
 ::itcl::configbody ManBrowser::enabledPages {
     if {![info exists enabledPages] || ![string is list $enabledPages]} {
     	set enabledPages [list]
@@ -101,6 +113,13 @@ package provide ManBrowser 1.0
     }
 }
 
+# ------------------------------------------------------------
+#                      OPERATIONS
+# ------------------------------------------------------------
+
+##
+# Loads a list of enabled commands into ToC, after comparing pages found in
+# 'path' with those listed in 'disabledPages' and 'enabledPages'.
 ::itcl::body ManBrowser::setPageNames {} {
     set manFiles [glob -directory $path *.html ]
 
@@ -128,6 +147,26 @@ package provide ManBrowser 1.0
     set pages($this) [lsort $pages($this)]
 }
 
+##
+# Loads pages selected graphically or through the command line into HTML browser
+#
+::itcl::body ManBrowser::loadPage {pageName} {
+    # Get page
+    set pathname [file join $path $pageName.html]
+    set htmlFile [open $pathname]
+    set pageData [read $htmlFile]
+    close $htmlFile
+
+    # Display page
+    set htmlview [[$this childsite].browser.htmlview html]
+    $htmlview reset
+    $htmlview configure -parsemode html
+    $htmlview parse $pageData
+}
+
+##
+# Selects page in ToC & loads into HTML browser; used for command line calls
+#
 ::itcl::body ManBrowser::select {pageName} {
     # Select the requested man page 
     set idx [lsearch -sorted -exact $pages($this) $pageName]
@@ -152,24 +191,9 @@ package provide ManBrowser 1.0
     return $result
 }
 
-::itcl::body ManBrowser::getBrowser {} {
-    return [itcl_info objects -class ManBrowser]
-}
-
-::itcl::body ManBrowser::loadPage {pageName} {
-    # Get page
-    set pathname [file join $path $pageName.html]
-    set htmlFile [open $pathname]
-    set pageData [read $htmlFile]
-    close $htmlFile
-
-    # Display page
-    set htmlview [[$this childsite].browser.htmlview html]
-    $htmlview reset
-    $htmlview configure -parsemode html
-    $htmlview parse $pageData
-}
-
+# ------------------------------------------------------------
+#                      CONSTRUCTOR
+# ------------------------------------------------------------
 ::itcl::body ManBrowser::constructor {args} {
     eval itk_initialize $args
 
@@ -188,7 +212,6 @@ package provide ManBrowser 1.0
         -modality none \
         -thickness 2 \
         -buttonboxpady 0
-       #-background $SystemButtonFace
     $this buttonconfigure 0 \
         -defaultring yes \
         -defaultringpad 3 \
@@ -255,12 +278,9 @@ package provide ManBrowser 1.0
     }
 
     bind $toc.toc_listbox <<ListboxSelect>> {
-	set mb [ManBrowser::getBrowser]
+	set mb [itcl_info objects -class ManBrowser]
 	$mb loadPage [%W get [%W curselection]]
     }
-
-    #center [namespace tail $this]
-    #::update
 
     configure -height 600 -width 800
     return $this
