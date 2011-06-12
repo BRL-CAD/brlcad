@@ -26,7 +26,10 @@ proc man {cmdname} {
     if {![winfo exists .mgedMan]} {
 	ManBrowser .mgedMan -parentName MGED
     }
-    .mgedMan select $cmdname
+
+    if {![.mgedMan select $cmdname]} {
+	error "couldn't find manual page \"$page\""
+    }
     .mgedMan activate
 }
 

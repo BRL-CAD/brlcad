@@ -5157,11 +5157,11 @@ namespace eval ArcherCore {
 	set options [lindex $optionsAndArgs 0]
 	set expandedArgs [lindex $optionsAndArgs 1]
 
-	if {$options == {}} {
-	    return $expandedArgs
-	} else {
-	    return [eval gedCmd ls $args]
+        # If there is an error, return it along with the results
+	if {![catch [set result [eval gedCmd ls $args]]]} {
+	    error "some of the requested objects could not be found"
 	}
+	return $result
     }
 }
 
@@ -5178,7 +5178,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::man {args} {
-    set archerMan [ManBrowser::getBrowser]
+    set archerMan $itk_interior.archerMan
 
     set len [llength $args]
     if {$len != 0 && $len != 1} {
@@ -5188,7 +5188,7 @@ namespace eval ArcherCore {
     if {$args != {}} {
 	set page $args
         if {![$archerMan select $page]} {
-            error "No man page found for $cmd"
+            error "couldn't find manual page \"$page\""
         }
     }
     $archerMan activate
