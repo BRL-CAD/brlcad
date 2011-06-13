@@ -112,6 +112,8 @@ IF(BRLCAD-ENABLE_OSL)
     ##########################################
 
     BRLCAD_ADDEXEC(osl_rt "osl_rt.cpp" "osl-renderer ${OSLRT_LIBS2}")
+
+    BRLCAD_ADDEXEC(osl_rt2 "osl_rt2.c" "osl-renderer ${OSLRT_LIBS2}")
     
 
 ELSE(BRLCAD-ENABLE_OSL)
