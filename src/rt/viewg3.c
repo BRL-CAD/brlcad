@@ -563,7 +563,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	out_obliq = acos(dot_prod) *
 	    bn_radtodeg;
 
-	/ *Check for exit obliquties greater than 90 degrees. */
+	/* Check for exit obliquties greater than 90 degrees. */
 
 			      if (in_obliq > 90.0)
 				  in_obliq = 90.0;
