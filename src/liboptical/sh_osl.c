@@ -83,13 +83,7 @@
  */
 struct osl_specific {
     long magic;	/* magic # for memory validity check, must come 1st */
-    double osl_val;	/* variables for shader ... */
-    double osl_dist;
-    vect_t osl_delta;
-    point_t osl_min;
-    point_t osl_max;
-    mat_t osl_m_to_sh;	/* model to shader space matrix */
-    mat_t osl_m_to_r;	/* model to shader space matrix */
+    OSLRenderer* oslr;
 };
 
 
@@ -97,13 +91,7 @@ struct osl_specific {
 static const
 struct osl_specific osl_defaults = {
     OSL_MAGIC,
-    1.0,				/* osl_val */
-    0.0,				/* osl_dist */
-    VINITALL(1.0),		/* osl_delta */
-    VINIT_ZERO,			/* osl_min */
-    VINIT_ZERO,			/* osl_max */
-    MAT_INIT_ZERO,		/* osl_m_to_sh */
-    MAT_INIT_ZERO		/* osl_m_to_r */
+    NULL
 };
 
 
@@ -111,25 +99,12 @@ struct osl_specific osl_defaults = {
 #define SHDR_O(m) bu_offsetof(struct osl_specific, m)
 #define SHDR_AO(m) bu_offsetofarray(struct osl_specific, m)
 
-
-/* description of how to parse/print the arguments to the shader
- * There is at least one line here for each variable in the shader specific
- * structure above
- */
+/* description of how to parse/print the arguments to the shader */
 struct bu_structparse osl_print_tab[] = {
-    {"%f",  1, "val",		SHDR_O(osl_val),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  1, "dist",		SHDR_O(osl_dist),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  3, "delta",		SHDR_AO(osl_delta),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  3, "max",		SHDR_AO(osl_max),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  3, "min",		SHDR_AO(osl_min),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,		0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
-
 };
 struct bu_structparse osl_parse_tab[] = {
     {"%p",	bu_byteoffset(osl_print_tab[0]), "osl_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  1, "v",		SHDR_O(osl_val),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  1, "dist",	SHDR_O(osl_dist),		bu_mm_cvt, NULL, NULL },
-    {"%f",  3, "d",		SHDR_AO(osl_delta),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -149,9 +124,6 @@ struct mfuncs osl_mfuncs[] = {
     {MF_MAGIC,	"osl",	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,     osl_setup,	osl_render,	osl_print,	osl_free },
     {0,		(char *)0,	0,		0,		0,     0,		0,		0,		0 }
 };
-
-/* Osl renderer system */
-OSLRenderer* oslr;
 
 /* X X X _ S E T U P
  *
@@ -194,34 +166,10 @@ osl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
     if (bu_struct_parse(matparm, osl_parse_tab, (char *)osl_sp) < 0)
 	return -1;
 
-    /* Optional:
-     *
-     * If the shader needs to operate in a coordinate system which stays
-     * fixed on the region when the region is moved (as in animation)
-     * we need to get a matrix to perform the appropriate transform(s).
-     *
-     * rt_shader_mat() returns a matrix which maps points on/in the
-     * region into the unit cube.  This unit cube is formed by first
-     * mapping from world coordinates into "region coordinates" (the
-     * coordinate system in which the region is defined).  Then the
-     * bounding box of the region is used to establish a mapping to
-     * the unit cube
-     *
-     * rt_shader_mat(osl_sp->osl_m_to_sh, rtip, rp, osl_sp->osl_min,
-     * osl_sp->osl_max);
-     *
-     * Alternatively, shading may be done in "region coordinates"
-     * if desired:
-     *
-     * db_region_mat(osl_sp->osl_m_to_r, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
-     *
-     */
-
-    oslr = oslrenderer_init();
-
+    osl_sp->oslr = oslrenderer_init();
+    
     if (rdebug&RDEBUG_SHADE) {
 	bu_struct_print(" Parameters:", osl_print_tab, (char *)osl_sp);
-	bn_mat_print("m_to_sh", osl_sp->osl_m_to_sh);
     }
 
     return 1;
@@ -244,7 +192,9 @@ osl_print(register struct region *rp, char *dp)
 HIDDEN void
 osl_free(char *cp)
 {
-    oslrenderer_free(&oslr);
+    register struct osl_specific *osl_sp =
+	(struct osl_specific *)cp;
+    oslrenderer_free(&(osl_sp->oslr));
     bu_free(cp, "osl_specific");
 }
 
@@ -307,7 +257,7 @@ osl_render(struct application *ap, struct partition *pp, struct shadework *swp, 
     info.isbackfacing = 0;
     info.surfacearea = 1.0f;
     
-    oslrenderer_query_color(oslr, &info);
+    oslrenderer_query_color(osl_sp->oslr, &info);
     VMOVE(swp->sw_color, info.pc);
     
     /* OSL perform shading operations here */
