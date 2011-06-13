@@ -94,7 +94,8 @@ void write_image(float *buffer, int w, int h)
 
 int main (){
 
-    OSLRenderer oslr;
+    OSLRenderer *oslr;
+    oslr = oslrenderer_init();
 
     // camera parameters
     Vec3 cam_o = Vec3(50, 52, 295.6); // positions
@@ -112,7 +113,7 @@ int main (){
 
     for(int y=0; y<h; y++) {
         
-        fprintf(stderr, "\rRendering (%d spp) %5.2f%%", samps*4, 100.*y/(h-1));
+        fprintf(stderr, "\rRendering2 (%d spp) %5.2f%%", samps*4, 100.*y/(h-1));
 
         Xi[0] = 0;
         Xi[1] = 0;
@@ -192,7 +193,13 @@ int main (){
                         info.isbackfacing = 0;
                         info.surfacearea = 1.0;
                         
-                        r = r + oslr.QueryColor(&info)*(1.0f/samps);
+                        oslrenderer_query_color(oslr, &info);
+                        Vec3 ans;
+                        ans[0] = info.pc[0];
+                        ans[1] = info.pc[1];
+                        ans[2] = info.pc[2];
+                        //r = r + oslr.QueryColor(&info)*(1.0f/samps);
+                        r = r + ans;
                     }
 
                     // normalize
