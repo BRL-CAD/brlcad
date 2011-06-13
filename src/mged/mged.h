@@ -222,14 +222,14 @@ extern void ellipse();
 extern void mged_view_callback(struct ged_view *gvp, genptr_t clientData);
 
 /* buttons.c */
-BU_EXTERN(void button, (int bnum));
-BU_EXTERN(void press, (char *str));
-BU_EXTERN(char *label_button, (int bnum));
-BU_EXTERN(int not_state, (int desired, char *str));
-BU_EXTERN(int chg_state, (int from, int to, char *str));
-BU_EXTERN(void state_err, (char *str));
+extern void button(int bnum);
+extern void press(char *str);
+extern char *label_button(int bnum);
+extern int not_state(int desired, char *str);
+extern int chg_state(int from, int to, char *str);
+extern void state_err(char *str);
 
-BU_EXTERN(int invoke_db_wrapper, (Tcl_Interp *interpreter, int argc, const char *argv[]));
+extern int invoke_db_wrapper(Tcl_Interp *interpreter, int argc, const char *argv[]);
 
 /* history.c */
 void history_record(struct bu_vls *cmdp, struct timeval *start, struct timeval *finish, int status); /* Either CMD_OK or CMD_BAD */

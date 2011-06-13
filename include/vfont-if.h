@@ -110,14 +110,14 @@ struct vfont {
  * VFONT_NULL is returned on error.  On ordinary errors, the function
  * is silent.  On extraordinary errors, a remark is placed on stderr.
  */
-BU_EXPORT BU_EXTERN(struct vfont *vfont_get, (char *font));
+BU_EXPORT extern struct vfont *vfont_get(char *font);
 
 /**
  * V F O N T _ F R E E
  *
  * Return the storage associated with a struct vfont
  */
-BU_EXPORT BU_EXTERN(void vfont_free, (struct vfont *font));
+BU_EXPORT extern void vfont_free(struct vfont *font);
 
 /** @} */
 /*

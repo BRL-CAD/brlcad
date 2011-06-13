@@ -50,7 +50,7 @@ static struct bn_tol	tol;
 
 static const char usage[] = "Usage: %s [-r region] [-g group] [jack_db] [brlcad_db]\n";
 
-BU_EXTERN( fastf_t nmg_loop_plane_area, (const struct loopuse *lu, plane_t pl ) );
+extern fastf_t nmg_loop_plane_area(const struct loopuse *lu, plane_t pl );
 
 int	psurf_to_nmg(struct model *m, FILE *fp, char *jfile);
 int	create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *grp_name);

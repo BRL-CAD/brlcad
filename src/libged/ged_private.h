@@ -115,347 +115,290 @@ struct _ged_trace_data {
 extern struct solid _FreeSolid;
 
 /* defined in attr.c */
-BU_EXTERN (int _ged_cmpattr,
-	   (const void *p1,
-            const void *p2));
+extern int _ged_cmpattr(const void *p1,
+            const void *p2);
 
 /* defined in ged.c */
-BU_EXTERN (void _ged_print_node,
-	   (struct ged *gedp,
+extern void _ged_print_node(struct ged *gedp,
 	    struct directory *dp,
 	    size_t pathpos,
 	    int indentSize,
 	    char prefix,
 	    unsigned flags,
 	    int displayDepth,
-	    int currdisplayDepth));
-BU_EXTERN (struct db_i *_ged_open_dbip,
-	   (const char *filename,
-	    int existing_only));
+	    int currdisplayDepth);
+extern struct db_i *_ged_open_dbip(const char *filename,
+	    int existing_only);
 
 /* defined in color.c */
-BU_EXTERN (void _ged_color_putrec,
-	   (struct ged *gedp,
-	    struct mater *mp));
+extern void _ged_color_putrec(struct ged *gedp,
+	    struct mater *mp);
 	    
-BU_EXTERN (void _ged_color_zaprec,
-	   (struct ged *gedp,
-	    struct mater *mp));
+extern void _ged_color_zaprec(struct ged *gedp,
+	    struct mater *mp);
 
 /* defined in comb.c */
-BU_EXTERN (struct directory *_ged_combadd,
-	   (struct ged *gedp,
+extern struct directory *_ged_combadd(struct ged *gedp,
 	    struct directory *objp,
 	    char *combname,
 	    int region_flag,
 	    int relation,
 	    int ident,
-	    int air));
+	    int air);
 
 /* defined in draw.c */
-BU_EXTERN (void _ged_cvt_vlblock_to_solids,
-	   (struct ged *gedp,
+extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
 	    struct bn_vlblock *vbp,
 	    char *name,
-	    int copy));
-BU_EXTERN (int _ged_invent_solid,
-	   (struct ged *gedp,
+	    int copy);
+extern int _ged_invent_solid(struct ged *gedp,
 	    char *name,
 	    struct bu_list *vhead,
 	    long int rgb,
 	    int copy,
 	    fastf_t transparency,
-	    int dmode));
-BU_EXTERN (int _ged_drawtrees,
-	   (struct ged *gedp,
+	    int dmode);
+extern int _ged_drawtrees(struct ged *gedp,
 	    int argc,
 	    const char *argv[],
 	    int kind,
-	    struct _ged_client_data *_dgcdp));
-BU_EXTERN (void _ged_drawH_part2,
-	   (int dashflag,
+	    struct _ged_client_data *_dgcdp);
+extern void _ged_drawH_part2(int dashflag,
 	    struct bu_list *vhead,
 	    const struct db_full_path *pathp,
 	    struct db_tree_state *tsp,
 	    struct solid *existing_sp,
-	    struct _ged_client_data *dgcdp));
+	    struct _ged_client_data *dgcdp);
 
 /* defined in editit.c */
-BU_EXTERN (int _ged_editit, 
-	   (const char *editstring, 
-	    const char *file));
+extern int _ged_editit(const char *editstring, 
+	    const char *file);
 
 /* defined in erase.c */
-BU_EXTERN (void _ged_eraseobjpath,
-	   (struct ged *gedp,
+extern void _ged_eraseobjpath(struct ged *gedp,
 	    int argc,
 	    const char *argv[],
 	    const int noisy,
 	    const int all,
-	    const int skip_first));
-BU_EXTERN (void _ged_eraseobjall,
-	   (struct ged *gedp,
+	    const int skip_first);
+extern void _ged_eraseobjall(struct ged *gedp,
 	    struct directory **dpp,
-	    int skip_first));
-BU_EXTERN (void _ged_eraseobj,
-	   (struct ged *gedp,
+	    int skip_first);
+extern void _ged_eraseobj(struct ged *gedp,
 	    struct directory **dpp,
-	    int skip_first));
-BU_EXTERN (void _ged_eraseAllNamesFromDisplay,
-	   (struct ged *gedp,
+	    int skip_first);
+extern void _ged_eraseAllNamesFromDisplay(struct ged *gedp,
 	    const char *name,
-	    const int skip_first));
-BU_EXTERN (void _ged_eraseAllPathsFromDisplay,
-	   (struct ged *gedp,
+	    const int skip_first);
+extern void _ged_eraseAllPathsFromDisplay(struct ged *gedp,
 	    const char *path,
-	    const int skip_first));
-BU_EXTERN (void _ged_freeDisplayListItem,
-	   (struct ged *gedp,
-	    struct ged_display_list *gdlp));
+	    const int skip_first);
+extern void _ged_freeDisplayListItem(struct ged *gedp,
+	    struct ged_display_list *gdlp);
 
 
 /* defined in get_comb.c */
-BU_EXTERN(void _ged_vls_print_matrix,
-	  (struct bu_vls *vls,
-	   matp_t matrix));
+extern void _ged_vls_print_matrix(struct bu_vls *vls,
+	   matp_t matrix);
 
 /* defined in get_obj_bounds.c */
-BU_EXTERN (int _ged_get_obj_bounds,
-	   (struct ged *gedp,
+extern int _ged_get_obj_bounds(struct ged *gedp,
 	    int argc,
 	    const char *argv[],
 	    int use_air,
 	    point_t rpp_min,
-	    point_t rpp_max));
+	    point_t rpp_max);
 
-BU_EXTERN (int _ged_get_obj_bounds2,
-	   (struct ged *gedp,
+extern int _ged_get_obj_bounds2(struct ged *gedp,
 	    int argc,
 	    const char *argv[],
 	    struct _ged_trace_data *gtdp,
 	    point_t rpp_min,
-	    point_t rpp_max));
+	    point_t rpp_max);
 
 /* defined in how.c */
-BU_EXTERN (struct directory **_ged_build_dpp,
-	   (struct ged *gedp,
-	    const char *path));
+extern struct directory **_ged_build_dpp(struct ged *gedp,
+	    const char *path);
 
 /* defined in list.c */
-BU_EXTERN(void _ged_do_list,
-	  (struct ged *gedp,
+extern void _ged_do_list(struct ged *gedp,
 	   struct directory *dp,
-	   int verbose));
+	   int verbose);
 
 /* defined in loadview.c */
 extern vect_t _ged_eye_model;
 extern mat_t _ged_viewrot;
 extern struct ged *_ged_current_gedp;
-BU_EXTERN (int _ged_cm_vsize,
-	   (int argc,
-	    char **argv));
-BU_EXTERN (int _ged_cm_eyept,
-	   (int argc,
-	    char **argv));
-BU_EXTERN (int _ged_cm_lookat_pt,
-	   (int argc,
-	    char **argv));
-BU_EXTERN (int _ged_cm_vrot,
-	   (int argc,
-	    char **argv));
-BU_EXTERN (int _ged_cm_orientation,
-	   (int argc,
-	    char **argv));
-BU_EXTERN (int _ged_cm_set,
-	   (int argc,
-	    char **argv));
-BU_EXTERN (int _ged_cm_null,
-	   (int argc,
-	    char **argv));
+extern int _ged_cm_vsize(int argc,
+	    char **argv);
+extern int _ged_cm_eyept(int argc,
+	    char **argv);
+extern int _ged_cm_lookat_pt(int argc,
+	    char **argv);
+extern int _ged_cm_vrot(int argc,
+	    char **argv);
+extern int _ged_cm_orientation(int argc,
+	    char **argv);
+extern int _ged_cm_set(int argc,
+	    char **argv);
+extern int _ged_cm_null(int argc,
+	    char **argv);
 
 
 /* defined in ls.c */
-BU_EXTERN(void _ged_vls_col_pr4v,
-	  (struct bu_vls *vls,
+extern void _ged_vls_col_pr4v(struct bu_vls *vls,
 	   struct directory **list_of_names,
 	   size_t num_in_list,
-	   int no_decorate));
-BU_EXTERN(struct directory ** _ged_getspace,
-	  (struct db_i *dbip,
-	   size_t num_entries));
+	   int no_decorate);
+extern struct directory ** _ged_getspace(struct db_i *dbip,
+	   size_t num_entries);
 
 /* defined in preview.c */
-BU_EXTERN (void _ged_setup_rt,
-	   (struct ged *gedp,
+extern void _ged_setup_rt(struct ged *gedp,
 	    char **vp,
-	    int printcmd));
+	    int printcmd);
 
 /* defined in red.c */
 
 extern char _ged_tmpfil[MAXPATHLEN];
 
 
-BU_EXTERN(int _ged_make_tree,
-	  (struct ged *gedp,
+extern int _ged_make_tree(struct ged *gedp,
 	   struct rt_comb_internal *comb,
 	   struct directory *dp,
 	   size_t node_count,
 	   const char *old_name,
 	   const char *new_name,
 	   struct rt_tree_array *rt_tree_array,
-	   int tree_index));
-BU_EXTERN(const char *_ged_save_comb,
-	  (struct ged *gedp,
-	   struct directory *dpold));
-BU_EXTERN(void _ged_restore_comb,
-	  (struct ged *gedp,
+	   int tree_index);
+extern const char *_ged_save_comb(struct ged *gedp,
+	   struct directory *dpold);
+extern void _ged_restore_comb(struct ged *gedp,
 	   struct directory *dp,
-	   const char *name));
-BU_EXTERN(void _ged_print_matrix,
-	  (FILE *fp, matp_t matrix));
+	   const char *name);
+extern void _ged_print_matrix(FILE *fp, matp_t matrix);
 
 /* defined in rt.c */
-BU_EXTERN (void _ged_rt_set_eye_model,
-	   (struct ged *gedp,
-	    vect_t eye_model));
-BU_EXTERN (int _ged_run_rt,
-	   (struct ged *gdp));
-BU_EXTERN (void _ged_rt_write,
-	   (struct ged *gedp,
+extern void _ged_rt_set_eye_model(struct ged *gedp,
+	    vect_t eye_model);
+extern int _ged_run_rt(struct ged *gdp);
+extern void _ged_rt_write(struct ged *gedp,
 	    FILE *fp,
-	    vect_t eye_model));
-BU_EXTERN (void _ged_rt_output_handler,
-	   (ClientData clientData,
-	    int mask));
+	    vect_t eye_model);
+extern void _ged_rt_output_handler(ClientData clientData,
+	    int mask);
 
 /* defined in rtcheck.c */
-BU_EXTERN (void _ged_wait_status,
-	   (struct bu_vls *logstr,
-	    int status));
+extern void _ged_wait_status(struct bu_vls *logstr,
+	    int status);
 
 /* defined in rotate_eto.c */
-BU_EXTERN (int _ged_rotate_eto,
-	   (struct ged *gedp,
+extern int _ged_rotate_eto(struct ged *gedp,
 	    struct rt_eto_internal *eto,
 	    const char *attribute,
-	    matp_t rmat));
+	    matp_t rmat);
 
 /* defined in rotate_extrude.c */
-BU_EXTERN (int _ged_rotate_extrude,
-	   (struct ged *gedp,
+extern int _ged_rotate_extrude(struct ged *gedp,
 	    struct rt_extrude_internal *extrude,
 	    const char *attribute,
-	    matp_t rmat));
+	    matp_t rmat);
 
 /* defined in rotate_hyp.c */
-BU_EXTERN (int _ged_rotate_hyp,
-	   (struct ged *gedp,
+extern int _ged_rotate_hyp(struct ged *gedp,
 	    struct rt_hyp_internal *hyp,
 	    const char *attribute,
-	    matp_t rmat));
+	    matp_t rmat);
 
 /* defined in rotate_tgc.c */
-BU_EXTERN (int _ged_rotate_tgc,
-	   (struct ged *gedp,
+extern int _ged_rotate_tgc(struct ged *gedp,
 	    struct rt_tgc_internal *tgc,
 	    const char *attribute,
-	    matp_t rmat));
+	    matp_t rmat);
 
 /* defined in scale_ehy.c */
-BU_EXTERN (int _ged_scale_ehy,
-	   (struct ged *gedp,
+extern int _ged_scale_ehy(struct ged *gedp,
 	    struct rt_ehy_internal *ehy,
 	    const char *attribute,
 	    fastf_t sf,
-	    int rflag));
+	    int rflag);
 
 /* defined in scale_ell.c */
-BU_EXTERN (int _ged_scale_ell,
-	   (struct ged *gedp,
+extern int _ged_scale_ell(struct ged *gedp,
 	    struct rt_ell_internal *ell,
 	    const char *attribute,
 	    fastf_t sf,
-	    int rflag));
+	    int rflag);
 
 /* defined in scale_epa.c */
-BU_EXTERN (int _ged_scale_epa,
-	   (struct ged *gedp,
+extern int _ged_scale_epa(struct ged *gedp,
 	    struct rt_epa_internal *epa,
 	    const char *attribute,
 	    fastf_t sf,
-	    int rflag));
+	    int rflag);
 
 /* defined in scale_eto.c */
-BU_EXTERN (int _ged_scale_eto,
-	   (struct ged *gedp,
+extern int _ged_scale_eto(struct ged *gedp,
 	    struct rt_eto_internal *eto,
 	    const char *attribute,
 	    fastf_t sf,
-	    int rflag));
+	    int rflag);
 
 /* defined in scale_extrude.c */
-BU_EXTERN (int _ged_scale_extrude,
-	   (struct ged *gedp,
+extern int _ged_scale_extrude(struct ged *gedp,
 	    struct rt_extrude_internal *extrude,
 	    const char *attribute,
 	    fastf_t sf,
-	    int rflag));
+	    int rflag);
 
 /* defined in scale_hyp.c */
-BU_EXTERN (int _ged_scale_hyp,
-	   (struct ged *gedp,
+extern int _ged_scale_hyp(struct ged *gedp,
 	    struct rt_hyp_internal *hyp,
 	    const char *attribute,
 	    fastf_t sf,
-	    int rflag));
+	    int rflag);
 
 /* defined in scale_part.c */
-BU_EXTERN (int _ged_scale_part,
-	   (struct ged *gedp,
+extern int _ged_scale_part(struct ged *gedp,
 	    struct rt_part_internal *part,
 	    const char *attribute,
 	    fastf_t sf,
-	    int rflag));
+	    int rflag);
 
 /* defined in scale_rhc.c */
-BU_EXTERN (int _ged_scale_rhc,
-	   (struct ged *gedp,
+extern int _ged_scale_rhc(struct ged *gedp,
 	    struct rt_rhc_internal *rhc,
 	    const char *attribute,
 	    fastf_t sf,
-	    int rflag));
+	    int rflag);
 
 /* defined in scale_rpc.c */
-BU_EXTERN (int _ged_scale_rpc,
-	   (struct ged *gedp,
+extern int _ged_scale_rpc(struct ged *gedp,
 	    struct rt_rpc_internal *rpc,
 	    const char *attribute,
 	    fastf_t sf,
-	    int rflag));
+	    int rflag);
 
 /* defined in scale_superell.c */
-BU_EXTERN (int _ged_scale_superell,
-	   (struct ged *gedp,
+extern int _ged_scale_superell(struct ged *gedp,
 	    struct rt_superell_internal *superell,
 	    const char *attribute,
 	    fastf_t sf,
-	    int rflag));
+	    int rflag);
 
 /* defined in scale_tgc.c */
-BU_EXTERN (int _ged_scale_tgc,
-	   (struct ged *gedp,
+extern int _ged_scale_tgc(struct ged *gedp,
 	    struct rt_tgc_internal *tgc,
 	    const char *attribute,
 	    fastf_t sf,
-	    int rflag));
+	    int rflag);
 
 /* defined in scale_tor.c */
-BU_EXTERN (int _ged_scale_tor,
-	   (struct ged *gedp,
+extern int _ged_scale_tor(struct ged *gedp,
 	    struct rt_tor_internal *tor,
 	    const char *attribute,
 	    fastf_t sf,
-	    int rflag));
+	    int rflag);
 
 /* defined in tops.c */
 struct directory **
@@ -463,59 +406,48 @@ _ged_dir_getspace(struct db_i *dbip,
 		  int num_entries);
 
 /* defined in trace.c */
-BU_EXTERN (void _ged_trace,
-	   (struct directory *dp,
+extern void _ged_trace(struct directory *dp,
 	    int pathpos,
 	    const mat_t old_xlate,
-	    struct _ged_trace_data *gtdp));
+	    struct _ged_trace_data *gtdp);
 
 /* defined in translate_extrude.c */
-BU_EXTERN (int _ged_translate_extrude,
-	   (struct ged *gedp,
+extern int _ged_translate_extrude(struct ged *gedp,
 	    struct rt_extrude_internal *extrude,
 	    const char *attribute,
 	    vect_t tvec,
-	    int rflag));
+	    int rflag);
 
 /* defined in translate_tgc.c */
-BU_EXTERN (int _ged_translate_tgc,
-	   (struct ged *gedp,
+extern int _ged_translate_tgc(struct ged *gedp,
 	    struct rt_tgc_internal *tgc,
 	    const char *attribute,
 	    vect_t tvec,
-	    int rflag));
+	    int rflag);
 
 /* defined in vutil.c */
-BU_EXTERN (void _ged_mat_aet,
-	   (struct ged_view *gvp));
-BU_EXTERN (int _ged_do_rot,
-	   (struct ged *gedp,
-	    char coord,
-	    mat_t rmat,
-	    int (*func)()));
-BU_EXTERN (int _ged_do_slew,
-	   (struct ged *gedp,
-	    vect_t svec));
-BU_EXTERN (int _ged_do_tra,
-	   (struct ged *gedp,
-	    char coord,
-	    vect_t tvec,
-	    int (*func)()));
-BU_EXTERN (int _ged_do_zoom,
-	   (struct ged *gedp,
-	    fastf_t sf));
+extern void _ged_mat_aet(struct ged_view *gvp);
+extern int _ged_do_rot(struct ged *gedp,
+		       char coord,
+		       mat_t rmat,
+		       int (*func)());
+extern int _ged_do_slew(struct ged *gedp,
+	    vect_t svec);
+extern int _ged_do_tra(struct ged *gedp,
+		       char coord,
+		       vect_t tvec,
+		       int (*func)());
+extern int _ged_do_zoom(struct ged *gedp,
+	    fastf_t sf);
 
 /* defined in ged_util.c */
-BU_EXTERN (int _ged_results_append_str,
-	   (struct ged *gedp,
-	    char *result_string));
+extern int _ged_results_append_str(struct ged *gedp,
+	    char *result_string);
 	    
-BU_EXTERN (int _ged_results_append_vls,
-	   (struct ged *gedp,
-	    struct bu_vls *result_vls));
+extern int _ged_results_append_vls(struct ged *gedp,
+	    struct bu_vls *result_vls);
 
-BU_EXTERN (int _ged_results_clear,
-	   (struct ged *gedp));
+extern int _ged_results_clear(struct ged *gedp);
 	
 __END_DECLS
 

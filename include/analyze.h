@@ -78,21 +78,19 @@ struct region_pair {
 /**
  *     Routine to parse a .density file
  */
-ANALYZE_EXPORT BU_EXTERN(int parse_densities_buffer,
-			 (char *buf,
+ANALYZE_EXPORT extern int parse_densities_buffer(char *buf,
 			  size_t len,
 			  struct density_entry *densities,
 			  struct bu_vls *result_str,
-			  int *num_densities));
+			  int *num_densities);
 
 /**
  *     region_pair for gqa 
  */
-ANALYZE_EXPORT BU_EXTERN(struct region_pair *add_unique_pair,
-			 (struct region_pair *list,
+ANALYZE_EXPORT extern struct region_pair *add_unique_pair(struct region_pair *list,
 			  struct region *r1,
 			  struct region *r2,
-			  double dist, point_t pt));
+			  double dist, point_t pt);
 
 
 __END_DECLS

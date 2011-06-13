@@ -53,12 +53,11 @@ struct pt_list
 };
 
 
-BU_EXTERN(void nmg_split_trim,
-	  (const struct edge_g_cnurb *cnrb,
+extern void nmg_split_trim(const struct edge_g_cnurb *cnrb,
 	   const struct face_g_snurb *snrb,
 	   fastf_t t,
 	   struct pt_list *pt0, struct pt_list *pt1,
-	   const struct bn_tol *tol));
+	   const struct bn_tol *tol);
 
 /**
  * N M G _ I S _ C O M M O N _ B I G L O O P

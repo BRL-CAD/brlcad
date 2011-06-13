@@ -96,7 +96,7 @@ static int bundle_miss(register struct application *ap);
 
 /* XXX maybe parameter with NORM, UV, CURVE bits? */
 
-RT_EXPORT BU_EXTERN(int rt_shootray_bundle, (register struct application *ap, struct xray *rays, int nrays));
+RT_EXPORT extern int rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays);
 
 int
 rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays)

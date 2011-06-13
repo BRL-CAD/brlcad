@@ -41,7 +41,7 @@
 #include "plot3.h"
 
 
-BU_EXTERN(void rt_ck, (struct rt_i *rtip));
+extern void rt_ck(struct rt_i *rtip);
 
 HIDDEN void rt_solid_bitfinder(register union tree *treep, struct region *regp, struct resource *resp);
 

@@ -54,7 +54,7 @@
 #define CP_BUF_SIZE 4096	/* size of buffer for file copy */
 #define SUFFIX_LEN 10 /* max size of suffix for 'part' files (-m option) */
 
-BU_EXTERN(union tree *do_nmg_region_end, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
+extern union tree *do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 void w_start_global(
     FILE *fp_dir,
     FILE *fp_param,
@@ -63,20 +63,20 @@ void w_start_global(
     const char *output_file,
     const char *id,
     const char *version);
-BU_EXTERN(void w_terminate, (FILE *fp));
-BU_EXTERN(void write_edge_list, (struct nmgregion *r, int vert_de, struct bu_ptbl *etab, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param));
-BU_EXTERN(void write_vertex_list, (struct nmgregion *r, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param));
-BU_EXTERN(void nmg_region_edge_list, (struct bu_ptbl *tab, struct nmgregion *r));
-BU_EXTERN(int nmgregion_to_iges, (char *name, struct nmgregion *r, int dependent, FILE *fp_dir, FILE *fp_param));
-BU_EXTERN(int write_shell_face_loop, (struct nmgregion *r, int edge_de, struct bu_ptbl *etab, int vert_de, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param));
-BU_EXTERN(void csg_comb_func, (struct db_i *dbip, struct directory *dp, genptr_t ptr));
-BU_EXTERN(void csg_leaf_func, (struct db_i *dbip, struct directory *dp, genptr_t ptr));
-BU_EXTERN(void set_iges_tolerances, (struct bn_tol *set_tol, struct rt_tess_tol *set_ttol));
-BU_EXTERN(void count_refs, (struct db_i *dbip, struct directory *dp, genptr_t ptr));
-BU_EXTERN(int nmgregion_to_tsurf, (char *name, struct nmgregion *r, FILE *fp_dir, FILE *fp_param));
-BU_EXTERN(int write_solid_instance, (int orig_de, mat_t mat, FILE *fp_dir, FILE *fp_param));
-BU_EXTERN(void get_props, (struct iges_properties *props, struct rt_comb_internal *comb));
-BU_EXTERN(int comb_to_iges, (struct rt_comb_internal *comb, int length, int dependent, struct iges_properties *props, int de_pointers[], FILE *fp_dir, FILE *fp_param));
+extern void w_terminate(FILE *fp);
+extern void write_edge_list(struct nmgregion *r, int vert_de, struct bu_ptbl *etab, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
+extern void write_vertex_list(struct nmgregion *r, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
+extern void nmg_region_edge_list(struct bu_ptbl *tab, struct nmgregion *r);
+extern int nmgregion_to_iges(char *name, struct nmgregion *r, int dependent, FILE *fp_dir, FILE *fp_param);
+extern int write_shell_face_loop(struct nmgregion *r, int edge_de, struct bu_ptbl *etab, int vert_de, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
+extern void csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr);
+extern void csg_leaf_func(struct db_i *dbip, struct directory *dp, genptr_t ptr);
+extern void set_iges_tolerances(struct bn_tol *set_tol, struct rt_tess_tol *set_ttol);
+extern void count_refs(struct db_i *dbip, struct directory *dp, genptr_t ptr);
+extern int nmgregion_to_tsurf(char *name, struct nmgregion *r, FILE *fp_dir, FILE *fp_param);
+extern int write_solid_instance(int orig_de, mat_t mat, FILE *fp_dir, FILE *fp_param);
+extern void get_props(struct iges_properties *props, struct rt_comb_internal *comb);
+extern int comb_to_iges(struct rt_comb_internal *comb, int length, int dependent, struct iges_properties *props, int de_pointers[], FILE *fp_dir, FILE *fp_param);
 
 static void
 usage(const char *argv0)
@@ -122,16 +122,16 @@ struct db_i *DBIP;
 static struct db_tree_state tree_state;	/* includes tol & model */
 
 /* function table for converting solids to iges */
-BU_EXTERN(int null_to_iges, (struct rt_db_internal *, char *, FILE *, FILE *));
-BU_EXTERN(int arb_to_iges, (struct rt_db_internal *, char *, FILE *, FILE *));
-BU_EXTERN(int ell_to_iges, (struct rt_db_internal *, char *, FILE *, FILE *));
-BU_EXTERN(int sph_to_iges, (struct rt_db_internal *, char *, FILE *, FILE *));
-BU_EXTERN(int tor_to_iges, (struct rt_db_internal *, char *, FILE *, FILE *));
-BU_EXTERN(int tgc_to_iges, (struct rt_db_internal *, char *, FILE *, FILE *));
-BU_EXTERN(int nmg_to_iges, (struct rt_db_internal *, char *, FILE *, FILE *));
-BU_EXTERN(int sketch_to_iges, (struct rt_db_internal *, char *, FILE *, FILE *));
-BU_EXTERN(void iges_init, (struct bn_tol *, struct rt_tess_tol *, int, struct db_i *));
-BU_EXTERN(void Print_stats, (FILE *));
+extern int null_to_iges(struct rt_db_internal *, char *, FILE *, FILE *);
+extern int arb_to_iges(struct rt_db_internal *, char *, FILE *, FILE *);
+extern int ell_to_iges(struct rt_db_internal *, char *, FILE *, FILE *);
+extern int sph_to_iges(struct rt_db_internal *, char *, FILE *, FILE *);
+extern int tor_to_iges(struct rt_db_internal *, char *, FILE *, FILE *);
+extern int tgc_to_iges(struct rt_db_internal *, char *, FILE *, FILE *);
+extern int nmg_to_iges(struct rt_db_internal *, char *, FILE *, FILE *);
+extern int sketch_to_iges(struct rt_db_internal *, char *, FILE *, FILE *);
+extern void iges_init(struct bn_tol *, struct rt_tess_tol *, int, struct db_i *);
+extern void Print_stats(FILE *);
 
 struct iges_functab
 {

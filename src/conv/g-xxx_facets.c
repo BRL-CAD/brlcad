@@ -45,7 +45,7 @@
     (a)[Z] = (b)[Z]/25.4; \
 }
 
-BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
+extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 
 extern double nmg_eue_dist;		/* from nmg_plot.c */
 

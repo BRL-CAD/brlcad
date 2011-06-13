@@ -58,7 +58,7 @@ HIDDEN void rt_ct_measure(struct rt_i *rtip, union cutter *cutp, int depth);
 HIDDEN union cutter *rt_ct_get(struct rt_i *rtip);
 HIDDEN void rt_plot_cut(FILE *fp, struct rt_i *rtip, union cutter *cutp, int lvl);
 
-BU_EXTERN(void rt_pr_cut_info, (const struct rt_i *rtip, const char *str));
+extern void rt_pr_cut_info(const struct rt_i *rtip, const char *str);
 HIDDEN int rt_ct_old_assess(register union cutter *, register int, double *, double *);
 
 #define AXIS(depth)	((depth)%3)	/* cuts: X, Y, Z, repeat */

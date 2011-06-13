@@ -89,12 +89,10 @@
 #endif /* DM_WGL */
 
 
-GED_EXPORT BU_EXTERN(void go_refresh,
-		     (struct ged_obj *gop,
-		      struct ged_dm_view *gdvp));
-GED_EXPORT BU_EXTERN(void go_refresh_draw,
-		     (struct ged_obj *gop,
-		      struct ged_dm_view *gdvp));
+GED_EXPORT extern void go_refresh(struct ged_obj *gop,
+		      struct ged_dm_view *gdvp);
+GED_EXPORT extern void go_refresh_draw(struct ged_obj *gop,
+		      struct ged_dm_view *gdvp);
 
 HIDDEN int to_autoview(struct ged *gedp,
 		       int argc,

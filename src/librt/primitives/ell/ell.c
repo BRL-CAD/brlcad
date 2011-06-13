@@ -43,8 +43,8 @@
 #include "../../librt_private.h"
 
 
-BU_EXTERN(int rt_sph_prep, (struct soltab *stp, struct rt_db_internal *ip,
-			    struct rt_i *rtip));
+extern int rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip,
+			    struct rt_i *rtip);
 
 const struct bu_structparse rt_ell_parse[] = {
     { "%f", 3, "V", bu_offsetof(struct rt_ell_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },

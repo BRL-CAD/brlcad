@@ -67,15 +67,15 @@ extern int viewshade(struct application *app,
 extern void multispectral_shader_init(struct mfuncs **headp);
 
 /* XXX Move to raytrace.h when routine goes into LIBRT */
-BU_EXTERN(double rt_pixel_footprint, (const struct application *app,
+extern double rt_pixel_footprint(const struct application *app,
 				      const struct hit *hitp,
 				      const struct seg *segp,
-				      const vect_t normal));
+				      const vect_t normal);
 
 
 /* XXX move to h/tabdata.h when function moves out of spectrum.c */
-BU_EXTERN(struct bn_table *bn_table_make_visible_and_uniform, (int num,
-							       double first, double last, int vis_nsamp));
+extern struct bn_table *bn_table_make_visible_and_uniform(int num,
+							       double first, double last, int vis_nsamp);
 
 
 const char title[] = "Thermal Multi-Spectral RT";

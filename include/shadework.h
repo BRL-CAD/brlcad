@@ -87,7 +87,7 @@ struct shadework {
  */
 };
 
-BU_EXTERN(void pr_shadework, (const char *str, const struct shadework *swp));
+extern void pr_shadework(const char *str, const struct shadework *swp);
 
 #endif
 /** @} */

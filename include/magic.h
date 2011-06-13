@@ -244,7 +244,7 @@
  *
  *  Support routine for BU_CKMAG macro.
  */
-BU_EXPORT BU_EXTERN(void bu_badmagic, (const unsigned long *ptr, unsigned long magic, const char *str, const char *file, int line));
+BU_EXPORT extern void bu_badmagic(const unsigned long *ptr, unsigned long magic, const char *str, const char *file, int line);
 
 /**
  * b u _ b a d m a g i c _ t c l
@@ -267,7 +267,7 @@ BU_EXPORT BU_EXTERN(void bu_badmagic, (const unsigned long *ptr, unsigned long m
  * @return
  * void
  */
-BU_EXPORT BU_EXTERN(void bu_badmagic_tcl, (Tcl_Interp *interp, const unsigned long *ptr, unsigned long magic, const char *str, const char *file, int line));
+BU_EXPORT extern void bu_badmagic_tcl(Tcl_Interp *interp, const unsigned long *ptr, unsigned long magic, const char *str, const char *file, int line);
 
 
 /**
@@ -279,7 +279,7 @@ BU_EXPORT BU_EXTERN(void bu_badmagic_tcl, (Tcl_Interp *interp, const unsigned lo
  * macro BU_CK_MAGIC() to provide a "hint" as to what sort of pointer
  * error might have been made.
  */
-BU_EXPORT BU_EXTERN(const char *bu_identify_magic, (unsigned long magic));
+BU_EXPORT extern const char *bu_identify_magic(unsigned long magic);
 
 
 #endif /* __MAGIC_H__ */

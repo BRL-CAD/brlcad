@@ -47,7 +47,7 @@
 #include "../../librt_private.h"
 
 
-BU_EXTERN(int rt_rec_prep, (struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip));
+extern int rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip);
 
 struct tgc_specific {
     vect_t tgc_V;		/* Vector to center of base of TGC */

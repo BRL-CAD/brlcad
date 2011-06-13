@@ -337,111 +337,87 @@ struct dm_obj {
 
 DM_EXPORT extern struct dm dm_Null;
 
-DM_EXPORT BU_EXTERN(int Dm_Init,
-		    ());
-DM_EXPORT BU_EXTERN(struct dm *dm_open,
-		    (Tcl_Interp *interp,
+DM_EXPORT extern int Dm_Init();
+DM_EXPORT extern struct dm *dm_open(Tcl_Interp *interp,
 		     int type,
 		     int argc,
-		     const char *argv[]));
-DM_EXPORT BU_EXTERN(int dm_share_dlist,
-		    (struct dm *dmp1,
-		     struct dm *dmp2));
-DM_EXPORT BU_EXTERN(fastf_t dm_Xx2Normal,
-		    (struct dm *dmp,
-		     int x));
-DM_EXPORT BU_EXTERN(int dm_Normal2Xx,
-		    (struct dm *dmp,
-		     fastf_t f));
-DM_EXPORT BU_EXTERN(fastf_t dm_Xy2Normal,
-		    (struct dm *dmp,
+		     const char *argv[]);
+DM_EXPORT extern int dm_share_dlist(struct dm *dmp1,
+		     struct dm *dmp2);
+DM_EXPORT extern fastf_t dm_Xx2Normal(struct dm *dmp,
+		     int x);
+DM_EXPORT extern int dm_Normal2Xx(struct dm *dmp,
+		     fastf_t f);
+DM_EXPORT extern fastf_t dm_Xy2Normal(struct dm *dmp,
 		     int y,
-		     int use_aspect));
-DM_EXPORT BU_EXTERN(int dm_Normal2Xy,
-		    (struct dm *dmp,
+		     int use_aspect);
+DM_EXPORT extern int dm_Normal2Xy(struct dm *dmp,
 		     fastf_t f,
-		     int use_aspect));
-DM_EXPORT BU_EXTERN(void dm_fogHint,
-		    (struct dm *dmp,
-		     int fastfog));
-DM_EXPORT BU_EXTERN(int dm_processOptions,
-		    ());
-DM_EXPORT BU_EXTERN(int dm_limit,
-		    (int i));
-DM_EXPORT BU_EXTERN(int dm_unlimit,
-		    (int i));
-DM_EXPORT BU_EXTERN(fastf_t dm_wrap,
-		    (fastf_t f));
-DM_EXPORT BU_EXTERN(void Nu_void,
-		    ());
-DM_EXPORT BU_EXTERN(int Nu_int0,
-		    ());
-DM_EXPORT BU_EXTERN(unsigned Nu_unsign,
-		    ());
+		     int use_aspect);
+DM_EXPORT extern void dm_fogHint(struct dm *dmp,
+		     int fastfog);
+DM_EXPORT extern int dm_processOptions();
+DM_EXPORT extern int dm_limit(int i);
+DM_EXPORT extern int dm_unlimit(int i);
+DM_EXPORT extern fastf_t dm_wrap(fastf_t f);
+DM_EXPORT extern void Nu_void();
+DM_EXPORT extern int Nu_int0();
+DM_EXPORT extern unsigned Nu_unsign();
 
 /* adc.c */
-DM_EXPORT BU_EXTERN(void dm_draw_adc,
-		    (struct dm *dmp,
-		     struct ged_view *gvp));
+DM_EXPORT extern void dm_draw_adc(struct dm *dmp,
+		     struct ged_view *gvp);
 
 /* axes.c */
-DM_EXPORT BU_EXTERN(void dm_draw_data_axes,
-		    (struct dm *dmp,
+DM_EXPORT extern void dm_draw_data_axes(struct dm *dmp,
 		     fastf_t viewSize,
-		     struct ged_data_axes_state *gdasp));
+		     struct ged_data_axes_state *gdasp);
 
-DM_EXPORT BU_EXTERN(void dm_draw_axes,
-		    (struct dm *dmp,
+DM_EXPORT extern void dm_draw_axes(struct dm *dmp,
 		     fastf_t viewSize,
 		     const mat_t rmat,
-		     struct ged_axes_state *gasp));
+		     struct ged_axes_state *gasp);
 
 /* clip.c */
-DM_EXPORT BU_EXTERN(int clip,
-		    (fastf_t *,
+DM_EXPORT extern int clip(fastf_t *,
 		     fastf_t *,
 		     fastf_t *,
-		     fastf_t *));
-DM_EXPORT BU_EXTERN(int vclip,
-		    (fastf_t *,
+		     fastf_t *);
+DM_EXPORT extern int vclip(fastf_t *,
 		     fastf_t *,
 		     fastf_t *,
-		     fastf_t *));
+		     fastf_t *);
 
 /* focus.c */
-DM_EXPORT BU_EXTERN(void dm_applicationfocus, (void));
+DM_EXPORT extern void dm_applicationfocus(void);
 
 /* grid.c */
-DM_EXPORT BU_EXTERN(void dm_draw_grid,
-		    (struct dm *dmp,
+DM_EXPORT extern void dm_draw_grid(struct dm *dmp,
 		     struct ged_grid_state *ggsp,
 		     struct ged_view *gvp,
-		     fastf_t base2local));
+		     fastf_t base2local);
 
 /* labels.c */
-DM_EXPORT BU_EXTERN(int dm_draw_labels,
-		    (struct dm *dmp,
-		     struct rt_wdb *wdbp,
-		     char *name,
-		     mat_t viewmat,
-		     int *labelsColor,
-		     int (*labelsHook)(),
-		     ClientData labelsHookClientdata));
+DM_EXPORT extern int dm_draw_labels(struct dm *dmp,
+			     struct rt_wdb *wdbp,
+			     char *name,
+			     mat_t viewmat,
+			     int *labelsColor,
+			     int (*labelsHook)(),
+			     ClientData labelsHookClientdata);
 
 /* rect.c */
-DM_EXPORT BU_EXTERN(void dm_draw_rect,
-		    (struct dm *dmp,
-		     struct ged_rect_state *grsp));
+DM_EXPORT extern void dm_draw_rect(struct dm *dmp,
+		     struct ged_rect_state *grsp);
 
 /* scale.c */
-DM_EXPORT BU_EXTERN(void dm_draw_scale,
-		    (struct dm *dmp,
+DM_EXPORT extern void dm_draw_scale(struct dm *dmp,
 		     fastf_t viewSize,
 		     int *lineColor,
-		     int *textColor));
+		     int *textColor);
 
 /* vers.c */
-DM_EXPORT BU_EXTERN(const char *dm_version, (void));
+DM_EXPORT extern const char *dm_version(void);
 
 
 /************************************************/

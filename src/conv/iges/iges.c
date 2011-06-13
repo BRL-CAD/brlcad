@@ -78,15 +78,15 @@ extern int comb_form;
 extern int do_nurbs;
 extern int mode;
 
-BU_EXTERN(int write_dir_entry, (FILE *fp, int entry[]));
-BU_EXTERN(int write_vertex_list, (struct nmgregion *r, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param));
-BU_EXTERN(int write_edge_list, (struct nmgregion *r, int vert_de, struct bu_ptbl *etab, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param));
-BU_EXTERN(int write_shell_face_loop, (char *name, struct nmgregion *r, int dependent, int edge_de, struct bu_ptbl *etab, int vert_de, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param));
-BU_EXTERN(int write_solid_assembly, (char *name, int de_list[], int length, int dependent, FILE *fp_dir, FILE *fp_param));
-BU_EXTERN(int write_planar_nurb, (struct faceuse *fu, vect_t u_dir, vect_t v_dir, fastf_t *u_max, fastf_t *v_max, point_t base_pt, FILE *fp_dir, FILE *fp_param));
-BU_EXTERN(int write_name_entity, (char *name, FILE *fp_dir, FILE *fp_param));
-BU_EXTERN(int write_att_entity, (struct iges_properties *props, FILE *fp_dir, FILE *fp_param));
-BU_EXTERN(int nmg_to_iges, (struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param));
+extern int write_dir_entry(FILE *fp, int entry[]);
+extern int write_vertex_list(struct nmgregion *r, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
+extern int write_edge_list(struct nmgregion *r, int vert_de, struct bu_ptbl *etab, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
+extern int write_shell_face_loop(char *name, struct nmgregion *r, int dependent, int edge_de, struct bu_ptbl *etab, int vert_de, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
+extern int write_solid_assembly(char *name, int de_list[], int length, int dependent, FILE *fp_dir, FILE *fp_param);
+extern int write_planar_nurb(struct faceuse *fu, vect_t u_dir, vect_t v_dir, fastf_t *u_max, fastf_t *v_max, point_t base_pt, FILE *fp_dir, FILE *fp_param);
+extern int write_name_entity(char *name, FILE *fp_dir, FILE *fp_param);
+extern int write_att_entity(struct iges_properties *props, FILE *fp_dir, FILE *fp_param);
+extern int nmg_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param);
 
 #define NO_OF_TYPES 31
 static int type_count[NO_OF_TYPES][2]={

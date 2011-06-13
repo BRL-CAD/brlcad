@@ -164,27 +164,22 @@ struct concat_data {
 #define V4_MAXNAME NAMESIZE
 
 /* Defined in wdb_cmd_std.c */
-BU_EXTERN(int wdb_comb_std_tcl,
-	  (ClientData clientData,
+extern int wdb_comb_std_tcl(ClientData clientData,
 	   Tcl_Interp *interp,
 	   int argc,
-	   char *argv[]));
+	   char *argv[]);
 
 /* Defined in dg_obj.c */
-BU_EXTERN(void dgo_impending_wdb_close,
-	  (struct rt_wdb *wdbp,
-	   Tcl_Interp *interp));
-BU_EXTERN(void dgo_zapall,
-	  (struct rt_wdb *wdbp,
-	   Tcl_Interp *interp));
-BU_EXTERN(void dgo_eraseobjall_callback,
-	  (struct db_i *dbip,
+extern void dgo_impending_wdb_close(struct rt_wdb *wdbp,
+	   Tcl_Interp *interp);
+extern void dgo_zapall(struct rt_wdb *wdbp,
+	   Tcl_Interp *interp);
+extern void dgo_eraseobjall_callback(struct db_i *dbip,
 	   Tcl_Interp *interp,
 	   struct directory *dp,
-	   int notify));
-BU_EXTERN(void dgo_notifyWdb,
-	  (struct rt_wdb *wdbp,
-	   Tcl_Interp *interp));
+	   int notify);
+extern void dgo_notifyWdb(struct rt_wdb *wdbp,
+	   Tcl_Interp *interp);
 
 
 int wdb_init_obj(Tcl_Interp *interp, struct rt_wdb *wdbp, const char *oname);

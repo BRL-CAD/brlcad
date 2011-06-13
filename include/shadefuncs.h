@@ -74,17 +74,14 @@ struct mfuncs {
 #define MFF_PROC	0x01		/**< @brief  shader is procedural, computes tr/re/hits */
 
 /* defined in material.c */
-OPTICAL_EXPORT BU_EXTERN(void mlib_add_shader,
-			 (struct mfuncs **headp,
-			  struct mfuncs *mfp1));
+OPTICAL_EXPORT extern void mlib_add_shader(struct mfuncs **headp,
+			  struct mfuncs *mfp1);
 
-OPTICAL_EXPORT BU_EXTERN(int mlib_setup,
-			 (struct mfuncs **headp,
+OPTICAL_EXPORT extern int mlib_setup(struct mfuncs **headp,
 			  struct region *rp,
-			  struct rt_i *rtip));
+			  struct rt_i *rtip);
 
-OPTICAL_EXPORT BU_EXTERN(void mlib_free,
-			 (struct region *rp));
+OPTICAL_EXPORT extern void mlib_free(struct region *rp);
 
 /**
  * L O A D _ D Y N A M I C _ S H A D E R
@@ -92,7 +89,7 @@ OPTICAL_EXPORT BU_EXTERN(void mlib_free,
  * Given a shader/material name, try to find a DSO to supply the
  * shader.
  */
-OPTICAL_EXPORT BU_EXTERN(struct mfuncs *load_dynamic_shader, (const char *material));
+OPTICAL_EXPORT extern struct mfuncs *load_dynamic_shader(const char *material);
 
 #endif
 /** @} */

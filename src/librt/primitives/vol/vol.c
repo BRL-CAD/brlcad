@@ -77,8 +77,8 @@ const struct bu_structparse rt_vol_parse[] = {
 };
 
 
-BU_EXTERN(void rt_vol_plate, (point_t a, point_t b, point_t c, point_t d,
-			      mat_t mat, struct bu_list *vhead, struct rt_vol_internal *vip));
+extern void rt_vol_plate(point_t a, point_t b, point_t c, point_t d,
+			      mat_t mat, struct bu_list *vhead, struct rt_vol_internal *vip);
 
 /*
  * Codes to represent surface normals.

@@ -241,27 +241,27 @@ extern "C" {
 #endif
 
 
-    BU_EXTERN(void argumentHelp, (FILE *fp, char *progname, char *message));
-    BU_EXTERN(void argumentExamples, (FILE *fp, char *progname));
-    BU_EXTERN(void defaultSettings, (FILE *fp));
-    BU_EXTERN(int parseArguments, (int argc, char *argv[]));
-    BU_EXTERN(void printMatrix, (FILE *fp, char *n, mat_t m));
-    BU_EXTERN(char *getName, (const char *base, int id, const char *suffix));
-    BU_EXTERN(char *getPrePostName, (char *prefix, char *base, char *suffix));
+    extern void argumentHelp(FILE *fp, char *progname, char *message);
+    extern void argumentExamples(FILE *fp, char *progname);
+    extern void defaultSettings(FILE *fp);
+    extern int parseArguments(int argc, char *argv[]);
+    extern void printMatrix(FILE *fp, char *n, mat_t m);
+    extern char *getName(const char *base, int id, const char *suffix);
+    extern char *getPrePostName(char *prefix, char *base, char *suffix);
 
-    BU_EXTERN(int generateFence_s, (struct rt_wdb *fp, char *fencename, point_t startpostion, point_t endposition));
-    BU_EXTERN(int generateFence, (struct rt_wdb *fp, char *fencename, point_t startpostion, vect_t heightvector, vect_t widthvector));
+    extern int generateFence_s(struct rt_wdb *fp, char *fencename, point_t startpostion, point_t endposition);
+    extern int generateFence(struct rt_wdb *fp, char *fencename, point_t startpostion, vect_t heightvector, vect_t widthvector);
 
-    BU_EXTERN(int generatePoles_s, (struct rt_wdb *fp, char *polename));
-    BU_EXTERN(int generatePoles, (struct rt_wdb *fp, char *polename, point_t startposition, vect_t heightvector, vect_t widthvector, double radius));
+    extern int generatePoles_s(struct rt_wdb *fp, char *polename);
+    extern int generatePoles(struct rt_wdb *fp, char *polename, point_t startposition, vect_t heightvector, vect_t widthvector, double radius);
 
-    BU_EXTERN(int generateMesh_s, (struct rt_wdb *fp, char *meshname));
-    BU_EXTERN(int generateMesh, (struct rt_wdb *fp, char *meshname, point_t startposition, vect_t heightvector, vect_t widthvector));
+    extern int generateMesh_s(struct rt_wdb *fp, char *meshname);
+    extern int generateMesh(struct rt_wdb *fp, char *meshname, point_t startposition, vect_t heightvector, vect_t widthvector);
 
-    BU_EXTERN(int generateWire_s, (struct rt_wdb *fp, char *wirename, point_t position));
-    BU_EXTERN(int generateWire, (struct rt_wdb *fp, char *wirename, point_t position, vect_t heightvector, vect_t widthvector, double radius, double angle, double wiresegmentlength));
+    extern int generateWire_s(struct rt_wdb *fp, char *wirename, point_t position);
+    extern int generateWire(struct rt_wdb *fp, char *wirename, point_t position, vect_t heightvector, vect_t widthvector, double radius, double angle, double wiresegmentlength);
 
-    BU_EXTERN(int createWire, (struct rt_wdb *fp, char *segmentname, vect_t heightvector, vect_t widthvector, double radius, double angle, double segmentlength, double segmentdepthseparation));
+    extern int createWire(struct rt_wdb *fp, char *segmentname, vect_t heightvector, vect_t widthvector, double radius, double angle, double segmentlength, double segmentdepthseparation);
 
 
 #ifdef __cplusplus

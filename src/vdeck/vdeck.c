@@ -176,8 +176,8 @@ extern int		delete();
 extern int		cgarbs();
 extern int		redoarb();
 
-BU_EXTERN(void ewrite, (FILE *fp, const char *buf, unsigned bytes) );
-BU_EXTERN(void blank_fill, (FILE *fp, int count) );
+extern void ewrite(FILE *fp, const char *buf, unsigned bytes);
+extern void blank_fill(FILE *fp, int count);
 
 /* Head of linked list of solids */
 struct soltab	sol_hd;

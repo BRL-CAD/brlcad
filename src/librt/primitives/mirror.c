@@ -40,7 +40,7 @@
 /* FIXME: temporary until all mirror functions are migrated and the
  * functab is utilized.
  */
-#define RT_DECLARE_MIRROR(name) BU_EXTERN(int rt_##name##_mirror, (struct rt_db_internal *ip, const plane_t plane))
+#define RT_DECLARE_MIRROR(name) extern int rt_##name##_mirror(struct rt_db_internal *ip, const plane_t plane)
 
 RT_DECLARE_MIRROR(tor);
 RT_DECLARE_MIRROR(tgc);

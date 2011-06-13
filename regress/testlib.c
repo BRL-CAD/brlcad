@@ -41,7 +41,8 @@
  */
 #if 0
 Example use:
-grep '^BU_EXPORT BU_EXTERN' bu.h | sed 's/^[^,]*[[:space:]*]\([a-zA-Z_][a-zA-Z0-9_]*\),.*/\1/g' | xargs ./a.out
+/* FIXME: regex needs to be rewritten to find function names */
+grep '^BU_EXPORT' bu.h | sed 's/^[^,]*[[:space:]*]\([a-zA-Z_][a-zA-Z0-9_]*\),.*/\1/g' | xargs ./a.out
 #endif
 
 #include <stdio.h>
