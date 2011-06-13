@@ -372,7 +372,7 @@ Most expressions will apply with: perl -0777 -pi -e 'EXPRESSION' FILE
 s/[[:space:]]*BU_ARGS[[:space:]]*\([[:space:]]*([^)]*[[:space:]]*)[[:space:]]*\)/\1/g
         BU_ARGS() no longer necessary due to C89 minimum, list args [7.20]
 
-s/BU_EXTERN[[:space:]]*\([[:space:]]*(.*)[[:space:]]*,[[:space:]]*\([[:space:]]*(.*)[[:space:]]*\)[[:space:]]*\)/extern \1(\2)/mg
+s/BU_EXTERN[[:space:]]*\([[:space:]]*([^,]*?)[[:space:]]*,[[:space:]]*\([[:space:]]*([^)]*)[[:space:]]*\)[[:space:]]*\)/extern \1(\2)/g
         BU_EXTERN() no longer necessary due to C89 minimum, use extern [7.20]
 
 s/SPM_NULL/BN_SPM_MAP_NULL/g
