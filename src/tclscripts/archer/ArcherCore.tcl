@@ -5157,11 +5157,11 @@ namespace eval ArcherCore {
 	set options [lindex $optionsAndArgs 0]
 	set expandedArgs [lindex $optionsAndArgs 1]
 
-        # If there is an error, return it along with the results
-	if {![catch [set result [eval gedCmd ls $args]]]} {
-	    error "some of the requested objects could not be found"
+	if {$options == {}} {
+	    return $expandedArgs
+	} else {
+	    return [eval gedCmd ls $args]
 	}
-	return $result
     }
 }
 
