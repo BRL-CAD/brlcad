@@ -226,16 +226,16 @@
 #  define BU_CKMAG(_ptr, _magic, _str) { \
 	uintptr_t _ptrval = (uintptr_t)(_ptr); \
 	if (UNLIKELY((_ptrval == 0) || (_ptrval & (sizeof(_ptrval)-1)) || *((unsigned long *)(_ptr)) != (unsigned long)(_magic))) { \
-		bu_badmagic((unsigned long *)(_ptr), (unsigned long)_magic, _str, __FILE__, __LINE__); \
+	    bu_badmagic((unsigned long *)(_ptr), (unsigned long)_magic, _str, __FILE__, __LINE__); \
 	} \
-}
+    }
 #  define BU_CKMAG_TCL(_interp, _ptr, _magic, _str) { \
 	uintptr_t _ptrval = (uintptr_t)(_ptr); \
 	if (UNLIKELY((_ptrval == 0) || (_ptrval & (sizeof(_ptrval)-1)) || *((unsigned long *)(_ptr)) != (_magic))) { \
-		bu_badmagic_tcl((_interp), (unsigned long *)(_ptr), (unsigned long)_magic, _str, __FILE__, __LINE__); \
-		return TCL_ERROR; \
+	    bu_badmagic_tcl((_interp), (unsigned long *)(_ptr), (unsigned long)_magic, _str, __FILE__, __LINE__); \
+	    return TCL_ERROR; \
 	} \
-}
+    }
 #endif
 
 

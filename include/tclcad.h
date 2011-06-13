@@ -73,8 +73,8 @@ TCLCAD_EXPORT extern int to_open_tcl(ClientData UNUSED(clientData),
 				     int argc,
 				     const char **argv);
 TCLCAD_EXPORT extern struct application *to_rt_gettrees_application(struct ged *gedp,
-			 int argc,
-			 const char *argv[]);
+								    int argc,
+								    const char *argv[]);
 
 
 

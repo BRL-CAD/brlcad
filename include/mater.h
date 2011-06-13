@@ -63,11 +63,11 @@ RT_EXPORT extern void rt_region_color_map(struct region *regp);
 
 /* process ID_MATERIAL record */
 RT_EXPORT extern void rt_color_addrec(int low,
-		     int hi,
-		     int r,
-		     int g,
-		     int b,
-		     off_t addr);
+				      int hi,
+				      int r,
+				      int g,
+				      int b,
+				      off_t addr);
 RT_EXPORT extern void rt_insert_color(struct mater *newp);
 RT_EXPORT extern void rt_vls_color_map(struct bu_vls *str);
 RT_EXPORT extern struct mater *rt_material_head();

@@ -75,11 +75,11 @@ struct mfuncs {
 
 /* defined in material.c */
 OPTICAL_EXPORT extern void mlib_add_shader(struct mfuncs **headp,
-			  struct mfuncs *mfp1);
+					   struct mfuncs *mfp1);
 
 OPTICAL_EXPORT extern int mlib_setup(struct mfuncs **headp,
-			  struct region *rp,
-			  struct rt_i *rtip);
+				     struct region *rp,
+				     struct rt_i *rtip);
 
 OPTICAL_EXPORT extern void mlib_free(struct region *rp);
 

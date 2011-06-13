@@ -339,23 +339,23 @@ DM_EXPORT extern struct dm dm_Null;
 
 DM_EXPORT extern int Dm_Init();
 DM_EXPORT extern struct dm *dm_open(Tcl_Interp *interp,
-		     int type,
-		     int argc,
-		     const char *argv[]);
+				    int type,
+				    int argc,
+				    const char *argv[]);
 DM_EXPORT extern int dm_share_dlist(struct dm *dmp1,
-		     struct dm *dmp2);
+				    struct dm *dmp2);
 DM_EXPORT extern fastf_t dm_Xx2Normal(struct dm *dmp,
-		     int x);
+				      int x);
 DM_EXPORT extern int dm_Normal2Xx(struct dm *dmp,
-		     fastf_t f);
+				  fastf_t f);
 DM_EXPORT extern fastf_t dm_Xy2Normal(struct dm *dmp,
-		     int y,
-		     int use_aspect);
+				      int y,
+				      int use_aspect);
 DM_EXPORT extern int dm_Normal2Xy(struct dm *dmp,
-		     fastf_t f,
-		     int use_aspect);
+				  fastf_t f,
+				  int use_aspect);
 DM_EXPORT extern void dm_fogHint(struct dm *dmp,
-		     int fastfog);
+				 int fastfog);
 DM_EXPORT extern int dm_processOptions();
 DM_EXPORT extern int dm_limit(int i);
 DM_EXPORT extern int dm_unlimit(int i);
@@ -366,55 +366,55 @@ DM_EXPORT extern unsigned Nu_unsign();
 
 /* adc.c */
 DM_EXPORT extern void dm_draw_adc(struct dm *dmp,
-		     struct ged_view *gvp);
+				  struct ged_view *gvp);
 
 /* axes.c */
 DM_EXPORT extern void dm_draw_data_axes(struct dm *dmp,
-		     fastf_t viewSize,
-		     struct ged_data_axes_state *gdasp);
+					fastf_t viewSize,
+					struct ged_data_axes_state *gdasp);
 
 DM_EXPORT extern void dm_draw_axes(struct dm *dmp,
-		     fastf_t viewSize,
-		     const mat_t rmat,
-		     struct ged_axes_state *gasp);
+				   fastf_t viewSize,
+				   const mat_t rmat,
+				   struct ged_axes_state *gasp);
 
 /* clip.c */
 DM_EXPORT extern int clip(fastf_t *,
-		     fastf_t *,
-		     fastf_t *,
-		     fastf_t *);
+			  fastf_t *,
+			  fastf_t *,
+			  fastf_t *);
 DM_EXPORT extern int vclip(fastf_t *,
-		     fastf_t *,
-		     fastf_t *,
-		     fastf_t *);
+			   fastf_t *,
+			   fastf_t *,
+			   fastf_t *);
 
 /* focus.c */
 DM_EXPORT extern void dm_applicationfocus(void);
 
 /* grid.c */
 DM_EXPORT extern void dm_draw_grid(struct dm *dmp,
-		     struct ged_grid_state *ggsp,
-		     struct ged_view *gvp,
-		     fastf_t base2local);
+				   struct ged_grid_state *ggsp,
+				   struct ged_view *gvp,
+				   fastf_t base2local);
 
 /* labels.c */
 DM_EXPORT extern int dm_draw_labels(struct dm *dmp,
-			     struct rt_wdb *wdbp,
-			     char *name,
-			     mat_t viewmat,
-			     int *labelsColor,
-			     int (*labelsHook)(),
-			     ClientData labelsHookClientdata);
+				    struct rt_wdb *wdbp,
+				    char *name,
+				    mat_t viewmat,
+				    int *labelsColor,
+				    int (*labelsHook)(),
+				    ClientData labelsHookClientdata);
 
 /* rect.c */
 DM_EXPORT extern void dm_draw_rect(struct dm *dmp,
-		     struct ged_rect_state *grsp);
+				   struct ged_rect_state *grsp);
 
 /* scale.c */
 DM_EXPORT extern void dm_draw_scale(struct dm *dmp,
-		     fastf_t viewSize,
-		     int *lineColor,
-		     int *textColor);
+				    fastf_t viewSize,
+				    int *lineColor,
+				    int *textColor);
 
 /* vers.c */
 DM_EXPORT extern const char *dm_version(void);

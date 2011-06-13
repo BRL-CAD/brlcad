@@ -41,17 +41,17 @@ struct bot_specific {
 };
 
 RT_EXPORT extern void rt_bot_prep_pieces(struct bot_specific	*bot,
-		     struct soltab		*stp,
-		     size_t			ntri,
-		     const struct bn_tol	*tol);
+					 struct soltab		*stp,
+					 size_t			ntri,
+					 const struct bn_tol	*tol);
 
 RT_EXPORT extern size_t rt_botface(struct soltab		*stp,
-		     struct bot_specific	*bot,
-		     fastf_t			*ap,
-		     fastf_t			*bp,
-		     fastf_t			*cp,
-		     size_t			face_no,
-		     const struct bn_tol	*tol);
+				   struct bot_specific	*bot,
+				   fastf_t			*ap,
+				   fastf_t			*bp,
+				   fastf_t			*cp,
+				   size_t			face_no,
+				   const struct bn_tol	*tol);
 
 /*
  * Local Variables:
