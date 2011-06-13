@@ -61,10 +61,10 @@ struct tclcad_obj {
 
 #define TCLCAD_OBJ_NULL (struct tclcad_obj *)0
 
-TCLCAD_EXPORT extern int tclcad_tk_setup, (Tcl_Interp *interp);
-TCLCAD_EXPORT extern void tclcad_auto_path, (Tcl_Interp *interp);
-TCLCAD_EXPORT extern void tclcad_tcl_library, (Tcl_Interp *interp);
-TCLCAD_EXPORT extern int Tclcad_Init, (Tcl_Interp *interp);
+TCLCAD_EXPORT extern int tclcad_tk_setup(Tcl_Interp *interp);
+TCLCAD_EXPORT extern void tclcad_auto_path(Tcl_Interp *interp);
+TCLCAD_EXPORT extern void tclcad_tcl_library(Tcl_Interp *interp);
+TCLCAD_EXPORT extern int Tclcad_Init(Tcl_Interp *interp);
 
 /* defined in tclcad_obj.c */
 TCLCAD_EXPORT extern int Go_Init(Tcl_Interp *interp);
