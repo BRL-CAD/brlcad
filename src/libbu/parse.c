@@ -676,7 +676,6 @@ _bu_struct_lookup(register const struct bu_structparse *sdp, register const char
 	    case 'V':
 		{
 		    struct bu_vls *vls = (struct bu_vls *)loc;
-		    bu_vls_init_if_uninit(vls);
 		    bu_vls_strcpy(vls, value);
 		}
 		break;
@@ -2292,7 +2291,6 @@ bu_structparse_argv(struct bu_vls *logstr,
 
 			bu_vls_printf(logstr, "%s ", sdp->sp_name);
 
-			bu_vls_init_if_uninit(vls);
 			bu_vls_strcpy(vls, argv[0]);
 
 			bu_vls_printf(logstr, "%s ", argv[0]);

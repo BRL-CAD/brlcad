@@ -358,7 +358,6 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 	    case 'S':
 	    {
 		struct bu_vls *vls = (struct bu_vls *)loc;
-		bu_vls_init_if_uninit( vls );
 		bu_vls_strcpy(vls, value);
 	    }
 	    break;
