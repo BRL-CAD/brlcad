@@ -5236,9 +5236,9 @@ namespace eval ArcherCore {
 	set expandedArgs [lindex $optionsAndArgs 1]
 
 	if {$options == {}} {
-	    return $expandedArgs
+	    return [eval gedCmd ls $expandedArgs]
 	} else {
-	    return [eval gedCmd ls $args]
+	    return [eval gedCmd ls $options $expandedArgs]
 	}
     }
 }
