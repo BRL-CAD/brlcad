@@ -815,7 +815,7 @@ struct db_i {
     double dbi_local2base;		/**< @brief local2mm */
     double dbi_base2local;		/**< @brief unit conversion factors */
     char * dbi_title;			/**< @brief title from IDENT rec */
-    char * const * dbi_filepath;	/**< @brief search path for aux file opens (convenience var) */
+    char ** dbi_filepath;		/**< @brief search path for aux file opens (convenience var) */
 
     /* THESE ELEMENTS ARE FOR LIBRT ONLY, AND MAY CHANGE */
 
