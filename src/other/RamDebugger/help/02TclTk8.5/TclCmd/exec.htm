@@ -1,0 +1,438 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>exec manual page - Tcl Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclCmd</a> <small>&gt;</small> exec</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="exec.htm#M2" NAME="L345">NAME</A>
+<DL><DD>exec - Invoke subprocesses</DD></DL>
+<DD><A HREF="exec.htm#M3" NAME="L346">SYNOPSIS</A>
+<DL>
+</DL>
+<DD><A HREF="exec.htm#M4" NAME="L347">DESCRIPTION</A>
+<DL class="description">
+<DD><A HREF="exec.htm#M5" NAME="L348"><B>-ignorestderr</B></A>
+<DD><A HREF="exec.htm#M6" NAME="L349"><B>-keepnewline</B></A>
+<DD><A HREF="exec.htm#M7" NAME="L350"><B>--</B></A>
+</DL>
+<DL class="description">
+<DD><A HREF="exec.htm#M8" NAME="L351"><B>|</B></A>
+<DD><A HREF="exec.htm#M9" NAME="L352"><B>|&amp;</B></A>
+<DD><A HREF="exec.htm#M10" NAME="L353"><B>&lt; </B><I>fileName</I></A>
+<DD><A HREF="exec.htm#M11" NAME="L354"><B>&lt;@ </B><I>fileId</I></A>
+<DD><A HREF="exec.htm#M12" NAME="L355"><B>&lt;&lt; </B><I>value</I></A>
+<DD><A HREF="exec.htm#M13" NAME="L356"><B>&gt; </B><I>fileName</I></A>
+<DD><A HREF="exec.htm#M14" NAME="L357"><B>2&gt; </B><I>fileName</I></A>
+<DD><A HREF="exec.htm#M15" NAME="L358"><B>&gt;&amp; </B><I>fileName</I></A>
+<DD><A HREF="exec.htm#M16" NAME="L359"><B>&gt;&gt; </B><I>fileName</I></A>
+<DD><A HREF="exec.htm#M17" NAME="L360"><B>2&gt;&gt; </B><I>fileName</I></A>
+<DD><A HREF="exec.htm#M18" NAME="L361"><B>&gt;&gt;&amp; </B><I>fileName</I></A>
+<DD><A HREF="exec.htm#M19" NAME="L362"><B>&gt;@ </B><I>fileId</I></A>
+<DD><A HREF="exec.htm#M20" NAME="L363"><B>2&gt;@ </B><I>fileId</I></A>
+<DD><A HREF="exec.htm#M21" NAME="L364"><B>2&gt;@1 </B></A>
+<DD><A HREF="exec.htm#M22" NAME="L365"><B>&gt;&amp;@ </B><I>fileId</I></A>
+</DL>
+<DD><A HREF="exec.htm#M23" NAME="L366">PORTABILITY ISSUES</A>
+<DL class="portability issues">
+<DD><A HREF="exec.htm#M24" NAME="L367"><B>Windows</B> (all versions)</A>
+<DL class="portability issues">
+</DL>
+<DD><A HREF="exec.htm#M25" NAME="L368"><B>Windows NT</B></A>
+<DL class="portability issues">
+</DL>
+<DD><A HREF="exec.htm#M26" NAME="L369"><B>Windows 9x</B></A>
+<DL class="portability issues">
+</DL>
+<DD><A HREF="exec.htm#M27" NAME="L370"><B>Unix</B></A>
+</DL>
+<DD><A HREF="exec.htm#M28" NAME="L371">UNIX EXAMPLES</A>
+<DD><A HREF="exec.htm#M29" NAME="L372">WINDOWS EXAMPLES</A>
+<DD><A HREF="exec.htm#M30" NAME="L373">SEE ALSO</A>
+<DD><A HREF="exec.htm#M31" NAME="L374">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+exec - Invoke subprocesses
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>exec </B>?<I>switches</I>? <I>arg </I>?<I>arg ...</I>?<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+This command treats its arguments as the specification
+of one or more subprocesses to execute.
+The arguments take the form of a standard shell pipeline
+where each <I>arg</I> becomes one word of a command, and
+each distinct command becomes a subprocess.
+<P>
+If the initial arguments to <B>exec</B> start with <B>-</B> then
+they are treated as command-line switches and are not part
+of the pipeline specification.  The following switches are
+currently supported:
+<P>
+<DL class="description">
+<DT><A NAME="M5"><B>-ignorestderr</B></A><DD>
+Stops the <B>exec</B> command from treating the output of messages to the
+pipeline's standard error channel as an error case.
+<P><DT><A NAME="M6"><B>-keepnewline</B></A><DD>
+Retains a trailing newline in the pipeline's output.
+Normally a trailing newline will be deleted.
+<P><DT><A NAME="M7"><B>--</B></A><DD>
+Marks the end of switches.  The argument following this one will
+be treated as the first <I>arg</I> even if it starts with a <B>-</B>.
+<P></DL>
+<P>
+If an <I>arg</I> (or pair of <I>arg</I>s) has one of the forms
+described below then it is used by <B>exec</B> to control the
+flow of input and output among the subprocess(es).
+Such arguments will not be passed to the subprocess(es).  In forms
+such as
+&#8220;<B>&lt;</B> <I>fileName</I>&#8221;,
+<I>fileName</I> may either be in a separate argument from
+&#8220;<B>&lt;</B>&#8221;
+or in the same argument with no intervening space (i.e.
+&#8220;<B>&lt;</B><I>fileName</I>&#8221;).
+<P>
+<DL class="description">
+<DT><A NAME="M8"><B>|</B></A><DD>
+Separates distinct commands in the pipeline.  The standard output
+of the preceding command will be piped into the standard input
+of the next command.
+<P><DT><A NAME="M9"><B>|&amp;</B></A><DD>
+Separates distinct commands in the pipeline.  Both standard output
+and standard error of the preceding command will be piped into
+the standard input of the next command.
+This form of redirection overrides forms such as 2&gt; and &gt;&amp;.
+<P><DT><A NAME="M10"><B>&lt; </B><I>fileName</I></A><DD>
+The file named by <I>fileName</I> is opened and used as the standard
+input for the first command in the pipeline.
+<P><DT><A NAME="M11"><B>&lt;@ </B><I>fileId</I></A><DD>
+<I>FileId</I> must be the identifier for an open file, such as the return
+value from a previous call to <B><A HREF="../TclCmd/open.htm">open</A></B>.
+It is used as the standard input for the first command in the pipeline.
+<I>FileId</I> must have been opened for reading.
+<P><DT><A NAME="M12"><B>&lt;&lt; </B><I>value</I></A><DD>
+<I>Value</I> is passed to the first command as its standard input.
+<P><DT><A NAME="M13"><B>&gt; </B><I>fileName</I></A><DD>
+Standard output from the last command is redirected to the file named
+<I>fileName</I>, overwriting its previous contents.
+<P><DT><A NAME="M14"><B>2&gt; </B><I>fileName</I></A><DD>
+Standard error from all commands in the pipeline is redirected to the
+file named <I>fileName</I>, overwriting its previous contents.
+<P><DT><A NAME="M15"><B>&gt;&amp; </B><I>fileName</I></A><DD>
+Both standard output from the last command and standard error from all
+commands are redirected to the file named <I>fileName</I>, overwriting
+its previous contents.
+<P><DT><A NAME="M16"><B>&gt;&gt; </B><I>fileName</I></A><DD>
+Standard output from the last command is
+redirected to the file named <I>fileName</I>, appending to it rather
+than overwriting it.
+<P><DT><A NAME="M17"><B>2&gt;&gt; </B><I>fileName</I></A><DD>
+Standard error from all commands in the pipeline is
+redirected to the file named <I>fileName</I>, appending to it rather
+than overwriting it.
+<P><DT><A NAME="M18"><B>&gt;&gt;&amp; </B><I>fileName</I></A><DD>
+Both standard output from the last command and standard error from
+all commands are redirected to the file named <I>fileName</I>,
+appending to it rather than overwriting it.
+<P><DT><A NAME="M19"><B>&gt;@ </B><I>fileId</I></A><DD>
+<I>FileId</I> must be the identifier for an open file, such as the return
+value from a previous call to <B><A HREF="../TclCmd/open.htm">open</A></B>.
+Standard output from the last command is redirected to <I>fileId</I>'s
+file, which must have been opened for writing.
+<P><DT><A NAME="M20"><B>2&gt;@ </B><I>fileId</I></A><DD>
+<I>FileId</I> must be the identifier for an open file, such as the return
+value from a previous call to <B><A HREF="../TclCmd/open.htm">open</A></B>.
+Standard error from all commands in the pipeline is
+redirected to <I>fileId</I>'s file.
+The file must have been opened for writing.
+<P><DT><A NAME="M21"><B>2&gt;@1 </B></A><DD>
+Standard error from all commands in the pipeline is redirected to the
+command result.  This operator is only valid at the end of the command
+pipeline.
+<P><DT><A NAME="M22"><B>&gt;&amp;@ </B><I>fileId</I></A><DD>
+<I>FileId</I> must be the identifier for an open file, such as the return
+value from a previous call to <B><A HREF="../TclCmd/open.htm">open</A></B>.
+Both standard output from the last command and standard error from
+all commands are redirected to <I>fileId</I>'s file.
+The file must have been opened for writing.
+<P></DL>
+<P>
+If standard output has not been redirected then the <B>exec</B>
+command returns the standard output from the last command
+in the pipeline,
+unless
+&#8220;2&gt;@1&#8221;
+was specified, in which case standard error is included as well.
+If any of the commands in the pipeline exit abnormally or
+are killed or suspended, then <B>exec</B> will return an error
+and the error message will include the pipeline's output followed by
+error messages describing the abnormal terminations; the
+<B>-errorcode</B> return option will contain additional information
+about the last abnormal termination encountered.
+If any of the commands writes to its standard error file and that
+standard error is not redirected
+and <B>-ignorestderr</B> is not specified,
+then <B>exec</B> will return an error;  the error message
+will include the pipeline's standard output, followed by messages
+about abnormal terminations (if any), followed by the standard error
+output.
+<P>
+If the last character of the result or error message
+is a newline then that character is normally deleted
+from the result or error message.
+This is consistent with other Tcl return values, which do not
+normally end with newlines.
+However, if <B>-keepnewline</B> is specified then the trailing
+newline is retained.
+<P>
+If standard input is not redirected with
+&#8220;&lt;&#8221;,
+&#8220;&lt;&lt;&#8221;
+or
+&#8220;&lt;@&#8221;
+then the standard input for the first command in the
+pipeline is taken from the application's current standard input.
+<P>
+If the last <I>arg</I> is
+&#8220;&amp;&#8221;
+then the pipeline will be executed in background.
+In this case the <B>exec</B> command will return a list whose
+elements are the process identifiers for all of the subprocesses
+in the pipeline.
+The standard output from the last command in the pipeline will
+go to the application's standard output if it has not been
+redirected, and error output from all of
+the commands in the pipeline will go to the application's
+standard error file unless redirected.
+<P>
+The first word in each command is taken as the command name;
+tilde-substitution is performed on it, and if the result contains
+no slashes then the directories
+in the PATH environment variable are searched for
+an executable by the given name.
+If the name contains a slash then it must refer to an executable
+reachable from the current directory.
+No
+&#8220;glob&#8221;
+expansion or other shell-like substitutions
+are performed on the arguments to commands.
+<H3><A NAME="M23">PORTABILITY ISSUES</A></H3>
+<DL class="portability issues">
+<DT><A NAME="M24"><B>Windows</B> (all versions)</A><DD>
+Reading from or writing to a socket, using the
+&#8220;<B>@ </B><I>fileId</I>&#8221;
+notation, does not work.  When reading from a socket, a 16-bit DOS
+application will hang and a 32-bit application will return immediately with
+end-of-file.  When either type of application writes to a socket, the
+information is instead sent to the console, if one is present, or is
+discarded.
+<P>
+The Tk console text widget does not provide real standard IO capabilities.
+Under Tk, when redirecting from standard input, all applications will see an
+immediate end-of-file; information redirected to standard output or standard
+error will be discarded.  
+<P>
+Either forward or backward slashes are accepted as path separators for
+arguments to Tcl commands.  When executing an application, the path name
+specified for the application may also contain forward or backward slashes
+as path separators.  Bear in mind, however, that most Windows applications
+accept arguments with forward slashes only as option delimiters and
+backslashes only in paths.  Any arguments to an application that specify a
+path name with forward slashes will not automatically be converted to use
+the backslash character.  If an argument contains forward slashes as the
+path separator, it may or may not be recognized as a path name, depending on
+the program.  
+<P>
+Additionally, when calling a 16-bit DOS or Windows 3.X application, all path
+names must use the short, cryptic, path format (e.g., using
+&#8220;applba~1.def&#8221;
+instead of
+&#8220;applbakery.default&#8221;),
+which can be obtained with the
+&#8220;<B>file attributes </B><I>fileName </I><B>-shortname</B>&#8221;
+command.
+<P>
+Two or more forward or backward slashes in a row in a path refer to a
+network path.  For example, a simple concatenation of the root directory
+<B>c:/</B> with a subdirectory <B>/windows/system</B> will yield
+<B>c://windows/system</B> (two slashes together), which refers to the mount
+point called <B>system</B> on the machine called <B>windows</B> (and the
+<B>c:/</B> is ignored), and is not equivalent to <B>c:/windows/system</B>,
+which describes a directory on the current computer.  The <B><A HREF="../TclCmd/file.htm">file join</A></B>
+command should be used to concatenate path components.
+<P>
+Note that there are two general types of Win32 console applications:
+<P>
+<DL class="portability issues">
+<DT>[1]<DD>
+CLI &#8212; CommandLine Interface, simple stdio exchange. <B>netstat.exe</B> for
+example.
+<P><DT>[2]<DD>
+TUI &#8212; Textmode User Interface, any application that accesses the console
+API for doing such things as cursor movement, setting text color, detecting
+key presses and mouse movement, etc.  An example would be <B>telnet.exe</B>
+from Windows 2000.  These types of applications are not common in a windows
+environment, but do exist.
+<P></DL>
+<P><B>exec</B> will not work well with TUI applications when a console is not
+present, as is done when launching applications under wish.  It is desirable
+to have console applications hidden and detached.  This is a designed-in
+limitation as <B>exec</B> wants to communicate over pipes.  The Expect
+extension addresses this issue when communicating with a TUI application.
+<P><DT><A NAME="M25"><B>Windows NT</B></A><DD>
+When attempting to execute an application, <B>exec</B> first searches for
+the name as it was specified.  Then, in order, <B>.com</B>, <B>.exe</B>, and
+<B>.bat</B> are appended to the end of the specified name and it searches
+for the longer name.  If a directory name was not specified as part of the
+application name, the following directories are automatically searched in
+order when attempting to locate the application:
+<P>
+<DL class="portability issues">
+<DT><DD>&#8226;&nbsp;
+The directory from which the Tcl executable was loaded.
+<P><DT><DD>&#8226;&nbsp;
+The current directory.
+<P><DT><DD>&#8226;&nbsp;
+The Windows NT 32-bit system directory.
+<P><DT><DD>&#8226;&nbsp;
+The Windows NT 16-bit system directory.
+<P><DT><DD>&#8226;&nbsp;
+The Windows NT home directory.
+<P><DT><DD>&#8226;&nbsp;
+The directories listed in the path.
+</DL><P>In order to execute shell built-in commands like <B>dir</B> and <B>copy</B>,
+the caller must prepend the desired command with
+&#8220;<B>cmd.exe /c </B>&#8221;
+because built-in commands are not implemented using executables.<DL>
+</DL>
+<P><DT><A NAME="M26"><B>Windows 9x</B></A><DD>
+When attempting to execute an application, <B>exec</B> first searches for
+the name as it was specified.  Then, in order, <B>.com</B>, <B>.exe</B>, and
+<B>.bat</B> are appended to the end of the specified name and it searches
+for the longer name.  If a directory name was not specified as part of the
+application name, the following directories are automatically searched in
+order when attempting to locate the application:
+<P>
+<DL class="portability issues">
+<DT><DD>&#8226;&nbsp;
+The directory from which the Tcl executable was loaded.
+<P><DT><DD>&#8226;&nbsp;
+The current directory.
+<P><DT><DD>&#8226;&nbsp;
+The Windows 9x system directory.
+<P><DT><DD>&#8226;&nbsp;
+The Windows 9x home directory.
+<P><DT><DD>&#8226;&nbsp;
+The directories listed in the path.
+<P></DL>
+<P>
+In order to execute shell built-in commands like <B>dir</B> and <B>copy</B>,
+the caller must prepend the desired command with
+&#8220;<B>command.com /c </B>&#8221;
+because built-in commands are not implemented using executables.
+<P>
+Once a 16-bit DOS application has read standard input from a console and 
+then quit, all subsequently run 16-bit DOS applications will see the 
+standard input as already closed.  32-bit applications do not have this
+problem and will run correctly, even after a 16-bit DOS application thinks 
+that standard input is closed.  There is no known workaround for this bug
+at this time.
+<P>
+Redirection between the <B>NUL:</B> device and a 16-bit application does not
+always work.  When redirecting from <B>NUL:</B>, some applications may hang,
+others will get an infinite stream of
+&#8220;0x01&#8221;
+bytes, and some will actually
+correctly get an immediate end-of-file; the behavior seems to depend upon 
+something compiled into the application itself.  When redirecting greater than
+4K or so to <B>NUL:</B>, some applications will hang.  The above problems do not
+happen with 32-bit applications.  
+<P>
+All DOS 16-bit applications are run synchronously.  All standard input from
+a pipe to a 16-bit DOS application is collected into a temporary file; the
+other end of the pipe must be closed before the 16-bit DOS application
+begins executing.  All standard output or error from a 16-bit DOS
+application to a pipe is collected into temporary files; the application
+must terminate before the temporary files are redirected to the next stage
+of the pipeline.  This is due to a workaround for a Windows 95 bug in the
+implementation of pipes, and is how the standard Windows 95 DOS shell
+handles pipes itself.
+<P>Certain applications, such as <B>command.com</B>, should not be executed
+interactively.  Applications which directly access the console window,
+rather than reading from their standard input and writing to their standard
+output may fail, hang Tcl, or even hang the system if their own private
+console window is not available to them.
+<P><DT><A NAME="M27"><B>Unix</B></A><DD>
+The <B>exec</B> command is fully functional and works as described.
+<P></DL>
+<H3><A NAME="M28">UNIX EXAMPLES</A></H3>
+Here are some examples of the use of the <B>exec</B> command on Unix.
+<P>
+To execute a simple program and get its result:
+<PRE><B>exec</B> uname -a</PRE>
+<P>
+To execute a program that can return a non-zero result, you should
+wrap the call to <B>exec</B> in <B><A HREF="../TclCmd/catch.htm">catch</A></B> and check the contents
+of the <B>-errorcode</B> return option if you have an error:
+<PRE>set status 0
+if {[catch {<B>exec</B> grep foo bar.txt} results options]} {
+   set details [dict get $options -errorcode]
+   if {[lindex $details 0] eq &quot;CHILDSTATUS&quot;} {
+      set status [lindex $details 2]
+   } else {
+      # Some kind of unexpected failure
+   }
+}</PRE>
+<P>
+When translating a command from a Unix shell invocation, care should
+be taken over the fact that single quote characters have no special
+significance to Tcl.  Thus:
+<PRE>awk '{sum += $1} END {print sum}' numbers.list</PRE>
+would be translated into something like:
+<PRE><B>exec</B> awk {{sum += $1} END {print sum}} numbers.list</PRE>
+<P>
+If you are converting invocations involving shell globbing, you should
+remember that Tcl does not handle globbing or expand things into
+multiple arguments by default.  Instead you should write things like
+this:
+<PRE><B>exec</B> ls -l {*}[glob *.tcl]</PRE>
+<H3><A NAME="M29">WINDOWS EXAMPLES</A></H3>
+Here are some examples of the use of the <B>exec</B> command on Windows.
+<P>
+To start an instance of <I>notepad</I> editing a file without waiting
+for the user to finish editing the file:
+<PRE><B>exec</B> notepad myfile.txt &amp;</PRE>
+<P>
+To print a text file using <I>notepad</I>:
+<PRE><B>exec</B> notepad /p myfile.txt</PRE>
+<P>
+If a program calls other programs, such as is common with compilers,
+then you may need to resort to batch files to hide the console windows
+that sometimes pop up:
+<PRE><B>exec</B> cmp.bat somefile.c -o somefile</PRE>
+With the file <I>cmp.bat</I> looking something like:
+<PRE>@gcc %1 %2 %3 %4 %5 %6 %7 %8 %9</PRE>
+<P>
+Sometimes you need to be careful, as different programs may have the
+same name and be in the path. It can then happen that typing a command
+at the DOS prompt finds <I>a different program</I> than the same
+command run via <B>exec</B>. This is because of the (documented)
+differences in behaviour between <B>exec</B> and DOS batch files.
+<P>
+When in doubt, use the command <B><A HREF="../TclCmd/library.htm">auto_execok</A></B>: it will return the
+complete path to the program as seen by the <B>exec</B> command.  This
+applies especially when you want to run
+&#8220;internal&#8221;
+commands like
+<I>dir</I> from a Tcl script (if you just want to list filenames, use
+the <B><A HREF="../TclCmd/glob.htm">glob</A></B> command.)  To do that, use this:
+<PRE><B>exec</B> {*}[auto_execok dir] *.tcl</PRE>
+<H3><A NAME="M30">SEE ALSO</A></H3>
+<B><A HREF="../TclCmd/error.htm">error</A></B>, <B><A HREF="../TclCmd/open.htm">open</A></B>
+<H3><A NAME="M31">KEYWORDS</A></H3>
+<A href="../Keywords/E.htm#execute">execute</A>, <A href="../Keywords/P.htm#pipeline">pipeline</A>, <A href="../Keywords/R.htm#redirection">redirection</A>, <A href="../Keywords/S.htm#subprocess">subprocess</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1993 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+Copyright &copy; 2006 Donal K. Fellows.
+</div>
+</BODY></HTML>

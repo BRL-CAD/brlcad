@@ -1,0 +1,42 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>pid manual page - Tcl Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclCmd</a> <small>&gt;</small> pid</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+pid - Retrieve process identifiers
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>pid </B>?<I>fileId</I>?<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+If the <I>fileId</I> argument is given then it should normally
+refer to a process pipeline created with the <B><A HREF="../TclCmd/open.htm">open</A></B> command.
+In this case the <B>pid</B> command will return a list whose elements
+are the process identifiers of all the processes in the pipeline,
+in order.
+The list will be empty if <I>fileId</I> refers to an open file
+that is not a process pipeline.
+If no <I>fileId</I> argument is given then <B>pid</B> returns the process
+identifier of the current process.
+All process identifiers are returned as decimal strings.
+<H3><A NAME="M5">EXAMPLE</A></H3>
+Print process information about the processes in a pipeline using the
+SysV <B>ps</B> program before reading the output of that pipeline:
+<P>
+<PRE>set pipeline [open &quot;| zcat somefile.gz | grep foobar | sort -u&quot;]
+# Print process information
+exec ps -fp [<B>pid</B> $pipeline] &gt;@stdout
+# Print a separator and then the output of the pipeline
+puts [string repeat - 70]
+puts [read $pipeline]
+close $pipeline</PRE>
+<H3><A NAME="M6">SEE ALSO</A></H3>
+<B><A HREF="../TclCmd/exec.htm">exec</A></B>, <B><A HREF="../TclCmd/open.htm">open</A></B>
+<H3><A NAME="M7">KEYWORDS</A></H3>
+<A href="../Keywords/F.htm#file">file</A>, <A href="../Keywords/P.htm#pipeline">pipeline</A>, <A href="../Keywords/P.htm#process identifier">process identifier</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1993 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

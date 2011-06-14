@@ -1,0 +1,252 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>Tcl manual page - Tcl Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclCmd</a> <small>&gt;</small> Tcl</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="Tcl.htm#M2" NAME="L1593">NAME</A>
+<DL><DD>Tcl - Tool Command Language</DD></DL>
+<DD><A HREF="Tcl.htm#M3" NAME="L1594">SYNOPSIS</A>
+<DL>
+</DL>
+<DD><A HREF="Tcl.htm#M4" NAME="L1595">DESCRIPTION</A>
+<DL class="description">
+<DD><A HREF="Tcl.htm#M5" NAME="L1596">[1] <B>Commands.</B></A>
+<DD><A HREF="Tcl.htm#M6" NAME="L1597">[2] <B>Evaluation.</B></A>
+<DD><A HREF="Tcl.htm#M7" NAME="L1598">[3] <B>Words.</B></A>
+<DD><A HREF="Tcl.htm#M8" NAME="L1599">[4] <B>Double quotes.</B></A>
+<DD><A HREF="Tcl.htm#M9" NAME="L1600">[5] <B>Argument expansion.</B></A>
+<DD><A HREF="Tcl.htm#M10" NAME="L1601">[6] <B>Braces.</B></A>
+<DD><A HREF="Tcl.htm#M11" NAME="L1602">[7] <B>Command substitution.</B></A>
+<DD><A HREF="Tcl.htm#M12" NAME="L1603">[8] <B>Variable substitution.</B></A>
+<DL class="description">
+<DD><A HREF="Tcl.htm#M13" NAME="L1604"><B>$</B><I>name</I></A>
+<DD><A HREF="Tcl.htm#M14" NAME="L1605"><B>$</B><I>name</I><B>(</B><I>index</I><B>)</B></A>
+<DD><A HREF="Tcl.htm#M15" NAME="L1606"><B>${</B><I>name</I><B>}</B></A>
+</DL>
+<DD><A HREF="Tcl.htm#M16" NAME="L1607">[9] <B>Backslash substitution.</B></A>
+<DL class="description">
+<DD><A HREF="Tcl.htm#M17" NAME="L1608">&#92;<B>a</B></A>
+<DD><A HREF="Tcl.htm#M18" NAME="L1609">&#92;<B>b</B></A>
+<DD><A HREF="Tcl.htm#M19" NAME="L1610">&#92;<B>f</B></A>
+<DD><A HREF="Tcl.htm#M20" NAME="L1611">&#92;<B>n</B></A>
+<DD><A HREF="Tcl.htm#M21" NAME="L1612">&#92;<B>r</B></A>
+<DD><A HREF="Tcl.htm#M22" NAME="L1613">&#92;<B>t</B></A>
+<DD><A HREF="Tcl.htm#M23" NAME="L1614">&#92;<B>v</B></A>
+<DD><A HREF="Tcl.htm#M24" NAME="L1615">&#92;<B>&lt;newline&gt;</B><I>whiteSpace</I></A>
+<DD><A HREF="Tcl.htm#M25" NAME="L1616">&#92;&#92;</A>
+<DD><A HREF="Tcl.htm#M26" NAME="L1617">&#92;<I>ooo</I></A>
+<DD><A HREF="Tcl.htm#M27" NAME="L1618">&#92;<B>x</B><I>hh</I></A>
+<DD><A HREF="Tcl.htm#M28" NAME="L1619">&#92;<B>u</B><I>hhhh</I></A>
+</DL>
+<DD><A HREF="Tcl.htm#M29" NAME="L1620">[10] <B>Comments.</B></A>
+<DD><A HREF="Tcl.htm#M30" NAME="L1621">[11] <B>Order of substitution.</B></A>
+<DD><A HREF="Tcl.htm#M31" NAME="L1622">[12] <B>Substitution and word boundaries.</B></A>
+</DL>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+Tcl - Tool Command Language
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+Summary of Tcl language syntax.<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+The following rules define the syntax and semantics of the Tcl language:
+<P>
+<DL class="description">
+<DT><A NAME="M5">[1] <B>Commands.</B></A><DD>
+A Tcl script is a string containing one or more commands.
+Semi-colons and newlines are command separators unless quoted as
+described below.
+Close brackets are command terminators during command substitution
+(see below) unless quoted.
+<P><DT><A NAME="M6">[2] <B>Evaluation.</B></A><DD>
+A command is evaluated in two steps.
+First, the Tcl interpreter breaks the command into <I>words</I>
+and performs substitutions as described below.
+These substitutions are performed in the same way for all
+commands.
+The first word is used to locate a command procedure to
+carry out the command, then all of the words of the command are
+passed to the command procedure.
+The command procedure is free to interpret each of its words
+in any way it likes, such as an integer, variable name, list,
+or Tcl script.
+Different commands interpret their words differently.
+<P><DT><A NAME="M7">[3] <B>Words.</B></A><DD>
+Words of a command are separated by white space (except for
+newlines, which are command separators).
+<P><DT><A NAME="M8">[4] <B>Double quotes.</B></A><DD>
+If the first character of a word is double-quote
+(&#8220;&#34;&#8221;)
+then the word is terminated by the next double-quote character.
+If semi-colons, close brackets, or white space characters
+(including newlines) appear between the quotes then they are treated
+as ordinary characters and included in the word.
+Command substitution, variable substitution, and backslash substitution
+are performed on the characters between the quotes as described below.
+The double-quotes are not retained as part of the word.
+<P><DT><A NAME="M9">[5] <B>Argument expansion.</B></A><DD>
+If a word starts with the string
+&#8220;{*}&#8221;
+followed by a non-whitespace character, then the leading
+&#8220;{*}&#8221;
+is removed
+and the rest of the word is parsed and substituted as any other
+word. After substitution, the word is parsed again without
+substitutions, and its words are added to the command being
+substituted. For instance,
+&#8220;cmd a {*}{b c} d {*}{e f}&#8221;
+is equivalent to
+&#8220;cmd a b c d e f&#8221;.
+<P><DT><A NAME="M10">[6] <B>Braces.</B></A><DD>
+If the first character of a word is an open brace
+(&#8220;{&#8221;)
+and rule [5] does not apply, then
+the word is terminated by the matching close brace
+(&#8220;}&#8221;).
+Braces nest within the word: for each additional open
+brace there must be an additional close brace (however,
+if an open brace or close brace within the word is
+quoted with a backslash then it is not counted in locating the
+matching close brace).
+No substitutions are performed on the characters between the
+braces except for backslash-newline substitutions described
+below, nor do semi-colons, newlines, close brackets,
+or white space receive any special interpretation.
+The word will consist of exactly the characters between the
+outer braces, not including the braces themselves.
+<P><DT><A NAME="M11">[7] <B>Command substitution.</B></A><DD>
+If a word contains an open bracket
+(&#8220;[&#8221;)
+then Tcl performs <I>command substitution</I>.
+To do this it invokes the Tcl interpreter recursively to process
+the characters following the open bracket as a Tcl script.
+The script may contain any number of commands and must be terminated
+by a close bracket
+(&#8220;]&#8221;).
+The result of the script (i.e. the result of its last command) is
+substituted into the word in place of the brackets and all of the
+characters between them.
+There may be any number of command substitutions in a single word.
+Command substitution is not performed on words enclosed in braces.
+<P><DT><A NAME="M12">[8] <B>Variable substitution.</B></A><DD>
+If a word contains a dollar-sign
+(&#8220;$&#8221;)
+followed by one of the forms
+described below, then Tcl performs <I>variable
+substitution</I>:  the dollar-sign and the following characters are
+replaced in the word by the value of a variable.
+Variable substitution may take any of the following forms:
+<P>
+<DL class="description">
+<DT><A NAME="M13"><B>$</B><I>name</I></A><DD>
+<I>Name</I> is the name of a scalar variable;  the name is a sequence
+of one or more characters that are a letter, digit, underscore,
+or namespace separators (two or more colons).
+<P><DT><A NAME="M14"><B>$</B><I>name</I><B>(</B><I>index</I><B>)</B></A><DD>
+<I>Name</I> gives the name of an array variable and <I>index</I> gives
+the name of an element within that array.
+<I>Name</I> must contain only letters, digits, underscores, and
+namespace separators, and may be an empty string.
+Command substitutions, variable substitutions, and backslash
+substitutions are performed on the characters of <I>index</I>.
+<P><DT><A NAME="M15"><B>${</B><I>name</I><B>}</B></A><DD>
+<I>Name</I> is the name of a scalar variable.  It may contain any
+characters whatsoever except for close braces.
+</DL><P>There may be any number of variable substitutions in a single word.
+Variable substitution is not performed on words enclosed in braces.<DL>
+</DL>
+<P><DT><A NAME="M16">[9] <B>Backslash substitution.</B></A><DD>
+If a backslash
+(&#8220;&#92;&#8221;)
+appears within a word then <I>backslash substitution</I> occurs.
+In all cases but those described below the backslash is dropped and
+the following character is treated as an ordinary
+character and included in the word.
+This allows characters such as double quotes, close brackets,
+and dollar signs to be included in words without triggering
+special processing.
+The following table lists the backslash sequences that are
+handled specially, along with the value that replaces each sequence.
+<P>
+<DL class="description">
+<DT><A NAME="M17">&#92;<B>a</B></A><DD>
+Audible alert (bell) (0x7).
+<P><DT><A NAME="M18">&#92;<B>b</B></A><DD>
+Backspace (0x8).
+<P><DT><A NAME="M19">&#92;<B>f</B></A><DD>
+Form feed (0xc).
+<P><DT><A NAME="M20">&#92;<B>n</B></A><DD>
+Newline (0xa).
+<P><DT><A NAME="M21">&#92;<B>r</B></A><DD>
+Carriage-return (0xd).
+<P><DT><A NAME="M22">&#92;<B>t</B></A><DD>
+Tab (0x9).
+<P><DT><A NAME="M23">&#92;<B>v</B></A><DD>
+Vertical tab (0xb).
+<P><DT><A NAME="M24">&#92;<B>&lt;newline&gt;</B><I>whiteSpace</I></A><DD>
+A single space character replaces the backslash, newline, and all spaces
+and tabs after the newline.  This backslash sequence is unique in that it
+is replaced in a separate pre-pass before the command is actually parsed.
+This means that it will be replaced even when it occurs between braces,
+and the resulting space will be treated as a word separator if it is not
+in braces or quotes.
+<P><DT><A NAME="M25">&#92;&#92;</A><DD>
+Backslash
+(&#8220;&#92;&#8221;).
+<P><DT><A NAME="M26">&#92;<I>ooo</I></A><DD>
+The digits <I>ooo</I> (one, two, or three of them) give an eight-bit octal 
+value for the Unicode character that will be inserted.  The upper bits of the
+Unicode character will be 0.
+<P><DT><A NAME="M27">&#92;<B>x</B><I>hh</I></A><DD>
+The hexadecimal digits <I>hh</I> give an eight-bit hexadecimal value for the
+Unicode character that will be inserted.  Any number of hexadecimal digits
+may be present; however, all but the last two are ignored (the result is
+always a one-byte quantity).  The upper bits of the Unicode character will
+be 0.
+<P><DT><A NAME="M28">&#92;<B>u</B><I>hhhh</I></A><DD>
+The hexadecimal digits <I>hhhh</I> (one, two, three, or four of them) give a
+sixteen-bit hexadecimal value for the Unicode character that will be
+inserted.
+</DL><P>Backslash substitution is not performed on words enclosed in braces,
+except for backslash-newline as described above.<DL>
+</DL>
+<P><DT><A NAME="M29">[10] <B>Comments.</B></A><DD>
+If a hash character
+(&#8220;#&#8221;)
+appears at a point where Tcl is
+expecting the first character of the first word of a command,
+then the hash character and the characters that follow it, up
+through the next newline, are treated as a comment and ignored.
+The comment character only has significance when it appears
+at the beginning of a command.
+<P><DT><A NAME="M30">[11] <B>Order of substitution.</B></A><DD>
+Each character is processed exactly once by the Tcl interpreter
+as part of creating the words of a command.
+For example, if variable substitution occurs then no further
+substitutions are performed on the value of the variable;  the
+value is inserted into the word verbatim.
+If command substitution occurs then the nested command is
+processed entirely by the recursive call to the Tcl interpreter;
+no substitutions are performed before making the recursive
+call and no additional substitutions are performed on the result
+of the nested script.
+<P>
+Substitutions take place from left to right, and each substitution is
+evaluated completely before attempting to evaluate the next.  Thus, a
+sequence like
+<PRE>set y [set x 0][incr x][incr x]</PRE>
+will always set the variable <I>y</I> to the value, <I>012</I>.
+<P><DT><A NAME="M31">[12] <B>Substitution and word boundaries.</B></A><DD>
+Substitutions do not affect the word boundaries of a command,
+except for argument expansion as specified in rule [5].
+For example, during variable substitution the entire value of
+the variable becomes part of a single word, even if the variable's
+value contains spaces.
+<P></DL>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1993 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

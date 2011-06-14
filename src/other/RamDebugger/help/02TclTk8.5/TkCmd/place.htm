@@ -1,0 +1,262 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>place manual page - Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TkCmd</a> <small>&gt;</small> place</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="place.htm#M2" NAME="L1148">NAME</A>
+<DL><DD>place - Geometry manager for fixed or rubber-sheet placement</DD></DL>
+<DD><A HREF="place.htm#M3" NAME="L1149">SYNOPSIS</A>
+<DL>
+</DL>
+<DD><A HREF="place.htm#M4" NAME="L1150">DESCRIPTION</A>
+<DL class="description">
+<DD><A HREF="place.htm#M5" NAME="L1151"><B>place </B><I>window option value </I>?<I>option value ...</I>?</A>
+<DD><A HREF="place.htm#M6" NAME="L1152"><B>place configure </B><I>window </I>?<I>option</I>? ?<I>value option value ...</I>?</A>
+<DL class="description">
+<DD><A HREF="place.htm#M7" NAME="L1153"><B>-anchor </B><I>where</I></A>
+<DD><A HREF="place.htm#M8" NAME="L1154"><B>-bordermode </B><I>mode</I></A>
+<DD><A HREF="place.htm#M9" NAME="L1155"><B>-height </B><I>size</I></A>
+<DD><A HREF="place.htm#M10" NAME="L1156"><B>-in </B><I>master</I></A>
+<DD><A HREF="place.htm#M11" NAME="L1157"><B>-relheight </B><I>size</I></A>
+<DD><A HREF="place.htm#M12" NAME="L1158"><B>-relwidth </B><I>size</I></A>
+<DD><A HREF="place.htm#M13" NAME="L1159"><B>-relx </B><I>location</I></A>
+<DD><A HREF="place.htm#M14" NAME="L1160"><B>-rely </B><I>location</I></A>
+<DD><A HREF="place.htm#M15" NAME="L1161"><B>-width </B><I>size</I></A>
+<DD><A HREF="place.htm#M16" NAME="L1162"><B>-x </B><I>location</I></A>
+<DD><A HREF="place.htm#M17" NAME="L1163"><B>-y </B><I>location</I></A>
+</DL>
+<DD><A HREF="place.htm#M18" NAME="L1164"><B>place forget </B><I>window</I></A>
+<DD><A HREF="place.htm#M19" NAME="L1165"><B>place info </B><I>window</I></A>
+<DD><A HREF="place.htm#M20" NAME="L1166"><B>place slaves </B><I>window</I></A>
+</DL>
+<DD><A HREF="place.htm#M21" NAME="L1167">FINE POINTS</A>
+<DD><A HREF="place.htm#M22" NAME="L1168">EXAMPLE</A>
+<DD><A HREF="place.htm#M23" NAME="L1169">SEE ALSO</A>
+<DD><A HREF="place.htm#M24" NAME="L1170">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+place - Geometry manager for fixed or rubber-sheet placement
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>place </B><I>option arg </I>?<I>arg ...</I>?<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+The placer is a geometry manager for Tk.
+It provides simple fixed placement of windows, where you specify
+the exact size and location of one window, called the <I>slave</I>,
+within another window, called the <I>master</I>.
+The placer also provides rubber-sheet placement, where you specify the
+size and location of the slave in terms of the dimensions of
+the master, so that the slave changes size and location
+in response to changes in the size of the master.
+Lastly, the placer allows you to mix these styles of placement so
+that, for example, the slave has a fixed width and height but is
+centered inside the master.
+<P>
+<P>
+<DL class="description">
+<DT><A NAME="M5"><B>place </B><I>window option value </I>?<I>option value ...</I>?</A><DD>
+Arrange for the placer to manage the geometry of a slave whose
+pathName is <I>window</I>.  The remaining arguments consist of one or
+more <I>option-value</I> pairs that specify the way in which
+<I>window</I>'s geometry is managed.  <I>Option</I> may have any of the
+values accepted by the <B>place configure</B> command.
+<P><DT><A NAME="M6"><B>place configure </B><I>window </I>?<I>option</I>? ?<I>value option value ...</I>?</A><DD>
+Query or modify the geometry options of the slave given by
+<I>window</I>.  If no <I>option</I> is specified, this command returns a
+list describing the available options (see <B><A HREF="../TkLib/ConfigWidg.htm">Tk_ConfigureInfo</A></B> for
+information on the format of this list).  If <I>option</I> is specified
+with no <I>value</I>, then the command returns a list describing the
+one named option (this list will be identical to the corresponding
+sublist of the value returned if no <I>option</I> is specified).  If
+one or more <I>option-value</I> pairs are specified, then the command
+modifies the given option(s) to have the given value(s); in this case
+the command returns an empty string.
+
+The following <I>option-value</I> pairs are supported:
+<P>
+<DL class="description">
+<DT><A NAME="M7"><B>-anchor </B><I>where</I></A><DD>
+<I>Where</I> specifies which point of <I>window</I> is to be positioned
+at the (x,y) location selected by the <B>-x</B>, <B>-y</B>,
+<B>-relx</B>, and <B>-rely</B> options.
+The anchor point is in terms of the outer area of <I>window</I>
+including its border, if any.
+Thus if <I>where</I> is <B>se</B> then the lower-right corner of
+<I>window</I>'s border will appear at the given (x,y) location
+in the master.
+The anchor position defaults to <B>nw</B>.
+<P><DT><A NAME="M8"><B>-bordermode </B><I>mode</I></A><DD>
+<I>Mode</I> determines the degree to which borders within the
+master are used in determining the placement of the slave.
+The default and most common value is <B>inside</B>.
+In this case the placer considers the area of the master to
+be the innermost area of the master, inside any border:
+an option of <B>-x 0</B> corresponds to an x-coordinate just
+inside the border and an option of <B>-relwidth 1.0</B>
+means <I>window</I> will fill the area inside the master's
+border.
+
+If <I>mode</I> is <B>outside</B> then the placer considers
+the area of the master to include its border;
+this mode is typically used when placing <I>window</I>
+outside its master, as with the options <B>-x 0 -y 0 -anchor ne</B>.
+Lastly, <I>mode</I> may be specified as <B>ignore</B>, in which
+case borders are ignored:  the area of the master is considered
+to be its official X area, which includes any internal border but
+no external border.  A bordermode of <B>ignore</B> is probably
+not very useful.
+<P><DT><A NAME="M9"><B>-height </B><I>size</I></A><DD>
+<I>Size</I> specifies the height for <I>window</I> in screen units
+(i.e. any of the forms accepted by <B><A HREF="../TkLib/GetPixels.htm">Tk_GetPixels</A></B>).
+The height will be the outer dimension of <I>window</I> including its
+border, if any.
+If <I>size</I> is an empty string, or if no <B>-height</B> or
+<B>-relheight</B> option is specified, then the height requested
+internally by the window will be used.
+<P><DT><A NAME="M10"><B>-in </B><I>master</I></A><DD>
+<I>Master</I> specifies the path name of the window relative
+to which <I>window</I> is to be placed.
+<I>Master</I> must either be <I>window</I>'s parent or a descendant
+of <I>window</I>'s parent.
+In addition, <I>master</I> and <I>window</I> must both be descendants
+of the same top-level window.
+These restrictions are necessary to guarantee
+that <I>window</I> is visible whenever <I>master</I> is visible.
+If this option is not specified then the master defaults to
+<I>window</I>'s parent.
+<P><DT><A NAME="M11"><B>-relheight </B><I>size</I></A><DD>
+<I>Size</I> specifies the height for <I>window</I>.
+In this case the height is specified as a floating-point number
+relative to the height of the master: 0.5 means <I>window</I> will
+be half as high as the master, 1.0 means <I>window</I> will have
+the same height as the master, and so on.
+If both <B>-height</B> and <B>-relheight</B> are specified for a slave,
+their values are summed.  For example, <B>-relheight 1.0 -height -2</B>
+makes the slave 2 pixels shorter than the master.
+<P><DT><A NAME="M12"><B>-relwidth </B><I>size</I></A><DD>
+<I>Size</I> specifies the width for <I>window</I>.
+In this case the width is specified as a floating-point number
+relative to the width of the master: 0.5 means <I>window</I> will
+be half as wide as the master, 1.0 means <I>window</I> will have
+the same width as the master, and so on.
+If both <B>-width</B> and <B>-relwidth</B> are specified for a slave,
+their values are summed.  For example, <B>-relwidth 1.0 -width 5</B>
+makes the slave 5 pixels wider than the master.
+<P><DT><A NAME="M13"><B>-relx </B><I>location</I></A><DD>
+<I>Location</I> specifies the x-coordinate within the master window
+of the anchor point for <I>window</I>.
+In this case the location is specified in a relative fashion
+as a floating-point number:  0.0 corresponds to the left edge
+of the master and 1.0 corresponds to the right edge of the master.
+<I>Location</I> need not be in the range 0.0-1.0.
+If both <B>-x</B> and <B>-relx</B> are specified for a slave
+then their values are summed.  For example, <B>-relx 0.5 -x -2</B>
+positions the left edge of the slave 2 pixels to the left of the
+center of its master.
+<P><DT><A NAME="M14"><B>-rely </B><I>location</I></A><DD>
+<I>Location</I> specifies the y-coordinate within the master window
+of the anchor point for <I>window</I>.
+In this case the value is specified in a relative fashion
+as a floating-point number:  0.0 corresponds to the top edge
+of the master and 1.0 corresponds to the bottom edge of the master.
+<I>Location</I> need not be in the range 0.0-1.0.
+If both <B>-y</B> and <B>-rely</B> are specified for a slave
+then their values are summed.  For example, <B>-rely 0.5 -x 3</B>
+positions the top edge of the slave 3 pixels below the
+center of its master.
+<P><DT><A NAME="M15"><B>-width </B><I>size</I></A><DD>
+<I>Size</I> specifies the width for <I>window</I> in screen units
+(i.e. any of the forms accepted by <B><A HREF="../TkLib/GetPixels.htm">Tk_GetPixels</A></B>).
+The width will be the outer width of <I>window</I> including its
+border, if any.
+If <I>size</I> is an empty string, or if no <B>-width</B>
+or <B>-relwidth</B> option is specified, then the width requested
+internally by the window will be used.
+<P><DT><A NAME="M16"><B>-x </B><I>location</I></A><DD>
+<I>Location</I> specifies the x-coordinate within the master window
+of the anchor point for <I>window</I>.
+The location is specified in screen units (i.e. any of the forms
+accepted by <B><A HREF="../TkLib/GetPixels.htm">Tk_GetPixels</A></B>) and need not lie within the bounds
+of the master window.
+<P><DT><A NAME="M17"><B>-y </B><I>location</I></A><DD>
+<I>Location</I> specifies the y-coordinate within the master window
+of the anchor point for <I>window</I>.
+The location is specified in screen units (i.e. any of the forms
+accepted by <B><A HREF="../TkLib/GetPixels.htm">Tk_GetPixels</A></B>) and need not lie within the bounds
+of the master window.
+</DL><P>If the same value is specified separately with
+two different options, such as <B>-x</B> and <B>-relx</B>, then
+the most recent option is used and the older one is ignored.<DL>
+</DL>
+<P><DT><A NAME="M18"><B>place forget </B><I>window</I></A><DD>
+Causes the placer to stop managing the geometry of <I>window</I>.  As a
+side effect of this command <I>window</I> will be unmapped so that it
+does not appear on the screen.  If <I>window</I> is not currently managed
+by the placer then the command has no effect.  This command returns an
+empty string.
+<P><DT><A NAME="M19"><B>place info </B><I>window</I></A><DD>
+Returns a list giving the current configuration of <I>window</I>.
+The list consists of <I>option-value</I> pairs in exactly the
+same form as might be specified to the <B>place configure</B>
+command.
+<P><DT><A NAME="M20"><B>place slaves </B><I>window</I></A><DD>
+Returns a list of all the slave windows for which <I>window</I> is the master.
+If there are no slaves for <I>window</I> then an empty string is returned.
+<P></DL>
+<P>
+If the configuration of a window has been retrieved with
+<B>place info</B>, that configuration can be restored later by
+first using <B>place forget</B> to erase any existing information
+for the window and then invoking <B>place configure</B> with
+the saved information.
+<H3><A NAME="M21">FINE POINTS</A></H3>
+It is not necessary for the master window to be the parent
+of the slave window.
+This feature is useful in at least two situations.
+First, for complex window layouts it means you can create a
+hierarchy of subwindows whose only purpose
+is to assist in the layout of the parent.
+The
+&#8220;real children&#8221;
+of the parent (i.e. the windows that
+are significant for the application's user interface) can be
+children of the parent yet be placed inside the windows
+of the geometry-management hierarchy.
+This means that the path names of the
+&#8220;real children&#8221;
+do not reflect the geometry-management hierarchy and users
+can specify options for the real children
+without being aware of the structure of the geometry-management
+hierarchy.
+<P>
+A second reason for having a master different than the slave's
+parent is to tie two siblings together.
+For example, the placer can be used to force a window always to
+be positioned centered just below one of its
+siblings by specifying the configuration
+<PRE><B>-in </B><I>sibling</I><B> -relx 0.5 -rely 1.0 -anchor n -bordermode outside</B></PRE>
+Whenever the sibling is repositioned in the future, the slave
+will be repositioned as well.
+<P>
+Unlike many other geometry managers (such as the packer)
+the placer does not make any attempt to manipulate the geometry of
+the master windows or the parents of slave windows (i.e. it does not
+set their requested sizes).
+To control the sizes of these windows, make them windows like
+frames and canvases that provide configuration options for this purpose.
+<H3><A NAME="M22">EXAMPLE</A></H3>
+Make the label occupy the middle bit of the toplevel, no matter how it
+is resized:
+<PRE>label .l -text &quot;In the&#92;nMiddle!&quot; -bg black -fg white
+<B>place</B> .l -relwidth .3 -relx .35 -relheight .3 -rely .35</PRE>
+<H3><A NAME="M23">SEE ALSO</A></H3>
+<B><A HREF="../TkCmd/grid.htm">grid</A></B>, <B><A HREF="../TkCmd/pack.htm">pack</A></B>
+<H3><A NAME="M24">KEYWORDS</A></H3>
+<A href="../Keywords/G.htm#geometry manager">geometry manager</A>, <A href="../Keywords/H.htm#height">height</A>, <A href="../Keywords/L.htm#location">location</A>, <A href="../Keywords/M.htm#master">master</A>, <A href="../Keywords/P.htm#place">place</A>, <A href="../Keywords/R.htm#rubber sheet">rubber sheet</A>, <A href="../Keywords/S.htm#slave">slave</A>, <A href="../Keywords/W.htm#width">width</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1992 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

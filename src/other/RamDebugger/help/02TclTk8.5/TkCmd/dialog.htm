@@ -1,0 +1,81 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>tk_dialog manual page - Tk Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TkCmd</a> <small>&gt;</small> dialog</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="dialog.htm#M2" NAME="L458">NAME</A>
+<DL><DD>tk_dialog - Create modal dialog and wait for response</DD></DL>
+<DD><A HREF="dialog.htm#M3" NAME="L459">SYNOPSIS</A>
+<DL>
+</DL>
+<DD><A HREF="dialog.htm#M4" NAME="L460">DESCRIPTION</A>
+<DL class="description">
+<DD><A HREF="dialog.htm#M5" NAME="L461"><I>window</I></A>
+<DD><A HREF="dialog.htm#M6" NAME="L462"><I>title</I></A>
+<DD><A HREF="dialog.htm#M7" NAME="L463"><I>text</I></A>
+<DD><A HREF="dialog.htm#M8" NAME="L464"><I>bitmap</I></A>
+<DD><A HREF="dialog.htm#M9" NAME="L465"><I>default</I></A>
+<DD><A HREF="dialog.htm#M10" NAME="L466"><I>string</I></A>
+</DL>
+<DD><A HREF="dialog.htm#M11" NAME="L467">EXAMPLE</A>
+<DD><A HREF="dialog.htm#M12" NAME="L468">SEE ALSO</A>
+<DD><A HREF="dialog.htm#M13" NAME="L469">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+tk_dialog - Create modal dialog and wait for response
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>tk_dialog </B><I>window title text bitmap default string string ...</I><BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+This procedure is part of the Tk script library.
+Its arguments describe a dialog box:
+<P>
+<DL class="description">
+<DT><A NAME="M5"><I>window</I></A><DD>
+Name of top-level window to use for dialog.  Any existing window
+by this name is destroyed.
+<P><DT><A NAME="M6"><I>title</I></A><DD>
+Text to appear in the window manager's title bar for the dialog.
+<P><DT><A NAME="M7"><I>text</I></A><DD>
+Message to appear in the top portion of the dialog box.
+<P><DT><A NAME="M8"><I>bitmap</I></A><DD>
+If non-empty, specifies a bitmap to display in the top portion of
+the dialog, to the left of the text.
+If this is an empty string then no bitmap is displayed in the dialog.
+<P><DT><A NAME="M9"><I>default</I></A><DD>
+If this is an integer greater than or equal to zero, then it gives
+the index of the button that is to be the default button for the dialog
+(0 for the leftmost button, and so on).
+If less than zero or an empty string then there will not be any default
+button.
+<P><DT><A NAME="M10"><I>string</I></A><DD>
+There will be one button for each of these arguments.
+Each <I>string</I> specifies text to display in a button,
+in order from left to right.
+<P></DL>
+<P>
+After creating a dialog box, <B>tk_dialog</B> waits for the user to
+select one of the buttons either by clicking on the button with the
+mouse or by typing return to invoke the default button (if any).
+Then it returns the index of the selected button:  0 for the leftmost
+button, 1 for the button next to it, and so on.
+If the dialog's window is destroyed before the user selects one
+of the buttons, then -1 is returned.
+<P>
+While waiting for the user to respond, <B>tk_dialog</B> sets a local
+grab.  This prevents the user from interacting with the application
+in any way except to invoke the dialog box.
+<H3><A NAME="M11">EXAMPLE</A></H3>
+<PRE>set reply [<B>tk_dialog</B> .foo &quot;The Title&quot; &quot;Do you want to say yes?&quot; &#92;
+        questhead 0 Yes No &quot;I'm not sure&quot;]</PRE>
+<H3><A NAME="M12">SEE ALSO</A></H3>
+<B>tk_messageBox</B>
+<H3><A NAME="M13">KEYWORDS</A></H3>
+<A href="../Keywords/B.htm#bitmap">bitmap</A>, <A href="../Keywords/D.htm#dialog">dialog</A>, <A href="../Keywords/M.htm#modal">modal</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1992 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

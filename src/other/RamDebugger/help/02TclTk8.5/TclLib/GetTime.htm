@@ -1,0 +1,106 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>Tcl_GetTime manual page - Tcl Library Procedures</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclLib</a> <small>&gt;</small> GetTime</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="GetTime.htm#M2" NAME="L354">NAME</A>
+<DL><DD>Tcl_GetTime, Tcl_SetTimeProc, Tcl_QueryTimeProc - get date and time</DD></DL>
+<DD><A HREF="GetTime.htm#M3" NAME="L355">SYNOPSIS</A>
+<DL>
+<DD><B>#include &lt;tcl.h&gt;</B>
+<DD><B>Tcl_GetTime</B>(<I>timePtr</I>)
+<DD><B>Tcl_SetTimeProc</B>(<I>getProc, scaleProc, clientData</I>)
+<DD><B>Tcl_QueryTimeProc</B>(<I>getProcPtr, scaleProcPtr, clientDataPtr</I>)
+</DL>
+<DD><A HREF="GetTime.htm#M4" NAME="L356">ARGUMENTS</A>
+<DL class="arguments">
+</DL>
+<DD><A HREF="GetTime.htm#M5" NAME="L357">DESCRIPTION</A>
+<DD><A HREF="GetTime.htm#M6" NAME="L358">SEE ALSO</A>
+<DD><A HREF="GetTime.htm#M7" NAME="L359">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+Tcl_GetTime, Tcl_SetTimeProc, Tcl_QueryTimeProc - get date and time
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>#include &lt;tcl.h&gt;</B><BR>
+<B>Tcl_GetTime</B>(<I>timePtr</I>)<BR>
+<B>Tcl_SetTimeProc</B>(<I>getProc, scaleProc, clientData</I>)<BR>
+<B>Tcl_QueryTimeProc</B>(<I>getProcPtr, scaleProcPtr, clientDataPtr</I>)<BR>
+<H3><A NAME="M4">ARGUMENTS</A></H3>
+<DL class="arguments">
+<DT>Tcl_Time * <B>timePtr</B> (out)<DD>
+Points to memory in which to store the date and time information.
+<P><DT>Tcl_GetTimeProc * <B>getProc</B> (in)<DD>
+Pointer to handler function replacing <B>Tcl_GetTime</B>'s access to the OS.
+<P><DT>Tcl_ScaleTimeProc * <B>scaleProc</B> (in)<DD>
+Pointer to handler function for the conversion of time delays in the
+virtual domain to real-time.
+<P><DT>ClientData * <B>clientData</B> (in)<DD>
+Value passed through to the two handler functions.
+<P><DT>Tcl_GetTimeProc ** <B>getProcPtr</B> (inout)<DD>
+Pointer to place the currently registered get handler function into.
+<P><DT>Tcl_ScaleTimeProc ** <B>scaleProcPtr</B> (inout)<DD>
+Pointer to place the currently registered scale handler function into.
+<P><DT>ClientData ** <B>clientDataPtr</B> (inout)<DD>
+Pointer to place the currently registered pass-through value into.
+<P></DL>
+<H3><A NAME="M5">DESCRIPTION</A></H3>
+The <B>Tcl_GetTime</B> function retrieves the current time as a
+<I>Tcl_Time</I> structure in memory the caller provides.  This
+structure has the following definition:
+<PRE>typedef struct Tcl_Time {
+    long sec;
+    long usec;
+} Tcl_Time;</PRE>
+<P>
+On return, the <I>sec</I> member of the structure is filled in with the
+number of seconds that have elapsed since the <I>epoch:</I> the epoch
+is the point in time of 00:00 UTC, 1 January 1970.  This number does
+<I>not</I> count leap seconds - an interval of one day advances it by
+86400 seconds regardless of whether a leap second has been inserted.
+<P>
+The <I>usec</I> member of the structure is filled in with the number of
+microseconds that have elapsed since the start of the second
+designated by <I>sec</I>.  The Tcl library makes every effort to keep
+this number as precise as possible, subject to the limitations of the
+computer system.  On multiprocessor variants of Windows, this number
+may be limited to the 10- or 20-ms granularity of the system clock.
+(On single-processor Windows systems, the <I>usec</I> field is derived
+from a performance counter and is highly precise.)
+<P>
+The <B>Tcl_SetTime</B> function registers two related handler functions
+with the core. The first handler function is a replacement for
+<B>Tcl_GetTime</B>, or rather the OS access made by
+<B>Tcl_GetTime</B>. The other handler function is used by the Tcl
+notifier to convert wait/block times from the virtual domain into real
+time.
+<P>
+The <B>Tcl_QueryTime</B> function returns the currently registered
+handler functions. If no external handlers were set then this will
+return the standard handlers accessing and processing the native time
+of the OS. The arguments to the function are allowed to be NULL; and
+any argument which is NULL is ignored and not set.
+<P>
+Any handler pair specified has to return data which is consistent
+between them. In other words, setting one handler of the pair to
+something assuming a 10-times slowdown, and the other handler of the
+pair to something assuming a two-times slowdown is wrong and not
+allowed.
+<P>
+The set handler functions are allowed to run the delivered time
+backwards, however this should be avoided. We have to allow it as the
+native time can run backwards as the user can fiddle with the system
+time one way or other. Note that the insertion of the hooks will not
+change the behaviour of the Tcl core with regard to this situation,
+i.e. the existing behaviour is retained.
+<H3><A NAME="M6">SEE ALSO</A></H3>
+<B><A HREF="../TclCmd/clock.htm">clock</A></B>
+<H3><A NAME="M7">KEYWORDS</A></H3>
+<A href="../Keywords/D.htm#date">date</A>, <A href="../Keywords/T.htm#time">time</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 2001 by Kevin B. Kenny.
+</div>
+</BODY></HTML>

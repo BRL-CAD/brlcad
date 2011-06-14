@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="utf-8"?><!-- -*- coding: utf-8;-*- -->
+<!DOCTYPE ramtranslator SYSTEM "ramtranslator.dtd">
+<ramtranslator version="1.3">
+    <maxrow>20</maxrow>
+    <languages>
+        <langlist>Spanish es English en</langlist>
+        <current>Spanish</current>
+    </languages>
+    <srcstrings>
+        <src id="15">
+            <base>Contents</base>
+            <position>helpviewer.tcl:1476;GID-HELP.tcl:80;helpviewer.tcl:1269;helpviewer.tcl:1474</position>
+            <priority>9</priority>
+        </src>
+        <src id="16">
+            <base>Search</base>
+            <position>helpviewer.tcl:1498;helpviewer.tcl:2248;CreateEnt.cc:6126;CreateEnt.cc:6275;CreateEnt.cc:6303;CreateEnt.cc:6330;CreateEnt.cc:6353;CreateEnt.cc:6380;CreateEnt.cc:6406;Set.cc:3599;Set.cc:3621;Set.cc:3637;Set.cc:3721;Set.cc:3827;Set.cc:4034;Set.cc:4063;Set.cc:4815;Set.cc:4833;Set.cc:4850;Set.cc:4868;Set.cc:4887;GrDataMenus.tcl:196;GrDataMenus.tcl:206;helpviewer.tcl:1295;helpviewer.tcl:2460;tclfileP.tcl:10829;tclfileP.tcl:10856;helpviewer.tcl:1496;helpviewer.tcl:2242;RamDebugger.tcl:7258;texteditor.tcl:892;texteditor.tcl:896</position>
+            <priority>1424</priority>
+        </src>
+        <src id="17">
+            <base>More</base>
+            <position>helpviewer.tcl:1571;ContextualEntity.tcl:184;helpviewer.tcl:1395;helpviewer.tcl:1404;tclfileP.tcl:4457;tclfileP.tcl:4665;tclfileP.tcl:5078;tclfileP.tcl:5115;helpviewer.tcl:1569</position>
+            <priority>11</priority>
+        </src>
+        <src id="18">
+            <base>Home</base>
+            <position>helpviewer.tcl:1575;helpviewer.tcl:1409;helpviewer.tcl:1573</position>
+            <priority>0</priority>
+        </src>
+        <src id="19">
+            <base>Previus</base>
+            <position>helpviewer.tcl:1577;helpviewer.tcl:1411;helpviewer.tcl:1575;RamDebugger.tcl:4460</position>
+            <priority>0</priority>
+        </src>
+        <src id="20">
+            <base>Next</base>
+            <position>helpviewer.tcl:1579;CreateEnt.cc:534;Graph-OpenGL.cc:4564;GrDataMenus.tcl:120;GrDataMenus.tcl:738;GrDataMenus.tcl:909;GrDataMenus.tcl:1068;helpviewer.tcl:1413;ListEntities.tcl:2049;ListEntities.tcl:2148;helpviewer.tcl:1577;RamDebugger.tcl:4462;RamDebugger.tcl:7258</position>
+            <priority>2205</priority>
+        </src>
+        <src id="21">
+            <base>Search in page...</base>
+            <position>helpviewer.tcl:1582;helpviewer.tcl:1580</position>
+            <priority>0</priority>
+        </src>
+        <src id="22">
+            <base>Search more</base>
+            <position>helpviewer.tcl:1584;helpviewer.tcl:1418;helpviewer.tcl:1582</position>
+            <priority>0</priority>
+        </src>
+        <src id="23">
+            <base>Close</base>
+            <position>helpviewer.tcl:1587;GLwidget-OpenGL.cc:10510;Set.cc:1963;Set.cc:2088;Set.cc:2104;Set.cc:2213;AutoAnimate.tcl:566;Calculator.tcl:64;Calculator.tcl:1283;Calculator.tcl:1457;ChangeAccelerators.tcl:37;ChangeVariables.tcl:1162;ClipPlanes.tcl:367;Comments.tcl:215;ConcentrateElem.tcl:346;ContourColors.tcl:1298;ContourColors.tcl:1302;CopyMove.tcl:725;CustomizeRender.tcl:77;DataCond.tcl:61;DataCond.tcl:141;DataCond.tcl:819;dataw.tcl:85;dataw.tcl:553;dataw.tcl:684;DataWindows.tcl:1756;DataWindows.tcl:1957;DataWindows.tcl:2226;DataWindows.tcl:2608;DataWindows.tcl:3096;dialog-ram.tcl:1840;dialog-ram.tcl:2155;EditNurb.tcl:112;filter_win.tcl:81;GID-HELP.tcl:2130;helpviewer.tcl:1421;Layers.tcl:864;ListEntities.tcl:286;ListEntities.tcl:2052;ListEntities.tcl:2150;MeshErrors.tcl:182;MeshQuality.tcl:413;OptionalMessage.tcl:27;PageSetup.tcl:996;Parametric.tcl:55;Parametric.tcl:255;Parametric.tcl:367;PerspecW.tcl:237;PostAnimate.tcl:98;PostAnimate.tcl:1899;PostAnimate.tcl:2562;PostDisplay.tcl:695;PostDisplay.tcl:1925;PostDisplay.tcl:2293;PostGeom.tcl:977;PostGraphs.tcl:67;PostLine.tcl:283;PostPoint.tcl:701;PostPoint.tcl:891;PostPoint.tcl:1066;PostRangesTable.tcl:100;PostResults.tcl:1132;PostResults.tcl:1443;PostVariosResultados.tcl:169;PostWidgets.tcl:994;ProcWin.tcl:68;ProcWin.tcl:286;ProcWin.tcl:399;ProcWin.tcl:1155;ReadBach.tcl:639;Report.tcl:234;Report.tcl:1619;RetrieveProblemtypes.tcl:368;RetrieveProblemtypes.tcl:538;Running.tcl:36;Running.tcl:114;SetCoord.tcl:62;SetCoord.tcl:227;tclfileP.tcl:6504;tclfileP.tcl:8092;tclfileP.tcl:8331;tclfileP.tcl:8824;tclfileP.tcl:9600;tclfileP.tcl:9809;toolbarmacros.tcl:3084;Toolbars.tcl:348;UndoCom.tcl:304;Vectors.tcl:288;WindowMessage.tcl:106;toolbarmacros_defaults:923;dialogwin.tcl:167;dialogwin.tcl:487;dialogwin.tcl:1121;helpviewer.tcl:1585;RamDebugger.tcl:7258</position>
+            <priority>801</priority>
+        </src>
+        <src id="24">
+            <base>Ok</base>
+            <position>helpviewer.tcl:2248;ACIS.cc:270;CreateEnt.cc:5917;CreateEnt.cc:11921;CreateEnt.cc:14124;CreateEnt.cc:17193;CreateEnt.cc:17293;CreateEnt.cc:17422;CreateEnt.cc:17561;CreateEnt.cc:19012;CreateEnt.cc:19114;Operations.cc:160;Operations.cc:271;Operations.cc:311;Operations.cc:700;Operations.cc:1099;Operations.cc:1536;Operations.cc:4897;Operations.cc:5525;Operations.cc:5677;Operations.cc:6002;Operations.cc:7127;ConcentrateElem.tcl:133;dataw.tcl:467;dialog-ram.tcl:554;dialog-ram.tcl:836;dialog-ram.tcl:966;dialog-ram.tcl:1067;dialog-ram.tcl:1350;dialog-ram.tcl:1462;dialog-ram.tcl:1601;dialog-ram.tcl:1609;filter_win.tcl:626;GiDColor.tcl:398;ListEntities.tcl:2017;RemoteCalc.tcl:1373;Report.tcl:1659;Running.tcl:47;Running.tcl:53;Running.tcl:56;Running.tcl:137;Running.tcl:144;Running.tcl:154;Running.tcl:171;Running.tcl:219;Running.tcl:244;Running.tcl:251;Running.tcl:265;Running.tcl:270;Running.tcl:303;Running.tcl:317;tclfileP.tcl:7058;Vectors.tcl:121;dialogwin.tcl:888;dialogwin.tcl:1116;helpviewer.tcl:2242</position>
+            <priority>49</priority>
+        </src>
+        <src id="25">
+            <base>Cancel</base>
+            <position>helpviewer.tcl:2248;ACIS.cc:116;ACIS.cc:271;CopyMove.cc:2347;CopyMove.cc:2354;CopyMove.cc:2768;CopyMove.cc:3546;CreateEnt.cc:5918;CreateEnt.cc:11922;CreateEnt.cc:14125;CreateEnt.cc:14760;CreateEnt.cc:17194;CreateEnt.cc:17294;CreateEnt.cc:17423;CreateEnt.cc:17562;CreateEnt.cc:19013;CreateEnt.cc:19115;Graph-OpenGL.cc:7893;Operations.cc:161;Operations.cc:272;Operations.cc:312;Operations.cc:701;Operations.cc:1100;Operations.cc:1537;Operations.cc:4898;Operations.cc:5526;Operations.cc:5678;Operations.cc:6003;Operations.cc:7128;colores.cc:1633;ConcentrateElem.tcl:137;CopyMove.tcl:722;CordalError.tcl:330;CordalError.tcl:431;DataCond.tcl:800;DataCond.tcl:808;dataw.tcl:467;dataw.tcl:534;dataw.tcl:943;dataw.tcl:959;DataWindows.tcl:5247;DataWindows.tcl:5268;DataWindows.tcl:5289;DataWindows.tcl:5321;DataWindows.tcl:5633;DataWindows.tcl:5655;dialog-ram.tcl:554;dialog-ram.tcl:966;dialog-ram.tcl:1350;dialog-ram.tcl:1610;dialog-ram.tcl:1616;dialog-ram.tcl:1629;dialog-ram.tcl:2342;EditNurb.tcl:214;EditNurb.tcl:221;EraseOldFiles.tcl:56;filter_win.tcl:626;GiDColor.tcl:399;moduniwin.tcl:267;PostAnimate.tcl:418;ProcWin.tcl:147;ProcWin.tcl:861;ProcWin.tcl:885;ramcolor.tcl:340;ReadBach.tcl:59;ReadBach.tcl:509;RemoteCalc.tcl:231;RemoteCalc.tcl:620;RemoteCalc.tcl:1187;Report.tcl:415;Report.tcl:603;Report.tcl:1659;Running.tcl:47;tclfileP.tcl:7058;tclfileP.tcl:9901;toolbarmacros.tcl:3067;treeforpass.tcl:178;dialogwin.tcl:169;dialogwin.tcl:489;dialogwin.tcl:927;dialogwin.tcl:931;dialogwin.tcl:939;dialogwin.tcl:985;dialogwin.tcl:1118;helpviewer.tcl:2242</position>
+            <priority>543</priority>
+        </src>
+        <src id="26">
+            <base>Text</base>
+            <position>helpviewer.tcl:2251;GrDataMenus.tcl:346;GrDataMenus.tcl:1169;helpviewer.tcl:2463;PostGraphs.tcl:138;helpviewer.tcl:2245</position>
+            <priority>1417</priority>
+        </src>
+        <src id="27">
+            <base>Forward</base>
+            <position>helpviewer.tcl:2256;helpviewer.tcl:2468;helpviewer.tcl:2250</position>
+            <priority>0</priority>
+        </src>
+        <src id="28">
+            <base>Backward</base>
+            <position>helpviewer.tcl:2258;helpviewer.tcl:2470;helpviewer.tcl:2252</position>
+            <priority>0</priority>
+        </src>
+        <src id="29">
+            <base>Consider case</base>
+            <position>helpviewer.tcl:2262;helpviewer.tcl:2474;helpviewer.tcl:2256;texteditor.tcl:923</position>
+            <priority>0</priority>
+        </src>
+        <src id="30">
+            <base>From beginning</base>
+            <position>helpviewer.tcl:2264;helpviewer.tcl:2476;helpviewer.tcl:2258;texteditor.tcl:925</position>
+            <priority>0</priority>
+        </src>
+        <src id="31">
+            <base>Html Files</base>
+            <position>helpviewer.tcl:645;helpviewer.tcl:1101;helpviewer.tcl:643;helpviewer.tcl:1099</position>
+            <priority>0</priority>
+        </src>
+        <src id="32">
+            <base>All files</base>
+            <position>helpviewer.tcl:645;helpviewer.tcl:1101;helpviewer.tcl:1109;helpviewer.tcl:1117;ACIS.cc:30;ACIS.cc:250;CGNS.cc:291;CreateEnt.cc:5058;DXF.cc:48;Graph-OpenGL.cc:440;Graph-OpenGL.cc:442;Graph-OpenGL.cc:473;Graph-OpenGL.cc:475;Graph-OpenGL.cc:9398;Graph-OpenGL.cc:9473;IGES.cc:24;Meshing3D.cc:68;Meshing3D.cc:99;NASTRAN.cc:1253;Operations.cc:2296;Parasolid.cc:20;Project.cc:1373;Project.cc:1939;Project.cc:2803;Project.cc:2902;Project.cc:10857;Project.cc:11045;Project.cc:11047;Rhino.cc:45;Set.cc:9093;Set.cc:9558;Set.cc:17368;Shapefile.cc:26;vda.cc:37;VRML.cc:48;3dstudiomax.cc:650;colores.cc:1721;geometry.cc:9934;geometry.cc:9970;geometry.cc:11669;hardcopy.cc:5417;hardcopy.cc:5693;hardcopy.cc:5809;hardcopy.cc:5916;hardcopy.cc:6023;hardcopy.cc:6129;hardcopy.cc:6236;hardcopy.cc:6342;hardcopy.cc:6448;pp.cc:888;pp.cc:986;pp.cc:1417;pp.cc:1519;pp.cc:1637;pp.cc:1770;pp.cc:1967;pp.cc:2228;textura.cc:3806;textura.cc:4746;AutoAnimate.tcl:320;AutoAnimate.tcl:385;AutoAnimate.tcl:452;DataWindows.tcl:5676;dev_kit.tcl:1559;helpviewer.tcl:506;helpviewer.tcl:869;helpviewer.tcl:876;helpviewer.tcl:883;html_lib.tcl:267;pref_general.ui.tcl:316;ReadBach.tcl:145;ReadBach.tcl:352;Report.tcl:1243;Report.tcl:1299;tclfileP.tcl:5726;toolbarmacros.tcl:357;toolbarmacros.tcl:400;toolbarmacros.tcl:2000;toolbarmacros_defaults:596;toolbarmacros_defaults:626;helpviewer.tcl:643;helpviewer.tcl:1099;helpviewer.tcl:1107;helpviewer.tcl:1115;texteditor.tcl:701;texteditor.tcl:727</position>
+            <priority>0</priority>
+        </src>
+        <src id="33">
+            <base>Word file</base>
+            <position>helpviewer.tcl:1109;helpviewer.tcl:876;helpviewer.tcl:1107</position>
+            <priority>0</priority>
+        </src>
+        <src id="34">
+            <base>CSV file</base>
+            <position>helpviewer.tcl:1117;helpviewer.tcl:883;helpviewer.tcl:1115</position>
+            <priority>0</priority>
+        </src>
+    </srcstrings>
+    <translatestrings>
+        <lan lan="es">
+            <translate id="15">
+                <base>Contenido</base>
+                <tuser>escolano</tuser>
+                <date>2003-01-10</date>
+            </translate>
+            <translate id="16">
+                <base>Búsqueda</base>
+                <tuser>escolano</tuser>
+                <date>2003-01-10</date>
+            </translate>
+            <translate id="17">
+                <base>Más</base>
+                <tuser>escolano</tuser>
+                <date>2003-01-10</date>
+            </translate>
+            <translate id="18">
+                <base>Inicio</base>
+                <tuser>escolano</tuser>
+                <date>2005-02-22</date>
+            </translate>
+            <translate id="19">
+                <base>Previo</base>
+                <tuser>escolano</tuser>
+                <date>2005-02-22</date>
+            </translate>
+            <translate id="20">
+                <base>Siguiente</base>
+                <tuser>escolano</tuser>
+                <date>2003-01-10</date>
+            </translate>
+            <translate id="21">
+                <base>Buscar en la página</base>
+                <tuser>escolano</tuser>
+                <date>2005-11-22</date>
+            </translate>
+            <translate id="22">
+                <base>Buscar siguiente</base>
+                <tuser>escolano</tuser>
+                <date>2005-02-22</date>
+            </translate>
+            <translate id="23">
+                <base>Cerrar</base>
+                <tuser>escolano</tuser>
+                <date>2003-01-10</date>
+            </translate>
+            <translate id="24">
+                <base>Aceptar</base>
+                <tuser>Abel</tuser>
+                <date>2005-04-27</date>
+            </translate>
+            <translate id="25">
+                <base>Cancelar</base>
+                <tuser>escolano</tuser>
+                <date>2003-01-10</date>
+            </translate>
+            <translate id="26">
+                <base>Texto</base>
+                <tuser>escolano</tuser>
+            </translate>
+            <translate id="27">
+                <base>Hacia alante</base>
+                <tuser>escolano</tuser>
+                <date>2005-02-22</date>
+            </translate>
+            <translate id="28">
+                <base>Hacia atrás</base>
+                <tuser>escolano</tuser>
+                <date>2005-02-22</date>
+            </translate>
+            <translate id="29">
+                <base>Distinguir mayusculas</base>
+                <tuser>escolano</tuser>
+                <date>2005-02-22</date>
+            </translate>
+            <translate id="30">
+                <base>Desde el comienzo</base>
+                <tuser>escolano</tuser>
+                <date>2005-02-22</date>
+            </translate>
+            <translate id="31">
+                <base>Ficheros Html</base>
+                <tuser>escolano</tuser>
+                <date>2006-04-13</date>
+            </translate>
+            <translate id="32">
+                <base>Todos los archivos</base>
+                <tuser>ollu</tuser>
+                <date>2004-08-20</date>
+            </translate>
+            <translate id="33">
+                <base>Fichero Word</base>
+                <tuser>escolano</tuser>
+                <date>2005-02-17</date>
+            </translate>
+            <translate id="34">
+                <base>Fichero CSV</base>
+                <tuser>escolano</tuser>
+                <date>2005-02-17</date>
+            </translate>
+        </lan>
+        <lan lan="en"/>
+    </translatestrings>
+    <users>
+        <user id="1">Programador</user>
+        <user id="2">Traductor</user>
+        <user id="3">Web</user>
+        <user id="4">ramsan</user>
+        <user id="5">Abel</user>
+        <user id="6">Programmer</user>
+        <user id="7">Translator</user>
+        <user id="8">escolano</user>
+        <user id="9">Mizuho</user>
+        <user id="10">paqui</user>
+        <user id="11">ollu</user>
+        <user id="12">ada</user>
+        <user id="13">miguel</user>
+        <user id="14">b.vacquier</user>
+        <user id="15">Fritz</user>
+        <user id="16">Gerardo Socorro</user>
+        <user id="17">Laur</user>
+        <current>ramsan</current>
+    </users>
+    <abbrevs/>
+    <options>
+        <option name="TranslationProgram" value="Helpviewer {{C:/Documents and Settings/ramsan/Mis documentos/GiD Project/scripts/helpviewer}} .tcl 0"/>
+    </options>
+</ramtranslator>

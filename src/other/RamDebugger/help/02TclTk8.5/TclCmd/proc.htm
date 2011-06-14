@@ -1,0 +1,93 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>proc manual page - Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclCmd</a> <small>&gt;</small> proc</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+proc - Create a Tcl procedure
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>proc </B><I>name args body</I><BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+The <B>proc</B> command creates a new Tcl procedure named
+<I>name</I>, replacing
+any existing command or procedure there may have been by that name.
+Whenever the new command is invoked, the contents of <I>body</I> will
+be executed by the Tcl interpreter.
+Normally, <I>name</I> is unqualified
+(does not include the names of any containing namespaces),
+and the new procedure is created in the current namespace.
+If <I>name</I> includes any namespace qualifiers,
+the procedure is created in the specified namespace.
+<I>Args</I> specifies the formal arguments to the
+procedure.  It consists of a list, possibly empty, each of whose
+elements specifies
+one argument.  Each argument specifier is also a list with either
+one or two fields.  If there is only a single field in the specifier
+then it is the name of the argument; if there are two fields, then
+the first is the argument name and the second is its default value. 
+Arguments with default values that are followed by non-defaulted
+arguments become required arguments.  In 8.6 this will be considered an 
+error. 
+<P>
+When <I>name</I> is invoked a local variable
+will be created for each of the formal arguments to the procedure; its
+value will be the value of corresponding argument in the invoking command
+or the argument's default value.
+Actual arguments are assigned to formal arguments strictly in order.
+Arguments with default values need not be
+specified in a procedure invocation.  However, there must be enough
+actual arguments for all the
+formal arguments that do not have defaults, and there must not be any extra
+actual arguments.  
+Arguments with default values that are followed by non-defaulted
+arguments become required arguments (in 8.6 it will be considered an 
+error).
+There is one special case to permit procedures with
+variable numbers of arguments.  If the last formal argument has the name
+<B>args</B>, then a call to the procedure may contain more actual arguments
+than the procedure has formals.  In this case, all of the actual arguments
+starting at the one that would be assigned to <B>args</B> are combined into
+a list (as if the <B><A HREF="../TclCmd/list.htm">list</A></B> command had been used); this combined value
+is assigned to the local variable <B>args</B>.
+<P>
+When <I>body</I> is being executed, variable names normally refer to
+local variables, which are created automatically when referenced and
+deleted when the procedure returns.  One local variable is automatically
+created for each of the procedure's arguments.
+Other variables can only be accessed by invoking one of the <B><A HREF="../TclCmd/global.htm">global</A></B>, 
+<B><A HREF="../TclCmd/variable.htm">variable</A></B>, <B><A HREF="../TclCmd/upvar.htm">upvar</A></B> or <B>namespace upvar</B> commands.
+<P>
+The <B>proc</B> command returns an empty string.  When a procedure is
+invoked, the procedure's return value is the value specified in a
+<B><A HREF="../TclCmd/return.htm">return</A></B> command.  If the procedure does not execute an explicit
+<B><A HREF="../TclCmd/return.htm">return</A></B>, then its return value is the value of the last command
+executed in the procedure's body.
+If an error occurs while executing the procedure
+body, then the procedure-as-a-whole will return that same error.
+<H3><A NAME="M5">EXAMPLES</A></H3>
+This is a procedure that accepts arbitrarily many arguments and prints
+them out, one by one.
+<PRE><B>proc</B> printArguments args {
+   foreach arg $args {
+      puts $arg
+   }
+}</PRE>
+<P>
+This procedure is a bit like the <B><A HREF="../TclCmd/incr.htm">incr</A></B> command, except it
+multiplies the contents of the named variable by the value, which
+defaults to <B>2</B>:
+<PRE><B>proc</B> mult {varName {multiplier 2}} {
+   upvar 1 $varName var
+   set var [expr {$var * $multiplier}]
+}</PRE>
+<H3><A NAME="M6">SEE ALSO</A></H3>
+<B><A HREF="../TclCmd/info.htm">info</A></B>, <B><A HREF="../TclCmd/unknown.htm">unknown</A></B>
+<H3><A NAME="M7">KEYWORDS</A></H3>
+<A href="../Keywords/A.htm#argument">argument</A>, <A href="../Keywords/P.htm#procedure">procedure</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1993 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

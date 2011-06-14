@@ -1,0 +1,179 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>Tcl_TraceCommand manual page - Tcl Library Procedures</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclLib</a> <small>&gt;</small> TraceCmd</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="TraceCmd.htm#M2" NAME="L757">NAME</A>
+<DL><DD>Tcl_CommandTraceInfo, Tcl_TraceCommand, Tcl_UntraceCommand - monitor renames and deletes of a command</DD></DL>
+<DD><A HREF="TraceCmd.htm#M3" NAME="L758">SYNOPSIS</A>
+<DL>
+<DD><B>#include &lt;tcl.h&gt;</B>
+<DD>ClientData
+<DD><B>Tcl_CommandTraceInfo(</B><I>interp, cmdName, flags, proc, prevClientData</I><B>)</B>
+<DD>int
+<DD><B>Tcl_TraceCommand(</B><I>interp, cmdName, flags, proc, clientData</I><B>)</B>
+<DD>void
+<DD><B>Tcl_UntraceCommand(</B><I>interp, cmdName, flags, proc, clientData</I><B>)</B>
+</DL>
+<DD><A HREF="TraceCmd.htm#M4" NAME="L759">ARGUMENTS</A>
+<DL class="arguments">
+</DL>
+<DD><A HREF="TraceCmd.htm#M5" NAME="L760">DESCRIPTION</A>
+<DL class="description">
+<DD><A HREF="TraceCmd.htm#M6" NAME="L761"><B>TCL_TRACE_RENAME</B></A>
+<DD><A HREF="TraceCmd.htm#M7" NAME="L762"><B>TCL_TRACE_DELETE</B></A>
+</DL>
+<DD><A HREF="TraceCmd.htm#M8" NAME="L763">CALLING COMMANDS DURING TRACES</A>
+<DD><A HREF="TraceCmd.htm#M9" NAME="L764">MULTIPLE TRACES</A>
+<DD><A HREF="TraceCmd.htm#M10" NAME="L765">TCL_TRACE_DESTROYED FLAG</A>
+<DD><A HREF="TraceCmd.htm#M11" NAME="L766">TCL_INTERP_DESTROYED</A>
+<DD><A HREF="TraceCmd.htm#M12" NAME="L767">BUGS</A>
+<DD><A HREF="TraceCmd.htm#M13" NAME="L768">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+Tcl_CommandTraceInfo, Tcl_TraceCommand, Tcl_UntraceCommand - monitor renames and deletes of a command
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>#include &lt;tcl.h&gt;</B><BR>
+ClientData<BR>
+<B>Tcl_CommandTraceInfo(</B><I>interp, cmdName, flags, proc, prevClientData</I><B>)</B><BR>
+int<BR>
+<B>Tcl_TraceCommand(</B><I>interp, cmdName, flags, proc, clientData</I><B>)</B><BR>
+void<BR>
+<B>Tcl_UntraceCommand(</B><I>interp, cmdName, flags, proc, clientData</I><B>)</B><BR>
+<H3><A NAME="M4">ARGUMENTS</A></H3>
+<DL class="arguments">
+<DT><A HREF="../TclLib/Interp.htm">Tcl_Interp</A> <B>*interp</B> (in)<DD>
+Interpreter containing the command.
+<P><DT>const char <B>*cmdName</B> (in)<DD>
+Name of command.
+<P><DT>int <B>flags</B> (in)<DD>
+OR'ed collection of the values <B>TCL_TRACE_RENAME</B> and
+<B>TCL_TRACE_DELETE</B>.
+<P><DT>Tcl_CommandTraceProc <B>*proc</B> (in)<DD>
+Procedure to call when specified operations occur to <I>cmdName</I>.
+<P><DT>ClientData <B>clientData</B> (in)<DD>
+Arbitrary argument to pass to <I>proc</I>.
+<P><DT>ClientData <B>prevClientData</B> (in)<DD>
+If non-NULL, gives last value returned by <B>Tcl_CommandTraceInfo</B>,
+so this call will return information about next trace.  If NULL, this
+call will return information about first trace.
+<P></DL>
+<H3><A NAME="M5">DESCRIPTION</A></H3>
+<B>Tcl_TraceCommand</B> allows a C procedure to monitor operations
+performed on a Tcl command, so that the C procedure is invoked
+whenever the command is renamed or deleted.  If the trace is created
+successfully then <B>Tcl_TraceCommand</B> returns <B>TCL_OK</B>. If an error
+occurred (e.g. <I>cmdName</I> specifies a non-existent command) then
+<B>TCL_ERROR</B> is returned and an error message is left in the
+interpreter's result.
+<P>
+The <I>flags</I> argument to <B>Tcl_TraceCommand</B> indicates when the
+trace procedure is to be invoked.  It consists of an OR'ed combination
+of any of the following values:
+<P>
+<DL class="description">
+<DT><A NAME="M6"><B>TCL_TRACE_RENAME</B></A><DD>
+Invoke <I>proc</I> whenever the command is renamed.
+<P><DT><A NAME="M7"><B>TCL_TRACE_DELETE</B></A><DD>
+Invoke <I>proc</I> when the command is deleted.
+<P></DL>
+<P>
+Whenever one of the specified operations occurs to the command,
+<I>proc</I> will be invoked.  It should have arguments and result that
+match the type <B>Tcl_CommandTraceProc</B>:
+<PRE>typedef void Tcl_CommandTraceProc(
+        ClientData <I>clientData</I>,
+        <A HREF="../TclLib/Interp.htm">Tcl_Interp</A> *<I>interp</I>,
+        const char *<I>oldName</I>,
+        const char *<I>newName</I>,
+        int <I>flags</I>);</PRE>
+The <I>clientData</I> and <I>interp</I> parameters will have the same
+values as those passed to <B>Tcl_TraceCommand</B> when the trace was
+created.  <I>ClientData</I> typically points to an application-specific
+data structure that describes what to do when <I>proc</I> is invoked.
+<I>OldName</I> gives the name of the command being renamed, and
+<I>newName</I> gives the name that the command is being renamed to (or
+an empty string or NULL when the command is being deleted.)
+<I>Flags</I> is an OR'ed combination of bits potentially providing
+several pieces of information.  One of the bits <B>TCL_TRACE_RENAME</B> and
+<B>TCL_TRACE_DELETE</B> will be set in <I>flags</I> to indicate which
+operation is being performed on the command.  The bit
+<B>TCL_TRACE_DESTROYED</B> will be set in <I>flags</I> if the trace is about
+to be destroyed; this information may be useful to <I>proc</I> so that
+it can clean up its own internal data structures (see the section
+<B>TCL_TRACE_DESTROYED</B> below for more details).  Lastly, the bit
+<B>TCL_INTERP_DESTROYED</B> will be set if the entire interpreter is being
+destroyed.  When this bit is set, <I>proc</I> must be especially
+careful in the things it does (see the section <B>TCL_INTERP_DESTROYED</B>
+below).
+<P>
+<B>Tcl_UntraceCommand</B> may be used to remove a trace.  If the
+command specified by <I>interp</I>, <I>cmdName</I>, and <I>flags</I> has
+a trace set with <I>flags</I>, <I>proc</I>, and <I>clientData</I>, then
+the corresponding trace is removed.  If no such trace exists, then the
+call to <B>Tcl_UntraceCommand</B> has no effect.  The same bits are
+valid for <I>flags</I> as for calls to <B>Tcl_TraceCommand</B>.
+<P>
+<B>Tcl_CommandTraceInfo</B> may be used to retrieve information about
+traces set on a given command.
+The return value from <B>Tcl_CommandTraceInfo</B> is the <I>clientData</I>
+associated with a particular trace.
+The trace must be on the command specified by the <I>interp</I>,
+<I>cmdName</I>, and <I>flags</I> arguments (note that currently the
+flags are ignored; <I>flags</I> should be set to 0 for future
+compatibility) and its trace procedure must the same as the <I>proc</I>
+argument.
+If the <I>prevClientData</I> argument is NULL then the return
+value corresponds to the first (most recently created) matching
+trace, or NULL if there are no matching traces.
+If the <I>prevClientData</I> argument is not NULL, then it should
+be the return value from a previous call to <B>Tcl_CommandTraceInfo</B>.
+In this case, the new return value will correspond to the next
+matching trace after the one whose <I>clientData</I> matches
+<I>prevClientData</I>, or NULL if no trace matches <I>prevClientData</I>
+or if there are no more matching traces after it.
+This mechanism makes it possible to step through all of the
+traces for a given command that have the same <I>proc</I>.
+<H3><A NAME="M8">CALLING COMMANDS DURING TRACES</A></H3>
+During rename traces, the command being renamed is visible with both
+names simultaneously, and the command still exists during delete
+traces (if <B>TCL_INTERP_DESTROYED</B> is not set).  However, there is no
+mechanism for signaling that an error occurred in a trace procedure,
+so great care should be taken that errors do not get silently lost.
+<H3><A NAME="M9">MULTIPLE TRACES</A></H3>
+It is possible for multiple traces to exist on the same command.
+When this happens, all of the trace procedures will be invoked on each
+access, in order from most-recently-created to least-recently-created.
+Attempts to delete the command during a delete trace will fail
+silently, since the command is already scheduled for deletion anyway.
+If the command being renamed is renamed by one of its rename traces,
+that renaming takes precedence over the one that triggered the trace
+and the collection of traces will not be reexecuted; if several traces
+rename the command, the last renaming takes precedence.
+<H3><A NAME="M10">TCL_TRACE_DESTROYED FLAG</A></H3>
+In a delete callback to <I>proc</I>, the <B>TCL_TRACE_DESTROYED</B> bit
+is set in <I>flags</I>.
+<H3><A NAME="M11">TCL_INTERP_DESTROYED</A></H3>
+When an interpreter is destroyed, unset traces are called for
+all of its commands.
+The <B>TCL_INTERP_DESTROYED</B> bit will be set in the <I>flags</I>
+argument passed to the trace procedures.
+Trace procedures must be extremely careful in what they do if
+the <B>TCL_INTERP_DESTROYED</B> bit is set.
+It is not safe for the procedures to invoke any Tcl procedures
+on the interpreter, since its state is partially deleted.
+All that trace procedures should do under these circumstances is
+to clean up and free their own internal data structures.
+<H3><A NAME="M12">BUGS</A></H3>
+Tcl does not do any error checking to prevent trace procedures
+from misusing the interpreter during traces with <B>TCL_INTERP_DESTROYED</B>
+set.
+<H3><A NAME="M13">KEYWORDS</A></H3>
+<A href="../Keywords/C.htm#clientData">clientData</A>, <A href="../Keywords/T.htm#trace">trace</A>, <A href="../Keywords/C.htm#command">command</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 2002 Donal K. Fellows
+</div>
+</BODY></HTML>

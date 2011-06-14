@@ -1,0 +1,52 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>Tcl_RecordAndEval manual page - Tcl Library Procedures</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclLib</a> <small>&gt;</small> RecordEval</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+Tcl_RecordAndEval - save command on history list before evaluating
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>#include &lt;tcl.h&gt;</B><BR>
+int<BR>
+<B>Tcl_RecordAndEval</B>(<I>interp, cmd, flags</I>)<BR>
+<H3><A NAME="M4">ARGUMENTS</A></H3>
+<DL class="arguments">
+<DT><A HREF="../TclLib/Interp.htm">Tcl_Interp</A> <B>*interp</B> (in)<DD>
+Tcl interpreter in which to evaluate command.
+<P><DT>const char <B>*cmd</B> (in)<DD>
+Command (or sequence of commands) to execute.
+<P><DT>int <B>flags</B> (in)<DD>
+An OR'ed combination of flag bits.  <B>TCL_NO_EVAL</B> means record the
+command but do not evaluate it.  <B>TCL_EVAL_GLOBAL</B> means evaluate
+the command at global level instead of the current stack level.
+<P></DL>
+<H3><A NAME="M5">DESCRIPTION</A></H3>
+<B>Tcl_RecordAndEval</B> is invoked to record a command as an event
+on the history list and then execute it using <B><A HREF="../TclLib/Eval.htm">Tcl_Eval</A></B>
+(or <B><A HREF="../TclLib/Eval.htm">Tcl_GlobalEval</A></B> if the <B>TCL_EVAL_GLOBAL</B> bit is set in <I>flags</I>).
+It returns a completion code such as <B>TCL_OK</B> just like <B><A HREF="../TclLib/Eval.htm">Tcl_Eval</A></B>
+and it leaves information in the interpreter's result.
+If you do not want the command recorded on the history list then
+you should invoke <B><A HREF="../TclLib/Eval.htm">Tcl_Eval</A></B> instead of <B>Tcl_RecordAndEval</B>.
+Normally <B>Tcl_RecordAndEval</B> is only called with top-level
+commands typed by the user, since the purpose of history is to
+allow the user to re-issue recently-invoked commands.
+If the <I>flags</I> argument contains the <B>TCL_NO_EVAL</B> bit then
+the command is recorded without being evaluated.
+<P>
+Note that <B>Tcl_RecordAndEval</B> has been largely replaced by the
+object-based procedure <B><A HREF="../TclLib/RecEvalObj.htm">Tcl_RecordAndEvalObj</A></B>.
+That object-based procedure records and optionally executes
+a command held in a Tcl object instead of a string.
+
+<H3><A NAME="M6">SEE ALSO</A></H3>
+<B><A HREF="../TclLib/RecEvalObj.htm">Tcl_RecordAndEvalObj</A></B>
+<H3><A NAME="M7">KEYWORDS</A></H3>
+<A href="../Keywords/C.htm#command">command</A>, <A href="../Keywords/E.htm#event">event</A>, <A href="../Keywords/E.htm#execute">execute</A>, <A href="../Keywords/H.htm#history">history</A>, <A href="../Keywords/I.htm#interpreter">interpreter</A>, <A href="../Keywords/R.htm#record">record</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1989-1993 The Regents of the University of California.
+Copyright &copy; 1994-1997 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

@@ -1,0 +1,80 @@
+<html>
+    <!---*- coding: utf-8;-*- -->
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+        <style type="text/css">
+	p { text-align:justify; }
+	body { font-family: Verdana, Arial, Helvetica, Geneva; font-size 8px; }
+
+	a { text-decoration:none }
+	pre { font-family:Courier New, Courier, Mono; }
+	h1 { font-family:Arial; font-size: 28; }
+	h2 { font-family:Arial; font-size: 24; }
+	h3 { font-family:Arial; font-size: 22; }
+	h4 { font-family:Arial; font-size: 18; }
+	P { font-family:Arial, Helvetica, sans-serif; font-size: 17; }
+	code { font-family:Courier New, Courier, Mono; font-size: 16; }
+	li { font-family:Arial, Helvetica, sans-serif; font-size: 17; }
+	ol { font-family:Arial, Helvetica, sans-serif; font-size: 17; }
+	ul { font-family:Arial, Helvetica, sans-serif; font-size: 17; }
+    </style>
+        <title>Debugging locally</title>
+    </head>
+    <body>
+        <a name="Usage&gt;Debugging locally"/>
+        <h3>Debugging locally</h3>
+        <p>To debug a TCL file locally, apply the following steps:</p>
+        <ul>
+            <li>Load the TCL file inside RamDebugger with <code>Files-&gt;Open file</code>
+. To make a test,
+use the example located in <b>&lt;RamDebugger directory&gt;/Examples/example1.tcl</b>
+            </li>
+            <li>Set a breakpoint in line 4 with <code>Debug-&gt;Set breakpoint</code>
+ or press <b>F9</b>
+ after
+having the cursor in the desired line.            </li>
+            <li>Start the debugger with <code>Debug-&gt;Go</code>
+ or press <b>F5</b>
+. A grey arrow at the left
+of the text indicates that the program has stopped in that line.            </li>
+            <li>to continue one line, use <code>Debug-&gt;Next</code>
+ or press <b>F10</b>
+.            </li>
+            <li>Use <code>Edit-&gt;Goto line-&gt;27</code>
+ and press <code>Debug-&gt;Continue to</code>
+            </li>
+            <li>Modify source code line <b>21</b>
+ from:<p/>
+                <p>
+                    <blockquote>	set cc $bb--qq</blockquote>
+                </p>
+                <p/>
+to:<p/>
+                <p>
+                    <blockquote>	set cc $bb--qq2</blockquote>
+                </p>
+                <p/>
+            </li>
+            <li>to continue one line, entering in functions, use <code>Debug-&gt;Step</code>
+ or press <b>F11</b>
+.            </li>
+            <li>Press <b>F11</b>
+ several times until arrow is in line <b>22</b>
+            </li>
+            <li>Put the mouse cursor over variable <b>cc</b>
+ and leave it there for aprox. one second.
+The value of the variable appears in a popup window. Note that it holds the new value,
+after the modification of the code.            </li>
+            <li>To see the value of one expression, open the window: <code>Debug-&gt;Expressions</code>
+ and
+write: <code>[string length $i]+3</code>
+            </li>
+            <li>To modify the value of variable <b>i</b>
+, enter <b>i</b>
+ in the left column of the <b>User
+defined variables</b>
+, enter the new value in the right column and pres <code>Return</code>
+.            </li>
+        </ul>
+    </body>
+</html>

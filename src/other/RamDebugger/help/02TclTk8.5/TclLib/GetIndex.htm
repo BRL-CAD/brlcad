@@ -1,0 +1,117 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>Tcl_GetIndexFromObj manual page - Tcl Library Procedures</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclLib</a> <small>&gt;</small> GetIndex</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="GetIndex.htm#M2" NAME="L332">NAME</A>
+<DL><DD>Tcl_GetIndexFromObj, Tcl_GetIndexFromObjStruct - lookup string in table of keywords</DD></DL>
+<DD><A HREF="GetIndex.htm#M3" NAME="L333">SYNOPSIS</A>
+<DL>
+<DD><B>#include &lt;tcl.h&gt;</B>
+<DD>int
+<DD><B>Tcl_GetIndexFromObj</B>(<I>interp, objPtr, tablePtr, msg, flags,
+<DD>indexPtr</I>)
+<DD>int
+<DD><B>Tcl_GetIndexFromObjStruct</B>(<I>interp, objPtr, structTablePtr, offset,
+<DD>                          msg, flags, indexPtr</I>)
+</DL>
+<DD><A HREF="GetIndex.htm#M4" NAME="L334">ARGUMENTS</A>
+<DL class="arguments">
+</DL>
+<DD><A HREF="GetIndex.htm#M5" NAME="L335">DESCRIPTION</A>
+<DD><A HREF="GetIndex.htm#M6" NAME="L336">SEE ALSO</A>
+<DD><A HREF="GetIndex.htm#M7" NAME="L337">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+Tcl_GetIndexFromObj, Tcl_GetIndexFromObjStruct - lookup string in table of keywords
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>#include &lt;tcl.h&gt;</B><BR>
+int<BR>
+<B>Tcl_GetIndexFromObj</B>(<I>interp, objPtr, tablePtr, msg, flags,<BR>
+indexPtr</I>)<BR>
+int<BR>
+<B>Tcl_GetIndexFromObjStruct</B>(<I>interp, objPtr, structTablePtr, offset,<BR>
+                          msg, flags, indexPtr</I>)<BR>
+<H3><A NAME="M4">ARGUMENTS</A></H3>
+<DL class="arguments">
+<DT><A HREF="../TclLib/Interp.htm">Tcl_Interp</A> <B>*interp</B> (in)<DD>
+Interpreter to use for error reporting; if NULL, then no message is
+provided on errors.
+<P><DT>Tcl_Obj <B>*objPtr</B> (in/out)<DD>
+The string value of this object is used to search through <I>tablePtr</I>.
+The internal representation is modified to hold the index of the matching
+table entry.
+<P><DT>const char <B>**tablePtr</B> (in)<DD>
+An array of null-terminated strings.  The end of the array is marked
+by a NULL string pointer.
+<P><DT>const void <B>*structTablePtr</B> (in)<DD>
+An array of arbitrary type, typically some <B>struct</B> type.
+The first member of the structure must be a null-terminated string.
+The size of the structure is given by <I>offset</I>.
+<P><DT>int <B>offset</B> (in)<DD>
+The offset to add to structTablePtr to get to the next entry.
+The end of the array is marked by a NULL string pointer.
+<P><DT>const char <B>*msg</B> (in)<DD>
+Null-terminated string describing what is being looked up, such as
+<B><A HREF="../TkCmd/option.htm">option</A></B>.  This string is included in error messages.
+<P><DT>int <B>flags</B> (in)<DD>
+OR-ed combination of bits providing additional information for
+operation.  The only bit that is currently defined is <B>TCL_EXACT</B>.
+<P><DT>int <B>*indexPtr</B> (out)<DD>
+The index of the string in <I>tablePtr</I> that matches the value of
+<I>objPtr</I> is returned here.
+<P></DL>
+<H3><A NAME="M5">DESCRIPTION</A></H3>
+This procedure provides an efficient way for looking up keywords,
+switch names, option names, and similar things where the value of
+an object must be one of a predefined set of values.
+<I>ObjPtr</I> is compared against each of
+the strings in <I>tablePtr</I> to find a match.  A match occurs if
+<I>objPtr</I>'s string value is identical to one of the strings in
+<I>tablePtr</I>, or if it is a non-empty unique abbreviation
+for exactly one of the strings in <I>tablePtr</I> and the
+<B>TCL_EXACT</B> flag was not specified; in either case
+the index of the matching entry is stored at <I>*indexPtr</I>
+and <B>TCL_OK</B> is returned.
+<P>
+If there is no matching entry,
+<B>TCL_ERROR</B> is returned and an error message is left in <I>interp</I>'s
+result if <I>interp</I> is not NULL.  <I>Msg</I> is included in the
+error message to indicate what was being looked up.  For example,
+if <I>msg</I> is <B><A HREF="../TkCmd/option.htm">option</A></B> the error message will have a form like
+&#8220;<B>bad option &#34;firt&#34;: must be first, second, or third</B>&#8221;.
+<P>
+If <B>Tcl_GetIndexFromObj</B> completes successfully it modifies the
+internal representation of <I>objPtr</I> to hold the address of
+the table and the index of the matching entry.  If <B>Tcl_GetIndexFromObj</B>
+is invoked again with the same <I>objPtr</I> and <I>tablePtr</I>
+arguments (e.g. during a reinvocation of a Tcl command), it returns
+the matching index immediately without having to redo the lookup
+operation.  Note: <B>Tcl_GetIndexFromObj</B> assumes that the entries
+in <I>tablePtr</I> are static: they must not change between
+invocations.  If the value of <I>objPtr</I> is the empty string,
+<B>Tcl_GetIndexFromObj</B> will treat it as a non-matching value
+and return <B>TCL_ERROR</B>.
+<P>
+<B>Tcl_GetIndexFromObjStruct</B> works just like
+<B>Tcl_GetIndexFromObj</B>, except that instead of treating
+<I>tablePtr</I> as an array of string pointers, it treats it as a
+pointer to the first string in a series of strings that have
+<I>offset</I> bytes between them (i.e. that there is a pointer to the
+first array of characters at <I>tablePtr</I>, a pointer to the second
+array of characters at <I>tablePtr</I>+<I>offset</I> bytes, etc.)
+This is particularly useful when processing things like
+<B>Tk_ConfigurationSpec</B>, whose string keys are in the same place in
+each of several array elements.
+
+<H3><A NAME="M6">SEE ALSO</A></H3>
+<B><A HREF="../TclLib/WrongNumArgs.htm">Tcl_WrongNumArgs</A></B>
+<H3><A NAME="M7">KEYWORDS</A></H3>
+<A href="../Keywords/I.htm#index">index</A>, <A href="../Keywords/O.htm#object">object</A>, <A href="../Keywords/T.htm#table lookup">table lookup</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1997 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

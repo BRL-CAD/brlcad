@@ -1,0 +1,172 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>Tcl_AsyncCreate manual page - Tcl Library Procedures</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclLib</a> <small>&gt;</small> Async</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="Async.htm#M2" NAME="L33">NAME</A>
+<DL><DD>Tcl_AsyncCreate, Tcl_AsyncMark, Tcl_AsyncInvoke, Tcl_AsyncDelete, Tcl_AsyncReady - handle asynchronous events</DD></DL>
+<DD><A HREF="Async.htm#M3" NAME="L34">SYNOPSIS</A>
+<DL>
+<DD><B>#include &lt;tcl.h&gt;</B>
+<DD>Tcl_AsyncHandler
+<DD><B>Tcl_AsyncCreate</B>(<I>proc, clientData</I>)
+<DD><B>Tcl_AsyncMark</B>(<I>async</I>)
+<DD>int
+<DD><B>Tcl_AsyncInvoke</B>(<I>interp, code</I>)
+<DD><B>Tcl_AsyncDelete</B>(<I>async</I>)
+<DD>int
+<DD><B>Tcl_AsyncReady</B>()
+</DL>
+<DD><A HREF="Async.htm#M4" NAME="L35">ARGUMENTS</A>
+<DL class="arguments">
+</DL>
+<DD><A HREF="Async.htm#M5" NAME="L36">DESCRIPTION</A>
+<DD><A HREF="Async.htm#M6" NAME="L37">WARNING</A>
+<DD><A HREF="Async.htm#M7" NAME="L38">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+Tcl_AsyncCreate, Tcl_AsyncMark, Tcl_AsyncInvoke, Tcl_AsyncDelete, Tcl_AsyncReady - handle asynchronous events
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>#include &lt;tcl.h&gt;</B><BR>
+Tcl_AsyncHandler<BR>
+<B>Tcl_AsyncCreate</B>(<I>proc, clientData</I>)<BR>
+<B>Tcl_AsyncMark</B>(<I>async</I>)<BR>
+int<BR>
+<B>Tcl_AsyncInvoke</B>(<I>interp, code</I>)<BR>
+<B>Tcl_AsyncDelete</B>(<I>async</I>)<BR>
+int<BR>
+<B>Tcl_AsyncReady</B>()<BR>
+<H3><A NAME="M4">ARGUMENTS</A></H3>
+<DL class="arguments">
+<DT>Tcl_AsyncProc <B>*proc</B> (in)<DD>
+Procedure to invoke to handle an asynchronous event.
+<P><DT>ClientData <B>clientData</B> (in)<DD>
+One-word value to pass to <I>proc</I>.
+<P><DT>Tcl_AsyncHandler <B>async</B> (in)<DD>
+Token for asynchronous event handler.
+<P><DT><A HREF="../TclLib/Interp.htm">Tcl_Interp</A> <B>*interp</B> (in)<DD>
+Tcl interpreter in which command was being evaluated when handler was
+invoked, or NULL if handler was invoked when there was no interpreter
+active.
+<P><DT>int <B>code</B> (in)<DD>
+Completion code from command that just completed in <I>interp</I>,
+or 0 if <I>interp</I> is NULL.
+<P></DL>
+<H3><A NAME="M5">DESCRIPTION</A></H3>
+These procedures provide a safe mechanism for dealing with
+asynchronous events such as signals.
+If an event such as a signal occurs while a Tcl script is being
+evaluated then it is not safe to take any substantive action to
+process the event.
+For example, it is not safe to evaluate a Tcl script since the
+interpreter may already be in the middle of evaluating a script;
+it may not even be safe to allocate memory, since a memory
+allocation could have been in progress when the event occurred.
+The only safe approach is to set a flag indicating that the event
+occurred, then handle the event later when the world has returned
+to a clean state, such as after the current Tcl command completes.
+<P>
+<B>Tcl_AsyncCreate</B>, <B>Tcl_AsyncDelete</B>, and <B>Tcl_AsyncReady</B>
+are thread sensitive.  They access and/or set a thread-specific data
+structure in the event of a core built with <I>--enable-threads</I>.  The token
+created by <B>Tcl_AsyncCreate</B> contains the needed thread information it
+was called from so that calling <B>Tcl_AsyncMark</B>(<I>token</I>) will only yield
+the origin thread into the asynchronous handler.
+<P>
+<B>Tcl_AsyncCreate</B> creates an asynchronous handler and returns
+a token for it.
+The asynchronous handler must be created before
+any occurrences of the asynchronous event that it is intended
+to handle (it is not safe to create a handler at the time of
+an event).
+When an asynchronous event occurs the code that detects the event
+(such as a signal handler) should call <B>Tcl_AsyncMark</B> with the
+token for the handler.
+<B>Tcl_AsyncMark</B> will mark the handler as ready to execute, but it
+will not invoke the handler immediately.
+Tcl will call the <I>proc</I> associated with the handler later, when
+the world is in a safe state, and <I>proc</I> can then carry out
+the actions associated with the asynchronous event.
+<I>Proc</I> should have arguments and result that match the
+type <B>Tcl_AsyncProc</B>:
+<PRE>typedef int Tcl_AsyncProc(
+        ClientData <I>clientData</I>,
+        <A HREF="../TclLib/Interp.htm">Tcl_Interp</A> *<I>interp</I>,
+        int <I>code</I>);</PRE>
+The <I>clientData</I> will be the same as the <I>clientData</I>
+argument passed to <B>Tcl_AsyncCreate</B> when the handler was
+created.
+If <I>proc</I> is invoked just after a command has completed
+execution in an interpreter, then <I>interp</I> will identify
+the interpreter in which the command was evaluated and
+<I>code</I> will be the completion code returned by that
+command.
+The command's result will be present in the interpreter's result.
+When <I>proc</I> returns, whatever it leaves in the interpreter's result
+will be returned as the result of the command and the integer
+value returned by <I>proc</I> will be used as the new completion
+code for the command.
+<P>
+It is also possible for <I>proc</I> to be invoked when no interpreter
+is active.
+This can happen, for example, if an asynchronous event occurs while
+the application is waiting for interactive input or an X event.
+In this case <I>interp</I> will be NULL and <I>code</I> will be
+0, and the return value from <I>proc</I> will be ignored.
+<P>
+The procedure <B>Tcl_AsyncInvoke</B> is called to invoke all of the
+handlers that are ready.
+The procedure <B>Tcl_AsyncReady</B> will return non-zero whenever any
+asynchronous handlers are ready;  it can be checked to avoid calls
+to <B>Tcl_AsyncInvoke</B> when there are no ready handlers.
+Tcl calls <B>Tcl_AsyncReady</B> after each command is evaluated
+and calls <B>Tcl_AsyncInvoke</B> if needed.
+Applications may also call <B>Tcl_AsyncInvoke</B> at interesting
+times for that application.
+For example, Tcl's event handler calls <B>Tcl_AsyncReady</B>
+after each event and calls <B>Tcl_AsyncInvoke</B> if needed.
+The <I>interp</I> and <I>code</I> arguments to <B>Tcl_AsyncInvoke</B>
+have the same meaning as for <I>proc</I>:  they identify the active
+interpreter, if any, and the completion code from the command
+that just completed.
+<P>
+<B>Tcl_AsyncDelete</B> removes an asynchronous handler so that
+its <I>proc</I> will never be invoked again.
+A handler can be deleted even when ready, and it will still
+not be invoked.
+<P>
+If multiple handlers become active at the same time, the
+handlers are invoked in the order they were created (oldest
+handler first).
+The <I>code</I> and the interpreter's result for later handlers
+reflect the values returned by earlier handlers, so that
+the most recently created handler has last say about
+the interpreter's result and completion code.
+If new handlers become ready while handlers are executing,
+<B>Tcl_AsyncInvoke</B> will invoke them all;  at each point it
+invokes the highest-priority (oldest) ready handler, repeating
+this over and over until there are no longer any ready handlers.
+<H3><A NAME="M6">WARNING</A></H3>
+It is almost always a bad idea for an asynchronous event
+handler to modify the interpreter's result or return a code different
+from its <I>code</I> argument.
+This sort of behavior can disrupt the execution of scripts in
+subtle ways and result in bugs that are extremely difficult
+to track down.
+If an asynchronous event handler needs to evaluate Tcl scripts
+then it should first save the interpreter's state by calling
+<B><A HREF="../TclLib/SaveResult.htm">Tcl_SaveInterpState</A></B>, passing in the <I>code</I> argument.
+When the asynchronous handler is finished it should restore
+the interpreter's state by calling <B><A HREF="../TclLib/SaveResult.htm">Tcl_RestoreInterpState</A></B>,
+and then returning the <I>code</I> argument.
+
+<H3><A NAME="M7">KEYWORDS</A></H3>
+<A href="../Keywords/A.htm#asynchronous event">asynchronous event</A>, <A href="../Keywords/H.htm#handler">handler</A>, <A href="../Keywords/S.htm#signal">signal</A>, <A href="../Keywords/T.htm#Tcl_SaveInterpState">Tcl_SaveInterpState</A>, <A href="../Keywords/T.htm#thread">thread</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1989-1993 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

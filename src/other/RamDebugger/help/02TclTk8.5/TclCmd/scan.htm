@@ -1,0 +1,271 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>scan manual page - Tcl Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclCmd</a> <small>&gt;</small> scan</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="scan.htm#M2" NAME="L1453">NAME</A>
+<DL><DD>scan - Parse string using conversion specifiers in the style of sscanf</DD></DL>
+<DD><A HREF="scan.htm#M3" NAME="L1454">SYNOPSIS</A>
+<DL>
+</DL>
+<DD><A HREF="scan.htm#M4" NAME="L1455">INTRODUCTION</A>
+<DD><A HREF="scan.htm#M5" NAME="L1456">DETAILS ON SCANNING</A>
+<DL class="details on scanning">
+<DD><A HREF="scan.htm#M6" NAME="L1457"><B>d</B></A>
+<DD><A HREF="scan.htm#M7" NAME="L1458"><B>o</B></A>
+<DD><A HREF="scan.htm#M8" NAME="L1459"><B>x</B></A>
+<DD><A HREF="scan.htm#M9" NAME="L1460"><B>u</B></A>
+<DD><A HREF="scan.htm#M10" NAME="L1461"><B>i</B></A>
+<DD><A HREF="scan.htm#M11" NAME="L1462"><B>c</B></A>
+<DD><A HREF="scan.htm#M12" NAME="L1463"><B>s</B></A>
+<DD><A HREF="scan.htm#M13" NAME="L1464"><B>e</B> or <B>f</B> or <B>g</B></A>
+<DD><A HREF="scan.htm#M14" NAME="L1465"><B>[</B><I>chars</I><B>]</B></A>
+<DD><A HREF="scan.htm#M15" NAME="L1466"><B>[^</B><I>chars</I><B>]</B></A>
+<DD><A HREF="scan.htm#M16" NAME="L1467"><B>n</B></A>
+</DL>
+<DD><A HREF="scan.htm#M17" NAME="L1468">DIFFERENCES FROM ANSI SSCANF</A>
+<DL class="differences from ansi sscanf">
+</DL>
+<DD><A HREF="scan.htm#M18" NAME="L1469">EXAMPLES</A>
+<DD><A HREF="scan.htm#M19" NAME="L1470">SEE ALSO</A>
+<DD><A HREF="scan.htm#M20" NAME="L1471">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+scan - Parse string using conversion specifiers in the style of sscanf
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>scan </B><I>string format </I>?<I>varName varName ...</I>?<BR>
+<H3><A NAME="M4">INTRODUCTION</A></H3>
+This command parses substrings from an input string in a fashion similar
+to the ANSI C <B>sscanf</B> procedure and returns a count of the number of
+conversions performed, or -1 if the end of the input string is reached
+before any conversions have been performed.  <I>String</I> gives the input
+to be parsed and <I>format</I> indicates how to parse it, using <B>%</B>
+conversion specifiers as in <B>sscanf</B>.  Each <I>varName</I> gives the
+name of a variable; when a substring is scanned from <I>string</I> that
+matches a conversion specifier, the substring is assigned to the
+corresponding variable.
+If no <I>varName</I> variables are specified, then <B>scan</B> works in an
+inline manner, returning the data that would otherwise be stored in the
+variables as a list.  In the inline case, an empty string is returned when
+the end of the input string is reached before any conversions have been
+performed.
+<H3><A NAME="M5">DETAILS ON SCANNING</A></H3>
+<B>Scan</B> operates by scanning <I>string</I> and <I>format</I> together.
+If the next character in <I>format</I> is a blank or tab then it
+matches any number of white space characters in <I>string</I> (including
+zero).
+Otherwise, if it is not a <B>%</B> character then it 
+must match the next character of <I>string</I>.
+When a <B>%</B> is encountered in <I>format</I>, it indicates
+the start of a conversion specifier.
+A conversion specifier contains up to four fields after the <B>%</B>:
+a XPG3 position specifier (or a <B>*</B> to indicate the converted
+value is to be discarded instead of assigned to any variable); a number
+indicating a maximum substring width; a size modifier; and a
+conversion character.
+All of these fields are optional except for the conversion character.
+The fields that are present must appear in the order given above.
+<P>
+When <B>scan</B> finds a conversion specifier in <I>format</I>, it
+first skips any white-space characters in <I>string</I> (unless the
+conversion character is <B>[</B> or <B>c</B>).
+Then it converts the next input characters according to the 
+conversion specifier and stores the result in the variable given
+by the next argument to <B>scan</B>.
+<P>
+If the <B>%</B> is followed by a decimal number and a <B>$</B>, as in
+&#8220;<B>%2$d</B>&#8221;,
+then the variable to use is not taken from the next
+sequential argument.  Instead, it is taken from the argument indicated
+by the number, where 1 corresponds to the first <I>varName</I>.  If
+there are any positional specifiers in <I>format</I> then all of the
+specifiers must be positional.  Every <I>varName</I> on the argument
+list must correspond to exactly one conversion specifier or an error
+is generated, or in the inline case, any position can be specified
+at most once and the empty positions will be filled in with empty strings.
+<P>
+The size modifier field is used only when scanning a substring into
+one of Tcl's integer values.  The size modifier field dictates the
+integer range acceptable to be stored in a variable, or, for the inline
+case, in a position in the result list.
+The syntactically valid values for the size modifier are <B>h</B>, <B>L</B>,
+<B>l</B>, and <B>ll</B>.  The <B>h</B> size modifier value is equivalent
+to the absence of a size modifier in the the conversion specifier.
+Either one indicates the integer range to be stored is limited to
+the same range produced by the <B>int()</B> function of the <B><A HREF="../TclCmd/expr.htm">expr</A></B>
+command.  The <B>L</B> size modifier is equivalent to the <B>l</B> size
+modifier. Either one indicates the integer range to be stored is
+limited to the same range produced by the <B>wide()</B> function of
+the <B><A HREF="../TclCmd/expr.htm">expr</A></B> command.  The <B>ll</B> size modifier indicates that
+the integer range to be stored is unlimited.
+<P>
+The following conversion characters are supported:
+<P>
+<DL class="details on scanning">
+<DT><A NAME="M6"><B>d</B></A><DD>
+The input substring must be a decimal integer.
+It is read in and the integer value is stored in the variable,
+truncated as required by the size modifier value.
+<P><DT><A NAME="M7"><B>o</B></A><DD>
+The input substring must be an octal integer. It is read in and the 
+integer value is stored in the variable,
+truncated as required by the size modifier value.
+<P><DT><A NAME="M8"><B>x</B></A><DD>
+The input substring must be a hexadecimal integer.
+It is read in and the integer value is stored in the variable,
+truncated as required by the size modifier value.
+<P><DT><A NAME="M9"><B>u</B></A><DD>
+The input substring must be a decimal integer.
+The integer value is truncated as required by the size modifier
+value, and the corresponding unsigned value for that truncated
+range is computed and stored in the variable as a decimal string.
+The conversion makes no sense without reference to a truncation range,
+so the size modifier <B>ll</B> is not permitted in combination
+with conversion character <B>u</B>.
+<P><DT><A NAME="M10"><B>i</B></A><DD>
+The input substring must be an integer.  The base (i.e. decimal, binary,
+octal, or hexadecimal) is determined in the same fashion as described in
+<B><A HREF="../TclCmd/expr.htm">expr</A></B>.  The integer value is stored in the variable,
+truncated as required by the size modifier value.
+<P><DT><A NAME="M11"><B>c</B></A><DD>
+A single character is read in and its Unicode value is stored in 
+the variable as an integer value.
+Initial white space is not skipped in this case, so the input
+substring may be a white-space character.
+<P><DT><A NAME="M12"><B>s</B></A><DD>
+The input substring consists of all the characters up to the next 
+white-space character; the characters are copied to the variable.
+<P><DT><A NAME="M13"><B>e</B> or <B>f</B> or <B>g</B></A><DD>
+The input substring must be a floating-point number consisting 
+of an optional sign, a string of decimal digits possibly
+containing a decimal point, and an optional exponent consisting 
+of an <B>e</B> or <B>E</B> followed by an optional sign and a string of 
+decimal digits.
+It is read in and stored in the variable as a floating-point value.
+<P><DT><A NAME="M14"><B>[</B><I>chars</I><B>]</B></A><DD>
+The input substring consists of one or more characters in <I>chars</I>.
+The matching string is stored in the variable.
+If the first character between the brackets is a <B>]</B> then
+it is treated as part of <I>chars</I> rather than the closing
+bracket for the set.
+If <I>chars</I>
+contains a sequence of the form <I>a</I><B>-</B><I>b</I> then any
+character between <I>a</I> and <I>b</I> (inclusive) will match.
+If the first or last character between the brackets is a <B>-</B>, then
+it is treated as part of <I>chars</I> rather than indicating a range.
+<P><DT><A NAME="M15"><B>[^</B><I>chars</I><B>]</B></A><DD>
+The input substring consists of one or more characters not in <I>chars</I>.
+The matching string is stored in the variable.
+If the character immediately following the <B>^</B> is a <B>]</B> then it is 
+treated as part of the set rather than the closing bracket for 
+the set.
+If <I>chars</I>
+contains a sequence of the form <I>a</I><B>-</B><I>b</I> then any
+character between <I>a</I> and <I>b</I> (inclusive) will be excluded
+from the set.
+If the first or last character between the brackets is a <B>-</B>, then
+it is treated as part of <I>chars</I> rather than indicating a range value.
+<P><DT><A NAME="M16"><B>n</B></A><DD>
+No input is consumed from the input string.  Instead, the total number
+of characters scanned from the input string so far is stored in the variable.
+<P></DL>
+<P>
+The number of characters read from the input for a conversion is the
+largest number that makes sense for that particular conversion (e.g.
+as many decimal digits as possible for <B>%d</B>, as 
+many octal digits as possible for <B>%o</B>, and so on).
+The input substring for a given conversion terminates either when a
+white-space character is encountered or when the maximum substring 
+width has been reached, whichever comes first.
+If a <B>*</B> is present in the conversion specifier 
+then no variable is assigned and the next scan argument is not consumed.
+<H3><A NAME="M17">DIFFERENCES FROM ANSI SSCANF</A></H3>
+The behavior of the <B>scan</B> command is the same as the behavior of
+the ANSI C <B>sscanf</B> procedure except for the following differences:
+<P>
+<DL class="differences from ansi sscanf">
+<DT>[1]<DD>
+<B>%p</B> conversion specifier is not supported.
+<P><DT>[2]<DD>
+For <B>%c</B> conversions a single character value is
+converted to a decimal string, which is then assigned to the
+corresponding <I>varName</I>;
+no substring width may be specified for this conversion.
+<P><DT>[3]<DD>
+The <B>h</B> modifier is always ignored and the <B>l</B> and <B>L</B>
+modifiers are ignored when converting real values (i.e. type
+<B>double</B> is used for the internal representation).  The <B>ll</B>
+modifier has no <B>sscanf</B> counterpart.
+<P><DT>[4]<DD>
+If the end of the input string is reached before any conversions have been
+performed and no variables are given, an empty string is returned.
+<P></DL>
+<H3><A NAME="M18">EXAMPLES</A></H3>
+Convert a UNICODE character to its numeric value:
+<PRE>set char &quot;x&quot;
+set value [<B>scan</B> $char %c]</PRE>
+<P>
+Parse a simple color specification of the form <I>#RRGGBB</I> using
+hexadecimal conversions with substring sizes:
+<PRE>set string &quot;#08D03F&quot;
+<B>scan</B> $string &quot;#%2x%2x%2x&quot; r g b</PRE>
+<P>
+Parse a <I>HH:MM</I> time string, noting that this avoids problems with
+octal numbers by forcing interpretation as decimals (if we did not
+care, we would use the <B>%i</B> conversion instead):
+<PRE>set string &quot;08:08&quot;   ;# *Not* octal!
+if {[<B>scan</B> $string &quot;%d:%d&quot; hours minutes] != 2} {
+   error &quot;not a valid time string&quot;
+}
+# We have to understand numeric ranges ourselves...
+if {$minutes &lt; 0 || $minutes &gt; 59} {
+   error &quot;invalid number of minutes&quot;
+}</PRE>
+<P>
+Break a string up into sequences of non-whitespace characters (note
+the use of the <B>%n</B> conversion so that we get skipping over
+leading whitespace correct):
+<PRE>set string &quot; a string {with braced words} + leading space &quot;
+set words {}
+while {[<B>scan</B> $string %s%n word length] == 2} {
+   lappend words $word
+   set string [string range $string $length end]
+}</PRE>
+<P>
+Parse a simple coordinate string, checking that it is complete by
+looking for the terminating character explicitly:
+<PRE>set string &quot;(5.2,-4e-2)&quot;
+# Note that the spaces before the literal parts of
+# the scan pattern are significant, and that &quot;)&quot; is
+# the Unicode character &#92;u0029
+if {
+   [<B>scan</B> $string &quot; (%f ,%f %c&quot; x y last] != 3
+   || $last != 0x0029
+} then {
+   error &quot;invalid coordinate string&quot;
+}
+puts &quot;X=$x, Y=$y&quot;</PRE>
+<P>
+An interactive session demonstrating the truncation of integer
+values determined by size modifiers:
+<PRE>% set tcl_platform(wordSize)
+4
+% scan 20000000000000000000 %d
+2147483647
+% scan 20000000000000000000 %ld
+9223372036854775807
+% scan 20000000000000000000 %lld
+20000000000000000000</PRE>
+<H3><A NAME="M19">SEE ALSO</A></H3>
+<B><A HREF="../TclCmd/format.htm">format</A></B>, <B>sscanf</B>
+<H3><A NAME="M20">KEYWORDS</A></H3>
+<A href="../Keywords/C.htm#conversion specifier">conversion specifier</A>, <A href="../Keywords/P.htm#parse">parse</A>, <A href="../Keywords/S.htm#scan">scan</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1993 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+Copyright &copy; 2000 Scriptics Corporation.
+</div>
+</BODY></HTML>

@@ -1,0 +1,238 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>Tcl_SetResult manual page - Tcl Library Procedures</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclLib</a> <small>&gt;</small> SetResult</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="SetResult.htm#M2" NAME="L646">NAME</A>
+<DL><DD>Tcl_SetObjResult, Tcl_GetObjResult, Tcl_SetResult, Tcl_GetStringResult, Tcl_AppendResult, Tcl_AppendResultVA, Tcl_AppendElement, Tcl_ResetResult, Tcl_FreeResult - manipulate Tcl result</DD></DL>
+<DD><A HREF="SetResult.htm#M3" NAME="L647">SYNOPSIS</A>
+<DL>
+<DD><B>#include &lt;tcl.h&gt;</B>
+<DD><B>Tcl_SetObjResult</B>(<I>interp, objPtr</I>)
+<DD>Tcl_Obj *
+<DD><B>Tcl_GetObjResult</B>(<I>interp</I>)
+<DD><B>Tcl_SetResult</B>(<I>interp, result, freeProc</I>)
+<DD>const char *
+<DD><B>Tcl_GetStringResult</B>(<I>interp</I>)
+<DD><B>Tcl_AppendResult</B>(<I>interp, result, result, ... , </I><B>(char *) NULL</B>)
+<DD><B>Tcl_AppendResultVA</B>(<I>interp, argList</I>)
+<DD><B>Tcl_AppendElement</B>(<I>interp, element</I>)
+<DD><B>Tcl_ResetResult</B>(<I>interp</I>)
+<DD><B>Tcl_FreeResult</B>(<I>interp</I>)
+</DL>
+<DD><A HREF="SetResult.htm#M4" NAME="L648">ARGUMENTS</A>
+<DL class="arguments">
+</DL>
+<DD><A HREF="SetResult.htm#M5" NAME="L649">DESCRIPTION</A>
+<DD><A HREF="SetResult.htm#M6" NAME="L650">OLD STRING PROCEDURES</A>
+<DD><A HREF="SetResult.htm#M7" NAME="L651">DIRECT ACCESS TO INTERP->RESULT IS DEPRECATED</A>
+<DD><A HREF="SetResult.htm#M8" NAME="L652">THE TCL_FREEPROC ARGUMENT TO TCL_SETRESULT</A>
+<DD><A HREF="SetResult.htm#M9" NAME="L653">SEE ALSO</A>
+<DD><A HREF="SetResult.htm#M10" NAME="L654">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+Tcl_SetObjResult, Tcl_GetObjResult, Tcl_SetResult, Tcl_GetStringResult, Tcl_AppendResult, Tcl_AppendResultVA, Tcl_AppendElement, Tcl_ResetResult, Tcl_FreeResult - manipulate Tcl result
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>#include &lt;tcl.h&gt;</B><BR>
+<B>Tcl_SetObjResult</B>(<I>interp, objPtr</I>)<BR>
+Tcl_Obj *<BR>
+<B>Tcl_GetObjResult</B>(<I>interp</I>)<BR>
+<B>Tcl_SetResult</B>(<I>interp, result, freeProc</I>)<BR>
+const char *<BR>
+<B>Tcl_GetStringResult</B>(<I>interp</I>)<BR>
+<B>Tcl_AppendResult</B>(<I>interp, result, result, ... , </I><B>(char *) NULL</B>)<BR>
+<B>Tcl_AppendResultVA</B>(<I>interp, argList</I>)<BR>
+<B>Tcl_AppendElement</B>(<I>interp, element</I>)<BR>
+<B>Tcl_ResetResult</B>(<I>interp</I>)<BR>
+<B>Tcl_FreeResult</B>(<I>interp</I>)<BR>
+<H3><A NAME="M4">ARGUMENTS</A></H3>
+<DL class="arguments">
+<DT><A HREF="../TclLib/Interp.htm">Tcl_Interp</A> <B>*interp</B> (out)<DD>
+Interpreter whose result is to be modified or read.
+<P><DT>Tcl_Obj <B>*objPtr</B> (in)<DD>
+Object value to become result for <I>interp</I>.
+<P><DT>char <B>*result</B> (in)<DD>
+String value to become result for <I>interp</I> or to be
+appended to the existing result.
+<P><DT>char <B>*element</B> (in)<DD>
+String value to append as a list element
+to the existing result of <I>interp</I>.
+<P><DT>Tcl_FreeProc <B>*freeProc</B> (in)<DD>
+Address of procedure to call to release storage at
+<I>result</I>, or <B>TCL_STATIC</B>, <B>TCL_DYNAMIC</B>, or
+<B>TCL_VOLATILE</B>.
+<P><DT>va_list <B>argList</B> (in)<DD>
+An argument list which must have been initialized using
+<B>va_start</B>, and cleared using <B>va_end</B>.
+<P></DL>
+<H3><A NAME="M5">DESCRIPTION</A></H3>
+The procedures described here are utilities for manipulating the
+result value in a Tcl interpreter.
+The interpreter result may be either a Tcl object or a string.
+For example, <B>Tcl_SetObjResult</B> and <B>Tcl_SetResult</B>
+set the interpreter result to, respectively, an object and a string.
+Similarly, <B>Tcl_GetObjResult</B> and <B>Tcl_GetStringResult</B>
+return the interpreter result as an object and as a string.
+The procedures always keep the string and object forms
+of the interpreter result consistent.
+For example, if <B>Tcl_SetObjResult</B> is called to set
+the result to an object,
+then <B>Tcl_GetStringResult</B> is called,
+it will return the object's string value.
+<P>
+<B>Tcl_SetObjResult</B>
+arranges for <I>objPtr</I> to be the result for <I>interp</I>,
+replacing any existing result.
+The result is left pointing to the object
+referenced by <I>objPtr</I>.
+<I>objPtr</I>'s reference count is incremented
+since there is now a new reference to it from <I>interp</I>.
+The reference count for any old result object
+is decremented and the old result object is freed if no
+references to it remain.
+<P>
+<B>Tcl_GetObjResult</B> returns the result for <I>interp</I> as an object.
+The object's reference count is not incremented;
+if the caller needs to retain a long-term pointer to the object
+they should use <B><A HREF="../TclLib/Object.htm">Tcl_IncrRefCount</A></B> to increment its reference count
+in order to keep it from being freed too early or accidentally changed.
+<P>
+<B>Tcl_SetResult</B>
+arranges for <I>result</I> to be the result for the current Tcl
+command in <I>interp</I>, replacing any existing result.
+The <I>freeProc</I> argument specifies how to manage the storage
+for the <I>result</I> argument;
+it is discussed in the section
+<B>THE TCL_FREEPROC ARGUMENT TO TCL_SETRESULT</B> below.
+If <I>result</I> is <B>NULL</B>, then <I>freeProc</I> is ignored
+and <B>Tcl_SetResult</B>
+re-initializes <I>interp</I>'s result to point to an empty string.
+<P>
+<B>Tcl_GetStringResult</B> returns the result for <I>interp</I> as a string.
+If the result was set to an object by a <B>Tcl_SetObjResult</B> call,
+the object form will be converted to a string and returned.
+If the object's string representation contains null bytes,
+this conversion will lose information.
+For this reason, programmers are encouraged to
+write their code to use the new object API procedures
+and to call <B>Tcl_GetObjResult</B> instead.
+<P>
+<B>Tcl_ResetResult</B> clears the result for <I>interp</I>
+and leaves the result in its normal empty initialized state.
+If the result is an object,
+its reference count is decremented and the result is left
+pointing to an unshared object representing an empty string.
+If the result is a dynamically allocated string, its memory is free*d
+and the result is left as a empty string.
+<B>Tcl_ResetResult</B> also clears the error state managed by
+<B><A HREF="../TclLib/AddErrInfo.htm">Tcl_AddErrorInfo</A></B>, <B><A HREF="../TclLib/AddErrInfo.htm">Tcl_AddObjErrorInfo</A></B>,
+and <B><A HREF="../TclLib/AddErrInfo.htm">Tcl_SetErrorCode</A></B>.
+<P>
+<B>Tcl_AppendResult</B> makes it easy to build up Tcl results in pieces.
+It takes each of its <I>result</I> arguments and appends them in order
+to the current result associated with <I>interp</I>.
+If the result is in its initialized empty state (e.g. a command procedure
+was just invoked or <B>Tcl_ResetResult</B> was just called),
+then <B>Tcl_AppendResult</B> sets the result to the concatenation of
+its <I>result</I> arguments.
+<B>Tcl_AppendResult</B> may be called repeatedly as additional pieces
+of the result are produced.
+<B>Tcl_AppendResult</B> takes care of all the
+storage management issues associated with managing <I>interp</I>'s
+result, such as allocating a larger result area if necessary.
+It also manages conversion to and from the <I>result</I> field of the
+<I>interp</I> so as to handle backward-compatability with old-style
+extensions.
+Any number of <I>result</I> arguments may be passed in a single
+call; the last argument in the list must be a NULL pointer.
+<P>
+<B>Tcl_AppendResultVA</B> is the same as <B>Tcl_AppendResult</B> except that
+instead of taking a variable number of arguments it takes an argument list.
+<H3><A NAME="M6">OLD STRING PROCEDURES</A></H3>
+Use of the following procedures (is deprecated
+since they manipulate the Tcl result as a string.
+Procedures such as <B>Tcl_SetObjResult</B>
+that manipulate the result as an object
+can be significantly more efficient.
+<P>
+<B>Tcl_AppendElement</B> is similar to <B>Tcl_AppendResult</B> in
+that it allows results to be built up in pieces.
+However, <B>Tcl_AppendElement</B> takes only a single <I>element</I>
+argument and it appends that argument to the current result
+as a proper Tcl list element.
+<B>Tcl_AppendElement</B> adds backslashes or braces if necessary
+to ensure that <I>interp</I>'s result can be parsed as a list and that
+<I>element</I> will be extracted as a single element.
+Under normal conditions, <B>Tcl_AppendElement</B> will add a space
+character to <I>interp</I>'s result just before adding the new
+list element, so that the list elements in the result are properly
+separated.
+However if the new list element is the first in a list or sub-list
+(i.e. <I>interp</I>'s current result is empty, or consists of the
+single character
+&#8220;{&#8221;,
+or ends in the characters
+&#8220; {&#8221;)
+then no space is added.
+<P>
+<B>Tcl_FreeResult</B> performs part of the work
+of <B>Tcl_ResetResult</B>.
+It frees up the memory associated with <I>interp</I>'s result.
+It also sets <I>interp-&gt;freeProc</I> to zero, but does not
+change <I>interp-&gt;result</I> or clear error state.
+<B>Tcl_FreeResult</B> is most commonly used when a procedure
+is about to replace one result value with another.
+<H3><A NAME="M7">DIRECT ACCESS TO INTERP->RESULT IS DEPRECATED</A></H3>
+It used to be legal for programs to
+directly read and write <I>interp-&gt;result</I>
+to manipulate the interpreter result.
+Direct access to <I>interp-&gt;result</I> is now strongly deprecated
+because it can make the result's string and object forms inconsistent.
+Programs should always read the result
+using the procedures <B>Tcl_GetObjResult</B> or <B>Tcl_GetStringResult</B>,
+and write the result using <B>Tcl_SetObjResult</B> or <B>Tcl_SetResult</B>.
+<H3><A NAME="M8">THE TCL_FREEPROC ARGUMENT TO TCL_SETRESULT</A></H3>
+<B>Tcl_SetResult</B>'s <I>freeProc</I> argument specifies how 
+the Tcl system is to manage the storage for the <I>result</I> argument.
+If <B>Tcl_SetResult</B> or <B>Tcl_SetObjResult</B> are called
+at a time when <I>interp</I> holds a string result,
+they do whatever is necessary to dispose of the old string result
+(see the <B><A HREF="../TclLib/Interp.htm">Tcl_Interp</A></B> manual entry for details on this).
+<P>
+If <I>freeProc</I> is <B>TCL_STATIC</B> it means that <I>result</I>
+refers to an area of static storage that is guaranteed not to be
+modified until at least the next call to <B><A HREF="../TclLib/Eval.htm">Tcl_Eval</A></B>.
+If <I>freeProc</I>
+is <B>TCL_DYNAMIC</B> it means that <I>result</I> was allocated with a call
+to <B><A HREF="../TclLib/Alloc.htm">Tcl_Alloc</A></B> and is now the property of the Tcl system.
+<B>Tcl_SetResult</B> will arrange for the string's storage to be
+released by calling <B><A HREF="../TclLib/Alloc.htm">Tcl_Free</A></B> when it is no longer needed.
+If <I>freeProc</I> is <B>TCL_VOLATILE</B> it means that <I>result</I>
+points to an area of memory that is likely to be overwritten when
+<B>Tcl_SetResult</B> returns (e.g. it points to something in a stack frame).
+In this case <B>Tcl_SetResult</B> will make a copy of the string in
+dynamically allocated storage and arrange for the copy to be the
+result for the current Tcl command.
+<P>
+If <I>freeProc</I> is not one of the values <B>TCL_STATIC</B>,
+<B>TCL_DYNAMIC</B>, and <B>TCL_VOLATILE</B>, then it is the address
+of a procedure that Tcl should call to free the string.
+This allows applications to use non-standard storage allocators.
+When Tcl no longer needs the storage for the string, it will
+call <I>freeProc</I>. <I>FreeProc</I> should have arguments and
+result that match the type <B>Tcl_FreeProc</B>:
+<PRE>typedef void Tcl_FreeProc(char *<I>blockPtr</I>);</PRE>
+When <I>freeProc</I> is called, its <I>blockPtr</I> will be set to
+the value of <I>result</I> passed to <B>Tcl_SetResult</B>.
+<H3><A NAME="M9">SEE ALSO</A></H3>
+<B><A HREF="../TclLib/AddErrInfo.htm">Tcl_AddErrorInfo</A></B>, <B><A HREF="../TclLib/CrtObjCmd.htm">Tcl_CreateObjCommand</A></B>, <B><A HREF="../TclLib/AddErrInfo.htm">Tcl_SetErrorCode</A></B>, <B><A HREF="../TclLib/Interp.htm">Tcl_Interp</A></B>
+<H3><A NAME="M10">KEYWORDS</A></H3>
+<A href="../Keywords/A.htm#append">append</A>, <A href="../Keywords/C.htm#command">command</A>, <A href="../Keywords/E.htm#element">element</A>, <A href="../Keywords/L.htm#list">list</A>, <A href="../Keywords/O.htm#object">object</A>, <A href="../Keywords/R.htm#result">result</A>, <A href="../Keywords/R.htm#return value">return value</A>, <A href="../Keywords/I.htm#interpreter">interpreter</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1989-1993 The Regents of the University of California.
+Copyright &copy; 1994-1997 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

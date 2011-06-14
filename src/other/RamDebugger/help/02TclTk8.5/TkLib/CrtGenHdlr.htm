@@ -1,0 +1,77 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>Tk_CreateGenericHandler manual page - Library Procedures</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TkLib</a> <small>&gt;</small> CrtGenHdlr</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+Tk_CreateGenericHandler, Tk_DeleteGenericHandler - associate procedure callback with all X events
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>#include &lt;tk.h&gt;</B><BR>
+<B>Tk_CreateGenericHandler</B>(<I>proc, clientData</I>)<BR>
+<B>Tk_DeleteGenericHandler</B>(<I>proc, clientData</I>)<BR>
+<H3><A NAME="M4">ARGUMENTS</A></H3>
+<DL class="arguments">
+<DT>Tk_GenericProc <B>*proc</B> (in)<DD>
+Procedure to invoke whenever any X event occurs on any display.
+<P><DT>ClientData <B>clientData</B> (in)<DD>
+Arbitrary one-word value to pass to <I>proc</I>.
+<P></DL>
+<H3><A NAME="M5">DESCRIPTION</A></H3>
+<B>Tk_CreateGenericHandler</B> arranges for <I>proc</I> to be
+invoked in the future whenever any X event occurs.  This mechanism is
+<I>not</I> intended for dispatching X events on windows managed by Tk
+(you should use <B><A HREF="../TkLib/EventHndlr.htm">Tk_CreateEventHandler</A></B> for this purpose).
+<B>Tk_CreateGenericHandler</B> is intended for other purposes, such
+as tracing X events, monitoring events on windows not owned by Tk,
+accessing X-related libraries that were not originally designed for
+use with Tk, and so on.
+<P>
+The callback to <I>proc</I> will be made by <B><A HREF="../TkLib/HandleEvent.htm">Tk_HandleEvent</A></B>;
+this mechanism only works in programs that dispatch events
+through <B><A HREF="../TkLib/HandleEvent.htm">Tk_HandleEvent</A></B> (or through other Tk procedures that
+call <B><A HREF="../TkLib/HandleEvent.htm">Tk_HandleEvent</A></B>, such as <B>Tk_DoOneEvent</B> or
+<B><A HREF="../TkLib/MainLoop.htm">Tk_MainLoop</A></B>).
+<P>
+<I>Proc</I> should have arguments and result that match the
+type <B>Tk_GenericProc</B>:
+<PRE>typedef int Tk_GenericProc(
+    ClientData <I>clientData</I>,
+    XEvent *<I>eventPtr</I>);</PRE>
+The <I>clientData</I> parameter to <I>proc</I> is a copy of the <I>clientData</I>
+argument given to <B>Tk_CreateGenericHandler</B> when the callback
+was created.  Typically, <I>clientData</I> points to a data
+structure containing application-specific information about
+how to handle events.
+<I>EventPtr</I> is a pointer to the X event.
+<P>
+Whenever an X event is processed by <B><A HREF="../TkLib/HandleEvent.htm">Tk_HandleEvent</A></B>, <I>proc</I>
+is called.  The return value from <I>proc</I> is normally 0.
+A non-zero return value indicates that the event is not to be handled
+further; that is, <I>proc</I> has done all processing that is to be
+allowed for the event.
+<P>
+If there are multiple generic event handlers, each one is called
+for each event, in the order in which they were established.
+<P>
+<B>Tk_DeleteGenericHandler</B> may be called to delete a
+previously-created generic event handler:  it deletes each handler
+it finds that matches the <I>proc</I> and <I>clientData</I> arguments.  If
+no such handler exists, then <B>Tk_DeleteGenericHandler</B> returns
+without doing anything.  Although Tk supports it, it's probably
+a bad idea to have more than one callback with the same
+<I>proc</I> and <I>clientData</I> arguments.
+<P>
+Establishing a generic event handler does nothing to ensure that the
+process will actually receive the X events that the handler wants to
+process.
+For example, it is the caller's responsibility to invoke
+<B>XSelectInput</B> to select the desired events, if that is necessary.
+<H3><A NAME="M6">KEYWORDS</A></H3>
+<A href="../Keywords/B.htm#bind">bind</A>, <A href="../Keywords/C.htm#callback">callback</A>, <A href="../Keywords/E.htm#event">event</A>, <A href="../Keywords/H.htm#handler">handler</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1992-1994 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

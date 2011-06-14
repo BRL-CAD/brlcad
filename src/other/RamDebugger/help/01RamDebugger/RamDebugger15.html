@@ -1,0 +1,63 @@
+<html>
+    <!---*- coding: utf-8;-*- -->
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+        <style type="text/css">
+	    p { text-align:justify; }
+	    body { font-family: Verdana, Arial, Helvetica, Geneva; font-size 8px; }
+	    a { text-decoration:none }
+	    pre { font-family:Courier New, Courier, Mono; }
+	    h1 { font-family:Arial; font-size: 28; font-weight: bold; color:DarkBlue; }
+	    h2 { font-family:Arial; font-size: 24; font-weight: bold; color:DarkBlue; }
+	    h3 { font-family:Arial; font-size: 22; font-weight: bold; color:DarkBlue; }
+	    h4 { font-family:Arial; font-size: 18; font-weight: bold; color:DarkBlue; }
+	    h4 { font-family:Arial; font-size: 18; font-weight: bold; color:DarkBlue; }
+	    h4 { font-family:Arial; font-size: 18; font-weight: bold; color:DarkBlue; }
+	    P { text-align:justify; font-family:Arial, Helvetica, sans-serif; font-size: 17; }
+	    code { font-family:Courier New, Courier, Mono; font-size: 16; }
+	    li { text-align:justify; font-family:Arial, Helvetica, sans-serif; font-size: 17; 
+		margin-top: 7px; }
+	    ol { text-align:justify; font-family:Arial, Helvetica, sans-serif; font-size: 17;  
+		margin-top: 7px; }
+	    ul { text-align:justify; font-family:Arial, Helvetica, sans-serif; font-size: 17; 
+		margin-top: 7px; }
+	</style>
+        <title>How does it work?</title>
+    </head>
+    <body>
+        <a name="More&gt;How does it work?"/>
+        <h3>How does it work?</h3>
+        <p>RamDebugger instruments the source code TCL files in order to make the debugging. Instrumenting
+means to add additional lines to the TCL code so as to be able to stop it whereever is
+desired. Depending on the context, it instruments all the file or only the <b>proc</b>
+'s.        </p>
+        <p>To see the instrumentation of a file, use <code>Utilities-&gt;View instrumented file</code>
+.        </p>
+        <p>When RamDebugger makes local debugging, it sends the instrumented codes to a slave interp.
+Then, it its executed there and can communicate easily.</p>
+        <p>When Ramdebugger makes remote debugging, it needs some kind of communication between itself
+and the debugged program. In UNIX, the command <code>send</code>
+ is used. In Windows, the package
+<code>comm</code>
+ is used.        </p>
+        <p>Some comments on communication on Windows:</p>
+        <ul>
+            <li>
+                <b>DDE</b>
+: This communication mode is totally broken. It is unpossible to make it work
+except for very simple examples. It just crashes RamDebugger or the full Windows.            </li>
+            <li>
+                <b>Windsend</b>
+: This package uses COM objects to communicate. It is nice and seems to
+work but has a very very slow startup time.            </li>
+            <li>
+                <b>comm</b>
+: This package emulates the UNIX send by using sockets. It has some problems
+in speed when trying connections. Also, it has been necessary to make some trick in order
+to identify the interps. This is the package chosen in Windows.            </li>
+        </ul>
+        <p>Due to the high dynamics nature of TCL, it is unpossible to make a direct correlation
+between source code lines and execution lines. Anyway, it works quite well for normal
+TCL code. Try and comment.</p>
+    </body>
+</html>

@@ -1,0 +1,2431 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>text manual page - Tk Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TkCmd</a> <small>&gt;</small> text</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="text.htm#M2" NAME="L1376">NAME</A>
+<DL><DD>text, tk_textCopy, tk_textCut, tk_textPaste - Create and manipulate text widgets</DD></DL>
+<DD><A HREF="text.htm#M3" NAME="L1377">SYNOPSIS</A>
+<DL>
+</DL>
+<DD><A HREF="text.htm#M4" NAME="L1378">STANDARD OPTIONS</A>
+<DL>
+<DD><A HREF="options.htm#M-background">-background or -bg, background, Background</A>
+<DD><A HREF="options.htm#M-borderwidth">-borderwidth or -bd, borderWidth, BorderWidth</A>
+<DD><A HREF="options.htm#M-cursor">-cursor, cursor, Cursor</A>
+<DD><A HREF="options.htm#M-exportselection">-exportselection, exportSelection, ExportSelection</A>
+<DD><A HREF="options.htm#M-font">-font, font, Font</A>
+<DD><A HREF="options.htm#M-foreground">-foreground or -fg, foreground, Foreground</A>
+<DD><A HREF="options.htm#M-highlightbackground">-highlightbackground, highlightBackground, HighlightBackground</A>
+<DD><A HREF="options.htm#M-highlightcolor">-highlightcolor, highlightColor, HighlightColor</A>
+<DD><A HREF="options.htm#M-highlightthickness">-highlightthickness, highlightThickness, HighlightThickness</A>
+<DD><A HREF="options.htm#M-insertbackground">-insertbackground, insertBackground, Foreground</A>
+<DD><A HREF="options.htm#M-insertborderwidth">-insertborderwidth, insertBorderWidth, BorderWidth</A>
+<DD><A HREF="options.htm#M-insertofftime">-insertofftime, insertOffTime, OffTime</A>
+<DD><A HREF="options.htm#M-insertontime">-insertontime, insertOnTime, OnTime</A>
+<DD><A HREF="options.htm#M-insertwidth">-insertwidth, insertWidth, InsertWidth</A>
+<DD><A HREF="options.htm#M-padx">-padx, padX, Pad</A>
+<DD><A HREF="options.htm#M-pady">-pady, padY, Pad</A>
+<DD><A HREF="options.htm#M-relief">-relief, relief, Relief</A>
+<DD><A HREF="options.htm#M-selectbackground">-selectbackground, selectBackground, Foreground</A>
+<DD><A HREF="options.htm#M-selectborderwidth">-selectborderwidth, selectBorderWidth, BorderWidth</A>
+<DD><A HREF="options.htm#M-selectforeground">-selectforeground, selectForeground, Background</A>
+<DD><A HREF="options.htm#M-setgrid">-setgrid, setGrid, SetGrid</A>
+<DD><A HREF="options.htm#M-takefocus">-takefocus, takeFocus, TakeFocus</A>
+<DD><A HREF="options.htm#M-xscrollcommand">-xscrollcommand, xScrollCommand, ScrollCommand</A>
+<DD><A HREF="options.htm#M-yscrollcommand">-yscrollcommand, yScrollCommand, ScrollCommand</A>
+</DL>
+<DD><A HREF="text.htm#M5" NAME="L1379">WIDGET-SPECIFIC OPTIONS</A>
+<DL>
+<DD><A HREF="text.htm#M6" NAME="L1380">-autoseparators, autoSeparators, AutoSeparators</A>
+<DD><A HREF="text.htm#M7" NAME="L1381">-blockcursor, blockCursor, BlockCursor</A>
+<DD><A HREF="text.htm#M8" NAME="L1382">-endline, endLine, EndLine</A>
+<DD><A HREF="text.htm#M9" NAME="L1383">-height, height, Height</A>
+<DD><A HREF="text.htm#M10" NAME="L1384">-inactiveselectbackground, inactiveSelectBackground, Foreground</A>
+<DD><A HREF="text.htm#M11" NAME="L1385">-maxundo, maxUndo, MaxUndo</A>
+<DD><A HREF="text.htm#M12" NAME="L1386">-spacing1, spacing1, Spacing1</A>
+<DD><A HREF="text.htm#M13" NAME="L1387">-spacing2, spacing2, Spacing2</A>
+<DD><A HREF="text.htm#M14" NAME="L1388">-spacing3, spacing3, Spacing3</A>
+<DD><A HREF="text.htm#M15" NAME="L1389">-startline, startLine, StartLine</A>
+<DD><A HREF="text.htm#M16" NAME="L1390">-state, state, State</A>
+<DD><A HREF="text.htm#M17" NAME="L1391">-tabs, tabs, Tabs</A>
+<DD><A HREF="text.htm#M18" NAME="L1392">-tabstyle, tabStyle, TabStyle</A>
+<DD><A HREF="text.htm#M19" NAME="L1393">-undo, undo, Undo</A>
+<DD><A HREF="text.htm#M20" NAME="L1394">-width, width, Width</A>
+<DD><A HREF="text.htm#M21" NAME="L1395">-wrap, wrap, Wrap</A>
+</DL>
+<DD><A HREF="text.htm#M22" NAME="L1396">DESCRIPTION</A>
+<DD><A HREF="text.htm#M23" NAME="L1397">INDICES</A>
+<DL class="indices">
+<DD><A HREF="text.htm#M24" NAME="L1398"><I>line</I><B>.</B><I>char</I></A>
+<DD><A HREF="text.htm#M25" NAME="L1399"><B>@</B><I>x</I><B>,</B><I>y</I></A>
+<DD><A HREF="text.htm#M26" NAME="L1400"><B>end</B></A>
+<DD><A HREF="text.htm#M27" NAME="L1401"><I>mark</I></A>
+<DD><A HREF="text.htm#M28" NAME="L1402"><I>tag</I><B>.first</B></A>
+<DD><A HREF="text.htm#M29" NAME="L1403"><I>tag</I><B>.last</B></A>
+<DD><A HREF="text.htm#M30" NAME="L1404"><I>pathName</I></A>
+<DD><A HREF="text.htm#M31" NAME="L1405"><I>imageName</I></A>
+</DL>
+<DL class="indices">
+<DD><A HREF="text.htm#M32" NAME="L1406"><B>+ </B><I>count</I> ?<I>submodifier</I>? <B>chars</B></A>
+<DD><A HREF="text.htm#M33" NAME="L1407"><B>- </B><I>count</I> ?<I>submodifier</I>? <B>chars</B></A>
+<DD><A HREF="text.htm#M34" NAME="L1408"><B>+ </B><I>count</I> ?<I>submodifier</I>? <B>indices</B></A>
+<DD><A HREF="text.htm#M35" NAME="L1409"><B>- </B><I>count</I> ?<I>submodifier</I>? <B>indices</B></A>
+<DD><A HREF="text.htm#M36" NAME="L1410"><B>+ </B><I>count</I> ?<I>submodifier</I>? <B>lines</B></A>
+<DD><A HREF="text.htm#M37" NAME="L1411"><B>- </B><I>count</I> ?<I>submodifier</I>? <B>lines</B></A>
+<DD><A HREF="text.htm#M38" NAME="L1412">?<I>submodifier</I>? <B>linestart</B></A>
+<DD><A HREF="text.htm#M39" NAME="L1413">?<I>submodifier</I>? <B>lineend</B></A>
+<DD><A HREF="text.htm#M40" NAME="L1414">?<I>submodifier</I>? <B>wordstart</B></A>
+<DD><A HREF="text.htm#M41" NAME="L1415">?<I>submodifier</I>? <B>wordend</B></A>
+</DL>
+<DD><A HREF="text.htm#M42" NAME="L1416">TAGS</A>
+<DL class="tags">
+<DD><A HREF="text.htm#M43" NAME="L1417"><B>-background </B><I>color</I></A>
+<DD><A HREF="text.htm#M44" NAME="L1418"><B>-bgstipple </B><I>bitmap</I></A>
+<DD><A HREF="text.htm#M45" NAME="L1419"><B>-borderwidth </B><I>pixels</I></A>
+<DD><A HREF="text.htm#M46" NAME="L1420"><B>-elide </B><I>boolean</I></A>
+<DD><A HREF="text.htm#M47" NAME="L1421"><B>-fgstipple </B><I>bitmap</I></A>
+<DD><A HREF="text.htm#M48" NAME="L1422"><B>-font </B><I>fontName</I></A>
+<DD><A HREF="text.htm#M49" NAME="L1423"><B>-foreground </B><I>color</I></A>
+<DD><A HREF="text.htm#M50" NAME="L1424"><B>-justify </B><I>justify</I></A>
+<DD><A HREF="text.htm#M51" NAME="L1425"><B>-lmargin1 </B><I>pixels</I></A>
+<DD><A HREF="text.htm#M52" NAME="L1426"><B>-lmargin2 </B><I>pixels</I></A>
+<DD><A HREF="text.htm#M53" NAME="L1427"><B>-offset </B><I>pixels</I></A>
+<DD><A HREF="text.htm#M54" NAME="L1428"><B>-overstrike </B><I>boolean</I></A>
+<DD><A HREF="text.htm#M55" NAME="L1429"><B>-relief </B><I>relief</I></A>
+<DD><A HREF="text.htm#M56" NAME="L1430"><B>-rmargin </B><I>pixels</I></A>
+<DD><A HREF="text.htm#M57" NAME="L1431"><B>-spacing1 </B><I>pixels</I></A>
+<DD><A HREF="text.htm#M58" NAME="L1432"><B>-spacing2 </B><I>pixels</I></A>
+<DD><A HREF="text.htm#M59" NAME="L1433"><B>-spacing3 </B><I>pixels</I></A>
+<DD><A HREF="text.htm#M60" NAME="L1434"><B>-tabs </B><I>tabList</I></A>
+<DD><A HREF="text.htm#M61" NAME="L1435"><B>-tabstyle </B><I>style</I></A>
+<DD><A HREF="text.htm#M62" NAME="L1436"><B>-underline </B><I>boolean</I></A>
+<DD><A HREF="text.htm#M63" NAME="L1437"><B>-wrap </B><I>mode</I></A>
+</DL>
+<DD><A HREF="text.htm#M64" NAME="L1438">MARKS</A>
+<DD><A HREF="text.htm#M65" NAME="L1439">EMBEDDED WINDOWS</A>
+<DL class="embedded windows">
+<DD><A HREF="text.htm#M66" NAME="L1440"><B>-align </B><I>where</I></A>
+<DD><A HREF="text.htm#M67" NAME="L1441"><B>-create </B><I>script</I></A>
+<DD><A HREF="text.htm#M68" NAME="L1442"><B>-padx </B><I>pixels</I></A>
+<DD><A HREF="text.htm#M69" NAME="L1443"><B>-pady </B><I>pixels</I></A>
+<DD><A HREF="text.htm#M70" NAME="L1444"><B>-stretch </B><I>boolean</I></A>
+<DD><A HREF="text.htm#M71" NAME="L1445"><B>-window </B><I>pathName</I></A>
+</DL>
+<DD><A HREF="text.htm#M72" NAME="L1446">EMBEDDED IMAGES</A>
+<DL class="embedded images">
+<DD><A HREF="text.htm#M73" NAME="L1447"><B>-align </B><I>where</I></A>
+<DD><A HREF="text.htm#M74" NAME="L1448"><B>-image </B><I>image</I></A>
+<DD><A HREF="text.htm#M75" NAME="L1449"><B>-name </B><I>ImageName</I></A>
+<DD><A HREF="text.htm#M76" NAME="L1450"><B>-padx </B><I>pixels</I></A>
+<DD><A HREF="text.htm#M77" NAME="L1451"><B>-pady </B><I>pixels</I></A>
+</DL>
+<DD><A HREF="text.htm#M78" NAME="L1452">THE SELECTION</A>
+<DL class="the selection">
+</DL>
+<DD><A HREF="text.htm#M79" NAME="L1453">THE INSERTION CURSOR</A>
+<DD><A HREF="text.htm#M80" NAME="L1454">THE MODIFIED FLAG</A>
+<DD><A HREF="text.htm#M81" NAME="L1455">THE UNDO MECHANISM</A>
+<DD><A HREF="text.htm#M82" NAME="L1456">PEER WIDGETS</A>
+<DD><A HREF="text.htm#M83" NAME="L1457">WIDGET COMMAND</A>
+<DL class="widget command">
+<DD><A HREF="text.htm#M84" NAME="L1458"><I>pathName </I><B>bbox </B><I>index</I></A>
+<DD><A HREF="text.htm#M85" NAME="L1459"><I>pathName </I><B>cget</B> <I>option</I></A>
+<DD><A HREF="text.htm#M86" NAME="L1460"><I>pathName </I><B>compare</B> <I>index1 op index2</I></A>
+<DD><A HREF="text.htm#M87" NAME="L1461"><I>pathName </I><B>configure</B> ?<I>option</I>? <I>?value option value ...</I>?</A>
+<DD><A HREF="text.htm#M88" NAME="L1462"><I>pathName </I><B>count</B> <I>?options</I>? <I>index1 index2</I></A>
+<DL class="widget command">
+<DD><A HREF="text.htm#M89" NAME="L1463"><B>-chars</B></A>
+<DD><A HREF="text.htm#M90" NAME="L1464"><B>-displaychars</B></A>
+<DD><A HREF="text.htm#M91" NAME="L1465"><B>-displayindices</B></A>
+<DD><A HREF="text.htm#M92" NAME="L1466"><B>-displaylines</B></A>
+<DD><A HREF="text.htm#M93" NAME="L1467"><B>-indices</B></A>
+<DD><A HREF="text.htm#M94" NAME="L1468"><B>-lines</B></A>
+<DD><A HREF="text.htm#M95" NAME="L1469"><B>-xpixels</B></A>
+<DD><A HREF="text.htm#M96" NAME="L1470"><B>-ypixels</B></A>
+</DL>
+<DD><A HREF="text.htm#M97" NAME="L1471"><I>pathName </I><B>debug </B>?<I>boolean</I>?</A>
+<DD><A HREF="text.htm#M98" NAME="L1472"><I>pathName </I><B>delete </B><I>index1 </I>?<I>index2 ...</I>?</A>
+<DD><A HREF="text.htm#M99" NAME="L1473"><I>pathName </I><B>dlineinfo </B><I>index</I></A>
+<DD><A HREF="text.htm#M100" NAME="L1474"><I>pathName </I><B>dump </B>?<I>switches</I>? <I>index1 </I>?<I>index2</I>?</A>
+</DL>
+<DL class="widget command">
+<DD><A HREF="text.htm#M101" NAME="L1475"><B>-all</B></A>
+<DD><A HREF="text.htm#M102" NAME="L1476"><B>-command </B><I>command</I></A>
+<DD><A HREF="text.htm#M103" NAME="L1477"><B>-image</B></A>
+<DD><A HREF="text.htm#M104" NAME="L1478"><B>-mark</B></A>
+<DD><A HREF="text.htm#M105" NAME="L1479"><B>-tag</B></A>
+<DD><A HREF="text.htm#M106" NAME="L1480"><B>-text</B></A>
+<DD><A HREF="text.htm#M107" NAME="L1481"><B>-window</B></A>
+</DL>
+<DL class="widget command">
+<DD><A HREF="text.htm#M108" NAME="L1482"><I>pathName </I><B>edit </B><I>option </I>?<I>arg arg ...</I>?</A>
+<DL class="widget command">
+<DD><A HREF="text.htm#M109" NAME="L1483"><I>pathName </I><B>edit modified ?</B><I>boolean</I>?</A>
+<DD><A HREF="text.htm#M110" NAME="L1484"><I>pathName </I><B>edit redo</B></A>
+<DD><A HREF="text.htm#M111" NAME="L1485"><I>pathName </I><B>edit reset</B></A>
+<DD><A HREF="text.htm#M112" NAME="L1486"><I>pathName </I><B>edit separator</B></A>
+<DD><A HREF="text.htm#M113" NAME="L1487"><I>pathName </I><B>edit undo</B></A>
+</DL>
+<DD><A HREF="text.htm#M114" NAME="L1488"><I>pathName </I><B>get</B> <I>?-displaychars?</I> <I>-- index1</I> ?<I>index2 ...</I>?</A>
+<DD><A HREF="text.htm#M115" NAME="L1489"><I>pathName </I><B>image </B><I>option </I>?<I>arg arg ...</I>?</A>
+<DL class="widget command">
+<DD><A HREF="text.htm#M116" NAME="L1490"><I>pathName </I><B>image cget</B> <I>index option</I></A>
+<DD><A HREF="text.htm#M117" NAME="L1491"><I>pathName </I><B>image configure </B><I>index</I> ?<I>option value ...</I>?</A>
+<DD><A HREF="text.htm#M118" NAME="L1492"><I>pathName </I><B>image create </B><I>index</I> ?<I>option value ...</I>?</A>
+<DD><A HREF="text.htm#M119" NAME="L1493"><I>pathName </I><B>image names</B></A>
+</DL>
+<DD><A HREF="text.htm#M120" NAME="L1494"><I>pathName </I><B>index </B><I>index</I></A>
+<DD><A HREF="text.htm#M121" NAME="L1495"><I>pathName </I><B>insert </B><I>index chars </I>?<I>tagList chars tagList ...</I>?</A>
+<DD><A HREF="text.htm#M122" NAME="L1496"><I>pathName </I><B>mark </B><I>option </I>?<I>arg arg ...</I>?</A>
+<DL class="widget command">
+<DD><A HREF="text.htm#M123" NAME="L1497"><I>pathName </I><B>mark gravity </B><I>markName</I> ?<I>direction</I>?</A>
+<DD><A HREF="text.htm#M124" NAME="L1498"><I>pathName </I><B>mark names</B></A>
+<DD><A HREF="text.htm#M125" NAME="L1499"><I>pathName </I><B>mark next </B><I>index</I></A>
+<DD><A HREF="text.htm#M126" NAME="L1500"><I>pathName </I><B>mark previous </B><I>index</I></A>
+<DD><A HREF="text.htm#M127" NAME="L1501"><I>pathName </I><B>mark set </B><I>markName index</I></A>
+<DD><A HREF="text.htm#M128" NAME="L1502"><I>pathName </I><B>mark unset </B><I>markName </I>?<I>markName markName ...</I>?</A>
+</DL>
+<DD><A HREF="text.htm#M129" NAME="L1503"><I>pathName </I><B>peer</B> <I>option args</I></A>
+<DL class="widget command">
+<DD><A HREF="text.htm#M130" NAME="L1504"><I>pathName </I><B>peer create </B><I>newPathName</I> ?<I>options</I>?</A>
+<DD><A HREF="text.htm#M131" NAME="L1505"><I>pathName </I><B>peer names</B></A>
+</DL>
+<DD><A HREF="text.htm#M132" NAME="L1506"><I>pathName </I><B>replace</B> <I>index1 index2 chars</I> ?<I>tagList chars tagList ...</I>?</A>
+<DD><A HREF="text.htm#M133" NAME="L1507"><I>pathName </I><B>scan</B> <I>option args</I></A>
+<DL class="widget command">
+<DD><A HREF="text.htm#M134" NAME="L1508"><I>pathName </I><B>scan mark </B><I>x y</I></A>
+<DD><A HREF="text.htm#M135" NAME="L1509"><I>pathName </I><B>scan dragto </B><I>x y</I></A>
+</DL>
+<DD><A HREF="text.htm#M136" NAME="L1510"><I>pathName </I><B>search </B>?<I>switches</I>? <I>pattern index </I>?<I>stopIndex</I>?</A>
+<DL class="widget command">
+<DD><A HREF="text.htm#M137" NAME="L1511"><B>-forwards</B></A>
+<DD><A HREF="text.htm#M138" NAME="L1512"><B>-backwards</B></A>
+<DD><A HREF="text.htm#M139" NAME="L1513"><B>-exact</B></A>
+<DD><A HREF="text.htm#M140" NAME="L1514"><B>-regexp</B></A>
+<DD><A HREF="text.htm#M141" NAME="L1515"><B>-nolinestop</B></A>
+<DD><A HREF="text.htm#M142" NAME="L1516"><B>-nocase</B></A>
+<DD><A HREF="text.htm#M143" NAME="L1517"><B>-count</B><I> varName</I></A>
+<DD><A HREF="text.htm#M144" NAME="L1518"><B>-all</B></A>
+<DD><A HREF="text.htm#M145" NAME="L1519"><B>-overlap</B></A>
+<DD><A HREF="text.htm#M146" NAME="L1520"><B>-strictlimits</B></A>
+<DD><A HREF="text.htm#M147" NAME="L1521"><B>-elide</B></A>
+<DD><A HREF="text.htm#M148" NAME="L1522"><B>--</B></A>
+</DL>
+<DD><A HREF="text.htm#M149" NAME="L1523"><I>pathName </I><B>see </B><I>index</I></A>
+<DD><A HREF="text.htm#M150" NAME="L1524"><I>pathName </I><B>tag </B><I>option </I>?<I>arg arg ...</I>?</A>
+<DL class="widget command">
+<DD><A HREF="text.htm#M151" NAME="L1525"><I>pathName </I><B>tag add </B><I>tagName index1 </I>?<I>index2 index1 index2 ...</I>?</A>
+<DD><A HREF="text.htm#M152" NAME="L1526"><I>pathName </I><B>tag bind </B><I>tagName</I> ?<I>sequence</I>? ?<I>script</I>?</A>
+<DD><A HREF="text.htm#M153" NAME="L1527"><I>pathName </I><B>tag cget</B> <I>tagName option</I></A>
+<DD><A HREF="text.htm#M154" NAME="L1528"><I>pathName </I><B>tag configure </B><I>tagName</I> ?<I>option</I>? ?<I>value</I>? ?<I>option value ...</I>?</A>
+<DD><A HREF="text.htm#M155" NAME="L1529"><I>pathName </I><B>tag delete </B><I>tagName </I>?<I>tagName ...</I>?</A>
+<DD><A HREF="text.htm#M156" NAME="L1530"><I>pathName</I><B> tag lower </B><I>tagName </I>?<I>belowThis</I>?</A>
+<DD><A HREF="text.htm#M157" NAME="L1531"><I>pathName </I><B>tag names </B>?<I>index</I>?</A>
+<DD><A HREF="text.htm#M158" NAME="L1532"><I>pathName </I><B>tag nextrange </B><I>tagName index1 </I>?<I>index2</I>?</A>
+<DD><A HREF="text.htm#M159" NAME="L1533"><I>pathName </I><B>tag prevrange </B><I>tagName index1 </I>?<I>index2</I>?</A>
+<DD><A HREF="text.htm#M160" NAME="L1534"><I>pathName</I><B> tag raise </B><I>tagName </I>?<I>aboveThis</I>?</A>
+<DD><A HREF="text.htm#M161" NAME="L1535"><I>pathName </I><B>tag ranges </B><I>tagName</I></A>
+<DD><A HREF="text.htm#M162" NAME="L1536"><I>pathName </I><B>tag remove </B><I>tagName index1 </I>?<I>index2 index1 index2 ...</I>?</A>
+</DL>
+<DD><A HREF="text.htm#M163" NAME="L1537"><I>pathName </I><B>window </B><I>option </I>?<I>arg arg ...</I>?</A>
+<DL class="widget command">
+<DD><A HREF="text.htm#M164" NAME="L1538"><I>pathName </I><B>window cget</B> <I>index option</I></A>
+<DD><A HREF="text.htm#M165" NAME="L1539"><I>pathName </I><B>window configure </B><I>index</I> ?<I>option value ...</I>?</A>
+<DD><A HREF="text.htm#M166" NAME="L1540"><I>pathName </I><B>window create </B><I>index</I> ?<I>option value ...</I>?</A>
+<DD><A HREF="text.htm#M167" NAME="L1541"><I>pathName </I><B>window names</B></A>
+</DL>
+<DD><A HREF="text.htm#M168" NAME="L1542"><I>pathName </I><B>xview </B><I>option args</I></A>
+<DL class="widget command">
+<DD><A HREF="text.htm#M169" NAME="L1543"><I>pathName </I><B>xview</B></A>
+<DD><A HREF="text.htm#M170" NAME="L1544"><I>pathName </I><B>xview moveto</B><I> fraction</I></A>
+<DD><A HREF="text.htm#M171" NAME="L1545"><I>pathName </I><B>xview scroll </B><I>number what</I></A>
+</DL>
+<DD><A HREF="text.htm#M172" NAME="L1546"><I>pathName </I><B>yview </B><I>?args</I>?</A>
+<DL class="widget command">
+<DD><A HREF="text.htm#M173" NAME="L1547"><I>pathName </I><B>yview</B></A>
+<DD><A HREF="text.htm#M174" NAME="L1548"><I>pathName </I><B>yview moveto</B><I> fraction</I></A>
+<DD><A HREF="text.htm#M175" NAME="L1549"><I>pathName </I><B>yview scroll </B><I>number what</I></A>
+<DD><A HREF="text.htm#M176" NAME="L1550"><I>pathName </I><B>yview </B>?<B>-pickplace</B>? <I>index</I></A>
+<DL class="widget command">
+</DL>
+<DD><A HREF="text.htm#M177" NAME="L1551"><I>pathName </I><B>yview </B><I>number</I></A>
+</DL>
+</DL>
+<DD><A HREF="text.htm#M178" NAME="L1552">BINDINGS</A>
+<DL class="bindings">
+</DL>
+<DD><A HREF="text.htm#M179" NAME="L1553">KNOWN ISSUES</A>
+<DD><A HREF="text.htm#M180" NAME="L1554">ISSUES CONCERNING CHARS AND INDICES</A>
+<DD><A HREF="text.htm#M181" NAME="L1555">PERFORMANCE ISSUES</A>
+<DD><A HREF="text.htm#M182" NAME="L1556">KNOWN BUGS</A>
+<DD><A HREF="text.htm#M183" NAME="L1557">SEE ALSO</A>
+<DD><A HREF="text.htm#M184" NAME="L1558">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+text, tk_textCopy, tk_textCut, tk_textPaste - Create and manipulate text widgets
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>text</B> <I>pathName </I>?<I>options</I>?<BR>
+<B>tk_textCopy</B> <I>pathName</I><BR>
+<B>tk_textCut</B> <I>pathName</I><BR>
+<B>tk_textPaste</B> <I>pathName</I><BR>
+<H3><A NAME="M4">STANDARD OPTIONS</A></H3>
+<DL>
+<DT><B><A HREF="options.htm#M-background">-background or -bg, background, Background</A></B>
+<DT><B><A HREF="options.htm#M-borderwidth">-borderwidth or -bd, borderWidth, BorderWidth</A></B>
+<DT><B><A HREF="options.htm#M-cursor">-cursor, cursor, Cursor</A></B>
+<DT><B><A HREF="options.htm#M-exportselection">-exportselection, exportSelection, ExportSelection</A></B>
+<DT><B><A HREF="options.htm#M-font">-font, font, Font</A></B>
+<DT><B><A HREF="options.htm#M-foreground">-foreground or -fg, foreground, Foreground</A></B>
+<DT><B><A HREF="options.htm#M-highlightbackground">-highlightbackground, highlightBackground, HighlightBackground</A></B>
+<DT><B><A HREF="options.htm#M-highlightcolor">-highlightcolor, highlightColor, HighlightColor</A></B>
+<DT><B><A HREF="options.htm#M-highlightthickness">-highlightthickness, highlightThickness, HighlightThickness</A></B>
+<DT><B><A HREF="options.htm#M-insertbackground">-insertbackground, insertBackground, Foreground</A></B>
+<DT><B><A HREF="options.htm#M-insertborderwidth">-insertborderwidth, insertBorderWidth, BorderWidth</A></B>
+<DT><B><A HREF="options.htm#M-insertofftime">-insertofftime, insertOffTime, OffTime</A></B>
+<DT><B><A HREF="options.htm#M-insertontime">-insertontime, insertOnTime, OnTime</A></B>
+<DT><B><A HREF="options.htm#M-insertwidth">-insertwidth, insertWidth, InsertWidth</A></B>
+<DT><B><A HREF="options.htm#M-padx">-padx, padX, Pad</A></B>
+<DT><B><A HREF="options.htm#M-pady">-pady, padY, Pad</A></B>
+<DT><B><A HREF="options.htm#M-relief">-relief, relief, Relief</A></B>
+<DT><B><A HREF="options.htm#M-selectbackground">-selectbackground, selectBackground, Foreground</A></B>
+<DT><B><A HREF="options.htm#M-selectborderwidth">-selectborderwidth, selectBorderWidth, BorderWidth</A></B>
+<DT><B><A HREF="options.htm#M-selectforeground">-selectforeground, selectForeground, Background</A></B>
+<DT><B><A HREF="options.htm#M-setgrid">-setgrid, setGrid, SetGrid</A></B>
+<DT><B><A HREF="options.htm#M-takefocus">-takefocus, takeFocus, TakeFocus</A></B>
+<DT><B><A HREF="options.htm#M-xscrollcommand">-xscrollcommand, xScrollCommand, ScrollCommand</A></B>
+<DT><B><A HREF="options.htm#M-yscrollcommand">-yscrollcommand, yScrollCommand, ScrollCommand</A></B>
+</DL>
+<H3><A NAME="M5">WIDGET-SPECIFIC OPTIONS</A></H3>
+<DL>
+<DT>Command-Line Name: <B><A NAME="M6">-autoseparators</A></B>
+<DT>Database Name: <B>autoSeparators</B>
+<DT>Database Class: <B>AutoSeparators</B>
+<DD>Specifies a boolean that says whether separators are automatically
+inserted in the undo stack. Only meaningful when the <B>-undo</B>
+option is true.
+<P><DT>Command-Line Name: <B><A NAME="M7">-blockcursor</A></B>
+<DT>Database Name: <B>blockCursor</B>
+<DT>Database Class: <B>BlockCursor</B>
+<DD>Specifies a boolean that says whether the blinking insertion cursor
+should be drawn as a character-sized rectangular block.  If false
+(the default) a thin vertical line is used for the insertion cursor.
+<P><DT>Command-Line Name: <B><A NAME="M8">-endline</A></B>
+<DT>Database Name: <B>endLine</B>
+<DT>Database Class: <B>EndLine</B>
+<DD>Specifies an integer line index representing the last line of the
+underlying textual data store that should be contained in the widget.
+This allows a text widget to reflect only a portion of a larger piece
+of text.   Instead of an integer, the empty string can be provided to
+this configuration option, which will configure the widget to end
+at the very last line in the textual data store.
+<P><DT>Command-Line Name: <B><A NAME="M9">-height</A></B>
+<DT>Database Name: <B>height</B>
+<DT>Database Class: <B>Height</B>
+<DD>Specifies the desired height for the window, in units of characters
+in the font given by the <B>-font</B> option.
+Must be at least one.
+<P><DT>Command-Line Name: <B><A NAME="M10">-inactiveselectbackground</A></B>
+<DT>Database Name: <B>inactiveSelectBackground</B>
+<DT>Database Class: <B>Foreground</B>
+<DD>Specifies the colour to use for the selection (the <B>sel</B> tag) when
+the window does not have the input focus.  If empty, <B>{}</B>, then no
+selection is shown when the window does not have the focus.
+<P><DT>Command-Line Name: <B><A NAME="M11">-maxundo</A></B>
+<DT>Database Name: <B>maxUndo</B>
+<DT>Database Class: <B>MaxUndo</B>
+<DD>Specifies the maximum number of compound undo actions on the undo
+stack. A zero or a negative value imply an unlimited undo stack.
+<P><DT>Command-Line Name: <B><A NAME="M12">-spacing1</A></B>
+<DT>Database Name: <B>spacing1</B>
+<DT>Database Class: <B>Spacing1</B>
+<DD>Requests additional space above each text line in the widget,
+using any of the standard forms for screen distances.
+If a line wraps, this option only applies to the first line
+on the display.
+This option may be overridden with <B>-spacing1</B> options in
+tags.
+<P><DT>Command-Line Name: <B><A NAME="M13">-spacing2</A></B>
+<DT>Database Name: <B>spacing2</B>
+<DT>Database Class: <B>Spacing2</B>
+<DD>For lines that wrap (so that they cover more than one line on the
+display) this option specifies additional space to provide between
+the display lines that represent a single line of text.
+The value may have any of the standard forms for screen distances.
+This option may be overridden with <B>-spacing2</B> options in
+tags.
+<P><DT>Command-Line Name: <B><A NAME="M14">-spacing3</A></B>
+<DT>Database Name: <B>spacing3</B>
+<DT>Database Class: <B>Spacing3</B>
+<DD>Requests additional space below each text line in the widget,
+using any of the standard forms for screen distances.
+If a line wraps, this option only applies to the last line
+on the display.
+This option may be overridden with <B>-spacing3</B> options in
+tags.
+<P><DT>Command-Line Name: <B><A NAME="M15">-startline</A></B>
+<DT>Database Name: <B>startLine</B>
+<DT>Database Class: <B>StartLine</B>
+<DD>Specifies an integer line index representing the first line of the
+underlying textual data store that should be contained in the widget.
+This allows a text widget to reflect only a portion of a larger piece
+of text.  Instead of an integer, the empty string can be provided to
+this configuration option, which will configure the widget to start
+at the very first line in the textual data store.
+<P><DT>Command-Line Name: <B><A NAME="M16">-state</A></B>
+<DT>Database Name: <B>state</B>
+<DT>Database Class: <B>State</B>
+<DD>Specifies one of two states for the text:  <B>normal</B> or <B>disabled</B>.
+If the text is disabled then characters may not be inserted or deleted
+and no insertion cursor will be displayed, even if the input focus is
+in the widget.
+<P><DT>Command-Line Name: <B><A NAME="M17">-tabs</A></B>
+<DT>Database Name: <B>tabs</B>
+<DT>Database Class: <B>Tabs</B>
+<DD>Specifies a set of tab stops for the window.  The option's value consists
+of a list of screen distances giving the positions of the tab stops,
+each of which is a distance relative to the left edge of the widget
+(excluding borders, padding, etc).  Each
+position may optionally be followed in the next list element
+by one of the keywords <B>left</B>, <B>right</B>, <B>center</B>,
+or <B>numeric</B>, which specifies how to justify
+text relative to the tab stop.  <B>Left</B> is the default; it causes
+the text following the tab character to be positioned with its left edge
+at the tab position.  <B>Right</B> means that the right edge of the text
+following the tab character is positioned at the tab position, and
+<B>center</B> means that the text is centered at the tab position.
+<B>Numeric</B> means that the decimal point in the text is positioned
+at the tab position;  if there is no decimal point then the least
+significant digit of the number is positioned just to the left of the
+tab position;  if there is no number in the text then the text is
+right-justified at the tab position.
+For example,
+&#8220;<B>-tabs {2c left 4c 6c center}</B>&#8221;
+creates three tab stops at two-centimeter intervals;  the first two use left
+justification and the third uses center justification.
+<P>
+If the list of tab stops does not have enough elements to cover all
+of the tabs in a text line, then Tk extrapolates new tab stops using
+the spacing and alignment from the last tab stop in the list.  Tab
+distances must be strictly positive, and must always increase from one
+tab stop to the next (if not, an error is thrown).
+The value of the <B>tabs</B> option may be overridden by <B>-tabs</B>
+options in tags.
+<P>
+If no <B>-tabs</B> option is specified, or if it is specified as
+an empty list, then Tk uses default tabs spaced every eight
+(average size) characters.  To achieve a different standard spacing,
+for example every 4 characters, simply configure the widget with
+&#8220;<B>-tabs &#34;[expr {4 * [font measure $font 0]}] left&#34; -tabstyle wordprocessor</B>&#8221;.
+<P><DT>Command-Line Name: <B><A NAME="M18">-tabstyle</A></B>
+<DT>Database Name: <B>tabStyle</B>
+<DT>Database Class: <B>TabStyle</B>
+<DD>Specifies how to interpret the relationship between tab stops on a line
+and tabs in the text of that line.  The value must be <B>tabular</B> (the
+default) or <B>wordprocessor</B>. Note that tabs are interpreted as they
+are encountered in the text.  If the tab style is <B>tabular</B> then the
+<I>n</I>'th tab character in the line's text will be associated with
+the <I>n</I>'th
+tab stop defined for that line.  If the tab character's x coordinate
+falls to the right of the <I>n</I>'th tab stop, then a gap of a single space
+will be inserted as a fallback.  If the tab style is <B>wordprocessor</B>
+then any tab character being laid out will use (and be defined by) the
+first tab stop to the right of the preceding characters already laid out
+on that line.  The value of the <B>tabstyle</B> option may be overridden
+by <B>-tabstyle</B> options in tags.
+<P><DT>Command-Line Name: <B><A NAME="M19">-undo</A></B>
+<DT>Database Name: <B>undo</B>
+<DT>Database Class: <B>Undo</B>
+<DD>Specifies a boolean that says whether the undo mechanism is active or
+not.
+<P><DT>Command-Line Name: <B><A NAME="M20">-width</A></B>
+<DT>Database Name: <B>width</B>
+<DT>Database Class: <B>Width</B>
+<DD>Specifies the desired width for the window in units of characters
+in the font given by the <B>-font</B> option.
+If the font does not have a uniform width then the width of the character
+&#8220;0&#8221;
+is used in translating from character units to screen units.
+<P><DT>Command-Line Name: <B><A NAME="M21">-wrap</A></B>
+<DT>Database Name: <B>wrap</B>
+<DT>Database Class: <B>Wrap</B>
+<DD>Specifies how to handle lines in the text that are too long to be
+displayed in a single line of the text's window.
+The value must be <B>none</B> or <B>char</B> or <B>word</B>.
+A wrap mode of <B>none</B> means that each line of text appears as
+exactly one line on the screen;  extra characters that do not fit
+on the screen are not displayed.
+In the other modes each line of text will be broken up into several
+screen lines if necessary to keep all the characters visible.
+In <B>char</B> mode a screen line break may occur after any character;
+in <B>word</B> mode a line break will only be made at word boundaries.
+</DL>
+<H3><A NAME="M22">DESCRIPTION</A></H3>
+The <B>text</B> command creates a new window (given by the
+<I>pathName</I> argument) and makes it into a text widget.
+Additional
+options, described above, may be specified on the command line
+or in the option database
+to configure aspects of the text such as its default background color
+and relief.  The <B>text</B> command returns the
+path name of the new window.
+<P>
+A text widget displays one or more lines of text and allows that
+text to be edited.
+Text widgets support four different kinds of annotations on the
+text, called tags, marks, embedded windows or embedded images.
+Tags allow different portions of the text
+to be displayed with different fonts and colors.
+In addition, Tcl commands can be associated with tags so
+that scripts are invoked when particular actions such as keystrokes
+and mouse button presses occur in particular ranges of the text.
+See <B>TAGS</B> below for more details.
+<P>
+The second form of annotation consists of floating markers in the text
+called
+&#8220;marks&#8221;.
+Marks are used to keep track of various interesting positions in the
+text as it is edited.
+See <B>MARKS</B> below for more details.
+<P>
+The third form of annotation allows arbitrary windows to be
+embedded in a text widget.
+See <B>EMBEDDED WINDOWS</B> below for more details.
+<P>
+The fourth form of annotation allows Tk images to be embedded in a text
+widget.
+See <B>EMBEDDED IMAGES</B> below for more details.
+<P>
+The text widget also has a built-in undo/redo mechanism.
+See <B>THE UNDO MECHANISM</B> below for more details.
+<P>
+The text widget allows for the creation of peer widgets.  These are
+other text widgets which share the same underlying data (text, marks,
+tags, images, etc).  See <B>PEER WIDGETS</B> below for more details.
+<H3><A NAME="M23">INDICES</A></H3>
+Many of the widget commands for texts take one or more indices
+as arguments.
+An index is a string used to indicate a particular place within
+a text, such as a place to insert characters or one endpoint of a
+range of characters to delete.
+Indices have the syntax
+<PRE><I>base modifier modifier modifier ...</I></PRE>
+Where <I>base</I> gives a starting point and the <I>modifier</I>s
+adjust the index from the starting point (e.g. move forward or
+backward one character).  Every index must contain a <I>base</I>,
+but the <I>modifier</I>s are optional.
+Most modifiers (as documented below) allow
+an optional submodifier.  Valid submodifiers are <B>any</B>
+and <B>display</B>. If the submodifier is abbreviated, then it must be
+followed by whitespace, but otherwise there need be no space between the
+submodifier and the following <I>modifier</I>.  Typically the <B>display</B>
+submodifier adjusts the meaning of the following <I>modifier</I> to make
+it refer to visual or non-elided units rather than logical units, but
+this is explained for each relevant case below.  Lastly, where <I>count</I>
+is used as part of a modifier, it can be positive or negative, so
+&#8220;<I>base</I> - -3 lines&#8221;
+is perfectly valid (and equivalent to
+&#8220;<I>base</I> +3lines&#8221;).
+<P>
+The <I>base</I> for an index must have one of the following forms:
+<P>
+<DL class="indices">
+<DT><A NAME="M24"><I>line</I><B>.</B><I>char</I></A><DD>
+Indicates <I>char</I>'th character on line <I>line</I>.
+Lines are numbered from 1 for consistency with other UNIX programs
+that use this numbering scheme.
+Within a line, characters are numbered from 0.
+If <I>char</I> is <B>end</B> then it refers to the newline character
+that ends the line.
+<P><DT><A NAME="M25"><B>@</B><I>x</I><B>,</B><I>y</I></A><DD>
+Indicates the character that covers the pixel whose x and y coordinates
+within the text's window are <I>x</I> and <I>y</I>.
+<P><DT><A NAME="M26"><B>end</B></A><DD>
+Indicates the end of the text (the character just after the last
+newline).
+<P><DT><A NAME="M27"><I>mark</I></A><DD>
+Indicates the character just after the mark whose name is <I>mark</I>.
+<P><DT><A NAME="M28"><I>tag</I><B>.first</B></A><DD>
+Indicates the first character in the text that has been tagged with
+<I>tag</I>.
+This form generates an error if no characters are currently tagged
+with <I>tag</I>.
+<P><DT><A NAME="M29"><I>tag</I><B>.last</B></A><DD>
+Indicates the character just after the last one in the text that has
+been tagged with <I>tag</I>.
+This form generates an error if no characters are currently tagged
+with <I>tag</I>.
+<P><DT><A NAME="M30"><I>pathName</I></A><DD>
+Indicates the position of the embedded window whose name is
+<I>pathName</I>.
+This form generates an error if there is no embedded window
+by the given name.
+<P><DT><A NAME="M31"><I>imageName</I></A><DD>
+Indicates the position of the embedded image whose name is
+<I>imageName</I>.
+This form generates an error if there is no embedded image
+by the given name.
+<P></DL>
+<P>
+If the <I>base</I> could match more than one of the above forms, such
+as a <I>mark</I> and <I>imageName</I> both having the same value, then
+the form earlier in the above list takes precedence.
+If modifiers follow the base index, each one of them must have one
+of the forms listed below.  Keywords such as <B>chars</B> and <B>wordend</B>
+may be abbreviated as long as the abbreviation is unambiguous.
+<P>
+<DL class="indices">
+<DT><A NAME="M32"><B>+ </B><I>count</I> ?<I>submodifier</I>? <B>chars</B></A><DD>
+Adjust the index forward by <I>count</I> characters, moving to later lines
+in the text if necessary.  If there are fewer than <I>count</I> characters
+in the text after the current index, then set the index to the last index
+in the text.  Spaces on either side of <I>count</I> are optional.  If the
+<B>display</B> submodifier is given, elided characters are skipped over
+without being counted.  If <B>any</B> is given, then all characters are
+counted.  For historical reasons, if neither modifier is given then the
+count actually takes place in units of index positions (see <B>indices</B>
+for details).  This behaviour may be changed in a future major release,
+so if you need an index count, you are encouraged to use <B>indices</B>
+instead wherever possible.
+<P><DT><A NAME="M33"><B>- </B><I>count</I> ?<I>submodifier</I>? <B>chars</B></A><DD>
+Adjust the index backward by <I>count</I> characters, moving to earlier
+lines in the text if necessary.  If there are fewer than <I>count</I>
+characters in the text before the current index, then set the index to
+the first index in the text (1.0).  Spaces on either side of <I>count</I>
+are optional.  If the <B>display</B> submodifier is given, elided
+characters are skipped over without being counted.  If <B>any</B> is
+given, then all characters are counted.  For historical reasons, if
+neither modifier is given then the count actually takes place in units of
+index positions (see <B>indices</B> for details).  This behaviour may be
+changed in a future major release, so if you need an index count, you are
+encouraged to use <B>indices</B> instead wherever possible.
+<P><DT><A NAME="M34"><B>+ </B><I>count</I> ?<I>submodifier</I>? <B>indices</B></A><DD>
+Adjust the index forward by <I>count</I> index positions, moving to later
+lines in the text if necessary.  If there are fewer than <I>count</I>
+index positions in the text after the current index, then set the index
+to the last index position in the text.  Spaces on either side of
+<I>count</I> are optional.  Note that an index position is either a single
+character or a single embedded image or embedded window.  If the
+<B>display</B> submodifier is given, elided indices are skipped over
+without being counted.  If <B>any</B> is given, then all indices are
+counted; this is also the default behaviour if no modifier is given.
+<P><DT><A NAME="M35"><B>- </B><I>count</I> ?<I>submodifier</I>? <B>indices</B></A><DD>
+Adjust the index backward by <I>count</I> index positions, moving to
+earlier lines in the text if necessary.  If there are fewer than
+<I>count</I> index positions in the text before the current index, then
+set the index to the first index position (1.0) in the text.  Spaces on
+either side of <I>count</I> are optional.  If the <B>display</B>
+submodifier is given, elided indices are skipped over without being
+counted.  If <B>any</B> is given, then all indices are counted; this is
+also the default behaviour if no modifier is given.
+<P><DT><A NAME="M36"><B>+ </B><I>count</I> ?<I>submodifier</I>? <B>lines</B></A><DD>
+Adjust the index forward by <I>count</I> lines, retaining the same
+character position within the line.  If there are fewer than <I>count</I>
+lines after the line containing the current index, then set the index to
+refer to the same character position on the last line of the text.  Then,
+if the line is not long enough to contain a character at the indicated
+character position, adjust the character position to refer to the last
+character of the line (the newline).  Spaces on either side of
+<I>count</I> are optional.  If the <B>display</B> submodifier is given,
+then each visual display line is counted separately.  Otherwise, if
+<B>any</B> (or no modifier) is given, then each logical line (no matter
+how many times it is visually wrapped) counts just once.  If the relevant
+lines are not wrapped, then these two methods of counting are equivalent.
+<P><DT><A NAME="M37"><B>- </B><I>count</I> ?<I>submodifier</I>? <B>lines</B></A><DD>
+Adjust the index backward by <I>count</I> logical lines, retaining the
+same character position within the line.  If there are fewer than
+<I>count</I> lines before the line containing the current index, then set
+the index to refer to the same character position on the first line of
+the text.  Then, if the line is not long enough to contain a character at
+the indicated character position, adjust the character position to refer
+to the last character of the line (the newline).  Spaces on either side
+of <I>count</I> are optional.  If the <B>display</B> submodifier is given,
+then each visual display line is counted separately.  Otherwise, if
+<B>any</B> (or no modifier) is given, then each logical line (no matter
+how many times it is visually wrapped) counts just once.  If the relevant
+lines are not wrapped, then these two methods of counting are equivalent.
+<P><DT><A NAME="M38">?<I>submodifier</I>? <B>linestart</B></A><DD>
+Adjust the index to refer to the first index on the line.  If the
+<B>display</B> submodifier is given, this is the first index on the
+display line, otherwise on the logical line.
+<P><DT><A NAME="M39">?<I>submodifier</I>? <B>lineend</B></A><DD>
+Adjust the index to refer to the last index on the line (the
+newline).  If the <B>display</B> submodifier is given, this is the last
+index on the display line, otherwise on the logical line.
+<P><DT><A NAME="M40">?<I>submodifier</I>? <B>wordstart</B></A><DD>
+Adjust the index to refer to the first character of the word containing
+the current index.  A word consists of any number of adjacent characters
+that are letters, digits, or underscores, or a single character that is
+not one of these.  If the <B>display</B> submodifier is given, this only
+examines non-elided characters, otherwise all characters (elided or not)
+are examined.
+<P><DT><A NAME="M41">?<I>submodifier</I>? <B>wordend</B></A><DD>
+Adjust the index to refer to the character just after the last one of the
+word containing the current index.  If the current index refers to the
+last character of the text then it is not modified.  If the <B>display</B>
+submodifier is given, this only examines non-elided characters, otherwise
+all characters (elided or not) are examined.
+<P></DL>
+<P>
+If more than one modifier is present then they are applied in
+left-to-right order.  For example, the index
+&#8220;<B>end - 1 chars</B>&#8221;
+refers to the next-to-last character in the text and
+&#8220;<B>insert wordstart - 1 c</B>&#8221;
+refers to the character just before
+the first one in the word containing the insertion cursor.  Modifiers
+are applied one by one in this left to right order, and after each step
+the resulting index is constrained to be a valid index in the text
+widget.  So, for example, the index
+&#8220;<B>1.0 -1c +1c</B>&#8221;
+refers to the index
+&#8220;<B>2.0</B>&#8221;.
+<P>
+Where modifiers result in index changes by display lines, display chars
+or display indices, and the <I>base</I> refers to an index inside an
+elided tag,
+that base index is considered to be equivalent to the first following
+non-elided index.
+<H3><A NAME="M42">TAGS</A></H3>
+The first form of annotation in text widgets is a tag.
+A tag is a textual string that is associated with some of the characters
+in a text.
+Tags may contain arbitrary characters, but it is probably best to
+avoid using the characters
+&#8220; &#8221;
+(space), <B>+</B>, or <B>-</B>:
+these characters have special meaning in indices, so tags containing
+them cannot be used as indices.
+There may be any number of tags associated with characters in a
+text.
+Each tag may refer to a single character, a range of characters, or
+several ranges of characters.
+An individual character may have any number of tags associated with it.
+<P>
+A priority order is defined among tags, and this order is used in
+implementing some of the tag-related functions described below.
+When a tag is defined (by associating it with characters or setting
+its display options or binding commands to it), it is given
+a priority higher than any existing tag.
+The priority order of tags may be redefined using the
+&#8220;<I>pathName </I><B>tag raise</B>&#8221;
+and
+&#8220;<I>pathName </I><B>tag lower</B>&#8221;
+widget commands.
+<P>
+Tags serve three purposes in text widgets.
+First, they control the way information is displayed on the screen.
+By default, characters are displayed as determined by the
+<B>-background</B>, <B>-font</B>, and <B>-foreground</B> options for the
+text widget.
+However, display options may be associated with individual tags
+using the
+&#8220;<I>pathName </I><B>tag configure</B>&#8221;
+widget command.
+If a character has been tagged, then the display options associated
+with the tag override the default display style.
+The following options are currently supported for tags:
+<P>
+<DL class="tags">
+<DT><A NAME="M43"><B>-background </B><I>color</I></A><DD>
+<I>Color</I> specifies the background color to use for characters
+associated with the tag.
+It may have any of the forms accepted by <B><A HREF="../TkLib/GetColor.htm">Tk_GetColor</A></B>.
+<P><DT><A NAME="M44"><B>-bgstipple </B><I>bitmap</I></A><DD>
+<I>Bitmap</I> specifies a bitmap that is used as a stipple pattern
+for the background.
+It may have any of the forms accepted by <B><A HREF="../TkLib/GetBitmap.htm">Tk_GetBitmap</A></B>.
+If <I>bitmap</I> has not been specified, or if it is specified
+as an empty string, then a solid fill will be used for the
+background.
+<P><DT><A NAME="M45"><B>-borderwidth </B><I>pixels</I></A><DD>
+<I>Pixels</I> specifies the width of a 3-D border to draw around
+the background.
+It may have any of the forms accepted by <B><A HREF="../TkLib/GetPixels.htm">Tk_GetPixels</A></B>.
+This option is used in conjunction with the <B>-relief</B>
+option to give a 3-D appearance to the background for characters;
+it is ignored unless the <B>-background</B> option
+has been set for the tag.
+<P><DT><A NAME="M46"><B>-elide </B><I>boolean</I></A><DD>
+<I>Elide</I> specifies whether the data should
+be elided.  Elided data (characters, images, embedded windows, etc) is
+not displayed and takes no space on screen, but further on behaves just
+as normal data.
+<P><DT><A NAME="M47"><B>-fgstipple </B><I>bitmap</I></A><DD>
+<I>Bitmap</I> specifies a bitmap that is used as a stipple pattern
+when drawing text and other foreground information such as
+underlines.
+It may have any of the forms accepted by <B><A HREF="../TkLib/GetBitmap.htm">Tk_GetBitmap</A></B>.
+If <I>bitmap</I> has not been specified, or if it is specified
+as an empty string, then a solid fill will be used.
+<P><DT><A NAME="M48"><B>-font </B><I>fontName</I></A><DD>
+<I>FontName</I> is the name of a font to use for drawing characters.
+It may have any of the forms accepted by <B><A HREF="../TkLib/GetFont.htm">Tk_GetFont</A></B>.
+<P><DT><A NAME="M49"><B>-foreground </B><I>color</I></A><DD>
+<I>Color</I> specifies the color to use when drawing text and other
+foreground information such as underlines.
+It may have any of the forms accepted by <B><A HREF="../TkLib/GetColor.htm">Tk_GetColor</A></B>.
+<P><DT><A NAME="M50"><B>-justify </B><I>justify</I></A><DD>
+If the first non-elided character of a display line has a tag for which this
+option has been specified, then <I>justify</I> determines how to
+justify the line.
+It must be one of <B>left</B>, <B>right</B>, or <B>center</B>.
+If a line wraps, then the justification for each line on the
+display is determined by the first non-elided character of that display line.
+<P><DT><A NAME="M51"><B>-lmargin1 </B><I>pixels</I></A><DD>
+If the first non-elided character of a text line has a tag for which this
+option has been specified, then <I>pixels</I> specifies how
+much the line should be indented from the left edge of the
+window.
+<I>Pixels</I> may have any of the standard forms for screen
+distances.
+If a line of text wraps, this option only applies to the
+first line on the display;  the <B>-lmargin2</B> option controls
+the indentation for subsequent lines.
+<P><DT><A NAME="M52"><B>-lmargin2 </B><I>pixels</I></A><DD>
+If the first non-elided character of a display line has a tag for which this
+option has been specified, and if the display line is not the
+first for its text line (i.e., the text line has wrapped), then
+<I>pixels</I> specifies how much the line should be indented from
+the left edge of the window.
+<I>Pixels</I> may have any of the standard forms for screen
+distances.
+This option is only used when wrapping is enabled, and it only
+applies to the second and later display lines for a text line.
+<P><DT><A NAME="M53"><B>-offset </B><I>pixels</I></A><DD>
+<I>Pixels</I> specifies an amount by which the text's baseline
+should be offset vertically from the baseline of the overall
+line, in pixels.
+For example, a positive offset can be used for superscripts
+and a negative offset can be used for subscripts.
+<I>Pixels</I> may have any of the standard forms for screen
+distances.
+<P><DT><A NAME="M54"><B>-overstrike </B><I>boolean</I></A><DD>
+Specifies whether or not to draw a horizontal rule through
+the middle of characters.
+<I>Boolean</I> may have any of the forms accepted by <B><A HREF="../TclLib/GetInt.htm">Tcl_GetBoolean</A></B>.
+<P><DT><A NAME="M55"><B>-relief </B><I>relief</I></A><DD>
+<I>Relief</I> specifies the 3-D relief to use for drawing backgrounds,
+in any of the forms accepted by <B><A HREF="../TkLib/GetRelief.htm">Tk_GetRelief</A></B>.
+This option is used in conjunction with the <B>-borderwidth</B>
+option to give a 3-D appearance to the background for characters;
+it is ignored unless the <B>-background</B> option
+has been set for the tag.
+<P><DT><A NAME="M56"><B>-rmargin </B><I>pixels</I></A><DD>
+If the first non-elided character of a display line has a tag for which this
+option has been specified, then <I>pixels</I> specifies how wide
+a margin to leave between the end of the line and the right
+edge of the window.
+<I>Pixels</I> may have any of the standard forms for screen
+distances.
+This option is only used when wrapping is enabled.
+If a text line wraps, the right margin for each line on the
+display is determined by the first non-elided character of that display
+line.
+<P><DT><A NAME="M57"><B>-spacing1 </B><I>pixels</I></A><DD>
+<I>Pixels</I> specifies how much additional space should be
+left above each text line, using any of the standard forms for
+screen distances.
+If a line wraps, this option only applies to the first
+line on the display.
+<P><DT><A NAME="M58"><B>-spacing2 </B><I>pixels</I></A><DD>
+For lines that wrap, this option specifies how much additional
+space to leave between the display lines for a single text line.
+<I>Pixels</I> may have any of the standard forms for screen
+distances.
+<P><DT><A NAME="M59"><B>-spacing3 </B><I>pixels</I></A><DD>
+<I>Pixels</I> specifies how much additional space should be
+left below each text line, using any of the standard forms for
+screen distances.
+If a line wraps, this option only applies to the last
+line on the display.
+<P><DT><A NAME="M60"><B>-tabs </B><I>tabList</I></A><DD>
+<I>TabList</I> specifies a set of tab stops in the same form
+as for the <B>-tabs</B> option for the text widget.  This
+option only applies to a display line if it applies to the
+first non-elided character on that display line.
+If this option is specified as an empty string, it cancels
+the option, leaving it unspecified for the tag (the default).
+If the option is specified as a non-empty string that is
+an empty list, such as <B>-tags { }</B>, then it requests
+default 8-character tabs as described for the <B>-tags</B>
+widget option.
+<P><DT><A NAME="M61"><B>-tabstyle </B><I>style</I></A><DD>
+<I>Style</I> specifies either the <I>tabular</I> or
+<I>wordprocessor</I> style of tabbing to use for the text widget.
+This option only applies to a display line if it applies to the
+first non-elided character on that display line.
+If this option is specified as an empty string, it cancels
+the option, leaving it unspecified for the tag (the default).
+<P><DT><A NAME="M62"><B>-underline </B><I>boolean</I></A><DD>
+<I>Boolean</I> specifies whether or not to draw an underline underneath
+characters.
+It may have any of the forms accepted by <B><A HREF="../TclLib/GetInt.htm">Tcl_GetBoolean</A></B>.
+<P><DT><A NAME="M63"><B>-wrap </B><I>mode</I></A><DD>
+<I>Mode</I> specifies how to handle lines that are wider than the
+text's window.
+It has the same legal values as the <B>-wrap</B> option
+for the text widget:  <B>none</B>, <B>char</B>, or <B>word</B>.
+If this tag option is specified, it overrides the <B>-wrap</B> option
+for the text widget.
+<P></DL>
+<P>
+If a character has several tags associated with it, and if their
+display options conflict, then the options of the highest priority
+tag are used.
+If a particular display option has not been specified for a
+particular tag, or if it is specified as an empty string, then
+that option will never be used;  the next-highest-priority
+tag's option will used instead.
+If no tag specifies a particular display option, then the default
+style for the widget will be used.
+<P>
+The second purpose for tags is event bindings.
+You can associate bindings with a tag in much the same way you can
+associate bindings with a widget class:  whenever particular X
+events occur on characters with the given tag, a given
+Tcl command will be executed.
+Tag bindings can be used to give behaviors to ranges of characters;
+among other things, this allows hypertext-like
+features to be implemented.
+For details, see the description of the
+&#8220;<I>pathName </I><B>tag bind</B>&#8221;
+widget command below.
+Tag bindings are shared between all peer widgets
+(including any bindings for the special <B>sel</B> tag).
+<P>
+The third use for tags is in managing the selection.
+See <B>THE SELECTION</B> below.
+With the exception of the special <B>sel</B>
+tag, all tags are shared between peer text widgets, and may be
+manipulated on an equal basis from any such widget.  The <B>sel</B>
+tag exists separately and independently in each peer text widget (but
+any tag bindings to <B>sel</B> are shared).
+<H3><A NAME="M64">MARKS</A></H3>
+The second form of annotation in text widgets is a mark.
+Marks are used for remembering particular places in a text.
+They are something like tags, in that they have names and
+they refer to places in the file, but a mark is not associated
+with particular characters.
+Instead, a mark is associated with the gap between two characters.
+Only a single position may be associated with a mark at any given
+time.
+If the characters around a mark are deleted the mark will still
+remain;  it will just have new neighbor characters.
+In contrast, if the characters containing a tag are deleted then
+the tag will no longer have an association with characters in
+the file.
+Marks may be manipulated with the
+&#8220;<I>pathName </I><B>mark</B>&#8221;
+widget
+command, and their current locations may be determined by using the
+mark name as an index in widget commands.
+<P>
+Each mark also has a
+&#8220;gravity&#8221;,
+which is either <B>left</B> or <B>right</B>.
+The gravity for a mark specifies what happens to the mark when
+text is inserted at the point of the mark.
+If a mark has left gravity, then the mark is treated as if it
+were attached to the character on its left, so the mark will
+remain to the left of any text inserted at the mark position.
+If the mark has right gravity, new text inserted at the mark
+position will appear to the left of the mark (so that the mark
+remains rightmost).  The gravity for a mark defaults to <B>right</B>.
+<P>
+The name space for marks is different from that for tags:  the
+same name may be used for both a mark and a tag, but they will refer
+to different things.
+<P>
+Two marks have special significance.
+First, the mark <B>insert</B> is associated with the insertion cursor,
+as described under <B>THE INSERTION CURSOR</B> below.
+Second, the mark <B>current</B> is associated with the character
+closest to the mouse and is adjusted automatically to track the
+mouse position and any changes to the text in the widget (one
+exception:  <B>current</B> is not updated in response to mouse
+motions if a mouse button is down;  the update will be deferred
+until all mouse buttons have been released).
+Neither of these special marks may be deleted.
+With the exception of
+these two special marks, all marks are shared between peer text
+widgets, and may be manipulated on an equal basis from any peer.
+<H3><A NAME="M65">EMBEDDED WINDOWS</A></H3>
+The third form of annotation in text widgets is an embedded window.
+Each embedded window annotation causes a window to be displayed
+at a particular point in  the text.
+There may be any number of embedded windows in a text widget,
+and any widget may be used as an embedded window (subject to the
+usual rules for geometry management, which require the text window
+to be the parent of the embedded window or a descendant of its
+parent).
+The embedded window's position on the screen will be updated as the
+text is modified or scrolled, and it will be mapped and unmapped as
+it moves into and out of the visible area of the text widget.
+Each embedded window occupies one
+unit's
+worth of index space
+in the text widget, and it may be referred to either by the name
+of its embedded window or by its position in the widget's
+index space.
+If the range of text containing the embedded window is deleted then
+the window is destroyed.
+Similarly if the text widget as a whole is deleted, then the window is
+destroyed.
+<P>
+When an embedded window is added to a text widget with the
+<I>pathName </I><B>window create</B> widget command, several configuration
+options may be associated with it.
+These options may be  modified later with the <I>pathName </I><B>window configure</B>
+widget command.
+The following options are currently supported:
+<P>
+<DL class="embedded windows">
+<DT><A NAME="M66"><B>-align </B><I>where</I></A><DD>
+If the window is not as tall as the line in which it is displayed,
+this option determines where the window is displayed in the line.
+<I>Where</I> must have one of the values <B>top</B> (align the top of the window
+with the top of the line), <B>center</B> (center the window
+within the range of the line), <B>bottom</B> (align the bottom of the
+window with the bottom of the line's area),
+or <B>baseline</B> (align the bottom of the window with the baseline
+of the line).
+<P><DT><A NAME="M67"><B>-create </B><I>script</I></A><DD>
+Specifies a Tcl script that may be evaluated to create the window
+for the annotation.
+If no <B>-window</B> option has been specified for the annotation
+this script will be evaluated when the annotation is about to
+be displayed on the screen.
+<I>Script</I> must create a window for the annotation and return
+the name of that window as its result.
+Two substitutions will be performed in <I>script</I> before evaluation.
+<I>%W</I> will be substituted by the name of the parent text widget,
+and <I>%%</I> will be substituted by a single <I>%</I>.
+If the annotation's window should ever be deleted, <I>script</I>
+will be evaluated again the next time the annotation is displayed.
+<P><DT><A NAME="M68"><B>-padx </B><I>pixels</I></A><DD>
+<I>Pixels</I> specifies the amount of extra space to leave on
+each side of the embedded window.
+It may have any of the usual forms defined for a screen distance.
+<P><DT><A NAME="M69"><B>-pady </B><I>pixels</I></A><DD>
+<I>Pixels</I> specifies the amount of extra space to leave on
+the top and on the bottom of the embedded window.
+It may have any of the usual forms defined for a screen distance.
+<P><DT><A NAME="M70"><B>-stretch </B><I>boolean</I></A><DD>
+If the requested height of the embedded window is less than the
+height of the line in which it is displayed, this option can be
+used to specify whether the window should be stretched vertically
+to fill its line.
+If the <B>-pady</B> option has been specified as well, then the
+requested padding will be retained even if the window is
+stretched.
+<P><DT><A NAME="M71"><B>-window </B><I>pathName</I></A><DD>
+Specifies the name of a window to display in the annotation.
+Note that if a <I>pathName</I> has been set, then later configuring a
+window to the empty string will not delete the widget corresponding to
+the old <I>pathName</I>. Rather it will remove the association between
+the old <I>pathName</I> and the text widget.  If multiple peer widgets
+are in use, it is usually simpler to use the <B>-create</B> option if
+embedded windows are desired in each peer.
+<P></DL>
+<H3><A NAME="M72">EMBEDDED IMAGES</A></H3>
+The final form of annotation in text widgets is an embedded image.
+Each embedded image annotation causes an image to be displayed
+at a particular point in  the text.
+There may be any number of embedded images in a text widget,
+and a particular image may be embedded in multiple places in the same
+text widget.
+The embedded image's position on the screen will be updated as the
+text is modified or scrolled.
+Each embedded image occupies one
+unit's
+worth of index space
+in the text widget, and it may be referred to either by
+its position in the widget's index space, or the name it is assigned
+when the image is inserted into the text widget with <I>pathName </I><B><A HREF="../TkCmd/image.htm">image create</A></B>.
+If the range of text containing the embedded image is deleted then
+that copy of the image is removed from the screen.
+<P>
+When an embedded image is added to a text widget with the <I>pathName </I><B>image
+create</B> widget command, a name unique to this instance of the image
+is returned.  This name may then be used to refer to this image
+instance.  The name is taken to be the value of the <B>-name</B> option
+(described below).  If the <B>-name</B> option is not provided, the
+<B>-image</B> name is used instead.  If the <I>imageName</I> is already
+in use in the text widget, then <B>#</B><I>nn</I> is added to the end of the
+<I>imageName</I>, where <I>nn</I> is an arbitrary integer.  This insures
+the <I>imageName</I> is unique.
+Once this name is assigned to this instance of the image, it does not
+change, even though the <B>-image</B> or <B>-name</B> values can be changed
+with <I>pathName </I><B><A HREF="../TkCmd/image.htm">image configure</A></B>.
+<P>
+When an embedded image is added to a text widget with the
+<I>pathName </I><B><A HREF="../TkCmd/image.htm">image create</A></B> widget command, several configuration
+options may be associated with it.
+These options may be modified later with the <I>pathName </I><B><A HREF="../TkCmd/image.htm">image configure</A></B>
+widget command.
+The following options are currently supported:
+<P>
+<DL class="embedded images">
+<DT><A NAME="M73"><B>-align </B><I>where</I></A><DD>
+If the image is not as tall as the line in which it is displayed,
+this option determines where the image is displayed in the line.
+<I>Where</I> must have one of the values <B>top</B> (align the top of the image
+with the top of the line), <B>center</B> (center the image
+within the range of the line), <B>bottom</B> (align the bottom of the
+image with the bottom of the line's area),
+or <B>baseline</B> (align the bottom of the image with the baseline
+of the line).
+<P><DT><A NAME="M74"><B>-image </B><I>image</I></A><DD>
+Specifies the name of the Tk image to display in the annotation.
+If <I>image</I> is not a valid Tk image, then an error is returned.
+<P><DT><A NAME="M75"><B>-name </B><I>ImageName</I></A><DD>
+Specifies the name by which this image instance may be referenced in
+the text widget. If <I>ImageName</I> is not supplied, then the
+name of the Tk image is used instead.
+If the <I>imageName</I> is already in use, <I>#nn</I> is appended to
+the end of the name as described above.
+<P><DT><A NAME="M76"><B>-padx </B><I>pixels</I></A><DD>
+<I>Pixels</I> specifies the amount of extra space to leave on
+each side of the embedded image.
+It may have any of the usual forms defined for a screen distance.
+<P><DT><A NAME="M77"><B>-pady </B><I>pixels</I></A><DD>
+<I>Pixels</I> specifies the amount of extra space to leave on
+the top and on the bottom of the embedded image.
+It may have any of the usual forms defined for a screen distance.
+<P></DL>
+<H3><A NAME="M78">THE SELECTION</A></H3>
+Selection support is implemented via tags.
+If the <B>exportSelection</B> option for the text widget is true
+then the <B>sel</B> tag will be associated with the selection:
+<P>
+<DL class="the selection">
+<DT>[1]<DD>
+Whenever characters are tagged with <B>sel</B> the text widget
+will claim ownership of the selection.
+<P><DT>[2]<DD>
+Attempts to retrieve the
+selection will be serviced by the text widget, returning all the
+characters with the <B>sel</B> tag.
+<P><DT>[3]<DD>
+If the selection is claimed away by another application or by another
+window within this application, then the <B>sel</B> tag will be removed
+from all characters in the text.
+<P><DT>[4]<DD>
+Whenever the <B>sel</B> tag range changes a virtual event
+<B>&lt;&lt;Selection&gt;&gt;</B> is generated.
+<P></DL>
+<P>
+The <B>sel</B> tag is automatically defined when a text widget is
+created, and it may not be deleted with the
+&#8220;<I>pathName </I><B>tag delete</B>&#8221;
+widget command.  Furthermore, the <B>selectBackground</B>,
+<B>selectBorderWidth</B>, and <B>selectForeground</B> options for
+the text widget are tied to the <B>-background</B>,
+<B>-borderwidth</B>, and <B>-foreground</B> options for the <B>sel</B>
+tag:  changes in either will automatically be reflected in the
+other.
+Also the
+<B>-inactiveselectbackground</B> option for the text widget is used
+instead of <B>-selectbackground</B> when the text widget does not have
+the focus.  This allows programmatic control over the visualization of
+the <B>sel</B> tag for foreground and background windows, or to have
+<B>sel</B> not shown at all (when <B>-inactiveselectbackground</B> is
+empty) for background windows.  Each peer text widget has its own
+<B>sel</B> tag which can be separately configured and set.
+<H3><A NAME="M79">THE INSERTION CURSOR</A></H3>
+The mark named <B>insert</B> has special significance in text widgets.
+It is defined automatically when a text widget is created and it
+may not be unset with the
+&#8220;<I>pathName </I><B>mark unset</B>&#8221;
+widget command.
+The <B>insert</B> mark represents the position of the insertion
+cursor, and the insertion cursor will automatically be drawn at
+this point whenever the text widget has the input focus.
+<H3><A NAME="M80">THE MODIFIED FLAG</A></H3>
+The text widget can keep track of changes to the content of the widget
+by means of the modified flag. Inserting or deleting text will set
+this flag. The flag can be queried, set and cleared programmatically
+as well. Whenever the flag changes state a <B>&lt;&lt;Modified&gt;&gt;</B> virtual
+event is generated. See the <I>pathName </I><B>edit modified</B> widget command for
+more details.
+<H3><A NAME="M81">THE UNDO MECHANISM</A></H3>
+The text widget has an unlimited undo and redo mechanism (when the
+<B>-undo</B> widget option is true) which records every insert and
+delete action on a stack.
+<P>
+Boundaries (called
+&#8220;separators&#8221;)
+are inserted between edit actions.  The
+purpose of these separators is to group inserts, deletes and replaces
+into one compound edit action.  When undoing a change everything between
+two separators will be undone.  The undone changes are then moved to the
+redo stack, so that an undone edit can be redone again.  The redo stack
+is cleared whenever new edit actions are recorded on the undo stack.  The
+undo and redo stacks can be cleared to keep their depth under control.
+<P>
+Separators are inserted automatically when the <B>-autoseparators</B>
+widget option is true.  You can insert separators programmatically as
+well.  If a separator is already present at the top of the undo stack
+no other will be inserted.  That means that two separators on the undo
+stack are always separated by at least one insert or delete action.
+<P>
+The undo mechanism is also linked to the modified flag.  This means
+that undoing or redoing changes can take a modified text widget back
+to the unmodified state or vice versa.  The modified flag will be set
+automatically to the appropriate state.  This automatic coupling
+does not work when the modified flag has been set by the user, until
+the flag has been reset again.
+<P>
+See below for the <I>pathName </I><B>edit</B> widget command that controls the undo
+mechanism.
+<H3><A NAME="M82">PEER WIDGETS</A></H3>
+The text widget has a separate store of all its data concerning each
+line's textual contents, marks, tags, images and windows, and the undo
+stack.
+<P>
+While this data store cannot be accessed directly (i.e. without a text
+widget as an intermediary), multiple text widgets can be created, each
+of which present different views on the same underlying data.  Such
+text widgets are known as peer text widgets.
+<P>
+As text is added, deleted, edited and coloured in any one widget, and as
+images, marks, tags are adjusted, all such changes will be reflected in
+all peers.
+<P>
+All data and markup is shared, except for a few small details.  First,
+the <B>sel</B> tag may be set and configured (in its display style)
+differently for each peer.  Second, each peer has its own <B>insert</B>
+and <B>current</B> mark positions (but all other marks are shared).
+Third, embedded windows, which are arbitrary other widgets, cannot be
+shared between peers.  This means the <B>-window</B> option of embedded
+windows is independently set for each peer (it is advisable to use
+the <B>-create</B> script capabilities to allow each peer to create its
+own embedded windows as needed).  Fourth, all of the configuration
+options of each peer (e.g. <B>-font</B>, etc) can be set independently,
+with the exception of <B>-undo</B>, <B>-maxUndo</B>, <B>-autoSeparators</B>
+(i.e. all undo, redo and modified state issues are shared).
+<P>
+Finally any single peer need not contain all lines from the underlying
+data store.  When creating a peer, a contiguous range of lines (e.g.
+only lines 52 through 125) may be specified.  This allows a peer to
+contain just a small portion of the overall text.  The range of lines
+will expand and contract as text is inserted or deleted.  The peer will
+only ever display complete lines of text (one cannot share just part of
+a line).  If the peer's contents contracts to nothing (i.e. all complete
+lines in the peer widget have been deleted from another widget), then it
+is impossible for new lines to be inserted.  The peer will simply become
+an empty shell on which the background can be configured, but which will
+never show any content (without manual reconfiguration of the start and
+end lines).  Note that a peer which does not contain all of the
+underlying data store still has indices numbered from
+&#8220;1.0&#8221;
+to
+&#8220;end&#8221;.
+It is simply that those indices reflect a subset of the total data, and
+data outside the contained range is not accessible to the peer.  This
+means that the command <I>peerName </I><B>index end</B> may return quite different
+values in different peers.  Similarly, commands like <I>peerName </I><B>tag
+ranges</B> will not return index ranges outside that which is meaningful
+to the peer.  The configuration options <B>-startline</B> and
+<B>-endline</B> may be used to control how much of the underlying data is
+contained in any given text widget.
+<P>
+Note that peers are really peers.  Deleting the
+&#8220;original&#8221;
+text widget will not cause any other peers to be deleted, or otherwise
+affected.
+<P>
+See below for the <I>pathName </I><B>peer</B> widget command that controls the
+creation of peer widgets.
+<H3><A NAME="M83">WIDGET COMMAND</A></H3>
+The <B>text</B> command creates a new Tcl command whose
+name is the same as the path name of the text's window.  This
+command may be used to invoke various
+operations on the widget.  It has the following general form:
+<PRE><I>pathName option </I>?<I>arg arg ...</I>?</PRE>
+<I>PathName</I> is the name of the command, which is the same as
+the text widget's path name.  <I>Option</I> and the <I>arg</I>s
+determine the exact behavior of the command.  The following
+commands are possible for text widgets:
+<P>
+<DL class="widget command">
+<DT><A NAME="M84"><I>pathName </I><B>bbox </B><I>index</I></A><DD>
+Returns a list of four elements describing the screen area
+of the character given by <I>index</I>.
+The first two elements of the list give the x and y coordinates
+of the upper-left corner of the area occupied by the
+character, and the last two elements give the width and height
+of the area.
+If the character is only partially visible on the screen, then
+the return value reflects just the visible part.
+If the character is not visible on the screen then the return
+value is an empty list.
+<P><DT><A NAME="M85"><I>pathName </I><B>cget</B> <I>option</I></A><DD>
+Returns the current value of the configuration option given
+by <I>option</I>.
+<I>Option</I> may have any of the values accepted by the <B>text</B>
+command.
+<P><DT><A NAME="M86"><I>pathName </I><B>compare</B> <I>index1 op index2</I></A><DD>
+Compares the indices given by <I>index1</I> and <I>index2</I> according
+to the relational operator given by <I>op</I>, and returns 1 if
+the relationship is satisfied and 0 if it is not.
+<I>Op</I> must be one of the operators &lt;, &lt;=, ==, &gt;=, &gt;, or !=.
+If <I>op</I> is == then 1 is returned if the two indices refer to
+the same character, if <I>op</I> is &lt; then 1 is returned if <I>index1</I>
+refers to an earlier character in the text than <I>index2</I>, and
+so on.
+<P><DT><A NAME="M87"><I>pathName </I><B>configure</B> ?<I>option</I>? <I>?value option value ...</I>?</A><DD>
+Query or modify the configuration options of the widget.
+If no <I>option</I> is specified, returns a list describing all of
+the available options for <I>pathName</I> (see <B><A HREF="../TkLib/ConfigWidg.htm">Tk_ConfigureInfo</A></B> for
+information on the format of this list).  If <I>option</I> is specified
+with no <I>value</I>, then the command returns a list describing the
+one named option (this list will be identical to the corresponding
+sublist of the value returned if no <I>option</I> is specified).  If
+one or more <I>option-value</I> pairs are specified, then the command
+modifies the given widget option(s) to have the given value(s);  in
+this case the command returns an empty string.
+<I>Option</I> may have any of the values accepted by the <B>text</B>
+command.
+<P><DT><A NAME="M88"><I>pathName </I><B>count</B> <I>?options</I>? <I>index1 index2</I></A><DD>
+Counts the number of relevant things between the two indices.
+If <I>index1</I> is after <I>index2</I>, the result will be a negative number
+(and this holds for each of the possible options).
+The actual items which are counted depend on the
+options given.  The result is a list of integers, one for the result of
+each counting option given.  Valid counting options are <B>-chars</B>,
+<B>-displaychars</B>, <B>-displayindices</B>, <B>-displaylines</B>,
+<B>-indices</B>, <B>-lines</B>, <B>-xpixels</B> and <B>-ypixels</B>. The
+default value, if no option is specified, is <B>-indices</B>. There is an
+additional possible option <B>-update</B> which is a modifier.  If given,
+then all subsequent options ensure that any possible out of date
+information is recalculated.  This currently only has any effect for the
+<I>-ypixels</I> count (which, if <B>-update</B> is not given, will use the text
+widget's current cached value for each line).  The count options are
+interpreted as follows:
+<P>
+<DL class="widget command">
+<DT><A NAME="M89"><B>-chars</B></A><DD>
+count all characters, whether elided or not.  Do not count
+embedded windows or images.
+<P><DT><A NAME="M90"><B>-displaychars</B></A><DD>
+count all non-elided characters.
+<P><DT><A NAME="M91"><B>-displayindices</B></A><DD>
+count all non-elided characters, windows and images.
+<P><DT><A NAME="M92"><B>-displaylines</B></A><DD>
+count all display lines (i.e. counting one for each
+time a line wraps) from the line of the first index up to, but not
+including the display line of the second index.  Therefore if they are
+both on the same display line, zero will be returned.  By definition
+displaylines are visible and therefore this only counts portions of
+actual visible lines.
+<P><DT><A NAME="M93"><B>-indices</B></A><DD>
+count all characters and embedded windows or images (i.e.
+everything which counts in text-widget index space), whether they are
+elided or not.
+<P><DT><A NAME="M94"><B>-lines</B></A><DD>
+count all logical lines (irrespective of wrapping) from
+the line of the first index up to, but not including the line of the
+second index.  Therefore if they are both on the same line, zero will be
+returned.  Logical lines are counted whether they are currently visible
+(non-elided) or not.
+<P><DT><A NAME="M95"><B>-xpixels</B></A><DD>
+count the number of horizontal pixels from the first
+pixel of the first index to (but not including) the first pixel of the
+second index.  To count the total desired width of the text widget
+(assuming wrapping is not enabled), first find the longest line and then
+use
+&#8220;.text count -xpixels &#34;${line}.0&#34; &#34;${line}.0 lineend&#34;&#8221;.
+<P><DT><A NAME="M96"><B>-ypixels</B></A><DD>
+count the number of vertical pixels from the first pixel
+of the first index to (but not including) the first pixel of the second
+index.  If both indices are on the same display line, zero will be
+returned.  To count the total number of vertical pixels in the text
+widget, use
+&#8220;.text count -ypixels 1.0 end&#8221;,
+and to ensure this is up to date, use
+&#8220;.text count -update -ypixels 1.0 end&#8221;.
+</DL><P>The command returns a positive or negative integer corresponding to the
+number of items counted between the two indices.  One such integer is
+returned for each counting option given, so a list is returned if more
+than one option was supplied.  For example
+&#8220;.text count -xpixels -ypixels 1.3 4.5&#8221;
+is perfectly valid and will return a list of two elements.<DL>
+</DL>
+<P><DT><A NAME="M97"><I>pathName </I><B>debug </B>?<I>boolean</I>?</A><DD>
+If <I>boolean</I> is specified, then it must have one of the true or
+false values accepted by <A HREF="../TclLib/GetInt.htm">Tcl_GetBoolean</A>.
+If the value is a true one then internal consistency checks will be
+turned on in the B-tree code associated with text widgets.
+If <I>boolean</I> has a false value then the debugging checks will
+be turned off.
+In either case the command returns an empty string.
+If <I>boolean</I> is not specified then the command returns <B>on</B>
+or <B>off</B> to indicate whether or not debugging is turned on.
+There is a single debugging switch shared by all text widgets:  turning
+debugging on or off in any widget turns it on or off for all widgets.
+For widgets with large amounts of text, the consistency checks may
+cause a noticeable slow-down.
+<P>
+When debugging is turned on, the drawing routines of the text widget
+set the global variables <B>tk_textRedraw</B> and <B>tk_textRelayout</B>
+to the lists of indices that are redrawn.  The values of these variables
+are tested by Tk's test suite.
+<P><DT><A NAME="M98"><I>pathName </I><B>delete </B><I>index1 </I>?<I>index2 ...</I>?</A><DD>
+Delete a range of characters from the text.
+If both <I>index1</I> and <I>index2</I> are specified, then delete
+all the characters starting with the one given by <I>index1</I>
+and stopping just before <I>index2</I> (i.e. the character at
+<I>index2</I> is not deleted).
+If <I>index2</I> does not specify a position later in the text
+than <I>index1</I> then no characters are deleted.
+If <I>index2</I> is not specified then the single character at
+<I>index1</I> is deleted.
+It is not allowable to delete characters in a way that would leave
+the text without a newline as the last character.
+The command returns an empty string.
+If more indices are given, multiple ranges of text will be deleted.
+All indices are first checked for validity before any deletions are made.
+They are sorted and the text is removed from the last range to the
+first range to deleted text does not cause an undesired index shifting
+side-effects.  If multiple ranges with the same start index are given,
+then the longest range is used.  If overlapping ranges are given, then
+they will be merged into spans that do not cause deletion of text
+outside the given ranges due to text shifted during deletion.
+<P><DT><A NAME="M99"><I>pathName </I><B>dlineinfo </B><I>index</I></A><DD>
+Returns a list with five elements describing the area occupied
+by the display line containing <I>index</I>.
+The first two elements of the list give the x and y coordinates
+of the upper-left corner of the area occupied by the
+line, the third and fourth elements give the width and height
+of the area, and the fifth element gives the position of the baseline
+for the line, measured down from the top of the area.
+All of this information is measured in pixels.
+If the current wrap mode is <B>none</B> and the line extends beyond
+the boundaries of the window,
+the area returned reflects the entire area of the line, including the
+portions that are out of the window.
+If the line is shorter than the full width of the window then the
+area returned reflects just the portion of the line that is occupied
+by characters and embedded windows.
+If the display line containing <I>index</I> is not visible on
+the screen then the return value is an empty list.
+<P><DT><A NAME="M100"><I>pathName </I><B>dump </B>?<I>switches</I>? <I>index1 </I>?<I>index2</I>?</A><DD>
+Return the contents of the text widget from <I>index1</I> up to,
+but not including <I>index2</I>,
+including the text and
+information about marks, tags, and embedded windows.
+If <I>index2</I> is not specified, then it defaults to
+one character past <I>index1</I>.  The information is returned
+in the following format:
+<P></DL>
+<P>
+<DL><DD>
+<I>key1 value1 index1 key2 value2 index2</I> ...
+<P>
+The possible <I>key</I> values are <B>text</B>, <B>mark</B>,
+<B>tagon</B>, <B>tagoff</B>, <B><A HREF="../TkCmd/image.htm">image</A></B>, and <B>window</B>.  The corresponding
+<I>value</I> is the text, mark name, tag name, image name, or window name.
+The <I>index</I> information is the index of the
+start of the text, mark, tag transition, image or window.
+One or more of the following switches (or abbreviations thereof)
+may be specified to control the dump:
+<P>
+<DL class="widget command">
+<DT><A NAME="M101"><B>-all</B></A><DD>
+Return information about all elements: text, marks, tags, images and windows.
+This is the default.
+<P><DT><A NAME="M102"><B>-command </B><I>command</I></A><DD>
+Instead of returning the information as the result of the dump operation,
+invoke the <I>command</I> on each element of the text widget within the range.
+The command has three arguments appended to it before it is evaluated:
+the <I>key</I>, <I>value</I>, and <I>index</I>.
+<P><DT><A NAME="M103"><B>-image</B></A><DD>
+Include information about images in the dump results.
+<P><DT><A NAME="M104"><B>-mark</B></A><DD>
+Include information about marks in the dump results.
+<P><DT><A NAME="M105"><B>-tag</B></A><DD>
+Include information about tag transitions in the dump results. Tag
+information is returned as <B>tagon</B> and <B>tagoff</B> elements that
+indicate the begin and end of each range of each tag, respectively.
+<P><DT><A NAME="M106"><B>-text</B></A><DD>
+Include information about text in the dump results.  The value is the
+text up to the next element or the end of range indicated by <I>index2</I>.
+A text element does not span newlines.  A multi-line block of text that
+contains no marks or tag transitions will still be dumped as a set
+of text segments that each end with a newline.  The newline is part
+of the value.
+<P><DT><A NAME="M107"><B>-window</B></A><DD>
+Include information about embedded windows in the dump results.
+The value of a window is its Tk pathname, unless the window
+has not been created yet.  (It must have a create script.)
+In this case an empty string is returned, and you must query the
+window by its index position to get more information.
+<P></DL>
+</DL>
+<P>
+<DL class="widget command">
+<DT><A NAME="M108"><I>pathName </I><B>edit </B><I>option </I>?<I>arg arg ...</I>?</A><DD>
+This command controls the undo mechanism and the modified flag.  The
+exact behavior of the command depends on the <I>option</I> argument
+that follows the <B>edit</B> argument.  The following forms of the
+command are currently supported:
+<P>
+<DL class="widget command">
+<DT><A NAME="M109"><I>pathName </I><B>edit modified ?</B><I>boolean</I>?</A><DD>
+If <I>boolean</I> is not specified, returns the modified flag of the
+widget. The insert, delete, edit undo and edit redo commands or the
+user can set or clear the modified flag.  If <I>boolean</I> is
+specified, sets the modified flag of the widget to <I>boolean</I>.
+<P><DT><A NAME="M110"><I>pathName </I><B>edit redo</B></A><DD>
+When the <B>-undo</B> option is true, reapplies the last undone edits
+provided no other edits were done since then. Generates an error when
+the redo stack is empty.  Does nothing when the <B>-undo</B> option is
+false.
+<P><DT><A NAME="M111"><I>pathName </I><B>edit reset</B></A><DD>
+Clears the undo and redo stacks.
+<P><DT><A NAME="M112"><I>pathName </I><B>edit separator</B></A><DD>
+Inserts a separator (boundary) on the undo stack. Does nothing when
+the <B>-undo</B> option is false.
+<P><DT><A NAME="M113"><I>pathName </I><B>edit undo</B></A><DD>
+Undoes the last edit action when the <B>-undo</B> option is true.  An
+edit action is defined as all the insert and delete commands that are
+recorded on the undo stack in between two separators. Generates an
+error when the undo stack is empty.  Does nothing when the <B>-undo</B>
+option is false.
+<P></DL>
+<P><DT><A NAME="M114"><I>pathName </I><B>get</B> <I>?-displaychars?</I> <I>-- index1</I> ?<I>index2 ...</I>?</A><DD>
+Return a range of characters from the text.
+The return value will be all the characters in the text starting
+with the one whose index is <I>index1</I> and ending just before
+the one whose index is <I>index2</I> (the character at <I>index2</I>
+will not be returned).
+If <I>index2</I> is omitted then the single character at <I>index1</I>
+is returned.
+If there are no characters in the specified range (e.g. <I>index1</I>
+is past the end of the file or <I>index2</I> is less than or equal
+to <I>index1</I>) then an empty string is returned.
+If the specified range contains embedded windows, no information
+about them is included in the returned string.
+If multiple index pairs are given, multiple ranges of text will be returned
+in a list.  Invalid ranges will not be represented with empty strings in
+the list.  The ranges are returned in the order passed to <I>pathName </I><B>get</B>.
+If the <B>-displaychars</B> option is given, then, within each range,
+only those characters which are not elided will be returned.  This may
+have the effect that some of the returned ranges are empty strings.
+<P><DT><A NAME="M115"><I>pathName </I><B>image </B><I>option </I>?<I>arg arg ...</I>?</A><DD>
+This command is used to manipulate embedded images.
+The behavior of the command depends on the <I>option</I> argument
+that follows the <B>tag</B> argument.
+The following forms of the command are currently supported:
+<P>
+<DL class="widget command">
+<DT><A NAME="M116"><I>pathName </I><B>image cget</B> <I>index option</I></A><DD>
+Returns the value of a configuration option for an embedded image.
+<I>Index</I> identifies the embedded image, and <I>option</I>
+specifies a particular configuration option, which must be one of
+the ones listed in the section <B>EMBEDDED IMAGES</B>.
+<P><DT><A NAME="M117"><I>pathName </I><B>image configure </B><I>index</I> ?<I>option value ...</I>?</A><DD>
+Query or modify the configuration options for an embedded image.
+If no <I>option</I> is specified, returns a list describing all of
+the available options for the embedded image at <I>index</I>
+(see <B><A HREF="../TkLib/ConfigWidg.htm">Tk_ConfigureInfo</A></B> for information on the format of this list).
+If <I>option</I> is specified with no <I>value</I>, then the command
+returns a list describing the one named option (this list will be
+identical to the corresponding sublist of the value returned if no
+<I>option</I> is specified).
+If one or more <I>option-value</I> pairs are specified, then the command
+modifies the given option(s) to have the given value(s);  in
+this case the command returns an empty string.
+See <B>EMBEDDED IMAGES</B> for information on the options that
+are supported.
+<P><DT><A NAME="M118"><I>pathName </I><B>image create </B><I>index</I> ?<I>option value ...</I>?</A><DD>
+This command creates a new image annotation, which will appear
+in the text at the position given by <I>index</I>.
+Any number of <I>option-value</I> pairs may be specified to
+configure the annotation.
+Returns a unique identifier that may be used as an index to refer to
+this image.
+See <B>EMBEDDED IMAGES</B> for information on the options that
+are supported, and a description of the identifier returned.
+<P><DT><A NAME="M119"><I>pathName </I><B>image names</B></A><DD>
+Returns a list whose elements are the names of all image instances currently
+embedded in <I>window</I>.
+<P></DL>
+<P><DT><A NAME="M120"><I>pathName </I><B>index </B><I>index</I></A><DD>
+Returns the position corresponding to <I>index</I> in the form
+<I>line.char</I> where <I>line</I> is the line number and <I>char</I>
+is the character number.
+<I>Index</I> may have any of the forms described under <B>INDICES</B> above.
+<P><DT><A NAME="M121"><I>pathName </I><B>insert </B><I>index chars </I>?<I>tagList chars tagList ...</I>?</A><DD>
+Inserts all of the <I>chars</I> arguments just before the character at
+<I>index</I>.
+If <I>index</I> refers to the end of the text (the character after
+the last newline) then the new text is inserted just before the
+last newline instead.
+If there is a single <I>chars</I> argument and no <I>tagList</I>, then
+the new text will receive any tags that are present on both the
+character before and the character after the insertion point; if a tag
+is present on only one of these characters then it will not be
+applied to the new text.
+If <I>tagList</I> is specified then it consists of a list of
+tag names;  the new characters will receive all of the tags in
+this list and no others, regardless of the tags present around
+the insertion point.
+If multiple <I>chars</I>-<I>tagList</I> argument pairs are present,
+they produce the same effect as if a separate <I>pathName </I><B>insert</B> widget
+command had been issued for each pair, in order.
+The last <I>tagList</I> argument may be omitted.
+<P><DT><A NAME="M122"><I>pathName </I><B>mark </B><I>option </I>?<I>arg arg ...</I>?</A><DD>
+This command is used to manipulate marks.  The exact behavior of
+the command depends on the <I>option</I> argument that follows
+the <B>mark</B> argument.  The following forms of the command
+are currently supported:
+<P>
+<DL class="widget command">
+<DT><A NAME="M123"><I>pathName </I><B>mark gravity </B><I>markName</I> ?<I>direction</I>?</A><DD>
+If <I>direction</I> is not specified, returns <B>left</B> or <B>right</B>
+to indicate which of its adjacent characters <I>markName</I> is attached
+to.
+If <I>direction</I> is specified, it must be <B>left</B> or <B>right</B>;
+the gravity of <I>markName</I> is set to the given value.
+<P><DT><A NAME="M124"><I>pathName </I><B>mark names</B></A><DD>
+Returns a list whose elements are the names of all the marks that
+are currently set.
+<P><DT><A NAME="M125"><I>pathName </I><B>mark next </B><I>index</I></A><DD>
+Returns the name of the next mark at or after <I>index</I>.
+If <I>index</I> is specified in numerical form, then the search for
+the next mark begins at that index.
+If <I>index</I> is the name of a mark, then the search for
+the next mark begins immediately after that mark.
+This can still return a mark at the same position if
+there are multiple marks at the same index.
+These semantics mean that the <B>mark next</B> operation can be used to
+step through all the marks in a text widget in the same order
+as the mark information returned by the <I>pathName </I><B>dump</B> operation.
+If a mark has been set to the special <B>end</B> index,
+then it appears to be <I>after</I> <B>end</B> with respect to the <I>pathName </I><B>mark next</B> operation.
+An empty string is returned if there are no marks after <I>index</I>.
+<P><DT><A NAME="M126"><I>pathName </I><B>mark previous </B><I>index</I></A><DD>
+Returns the name of the mark at or before <I>index</I>.
+If <I>index</I> is specified in numerical form, then the search for
+the previous mark begins with the character just before that index.
+If <I>index</I> is the name of a mark, then the search for
+the next mark begins immediately before that mark.
+This can still return a mark at the same position if
+there are multiple marks at the same index.
+These semantics mean that the <I>pathName </I><B>mark previous</B> operation can be used to
+step through all the marks in a text widget in the reverse order
+as the mark information returned by the <I>pathName </I><B>dump</B> operation.
+An empty string is returned if there are no marks before <I>index</I>.
+<P><DT><A NAME="M127"><I>pathName </I><B>mark set </B><I>markName index</I></A><DD>
+Sets the mark named <I>markName</I> to a position just before the
+character at <I>index</I>.
+If <I>markName</I> already exists, it is moved from its old position;
+if it does not exist, a new mark is created.
+This command returns an empty string.
+<P><DT><A NAME="M128"><I>pathName </I><B>mark unset </B><I>markName </I>?<I>markName markName ...</I>?</A><DD>
+Remove the mark corresponding to each of the <I>markName</I> arguments.
+The removed marks will not be usable in indices and will not be
+returned by future calls to
+&#8220;<I>pathName </I><B>mark names</B>&#8221;.
+This command returns an empty string.
+<P></DL>
+<P><DT><A NAME="M129"><I>pathName </I><B>peer</B> <I>option args</I></A><DD>
+This command is used to create and query widget peers.  It has
+two forms, depending on <I>option</I>:
+<P>
+<DL class="widget command">
+<DT><A NAME="M130"><I>pathName </I><B>peer create </B><I>newPathName</I> ?<I>options</I>?</A><DD>
+Creates a peer text widget with the given <I>newPathName</I>, and any
+optional standard configuration options (as for the <I>text</I> command).
+By default the peer will have the same start and end line as the
+parent widget, but these can be overridden with the standard
+configuration options.
+<P><DT><A NAME="M131"><I>pathName </I><B>peer names</B></A><DD>
+Returns a list of peers of this widget (this does not include the widget
+itself).  The order within this list is undefined.
+<P></DL>
+<P><DT><A NAME="M132"><I>pathName </I><B>replace</B> <I>index1 index2 chars</I> ?<I>tagList chars tagList ...</I>?</A><DD>
+Replaces the range of characters between <I>index1</I> and <I>index2</I>
+with the given characters and tags.  See the section on <I>pathName
+</I><B>insert</B> for an explanation of the handling of the <I>tagList...</I>
+arguments, and the section on <I>pathName
+</I><B>delete</B> for an explanation of the handling of the indices.  If
+<I>index2</I> corresponds to an index earlier in the text than
+<I>index1</I>, an error will be generated.
+<P>
+The deletion and insertion are arranged so that no unnecessary
+scrolling of the window or movement of insertion cursor occurs.  In
+addition the undo/redo stack are correctly modified, if undo operations
+are active in the text widget.  The command returns an empty string.
+<P><DT><A NAME="M133"><I>pathName </I><B>scan</B> <I>option args</I></A><DD>
+This command is used to implement scanning on texts.  It has
+two forms, depending on <I>option</I>:
+<P>
+<DL class="widget command">
+<DT><A NAME="M134"><I>pathName </I><B>scan mark </B><I>x y</I></A><DD>
+Records <I>x</I> and <I>y</I> and the current view in the text window,
+for use in conjunction with later <I>pathName </I><B>scan dragto</B> commands.
+Typically this command is associated with a mouse button press in
+the widget.  It returns an empty string.
+<P><DT><A NAME="M135"><I>pathName </I><B>scan dragto </B><I>x y</I></A><DD>
+This command computes the difference between its <I>x</I> and <I>y</I>
+arguments and the <I>x</I> and <I>y</I> arguments to the last
+<I>pathName </I><B>scan mark</B> command for the widget.
+It then adjusts the view by 10 times the difference in coordinates.
+This command is typically associated
+with mouse motion events in the widget, to produce the effect of
+dragging the text at high speed through the window.  The return
+value is an empty string.
+<P></DL>
+<P><DT><A NAME="M136"><I>pathName </I><B>search </B>?<I>switches</I>? <I>pattern index </I>?<I>stopIndex</I>?</A><DD>
+Searches the text in <I>pathName</I> starting at <I>index</I> for a range
+of characters that matches <I>pattern</I>.
+If a match is found, the index of the first character in the match is
+returned as result;  otherwise an empty string is returned.
+One or more of the following switches (or abbreviations thereof)
+may be specified to control the search:
+<P>
+<DL class="widget command">
+<DT><A NAME="M137"><B>-forwards</B></A><DD>
+The search will proceed forward through the text, finding the first
+matching range starting at or after the position given by <I>index</I>.
+This is the default.
+<P><DT><A NAME="M138"><B>-backwards</B></A><DD>
+The search will proceed backward through the text, finding the
+matching range closest to <I>index</I> whose first character
+is before <I>index</I>
+(it is not allowed to be at <I>index</I>).  Note that, for a variety of
+reasons, backwards searches can be substantially slower than forwards
+searches (particularly when using <B>-regexp</B>), so it is recommended
+that performance-critical code use forward searches.
+<P><DT><A NAME="M139"><B>-exact</B></A><DD>
+Use exact matching:  the characters in the matching range must be
+identical to those in <I>pattern</I>.
+This is the default.
+<P><DT><A NAME="M140"><B>-regexp</B></A><DD>
+Treat <I>pattern</I> as a regular expression and match it against
+the text using the rules for regular expressions (see the <B><A HREF="../TclCmd/regexp.htm">regexp</A></B>
+command for details).
+The default matching automatically passes
+both the <B>-lineanchor</B> and <B>-linestop</B> options
+to the regexp engine (unless <B>-nolinestop</B> is used), so that
+<I>^$</I> match beginning and end of line, and <I>.</I>, <I>[^</I>
+sequences will never match the newline character <I>&#92;n</I>.
+<P><DT><A NAME="M141"><B>-nolinestop</B></A><DD>
+This allows <I>.</I> and <I>[^</I> sequences to match the newline
+character <I>&#92;n</I>, which they will otherwise not do (see the <B><A HREF="../TclCmd/regexp.htm">regexp</A></B>
+command for details). This option is only meaningful if <B>-regexp</B>
+is also given, and an error will be thrown otherwise.  For example,
+to match the entire text, use
+&#8220;<I>pathName </I><B>search -nolinestop -regexp</B> &#34;.*&#34; 1.0&#8221;.
+<P><DT><A NAME="M142"><B>-nocase</B></A><DD>
+Ignore case differences between the pattern and the text.
+<P><DT><A NAME="M143"><B>-count</B><I> varName</I></A><DD>
+The argument following <B>-count</B> gives the name of a variable;
+if a match is found, the number of index positions between beginning and
+end of the matching range will be stored in the variable.  If there are no
+embedded images or windows in the matching range (and there are no
+elided characters if <B>-elide</B> is not given), this is equivalent to the
+number of characters matched.  In either case, the range <I>matchIdx</I> to
+<I>matchIdx + $count chars</I> will return the entire matched text.
+<P><DT><A NAME="M144"><B>-all</B></A><DD>
+Find all matches in the given range and return a list of the indices of
+the first character of each match.  If a <B>-count</B><I> varName</I> switch is
+given, then <I>varName</I> is also set to a list containing one element
+for each successful match.  Note that, even for exact searches, the
+elements of this list may be different, if there are embedded images,
+windows or hidden text.  Searches with <B>-all</B> behave very
+similarly to the Tcl command <B>regexp -all</B>, in that overlapping
+matches are not normally returned.  For example, applying an
+<B>-all</B> search of the pattern
+&#8220;&#92;w+&#8221;
+against
+&#8220;hello there&#8221;
+will just match twice, once for each word, and matching
+&#8220;Z[a-z]+Z&#8221;
+against
+&#8220;ZooZooZoo&#8221;
+will just match once.
+<P><DT><A NAME="M145"><B>-overlap</B></A><DD>
+When performing <B>-all</B> searches, the normal behaviour is that
+matches which overlap an already-found match will not be returned.  This
+switch changes that behaviour so that all matches which are not totally
+enclosed within another match are returned.  For example, applying an
+<B>-overlap</B> search of the pattern
+&#8220;&#92;w+&#8221;
+against
+&#8220;hello there&#8221;
+will just match twice (i.e. no different to just <B>-all</B>),
+but matching
+&#8220;Z[a-z]+Z&#8221;
+against
+&#8220;ZooZooZoo&#8221;
+will now match twice.
+An error will be thrown if this switch is used without <B>-all</B>.
+<P><DT><A NAME="M146"><B>-strictlimits</B></A><DD>
+When performing any search, the normal behaviour is that
+the start and stop limits are checked with respect to the
+start of the matching text.  With the <B>-strictlimits</B> flag,
+the entire matching range must lie inside the start and stop
+limits specified for the match to be valid.
+<P><DT><A NAME="M147"><B>-elide</B></A><DD>
+Find elided (hidden) text as well. By default only displayed text is
+searched.
+<P><DT><A NAME="M148"><B>--</B></A><DD>
+This switch has no effect except to terminate the list of switches:
+the next argument will be treated as <I>pattern</I> even if it starts
+with <B>-</B>.
+</DL><P>The matching range may be within a single line of text, or run across
+multiple lines (if parts of the pattern can match a new-line).  For
+regular expression matching one can use the various newline-matching
+features such as <B>$</B> to match the end of a line, <B>^</B> to match
+the beginning of a line, and to control
+whether <B>.</B> is allowed to match a new-line.
+If <I>stopIndex</I> is specified, the search stops at that index:
+for forward searches, no match at or after <I>stopIndex</I> will
+be considered;  for backward searches, no match earlier in the
+text than <I>stopIndex</I> will be considered.
+If <I>stopIndex</I> is omitted, the entire text will be searched:
+when the beginning or end of the text is reached, the search
+continues at the other end until the starting location is reached
+again;  if <I>stopIndex</I> is specified, no wrap-around will occur.
+This means that, for example, if the search is <B>-forwards</B>
+but <I>stopIndex</I> is earlier in the text than <I>startIndex</I>,
+nothing will ever be found.  See <B>KNOWN BUGS</B> below for a number of
+minor limitations of the <I>pathName </I><B>search</B> command.<DL>
+</DL>
+<P><DT><A NAME="M149"><I>pathName </I><B>see </B><I>index</I></A><DD>
+Adjusts the view in the window so that the character given by <I>index</I>
+is completely visible.
+If <I>index</I> is already visible then the command does nothing.
+If <I>index</I> is a short distance out of view, the command
+adjusts the view just enough to make <I>index</I> visible at the
+edge of the window.
+If <I>index</I> is far out of view, then the command centers
+<I>index</I> in the window.
+<P><DT><A NAME="M150"><I>pathName </I><B>tag </B><I>option </I>?<I>arg arg ...</I>?</A><DD>
+This command is used to manipulate tags.  The exact behavior of the
+command depends on the <I>option</I> argument that follows the
+<B>tag</B> argument.  The following forms of the command are currently
+supported:
+<P>
+<DL class="widget command">
+<DT><A NAME="M151"><I>pathName </I><B>tag add </B><I>tagName index1 </I>?<I>index2 index1 index2 ...</I>?</A><DD>
+Associate the tag <I>tagName</I> with all of the characters starting
+with <I>index1</I> and ending just before
+<I>index2</I> (the character at <I>index2</I> is not tagged).
+A single command may contain any number of <I>index1</I>-<I>index2</I>
+pairs.
+If the last <I>index2</I> is omitted then the single character at
+<I>index1</I> is tagged.
+If there are no characters in the specified range (e.g. <I>index1</I>
+is past the end of the file or <I>index2</I> is less than or equal
+to <I>index1</I>) then the command has no effect.
+<P><DT><A NAME="M152"><I>pathName </I><B>tag bind </B><I>tagName</I> ?<I>sequence</I>? ?<I>script</I>?</A><DD>
+This command associates <I>script</I> with the tag given by
+<I>tagName</I>.
+Whenever the event sequence given by <I>sequence</I> occurs for a
+character that has been tagged with <I>tagName</I>,
+the script will be invoked.
+This widget command is similar to the <B><A HREF="../TkCmd/bind.htm">bind</A></B> command except that
+it operates on characters in a text rather than entire widgets.
+See the <B><A HREF="../TkCmd/bind.htm">bind</A></B> manual entry for complete details
+on the syntax of <I>sequence</I> and the substitutions performed
+on <I>script</I> before invoking it.
+If all arguments are specified then a new binding is created, replacing
+any existing binding for the same <I>sequence</I> and <I>tagName</I>
+(if the first character of <I>script</I> is
+&#8220;+&#8221;
+then <I>script</I> augments an existing binding rather than replacing it).
+In this case the return value is an empty string.
+If <I>script</I> is omitted then the command returns the <I>script</I>
+associated with <I>tagName</I> and <I>sequence</I> (an error occurs
+if there is no such binding).
+If both <I>script</I> and <I>sequence</I> are omitted then the command
+returns a list of all the sequences for which bindings have been
+defined for <I>tagName</I>.
+<P>
+The only events for which bindings may be specified are those related
+to the mouse and keyboard (such as <B>Enter</B>, <B>Leave</B>,
+<B>ButtonPress</B>, <B>Motion</B>, and <B>KeyPress</B>) or virtual events.
+Event bindings for a text widget use the <B>current</B> mark described
+under <B>MARKS</B> above.  An <B>Enter</B> event triggers for a tag when the tag
+first becomes present on the current character, and a <B>Leave</B> event
+triggers for a tag when it ceases to be present on the current character.
+<B>Enter</B> and <B>Leave</B> events can happen either because the
+<B>current</B> mark moved or because the character at that position
+changed.  Note that these events are different than <B>Enter</B> and
+<B>Leave</B> events for windows.  Mouse and keyboard events are directed
+to the current character.  If a virtual event is used in a binding, that
+binding can trigger only if the virtual event is defined by an underlying
+mouse-related or keyboard-related event.
+<P>
+It is possible for the current character to have multiple tags,
+and for each of them to have a binding for a particular event
+sequence.
+When this occurs, one binding is invoked for each tag, in order
+from lowest-priority to highest priority.
+If there are multiple matching bindings for a single tag, then
+the most specific binding is chosen (see the manual entry for
+the <B><A HREF="../TkCmd/bind.htm">bind</A></B> command for details).
+<B><A HREF="../TclCmd/continue.htm">continue</A></B> and <B><A HREF="../TclCmd/break.htm">break</A></B> commands within binding scripts
+are processed in the same way as for bindings created with
+the <B><A HREF="../TkCmd/bind.htm">bind</A></B> command.
+<P>If bindings are created for the widget as a whole using the
+<B><A HREF="../TkCmd/bind.htm">bind</A></B> command, then those bindings will supplement the
+tag bindings.
+The tag bindings will be invoked first, followed by bindings
+for the window as a whole.
+<P><DT><A NAME="M153"><I>pathName </I><B>tag cget</B> <I>tagName option</I></A><DD>
+This command returns the current value of the option named <I>option</I>
+associated with the tag given by <I>tagName</I>.
+<I>Option</I> may have any of the values accepted by the <I>pathName </I><B>tag
+configure</B> widget command.
+<P><DT><A NAME="M154"><I>pathName </I><B>tag configure </B><I>tagName</I> ?<I>option</I>? ?<I>value</I>? ?<I>option value ...</I>?</A><DD>
+This command is similar to the <I>pathName </I><B>configure</B> widget command except
+that it modifies options associated with the tag given by <I>tagName</I>
+instead of modifying options for the overall text widget.
+If no <I>option</I> is specified, the command returns a list describing
+all of the available options for <I>tagName</I> (see <B><A HREF="../TkLib/ConfigWidg.htm">Tk_ConfigureInfo</A></B>
+for information on the format of this list).
+If <I>option</I> is specified with no <I>value</I>, then the command returns
+a list describing the one named option (this list will be identical to
+the corresponding sublist of the value returned if no <I>option</I>
+is specified).
+If one or more <I>option-value</I> pairs are specified, then the command
+modifies the given option(s) to have the given value(s) in <I>tagName</I>;
+in this case the command returns an empty string.
+See <B>TAGS</B> above for details on the options available for tags.
+<P><DT><A NAME="M155"><I>pathName </I><B>tag delete </B><I>tagName </I>?<I>tagName ...</I>?</A><DD>
+Deletes all tag information for each of the <I>tagName</I>
+arguments.
+The command removes the tags from all characters in the file
+and also deletes any other information associated with the tags,
+such as bindings and display information.
+The command returns an empty string.
+<P><DT><A NAME="M156"><I>pathName</I><B> tag lower </B><I>tagName </I>?<I>belowThis</I>?</A><DD>
+Changes the priority of tag <I>tagName</I> so that it is just lower
+in priority than the tag whose name is <I>belowThis</I>.
+If <I>belowThis</I> is omitted, then <I>tagName</I>'s priority
+is changed to make it lowest priority of all tags.
+<P><DT><A NAME="M157"><I>pathName </I><B>tag names </B>?<I>index</I>?</A><DD>
+Returns a list whose elements are the names of all the tags that
+are active at the character position given by <I>index</I>.
+If <I>index</I> is omitted, then the return value will describe
+all of the tags that exist for the text (this includes all tags
+that have been named in a
+&#8220;<I>pathName </I><B>tag</B>&#8221;
+widget command but have not been deleted by a
+&#8220;<I>pathName </I><B>tag delete</B>&#8221;
+widget command, even if no characters are currently marked with the tag).
+The list will be sorted in order from lowest priority to highest
+priority.
+<P><DT><A NAME="M158"><I>pathName </I><B>tag nextrange </B><I>tagName index1 </I>?<I>index2</I>?</A><DD>
+This command searches the text for a range of characters tagged
+with <I>tagName</I> where the first character of the range is
+no earlier than the character at <I>index1</I> and no later than
+the character just before <I>index2</I> (a range starting at
+<I>index2</I> will not be considered).
+If several matching ranges exist, the first one is chosen.
+The command's return value is a list containing
+two elements, which are the index of the first character of the
+range and the index of the character just after the last one in
+the range.
+If no matching range is found then the return value is an
+empty string.
+If <I>index2</I> is not given then it defaults to the end of the text.
+<P><DT><A NAME="M159"><I>pathName </I><B>tag prevrange </B><I>tagName index1 </I>?<I>index2</I>?</A><DD>
+This command searches the text for a range of characters tagged
+with <I>tagName</I> where the first character of the range is
+before the character at <I>index1</I> and no earlier than
+the character at <I>index2</I> (a range starting at
+<I>index2</I> will be considered).
+If several matching ranges exist, the one closest to <I>index1</I> is chosen.
+The command's return value is a list containing
+two elements, which are the index of the first character of the
+range and the index of the character just after the last one in
+the range.
+If no matching range is found then the return value is an
+empty string.
+If <I>index2</I> is not given then it defaults to the beginning of the text.
+<P><DT><A NAME="M160"><I>pathName</I><B> tag raise </B><I>tagName </I>?<I>aboveThis</I>?</A><DD>
+Changes the priority of tag <I>tagName</I> so that it is just higher
+in priority than the tag whose name is <I>aboveThis</I>.
+If <I>aboveThis</I> is omitted, then <I>tagName</I>'s priority
+is changed to make it highest priority of all tags.
+<P><DT><A NAME="M161"><I>pathName </I><B>tag ranges </B><I>tagName</I></A><DD>
+Returns a list describing all of the ranges of text that have been
+tagged with <I>tagName</I>.
+The first two elements of the list describe the first tagged range
+in the text, the next two elements describe the second range, and
+so on.
+The first element of each pair contains the index of the first
+character of the range, and the second element of the pair contains
+the index of the character just after the last one in the
+range.
+If there are no characters tagged with <I>tag</I> then an
+empty string is returned.
+<P><DT><A NAME="M162"><I>pathName </I><B>tag remove </B><I>tagName index1 </I>?<I>index2 index1 index2 ...</I>?</A><DD>
+Remove the tag <I>tagName</I> from all of the characters starting
+at <I>index1</I> and ending just before
+<I>index2</I> (the character at <I>index2</I> is not affected).
+A single command may contain any number of <I>index1</I>-<I>index2</I>
+pairs.
+If the last <I>index2</I> is omitted then the tag is removed from the
+single character at <I>index1</I>.
+If there are no characters in the specified range (e.g. <I>index1</I>
+is past the end of the file or <I>index2</I> is less than or equal
+to <I>index1</I>) then the command has no effect.
+This command returns an empty string.
+<P></DL>
+<P><DT><A NAME="M163"><I>pathName </I><B>window </B><I>option </I>?<I>arg arg ...</I>?</A><DD>
+This command is used to manipulate embedded windows.
+The behavior of the command depends on the <I>option</I> argument
+that follows the <B>tag</B> argument.
+The following forms of the command are currently supported:
+<P>
+<DL class="widget command">
+<DT><A NAME="M164"><I>pathName </I><B>window cget</B> <I>index option</I></A><DD>
+Returns the value of a configuration option for an embedded window.
+<I>Index</I> identifies the embedded window, and <I>option</I>
+specifies a particular configuration option, which must be one of
+the ones listed in the section <B>EMBEDDED WINDOWS</B>.
+<P><DT><A NAME="M165"><I>pathName </I><B>window configure </B><I>index</I> ?<I>option value ...</I>?</A><DD>
+Query or modify the configuration options for an embedded window.
+If no <I>option</I> is specified, returns a list describing all of
+the available options for the embedded window at <I>index</I>
+(see <B><A HREF="../TkLib/ConfigWidg.htm">Tk_ConfigureInfo</A></B> for information on the format of this list).
+If <I>option</I> is specified with no <I>value</I>, then the command
+returns a list describing the one named option (this list will be
+identical to the corresponding sublist of the value returned if no
+<I>option</I> is specified).
+If one or more <I>option-value</I> pairs are specified, then the command
+modifies the given option(s) to have the given value(s);  in
+this case the command returns an empty string.
+See <B>EMBEDDED WINDOWS</B> for information on the options that
+are supported.
+<P><DT><A NAME="M166"><I>pathName </I><B>window create </B><I>index</I> ?<I>option value ...</I>?</A><DD>
+This command creates a new window annotation, which will appear
+in the text at the position given by <I>index</I>.
+Any number of <I>option-value</I> pairs may be specified to
+configure the annotation.
+See <B>EMBEDDED WINDOWS</B> for information on the options that
+are supported.
+Returns an empty string.
+<P><DT><A NAME="M167"><I>pathName </I><B>window names</B></A><DD>
+Returns a list whose elements are the names of all windows currently
+embedded in <I>window</I>.
+<P></DL>
+<P><DT><A NAME="M168"><I>pathName </I><B>xview </B><I>option args</I></A><DD>
+This command is used to query and change the horizontal position of the
+text in the widget's window.  It can take any of the following
+forms:
+<P>
+<DL class="widget command">
+<DT><A NAME="M169"><I>pathName </I><B>xview</B></A><DD>
+Returns a list containing two elements.
+Each element is a real fraction between 0 and 1;  together they describe
+the portion of the document's horizontal span that is visible in
+the window.
+For example, if the first element is .2 and the second element is .6,
+20% of the text is off-screen to the left, the middle 40% is visible
+in the window, and 40% of the text is off-screen to the right.
+The fractions refer only to the lines that are actually visible in the
+window:  if the lines in the window are all very short, so that they
+are entirely visible, the returned fractions will be 0 and 1,
+even if there are other lines in the text that are
+much wider than the window.
+These are the same values passed to scrollbars via the <B>-xscrollcommand</B>
+option.
+<P><DT><A NAME="M170"><I>pathName </I><B>xview moveto</B><I> fraction</I></A><DD>
+Adjusts the view in the window so that <I>fraction</I> of the horizontal
+span of the text is off-screen to the left.
+<I>Fraction</I> is a fraction between 0 and 1.
+<P><DT><A NAME="M171"><I>pathName </I><B>xview scroll </B><I>number what</I></A><DD>
+This command shifts the view in the window left or right according to
+<I>number</I> and <I>what</I>.
+<I>What</I> must be <B>units</B>, <B>pages</B> or <B>pixels</B>.
+If <I>what</I> is <B>units</B> or <B>pages</B> then <I>number</I> must be an
+integer, otherwise number may be specified in any of the forms acceptable
+to <B><A HREF="../TkLib/GetPixels.htm">Tk_GetPixels</A></B>, such as
+&#8220;2.0c&#8221;
+or
+&#8220;1i&#8221;
+(the result is rounded
+to the nearest integer value.  If no units are given, pixels are
+assumed).  If <I>what</I> is <B>units</B>, the view adjusts left or right by
+<I>number</I> average-width characters on the display; if it is
+<B>pages</B> then the view adjusts by <I>number</I> screenfuls; if it is
+<B>pixels</B> then the view adjusts by <I>number</I> pixels.  If
+<I>number</I> is negative then characters farther to the left become
+visible; if it is positive then characters farther to the right become
+visible.
+<P></DL>
+<P><DT><A NAME="M172"><I>pathName </I><B>yview </B><I>?args</I>?</A><DD>
+This command is used to query and change the vertical position of the
+text in the widget's window.
+It can take any of the following forms:
+<P>
+<DL class="widget command">
+<DT><A NAME="M173"><I>pathName </I><B>yview</B></A><DD>
+Returns a list containing two elements, both of which are real fractions
+between 0 and 1.
+The first element gives the position of the first visible pixel of the
+first character (or image, etc) in the
+top line in the window, relative to the text as a whole (0.5 means
+it is halfway through the text, for example).
+The second element gives the position of the first pixel just after the
+last visible one in the bottom line of the window,
+relative to the text as a whole.
+These are the same values passed to scrollbars via the <B>-yscrollcommand</B>
+option.
+<P><DT><A NAME="M174"><I>pathName </I><B>yview moveto</B><I> fraction</I></A><DD>
+Adjusts the view in the window so that the pixel given by <I>fraction</I>
+appears at the top of the top line of the window.
+<I>Fraction</I> is a fraction between 0 and 1;  0 indicates the first
+pixel of the first character in the text, 0.33 indicates the pixel that is
+one-third the way through the text; and so on.
+Values close to 1 will
+indicate values close to the last pixel in the text (1 actually refers
+to one pixel beyond the last pixel), but in such cases the widget will
+never scroll beyond the last pixel, and so a value of 1 will effectively
+be rounded back to whatever fraction ensures the last pixel is at the
+bottom of the window, and some other pixel is at the top.
+<P><DT><A NAME="M175"><I>pathName </I><B>yview scroll </B><I>number what</I></A><DD>
+This command adjust the view in the window up or down according to
+<I>number</I> and <I>what</I>.
+<I>What</I> must be <B>units</B>, <B>pages</B> or <B>pixels</B>.
+If <I>what</I> is <B>units</B> or <B>pages</B> then <I>number</I> must be an
+integer, otherwise number may be specified in any of the forms acceptable
+to <B><A HREF="../TkLib/GetPixels.htm">Tk_GetPixels</A></B>, such as
+&#8220;2.0c&#8221;
+or
+&#8220;1i&#8221;
+(the result is rounded
+to the nearest integer value.  If no units are given, pixels are
+assumed).  If <I>what</I> is <B>units</B>, the view adjusts up or down by
+<I>number</I> lines on the display; if it is <B>pages</B> then the view
+adjusts by <I>number</I> screenfuls; if it is <B>pixels</B> then the view
+adjusts by <I>number</I> pixels.
+If <I>number</I> is negative then earlier positions in the text
+become visible;  if it is positive then later positions in the text
+become visible.
+<P><DT><A NAME="M176"><I>pathName </I><B>yview </B>?<B>-pickplace</B>? <I>index</I></A><DD>
+Changes the view in the widget's window to make <I>index</I> visible.
+If the <B>-pickplace</B> option is not specified then <I>index</I> will
+appear at the top of the window.
+If <B>-pickplace</B> is specified then the widget chooses where
+<I>index</I> appears in the window:
+<P>
+<DL class="widget command">
+<DT>[1]<DD>
+If <I>index</I> is already visible somewhere in the window then the
+command does nothing.
+<P><DT>[2]<DD>
+If <I>index</I> is only a few lines off-screen above the window then
+it will be positioned at the top of the window.
+<P><DT>[3]<DD>
+If <I>index</I> is only a few lines off-screen below the window then
+it will be positioned at the bottom of the window.
+<P><DT>[4]<DD>
+Otherwise, <I>index</I> will be centered in the window.
+</DL><P>The <B>-pickplace</B> option has been obsoleted by the <I>pathName </I><B>see</B> widget
+command (<I>pathName </I><B>see</B> handles both x- and y-motion to make a location
+visible, whereas the <B>-pickplace</B> mode only handles motion in y).<DL>
+</DL>
+<P><DT><A NAME="M177"><I>pathName </I><B>yview </B><I>number</I></A><DD>
+This command makes the first character on the line after
+the one given by <I>number</I> visible at the top of the window.
+<I>Number</I> must be an integer.
+This command used to be used for scrolling, but now it is obsolete.
+<P></DL>
+<P></DL>
+<H3><A NAME="M178">BINDINGS</A></H3>
+Tk automatically creates class bindings for texts that give them
+the following default behavior.
+In the descriptions below,
+&#8220;word&#8221;
+is dependent on the value of
+the <B>tcl_wordchars</B> variable.  See <B><A HREF="../TclCmd/tclvars.htm">tclvars</A></B>(n).
+<P>
+<DL class="bindings">
+<DT>[1]<DD>
+Clicking mouse button 1 positions the insertion cursor
+just before the character underneath the mouse cursor, sets the
+input focus to this widget, and clears any selection in the widget.
+Dragging with mouse button 1 strokes out a selection between
+the insertion cursor and the character under the mouse.
+<P><DT>[2]<DD>
+Double-clicking with mouse button 1 selects the word under the mouse
+and positions the insertion cursor at the start of the word.
+Dragging after a double click will stroke out a selection consisting
+of whole words.
+<P><DT>[3]<DD>
+Triple-clicking with mouse button 1 selects the line under the mouse
+and positions the insertion cursor at the start of the line.
+Dragging after a triple click will stroke out a selection consisting
+of whole lines.
+<P><DT>[4]<DD>
+The ends of the selection can be adjusted by dragging with mouse
+button 1 while the Shift key is down;  this will adjust the end
+of the selection that was nearest to the mouse cursor when button
+1 was pressed.
+If the button is double-clicked before dragging then the selection
+will be adjusted in units of whole words;  if it is triple-clicked
+then the selection will be adjusted in units of whole lines.
+<P><DT>[5]<DD>
+Clicking mouse button 1 with the Control key down will reposition the
+insertion cursor without affecting the selection.
+<P><DT>[6]<DD>
+If any normal printing characters are typed, they are
+inserted at the point of the insertion cursor.
+<P><DT>[7]<DD>
+The view in the widget can be adjusted by dragging with mouse button 2.
+If mouse button 2 is clicked without moving the mouse, the selection
+is copied into the text at the position of the mouse cursor.
+The Insert key also inserts the selection, but at the position of
+the insertion cursor.
+<P><DT>[8]<DD>
+If the mouse is dragged out of the widget
+while button 1 is pressed, the entry will automatically scroll to
+make more text visible (if there is more text off-screen on the side
+where the mouse left the window).
+<P><DT>[9]<DD>
+The Left and Right keys move the insertion cursor one character to the
+left or right;  they also clear any selection in the text.
+If Left or Right is typed with the Shift key down, then the insertion
+cursor moves and the selection is extended to include the new character.
+Control-Left and Control-Right move the insertion cursor by words, and
+Control-Shift-Left and Control-Shift-Right move the insertion cursor
+by words and also extend the selection.
+Control-b and Control-f behave the same as Left and Right, respectively.
+Meta-b and Meta-f behave the same as Control-Left and Control-Right,
+respectively.
+<P><DT>[10]<DD>
+The Up and Down keys move the insertion cursor one line up or
+down and clear any selection in the text.
+If Up or Right is typed with the Shift key down, then the insertion
+cursor moves and the selection is extended to include the new character.
+Control-Up and Control-Down move the insertion cursor by paragraphs (groups
+of lines separated by blank lines), and
+Control-Shift-Up and Control-Shift-Down move the insertion cursor
+by paragraphs and also extend the selection.
+Control-p and Control-n behave the same as Up and Down, respectively.
+<P><DT>[11]<DD>
+The Next and Prior keys move the insertion cursor forward or backwards
+by one screenful and clear any selection in the text.
+If the Shift key is held down while Next or Prior is typed, then
+the selection is extended to include the new character.
+<P><DT>[12]<DD>
+Control-Next and Control-Prior scroll the view right or left by one page
+without moving the insertion cursor or affecting the selection.
+<P><DT>[13]<DD>
+Home and Control-a move the insertion cursor to the
+beginning of its display line and clear any selection in the widget.
+Shift-Home moves the insertion cursor to the beginning of the display line
+and also extends the selection to that point.
+<P><DT>[14]<DD>
+End and Control-e move the insertion cursor to the
+end of the display line and clear any selection in the widget.
+Shift-End moves the cursor to the end of the display line and extends
+the selection to that point.
+<P><DT>[15]<DD>
+Control-Home and Meta-&lt; move the insertion cursor to the beginning of
+the text and clear any selection in the widget.
+Control-Shift-Home moves the insertion cursor to the beginning of the text
+and also extends the selection to that point.
+<P><DT>[16]<DD>
+Control-End and Meta-&gt; move the insertion cursor to the end of the
+text and clear any selection in the widget.
+Control-Shift-End moves the cursor to the end of the text and extends
+the selection to that point.
+<P><DT>[17]<DD>
+The Select key and Control-Space set the selection anchor to the position
+of the insertion cursor.  They do not affect the current selection.
+Shift-Select and Control-Shift-Space adjust the selection to the
+current position of the insertion cursor, selecting from the anchor
+to the insertion cursor if there was not any selection previously.
+<P><DT>[18]<DD>
+Control-/ selects the entire contents of the widget.
+<P><DT>[19]<DD>
+Control-&#92; clears any selection in the widget.
+<P><DT>[20]<DD>
+The F16 key (labelled Copy on many Sun workstations) or Meta-w
+copies the selection in the widget to the clipboard, if there is a selection.
+This action is carried out by the command <B>tk_textCopy</B>.
+<P><DT>[21]<DD>
+The F20 key (labelled Cut on many Sun workstations) or Control-w
+copies the selection in the widget to the clipboard and deletes
+the selection.
+This action is carried out by the command <B>tk_textCut</B>.
+If there is no selection in the widget then these keys have no effect.
+<P><DT>[22]<DD>
+The F18 key (labelled Paste on many Sun workstations) or Control-y
+inserts the contents of the clipboard at the position of the
+insertion cursor.
+This action is carried out by the command <B>tk_textPaste</B>.
+<P><DT>[23]<DD>
+The Delete key deletes the selection, if there is one in the widget.
+If there is no selection, it deletes the character to the right of
+the insertion cursor.
+<P><DT>[24]<DD>
+Backspace and Control-h delete the selection, if there is one
+in the widget.
+If there is no selection, they delete the character to the left of
+the insertion cursor.
+<P><DT>[25]<DD>
+Control-d deletes the character to the right of the insertion cursor.
+<P><DT>[26]<DD>
+Meta-d deletes the word to the right of the insertion cursor.
+<P><DT>[27]<DD>
+Control-k deletes from the insertion cursor to the end of its line;
+if the insertion cursor is already at the end of a line, then
+Control-k deletes the newline character.
+<P><DT>[28]<DD>
+Control-o opens a new line by inserting a newline character in
+front of the insertion cursor without moving the insertion cursor.
+<P><DT>[29]<DD>
+Meta-backspace and Meta-Delete delete the word to the left of the
+insertion cursor.
+<P><DT>[30]<DD>
+Control-x deletes whatever is selected in the text widget
+after copying it to the clipboard.
+<P><DT>[31]<DD>
+Control-t reverses the order of the two characters to the right of
+the insertion cursor.
+<P><DT>[32]<DD>
+Control-z (and Control-underscore on UNIX when <B>tk_strictMotif</B> is
+true) undoes the last edit action if the <B>-undo</B> option is true.
+Does nothing otherwise.
+<P><DT>[33]<DD>
+Control-Z (or Control-y on Windows) reapplies the last undone edit
+action if the <B>-undo</B> option is true. Does nothing otherwise.
+<P></DL>
+<P>
+If the widget is disabled using the <B>-state</B> option, then its
+view can still be adjusted and text can still be selected,
+but no insertion cursor will be displayed and no text modifications will
+take place.
+<P>
+The behavior of texts can be changed by defining new bindings for
+individual widgets or by redefining the class bindings.
+<H3><A NAME="M179">KNOWN ISSUES</A></H3>
+<H4><A NAME="M180">ISSUES CONCERNING CHARS AND INDICES</A></H4>
+Before Tk 8.5, the widget used the string
+&#8220;chars&#8221;
+to refer to index positions (which included characters, embedded
+windows and embedded images).  As of Tk 8.5 the text widget deals
+separately and correctly with
+&#8220;chars&#8221;
+and
+&#8220;indices&#8221;.
+For backwards compatibility, however, the index modifiers
+&#8220;+N chars&#8221;
+and
+&#8220;-N chars&#8221;
+continue to refer to indices.
+One must use any of the full forms
+&#8220;+N any chars&#8221;
+or
+&#8220;-N any chars&#8221;
+etc. to refer to actual character indices.  This confusion may be fixed in a
+future release by making the widget correctly interpret
+&#8220;+N chars&#8221;
+as a synonym for
+&#8220;+N any chars&#8221;.
+<H4><A NAME="M181">PERFORMANCE ISSUES</A></H4>
+Text widgets should run efficiently under a variety
+of conditions.  The text widget uses about 2-3 bytes of
+main memory for each byte of text, so texts containing a megabyte
+or more should be practical on most workstations.
+Text is represented internally with a modified B-tree structure
+that makes operations relatively efficient even with large texts.
+Tags are included in the B-tree structure in a way that allows
+tags to span large ranges or have many disjoint smaller ranges
+without loss of efficiency.
+Marks are also implemented in a way that allows large numbers of
+marks.
+In most cases it is fine to have large numbers of unique tags,
+or a tag that has many distinct ranges.
+<P>
+One performance problem can arise if you have hundreds or thousands
+of different tags that all have the following characteristics:
+the first and last ranges of each tag are near the beginning and
+end of the text, respectively,
+or a single tag range covers most of the text widget.
+The cost of adding and deleting tags like this is proportional
+to the number of other tags with the same properties.
+In contrast, there is no problem with having thousands of distinct
+tags if their overall ranges are localized and spread uniformly throughout
+the text.
+<P>
+Very long text lines can be expensive,
+especially if they have many marks and tags within them.
+<P>
+The display line with the insert cursor is redrawn each time the
+cursor blinks, which causes a steady stream of graphics traffic.
+Set the <B>insertOffTime</B> attribute to 0 avoid this.
+<H4><A NAME="M182">KNOWN BUGS</A></H4>
+The <I>pathName </I><B>search -regexp</B> sub-command attempts to perform sophisticated
+regexp matching across multiple lines in an efficient fashion (since Tk
+8.5), examining each line individually, and then in small groups of lines,
+whether searching forwards or backwards.  Under certain conditions the
+search result might differ from that obtained by applying the same regexp
+to the entire text from the widget in one go.  For example, when
+searching with a greedy regexp, the widget will continue to attempt to
+add extra lines to the match as long as one of two conditions are true:
+either Tcl's regexp library returns a code to indicate a longer match is
+possible (but there are known bugs in Tcl which mean this code is not
+always correctly returned); or if each extra line added results in at
+least a partial match with the pattern.  This means in the case where the
+first extra line added results in no match and Tcl's regexp system
+returns the incorrect code and adding a second extra line would actually
+match, the text widget will return the wrong result.  In practice this is
+a rare problem, but it can occur, for example:
+<PRE>pack [text .t]
+.t insert 1.0 &quot;aaaa&#92;nbbbb&#92;ncccc&#92;nbbbb&#92;naaaa&#92;n&quot;
+.t search -regexp -- {(a+|b+&#92;nc+&#92;nb+)+&#92;na+} 1.0</PRE>
+will not find a match when one exists of 19
+characters starting from the first
+&#8220;b&#8221;.
+<P>
+Whenever one possible match is fully enclosed in another, the search
+command will attempt to ensure only the larger match is returned.
+When performing backwards regexp searches it is possible that Tcl
+will not always achieve this, in the case where a match is preceded by
+one or more short, non-overlapping matches, all of which are preceded
+by a large match which actually encompasses all of them.  The search
+algorithm used by the widget does not look back arbitrarily far for a
+possible match which might cover large portions of the widget.
+For example:
+<PRE>pack [text .t]
+.t insert 1.0 &quot;aaaa&#92;nbbbb&#92;nbbbb&#92;nbbbb&#92;nbbbb&#92;n&quot;
+.t search -regexp -backward -- {b+&#92;n|a+&#92;n(b+&#92;n)+} end</PRE>
+matches at
+&#8220;5.0&#8221;
+when a true greedy match would match at
+&#8220;1.0&#8221;.
+Similarly if we add <B>-all</B> to this case, it matches at all of
+&#8220;5.0&#8221;,
+&#8220;4.0&#8221;,
+&#8220;3.0&#8221;
+and
+&#8220;1.0&#8221;,
+when really it should only match at
+&#8220;1.0&#8221;
+since that match encloses all the others.
+<H3><A NAME="M183">SEE ALSO</A></H3>
+<B><A HREF="../TkCmd/entry.htm">entry</A></B>, <B><A HREF="../TkCmd/scrollbar.htm">scrollbar</A></B>
+<H3><A NAME="M184">KEYWORDS</A></H3>
+<A href="../Keywords/T.htm#text">text</A>, <A href="../Keywords/W.htm#widget">widget</A>, <A href="../Keywords/T.htm#tkvars">tkvars</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1992 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

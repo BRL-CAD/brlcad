@@ -1,0 +1,64 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>fblocked manual page - Tcl Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclCmd</a> <small>&gt;</small> fblocked</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+fblocked - Test whether the last input operation exhausted all available input
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>fblocked </B><I>channelId</I><BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+The <B>fblocked</B> command returns 1 if the most recent input operation
+on <I>channelId</I> returned less information than requested because all
+available input was exhausted.
+For example, if <B><A HREF="../TclCmd/gets.htm">gets</A></B> is invoked when there are only three
+characters available for input and no end-of-line sequence, <B><A HREF="../TclCmd/gets.htm">gets</A></B>
+returns an empty string and a subsequent call to <B>fblocked</B> will
+return 1.
+<P>
+<I>ChannelId</I> must be an identifier for an open channel such as a
+Tcl standard channel (<B>stdin</B>, <B>stdout</B>, or <B>stderr</B>),
+the return value from an invocation of <B><A HREF="../TclCmd/open.htm">open</A></B> or <B><A HREF="../TclCmd/socket.htm">socket</A></B>, or
+the result of a channel creation command provided by a Tcl extension.
+<H3><A NAME="M5">EXAMPLE</A></H3>
+The <B>fblocked</B> command is particularly useful when writing network
+servers, as it allows you to write your code in a line-by-line style
+without preventing the servicing of other connections.  This can be
+seen in this simple echo-service:
+<P>
+<PRE># This is called whenever a new client connects to the server
+proc connect {chan host port} {
+    set clientName [format &lt;%s:%d&gt; $host $port]
+    puts &quot;connection from $clientName&quot;
+    fconfigure $chan -blocking 0 -buffering line
+    fileevent $chan readable [list echoLine $chan $clientName]
+}
+
+# This is called whenever either at least one byte of input
+# data is available, or the channel was closed by the client.
+proc echoLine {chan clientName} {
+    gets $chan line
+    if {[eof $chan]} {
+        puts &quot;finishing connection from $clientName&quot;
+        close $chan
+    } elseif {![<B>fblocked</B> $chan]} {
+        # Didn't block waiting for end-of-line
+        puts &quot;$clientName - $line&quot;
+        puts $chan $line
+    }
+}
+
+# Create the server socket and enter the event-loop to wait
+# for incoming connections...
+socket -server connect 12345
+vwait forever</PRE>
+<H3><A NAME="M6">SEE ALSO</A></H3>
+<B><A HREF="../TclCmd/gets.htm">gets</A></B>, <B><A HREF="../TclCmd/open.htm">open</A></B>, <B><A HREF="../TclCmd/read.htm">read</A></B>, <B><A HREF="../TclCmd/socket.htm">socket</A></B>, <B><A HREF="../TclLib/StdChannels.htm">Tcl_StandardChannels</A></B>
+<H3><A NAME="M7">KEYWORDS</A></H3>
+<A href="../Keywords/B.htm#blocking">blocking</A>, <A href="../Keywords/N.htm#nonblocking">nonblocking</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

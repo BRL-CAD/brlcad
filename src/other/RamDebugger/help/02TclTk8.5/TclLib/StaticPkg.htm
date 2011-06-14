@@ -1,0 +1,63 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>Tcl_StaticPackage manual page - Tcl Library Procedures</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclLib</a> <small>&gt;</small> StaticPkg</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+Tcl_StaticPackage - make a statically linked package available via the 'load' command
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>#include &lt;tcl.h&gt;</B><BR>
+<B>Tcl_StaticPackage</B>(<I>interp, pkgName, initProc, safeInitProc</I>)<BR>
+<H3><A NAME="M4">ARGUMENTS</A></H3>
+<DL class="arguments">
+<DT><A HREF="../TclLib/Interp.htm">Tcl_Interp</A> <B>*interp</B> (in)<DD>
+If not NULL, points to an interpreter into which the package has
+already been loaded (i.e., the caller has already invoked the
+appropriate initialization procedure).  NULL means the package
+has not yet been incorporated into any interpreter.
+<P><DT>const char <B>*pkgName</B> (in)<DD>
+Name of the package;  should be properly capitalized (first letter
+upper-case, all others lower-case).
+<P><DT>Tcl_PackageInitProc <B>*initProc</B> (in)<DD>
+Procedure to invoke to incorporate this package into a trusted
+interpreter.
+<P><DT>Tcl_PackageInitProc <B>*safeInitProc</B> (in)<DD>
+Procedure to call to incorporate this package into a safe interpreter
+(one that will execute untrusted scripts).   NULL means the package
+cannot be used in safe interpreters.
+<P></DL>
+<H3><A NAME="M5">DESCRIPTION</A></H3>
+This procedure may be invoked to announce that a package has been
+linked statically with a Tcl application and, optionally, that it
+has already been loaded into an interpreter.
+Once <B>Tcl_StaticPackage</B> has been invoked for a package, it
+may be loaded into interpreters using the <B><A HREF="../TclCmd/load.htm">load</A></B> command.
+<B>Tcl_StaticPackage</B> is normally invoked only by the <B><A HREF="../TclLib/AppInit.htm">Tcl_AppInit</A></B>
+procedure for the application, not by packages for themselves
+(<B>Tcl_StaticPackage</B> should only be invoked for statically
+loaded packages, and code in the package itself should not need
+to know whether the package is dynamically or statically loaded).
+<P>
+When the <B><A HREF="../TclCmd/load.htm">load</A></B> command is used later to load the package into
+an interpreter, one of <I>initProc</I> and <I>safeInitProc</I> will
+be invoked, depending on whether the target interpreter is safe
+or not.
+<I>initProc</I> and <I>safeInitProc</I> must both match the
+following prototype:
+<PRE>typedef int Tcl_PackageInitProc(<A HREF="../TclLib/Interp.htm">Tcl_Interp</A> *<I>interp</I>);</PRE>
+The <I>interp</I> argument identifies the interpreter in which the package
+is to be loaded.  The initialization procedure must return <B>TCL_OK</B> or
+<B>TCL_ERROR</B> to indicate whether or not it completed successfully; in
+the event of an error it should set the interpreter's result to point to an
+error message.  The result or error from the initialization procedure will
+be returned as the result of the <B><A HREF="../TclCmd/load.htm">load</A></B> command that caused the
+initialization procedure to be invoked.
+
+<H3><A NAME="M6">KEYWORDS</A></H3>
+<A href="../Keywords/I.htm#initialization procedure">initialization procedure</A>, <A href="../Keywords/P.htm#package">package</A>, <A href="../Keywords/S.htm#static linking">static linking</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1995-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

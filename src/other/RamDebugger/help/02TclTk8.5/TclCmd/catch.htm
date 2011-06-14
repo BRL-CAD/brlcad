@@ -1,0 +1,88 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>catch manual page - Tcl Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclCmd</a> <small>&gt;</small> catch</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+catch - Evaluate script and trap exceptional returns
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>catch</B><I> script </I>?<I>resultVarName</I>? ?<I>optionsVarName</I>?<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+The <B>catch</B> command may be used to prevent errors from aborting command
+interpretation.  The <B>catch</B> command calls the Tcl interpreter recursively to
+execute <I>script</I>, and always returns without raising an error,
+regardless of any errors that might occur while executing <I>script</I>.
+<P>
+If <I>script</I> raises an error, <B>catch</B> will return a non-zero integer
+value corresponding to the exceptional return code returned by evaluation
+of <I>script</I>.  Tcl defines the normal return code from script
+evaluation to be zero (0), or <B>TCL_OK</B>.  Tcl also defines four exceptional
+return codes: 1 (<B>TCL_ERROR</B>), 2 (<B>TCL_RETURN</B>), 3 (<B>TCL_BREAK</B>),
+and 4 (<B>TCL_CONTINUE</B>).  Errors during evaluation of a script are indicated
+by a return code of <B>TCL_ERROR</B>.  The other exceptional return codes are
+returned by the <B><A HREF="../TclCmd/return.htm">return</A></B>, <B><A HREF="../TclCmd/break.htm">break</A></B>, and <B><A HREF="../TclCmd/continue.htm">continue</A></B> commands
+and in other special situations as documented.  Tcl packages can define
+new commands that return other integer values as return codes as well,
+and scripts that make use of the <B>return -code</B> command can also
+have return codes other than the five defined by Tcl.
+<P>
+If the <I>resultVarName</I> argument is given, then the variable it names is
+set to the result of the script evaluation.  When the return code from
+the script is 1 (<B>TCL_ERROR</B>), the value stored in <I>resultVarName</I> is an error
+message.  When the return code from the script is 0 (<B>TCL_OK</B>), the value
+stored in <I>resultVarName</I> is the value returned from <I>script</I>.
+<P>
+If the <I>optionsVarName</I> argument is given, then the variable it
+names is set to a dictionary of return options returned by evaluation
+of <I>script</I>.  Tcl specifies two entries that are always 
+defined in the dictionary: <B>-code</B> and <B>-level</B>.  When
+the return code from evaluation of <I>script</I> is not <B>TCL_RETURN</B>,
+the value of the <B>-level</B> entry will be 0, and the value
+of the <B>-code</B> entry will be the same as the return code.
+Only when the return code is <B>TCL_RETURN</B> will the values of
+the <B>-level</B> and <B>-code</B> entries be something else, as
+further described in the documentation for the <B><A HREF="../TclCmd/return.htm">return</A></B> command.
+<P>
+When the return code from evaluation of <I>script</I> is <B>TCL_ERROR</B>,
+three additional entries are defined in the dictionary of return options
+stored in <I>optionsVarName</I>: <B>-errorinfo</B>, <B>-errorcode</B>, 
+and <B>-errorline</B>.  The value of the <B>-errorinfo</B> entry
+is a formatted stack trace containing more information about
+the context in which the error happened.  The formatted stack
+trace is meant to be read by a person.  The value of
+the <B>-errorcode</B> entry is additional information about the
+error stored as a list.  The <B>-errorcode</B> value is meant to
+be further processed by programs, and may not be particularly
+readable by people.  The value of the <B>-errorline</B> entry
+is an integer indicating which line of <I>script</I> was being
+evaluated when the error occurred.  The values of the <B>-errorinfo</B>
+and <B>-errorcode</B> entries of the most recent error are also
+available as values of the global variables <B>::errorInfo</B>
+and <B>::errorCode</B> respectively.
+<P>
+Tcl packages may provide commands that set other entries in the
+dictionary of return options, and the <B><A HREF="../TclCmd/return.htm">return</A></B> command may be
+used by scripts to set return options in addition to those defined
+above.
+<H3><A NAME="M5">EXAMPLES</A></H3>
+The <B>catch</B> command may be used in an <B><A HREF="../TclCmd/if.htm">if</A></B> to branch based on
+the success of a script.
+<PRE>if { [<B>catch</B> {open $someFile w} fid] } {
+    puts stderr &quot;Could not open $someFile for writing&#92;n$fid&quot;
+    exit 1
+}</PRE>
+<P>
+There are more complex examples of <B>catch</B> usage in the
+documentation for the <B><A HREF="../TclCmd/return.htm">return</A></B> command.
+
+<H3><A NAME="M6">SEE ALSO</A></H3>
+<B><A HREF="../TclCmd/break.htm">break</A></B>, <B><A HREF="../TclCmd/continue.htm">continue</A></B>, <B><A HREF="../TclCmd/dict.htm">dict</A></B>, <B><A HREF="../TclCmd/error.htm">error</A></B>, <B><A HREF="../TclCmd/return.htm">return</A></B>, <B><A HREF="../TclCmd/tclvars.htm">tclvars</A></B>
+<H3><A NAME="M7">KEYWORDS</A></H3>
+<A href="../Keywords/C.htm#catch">catch</A>, <A href="../Keywords/E.htm#error">error</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1993-1994 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

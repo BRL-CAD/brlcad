@@ -1,0 +1,36 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>time manual page - Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclCmd</a> <small>&gt;</small> time</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+time - Time the execution of a script
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>time </B><I>script</I> ?<I>count</I>?<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+This command will call the Tcl interpreter <I>count</I>
+times to evaluate <I>script</I> (or once if <I>count</I> is not
+specified).  It will then return a string of the form
+<PRE><B>503 microseconds per iteration</B></PRE>
+which indicates the average amount of time required per iteration,
+in microseconds.
+Time is measured in elapsed time, not CPU time.
+<H3><A NAME="M5">EXAMPLE</A></H3>
+Estimate how long it takes for a simple Tcl <B><A HREF="../TclCmd/for.htm">for</A></B> loop to count to
+a thousand:
+<PRE>time {
+    for {set i 0} {$i&lt;1000} {incr i} {
+        # empty body
+    }
+}</PRE>
+<H3><A NAME="M6">SEE ALSO</A></H3>
+<B><A HREF="../TclCmd/clock.htm">clock</A></B>
+<H3><A NAME="M7">KEYWORDS</A></H3>
+<A href="../Keywords/S.htm#script">script</A>, <A href="../Keywords/T.htm#time">time</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1993 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

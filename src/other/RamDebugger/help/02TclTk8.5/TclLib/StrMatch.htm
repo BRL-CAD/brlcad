@@ -1,0 +1,63 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>Tcl_StringMatch manual page - Tcl Library Procedures</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclLib</a> <small>&gt;</small> StrMatch</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="StrMatch.htm#M2" NAME="L717">NAME</A>
+<DL><DD>Tcl_StringMatch, Tcl_StringCaseMatch - test whether a string matches a pattern</DD></DL>
+<DD><A HREF="StrMatch.htm#M3" NAME="L718">SYNOPSIS</A>
+<DL>
+<DD><B>#include &lt;tcl.h&gt;</B>
+<DD>int
+<DD><B>Tcl_StringMatch</B>(<I>str</I>, <I>pattern</I>)
+<DD>int
+<DD><B>Tcl_StringCaseMatch</B>(<I>str</I>, <I>pattern</I>, <I>flags</I>)
+</DL>
+<DD><A HREF="StrMatch.htm#M4" NAME="L719">ARGUMENTS</A>
+<DL class="arguments">
+</DL>
+<DD><A HREF="StrMatch.htm#M5" NAME="L720">DESCRIPTION</A>
+<DD><A HREF="StrMatch.htm#M6" NAME="L721">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+Tcl_StringMatch, Tcl_StringCaseMatch - test whether a string matches a pattern
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>#include &lt;tcl.h&gt;</B><BR>
+int<BR>
+<B>Tcl_StringMatch</B>(<I>str</I>, <I>pattern</I>)<BR>
+int<BR>
+<B>Tcl_StringCaseMatch</B>(<I>str</I>, <I>pattern</I>, <I>flags</I>)<BR>
+<H3><A NAME="M4">ARGUMENTS</A></H3>
+<DL class="arguments">
+<DT>const char <B>*str</B> (in)<DD>
+String to test.
+<P><DT>const char <B>*pattern</B> (in)<DD>
+Pattern to match against string.  May contain special
+characters from the set *?&#92;[].
+<P><DT>int <B>flags</B> (in)<DD>
+OR-ed combination of match flags, currently only <B>TCL_MATCH_NOCASE</B>.
+0 specifies a case-sensitive search.
+<P></DL>
+<H3><A NAME="M5">DESCRIPTION</A></H3>
+This utility procedure determines whether a string matches
+a given pattern.  If it does, then <B>Tcl_StringMatch</B> returns
+1.  Otherwise <B>Tcl_StringMatch</B> returns 0.  The algorithm
+used for matching is the same algorithm used in the <B><A HREF="../TclCmd/string.htm">string match</A></B>
+Tcl command and is similar to the algorithm used by the C-shell
+for file name matching;  see the <A HREF="../TclCmd/Tcl.htm">Tcl</A> manual entry for details.
+<P>
+In <B>Tcl_StringCaseMatch</B>, the algorithm is
+the same, but you have the option to make the matching case-insensitive.
+If you choose this (by passing <B>TCL_MATCH_NOCASE</B>), then the string and
+pattern are essentially matched in the lower case.
+
+<H3><A NAME="M6">KEYWORDS</A></H3>
+<A href="../Keywords/M.htm#match">match</A>, <A href="../Keywords/P.htm#pattern">pattern</A>, <A href="../Keywords/S.htm#string">string</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1989-1993 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

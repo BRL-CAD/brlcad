@@ -1,0 +1,89 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>Tcl_AppInit manual page - Tcl Library Procedures</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclLib</a> <small>&gt;</small> AppInit</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="AppInit.htm#M2" NAME="L23">NAME</A>
+<DL><DD>Tcl_AppInit - perform application-specific initialization</DD></DL>
+<DD><A HREF="AppInit.htm#M3" NAME="L24">SYNOPSIS</A>
+<DL>
+<DD><B>#include &lt;tcl.h&gt;</B>
+<DD>int
+<DD><B>Tcl_AppInit</B>(<I>interp</I>)
+</DL>
+<DD><A HREF="AppInit.htm#M4" NAME="L25">ARGUMENTS</A>
+<DL class="arguments">
+</DL>
+<DD><A HREF="AppInit.htm#M5" NAME="L26">DESCRIPTION</A>
+<DL class="description">
+</DL>
+<DD><A HREF="AppInit.htm#M6" NAME="L27">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+Tcl_AppInit - perform application-specific initialization
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>#include &lt;tcl.h&gt;</B><BR>
+int<BR>
+<B>Tcl_AppInit</B>(<I>interp</I>)<BR>
+<H3><A NAME="M4">ARGUMENTS</A></H3>
+<DL class="arguments">
+<DT><A HREF="../TclLib/Interp.htm">Tcl_Interp</A> <B>*interp</B> (in)<DD>
+Interpreter for the application.
+<P></DL>
+<H3><A NAME="M5">DESCRIPTION</A></H3>
+<B>Tcl_AppInit</B> is a
+&#8220;hook&#8221;
+procedure that is invoked by
+the main programs for Tcl applications such as <B><A HREF="../UserCmd/tclsh.htm">tclsh</A></B> and <B><A HREF="../UserCmd/wish.htm">wish</A></B>.
+Its purpose is to allow new Tcl applications to be created without
+modifying the main programs provided as part of Tcl and Tk.
+To create a new application you write a new version of
+<B>Tcl_AppInit</B> to replace the default version provided by Tcl,
+then link your new <B>Tcl_AppInit</B> with the Tcl library.
+<P>
+<B>Tcl_AppInit</B> is invoked by <B><A HREF="../TclLib/Tcl_Main.htm">Tcl_Main</A></B> and <B><A HREF="../TkLib/Tk_Main.htm">Tk_Main</A></B>
+after their own initialization and before entering the main loop
+to process commands.
+Here are some examples of things that <B>Tcl_AppInit</B> might do:
+<P>
+<DL class="description">
+<DT>[1]<DD>
+Call initialization procedures for various packages used by
+the application.
+Each initialization procedure adds new commands to <I>interp</I>
+for its package and performs other package-specific initialization.
+<P><DT>[2]<DD>
+Process command-line arguments, which can be accessed from the
+Tcl variables <B>argv</B> and <B>argv0</B> in <I>interp</I>.
+<P><DT>[3]<DD>
+Invoke a startup script to initialize the application.
+<P></DL>
+<P>
+<B>Tcl_AppInit</B> returns <B>TCL_OK</B> or <B>TCL_ERROR</B>.
+If it returns <B>TCL_ERROR</B> then it must leave an error message in
+for the interpreter's result;  otherwise the result is ignored.
+<P>
+In addition to <B>Tcl_AppInit</B>, your application should also contain
+a procedure <B>main</B> that calls <B><A HREF="../TclLib/Tcl_Main.htm">Tcl_Main</A></B> as follows:
+<PRE><A HREF="../TclLib/Tcl_Main.htm">Tcl_Main</A>(argc, argv, Tcl_AppInit);</PRE>
+The third argument to <B><A HREF="../TclLib/Tcl_Main.htm">Tcl_Main</A></B> gives the address of the
+application-specific initialization procedure to invoke.
+This means that you do not have to use the name <B>Tcl_AppInit</B>
+for the procedure, but in practice the name is nearly always
+<B>Tcl_AppInit</B> (in versions before Tcl 7.4 the name <B>Tcl_AppInit</B>
+was implicit;  there was no way to specify the procedure explicitly).
+The best way to get started is to make a copy of the file
+<B>tclAppInit.c</B> from the Tcl library or source directory.
+It already contains a <B>main</B> procedure and a template for
+<B>Tcl_AppInit</B> that you can modify for your application.
+
+<H3><A NAME="M6">KEYWORDS</A></H3>
+<A href="../Keywords/A.htm#application">application</A>, <A href="../Keywords/A.htm#argument">argument</A>, <A href="../Keywords/C.htm#command">command</A>, <A href="../Keywords/I.htm#initialization">initialization</A>, <A href="../Keywords/I.htm#interpreter">interpreter</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1993 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

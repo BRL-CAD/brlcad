@@ -1,0 +1,256 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>Tcl_DictObj manual page - Tcl Library Procedures</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclLib</a> <small>&gt;</small> DictObj</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="DictObj.htm#M2" NAME="L174">NAME</A>
+<DL><DD>Tcl_NewDictObj, Tcl_DictObjPut, Tcl_DictObjGet, Tcl_DictObjRemove, Tcl_DictObjSize, Tcl_DictObjFirst, Tcl_DictObjNext, Tcl_DictObjDone, Tcl_DictObjPutKeyList, Tcl_DictObjRemoveKeyList - manipulate Tcl objects as dictionaries</DD></DL>
+<DD><A HREF="DictObj.htm#M3" NAME="L175">SYNOPSIS</A>
+<DL>
+<DD><B>#include &lt;tcl.h&gt;</B>
+<DD>Tcl_Obj *
+<DD><B>Tcl_NewDictObj</B>()
+<DD>int
+<DD><B>Tcl_DictObjGet</B>(<I>interp, dictPtr, keyPtr, valuePtrPtr</I>)
+<DD>int
+<DD><B>Tcl_DictObjPut</B>(<I>interp, dictPtr, keyPtr, valuePtr</I>)
+<DD>int
+<DD><B>Tcl_DictObjRemove</B>(<I>interp, dictPtr, keyPtr</I>)
+<DD>int
+<DD><B>Tcl_DictObjSize</B>(<I>interp, dictPtr, sizePtr</I>)
+<DD>int
+<DD><B>Tcl_DictObjFirst</B>(<I>interp, dictPtr, searchPtr,
+<DD>                 keyPtrPtr, valuePtrPtr, donePtr</I>)
+<DD>void
+<DD><B>Tcl_DictObjNext</B>(<I>searchPtr, keyPtrPtr, valuePtrPtr, donePtr</I>)
+<DD>void
+<DD><B>Tcl_DictObjDone</B>(<I>searchPtr</I>)
+<DD>int
+<DD><B>Tcl_DictObjPutKeyList</B>(<I>interp, dictPtr, keyc, keyv, valuePtr</I>)
+<DD>int
+<DD><B>Tcl_DictObjRemoveKeyList</B>(<I>interp, dictPtr, keyc, keyv</I>)
+</DL>
+<DD><A HREF="DictObj.htm#M4" NAME="L176">ARGUMENTS</A>
+<DL class="arguments">
+</DL>
+<DD><A HREF="DictObj.htm#M5" NAME="L177">DESCRIPTION</A>
+<DD><A HREF="DictObj.htm#M6" NAME="L178">EXAMPLE</A>
+<DD><A HREF="DictObj.htm#M7" NAME="L179">SEE ALSO</A>
+<DD><A HREF="DictObj.htm#M8" NAME="L180">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+Tcl_NewDictObj, Tcl_DictObjPut, Tcl_DictObjGet, Tcl_DictObjRemove, Tcl_DictObjSize, Tcl_DictObjFirst, Tcl_DictObjNext, Tcl_DictObjDone, Tcl_DictObjPutKeyList, Tcl_DictObjRemoveKeyList - manipulate Tcl objects as dictionaries
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>#include &lt;tcl.h&gt;</B><BR>
+Tcl_Obj *<BR>
+<B>Tcl_NewDictObj</B>()<BR>
+int<BR>
+<B>Tcl_DictObjGet</B>(<I>interp, dictPtr, keyPtr, valuePtrPtr</I>)<BR>
+int<BR>
+<B>Tcl_DictObjPut</B>(<I>interp, dictPtr, keyPtr, valuePtr</I>)<BR>
+int<BR>
+<B>Tcl_DictObjRemove</B>(<I>interp, dictPtr, keyPtr</I>)<BR>
+int<BR>
+<B>Tcl_DictObjSize</B>(<I>interp, dictPtr, sizePtr</I>)<BR>
+int<BR>
+<B>Tcl_DictObjFirst</B>(<I>interp, dictPtr, searchPtr,<BR>
+                 keyPtrPtr, valuePtrPtr, donePtr</I>)<BR>
+void<BR>
+<B>Tcl_DictObjNext</B>(<I>searchPtr, keyPtrPtr, valuePtrPtr, donePtr</I>)<BR>
+void<BR>
+<B>Tcl_DictObjDone</B>(<I>searchPtr</I>)<BR>
+int<BR>
+<B>Tcl_DictObjPutKeyList</B>(<I>interp, dictPtr, keyc, keyv, valuePtr</I>)<BR>
+int<BR>
+<B>Tcl_DictObjRemoveKeyList</B>(<I>interp, dictPtr, keyc, keyv</I>)<BR>
+<H3><A NAME="M4">ARGUMENTS</A></H3>
+<DL class="arguments">
+<DT><A HREF="../TclLib/Interp.htm">Tcl_Interp</A> <B>*interp</B> (in)<DD>
+If an error occurs while converting an object to be a dictionary object,
+an error message is left in the interpreter's result object
+unless <I>interp</I> is NULL.
+<P><DT>Tcl_Obj <B>*dictPtr</B> (in/out)<DD>
+Points to the dictionary object to be manipulated.
+If <I>dictPtr</I> does not already point to a dictionary object,
+an attempt will be made to convert it to one.
+<P><DT>Tcl_Obj <B>*keyPtr</B> (in)<DD>
+Points to the key for the key/value pair being manipulated within the
+dictionary object.
+<P><DT>Tcl_Obj <B>**keyPtrPtr</B> (out)<DD>
+Points to a variable that will have the key from a key/value pair
+placed within it.  May be NULL to indicate that the caller is not
+interested in the key.
+<P><DT>Tcl_Obj <B>*valuePtr</B> (in)<DD>
+Points to the value for the key/value pair being manipulate within the
+dictionary object (or sub-object, in the case of
+<B>Tcl_DictObjPutKeyList</B>.)
+<P><DT>Tcl_Obj <B>**valuePtrPtr</B> (out)<DD>
+Points to a variable that will have the value from a key/value pair
+placed within it.  For <B>Tcl_DictObjFirst</B> and
+<B>Tcl_DictObjNext</B>, this may be NULL to indicate that the caller is
+not interested in the value.
+<P><DT>int <B>*sizePtr</B> (out)<DD>
+Points to a variable that will have the number of key/value pairs
+contained within the dictionary placed within it.
+<P><DT>Tcl_DictSearch <B>*searchPtr</B> (in/out)<DD>
+Pointer to record to use to keep track of progress in enumerating all
+key/value pairs in a dictionary.  The contents of the record will be
+initialized by the call to <B>Tcl_DictObjFirst</B>.  If the enumerating
+is to be terminated before all values in the dictionary have been
+returned, the search record <I>must</I> be passed to
+<B>Tcl_DictObjDone</B> to enable the internal locks to be released.
+<P><DT>int <B>*donePtr</B> (out)<DD>
+Points to a variable that will have a non-zero value written into it
+when the enumeration of the key/value pairs in a dictionary has
+completed, and a zero otherwise.
+<P><DT>int <B>keyc</B> (in)<DD>
+Indicates the number of keys that will be supplied in the <I>keyv</I>
+array.
+<P><DT>Tcl_Obj *const <B>*keyv</B> (in)<DD>
+Array of <I>keyc</I> pointers to objects that
+<B>Tcl_DictObjPutKeyList</B> and <B>Tcl_DictObjRemoveKeyList</B> will
+use to locate the key/value pair to manipulate within the
+sub-dictionaries of the main dictionary object passed to them.
+<P></DL>
+<H3><A NAME="M5">DESCRIPTION</A></H3>
+Tcl dictionary objects have an internal representation that supports
+efficient mapping from keys to values and which guarantees that the
+particular ordering of keys within the dictionary remains the same
+modulo any keys being deleted (which removes them from the order) or
+added (which adds them to the end of the order). If reinterpreted as a
+list, the values at the even-valued indices in the list will be the
+keys of the dictionary, and each will be followed (in the odd-valued
+index) bu the value associated with that key.
+<P>
+The procedures described in this man page are used to
+create, modify, index, and iterate over dictionary objects from C code.
+<P>
+<B>Tcl_NewDictObj</B> creates a new, empty dictionary object.  The
+string representation of the object will be invalid, and the reference
+count of the object will be zero.
+<P>
+<B>Tcl_DictObjGet</B> looks up the given key within the given
+dictionary and writes a pointer to the value associated with that key
+into the variable pointed to by <I>valuePtrPtr</I>, or a NULL if the
+key has no mapping within the dictionary.  The result of this
+procedure is <B>TCL_OK</B>, or <B>TCL_ERROR</B> if the <I>dictPtr</I> cannot be
+converted to a dictionary.
+<P>
+<B>Tcl_DictObjPut</B> updates the given dictionary so that the given
+key maps to the given value; any key may exist at most once in any
+particular dictionary.  The dictionary must not be shared, but the key
+and value may be.  This procedure may increase the reference count of
+both key and value if it proves necessary to store them.  Neither key
+nor value should be NULL.  The result of this procedure is <B>TCL_OK</B>, or
+<B>TCL_ERROR</B> if the <I>dictPtr</I> cannot be converted to a dictionary.
+<P>
+<B>Tcl_DictObjRemove</B> updates the given dictionary so that the given
+key has no mapping to any value.  The dictionary must not be shared,
+but the key may be.  The key actually stored in the dictionary will
+have its reference count decremented if it was present.  It is not an
+error if the key did not previously exist.  The result of this
+procedure is <B>TCL_OK</B>, or <B>TCL_ERROR</B> if the <I>dictPtr</I> cannot be
+converted to a dictionary.
+<P>
+<B>Tcl_DictObjSize</B> updates the given variable with the number of
+key/value pairs currently in the given dictionary. The result of this
+procedure is <B>TCL_OK</B>, or <B>TCL_ERROR</B> if the <I>dictPtr</I> cannot be
+converted to a dictionary.
+<P>
+<B>Tcl_DictObjFirst</B> commences an iteration across all the key/value
+pairs in the given dictionary, placing the key and value in the
+variables pointed to by the <I>keyPtrPtr</I> and <I>valuePtrPtr</I>
+arguments (which may be NULL to indicate that the caller is
+uninterested in they key or variable respectively.)  The next
+key/value pair in the dictionary may be retrieved with
+<B>Tcl_DictObjNext</B>.  Concurrent updates of the dictionary's
+internal representation will not modify the iteration processing
+unless the dictionary is unshared, when this will trigger premature
+termination of the iteration instead (which Tcl scripts cannot trigger
+via the <B><A HREF="../TclCmd/dict.htm">dict</A></B> command.)  The <I>searchPtr</I> argument points to a
+piece of context that is used to identify which particular iteration
+is being performed, and is initialized by the call to
+<B>Tcl_DictObjFirst</B>.  The <I>donePtr</I> argument points to a
+variable that is updated to be zero of there are further key/value
+pairs to be iterated over, or non-zero if the iteration is complete.
+The order of iteration is implementation-defined.  If the
+<I>dictPtr</I> argument cannot be converted to a dictionary,
+<B>Tcl_DictObjFirst</B> returns <B>TCL_ERROR</B> and the iteration is not
+commenced, and otherwise it returns <B>TCL_OK</B>.
+<P>
+When <B>Tcl_DictObjFirst</B> is called upon a dictionary, a lock is placed on
+the dictionary to enable that dictionary to be iterated over safely without
+regard for whether the dictionary is modified during the iteration. Because of
+this, once the iteration over a dictionary's keys has finished (whether
+because all values have been iterated over as indicated by the variable
+indicated by the <I>donePtr</I> argument being set to one, or because no
+further values are required) the <B>Tcl_DictObjDone</B> function must be called
+with the same <I>searchPtr</I> as was passed to <B>Tcl_DictObjFirst</B> so that
+the internal locks can be released. Once a particular <I>searchPtr</I> is
+passed to <B>Tcl_DictObjDone</B>, passing it to <B>Tcl_DictObjNext</B> (without
+first initializing it with <B>Tcl_DictObjFirst</B>) will result in no values
+being produced and the variable pointed to by <I>donePtr</I> being set to one.
+It is safe to call <B>Tcl_DictObjDone</B> multiple times on the same
+<I>searchPtr</I> for each call to <B>Tcl_DictObjFirst</B>.
+<P>
+The procedures <B>Tcl_DictObjPutKeyList</B> and
+<B>Tcl_DictObjRemoveKeyList</B> are the close analogues of
+<B>Tcl_DictObjPut</B> and <B>Tcl_DictObjRemove</B> respectively, except
+that instead of working with a single dictionary, they are designed to
+operate on a nested tree of dictionaries, with inner dictionaries
+stored as values inside outer dictionaries.  The <I>keyc</I> and
+<I>keyv</I> arguments specify a list of keys (with outermost keys
+first) that acts as a path to the key/value pair to be affected.  Note
+that there is no corresponding operation for reading a value for a
+path as this is easy to construct from repeated use of
+<B>Tcl_DictObjGet</B>. With <B>Tcl_DictObjPutKeyList</B>, nested
+dictionaries are created for non-terminal keys where they do not
+already exist. With <B>Tcl_DictObjRemoveKeyList</B>, all non-terminal
+keys must exist and have dictionaries as their values.
+<H3><A NAME="M6">EXAMPLE</A></H3>
+Using the dictionary iteration interface to search determine if there
+is a key that maps to itself:
+<P>
+<PRE>Tcl_DictSearch search;
+Tcl_Obj *key, *value;
+int done;
+
+/*
+ * Assume interp and objPtr are parameters.  This is the
+ * idiomatic way to start an iteration over the dictionary; it
+ * sets a lock on the internal representation that ensures that
+ * there are no concurrent modification issues when normal
+ * reference count management is also used.  The lock is
+ * released automatically when the loop is finished, but must
+ * be released manually when an exceptional exit from the loop
+ * is performed. However it is safe to try to release the lock
+ * even if we've finished iterating over the loop.
+ */
+if (<B>Tcl_DictObjFirst</B>(interp, objPtr, &amp;search,
+        &amp;key, &amp;value, &amp;done) != TCL_OK) {
+    return TCL_ERROR;
+}
+for (; done ; <B>Tcl_DictObjNext</B>(&amp;search, &amp;key, &amp;value, &amp;done)) {
+    /*
+     * Note that strcmp() is not a good way of comparing
+     * objects and is just used here for demonstration
+     * purposes.
+     */
+    if (!strcmp(<A HREF="../TclLib/StringObj.htm">Tcl_GetString</A>(key), <A HREF="../TclLib/StringObj.htm">Tcl_GetString</A>(value))) {
+        break;
+    }
+}
+<B>Tcl_DictObjDone</B>(&amp;search);
+<A HREF="../TclLib/SetResult.htm">Tcl_SetObjResult</A>(interp, <A HREF="../TclLib/BoolObj.htm">Tcl_NewBooleanObj</A>(!done));
+return TCL_OK;</PRE>
+<H3><A NAME="M7">SEE ALSO</A></H3>
+<B><A HREF="../TclLib/Object.htm">Tcl_NewObj</A></B>, <B><A HREF="../TclLib/Object.htm">Tcl_DecrRefCount</A></B>, <B><A HREF="../TclLib/Object.htm">Tcl_IncrRefCount</A></B>, <B><A HREF="../TclLib/Hash.htm">Tcl_InitObjHashTable</A></B>
+<H3><A NAME="M8">KEYWORDS</A></H3>
+<A href="../Keywords/D.htm#dict">dict</A>, <A href="../Keywords/D.htm#dict object">dict object</A>, <A href="../Keywords/D.htm#dictionary">dictionary</A>, <A href="../Keywords/D.htm#dictionary object">dictionary object</A>, <A href="../Keywords/H.htm#hash table">hash table</A>, <A href="../Keywords/I.htm#iteration">iteration</A>, <A href="../Keywords/O.htm#object">object</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 2003 Donal K. Fellows
+</div>
+</BODY></HTML>

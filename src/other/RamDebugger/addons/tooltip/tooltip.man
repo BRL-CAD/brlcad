@@ -1,0 +1,141 @@
+[comment {-*- tcl -*- doctools manpage}]
+[manpage_begin tooltip n 1.4.4]
+[copyright {1996-2008, Jeffrey Hobbs}]
+[moddesc   {Tooltip management}]
+[titledesc {Tooltip management}]
+[require Tcl 8.4]
+[require msgcat 1.3]
+[require tooltip [opt 1.4.4]]
+[description]
+[para]
+
+This package provides tooltips, small text messages that can be displayed
+when the mouse hovers over a widget, menu item, canvas item, listbox item
+or text widget tag.
+
+[section {COMMANDS}]
+
+[list_begin definitions]
+
+[call [cmd ::tooltip::tooltip] [arg command] [opt [arg options]]]
+
+Manage the tooltip package using the following subcommands.
+
+[list_begin options]
+
+[opt_def clear [arg index]]
+
+Prevents the specified widgets from showing tooltips. [arg pattern] 
+is a glob pattern and defaults to matching all widgets.
+
+[opt_def delay [opt [arg millisecs]]]
+
+Query or set the hover delay. This is the interval that the pointer must remain
+over the widget before the tooltip is displayed. The delay is specified in 
+milliseconds and must be greater than 50ms.
+With no argument the current delay is returned.
+
+[opt_def fade [opt [arg boolean]]]
+
+Enable or disable fading of the tooltip.  The is enabled by default on Win32
+and Aqua.  The tooltip will fade away on Leave events instead disappearing.
+
+[opt_def disable]
+[opt_def off]
+
+Disable all tooltips
+
+[opt_def enable]
+[opt_def on]
+
+Enables tooltips for defined widgets.
+
+[list_end]
+
+[nl]
+
+[call [cmd ::tooltip::tooltip] \
+     [arg pathName] [opt [arg "option arg"]] [arg message]]
+
+This command arranges for widget [arg pathName] to display a tooltip with
+message [arg message].  The tooltip uses a late-binding msgcat call on the
+passed in message to allow for on-the-fly language changes in an application.
+If the widget specified is a menu, canvas or text widget then additional options
+are used to tie the tooltip to specific menu entries, canvas items or text
+tags.
+
+[list_begin options]
+
+[opt_def -index [arg index]]
+
+This option is used to set a tooltip on a menu item. The index may be
+either the entry index or the entry label. The widget must be a menu
+widget but the entries do not have to exists when the tooltip is set.
+
+[opt_def -items [arg name]]
+
+This option is used to set a tooltip for canvas widget or listbox items.
+For the canvas widget, the item must already be present in the canvas
+widget and will be found with a [cmd "find withtag"] lookup.
+For listbox widgets the item(s) may be created later but the programmer
+is responsible for managing the link between the listbox item index and the
+corresponding tooltip. If the listbox items are re-ordered, the tooltips
+will need amending.
+[nl]
+If the widget is not a canvas or listbox then an error is raised.
+
+[opt_def -tag [arg name]]
+
+The [option -tag] option can be used to set a tooltip for a text widget
+tag. The tag should already be present when this command is called or
+an error will be returned. The widget must also be a text widget.
+
+[list_end]
+
+[list_end]
+
+[section EXAMPLE]
+
+[example {
+# Demonstrate widget tooltip
+package require tooltip
+pack [label .l -text "label"]
+tooltip::tooltip .l "This is a label widget"
+}]
+
+[example {
+# Demonstrate menu tooltip
+package require tooltip
+. configure -menu [menu .menu]
+.menu add cascade -label Test -menu [menu .menu.test -tearoff 0]
+.menu.test add command -label Tooltip
+tooltip::tooltip .menu.test -index 0 "This is a menu tooltip"
+}]
+
+[example {
+# Demonstrate canvas item tooltip
+package require tooltip
+pack [canvas .c]
+set item [.c create rectangle 10 10 80 80]
+tooltip::tooltip .c -item $item "Canvas item tooltip"
+}]
+
+[example {
+# Demonstrate listbox item tooltip
+package require tooltip
+pack [listbox .lb]
+.lb insert 0 "item one"
+tooltip::tooltip .lb -item 0 "Listbox item tooltip"
+}]
+
+[example {
+# Demonstrate text tag tooltip
+package require tooltip
+pack [text .txt]
+.txt tag configure TIP-1 -underline 1
+tooltip::tooltip .txt -tag TIP-1 "tooltip one text"
+.txt insert end "An example of a " {} "tooltip" TIP-1 " tag.\n" {}
+}]
+
+[keywords tooltip hover balloon help]
+[manpage_end]

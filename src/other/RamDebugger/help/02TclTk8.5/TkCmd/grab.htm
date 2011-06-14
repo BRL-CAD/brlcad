@@ -1,0 +1,145 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>grab manual page - Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TkCmd</a> <small>&gt;</small> grab</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="grab.htm#M2" NAME="L693">NAME</A>
+<DL><DD>grab - Confine pointer and keyboard events to a window sub-tree</DD></DL>
+<DD><A HREF="grab.htm#M3" NAME="L694">SYNOPSIS</A>
+<DL>
+</DL>
+<DD><A HREF="grab.htm#M4" NAME="L695">DESCRIPTION</A>
+<DL class="description">
+<DD><A HREF="grab.htm#M5" NAME="L696"><B>grab </B>?<B>-global</B>? <I>window</I></A>
+<DD><A HREF="grab.htm#M6" NAME="L697"><B>grab current </B>?<I>window</I>?</A>
+<DD><A HREF="grab.htm#M7" NAME="L698"><B>grab release </B><I>window</I></A>
+<DD><A HREF="grab.htm#M8" NAME="L699"><B>grab set </B>?<B>-global</B>? <I>window</I></A>
+<DD><A HREF="grab.htm#M9" NAME="L700"><B>grab status </B><I>window</I></A>
+</DL>
+<DD><A HREF="grab.htm#M10" NAME="L701">WARNING</A>
+<DD><A HREF="grab.htm#M11" NAME="L702">BUGS</A>
+<DD><A HREF="grab.htm#M12" NAME="L703">EXAMPLE</A>
+<DD><A HREF="grab.htm#M13" NAME="L704">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+grab - Confine pointer and keyboard events to a window sub-tree
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>grab </B>?<B>-global</B>? <I>window</I><BR>
+<B>grab </B><I>option </I>?<I>arg arg </I>...?<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+This command implements simple pointer and keyboard grabs for Tk.
+Tk's grabs are different than the grabs
+described in the Xlib documentation.
+When a grab is set for a particular window, Tk restricts all pointer
+events to the grab window and its descendants in Tk's window hierarchy.
+Whenever the pointer is within the grab window's subtree, the pointer
+will behave exactly the same as if there had been no grab at all
+and all events will be reported in the normal fashion.
+When the pointer is outside <I>window</I>'s tree, button presses and
+releases and
+mouse motion events are reported to <I>window</I>, and window entry
+and window exit events are ignored. The grab subtree
+&#8220;owns&#8221;
+the pointer:
+windows outside the grab subtree will be visible on the screen
+but they will be insensitive until the grab is released.
+The tree of windows underneath the grab window can include top-level
+windows, in which case all of those top-level windows
+and their descendants will continue to receive mouse events
+during the grab.
+<P>
+Two forms of grabs are possible:  local and global.
+A local grab affects only the grabbing application:  events will
+be reported to other applications as if the grab had never occurred.
+Grabs are local by default.
+A global grab locks out all applications on the screen,
+so that only the given subtree of the grabbing application will be
+sensitive to pointer events (mouse button presses, mouse button releases,
+pointer motions, window entries, and window exits).
+During global grabs the window manager will not receive pointer
+events either.
+<P>
+During local grabs, keyboard events (key presses and key releases)
+are delivered as usual:  the window
+manager controls which application receives keyboard events, and
+if they are sent to any window in the grabbing application then they are
+redirected to the focus window.
+During a global grab Tk grabs the keyboard so that all keyboard events
+are always sent to the grabbing application.
+The <B><A HREF="../TkCmd/focus.htm">focus</A></B> command is still used to determine which window in the
+application receives the keyboard events.
+The keyboard grab is released when the grab is released.
+<P>
+Grabs apply to particular displays.  If an application has windows
+on multiple displays then it can establish a separate grab on each
+display.
+The grab on a particular display affects only the windows on
+that display.
+It is possible for different applications on a single display to have
+simultaneous local grabs, but only one application can have a global
+grab on a given display at once.
+<P>
+The <B>grab</B> command can take any of the following forms:
+<P>
+<DL class="description">
+<DT><A NAME="M5"><B>grab </B>?<B>-global</B>? <I>window</I></A><DD>
+Same as <B>grab set</B>, described below.
+<P><DT><A NAME="M6"><B>grab current </B>?<I>window</I>?</A><DD>
+If <I>window</I> is specified, returns the name of the current grab
+window in this application for <I>window</I>'s display, or an empty
+string if there is no such window.
+If <I>window</I> is omitted, the command returns a list whose elements
+are all of the windows grabbed by this application for all displays,
+or an empty string if the application has no grabs.
+<P><DT><A NAME="M7"><B>grab release </B><I>window</I></A><DD>
+Releases the grab on <I>window</I> if there is one, otherwise does
+nothing.  Returns an empty string.
+<P><DT><A NAME="M8"><B>grab set </B>?<B>-global</B>? <I>window</I></A><DD>
+Sets a grab on <I>window</I>.  If <B>-global</B> is specified then the
+grab is global, otherwise it is local.
+If a grab was already in effect for this application on
+<I>window</I>'s display then it is automatically released.
+If there is already a grab on <I>window</I> and it has the same
+global/local form as the requested grab, then the command
+does nothing.  Returns an empty string.
+<P><DT><A NAME="M9"><B>grab status </B><I>window</I></A><DD>
+Returns <B>none</B> if no grab is currently set on <I>window</I>,
+<B>local</B> if a local grab is set on <I>window</I>, and
+<B><A HREF="../TclCmd/global.htm">global</A></B> if a global grab is set.
+<P></DL>
+<H3><A NAME="M10">WARNING</A></H3>
+It is very easy to use global grabs to render a display completely
+unusable (e.g. by setting a grab on a widget which does not respond to
+events and not providing any mechanism for releasing the grab).  Take
+<I>extreme</I> care when using them!
+<H3><A NAME="M11">BUGS</A></H3>
+It took an incredibly complex and gross implementation to produce
+the simple grab effect described above.
+Given the current implementation, it is not safe for applications
+to use the Xlib grab facilities at all except through the Tk grab
+procedures.
+If applications try to manipulate X's grab mechanisms directly,
+things will probably break.
+<P>
+If a single process is managing several different Tk applications,
+only one of those applications can have a local grab for a given
+display at any given time.  If the applications are in different
+processes, this restriction does not exist.
+<H3><A NAME="M12">EXAMPLE</A></H3>
+Set a grab so that only one button may be clicked out of a group.  The
+other buttons are unresponsive to the mouse until the middle button is
+clicked.
+<PRE>pack [button .b1 -text &quot;Click me! #1&quot; -command {destroy .b1}]
+pack [button .b2 -text &quot;Click me! #2&quot; -command {destroy .b2}]
+pack [button .b3 -text &quot;Click me! #3&quot; -command {destroy .b3}]
+<B>grab</B> .b2</PRE>
+<H3><A NAME="M13">KEYWORDS</A></H3>
+<A href="../Keywords/G.htm#grab">grab</A>, <A href="../Keywords/K.htm#keyboard events">keyboard events</A>, <A href="../Keywords/P.htm#pointer events">pointer events</A>, <A href="../Keywords/W.htm#window">window</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1992 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

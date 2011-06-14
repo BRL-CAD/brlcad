@@ -1,0 +1,140 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>ttk::style manual page - Tk Themed Widget</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TkCmd</a> <small>&gt;</small> ttk_style</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="ttk_style.htm#M2" NAME="L1944">NAME</A>
+<DL><DD>ttk::style - Manipulate style database</DD></DL>
+<DD><A HREF="ttk_style.htm#M3" NAME="L1945">SYNOPSIS</A>
+<DL>
+</DL>
+<DD><A HREF="ttk_style.htm#M4" NAME="L1946">NOTES</A>
+<DD><A HREF="ttk_style.htm#M5" NAME="L1947">DEFINITIONS</A>
+<DD><A HREF="ttk_style.htm#M6" NAME="L1948">DESCRIPTION</A>
+<DL class="description">
+<DD><A HREF="ttk_style.htm#M7" NAME="L1949"><B>ttk::style configure </B><I>style</I> ?<I>-option</I> ?<I>value option value...</I>? ?</A>
+<DD><A HREF="ttk_style.htm#M8" NAME="L1950"><B>ttk::style map </B><I>style</I> ?<I>-option</I><B> { </B><I>statespec value...</I><B> }</B>?</A>
+<DD><A HREF="ttk_style.htm#M9" NAME="L1951"><B>ttk::style lookup </B><I>style</I> <I>-option </I>?<I>state </I>?<I>default</I>??</A>
+<DD><A HREF="ttk_style.htm#M10" NAME="L1952"><B>ttk::style layout </B><I>style</I> ?<I>layoutSpec</I>?</A>
+<DD><A HREF="ttk_style.htm#M11" NAME="L1953"><B>ttk::style element create</B> <I>elementName</I> <I>type</I> ?<I>args...</I>?</A>
+<DD><A HREF="ttk_style.htm#M12" NAME="L1954"><B>ttk::style element names</B></A>
+<DD><A HREF="ttk_style.htm#M13" NAME="L1955"><B>ttk::style element options </B><I>element</I></A>
+<DD><A HREF="ttk_style.htm#M14" NAME="L1956"><B>ttk::style theme create</B> <I>themeName</I> ?<B>-parent </B><I>basedon</I>? ?<B>-settings </B><I>script...</I> ?</A>
+<DD><A HREF="ttk_style.htm#M15" NAME="L1957"><B>ttk::style theme settings </B><I>themeName</I> <I>script</I></A>
+<DD><A HREF="ttk_style.htm#M16" NAME="L1958"><B>ttk::style theme names</B></A>
+<DD><A HREF="ttk_style.htm#M17" NAME="L1959"><B>ttk::style theme use</B> <I>themeName</I></A>
+</DL>
+<DD><A HREF="ttk_style.htm#M18" NAME="L1960">LAYOUTS</A>
+<DL class="layouts">
+<DD><A HREF="ttk_style.htm#M19" NAME="L1961"><B>-side </B><I>side</I></A>
+<DD><A HREF="ttk_style.htm#M20" NAME="L1962"><B>-sticky</B> <B>[</B><I>nswe</I><B>]</B></A>
+<DD><A HREF="ttk_style.htm#M21" NAME="L1963"><B>-children { </B><I>sublayout... </I><B>}</B></A>
+</DL>
+<DD><A HREF="ttk_style.htm#M22" NAME="L1964">SEE ALSO</A>
+<DD><A HREF="ttk_style.htm#M23" NAME="L1965">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+ttk::style - Manipulate style database
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>ttk::style</B> <I>option</I> ?<I>args</I>?<BR>
+<H3><A NAME="M4">NOTES</A></H3>
+See also the Tcl'2004 conference presentation,
+available at http://tktable.sourceforge.net/tile/tile-tcl2004.pdf
+<H3><A NAME="M5">DEFINITIONS</A></H3>
+Each widget is assigned a <I>style</I>,
+which specifies the set of elements making up the widget
+and how they are arranged, along with dynamic and default
+settings for element options.
+By default, the style name is the same as the widget's class;
+this may be overridden by the <B>-style</B> option. 
+<P>
+A <I>theme</I> is a collection of elements and styles 
+which controls the overall look and feel of an application.
+<H3><A NAME="M6">DESCRIPTION</A></H3>
+The <B>ttk::style</B> command takes the following arguments:
+<P>
+<DL class="description">
+<DT><A NAME="M7"><B>ttk::style configure </B><I>style</I> ?<I>-option</I> ?<I>value option value...</I>? ?</A><DD>
+Sets the default value of the specified option(s) in <I>style</I>.
+<P><DT><A NAME="M8"><B>ttk::style map </B><I>style</I> ?<I>-option</I><B> { </B><I>statespec value...</I><B> }</B>?</A><DD>
+Sets dynamic values of the specified option(s) in <I>style</I>.
+Each <I>statespec / value</I> pair is examined in order;
+the value corresponding to the first matching <I>statespec</I>
+is used.
+<P><DT><A NAME="M9"><B>ttk::style lookup </B><I>style</I> <I>-option </I>?<I>state </I>?<I>default</I>??</A><DD>
+Returns the value specified for <I>-option</I> in style <I>style</I>
+in state <I>state</I>, using the standard lookup rules for element options.
+<I>state</I> is a list of state names; if omitted, 
+it defaults to all bits off (the
+&#8220;normal&#8221;
+state).
+If the <I>default</I> argument is present, it is used as a fallback
+value in case no specification for <I>-option</I> is found.
+<P><DT><A NAME="M10"><B>ttk::style layout </B><I>style</I> ?<I>layoutSpec</I>?</A><DD>
+Define the widget layout for style <I>style</I>.  
+See <B>LAYOUTS</B> below for the format of <I>layoutSpec</I>.
+If <I>layoutSpec</I> is omitted, return the layout specification
+for style <I>style</I>.
+<P><DT><A NAME="M11"><B>ttk::style element create</B> <I>elementName</I> <I>type</I> ?<I>args...</I>?</A><DD>
+Creates a new element in the current theme of type <I>type</I>.
+The only built-in element type is <I>image</I> (see <I>image(n)</I>),
+although themes may define other element types 
+(see <B>Ttk_RegisterElementFactory</B>).
+<P><DT><A NAME="M12"><B>ttk::style element names</B></A><DD>
+Returns the list of elements defined in the current theme.
+<P><DT><A NAME="M13"><B>ttk::style element options </B><I>element</I></A><DD>
+Returns the list of <I>element</I>'s options.
+<P><DT><A NAME="M14"><B>ttk::style theme create</B> <I>themeName</I> ?<B>-parent </B><I>basedon</I>? ?<B>-settings </B><I>script...</I> ?</A><DD>
+Creates a new theme.  It is an error if <I>themeName</I> already exists.
+If <B>-parent</B> is specified, the new theme will inherit
+styles, elements, and layouts from the parent theme <I>basedon</I>.
+If <B>-settings</B> is present, <I>script</I> is evaluated in the
+context of the new theme as per <B>ttk::style theme settings</B>.
+<P><DT><A NAME="M15"><B>ttk::style theme settings </B><I>themeName</I> <I>script</I></A><DD>
+Temporarily sets the current theme to <I>themeName</I>, 
+evaluate <I>script</I>, then restore the previous theme.
+Typically <I>script</I> simply defines styles and elements,
+though arbitrary Tcl code may appear.
+<P><DT><A NAME="M16"><B>ttk::style theme names</B></A><DD>
+Returns a list of all known themes.
+<P><DT><A NAME="M17"><B>ttk::style theme use</B> <I>themeName</I></A><DD>
+Sets the current theme to <I>themeName</I>, and refreshes all widgets.
+<P></DL>
+<H3><A NAME="M18">LAYOUTS</A></H3>
+A <I>layout</I> specifies a list of elements, each followed
+by one or more options specifying how to arrange the element.
+The layout mechanism uses a simplified version of the <B><A HREF="../TkCmd/pack.htm">pack</A></B>
+geometry manager: given an initial cavity,
+each element is allocated a parcel.
+Valid options are:
+<P>
+<DL class="layouts">
+<DT><A NAME="M19"><B>-side </B><I>side</I></A><DD>
+Specifies which side of the cavity to place the element;
+one of <B>left</B>, <B>right</B>, <B>top</B>, or <B>bottom</B>.
+If omitted, the element occupies the entire cavity.
+<P><DT><A NAME="M20"><B>-sticky</B> <B>[</B><I>nswe</I><B>]</B></A><DD>
+Specifies where the element is placed inside its allocated parcel.
+<P><DT><A NAME="M21"><B>-children { </B><I>sublayout... </I><B>}</B></A><DD>
+Specifies a list of elements to place inside the element.
+<P></DL>
+<P>
+For example:
+<PRE>ttk::style layout Horizontal.TScrollbar {
+    Scrollbar.trough -children {
+        Scrollbar.leftarrow -side left
+        Scrollbar.rightarrow -side right
+        Horizontal.Scrollbar.thumb -side left -sticky ew
+    }
+}</PRE>
+<H3><A NAME="M22">SEE ALSO</A></H3>
+<B><A HREF="../TkCmd/ttk_intro.htm">ttk::intro</A></B>, <B><A HREF="../TkCmd/ttk_widget.htm">ttk::widget</A></B>, <B><A HREF="../TkCmd/photo.htm">photo</A></B>
+<H3><A NAME="M23">KEYWORDS</A></H3>
+<A href="../Keywords/S.htm#style">style</A>, <A href="../Keywords/T.htm#theme">theme</A>, <A href="../Keywords/A.htm#appearance">appearance</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 2004 Joe English
+</div>
+</BODY></HTML>

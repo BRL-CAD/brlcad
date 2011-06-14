@@ -1,0 +1,67 @@
+[comment {-*- tcl -*- doctools manpage}]
+[manpage_begin autoscroll n 1.1]
+[moddesc   {Automatic mapping of scrollbars}]
+[titledesc {Provides for a scrollbar to automatically mapped and unmapped as needed}]
+[require Tcl]
+[require autoscroll [opt 1.1]]
+[description]
+
+This package allows scrollbars to be mapped and
+unmapped as needed depending on the size and
+content of the scrollbars scrolled widget. The
+scrollbar must be managed by either pack or grid,
+other geometry managers are not supported.
+
+[para]
+
+When managed by pack, any geometry changes made in the
+scrollbars parent between the time a scrollbar is
+unmapped, and when it is mapped will be lost. It is
+an error to destroy any of the scrollbars siblings while the
+scrollbar is unmapped. When managed by grid, if anything
+becomes gridded in the same row and column the scrollbar
+occupied it will be replaced by the scrollbar when remapped.
+
+[para]
+
+This package may be used on any scrollbar-like widget
+as long as it supports the [const set] subcommand in the same
+style as scrollbar. If the [const set] subcommand is not used
+then this package will have no effect.
+
+[para]
+
+[list_begin definitions]
+
+[call [cmd ::autoscroll::autoscroll] [arg scrollbar]]
+
+Arranges for the already existing scrollbar [const scrollbar]
+to be mapped and unmapped as needed.
+
+[call [cmd ::autoscroll::unautoscroll] [arg scrollbar]]
+
+Returns the named scrollbar to its original static state.
+
+[call [cmd ::autoscroll::wrap]]
+
+Arranges for all scrollbars created after this command is run
+to be automatically mapped and unmapped as needed.
+
+[call [cmd ::autoscroll::unwrap]]
+
+Turns off the automatic autoscrolling of all new scrollbars.
+Does not effect existing scrollbars
+
+[list_end]
+
+[example {
+text .t -yscrollcommand ".scrolly set"
+scrollbar .scrolly -orient v -command ".t yview"
+pack .scrolly -side right -fill y
+pack .t -side left -fill both -expand 1
+::autoscroll::autoscroll .scrolly
+}]
+
+
+[keywords scroll scrollbar]
+[manpage_end]

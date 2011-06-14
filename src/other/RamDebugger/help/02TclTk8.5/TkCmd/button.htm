@@ -1,0 +1,283 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>button manual page - Tk Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TkCmd</a> <small>&gt;</small> button</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="button.htm#M2" NAME="L180">NAME</A>
+<DL><DD>button - Create and manipulate button widgets</DD></DL>
+<DD><A HREF="button.htm#M3" NAME="L181">SYNOPSIS</A>
+<DL>
+</DL>
+<DD><A HREF="button.htm#M4" NAME="L182">STANDARD OPTIONS</A>
+<DL>
+<DD><A HREF="options.htm#M-activebackground">-activebackground, activeBackground, Foreground</A>
+<DD><A HREF="options.htm#M-activeforeground">-activeforeground, activeForeground, Background</A>
+<DD><A HREF="options.htm#M-anchor">-anchor, anchor, Anchor</A>
+<DD><A HREF="options.htm#M-background">-background or -bg, background, Background</A>
+<DD><A HREF="options.htm#M-bitmap">-bitmap, bitmap, Bitmap</A>
+<DD><A HREF="options.htm#M-borderwidth">-borderwidth or -bd, borderWidth, BorderWidth</A>
+<DD><A HREF="options.htm#M-compound">-compound, compound, Compound</A>
+<DD><A HREF="options.htm#M-cursor">-cursor, cursor, Cursor</A>
+<DD><A HREF="options.htm#M-disabledforeground">-disabledforeground, disabledForeground, DisabledForeground</A>
+<DD><A HREF="options.htm#M-font">-font, font, Font</A>
+<DD><A HREF="options.htm#M-foreground">-foreground or -fg, foreground, Foreground</A>
+<DD><A HREF="options.htm#M-highlightbackground">-highlightbackground, highlightBackground, HighlightBackground</A>
+<DD><A HREF="options.htm#M-highlightcolor">-highlightcolor, highlightColor, HighlightColor</A>
+<DD><A HREF="options.htm#M-highlightthickness">-highlightthickness, highlightThickness, HighlightThickness</A>
+<DD><A HREF="options.htm#M-image">-image, image, Image</A>
+<DD><A HREF="options.htm#M-justify">-justify, justify, Justify</A>
+<DD><A HREF="options.htm#M-padx">-padx, padX, Pad</A>
+<DD><A HREF="options.htm#M-pady">-pady, padY, Pad</A>
+<DD><A HREF="options.htm#M-relief">-relief, relief, Relief</A>
+<DD><A HREF="options.htm#M-repeatdelay">-repeatdelay, repeatDelay, RepeatDelay</A>
+<DD><A HREF="options.htm#M-repeatinterval">-repeatinterval, repeatInterval, RepeatInterval</A>
+<DD><A HREF="options.htm#M-takefocus">-takefocus, takeFocus, TakeFocus</A>
+<DD><A HREF="options.htm#M-text">-text, text, Text</A>
+<DD><A HREF="options.htm#M-textvariable">-textvariable, textVariable, Variable</A>
+<DD><A HREF="options.htm#M-underline">-underline, underline, Underline</A>
+<DD><A HREF="options.htm#M-wraplength">-wraplength, wrapLength, WrapLength</A>
+</DL>
+<DD><A HREF="button.htm#M5" NAME="L183">WIDGET-SPECIFIC OPTIONS</A>
+<DL>
+<DD><A HREF="button.htm#M6" NAME="L184">-command, command, Command</A>
+<DD><A HREF="button.htm#M7" NAME="L185">-default, default, Default</A>
+<DD><A HREF="button.htm#M8" NAME="L186">-height, height, Height</A>
+<DD><A HREF="button.htm#M9" NAME="L187">-overrelief, overRelief, OverRelief</A>
+<DD><A HREF="button.htm#M10" NAME="L188">-state, state, State</A>
+<DD><A HREF="button.htm#M11" NAME="L189">-width, width, Width</A>
+</DL>
+<DD><A HREF="button.htm#M12" NAME="L190">DESCRIPTION</A>
+<DD><A HREF="button.htm#M13" NAME="L191">WIDGET COMMAND</A>
+<DL class="widget command">
+<DD><A HREF="button.htm#M14" NAME="L192"><I>pathName </I><B>cget</B> <I>option</I></A>
+<DD><A HREF="button.htm#M15" NAME="L193"><I>pathName </I><B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?</A>
+<DD><A HREF="button.htm#M16" NAME="L194"><I>pathName </I><B>flash</B></A>
+<DD><A HREF="button.htm#M17" NAME="L195"><I>pathName </I><B>invoke</B></A>
+</DL>
+<DD><A HREF="button.htm#M18" NAME="L196">DEFAULT BINDINGS</A>
+<DL class="default bindings">
+</DL>
+<DD><A HREF="button.htm#M19" NAME="L197">EXAMPLES</A>
+<DD><A HREF="button.htm#M20" NAME="L198">SEE ALSO</A>
+<DD><A HREF="button.htm#M21" NAME="L199">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+button - Create and manipulate button widgets
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>button</B> <I>pathName </I>?<I>options</I>?<BR>
+<H3><A NAME="M4">STANDARD OPTIONS</A></H3>
+<DL>
+<DT><B><A HREF="options.htm#M-activebackground">-activebackground, activeBackground, Foreground</A></B>
+<DT><B><A HREF="options.htm#M-activeforeground">-activeforeground, activeForeground, Background</A></B>
+<DT><B><A HREF="options.htm#M-anchor">-anchor, anchor, Anchor</A></B>
+<DT><B><A HREF="options.htm#M-background">-background or -bg, background, Background</A></B>
+<DT><B><A HREF="options.htm#M-bitmap">-bitmap, bitmap, Bitmap</A></B>
+<DT><B><A HREF="options.htm#M-borderwidth">-borderwidth or -bd, borderWidth, BorderWidth</A></B>
+<DT><B><A HREF="options.htm#M-compound">-compound, compound, Compound</A></B>
+<DT><B><A HREF="options.htm#M-cursor">-cursor, cursor, Cursor</A></B>
+<DT><B><A HREF="options.htm#M-disabledforeground">-disabledforeground, disabledForeground, DisabledForeground</A></B>
+<DT><B><A HREF="options.htm#M-font">-font, font, Font</A></B>
+<DT><B><A HREF="options.htm#M-foreground">-foreground or -fg, foreground, Foreground</A></B>
+<DT><B><A HREF="options.htm#M-highlightbackground">-highlightbackground, highlightBackground, HighlightBackground</A></B>
+<DT><B><A HREF="options.htm#M-highlightcolor">-highlightcolor, highlightColor, HighlightColor</A></B>
+<DT><B><A HREF="options.htm#M-highlightthickness">-highlightthickness, highlightThickness, HighlightThickness</A></B>
+<DT><B><A HREF="options.htm#M-image">-image, image, Image</A></B>
+<DT><B><A HREF="options.htm#M-justify">-justify, justify, Justify</A></B>
+<DT><B><A HREF="options.htm#M-padx">-padx, padX, Pad</A></B>
+<DT><B><A HREF="options.htm#M-pady">-pady, padY, Pad</A></B>
+<DT><B><A HREF="options.htm#M-relief">-relief, relief, Relief</A></B>
+<DT><B><A HREF="options.htm#M-repeatdelay">-repeatdelay, repeatDelay, RepeatDelay</A></B>
+<DT><B><A HREF="options.htm#M-repeatinterval">-repeatinterval, repeatInterval, RepeatInterval</A></B>
+<DT><B><A HREF="options.htm#M-takefocus">-takefocus, takeFocus, TakeFocus</A></B>
+<DT><B><A HREF="options.htm#M-text">-text, text, Text</A></B>
+<DT><B><A HREF="options.htm#M-textvariable">-textvariable, textVariable, Variable</A></B>
+<DT><B><A HREF="options.htm#M-underline">-underline, underline, Underline</A></B>
+<DT><B><A HREF="options.htm#M-wraplength">-wraplength, wrapLength, WrapLength</A></B>
+</DL>
+<H3><A NAME="M5">WIDGET-SPECIFIC OPTIONS</A></H3>
+<DL>
+<DT>Command-Line Name: <B><A NAME="M6">-command</A></B>
+<DT>Database Name: <B>command</B>
+<DT>Database Class: <B>Command</B>
+<DD>Specifies a Tcl command to associate with the button.  This command
+is typically invoked when mouse button 1 is released over the button
+window.
+<P><DT>Command-Line Name: <B><A NAME="M7">-default</A></B>
+<DT>Database Name: <B>default</B>
+<DT>Database Class: <B>Default</B>
+<DD>Specifies one of three states for the default ring: <B>normal</B>,
+<B>active</B>, or <B>disabled</B>.  In active state, the button is drawn
+with the platform specific appearance for a default button.  In normal
+state, the button is drawn with the platform specific appearance for a
+non-default button, leaving enough space to draw the default button
+appearance.  The normal and active states will result in buttons of
+the same size.  In disabled state, the button is drawn with the
+non-default button appearance without leaving space for the default
+appearance.  The disabled state may result in a smaller button than
+the active state.
+<P><DT>Command-Line Name: <B><A NAME="M8">-height</A></B>
+<DT>Database Name: <B>height</B>
+<DT>Database Class: <B>Height</B>
+<DD>Specifies a desired height for the button.
+If an image or bitmap is being displayed in the button then the value is in
+screen units (i.e. any of the forms acceptable to <B><A HREF="../TkLib/GetPixels.htm">Tk_GetPixels</A></B>);
+for text it is in lines of text.
+If this option is not specified, the button's desired height is computed
+from the size of the image or bitmap or text being displayed in it.
+<P><DT>Command-Line Name: <B><A NAME="M9">-overrelief</A></B>
+<DT>Database Name: <B>overRelief</B>
+<DT>Database Class: <B>OverRelief</B>
+<DD>Specifies an alternative relief for the button, to be used when the
+mouse cursor is over the widget.  This option can be used to make
+toolbar buttons, by configuring <B>-relief flat -overrelief
+raised</B>.  If the value of this option is the empty string, then no
+alternative relief is used when the mouse cursor is over the button.
+The empty string is the default value.
+<P><DT>Command-Line Name: <B><A NAME="M10">-state</A></B>
+<DT>Database Name: <B>state</B>
+<DT>Database Class: <B>State</B>
+<DD>Specifies one of three states for the button:  <B>normal</B>, <B>active</B>,
+or <B>disabled</B>.  In normal state the button is displayed using the
+<B>foreground</B> and <B>background</B> options.  The active state is
+typically used when the pointer is over the button.  In active state
+the button is displayed using the <B>activeForeground</B> and
+<B>activeBackground</B> options.  Disabled state means that the button
+should be insensitive:  the default bindings will refuse to activate
+the widget and will ignore mouse button presses.
+In this state the <B>disabledForeground</B> and
+<B>background</B> options determine how the button is displayed.
+<P><DT>Command-Line Name: <B><A NAME="M11">-width</A></B>
+<DT>Database Name: <B>width</B>
+<DT>Database Class: <B>Width</B>
+<DD>Specifies a desired width for the button.
+If an image or bitmap is being displayed in the button then the value is in
+screen units (i.e. any of the forms acceptable to <B><A HREF="../TkLib/GetPixels.htm">Tk_GetPixels</A></B>);
+for text it is in characters.
+If this option is not specified, the button's desired width is computed
+from the size of the image or bitmap or text being displayed in it.
+</DL>
+<H3><A NAME="M12">DESCRIPTION</A></H3>
+The <B>button</B> command creates a new window (given by the
+<I>pathName</I> argument) and makes it into a button widget.
+Additional
+options, described above, may be specified on the command line
+or in the option database
+to configure aspects of the button such as its colors, font,
+text, and initial relief.  The <B>button</B> command returns its
+<I>pathName</I> argument.  At the time this command is invoked,
+there must not exist a window named <I>pathName</I>, but
+<I>pathName</I>'s parent must exist.
+<P>
+A button is a widget that displays a textual string, bitmap or image.
+If text is displayed, it must all be in a single font, but it
+can occupy multiple lines on the screen (if it contains newlines
+or if wrapping occurs because of the <B>wrapLength</B> option) and
+one of the characters may optionally be underlined using the
+<B>underline</B> option.
+It can display itself in either of three different ways, according
+to
+the <B>state</B> option; 
+it can be made to appear raised, sunken, or flat;
+and it can be made to flash.  When a user invokes the
+button (by pressing mouse button 1 with the cursor over the
+button), then the Tcl command specified in the <B>-command</B>
+option is invoked.
+
+<H3><A NAME="M13">WIDGET COMMAND</A></H3>
+The <B>button</B> command creates a new Tcl command whose
+name is <I>pathName</I>.  This
+command may be used to invoke various
+operations on the widget.  It has the following general form:
+<PRE><I>pathName option </I>?<I>arg arg ...</I>?</PRE>
+<I>Option</I> and the <I>arg</I>s
+determine the exact behavior of the command.  The following
+commands are possible for button widgets:
+<P>
+<DL class="widget command">
+<DT><A NAME="M14"><I>pathName </I><B>cget</B> <I>option</I></A><DD>
+Returns the current value of the configuration option given
+by <I>option</I>.
+<I>Option</I> may have any of the values accepted by the <B>button</B>
+command.
+<P><DT><A NAME="M15"><I>pathName </I><B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?</A><DD>
+Query or modify the configuration options of the widget.
+If no <I>option</I> is specified, returns a list describing all of
+the available options for <I>pathName</I> (see <B><A HREF="../TkLib/ConfigWidg.htm">Tk_ConfigureInfo</A></B> for
+information on the format of this list).  If <I>option</I> is specified
+with no <I>value</I>, then the command returns a list describing the
+one named option (this list will be identical to the corresponding
+sublist of the value returned if no <I>option</I> is specified).  If
+one or more <I>option-value</I> pairs are specified, then the command
+modifies the given widget option(s) to have the given value(s);  in
+this case the command returns an empty string.
+<I>Option</I> may have any of the values accepted by the <B>button</B>
+command.
+<P><DT><A NAME="M16"><I>pathName </I><B>flash</B></A><DD>
+Flash the button.  This is accomplished by redisplaying the button
+several times, alternating between active and normal colors.  At
+the end of the flash the button is left in the same normal/active
+state as when the command was invoked.
+This command is ignored if the button's state is <B>disabled</B>.
+<P><DT><A NAME="M17"><I>pathName </I><B>invoke</B></A><DD>
+Invoke the Tcl command associated with the button, if there is one.
+The return value is the return value from the Tcl command, or an
+empty string if there is no command associated with the button.
+This command is ignored if the button's state is <B>disabled</B>.
+
+<P></DL>
+<H3><A NAME="M18">DEFAULT BINDINGS</A></H3>
+Tk automatically creates class bindings for buttons that give them
+default behavior:
+<P>
+<DL class="default bindings">
+<DT>[1]<DD>
+A button activates whenever the mouse passes over it and deactivates
+whenever the mouse leaves the button.
+Under Windows, this binding is only active when mouse button 1 has
+been pressed over the button.
+<P><DT>[2]<DD>
+A button's relief is changed to sunken whenever mouse button 1 is
+pressed over the button, and the relief is restored to its original
+value when button 1 is later released.
+<P><DT>[3]<DD>
+If mouse button 1 is pressed over a button and later released over
+the button, the button is invoked.  However, if the mouse is not
+over the button when button 1 is released, then no invocation occurs.
+<P><DT>[4]<DD>
+When a button has the input focus, the space key causes the button
+to be invoked.
+<P></DL>
+<P>
+If the button's state is <B>disabled</B> then none of the above
+actions occur:  the button is completely non-responsive.
+<P>
+The behavior of buttons can be changed by defining new bindings for
+individual widgets or by redefining the class bindings.
+
+<H3><A NAME="M19">EXAMPLES</A></H3>
+This is the classic Tk
+&#8220;Hello, World!&#8221;
+demonstration:
+<P>
+<PRE><B>button</B> .b -text &quot;Hello, World!&quot; -command exit
+    pack .b</PRE>
+<P>
+This example demonstrates how to handle button accelerators:
+<P>
+<PRE><B>button</B> .b1 -text Hello -underline 0
+    <B>button</B> .b2 -text World -underline 0
+    bind . &lt;Key-h&gt; {.b1 flash; .b1 invoke}
+    bind . &lt;Key-w&gt; {.b2 flash; .b2 invoke}
+    pack .b1 .b2</PRE>
+<H3><A NAME="M20">SEE ALSO</A></H3>
+<B><A HREF="../TkCmd/ttk_button.htm">ttk::button</A></B>
+<H3><A NAME="M21">KEYWORDS</A></H3>
+<A href="../Keywords/B.htm#button">button</A>, <A href="../Keywords/W.htm#widget">widget</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1990-1994 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

@@ -1,0 +1,72 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>split manual page - Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclCmd</a> <small>&gt;</small> split</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+split - Split a string into a proper Tcl list
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>split </B><I>string </I>?<I>splitChars</I>?<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+Returns a list created by splitting <I>string</I> at each character
+that is in the <I>splitChars</I> argument.
+Each element of the result list will consist of the
+characters from <I>string</I> that lie between instances of the
+characters in <I>splitChars</I>.
+Empty list elements will be generated if <I>string</I> contains
+adjacent characters in <I>splitChars</I>, or if the first or last
+character of <I>string</I> is in <I>splitChars</I>.
+If <I>splitChars</I> is an empty string then each character of
+<I>string</I> becomes a separate element of the result list.
+<I>SplitChars</I> defaults to the standard white-space characters.
+<H3><A NAME="M5">EXAMPLES</A></H3>
+Divide up a USENET group name into its hierarchical components:
+<PRE><B>split</B> &quot;comp.lang.tcl.announce&quot; .
+      <I><font size="+1">&#8594;</font> comp lang tcl announce</I></PRE>
+<P>
+See how the <B>split</B> command splits on <I>every</I> character in
+<I>splitChars</I>, which can result in information loss if you are not
+careful:
+<PRE><B>split</B> &quot;alpha beta gamma&quot; &quot;temp&quot;
+      <I><font size="+1">&#8594;</font> al {ha b} {} {a ga} {} a</I></PRE>
+<P>
+Extract the list words from a string that is not a well-formed list:
+<PRE><B>split</B> &quot;Example with {unbalanced brace character&quot;
+      <I><font size="+1">&#8594;</font> Example with &#92;{unbalanced brace character</I></PRE>
+<P>
+Split a string into its constituent characters
+<PRE><B>split</B> &quot;Hello world&quot; {}
+      <I><font size="+1">&#8594;</font> H e l l o { } w o r l d</I></PRE>
+<H4><A NAME="M6">PARSING RECORD-ORIENTED FILES</A></H4>
+Parse a Unix /etc/passwd file, which consists of one entry per line,
+with each line consisting of a colon-separated list of fields:
+<PRE>## Read the file
+set fid [open /etc/passwd]
+set content [read $fid]
+close $fid
+
+## Split into records on newlines
+set records [<B>split</B> $content &quot;&#92;n&quot;]
+
+## Iterate over the records
+foreach rec $records {
+
+   ## Split into fields on colons
+   set fields [<B>split</B> $rec &quot;:&quot;]
+
+   ## Assign fields to variables and print some out...
+   lassign $fields &#92;
+         userName password uid grp longName homeDir shell
+   puts &quot;$longName uses [file tail $shell] for a login shell&quot;
+}</PRE>
+<H3><A NAME="M7">SEE ALSO</A></H3>
+<B><A HREF="../TclCmd/join.htm">join</A></B>, <B><A HREF="../TclCmd/list.htm">list</A></B>, <B><A HREF="../TclCmd/string.htm">string</A></B>
+<H3><A NAME="M8">KEYWORDS</A></H3>
+<A href="../Keywords/L.htm#list">list</A>, <A href="../Keywords/S.htm#split">split</A>, <A href="../Keywords/S.htm#string">string</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1993 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

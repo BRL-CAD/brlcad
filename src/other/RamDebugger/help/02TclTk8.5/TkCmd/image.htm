@@ -1,0 +1,119 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>image manual page - Tk Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TkCmd</a> <small>&gt;</small> image</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="image.htm#M2" NAME="L743">NAME</A>
+<DL><DD>image - Create and manipulate images</DD></DL>
+<DD><A HREF="image.htm#M3" NAME="L744">SYNOPSIS</A>
+<DL>
+</DL>
+<DD><A HREF="image.htm#M4" NAME="L745">DESCRIPTION</A>
+<DL class="description">
+<DD><A HREF="image.htm#M5" NAME="L746"><B>image create </B><I>type </I>?<I>name</I>? ?<I>option value ...</I>?</A>
+<DD><A HREF="image.htm#M6" NAME="L747"><B>image delete </B>?<I>name name</I> ...?</A>
+<DD><A HREF="image.htm#M7" NAME="L748"><B>image height </B><I>name</I></A>
+<DD><A HREF="image.htm#M8" NAME="L749"><B>image inuse </B><I>name</I></A>
+<DD><A HREF="image.htm#M9" NAME="L750"><B>image names</B></A>
+<DD><A HREF="image.htm#M10" NAME="L751"><B>image type </B><I>name</I></A>
+<DD><A HREF="image.htm#M11" NAME="L752"><B>image types</B></A>
+<DD><A HREF="image.htm#M12" NAME="L753"><B>image width </B><I>name</I></A>
+</DL>
+<DD><A HREF="image.htm#M13" NAME="L754">BUILT-IN IMAGE TYPES</A>
+<DL class="built-in image types">
+<DD><A HREF="image.htm#M14" NAME="L755"><B>bitmap</B></A>
+<DD><A HREF="image.htm#M15" NAME="L756"><B>photo</B></A>
+</DL>
+<DD><A HREF="image.htm#M16" NAME="L757">SEE ALSO</A>
+<DD><A HREF="image.htm#M17" NAME="L758">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+image - Create and manipulate images
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>image</B> <I>option </I>?<I>arg arg ...</I>?<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+The <B>image</B> command is used to create, delete, and query images.
+It can take several different forms, depending on the
+<I>option</I> argument.  The legal forms are:
+<P>
+<DL class="description">
+<DT><A NAME="M5"><B>image create </B><I>type </I>?<I>name</I>? ?<I>option value ...</I>?</A><DD>
+Creates a new image and a command with the same name and returns its name.
+<I>type</I> specifies the type of the image, which must be one of
+the types currently defined (e.g., <B><A HREF="../TkCmd/bitmap.htm">bitmap</A></B>).
+<I>name</I> specifies the name for the image;  if it is omitted then
+Tk picks a name of the form <B>image</B><I>x</I>, where <I>x</I> is
+an integer.
+There may be any number of <I>option</I>-<I>value</I> pairs,
+which provide configuration options for the new image.
+The legal set of options is defined separately for each image
+type;  see below for details on the options for built-in image types.
+If an image already exists by the given name then it is replaced
+with the new image and any instances of that image will redisplay
+with the new contents.
+It is important to note that the image command will silently overwrite any
+procedure that may currently be defined by the given name, so choose the
+name wisely.  It is recommended to use a separate namespace for image names
+(e.g., <B>::img::logo</B>, <B>::img::large</B>).
+<P><DT><A NAME="M6"><B>image delete </B>?<I>name name</I> ...?</A><DD>
+Deletes each of the named images and returns an empty string.
+If there are instances of the images displayed in widgets,
+the images will not actually be deleted until all of the instances
+are released.
+However, the association between the instances and the image
+manager will be dropped.
+Existing instances will retain their sizes but redisplay as
+empty areas.
+If a deleted image is recreated with another call to <B>image create</B>,
+the existing instances will use the new image.
+<P><DT><A NAME="M7"><B>image height </B><I>name</I></A><DD>
+Returns a decimal string giving the height of image <I>name</I>
+in pixels.
+<P><DT><A NAME="M8"><B>image inuse </B><I>name</I></A><DD>
+Returns a boolean value indicating whether or not the image given by
+<I>name</I> is in use by any widgets.
+<P><DT><A NAME="M9"><B>image names</B></A><DD>
+Returns a list containing the names of all existing images.
+<P><DT><A NAME="M10"><B>image type </B><I>name</I></A><DD>
+Returns the type of image <I>name</I> (the value of the <I>type</I>
+argument to <B>image create</B> when the image was created).
+<P><DT><A NAME="M11"><B>image types</B></A><DD>
+Returns a list whose elements are all of the valid image types
+(i.e., all of the values that may be supplied for the <I>type</I>
+argument to <B>image create</B>).
+<P><DT><A NAME="M12"><B>image width </B><I>name</I></A><DD>
+Returns a decimal string giving the width of image <I>name</I>
+in pixels.
+<P></DL>
+<P>
+Additional operations (e.g. writing the image to a file) may be
+available as subcommands of the image instance command. See the manual
+page for the particular image type for details.
+<H3><A NAME="M13">BUILT-IN IMAGE TYPES</A></H3>
+The following image types are defined by Tk so they will be available
+in any Tk application.
+Individual applications or extensions may define additional types.
+<P>
+<DL class="built-in image types">
+<DT><A NAME="M14"><B>bitmap</B></A><DD>
+Each pixel in the image displays a foreground color, a background
+color, or nothing.
+See the <B><A HREF="../TkCmd/bitmap.htm">bitmap</A></B> manual entry for more information.
+<P><DT><A NAME="M15"><B>photo</B></A><DD>
+Displays a variety of full-color images, using dithering to
+approximate colors on displays with limited color capabilities.
+See the <B><A HREF="../TkCmd/photo.htm">photo</A></B> manual entry for more information.
+
+<P></DL>
+<H3><A NAME="M16">SEE ALSO</A></H3>
+<B><A HREF="../TkCmd/bitmap.htm">bitmap</A></B>, <B><A HREF="../TkCmd/options.htm">options</A></B>, <B><A HREF="../TkCmd/photo.htm">photo</A></B>
+<H3><A NAME="M17">KEYWORDS</A></H3>
+<A href="../Keywords/H.htm#height">height</A>, <A href="../Keywords/I.htm#image">image</A>, <A href="../Keywords/T.htm#types of images">types of images</A>, <A href="../Keywords/W.htm#width">width</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1994 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

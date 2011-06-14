@@ -1,0 +1,88 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>Tcl_UpVar manual page - Tcl Library Procedures</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclLib</a> <small>&gt;</small> UpVar</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="UpVar.htm#M2" NAME="L805">NAME</A>
+<DL><DD>Tcl_UpVar, Tcl_UpVar2 - link one variable to another</DD></DL>
+<DD><A HREF="UpVar.htm#M3" NAME="L806">SYNOPSIS</A>
+<DL>
+<DD><B>#include &lt;tcl.h&gt;</B>
+<DD>int
+<DD><B>Tcl_UpVar(</B><I>interp, frameName, sourceName, destName, flags</I><B>)</B>
+<DD>int
+<DD><B>Tcl_UpVar2(</B><I>interp, frameName, name1, name2, destName, flags</I><B>)</B>
+</DL>
+<DD><A HREF="UpVar.htm#M4" NAME="L807">ARGUMENTS</A>
+<DL class="arguments">
+</DL>
+<DD><A HREF="UpVar.htm#M5" NAME="L808">DESCRIPTION</A>
+<DD><A HREF="UpVar.htm#M6" NAME="L809">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+Tcl_UpVar, Tcl_UpVar2 - link one variable to another
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>#include &lt;tcl.h&gt;</B><BR>
+int<BR>
+<B>Tcl_UpVar(</B><I>interp, frameName, sourceName, destName, flags</I><B>)</B><BR>
+int<BR>
+<B>Tcl_UpVar2(</B><I>interp, frameName, name1, name2, destName, flags</I><B>)</B><BR>
+<H3><A NAME="M4">ARGUMENTS</A></H3>
+<DL class="arguments">
+<DT><A HREF="../TclLib/Interp.htm">Tcl_Interp</A> <B>*interp</B> (in)<DD>
+Interpreter containing variables;  also used for error reporting.
+<P><DT>const char <B>*frameName</B> (in)<DD>
+Identifies the stack frame containing source variable.
+May have any of the forms accepted by
+the <B><A HREF="../TclCmd/upvar.htm">upvar</A></B> command, such as <B>#0</B> or <B>1</B>.
+<P><DT>const char <B>*sourceName</B> (in)<DD>
+Name of source variable, in the frame given by <I>frameName</I>.
+May refer to a scalar variable or to an array variable with a
+parenthesized index.
+<P><DT>const char <B>*destName</B> (in)<DD>
+Name of destination variable, which is to be linked to source
+variable so that references to <I>destName</I>
+refer to the other variable.  Must not currently exist except as
+an upvar-ed variable.
+<P><DT>int <B>flags</B> (in)<DD>
+One of <B>TCL_GLOBAL_ONLY</B>, <B>TCL_NAMESPACE_ONLY</B> or 0;  if non-zero,
+then <I>destName</I> is a global or namespace variable;  otherwise it is
+local to the current procedure (or current namespace if no procedure is
+active). 
+<P><DT>const char <B>*name1</B> (in)<DD>
+First part of source variable's name (scalar name, or name of array
+without array index).
+<P><DT>const char <B>*name2</B> (in)<DD>
+If source variable is an element of an array, gives the index of the element.
+For scalar source variables, is NULL.
+<P></DL>
+<H3><A NAME="M5">DESCRIPTION</A></H3>
+<B>Tcl_UpVar</B> and <B>Tcl_UpVar2</B> provide the same functionality
+as the <B><A HREF="../TclCmd/upvar.htm">upvar</A></B> command:  they make a link from a source variable
+to a destination variable, so that references to the destination are
+passed transparently through to the source.
+The name of the source variable may be specified either as a single
+string such as <B>xyx</B> or <B>a(24)</B> (by calling <B>Tcl_UpVar</B>)
+or in two parts where the array name has been separated from the
+element name (by calling <B>Tcl_UpVar2</B>).
+The destination variable name is specified in a single string;  it
+may not be an array element.
+<P>
+Both procedures return either <B>TCL_OK</B> or <B>TCL_ERROR</B>, and they
+leave an error message in the interpreter's result if an error occurs.
+<P>
+As with the <B><A HREF="../TclCmd/upvar.htm">upvar</A></B> command, the source variable need not exist;
+if it does exist, unsetting it later does not destroy the link.  The
+destination variable may exist at the time of the call, but if so
+it must exist as a linked variable.
+
+<H3><A NAME="M6">KEYWORDS</A></H3>
+<A href="../Keywords/L.htm#linked variable">linked variable</A>, <A href="../Keywords/U.htm#upvar">upvar</A>, <A href="../Keywords/V.htm#variable">variable</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1994 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

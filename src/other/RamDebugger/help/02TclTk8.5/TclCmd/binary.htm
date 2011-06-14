@@ -1,0 +1,678 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>binary manual page - Tcl Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclCmd</a> <small>&gt;</small> binary</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="binary.htm#M2" NAME="L49">NAME</A>
+<DL><DD>binary - Insert and extract fields from binary strings</DD></DL>
+<DD><A HREF="binary.htm#M3" NAME="L50">SYNOPSIS</A>
+<DL>
+</DL>
+<DD><A HREF="binary.htm#M4" NAME="L51">DESCRIPTION</A>
+<DD><A HREF="binary.htm#M5" NAME="L52">BINARY FORMAT</A>
+<DL class="binary format">
+<DD><A HREF="binary.htm#M6" NAME="L53"><B>a</B></A>
+<DD><A HREF="binary.htm#M7" NAME="L54"><B>A</B></A>
+<DD><A HREF="binary.htm#M8" NAME="L55"><B>b</B></A>
+<DD><A HREF="binary.htm#M9" NAME="L56"><B>B</B></A>
+<DD><A HREF="binary.htm#M10" NAME="L57"><B>H</B></A>
+<DD><A HREF="binary.htm#M11" NAME="L58"><B>h</B></A>
+<DD><A HREF="binary.htm#M12" NAME="L59"><B>c</B></A>
+<DD><A HREF="binary.htm#M13" NAME="L60"><B>s</B></A>
+<DD><A HREF="binary.htm#M14" NAME="L61"><B>S</B></A>
+<DD><A HREF="binary.htm#M15" NAME="L62"><B>t</B></A>
+<DD><A HREF="binary.htm#M16" NAME="L63"><B>i</B></A>
+<DD><A HREF="binary.htm#M17" NAME="L64"><B>I</B></A>
+<DD><A HREF="binary.htm#M18" NAME="L65"><B>n</B></A>
+<DD><A HREF="binary.htm#M19" NAME="L66"><B>w</B></A>
+<DD><A HREF="binary.htm#M20" NAME="L67"><B>W</B></A>
+<DD><A HREF="binary.htm#M21" NAME="L68"><B>m</B></A>
+<DD><A HREF="binary.htm#M22" NAME="L69"><B>f</B></A>
+<DD><A HREF="binary.htm#M23" NAME="L70"><B>r</B></A>
+<DD><A HREF="binary.htm#M24" NAME="L71"><B>R</B></A>
+<DD><A HREF="binary.htm#M25" NAME="L72"><B>d</B></A>
+<DD><A HREF="binary.htm#M26" NAME="L73"><B>q</B></A>
+<DD><A HREF="binary.htm#M27" NAME="L74"><B>Q</B></A>
+<DD><A HREF="binary.htm#M28" NAME="L75"><B>x</B></A>
+<DD><A HREF="binary.htm#M29" NAME="L76"><B>X</B></A>
+<DD><A HREF="binary.htm#M30" NAME="L77"><B>@</B></A>
+</DL>
+<DD><A HREF="binary.htm#M31" NAME="L78">BINARY SCAN</A>
+<DL class="binary scan">
+<DD><A HREF="binary.htm#M32" NAME="L79"><B>a</B></A>
+<DD><A HREF="binary.htm#M33" NAME="L80"><B>A</B></A>
+<DD><A HREF="binary.htm#M34" NAME="L81"><B>b</B></A>
+<DD><A HREF="binary.htm#M35" NAME="L82"><B>B</B></A>
+<DD><A HREF="binary.htm#M36" NAME="L83"><B>H</B></A>
+<DD><A HREF="binary.htm#M37" NAME="L84"><B>h</B></A>
+<DD><A HREF="binary.htm#M38" NAME="L85"><B>c</B></A>
+<DD><A HREF="binary.htm#M39" NAME="L86"><B>s</B></A>
+<DD><A HREF="binary.htm#M40" NAME="L87"><B>S</B></A>
+<DD><A HREF="binary.htm#M41" NAME="L88"><B>t</B></A>
+<DD><A HREF="binary.htm#M42" NAME="L89"><B>i</B></A>
+<DD><A HREF="binary.htm#M43" NAME="L90"><B>I</B></A>
+<DD><A HREF="binary.htm#M44" NAME="L91"><B>n</B></A>
+<DD><A HREF="binary.htm#M45" NAME="L92"><B>w</B></A>
+<DD><A HREF="binary.htm#M46" NAME="L93"><B>W</B></A>
+<DD><A HREF="binary.htm#M47" NAME="L94"><B>m</B></A>
+<DD><A HREF="binary.htm#M48" NAME="L95"><B>f</B></A>
+<DD><A HREF="binary.htm#M49" NAME="L96"><B>r</B></A>
+<DD><A HREF="binary.htm#M50" NAME="L97"><B>R</B></A>
+<DD><A HREF="binary.htm#M51" NAME="L98"><B>d</B></A>
+<DD><A HREF="binary.htm#M52" NAME="L99"><B>q</B></A>
+<DD><A HREF="binary.htm#M53" NAME="L100"><B>Q</B></A>
+<DD><A HREF="binary.htm#M54" NAME="L101"><B>x</B></A>
+<DD><A HREF="binary.htm#M55" NAME="L102"><B>X</B></A>
+<DD><A HREF="binary.htm#M56" NAME="L103"><B>@</B></A>
+</DL>
+<DD><A HREF="binary.htm#M57" NAME="L104">PORTABILITY ISSUES</A>
+<DD><A HREF="binary.htm#M58" NAME="L105">EXAMPLES</A>
+<DD><A HREF="binary.htm#M59" NAME="L106">SEE ALSO</A>
+<DD><A HREF="binary.htm#M60" NAME="L107">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+binary - Insert and extract fields from binary strings
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>binary format </B><I>formatString </I>?<I>arg arg ...</I>?<BR>
+<B>binary scan </B><I>string formatString </I>?<I>varName varName ...</I>?<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+This command provides facilities for manipulating binary data.  The
+first form, <B>binary format</B>, creates a binary string from normal
+Tcl values.  For example, given the values 16 and 22, on a 32-bit
+architecture, it might produce an 8-byte binary string consisting of
+two 4-byte integers, one for each of the numbers.  The second form of
+the command, <B>binary scan</B>, does the opposite: it extracts data
+from a binary string and returns it as ordinary Tcl string values.
+<H3><A NAME="M5">BINARY FORMAT</A></H3>
+The <B>binary format</B> command generates a binary string whose layout
+is specified by the <I>formatString</I> and whose contents come from
+the additional arguments.  The resulting binary value is returned.
+<P>
+The <I>formatString</I> consists of a sequence of zero or more field
+specifiers separated by zero or more spaces.  Each field specifier is
+a single type character followed by an optional flag character followed
+by an optional numeric <I>count</I>.
+Most field specifiers consume one argument to obtain the value to be
+formatted.  The type character specifies how the value is to be
+formatted.  The <I>count</I> typically indicates how many items of the
+specified type are taken from the value.  If present, the <I>count</I>
+is a non-negative decimal integer or <B>*</B>, which normally indicates
+that all of the items in the value are to be used.  If the number of
+arguments does not match the number of fields in the format string
+that consume arguments, then an error is generated. The flag character
+is ignored for for <B>binary format</B>.
+<P>
+Here is a small example to clarify the relation between the field
+specifiers and the arguments:
+<PRE><B>binary format</B> d3d {1.0 2.0 3.0 4.0} 0.1</PRE>
+<P>
+The first argument is a list of four numbers, but because of the count
+of 3 for the associated field specifier, only the first three will be
+used. The second argument is associated with the second field
+specifier. The resulting binary string contains the four numbers 1.0,
+2.0, 3.0 and 0.1.
+<P>
+Each type-count pair moves an imaginary cursor through the binary
+data, storing bytes at the current position and advancing the cursor
+to just after the last byte stored.  The cursor is initially at
+position 0 at the beginning of the data.  The type may be any one of
+the following characters:
+<P>
+<DL class="binary format">
+<DT><A NAME="M6"><B>a</B></A><DD>
+Stores a byte string of length <I>count</I> in the output string.
+Every character is taken as modulo 256 (i.e. the low byte of every
+character is used, and the high byte discarded) so when storing
+character strings not wholly expressible using the characters &#92;u0000-&#92;u00ff,
+the <B>encoding convertto</B> command should be used first to change
+the string into an external representation
+if this truncation is not desired (i.e. if the characters are
+not part of the ISO 8859-1 character set.)
+If <I>arg</I> has fewer than <I>count</I> bytes, then additional zero
+bytes are used to pad out the field.  If <I>arg</I> is longer than the
+specified length, the extra characters will be ignored.  If
+<I>count</I> is <B>*</B>, then all of the bytes in <I>arg</I> will be
+formatted.  If <I>count</I> is omitted, then one character will be
+formatted.  For example,
+<PRE><B>binary format</B> a7a*a alpha bravo charlie</PRE>
+will return a string equivalent to <B>alpha&#92;000&#92;000bravoc</B>,
+<PRE><B>binary format</B> a* [encoding convertto utf-8 &#92;u20ac]</PRE>
+will return a string equivalent to <B>&#92;342&#92;202&#92;254</B> (which is the
+UTF-8 byte sequence for a Euro-currency character) and
+<PRE><B>binary format</B> a* [encoding convertto iso8859-15 &#92;u20ac]</PRE>
+will return a string equivalent to <B>&#92;244</B> (which is the ISO
+8859-15 byte sequence for a Euro-currency character). Contrast these
+last two with:
+<PRE><B>binary format</B> a* &#92;u20ac</PRE>
+which returns a string equivalent to <B>&#92;254</B> (i.e. <B>&#92;xac</B>) by
+truncating the high-bits of the character, and which is probably not
+what is desired.
+<P><DT><A NAME="M7"><B>A</B></A><DD>
+This form is the same as <B>a</B> except that spaces are used for
+padding instead of nulls.  For example,
+<PRE><B>binary format</B> A6A*A alpha bravo charlie</PRE>
+will return <B>alpha bravoc</B>.
+<P><DT><A NAME="M8"><B>b</B></A><DD>
+Stores a string of <I>count</I> binary digits in low-to-high order
+within each byte in the output string.  <I>Arg</I> must contain a
+sequence of <B>1</B> and <B>0</B> characters.  The resulting bytes are
+emitted in first to last order with the bits being formatted in
+low-to-high order within each byte.  If <I>arg</I> has fewer than
+<I>count</I> digits, then zeros will be used for the remaining bits.
+If <I>arg</I> has more than the specified number of digits, the extra
+digits will be ignored.  If <I>count</I> is <B>*</B>, then all of the
+digits in <I>arg</I> will be formatted.  If <I>count</I> is omitted,
+then one digit will be formatted.  If the number of bits formatted
+does not end at a byte boundary, the remaining bits of the last byte
+will be zeros.  For example,
+<PRE><B>binary format</B> b5b* 11100 111000011010</PRE>
+will return a string equivalent to <B>&#92;x07&#92;x87&#92;x05</B>.
+<P><DT><A NAME="M9"><B>B</B></A><DD>
+This form is the same as <B>b</B> except that the bits are stored in
+high-to-low order within each byte.  For example,
+<PRE><B>binary format</B> B5B* 11100 111000011010</PRE>
+will return a string equivalent to <B>&#92;xe0&#92;xe1&#92;xa0</B>.
+<P><DT><A NAME="M10"><B>H</B></A><DD>
+Stores a string of <I>count</I> hexadecimal digits in high-to-low
+within each byte in the output string.  <I>Arg</I> must contain a
+sequence of characters in the set
+&#8220;0123456789abcdefABCDEF&#8221;.
+The resulting bytes are emitted in first to last order with the hex digits
+being formatted in high-to-low order within each byte.  If <I>arg</I>
+has fewer than <I>count</I> digits, then zeros will be used for the
+remaining digits.  If <I>arg</I> has more than the specified number of
+digits, the extra digits will be ignored.  If <I>count</I> is
+<B>*</B>, then all of the digits in <I>arg</I> will be formatted.  If
+<I>count</I> is omitted, then one digit will be formatted.  If the
+number of digits formatted does not end at a byte boundary, the
+remaining bits of the last byte will be zeros.  For example,
+<PRE><B>binary format</B> H3H*H2 ab DEF 987</PRE>
+will return a string equivalent to <B>&#92;xab&#92;x00&#92;xde&#92;xf0&#92;x98</B>.
+<P><DT><A NAME="M11"><B>h</B></A><DD>
+This form is the same as <B>H</B> except that the digits are stored in
+low-to-high order within each byte. This is seldom required. For example,
+<PRE><B>binary format</B> h3h*h2 AB def 987</PRE>
+will return a string equivalent to <B>&#92;xba&#92;x00&#92;xed&#92;x0f&#92;x89</B>.
+<P><DT><A NAME="M12"><B>c</B></A><DD>
+Stores one or more 8-bit integer values in the output string.  If no
+<I>count</I> is specified, then <I>arg</I> must consist of an integer
+value. If <I>count</I> is specified, <I>arg</I> must consist of a list
+containing at least that many integers. The low-order 8 bits of each integer
+are stored as a one-byte value at the cursor position.  If <I>count</I>
+is <B>*</B>, then all of the integers in the list are formatted. If the
+number of elements in the list is greater
+than <I>count</I>, then the extra elements are ignored.  For example,
+<PRE><B>binary format</B> c3cc* {3 -3 128 1} 260 {2 5}</PRE>
+will return a string equivalent to
+<B>&#92;x03&#92;xfd&#92;x80&#92;x04&#92;x02&#92;x05</B>, whereas
+<PRE><B>binary format</B> c {2 5}</PRE>
+will generate an error.
+<P><DT><A NAME="M13"><B>s</B></A><DD>
+This form is the same as <B>c</B> except that it stores one or more
+16-bit integers in little-endian byte order in the output string.  The
+low-order 16-bits of each integer are stored as a two-byte value at
+the cursor position with the least significant byte stored first.  For
+example,
+<PRE><B>binary format</B> s3 {3 -3 258 1}</PRE>
+will return a string equivalent to 
+<B>&#92;x03&#92;x00&#92;xfd&#92;xff&#92;x02&#92;x01</B>.
+<P><DT><A NAME="M14"><B>S</B></A><DD>
+This form is the same as <B>s</B> except that it stores one or more
+16-bit integers in big-endian byte order in the output string.  For
+example,
+<PRE><B>binary format</B> S3 {3 -3 258 1}</PRE>
+will return a string equivalent to 
+<B>&#92;x00&#92;x03&#92;xff&#92;xfd&#92;x01&#92;x02</B>.
+<P><DT><A NAME="M15"><B>t</B></A><DD>
+This form (mnemonically <I>tiny</I>) is the same as <B>s</B> and <B>S</B>
+except that it stores the 16-bit integers in the output string in the
+native byte order of the machine where the Tcl script is running.
+To determine what the native byte order of the machine is, refer to
+the <B>byteOrder</B> element of the <B>tcl_platform</B> array.
+<P><DT><A NAME="M16"><B>i</B></A><DD>
+This form is the same as <B>c</B> except that it stores one or more
+32-bit integers in little-endian byte order in the output string.  The
+low-order 32-bits of each integer are stored as a four-byte value at
+the cursor position with the least significant byte stored first.  For
+example,
+<PRE><B>binary format</B> i3 {3 -3 65536 1}</PRE>
+will return a string equivalent to 
+<B>&#92;x03&#92;x00&#92;x00&#92;x00&#92;xfd&#92;xff&#92;xff&#92;xff&#92;x00&#92;x00&#92;x01&#92;x00</B>
+<P><DT><A NAME="M17"><B>I</B></A><DD>
+This form is the same as <B>i</B> except that it stores one or more one
+or more 32-bit integers in big-endian byte order in the output string.
+For example,
+<PRE><B>binary format</B> I3 {3 -3 65536 1}</PRE>
+will return a string equivalent to 
+<B>&#92;x00&#92;x00&#92;x00&#92;x03&#92;xff&#92;xff&#92;xff&#92;xfd&#92;x00&#92;x01&#92;x00&#92;x00</B>
+<P><DT><A NAME="M18"><B>n</B></A><DD>
+This form (mnemonically <I>number</I> or <I>normal</I>) is the same as
+<B>i</B> and <B>I</B> except that it stores the 32-bit integers in the
+output string in the native byte order of the machine where the Tcl
+script is running.
+To determine what the native byte order of the machine is, refer to
+the <B>byteOrder</B> element of the <B>tcl_platform</B> array.
+<P><DT><A NAME="M19"><B>w</B></A><DD>
+This form is the same as <B>c</B> except that it stores one or more
+64-bit integers in little-endian byte order in the output string.  The
+low-order 64-bits of each integer are stored as an eight-byte value at
+the cursor position with the least significant byte stored first.  For
+example,
+<PRE><B>binary format</B> w 7810179016327718216</PRE>
+will return the string <B>HelloTcl</B>
+<P><DT><A NAME="M20"><B>W</B></A><DD>
+This form is the same as <B>w</B> except that it stores one or more one
+or more 64-bit integers in big-endian byte order in the output string.
+For example,
+<PRE><B>binary format</B> Wc 4785469626960341345 110</PRE>
+will return the string <B>BigEndian</B>
+<P><DT><A NAME="M21"><B>m</B></A><DD>
+This form (mnemonically the mirror of <B>w</B>) is the same as <B>w</B>
+and <B>W</B> except that it stores the 64-bit integers in the output
+string in the native byte order of the machine where the Tcl script is
+running.
+To determine what the native byte order of the machine is, refer to
+the <B>byteOrder</B> element of the <B>tcl_platform</B> array.
+<P><DT><A NAME="M22"><B>f</B></A><DD>
+This form is the same as <B>c</B> except that it stores one or more one
+or more single-precision floating point numbers in the machine's native
+representation in the output string.  This representation is not
+portable across architectures, so it should not be used to communicate
+floating point numbers across the network.  The size of a floating
+point number may vary across architectures, so the number of bytes
+that are generated may vary.  If the value overflows the
+machine's native representation, then the value of FLT_MAX
+as defined by the system will be used instead.  Because Tcl uses
+double-precision floating point numbers internally, there may be some
+loss of precision in the conversion to single-precision.  For example,
+on a Windows system running on an Intel Pentium processor,
+<PRE><B>binary format</B> f2 {1.6 3.4}</PRE>
+will return a string equivalent to 
+<B>&#92;xcd&#92;xcc&#92;xcc&#92;x3f&#92;x9a&#92;x99&#92;x59&#92;x40</B>.
+<P><DT><A NAME="M23"><B>r</B></A><DD>
+This form (mnemonically <I>real</I>) is the same as <B>f</B> except that
+it stores the single-precision floating point numbers in little-endian
+order.  This conversion only produces meaningful output when used on
+machines which use the IEEE floating point representation (very
+common, but not universal.)
+<P><DT><A NAME="M24"><B>R</B></A><DD>
+This form is the same as <B>r</B> except that it stores the
+single-precision floating point numbers in big-endian order.
+<P><DT><A NAME="M25"><B>d</B></A><DD>
+This form is the same as <B>f</B> except that it stores one or more one
+or more double-precision floating point numbers in the machine's native
+representation in the output string.  For example, on a
+Windows system running on an Intel Pentium processor,
+<PRE><B>binary format</B> d1 {1.6}</PRE>
+will return a string equivalent to 
+<B>&#92;x9a&#92;x99&#92;x99&#92;x99&#92;x99&#92;x99&#92;xf9&#92;x3f</B>.
+<P><DT><A NAME="M26"><B>q</B></A><DD>
+This form (mnemonically the mirror of <B>d</B>) is the same as <B>d</B>
+except that it stores the double-precision floating point numbers in
+little-endian order.  This conversion only produces meaningful output
+when used on machines which use the IEEE floating point representation
+(very common, but not universal.)
+<P><DT><A NAME="M27"><B>Q</B></A><DD>
+This form is the same as <B>q</B> except that it stores the
+double-precision floating point numbers in big-endian order.
+<P><DT><A NAME="M28"><B>x</B></A><DD>
+Stores <I>count</I> null bytes in the output string.  If <I>count</I> is
+not specified, stores one null byte.  If <I>count</I> is <B>*</B>,
+generates an error.  This type does not consume an argument.  For
+example,
+<PRE><B>binary format</B> a3xa3x2a3 abc def ghi</PRE>
+will return a string equivalent to <B>abc&#92;000def&#92;000&#92;000ghi</B>.
+<P><DT><A NAME="M29"><B>X</B></A><DD>
+Moves the cursor back <I>count</I> bytes in the output string.  If
+<I>count</I> is <B>*</B> or is larger than the current cursor position,
+then the cursor is positioned at location 0 so that the next byte
+stored will be the first byte in the result string.  If <I>count</I> is
+omitted then the cursor is moved back one byte.  This type does not
+consume an argument.  For example,
+<PRE><B>binary format</B> a3X*a3X2a3 abc def ghi</PRE>
+will return <B>dghi</B>.
+<P><DT><A NAME="M30"><B>@</B></A><DD>
+Moves the cursor to the absolute location in the output string
+specified by <I>count</I>.  Position 0 refers to the first byte in the
+output string.  If <I>count</I> refers to a position beyond the last
+byte stored so far, then null bytes will be placed in the uninitialized
+locations and the cursor will be placed at the specified location.  If
+<I>count</I> is <B>*</B>, then the cursor is moved to the current end of
+the output string.  If <I>count</I> is omitted, then an error will be
+generated.  This type does not consume an argument. For example,
+<PRE><B>binary format</B> a5@2a1@*a3@10a1 abcde f ghi j</PRE>
+will return <B>abfdeghi&#92;000&#92;000j</B>.
+<P></DL>
+<H3><A NAME="M31">BINARY SCAN</A></H3>
+The <B>binary scan</B> command parses fields from a binary string,
+returning the number of conversions performed.  <I>String</I> gives the
+input bytes to be parsed (one byte per character, and characters not
+representable as a byte have their high bits chopped)
+and <I>formatString</I> indicates how to parse it.
+Each <I>varName</I> gives the name of a variable; when a field is
+scanned from <I>string</I> the result is assigned to the corresponding
+variable.
+<P>
+As with <B>binary format</B>, the <I>formatString</I> consists of a
+sequence of zero or more field specifiers separated by zero or more
+spaces.  Each field specifier is a single type character followed by
+an optional flag character followed by an optional numeric <I>count</I>.
+Most field specifiers consume one
+argument to obtain the variable into which the scanned values should
+be placed.  The type character specifies how the binary data is to be
+interpreted.  The <I>count</I> typically indicates how many items of
+the specified type are taken from the data.  If present, the
+<I>count</I> is a non-negative decimal integer or <B>*</B>, which
+normally indicates that all of the remaining items in the data are to
+be used.  If there are not enough bytes left after the current cursor
+position to satisfy the current field specifier, then the
+corresponding variable is left untouched and <B>binary scan</B> returns
+immediately with the number of variables that were set.  If there are
+not enough arguments for all of the fields in the format string that
+consume arguments, then an error is generated. The flag character
+&#8220;u&#8221;
+may be given to cause some types to be read as unsigned values. The flag
+is accepted for all field types but is ignored for non-integer fields.
+<P>
+A similar example as with <B>binary format</B> should explain the
+relation between field specifiers and arguments in case of the binary
+scan subcommand:
+<PRE><B>binary scan</B> $bytes s3s first second</PRE>
+<P>
+This command (provided the binary string in the variable <I>bytes</I>
+is long enough) assigns a list of three integers to the variable
+<I>first</I> and assigns a single value to the variable <I>second</I>.
+If <I>bytes</I> contains fewer than 8 bytes (i.e. four 2-byte
+integers), no assignment to <I>second</I> will be made, and if
+<I>bytes</I> contains fewer than 6 bytes (i.e. three 2-byte integers),
+no assignment to <I>first</I> will be made.  Hence:
+<PRE>puts [<B>binary scan</B> abcdefg s3s first second]
+puts $first
+puts $second</PRE>
+will print (assuming neither variable is set previously):
+<PRE>1
+25185 25699 26213
+can't read &quot;second&quot;: no such variable</PRE>
+<P>
+It is <I>important</I> to note that the <B>c</B>, <B>s</B>, and <B>S</B>
+(and <B>i</B> and <B>I</B> on 64bit systems) will be scanned into
+long data size values.  In doing this, values that have their high
+bit set (0x80 for chars, 0x8000 for shorts, 0x80000000 for ints),
+will be sign extended.  Thus the following will occur:
+<PRE>set signShort [<B>binary format</B> s1 0x8000]
+<B>binary scan</B> $signShort s1 val; <I># val == 0xFFFF8000</I></PRE>
+If you require unsigned values you can include the
+&#8220;u&#8221;
+flag character following
+the field type. For example, to read an unsigned short value:
+<PRE>set signShort [<B>binary format</B> s1 0x8000]
+<B>binary scan</B> $signShort su1 val; <I># val == 0x00008000</I></PRE>
+<P>
+Each type-count pair moves an imaginary cursor through the binary data,
+reading bytes from the current position.  The cursor is initially
+at position 0 at the beginning of the data.  The type may be any one of
+the following characters:
+<P>
+<DL class="binary scan">
+<DT><A NAME="M32"><B>a</B></A><DD>
+The data is a byte string of length <I>count</I>.  If <I>count</I>
+is <B>*</B>, then all of the remaining bytes in <I>string</I> will be
+scanned into the variable.  If <I>count</I> is omitted, then one
+byte will be scanned.
+All bytes scanned will be interpreted as being characters in the
+range &#92;u0000-&#92;u00ff so the <B>encoding convertfrom</B> command will be
+needed if the string is not a binary string or a string encoded in ISO
+8859-1.
+For example,
+<PRE><B>binary scan</B> abcde&#92;000fghi a6a10 var1 var2</PRE>
+will return <B>1</B> with the string equivalent to <B>abcde&#92;000</B>
+stored in <I>var1</I> and <I>var2</I> left unmodified, and
+<PRE><B>binary scan</B> &#92;342&#92;202&#92;254 a* var1
+set var2 [encoding convertfrom utf-8 $var1]</PRE>
+will store a Euro-currency character in <I>var2</I>.
+<P><DT><A NAME="M33"><B>A</B></A><DD>
+This form is the same as <B>a</B>, except trailing blanks and nulls are stripped from
+the scanned value before it is stored in the variable.  For example,
+<PRE><B>binary scan</B> &quot;abc efghi  &#92;000&quot; A* var1</PRE>
+will return <B>1</B> with <B>abc efghi</B> stored in <I>var1</I>.
+<P><DT><A NAME="M34"><B>b</B></A><DD>
+The data is turned into a string of <I>count</I> binary digits in
+low-to-high order represented as a sequence of
+&#8220;1&#8221;
+and
+&#8220;0&#8221;
+characters.  The data bytes are scanned in first to last order with
+the bits being taken in low-to-high order within each byte.  Any extra
+bits in the last byte are ignored.  If <I>count</I> is <B>*</B>, then
+all of the remaining bits in <I>string</I> will be scanned.  If
+<I>count</I> is omitted, then one bit will be scanned.  For example,
+<PRE><B>binary scan</B> &#92;x07&#92;x87&#92;x05 b5b* var1 var2</PRE>
+will return <B>2</B> with <B>11100</B> stored in <I>var1</I> and
+<B>1110000110100000</B> stored in <I>var2</I>.
+<P><DT><A NAME="M35"><B>B</B></A><DD>
+This form is the same as <B>b</B>, except the bits are taken in
+high-to-low order within each byte.  For example,
+<PRE><B>binary scan</B> &#92;x70&#92;x87&#92;x05 B5B* var1 var2</PRE>
+will return <B>2</B> with <B>01110</B> stored in <I>var1</I> and
+<B>1000011100000101</B> stored in <I>var2</I>.
+<P><DT><A NAME="M36"><B>H</B></A><DD>
+The data is turned into a string of <I>count</I> hexadecimal digits in
+high-to-low order represented as a sequence of characters in the set
+&#8220;0123456789abcdef&#8221;.
+The data bytes are scanned in first to last
+order with the hex digits being taken in high-to-low order within each
+byte. Any extra bits in the last byte are ignored. If <I>count</I> is
+<B>*</B>, then all of the remaining hex digits in <I>string</I> will be
+scanned. If <I>count</I> is omitted, then one hex digit will be
+scanned. For example,
+<PRE><B>binary scan</B> &#92;x07&#92;xC6&#92;x05&#92;x1f&#92;x34 H3H* var1 var2</PRE>
+will return <B>2</B> with <B>07c</B> stored in <I>var1</I> and
+<B>051f34</B> stored in <I>var2</I>.
+<P><DT><A NAME="M37"><B>h</B></A><DD>
+This form is the same as <B>H</B>, except the digits are taken in
+reverse (low-to-high) order within each byte. For example,
+<PRE><B>binary scan</B> &#92;x07&#92;x86&#92;x05&#92;x12&#92;x34 h3h* var1 var2</PRE>
+will return <B>2</B> with <B>706</B> stored in <I>var1</I> and
+<B>502143</B> stored in <I>var2</I>.
+Note that most code that wishes to parse the hexadecimal digits from
+multiple bytes in order should use the <B>H</B> format.
+<P><DT><A NAME="M38"><B>c</B></A><DD>
+The data is turned into <I>count</I> 8-bit signed integers and stored
+in the corresponding variable as a list. If <I>count</I> is <B>*</B>,
+then all of the remaining bytes in <I>string</I> will be scanned.  If
+<I>count</I> is omitted, then one 8-bit integer will be scanned.  For
+example,
+<PRE><B>binary scan</B> &#92;x07&#92;x86&#92;x05 c2c* var1 var2</PRE>
+will return <B>2</B> with <B>7 -122</B> stored in <I>var1</I> and <B>5</B>
+stored in <I>var2</I>.  Note that the integers returned are signed, but
+they can be converted to unsigned 8-bit quantities using an expression
+like:
+<PRE>set num [expr { $num &amp; 0xff }]</PRE>
+<P><DT><A NAME="M39"><B>s</B></A><DD>
+The data is interpreted as <I>count</I> 16-bit signed integers
+represented in little-endian byte order.  The integers are stored in
+the corresponding variable as a list.  If <I>count</I> is <B>*</B>, then
+all of the remaining bytes in <I>string</I> will be scanned.  If
+<I>count</I> is omitted, then one 16-bit integer will be scanned.  For
+example,
+<PRE><B>binary scan</B> &#92;x05&#92;x00&#92;x07&#92;x00&#92;xf0&#92;xff s2s* var1 var2</PRE>
+will return <B>2</B> with <B>5 7</B> stored in <I>var1</I> and <B>-16</B>
+stored in <I>var2</I>.  Note that the integers returned are signed, but
+they can be converted to unsigned 16-bit quantities using an expression
+like:
+<PRE>set num [expr { $num &amp; 0xffff }]</PRE>
+<P><DT><A NAME="M40"><B>S</B></A><DD>
+This form is the same as <B>s</B> except that the data is interpreted
+as <I>count</I> 16-bit signed integers represented in big-endian byte
+order.  For example,
+<PRE><B>binary scan</B> &#92;x00&#92;x05&#92;x00&#92;x07&#92;xff&#92;xf0 S2S* var1 var2</PRE>
+will return <B>2</B> with <B>5 7</B> stored in <I>var1</I> and <B>-16</B>
+stored in <I>var2</I>. 
+<P><DT><A NAME="M41"><B>t</B></A><DD>
+The data is interpreted as <I>count</I> 16-bit signed integers
+represented in the native byte order of the machine running the Tcl
+script.  It is otherwise identical to <B>s</B> and <B>S</B>.
+To determine what the native byte order of the machine is, refer to
+the <B>byteOrder</B> element of the <B>tcl_platform</B> array.
+<P><DT><A NAME="M42"><B>i</B></A><DD>
+The data is interpreted as <I>count</I> 32-bit signed integers
+represented in little-endian byte order.  The integers are stored in
+the corresponding variable as a list.  If <I>count</I> is <B>*</B>, then
+all of the remaining bytes in <I>string</I> will be scanned.  If
+<I>count</I> is omitted, then one 32-bit integer will be scanned.  For
+example,
+<PRE>set str &#92;x05&#92;x00&#92;x00&#92;x00&#92;x07&#92;x00&#92;x00&#92;x00&#92;xf0&#92;xff&#92;xff&#92;xff
+<B>binary scan</B> $str i2i* var1 var2</PRE>
+will return <B>2</B> with <B>5 7</B> stored in <I>var1</I> and <B>-16</B>
+stored in <I>var2</I>.  Note that the integers returned are signed, but
+they can be converted to unsigned 32-bit quantities using an expression
+like:
+<PRE>set num [expr { $num &amp; 0xffffffff }]</PRE>
+<P><DT><A NAME="M43"><B>I</B></A><DD>
+This form is the same as <B>I</B> except that the data is interpreted
+as <I>count</I> 32-bit signed integers represented in big-endian byte
+order.  For example,
+<PRE>set str &#92;x00&#92;x00&#92;x00&#92;x05&#92;x00&#92;x00&#92;x00&#92;x07&#92;xff&#92;xff&#92;xff&#92;xf0
+<B>binary scan</B> $str I2I* var1 var2</PRE>
+will return <B>2</B> with <B>5 7</B> stored in <I>var1</I> and <B>-16</B>
+stored in <I>var2</I>.
+<P><DT><A NAME="M44"><B>n</B></A><DD>
+The data is interpreted as <I>count</I> 32-bit signed integers
+represented in the native byte order of the machine running the Tcl
+script.  It is otherwise identical to <B>i</B> and <B>I</B>.
+To determine what the native byte order of the machine is, refer to
+the <B>byteOrder</B> element of the <B>tcl_platform</B> array.
+<P><DT><A NAME="M45"><B>w</B></A><DD>
+The data is interpreted as <I>count</I> 64-bit signed integers
+represented in little-endian byte order.  The integers are stored in
+the corresponding variable as a list.  If <I>count</I> is <B>*</B>, then
+all of the remaining bytes in <I>string</I> will be scanned.  If
+<I>count</I> is omitted, then one 64-bit integer will be scanned.  For
+example,
+<PRE>set str &#92;x05&#92;x00&#92;x00&#92;x00&#92;x07&#92;x00&#92;x00&#92;x00&#92;xf0&#92;xff&#92;xff&#92;xff
+<B>binary scan</B> $str wi* var1 var2</PRE>
+will return <B>2</B> with <B>30064771077</B> stored in <I>var1</I> and
+<B>-16</B> stored in <I>var2</I>.  Note that the integers returned are
+signed and cannot be represented by Tcl as unsigned values.
+<P><DT><A NAME="M46"><B>W</B></A><DD>
+This form is the same as <B>w</B> except that the data is interpreted
+as <I>count</I> 64-bit signed integers represented in big-endian byte
+order.  For example,
+<PRE>set str &#92;x00&#92;x00&#92;x00&#92;x05&#92;x00&#92;x00&#92;x00&#92;x07&#92;xff&#92;xff&#92;xff&#92;xf0
+<B>binary scan</B> $str WI* var1 var2</PRE>
+will return <B>2</B> with <B>21474836487</B> stored in <I>var1</I> and <B>-16</B>
+stored in <I>var2</I>.
+<P><DT><A NAME="M47"><B>m</B></A><DD>
+The data is interpreted as <I>count</I> 64-bit signed integers
+represented in the native byte order of the machine running the Tcl
+script.  It is otherwise identical to <B>w</B> and <B>W</B>.
+To determine what the native byte order of the machine is, refer to
+the <B>byteOrder</B> element of the <B>tcl_platform</B> array.
+<P><DT><A NAME="M48"><B>f</B></A><DD>
+The data is interpreted as <I>count</I> single-precision floating point
+numbers in the machine's native representation.  The floating point
+numbers are stored in the corresponding variable as a list.  If
+<I>count</I> is <B>*</B>, then all of the remaining bytes in
+<I>string</I> will be scanned.  If <I>count</I> is omitted, then one
+single-precision floating point number will be scanned.  The size of a
+floating point number may vary across architectures, so the number of
+bytes that are scanned may vary.  If the data does not represent a
+valid floating point number, the resulting value is undefined and
+compiler dependent.  For example, on a Windows system running on an
+Intel Pentium processor,
+<PRE><B>binary scan</B> &#92;x3f&#92;xcc&#92;xcc&#92;xcd f var1</PRE>
+will return <B>1</B> with <B>1.6000000238418579</B> stored in
+<I>var1</I>.
+<P><DT><A NAME="M49"><B>r</B></A><DD>
+This form is the same as <B>f</B> except that the data is interpreted
+as <I>count</I> single-precision floating point number in little-endian
+order.  This conversion is not portable to the minority of systems not
+using IEEE floating point representations.
+<P><DT><A NAME="M50"><B>R</B></A><DD>
+This form is the same as <B>f</B> except that the data is interpreted
+as <I>count</I> single-precision floating point number in big-endian
+order.  This conversion is not portable to the minority of systems not
+using IEEE floating point representations.
+<P><DT><A NAME="M51"><B>d</B></A><DD>
+This form is the same as <B>f</B> except that the data is interpreted
+as <I>count</I> double-precision floating point numbers in the
+machine's native representation. For example, on a Windows system
+running on an Intel Pentium processor,
+<PRE><B>binary scan</B> &#92;x9a&#92;x99&#92;x99&#92;x99&#92;x99&#92;x99&#92;xf9&#92;x3f d var1</PRE>
+will return <B>1</B> with <B>1.6000000000000001</B>
+stored in <I>var1</I>.
+<P><DT><A NAME="M52"><B>q</B></A><DD>
+This form is the same as <B>d</B> except that the data is interpreted
+as <I>count</I> double-precision floating point number in little-endian
+order.  This conversion is not portable to the minority of systems not
+using IEEE floating point representations.
+<P><DT><A NAME="M53"><B>Q</B></A><DD>
+This form is the same as <B>d</B> except that the data is interpreted
+as <I>count</I> double-precision floating point number in big-endian
+order.  This conversion is not portable to the minority of systems not
+using IEEE floating point representations.
+<P><DT><A NAME="M54"><B>x</B></A><DD>
+Moves the cursor forward <I>count</I> bytes in <I>string</I>.  If
+<I>count</I> is <B>*</B> or is larger than the number of bytes after the
+current cursor position, then the cursor is positioned after
+the last byte in <I>string</I>.  If <I>count</I> is omitted, then the
+cursor is moved forward one byte.  Note that this type does not
+consume an argument.  For example,
+<PRE><B>binary scan</B> &#92;x01&#92;x02&#92;x03&#92;x04 x2H* var1</PRE>
+will return <B>1</B> with <B>0304</B> stored in <I>var1</I>.
+<P><DT><A NAME="M55"><B>X</B></A><DD>
+Moves the cursor back <I>count</I> bytes in <I>string</I>.  If
+<I>count</I> is <B>*</B> or is larger than the current cursor position,
+then the cursor is positioned at location 0 so that the next byte
+scanned will be the first byte in <I>string</I>.  If <I>count</I>
+is omitted then the cursor is moved back one byte.  Note that this
+type does not consume an argument.  For example,
+<PRE><B>binary scan</B> &#92;x01&#92;x02&#92;x03&#92;x04 c2XH* var1 var2</PRE>
+will return <B>2</B> with <B>1 2</B> stored in <I>var1</I> and <B>020304</B>
+stored in <I>var2</I>.
+<P><DT><A NAME="M56"><B>@</B></A><DD>
+Moves the cursor to the absolute location in the data string specified
+by <I>count</I>.  Note that position 0 refers to the first byte in
+<I>string</I>.  If <I>count</I> refers to a position beyond the end of
+<I>string</I>, then the cursor is positioned after the last byte.  If
+<I>count</I> is omitted, then an error will be generated.  For example,
+<PRE><B>binary scan</B> &#92;x01&#92;x02&#92;x03&#92;x04 c2@1H* var1 var2</PRE>
+will return <B>2</B> with <B>1 2</B> stored in <I>var1</I> and <B>020304</B>
+stored in <I>var2</I>.
+<P></DL>
+<H3><A NAME="M57">PORTABILITY ISSUES</A></H3>
+The <B>r</B>, <B>R</B>, <B>q</B> and <B>Q</B> conversions will only work
+reliably for transferring data between computers which are all using
+IEEE floating point representations.  This is very common, but not
+universal.  To transfer floating-point numbers portably between all
+architectures, use their textual representation (as produced by
+<B><A HREF="../TclCmd/format.htm">format</A></B>) instead.
+<H3><A NAME="M58">EXAMPLES</A></H3>
+This is a procedure to write a Tcl string to a binary-encoded channel as
+UTF-8 data preceded by a length word:
+<PRE>proc <I>writeString</I> {channel string} {
+    set data [encoding convertto utf-8 $string]
+    puts -nonewline [<B>binary format</B> Ia* &#92;
+            [string length $data] $data]
+}</PRE>
+<P>
+This procedure reads a string from a channel that was written by the
+previously presented <I>writeString</I> procedure:
+<PRE>proc <I>readString</I> {channel} {
+    if {![<B>binary scan</B> [read $channel 4] I length]} {
+        error &quot;missing length&quot;
+    }
+    set data [read $channel $length]
+    return [encoding convertfrom utf-8 $data]
+}</PRE>
+<H3><A NAME="M59">SEE ALSO</A></H3>
+<B><A HREF="../TclCmd/format.htm">format</A></B>, <B><A HREF="../TclCmd/scan.htm">scan</A></B>, <B><A HREF="../TclCmd/tclvars.htm">tclvars</A></B>
+<H3><A NAME="M60">KEYWORDS</A></H3>
+<A href="../Keywords/B.htm#binary">binary</A>, <A href="../Keywords/F.htm#format">format</A>, <A href="../Keywords/S.htm#scan">scan</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1997 by Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

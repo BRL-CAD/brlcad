@@ -1,0 +1,40 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>rename manual page - Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclCmd</a> <small>&gt;</small> rename</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+rename - Rename or delete a command
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>rename </B><I>oldName newName</I><BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+Rename the command that used to be called <I>oldName</I> so that it
+is now called <I>newName</I>.
+If <I>newName</I> is an empty string then <I>oldName</I> is deleted.
+<I>oldName</I> and <I>newName</I> may include namespace qualifiers
+(names of containing namespaces).
+If a command is renamed into a different namespace,
+future invocations of it will execute in the new namespace.
+The <B>rename</B> command returns an empty string as result.
+<H3><A NAME="M5">EXAMPLE</A></H3>
+The <B>rename</B> command can be used to wrap the standard Tcl commands
+with your own monitoring machinery.  For example, you might wish to
+count how often the <B><A HREF="../TclCmd/source.htm">source</A></B> command is called:
+<PRE><B>rename</B> ::source ::theRealSource
+set sourceCount 0
+proc ::source args {
+    global sourceCount
+    puts &quot;called source for the [incr sourceCount]'th time&quot;
+    uplevel 1 ::theRealSource $args
+}</PRE>
+<H3><A NAME="M6">SEE ALSO</A></H3>
+<B><A HREF="../TclCmd/namespace.htm">namespace</A></B>, <B><A HREF="../TclCmd/proc.htm">proc</A></B>
+<H3><A NAME="M7">KEYWORDS</A></H3>
+<A href="../Keywords/C.htm#command">command</A>, <A href="../Keywords/D.htm#delete">delete</A>, <A href="../Keywords/N.htm#namespace">namespace</A>, <A href="../Keywords/R.htm#rename">rename</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1993 The Regents of the University of California.
+Copyright &copy; 1994-1997 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

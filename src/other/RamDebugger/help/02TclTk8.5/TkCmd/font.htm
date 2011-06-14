@@ -1,0 +1,376 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>font manual page - Tk Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TkCmd</a> <small>&gt;</small> font</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="font.htm#M2" NAME="L609">NAME</A>
+<DL><DD>font - Create and inspect fonts.</DD></DL>
+<DD><A HREF="font.htm#M3" NAME="L610">SYNOPSIS</A>
+<DL>
+</DL>
+<DD><A HREF="font.htm#M4" NAME="L611">DESCRIPTION</A>
+<DL class="description">
+<DD><A HREF="font.htm#M5" NAME="L612"><B>font actual </B><I>font</I> ?<B>-displayof </B><I>window</I>? ?<I>option</I>? ?<B>--</B>? ?<I>char</I>?</A>
+<DD><A HREF="font.htm#M6" NAME="L613"><B>font configure </B><I>fontname</I> ?<I>option</I>? ?<I>value option value ...</I>?</A>
+<DD><A HREF="font.htm#M7" NAME="L614"><B>font create</B> ?<I>fontname</I>? ?<I>option value ...</I>?</A>
+<DD><A HREF="font.htm#M8" NAME="L615"><B>font delete</B> <I>fontname</I> ?<I>fontname ...</I>?</A>
+<DD><A HREF="font.htm#M9" NAME="L616"><B>font families</B> ?<B>-displayof </B><I>window</I>?</A>
+<DD><A HREF="font.htm#M10" NAME="L617"><B>font measure </B><I>font</I> ?<B>-displayof </B><I>window</I>? <I>text</I></A>
+<DD><A HREF="font.htm#M11" NAME="L618"><B>font metrics </B><I>font</I> ?<B>-displayof </B><I>window</I>? ?<I>option</I>?</A>
+<DD><A HREF="font.htm#M12" NAME="L619"><B>font names</B></A>
+</DL>
+<DD><A HREF="font.htm#M13" NAME="L620">FONT DESCRIPTION</A>
+<DL class="font description">
+<DD><A HREF="font.htm#M14" NAME="L621">[1] <I>fontname</I></A>
+<DD><A HREF="font.htm#M15" NAME="L622">[2] <I>systemfont</I></A>
+<DD><A HREF="font.htm#M16" NAME="L623">[3] <I>family </I>?<I>size</I>? ?<I>style</I>? ?<I>style ...</I>?</A>
+<DD><A HREF="font.htm#M17" NAME="L624">[4] X-font names (XLFD)</A>
+<DD><A HREF="font.htm#M18" NAME="L625">[5] <I>option value </I>?<I>option value ...</I>?</A>
+</DL>
+<DD><A HREF="font.htm#M19" NAME="L626">FONT METRICS</A>
+<DL class="font metrics">
+<DD><A HREF="font.htm#M20" NAME="L627"><B>-ascent         </B></A>
+<DD><A HREF="font.htm#M21" NAME="L628"><B>-descent        </B></A>
+<DD><A HREF="font.htm#M22" NAME="L629"><B>-linespace</B></A>
+<DD><A HREF="font.htm#M23" NAME="L630"><B>-fixed           </B></A>
+</DL>
+<DD><A HREF="font.htm#M24" NAME="L631">FONT OPTIONS</A>
+<DL class="font options">
+<DD><A HREF="font.htm#M25" NAME="L632"><B>-family </B><I>name</I></A>
+<DD><A HREF="font.htm#M26" NAME="L633"><B>-size </B><I>size</I></A>
+<DD><A HREF="font.htm#M27" NAME="L634"><B>-weight </B><I>weight</I></A>
+<DD><A HREF="font.htm#M28" NAME="L635"><B>-slant </B><I>slant</I></A>
+<DD><A HREF="font.htm#M29" NAME="L636"><B>-underline </B><I>boolean</I></A>
+<DD><A HREF="font.htm#M30" NAME="L637"><B>-overstrike </B><I>boolean</I></A>
+</DL>
+<DD><A HREF="font.htm#M31" NAME="L638">STANDARD FONTS</A>
+<DL class="standard fonts">
+<DD><A HREF="font.htm#M32" NAME="L639"><B>TkDefaultFont</B></A>
+<DD><A HREF="font.htm#M33" NAME="L640"><B>TkTextFont</B></A>
+<DD><A HREF="font.htm#M34" NAME="L641"><B>TkFixedFont</B></A>
+<DD><A HREF="font.htm#M35" NAME="L642"><B>TkMenuFont</B></A>
+<DD><A HREF="font.htm#M36" NAME="L643"><B>TkHeadingFont</B></A>
+<DD><A HREF="font.htm#M37" NAME="L644"><B>TkCaptionFont</B></A>
+<DD><A HREF="font.htm#M38" NAME="L645"><B>TkSmallCaptionFont</B></A>
+<DD><A HREF="font.htm#M39" NAME="L646"><B>TkIconFont</B></A>
+<DD><A HREF="font.htm#M40" NAME="L647"><B>TkTooltipFont</B></A>
+</DL>
+<DD><A HREF="font.htm#M41" NAME="L648">PLATFORM-SPECIFIC FONTS</A>
+<DL class="platform-specific fonts">
+<DD><A HREF="font.htm#M42" NAME="L649"><B>X Windows</B></A>
+<DD><A HREF="font.htm#M43" NAME="L650"><B>MS Windows</B></A>
+<DD><A HREF="font.htm#M44" NAME="L651"><B>Mac OS X</B></A>
+</DL>
+<DD><A HREF="font.htm#M45" NAME="L652">EXAMPLE</A>
+<DD><A HREF="font.htm#M46" NAME="L653">SEE ALSO</A>
+<DD><A HREF="font.htm#M47" NAME="L654">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+font - Create and inspect fonts.
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>font</B><I> option </I>?<I>arg arg ...</I>?<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+The <B>font</B> command provides several facilities for dealing with
+fonts, such as defining named fonts and inspecting the actual attributes of
+a font.  The command has several different forms, determined by the
+first argument.  The following forms are currently supported:
+<P>
+<DL class="description">
+<DT><A NAME="M5"><B>font actual </B><I>font</I> ?<B>-displayof </B><I>window</I>? ?<I>option</I>? ?<B>--</B>? ?<I>char</I>?</A><DD>
+Returns information about the actual attributes that are obtained when
+<I>font</I> is used on <I>window</I>'s display; the actual attributes obtained
+may differ from the attributes requested due to platform-dependent
+limitations, such as the availability of font families and pointsizes.
+<I>font</I> is a font description; see <B>FONT DESCRIPTIONS</B> below.  If the
+<I>window</I> argument is omitted, it defaults to the main window.  If
+<I>option</I> is specified, returns the value of that attribute; if it is
+omitted, the return value is a list of all the attributes and their values.
+See <B>FONT OPTIONS</B> below for a list of the possible attributes.  If the
+<I>char</I> argument is supplied, it must be a single character. The font
+attributes returned will be those of the specific font used to render
+that character, which will be different from the base font if the base
+font does not contain the given character.  If <I>char</I> may be a hyphen, it
+should be preceded by <B>--</B> to distinguish it from a misspelled
+<I>option</I>.
+<P><DT><A NAME="M6"><B>font configure </B><I>fontname</I> ?<I>option</I>? ?<I>value option value ...</I>?</A><DD>
+Query or modify the desired attributes for the named font called
+<I>fontname</I>.  If no <I>option</I> is specified, returns a list describing
+all the options and their values for <I>fontname</I>.  If a single <I>option</I>
+is specified with no <I>value</I>, then returns the current value of that
+attribute.  If one or more <I>option</I>-<I>value</I> pairs are specified,
+then the command modifies the given named font to have the given values; in
+this case, all widgets using that font will redisplay themselves using the
+new attributes for the font.  See <B>FONT OPTIONS</B> below for a list of the
+possible attributes.
+<P><DT><A NAME="M7"><B>font create</B> ?<I>fontname</I>? ?<I>option value ...</I>?</A><DD>
+Creates a new named font and returns its name.  <I>fontname</I> specifies the
+name for the font; if it is omitted, then Tk generates a new name of the
+form <B>font</B><I>x</I>, where <I>x</I> is an integer.  There may be any number
+of <I>option</I>-<I>value</I> pairs, which provide the desired attributes for
+the new named font.  See <B>FONT OPTIONS</B> below for a list of the possible
+attributes.
+<P><DT><A NAME="M8"><B>font delete</B> <I>fontname</I> ?<I>fontname ...</I>?</A><DD>
+Delete the specified named fonts.  If there are widgets using the named font,
+the named font will not actually be deleted until all the instances are
+released.  Those widgets will continue to display using the last known values
+for the named font.  If a deleted named font is subsequently recreated with
+another call to <B>font create</B>, the widgets will use the new named font
+and redisplay themselves using the new attributes of that font.
+<P><DT><A NAME="M9"><B>font families</B> ?<B>-displayof </B><I>window</I>?</A><DD>
+The return value is a list of the case-insensitive names of all font families
+that exist on <I>window</I>'s display.  If the <I>window</I> argument is
+omitted, it defaults to the main window.
+<P><DT><A NAME="M10"><B>font measure </B><I>font</I> ?<B>-displayof </B><I>window</I>? <I>text</I></A><DD>
+Measures the amount of space the string <I>text</I> would use in the given
+<I>font</I> when displayed in <I>window</I>.  <I>font</I> is a font description;
+see <B>FONT DESCRIPTIONS</B> below.  If the <I>window</I> argument is
+omitted, it 
+defaults to the main window.  The return value is the total width in pixels
+of <I>text</I>, not including the extra pixels used by highly exaggerated
+characters such as cursive
+&#8220;f&#8221;.
+If the string contains newlines or tabs,
+those characters are not expanded or treated specially when measuring the
+string.
+<P><DT><A NAME="M11"><B>font metrics </B><I>font</I> ?<B>-displayof </B><I>window</I>? ?<I>option</I>?</A><DD>
+Returns information about the metrics (the font-specific data), for
+<I>font</I> when it is used on <I>window</I>'s display.  <I>font</I> is a font
+description; see <B>FONT DESCRIPTIONS</B> below.  If the <I>window</I>
+argument is
+omitted, it defaults to the main window.  If <I>option</I> is specified,
+returns the value of that metric; if it is omitted, the return value is a
+list of all the metrics and their values.  See <B>FONT METRICS</B>
+below for a list of the possible metrics.
+<P><DT><A NAME="M12"><B>font names</B></A><DD>
+The return value is a list of all the named fonts that are currently defined.
+<P></DL>
+<H3><A NAME="M13">FONT DESCRIPTION</A></H3>
+The following formats are accepted as a font description anywhere
+<I>font</I> is specified as an argument above; these same forms are also
+permitted when specifying the <B>-font</B> option for widgets.
+<P>
+<DL class="font description">
+<DT><A NAME="M14">[1] <I>fontname</I></A><DD>
+The name of a named font, created using the <B>font create</B> command.  When
+a widget uses a named font, it is guaranteed that this will never cause an
+error, as long as the named font exists, no matter what potentially invalid
+or meaningless set of attributes the named font has.  If the named font
+cannot be displayed with exactly the specified attributes, some other close
+font will be substituted automatically.
+<P><DT><A NAME="M15">[2] <I>systemfont</I></A><DD>
+The platform-specific name of a font, interpreted by the graphics server.
+This also includes, under X, an XLFD (see [4]) for which a single
+&#8220;<B>*</B>&#8221;
+character was used to elide more than one field in the middle of the
+name.  See <B>PLATFORM-SPECIFIC</B> issues for a list of the system fonts.
+<P><DT><A NAME="M16">[3] <I>family </I>?<I>size</I>? ?<I>style</I>? ?<I>style ...</I>?</A><DD>
+A properly formed list whose first element is the desired font
+<I>family</I> and whose optional second element is the desired <I>size</I>.
+The interpretation of the <I>size</I> attribute follows the same rules
+described for <B>-size</B> in <B>FONT OPTIONS</B> below.  Any
+additional optional
+arguments following the <I>size</I> are font <I>style</I>s.  Possible values
+for the <I>style</I> arguments are as follows:
+<dl><dd><table border="0"><tr><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>normal</B><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>bold</B><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>roman</B><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>italic</B><tr><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>underline</B><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>overstrike</B></table></dl>
+<P><DT><A NAME="M17">[4] X-font names (XLFD)</A><DD>
+A Unix-centric font name of the form
+<I>-foundry-family-weight-slant-setwidth-addstyle-pixel-point-resx-resy-spacing-width-charset-encoding</I>.
+The
+&#8220;<B>*</B>&#8221;
+character may be used to skip individual fields that the
+user does not care about.  There must be exactly one
+&#8220;<B>*</B>&#8221;
+for each field skipped, except that a
+&#8220;<B>*</B>&#8221;
+at the end of the XLFD skips any
+remaining fields; the shortest valid XLFD is simply
+&#8220;<B>*</B>&#8221;,
+signifying all fields as defaults.  Any fields that were skipped are
+given default
+values.  For compatibility, an XLFD always chooses a font of the specified
+pixel size (not point size); although this interpretation is not strictly
+correct, all existing applications using XLFDs assumed that one
+&#8220;point&#8221;
+was in fact one pixel and would display incorrectly (generally larger) if
+the correct size font were actually used.
+<P><DT><A NAME="M18">[5] <I>option value </I>?<I>option value ...</I>?</A><DD>
+A properly formed list of <I>option</I>-<I>value</I> pairs that specify
+the desired attributes of the font, in the same format used when defining
+a named font; see <B>FONT OPTIONS</B> below.
+<P></DL>
+<P>
+When font description <I>font</I> is used, the system attempts to parse the
+description according to each of the above five rules, in the order specified.
+Cases [1] and [2] must match the name of an existing named font or of a
+system font.  Cases [3], [4], and [5] are accepted on all
+platforms and the closest available font will be used.  In some situations
+it may not be possible to find any close font (e.g., the font family was
+a garbage value); in that case, some system-dependent default font is
+chosen.  If the font description does not match any of the above patterns,
+an error is generated.
+<H3><A NAME="M19">FONT METRICS</A></H3>
+The following options are used by the <B>font metrics</B> command to query
+font-specific data determined when the font was created.  These properties are
+for the whole font itself and not for individual characters drawn in that
+font.  In the following definitions, the
+&#8220;baseline&#8221;
+of a font is the
+horizontal line where the bottom of most letters line up; certain letters,
+such as lower-case
+&#8220;g&#8221;
+stick below the baseline.
+<P>
+<DL class="font metrics">
+<DT><A NAME="M20"><B>-ascent         </B></A><DD>
+The amount in pixels that the tallest letter sticks up above the baseline of
+the font, plus any extra blank space added by the designer of the font.
+<P><DT><A NAME="M21"><B>-descent        </B></A><DD>
+The largest amount in pixels that any letter sticks down below the baseline
+of the font, plus any extra blank space added by the designer of the font.
+<P><DT><A NAME="M22"><B>-linespace</B></A><DD>
+Returns how far apart vertically in pixels two lines of text using the same
+font should be placed so that none of the characters in one line overlap any
+of the characters in the other line.  This is generally the sum of the ascent
+above the baseline line plus the descent below the baseline.
+<P><DT><A NAME="M23"><B>-fixed           </B></A><DD>
+Returns a boolean flag that is
+&#8220;<B>1</B>&#8221;
+if this is a fixed-width font,
+where each normal character is the same width as all the other
+characters, or is
+&#8220;<B>0</B>&#8221;
+if this is a proportionally-spaced font, where
+individual characters have different widths.  The widths of control
+characters, tab characters, and other non-printing characters are not
+included when calculating this value.
+<P></DL>
+<H3><A NAME="M24">FONT OPTIONS</A></H3>
+The following options are supported on all platforms, and are used when
+constructing a named font or when specifying a font using style [5] as
+above:
+<P>
+<DL class="font options">
+<DT><A NAME="M25"><B>-family </B><I>name</I></A><DD>
+The case-insensitive font family name.  Tk guarantees to support the font
+families named <B>Courier</B> (a monospaced
+&#8220;typewriter&#8221;
+font), <B>Times</B> (a serifed
+&#8220;newspaper&#8221;
+font), and <B>Helvetica</B> (a sans-serif
+&#8220;European&#8221;
+font).  The most closely matching native font family will
+automatically be substituted when one of the above font families is used.
+The <I>name</I> may also be the name of a native, platform-specific font
+family; in that case it will work as desired on one platform but may not
+display correctly on other platforms.  If the family is unspecified or
+unrecognized, a platform-specific default font will be chosen.
+<P><DT><A NAME="M26"><B>-size </B><I>size</I></A><DD>
+The desired size of the font.  If the <I>size</I> argument is a positive
+number, it is interpreted as a size in points.  If <I>size</I> is a negative
+number, its absolute value is interpreted as a size in pixels.  If a
+font cannot be displayed at the specified size, a nearby size will be
+chosen.  If <I>size</I> is unspecified or zero, a platform-dependent default
+size will be chosen.
+<P>
+Sizes should normally be specified in points so the application will remain
+the same ruler size on the screen, even when changing screen resolutions or
+moving scripts across platforms.  However, specifying pixels is useful in
+certain circumstances such as when a piece of text must line up with respect
+to a fixed-size bitmap.  The mapping between points and pixels is set when
+the application starts, based on properties of the installed monitor, but it
+can be overridden by calling the <B><A HREF="../TkCmd/tk.htm">tk scaling</A></B> command.
+<P><DT><A NAME="M27"><B>-weight </B><I>weight</I></A><DD>
+The nominal thickness of the characters in the font.  The value
+<B>normal</B> specifies a normal weight font, while <B>bold</B> specifies a
+bold font.  The closest available weight to the one specified will
+be chosen.  The default weight is <B>normal</B>.
+<P><DT><A NAME="M28"><B>-slant </B><I>slant</I></A><DD>
+The amount the characters in the font are slanted away from the
+vertical.  Valid values for slant are <B>roman</B> and <B>italic</B>.
+A roman font is the normal, upright appearance of a font, while
+an italic font is one that is tilted some number of degrees from upright.
+The closest available slant to the one specified will be chosen.
+The default slant is <B>roman</B>.
+<P><DT><A NAME="M29"><B>-underline </B><I>boolean</I></A><DD>
+The value is a boolean flag that specifies whether characters in this
+font should be underlined.  The default value for underline is <B>false</B>.
+<P><DT><A NAME="M30"><B>-overstrike </B><I>boolean</I></A><DD>
+The value is a boolean flag that specifies whether a horizontal line should
+be drawn through the middle of characters in this font.  The default value
+for overstrike is <B>false</B>.
+<P></DL>
+<H3><A NAME="M31">STANDARD FONTS</A></H3>
+The following named fonts are supported on all systems, and default to values
+that match appropriate system defaults.
+<P>
+<DL class="standard fonts">
+<DT><A NAME="M32"><B>TkDefaultFont</B></A><DD>
+This font is the default for all GUI items not otherwise specified.
+<P><DT><A NAME="M33"><B>TkTextFont</B></A><DD>
+This font should be used for user text in entry widgets, listboxes etc.
+<P><DT><A NAME="M34"><B>TkFixedFont</B></A><DD>
+This font is the standard fixed-width font.
+<P><DT><A NAME="M35"><B>TkMenuFont</B></A><DD>
+This font is used for menu items.
+<P><DT><A NAME="M36"><B>TkHeadingFont</B></A><DD>
+This font should be used for column headings in lists and tables.
+<P><DT><A NAME="M37"><B>TkCaptionFont</B></A><DD>
+This font should be used for window and dialog caption bars.
+<P><DT><A NAME="M38"><B>TkSmallCaptionFont</B></A><DD>
+This font should be used for captions on contained windows or tool dialogs.
+<P><DT><A NAME="M39"><B>TkIconFont</B></A><DD>
+This font should be used for icon captions.
+<P><DT><A NAME="M40"><B>TkTooltipFont</B></A><DD>
+This font should be used for tooltip windows (transient information windows).
+<P></DL>
+<P>
+It is <I>not</I> advised to change these fonts, as they may be modified by Tk
+itself in response to system changes. Instead, make a copy of the font and
+modify that.
+<H3><A NAME="M41">PLATFORM-SPECIFIC FONTS</A></H3>
+The following system fonts are supported:
+<P>
+<DL class="platform-specific fonts">
+<DT><A NAME="M42"><B>X Windows</B></A><DD>
+All valid X font names, including those listed by xlsfonts(1), are available.
+<P><DT><A NAME="M43"><B>MS Windows</B></A><DD>
+The following fonts are supported, and are mapped to the user's
+style defaults.
+<dl><dd><table border="0"><tr><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>system</B><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>ansi</B><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>device</B><tr><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>systemfixed</B><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>ansifixed</B><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>oemfixed</B></table></dl>
+<P><DT><A NAME="M44"><B>Mac OS X</B></A><DD>
+The following fonts are supported, and are mapped to the user's
+style defaults.
+<dl><dd><table border="0"><tr><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>system</B><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>application</B><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B><A HREF="../TkCmd/menu.htm">menu</A></B></table></dl>
+<P>
+Additionally, the following named fonts provide access to the Aqua
+theme fonts:
+<dl><dd><table border="0"><tr><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>systemSystemFont</B><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>systemEmphasizedSystemFont</B><tr><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>systemSmallSystemFont</B><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>systemSmallEmphasizedSystemFont</B><tr><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>systemApplicationFont</B><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>systemLabelFont</B><tr><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>systemViewsFont</B><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>systemMenuTitleFont</B><tr><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>systemMenuItemFont</B><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>systemMenuItemMarkFont</B><tr><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>systemMenuItemCmdKeyFont</B><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>systemWindowTitleFont</B><tr><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>systemPushButtonFont</B><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>systemUtilityWindowTitleFont</B><tr><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>systemAlertHeaderFont</B><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>systemToolbarFont</B><tr><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>systemMiniSystemFont</B><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>systemDetailSystemFont</B><tr><td><p style="font-size:12px;padding-left:.5em;padding-right:.5em;"><B>systemDetailEmphasizedSystemFont</B></table></dl>
+<P></DL>
+<H3><A NAME="M45">EXAMPLE</A></H3>
+Fill a text widget with lots of font demonstrators, one for every font
+family installed on your system:
+<PRE>pack [text .t -wrap none] -fill both -expand 1
+set count 0
+set tabwidth 0
+foreach family [lsort -dictionary [<B>font families</B>]] {
+    .t tag configure f[incr count] -font [list $family 10]
+    .t insert end ${family}:&#92;t {} &#92;
+            &quot;This is a simple sampler&#92;n&quot; f$count
+    set w [<B>font measure</B> [.t cget -font] ${family}:]
+    if {$w+5 &gt; $tabwidth} {
+        set tabwidth [expr {$w+5}]
+        .t configure -tabs $tabwidth
+    }
+}</PRE>
+<H3><A NAME="M46">SEE ALSO</A></H3>
+<B><A HREF="../TkCmd/options.htm">options</A></B>
+<H3><A NAME="M47">KEYWORDS</A></H3>
+<A href="../Keywords/F.htm#font">font</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1996 Sun Microsystems, Inc.
+Copyright &copy; 2006-2007 Daniel A. Steffen &lt;das(at)users.sourceforge.net&gt;
+</div>
+</BODY></HTML>

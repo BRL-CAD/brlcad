@@ -1,0 +1,38 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>tk_optionMenu manual page - Tk Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TkCmd</a> <small>&gt;</small> optionMenu</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+tk_optionMenu - Create an option menubutton and its menu
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>tk_optionMenu </B><I>pathName varName value </I>?<I>value value ...</I>?<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+This procedure creates an option menubutton whose name is <I>pathName</I>,
+plus an associated menu.
+Together they allow the user to select one of the values
+given by the <I>value</I> arguments.
+The current value will be stored in the global variable whose
+name is given by <I>varName</I> and it will also be displayed as the label
+in the option menubutton.
+The user can click on the menubutton to display a menu containing
+all of the <I>value</I>s and thereby select a new value.
+Once a new value is selected, it will be stored in the variable
+and appear in the option menubutton.
+The current value can also be changed by setting the variable.
+<P>
+The return value from <B>tk_optionMenu</B> is the name of the menu
+associated with <I>pathName</I>, so that the caller can change its
+configuration options or manipulate it in other ways.
+<H3><A NAME="M5">EXAMPLE</A></H3>
+<PRE>tk_optionMenu .foo myVar Foo Bar Boo Spong Wibble
+pack .foo</PRE>
+<H3><A NAME="M6">KEYWORDS</A></H3>
+<A href="../Keywords/O.htm#option menu">option menu</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1990-1994 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

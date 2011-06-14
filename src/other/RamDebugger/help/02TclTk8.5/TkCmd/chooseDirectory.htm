@@ -1,0 +1,68 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>tk_chooseDirectory manual page - Tk Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TkCmd</a> <small>&gt;</small> chooseDirectory</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="chooseDirectory.htm#M2" NAME="L406">NAME</A>
+<DL><DD>tk_chooseDirectory - pops up a dialog box for the user to select a directory.</DD></DL>
+<DD><A HREF="chooseDirectory.htm#M3" NAME="L407">SYNOPSIS</A>
+<DL>
+</DL>
+<DD><A HREF="chooseDirectory.htm#M4" NAME="L408">DESCRIPTION</A>
+<DL class="description">
+<DD><A HREF="chooseDirectory.htm#M5" NAME="L409"><B>-initialdir</B> <I>dirname</I></A>
+<DD><A HREF="chooseDirectory.htm#M6" NAME="L410"><B>-mustexist</B> <I>boolean</I></A>
+<DD><A HREF="chooseDirectory.htm#M7" NAME="L411"><B>-parent</B> <I>window</I></A>
+<DD><A HREF="chooseDirectory.htm#M8" NAME="L412"><B>-title</B> <I>titleString</I></A>
+</DL>
+<DD><A HREF="chooseDirectory.htm#M9" NAME="L413">EXAMPLE</A>
+<DD><A HREF="chooseDirectory.htm#M10" NAME="L414">SEE ALSO</A>
+<DD><A HREF="chooseDirectory.htm#M11" NAME="L415">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+tk_chooseDirectory - pops up a dialog box for the user to select a directory.
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>tk_chooseDirectory </B>?<I>option value ...</I>?<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+The procedure <B>tk_chooseDirectory</B> pops up a dialog box for the
+user to select a directory. The following <I>option-value</I> pairs are
+possible as command line arguments:
+<P>
+<DL class="description">
+<DT><A NAME="M5"><B>-initialdir</B> <I>dirname</I></A><DD>
+Specifies that the directories in <I>directory</I> should be displayed
+when the dialog pops up. If this parameter is not specified, then
+the directories in the current working directory are displayed. If the
+parameter specifies a relative path, the return value will convert the
+relative path to an absolute path.
+<P><DT><A NAME="M6"><B>-mustexist</B> <I>boolean</I></A><DD>
+Specifies whether the user may specify non-existent directories.  If
+this parameter is true, then the user may only select directories that
+already exist.  The default value is <I>false</I>.
+<P><DT><A NAME="M7"><B>-parent</B> <I>window</I></A><DD>
+Makes <I>window</I> the logical parent of the dialog. The dialog
+is displayed on top of its parent window. On Mac OS X, this
+turns the file dialog into a sheet attached to the parent window.
+<P><DT><A NAME="M8"><B>-title</B> <I>titleString</I></A><DD>
+Specifies a string to display as the title of the dialog box. If this
+option is not specified, then a default title will be displayed.
+<P></DL>
+<H3><A NAME="M9">EXAMPLE</A></H3>
+<PRE>set dir [<B>tk_chooseDirectory</B> &#92;
+        -initialdir ~ -title &quot;Choose a directory&quot;]
+if {$dir eq &quot;&quot;} {
+   label .l -text &quot;No directory selected&quot;
+} else {
+   label .l -text &quot;Selected $dir&quot;
+}</PRE>
+<H3><A NAME="M10">SEE ALSO</A></H3>
+<B>tk_getOpenFile</B>, <B>tk_getSaveFile</B>
+<H3><A NAME="M11">KEYWORDS</A></H3>
+<A href="../Keywords/D.htm#directory">directory</A>, <A href="../Keywords/S.htm#selection">selection</A>, <A href="../Keywords/D.htm#dialog">dialog</A>, <A href="../Keywords/P.htm#platform-specific">platform-specific</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1998-2000 by Scriptics Corporation.
+</div>
+</BODY></HTML>

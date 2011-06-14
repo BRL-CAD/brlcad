@@ -1,0 +1,101 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>Tcl_GetInt manual page - Library Procedures</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclLib</a> <small>&gt;</small> GetInt</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="GetInt.htm#M2" NAME="L338">NAME</A>
+<DL><DD>Tcl_GetInt, Tcl_GetDouble, Tcl_GetBoolean - convert from string to integer, double, or boolean</DD></DL>
+<DD><A HREF="GetInt.htm#M3" NAME="L339">SYNOPSIS</A>
+<DL>
+<DD><B>#include &lt;tcl.h&gt;</B>
+<DD>int
+<DD><B>Tcl_GetInt</B>(<I>interp, src, intPtr</I>)
+<DD>int
+<DD><B>Tcl_GetDouble</B>(<I>interp, src, doublePtr</I>)
+<DD>int
+<DD><B>Tcl_GetBoolean</B>(<I>interp, src, boolPtr</I>)
+</DL>
+<DD><A HREF="GetInt.htm#M4" NAME="L340">ARGUMENTS</A>
+<DL class="arguments">
+</DL>
+<DD><A HREF="GetInt.htm#M5" NAME="L341">DESCRIPTION</A>
+<DD><A HREF="GetInt.htm#M6" NAME="L342">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+Tcl_GetInt, Tcl_GetDouble, Tcl_GetBoolean - convert from string to integer, double, or boolean
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>#include &lt;tcl.h&gt;</B><BR>
+int<BR>
+<B>Tcl_GetInt</B>(<I>interp, src, intPtr</I>)<BR>
+int<BR>
+<B>Tcl_GetDouble</B>(<I>interp, src, doublePtr</I>)<BR>
+int<BR>
+<B>Tcl_GetBoolean</B>(<I>interp, src, boolPtr</I>)<BR>
+<H3><A NAME="M4">ARGUMENTS</A></H3>
+<DL class="arguments">
+<DT><A HREF="../TclLib/Interp.htm">Tcl_Interp</A> <B>*interp</B> (in)<DD>
+Interpreter to use for error reporting.
+<P><DT>const char <B>*src</B> (in)<DD>
+Textual value to be converted.
+<P><DT>int <B>*intPtr</B> (out)<DD>
+Points to place to store integer value converted from <I>src</I>.
+<P><DT>double <B>*doublePtr</B> (out)<DD>
+Points to place to store double-precision floating-point
+value converted from <I>src</I>.
+<P><DT>int <B>*boolPtr</B> (out)<DD>
+Points to place to store boolean value (0 or 1) converted from <I>src</I>.
+<P></DL>
+<H3><A NAME="M5">DESCRIPTION</A></H3>
+These procedures convert from strings to integers or double-precision
+floating-point values or booleans (represented as 0- or 1-valued
+integers).  Each of the procedures takes a <I>src</I> argument,
+converts it to an internal form of a particular type, and stores
+the converted value at the location indicated by the procedure's
+third argument.  If all goes well, each of the procedures returns
+<B>TCL_OK</B>.  If <I>src</I> does not have the proper syntax for the
+desired type then <B>TCL_ERROR</B> is returned, an error message is left
+in the interpreter's result, and nothing is stored at *<I>intPtr</I>
+or *<I>doublePtr</I> or *<I>boolPtr</I>.
+<P>
+<B>Tcl_GetInt</B> expects <I>src</I> to consist of a collection
+of integer digits, optionally signed and optionally preceded by
+white space.  If the first two characters of <I>src</I>
+after the optional white space and sign are
+&#8220;0x&#8221;
+then <I>src</I> is expected to be in hexadecimal form;  otherwise,
+if the first such character is
+&#8220;0&#8221;
+then <I>src</I>
+is expected to be in octal form;  otherwise, <I>src</I> is
+expected to be in decimal form.
+<P>
+<B>Tcl_GetDouble</B> expects <I>src</I> to consist of a floating-point
+number, which is:  white space;  a sign; a sequence of digits;  a
+decimal point;  a sequence of digits;  the letter
+&#8220;e&#8221;;
+a signed decimal exponent;  and more white space.
+Any of the fields may be omitted, except that
+the digits either before or after the decimal point must be present
+and if the
+&#8220;e&#8221;
+is present then it must be followed by the exponent number.
+<P>
+<B>Tcl_GetBoolean</B> expects <I>src</I> to specify a boolean
+value.  If <I>src</I> is any of <B>0</B>, <B>false</B>,
+<B>no</B>, or <B>off</B>, then <B>Tcl_GetBoolean</B> stores a zero
+value at <I>*boolPtr</I>.
+If <I>src</I> is any of <B>1</B>, <B>true</B>, <B>yes</B>, or <B>on</B>,
+then 1 is stored at <I>*boolPtr</I>.
+Any of these values may be abbreviated, and upper-case spellings
+are also acceptable.
+
+<H3><A NAME="M6">KEYWORDS</A></H3>
+<A href="../Keywords/B.htm#boolean">boolean</A>, <A href="../Keywords/C.htm#conversion">conversion</A>, <A href="../Keywords/D.htm#double">double</A>, <A href="../Keywords/F.htm#floating-point">floating-point</A>, <A href="../Keywords/I.htm#integer">integer</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1989-1993 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

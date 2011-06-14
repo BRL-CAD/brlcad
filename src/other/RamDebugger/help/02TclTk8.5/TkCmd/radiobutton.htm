@@ -1,0 +1,362 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>radiobutton manual page - Tk Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TkCmd</a> <small>&gt;</small> radiobutton</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="radiobutton.htm#M2" NAME="L1177">NAME</A>
+<DL><DD>radiobutton - Create and manipulate radiobutton widgets</DD></DL>
+<DD><A HREF="radiobutton.htm#M3" NAME="L1178">SYNOPSIS</A>
+<DL>
+</DL>
+<DD><A HREF="radiobutton.htm#M4" NAME="L1179">STANDARD OPTIONS</A>
+<DL>
+<DD><A HREF="options.htm#M-activebackground">-activebackground, activeBackground, Foreground</A>
+<DD><A HREF="options.htm#M-activeforeground">-activeforeground, activeForeground, Background</A>
+<DD><A HREF="options.htm#M-anchor">-anchor, anchor, Anchor</A>
+<DD><A HREF="options.htm#M-background">-background or -bg, background, Background</A>
+<DD><A HREF="options.htm#M-bitmap">-bitmap, bitmap, Bitmap</A>
+<DD><A HREF="options.htm#M-borderwidth">-borderwidth or -bd, borderWidth, BorderWidth</A>
+<DD><A HREF="options.htm#M-compound">-compound, compound, Compound</A>
+<DD><A HREF="options.htm#M-cursor">-cursor, cursor, Cursor</A>
+<DD><A HREF="options.htm#M-disabledforeground">-disabledforeground, disabledForeground, DisabledForeground</A>
+<DD><A HREF="options.htm#M-font">-font, font, Font</A>
+<DD><A HREF="options.htm#M-foreground">-foreground or -fg, foreground, Foreground</A>
+<DD><A HREF="options.htm#M-highlightbackground">-highlightbackground, highlightBackground, HighlightBackground</A>
+<DD><A HREF="options.htm#M-highlightcolor">-highlightcolor, highlightColor, HighlightColor</A>
+<DD><A HREF="options.htm#M-highlightthickness">-highlightthickness, highlightThickness, HighlightThickness</A>
+<DD><A HREF="options.htm#M-image">-image, image, Image</A>
+<DD><A HREF="options.htm#M-justify">-justify, justify, Justify</A>
+<DD><A HREF="options.htm#M-padx">-padx, padX, Pad</A>
+<DD><A HREF="options.htm#M-pady">-pady, padY, Pad</A>
+<DD><A HREF="options.htm#M-relief">-relief, relief, Relief</A>
+<DD><A HREF="options.htm#M-takefocus">-takefocus, takeFocus, TakeFocus</A>
+<DD><A HREF="options.htm#M-text">-text, text, Text</A>
+<DD><A HREF="options.htm#M-textvariable">-textvariable, textVariable, Variable</A>
+<DD><A HREF="options.htm#M-underline">-underline, underline, Underline</A>
+<DD><A HREF="options.htm#M-wraplength">-wraplength, wrapLength, WrapLength</A>
+</DL>
+<DD><A HREF="radiobutton.htm#M5" NAME="L1180">WIDGET-SPECIFIC OPTIONS</A>
+<DL>
+<DD><A HREF="radiobutton.htm#M6" NAME="L1181">-command, command, Command</A>
+<DD><A HREF="radiobutton.htm#M7" NAME="L1182">-height, height, Height</A>
+<DD><A HREF="radiobutton.htm#M8" NAME="L1183">-indicatoron, indicatorOn, IndicatorOn</A>
+<DD><A HREF="radiobutton.htm#M9" NAME="L1184">-selectcolor, selectColor, Background</A>
+<DD><A HREF="radiobutton.htm#M10" NAME="L1185">-offrelief, offRelief, OffRelief</A>
+<DD><A HREF="radiobutton.htm#M11" NAME="L1186">-overrelief, overRelief, OverRelief</A>
+<DD><A HREF="radiobutton.htm#M12" NAME="L1187">-selectimage, selectImage, SelectImage</A>
+<DD><A HREF="radiobutton.htm#M13" NAME="L1188">-state, state, State</A>
+<DD><A HREF="radiobutton.htm#M14" NAME="L1189">-tristateimage, tristateImage, TristateImage</A>
+<DD><A HREF="radiobutton.htm#M15" NAME="L1190">-tristatevalue, tristateValue, Value</A>
+<DD><A HREF="radiobutton.htm#M16" NAME="L1191">-value, value, Value</A>
+<DD><A HREF="radiobutton.htm#M17" NAME="L1192">-variable, variable, Variable</A>
+<DD><A HREF="radiobutton.htm#M18" NAME="L1193">-width, width, Width</A>
+</DL>
+<DD><A HREF="radiobutton.htm#M19" NAME="L1194">DESCRIPTION</A>
+<DD><A HREF="radiobutton.htm#M20" NAME="L1195">WIDGET COMMAND</A>
+<DL class="widget command">
+<DD><A HREF="radiobutton.htm#M21" NAME="L1196"><I>pathName </I><B>cget</B> <I>option</I></A>
+<DD><A HREF="radiobutton.htm#M22" NAME="L1197"><I>pathName </I><B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?</A>
+<DD><A HREF="radiobutton.htm#M23" NAME="L1198"><I>pathName </I><B>deselect</B></A>
+<DD><A HREF="radiobutton.htm#M24" NAME="L1199"><I>pathName </I><B>flash</B></A>
+<DD><A HREF="radiobutton.htm#M25" NAME="L1200"><I>pathName </I><B>invoke</B></A>
+<DD><A HREF="radiobutton.htm#M26" NAME="L1201"><I>pathName </I><B>select</B></A>
+</DL>
+<DD><A HREF="radiobutton.htm#M27" NAME="L1202">BINDINGS</A>
+<DL class="bindings">
+</DL>
+<DD><A HREF="radiobutton.htm#M28" NAME="L1203">SEE ALSO</A>
+<DD><A HREF="radiobutton.htm#M29" NAME="L1204">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+radiobutton - Create and manipulate radiobutton widgets
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>radiobutton</B> <I>pathName </I>?<I>options</I>?<BR>
+<H3><A NAME="M4">STANDARD OPTIONS</A></H3>
+<DL>
+<DT><B><A HREF="options.htm#M-activebackground">-activebackground, activeBackground, Foreground</A></B>
+<DT><B><A HREF="options.htm#M-activeforeground">-activeforeground, activeForeground, Background</A></B>
+<DT><B><A HREF="options.htm#M-anchor">-anchor, anchor, Anchor</A></B>
+<DT><B><A HREF="options.htm#M-background">-background or -bg, background, Background</A></B>
+<DT><B><A HREF="options.htm#M-bitmap">-bitmap, bitmap, Bitmap</A></B>
+<DT><B><A HREF="options.htm#M-borderwidth">-borderwidth or -bd, borderWidth, BorderWidth</A></B>
+<DT><B><A HREF="options.htm#M-compound">-compound, compound, Compound</A></B>
+<DT><B><A HREF="options.htm#M-cursor">-cursor, cursor, Cursor</A></B>
+<DT><B><A HREF="options.htm#M-disabledforeground">-disabledforeground, disabledForeground, DisabledForeground</A></B>
+<DT><B><A HREF="options.htm#M-font">-font, font, Font</A></B>
+<DT><B><A HREF="options.htm#M-foreground">-foreground or -fg, foreground, Foreground</A></B>
+<DT><B><A HREF="options.htm#M-highlightbackground">-highlightbackground, highlightBackground, HighlightBackground</A></B>
+<DT><B><A HREF="options.htm#M-highlightcolor">-highlightcolor, highlightColor, HighlightColor</A></B>
+<DT><B><A HREF="options.htm#M-highlightthickness">-highlightthickness, highlightThickness, HighlightThickness</A></B>
+<DT><B><A HREF="options.htm#M-image">-image, image, Image</A></B>
+<DT><B><A HREF="options.htm#M-justify">-justify, justify, Justify</A></B>
+<DT><B><A HREF="options.htm#M-padx">-padx, padX, Pad</A></B>
+<DT><B><A HREF="options.htm#M-pady">-pady, padY, Pad</A></B>
+<DT><B><A HREF="options.htm#M-relief">-relief, relief, Relief</A></B>
+<DT><B><A HREF="options.htm#M-takefocus">-takefocus, takeFocus, TakeFocus</A></B>
+<DT><B><A HREF="options.htm#M-text">-text, text, Text</A></B>
+<DT><B><A HREF="options.htm#M-textvariable">-textvariable, textVariable, Variable</A></B>
+<DT><B><A HREF="options.htm#M-underline">-underline, underline, Underline</A></B>
+<DT><B><A HREF="options.htm#M-wraplength">-wraplength, wrapLength, WrapLength</A></B>
+</DL>
+<H3><A NAME="M5">WIDGET-SPECIFIC OPTIONS</A></H3>
+<DL>
+<DT>Command-Line Name: <B><A NAME="M6">-command</A></B>
+<DT>Database Name: <B>command</B>
+<DT>Database Class: <B>Command</B>
+<DD>Specifies a Tcl command to associate with the button.  This command
+is typically invoked when mouse button 1 is released over the button
+window.  The button's global variable (<B>-variable</B> option) will
+be updated before the command is invoked.
+<P><DT>Command-Line Name: <B><A NAME="M7">-height</A></B>
+<DT>Database Name: <B>height</B>
+<DT>Database Class: <B>Height</B>
+<DD>Specifies a desired height for the button.
+If an image or bitmap is being displayed in the button then the value is in
+screen units (i.e. any of the forms acceptable to <B><A HREF="../TkLib/GetPixels.htm">Tk_GetPixels</A></B>);
+for text it is in lines of text.
+If this option is not specified, the button's desired height is computed
+from the size of the image or bitmap or text being displayed in it.
+<P><DT>Command-Line Name: <B><A NAME="M8">-indicatoron</A></B>
+<DT>Database Name: <B>indicatorOn</B>
+<DT>Database Class: <B>IndicatorOn</B>
+<DD>Specifies whether or not the indicator should be drawn.  Must be a
+proper boolean value.  If false, the <B>relief</B> option is
+ignored and the widget's relief is always sunken if the widget is
+selected and raised otherwise.
+<P><DT>Command-Line Name: <B><A NAME="M9">-selectcolor</A></B>
+<DT>Database Name: <B>selectColor</B>
+<DT>Database Class: <B>Background</B>
+<DD>Specifies a background color to use when the button is selected.
+If <B>indicatorOn</B> is true then the color applies to the indicator.
+Under Windows, this color is used as the background for the indicator
+regardless of the select state.
+If <B>indicatorOn</B> is false, this color is used as the background
+for the entire widget, in place of <B>background</B> or <B>activeBackground</B>,
+whenever the widget is selected.
+If specified as an empty string then no special color is used for
+displaying when the widget is selected.
+<P><DT>Command-Line Name: <B><A NAME="M10">-offrelief</A></B>
+<DT>Database Name: <B>offRelief</B>
+<DT>Database Class: <B>OffRelief</B>
+<DD>Specifies the relief for the checkbutton when the indicator is not drawn and
+the checkbutton is off.  The default value is
+&#8220;raised&#8221;.
+By setting this option to
+&#8220;flat&#8221;
+and setting <B>-indicatoron</B> to false and <B>-overrelief</B> to
+&#8220;raised&#8221;,
+the effect is achieved 
+of having a flat button that raises on mouse-over and which is
+depressed when activated.  This is the behavior typically exhibited by
+the Align-Left, Align-Right, and Center radiobuttons on the toolbar of a 
+word-processor, for example.
+<P><DT>Command-Line Name: <B><A NAME="M11">-overrelief</A></B>
+<DT>Database Name: <B>overRelief</B>
+<DT>Database Class: <B>OverRelief</B>
+<DD>Specifies an alternative relief for the radiobutton, to be used when the
+mouse cursor is over the widget.  This option can be used to make
+toolbar buttons, by configuring <B>-relief flat -overrelief
+raised</B>.  If the value of this option is the empty string, then no
+alternative relief is used when the mouse cursor is over the radiobutton.
+The empty string is the default value.
+<P><DT>Command-Line Name: <B><A NAME="M12">-selectimage</A></B>
+<DT>Database Name: <B>selectImage</B>
+<DT>Database Class: <B>SelectImage</B>
+<DD>Specifies an image to display (in place of the <B>image</B> option)
+when the radiobutton is selected.
+This option is ignored unless the <B>image</B> option has been
+specified.
+<P><DT>Command-Line Name: <B><A NAME="M13">-state</A></B>
+<DT>Database Name: <B>state</B>
+<DT>Database Class: <B>State</B>
+<DD>Specifies one of three states for the radiobutton:  <B>normal</B>, <B>active</B>,
+or <B>disabled</B>.  In normal state the radiobutton is displayed using the
+<B>foreground</B> and <B>background</B> options.  The active state is
+typically used when the pointer is over the radiobutton.  In active state
+the radiobutton is displayed using the <B>activeForeground</B> and
+<B>activeBackground</B> options.  Disabled state means that the radiobutton
+should be insensitive:  the default bindings will refuse to activate
+the widget and will ignore mouse button presses.
+In this state the <B>disabledForeground</B> and
+<B>background</B> options determine how the radiobutton is displayed.
+<P><DT>Command-Line Name: <B><A NAME="M14">-tristateimage</A></B>
+<DT>Database Name: <B>tristateImage</B>
+<DT>Database Class: <B>TristateImage</B>
+<DD>Specifies an image to display (in place of the <B>image</B> option)
+when the radiobutton is selected.
+This option is ignored unless the <B>image</B> option has been
+specified.
+<P><DT>Command-Line Name: <B><A NAME="M15">-tristatevalue</A></B>
+<DT>Database Name: <B>tristateValue</B>
+<DT>Database Class: <B>Value</B>
+<DD>Specifies the value that causes the radiobutton to display the multi-value 
+selection, also known as the tri-state mode.  Defaults to
+&#8220;&#8221;.
+<P><DT>Command-Line Name: <B><A NAME="M16">-value</A></B>
+<DT>Database Name: <B>value</B>
+<DT>Database Class: <B>Value</B>
+<DD>Specifies value to store in the button's associated variable whenever
+this button is selected.
+<P><DT>Command-Line Name: <B><A NAME="M17">-variable</A></B>
+<DT>Database Name: <B><A HREF="../TclCmd/variable.htm">variable</A></B>
+<DT>Database Class: <B><A HREF="../TclCmd/variable.htm">Variable</A></B>
+<DD>Specifies name of global variable to set whenever this button is
+selected.  Changes in this variable also cause the button to select
+or deselect itself.
+Defaults to the value <B>selectedButton</B>.
+<P><DT>Command-Line Name: <B><A NAME="M18">-width</A></B>
+<DT>Database Name: <B>width</B>
+<DT>Database Class: <B>Width</B>
+<DD>Specifies a desired width for the button.
+If an image or bitmap is being displayed in the button, the value is in
+screen units (i.e. any of the forms acceptable to <B><A HREF="../TkLib/GetPixels.htm">Tk_GetPixels</A></B>);
+for text it is in characters.
+If this option is not specified, the button's desired width is computed
+from the size of the image or bitmap or text being displayed in it.
+</DL>
+<H3><A NAME="M19">DESCRIPTION</A></H3>
+The <B>radiobutton</B> command creates a new window (given by the
+<I>pathName</I> argument) and makes it into a radiobutton widget.
+Additional
+options, described above, may be specified on the command line
+or in the option database
+to configure aspects of the radiobutton such as its colors, font,
+text, and initial relief.  The <B>radiobutton</B> command returns its
+<I>pathName</I> argument.  At the time this command is invoked,
+there must not exist a window named <I>pathName</I>, but
+<I>pathName</I>'s parent must exist.
+<P>
+A radiobutton is a widget that displays a textual string, bitmap or image
+and a diamond or circle called an <I>indicator</I>.
+If text is displayed, it must all be in a single font, but it
+can occupy multiple lines on the screen (if it contains newlines
+or if wrapping occurs because of the <B>wrapLength</B> option) and
+one of the characters may optionally be underlined using the
+<B>underline</B> option.  A radiobutton has
+all of the behavior of a simple button: it can display itself in either
+of three different ways, according to the <B>state</B> option;
+it can be made to appear
+raised, sunken, or flat; it can be made to flash; and it invokes
+a Tcl command whenever mouse button 1 is clicked over the
+check button.
+<P>
+In addition, radiobuttons can be <I>selected</I>.
+If a radiobutton is selected, the indicator is normally
+drawn with a selected appearance, and
+a Tcl variable associated with the radiobutton is set to a particular
+value (normally 1).
+Under Unix, the indicator is drawn with a sunken relief and a special
+color.  Under Windows, the indicator is drawn with a round mark inside.
+If the radiobutton is not selected, then the indicator is drawn with a
+deselected appearance, and the associated variable is
+set to a different value (typically 0).
+The indicator is drawn without a round mark inside.
+Typically, several radiobuttons share a single variable and the
+value of the variable indicates which radiobutton is to be selected.
+When a radiobutton is selected it sets the value of the variable to
+indicate that fact;  each radiobutton also monitors the value of
+the variable and automatically selects and deselects itself when the
+variable's value changes.
+If the variable's value matches the <B>tristateValue</B>, then the radiobutton is 
+drawn using the tri-state mode.  This mode is used to indicate mixed or 
+multiple values.  (This is used when the radiobutton represents the state 
+of multiple items.)
+By default the variable <B>selectedButton</B>
+is used;  its contents give the name of the button that is
+selected, or the empty string if no button associated with that
+variable is selected.
+The name of the variable for a radiobutton,
+plus the variable to be stored into it, may be modified with options
+on the command line or in the option database.
+Configuration options may also be used to modify the way the
+indicator is displayed (or whether it is displayed at all).
+By default a radiobutton is configured to select itself on button clicks.
+<H3><A NAME="M20">WIDGET COMMAND</A></H3>
+The <B>radiobutton</B> command creates a new Tcl command whose
+name is <I>pathName</I>.  This
+command may be used to invoke various
+operations on the widget.  It has the following general form:
+<PRE><I>pathName option </I>?<I>arg arg ...</I>?</PRE>
+<I>Option</I> and the <I>arg</I>s
+determine the exact behavior of the command.  The following
+commands are possible for radiobutton widgets:
+<P>
+<DL class="widget command">
+<DT><A NAME="M21"><I>pathName </I><B>cget</B> <I>option</I></A><DD>
+Returns the current value of the configuration option given
+by <I>option</I>.
+<I>Option</I> may have any of the values accepted by the <B>radiobutton</B>
+command.
+<P><DT><A NAME="M22"><I>pathName </I><B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?</A><DD>
+Query or modify the configuration options of the widget.
+If no <I>option</I> is specified, returns a list describing all of
+the available options for <I>pathName</I> (see <B><A HREF="../TkLib/ConfigWidg.htm">Tk_ConfigureInfo</A></B> for
+information on the format of this list).  If <I>option</I> is specified
+with no <I>value</I>, the command returns a list describing the
+one named option (this list will be identical to the corresponding
+sublist of the value returned if no <I>option</I> is specified).  If
+one or more <I>option-value</I> pairs are specified, the command
+modifies the given widget option(s) to have the given value(s);  in
+this case the command returns an empty string.
+<I>Option</I> may have any of the values accepted by the <B>radiobutton</B>
+command.
+<P><DT><A NAME="M23"><I>pathName </I><B>deselect</B></A><DD>
+Deselects the radiobutton and sets the associated variable to an
+empty string.
+If this radiobutton was not currently selected, the command has
+no effect.
+<P><DT><A NAME="M24"><I>pathName </I><B>flash</B></A><DD>
+Flashes the radiobutton.  This is accomplished by redisplaying the radiobutton
+several times, alternating between active and normal colors.  At
+the end of the flash the radiobutton is left in the same normal/active
+state as when the command was invoked.
+This command is ignored if the radiobutton's state is <B>disabled</B>.
+<P><DT><A NAME="M25"><I>pathName </I><B>invoke</B></A><DD>
+Does just what would have happened if the user invoked the radiobutton
+with the mouse: selects the button and invokes
+its associated Tcl command, if there is one.
+The return value is the return value from the Tcl command, or an
+empty string if there is no command associated with the radiobutton.
+This command is ignored if the radiobutton's state is <B>disabled</B>.
+<P><DT><A NAME="M26"><I>pathName </I><B>select</B></A><DD>
+Selects the radiobutton and sets the associated variable to the
+value corresponding to this widget.
+<P></DL>
+<H3><A NAME="M27">BINDINGS</A></H3>
+Tk automatically creates class bindings for radiobuttons that give them
+the following default behavior:
+<P>
+<DL class="bindings">
+<DT>[1]<DD>
+On Unix systems, a radiobutton activates whenever the mouse passes
+over it and deactivates whenever the mouse leaves the radiobutton.  On
+Mac and Windows systems, when mouse button 1 is pressed over a
+radiobutton, the button activates whenever the mouse pointer is inside
+the button, and deactivates whenever the mouse pointer leaves the
+button.
+<P><DT>[2]<DD>
+When mouse button 1 is pressed over a radiobutton it is invoked (it
+becomes selected and the command associated with the button is
+invoked, if there is one).
+<P><DT>[3]<DD>
+When a radiobutton has the input focus, the space key causes the radiobutton
+to be invoked.
+<P></DL>
+<P>
+If the radiobutton's state is <B>disabled</B> then none of the above
+actions occur:  the radiobutton is completely non-responsive.
+<P>
+The behavior of radiobuttons can be changed by defining new bindings for
+individual widgets or by redefining the class bindings.
+<H3><A NAME="M28">SEE ALSO</A></H3>
+<B><A HREF="../TkCmd/checkbutton.htm">checkbutton</A></B>, <B><A HREF="../TkCmd/labelframe.htm">labelframe</A></B>, <B><A HREF="../TkCmd/listbox.htm">listbox</A></B>, <B><A HREF="../TkCmd/options.htm">options</A></B>, <B><A HREF="../TkCmd/scale.htm">scale</A></B>, <B><A HREF="../TkCmd/ttk_radiobutton.htm">ttk::radiobutton</A></B>
+<H3><A NAME="M29">KEYWORDS</A></H3>
+<A href="../Keywords/R.htm#radiobutton">radiobutton</A>, <A href="../Keywords/W.htm#widget">widget</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1990-1994 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

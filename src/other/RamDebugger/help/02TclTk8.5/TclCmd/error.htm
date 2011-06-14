@@ -1,0 +1,62 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>error manual page - Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclCmd</a> <small>&gt;</small> error</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+error - Generate an error
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>error </B><I>message</I> ?<I>info</I>? ?<I>code</I>?<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+Returns a <B>TCL_ERROR</B> code, which causes command interpretation to be
+unwound.  <I>Message</I> is a string that is returned to the application
+to indicate what went wrong.
+<P>
+The <B>-errorinfo</B> return option of an interpreter is used
+to accumulate a stack trace of what was in progress when an
+error occurred; as nested commands unwind,
+the Tcl interpreter adds information to the <B>-errorinfo</B>
+return option.  If the <I>info</I> argument is present, it is
+used to initialize the <B>-errorinfo</B> return options and
+the first increment of unwind information
+will not be added by the Tcl interpreter.  
+In other
+words, the command containing the <B>error</B> command will not appear
+in the stack trace; in its place will be <I>info</I>.
+Historically, this feature had been most useful in conjunction
+with the <B><A HREF="../TclCmd/catch.htm">catch</A></B> command:
+if a caught error cannot be handled successfully, <I>info</I> can be used
+to return a stack trace reflecting the original point of occurrence
+of the error:
+<PRE><B>catch {...} errMsg
+set savedInfo $::errorInfo
+	...
+error $errMsg $savedInfo</B></PRE>
+When working with Tcl 8.5 or later, the following code
+should be used instead:
+<PRE><B>catch {...} errMsg options
+	...
+return -options $options $errMsg</B></PRE>
+<P>
+If the <I>code</I> argument is present, then its value is stored
+in the <B>-errorcode</B> return option.  The <B>-errorcode</B>
+return option is intended to hold a machine-readable description
+of the error in cases where such information is available; see
+the <B><A HREF="../TclCmd/return.htm">return</A></B> manual page for information on the proper format
+for this option's value.
+<H3><A NAME="M5">EXAMPLE</A></H3>
+Generate an error if a basic mathematical operation fails:
+<PRE>if {1+2 != 3} {
+    <B>error</B> &quot;something is very wrong with addition&quot;
+}</PRE>
+<H3><A NAME="M6">SEE ALSO</A></H3>
+<B><A HREF="../TclCmd/catch.htm">catch</A></B>, <B><A HREF="../TclCmd/return.htm">return</A></B>
+<H3><A NAME="M7">KEYWORDS</A></H3>
+<A href="../Keywords/E.htm#error">error</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1993 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

@@ -1,0 +1,75 @@
+<html>
+    <!---*- coding: utf-8;-*- -->
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+        <style type="text/css">
+	    p { text-align:justify; }
+	    body { font-family: Verdana, Arial, Helvetica, Geneva; font-size 8px; }
+	    a { text-decoration:none }
+	    pre { font-family:Courier New, Courier, Mono; }
+	    h1 { font-family:Arial; font-size: 28; font-weight: bold; color:DarkBlue; }
+	    h2 { font-family:Arial; font-size: 24; font-weight: bold; color:DarkBlue; }
+	    h3 { font-family:Arial; font-size: 22; font-weight: bold; color:DarkBlue; }
+	    h4 { font-family:Arial; font-size: 18; font-weight: bold; color:DarkBlue; }
+	    h4 { font-family:Arial; font-size: 18; font-weight: bold; color:DarkBlue; }
+	    h4 { font-family:Arial; font-size: 18; font-weight: bold; color:DarkBlue; }
+	    P { text-align:justify; font-family:Arial, Helvetica, sans-serif; font-size: 17; }
+	    code { font-family:Courier New, Courier, Mono; font-size: 16; }
+	    li { text-align:justify; font-family:Arial, Helvetica, sans-serif; font-size: 17; 
+		margin-top: 7px; }
+	    ol { text-align:justify; font-family:Arial, Helvetica, sans-serif; font-size: 17;  
+		margin-top: 7px; }
+	    ul { text-align:justify; font-family:Arial, Helvetica, sans-serif; font-size: 17; 
+		margin-top: 7px; }
+	</style>
+        <title>Timing control</title>
+    </head>
+    <body>
+        <a name="Usage&gt;Timing control"/>
+        <h3>Timing control</h3>
+        <p>An additional feature of RamDebugger is the possibility of controlling the computing time
+of several parts of the program.</p>
+        <p>To proceed with the control of time, make the following steps:</p>
+        <ul>
+            <li>Load the TCL file inside RamDebugger with <code>Files-&gt;Open file</code>
+. In this case,
+use the example located in <b>&lt;RamDebugger directory&gt;/Examples/example3.tcl</b>
+            </li>
+            <li>Open window <code>Debug-&gt;Timing control</code>
+            </li>
+            <li>Create a first block with name <b>Block 1</b>
+, initial line <b>26</b>
+ and end line <b>27</b>
+.            </li>
+            <li>Create another block with name <b>Block 2</b>
+, initial line <b>26</b>
+ and end line <b>26</b>
+.            </li>
+            <li>Create another block with name <b>Block 3</b>
+, initial line <b>27</b>
+ and end line <b>27</b>
+.            </li>
+            <li>Press button <b>Start</b>
+ and select <code>Files-&gt;Debug on-&gt;Currentfile</code>
+.            </li>
+            <li>Check the report with button <b>Report</b>
+            </li>
+        </ul>
+        <p>
+            <center>
+                <table>
+                    <tr>
+                        <td>
+                            <center>
+                                <img src="RamDebugger_images/timing_control.gif" width="371"/>
+                            </center>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2"/>
+                    </tr>
+                </table>
+            </center>
+        </p>
+    </body>
+</html>

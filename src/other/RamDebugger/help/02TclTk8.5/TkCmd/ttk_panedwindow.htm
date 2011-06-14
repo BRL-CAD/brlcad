@@ -1,0 +1,137 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>ttk::panedwindow manual page - Tk Themed Widget</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TkCmd</a> <small>&gt;</small> ttk_panedwindow</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="ttk_panedwindow.htm#M2" NAME="L1847">NAME</A>
+<DL><DD>ttk::panedwindow - Multi-pane container window</DD></DL>
+<DD><A HREF="ttk_panedwindow.htm#M3" NAME="L1848">SYNOPSIS</A>
+<DL>
+</DL>
+<DD><A HREF="ttk_panedwindow.htm#M4" NAME="L1849">DESCRIPTION</A>
+<DD><A HREF="ttk_panedwindow.htm#M5" NAME="L1850">STANDARD OPTIONS</A>
+<DL>
+<DD><A HREF="ttk_widget.htm#M-class">-class, undefined, undefined</A>
+<DD><A HREF="ttk_widget.htm#M-cursor">-cursor, cursor, Cursor</A>
+<DD><A HREF="ttk_widget.htm#M-style">-style, style, Style</A>
+<DD><A HREF="ttk_widget.htm#M-takefocus">-takefocus, takeFocus, TakeFocus</A>
+</DL>
+<DD><A HREF="ttk_panedwindow.htm#M6" NAME="L1851">WIDGET-SPECIFIC OPTIONS</A>
+<DL>
+<DD><A HREF="ttk_panedwindow.htm#M7" NAME="L1852">-orient, orient, Orient</A>
+<DD><A HREF="ttk_panedwindow.htm#M8" NAME="L1853">-width, width, Width</A>
+<DD><A HREF="ttk_panedwindow.htm#M9" NAME="L1854">-height, height, Height</A>
+</DL>
+<DD><A HREF="ttk_panedwindow.htm#M10" NAME="L1855">PANE OPTIONS</A>
+<DL>
+<DD><A HREF="ttk_panedwindow.htm#M11" NAME="L1856">-weight, weight, Weight</A>
+</DL>
+<DD><A HREF="ttk_panedwindow.htm#M12" NAME="L1857">WIDGET COMMAND</A>
+<DL class="widget command">
+<DD><A HREF="ttk_panedwindow.htm#M13" NAME="L1858"><I>pathname </I><B>add</B> <I>subwindow</I> <I>options...</I></A>
+<DD><A HREF="ttk_panedwindow.htm#M14" NAME="L1859"><I>pathname </I><B>forget</B> <I>pane</I></A>
+<DD><A HREF="ttk_panedwindow.htm#M15" NAME="L1860"><I>pathname </I><B>insert</B> <I>pos</I> <I>subwindow</I> <I>options...</I></A>
+<DD><A HREF="ttk_panedwindow.htm#M16" NAME="L1861"><I>pathname </I><B>pane</B> <I>pane -option </I>?<I>value </I>?<I>-option value...</I></A>
+<DD><A HREF="ttk_panedwindow.htm#M17" NAME="L1862"><I>pathname</I> <B>sashpos</B> <I>index</I> ?<I>newpos</I>?</A>
+<DD><A HREF="ttk_panedwindow.htm#M18" NAME="L1863"><I>pathname</I> <B>identify</B> <I>x y</I></A>
+</DL>
+<DD><A HREF="ttk_panedwindow.htm#M19" NAME="L1864">SEE ALSO</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+ttk::panedwindow - Multi-pane container window
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>ttk::panedwindow</B> <I>pathName </I>?<I>options</I>?<BR>
+<I>pathName </I><B>add</B> <I>window</I> ?<I>options...</I>?<BR>
+<I>pathName </I><B>insert</B> <I>index</I> <I>window</I> ?<I>options...</I>?<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+A <B>ttk::panedwindow</B> widget displays a number of subwindows, stacked
+either vertically or horizontally.  The user may adjust the relative sizes
+of the subwindows by dragging the sash between panes.
+<H3><A NAME="M5">STANDARD OPTIONS</A></H3>
+<DL>
+<DT><B><A HREF="ttk_widget.htm#M-class">-class, undefined, undefined</A></B>
+<DT><B><A HREF="ttk_widget.htm#M-cursor">-cursor, cursor, Cursor</A></B>
+<DT><B><A HREF="ttk_widget.htm#M-style">-style, style, Style</A></B>
+<DT><B><A HREF="ttk_widget.htm#M-takefocus">-takefocus, takeFocus, TakeFocus</A></B>
+</DL>
+<H3><A NAME="M6">WIDGET-SPECIFIC OPTIONS</A></H3>
+<DL>
+<DT>Command-Line Name: <B><A NAME="M7">-orient</A></B>
+<DT>Database Name: <B>orient</B>
+<DT>Database Class: <B>Orient</B>
+<DD>Specifies the orientation of the window.
+If <B>vertical</B>, subpanes are stacked top-to-bottom;
+if <B>horizontal</B>, subpanes are stacked left-to-right.
+<P><DT>Command-Line Name: <B><A NAME="M8">-width</A></B>
+<DT>Database Name: <B>width</B>
+<DT>Database Class: <B>Width</B>
+<DD>If present and greater than zero, 
+specifies the desired width of the widget in pixels.
+Otherwise, the requested width is determined by the width
+of the managed windows.
+<P><DT>Command-Line Name: <B><A NAME="M9">-height</A></B>
+<DT>Database Name: <B>height</B>
+<DT>Database Class: <B>Height</B>
+<DD>If present and greater than zero, 
+specifies the desired height of the widget in pixels.
+Otherwise, the requested height is determined by the height
+of the managed windows.
+</DL>
+<H3><A NAME="M10">PANE OPTIONS</A></H3>
+The following options may be specified for each pane:
+<DL>
+<DT>Command-Line Name: <B><A NAME="M11">-weight</A></B>
+<DT>Database Name: <B>weight</B>
+<DT>Database Class: <B>Weight</B>
+<DD>An integer specifying the relative stretchability of the pane.
+When the paned window is resized, the extra space is added
+or subtracted to each pane proportionally to its <B>-weight</B>.
+</DL>
+<H3><A NAME="M12">WIDGET COMMAND</A></H3>
+Supports the standard <B>configure</B>, <B>cget</B>, <B>state</B>, 
+and <B>instate</B> commands; see <I>ttk::widget(n)</I> for details.
+Additional commands:
+<P>
+<DL class="widget command">
+<DT><A NAME="M13"><I>pathname </I><B>add</B> <I>subwindow</I> <I>options...</I></A><DD>
+Adds a new pane to the window.
+<I>subwindow</I> must be a direct child of the paned window <I>pathname</I>.
+See <B>PANE OPTIONS</B> for the list of available options.
+<P><DT><A NAME="M14"><I>pathname </I><B>forget</B> <I>pane</I></A><DD>
+Removes the specified subpane from the widget.
+<I>pane</I> is either an integer index or the name of a managed subwindow.
+<P><DT><A NAME="M15"><I>pathname </I><B>insert</B> <I>pos</I> <I>subwindow</I> <I>options...</I></A><DD>
+Inserts a pane at the specified position.
+<I>pos</I> is either the string <B>end</B>, an integer index, 
+or the name of a managed subwindow.
+If <I>subwindow</I> is already managed by the paned window, 
+moves it to the specified position.
+See <B>PANE OPTIONS</B> for the list of available options.
+<P><DT><A NAME="M16"><I>pathname </I><B>pane</B> <I>pane -option </I>?<I>value </I>?<I>-option value...</I></A><DD>
+Query or modify the options of the specified <I>pane</I>,
+where <I>pane</I> is either an integer index or the name of a managed subwindow.
+If no <I>-option</I> is specified, returns a dictionary of the pane 
+option values.
+If one <I>-option</I> is specified, returns the value of that <I>option</I>.
+Otherwise, sets the <I>-option</I>s to the corresponding <I>value</I>s.
+<P><DT><A NAME="M17"><I>pathname</I> <B>sashpos</B> <I>index</I> ?<I>newpos</I>?</A><DD>
+If <I>newpos</I> is specified, sets the position 
+of sash number <I>index</I>.
+May adjust the positions of adjacent sashes
+to ensure that positions are monotonically increasing.
+Sash positions are further constrained to be between 0 
+and the total size of the widget.
+Returns the new position of sash number <I>index</I>.
+<P><DT><A NAME="M18"><I>pathname</I> <B>identify</B> <I>x y</I></A><DD>
+Returns the index of the sash at point <I>x,y</I>,
+or the empty string if <I>x,y</I> is not over a sash.
+<P></DL>
+<H3><A NAME="M19">SEE ALSO</A></H3>
+<B><A HREF="../TkCmd/ttk_widget.htm">ttk::widget</A></B>, <B><A HREF="../TkCmd/ttk_notebook.htm">ttk::notebook</A></B>, <B><A HREF="../TkCmd/panedwindow.htm">panedwindow</A></B>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 2005 Joe English
+</div>
+</BODY></HTML>

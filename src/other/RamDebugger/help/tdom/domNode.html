@@ -1,0 +1,588 @@
+<html>
+<head>
+<link rel="stylesheet" href="manpage.css"><title>tDOM manual: domNode</title><meta name="xsl-processor" content="Jochen Loewer (loewerj@hotmail.com), Rolf Ade (rolf@pointsman.de) et. al."><meta name="generator" content="$RCSfile: domNode.html,v $ $Revision$">
+</head><body>
+<div class="header">
+<div class="navbar" align="center">
+<a href="#SECTid883">NAME</a> � <a href="#SECTid894">SYNOPSIS</a> � <a href="#SECTid905"> DESCRIPTION </a> � <a href="#SECTid1980">SEE ALSO</a> � <a href="#SECTid1989">KEYWORDS</a>
+</div><hr class="navsep">
+</div><div class="body">
+  <h2><a name="SECTid883">NAME</a></h2><p class="namesection">
+<b class="names">domNode - </b><br>Manipulates an instance of a DOM node object</p>
+
+
+
+  <h2><a name="SECTid894">SYNOPSIS</a></h2><pre class="syntax"> $nodeObject <i class="m">method</i>  <i class="m">arg arg ...</i>
+</pre>
+  <h2><a name="SECTid905"> DESCRIPTION </a></h2><p>This command manipulates one particular instance of a DOM node object.
+<i class="m">method</i> indicates a specific method of the node class. These methods
+should closely conform to the W3C recommendation "Document Object Model
+(Core) Level 1" (<a href="http://www.w3.org/TR/REC-DOM-Level-1/level-one-core.html">http://www.w3.org/TR/REC-DOM-Level-1/level-one-core.html</a>)
+as well to parts of the W3C draft "XML Pointer Language (XPointer)"
+(<a href="http://www.w3.org/TR/1998/WD-xptr-19980303">http://www.w3.org/TR/1998/WD-xptr-19980303</a>).</p><p>The selectNodes method implements the "XML Path
+Language (XPath) Version 1.0" W3C recommendation 16 November 1999 (<a href="http://www.w3.org/TR/1999/REC-xpath-19991116">http://www.w3.org/TR/1999/REC-xpath-19991116</a>). Look
+at these documents for a deeper understanding of the functionality.</p><p>The valid methods are:</p><dl class="commandlist">
+      
+        <dt><b class="method">nodeType</b></dt>
+        <dd>Returns the node type of that node object. This can be:
+ELEMENT_NODE, TEXT_NODE, CDATA_SECTION_NODE, COMMENT_NODE or
+PROCESSING_INSTRUCTION_NODE.</dd>
+      
+
+      
+        <dt><b class="method">nodeName</b></dt>
+        <dd>Returns the node name of that node object. This is the element
+(tag) name for element nodes (type ELEMENT_NODE), "#text" for text
+node or "#cdata" for cdata section nodes.</dd>
+      
+
+      
+        <dt>
+<b class="method">nodeValue</b> <i class="m">?newValue?</i>
+</dt>
+        <dd>Returns the value of that node object. This is the the text or
+the data for element nodes of type TEXT_NODE, COMMENT_NODE,
+PROCESSING_INSTRUCTION_NODE or CDATA_SECTION_NODE). Otherwise it is empty. If
+the node is a TEXT_NODE, COMMENT_NODE or PROCESSING_INSTRUCTION_NODE and the
+optional argument <i class="m">newValue</i> is given, the node is set to that
+value.</dd>
+
+      
+
+      
+        <dt><b class="method">hasChildNodes</b></dt>
+        <dd>Returns 1 if the has children. Otherwise 0 is returned.</dd>
+      
+
+      
+        <dt>
+<b class="method">parentNode</b> <b class="variable">?objVar?</b>
+</dt>
+        <dd>Returns the parent node.</dd>
+      
+
+      
+        <dt><b class="method">childNodes</b></dt>
+        <dd>Returns a list of direct children node objects.</dd>
+      
+
+      
+        <dt><b class="method">childNodesLive</b></dt>
+        <dd>Returns a "live" nodeList object of the child nodes of
+the node in the sense of the DOM recommendation. This nodeList object is
+"live" in the sense that, for instance, changes to the children of
+the node object that it was created from are immediately reflected in the nodes
+returned by the NodeList accessors; it is not a static snapshot of the content
+of the node. The both accessors know by the nodeList object are "item
+&lt;index&gt;", which returns the indexth item in the collection, and
+"length", which returns the number of nodes in the list.</dd>
+      
+
+      
+        <dt>
+<b class="method">firstChild</b> <b class="variable">?objVar?</b>
+</dt>
+        <dd>Returns the first child as a node object.</dd>
+      
+
+      
+        <dt>
+<b class="method">lastChild</b> <b class="variable">?objVar?</b>
+</dt>
+        <dd>Returns the last child as a node object.</dd>
+      
+      
+      
+        <dt>
+<b class="method">nextSibling</b>  <b class="variable">?objVar?</b>
+</dt>
+        <dd>Returns the next sibling relativ to the current node as a node
+object.</dd>
+      
+
+      
+        <dt>
+<b class="method">previousSibling</b> <b class="variable">?objVar?</b>
+</dt>
+        <dd>Returns the next sibling relativ to the current node as a node
+object.</dd>
+      
+
+      
+        <dt>
+<b class="method">getElementsByTagName</b> <i class="m">name</i>
+</dt>
+        <dd>Returns a list of all elements in the subtree matching (glob
+style) <i class="m">name</i>.</dd>
+      
+
+      
+        <dt>
+<b class="method">getElementsByTagNameNS</b> <i class="m">uri</i> <i class="m">localname</i>
+</dt>
+        <dd>Returns a list of all elements in the subtree
+matching (glob style) <i class="m">localname</i> and having the given namespace
+<i class="m">uri</i>.</dd>
+      
+
+      
+        <dt>
+<b class="method">getElementById</b> <i class="m">id</i>
+</dt>
+        <dd>Returns the node having a id attribute with value
+<i class="m">id</i>.</dd>
+      
+
+      
+        <dt>
+<b class="method">hasAttribute</b> <i class="m">attributeName</i>
+</dt>
+        <dd>Returns 1 if the object node contains an attribute with name
+<i class="m">attributeName</i> . Otherwise 0 is returned.</dd>
+      
+
+      
+        <dt>
+<b class="method">getAttribute</b> <i class="m">attributeName  ?defaultValue?</i>
+</dt>
+        <dd>Returns the value of the attribute <i class="m">attributeName</i>. If
+attribute is not available <i class="m">defaultValue</i> is returned.</dd>
+      
+
+      
+        <dt>
+<b class="method">setAttribute</b> <i class="m">attributeName newValue 
+?attributeName newValue ...?</i>
+</dt>
+        <dd>Sets the value for one or more attributes. Every
+<i class="m">attributeName</i> is set to the corresponding <i class="m">newValue</i>. If there
+isn't an attribute for one or more of the <i class="m">attributeName</i> this will
+create that attribute.</dd>
+
+      
+
+      
+        <dt>
+<b class="method">removeAttribute</b> <i class="m">attributeName</i>
+</dt>
+        <dd>Removes the attribute <i class="m">attributeName</i>.</dd>
+      
+
+      
+        <dt>
+<b class="method">hasAttributeNS</b> <i class="m">uri</i> <i class="m">localName</i>
+</dt>
+        <dd>Returns 1 if the object node contains an attribute with the
+local name <i class="m">localName</i> within the namespace <i class="m">uri</i>.  Otherwise 0 is
+returned.</dd>
+      
+
+      
+        <dt>
+<b class="method">getAttributeNS</b> <i class="m">uri</i> <i class="m">localName
+?defaultValue?</i>
+</dt>
+        <dd>Returns the value of the attribute with the local name
+<i class="m">localName</i> within the namespace URI <i class="m">uri</i>. If the node dosn't have
+that attribute the <i class="m">defaultValue</i> is returned.</dd>
+      
+
+      
+        <dt>
+<b class="method">setAttributeNS</b> <i class="m">uri qualifiedName newValue
+?uri qualifiedName newValue ...?</i> </dt>
+        <dd>
+<p>Sets the value for one or more full qualified
+attributes. Every attribute <i class="m">qualifiedName</i> with the namespace URI
+<i class="m">uri</i> will be set to <i class="m">newValue</i>. This will create a new attribute, if
+it wasn't avialble before. If you want to set an attribute within a namespace
+you must specify the attribute name with prefix, even if you want to set an
+already existing attribute to a new value. While searching, if the attribute
+already exists, only the given <i class="m">uri</i> and the localname of the
+<i class="m">qualifiedName</i> is used.</p>
+
+        <pre class="example">$node setAttributeNS "http://some.uri.com/wow" prefix:attr1 attrValue</pre>
+
+<p>If the uri is the empty string and the attribute name hasn't a prefix, this
+method has the same effect as the method <b>setAttribute</b>.</p>
+
+        <pre class="example">$node setAttributeNS "" attri "some Value"</pre>
+
+<p>XML namespace nodes are not in any namespace. Set them this way:</p>
+
+        <pre class="example">$node setAttributeNS "" xmlns:myprefix "myNamespaceURI"
+$node setAttributeNS "" xmlns "newDefaultNamespace"</pre>
+
+<p>If your <i class="m">qualifiedName</i> has the prefix "xml" and you give the empty
+string as <i class="m">uri</i>, the namespace of the attribute defaults to
+"http://www.w3.org/XML/1998/namespace", as the DOM 2 recommendation
+requests. With the exceptions of the special prefixes "xmlns" and "xml" you
+always must provide a non emtpy <i class="m">uri</i>, if your <i class="m">qualifiedName</i> has a
+prefix.</p>
+        </dd>
+      
+
+      
+        <dt>
+<b class="method">removeAttributeNS</b> <i class="m">uri</i> <i class="m">localName</i>
+</dt>
+        <dd>Removes the attribute with the local name <i class="m">localName</i> within
+ the namespace <i class="m">uri</i>.</dd>
+      
+
+      
+        <dt>
+<b class="method">attributes</b> <b class="option">?attributeNamePattern?</b>
+</dt>
+        <dd>Returns all attributes matching the <i class="m">attributeNamePattern</i>.
+If <i class="m">attributeNamePattern</i> isn't given all attributes are returned as a Tcl
+list.</dd>
+      
+
+      
+        <dt>
+<b class="method">appendChild</b> <i class="m">newChild</i>
+</dt>
+        <dd>Append <i class="m">newChild</i> to the end of the child list of the
+node. <i class="m">newChild</i> must be in the document fragment list.</dd>
+      
+
+      
+        <dt>
+<b class="method">insertBefore</b> <i class="m">newChild</i>  <i class="m">refChild</i>
+</dt>
+        <dd>Insert <i class="m">newChild</i> before the <i class="m">refChild</i> in list of
+children of that node. <i class="m">newChild</i> must be in the document fragment list.</dd>
+      
+
+      
+        <dt>
+<b class="method">replaceChild</b> <i class="m">newChild</i>  <i class="m">oldChild</i>
+</dt>
+        <dd>Replace <i class="m">newChild</i> with <i class="m">oldChild</i> in list of children
+of that node.  <i class="m">newChild</i> must be in the document fragment list.
+<i class="m">oldChild</i> will be part of the document fragment list after this
+operation.</dd>
+      
+
+      
+        <dt>
+<b class="method">removeChild</b> <i class="m">child</i>
+</dt>
+        <dd>Removes <i class="m">child</i> from the list of children of that node
+<i class="m">child</i> will be part of the document fragment list after this
+operation. It is not physically deleted.</dd>
+      
+
+      
+        <dt><b class="method">delete</b></dt>
+        <dd>Deletes the given node and its complete child tree
+and frees the complete internal memory. The affected nodes are not accessible
+through the document fragment list.</dd>
+      
+
+      
+        <dt>
+<b class="method">cloneNode</b> <b class="option">?-deep?</b>
+</dt>
+        <dd>Clones this node and adds the new create node into the document
+fragment list. If the <i class="m">-deep</i> option is specified, all descendant nodes
+are also cloned.</dd>
+      
+
+      
+        <dt>
+<b class="method">ownerDocument</b> <b class="variable">?domObjVar?</b>
+</dt>
+        <dd>Returns the document object of the document this node belongs
+to.</dd>
+      
+
+      
+        <dt>
+<b class="method">find</b> <i class="m">attrName</i> <i class="m">attrVal</i>
+<b class="option">?objVar?</b>
+</dt>
+        <dd>Finds the node with the attribute name <i class="m">attrName</i>, and
+attribute value <i class="m">attrVal</i> in the subtree starting the current node.</dd>
+      
+
+      
+        <dt>
+<b class="method">child</b> <i class="m">number|all</i> <b class="option">type</b>
+<b class="option">attrName attrValue</b>
+</dt>
+        <dd>(XPointer) child</dd>
+      
+      
+      
+        <dt>
+<b class="method">descendant</b> <i class="m">number|all</i> <b class="option">type</b>
+<b class="option">attrName attrValue</b>
+</dt>
+        <dd>(XPointer) descendant</dd>
+      
+
+      
+        <dt>
+<b class="method">ancestor</b> <i class="m">number|all</i> <b class="option">type</b>
+<b class="option">attrName attrValue</b>
+</dt>
+        <dd>(XPointer) ancestor</dd>
+      
+
+      
+        <dt>
+<b class="method">fsibling</b> <i class="m">number|all</i> <b class="option">type</b>
+<b class="option">attrName attrValue</b>
+</dt>
+        <dd>(XPointer) fsibling</dd>
+      
+
+      
+        <dt>
+<b class="method">psibling</b> <i class="m">number|all</i> <b class="option">type</b>
+<b class="option">attrName attrValue</b>
+</dt>
+        <dd>(XPointer) psibling</dd>
+      
+
+      
+        <dt>
+<b class="method">root</b>  <b class="option">objVar</b>
+</dt>
+        <dd>(XPointer) root</dd>
+      
+
+      
+        <dt><b class="method">text</b></dt>
+        <dd>Returns all text node children of that current node combined,
+i.e. appended into one string.</dd>
+      
+
+      
+        <dt><b class="method">target</b></dt>
+        <dd>For a processing instruction node the target part is returned.
+Otherwise an error is generated.</dd>
+      
+
+      
+        <dt><b class="method">data</b></dt>
+        <dd>For a processing instruction node the data part is returned. For
+a text node, comment node or cdata section node the value is returned.
+Otherwise an error is generated.</dd>
+      
+
+      
+        <dt><b class="method">prefix</b></dt>
+        <dd>Returns the namespace prefix.</dd>
+      
+
+      
+        <dt><b class="method">namespaceURI</b></dt>
+        <dd>Returns the URI from the namespace of the given node.</dd>
+      
+
+      
+        <dt><b class="method">localName</b></dt>
+        <dd>Returns the localName from the tag name of the given node.</dd>
+      
+
+      
+        <dt>
+<b class="method">selectNodes</b> <i class="m">xpathQuery</i> <b class="option">?typeVar?</b>
+</dt>
+        <dd>Returns the result of applying the XPath query <i class="m">xpathQuery</i>
+to the subtree. This can be a string/value, a list of strings, a list of nodes
+or a list of attribute name / value pairs. If
+<i class="m">typeVar</i> is given the result type name is store into that variable
+(empty, bool, number, string, nodes, attrnodes or mixed).
+
+      <pre class="example">set paragraphNodes [$node selectNodes {chapter[3]//para[@type='warning' or @type='error'} ]
+foreach paragraph $paragraphNodes {
+    lappend  values [$paragraph selectNodes attribute::type]
+}
+      </pre>
+
+      <p>The expression context of the XPath query is the node. That means,
+every namespace prefix in the query is resolved using the namespace declaration
+that are in scope of the node.</p>
+</dd>
+      
+
+      
+        <dt><b class="method">getLine</b></dt>
+        <dd>Returns the line number of that node in the orignal parsed
+XML.</dd>
+      
+      
+      
+        <dt><b class="method">getColumn</b></dt>
+        <dd>Returns the column number of that node in the orignal parsed
+XML.</dd>
+      
+
+      
+        <dt><b class="method">asList</b></dt>
+        <dd>Returns the DOM substree starting form the current node as a
+nested Tcl list.</dd>
+      
+
+      
+        <dt>
+<b class="method">asXML</b> <b class="option">?-indent none/1..8?</b>
+<b class="option">?-channel channelId?</b> <b class="option">?-escapeNonASCII?</b>
+</dt>
+        <dd>Returns the DOM substree starting from the current node as the
+root node of the result as an (optional indented) XML string or sends the
+output directly to the given channelId. If the option <i class="m">-escapeNonASCII</i> is
+given, every non 7 bit ASCII character in attribute values or element PCDATA
+content will be escaped as character reference in decimal
+representation.</dd>
+      
+
+      
+        <dt>
+<b class="method">asHTML</b> <b class="option">?-channel channelId?</b>
+<b class="option">?-escapeNonASCII?</b>  <b class="option">?-htmlEntities?</b>
+</dt>
+        <dd>Returns the DOM substree starting from the current node as the
+root node of the result serialized acording to HTML rules (HTML elements are
+recognized regardless of case, without end tags for emtpy HTML elements etc.),
+as string or sends the output directly to the given channelId. If the option
+<i class="m">-escapeNonASCII</i> is given, every non 7 bit ASCII character in attribute
+values or element PCDATA content will be escaped as character reference in
+decimal representation. If the option <i class="m">-htmlEntities</i> is given, a
+character is outputed using a HTML 4.01 character entity reference, if one is
+defined for it.</dd>
+      
+
+      
+        <dt>
+<b class="method">appendFromList</b> <i class="m">list</i>
+</dt>
+        <dd>Parses <i class="m">list</i> , creates an according DOM subtree and
+appends this subtree to the current node.</dd>
+      
+
+      
+        <dt>
+<b class="method">appendFromScript</b> <i class="m">tclScript</i>
+</dt>
+        <dd>Appends the nodes created in the <i class="m">tclScript</i> by
+Tcl functions, which have been built using <i class="m">dom createNodeCmd</i>, to the
+given node.</dd>
+      
+
+      
+        <dt>
+<b class="method">appendXML</b> <i class="m">XMLstring</i>
+</dt>
+        <dd>Parses <i class="m">XMLstring</i>, creates an according DOM subtree and
+appends this subtree to the current node.</dd>
+      
+
+      
+        <dt>
+<b class="method">simpleTranslate</b> <i class="m">outputVar</i>
+<i class="m">specifications</i>
+</dt>
+        <dd>Translate the subtree starting at the object node according to
+the specifications in <i class="m">specifications</i> and outputs the result in the
+variable <i class="m">outputVar</i> . The translation is very similar to Cost Simple
+mode.</dd>
+      
+
+      
+        <dt><b class="method">toXPath</b></dt>
+        <dd>Returns a XPath, which exactly addresses the given
+node in its document. This XPath is only valid as there are no changes to DOM
+tree made later one.</dd>
+      
+
+      
+        <dt><b class="method">getBaseURI</b></dt>
+        <dd>Returns the baseURI of the node.</dd>
+      
+
+      
+        <dt>
+<b class="method">disableOutputEscaping</b> <i class="m">?boolean?</i>
+</dt>
+        <dd>This method works only for text nodes; for every other nodes it
+returns error. Without the optional argument it returns, if disabling output
+escaping is on. The return value 0 means, the characters of the text node will
+be escaped, to generate valid XML, if serialized. This is the default for
+every parsed or created text node (with the exception of that text nodes in a
+result tree of an XSLT transformation, for which disabling output escaping was
+requested explicitely in the stylesheet). The return value 1 means, that output
+escaping is disabled for this text node. If such a text node is serialized
+(with asXML or asHTML), it is literarily written, without escaping of the
+special XML characters. If the optional boolean value <i class="m">boolean</i> is given,
+the flag is set accordingly. You should not set this flag to 1, until you
+really know, what you do.</dd>
+      
+
+      
+        <dt>
+<b class="method">precedes</b> <i class="m">refnode</i>
+</dt>
+        <dd>Compares the relative order of the node and <i class="m">refnode</i>. Both
+nodes must be part of the same documents and not out of the fragment list of
+the document. Returns true, if node is in document order (in the sense of the
+XPath 1.0 recommendation) before <i class="m">refnode</i> and false otherwise.</dd>
+      
+
+      
+        <dt>
+<b class="method">xslt</b> <b class="option">?-parameters
+parameterList?</b> <b class="option">?-ignoreUndeclaredParameters?</b>
+<b class="option">?-xsltmessagecmd script?</b> <i class="m">stylesheet</i> <i class="m">?outputVar?</i>
+</dt>
+        <dd>Applies an XSLT transformation on the document using the XSLT
+<i class="m">stylesheet</i> (given as domDoc). Returns a document object containing the
+result document of that transformation and stores it in the optional
+<i class="m">outputVar</i>. 
+
+<p>The optional <i class="m">-parameters</i> option sets top level
+&lt;xsl:param&gt; to string values. The <i class="m">parameterList</i> has to be a tcl
+list consisting of parameter name and value pairs.</p>
+
+<p>If the option <i class="m">-ignoreUndeclaredParameters</i> is given, then parameter
+names in the <i class="m">parameterList</i> given to the <i class="m">-parameters</i> options that
+are not declared as top-level parameters in the stylesheet are silently
+ignored. Without this option, an error is raised, if the user tries to set a
+top-level parameter, which is not declared in the stylesheet.</p>
+
+<p>The <i class="m">-xsltmessagecmd</i> option sets a callback for xslt:message elements
+in the stylesheet. The actual command consists of the script, given as argument
+to the option, appended with the XML Fragment from instantiating the
+xsl:message element content as string (as if the XPath string() function would
+have been applied to the XML Fragment) and a flag, which indicates, if the
+xsl:message has an attribute "terminate" with the value "yes".</p>
+</dd>
+      
+
+      
+        <dt><i class="m">@attrName</i></dt>
+        <dd>Returns the value of the attribute <i class="m">attrName</i>.  Short cut
+for <i class="m">getAttribute</i>.</dd>
+      
+    </dl><p>Otherwise, if an unknown method name is given, the command with the same
+name as the given method within the namespace <tt class="l">::dom::domNode</tt> is tried to
+be executed. This allows quick method additions on Tcl level.</p>
+
+
+  <h2><a name="SECTid1980">SEE ALSO</a></h2><p class="seealso">
+<a href="dom.html">dom</a>, <a href="domDoc.html">domDoc</a>
+</p>
+  
+  <h2><a name="SECTid1989">KEYWORDS</a></h2><p class="keywords">
+<a class="keyword" href="keyword-index.html#KW-XML">XML</a>, <a class="keyword" href="keyword-index.html#KW-DOM">DOM</a>, <a class="keyword" href="keyword-index.html#KW-document">document</a>, <a class="keyword" href="keyword-index.html#KW-node">node</a>, <a class="keyword" href="keyword-index.html#KW-parsing">parsing</a>
+</p>
+  
+</div><hr class="navsep"><div class="navbar" align="center">
+<a class="navaid" href="index.html">Table of Contents</a> � <a class="navaid" href="category-index.html">Index</a> � <a class="navaid" href="keyword-index.html">Keywords</a>
+</div>
+</body>
+</html>

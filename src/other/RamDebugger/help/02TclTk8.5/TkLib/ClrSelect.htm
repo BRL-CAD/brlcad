@@ -1,0 +1,38 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>Tk_ClearSelection manual page - Tk Library Procedures</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TkLib</a> <small>&gt;</small> ClrSelect</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+Tk_ClearSelection - Deselect a selection
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>#include &lt;tk.h&gt;</B><BR>
+<B>Tk_ClearSelection</B>(<I>tkwin, selection</I>)<BR>
+<H3><A NAME="M4">ARGUMENTS</A></H3>
+<DL class="arguments">
+<DT>Tk_Window <B>tkwin</B> (in)<DD>
+The selection will be cleared from the display containing this
+window.
+<P><DT>Atom <B><A HREF="../TkCmd/selection.htm">selection</A></B> (in)<DD>
+The name of selection to be cleared.
+<P></DL>
+<H3><A NAME="M5">DESCRIPTION</A></H3>
+<B>Tk_ClearSelection</B> cancels the selection specified by the atom 
+<I>selection</I> for the display containing <I>tkwin</I>.
+The selection need not be in <I>tkwin</I> itself or even in
+<I>tkwin</I>'s application.
+If there is a window anywhere on <I>tkwin</I>'s display that
+owns <I>selection</I>, the window will be notified and the
+selection will be cleared.
+If there is no owner for <I>selection</I> on the display, then the
+procedure has no effect.
+
+<H3><A NAME="M6">KEYWORDS</A></H3>
+<A href="../Keywords/C.htm#clear">clear</A>, <A href="../Keywords/S.htm#selection">selection</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1992-1994 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

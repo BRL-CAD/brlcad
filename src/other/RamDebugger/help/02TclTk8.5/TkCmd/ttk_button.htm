@@ -1,0 +1,130 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>ttk::button manual page - Tk Themed Widget</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TkCmd</a> <small>&gt;</small> ttk_button</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="ttk_button.htm#M2" NAME="L1609">NAME</A>
+<DL><DD>ttk::button - Widget that issues a command when pressed</DD></DL>
+<DD><A HREF="ttk_button.htm#M3" NAME="L1610">SYNOPSIS</A>
+<DL>
+</DL>
+<DD><A HREF="ttk_button.htm#M4" NAME="L1611">DESCRIPTION</A>
+<DD><A HREF="ttk_button.htm#M5" NAME="L1612">STANDARD OPTIONS</A>
+<DL>
+<DD><A HREF="ttk_widget.htm#M-class">-class, undefined, undefined</A>
+<DD><A HREF="ttk_widget.htm#M-compound">-compound, compound, Compound</A>
+<DD><A HREF="ttk_widget.htm#M-cursor">-cursor, cursor, Cursor</A>
+<DD><A HREF="ttk_widget.htm#M-image">-image, image, Image</A>
+<DD><A HREF="ttk_widget.htm#M-state">-state, state, State</A>
+<DD><A HREF="ttk_widget.htm#M-style">-style, style, Style</A>
+<DD><A HREF="ttk_widget.htm#M-takefocus">-takefocus, takeFocus, TakeFocus</A>
+<DD><A HREF="ttk_widget.htm#M-text">-text, text, Text</A>
+<DD><A HREF="ttk_widget.htm#M-textvariable">-textvariable, textVariable, Variable</A>
+<DD><A HREF="ttk_widget.htm#M-underline">-underline, underline, Underline</A>
+<DD><A HREF="ttk_widget.htm#M-width">-width, width, Width</A>
+</DL>
+<DD><A HREF="ttk_button.htm#M6" NAME="L1613">WIDGET-SPECIFIC OPTIONS</A>
+<DL>
+<DD><A HREF="ttk_button.htm#M7" NAME="L1614">-command, command, Command</A>
+<DD><A HREF="ttk_button.htm#M8" NAME="L1615">-default, default, Default</A>
+<DD><A HREF="ttk_button.htm#M9" NAME="L1616">-width, width, Width</A>
+</DL>
+<DD><A HREF="ttk_button.htm#M10" NAME="L1617">WIDGET COMMAND</A>
+<DL class="widget command">
+<DD><A HREF="ttk_button.htm#M11" NAME="L1618"><I>pathName </I><B>invoke</B></A>
+<DD><A HREF="ttk_button.htm#M12" NAME="L1619"><I>pathName </I><B>cget</B> <I>option</I></A>
+<DD><A HREF="ttk_button.htm#M13" NAME="L1620"><I>pathName </I><B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?</A>
+<DD><A HREF="ttk_button.htm#M14" NAME="L1621"><I>pathName </I><B>instate </B><I>stateSpec</I> ?<I>script</I>?</A>
+<DD><A HREF="ttk_button.htm#M15" NAME="L1622"><I>pathName </I><B>state</B> ?<I>stateSpec</I>?</A>
+</DL>
+<DD><A HREF="ttk_button.htm#M16" NAME="L1623">COMPATIBILITY OPTIONS</A>
+<DL>
+<DD><A HREF="ttk_button.htm#M17" NAME="L1624">-state, state, State</A>
+</DL>
+<DD><A HREF="ttk_button.htm#M18" NAME="L1625">SEE ALSO</A>
+<DD><A HREF="ttk_button.htm#M19" NAME="L1626">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+ttk::button - Widget that issues a command when pressed
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>ttk::button</B> <I>pathName </I>?<I>options</I>?<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+A <B>ttk::button</B> widget displays a textual label and/or image,
+and evaluates a command when pressed.
+<H3><A NAME="M5">STANDARD OPTIONS</A></H3>
+<DL>
+<DT><B><A HREF="ttk_widget.htm#M-class">-class, undefined, undefined</A></B>
+<DT><B><A HREF="ttk_widget.htm#M-compound">-compound, compound, Compound</A></B>
+<DT><B><A HREF="ttk_widget.htm#M-cursor">-cursor, cursor, Cursor</A></B>
+<DT><B><A HREF="ttk_widget.htm#M-image">-image, image, Image</A></B>
+<DT><B><A HREF="ttk_widget.htm#M-state">-state, state, State</A></B>
+<DT><B><A HREF="ttk_widget.htm#M-style">-style, style, Style</A></B>
+<DT><B><A HREF="ttk_widget.htm#M-takefocus">-takefocus, takeFocus, TakeFocus</A></B>
+<DT><B><A HREF="ttk_widget.htm#M-text">-text, text, Text</A></B>
+<DT><B><A HREF="ttk_widget.htm#M-textvariable">-textvariable, textVariable, Variable</A></B>
+<DT><B><A HREF="ttk_widget.htm#M-underline">-underline, underline, Underline</A></B>
+<DT><B><A HREF="ttk_widget.htm#M-width">-width, width, Width</A></B>
+</DL>
+<H3><A NAME="M6">WIDGET-SPECIFIC OPTIONS</A></H3>
+<DL>
+<DT>Command-Line Name: <B><A NAME="M7">-command</A></B>
+<DT>Database Name: <B>command</B>
+<DT>Database Class: <B>Command</B>
+<DD>A script to evaluate when the widget is invoked.
+<P><DT>Command-Line Name: <B><A NAME="M8">-default</A></B>
+<DT>Database Name: <B>default</B>
+<DT>Database Class: <B>Default</B>
+<DD>May be set to one of  <B>normal</B>, <B>active</B>, or <B>disabled</B>.
+In a dialog box, one button may be designated the
+&#8220;default&#8221;
+button (meaning, roughly,
+&#8220;the one that gets invoked when the user presses &lt;Enter&gt;&#8221;).
+<B>active</B> indicates that this is currently the default button;
+<B>normal</B> means that it may become the default button, and
+<B>disabled</B> means that it is not defaultable.
+The default is <B>normal</B>.
+<P>
+Depending on the theme, the default button may be displayed 
+with an extra highlight ring, or with a different border color.
+<P><DT>Command-Line Name: <B><A NAME="M9">-width</A></B>
+<DT>Database Name: <B>width</B>
+<DT>Database Class: <B>Width</B>
+<DD>If greater than zero, specifies how much space, in character widths, 
+to allocate for the text label.  
+If less than zero, specifies a minimum width.
+If zero or unspecified, the natural width of the text label is used.
+Note that some themes may specify a non-zero <B>-width</B>
+in the style.
+</DL>
+<H3><A NAME="M10">WIDGET COMMAND</A></H3>
+<DL class="widget command">
+<DT><A NAME="M11"><I>pathName </I><B>invoke</B></A><DD>
+Invokes the command associated with the button.
+<P><DT><A NAME="M12"><I>pathName </I><B>cget</B> <I>option</I></A><DD>
+<P><DT><A NAME="M13"><I>pathName </I><B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?</A><DD>
+<P><DT><A NAME="M14"><I>pathName </I><B>instate </B><I>stateSpec</I> ?<I>script</I>?</A><DD>
+<P><DT><A NAME="M15"><I>pathName </I><B>state</B> ?<I>stateSpec</I>?</A><DD>
+See <I>ttk::widget(n)</I>
+<P></DL>
+<H3><A NAME="M16">COMPATIBILITY OPTIONS</A></H3>
+<DL>
+<DT>Command-Line Name: <B><A NAME="M17">-state</A></B>
+<DT>Database Name: <B>state</B>
+<DT>Database Class: <B>State</B>
+<DD>May be set to <B>normal</B> or <B>disabled</B> to control the
+<B>disabled</B> state bit. This is a
+&#8220;write-only&#8221;
+option: setting it changes the widget state, but the <B>state</B>
+widget command does not affect the state option.
+</DL>
+<H3><A NAME="M18">SEE ALSO</A></H3>
+<B><A HREF="../TkCmd/ttk_widget.htm">ttk::widget</A></B>, <B><A HREF="../TkCmd/button.htm">button</A></B>
+<H3><A NAME="M19">KEYWORDS</A></H3>
+<A href="../Keywords/W.htm#widget">widget</A>, <A href="../Keywords/B.htm#button">button</A>, <A href="../Keywords/D.htm#default">default</A>, <A href="../Keywords/C.htm#command">command</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 2004 Joe English
+</div>
+</BODY></HTML>

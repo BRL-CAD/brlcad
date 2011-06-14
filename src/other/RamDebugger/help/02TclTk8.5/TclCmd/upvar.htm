@@ -1,0 +1,107 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>upvar manual page - Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclCmd</a> <small>&gt;</small> upvar</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+upvar - Create link to variable in a different stack frame
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>upvar </B>?<I>level</I>? <I>otherVar myVar </I>?<I>otherVar myVar </I>...?<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+This command arranges for one or more local variables in the current
+procedure to refer to variables in an enclosing procedure call or
+to global variables.
+<I>Level</I> may have any of the forms permitted for the <B><A HREF="../TclCmd/uplevel.htm">uplevel</A></B>
+command, and may be omitted if the first letter of the first <I>otherVar</I>
+is not <B>#</B> or a digit (it defaults to <B>1</B>).
+For each <I>otherVar</I> argument, <B>upvar</B> makes the variable
+by that name in the procedure frame given by <I>level</I> (or at
+global level, if <I>level</I> is <B>#0</B>) accessible
+in the current procedure by the name given in the corresponding
+<I>myVar</I> argument.
+The variable named by <I>otherVar</I> need not exist at the time of the
+call;  it will be created the first time <I>myVar</I> is referenced, just like
+an ordinary variable.  There must not exist a variable by the
+name <I>myVar</I> at the time <B>upvar</B> is invoked.
+<I>MyVar</I> is always treated as the name of a variable, not an
+array element.  An error is returned if the name looks like an array element,
+such as <B>a(b)</B>.
+<I>OtherVar</I> may refer to a scalar variable, an array,
+or an array element.
+<B>Upvar</B> returns an empty string.
+<P>
+The <B>upvar</B> command simplifies the implementation of call-by-name
+procedure calling and also makes it easier to build new control constructs
+as Tcl procedures.
+For example, consider the following procedure:
+<PRE>proc <I>add2</I> name {
+   <B>upvar</B> $name x
+   set x [expr {$x + 2}]
+}</PRE>
+If <I>add2</I> is invoked with an argument giving the name of a variable,
+it adds two to the value of that variable.
+Although <I>add2</I> could have been implemented using <B><A HREF="../TclCmd/uplevel.htm">uplevel</A></B>
+instead of <B>upvar</B>, <B>upvar</B> makes it simpler for <B>add2</B>
+to access the variable in the caller's procedure frame.
+<P>
+<B>namespace eval</B> is another way (besides procedure calls)
+that the Tcl naming context can change.
+It adds a call frame to the stack to represent the namespace context.
+This means each <B>namespace eval</B> command
+counts as another call level for <B><A HREF="../TclCmd/uplevel.htm">uplevel</A></B> and <B>upvar</B> commands.
+For example, <B>info level 1</B> will return a list
+describing a command that is either
+the outermost procedure call or the outermost <B>namespace eval</B> command.
+Also, <B>uplevel #0</B> evaluates a script
+at top-level in the outermost namespace (the global namespace).
+<P>
+If an upvar variable is unset (e.g. <B>x</B> in <B>add2</B> above), the
+<B><A HREF="../TclCmd/unset.htm">unset</A></B> operation affects the variable it is linked to, not the
+upvar variable.  There is no way to unset an upvar variable except
+by exiting the procedure in which it is defined.  However, it is
+possible to retarget an upvar variable by executing another <B>upvar</B>
+command.
+<H3><A NAME="M5">TRACES AND UPVAR</A></H3>
+Upvar interacts with traces in a straightforward but possibly
+unexpected manner.  If a variable trace is defined on <I>otherVar</I>, that
+trace will be triggered by actions involving <I>myVar</I>.  However,
+the trace procedure will be passed the name of <I>myVar</I>, rather
+than the name of <I>otherVar</I>.  Thus, the output of the following code
+will be
+&#8220;<I>localVar</I>&#8221;
+rather than
+&#8220;<I>originalVar</I>&#8221;:
+<PRE>proc <I>traceproc</I> { name index op } {
+   puts $name
+}
+proc <I>setByUpvar</I> { name value } {
+   <B>upvar</B> $name localVar
+   set localVar $value
+}
+set originalVar 1
+trace variable originalVar w <I>traceproc</I>
+<I>setByUpvar</I> originalVar 2</PRE>
+<P>
+If <I>otherVar</I> refers to an element of an array, then variable
+traces set for the entire array will not be invoked when <I>myVar</I>
+is accessed (but traces on the particular element will still be
+invoked).  In particular, if the array is <B>env</B>, then changes
+made to <I>myVar</I> will not be passed to subprocesses correctly.
+<H3><A NAME="M6">EXAMPLE</A></H3>
+A <B>decr</B> command that works like <B><A HREF="../TclCmd/incr.htm">incr</A></B> except it subtracts
+the value from the variable instead of adding it:
+<PRE>proc decr {varName {decrement 1}} {
+    <B>upvar</B> 1 $varName var
+    incr var [expr {-$decrement}]
+}</PRE>
+<H3><A NAME="M7">SEE ALSO</A></H3>
+<B><A HREF="../TclCmd/global.htm">global</A></B>, <B><A HREF="../TclCmd/namespace.htm">namespace</A></B>, <B><A HREF="../TclCmd/uplevel.htm">uplevel</A></B>, <B><A HREF="../TclCmd/variable.htm">variable</A></B>
+<H3><A NAME="M8">KEYWORDS</A></H3>
+<A href="../Keywords/C.htm#context">context</A>, <A href="../Keywords/F.htm#frame">frame</A>, <A href="../Keywords/G.htm#global">global</A>, <A href="../Keywords/L.htm#level">level</A>, <A href="../Keywords/N.htm#namespace">namespace</A>, <A href="../Keywords/P.htm#procedure">procedure</A>, <A href="../Keywords/V.htm#variable">variable</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1993 The Regents of the University of California.
+Copyright &copy; 1994-1997 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

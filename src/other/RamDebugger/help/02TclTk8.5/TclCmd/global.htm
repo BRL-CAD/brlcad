@@ -1,0 +1,49 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>global manual page - Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclCmd</a> <small>&gt;</small> global</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+global - Access global variables
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>global </B><I>varname </I>?<I>varname ...</I>?<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+This command has no effect unless executed in the context of a proc body.
+If the <B>global</B> command is executed in the context of a proc body, it
+creates local variables linked to the corresponding global variables (and
+therefore these variables are listed by info locals).
+<P>
+If <I>varname</I> contains namespace qualifiers, the local variable's name is
+the unqualified name of the global variable, as determined by the
+<B>namespace tail</B> command. 
+<P>
+<I>varname</I> is always treated as the name of a variable, not an
+array element.  An error is returned if the name looks like an array element,
+such as <B>a(b)</B>.
+<H3><A NAME="M5">EXAMPLES</A></H3>
+This procedure sets the namespace variable <I>::a::x</I>
+<PRE>proc reset {} {
+    <B>global</B> a::x
+    set x 0
+}</PRE>
+<P>
+This procedure accumulates the strings passed to it in a global
+buffer, separated by newlines.  It is useful for situations when you
+want to build a message piece-by-piece (as if with <B><A HREF="../TclCmd/puts.htm">puts</A></B>) but
+send that full message in a single piece (e.g. over a connection
+opened with <B><A HREF="../TclCmd/socket.htm">socket</A></B> or as part of a counted HTTP response).
+<PRE>proc accum {string} {
+    <B>global</B> accumulator
+    append accumulator $string &#92;n
+}</PRE>
+<H3><A NAME="M6">SEE ALSO</A></H3>
+<B><A HREF="../TclCmd/namespace.htm">namespace</A></B>, <B><A HREF="../TclCmd/upvar.htm">upvar</A></B>, <B><A HREF="../TclCmd/variable.htm">variable</A></B>
+<H3><A NAME="M7">KEYWORDS</A></H3>
+<A href="../Keywords/G.htm#global">global</A>, <A href="../Keywords/N.htm#namespace">namespace</A>, <A href="../Keywords/P.htm#procedure">procedure</A>, <A href="../Keywords/V.htm#variable">variable</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1993 The Regents of the University of California.
+Copyright &copy; 1994-1997 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

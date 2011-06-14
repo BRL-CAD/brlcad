@@ -1,0 +1,26 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>Tcl_GetHostName manual page - Tcl Library Procedures</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclLib</a> <small>&gt;</small> GetHostName</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+Tcl_GetHostName - get the name of the local host
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>#include &lt;tcl.h&gt;</B><BR>
+const char *<BR>
+<B>Tcl_GetHostName</B>()<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+<B>Tcl_GetHostName</B> is a utility procedure used by some of the
+Tcl commands.  It returns a pointer to a string containing the name 
+for the current machine, or an empty string if the name cannot be
+determined.  The string is statically allocated, and the caller must
+not modify of free it.
+<P>
+<H3><A NAME="M5">KEYWORDS</A></H3>
+<A href="../Keywords/H.htm#hostname">hostname</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1998-2000 by Scriptics Corporation.
+</div>
+</BODY></HTML>

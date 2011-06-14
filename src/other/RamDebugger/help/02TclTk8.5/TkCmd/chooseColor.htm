@@ -1,0 +1,41 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>tk_chooseColor manual page - Tk Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TkCmd</a> <small>&gt;</small> chooseColor</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+tk_chooseColor - pops up a dialog box for the user to select a color.
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>tk_chooseColor </B>?<I>option value ...</I>?<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+The procedure <B>tk_chooseColor</B> pops up a dialog box for the
+user to select a color. The following <I>option-value</I> pairs are
+possible as command line arguments:
+<P>
+<DL class="description">
+<DT><A NAME="M5"><B>-initialcolor</B> <I>color</I></A><DD>
+Specifies the color to display in the color dialog when it pops
+up. <I>color</I> must be in a form acceptable to the <B><A HREF="../TkLib/GetColor.htm">Tk_GetColor</A></B>
+function.
+<P><DT><A NAME="M6"><B>-parent</B> <I>window</I></A><DD>
+Makes <I>window</I> the logical parent of the color dialog. The color
+dialog is displayed on top of its parent window.
+<P><DT><A NAME="M7"><B>-title</B> <I>titleString</I></A><DD>
+Specifies a string to display as the title of the dialog box. If this
+option is not specified, then a default title will be displayed.
+<P></DL>
+<P>
+If the user selects a color, <B>tk_chooseColor</B> will return the
+name of the color in a form acceptable to <B><A HREF="../TkLib/GetColor.htm">Tk_GetColor</A></B>.  If the
+user cancels the operation, both commands will return the empty
+string.
+<H3><A NAME="M8">EXAMPLE</A></H3>
+<PRE>button .b -bg [tk_chooseColor -initialcolor gray -title &quot;Choose color&quot;]</PRE>
+<H3><A NAME="M9">KEYWORDS</A></H3>
+<A href="../Keywords/C.htm#color selection dialog">color selection dialog</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

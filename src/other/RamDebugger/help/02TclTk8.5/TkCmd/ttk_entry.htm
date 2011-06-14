@@ -1,0 +1,554 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>ttk::entry manual page - Tk Themed Widget</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TkCmd</a> <small>&gt;</small> ttk_entry</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="ttk_entry.htm#M2" NAME="L1666">NAME</A>
+<DL><DD>ttk::entry - Editable text field widget</DD></DL>
+<DD><A HREF="ttk_entry.htm#M3" NAME="L1667">SYNOPSIS</A>
+<DL>
+</DL>
+<DD><A HREF="ttk_entry.htm#M4" NAME="L1668">DESCRIPTION</A>
+<DD><A HREF="ttk_entry.htm#M5" NAME="L1669">STANDARD OPTIONS</A>
+<DL>
+<DD><A HREF="ttk_widget.htm#M-class">-class, undefined, undefined</A>
+<DD><A HREF="ttk_widget.htm#M-cursor">-cursor, cursor, Cursor</A>
+<DD><A HREF="ttk_widget.htm#M-style">-style, style, Style</A>
+<DD><A HREF="ttk_widget.htm#M-takefocus">-takefocus, takeFocus, TakeFocus</A>
+<DD><A HREF="ttk_widget.htm#M-xscrollcommand">-xscrollcommand, xScrollCommand, ScrollCommand</A>
+</DL>
+<DD><A HREF="ttk_entry.htm#M6" NAME="L1670">WIDGET-SPECIFIC OPTIONS</A>
+<DL>
+<DD><A HREF="ttk_entry.htm#M7" NAME="L1671">-exportselection, exportSelection, ExportSelection</A>
+<DD><A HREF="ttk_entry.htm#M8" NAME="L1672">-invalidcommand, invalidCommand, InvalidCommand</A>
+<DD><A HREF="ttk_entry.htm#M9" NAME="L1673">-justify, justify, Justify</A>
+<DD><A HREF="ttk_entry.htm#M10" NAME="L1674">-show, show, Show</A>
+<DD><A HREF="ttk_entry.htm#M11" NAME="L1675">-state, state, State</A>
+<DD><A HREF="ttk_entry.htm#M12" NAME="L1676">-textvariable, textVariable, Variable</A>
+<DD><A HREF="ttk_entry.htm#M13" NAME="L1677">-validate, validate, Validate</A>
+<DD><A HREF="ttk_entry.htm#M14" NAME="L1678">-validatecommand, validateCommand, ValidateCommand</A>
+<DD><A HREF="ttk_entry.htm#M15" NAME="L1679">-width, width, Width</A>
+</DL>
+<DD><A HREF="ttk_entry.htm#M16" NAME="L1680">NOTES</A>
+<DD><A HREF="ttk_entry.htm#M17" NAME="L1681">INDICES</A>
+<DL class="indices">
+<DD><A HREF="ttk_entry.htm#M18" NAME="L1682"><I>number</I></A>
+<DD><A HREF="ttk_entry.htm#M19" NAME="L1683"><B>@</B><I>number</I></A>
+<DD><A HREF="ttk_entry.htm#M20" NAME="L1684"><B>end</B></A>
+<DD><A HREF="ttk_entry.htm#M21" NAME="L1685"><B>insert</B></A>
+<DD><A HREF="ttk_entry.htm#M22" NAME="L1686"><B>sel.first</B></A>
+<DD><A HREF="ttk_entry.htm#M23" NAME="L1687"><B>sel.last</B></A>
+</DL>
+<DD><A HREF="ttk_entry.htm#M24" NAME="L1688">WIDGET COMMAND</A>
+<DL class="widget command">
+<DD><A HREF="ttk_entry.htm#M25" NAME="L1689"><I>pathName </I><B>bbox </B><I>index</I></A>
+<DD><A HREF="ttk_entry.htm#M26" NAME="L1690"><I>pathName </I><B>cget</B> <I>option</I></A>
+<DD><A HREF="ttk_entry.htm#M27" NAME="L1691"><I>pathName </I><B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?</A>
+<DD><A HREF="ttk_entry.htm#M28" NAME="L1692"><I>pathName </I><B>delete </B><I>first </I>?<I>last</I>?</A>
+<DD><A HREF="ttk_entry.htm#M29" NAME="L1693"><I>pathName </I><B>get</B></A>
+<DD><A HREF="ttk_entry.htm#M30" NAME="L1694"><I>pathName </I><B>icursor </B><I>index</I></A>
+<DD><A HREF="ttk_entry.htm#M31" NAME="L1695"><I>pathName </I><B>identify </B><I>x y</I></A>
+<DD><A HREF="ttk_entry.htm#M32" NAME="L1696"><I>pathName </I><B>index</B><I> index</I></A>
+<DD><A HREF="ttk_entry.htm#M33" NAME="L1697"><I>pathName </I><B>insert </B><I>index string</I></A>
+<DD><A HREF="ttk_entry.htm#M34" NAME="L1698"><I>pathName </I><B>instate </B><I>statespec</I> ?<I>script</I>?</A>
+<DD><A HREF="ttk_entry.htm#M35" NAME="L1699"><I>pathName </I><B>selection </B><I>option arg</I></A>
+<DL class="widget command">
+<DD><A HREF="ttk_entry.htm#M36" NAME="L1700"><I>pathName </I><B>selection clear</B></A>
+<DD><A HREF="ttk_entry.htm#M37" NAME="L1701"><I>pathName </I><B>selection present</B></A>
+<DD><A HREF="ttk_entry.htm#M38" NAME="L1702"><I>pathName </I><B>selection range </B><I>start</I> <I>end</I></A>
+</DL>
+<DD><A HREF="ttk_entry.htm#M39" NAME="L1703"><I>pathName </I><B>state</B> ?<I>stateSpec</I>?</A>
+<DD><A HREF="ttk_entry.htm#M40" NAME="L1704"><I>pathName </I><B>validate</B></A>
+<DD><A HREF="ttk_entry.htm#M41" NAME="L1705"><I>pathName </I><B>xview </B><I>args</I></A>
+<DL class="widget command">
+<DD><A HREF="ttk_entry.htm#M42" NAME="L1706"><I>pathName </I><B>xview</B></A>
+<DD><A HREF="ttk_entry.htm#M43" NAME="L1707"><I>pathName </I><B>xview</B> <I>index</I></A>
+<DD><A HREF="ttk_entry.htm#M44" NAME="L1708"><I>pathName </I><B>xview moveto</B><I> fraction</I></A>
+<DD><A HREF="ttk_entry.htm#M45" NAME="L1709"><I>pathName </I><B>xview scroll </B><I>number what</I></A>
+</DL>
+</DL>
+<DD><A HREF="ttk_entry.htm#M46" NAME="L1710">VALIDATION</A>
+<DD><A HREF="ttk_entry.htm#M47" NAME="L1711">VALIDATION MODES</A>
+<DL class="validation modes">
+<DD><A HREF="ttk_entry.htm#M48" NAME="L1712"><B>none</B></A>
+<DD><A HREF="ttk_entry.htm#M49" NAME="L1713"><B>key</B></A>
+<DD><A HREF="ttk_entry.htm#M50" NAME="L1714"><B>focus</B></A>
+<DD><A HREF="ttk_entry.htm#M51" NAME="L1715"><B>focusin</B></A>
+<DD><A HREF="ttk_entry.htm#M52" NAME="L1716"><B>focusout</B></A>
+<DD><A HREF="ttk_entry.htm#M53" NAME="L1717"><B>all</B></A>
+</DL>
+<DD><A HREF="ttk_entry.htm#M54" NAME="L1718">VALIDATION SCRIPT SUBSTITUTIONS</A>
+<DL class="validation script substitutions">
+<DD><A HREF="ttk_entry.htm#M55" NAME="L1719"><B>%d</B></A>
+<DD><A HREF="ttk_entry.htm#M56" NAME="L1720"><B>%i</B></A>
+<DD><A HREF="ttk_entry.htm#M57" NAME="L1721"><B>%P</B></A>
+<DD><A HREF="ttk_entry.htm#M58" NAME="L1722"><B>%s</B></A>
+<DD><A HREF="ttk_entry.htm#M59" NAME="L1723"><B>%S</B></A>
+<DD><A HREF="ttk_entry.htm#M60" NAME="L1724"><B>%v</B></A>
+<DD><A HREF="ttk_entry.htm#M61" NAME="L1725"><B>%V</B></A>
+<DD><A HREF="ttk_entry.htm#M62" NAME="L1726"><B>%W</B></A>
+</DL>
+<DD><A HREF="ttk_entry.htm#M63" NAME="L1727">DIFFERENCES FROM TK ENTRY WIDGET VALIDATION</A>
+<DL class="differences from tk entry widget validation">
+</DL>
+<DD><A HREF="ttk_entry.htm#M64" NAME="L1728">DEFAULT BINDINGS</A>
+<DL class="default bindings">
+</DL>
+<DD><A HREF="ttk_entry.htm#M65" NAME="L1729">WIDGET STATES</A>
+<DD><A HREF="ttk_entry.htm#M66" NAME="L1730">SEE ALSO</A>
+<DD><A HREF="ttk_entry.htm#M67" NAME="L1731">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+ttk::entry - Editable text field widget
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>ttk::entry</B> <I>pathName </I>?<I>options</I>?<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+An <B>ttk::entry</B> widget displays a one-line text string and
+allows that string to be edited by the user.
+The value of the string may be linked to a Tcl variable 
+with the <B>-textvariable</B> option.
+Entry widgets support horizontal scrolling with the 
+standard <B>-xscrollcommand</B> option and <B>xview</B> widget command.
+<H3><A NAME="M5">STANDARD OPTIONS</A></H3>
+<DL>
+<DT><B><A HREF="ttk_widget.htm#M-class">-class, undefined, undefined</A></B>
+<DT><B><A HREF="ttk_widget.htm#M-cursor">-cursor, cursor, Cursor</A></B>
+<DT><B><A HREF="ttk_widget.htm#M-style">-style, style, Style</A></B>
+<DT><B><A HREF="ttk_widget.htm#M-takefocus">-takefocus, takeFocus, TakeFocus</A></B>
+<DT><B><A HREF="ttk_widget.htm#M-xscrollcommand">-xscrollcommand, xScrollCommand, ScrollCommand</A></B>
+</DL>
+<H3><A NAME="M6">WIDGET-SPECIFIC OPTIONS</A></H3>
+<DL>
+<DT>Command-Line Name: <B><A NAME="M7">-exportselection</A></B>
+<DT>Database Name: <B>exportSelection</B>
+<DT>Database Class: <B>ExportSelection</B>
+<DD>A boolean value specifying whether or not 
+a selection in the widget should be linked to the X selection.
+If the selection is exported, then selecting in the widget deselects
+the current X selection, selecting outside the widget deselects any
+widget selection, and the widget will respond to selection retrieval
+requests when it has a selection.
+<P><DT>Command-Line Name: <B><A NAME="M8">-invalidcommand</A></B>
+<DT>Database Name: <B>invalidCommand</B>
+<DT>Database Class: <B>InvalidCommand</B>
+<DD>A script template to evaluate whenever the <B>validateCommand</B> returns 0.
+See <B>VALIDATION</B> below for more information.
+<P><DT>Command-Line Name: <B><A NAME="M9">-justify</A></B>
+<DT>Database Name: <B>justify</B>
+<DT>Database Class: <B>Justify</B>
+<DD>Specifies how the text is aligned within the entry widget.
+One of <B>left</B>, <B>center</B>, or <B>right</B>.
+<P><DT>Command-Line Name: <B><A NAME="M10">-show</A></B>
+<DT>Database Name: <B>show</B>
+<DT>Database Class: <B>Show</B>
+<DD>If this option is specified, then the true contents of the entry
+are not displayed in the window.
+Instead, each character in the entry's value will be displayed as
+the first character in the value of this option, such as
+&#8220;*&#8221;
+or a bullet.
+This is useful, for example, if the entry is to be used to enter
+a password.
+If characters in the entry are selected and copied elsewhere, the
+information copied will be what is displayed, not the true contents
+of the entry.
+<P><DT>Command-Line Name: <B><A NAME="M11">-state</A></B>
+<DT>Database Name: <B>state</B>
+<DT>Database Class: <B>State</B>
+<DD>Compatibility option; see <I>ttk::widget(n)</I> for details.
+Specifies one of three states for the entry,
+<B>normal</B>, <B>disabled</B>, or <B>readonly</B>.
+See <B>WIDGET STATES</B>, below.
+<P><DT>Command-Line Name: <B><A NAME="M12">-textvariable</A></B>
+<DT>Database Name: <B>textVariable</B>
+<DT>Database Class: <B><A HREF="../TclCmd/variable.htm">Variable</A></B>
+<DD>Specifies the name of a variable whose value is linked 
+to the entry widget's contents.
+Whenever the variable changes value, the widget's contents are updated,
+and vice versa.
+<P><DT>Command-Line Name: <B><A NAME="M13">-validate</A></B>
+<DT>Database Name: <B>validate</B>
+<DT>Database Class: <B>Validate</B>
+<DD>Specifies the mode in which validation should operate:
+<B>none</B>, <B><A HREF="../TkCmd/focus.htm">focus</A></B>, <B>focusin</B>, <B>focusout</B>, <B>key</B>, or <B>all</B>.
+Default is <B>none</B>, meaning that validation is disabled.
+See <B>VALIDATION</B> below.
+<P><DT>Command-Line Name: <B><A NAME="M14">-validatecommand</A></B>
+<DT>Database Name: <B>validateCommand</B>
+<DT>Database Class: <B>ValidateCommand</B>
+<DD>A script template to evaluate whenever validation is triggered.
+If set to the empty string (the default), validation is disabled.
+The script must return a boolean value.
+See <B>VALIDATION</B> below.
+<P><DT>Command-Line Name: <B><A NAME="M15">-width</A></B>
+<DT>Database Name: <B>width</B>
+<DT>Database Class: <B>Width</B>
+<DD>Specifies an integer value indicating the desired width of the entry window,
+in average-size characters of the widget's font.
+</DL>
+<H3><A NAME="M16">NOTES</A></H3>
+A portion of the entry may be selected as described below.
+If an entry is exporting its selection (see the <B>exportSelection</B>
+option), then it will observe the standard X11 protocols for handling the
+selection;  entry selections are available as type <B><A HREF="../TclCmd/string.htm">STRING</A></B>.
+Entries also observe the standard Tk rules for dealing with the
+input focus.  When an entry has the input focus it displays an
+<I>insert cursor</I> to indicate where new characters will be
+inserted.
+<P>
+Entries are capable of displaying strings that are too long to
+fit entirely within the widget's window.  In this case, only a
+portion of the string will be displayed;  commands described below
+may be used to change the view in the window.  Entries use
+the standard <B>xScrollCommand</B> mechanism for interacting with
+scrollbars (see the description of the <B>xScrollCommand</B> option
+for details).
+<H3><A NAME="M17">INDICES</A></H3>
+Many of the <B><A HREF="../TkCmd/entry.htm">entry</A></B> widget commands take one or more indices as
+arguments.  An index specifies a particular character in the entry's
+string, in any of the following ways:
+<P>
+<DL class="indices">
+<DT><A NAME="M18"><I>number</I></A><DD>
+Specifies the character as a numerical index, where 0 corresponds
+to the first character in the string.
+<P><DT><A NAME="M19"><B>@</B><I>number</I></A><DD>
+In this form, <I>number</I> is treated as an x-coordinate in the
+entry's window;  the character spanning that x-coordinate is used.
+For example,
+&#8220;<B>@0</B>&#8221;
+indicates the left-most character in the window.
+<P><DT><A NAME="M20"><B>end</B></A><DD>
+Indicates the character just after the last one in the entry's string.
+This is equivalent to specifying a numerical index equal to the length
+of the entry's string.
+<P><DT><A NAME="M21"><B>insert</B></A><DD>
+Indicates the character adjacent to and immediately following the
+insert cursor.
+<P><DT><A NAME="M22"><B>sel.first</B></A><DD>
+Indicates the first character in the selection.  It is an error to
+use this form if the selection is not in the entry window.
+<P><DT><A NAME="M23"><B>sel.last</B></A><DD>
+Indicates the character just after the last one in the selection.
+It is an error to use this form if the selection is not in the
+entry window.
+<P></DL>
+<P>
+Abbreviations may be used for any of the forms above, e.g.
+&#8220;<B>e</B>&#8221;
+or
+&#8220;<B>sel.f</B>&#8221;.
+In general, out-of-range indices are automatically rounded to the
+nearest legal value.
+<H3><A NAME="M24">WIDGET COMMAND</A></H3>
+The following commands are possible for entry widgets:
+<P>
+<DL class="widget command">
+<DT><A NAME="M25"><I>pathName </I><B>bbox </B><I>index</I></A><DD>
+Returns a list of four numbers describing the bounding box of the
+character given by <I>index</I>.
+The first two elements of the list give the x and y coordinates of
+the upper-left corner of the screen area covered by the character
+(in pixels relative to the widget) and the last two elements give
+the width and height of the character, in pixels.
+The bounding box may refer to a region outside the visible area
+of the window.
+<P><DT><A NAME="M26"><I>pathName </I><B>cget</B> <I>option</I></A><DD>
+Returns the current value of the specified <I>option</I>.
+See <I>ttk::widget(n)</I>.
+<P><DT><A NAME="M27"><I>pathName </I><B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?</A><DD>
+Modify or query widget options.
+See <I>ttk::widget(n)</I>.
+<P><DT><A NAME="M28"><I>pathName </I><B>delete </B><I>first </I>?<I>last</I>?</A><DD>
+Delete one or more elements of the entry.
+<I>First</I> is the index of the first character to delete, and
+<I>last</I> is the index of the character just after the last
+one to delete.
+If <I>last</I> is not specified it defaults to <I>first</I>+1,
+i.e. a single character is deleted.
+This command returns the empty string.
+<P><DT><A NAME="M29"><I>pathName </I><B>get</B></A><DD>
+Returns the entry's string.
+<P><DT><A NAME="M30"><I>pathName </I><B>icursor </B><I>index</I></A><DD>
+Arrange for the insert cursor to be displayed just before the character
+given by <I>index</I>.  Returns the empty string.
+<P><DT><A NAME="M31"><I>pathName </I><B>identify </B><I>x y</I></A><DD>
+Returns the name of the element at position <I>x</I>, <I>y</I>,
+or the empty string if the coordinates are outside the window.
+<P><DT><A NAME="M32"><I>pathName </I><B>index</B><I> index</I></A><DD>
+Returns the numerical index corresponding to <I>index</I>.
+<P><DT><A NAME="M33"><I>pathName </I><B>insert </B><I>index string</I></A><DD>
+Insert <I>string</I> just before the character
+indicated by <I>index</I>.  Returns the empty string.
+<P><DT><A NAME="M34"><I>pathName </I><B>instate </B><I>statespec</I> ?<I>script</I>?</A><DD>
+Test the widget state.
+See <I>ttk::widget(n)</I>.
+<P><DT><A NAME="M35"><I>pathName </I><B>selection </B><I>option arg</I></A><DD>
+This command is used to adjust the selection within an entry.  It
+has several forms, depending on <I>option</I>:
+<P>
+<DL class="widget command">
+<DT><A NAME="M36"><I>pathName </I><B>selection clear</B></A><DD>
+Clear the selection if it is currently in this widget.
+If the selection is not in this widget then the command has no effect.
+Returns the empty string.
+<P><DT><A NAME="M37"><I>pathName </I><B>selection present</B></A><DD>
+Returns 1 if there is are characters selected in the entry,
+0 if nothing is selected.
+<P><DT><A NAME="M38"><I>pathName </I><B>selection range </B><I>start</I> <I>end</I></A><DD>
+Sets the selection to include the characters starting with
+the one indexed by <I>start</I> and ending with the one just
+before <I>end</I>.
+If <I>end</I> refers to the same character as <I>start</I> or an
+earlier one, then the entry's selection is cleared.
+<P></DL>
+<P><DT><A NAME="M39"><I>pathName </I><B>state</B> ?<I>stateSpec</I>?</A><DD>
+Modify or query the widget state.
+See <I>ttk::widget(n)</I>.
+<P><DT><A NAME="M40"><I>pathName </I><B>validate</B></A><DD>
+Force revalidation, independent of the conditions specified 
+by the <B>-validate</B> option.
+Returns 0 if validation fails, 1 if it succeeds.
+Sets or clears the <B>invalid</B> state accordingly.
+<P><DT><A NAME="M41"><I>pathName </I><B>xview </B><I>args</I></A><DD>
+This command is used to query and change the horizontal position of the
+text in the widget's window.  It can take any of the following
+forms:
+<P>
+<DL class="widget command">
+<DT><A NAME="M42"><I>pathName </I><B>xview</B></A><DD>
+Returns a list containing two elements.
+Each element is a real fraction between 0 and 1; together they describe
+the horizontal span that is visible in the window.
+For example, if the first element is .2 and the second element is .6,
+20% of the entry's text is off-screen to the left, the middle 40% is visible
+in the window, and 40% of the text is off-screen to the right.
+These are the same values passed to scrollbars via the <B>-xscrollcommand</B>
+option.
+<P><DT><A NAME="M43"><I>pathName </I><B>xview</B> <I>index</I></A><DD>
+Adjusts the view in the window so that the character given by <I>index</I>
+is displayed at the left edge of the window.
+<P><DT><A NAME="M44"><I>pathName </I><B>xview moveto</B><I> fraction</I></A><DD>
+Adjusts the view in the window so that the character <I>fraction</I> of the
+way through the text appears at the left edge of the window.
+<I>Fraction</I> must be a fraction between 0 and 1.
+<P><DT><A NAME="M45"><I>pathName </I><B>xview scroll </B><I>number what</I></A><DD>
+This command shifts the view in the window left or right according to
+<I>number</I> and <I>what</I>.
+<I>Number</I> must be an integer.
+<I>What</I> must be either <B>units</B> or <B>pages</B>.
+If <I>what</I> is <B>units</B>, the view adjusts left or right by
+<I>number</I> average-width characters on the display;  if it is
+<B>pages</B> then the view adjusts by <I>number</I> screenfuls.
+If <I>number</I> is negative then characters farther to the left
+become visible;  if it is positive then characters farther to the right
+become visible.
+<P></DL>
+<P></DL>
+<H3><A NAME="M46">VALIDATION</A></H3>
+The <B>-validate</B>, <B>-validatecommand</B>, and <B>-invalidcommand</B>
+options are used to enable entry widget validation.
+<H4><A NAME="M47">VALIDATION MODES</A></H4>
+There are two main validation modes: <I>prevalidation</I>,
+in which the <B>-validatecommand</B> is evaluated prior to each edit
+and the return value is used to determine whether to accept 
+or reject the change;
+and <I>revalidation</I>, in which the <B>-validatecommand</B> is 
+evaluated to determine whether the current value is valid.
+<P>
+The <B>-validate</B> option determines when validation occurs;
+it may be set to any of the following values:
+<P>
+<DL class="validation modes">
+<DT><A NAME="M48"><B>none</B></A><DD>
+Default.  This means validation will only occur when 
+specifically requested by the <B>validate</B> widget command.
+<P><DT><A NAME="M49"><B>key</B></A><DD>
+The entry will be prevalidated prior to each edit
+(specifically, whenever the <B>insert</B> or <B>delete</B> 
+widget commands are called).
+If prevalidation fails, the edit is rejected.
+<P><DT><A NAME="M50"><B>focus</B></A><DD>
+The entry is revalidated when the entry receives or loses focus.
+<P><DT><A NAME="M51"><B>focusin</B></A><DD>
+The entry is revalidated when the entry receives focus.
+<P><DT><A NAME="M52"><B>focusout</B></A><DD>
+The entry is revalidated when the entry loses focus.
+<P><DT><A NAME="M53"><B>all</B></A><DD>
+Validation is performed for all above conditions.
+<P></DL>
+<P>
+The <B>-invalidcommand</B> is evaluated whenever
+the <B>-validatecommand</B> returns a false value.
+<P>
+The <B>-validatecommand</B> and <B>-invalidcommand</B>
+may modify the entry widget's value
+via the widget <B>insert</B> or <B>delete</B> commands,
+or by setting the linked <B>-textvariable</B>.
+If either does so during prevalidation,
+then the edit is rejected 
+regardless of the value returned by the <B>-validatecommand</B>.
+<P>
+If <B>-validatecommand</B> is empty (the default), 
+validation always succeeds.
+<H4><A NAME="M54">VALIDATION SCRIPT SUBSTITUTIONS</A></H4>
+It is possible to perform percent substitutions on the 
+<B>-validatecommand</B> and <B>invalidCommand</B>,
+just as in a <B><A HREF="../TkCmd/bind.htm">bind</A></B> script.
+The following substitutions are recognized:
+<P>
+<DL class="validation script substitutions">
+<DT><A NAME="M55"><B>%d</B></A><DD>
+Type of action: 1 for <B>insert</B> prevalidation, 
+0 for <B>delete</B> prevalidation,
+or -1 for revalidation.
+<P><DT><A NAME="M56"><B>%i</B></A><DD>
+Index of character string to be inserted/deleted, if any, otherwise -1.
+<P><DT><A NAME="M57"><B>%P</B></A><DD>
+In prevalidation, the new value of the entry if the edit is accepted.
+In revalidation, the current value of the entry.
+<P><DT><A NAME="M58"><B>%s</B></A><DD>
+The current value of entry prior to editing.
+<P><DT><A NAME="M59"><B>%S</B></A><DD>
+The text string being inserted/deleted, if any, {} otherwise.
+<P><DT><A NAME="M60"><B>%v</B></A><DD>
+The current value of the <B>-validate</B> option.
+<P><DT><A NAME="M61"><B>%V</B></A><DD>
+The validation condition that triggered the callback
+(<B>key</B>, <B>focusin</B>, <B>focusout</B>, or <B>forced</B>).
+<P><DT><A NAME="M62"><B>%W</B></A><DD>
+The name of the entry widget.
+<P></DL>
+<H4><A NAME="M63">DIFFERENCES FROM TK ENTRY WIDGET VALIDATION</A></H4>
+<DL class="differences from tk entry widget validation">
+<DT><DD>&#8226;&nbsp;
+The standard Tk entry widget automatically disables validation
+(by setting <B>-validate</B> to <B>none</B>)
+if the <B>-validatecommand</B> or <B>-invalidcommand</B> modifies 
+the entry's value.
+The Tk themed entry widget only disables validation if one
+of the validation scripts raises an error, or if <B>-validatecommand</B>
+does not return a valid boolean value.
+(Thus, it is not necessary to reenable validation after 
+modifying the entry value in a validation script).
+<P><DT><DD>&#8226;&nbsp;
+The standard entry widget invokes validation whenever the linked
+<B>-textvariable</B> is modified; the Tk themed entry widget does not.
+<P></DL>
+<H3><A NAME="M64">DEFAULT BINDINGS</A></H3>
+The entry widget's default bindings enable the following behavior.  
+In the descriptions below,
+&#8220;word&#8221;
+refers to a contiguous group of letters, digits, or
+&#8220;_&#8221;
+characters, or any single character other than these.
+<P>
+<DL class="default bindings">
+<DT><DD>&#8226;&nbsp;
+Clicking mouse button 1 positions the insert cursor
+just before the character underneath the mouse cursor, sets the
+input focus to this widget, and clears any selection in the widget.
+Dragging with mouse button 1 down strokes out a selection between
+the insert cursor and the character under the mouse.
+<P><DT><DD>&#8226;&nbsp;
+Double-clicking with mouse button 1 selects the word under the mouse
+and positions the insert cursor at the end of the word.
+Dragging after a double click strokes out a selection consisting
+of whole words.
+<P><DT><DD>&#8226;&nbsp;
+Triple-clicking with mouse button 1 selects all of the text in the
+entry and positions the insert cursor at the end of the line.
+<P><DT><DD>&#8226;&nbsp;
+The ends of the selection can be adjusted by dragging with mouse
+button 1 while the Shift key is down.
+If the button is double-clicked before dragging then the selection
+will be adjusted in units of whole words.
+<P><DT><DD>&#8226;&nbsp;
+Clicking mouse button 1 with the Control key down will position the
+insert cursor in the entry without affecting the selection.
+<P><DT><DD>&#8226;&nbsp;
+If any normal printing characters are typed in an entry, they are
+inserted at the point of the insert cursor.
+<P><DT><DD>&#8226;&nbsp;
+The view in the entry can be adjusted by dragging with mouse button 2.
+If mouse button 2 is clicked without moving the mouse, the selection
+is copied into the entry at the position of the mouse cursor.
+<P><DT><DD>&#8226;&nbsp;
+If the mouse is dragged out of the entry on the left or right sides
+while button 1 is pressed, the entry will automatically scroll to
+make more text visible (if there is more text off-screen on the side
+where the mouse left the window).
+<P><DT><DD>&#8226;&nbsp;
+The Left and Right keys move the insert cursor one character to the
+left or right;  they also clear any selection in the entry.
+If Left or Right is typed with the Shift key down, then the insertion
+cursor moves and the selection is extended to include the new character.
+Control-Left and Control-Right move the insert cursor by words, and
+Control-Shift-Left and Control-Shift-Right move the insert cursor
+by words and also extend the selection.
+Control-b and Control-f behave the same as Left and Right, respectively.
+<P><DT><DD>&#8226;&nbsp;
+The Home key and Control-a move the insert cursor to the
+beginning of the entry and clear any selection in the entry.
+Shift-Home moves the insert cursor to the beginning of the entry
+and extends the selection to that point.
+<P><DT><DD>&#8226;&nbsp;
+The End key and Control-e move the insert cursor to the
+end of the entry and clear any selection in the entry.
+Shift-End moves the cursor to the end and extends the selection
+to that point.
+<P><DT><DD>&#8226;&nbsp;
+Control-/ selects all the text in the entry.
+<P><DT><DD>&#8226;&nbsp;
+Control-&#92; clears any selection in the entry.
+<P><DT><DD>&#8226;&nbsp;
+The standard Tk &lt;&lt;Cut&gt;&gt;, &lt;&lt;Copy&gt;&gt;, &lt;&lt;Paste&gt;&gt;, and &lt;&lt;Clear&gt;&gt;
+virtual events operate on the selection in the expected manner.
+<P><DT><DD>&#8226;&nbsp;
+The Delete key deletes the selection, if there is one in the entry.
+If there is no selection, it deletes the character to the right of
+the insert cursor.
+<P><DT><DD>&#8226;&nbsp;
+The BackSpace key and Control-h delete the selection, if there is one
+in the entry.
+If there is no selection, it deletes the character to the left of
+the insert cursor.
+<P><DT><DD>&#8226;&nbsp;
+Control-d deletes the character to the right of the insert cursor.
+<P><DT><DD>&#8226;&nbsp;
+Control-k deletes all the characters to the right of the insertion
+cursor.
+<P></DL>
+<H3><A NAME="M65">WIDGET STATES</A></H3>
+In the <B>disabled</B> state, 
+the entry cannot be edited and the text cannot be selected.
+In the <B>readonly</B> state,
+no insert cursor is displayed and 
+the entry cannot be edited 
+(specifically: the <B>insert</B> and <B>delete</B> commands have no effect).
+The <B>disabled</B> state is the same as <B>readonly</B>, 
+and in addition text cannot be selected.
+<P>
+Note that changes to the linked <B>-textvariable</B> will 
+still be reflected in the entry, even if it is disabled or readonly.
+<P>
+Typically, the text is
+&#8220;grayed-out&#8221;
+in the <B>disabled</B> state,
+and a different background is used in the <B>readonly</B> state. 
+<P>
+The entry widget sets the <B>invalid</B> state if revalidation fails,
+and clears it whenever validation succeeds.
+<H3><A NAME="M66">SEE ALSO</A></H3>
+<B><A HREF="../TkCmd/ttk_widget.htm">ttk::widget</A></B>, <B><A HREF="../TkCmd/entry.htm">entry</A></B>
+<H3><A NAME="M67">KEYWORDS</A></H3>
+<A href="../Keywords/E.htm#entry">entry</A>, <A href="../Keywords/W.htm#widget">widget</A>, <A href="../Keywords/T.htm#text field">text field</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+Copyright &copy; 1998-2000 Scriptics Corporation.
+Copyright &copy; 2004 Joe English
+</div>
+</BODY></HTML>

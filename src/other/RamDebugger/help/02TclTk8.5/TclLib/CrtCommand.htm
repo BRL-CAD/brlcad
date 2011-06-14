@@ -1,0 +1,136 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>Tcl_CreateCommand manual page - Library Procedures</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclLib</a> <small>&gt;</small> CrtCommand</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+Tcl_CreateCommand - implement new commands in C
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>#include &lt;tcl.h&gt;</B><BR>
+Tcl_Command<BR>
+<B>Tcl_CreateCommand</B>(<I>interp, cmdName, proc, clientData, deleteProc</I>)<BR>
+<H3><A NAME="M4">ARGUMENTS</A></H3>
+<DL class="arguments">
+<DT><A HREF="../TclLib/Interp.htm">Tcl_Interp</A> <B>*interp</B> (in)<DD>
+Interpreter in which to create new command.
+<P><DT>const char <B>*cmdName</B> (in)<DD>
+Name of command.
+<P><DT>Tcl_CmdProc <B>*proc</B> (in)<DD>
+Implementation of new command:  <I>proc</I> will be called whenever
+<I>cmdName</I> is invoked as a command.
+<P><DT>ClientData <B>clientData</B> (in)<DD>
+Arbitrary one-word value to pass to <I>proc</I> and <I>deleteProc</I>.
+<P><DT>Tcl_CmdDeleteProc <B>*deleteProc</B> (in)<DD>
+Procedure to call before <I>cmdName</I> is deleted from the interpreter;
+allows for command-specific cleanup.  If NULL, then no procedure is
+called before the command is deleted.
+<P></DL>
+<H3><A NAME="M5">DESCRIPTION</A></H3>
+<B>Tcl_CreateCommand</B> defines a new command in <I>interp</I> and associates
+it with procedure <I>proc</I> such that whenever <I>cmdName</I> is
+invoked as a Tcl command (via a call to <B><A HREF="../TclLib/Eval.htm">Tcl_Eval</A></B>) the Tcl interpreter
+will call <I>proc</I> to process the command.
+It differs from <B><A HREF="../TclLib/CrtObjCmd.htm">Tcl_CreateObjCommand</A></B> in that a new string-based
+command is defined;
+that is, a command procedure is defined that takes an array of
+argument strings instead of objects.
+The object-based command procedures registered by <B><A HREF="../TclLib/CrtObjCmd.htm">Tcl_CreateObjCommand</A></B>
+can execute significantly faster than the string-based command procedures
+defined by <B>Tcl_CreateCommand</B>.
+This is because they take Tcl objects as arguments
+and those objects can retain an internal representation that
+can be manipulated more efficiently.
+Also, Tcl's interpreter now uses objects internally.
+In order to invoke a string-based command procedure
+registered by <B>Tcl_CreateCommand</B>,
+it must generate and fetch a string representation
+from each argument object before the call
+and create a new Tcl object to hold the string result returned by the
+string-based command procedure.
+New commands should be defined using <B><A HREF="../TclLib/CrtObjCmd.htm">Tcl_CreateObjCommand</A></B>.
+We support <B>Tcl_CreateCommand</B> for backwards compatibility.
+<P>
+The procedures <B><A HREF="../TclLib/CrtObjCmd.htm">Tcl_DeleteCommand</A></B>, <B><A HREF="../TclLib/CrtObjCmd.htm">Tcl_GetCommandInfo</A></B>,
+and <B><A HREF="../TclLib/CrtObjCmd.htm">Tcl_SetCommandInfo</A></B> are used in conjunction with
+<B>Tcl_CreateCommand</B>.
+<P>
+<B>Tcl_CreateCommand</B> will delete an existing command <I>cmdName</I>,
+if one is already associated with the interpreter.
+It returns a token that may be used to refer
+to the command in subsequent calls to <B><A HREF="../TclLib/CrtObjCmd.htm">Tcl_GetCommandName</A></B>.
+If <I>cmdName</I> contains any <B>::</B> namespace qualifiers,
+then the command is added to the specified namespace;
+otherwise the command is added to the global namespace.
+If <B>Tcl_CreateCommand</B> is called for an interpreter that is in
+the process of being deleted, then it does not create a new command
+and it returns NULL.
+<I>Proc</I> should have arguments and result that match the type
+<B>Tcl_CmdProc</B>:
+<PRE>typedef int Tcl_CmdProc(
+        ClientData <I>clientData</I>,
+        <A HREF="../TclLib/Interp.htm">Tcl_Interp</A> *<I>interp</I>,
+        int <I>argc</I>,
+        const char *<I>argv</I>[]);</PRE>
+When <I>proc</I> is invoked the <I>clientData</I> and <I>interp</I>
+parameters will be copies of the <I>clientData</I> and <I>interp</I>
+arguments given to <B>Tcl_CreateCommand</B>.
+Typically, <I>clientData</I> points to an application-specific
+data structure that describes what to do when the command procedure
+is invoked.  <I>Argc</I> and <I>argv</I> describe the arguments to
+the command, <I>argc</I> giving the number of arguments (including
+the command name) and <I>argv</I> giving the values of the arguments
+as strings.  The <I>argv</I> array will contain <I>argc</I>+1 values;
+the first <I>argc</I> values point to the argument strings, and the
+last value is NULL.  
+Note that the argument strings should not be modified as they may
+point to constant strings or may be shared with other parts of the
+interpreter.
+<P>
+Note that the argument strings are encoded in normalized UTF-8 since
+version 8.1 of Tcl.
+<P>
+<I>Proc</I> must return an integer code that is expected to be one of
+<B>TCL_OK</B>, <B>TCL_ERROR</B>, <B>TCL_RETURN</B>, <B>TCL_BREAK</B>, or
+<B>TCL_CONTINUE</B>.  See the Tcl overview man page
+for details on what these codes mean.  Most normal commands will only
+return <B>TCL_OK</B> or <B>TCL_ERROR</B>.  In addition, <I>proc</I> must set
+the interpreter result to point to a string value;
+in the case of a <B>TCL_OK</B> return code this gives the result
+of the command, and in the case of <B>TCL_ERROR</B> it gives an error message.
+The <B><A HREF="../TclLib/SetResult.htm">Tcl_SetResult</A></B> procedure provides an easy interface for setting
+the return value;  for complete details on how the interpreter result
+field is managed, see the <B><A HREF="../TclLib/Interp.htm">Tcl_Interp</A></B> man page.
+Before invoking a command procedure,
+<B><A HREF="../TclLib/Eval.htm">Tcl_Eval</A></B> sets the interpreter result to point to an empty string,
+so simple commands can return an empty result by doing nothing at all.
+<P>
+The contents of the <I>argv</I> array belong to Tcl and are not
+guaranteed to persist once <I>proc</I> returns:  <I>proc</I> should
+not modify them, nor should it set the interpreter result to point
+anywhere within the <I>argv</I> values.
+Call <B><A HREF="../TclLib/SetResult.htm">Tcl_SetResult</A></B> with status <B>TCL_VOLATILE</B> if you want
+to return something from the <I>argv</I> array.
+<P>
+<I>DeleteProc</I> will be invoked when (if) <I>cmdName</I> is deleted.
+This can occur through a call to <B><A HREF="../TclLib/CrtObjCmd.htm">Tcl_DeleteCommand</A></B> or <B><A HREF="../TclLib/CrtInterp.htm">Tcl_DeleteInterp</A></B>,
+or by replacing <I>cmdName</I> in another call to <B>Tcl_CreateCommand</B>.
+<I>DeleteProc</I> is invoked before the command is deleted, and gives the
+application an opportunity to release any structures associated
+with the command.  <I>DeleteProc</I> should have arguments and
+result that match the type <B>Tcl_CmdDeleteProc</B>:
+<PRE>typedef void Tcl_CmdDeleteProc(
+        ClientData <I>clientData</I>);</PRE>
+The <I>clientData</I> argument will be the same as the <I>clientData</I>
+argument passed to <B>Tcl_CreateCommand</B>.
+
+<H3><A NAME="M6">SEE ALSO</A></H3>
+<B><A HREF="../TclLib/CrtObjCmd.htm">Tcl_CreateObjCommand</A></B>, <B><A HREF="../TclLib/CrtObjCmd.htm">Tcl_DeleteCommand</A></B>, <B><A HREF="../TclLib/CrtObjCmd.htm">Tcl_GetCommandInfo</A></B>, <B><A HREF="../TclLib/CrtObjCmd.htm">Tcl_SetCommandInfo</A></B>, <B><A HREF="../TclLib/CrtObjCmd.htm">Tcl_GetCommandName</A></B>, <B><A HREF="../TclLib/SetResult.htm">Tcl_SetObjResult</A></B>
+<H3><A NAME="M7">KEYWORDS</A></H3>
+<A href="../Keywords/B.htm#bind">bind</A>, <A href="../Keywords/C.htm#command">command</A>, <A href="../Keywords/C.htm#create">create</A>, <A href="../Keywords/D.htm#delete">delete</A>, <A href="../Keywords/I.htm#interpreter">interpreter</A>, <A href="../Keywords/N.htm#namespace">namespace</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1989-1993 The Regents of the University of California.
+Copyright &copy; 1994-1997 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

@@ -1,0 +1,662 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>Notifier manual page - Tcl Library Procedures</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclLib</a> <small>&gt;</small> Notifier</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="Notifier.htm#M2" NAME="L445">NAME</A>
+<DL><DD>Tcl_CreateEventSource, Tcl_DeleteEventSource, Tcl_SetMaxBlockTime, Tcl_QueueEvent, Tcl_ThreadQueueEvent, Tcl_ThreadAlert, Tcl_GetCurrentThread, Tcl_DeleteEvents, Tcl_InitNotifier, Tcl_FinalizeNotifier, Tcl_WaitForEvent, Tcl_AlertNotifier, Tcl_SetTimer, Tcl_ServiceAll, Tcl_ServiceEvent, Tcl_GetServiceMode, Tcl_SetServiceMode - the event queue and notifier interfaces</DD></DL>
+<DD><A HREF="Notifier.htm#M3" NAME="L446">SYNOPSIS</A>
+<DL>
+<DD><B>#include &lt;tcl.h&gt;</B>
+<DD>void
+<DD><B>Tcl_CreateEventSource</B>(<I>setupProc, checkProc, clientData</I>)
+<DD>void
+<DD><B>Tcl_DeleteEventSource</B>(<I>setupProc, checkProc, clientData</I>)
+<DD>void
+<DD><B>Tcl_SetMaxBlockTime</B>(<I>timePtr</I>)
+<DD>void
+<DD><B>Tcl_QueueEvent</B>(<I>evPtr, position</I>)
+<DD>void
+<DD><B>Tcl_ThreadQueueEvent</B>(<I>threadId, evPtr, position</I>)
+<DD>void
+<DD><B>Tcl_ThreadAlert</B>(<I>threadId</I>)
+<DD>Tcl_ThreadId
+<DD><B>Tcl_GetCurrentThread</B>()
+<DD>void
+<DD><B>Tcl_DeleteEvents</B>(<I>deleteProc, clientData</I>)
+<DD>ClientData
+<DD><B>Tcl_InitNotifier</B>()
+<DD>void
+<DD><B>Tcl_FinalizeNotifier</B>(<I>clientData</I>)
+<DD>int
+<DD><B>Tcl_WaitForEvent</B>(<I>timePtr</I>)
+<DD>void
+<DD><B>Tcl_AlertNotifier</B>(<I>clientData</I>)
+<DD>void
+<DD><B>Tcl_SetTimer</B>(<I>timePtr</I>)
+<DD>int
+<DD><B>Tcl_ServiceAll</B>()
+<DD>int
+<DD><B>Tcl_ServiceEvent</B>(<I>flags</I>)
+<DD>int
+<DD><B>Tcl_GetServiceMode</B>()
+<DD>int
+<DD><B>Tcl_SetServiceMode</B>(<I>mode</I>)
+<DD>void
+<DD><B>Tcl_ServiceModeHook</B>(<I>mode</I>)
+<DD>void
+<DD><B>Tcl_SetNotifier</B>(<I>notifierProcPtr</I>)
+</DL>
+<DD><A HREF="Notifier.htm#M4" NAME="L447">ARGUMENTS</A>
+<DL class="arguments">
+</DL>
+<DD><A HREF="Notifier.htm#M5" NAME="L448">INTRODUCTION</A>
+<DL class="introduction">
+</DL>
+<DD><A HREF="Notifier.htm#M6" NAME="L449">NOTIFIER BASICS</A>
+<DL class="notifier basics">
+</DL>
+<DD><A HREF="Notifier.htm#M7" NAME="L450">CREATING A NEW EVENT SOURCE</A>
+<DL class="creating a new event source">
+<DD><A HREF="Notifier.htm#M8" NAME="L451"><B>TCL_QUEUE_TAIL</B></A>
+<DD><A HREF="Notifier.htm#M9" NAME="L452"><B>TCL_QUEUE_HEAD</B></A>
+<DD><A HREF="Notifier.htm#M10" NAME="L453"><B>TCL_QUEUE_MARK</B></A>
+</DL>
+<DD><A HREF="Notifier.htm#M11" NAME="L454">CREATING A NEW NOTIFIER</A>
+<DD><A HREF="Notifier.htm#M12" NAME="L455">REPLACING THE NOTIFIER</A>
+<DD><A HREF="Notifier.htm#M13" NAME="L456">EXTERNAL EVENT LOOPS</A>
+<DD><A HREF="Notifier.htm#M14" NAME="L457">SEE ALSO</A>
+<DD><A HREF="Notifier.htm#M15" NAME="L458">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+Tcl_CreateEventSource, Tcl_DeleteEventSource, Tcl_SetMaxBlockTime, Tcl_QueueEvent, Tcl_ThreadQueueEvent, Tcl_ThreadAlert, Tcl_GetCurrentThread, Tcl_DeleteEvents, Tcl_InitNotifier, Tcl_FinalizeNotifier, Tcl_WaitForEvent, Tcl_AlertNotifier, Tcl_SetTimer, Tcl_ServiceAll, Tcl_ServiceEvent, Tcl_GetServiceMode, Tcl_SetServiceMode - the event queue and notifier interfaces
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>#include &lt;tcl.h&gt;</B><BR>
+void<BR>
+<B>Tcl_CreateEventSource</B>(<I>setupProc, checkProc, clientData</I>)<BR>
+void<BR>
+<B>Tcl_DeleteEventSource</B>(<I>setupProc, checkProc, clientData</I>)<BR>
+void<BR>
+<B>Tcl_SetMaxBlockTime</B>(<I>timePtr</I>)<BR>
+void<BR>
+<B>Tcl_QueueEvent</B>(<I>evPtr, position</I>)<BR>
+void<BR>
+<B>Tcl_ThreadQueueEvent</B>(<I>threadId, evPtr, position</I>)<BR>
+void<BR>
+<B>Tcl_ThreadAlert</B>(<I>threadId</I>)<BR>
+Tcl_ThreadId<BR>
+<B>Tcl_GetCurrentThread</B>()<BR>
+void<BR>
+<B>Tcl_DeleteEvents</B>(<I>deleteProc, clientData</I>)<BR>
+ClientData<BR>
+<B>Tcl_InitNotifier</B>()<BR>
+void<BR>
+<B>Tcl_FinalizeNotifier</B>(<I>clientData</I>)<BR>
+int<BR>
+<B>Tcl_WaitForEvent</B>(<I>timePtr</I>)<BR>
+void<BR>
+<B>Tcl_AlertNotifier</B>(<I>clientData</I>)<BR>
+void<BR>
+<B>Tcl_SetTimer</B>(<I>timePtr</I>)<BR>
+int<BR>
+<B>Tcl_ServiceAll</B>()<BR>
+int<BR>
+<B>Tcl_ServiceEvent</B>(<I>flags</I>)<BR>
+int<BR>
+<B>Tcl_GetServiceMode</B>()<BR>
+int<BR>
+<B>Tcl_SetServiceMode</B>(<I>mode</I>)<BR>
+void<BR>
+<B>Tcl_ServiceModeHook</B>(<I>mode</I>)<BR>
+void<BR>
+<B>Tcl_SetNotifier</B>(<I>notifierProcPtr</I>)<BR>
+<H3><A NAME="M4">ARGUMENTS</A></H3>
+<DL class="arguments">
+<DT>Tcl_EventSetupProc <B>*setupProc</B> (in)<DD>
+Procedure to invoke to prepare for event wait in <B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B>.
+<P><DT>Tcl_EventCheckProc <B>*checkProc</B> (in)<DD>
+Procedure for <B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B> to invoke after waiting for
+events.  Checks to see if any events have occurred and, if so,
+queues them.
+<P><DT>ClientData <B>clientData</B> (in)<DD>
+Arbitrary one-word value to pass to <I>setupProc</I>, <I>checkProc</I>, or
+<I>deleteProc</I>.
+<P><DT>Tcl_Time <B>*timePtr</B> (in)<DD>
+Indicates the maximum amount of time to wait for an event.  This
+is specified as an interval (how long to wait), not an absolute
+time (when to wakeup).  If the pointer passed to <B>Tcl_WaitForEvent</B>
+is NULL, it means there is no maximum wait time:  wait forever if
+necessary.
+<P><DT>Tcl_Event <B>*evPtr</B> (in)<DD>
+An event to add to the event queue.  The storage for the event must
+have been allocated by the caller using <B><A HREF="../TclLib/Alloc.htm">Tcl_Alloc</A></B> or <B><A HREF="../TclLib/Alloc.htm">ckalloc</A></B>.
+<P><DT>Tcl_QueuePosition <B>position</B> (in)<DD>
+Where to add the new event in the queue:  <B>TCL_QUEUE_TAIL</B>,
+<B>TCL_QUEUE_HEAD</B>, or <B>TCL_QUEUE_MARK</B>.
+<P><DT>Tcl_ThreadId <B>threadId</B> (in)<DD>
+A unique identifier for a thread.
+<P><DT>Tcl_EventDeleteProc <B>*deleteProc</B> (in)<DD>
+Procedure to invoke for each queued event in <B>Tcl_DeleteEvents</B>.
+<P><DT>int <B>flags</B> (in)<DD>
+What types of events to service.  These flags are the same as those
+passed to <B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B>.
+<P><DT>int <B>mode</B> (in)<DD>
+Indicates whether events should be serviced by <B>Tcl_ServiceAll</B>.
+Must be one of <B>TCL_SERVICE_NONE</B> or <B>TCL_SERVICE_ALL</B>.
+<P><DT>Tcl_NotifierProcs* <B>notifierProcPtr</B> (in)<DD>
+Structure of function pointers describing notifier procedures that are
+to replace the ones installed in the executable.  See
+<B>REPLACING THE NOTIFIER</B> for details.
+<P></DL>
+<H3><A NAME="M5">INTRODUCTION</A></H3>
+The interfaces described here are used to customize the Tcl event
+loop.  The two most common customizations are to add new sources of
+events and to merge Tcl's event loop with some other event loop, such
+as one provided by an application in which Tcl is embedded.  Each of
+these tasks is described in a separate section below.
+<P>
+The procedures in this manual entry are the building blocks out of which
+the Tcl event notifier is constructed.  The event notifier is the lowest
+layer in the Tcl event mechanism.  It consists of three things:
+<P>
+<DL class="introduction">
+<DT>[1]<DD>
+Event sources: these represent the ways in which events can be
+generated.  For example, there is a timer event source that implements
+the <B><A HREF="../TclLib/CrtTimerHdlr.htm">Tcl_CreateTimerHandler</A></B> procedure and the <B><A HREF="../TclCmd/after.htm">after</A></B>
+command, and there is a file event source that implements the
+<B><A HREF="../TclLib/CrtFileHdlr.htm">Tcl_CreateFileHandler</A></B> procedure on Unix systems.  An event
+source must work with the notifier to detect events at the right
+times, record them on the event queue, and eventually notify
+higher-level software that they have occurred.  The procedures
+<B>Tcl_CreateEventSource</B>, <B>Tcl_DeleteEventSource</B>,
+and <B>Tcl_SetMaxBlockTime</B>, <B>Tcl_QueueEvent</B>, and
+<B>Tcl_DeleteEvents</B> are used primarily by event sources.
+<P><DT>[2]<DD>
+The event queue: for non-threaded applications,
+there is a single queue for the whole application,
+containing events that have been detected but not yet serviced.  Event
+sources place events onto the queue so that they may be processed in
+order at appropriate times during the event loop. The event queue
+guarantees a fair discipline of event handling, so that no event
+source can starve the others.  It also allows events to be saved for
+servicing at a future time.  Threaded applications work in a
+similar manner, except that there is a separate event queue for
+each thread containing a Tcl interpreter.
+<B>Tcl_QueueEvent</B> is used (primarily
+by event sources) to add events to the event queue and 
+<B>Tcl_DeleteEvents</B> is used to remove events from the queue without
+processing them.  In a threaded application, <B>Tcl_QueueEvent</B> adds
+an event to the current thread's queue, and <B>Tcl_ThreadQueueEvent</B>
+adds an event to a queue in a specific thread.
+<P><DT>[3]<DD>
+The event loop: in order to detect and process events, the application
+enters a loop that waits for events to occur, places them on the event
+queue, and then processes them.  Most applications will do this by
+calling the procedure <B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B>, which is described in a
+separate manual entry.
+<P></DL>
+<P>
+Most Tcl applications need not worry about any of the internals of
+the Tcl notifier.  However, the notifier now has enough flexibility
+to be retargeted either for a new platform or to use an external event
+loop (such as the Motif event loop, when Tcl is embedded in a Motif
+application).  The procedures <B>Tcl_WaitForEvent</B> and
+<B>Tcl_SetTimer</B> are normally implemented by Tcl, but may be
+replaced with new versions to retarget the notifier (the
+<B>Tcl_InitNotifier</B>, <B>Tcl_AlertNotifier</B>,
+<B>Tcl_FinalizeNotifier</B>, <B><A HREF="../TclLib/Sleep.htm">Tcl_Sleep</A></B>,
+<B><A HREF="../TclLib/CrtFileHdlr.htm">Tcl_CreateFileHandler</A></B>, and <B><A HREF="../TclLib/CrtFileHdlr.htm">Tcl_DeleteFileHandler</A></B> must
+also be replaced; see CREATING A NEW NOTIFIER below for details).
+The procedures <B>Tcl_ServiceAll</B>, <B>Tcl_ServiceEvent</B>,
+<B>Tcl_GetServiceMode</B>, and <B>Tcl_SetServiceMode</B> are provided
+to help connect Tcl's event loop to an external event loop such as
+Motif's.
+<H3><A NAME="M6">NOTIFIER BASICS</A></H3>
+The easiest way to understand how the notifier works is to consider
+what happens when <B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B> is called.
+<B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B> is passed a <I>flags</I> argument that indicates
+what sort of events it is OK to process and also whether or not to
+block if no events are ready.  <B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B> does the following
+things:
+<P>
+<DL class="notifier basics">
+<DT>[1]<DD>
+Check the event queue to see if it contains any events that can
+be serviced.  If so, service the first possible event, remove it
+from the queue, and return.  It does this by calling
+<B>Tcl_ServiceEvent</B> and passing in the <I>flags</I> argument.
+<P><DT>[2]<DD>
+Prepare to block for an event.  To do this, <B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B>
+invokes a <I>setup procedure</I> in each event source.
+The event source will perform event-source specific initialization and
+possibly call <B>Tcl_SetMaxBlockTime</B> to limit how long
+<B>Tcl_WaitForEvent</B> will block if no new events occur.
+<P><DT>[3]<DD>
+Call <B>Tcl_WaitForEvent</B>.  This procedure is implemented differently
+on different platforms;  it waits for an event to occur, based on the
+information provided by the event sources.
+It may cause the application to block if <I>timePtr</I> specifies
+an interval other than 0.
+<B>Tcl_WaitForEvent</B> returns when something has happened,
+such as a file becoming readable or the interval given by <I>timePtr</I>
+expiring.  If there are no events for <B>Tcl_WaitForEvent</B> to
+wait for, so that it would block forever, then it returns immediately
+and <B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B> returns 0.
+<P><DT>[4]<DD>
+Call a <I>check procedure</I> in each event source.  The check
+procedure determines whether any events of interest to this source
+occurred.  If so, the events are added to the event queue.
+<P><DT>[5]<DD>
+Check the event queue to see if it contains any events that can
+be serviced.  If so, service the first possible event, remove it
+from the queue, and return.
+<P><DT>[6]<DD>
+See if there are idle callbacks pending. If so, invoke all of them and
+return.
+<P><DT>[7]<DD>
+Either return 0 to indicate that no events were ready, or go back to
+step [2] if blocking was requested by the caller.
+
+<P></DL>
+<H3><A NAME="M7">CREATING A NEW EVENT SOURCE</A></H3>
+An event source consists of three procedures invoked by the notifier,
+plus additional C procedures that are invoked by higher-level code
+to arrange for event-driven callbacks.  The three procedures called
+by the notifier consist of the setup and check procedures described
+above, plus an additional procedure that is invoked when an event
+is removed from the event queue for servicing.
+<P>
+The procedure <B>Tcl_CreateEventSource</B> creates a new event source.
+Its arguments specify the setup procedure and check procedure for
+the event source.
+<I>SetupProc</I> should match the following prototype:
+<PRE>typedef void Tcl_EventSetupProc(
+        ClientData <I>clientData</I>,
+        int <I>flags</I>);</PRE>
+The <I>clientData</I> argument will be the same as the <I>clientData</I>
+argument to <B>Tcl_CreateEventSource</B>;  it is typically used to
+point to private information managed by the event source.
+The <I>flags</I> argument will be the same as the <I>flags</I>
+argument passed to <B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B> except that it will never
+be 0 (<B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B> replaces 0 with <B>TCL_ALL_EVENTS</B>).
+<I>Flags</I> indicates what kinds of events should be considered;
+if the bit corresponding to this event source is not set, the event
+source should return immediately without doing anything.  For
+example, the file event source checks for the <B>TCL_FILE_EVENTS</B>
+bit.
+<P>
+<I>SetupProc</I>'s job is to make sure that the application wakes up
+when events of the desired type occur.  This is typically done in a
+platform-dependent fashion.  For example, under Unix an event source
+might call <B><A HREF="../TclLib/CrtFileHdlr.htm">Tcl_CreateFileHandler</A></B>; under Windows it might
+request notification with a Windows event.  For timer-driven event
+sources such as timer events or any polled event, the event source
+can call <B>Tcl_SetMaxBlockTime</B> to force the application to wake
+up after a specified time even if no events have occurred.
+If no event source calls <B>Tcl_SetMaxBlockTime</B>
+then <B>Tcl_WaitForEvent</B> will wait as long as necessary for an
+event to occur; otherwise, it will only wait as long as the shortest
+interval passed to <B>Tcl_SetMaxBlockTime</B> by one of the event
+sources.  If an event source knows that it already has events ready to
+report, it can request a zero maximum block time.  For example, the
+setup procedure for the X event source looks to see if there are
+events already queued.  If there are, it calls
+<B>Tcl_SetMaxBlockTime</B> with a 0 block time so that
+<B>Tcl_WaitForEvent</B> does not block if there is no new data on the X
+connection.
+The <I>timePtr</I> argument to <B>Tcl_WaitForEvent</B> points to
+a structure that describes a time interval in seconds and
+microseconds:
+<PRE>typedef struct Tcl_Time {
+        long <I>sec</I>;
+        long <I>usec</I>;
+} Tcl_Time;</PRE>
+The <I>usec</I> field should be less than 1000000.
+<P>
+Information provided to <B>Tcl_SetMaxBlockTime</B>
+is only used for the next call to <B>Tcl_WaitForEvent</B>; it is
+discarded after <B>Tcl_WaitForEvent</B> returns.
+The next time an event wait is done each of the event sources'
+setup procedures will be called again, and they can specify new
+information for that event wait.
+<P>
+If the application uses an external event loop rather than
+<B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B>, the event sources may need to call
+<B>Tcl_SetMaxBlockTime</B> at other times.  For example, if a new event
+handler is registered that needs to poll for events, the event source
+may call <B>Tcl_SetMaxBlockTime</B> to set the block time to zero to
+force the external event loop to call Tcl.  In this case,
+<B>Tcl_SetMaxBlockTime</B> invokes <B>Tcl_SetTimer</B> with the shortest
+interval seen since the last call to <B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B> or
+<B>Tcl_ServiceAll</B>.
+<P>
+In addition to the generic procedure <B>Tcl_SetMaxBlockTime</B>, other
+platform-specific procedures may also be available for
+<I>setupProc</I>, if there is additional information needed by
+<B>Tcl_WaitForEvent</B> on that platform.  For example, on Unix systems
+the <B><A HREF="../TclLib/CrtFileHdlr.htm">Tcl_CreateFileHandler</A></B> interface can be used to wait for file events.
+<P>
+The second procedure provided by each event source is its check
+procedure, indicated by the <I>checkProc</I> argument to
+<B>Tcl_CreateEventSource</B>.  <I>CheckProc</I> must match the
+following prototype:
+<PRE>typedef void Tcl_EventCheckProc(
+        ClientData <I>clientData</I>,
+        int <I>flags</I>);</PRE>
+The arguments to this procedure are the same as those for <I>setupProc</I>.
+<B>CheckProc</B> is invoked by <B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B> after it has waited
+for events.  Presumably at least one event source is now prepared to
+queue an event.  <B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B> calls each of the event sources
+in turn, so they all have a chance to queue any events that are ready.
+The check procedure does two things.  First, it must see if any events
+have triggered.  Different event sources do this in different ways.
+<P>
+If an event source's check procedure detects an interesting event, it
+must add the event to Tcl's event queue.  To do this, the event source
+calls <B>Tcl_QueueEvent</B>.  The <I>evPtr</I> argument is a pointer to
+a dynamically allocated structure containing the event (see below for
+more information on memory management issues).  Each event source can
+define its own event structure with whatever information is relevant
+to that event source.  However, the first element of the structure
+must be a structure of type <B>Tcl_Event</B>, and the address of this
+structure is used when communicating between the event source and the
+rest of the notifier.  A <B>Tcl_Event</B> has the following definition:
+<PRE>typedef struct {
+    Tcl_EventProc *<I>proc</I>;
+    struct Tcl_Event *<I>nextPtr</I>;
+} Tcl_Event;</PRE>
+The event source must fill in the <I>proc</I> field of
+the event before calling <B>Tcl_QueueEvent</B>.
+The <I>nextPtr</I> is used to link together the events in the queue
+and should not be modified by the event source.
+<P>
+An event may be added to the queue at any of three positions, depending
+on the <I>position</I> argument to <B>Tcl_QueueEvent</B>:
+<P>
+<DL class="creating a new event source">
+<DT><A NAME="M8"><B>TCL_QUEUE_TAIL</B></A><DD>
+Add the event at the back of the queue, so that all other pending
+events will be serviced first.  This is almost always the right
+place for new events.
+<P><DT><A NAME="M9"><B>TCL_QUEUE_HEAD</B></A><DD>
+Add the event at the front of the queue, so that it will be serviced
+before all other queued events.
+<P><DT><A NAME="M10"><B>TCL_QUEUE_MARK</B></A><DD>
+Add the event at the front of the queue, unless there are other
+events at the front whose position is <B>TCL_QUEUE_MARK</B>;  if so,
+add the new event just after all other <B>TCL_QUEUE_MARK</B> events.
+This value of <I>position</I> is used to insert an ordered sequence of
+events at the front of the queue, such as a series of
+Enter and Leave events synthesized during a grab or ungrab operation
+in Tk.
+<P></DL>
+<P>
+When it is time to handle an event from the queue (steps 1 and 4
+above) <B>Tcl_ServiceEvent</B> will invoke the <I>proc</I> specified
+in the first queued <B>Tcl_Event</B> structure.
+<I>Proc</I> must match the following prototype:
+<PRE>typedef int Tcl_EventProc(
+        Tcl_Event *<I>evPtr</I>,
+        int <I>flags</I>);</PRE>
+The first argument to <I>proc</I> is a pointer to the event, which will
+be the same as the first argument to the <B>Tcl_QueueEvent</B> call that
+added the event to the queue.
+The second argument to <I>proc</I> is the <I>flags</I> argument for the
+current call to <B>Tcl_ServiceEvent</B>;  this is used by the event source
+to return immediately if its events are not relevant.
+<P>
+It is up to <I>proc</I> to handle the event, typically by invoking
+one or more Tcl commands or C-level callbacks.
+Once the event source has finished handling the event it returns 1
+to indicate that the event can be removed from the queue.
+If for some reason the event source decides that the event cannot
+be handled at this time, it may return 0 to indicate that the event
+should be deferred for processing later;  in this case <B>Tcl_ServiceEvent</B>
+will go on to the next event in the queue and attempt to service it.
+There are several reasons why an event source might defer an event.
+One possibility is that events of this type are excluded by the
+<I>flags</I> argument.
+For example, the file event source will always return 0 if the
+<B>TCL_FILE_EVENTS</B> bit is not set in <I>flags</I>.
+Another example of deferring events happens in Tk if
+<B><A HREF="../TkLib/RestrictEv.htm">Tk_RestrictEvents</A></B> has been invoked to defer certain kinds
+of window events.
+<P>
+When <I>proc</I> returns 1, <B>Tcl_ServiceEvent</B> will remove the
+event from the event queue and free its storage.
+Note that the storage for an event must be allocated by
+the event source (using <B><A HREF="../TclLib/Alloc.htm">Tcl_Alloc</A></B> or the Tcl macro <B><A HREF="../TclLib/Alloc.htm">ckalloc</A></B>)
+before calling <B>Tcl_QueueEvent</B>, but it
+will be freed by <B>Tcl_ServiceEvent</B>, not by the event source.
+<P>
+Threaded applications work in a
+similar manner, except that there is a separate event queue for
+each thread containing a Tcl interpreter.
+Calling <B>Tcl_QueueEvent</B> in a multithreaded application adds
+an event to the current thread's queue.
+To add an event to another thread's queue, use <B>Tcl_ThreadQueueEvent</B>.
+<B>Tcl_ThreadQueueEvent</B> accepts as an argument a Tcl_ThreadId argument,
+which uniquely identifies a thread in a Tcl application.  To obtain the
+Tcl_ThreadID for the current thread, use the <B>Tcl_GetCurrentThread</B>
+procedure.  (A thread would then need to pass this identifier to other
+threads for those threads to be able to add events to its queue.)
+After adding an event to another thread's queue, you then typically
+need to call <B>Tcl_ThreadAlert</B> to
+&#8220;wake up&#8221;
+that thread's notifier to alert it to the new event.
+<P>
+<B>Tcl_DeleteEvents</B> can be used to explicitly remove one or more
+events from the event queue.  <B>Tcl_DeleteEvents</B> calls <I>proc</I>
+for each event in the queue, deleting those for with the procedure
+returns 1.  Events for which the procedure returns 0 are left in the
+queue.  <I>Proc</I> should match the following prototype:
+<PRE>typedef int Tcl_EventDeleteProc(
+        Tcl_Event *<I>evPtr</I>,
+        ClientData <I>clientData</I>);</PRE>
+The <I>clientData</I> argument will be the same as the <I>clientData</I>
+argument to <B>Tcl_DeleteEvents</B>; it is typically used to point to
+private information managed by the event source.  The <I>evPtr</I> will
+point to the next event in the queue.
+<P>
+<B>Tcl_DeleteEventSource</B> deletes an event source.  The <I>setupProc</I>,
+<I>checkProc</I>, and <I>clientData</I> arguments must exactly match those
+provided to the <B>Tcl_CreateEventSource</B> for the event source to be deleted.
+If no such source exists, <B>Tcl_DeleteEventSource</B> has no effect.
+
+<H3><A NAME="M11">CREATING A NEW NOTIFIER</A></H3>
+The notifier consists of all the procedures described in this manual
+entry, plus <B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B> and <B><A HREF="../TclLib/Sleep.htm">Tcl_Sleep</A></B>, which are
+available on all platforms, and <B><A HREF="../TclLib/CrtFileHdlr.htm">Tcl_CreateFileHandler</A></B> and
+<B><A HREF="../TclLib/CrtFileHdlr.htm">Tcl_DeleteFileHandler</A></B>, which are Unix-specific.  Most of these
+procedures are generic, in that they are the same for all notifiers.
+However, none of the procedures are notifier-dependent:
+<B>Tcl_InitNotifier</B>, <B>Tcl_AlertNotifier</B>,
+<B>Tcl_FinalizeNotifier</B>, <B>Tcl_SetTimer</B>, <B><A HREF="../TclLib/Sleep.htm">Tcl_Sleep</A></B>,
+<B>Tcl_WaitForEvent</B>, <B><A HREF="../TclLib/CrtFileHdlr.htm">Tcl_CreateFileHandler</A></B>,
+<B><A HREF="../TclLib/CrtFileHdlr.htm">Tcl_DeleteFileHandler</A></B> and <B>Tcl_ServiceModeHook</B>.  To support a
+new platform or to integrate Tcl with an application-specific event loop,
+you must write new versions of these procedures.
+<P>
+<B>Tcl_InitNotifier</B> initializes the notifier state and returns
+a handle to the notifier state.  Tcl calls this
+procedure when initializing a Tcl interpreter.  Similarly,
+<B>Tcl_FinalizeNotifier</B> shuts down the notifier, and is
+called by <B><A HREF="../TclLib/Exit.htm">Tcl_Finalize</A></B> when shutting down a Tcl interpreter.
+<P>
+<B>Tcl_WaitForEvent</B> is the lowest-level procedure in the notifier;
+it is responsible for waiting for an
+&#8220;interesting&#8221;
+event to occur or
+for a given time to elapse.  Before <B>Tcl_WaitForEvent</B> is invoked,
+each of the event sources' setup procedure will have been invoked.
+The <I>timePtr</I> argument to
+<B>Tcl_WaitForEvent</B> gives the maximum time to block for an event,
+based on calls to <B>Tcl_SetMaxBlockTime</B> made by setup procedures
+and on other information (such as the <B>TCL_DONT_WAIT</B> bit in
+<I>flags</I>).
+<P>
+Ideally, <B>Tcl_WaitForEvent</B> should only wait for an event
+to occur; it should not actually process the event in any way.
+Later on, the
+event sources will process the raw events and create Tcl_Events on
+the event queue in their <I>checkProc</I> procedures.
+However, on some platforms (such as Windows) this is not possible;
+events may be processed in <B>Tcl_WaitForEvent</B>, including queuing
+Tcl_Events and more (for example, callbacks for native widgets may be
+invoked).  The return value from <B>Tcl_WaitForEvent</B> must be either
+0, 1, or -1.  On platforms such as Windows where events get processed in
+<B>Tcl_WaitForEvent</B>, a return value of 1 means that there may be more
+events still pending that have not been processed.  This is a sign to the
+caller that it must call <B>Tcl_WaitForEvent</B> again if it wants all
+pending events to be processed. A 0 return value means that calling
+<B>Tcl_WaitForEvent</B> again will not have any effect: either this is a
+platform where <B>Tcl_WaitForEvent</B> only waits without doing any event
+processing, or <B>Tcl_WaitForEvent</B> knows for sure that there are no
+additional events to process (e.g. it returned because the time
+elapsed).  Finally, a return value of -1 means that the event loop is
+no longer operational and the application should probably unwind and
+terminate.  Under Windows this happens when a WM_QUIT message is received;
+under Unix it happens when <B>Tcl_WaitForEvent</B> would have waited
+forever because there were no active event sources and the timeout was
+infinite.
+<P>
+<B>Tcl_AlertNotifier</B> is used in multithreaded applications to allow
+any thread to
+&#8220;wake up&#8221;
+the notifier to alert it to new events on its
+queue.  <B>Tcl_AlertNotifier</B> requires as an argument the notifier
+handle returned by <B>Tcl_InitNotifier</B>.
+<P>
+If the notifier will be used with an external event loop, then it must
+also support the <B>Tcl_SetTimer</B> interface.  <B>Tcl_SetTimer</B> is
+invoked by <B>Tcl_SetMaxBlockTime</B> whenever the maximum blocking
+time has been reduced.  <B>Tcl_SetTimer</B> should arrange for the
+external event loop to invoke <B>Tcl_ServiceAll</B> after the specified
+interval even if no events have occurred.  This interface is needed
+because <B>Tcl_WaitForEvent</B> is not invoked when there is an external
+event loop.  If the
+notifier will only be used from <B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B>, then
+<B>Tcl_SetTimer</B> need not do anything.
+<P>
+<B>Tcl_ServiceModeHook</B> is called by the platform-independent portion
+of the notifier when client code makes a call to
+<B>Tcl_SetServiceMode</B>. This hook is provided to support operating
+systems that require special event handling when the application is in
+a modal loop (the Windows notifier, for instance, uses this hook to
+create a communication window).
+<P>
+On Unix systems, the file event source also needs support from the
+notifier.  The file event source consists of the
+<B><A HREF="../TclLib/CrtFileHdlr.htm">Tcl_CreateFileHandler</A></B> and <B><A HREF="../TclLib/CrtFileHdlr.htm">Tcl_DeleteFileHandler</A></B>
+procedures, which are described in the <B><A HREF="../TclLib/CrtFileHdlr.htm">Tcl_CreateFileHandler</A></B>
+manual page.
+<P>
+The <B><A HREF="../TclLib/Sleep.htm">Tcl_Sleep</A></B> and <B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B> interfaces are described
+in their respective manual pages.
+<P>
+The easiest way to create a new notifier is to look at the code
+for an existing notifier, such as the files <B>unix/tclUnixNotfy.c</B>
+or <B>win/tclWinNotify.c</B> in the Tcl source distribution.
+
+<H3><A NAME="M12">REPLACING THE NOTIFIER</A></H3>
+A notifier that has been written according to the conventions above
+can also be installed in a running process in place of the standard
+notifier.  This mechanism is used so that a single executable can be
+used (with the standard notifier) as a stand-alone program and reused
+(with a replacement notifier in a loadable extension) as an extension
+to another program, such as a Web browser plugin.
+<P>
+To do this, the extension makes a call to <B>Tcl_SetNotifier</B>
+passing a pointer to a <B>Tcl_NotifierProcs</B> data structure.  The
+structure has the following layout:
+<PRE>typedef struct Tcl_NotifierProcs {
+    Tcl_SetTimerProc *setTimerProc;
+    Tcl_WaitForEventProc *waitForEventProc;
+    Tcl_CreateFileHandlerProc *createFileHandlerProc;
+    Tcl_DeleteFileHandlerProc *deleteFileHandlerProc;
+    Tcl_InitNotifierProc *initNotifierProc;
+    Tcl_FinalizeNotifierProc *finalizeNotifierProc;
+    Tcl_AlertNotifierProc *alertNotifierProc;
+    Tcl_ServiceModeHookProc *serviceModeHookProc;
+} Tcl_NotifierProcs;</PRE>
+Following the call to <B>Tcl_SetNotifier</B>, the pointers given in
+the <B>Tcl_NotifierProcs</B> structure replace whatever notifier had
+been installed in the process.
+<P>
+It is extraordinarily unwise to replace a running notifier. Normally,
+<B>Tcl_SetNotifier</B> should be called at process initialization time
+before the first call to <B>Tcl_InitNotifier</B>.
+
+<H3><A NAME="M13">EXTERNAL EVENT LOOPS</A></H3>
+The notifier interfaces are designed so that Tcl can be embedded into
+applications that have their own private event loops.  In this case,
+the application does not call <B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B> except in the case
+of recursive event loops such as calls to the Tcl commands <B><A HREF="../TclCmd/update.htm">update</A></B>
+or <B><A HREF="../TclCmd/vwait.htm">vwait</A></B>.  Most of the time is spent in the external event loop
+of the application.  In this case the notifier must arrange for the
+external event loop to call back into Tcl when something
+happens on the various Tcl event sources.  These callbacks should
+arrange for appropriate Tcl events to be placed on the Tcl event queue.
+<P>
+Because the external event loop is not calling <B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B> on
+a regular basis, it is up to the notifier to arrange for
+<B>Tcl_ServiceEvent</B> to be called whenever events are pending on the
+Tcl event queue.  The easiest way to do this is to invoke
+<B>Tcl_ServiceAll</B> at the end of each callback from the external
+event loop.  This will ensure that all of the event sources are
+polled, any queued events are serviced, and any pending idle handlers
+are processed before returning control to the application.  In
+addition, event sources that need to poll for events can call
+<B>Tcl_SetMaxBlockTime</B> to force the external event loop to call
+Tcl even if no events are available on the system event queue.
+<P>
+As a side effect of processing events detected in the main external
+event loop, Tcl may invoke <B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B> to start a recursive event
+loop in commands like <B><A HREF="../TclCmd/vwait.htm">vwait</A></B>.  <B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B> will invoke
+the external event loop, which will result in callbacks as described
+in the preceding paragraph, which will result in calls to
+<B>Tcl_ServiceAll</B>.  However, in these cases it is undesirable to
+service events in <B>Tcl_ServiceAll</B>.  Servicing events there is
+unnecessary because control will immediately return to the
+external event loop and hence to <B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B>, which can
+service the events itself.  Furthermore, <B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B> is
+supposed to service only a single event, whereas <B>Tcl_ServiceAll</B>
+normally services all pending events.  To handle this situation,
+<B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B> sets a flag for <B>Tcl_ServiceAll</B>
+that causes it to return without servicing any events.
+This flag is called the <I>service mode</I>;
+<B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B> restores it to its previous value before it returns.
+<P>
+In some cases, however, it may be necessary for <B>Tcl_ServiceAll</B>
+to service events
+even when it has been invoked from <B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B>.  This happens
+when there is yet another recursive event loop invoked via an
+event handler called by <B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B> (such as one that is
+part of a native widget).  In this case, <B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B> may not
+have a chance to service events so <B>Tcl_ServiceAll</B> must service
+them all.  Any recursive event loop that calls an external event
+loop rather than <B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B> must reset the service mode so
+that all events get processed in <B>Tcl_ServiceAll</B>.  This is done
+by invoking the <B>Tcl_SetServiceMode</B> procedure.  If
+<B>Tcl_SetServiceMode</B> is passed <B>TCL_SERVICE_NONE</B>, then calls
+to <B>Tcl_ServiceAll</B> will return immediately without processing any
+events.  If <B>Tcl_SetServiceMode</B> is passed <B>TCL_SERVICE_ALL</B>,
+then calls to <B>Tcl_ServiceAll</B> will behave normally.
+<B>Tcl_SetServiceMode</B> returns the previous value of the service
+mode, which should be restored when the recursive loop exits.
+<B>Tcl_GetServiceMode</B> returns the current value of the service
+mode.
+
+<H3><A NAME="M14">SEE ALSO</A></H3>
+<B><A HREF="../TclLib/CrtFileHdlr.htm">Tcl_CreateFileHandler</A></B>, <B><A HREF="../TclLib/CrtFileHdlr.htm">Tcl_DeleteFileHandler</A></B>, <B><A HREF="../TclLib/Sleep.htm">Tcl_Sleep</A></B>, <B><A HREF="../TclLib/DoOneEvent.htm">Tcl_DoOneEvent</A></B>, <B>Thread</B>
+<H3><A NAME="M15">KEYWORDS</A></H3>
+<A href="../Keywords/E.htm#event">event</A>, <A href="../Keywords/N.htm#notifier">notifier</A>, <A href="../Keywords/E.htm#event queue">event queue</A>, <A href="../Keywords/E.htm#event sources">event sources</A>, <A href="../Keywords/F.htm#file events">file events</A>, <A href="../Keywords/T.htm#timer">timer</A>, <A href="../Keywords/I.htm#idle">idle</A>, <A href="../Keywords/S.htm#service mode">service mode</A>, <A href="../Keywords/T.htm#threads">threads</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1998-1999 Scriptics Corporation
+Copyright &copy; 1995-1997 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

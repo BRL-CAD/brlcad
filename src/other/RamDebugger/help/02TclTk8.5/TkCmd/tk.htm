@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>tk manual page - Tk Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TkCmd</a> <small>&gt;</small> tk</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="tk.htm#M2" NAME="L1559">NAME</A>
+<DL><DD>tk - Manipulate Tk internal state</DD></DL>
+<DD><A HREF="tk.htm#M3" NAME="L1560">SYNOPSIS</A>
+<DL>
+</DL>
+<DD><A HREF="tk.htm#M4" NAME="L1561">DESCRIPTION</A>
+<DL class="description">
+<DD><A HREF="tk.htm#M5" NAME="L1562"><B>tk appname </B>?<I>newName</I>?</A>
+<DD><A HREF="tk.htm#M6" NAME="L1563"><B>tk caret window </B>?<B>-x </B><I>x</I>? ?<B>-y </B><I>y</I>? ?<B>-height </B><I>height</I>?</A>
+<DD><A HREF="tk.htm#M7" NAME="L1564"><B>tk scaling </B>?<B>-displayof </B><I>window</I>? ?<I>number</I>?</A>
+<DD><A HREF="tk.htm#M8" NAME="L1565"><B>tk inactive </B>?<B>-displayof </B><I>window</I>? ?<B>reset</B>?</A>
+<DD><A HREF="tk.htm#M9" NAME="L1566"><B>tk useinputmethods </B>?<B>-displayof </B><I>window</I>? ?<I>boolean</I>?</A>
+<DD><A HREF="tk.htm#M10" NAME="L1567"><B>tk windowingsystem</B></A>
+</DL>
+<DD><A HREF="tk.htm#M11" NAME="L1568">SEE ALSO</A>
+<DD><A HREF="tk.htm#M12" NAME="L1569">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+tk - Manipulate Tk internal state
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>tk</B> <I>option </I>?<I>arg arg ...</I>?<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+The <B>tk</B> command provides access to miscellaneous
+elements of Tk's internal state.
+Most of the information manipulated by this command pertains to the
+application as a whole, or to a screen or display, rather than to a
+particular window.
+The command can take any of a number of different forms
+depending on the <I>option</I> argument.  The legal forms are:
+<P>
+<DL class="description">
+<DT><A NAME="M5"><B>tk appname </B>?<I>newName</I>?</A><DD>
+If <I>newName</I> is not specified, this command returns the name
+of the application (the name that may be used in <B><A HREF="../TkCmd/send.htm">send</A></B>
+commands to communicate with the application).
+If <I>newName</I> is specified, then the name of the application
+is changed to <I>newName</I>.
+If the given name is already in use, then a suffix of the form
+&#8220;<B> #2</B>&#8221;
+or
+&#8220;<B> #3</B>&#8221;
+is appended in order to make the name unique.
+The command's result is the name actually chosen.
+<I>newName</I> should not start with a capital letter.
+This will interfere with option processing, since names starting with
+capitals are assumed to be classes;  as a result, Tk may not
+be able to find some options for the application.
+If sends have been disabled by deleting the <B><A HREF="../TkCmd/send.htm">send</A></B> command,
+this command will reenable them and recreate the <B><A HREF="../TkCmd/send.htm">send</A></B>
+command.
+<P><DT><A NAME="M6"><B>tk caret window </B>?<B>-x </B><I>x</I>? ?<B>-y </B><I>y</I>? ?<B>-height </B><I>height</I>?</A><DD>
+Sets and queries the caret location for the display of the specified
+Tk window <I>window</I>.  The caret is the per-display cursor location
+used for indicating global focus (e.g. to comply with Microsoft
+Accessibility guidelines), as well as for location of the over-the-spot
+XIM (X Input Methods) or Windows IME windows.  If no options are specified,
+the last values used for setting the caret are return in option-value pair
+format.  <I>-x</I> and <I>-y</I> represent window-relative coordinates, and
+<I>-height</I> is the height of the current cursor location, or the height
+of the specified <I>window</I> if none is given.
+<P><DT><A NAME="M7"><B>tk scaling </B>?<B>-displayof </B><I>window</I>? ?<I>number</I>?</A><DD>
+Sets and queries the current scaling factor used by Tk to convert between
+physical units (for example, points, inches, or millimeters) and pixels.  The
+<I>number</I> argument is a floating point number that specifies the number of
+pixels per point on <I>window</I>'s display.  If the <I>window</I> argument is
+omitted, it defaults to the main window.  If the <I>number</I> argument is 
+omitted, the current value of the scaling factor is returned.
+<P>
+A
+&#8220;point&#8221;
+is a unit of measurement equal to 1/72 inch.  A scaling factor
+of 1.0 corresponds to 1 pixel per point, which is equivalent to a standard
+72 dpi monitor.  A scaling factor of 1.25 would mean 1.25 pixels per point,
+which is the setting for a 90 dpi monitor; setting the scaling factor to
+1.25 on a 72 dpi monitor would cause everything in the application to be
+displayed 1.25 times as large as normal.  The initial value for the scaling
+factor is set when the application starts, based on properties of the
+installed monitor, but it can be changed at any time.  Measurements made
+after the scaling factor is changed will use the new scaling factor, but it
+is undefined whether existing widgets will resize themselves dynamically to
+accommodate the new scaling factor.
+<P><DT><A NAME="M8"><B>tk inactive </B>?<B>-displayof </B><I>window</I>? ?<B>reset</B>?</A><DD>
+Returns a positive integer, the number of milliseconds since the last
+time the user interacted with the system. If the <B>-displayof</B>
+option is given then the return value refers to the display of
+<I>window</I>; otherwise it refers to the display of the application's
+main window.
+<P>
+<B>tk inactive</B> will return -1, if querying the user inactive time
+is not supported by the system, and in safe interpreters.
+<P>If the literal string <B>reset</B> is given as an additional argument,
+the timer is reset and an empty string is returned. Resetting the
+inactivity time is forbidden in safe interpreters and will throw and
+error if tried.
+<P><DT><A NAME="M9"><B>tk useinputmethods </B>?<B>-displayof </B><I>window</I>? ?<I>boolean</I>?</A><DD>
+Sets and queries the state of whether Tk should use XIM (X Input Methods)
+for filtering events.  The resulting state is returned.  XIM is used in
+some locales (i.e., Japanese, Korean), to handle special input devices. This
+feature is only significant on X.  If XIM support is not available, this
+will always return 0.  If the <I>window</I> argument is omitted, it defaults
+to the main window.  If the <I>boolean</I> argument is omitted, the current
+state is returned.  This is turned on by default for the main display.
+<P><DT><A NAME="M10"><B>tk windowingsystem</B></A><DD>
+Returns the current Tk windowing system, one of
+<B>x11</B> (X11-based), <B>win32</B> (MS Windows),
+or <B>aqua</B> (Mac OS X Aqua).
+<P></DL>
+<H3><A NAME="M11">SEE ALSO</A></H3>
+<B><A HREF="../TkCmd/send.htm">send</A></B>, <B><A HREF="../TkCmd/winfo.htm">winfo</A></B>
+<H3><A NAME="M12">KEYWORDS</A></H3>
+<A href="../Keywords/A.htm#application name">application name</A>, <A href="../Keywords/S.htm#send">send</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1992 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

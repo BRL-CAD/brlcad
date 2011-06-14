@@ -1,0 +1,31 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>bell manual page - Tk Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TkCmd</a> <small>&gt;</small> bell</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+bell - Ring a display's bell
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>bell </B>?<B>-displayof </B><I>window</I>? ?<B>-nice</B>?<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+This command rings the bell on the display for <I>window</I> and
+returns an empty string.
+If the <B>-displayof</B> option is omitted, the display of the
+application's main window is used by default.
+The command uses the current bell-related settings for the display, which
+may be modified with programs such as <B>xset</B>.
+<P>
+If <B>-nice</B> is not specified, this command also resets the screen saver
+for the screen.  Some screen savers will ignore this, but others will reset
+so that the screen becomes visible again.
+
+<H3><A NAME="M5">KEYWORDS</A></H3>
+<A href="../Keywords/B.htm#beep">beep</A>, <A href="../Keywords/B.htm#bell">bell</A>, <A href="../Keywords/R.htm#ring">ring</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1994 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+Copyright &copy; 2000 Ajuba Solutions.
+</div>
+</BODY></HTML>

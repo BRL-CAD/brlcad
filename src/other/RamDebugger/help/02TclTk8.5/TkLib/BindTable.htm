@@ -1,0 +1,171 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>Tk_CreateBindingTable manual page - Tk Library Procedures</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TkLib</a> <small>&gt;</small> BindTable</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="BindTable.htm#M2" NAME="L16">NAME</A>
+<DL><DD>Tk_CreateBindingTable, Tk_DeleteBindingTable, Tk_CreateBinding, Tk_DeleteBinding, Tk_GetBinding, Tk_GetAllBindings, Tk_DeleteAllBindings, Tk_BindEvent - invoke scripts in response to X events</DD></DL>
+<DD><A HREF="BindTable.htm#M3" NAME="L17">SYNOPSIS</A>
+<DL>
+<DD><B>#include &lt;tk.h&gt;</B>
+<DD>Tk_BindingTable
+<DD><B>Tk_CreateBindingTable(</B><I>interp</I><B>)</B>
+<DD><B>Tk_DeleteBindingTable(</B><I>bindingTable</I><B>)</B>
+<DD>unsigned long
+<DD><B>Tk_CreateBinding(</B><I>interp, bindingTable, object, eventString, script, append</I><B>)</B>
+<DD>int
+<DD><B>Tk_DeleteBinding(</B><I>interp, bindingTable, object, eventString</I><B>)</B>
+<DD>const char *
+<DD><B>Tk_GetBinding(</B><I>interp, bindingTable, object, eventString</I><B>)</B>
+<DD><B>Tk_GetAllBindings(</B><I>interp, bindingTable, object</I><B>)</B>
+<DD><B>Tk_DeleteAllBindings(</B><I>bindingTable, object</I><B>)</B>
+<DD><B>Tk_BindEvent(</B><I>bindingTable, eventPtr, tkwin, numObjects, objectPtr</I><B>)</B>
+</DL>
+<DD><A HREF="BindTable.htm#M4" NAME="L18">ARGUMENTS</A>
+<DL class="arguments">
+</DL>
+<DD><A HREF="BindTable.htm#M5" NAME="L19">DESCRIPTION</A>
+<DD><A HREF="BindTable.htm#M6" NAME="L20">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+Tk_CreateBindingTable, Tk_DeleteBindingTable, Tk_CreateBinding, Tk_DeleteBinding, Tk_GetBinding, Tk_GetAllBindings, Tk_DeleteAllBindings, Tk_BindEvent - invoke scripts in response to X events
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>#include &lt;tk.h&gt;</B><BR>
+Tk_BindingTable<BR>
+<B>Tk_CreateBindingTable(</B><I>interp</I><B>)</B><BR>
+<B>Tk_DeleteBindingTable(</B><I>bindingTable</I><B>)</B><BR>
+unsigned long<BR>
+<B>Tk_CreateBinding(</B><I>interp, bindingTable, object, eventString, script, append</I><B>)</B><BR>
+int<BR>
+<B>Tk_DeleteBinding(</B><I>interp, bindingTable, object, eventString</I><B>)</B><BR>
+const char *<BR>
+<B>Tk_GetBinding(</B><I>interp, bindingTable, object, eventString</I><B>)</B><BR>
+<B>Tk_GetAllBindings(</B><I>interp, bindingTable, object</I><B>)</B><BR>
+<B>Tk_DeleteAllBindings(</B><I>bindingTable, object</I><B>)</B><BR>
+<B>Tk_BindEvent(</B><I>bindingTable, eventPtr, tkwin, numObjects, objectPtr</I><B>)</B><BR>
+<H3><A NAME="M4">ARGUMENTS</A></H3>
+<DL class="arguments">
+<DT><A HREF="../TclLib/Interp.htm">Tcl_Interp</A> <B>*interp</B> (in)<DD>
+Interpreter to use when invoking bindings in binding table.  Also
+used for returning results and errors from binding procedures.
+<P><DT>Tk_BindingTable <B>bindingTable</B> (in)<DD>
+Token for binding table;  must have been returned by some previous
+call to <B>Tk_CreateBindingTable</B>.
+<P><DT>ClientData <B>object</B> (in)<DD>
+Identifies object with which binding is associated.
+<P><DT>const char <B>*eventString</B> (in)<DD>
+String describing event sequence.
+<P><DT>char <B>*script</B> (in)<DD>
+Tcl script to invoke when binding triggers.
+<P><DT>int <B><A HREF="../TclCmd/append.htm">append</A></B> (in)<DD>
+Non-zero means append <I>script</I> to existing script for binding,
+if any; zero means replace existing script with new one.
+<P><DT>XEvent <B>*eventPtr</B> (in)<DD>
+X event to match against bindings in <I>bindingTable</I>.
+<P><DT>Tk_Window <B>tkwin</B> (in)<DD>
+Identifier for any window on the display where the event occurred.
+Used to find display-related information such as key maps.
+<P><DT>int <B>numObjects</B> (in)<DD>
+Number of object identifiers pointed to by <I>objectPtr</I>.
+<P><DT>ClientData <B>*objectPtr</B> (in)<DD>
+Points to an array of object identifiers:  bindings will be considered
+for each of these objects in order from first to last.
+<P></DL>
+<H3><A NAME="M5">DESCRIPTION</A></H3>
+These procedures provide a general-purpose mechanism for creating
+and invoking bindings.
+Bindings are organized in terms of <I>binding tables</I>.
+A binding table consists of a collection of bindings plus a history
+of recent events.
+Within a binding table, bindings are associated with <I>objects</I>.
+The meaning of an object is defined by clients of the binding package.
+For example, Tk keeps uses one binding table to hold all of the bindings
+created by the <B><A HREF="../TkCmd/bind.htm">bind</A></B> command.
+For this table, objects are pointers to strings such as window names, class
+names, or other binding tags such as <B>all</B>.
+Tk also keeps a separate binding table for each canvas widget, which manages
+bindings created by the canvas's <B><A HREF="../TkCmd/bind.htm">bind</A></B> widget command;  within
+this table, an object is either a pointer to the internal structure for a
+canvas item or a <A HREF="../TkLib/GetUid.htm">Tk_Uid</A> identifying a tag.
+<P>
+The procedure <B>Tk_CreateBindingTable</B> creates a new binding
+table and associates <I>interp</I> with it (when bindings in the
+table are invoked, the scripts will be evaluated in <I>interp</I>).
+<B>Tk_CreateBindingTable</B> returns a token for the table, which
+must be used in calls to other procedures such as <B>Tk_CreateBinding</B>
+or <B>Tk_BindEvent</B>.
+<P>
+<B>Tk_DeleteBindingTable</B> frees all of the state associated
+with a binding table.
+Once it returns the caller should not use the <I>bindingTable</I>
+token again.
+<P>
+<B>Tk_CreateBinding</B> adds a new binding to an existing table.
+The <I>object</I> argument identifies the object with which the
+binding is to be associated, and it may be any one-word value.
+Typically it is a pointer to a string or data structure.
+The <I>eventString</I> argument identifies the event or sequence
+of events for the binding;  see the documentation for the
+<B><A HREF="../TkCmd/bind.htm">bind</A></B> command for a description of its format.
+<I>script</I> is the Tcl script to be evaluated when the binding
+triggers.
+<I>append</I> indicates what to do if there already
+exists a binding for <I>object</I> and <I>eventString</I>:  if <I>append</I>
+is zero then <I>script</I> replaces the old script;  if <I>append</I>
+is non-zero then the new script is appended to the old one.
+<B>Tk_CreateBinding</B> returns an X event mask for all the events
+associated with the bindings.
+This information may be useful to invoke <B>XSelectInput</B> to
+select relevant events, or to disallow the use of certain events
+in bindings.
+If an error occurred while creating the binding (e.g., <I>eventString</I>
+refers to a non-existent event), then 0 is returned and an error
+message is left in <I>interp-&gt;result</I>.
+<P>
+<B>Tk_DeleteBinding</B> removes from <I>bindingTable</I> the
+binding given by <I>object</I> and <I>eventString</I>, if
+such a binding exists.
+<B>Tk_DeleteBinding</B> always returns <B>TCL_OK</B>.
+In some cases it may reset <I>interp-&gt;result</I> to the default
+empty value.
+<P>
+<B>Tk_GetBinding</B> returns a pointer to the script associated
+with <I>eventString</I> and <I>object</I> in <I>bindingTable</I>.
+If no such binding exists then NULL is returned and an error
+message is left in <I>interp-&gt;result</I>.
+<P>
+<B>Tk_GetAllBindings</B> returns in <I>interp-&gt;result</I> a list
+of all the event strings for which there are bindings in
+<I>bindingTable</I> associated with <I>object</I>.
+If there are no bindings for <I>object</I> then an empty
+string is returned in <I>interp-&gt;result</I>.
+<P>
+<B>Tk_DeleteAllBindings</B> deletes all of the bindings in
+<I>bindingTable</I> that are associated with <I>object</I>.
+<P>
+<B>Tk_BindEvent</B> is called to process an event.
+It makes a copy of the event in an internal history list associated
+with the binding table, then it checks for bindings that match
+the event.
+<B>Tk_BindEvent</B> processes each of the objects pointed to
+by <I>objectPtr</I> in turn.
+For each object, it finds all the bindings that match the current
+event history, selects the most specific binding using the priority
+mechanism described in the documentation for <B><A HREF="../TkCmd/bind.htm">bind</A></B>,
+and invokes the script for that binding.
+If there are no matching bindings for a particular object, then
+the object is skipped.
+<B>Tk_BindEvent</B> continues through all of the objects, handling
+exceptions such as errors, <B><A HREF="../TclCmd/break.htm">break</A></B>, and <B><A HREF="../TclCmd/continue.htm">continue</A></B> as
+described in the documentation for <B><A HREF="../TkCmd/bind.htm">bind</A></B>.
+
+<H3><A NAME="M6">KEYWORDS</A></H3>
+<A href="../Keywords/B.htm#binding">binding</A>, <A href="../Keywords/E.htm#event">event</A>, <A href="../Keywords/O.htm#object">object</A>, <A href="../Keywords/S.htm#script">script</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1994 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

@@ -1,0 +1,53 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>eof manual page - Tcl Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclCmd</a> <small>&gt;</small> eof</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+eof - Check for end of file condition on channel
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>eof </B><I>channelId</I><BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+Returns 1 if an end of file condition occurred during the most
+recent input operation on <I>channelId</I> (such as <B><A HREF="../TclCmd/gets.htm">gets</A></B>),
+0 otherwise.
+<P>
+<I>ChannelId</I> must be an identifier for an open channel such as a
+Tcl standard channel (<B>stdin</B>, <B>stdout</B>, or <B>stderr</B>),
+the return value from an invocation of <B><A HREF="../TclCmd/open.htm">open</A></B> or <B><A HREF="../TclCmd/socket.htm">socket</A></B>, or
+the result of a channel creation command provided by a Tcl extension.
+<H3><A NAME="M5">EXAMPLES</A></H3>
+Read and print out the contents of a file line-by-line:
+<PRE>set f [open somefile.txt]
+while {1} {
+    set line [gets $f]
+    if {[<B>eof</B> $f]} {
+        close $f
+        break
+    }
+    puts &quot;Read line: $line&quot;
+}</PRE>
+<P>
+Read and print out the contents of a file by fixed-size records:
+<PRE>set f [open somefile.dat]
+fconfigure $f -translation binary
+set recordSize 40
+while {1} {
+    set record [read $f $recordSize]
+    if {[<B>eof</B> $f]} {
+        close $f
+        break
+    }
+    puts &quot;Read record: $record&quot;
+}</PRE>
+<H3><A NAME="M6">SEE ALSO</A></H3>
+<B><A HREF="../TclCmd/file.htm">file</A></B>, <B><A HREF="../TclCmd/open.htm">open</A></B>, <B><A HREF="../TclCmd/close.htm">close</A></B>, <B><A HREF="../TclCmd/fblocked.htm">fblocked</A></B>, <B><A HREF="../TclLib/StdChannels.htm">Tcl_StandardChannels</A></B>
+<H3><A NAME="M7">KEYWORDS</A></H3>
+<A href="../Keywords/C.htm#channel">channel</A>, <A href="../Keywords/E.htm#end of file">end of file</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1993 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

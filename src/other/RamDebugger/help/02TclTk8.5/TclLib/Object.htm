@@ -1,0 +1,345 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>Tcl_Obj manual page - Tcl Library Procedures</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclLib</a> <small>&gt;</small> Object</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="Object.htm#M2" NAME="L459">NAME</A>
+<DL><DD>Tcl_NewObj, Tcl_DuplicateObj, Tcl_IncrRefCount, Tcl_DecrRefCount, Tcl_IsShared, Tcl_InvalidateStringRep - manipulate Tcl objects</DD></DL>
+<DD><A HREF="Object.htm#M3" NAME="L460">SYNOPSIS</A>
+<DL>
+<DD><B>#include &lt;tcl.h&gt;</B>
+<DD>Tcl_Obj *
+<DD><B>Tcl_NewObj</B>()
+<DD>Tcl_Obj *
+<DD><B>Tcl_DuplicateObj</B>(<I>objPtr</I>)
+<DD><B>Tcl_IncrRefCount</B>(<I>objPtr</I>)
+<DD><B>Tcl_DecrRefCount</B>(<I>objPtr</I>)
+<DD>int
+<DD><B>Tcl_IsShared</B>(<I>objPtr</I>)
+<DD><B>Tcl_InvalidateStringRep</B>(<I>objPtr</I>)
+</DL>
+<DD><A HREF="Object.htm#M4" NAME="L461">ARGUMENTS</A>
+<DL class="arguments">
+</DL>
+<DD><A HREF="Object.htm#M5" NAME="L462">INTRODUCTION</A>
+<DD><A HREF="Object.htm#M6" NAME="L463">THE TCL_OBJ STRUCTURE</A>
+<DD><A HREF="Object.htm#M7" NAME="L464">EXAMPLE OF THE LIFETIME OF AN OBJECT</A>
+<DD><A HREF="Object.htm#M8" NAME="L465">STORAGE MANAGEMENT OF OBJECTS</A>
+<DD><A HREF="Object.htm#M9" NAME="L466">SEE ALSO</A>
+<DD><A HREF="Object.htm#M10" NAME="L467">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+Tcl_NewObj, Tcl_DuplicateObj, Tcl_IncrRefCount, Tcl_DecrRefCount, Tcl_IsShared, Tcl_InvalidateStringRep - manipulate Tcl objects
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>#include &lt;tcl.h&gt;</B><BR>
+Tcl_Obj *<BR>
+<B>Tcl_NewObj</B>()<BR>
+Tcl_Obj *<BR>
+<B>Tcl_DuplicateObj</B>(<I>objPtr</I>)<BR>
+<B>Tcl_IncrRefCount</B>(<I>objPtr</I>)<BR>
+<B>Tcl_DecrRefCount</B>(<I>objPtr</I>)<BR>
+int<BR>
+<B>Tcl_IsShared</B>(<I>objPtr</I>)<BR>
+<B>Tcl_InvalidateStringRep</B>(<I>objPtr</I>)<BR>
+<H3><A NAME="M4">ARGUMENTS</A></H3>
+<DL class="arguments">
+<DT>Tcl_Obj <B>*objPtr</B> (in)<DD>
+Points to an object;
+must have been the result of a previous call to <B>Tcl_NewObj</B>.
+<P></DL>
+<H3><A NAME="M5">INTRODUCTION</A></H3>
+This man page presents an overview of Tcl objects and how they are used.
+It also describes generic procedures for managing Tcl objects.
+These procedures are used to create and copy objects,
+and increment and decrement the count of references (pointers) to objects.
+The procedures are used in conjunction with ones
+that operate on specific types of objects such as
+<B><A HREF="../TclLib/IntObj.htm">Tcl_GetIntFromObj</A></B> and <B><A HREF="../TclLib/ListObj.htm">Tcl_ListObjAppendElement</A></B>.
+The individual procedures are described along with the data structures
+they manipulate.
+<P>
+Tcl's <I>dual-ported</I> objects provide a general-purpose mechanism
+for storing and exchanging Tcl values.
+They largely replace the use of strings in Tcl.
+For example, they are used to store variable values,
+command arguments, command results, and scripts.
+Tcl objects behave like strings but also hold an internal representation
+that can be manipulated more efficiently.
+For example, a Tcl list is now represented as an object
+that holds the list's string representation
+as well as an array of pointers to the objects for each list element.
+Dual-ported objects avoid most runtime type conversions.
+They also improve the speed of many operations
+since an appropriate representation is immediately available.
+The compiler itself uses Tcl objects to
+cache the instruction bytecodes resulting from compiling scripts.
+<P>
+The two representations are a cache of each other and are computed lazily.
+That is, each representation is only computed when necessary,
+it is computed from the other representation,
+and, once computed, it is saved.
+In addition, a change in one representation invalidates the other one.
+As an example, a Tcl program doing integer calculations can
+operate directly on a variable's internal machine integer
+representation without having to constantly convert
+between integers and strings.
+Only when it needs a string representing the variable's value,
+say to print it,
+will the program regenerate the string representation from the integer.
+Although objects contain an internal representation,
+their semantics are defined in terms of strings:
+an up-to-date string can always be obtained,
+and any change to the object will be reflected in that string
+when the object's string representation is fetched.
+Because of this representation invalidation and regeneration,
+it is dangerous for extension writers to access
+<B>Tcl_Obj</B> fields directly.
+It is better to access Tcl_Obj information using
+procedures like <B><A HREF="../TclLib/StringObj.htm">Tcl_GetStringFromObj</A></B> and <B><A HREF="../TclLib/StringObj.htm">Tcl_GetString</A></B>.
+<P>
+Objects are allocated on the heap
+and are referenced using a pointer to their <B>Tcl_Obj</B> structure.
+Objects are shared as much as possible.
+This significantly reduces storage requirements
+because some objects such as long lists are very large.
+Also, most Tcl values are only read and never modified.
+This is especially true for procedure arguments,
+which can be shared between the caller and the called procedure.
+Assignment and argument binding is done by
+simply assigning a pointer to the value. 
+Reference counting is used to determine when it is safe to
+reclaim an object's storage.
+<P>
+Tcl objects are typed.
+An object's internal representation is controlled by its type.
+Seven types are predefined in the Tcl core
+including integer, double, list, and bytecode.
+Extension writers can extend the set of types
+by using the procedure <B><A HREF="../TclLib/ObjectType.htm">Tcl_RegisterObjType</A></B> .
+<H3><A NAME="M6">THE TCL_OBJ STRUCTURE</A></H3>
+Each Tcl object is represented by a <B>Tcl_Obj</B> structure
+which is defined as follows.
+<PRE>typedef struct Tcl_Obj {
+        int <I>refCount</I>;
+        char *<I>bytes</I>;
+        int <I>length</I>;
+        Tcl_ObjType *<I>typePtr</I>;
+        union {
+                long <I>longValue</I>;
+                double <I>doubleValue</I>;
+                void *<I>otherValuePtr</I>;
+                Tcl_WideInt <I>wideValue</I>;
+                struct {
+                        void *<I>ptr1</I>;
+                        void *<I>ptr2</I>;
+                } <I>twoPtrValue</I>;
+                struct {
+                        void *<I>ptr</I>;
+                        unsigned long <I>value</I>;
+                } <I>ptrAndLongRep</I>;
+        } <I>internalRep</I>;
+} Tcl_Obj;</PRE>
+The <I>bytes</I> and the <I>length</I> members together hold
+an object's UTF-8 string representation,
+which is a <I>counted string</I> not containing null bytes (UTF-8 null
+characters should be encoded as a two byte sequence: 192, 128.)
+<I>bytes</I> points to the first byte of the string representation.
+The <I>length</I> member gives the number of bytes.
+The byte array must always have a null byte after the last data byte,
+at offset <I>length</I>;
+this allows string representations
+to be treated as conventional null-terminated C strings.
+C programs use <B><A HREF="../TclLib/StringObj.htm">Tcl_GetStringFromObj</A></B> and <B><A HREF="../TclLib/StringObj.htm">Tcl_GetString</A></B> to get
+an object's string representation.
+If <I>bytes</I> is NULL,
+the string representation is invalid.
+<P>
+An object's type manages its internal representation.
+The member <I>typePtr</I> points to the Tcl_ObjType structure
+that describes the type.
+If <I>typePtr</I> is NULL,
+the internal representation is invalid.
+<P>
+The <I>internalRep</I> union member holds
+an object's internal representation.
+This is either a (long) integer, a double-precision floating-point number,
+a pointer to a value containing additional information
+needed by the object's type to represent the object, a Tcl_WideInt
+integer, two arbitrary pointers, or a pair made up of an unsigned long
+integer and a pointer.
+<P>
+The <I>refCount</I> member is used to tell when it is safe to free
+an object's storage.
+It holds the count of active references to the object.
+Maintaining the correct reference count is a key responsibility
+of extension writers.
+Reference counting is discussed below
+in the section <B>STORAGE MANAGEMENT OF OBJECTS</B>.
+<P>
+Although extension writers can directly access
+the members of a Tcl_Obj structure,
+it is much better to use the appropriate procedures and macros.
+For example, extension writers should never
+read or update <I>refCount</I> directly;
+they should use macros such as
+<B>Tcl_IncrRefCount</B> and <B>Tcl_IsShared</B> instead.
+<P>
+A key property of Tcl objects is that they hold two representations.
+An object typically starts out containing only a string representation:
+it is untyped and has a NULL <I>typePtr</I>.
+An object containing an empty string or a copy of a specified string
+is created using <B>Tcl_NewObj</B> or <B><A HREF="../TclLib/StringObj.htm">Tcl_NewStringObj</A></B> respectively.
+An object's string value is gotten with
+<B><A HREF="../TclLib/StringObj.htm">Tcl_GetStringFromObj</A></B> or <B><A HREF="../TclLib/StringObj.htm">Tcl_GetString</A></B>
+and changed with <B><A HREF="../TclLib/StringObj.htm">Tcl_SetStringObj</A></B>.
+If the object is later passed to a procedure like <B><A HREF="../TclLib/IntObj.htm">Tcl_GetIntFromObj</A></B>
+that requires a specific internal representation,
+the procedure will create one and set the object's <I>typePtr</I>.
+The internal representation is computed from the string representation.
+An object's two representations are duals of each other:
+changes made to one are reflected in the other.
+For example, <B><A HREF="../TclLib/ListObj.htm">Tcl_ListObjReplace</A></B> will modify an object's
+internal representation and the next call to <B><A HREF="../TclLib/StringObj.htm">Tcl_GetStringFromObj</A></B>
+or <B><A HREF="../TclLib/StringObj.htm">Tcl_GetString</A></B> will reflect that change.
+<P>
+Representations are recomputed lazily for efficiency.
+A change to one representation made by a procedure
+such as <B><A HREF="../TclLib/ListObj.htm">Tcl_ListObjReplace</A></B> is not reflected immediately
+in the other representation.
+Instead, the other representation is marked invalid
+so that it is only regenerated if it is needed later.
+Most C programmers never have to be concerned with how this is done
+and simply use procedures such as <B><A HREF="../TclLib/BoolObj.htm">Tcl_GetBooleanFromObj</A></B> or
+<B><A HREF="../TclLib/ListObj.htm">Tcl_ListObjIndex</A></B>.
+Programmers that implement their own object types
+must check for invalid representations
+and mark representations invalid when necessary.
+The procedure <B>Tcl_InvalidateStringRep</B> is used
+to mark an object's string representation invalid and to
+free any storage associated with the old string representation.
+<P>
+Objects usually remain one type over their life,
+but occasionally an object must be converted from one type to another.
+For example, a C program might build up a string in an object
+with repeated calls to <B><A HREF="../TclLib/StringObj.htm">Tcl_AppendToObj</A></B>,
+and then call <B><A HREF="../TclLib/ListObj.htm">Tcl_ListObjIndex</A></B> to extract a list element from
+the object.
+The same object holding the same string value
+can have several different internal representations
+at different times.
+Extension writers can also force an object to be converted from one type
+to another using the <B><A HREF="../TclLib/ObjectType.htm">Tcl_ConvertToType</A></B> procedure.
+Only programmers that create new object types need to be concerned
+about how this is done.
+A procedure defined as part of the object type's implementation
+creates a new internal representation for an object
+and changes its <I>typePtr</I>.
+See the man page for <B><A HREF="../TclLib/ObjectType.htm">Tcl_RegisterObjType</A></B>
+to see how to create a new object type.
+<H3><A NAME="M7">EXAMPLE OF THE LIFETIME OF AN OBJECT</A></H3>
+As an example of the lifetime of an object,
+consider the following sequence of commands:
+<PRE><B>set x 123</B></PRE>
+This assigns to <I>x</I> an untyped object whose
+<I>bytes</I> member points to <B>123</B> and <I>length</I> member contains 3.
+The object's <I>typePtr</I> member is NULL.
+<PRE><B>puts &quot;x is $x&quot;</B></PRE>
+<I>x</I>'s string representation is valid (since <I>bytes</I> is non-NULL)
+and is fetched for the command.
+<PRE><B>incr x</B></PRE>
+The <B><A HREF="../TclCmd/incr.htm">incr</A></B> command first gets an integer from <I>x</I>'s object
+by calling <B><A HREF="../TclLib/IntObj.htm">Tcl_GetIntFromObj</A></B>.
+This procedure checks whether the object is already an integer object.
+Since it is not, it converts the object
+by setting the object's <I>internalRep.longValue</I> member
+to the integer <B>123</B>
+and setting the object's <I>typePtr</I>
+to point to the integer Tcl_ObjType structure.
+Both representations are now valid.
+<B><A HREF="../TclCmd/incr.htm">incr</A></B> increments the object's integer internal representation
+then invalidates its string representation
+(by calling <B>Tcl_InvalidateStringRep</B>)
+since the string representation
+no longer corresponds to the internal representation.
+<PRE><B>puts &quot;x is now $x&quot;</B></PRE>
+The string representation of <I>x</I>'s object is needed
+and is recomputed.
+The string representation is now <B>124</B>
+and both representations are again valid.
+<H3><A NAME="M8">STORAGE MANAGEMENT OF OBJECTS</A></H3>
+Tcl objects are allocated on the heap and are shared as much as possible
+to reduce storage requirements.
+Reference counting is used to determine when an object is
+no longer needed and can safely be freed.
+An object just created by <B>Tcl_NewObj</B> or <B><A HREF="../TclLib/StringObj.htm">Tcl_NewStringObj</A></B>
+has <I>refCount</I> 0.
+The macro <B>Tcl_IncrRefCount</B> increments the reference count
+when a new reference to the object is created.
+The macro <B>Tcl_DecrRefCount</B> decrements the count
+when a reference is no longer needed and,
+if the object's reference count drops to zero, frees its storage.
+An object shared by different code or data structures has
+<I>refCount</I> greater than 1.
+Incrementing an object's reference count ensures that
+it will not be freed too early or have its value change accidentally.
+<P>
+As an example, the bytecode interpreter shares argument objects
+between calling and called Tcl procedures to avoid having to copy objects.
+It assigns the call's argument objects to the procedure's
+formal parameter variables.
+In doing so, it calls <B>Tcl_IncrRefCount</B> to increment
+the reference count of each argument since there is now a new
+reference to it from the formal parameter.
+When the called procedure returns,
+the interpreter calls <B>Tcl_DecrRefCount</B> to decrement
+each argument's reference count.
+When an object's reference count drops less than or equal to zero,
+<B>Tcl_DecrRefCount</B> reclaims its storage.
+Most command procedures do not have to be concerned about
+reference counting since they use an object's value immediately
+and do not retain a pointer to the object after they return.
+However, if they do retain a pointer to an object in a data structure,
+they must be careful to increment its reference count
+since the retained pointer is a new reference.
+<P>
+Command procedures that directly modify objects
+such as those for <B><A HREF="../TclCmd/lappend.htm">lappend</A></B> and <B><A HREF="../TclCmd/linsert.htm">linsert</A></B> must be careful to
+copy a shared object before changing it.
+They must first check whether the object is shared
+by calling <B>Tcl_IsShared</B>.
+If the object is shared they must copy the object
+by using <B>Tcl_DuplicateObj</B>;
+this returns a new duplicate of the original object
+that has <I>refCount</I> 0.
+If the object is not shared,
+the command procedure
+&#8220;owns&#8221;
+the object and can safely modify it directly.
+For example, the following code appears in the command procedure
+that implements <B><A HREF="../TclCmd/linsert.htm">linsert</A></B>.
+This procedure modifies the list object passed to it in <I>objv[1]</I>
+by inserting <I>objc-3</I> new elements before <I>index</I>.
+<P>
+<PRE>listPtr = objv[1];
+if (Tcl_IsShared(listPtr)) {
+    listPtr = Tcl_DuplicateObj(listPtr);
+}
+result = <A HREF="../TclLib/ListObj.htm">Tcl_ListObjReplace</A>(interp, listPtr, index, 0,
+        (objc-3), &amp;(objv[3]));</PRE>
+<P>
+As another example, <B><A HREF="../TclCmd/incr.htm">incr</A></B>'s command procedure
+must check whether the variable's object is shared before
+incrementing the integer in its internal representation.
+If it is shared, it needs to duplicate the object
+in order to avoid accidentally changing values in other data structures.
+<H3><A NAME="M9">SEE ALSO</A></H3>
+<B><A HREF="../TclLib/ObjectType.htm">Tcl_ConvertToType</A></B>, <B><A HREF="../TclLib/IntObj.htm">Tcl_GetIntFromObj</A></B>, <B><A HREF="../TclLib/ListObj.htm">Tcl_ListObjAppendElement</A></B>, <B><A HREF="../TclLib/ListObj.htm">Tcl_ListObjIndex</A></B>, <B><A HREF="../TclLib/ListObj.htm">Tcl_ListObjReplace</A></B>, <B><A HREF="../TclLib/ObjectType.htm">Tcl_RegisterObjType</A></B>
+<H3><A NAME="M10">KEYWORDS</A></H3>
+<A href="../Keywords/I.htm#internal representation">internal representation</A>, <A href="../Keywords/O.htm#object">object</A>, <A href="../Keywords/O.htm#object creation">object creation</A>, <A href="../Keywords/O.htm#object type">object type</A>, <A href="../Keywords/R.htm#reference counting">reference counting</A>, <A href="../Keywords/S.htm#string representation">string representation</A>, <A href="../Keywords/T.htm#type conversion">type conversion</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1996-1997 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

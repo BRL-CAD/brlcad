@@ -1,0 +1,98 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>Tk_CanvasTextInfo manual page - Tk Library Procedures</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TkLib</a> <small>&gt;</small> CanvTxtInfo</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+Tk_CanvasTextInfo - additional information for managing text items in canvases
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>#include &lt;tk.h&gt;</B><BR>
+Tk_CanvasTextInfo *<BR>
+<B>Tk_CanvasGetTextInfo</B>(<I>canvas</I>)<BR>
+<H3><A NAME="M4">ARGUMENTS</A></H3>
+<DL class="arguments">
+<DT>Tk_Canvas <B><A HREF="../TkCmd/canvas.htm">canvas</A></B> (in)<DD>
+A token that identifies a particular canvas widget.
+<P></DL>
+<H3><A NAME="M5">DESCRIPTION</A></H3>
+Textual canvas items are somewhat more complicated to manage than
+other items, due to things like the selection and the input focus.
+<B>Tk_CanvasGetTextInfo</B> may be invoked by a type manager
+to obtain additional information needed for items that display text.
+The return value from <B>Tk_CanvasGetTextInfo</B> is a pointer to
+a structure that is shared between Tk and all the items that display
+text.
+The structure has the following form:
+<PRE>typedef struct Tk_CanvasTextInfo {
+    Tk_3DBorder <I>selBorder</I>;
+    int <I>selBorderWidth</I>;
+    XColor *<I>selFgColorPtr</I>;
+    Tk_Item *<I>selItemPtr</I>;
+    int <I>selectFirst</I>;
+    int <I>selectLast</I>;
+    Tk_Item *<I>anchorItemPtr</I>;
+    int <I>selectAnchor</I>;
+    Tk_3DBorder <I>insertBorder</I>;
+    int <I>insertWidth</I>;
+    int <I>insertBorderWidth</I>;
+    Tk_Item *<I>focusItemPtr</I>;
+    int <I>gotFocus</I>;
+    int <I>cursorOn</I>;
+} Tk_CanvasTextInfo;</PRE>
+The <B>selBorder</B> field identifies a Tk_3DBorder that should be
+used for drawing the background under selected text.
+<I>selBorderWidth</I> gives the width of the raised border around
+selected text, in pixels.
+<I>selFgColorPtr</I> points to an XColor that describes the foreground
+color to be used when drawing selected text.
+<I>selItemPtr</I> points to the item that is currently selected, or
+NULL if there is no item selected or if the canvas does not have the
+selection.
+<I>selectFirst</I> and <I>selectLast</I> give the indices of the first
+and last selected characters in <I>selItemPtr</I>, as returned by the
+<I>indexProc</I> for that item.
+<I>anchorItemPtr</I> points to the item that currently has the selection
+anchor;  this is not necessarily the same as <I>selItemPtr</I>.
+<I>selectAnchor</I> is an index that identifies the anchor position
+within <I>anchorItemPtr</I>.
+<I>insertBorder</I> contains a Tk_3DBorder to use when drawing the
+insertion cursor;  <I>insertWidth</I> gives the total width of the
+insertion cursor in pixels, and <I>insertBorderWidth</I> gives the
+width of the raised  border around the insertion cursor.
+<I>focusItemPtr</I> identifies the item that currently has the input
+focus, or NULL if there is no such item.
+<I>gotFocus</I> is 1 if the canvas widget has the input focus and
+0 otherwise.
+<I>cursorOn</I> is 1 if the insertion cursor should be drawn in
+<I>focusItemPtr</I> and 0 if it should not be drawn;  this field
+is toggled on and off by Tk to make the cursor blink.
+<P>
+The structure returned by <B>Tk_CanvasGetTextInfo</B>
+is shared between Tk and the type managers;  typically the type manager
+calls <B>Tk_CanvasGetTextInfo</B> once when an item is created and
+then saves the pointer in the item's record.
+Tk will update information in the Tk_CanvasTextInfo;  for example,
+a <B>configure</B> widget command might change the <I>selBorder</I>
+field, or a <B>select</B> widget command might change the <I>selectFirst</I>
+field, or Tk might change <I>cursorOn</I> in order to make the insertion
+cursor flash on and off during successive redisplays.
+<P>
+Type managers should treat all of the fields of the Tk_CanvasTextInfo
+structure as read-only, except for <I>selItemPtr</I>, <I>selectFirst</I>,
+<I>selectLast</I>, and <I>selectAnchor</I>.
+Type managers may change <I>selectFirst</I>, <I>selectLast</I>, and
+<I>selectAnchor</I> to adjust for insertions and deletions in the
+item (but only if the item is the current owner of the selection or
+anchor, as determined by <I>selItemPtr</I> or <I>anchorItemPtr</I>).
+If all of the selected text in the item is deleted, the item should
+set <I>selItemPtr</I> to NULL to indicate that there is no longer a
+selection.
+
+<H3><A NAME="M6">KEYWORDS</A></H3>
+<A href="../Keywords/C.htm#canvas">canvas</A>, <A href="../Keywords/F.htm#focus">focus</A>, <A href="../Keywords/I.htm#insertion cursor">insertion cursor</A>, <A href="../Keywords/S.htm#selection">selection</A>, <A href="../Keywords/S.htm#selection anchor">selection anchor</A>, <A href="../Keywords/T.htm#text">text</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

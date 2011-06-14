@@ -1,0 +1,129 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>Tcl_RegisterConfig manual page - Tcl Library Procedures</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclLib</a> <small>&gt;</small> RegConfig</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="RegConfig.htm#M2" NAME="L569">NAME</A>
+<DL><DD>Tcl_RegisterConfig - procedures to register embedded configuration information</DD></DL>
+<DD><A HREF="RegConfig.htm#M3" NAME="L570">SYNOPSIS</A>
+<DL>
+<DD><B>#include &lt;tcl.h&gt;</B>
+<DD>void
+<DD><B>Tcl_RegisterConfig</B>(<I>interp, pkgName, configuration, valEncoding</I>)
+</DL>
+<DD><A HREF="RegConfig.htm#M4" NAME="L571">ARGUMENTS</A>
+<DL class="arguments">
+</DL>
+<DD><A HREF="RegConfig.htm#M5" NAME="L572">DESCRIPTION</A>
+<DL class="description">
+<DD><A HREF="RegConfig.htm#M6" NAME="L573">(1)</A>
+<DD><A HREF="RegConfig.htm#M7" NAME="L574">(2)</A>
+</DL>
+<DL class="description">
+<DD><A HREF="RegConfig.htm#M8" NAME="L575">::<I>pkgName</I>::<B>pkgconfig</B> list</A>
+<DD><A HREF="RegConfig.htm#M9" NAME="L576">::<I>pkgName</I>::<B>pkgconfig</B> get <I>key</I></A>
+</DL>
+<DD><A HREF="RegConfig.htm#M10" NAME="L577">TCL_CONFIG</A>
+<DD><A HREF="RegConfig.htm#M11" NAME="L578">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+Tcl_RegisterConfig - procedures to register embedded configuration information
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>#include &lt;tcl.h&gt;</B><BR>
+void<BR>
+<B>Tcl_RegisterConfig</B>(<I>interp, pkgName, configuration, valEncoding</I>)<BR>
+<H3><A NAME="M4">ARGUMENTS</A></H3>
+<DL class="arguments">
+<DT><A HREF="../TclLib/Interp.htm">Tcl_Interp</A> <B>*interp</B> (in)<DD>
+Refers to the interpreter the embedded configuration information is
+registered for. Must not be NULL.
+<P><DT>const char <B>*pkgName</B> (in)<DD>
+Contains the name of the package registering the embedded
+configuration as ASCII string. This means that this information is in
+UTF-8 too. Must not be NULL.
+<P><DT>Tcl_Config <B>*configuration</B> (in)<DD>
+Refers to an array of Tcl_Config entries containing the information
+embedded in the binary library. Must not be NULL. The end of the array
+is signaled by either a key identical to NULL, or a key referring to
+the empty string.
+<P><DT>const char <B>*valEncoding</B> (in)<DD>
+Contains the name of the encoding used to store the configuration
+values as ASCII string. This means that this information is in UTF-8
+too. Must not be NULL.
+<P></DL>
+<H3><A NAME="M5">DESCRIPTION</A></H3>
+The function described here has its base in TIP 59 and provides
+extensions with support for the embedding of configuration
+information into their binary library and the generation of a
+Tcl-level interface for querying this information.
+<P>
+To embed configuration information into their binary library an
+extension has to define a non-volatile array of Tcl_Config entries in
+one if its source files and then call <B>Tcl_RegisterConfig</B> to
+register that information.
+<P>
+<B>Tcl_RegisterConfig</B> takes four arguments; first, a reference to
+the interpreter we are registering the information with, second, the
+name of the package registering its configuration information, third,
+a pointer to an array of structures, and fourth a string declaring the
+encoding used by the configuration values.
+<P>
+The string <I>valEncoding</I> contains the name of an encoding known to
+Tcl.  All these names are use only characters in the ASCII subset of
+UTF-8 and are thus implicitly in the UTF-8 encoding. It is expected
+that keys are legible English text and therefore using the ASCII
+subset of UTF-8. In other words, they are expected to be in UTF-8
+too. The values associated with the keys can be any string
+however. For these the contents of <I>valEncoding</I> define which
+encoding was used to represent the characters of the strings.
+<P>
+Each element of the <I>configuration</I> array refers to two strings
+containing the key and the value associated with that key. The end of
+the array is signaled by either an empty key or a key identical to
+NULL. The function makes <B>no</B> copy of the <I>configuration</I>
+array. This means that the caller has to make sure that the memory
+holding this array is never released. This is the meaning behind the
+word <B>non-volatile</B> used earlier. The easiest way to accomplish
+this is to define a global static array of Tcl_Config entries. See the file
+&#8220;generic/tclPkgConfig.c&#8221;
+in the sources of the Tcl core for an example.
+<P>
+When called <B>Tcl_RegisterConfig</B> will
+<P>
+<DL class="description">
+<DT><A NAME="M6">(1)</A><DD>
+create a namespace having the provided <I>pkgName</I>, if not yet
+existing.
+<P><DT><A NAME="M7">(2)</A><DD>
+create the command <B>pkgconfig</B> in that namespace and link it to
+the provided information so that the keys from _configuration_ and
+their associated values can be retrieved through calls to
+<B>pkgconfig</B>.
+<P></DL>
+<P>
+The command <B>pkgconfig</B> will provide two subcommands, <B><A HREF="../TclCmd/list.htm">list</A></B>
+and <B>get</B>:
+<P>
+<DL class="description">
+<DT><A NAME="M8">::<I>pkgName</I>::<B>pkgconfig</B> list</A><DD>
+Returns a list containing the names of all defined keys.
+<P><DT><A NAME="M9">::<I>pkgName</I>::<B>pkgconfig</B> get <I>key</I></A><DD>
+Returns the configuration value associated with the specified
+<I>key</I>.
+<P></DL>
+<H3><A NAME="M10">TCL_CONFIG</A></H3>
+The <B>Tcl_Config</B> structure contains the following fields:
+<P>
+<PRE>typedef struct Tcl_Config {
+    const char* key;
+    const char* value;
+} Tcl_Config;</PRE>
+<H3><A NAME="M11">KEYWORDS</A></H3>
+<A href="../Keywords/E.htm#embedding">embedding</A>, <A href="../Keywords/C.htm#configuration">configuration</A>, <A href="../Keywords/B.htm#bianry library">bianry library</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 2002 Andreas Kupries &lt;andreas_kupries(at)users.sourceforge.net&gt;
+</div>
+</BODY></HTML>

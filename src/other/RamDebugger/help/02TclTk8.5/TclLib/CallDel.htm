@@ -1,0 +1,56 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>Tcl_CallWhenDeleted manual page - Tcl Library Procedures</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclLib</a> <small>&gt;</small> CallDel</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+Tcl_CallWhenDeleted, Tcl_DontCallWhenDeleted - Arrange for callback when interpreter is deleted
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>#include &lt;tcl.h&gt;</B><BR>
+<B>Tcl_CallWhenDeleted</B>(<I>interp</I>, <I>proc</I>, <I>clientData</I>)<BR>
+<B>Tcl_DontCallWhenDeleted</B>(<I>interp</I>, <I>proc</I>, <I>clientData</I>)<BR>
+<H3><A NAME="M4">ARGUMENTS</A></H3>
+<DL class="arguments">
+<DT><A HREF="../TclLib/Interp.htm">Tcl_Interp</A> <B>*interp</B> (in)<DD>
+Interpreter with which to associated callback.
+<P><DT>Tcl_InterpDeleteProc <B>*proc</B> (in)<DD>
+Procedure to call when <I>interp</I> is deleted.
+<P><DT>ClientData <B>clientData</B> (in)<DD>
+Arbitrary one-word value to pass to <I>proc</I>.
+<P></DL>
+<H3><A NAME="M5">DESCRIPTION</A></H3>
+<B>Tcl_CallWhenDeleted</B> arranges for <I>proc</I> to be called by
+<B><A HREF="../TclLib/CrtInterp.htm">Tcl_DeleteInterp</A></B> if/when <I>interp</I> is deleted at some future
+time.  <I>Proc</I> will be invoked just before the interpreter
+is deleted, but the interpreter will still be valid at the
+time of the call.
+<I>Proc</I> should have arguments and result that match the
+type <B>Tcl_InterpDeleteProc</B>:
+<PRE>typedef void Tcl_InterpDeleteProc(
+        ClientData <I>clientData</I>,
+        <A HREF="../TclLib/Interp.htm">Tcl_Interp</A> *<I>interp</I>);</PRE>
+The <I>clientData</I> and <I>interp</I> parameters are
+copies of the <I>clientData</I> and <I>interp</I> arguments given
+to <B>Tcl_CallWhenDeleted</B>.
+Typically, <I>clientData</I> points to an application-specific
+data structure that <I>proc</I> uses to perform cleanup when an
+interpreter is about to go away.
+<I>Proc</I> does not return a value.
+<P>
+<B>Tcl_DontCallWhenDeleted</B> cancels a previous call to
+<B>Tcl_CallWhenDeleted</B> with the same arguments, so that
+<I>proc</I> will not be called after all when <I>interp</I> is
+deleted.
+If there is no deletion callback that matches <I>interp</I>,
+<I>proc</I>, and <I>clientData</I> then the call to
+<B>Tcl_DontCallWhenDeleted</B> has no effect.
+
+<H3><A NAME="M6">KEYWORDS</A></H3>
+<A href="../Keywords/C.htm#callback">callback</A>, <A href="../Keywords/D.htm#delete">delete</A>, <A href="../Keywords/I.htm#interpreter">interpreter</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1993 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

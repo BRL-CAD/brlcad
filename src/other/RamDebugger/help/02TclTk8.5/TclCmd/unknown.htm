@@ -1,0 +1,88 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>unknown manual page - Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclCmd</a> <small>&gt;</small> unknown</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+unknown - Handle attempts to use non-existent commands
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>unknown </B><I>cmdName </I>?<I>arg arg ...</I>?<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+This command is invoked by the Tcl interpreter whenever a script
+tries to invoke a command that does not exist.  The default implementation
+of <B>unknown</B> is a library procedure defined when Tcl initializes an
+interpreter.  You can override the default <B>unknown</B> to change its
+functionality, or you can register a new handler for individual namespaces
+using the <B>namespace unknown</B> command.  Note that there is no default 
+implementation of <B>unknown</B> in a safe interpreter.
+<P>
+If the Tcl interpreter encounters a command name for which there
+is not a defined command (in either the current namespace, or the 
+global namespace), then Tcl checks for the existence of
+an unknown handler for the current namespace. By default, this
+handler is a command named <B>::unknown</B>.  If there is no such 
+command, then the interpreter returns an error.
+If the <B>unknown</B> command exists (or a new handler has been
+registered for the current namespace), then it is invoked with
+arguments consisting of the fully-substituted name and arguments
+for the original non-existent command.
+The <B>unknown</B> command typically does things like searching
+through library directories for a command procedure with the name
+<I>cmdName</I>, or expanding abbreviated command names to full-length,
+or automatically executing unknown commands as sub-processes.
+In some cases (such as expanding abbreviations) <B>unknown</B> will
+change the original command slightly and then (re-)execute it.
+The result of the <B>unknown</B> command is used as the result for
+the original non-existent command.
+<P>
+The default implementation of <B>unknown</B> behaves as follows.
+It first calls the <B><A HREF="../TclCmd/library.htm">auto_load</A></B> library procedure to load the command.
+If this succeeds, then it executes the original command with its
+original arguments.
+If the auto-load fails then <B>unknown</B> calls <B><A HREF="../TclCmd/library.htm">auto_execok</A></B>
+to see if there is an executable file by the name <I>cmd</I>.
+If so, it invokes the Tcl <B><A HREF="../TclCmd/exec.htm">exec</A></B> command
+with <I>cmd</I> and all the <I>args</I> as arguments.
+If <I>cmd</I> cannot be auto-executed, <B>unknown</B> checks to
+see if the command was invoked at top-level and outside of any
+script.  If so, then <B>unknown</B> takes two additional steps.
+First, it sees if <I>cmd</I> has one of the following three forms:
+<B>!!</B>, <B>!</B><I>event</I>, or <B>^</B><I>old</I><B>^</B><I>new</I>?<B>^</B>?.
+If so, then <B>unknown</B> carries out history substitution
+in the same way that <B>csh</B> would for these constructs.
+Finally, <B>unknown</B> checks to see if <I>cmd</I> is
+a unique abbreviation for an existing Tcl command.
+If so, it expands the command name and executes the command with
+the original arguments.
+If none of the above efforts has been able to execute
+the command, <B>unknown</B> generates an error return.
+If the global variable <B>auto_noload</B> is defined, then the auto-load
+step is skipped.
+If the global variable <B>auto_noexec</B> is defined then the
+auto-exec step is skipped.
+Under normal circumstances the return value from <B>unknown</B>
+is the return value from the command that was eventually
+executed.
+<H3><A NAME="M5">EXAMPLE</A></H3>
+Arrange for the <B>unknown</B> command to have its standard behavior
+except for first logging the fact that a command was not found:
+<P>
+<PRE># Save the original one so we can chain to it
+rename <B>unknown</B> _original_unknown
+
+# Provide our own implementation
+proc <B>unknown</B> args {
+    puts stderr &quot;WARNING: unknown command: $args&quot;
+    uplevel 1 [list _original_unknown {*}$args]
+}</PRE>
+<H3><A NAME="M6">SEE ALSO</A></H3>
+<B><A HREF="../TclCmd/info.htm">info</A></B>, <B><A HREF="../TclCmd/proc.htm">proc</A></B>, <B><A HREF="../TclCmd/interp.htm">interp</A></B>, <B>library</B>, <B><A HREF="../TclCmd/namespace.htm">namespace</A></B>
+<H3><A NAME="M7">KEYWORDS</A></H3>
+<A href="../Keywords/E.htm#error">error</A>, <A href="../Keywords/N.htm#non-existent command">non-existent command</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1993 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

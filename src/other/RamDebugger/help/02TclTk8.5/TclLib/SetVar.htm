@@ -1,0 +1,281 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>Tcl_SetVar manual page - Tcl Library Procedures</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclLib</a> <small>&gt;</small> SetVar</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="SetVar.htm#M2" NAME="L655">NAME</A>
+<DL><DD>Tcl_SetVar2Ex, Tcl_SetVar, Tcl_SetVar2, Tcl_ObjSetVar2, Tcl_GetVar2Ex, Tcl_GetVar, Tcl_GetVar2, Tcl_ObjGetVar2, Tcl_UnsetVar, Tcl_UnsetVar2 - manipulate Tcl variables</DD></DL>
+<DD><A HREF="SetVar.htm#M3" NAME="L656">SYNOPSIS</A>
+<DL>
+<DD><B>#include &lt;tcl.h&gt;</B>
+<DD>Tcl_Obj *
+<DD><B>Tcl_SetVar2Ex</B>(<I>interp, name1, name2, newValuePtr, flags</I>)
+<DD>const char *
+<DD><B>Tcl_SetVar</B>(<I>interp, varName, newValue, flags</I>)
+<DD>const char *
+<DD><B>Tcl_SetVar2</B>(<I>interp, name1, name2, newValue, flags</I>)
+<DD>Tcl_Obj *
+<DD><B>Tcl_ObjSetVar2</B>(<I>interp, part1Ptr, part2Ptr, newValuePtr, flags</I>)
+<DD>Tcl_Obj *
+<DD><B>Tcl_GetVar2Ex</B>(<I>interp, name1, name2, flags</I>)
+<DD>const char *
+<DD><B>Tcl_GetVar</B>(<I>interp, varName, flags</I>)
+<DD>const char *
+<DD><B>Tcl_GetVar2</B>(<I>interp, name1, name2, flags</I>)
+<DD>Tcl_Obj *
+<DD><B>Tcl_ObjGetVar2</B>(<I>interp, part1Ptr, part2Ptr, flags</I>)
+<DD>int
+<DD><B>Tcl_UnsetVar</B>(<I>interp, varName, flags</I>)
+<DD>int
+<DD><B>Tcl_UnsetVar2</B>(<I>interp, name1, name2, flags</I>)
+</DL>
+<DD><A HREF="SetVar.htm#M4" NAME="L657">ARGUMENTS</A>
+<DL class="arguments">
+</DL>
+<DD><A HREF="SetVar.htm#M5" NAME="L658">DESCRIPTION</A>
+<DL class="description">
+</DL>
+<DL class="description">
+<DD><A HREF="SetVar.htm#M6" NAME="L659"><B>TCL_GLOBAL_ONLY</B></A>
+<DD><A HREF="SetVar.htm#M7" NAME="L660"><B>TCL_NAMESPACE_ONLY</B></A>
+<DD><A HREF="SetVar.htm#M8" NAME="L661"><B>TCL_LEAVE_ERR_MSG</B></A>
+<DD><A HREF="SetVar.htm#M9" NAME="L662"><B>TCL_APPEND_VALUE</B></A>
+<DD><A HREF="SetVar.htm#M10" NAME="L663"><B>TCL_LIST_ELEMENT</B></A>
+</DL>
+<DD><A HREF="SetVar.htm#M11" NAME="L664">SEE ALSO</A>
+<DD><A HREF="SetVar.htm#M12" NAME="L665">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+Tcl_SetVar2Ex, Tcl_SetVar, Tcl_SetVar2, Tcl_ObjSetVar2, Tcl_GetVar2Ex, Tcl_GetVar, Tcl_GetVar2, Tcl_ObjGetVar2, Tcl_UnsetVar, Tcl_UnsetVar2 - manipulate Tcl variables
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>#include &lt;tcl.h&gt;</B><BR>
+Tcl_Obj *<BR>
+<B>Tcl_SetVar2Ex</B>(<I>interp, name1, name2, newValuePtr, flags</I>)<BR>
+const char *<BR>
+<B>Tcl_SetVar</B>(<I>interp, varName, newValue, flags</I>)<BR>
+const char *<BR>
+<B>Tcl_SetVar2</B>(<I>interp, name1, name2, newValue, flags</I>)<BR>
+Tcl_Obj *<BR>
+<B>Tcl_ObjSetVar2</B>(<I>interp, part1Ptr, part2Ptr, newValuePtr, flags</I>)<BR>
+Tcl_Obj *<BR>
+<B>Tcl_GetVar2Ex</B>(<I>interp, name1, name2, flags</I>)<BR>
+const char *<BR>
+<B>Tcl_GetVar</B>(<I>interp, varName, flags</I>)<BR>
+const char *<BR>
+<B>Tcl_GetVar2</B>(<I>interp, name1, name2, flags</I>)<BR>
+Tcl_Obj *<BR>
+<B>Tcl_ObjGetVar2</B>(<I>interp, part1Ptr, part2Ptr, flags</I>)<BR>
+int<BR>
+<B>Tcl_UnsetVar</B>(<I>interp, varName, flags</I>)<BR>
+int<BR>
+<B>Tcl_UnsetVar2</B>(<I>interp, name1, name2, flags</I>)<BR>
+<H3><A NAME="M4">ARGUMENTS</A></H3>
+<DL class="arguments">
+<DT><A HREF="../TclLib/Interp.htm">Tcl_Interp</A> <B>*interp</B> (in)<DD>
+Interpreter containing variable.
+<P><DT>const char <B>*name1</B> (in)<DD>
+Contains the name of an array variable (if <I>name2</I> is non-NULL)
+or (if <I>name2</I> is NULL) either the name of a scalar variable
+or a complete name including both variable name and index.
+May include <B>::</B> namespace qualifiers
+to specify a variable in a particular namespace.
+<P><DT>const char <B>*name2</B> (in)<DD>
+If non-NULL, gives name of element within array; in this
+case <I>name1</I> must refer to an array variable.
+<P><DT>Tcl_Obj <B>*newValuePtr</B> (in)<DD>
+Points to a Tcl object containing the new value for the variable.
+<P><DT>int <B>flags</B> (in)<DD>
+OR-ed combination of bits providing additional information. See below
+for valid values.
+<P><DT>const char <B>*varName</B> (in)<DD>
+Name of variable.
+May include <B>::</B> namespace qualifiers
+to specify a variable in a particular namespace.
+May refer to a scalar variable or an element of
+an array.
+<P><DT>const char <B>*newValue</B> (in)<DD>
+New value for variable, specified as a null-terminated string.
+A copy of this value is stored in the variable.
+<P><DT>Tcl_Obj <B>*part1Ptr</B> (in)<DD>
+Points to a Tcl object containing the variable's name.
+The name may include a series of <B>::</B> namespace qualifiers
+to specify a variable in a particular namespace.
+May refer to a scalar variable or an element of an array variable.
+<P><DT>Tcl_Obj <B>*part2Ptr</B> (in)<DD>
+If non-NULL, points to an object containing the name of an element
+within an array and <I>part1Ptr</I> must refer to an array variable.
+<P></DL>
+<H3><A NAME="M5">DESCRIPTION</A></H3>
+These procedures are used to create, modify, read, and delete
+Tcl variables from C code.
+<P>
+<B>Tcl_SetVar2Ex</B>, <B>Tcl_SetVar</B>, <B>Tcl_SetVar2</B>, and
+<B>Tcl_ObjSetVar2</B> 
+will create a new variable or modify an existing one.
+These procedures set the given variable to the value
+given by <I>newValuePtr</I> or <I>newValue</I> and return a
+pointer to the variable's new value, which is stored in Tcl's
+variable structure.
+<B>Tcl_SetVar2Ex</B> and <B>Tcl_ObjSetVar2</B> take the new value as a
+Tcl_Obj and return
+a pointer to a Tcl_Obj.  <B>Tcl_SetVar</B> and <B>Tcl_SetVar2</B>
+take the new value as a string and return a string; they are
+usually less efficient than <B>Tcl_ObjSetVar2</B>.  Note that the
+return value may be different than the <I>newValuePtr</I> or
+<I>newValue</I> argument, due to modifications made by write traces.
+If an error occurs in setting the variable (e.g. an array
+variable is referenced without giving an index into the array)
+NULL is returned and an error message is left in <I>interp</I>'s
+result if the <B>TCL_LEAVE_ERR_MSG</B> <I>flag</I> bit is set.
+<P>
+<B>Tcl_GetVar2Ex</B>, <B>Tcl_GetVar</B>, <B>Tcl_GetVar2</B>, and
+<B>Tcl_ObjGetVar2</B>
+return the current value of a variable.
+The arguments to these procedures are treated in the same way
+as the arguments to the procedures described above.
+Under normal circumstances, the return value is a pointer
+to the variable's value.  For <B>Tcl_GetVar2Ex</B> and
+<B>Tcl_ObjGetVar2</B> the value is
+returned as a pointer to a Tcl_Obj.  For <B>Tcl_GetVar</B> and
+<B>Tcl_GetVar2</B> the value is returned as a string; this is
+usually less efficient, so <B>Tcl_GetVar2Ex</B> or <B>Tcl_ObjGetVar2</B>
+are preferred.
+If an error occurs while reading the variable (e.g. the variable
+does not exist or an array element is specified for a scalar
+variable), then NULL is returned and an error message is left
+in <I>interp</I>'s result if the <B>TCL_LEAVE_ERR_MSG</B> <I>flag</I>
+bit is set.
+<P>
+<B>Tcl_UnsetVar</B> and <B>Tcl_UnsetVar2</B> may be used to remove
+a variable, so that future attempts to read the variable will return
+an error.
+The arguments to these procedures are treated in the same way
+as the arguments to the procedures above.
+If the variable is successfully removed then <B>TCL_OK</B> is returned.
+If the variable cannot be removed because it does not exist then
+<B>TCL_ERROR</B> is returned and an error message is left
+in <I>interp</I>'s result if the <B>TCL_LEAVE_ERR_MSG</B> <I>flag</I>
+bit is set.
+If an array element is specified, the given element is removed
+but the array remains.
+If an array name is specified without an index, then the entire
+array is removed.
+<P>
+The name of a variable may be specified to these procedures in
+four ways:
+<P>
+<DL class="description">
+<DT>[1]<DD>
+If <B>Tcl_SetVar</B>, <B>Tcl_GetVar</B>, or <B>Tcl_UnsetVar</B>
+is invoked, the variable name is given as
+a single string, <I>varName</I>.
+If <I>varName</I> contains an open parenthesis and ends with a
+close parenthesis, then the value between the parentheses is
+treated as an index (which can have any string value) and
+the characters before the first open
+parenthesis are treated as the name of an array variable.
+If <I>varName</I> does not have parentheses as described above, then
+the entire string is treated as the name of a scalar variable.
+<P><DT>[2]<DD>
+If the <I>name1</I> and <I>name2</I> arguments are provided and
+<I>name2</I> is non-NULL, then an array element is specified and
+the array name and index have
+already been separated by the caller: <I>name1</I> contains the
+name and <I>name2</I> contains the index.  An error is generated
+if <I>name1</I>  contains an open parenthesis and ends with a
+close parenthesis (array element) and <I>name2</I> is non-NULL.
+<P><DT>[3]<DD>
+If <I>name2</I> is NULL, <I>name1</I> is treated just like
+<I>varName</I> in case [1] above (it can be either a scalar or an array
+element variable name).
+<P></DL>
+<P>
+The <I>flags</I> argument may be used to specify any of several
+options to the procedures.
+It consists of an OR-ed combination of the following bits.
+<P>
+<DL class="description">
+<DT><A NAME="M6"><B>TCL_GLOBAL_ONLY</B></A><DD>
+Under normal circumstances the procedures look up variables as follows.
+If a procedure call is active in <I>interp</I>,
+the variable is looked up at the current level of procedure call.
+Otherwise, the variable is looked up first in the current namespace,
+then in the global namespace.
+However, if this bit is set in <I>flags</I> then the variable
+is looked up only in the global namespace
+even if there is a procedure call active.
+If both <B>TCL_GLOBAL_ONLY</B> and <B>TCL_NAMESPACE_ONLY</B> are given,
+<B>TCL_GLOBAL_ONLY</B> is ignored.
+<P><DT><A NAME="M7"><B>TCL_NAMESPACE_ONLY</B></A><DD>
+If this bit is set in <I>flags</I> then the variable
+is looked up only in the current namespace; if a procedure is active
+its variables are ignored, and the global namespace is also ignored unless
+it is the current namespace.
+<P><DT><A NAME="M8"><B>TCL_LEAVE_ERR_MSG</B></A><DD>
+If an error is returned and this bit is set in <I>flags</I>, then
+an error message will be left in the interpreter's result,
+where it can be retrieved with <B><A HREF="../TclLib/SetResult.htm">Tcl_GetObjResult</A></B>
+or <B><A HREF="../TclLib/SetResult.htm">Tcl_GetStringResult</A></B>.
+If this flag bit is not set then no error message is left
+and the interpreter's result will not be modified.
+<P><DT><A NAME="M9"><B>TCL_APPEND_VALUE</B></A><DD>
+If this bit is set then <I>newValuePtr</I> or <I>newValue</I> is
+appended to the current value instead of replacing it.
+If the variable is currently undefined, then the bit is ignored.
+This bit is only used by the <B>Tcl_Set*</B> procedures.
+<P><DT><A NAME="M10"><B>TCL_LIST_ELEMENT</B></A><DD>
+If this bit is set, then <I>newValue</I> is converted to a valid
+Tcl list element before setting (or appending to) the variable.
+A separator space is appended before the new list element unless
+the list element is going to be the first element in a list or
+sublist (i.e. the variable's current value is empty, or contains
+the single character
+&#8220;{&#8221;,
+or ends in
+&#8220; }&#8221;).
+When appending, the original value of the variable must also be
+a valid list, so that the operation is the appending of a new
+list element onto a list.
+<P></DL>
+<P>
+<B>Tcl_GetVar</B> and <B>Tcl_GetVar2</B>
+return the current value of a variable.
+The arguments to these procedures are treated in the same way
+as the arguments to <B>Tcl_SetVar</B> and <B>Tcl_SetVar2</B>.
+Under normal circumstances, the return value is a pointer
+to the variable's value (which is stored in Tcl's variable
+structure and will not change before the next call to <B>Tcl_SetVar</B>
+or <B>Tcl_SetVar2</B>).
+<B>Tcl_GetVar</B> and <B>Tcl_GetVar2</B> use the flag bits <B>TCL_GLOBAL_ONLY</B>
+and <B>TCL_LEAVE_ERR_MSG</B>, both of
+which have
+the same meaning as for <B>Tcl_SetVar</B>.
+If an error occurs in reading the variable (e.g. the variable
+does not exist or an array element is specified for a scalar
+variable), then NULL is returned.
+<P>
+<B>Tcl_UnsetVar</B> and <B>Tcl_UnsetVar2</B> may be used to remove
+a variable, so that future calls to <B>Tcl_GetVar</B> or <B>Tcl_GetVar2</B>
+for the variable will return an error.
+The arguments to these procedures are treated in the same way
+as the arguments to <B>Tcl_GetVar</B> and <B>Tcl_GetVar2</B>.
+If the variable is successfully removed then <B>TCL_OK</B> is returned.
+If the variable cannot be removed because it does not exist then
+<B>TCL_ERROR</B> is returned.
+If an array element is specified, the given element is removed
+but the array remains.
+If an array name is specified without an index, then the entire
+array is removed.
+
+<H3><A NAME="M11">SEE ALSO</A></H3>
+<B><A HREF="../TclLib/SetResult.htm">Tcl_GetObjResult</A></B>, <B><A HREF="../TclLib/SetResult.htm">Tcl_GetStringResult</A></B>, <B><A HREF="../TclLib/TraceVar.htm">Tcl_TraceVar</A></B>
+<H3><A NAME="M12">KEYWORDS</A></H3>
+<A href="../Keywords/A.htm#array">array</A>, <A href="../Keywords/G.htm#get variable">get variable</A>, <A href="../Keywords/I.htm#interpreter">interpreter</A>, <A href="../Keywords/O.htm#object">object</A>, <A href="../Keywords/S.htm#scalar">scalar</A>, <A href="../Keywords/S.htm#set">set</A>, <A href="../Keywords/U.htm#unset">unset</A>, <A href="../Keywords/V.htm#variable">variable</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1989-1993 The Regents of the University of California.
+Copyright &copy; 1994-1997 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

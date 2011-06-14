@@ -1,0 +1,275 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>format manual page - Tcl Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclCmd</a> <small>&gt;</small> format</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="format.htm#M2" NAME="L533">NAME</A>
+<DL><DD>format - Format a string in the style of sprintf</DD></DL>
+<DD><A HREF="format.htm#M3" NAME="L534">SYNOPSIS</A>
+<DL>
+</DL>
+<DD><A HREF="format.htm#M4" NAME="L535">INTRODUCTION</A>
+<DD><A HREF="format.htm#M5" NAME="L536">DETAILS ON FORMATTING</A>
+<DL class="details on formatting">
+<DD><A HREF="format.htm#M6" NAME="L537"><B>-</B></A>
+<DD><A HREF="format.htm#M7" NAME="L538"><B>+</B></A>
+<DD><A HREF="format.htm#M8" NAME="L539"><I>space</I></A>
+<DD><A HREF="format.htm#M9" NAME="L540"><B>0</B></A>
+<DD><A HREF="format.htm#M10" NAME="L541"><B>#</B></A>
+</DL>
+<DL class="details on formatting">
+<DD><A HREF="format.htm#M11" NAME="L542"><B>d</B></A>
+<DD><A HREF="format.htm#M12" NAME="L543"><B>u</B></A>
+<DD><A HREF="format.htm#M13" NAME="L544"><B>i</B></A>
+<DD><A HREF="format.htm#M14" NAME="L545"><B>o</B></A>
+<DD><A HREF="format.htm#M15" NAME="L546"><B>x</B> or <B>X</B></A>
+<DD><A HREF="format.htm#M16" NAME="L547"><B>c</B></A>
+<DD><A HREF="format.htm#M17" NAME="L548"><B>s</B></A>
+<DD><A HREF="format.htm#M18" NAME="L549"><B>f</B></A>
+<DD><A HREF="format.htm#M19" NAME="L550"><B>e</B> or <B>E</B></A>
+<DD><A HREF="format.htm#M20" NAME="L551"><B>g</B> or <B>G</B></A>
+<DD><A HREF="format.htm#M21" NAME="L552"><B>%</B></A>
+</DL>
+<DD><A HREF="format.htm#M22" NAME="L553">DIFFERENCES FROM ANSI SPRINTF</A>
+<DL class="differences from ansi sprintf">
+</DL>
+<DD><A HREF="format.htm#M23" NAME="L554">EXAMPLES</A>
+<DD><A HREF="format.htm#M24" NAME="L555">SEE ALSO</A>
+<DD><A HREF="format.htm#M25" NAME="L556">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+format - Format a string in the style of sprintf
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>format </B><I>formatString </I>?<I>arg arg ...</I>?<BR>
+<H3><A NAME="M4">INTRODUCTION</A></H3>
+This command generates a formatted string in a fashion similar to the
+ANSI C <B>sprintf</B> procedure.
+<I>FormatString</I> indicates how to format the result, using
+<B>%</B> conversion specifiers as in <B>sprintf</B>, and the additional
+arguments, if any, provide values to be substituted into the result.
+The return value from <B>format</B> is the formatted string.
+<H3><A NAME="M5">DETAILS ON FORMATTING</A></H3>
+The command operates by scanning <I>formatString</I> from left to right. 
+Each character from the format string is appended to the result
+string unless it is a percent sign.
+If the character is a <B>%</B> then it is not copied to the result string.
+Instead, the characters following the <B>%</B> character are treated as
+a conversion specifier.
+The conversion specifier controls the conversion of the next successive
+<I>arg</I> to a particular format and the result is appended to 
+the result string in place of the conversion specifier.
+If there are multiple conversion specifiers in the format string,
+then each one controls the conversion of one additional <I>arg</I>.
+The <B>format</B> command must be given enough <I>arg</I>s to meet the needs
+of all of the conversion specifiers in <I>formatString</I>.
+<P>
+Each conversion specifier may contain up to six different parts:
+an XPG3 position specifier,
+a set of flags, a minimum field width, a precision, a size modifier,
+and a conversion character.
+Any of these fields may be omitted except for the conversion character.
+The fields that are present must appear in the order given above.
+The paragraphs below discuss each of these fields in turn.
+<P>
+If the <B>%</B> is followed by a decimal number and a <B>$</B>, as in
+&#8220;<B>%2$d</B>&#8221;,
+then the value to convert is not taken from the next sequential argument.
+Instead, it is taken from the argument indicated by the number,
+where 1 corresponds to the first <I>arg</I>.
+If the conversion specifier requires multiple arguments because
+of <B>*</B> characters in the specifier then
+successive arguments are used, starting with the argument
+given by the number.
+This follows the XPG3 conventions for positional specifiers.
+If there are any positional specifiers in <I>formatString</I>
+then all of the specifiers must be positional.
+<P>
+The second portion of a conversion specifier may contain any of the
+following flag characters, in any order:
+<P>
+<DL class="details on formatting">
+<DT><A NAME="M6"><B>-</B></A><DD>
+Specifies that the converted argument should be left-justified 
+in its field (numbers are normally right-justified with leading 
+spaces if needed).
+<P><DT><A NAME="M7"><B>+</B></A><DD>
+Specifies that a number should always be printed with a sign, 
+even if positive.
+<P><DT><A NAME="M8"><I>space</I></A><DD>
+Specifies that a space should be added to the beginning of the
+number if the first character is not a sign.
+<P><DT><A NAME="M9"><B>0</B></A><DD>
+Specifies that the number should be padded on the left with 
+zeroes instead of spaces.
+<P><DT><A NAME="M10"><B>#</B></A><DD>
+Requests an alternate output form. For <B>o</B> and <B>O</B>
+conversions it guarantees that the first digit is always <B>0</B>.
+For <B>x</B> or <B>X</B> conversions, <B>0x</B> or <B>0X</B> (respectively)
+will be added to the beginning of the result unless it is zero.
+For all floating-point conversions (<B>e</B>, <B>E</B>, <B>f</B>,
+<B>g</B>, and <B>G</B>) it guarantees that the result always 
+has a decimal point.
+For <B>g</B> and <B>G</B> conversions it specifies that 
+trailing zeroes should not be removed.
+<P></DL>
+<P>
+The third portion of a conversion specifier is a decimal number giving a
+minimum field width for this conversion.
+It is typically used to make columns line up in tabular printouts.
+If the converted argument contains fewer characters than the
+minimum field width then it will be padded so that it is as wide
+as the minimum field width.
+Padding normally occurs by adding extra spaces on the left of the
+converted argument, but the <B>0</B> and <B>-</B> flags 
+may be used to specify padding with zeroes on the left or with
+spaces on the right, respectively.
+If the minimum field width is specified as <B>*</B> rather than
+a number, then the next argument to the <B>format</B> command
+determines the minimum field width; it must be an integer value.
+<P>
+The fourth portion of a conversion specifier is a precision,
+which consists of a period followed by a number.
+The number is used in different ways for different conversions.
+For <B>e</B>, <B>E</B>, and <B>f</B> conversions it specifies the number
+of digits to appear to the right of the decimal point.
+For <B>g</B> and <B>G</B> conversions it specifies the total number
+of digits to appear, including those on both sides of the decimal
+point (however, trailing zeroes after the decimal point will still
+be omitted unless the <B>#</B> flag has been specified).
+For integer conversions, it specifies a minimum number of digits
+to print (leading zeroes will be added if necessary).
+For <B>s</B> conversions it specifies the maximum number of characters to be 
+printed; if the string is longer than this then the trailing characters will be dropped.
+If the precision is specified with <B>*</B> rather than a number
+then the next argument to the <B>format</B> command determines the precision;
+it must be a numeric string.
+<P>
+The fifth part of a conversion specifier is a size modifier,
+which must be <B>ll</B>, <B>h</B>, or <B>l</B>.
+If it is <B>ll</B> it specifies that an integer value is taken
+without truncation for conversion to a formatted substring.
+If it is <B>h</B> it specifies that an integer value is
+truncated to a 16-bit range before converting.  This option is rarely useful.
+If it is <B>l</B> it specifies that the integer value is 
+truncated to the same range as that produced by the <B>wide()</B>
+function of the <B><A HREF="../TclCmd/expr.htm">expr</A></B> command (at least a 64-bit range).
+If neither <B>h</B> nor <B>l</B> are present, the integer value is
+truncated to the same range as that produced by the <B>int()</B>
+function of the <B><A HREF="../TclCmd/expr.htm">expr</A></B> command (at least a 32-bit range, but
+determined by the value of <B>tcl_platform(wordSize)</B>).
+<P>
+The last thing in a conversion specifier is an alphabetic character
+that determines what kind of conversion to perform.
+The following conversion characters are currently supported:
+<P>
+<DL class="details on formatting">
+<DT><A NAME="M11"><B>d</B></A><DD>
+Convert integer to signed decimal string.
+<P><DT><A NAME="M12"><B>u</B></A><DD>
+Convert integer to unsigned decimal string.
+<P><DT><A NAME="M13"><B>i</B></A><DD>
+Convert integer to signed decimal string (equivalent to <B>d</B>).
+<P><DT><A NAME="M14"><B>o</B></A><DD>
+Convert integer to unsigned octal string.
+<P><DT><A NAME="M15"><B>x</B> or <B>X</B></A><DD>
+Convert integer to unsigned hexadecimal string, using digits
+&#8220;0123456789abcdef&#8221;
+for <B>x</B> and
+&#8220;0123456789ABCDEF&#8221;
+for <B>X</B>).
+<P><DT><A NAME="M16"><B>c</B></A><DD>
+Convert integer to the Unicode character it represents.
+<P><DT><A NAME="M17"><B>s</B></A><DD>
+No conversion; just insert string.
+<P><DT><A NAME="M18"><B>f</B></A><DD>
+Convert number to signed decimal string of 
+the form <I>xx.yyy</I>, where the number of <I>y</I>'s is determined by 
+the precision (default: 6).
+If the precision is 0 then no decimal point is output.
+<P><DT><A NAME="M19"><B>e</B> or <B>E</B></A><DD>
+Convert number to scientific notation in the 
+form <I>x.yyy</I><B>e&#177;</B><I>zz</I>, where the number of <I>y</I>'s is determined 
+by the precision (default: 6).
+If the precision is 0 then no decimal point is output.
+If the <B>E</B> form is used then <B>E</B> is 
+printed instead of <B>e</B>.
+<P><DT><A NAME="M20"><B>g</B> or <B>G</B></A><DD>
+If the exponent is less than -4 or greater than or equal to the 
+precision, then convert number as for <B>%e</B> or 
+<B>%E</B>.
+Otherwise convert as for <B>%f</B>.
+Trailing zeroes and a trailing decimal point are omitted.
+<P><DT><A NAME="M21"><B>%</B></A><DD>
+No conversion: just insert <B>%</B>.
+<P></DL>
+<H3><A NAME="M22">DIFFERENCES FROM ANSI SPRINTF</A></H3>
+The behavior of the format command is the same as the
+ANSI C <B>sprintf</B> procedure except for the following
+differences:
+<P>
+<DL class="differences from ansi sprintf">
+<DT>[1]<DD>
+<B>%p</B> and <B>%n</B> specifiers are not supported.
+<P><DT>[2]<DD>
+For <B>%c</B> conversions the argument must be an integer value,
+which will then be converted to the corresponding character value.
+<P><DT>[3]<DD>
+The size modifiers are ignored when formatting floating-point values.
+The <B>ll</B> modifier has no <B>sprintf</B> counterpart.
+<P></DL>
+<H3><A NAME="M23">EXAMPLES</A></H3>
+Convert the numeric value of a UNICODE character to the character
+itself:
+<PRE>set value 120
+set char [<B>format</B> %c $value]</PRE>
+<P>
+Convert the output of <B><A HREF="../TclCmd/time.htm">time</A></B> into seconds to an accuracy of
+hundredths of a second:
+<PRE>set us [lindex [time $someTclCode] 0]
+puts [<B>format</B> &quot;%.2f seconds to execute&quot; [expr {$us / 1e6}]]</PRE>
+<P>
+Create a packed X11 literal color specification:
+<PRE># Each color-component should be in range (0..255)
+set color [<B>format</B> &quot;#%02x%02x%02x&quot; $r $g $b]</PRE>
+<P>
+Use XPG3 format codes to allow reordering of fields (a technique that
+is often used in localized message catalogs; see <B><A HREF="../TclCmd/msgcat.htm">msgcat</A></B>) without
+reordering the data values passed to <B>format</B>:
+<PRE>set fmt1 &quot;Today, %d shares in %s were bought at $%.2f each&quot;
+puts [<B>format</B> $fmt1 123 &quot;Global BigCorp&quot; 19.37]
+
+set fmt2 &quot;Bought %2&#92;$s equity ($%3$.2f x %1&#92;$d) today&quot;
+puts [<B>format</B> $fmt2 123 &quot;Global BigCorp&quot; 19.37]</PRE>
+<P>
+Print a small table of powers of three:
+<PRE># Set up the column widths
+set w1 5
+set w2 10
+
+# Make a nice header (with separator) for the table first
+set sep +-[string repeat - $w1]-+-[string repeat - $w2]-+
+puts $sep
+puts [<B>format</B> &quot;| %-*s | %-*s |&quot; $w1 &quot;Index&quot; $w2 &quot;Power&quot;]
+puts $sep
+
+# Print the contents of the table
+set p 1
+for {set i 0} {$i&lt;=20} {incr i} {
+   puts [<B>format</B> &quot;| %*d | %*ld |&quot; $w1 $i $w2 $p]
+   set p [expr {wide($p) * 3}]
+}
+
+# Finish off by printing the separator again
+puts $sep</PRE>
+<H3><A NAME="M24">SEE ALSO</A></H3>
+<B><A HREF="../TclCmd/scan.htm">scan</A></B>, <B>sprintf</B>, <B><A HREF="../TclCmd/string.htm">string</A></B>
+<H3><A NAME="M25">KEYWORDS</A></H3>
+<A href="../Keywords/C.htm#conversion specifier">conversion specifier</A>, <A href="../Keywords/F.htm#format">format</A>, <A href="../Keywords/S.htm#sprintf">sprintf</A>, <A href="../Keywords/S.htm#string">string</A>, <A href="../Keywords/S.htm#substitution">substitution</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1993 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

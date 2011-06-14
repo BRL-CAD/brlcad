@@ -1,0 +1,140 @@
+<html>
+<head>
+<link rel="stylesheet" href="manpage.css"><title>tDOM manual: tnc</title><meta name="xsl-processor" content="Jochen Loewer (loewerj@hotmail.com), Rolf Ade (rolf@pointsman.de) et. al."><meta name="generator" content="$RCSfile: tnc.html,v $ $Revision$">
+</head><body>
+<div class="header">
+<div class="navbar" align="center">
+<a href="#SECTid883">NAME</a> · <a href="#SECTid892">SYNOPSIS</a> · <a href="#SECTid898">DESCRIPTION</a> · <a href="#SECTid1068">BUGS</a> · <a href="#SECTid1086">KEYWORDS</a>
+</div><hr class="navsep">
+</div><div class="body">
+  <h2><a name="SECTid883">NAME</a></h2><p class="namesection">
+<b class="names">tnc - </b><br>tnc is an expat parser object extension, that validates the XML
+stream against the document DTD while parsing.</p>
+  
+  <h2><a name="SECTid892">SYNOPSIS</a></h2><pre class="syntax">package require tdom
+package require tnc
+
+set parser [expat]
+
+tnc $parser enable</pre>
+
+  <h2><a name="SECTid898">DESCRIPTION</a></h2><p>
+<i class="m">tnc</i> adds the C handler set "tnc" to a tcl expat parser
+obj. This handler set is a simple DTD validator. If the validator detects a
+validation error, it sets the interp result, signals error and stops
+parsing. There isn't any validation error recovering. As a consequence, only
+valid documents are completely parsed.</p><p>This handler set has only three methods:</p><dl class="commandlist">
+      
+        <dt>
+<b class="cmd">tnc</b> <i class="m">parserObj</i> <b class="method">enable</b>
+</dt>
+
+        <dd><p>Adds the tnc C handler set to a Tcl expat parser object.</p></dd>
+      
+
+      
+        <dt>
+<b class="cmd">tnc</b> <i class="m">parserObj</i> <b class="method">remove</b>
+</dt>
+
+        <dd><p>Removes the tnc validatore from the parser <i class="m">parserObj</i>
+and frees all information, stored by it.</p></dd>
+      
+
+      
+        <dt>
+<b class="cmd">tnc</b> <i class="m">parserObj</i> <b class="method">getValidateCmd</b> <b class="option">?validateCmdName?</b>
+</dt>
+
+        <dd>
+<p>Returns a new created validation command, if one is avaliable
+from the parser command, otherwise it signals error. The name of the validation
+command is the <i class="m">validateCmdName</i>, if this optional argument was given, or
+a random choosen name. A validation command is avaliable in a parser command,
+if the parser with tnc enabled was previously used, to parse an XML document
+with a valid doctype declaration, a valid external subset, if one was given by
+the doctype declaration, and a valid internal subset. The further document
+doesn't need to be valid, to make the validation command avaliable. The
+validation command can only get received one time from the parser command. The
+created validation command has this syntax:</p>
+
+<pre class="syntax">
+<b class="cmd">validationCmd</b> <i class="m">method</i> <i class="m">?args?</i>
+</pre>
+
+    <p>The valid methods are:</p>
+
+    <dl class="commandlist">
+      
+        <dt>
+<b class="method">validateDocument</b> <i class="m">domDocument</i> <i class="m">?varName?</i>
+</dt>
+        <dd>Checks, if the given domDocument is valid against the DTD
+information represented by the validation command. Returns 1, if the document
+ist valid, 0 otherwise. If the <i class="m">varName</i> argument is given, then the
+variable it names is set to the detected reason for the validation error or to
+the empty string in case of a valid document.</dd>
+      
+
+      
+        <dt>
+<b class="method">validateTree</b> <i class="m">elementNode</i> <i class="m">?varName?</i>
+</dt>
+
+        <dd>Checks, if the given subtree with <i class="m">domNode</i> as root element
+is a posible valid subtree of a document conforming to the DTD information
+represented by teh validation command. IDREF could not checked, while
+validating only a subtree, but it is checked, that every known ID attribute in
+the subtree is unique. Returns 1, if the subtree is OK, 0 otherwise. If the
+<i class="m">varName</i> argument is given, then the variable it names is set to the
+detected reason for the validation error or to the empty string in case of
+a valid subtree.</dd>
+
+      
+
+      
+        <dt>
+<b class="method">validateAttributes</b> <i class="m">elementNode</i> <i class="m">?varName?</i>
+</dt>
+
+        <dd>Checks, if there is an element declaration for the name of the
+<i class="m">elementNode</i> in the DTD represented by the validation command and, if
+yes, if the attributes of the <i class="m">elementNode</i> are conform to the ATTLIST
+declarations for that element in the DTD. Returns 1, if the attributes and
+there value types are OK, 0 otherwise. If the <i class="m">varName</i> argument is given,
+then the variable it names is set to the detected reason for the validation
+error or to the empty string in case the element has all its required
+attributes, only declared attributes and the values of the attributes matches
+there type.</dd>
+
+      
+
+      
+        <dt><b class="method">delete</b></dt>
+        <dd>Deletes the validation command and frees the memory used by
+it. Returns the empty string.</dd>
+      
+
+      </dl>
+     </dd>
+      
+    </dl>
+
+  <h2><a name="SECTid1068">BUGS</a></h2><p>The validation error reports could be much more informative and
+user-friendly.</p><p>The validator doesn't detect ambiguous content models (see XML
+recomendation Section 3.2.1 and Appendix E). Most Java validators also doesn't,
+but handle such content models right anyhow. Tnc does not; if your DTD has
+such ambiguous content models, tnc can not used to validate documents against
+such (not completely XML spec compliant) DTDs.</p><p>It isn't possible to validate XML documents with standalone="yes" in the
+XML Declaration</p><p>Violations of the validity constraints Proper Group/PE Nesting and
+Proper Conditional Section/PE Nesting are not detected. They could only happen
+inside a invalid DTD, not in the content of a document.</p>
+  <h2><a name="SECTid1086">KEYWORDS</a></h2><p class="keywords">
+<a class="keyword" href="keyword-index.html#KW-Validation">Validation</a>, <a class="keyword" href="keyword-index.html#KW-DTD">DTD</a>
+</p>
+  
+</div><hr class="navsep"><div class="navbar" align="center">
+<a class="navaid" href="index.html">Table of Contents</a> · <a class="navaid" href="category-index.html">Index</a> · <a class="navaid" href="keyword-index.html">Keywords</a>
+</div>
+</body>
+</html>

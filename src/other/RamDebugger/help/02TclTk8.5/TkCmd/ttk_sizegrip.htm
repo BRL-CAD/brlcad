@@ -1,0 +1,84 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>ttk::sizegrip manual page - Tk Themed Widget</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TkCmd</a> <small>&gt;</small> ttk_sizegrip</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="ttk_sizegrip.htm#M2" NAME="L1934">NAME</A>
+<DL><DD>ttk::sizegrip - Bottom-right corner resize widget</DD></DL>
+<DD><A HREF="ttk_sizegrip.htm#M3" NAME="L1935">SYNOPSIS</A>
+<DL>
+</DL>
+<DD><A HREF="ttk_sizegrip.htm#M4" NAME="L1936">DESCRIPTION</A>
+<DD><A HREF="ttk_sizegrip.htm#M5" NAME="L1937">STANDARD OPTIONS</A>
+<DL>
+<DD><A HREF="ttk_widget.htm#M-class">-class, undefined, undefined</A>
+<DD><A HREF="ttk_widget.htm#M-cursor">-cursor, cursor, Cursor</A>
+<DD><A HREF="ttk_widget.htm#M-state">-state, state, State</A>
+<DD><A HREF="ttk_widget.htm#M-style">-style, style, Style</A>
+<DD><A HREF="ttk_widget.htm#M-takefocus">-takefocus, takeFocus, TakeFocus</A>
+</DL>
+<DD><A HREF="ttk_sizegrip.htm#M6" NAME="L1938">WIDGET COMMAND</A>
+<DD><A HREF="ttk_sizegrip.htm#M7" NAME="L1939">PLATFORM-SPECIFIC NOTES</A>
+<DD><A HREF="ttk_sizegrip.htm#M8" NAME="L1940">EXAMPLES</A>
+<DD><A HREF="ttk_sizegrip.htm#M9" NAME="L1941">BUGS</A>
+<DD><A HREF="ttk_sizegrip.htm#M10" NAME="L1942">SEE ALSO</A>
+<DD><A HREF="ttk_sizegrip.htm#M11" NAME="L1943">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+ttk::sizegrip - Bottom-right corner resize widget
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>ttk::sizegrip</B> <I>pathName </I>?<I>options</I>?<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+A <B>ttk::sizegrip</B> widget (also known as a <I>grow box</I>)
+allows the user to resize the containing toplevel window
+by pressing and dragging the grip.
+<H3><A NAME="M5">STANDARD OPTIONS</A></H3>
+<DL>
+<DT><B><A HREF="ttk_widget.htm#M-class">-class, undefined, undefined</A></B>
+<DT><B><A HREF="ttk_widget.htm#M-cursor">-cursor, cursor, Cursor</A></B>
+<DT><B><A HREF="ttk_widget.htm#M-state">-state, state, State</A></B>
+<DT><B><A HREF="ttk_widget.htm#M-style">-style, style, Style</A></B>
+<DT><B><A HREF="ttk_widget.htm#M-takefocus">-takefocus, takeFocus, TakeFocus</A></B>
+</DL>
+<H3><A NAME="M6">WIDGET COMMAND</A></H3>
+Sizegrip widgets support the standard
+<B>cget</B>, <B>configure</B>, <B>instate</B>, and <B>state</B>
+methods.  No other widget methods are used.
+<H3><A NAME="M7">PLATFORM-SPECIFIC NOTES</A></H3>
+On Mac OSX, toplevel windows automatically include a built-in
+size grip by default.
+Adding a <B>ttk::sizegrip</B> there is harmless, since
+the built-in grip will just mask the widget.
+<H3><A NAME="M8">EXAMPLES</A></H3>
+Using pack:
+<PRE>pack [ttk::frame $top.statusbar] -side bottom -fill x
+pack [<B>ttk::sizegrip</B> $top.statusbar.grip] -side right -anchor se</PRE>
+<P>
+Using grid:
+<PRE>grid [<B>ttk::sizegrip</B> $top.statusbar.grip] &#92;
+    -row $lastRow -column $lastColumn -sticky se
+# ... optional: add vertical scrollbar in $lastColumn,
+# ... optional: add horizontal scrollbar in $lastRow</PRE>
+<H3><A NAME="M9">BUGS</A></H3>
+If the containing toplevel's position was specified
+relative to the right or bottom of the screen
+(e.g.,
+&#8220;<B>wm geometry ... </B><I>w</I><B>x</B><I>h</I><B>-</B><I>x</I><B>-</B><I>y</I>&#8221;
+instead of
+&#8220;<B>wm geometry ... </B><I>w</I><B>x</B><I>h</I><B>+</B><I>x</I><B>+</B><I>y</I>&#8221;),
+the sizegrip widget will not resize the window.
+<P>
+<B>ttk::sizegrip</B> widgets only support
+&#8220;southeast&#8221;
+resizing.
+<H3><A NAME="M10">SEE ALSO</A></H3>
+<B><A HREF="../TkCmd/ttk_widget.htm">ttk::widget</A></B>
+<H3><A NAME="M11">KEYWORDS</A></H3>
+<A href="../Keywords/W.htm#widget">widget</A>, <A href="../Keywords/S.htm#sizegrip">sizegrip</A>, <A href="../Keywords/G.htm#grow box">grow box</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 2006 Joe English
+</div>
+</BODY></HTML>

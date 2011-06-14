@@ -1,0 +1,106 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>Tcl_UtfToUpper manual page - Tcl Library Procedures</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclLib</a> <small>&gt;</small> ToUpper</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="ToUpper.htm#M2" NAME="L751">NAME</A>
+<DL><DD>Tcl_UniCharToUpper, Tcl_UniCharToLower, Tcl_UniCharToTitle, Tcl_UtfToUpper, Tcl_UtfToLower, Tcl_UtfToTitle - routines for manipulating the case of Unicode characters and UTF-8 strings</DD></DL>
+<DD><A HREF="ToUpper.htm#M3" NAME="L752">SYNOPSIS</A>
+<DL>
+<DD><B>#include &lt;tcl.h&gt;</B>
+<DD>Tcl_UniChar
+<DD><B>Tcl_UniCharToUpper</B>(<I>ch</I>)
+<DD>Tcl_UniChar
+<DD><B>Tcl_UniCharToLower</B>(<I>ch</I>)
+<DD>Tcl_UniChar
+<DD><B>Tcl_UniCharToTitle</B>(<I>ch</I>)
+<DD>int
+<DD><B>Tcl_UtfToUpper</B>(<I>str</I>)
+<DD>int
+<DD><B>Tcl_UtfToLower</B>(<I>str</I>)
+<DD>int
+<DD><B>Tcl_UtfToTitle</B>(<I>str</I>)
+</DL>
+<DD><A HREF="ToUpper.htm#M4" NAME="L753">ARGUMENTS</A>
+<DL class="arguments">
+</DL>
+<DD><A HREF="ToUpper.htm#M5" NAME="L754">DESCRIPTION</A>
+<DD><A HREF="ToUpper.htm#M6" NAME="L755">BUGS</A>
+<DD><A HREF="ToUpper.htm#M7" NAME="L756">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+Tcl_UniCharToUpper, Tcl_UniCharToLower, Tcl_UniCharToTitle, Tcl_UtfToUpper, Tcl_UtfToLower, Tcl_UtfToTitle - routines for manipulating the case of Unicode characters and UTF-8 strings
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>#include &lt;tcl.h&gt;</B><BR>
+<A HREF="../TclLib/Utf.htm">Tcl_UniChar</A><BR>
+<B>Tcl_UniCharToUpper</B>(<I>ch</I>)<BR>
+<A HREF="../TclLib/Utf.htm">Tcl_UniChar</A><BR>
+<B>Tcl_UniCharToLower</B>(<I>ch</I>)<BR>
+<A HREF="../TclLib/Utf.htm">Tcl_UniChar</A><BR>
+<B>Tcl_UniCharToTitle</B>(<I>ch</I>)<BR>
+int<BR>
+<B>Tcl_UtfToUpper</B>(<I>str</I>)<BR>
+int<BR>
+<B>Tcl_UtfToLower</B>(<I>str</I>)<BR>
+int<BR>
+<B>Tcl_UtfToTitle</B>(<I>str</I>)<BR>
+<H3><A NAME="M4">ARGUMENTS</A></H3>
+<DL class="arguments">
+<DT>int <B>ch</B> (in)<DD>
+The <A HREF="../TclLib/Utf.htm">Tcl_UniChar</A> to be converted.
+<P><DT>char <B>*str</B> (in/out)<DD>
+Pointer to UTF-8 string to be converted in place.
+<P></DL>
+<H3><A NAME="M5">DESCRIPTION</A></H3>
+The first three routines convert the case of individual Unicode characters:
+<P>
+If <I>ch</I> represents a lower-case character,
+<B>Tcl_UniCharToUpper</B> returns the corresponding upper-case
+character.  If no upper-case character is defined, it returns the
+character unchanged.
+<P>
+If <I>ch</I> represents an upper-case character,
+<B>Tcl_UniCharToLower</B> returns the corresponding lower-case
+character.  If no lower-case character is defined, it returns the
+character unchanged.
+<P>
+If <I>ch</I> represents a lower-case character,
+<B>Tcl_UniCharToTitle</B> returns the corresponding title-case
+character.  If no title-case character is defined, it returns the
+corresponding upper-case character.  If no upper-case character is
+defined, it returns the character unchanged.  Title-case is defined
+for a small number of characters that have a different appearance when
+they are at the beginning of a capitalized word.
+<P>
+The next three routines convert the case of UTF-8 strings in place in
+memory:
+<P>
+<B>Tcl_UtfToUpper</B> changes every UTF-8 character in <I>str</I> to
+upper-case.  Because changing the case of a character may change its
+size, the byte offset of each character in the resulting string may
+differ from its original location.  <B>Tcl_UtfToUpper</B> writes a null
+byte at the end of the converted string.  <B>Tcl_UtfToUpper</B> returns
+the new length of the string in bytes.  This new length is guaranteed
+to be no longer than the original string length.
+<P>
+<B>Tcl_UtfToLower</B> is the same as <B>Tcl_UtfToUpper</B> except it
+turns each character in the string into its lower-case equivalent.
+<P>
+<B>Tcl_UtfToTitle</B> is the same as <B>Tcl_UtfToUpper</B> except it
+turns the first character in the string into its title-case equivalent
+and all following characters into their lower-case equivalents.
+
+<H3><A NAME="M6">BUGS</A></H3>
+At this time, the case conversions are only defined for the ISO8859-1
+characters.  Unicode characters above 0x00ff are not modified by these
+routines.
+
+<H3><A NAME="M7">KEYWORDS</A></H3>
+<A href="../Keywords/U.htm#utf">utf</A>, <A href="../Keywords/U.htm#unicode">unicode</A>, <A href="../Keywords/T.htm#toupper">toupper</A>, <A href="../Keywords/T.htm#tolower">tolower</A>, <A href="../Keywords/T.htm#totitle">totitle</A>, <A href="../Keywords/C.htm#case">case</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1997 by Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

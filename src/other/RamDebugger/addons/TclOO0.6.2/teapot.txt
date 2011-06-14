@@ -1,0 +1,21 @@
+Package TclOO 0.6.2
+Meta activestatetags ActiveTcl Public
+Meta as::author      {Donal K. Fellows}
+Meta as::build::date 2010-05-16
+Meta as::origin      http://sourceforge.net/projects/tcl
+Meta category        {Object system}
+Meta description     TclOO is the planned object system for the Tcl core,
+Meta description     as specified per TIP 257. It is provided as a
+Meta description     package to allow for easier experimentation with it
+Meta description     before it is actually added to the core. Please
+Meta description     contact Donal K. Fellows
+Meta description     <donal.k.fellows@manchester.ac.uk> with questions,
+Meta description     comments and other thoughts.
+Meta entity          package
+Meta license         BSD
+Meta name            TclOO
+Meta platform        linux-glibc2.3-ix86
+Meta require         {Tcl 8.5}
+Meta subject         oo object class method type
+Meta summary         TIP 257 Object system for the core.
+Meta version         0.6.2

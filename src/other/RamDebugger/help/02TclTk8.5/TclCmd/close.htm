@@ -1,0 +1,71 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>close manual page - Tcl Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclCmd</a> <small>&gt;</small> close</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+close - Close an open channel
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>close </B><I>channelId</I><BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+Closes the channel given by <I>channelId</I>.
+<P>
+<I>ChannelId</I> must be an identifier for an open channel such as a
+Tcl standard channel (<B>stdin</B>, <B>stdout</B>, or <B>stderr</B>),
+the return value from an invocation of <B><A HREF="../TclCmd/open.htm">open</A></B> or <B><A HREF="../TclCmd/socket.htm">socket</A></B>, or
+the result of a channel creation command provided by a Tcl extension.
+<P>
+All buffered output is flushed to the channel's output device,
+any buffered input is discarded, the underlying file or device is closed,
+and <I>channelId</I> becomes unavailable for use.
+<P>
+If the channel is blocking, the command does not return until all output
+is flushed.
+If the channel is nonblocking and there is unflushed output, the
+channel remains open and the command
+returns immediately; output will be flushed in the background and the
+channel will be closed when all the flushing is complete.
+<P>
+If <I>channelId</I> is a blocking channel for a command pipeline then
+<B>close</B> waits for the child processes to complete.
+<P>
+If the channel is shared between interpreters, then <B>close</B>
+makes <I>channelId</I> unavailable in the invoking interpreter but has no
+other effect until all of the sharing interpreters have closed the
+channel.
+When the last interpreter in which the channel is registered invokes
+<B>close</B>, the cleanup actions described above occur. See the
+<B><A HREF="../TclCmd/interp.htm">interp</A></B> command for a description of channel sharing.
+<P>
+Channels are automatically closed when an interpreter is destroyed and
+when the process exits.  Channels are switched to blocking mode, to ensure
+that all output is correctly flushed before the process exits.
+<P>
+The command returns an empty string, and may generate an error if
+an error occurs while flushing output.  If a command in a command
+pipeline created with <B><A HREF="../TclCmd/open.htm">open</A></B> returns an error, <B>close</B>
+generates an error (similar to the <B><A HREF="../TclCmd/exec.htm">exec</A></B> command.)
+<H3><A NAME="M5">EXAMPLE</A></H3>
+This illustrates how you can use Tcl to ensure that files get closed
+even when errors happen by combining <B><A HREF="../TclCmd/catch.htm">catch</A></B>, <B>close</B> and
+<B><A HREF="../TclCmd/return.htm">return</A></B>:
+<PRE>proc withOpenFile {filename channelVar script} {
+    upvar 1 $channelVar chan
+    set chan [open $filename]
+    catch {
+        uplevel 1 $script
+    } result options
+    <B>close</B> $chan
+    return -options $options $result
+}</PRE>
+<H3><A NAME="M6">SEE ALSO</A></H3>
+<B><A HREF="../TclCmd/file.htm">file</A></B>, <B><A HREF="../TclCmd/open.htm">open</A></B>, <B><A HREF="../TclCmd/socket.htm">socket</A></B>, <B><A HREF="../TclCmd/eof.htm">eof</A></B>, <B><A HREF="../TclLib/StdChannels.htm">Tcl_StandardChannels</A></B>
+<H3><A NAME="M7">KEYWORDS</A></H3>
+<A href="../Keywords/B.htm#blocking">blocking</A>, <A href="../Keywords/C.htm#channel">channel</A>, <A href="../Keywords/C.htm#close">close</A>, <A href="../Keywords/N.htm#nonblocking">nonblocking</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1993 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

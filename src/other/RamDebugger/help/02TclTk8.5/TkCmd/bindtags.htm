@@ -1,0 +1,91 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>bindtags manual page - Tk Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TkCmd</a> <small>&gt;</small> bindtags</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+bindtags - Determine which bindings apply to a window, and order of evaluation
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>bindtags </B><I>window </I>?<I>tagList</I>?<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+When a binding is created with the <B><A HREF="../TkCmd/bind.htm">bind</A></B> command, it is
+associated either with a particular window such as <B>.a.b.c</B>,
+a class name such as <B><A HREF="../TkCmd/button.htm">Button</A></B>, the keyword <B>all</B>, or any
+other string.
+All of these forms are called <I>binding tags</I>.
+Each window contains a list of binding tags that determine how
+events are processed for the window.
+When an event occurs in a window, it is applied to each of the
+window's tags in order:  for each tag, the most specific binding
+that matches the given tag and event is executed.
+See the <B><A HREF="../TkCmd/bind.htm">bind</A></B> command for more information on the matching
+process.
+<P>
+By default, each window has four binding tags consisting of the
+name of the window, the window's class name, the name of the window's
+nearest toplevel ancestor, and <B>all</B>, in that order.
+Toplevel windows have only three tags by default, since the toplevel
+name is the same as that of the window.
+The <B>bindtags</B> command allows the binding tags for a window to be
+read and modified.
+<P>
+If <B>bindtags</B> is invoked with only one argument, then the
+current set of binding tags for <I>window</I> is returned as a list.
+If the <I>tagList</I> argument is specified to <B>bindtags</B>,
+then it must be a proper list; the tags for <I>window</I> are changed
+to the elements of the list.
+The elements of <I>tagList</I> may be arbitrary strings;  however,
+any tag starting with a dot is treated as the name of a window;  if
+no window by that name exists at the time an event is processed,
+then the tag is ignored for that event.
+The order of the elements in <I>tagList</I> determines the order in
+which binding scripts are executed in response to events.
+For example, the command
+<PRE><B>bindtags .b {all . Button .b}</B></PRE>
+reverses the order in which binding scripts will be evaluated for
+a button named <B>.b</B> so that <B>all</B> bindings are invoked
+first, following by bindings for <B>.b</B>'s toplevel
+(&#8220;.&#8221;),
+followed by class bindings, followed by bindings for <B>.b</B>.
+If <I>tagList</I> is an empty list then the binding tags for <I>window</I>
+are returned to the default state described above.
+<P>
+The <B>bindtags</B> command may be used to introduce arbitrary
+additional binding tags for a window, or to remove standard tags.
+For example, the command
+<PRE><B>bindtags .b {.b TrickyButton . all}</B></PRE>
+replaces the <B><A HREF="../TkCmd/button.htm">Button</A></B> tag for <B>.b</B> with <B>TrickyButton</B>.
+This means that the default widget bindings for buttons, which are
+associated with the <B><A HREF="../TkCmd/button.htm">Button</A></B> tag, will no longer apply to <B>.b</B>,
+but any bindings associated with <B>TrickyButton</B> (perhaps some
+new button behavior) will apply.
+<H3><A NAME="M5">EXAMPLE</A></H3>
+If you have a set of nested <B><A HREF="../TkCmd/frame.htm">frame</A></B> widgets and you want events
+sent to a <B><A HREF="../TkCmd/button.htm">button</A></B> widget to also be delivered to all the widgets
+up to the current <B><A HREF="../TkCmd/toplevel.htm">toplevel</A></B> (in contrast to Tk's default
+behavior, where events are not delivered to those intermediate
+windows) to make it easier to have accelerators that are only active
+for part of a window, you could use a helper procedure like this to
+help set things up:
+<PRE>proc setupBindtagsForTreeDelivery {widget} {
+    set tags [list $widget [winfo class $widget]]
+    set w $widget
+    set t [winfo toplevel $w]
+    while {$w ne $t} {
+        set w [winfo parent $w]
+        lappend tags $w
+    }
+    lappend tags all
+    <B>bindtags</B> $widget $tags
+}</PRE>
+<H3><A NAME="M6">SEE ALSO</A></H3>
+<B><A HREF="../TkCmd/bind.htm">bind</A></B>
+<H3><A NAME="M7">KEYWORDS</A></H3>
+<A href="../Keywords/B.htm#binding">binding</A>, <A href="../Keywords/E.htm#event">event</A>, <A href="../Keywords/T.htm#tag">tag</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1990 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

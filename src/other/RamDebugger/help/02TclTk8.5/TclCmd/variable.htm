@@ -1,0 +1,87 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>variable manual page - Tcl Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclCmd</a> <small>&gt;</small> variable</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+variable - create and initialize a namespace variable
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>variable </B>?<I>name value...</I>? <I>name </I>?<I>value</I>?<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+This command is normally used within a
+<B>namespace eval</B> command to create one or more variables
+within a namespace.
+Each variable <I>name</I> is initialized with <I>value</I>.
+The <I>value</I> for the last variable is optional.
+<P>
+If a variable <I>name</I> does not exist, it is created.
+In this case, if <I>value</I> is specified,
+it is assigned to the newly created variable.
+If no <I>value</I> is specified, the new variable is left undefined.
+If the variable already exists,
+it is set to <I>value</I> if <I>value</I> is specified
+or left unchanged if no <I>value</I> is given.
+Normally, <I>name</I> is unqualified
+(does not include the names of any containing namespaces),
+and the variable is created in the current namespace.
+If <I>name</I> includes any namespace qualifiers,
+the variable is created in the specified namespace.  If the variable
+is not defined, it will be visible to the <B>namespace which</B>
+command, but not to the <B><A HREF="../TclCmd/info.htm">info exists</A></B> command.
+<P>
+If the <B>variable</B> command is executed inside a Tcl procedure,
+it creates local variables
+linked to the corresponding namespace variables (and therefore these
+variables are listed by <B><A HREF="../TclCmd/info.htm">info vars</A></B>.)
+In this way the <B>variable</B> command resembles the <B><A HREF="../TclCmd/global.htm">global</A></B> command,
+although the <B><A HREF="../TclCmd/global.htm">global</A></B> command
+only links to variables in the global namespace.
+If any <I>value</I>s are given,
+they are used to modify the values of the associated namespace variables.
+If a namespace variable does not exist,
+it is created and optionally initialized.
+<P>
+A <I>name</I> argument cannot reference an element within an array.
+Instead, <I>name</I> should reference the entire array,
+and the initialization <I>value</I> should be left off.
+After the variable has been declared,
+elements within the array can be set using ordinary
+<B><A HREF="../TclCmd/set.htm">set</A></B> or <B><A HREF="../TclCmd/array.htm">array</A></B> commands.
+<H3><A NAME="M5">EXAMPLES</A></H3>
+Create a variable in a namespace:
+<PRE>namespace eval foo {
+    <B>variable</B> bar 12345
+}</PRE>
+<P>
+Create an array in a namespace:
+<PRE>namespace eval someNS {
+    <B>variable</B> someAry
+    array set someAry {
+        someName  someValue
+        otherName otherValue
+    }
+}</PRE>
+<P>
+Access variables in namespaces from a procedure:
+<PRE>namespace eval foo {
+    proc spong {} {
+        # Variable in this namespace
+        <B>variable</B> bar
+        puts &quot;bar is $bar&quot;
+
+        # Variable in another namespace
+        <B>variable</B> ::someNS::someAry
+        parray someAry
+    }
+}</PRE>
+<H3><A NAME="M6">SEE ALSO</A></H3>
+<B><A HREF="../TclCmd/global.htm">global</A></B>, <B><A HREF="../TclCmd/namespace.htm">namespace</A></B>, <B><A HREF="../TclCmd/upvar.htm">upvar</A></B>
+<H3><A NAME="M7">KEYWORDS</A></H3>
+<A href="../Keywords/G.htm#global">global</A>, <A href="../Keywords/N.htm#namespace">namespace</A>, <A href="../Keywords/P.htm#procedure">procedure</A>, <A href="../Keywords/V.htm#variable">variable</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1993-1997 Bell Labs Innovations for Lucent Technologies
+Copyright &copy; 1997 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

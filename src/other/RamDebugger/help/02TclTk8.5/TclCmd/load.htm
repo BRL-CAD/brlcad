@@ -1,0 +1,158 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>load manual page - Tcl Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclCmd</a> <small>&gt;</small> load</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+load - Load machine code and initialize new commands
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>load </B><I>fileName</I><BR>
+<B>load </B><I>fileName packageName</I><BR>
+<B>load </B><I>fileName packageName interp</I><BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+This command loads binary code from a file into the
+application's address space and calls an initialization procedure
+in the package to incorporate it into an interpreter.  <I>fileName</I>
+is the name of the file containing the code;  its exact form varies
+from system to system but on most systems it is a shared library,
+such as a <B>.so</B> file under Solaris or a DLL under Windows.
+<I>packageName</I> is the name of the package, and is used to
+compute the name of an initialization procedure.
+<I>interp</I> is the path name of the interpreter into which to load
+the package (see the <B><A HREF="../TclCmd/interp.htm">interp</A></B> manual entry for details);
+if <I>interp</I> is omitted, it defaults to the
+interpreter in which the <B>load</B> command was invoked.
+<P>
+Once the file has been loaded into the application's address space,
+one of two initialization procedures will be invoked in the new code.
+Typically the initialization procedure will add new commands to a
+Tcl interpreter.
+The name of the initialization procedure is determined by
+<I>packageName</I> and whether or not the target interpreter
+is a safe one.  For normal interpreters the name of the initialization
+procedure will have the form <I>pkg</I><B>_Init</B>, where <I>pkg</I>
+is the same as <I>packageName</I> except that the first letter is
+converted to upper case and all other letters
+are converted to lower case.  For example, if <I>packageName</I> is
+<B>foo</B> or <B>FOo</B>, the initialization procedure's name will
+be <B>Foo_Init</B>.
+<P>
+If the target interpreter is a safe interpreter, then the name
+of the initialization procedure will be <I>pkg</I><B>_SafeInit</B>
+instead of <I>pkg</I><B>_Init</B>.
+The <I>pkg</I><B>_SafeInit</B> function should be written carefully, so that it
+initializes the safe interpreter only with partial functionality provided
+by the package that is safe for use by untrusted code. For more information
+on Safe-Tcl, see the <B>safe</B> manual entry.
+<P>
+The initialization procedure must match the following prototype:
+<PRE>typedef int Tcl_PackageInitProc(<A HREF="../TclLib/Interp.htm">Tcl_Interp</A> *<I>interp</I>);</PRE>
+The <I>interp</I> argument identifies the interpreter in which the
+package is to be loaded.  The initialization procedure must return
+<B>TCL_OK</B> or <B>TCL_ERROR</B> to indicate whether or not it completed
+successfully;  in the event of an error it should set the interpreter's result
+to point to an error message.  The result of the <B>load</B> command
+will be the result returned by the initialization procedure.
+<P>
+The actual loading of a file will only be done once for each <I>fileName</I>
+in an application.  If a given <I>fileName</I> is loaded into multiple
+interpreters, then the first <B>load</B> will load the code and
+call the initialization procedure;  subsequent <B>load</B>s will
+call the initialization procedure without loading the code again.
+For Tcl versions lower than 8.5, it is not possible to unload or reload a
+package. From version 8.5 however, the <B><A HREF="../TclCmd/unload.htm">unload</A></B> command allows the unloading
+of libraries loaded with <B>load</B>, for libraries that are aware of the
+Tcl's unloading mechanism.
+<P>
+The <B>load</B> command also supports packages that are statically
+linked with the application, if those packages have been registered
+by calling the <B><A HREF="../TclLib/StaticPkg.htm">Tcl_StaticPackage</A></B> procedure.
+If <I>fileName</I> is an empty string, then <I>packageName</I> must
+be specified.
+<P>
+If <I>packageName</I> is omitted or specified as an empty string,
+Tcl tries to guess the name of the package.
+This may be done differently on different platforms.
+The default guess, which is used on most UNIX platforms, is to
+take the last element of <I>fileName</I>, strip off the first
+three characters if they are <B>lib</B>, and use any following
+alphabetic and underline characters as the module name.
+For example, the command <B>load libxyz4.2.so</B> uses the module
+name <B>xyz</B> and the command <B>load bin/last.so {}</B> uses the
+module name <B>last</B>.
+<P>
+If <I>fileName</I> is an empty string, then <I>packageName</I> must
+be specified.
+The <B>load</B> command first searches for a statically loaded package
+(one that has been registered by calling the <B><A HREF="../TclLib/StaticPkg.htm">Tcl_StaticPackage</A></B>
+procedure) by that name; if one is found, it is used.
+Otherwise, the <B>load</B> command searches for a dynamically loaded
+package by that name, and uses it if it is found.  If several
+different files have been <B>load</B>ed with different versions of
+the package, Tcl picks the file that was loaded first.
+<H3><A NAME="M5">PORTABILITY ISSUES</A></H3>
+<DL class="portability issues">
+<DT><A NAME="M6"><B>Windows</B></A><DD>
+When a load fails with
+&#8220;library not found&#8221;
+error, it is also possible
+that a dependent library was not found.  To see the dependent libraries,
+type
+&#8220;dumpbin -imports &lt;dllname&gt;&#8221;
+in a DOS console to see what the library must import.
+When loading a DLL in the current directory, Windows will ignore
+&#8220;./&#8221;
+as a path specifier and use a search heuristic to find the DLL instead.
+To avoid this, load the DLL with:
+<PRE><B>load</B> [file join [pwd] mylib.DLL]</PRE>
+<P></DL>
+<H3><A NAME="M7">BUGS</A></H3>
+If the same file is <B>load</B>ed by different <I>fileName</I>s, it will
+be loaded into the process's address space multiple times.  The
+behavior of this varies from system to system (some systems may
+detect the redundant loads, others may not).
+<H3><A NAME="M8">EXAMPLE</A></H3>
+The following is a minimal extension:
+<P>
+<PRE>#include &lt;tcl.h&gt;
+#include &lt;stdio.h&gt;
+static int fooCmd(ClientData clientData,
+        <A HREF="../TclLib/Interp.htm">Tcl_Interp</A> *interp, int objc, Tcl_Obj *const objv[]) {
+    printf(&quot;called with %d arguments&#92;n&quot;, objc);
+    return TCL_OK;
+}
+int Foo_Init(<A HREF="../TclLib/Interp.htm">Tcl_Interp</A> *interp) {
+    if (<A HREF="../TclLib/InitStubs.htm">Tcl_InitStubs</A>(interp, &quot;8.1&quot;, 0) == NULL) {
+	return TCL_ERROR;
+    }
+    printf(&quot;creating foo command&quot;);
+    <A HREF="../TclLib/CrtObjCmd.htm">Tcl_CreateObjCommand</A>(interp, &quot;foo&quot;, fooCmd, NULL, NULL);
+    return TCL_OK;
+}</PRE>
+<P>
+When built into a shared/dynamic library with a suitable name
+(e.g. <B>foo.dll</B> on Windows, <B>libfoo.so</B> on Solaris and Linux)
+it can then be loaded into Tcl with the following:
+<P>
+<PRE># Load the extension
+switch $tcl_platform(platform) {
+   windows {
+      <B>load</B> [file join [pwd] foo.dll]
+   }
+   unix {
+      <B>load</B> [file join [pwd] libfoo[info sharedlibextension]]
+   }
+}
+
+# Now execute the command defined by the extension
+foo</PRE>
+<H3><A NAME="M9">SEE ALSO</A></H3>
+<B><A HREF="../TclCmd/info.htm">info sharedlibextension</A></B>, <B><A HREF="../TclLib/StaticPkg.htm">Tcl_StaticPackage</A></B>, <B>safe</B>
+<H3><A NAME="M10">KEYWORDS</A></H3>
+<A href="../Keywords/B.htm#binary code">binary code</A>, <A href="../Keywords/L.htm#loading">loading</A>, <A href="../Keywords/S.htm#safe interpreter">safe interpreter</A>, <A href="../Keywords/S.htm#shared library">shared library</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1995-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

@@ -1,0 +1,68 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>if manual page - Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclCmd</a> <small>&gt;</small> if</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+if - Execute scripts conditionally
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>if </B><I>expr1 </I>?<B>then</B>? <I>body1 </I><B>elseif </B><I>expr2 </I>?<B>then</B>? <I>body2</I> <B>elseif</B> ... ?<B>else</B>? ?<I>bodyN</I>?<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+The <I>if</I> command evaluates <I>expr1</I> as an expression (in the
+same way that <B><A HREF="../TclCmd/expr.htm">expr</A></B> evaluates its argument).  The value of the
+expression must be a boolean
+(a numeric value, where 0 is false and
+anything is true, or a string value such as <B>true</B> or <B>yes</B>
+for true and <B>false</B> or <B>no</B> for false);
+if it is true then <I>body1</I> is executed by passing it to the
+Tcl interpreter.
+Otherwise <I>expr2</I> is evaluated as an expression and if it is true
+then <B>body2</B> is executed, and so on.
+If none of the expressions evaluates to true then <I>bodyN</I> is
+executed.
+The <B>then</B> and <B>else</B> arguments are optional
+&#8220;noise words&#8221;
+to make the command easier to read.
+There may be any number of <B>elseif</B> clauses, including zero.
+<I>BodyN</I> may also be omitted as long as <B>else</B> is omitted too.
+The return value from the command is the result of the body script
+that was executed, or an empty string
+if none of the expressions was non-zero and there was no <I>bodyN</I>.
+<H3><A NAME="M5">EXAMPLES</A></H3>
+A simple conditional:
+<PRE><B>if</B> {$vbl == 1} { puts &quot;vbl is one&quot; }</PRE>
+<P>
+With an <B>else</B>-clause:
+<PRE><B>if</B> {$vbl == 1} {
+   puts &quot;vbl is one&quot;
+} <B>else</B> {
+   puts &quot;vbl is not one&quot;
+}</PRE>
+<P>
+With an <B>elseif</B>-clause too:
+<PRE><B>if</B> {$vbl == 1} {
+   puts &quot;vbl is one&quot;
+} <B>elseif</B> {$vbl == 2} {
+   puts &quot;vbl is two&quot;
+} <B>else</B> {
+   puts &quot;vbl is not one or two&quot;
+}</PRE>
+<P>
+Remember, expressions can be multi-line, but in that case it can be a
+good idea to use the optional <B>then</B> keyword for clarity:
+<PRE><B>if</B> {
+   $vbl == 1 || $vbl == 2 || $vbl == 3
+} <B>then</B> {
+   puts &quot;vbl is one, two or three&quot;
+}</PRE>
+<H3><A NAME="M6">SEE ALSO</A></H3>
+<B><A HREF="../TclCmd/expr.htm">expr</A></B>, <B><A HREF="../TclCmd/for.htm">for</A></B>, <B><A HREF="../TclCmd/foreach.htm">foreach</A></B>
+<H3><A NAME="M7">KEYWORDS</A></H3>
+<A href="../Keywords/B.htm#boolean">boolean</A>, <A href="../Keywords/C.htm#conditional">conditional</A>, <A href="../Keywords/E.htm#else">else</A>, <A href="../Keywords/F.htm#false">false</A>, <A href="../Keywords/I.htm#if">if</A>, <A href="../Keywords/T.htm#true">true</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1993 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

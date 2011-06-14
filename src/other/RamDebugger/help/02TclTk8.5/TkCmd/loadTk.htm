@@ -1,0 +1,76 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>Safe manual page - Tk Tk Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TkCmd</a> <small>&gt;</small> loadTk</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+loadTk - Load Tk into a safe interpreter.
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>::safe::loadTk </B><I>slave</I> ?<B>-use</B> <I>windowId</I>? ?<B>-display</B> <I>displayName</I>? <BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+Safe Tk is based on Safe Tcl, which provides a mechanism 
+that allows restricted and mediated
+access to auto-loading and packages for safe interpreters.
+Safe Tk adds the ability to configure the interpreter
+for safe Tk operations and load Tk into safe 
+interpreters.
+<P>
+The <B>::safe::loadTk</B> command initializes the required data structures
+in the named safe interpreter and then loads Tk into it.
+The interpreter must have been created with <B>::safe::interpCreate</B>
+or have been initialized with <B>::safe::interpInit</B>.
+The command returns the name of the safe interpreter.
+If <B>-use</B> is specified, the window identified by the specified system
+dependent identifier <I>windowId</I> is used to contain the
+&#8220;.&#8221;
+window of the safe interpreter; it can be any valid id, eventually 
+referencing a window belonging to another application. As a convenience,
+if the window you plan to use is a Tk Window of the application you
+can use the window name (e.g. <B>.x.y</B>) instead of its window Id 
+(<B>[winfo id .x.y]</B>).
+When <B>-use</B> is not specified,
+a new toplevel window is created for the
+&#8220;.&#8221;
+window of
+the safe interpreter. On X11 if you want the embedded window
+to use another display than the default one, specify it with
+<B>-display</B>.
+See the <B>SECURITY ISSUES</B> section below for implementation details.
+
+<H3><A NAME="M5">SECURITY ISSUES</A></H3>
+Please read the <B>safe</B> manual page for Tcl to learn about the basic
+security considerations for Safe Tcl.
+<P>
+<B>::safe::loadTk</B> adds the value of <B>tk_library</B> taken from the master
+interpreter to the virtual access path of the safe interpreter so that
+auto-loading will work in the safe interpreter.
+<P>
+<P>
+Tk initialization is now safe with respect to not trusting
+the slave's state for startup. <B>::safe::loadTk</B>
+registers the slave's name so
+when the Tk initialization (<B><A HREF="../TkLib/Tk_Init.htm">Tk_SafeInit</A></B>) is called
+and in turn calls the master's <B>::safe::InitTk</B> it will
+return the desired <B>argv</B> equivalent (<B>-use</B> 
+<I>windowId</I>, correct <B>-display</B>, etc.)
+<P>
+When <B>-use</B> is not used, the new toplevel created is specially
+decorated so the user is always aware that the user interface presented comes
+from a potentially unsafe code and can easily delete the corresponding
+interpreter.
+<P>
+On X11, conflicting <B>-use</B> and <B>-display</B> are likely
+to generate a fatal X error.
+
+<H3><A NAME="M6">SEE ALSO</A></H3>
+<B>safe</B>, <B><A HREF="../TclCmd/interp.htm">interp</A></B>, <B>library</B>, <B><A HREF="../TclCmd/load.htm">load</A></B>, <B><A HREF="../TclCmd/package.htm">package</A></B>, <B><A HREF="../TclCmd/source.htm">source</A></B>, <B><A HREF="../TclCmd/unknown.htm">unknown</A></B>
+<H3><A NAME="M7">KEYWORDS</A></H3>
+<A href="../Keywords/A.htm#alias">alias</A>, <A href="../Keywords/A.htm#auto-loading">auto-loading</A>, <A href="../Keywords/A.htm#auto_mkindex">auto_mkindex</A>, <A href="../Keywords/L.htm#load">load</A>, <A href="../Keywords/M.htm#master interpreter">master interpreter</A>, <A href="../Keywords/S.htm#safe
+interpreter">safe
+interpreter</A>, <A href="../Keywords/S.htm#slave interpreter">slave interpreter</A>, <A href="../Keywords/S.htm#source">source</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1995-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

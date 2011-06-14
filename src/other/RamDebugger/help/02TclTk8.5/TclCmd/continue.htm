@@ -1,0 +1,39 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>continue manual page - Built-In Commands</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclCmd</a> <small>&gt;</small> continue</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<H3><A NAME="M2">NAME</A></H3>
+continue - Skip to the next iteration of a loop
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>continue</B><BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+This command is typically invoked inside the body of a looping command
+such as <B><A HREF="../TclCmd/for.htm">for</A></B> or <B><A HREF="../TclCmd/foreach.htm">foreach</A></B> or <B><A HREF="../TclCmd/while.htm">while</A></B>.
+It returns a <B>TCL_CONTINUE</B> code, which causes a continue exception
+to occur.
+The exception causes the current script to be aborted
+out to the innermost containing loop command, which then
+continues with the next iteration of the loop.
+Catch exceptions are also handled in a few other situations, such
+as the <B><A HREF="../TclCmd/catch.htm">catch</A></B> command and the outermost scripts of procedure
+bodies.
+<H3><A NAME="M5">EXAMPLE</A></H3>
+Print a line for each of the integers from 0 to 10 <I>except</I> 5:
+<PRE>for {set x 0} {$x&lt;10} {incr x} {
+   if {$x == 5} {
+      <B>continue</B>
+   }
+   puts &quot;x is $x&quot;
+}</PRE>
+<H3><A NAME="M6">SEE ALSO</A></H3>
+<B><A HREF="../TclCmd/break.htm">break</A></B>, <B><A HREF="../TclCmd/for.htm">for</A></B>, <B><A HREF="../TclCmd/foreach.htm">foreach</A></B>, <B><A HREF="../TclCmd/return.htm">return</A></B>, <B><A HREF="../TclCmd/while.htm">while</A></B>
+<H3><A NAME="M7">KEYWORDS</A></H3>
+<A href="../Keywords/C.htm#continue">continue</A>, <A href="../Keywords/I.htm#iteration">iteration</A>, <A href="../Keywords/L.htm#loop">loop</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1993-1994 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>

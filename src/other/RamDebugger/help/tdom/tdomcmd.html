@@ -1,0 +1,105 @@
+<html>
+<head>
+<link rel="stylesheet" href="manpage.css"><title>tDOM manual: tdom</title><meta name="xsl-processor" content="Jochen Loewer et. al. (loewerj@hotmail.com)"><meta name="generator" content="$RCSfile: tdomcmd.html,v $ $Revision$">
+</head><body>
+<div class="header">
+<div class="navbar" align="center">
+<a href="#SECTnode13446">NAME</a> · <a href="#SECTnode13455">SYNOPSIS</a> · <a href="#SECTnode13461">DESCRIPTION</a> · <a href="#SECTnode13620">SEE ALSO</a> · <a href="#SECTnode13629">KEYWORDS</a>
+</div><hr class="navsep">
+</div><div class="body">
+    <h2><a name="SECTnode13446">NAME</a></h2><p class="namesection">
+<b class="names">tdom - </b><br>tdom is an expat parser object extension to create an in-memory
+DOM tree from the input while parsing.</p>
+
+
+  <h2><a name="SECTnode13455">SYNOPSIS</a></h2><pre class="syntax">package require tdom
+
+set parser [expat]
+
+tdom $parser enable</pre>
+
+  <h2><a name="SECTnode13461">DESCRIPTION</a></h2><p>
+<i class="m">tdom</i> adds the C handler set &quot;tdom&quot; to an tcl expat
+parser obj. This handler set builds an in-memory DOM tree out of the input,
+parsed by the parser. A DOM tree created this way behave exactly like a DOM
+tree created by the &quot;dom&quot; command (see there). In fact, tdom is only
+another interface to the same functionality; it uses the code behind the
+<tt class="samp">dom</tt> code for building the DOM tree.</p><dl class="commandlist">
+      
+        <dt>
+<b class="cmd">tdom</b> <i class="m">parserObj</i> <b class="method">enable</b>
+</dt>
+
+        <dd><p>Adds the tdom C handler set to a Tcl expat parser object. Next
+time, the parser parses input, the tdom C handler functions create an in-memory
+DOM tree.</p></dd>
+      
+
+      
+        <dt>
+<b class="cmd">tdom</b> <i class="m">parserObj</i> <b class="method">getdoc</b>
+</dt>
+
+        <dd><p>Returns the DOM tree as domDoc (see there) object.</p></dd>
+      
+
+      
+        <dt>
+<b class="cmd">tdom</b> <i class="m">parserObj</i> <b class="method">setResultEncoding</b>
+</dt>
+
+        <dd><p>See the method <tt class="samp">setResultEncoding</tt> of the
+<b class="cmd"><a href="dom.html">dom</a></b> command.</p></dd>
+      
+
+      
+        <dt>
+<b class="cmd">tdom</b> <i class="m">parserObj</i> <b class="method">setStoreLineColumn</b> ?<i class="m">boolean</i>?</dt>
+
+        <dd><p>See the method <tt class="samp">setStoreLineColumn</tt> of the
+<b class="cmd"><a href="dom.html">dom</a></b> command.</p></dd>
+      
+
+      
+        <dt>
+<b class="cmd">tdom</b> <i class="m">parserObj</i> <b class="method">remove</b>
+</dt>
+
+        <dd><p>Removes the tdom C handler set from the parser
+object.</p></dd>
+      
+
+      
+        <dt>
+<b class="cmd">tdom</b> <i class="m">parserObj</i> <b class="method">keepEmpties</b>
+</dt>
+
+        <dd><p>See the option <tt class="samp">-keepEmpties</tt> of the <b class="cmd"><a href="dom.html">dom</a></b> command.</p></dd>
+      
+
+      
+        <dt>
+<b class="cmd">tdom</b> <i class="m">parserObj</i> <b class="method">setExternalEntityResolver</b> <i class="m">script</i>
+</dt>
+        <dd></dd>
+      
+
+    </dl>
+
+  <h2><a name="SECTnode13620">SEE ALSO</a></h2><p class="seealso">
+<a href="dom.html">dom</a>, <a href="expat.html">expat</a>
+</p>
+
+  <h2><a name="SECTnode13629">KEYWORDS</a></h2><p class="keywords">
+<a class="keyword" href="keyword-index.html#KW-DOM">DOM</a>, <a class="keyword" href="keyword-index.html#KW-SAX">SAX</a>, <a class="keyword" href="keyword-index.html#KW-Chandlerset">C handler set</a>
+</p>
+
+</div><div class="footer">
+<hr class="navsep"><!-- footer.html: Standard navigational footer --><div class="navbar" align="center">
+	<a class="navaid" href="index.html">Table of Contents</a>
+ ·	<a class="navaid" href="category-index.html">Index</a>
+ ·	<a class="navaid" href="keyword-index.html">Keywords</a>
+</div>
+</div>
+</body>
+</html>

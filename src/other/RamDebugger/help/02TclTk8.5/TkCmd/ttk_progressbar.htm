@@ -1,0 +1,135 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>ttk::progressbar manual page - Tk Themed Widget</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TkCmd</a> <small>&gt;</small> ttk_progressbar</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="ttk_progressbar.htm#M2" NAME="L1865">NAME</A>
+<DL><DD>ttk::progressbar - Provide progress feedback</DD></DL>
+<DD><A HREF="ttk_progressbar.htm#M3" NAME="L1866">SYNOPSIS</A>
+<DL>
+</DL>
+<DD><A HREF="ttk_progressbar.htm#M4" NAME="L1867">DESCRIPTION</A>
+<DD><A HREF="ttk_progressbar.htm#M5" NAME="L1868">STANDARD OPTIONS</A>
+<DL>
+<DD><A HREF="ttk_widget.htm#M-class">-class, undefined, undefined</A>
+<DD><A HREF="ttk_widget.htm#M-cursor">-cursor, cursor, Cursor</A>
+<DD><A HREF="ttk_widget.htm#M-style">-style, style, Style</A>
+<DD><A HREF="ttk_widget.htm#M-takefocus">-takefocus, takeFocus, TakeFocus</A>
+</DL>
+<DD><A HREF="ttk_progressbar.htm#M6" NAME="L1869">WIDGET-SPECIFIC OPTIONS</A>
+<DL>
+<DD><A HREF="ttk_progressbar.htm#M7" NAME="L1870">-orient, orient, Orient</A>
+<DD><A HREF="ttk_progressbar.htm#M8" NAME="L1871">-length, length, Length</A>
+<DD><A HREF="ttk_progressbar.htm#M9" NAME="L1872">-mode, mode, Mode</A>
+<DD><A HREF="ttk_progressbar.htm#M10" NAME="L1873">-maximum, maximum, Maximum</A>
+<DD><A HREF="ttk_progressbar.htm#M11" NAME="L1874">-value, value, Value</A>
+<DD><A HREF="ttk_progressbar.htm#M12" NAME="L1875">-variable, variable, Variable</A>
+<DD><A HREF="ttk_progressbar.htm#M13" NAME="L1876">-phase, phase, Phase</A>
+</DL>
+<DD><A HREF="ttk_progressbar.htm#M14" NAME="L1877">WIDGET COMMAND</A>
+<DL class="widget command">
+<DD><A HREF="ttk_progressbar.htm#M15" NAME="L1878"><I>pathName </I><B>cget</B> <I>option</I></A>
+<DD><A HREF="ttk_progressbar.htm#M16" NAME="L1879"><I>pathName </I><B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?</A>
+<DD><A HREF="ttk_progressbar.htm#M17" NAME="L1880"><I>pathName </I><B>instate </B><I>statespec</I> ?<I>script</I>?</A>
+<DD><A HREF="ttk_progressbar.htm#M18" NAME="L1881"><I>pathName </I><B>start</B> ?<I>interval</I>?</A>
+<DD><A HREF="ttk_progressbar.htm#M19" NAME="L1882"><I>pathName </I><B>state</B> ?<I>stateSpec</I>?</A>
+<DD><A HREF="ttk_progressbar.htm#M20" NAME="L1883"><I>pathName </I><B>step</B> ?<I>amount</I>?</A>
+<DD><A HREF="ttk_progressbar.htm#M21" NAME="L1884"><I>pathName </I><B>stop</B></A>
+</DL>
+<DD><A HREF="ttk_progressbar.htm#M22" NAME="L1885">SEE ALSO</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+ttk::progressbar - Provide progress feedback
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>ttk::progressbar</B> <I>pathName </I>?<I>options</I>?<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+A <B>ttk::progressbar</B> widget shows the status of a long-running
+operation.  They can operate in two modes: <I>determinate</I> mode shows the
+amount completed relative to the total amount of work to be done, and
+<I>indeterminate</I> mode provides an animated display to let the user know
+that something is happening.
+<H3><A NAME="M5">STANDARD OPTIONS</A></H3>
+<DL>
+<DT><B><A HREF="ttk_widget.htm#M-class">-class, undefined, undefined</A></B>
+<DT><B><A HREF="ttk_widget.htm#M-cursor">-cursor, cursor, Cursor</A></B>
+<DT><B><A HREF="ttk_widget.htm#M-style">-style, style, Style</A></B>
+<DT><B><A HREF="ttk_widget.htm#M-takefocus">-takefocus, takeFocus, TakeFocus</A></B>
+</DL>
+<H3><A NAME="M6">WIDGET-SPECIFIC OPTIONS</A></H3>
+<DL>
+<DT>Command-Line Name: <B><A NAME="M7">-orient</A></B>
+<DT>Database Name: <B>orient</B>
+<DT>Database Class: <B>Orient</B>
+<DD>One of <B>horizontal</B> or <B>vertical</B>.
+Specifies the orientation of the progress bar.
+<P><DT>Command-Line Name: <B><A NAME="M8">-length</A></B>
+<DT>Database Name: <B>length</B>
+<DT>Database Class: <B>Length</B>
+<DD>Specifies the length of the long axis of the progress bar
+(width if horizontal, height if vertical).
+<P><DT>Command-Line Name: <B><A NAME="M9">-mode</A></B>
+<DT>Database Name: <B>mode</B>
+<DT>Database Class: <B>Mode</B>
+<DD>One of <B>determinate</B> or <B>indeterminate</B>.
+<P><DT>Command-Line Name: <B><A NAME="M10">-maximum</A></B>
+<DT>Database Name: <B>maximum</B>
+<DT>Database Class: <B>Maximum</B>
+<DD>A floating point number specifying the maximum <B>-value</B>.
+Defaults to 100.
+<P><DT>Command-Line Name: <B><A NAME="M11">-value</A></B>
+<DT>Database Name: <B>value</B>
+<DT>Database Class: <B>Value</B>
+<DD>The current value of the progress bar.
+In <I>determinate</I> mode, this represents the amount of work completed.
+In <I>indeterminate</I> mode, it is interpreted modulo <B>-maximum</B>;
+that is, the progress bar completes one
+&#8220;cycle&#8221;
+when the <B>-value</B> increases by <B>-maximum</B>.
+<P><DT>Command-Line Name: <B><A NAME="M12">-variable</A></B>
+<DT>Database Name: <B><A HREF="../TclCmd/variable.htm">variable</A></B>
+<DT>Database Class: <B><A HREF="../TclCmd/variable.htm">Variable</A></B>
+<DD>The name of a Tcl variable which is linked to the <B>-value</B>.
+If specified, the <B>-value</B> of the progress bar is 
+automatically set to the value of the variable whenever 
+the latter is modified.
+<P><DT>Command-Line Name: <B><A NAME="M13">-phase</A></B>
+<DT>Database Name: <B>phase</B>
+<DT>Database Class: <B>Phase</B>
+<DD>Read-only option.
+The widget periodically increments the value of this option 
+whenever the <B>-value</B> is greater than 0 and,
+in <I>determinate</I> mode, less than <B>-maximum</B>.
+This option may be used by the current theme 
+to provide additional animation effects.
+</DL>
+<H3><A NAME="M14">WIDGET COMMAND</A></H3>
+<DL class="widget command">
+<DT><A NAME="M15"><I>pathName </I><B>cget</B> <I>option</I></A><DD>
+Returns the current value of the specified <I>option</I>; see <I>ttk::widget(n)</I>.
+<P><DT><A NAME="M16"><I>pathName </I><B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?</A><DD>
+Modify or query widget options; see <I>ttk::widget(n)</I>.
+<P><DT><A NAME="M17"><I>pathName </I><B>instate </B><I>statespec</I> ?<I>script</I>?</A><DD>
+Test the widget state; see <I>ttk::widget(n)</I>.
+<P><DT><A NAME="M18"><I>pathName </I><B>start</B> ?<I>interval</I>?</A><DD>
+Begin autoincrement mode:
+schedules a recurring timer event that calls <B>step</B> 
+every <I>interval</I> milliseconds.
+If omitted, <I>interval</I> defaults to 50 milliseconds (20 steps/second).
+<P><DT><A NAME="M19"><I>pathName </I><B>state</B> ?<I>stateSpec</I>?</A><DD>
+Modify or query the widget state; see <I>ttk::widget(n)</I>.
+<P><DT><A NAME="M20"><I>pathName </I><B>step</B> ?<I>amount</I>?</A><DD>
+Increments the <B>-value</B> by <I>amount</I>.  
+<I>amount</I> defaults to 1.0 if omitted.
+<P><DT><A NAME="M21"><I>pathName </I><B>stop</B></A><DD>
+Stop autoincrement mode:
+cancels any recurring timer event initiated by <I>pathName </I><B>start</B>.
+<P></DL>
+<H3><A NAME="M22">SEE ALSO</A></H3>
+<B><A HREF="../TkCmd/ttk_widget.htm">ttk::widget</A></B>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 2005 Joe English
+</div>
+</BODY></HTML>

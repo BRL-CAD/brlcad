@@ -1,0 +1,270 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>ttk::notebook manual page - Tk Themed Widget</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TkCmd</a> <small>&gt;</small> ttk_notebook</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="ttk_notebook.htm#M2" NAME="L1812">NAME</A>
+<DL><DD>ttk::notebook - Multi-paned container widget</DD></DL>
+<DD><A HREF="ttk_notebook.htm#M3" NAME="L1813">SYNOPSIS</A>
+<DL>
+</DL>
+<DD><A HREF="ttk_notebook.htm#M4" NAME="L1814">DESCRIPTION</A>
+<DD><A HREF="ttk_notebook.htm#M5" NAME="L1815">STANDARD OPTIONS</A>
+<DL>
+<DD><A HREF="ttk_widget.htm#M-class">-class, undefined, undefined</A>
+<DD><A HREF="ttk_widget.htm#M-cursor">-cursor, cursor, Cursor</A>
+<DD><A HREF="ttk_widget.htm#M-style">-style, style, Style</A>
+<DD><A HREF="ttk_widget.htm#M-takefocus">-takefocus, takeFocus, TakeFocus</A>
+</DL>
+<DD><A HREF="ttk_notebook.htm#M6" NAME="L1816">WIDGET-SPECIFIC OPTIONS</A>
+<DL>
+<DD><A HREF="ttk_notebook.htm#M7" NAME="L1817">-height, height, Height</A>
+<DD><A HREF="ttk_notebook.htm#M8" NAME="L1818">-padding, padding, Padding</A>
+<DD><A HREF="ttk_notebook.htm#M9" NAME="L1819">-width, width, Width</A>
+</DL>
+<DD><A HREF="ttk_notebook.htm#M10" NAME="L1820">TAB OPTIONS</A>
+<DL>
+<DD><A HREF="ttk_notebook.htm#M11" NAME="L1821">-state, state, State</A>
+<DD><A HREF="ttk_notebook.htm#M12" NAME="L1822">-sticky, sticky, Sticky</A>
+<DD><A HREF="ttk_notebook.htm#M13" NAME="L1823">-padding, padding, Padding</A>
+<DD><A HREF="ttk_notebook.htm#M14" NAME="L1824">-text, text, Text</A>
+<DD><A HREF="ttk_notebook.htm#M15" NAME="L1825">-image, image, Image</A>
+<DD><A HREF="ttk_notebook.htm#M16" NAME="L1826">-compound, compound, Compound</A>
+<DD><A HREF="ttk_notebook.htm#M17" NAME="L1827">-underline, underline, Underline</A>
+</DL>
+<DD><A HREF="ttk_notebook.htm#M18" NAME="L1828">WIDGET COMMAND</A>
+<DL class="widget command">
+<DD><A HREF="ttk_notebook.htm#M19" NAME="L1829"><I>pathname </I><B>add</B> <I>window</I> ?<I>options...</I>?</A>
+<DD><A HREF="ttk_notebook.htm#M20" NAME="L1830"><I>pathname </I><B>configure</B> ?<I>options</I>?</A>
+<DD><A HREF="ttk_notebook.htm#M21" NAME="L1831"><I>pathname </I><B>cget</B> <I>option</I></A>
+<DD><A HREF="ttk_notebook.htm#M22" NAME="L1832"><I>pathname </I><B>forget</B> <I>tabid</I></A>
+<DD><A HREF="ttk_notebook.htm#M23" NAME="L1833"><I>pathname </I><B>hide</B> <I>tabid</I></A>
+<DD><A HREF="ttk_notebook.htm#M24" NAME="L1834"><I>pathname </I><B>index</B> <I>tabid</I></A>
+<DD><A HREF="ttk_notebook.htm#M25" NAME="L1835"><I>pathname </I><B>insert</B> <I>pos</I> <I>subwindow</I> <I>options...</I></A>
+<DD><A HREF="ttk_notebook.htm#M26" NAME="L1836"><I>pathname </I><B>instate</B> <I>statespec </I>?<I>script...</I>?</A>
+<DD><A HREF="ttk_notebook.htm#M27" NAME="L1837"><I>pathname </I><B>select</B> ?<I>tabid</I>?</A>
+<DD><A HREF="ttk_notebook.htm#M28" NAME="L1838"><I>pathname </I><B>state</B> ?<I>statespec</I>?</A>
+<DD><A HREF="ttk_notebook.htm#M29" NAME="L1839"><I>pathname </I><B>tab</B> <I>tabid</I> ?<I>-option </I>?<I>value ...</I></A>
+<DD><A HREF="ttk_notebook.htm#M30" NAME="L1840"><I>pathname </I><B>tabs</B></A>
+</DL>
+<DD><A HREF="ttk_notebook.htm#M31" NAME="L1841">KEYBOARD TRAVERSAL</A>
+<DL class="keyboard traversal">
+</DL>
+<DD><A HREF="ttk_notebook.htm#M32" NAME="L1842">TAB IDENTIFIERS</A>
+<DL class="tab identifiers">
+</DL>
+<DD><A HREF="ttk_notebook.htm#M33" NAME="L1843">VIRTUAL EVENTS</A>
+<DD><A HREF="ttk_notebook.htm#M34" NAME="L1844">EXAMPLE</A>
+<DD><A HREF="ttk_notebook.htm#M35" NAME="L1845">SEE ALSO</A>
+<DD><A HREF="ttk_notebook.htm#M36" NAME="L1846">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+ttk::notebook - Multi-paned container widget
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>ttk::notebook</B> <I>pathName </I>?<I>options...</I>?<BR>
+<I>pathName </I><B>add</B> <I>window</I> ?<I>options...</I>?<BR>
+<I>pathName </I><B>insert</B> <I>index</I> <I>window</I> ?<I>options...</I>?<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+A <B>ttk::notebook</B> widget manages a collection of windows 
+and displays a single one at a time.
+Each slave window is associated with a <I>tab</I>,
+which the user may select to change the currently-displayed window.
+<H3><A NAME="M5">STANDARD OPTIONS</A></H3>
+<DL>
+<DT><B><A HREF="ttk_widget.htm#M-class">-class, undefined, undefined</A></B>
+<DT><B><A HREF="ttk_widget.htm#M-cursor">-cursor, cursor, Cursor</A></B>
+<DT><B><A HREF="ttk_widget.htm#M-style">-style, style, Style</A></B>
+<DT><B><A HREF="ttk_widget.htm#M-takefocus">-takefocus, takeFocus, TakeFocus</A></B>
+</DL>
+<H3><A NAME="M6">WIDGET-SPECIFIC OPTIONS</A></H3>
+<DL>
+<DT>Command-Line Name: <B><A NAME="M7">-height</A></B>
+<DT>Database Name: <B>height</B>
+<DT>Database Class: <B>Height</B>
+<DD>If present and greater than zero, 
+specifies the desired height of the pane area
+(not including internal padding or tabs).
+Otherwise, the maximum height of all panes is used.
+<P><DT>Command-Line Name: <B><A NAME="M8">-padding</A></B>
+<DT>Database Name: <B>padding</B>
+<DT>Database Class: <B>Padding</B>
+<DD>Specifies the amount of extra space to add around the outside
+of the notebook.
+The padding is a list of up to four length specifications 
+<I>left top right bottom</I>.
+If fewer than four elements are specified, 
+<I>bottom</I> defaults to <I>top</I>,
+<I>right</I> defaults to <I>left</I>, and 
+<I>top</I> defaults to <I>left</I>.
+<P><DT>Command-Line Name: <B><A NAME="M9">-width</A></B>
+<DT>Database Name: <B>width</B>
+<DT>Database Class: <B>Width</B>
+<DD>If present and greater than zero, 
+specifies the desired width of the pane area
+(not including internal padding).
+Otherwise, the maximum width of all panes is used.
+</DL>
+<H3><A NAME="M10">TAB OPTIONS</A></H3>
+The following options may be specified for individual notebook panes:
+<DL>
+<DT>Command-Line Name: <B><A NAME="M11">-state</A></B>
+<DT>Database Name: <B>state</B>
+<DT>Database Class: <B>State</B>
+<DD>Either <B>normal</B>, <B>disabled</B> or <B>hidden</B>.  
+If <B>disabled</B>, then the tab is not selectable.
+If <B>hidden</B>, then the tab is not shown.
+<P><DT>Command-Line Name: <B><A NAME="M12">-sticky</A></B>
+<DT>Database Name: <B>sticky</B>
+<DT>Database Class: <B>Sticky</B>
+<DD>Specifies how the slave window is positioned within the pane area.
+Value is a string containing zero or more of the characters
+<B>n, s, e,</B> or <B>w</B>.
+Each letter refers to a side (north, south, east, or west) 
+that the slave window will
+&#8220;stick&#8221;
+to, as per the <B><A HREF="../TkCmd/grid.htm">grid</A></B> geometry manager.
+<P><DT>Command-Line Name: <B><A NAME="M13">-padding</A></B>
+<DT>Database Name: <B>padding</B>
+<DT>Database Class: <B>Padding</B>
+<DD>Specifies the amount of extra space to add between the notebook and this pane.
+Syntax is the same as for the widget <B>-padding</B> option.
+<P><DT>Command-Line Name: <B><A NAME="M14">-text</A></B>
+<DT>Database Name: <B><A HREF="../TkCmd/text.htm">text</A></B>
+<DT>Database Class: <B><A HREF="../TkCmd/text.htm">Text</A></B>
+<DD>Specifies a string to be displayed in the tab.
+<P><DT>Command-Line Name: <B><A NAME="M15">-image</A></B>
+<DT>Database Name: <B><A HREF="../TkCmd/image.htm">image</A></B>
+<DT>Database Class: <B><A HREF="../TkCmd/image.htm">Image</A></B>
+<DD>Specifies an image to display in the tab.
+See <I>ttk_widget(n)</I> for details.
+<P><DT>Command-Line Name: <B><A NAME="M16">-compound</A></B>
+<DT>Database Name: <B>compound</B>
+<DT>Database Class: <B>Compound</B>
+<DD>Specifies how to display the image relative to the text,
+in the case both <B>-text</B> and <B>-image</B> are present.
+See <I>label(n)</I> for legal values.
+<P><DT>Command-Line Name: <B><A NAME="M17">-underline</A></B>
+<DT>Database Name: <B>underline</B>
+<DT>Database Class: <B>Underline</B>
+<DD>Specifies the integer index (0-based) of a character to underline 
+in the text string.
+The underlined character is used for mnemonic activation
+if <B>ttk::notebook::enableTraversal</B> is called.
+</DL>
+<H3><A NAME="M18">WIDGET COMMAND</A></H3>
+<DL class="widget command">
+<DT><A NAME="M19"><I>pathname </I><B>add</B> <I>window</I> ?<I>options...</I>?</A><DD>
+Adds a new tab to the notebook.
+See <B>TAB OPTIONS</B> for the list of available <I>options</I>.
+If <I>window</I> is currently managed by the notebook but hidden,
+it is restored to its previous position.
+<P><DT><A NAME="M20"><I>pathname </I><B>configure</B> ?<I>options</I>?</A><DD>
+See <I>ttk::widget(n)</I>.
+<P><DT><A NAME="M21"><I>pathname </I><B>cget</B> <I>option</I></A><DD>
+See <I>ttk::widget(n)</I>.
+<P><DT><A NAME="M22"><I>pathname </I><B>forget</B> <I>tabid</I></A><DD>
+Removes the tab specified by <I>tabid</I>,
+unmaps and unmanages the associated window.
+<P><DT><A NAME="M23"><I>pathname </I><B>hide</B> <I>tabid</I></A><DD>
+Hides the tab specified by <I>tabid</I>.
+The tab will not be displayed, but the associated window
+remains managed by the notebook and its configuration remembered.
+Hidden tabs may be restored with the <B>add</B> command.
+<P><DT><A NAME="M24"><I>pathname </I><B>index</B> <I>tabid</I></A><DD>
+Returns the numeric index of the tab specified by <I>tabid</I>,
+or the total number of tabs if <I>tabid</I> is the string
+&#8220;<B>end</B>&#8221;.
+<P><DT><A NAME="M25"><I>pathname </I><B>insert</B> <I>pos</I> <I>subwindow</I> <I>options...</I></A><DD>
+Inserts a pane at the specified position.
+<I>pos</I> is either the string <B>end</B>, an integer index, 
+or the name of a managed subwindow.
+If <I>subwindow</I> is already managed by the notebook, 
+moves it to the specified position.
+See <B>TAB OPTIONS</B> for the list of available options.
+<P><DT><A NAME="M26"><I>pathname </I><B>instate</B> <I>statespec </I>?<I>script...</I>?</A><DD>
+See <I>ttk::widget(n)</I>.
+<P><DT><A NAME="M27"><I>pathname </I><B>select</B> ?<I>tabid</I>?</A><DD>
+Selects the specified tab.
+The associated slave window will be displayed,
+and the previously-selected window (if different) is unmapped.
+If <I>tabid</I> is omitted, returns the widget name of the
+currently selected pane.
+<P><DT><A NAME="M28"><I>pathname </I><B>state</B> ?<I>statespec</I>?</A><DD>
+See <I>ttk::widget(n)</I>.
+<P><DT><A NAME="M29"><I>pathname </I><B>tab</B> <I>tabid</I> ?<I>-option </I>?<I>value ...</I></A><DD>
+Query or modify the options of the specific tab.
+If no <I>-option</I> is specified,
+returns a dictionary of the tab option values.
+If one <I>-option</I> is specified,
+returns the value of that <I>option</I>.
+Otherwise, sets the <I>-option</I>s to the corresponding <I>value</I>s.
+See <B>TAB OPTIONS</B> for the available options.
+<P><DT><A NAME="M30"><I>pathname </I><B>tabs</B></A><DD>
+Returns the list of windows managed by the notebook.
+<P></DL>
+<H3><A NAME="M31">KEYBOARD TRAVERSAL</A></H3>
+To enable keyboard traversal for a toplevel window
+containing a notebook widget <I>$nb</I>, call:
+<PRE>ttk::notebook::enableTraversal $nb</PRE>
+<P>
+This will extend the bindings for the toplevel window
+containing the notebook as follows:
+<P>
+<DL class="keyboard traversal">
+<DT><DD>&#8226;&nbsp;
+<B>Control-Tab</B> selects the tab following the currently selected one.
+<P><DT><DD>&#8226;&nbsp;
+<B>Shift-Control-Tab</B> selects the tab preceding the currently selected one.
+<P><DT><DD>&#8226;&nbsp;
+<B>Alt-K</B>, where <B>K</B> is the mnemonic (underlined) character
+of any tab, will select that tab.
+<P></DL>
+<P>
+Multiple notebooks in a single toplevel may be enabled for traversal,
+including nested notebooks.  
+However, notebook traversal only works properly if all panes
+are direct children of the notebook.
+<H3><A NAME="M32">TAB IDENTIFIERS</A></H3>
+The <I>tabid</I> argument to the above commands may take
+any of the following forms:
+<P>
+<DL class="tab identifiers">
+<DT><DD>&#8226;&nbsp;
+An integer between zero and the number of tabs;
+<P><DT><DD>&#8226;&nbsp;
+The name of a slave window;
+<P><DT><DD>&#8226;&nbsp;
+A positional specification of the form
+&#8220;@<I>x</I>,<I>y</I>&#8221;,
+which identifies the tab 
+<P><DT><DD>&#8226;&nbsp;
+The literal string
+&#8220;<B>current</B>&#8221;,
+which identifies the currently-selected tab; or:
+<P><DT><DD>&#8226;&nbsp;
+The literal string
+&#8220;<B>end</B>&#8221;,
+which returns the number of tabs 
+(only valid for
+&#8220;<I>pathname </I><B>index</B>&#8221;).
+<P></DL>
+<H3><A NAME="M33">VIRTUAL EVENTS</A></H3>
+The notebook widget generates a <B>&lt;&lt;NotebookTabChanged&gt;&gt;</B>
+virtual event after a new tab is selected.
+<H3><A NAME="M34">EXAMPLE</A></H3>
+<PRE>pack [<B>ttk::notebook</B> .nb]
+.nb add [frame .nb.f1] -text &quot;First tab&quot;
+.nb add [frame .nb.f2] -text &quot;Second tab&quot;
+.nb select .nb.f2
+ttk::notebook::enableTraversal .nb</PRE>
+<H3><A NAME="M35">SEE ALSO</A></H3>
+<B><A HREF="../TkCmd/ttk_widget.htm">ttk::widget</A></B>, <B><A HREF="../TkCmd/grid.htm">grid</A></B>
+<H3><A NAME="M36">KEYWORDS</A></H3>
+<A href="../Keywords/P.htm#pane">pane</A>, <A href="../Keywords/T.htm#tab">tab</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 2004 Joe English
+</div>
+</BODY></HTML>

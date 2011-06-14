@@ -1,0 +1,338 @@
+<html>
+<head>
+<link rel="stylesheet" href="manpage.css"><title>tDOM manual: dom</title><meta name="xsl-processor" content="Jochen Loewer (loewerj@hotmail.com), Rolf Ade (rolf@pointsman.de) et. al."><meta name="generator" content="$RCSfile: dom.html,v $ $Revision$">
+</head><body>
+<div class="header">
+<div class="navbar" align="center">
+<a href="#SECTid883">NAME</a> � <a href="#SECTid894">SYNOPSIS</a> � <a href="#SECTid909">DESCRIPTION </a> � <a href="#SECTid1450">KEYWORDS</a>
+</div><hr class="navsep">
+</div><div class="body">
+  <h2><a name="SECTid883">NAME</a></h2><p class="namesection">
+<b class="names">dom - </b><br>Create an in-memory DOM tree from XML</p>
+  
+  <h2><a name="SECTid894">SYNOPSIS</a></h2><pre class="syntax">package require tdom
+
+<b class="cmd">dom</b> <i class="m">method</i> ?<i class="m">arg arg ...</i>?</pre>
+
+  <h2><a name="SECTid909">DESCRIPTION </a></h2><p>This command provides the creation of complete DOM trees in memory. In
+the usual case a string containing a XML information is parsed and converted
+into a DOM tree. <i class="m">method</i> indicates a specific subcommand. </p><p>The valid methods are:</p><dl class="commandlist">
+        
+          <dt>
+<b class="cmd">dom</b> <b class="method">parse</b> ?<i class="m">options</i>? ?<i class="m">data</i>?</dt>
+          <dd>Parses the XML information and builds up the DOM tree in memory
+providing a Tcl object command to this DOM document object. Example:
+
+      <pre class="example">
+dom parse $xml doc
+$doc documentElement root</pre>
+
+      <p>parses the XML in the variable xml, creates the DOM tree in memory,
+make a reference to the document object, visible in Tcl as a document object
+command, and assigns this new object name to the variable doc. When doc gets
+freed, the DOM tree and the associated Tcl command object (document and all
+node objects) are freed automatically.</p>
+      
+      <pre class="example">
+set document [dom parse $xml]
+set root     [$document documentElement]</pre>
+
+      <p>parses the XML in the variable xml, creates the DOM tree in memory,
+make a reference to the document object, visible in Tcl as a document object
+command, and returns this new object name, which is then stored in
+<tt class="samp">document</tt>.  To free the underlying DOM tree and the associative Tcl
+object commands (document + nodes + fragment nodes) the document object command
+has to be explicitly deleted by:</p>
+
+      <pre class="example">
+$document delete
+</pre>or<pre class="example">
+rename $document ""</pre>
+
+<p>The valid options are:</p>
+<dl class="optlist">
+              
+                <dt><b>-simple</b></dt> 
+                <dd>If <i class="m">-simple</i> is
+specified, a simple but fast parser is used (conforms not fully to XML
+recommendation). That should double parsing and DOM generation speed. The
+encoding of the data is not transformed inside the parser. The simple parser
+does not respect any encoding information in the XML declaration. It skips over
+the internal DTD subset and ignores any information in it. Therefor it doesn't
+include defaulted attribute values into the tree, even if the according
+attribute declaration is in the internal subset. It also doesn't expand
+internal or external entity references other than the predefined entities and
+character references.</dd>
+              
+
+              
+                <dt><b>-html</b></dt>
+                <dd>If <i class="m">-html</i> is specified, a fast HTML parser is 
+used, which tries to even parse badly formed HTML into a DOM tree.</dd>
+              
+       
+              
+                <dt><b>-keepEmpties</b></dt> 
+                <dd>If <i class="m">-keepEmpties</i> is
+specified, text nodes, which contain only whitespaces, will be part of the
+resulting DOM tree. In default case (<i class="m">-keepEmpties</i> not given) those empty
+text nodes are removed at parsing time.</dd>
+              
+
+              
+                <dt>
+<b>-channel</b> <i>&lt;channel-ID&gt;</i>
+</dt>
+                
+                <dd>If <i class="m">-channel &lt;channel-ID&gt;</i> is specified, the
+input to be parsed is read from the specified channel. The encoding setting of
+the channel (via fconfigure -encoding) is respected, ie the data read from the
+channel are converted to UTF-8 according to the encoding settings, befor the
+data is parsed.</dd>
+              
+
+              
+                <dt>
+<b>-baseurl</b> <i>&lt;baseURI&gt;</i>
+</dt>
+                
+                <dd>If <i class="m">-baseurl &lt;baseURI&gt;</i> is specified, the
+baseURI is used as the base URI of the document. External entities referenced
+in the document are resolved relative to this base URI. This base URI is also
+stored within the DOM tree.</dd>
+              
+
+              
+                <dt>
+<b>-feedbackAfter</b> <i>&lt;#bytes&gt;</i>
+</dt>
+                
+                <dd>If <i class="m">-feedbackAfter &lt;#bytes&gt;</i> is specified, the
+tcl command ::dom::domParseFeedback is evaluated after parsing every #bytes. If
+you use this option, you have to create a tcl proc named
+::dom::domParseFeedback, otherwise you will get an error. Please notice, that
+the calls of ::dom::domParseFeedback are not done exactly every #bytes, but
+always at the first element start after every #bytes.</dd>
+              
+
+              
+                <dt>
+<b>-externalentitycommand</b> <i>&lt;script&gt;</i>
+</dt>
+                
+                <dd>If <i class="m">-externalentitycommand &lt;script&gt;</i> is
+specified, the specified tcl script is called to resolve any external entities
+of the document. The actual evaluated command consists of this option followed
+by three arguments: the base uri, the system identifier of the entity and the
+public identifier of the entity. The base uri and the public identifier may be
+the empty list. The script has to return a tcl list consisting of three
+elements. The first element of this list signals, how the external entity is
+returned to the processor. At the moment, the two allowed types are "string"
+and "channel". The second element of the list has to be the (absolute) base URI
+of the external entity to be parsed.  The third element of the list are data,
+either the already read data out of the external entity as string in the case
+of type "string", or the name of a tcl channel, in the case of type
+"channel".</dd>
+              
+
+              
+                <dt>
+<b>-useForeignDTD</b> <i>&lt;boolean&gt;</i>
+</dt>
+                
+                <dd>If &lt;boolean&gt; is true and the document does not have
+an external subset, the parser will call the -externalentitycommand script with
+empty values for the systemId and publicID arguments. Pleace notice, that, if
+the document also doesn't have an internal subset, the
+-startdoctypedeclcommand and -enddoctypedeclcommand scripts, if set, are not
+called. The <i class="m">-useForeignDTD</i> respects </dd>
+              
+
+              
+                <dt>
+<b>-paramentityparsing</b> <i>&lt;always|never|notstandalone&gt;</i>
+</dt>
+                
+                <dd>The <i class="m">-paramentityparsing</i> option controls, if the
+parser tries to resolve the external entities (including the external DTD
+subset) of the document, while building the DOM
+tree. <i class="m">-paramentityparsing</i> requires an argument, which must be either
+"always", "never", or "notstandalone". The value "always" means, that the
+parser tries to resolves (recursively) all external entities of the XML
+source. This is the default, in case <i class="m">-paramentityparsing</i> is omitted. The
+value "never" means, that only the given XML source is parsed and no external
+entity (including the external subset) will be resolved and parsed. The value
+"notstandalone" means, that all external entities will be resolved and parsed,
+with the execption of documents, which explicitly states standalone="yes" in
+their XML declaration.</dd>
+              
+
+            </dl>
+<p></p>
+</dd>
+        
+
+        
+          <dt>
+<b class="cmd">dom</b> <b class="method">createDocument</b>
+<i class="m">docElemName</i> ?<i class="m">objVar</i>?</dt>
+          <dd>Creates a new DOM document object with one element node with
+node name <tt class="samp">docElemName</tt>. The <tt class="samp">objVar</tt> controlls the
+memory handling as explained above.</dd>
+        
+
+        
+          <dt>
+<b class="cmd">dom</b> <b class="method">createDocumentNS</b>
+<i class="m">docElemName</i> <i class="m">uri</i> ?<i class="m">objVar</i>?</dt>
+          <dd>Creates a new DOM document object with one element node with
+node name <tt class="samp">docElemName</tt>. <tt class="samp">Uri</tt> gives the namespace of the
+document element to create. The <tt class="samp">objVar</tt> controlls the
+memory handling as explained above.</dd>
+        
+
+        
+          <dt>
+<b class="cmd">dom</b> <b class="method">setResultEncoding</b> ?<i class="m">encodingName</i>?</dt>
+          <dd>If <tt class="samp">encodingName</tt> is not given the current global
+result encoding is returned.  Otherwise the global result encoding is set to
+<tt class="samp">encodingName</tt>.  All character data, attribute values, etc. will
+then be converted from UTF-8, which is delivered from the Expat XML parser, to
+the given 8 bit encoding at XML/DOM parse time.  Valid values for
+<tt class="samp">encodingName</tt> are: utf-8, ascii, cp1250, cp1251, cp1252, cp1253,
+cp1254, cp1255, cp1256, cp437, cp850, en, iso8859-1, iso8859-2, iso8859-3,
+iso8859-4, iso8859-5, iso8859-6, iso8859-7, iso8859-8, iso8859-9, koi8-r.</dd>
+        
+
+        
+          <dt>
+<b class="cmd">dom</b> <b class="method">createNodeCmd</b>
+<i class="m">?-returnNodeCmd?</i> <i class="m">(element|comment|text|cdata|pi)Node</i> <i class="m">commandName</i>
+</dt>
+          <dd>This method creates Tcl commands, which in turn create tDOM nodes.
+Tcl commands created by this command are only avaliable inside a script given to the
+domNode method <i class="m">appendFromScript</i>. If a command created with
+<i class="m">createNodeCmd</i> is invoked in any other context, it will return error. The
+created command <i class="m">commandName</i> replaces any existing command or procedure
+with that name. If the <i class="m">commandName</i> includes any namespace qualifiers, 
+it is created in the specified namespace.
+
+<p>If such command is invoked inside a script given as argument to
+the domNode method <i class="m">appendFromScript</i>, it creates a new node and
+appends this node at the end of the child list of the invoking element
+node. If the option <i class="m">-returnNodeCmd</i> was given, the command returns the
+created node as Tcl command. If this option was omitted, the command returns
+nothing. Each command creates always the same type of node. Which type of 
+node is created by the command is determined by the first argument to the
+<i class="m">createNodeCmd</i>. The syntax of the created command depends on the 
+type of the node it creates.</p>
+
+<p>If the first argument of the method is <i class="m">elementNode</i>, the created
+command will create an element node. The tag name of the created
+node is <i class="m">commandName</i> without namespace qualifiers. The syntax of the 
+created command is:</p>
+
+<pre class="syntax">
+<b class="cmd">elementNodeCmd</b> <i class="m">?attributeName attributeValue ...? ?script?</i>
+<b class="cmd">elementNodeCmd</b> <i class="m">?-attributeName attributeValue ...? ?script?</i>
+<b class="cmd">elementNodeCmd</b> <i class="m">name_value_list script</i>
+</pre>
+
+<p>The command syntax allows three different ways to specify the attributes of
+the resulting element. These could be specified with <i class="m">attributeName
+attributeValue</i> argument pairs, in an "option style" way with
+<i class="m">-attriubteName attributeValue</i> argument pairs (the '-' character is only
+syntactical sugar and will be stripped off) or as a Tcl list with elements
+interpreted as attribute name and the corresponding attribute value.
+The attribute name elements in the list may have a leading '-' character, which
+will be stripped off.</p>
+
+<p>Every <i class="m">elementNodeCmd</i> accepts an optional Tcl script as last
+argument. This script is evaluated as recursive <i class="m">appendFromScript</i> script
+with the node created by the <i class="m">elementNodeCmd</i> as parent of all nodes
+created by the script.</p>
+
+<p>If the first argument of the method is <i class="m">textNode</i>, the command will create
+a text node. The syntax of the created command is:</p>
+
+<pre class="syntax">
+<b class="cmd">textNodeCmd</b> ?-disableOutputEscaping? <i class="m">data</i>
+</pre>
+
+<p>If the optional flag <i class="m">-disableOutputEscaping</i> is given, the
+escaping of the ampersand character (&amp;) and the left angle bracket (&lt;)
+inside the data is disabled. You should use this flag carefully.</p>
+
+<p>If the first argument of the method is <i class="m">textNode</i>, or <i class="m">cdataNode</i>,
+the command will create an comment node or CDATA section node. The syntax of 
+the created command is:</p>
+
+<pre class="syntax">
+<b class="cmd">nodeCmd</b> <i class="m">data</i>
+</pre>
+
+<p>If the first argument of the method is <i class="m">piNode</i>, the command will
+create a processing instruction node. The syntax of the created
+command is:</p>
+
+<pre class="syntax">
+<b class="cmd">piNodeCmd</b> <i class="m">target data</i>
+</pre>
+
+</dd>
+        
+
+        
+          <dt>
+<b class="cmd">dom</b> <b class="method">setStoreLineColumn</b> <i class="m">?boolean</i>
+</dt>
+          <dd>If switched on, the DOM nodes will contain line and column
+position information for the original XML document after parsing.</dd>
+        
+
+        
+          <dt>
+<b class="cmd">dom</b> <b class="method">isName</b> <i class="m">name</i>
+</dt>
+          <dd>Returns 1, if <i class="m">name</i> is a valid XML Name according to
+production 5 of the <a href="http://www.w3.org/TR/2000/REC-xml-20001006.html">XML 1.0</a> recommendation. Otherwise it returns 0.</dd>
+        
+
+        
+          <dt>
+<b class="cmd">dom</b> <b class="method">isNCName</b> <i class="m">name</i>
+</dt>
+          <dd>Returns 1, if <i class="m">name</i> is a valid NCName according
+to production 4 of the of the <a href="http://www.w3.org/TR/1999/REC-xml-names-19990114">Namespaces in XML</a> recommendation. Otherwise it returns
+0.</dd>
+        
+
+        
+          <dt>
+<b class="cmd">dom</b> <b class="method">isQName</b> <i class="m">name</i>
+</dt>
+          <dd>Returns 1, if <i class="m">name</i> is a valid QName according
+to production 6 of the of the <a href="http://www.w3.org/TR/1999/REC-xml-names-19990114">Namespaces in XML</a> recommendation. Otherwise it returns
+0.</dd>
+        
+
+        
+          <dt>
+<b class="cmd">dom</b> <b class="method">isCharData</b>
+<i class="m">string</i>
+</dt>
+          <dd>Returns 1, if every character in <i class="m">string</i> is
+a valid XML Char according to production 2 of the <a href="http://www.w3.org/TR/2000/REC-xml-20001006.html">XML 1.0</a>
+recommendation. Otherwise it returns 0.</dd>
+        
+
+      </dl>
+
+  <h2><a name="SECTid1450">KEYWORDS</a></h2><p class="keywords">
+<a class="keyword" href="keyword-index.html#KW-XML">XML</a>, <a class="keyword" href="keyword-index.html#KW-DOM">DOM</a>, <a class="keyword" href="keyword-index.html#KW-Document">Document</a>, <a class="keyword" href="keyword-index.html#KW-node">node</a>, <a class="keyword" href="keyword-index.html#KW-parsing">parsing</a>
+</p>
+</div><hr class="navsep"><div class="navbar" align="center">
+<a class="navaid" href="index.html">Table of Contents</a> � <a class="navaid" href="category-index.html">Index</a> � <a class="navaid" href="keyword-index.html">Keywords</a>
+</div>
+</body>
+</html>

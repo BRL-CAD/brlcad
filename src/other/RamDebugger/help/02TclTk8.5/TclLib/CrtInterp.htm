@@ -1,0 +1,146 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD><TITLE>Tcl_CreateInterp manual page - Tcl Library Procedures</TITLE>
+<link rel="stylesheet" href="../docs.css" type="text/css" media="all">
+</HEAD>
+<BODY><H2><a href="../contents.htm">Tcl8.5.1/Tk8.5.1 Documentation</a> <small>&gt;</small> <a href="contents.htm">TclLib</a> <small>&gt;</small> CrtInterp</H2>
+<H3><A HREF="../UserCmd/contents.htm">Tcl/Tk Applications</A> | <A HREF="../TclCmd/contents.htm">Tcl Commands</A> | <A HREF="../TkCmd/contents.htm">Tk Commands</A> | <A HREF="../TclLib/contents.htm">Tcl Library</A> | <A HREF="../TkLib/contents.htm">Tk Library</A></H3>
+<DL>
+<DD><A HREF="CrtInterp.htm#M2" NAME="L131">NAME</A>
+<DL><DD>Tcl_CreateInterp, Tcl_DeleteInterp, Tcl_InterpDeleted - create and delete Tcl command interpreters</DD></DL>
+<DD><A HREF="CrtInterp.htm#M3" NAME="L132">SYNOPSIS</A>
+<DL>
+<DD><B>#include &lt;tcl.h&gt;</B>
+<DD>Tcl_Interp *
+<DD><B>Tcl_CreateInterp</B>()
+<DD><B>Tcl_DeleteInterp</B>(<I>interp</I>)
+<DD>int
+<DD><B>Tcl_InterpDeleted</B>(<I>interp</I>)
+</DL>
+<DD><A HREF="CrtInterp.htm#M4" NAME="L133">ARGUMENTS</A>
+<DL class="arguments">
+</DL>
+<DD><A HREF="CrtInterp.htm#M5" NAME="L134">DESCRIPTION</A>
+<DD><A HREF="CrtInterp.htm#M6" NAME="L135">INTERPRETERS AND MEMORY MANAGEMENT</A>
+<DL class="interpreters and memory management">
+<DD><A HREF="CrtInterp.htm#M7" NAME="L136">Interpreters Passed As Arguments</A>
+<DD><A HREF="CrtInterp.htm#M8" NAME="L137">Interpreter Creation And Deletion</A>
+<DD><A HREF="CrtInterp.htm#M9" NAME="L138">Retrieving An Interpreter From A Data Structure</A>
+</DL>
+<DD><A HREF="CrtInterp.htm#M10" NAME="L139">SEE ALSO</A>
+<DD><A HREF="CrtInterp.htm#M11" NAME="L140">KEYWORDS</A>
+</DL>
+<H3><A NAME="M2">NAME</A></H3>
+Tcl_CreateInterp, Tcl_DeleteInterp, Tcl_InterpDeleted - create and delete Tcl command interpreters
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+<B>#include &lt;tcl.h&gt;</B><BR>
+<A HREF="../TclLib/Interp.htm">Tcl_Interp</A> *<BR>
+<B>Tcl_CreateInterp</B>()<BR>
+<B>Tcl_DeleteInterp</B>(<I>interp</I>)<BR>
+int<BR>
+<B>Tcl_InterpDeleted</B>(<I>interp</I>)<BR>
+<H3><A NAME="M4">ARGUMENTS</A></H3>
+<DL class="arguments">
+<DT><A HREF="../TclLib/Interp.htm">Tcl_Interp</A> <B>*interp</B> (in)<DD>
+Token for interpreter to be destroyed.
+<P></DL>
+<H3><A NAME="M5">DESCRIPTION</A></H3>
+<B>Tcl_CreateInterp</B> creates a new interpreter structure and returns
+a token for it.  The token is required in calls to most other Tcl
+procedures, such as <B><A HREF="../TclLib/CrtCommand.htm">Tcl_CreateCommand</A></B>, <B><A HREF="../TclLib/Eval.htm">Tcl_Eval</A></B>, and
+<B>Tcl_DeleteInterp</B>.
+Clients are only allowed to access a few of the fields of
+<A HREF="../TclLib/Interp.htm">Tcl_Interp</A> structures;  see the <B><A HREF="../TclLib/Interp.htm">Tcl_Interp</A></B>
+and <B><A HREF="../TclLib/CrtCommand.htm">Tcl_CreateCommand</A></B> man pages for details.
+The new interpreter is initialized with the built-in Tcl commands
+and with the variables documented in tclvars(n).  To bind in
+additional commands, call <B><A HREF="../TclLib/CrtCommand.htm">Tcl_CreateCommand</A></B>.
+<P>
+<B>Tcl_DeleteInterp</B> marks an interpreter as deleted; the interpreter
+will eventually be deleted when all calls to <B><A HREF="../TclLib/Preserve.htm">Tcl_Preserve</A></B> for it have
+been matched by calls to <B><A HREF="../TclLib/Preserve.htm">Tcl_Release</A></B>. At that time, all of the
+resources associated with it, including variables, procedures, and
+application-specific command bindings, will be deleted.  After
+<B>Tcl_DeleteInterp</B> returns any attempt to use <B><A HREF="../TclLib/Eval.htm">Tcl_Eval</A></B> on the
+interpreter will fail and return <B>TCL_ERROR</B>. After the call to
+<B>Tcl_DeleteInterp</B> it is safe to examine the interpreter's result,
+query or set the values of variables, define, undefine or retrieve
+procedures, and examine the runtime evaluation stack. See below, in the
+section <B>INTERPRETERS AND MEMORY MANAGEMENT</B> for details.
+<P>
+<B>Tcl_InterpDeleted</B> returns nonzero if <B>Tcl_DeleteInterp</B> was
+called with <I>interp</I> as its argument; this indicates that the
+interpreter will eventually be deleted, when the last call to
+<B><A HREF="../TclLib/Preserve.htm">Tcl_Preserve</A></B> for it is matched by a call to <B><A HREF="../TclLib/Preserve.htm">Tcl_Release</A></B>. If
+nonzero is returned, further calls to <B><A HREF="../TclLib/Eval.htm">Tcl_Eval</A></B> in this interpreter
+will return <B>TCL_ERROR</B>.
+<P>
+<B>Tcl_InterpDeleted</B> is useful in deletion callbacks to distinguish
+between when only the memory the callback is responsible for is being
+deleted and when the whole interpreter is being deleted. In the former case
+the callback may recreate the data being deleted, but this would lead to an
+infinite loop if the interpreter were being deleted.
+
+<H3><A NAME="M6">INTERPRETERS AND MEMORY MANAGEMENT</A></H3>
+<B>Tcl_DeleteInterp</B> can be called at any time on an interpreter that may
+be used by nested evaluations and C code in various extensions. Tcl
+implements a simple mechanism that allows callers to use interpreters
+without worrying about the interpreter being deleted in a nested call, and
+without requiring special code to protect the interpreter, in most cases.
+This mechanism ensures that nested uses of an interpreter can safely
+continue using it even after <B>Tcl_DeleteInterp</B> is called.
+<P>
+The mechanism relies on matching up calls to <B><A HREF="../TclLib/Preserve.htm">Tcl_Preserve</A></B> with calls
+to <B><A HREF="../TclLib/Preserve.htm">Tcl_Release</A></B>. If <B>Tcl_DeleteInterp</B> has been called, only when
+the last call to <B><A HREF="../TclLib/Preserve.htm">Tcl_Preserve</A></B> is matched by a call to
+<B><A HREF="../TclLib/Preserve.htm">Tcl_Release</A></B>, will the interpreter be freed. See the manual entry for
+<B><A HREF="../TclLib/Preserve.htm">Tcl_Preserve</A></B> for a description of these functions.
+<P>
+The rules for when the user of an interpreter must call <B><A HREF="../TclLib/Preserve.htm">Tcl_Preserve</A></B>
+and <B><A HREF="../TclLib/Preserve.htm">Tcl_Release</A></B> are simple:
+<P>
+<DL class="interpreters and memory management">
+<DT><A NAME="M7">Interpreters Passed As Arguments</A><DD>
+Functions that are passed an interpreter as an argument can safely use the
+interpreter without any special protection. Thus, when you write an
+extension consisting of new Tcl commands, no special code is needed to
+protect interpreters received as arguments. This covers the majority of all
+uses.
+<P><DT><A NAME="M8">Interpreter Creation And Deletion</A><DD>
+When a new interpreter is created and used in a call to <B><A HREF="../TclLib/Eval.htm">Tcl_Eval</A></B>,
+<B><A HREF="../TclLib/Eval.htm">Tcl_VarEval</A></B>, <B><A HREF="../TclLib/Eval.htm">Tcl_GlobalEval</A></B>, <B><A HREF="../TclLib/SetVar.htm">Tcl_SetVar</A></B>, or
+<B><A HREF="../TclLib/SetVar.htm">Tcl_GetVar</A></B>, a pair of calls to <B><A HREF="../TclLib/Preserve.htm">Tcl_Preserve</A></B> and
+<B><A HREF="../TclLib/Preserve.htm">Tcl_Release</A></B> should be wrapped around all uses of the interpreter.
+Remember that it is unsafe to use the interpreter once <B><A HREF="../TclLib/Preserve.htm">Tcl_Release</A></B>
+has been called. To ensure that the interpreter is properly deleted when
+it is no longer needed, call <B>Tcl_InterpDeleted</B> to test if some other
+code already called <B>Tcl_DeleteInterp</B>; if not, call
+<B>Tcl_DeleteInterp</B> before calling <B><A HREF="../TclLib/Preserve.htm">Tcl_Release</A></B> in your own code.
+<P><DT><A NAME="M9">Retrieving An Interpreter From A Data Structure</A><DD>
+When an interpreter is retrieved from a data structure (e.g. the client
+data of a callback) for use in <B><A HREF="../TclLib/Eval.htm">Tcl_Eval</A></B>, <B><A HREF="../TclLib/Eval.htm">Tcl_VarEval</A></B>,
+<B><A HREF="../TclLib/Eval.htm">Tcl_GlobalEval</A></B>, <B><A HREF="../TclLib/SetVar.htm">Tcl_SetVar</A></B>, or <B><A HREF="../TclLib/SetVar.htm">Tcl_GetVar</A></B>, a pair of
+calls to <B><A HREF="../TclLib/Preserve.htm">Tcl_Preserve</A></B> and <B><A HREF="../TclLib/Preserve.htm">Tcl_Release</A></B> should be wrapped around
+all uses of the interpreter; it is unsafe to reuse the interpreter once
+<B><A HREF="../TclLib/Preserve.htm">Tcl_Release</A></B> has been called.  If an interpreter is stored inside a
+callback data structure, an appropriate deletion cleanup mechanism should
+be set up by the code that creates the data structure so that the
+interpreter is removed from the data structure (e.g. by setting the field
+to NULL) when the interpreter is deleted. Otherwise, you may be using an
+interpreter that has been freed and whose memory may already have been
+reused.
+<P></DL>
+<P>
+All uses of interpreters in Tcl and Tk have already been protected.
+Extension writers should ensure that their code also properly protects any
+additional interpreters used, as described above.
+
+<H3><A NAME="M10">SEE ALSO</A></H3>
+<B><A HREF="../TclLib/Preserve.htm">Tcl_Preserve</A></B>, <B><A HREF="../TclLib/Preserve.htm">Tcl_Release</A></B>
+<H3><A NAME="M11">KEYWORDS</A></H3>
+<A href="../Keywords/C.htm#command">command</A>, <A href="../Keywords/C.htm#create">create</A>, <A href="../Keywords/D.htm#delete">delete</A>, <A href="../Keywords/I.htm#interpreter">interpreter</A>
+<div class="copy">Copyright &copy; 1995-1997 Roger E. Critchlow Jr.
+Copyright &copy; 1989-1993 The Regents of the University of California.
+Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
+</BODY></HTML>
