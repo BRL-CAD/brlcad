@@ -41,7 +41,7 @@ namespace eval ArcherCore {
     itk_option define -quitcmd quitCmd Command {}
     itk_option define -master master Master "."
 
-    constructor {{_viewOnly 0} {_noCopy 0} args} {}
+    constructor {{_viewOnly 0} {_noCopy 0} {_noTree 0} {_noToolbar 0} args} {}
     destructor {}
 
     public {
@@ -275,6 +275,8 @@ namespace eval ArcherCore {
 	variable mDelayCommandViewBuild 0
 	variable mRestoringTree 0
 	variable mViewOnly 0
+	variable mNoTree 0
+	variable mNoToolbar 0
 	variable mTarget ""
 	variable mTargetCopy ""
 	variable mTargetOldCopy ""
@@ -314,12 +316,12 @@ namespace eval ArcherCore {
 	variable mVPaneToggle3 20
 	variable mVPaneToggle5 20
 
-	variable mShowViewAxes 0
+	variable mShowViewAxes 1
 	variable mShowModelAxes 0
 	variable mShowModelAxesTicks 1
 	variable mShowGroundPlane 0
 	variable mShowPrimitiveLabels 0
-	variable mShowViewingParams 1
+	variable mShowViewingParams 0
 	variable mShowScale 0
 	variable mShowGrid 0
 	variable mSnapGrid 0
@@ -809,7 +811,7 @@ namespace eval ArcherCore {
 # ------------------------------------------------------------
 #                      CONSTRUCTOR
 # ------------------------------------------------------------
-::itcl::body ArcherCore::constructor {{_viewOnly 0} {_noCopy 0} args} {
+::itcl::body ArcherCore::constructor {{_viewOnly 0} {_noCopy 0} {_noTree 0} {_noToolbar 0} args} {
     global env
     global tcl_platform
 
@@ -827,6 +829,8 @@ namespace eval ArcherCore {
     set mProgressBarHeight [expr {[font metrics $mFontText -linespace] + 1}]
     set mViewOnly $_viewOnly
     set mDbNoCopy $_noCopy
+    set mNoTree $_noTree
+    set mNoToolbar $_noToolbar
 
     if {$ArcherCore::inheritFromToplevel} {
 	wm withdraw [namespace tail $this]
@@ -875,13 +879,20 @@ namespace eval ArcherCore {
 	    -background $LABEL_BACKGROUND_COLOR
     } {}
 
-    $itk_component(vpane) add hierarchyView
+    if {!$mNoTree} {
+	$itk_component(vpane) add hierarchyView
+    }
+
     if {!$mViewOnly} {
 	$itk_component(vpane) add geomView
 	$itk_component(vpane) add attrView
-	$itk_component(vpane) paneconfigure hierarchyView \
-	    -margin 0 \
-	    -minimum 0
+
+	if {!$mNoTree} {
+	    $itk_component(vpane) paneconfigure hierarchyView \
+		-margin 0 \
+		-minimum 0
+	}
+
 	$itk_component(vpane) paneconfigure geomView \
 	    -margin 0
 	$itk_component(vpane) paneconfigure attrView \
@@ -902,19 +913,21 @@ namespace eval ArcherCore {
 	    -relief sunken
     } {}
 
-    itk_component add canvas_menu {
-	::iwidgets::menubar $itk_component(canvasF).canvas_menu \
-	    -helpvariable [::itcl::scope mStatusStr] \
-	    -font $mFontText \
-	    -activeborderwidth 2 \
-	    -borderwidth 0 \
-	    -activebackground $SystemHighlight \
-	    -activeforeground $SystemHighlightText
-    } {
-	keep -background
-    }
+    if {!$mNoToolbar} {
+	itk_component add canvas_menu {
+	    ::iwidgets::menubar $itk_component(canvasF).canvas_menu \
+		-helpvariable [::itcl::scope mStatusStr] \
+		-font $mFontText \
+		-activeborderwidth 2 \
+		-borderwidth 0 \
+		-activebackground $SystemHighlight \
+		-activeforeground $SystemHighlightText
+	} {
+	    keep -background
+	}
 
-    buildCanvasMenubar
+	buildCanvasMenubar
+    }
 
     if {!$mViewOnly} {
 	# dummy canvas
@@ -923,10 +936,15 @@ namespace eval ArcherCore {
 		-borderwidth 0 \
 		-relief flat 
 	} {}
-	grid $itk_component(canvas_menu) -row 0 -column 1 -sticky w
-	grid $itk_component(canvas) -row 1 -column 0 -columnspan 3 -sticky news
+	if {!$mNoToolbar} {
+	    grid $itk_component(canvas_menu) -row 0 -column 1 -sticky w
+	    grid $itk_component(canvas) -row 1 -column 0 -columnspan 3 -sticky news
+	    grid rowconfigure $itk_component(canvasF) 1 -weight 1
+	} else {
+	    grid $itk_component(canvas) -row 0 -column 0 -columnspan 3 -sticky news
+	    grid rowconfigure $itk_component(canvasF) 0 -weight 1
+	}
 	grid columnconfigure $itk_component(canvasF) 1 -weight 1
-	grid rowconfigure $itk_component(canvasF) 1 -weight 1
 
 	# status bar
 	itk_component add statusF {
@@ -975,10 +993,15 @@ namespace eval ArcherCore {
 		-relief flat
 	}
 
-	grid $itk_component(canvas_menu) -row 0 -column 0 -sticky w
-	grid $itk_component(canvas) -row 1 -column 0 -sticky news
+	if {!$mNoToolbar} {
+	    grid $itk_component(canvas_menu) -row 0 -column 0 -sticky w
+	    grid $itk_component(canvas) -row 1 -column 0 -sticky news
+	    grid rowconfigure $itk_component(canvasF) 1 -weight 1
+	} else {
+	    grid $itk_component(canvas) -row 0 -column 0 -sticky news
+	    grid rowconfigure $itk_component(canvasF) 0 -weight 1
+	}
 	grid columnconfigure $itk_component(canvasF) 0 -weight 1
-	grid rowconfigure $itk_component(canvasF) 1 -weight 1
 
 	# tree control
 	initTree
@@ -1009,7 +1032,9 @@ namespace eval ArcherCore {
 	}
 	pack $itk_component(statusF) -before $itk_component(south) -side bottom -fill x
     }
-    pack $itk_component(newtreeF) -fill both -expand yes
+    if {!$mNoTree} {
+	pack $itk_component(newtreeF) -fill both -expand yes
+    }
     pack $itk_component(hpane) -fill both -expand yes
     pack $itk_component(vpane) -fill both -expand yes
     pack $itk_component(canvasF) -fill both -expand yes
@@ -1022,7 +1047,9 @@ namespace eval ArcherCore {
 	}
     }
 
-    buildPrimaryToolbar
+    if {!$mNoToolbar} {
+	buildPrimaryToolbar
+    }
 
     trace add variable [::itcl::scope mMeasuringStickColor] write watchVar
     trace add variable [::itcl::scope mMeasuringStickMode] write watchVar
@@ -1055,12 +1082,16 @@ namespace eval ArcherCore {
 
     initImages
     initTreeImages
-    if {!$mDelayCommandViewBuild} {
+
+    if {!$mViewOnly && !$mDelayCommandViewBuild} {
 	after idle "$itk_component(cmd) configure -cmd_prefix \"[namespace tail $this] cmd\""
-	Load ""
     }
 
-    $itk_component(primaryToolbar) itemconfigure open -state normal
+#    Load ""
+ 
+    if {!$mNoToolbar} {
+	$itk_component(primaryToolbar) itemconfigure open -state normal
+    }
 
     #    eval itk_initialize $args
 }
@@ -1178,7 +1209,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::buildCanvasMenubar {}  {
-    if {$mViewOnly} {
+    if {!$mNoToolbar} {
 	# View Menu
 	$itk_component(canvas_menu) add menubutton view \
 	    -text "View" -menu {
@@ -1387,6 +1418,16 @@ namespace eval ArcherCore {
     set dir $mImgDir
 
     if {!$mViewOnly} {
+	if {!$mNoToolbar} {
+	    # Primary Toolbar
+	    $itk_component(primaryToolbar) itemconfigure open \
+		-image [image create photo \
+			    -file [file join $dir open.png]]
+	    $itk_component(primaryToolbar) itemconfigure save \
+		-image [image create photo \
+			    -file [file join $dir save.png]]
+	}
+
 	# Tree Control
 #	$itk_component(tree) configure \
 	    -openimage [image create photo -file [file join $dir folder_open_small.png]] \
@@ -1394,43 +1435,42 @@ namespace eval ArcherCore {
 	    -nodeimage [image create photo -file [file join $dir file_text_small.png]]
 #	$itk_component(tree) redraw
 
-	# Primary Toolbar
-	$itk_component(primaryToolbar) itemconfigure open \
-	    -image [image create photo \
-			-file [file join $dir open.png]]
-	$itk_component(primaryToolbar) itemconfigure save \
-	    -image [image create photo \
-			-file [file join $dir save.png]]
     }
 
-    # View Toolbar
-    $itk_component(primaryToolbar) itemconfigure rotate \
-	-image [image create photo \
-		    -file [file join $dir view_rotate.png]]
-    $itk_component(primaryToolbar) itemconfigure translate \
-	-image [image create photo \
-		    -file [file join $dir view_translate.png]]
-    $itk_component(primaryToolbar) itemconfigure scale \
-	-image [image create photo \
-		    -file [file join $dir view_scale.png]]
-    $itk_component(primaryToolbar) itemconfigure center \
-	-image [image create photo \
-		    -file [file join $dir view_center.png]]
-    $itk_component(primaryToolbar) itemconfigure cpick \
-	-image [image create photo \
-		    -file [file join $dir component_pick.png]]
-    $itk_component(primaryToolbar) itemconfigure cerase \
-	-image [image create photo \
-		    -file [file join $dir component_erase.png]]
-    $itk_component(primaryToolbar) itemconfigure cselect \
-	-image [image create photo \
-		    -file [file join $dir component_select.png]]
-    $itk_component(primaryToolbar) itemconfigure measure \
-	-image [image create photo \
-		    -file [file join $dir measure.png]]
+    if {!$mNoToolbar} {
+	# View Toolbar
+	$itk_component(primaryToolbar) itemconfigure rotate \
+	    -image [image create photo \
+			-file [file join $dir view_rotate.png]]
+	$itk_component(primaryToolbar) itemconfigure translate \
+	    -image [image create photo \
+			-file [file join $dir view_translate.png]]
+	$itk_component(primaryToolbar) itemconfigure scale \
+	    -image [image create photo \
+			-file [file join $dir view_scale.png]]
+	$itk_component(primaryToolbar) itemconfigure center \
+	    -image [image create photo \
+			-file [file join $dir view_center.png]]
+	$itk_component(primaryToolbar) itemconfigure cpick \
+	    -image [image create photo \
+			-file [file join $dir component_pick.png]]
+	$itk_component(primaryToolbar) itemconfigure cerase \
+	    -image [image create photo \
+			-file [file join $dir component_erase.png]]
+	$itk_component(primaryToolbar) itemconfigure cselect \
+	    -image [image create photo \
+			-file [file join $dir component_select.png]]
+	$itk_component(primaryToolbar) itemconfigure measure \
+	    -image [image create photo \
+			-file [file join $dir measure.png]]
+    }
 }
 
 ::itcl::body ArcherCore::initTree {} {
+    if {$mNoTree} {
+	return
+    }
+
     set parent [$itk_component(vpane) childsite hierarchyView]
 
     set mNode2Text() ""
@@ -1494,6 +1534,10 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::initTreeImages {} {
+    if {$mNoTree} {
+	return
+    }
+
     set mImage_air [image create photo -file [file join $mImgDir air.png]]
     set mImage_airLabeled [image create photo -file [file join $mImgDir air_labeled.png]]
     set mImage_airInter [image create photo -file [file join $mImgDir air_intersect.png]]
@@ -1714,7 +1758,7 @@ namespace eval ArcherCore {
     # Other bindings for mged
     #bind $itk_component(ged) <Enter> {focus %W}
 
-    if {$mViewOnly} {
+    if {$mViewOnly && !$mNoToolbar} {
 	$itk_component(canvas_menu) menuconfigure .raytrace.rt \
 	    -state normal
 	$itk_component(canvas_menu) menuconfigure .raytrace.rt.fivetwelve \
@@ -1959,17 +2003,25 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::closeHierarchy {} {
-    $itk_component(vpane) hide hierarchyView
+    if {!$mNoTree} {
+	$itk_component(vpane) hide hierarchyView
+    }
 }
 
 ::itcl::body ArcherCore::openHierarchy {{fraction 30}} {
     #XXX We should check to see if fraction is between
     #    0 and 100 inclusive.
-    $itk_component(vpane) show hierarchyView
-    $itk_component(vpane) fraction $fraction [expr {100 - $fraction}]
+    if {!$mNoTree} {
+	$itk_component(vpane) show hierarchyView
+	$itk_component(vpane) fraction $fraction [expr {100 - $fraction}]
+    }
 }
 
 ::itcl::body ArcherCore::rebuildTree {} {
+    if {$mNoTree} {
+	return
+    }
+
     foreach node [array names mNode2Text] {
 	catch {$itk_component(newtree) delete $node}
     }
@@ -2012,6 +2064,10 @@ namespace eval ArcherCore {
 # This routine expects mEnableListView to be 0.
 #
 ::itcl::body ArcherCore::rsyncTree {_pnode} {
+    if {$mNoTree} {
+	return
+    }
+
     set ptext $mNode2Text($_pnode)
 
     # Is _pnode currently set up for children?
@@ -2147,6 +2203,10 @@ namespace eval ArcherCore {
 # Synchronize the tree view with the database.
 #
 ::itcl::body ArcherCore::syncTree {} {
+    if {$mNoTree} {
+	return
+    }
+
     # Get list of toplevel tree items
     if {$mEnableListView} {
 	set items [lsort -dictionary [$itk_component(ged) ls]]
@@ -2639,14 +2699,16 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::initDefaultBindings {{_comp ""}} {
-    $itk_component(primaryToolbar) itemconfigure rotate -state normal
-    $itk_component(primaryToolbar) itemconfigure translate -state normal
-    $itk_component(primaryToolbar) itemconfigure scale -state normal
-    $itk_component(primaryToolbar) itemconfigure center -state normal
-    $itk_component(primaryToolbar) itemconfigure cpick -state normal
-    $itk_component(primaryToolbar) itemconfigure cerase -state normal
-    $itk_component(primaryToolbar) itemconfigure cselect -state normal
-    $itk_component(primaryToolbar) itemconfigure measure -state normal
+    if {!$mNoToolbar} {
+	$itk_component(primaryToolbar) itemconfigure rotate -state normal
+	$itk_component(primaryToolbar) itemconfigure translate -state normal
+	$itk_component(primaryToolbar) itemconfigure scale -state normal
+	$itk_component(primaryToolbar) itemconfigure center -state normal
+	$itk_component(primaryToolbar) itemconfigure cpick -state normal
+	$itk_component(primaryToolbar) itemconfigure cerase -state normal
+	$itk_component(primaryToolbar) itemconfigure cselect -state normal
+	$itk_component(primaryToolbar) itemconfigure measure -state normal
+    }
 
     $itk_component(ged) init_view_bindings
 
@@ -2656,14 +2718,16 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::initBrlcadBindings {} {
-    $itk_component(primaryToolbar) itemconfigure rotate -state disabled
-    $itk_component(primaryToolbar) itemconfigure translate -state disabled
-    $itk_component(primaryToolbar) itemconfigure scale -state disabled
-    $itk_component(primaryToolbar) itemconfigure center -state disabled
-    $itk_component(primaryToolbar) itemconfigure cpick -state disabled
-    $itk_component(primaryToolbar) itemconfigure cerase -state disabled
-    $itk_component(primaryToolbar) itemconfigure cselect -state disabled
-    $itk_component(primaryToolbar) itemconfigure measure -state disabled
+    if {!$mNoToolbar} {
+	$itk_component(primaryToolbar) itemconfigure rotate -state disabled
+	$itk_component(primaryToolbar) itemconfigure translate -state disabled
+	$itk_component(primaryToolbar) itemconfigure scale -state disabled
+	$itk_component(primaryToolbar) itemconfigure center -state disabled
+	$itk_component(primaryToolbar) itemconfigure cpick -state disabled
+	$itk_component(primaryToolbar) itemconfigure cerase -state disabled
+	$itk_component(primaryToolbar) itemconfigure cselect -state disabled
+	$itk_component(primaryToolbar) itemconfigure measure -state disabled
+    }
 
     $itk_component(ged) init_view_bindings brlcad
 }
@@ -3279,6 +3343,10 @@ namespace eval ArcherCore {
 # ------------------------------------------------------------
 
 ::itcl::body ArcherCore::updateTreeDrawLists {{_cflag 0}} {
+    if {$mNoTree} {
+	return
+    }
+
     foreach node $mNodePDrawList {
 	removeTreeNodeTag $node $TREE_PARTIALLY_DISPLAYED_TAG
     }
@@ -4074,6 +4142,10 @@ namespace eval ArcherCore {
 # variables that are used to interact with the tree viewer.
 #
 ::itcl::body ArcherCore::purgeNodeData {_node} {
+    if {$mNoTree} {
+	return
+    }
+
     if {[info exists mPNode2CList($_node)]} {
 	foreach sublist $mPNode2CList($_node) {
 	    if {[lindex $sublist 0] != $TREE_PLACEHOLDER_TAG} {
@@ -4239,7 +4311,11 @@ namespace eval ArcherCore {
 	    grid $itk_component(ged) -row 1 -column 0 -columnspan 3 -sticky news
 	    after idle "$itk_component(cmd) configure -cmd_prefix \"[namespace tail $this] cmd\""
 	} else {
-	    grid $itk_component(ged) -row 1 -column 0 -sticky news
+	    if {!$mNoToolbar} {
+		grid $itk_component(ged) -row 1 -column 0 -sticky news
+	    } else {
+		grid $itk_component(ged) -row 0 -column 0 -sticky news
+	    }
 	}
     }
 
@@ -4530,12 +4606,14 @@ namespace eval ArcherCore {
 	return
     }
 
-    if {!$mDbNoCopy && !$mDbReadOnly && $mNeedSave} {
-	$itk_component(primaryToolbar) itemconfigure save \
-	    -state normal
-    } else {
-	$itk_component(primaryToolbar) itemconfigure save \
-	    -state disabled
+    if {!$mNoToolbar} {
+	if {!$mDbNoCopy && !$mDbReadOnly && $mNeedSave} {
+	    $itk_component(primaryToolbar) itemconfigure save \
+		-state normal
+	} else {
+	    $itk_component(primaryToolbar) itemconfigure save \
+		-state disabled
+	}
     }
 }
 
