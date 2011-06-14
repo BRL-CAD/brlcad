@@ -1632,7 +1632,7 @@ struct bu_attribute_value_set {
 struct bu_vls  {
     unsigned long vls_magic;
     char *vls_str;	/**< @brief Dynamic memory for buffer */
-    off_t vls_offset;	/**< @brief Offset into vls_str where data is good */
+    size_t vls_offset;	/**< @brief Offset into vls_str where data is good */
     size_t vls_len;	/**< @brief Length, not counting the null */
     size_t vls_max;
 };

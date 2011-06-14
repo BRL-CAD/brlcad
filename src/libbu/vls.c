@@ -108,8 +108,7 @@ bu_vls_addr(const struct bu_vls *vp)
     }
 
     /* Sanity checking */
-    if (vp->vls_offset < 0 ||
-	vp->vls_str == (char *)NULL ||
+    if (vp->vls_str == (char *)NULL ||
 	vp->vls_len + vp->vls_offset >= vp->vls_max)
     {
 	bu_log("bu_vls_addr: bad VLS.  max=%d, len=%d, offset=%d\n",
@@ -147,8 +146,8 @@ bu_vls_extend(struct bu_vls *vp, unsigned int extra)
 	extra += (unsigned int)(_VLS_ALLOC_STEP - (extra % _VLS_ALLOC_STEP));
 
     /* need more space? */
-    if (vp->vls_offset + vp->vls_len + extra >= (size_t)vp->vls_max) {
-	vp->vls_str = (char *)bu_realloc(vp->vls_str, (size_t)(vp->vls_max + extra), bu_vls_message);
+    if (vp->vls_offset + vp->vls_len + extra >= vp->vls_max) {
+	vp->vls_str = (char *)bu_realloc(vp->vls_str, (vp->vls_max + extra), bu_vls_message);
 	vp->vls_max += extra;
     }
 }
@@ -218,7 +217,7 @@ bu_vls_nibble(struct bu_vls *vp, int len)
 {
     BU_CK_VLS(vp);
 
-    if (len < 0 && (-len) > vp->vls_offset)
+    if (len < 0 && (-len) > (ssize_t)vp->vls_offset)
 	len = -vp->vls_offset;
     if ((size_t)len >= vp->vls_len) {
 	bu_vls_trunc(vp, 0);
@@ -313,11 +312,11 @@ bu_vls_strcpy(struct bu_vls *vp, const char *s)
 
     /* cancel offset before extending */
     vp->vls_offset = 0;
-    if (len+1 >= (size_t)vp->vls_max)
+    if (len+1 >= vp->vls_max)
 	bu_vls_extend(vp, (unsigned int)len+1);
 
     memcpy(vp->vls_str, s, len+1); /* include null */
-    vp->vls_len = (int)len;
+    vp->vls_len = len;
 }
 
 
@@ -341,7 +340,7 @@ bu_vls_strncpy(struct bu_vls *vp, const char *s, size_t n)
 
     /* cancel offset before extending */
     vp->vls_offset = 0;
-    if (len+1 >= (size_t)vp->vls_max)
+    if (len+1 >= vp->vls_max)
 	bu_vls_extend(vp, (unsigned int)len+1);
 
     memcpy(vp->vls_str, s, len);
@@ -364,7 +363,7 @@ bu_vls_strcat(struct bu_vls *vp, const char *s)
     if (UNLIKELY(len <= 0))
 	return;
 
-    if ((size_t)vp->vls_offset + (size_t)vp->vls_len + len+1 >= (size_t)vp->vls_max)
+    if (vp->vls_offset + vp->vls_len + len+1 >= vp->vls_max)
 	bu_vls_extend(vp, (unsigned int)len+1);
 
     memcpy(vp->vls_str +vp->vls_offset + vp->vls_len, s, len+1); /* include null */
@@ -388,7 +387,7 @@ bu_vls_strncat(struct bu_vls *vp, const char *s, size_t n)
     if (UNLIKELY(len <= 0))
 	return;
 
-    if ((size_t)vp->vls_offset + (size_t)vp->vls_len + len+1 >= (size_t)vp->vls_max)
+    if (vp->vls_offset + vp->vls_len + len+1 >= vp->vls_max)
 	bu_vls_extend(vp, (unsigned int)len+1);
 
     memcpy(vp->vls_str + vp->vls_offset + vp->vls_len, s, len);
@@ -410,7 +409,7 @@ bu_vls_vlscat(struct bu_vls *dest, const struct bu_vls *src)
 	bu_vls_extend(dest, (unsigned int)src->vls_len+1);
 
     /* copy source string, including null */
-    memcpy(dest->vls_str +dest->vls_offset + dest->vls_len, src->vls_str+src->vls_offset, (size_t)src->vls_len+1);
+    memcpy(dest->vls_str +dest->vls_offset + dest->vls_len, src->vls_str+src->vls_offset, src->vls_len+1);
     dest->vls_len += src->vls_len;
 }
 
@@ -597,7 +596,7 @@ bu_vls_fwrite(FILE *fp, const struct bu_vls *vp)
 	return;
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    status = fwrite(vp->vls_str + vp->vls_offset, (size_t)vp->vls_len, 1, fp);
+    status = fwrite(vp->vls_str + vp->vls_offset, vp->vls_len, 1, fp);
     bu_semaphore_release(BU_SEM_SYSCALL);
 
     if (UNLIKELY(status != 1)) {
@@ -618,7 +617,7 @@ bu_vls_write(int fd, const struct bu_vls *vp)
 	return;
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    status = write(fd, vp->vls_str + vp->vls_offset, (size_t)vp->vls_len);
+    status = write(fd, vp->vls_str + vp->vls_offset, vp->vls_len);
     bu_semaphore_release(BU_SEM_SYSCALL);
 
     if (UNLIKELY(status < 0 || (size_t)status != vp->vls_len)) {
@@ -639,7 +638,7 @@ bu_vls_read(struct bu_vls *vp, int fd)
 
     for (;;) {
 	bu_vls_extend(vp, _VLS_ALLOC_READ);
-	todo = (size_t)vp->vls_max - vp->vls_len - vp->vls_offset - 1;
+	todo = vp->vls_max - vp->vls_len - vp->vls_offset - 1;
 
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	got = (int)read(fd, vp->vls_str+vp->vls_offset+vp->vls_len, todo);
@@ -1203,7 +1202,7 @@ bu_vls_prepend(struct bu_vls *vp, char *str)
     bu_vls_extend(vp, (unsigned int)len);
 
     /* memmove is supposed to be safe even if strings overlap */
-    memmove(vp->vls_str+vp->vls_offset+len, vp->vls_str+vp->vls_offset, (size_t)vp->vls_len);
+    memmove(vp->vls_str+vp->vls_offset+len, vp->vls_str+vp->vls_offset, vp->vls_len);
 
     /* insert the data at the head of the string */
     memcpy(vp->vls_str+vp->vls_offset, str, len);
