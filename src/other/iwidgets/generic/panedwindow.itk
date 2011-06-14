@@ -54,11 +54,13 @@ itcl::class iwidgets::Panedwindow {
     itk_option define -sashborderwidth sashBorderWidth SashBorderWidth 2
     itk_option define -sashcursor sashCursor SashCursor crosshair
     itk_option define -sashwidth sashWidth SashWidth 10
+    itk_option define -sashpad sashPad SashPad 2
     itk_option define -sashheight sashHeight SashHeight 10
     itk_option define -thickness thickness Thickness 3
     itk_option define -sashindent sashIndent SashIndent -10
     itk_option define -showhandle showHandle ShowHandle 1
 
+    public method panes {} 
     public method index {index} 
     public method childsite {args} 
     public method fraction {args}
@@ -248,6 +250,24 @@ itcl::configbody iwidgets::Panedwindow::sashwidth {
 }
 
 # ------------------------------------------------------------------
+# OPTION: -sashpad
+#
+# Specifies the pad of the sash.
+# ------------------------------------------------------------------
+itcl::configbody iwidgets::Panedwindow::sashpad {
+    set pixels [winfo pixels $itk_component(hull) \
+	    $itk_option(-sashpad)]
+    set itk_option(-sashpad) $pixels
+    
+    if {$_initialized} {
+	for {set i 1} {$i < [llength $_activePanes]} {incr i} {
+	    $itk_component(sash$i) configure \
+		    -width $itk_option(-sashpad)
+	}
+    }
+}
+
+# ------------------------------------------------------------------
 # OPTION: -sashheight
 #
 # Specifies the height of the sash,
@@ -338,6 +358,16 @@ itcl::configbody iwidgets::Panedwindow::sashindent {
 # ------------------------------------------------------------------
 #                            METHODS
 # ------------------------------------------------------------------
+
+# ------------------------------------------------------------------
+# METHOD: panes 
+#
+# Returns the list of panes.
+# ------------------------------------------------------------------    
+itcl::body iwidgets::Panedwindow::panes {} {
+	return $_panes
+}
+
 
 # ------------------------------------------------------------------
 # METHOD: index index
