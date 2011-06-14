@@ -753,6 +753,12 @@ struct bu_list {
 };
 #define BU_LIST_NULL ((struct bu_list *)0)
 
+/**
+ * macro suitable for declaration statement initialization of a
+ * bu_list struct.  does not allocate memory.
+ */
+#define BU_LIST_INIT_ZERO { BU_LIST_HEAD_MAGIC, BU_LIST_NULL, BU_LIST_NULL }
+
 typedef struct bu_list bu_list_t;
 
 #define BU_LIST_CLOSE(hp) { \
@@ -885,6 +891,11 @@ typedef struct bu_list bu_list_t;
 /* Handle list initialization */
 #define BU_LIST_UNINITIALIZED(hp)	(UNLIKELY((hp)->forw == BU_LIST_NULL))
 #define BU_LIST_IS_INITIALIZED(hp)	(LIKELY((hp)->forw != BU_LIST_NULL))
+
+/**
+ * initializes a bu_list struct without allocating any memory or list
+ * nodes.
+ */
 #define BU_LIST_INIT(hp) { \
 	(hp)->forw = (hp)->back = (hp); \
 	(hp)->magic = BU_LIST_HEAD_MAGIC;	/* used by circ. macros */ }
@@ -1210,8 +1221,28 @@ struct bu_bitv {
     bitv_t bits[2];	/**< @brief variable size array */
 };
 
-
+/**
+ * verifies the integrity of a bu_bitv struct
+ */
 #define BU_CK_BITV(_vp) BU_CKMAG(_vp, BU_BITV_MAGIC, "bu_bitv")
+
+/**
+ * initializes a bu_bitv struct without allocating any memory
+ */
+#define BU_INIT_BITV(_bp) { \
+	BU_INIT_LIST((_bp)->l); \
+	BU_LIST_MAGIC_SET((_bp)->l, BU_BITV_MAGIC); \
+	(_bp)->nbits = 0; \
+	(_bp)->bits[0] = 0; \
+	(_bp)->bits[1] = 0; \
+    }
+
+/**
+ * macro suitable for declaration statement initialization of a bu_bitv
+ * struct.  does not allocate memory.
+ */
+#define BU_BITV_INIT_ZERO { {BU_BITV_MAGIC, BU_LIST_NULL, BU_LIST_NULL}, 0, {0, 0} }
+
 
 /**
  * b u _ b i t v _ s h i f t
