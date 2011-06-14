@@ -1221,10 +1221,16 @@ Usage: go_open\n\
 
     /* initialize ged_obj */
     BU_GETSTRUCT(top->to_gop, ged_obj);
+
+    BU_ASSERT_PTR(gedp, !=, NULL);
     top->to_gop->go_gedp = gedp;
+
     top->to_gop->go_gedp->ged_output_handler = to_output_handler;
     top->to_gop->go_gedp->ged_refresh_handler = to_refresh_handler;
+
+    BU_ASSERT_PTR(gedp->ged_gdp, !=, NULL);
     top->to_gop->go_gedp->ged_gdp->gd_rtCmdNotify = to_rt_end_callback_internal;
+
     bu_vls_init(&top->to_gop->go_name);
     bu_vls_strcpy(&top->to_gop->go_name, argv[1]);
     bu_vls_init(&top->to_gop->go_more_args_callback);
