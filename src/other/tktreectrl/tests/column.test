@@ -1,0 +1,543 @@
+# Commands covered:  treectrl's widget command column
+#
+# This file contains a collection of tests for the column widget command of
+# the tktreectrl extension.  Sourcing this file into Tcl runs the tests and
+# generates output for errors.  No output means no errors were found.
+#
+# Copyright (c) 2000 by Scriptics Corporation.
+# Copyright (c) 2002 by Christian Krone.
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# CVS: @(#) $Id$
+
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest 2
+    namespace import ::tcltest::*
+}
+
+package require Tk
+package require treectrl
+
+test column-0.1 {some needed preparations} -body {
+    pack [treectrl .t -usetheme no]
+} -result {}
+
+test column-0.2 {create an image} -body {
+    image create photo emptyImg
+} -result {emptyImg}
+
+test column-1.1 {missing args} -body {
+    .t column
+} -returnCodes error -result {wrong # args: should be ".t column command ?arg arg ...?"}
+
+test column-1.2 {unknown command} -body {
+    .t column foo
+} -returnCodes error -result {bad command "foo": must be *} -match glob
+
+test column-1.3 {configure: no column exists with numerical index} -body {
+    .t column configure 0
+} -returnCodes error -result {column "0" doesn't exist}
+
+test column-1.4 {configure: no column exists with tag} -body {
+    .t column configure column0
+} -returnCodes error -result {column "column0" doesn't exist}
+
+test column-1.5 {configure: create and fill a column} -body {
+    .t column create
+    .t column configure 0 -tags column0
+    .t element create e rect -width 482 -height 20
+    .t style create s
+    .t style elements s e
+    set i [.t item create]
+    .t item style set $i 0 s
+    .t item lastchild root $i
+} -result {1}
+
+test column-1.6 {configure: create another column} -body {
+    .t column create
+    .t column configure 1 -tags column1
+} -result {}
+
+test column-2.1 {column bbox: missing args} -body {
+    .t column bbox
+} -returnCodes error -result {wrong # args: should be ".t column bbox column"}
+
+test column-2.2 {column bbox: invalid column} -body {
+    .t column bbox foo
+} -returnCodes error -result {column "foo" doesn't exist}
+
+test column-2.3 {column bbox: tree doesn't show headers} -body {
+    .t configure -showheader 0
+    .t column bbox column0
+} -result {}
+
+test column-2.4 {column bbox} -body {
+    .t configure -showheader 1
+    .t column bbox 0
+} -result {2 2 484 6}
+
+test column-2.5 {column bbox: tail column not allowed} -body {
+    .t column bbox tail
+} -returnCodes error -result {can't specify "tail" for this command}
+
+test column-3.1 {column configure: missing args} -body {
+    .t column configure
+} -returnCodes error -result {wrong # args: should be ".t column configure column ?option? ?value? ?option value ...?"}
+
+test column-3.2 {column configure: invalid column} -body {
+    .t column configure foo
+} -returnCodes error -result {column "foo" doesn't exist}
+
+test column-3.3 {column configure: list all options} -body {
+    .t column configure column1
+} -result {{-arrow {} {} none none} *} -match glob
+
+test column-3.4 {column configure: tail column} -body {
+    .t column configure tail
+} -result {{-arrow {} {} none none} *} -match glob
+
+test column-3.4a {column configure: invalid option} -body {
+    .t column configure tail -foo
+} -returnCodes error -result {unknown option "-foo"}
+
+test column-3.5 {column configure: invalid -arrow} -body {
+    .t column configure column1 -arrow straight
+} -returnCodes error -result {bad arrow "straight": must be none, up, or down}
+
+test column-3.6 {column configure/cget: -arrow} -body {
+    .t column configure column1 -arrow up
+    .t column cget column1 -arrow
+} -result {up}
+
+test column-3.7 {column configure: invalid -arrowside} -body {
+    .t column configure column1 -arrowside up
+} -returnCodes error -result {bad arrowside "up": must be left or right}
+
+test column-3.8 {column configure/cget: -arrowside} -body {
+    .t column configure column1 -arrowside left
+    .t column cget column1 -arrowside
+} -result {left}
+
+test column-3.9 {column configure: invalid -arrowgravity} -body {
+    .t column configure column1 -arrowgravity both
+} -returnCodes error -result {bad arrowgravity "both": must be left or right}
+
+test column-3.10 {column configure/cget: -arrowgravity} -body {
+    .t column configure column1 -arrowgravity right
+    .t column cget column1 -arrowgravity
+} -result {right}
+
+test column-3.11 {column configure: invalid -arrowpadx} -body {
+    .t column configure column1 -arrowpadx x
+} -returnCodes error -result {bad pad amount "x": must be a list of 1 or 2 positive screen distances}
+
+test column-3.11a {column configure: invalid 2 element -arrowpadx} -body {
+    .t column configure column1 -arrowpadx {3 x}
+} -returnCodes error -result {bad pad amount "3 x": must be a list of 1 or 2 positive screen distances}
+
+test column-3.12 {column configure/cget: -arrowpadx} -body {
+    .t column configure column1 -arrowpadx 8
+    .t column cget column1 -arrowpadx
+} -result {8}
+
+test column-3.12a {column configure/cget: 2 element -arrowpadx} -body {
+    .t column configure column1 -arrowpadx {8 5}
+    .t column cget column1 -arrowpadx
+} -result {8 5}
+
+test column-3.13 {column configure: invalid -bitmap} -body {
+    .t column configure column1 -bitmap no-such-bitmap
+} -returnCodes error -result {bitmap "no-such-bitmap" not defined}
+
+test column-3.14 {column configure/cget: -bitmap} -body {
+    .t column configure column1 -bitmap questhead
+    .t column cget column1 -bitmap
+} -result {questhead}
+
+test column-3.15 {column configure: invalid -background} -body {
+    .t column configure column1 -background foo
+} -returnCodes error -result {unknown color name "foo"}
+
+test column-3.16 {column configure/cget: -background} -body {
+    .t column configure column1 -background magenta
+    .t column cget column1 -background
+} -result {magenta}
+
+test column-3.17 {column configure: invalid -borderwidth} -body {
+    .t column configure column1 -borderwidth x
+} -returnCodes error -result {bad screen distance "x"}
+
+test column-3.18 {column configure/cget: -borderwidth} -body {
+    .t column configure column1 -borderwidth 4
+    .t column cget column1 -borderwidth
+} -result {4}
+
+test column-3.19 {column configure: invalid -button} -body {
+    .t column configure column1 -button ""
+} -returnCodes error -result {expected boolean value but got ""}
+
+test column-3.20 {column configure/cget: -button} -body {
+    .t column configure column1 -button off
+    .t column cget column1 -button
+} -result {0}
+
+test column-3.21 {column configure: invalid -expand} -body {
+    .t column configure column1 -expand ew
+} -returnCodes error -result {expected boolean value but got "ew"}
+
+test column-3.22 {column configure/cget: -expand} -body {
+    .t column configure column1 -expand true
+    .t column cget column1 -expand
+} -result {1}
+
+test column-3.23 {column configure: invalid -image} -body {
+    .t column configure column1 -image questhead
+} -returnCodes error -result {image "questhead" doesn't exist}
+
+test column-3.24 {column configure/cget: -image} -body {
+    .t column configure column1 -image emptyImg
+    .t column cget column1 -image
+} -result {emptyImg}
+
+test column-3.25 {column configure: invalid -imagepadx} -body {
+    .t column configure column1 -imagepadx y
+} -returnCodes error -result {bad pad amount "y": must be a list of 1 or 2 positive screen distances}
+
+test column-3.25a {column configure: invalid 2 element -imagepadx} -body {
+    .t column configure column1 -imagepadx "y \{"
+} -returnCodes error -result {unmatched open brace in list}
+
+test column-3.26 {column configure/cget: -imagepadx} -body {
+    .t column configure column1 -imagepadx 9 -imagepady 4
+    list [.t column cget column1 -imagepadx] \
+	 [.t column cget column1 -imagepady]
+} -result {9 4}
+
+test column-3.26a {column configure/cget: 2 element -imagepadx/y} -body {
+    .t column configure column1 -imagepadx {9 0} -imagepady {4 3}
+    list [.t column cget column1 -imagepadx] \
+	 [.t column cget column1 -imagepady]
+} -result {{9 0} {4 3}}
+
+test column-3.27 {column configure: invalid -itembackground} -body {
+    .t column configure column1 -itembackground no
+} -returnCodes error -result {unknown color or gradient name "no"}
+
+test column-3.28 {column configure/cget: simple -itembackground} -body {
+    .t column configure column1 -itembackground blue
+    .t column cget column1 -itembackground
+} -result {blue}
+
+test column-3.29 {column configure: invalid -itembackground list} -body {
+    .t column configure column1 -itembackground {blue selected green active}
+} -returnCodes error -result {unknown color or gradient name "selected"}
+
+test column-3.30 {column configure/cget: -itembackground list} -body {
+    .t column configure column1 -itembackground {blue green magenta red}
+    .t column cget column1 -itembackground
+} -result {blue green magenta red}
+
+test column-3.31 {column configure: invalid -justify} -body {
+    .t column configure column1 -justify no
+} -returnCodes error -result {bad justification "no": must be left, right, or center}
+
+test column-3.32 {column configure/cget: simple -justify} -body {
+    .t column configure column1 -justify center
+    .t column cget column1 -justify
+} -result {center}
+
+test column-3.33 {column configure: invalid -minwidth} -body {
+    .t column configure column1 -minwidth z
+} -returnCodes error -result {bad screen distance "z"}
+
+test column-3.34 {column configure/cget: -minwidth} -body {
+    .t column configure column1 -minwidth 25
+    .t column cget column1 -minwidth
+} -result {25}
+
+test column-3.35 {column configure: invalid -state} -body {
+    .t column configure column1 -state yes
+} -returnCodes error -result {bad state "yes": must be normal, active, or pressed}
+
+test column-3.36 {column configure/cget: -state} -body {
+    .t column configure column1 -state pressed
+    .t column cget column1 -state
+} -result {pressed}
+
+test column-3.37 {column configure: invalid -stepwidth} -constraints {
+    deprecated
+} -body {
+    .t column configure column1 -stepwidth "\t"
+} -returnCodes error -result {bad screen distance "	"}
+
+test column-3.38 {column configure/cget: -stepwidth} -constraints {
+    deprecated
+} -body {
+    .t column configure column1 -stepwidth 125
+    .t column cget column1 -stepwidth
+} -result {125}
+
+test column-3.41 {column configure: -text} -body {
+    .t column configure column1 -text "Text above Column 1"
+    .t column cget column1 -text
+} -result {Text above Column 1}
+
+test column-3.42 {column configure: invalid -textpadx} -body {
+    .t column configure column1 -textpadx baz
+} -returnCodes error -result {bad pad amount "baz": must be a list of 1 or 2 positive screen distances}
+
+test column-3.42a {column configure: invalid 2 element -textpadx} -body {
+    .t column configure column1 -textpadx {foo bar baz}
+} -returnCodes error -result {bad pad amount "foo bar baz": must be a list of 1 or 2 positive screen distances}
+
+test column-3.43 {column configure/cget: -textpadx/y} -body {
+    .t column configure column1 -textpadx 8 -textpady 5
+    list [.t column cget column1 -textpadx] \
+	 [.t column cget column1 -textpady]
+} -result {8 5}
+
+test column-3.43a {column configure/cget: 2 element -textpadx/y} -body {
+    .t column configure column1 -textpadx {8 4} -textpady {4 5}
+    list [.t column cget column1 -textpadx] \
+	 [.t column cget column1 -textpady]
+} -result {{8 4} {4 5}}
+
+test column-3.44 {column configure: invalid -width} -body {
+    .t column configure column1 -width all
+} -returnCodes error -result {bad screen distance "all"}
+
+test column-3.45 {column configure/cget: -width} -body {
+    .t column configure column1 -width 250
+    .t column cget column1 -width
+} -result {250}
+
+test column-3.46 {column configure: invalid -visible} -body {
+    .t column configure column1 -visible never
+} -returnCodes error -result {expected boolean value but got "never"}
+
+test column-3.47 {column configure/cget: -visible} -body {
+    .t column configure column1 -visible no
+    .t column cget column1 -visible
+} -result {0}
+
+test column-3.48 {column configure: invalid -widthhack} -constraints {
+    deprecated
+} -body {
+    .t column configure column1 -widthhack ok
+} -returnCodes error -result {expected boolean value but got "ok"}
+
+test column-3.49 {column configure/cget: -widthhack} -constraints {
+    deprecated
+} -body {
+    .t column configure column1 -widthhack yes
+    .t column cget column1 -widthhack
+} -result {1}
+
+test column-4.1 {column configure: -tags} -body {
+    .t column configure column1 -tags column2
+    .t column cget column1 -tags
+} -returnCodes error -result {column "column1" doesn't exist}
+
+test column-4.2 {column configure: -tags} -body {
+    .t column cget column2 -tags
+} -result {column2}
+
+test column-4.3 {column cget: -tags of tail} -body {
+    .t column cget tail -tags
+} -result {}
+
+test column-4.4 {column configure/cget: -tags of tail} -body {
+    .t column configure tail -tags head
+} -result {}
+
+test column-4.5 {column cget: specify tail by its tag} -body {
+    .t column cget head -tags
+} -result {head}
+
+test column-5.1 {column delete: missing args} -body {
+    .t column delete
+} -returnCodes error -result {wrong # args: should be ".t column delete first ?last?"}
+
+test column-5.2 {column delete: column tail} -body {
+    .t column delete tail
+} -returnCodes error -result {can't specify "tail" for this command}
+
+test column-5.3 {column delete: first column} -body {
+    .t column delete 0
+} -result {}
+
+test column-5.4 {deleted column doesn't exist} -body {
+    .t column cget 0 -tags
+} -returnCodes error -result {column "0" doesn't exist}
+
+test column-5.5 {column delete: all} -body {
+    .t column delete all
+    .t column list
+} -result {}
+
+test column-5.6 {column delete: range of 1} -body {
+    .t column create -tags column1
+    .t column create -tags column2
+    .t column create -tags column3
+    .t column create -tags column4    
+    .t column delete column1 column1
+    .t column list
+} -result {1 2 3}
+
+test column-5.7 {column delete: range of 2, reverse order} -body {
+    .t column delete column4 column3
+    .t column list
+} -result {1}
+
+test column-6.1 {column id: missing args} -body {
+    .t column id
+} -returnCodes error -result {wrong # args: should be ".t column id column"}
+
+test column-6.2 {column id: the easy case} -body {
+    .t column id 1
+} -result {1}
+
+test column-6.3 {column id} -body {
+    .t column id column2
+} -result {1}
+
+test column-6.4 {column id: tail column} -body {
+    .t column id tail
+} -result {tail}
+
+test column-6.5 {column id: first column} -body {
+    .t column id first
+} -result {1}
+
+test column-6.6 {column id: last column} -body {
+    .t column id last
+} -result {1}
+
+test column-6.7 {column id: tail prev} -body {
+    .t column id "tail prev"
+} -result {1}
+
+test column-7.1 {column move: missing args} -body {
+    .t column move
+} -returnCodes error -result {wrong # args: should be ".t column move column before"}
+
+test column-7.2 {column move: invalid column} -body {
+    .t column move 0 2
+} -returnCodes error -result {column "0" doesn't exist}
+
+test column-7.3 {column move: move column2} -body {
+    .t column create -tags column1
+    .t column create -tags column3
+    .t column move column2 column3
+    .t column order column2
+} -result {1}
+
+test column-7.4 {correct moved?} -body {
+    set res {}
+    for {set x 0} {$x < [.t column count]} {incr x} {
+	lappend res [.t column cget "order $x" -tags]
+    }
+    set res
+} -result {column1 column2 column3}
+
+test column-7.5 {column move: tail to the left} -body {
+    .t column move tail column1
+} -returnCodes error -result {can't specify "tail" for this command}
+
+test column-7.6 {column move: tail as before is ok} -body {
+    .t column move column1 tail
+    .t column order column1
+} -result {2}
+
+test column-8.1 {column width: missing args} -body {
+    .t column width
+} -returnCodes error -result {wrong # args: should be ".t column width column"}
+
+test column-8.2 {column width: invalid column} -body {
+    .t column width foo
+} -returnCodes error -result {column "foo" doesn't exist}
+
+test column-8.3 {column width: tail column returns always 0} -body {
+    .t column width tail
+} -result {0}
+
+test column-8.4 {column width} -body {
+    .t element create eText2 text -font {{courier -12}} -text "Hello World"
+    .t style create testStyle3
+    .t style elements testStyle3 eText2
+    .t item style set 1 column1 testStyle3
+    update idletasks
+    list [.t column width column1] [font measure {courier -12} "Hello World"]
+} -result {77 77}
+
+test column-9.1 {column neededwidth: missing args} -body {
+    .t column neededwidth
+} -returnCodes error -result {wrong # args: should be ".t column neededwidth column"}
+
+test column-9.2 {column neededwidth: invalid column} -body {
+    .t column neededwidth foo
+} -returnCodes error -result {column "foo" doesn't exist}
+
+test column-9.3 {column neededwidth: tail column returns always 0} -body {
+    .t column neededwidth tail
+} -result {0}
+
+test column-9.4 {column neededwidth} -body {
+    .t column neededwidth column1
+} -result {77}
+
+test column-10.1 {-itemstyle: not for tail} -body {
+    .t column configure tail -itemstyle testStyle3
+} -returnCodes error -result {can't change the -itemstyle option of the tail column}
+
+test column-10.2 {-itemstyle: set} -body {
+    .t column configure column1 -itemstyle testStyle3
+    .t column cget column1 -itemstyle
+} -result {testStyle3}
+
+test column-10.3 {-itemstyle: unset} -body {
+    .t column configure column1 -itemstyle {}
+    .t column cget column1 -itemstyle
+} -result {}
+
+test column-10.4 {-itemstyle: change} -body {
+    .t style create testStyle2
+    .t column configure column1 -itemstyle testStyle2
+    .t column cget column1 -itemstyle
+} -result {testStyle2}
+
+test column-10.5 {-itemstyle: style is deleted} -body {
+    .t style delete testStyle2
+    .t column cget column1 -itemstyle
+} -result {}
+
+test column-11.1 {column count: too many args} -body {
+    .t column count a b
+} -returnCodes error -result {wrong # args: should be ".t column count ?columnDesc?"}
+
+test column-11.2 {column count: no args} -body {
+    .t column count
+} -result {3}
+
+test column-11.3 {column count: with desc} -body {
+    .t column count "range first last"
+} -result {3}
+
+test column-11.4 {column count: all includes tail} -body {
+    .t column count all
+} -result {4}
+
+test column-11.5 {column count: unknown tag} -body {
+    .t column count {tag foo}
+} -result {0}
+
+test column-99.1 {some needed cleanup} -body {
+    destroy .t
+} -result {}
+
+# cleanup
+image delete emptyImg
+::tcltest::cleanupTests
+return
