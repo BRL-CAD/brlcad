@@ -4424,12 +4424,12 @@ BU_EXPORT extern void bu_semaphore_release(unsigned int i);
 BU_EXPORT extern void bu_vls_init(struct bu_vls *vp);
 
 /**
- * b u _ v l s _ i n i t _ i f _ u n i n i t
+ * DEPRECATED: use if (!vls) bu_vls_init(vls)
  *
  * If a VLS is unitialized, initialize it.  If it is already
  * initialized, leave it alone, caller wants to append to it.
  */
-BU_EXPORT extern void bu_vls_init_if_uninit(struct bu_vls *vp);
+DEPRECATED BU_EXPORT extern void bu_vls_init_if_uninit(struct bu_vls *vp);
 
 /**
  * b u _ v l s _ v l s i n i t

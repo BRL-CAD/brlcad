@@ -48,6 +48,8 @@ new names should be listed for reference.
 7.20
 ----
 
+bu.h
+        bu_vls_init_if_uninit() -> bu_vls_init() [deprecated 7.20]
 autogen.sh && configure
         GNU Autotools build system -> CMake build system [deprecated 7.20]
         ./configure -> cmake . [deprecated 7.20]

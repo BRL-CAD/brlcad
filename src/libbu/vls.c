@@ -74,6 +74,8 @@ bu_vls_init(struct bu_vls *vp)
 void
 bu_vls_init_if_uninit(struct bu_vls *vp)
 {
+    bu_log("DEPRECATION WARNING: bu_vls_init_if_uninit() should no longer be called.\n\t\tUse bu_vls_init() instead.\n");
+
     if (UNLIKELY(vp == (struct bu_vls *)NULL))
 	bu_bomb("bu_vls_init_if_uninit() passed NULL pointer");
 
