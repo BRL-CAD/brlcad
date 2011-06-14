@@ -17,6 +17,9 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* eliminate dbi_filepath (perhaps replace with dbi_filedir) as we
+  shouldn't need to search.  we were told where the database was.
+
 * rtwizard wipes out on a .g file when unknown units are present in the .g
   Shouldn't crash - looks like libged function vo_units_cmd is returning
   TCL_ERROR and that's enough to hault things.  Perhaps units should be
