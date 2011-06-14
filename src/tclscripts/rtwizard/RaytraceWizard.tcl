@@ -39,6 +39,11 @@ namespace eval RtWizard {
 		      -slant italic}
 }
 
+namespace eval ArcherCore {
+    set parentClass itk::Widget
+    set inheritFromToplevel 0
+}
+
 #
 # All RaytraceWizard stuff is in the RaytraceWizard namespace
 #
@@ -209,8 +214,8 @@ namespace eval RaytraceWizard {
 	# We load the database ourselves and hand it to the
 	# pages.
 	#
-	set ::mgedObj [Mged .\#auto $::RtWizard::dbFile]
-	$::mgedObj configure -multi_pane 0
+	set ::mgedObj [ArcherCore .\#auto 1 1 1 1]
+	$::mgedObj opendb $::RtWizard::dbFile
 	$fb inform "MGED object instantiated." 40
 
 	$w add RtWizard::FullColorPage fullColor $::RtWizard::dbFile
