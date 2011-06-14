@@ -91,8 +91,7 @@ bu_bitv_new(unsigned int nbits)
 
     /* get zero'd memory, otherwise need to call BU_BITV_ZEROALL */
     bv = (struct bu_bitv *)bu_calloc(1, (size_t)total_bytes, "struct bu_bitv");
-    BU_LIST_INIT(&bv->l);
-    bv->l.magic = BU_BITV_MAGIC;
+    BU_INIT_BITV(bv);
     bv->nbits = bv_bytes * 8;
 
     return bv;
