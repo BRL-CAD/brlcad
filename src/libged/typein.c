@@ -2243,7 +2243,7 @@ revolve_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_REVOLVE;
     intern->idb_meth = &rt_functab[ID_REVOLVE];
-    intern->idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_revolve_internal),
+    intern->idb_ptr = (genptr_t)bu_calloc(1, sizeof(struct rt_revolve_internal),
 					  "rt_revolve_internal");
     rip = (struct rt_revolve_internal *)intern->idb_ptr;
     rip->magic = RT_REVOLVE_INTERNAL_MAGIC;
@@ -2255,7 +2255,7 @@ revolve_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
     }
     rip->ang = atof(cmd_argvs[12]) * DEG2RAD;
 
-    bu_vls_init_if_uninit(&rip->sketch_name);
+    bu_vls_init(&rip->sketch_name);
     bu_vls_strcpy(&rip->sketch_name, cmd_argvs[13]);
 
     VUNITIZE(rip->r);

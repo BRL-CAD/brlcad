@@ -17,6 +17,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* test revolve typein
+
 * eliminate dbi_filepath (perhaps replace with dbi_filedir) as we
   shouldn't need to search.  we were told where the database was.
 
