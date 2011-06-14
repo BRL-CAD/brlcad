@@ -1636,9 +1636,37 @@ struct bu_vls  {
     size_t vls_len;	/**< @brief Length, not counting the null */
     size_t vls_max;
 };
+
+/**
+ * verifies the integrity of a bu_vls struct
+ */
 #define BU_CK_VLS(_vp) BU_CKMAG(_vp, BU_VLS_MAGIC, "bu_vls")
-#define BU_VLS_IS_INITIALIZED(_vp)	\
+
+/**
+ * initializes a bu_vls struct without allocating any memory
+ */
+#define BU_INIT_VLS(_vp) { \
+	(_vp)->vls_magic = BU_VLS_MAGIC; \
+	(_vp)->vls_str = NULL; \
+	(_vp)->vls_offset = (_vp)->vls_len = (_vp)->vls_max = 0; \
+    }
+
+/**
+ * macro suitable for declaration statement initialization of a bu_vls
+ * struct.  does not allocate memory.
+ */
+#define BU_VLS_INIT_ZERO { BU_VLS_MAGIC, NULL, 0, 0, 0 }
+
+/**
+ * returns truthfully whether a bu_vls struct has been initialized.
+ * is not reliable unless the struct has been allocated with
+ * bu_calloc() or a previous call to bu_init_vls() or BU_INIT_VLS()
+ * has been made.
+ */
+#define BU_VLS_IS_INITIALIZED(_vp) \
     (((struct bu_vls *)(_vp) != (struct bu_vls *)0) && ((_vp)->vls_magic == BU_VLS_MAGIC))
+
+
 
 /** @} */
 
@@ -1662,9 +1690,36 @@ struct bu_vlb {
     size_t bufCapacity;     /**< @brief Current capacity of the buffer */
     size_t nextByte;        /**< @brief Number of bytes currently used in the buffer */
 };
+
+/**
+ * verifies the integrity of a bu_vlb struct
+ */
 #define BU_CK_VLB(_vp) BU_CKMAG(_vp, BU_VLB_MAGIC, "bu_vlb")
-#define BU_VLB_IS_INITIALIZED(_vp)	\
-    ((_vp) && ((_vp)->magic == BU_VLB_MAGIC))
+
+/**
+ * initializes a bu_vlb struct without allocating any memory
+ */
+#define BU_INIT_VLB(_vp) { \
+	(_vp)->vls_magic = BU_VLB_MAGIC; \
+	(_vp)->buf = NULL; \
+	(_vp)->bufCapacity = (_vp)->nextByte = 0; \
+    }
+
+/**
+ * macro suitable for declaration statement initialization of a bu_vlb
+ * struct.  does not allocate memory.
+ */
+#define BU_VLB_INIT_ZERO { BU_VLB_MAGIC, NULL, 0, 0 }
+
+/**
+ * returns truthfully whether a bu_vlb struct has been initialized.
+ * is not reliable unless the struct has been allocated with
+ * bu_calloc() or a previous call to bu_init_vlb() or BU_INIT_VLB()
+ * has been made.
+ */
+#define BU_VLB_IS_INITIALIZED(_vp) ((_vp) && ((_vp)->magic == BU_VLB_MAGIC))
+
+
 /** @} */
 /*----------------------------------------------------------------------*/
 
@@ -1885,8 +1940,20 @@ struct bu_external  {
     size_t ext_nbytes;
     uint8_t *ext_buf;
 };
-#define BU_INIT_EXTERNAL(_p) { (_p)->ext_magic = BU_EXTERNAL_MAGIC; (_p)->ext_buf = NULL; (_p)->ext_nbytes = 0; }
+
+/**
+ * validates the integrity of a bu_external struct
+ */
 #define BU_CK_EXTERNAL(_p) BU_CKMAG(_p, BU_EXTERNAL_MAGIC, "bu_external")
+
+/**
+ * initializes a bu_external struct without allocating any memory.
+ */
+#define BU_INIT_EXTERNAL(_p) { \
+	(_p)->ext_magic = BU_EXTERNAL_MAGIC; \
+	(_p)->ext_buf = NULL; \
+	(_p)->ext_nbytes = 0; \
+    }
 
 /** @} */
 /*----------------------------------------------------------------------*/
