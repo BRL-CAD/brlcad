@@ -751,7 +751,22 @@ struct bu_list {
     struct bu_list *forw;		/**< @brief "forward", "next" */
     struct bu_list *back;		/**< @brief "back", "last" */
 };
+typedef struct bu_list bu_list_t;
 #define BU_LIST_NULL ((struct bu_list *)0)
+
+#define BU_LIST_UNINITIALIZED(hp)	(UNLIKELY((hp)->forw == BU_LIST_NULL))
+#define BU_LIST_IS_INITIALIZED(hp)	(LIKELY((hp)->forw != BU_LIST_NULL))
+
+/**
+ * DEPRECATED: use BU_INIT_LIST
+ */
+#define BU_LIST_INIT(hp) { \
+	(hp)->forw = (hp)->back = (hp); \
+	(hp)->magic = BU_LIST_HEAD_MAGIC;	/* used by circ. macros */ }
+/**
+ * initializes a bu_list struct without allocating any memory
+ */
+#define BU_INIT_LIST(_lp) BU_LIST_INIT((_lp))
 
 /**
  * macro suitable for declaration statement initialization of a
@@ -759,7 +774,10 @@ struct bu_list {
  */
 #define BU_LIST_INIT_ZERO { BU_LIST_HEAD_MAGIC, BU_LIST_NULL, BU_LIST_NULL }
 
-typedef struct bu_list bu_list_t;
+#define BU_LIST_MAGIC_SET(hp, val) {(hp)->magic = (val);}
+#define BU_LIST_MAGIC_OK(hp, val)	((hp)->magic == (val))
+#define BU_LIST_MAGIC_WRONG(hp, val)	((hp)->magic != (val))
+
 
 #define BU_LIST_CLOSE(hp) { \
 	BU_ASSERT((hp) != NULL); \
@@ -887,21 +905,6 @@ typedef struct bu_list bu_list_t;
 #define BU_LIST_IS_CLEAR(hp)	((hp)->magic == 0 && \
 				 (hp)->forw == BU_LIST_NULL && \
 				 (hp)->back == BU_LIST_NULL)
-
-/* Handle list initialization */
-#define BU_LIST_UNINITIALIZED(hp)	(UNLIKELY((hp)->forw == BU_LIST_NULL))
-#define BU_LIST_IS_INITIALIZED(hp)	(LIKELY((hp)->forw != BU_LIST_NULL))
-
-/**
- * initializes a bu_list struct without allocating any memory or list
- * nodes.
- */
-#define BU_LIST_INIT(hp) { \
-	(hp)->forw = (hp)->back = (hp); \
-	(hp)->magic = BU_LIST_HEAD_MAGIC;	/* used by circ. macros */ }
-#define BU_LIST_MAGIC_SET(hp, val) {(hp)->magic = (val);}
-#define BU_LIST_MAGIC_OK(hp, val)	((hp)->magic == (val))
-#define BU_LIST_MAGIC_WRONG(hp, val)	((hp)->magic != (val))
 
 /* Return re-cast pointer to first element on list.
  * No checking is performed to see if list is empty.
@@ -1230,8 +1233,8 @@ struct bu_bitv {
  * initializes a bu_bitv struct without allocating any memory
  */
 #define BU_INIT_BITV(_bp) { \
-	BU_INIT_LIST((_bp)->l); \
-	BU_LIST_MAGIC_SET((_bp)->l, BU_BITV_MAGIC); \
+	BU_INIT_LIST(&(_bp)->l); \
+	BU_LIST_MAGIC_SET(&(_bp)->l, BU_BITV_MAGIC); \
 	(_bp)->nbits = 0; \
 	(_bp)->bits[0] = 0; \
 	(_bp)->bits[1] = 0; \
