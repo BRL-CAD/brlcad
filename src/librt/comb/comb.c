@@ -479,11 +479,9 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
     ip->idb_type = ID_COMBINATION;
     ip->idb_meth = &rt_functab[ID_COMBINATION];
     BU_GETSTRUCT(comb, rt_comb_internal);
+    RT_INIT_COMB_INTERNAL(comb);
+
     ip->idb_ptr = (genptr_t)comb;
-    comb->magic = RT_COMB_MAGIC;
-    bu_vls_init(&comb->shader);
-    bu_vls_init(&comb->material);
-    comb->temperature = -1;
 
     cp = ep->ext_buf;
     wid = *cp++;
@@ -1091,19 +1089,9 @@ rt_comb_make(const struct rt_functab *UNUSED(ftp), struct rt_db_internal *intern
 				"rt_comb_internal");
 
     comb = (struct rt_comb_internal *)intern->idb_ptr;
-    comb->magic = (long)RT_COMB_MAGIC;
-    comb->temperature = -1;
-    comb->tree = (union tree *)0;
-    comb->region_flag = 1;
-    comb->region_id = 0;
-    comb->aircode = 0;
-    comb->GIFTmater = 0;
-    comb->los = 0;
-    comb->rgb_valid = 0;
-    comb->rgb[0] = comb->rgb[1] = comb->rgb[2] = 0;
+    RT_INIT_COMB_INTERNAL(comb);
     bu_vls_init(&comb->shader);
     bu_vls_init(&comb->material);
-    comb->inherit = 0;
 }
 
 

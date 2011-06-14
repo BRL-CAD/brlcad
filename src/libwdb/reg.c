@@ -297,9 +297,7 @@ mk_comb(
     } else {
 	/* Create a fresh new object for export */
 	BU_GETSTRUCT(comb, rt_comb_internal);
-	comb->magic = RT_COMB_MAGIC;
-	bu_vls_init(&comb->shader);
-	bu_vls_init(&comb->material);
+	RT_INIT_COMB_INTERNAL(comb);
 
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_COMBINATION;

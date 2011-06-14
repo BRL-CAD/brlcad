@@ -106,10 +106,10 @@ Convtree()
 	    brl_att.region_flag = 1;
 
 	BU_GETSTRUCT(comb, rt_comb_internal);
-	comb->magic = RT_COMB_MAGIC;
+	RT_INIT_COMB_INTERNAL(comb);
+
 	comb->tree = ptr;
-	comb->is_fastgen = REGION_NON_FASTGEN;
-	comb->temperature = 0;
+
 	if (brl_att.region_flag) {
 	    comb->region_flag = 1;
 	    comb->region_id = brl_att.ident;

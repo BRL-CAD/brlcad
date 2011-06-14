@@ -889,12 +889,10 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	    GED_DB_DIRADD(gedp, tmp_dp, bu_vls_addr(&temp_name), -1, 0, RT_DIR_COMB, (genptr_t)&intern.idb_type, 0);
 
 	    BU_GETSTRUCT(comb, rt_comb_internal);
+	    RT_INIT_COMB_INTERNAL(comb);
+
 	    intern.idb_ptr = (genptr_t)comb;
-	    comb->magic = RT_COMB_MAGIC;
-	    bu_vls_init(&comb->shader);
-	    bu_vls_init(&comb->material);
-	    comb->region_id = 0;  /* This makes a comb/group by default */
-	    comb->tree = TREE_NULL;
+
 	    GED_DB_PUT_INTERNAL(gedp, tmp_dp, &intern, &rt_uniresource, 0);
 	}
 

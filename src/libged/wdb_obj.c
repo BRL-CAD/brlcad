@@ -9390,11 +9390,7 @@ wdb_combadd(Tcl_Interp *interp,
 
 	BU_GETSTRUCT(comb, rt_comb_internal);
 	intern.idb_ptr = (genptr_t)comb;
-	comb->magic = RT_COMB_MAGIC;
-	bu_vls_init(&comb->shader);
-	bu_vls_init(&comb->material);
-	comb->region_id = 0;  /* This makes a comb/group by default */
-	comb->tree = TREE_NULL;
+	RT_INIT_COMB_INTERNAL(comb);
 
 	if (region_flag) {
 	    struct bu_vls tmp_vls;

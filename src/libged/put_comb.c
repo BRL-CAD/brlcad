@@ -534,10 +534,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
     } else {
 	/* make an empty combination structure */
 	BU_GETSTRUCT(comb, rt_comb_internal);
-	comb->magic = RT_COMB_MAGIC;
-	comb->tree = TREE_NULL;
-	bu_vls_init(&comb->shader);
-	bu_vls_init(&comb->material);
+	RT_INIT_COMB_INTERNAL(comb);
     }
 
     if (db_version(gedp->ged_wdbp->dbip) < 5) {

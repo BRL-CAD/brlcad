@@ -687,10 +687,10 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 
 	flags = RT_DIR_COMB;
 	BU_GETSTRUCT(comb, rt_comb_internal);
-	comb->magic = RT_COMB_MAGIC;
+	RT_INIT_COMB_INTERNAL(comb);
+
 	comb->tree = final_tree;
-	bu_vls_init(&comb->shader);
-	bu_vls_init(&comb->material);
+
 	comb->region_id = -1;
 	if (region_flag == (-1))
 	    comb->region_flag = 0;

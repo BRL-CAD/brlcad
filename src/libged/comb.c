@@ -149,12 +149,9 @@ _ged_combadd(struct ged			*gedp,
 	GED_DB_DIRADD(gedp, dp, combname, -1, 0, flags, (genptr_t)&intern.idb_type, 0);
 
 	BU_GETSTRUCT(comb, rt_comb_internal);
+	RT_INIT_COMB_INTERNAL(comb);
+
 	intern.idb_ptr = (genptr_t)comb;
-	comb->magic = RT_COMB_MAGIC;
-	bu_vls_init(&comb->shader);
-	bu_vls_init(&comb->material);
-	comb->region_id = 0;  /* This makes a comb/group by default */
-	comb->tree = TREE_NULL;
 
 	if (region_flag) {
 	    comb->region_flag = 1;
