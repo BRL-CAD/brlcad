@@ -958,7 +958,7 @@ rt_nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, lon
 
 
 /**
- * R T _ N M G _ R E I N D E X
+ * R E I N D E X
  *
  * Depends on ecnt[0].byte_offset having been set to maxindex.
  *
@@ -967,8 +967,8 @@ rt_nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, lon
  * 0 substitute a null pointer when imported.
  * -1 substitute pointer to within-struct list head when imported.
  */
-int
-rt_nmg_reindex(genptr_t p, struct nmg_exp_counts *ecnt)
+HIDDEN int
+reindex(genptr_t p, struct nmg_exp_counts *ecnt)
 {
     int idx;
     int ret=0;	/* zero is NOT the default value, this is just to satisfy cray compilers */
@@ -982,35 +982,35 @@ rt_nmg_reindex(genptr_t p, struct nmg_exp_counts *ecnt)
 	if (idx == -1) {
 	    ret = DISK_INDEX_LISTHEAD; /* FLAG:  special list head */
 	} else if (idx < -1) {
-	    bu_bomb("rt_nmg_reindex(): unable to obtain struct index\n");
+	    bu_bomb("reindex(): unable to obtain struct index\n");
 	} else {
 	    ret = ecnt[idx].new_subscript;
 	    if (ecnt[idx].kind < 0) {
-		bu_log("rt_nmg_reindex(p=x%x), p->index=%d, ret=%d, kind=%d\n", p, idx, ret, ecnt[idx].kind);
-		bu_bomb("rt_nmg_reindex() This index not found in ecnt[]\n");
+		bu_log("reindex(p=x%x), p->index=%d, ret=%d, kind=%d\n", p, idx, ret, ecnt[idx].kind);
+		bu_bomb("reindex() This index not found in ecnt[]\n");
 	    }
 	    /* ret == 0 on supressed loop_g ptrs, etc */
 	    if (ret < 0 || ret > ecnt[0].byte_offset) {
-		bu_log("rt_nmg_reindex(p=x%x) %s, p->index=%d, ret=%d, maxindex=%d\n",
+		bu_log("reindex(p=x%x) %s, p->index=%d, ret=%d, maxindex=%d\n",
 		       p,
 		       bu_identify_magic(*(long *)p),
 		       idx, ret, ecnt[0].byte_offset);
-		bu_bomb("rt_nmg_reindex() subscript out of range\n");
+		bu_bomb("reindex() subscript out of range\n");
 	    }
 	}
     }
-/*bu_log("rt_nmg_reindex(p=x%x), p->index=%d, ret=%d\n", p, idx, ret);*/
+/*bu_log("reindex(p=x%x), p->index=%d, ret=%d\n", p, idx, ret);*/
     return ret;
 }
 
 
 /* forw may never be null;  back may be null for loopuse (sigh) */
-#define INDEX(o, i, elem) *(uint32_t *)(o)->elem = htonl(rt_nmg_reindex((genptr_t)((i)->elem), ecnt))
+#define INDEX(o, i, elem) *(uint32_t *)(o)->elem = htonl(reindex((genptr_t)((i)->elem), ecnt))
 #define INDEXL(oo, ii, elem) {						\
-	long _f = rt_nmg_reindex((genptr_t)((ii)->elem.forw), ecnt);	\
+	long _f = reindex((genptr_t)((ii)->elem.forw), ecnt);	\
 	if (_f == DISK_INDEX_NULL) bu_log("Warning rt_nmg_edisk: reindex forw to null?\n"); \
 	*(uint32_t *)((oo)->elem.forw) = htonl(_f);			\
-	*(uint32_t *)((oo)->elem.back) = htonl(rt_nmg_reindex((genptr_t)((ii)->elem.back), ecnt)); }
+	*(uint32_t *)((oo)->elem.back) = htonl(reindex((genptr_t)((ii)->elem.back), ecnt)); }
 #define PUTMAGIC(_magic) *(uint32_t *)d->magic = htonl(_magic)
 
 
@@ -1120,7 +1120,7 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, dou
 	    PUTMAGIC(DISK_FACE_MAGIC);
 	    INDEXL(d, f, l);	/* face is member of fg list */
 	    INDEX(d, f, fu_p);
-	    *(uint32_t *)d->g = htonl(rt_nmg_reindex((genptr_t)(f->g.magic_p), ecnt));
+	    *(uint32_t *)d->g = htonl(reindex((genptr_t)(f->g.magic_p), ecnt));
 	    *(uint32_t *)d->flip = htonl(f->flip);
 	}
 	    return;
@@ -1173,7 +1173,7 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, dou
 	    NMG_CK_LOOPUSE(lu);
 	    PUTMAGIC(DISK_LOOPUSE_MAGIC);
 	    INDEXL(d, lu, l);
-	    *(uint32_t *)d->up = htonl(rt_nmg_reindex((genptr_t)(lu->up.magic_p), ecnt));
+	    *(uint32_t *)d->up = htonl(reindex((genptr_t)(lu->up.magic_p), ecnt));
 	    INDEX(d, lu, lumate_p);
 	    *(uint32_t *)d->orientation = htonl(lu->orientation);
 	    INDEX(d, lu, l_p);
@@ -1215,13 +1215,13 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, dou
 	     * at the top of the edgeuse.  Beware on import.
 	     */
 	    INDEXL(d, eu, l2);
-	    *(uint32_t *)d->up = htonl(rt_nmg_reindex((genptr_t)(eu->up.magic_p), ecnt));
+	    *(uint32_t *)d->up = htonl(reindex((genptr_t)(eu->up.magic_p), ecnt));
 	    INDEX(d, eu, eumate_p);
 	    INDEX(d, eu, radial_p);
 	    INDEX(d, eu, e_p);
 	    *(uint32_t *)d->orientation = htonl(eu->orientation);
 	    INDEX(d, eu, vu_p);
-	    *(uint32_t *)d->g = htonl(rt_nmg_reindex((genptr_t)(eu->g.magic_p), ecnt));
+	    *(uint32_t *)d->g = htonl(reindex((genptr_t)(eu->g.magic_p), ecnt));
 	}
 	    return;
 	case NMG_KIND_EDGE: {
@@ -1285,10 +1285,10 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, dou
 	    NMG_CK_VERTEXUSE(vu);
 	    PUTMAGIC(DISK_VERTEXUSE_MAGIC);
 	    INDEXL(d, vu, l);
-	    *(uint32_t *)d->up = htonl(rt_nmg_reindex((genptr_t)(vu->up.magic_p), ecnt));
+	    *(uint32_t *)d->up = htonl(reindex((genptr_t)(vu->up.magic_p), ecnt));
 	    INDEX(d, vu, v_p);
 	    if (vu->a.magic_p)NMG_CK_VERTEXUSE_A_EITHER(vu->a.magic_p);
-	    *(uint32_t *)d->a = htonl(rt_nmg_reindex((genptr_t)(vu->a.magic_p), ecnt));
+	    *(uint32_t *)d->a = htonl(reindex((genptr_t)(vu->a.magic_p), ecnt));
 	}
 	    return;
 	case NMG_KIND_VERTEXUSE_A_PLANE: {
@@ -2278,7 +2278,7 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
     tot_size += kind_counts[NMG_KIND_DOUBLE_ARRAY] * (4+4) +
 	double_count * 8;
 
-    ecnt[0].byte_offset = subscript; /* implicit arg to rt_nmg_reindex() */
+    ecnt[0].byte_offset = subscript; /* implicit arg to reindex() */
 
     additional_grans = (tot_size + sizeof(union record)-1) / sizeof(union record);
     BU_CK_EXTERNAL(ep);
@@ -2629,7 +2629,7 @@ rt_nmg_export5(
     tot_size += kind_counts[NMG_KIND_DOUBLE_ARRAY] * (4+4) +
 	double_count*8;
 
-    ecnt[0].byte_offset = subscript; /* implicit arg to rt_nmg_reindex() */
+    ecnt[0].byte_offset = subscript; /* implicit arg to reindex() */
     tot_size += SIZEOF_NETWORK_LONG*(NMG_N_KINDS + 1); /* one for magic */
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = tot_size;
