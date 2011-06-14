@@ -54,10 +54,10 @@ struct pt_list
 
 
 extern void nmg_split_trim(const struct edge_g_cnurb *cnrb,
-	   const struct face_g_snurb *snrb,
-	   fastf_t t,
-	   struct pt_list *pt0, struct pt_list *pt1,
-	   const struct bn_tol *tol);
+			   const struct face_g_snurb *snrb,
+			   fastf_t t,
+			   struct pt_list *pt0, struct pt_list *pt1,
+			   const struct bn_tol *tol);
 
 /**
  * N M G _ I S _ C O M M O N _ B I G L O O P
@@ -332,7 +332,7 @@ nmg_cnurb_is_linear(const struct edge_g_cnurb *cnrb)
 
     linear = 1;
 
- out:
+out:
     if (rt_g.NMG_debug & DEBUG_MESH)
 	bu_log("nmg_cnurb_is_linear(x%x) returning %d\n", cnrb, linear);
 
@@ -484,7 +484,7 @@ nmg_snurb_is_planar(const struct face_g_snurb *srf, const struct bn_tol *tol)
     }
 
     planar = 1;
- out:
+out:
     if (rt_g.NMG_debug & DEBUG_MESH)
 	bu_log("nmg_snurb_is_planar(x%x) returning %d\n", srf, planar);
 
@@ -1354,7 +1354,7 @@ nmg_two_face_fuse(struct face *f1, struct face *f2, const struct bn_tol *tol)
     }
 
 #ifdef TOPPLOGY_CHECK
- must_fuse:
+must_fuse:
 #endif
     /* All points are on the plane, it's OK to fuse */
     if (flip2 == 0) {
@@ -1931,10 +1931,10 @@ nmg_insure_radial_list_is_increasing(struct bu_list *hd, fastf_t amin, fastf_t a
 void
 nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existing, struct edgeuse *eu, const fastf_t *xvec, const fastf_t *yvec, const fastf_t *zvec, const struct bn_tol *tol)
 
-    /* may be null */
+/* may be null */
 
 
-    /* for printing */
+/* for printing */
 {
     struct edgeuse *teu;
     struct nmg_radial *rad;
@@ -2283,7 +2283,7 @@ const struct edgeuse *
 nmg_find_next_use_of_2e_in_lu(const struct edgeuse *eu, const struct edge *e1, const struct edge *e2)
 
 
-    /* may be NULL */
+/* may be NULL */
 {
     register const struct edgeuse *neu;
 
@@ -2321,7 +2321,7 @@ void
 nmg_radial_mark_cracks(struct bu_list *hd, const struct edge *e1, const struct edge *e2, const struct bn_tol *tol)
 
 
-    /* may be NULL */
+/* may be NULL */
 
 {
     struct nmg_radial *rad;
@@ -2647,9 +2647,9 @@ nmg_radial_check_parity(const struct bu_list *hd, const struct bu_ptbl *shells, 
 void
 nmg_radial_implement_decisions(struct bu_list *hd, const struct bn_tol *tol, struct edgeuse *eu1, fastf_t *xvec, fastf_t *yvec, fastf_t *zvec)
 
-    /* for printing */
-    /* temp */
-    /*** temp ***/
+/* for printing */
+/* temp */
+/*** temp ***/
 {
     struct nmg_radial *rad;
     struct nmg_radial *prev;
@@ -2661,7 +2661,7 @@ nmg_radial_implement_decisions(struct bu_list *hd, const struct bn_tol *tol, str
     if (rt_g.NMG_debug & DEBUG_BASIC)
 	bu_log("nmg_radial_implement_decisions() BEGIN\n");
 
- again:
+again:
     skipped = 0;
     for (BU_LIST_FOR(rad, nmg_radial, hd)) {
 	struct edgeuse *dest;
@@ -2755,7 +2755,7 @@ nmg_pr_radial(const char *title, const struct nmg_radial *rad)
 void
 nmg_pr_radial_list(const struct bu_list *hd, const struct bn_tol *tol)
 
-    /* for printing */
+/* for printing */
 {
     struct nmg_radial *rad;
 
@@ -2892,7 +2892,7 @@ nmg_do_radial_join(struct bu_list *hd, struct edgeuse *eu1ref, fastf_t *xvec, fa
     if (rt_g.NMG_debug & DEBUG_MESH_EU)
 	bu_log("ref_dir = (%g %g %g)\n", V3ARGS(ref_dir));
 
- top:
+top:
 
     if (rt_g.NMG_debug & DEBUG_MESH_EU) {
 	bu_log("At top of nmg_do_radial_join:\n");
@@ -3108,7 +3108,7 @@ nmg_radial_join_eu_NEW(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn
 void
 nmg_radial_exchange_marked(struct bu_list *hd, const struct bn_tol *tol)
 
-    /* for printing */
+/* for printing */
 {
     struct nmg_radial *rad;
 

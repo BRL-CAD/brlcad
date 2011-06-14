@@ -44,7 +44,7 @@
 
 
 extern int rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip,
-			    struct rt_i *rtip);
+		       struct rt_i *rtip);
 
 const struct bu_structparse rt_ell_parse[] = {
     { "%f", 3, "V", bu_offsetof(struct rt_ell_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -399,10 +399,10 @@ rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap
  */
 void
 rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-    /* An array of solid pointers */
-    /* An array of ray pointers */
-    /* array of segs (results returned) */
-    /* Number of ray/object pairs */
+/* An array of solid pointers */
+/* An array of ray pointers */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
 
 {
     register int i;
@@ -1073,7 +1073,7 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
     bu_free((char *)strips, "strips[]");
     return 0;
- fail:
+fail:
     /* Release memory */
     /* All strips have vertices and normals */
     for (i=0; i<nstrips; i++) {

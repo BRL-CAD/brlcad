@@ -403,11 +403,8 @@ db_close(register struct db_i *dbip)
     }
 
     if (dbip->dbi_filepath != NULL) {
-	if (dbip->dbi_filepath[0] != NULL)
-	    bu_free((char *)dbip->dbi_filepath[0], "dbip->dbi_filepath[0]");
-	if (dbip->dbi_filepath[1] != NULL)
-	    bu_free((char *)dbip->dbi_filepath[1], "dbip->dbi_filepath[1]");
-	bu_free((char *)dbip->dbi_filepath, "dbip->dbi_filepath");
+	bu_free_argv(2, dbi->dbi_filepath);
+	dbi->dbi_filepath = NULL; /* sanity */
     }
 
     bu_free((char *)dbip, "struct db_i");

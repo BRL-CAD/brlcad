@@ -42,34 +42,34 @@
 
 
 #define RT_DECLARE_INTERFACE(name) \
-	extern int rt_##name##_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip); \
-	extern int rt_##name##_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead); \
-	extern int rt_##name##_piece_shot(struct rt_piecestate *psp, struct rt_piecelist *plp, double dist_corr, struct xray *rp, struct application *ap, struct seg *seghead); \
-	extern void rt_##name##_piece_hitsegs(struct rt_piecestate *psp, struct seg *seghead, struct application *ap); \
-	extern void rt_##name##_print(const struct soltab *stp); \
-	extern void rt_##name##_norm(struct hit *hitp, struct soltab *stp, struct xray *rp); \
-	extern void rt_##name##_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp); \
-	extern void rt_##name##_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp); \
-	extern int rt_##name##_class(); \
-	extern void rt_##name##_free(struct soltab *stp); \
-	extern int rt_##name##_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol); \
-	extern void rt_##name##_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap); \
-	extern int rt_##name##_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol); \
-	extern int rt_##name##_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol); \
-	extern void rt_##name##_brep(ON_Brep **b, struct rt_db_internal *ip, const struct bn_tol *tol); \
-	extern int rt_##name##_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp); \
-	extern int rt_##name##_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp); \
-	extern int rt_##name##_import4(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp); \
-	extern int rt_##name##_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp); \
-	extern void rt_##name##_ifree(struct rt_db_internal *ip); \
-	extern int rt_##name##_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr); \
-	extern int rt_##name##_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv); \
-	extern int rt_##name##_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local, struct resource *resp, struct db_i *db_i); \
-	extern void rt_##name##_make(const struct rt_functab *ftp, struct rt_db_internal *intern); \
-	extern int rt_##name##_xform(struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int release, struct db_i *dbip, struct resource *resp); \
-	extern int rt_##name##_params(struct pc_pc_set *ps, const struct rt_db_internal *ip); \
-	extern int rt_##name##_mirror(struct rt_db_internal *ip, const plane_t *plane); \
-	extern const struct bu_structparse rt_##name##_parse[]
+    extern int rt_##name##_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip); \
+    extern int rt_##name##_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead); \
+    extern int rt_##name##_piece_shot(struct rt_piecestate *psp, struct rt_piecelist *plp, double dist_corr, struct xray *rp, struct application *ap, struct seg *seghead); \
+    extern void rt_##name##_piece_hitsegs(struct rt_piecestate *psp, struct seg *seghead, struct application *ap); \
+    extern void rt_##name##_print(const struct soltab *stp); \
+    extern void rt_##name##_norm(struct hit *hitp, struct soltab *stp, struct xray *rp); \
+    extern void rt_##name##_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp); \
+    extern void rt_##name##_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp); \
+    extern int rt_##name##_class(); \
+    extern void rt_##name##_free(struct soltab *stp); \
+    extern int rt_##name##_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol); \
+    extern void rt_##name##_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap); \
+    extern int rt_##name##_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol); \
+    extern int rt_##name##_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol); \
+    extern void rt_##name##_brep(ON_Brep **b, struct rt_db_internal *ip, const struct bn_tol *tol); \
+    extern int rt_##name##_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp); \
+    extern int rt_##name##_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp); \
+    extern int rt_##name##_import4(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp); \
+    extern int rt_##name##_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp); \
+    extern void rt_##name##_ifree(struct rt_db_internal *ip); \
+    extern int rt_##name##_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr); \
+    extern int rt_##name##_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv); \
+    extern int rt_##name##_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local, struct resource *resp, struct db_i *db_i); \
+    extern void rt_##name##_make(const struct rt_functab *ftp, struct rt_db_internal *intern); \
+    extern int rt_##name##_xform(struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int release, struct db_i *dbip, struct resource *resp); \
+    extern int rt_##name##_params(struct pc_pc_set *ps, const struct rt_db_internal *ip); \
+    extern int rt_##name##_mirror(struct rt_db_internal *ip, const plane_t *plane); \
+    extern const struct bu_structparse rt_##name##_parse[]
 
 
 RT_DECLARE_INTERFACE(tor);

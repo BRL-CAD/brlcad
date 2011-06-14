@@ -79,10 +79,10 @@ struct ebm_hit_private {
 
 
 extern int rt_ebm_dda(struct xray *rp, struct soltab *stp,
-			   struct application *ap, struct seg *seghead);
+		      struct application *ap, struct seg *seghead);
 extern int rt_seg_planeclip(struct seg *out_hd, struct seg *in_hd,
-				 vect_t out_norm, fastf_t in, fastf_t out,
-				 struct xray *rp, struct application *ap);
+			    vect_t out_norm, fastf_t in, fastf_t out,
+			    struct xray *rp, struct application *ap);
 
 /*
  * Codes to represent surface normals.  In a bitmap, there are only 4

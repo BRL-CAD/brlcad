@@ -900,8 +900,8 @@ void
 rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, int n, struct application *ap)
 
 
-    /* array of segs (results returned) */
-    /* Number of ray/object pairs */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
 
 {
     register struct tgc_specific *tgc;

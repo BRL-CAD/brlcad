@@ -78,7 +78,7 @@ const struct bu_structparse rt_vol_parse[] = {
 
 
 extern void rt_vol_plate(point_t a, point_t b, point_t c, point_t d,
-			      mat_t mat, struct bu_list *vhead, struct rt_vol_internal *vip);
+			 mat_t mat, struct bu_list *vhead, struct rt_vol_internal *vip);
 
 /*
  * Codes to represent surface normals.
@@ -105,7 +105,7 @@ extern void rt_vol_plate(point_t a, point_t b, point_t c, point_t d,
 #define VOL(_vip, _xx, _yy, _zz)	(_vip)->map[ \
 	(((_zz)+VOL_ZWIDEN) * ((_vip)->ydim + VOL_YWIDEN*2)+ \
 	 ((_yy)+VOL_YWIDEN))* ((_vip)->xdim + VOL_XWIDEN*2)+ \
-	  (_xx)+VOL_XWIDEN ]
+	(_xx)+VOL_XWIDEN ]
 
 #define OK(_vip, _v)	((_v) >= (_vip)->lo && (_v) <= (_vip)->hi)
 
@@ -1303,7 +1303,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     return 0;
 
- fail:
+fail:
     nmg_km(m_tmp);
     *r = (struct nmgregion *)NULL;
 

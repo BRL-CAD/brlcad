@@ -1237,15 +1237,15 @@ int rt_load_attrs(struct rt_i *rtip, char **attrs)
 
         bu_avs_init_empty(&(regp->attr_values));
 	for (i=0; i<attr_count; i++) {
-		if ((attr = bu_avs_get(&avs, attrs[i])) == NULL)
-			continue;
+	    if ((attr = bu_avs_get(&avs, attrs[i])) == NULL)
+		continue;
 
-		bu_avs_add(&(regp->attr_values), attrs[i], attr);
-		did_set = 1;
+	    bu_avs_add(&(regp->attr_values), attrs[i], attr);
+	    did_set = 1;
 	}
 
 	if (did_set)
-		region_count++;
+	    region_count++;
 
 	bu_avs_free(&avs);
     }
