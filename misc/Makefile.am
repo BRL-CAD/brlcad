@@ -19,64 +19,6 @@ EXTRA_DIST = \
 	$(man_MANS) \
 	$(sample_applications_DATA) \
 	${DATAFILES} \
-	Description.txt \
-	Doxyfile \
-	Makefile.defs \
-	archlinux/PKGBUILD \
-	archlinux/brlcad.install \
-	archlinux/brlcad.sh \
-	batch-indent-region.el \
-	brlcad-config \
-	brlcad-config.in \
-	brlcad.spec \
-	brlcad.spec.in \
-	debian/application-x-brlcad-v4.png \
-	debian/application-x-brlcad-v5.png \
-	debian/application-x-brlcad.xml \
-	debian/brlcad-archer.desktop \
-	debian/brlcad-archer.png \
-	debian/brlcad-db.desktop \
-	debian/brlcad-db.png \
-	debian/brlcad.directory \
-	debian/brlcad-doc-animation.desktop \
-	debian/brlcad-doc.desktop \
-	debian/brlcad-doc.directory \
-	debian/brlcad-doc-mged.desktop \
-	debian/brlcad-doc.png \
-	debian/brlcad.docs \
-	debian/brlcad.install \
-	debian/brlcad.menu \
-	debian/brlcad-mged.desktop \
-	debian/brlcad-mged.png \
-	debian/brlcad.postinst \
-	debian/brlcad.postrm \
-	debian/brlcad-rtwizard.desktop \
-	debian/brlcad.sh \
-	debian/changelog \
-	debian/compat \
-	debian/control \
-	debian/copyright \
-	debian/rules \
-	debian/source/format \
-	debian/source/include-binaries \
-	doxygen_structure \
-	flawfinder \
-	libtool.m4 \
-	nsis/archer.ico \
-	nsis/brlcad.ico \
-	nsis/brlcad.nsi \
-	nsis/header.bmp \
-	nsis/side.bmp \
-	nsis/uninstall.ico \
-	nsis/updateVersion.tcl \
-	win32-msvc/CMakeLists.txt \
-	win32-msvc/Dll/BrlcadCore.def \
-	win32-msvc/Dll/BrlcadCore.rc \
-	win32-msvc/Dll/CMakeLists.txt \
-	win32-msvc/Dll/brlcad.def \
-	win32-msvc/Dll/brlcad.rc \
-	win32-msvc/Dll/TclDummies.c \
-	CMakeLists.txt \
 	CMake/BRLCAD_CPackOptions.cmake.in \
 	CMake/BRLCAD_CheckFunctions.cmake \
 	CMake/BRLCAD_Dependent_Options.cmake \
@@ -84,15 +26,13 @@ EXTRA_DIST = \
 	CMake/CheckCFileRuns.cmake \
 	CMake/CheckPrototypeExists.cmake \
 	CMake/CompilerFlags.cmake \
-	CMake/FindCarbon.cmake \
-	CMake/FindCocoa.cmake \
 	CMake/FindFOP.cmake \
 	CMake/FindGL.cmake \
 	CMake/FindLEX.cmake \
 	CMake/FindOIIO.cmake \
-	CMake/FindOpenEXR.cmake \
 	CMake/FindOPENNURBS.cmake \
 	CMake/FindOSL.cmake \
+	CMake/FindOpenEXR.cmake \
 	CMake/FindPkgMacros.cmake \
 	CMake/FindREGEX.cmake \
 	CMake/FindSCL.cmake \
@@ -125,7 +65,66 @@ EXTRA_DIST = \
 	CMake/test_srcs/termlib.c.in \
 	CMake/test_srcs/time.c.in \
 	CMake/test_srcs/timedelta_end.c.in \
-	CMake/test_srcs/timedelta_start.c.in
+	CMake/test_srcs/timedelta_start.c.in \
+	CMake/util_macros.cmake \
+	CMakeLists.txt \
+	Description.txt \
+	Doxyfile \
+	Makefile.defs \
+	archlinux/PKGBUILD \
+	archlinux/brlcad.install \
+	archlinux/brlcad.sh \
+	batch-indent-region.el \
+	brlcad-config \
+	brlcad-config.in \
+	brlcad.spec \
+	brlcad.spec.in \
+	debian/application-x-brlcad-v4.png \
+	debian/application-x-brlcad-v5.png \
+	debian/application-x-brlcad.xml \
+	debian/brlcad-archer.desktop \
+	debian/brlcad-archer.png \
+	debian/brlcad-db.desktop \
+	debian/brlcad-db.png \
+	debian/brlcad-doc-animation.desktop \
+	debian/brlcad-doc-mged.desktop \
+	debian/brlcad-doc.desktop \
+	debian/brlcad-doc.directory \
+	debian/brlcad-doc.png \
+	debian/brlcad-mged.desktop \
+	debian/brlcad-mged.png \
+	debian/brlcad-rtwizard.desktop \
+	debian/brlcad.directory \
+	debian/brlcad.docs \
+	debian/brlcad.install \
+	debian/brlcad.menu \
+	debian/brlcad.postinst \
+	debian/brlcad.postrm \
+	debian/brlcad.sh \
+	debian/changelog \
+	debian/compat \
+	debian/control \
+	debian/copyright \
+	debian/rules \
+	debian/source/format \
+	debian/source/include-binaries \
+	doxygen_structure \
+	flawfinder \
+	libtool.m4 \
+	nsis/archer.ico \
+	nsis/brlcad.ico \
+	nsis/brlcad.nsi \
+	nsis/header.bmp \
+	nsis/side.bmp \
+	nsis/uninstall.ico \
+	nsis/updateVersion.tcl \
+	win32-msvc/CMakeLists.txt \
+	win32-msvc/Dll/BrlcadCore.def \
+	win32-msvc/Dll/BrlcadCore.rc \
+	win32-msvc/Dll/CMakeLists.txt \
+	win32-msvc/Dll/TclDummies.c \
+	win32-msvc/Dll/brlcad.def \
+	win32-msvc/Dll/brlcad.rc
 
 datafilesdir = $(BRLCAD_DATA)/data
 
