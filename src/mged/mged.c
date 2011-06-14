@@ -165,7 +165,7 @@ int old_mged_gui=1;
 static int mged_init_flag = 1;	/* >0 means in initialization stage */
 
 struct bu_vls input_str, scratchline, input_str_prefix;
-int input_str_index = 0;
+size_t input_str_index = 0;
 
 char *dpy_string = (char *)NULL;
 
@@ -708,7 +708,7 @@ mged_process_char(char ch)
 	    break;
 	case DELETE:
 	case BACKSPACE:
-	    if (input_str_index <= 0) {
+	    if (input_str_index == 0) {
 		pr_beep();
 		break;
 	    }
@@ -1854,7 +1854,7 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 int
 cmd_stuff_str(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
-    int i;
+    size_t i;
 
     if (argc != 2) {
 	struct bu_vls vls;

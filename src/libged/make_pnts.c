@@ -271,7 +271,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
     char *endp = (char *)NULL;
 
     struct bu_vls format_string;
-    int format_string_index = 0;
+    size_t format_string_index = 0;
 
     unsigned int num_doubles_per_point = 0;
 

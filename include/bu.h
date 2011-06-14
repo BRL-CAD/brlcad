@@ -1632,9 +1632,9 @@ struct bu_attribute_value_set {
 struct bu_vls  {
     unsigned long vls_magic;
     char *vls_str;	/**< @brief Dynamic memory for buffer */
-    int vls_offset;	/**< @brief Offset into vls_str where data is good */
-    int vls_len;	/**< @brief Length, not counting the null */
-    int vls_max;
+    off_t vls_offset;	/**< @brief Offset into vls_str where data is good */
+    size_t vls_len;	/**< @brief Length, not counting the null */
+    size_t vls_max;
 };
 #define BU_CK_VLS(_vp) BU_CKMAG(_vp, BU_VLS_MAGIC, "bu_vls")
 #define BU_VLS_IS_INITIALIZED(_vp)	\
@@ -4471,14 +4471,14 @@ BU_EXPORT extern void bu_vls_extend(struct bu_vls *vp,
  * Does not initialize the value of any of the new bytes.
  */
 BU_EXPORT extern void bu_vls_setlen(struct bu_vls *vp,
-				    int newlen);
+				    size_t newlen);
 /**
  * b u _ v l s _ s t r l e n
  *
  * Return length of the string, in bytes, not including the null
  * terminator.
  */
-BU_EXPORT extern int bu_vls_strlen(const struct bu_vls *vp);
+BU_EXPORT extern size_t bu_vls_strlen(const struct bu_vls *vp);
 
 /**
  * b u _ v l s _ t r u n c

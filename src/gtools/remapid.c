@@ -189,7 +189,7 @@ remapid_fgetc(REMAPID_FILE *bfp)
  * Print out a syntax error message about a REMAPID_FILE
  */
 void
-remapid_file_err (REMAPID_FILE *bfp, char *text1, char *text2, int cursor_pos)
+remapid_file_err(REMAPID_FILE *bfp, char *text1, char *text2, ssize_t cursor_pos)
 {
     char *cp;
     int buflen;
@@ -222,7 +222,7 @@ remapid_file_err (REMAPID_FILE *bfp, char *text1, char *text2, int cursor_pos)
      * Print out position-indicating arrow, if requested
      */
     if ((cursor_pos >= 0)
-	&& (cursor_pos < bu_vls_strlen(&(bfp->file_buf))))
+	&& ((size_t)cursor_pos < bu_vls_strlen(&(bfp->file_buf))))
     {
 	cp = bu_vls_addr(&(bfp->file_buf));
 	for (i = 0; i < cursor_pos; ++i)

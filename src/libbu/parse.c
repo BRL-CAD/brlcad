@@ -1678,7 +1678,7 @@ bu_key_eq_to_key_val(const char *in, const char **next, struct bu_vls *vls)
 int
 bu_shader_to_tcl_list(const char *in, struct bu_vls *vls)
 {
-    int len;
+    size_t len;
     int is_stack=0;
     int shader_name_len=0;
     char *iptr;

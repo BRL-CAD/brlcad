@@ -108,9 +108,7 @@ bu_vls_addr(const struct bu_vls *vp)
     }
 
     /* Sanity checking */
-    if (vp->vls_max < 0 ||
-	vp->vls_len < 0 ||
-	vp->vls_offset < 0 ||
+    if (vp->vls_offset < 0 ||
 	vp->vls_str == (char *)NULL ||
 	vp->vls_len + vp->vls_offset >= vp->vls_max)
     {
@@ -157,7 +155,7 @@ bu_vls_extend(struct bu_vls *vp, unsigned int extra)
 
 
 void
-bu_vls_setlen(struct bu_vls *vp, int newlen)
+bu_vls_setlen(struct bu_vls *vp, size_t newlen)
 {
     BU_CK_VLS(vp);
 
@@ -169,13 +167,10 @@ bu_vls_setlen(struct bu_vls *vp, int newlen)
 }
 
 
-int
+size_t
 bu_vls_strlen(const struct bu_vls *vp)
 {
     BU_CK_VLS(vp);
-
-    if (vp->vls_len <= 0)
-	return 0;
 
     return vp->vls_len;
 }
@@ -190,7 +185,7 @@ bu_vls_trunc(struct bu_vls *vp, int len)
 	/* now an absolute length */
 	len = vp->vls_len + len;
     }
-    if (vp->vls_len <= len)
+    if (vp->vls_len <= (size_t)len)
 	return;
     if (len == 0)
 	vp->vls_offset = 0;
@@ -205,7 +200,7 @@ bu_vls_trunc2(struct bu_vls *vp, int len)
 {
     BU_CK_VLS(vp);
 
-    if (vp->vls_len <= len)
+    if (vp->vls_len <= (size_t)len)
 	return;
 
     if (len < 0)
@@ -225,7 +220,7 @@ bu_vls_nibble(struct bu_vls *vp, int len)
 
     if (len < 0 && (-len) > vp->vls_offset)
 	len = -vp->vls_offset;
-    if (len >= vp->vls_len) {
+    if ((size_t)len >= vp->vls_len) {
 	bu_vls_trunc(vp, 0);
 	return;
     }
@@ -615,7 +610,7 @@ bu_vls_fwrite(FILE *fp, const struct bu_vls *vp)
 void
 bu_vls_write(int fd, const struct bu_vls *vp)
 {
-    int status;
+    ssize_t status;
 
     BU_CK_VLS(vp);
 
@@ -623,10 +618,10 @@ bu_vls_write(int fd, const struct bu_vls *vp)
 	return;
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    status = (int)write(fd, vp->vls_str + vp->vls_offset, (size_t)vp->vls_len);
+    status = write(fd, vp->vls_str + vp->vls_offset, (size_t)vp->vls_len);
     bu_semaphore_release(BU_SEM_SYSCALL);
 
-    if (UNLIKELY(status != vp->vls_len)) {
+    if (UNLIKELY(status < 0 || (size_t)status != vp->vls_len)) {
 	perror("write");
 	bu_bomb("bu_vls_write() write error\n");
     }
