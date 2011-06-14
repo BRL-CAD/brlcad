@@ -980,6 +980,42 @@ struct rt_comb_internal {
 #define RT_CHECK_COMB_TCL(_interp, _p) BU_CKMAG_TCL(interp, _p, RT_COMB_MAGIC, "rt_comb_internal")
 #define RT_CK_COMB_TCL(_interp, _p) RT_CHECK_COMB_TCL(_interp, _p)
 
+/**
+ * initialize an rt_comb_internal to empty.  caller will need to free
+ * the shader/material members or call RT_FREE_COMB_INTERNAL().
+ */
+#define RT_INIT_COMB_INTERNAL(_p) { \
+	(_p)->magic = RT_COMB_MAGIC; \
+	(_p)->tree = TREE_NULL; \
+	(_p)->region_flag = 0; \
+	(_p)->is_fastgen = REGION_NON_FASTGEN; \
+	(_p)->region_id = 0; \
+	(_p)->aircode = 0; \
+	(_p)->GIFTmater = 0; \
+	(_p)->los = 0; \
+	(_p)->rgb_valid = 0; \
+	(_p)->rgb[0] = 0; \
+	(_p)->rgb[1] = 0; \
+	(_p)->rgb[2] = 0; \
+	(_p)->temperature = 0.0; \
+	bu_vls_init(&(_p)->shader); \
+	bu_vls_init(&(_p)->material); \
+	(_p)->inherit = 0; \
+    }
+
+/**
+ * release memory associated with an rt_comb_internal.  the tree
+ * pointer is not released so callers will need to call RT_FREE_TREE()
+ * directly if a tree is set.  however, the shader and material
+ * strings are released.
+ */
+#define RT_FREE_COMB_INTERNAL(_p) { \
+	bu_vls_free(&(_p)->shader); \
+	bu_vls_free(&(_p)->material); \
+	(_p)->tree = TREE_NULL; \
+	(_p)->magic = 0; \
+    }
+
 
 /**
  * R T _ B I N U N I F _ I N T E R N A L
