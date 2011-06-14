@@ -2219,7 +2219,7 @@ process_leader_entities_code( int code )
 static int
 process_mtext_entities_code( int code )
 {
-    static struct bu_vls vls;
+    static struct bu_vls *vls = NULL;
     static int attachPoint=0;
     static int drawingDirection=0;
     static double textHeight=0.0;
@@ -2234,12 +2234,18 @@ process_mtext_entities_code( int code )
 
     switch ( code ) {
 	case 3:
-	    bu_vls_init_if_uninit( &vls );
-	    bu_vls_strcat( &vls, line );
+	    if (!vls) {
+		BU_GETSTRUCT(vls, bu_vls);
+		bu_vls_init(vls);
+	    }
+	    bu_vls_strcat(vls, line);
 	    break;
 	case 1:
-	    bu_vls_init_if_uninit( &vls );
-	    bu_vls_strcat( &vls, line );
+	    if (!vls) {
+		BU_GETSTRUCT(vls, bu_vls);
+		bu_vls_init(vls);
+	    }
+	    bu_vls_strcat(vls, line);
 	    break;
 	case 8:		/* layer name */
 	    if ( curr_layer_name ) {
@@ -2288,7 +2294,7 @@ process_mtext_entities_code( int code )
 	    break;
 	case 0:
 	    if ( verbose ) {
-		bu_log( "MTEXT (%s), height = %g, entityHeight = %g, rectWidth = %g\n", bu_vls_addr( &vls ), textHeight, entityHeight, rectWidth );
+		bu_log( "MTEXT (%s), height = %g, entityHeight = %g, rectWidth = %g\n", (vls) ? bu_vls_addr(vls) : "NO_NAME", textHeight, entityHeight, rectWidth );
 		bu_log( "\tattachPoint = %d, charWidth = %g, insertPt = (%g %g %g)\n", attachPoint, charWidth, V3ARGS( insertionPoint ) );
 	    }
 	    /* draw the text */
@@ -2304,10 +2310,12 @@ process_mtext_entities_code( int code )
 	    MAT4X3PNT( tmp_pt, curr_state->xform, insertionPoint );
 	    VMOVE( insertionPoint, tmp_pt );
 
-	    drawMtext( bu_vls_addr( &vls ), attachPoint, drawingDirection, textHeight, entityHeight,
+	    drawMtext( (vls) ? bu_vls_addr(vls) : "NO_NAME", attachPoint, drawingDirection, textHeight, entityHeight,
 		       charWidth, rectWidth, rotationAngle, insertionPoint );
 
-	    bu_vls_free( &vls );
+	    bu_vls_free(vls);
+	    vls = NULL;
+
 	    attachPoint = 0;
 	    textHeight = 0.0;
 	    entityHeight = 0.0;
@@ -3389,7 +3397,6 @@ main( int argc, char *argv[] )
     if ( BU_LIST_NON_EMPTY( &head_all ) ) {
 	struct bu_vls top_name;
 	int count=0;
-
 
 	bu_vls_init(&top_name);
 	bu_vls_strcpy( &top_name, "all" );
