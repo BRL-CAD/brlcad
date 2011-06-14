@@ -719,7 +719,7 @@ light_setup(register struct region *rp,
     }
 
     /* Add to linked list of lights */
-    if (BU_LIST_UNINITIALIZED(&(LightHead.l))) {
+    if (!BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
 	BU_LIST_INIT(&(LightHead.l));
     }
     BU_LIST_INSERT(&(LightHead.l), &(lsp->l));
@@ -758,7 +758,7 @@ light_init(struct application *ap)
     register int nlights = 0;
     register fastf_t inten = 0.0;
 
-    if (BU_LIST_UNINITIALIZED(&(LightHead.l))) {
+    if (!BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
 	BU_LIST_INIT(&(LightHead.l));
     }
 
@@ -848,7 +848,7 @@ light_cleanup(void)
 {
     register struct light_specific *lsp, *zaplsp;
 
-    if (BU_LIST_UNINITIALIZED(&(LightHead.l))) {
+    if (!BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
 	BU_LIST_INIT(&(LightHead.l));
 	return;
     }
@@ -1879,7 +1879,7 @@ light_maker(int num, mat_t v2m)
 	lsp->lt_cosangle = -1;		/* cos(180) */
 	lsp->lt_infinite = 0;
 	lsp->lt_rp = REGION_NULL;
-	if (BU_LIST_UNINITIALIZED(&(LightHead.l))) {
+	if (!BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
 	    BU_LIST_INIT(&(LightHead.l));
 	}
 	BU_LIST_INSERT(&(LightHead.l), &(lsp->l));

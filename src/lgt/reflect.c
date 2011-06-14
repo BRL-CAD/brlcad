@@ -422,7 +422,7 @@ render_Scan(int cpu, void *UNUSED(data))
 
     resource[cpu].re_cpu = cpu;
 #ifdef RESOURCE_MAGIC
-    if ( BU_LIST_UNINITIALIZED( &resource[cpu].re_parthead ) )
+    if ( !BU_LIST_IS_INITIALIZED( &resource[cpu].re_parthead ) )
 	rt_init_resource( &resource[cpu], cpu, rt_ip );
 #endif
 

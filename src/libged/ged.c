@@ -102,7 +102,7 @@ ged_drawable_init(struct ged_drawable *gdp)
     if (gdp == GED_DRAWABLE_NULL)
 	return;
 
-    if (BU_LIST_UNINITIALIZED(&_FreeSolid.l)) {
+    if (!BU_LIST_IS_INITIALIZED(&_FreeSolid.l)) {
 	BU_LIST_INIT(&_FreeSolid.l);
     }
 

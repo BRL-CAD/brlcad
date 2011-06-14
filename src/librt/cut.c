@@ -2215,7 +2215,7 @@ rt_cut_clean(struct rt_i *rtip)
     /* Abandon the linked list of diced-up structures */
     rtip->rti_CutFree = CUTTER_NULL;
 
-    if (BU_LIST_UNINITIALIZED(&rtip->rti_busy_cutter_nodes.l))
+    if (!BU_LIST_IS_INITIALIZED(&rtip->rti_busy_cutter_nodes.l))
 	return;
 
     /* Release the blocks we got from bu_malloc() */

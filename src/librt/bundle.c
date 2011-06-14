@@ -177,7 +177,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
     BU_LIST_INIT(&finished_segs.l);
     ap->a_finished_segs_hdp = &finished_segs;
 
-    if (BU_LIST_UNINITIALIZED(&resp->re_parthead)) {
+    if (!BU_LIST_IS_INITIALIZED(&resp->re_parthead)) {
 	/* XXX This shouldn't happen any more */
 	bu_log("rt_shootray_bundle() resp=%p uninitialized, fixing it\n", (void *)resp);
 	/*

@@ -57,7 +57,7 @@ bn_vlblock_init(struct bu_list *free_vlist_hd, /**< where to get/put free vlists
     struct bn_vlblock *vbp;
     size_t i;
 
-    if (BU_LIST_UNINITIALIZED(free_vlist_hd))
+    if (!BU_LIST_IS_INITIALIZED(free_vlist_hd))
 	BU_LIST_INIT(free_vlist_hd);
 
     BU_GETSTRUCT(vbp, bn_vlblock);
@@ -278,7 +278,7 @@ bn_vlist_cleanup(struct bu_list *hd)
 {
     register struct bn_vlist *vp;
 
-    if (BU_LIST_UNINITIALIZED(hd)) {
+    if (!BU_LIST_IS_INITIALIZED(hd)) {
 	BU_LIST_INIT(hd);
 	return;
     }

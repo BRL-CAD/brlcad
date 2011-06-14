@@ -754,7 +754,6 @@ struct bu_list {
 typedef struct bu_list bu_list_t;
 #define BU_LIST_NULL ((struct bu_list *)0)
 
-#define BU_LIST_UNINITIALIZED(hp)	(UNLIKELY((hp)->forw == BU_LIST_NULL))
 #define BU_LIST_IS_INITIALIZED(hp)	(LIKELY((hp)->forw != BU_LIST_NULL))
 
 /**

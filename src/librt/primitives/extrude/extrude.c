@@ -1894,7 +1894,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     }
 
     BU_LIST_INIT(&vhead);
-    if (BU_LIST_UNINITIALIZED(&rt_g.rtg_vlfree)) {
+    if (!BU_LIST_IS_INITIALIZED(&rt_g.rtg_vlfree)) {
 	BU_LIST_INIT(&rt_g.rtg_vlfree);
     }
     for (i=0; i<(size_t)BU_PTBL_END(outer_loop); i++) {

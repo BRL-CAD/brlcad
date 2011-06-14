@@ -750,8 +750,8 @@ view_2init(struct application *app, char *framename)
 	case 0:
 	    app->a_hit = colorview;
 	    /* If present, use user-specified light solids */
-	    if (BU_LIST_IS_EMPTY(&(LightHead.l))  ||
-		BU_LIST_UNINITIALIZED(&(LightHead.l))) {
+	    if (BU_LIST_IS_EMPTY(&(LightHead.l))
+		|| !BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
 		if (rdebug&RDEBUG_SHOWERR) {
 		    bu_log("No explicit light\n");
 		}

@@ -1557,8 +1557,8 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	    /* If user did not specify any light sources then create
 	     * default light sources
 	     */
-	    if (BU_LIST_IS_EMPTY(&(LightHead.l))  ||
-		BU_LIST_UNINITIALIZED(&(LightHead.l))) {
+	    if (BU_LIST_IS_EMPTY(&(LightHead.l))
+		|| !BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
 		if (R_DEBUG&RDEBUG_SHOWERR)bu_log("No explicit light\n");
 		light_maker(1, view2model);
 	    }
@@ -1582,7 +1582,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 		/* If user did not specify any light sources then
 		 * create one.
 		 */
-		if (BU_LIST_IS_EMPTY(&(LightHead.l)) || BU_LIST_UNINITIALIZED(&(LightHead.l))) {
+		if (BU_LIST_IS_EMPTY(&(LightHead.l)) || !BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
 		    if (rdebug&RDEBUG_SHOWERR)
 			bu_log("No explicit light\n");
 		    light_maker(1, view2model);
@@ -1609,8 +1609,8 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	case 8:
 	    {
 		ap->a_hit = colorview;
-		if (BU_LIST_IS_EMPTY(&(LightHead.l))  ||
-		    BU_LIST_UNINITIALIZED(&(LightHead.l))) {
+		if (BU_LIST_IS_EMPTY(&(LightHead.l))
+		    || !BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
 		    if (R_DEBUG&RDEBUG_SHOWERR)bu_log("No explicit light\n");
 		    light_maker(1, view2model);	
 		}

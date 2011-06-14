@@ -288,21 +288,21 @@ view_2init(struct application *ap, char *UNUSED(framename))
      * This will be expanded to handle multiple BUFMODES,
      * as in view.c */
     /*if (sub_grid_mode)  {
-	    for (i = sub_ymin; i <= sub_ymax; i++)
-		    scanline[i].sl_left = sub_xmax-sub_xmin+1;
-	}
-    else {
-		for (i = 0; i < height; i++)
-		    scanline[i].sl_left = width;
+      for (i = sub_ymin; i <= sub_ymax; i++)
+      scanline[i].sl_left = sub_xmax-sub_xmin+1;
+      }
+      else {
+      for (i = 0; i < height; i++)
+      scanline[i].sl_left = width;
     }*/
 
 
     /* Setting Lights if the user did not specify */
-    if (BU_LIST_IS_EMPTY(&(LightHead.l)) ||
-       (BU_LIST_UNINITIALIZED(&(LightHead.l)))) {
-		if (R_DEBUG&RDEBUG_SHOWERR) bu_log("No explicit light\n");
-		light_maker(1, view2model);
-	}
+    if (BU_LIST_IS_EMPTY(&(LightHead.l))
+	|| (!BU_LIST_IS_INITIALIZED(&(LightHead.l)))) {
+	if (R_DEBUG&RDEBUG_SHOWERR) bu_log("No explicit light\n");
+	light_maker(1, view2model);
+    }
 
     ap->a_rt_i->rti_nlights = light_init(ap);
 }

@@ -252,7 +252,7 @@ rt_alloc_seg_block(register struct resource *res)
 
     RT_CK_RESOURCE(res);
 
-    if (BU_LIST_UNINITIALIZED(&res->re_seg)) {
+    if (!BU_LIST_IS_INITIALIZED(&res->re_seg)) {
 	BU_LIST_INIT(&(res->re_seg));
 	bu_ptbl_init(&res->re_seg_blocks, 64, "re_seg_blocks ptbl");
     }

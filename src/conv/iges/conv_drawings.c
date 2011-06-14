@@ -116,7 +116,7 @@ Note_to_vlist(entno, vhead)
     int nstrings=0;
     int i;
 
-    if (BU_LIST_UNINITIALIZED(&free_hd)) BU_LIST_INIT(&free_hd);
+    if (!BU_LIST_IS_INITIALIZED(&free_hd)) BU_LIST_INIT(&free_hd);
 
     Readrec(dir[entno]->param);
     Readint(&entity_type, "");

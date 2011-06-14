@@ -371,6 +371,9 @@ Expressions are shown using Perl syntax and may need adjustment
 (particularly quoting of '(', ')', and '|') for other environments.
 Most expressions will apply with: perl -0777 -pi -e 'EXPRESSION' FILE
 
+s/BU_LIST_UNINITIALIZED/!BU_LIST_IS_INITIALIZED/g
+        BU_LIST_IS_INITIALIZED() removed for consistency [7.20]
+
 s/[[:space:]]*BU_ARGS[[:space:]]*\([[:space:]]*([^)]*[[:space:]]*)[[:space:]]*\)/\1/g
         BU_ARGS() no longer necessary due to C89 minimum, list args [7.20]
 
