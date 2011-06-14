@@ -498,7 +498,6 @@ new_tables(struct directory *dp, struct bu_ptbl *cur_path, const matp_t old_mat,
 	    struct rt_db_internal sol_intern;
 	    struct directory *sol_dp;
 	    mat_t temp_mat;
-	    struct bu_vls tmp_vls;
 	    int old;
 
 	    switch (tree_list[i].tl_op) {
@@ -554,7 +553,9 @@ new_tables(struct directory *dp, struct bu_ptbl *cur_path, const matp_t old_mat,
 
 	    if (!old && (sol_dp->d_flags & RT_DIR_SOLID)) {
 		/* if we get here, we must be looking for a solid table */
-		bu_vls_init_if_uninit(&tmp_vls);
+		struct bu_vls tmp_vls;
+		bu_vls_init(&tmp_vls);
+
 		if (rt_functab[sol_intern.idb_type].ft_describe(&tmp_vls, &sol_intern, 1, base2local, &rt_uniresource, dbip) < 0) {
 		    Tcl_AppendResult(INTERP, tree_list[i].tl_tree->tr_l.tl_name,
 				     "describe error\n", (char *)NULL);
