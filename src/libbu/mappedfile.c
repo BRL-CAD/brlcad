@@ -39,11 +39,8 @@
 #include "bu.h"
 
 
-static struct bu_list bu_mapped_file_list = {
-    0,
-    (struct bu_list *)NULL,
-    (struct bu_list *)NULL
-};	/* list of currently open mapped files */
+/* list of currently open mapped files */
+static struct bu_list bu_mapped_file_list = BU_LIST_INIT_ZERO;
 
 
 struct bu_mapped_file *

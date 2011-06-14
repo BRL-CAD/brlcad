@@ -111,6 +111,7 @@ _bu_add_to_list(const char *fn, int fd)
     }
 
     BU_GETSTRUCT(newtf, _bu_tf_list);
+    BU_LIST_INIT(&(_bu_tf->l));
     bu_vls_init(&_bu_tf->fn);
 
     bu_vls_strcpy(&_bu_tf->fn, fn);
