@@ -835,10 +835,10 @@ SET(tktable_ignore_files
 DISTCHECK_IGNORE(tktable tktable_ignore_files)
 
 # OpenNURBS Library
-THIRD_PARTY_OPTION(OPENNURBS openNURBS)
-THIRD_PARTY_SUBDIR(OPENNURBS openNURBS)
+THIRD_PARTY_OPTION(OPENNURBS opennurbs)
+THIRD_PARTY_SUBDIR(OPENNURBS opennurbs)
 IF(BRLCAD_BUILD_LOCAL_OPENNURBS)
-	get_directory_property(OPENNURBS_HEADERS DIRECTORY openNURBS DEFINITION	OPENNURBS_HEADERS)
+	get_directory_property(OPENNURBS_HEADERS DIRECTORY opennurbs DEFINITION	OPENNURBS_HEADERS)
 	SET(opennurbs_ignore_files
 		${OPENNURBS_HEADERS}
 		BRL-CAD_changes.txt
@@ -864,9 +864,9 @@ IF(BRLCAD_BUILD_LOCAL_OPENNURBS)
 		opennurbs_zlib_memory.cpp
 		readme.txt
 		)
-	DISTCHECK_IGNORE(openNURBS opennurbs_ignore_files)
+	DISTCHECK_IGNORE(opennurbs opennurbs_ignore_files)
 ELSE(BRLCAD_BUILD_LOCAL_OPENNURBS)
-	CMAKEFILES(openNURBS)
+	CMAKEFILES(opennurbs)
 ENDIF(BRLCAD_BUILD_LOCAL_OPENNURBS)
 
 # STEP Class Libraries
