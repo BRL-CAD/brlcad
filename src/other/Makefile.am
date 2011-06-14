@@ -106,7 +106,7 @@ TKTABLEDIR=
 endif
 
 if BUILD_OPENNURBS
-OPENNURBSDIR=opennurbs
+OPENNURBSDIR=openNURBS
 else !BUILD_OPENNURBS
 OPENNURBSDIR=
 endif
@@ -187,7 +187,7 @@ DIST_SUBDIRS = \
 	libtermlib \
 	libutahrle \
 	libz \
-	opennurbs \
+	openNURBS \
 	step \
 	tcl \
 	tk \

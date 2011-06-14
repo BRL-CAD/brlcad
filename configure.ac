@@ -2759,9 +2759,9 @@ else
 fi
 AC_MSG_CHECKING(whether to build the included openNURBS library)
 OPENNURBS=""
-OPENNURBS_CPPFLAGS='-I${top_srcdir}/src/other/opennurbs ${LIBZ_CPPFLAGS}'
+OPENNURBS_CPPFLAGS='-I${top_srcdir}/src/other/openNURBS ${LIBZ_CPPFLAGS}'
 if test "x$build_brlcad_opennurbs" = "xyes" ; then
-    OPENNURBS='${top_builddir}/src/other/opennurbs/libopenNURBS.la ${LIBSTDCXX}'
+    OPENNURBS='${top_builddir}/src/other/openNURBS/libopenNURBS.la ${LIBSTDCXX}'
     AC_MSG_RESULT(yes)
 else
     OPENNURBS="$LIBOPENNURBS $LIBSTDCXX $LIBZ"	# produces "  " if we didn't find OpenNURBS
@@ -4380,7 +4380,7 @@ AC_CONFIG_FILES([
 	src/other/libutahrle/Makefile
 	src/other/libutahrle/include/Makefile
 	src/other/libz/Makefile
-	src/other/opennurbs/Makefile
+	src/other/openNURBS/Makefile
 	src/other/tcl/Makefile
 	src/other/tk/Makefile
 	src/other/tkpng/Makefile
