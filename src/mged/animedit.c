@@ -419,7 +419,7 @@ static void
 parse_error(struct bu_vls *str, char *error)
 {
     char *text;
-    int i;
+    size_t i;
 
     if (!str->vls_str) {
 	struct bu_vls tmp_vls;
