@@ -210,14 +210,6 @@ struct iges_edge_list
 };
 
 
-#define MEMCHECK if (bu_debug & BU_DEBUG_MEM_CHECK) {\
-	if (bu_mem_barriercheck()) {\
-	    bu_log("memory corruption found in file %s at line %d\n", \
-		   __FILE__, __LINE__);\
-	}\
-    }
-
-
 extern char *iges_type(int type_no);
 extern char *Make_unique_brl_name(char *name);
 extern int Add_loop_to_face(struct shell *s, struct faceuse *fu, int entityno, int face_orient);

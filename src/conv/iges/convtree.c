@@ -28,6 +28,9 @@
 #include "./iges_extern.h"
 
 
+#define MEMCHECK if ((bu_debug & BU_DEBUG_MEM_CHECK) && (bu_mem_barriercheck())) bu_log("memory corruption found in file %s at line %d\n", __FILE__, __LINE__)
+
+
 union tree *Readtree();
 union tree *Copytree();
 
@@ -48,9 +51,9 @@ Convtree()
 
     if (bu_debug & BU_DEBUG_MEM_CHECK)
 	bu_log("Doing memory checking in Convtree()\n");
-    MEMCHECK
+    MEMCHECK;
 
-	bu_log("\nConverting boolean tree entities:\n");
+    bu_log("\nConverting boolean tree entities:\n");
 
     for (i=0; i<totentities; i++) {
 	/* loop through all entities */
@@ -69,17 +72,17 @@ Convtree()
 
 	Readrec(dir[i]->param); /* read first record into buffer */
 
-	MEMCHECK
+	MEMCHECK;
 
-	    ptr = Readtree(dir[i]->rot); /* construct the tree */
+	ptr = Readtree(dir[i]->rot); /* construct the tree */
 
-	MEMCHECK
+	MEMCHECK;
 
-	    if (!ptr) {
-		/* failure */
-		bu_log("\tFailed to convert Boolean tree at D%07d\n", dir[i]->direct);
-		continue;
-	    }
+	if (!ptr) {
+	    /* failure */
+	    bu_log("\tFailed to convert Boolean tree at D%07d\n", dir[i]->direct);
+	    continue;
+	}
 
 	/* skip over the associativities */
 	Readint(&no_of_assoc, "");
@@ -131,18 +134,18 @@ Convtree()
 	}
 	bu_vls_init(&comb->material);
 
-	MEMCHECK
-	    if (wdb_export(fdout, dir[i]->name, (genptr_t)comb, ID_COMBINATION, mk_conv2mm))
-		bu_exit(1, "mk_export_fwrite() failed for combination (%s)\n", dir[i]->name);
+	MEMCHECK;
+	if (wdb_export(fdout, dir[i]->name, (genptr_t)comb, ID_COMBINATION, mk_conv2mm))
+	    bu_exit(1, "mk_export_fwrite() failed for combination (%s)\n", dir[i]->name);
 
 	conv++;
 
-	MEMCHECK
-	    }
+	MEMCHECK;
+    }
 
     bu_log("Converted %d trees successfully out of %d total trees\n", conv, tottrees);
-    MEMCHECK
-	}
+    MEMCHECK;
+}
 
 /*
  * Local Variables:
