@@ -90,9 +90,9 @@
 
 
 GED_EXPORT extern void go_refresh(struct ged_obj *gop,
-		      struct ged_dm_view *gdvp);
+				  struct ged_dm_view *gdvp);
 GED_EXPORT extern void go_refresh_draw(struct ged_obj *gop,
-		      struct ged_dm_view *gdvp);
+				       struct ged_dm_view *gdvp);
 
 HIDDEN int to_autoview(struct ged *gedp,
 		       int argc,
@@ -155,11 +155,11 @@ HIDDEN int to_copy(struct ged *gedp,
 		   const char *usage,
 		   int maxargs);
 HIDDEN int to_data_arrows(struct ged *gedp,
-			int argc,
-			const char *argv[],
-			ged_func_ptr func,
-			const char *usage,
-			int maxargs);
+			  int argc,
+			  const char *argv[],
+			  ged_func_ptr func,
+			  const char *usage,
+			  int maxargs);
 HIDDEN int to_data_axes(struct ged *gedp,
 			int argc,
 			const char *argv[],
@@ -167,17 +167,17 @@ HIDDEN int to_data_axes(struct ged *gedp,
 			const char *usage,
 			int maxargs);
 HIDDEN int to_data_labels(struct ged *gedp,
-			int argc,
-			const char *argv[],
-			ged_func_ptr func,
-			const char *usage,
-			int maxargs);
+			  int argc,
+			  const char *argv[],
+			  ged_func_ptr func,
+			  const char *usage,
+			  int maxargs);
 HIDDEN int to_data_lines(struct ged *gedp,
-			int argc,
-			const char *argv[],
-			ged_func_ptr func,
-			const char *usage,
-			int maxargs);
+			 int argc,
+			 const char *argv[],
+			 ged_func_ptr func,
+			 const char *usage,
+			 int maxargs);
 HIDDEN int to_data_move(struct ged *gedp,
 			int argc,
 			const char *argv[],
@@ -632,11 +632,11 @@ HIDDEN int to_view_func_plus(struct ged *gedp,
 			     const char *usage,
 			     int maxargs);
 HIDDEN int to_dm_func(struct ged *gedp,
-			int argc,
-			const char *argv[],
-			ged_func_ptr func,
-			const char *usage,
-			int maxargs);
+		      int argc,
+		      const char *argv[],
+		      ged_func_ptr func,
+		      const char *usage,
+		      int maxargs);
 
 /* Utility Functions */
 HIDDEN int to_close_fbs(struct ged_dm_view *gdvp);
@@ -1678,7 +1678,7 @@ to_axes(struct ged *gedp,
 	goto bad;
     }
 
- bad:
+bad:
     bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
@@ -1764,7 +1764,7 @@ to_bg(struct ged *gedp,
 
     return GED_OK;
 
- bad_color:
+bad_color:
     bu_vls_printf(&gedp->ged_result_str, "%s: %s %s %s", argv[0], argv[2], argv[3], argv[4]);
     return GED_ERROR;
 }
@@ -2407,7 +2407,7 @@ to_data_arrows(struct ged *gedp,
 	goto bad;
     }
 
- bad:
+bad:
     bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
@@ -2608,7 +2608,7 @@ to_data_axes(struct ged *gedp,
 	}
     }
 
- bad:
+bad:
     bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
@@ -2836,7 +2836,7 @@ to_data_labels(struct ged *gedp,
     }
 
 
- bad:
+bad:
     bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
@@ -3021,7 +3021,7 @@ to_data_lines(struct ged *gedp,
 	}
     }
 
- bad:
+bad:
     bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
@@ -3498,7 +3498,7 @@ to_data_pick(struct ged *gedp,
 
     return GED_OK;
 
- bad:
+bad:
     bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
@@ -3774,7 +3774,7 @@ to_fontsize(struct ged *gedp,
 	return GED_OK;
     }
 
- bad_fontsize:
+bad_fontsize:
     bu_vls_printf(&gedp->ged_result_str, "%s: %s", argv[0], argv[2]);
     return GED_ERROR;
 }
@@ -4050,7 +4050,7 @@ to_faceplate(struct ged *gedp,
 	goto bad;
     }
 
- bad:
+bad:
     bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
@@ -6601,7 +6601,7 @@ to_prim_label(struct ged *gedp,
 	return GED_OK;
 
     current_top->to_gop->go_prim_label_list = bu_calloc(current_top->to_gop->go_prim_label_list_size,
-						   sizeof(struct bu_vls), "prim_label");
+							sizeof(struct bu_vls), "prim_label");
     for (i = 0; i < current_top->to_gop->go_prim_label_list_size; ++i) {
 	bu_vls_init(&current_top->to_gop->go_prim_label_list[i]);
 	bu_vls_printf(&current_top->to_gop->go_prim_label_list[i], "%s", argv[i+1]);
@@ -8076,8 +8076,8 @@ to_autoview_func(struct ged *gedp,
 
 HIDDEN int
 to_edit_redraw(struct ged *gedp,
-		    int argc,
-		    const char *argv[])
+	       int argc,
+	       const char *argv[])
 {
     size_t i;
     register struct ged_display_list *gdlp;
@@ -8375,11 +8375,11 @@ to_view_func_plus(struct ged *gedp,
 
 HIDDEN int
 to_dm_func(struct ged *gedp,
-	     int argc,
-	     const char *argv[],
-	     ged_func_ptr func,
-	     const char *usage,
-	     int maxargs)
+	   int argc,
+	   const char *argv[],
+	   ged_func_ptr func,
+	   const char *usage,
+	   int maxargs)
 {
     register int i;
     int ret;

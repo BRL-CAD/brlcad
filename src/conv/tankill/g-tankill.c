@@ -378,7 +378,7 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, const struc
 		 tsp->ts_mater.ma_shader );
     }
 
- outt:	bu_free( (char *)flags, "g-tankill: flags" );
+outt:	bu_free( (char *)flags, "g-tankill: flags" );
     bu_ptbl_free( &vertices );
 }
 

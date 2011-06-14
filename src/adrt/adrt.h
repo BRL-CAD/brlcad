@@ -79,7 +79,7 @@ enum
     (op >= ADRT_NETOP_BASE && op <= ADRT_NETOP_END) ? adrt_netop_table[op-ADRT_NETOP_BASE] : \
     "Unknown"
 
-    /* use the high bit to indicate if mode has changed */
+/* use the high bit to indicate if mode has changed */
 #define ADRT_MESSAGE_MODE_CHANGE(x) (x |= 0x80)
 #define ADRT_MESSAGE_MODE_CHANGEP(x) (x & 0x80)
 #define ADRT_MESSAGE_MODE(x) (x & ~0x80)
@@ -124,8 +124,8 @@ enum
 
 #define TIENET_BUFFER_SIZE(_b, _s) { \
 	if (_s > _b.size) { \
-	  _b.data = bu_realloc(_b.data, _s, "tienet buffer size"); \
-	  _b.size = _s; \
+	    _b.data = bu_realloc(_b.data, _s, "tienet buffer size"); \
+	    _b.size = _s; \
         } }
 
 typedef struct tienet_buffer_s {

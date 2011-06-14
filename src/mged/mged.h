@@ -273,26 +273,26 @@ extern char *state_str[]; /* identifying strings */
 
 /* Cloned mged macros for use in Tcl/Tk */
 #define TCL_READ_ERR {\
-	  Tcl_AppendResult(INTERP, "Database read error, aborting\n", (char *)NULL);\
-	}
+	Tcl_AppendResult(INTERP, "Database read error, aborting\n", (char *)NULL);\
+    }
 
 #define TCL_READ_ERR_return {\
-	  TCL_READ_ERR;\
-	  return TCL_ERROR;\
-	}
+	TCL_READ_ERR;\
+	return TCL_ERROR;\
+    }
 
 #define TCL_WRITE_ERR { \
-	  Tcl_AppendResult(INTERP, "Database write error, aborting.\n", (char *)NULL);\
-	  TCL_ERROR_RECOVERY_SUGGESTION; }
+	Tcl_AppendResult(INTERP, "Database write error, aborting.\n", (char *)NULL);\
+	TCL_ERROR_RECOVERY_SUGGESTION; }
 
 #define TCL_WRITE_ERR_return { \
-	  TCL_WRITE_ERR; \
-	  return TCL_ERROR; }
+	TCL_WRITE_ERR; \
+	return TCL_ERROR; }
 
 #define TCL_ALLOC_ERR { \
-	  Tcl_AppendResult(INTERP, "\
+	Tcl_AppendResult(INTERP, "\
 An error has occured while adding a new object to the database.\n", (char *)NULL); \
-	  TCL_ERROR_RECOVERY_SUGGESTION; }
+	TCL_ERROR_RECOVERY_SUGGESTION; }
 
 #define TCL_ALLOC_ERR_return { \
 	TCL_ALLOC_ERR; \
@@ -301,7 +301,7 @@ An error has occured while adding a new object to the database.\n", (char *)NULL
 /* For errors from db_delete() or db_dirdelete() */
 #define TCL_DELETE_ERR(_name) { \
 	Tcl_AppendResult(INTERP, "An error has occurred while deleting '", _name, \
-	"' from the database.\n", (char *)NULL);\
+			 "' from the database.\n", (char *)NULL);\
 	TCL_ERROR_RECOVERY_SUGGESTION; }
 
 #define TCL_DELETE_ERR_return(_name) {  \
@@ -310,7 +310,7 @@ An error has occured while adding a new object to the database.\n", (char *)NULL
 
 /* A verbose message to attempt to soothe and advise the user */
 #define TCL_ERROR_RECOVERY_SUGGESTION\
-	Tcl_AppendResult(INTERP, "\
+    Tcl_AppendResult(INTERP, "\
 The in-memory table of contents may not match the status of the on-disk\n\
 database.  The on-disk database should still be intact.  For safety, \n\
 you should exit MGED now, and resolve the I/O problem, before continuing.\n", (char *)NULL)
@@ -364,24 +364,24 @@ An error has occurred while deleting '%s' from the database.\n", _name); \
 
 /* A verbose message to attempt to soothe and advise the user */
 #define ERROR_RECOVERY_SUGGESTION	\
-	(void)printf("\
+    (void)printf("\
 The in-memory table of contents may not match the status of the on-disk\n\
 database.  The on-disk database should still be intact.  For safety, \n\
 you should exit MGED now, and resolve the I/O problem, before continuing.\n")
 
 /* Check if database pointer is NULL */
 #define CHECK_DBI_NULL \
-	if (dbip == DBI_NULL) { \
-		Tcl_AppendResult(INTERP, "A database is not open!\n", (char *)NULL); \
-		return TCL_ERROR; \
-	}
+    if (dbip == DBI_NULL) { \
+	Tcl_AppendResult(INTERP, "A database is not open!\n", (char *)NULL); \
+	return TCL_ERROR; \
+    }
 
 /* Check if the database is read only, and if so return TCL_ERROR */
 #define CHECK_READ_ONLY	\
-	if (dbip->dbi_read_only) { \
-		Tcl_AppendResult(INTERP, "Sorry, this database is READ-ONLY\n", (char *)NULL); \
-		return TCL_ERROR; \
-	}
+    if (dbip->dbi_read_only) { \
+	Tcl_AppendResult(INTERP, "Sorry, this database is READ-ONLY\n", (char *)NULL); \
+	return TCL_ERROR; \
+    }
 
 
 #define FUNTAB_UNLIMITED -1

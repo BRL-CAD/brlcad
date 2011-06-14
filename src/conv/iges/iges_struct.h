@@ -211,11 +211,11 @@ struct iges_edge_list
 
 
 #define MEMCHECK if (bu_debug & BU_DEBUG_MEM_CHECK) {\
-		if (bu_mem_barriercheck()) {\
-			bu_log("memory corruption found in file %s at line %d\n", \
-				__FILE__, __LINE__);\
-		}\
-	}
+	if (bu_mem_barriercheck()) {\
+	    bu_log("memory corruption found in file %s at line %d\n", \
+		   __FILE__, __LINE__);\
+	}\
+    }
 
 
 extern char *iges_type(int type_no);

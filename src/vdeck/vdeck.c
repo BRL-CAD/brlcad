@@ -273,19 +273,19 @@ main( int argc, char *argv[] )
 		(void) insert( arg_list, arg_ct );
 		break;
 	    case LIST :
-	    {
-		int	i;
-		if ( arg_list[1] == 0 )
 		{
-		    (void) col_prt( curr_list, curr_ct );
+		    int	i;
+		    if ( arg_list[1] == 0 )
+		    {
+			(void) col_prt( curr_list, curr_ct );
+			break;
+		    }
+		    for ( tmp_ct = 0, i = 0; i < curr_ct; i++ )
+			if ( match( arg_list[1], curr_list[i] ) )
+			    tmp_list[tmp_ct++] = curr_list[i];
+		    (void) col_prt( tmp_list, tmp_ct );
 		    break;
 		}
-		for ( tmp_ct = 0, i = 0; i < curr_ct; i++ )
-		    if ( match( arg_list[1], curr_list[i] ) )
-			tmp_list[tmp_ct++] = curr_list[i];
-		(void) col_prt( tmp_list, tmp_ct );
-		break;
-	    }
 	    case MENU :
 		menu( cmd );
 		prompt( PROMPT );
@@ -332,7 +332,7 @@ main( int argc, char *argv[] )
 	}
 	prompt( CMD_PROMPT );
     }
- out:
+out:
     return 0;
 }
 
@@ -691,7 +691,7 @@ gettree_leaf( struct db_tree_state *tsp, const struct db_full_path *pathp, struc
     bu_vls_fwrite( solfp, &sol );
     bu_vls_free( &sol );
 
- found_it:
+found_it:
     BU_GETUNION( curtree, tree );
     RT_INIT_TREE(curtree);
     curtree->tr_op = OP_SOLID;
@@ -1393,10 +1393,10 @@ list_toc( char *args[] )
 #define NAMESIZE	16
 #define MAX_COL	(NAMESIZE*5)
 #define SEND_LN()	{\
-			buf[column++] = '\n';\
-			ewrite( stdout, buf, (unsigned) column );\
-			column = 0;\
-			}
+	buf[column++] = '\n';\
+	ewrite( stdout, buf, (unsigned) column );\
+	column = 0;\
+    }
 
 
 /**

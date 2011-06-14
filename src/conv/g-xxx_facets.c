@@ -40,10 +40,10 @@
 
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
 #define VSETIN( a, b )	{\
-    (a)[X] = (b)[X]/25.4; \
-    (a)[Y] = (b)[Y]/25.4; \
-    (a)[Z] = (b)[Z]/25.4; \
-}
+	(a)[X] = (b)[X]/25.4; \
+	(a)[Y] = (b)[Y]/25.4; \
+	(a)[Z] = (b)[Z]/25.4; \
+    }
 
 extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 

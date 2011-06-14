@@ -403,8 +403,8 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 
 static void
 nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
-    /* NMG region to be converted. */
-    /* Jack format file to write vertex list to. */
+/* NMG region to be converted. */
+/* Jack format file to write vertex list to. */
 {
     int			i;
     int			*map;	/* map from v->index to Jack vert # */
@@ -450,8 +450,8 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
  */
 static void
 jack_faces(struct nmgregion *r, FILE *fp_psurf, int *map)
-    /* NMG region to be converted. */
-    /* Jack format file to write face vertices to. */
+/* NMG region to be converted. */
+/* Jack format file to write face vertices to. */
 
 {
     struct edgeuse		*eu;

@@ -50,9 +50,9 @@
 #ifdef MEMORY_LEAK_CHECKING
 #define BARRIER_CHECK { \
 	if ( bu_mem_barriercheck() ) { \
-		bu_log( "memory is corrupted at line %d in file %d\n", __LINE__, __FILE__ ); \
+	    bu_log( "memory is corrupted at line %d in file %d\n", __LINE__, __FILE__ ); \
 	} \
-}
+    }
 #else
 #define BARRIER_CHECK /* */
 #endif

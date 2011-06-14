@@ -68,14 +68,14 @@ extern void multispectral_shader_init(struct mfuncs **headp);
 
 /* XXX Move to raytrace.h when routine goes into LIBRT */
 extern double rt_pixel_footprint(const struct application *app,
-				      const struct hit *hitp,
-				      const struct seg *segp,
-				      const vect_t normal);
+				 const struct hit *hitp,
+				 const struct seg *segp,
+				 const vect_t normal);
 
 
 /* XXX move to h/tabdata.h when function moves out of spectrum.c */
 extern struct bn_table *bn_table_make_visible_and_uniform(int num,
-							       double first, double last, int vis_nsamp);
+							  double first, double last, int vis_nsamp);
 
 
 const char title[] = "Thermal Multi-Spectral RT";
@@ -641,7 +641,7 @@ colorview(struct application *app, struct partition *PartHeadp, struct seg *UNUS
     bu_free(sw.msw_color, "sw.msw_color");
     bu_free(sw.msw_basecolor, "sw.msw_basecolor");
 
- out:
+out:
     RT_CK_REGION(app->a_uptr);
     if (rdebug&RDEBUG_HITS) {
 	bu_log("colorview: lvl=%d ret a_user=%d %s\n",
