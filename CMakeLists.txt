@@ -1572,8 +1572,9 @@ CMAKEFILES(${toplevel_ignore_files})
 # 9.  Clean up.
 #
 IF(NOT BRLCAD-IS_SUBBUILD)
-	FILE(GLOB dlists ${CMAKE_CURRENT_SOURCE_DIR}/src/other/dlists
-		"${CMAKE_CURRENT_SOURCE_DIR}/src/other/dlists/*.dist")
+	FILE(GLOB dlists ${CMAKE_CURRENT_SOURCE_DIR}/src/other
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/other/*.dist")
+	MESSAGE("dlists: ${dlists}")
 	get_property(distcheck_list GLOBAL PROPERTY DISTCHECK_DIRS)
 	FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distchecklist.cmake ${distcheck_list})
 	configure_file(${BRLCAD_CMAKE_DIR}/distcheck_buildsys.cmake.in
