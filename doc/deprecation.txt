@@ -768,3 +768,9 @@ s/[[:space:]]*BU_ARGS[[:space:]]*\([[:space:]]*([^)]*[[:space:]]*)[[:space:]]*\)
 
 s/BU_LIST_UNINITIALIZED/!BU_LIST_IS_INITIALIZED/g
         BU_LIST_IS_INITIALIZED() removed for consistency [7.20]
+
+s/BU_INIT_EXTERNAL/BU_EXTERNAL_INIT/g
+        renamed for API consistency [7.20]
+
+s/RT_INIT_DB_INTERNAL/RT_DB_INTERNAL_INIT/g
+        renamed for API consistency [7.20]
