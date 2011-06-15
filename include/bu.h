@@ -1492,7 +1492,7 @@ struct bu_ptbl {
     size_t blen; /**< @brief # of (long *)'s worth of storage at *buffer */
     long **buffer; /**< @brief data storage area */
 };
-typedef struct bu_ptbl bu_pbtl_t;
+typedef struct bu_ptbl bu_ptbl_t;
 #define BU_PTBL_NULL ((struct bu_ptbl *)0)
 
 /**
@@ -1521,7 +1521,7 @@ typedef struct bu_ptbl bu_pbtl_t;
  * returns truthfully whether a bu_ptbl has been initialized via
  * BU_PTBL_INIT() or BU_PTBL_INIT_ZERO.
  */
-#define BU_PTBL_IS_INITIALIZED(_hp) (LIKELY((_hp)->l.magic == BU_PTBL_MAGIC))
+#define BU_PTBL_IS_INITIALIZED(_p) (LIKELY((_p)->l.magic == BU_PTBL_MAGIC))
 
 
 /*
@@ -1615,7 +1615,38 @@ struct bu_mapped_file {
     int uses;		/**< @brief # ptrs to this struct handed out */
     int dont_restat;	/**< @brief 1=on subsequent opens, don't re-stat()  */
 };
-#define BU_CK_MAPPED_FILE(_p) BU_CKMAG(_p, BU_MAPPED_FILE_MAGIC, "bu_mapped_file")
+typedef struct bu_mapped_file bu_mapped_file_t;
+#define BU_MAPPED_FILE_NULL ((struct bu_mapped_file *)0)
+
+/**
+ * assert the integrity of a bu_mapped_file struct.
+ */
+#define BU_CK_MAPPED_FILE(_mf) BU_CKMAG(_mf, BU_MAPPED_FILE_MAGIC, "bu_mapped_file")
+
+/**
+ * initialize a bu_mapped_file struct without allocating any memory.
+ */
+#define BU_MAPPED_FILE_INIT(_mf) { \
+	BU_LIST_INIT(&(_mf)->l); \
+	BU_LIST_MAGIC_SET(&(_mf)->l, BU_MAPPED_FILE_MAGIC); \
+	(_mf)->name = (_mf)->buf = NULL; \
+	(_mf)->buflen = (_mf)->is_mapped = 0; \
+	(_mf)->appl = (_mf)->apbuf = NULL; \
+	(_mf)->apbuflen = (_mf)->modtime = (_mf)->uses = (_mf)->dont_restat = 0; \
+    }
+
+/**
+ * macro suitable for declaration statement initialization of a
+ * bu_mapped_file struct.  does not allocate memory.
+ */
+#define BU_MAPPED_FILE_INIT_ZERO { {BU_MAPPED_FILE_MAGIC, BU_LIST_NULL, BU_LIST_NULL}, NULL, NULL, 0, 0, NULL, NULL, 0, 0, 0, 0 }
+
+/**
+ * returns truthfully whether a bu_mapped_file has been initialized via
+ * BU_MAPPED_FILE_INIT() or BU_MAPPED_FILE_INIT_ZERO.
+ */
+#define BU_MAPPED_FILE_IS_INITIALIZED(_hp) (LIKELY((_hp)->l.magic == BU_MAPPED_FILE_MAGIC))
+
 
 /** @} */
 /*----------------------------------------------------------------------*/
