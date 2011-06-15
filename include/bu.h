@@ -1834,12 +1834,12 @@ typedef struct bu_vls bu_vls_t;
 #define BU_VLS_NULL ((struct bu_vls *)0)
 
 /**
- * assert the integrity of a bu_vls struct
+ * assert the integrity of a bu_vls struct.
  */
 #define BU_CK_VLS(_vp) BU_CKMAG(_vp, BU_VLS_MAGIC, "bu_vls")
 
 /**
- * initializes a bu_vls struct without allocating any memory
+ * initializes a bu_vls struct without allocating any memory.
  */
 #define BU_VLS_INIT(_vp) { \
 	(_vp)->vls_magic = BU_VLS_MAGIC; \
@@ -1861,7 +1861,6 @@ typedef struct bu_vls bu_vls_t;
  */
 #define BU_VLS_IS_INITIALIZED(_vp) \
     (((struct bu_vls *)(_vp) != (struct bu_vls *)0) && ((_vp)->vls_magic == BU_VLS_MAGIC))
-
 
 
 /** @} */
@@ -1886,16 +1885,18 @@ struct bu_vlb {
     size_t bufCapacity;     /**< @brief Current capacity of the buffer */
     size_t nextByte;        /**< @brief Number of bytes currently used in the buffer */
 };
+typedef struct bu_vlb bu_vlb_t;
+#define BU_VLB_NULL ((struct bu_vlb *)0)
 
 /**
- * verifies the integrity of a bu_vlb struct
+ * assert the integrity of a bu_vlb struct.
  */
 #define BU_CK_VLB(_vp) BU_CKMAG(_vp, BU_VLB_MAGIC, "bu_vlb")
 
 /**
- * initializes a bu_vlb struct without allocating any memory
+ * initializes a bu_vlb struct without allocating any memory.
  */
-#define BU_INIT_VLB(_vp) { \
+#define BU_VLB_INIT(_vp) { \
 	(_vp)->vls_magic = BU_VLB_MAGIC; \
 	(_vp)->buf = NULL; \
 	(_vp)->bufCapacity = (_vp)->nextByte = 0; \
@@ -1910,7 +1911,7 @@ struct bu_vlb {
 /**
  * returns truthfully whether a bu_vlb struct has been initialized.
  * is not reliable unless the struct has been allocated with
- * bu_calloc() or a previous call to bu_init_vlb() or BU_INIT_VLB()
+ * bu_calloc() or a previous call to bu_vlb_init() or BU_VLB_INIT()
  * has been made.
  */
 #define BU_VLB_IS_INITIALIZED(_vp) ((_vp) && ((_vp)->magic == BU_VLB_MAGIC))
