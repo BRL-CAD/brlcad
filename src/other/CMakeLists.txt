@@ -50,7 +50,11 @@ ENDIF(BRLCAD-DISABLE_SRC_OTHER_WARN)
 # Most third party items have a list calling out files for distcheck - these
 # are stored in files in the dlists directory.  Ignore that directory for
 # distcheck
-DISTCHECK_IGNORE_ITEM(dlists)
+FILE(GLOB dlists "*.dist")
+FOREACH(ITEM ${dlists})
+	get_filename_component(dlist ${ITEM} NAME)
+	DISTCHECK_IGNORE_ITEM(${dlist})
+ENDFOREACH(ITEM ${dlists})
 
 # Ignore the boost subdir - it's only used for the boost headers and is not
 # compiled

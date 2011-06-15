@@ -122,6 +122,18 @@ ELSE(BRLCAD-ENABLE_OSL)
 
 ENDIF(BRLCAD-ENABLE_OSL)
 
+CMAKEFILES(
+	osl-renderer.cpp 
+	oslexec_pvt.h 
+	render_svc.h 
+	sh_osl.c 
+	osl_rt2.c 
+	osl-renderer.h 
+	constantpool.h 
+	osl_rt.cpp 
+	render_svc.cpp
+	)
+
 SET_TARGET_PROPERTIES(liboptical PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
 SET(LIBRTMS_SRCS

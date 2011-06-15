@@ -75,3 +75,35 @@ IF(SH_EXEC)
 		)
 
 ENDIF(SH_EXEC)
+
+CMAKEFILES(
+	bots.sh 
+	fastgen.sh 
+	fastgen_dos.fast4 
+	flawfinder.sh 
+	gqa.sh 
+	iges.sh 
+	library.sh 
+	lights.sh 
+	lights_ref.asc 
+	main.sh 
+	master_fetch.sh 
+	master_prep.sh 
+	mged 
+	mged.sh 
+	mged_test.sh 
+	moss.sh 
+	mosspix.asc 
+	nightly.sh 
+	red.sh 
+	repository.sh 
+	shaders.sh 
+	shaderspix.asc 
+	slave_build.sh 
+	solids.sh 
+	solidspix.asc 
+	spdi.sh 
+	spdipix.asc 
+	testlib.c 
+	weight.sh
+	)

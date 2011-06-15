@@ -42,3 +42,5 @@ SET(noinst_SCRIPTS
   template.sh 
   ws.sh
 )
+CMAKEFILES(${sh_SCRIPTS})
+CMAKEFILES(${noinst_SCRIPTS})

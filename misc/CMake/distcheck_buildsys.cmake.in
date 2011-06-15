@@ -12,9 +12,10 @@ MACRO(CLEAR_REFERENCED filelist referencelist)
 	ENDFOREACH(ITEM ${${filelist}})
 ENDMACRO(CLEAR_REFERENCED)
 
-# The actual success/fail test is the first if test on the distlist - the rest is pretty-printing
+# The actual success/fail test is the first IF test on the distlist - the rest is pretty-printing
 MACRO(DIST_TEST distlist workingdir)
 	IF(${distlist})
+		LIST(SORT ${distlist})
 		SET(dirpath ${workingdir})
 		SET(cmakelistsdir "")
 		WHILE(NOT cmakelistsdir AND dirpath)
@@ -43,6 +44,7 @@ MACRO(DIST_TEST distlist workingdir)
 	ENDIF(${distlist})
 ENDMACRO(DIST_TEST)
 
+# Go with a function here because we want local variable scope
 function(check_directory dir)
 	MESSAGE("Checking directory ${dir}")
 	IF(EXISTS ${CMAKE_ORIG_BINARY_DIR}/${dir}/cmakefiles.cmake)
