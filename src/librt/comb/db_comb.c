@@ -890,12 +890,7 @@ rt_comb_ifree(struct rt_db_internal *ip)
     if (comb) {
 	/* If tree hasn't been stolen, release it */
 	db_free_tree(comb->tree, &rt_uniresource);
-	comb->tree = NULL;
-
-	bu_vls_free(&comb->shader);
-	bu_vls_free(&comb->material);
-
-	comb->magic = 0;			/* sanity */
+	RT_FREE_COMB_INTERNAL(comb);
 	bu_free((genptr_t)comb, "comb ifree");
     }
     ip->idb_ptr = GENPTR_NULL;	/* sanity */
