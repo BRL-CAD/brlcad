@@ -1659,10 +1659,35 @@ struct bu_hook_list {
     bu_hook_t hookfunc; /**< @brief function to call */
     genptr_t clientdata; /**< @brief data for caller */
 };
-
-
-#define BU_HOOK_NULL 0
+typedef struct bu_hook_list bu_hook_list_t;
 #define BU_HOOK_LIST_NULL ((struct bu_hook_list *) 0)
+
+/**
+ * assert the integrity of a bu_hook_list struct.
+ */
+#define BU_CK_HOOK_LIST(_hl) BU_CKMAG(_hl, BU_HOOK_LIST_MAGIC, "bu_hook_list")
+
+/**
+ * initialize a bu_hook_list struct without allocating any memory.
+ */
+#define BU_HOOK_LIST_INIT(_hl) { \
+	BU_LIST_INIT(&(_hl)->l); \
+	BU_LIST_MAGIC_SET(&(_hl)->l, BU_HOOK_LIST_MAGIC); \
+	(_hl)->hookfunc = (_hl)->clientdata = NULL; \
+    }
+
+/**
+ * macro suitable for declaration statement initialization of a
+ * bu_hook_list struct.  does not allocate memory.
+ */
+#define BU_HOOK_LIST_INIT_ZERO { {BU_HOOK_LIST_MAGIC, BU_LIST_NULL, BU_LIST_NULL}, NULL, NULL }
+
+/**
+ * returns truthfully whether a bu_hook_list has been initialized via
+ * BU_HOOK_LIST_INIT() or BU_HOOK_LIST_INIT_ZERO.
+ */
+#define BU_HOOK_LIST_IS_INITIALIZED(_p) (LIKELY((_p)->l.magic == BU_HOOK_LIST_MAGIC))
+
 
 /** list of callbacks to call during bu_bomb, used by mged. */
 BU_EXPORT extern struct bu_hook_list bu_bomb_hook_list;
