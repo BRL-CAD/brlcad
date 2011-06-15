@@ -1137,7 +1137,7 @@ struct db_traverse
     struct resource *resp;
     genptr_t client_data;
 };
-#define RT_DB_INTERNAL_INIT(_p) {(_p)->magic = RT_DB_TRAVERSE_MAGIC; \
+#define RT_DB_TRAVERSE_INIT(_p) {(_p)->magic = RT_DB_TRAVERSE_MAGIC;   \
 	(_p)->dbip = GENPTR_NULL; (_p)->comb_enter_func = GENPTR_NULL; \
 	(_p)->comb_exit_func = GENPTR_NULL; (_p)->leaf_func = GENPTR_NULL; \
 	(_p)->resp = GENPTR_NULL; (_p)->client_data = GENPTR_NULL;}
