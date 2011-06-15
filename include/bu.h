@@ -1830,16 +1830,18 @@ struct bu_vls  {
     size_t vls_len;	/**< @brief Length, not counting the null */
     size_t vls_max;
 };
+typedef struct bu_vls bu_vls_t;
+#define BU_VLS_NULL ((struct bu_vls *)0)
 
 /**
- * verifies the integrity of a bu_vls struct
+ * assert the integrity of a bu_vls struct
  */
 #define BU_CK_VLS(_vp) BU_CKMAG(_vp, BU_VLS_MAGIC, "bu_vls")
 
 /**
  * initializes a bu_vls struct without allocating any memory
  */
-#define BU_INIT_VLS(_vp) { \
+#define BU_VLS_INIT(_vp) { \
 	(_vp)->vls_magic = BU_VLS_MAGIC; \
 	(_vp)->vls_str = NULL; \
 	(_vp)->vls_offset = (_vp)->vls_len = (_vp)->vls_max = 0; \
@@ -1854,7 +1856,7 @@ struct bu_vls  {
 /**
  * returns truthfully whether a bu_vls struct has been initialized.
  * is not reliable unless the struct has been allocated with
- * bu_calloc() or a previous call to bu_vls_init() or BU_INIT_VLS()
+ * bu_calloc() or a previous call to bu_vls_init() or BU_VLS_INIT()
  * has been made.
  */
 #define BU_VLS_IS_INITIALIZED(_vp) \
