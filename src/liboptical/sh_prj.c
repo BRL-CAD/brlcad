@@ -74,6 +74,7 @@ struct img_specific {
     fastf_t i_perspective;	/* perspective angle 0=ortho */
 };
 #define img_MAGIC 0x696d6700	/* "img" */
+#define IMG_SPECIFIC_INIT_ZERO {BU_LIST_INIT_ZERO, 0, BU_VLS_INIT_ZERO, '\0', NULL, NULL, NULL, 0, 0, 0.0, VINIT_ZERO, HINIT_ZERO, MAT_INIT_IDN, MAT_INIT_IDN, HINIT_ZERO, MAT_INIT_IDN, '\0', '\0', '\0', 0.0}
 
 
 /**
@@ -281,7 +282,6 @@ orient_hook(register const struct bu_structparse *UNUSED(sdp), register const ch
     memcpy(img_new, img_sp, sizeof(struct img_specific));
     BU_CK_VLS(&img_sp->i_name);
 
-
     /* zero the filename for the next iteration */
     bu_vls_init(&img_sp->i_name);
 
@@ -426,6 +426,9 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 
 /* New since 4.4 release */
 {
+    /* we use this to initialize new img_specific objects */
+    static const struct img_specific IMG_INIT = IMG_SPECIFIC_INIT_ZERO;
+
     struct prj_specific *prj_sp;
     struct img_specific *img_sp;
 
@@ -446,8 +449,8 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
     *dpp = (char *)prj_sp;
 
     prj_sp->magic = prj_MAGIC;
+    memcpy(&prj_sp->prj_images, &IMG_INIT, sizeof(struct img_specific));
     BU_LIST_INIT(&prj_sp->prj_images.l);
-
 
     if (rdebug&RDEBUG_SHADE) {
 	if ((prj_sp->prj_plfd=fopen("prj.pl", "wb")) == (FILE *)NULL) {
@@ -495,11 +498,6 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
     prj_sp->prj_images.i_through = '0';
     prj_sp->prj_images.i_behind = '0';
     prj_sp->prj_images.i_datasrc = IMG_SRC_AUTO;
-
-    /* sanity */
-    prj_sp->prj_images.i_data = GENPTR_NULL;
-    prj_sp->prj_images.i_binunifp = GENPTR_NULL;
-    prj_sp->prj_images.i_img = GENPTR_NULL;
 
     if (bu_struct_parse(&parameter_data, img_parse_tab,
 			(char *)&prj_sp->prj_images) < 0) {
