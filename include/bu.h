@@ -1492,7 +1492,37 @@ struct bu_ptbl {
     size_t blen; /**< @brief # of (long *)'s worth of storage at *buffer */
     long **buffer; /**< @brief data storage area */
 };
+typedef struct bu_ptbl bu_pbtl_t;
+#define BU_PTBL_NULL ((struct bu_ptbl *)0)
+
+/**
+ * assert the integrity of a bu_ptbl struct.
+ */
 #define BU_CK_PTBL(_p) BU_CKMAG(_p, BU_PTBL_MAGIC, "bu_ptbl")
+
+/**
+ * initialize a bu_ptbl struct without allocating any memory.
+ */
+#define BU_PTBL_INIT(_p) { \
+	BU_LIST_INIT(&(_p)->l); \
+	BU_LIST_MAGIC_SET(&(_p)->l, BU_PTBL_MAGIC); \
+	(_p)->end = 0; \
+	(_p)->blen = 0; \
+	(_p)->buffer = NULL; \
+    }
+
+/**
+ * macro suitable for declaration statement initialization of a
+ * bu_ptbl struct.  does not allocate memory.
+ */
+#define BU_PTBL_INIT_ZERO { {BU_PTBL_MAGIC, BU_LIST_NULL, BU_LIST_NULL}, 0, 0, NULL }
+
+/**
+ * returns truthfully whether a bu_ptbl has been initialized via
+ * BU_PTBL_INIT() or BU_PTBL_INIT_ZERO.
+ */
+#define BU_PTBL_IS_INITIALIZED(_hp) (LIKELY((_hp)->l.magic == BU_PTBL_MAGIC))
+
 
 /*
  * For those routines that have to "peek" into the ptbl a little bit.
