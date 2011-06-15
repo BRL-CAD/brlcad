@@ -981,8 +981,7 @@ struct rt_comb_internal {
 #define RT_CK_COMB_TCL(_interp, _p) RT_CHECK_COMB_TCL(_interp, _p)
 
 /**
- * initialize an rt_comb_internal to empty.  caller will need to free
- * the shader/material members or call RT_FREE_COMB_INTERNAL().
+ * initialize an rt_comb_internal to empty.
  */
 #define RT_INIT_COMB_INTERNAL(_p) { \
 	(_p)->magic = RT_COMB_MAGIC; \
@@ -998,8 +997,8 @@ struct rt_comb_internal {
 	(_p)->rgb[1] = 0; \
 	(_p)->rgb[2] = 0; \
 	(_p)->temperature = 0.0; \
-	bu_vls_init(&(_p)->shader); \
-	bu_vls_init(&(_p)->material); \
+	BU_INIT_VLS(&(_p)->shader); \
+	BU_INIT_VLS(&(_p)->material); \
 	(_p)->inherit = 0; \
     }
 
