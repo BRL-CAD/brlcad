@@ -765,9 +765,9 @@ typedef struct bu_list bu_list_t;
  * initializes a bu_list struct as a circular list without allocating
  * any memory.  call BU_LIST_MAGIC_SET() to change the list type.
  */
-#define BU_LIST_INIT(hp) { \
-	(hp)->forw = (hp)->back = (hp); \
-	(hp)->magic = BU_LIST_HEAD_MAGIC;	/* used by circ. macros */ }
+#define BU_LIST_INIT(_hp) { \
+	(_hp)->forw = (_hp)->back = (_hp); \
+	(_hp)->magic = BU_LIST_HEAD_MAGIC;	/* used by circ. macros */ }
 
 /**
  * macro suitable for declaration statement initialization of a
@@ -780,20 +780,20 @@ typedef struct bu_list bu_list_t;
  * BU_LIST_INIT().  lists initialized with BU_LIST_INIT_ZERO will not
  * return true as their forward/backward pointers reference nothing.
  */
-#define BU_LIST_IS_INITIALIZED(hp) (LIKELY((hp)->forw != BU_LIST_NULL))
+#define BU_LIST_IS_INITIALIZED(_hp) ((_hp) && LIKELY((_hp)->forw != BU_LIST_NULL))
 
-#define BU_LIST_MAGIC_SET(hp, val) {(hp)->magic = (val);}
-#define BU_LIST_MAGIC_OK(hp, val) ((hp)->magic == (val))
-#define BU_LIST_MAGIC_WRONG(hp, val) ((hp)->magic != (val))
+#define BU_LIST_MAGIC_SET(_hp, val) {(_hp)->magic = (val);}
+#define BU_LIST_MAGIC_OK(_hp, val) ((_hp)->magic == (val))
+#define BU_LIST_MAGIC_WRONG(_hp, val) ((_hp)->magic != (val))
 
 
-#define BU_LIST_CLOSE(hp) { \
-	BU_ASSERT((hp) != NULL); \
-	if ((hp) == NULL) \
+#define BU_LIST_CLOSE(_hp) { \
+	BU_ASSERT((_hp) != NULL); \
+	if ((_hp) == NULL) \
 	    return; \
-	BU_ASSERT(BU_LIST_IS_EMPTY((hp))); \
-	bu_list_free((hp)); \
-	bu_free((char *)(hp), "bu_list head"); \
+	BU_ASSERT(BU_LIST_IS_EMPTY((_hp))); \
+	bu_list_free((_hp)); \
+	bu_free((char *)(_hp), "bu_list head"); \
     }
 
 
@@ -1259,7 +1259,7 @@ typedef struct bu_bitv bu_bitv_t;
 /**
  * returns truthfully whether a bu_bitv has been initialized
  */
-#define BU_BITV_IS_INITIALIZED(_bp) (LIKELY((_bp)->l.magic == BU_BITV_MAGIC))
+#define BU_BITV_IS_INITIALIZED(_bp) ((_bp) && LIKELY((_bp)->l.magic == BU_BITV_MAGIC))
 
 /**
  * b u _ b i t v _ s h i f t
@@ -1439,7 +1439,7 @@ typedef struct bu_hist bu_hist_t;
  * returns truthfully whether a bu_hist has been initialized via
  * BU_HIST_INIT() or BU_HIST_INIT_ZERO.
  */
-#define BU_HIST_IS_INITIALIZED(_hp) (LIKELY((_hp)->magic == BU_HIST_MAGIC))
+#define BU_HIST_IS_INITIALIZED(_hp) ((_hp) && LIKELY((_hp)->magic == BU_HIST_MAGIC))
 
 #define BU_HIST_TALLY(_hp, _val) { \
 	if ((_val) <= (_hp)->hg_min) { \
@@ -1524,7 +1524,7 @@ typedef struct bu_ptbl bu_ptbl_t;
  * returns truthfully whether a bu_ptbl has been initialized via
  * BU_PTBL_INIT() or BU_PTBL_INIT_ZERO.
  */
-#define BU_PTBL_IS_INITIALIZED(_p) (LIKELY((_p)->l.magic == BU_PTBL_MAGIC))
+#define BU_PTBL_IS_INITIALIZED(_p) ((_p) && LIKELY((_p)->l.magic == BU_PTBL_MAGIC))
 
 
 /*
@@ -1648,7 +1648,7 @@ typedef struct bu_mapped_file bu_mapped_file_t;
  * returns truthfully whether a bu_mapped_file has been initialized via
  * BU_MAPPED_FILE_INIT() or BU_MAPPED_FILE_INIT_ZERO.
  */
-#define BU_MAPPED_FILE_IS_INITIALIZED(_hp) (LIKELY((_hp)->l.magic == BU_MAPPED_FILE_MAGIC))
+#define BU_MAPPED_FILE_IS_INITIALIZED(_hp) ((_hp) && LIKELY((_hp)->l.magic == BU_MAPPED_FILE_MAGIC))
 
 
 /** @} */
@@ -1691,7 +1691,7 @@ typedef struct bu_hook_list bu_hook_list_t;
  * returns truthfully whether a non-head node bu_hook_list has been
  * initialized via BU_HOOK_LIST_INIT() or BU_HOOK_LIST_INIT_ZERO.
  */
-#define BU_HOOK_LIST_IS_INITIALIZED(_p) (LIKELY((_p)->l.magic == BU_HOOK_LIST_MAGIC))
+#define BU_HOOK_LIST_IS_INITIALIZED(_p) ((_p) && LIKELY((_p)->l.magic == BU_HOOK_LIST_MAGIC))
 
 
 /** list of callbacks to call during bu_bomb, used by mged. */
@@ -1768,7 +1768,7 @@ typedef struct bu_attribute_value_set bu_avs_t;
  * returns truthfully whether a bu_attribute_value_set has been initialized via
  * BU_AVS_INIT() or BU_AVS_INIT_ZERO.
  */
-#define BU_AVS_IS_INITIALIZED(_ap) (LIKELY((_ap)->magic == BU_AVS_MAGIC))
+#define BU_AVS_IS_INITIALIZED(_ap) ((_ap) && LIKELY((_ap)->magic == BU_AVS_MAGIC))
 
 
 /**
@@ -1859,8 +1859,7 @@ typedef struct bu_vls bu_vls_t;
  * bu_calloc() or a previous call to bu_vls_init() or BU_VLS_INIT()
  * has been made.
  */
-#define BU_VLS_IS_INITIALIZED(_vp) \
-    (((struct bu_vls *)(_vp) != (struct bu_vls *)0) && ((_vp)->vls_magic == BU_VLS_MAGIC))
+#define BU_VLS_IS_INITIALIZED(_vp) ((_vp) && ((_vp)->vls_magic == BU_VLS_MAGIC))
 
 
 /** @} */
@@ -2114,11 +2113,47 @@ struct bu_structparse {
     size_t sp_count;		/**< @brief number of elements */
     char *sp_name;		/**< @brief Element's symbolic name */
     size_t sp_offset;		/**< @brief Byte offset in struct */
-    void (*sp_hook)();	/**< @brief Optional hooked function, or indir ptr */
+    void (*sp_hook)();		/**< @brief Optional hooked function, or indir ptr */
     char *sp_desc;		/**< @brief description of element */
     void *sp_default;		/**< @brief ptr to default value */
 };
+typedef struct bu_structparse bu_structparse_t;
+#define BU_STRUCTPARSE_NULL ((struct bu_structparse *)0)
+
+/* FIXME: parameterless k&r-style function declarations are not proper
+ * with ansi.  need to declare the callback completely.
+ */
 #define BU_STRUCTPARSE_FUNC_NULL ((void (*)())0)
+
+/**
+ * assert the integrity of a bu_structparse struct.
+ */
+#define BU_CK_STRUCTPARSE(_sp) /* nothing to do */
+
+/**
+ * initialize a bu_structparse struct without allocating any memory.
+ */
+#define BU_STRUCTPARSE_INIT(_sp) { \
+	(_sp)->sp_fmt[0] = (_sp)->sp_fmt[1] = (_sp)->sp_fmt[2] = (_sp)->sp_fmt[3] = '\0'; \
+	(_sp)->sp_count = 0; \
+	(_sp)->sp_name = NULL; \
+	(_sp)->sp_offset = 0; \
+	(_sp)->sp_hook = BU_STRUCTPARSE_FUNC_NULL; \
+	(_sp)->sp_desc = NULL; \
+	(_sp)->sp_default = NULL; \
+    }
+
+/**
+ * macro suitable for declaration statement initialization of a bu_structparse
+ * struct.  does not allocate memory.
+ */
+#define BU_STRUCTPARSE_INIT_ZERO { {'\0', '\0', '\0', '\0'}, 0, NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+
+/**
+ * returns truthfully whether a bu_structparse struct has been
+ * initialized.  validates whether pointer is non-NULL.
+ */
+#define BU_STRUCTPARSE_IS_INITIALIZED(_sp) ((_sp))
 
 
 /*----------------------------------------------------------------------*/
