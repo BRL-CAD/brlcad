@@ -1234,12 +1234,13 @@ typedef struct bu_bitv bu_bitv_t;
 #define BU_BITV_NULL ((struct bu_bitv *)0)
 
 /**
- * verifies the integrity of a bu_bitv struct
+ * asserts the integrity of a non-head node bu_bitv struct.
  */
 #define BU_CK_BITV(_vp) BU_CKMAG(_vp, BU_BITV_MAGIC, "bu_bitv")
 
 /**
- * initializes a bu_bitv struct without allocating any memory
+ * initializes a bu_bitv struct without allocating any memory.  this
+ * macro is not suitable for initializing a head list node.
  */
 #define BU_BITV_INIT(_bp) { \
 	BU_LIST_INIT(&(_bp)->l); \
@@ -1251,7 +1252,7 @@ typedef struct bu_bitv bu_bitv_t;
 
 /**
  * macro suitable for declaration statement initialization of a bu_bitv
- * struct.  does not allocate memory.
+ * struct.  does not allocate memory.  not suitable for a head node.
  */
 #define BU_BITV_INIT_ZERO { {BU_BITV_MAGIC, BU_LIST_NULL, BU_LIST_NULL}, 0, {0, 0} }
 
@@ -1496,12 +1497,13 @@ typedef struct bu_ptbl bu_ptbl_t;
 #define BU_PTBL_NULL ((struct bu_ptbl *)0)
 
 /**
- * assert the integrity of a bu_ptbl struct.
+ * assert the integrity of a non-head node bu_ptbl struct.
  */
 #define BU_CK_PTBL(_p) BU_CKMAG(_p, BU_PTBL_MAGIC, "bu_ptbl")
 
 /**
- * initialize a bu_ptbl struct without allocating any memory.
+ * initialize a bu_ptbl struct without allocating any memory.  this
+ * macro is not suitable for initializing a list head node.
  */
 #define BU_PTBL_INIT(_p) { \
 	BU_LIST_INIT(&(_p)->l); \
@@ -1513,7 +1515,8 @@ typedef struct bu_ptbl bu_ptbl_t;
 
 /**
  * macro suitable for declaration statement initialization of a
- * bu_ptbl struct.  does not allocate memory.
+ * bu_ptbl struct.  does not allocate memory.  not suitable for
+ * initializing a list head node.
  */
 #define BU_PTBL_INIT_ZERO { {BU_PTBL_MAGIC, BU_LIST_NULL, BU_LIST_NULL}, 0, 0, NULL }
 
@@ -1663,12 +1666,13 @@ typedef struct bu_hook_list bu_hook_list_t;
 #define BU_HOOK_LIST_NULL ((struct bu_hook_list *) 0)
 
 /**
- * assert the integrity of a bu_hook_list struct.
+ * assert the integrity of a non-head node bu_hook_list struct.
  */
 #define BU_CK_HOOK_LIST(_hl) BU_CKMAG(_hl, BU_HOOK_LIST_MAGIC, "bu_hook_list")
 
 /**
  * initialize a bu_hook_list struct without allocating any memory.
+ * this macro is not suitable for initialization of a list head node.
  */
 #define BU_HOOK_LIST_INIT(_hl) { \
 	BU_LIST_INIT(&(_hl)->l); \
@@ -1678,13 +1682,14 @@ typedef struct bu_hook_list bu_hook_list_t;
 
 /**
  * macro suitable for declaration statement initialization of a
- * bu_hook_list struct.  does not allocate memory.
+ * bu_hook_list struct.  does not allocate memory.  not suitable for
+ * initialization of a list head node.
  */
 #define BU_HOOK_LIST_INIT_ZERO { {BU_HOOK_LIST_MAGIC, BU_LIST_NULL, BU_LIST_NULL}, NULL, NULL }
 
 /**
- * returns truthfully whether a bu_hook_list has been initialized via
- * BU_HOOK_LIST_INIT() or BU_HOOK_LIST_INIT_ZERO.
+ * returns truthfully whether a non-head node bu_hook_list has been
+ * initialized via BU_HOOK_LIST_INIT() or BU_HOOK_LIST_INIT_ZERO.
  */
 #define BU_HOOK_LIST_IS_INITIALIZED(_p) (LIKELY((_p)->l.magic == BU_HOOK_LIST_MAGIC))
 
