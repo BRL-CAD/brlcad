@@ -780,7 +780,7 @@ typedef struct bu_list bu_list_t;
  * BU_LIST_INIT().  lists initialized with BU_LIST_INIT_ZERO will not
  * return true as their forward/backward pointers reference nothing.
  */
-#define BU_LIST_IS_INITIALIZED(_hp) ((_hp) && LIKELY((_hp)->forw != BU_LIST_NULL))
+#define BU_LIST_IS_INITIALIZED(_hp) (((struct bu_list *)(_hp) != BU_LIST_NULL) && LIKELY((_hp)->forw != BU_LIST_NULL))
 
 #define BU_LIST_MAGIC_SET(_hp, val) {(_hp)->magic = (val);}
 #define BU_LIST_MAGIC_OK(_hp, val) ((_hp)->magic == (val))
@@ -1259,7 +1259,7 @@ typedef struct bu_bitv bu_bitv_t;
 /**
  * returns truthfully whether a bu_bitv has been initialized
  */
-#define BU_BITV_IS_INITIALIZED(_bp) ((_bp) && LIKELY((_bp)->l.magic == BU_BITV_MAGIC))
+#define BU_BITV_IS_INITIALIZED(_bp) (((struct bu_bitv *)(_bp) != BU_BITV_NULL) && LIKELY((_bp)->l.magic == BU_BITV_MAGIC))
 
 /**
  * b u _ b i t v _ s h i f t
@@ -1439,7 +1439,7 @@ typedef struct bu_hist bu_hist_t;
  * returns truthfully whether a bu_hist has been initialized via
  * BU_HIST_INIT() or BU_HIST_INIT_ZERO.
  */
-#define BU_HIST_IS_INITIALIZED(_hp) ((_hp) && LIKELY((_hp)->magic == BU_HIST_MAGIC))
+#define BU_HIST_IS_INITIALIZED(_hp) (((struct bu_hist *)(_hp) != BU_HIST_NULL) && LIKELY((_hp)->magic == BU_HIST_MAGIC))
 
 #define BU_HIST_TALLY(_hp, _val) { \
 	if ((_val) <= (_hp)->hg_min) { \
@@ -1524,7 +1524,7 @@ typedef struct bu_ptbl bu_ptbl_t;
  * returns truthfully whether a bu_ptbl has been initialized via
  * BU_PTBL_INIT() or BU_PTBL_INIT_ZERO.
  */
-#define BU_PTBL_IS_INITIALIZED(_p) ((_p) && LIKELY((_p)->l.magic == BU_PTBL_MAGIC))
+#define BU_PTBL_IS_INITIALIZED(_p) (((struct bu_ptbl *)(_p) != BU_PTBL_NULL) && LIKELY((_p)->l.magic == BU_PTBL_MAGIC))
 
 
 /*
@@ -1648,7 +1648,7 @@ typedef struct bu_mapped_file bu_mapped_file_t;
  * returns truthfully whether a bu_mapped_file has been initialized via
  * BU_MAPPED_FILE_INIT() or BU_MAPPED_FILE_INIT_ZERO.
  */
-#define BU_MAPPED_FILE_IS_INITIALIZED(_hp) ((_hp) && LIKELY((_hp)->l.magic == BU_MAPPED_FILE_MAGIC))
+#define BU_MAPPED_FILE_IS_INITIALIZED(_hp) (((struct bu_mapped_file *)(_hp) != BU_MAPPED_FILE_NULL) && LIKELY((_hp)->l.magic == BU_MAPPED_FILE_MAGIC))
 
 
 /** @} */
@@ -1691,7 +1691,7 @@ typedef struct bu_hook_list bu_hook_list_t;
  * returns truthfully whether a non-head node bu_hook_list has been
  * initialized via BU_HOOK_LIST_INIT() or BU_HOOK_LIST_INIT_ZERO.
  */
-#define BU_HOOK_LIST_IS_INITIALIZED(_p) ((_p) && LIKELY((_p)->l.magic == BU_HOOK_LIST_MAGIC))
+#define BU_HOOK_LIST_IS_INITIALIZED(_p) (((struct bu_hook_list *)(_p) != BU_HOOK_LIST_NULL) && LIKELY((_p)->l.magic == BU_HOOK_LIST_MAGIC))
 
 
 /** list of callbacks to call during bu_bomb, used by mged. */
@@ -1768,7 +1768,7 @@ typedef struct bu_attribute_value_set bu_avs_t;
  * returns truthfully whether a bu_attribute_value_set has been initialized via
  * BU_AVS_INIT() or BU_AVS_INIT_ZERO.
  */
-#define BU_AVS_IS_INITIALIZED(_ap) ((_ap) && LIKELY((_ap)->magic == BU_AVS_MAGIC))
+#define BU_AVS_IS_INITIALIZED(_ap) (((struct bu_attribute_value_set *)(_ap) != BU_AVS_NULL) && LIKELY((_ap)->magic == BU_AVS_MAGIC))
 
 
 /**
@@ -1859,7 +1859,7 @@ typedef struct bu_vls bu_vls_t;
  * bu_calloc() or a previous call to bu_vls_init() or BU_VLS_INIT()
  * has been made.
  */
-#define BU_VLS_IS_INITIALIZED(_vp) ((_vp) && ((_vp)->vls_magic == BU_VLS_MAGIC))
+#define BU_VLS_IS_INITIALIZED(_vp) (((struct bu_vls *)(_vp) != BU_VLS_NULL) && ((_vp)->vls_magic == BU_VLS_MAGIC))
 
 
 /** @} */
@@ -1913,7 +1913,7 @@ typedef struct bu_vlb bu_vlb_t;
  * bu_calloc() or a previous call to bu_vlb_init() or BU_VLB_INIT()
  * has been made.
  */
-#define BU_VLB_IS_INITIALIZED(_vp) ((_vp) && ((_vp)->magic == BU_VLB_MAGIC))
+#define BU_VLB_IS_INITIALIZED(_vp) (((struct bu_vlb *)(_vp) != BU_VLB_NULL) && ((_vp)->magic == BU_VLB_MAGIC))
 
 
 /** @} */
@@ -2153,7 +2153,7 @@ typedef struct bu_structparse bu_structparse_t;
  * returns truthfully whether a bu_structparse struct has been
  * initialized.  validates whether pointer is non-NULL.
  */
-#define BU_STRUCTPARSE_IS_INITIALIZED(_sp) ((_sp))
+#define BU_STRUCTPARSE_IS_INITIALIZED(_sp) ((struct bu_structparse *)(_sp) != BU_STRUCTPARSE_NULL)
 
 
 /*----------------------------------------------------------------------*/
