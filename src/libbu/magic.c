@@ -235,7 +235,7 @@ bu_identify_magic(register unsigned long magic)
 	    return "librt rt_constraint_internal";
 	case RT_CTS_MAGIC:
 	    return "librt combined_tree_state";
-	case RT_DBTR_MAGIC:
+	case RT_DB_TRAVERSE_MAGIC:
 	    return "librt dbtr";
 	case RT_DBTS_MAGIC:
 	    return "librt dbts";

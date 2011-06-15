@@ -168,7 +168,7 @@
 #define RT_COMB_MAGIC			0x436f6d49 /**< ComI */
 #define RT_CONSTRAINT_MAGIC		0x7063696d /**< pcim */
 #define RT_CTS_MAGIC			0x98989123
-#define RT_DBTR_MAGIC			0x64627472 /**< dbtr */
+#define RT_DB_TRAVERSE_MAGIC			0x64627472 /**< dbtr */
 #define RT_DBTS_MAGIC			0x64627473 /**< dbts */
 #define RT_DB_INTERNAL_MAGIC		0x0dbbd867
 #define RT_DIR_MAGIC			0x05551212 /**< Directory assistance */

@@ -774,3 +774,7 @@ s/BU_INIT_EXTERNAL/BU_EXTERNAL_INIT/g
 
 s/RT_INIT_DB_INTERNAL/RT_DB_INTERNAL_INIT/g
         renamed for API consistency [7.20]
+
+s/RT_CK_DBTR/RT_CK_DB_TRAVERSE/g
+s/RT_DBTR_MAGIC/RT_DB_TRAVERSE_MAGIC/g
+        renamed for API consistency [7.20]

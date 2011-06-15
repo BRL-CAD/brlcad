@@ -1137,11 +1137,11 @@ struct db_traverse
     struct resource *resp;
     genptr_t client_data;
 };
-#define RT_INIT_DBTR(_p) {(_p)->magic = RT_DBTR_MAGIC; \
+#define RT_INIT_DBTR(_p) {(_p)->magic = RT_DB_TRAVERSE_MAGIC; \
 	(_p)->dbip = GENPTR_NULL; (_p)->comb_enter_func = GENPTR_NULL; \
 	(_p)->comb_exit_func = GENPTR_NULL; (_p)->leaf_func = GENPTR_NULL; \
 	(_p)->resp = GENPTR_NULL; (_p)->client_data = GENPTR_NULL;}
-#define RT_CK_DBTR(_p) BU_CKMAG(_p, RT_DBTR_MAGIC, "db_traverse")
+#define RT_CK_DB_TRAVERSE(_p) BU_CKMAG(_p, RT_DB_TRAVERSE_MAGIC, "db_traverse")
 
 /**
  * C O M B I N E D _ T R E E _ S T A T E
