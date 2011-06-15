@@ -236,7 +236,7 @@ bu_vls_free(struct bu_vls *vp)
 {
     BU_CK_VLS(vp);
 
-    if (vp->vls_str) {
+    if (vp->vls_str && vp->vls_max > 0) {
 	vp->vls_str[0] = '?'; /* Sanity */
 	bu_free(vp->vls_str, "bu_vls_free");
 	vp->vls_str = (char *)0;
