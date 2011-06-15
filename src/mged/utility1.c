@@ -156,12 +156,7 @@ f_edcodes(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
     CHECK_DBI_NULL;
 
     if (argc < 2) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help edcodes");
-	Tcl_Eval(interpreter, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
+	Tcl_Eval(interpreter, "help edcodes");
 	return TCL_ERROR;
     }
 
@@ -202,12 +197,7 @@ f_edmater(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
     CHECK_DBI_NULL;
 
     if (argc < 2) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help edmater");
-	Tcl_Eval(interpreter, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
+	Tcl_Eval(interpreter, "help edmater");
 	return TCL_ERROR;
     }
 
@@ -248,12 +238,7 @@ f_red(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
     CHECK_DBI_NULL;
 
     if (argc < 2) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help red");
-	Tcl_Eval(interpreter, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
+	Tcl_Eval(interpreter, "help red");
 	return TCL_ERROR;
     }
 
