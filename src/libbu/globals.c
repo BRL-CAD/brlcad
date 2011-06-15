@@ -85,7 +85,7 @@ struct bu_hook_list bu_bomb_hook_list = {
 	&bu_bomb_hook_list.l,
 	&bu_bomb_hook_list.l
     },
-    BU_HOOK_NULL,
+    NULL,
     GENPTR_NULL
 };
 
@@ -100,7 +100,7 @@ struct bu_hook_list bu_log_hook_list = {
 	&bu_log_hook_list.l,
 	&bu_log_hook_list.l
     },
-    BU_HOOK_NULL,
+    NULL,
     GENPTR_NULL
 };
 

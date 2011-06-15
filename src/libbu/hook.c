@@ -30,7 +30,7 @@ void
 bu_hook_list_init(struct bu_hook_list *hlp)
 {
     BU_LIST_INIT(&hlp->l);
-    hlp->hookfunc = BU_HOOK_NULL;
+    hlp->hookfunc = NULL;
     hlp->clientdata = GENPTR_NULL;
 }
 
