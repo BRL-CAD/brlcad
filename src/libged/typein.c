@@ -2832,7 +2832,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	return GED_MORE;
     }
 
-    RT_INIT_DB_INTERNAL(&internal);
+    RT_DB_INTERNAL_INIT(&internal);
 
     /*
      * Decide which solid to make and get the rest of the args

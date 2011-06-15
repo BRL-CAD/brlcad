@@ -2329,7 +2329,7 @@ rt_extrude_ifree(struct rt_db_internal *ip)
     extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(extrude_ip);
     if (extrude_ip->skt) {
-	RT_INIT_DB_INTERNAL(&tmp_ip);
+	RT_DB_INTERNAL_INIT(&tmp_ip);
 	tmp_ip.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	tmp_ip.idb_type = ID_SKETCH;
 	tmp_ip.idb_ptr = (genptr_t)extrude_ip->skt;
@@ -2368,7 +2368,7 @@ rt_extrude_xform(
     }
 
     if (op != ip) {
-	RT_INIT_DB_INTERNAL(op);
+	RT_DB_INTERNAL_INIT(op);
 	eop = (struct rt_extrude_internal *)bu_malloc(sizeof(struct rt_extrude_internal), "eop");
 	eop->magic = RT_EXTRUDE_INTERNAL_MAGIC;
 	eop->sketch_name = bu_strdup(eip->sketch_name);

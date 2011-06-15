@@ -65,7 +65,7 @@ ged_cc(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_EXISTS(gedp, argv[1], LOOKUP_QUIET, GED_ERROR);
     GED_CHECK_EXISTS(gedp, argv[2], LOOKUP_QUIET, GED_ERROR);
 
-    RT_INIT_DB_INTERNAL(&internal);
+    RT_DB_INTERNAL_INIT(&internal);
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_CONSTRAINT;
     internal.idb_meth=&rt_functab[ID_CONSTRAINT];

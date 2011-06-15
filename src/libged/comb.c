@@ -141,7 +141,7 @@ _ged_combadd(struct ged			*gedp,
 	else
 	    flags = RT_DIR_COMB;
 
-	RT_INIT_DB_INTERNAL(&intern);
+	RT_DB_INTERNAL_INIT(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_COMBINATION;
 	intern.idb_meth = &rt_functab[ID_COMBINATION];
@@ -149,7 +149,7 @@ _ged_combadd(struct ged			*gedp,
 	GED_DB_DIRADD(gedp, dp, combname, -1, 0, flags, (genptr_t)&intern.idb_type, 0);
 
 	BU_GETSTRUCT(comb, rt_comb_internal);
-	RT_INIT_COMB_INTERNAL(comb);
+	RT_COMB_INTERNAL_INIT(comb);
 
 	intern.idb_ptr = (genptr_t)comb;
 

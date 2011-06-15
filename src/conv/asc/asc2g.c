@@ -499,7 +499,7 @@ nmgbld(void)
     }
 
     /* Next, import this disk record into memory */
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     if (rt_functab[ID_NMG].ft_import5(&intern, &ext, bn_mat_identity, ofp->dbip, &rt_uniresource) < 0)
 	bu_exit(-1, "ft_import5 failed on NMG %s\n", name);
     bu_free_external(&ext);
@@ -510,7 +510,7 @@ nmgbld(void)
     /* Finally, squirt it back out through LIBWDB */
     mk_nmg(ofp, name, (struct model *)intern.idb_ptr);
     /* mk_nmg() frees the intern.idp_ptr pointer */
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
 
     bu_free(name, "name");
 }
@@ -1123,7 +1123,7 @@ polyhbld(void)
     }
 
     /* Convert the polysolid to a BoT */
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_type = ID_POLY;
     intern.idb_meth = &rt_functab[ID_POLY];

@@ -114,7 +114,7 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
     bu_close_mapped_file(bu_fd);
 
     /* create the rt_internal form */
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     intern.idb_major_type = major_type;
     intern.idb_minor_type = minor_type;
     intern.idb_ptr = (genptr_t)bip;

@@ -359,7 +359,7 @@ wdb_export(
 	return -1;
     }
 
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_type = id;
     intern.idb_ptr = gp;

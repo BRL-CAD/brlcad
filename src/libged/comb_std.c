@@ -239,7 +239,7 @@ ged_do_inter(struct bu_list *hp)
 
 	/* this is an eligible intersection operation */
 	BU_GETUNION(tp, tree);
-	RT_INIT_TREE(tp);
+	RT_TREE_INIT(tp);
 	tp->tr_b.tb_op = OP_INTERSECT;
 	tp->tr_b.tb_regionp = (struct region *)NULL;
 	tp->tr_b.tb_left = prev->tp;
@@ -273,7 +273,7 @@ ged_do_union_subtr(struct bu_list *hp)
 
 	/* this is an eligible operation */
 	BU_GETUNION(tp, tree);
-	RT_INIT_TREE(tp);
+	RT_TREE_INIT(tp);
 	if (tok->type == GED_TOK_UNION)
 	    tp->tr_b.tb_op = OP_UNION;
 	else
@@ -651,7 +651,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 
 	flags = RT_DIR_COMB;
 	BU_GETSTRUCT(comb, rt_comb_internal);
-	RT_INIT_COMB_INTERNAL(comb);
+	RT_COMB_INTERNAL_INIT(comb);
 
 	comb->tree = final_tree;
 
@@ -674,7 +674,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	    flags |= RT_DIR_REGION;
 	}
 
-	RT_INIT_DB_INTERNAL(&intern);
+	RT_DB_INTERNAL_INIT(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_COMBINATION;
 	intern.idb_meth = &rt_functab[ID_COMBINATION];

@@ -74,7 +74,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    RT_INIT_DB_INTERNAL(&new_intern);
+    RT_DB_INTERNAL_INIT(&new_intern);
 
     if (argc == 4) {
 	do_all = 0;

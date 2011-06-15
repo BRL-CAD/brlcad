@@ -1331,7 +1331,7 @@ rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_interna
     if (dbip) RT_CK_DBI(dbip);
 
     if (op != ip && !release) {
-	RT_INIT_DB_INTERNAL(op);
+	RT_DB_INTERNAL_INIT(op);
 	BU_GETSTRUCT(botop, rt_bot_internal);
 	botop->magic = RT_BOT_INTERNAL_MAGIC;
 	botop->mode = botip->mode;

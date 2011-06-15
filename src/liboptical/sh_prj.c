@@ -135,7 +135,7 @@ HIDDEN int img_load_datasource(struct img_specific *image, struct db_i *dbInstan
 	} else {
 	    struct rt_db_internal *dbip=(struct rt_db_internal *)bu_malloc(sizeof(struct rt_db_internal), "img_load_datasource");
 
-	    RT_INIT_DB_INTERNAL(dbip);
+	    RT_DB_INTERNAL_INIT(dbip);
 	    RT_CK_DB_INTERNAL(dbip);
 	    RT_CK_DIR(dirEntry);
 
@@ -152,7 +152,7 @@ HIDDEN int img_load_datasource(struct img_specific *image, struct db_i *dbInstan
 	    image->i_binunifp=(struct rt_binunif_internal *)dbip->idb_ptr; /* make it so */
 
 	    /* release the database struct we created */
-	    RT_INIT_DB_INTERNAL(dbip);
+	    RT_DB_INTERNAL_INIT(dbip);
 	    bu_free(dbip, "img_load_datasource");
 
 	    /* check size of object */

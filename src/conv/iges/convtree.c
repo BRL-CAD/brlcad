@@ -106,7 +106,7 @@ Convtree()
 	    brl_att.region_flag = 1;
 
 	BU_GETSTRUCT(comb, rt_comb_internal);
-	RT_INIT_COMB_INTERNAL(comb);
+	RT_COMB_INTERNAL_INIT(comb);
 
 	comb->tree = ptr;
 

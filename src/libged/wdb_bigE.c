@@ -201,7 +201,7 @@ wdb_add_solid(const struct directory *dp,
 		    Tcl_AppendResult(dgcdp->interp, "Prep failure for solid '", dp->d_namep,
 				     "'\n", (char *)NULL);
 	    } else {
-		RT_INIT_DB_INTERNAL(&intern2);
+		RT_DB_INTERNAL_INIT(&intern2);
 		intern2.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		intern2.idb_type = ID_BOT;
 		intern2.idb_meth = &rt_functab[ID_BOT];
@@ -2000,7 +2000,7 @@ wdb_fix_halfs(struct dg_client_data *dgcdp)
 	} else {
 	    struct rt_db_internal intern2;
 
-	    RT_INIT_DB_INTERNAL(&intern2);
+	    RT_DB_INTERNAL_INIT(&intern2);
 	    intern2.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern2.idb_type = ID_POLY;
 	    intern2.idb_meth = &rt_functab[ID_POLY];

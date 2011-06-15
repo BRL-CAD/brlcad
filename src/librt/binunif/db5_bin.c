@@ -437,7 +437,7 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
     if ( (dp = db_lookup( dbip, name, LOOKUP_NOISY)) == RT_DIR_NULL )
 	return -1;
 
-    RT_INIT_DB_INTERNAL(intern);
+    RT_DB_INTERNAL_INIT(intern);
     if ( rt_db_get_internal5( intern, dp, dbip, NULL, &rt_uniresource)
 	 != ID_BINUNIF     || db_get_external( &ext, dp, dbip ) < 0 )
 	return -1;

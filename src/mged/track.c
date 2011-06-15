@@ -587,7 +587,7 @@ wrobj(char name[], int flags)
 	return -1;
     }
 
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     switch (sol.s_type) {
 	case ID_ARB8:
 	    {

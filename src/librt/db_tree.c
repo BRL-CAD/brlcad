@@ -1155,7 +1155,7 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
     RT_CHECK_DBI(tsp->ts_dbip);
     RT_CK_RESOURCE(tsp->ts_resp);
     RT_CK_FULL_PATH(pathp);
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
 
     if (pathp->fp_len <= 0) {
 	bu_log("db_recurse() null path?\n");
@@ -1290,7 +1290,7 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
 	if (RT_G_DEBUG&DEBUG_TREEWALK)
 	    bu_log("db_recurse() rt_db_get_internal(%s) solid\n", dp->d_namep);
 
-	RT_INIT_DB_INTERNAL(&intern);
+	RT_DB_INTERNAL_INIT(&intern);
 	if (rt_db_get_internal(&intern, dp, tsp->ts_dbip, tsp->ts_mat, tsp->ts_resp) < 0) {
 	    bu_log("db_recurse() rt_db_get_internal(%s) FAIL\n", dp->d_namep);
 	    curtree = TREE_NULL;		/* FAIL */

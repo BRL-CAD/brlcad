@@ -64,7 +64,7 @@ ged_facetize_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_
     if ( ged_facetize_tree )  {
 	union tree	*tr;
 	BU_GETUNION(tr, tree);
-	RT_INIT_TREE(tr);
+	RT_TREE_INIT(tr);
 	tr->tr_op = OP_UNION;
 	tr->tr_b.tb_regionp = REGION_NULL;
 	tr->tr_b.tb_left = ged_facetize_tree;
@@ -202,7 +202,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 	    union tree *new_tree;
 
 	    BU_GETUNION( new_tree, tree );
-	    RT_INIT_TREE(new_tree);
+	    RT_TREE_INIT(new_tree);
 
 	    new_tree->tr_b.tb_regionp = REGION_NULL;
 	    new_tree->tr_b.tb_left = tmp_tree;
@@ -312,7 +312,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(&gedp->ged_result_str, "%s: converting NMG to database format\n", cmdname);
 
     /* Export NMG as a new solid */
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_type = ID_NMG;
     intern.idb_meth = &rt_functab[ID_NMG];

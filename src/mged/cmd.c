@@ -373,7 +373,7 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
     else
 	return TCL_OK;
 
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
 
     if (STATE == ST_S_EDIT) {
 	/* solid edit mode */

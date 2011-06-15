@@ -120,7 +120,7 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 	/* wdb_xform matrix calculated in wdb_trace() */
 
 	/* create the new solid */
-	RT_INIT_DB_INTERNAL(&new_int);
+	RT_DB_INTERNAL_INIT(&new_int);
 	if (rt_generic_xform(&new_int, gtd.gtd_xform,
 			     &internal, 0, gedp->ged_wdbp->dbip, &rt_uniresource)) {
 	    rt_db_free_internal(&internal);

@@ -149,7 +149,7 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     bi.brep = brep;
 
     struct rt_db_internal di;
-    RT_INIT_DB_INTERNAL(&di);
+    RT_DB_INTERNAL_INIT(&di);
     di.idb_ptr = (genptr_t)&bi;
 
     return rt_brep_prep(stp, &di, rtip);
@@ -675,7 +675,7 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     bi.brep = brep;
 
     struct rt_db_internal di;
-    RT_INIT_DB_INTERNAL(&di);
+    RT_DB_INTERNAL_INIT(&di);
     di.idb_ptr = (genptr_t)&bi;
 
     return rt_brep_plot(vhead, &di, ttol, tol);

@@ -693,7 +693,7 @@ gettree_leaf( struct db_tree_state *tsp, const struct db_full_path *pathp, struc
 
 found_it:
     BU_GETUNION( curtree, tree );
-    RT_INIT_TREE(curtree);
+    RT_TREE_INIT(curtree);
     curtree->tr_op = OP_SOLID;
     curtree->tr_a.tu_stp = stp;
     curtree->tr_a.tu_regionp = (struct region *)0;

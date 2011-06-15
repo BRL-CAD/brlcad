@@ -100,7 +100,7 @@ rt_db_get_internal(
     int id;
     int ret;
 
-    RT_INIT_DB_INTERNAL(ip);
+    RT_DB_INTERNAL_INIT(ip);
 
     if (dbip->dbi_version > 4)
 	return rt_db_get_internal5(ip, dp, dbip, mat, resp);
@@ -268,7 +268,7 @@ rt_db_free_internal(struct rt_db_internal *ip)
     if (ip->idb_avs.magic == BU_AVS_MAGIC) {
 	bu_avs_free(&ip->idb_avs);
     }
-    RT_INIT_DB_INTERNAL(ip);
+    RT_DB_INTERNAL_INIT(ip);
 }
 
 

@@ -475,7 +475,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
 		    break;
 	    }
 	    BU_GETUNION(tp, tree);
-	    RT_INIT_TREE(tp);
+	    RT_TREE_INIT(tp);
 	    rt_tree_array[tree_index].tl_tree = tp;
 	    tp->tr_l.tl_op = OP_DB_LEAF;
 	    tp->tr_l.tl_name = bu_strdup(bu_vls_addr(&current_substring));
@@ -881,7 +881,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 		goto cleanup;
 	    }
 	} else {
-	    RT_INIT_DB_INTERNAL(&intern);
+	    RT_DB_INTERNAL_INIT(&intern);
 	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern.idb_type = ID_COMBINATION;
 	    intern.idb_meth = &rt_functab[ID_COMBINATION];
@@ -889,7 +889,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 	    GED_DB_DIRADD(gedp, tmp_dp, bu_vls_addr(&temp_name), -1, 0, RT_DIR_COMB, (genptr_t)&intern.idb_type, 0);
 
 	    BU_GETSTRUCT(comb, rt_comb_internal);
-	    RT_INIT_COMB_INTERNAL(comb);
+	    RT_COMB_INTERNAL_INIT(comb);
 
 	    intern.idb_ptr = (genptr_t)comb;
 

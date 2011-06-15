@@ -1092,7 +1092,7 @@ rt_db_get_internal5(
     int ret;
 
     BU_EXTERNAL_INIT(&ext);
-    RT_INIT_DB_INTERNAL(ip);
+    RT_DB_INTERNAL_INIT(ip);
 
     BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
 

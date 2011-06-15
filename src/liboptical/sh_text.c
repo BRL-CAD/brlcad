@@ -165,7 +165,7 @@ HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInst
 	} else {
 	    struct rt_db_internal *dbip=(struct rt_db_internal *)bu_malloc(sizeof(struct rt_db_internal), "txt_load_datasource");
 
-	    RT_INIT_DB_INTERNAL(dbip);
+	    RT_DB_INTERNAL_INIT(dbip);
 	    RT_CK_DB_INTERNAL(dbip);
 	    RT_CK_DIR(dirEntry);
 
@@ -182,7 +182,7 @@ HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInst
 	    texture->tx_binunifp=(struct rt_binunif_internal *)dbip->idb_ptr; /* make it so */
 
 	    /* release the database instance pointer struct we created */
-	    RT_INIT_DB_INTERNAL(dbip);
+	    RT_DB_INTERNAL_INIT(dbip);
 	    bu_free(dbip, "txt_load_datasource");
 
 	    /* check size of object */

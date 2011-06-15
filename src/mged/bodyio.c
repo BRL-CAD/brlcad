@@ -118,7 +118,7 @@ cmd_import_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
 	mged_print_result(TCL_ERROR);
 	return TCL_ERROR;
     } else {
-	RT_INIT_DB_INTERNAL(&intern);
+	RT_DB_INTERNAL_INIT(&intern);
     }
 
     /*
@@ -252,7 +252,7 @@ cmd_export_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
 	mged_print_result(TCL_ERROR);
 	return TCL_ERROR;
     }
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     if (rt_db_get_internal5(&intern, dp, dbip, NULL, &rt_uniresource)
 	!= ID_BINUNIF
 	|| db_get_external(&ext, dp, dbip) < 0) {

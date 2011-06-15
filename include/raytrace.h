@@ -208,7 +208,7 @@ struct rt_db_internal {
     struct bu_attribute_value_set idb_avs;
 };
 #define idb_type		idb_minor_type
-#define RT_INIT_DB_INTERNAL(_p) { \
+#define RT_DB_INTERNAL_INIT(_p) { \
 	(_p)->idb_magic = RT_DB_INTERNAL_MAGIC; \
 	(_p)->idb_major_type = -1; \
 	(_p)->idb_minor_type = -1; \
@@ -983,7 +983,7 @@ struct rt_comb_internal {
 /**
  * initialize an rt_comb_internal to empty.
  */
-#define RT_INIT_COMB_INTERNAL(_p) { \
+#define RT_COMB_INTERNAL_INIT(_p) { \
 	(_p)->magic = RT_COMB_MAGIC; \
 	(_p)->tree = TREE_NULL; \
 	(_p)->region_flag = 0; \
@@ -1137,7 +1137,7 @@ struct db_traverse
     struct resource *resp;
     genptr_t client_data;
 };
-#define RT_INIT_DBTR(_p) {(_p)->magic = RT_DB_TRAVERSE_MAGIC; \
+#define RT_DB_INTERNAL_INIT(_p) {(_p)->magic = RT_DB_TRAVERSE_MAGIC; \
 	(_p)->dbip = GENPTR_NULL; (_p)->comb_enter_func = GENPTR_NULL; \
 	(_p)->comb_exit_func = GENPTR_NULL; (_p)->leaf_func = GENPTR_NULL; \
 	(_p)->resp = GENPTR_NULL; (_p)->client_data = GENPTR_NULL;}
@@ -1223,7 +1223,7 @@ union tree {
  * the largest union so all values are effectively zero except for the
  * magic number.
  */
-#define RT_INIT_TREE(_p) {		   \
+#define RT_TREE_INIT(_p) {		   \
 	(_p)->magic = RT_TREE_MAGIC;	   \
 	(_p)->tr_b.tb_op = 0;		   \
 	(_p)->tr_b.tb_regionp = NULL;	   \
@@ -1251,7 +1251,7 @@ union tree {
 	    BU_GETUNION(_tp, tree);			 \
 	    (_res)->re_tree_malloc++;			 \
 	}						 \
-	RT_INIT_TREE((_tp));				 \
+	RT_TREE_INIT((_tp));				 \
     }
 
 /**

@@ -175,7 +175,7 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
    	arb->magic = RT_ARB_INTERNAL_MAGIC;
        	
    	/* set up internal structure */
-   	RT_INIT_DB_INTERNAL(&new_intern);
+   	RT_DB_INTERNAL_INIT(&new_intern);
    	new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
    	new_intern.idb_type = ID_ARB8;
    	new_intern.idb_meth = &rt_functab[ID_ARB8];

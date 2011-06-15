@@ -134,7 +134,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
     save_bu_optind = bu_optind;
 
     GED_CHECK_EXISTS(gedp, argv[bu_optind], LOOKUP_QUIET, GED_ERROR);
-    RT_INIT_DB_INTERNAL(&internal);
+    RT_DB_INTERNAL_INIT(&internal);
 
     if (BU_STR_EQUAL(argv[bu_optind+1], "arb8") ||
 	BU_STR_EQUAL(argv[bu_optind+1],  "rpp")) {

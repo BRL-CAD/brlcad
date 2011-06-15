@@ -41,7 +41,7 @@ Readtree(mat_t *matp)
 	if (op < 0) {
 	    /* This is an operand */
 	    BU_GETUNION(ptr, tree);
-	    RT_INIT_TREE(ptr);
+	    RT_TREE_INIT(ptr);
 	    ptr->tr_l.tl_op = OP_DB_LEAF;
 	    k = ((-op)-1)/2;
 	    if (k < 0 || k >= totentities) {
@@ -67,7 +67,7 @@ Readtree(mat_t *matp)
 	} else {
 	    /* This is an operator */
 	    BU_GETUNION(ptr, tree);
-	    RT_INIT_TREE(ptr);
+	    RT_TREE_INIT(ptr);
 	    switch (op) {
 		case 1:
 		    ptr->tr_b.tb_op = OP_UNION;

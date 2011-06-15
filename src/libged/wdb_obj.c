@@ -1112,7 +1112,7 @@ wdb_put_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
 
     for (i = 0; argv[2][i] != 0 && i < 16; i++) {
 	type[i] = isupper(argv[2][i]) ? tolower(argv[2][i]) :
@@ -1819,7 +1819,7 @@ wdb_shells_cmd(struct rt_wdb *wdbp,
 	    }
 
 	    /* Export NMG as a new solid */
-	    RT_INIT_DB_INTERNAL(&new_intern);
+	    RT_DB_INTERNAL_INIT(&new_intern);
 	    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    new_intern.idb_type = ID_NMG;
 	    new_intern.idb_meth = &rt_functab[ID_NMG];
@@ -3721,7 +3721,7 @@ wdb_copyeval_cmd(struct rt_wdb *wdbp,
     /* wdb_xform matrix calculated in wdb_trace() */
 
     /* create the new solid */
-    RT_INIT_DB_INTERNAL(&new_int);
+    RT_DB_INTERNAL_INIT(&new_int);
     if (rt_generic_xform(&new_int, gtd.gtd_xform,
 			 &internal, 0, wdbp->dbip, &rt_uniresource)) {
 	rt_db_free_internal(&internal);
@@ -4395,7 +4395,7 @@ facetize_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path
     if (*facetize_tree) {
 	union tree *tr;
 	BU_GETUNION(tr, tree);
-	RT_INIT_TREE(tr);
+	RT_TREE_INIT(tr);
 	tr->tr_op = OP_UNION;
 	tr->tr_b.tb_regionp = REGION_NULL;
 	tr->tr_b.tb_left = *facetize_tree;
@@ -4603,7 +4603,7 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
 	nmg_model = (struct model *)NULL;
 
 	/* Export BOT as a new solid */
-	RT_INIT_DB_INTERNAL(&intern);
+	RT_DB_INTERNAL_INIT(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_BOT;
 	intern.idb_meth = &rt_functab[ID_BOT];
@@ -4613,7 +4613,7 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
 	Tcl_AppendResult(interp, "facetize:  converting NMG to database format\n", (char *)NULL);
 
 	/* Export NMG as a new solid */
-	RT_INIT_DB_INTERNAL(&intern);
+	RT_DB_INTERNAL_INIT(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_NMG;
 	intern.idb_meth = &rt_functab[ID_NMG];
@@ -7147,7 +7147,7 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
     arb->magic = RT_ARB_INTERNAL_MAGIC;
 
     /* set up internal structure */
-    RT_INIT_DB_INTERNAL(&new_intern);
+    RT_DB_INTERNAL_INIT(&new_intern);
     new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     new_intern.idb_type = ID_ARB8;
     new_intern.idb_meth = &rt_functab[ID_ARB8];
@@ -7889,7 +7889,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    RT_INIT_DB_INTERNAL(&new_intern);
+    RT_DB_INTERNAL_INIT(&new_intern);
 
     if (argc == 4) {
 	do_all = 0;
@@ -9375,7 +9375,7 @@ wdb_combadd(Tcl_Interp *interp,
 	else
 	    flags = RT_DIR_COMB;
 
-	RT_INIT_DB_INTERNAL(&intern);
+	RT_DB_INTERNAL_INIT(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_COMBINATION;
 	intern.idb_meth = &rt_functab[ID_COMBINATION];
@@ -9390,7 +9390,7 @@ wdb_combadd(Tcl_Interp *interp,
 
 	BU_GETSTRUCT(comb, rt_comb_internal);
 	intern.idb_ptr = (genptr_t)comb;
-	RT_INIT_COMB_INTERNAL(comb);
+	RT_COMB_INTERNAL_INIT(comb);
 
 	if (region_flag) {
 	    struct bu_vls tmp_vls;
@@ -9782,7 +9782,7 @@ wdb_bot_decimate_cmd(struct rt_wdb *wdbp,
     }
 
     /* import the current solid */
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     if (rt_db_get_internal(&intern, dp, wdbp->dbip, NULL, wdbp->wdb_resp) < 0) {
 	Tcl_AppendResult(interp, "Failed to get internal form of ", argv[1],
 			 "\n", (char *)NULL);

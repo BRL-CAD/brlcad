@@ -111,7 +111,7 @@ ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
     GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_QUIET, GED_ERROR);
 
     /* import the current solid */
-    RT_INIT_DB_INTERNAL( &intern );
+    RT_DB_INTERNAL_INIT( &intern );
     GED_DB_GET_INTERNAL(gedp, &intern, dp, NULL, gedp->ged_wdbp->wdb_resp, GED_ERROR);
 
     /* make sure this is a BOT solid */

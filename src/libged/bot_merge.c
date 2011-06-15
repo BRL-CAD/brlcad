@@ -176,7 +176,7 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
 	avail_face += bots[i]->num_faces;
     }
 
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     intern.idb_type = ID_BOT;
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_minor_type = DB5_MINORTYPE_BRLCAD_BOT;

@@ -479,7 +479,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
     ip->idb_type = ID_COMBINATION;
     ip->idb_meth = &rt_functab[ID_COMBINATION];
     BU_GETSTRUCT(comb, rt_comb_internal);
-    RT_INIT_COMB_INTERNAL(comb);
+    RT_COMB_INTERNAL_INIT(comb);
 
     ip->idb_ptr = (genptr_t)comb;
 
@@ -1089,7 +1089,7 @@ rt_comb_make(const struct rt_functab *UNUSED(ftp), struct rt_db_internal *intern
 				"rt_comb_internal");
 
     comb = (struct rt_comb_internal *)intern->idb_ptr;
-    RT_INIT_COMB_INTERNAL(comb);
+    RT_COMB_INTERNAL_INIT(comb);
     bu_vls_init(&comb->shader);
     bu_vls_init(&comb->material);
 }

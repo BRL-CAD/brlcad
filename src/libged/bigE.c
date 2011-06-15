@@ -190,7 +190,7 @@ add_solid(const struct directory *dp,
 		    bu_vls_printf(&dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", dp->d_namep);
 		}
 	    } else {
-		RT_INIT_DB_INTERNAL(&intern2);
+		RT_DB_INTERNAL_INIT(&intern2);
 		intern2.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		intern2.idb_type = ID_BOT;
 		intern2.idb_meth = &rt_functab[ID_BOT];
@@ -1989,7 +1989,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 	} else {
 	    struct rt_db_internal intern2;
 
-	    RT_INIT_DB_INTERNAL(&intern2);
+	    RT_DB_INTERNAL_INIT(&intern2);
 	    intern2.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern2.idb_type = ID_POLY;
 	    intern2.idb_meth = &rt_functab[ID_POLY];

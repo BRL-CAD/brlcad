@@ -318,13 +318,13 @@ rt_comb_import4(
     else
 	tree = (union tree *)NULL;
 
-    RT_INIT_DB_INTERNAL(ip);
+    RT_DB_INTERNAL_INIT(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_COMBINATION;
     ip->idb_meth = &rt_functab[ID_COMBINATION];
 
     BU_GETSTRUCT(comb, rt_comb_internal);
-    RT_INIT_COMB_INTERNAL(comb);
+    RT_COMB_INTERNAL_INIT(comb);
 
     comb->tree = tree;
 

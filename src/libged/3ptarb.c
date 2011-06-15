@@ -183,7 +183,7 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    RT_INIT_DB_INTERNAL( &internal );
+    RT_DB_INTERNAL_INIT( &internal );
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_ARB8;
     internal.idb_meth = &rt_functab[ID_ARB8];

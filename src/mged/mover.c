@@ -57,7 +57,7 @@ moveHobj(struct directory *dp, matp_t xlate)
     if (dbip == DBI_NULL)
 	return;
 
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     if (rt_db_get_internal(&intern, dp, dbip, xlate, &rt_uniresource) < 0) {
 	Tcl_AppendResult(INTERP, "rt_db_get_internal() failed for ", dp->d_namep,
 			 (char *)NULL);

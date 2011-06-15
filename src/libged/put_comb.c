@@ -50,7 +50,7 @@ _ged_make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory
     else
 	final_tree = (union tree *)NULL;
 
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_type = ID_COMBINATION;
     intern.idb_meth = &rt_functab[ID_COMBINATION];
@@ -425,7 +425,7 @@ put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct direc
 	    }
 
 	    BU_GETUNION(tp, tree);
-	    RT_INIT_TREE(tp);
+	    RT_TREE_INIT(tp);
 	    rt_tree_array[tree_index].tl_tree = tp;
 	    tp->tr_l.tl_op = OP_DB_LEAF;
 	    tp->tr_l.tl_name = bu_strdup(name);
@@ -534,7 +534,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
     } else {
 	/* make an empty combination structure */
 	BU_GETSTRUCT(comb, rt_comb_internal);
-	RT_INIT_COMB_INTERNAL(comb);
+	RT_COMB_INTERNAL_INIT(comb);
     }
 
     if (db_version(gedp->ged_wdbp->dbip) < 5) {

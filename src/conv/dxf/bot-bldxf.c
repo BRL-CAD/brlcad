@@ -527,7 +527,7 @@ int main(int ac, char *av[])
 	return 1;
     }
 
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
 
     if ((rtip=rt_dirbuild(av[arg_count], idbuf, sizeof(idbuf)))==RTI_NULL) {
 	fprintf(stderr, "rtexample: rt_dirbuild failure\n");

@@ -53,7 +53,7 @@ main(int argc, char** argv)
 {
     struct rt_wdb* outfp;
     struct rt_db_internal *tmp_internal = (struct rt_db_internal *) bu_malloc(sizeof(struct rt_db_internal), "allocate structure");
-    RT_INIT_DB_INTERNAL(tmp_internal);
+    RT_DB_INTERNAL_INIT(tmp_internal);
     struct bn_tol tmptol;
     tmptol.magic = BN_TOL_MAGIC;
     tmptol.dist = 0.005;
@@ -199,7 +199,7 @@ main(int argc, char** argv)
     bu_log("Writing an ARBN (via NMG) b-rep...\n");
     ON_Brep* arbnbrep = ON_Brep::New();
     struct rt_db_internal arbninternal;
-    RT_INIT_DB_INTERNAL(&arbninternal);
+    RT_DB_INTERNAL_INIT(&arbninternal);
     arbninternal.idb_type = ID_ARBN;
     arbninternal.idb_meth = &rt_functab[ID_ARBN];
     arbninternal.idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_arbn_internal), "rt_arbn_internal");

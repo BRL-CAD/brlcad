@@ -477,7 +477,7 @@ if ((_tree_index)) \
 else \
     (_final_tree) = TREE_NULL; \
 \
-RT_INIT_DB_INTERNAL(&(_intern)); \
+RT_DB_INTERNAL_INIT(&(_intern)); \
 (_intern).idb_major_type = DB5_MAJORTYPE_BRLCAD; \
 (_intern).idb_type = ID_COMBINATION; \
 (_intern).idb_meth = &rt_functab[ID_COMBINATION]; \
@@ -599,7 +599,7 @@ combmem_set(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 	}
 
 	BU_GETUNION(tp, tree);
-	RT_INIT_TREE(tp);
+	RT_TREE_INIT(tp);
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
 	if (etype == ETYPES_REL && tree_index < old_node_count && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat &&
@@ -682,7 +682,7 @@ combmem_set_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	}
 
 	BU_GETUNION(tp, tree);
-	RT_INIT_TREE(tp);
+	RT_TREE_INIT(tp);
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
 	if (tree_index < old_node_count && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat &&
@@ -760,7 +760,7 @@ combmem_set_arb_rot(struct ged *gedp, int argc, const char *argv[], enum etypes 
 	}
 
 	BU_GETUNION(tp, tree);
-	RT_INIT_TREE(tp);
+	RT_TREE_INIT(tp);
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
 	if (tree_index < old_node_count && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat &&
@@ -830,7 +830,7 @@ combmem_set_tra(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	}
 
 	BU_GETUNION(tp, tree);
-	RT_INIT_TREE(tp);
+	RT_TREE_INIT(tp);
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
 	if (tree_index < old_node_count && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat &&
@@ -907,7 +907,7 @@ combmem_set_sca(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	}
 
 	BU_GETUNION(tp, tree);
-	RT_INIT_TREE(tp);
+	RT_TREE_INIT(tp);
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
 	if (tree_index < old_node_count && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat &&

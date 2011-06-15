@@ -90,7 +90,7 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 		ged_make_name(gedp, ac, av);
 
 		/* Create the bot */
-		RT_INIT_DB_INTERNAL(&bot_intern);
+		RT_DB_INTERNAL_INIT(&bot_intern);
 		bot_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		bot_intern.idb_type = ID_BOT;
 		bot_intern.idb_meth = &rt_functab[ID_BOT];

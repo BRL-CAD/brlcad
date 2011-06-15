@@ -1186,7 +1186,7 @@ ged_inside(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
 
     if (argc < arg+1) {
 	bu_vls_printf(&gedp->ged_result_str, "Enter name of outside solid: ");
