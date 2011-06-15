@@ -1693,7 +1693,7 @@ struct bu_vls  {
 /**
  * returns truthfully whether a bu_vls struct has been initialized.
  * is not reliable unless the struct has been allocated with
- * bu_calloc() or a previous call to bu_init_vls() or BU_INIT_VLS()
+ * bu_calloc() or a previous call to bu_vls_init() or BU_INIT_VLS()
  * has been made.
  */
 #define BU_VLS_IS_INITIALIZED(_vp) \
