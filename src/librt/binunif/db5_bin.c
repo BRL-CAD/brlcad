@@ -256,7 +256,7 @@ rt_binunif_export5( struct bu_external		*ep,
     bip = (struct rt_binunif_internal *)ip->idb_ptr;
     RT_CK_BINUNIF(bip);
 
-    BU_INIT_EXTERNAL(ep);
+    BU_EXTERNAL_INIT(ep);
 
     /*
      * Convert from internal (host) to database (network) format

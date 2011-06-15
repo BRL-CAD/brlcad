@@ -68,7 +68,7 @@ rt_generic_xform(
     memset(&avs, 0, sizeof(struct bu_attribute_value_set));
 
     id = ip->idb_type;
-    BU_INIT_EXTERNAL(&ext);
+    BU_EXTERNAL_INIT(&ext);
     /* Scale change on export is 1.0 -- no change */
     switch (db_version(dbip)) {
 	case 4:

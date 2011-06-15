@@ -236,7 +236,7 @@ main(int argc, char **argv)
 		    }
 		    poly[curr_poly++] = record;	/* struct copy */
 		}
-		BU_INIT_EXTERNAL( &ext );
+		BU_EXTERNAL_INIT( &ext );
 		ext.ext_nbytes = curr_poly * sizeof( union record );
 		ext.ext_buf = (uint8_t *)poly;
 		if ( rt_functab[ID_POLY].ft_import4( &intern, &ext, bn_mat_identity, (struct db_i *)NULL, &rt_uniresource ) )
@@ -249,7 +249,7 @@ main(int argc, char **argv)
 		    bu_exit(1, "Unable to convert polysolid %s\n", poly[0].p.p_name );
 		}
 
-		BU_INIT_EXTERNAL( &ext2 );
+		BU_EXTERNAL_INIT( &ext2 );
 		if ( rt_functab[ID_POLY].ft_export4( &ext2, &intern, 1.0, (struct db_i *)NULL, &rt_uniresource ) < 0 )  {
 		    bu_exit(1, "Unable to export v4 BoT %s\n", poly[0].p.p_name );
 		}

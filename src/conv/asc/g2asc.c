@@ -463,7 +463,7 @@ get_ext(struct bu_external *ep, size_t ngran)
 {
     size_t count;
 
-    BU_INIT_EXTERNAL(ep);
+    BU_EXTERNAL_INIT(ep);
 
     ep->ext_nbytes = ngran * sizeof(union record);
     ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "get_ext ext_buf" );

@@ -469,7 +469,7 @@ rt_comb_export4(
     }
 
     /* Reformat the data into the necessary V4 granules */
-    BU_INIT_EXTERNAL(ep);
+    BU_EXTERNAL_INIT(ep);
     ep->ext_nbytes = sizeof(union record) * (1 + node_count);
     ep->ext_buf = bu_calloc(1, ep->ext_nbytes, "v4 comb external");
     rp = (union record *)ep->ext_buf;

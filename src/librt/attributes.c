@@ -150,7 +150,7 @@ db5_export_attributes(struct bu_external *ext, const struct bu_attribute_value_s
     size_t i;
 
     BU_CK_AVS(avs);
-    BU_INIT_EXTERNAL(ext);
+    BU_EXTERNAL_INIT(ext);
 
     if (avs->count <= 0) {
 	return;
@@ -265,7 +265,7 @@ db5_replace_attributes(struct directory *dp, struct bu_attribute_value_set *avsp
     }
 
     db5_export_attributes(&attr, avsp);
-    BU_INIT_EXTERNAL(&ext2);
+    BU_EXTERNAL_INIT(&ext2);
     db5_export_object3(&ext2,
 		       raw.h_dli,
 		       dp->d_namep,
@@ -357,7 +357,7 @@ db5_update_attributes(struct directory *dp, struct bu_attribute_value_set *avsp,
     bu_avs_merge(&old_avs, avsp);
 
     db5_export_attributes(&attr, &old_avs);
-    BU_INIT_EXTERNAL(&ext2);
+    BU_EXTERNAL_INIT(&ext2);
     db5_export_object3(&ext2,
 		       raw.h_dli,
 		       dp->d_namep,

@@ -319,7 +319,7 @@ db_get_external(register struct bu_external *ep, const struct directory *dp, con
     if ((dp->d_flags & RT_DIR_INMEM) == 0 && dp->d_addr == RT_DIR_PHONY_ADDR)
 	return -1;		/* was dummy DB entry */
 
-    BU_INIT_EXTERNAL(ep);
+    BU_EXTERNAL_INIT(ep);
     if (dbip->dbi_version < 5)
 	ep->ext_nbytes = dp->d_len * sizeof(union record);
     else

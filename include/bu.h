@@ -2181,7 +2181,7 @@ struct bu_external  {
 /**
  * initializes a bu_external struct without allocating any memory.
  */
-#define BU_INIT_EXTERNAL(_p) { \
+#define BU_EXTERNAL_INIT(_p) { \
 	(_p)->ext_magic = BU_EXTERNAL_MAGIC; \
 	(_p)->ext_buf = NULL; \
 	(_p)->ext_nbytes = 0; \

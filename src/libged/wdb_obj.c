@@ -7336,7 +7336,7 @@ wdb_hide_cmd(struct rt_wdb *wdbp,
 		continue;
 	}
 
-	BU_INIT_EXTERNAL(&ext);
+	BU_EXTERNAL_INIT(&ext);
 
 	if (db_get_external(&ext, dp, dbip) < 0) {
 	    Tcl_AppendResult(interp, "db_get_external failed for ",
@@ -7353,7 +7353,7 @@ wdb_hide_cmd(struct rt_wdb *wdbp,
 
 	raw.h_name_hidden = (unsigned char)(0x1);
 
-	BU_INIT_EXTERNAL(&tmp);
+	BU_EXTERNAL_INIT(&tmp);
 	db5_export_object3(&tmp, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
 			   dp->d_namep,
 			   raw.h_name_hidden,
@@ -7441,7 +7441,7 @@ wdb_unhide_cmd(struct rt_wdb *wdbp,
 
 	RT_CK_DIR(dp);
 
-	BU_INIT_EXTERNAL(&ext);
+	BU_EXTERNAL_INIT(&ext);
 
 	if (db_get_external(&ext, dp, dbip) < 0) {
 	    Tcl_AppendResult(interp, "db_get_external failed for ",
@@ -7458,7 +7458,7 @@ wdb_unhide_cmd(struct rt_wdb *wdbp,
 
 	raw.h_name_hidden = (unsigned char)(0x0);
 
-	BU_INIT_EXTERNAL(&tmp);
+	BU_EXTERNAL_INIT(&tmp);
 	db5_export_object3(&tmp, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
 			   dp->d_namep,
 			   raw.h_name_hidden,

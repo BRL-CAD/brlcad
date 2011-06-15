@@ -62,7 +62,7 @@ db5_write_free( struct db_i *dbip, struct directory *dp, size_t length )
 
     if ( length <= 8192 )  {
 
-	BU_INIT_EXTERNAL( &ext );
+	BU_EXTERNAL_INIT( &ext );
 	db5_make_free_object( &ext, length );
 
 	if ( dp->d_flags & RT_DIR_INMEM )  {
@@ -81,7 +81,7 @@ db5_write_free( struct db_i *dbip, struct directory *dp, size_t length )
 
     /* Free object is "large", only write the header and trailer bytes. */
 
-    BU_INIT_EXTERNAL( &ext );
+    BU_EXTERNAL_INIT( &ext );
     db5_make_free_object_hdr( &ext, length );
 
     if ( dp->d_flags & RT_DIR_INMEM )  {

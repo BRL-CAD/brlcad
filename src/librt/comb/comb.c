@@ -313,7 +313,7 @@ rt_comb_export5(
 	tcs.leafbytes +		/* size for leaf nodes */
 	rpn_len;		/* storage for RPN expression */
 
-    BU_INIT_EXTERNAL(ep);
+    BU_EXTERNAL_INIT(ep);
     ep->ext_nbytes = need;
     ep->ext_buf = bu_calloc(1, need, "rt_comb_export5 ext_buf");
 

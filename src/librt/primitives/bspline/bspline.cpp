@@ -984,7 +984,7 @@ rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
      * calculating the number of bytes
      * needed for storage and add it to the total
      */
-    BU_INIT_EXTERNAL(ep);
+    BU_EXTERNAL_INIT(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_LONG;	/* number of surfaces */
     for (s = 0; s < sip->nsrf; s++) {
 	ep->ext_nbytes += rt_nurb_bytes(sip->srfs[s]);

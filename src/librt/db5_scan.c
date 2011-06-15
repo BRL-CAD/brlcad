@@ -372,7 +372,7 @@ db_dirbuild(struct db_i *dbip)
 	    db5_update_ident(dbip, "Untitled BRL-CAD Database", 1.0);
 	    return 0;	/* not a fatal error, user may have deleted it */
 	}
-	BU_INIT_EXTERNAL(&ext);
+	BU_EXTERNAL_INIT(&ext);
 	if (db_get_external(&ext, dp, dbip) < 0 ||
 	    db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
 	    bu_log("db_dirbuild(%s): improper database, unable to read %s object\n",

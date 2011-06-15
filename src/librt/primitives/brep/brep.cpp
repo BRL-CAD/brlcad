@@ -2965,7 +2965,7 @@ rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
 
-    BU_INIT_EXTERNAL(ep);
+    BU_EXTERNAL_INIT(ep);
 
     RT_MemoryArchive archive;
     /* XXX what to do about the version */

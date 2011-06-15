@@ -4625,7 +4625,7 @@ nmg_stash_model_to_file(const char *filename, const struct model *m, const char 
     intern.idb_ptr = (genptr_t)m;
 
     if (db_version(fp->dbip) < 5) {
-	BU_INIT_EXTERNAL(&ext);
+	BU_EXTERNAL_INIT(&ext);
 	ret = intern.idb_meth->ft_export4(&ext, &intern, 1.0, fp->dbip, &rt_uniresource);
 	if (ret < 0) {
 	    bu_log("rt_db_put_internal(%s):  solid export failure\n",

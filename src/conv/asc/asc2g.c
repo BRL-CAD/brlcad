@@ -464,7 +464,7 @@ nmgbld(void)
     granules = atol(cp);
 
     /* Allocate storage for external v5 form of the body */
-    BU_INIT_EXTERNAL(&ext);
+    BU_EXTERNAL_INIT(&ext);
     ext.ext_nbytes = SIZEOF_NETWORK_LONG + 26*SIZEOF_NETWORK_LONG + 128 * granules;
     ext.ext_buf = bu_malloc(ext.ext_nbytes, "nmg ext_buf");
     *(uint32_t *)ext.ext_buf = htonl(version);

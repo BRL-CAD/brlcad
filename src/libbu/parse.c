@@ -121,7 +121,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
     size_t len;
     register size_t i;
 
-    BU_INIT_EXTERNAL(ext);
+    BU_EXTERNAL_INIT(ext);
 
     ext->ext_nbytes = 480;
     ext->ext_buf = (genptr_t)bu_malloc(ext->ext_nbytes,
@@ -423,7 +423,7 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
     size_t i;
     uint32_t len;
 
-    BU_INIT_EXTERNAL(ext);
+    BU_EXTERNAL_INIT(ext);
     ext->ext_buf = (genptr_t) bu_malloc(6, "bu_struct_get buffer head");
     bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
 
@@ -492,7 +492,7 @@ bu_struct_wrap_buf(struct bu_external *ext, genptr_t buf)
 {
     register long i, len;
 
-    BU_INIT_EXTERNAL(ext);
+    BU_EXTERNAL_INIT(ext);
     ext->ext_buf = buf;
     i = (((unsigned char *)(ext->ext_buf))[0] << 8) |
 	((unsigned char *)(ext->ext_buf))[1];
@@ -2134,7 +2134,7 @@ void
 bu_copy_external(struct bu_external *op, const struct bu_external *ip)
 {
     BU_CK_EXTERNAL(ip);
-    BU_INIT_EXTERNAL(op);
+    BU_EXTERNAL_INIT(op);
 
     if (UNLIKELY(op == ip))
 	return;

@@ -289,7 +289,7 @@ wdb_put_internal(
     RT_CK_DB_INTERNAL(ip);
 
     if (db_version(wdbp->dbip) < 5) {
-	BU_INIT_EXTERNAL(&ext);
+	BU_EXTERNAL_INIT(&ext);
 
 	ret = -1;
 	if (ip->idb_meth->ft_export4) {
