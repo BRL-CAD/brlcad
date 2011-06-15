@@ -364,67 +364,26 @@ removing unused parameters.
 Basically, the impact can usually be considered minor if a static
 regular expression search-and-replace is all that is needed to update.
 Included in following are various minimally impacting API changes that
-have been identified in reverse chronological order.  As expressions are
-not extensively tested, use with caution.
+have been identified in chronological order.  As expressions are not
+extensively tested, use with caution.
 
 Expressions are shown using Perl syntax and may need adjustment
 (particularly quoting of '(', ')', and '|') for other environments.
 Most expressions will apply with: perl -0777 -pi -e 'EXPRESSION' FILE
 
-s/BU_LIST_UNINITIALIZED/!BU_LIST_IS_INITIALIZED/g
-        BU_LIST_IS_INITIALIZED() removed for consistency [7.20]
 
-s/[[:space:]]*BU_ARGS[[:space:]]*\([[:space:]]*([^)]*[[:space:]]*)[[:space:]]*\)/\1/g
-        BU_ARGS() no longer necessary due to C89 minimum, list args [7.20]
+7.14
+----
+s/rt_db_free_internal\(([^,]+),[^\)]*\)/rt_db_free_internal(\1)/g
+	struct resource pointer parameter removed [7.14]
 
-s/BU_EXTERN[[:space:]]*\([[:space:]]*([^,]*?)[[:space:]]*,[[:space:]]*\([[:space:]]*([^)]*)[[:space:]]*\)[[:space:]]*\)/extern \1(\2)/g
-        BU_EXTERN() no longer necessary due to C89 minimum, use extern [7.20]
+7.16
+----
+s/rt_ptalloc\(\);/(struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");/g
+        rt_ptalloc() removed [7.16]
 
-s/SPM_NULL/BN_SPM_MAP_NULL/g
-        SPM_NULL renamed to BN_SPM_MAP_NULL [7.20]
-
-s/SPM_MAGIC/BN_SPM_MAGIC/g
-        SPM_MAGIC renamed to BN_SPM_MAGIC [7.20]
-
-s/RT_CK_SPM/BN_CK_SPM_MAP/g
-        RT_CK_SPM macro renamed to BN_CK_SPM MAP [7.20]
-
-s/spm_([^\)]*)/bn_spm_\1/g
-        spm functions and types renamed to bn_spm [7.20]
-
-s/V2APPROXEQUAL\(/V2NEAR_EQUAL(/g
-        V2APPROXEQUAL() renamed to V2NEAR_EQUAL() [7.18]
-
-s/SMALL([^_])/SMALL_FAST\1/g
-        SMALL renamed to SMALL_FASTF [7.18]
-
-s/db_shader_mat\(/rt_shader_mat(/g
-        db_shader_mat() renamed to rt_shader_mat() [7.18]
-
-s/rt_get_seg\(/rt_alloc_sed_block(/g
-        rt_get_seg() renamed to rt_alloc_seg_block() [7.18]
-
-s/db_get_directory\(/db_alloc_directory_block(/g
-        db_get_directory() renamed to db_alloc_directory_block() [7.18]
-
-s/db_get_directory_size\(/db_directory_size(/g
-        db_get_directory_size() renamed to db_directory_size() [7.18]
-
-s/db_get_version\(/db_version(/g
-        db_get_version() renamed to db_version() [7.18]
-
-s/VAPPROXEQUAL\(/VNEAR_EQUAL(/g
-        VAPPROXEQUAL() renamed to VNEAR_EQUAL() [7.18]
-
-s/bu_vlb_getBufferLength\(/bu_vlb_buflen(/g
-        bu_vlb_getBufferLength() remamed to bu_vlb_buflen() [7.18]
-
-s/bu_vlb_getBuffer\(/bu_vlb_addr(/g
-        bu_vlb_getBuffer() remamed to bu_vlb_addr() [7.18]
-
-s/nmg_struct_counts\(/nmg_pr_m_struct_counts(/g
-        nmg_struct_counts() renamed to nmg_pr_m_struct_counts() [7.18]
-
+7.18
+----
 s/bu_ptbl\(([^,]*),[[:space:]]*BU_PTBL_INIT([^\)]*)\)/bu_ptbl_init(\1, 64, "init")/g
 s/bu_ptbl\(([^,]*),[[:space:]]*BU_PTBL_RST([^\)]*)\)/bu_ptbl_reset(\1)/g
 s/bu_ptbl\(([^,]*),[[:space:]]*BU_PTBL_INS([^\)]*)\)/bu_ptbl_ins(\1\2)/g
@@ -436,8 +395,58 @@ s/bu_ptbl\(([^,]*),[[:space:]]*BU_PTBL_CAT([^\)]*)\)/bu_ptbl_cat(\1\2)/g
 s/bu_ptbl\(([^,]*),[[:space:]]*BU_PTBL_FREE([^\)]*)\)/bu_ptbl_free(\1)/g
         bu_ptbl() removed [7.18]
 
-s/rt_ptalloc\(\);/(struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");/g
-        rt_ptalloc() removed [7.16]
+s/nmg_struct_counts\(/nmg_pr_m_struct_counts(/g
+        nmg_struct_counts() renamed to nmg_pr_m_struct_counts() [7.18]
 
-s/rt_db_free_internal\(([^,]+),[^\)]*\)/rt_db_free_internal(\1)/g
-	struct resource pointer parameter removed [7.14]
+s/bu_vlb_getBuffer\(/bu_vlb_addr(/g
+        bu_vlb_getBuffer() remamed to bu_vlb_addr() [7.18]
+
+s/bu_vlb_getBufferLength\(/bu_vlb_buflen(/g
+        bu_vlb_getBufferLength() remamed to bu_vlb_buflen() [7.18]
+
+s/V2APPROXEQUAL\(/V2NEAR_EQUAL(/g
+        V2APPROXEQUAL() renamed to V2NEAR_EQUAL() [7.18]
+
+s/VAPPROXEQUAL\(/VNEAR_EQUAL(/g
+        VAPPROXEQUAL() renamed to VNEAR_EQUAL() [7.18]
+
+s/db_get_version\(/db_version(/g
+        db_get_version() renamed to db_version() [7.18]
+
+s/db_get_directory_size\(/db_directory_size(/g
+        db_get_directory_size() renamed to db_directory_size() [7.18]
+
+s/db_get_directory\(/db_alloc_directory_block(/g
+        db_get_directory() renamed to db_alloc_directory_block() [7.18]
+
+s/rt_get_seg\(/rt_alloc_sed_block(/g
+        rt_get_seg() renamed to rt_alloc_seg_block() [7.18]
+
+s/db_shader_mat\(/rt_shader_mat(/g
+        db_shader_mat() renamed to rt_shader_mat() [7.18]
+
+s/SMALL([^_])/SMALL_FAST\1/g
+        SMALL renamed to SMALL_FASTF [7.18]
+
+7.20
+----
+s/spm_([^\)]*)/bn_spm_\1/g
+        spm functions and types renamed to bn_spm [7.20]
+
+s/RT_CK_SPM/BN_CK_SPM_MAP/g
+        RT_CK_SPM macro renamed to BN_CK_SPM MAP [7.20]
+
+s/SPM_MAGIC/BN_SPM_MAGIC/g
+        SPM_MAGIC renamed to BN_SPM_MAGIC [7.20]
+
+s/SPM_NULL/BN_SPM_MAP_NULL/g
+        SPM_NULL renamed to BN_SPM_MAP_NULL [7.20]
+
+s/BU_EXTERN[[:space:]]*\([[:space:]]*([^,]*?)[[:space:]]*,[[:space:]]*\([[:space:]]*([^)]*)[[:space:]]*\)[[:space:]]*\)/extern \1(\2)/g
+        BU_EXTERN() no longer necessary due to C89 minimum, use extern [7.20]
+
+s/[[:space:]]*BU_ARGS[[:space:]]*\([[:space:]]*([^)]*[[:space:]]*)[[:space:]]*\)/\1/g
+        BU_ARGS() no longer necessary due to C89 minimum, list args [7.20]
+
+s/BU_LIST_UNINITIALIZED/!BU_LIST_IS_INITIALIZED/g
+        BU_LIST_IS_INITIALIZED() removed for consistency [7.20]
