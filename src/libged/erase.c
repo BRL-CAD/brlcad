@@ -48,7 +48,8 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
     int flag_o_nonunique=1;
     int last_opt=0;
     struct bu_vls vls;
-    static const char *usage = "[[-o] -A attribute=value] [object(s)]";
+    static const char *usage = "[-r] [[-o] -A attribute=value] [object(s)]";
+    const char *cmdName = **argv;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -59,7 +60,7 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmdName, usage);
 	return GED_HELP;
     }
 
@@ -67,7 +68,7 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
     --argc;
     ++argv;
 
-    /* check args for "-A" (attributes) and "-o" */
+    /* check args for options */
     bu_vls_init(&vls);
     for (i=0; i<(size_t)argc; i++) {
 	char *ptr_A=NULL;
@@ -75,6 +76,13 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 
 	if (*argv[i] != '-')
 	    break;
+
+	if (strchr(argv[i], 'r')) {
+	    /* Erase all and quit (ignore other options) */
+	    for (i = 1; i < (size_t)argc; ++i)
+		_ged_eraseAllPathsFromDisplay(gedp, argv[i], 0);
+	    return GED_OK;
+	}
 
 	ptr_A=strchr(argv[i], 'A');
 	if (ptr_A)
@@ -87,7 +95,7 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 	last_opt = i;
 
 	if (!ptr_A && !ptr_o) {
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmdName, usage);
 	    return GED_ERROR;
 	}
 
@@ -96,7 +104,7 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmdName, usage);
 	return GED_ERROR;
     }
 

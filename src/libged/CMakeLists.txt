@@ -64,7 +64,6 @@ set(LIBGED_SOURCES
     editit.c
     edmater.c
     erase.c
-    erase_all.c
     expand.c
     eye.c
     eye_pos.c

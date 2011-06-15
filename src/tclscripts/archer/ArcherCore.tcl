@@ -172,7 +172,6 @@ namespace eval ArcherCore {
 	method edcomb              {args}
 	method edmater             {args}
 	method erase               {args}
-	method erase_all           {args}
 	method ev                  {args}
 	method exit                {args}
 	method facetize            {args}
@@ -445,7 +444,7 @@ namespace eval ArcherCore {
 	    bot_smooth bot_split bot_sync bot_vertex_fuse c cd clear clone \
 	    closedb color comb comb_color combmem copy copyeval copymat cp \
 	    cpi dbconcat dbExpand decompose delete draw E edcodes edcolor \
-	    edcomb edmater erase erase_all ev exit facetize fracture g group \
+	    edcomb edmater erase ev exit facetize fracture g group \
 	    hide human i importFg4Section in inside item kill killall \
 	    killrefs killtree ls make make_bb make_pnts man mater mirror move \
 	    move_arb_edge move_arb_face mv mvall nmg_collapse nmg_simplify \
@@ -5137,6 +5136,7 @@ namespace eval ArcherCore {
     set objects [lindex $optionsAndArgs 1]
 
     # remove leading /'s to make the hierarchy widget happy
+    set tobjects {}
     foreach obj $objects {
 	lappend tobjects [regsub {^/} $obj ""]
     }
@@ -5152,10 +5152,6 @@ namespace eval ArcherCore {
     gedCmd configure -primitiveLabels {}
     updateTreeDrawLists
     SetNormalCursor $this
-}
-
-::itcl::body ArcherCore::erase_all {args} {
-    eval gedWrapper erase_all 1 0 0 1 $args
 }
 
 ::itcl::body ArcherCore::ev {args} {

@@ -176,7 +176,6 @@ package provide cadwidgets::Ged 1.0
 	method edcomb {args}
 	method edmater {args}
 	method erase {args}
-	method erase_all {args}
 	method ev {args}
 	method expand {args}
 	method eye {args}
@@ -1230,10 +1229,6 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::erase {args} {
     eval $mGed erase $args
-}
-
-::itcl::body cadwidgets::Ged::erase_all {args} {
-    eval $mGed erase_all $args
 }
 
 ::itcl::body cadwidgets::Ged::ev {args} {
@@ -4110,7 +4105,6 @@ package provide cadwidgets::Ged 1.0
     $help add edcomb		{{comb rflag rid air los mid} {modify combination record information}}
     $help add edmater		{{comb1 [comb2 ...]} {edit combination materials}}
     $help add erase		{{<objects>} {remove objects from the screen}}
-    $help add erase_all		{{<objects>} {remove all occurrences of object(s) from the screen}}
     $help add ev		{{"[-dfnqstuvwT] [-P #] <objects>"} {evaluate objects via NMG tessellation}}
     $help add expand		{{expression} {globs expression against database objects}}
     $help add eye		{{mx my mz} {set eye point to given model coordinates}}

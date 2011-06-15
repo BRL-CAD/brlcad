@@ -65,7 +65,6 @@ option add *Mged.height 400 widgetDefault
 	method edcomb {args}
 	method edmater {args}
 	method erase {args}
-	method erase_all {args}
 	method ev {args}
 	method expand {args}
 	method facetize {args}
@@ -670,10 +669,6 @@ option add *Mged.height 400 widgetDefault
 
 ::itcl::body Mged::ev {args} {
     eval $db ev $args
-}
-
-::itcl::body Mged::erase_all {args} {
-    eval $db erase_all $args
 }
 
 ::itcl::body Mged::overlay {args} {

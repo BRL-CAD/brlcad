@@ -1483,11 +1483,6 @@ GED_EXPORT extern int ged_edmater(struct ged *gedp, int argc, const char *argv[]
 GED_EXPORT extern int ged_erase(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Erase all occurrences of objects from the display.
- */
-GED_EXPORT extern int ged_erase_all(struct ged *gedp, int argc, const char *argv[]);
-
-/**
  * Evaluate objects via NMG tessellation
  */
 GED_EXPORT extern int ged_ev(struct ged *gedp, int argc, const char *argv[]);

@@ -110,7 +110,6 @@ set mged_help_data(copymat)	{{a/b c/d}	{copy matrix from one combination's arc t
 set mged_help_data(cp)		$helplib_data(wdb_copy)
 set mged_help_data(cpi)		{{from to}	{copy cylinder and position at end of original cylinder}}
 set mged_help_data(d)		$helplib_data(dgo_erase)
-set mged_help_data(dall)	$helplib_data(dgo_erase_all)
 set mged_help_data(db)		{{command}	{database manipulation routines}}
 set mged_help_data(db_glob)	{{cmd_string}	{globs cmd_string against the MGED database
     resulting in an expanded command string}}
@@ -143,7 +142,6 @@ set mged_help_data(edcomb)	{{combname Regionflag regionid air los [material]}	{e
 set mged_help_data(edgedir)	{{[delta_x delta_y delta_z]|[rot fb]}	{define direction of ARB edge being moved}}
 set mged_help_data(edmater)	{{comb(s)}	{edit combination materials}}
 set mged_help_data(erase)	{{<objects>}	{remove objects from the screen}}
-set mged_help_data(erase_all)	{{<objects>}	{remove all occurrences of object(s) from the screen}}
 set mged_help_data(ev)		$helplib_data(dgo_ev)
 set mged_help_data(eqn)		{{A B C}	{planar equation coefficients}}
 set mged_help_data(exit)	{{}	{exit}}

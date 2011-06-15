@@ -34,7 +34,6 @@
 	method draw {args}
 	method E {args}
 	method erase {args}
-	method erase_all {args}
 	method ev {args}
 	method get_autoview {}
 	method get_eyemodel {viewObj}
@@ -116,10 +115,6 @@
 
 ::itcl::body Drawable::erase {args} {
     eval $dg erase $args
-}
-
-::itcl::body Drawable::erase_all {args} {
-    eval $dg erase_all $args
 }
 
 ::itcl::body Drawable::ev {args} {
@@ -243,7 +238,6 @@
     $help add clear		{{} {clear screen}}
     $help add draw		{{"-C#/#/# <objects>"} {draw objects}}
     $help add erase		{{<objects>} {remove objects from the screen}}
-    $help add erase_all		{{<objects>} {remove all occurrences of object(s) from the screen}}
     $help add ev		{{"[-dfnqstuvwT] [-P #] <objects>"} {evaluate objects via NMG tessellation}}
     $help add get_autoview	{{} {get view parameters that shows drawn geometry}}
     $help add how		{{obj} {returns how an object is being displayed}}
