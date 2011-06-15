@@ -97,6 +97,9 @@ target_link_libraries(htester ${CMAKE_THREAD_LIBS_INIT} ${PNG_LIBRARY} libbu)
 add_executable(timetester timetester.c)
 target_link_libraries(timetester libbu)
 
+add_executable(basenametester  basenametester.c)
+target_link_libraries(basenametester libbu)
+
 set(bu_MAN3
   htond.3
   libbu.3
