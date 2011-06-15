@@ -754,18 +754,20 @@ struct bu_list {
 typedef struct bu_list bu_list_t;
 #define BU_LIST_NULL ((struct bu_list *)0)
 
-#define BU_LIST_IS_INITIALIZED(hp)	(LIKELY((hp)->forw != BU_LIST_NULL))
+/**
+ * there is no reliable way to assert the integrity of an arbitrary
+ * bu_list struct since the magic can be anything, therefore there is
+ * no BU_CK_LIST().  we can, however, check for a valid head node.
+ */
+#define BU_CK_LIST_HEAD(_p) BU_CKMAG((_p), BU_LIST_HEAD_MAGIC, "bu_list")
 
 /**
- * initializes a bu_list struct without allocating any memory
+ * initializes a bu_list struct as a circular list without allocating
+ * any memory.  call BU_LIST_MAGIC_SET() to change the list type.
  */
 #define BU_LIST_INIT(hp) { \
 	(hp)->forw = (hp)->back = (hp); \
 	(hp)->magic = BU_LIST_HEAD_MAGIC;	/* used by circ. macros */ }
-/**
- * initializes a bu_list struct without allocating any memory
- */
-#define BU_INIT_LIST(_lp) BU_LIST_INIT((_lp))
 
 /**
  * macro suitable for declaration statement initialization of a
@@ -773,9 +775,16 @@ typedef struct bu_list bu_list_t;
  */
 #define BU_LIST_INIT_ZERO { BU_LIST_HEAD_MAGIC, BU_LIST_NULL, BU_LIST_NULL }
 
+/**
+ * returns truthfully whether a bu_list has been initialized via
+ * BU_LIST_INIT().  lists initialized with BU_LIST_INIT_ZERO will not
+ * return true as their forward/backward pointers reference nothing.
+ */
+#define BU_LIST_IS_INITIALIZED(hp) (LIKELY((hp)->forw != BU_LIST_NULL))
+
 #define BU_LIST_MAGIC_SET(hp, val) {(hp)->magic = (val);}
-#define BU_LIST_MAGIC_OK(hp, val)	((hp)->magic == (val))
-#define BU_LIST_MAGIC_WRONG(hp, val)	((hp)->magic != (val))
+#define BU_LIST_MAGIC_OK(hp, val) ((hp)->magic == (val))
+#define BU_LIST_MAGIC_WRONG(hp, val) ((hp)->magic != (val))
 
 
 #define BU_LIST_CLOSE(hp) { \
@@ -928,7 +937,6 @@ typedef struct bu_list bu_list_t;
     (((struct bu_list *)(p)) == (hp))
 #define BU_LIST_NOT_HEAD(p, hp)	\
     (((struct bu_list *)(p)) != (hp))
-#define BU_CK_LIST_HEAD(_p) BU_CKMAG((_p), BU_LIST_HEAD_MAGIC, "bu_list")
 
 /**
  * Boolean test to see if previous list element is the head
@@ -1222,6 +1230,8 @@ struct bu_bitv {
     unsigned int nbits;		/**< @brief actual size of bits[], in bits */
     bitv_t bits[2];	/**< @brief variable size array */
 };
+typedef struct bu_bitv bu_bitv_t;
+#define BU_BITV_NULL ((struct bu_bitv *)0)
 
 /**
  * verifies the integrity of a bu_bitv struct
@@ -1231,8 +1241,8 @@ struct bu_bitv {
 /**
  * initializes a bu_bitv struct without allocating any memory
  */
-#define BU_INIT_BITV(_bp) { \
-	BU_INIT_LIST(&(_bp)->l); \
+#define BU_BITV_INIT(_bp) { \
+	BU_LIST_INIT(&(_bp)->l); \
 	BU_LIST_MAGIC_SET(&(_bp)->l, BU_BITV_MAGIC); \
 	(_bp)->nbits = 0; \
 	(_bp)->bits[0] = 0; \
@@ -1245,6 +1255,10 @@ struct bu_bitv {
  */
 #define BU_BITV_INIT_ZERO { {BU_BITV_MAGIC, BU_LIST_NULL, BU_LIST_NULL}, 0, {0, 0} }
 
+/**
+ * returns truthfully whether a bu_bitv has been initialized
+ */
+#define BU_BITV_IS_INITIALIZED(_bp) (LIKELY((_bp)->l.magic == BU_BITV_MAGIC))
 
 /**
  * b u _ b i t v _ s h i f t
@@ -1396,7 +1410,35 @@ struct bu_hist  {
     long hg_nbins;		/**< @brief # of bins in hg_bins[]  */
     long *hg_bins;		/**< @brief array of counters */
 };
+typedef struct bu_hist bu_hist_t;
+#define BU_HIST_NULL ((struct bu_hist *)0)
+
+/**
+ * assert the integrity of a bu_hist struct.
+ */
 #define BU_CK_HIST(_p) BU_CKMAG(_p, BU_HIST_MAGIC, "struct bu_hist")
+
+/**
+ * initialize a bu_hist struct without allocating any memory.
+ */
+#define BU_HIST_INIT(_hp) { \
+	(_hp)->magic = BU_HIST_MAGIC; \
+	(_hp)->hg_min = (_hp)->hg_max = (_hp)->hg_clumpsize = 0.0; \
+	(_hp)->hg_nsamples = (_hp)->hg_nbins = 0; \
+	(_hp)->hg_bins = NULL; \
+    }
+
+/**
+ * macro suitable for declaration statement initialization of a
+ * bu_hist struct.  does not allocate memory.
+ */
+#define BU_HIST_INIT_ZERO {BU_HIST_MAGIC, 0.0, 0.0, 0.0, 0, 0, NULL}
+
+/**
+ * returns truthfully whether a bu_hist has been initialized via
+ * BU_HIST_INIT() or BU_HIST_INIT_ZERO.
+ */
+#define BU_HIST_IS_INITIALIZED(_hp) (LIKELY((_hp)->magic == BU_HIST_MAGIC))
 
 #define BU_HIST_TALLY(_hp, _val) { \
 	if ((_val) <= (_hp)->hg_min) { \
