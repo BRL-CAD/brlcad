@@ -757,7 +757,7 @@ typedef struct bu_list bu_list_t;
 #define BU_LIST_IS_INITIALIZED(hp)	(LIKELY((hp)->forw != BU_LIST_NULL))
 
 /**
- * DEPRECATED: use BU_INIT_LIST
+ * initializes a bu_list struct without allocating any memory
  */
 #define BU_LIST_INIT(hp) { \
 	(hp)->forw = (hp)->back = (hp); \
