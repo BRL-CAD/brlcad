@@ -58,15 +58,15 @@
 #ifdef HAVE_GL_GLX_H
 #  include <GL/glx.h>
 #endif
+#ifdef HAVE_GL_GL_H
+#  include <GL/gl.h>
+#endif
 #undef remainder
 #undef access
 #undef index
 #undef read
 #undef y1
 #undef j1
-#ifdef HAVE_GL_GL_H
-#  include <GL/gl.h>
-#endif
 
 #include "tk.h"
 
