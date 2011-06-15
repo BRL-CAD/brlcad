@@ -1003,10 +1003,11 @@ struct rt_comb_internal {
     }
 
 /**
- * release memory associated with an rt_comb_internal.  the tree
- * pointer is not released so callers will need to call RT_FREE_TREE()
- * directly if a tree is set.  however, the shader and material
- * strings are released.
+ * deinitialize an rt_comb_internal.  the tree pointer is not released
+ * so callers will need to call RT_FREE_TREE() or db_free_tree()
+ * directly if a tree is set.  the shader and material strings are
+ * released.  the comb itself will need to be released with bu_free()
+ * unless it resides on the stack.
  */
 #define RT_FREE_COMB_INTERNAL(_p) { \
 	bu_vls_free(&(_p)->shader); \
@@ -1254,7 +1255,7 @@ union tree {
     }
 
 /**
- * RT_FREE_TREE releases a tree union pointer.
+ * RT_FREE_TREE deinitializes a tree union pointer.
  *
  * This is a malloc-efficient replacement for bu_free(tp).  Instead of
  * actually freeing the nodes, they are added to a single-linked list
