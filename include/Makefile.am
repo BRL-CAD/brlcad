@@ -85,7 +85,6 @@ noinst_HEADERS = \
 	sysv.h
 
 EXTRA_DIST = \
-	sed4 \
 	config_win_cmake.h \
 	CMakeLists.txt
 
