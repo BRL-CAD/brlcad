@@ -1741,7 +1741,35 @@ struct bu_attribute_value_set {
     genptr_t readonly_max;
     struct bu_attribute_value_pair *avp;	/**< @brief array[max]  */
 };
-#define BU_CK_AVS(_avp) BU_CKMAG(_avp, BU_AVS_MAGIC, "bu_attribute_value_set")
+typedef struct bu_attribute_value_set bu_avs_t;
+#define BU_AVS_NULL ((struct bu_attribute_value_set *)0)
+
+/**
+ * assert the integrity of a non-head node bu_attribute_value_set struct.
+ */
+#define BU_CK_AVS(_ap) BU_CKMAG(_ap, BU_AVS_MAGIC, "bu_attribute_value_set")
+
+/**
+ * initialize a bu_attribute_value_set struct without allocating any memory.
+ */
+#define BU_AVS_INIT(_ap) { \
+	(_ap)->magic = BU_AVS_MAGIC; \
+	(_ap)->count = (_ap)->max = 0; \
+	(_ap)->readonly_min = (_ap)->readonly_max = (_ap)->avp = NULL; \
+    }
+
+/**
+ * macro suitable for declaration statement initialization of a
+ * bu_attribute_value_set struct.  does not allocate memory.
+ */
+#define BU_AVS_INIT_ZERO { BU_AVS_MAGIC, 0, 0, NULL, NULL, NULL }
+
+/**
+ * returns truthfully whether a bu_attribute_value_set has been initialized via
+ * BU_AVS_INIT() or BU_AVS_INIT_ZERO.
+ */
+#define BU_AVS_IS_INITIALIZED(_ap) (LIKELY((_ap)->magic == BU_AVS_MAGIC))
+
 
 /**
  * B U _ A V S _ F O R
