@@ -1,0 +1,16 @@
+CHANGES
+ChangeLog
+README
+aclocal.m4
+configure.in
+demos
+doc
+incoming
+iwidgets.tcl.in
+license.terms
+outgoing
+pkgIndex.tcl
+pkgIndex.tcl.in
+tclconfig
+tests
+win
