@@ -68,7 +68,7 @@ main(int ac, char *av[])
     /* user tests */
     if (ac > 1) {
 	printf("Enter a string:\n");
-	fgets(input, 1000, stdin);
+	bu_fgets(input, 1000, stdin);
 	if (strlen(input) > 0)
 	    input[strlen(input)-1] = '\0';
 	automatic_test(input);
