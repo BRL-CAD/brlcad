@@ -21,6 +21,7 @@ cnv/rletorast.c
 cnv/rletotiff.c
 cnv/tifftorle.c
 cnv/rletoabA62/COPYRIGHT
+cnv/rletogif/rletogif.h
 tools/rleaddeof.c
 tools/rleskel.c
 tools/clock/README

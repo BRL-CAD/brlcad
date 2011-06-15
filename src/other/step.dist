@@ -88,3 +88,7 @@ src/clutils/scl_string.h
 src/clutils/scldir.h
 src/clutils/stat.h
 src/clutils/str_list.h
+src/clSchemas
+src/clivfasd
+src/clprobe-ui
+src/test
