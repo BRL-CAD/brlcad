@@ -997,8 +997,8 @@ struct rt_comb_internal {
 	(_p)->rgb[1] = 0; \
 	(_p)->rgb[2] = 0; \
 	(_p)->temperature = 0.0; \
-	BU_INIT_VLS(&(_p)->shader); \
-	BU_INIT_VLS(&(_p)->material); \
+	BU_VLS_INIT(&(_p)->shader); \
+	BU_VLS_INIT(&(_p)->material); \
 	(_p)->inherit = 0; \
     }
 
