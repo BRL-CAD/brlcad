@@ -228,7 +228,7 @@ bu_getprogname(void) {
 
     tmp_basename = bu_basename(bu_progname);
     bu_strlcpy(buffer, tmp_basename, strlen(tmp_basename)+1);
-    bu_free(buffer, "tmp_basename free");
+    bu_free(tmp_basename, "tmp_basename free");
     return buffer;
 }
 
