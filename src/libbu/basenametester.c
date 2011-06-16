@@ -36,17 +36,20 @@ void
 automatic_test(const char *input)
 {
 
-    char *ans, buf_input[1000];
-    char *res;
+    char *ans = NULL;
+    char buf_input[1000];
+    char *res = NULL;
 
     if (input)
 	bu_strlcpy(buf_input, input, strlen(input)+1);
 
+#ifdef HAVE_BASENAME
     /* build UNIX 'basename' command */
     if (!input)
 	ans = basename(NULL);
     else
 	ans = basename(buf_input);
+#endif
 
     if (!input)
 	res = bu_basename(NULL);
