@@ -2301,6 +2301,7 @@ AC_CHECK_FUNCS(\
 	drand48 \
 	fchmod \
 	fsync \
+	getcwd \
 	getegid \
 	geteuid \
 	gethostname \
