@@ -1673,7 +1673,7 @@ package provide Archer 1.0
 
 	grid forget $itk_component(canvas)
 	if {!$mViewOnly} {
-	    grid $itk_component(ged) -row 1 -column 0 -columnspan 3 -sticky news
+	    grid $itk_component(ged) -row 0 -column 0 -columnspan 3 -sticky news
 	    after idle "$this component cmd configure -cmd_prefix \"[namespace tail $this] cmd\""
 	} else {
 	    grid $itk_component(ged) -row 1 -column 0 -sticky news

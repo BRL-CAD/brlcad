@@ -912,7 +912,7 @@ namespace eval ArcherCore {
 	    -relief sunken
     } {}
 
-    if {!$mNoToolbar} {
+    if {$mViewOnly && !$mNoToolbar} {
 	itk_component add canvas_menu {
 	    ::iwidgets::menubar $itk_component(canvasF).canvas_menu \
 		-helpvariable [::itcl::scope mStatusStr] \
@@ -935,14 +935,9 @@ namespace eval ArcherCore {
 		-borderwidth 0 \
 		-relief flat 
 	} {}
-	if {!$mNoToolbar} {
-	    grid $itk_component(canvas_menu) -row 0 -column 1 -sticky w
-	    grid $itk_component(canvas) -row 1 -column 0 -columnspan 3 -sticky news
-	    grid rowconfigure $itk_component(canvasF) 1 -weight 1
-	} else {
-	    grid $itk_component(canvas) -row 0 -column 0 -columnspan 3 -sticky news
-	    grid rowconfigure $itk_component(canvasF) 0 -weight 1
-	}
+
+	grid $itk_component(canvas) -row 0 -column 0 -columnspan 3 -sticky news
+	grid rowconfigure $itk_component(canvasF) 0 -weight 1
 	grid columnconfigure $itk_component(canvasF) 1 -weight 1
 
 	# status bar
@@ -1208,7 +1203,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::buildCanvasMenubar {}  {
-    if {!$mNoToolbar} {
+    if {$mViewOnly && !$mNoToolbar} {
 	# View Menu
 	$itk_component(canvas_menu) add menubutton view \
 	    -text "View" -menu {
