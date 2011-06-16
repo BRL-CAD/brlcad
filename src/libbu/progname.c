@@ -46,7 +46,7 @@ _bu_ipwd()
 {
     /* private stash */
     static const char *ipwd = NULL;
-    static char buffer[MAXPATHLEN] = {0};
+    char buffer[MAXPATHLEN] = {0};
     const char *pwd = NULL;
 
     /* already found the path before */
