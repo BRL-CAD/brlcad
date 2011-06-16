@@ -175,15 +175,7 @@ bu_argv0_full_path(void)
 const char *
 bu_getprogname(void) {
     const char *name = NULL;
-    static char buffer[MAXPATHLEN] = {0};
-    char *tmp_basename;
-
-    if (bu_progname[0] != '\0') {
-	tmp_basename = bu_basename(bu_progname);
-	bu_strlcpy(buffer, tmp_basename, strlen(tmp_basename)+1);
-	bu_free(tmp_basename, "tmp_basename free");
-	return buffer;
-    }
+    char *tmp_basename = NULL;
 
 #ifdef HAVE_GETPROGNAME
     name = getprogname(); /* not malloc'd memory */
@@ -193,12 +185,15 @@ bu_getprogname(void) {
 	name = _bu_argv0();
     }
 
-    snprintf(bu_progname, MAXPATHLEN, "%s", name);
+    tmp_basename = bu_basename(name);
+    if (!BU_STR_EQUAL(tmp_basename, ".") && !BU_STR_EQUAL(tmp_basename, "/")) {
+	bu_strlcpy(bu_progname, tmp_basename, MAXPATHLEN);
+	bu_free(tmp_basename, "tmp_basename free");
+    } else {
+	bu_strlcpy(bu_progname, name, MAXPATHLEN);
+    }
 
-    tmp_basename = bu_basename(bu_progname);
-    bu_strlcpy(buffer, tmp_basename, strlen(tmp_basename)+1);
-    bu_free(tmp_basename, "tmp_basename free");
-    return buffer;
+    return bu_progname;
 }
 
 
