@@ -131,6 +131,7 @@ option add *Mged.height 400 widgetDefault
 	method tol {args}
 	method tops {args}
 	method track {args}
+	method translate {args}
 	method tree {args}
 	method unhide {args}
 	method units {args}
@@ -429,6 +430,10 @@ option add *Mged.height 400 widgetDefault
 
 ::itcl::body Mged::track {args} {
     eval $db track $args
+}
+
+::itcl::body Mged::translate {args} {
+    eval $db translate $args
 }
 
 ::itcl::body Mged::tree {args} {

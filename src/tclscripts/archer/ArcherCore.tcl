@@ -234,6 +234,7 @@ namespace eval ArcherCore {
 	method tire                {args}
 	method title               {args}
 	method track               {args}
+	method translate           {args}
 	method unhide              {args}
 	method units               {args}
 	method vmake               {args}
@@ -451,7 +452,8 @@ namespace eval ArcherCore {
 	    ocenter opendb orotate oscale otranslate p q quit packTree prefix \
 	    protate pscale ptranslate push put put_comb putmat pwd r rcodes \
 	    red rfarb rm rmater rotate_arb_face search sed shader shells tire \
-	    title track unhide units unpackTree vmake wmater xpush Z zap
+	    title track translate unhide units unpackTree vmake wmater xpush \
+	    Z zap
 	}
 
 	# Commands in this list get passed directly to the Ged object
@@ -5514,6 +5516,11 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::track {args} {
     eval gedWrapper track 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::translate {args} {
+    #eval gedWrapper translate 1 0 1 0 $args
+    gedCmd translate
 }
 
 ::itcl::body ArcherCore::unhide {args} {

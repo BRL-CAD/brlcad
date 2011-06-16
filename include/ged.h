@@ -2191,6 +2191,11 @@ GED_EXPORT extern int ged_tra(struct ged *gedp, int argc, const char *argv[]);
  */
 GED_EXPORT extern int ged_track(struct ged *gedp, int argc, const char *argv[]);
 
+/**
+ * Translate object(s)
+ */
+GED_EXPORT extern int ged_translate(struct ged *gedp, int argc, const char *argv[]);
+
 #if 0
 /**
  *

@@ -222,6 +222,7 @@ set(LIBGED_SOURCES
     tra.c
     trace.c
     track.c
+    translate.c
     translate_extrude.c
     translate_tgc.c
     tree.c

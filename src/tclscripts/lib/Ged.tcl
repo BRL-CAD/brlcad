@@ -475,6 +475,7 @@ package provide cadwidgets::Ged 1.0
 	method tops {args}
 	method tra {args}
 	method track {args}
+	method translate {args}
 	method translate_mode {args}
 	method transparency {args}
 	method transparency_all {args}
@@ -2507,6 +2508,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed track $args
 }
 
+::itcl::body cadwidgets::Ged::translate {args} {
+    eval $mGed translate $args
+}
+
 ::itcl::body cadwidgets::Ged::translate_mode {args} {
     eval $mGed translate_mode $itk_component($itk_option(-pane)) $args
 }
@@ -4236,6 +4241,7 @@ package provide cadwidgets::Ged 1.0
     $help add tops		{{} {find all top level objects}}
     $help add tra		{{[-v|-m] "x y z"} {translate the view}}
     $help add track		{{args} {create a track}}
+    $help add translate		{{x [y [z]] object(s)} {translate object(s)}}
     $help add tree		{{[-c] [-i n] [-d n] [-o outfile] object(s)} {print out a tree of all members of an object, or all members to depth n in the tree if n -d option is supplied}}
     $help add unhide		{{[objects]} {unset the "hidden" flag for the specified objects so they will appear in a "t" or "ls" command output}}
     $help add units		{{[mm|cm|m|in|ft|...]}	{change units}}

@@ -341,6 +341,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"track", f_amtrack, GED_FUNC_PTR_NULL},
     {"tracker", f_tracker, GED_FUNC_PTR_NULL},
     {"translate", f_tr_obj, GED_FUNC_PTR_NULL},
+    {"translate2", cmd_ged_plain_wrapper, ged_translate},
     {"tree", cmd_ged_plain_wrapper, ged_tree},
     {"unhide", cmd_ged_plain_wrapper, ged_unhide},
     {"units", cmd_units, GED_FUNC_PTR_NULL},
