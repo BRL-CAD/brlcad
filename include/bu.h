@@ -2172,9 +2172,11 @@ struct bu_external  {
     size_t ext_nbytes;
     uint8_t *ext_buf;
 };
+typedef struct bu_external bu_external_t;
+#define BU_EXTERNAL_NULL ((struct bu_external *)0)
 
 /**
- * validates the integrity of a bu_external struct
+ * assert the integrity of a bu_external struct.
  */
 #define BU_CK_EXTERNAL(_p) BU_CKMAG(_p, BU_EXTERNAL_MAGIC, "bu_external")
 
@@ -2183,9 +2185,23 @@ struct bu_external  {
  */
 #define BU_EXTERNAL_INIT(_p) { \
 	(_p)->ext_magic = BU_EXTERNAL_MAGIC; \
-	(_p)->ext_buf = NULL; \
 	(_p)->ext_nbytes = 0; \
+	(_p)->ext_buf = NULL; \
     }
+
+/**
+ * macro suitable for declaration statement initialization of a
+ * bu_external struct. does not allocate memory.
+ */
+#define BU_EXTERNAL_INIT_ZERO { BU_EXTERNAL_MAGIC, 0, NULL }
+
+/**
+ * returns truthfully whether a bu_external struct has been
+ * initialized.  is not reliable unless the struct has been
+ * initialized with BU_EXTERNAL_INIT().
+ */
+#define BU_EXTERNAL_IS_INITIALIZED(_p) (((struct bu_external *)(_p) != BU_EXTERNAL_NULL) && (_p)->ext_magic == BU_EXTERNAL_MAGIC)
+
 
 /** @} */
 /*----------------------------------------------------------------------*/
