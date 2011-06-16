@@ -67,6 +67,21 @@ GCV_EXPORT extern union tree *gcv_region_end(struct db_tree_state *tsp, const st
 GCV_EXPORT extern union tree *gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 
 
+/**
+ * G C V _ B O T T E S S _ R E G I O N _ E N D
+ *
+ */
+GCV_EXPORT extern union tree *gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+
+
+/**
+ * G C V _ B O T T E S S
+ *
+ */
+GCV_EXPORT extern union tree *gcv_bottess(int argc, const char **argv, struct db_i *dbip, struct rt_tess_tol *ttol);
+
+
+
 __END_DECLS
 
 #endif /* __GCV_H__ */
