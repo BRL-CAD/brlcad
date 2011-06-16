@@ -49,7 +49,7 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
     int last_opt=0;
     struct bu_vls vls;
     static const char *usage = "[[-r] | [[-o] -A attribute=value]] [object(s)]";
-    const char *cmdName = **argv;
+    const char *cmdName = argv[0];
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
