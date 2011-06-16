@@ -109,7 +109,7 @@ _bu_argv0(void)
     /* private stash */
     static const char *argv0 = NULL;
 
-    /* set initial pwd if we have not already */
+    /* FIXME: this is temporary until bu_getcwd() is working. */
     (void)_bu_ipwd();
 
     if (bu_progname[0] != '\0') {
@@ -137,6 +137,8 @@ bu_argv0_full_path(void)
     static char buffer[MAXPATHLEN] = {0};
 
     const char *argv0 = _bu_argv0();
+
+    /* FIXME: this is temporary until bu_getcwd() is working. */
     const char *ipwd = _bu_ipwd();
 
     const char *which = bu_which(argv0);
@@ -213,6 +215,7 @@ bu_setprogname(const char *argv0)
 	bu_progname[0] = '\0';
     }
 
+    /* FIXME: this is temporary until bu_getcwd() is working. */
     (void)_bu_ipwd();
 
     return;
