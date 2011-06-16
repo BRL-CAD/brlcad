@@ -2216,8 +2216,35 @@ struct bu_color
     unsigned long buc_magic;
     fastf_t buc_rgb[3];
 };
+typedef struct bu_color bu_color_t;
 #define BU_COLOR_NULL ((struct bu_color *) 0)
-#define BU_CK_COLOR(_bp) BU_CKMAG(_bp, BU_COLOR_MAGIC, "bu_color")
+
+/**
+ * asserts the integrity of a bu_color struct.
+ */
+#define BU_CK_COLOR(_c) BU_CKMAG(_c, BU_COLOR_MAGIC, "bu_color")
+
+/**
+ * initializes a bu_bitv struct without allocating any memory.  this
+ * macro is not suitable for initializing a head list node.
+ */
+#define BU_COLOR_INIT(_c) { \
+	(_c)->buc_magic = BU_COLOR_MAGIC; \
+	(_c)->buc_rgb[0] = (_c)->buc_rgb[1] = (_c)->buc_rgb[2] = 0; \
+    }
+
+/**
+ * macro suitable for declaration statement initialization of a bu_color
+ * struct.  does not allocate memory.
+ */
+#define BU_COLOR_INIT_ZERO { BU_COLOR_MAGIC, {0, 0, 0} }
+
+/**
+ * returns truthfully whether a bu_color has been initialized
+ */
+#define BU_COLOR_IS_INITIALIZED(_c) (((struct bu_color *)(_c) != BU_COLOR_NULL) && LIKELY((_c)->magic == BU_COLOR_MAGIC))
+
+
 
 /*----------------------------------------------------------------------*/
 /* red-black tree support */
