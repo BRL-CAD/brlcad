@@ -2124,8 +2124,8 @@ struct rt_functab {
     int	(*ft_adjust)(struct bu_vls *, struct rt_db_internal *, int /*argc*/, const char ** /*argv*/);
     int	(*ft_form)(struct bu_vls *, const struct rt_functab *);
 
-    void (*ft_make)(const struct rt_functab *, struct rt_db_internal */*ip*/);
-    int (*ft_params)(struct pc_pc_set *, const struct rt_db_internal */*ip*/);
+    void (*ft_make)(const struct rt_functab *, struct rt_db_internal * /*ip*/);
+    int (*ft_params)(struct pc_pc_set *, const struct rt_db_internal * /*ip*/);
 };
 
 
