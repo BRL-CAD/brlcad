@@ -20,6 +20,10 @@
 
 #include "common.h"
 
+#ifdef HAVE_SYS_PARAM_H /* for MAXPATHLEN */
+#  include <sys/param.h>
+#endif
+
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"

@@ -22,13 +22,13 @@
 
 #include "common.h"
 
+#ifdef HAVE_SYS_PARAM_H /* for MAXPATHLEN */
+#  include <sys/param.h>
+#endif
+
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
-
-#ifdef HAVE_SYS_PARAM_H
-#  include <sys/param.h>
-#endif
 
 #include "bu.h"
 #include "sysv.h"
