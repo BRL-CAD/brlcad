@@ -2268,6 +2268,8 @@ typedef struct bu_color bu_color_t;
  * all the nodes and all the packages in the tree.  Applications
  * should not muck with these things.  They are maintained only to
  * facilitate freeing bu_rb_trees.
+ *
+ * This is a PRIVATE structure.
  */
 struct bu_rb_list
 {
@@ -2276,7 +2278,7 @@ struct bu_rb_list
     {
 	struct bu_rb_node *rbl_n;
 	struct bu_rb_package *rbl_p;
-    }			rbl_u;
+    } rbl_u;
 };
 #define rbl_magic l.magic
 #define rbl_node rbl_u.rbl_n
@@ -2300,16 +2302,17 @@ struct bu_rb_list
  *		provided in the package.  Touch these
  *		at your own risk!
  */
-typedef struct
-{
-    /* CLASS I - Applications may read directly. */
+struct bu_rb_tree {
+    /***** CLASS I - Applications may read directly. ****************/
     unsigned long rbt_magic;           /**< @brief Magic no. for integrity check */
     int rbt_nm_nodes;                  /**< @brief Number of nodes */
-    /* CLASS II - Applications may read/write directly. */
+
+    /**** CLASS II - Applications may read/write directly. **********/
     void (*rbt_print)(void *);         /**< @brief Data pretty-print function */
     int rbt_debug;                     /**< @brief Debug bits */
     char *rbt_description;             /**< @brief Comment for diagnostics */
-    /* CLASS III - Applications should not manipulate directly. */
+
+    /*** CLASS III - Applications should NOT manipulate directly. ***/
     int rbt_nm_orders;                 /**< @brief Number of simultaneous orders */
     int (**rbt_order)();               /**< @brief Comparison functions */
     struct bu_rb_node **rbt_root;      /**< @brief The actual trees */
@@ -2318,8 +2321,9 @@ typedef struct
     struct bu_rb_list rbt_nodes;       /**< @brief All nodes */
     struct bu_rb_list rbt_packages;    /**< @brief All packages */
     struct bu_rb_node *rbt_empty_node; /**< @brief Sentinel representing nil */
-}	bu_rb_tree;
-#define BU_RB_TREE_NULL ((bu_rb_tree *) 0)
+};
+typedef struct bu_rb_tree bu_rb_tree_t;
+#define BU_RB_TREE_NULL ((struct bu_rb_tree *) 0)
 
 /*
  * Debug bit flags for member rbt_debug
@@ -2363,7 +2367,7 @@ struct bu_rb_package
 struct bu_rb_node
 {
     unsigned long rbn_magic;		/**< @brief Magic no. for integrity check */
-    bu_rb_tree *rbn_tree;		/**< @brief Tree containing this node */
+    struct bu_rb_tree *rbn_tree;	/**< @brief Tree containing this node */
     struct bu_rb_node **rbn_parent;	/**< @brief Parents */
     struct bu_rb_node **rbn_left;	/**< @brief Left subtrees */
     struct bu_rb_node **rbn_right;	/**< @brief Right subtrees */
@@ -4390,7 +4394,7 @@ BU_EXPORT extern void bu_ptbl_trunc(struct bu_ptbl *tbl,
  * and the comparison functions (one per order).  bu_rb_create()
  * returns a pointer to the red-black tree header record.
  */
-BU_EXPORT extern bu_rb_tree *bu_rb_create(char *description, int nm_orders, int (**order_funcs)());
+BU_EXPORT extern struct bu_rb_tree *bu_rb_create(char *description, int nm_orders, int (**order_funcs)());
 
 /**
  * B U _ R B _ C R E A T E 1
@@ -4407,7 +4411,7 @@ BU_EXPORT extern bu_rb_tree *bu_rb_create(char *description, int nm_orders, int 
  * function pointers, in order to avoid memory leaks on freeing the
  * tree, applications should call bu_rb_free1(), NOT bu_rb_free().
  */
-BU_EXPORT extern bu_rb_tree *bu_rb_create1(char *description, int (*order_func)());
+BU_EXPORT extern struct bu_rb_tree *bu_rb_create1(char *description, int (*order_func)());
 
 /** @file rb_delete.c
  *
@@ -4425,7 +4429,7 @@ BU_EXPORT extern bu_rb_tree *bu_rb_create1(char *description, int (*order_func)(
  * the current node (in the position of the specified order) from
  * every order in the tree.
  */
-BU_EXPORT extern void bu_rb_delete(bu_rb_tree *tree,
+BU_EXPORT extern void bu_rb_delete(struct bu_rb_tree *tree,
 				   int order);
 #define bu_rb_delete1(t) bu_rb_delete((t), 0)
 
@@ -4444,7 +4448,7 @@ BU_EXPORT extern void bu_rb_delete(bu_rb_tree *tree,
  * to print out and the type of traversal (preorder, inorder, or
  * postorder).
  */
-BU_EXPORT extern void bu_rb_diagnose_tree(bu_rb_tree *tree,
+BU_EXPORT extern void bu_rb_diagnose_tree(struct bu_rb_tree *tree,
 					  int order,
 					  int trav_type);
 
@@ -4457,7 +4461,7 @@ BU_EXPORT extern void bu_rb_diagnose_tree(bu_rb_tree *tree,
  * bu_rb_summarize_tree() prints out the header information for the
  * tree.  It is intended for diagnostic purposes.
  */
-BU_EXPORT extern void bu_rb_summarize_tree(bu_rb_tree *tree);
+BU_EXPORT extern void bu_rb_summarize_tree(struct bu_rb_tree *tree);
 
 /** @file rb_extreme.c
  *
@@ -4477,7 +4481,7 @@ BU_EXPORT extern void bu_rb_summarize_tree(bu_rb_tree *tree);
  * (min or max).  On success, bu_rb_extreme() returns a pointer to the
  * data in the extreme node.  Otherwise it returns NULL.
  */
-BU_EXPORT extern void *bu_rb_extreme(bu_rb_tree *tree,
+BU_EXPORT extern void *bu_rb_extreme(struct bu_rb_tree *tree,
 				     int order,
 				     int sense);
 
@@ -4493,7 +4497,7 @@ BU_EXPORT extern void *bu_rb_extreme(bu_rb_tree *tree,
  * the specified direction, if that node exists.  Otherwise, it
  * returns NULL.
  */
-BU_EXPORT extern void *bu_rb_neighbor(bu_rb_tree *tree,
+BU_EXPORT extern void *bu_rb_neighbor(struct bu_rb_tree *tree,
 				      int order,
 				      int sense);
 
@@ -4506,7 +4510,7 @@ BU_EXPORT extern void *bu_rb_neighbor(bu_rb_tree *tree,
  * find the current node.  bu_rb_curr() returns a pointer to the data
  * in the current node, if it exists.  Otherwise, it returns NULL.
  */
-BU_EXPORT extern void *bu_rb_curr(bu_rb_tree *tree,
+BU_EXPORT extern void *bu_rb_curr(struct bu_rb_tree *tree,
 				  int order);
 #define bu_rb_curr1(t) bu_rb_curr((t), 0)
 
@@ -4529,7 +4533,7 @@ BU_EXPORT extern void *bu_rb_curr(bu_rb_tree *tree,
  * package's rbp_data member.  Otherwise, the application data is left
  * untouched.
  */
-BU_EXPORT extern void bu_rb_free(bu_rb_tree *tree, void (*free_data)());
+BU_EXPORT extern void bu_rb_free(struct bu_rb_tree *tree, void (*free_data)());
 #define BU_RB_RETAIN_DATA ((void (*)()) 0)
 #define bu_rb_free1(t, f)					\
     {							\
@@ -4558,7 +4562,7 @@ BU_EXPORT extern void bu_rb_free(bu_rb_tree *tree, void (*free_data)());
  * returns the number of orders for which the new node was equal to a
  * node already in the tree.
  */
-BU_EXPORT extern int bu_rb_insert(bu_rb_tree *tree,
+BU_EXPORT extern int bu_rb_insert(struct bu_rb_tree *tree,
 				  void *data);
 
 /**
@@ -4569,7 +4573,7 @@ BU_EXPORT extern int bu_rb_insert(bu_rb_tree *tree,
  * This function has two parameters: the tree and the order for which
  * to query uniqueness.
  */
-BU_EXPORT extern int bu_rb_is_uniq(bu_rb_tree *tree,
+BU_EXPORT extern int bu_rb_is_uniq(struct bu_rb_tree *tree,
 				   int order);
 #define bu_rb_is_uniq1(t) bu_rb_is_uniq((t), 0)
 
@@ -4585,7 +4589,7 @@ BU_EXPORT extern int bu_rb_is_uniq(bu_rb_tree *tree,
  * first, second, and fourth orders are specified unique, and the
  * third is specified not-necessarily unique.
  */
-BU_EXPORT extern void bu_rb_set_uniqv(bu_rb_tree *tree,
+BU_EXPORT extern void bu_rb_set_uniqv(struct bu_rb_tree *tree,
 				      bitv_t vec);
 
 /**
@@ -4594,7 +4598,7 @@ BU_EXPORT extern void bu_rb_set_uniqv(bu_rb_tree *tree,
  * These functions have one parameter: the tree for which to
  * require uniqueness/permit nonuniqueness.
  */
-BU_EXPORT extern void bu_rb_uniq_all_off(bu_rb_tree *tree);
+BU_EXPORT extern void bu_rb_uniq_all_off(struct bu_rb_tree *tree);
 
 /**
  * B U _ R B _ U N I Q _ A L L _ O N
@@ -4602,7 +4606,7 @@ BU_EXPORT extern void bu_rb_uniq_all_off(bu_rb_tree *tree);
  * These functions have one parameter: the tree for which to
  * require uniqueness/permit nonuniqueness.
  */
-BU_EXPORT extern void bu_rb_uniq_all_on(bu_rb_tree *tree);
+BU_EXPORT extern void bu_rb_uniq_all_on(struct bu_rb_tree *tree);
 
 /**
  * B U _ R B _ U N I Q _ O N
@@ -4611,7 +4615,7 @@ BU_EXPORT extern void bu_rb_uniq_all_on(bu_rb_tree *tree);
  * uniqueness/permit nonuniqueness.  Each sets the specified flag to
  * the specified value and returns the previous value of the flag.
  */
-BU_EXPORT extern int bu_rb_uniq_on(bu_rb_tree *tree,
+BU_EXPORT extern int bu_rb_uniq_on(struct bu_rb_tree *tree,
 				   int order);
 #define bu_rb_uniq_on1(t) bu_rb_uniq_on((t), 0)
 
@@ -4622,7 +4626,7 @@ BU_EXPORT extern int bu_rb_uniq_on(bu_rb_tree *tree,
  * uniqueness/permit nonuniqueness.  Each sets the specified flag to
  * the specified value and returns the previous value of the flag.
  */
-BU_EXPORT extern int bu_rb_uniq_off(bu_rb_tree *tree,
+BU_EXPORT extern int bu_rb_uniq_off(struct bu_rb_tree *tree,
 				    int order);
 #define bu_rb_uniq_off1(t) bu_rb_uniq_off((t), 0)
 
@@ -4643,7 +4647,7 @@ BU_EXPORT extern int bu_rb_uniq_off(bu_rb_tree *tree,
  * the current node in the specified order.  bu_rb_rank() is an
  * implementation of the routine OS-RANK on p. 283 of Cormen et al.
  */
-BU_EXPORT extern int bu_rb_rank(bu_rb_tree *tree,
+BU_EXPORT extern int bu_rb_rank(struct bu_rb_tree *tree,
 				int order);
 #define bu_rb_rank1(t) bu_rb_rank1((t), 0)
 
@@ -4655,7 +4659,7 @@ BU_EXPORT extern int bu_rb_rank(bu_rb_tree *tree,
  * On success, bu_rb_select() returns a pointer to the data block in
  * the discovered node.  Otherwise, it returns NULL.
  */
-BU_EXPORT extern void *bu_rb_select(bu_rb_tree *tree,
+BU_EXPORT extern void *bu_rb_select(struct bu_rb_tree *tree,
 				    int order,
 				    int k);
 #define bu_rb_select1(t, k) bu_rb_select((t), 0, (k))
@@ -4675,7 +4679,7 @@ BU_EXPORT extern void *bu_rb_select(bu_rb_tree *tree,
  * pointer to the data block in the discovered node.  Otherwise, it
  * returns NULL.
  */
-BU_EXPORT extern void *bu_rb_search(bu_rb_tree *tree,
+BU_EXPORT extern void *bu_rb_search(struct bu_rb_tree *tree,
 				    int order,
 				    void *data);
 #define bu_rb_search1(t, d) bu_rb_search((t), 0, (d))
@@ -4709,7 +4713,7 @@ BU_EXPORT extern void *bu_rb_search(bu_rb_tree *tree,
  * on which to do the walking, the function to apply to each node, and
  * the type of traversal (preorder, inorder, or postorder).
  */
-BU_EXPORT extern void bu_rb_walk(bu_rb_tree *tree, int order, void (*visit)(), int trav_type);
+BU_EXPORT extern void bu_rb_walk(struct bu_rb_tree *tree, int order, void (*visit)(), int trav_type);
 #define bu_rb_walk1(t, v, d) bu_rb_walk((t), 0, (v), (d))
 
 /** @} */

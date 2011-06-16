@@ -134,8 +134,8 @@ static unsigned char dflt_plot_rgb[] =
     128, 128, 128	/* vacuum */
 };
 
-bu_rb_tree *ovlp_log = 0;	/* Log of previous overlaps */
-bu_rb_tree *ovlps_by_vol;	/* For sorting by volume */
+struct bu_rb_tree *ovlp_log = 0;	/* Log of previous overlaps */
+struct bu_rb_tree *ovlps_by_vol;	/* For sorting by volume */
 
 int log_2 (unsigned long x)
 {

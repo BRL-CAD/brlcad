@@ -27,7 +27,7 @@
 
 
 void
-bu_rb_free(bu_rb_tree *tree, void (*free_data) (/* ??? */))
+bu_rb_free(struct bu_rb_tree *tree, void (*free_data) (/* ??? */))
 {
     struct bu_rb_list *rblp;
     struct bu_rb_node *node;
@@ -78,7 +78,7 @@ bu_rb_free(bu_rb_tree *tree, void (*free_data) (/* ??? */))
 void
 rb_free_node(struct bu_rb_node *node)
 {
-    bu_rb_tree *tree;
+    struct bu_rb_tree *tree;
 
     BU_CKMAG(node, BU_RB_NODE_MAGIC, "red-black node");
 

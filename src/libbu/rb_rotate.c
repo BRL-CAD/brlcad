@@ -35,7 +35,7 @@ rb_rot_left(struct bu_rb_node *x, int order)
     struct bu_rb_node *y;		/* x's child to pivot up */
     struct bu_rb_node *beta;		/* y's child in direction of rot. */
     struct bu_rb_node *x_parent;	/* x's parent */
-    bu_rb_tree *tree = x->rbn_tree;	/* Tree where it all happens */
+    struct bu_rb_tree *tree = x->rbn_tree;	/* Tree where it all happens */
 
     /*
      * Set y and check data types of both x and y
@@ -76,7 +76,7 @@ void rb_rot_right (struct bu_rb_node *y, int order)
     struct bu_rb_node *x;		/* y's child to pivot up */
     struct bu_rb_node *beta;		/* x's child in direction of rot. */
     struct bu_rb_node *y_parent;	/* y's parent */
-    bu_rb_tree *tree = y->rbn_tree;	/* Tree where it all happens */
+    struct bu_rb_tree *tree = y->rbn_tree;	/* Tree where it all happens */
 
     /*
      * Set x and check data types of both x and y

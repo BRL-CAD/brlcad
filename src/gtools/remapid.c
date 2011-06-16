@@ -246,7 +246,7 @@ remapid_file_err(REMAPID_FILE *bfp, char *text1, char *text2, ssize_t cursor_pos
  */
 
 
-bu_rb_tree *assignment;	/* Remapping assignment */
+struct bu_rb_tree *assignment;	/* Remapping assignment */
 struct db_i *dbip;		/* Instance of BRL-CAD database */
 
 
@@ -295,7 +295,7 @@ struct db_i *dbip;		/* Instance of BRL-CAD database */
  *									*
  *									*
  *				        +-+				*
- *	       bu_rb_tree		| |				*
+ *	struct bu_rb_tree		| |				*
  *				        +-+				*
  *				       /   \				*
  *				   +-+/     \+-+			*
@@ -303,13 +303,13 @@ struct db_i *dbip;		/* Instance of BRL-CAD database */
  *				   +-+       +-+			*
  *				   / \       / \			*
  *				 +-+ +-+   +-+ +-+			*
- *	  curr_id structures	 | | | |   | | | |			*
+ *	curr_id structures	 | | | |   | | | |			*
  *	  			 +-+ +-+   +-+ +-+			*
  *				  |					*
  *				  | ...					*
  *				  |					*
  *	 			+---+   +---+   +---+   +---+		*
- *	 remap_reg structures	|   |-->|   |-->|   |-->|   |--+	*
+ *	remap_reg structures	|   |-->|   |-->|   |-->|   |--+	*
  *				+---+   +---+   +---+   +---+  |	*
  *				  ^                            |	*
  *				  |                            |	*

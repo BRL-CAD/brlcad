@@ -55,7 +55,7 @@ redblack \- red-black tree operations
 \fB#include "bu.h"
 .\"
 .PP
-.B bu_rb_tree *bu_rb_create (description, nm_orders, order_funcs)
+.B struct bu_rb_tree *bu_rb_create (description, nm_orders, order_funcs)
 .br
 .B char *description;
 .br
@@ -64,7 +64,7 @@ redblack \- red-black tree operations
 .B int (**order_funcs)();
 .\"
 .PP
-.B bu_rb_tree *bu_rb_create1 (description, order_func)
+.B struct bu_rb_tree *bu_rb_create1 (description, order_func)
 .br
 .B char *description;
 .br
@@ -73,21 +73,21 @@ redblack \- red-black tree operations
 .PP
 .B void *bu_rb_curr (tree, order)
 .br
-.B bu_rb_tree *tree;
+.B struct bu_rb_tree *tree;
 .br
 .B int order;
 .\"
 .PP
 .B void bu_rb_delete (tree, order)
 .br
-.B bu_rb_tree *tree;
+.B struct bu_rb_tree *tree;
 .br
 .B int order;
 .\"
 .PP
 .B void bu_rb_diagnose_tree (tree, order, trav_type)
 .br
-.B bu_rb_tree *tree;
+.B struct bu_rb_tree *tree;
 .br
 .B int order;
 .br
@@ -96,7 +96,7 @@ redblack \- red-black tree operations
 .PP
 .B void *bu_rb_extreme (tree, order, sense)
 .br
-.B bu_rb_tree *tree;
+.B struct bu_rb_tree *tree;
 .br
 .B int order;
 .br
@@ -105,28 +105,28 @@ redblack \- red-black tree operations
 .PP
 .B void bu_rb_free (tree, free_data)
 .br
-.B bu_rb_tree *tree;
+.B struct bu_rb_tree *tree;
 .br
 .B void (*free_data)();
 .\"
 .PP
 .B int bu_rb_insert (tree, data)
 .br
-.B bu_rb_tree *tree;
+.B struct bu_rb_tree *tree;
 .br
 .B void *data;
 .\"
 .PP
 .B int bu_rb_is_uniq (tree, order)
 .br
-.B bu_rb_tree *tree;
+.B struct bu_rb_tree *tree;
 .br
 .B int order;
 .\"
 .PP
 .B void *bu_rb_neighbor (tree, order, sense)
 .br
-.B bu_rb_tree *tree;
+.B struct bu_rb_tree *tree;
 .br
 .B int order;
 .br
@@ -135,14 +135,14 @@ redblack \- red-black tree operations
 .PP
 .B int bu_rb_rank (tree, order)
 .br
-.B bu_rb_tree *tree;
+.B struct bu_rb_tree *tree;
 .br
 .B int order;
 .\"
 .PP
 .B void *bu_rb_search (tree, order, data)
 .br
-.B bu_rb_tree *tree;
+.B struct bu_rb_tree *tree;
 .br
 .B int order;
 .br
@@ -151,7 +151,7 @@ redblack \- red-black tree operations
 .PP
 .B void *bu_rb_select (tree, order, k)
 .br
-.B bu_rb_tree *tree;
+.B struct bu_rb_tree *tree;
 .br
 .B int order;
 .br
@@ -160,43 +160,43 @@ redblack \- red-black tree operations
 .PP
 .B void bu_rb_set_uniqv (tree, vec)
 .br
-.B bu_rb_tree *tree;
+.B struct bu_rb_tree *tree;
 .br
 .B bitv_t vec;
 .\"
 .PP
 .B void bu_rb_summarize_tree (tree)
 .br
-.B bu_rb_tree *tree;
+.B struct bu_rb_tree *tree;
 .\"
 .PP
 .B void bu_rb_uniq_all_off (tree)
 .br
-.B bu_rb_tree *tree;
+.B struct bu_rb_tree *tree;
 .\"
 .PP
 .B void bu_rb_uniq_all_on (tree)
 .br
-.B bu_rb_tree *tree;
+.B struct bu_rb_tree *tree;
 .\"
 .PP
 .B int bu_rb_uniq_off (tree, order)
 .br
-.B bu_rb_tree *tree;
+.B struct bu_rb_tree *tree;
 .br
 .B int order;
 .\"
 .PP
 .B int bu_rb_uniq_on (tree, order)
 .br
-.B bu_rb_tree *tree;
+.B struct bu_rb_tree *tree;
 .br
 .B int order;
 .\"
 .PP
 .B void bu_rb_walk (tree, order, visit, trav_type)
 .br
-.B bu_rb_tree *tree;
+.B struct bu_rb_tree *tree;
 .br
 .B int order;
 .br
@@ -252,7 +252,8 @@ less than, equal to, or greater than the second.
 .I bu_rb_create
 returns a pointer to
 a
-.I bu_rb_tree.
+.I bu_rb_tree
+structure.
 This pointer must be saved,
 as it is a required argument to all the other routines.
 .I bu_rb_create1

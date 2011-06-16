@@ -45,7 +45,7 @@ HIDDEN struct bu_rb_node *
 _rb_extreme(struct bu_rb_node *root, int order, int sense, struct bu_rb_node *empty_node)
 {
     struct bu_rb_node *child;
-    bu_rb_tree *tree;
+    struct bu_rb_tree *tree;
 
     if (root == empty_node)
 	return root;
@@ -70,7 +70,7 @@ _rb_extreme(struct bu_rb_node *root, int order, int sense, struct bu_rb_node *em
 
 
 void *
-bu_rb_extreme(bu_rb_tree *tree, int order, int sense)
+bu_rb_extreme(struct bu_rb_tree *tree, int order, int sense)
 {
     struct bu_rb_node *node;
 
@@ -97,7 +97,7 @@ rb_neighbor(struct bu_rb_node *node, int order, int sense)
 {
     struct bu_rb_node *child;
     struct bu_rb_node *parent;
-    bu_rb_tree *tree;
+    struct bu_rb_tree *tree;
     struct bu_rb_node *empty_node;
 
     BU_CKMAG(node, BU_RB_NODE_MAGIC, "red-black node");
@@ -126,7 +126,7 @@ rb_neighbor(struct bu_rb_node *node, int order, int sense)
 
 
 void *
-bu_rb_neighbor(bu_rb_tree *tree, int order, int sense)
+bu_rb_neighbor(struct bu_rb_tree *tree, int order, int sense)
 {
     struct bu_rb_node *node;
 
@@ -152,7 +152,7 @@ bu_rb_neighbor(bu_rb_tree *tree, int order, int sense)
 
 
 void *
-bu_rb_curr(bu_rb_tree *tree, int order)
+bu_rb_curr(struct bu_rb_tree *tree, int order)
 {
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
     RB_CKORDER(tree, order);

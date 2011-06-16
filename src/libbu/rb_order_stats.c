@@ -63,7 +63,7 @@ _rb_select(struct bu_rb_node *root, int order, int k)
 
 
 void *
-bu_rb_select(bu_rb_tree *tree, int order, int k)
+bu_rb_select(struct bu_rb_tree *tree, int order, int k)
 {
     struct bu_rb_node *node;
 
@@ -87,7 +87,7 @@ bu_rb_select(bu_rb_tree *tree, int order, int k)
 }
 
 
-int bu_rb_rank(bu_rb_tree *tree, int order)
+int bu_rb_rank(struct bu_rb_tree *tree, int order)
 {
     int rank;
     struct bu_rb_node *node;
