@@ -2874,6 +2874,9 @@ DEPRECATED BU_EXPORT extern const char *bu_argv0(void);
  *
  * this routine will return "(unknown)" if argv[0] cannot be
  * identified but should never return NULL.
+ *
+ * DEPRECATED: This routine is replaced by bu_getcwd().
+ *             Do not use.
  */
 BU_EXPORT extern const char *bu_argv0_full_path(void);
 
@@ -2894,6 +2897,14 @@ BU_EXPORT extern const char *bu_getprogname(void);
  * before main() for you, but necessary otherwise for portability.
  */
 BU_EXPORT extern void bu_setprogname(const char *path);
+
+/**
+ * b u _ g e t c w d
+ *
+ * returns the pathname for the current working directory.
+ *
+ */
+BU_EXPORT extern char *bu_getcwd(char *buf, size_t size);
 
 /**
  * b u _ b r l c a d _ r o o t
