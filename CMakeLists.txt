@@ -149,7 +149,7 @@ ENDIF(BRLCAD_PREFIX)
 IF(CMAKE_SYSTEM_IGNORE_PATH)
 	LIST(REMOVE_DUPLICATES CMAKE_SYSTEM_IGNORE_PATH)
 ENDIF(CMAKE_SYSTEM_IGNORE_PATH)
-
+MARK_AS_ADVANCED(CMAKE_SYSTEM_IGNORE_PATH)
 
 #---------------------------------------------------------------------
 # By default (as of version 2.8.2) CMake does not provide access to 
