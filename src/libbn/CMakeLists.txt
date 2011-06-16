@@ -42,4 +42,7 @@ ADD_MAN_PAGE(3 libplot3.3)
 
 add_executable(bntester bntester.c)
 target_link_libraries(bntester libbu libbn)
+IF(MSVC)
+	SET_TARGET_PROPERTIES(bntester PROPERTIES COMPILE_FLAGS "-DBRLCAD_DLL")
+ENDIF(MSVC)
 CMAKEFILES(bntester.dat ulp.c)

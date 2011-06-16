@@ -101,6 +101,9 @@ target_link_libraries(timetester libbu)
 
 add_executable(basenametester  basenametester.c)
 target_link_libraries(basenametester libbu)
+IF(MSVC)
+	SET_TARGET_PROPERTIES(basenametester PROPERTIES COMPILE_FLAGS "-DBRLCAD_DLL")
+ENDIF(MSVC)
 
 set(bu_MAN3
   htond.3
