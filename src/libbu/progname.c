@@ -204,11 +204,13 @@ void
 bu_setprogname(const char *argv0)
 {
 #ifdef HAVE_SETPROGNAME
-    setprogname(argv0);
+    setprogname(argv0 ? argv0 : "");
 #endif
 
     if (argv0) {
 	snprintf(bu_progname, MAXPATHLEN, "%s", argv0);
+    } else {
+	bu_progname[0] = '\0';
     }
 
     (void)_bu_ipwd();
