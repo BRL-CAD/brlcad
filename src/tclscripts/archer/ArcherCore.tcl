@@ -5219,19 +5219,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::ls {args} {
-    if {$args == {}} {
-	return [gedCmd ls]
-    } else {
-	set optionsAndArgs [eval dbExpand $args]
-	set options [lindex $optionsAndArgs 0]
-	set expandedArgs [lindex $optionsAndArgs 1]
-
-	if {$options == {}} {
-	    return [eval gedCmd ls $expandedArgs]
-	} else {
-	    return [eval gedCmd ls $options $expandedArgs]
-	}
-    }
+    eval gedWrapper ls 1 0 0 0 $args
 }
 
 ::itcl::body ArcherCore::make {args} {
