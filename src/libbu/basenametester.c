@@ -22,11 +22,13 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#ifdef HAVE_LIBGED_H /* for basename */
+#  include <libgen.h>
+#endif
 
 #include "bu.h"
 
-#include <string.h>
-#include <libgen.h>
 
 
 /* Test against basename UNIX tool */
