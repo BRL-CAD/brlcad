@@ -52,6 +52,7 @@ set(LIBBU_SOURCES
     parse.c
     printb.c
     process.c
+    progname.c
     ptbl.c
     quote.c
     rb_create.c
@@ -70,7 +71,7 @@ set(LIBBU_SOURCES
     str.c
     tcl.c
     temp.c
-	 timer.c
+    timer.c
     units.c
     vers.c
     vfont.c
