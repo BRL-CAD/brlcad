@@ -2,7 +2,7 @@
 lib_LTLIBRARIES = libbu.la
 noinst_LTLIBRARIES = libbu_nil.la
 
-noinst_PROGRAMS = htester timetester basenametester
+noinst_PROGRAMS = htester timetester basenametester prognametester
 
 libbu_nil_la_SOURCES = \
 	argv.c \
@@ -100,6 +100,11 @@ timetester_LDADD = \
 
 basenametester_SOURCES = basenametester.c
 basenametester_LDADD = \
+	libbu.la \
+	${BU_LIBS}
+
+prognametester_SOURCES = prognametester.c
+prognametester_LDADD = \
 	libbu.la \
 	${BU_LIBS}
 

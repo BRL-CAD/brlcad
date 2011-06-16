@@ -105,6 +105,9 @@ IF(MSVC)
 	SET_TARGET_PROPERTIES(basenametester PROPERTIES COMPILE_FLAGS "-DBRLCAD_DLL")
 ENDIF(MSVC)
 
+add_executable(prognametester  prognametester.c)
+target_link_libraries(prognametester libbu)
+
 set(bu_MAN3
   htond.3
   libbu.3
