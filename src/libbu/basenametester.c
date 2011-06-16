@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef HAVE_LIBGED_H /* for basename */
+#ifdef HAVE_LIBGEN_H /* for basename */
 #  include <libgen.h>
 #endif
 
