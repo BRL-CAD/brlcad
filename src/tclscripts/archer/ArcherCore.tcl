@@ -5519,7 +5519,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::translate {args} {
-    eval gedWrapper translate 1 0 1 0 $args
+    eval gedWrapper translate 0 0 0 0 $args
 }
 
 ::itcl::body ArcherCore::unhide {args} {
