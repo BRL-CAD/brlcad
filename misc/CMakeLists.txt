@@ -1,3 +1,7 @@
+IF(BUILD_STATIC_LIBS AND BRLCAD-ENABLE_BRLCAD_LIBRARY)
+	ADD_SUBDIRECTORY(win32-msvc)
+ENDIF(BUILD_STATIC_LIBS AND BRLCAD-ENABLE_BRLCAD_LIBRARY)
+
 SET(prefix ${CMAKE_INSTALL_PREFIX})
 SET(exec_prefix "\${prefix}")
 SET(libdir "\${exec_prefix}/lib")
@@ -63,7 +67,6 @@ SET(misc_ignore_files
 	libtool.m4
 	macosx
 	nsis
-	win32-msvc
 	win32-msvc8
 	)
 CMAKEFILES(${misc_ignore_files})

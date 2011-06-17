@@ -565,6 +565,11 @@ ENDIF(CMAKE_BUILD_TYPE)
 # Turn on librtserver build.  
 OPTION(BRLCAD-ENABLE_RTSERVER "Enable the librtserver target." ON)
 
+# Turn off the brlcad.dll build.
+# It's an expert's setting at the moment.
+OPTION(BRLCAD-ENABLE_BRLCAD_LIBRARY "Use compiler warning flags" OFF)
+MARK_AS_ADVANCED(BRLCAD-ENABLE_BRLCAD_LIBRARY)
+
 # Global third party controls - these options enable and disable ALL
 # local copies of libraries in src/other.  Forcing all local
 # libraries off is not usually recommended unless attempting to
