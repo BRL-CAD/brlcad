@@ -15,15 +15,15 @@ ENDIF(BRLCAD-DISABLE_SRC_OTHER_WARN)
 #---------------------------------------------------------------------------------
 # Local Copies of Tools
 #---------------------------------------------------------------------------------
-
+OPTION(BUILD_LOCAL_TOOLS "Build local copies of m4, byacc and flex" OFF)
+IF(BUILD_LOCAL_TOOLS)
 # Build Berkeley Yacc - guarantees certain extensions added originally by GNU
 # Bison are supported, as well as yacc itself (problematic on, say, Windows.)
 # Need to upgrade FindYacc.cmake to test for advanced Bison options
 # options and be smarter - in the meantime just turn this on.  Not used yet,
 # for now just testing the build - the CMake script is basic and doesn't
 # implement any of the checks in byacc's aclocal.m4 or use a config.h file.
-#ADD_SUBDIRECTORY(byacc)
-DISTCHECK_IGNORE_ITEM(byacc)
+ADD_SUBDIRECTORY(byacc)
 
 # Preparing to build flex as well - modern implementations apparently are
 # heavily dependent on m4, so the simplest path is to get the simplest
@@ -31,10 +31,11 @@ DISTCHECK_IGNORE_ITEM(byacc)
 # m4 implementation - very small, about 280K for m4 plus portability files,
 # and that will be smaller once we hook into byacc to generate a couple
 # of the files.
-#ADD_SUBDIRECTORY(m4)
-DISTCHECK_IGNORE_ITEM(m4)
+ADD_SUBDIRECTORY(m4)
 
-#ADD_SUBDIRECTORY(flex)
+# This is a very minimal flex build.
+ADD_SUBDIRECTORY(flex)
+ENDIF(BUILD_LOCAL_TOOLS)
 
 #---------------------------------------------------------------------------------
 # Optionally Building Local Copies of External Libraries 
