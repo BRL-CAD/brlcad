@@ -40,9 +40,9 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     char *kp_arg = NULL;		/* keypoint */
     const char *cmdName = argv[0];
     static const char *usage = "[-k keypoint]"
-				"[[-a] | [-r]]" 
-				"xpos [ypos [zpos]]"
-				"objects";
+				" [[-a] | [-r]]" 
+				" xpos [ypos [zpos]]"
+				" objects";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
