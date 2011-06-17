@@ -23,6 +23,7 @@ ENDIF(BRLCAD-DISABLE_SRC_OTHER_WARN)
 # for now just testing the build - the CMake script is basic and doesn't
 # implement any of the checks in byacc's aclocal.m4 or use a config.h file.
 #ADD_SUBDIRECTORY(byacc)
+DISTCHECK_IGNORE_ITEM(byacc)
 
 # Preparing to build flex as well - modern implementations apparently are
 # heavily dependent on m4, so the simplest path is to get the simplest
@@ -31,6 +32,7 @@ ENDIF(BRLCAD-DISABLE_SRC_OTHER_WARN)
 # and that will be smaller once we hook into byacc to generate a couple
 # of the files.
 #ADD_SUBDIRECTORY(m4)
+DISTCHECK_IGNORE_ITEM(m4)
 
 #ADD_SUBDIRECTORY(flex)
 
