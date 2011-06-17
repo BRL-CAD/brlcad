@@ -2356,7 +2356,7 @@ typedef struct bu_rb_tree bu_rb_tree_t;
 	{ BU_LIST_INIT_ZER0, {NULL, NULL} }, { BU_LIST_INIT_ZER0, {NULL, NULL} }, NULL, NULL, NULL }
 
 /**
- * returns truthfully whether a bu_rb_tree has been initialized
+ * returns truthfully whether a bu_rb_tree has been initialized.
  */
 #define BU_RB_TREE_IS_INITIALIZED(_rb) (((struct bu_rb_tree *)(_rb) != BU_RB_TREE_NULL) && LIKELY((_rb)->rbt_magic == BU_RB_TREE_MAGIC))
 
@@ -6385,6 +6385,35 @@ struct bu_image_file {
     unsigned char *data;
     unsigned long flags;
 };
+typedef struct bu_image_file bu_image_file_t;
+#define BU_IMAGE_FILE_NULL ((struct bu_image_file *)0)
+
+/**
+ * asserts the integrity of a bu_image_file struct.
+ */
+#define BU_CK_IMAGE_FILE(_i) BU_CKMAG(_i, BU_IMAGE_FILE_MAGIC, "bu_image_file")
+
+/**
+ * initializes a bu_image_file struct without allocating any memory.
+ */
+#define BU_IMAGE_FILE_INIT(_i) { \
+	(_i)->magic = BU_IMAGE_FILE_MAGIC; \
+	(_i)->filename = NULL; \
+	(_i)->fd = (_i)->format = (_i)->width = (_i)->height = (_i)->depth = 0; \
+	(_i)->data = NULL; \
+	(_i)->flags = 0; \
+    }
+
+/**
+ * macro suitable for declaration statement initialization of a
+ * bu_image_file struct.  does not allocate mmeory.
+ */
+#define BU_IMAGE_FILE_INIT_ZERO { BU_IMAGE_FILE_MAGIC, NULL, 0, 0, 0, 0, 0, NULL, 0 }
+
+/**
+ * returns truthfully whether a bu_image_file has been initialized.
+ */
+#define BU_IMAGE_FILE_IS_INITIALIZED(_i) (((struct bu_image_file *)(_i) != BU_IMAGE_FILE_NULL) && LIKELY((_i)->magic == BU_IMAGE_FILE_MAGIC))
 
 
 BU_EXPORT extern struct bu_image_file *bu_image_save_open(const char *filename,
