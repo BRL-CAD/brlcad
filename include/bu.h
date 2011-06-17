@@ -1236,7 +1236,7 @@ typedef struct bu_bitv bu_bitv_t;
 /**
  * asserts the integrity of a non-head node bu_bitv struct.
  */
-#define BU_CK_BITV(_vp) BU_CKMAG(_vp, BU_BITV_MAGIC, "bu_bitv")
+#define BU_CK_BITV(_bp) BU_CKMAG(_bp, BU_BITV_MAGIC, "bu_bitv")
 
 /**
  * initializes a bu_bitv struct without allocating any memory.  this
@@ -2225,8 +2225,7 @@ typedef struct bu_color bu_color_t;
 #define BU_CK_COLOR(_c) BU_CKMAG(_c, BU_COLOR_MAGIC, "bu_color")
 
 /**
- * initializes a bu_bitv struct without allocating any memory.  this
- * macro is not suitable for initializing a head list node.
+ * initializes a bu_bitv struct without allocating any memory.
  */
 #define BU_COLOR_INIT(_c) { \
 	(_c)->buc_magic = BU_COLOR_MAGIC; \
@@ -2324,6 +2323,43 @@ struct bu_rb_tree {
 };
 typedef struct bu_rb_tree bu_rb_tree_t;
 #define BU_RB_TREE_NULL ((struct bu_rb_tree *) 0)
+
+/**
+ * asserts the integrity of a bu_rb_tree struct.
+ */
+#define BU_CK_RB_TREE(_rb) BU_CKMAG(_rb, BU_RB_TREE_MAGIC, "bu_rb_tree")
+
+/**
+ * initializes a bu_rb_tree struct without allocating any memory.
+ */
+#define BU_RB_TREE_INIT(_rb) { \
+	(_rb)->rbt_magic = BU_RB_TREE_MAGIC; \
+	(_rb)->rbt_nm_nodes = 0; \
+	(_rb)->rbt_print = NULL; \
+	(_rb)->rbt_debug = 0; \
+	(_rb)->rbt_description = NULL; \
+	(_rb)->rbt_nm_orders = 0; \
+	(_rb)->rbt_order = NULL; \
+	(_rb)->rbt_root = (_rb)->rbt_unique = (_rb)->rbt_current = NULL; \
+	BU_LIST_INIT(&(_rb)->rbt_nodes.l); \
+	(_rb)->rbt_nodes.rbl_u.rbl_n = (_rb)->rbt_nodes.rbl_u.rbl_p = NULL; \
+	BU_LIST_INIT(&(_rb)->rbt_packages.l); \
+	(_rb)->rbt_packages.rbl_u.rbl_n = (_rb)->rbt_packages.rbl_u.rbl_p = NULL; \
+	(_rb)->rbt_empty_node = NULL; \
+    }
+
+/**
+ * macro suitable for declaration statement initialization of a
+ * bu_rb_tree struct.  does not allocate memory.
+ */
+#define BU_RB_TREE_INIT_ZERO { BU_RB_TREE_MAGIC, 0, NULL, 0, NULL, 0, NULL, NULL, NULL, NULL, \
+	{ BU_LIST_INIT_ZER0, {NULL, NULL} }, { BU_LIST_INIT_ZER0, {NULL, NULL} }, NULL, NULL, NULL }
+
+/**
+ * returns truthfully whether a bu_rb_tree has been initialized
+ */
+#define BU_RB_TREE_IS_INITIALIZED(_rb) (((struct bu_rb_tree *)(_rb) != BU_RB_TREE_NULL) && LIKELY((_rb)->rbt_magic == BU_RB_TREE_MAGIC))
+
 
 /*
  * Debug bit flags for member rbt_debug
