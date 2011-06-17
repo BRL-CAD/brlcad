@@ -36,10 +36,10 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 {
     int c;			/* bu_getopt return value */
     int abs_flag = 0;		/* use absolute position */
-    int rel_flag = 0;		/* use relative position */
+    int rel_flag = 0;		/* use relative distance */
     char *kp_arg = NULL;		/* keypoint */
     const char *cmdName = argv[0];
-    static const char *usage = "[-k keypoint]"
+    static const char *usage = "[-k keypoint:object]"
 				" [[-a] | [-r]]" 
 				" xpos [ypos [zpos]]"
 				" objects";
@@ -57,6 +57,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
+    /* Get short arguments */
     bu_optind = 1; /* re-init bu_getopt() */
     while ((c = bu_getopt(argc, (char * const *)argv, "ak:r")) != -1) {
         switch (c) {
@@ -65,36 +66,51 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 	    break;
 	case 'k':
 	    kp_arg = bu_optarg;
+	    if (kp_arg[0] == '-') {
+		/* That's an option, not an arg */
+		bu_vls_printf(&gedp->ged_result_str,
+			      "Missing argument for option -%c", bu_optopt);
+		return GED_ERROR;
+	    }
 	    break;
 	case 'r':
 	    rel_flag = 1;
 	    break;
 	default:
-	    switch (bu_optopt) {
 	    /* Options that require arguments */
+	    switch (bu_optopt) {
 	    case 'k':
 		bu_vls_printf(&gedp->ged_result_str,
 			      "Missing argument for option -%c", bu_optopt);
 		return GED_ERROR;
+	    }
 
 	    /* Unknown options */
-	    default:
-		if (isprint(bu_optopt)) {
-		    bu_vls_printf(&gedp->ged_result_str,
-				  "Unknown option '-%c'", bu_optopt);
-		    return GED_ERROR;
-		} else {
-		    bu_vls_printf(&gedp->ged_result_str,
-				  "Unknown option character '\\x%x'",
-				  bu_optopt);
-		    return GED_ERROR;
-		}
+	    if (isprint(bu_optopt)) {
+		bu_vls_printf(&gedp->ged_result_str,
+			      "Unknown option '-%c'", bu_optopt);
+		return GED_ERROR;
+	    } else {
+		bu_vls_printf(&gedp->ged_result_str,
+			      "Unknown option character '\\x%x'",
+			      bu_optopt);
+		return GED_ERROR;
 	    }
-	    break;
         }
     }
-    goto disabled;
 
+    
+    /* need a default action */
+    if (!abs_flag && !rel_flag)
+	abs_flag = 1; /* default */
+    else if (abs_flag && rel_flag) {
+	bu_vls_printf(&gedp->ged_result_str,
+		      "'-a' and '-r' are mutually exclusive");
+	return GED_ERROR;
+    }
+
+    goto disabled;
+	
     return GED_OK;
 
     /* Not yet working*/
