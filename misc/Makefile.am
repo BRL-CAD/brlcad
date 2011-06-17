@@ -2,8 +2,7 @@
 SUBDIRS = \
 	enigma \
 	macosx \
-	pkgconfig \
-	win32-msvc8
+	pkgconfig
 
 sample_applicationsdir = $(SAMPLE_APPLICATIONS_DIR)
 sample_applications_DATA = fortran_example.f
