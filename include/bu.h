@@ -1896,7 +1896,7 @@ typedef struct bu_vlb bu_vlb_t;
  * initializes a bu_vlb struct without allocating any memory.
  */
 #define BU_VLB_INIT(_vp) { \
-	(_vp)->vls_magic = BU_VLB_MAGIC; \
+	(_vp)->magic = BU_VLB_MAGIC; \
 	(_vp)->buf = NULL; \
 	(_vp)->bufCapacity = (_vp)->nextByte = 0; \
     }
@@ -2441,10 +2441,42 @@ struct bu_observer {
     struct bu_vls observer;
     struct bu_vls cmd;
 };
+typedef struct bu_observer bu_observer_t;
 #define BU_OBSERVER_NULL ((struct bu_observer *)0)
 
 /**
+ * asserts the integrity of a non-head node bu_observer struct.
+ * FIXME: observer implementation doesn't actually set a magic number.
+ */
+#define BU_CK_OBSERVER(_op) BU_CKMAG(_op, 0, "bu_observer zero magic")
+
+/**
+ * initializes a bu_observer struct without allocating any memory.
+ */
+#define BU_OBSERVER_INIT(_op) { \
+	BU_LIST_INIT(&(_op)->l); \
+	BU_LIST_MAGIC_SET(&(_op)->l, 0); \
+	BU_VLS_INIT(&(_op)->observer); \
+	BU_VLS_INIT(&(_op)->cmd); \
+    }
+
+/**
+ * macro suitable for declaration statement initialization of a bu_observer
+ * struct.  does not allocate memory.  not suitable for a head node.
+ */
+#define BU_OBSERVER_INIT_ZERO { {0, BU_LIST_NULL, BU_LIST_NULL}, BU_VLS_INIT_ZERO, BU_VLS_INIT_ZERO }
+
+/**
+ * returns truthfully whether a bu_observer has been initialized.
+ */
+#define BU_OBSERVER_IS_INITIALIZED(_op) (((struct bu_observer *)(_op) != BU_OBSERVER_NULL))
+
+
+/**
  * B U _ C M D T A B
+ *
+ * DEPRECATED: use not recommended due to k&r callback (provides no
+ * type checking)
  */
 struct bu_cmdtab {
     char *ct_name;
