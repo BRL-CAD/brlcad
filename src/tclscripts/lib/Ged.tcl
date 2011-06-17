@@ -3129,7 +3129,7 @@ package provide cadwidgets::Ged 1.0
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_ray $dm %x %y]; break"
+	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_ray $dm %x %y]; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> ""
     }
 }
@@ -3138,7 +3138,7 @@ package provide cadwidgets::Ged 1.0
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_arrow $dm %x %y]; break"
+	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_arrow $dm %x %y]; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_data_arrow $dm]; break"
     }
 }
@@ -3147,7 +3147,7 @@ package provide cadwidgets::Ged 1.0
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_data_label $dm %x %y]; break"
+	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_data_label $dm %x %y]; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> ""
     }
 }
@@ -3156,7 +3156,7 @@ package provide cadwidgets::Ged 1.0
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_line $dm %x %y]; break"
+	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_line $dm %x %y]; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_data_line $dm]; break"
     }
 }
@@ -3165,7 +3165,7 @@ package provide cadwidgets::Ged 1.0
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_move $dm %x %y]; break"
+	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_move $dm %x %y]; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_data_move $dm]; break"
     }
 }
@@ -3174,7 +3174,7 @@ package provide cadwidgets::Ged 1.0
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_data_pick $dm %x %y]; break"
+	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_data_pick $dm %x %y]; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> ""
     }
 }
@@ -3215,7 +3215,7 @@ package provide cadwidgets::Ged 1.0
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "$mGed vslew $itk_component($dm) %x %y; break"
+	bind $itk_component($dm) <$_button> "$mGed vslew $itk_component($dm) %x %y; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_view_translate $dm]; break"
     }
 }
@@ -3224,13 +3224,13 @@ package provide cadwidgets::Ged 1.0
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_part1_button> "[::itcl::code $this begin_view_measure $dm $_part1_button $_part2_button %x %y]; break"
+	bind $itk_component($dm) <$_part1_button> "[::itcl::code $this begin_view_measure $dm $_part1_button $_part2_button %x %y]; focus %W; break"
     }
 }
 
 ::itcl::body cadwidgets::Ged::init_view_measure_part2 {_button} {
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_view_measure_part2 $dm $_button %x %y]; break"
+	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_view_measure_part2 $dm $_button %x %y]; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_view_measure_part2 $dm $_button]; break"
     }
 }
@@ -3239,7 +3239,7 @@ package provide cadwidgets::Ged 1.0
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "$mGed rect_mode $itk_component($dm) %x %y; break"
+	bind $itk_component($dm) <$_button> "$mGed rect_mode $itk_component($dm) %x %y; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_view_rect $dm]; break"
     }
 }
@@ -3248,7 +3248,7 @@ package provide cadwidgets::Ged 1.0
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "$mGed rotate_mode $itk_component($dm) %x %y; break"
+	bind $itk_component($dm) <$_button> "$mGed rotate_mode $itk_component($dm) %x %y; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_view_rotate $dm]; break"
     }
 }
@@ -3257,7 +3257,7 @@ package provide cadwidgets::Ged 1.0
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "$mGed scale_mode $itk_component($dm) %x %y; break"
+	bind $itk_component($dm) <$_button> "$mGed scale_mode $itk_component($dm) %x %y; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_view_scale $dm]; break"
     }
 }
@@ -3266,7 +3266,7 @@ package provide cadwidgets::Ged 1.0
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "$mGed translate_mode $itk_component($dm) %x %y; break"
+	bind $itk_component($dm) <$_button> "$mGed translate_mode $itk_component($dm) %x %y; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_view_translate $dm]; break"
     }
 }

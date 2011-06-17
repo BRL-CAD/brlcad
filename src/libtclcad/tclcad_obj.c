@@ -3544,18 +3544,21 @@ to_init_default_bindings(struct ged_dm_view *gdvp)
 		  &gdvp->gdv_name);
 
     /* Mouse Bindings */
-    bu_vls_printf(&bindings, "bind %V <2> {%V vslew %V %%x %%y; break}; ",
+    bu_vls_printf(&bindings, "bind %V <2> {%V vslew %V %%x %%y; focus %V; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
-		  &gdvp->gdv_name);
-    bu_vls_printf(&bindings, "bind %V <1> {%V zoom %V 0.5; break}; ",
+		  &gdvp->gdv_name,
+		  &gdvp->gdv_dmp->dm_pathName);
+    bu_vls_printf(&bindings, "bind %V <1> {%V zoom %V 0.5; focus %V; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
-		  &gdvp->gdv_name);
-    bu_vls_printf(&bindings, "bind %V <3> {%V zoom %V 2.0; break}; ",
+		  &gdvp->gdv_name,
+		  &gdvp->gdv_dmp->dm_pathName);
+    bu_vls_printf(&bindings, "bind %V <3> {%V zoom %V 2.0; focus %V;  break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
-		  &gdvp->gdv_name);
+		  &gdvp->gdv_name,
+		  &gdvp->gdv_dmp->dm_pathName);
 
     /* Idle Mode */
     bu_vls_printf(&bindings, "bind %V <ButtonRelease> {%V idle_mode %V; break}; ",
