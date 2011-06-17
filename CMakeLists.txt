@@ -216,11 +216,9 @@ IF(NOT BRLCAD-IS_SUBBUILD)
 	define_property(GLOBAL PROPERTY CMAKE_LIBRARY_TARGET_LIST BRIEF_DOCS "libtarget list" FULL_DOCS "Library target list")
 	define_property(GLOBAL PROPERTY CMAKE_EXEC_TARGET_LIST BRIEF_DOCS "exec target list" FULL_DOCS "Executable target list")
 	define_property(GLOBAL PROPERTY CMAKE_CUSTOM_TARGET_LIST BRIEF_DOCS "custom target list" FULL_DOCS "Custom target list")
-	define_property(GLOBAL PROPERTY DISTCHECK_DIRS BRIEF_DOCS "check during distcheck" FULL_DOCS "List of directories to check during make distcheck")
 	MARK_AS_ADVANCED(CMAKE_LIBRARY_TARGET_LIST)
 	MARK_AS_ADVANCED(CMAKE_EXEC_TARGET_LIST)
 	MARK_AS_ADVANCED(CMAKE_CUSTOM_TARGET_LIST)
-	MARK_AS_ADVANCED(DISTCHECK_DIRS)
 
 	# Override and wrap add_library.  While we're at it, avoid doubling up
 	# on the lib prefix for libraries if the target name is lib<target>
@@ -249,10 +247,6 @@ IF(NOT BRLCAD-IS_SUBBUILD)
 		set_property(GLOBAL APPEND PROPERTY CMAKE_CUSTOM_TARGET_LIST ${name})
 	endfunction(add_custom_target)
 
-	# We want to check the top directory in distcheck, but it won't be added by
-	# add_subdirectory - add it manually
-	set_property(GLOBAL PROPERTY DISTCHECK_DIRS "${CMAKE_CURRENT_SOURCE_DIR}")
- 
 	# The toplevel dir doesn't invoke add_subdirectory on itself,
 	# so remove any old cmakefiles.cmake file manually
 	FILE(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/cmakefiles.cmake)
@@ -264,7 +258,6 @@ IF(NOT BRLCAD-IS_SUBBUILD)
 	function(add_subdirectory name)
 		FILE(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/${name}/cmakefiles.cmake)
 		FILE(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/${name}/cmakepaths.cmake)
-		set_property(GLOBAL APPEND PROPERTY DISTCHECK_DIRS	"\\${CMAKE_CURRENT_SOURCE_DIR}/${name}")
 		_add_subdirectory(${name} ${ARGN})
 		FILE(APPEND ${CMAKE_CURRENT_BINARY_DIR}/cmakepaths.cmake	"${name}\n")
 	endfunction(add_subdirectory)
@@ -1573,8 +1566,6 @@ CMAKEFILES(${toplevel_ignore_files})
 # 9.  Clean up.
 #
 IF(NOT BRLCAD-IS_SUBBUILD)
-	get_property(distcheck_list GLOBAL PROPERTY DISTCHECK_DIRS)
-	FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distchecklist.cmake ${distcheck_list})
 	configure_file(${BRLCAD_CMAKE_DIR}/distcheck_buildsys.cmake.in
 		${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_buildsys.cmake @ONLY)
 	configure_file(${BRLCAD_CMAKE_DIR}/svncheck.cmake.in

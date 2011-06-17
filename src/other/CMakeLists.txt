@@ -33,7 +33,12 @@ ADD_SUBDIRECTORY(byacc)
 # of the files.
 ADD_SUBDIRECTORY(m4)
 
-# This is a very minimal flex build.
+# This is a very minimal flex build.  Need to improve this by getting the
+# LOCATION of the m4 target from the above build and pass that in to flex
+# for it's M4 location definition.  Also should probably remove the
+# environment variable check for M4 from flex to avoid unexpected behavior - 
+# using our m4 will give consistent behavior (once we test it out and make
+# sure it IS correct...) and a system m4 might do unexpected things.
 ADD_SUBDIRECTORY(flex)
 ENDIF(BUILD_LOCAL_TOOLS)
 
