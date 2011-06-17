@@ -34,12 +34,15 @@
 int
 ged_translate(struct ged *gedp, int argc, const char *argv[])
 {
-    int c; /* bu_getopt return value */
-    char *a_arg; /* absolute position */
-    char *k_arg; /* keypoint */
-    char *r_arg; /* relative position */
+    int c;			/* bu_getopt return value */
+    int abs_flag = 0;		/* use absolute position */
+    int rel_flag = 0;		/* use relative position */
+    char *kp_arg = NULL;		/* keypoint */
     const char *cmdName = argv[0];
-    static const char *usage = "xpos [ypos [zpos]]";
+    static const char *usage = "[-k keypoint]"
+				"[[-a] | [-r]]" 
+				"xpos [ypos [zpos]]"
+				"objects";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -49,53 +52,49 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
     /* must be wanting help */
-    if (argc == 1 || argc < 3) {
+    if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmdName, usage);
 	return GED_HELP;
     }
 
-    goto disabled; /* DISABLE DISABLE DISABLE DISABLE DISABLE DISABLE DISABLE */
-    
-    while ((c = bu_getopt(argc, (char * const *)argv, "a:k:r:")) != -1) {
+    bu_optind = 1; /* re-init bu_getopt() */
+    while ((c = bu_getopt(argc, (char * const *)argv, "ak:r")) != -1) {
         switch (c) {
-            case 'a' :
-		a_arg = bu_optarg;
-                break;
-            case 'k' :
-		k_arg = bu_optarg;
-                break;
-            case 'r' :
-		r_arg = bu_optarg;
-                break;
-	    case '?':
-		switch (bu_optopt) {
-		    case 'a':
-		    case 'k':
-		    case 'r':
-			bu_vls_printf(&gedp->ged_result_str,
-			              "Missing argument for option -%c",
-				      bu_optopt);
-			return GED_ERROR;
-		    default:
-			if (isprint(bu_optopt)) {
-			    bu_vls_printf(&gedp->ged_result_str,
-					  "Unknown option '-%c'", bu_optopt);
-			    return GED_ERROR;
-			} else {
-			    bu_vls_printf(&gedp->ged_result_str,
-					  "Unknown option character '\\x%x'",
-					  bu_optopt);
-			    return GED_ERROR;
-			}
-		}
-            default :
-		bu_vls_printf(&gedp->ged_result_str, "Unknown error");
+	case 'a':
+	    abs_flag = 1;
+	    break;
+	case 'k':
+	    kp_arg = bu_optarg;
+	    break;
+	case 'r':
+	    rel_flag = 1;
+	    break;
+	default:
+	    switch (bu_optopt) {
+	    /* Options that require arguments */
+	    case 'k':
+		bu_vls_printf(&gedp->ged_result_str,
+			      "Missing argument for option -%c", bu_optopt);
 		return GED_ERROR;
-                break;
+
+	    /* Unknown options */
+	    default:
+		if (isprint(bu_optopt)) {
+		    bu_vls_printf(&gedp->ged_result_str,
+				  "Unknown option '-%c'", bu_optopt);
+		    return GED_ERROR;
+		} else {
+		    bu_vls_printf(&gedp->ged_result_str,
+				  "Unknown option character '\\x%x'",
+				  bu_optopt);
+		    return GED_ERROR;
+		}
+	    }
+	    break;
         }
     }
-   
-    bu_vls_printf(&gedp->ged_result_str, "a:%s k:%s r:%s", a_arg, k_arg, r_arg);
+    goto disabled;
+
     return GED_OK;
 
     /* Not yet working*/
