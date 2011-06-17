@@ -6086,6 +6086,9 @@ BU_EXPORT extern long int bu_mread(int fd, void *bufp, long int n);
  * An implimentation of hash tables.
  */
 
+/**
+ * A hash entry
+ */
 struct bu_hash_entry {
     unsigned long magic;
     unsigned char *key;
@@ -6093,8 +6096,39 @@ struct bu_hash_entry {
     int key_len;
     struct bu_hash_entry *next;
 };
+typedef struct bu_hash_entry bu_hash_entry_t;
+#define BU_HASH_ENTRY_NULL ((struct bu_hash_entry *)0)
+
+/**
+ * asserts the integrity of a non-head node bu_hash_entry struct.
+ */
+#define BU_CK_HASH_ENTRY(_ep) BU_CKMAG(_ep, BU_HASH_ENTRY_MAGIC, "bu_hash_entry")
+
+/**
+ * initializes a bu_hash_entry struct without allocating any memory.
+ */
+#define BU_HASH_ENTRY_INIT(_h) { \
+	(_h)->magic = BU_HASH_ENTRY_MAGIC; \
+	(_h)->key = (_h)->value = NULL; \
+	(_h)->key_len = 0; \
+	(_h)->next = NULL; \
+    }
+
+/**
+ * macro suitable for declaration statement initialization of a
+ * bu_hash_entry struct.  does not allocate memory.
+ */
+#define BU_HASH_ENTRY_INIT_ZERO { BU_HASH_ENTRY_MAGIC, NULL, NULL, 0, NULL }
+
+/**
+ * returns truthfully whether a bu_hash_entry has been initialized.
+ */
+#define BU_HASH_ENTRY_IS_INITIALIZED(_h) (((struct bu_hash_entry *)(_h) != BU_HASH_ENTRY_NULL) && LIKELY((_h)->magic == BU_HASH_ENTRY_MAGIC))
 
 
+/**
+ * A table of hash entries
+ */
 struct bu_hash_tbl {
     unsigned long magic;
     unsigned long mask;
@@ -6102,19 +6136,73 @@ struct bu_hash_tbl {
     unsigned long num_entries;
     struct bu_hash_entry **lists;
 };
+typedef struct bu_hash_tbl bu_hash_tbl_t;
+#define BU_HASH_TBL_NULL ((struct bu_hash_tbl *)0)
+
+/**
+ * asserts the integrity of a non-head node bu_hash_tbl struct.
+ */
+#define BU_CK_HASH_TBL(_hp) BU_CKMAG(_hp, BU_HASH_TBL_MAGIC, "bu_hash_tbl")
+
+/**
+ * initializes a bu_hash_tbl struct without allocating any memory.
+ */
+#define BU_HASH_TBL_INIT(_h) { \
+	(_h)->magic = BU_HASH_TBL_MAGIC; \
+	(_h)->mask = (_h)->num_lists = (_h)->num_entries = 0; \
+	(_h)->lists = NULL; \
+    }
+
+/**
+ * macro suitable for declaration statement initialization of a
+ * bu_hash_tbl struct.  does not allocate memory.
+ */
+#define BU_HASH_TBL_INIT_ZERO { BU_HASH_TBL_MAGIC, 0, 0, 0, NULL }
+
+/**
+ * returns truthfully whether a bu_hash_tbl has been initialized.
+ */
+#define BU_HASH_TBL_IS_INITIALIZED(_h) (((struct bu_hash_tbl *)(_h) != BU_HASH_TBL_NULL) && LIKELY((_h)->magic == BU_HASH_TBL_MAGIC))
 
 
+/**
+ * A hash table entry record
+ */
 struct bu_hash_record {
     unsigned long magic;
     struct bu_hash_tbl *tbl;
     unsigned long index;
     struct bu_hash_entry *hsh_entry;
 };
+typedef struct bu_hash_record bu_hash_record_t;
+#define BU_HASH_RECORD_NULL ((struct bu_hash_record *)0)
 
-
-#define BU_CK_HASH_TBL(_hp) BU_CKMAG(_hp, BU_HASH_TBL_MAGIC, "bu_hash_tbl")
+/**
+ * asserts the integrity of a non-head node bu_hash_record struct.
+ */
 #define BU_CK_HASH_RECORD(_rp) BU_CKMAG(_rp, BU_HASH_RECORD_MAGIC, "bu_hash_record")
-#define BU_CK_HASH_ENTRY(_ep) BU_CKMAG(_ep, BU_HASH_ENTRY_MAGIC, "bu_hash_entry")
+
+/**
+ * initializes a bu_hash_record struct without allocating any memory.
+ */
+#define BU_HASH_RECORD_INIT(_h) { \
+	(_h)->magic = BU_HASH_RECORD_MAGIC; \
+	(_h)->tbl = NULL; \
+	(_h)->index = 0; \
+	(_h)->hsh_entry = NULL; \
+    }
+
+/**
+ * macro suitable for declaration statement initialization of a
+ * bu_hash_record struct.  does not allocate memory.
+ */
+#define BU_HASH_RECORD_INIT_ZERO { BU_HASH_RECORD_MAGIC, NULL, 0, NULL }
+
+/**
+ * returns truthfully whether a bu_hash_record has been initialized.
+ */
+#define BU_HASH_RECORD_IS_INITIALIZED(_h) (((struct bu_hash_record *)(_h) != BU_HASH_RECORD_NULL) && LIKELY((_h)->magic == BU_HASH_RECORD_MAGIC))
+
 
 /**
  * B U _ H A S H
