@@ -4,41 +4,58 @@ OSLRenderer::OSLRenderer(){
 
     shadingsys = ShadingSystem::create(&rend, NULL, &errhandler);
     
-    InitShaders();
-
     ssi = (ShadingSystemImpl *)shadingsys;
-    thread_info.handle = ssi->create_thread_info();
-    thread_info.ctx = ssi->get_context(thread_info.handle);
-
+    
+    handle = ssi->create_thread_info();
+    ctx = ssi->get_context(handle);
 }
+
 OSLRenderer::~OSLRenderer(){
-    
-    // free OSL data
-    ssi->release_context(thread_info.ctx, thread_info.handle);
-    ssi->destroy_thread_info(thread_info.handle);
-    
+
+    fprintf(stderr, "[DEB] destructor\n");
+    ssi->release_context(ctx, handle);
+    ssi->destroy_thread_info(handle);
     ShadingSystem::destroy(shadingsys);
+}
+void OSLRenderer::AddShader(const char *shadername){
+
+    OSLShader osl_sh;
+    
+    shadingsys->ShaderGroupBegin();
+    shadingsys->Shader("surface", shadername, NULL);
+    shadingsys->ShaderGroupEnd();
+    
+    osl_sh.name = shadername;
+    osl_sh.state = shadingsys->state();
+    shadingsys->clear_state();
+
+    shaders.push_back(osl_sh);
 }
 
 Color3 OSLRenderer::QueryColor(RenderInfo *info){
 
+    if(info->depth >= 5){
+        //printf("[DEB] maximum level of recursion reached\n");
+        return Color3(0.0f);
+    }
+   
     fastf_t y = info->screen_y;
 
-    thread_info.Xi[0] = 0;
-    thread_info.Xi[1] = 0;
-    thread_info.Xi[2] = y*y*y;
+    Xi[0] = rand();
+    Xi[1] = rand();
+    Xi[2] = rand();
 
     // execute shader
     ShaderGlobals globals;
-    const ClosureColor *closure = ExecuteShaders(thread_info, globals, info,
-                                                 shaderstate);
+    const ClosureColor *closure = ExecuteShaders(globals, info);
 
-    // sample primitive from closure tree
+    if(closure == NULL){
+        fprintf(stderr, "closure is null\n");
+    }
+
     Color3 weight = Color3(0.0f);
-    //erand48(thread_info.Xi)
+    // sample primitive from closure tree
     const ClosurePrimitive *prim = SamplePrimitive(weight, closure, 0.5);
-
-    //printf("Color: %.2lf %.2lf %.2lf\n", weight[0], weight[1], weight[2]);
 
     if(prim) {
         if(prim->category() == OSL::ClosurePrimitive::BSDF) {
@@ -48,30 +65,32 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info){
             Color3 eval;
             float pdf = 0.0;
 
-            bsdf->sample(globals.Ng, globals.I, zero, zero, erand48(thread_info.Xi), erand48(thread_info.Xi),
+            bsdf->sample(globals.Ng, globals.I, zero, zero, 
+                         erand48(Xi), erand48(Xi),
 			 omega_in, zero, zero, pdf, eval);
 	    
-	    //printf("Weight: %.2lf %.2lf %.2lf -- pdf: %.2lf\n", weight[0], weight[1], weight[2], pdf);
-	    if (pdf <= 1e-4){
-		return Color3(0.0f);
-	    }
-	    return weight*eval/pdf;
-	    /* Recursion FIXME
             if(pdf != 0.0f) {
-                Ray new_ray(globals.P, omega_in);
-                Color3 r = (weight*eval/pdf)*radiance(thread_info, new_ray, depth+1);
-
-                return r;
+                OSLRenderer::Vec3toPoint_t(globals.P, info->out_ray.origin);
+                OSLRenderer::Vec3toPoint_t(omega_in, info->out_ray.dir);
+                info->doreflection = 1;
+                return weight*eval/pdf;
             }
-	    */
         }
         else if(prim->category() == OSL::ClosurePrimitive::Emissive) {
             // evaluate emissive closure
+            
             EmissiveClosure *emissive = (EmissiveClosure*)prim;
-            return weight*emissive->eval(globals.Ng, globals.I);
+            Color3 l = weight*emissive->eval(globals.Ng, globals.I);
+            /*
+            printf("[DEB] Returning a light: %.2lf %.2lf %.2lf\n",
+                   l[0], l[1], l[2]);
+            */
+
+            return l;
         }
         else if(prim->category() == OSL::ClosurePrimitive::Background) {
             // background closure just returns weight
+            printf("[Background]\n");
             return weight;
         }
     }
@@ -81,26 +100,39 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info){
  * Private methods
  * ----------------------------------------------- */
 
-void OSLRenderer::InitShaders(){
+// void OSLRenderer::InitShaders(const char *shadername){
 
-    shadingsys->attribute("optimize", 2);
-    shadingsys->attribute("lockgeom", 1);
+//     shadingsys->attribute("optimize", 2);
+//     shadingsys->attribute("lockgeom", 1);
     
-    shadingsys->ShaderGroupBegin();
-    shadingsys->Shader("surface", "yellow", NULL);
-    shadingsys->ShaderGroupEnd();
+//     shadingsys->ShaderGroupBegin();
+//     shadingsys->Shader("surface", shadername, NULL);
+//     shadingsys->ShaderGroupEnd();
 
-    shaderstate = shadingsys->state();
+//     fprintf(stderr, "[DEB] inicializando shader state\n");
+
+//     shaderstate = shadingsys->state();
     
-    shadingsys->clear_state();
-}
+//     shadingsys->clear_state();
+// }
 const ClosureColor * OSLRenderer::
-ExecuteShaders(ThreadInfo &thread_info,
-               ShaderGlobals &globals, RenderInfo *info,
-               ShadingAttribStateRef shaderstate){
+ExecuteShaders(ShaderGlobals &globals, RenderInfo *info){
+
+    /* Search for the given shader */
+    int sh_id = -1;
+    for(size_t i = 0; i < shaders.size(); i++){
+        if (strcmp(shaders[i].name, info->shadername) == 0){
+            sh_id = i;
+            break;
+        }
+    }
+    if(sh_id == -1){
+        printf("[DEB] shader not found\n");
+        return NULL;
+    }
 
     memset(&globals, 0, sizeof(globals));
-
+    
     VMOVE(globals.P, info->P);
     VMOVE(globals.I, info->I);
     VMOVE(globals.Ng, info->N);
@@ -110,6 +142,8 @@ ExecuteShaders(ThreadInfo &thread_info,
     // u-v coordinates
     globals.u = info->u;
     globals.v = info->v;
+    globals.u = 0;
+    globals.v = 0;
 
     // u-v tangents
     VMOVE(globals.dPdu, info->dPdu);
@@ -122,8 +156,8 @@ ExecuteShaders(ThreadInfo &thread_info,
     globals.Ci = NULL;
 
     // execute shader
-    thread_info.ctx->execute(ShadUseSurface, *shaderstate, globals);
-
+    ctx->execute(ShadUseSurface, *(shaders[sh_id].state),
+                             globals);
 
     return globals.Ci;
 }
@@ -193,7 +227,7 @@ void OSLRenderer::SamplePrimitiveRecurse(const ClosurePrimitive*& r_prim, Color3
 /* -----------------------------------------------
  * Wrapper methods
  * ----------------------------------------------- */
-OSLRenderer* oslrenderer_init(){
+OSLRenderer* oslrenderer_init(const char *shadername){
     OSLRenderer* oslr = new OSLRenderer();
     return oslr;
 }
@@ -202,6 +236,7 @@ void oslrenderer_query_color(OSLRenderer *oslr, RenderInfo *info){
     info->pc[0] = pc[0];
     info->pc[1] = pc[1];
     info->pc[2] = pc[2];
+    //if(pc[0] < 0.5) fprintf(stderr, "[DEB] Returning black point\n");
 }
 void oslrenderer_free(OSLRenderer **osl){
     delete (*osl);

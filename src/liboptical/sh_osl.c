@@ -1,3 +1,4 @@
+
 /*                        S H _ X X X . C
  * BRL-CAD
  *
@@ -82,8 +83,8 @@
  * to any particular use of the shader.
  */
 struct osl_specific {
-    long magic;	/* magic # for memory validity check, must come 1st */
-    OSLRenderer* oslr;
+    long magic;              	 /* magic # for memory validity check */
+    OSLRenderer* oslr;           /* reference to osl ray tracer */
 };
 
 
@@ -125,7 +126,7 @@ struct mfuncs osl_mfuncs[] = {
     {0,		(char *)0,	0,		0,		0,     0,		0,		0,		0 }
 };
 
-/* X X X _ S E T U P
+/* O S L _ S E T U P
  *
  * This routine is called (at prep time)
  * once for each region which uses this shader.
@@ -151,7 +152,6 @@ osl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
     BU_CK_VLS(matparm);
     RT_CK_REGION(rp);
 
-
     if (rdebug&RDEBUG_SHADE)
 	bu_log("osl_setup(%s)\n", rp->reg_name);
 
@@ -159,15 +159,16 @@ osl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
     BU_GETSTRUCT(osl_sp, osl_specific);
     *dpp = (char *)osl_sp;
 
-    /* initialize the default values for the shader */
+    /* -----------------------------------
+     * Initialize the osl specific values
+     * -----------------------------------
+     */
     memcpy(osl_sp, &osl_defaults, sizeof(struct osl_specific));
 
     /* parse the user's arguments for this use of the shader. */
     if (bu_struct_parse(matparm, osl_parse_tab, (char *)osl_sp) < 0)
 	return -1;
-
-    osl_sp->oslr = oslrenderer_init();
-    
+  
     if (rdebug&RDEBUG_SHADE) {
 	bu_struct_print(" Parameters:", osl_print_tab, (char *)osl_sp);
     }
@@ -175,9 +176,8 @@ osl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
     return 1;
 }
 
-
 /*
- * X X X _ P R I N T
+ * O S L _ P R I N T
  */
 HIDDEN void
 osl_print(register struct region *rp, char *dp)
@@ -187,7 +187,7 @@ osl_print(register struct region *rp, char *dp)
 
 
 /*
- * X X X _ F R E E
+ * O S L _ F R E E
  */
 HIDDEN void
 osl_free(char *cp)
@@ -200,7 +200,7 @@ osl_free(char *cp)
 
 
 /*
- * X X X _ R E N D E R
+ * O S L _ R E N D E R
  *
  * This is called (from viewshade() in shade.c) once for each hit point
  * to be shaded.  The purpose here is to fill in values in the shadework
@@ -217,6 +217,13 @@ osl_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 	(struct osl_specific *)dp;
     point_t pt;
     RenderInfo info;
+    static int first = 1;
+    static OSLRenderer *oslr = NULL;
+
+    if(first == 1){
+	oslr = oslrenderer_init("yellow");
+    }
+    first = 0;
 
     VSETALL(pt, 0);
 
@@ -227,24 +234,16 @@ osl_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 
     if (rdebug&RDEBUG_SHADE)
 	bu_struct_print("osl_render Parameters:", osl_print_tab, (char *)osl_sp);
-
-    /* If we are performing the shading in "region" space, we must
-     * transform the hit point from "model" space to "region" space.
-     * See the call to db_region_mat in osl_setup().
-     MAT4X3PNT(pt, osl_sp->osl_m_to_sh, swp->sw_hit.hit_point);
-     MAT4X3PNT(pt, osl_sp->osl_m_to_r, swp->sw_hit.hit_point);
-
-     if (rdebug&RDEBUG_SHADE) {
-     bu_log("osl_render() model:(%g %g %g) shader:(%g %g %g)\n",
-     V3ARGS(swp->sw_hit.hit_point),
-     V3ARGS(pt));
-     }
-    */
+    /* OSL perform shading operations here */
 
     /* Fill in all necessary information for the OSL renderer */
     VMOVE(info.P, swp->sw_hit.hit_point);
+    printf("[DEB] %.2lf %.2lf %.2lf\n", info.P[0], info.P[1], info.P[2]);
     VMOVE(info.N, swp->sw_hit.hit_normal);
+    printf("[DEB] N %.2lf %.2lf %.2lf\n", info.N[0], info.N[1], info.N[2]);
+    /*VMOVE(info.I, ap->a_inv_dir);*/
     VMOVE(info.I, ap->a_inv_dir);
+    /*printf("[DEB] I %.8lf %.8lf %.8lf\n", info.I[0], info.I[1], info.I[2]);*/
     info.u = swp->sw_uv.uv_u;
     info.v = swp->sw_uv.uv_v;
     info.screen_x = ap->a_x;
@@ -253,14 +252,25 @@ osl_render(struct application *ap, struct partition *pp, struct shadework *swp, 
     /* FIXME */
     VSETALL(info.dPdu, 0.0f);
     VSETALL(info.dPdv, 0.0f);
-    info.depth = 0;
+    info.depth = ap->a_level;
     info.isbackfacing = 0;
     info.surfacearea = 1.0f;
-    
-    oslrenderer_query_color(osl_sp->oslr, &info);
-    VMOVE(swp->sw_color, info.pc);
-    
-    /* OSL perform shading operations here */
+
+    /* a priori we won't do reflection. If OSLRender decides to do
+     so, it will set it to 1 */
+    info.doreflection = 0; 
+
+    oslrenderer_query_color(oslr, &info);
+    VMOVE(swp->sw_color, info.pc);    
+
+    /* if(info.doreflection == 1){ */
+    /* 	ap->a_onehit = 0; */
+    /* 	ap->a_level++; */
+    /* 	swp->sw_reflect = 1; */
+    /* } */
+
+
+    /* printf("parameter a_onehit: %d\n", ap->a_onehit); */
 
     /* shader must perform transmission/reflection calculations
      *

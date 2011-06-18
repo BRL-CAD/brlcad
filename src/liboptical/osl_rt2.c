@@ -7,7 +7,7 @@ static unsigned short Xi[3];
 int main (){
 
     OSLRenderer *oslr;
-    oslr = oslrenderer_init();
+    oslr = oslrenderer_init("yellow");
 
     for(int y=0; y<h; y++) {
         
