@@ -1086,21 +1086,21 @@ struct db_tree_state {
     struct bu_attribute_value_set	ts_attrs;	/**< @brief attribute/value structure */
 
     int			ts_stop_at_regions;	/**< @brief else stop at solids */
-    int			(*ts_region_start_func)(struct db_tree_state * /**< @brief tsp*/,
-						const struct db_full_path * /**< @brief pathp*/,
-						const struct rt_comb_internal * /**< @brief combp */,
+    int			(*ts_region_start_func)(struct db_tree_state *tsp,
+						const struct db_full_path *pathp,
+						const struct rt_comb_internal *comb,
 						genptr_t client_data
-	);
-    union tree *	(*ts_region_end_func)(struct db_tree_state * /**< @brief tsp*/,
-					      const struct db_full_path * /**< @brief pathp*/,
-					      union tree * /**< @brief curtree*/,
+	); /**< @brief callback during DAG downward traversal called on region nodes */
+    union tree *	(*ts_region_end_func)(struct db_tree_state *tsp,
+					      const struct db_full_path *pathp,
+					      union tree *curtree,
 					      genptr_t client_data
-	);
-    union tree *	(*ts_leaf_func)(struct db_tree_state * /**< @brief tsp*/,
-					const struct db_full_path * /**< @brief pathp*/,
-					struct rt_db_internal * /**< @brief ip*/,
+	); /**< @brief callback during DAG upward traversal called on region nodes */
+    union tree *	(*ts_leaf_func)(struct db_tree_state *tsp,
+					const struct db_full_path *pathp,
+					struct rt_db_internal *ip,
 					genptr_t client_data
-	);
+	); /**< @brief callback during DAG traversal called on leaf primitive nodes */
     const struct rt_tess_tol *	ts_ttol;	/**< @brief  Tessellation tolerance */
     const struct bn_tol	*	ts_tol;		/**< @brief  Math tolerance */
     struct model **		ts_m;		/**< @brief  ptr to ptr to NMG "model" */
@@ -2036,34 +2036,34 @@ struct rt_functab {
     char ft_name[16];
     char ft_label[8];
     int ft_use_rpp;
-    int (*ft_prep)(struct soltab * /**< @brief stp*/,
-		   struct rt_db_internal * /**< @brief ip*/,
-		   struct rt_i * /**< @brief rtip*/);
-    int (*ft_shot)(struct soltab * /**< @brief stp*/,
-		   struct xray * /**< @brief rp*/,
-		   struct application * /**< @brief ap*/,	/**< @brief  has resource */
-		   struct seg * /**< @brief seghead*/);
-    void (*ft_print)(const struct soltab * /**< @brief stp*/);
-    void (*ft_norm)(struct hit * /**< @brief hitp*/,
-		    struct soltab * /**< @brief stp*/,
-		    struct xray * /**< @brief rp*/);
-    int (*ft_piece_shot)(struct rt_piecestate * /**< @brief psp*/,
-			 struct rt_piecelist * /**< @brief plp*/,
-			 double /**< @brief  dist_correction to apply to hit distances */,
-			 struct xray * /**< @brief  ray transformed to be near cut cell */,
-			 struct application * /**< @brief ap*/,	/**< @brief  has resource */
-			 struct seg * /**< @brief seghead*/);	/**< @brief  used only for PLATE mode hits */
-    void (*ft_piece_hitsegs)(struct rt_piecestate * /**< @brief psp*/,
-			     struct seg * /**< @brief seghead*/,
-			     struct application * /**< @brief ap*/);	/**< @brief  has resource */
-    void (*ft_uv)(struct application * /**< @brief ap*/,	/**< @brief  has resource */
-		  struct soltab * /**< @brief stp*/,
-		  struct hit * /**< @brief hitp*/,
-		  struct uvcoord * /**< @brief uvp*/);
-    void (*ft_curve)(struct curvature * /**< @brief cvp*/,
-		     struct hit * /**< @brief hitp*/,
-		     struct soltab * /**< @brief stp*/);
-    int (*ft_classify)(const struct soltab * /*stp*/, const vect_t /*min*/, const vect_t /*max*/, const struct bn_tol * /*tol*/);
+    int (*ft_prep)(struct soltab *stp,
+		   struct rt_db_internal *ip,
+		   struct rt_i *rtip);
+    int (*ft_shot)(struct soltab *stp,
+		   struct xray *rp,
+		   struct application *ap, /* has resource */
+		   struct seg *seghead);
+    void (*ft_print)(const struct soltab *stp);
+    void (*ft_norm)(struct hit *hitp,
+		    struct soltab *stp,
+		    struct xray *rp);
+    int (*ft_piece_shot)(struct rt_piecestate *psp,
+			 struct rt_piecelist *plp,
+			 double dist, /* correction to apply to hit distances */
+			 struct xray *ray, /* ray transformed to be near cut cell */
+			 struct application *ap, /* has resource */
+			 struct seg *seghead);	/* used only for PLATE mode hits */
+    void (*ft_piece_hitsegs)(struct rt_piecestate *psp,
+			     struct seg *seghead,
+			     struct application *ap); /* has resource */
+    void (*ft_uv)(struct application *ap, /* has resource */
+		  struct soltab *stp,
+		  struct hit *hitp,
+		  struct uvcoord *uvp);
+    void (*ft_curve)(struct curvature *cvp,
+		     struct hit *hitp,
+		     struct soltab *stp);
+    int (*ft_classify)(const struct soltab */*stp*/, const vect_t /*min*/, const vect_t /*max*/, const struct bn_tol * /*tol*/);
     void (*ft_free)(struct soltab * /*stp*/);
     int (*ft_plot)(struct bu_list * /*vhead*/,
 		   struct rt_db_internal * /*ip*/,
