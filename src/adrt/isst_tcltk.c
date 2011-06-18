@@ -15,7 +15,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file main.c
+/** @file isst_tcltk.c
  *
  *  Tcl/Tk wrapper for adrt/tie functionality, used by Tcl/Tk version
  *  of ISST.
