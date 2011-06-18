@@ -662,7 +662,7 @@ BU_EXPORT extern bu_endian_t bu_byteorder(void);
 
 /** @addtogroup bu_list */
 /** @{ */
-/** @file list.c
+/** @file libbu/list.c
  *
  * @brief Support routines for doubly-linked lists.
  *
@@ -3488,7 +3488,7 @@ BU_EXPORT extern void bu_call_hook(struct bu_hook_list *hlp,
 /** @} */
 /** @addtogroup bu_log */
 /** @{ */
-/** @file log.c
+/** @file libbu/log.c
  *
  * @brief
  * parallel safe version of fprintf for logging
@@ -3840,7 +3840,7 @@ BU_EXPORT extern struct bu_mapped_file *bu_open_mapped_file_with_path(char * con
 
 /** @addtogroup thread */
 /** @{ */
-/** @file kill.c
+/** @file libbu/kill.c
  *
  * terminate a given process.
  *
@@ -3855,7 +3855,7 @@ BU_EXPORT extern struct bu_mapped_file *bu_open_mapped_file_with_path(char * con
  */
 BU_EXPORT extern int bu_terminate(int process);
 
-/** @file process.c
+/** @file libbu/process.c
  *
  * process management routines
  *
@@ -5414,7 +5414,7 @@ BU_EXPORT extern int bu_strcmpm(const char *string1, const char *string2, const 
 /** @addtogroup bu_log */
 /** @{ */
 
-/** @file units.c
+/** @file libbu/units.c
  *
  * Module of libbu to handle units conversion between strings and mm.
  *
@@ -5603,7 +5603,7 @@ BU_EXPORT extern void bu_observer_notify(Tcl_Interp *interp, struct bu_observer 
  */
 BU_EXPORT extern void bu_observer_free(struct bu_observer *);
 
-/** @file tcl.c
+/** @file libbu/tcl.c
  *
  * Tcl interfaces to all the LIBBU Basic BRL-CAD Utility routines.
  *
