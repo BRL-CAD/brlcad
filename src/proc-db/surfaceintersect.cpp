@@ -35,7 +35,8 @@
 /**
  * ClosestValue
  *
- * @brief returns the value that is closest to the given value but in the given interval
+ * @brief returns the value that is closest to the given value but in
+ * the given interval
  */
 double ClosestValue(
     double value,
@@ -180,7 +181,7 @@ void ShatterLoop(
 /**
  * Compare_X_Parameter
  *
- * @Compares two ON_X_EVENTS by the value of the parameter of the
+ * @brief Compares two ON_X_EVENTS by the value of the parameter of the
  * first curve.
  */
 int Compare_X_Parameter(
@@ -201,7 +202,7 @@ int Compare_X_Parameter(
 /**
  * Curve_Compare_start
  *
- * @Compares the start points of the curve profiles
+ * @brief Compares the start points of the curve profiles
  */
 int Curve_Compare_start(
     ON_Curve *const *a,
@@ -231,7 +232,7 @@ int Curve_Compare_start(
 /**
  * Curve_Compare_end
  *
- * @Compares the end points of the curve profiles
+ * @brief Compares the end points of the curve profiles
  */
 int Curve_Compare_end(
     const ON_Curve **a,
@@ -304,9 +305,9 @@ ON_X_EVENT::ON_X_EVENT()
 /**
  * Face_X_Event::Render_Curves
  *
- * @Renders the Curves in the Face_X_Event as the different curves
- * it is segmented in to This assumes the convention that to the left
- * of a curve is below.
+ * @brief Renders the Curves in the Face_X_Event as the different
+ * curves it is segmented in to This assumes the convention that to
+ * the left of a curve is below.
  */
 int Face_X_Event::Render_Curves()
 {
@@ -370,12 +371,13 @@ int Face_X_Event::Render_Curves()
 /**
  * CurveCurveIntersect
  *
- * @brief Intersect 2 curves appending ON_X_EVENTS to the array x for the intersections
- * returns the number of ON_X_EVENTS appended
+ * @brief Intersect 2 curves appending ON_X_EVENTS to the array x for
+ * the intersections returns the number of ON_X_EVENTS appended
  *
- * This is not a great implementation of this function it's limited in that it will only find
- * point intersections, not overlaps. Overlaps, will come out as long strings of points, and
- * will probably take a long time to compute.
+ * This is not a great implementation of this function it's limited in
+ * that it will only find point intersections, not overlaps. Overlaps,
+ * will come out as long strings of points, and will probably take a
+ * long time to compute.
  */
 int CurveCurveIntersect(
     const ON_Curve *curve1,
@@ -427,8 +429,9 @@ int CurveCurveIntersect(
 /**
  * SetCurveSurveIntersectionDir
  *
- * @brief Sets the Dir fields on an intersection event, this function is 
- *  'below' a curve refers to the portion to the right of the curve wrt N
+ * @brief Sets the Dir fields on an intersection event, this function
+ * is 'below' a curve refers to the portion to the right of the curve
+ * wrt N
  */
 bool SetCurveCurveIntersectionDir(
     ON_3dVector N,
@@ -475,8 +478,8 @@ bool SetCurveCurveIntersectionDir(
  * Face_X_Event::Get_ON_X_Events()
  *
  * @brief Gets all of the intersections between either of the new
- * curves and the trims of the faces, stores them in the x field
- * in the class
+ * curves and the trims of the faces, stores them in the x field in
+ * the class
  */
 int Face_X_Event::Get_ON_X_Events(double tol)
 {
@@ -602,9 +605,9 @@ int MakeLoops(
 /**
  * IsClosed
  *
- * @check if a 2dPointarrray is closed. To be closed an array must have
- * >2 points in it, have the first and last points within tol of one
- * another and have at least one point not within tol of either of
+ * @check if a 2dPointarrray is closed. To be closed an array must
+ * have >2 points in it, have the first and last points within tol of
+ * one another and have at least one point not within tol of either of
  * them.
  */
 bool IsClosed(
