@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file getcwd.c
+/** @file libbu/getcwd.c
  *
  * Routine(s) for getting the current working directory full pathname.
  *
