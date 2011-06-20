@@ -275,10 +275,6 @@ expand_builtin(const char *argv[], int argc, int td)
 		pbnum(sysval);
 		break;
 
-	case ESYSCMDTYPE:
-		if (argc > 2)
-			doesyscmd(argv[2]);
-	    	break;
 	case INCLTYPE:
 		if (argc > 2)
 			if (!doincl(argv[2]))

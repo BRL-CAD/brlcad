@@ -60,7 +60,6 @@ extern void doregexp(const char *[], int);
 extern void doprintlineno(struct input_file *);
 extern void doprintfilename(struct input_file *);
 
-extern void doesyscmd(const char *);
 extern void getdivfile(const char *);
 extern void doformat(const char *[], int);
  

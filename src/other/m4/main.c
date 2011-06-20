@@ -126,7 +126,6 @@ struct keyblk keywrds[] = {	/* m4 keywords to be installed */
 	{ "builtin",      BUILTINTYPE},
 	{ "patsubst",	  PATSTYPE},
 	{ "regexp",	  REGEXPTYPE},
-	{ "esyscmd",	  ESYSCMDTYPE},
 	{ "__file__",	  FILENAMETYPE | NOARGS},
 	{ "__line__",	  LINETYPE | NOARGS},
 #endif

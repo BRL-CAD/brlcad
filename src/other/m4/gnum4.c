@@ -620,54 +620,6 @@ doformat(const char *argv[], int argc)
 }
 
 void
-doesyscmd(const char *cmd)
-{
-	int p[2];
-	pid_t pid, cpid;
-	const char *argv[4];
-	int cc;
-	int status;
-
-	/* Follow gnu m4 documentation: first flush buffers. */
-	fflush(NULL);
-
-	argv[0] = "sh";
-	argv[1] = "-c";
-	argv[2] = cmd;
-	argv[3] = NULL;
-
-	/* Just set up standard output, share stderr and stdin with m4 */
-	if (pipe(p) == -1)
-		err(1, "bad pipe");
-	switch(cpid = fork()) {
-	case -1:
-		err(1, "bad fork");
-		/* NOTREACHED */
-	case 0:
-		(void) close(p[0]);
-		(void) dup2(p[1], 1);
-		(void) close(p[1]);
-		execv(_PATH_BSHELL, __UNCONST(argv));
-		exit(1);
-	default:
-		/* Read result in two stages, since m4's buffer is
-		 * pushback-only. */
-		(void) close(p[1]);
-		do {
-			char result[BUFSIZE];
-			cc = read(p[0], result, sizeof result);
-			if (cc > 0)
-				addchars(result, cc);
-		} while (cc > 0 || (cc == -1 && errno == EINTR));
-
-		(void) close(p[0]);
-		while ((pid = wait(&status)) != cpid && pid >= 0)
-			continue;
-		pbstr(getstring());
-	}
-}
-
-void
 getdivfile(const char *name)
 {
 	FILE *f;
