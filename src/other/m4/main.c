@@ -405,7 +405,7 @@ macro(void)
 					chrsave(EOS);
 
 					if ((size_t)sp == STACKMAX)
-						errx(1, "internal stack overflow");
+						m4errx(1, "internal stack overflow");
 					eval((const char **) mstack+fp+1, 2, 
 					    CALTYP, TRACESTATUS);
 
@@ -449,7 +449,7 @@ macro(void)
 				chrsave(EOS);
 
 				if ((size_t)sp == STACKMAX)
-					errx(1, "internal stack overflow");
+					m4errx(1, "internal stack overflow");
 
 				eval((const char **) mstack+fp+1, sp-fp, 
 				    CALTYP, TRACESTATUS);

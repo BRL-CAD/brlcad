@@ -87,10 +87,10 @@ new_path_entry(const char *dirname)
 
 	n = malloc(sizeof(struct path_entry));
 	if (!n)
-		errx(1, "out of memory");
+		m4errx(1, "out of memory");
 	n->name = strdup(dirname);
 	if (!n->name)
-		errx(1, "out of memory");
+		m4errx(1, "out of memory");
 	n->next = 0;
 	return n;
 }
@@ -127,7 +127,7 @@ ensure_m4path()
 	/* for portability: getenv result is read-only */
 	envpath = strdup(envpath);
 	if (!envpath)
-		errx(1, "out of memory");
+		m4errx(1, "out of memory");
 	for (sweep = envpath; 
 	    (path = strsep(&sweep, ":")) != NULL;)
 	    addtoincludepath(path);

@@ -181,7 +181,7 @@ enlarge_strspace()
 	strsize *= 2;
 	newstrspace = malloc(strsize + 1);
 	if (!newstrspace)
-		errx(1, "string space overflow");
+		m4errx(1, "string space overflow");
 	memcpy(newstrspace, strspace, strsize/2);
 	for (i = 0; i <= sp; i++) 
 		if (sstack[i])
