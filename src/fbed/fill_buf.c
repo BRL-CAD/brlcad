@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file fill_buf.c
+/** @file fbed/fill_buf.c
  *
  * Two routines for filling the buffers used in the filtering.
  *

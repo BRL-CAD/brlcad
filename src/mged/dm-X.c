@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dm-X.c
+/** @file mged/dm-X.c
  *
  * Routines specific to MGED's use of LIBDM's X display manager.
  *

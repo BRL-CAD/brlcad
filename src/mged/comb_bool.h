@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file comb_bool.h
+/** @file mged/comb_bool.h
  *
  */
 

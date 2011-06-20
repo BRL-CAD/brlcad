@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file glob.c
+/** @file burst/glob.c
  *
  */
 #include <stdio.h>

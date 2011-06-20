@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file titles.h
+/** @file mged/titles.h
  *
  * Constants that describe the layout of the faceplate.
  *

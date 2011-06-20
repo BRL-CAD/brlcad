@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sedit.h
+/** @file mged/sedit.h
  *
  * This header file contains the esolid structure definition,
  * which holds all the information necessary for solid editing.

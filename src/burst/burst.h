@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file burst.h
+/** @file burst/burst.h
  *
  */
 

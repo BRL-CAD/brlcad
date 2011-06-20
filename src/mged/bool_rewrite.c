@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bool_rewrite.c
+/** @file mged/bool_rewrite.c
  *
  * Conversion routines to mangle an arbitrary Boolean tree,
  * leaving it in GIFT-Boolean form.

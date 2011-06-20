@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file texture_gradient.c
+/** @file librender/texture_gradient.c
  *
  *  Comments -
  *      Texture Library - Produces Gradient to be used with Blend

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file red.c
+/** @file mged/red.c
  *
  * These routines allow editing of a combination using the text editor
  * of the users choice.

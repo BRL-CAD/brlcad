@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tedit.c
+/** @file mged/tedit.c
  *
  */
 

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sgi_dep.c
+/** @file lgt/sgi_dep.c
     Author:		Gary S. Moss
 
     SGI specific routines.  NOTE (XXX) getorigin() doesn't work for

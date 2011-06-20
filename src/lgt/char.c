@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file char.c
+/** @file lgt/char.c
  *
  * routines for displaying a string on a frame buffer.
  *

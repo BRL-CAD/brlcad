@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file cmd.c
+/** @file mged/cmd.c
  *
  * The hooks to most of mged's commands when running in console mode.
  *

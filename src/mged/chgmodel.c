@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file chgmodel.c
+/** @file mged/chgmodel.c
  *
  * This module contains functions which change particulars of the
  * model, generally on a single solid or combination.

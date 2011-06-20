@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file texture.h
+/** @file lgt/texture.h
     Author:		Gary S. Moss
 */
 0xFFFF, 0xFFFF, 0xFFFF,

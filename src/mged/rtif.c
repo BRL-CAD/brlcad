@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rtif.c
+/** @file mged/rtif.c
  *
  * Routines to interface to RT, and RT-style command files
  *

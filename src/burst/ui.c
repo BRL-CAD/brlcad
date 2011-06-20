@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file ui.c
+/** @file burst/ui.c
  *
  */
 

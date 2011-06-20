@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file getinput.c
+/** @file fbed/getinput.c
  *	Author:		Gary S. Moss
  */
 

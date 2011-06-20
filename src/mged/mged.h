@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged.h
+/** @file mged/mged.h
  *
  * This file contains all of the definitions local to MGED
  *

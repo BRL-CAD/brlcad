@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file Hm.h
+/** @file burst/Hm.h
  *
  */
 /**

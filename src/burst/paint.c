@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file paint.c
+/** @file burst/paint.c
  *
  */
 

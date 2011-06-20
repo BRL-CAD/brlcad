@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file track.c
+/** @file mged/track.c
  *
  * f_amtrack():	Adds "tracks" to the data file given the required info
  *

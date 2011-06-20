@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file lgt.h
+/** @file lgt/lgt.h
     Author:		Gary S. Moss
 */
 #ifndef INCL_LGT

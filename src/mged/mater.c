@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mater.c
+/** @file mged/mater.c
  *
  * Code to deal with establishing and maintaining the tables which map
  * region ID codes into worthwhile material information (colors and

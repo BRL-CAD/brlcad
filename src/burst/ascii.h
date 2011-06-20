@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file ascii.h
+/** @file burst/ascii.h
  *
  */
 #define NUL '\000'

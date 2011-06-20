@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tree.h
+/** @file lgt/tree.h
     Author:		Gary S. Moss
 */
 

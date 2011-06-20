@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file render_util.c
+/** @file librender/render_util.c
  *
  */
 

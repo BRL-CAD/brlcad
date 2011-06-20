@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file cad_boundp.c
+/** @file mged/cad_boundp.c
  *
  * cad_boundp -- bounding polygon of two-dimensional view
  *

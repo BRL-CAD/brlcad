@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file vparse.c
+/** @file mged/vparse.c
  *
  * Routines for interfacing with the LIBBU struct parsing utilities.
  *

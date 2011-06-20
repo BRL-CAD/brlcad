@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file texture_internal.h
+/** @file librender/texture_internal.h
  *
  *  Comments -
  *      Texture Library - Internal texture include

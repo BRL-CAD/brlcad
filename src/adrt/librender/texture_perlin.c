@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file texture_perlin.c
+/** @file librender/texture_perlin.c
  *
  *  Comments -
  *      Texture Library - Perlin Utility

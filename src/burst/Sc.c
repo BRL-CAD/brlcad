@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file Sc.c
+/** @file burst/Sc.c
  *
  */
 

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file htmlLibraryUi.h
+/** @file mged/htmlLibraryUi.h
     # Simple HTML display library by Stephen Uhler (stephen.uhler@sun.com)
     # Copyright (c) 1995 by Sun Microsystems
     # Version 0.1 Thu Jul 20 09:06:28 PDT 1995

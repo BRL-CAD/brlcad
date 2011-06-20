@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file chgtree.c
+/** @file mged/chgtree.c
  *
  * This module contains functions which change the tree structure
  * of the model, and delete solids or combinations or combination elements.

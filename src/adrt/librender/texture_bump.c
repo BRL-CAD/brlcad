@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file texture_bump.c
+/** @file librender/texture_bump.c
  *
  *  Comments -
  *      Texture Library - Bump Mapping maps R, G, Z to surface normal X, Y, Z

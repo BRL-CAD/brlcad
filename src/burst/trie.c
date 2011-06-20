@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file trie.c
+/** @file burst/trie.c
  *
  */
 

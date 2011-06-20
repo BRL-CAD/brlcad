@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file octree.c
+/** @file lgt/octree.c
     Author:		Gary S. Moss
 */
 /*

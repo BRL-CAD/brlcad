@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file fbserv.c
+/** @file mged/fbserv.c
  *
  * This code was developed by modifying the stand-alone version of
  * fbserv to work within MGED.

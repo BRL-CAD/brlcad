@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file popup.h
+/** @file fbed/popup.h
  *	Author:		Gary S. Moss
  */
 #define INCL_POPUP

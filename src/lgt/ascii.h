@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ascii.h
+/** @file lgt/ascii.h
  *	Author:		Gary S. Moss
  */
 #define NUL		'\000'

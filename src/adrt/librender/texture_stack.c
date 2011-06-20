@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file texture_stack.c
+/** @file librender/texture_stack.c
  *
  *  Comments -
  *      Texture Library - Stack textures to pipe output of one into another

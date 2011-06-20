@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file gridrotate.c
+/** @file burst/gridrotate.c
  *
  */
 

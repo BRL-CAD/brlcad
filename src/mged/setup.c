@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file setup.c
+/** @file mged/setup.c
  *
  * routines to initialize mged
  *

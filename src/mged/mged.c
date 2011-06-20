@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged.c
+/** @file mged/mged.c
  *
  * Mainline portion of the Mutliple-display Graphics EDitor (MGED)
  *

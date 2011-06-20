@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file texture_clouds.c
+/** @file librender/texture_clouds.c
  *
  *  Comments -
  *      Texture Library - Perlin Clouds

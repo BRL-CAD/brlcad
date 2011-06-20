@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dm-rtgl.c
+/** @file mged/dm-rtgl.c
  *
  * Routines specific to MGED's use of LIBDM's Ray Tracing OpenGl display manager.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file prnt.c
+/** @file fbed/prnt.c
  *	Author:		Gary S. Moss
  */
 

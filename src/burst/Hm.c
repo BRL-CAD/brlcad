@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file Hm.c
+/** @file burst/Hm.c
  *
  * This code is derived in part from menuhit(9.3) in AT&T 9th Edition
  * UNIX, Version 1 Programmer's Manual.

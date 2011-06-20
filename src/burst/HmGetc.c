@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file HmGetc.c
+/** @file burst/HmGetc.c
  *
  */
 

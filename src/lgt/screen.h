@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file screen.h
+/** @file lgt/screen.h
     Author:		Gary S. Moss
 */
 

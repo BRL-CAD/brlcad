@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file columns.c
+/** @file mged/columns.c
  *
  * A set of routines for printing columns of data.
  *

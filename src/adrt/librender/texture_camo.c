@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file texture.h
+/** @file librender/texture.h
  *
  *  Comments -
  *      Texture Library - Applies a 3 color camoflauge

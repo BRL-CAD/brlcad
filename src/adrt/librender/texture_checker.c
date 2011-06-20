@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file texture_checker.c
+/** @file librender/texture_checker.c
  *
  *  Comments -
  *      Texture Library - Checker pattern with tile parameter

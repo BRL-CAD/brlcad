@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file fbserv.h
+/** @file mged/fbserv.h
  * Package Handlers.
  */
 #ifndef __FBSERV_H__

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file lgt_db.c
+/** @file lgt/lgt_db.c
     Author:		Gary S. Moss
 */
 

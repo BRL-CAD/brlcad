@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file extern.h
+/** @file burst/extern.h
  *
  */
 

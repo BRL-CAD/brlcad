@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file fb.c
+/** @file burst/fb.c
  *
  */
 

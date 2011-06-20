@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file clone.c
+/** @file mged/clone.c
  *
  * routines related to performing deep object copies
  *

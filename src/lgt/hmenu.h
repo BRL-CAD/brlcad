@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file hmenu.h
+/** @file lgt/hmenu.h
 
 Authors:	Gary S. Moss
 Douglas A. Gwyn

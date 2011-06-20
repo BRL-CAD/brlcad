@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file burst.c
+/** @file burst/burst.c
  *
  */
 

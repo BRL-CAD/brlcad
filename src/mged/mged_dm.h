@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged_dm.h
+/** @file mged/mged_dm.h
  *
  * Header file for communication with the display manager.
  *

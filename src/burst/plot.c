@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file plot.c
+/** @file burst/plot.c
  *
  */
 
