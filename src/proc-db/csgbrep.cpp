@@ -1,4 +1,4 @@
-/*                           C S G B R E P . C
+/*                     C S G B R E P . C P P
  * BRL-CAD
  *
  * Copyright (c) 2004-2011 United States Government as represented by
@@ -16,11 +16,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
- */
-/** @file proc-db/csgbrep.c
- * 
- *  
- * 
  */
 
 #include "common.h"
