@@ -41,7 +41,6 @@
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
-#include <sys/cdefs.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>

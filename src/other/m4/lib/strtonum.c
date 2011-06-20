@@ -19,7 +19,6 @@
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
-#include <sys/cdefs.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>

@@ -6,8 +6,6 @@
 #include "nbtool_config.h"
 #endif
 
-#include <sys/cdefs.h>
-
 #if !defined(_WIN32) & !defined(__CYGWIN__)
 int yywrap __P((void));
 #endif

@@ -41,10 +41,8 @@
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
-#include <sys/cdefs.h>
 #include <assert.h>
 #include <signal.h>
-#include <err.h>
 #include <errno.h>
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #  define NOMINMAX

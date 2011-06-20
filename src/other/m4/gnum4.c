@@ -32,13 +32,8 @@
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
-#include <sys/cdefs.h>
-#include <sys/param.h>
 #include <sys/types.h>
-#include <sys/wait.h>
 #include <ctype.h>
-#include <err.h>
-#include <paths.h>
 #include <regex.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -62,6 +57,13 @@
 #include "stdd.h"
 #include "extern.h"
 
+#ifndef MAXPATHLEN
+#define MAXPATHLEN 1024
+#endif
+
+#if defined(_WIN32)
+typedef int pid_t;
+#endif
 
 int mimic_gnu = 0;
 #ifndef SIZE_T_MAX

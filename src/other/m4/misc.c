@@ -35,7 +35,6 @@
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
-#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <errno.h>
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -57,7 +56,6 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
-#include <err.h>
 #include "mdef.h"
 #include "stdd.h"
 #include "extern.h"
@@ -256,7 +254,7 @@ void
 onintr(int signo)
 {
 #define intrmessage	"m4: interrupted.\n"
-	write(STDERR_FILENO, intrmessage, sizeof(intrmessage)-1);
+	fprintf(stderr, "%s", intrmessage);
 	_exit(1);
 }
 

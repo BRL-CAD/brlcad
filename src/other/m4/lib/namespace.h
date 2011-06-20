@@ -29,8 +29,6 @@
 #ifndef _NAMESPACE_H_
 #define _NAMESPACE_H_
 
-#include <sys/cdefs.h>
-
 #ifndef __lint__
 #define brk		_brk
 #define catclose	_catclose

@@ -41,10 +41,8 @@
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
-#include <sys/cdefs.h>
 
 #include <sys/types.h>
-#include <err.h>
 #include <errno.h>
 #include <limits.h>
 #if defined(_WIN32) && !defined(__CYGWIN__)
