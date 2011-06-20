@@ -1,3 +1,4 @@
+#include "common.h"
 #ifndef lint
 static char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93";
 #endif
@@ -30,7 +31,6 @@ static char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93";
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
-#include <stdint.h>
 #include <stdlib.h> 
 #define YYSTYPE	int32_t
 extern int32_t end_result;
