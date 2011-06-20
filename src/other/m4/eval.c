@@ -47,7 +47,20 @@
 #include <err.h>
 #include <errno.h>
 #include <limits.h>
-#include <unistd.h>
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#  define NOMINMAX
+#  include <windows.h>
+#  include <io.h>
+
+#   undef rad1 /* Win32 radio button 1 */
+#   undef rad2 /* Win32 radio button 2 */
+#   undef small /* defined as part of the Microsoft Interface Definition Language (MIDL) */
+#   undef IN
+#   undef OUT
+
+#else
+#  include <unistd.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
