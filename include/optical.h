@@ -50,7 +50,12 @@ __BEGIN_DECLS
 #endif
 
 
-/* defined in init.c */
+/**
+ * this function sets the provided mfuncs head pointer to the list of
+ * available shaders.  the provided mfuncs head pointer should point
+ * to MF_NULL prior to getting passed to optical_shader_init() so that
+ * the same shader list may be returned repeatably.
+ */
 OPTICAL_EXPORT extern void optical_shader_init(struct mfuncs **headp);
 
 /* stub functions useful for debugging */
