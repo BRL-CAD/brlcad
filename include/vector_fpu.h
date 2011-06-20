@@ -25,6 +25,8 @@
 #ifndef __VECTOR_FPU
 #define __VECTOR_FPU
 
+#include "common.h"
+
 #ifdef __GNUC__
 #undef VEC_ALIGN
 #define VEC_ALIGN __attribute__((aligned(16)))
