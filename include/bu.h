@@ -19,7 +19,7 @@
  */
 /** @addtogroup libbu */
 /** @{ */
-/** @file bu.h
+/** @file libbu/bu.h
  *
  * @brief
  * Header file for the BRL-CAD Utility Library, LIBBU.
@@ -370,7 +370,7 @@ typedef void *genptr_t;
 /*----------------------------------------------------------------------*/
 /** @addtogroup conv */
 /** @{*/
-/** @file convert.c
+/** @file libbu/convert.c
  *
  * @brief
  * Routines to translate data formats.  The data formats are:
@@ -624,7 +624,7 @@ BU_EXPORT extern size_t bu_cv_htonul(genptr_t,
 
 
 /*----------------------------------------------------------------------*/
-/** @file endian.c
+/** @file libbu/endian.c
  *
  * Run-time byte order detection.
  *
@@ -1155,7 +1155,7 @@ typedef double fastf_t;
 /*----------------------------------------------------------------------*/
 /** @addtogroup bitv */
 /** @{*/
-/** @file bitv.c
+/** @file libbu/bitv.c
  *
  * Routines for managing efficient high-performance bit vectors of
  * arbitrary length.
@@ -1385,7 +1385,7 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 /*----------------------------------------------------------------------*/
 /** @addtogroup bu_hist */
 /** @{ */
-/** @file hist.c
+/** @file libbu/hist.c
  *
  * @brief
  * General purpose histogram handling routines.
@@ -1467,7 +1467,7 @@ typedef struct bu_hist bu_hist_t;
 /* ptbl.c */
 /** @addtogroup ptbl */
 /** @{ */
-/** @file ptbl.c
+/** @file libbu/ptbl.c
  *
  * @brief Support for generalized "pointer tables"
  *
@@ -1561,7 +1561,7 @@ typedef struct bu_ptbl bu_ptbl_t;
 /*----------------------------------------------------------------------*/
 /** @addtogroup mf */
 /** @{ */
-/** @file mappedfile.c
+/** @file libbu/mappedfile.c
  *
  * @brief
  * Routines for sharing large read-only data files.
@@ -1700,7 +1700,7 @@ BU_EXPORT extern struct bu_hook_list bu_bomb_hook_list;
 /*----------------------------------------------------------------------*/
 /** @addtogroup avs */
 /** @{ */
-/** @file avs.c
+/** @file libbu/avs.c
  *
  * @brief
  * Routines to manage attribute/value sets.
@@ -1811,7 +1811,7 @@ typedef struct bu_attribute_value_set bu_avs_t;
 /*----------------------------------------------------------------------*/
 /** @addtogroup vls */
 /** @{ */
-/** @file vls.c
+/** @file libbu/vls.c
  *
  @brief
  * Variable Length Strings
@@ -1867,7 +1867,7 @@ typedef struct bu_vls bu_vls_t;
 /*----------------------------------------------------------------------*/
 /** @addtogroup vlb */
 /** @{ */
-/** @file vlb.c
+/** @file libbu/vlb.c
  *
  * @brief The variable length buffer package.
  *
@@ -2692,7 +2692,7 @@ BU_EXPORT extern struct bu_bitv *bu_bitv_dup(const struct bu_bitv *bv);
 
 /** @addtogroup bu_log */
 /** @{ */
-/** @file backtrace.c
+/** @file libbu/backtrace.c
  *
  * Extract a backtrace of the current call stack.
  *
@@ -2771,7 +2771,7 @@ BU_EXPORT extern void bu_bomb(const char *str) __BU_ATTR_NORETURN;
  */
 BU_EXPORT extern void bu_exit(int status, const char *fmt, ...) __BU_ATTR_NORETURN __BU_ATTR_FORMAT23;
 
-/** @file crashreport.c
+/** @file libbu/crashreport.c
  *
  * Generate a crash report file, including a call stack backtrace and
  * other system details.
@@ -2792,7 +2792,7 @@ BU_EXPORT extern void bu_exit(int status, const char *fmt, ...) __BU_ATTR_NORETU
  */
 BU_EXPORT extern int bu_crashreport(const char *filename);
 
-/** @file fgets.c
+/** @file libbu/fgets.c
  *
  * fgets replacement function that also handles CR as an EOL marker
  *
@@ -2850,7 +2850,7 @@ BU_EXPORT extern int bu_color_to_rgb_floats(struct bu_color *cp, fastf_t *rgb);
 /** @addtogroup file */
 /** @{ */
 
-/** @file stat.c
+/** @file libbu/stat.c
  *
  * Support routines for identifying properties of files and
  * directories such as whether they exist or are the same as another
@@ -2913,7 +2913,7 @@ BU_EXPORT extern int bu_file_writable(const char *path);
  */
 BU_EXPORT extern int bu_file_executable(const char *path);
 
-/** @file fnmatch.c
+/** @file libbu/fnmatch.c
  *
  */
 
@@ -2924,7 +2924,7 @@ BU_EXPORT extern int bu_file_executable(const char *path);
  */
 BU_EXPORT extern int bu_fnmatch(const char *, const char *, int);
 
-/** @file dirent.c
+/** @file libbu/dirent.c
  *
  * Functionality for accessing all files in a directory.
  *
@@ -2941,7 +2941,7 @@ BU_EXPORT extern int bu_count_path(char *path, char *substr);
 BU_EXPORT extern void bu_list_path(char *path, char *substr, char **filearray);
 
 
-/** @file brlcad_path.c
+/** @file libbu/brlcad_path.c
  *
  * @brief
  * A support routine to provide the executable code with the path
@@ -3082,7 +3082,7 @@ BU_EXPORT extern const char *bu_which(const char *cmd);
  */
 BU_EXPORT extern const char *bu_whereis(const char *cmd);
 
-/** @file fopen_uniq.c
+/** @file libbu/fopen_uniq.c
  *
  * @brief DEPRECATED: Routine to open a unique filename.
  *
@@ -3115,7 +3115,7 @@ BU_EXPORT extern const char *bu_whereis(const char *cmd);
  */
 DEPRECATED BU_EXPORT extern FILE *bu_fopen_uniq(const char *outfmt, const char *namefmt, int n);
 
-/** @file temp.c
+/** @file libbu/temp.c
  *
  * Routine to open a temporary file.
  *
@@ -3165,7 +3165,7 @@ BU_EXPORT extern FILE *bu_temp_file(char *filepath, size_t len);
 /** @addtogroup getopt */
 /** @{ */
 
-/** @file getopt.c
+/** @file libbu/getopt.c
  *
  * @brief
  * Special re-entrant version of getopt.
@@ -3250,7 +3250,7 @@ BU_EXPORT extern void bu_hist_pr(const struct bu_hist *histp, const char *title)
 
 /** @addtogroup hton */
 /** @{ */
-/** @file htond.c
+/** @file libbu/htond.c
  *
  * @brief
  * convert doubles to host/network format
@@ -3306,7 +3306,7 @@ BU_EXPORT extern void ntohd(unsigned char *out,
 			    const unsigned char *in,
 			    size_t count);
 
-/** @file htonf.c
+/** @file libbu/htonf.c
  *
  * @brief convert floats to host/network format
  *
@@ -3336,7 +3336,7 @@ BU_EXPORT extern void ntohf(unsigned char *out,
 
 /** @addtogroup thread */
 /** @{ */
-/** @file ispar.c
+/** @file libbu/ispar.c
  *
  * @brief
  * subroutine to determine if we are multi-threaded
@@ -3369,7 +3369,7 @@ BU_EXPORT extern void bu_kill_parallel();
 
 /** @addtogroup bu_log */
 /** @{ */
-/** @file linebuf.c
+/** @file libbu/linebuf.c
  *
  * A portable way of doing setlinebuf().
  *
@@ -3469,7 +3469,7 @@ BU_EXPORT extern void bu_ck_list_magic(const struct bu_list *hd,
 
 /** @addtogroup bu_log */
 /** @{ */
-/** @file hook.c
+/** @file libbu/hook.c
  *
  * @brief
  * BRL-CAD support library's hook utility.
@@ -3592,7 +3592,7 @@ BU_EXPORT extern void bu_flog(FILE *, const char *, ...) __BU_ATTR_FORMAT23;
 
 /** @addtogroup malloc */
 /** @{ */
-/** @file malloc.c
+/** @file libbu/malloc.c
  *
  * @brief
  * Parallel-protected debugging-enhanced wrapper around system malloc().
@@ -3712,8 +3712,7 @@ BU_EXPORT extern int bu_mem_barriercheck();
 
 /** @addtogroup bu_log */
 /** @{ */
-/** @file basename.c
- ** @file dirname.c
+/** @file libbu/dirname.c
  *
  * @brief
  * Routines to process file and path names.
@@ -3866,7 +3865,7 @@ BU_EXPORT extern int bu_terminate(int process);
  */
 BU_EXPORT extern int bu_process_id();
 
-/** @file parallel.c
+/** @file libbu/parallel.c
  *
  * @brief routines for parallel processing
  *
@@ -3975,7 +3974,7 @@ BU_EXPORT extern void bu_parallel(void (*func)(int ncpu, genptr_t arg), int ncpu
 
 /** @addtogroup parse */
 /** @{ */
-/** @file ./libbu/parse.c
+/** @file libbu/parse.c
  *
  * @brief routines for parsing arbitrary structures
  *
@@ -4277,7 +4276,7 @@ BU_EXPORT extern int bu_str_false(const char *str);
 /** @} */
 /** @addtogroup bitv */
 /** @{ */
-/** @file printb.c
+/** @file libbu/printb.c
  *
  * @brief print bitfields
  *
@@ -4446,7 +4445,7 @@ BU_EXPORT extern void bu_ptbl_trunc(struct bu_ptbl *tbl,
 
 /** @addtogroup rb */
 /** @{ */
-/** @file rb_create.c
+/** @file libbu/rb_create.c
  *
  * Routines to create a red-black tree
  *
@@ -4481,7 +4480,7 @@ BU_EXPORT extern struct bu_rb_tree *bu_rb_create(char *description, int nm_order
  */
 BU_EXPORT extern struct bu_rb_tree *bu_rb_create1(char *description, int (*order_func)());
 
-/** @file rb_delete.c
+/** @file libbu/rb_delete.c
  *
  * Routines to delete a node from a red-black tree
  *
@@ -4501,7 +4500,7 @@ BU_EXPORT extern void bu_rb_delete(struct bu_rb_tree *tree,
 				   int order);
 #define bu_rb_delete1(t) bu_rb_delete((t), 0)
 
-/** @file rb_diag.c
+/** @file libbu/rb_diag.c
  *
  * Diagnostic routines for red-black tree maintenance
  *
@@ -4531,7 +4530,7 @@ BU_EXPORT extern void bu_rb_diagnose_tree(struct bu_rb_tree *tree,
  */
 BU_EXPORT extern void bu_rb_summarize_tree(struct bu_rb_tree *tree);
 
-/** @file rb_extreme.c
+/** @file libbu/rb_extreme.c
  *
  * Routines to extract mins, maxes, adjacent, and current nodes
  * from a red-black tree
@@ -4582,7 +4581,7 @@ BU_EXPORT extern void *bu_rb_curr(struct bu_rb_tree *tree,
 				  int order);
 #define bu_rb_curr1(t) bu_rb_curr((t), 0)
 
-/** @file rb_free.c
+/** @file libbu/rb_free.c
  *
  * Routines to free a red-black tree
  *
@@ -4611,7 +4610,7 @@ BU_EXPORT extern void bu_rb_free(struct bu_rb_tree *tree, void (*free_data)());
 	bu_rb_free(t, f);					\
     }
 
-/** @file rb_insert.c
+/** @file libbu/rb_insert.c
  *
  * Routines to insert into a red-black tree
  *
@@ -4698,7 +4697,7 @@ BU_EXPORT extern int bu_rb_uniq_off(struct bu_rb_tree *tree,
 				    int order);
 #define bu_rb_uniq_off1(t) bu_rb_uniq_off((t), 0)
 
-/** @file rb_order_stats.c
+/** @file libbu/rb_order_stats.c
  *
  * Routines to support order-statistic operations for a red-black tree
  *
@@ -4732,7 +4731,7 @@ BU_EXPORT extern void *bu_rb_select(struct bu_rb_tree *tree,
 				    int k);
 #define bu_rb_select1(t, k) bu_rb_select((t), 0, (k))
 
-/** @file rb_search.c
+/** @file libbu/rb_search.c
  *
  * Routines to search for a node in a red-black tree
  *
@@ -4752,7 +4751,7 @@ BU_EXPORT extern void *bu_rb_search(struct bu_rb_tree *tree,
 				    void *data);
 #define bu_rb_search1(t, d) bu_rb_search((t), 0, (d))
 
-/** @file rb_walk.c
+/** @file libbu/rb_walk.c
  *
  * Routines for traversal of red-black trees
  *
@@ -4788,7 +4787,7 @@ BU_EXPORT extern void bu_rb_walk(struct bu_rb_tree *tree, int order, void (*visi
 /** @addtogroup thread */
 /** @{ */
 
-/** @file semaphore.c
+/** @file libbu/semaphore.c
  *
  * @brief semaphore implementation
  *
@@ -5339,7 +5338,7 @@ BU_EXPORT extern void bu_vlb_print(struct bu_vlb *vlb,
 BU_EXPORT extern void bu_pr_vlb(const char *title, const struct bu_vlb *vlb);
 
 
-/** @file str.c
+/** @file libbu/str.c
  *
  * Compatibility routines to various string processing functions
  * including strlcat and strlcpy.
@@ -5487,7 +5486,7 @@ BU_EXPORT extern void bu_mm_cvt(const struct bu_structparse *sdp,
 
 /** @addtogroup hton */
 /** @{ */
-/** @file htester.c
+/** @file libbu/htester.c
  *
  * @brief
  * Test network float conversion.
@@ -5497,7 +5496,7 @@ BU_EXPORT extern void bu_mm_cvt(const struct bu_structparse *sdp,
  *
  */
 
-/** @file xdr.c
+/** @file libbu/xdr.c
  *
  * DEPRECATED
  *
@@ -5574,7 +5573,7 @@ DEPRECATED BU_EXPORT extern unsigned char *bu_plonglong(unsigned char *msgp, uin
 
 /** @addtogroup tcl */
 /** @{ */
-/** @file observer.c
+/** @file libbu/observer.c
  *
  * @brief
  * Routines for implementing the observer pattern.
@@ -6005,7 +6004,7 @@ BU_EXPORT extern int Bu_Init(Tcl_Interp *interp);
 
 /** @addtogroup bu_log */
 /** @{ */
-/** @file lex.c
+/** @file libbu/lex.c
  *
  */
 
@@ -6055,7 +6054,7 @@ BU_EXPORT extern int bu_lex(union bu_lex_token *token,
 			    struct bu_lex_key *symbols);
 
 
-/** @file mread.c
+/** @file libbu/mread.c
  *
  * @brief multiple-read to fill a buffer
  *
@@ -6080,7 +6079,7 @@ BU_EXPORT extern long int bu_mread(int fd, void *bufp, long int n);
 
 /** @addtogroup bu_hash */
 /** @{ */
-/** @file hash.c
+/** @file libbu/hash.c
  *
  * @brief
  * An implimentation of hash tables.
@@ -6349,7 +6348,7 @@ BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_next(struct bu_hash_record *r
 
 /** @addtogroup image */
 /** @{ */
-/** @file image.c
+/** @file libbu/image.c
  *
  * @brief image save/load routines
  *
@@ -6445,7 +6444,7 @@ BU_EXPORT extern int bu_image_save(unsigned char *data,
 
 /** @addtogroup file */
 /** @{ */
-/** @file fchmod.c
+/** @file libbu/fchmod.c
  *
  * Wrapper around fchmod.
  *
@@ -6457,7 +6456,7 @@ BU_EXPORT extern int bu_image_save(unsigned char *data,
  */
 BU_EXPORT extern int bu_fchmod(FILE *fp, unsigned long pmode);
 
-/** @file argv.c
+/** @file libbu/argv.c
  *
  * Functions related to argv processing.
  *
@@ -6513,7 +6512,7 @@ BU_EXPORT extern char **bu_dupinsert_argv(int insert, int insertArgc, const char
 BU_EXPORT extern char **bu_argv_from_path(const char *path, int *ac);
 
 
-/** @file interrupt.c
+/** @file libbu/interrupt.c
  *
  * Routines for managing signals.  In particular, provide a common
  * means to temporarily buffer processing a signal during critical
@@ -6552,7 +6551,7 @@ BU_EXPORT extern int bu_restore_interrupts();
 
 /** @addtogroup file */
 /** @{ */
-/** @file simd.c
+/** @file libbu/simd.c
  * Detect SIMD type at runtime.
  */
 
@@ -6567,7 +6566,7 @@ BU_EXPORT extern int bu_simd_level();
 
 /** @addtogroup file */
 /** @{ */
-/** @file timer.c
+/** @file libbu/timer.c
  * Return microsecond accuracy time information.
  */
 BU_EXPORT extern int64_t bu_gettime();
@@ -6576,7 +6575,7 @@ BU_EXPORT extern int64_t bu_gettime();
 
 /** @addtogroup file */
 /** @{ */
-/** @file dlfcn.c
+/** @file libbu/dlfcn.c
  * Dynamic Library functionality
  */
 #ifdef HAVE_DLOPEN
