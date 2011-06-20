@@ -1,3 +1,17 @@
+# Minimum required version of CMake
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+IF(COMMAND CMAKE_POLICY)
+	CMAKE_POLICY(SET CMP0003 NEW)
+ENDIF(COMMAND CMAKE_POLICY)
+
+# set CMake project name
+PROJECT(FLEX)
+
+SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMake)
+find_package(REGEX)
+
+SET(TARGET_LIBS ${TARGET_LIBS} ${REGEX_LIBRARY})
+
 SET(flex_SOURCES
 	ccl.c
 	dfa.c
@@ -41,13 +55,17 @@ add_definitions(
 	-DHAVE_CONFIG_H
 	)
 
+INCLUDE(CheckIncludeFile)
 SET(STDC_HEADERS 1)
 SET(M4 ${CMAKE_BINARY_DIR}/${BIN_DIR}/m4)
 CHECK_INCLUDE_FILE(alloca.h HAVE_ALLOCA_H)
 
 configure_file(conf.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
+
+
 add_executable(flex ${flex_SOURCES} ${flex_bootstrap_SOURCES})
 if(M_LIBRARY)
-	target_link_libraries(flex ${M_LIBRARY})
+	SET(TARGET_LIBS ${TARGET_LIBS} ${M_LIBRARY})
 endif(M_LIBRARY)
+target_link_libraries(flex ${TARGET_LIBS})
