@@ -45,11 +45,11 @@ OSLRenderer::~OSLRenderer(){
 void OSLRenderer::AddShader(const char *shadername){
 
     OSLShader osl_sh;
-    
+
     shadingsys->ShaderGroupBegin();
     shadingsys->Shader("surface", shadername, NULL);
     shadingsys->ShaderGroupEnd();
-    
+
     osl_sh.name = shadername;
     osl_sh.state = shadingsys->state();
     shadingsys->clear_state();
@@ -60,10 +60,10 @@ void OSLRenderer::AddShader(const char *shadername){
 Color3 OSLRenderer::QueryColor(RenderInfo *info){
 
     if(info->depth >= 5){
-        //printf("[DEB] maximum level of recursion reached\n");
-        return Color3(0.0f);
+	//printf("[DEB] maximum level of recursion reached\n");
+	return Color3(0.0f);
     }
-   
+
     fastf_t y = info->screen_y;
 
     Xi[0] = rand();
@@ -75,7 +75,7 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info){
     const ClosureColor *closure = ExecuteShaders(globals, info);
 
     if(closure == NULL){
-        fprintf(stderr, "closure is null\n");
+	fprintf(stderr, "closure is null\n");
     }
 
     Color3 weight = Color3(0.0f);
@@ -83,41 +83,41 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info){
     const ClosurePrimitive *prim = SamplePrimitive(weight, closure, 0.5);
 
     if(prim) {
-        if(prim->category() == OSL::ClosurePrimitive::BSDF) {
-            // sample BSDF closure
-            BSDFClosure *bsdf = (BSDFClosure*)prim;
-            Vec3 omega_in, zero(0.0f);
-            Color3 eval;
-            float pdf = 0.0;
+	if(prim->category() == OSL::ClosurePrimitive::BSDF) {
+	    // sample BSDF closure
+	    BSDFClosure *bsdf = (BSDFClosure*)prim;
+	    Vec3 omega_in, zero(0.0f);
+	    Color3 eval;
+	    float pdf = 0.0;
 
-            bsdf->sample(globals.Ng, globals.I, zero, zero, 
-                         erand48(Xi), erand48(Xi),
+	    bsdf->sample(globals.Ng, globals.I, zero, zero,
+			 erand48(Xi), erand48(Xi),
 			 omega_in, zero, zero, pdf, eval);
-	    
-            if(pdf != 0.0f) {
-                OSLRenderer::Vec3toPoint_t(globals.P, info->out_ray.origin);
-                OSLRenderer::Vec3toPoint_t(omega_in, info->out_ray.dir);
-                info->doreflection = 1;
-                return weight*eval/pdf;
-            }
-        }
-        else if(prim->category() == OSL::ClosurePrimitive::Emissive) {
-            // evaluate emissive closure
-            
-            EmissiveClosure *emissive = (EmissiveClosure*)prim;
-            Color3 l = weight*emissive->eval(globals.Ng, globals.I);
-            /*
-            printf("[DEB] Returning a light: %.2lf %.2lf %.2lf\n",
-                   l[0], l[1], l[2]);
-            */
 
-            return l;
-        }
-        else if(prim->category() == OSL::ClosurePrimitive::Background) {
-            // background closure just returns weight
-            printf("[Background]\n");
-            return weight;
-        }
+	    if(pdf != 0.0f) {
+		OSLRenderer::Vec3toPoint_t(globals.P, info->out_ray.origin);
+		OSLRenderer::Vec3toPoint_t(omega_in, info->out_ray.dir);
+		info->doreflection = 1;
+		return weight*eval/pdf;
+	    }
+	}
+	else if(prim->category() == OSL::ClosurePrimitive::Emissive) {
+	    // evaluate emissive closure
+
+	    EmissiveClosure *emissive = (EmissiveClosure*)prim;
+	    Color3 l = weight*emissive->eval(globals.Ng, globals.I);
+	    /*
+	      printf("[DEB] Returning a light: %.2lf %.2lf %.2lf\n",
+	      l[0], l[1], l[2]);
+	    */
+
+	    return l;
+	}
+	else if(prim->category() == OSL::ClosurePrimitive::Background) {
+	    // background closure just returns weight
+	    printf("[Background]\n");
+	    return weight;
+	}
     }
     return Color3(0.0f);
 }
@@ -129,7 +129,7 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info){
 
 //     shadingsys->attribute("optimize", 2);
 //     shadingsys->attribute("lockgeom", 1);
-    
+
 //     shadingsys->ShaderGroupBegin();
 //     shadingsys->Shader("surface", shadername, NULL);
 //     shadingsys->ShaderGroupEnd();
@@ -137,7 +137,7 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info){
 //     fprintf(stderr, "[DEB] inicializando shader state\n");
 
 //     shaderstate = shadingsys->state();
-    
+
 //     shadingsys->clear_state();
 // }
 const ClosureColor * OSLRenderer::
@@ -146,24 +146,24 @@ ExecuteShaders(ShaderGlobals &globals, RenderInfo *info){
     /* Search for the given shader */
     int sh_id = -1;
     for(size_t i = 0; i < shaders.size(); i++){
-        if (strcmp(shaders[i].name, info->shadername) == 0){
-            sh_id = i;
-            break;
-        }
+	if (strcmp(shaders[i].name, info->shadername) == 0){
+	    sh_id = i;
+	    break;
+	}
     }
     if(sh_id == -1){
-        printf("[DEB] shader not found\n");
-        return NULL;
+	printf("[DEB] shader not found\n");
+	return NULL;
     }
 
     memset(&globals, 0, sizeof(globals));
-    
+
     VMOVE(globals.P, info->P);
     VMOVE(globals.I, info->I);
     VMOVE(globals.Ng, info->N);
 
-    globals.N = globals.Ng;    
-    
+    globals.N = globals.Ng;
+
     // u-v coordinates
     globals.u = info->u;
     globals.v = info->v;
@@ -182,7 +182,7 @@ ExecuteShaders(ShaderGlobals &globals, RenderInfo *info){
 
     // execute shader
     ctx->execute(ShadUseSurface, *(shaders[sh_id].state),
-                             globals);
+		 globals);
 
     return globals.Ci;
 }
@@ -190,62 +190,62 @@ ExecuteShaders(ShaderGlobals &globals, RenderInfo *info){
 const ClosurePrimitive * OSLRenderer::SamplePrimitive(Color3& weight, const ClosureColor *closure, float r){
 
     if(closure) {
-        const ClosurePrimitive *prim = NULL;
-        float totw = 0.0f;
-	
-        SamplePrimitiveRecurse(prim, weight, closure, Color3(1.0f), totw, r);
-        weight *= totw;
+	const ClosurePrimitive *prim = NULL;
+	float totw = 0.0f;
 
-        return prim;
+	SamplePrimitiveRecurse(prim, weight, closure, Color3(1.0f), totw, r);
+	weight *= totw;
+
+	return prim;
     }
     return NULL;
 }
 void OSLRenderer::SamplePrimitiveRecurse(const ClosurePrimitive*& r_prim, Color3& r_weight, const ClosureColor *closure,
-                                     const Color3& weight, float& totw, float& r){
+					 const Color3& weight, float& totw, float& r){
 
     if(closure->type == ClosureColor::COMPONENT) {
 
-        ClosureComponent *comp = (ClosureComponent*)closure;
-        ClosurePrimitive *prim = (ClosurePrimitive*)comp->data();
-        float p, w = fabsf(weight[0]) + fabsf(weight[1]) + fabsf(weight[2]);
+	ClosureComponent *comp = (ClosureComponent*)closure;
+	ClosurePrimitive *prim = (ClosurePrimitive*)comp->data();
+	float p, w = fabsf(weight[0]) + fabsf(weight[1]) + fabsf(weight[2]);
 
-        if(w == 0.0f)
-            return;
+	if(w == 0.0f)
+	    return;
 
-        totw += w;
+	totw += w;
 
-        if(!r_prim) {
-            // no primitive was found yet, so use this
-            r_prim = prim;
-            r_weight = weight/w;
-        }
-        else {
+	if(!r_prim) {
+	    // no primitive was found yet, so use this
+	    r_prim = prim;
+	    r_weight = weight/w;
+	}
+	else {
 
-            p = w/totw;
+	    p = w/totw;
 
-            if(r < p) {
-                // pick other primitive
-                r_prim = prim;
-                r_weight = weight/w;
-                
-                r = r/p;
-            }
-            else {
-                // keep existing primitive
-                r = (r + p)/(1.0f - p);
-            }
-        }
+	    if(r < p) {
+		// pick other primitive
+		r_prim = prim;
+		r_weight = weight/w;
+
+		r = r/p;
+	    }
+	    else {
+		// keep existing primitive
+		r = (r + p)/(1.0f - p);
+	    }
+	}
     }
     else if(closure->type == ClosureColor::MUL) {
-        ClosureMul *mul = (ClosureMul*)closure;
+	ClosureMul *mul = (ClosureMul*)closure;
 
-        SamplePrimitiveRecurse(r_prim, r_weight, mul->closure, mul->weight * weight, totw, r);
+	SamplePrimitiveRecurse(r_prim, r_weight, mul->closure, mul->weight * weight, totw, r);
     }
     else if(closure->type == ClosureColor::ADD) {
-        ClosureAdd *add = (ClosureAdd*)closure;
-
-        SamplePrimitiveRecurse(r_prim, r_weight, add->closureA, weight, totw, r);
-        SamplePrimitiveRecurse(r_prim, r_weight, add->closureB, weight, totw, r);
+	ClosureAdd *add = (ClosureAdd*)closure;
+	
+	SamplePrimitiveRecurse(r_prim, r_weight, add->closureA, weight, totw, r);
+	SamplePrimitiveRecurse(r_prim, r_weight, add->closureB, weight, totw, r);
     }
 }
 
@@ -269,7 +269,7 @@ void oslrenderer_free(OSLRenderer **osl){
 }
 
 // Local Variables:
-// tab-width: 8
+// tab-width: 8o
 // mode: C++
 // c-basic-offset: 4
 // indent-tabs-mode: t

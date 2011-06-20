@@ -1,3 +1,29 @@
+/*                  O S L - R E N D E R E R . H
+ * BRL-CAD
+ *
+ * Copyright (c) 2011 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file osl-renderer.h
+ *
+ * This code represents an interface to OSL system. Through it, one can
+ * add OSL shaders and query colors, given some global parameters
+ *
+ */
+
 #ifndef OSL_RENDERER_H
 #define OSL_RENDERER_H
 
@@ -10,14 +36,14 @@ typedef  struct Ray {
 } Ray;
 
 
-/* Shared struct by which the C shader and the C++ render system may 
+/* Shared struct by which the C shader and the C++ render system may
    exchange information
- */
+*/
 struct RenderInfo {
-    
+
     /* -- input -- */
     fastf_t screen_x;       /* Coordinates of the screen (if applicable) */
-    fastf_t screen_y; 
+    fastf_t screen_y;
     point_t P;              /* Query point */
     point_t N;              /* Object normal */
     point_t I;              /* Incident ray direction */
@@ -27,7 +53,7 @@ struct RenderInfo {
     fastf_t surfacearea;    /* FIXME */
     int isbackfacing;       /* FIXME */
     const char *shadername; /* Name of the shader we are querying */
-    
+
     /* -- output -- */
     point_t pc; /* Color of the point (or multiplier) */
     int doreflection;     /* 1 if there will be reflection 0, otherwise */
@@ -50,14 +76,14 @@ struct ThreadInfo {
     unsigned short Xi[3];
 };
 
-/* Class 'OSLRenderer' holds global information about OSL shader system. 
+/* Class 'OSLRenderer' holds global information about OSL shader system.
    These information are hidden from the calling C code */
 class OSLRenderer {
 
     const char *shadername;              /* name of the shader */
     ErrorHandler errhandler;
     ShaderGlobals globals;
-    
+
     ShadingSystem *shadingsys;
     ShadingSystemImpl *ssi;
     SimpleRenderer rend;
@@ -68,27 +94,27 @@ class OSLRenderer {
 
     /* Information about each shader of the renderer */
     struct OSLShader{
-        const char *name;
-        ShadingAttribStateRef state;        
+	const char *name;
+	ShadingAttribStateRef state;
     };
     std::vector<OSLShader> shaders;
 
-    const ClosureColor 
-        *ExecuteShaders(ShaderGlobals &globals, RenderInfo *info);
+    const ClosureColor
+	*ExecuteShaders(ShaderGlobals &globals, RenderInfo *info);
 
     /* Sample a primitive from the shaders group */
-    const ClosurePrimitive* SamplePrimitive(Color3& weight, 
-                                            const ClosureColor *closure,
-                                            float r);
-    
+    const ClosurePrimitive* SamplePrimitive(Color3& weight,
+					    const ClosureColor *closure,
+					    float r);
+
     /* Helper function for SamplePrimitive */
-    void SamplePrimitiveRecurse(const ClosurePrimitive*& r_prim, 
-                                Color3& r_weight,
-                                const ClosureColor *closure,
+    void SamplePrimitiveRecurse(const ClosurePrimitive*& r_prim,
+				Color3& r_weight,
+				const ClosureColor *closure,
 				const Color3& weight, float& totw, float& r);
-    
- public:
-    
+
+public:
+
     OSLRenderer();
     ~OSLRenderer();
 
@@ -99,20 +125,20 @@ class OSLRenderer {
     Color3 QueryColor(RenderInfo *info);
 
     static void Vec3toPoint_t(Vec3 s, point_t t){
-        t[0] = s[0];
-        t[1] = s[1];
-        t[2] = s[2];
+	t[0] = s[0];
+	t[1] = s[1];
+	t[2] = s[2];
     }
 
 };
 
 #else
 
-typedef 
+typedef
 struct OSLRenderer
 OSLRenderer;
 
-typedef 
+typedef
 struct RenderInfo
 RenderInfo;
 
@@ -137,6 +163,16 @@ extern "C" {
 #endif
 
 
-
-
 #endif
+
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * c-basic-offset: 4
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
