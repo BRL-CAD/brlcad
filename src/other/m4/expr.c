@@ -18,7 +18,7 @@
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
-#include <stdint.h>
+#include "common.h"
 #include <stdio.h>
 #include <stddef.h>
 #include "mdef.h"
