@@ -30,7 +30,7 @@
 #include <stdio.h>
 #include "vmath.h"
 
-typedef  struct Ray {
+typedef struct Ray {
     point_t dir;
     point_t origin;
 } Ray;
@@ -61,12 +61,17 @@ struct RenderInfo {
 };
 
 
-#ifdef __cplusplus
+#ifndef WITH_OSL
 
-#include "render_svc.h"
+typedef struct OSLRenderer OSLRenderer;
+typedef struct RenderInfo RenderInfo;
+
+#else /* WITH_OSL */
+
+#  include "oslclosure.h"
+#  include "render_svc.h"
 /* FIXME  -- Add my own ShaderSystem? */
-#include "./oslexec_pvt.h"
-#include "oslclosure.h"
+#  include "./oslexec_pvt.h"
 
 using namespace OSL;
 
@@ -132,22 +137,9 @@ public:
 
 };
 
-#else
+#endif /* WITH_OSL */
 
-typedef
-struct OSLRenderer
-OSLRenderer;
-
-typedef
-struct RenderInfo
-RenderInfo;
-
-#endif
-
-
-#ifdef __cplusplus
 extern "C" {
-#endif
 
     /* Wrapper for OSLRenderer constructor */
     OSLRenderer * oslrenderer_init(const char *shadername);
@@ -158,12 +150,9 @@ extern "C" {
     /* Wrapper for OSLRenderer destructor */
     void oslrenderer_free(OSLRenderer **osl);
 
-#ifdef __cplusplus
 }
-#endif
 
-
-#endif
+#endif /* OSL_RENDERER_H */
 
 
 /*
