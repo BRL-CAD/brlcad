@@ -19,7 +19,7 @@
  */
 /** @addtogroup libbu */
 /** @{ */
-/** @file libbu/bu.h
+/** @file bu.h
  *
  * @brief
  * Header file for the BRL-CAD Utility Library, LIBBU.
