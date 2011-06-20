@@ -35,22 +35,9 @@
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
+#include "common.h"
 #include <sys/types.h>
 #include <errno.h>
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#  define NOMINMAX
-#  include <windows.h>
-#  include <io.h>
-
-#   undef rad1 /* Win32 radio button 1 */
-#   undef rad2 /* Win32 radio button 2 */
-#   undef small /* defined as part of the Microsoft Interface Definition Language (MIDL) */
-#   undef IN
-#   undef OUT
-
-#else
-#  include <unistd.h>
-#endif
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
