@@ -31,6 +31,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * Parts of this file are LGPL.
  */
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
@@ -422,3 +424,105 @@ dump_buffer(FILE *f, size_t m)
 	for (s = bp; (size_t)(s - buf) > m;)
 		fputc(*--s, f);
 }
+
+#ifdef WIN32
+
+/* from src/libbu/getopt.c. LGPL. */
+int debug = 0;
+int opterr = 1;
+int optind = 1;
+int optopt = 0;
+char *optarg = NULL;
+#define BADCH (int)'?'
+#define EMSG ""
+#define tell(s)	if (opterr) {		\
+	fputs(*nargv, stderr);			\
+	fputs(s, stderr);			\
+	fputc(optopt, stderr);		\
+	fputc('\n', stderr);			\
+    } return BADCH;
+int
+getopt(int nargc, char * const nargv[], const char *ostr)
+{
+    static char *place = EMSG;	/* option letter processing */
+    register char *oli;		/* option letter list index */
+
+    if (*place=='\0') {
+	/* update scanning pointer */
+	if (optind >= nargc || *(place = nargv[optind]) != '-' ||
+	    !*++place) {
+	    place = EMSG;
+	    return -1;
+	}
+	if (*place == '-') {
+	    /* found "--" */
+	    place = EMSG;
+	    ++optind;
+	    return -1;
+	}
+    } /* option letter okay? */
+
+    optopt = (int)*place++;
+    oli = strchr(ostr, optopt);
+    if (optopt == (int)':' || !oli) {
+	++optind;
+	place = EMSG;
+	tell(": illegal option -- ");
+    }
+    if (*++oli != ':') {
+	/* don't need argument */
+	optarg = NULL;
+	if (*place == '\0') {
+	    ++optind;
+	    place = EMSG;
+	}
+    }
+    else {
+	/* need an argument */
+	if (*place) optarg = place;	/* no white space */
+	else if (nargc <= ++optind) {
+	    /* no arg */
+	    place = EMSG;
+	    tell(": option requires an argument -- ");
+	}
+	else optarg = nargv[optind];	/* white space */
+	place = EMSG;
+	++optind;
+    }
+    return optopt;			/* dump back option letter */
+}
+/* end of LGPL code. */
+
+void
+warnx()
+{
+	fprintf(stderr, "%s: ", getprogname());
+	fprintf(stderr, "%s at line %lu: ", CURRENT_NAME, CURRENT_LINE);
+	if (fmt != NULL) {
+		va_list ap;
+
+		va_start(ap, fmt);
+		vfprintf(stderr, fmt, ap);
+		va_end(ap);
+	}
+	fprintf(stderr, "\n");
+}
+
+int
+mkstemp(char *file)
+{
+	fprintf(stderr, "Whu?\n");
+	return -1;
+}
+
+#endif
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
