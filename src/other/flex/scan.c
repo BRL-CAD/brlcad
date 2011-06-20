@@ -2005,18 +2005,7 @@ extern const char *escaped_qstart, *escaped_qend;
  * down here because we want the user's section 1 to have been scanned first.
  * The user has a chance to override it with an option.
  */
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#  define NOMINMAX
-#  include <windows.h>
-#  include <io.h>
-
-#   undef rad1 /* Win32 radio button 1 */
-#   undef rad2 /* Win32 radio button 2 */
-#   undef small /* defined as part of the Microsoft Interface Definition Language (MIDL) */
-#   undef IN
-#   undef OUT
-
-#else
+#if !defined(_WIN32) || defined(__CYGWIN__)
 #  include <unistd.h>
 #endif
 #endif
