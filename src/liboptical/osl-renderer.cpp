@@ -269,7 +269,7 @@ void oslrenderer_free(OSLRenderer **osl){
 }
 
 // Local Variables:
-// tab-width: 8o
+// tab-width: 8
 // mode: C++
 // c-basic-offset: 4
 // indent-tabs-mode: t
