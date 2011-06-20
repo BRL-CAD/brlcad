@@ -24,6 +24,8 @@
  * techniques, and more efficient in most cases.
  */
 
+#include <sys/types.h>
+
 struct ohash_info {
 	ptrdiff_t key_offset;
 	void *data;	/* user data */
