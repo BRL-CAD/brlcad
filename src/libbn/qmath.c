@@ -19,7 +19,7 @@
  */
 /** @addtogroup mat */
 /** @{ */
-/** @file qmath.c
+/** @file libbn/qmath.c
  *
  * @brief
  *  Quaternion math routines.

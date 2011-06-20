@@ -19,7 +19,7 @@
  */
 /** @addtogroup wavelet */
 /** @{ */
-/** @file wavelet.c
+/** @file libbn/wavelet.c
  *
  * @brief
  *  This is a standard wavelet library that takes a given data buffer of some data

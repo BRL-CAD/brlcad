@@ -19,7 +19,7 @@
  */
 /** @addtogroup plot */
 /** @{ */
-/** @file symbol.c
+/** @file libbn/symbol.c
  *
  *	Terminal Independant Graphics Display Package.
  *		Mike Muuss  July 31, 1978

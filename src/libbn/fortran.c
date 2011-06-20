@@ -19,7 +19,7 @@
  */
 /** @addtogroup fort */
 /** @{ */
-/** @file fortran.c
+/** @file libbn/fortran.c
  *
  * @brief
  * A FORTRAN-callable interface to libplot3.

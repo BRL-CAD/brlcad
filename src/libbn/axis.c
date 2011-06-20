@@ -19,7 +19,7 @@
  */
 /** @addtogroup axis */
 /** @{ */
-/** @file axis.c
+/** @file libbn/axis.c
  *
  * @brief
  *	This routine is used to generate an axis for a graph.

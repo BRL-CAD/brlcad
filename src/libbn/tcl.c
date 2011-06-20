@@ -19,7 +19,7 @@
  */
 /** @addtogroup bntcl */
 /** @{ */
-/** @file bn_tcl.c
+/** @file libbn/bn_tcl.c
  *
  * @brief
  * Tcl interfaces to all the LIBBN math routines.

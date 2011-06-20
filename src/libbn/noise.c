@@ -19,7 +19,7 @@
  */
 /** @addtogroup noise */
 /** @{ */
-/** @file noise.c
+/** @file libbn/noise.c
  *
  * These noise functions provide mostly random noise at the integer
  * lattice points.  The functions should be evaluated at non-integer

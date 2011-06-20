@@ -19,7 +19,7 @@
  */
 /** @addtogroup vtree */
 /** @{ */
-/** @file vert_tree.c
+/** @file libbn/vert_tree.c
  *
  * @brief
  * Routines to manage a binary search tree of vertices.

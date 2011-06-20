@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ulp.c
+/** @file libbn/ulp.c
  *
  * Routines useful for performing comparisons and dynamically
  * calculating floating point limits including the Unit in the Last

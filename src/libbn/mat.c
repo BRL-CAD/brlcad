@@ -19,7 +19,7 @@
  */
 /** @addtogroup mat */
 /** @{ */
-/** @file mat.c
+/** @file libbn/mat.c
  *
  * @brief
  * 4 x 4 Matrix manipulation functions...

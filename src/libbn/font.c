@@ -19,7 +19,7 @@
  */
 /** @addtogroup vlist */
 /** @{ */
-/** @file font.c
+/** @file libbn/font.c
  *
  */
 

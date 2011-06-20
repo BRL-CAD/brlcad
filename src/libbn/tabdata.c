@@ -19,7 +19,7 @@
  */
 /** @addtogroup anim */
 /** @{ */
-/** @file tabdata.c
+/** @file libbn/tabdata.c
  *
  * @brief
  *  Routines for processing tables (curves) of data with one independent

@@ -19,7 +19,7 @@
  */
 /** @addtogroup complex */
 /** @{ */
-/** @file complex.c
+/** @file libbn/complex.c
  *
  */
 /** @} */

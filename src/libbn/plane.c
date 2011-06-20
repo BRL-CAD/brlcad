@@ -19,7 +19,7 @@
  */
 /** @addtogroup plane */
 /** @{ */
-/** @file plane.c
+/** @file libbn/plane.c
  *
  * @brief
  * Some useful routines for dealing with planes and lines.
