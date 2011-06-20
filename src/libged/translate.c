@@ -28,21 +28,27 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-
+#include "vmath.h"
 #include "ged.h"
 
 int
 ged_translate(struct ged *gedp, int argc, const char *argv[])
 {
+    int i;			/* iterator */
     int c;			/* bu_getopt return value */
     int abs_flag = 0;		/* use absolute position */
     int rel_flag = 0;		/* use relative distance */
-    char *kp_arg = NULL;		/* keypoint */
-    const char *cmdName = argv[0];
+    char *kp_arg = NULL;
+    const char *obj_name; /* FIXME: needs to handle >1 obj */
+    point_t keypoint;
+    const char *cmd_name = argv[0];
     static const char *usage = "[-k keypoint:object]"
 				" [[-a] | [-r]]" 
-				" xpos [ypos [zpos]]"
+				" x [y [z]]"
 				" objects";
+    /* testing */
+    mat_t modelchanges, incr, old;
+    vect_t model_sol_pt, model_incr, ed_sol_pt, new_vertex;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -53,11 +59,11 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmdName, usage);
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 	return GED_HELP;
     }
 
-    /* Get short arguments */
+    /* get short arguments */
     bu_optind = 1; /* re-init bu_getopt() */
     while ((c = bu_getopt(argc, (char * const *)argv, "ak:r")) != -1) {
         switch (c) {
@@ -67,7 +73,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 	case 'k':
 	    kp_arg = bu_optarg;
 	    if (kp_arg[0] == '-') {
-		/* That's an option, not an arg */
+		/* that's an option, not an arg */
 		bu_vls_printf(&gedp->ged_result_str,
 			      "Missing argument for option -%c", bu_optopt);
 		return GED_ERROR;
@@ -77,7 +83,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 	    rel_flag = 1;
 	    break;
 	default:
-	    /* Options that require arguments */
+	    /* options that require arguments */
 	    switch (bu_optopt) {
 	    case 'k':
 		bu_vls_printf(&gedp->ged_result_str,
@@ -85,7 +91,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 		return GED_ERROR;
 	    }
 
-	    /* Unknown options */
+	    /* unknown options */
 	    if (isprint(bu_optopt)) {
 		bu_vls_printf(&gedp->ged_result_str,
 			      "Unknown option '-%c'", bu_optopt);
@@ -99,24 +105,53 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
         }
     }
 
-    
-    /* need a default action */
+    /* needs to be either absolute or relative positioning */
     if (!abs_flag && !rel_flag)
-	abs_flag = 1; /* default */
+	rel_flag = 1;
     else if (abs_flag && rel_flag) {
 	bu_vls_printf(&gedp->ged_result_str,
-		      "'-a' and '-r' are mutually exclusive");
+		      "options '-a' and '-r' are mutually exclusive");
 	return GED_ERROR;
     }
 
+    /* disabled until functional */
     goto disabled;
-	
-    return GED_OK;
 
-    /* Not yet working*/
+    /* set reasonable default keypoint */
+    #if 0
+    if (!keypoint)
+	;
+    #endif
+
+    /* testing */
+    keypoint[0] = 0;
+    keypoint[1] = 0;
+    keypoint[2] = 0;
+
+    /* set 3d coords */
+    /* FIXME: will crash if arguments are in wrong order */
+    for (i = 0; i < 3; ++i, ++bu_optind)
+	new_vertex[i] = atof(argv[bu_optind]) *
+	    gedp->ged_wdbp->dbip->dbi_local2base;
+    
+    /* FIXME: needs to handle >1 obj */
+    obj_name = argv[bu_optind];
+
+    /* do translation */
+    MAT_IDN(incr);
+    MAT_IDN(old);
+    VMOVE(model_sol_pt, keypoint);
+    MAT4X3PNT(ed_sol_pt, modelchanges, model_sol_pt);
+    VSUB2(model_incr, new_vertex, ed_sol_pt);
+    MAT_DELTAS_VEC(incr, model_incr);
+    MAT_COPY(old, modelchanges);
+    bn_mat_mul(modelchanges, incr, old);
+    //new_edit_mats();
+
+    return GED_OK;
     disabled:
     bu_vls_printf(&gedp->ged_result_str, "Not yet implemented");
-    return GED_OK;
+    return GED_ERROR;
 }
 
 /*
