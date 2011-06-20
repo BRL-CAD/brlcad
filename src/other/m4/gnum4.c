@@ -32,7 +32,8 @@
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
-#include "common.h"
+#include "common.h"	/* needed for regex.h */
+#include "commonm4.h"
 #include <sys/types.h>
 #include <ctype.h>
 #include <regex.h>

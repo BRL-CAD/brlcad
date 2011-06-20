@@ -19,7 +19,7 @@
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
-#include "common.h"
+#include "commonm4.h"
 #include "parser.h"
 #include <stdlib.h>
 #include <errno.h>

@@ -41,7 +41,7 @@
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
-#include "common.h"
+#include "commonm4.h"
 #include <assert.h>
 #include <signal.h>
 #include <errno.h>

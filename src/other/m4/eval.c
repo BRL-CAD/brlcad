@@ -42,7 +42,7 @@
 #include "nbtool_config.h"
 #endif
 
-#include "common.h"
+#include "commonm4.h"
 
 #include <sys/types.h>
 #include <errno.h>

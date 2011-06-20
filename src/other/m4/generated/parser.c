@@ -1,4 +1,4 @@
-#include "common.h"
+#include "commonm4.h"
 #ifndef lint
 static char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93";
 #endif
