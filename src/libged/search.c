@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file search.c
+/** @file libged/search.c
  *
  * GED wrapper around librt search functions
  *

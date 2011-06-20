@@ -19,7 +19,7 @@
  */
 /** @addtogroup db5 */
 /** @{ */
-/** @file db5_types.c
+/** @file librt/db5_types.c
  *
  * Map between Major_Types/Minor_Types and ASCII strings
  *

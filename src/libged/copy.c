@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file copy.c
+/** @file libged/copy.c
  *
  * The copy command.
  *

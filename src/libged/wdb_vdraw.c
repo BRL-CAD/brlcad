@@ -19,7 +19,7 @@
  */
 /** @addtogroup libged */
 /** @{ */
-/** @file vdraw.c
+/** @file libged/vdraw.c
  *
  * Edit vector lists and display them as pseudosolids.
  *

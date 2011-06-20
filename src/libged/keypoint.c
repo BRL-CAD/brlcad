@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file keypoint.c
+/** @file libged/keypoint.c
  *
  * The keypoint command.
  *

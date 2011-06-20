@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file put.c
+/** @file libged/put.c
  *
  * The put command.
  *

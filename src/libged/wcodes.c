@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file wcodes.c
+/** @file libged/wcodes.c
  *
  * The wcodes command.
  *

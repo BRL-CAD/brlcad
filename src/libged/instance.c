@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file instance.c
+/** @file libged/instance.c
  *
  * The instance command.
  *

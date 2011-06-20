@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_brdf.c
+/** @file liboptical/sh_brdf.c
  *
  * Simple Isotropic Gaussian model with just one parameter (RMS slope).
  *

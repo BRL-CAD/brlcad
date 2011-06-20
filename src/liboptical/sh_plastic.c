@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_plastic.c
+/** @file liboptical/sh_plastic.c
  *
  * Notes -
  * The normals on all surfaces point OUT of the solid.

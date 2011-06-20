@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file inside.c
+/** @file libged/inside.c
  *
  * The inside command.
  *

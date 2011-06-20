@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bot_flip.c
+/** @file libged/bot_flip.c
  *
  * The bot_flip command.
  *

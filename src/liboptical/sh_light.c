@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_light.c
+/** @file liboptical/sh_light.c
  *
  * Implement simple isotropic light sources as a material property.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bo.c
+/** @file libged/bo.c
  *
  * The 'bo' binary object command, used for importing and exporting
  * between files and binary objects stored in a geometry database.

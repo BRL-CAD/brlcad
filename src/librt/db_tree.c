@@ -19,7 +19,7 @@
  */
 /** @addtogroup dbio */
 /** @{ */
-/** @file db_tree.c
+/** @file librt/db_tree.c
  *
  * Includes parallel tree walker routine.  Also includes routines to
  * return a matrix givne a name or path.

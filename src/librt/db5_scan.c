@@ -19,7 +19,7 @@
  */
 /** @addtogroup db5 */
 /** @{ */
-/** @file db5_scan.c
+/** @file librt/db5_scan.c
  *
  * Scan a v5 database, sending each object off to a handler.
  *

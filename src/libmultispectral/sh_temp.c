@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_temp.c
+/** @file libmultispectral/sh_temp.c
  *
  *  Temperature map lookup.
  *  Based upon liboptical/sh_text.c

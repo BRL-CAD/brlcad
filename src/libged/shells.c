@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file shells.c
+/** @file libged/shells.c
  *
  * The shells command.
  *

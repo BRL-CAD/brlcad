@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file shaded_mode.c
+/** @file libged/shaded_mode.c
  *
  * The shaded_mode command.
  *

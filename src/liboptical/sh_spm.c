@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_spm.c
+/** @file liboptical/sh_spm.c
  *
  * Spherical Data Structures/Texture Maps
  *

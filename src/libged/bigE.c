@@ -19,7 +19,7 @@
  */
 /** @addtogroup libged */
 /** @{ */
-/** @file bigE.c
+/** @file libged/bigE.c
  *
  * This module implements the 'E' command.
  *

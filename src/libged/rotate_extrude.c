@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rotate_extrude.c
+/** @file libged/rotate_extrude.c
  *
  * The rotate_extrude command.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pipe.c
+/** @file libwdb/pipe.c
  *
  * Support for particles and pipes.  Library for writing geometry
  * databases from arbitrary procedures.

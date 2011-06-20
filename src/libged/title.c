@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file title.c
+/** @file libged/title.c
  *
  * The title command.
  *

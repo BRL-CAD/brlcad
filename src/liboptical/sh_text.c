@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_text.c
+/** @file liboptical/sh_text.c
  *
  * Texture map lookup
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bot_merge.c
+/** @file libged/bot_merge.c
  *
  * The bot_merge command.
  *

@@ -19,7 +19,7 @@
  */
 /** @addtogroup libged */
 /** @{ */
-/** @file wdb_obj.c
+/** @file libged/wdb_obj.c
  *
  * A quasi-object-oriented database interface.
  *

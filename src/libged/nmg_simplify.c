@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file nmg_simplify.c
+/** @file libged/nmg_simplify.c
  *
  * The nmg_simplify command.
  *

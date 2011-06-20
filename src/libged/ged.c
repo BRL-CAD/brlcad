@@ -19,7 +19,7 @@
  */
 /** @addtogroup libged */
 /** @{ */
-/** @file ged.c
+/** @file libged/ged.c
  *
  * A quasi-object-oriented database interface.
  *

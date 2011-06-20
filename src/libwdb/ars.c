@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ars.c
+/** @file libwdb/ars.c
  *
  * libwdb support for writing an ARS.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file get_eyemodel.c
+/** @file libged/get_eyemodel.c
  *
  * The get_eyemodel command.
  *

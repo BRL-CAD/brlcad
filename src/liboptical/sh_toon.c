@@ -18,7 +18,7 @@
  * information.
  */
 
-/** @file sh_toon.c
+/** @file liboptical/sh_toon.c
  *
  * uses simple binning based on the cosine between the ray and the vector from
  * the hitpoint to the light. Might be improved by using hit location curvature

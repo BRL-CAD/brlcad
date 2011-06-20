@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file overlay.c
+/** @file libged/overlay.c
  *
  * The overlay command.
  *

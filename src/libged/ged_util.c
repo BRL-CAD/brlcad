@@ -19,7 +19,7 @@
  */
 /** @addtogroup libged */
 /** @{ */
-/** @file ged_util.c
+/** @file libged/ged_util.c
  *
  * Utility routines for common operations in libged.
  * 

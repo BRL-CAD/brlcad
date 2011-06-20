@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dup.c
+/** @file libged/dup.c
  *
  * The dup command.
  *

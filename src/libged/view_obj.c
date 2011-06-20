@@ -19,7 +19,7 @@
  */
 /** @addtogroup libged */
 /** @{ */
-/** @file view_obj.c
+/** @file libged/view_obj.c
  *
  * A view object contains the attributes and methods for controlling
  * viewing transformations.

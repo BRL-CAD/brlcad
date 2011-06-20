@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bot_vertex_fuse.c
+/** @file libged/bot_vertex_fuse.c
  *
  * The bot_vertex_fuse command.
  *

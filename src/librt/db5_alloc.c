@@ -19,7 +19,7 @@
  */
 /** @addtogroup db5 */
 /** @{ */
-/** @file db5_alloc.c
+/** @file librt/db5_alloc.c
  *
  * Handle disk space allocation in the BRL-CAD v5 database.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file export.c
+/** @file libwdb/export.c
  *
  * Routines to allow libwdb to use librt's import/export interface,
  * rather than having to know about the database formats directly.

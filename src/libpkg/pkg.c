@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pkg.c
+/** @file libpkg/pkg.c
  *
  * LIBPKG provides routines to manage multiplexing and de-multiplexing
  * synchronous and asynchronous messages across stream connections.

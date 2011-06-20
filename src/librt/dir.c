@@ -19,7 +19,7 @@
  */
 /** @addtogroup dbio */
 /** @{ */
-/** @file dir.c
+/** @file librt/dir.c
  *
  * Ray Tracing program, GED database directory manager.
  *

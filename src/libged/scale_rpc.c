@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file scale_rpc.c
+/** @file libged/scale_rpc.c
  *
  * The scale_rpc command.
  */

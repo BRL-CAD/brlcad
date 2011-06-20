@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file photonmap.c
+/** @file liboptical/photonmap.c
  *
  * Implemention of Photon Mapping
  *

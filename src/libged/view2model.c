@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file view2model.c
+/** @file libged/view2model.c
  *
  * The view2model command.
  *

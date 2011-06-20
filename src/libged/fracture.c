@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file fracture.c
+/** @file libged/fracture.c
  *
  * The fracture command.
  *

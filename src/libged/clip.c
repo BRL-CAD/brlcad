@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file clip.c
+/** @file libged/clip.c
  *
  *  Functions -
  *	clip	clip a 2-D integer line seg against the size of the display

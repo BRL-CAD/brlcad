@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rmap.c
+/** @file libged/rmap.c
  *
  * The rmap command.
  *

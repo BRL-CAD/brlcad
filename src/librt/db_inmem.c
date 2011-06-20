@@ -19,7 +19,7 @@
  */
 /** @addtogroup dbio */
 /** @{ */
-/** @file db_inmem.c
+/** @file librt/db_inmem.c
  *
  * Routines in support of maintaining geometry in-memory-only.  The
  * general process for adding geometry to an inmem database is to

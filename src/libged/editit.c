@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file editit.c
+/** @file libged/editit.c
  *
  * The editit function.
  *

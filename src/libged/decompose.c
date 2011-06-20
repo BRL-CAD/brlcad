@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file decompose.c
+/** @file libged/decompose.c
  *
  * The decompose command.
  *

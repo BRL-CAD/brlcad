@@ -19,7 +19,7 @@
  */
 /** @addtogroup libged */
 /** @{ */
-/** @file ged_obj.c
+/** @file libtclcad/ged_obj.c
  *
  * A quasi-object-oriented database interface.
  *

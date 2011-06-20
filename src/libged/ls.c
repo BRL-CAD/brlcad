@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ls.c
+/** @file libged/ls.c
  *
  * The ls command.
  *

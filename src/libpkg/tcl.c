@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tcl.c
+/** @file libpkg/tcl.c
  *
  * LIBPKG's tcl interface.
  *

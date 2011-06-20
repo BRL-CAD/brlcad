@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bot_smooth.c
+/** @file libged/bot_smooth.c
  *
  * The bot_smooth command.
  *

@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file pix2fb.c
+/** @file libged/pix2fb.c
  *
  * Program to take bottom-up pixel files and send them to a framebuffer.
  *

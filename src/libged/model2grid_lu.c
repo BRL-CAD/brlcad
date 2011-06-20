@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file model2grid_lu.c
+/** @file libged/model2grid_lu.c
  *
  * The model2grid_lu command.
  *

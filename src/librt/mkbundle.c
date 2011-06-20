@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file mkbundle.c
+/** @file librt/mkbundle.c
  *
  */
 /** @} */

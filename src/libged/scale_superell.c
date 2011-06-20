@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file scale_superell.c
+/** @file libged/scale_superell.c
  *
  * The scale_superell command.
  */

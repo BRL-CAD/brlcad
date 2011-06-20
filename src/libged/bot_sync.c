@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bot_sync.c
+/** @file libged/bot_sync.c
  *
  * The bot_sync command.
  *

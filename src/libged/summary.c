@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file summary.c
+/** @file libged/summary.c
  *
  * The summary command.
  *

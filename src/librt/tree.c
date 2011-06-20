@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file tree.c
+/** @file librt/tree.c
  *
  * Ray Tracing library database tree walker.
  *

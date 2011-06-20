@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file scale_epa.c
+/** @file libged/scale_epa.c
  *
  * The scale_epa command.
  */

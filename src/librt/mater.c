@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file mater.c
+/** @file librt/mater.c
  *
  * Code to deal with establishing and maintaining the tables which map
  * region ID codes into worthwhile material information (colors and

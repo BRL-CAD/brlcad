@@ -18,7 +18,7 @@
  * information.
  */
 
-/** @file nmg_fix_normals.c
+/** @file libged/nmg_fix_normals.c
  *
  * The nmg_fix_normals command.
  *

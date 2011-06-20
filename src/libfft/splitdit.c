@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file splitdit.c
+/** @file libfft/splitdit.c
  *
  *  Real valued, split-radix, decimation in time FFT.
  *

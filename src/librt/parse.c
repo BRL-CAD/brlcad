@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file ./librt/parse.c
+/** @file librt/parse.c
  *
  *  Routines to assign values to elements of arbitrary structures.
  *  The layout of a structure to be processed is described by

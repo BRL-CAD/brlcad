@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rmat.c
+/** @file libged/rmat.c
  *
  * The rmat command.
  *

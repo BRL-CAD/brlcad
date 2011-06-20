@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file setview.c
+/** @file libged/setview.c
  *
  * The setview command.
  *

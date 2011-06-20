@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file erase.c
+/** @file libged/erase.c
  *
  * The erase command.
  *

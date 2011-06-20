@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_grass.c
+/** @file liboptical/sh_grass.c
  *
  * A procedural shader to produce grass
  *

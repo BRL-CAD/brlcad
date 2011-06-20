@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file preview.c
+/** @file libged/preview.c
  *
  * The preview command.
  *

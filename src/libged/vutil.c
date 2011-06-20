@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file vutil.c
+/** @file libged/vutil.c
  *
  * This file contains view related utility functions.
  *

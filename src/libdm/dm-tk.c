@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dm-tk.c
+/** @file libdm/dm-tk.c
  *
  * A Display Manager that should work wherever tk does.
  *

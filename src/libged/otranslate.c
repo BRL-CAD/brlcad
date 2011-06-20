@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file otranslate.c
+/** @file libged/otranslate.c
  *
  * The otranslate command.
  *

@@ -19,7 +19,7 @@
  */
 /** @addtogroup dbio */
 /** @{ */
-/** @file db_walk.c
+/** @file librt/db_walk.c
  *
  * No-frills tree-walker.
  *

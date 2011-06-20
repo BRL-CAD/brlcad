@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file scale_ehy.c
+/** @file libged/scale_ehy.c
  *
  * The scale_ehy command.
  */

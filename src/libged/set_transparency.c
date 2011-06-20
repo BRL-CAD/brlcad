@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file set_transparency.c
+/** @file libged/set_transparency.c
  *
  * The set_transparency command.
  *

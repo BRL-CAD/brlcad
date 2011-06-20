@@ -19,7 +19,7 @@
  */
 /** @addtogroup ray */
 /** @{ */
-/** @file vshoot.c
+/** @file librt/vshoot.c
  *
  * EXPERIMENTAL vector version of the Ray Tracing program shot
  * coordinator.

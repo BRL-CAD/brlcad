@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tables.c
+/** @file libged/tables.c
  *
  * The tables command.
  *

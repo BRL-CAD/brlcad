@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_toyota.c
+/** @file liboptical/sh_toyota.c
  *
  * Notes -
  * Implementation of model developed by Atsushi Takagi, Hitoshi

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rtserverTest.c
+/** @file librtserver/rtserverTest.c
  *
  * library for BRL-CAD raytrace server
  *

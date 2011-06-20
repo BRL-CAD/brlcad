@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file screengrab.c
+/** @file libged/screengrab.c
  *
  * The screengrab command.
  *

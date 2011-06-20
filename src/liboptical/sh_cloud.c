@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_cloud.c
+/** @file liboptical/sh_cloud.c
  *
  * An attempt at 2D Geoffrey Gardner style cloud texture map
  *

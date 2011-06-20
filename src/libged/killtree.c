@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file killtree.c
+/** @file libged/killtree.c
  *
  * The killtree command.
  *

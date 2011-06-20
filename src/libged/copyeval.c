@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file copyeval.c
+/** @file libged/copyeval.c
  *
  * The copyeval command.
  *

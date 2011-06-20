@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file track.c
+/** @file libged/track.c
  *
  * Adds "tracks" to the data file given the required info
  *

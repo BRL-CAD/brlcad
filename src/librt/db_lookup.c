@@ -19,7 +19,7 @@
  */
 /** @addtogroup dbio */
 /** @{ */
-/** @file db_lookup.c
+/** @file librt/db_lookup.c
  *
  * v4/v5 database directory routines
  *

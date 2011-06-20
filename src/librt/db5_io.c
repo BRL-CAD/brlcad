@@ -19,7 +19,7 @@
  */
 /** @addtogroup db5 */
 /** @{ */
-/** @file db5_io.c
+/** @file librt/db5_io.c
  *
  * Handle import/export and IO of v5 database objects.
  *

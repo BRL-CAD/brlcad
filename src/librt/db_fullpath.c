@@ -19,7 +19,7 @@
  */
 /** @addtogroup dbio */
 /** @{ */
-/** @file db_fullpath.c
+/** @file librt/db_fullpath.c
  *
  * Routines to manipulate "db_full_path" structures
  *

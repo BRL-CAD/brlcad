@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rot.c
+/** @file libicv/rot.c
  *
  * Rotate, Invert, and/or Reverse the pixels in an image file.
  *

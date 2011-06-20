@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_example.c
+/** @file librt/nurb_example.c
  *
  */
 /** @} */

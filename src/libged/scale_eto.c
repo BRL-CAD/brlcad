@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file scale_eto.c
+/** @file libged/scale_eto.c
  *
  * The scale_eto command.
  *

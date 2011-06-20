@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file concat.c
+/** @file libged/concat.c
  *
  * The concat command.
  *

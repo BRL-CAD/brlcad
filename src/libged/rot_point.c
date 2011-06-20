@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rot_point.c
+/** @file libged/rot_point.c
  *
  * The rot_point command.
  *

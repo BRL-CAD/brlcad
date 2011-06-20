@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file scale_tgc.c
+/** @file libged/scale_tgc.c
  *
  * The scale_tgc command.
  *

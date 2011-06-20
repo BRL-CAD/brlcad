@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ps.c
+/** @file libged/ps.c
  *
  * The ps command.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bb.c
+/** @file libged/bb.c
  *
  * The bb command - report the dimensions of the bounding arb8
  * for a given object and optionally create an arb8 with those

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file grid2view_lu.c
+/** @file libged/grid2view_lu.c
  *
  * The grid2view_lu command.
  *

@@ -19,7 +19,7 @@
  */
 /** @addtogroup libged */
 /** @{ */
-/** @file qray.c
+/** @file libged/qray.c
  *
  * Routines to set and get "Query Ray" variables.
  *

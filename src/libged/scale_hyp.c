@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file scale_hyp.c
+/** @file libged/scale_hyp.c
  *
  * The scale_hyp command.
  *

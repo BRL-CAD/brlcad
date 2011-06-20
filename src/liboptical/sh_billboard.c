@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_billboard.c
+/** @file liboptical/sh_billboard.c
  *
  * A billboard shader for use with RCC geometry
  *

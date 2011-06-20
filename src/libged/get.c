@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file get.c
+/** @file libged/get.c
  *
  * The get command.
  *

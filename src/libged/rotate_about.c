@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rotate_about.c
+/** @file libged/rotate_about.c
  *
  * The rotate_about command.
  *

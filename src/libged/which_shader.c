@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file which_shader.c
+/** @file libged/which_shader.c
  *
  * The which_shader commands.
  *

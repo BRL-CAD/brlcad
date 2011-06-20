@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_stxt.c
+/** @file liboptical/sh_stxt.c
  *
  * Routines to implement solid (ie, 3-D) texture maps.
  *

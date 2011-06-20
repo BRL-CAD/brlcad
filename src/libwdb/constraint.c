@@ -19,7 +19,7 @@
  */
 /** @addtogroup pcdbio */
 /** @{ */
-/** @file constraint.c
+/** @file libwdb/constraint.c
  *
  * @brief External C Routines of Parametrics and Constraints API
  *

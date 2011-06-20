@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dm-rtgl.c
+/** @file libdm/dm-rtgl.c
  *
  * A Ray Tracing X11 OpenGL Display Manager.
  *

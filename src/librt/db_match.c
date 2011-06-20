@@ -19,7 +19,7 @@
  */
 /** @addtogroup dbio */
 /** @{ */
-/** @file db_match.c
+/** @file librt/db_match.c
  *
  * Routines to dtermine if a string matches a given pattern.
  *

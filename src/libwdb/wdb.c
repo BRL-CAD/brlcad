@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file wdb.c
+/** @file libwdb/wdb.c
  *
  * Library for writing MGED databases from arbitrary procedures.
  * Assumes that some of the structure of such databases are known by

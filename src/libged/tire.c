@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tire.c
+/** @file libged/tire.c
  *
  * Tire Generator
  *

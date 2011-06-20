@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file list.c
+/** @file libged/list.c
  *
  * The l command.
  *

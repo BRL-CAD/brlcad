@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file oslo_map.c
+/** @file librt/oslo_map.c
  *
  * Map the olso matrix with the old curve resulting in a new one.
  *

@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file importFg4Section.c
+/** @file libged/importFg4Section.c
  *
  * Some of this code was taken from conv/fast4-g.c and libwdb/bot.c
  * and modified to behave as a method of the BRL-CAD database object

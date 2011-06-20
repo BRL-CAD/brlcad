@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file which.c
+/** @file libged/which.c
  *
  * The whichair and whichid commands.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dm-plot.c
+/** @file libdm/dm-plot.c
  *
  * An unsatisfying (but useful) hack to allow GED to generate
  * UNIX-plot files that not only contain the drawn objects, but

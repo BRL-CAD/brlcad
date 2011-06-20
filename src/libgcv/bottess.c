@@ -18,7 +18,7 @@
  * information.
  */
 
-/** @file region_end.c
+/** @file libgcv/region_end.c
  *
  * Generate a tree of resolved BoT's, one per region. Roughly based
  * on UnBBoolean's j3dbool (and associated papers).

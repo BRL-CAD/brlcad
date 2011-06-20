@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_points.c
+/** @file liboptical/sh_points.c
  *
  * Reads a file of u, v point locations and associated RGB color
  * values.  For each u, v texture mapping cell, this routine fills in

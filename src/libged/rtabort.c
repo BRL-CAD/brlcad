@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rtabort.c
+/** @file libged/rtabort.c
  *
  * The rtabort command.
  *

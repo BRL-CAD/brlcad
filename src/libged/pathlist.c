@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pathlist.c
+/** @file libged/pathlist.c
  *
  * The pathlist command.
  *

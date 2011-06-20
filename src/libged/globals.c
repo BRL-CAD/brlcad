@@ -19,7 +19,7 @@
  */
 /** @addtogroup libged */
 /** @{ */
-/** @file globals.c
+/** @file libged/globals.c
  *
  * Global variables in LIBGED.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file cat.c
+/** @file libged/cat.c
  *
  * The cat command.
  *

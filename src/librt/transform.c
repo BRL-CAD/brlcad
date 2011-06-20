@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file transform.c
+/** @file librt/transform.c
  *
  * apply a matrix transform to a given object
  *

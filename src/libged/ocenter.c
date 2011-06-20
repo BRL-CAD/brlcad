@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ocenter.c
+/** @file libged/ocenter.c
  *
  * The ocenter command.
  *

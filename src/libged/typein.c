@@ -18,7 +18,7 @@
  * information.
  */
 
-/** @file typein.c
+/** @file libged/typein.c
  *
  * The "in" command allows solid parameters to be entered via the keyboard.
  *

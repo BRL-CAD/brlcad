@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rotate_eto.c
+/** @file libged/rotate_eto.c
  *
  * The rotate_eto command.
  *

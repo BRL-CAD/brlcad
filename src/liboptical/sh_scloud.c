@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_scloud.c
+/** @file liboptical/sh_scloud.c
  *
  * A 3D "solid" cloud shader
  *

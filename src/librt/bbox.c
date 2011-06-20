@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file bbox.c
+/** @file librt/bbox.c
  *
  * Routines related to creating and processing bounding boxes.
  *

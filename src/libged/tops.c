@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tops.c
+/** @file libged/tops.c
  *
  * The tops command.
  *

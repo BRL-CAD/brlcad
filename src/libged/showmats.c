@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file showmats.c
+/** @file libged/showmats.c
  *
  * The showmats command.
  *

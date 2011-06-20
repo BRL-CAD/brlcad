@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file eye_pos.c
+/** @file libged/eye_pos.c
  *
  * The eye_pos command.
  *

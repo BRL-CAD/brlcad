@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file model2view.c
+/** @file libged/model2view.c
  *
  * The model2view command.
  *

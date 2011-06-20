@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file scale_ell.c
+/** @file libged/scale_ell.c
  *
  * The scale_ell command.
  */

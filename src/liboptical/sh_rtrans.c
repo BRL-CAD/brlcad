@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_rtrans.c
+/** @file liboptical/sh_rtrans.c
  *
  * Random transparency shader. A random number from 0 to 1 is drawn
  * for each pixel rendered. If the random number is less than the threshold

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file db_corrupt.c
+/** @file librt/db_corrupt.c
  *
  * Routines to detect whether a geometry database file seems to be
  * corrupt or invalid due to flipped endian encoding.

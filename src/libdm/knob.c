@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file knob.c
+/** @file libdm/knob.c
  *
  * Utilities for dealing with knobs.
  *

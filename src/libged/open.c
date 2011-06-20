@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file open.c
+/** @file libged/open.c
  *
  * The open command.
  *

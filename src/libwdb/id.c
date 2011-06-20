@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file id.c
+/** @file libwdb/id.c
  *
  * An ID record must be the first granule in the database.
  *

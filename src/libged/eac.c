@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file eac.c
+/** @file libged/eac.c
  *
  * The eac command.
  *

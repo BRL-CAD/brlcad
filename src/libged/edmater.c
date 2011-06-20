@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file edmater.c
+/** @file libged/edmater.c
  *
  * The edmater command.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file comb_std.c
+/** @file libged/comb_std.c
  *
  * The c command.
  *

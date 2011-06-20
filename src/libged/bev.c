@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bev.c
+/** @file libged/bev.c
  *
  * The bev command.
  *

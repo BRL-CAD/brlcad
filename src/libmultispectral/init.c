@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file init.c
+/** @file libmultispectral/init.c
  *
  *  This file represents the single function exported from the
  *  shader library whose "name" is known.

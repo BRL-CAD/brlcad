@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rrt.c
+/** @file libged/rrt.c
  *
  * The rrt command.
  *

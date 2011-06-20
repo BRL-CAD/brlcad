@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file human.c
+/** @file libged/human.c
  *
  * Generator for human models based on height, and other stuff eventually,
  * and for the humanwizard plugin (mostly).

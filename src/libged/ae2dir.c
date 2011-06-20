@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ae2dir.c
+/** @file libged/ae2dir.c
  *
  * The ae2dir command.
  *

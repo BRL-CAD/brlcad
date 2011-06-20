@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dir2ae.c
+/** @file libged/dir2ae.c
  *
  * The dir2ae command.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file put_comb.c
+/** @file libged/put_comb.c
  *
  * The put_comb command.
  *

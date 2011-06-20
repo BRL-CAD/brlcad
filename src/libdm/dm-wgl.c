@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dm-wgl.c
+/** @file libdm/dm-wgl.c
  *
  *  A Windows OpenGL (wgl) Display Manager.
  *

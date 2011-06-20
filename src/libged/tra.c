@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tra.c
+/** @file libged/tra.c
  *
  * The tra command.
  *

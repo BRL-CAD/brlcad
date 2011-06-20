@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ypr.c
+/** @file libged/ypr.c
  *
  * The ypr command.
  *

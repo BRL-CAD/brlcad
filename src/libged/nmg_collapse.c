@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file nmg_collapse.c
+/** @file libged/nmg_collapse.c
  *
  * The nmg_collapse command.
  *

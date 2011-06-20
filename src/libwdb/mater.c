@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mater.c
+/** @file libwdb/mater.c
  *
  * Interface for writing region-id-based color tables to the database.
  *

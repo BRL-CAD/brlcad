@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_camo.c
+/** @file liboptical/sh_camo.c
  *
  * A shader to apply a crude camoflage color pattern to an object
  * using a fractional Brownian motion of 3 colors

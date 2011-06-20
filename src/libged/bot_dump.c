@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bot_dump.c
+/** @file libged/bot_dump.c
  *
  * The bot_dump command.
  *

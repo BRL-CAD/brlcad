@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file tclcadAutoPath.c
+/** @file libtclcad/tclcadAutoPath.c
  *
  * Locate the BRL-CAD tclscripts
  *

@@ -19,7 +19,7 @@
  */
 /** @addtogroup dbio */
 /** @{ */
-/** @file db_open.c
+/** @file librt/db_open.c
  *
  * Routines for opening, creating, and replicating BRL-CAD geometry
  * database files.  BRL-CAD geometry database files are managed in a

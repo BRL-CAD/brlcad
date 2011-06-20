@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bot.c
+/** @file libged/bot.c
  *
  * Bot command for simple bot primitive operations.
  *

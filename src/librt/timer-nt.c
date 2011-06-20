@@ -19,7 +19,7 @@
  */
 /** @addtogroup timer */
 /** @{ */
-/** @file timer-nt.c
+/** @file librt/timer-nt.c
  *
  * To provide timing information on Microsoft Windows NT.
  */

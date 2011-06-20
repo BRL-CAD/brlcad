@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file 3ptarb.c
+/** @file libged/3ptarb.c
  *
  * The 3ptarb command.
  *

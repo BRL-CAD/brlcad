@@ -19,7 +19,7 @@
  */
 /** @addtogroup wdb */
 /** @{ */
-/** @file wdb_comb_std.c
+/** @file libged/wdb_comb_std.c
  *
  * Code to implement the database objects "c" command.
  *

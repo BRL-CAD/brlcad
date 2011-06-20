@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file attr.c
+/** @file libged/attr.c
  *
  * The attr command.
  *

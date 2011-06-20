@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file subtype.c
+/** @file libged/subtype.c
  *
  * Given an arb, ell or tgc determine if the values contained in
  * the data structure actually represent a less general shape.

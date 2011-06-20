@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file reg.c
+/** @file libwdb/reg.c
  *
  * Library for writing MGED databases from arbitrary procedures.
  *

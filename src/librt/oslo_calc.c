@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file oslo_calc.c
+/** @file librt/oslo_calc.c
  *
  * Calculate the Oslo refinement matrix.
  *

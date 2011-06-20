@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file make_pnts.c
+/** @file libged/make_pnts.c
  *
  * The "make_pnts" command makes a point-cloud from a points data file.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_null.c
+/** @file liboptical/sh_null.c
  *
  * Notes -
  * This is the null, aka invisible, shader.  It is potentially useful as a performance

@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file bundle.c
+/** @file librt/bundle.c
  *
  * NOTE:  This is experimental code right now.
  *

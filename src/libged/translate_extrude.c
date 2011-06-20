@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file translate_extrude.c
+/** @file libged/translate_extrude.c
  *
  * The translate_extrude command.
  *

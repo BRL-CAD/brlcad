@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bot_face_sort.c
+/** @file libged/bot_face_sort.c
  *
  * The bot_face_sort command.
  *

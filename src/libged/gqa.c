@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file gqa.c
+/** @file libged/gqa.c
  *
  * performs a set of quantitative analysese on geometry.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file material.c
+/** @file liboptical/material.c
  *
  * Routines to coordinate the implementation of material properties
  *

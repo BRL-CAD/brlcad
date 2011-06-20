@@ -19,7 +19,7 @@
  */
 /** @addtogroup ray */
 /** @{ */
-/** @file bezier_2d_isect.c
+/** @file librt/bezier_2d_isect.c
  *
  * The following routines are for 2D Bezier curves
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pmodel2view.c
+/** @file libged/pmodel2view.c
  *
  * The pmodel2view command.
  *

@@ -19,7 +19,7 @@
  */
 /** @addtogroup timer */
 /** @{ */
-/** @file timerhep.c
+/** @file librt/timerhep.c
  *
  * To provide timing information for RT.
  * THIS VERSION FOR Denelcor HEP/UPX (System III-like)

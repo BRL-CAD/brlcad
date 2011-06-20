@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file copymat.c
+/** @file libged/copymat.c
  *
  * The copymat command.
  *

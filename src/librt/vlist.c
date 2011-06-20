@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file vlist.c
+/** @file librt/vlist.c
  *
  * Routines for the import and export of vlist chains as:
  * Network independent binary,

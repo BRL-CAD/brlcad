@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file make_name.c
+/** @file libged/make_name.c
  *
  * The make_name command.
  *

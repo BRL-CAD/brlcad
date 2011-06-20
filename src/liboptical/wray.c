@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file wray.c
+/** @file liboptical/wray.c
  *
  * Write a VLD-standard ray on the given file pointer.
  * VLD-standard rays are defined by /vld/include/ray.h,

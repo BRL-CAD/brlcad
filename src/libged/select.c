@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file select.c
+/** @file libged/select.c
  *
  * The select command.
  *

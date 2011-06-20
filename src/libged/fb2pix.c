@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file fb2pix.c
+/** @file libged/fb2pix.c
  *
  * fb2pix writes a framebuffer image to a .pix file.
  *

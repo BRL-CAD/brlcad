@@ -19,7 +19,7 @@
  */
 /** @addtogroup db4 */
 /** @{ */
-/** @file db_alloc.c
+/** @file librt/db_alloc.c
  *
  * v4 granule allocation routines
  *

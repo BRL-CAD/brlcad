@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file prefix.c
+/** @file libged/prefix.c
  *
  * The prefix command.
  *

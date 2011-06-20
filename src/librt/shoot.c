@@ -19,7 +19,7 @@
  */
 /** @addtogroup ray */
 /** @{ */
-/** @file shoot.c
+/** @file librt/shoot.c
  *
  * Ray Tracing program shot coordinator.
  *

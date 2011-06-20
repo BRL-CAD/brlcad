@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dbip.c
+/** @file libged/dbip.c
  *
  * The dbip command.
  *

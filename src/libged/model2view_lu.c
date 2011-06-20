@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file model2view_lu.c
+/** @file libged/model2view_lu.c
  *
  * The model2view_lu command.
  *

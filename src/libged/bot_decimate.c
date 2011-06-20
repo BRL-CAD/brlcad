@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bot_decimate.c
+/** @file libged/bot_decimate.c
  *
  * The bot_decimate command.
  *

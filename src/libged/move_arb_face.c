@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file move_arb_face.c
+/** @file libged/move_arb_face.c
  *
  * The move_arb_face command.
  *

@@ -19,7 +19,7 @@
  */
 /** @addtogroup libged */
 /** @{ */
-/** @file nirt.c
+/** @file libged/nirt.c
  *
  * Routines to interface to nirt.
  *

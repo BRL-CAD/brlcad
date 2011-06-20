@@ -19,7 +19,7 @@
  */
 /** @addtogroup pcdbio */
 /** @{ */
-/** @file pc_main.c
+/** @file libpc/pc_main.c
  *
  * @brief External C Routines of Parametrics and Constraints API
  *

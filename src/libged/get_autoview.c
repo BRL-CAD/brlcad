@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file get_autoview.c
+/** @file libged/get_autoview.c
  *
  * The get_autoview command.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file translate_tgc.c
+/** @file libged/translate_tgc.c
  *
  * The translate_tgc command.
  *

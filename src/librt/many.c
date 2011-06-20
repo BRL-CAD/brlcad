@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file many.c
+/** @file librt/many.c
  *
  * Wrapper routines to help fire multiple rays in parallel, without
  * exposing the caller to the details of running in parallel.

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pov.c
+/** @file libged/pov.c
  *
  * The pov command.
  *

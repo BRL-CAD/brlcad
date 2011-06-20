@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file make_bb.c
+/** @file libged/make_bb.c
  *
  * The make_bb command.
  *

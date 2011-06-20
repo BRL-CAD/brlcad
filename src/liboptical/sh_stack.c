@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_stack.c
+/** @file liboptical/sh_stack.c
  *
  * Stack multiple material modules together
  *

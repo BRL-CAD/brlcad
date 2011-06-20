@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_prj.c
+/** @file liboptical/sh_prj.c
  *
  * Projection shader
  *

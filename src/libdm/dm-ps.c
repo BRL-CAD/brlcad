@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dm-ps.c
+/** @file libdm/dm-ps.c
  *
  * A useful hack to allow GED to generate
  * PostScript files that not only contain the drawn objects, but

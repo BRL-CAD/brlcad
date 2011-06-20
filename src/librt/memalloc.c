@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file memalloc.c
+/** @file librt/memalloc.c
  *
  * Functions -
  *	rt_memalloc	allocate 'size' of memory from a given map

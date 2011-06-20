@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file move_all.c
+/** @file libged/move_all.c
  *
  * The move_all command.
  *

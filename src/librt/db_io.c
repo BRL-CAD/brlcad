@@ -19,7 +19,7 @@
  */
 /** @addtogroup db4 */
 /** @{ */
-/** @file db_io.c
+/** @file librt/db_io.c
  *
  * v4 database read/write I/O routines
  *

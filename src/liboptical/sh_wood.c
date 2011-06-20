@@ -7,7 +7,7 @@
  * Permission is granted to freely distribute this software as part of
  * the BRL-CAD package.
  */
-/** @file sh_wood.c
+/** @file liboptical/sh_wood.c
  *
  * Simple wood-grain texture
  *

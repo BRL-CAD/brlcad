@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file log.c
+/** @file libged/log.c
  *
  * The log command.
  *

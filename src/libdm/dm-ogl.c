@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dm-ogl.c
+/** @file libdm/dm-ogl.c
  *
  * An X11 OpenGL Display Manager.
  *

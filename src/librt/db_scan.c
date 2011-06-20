@@ -19,7 +19,7 @@
  */
 /** @addtogroup db4 */
 /** @{ */
-/** @file db_scan.c
+/** @file librt/db_scan.c
  *
  * Routines to sequentially read database, send objects to handlers,
  * process ident records, and perform unit conversion.

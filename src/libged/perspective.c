@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file perspective.c
+/** @file libged/perspective.c
  *
  * The perspective command.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file prcolor.c
+/** @file libged/prcolor.c
  *
  * The prcolor command.
  *

@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file pr.c
+/** @file librt/pr.c
  *
  * Routines to print LIBRT data structures using bu_log().
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file form.c
+/** @file libged/form.c
  *
  * The form command.
  *

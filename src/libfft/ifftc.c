@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ifftc.c
+/** @file libfft/ifftc.c
  *
  * Split Radix Decimation in Freq Inverse FFT C code generator.
  *

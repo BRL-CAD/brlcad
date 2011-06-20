@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file putmat.c
+/** @file libged/putmat.c
  *
  * The putmat command.
  *

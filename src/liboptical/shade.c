@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file shade.c
+/** @file liboptical/shade.c
  *
  * Ray Tracing program, lighting model shader interface.
  *

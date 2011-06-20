@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_tcl.c
+/** @file liboptical/sh_tcl.c
  *
  * To add a new shader to the "rt" program's LIBOPTICAL library:
  *

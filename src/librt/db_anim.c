@@ -19,7 +19,7 @@
  */
 /** @addtogroup dbio */
 /** @{ */
-/** @file db_anim.c
+/** @file librt/db_anim.c
  *
  * Routines to apply animation directives to geometry database.
  *

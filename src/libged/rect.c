@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rect.c
+/** @file libged/rect.c
  *
  * Rubber band rectangle.
  *

@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file db_flip.c
+/** @file librt/db_flip.c
  *
  * v4 geometry database serialization routines.
  *

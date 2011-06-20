@@ -19,7 +19,7 @@
  */
 /** @addtogroup ray */
 /** @{ */
-/** @file prep.c
+/** @file librt/prep.c
  *
  * Manage one-time preparations to be done before actual ray-tracing
  * can commence.

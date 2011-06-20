@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file grid.c
+/** @file libged/grid.c
  *
  * Routines that provide the basics for a snap to grid capability.
  *

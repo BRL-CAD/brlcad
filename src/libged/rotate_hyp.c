@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rotate_hyp.c
+/** @file libged/rotate_hyp.c
  *
  * The rotate_hyp command.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rotate_arb_face.c
+/** @file libged/rotate_arb_face.c
  *
  * The rotate_arb_face command.
  *

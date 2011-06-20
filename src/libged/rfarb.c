@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rfarb.c
+/** @file libged/rfarb.c
  *
  * The rfarb command.
  *

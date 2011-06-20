@@ -19,7 +19,7 @@
  */
 /** @addtogroup libpc */
 /** @{ */
-/** @file pc_constraints.c
+/** @file libpc/pc_constraints.c
  *
  * @brief Constraint evaluation functions in C
  *

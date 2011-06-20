@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_flat.c
+/** @file liboptical/sh_flat.c
  *
  * Notes -
  * This is a basic flat shader.  It will display an object with a set color

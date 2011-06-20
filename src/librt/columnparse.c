@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file columnparse.c
+/** @file librt/columnparse.c
  */
 
 #include "common.h"

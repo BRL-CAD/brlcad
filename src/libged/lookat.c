@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file lookat.c
+/** @file libged/lookat.c
  *
  * The lookat command.
  *

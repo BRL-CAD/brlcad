@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_noise.c
+/** @file liboptical/sh_noise.c
  *
  * Shaders:
  * gravel turbulence noise applied to color and surface normal

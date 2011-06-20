@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file version.c
+/** @file libged/version.c
  *
  * The version command.
  *

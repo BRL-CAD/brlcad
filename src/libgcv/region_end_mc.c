@@ -18,7 +18,7 @@
  * information.
  */
 
-/** @file region_end.c
+/** @file libgcv/region_end.c
  *
  * Routines to process regions during a db_walk_tree using the marching cubes
  * algorithm.

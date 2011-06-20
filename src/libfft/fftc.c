@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file fftc.c
+/** @file libfft/fftc.c
  *
  * Split Radix Decimation in Time
  * FFT C code generator.

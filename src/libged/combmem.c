@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file combmem.c
+/** @file libged/combmem.c
  *
  * The combmem command.
  *

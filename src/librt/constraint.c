@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file constraint.c
+/** @file librt/constraint.c
  *
  * Various functions associated with constraint object database I/O
  *

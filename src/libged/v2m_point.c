@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file v2m_point.c
+/** @file libged/v2m_point.c
  *
  * The v2m_point command.
  *

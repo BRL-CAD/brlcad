@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file roots.c
+/** @file librt/roots.c
  *
  * Find the roots of a polynomial
  *

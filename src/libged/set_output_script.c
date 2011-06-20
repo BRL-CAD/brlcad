@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file set_output_script.c
+/** @file libged/set_output_script.c
  *
  * The set_output_script command.
  *

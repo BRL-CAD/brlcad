@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dm_obj.c
+/** @file libdm/dm_obj.c
  *
  * A display manager object contains the attributes and
  * methods for controlling display managers.

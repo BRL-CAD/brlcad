@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bot_split.c
+/** @file libged/bot_split.c
  *
  * The bot_split command.
  *

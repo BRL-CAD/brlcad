@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file get_type.c
+/** @file libged/get_type.c
  *
  * The get_type command.
  *

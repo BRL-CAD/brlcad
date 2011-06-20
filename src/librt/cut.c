@@ -19,7 +19,7 @@
  */
 /** @addtogroup ray */
 /** @{ */
-/** @file cut.c
+/** @file librt/cut.c
  *
  * Cut space into lots of small boxes (RPPs actually).
  *

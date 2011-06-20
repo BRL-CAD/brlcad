@@ -19,7 +19,7 @@
  */
 /** @addtogroup timer */
 /** @{ */
-/** @file timerunix.c
+/** @file librt/timerunix.c
  *
  * To provide timing information for RT.
  * This version for any non-BSD UNIX system, including

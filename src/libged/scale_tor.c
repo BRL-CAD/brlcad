@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file scale_tor.c
+/** @file libged/scale_tor.c
  *
  * The scale_tor command.
  *

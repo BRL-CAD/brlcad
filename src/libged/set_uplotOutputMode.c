@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file set_uplotOutputMode.c
+/** @file libged/set_uplotOutputMode.c
  *
  * The set_uplotOutputMode command.
  *

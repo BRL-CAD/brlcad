@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file zap.c
+/** @file libged/zap.c
  *
  * The zap command.
  *

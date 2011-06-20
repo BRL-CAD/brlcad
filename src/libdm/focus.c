@@ -18,7 +18,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file focus.c
+/** @file libdm/focus.c
  *
  * Routines for setting the current application focus, particularly
  * useful on Mac OS X where X11 applications are not necessarily given

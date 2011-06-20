@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dynamic_geometry.c
+/** @file libwdb/dynamic_geometry.c
  *
  * Library for dynamically changing BRL-CAD geometry (i.e., changing
  * already prepped geometry)

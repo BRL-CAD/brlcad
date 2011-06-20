@@ -19,7 +19,7 @@
  */
 /** @addtogroup libged */
 /** @{ */
-/** @file dg_obj.c
+/** @file libged/dg_obj.c
  *
  * A drawable geometry object contains methods and attributes for
  * preparing geometry that is ready (i.e. vlists) for display.

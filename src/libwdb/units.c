@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file units.c
+/** @file libwdb/units.c
  *
  * Module of libwdb to handle units conversion.
  *

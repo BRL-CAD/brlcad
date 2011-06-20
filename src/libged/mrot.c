@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mrot.c
+/** @file libged/mrot.c
  *
  * The mrot command.
  *

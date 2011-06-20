@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file scale_part.c
+/** @file libged/scale_part.c
  *
  * The scale_part command.
  */
