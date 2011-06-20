@@ -123,9 +123,9 @@ BSplineSurface::Print(int level) {
 	TAB(level+1); std::cout << "u_degree:" << u_degree << std::endl;
 	TAB(level+1); std::cout << "v_degree:" << v_degree << std::endl;
 
-	TAB(level+1); std::cout << "u_closed:" << step->getLogicalString((SCLLOG_H(Logical))u_closed) << std::endl;
-	TAB(level+1); std::cout << "v_closed:" << step->getLogicalString((SCLLOG_H(Logical))v_closed) << std::endl;
-	TAB(level+1); std::cout << "self_intersect:" << step->getLogicalString((SCLLOG_H(Logical))self_intersect) << std::endl;
+	TAB(level+1); std::cout << "u_closed:" << step->getLogicalString((Logical)u_closed) << std::endl;
+	TAB(level+1); std::cout << "v_closed:" << step->getLogicalString((Logical)v_closed) << std::endl;
+	TAB(level+1); std::cout << "self_intersect:" << step->getLogicalString((Logical)self_intersect) << std::endl;
 	TAB(level+1); std::cout << "surface_form:" << B_spline_surface_form_string[surface_form] << std::endl;
 
 	TAB(level); std::cout << "Inherited Attributes:" << std::endl;

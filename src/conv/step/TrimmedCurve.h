@@ -40,7 +40,7 @@ protected:
 	Curve *basis_curve;
 	LIST_OF_TRIMMING_SELECT trim_1;
 	LIST_OF_TRIMMING_SELECT trim_2;
-	SCLBOOL_H(Boolean) sense_agreement;
+	Boolean sense_agreement;
 	Trimming_preference master_representation;
 
 public:

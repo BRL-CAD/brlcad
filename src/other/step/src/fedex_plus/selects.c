@@ -714,7 +714,7 @@ TYPEselect_inc_print (const Type type, FILE* f)
 
   fprintf( f, "\n\t//  part 5\n" );
    LISTdo( SEL_TYPEget_items(type), t, Type )
-      fprintf( f, "\tSCLLOG(Logical) Is%s() const;\n", 
+      fprintf( f, "\tLogical Is%s() const;\n", 
 	FirstToUpper(TYPEget_name(t)) );
    LISTod;
 
@@ -1173,11 +1173,11 @@ TYPEselect_lib_print_part_three( const Type type, FILE* f, Schema schema,
 	      break;
 
 	  case boolean_:
-	    fprintf( f, "   return (SCLBOOL(Boolean)) 0;\n}\n\n" );
+	    fprintf( f, "   return (Boolean) 0;\n}\n\n" );
 	      break;
 
 	  case logical_:
-	    fprintf( f, "   return (SCLLOG(Logical)) 0;\n}\n\n" );
+	    fprintf( f, "   return (Logical) 0;\n}\n\n" );
 	      break;
 
 	  default:
@@ -1973,12 +1973,12 @@ TYPEselect_lib_print (const Type type, FILE* f, Schema schema)
    fprintf( f, "\n\t//  part 5\n" );
    LISTdo( SEL_TYPEget_items(type), t, Type )
       z = FirstToUpper( TYPEget_name(t) );
-      fprintf( f, "SCLLOG(Logical) %s::Is%s() const\n{\n", n, z );
+      fprintf( f, "Logical %s::Is%s() const\n{\n", n, z );
       fprintf( f, "   if( !exists() )\n", n );
-      fprintf( f, "      return SCLLOG(LUnknown);\n" );
+      fprintf( f, "      return LUnknown;\n" );
       fprintf( f, "   if( CurrentUnderlyingType () == %s )\n", TYPEtd_name(t));
-      fprintf( f, "      return SCLLOG(LTrue);\n" );
-      fprintf( f, "   return SCLLOG(LFalse);\n}\n\n" );
+      fprintf( f, "      return LTrue;\n" );
+      fprintf( f, "   return LFalse;\n}\n\n" );
    LISTod;
 
 #ifdef UNDERLYINGTYPE

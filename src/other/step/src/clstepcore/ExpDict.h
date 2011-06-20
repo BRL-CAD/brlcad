@@ -813,8 +813,8 @@ class AttrDescriptor {
 	AttrDescriptor(
 		       const char * name,		// i.e. char *
 		       const TypeDescriptor *domainType, 
-		       SCLLOG(Logical) optional,	// i.e. F U or T
-		       SCLLOG(Logical) unique,	// i.e. F U or T
+		       Logical optional,	// i.e. F U or T
+		       Logical unique,	// i.e. F U or T
 		       AttrType_Enum at,// AttrType_Explicit, AttrType_Inverse,
 				       // AttrType_Deriving,AttrType_Redefining
 		       const EntityDescriptor & owner 
@@ -880,36 +880,36 @@ class AttrDescriptor {
 	const SCLP23(LOGICAL) & Optional() const { return _optional; }
 	void Optional (SCLP23(LOGICAL) &opt)	{ _optional.put(opt.asInt()); }
 
-	void Optional (SCLLOG(Logical) opt)	{ _optional.put(opt); }
+	void Optional (Logical opt)	{ _optional.put(opt); }
 	void Optional (const char *opt) { _optional.put(opt); }
 
 	const SCLP23(LOGICAL) & Unique() const { return _unique; }
 	void Unique (SCLP23(LOGICAL) uniq)	{ _unique.put(uniq.asInt()); }
-	void Unique (SCLLOG(Logical) uniq)	{ _unique.put(uniq); }
+	void Unique (Logical uniq)	{ _unique.put(uniq); }
 	void Unique (const char *uniq)	{ _unique.put(uniq); }
 
 	void AttrType(enum AttrType_Enum ate) { _attrType = ate; }
 	enum AttrType_Enum AttrType() const { return _attrType; }
 
-	SCLLOG(Logical) Explicit() const;
-	SCLLOG(Logical) Inverse() const;
-	SCLLOG(Logical) Redefining() const;
-	SCLLOG(Logical) Deriving() const;
+	Logical Explicit() const;
+	Logical Inverse() const;
+	Logical Redefining() const;
+	Logical Deriving() const;
 
 	//outdated functions, use AttrType func above, new support of redefined
-	SCLLOG(Logical) Derived() const { return Deriving(); }
-	void Derived (SCLLOG(Logical) x);     // outdated DAS
+	Logical Derived() const { return Deriving(); }
+	void Derived (Logical x);     // outdated DAS
 	void Derived (SCLP23(LOGICAL) x); // outdated DAS
 	void Derived (const char *x); // outdated DAS
 
 	const SCLP23(LOGICAL) & Optionality() const { return _optional; }
 	void Optionality (SCLP23(LOGICAL) &opt) { _optional.put(opt.asInt()); }
-	void Optionality (SCLLOG(Logical) opt)	   { _optional.put(opt); }
+	void Optionality (Logical opt)	   { _optional.put(opt); }
 	void Optionality (const char *opt) { _optional.put(opt); }
 
 	const SCLP23(LOGICAL) & Uniqueness() const	{ return _unique; }
 	void Uniqueness (SCLP23(LOGICAL) uniq)	{ _unique.put(uniq.asInt()); }
-	void Uniqueness (SCLLOG(Logical) uniq)		{ _unique.put(uniq); }
+	void Uniqueness (Logical uniq)		{ _unique.put(uniq); }
 	void Uniqueness (const char *uniq)	{ _unique.put(uniq); }
 
 #ifdef __O3DB__
@@ -931,8 +931,8 @@ class Derived_attribute  :    public AttrDescriptor  {
     Derived_attribute(
 		       const char * name,		// i.e. char *
 		       const TypeDescriptor *domainType, 
-		       SCLLOG(Logical) optional,	// i.e. F U or T
-		       SCLLOG(Logical) unique,	// i.e. F U or T
+		       Logical optional,	// i.e. F U or T
+		       Logical unique,	// i.e. F U or T
 		       AttrType_Enum at,// AttrType_Explicit, AttrType_Inverse,
 				       // AttrType_Deriving,AttrType_Redefining
 		       const EntityDescriptor & owner 
@@ -960,8 +960,8 @@ class Inverse_attribute  :    public AttrDescriptor  {
 	Inverse_attribute(
 		       const char * name,		// i.e. char *
 		       TypeDescriptor *domainType, 
-		       SCLLOG(Logical) optional,	// i.e. F U or T*/
-		       SCLLOG(Logical) unique,	// i.e. F U or T
+		       Logical optional,	// i.e. F U or T*/
+		       Logical unique,	// i.e. F U or T
 //		       AttrType_Enum at, // will always be AttrType_Inverse
 		       const EntityDescriptor & owner, 
 		       const char *inverted_attr_id =0
@@ -1346,8 +1346,8 @@ class EntityDescriptor  :    public TypeDescriptor  {
 	EntityDescriptor ( );
 	EntityDescriptor (const char * name, // i.e. char *
 			  Schema *origSchema,
-			  SCLLOG(Logical) abstractEntity, // i.e. F U or T
-			  SCLLOG(Logical) extMapping,
+			  Logical abstractEntity, // i.e. F U or T
+			  Logical extMapping,
 			  Creator f =0
 			  );
 
@@ -1364,8 +1364,8 @@ class EntityDescriptor  :    public TypeDescriptor  {
 					{ _abstractEntity.put(ae.asInt()); }
 	void ExtMapping (SCLP23(LOGICAL) &em)
 				        { _extMapping.put(em.asInt());     }
-	void AbstractEntity (SCLLOG(Logical) ae) { _abstractEntity.put(ae); }
-	void ExtMapping     (SCLLOG(Logical) em) { _extMapping.put(em);     }
+	void AbstractEntity (Logical ae) { _abstractEntity.put(ae); }
+	void ExtMapping     (Logical em) { _extMapping.put(em);     }
 	void ExtMapping     (const char *em)    { _extMapping.put(em);     }
 
 	const EntityDescriptorList& Subtypes() const
@@ -1540,7 +1540,7 @@ class AggrTypeDescriptor  :    public TypeDescriptor  {
 
     AggrTypeDescriptor ( ); 
     AggrTypeDescriptor(SCLP23(Integer) b1, SCLP23(Integer) b2, 
-		       SCLLOG(Logical) uniqElem, 
+		       Logical uniqElem, 
 		       TypeDescriptor *aggrDomType);
     AggrTypeDescriptor (const char * nm, PrimitiveType ft, 
 			Schema *origSchema, const char * d, 
@@ -1558,7 +1558,7 @@ class AggrTypeDescriptor  :    public TypeDescriptor  {
     SCLP23(LOGICAL)& UniqueElements()	{ return _uniqueElements; } 
     void UniqueElements (SCLP23(LOGICAL) &ue) 
 					{ _uniqueElements.put(ue.asInt()); } 
-    void UniqueElements (SCLLOG(Logical) ue)     { _uniqueElements.put(ue); }
+    void UniqueElements (Logical ue)     { _uniqueElements.put(ue); }
     void UniqueElements (const char *ue) { _uniqueElements.put(ue); }
 
     class TypeDescriptor * AggrDomainType()    { return _aggrDomainType; } 
@@ -1576,7 +1576,7 @@ class ArrayTypeDescriptor  :    public AggrTypeDescriptor  {
   public:  
 
     ArrayTypeDescriptor ( ) : _optionalElements((char *)"UNKNOWN_TYPE") { } 
-    ArrayTypeDescriptor (SCLLOG(Logical) optElem) : _optionalElements(optElem)
+    ArrayTypeDescriptor (Logical optElem) : _optionalElements(optElem)
       { }
     ArrayTypeDescriptor (const char * nm, PrimitiveType ft, 
 			 Schema *origSchema, const char * d, 
@@ -1591,7 +1591,7 @@ class ArrayTypeDescriptor  :    public AggrTypeDescriptor  {
     SCLP23(LOGICAL)& OptionalElements()       { return _optionalElements; } 
     void OptionalElements (SCLP23(LOGICAL) &oe) 
 				     { _optionalElements.put(oe.asInt()); } 
-    void OptionalElements (SCLLOG(Logical) oe)     { _optionalElements.put(oe); }
+    void OptionalElements (Logical oe)     { _optionalElements.put(oe); }
     void OptionalElements (const char *oe) { _optionalElements.put(oe); }
 };
 
@@ -1714,7 +1714,7 @@ class StringTypeDescriptor  :    public TypeDescriptor  {
 
 	SCLP23(LOGICAL)& FixedSize()		{ return _fixedSize; }
 	void FixedSize (SCLP23(LOGICAL) fs)	{ _fixedSize.put(fs.asInt()); }
-	void FixedSize (SCLLOG(Logical) fs)	{ _fixedSize.put(fs); }
+	void FixedSize (Logical fs)	{ _fixedSize.put(fs); }
 };
 
 class RealTypeDescriptor  :    public TypeDescriptor  { 

@@ -219,7 +219,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_0name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_representation_item);
 	config_control_designe_representation_item->AddExplicitAttr (a_0name);
 	reg.AddEntity (*config_control_designe_representation_item);
@@ -232,7 +232,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_representation_item->AddSubtype(config_control_designe_geometric_representation_item);
   a_1Ddim =
 	  new Derived_attribute("dim",config_control_designt_dimension_count,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_geometric_representation_item);
 	config_control_designe_geometric_representation_item->AddExplicitAttr (a_1Ddim);
 	a_1Ddim->initializer_("dimension_of(SELF)");
@@ -243,12 +243,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_2name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_functionally_defined_transformation);
 	config_control_designe_functionally_defined_transformation->AddExplicitAttr (a_2name);
   a_3description =
 	  new AttrDescriptor("description",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_functionally_defined_transformation);
 	config_control_designe_functionally_defined_transformation->AddExplicitAttr (a_3description);
 	reg.AddEntity (*config_control_designe_functionally_defined_transformation);
@@ -263,27 +263,27 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_functionally_defined_transformation->AddSubtype(config_control_designe_cartesian_transformation_operator);
 	a_4axis1 =
 	  new AttrDescriptor("axis1",config_control_designe_direction,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_cartesian_transformation_operator);
 	config_control_designe_cartesian_transformation_operator->AddExplicitAttr (a_4axis1);
 	a_5axis2 =
 	  new AttrDescriptor("axis2",config_control_designe_direction,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_cartesian_transformation_operator);
 	config_control_designe_cartesian_transformation_operator->AddExplicitAttr (a_5axis2);
 	a_6local_origin =
 	  new AttrDescriptor("local_origin",config_control_designe_cartesian_point,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_cartesian_transformation_operator);
 	config_control_designe_cartesian_transformation_operator->AddExplicitAttr (a_6local_origin);
   a_7scale =
 	  new AttrDescriptor("scale",t_sdaiREAL,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_cartesian_transformation_operator);
 	config_control_designe_cartesian_transformation_operator->AddExplicitAttr (a_7scale);
   a_8Dscl =
 	  new Derived_attribute("scl",t_sdaiREAL,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_cartesian_transformation_operator);
 	config_control_designe_cartesian_transformation_operator->AddExplicitAttr (a_8Dscl);
 	a_8Dscl->initializer_("NVL(scale,1)");
@@ -296,7 +296,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_cartesian_transformation_operator->AddSubtype(config_control_designe_cartesian_transformation_operator_3d);
 	a_9axis3 =
 	  new AttrDescriptor("axis3",config_control_designe_direction,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_cartesian_transformation_operator_3d);
 	config_control_designe_cartesian_transformation_operator_3d->AddExplicitAttr (a_9axis3);
 	ListTypeDescriptor * t_0 = new ListTypeDescriptor;
@@ -308,7 +308,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_0->OriginatingSchema(s_config_control_design);
 	t_0->ReferentType(config_control_designe_direction);
   a_10Du =
-	  new Derived_attribute("u",t_0,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  new Derived_attribute("u",t_0,LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_cartesian_transformation_operator_3d);
 	config_control_designe_cartesian_transformation_operator_3d->AddExplicitAttr (a_10Du);
 	a_10Du->initializer_("base_axis(3,SELF\\cartesian_transformation_operator.axis1,SELF\\\n        cartesian_transformation_operator.axis2,axis3)");
@@ -319,22 +319,22 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_11id =
 	  new AttrDescriptor("id",config_control_designt_identifier,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_versioned_action_request);
 	config_control_designe_versioned_action_request->AddExplicitAttr (a_11id);
   a_12version =
 	  new AttrDescriptor("version",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_versioned_action_request);
 	config_control_designe_versioned_action_request->AddExplicitAttr (a_12version);
   a_13purpose =
 	  new AttrDescriptor("purpose",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_versioned_action_request);
 	config_control_designe_versioned_action_request->AddExplicitAttr (a_13purpose);
   a_14description =
 	  new AttrDescriptor("description",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_versioned_action_request);
 	config_control_designe_versioned_action_request->AddExplicitAttr (a_14description);
 	reg.AddEntity (*config_control_designe_versioned_action_request);
@@ -344,7 +344,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_15name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_representation);
 	config_control_designe_representation->AddExplicitAttr (a_15name);
 	SetTypeDescriptor * t_1 = new SetTypeDescriptor;
@@ -356,12 +356,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_1->OriginatingSchema(s_config_control_design);
 	t_1->ReferentType(config_control_designe_representation_item);
   a_16items =
-	  new AttrDescriptor("items",t_1,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("items",t_1,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_representation);
 	config_control_designe_representation->AddExplicitAttr (a_16items);
 	a_17context_of_items =
 	  new AttrDescriptor("context_of_items",config_control_designe_representation_context,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_representation);
 	config_control_designe_representation->AddExplicitAttr (a_17context_of_items);
 	reg.AddEntity (*config_control_designe_representation);
@@ -385,17 +385,17 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_18name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_certification);
 	config_control_designe_certification->AddExplicitAttr (a_18name);
   a_19purpose =
 	  new AttrDescriptor("purpose",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_certification);
 	config_control_designe_certification->AddExplicitAttr (a_19purpose);
 	a_20kind =
 	  new AttrDescriptor("kind",config_control_designe_certification_type,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_certification);
 	config_control_designe_certification->AddExplicitAttr (a_20kind);
 	reg.AddEntity (*config_control_designe_certification);
@@ -405,27 +405,27 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_21id =
 	  new AttrDescriptor("id",config_control_designt_identifier,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_product_definition_relationship);
 	config_control_designe_product_definition_relationship->AddExplicitAttr (a_21id);
   a_22name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_product_definition_relationship);
 	config_control_designe_product_definition_relationship->AddExplicitAttr (a_22name);
   a_23description =
 	  new AttrDescriptor("description",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_product_definition_relationship);
 	config_control_designe_product_definition_relationship->AddExplicitAttr (a_23description);
 	a_24relating_product_definition =
 	  new AttrDescriptor("relating_product_definition",config_control_designe_product_definition,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_product_definition_relationship);
 	config_control_designe_product_definition_relationship->AddExplicitAttr (a_24relating_product_definition);
 	a_25related_product_definition =
 	  new AttrDescriptor("related_product_definition",config_control_designe_product_definition,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_product_definition_relationship);
 	config_control_designe_product_definition_relationship->AddExplicitAttr (a_25related_product_definition);
 	reg.AddEntity (*config_control_designe_product_definition_relationship);
@@ -446,7 +446,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_product_definition_usage->AddSubtype(config_control_designe_assembly_component_usage);
   a_26reference_designator =
 	  new AttrDescriptor("reference_designator",config_control_designt_identifier,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_assembly_component_usage);
 	config_control_designe_assembly_component_usage->AddExplicitAttr (a_26reference_designator);
 	reg.AddEntity (*config_control_designe_assembly_component_usage);
@@ -458,7 +458,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_assembly_component_usage->AddSubtype(config_control_designe_quantified_assembly_component_usage);
 	a_27quantity =
 	  new AttrDescriptor("quantity",config_control_designe_measure_with_unit,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_quantified_assembly_component_usage);
 	config_control_designe_quantified_assembly_component_usage->AddExplicitAttr (a_27quantity);
 	reg.AddEntity (*config_control_designe_quantified_assembly_component_usage);
@@ -478,7 +478,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_solid_model->AddSubtype(config_control_designe_manifold_solid_brep);
 	a_28outer =
 	  new AttrDescriptor("outer",config_control_designe_closed_shell,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_manifold_solid_brep);
 	config_control_designe_manifold_solid_brep->AddExplicitAttr (a_28outer);
 	reg.AddEntity (*config_control_designe_manifold_solid_brep);
@@ -495,22 +495,22 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_29name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_action_directive);
 	config_control_designe_action_directive->AddExplicitAttr (a_29name);
   a_30description =
 	  new AttrDescriptor("description",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_action_directive);
 	config_control_designe_action_directive->AddExplicitAttr (a_30description);
   a_31analysis =
 	  new AttrDescriptor("analysis",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_action_directive);
 	config_control_designe_action_directive->AddExplicitAttr (a_31analysis);
   a_32comment =
 	  new AttrDescriptor("comment",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_action_directive);
 	config_control_designe_action_directive->AddExplicitAttr (a_32comment);
 	SetTypeDescriptor * t_2 = new SetTypeDescriptor;
@@ -522,7 +522,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_2->OriginatingSchema(s_config_control_design);
 	t_2->ReferentType(config_control_designe_versioned_action_request);
   a_33requests =
-	  new AttrDescriptor("requests",t_2,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("requests",t_2,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_action_directive);
 	config_control_designe_action_directive->AddExplicitAttr (a_33requests);
 	reg.AddEntity (*config_control_designe_action_directive);
@@ -533,7 +533,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_named_unit->AddSupertype_Stmt("SUPERTYPE OF (ONEOF (si_unit,conversion_based_unit,context_dependent_unit) ANDOR ONEOF (\n        length_unit,mass_unit,plane_angle_unit,solid_angle_unit,area_unit,\n        volume_unit))");
 	a_34dimensions =
 	  new AttrDescriptor("dimensions",config_control_designe_dimensional_exponents,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_named_unit);
 	config_control_designe_named_unit->AddExplicitAttr (a_34dimensions);
 	reg.AddEntity (*config_control_designe_named_unit);
@@ -551,12 +551,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_measure_with_unit->AddSupertype_Stmt("SUPERTYPE OF (ONEOF (length_measure_with_unit,mass_measure_with_unit,\n        plane_angle_measure_with_unit,solid_angle_measure_with_unit,\n        area_measure_with_unit,volume_measure_with_unit))");
   a_35value_component =
 	  new AttrDescriptor("value_component",config_control_designt_measure_value,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_measure_with_unit);
 	config_control_designe_measure_with_unit->AddExplicitAttr (a_35value_component);
   a_36unit_component =
 	  new AttrDescriptor("unit_component",config_control_designt_unit,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_measure_with_unit);
 	config_control_designe_measure_with_unit->AddExplicitAttr (a_36unit_component);
 	reg.AddEntity (*config_control_designe_measure_with_unit);
@@ -574,7 +574,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_effectivity->AddSupertype_Stmt("SUPERTYPE OF (ONEOF (serial_numbered_effectivity,dated_effectivity,lot_effectivity))");
   a_37id =
 	  new AttrDescriptor("id",config_control_designt_identifier,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_effectivity);
 	config_control_designe_effectivity->AddExplicitAttr (a_37id);
 	reg.AddEntity (*config_control_designe_effectivity);
@@ -586,12 +586,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_effectivity->AddSubtype(config_control_designe_serial_numbered_effectivity);
   a_38effectivity_start_id =
 	  new AttrDescriptor("effectivity_start_id",config_control_designt_identifier,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_serial_numbered_effectivity);
 	config_control_designe_serial_numbered_effectivity->AddExplicitAttr (a_38effectivity_start_id);
   a_39effectivity_end_id =
 	  new AttrDescriptor("effectivity_end_id",config_control_designt_identifier,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_serial_numbered_effectivity);
 	config_control_designe_serial_numbered_effectivity->AddExplicitAttr (a_39effectivity_end_id);
 	reg.AddEntity (*config_control_designe_serial_numbered_effectivity);
@@ -611,17 +611,17 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_surface->AddSubtype(config_control_designe_offset_surface);
 	a_40basis_surface =
 	  new AttrDescriptor("basis_surface",config_control_designe_surface,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_offset_surface);
 	config_control_designe_offset_surface->AddExplicitAttr (a_40basis_surface);
   a_41distance =
 	  new AttrDescriptor("distance",config_control_designt_length_measure,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_offset_surface);
 	config_control_designe_offset_surface->AddExplicitAttr (a_41distance);
   a_42self_intersect =
 	  new AttrDescriptor("self_intersect",t_sdaiLOGICAL,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_offset_surface);
 	config_control_designe_offset_surface->AddExplicitAttr (a_42self_intersect);
 	reg.AddEntity (*config_control_designe_offset_surface);
@@ -634,7 +634,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_geometric_representation_item->AddSubtype(config_control_designe_placement);
 	a_43location =
 	  new AttrDescriptor("location",config_control_designe_cartesian_point,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_placement);
 	config_control_designe_placement->AddExplicitAttr (a_43location);
 	reg.AddEntity (*config_control_designe_placement);
@@ -646,7 +646,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_placement->AddSubtype(config_control_designe_axis2_placement_2d);
 	a_44ref_direction =
 	  new AttrDescriptor("ref_direction",config_control_designe_direction,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_axis2_placement_2d);
 	config_control_designe_axis2_placement_2d->AddExplicitAttr (a_44ref_direction);
 	ListTypeDescriptor * t_3 = new ListTypeDescriptor;
@@ -658,7 +658,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_3->OriginatingSchema(s_config_control_design);
 	t_3->ReferentType(config_control_designe_direction);
   a_45Dp =
-	  new Derived_attribute("p",t_3,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  new Derived_attribute("p",t_3,LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_axis2_placement_2d);
 	config_control_designe_axis2_placement_2d->AddExplicitAttr (a_45Dp);
 	a_45Dp->initializer_("build_2axes(ref_direction)");
@@ -669,12 +669,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_46name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_product_category);
 	config_control_designe_product_category->AddExplicitAttr (a_46name);
   a_47description =
 	  new AttrDescriptor("description",config_control_designt_text,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_product_category);
 	config_control_designe_product_category->AddExplicitAttr (a_47description);
 	reg.AddEntity (*config_control_designe_product_category);
@@ -693,7 +693,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_4->OriginatingSchema(s_config_control_design);
 	t_4->ReferentType(config_control_designe_product);
   a_48products =
-	  new AttrDescriptor("products",t_4,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("products",t_4,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_product_related_product_category);
 	config_control_designe_product_related_product_category->AddExplicitAttr (a_48products);
 	reg.AddEntity (*config_control_designe_product_related_product_category);
@@ -714,7 +714,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_curve->AddSubtype(config_control_designe_conic);
   a_49position =
 	  new AttrDescriptor("position",config_control_designt_axis2_placement,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_conic);
 	config_control_designe_conic->AddExplicitAttr (a_49position);
 	reg.AddEntity (*config_control_designe_conic);
@@ -726,12 +726,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_conic->AddSubtype(config_control_designe_hyperbola);
   a_50semi_axis =
 	  new AttrDescriptor("semi_axis",config_control_designt_positive_length_measure,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_hyperbola);
 	config_control_designe_hyperbola->AddExplicitAttr (a_50semi_axis);
   a_51semi_imag_axis =
 	  new AttrDescriptor("semi_imag_axis",config_control_designt_positive_length_measure,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_hyperbola);
 	config_control_designe_hyperbola->AddExplicitAttr (a_51semi_imag_axis);
 	reg.AddEntity (*config_control_designe_hyperbola);
@@ -741,62 +741,62 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_52internal_location =
 	  new AttrDescriptor("internal_location",config_control_designt_label,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_address);
 	config_control_designe_address->AddExplicitAttr (a_52internal_location);
   a_53street_number =
 	  new AttrDescriptor("street_number",config_control_designt_label,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_address);
 	config_control_designe_address->AddExplicitAttr (a_53street_number);
   a_54street =
 	  new AttrDescriptor("street",config_control_designt_label,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_address);
 	config_control_designe_address->AddExplicitAttr (a_54street);
   a_55postal_box =
 	  new AttrDescriptor("postal_box",config_control_designt_label,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_address);
 	config_control_designe_address->AddExplicitAttr (a_55postal_box);
   a_56town =
 	  new AttrDescriptor("town",config_control_designt_label,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_address);
 	config_control_designe_address->AddExplicitAttr (a_56town);
   a_57region =
 	  new AttrDescriptor("region",config_control_designt_label,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_address);
 	config_control_designe_address->AddExplicitAttr (a_57region);
   a_58postal_code =
 	  new AttrDescriptor("postal_code",config_control_designt_label,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_address);
 	config_control_designe_address->AddExplicitAttr (a_58postal_code);
   a_59country =
 	  new AttrDescriptor("country",config_control_designt_label,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_address);
 	config_control_designe_address->AddExplicitAttr (a_59country);
   a_60facsimile_number =
 	  new AttrDescriptor("facsimile_number",config_control_designt_label,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_address);
 	config_control_designe_address->AddExplicitAttr (a_60facsimile_number);
   a_61telephone_number =
 	  new AttrDescriptor("telephone_number",config_control_designt_label,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_address);
 	config_control_designe_address->AddExplicitAttr (a_61telephone_number);
   a_62electronic_mail_address =
 	  new AttrDescriptor("electronic_mail_address",config_control_designt_label,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_address);
 	config_control_designe_address->AddExplicitAttr (a_62electronic_mail_address);
   a_63telex_number =
 	  new AttrDescriptor("telex_number",config_control_designt_label,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_address);
 	config_control_designe_address->AddExplicitAttr (a_63telex_number);
 	reg.AddEntity (*config_control_designe_address);
@@ -815,12 +815,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_5->OriginatingSchema(s_config_control_design);
 	t_5->ReferentType(config_control_designe_organization);
   a_64organizations =
-	  new AttrDescriptor("organizations",t_5,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("organizations",t_5,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_organizational_address);
 	config_control_designe_organizational_address->AddExplicitAttr (a_64organizations);
   a_65description =
 	  new AttrDescriptor("description",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_organizational_address);
 	config_control_designe_organizational_address->AddExplicitAttr (a_65description);
 	reg.AddEntity (*config_control_designe_organizational_address);
@@ -841,12 +841,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_bounded_surface->AddSubtype(config_control_designe_b_spline_surface);
   a_66u_degree =
 	  new AttrDescriptor("u_degree",t_sdaiINTEGER,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_b_spline_surface);
 	config_control_designe_b_spline_surface->AddExplicitAttr (a_66u_degree);
   a_67v_degree =
 	  new AttrDescriptor("v_degree",t_sdaiINTEGER,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_b_spline_surface);
 	config_control_designe_b_spline_surface->AddExplicitAttr (a_67v_degree);
 	ListTypeDescriptor * t_6 = new ListTypeDescriptor;
@@ -866,38 +866,38 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_7->ReferentType(config_control_designe_cartesian_point);
 	t_6->ReferentType(t_7);
   a_68control_points_list =
-	  new AttrDescriptor("control_points_list",t_6,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("control_points_list",t_6,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_b_spline_surface);
 	config_control_designe_b_spline_surface->AddExplicitAttr (a_68control_points_list);
   a_69surface_form =
 	  new AttrDescriptor("surface_form",config_control_designt_b_spline_surface_form,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_b_spline_surface);
 	config_control_designe_b_spline_surface->AddExplicitAttr (a_69surface_form);
   a_70u_closed =
 	  new AttrDescriptor("u_closed",t_sdaiLOGICAL,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_b_spline_surface);
 	config_control_designe_b_spline_surface->AddExplicitAttr (a_70u_closed);
   a_71v_closed =
 	  new AttrDescriptor("v_closed",t_sdaiLOGICAL,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_b_spline_surface);
 	config_control_designe_b_spline_surface->AddExplicitAttr (a_71v_closed);
   a_72self_intersect =
 	  new AttrDescriptor("self_intersect",t_sdaiLOGICAL,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_b_spline_surface);
 	config_control_designe_b_spline_surface->AddExplicitAttr (a_72self_intersect);
   a_73Du_upper =
 	  new Derived_attribute("u_upper",t_sdaiINTEGER,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_b_spline_surface);
 	config_control_designe_b_spline_surface->AddExplicitAttr (a_73Du_upper);
 	a_73Du_upper->initializer_("SIZEOF(control_points_list) - 1");
   a_74Dv_upper =
 	  new Derived_attribute("v_upper",t_sdaiINTEGER,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_b_spline_surface);
 	config_control_designe_b_spline_surface->AddExplicitAttr (a_74Dv_upper);
 	a_74Dv_upper->initializer_("SIZEOF(control_points_list[1]) - 1");
@@ -918,7 +918,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_9->ReferentType(config_control_designe_cartesian_point);
 	t_8->ReferentType(t_9);
   a_75Dcontrol_points =
-	  new Derived_attribute("control_points",t_8,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  new Derived_attribute("control_points",t_8,LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_b_spline_surface);
 	config_control_designe_b_spline_surface->AddExplicitAttr (a_75Dcontrol_points);
 	a_75Dcontrol_points->initializer_("make_array_of_array(control_points_list,0,u_upper,0,v_upper)");
@@ -945,12 +945,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_placement->AddSubtype(config_control_designe_axis1_placement);
 	a_76axis =
 	  new AttrDescriptor("axis",config_control_designe_direction,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_axis1_placement);
 	config_control_designe_axis1_placement->AddExplicitAttr (a_76axis);
 	a_77Dz =
 	  new Derived_attribute("z",config_control_designe_direction,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_axis1_placement);
 	config_control_designe_axis1_placement->AddExplicitAttr (a_77Dz);
 	a_77Dz->initializer_("NVL(normalise(axis),dummy_gri || direction([0,0,1]))");
@@ -972,7 +972,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_bounded_curve->AddSubtype(config_control_designe_b_spline_curve);
   a_78degree =
 	  new AttrDescriptor("degree",t_sdaiINTEGER,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_b_spline_curve);
 	config_control_designe_b_spline_curve->AddExplicitAttr (a_78degree);
 	ListTypeDescriptor * t_10 = new ListTypeDescriptor;
@@ -984,27 +984,27 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_10->OriginatingSchema(s_config_control_design);
 	t_10->ReferentType(config_control_designe_cartesian_point);
   a_79control_points_list =
-	  new AttrDescriptor("control_points_list",t_10,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("control_points_list",t_10,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_b_spline_curve);
 	config_control_designe_b_spline_curve->AddExplicitAttr (a_79control_points_list);
   a_80curve_form =
 	  new AttrDescriptor("curve_form",config_control_designt_b_spline_curve_form,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_b_spline_curve);
 	config_control_designe_b_spline_curve->AddExplicitAttr (a_80curve_form);
   a_81closed_curve =
 	  new AttrDescriptor("closed_curve",t_sdaiLOGICAL,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_b_spline_curve);
 	config_control_designe_b_spline_curve->AddExplicitAttr (a_81closed_curve);
   a_82self_intersect =
 	  new AttrDescriptor("self_intersect",t_sdaiLOGICAL,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_b_spline_curve);
 	config_control_designe_b_spline_curve->AddExplicitAttr (a_82self_intersect);
   a_83Dupper_index_on_control_points =
 	  new Derived_attribute("upper_index_on_control_points",t_sdaiINTEGER,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_b_spline_curve);
 	config_control_designe_b_spline_curve->AddExplicitAttr (a_83Dupper_index_on_control_points);
 	a_83Dupper_index_on_control_points->initializer_("SIZEOF(control_points_list) - 1");
@@ -1017,7 +1017,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_11->OriginatingSchema(s_config_control_design);
 	t_11->ReferentType(config_control_designe_cartesian_point);
   a_84Dcontrol_points =
-	  new Derived_attribute("control_points",t_11,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  new Derived_attribute("control_points",t_11,LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_b_spline_curve);
 	config_control_designe_b_spline_curve->AddExplicitAttr (a_84Dcontrol_points);
 	a_84Dcontrol_points->initializer_("list_to_array(control_points_list,0,upper_index_on_control_points)");
@@ -1037,7 +1037,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_12->OriginatingSchema(s_config_control_design);
 	t_12->ReferentType(t_sdaiREAL);
   a_85weights_data =
-	  new AttrDescriptor("weights_data",t_12,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("weights_data",t_12,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_rational_b_spline_curve);
 	config_control_designe_rational_b_spline_curve->AddExplicitAttr (a_85weights_data);
 	ArrayTypeDescriptor * t_13 = new ArrayTypeDescriptor;
@@ -1049,7 +1049,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_13->OriginatingSchema(s_config_control_design);
 	t_13->ReferentType(t_sdaiREAL);
   a_86Dweights =
-	  new Derived_attribute("weights",t_13,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  new Derived_attribute("weights",t_13,LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_rational_b_spline_curve);
 	config_control_designe_rational_b_spline_curve->AddExplicitAttr (a_86Dweights);
 	a_86Dweights->initializer_("list_to_array(weights_data,0,upper_index_on_control_points)");
@@ -1061,7 +1061,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_action_request_assignment->AddSupertype_Stmt("ABSTRACT SUPERTYPE");
 	a_87assigned_action_request =
 	  new AttrDescriptor("assigned_action_request",config_control_designe_versioned_action_request,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_action_request_assignment);
 	config_control_designe_action_request_assignment->AddExplicitAttr (a_87assigned_action_request);
 	reg.AddEntity (*config_control_designe_action_request_assignment);
@@ -1081,12 +1081,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_topological_representation_item->AddSubtype(config_control_designe_face_bound);
 	a_88bound =
 	  new AttrDescriptor("bound",config_control_designe_loop,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_face_bound);
 	config_control_designe_face_bound->AddExplicitAttr (a_88bound);
   a_89orientation =
 	  new AttrDescriptor("orientation",t_sdaiBOOLEAN,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_face_bound);
 	config_control_designe_face_bound->AddExplicitAttr (a_89orientation);
 	reg.AddEntity (*config_control_designe_face_bound);
@@ -1105,12 +1105,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_effectivity->AddSubtype(config_control_designe_dated_effectivity);
 	a_90effectivity_start_date =
 	  new AttrDescriptor("effectivity_start_date",config_control_designe_date_and_time,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_dated_effectivity);
 	config_control_designe_dated_effectivity->AddExplicitAttr (a_90effectivity_start_date);
 	a_91effectivity_end_date =
 	  new AttrDescriptor("effectivity_end_date",config_control_designe_date_and_time,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_dated_effectivity);
 	config_control_designe_dated_effectivity->AddExplicitAttr (a_91effectivity_end_date);
 	reg.AddEntity (*config_control_designe_dated_effectivity);
@@ -1129,7 +1129,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_14->OriginatingSchema(s_config_control_design);
 	t_14->ReferentType(t_sdaiREAL);
   a_92direction_ratios =
-	  new AttrDescriptor("direction_ratios",t_14,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("direction_ratios",t_14,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_direction);
 	config_control_designe_direction->AddExplicitAttr (a_92direction_ratios);
 	reg.AddEntity (*config_control_designe_direction);
@@ -1149,12 +1149,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_topological_representation_item->AddSubtype(config_control_designe_edge);
 	a_93edge_start =
 	  new AttrDescriptor("edge_start",config_control_designe_vertex,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_edge);
 	config_control_designe_edge->AddExplicitAttr (a_93edge_start);
 	a_94edge_end =
 	  new AttrDescriptor("edge_end",config_control_designe_vertex,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_edge);
 	config_control_designe_edge->AddExplicitAttr (a_94edge_end);
 	reg.AddEntity (*config_control_designe_edge);
@@ -1166,23 +1166,23 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_edge->AddSubtype(config_control_designe_oriented_edge);
 	a_95edge_element =
 	  new AttrDescriptor("edge_element",config_control_designe_edge,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_oriented_edge);
 	config_control_designe_oriented_edge->AddExplicitAttr (a_95edge_element);
   a_96orientation =
 	  new AttrDescriptor("orientation",t_sdaiBOOLEAN,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_oriented_edge);
 	config_control_designe_oriented_edge->AddExplicitAttr (a_96orientation);
 	a_97Dedge_edge_start =
 	  new Derived_attribute("edge.edge_start",config_control_designe_vertex,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_oriented_edge);
 	config_control_designe_oriented_edge->AddExplicitAttr (a_97Dedge_edge_start);
 	a_97Dedge_edge_start->initializer_("boolean_choose(SELF.orientation,SELF.edge_element.edge_start,SELF.\n        edge_element.edge_end)");
 	a_98Dedge_edge_end =
 	  new Derived_attribute("edge.edge_end",config_control_designe_vertex,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_oriented_edge);
 	config_control_designe_oriented_edge->AddExplicitAttr (a_98Dedge_edge_end);
 	a_98Dedge_edge_end->initializer_("boolean_choose(SELF.orientation,SELF.edge_element.edge_end,SELF.\n        edge_element.edge_start)");
@@ -1193,17 +1193,17 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_99id =
 	  new AttrDescriptor("id",config_control_designt_identifier,
-	  SCLLOG(LFalse),SCLLOG(LTrue), AttrType_Explicit,
+	  LFalse,LTrue, AttrType_Explicit,
 	  *config_control_designe_person);
 	config_control_designe_person->AddExplicitAttr (a_99id);
   a_100last_name =
 	  new AttrDescriptor("last_name",config_control_designt_label,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_person);
 	config_control_designe_person->AddExplicitAttr (a_100last_name);
   a_101first_name =
 	  new AttrDescriptor("first_name",config_control_designt_label,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_person);
 	config_control_designe_person->AddExplicitAttr (a_101first_name);
 	ListTypeDescriptor * t_15 = new ListTypeDescriptor;
@@ -1215,7 +1215,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_15->OriginatingSchema(s_config_control_design);
 	t_15->ReferentType(config_control_designt_label);
   a_102middle_names =
-	  new AttrDescriptor("middle_names",t_15,SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("middle_names",t_15,LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_person);
 	config_control_designe_person->AddExplicitAttr (a_102middle_names);
 	ListTypeDescriptor * t_16 = new ListTypeDescriptor;
@@ -1227,7 +1227,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_16->OriginatingSchema(s_config_control_design);
 	t_16->ReferentType(config_control_designt_label);
   a_103prefix_titles =
-	  new AttrDescriptor("prefix_titles",t_16,SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("prefix_titles",t_16,LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_person);
 	config_control_designe_person->AddExplicitAttr (a_103prefix_titles);
 	ListTypeDescriptor * t_17 = new ListTypeDescriptor;
@@ -1239,7 +1239,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_17->OriginatingSchema(s_config_control_design);
 	t_17->ReferentType(config_control_designt_label);
   a_104suffix_titles =
-	  new AttrDescriptor("suffix_titles",t_17,SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("suffix_titles",t_17,LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_person);
 	config_control_designe_person->AddExplicitAttr (a_104suffix_titles);
 	reg.AddEntity (*config_control_designe_person);
@@ -1249,22 +1249,22 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_105id =
 	  new AttrDescriptor("id",config_control_designt_identifier,
-	  SCLLOG(LFalse),SCLLOG(LTrue), AttrType_Explicit,
+	  LFalse,LTrue, AttrType_Explicit,
 	  *config_control_designe_document);
 	config_control_designe_document->AddExplicitAttr (a_105id);
   a_106name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_document);
 	config_control_designe_document->AddExplicitAttr (a_106name);
   a_107description =
 	  new AttrDescriptor("description",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_document);
 	config_control_designe_document->AddExplicitAttr (a_107description);
 	a_108kind =
 	  new AttrDescriptor("kind",config_control_designe_document_type,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_document);
 	config_control_designe_document->AddExplicitAttr (a_108kind);
 	reg.AddEntity (*config_control_designe_document);
@@ -1276,7 +1276,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_document->AddSubtype(config_control_designe_document_with_class);
   a_109class =
 	  new AttrDescriptor("class",config_control_designt_identifier,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_document_with_class);
 	config_control_designe_document_with_class->AddExplicitAttr (a_109class);
 	reg.AddEntity (*config_control_designe_document_with_class);
@@ -1288,12 +1288,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_named_unit->AddSubtype(config_control_designe_conversion_based_unit);
   a_110name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_conversion_based_unit);
 	config_control_designe_conversion_based_unit->AddExplicitAttr (a_110name);
 	a_111conversion_factor =
 	  new AttrDescriptor("conversion_factor",config_control_designe_measure_with_unit,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_conversion_based_unit);
 	config_control_designe_conversion_based_unit->AddExplicitAttr (a_111conversion_factor);
 	reg.AddEntity (*config_control_designe_conversion_based_unit);
@@ -1313,17 +1313,17 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_point->AddSubtype(config_control_designe_point_on_surface);
 	a_112basis_surface =
 	  new AttrDescriptor("basis_surface",config_control_designe_surface,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_point_on_surface);
 	config_control_designe_point_on_surface->AddExplicitAttr (a_112basis_surface);
   a_113point_parameter_u =
 	  new AttrDescriptor("point_parameter_u",config_control_designt_parameter_value,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_point_on_surface);
 	config_control_designe_point_on_surface->AddExplicitAttr (a_113point_parameter_u);
   a_114point_parameter_v =
 	  new AttrDescriptor("point_parameter_v",config_control_designt_parameter_value,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_point_on_surface);
 	config_control_designe_point_on_surface->AddExplicitAttr (a_114point_parameter_v);
 	reg.AddEntity (*config_control_designe_point_on_surface);
@@ -1333,17 +1333,17 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_115id =
 	  new AttrDescriptor("id",config_control_designt_identifier,
-	  SCLLOG(LFalse),SCLLOG(LTrue), AttrType_Explicit,
+	  LFalse,LTrue, AttrType_Explicit,
 	  *config_control_designe_product_definition_formation);
 	config_control_designe_product_definition_formation->AddExplicitAttr (a_115id);
   a_116description =
 	  new AttrDescriptor("description",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_product_definition_formation);
 	config_control_designe_product_definition_formation->AddExplicitAttr (a_116description);
 	a_117of_product =
 	  new AttrDescriptor("of_product",config_control_designe_product,
-	  SCLLOG(LFalse),SCLLOG(LTrue), AttrType_Explicit,
+	  LFalse,LTrue, AttrType_Explicit,
 	  *config_control_designe_product_definition_formation);
 	config_control_designe_product_definition_formation->AddExplicitAttr (a_117of_product);
 	reg.AddEntity (*config_control_designe_product_definition_formation);
@@ -1354,12 +1354,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_person_and_organization_assignment->AddSupertype_Stmt("ABSTRACT SUPERTYPE");
 	a_118assigned_person_and_organization =
 	  new AttrDescriptor("assigned_person_and_organization",config_control_designe_person_and_organization,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_person_and_organization_assignment);
 	config_control_designe_person_and_organization_assignment->AddExplicitAttr (a_118assigned_person_and_organization);
 	a_119role =
 	  new AttrDescriptor("role",config_control_designe_person_and_organization_role,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_person_and_organization_assignment);
 	config_control_designe_person_and_organization_assignment->AddExplicitAttr (a_119role);
 	reg.AddEntity (*config_control_designe_person_and_organization_assignment);
@@ -1378,7 +1378,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_18->OriginatingSchema(s_config_control_design);
 	t_18->ReferentType(config_control_designt_person_organization_item);
   a_120items =
-	  new AttrDescriptor("items",t_18,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("items",t_18,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_cc_design_person_and_organization_assignment);
 	config_control_designe_cc_design_person_and_organization_assignment->AddExplicitAttr (a_120items);
 	reg.AddEntity (*config_control_designe_cc_design_person_and_organization_assignment);
@@ -1390,22 +1390,22 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_curve->AddSubtype(config_control_designe_offset_curve_3d);
 	a_121basis_curve =
 	  new AttrDescriptor("basis_curve",config_control_designe_curve,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_offset_curve_3d);
 	config_control_designe_offset_curve_3d->AddExplicitAttr (a_121basis_curve);
   a_122distance =
 	  new AttrDescriptor("distance",config_control_designt_length_measure,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_offset_curve_3d);
 	config_control_designe_offset_curve_3d->AddExplicitAttr (a_122distance);
   a_123self_intersect =
 	  new AttrDescriptor("self_intersect",t_sdaiLOGICAL,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_offset_curve_3d);
 	config_control_designe_offset_curve_3d->AddExplicitAttr (a_123self_intersect);
 	a_124ref_direction =
 	  new AttrDescriptor("ref_direction",config_control_designe_direction,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_offset_curve_3d);
 	config_control_designe_offset_curve_3d->AddExplicitAttr (a_124ref_direction);
 	reg.AddEntity (*config_control_designe_offset_curve_3d);
@@ -1415,12 +1415,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
 	a_125status =
 	  new AttrDescriptor("status",config_control_designe_approval_status,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_approval);
 	config_control_designe_approval->AddExplicitAttr (a_125status);
   a_126level =
 	  new AttrDescriptor("level",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_approval);
 	config_control_designe_approval->AddExplicitAttr (a_126level);
 	reg.AddEntity (*config_control_designe_approval);
@@ -1439,23 +1439,23 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_19->OriginatingSchema(s_config_control_design);
 	t_19->ReferentType(config_control_designe_composite_curve_segment);
   a_127segments =
-	  new AttrDescriptor("segments",t_19,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("segments",t_19,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_composite_curve);
 	config_control_designe_composite_curve->AddExplicitAttr (a_127segments);
   a_128self_intersect =
 	  new AttrDescriptor("self_intersect",t_sdaiLOGICAL,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_composite_curve);
 	config_control_designe_composite_curve->AddExplicitAttr (a_128self_intersect);
   a_129Dn_segments =
 	  new Derived_attribute("n_segments",t_sdaiINTEGER,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_composite_curve);
 	config_control_designe_composite_curve->AddExplicitAttr (a_129Dn_segments);
 	a_129Dn_segments->initializer_("SIZEOF(segments)");
   a_130Dclosed_curve =
 	  new Derived_attribute("closed_curve",t_sdaiLOGICAL,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_composite_curve);
 	config_control_designe_composite_curve->AddExplicitAttr (a_130Dclosed_curve);
 	a_130Dclosed_curve->initializer_("segments[n_segments].transition <> discontinuous");
@@ -1476,7 +1476,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_20->OriginatingSchema(s_config_control_design);
 	t_20->ReferentType(config_control_designe_surface);
   a_131Dbasis_surface =
-	  new Derived_attribute("basis_surface",t_20,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  new Derived_attribute("basis_surface",t_20,LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_composite_curve_on_surface);
 	config_control_designe_composite_curve_on_surface->AddExplicitAttr (a_131Dbasis_surface);
 	a_131Dbasis_surface->initializer_("get_basis_surface(SELF)");
@@ -1494,12 +1494,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_132context_identifier =
 	  new AttrDescriptor("context_identifier",config_control_designt_identifier,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_representation_context);
 	config_control_designe_representation_context->AddExplicitAttr (a_132context_identifier);
   a_133context_type =
 	  new AttrDescriptor("context_type",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_representation_context);
 	config_control_designe_representation_context->AddExplicitAttr (a_133context_type);
 	SetTypeDescriptor * t_21 = new SetTypeDescriptor;
@@ -1511,7 +1511,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_21->OriginatingSchema(s_config_control_design);
 	t_21->ReferentType(config_control_designe_representation);
   a_134Irepresentations_in_context =
-	  new Inverse_attribute("representations_in_context",t_21,SCLLOG(LFalse),SCLLOG(LFalse),
+	  new Inverse_attribute("representations_in_context",t_21,LFalse,LFalse,
 	  *config_control_designe_representation_context);
 	config_control_designe_representation_context->AddInverseAttr (a_134Irepresentations_in_context);
 	a_134Irepresentations_in_context->inverted_attr_id_("context_of_items");
@@ -1526,7 +1526,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_representation_context->AddSubtype(config_control_designe_geometric_representation_context);
   a_135coordinate_space_dimension =
 	  new AttrDescriptor("coordinate_space_dimension",config_control_designt_dimension_count,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_geometric_representation_context);
 	config_control_designe_geometric_representation_context->AddExplicitAttr (a_135coordinate_space_dimension);
 	reg.AddEntity (*config_control_designe_geometric_representation_context);
@@ -1536,12 +1536,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_136status =
 	  new AttrDescriptor("status",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_action_status);
 	config_control_designe_action_status->AddExplicitAttr (a_136status);
 	a_137assigned_action =
 	  new AttrDescriptor("assigned_action",config_control_designe_executed_action,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_action_status);
 	config_control_designe_action_status->AddExplicitAttr (a_137assigned_action);
 	reg.AddEntity (*config_control_designe_action_status);
@@ -1551,7 +1551,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_138application =
 	  new AttrDescriptor("application",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_application_context);
 	config_control_designe_application_context->AddExplicitAttr (a_138application);
 	SetTypeDescriptor * t_22 = new SetTypeDescriptor;
@@ -1563,7 +1563,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_22->OriginatingSchema(s_config_control_design);
 	t_22->ReferentType(config_control_designe_application_context_element);
   a_139Icontext_elements =
-	  new Inverse_attribute("context_elements",t_22,SCLLOG(LFalse),SCLLOG(LFalse),
+	  new Inverse_attribute("context_elements",t_22,LFalse,LFalse,
 	  *config_control_designe_application_context);
 	config_control_designe_application_context->AddInverseAttr (a_139Icontext_elements);
 	a_139Icontext_elements->inverted_attr_id_("frame_of_reference");
@@ -1585,7 +1585,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_23->OriginatingSchema(s_config_control_design);
 	t_23->ReferentType(config_control_designt_change_request_item);
   a_140items =
-	  new AttrDescriptor("items",t_23,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("items",t_23,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_change_request);
 	config_control_designe_change_request->AddExplicitAttr (a_140items);
 	reg.AddEntity (*config_control_designe_change_request);
@@ -1595,12 +1595,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
 	a_141date_component =
 	  new AttrDescriptor("date_component",config_control_designe_date,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_date_and_time);
 	config_control_designe_date_and_time->AddExplicitAttr (a_141date_component);
 	a_142time_component =
 	  new AttrDescriptor("time_component",config_control_designe_local_time,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_date_and_time);
 	config_control_designe_date_and_time->AddExplicitAttr (a_142time_component);
 	reg.AddEntity (*config_control_designe_date_and_time);
@@ -1610,12 +1610,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_143date_time =
 	  new AttrDescriptor("date_time",config_control_designt_date_time_select,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_approval_date_time);
 	config_control_designe_approval_date_time->AddExplicitAttr (a_143date_time);
 	a_144dated_approval =
 	  new AttrDescriptor("dated_approval",config_control_designe_approval,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_approval_date_time);
 	config_control_designe_approval_date_time->AddExplicitAttr (a_144dated_approval);
 	reg.AddEntity (*config_control_designe_approval_date_time);
@@ -1625,7 +1625,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_145role =
 	  new AttrDescriptor("role",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_approval_role);
 	config_control_designe_approval_role->AddExplicitAttr (a_145role);
 	reg.AddEntity (*config_control_designe_approval_role);
@@ -1636,12 +1636,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_application_context_element->AddSupertype_Stmt("SUPERTYPE OF (ONEOF (product_context,product_definition_context,product_concept_context))");
   a_146name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_application_context_element);
 	config_control_designe_application_context_element->AddExplicitAttr (a_146name);
 	a_147frame_of_reference =
 	  new AttrDescriptor("frame_of_reference",config_control_designe_application_context,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_application_context_element);
 	config_control_designe_application_context_element->AddExplicitAttr (a_147frame_of_reference);
 	reg.AddEntity (*config_control_designe_application_context_element);
@@ -1653,7 +1653,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_application_context_element->AddSubtype(config_control_designe_product_context);
   a_148discipline_type =
 	  new AttrDescriptor("discipline_type",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_product_context);
 	config_control_designe_product_context->AddExplicitAttr (a_148discipline_type);
 	reg.AddEntity (*config_control_designe_product_context);
@@ -1666,7 +1666,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_surface->AddSubtype(config_control_designe_elementary_surface);
 	a_149position =
 	  new AttrDescriptor("position",config_control_designe_axis2_placement_3d,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_elementary_surface);
 	config_control_designe_elementary_surface->AddExplicitAttr (a_149position);
 	reg.AddEntity (*config_control_designe_elementary_surface);
@@ -1678,7 +1678,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_elementary_surface->AddSubtype(config_control_designe_spherical_surface);
   a_150radius =
 	  new AttrDescriptor("radius",config_control_designt_positive_length_measure,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_spherical_surface);
 	config_control_designe_spherical_surface->AddExplicitAttr (a_150radius);
 	reg.AddEntity (*config_control_designe_spherical_surface);
@@ -1688,22 +1688,22 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_151status =
 	  new AttrDescriptor("status",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_application_protocol_definition);
 	config_control_designe_application_protocol_definition->AddExplicitAttr (a_151status);
   a_152application_interpreted_model_schema_name =
 	  new AttrDescriptor("application_interpreted_model_schema_name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_application_protocol_definition);
 	config_control_designe_application_protocol_definition->AddExplicitAttr (a_152application_interpreted_model_schema_name);
   a_153application_protocol_year =
 	  new AttrDescriptor("application_protocol_year",config_control_designt_year_number,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_application_protocol_definition);
 	config_control_designe_application_protocol_definition->AddExplicitAttr (a_153application_protocol_year);
 	a_154application =
 	  new AttrDescriptor("application",config_control_designe_application_context,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_application_protocol_definition);
 	config_control_designe_application_protocol_definition->AddExplicitAttr (a_154application);
 	reg.AddEntity (*config_control_designe_application_protocol_definition);
@@ -1715,12 +1715,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_assembly_component_usage->AddSubtype(config_control_designe_specified_higher_usage_occurrence);
 	a_155upper_usage =
 	  new AttrDescriptor("upper_usage",config_control_designe_assembly_component_usage,
-	  SCLLOG(LFalse),SCLLOG(LTrue), AttrType_Explicit,
+	  LFalse,LTrue, AttrType_Explicit,
 	  *config_control_designe_specified_higher_usage_occurrence);
 	config_control_designe_specified_higher_usage_occurrence->AddExplicitAttr (a_155upper_usage);
 	a_156next_usage =
 	  new AttrDescriptor("next_usage",config_control_designe_next_assembly_usage_occurrence,
-	  SCLLOG(LFalse),SCLLOG(LTrue), AttrType_Explicit,
+	  LFalse,LTrue, AttrType_Explicit,
 	  *config_control_designe_specified_higher_usage_occurrence);
 	config_control_designe_specified_higher_usage_occurrence->AddExplicitAttr (a_156next_usage);
 	reg.AddEntity (*config_control_designe_specified_higher_usage_occurrence);
@@ -1732,7 +1732,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_product_definition_formation->AddSubtype(config_control_designe_product_definition_formation_with_specified_source);
   a_157make_or_buy =
 	  new AttrDescriptor("make_or_buy",config_control_designt_source,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_product_definition_formation_with_specified_source);
 	config_control_designe_product_definition_formation_with_specified_source->AddExplicitAttr (a_157make_or_buy);
 	reg.AddEntity (*config_control_designe_product_definition_formation_with_specified_source);
@@ -1742,12 +1742,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
 	a_158method =
 	  new AttrDescriptor("method",config_control_designe_action_method,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_action_request_solution);
 	config_control_designe_action_request_solution->AddExplicitAttr (a_158method);
 	a_159request =
 	  new AttrDescriptor("request",config_control_designe_versioned_action_request,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_action_request_solution);
 	config_control_designe_action_request_solution->AddExplicitAttr (a_159request);
 	reg.AddEntity (*config_control_designe_action_request_solution);
@@ -1759,12 +1759,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_measure_with_unit->AddSubtype(config_control_designe_uncertainty_measure_with_unit);
   a_160name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_uncertainty_measure_with_unit);
 	config_control_designe_uncertainty_measure_with_unit->AddExplicitAttr (a_160name);
   a_161description =
 	  new AttrDescriptor("description",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_uncertainty_measure_with_unit);
 	config_control_designe_uncertainty_measure_with_unit->AddExplicitAttr (a_161description);
 	reg.AddEntity (*config_control_designe_uncertainty_measure_with_unit);
@@ -1783,7 +1783,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_24->OriginatingSchema(s_config_control_design);
 	t_24->ReferentType(config_control_designe_connected_edge_set);
   a_162ebwm_boundary =
-	  new AttrDescriptor("ebwm_boundary",t_24,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("ebwm_boundary",t_24,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_edge_based_wireframe_model);
 	config_control_designe_edge_based_wireframe_model->AddExplicitAttr (a_162ebwm_boundary);
 	reg.AddEntity (*config_control_designe_edge_based_wireframe_model);
@@ -1798,13 +1798,13 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_25->AssignAggrCreator((AggregateCreator) create_EntityAggregate);	// Creator function 
 	t_25->Bound1(1);
 	t_25->Bound2(2147483647);
-	t_25->UniqueElements(SCLLOG(LTrue));
+	t_25->UniqueElements(LTrue);
 	t_25->FundamentalType(LIST_TYPE);
 	t_25->Description("LIST [1:?] OF UNIQUE oriented_edge");
 	t_25->OriginatingSchema(s_config_control_design);
 	t_25->ReferentType(config_control_designe_oriented_edge);
   a_163edge_list =
-	  new AttrDescriptor("edge_list",t_25,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("edge_list",t_25,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_path);
 	config_control_designe_path->AddExplicitAttr (a_163edge_list);
 	reg.AddEntity (*config_control_designe_path);
@@ -1824,7 +1824,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_26->OriginatingSchema(s_config_control_design);
 	t_26->ReferentType(config_control_designe_face);
   a_164cfs_faces =
-	  new AttrDescriptor("cfs_faces",t_26,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("cfs_faces",t_26,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_connected_face_set);
 	config_control_designe_connected_face_set->AddExplicitAttr (a_164cfs_faces);
 	reg.AddEntity (*config_control_designe_connected_face_set);
@@ -1843,12 +1843,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_open_shell->AddSubtype(config_control_designe_oriented_open_shell);
 	a_165open_shell_element =
 	  new AttrDescriptor("open_shell_element",config_control_designe_open_shell,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_oriented_open_shell);
 	config_control_designe_oriented_open_shell->AddExplicitAttr (a_165open_shell_element);
   a_166orientation =
 	  new AttrDescriptor("orientation",t_sdaiBOOLEAN,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_oriented_open_shell);
 	config_control_designe_oriented_open_shell->AddExplicitAttr (a_166orientation);
 	SetTypeDescriptor * t_27 = new SetTypeDescriptor;
@@ -1860,7 +1860,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_27->OriginatingSchema(s_config_control_design);
 	t_27->ReferentType(config_control_designe_face);
   a_167Dconnected_face_set_cfs_faces =
-	  new Derived_attribute("connected_face_set.cfs_faces",t_27,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  new Derived_attribute("connected_face_set.cfs_faces",t_27,LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_oriented_open_shell);
 	config_control_designe_oriented_open_shell->AddExplicitAttr (a_167Dconnected_face_set_cfs_faces);
 	a_167Dconnected_face_set_cfs_faces->initializer_("conditional_reverse(SELF.orientation,SELF.open_shell_element.cfs_faces)");
@@ -1878,17 +1878,17 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_168hour_offset =
 	  new AttrDescriptor("hour_offset",config_control_designt_hour_in_day,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_coordinated_universal_time_offset);
 	config_control_designe_coordinated_universal_time_offset->AddExplicitAttr (a_168hour_offset);
   a_169minute_offset =
 	  new AttrDescriptor("minute_offset",config_control_designt_minute_in_hour,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_coordinated_universal_time_offset);
 	config_control_designe_coordinated_universal_time_offset->AddExplicitAttr (a_169minute_offset);
   a_170sense =
 	  new AttrDescriptor("sense",config_control_designt_ahead_or_behind,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_coordinated_universal_time_offset);
 	config_control_designe_coordinated_universal_time_offset->AddExplicitAttr (a_170sense);
 	reg.AddEntity (*config_control_designe_coordinated_universal_time_offset);
@@ -1900,12 +1900,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_curve->AddSubtype(config_control_designe_curve_replica);
 	a_171parent_curve =
 	  new AttrDescriptor("parent_curve",config_control_designe_curve,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_curve_replica);
 	config_control_designe_curve_replica->AddExplicitAttr (a_171parent_curve);
 	a_172transformation =
 	  new AttrDescriptor("transformation",config_control_designe_cartesian_transformation_operator,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_curve_replica);
 	config_control_designe_curve_replica->AddExplicitAttr (a_172transformation);
 	reg.AddEntity (*config_control_designe_curve_replica);
@@ -1925,7 +1925,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_curve->AddSubtype(config_control_designe_surface_curve);
 	a_173curve_3d =
 	  new AttrDescriptor("curve_3d",config_control_designe_curve,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_surface_curve);
 	config_control_designe_surface_curve->AddExplicitAttr (a_173curve_3d);
 	ListTypeDescriptor * t_28 = new ListTypeDescriptor;
@@ -1937,12 +1937,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_28->OriginatingSchema(s_config_control_design);
 	t_28->ReferentType(config_control_designt_pcurve_or_surface);
   a_174associated_geometry =
-	  new AttrDescriptor("associated_geometry",t_28,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("associated_geometry",t_28,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_surface_curve);
 	config_control_designe_surface_curve->AddExplicitAttr (a_174associated_geometry);
   a_175master_representation =
 	  new AttrDescriptor("master_representation",config_control_designt_preferred_surface_curve_representation,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_surface_curve);
 	config_control_designe_surface_curve->AddExplicitAttr (a_175master_representation);
 	SetTypeDescriptor * t_29 = new SetTypeDescriptor;
@@ -1954,7 +1954,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_29->OriginatingSchema(s_config_control_design);
 	t_29->ReferentType(config_control_designe_surface);
   a_176Dbasis_surface =
-	  new Derived_attribute("basis_surface",t_29,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  new Derived_attribute("basis_surface",t_29,LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_surface_curve);
 	config_control_designe_surface_curve->AddExplicitAttr (a_176Dbasis_surface);
 	a_176Dbasis_surface->initializer_("get_basis_surface(SELF)");
@@ -1965,12 +1965,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_177status =
 	  new AttrDescriptor("status",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_action_request_status);
 	config_control_designe_action_request_status->AddExplicitAttr (a_177status);
 	a_178assigned_request =
 	  new AttrDescriptor("assigned_request",config_control_designe_versioned_action_request,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_action_request_status);
 	config_control_designe_action_request_status->AddExplicitAttr (a_178assigned_request);
 	reg.AddEntity (*config_control_designe_action_request_status);
@@ -1987,17 +1987,17 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_founded_item->AddSubtype(config_control_designe_composite_curve_segment);
   a_179transition =
 	  new AttrDescriptor("transition",config_control_designt_transition_code,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_composite_curve_segment);
 	config_control_designe_composite_curve_segment->AddExplicitAttr (a_179transition);
   a_180same_sense =
 	  new AttrDescriptor("same_sense",t_sdaiBOOLEAN,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_composite_curve_segment);
 	config_control_designe_composite_curve_segment->AddExplicitAttr (a_180same_sense);
 	a_181parent_curve =
 	  new AttrDescriptor("parent_curve",config_control_designe_curve,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_composite_curve_segment);
 	config_control_designe_composite_curve_segment->AddExplicitAttr (a_181parent_curve);
 	BagTypeDescriptor * t_30 = new BagTypeDescriptor;
@@ -2009,7 +2009,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_30->OriginatingSchema(s_config_control_design);
 	t_30->ReferentType(config_control_designe_composite_curve);
   a_182Iusing_curves =
-	  new Inverse_attribute("using_curves",t_30,SCLLOG(LFalse),SCLLOG(LFalse),
+	  new Inverse_attribute("using_curves",t_30,LFalse,LFalse,
 	  *config_control_designe_composite_curve_segment);
 	config_control_designe_composite_curve_segment->AddInverseAttr (a_182Iusing_curves);
 	a_182Iusing_curves->inverted_attr_id_("segments");
@@ -2024,7 +2024,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_composite_curve_segment->AddSubtype(config_control_designe_reparametrised_composite_curve_segment);
   a_183param_length =
 	  new AttrDescriptor("param_length",config_control_designt_parameter_value,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_reparametrised_composite_curve_segment);
 	config_control_designe_reparametrised_composite_curve_segment->AddExplicitAttr (a_183param_length);
 	reg.AddEntity (*config_control_designe_reparametrised_composite_curve_segment);
@@ -2034,22 +2034,22 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_184name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_representation_relationship);
 	config_control_designe_representation_relationship->AddExplicitAttr (a_184name);
   a_185description =
 	  new AttrDescriptor("description",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_representation_relationship);
 	config_control_designe_representation_relationship->AddExplicitAttr (a_185description);
 	a_186rep_1 =
 	  new AttrDescriptor("rep_1",config_control_designe_representation,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_representation_relationship);
 	config_control_designe_representation_relationship->AddExplicitAttr (a_186rep_1);
 	a_187rep_2 =
 	  new AttrDescriptor("rep_2",config_control_designe_representation,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_representation_relationship);
 	config_control_designe_representation_relationship->AddExplicitAttr (a_187rep_2);
 	reg.AddEntity (*config_control_designe_representation_relationship);
@@ -2061,7 +2061,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_representation_relationship->AddSubtype(config_control_designe_representation_relationship_with_transformation);
   a_188transformation_operator =
 	  new AttrDescriptor("transformation_operator",config_control_designt_transformation,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_representation_relationship_with_transformation);
 	config_control_designe_representation_relationship_with_transformation->AddExplicitAttr (a_188transformation_operator);
 	reg.AddEntity (*config_control_designe_representation_relationship_with_transformation);
@@ -2071,7 +2071,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_189name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_person_and_organization_role);
 	config_control_designe_person_and_organization_role->AddExplicitAttr (a_189name);
 	reg.AddEntity (*config_control_designe_person_and_organization_role);
@@ -2091,7 +2091,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_surface->AddSubtype(config_control_designe_swept_surface);
 	a_190swept_curve =
 	  new AttrDescriptor("swept_curve",config_control_designe_curve,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_swept_surface);
 	config_control_designe_swept_surface->AddExplicitAttr (a_190swept_curve);
 	reg.AddEntity (*config_control_designe_swept_surface);
@@ -2101,17 +2101,17 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_191name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_property_definition);
 	config_control_designe_property_definition->AddExplicitAttr (a_191name);
   a_192description =
 	  new AttrDescriptor("description",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_property_definition);
 	config_control_designe_property_definition->AddExplicitAttr (a_192description);
   a_193definition =
 	  new AttrDescriptor("definition",config_control_designt_characterized_definition,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_property_definition);
 	config_control_designe_property_definition->AddExplicitAttr (a_193definition);
 	reg.AddEntity (*config_control_designe_property_definition);
@@ -2130,7 +2130,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_31->OriginatingSchema(s_config_control_design);
 	t_31->ReferentType(config_control_designe_uncertainty_measure_with_unit);
   a_194uncertainty =
-	  new AttrDescriptor("uncertainty",t_31,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("uncertainty",t_31,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_global_uncertainty_assigned_context);
 	config_control_designe_global_uncertainty_assigned_context->AddExplicitAttr (a_194uncertainty);
 	reg.AddEntity (*config_control_designe_global_uncertainty_assigned_context);
@@ -2140,22 +2140,22 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_195name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_organization_relationship);
 	config_control_designe_organization_relationship->AddExplicitAttr (a_195name);
   a_196description =
 	  new AttrDescriptor("description",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_organization_relationship);
 	config_control_designe_organization_relationship->AddExplicitAttr (a_196description);
 	a_197relating_organization =
 	  new AttrDescriptor("relating_organization",config_control_designe_organization,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_organization_relationship);
 	config_control_designe_organization_relationship->AddExplicitAttr (a_197relating_organization);
 	a_198related_organization =
 	  new AttrDescriptor("related_organization",config_control_designe_organization,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_organization_relationship);
 	config_control_designe_organization_relationship->AddExplicitAttr (a_198related_organization);
 	reg.AddEntity (*config_control_designe_organization_relationship);
@@ -2167,7 +2167,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_conic->AddSubtype(config_control_designe_parabola);
   a_199focal_dist =
 	  new AttrDescriptor("focal_dist",config_control_designt_length_measure,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_parabola);
 	config_control_designe_parabola->AddExplicitAttr (a_199focal_dist);
 	reg.AddEntity (*config_control_designe_parabola);
@@ -2194,18 +2194,18 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_33->ReferentType(config_control_designe_surface_patch);
 	t_32->ReferentType(t_33);
   a_200segments =
-	  new AttrDescriptor("segments",t_32,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("segments",t_32,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_rectangular_composite_surface);
 	config_control_designe_rectangular_composite_surface->AddExplicitAttr (a_200segments);
   a_201Dn_u =
 	  new Derived_attribute("n_u",t_sdaiINTEGER,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_rectangular_composite_surface);
 	config_control_designe_rectangular_composite_surface->AddExplicitAttr (a_201Dn_u);
 	a_201Dn_u->initializer_("SIZEOF(segments)");
   a_202Dn_v =
 	  new Derived_attribute("n_v",t_sdaiINTEGER,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_rectangular_composite_surface);
 	config_control_designe_rectangular_composite_surface->AddExplicitAttr (a_202Dn_v);
 	a_202Dn_v->initializer_("SIZEOF(segments[1])");
@@ -2218,12 +2218,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_effectivity->AddSubtype(config_control_designe_lot_effectivity);
   a_203effectivity_lot_id =
 	  new AttrDescriptor("effectivity_lot_id",config_control_designt_identifier,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_lot_effectivity);
 	config_control_designe_lot_effectivity->AddExplicitAttr (a_203effectivity_lot_id);
 	a_204effectivity_lot_size =
 	  new AttrDescriptor("effectivity_lot_size",config_control_designe_measure_with_unit,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_lot_effectivity);
 	config_control_designe_lot_effectivity->AddExplicitAttr (a_204effectivity_lot_size);
 	reg.AddEntity (*config_control_designe_lot_effectivity);
@@ -2235,7 +2235,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_swept_surface->AddSubtype(config_control_designe_surface_of_linear_extrusion);
 	a_205extrusion_axis =
 	  new AttrDescriptor("extrusion_axis",config_control_designe_vector,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_surface_of_linear_extrusion);
 	config_control_designe_surface_of_linear_extrusion->AddExplicitAttr (a_205extrusion_axis);
 	reg.AddEntity (*config_control_designe_surface_of_linear_extrusion);
@@ -2254,7 +2254,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_34->OriginatingSchema(s_config_control_design);
 	t_34->ReferentType(config_control_designt_shell);
   a_206sbsm_boundary =
-	  new AttrDescriptor("sbsm_boundary",t_34,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("sbsm_boundary",t_34,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_shell_based_surface_model);
 	config_control_designe_shell_based_surface_model->AddExplicitAttr (a_206sbsm_boundary);
 	reg.AddEntity (*config_control_designe_shell_based_surface_model);
@@ -2290,7 +2290,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_path->AddSubtype(config_control_designe_edge_loop);
   a_207Dne =
 	  new Derived_attribute("ne",t_sdaiINTEGER,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_edge_loop);
 	config_control_designe_edge_loop->AddExplicitAttr (a_207Dne);
 	a_207Dne->initializer_("SIZEOF(SELF\\path.edge_list)");
@@ -2302,7 +2302,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_date->AddSupertype_Stmt("SUPERTYPE OF (ONEOF (calendar_date,ordinal_date,week_of_year_and_day_date))");
   a_208year_component =
 	  new AttrDescriptor("year_component",config_control_designt_year_number,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_date);
 	config_control_designe_date->AddExplicitAttr (a_208year_component);
 	reg.AddEntity (*config_control_designe_date);
@@ -2314,12 +2314,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_date->AddSubtype(config_control_designe_calendar_date);
   a_209day_component =
 	  new AttrDescriptor("day_component",config_control_designt_day_in_month_number,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_calendar_date);
 	config_control_designe_calendar_date->AddExplicitAttr (a_209day_component);
   a_210month_component =
 	  new AttrDescriptor("month_component",config_control_designt_month_in_year_number,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_calendar_date);
 	config_control_designe_calendar_date->AddExplicitAttr (a_210month_component);
 	reg.AddEntity (*config_control_designe_calendar_date);
@@ -2331,12 +2331,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_elementary_surface->AddSubtype(config_control_designe_toroidal_surface);
   a_211major_radius =
 	  new AttrDescriptor("major_radius",config_control_designt_positive_length_measure,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_toroidal_surface);
 	config_control_designe_toroidal_surface->AddExplicitAttr (a_211major_radius);
   a_212minor_radius =
 	  new AttrDescriptor("minor_radius",config_control_designt_positive_length_measure,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_toroidal_surface);
 	config_control_designe_toroidal_surface->AddExplicitAttr (a_212minor_radius);
 	reg.AddEntity (*config_control_designe_toroidal_surface);
@@ -2354,7 +2354,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_approval_assignment->AddSupertype_Stmt("ABSTRACT SUPERTYPE");
 	a_213assigned_approval =
 	  new AttrDescriptor("assigned_approval",config_control_designe_approval,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_approval_assignment);
 	config_control_designe_approval_assignment->AddExplicitAttr (a_213assigned_approval);
 	reg.AddEntity (*config_control_designe_approval_assignment);
@@ -2364,27 +2364,27 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_214id =
 	  new AttrDescriptor("id",config_control_designt_identifier,
-	  SCLLOG(LFalse),SCLLOG(LTrue), AttrType_Explicit,
+	  LFalse,LTrue, AttrType_Explicit,
 	  *config_control_designe_configuration_item);
 	config_control_designe_configuration_item->AddExplicitAttr (a_214id);
   a_215name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_configuration_item);
 	config_control_designe_configuration_item->AddExplicitAttr (a_215name);
   a_216description =
 	  new AttrDescriptor("description",config_control_designt_text,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_configuration_item);
 	config_control_designe_configuration_item->AddExplicitAttr (a_216description);
 	a_217item_concept =
 	  new AttrDescriptor("item_concept",config_control_designe_product_concept,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_configuration_item);
 	config_control_designe_configuration_item->AddExplicitAttr (a_217item_concept);
   a_218purpose =
 	  new AttrDescriptor("purpose",config_control_designt_label,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_configuration_item);
 	config_control_designe_configuration_item->AddExplicitAttr (a_218purpose);
 	reg.AddEntity (*config_control_designe_configuration_item);
@@ -2395,7 +2395,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_contract_assignment->AddSupertype_Stmt("ABSTRACT SUPERTYPE");
 	a_219assigned_contract =
 	  new AttrDescriptor("assigned_contract",config_control_designe_contract,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_contract_assignment);
 	config_control_designe_contract_assignment->AddExplicitAttr (a_219assigned_contract);
 	reg.AddEntity (*config_control_designe_contract_assignment);
@@ -2407,12 +2407,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_geometric_representation_item->AddSubtype(config_control_designe_vector);
 	a_220orientation =
 	  new AttrDescriptor("orientation",config_control_designe_direction,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_vector);
 	config_control_designe_vector->AddExplicitAttr (a_220orientation);
   a_221magnitude =
 	  new AttrDescriptor("magnitude",config_control_designt_length_measure,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_vector);
 	config_control_designe_vector->AddExplicitAttr (a_221magnitude);
 	reg.AddEntity (*config_control_designe_vector);
@@ -2424,12 +2424,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_curve->AddSubtype(config_control_designe_pcurve);
 	a_222basis_surface =
 	  new AttrDescriptor("basis_surface",config_control_designe_surface,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_pcurve);
 	config_control_designe_pcurve->AddExplicitAttr (a_222basis_surface);
 	a_223reference_to_curve =
 	  new AttrDescriptor("reference_to_curve",config_control_designe_definitional_representation,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_pcurve);
 	config_control_designe_pcurve->AddExplicitAttr (a_223reference_to_curve);
 	reg.AddEntity (*config_control_designe_pcurve);
@@ -2457,7 +2457,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_bounded_curve->AddSubtype(config_control_designe_trimmed_curve);
 	a_224basis_curve =
 	  new AttrDescriptor("basis_curve",config_control_designe_curve,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_trimmed_curve);
 	config_control_designe_trimmed_curve->AddExplicitAttr (a_224basis_curve);
 	SetTypeDescriptor * t_35 = new SetTypeDescriptor;
@@ -2469,7 +2469,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_35->OriginatingSchema(s_config_control_design);
 	t_35->ReferentType(config_control_designt_trimming_select);
   a_225trim_1 =
-	  new AttrDescriptor("trim_1",t_35,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("trim_1",t_35,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_trimmed_curve);
 	config_control_designe_trimmed_curve->AddExplicitAttr (a_225trim_1);
 	SetTypeDescriptor * t_36 = new SetTypeDescriptor;
@@ -2481,17 +2481,17 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_36->OriginatingSchema(s_config_control_design);
 	t_36->ReferentType(config_control_designt_trimming_select);
   a_226trim_2 =
-	  new AttrDescriptor("trim_2",t_36,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("trim_2",t_36,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_trimmed_curve);
 	config_control_designe_trimmed_curve->AddExplicitAttr (a_226trim_2);
   a_227sense_agreement =
 	  new AttrDescriptor("sense_agreement",t_sdaiBOOLEAN,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_trimmed_curve);
 	config_control_designe_trimmed_curve->AddExplicitAttr (a_227sense_agreement);
   a_228master_representation =
 	  new AttrDescriptor("master_representation",config_control_designt_trimming_preference,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_trimmed_curve);
 	config_control_designe_trimmed_curve->AddExplicitAttr (a_228master_representation);
 	reg.AddEntity (*config_control_designe_trimmed_curve);
@@ -2503,7 +2503,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_application_context_element->AddSubtype(config_control_designe_product_definition_context);
   a_229life_cycle_stage =
 	  new AttrDescriptor("life_cycle_stage",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_product_definition_context);
 	config_control_designe_product_definition_context->AddExplicitAttr (a_229life_cycle_stage);
 	reg.AddEntity (*config_control_designe_product_definition_context);
@@ -2522,22 +2522,22 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_230name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_item_defined_transformation);
 	config_control_designe_item_defined_transformation->AddExplicitAttr (a_230name);
   a_231description =
 	  new AttrDescriptor("description",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_item_defined_transformation);
 	config_control_designe_item_defined_transformation->AddExplicitAttr (a_231description);
 	a_232transform_item_1 =
 	  new AttrDescriptor("transform_item_1",config_control_designe_representation_item,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_item_defined_transformation);
 	config_control_designe_item_defined_transformation->AddExplicitAttr (a_232transform_item_1);
 	a_233transform_item_2 =
 	  new AttrDescriptor("transform_item_2",config_control_designe_representation_item,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_item_defined_transformation);
 	config_control_designe_item_defined_transformation->AddExplicitAttr (a_233transform_item_2);
 	reg.AddEntity (*config_control_designe_item_defined_transformation);
@@ -2547,22 +2547,22 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_234name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_action_method);
 	config_control_designe_action_method->AddExplicitAttr (a_234name);
   a_235description =
 	  new AttrDescriptor("description",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_action_method);
 	config_control_designe_action_method->AddExplicitAttr (a_235description);
   a_236consequence =
 	  new AttrDescriptor("consequence",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_action_method);
 	config_control_designe_action_method->AddExplicitAttr (a_236consequence);
   a_237purpose =
 	  new AttrDescriptor("purpose",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_action_method);
 	config_control_designe_action_method->AddExplicitAttr (a_237purpose);
 	reg.AddEntity (*config_control_designe_action_method);
@@ -2572,22 +2572,22 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_238name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_product_category_relationship);
 	config_control_designe_product_category_relationship->AddExplicitAttr (a_238name);
   a_239description =
 	  new AttrDescriptor("description",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_product_category_relationship);
 	config_control_designe_product_category_relationship->AddExplicitAttr (a_239description);
 	a_240category =
 	  new AttrDescriptor("category",config_control_designe_product_category,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_product_category_relationship);
 	config_control_designe_product_category_relationship->AddExplicitAttr (a_240category);
 	a_241sub_category =
 	  new AttrDescriptor("sub_category",config_control_designe_product_category,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_product_category_relationship);
 	config_control_designe_product_category_relationship->AddExplicitAttr (a_241sub_category);
 	reg.AddEntity (*config_control_designe_product_category_relationship);
@@ -2611,12 +2611,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
 	a_242mapping_origin =
 	  new AttrDescriptor("mapping_origin",config_control_designe_representation_item,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_representation_map);
 	config_control_designe_representation_map->AddExplicitAttr (a_242mapping_origin);
 	a_243mapped_representation =
 	  new AttrDescriptor("mapped_representation",config_control_designe_representation,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_representation_map);
 	config_control_designe_representation_map->AddExplicitAttr (a_243mapped_representation);
 	SetTypeDescriptor * t_37 = new SetTypeDescriptor;
@@ -2628,7 +2628,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_37->OriginatingSchema(s_config_control_design);
 	t_37->ReferentType(config_control_designe_mapped_item);
   a_244Imap_usage =
-	  new Inverse_attribute("map_usage",t_37,SCLLOG(LFalse),SCLLOG(LFalse),
+	  new Inverse_attribute("map_usage",t_37,LFalse,LFalse,
 	  *config_control_designe_representation_map);
 	config_control_designe_representation_map->AddInverseAttr (a_244Imap_usage);
 	a_244Imap_usage->inverted_attr_id_("mapping_source");
@@ -2643,7 +2643,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_effectivity->AddSubtype(config_control_designe_product_definition_effectivity);
 	a_245usage =
 	  new AttrDescriptor("usage",config_control_designe_product_definition_relationship,
-	  SCLLOG(LFalse),SCLLOG(LTrue), AttrType_Explicit,
+	  LFalse,LTrue, AttrType_Explicit,
 	  *config_control_designe_product_definition_effectivity);
 	config_control_designe_product_definition_effectivity->AddExplicitAttr (a_245usage);
 	reg.AddEntity (*config_control_designe_product_definition_effectivity);
@@ -2655,7 +2655,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_product_definition_effectivity->AddSubtype(config_control_designe_configuration_effectivity);
 	a_246configuration =
 	  new AttrDescriptor("configuration",config_control_designe_configuration_design,
-	  SCLLOG(LFalse),SCLLOG(LTrue), AttrType_Explicit,
+	  LFalse,LTrue, AttrType_Explicit,
 	  *config_control_designe_configuration_effectivity);
 	config_control_designe_configuration_effectivity->AddExplicitAttr (a_246configuration);
 	reg.AddEntity (*config_control_designe_configuration_effectivity);
@@ -2667,12 +2667,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_conic->AddSubtype(config_control_designe_ellipse);
   a_247semi_axis_1 =
 	  new AttrDescriptor("semi_axis_1",config_control_designt_positive_length_measure,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_ellipse);
 	config_control_designe_ellipse->AddExplicitAttr (a_247semi_axis_1);
   a_248semi_axis_2 =
 	  new AttrDescriptor("semi_axis_2",config_control_designt_positive_length_measure,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_ellipse);
 	config_control_designe_ellipse->AddExplicitAttr (a_248semi_axis_2);
 	reg.AddEntity (*config_control_designe_ellipse);
@@ -2684,7 +2684,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_named_unit->AddSubtype(config_control_designe_context_dependent_unit);
   a_249name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_context_dependent_unit);
 	config_control_designe_context_dependent_unit->AddExplicitAttr (a_249name);
 	reg.AddEntity (*config_control_designe_context_dependent_unit);
@@ -2694,27 +2694,27 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_250name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_alternate_product_relationship);
 	config_control_designe_alternate_product_relationship->AddExplicitAttr (a_250name);
   a_251definition =
 	  new AttrDescriptor("definition",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_alternate_product_relationship);
 	config_control_designe_alternate_product_relationship->AddExplicitAttr (a_251definition);
 	a_252alternate =
 	  new AttrDescriptor("alternate",config_control_designe_product,
-	  SCLLOG(LFalse),SCLLOG(LTrue), AttrType_Explicit,
+	  LFalse,LTrue, AttrType_Explicit,
 	  *config_control_designe_alternate_product_relationship);
 	config_control_designe_alternate_product_relationship->AddExplicitAttr (a_252alternate);
 	a_253base =
 	  new AttrDescriptor("base",config_control_designe_product,
-	  SCLLOG(LFalse),SCLLOG(LTrue), AttrType_Explicit,
+	  LFalse,LTrue, AttrType_Explicit,
 	  *config_control_designe_alternate_product_relationship);
 	config_control_designe_alternate_product_relationship->AddExplicitAttr (a_253base);
   a_254basis =
 	  new AttrDescriptor("basis",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_alternate_product_relationship);
 	config_control_designe_alternate_product_relationship->AddExplicitAttr (a_254basis);
 	reg.AddEntity (*config_control_designe_alternate_product_relationship);
@@ -2724,7 +2724,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_255product_data_type =
 	  new AttrDescriptor("product_data_type",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_document_type);
 	config_control_designe_document_type->AddExplicitAttr (a_255product_data_type);
 	reg.AddEntity (*config_control_designe_document_type);
@@ -2735,12 +2735,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_document_reference->AddSupertype_Stmt("ABSTRACT SUPERTYPE");
 	a_256assigned_document =
 	  new AttrDescriptor("assigned_document",config_control_designe_document,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_document_reference);
 	config_control_designe_document_reference->AddExplicitAttr (a_256assigned_document);
   a_257source =
 	  new AttrDescriptor("source",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_document_reference);
 	config_control_designe_document_reference->AddExplicitAttr (a_257source);
 	reg.AddEntity (*config_control_designe_document_reference);
@@ -2766,7 +2766,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_38->OriginatingSchema(s_config_control_design);
 	t_38->ReferentType(config_control_designt_shell);
   a_258sbwm_boundary =
-	  new AttrDescriptor("sbwm_boundary",t_38,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("sbwm_boundary",t_38,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_shell_based_wireframe_model);
 	config_control_designe_shell_based_wireframe_model->AddExplicitAttr (a_258sbwm_boundary);
 	reg.AddEntity (*config_control_designe_shell_based_wireframe_model);
@@ -2776,17 +2776,17 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_259name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_contract);
 	config_control_designe_contract->AddExplicitAttr (a_259name);
   a_260purpose =
 	  new AttrDescriptor("purpose",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_contract);
 	config_control_designe_contract->AddExplicitAttr (a_260purpose);
 	a_261kind =
 	  new AttrDescriptor("kind",config_control_designe_contract_type,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_contract);
 	config_control_designe_contract->AddExplicitAttr (a_261kind);
 	reg.AddEntity (*config_control_designe_contract);
@@ -2796,37 +2796,37 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_262length_exponent =
 	  new AttrDescriptor("length_exponent",t_sdaiREAL,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_dimensional_exponents);
 	config_control_designe_dimensional_exponents->AddExplicitAttr (a_262length_exponent);
   a_263mass_exponent =
 	  new AttrDescriptor("mass_exponent",t_sdaiREAL,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_dimensional_exponents);
 	config_control_designe_dimensional_exponents->AddExplicitAttr (a_263mass_exponent);
   a_264time_exponent =
 	  new AttrDescriptor("time_exponent",t_sdaiREAL,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_dimensional_exponents);
 	config_control_designe_dimensional_exponents->AddExplicitAttr (a_264time_exponent);
   a_265electric_current_exponent =
 	  new AttrDescriptor("electric_current_exponent",t_sdaiREAL,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_dimensional_exponents);
 	config_control_designe_dimensional_exponents->AddExplicitAttr (a_265electric_current_exponent);
   a_266thermodynamic_temperature_exponent =
 	  new AttrDescriptor("thermodynamic_temperature_exponent",t_sdaiREAL,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_dimensional_exponents);
 	config_control_designe_dimensional_exponents->AddExplicitAttr (a_266thermodynamic_temperature_exponent);
   a_267amount_of_substance_exponent =
 	  new AttrDescriptor("amount_of_substance_exponent",t_sdaiREAL,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_dimensional_exponents);
 	config_control_designe_dimensional_exponents->AddExplicitAttr (a_267amount_of_substance_exponent);
   a_268luminous_intensity_exponent =
 	  new AttrDescriptor("luminous_intensity_exponent",t_sdaiREAL,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_dimensional_exponents);
 	config_control_designe_dimensional_exponents->AddExplicitAttr (a_268luminous_intensity_exponent);
 	reg.AddEntity (*config_control_designe_dimensional_exponents);
@@ -2845,7 +2845,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_39->OriginatingSchema(s_config_control_design);
 	t_39->ReferentType(config_control_designt_start_request_item);
   a_269items =
-	  new AttrDescriptor("items",t_39,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("items",t_39,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_start_request);
 	config_control_designe_start_request->AddExplicitAttr (a_269items);
 	reg.AddEntity (*config_control_designe_start_request);
@@ -2864,7 +2864,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_40->OriginatingSchema(s_config_control_design);
 	t_40->ReferentType(config_control_designt_specified_item);
   a_270items =
-	  new AttrDescriptor("items",t_40,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("items",t_40,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_cc_design_specification_reference);
 	config_control_designe_cc_design_specification_reference->AddExplicitAttr (a_270items);
 	reg.AddEntity (*config_control_designe_cc_design_specification_reference);
@@ -2881,12 +2881,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
 	a_271representation_relation =
 	  new AttrDescriptor("representation_relation",config_control_designe_shape_representation_relationship,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_context_dependent_shape_representation);
 	config_control_designe_context_dependent_shape_representation->AddExplicitAttr (a_271representation_relation);
 	a_272represented_product_relation =
 	  new AttrDescriptor("represented_product_relation",config_control_designe_product_definition_shape,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_context_dependent_shape_representation);
 	config_control_designe_context_dependent_shape_representation->AddExplicitAttr (a_272represented_product_relation);
 	reg.AddEntity (*config_control_designe_context_dependent_shape_representation);
@@ -2898,7 +2898,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_toroidal_surface->AddSubtype(config_control_designe_degenerate_toroidal_surface);
   a_273select_outer =
 	  new AttrDescriptor("select_outer",t_sdaiBOOLEAN,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_degenerate_toroidal_surface);
 	config_control_designe_degenerate_toroidal_surface->AddExplicitAttr (a_273select_outer);
 	reg.AddEntity (*config_control_designe_degenerate_toroidal_surface);
@@ -2910,7 +2910,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_date->AddSubtype(config_control_designe_ordinal_date);
   a_274day_component =
 	  new AttrDescriptor("day_component",config_control_designt_day_in_year_number,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_ordinal_date);
 	config_control_designe_ordinal_date->AddExplicitAttr (a_274day_component);
 	reg.AddEntity (*config_control_designe_ordinal_date);
@@ -2943,7 +2943,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_41->OriginatingSchema(s_config_control_design);
 	t_41->ReferentType(config_control_designe_oriented_closed_shell);
   a_275voids =
-	  new AttrDescriptor("voids",t_41,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("voids",t_41,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_brep_with_voids);
 	config_control_designe_brep_with_voids->AddExplicitAttr (a_275voids);
 	reg.AddEntity (*config_control_designe_brep_with_voids);
@@ -2955,12 +2955,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_date->AddSubtype(config_control_designe_week_of_year_and_day_date);
   a_276week_component =
 	  new AttrDescriptor("week_component",config_control_designt_week_in_year_number,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_week_of_year_and_day_date);
 	config_control_designe_week_of_year_and_day_date->AddExplicitAttr (a_276week_component);
   a_277day_component =
 	  new AttrDescriptor("day_component",config_control_designt_day_in_week_number,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_week_of_year_and_day_date);
 	config_control_designe_week_of_year_and_day_date->AddExplicitAttr (a_277day_component);
 	reg.AddEntity (*config_control_designe_week_of_year_and_day_date);
@@ -2972,12 +2972,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_point->AddSubtype(config_control_designe_point_on_curve);
 	a_278basis_curve =
 	  new AttrDescriptor("basis_curve",config_control_designe_curve,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_point_on_curve);
 	config_control_designe_point_on_curve->AddExplicitAttr (a_278basis_curve);
   a_279point_parameter =
 	  new AttrDescriptor("point_parameter",config_control_designt_parameter_value,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_point_on_curve);
 	config_control_designe_point_on_curve->AddExplicitAttr (a_279point_parameter);
 	reg.AddEntity (*config_control_designe_point_on_curve);
@@ -3004,7 +3004,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_42->OriginatingSchema(s_config_control_design);
 	t_42->ReferentType(config_control_designe_face_bound);
   a_280bounds =
-	  new AttrDescriptor("bounds",t_42,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("bounds",t_42,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_face);
 	config_control_designe_face->AddExplicitAttr (a_280bounds);
 	reg.AddEntity (*config_control_designe_face);
@@ -3018,12 +3018,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_geometric_representation_item->AddSubtype(config_control_designe_face_surface);
 	a_281face_geometry =
 	  new AttrDescriptor("face_geometry",config_control_designe_surface,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_face_surface);
 	config_control_designe_face_surface->AddExplicitAttr (a_281face_geometry);
   a_282same_sense =
 	  new AttrDescriptor("same_sense",t_sdaiBOOLEAN,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_face_surface);
 	config_control_designe_face_surface->AddExplicitAttr (a_282same_sense);
 	reg.AddEntity (*config_control_designe_face_surface);
@@ -3035,12 +3035,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_face->AddSubtype(config_control_designe_oriented_face);
 	a_283face_element =
 	  new AttrDescriptor("face_element",config_control_designe_face,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_oriented_face);
 	config_control_designe_oriented_face->AddExplicitAttr (a_283face_element);
   a_284orientation =
 	  new AttrDescriptor("orientation",t_sdaiBOOLEAN,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_oriented_face);
 	config_control_designe_oriented_face->AddExplicitAttr (a_284orientation);
 	SetTypeDescriptor * t_43 = new SetTypeDescriptor;
@@ -3052,7 +3052,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_43->OriginatingSchema(s_config_control_design);
 	t_43->ReferentType(config_control_designe_face_bound);
   a_285Dface_bounds =
-	  new Derived_attribute("face.bounds",t_43,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  new Derived_attribute("face.bounds",t_43,LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_oriented_face);
 	config_control_designe_oriented_face->AddExplicitAttr (a_285Dface_bounds);
 	a_285Dface_bounds->initializer_("conditional_reverse(SELF.orientation,SELF.face_element.bounds)");
@@ -3065,12 +3065,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_swept_surface->AddSubtype(config_control_designe_surface_of_revolution);
 	a_286axis_position =
 	  new AttrDescriptor("axis_position",config_control_designe_axis1_placement,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_surface_of_revolution);
 	config_control_designe_surface_of_revolution->AddExplicitAttr (a_286axis_position);
 	a_287Daxis_line =
 	  new Derived_attribute("axis_line",config_control_designe_line,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_surface_of_revolution);
 	config_control_designe_surface_of_revolution->AddExplicitAttr (a_287Daxis_line);
 	a_287Daxis_line->initializer_("dummy_gri || curve() || line(axis_position.location,dummy_gri || vector(\n        axis_position.z,1))");
@@ -3092,12 +3092,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_geometric_representation_item->AddSubtype(config_control_designe_edge_curve);
 	a_288edge_geometry =
 	  new AttrDescriptor("edge_geometry",config_control_designe_curve,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_edge_curve);
 	config_control_designe_edge_curve->AddExplicitAttr (a_288edge_geometry);
   a_289same_sense =
 	  new AttrDescriptor("same_sense",t_sdaiBOOLEAN,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_edge_curve);
 	config_control_designe_edge_curve->AddExplicitAttr (a_289same_sense);
 	reg.AddEntity (*config_control_designe_edge_curve);
@@ -3109,12 +3109,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_point->AddSubtype(config_control_designe_point_replica);
 	a_290parent_pt =
 	  new AttrDescriptor("parent_pt",config_control_designe_point,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_point_replica);
 	config_control_designe_point_replica->AddExplicitAttr (a_290parent_pt);
 	a_291transformation =
 	  new AttrDescriptor("transformation",config_control_designe_cartesian_transformation_operator,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_point_replica);
 	config_control_designe_point_replica->AddExplicitAttr (a_291transformation);
 	reg.AddEntity (*config_control_designe_point_replica);
@@ -3124,17 +3124,17 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_292id =
 	  new AttrDescriptor("id",config_control_designt_identifier,
-	  SCLLOG(LFalse),SCLLOG(LTrue), AttrType_Explicit,
+	  LFalse,LTrue, AttrType_Explicit,
 	  *config_control_designe_product);
 	config_control_designe_product->AddExplicitAttr (a_292id);
   a_293name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_product);
 	config_control_designe_product->AddExplicitAttr (a_293name);
   a_294description =
 	  new AttrDescriptor("description",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_product);
 	config_control_designe_product->AddExplicitAttr (a_294description);
 	SetTypeDescriptor * t_44 = new SetTypeDescriptor;
@@ -3146,7 +3146,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_44->OriginatingSchema(s_config_control_design);
 	t_44->ReferentType(config_control_designe_product_context);
   a_295frame_of_reference =
-	  new AttrDescriptor("frame_of_reference",t_44,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("frame_of_reference",t_44,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_product);
 	config_control_designe_product->AddExplicitAttr (a_295frame_of_reference);
 	reg.AddEntity (*config_control_designe_product);
@@ -3156,22 +3156,22 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_296name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_shape_aspect_relationship);
 	config_control_designe_shape_aspect_relationship->AddExplicitAttr (a_296name);
   a_297description =
 	  new AttrDescriptor("description",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_shape_aspect_relationship);
 	config_control_designe_shape_aspect_relationship->AddExplicitAttr (a_297description);
 	a_298relating_shape_aspect =
 	  new AttrDescriptor("relating_shape_aspect",config_control_designe_shape_aspect,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_shape_aspect_relationship);
 	config_control_designe_shape_aspect_relationship->AddExplicitAttr (a_298relating_shape_aspect);
 	a_299related_shape_aspect =
 	  new AttrDescriptor("related_shape_aspect",config_control_designe_shape_aspect,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_shape_aspect_relationship);
 	config_control_designe_shape_aspect_relationship->AddExplicitAttr (a_299related_shape_aspect);
 	reg.AddEntity (*config_control_designe_shape_aspect_relationship);
@@ -3183,37 +3183,37 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_bounded_surface->AddSubtype(config_control_designe_rectangular_trimmed_surface);
 	a_300basis_surface =
 	  new AttrDescriptor("basis_surface",config_control_designe_surface,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_rectangular_trimmed_surface);
 	config_control_designe_rectangular_trimmed_surface->AddExplicitAttr (a_300basis_surface);
   a_301u1 =
 	  new AttrDescriptor("u1",config_control_designt_parameter_value,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_rectangular_trimmed_surface);
 	config_control_designe_rectangular_trimmed_surface->AddExplicitAttr (a_301u1);
   a_302u2 =
 	  new AttrDescriptor("u2",config_control_designt_parameter_value,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_rectangular_trimmed_surface);
 	config_control_designe_rectangular_trimmed_surface->AddExplicitAttr (a_302u2);
   a_303v1 =
 	  new AttrDescriptor("v1",config_control_designt_parameter_value,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_rectangular_trimmed_surface);
 	config_control_designe_rectangular_trimmed_surface->AddExplicitAttr (a_303v1);
   a_304v2 =
 	  new AttrDescriptor("v2",config_control_designt_parameter_value,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_rectangular_trimmed_surface);
 	config_control_designe_rectangular_trimmed_surface->AddExplicitAttr (a_304v2);
   a_305usense =
 	  new AttrDescriptor("usense",t_sdaiBOOLEAN,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_rectangular_trimmed_surface);
 	config_control_designe_rectangular_trimmed_surface->AddExplicitAttr (a_305usense);
   a_306vsense =
 	  new AttrDescriptor("vsense",t_sdaiBOOLEAN,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_rectangular_trimmed_surface);
 	config_control_designe_rectangular_trimmed_surface->AddExplicitAttr (a_306vsense);
 	reg.AddEntity (*config_control_designe_rectangular_trimmed_surface);
@@ -3231,7 +3231,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_action_assignment->AddSupertype_Stmt("ABSTRACT SUPERTYPE");
 	a_307assigned_action =
 	  new AttrDescriptor("assigned_action",config_control_designe_action,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_action_assignment);
 	config_control_designe_action_assignment->AddExplicitAttr (a_307assigned_action);
 	reg.AddEntity (*config_control_designe_action_assignment);
@@ -3250,7 +3250,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_45->OriginatingSchema(s_config_control_design);
 	t_45->ReferentType(config_control_designt_work_item);
   a_308items =
-	  new AttrDescriptor("items",t_45,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("items",t_45,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_change);
 	config_control_designe_change->AddExplicitAttr (a_308items);
 	reg.AddEntity (*config_control_designe_change);
@@ -3262,7 +3262,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_conic->AddSubtype(config_control_designe_circle);
   a_309radius =
 	  new AttrDescriptor("radius",config_control_designt_positive_length_measure,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_circle);
 	config_control_designe_circle->AddExplicitAttr (a_309radius);
 	reg.AddEntity (*config_control_designe_circle);
@@ -3274,12 +3274,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_curve->AddSubtype(config_control_designe_line);
 	a_310pnt =
 	  new AttrDescriptor("pnt",config_control_designe_cartesian_point,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_line);
 	config_control_designe_line->AddExplicitAttr (a_310pnt);
 	a_311dir =
 	  new AttrDescriptor("dir",config_control_designe_vector,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_line);
 	config_control_designe_line->AddExplicitAttr (a_311dir);
 	reg.AddEntity (*config_control_designe_line);
@@ -3289,12 +3289,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
 	a_312definition =
 	  new AttrDescriptor("definition",config_control_designe_property_definition,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_property_definition_representation);
 	config_control_designe_property_definition_representation->AddExplicitAttr (a_312definition);
 	a_313used_representation =
 	  new AttrDescriptor("used_representation",config_control_designe_representation,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_property_definition_representation);
 	config_control_designe_property_definition_representation->AddExplicitAttr (a_313used_representation);
 	reg.AddEntity (*config_control_designe_property_definition_representation);
@@ -3314,7 +3314,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_46->OriginatingSchema(s_config_control_design);
 	t_46->ReferentType(config_control_designt_geometric_set_select);
   a_314elements =
-	  new AttrDescriptor("elements",t_46,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("elements",t_46,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_geometric_set);
 	config_control_designe_geometric_set->AddExplicitAttr (a_314elements);
 	reg.AddEntity (*config_control_designe_geometric_set);
@@ -3340,12 +3340,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_47->OriginatingSchema(s_config_control_design);
 	t_47->ReferentType(config_control_designe_person);
   a_315people =
-	  new AttrDescriptor("people",t_47,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("people",t_47,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_personal_address);
 	config_control_designe_personal_address->AddExplicitAttr (a_315people);
   a_316description =
 	  new AttrDescriptor("description",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_personal_address);
 	config_control_designe_personal_address->AddExplicitAttr (a_316description);
 	reg.AddEntity (*config_control_designe_personal_address);
@@ -3355,22 +3355,22 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_317name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_document_relationship);
 	config_control_designe_document_relationship->AddExplicitAttr (a_317name);
   a_318description =
 	  new AttrDescriptor("description",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_document_relationship);
 	config_control_designe_document_relationship->AddExplicitAttr (a_318description);
 	a_319relating_document =
 	  new AttrDescriptor("relating_document",config_control_designe_document,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_document_relationship);
 	config_control_designe_document_relationship->AddExplicitAttr (a_319relating_document);
 	a_320related_document =
 	  new AttrDescriptor("related_document",config_control_designe_document,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_document_relationship);
 	config_control_designe_document_relationship->AddExplicitAttr (a_320related_document);
 	reg.AddEntity (*config_control_designe_document_relationship);
@@ -3394,22 +3394,22 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_321name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_assembly_component_usage_substitute);
 	config_control_designe_assembly_component_usage_substitute->AddExplicitAttr (a_321name);
   a_322definition =
 	  new AttrDescriptor("definition",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_assembly_component_usage_substitute);
 	config_control_designe_assembly_component_usage_substitute->AddExplicitAttr (a_322definition);
 	a_323base =
 	  new AttrDescriptor("base",config_control_designe_assembly_component_usage,
-	  SCLLOG(LFalse),SCLLOG(LTrue), AttrType_Explicit,
+	  LFalse,LTrue, AttrType_Explicit,
 	  *config_control_designe_assembly_component_usage_substitute);
 	config_control_designe_assembly_component_usage_substitute->AddExplicitAttr (a_323base);
 	a_324substitute =
 	  new AttrDescriptor("substitute",config_control_designe_assembly_component_usage,
-	  SCLLOG(LFalse),SCLLOG(LTrue), AttrType_Explicit,
+	  LFalse,LTrue, AttrType_Explicit,
 	  *config_control_designe_assembly_component_usage_substitute);
 	config_control_designe_assembly_component_usage_substitute->AddExplicitAttr (a_324substitute);
 	reg.AddEntity (*config_control_designe_assembly_component_usage_substitute);
@@ -3421,12 +3421,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_point->AddSubtype(config_control_designe_degenerate_pcurve);
 	a_325basis_surface =
 	  new AttrDescriptor("basis_surface",config_control_designe_surface,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_degenerate_pcurve);
 	config_control_designe_degenerate_pcurve->AddExplicitAttr (a_325basis_surface);
 	a_326reference_to_curve =
 	  new AttrDescriptor("reference_to_curve",config_control_designe_definitional_representation,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_degenerate_pcurve);
 	config_control_designe_degenerate_pcurve->AddExplicitAttr (a_326reference_to_curve);
 	reg.AddEntity (*config_control_designe_degenerate_pcurve);
@@ -3438,7 +3438,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_degenerate_pcurve->AddSubtype(config_control_designe_evaluated_degenerate_pcurve);
 	a_327equivalent_point =
 	  new AttrDescriptor("equivalent_point",config_control_designe_cartesian_point,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_evaluated_degenerate_pcurve);
 	config_control_designe_evaluated_degenerate_pcurve->AddExplicitAttr (a_327equivalent_point);
 	reg.AddEntity (*config_control_designe_evaluated_degenerate_pcurve);
@@ -3464,7 +3464,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_48->OriginatingSchema(s_config_control_design);
 	t_48->ReferentType(config_control_designe_edge);
   a_328ces_edges =
-	  new AttrDescriptor("ces_edges",t_48,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("ces_edges",t_48,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_connected_edge_set);
 	config_control_designe_connected_edge_set->AddExplicitAttr (a_328ces_edges);
 	reg.AddEntity (*config_control_designe_connected_edge_set);
@@ -3474,17 +3474,17 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_329name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_action);
 	config_control_designe_action->AddExplicitAttr (a_329name);
   a_330description =
 	  new AttrDescriptor("description",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_action);
 	config_control_designe_action->AddExplicitAttr (a_330description);
 	a_331chosen_method =
 	  new AttrDescriptor("chosen_method",config_control_designe_action_method,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_action);
 	config_control_designe_action->AddExplicitAttr (a_331chosen_method);
 	reg.AddEntity (*config_control_designe_action);
@@ -3503,7 +3503,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_executed_action->AddSubtype(config_control_designe_directed_action);
 	a_332directive =
 	  new AttrDescriptor("directive",config_control_designe_action_directive,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_directed_action);
 	config_control_designe_directed_action->AddExplicitAttr (a_332directive);
 	reg.AddEntity (*config_control_designe_directed_action);
@@ -3513,12 +3513,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_333name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_organizational_project);
 	config_control_designe_organizational_project->AddExplicitAttr (a_333name);
   a_334description =
 	  new AttrDescriptor("description",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_organizational_project);
 	config_control_designe_organizational_project->AddExplicitAttr (a_334description);
 	SetTypeDescriptor * t_49 = new SetTypeDescriptor;
@@ -3530,7 +3530,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_49->OriginatingSchema(s_config_control_design);
 	t_49->ReferentType(config_control_designe_organization);
   a_335responsible_organizations =
-	  new AttrDescriptor("responsible_organizations",t_49,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("responsible_organizations",t_49,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_organizational_project);
 	config_control_designe_organizational_project->AddExplicitAttr (a_335responsible_organizations);
 	reg.AddEntity (*config_control_designe_organizational_project);
@@ -3540,7 +3540,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_336name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_date_time_role);
 	config_control_designe_date_time_role->AddExplicitAttr (a_336name);
 	reg.AddEntity (*config_control_designe_date_time_role);
@@ -3552,7 +3552,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_bounded_surface->AddSubtype(config_control_designe_curve_bounded_surface);
 	a_337basis_surface =
 	  new AttrDescriptor("basis_surface",config_control_designe_surface,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_curve_bounded_surface);
 	config_control_designe_curve_bounded_surface->AddExplicitAttr (a_337basis_surface);
 	SetTypeDescriptor * t_50 = new SetTypeDescriptor;
@@ -3564,12 +3564,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_50->OriginatingSchema(s_config_control_design);
 	t_50->ReferentType(config_control_designe_boundary_curve);
   a_338boundaries =
-	  new AttrDescriptor("boundaries",t_50,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("boundaries",t_50,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_curve_bounded_surface);
 	config_control_designe_curve_bounded_surface->AddExplicitAttr (a_338boundaries);
   a_339implicit_outer =
 	  new AttrDescriptor("implicit_outer",t_sdaiBOOLEAN,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_curve_bounded_surface);
 	config_control_designe_curve_bounded_surface->AddExplicitAttr (a_339implicit_outer);
 	reg.AddEntity (*config_control_designe_curve_bounded_surface);
@@ -3609,17 +3609,17 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_named_unit->AddSubtype(config_control_designe_si_unit);
   a_340prefix =
 	  new AttrDescriptor("prefix",config_control_designt_si_prefix,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_si_unit);
 	config_control_designe_si_unit->AddExplicitAttr (a_340prefix);
   a_341name =
 	  new AttrDescriptor("name",config_control_designt_si_unit_name,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_si_unit);
 	config_control_designe_si_unit->AddExplicitAttr (a_341name);
 	a_342Dnamed_unit_dimensions =
 	  new Derived_attribute("named_unit.dimensions",config_control_designe_dimensional_exponents,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_si_unit);
 	config_control_designe_si_unit->AddExplicitAttr (a_342Dnamed_unit_dimensions);
 	a_342Dnamed_unit_dimensions->initializer_("dimensions_for_si_unit(SELF.name)");
@@ -3638,7 +3638,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_certification_assignment->AddSupertype_Stmt("ABSTRACT SUPERTYPE");
 	a_343assigned_certification =
 	  new AttrDescriptor("assigned_certification",config_control_designe_certification,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_certification_assignment);
 	config_control_designe_certification_assignment->AddExplicitAttr (a_343assigned_certification);
 	reg.AddEntity (*config_control_designe_certification_assignment);
@@ -3657,7 +3657,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_51->OriginatingSchema(s_config_control_design);
 	t_51->ReferentType(config_control_designt_work_item);
   a_344items =
-	  new AttrDescriptor("items",t_51,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("items",t_51,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_start_work);
 	config_control_designe_start_work->AddExplicitAttr (a_344items);
 	reg.AddEntity (*config_control_designe_start_work);
@@ -3667,7 +3667,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_345description =
 	  new AttrDescriptor("description",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_contract_type);
 	config_control_designe_contract_type->AddExplicitAttr (a_345description);
 	reg.AddEntity (*config_control_designe_contract_type);
@@ -3686,7 +3686,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_52->OriginatingSchema(s_config_control_design);
 	t_52->ReferentType(t_sdaiINTEGER);
   a_346knot_multiplicities =
-	  new AttrDescriptor("knot_multiplicities",t_52,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("knot_multiplicities",t_52,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_b_spline_curve_with_knots);
 	config_control_designe_b_spline_curve_with_knots->AddExplicitAttr (a_346knot_multiplicities);
 	ListTypeDescriptor * t_53 = new ListTypeDescriptor;
@@ -3698,17 +3698,17 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_53->OriginatingSchema(s_config_control_design);
 	t_53->ReferentType(config_control_designt_parameter_value);
   a_347knots =
-	  new AttrDescriptor("knots",t_53,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("knots",t_53,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_b_spline_curve_with_knots);
 	config_control_designe_b_spline_curve_with_knots->AddExplicitAttr (a_347knots);
   a_348knot_spec =
 	  new AttrDescriptor("knot_spec",config_control_designt_knot_type,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_b_spline_curve_with_knots);
 	config_control_designe_b_spline_curve_with_knots->AddExplicitAttr (a_348knot_spec);
   a_349Dupper_index_on_knots =
 	  new Derived_attribute("upper_index_on_knots",t_sdaiINTEGER,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_b_spline_curve_with_knots);
 	config_control_designe_b_spline_curve_with_knots->AddExplicitAttr (a_349Dupper_index_on_knots);
 	a_349Dupper_index_on_knots->initializer_("SIZEOF(knots)");
@@ -3728,7 +3728,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_54->OriginatingSchema(s_config_control_design);
 	t_54->ReferentType(config_control_designt_approved_item);
   a_350items =
-	  new AttrDescriptor("items",t_54,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("items",t_54,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_cc_design_approval);
 	config_control_designe_cc_design_approval->AddExplicitAttr (a_350items);
 	reg.AddEntity (*config_control_designe_cc_design_approval);
@@ -3752,22 +3752,22 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_351id =
 	  new AttrDescriptor("id",config_control_designt_identifier,
-	  SCLLOG(LFalse),SCLLOG(LTrue), AttrType_Explicit,
+	  LFalse,LTrue, AttrType_Explicit,
 	  *config_control_designe_product_concept);
 	config_control_designe_product_concept->AddExplicitAttr (a_351id);
   a_352name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_product_concept);
 	config_control_designe_product_concept->AddExplicitAttr (a_352name);
   a_353description =
 	  new AttrDescriptor("description",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_product_concept);
 	config_control_designe_product_concept->AddExplicitAttr (a_353description);
 	a_354market_context =
 	  new AttrDescriptor("market_context",config_control_designe_product_concept_context,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_product_concept);
 	config_control_designe_product_concept->AddExplicitAttr (a_354market_context);
 	reg.AddEntity (*config_control_designe_product_concept);
@@ -3786,7 +3786,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_55->OriginatingSchema(s_config_control_design);
 	t_55->ReferentType(config_control_designt_contracted_item);
   a_355items =
-	  new AttrDescriptor("items",t_55,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("items",t_55,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_cc_design_contract);
 	config_control_designe_cc_design_contract->AddExplicitAttr (a_355items);
 	reg.AddEntity (*config_control_designe_cc_design_contract);
@@ -3805,12 +3805,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_placement->AddSubtype(config_control_designe_axis2_placement_3d);
 	a_356axis =
 	  new AttrDescriptor("axis",config_control_designe_direction,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_axis2_placement_3d);
 	config_control_designe_axis2_placement_3d->AddExplicitAttr (a_356axis);
 	a_357ref_direction =
 	  new AttrDescriptor("ref_direction",config_control_designe_direction,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_axis2_placement_3d);
 	config_control_designe_axis2_placement_3d->AddExplicitAttr (a_357ref_direction);
 	ListTypeDescriptor * t_56 = new ListTypeDescriptor;
@@ -3822,7 +3822,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_56->OriginatingSchema(s_config_control_design);
 	t_56->ReferentType(config_control_designe_direction);
   a_358Dp =
-	  new Derived_attribute("p",t_56,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  new Derived_attribute("p",t_56,LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_axis2_placement_3d);
 	config_control_designe_axis2_placement_3d->AddExplicitAttr (a_358Dp);
 	a_358Dp->initializer_("build_axes(axis,ref_direction)");
@@ -3850,7 +3850,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_58->ReferentType(t_sdaiREAL);
 	t_57->ReferentType(t_58);
   a_359weights_data =
-	  new AttrDescriptor("weights_data",t_57,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("weights_data",t_57,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_rational_b_spline_surface);
 	config_control_designe_rational_b_spline_surface->AddExplicitAttr (a_359weights_data);
 	ArrayTypeDescriptor * t_59 = new ArrayTypeDescriptor;
@@ -3870,7 +3870,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_60->ReferentType(t_sdaiREAL);
 	t_59->ReferentType(t_60);
   a_360Dweights =
-	  new Derived_attribute("weights",t_59,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  new Derived_attribute("weights",t_59,LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_rational_b_spline_surface);
 	config_control_designe_rational_b_spline_surface->AddExplicitAttr (a_360Dweights);
 	a_360Dweights->initializer_("make_array_of_array(weights_data,0,u_upper,0,v_upper)");
@@ -3881,12 +3881,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
 	a_361configuration =
 	  new AttrDescriptor("configuration",config_control_designe_configuration_item,
-	  SCLLOG(LFalse),SCLLOG(LTrue), AttrType_Explicit,
+	  LFalse,LTrue, AttrType_Explicit,
 	  *config_control_designe_configuration_design);
 	config_control_designe_configuration_design->AddExplicitAttr (a_361configuration);
 	a_362design =
 	  new AttrDescriptor("design",config_control_designe_product_definition_formation,
-	  SCLLOG(LFalse),SCLLOG(LTrue), AttrType_Explicit,
+	  LFalse,LTrue, AttrType_Explicit,
 	  *config_control_designe_configuration_design);
 	config_control_designe_configuration_design->AddExplicitAttr (a_362design);
 	reg.AddEntity (*config_control_designe_configuration_design);
@@ -3903,22 +3903,22 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_363id =
 	  new AttrDescriptor("id",config_control_designt_identifier,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_product_definition);
 	config_control_designe_product_definition->AddExplicitAttr (a_363id);
   a_364description =
 	  new AttrDescriptor("description",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_product_definition);
 	config_control_designe_product_definition->AddExplicitAttr (a_364description);
 	a_365formation =
 	  new AttrDescriptor("formation",config_control_designe_product_definition_formation,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_product_definition);
 	config_control_designe_product_definition->AddExplicitAttr (a_365formation);
 	a_366frame_of_reference =
 	  new AttrDescriptor("frame_of_reference",config_control_designe_product_definition_context,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_product_definition);
 	config_control_designe_product_definition->AddExplicitAttr (a_366frame_of_reference);
 	reg.AddEntity (*config_control_designe_product_definition);
@@ -3937,7 +3937,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_61->OriginatingSchema(s_config_control_design);
 	t_61->ReferentType(config_control_designe_document);
   a_367documentation_ids =
-	  new AttrDescriptor("documentation_ids",t_61,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("documentation_ids",t_61,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_product_definition_with_associated_documents);
 	config_control_designe_product_definition_with_associated_documents->AddExplicitAttr (a_367documentation_ids);
 	reg.AddEntity (*config_control_designe_product_definition_with_associated_documents);
@@ -3947,17 +3947,17 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_368id =
 	  new AttrDescriptor("id",config_control_designt_identifier,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_organization);
 	config_control_designe_organization->AddExplicitAttr (a_368id);
   a_369name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_organization);
 	config_control_designe_organization->AddExplicitAttr (a_369name);
   a_370description =
 	  new AttrDescriptor("description",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_organization);
 	config_control_designe_organization->AddExplicitAttr (a_370description);
 	reg.AddEntity (*config_control_designe_organization);
@@ -3976,7 +3976,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_62->OriginatingSchema(s_config_control_design);
 	t_62->ReferentType(config_control_designt_certified_item);
   a_371items =
-	  new AttrDescriptor("items",t_62,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("items",t_62,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_cc_design_certification);
 	config_control_designe_cc_design_certification->AddExplicitAttr (a_371items);
 	reg.AddEntity (*config_control_designe_cc_design_certification);
@@ -3995,7 +3995,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_63->OriginatingSchema(s_config_control_design);
 	t_63->ReferentType(t_sdaiINTEGER);
   a_372u_multiplicities =
-	  new AttrDescriptor("u_multiplicities",t_63,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("u_multiplicities",t_63,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_b_spline_surface_with_knots);
 	config_control_designe_b_spline_surface_with_knots->AddExplicitAttr (a_372u_multiplicities);
 	ListTypeDescriptor * t_64 = new ListTypeDescriptor;
@@ -4007,7 +4007,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_64->OriginatingSchema(s_config_control_design);
 	t_64->ReferentType(t_sdaiINTEGER);
   a_373v_multiplicities =
-	  new AttrDescriptor("v_multiplicities",t_64,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("v_multiplicities",t_64,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_b_spline_surface_with_knots);
 	config_control_designe_b_spline_surface_with_knots->AddExplicitAttr (a_373v_multiplicities);
 	ListTypeDescriptor * t_65 = new ListTypeDescriptor;
@@ -4019,7 +4019,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_65->OriginatingSchema(s_config_control_design);
 	t_65->ReferentType(config_control_designt_parameter_value);
   a_374u_knots =
-	  new AttrDescriptor("u_knots",t_65,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("u_knots",t_65,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_b_spline_surface_with_knots);
 	config_control_designe_b_spline_surface_with_knots->AddExplicitAttr (a_374u_knots);
 	ListTypeDescriptor * t_66 = new ListTypeDescriptor;
@@ -4031,23 +4031,23 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_66->OriginatingSchema(s_config_control_design);
 	t_66->ReferentType(config_control_designt_parameter_value);
   a_375v_knots =
-	  new AttrDescriptor("v_knots",t_66,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("v_knots",t_66,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_b_spline_surface_with_knots);
 	config_control_designe_b_spline_surface_with_knots->AddExplicitAttr (a_375v_knots);
   a_376knot_spec =
 	  new AttrDescriptor("knot_spec",config_control_designt_knot_type,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_b_spline_surface_with_knots);
 	config_control_designe_b_spline_surface_with_knots->AddExplicitAttr (a_376knot_spec);
   a_377Dknot_u_upper =
 	  new Derived_attribute("knot_u_upper",t_sdaiINTEGER,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_b_spline_surface_with_knots);
 	config_control_designe_b_spline_surface_with_knots->AddExplicitAttr (a_377Dknot_u_upper);
 	a_377Dknot_u_upper->initializer_("SIZEOF(u_knots)");
   a_378Dknot_v_upper =
 	  new Derived_attribute("knot_v_upper",t_sdaiINTEGER,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_b_spline_surface_with_knots);
 	config_control_designe_b_spline_surface_with_knots->AddExplicitAttr (a_378Dknot_v_upper);
 	a_378Dknot_v_upper->initializer_("SIZEOF(v_knots)");
@@ -4058,7 +4058,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_379description =
 	  new AttrDescriptor("description",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_certification_type);
 	config_control_designe_certification_type->AddExplicitAttr (a_379description);
 	reg.AddEntity (*config_control_designe_certification_type);
@@ -4070,25 +4070,25 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_path->AddSubtype(config_control_designe_oriented_path);
 	a_380path_element =
 	  new AttrDescriptor("path_element",config_control_designe_path,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_oriented_path);
 	config_control_designe_oriented_path->AddExplicitAttr (a_380path_element);
   a_381orientation =
 	  new AttrDescriptor("orientation",t_sdaiBOOLEAN,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_oriented_path);
 	config_control_designe_oriented_path->AddExplicitAttr (a_381orientation);
 	ListTypeDescriptor * t_67 = new ListTypeDescriptor;
 	t_67->AssignAggrCreator((AggregateCreator) create_EntityAggregate);	// Creator function 
 	t_67->Bound1(1);
 	t_67->Bound2(2147483647);
-	t_67->UniqueElements(SCLLOG(LTrue));
+	t_67->UniqueElements(LTrue);
 	t_67->FundamentalType(LIST_TYPE);
 	t_67->Description("LIST [1:?] OF UNIQUE oriented_edge");
 	t_67->OriginatingSchema(s_config_control_design);
 	t_67->ReferentType(config_control_designe_oriented_edge);
   a_382Dpath_edge_list =
-	  new Derived_attribute("path.edge_list",t_67,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  new Derived_attribute("path.edge_list",t_67,LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_oriented_path);
 	config_control_designe_oriented_path->AddExplicitAttr (a_382Dpath_edge_list);
 	a_382Dpath_edge_list->initializer_("conditional_reverse(SELF.orientation,SELF.path_element.edge_list)");
@@ -4099,17 +4099,17 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_383name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_security_classification);
 	config_control_designe_security_classification->AddExplicitAttr (a_383name);
   a_384purpose =
 	  new AttrDescriptor("purpose",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_security_classification);
 	config_control_designe_security_classification->AddExplicitAttr (a_384purpose);
 	a_385security_level =
 	  new AttrDescriptor("security_level",config_control_designe_security_classification_level,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_security_classification);
 	config_control_designe_security_classification->AddExplicitAttr (a_385security_level);
 	reg.AddEntity (*config_control_designe_security_classification);
@@ -4121,7 +4121,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_loop->AddSubtype(config_control_designe_vertex_loop);
 	a_386loop_vertex =
 	  new AttrDescriptor("loop_vertex",config_control_designe_vertex,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_vertex_loop);
 	config_control_designe_vertex_loop->AddExplicitAttr (a_386loop_vertex);
 	reg.AddEntity (*config_control_designe_vertex_loop);
@@ -4131,7 +4131,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_387name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_approval_status);
 	config_control_designe_approval_status->AddExplicitAttr (a_387name);
 	reg.AddEntity (*config_control_designe_approval_status);
@@ -4150,7 +4150,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_68->OriginatingSchema(s_config_control_design);
 	t_68->ReferentType(config_control_designt_length_measure);
   a_388coordinates =
-	  new AttrDescriptor("coordinates",t_68,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("coordinates",t_68,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_cartesian_point);
 	config_control_designe_cartesian_point->AddExplicitAttr (a_388coordinates);
 	reg.AddEntity (*config_control_designe_cartesian_point);
@@ -4161,12 +4161,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_date_and_time_assignment->AddSupertype_Stmt("ABSTRACT SUPERTYPE");
 	a_389assigned_date_and_time =
 	  new AttrDescriptor("assigned_date_and_time",config_control_designe_date_and_time,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_date_and_time_assignment);
 	config_control_designe_date_and_time_assignment->AddExplicitAttr (a_389assigned_date_and_time);
 	a_390role =
 	  new AttrDescriptor("role",config_control_designe_date_time_role,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_date_and_time_assignment);
 	config_control_designe_date_and_time_assignment->AddExplicitAttr (a_390role);
 	reg.AddEntity (*config_control_designe_date_and_time_assignment);
@@ -4185,7 +4185,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_application_context_element->AddSubtype(config_control_designe_product_concept_context);
   a_391market_segment_type =
 	  new AttrDescriptor("market_segment_type",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_product_concept_context);
 	config_control_designe_product_concept_context->AddExplicitAttr (a_391market_segment_type);
 	reg.AddEntity (*config_control_designe_product_concept_context);
@@ -4197,27 +4197,27 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_founded_item->AddSubtype(config_control_designe_surface_patch);
 	a_392parent_surface =
 	  new AttrDescriptor("parent_surface",config_control_designe_bounded_surface,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_surface_patch);
 	config_control_designe_surface_patch->AddExplicitAttr (a_392parent_surface);
   a_393u_transition =
 	  new AttrDescriptor("u_transition",config_control_designt_transition_code,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_surface_patch);
 	config_control_designe_surface_patch->AddExplicitAttr (a_393u_transition);
   a_394v_transition =
 	  new AttrDescriptor("v_transition",config_control_designt_transition_code,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_surface_patch);
 	config_control_designe_surface_patch->AddExplicitAttr (a_394v_transition);
   a_395u_sense =
 	  new AttrDescriptor("u_sense",t_sdaiBOOLEAN,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_surface_patch);
 	config_control_designe_surface_patch->AddExplicitAttr (a_395u_sense);
   a_396v_sense =
 	  new AttrDescriptor("v_sense",t_sdaiBOOLEAN,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_surface_patch);
 	config_control_designe_surface_patch->AddExplicitAttr (a_396v_sense);
 	BagTypeDescriptor * t_69 = new BagTypeDescriptor;
@@ -4229,7 +4229,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_69->OriginatingSchema(s_config_control_design);
 	t_69->ReferentType(config_control_designe_rectangular_composite_surface);
   a_397Iusing_surfaces =
-	  new Inverse_attribute("using_surfaces",t_69,SCLLOG(LFalse),SCLLOG(LFalse),
+	  new Inverse_attribute("using_surfaces",t_69,LFalse,LFalse,
 	  *config_control_designe_surface_patch);
 	config_control_designe_surface_patch->AddInverseAttr (a_397Iusing_surfaces);
 	a_397Iusing_surfaces->inverted_attr_id_("segments");
@@ -4249,22 +4249,22 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_398name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_shape_aspect);
 	config_control_designe_shape_aspect->AddExplicitAttr (a_398name);
   a_399description =
 	  new AttrDescriptor("description",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_shape_aspect);
 	config_control_designe_shape_aspect->AddExplicitAttr (a_399description);
 	a_400of_shape =
 	  new AttrDescriptor("of_shape",config_control_designe_product_definition_shape,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_shape_aspect);
 	config_control_designe_shape_aspect->AddExplicitAttr (a_400of_shape);
   a_401product_definitional =
 	  new AttrDescriptor("product_definitional",t_sdaiLOGICAL,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_shape_aspect);
 	config_control_designe_shape_aspect->AddExplicitAttr (a_401product_definitional);
 	reg.AddEntity (*config_control_designe_shape_aspect);
@@ -4288,7 +4288,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_402name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_security_classification_level);
 	config_control_designe_security_classification_level->AddExplicitAttr (a_402name);
 	reg.AddEntity (*config_control_designe_security_classification_level);
@@ -4298,22 +4298,22 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_403name =
 	  new AttrDescriptor("name",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_approval_relationship);
 	config_control_designe_approval_relationship->AddExplicitAttr (a_403name);
   a_404description =
 	  new AttrDescriptor("description",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_approval_relationship);
 	config_control_designe_approval_relationship->AddExplicitAttr (a_404description);
 	a_405relating_approval =
 	  new AttrDescriptor("relating_approval",config_control_designe_approval,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_approval_relationship);
 	config_control_designe_approval_relationship->AddExplicitAttr (a_405relating_approval);
 	a_406related_approval =
 	  new AttrDescriptor("related_approval",config_control_designe_approval,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_approval_relationship);
 	config_control_designe_approval_relationship->AddExplicitAttr (a_406related_approval);
 	reg.AddEntity (*config_control_designe_approval_relationship);
@@ -4332,7 +4332,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_70->OriginatingSchema(s_config_control_design);
 	t_70->ReferentType(config_control_designe_cartesian_point);
   a_407points =
-	  new AttrDescriptor("points",t_70,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("points",t_70,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_polyline);
 	config_control_designe_polyline->AddExplicitAttr (a_407points);
 	reg.AddEntity (*config_control_designe_polyline);
@@ -4342,17 +4342,17 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_408person_organization =
 	  new AttrDescriptor("person_organization",config_control_designt_person_organization_select,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_approval_person_organization);
 	config_control_designe_approval_person_organization->AddExplicitAttr (a_408person_organization);
 	a_409authorized_approval =
 	  new AttrDescriptor("authorized_approval",config_control_designe_approval,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_approval_person_organization);
 	config_control_designe_approval_person_organization->AddExplicitAttr (a_409authorized_approval);
 	a_410role =
 	  new AttrDescriptor("role",config_control_designe_approval_role,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_approval_person_organization);
 	config_control_designe_approval_person_organization->AddExplicitAttr (a_410role);
 	reg.AddEntity (*config_control_designe_approval_person_organization);
@@ -4364,12 +4364,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_surface->AddSubtype(config_control_designe_surface_replica);
 	a_411parent_surface =
 	  new AttrDescriptor("parent_surface",config_control_designe_surface,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_surface_replica);
 	config_control_designe_surface_replica->AddExplicitAttr (a_411parent_surface);
 	a_412transformation =
 	  new AttrDescriptor("transformation",config_control_designe_cartesian_transformation_operator_3d,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_surface_replica);
 	config_control_designe_surface_replica->AddExplicitAttr (a_412transformation);
 	reg.AddEntity (*config_control_designe_surface_replica);
@@ -4380,7 +4380,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_security_classification_assignment->AddSupertype_Stmt("ABSTRACT SUPERTYPE");
 	a_413assigned_security_classification =
 	  new AttrDescriptor("assigned_security_classification",config_control_designe_security_classification,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_security_classification_assignment);
 	config_control_designe_security_classification_assignment->AddExplicitAttr (a_413assigned_security_classification);
 	reg.AddEntity (*config_control_designe_security_classification_assignment);
@@ -4399,7 +4399,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_71->OriginatingSchema(s_config_control_design);
 	t_71->ReferentType(config_control_designt_classified_item);
   a_414items =
-	  new AttrDescriptor("items",t_71,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("items",t_71,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_cc_design_security_classification);
 	config_control_designe_cc_design_security_classification->AddExplicitAttr (a_414items);
 	reg.AddEntity (*config_control_designe_cc_design_security_classification);
@@ -4416,17 +4416,17 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
 	a_415source =
 	  new AttrDescriptor("source",config_control_designe_document,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_document_usage_constraint);
 	config_control_designe_document_usage_constraint->AddExplicitAttr (a_415source);
   a_416subject_element =
 	  new AttrDescriptor("subject_element",config_control_designt_label,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_document_usage_constraint);
 	config_control_designe_document_usage_constraint->AddExplicitAttr (a_416subject_element);
   a_417subject_element_value =
 	  new AttrDescriptor("subject_element_value",config_control_designt_text,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_document_usage_constraint);
 	config_control_designe_document_usage_constraint->AddExplicitAttr (a_417subject_element_value);
 	reg.AddEntity (*config_control_designe_document_usage_constraint);
@@ -4440,7 +4440,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_geometric_representation_item->AddSubtype(config_control_designe_vertex_point);
 	a_418vertex_geometry =
 	  new AttrDescriptor("vertex_geometry",config_control_designe_point,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_vertex_point);
 	config_control_designe_vertex_point->AddExplicitAttr (a_418vertex_geometry);
 	reg.AddEntity (*config_control_designe_vertex_point);
@@ -4459,7 +4459,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_72->OriginatingSchema(s_config_control_design);
 	t_72->ReferentType(config_control_designt_date_time_item);
   a_419items =
-	  new AttrDescriptor("items",t_72,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("items",t_72,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_cc_design_date_and_time_assignment);
 	config_control_designe_cc_design_date_and_time_assignment->AddExplicitAttr (a_419items);
 	reg.AddEntity (*config_control_designe_cc_design_date_and_time_assignment);
@@ -4471,12 +4471,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_closed_shell->AddSubtype(config_control_designe_oriented_closed_shell);
 	a_420closed_shell_element =
 	  new AttrDescriptor("closed_shell_element",config_control_designe_closed_shell,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_oriented_closed_shell);
 	config_control_designe_oriented_closed_shell->AddExplicitAttr (a_420closed_shell_element);
   a_421orientation =
 	  new AttrDescriptor("orientation",t_sdaiBOOLEAN,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_oriented_closed_shell);
 	config_control_designe_oriented_closed_shell->AddExplicitAttr (a_421orientation);
 	SetTypeDescriptor * t_73 = new SetTypeDescriptor;
@@ -4488,7 +4488,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_73->OriginatingSchema(s_config_control_design);
 	t_73->ReferentType(config_control_designe_face);
   a_422Dconnected_face_set_cfs_faces =
-	  new Derived_attribute("connected_face_set.cfs_faces",t_73,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Deriving,
+	  new Derived_attribute("connected_face_set.cfs_faces",t_73,LFalse,LFalse, AttrType_Deriving,
 	  *config_control_designe_oriented_closed_shell);
 	config_control_designe_oriented_closed_shell->AddExplicitAttr (a_422Dconnected_face_set_cfs_faces);
 	a_422Dconnected_face_set_cfs_faces->initializer_("conditional_reverse(SELF.orientation,SELF.closed_shell_element.cfs_faces)");
@@ -4499,12 +4499,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
 	a_423the_person =
 	  new AttrDescriptor("the_person",config_control_designe_person,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_person_and_organization);
 	config_control_designe_person_and_organization->AddExplicitAttr (a_423the_person);
 	a_424the_organization =
 	  new AttrDescriptor("the_organization",config_control_designe_organization,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_person_and_organization);
 	config_control_designe_person_and_organization->AddExplicitAttr (a_424the_organization);
 	reg.AddEntity (*config_control_designe_person_and_organization);
@@ -4516,7 +4516,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_elementary_surface->AddSubtype(config_control_designe_cylindrical_surface);
   a_425radius =
 	  new AttrDescriptor("radius",config_control_designt_positive_length_measure,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_cylindrical_surface);
 	config_control_designe_cylindrical_surface->AddExplicitAttr (a_425radius);
 	reg.AddEntity (*config_control_designe_cylindrical_surface);
@@ -4526,22 +4526,22 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 
   a_426hour_component =
 	  new AttrDescriptor("hour_component",config_control_designt_hour_in_day,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_local_time);
 	config_control_designe_local_time->AddExplicitAttr (a_426hour_component);
   a_427minute_component =
 	  new AttrDescriptor("minute_component",config_control_designt_minute_in_hour,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_local_time);
 	config_control_designe_local_time->AddExplicitAttr (a_427minute_component);
   a_428second_component =
 	  new AttrDescriptor("second_component",config_control_designt_second_in_minute,
-	  SCLLOG(LTrue),SCLLOG(LFalse), AttrType_Explicit,
+	  LTrue,LFalse, AttrType_Explicit,
 	  *config_control_designe_local_time);
 	config_control_designe_local_time->AddExplicitAttr (a_428second_component);
 	a_429zone =
 	  new AttrDescriptor("zone",config_control_designe_coordinated_universal_time_offset,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_local_time);
 	config_control_designe_local_time->AddExplicitAttr (a_429zone);
 	reg.AddEntity (*config_control_designe_local_time);
@@ -4560,7 +4560,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_topological_representation_item->AddSubtype(config_control_designe_vertex_shell);
 	a_430vertex_shell_extent =
 	  new AttrDescriptor("vertex_shell_extent",config_control_designe_vertex_loop,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_vertex_shell);
 	config_control_designe_vertex_shell->AddExplicitAttr (a_430vertex_shell_extent);
 	reg.AddEntity (*config_control_designe_vertex_shell);
@@ -4576,13 +4576,13 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_74->AssignAggrCreator((AggregateCreator) create_EntityAggregate);	// Creator function 
 	t_74->Bound1(3);
 	t_74->Bound2(2147483647);
-	t_74->UniqueElements(SCLLOG(LTrue));
+	t_74->UniqueElements(LTrue);
 	t_74->FundamentalType(LIST_TYPE);
 	t_74->Description("LIST [3:?] OF UNIQUE cartesian_point");
 	t_74->OriginatingSchema(s_config_control_design);
 	t_74->ReferentType(config_control_designe_cartesian_point);
   a_431polygon =
-	  new AttrDescriptor("polygon",t_74,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("polygon",t_74,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_poly_loop);
 	config_control_designe_poly_loop->AddExplicitAttr (a_431polygon);
 	reg.AddEntity (*config_control_designe_poly_loop);
@@ -4601,7 +4601,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_75->OriginatingSchema(s_config_control_design);
 	t_75->ReferentType(config_control_designe_loop);
   a_432wire_shell_extent =
-	  new AttrDescriptor("wire_shell_extent",t_75,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("wire_shell_extent",t_75,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_wire_shell);
 	config_control_designe_wire_shell->AddExplicitAttr (a_432wire_shell_extent);
 	reg.AddEntity (*config_control_designe_wire_shell);
@@ -4620,12 +4620,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_representation_item->AddSubtype(config_control_designe_mapped_item);
 	a_433mapping_source =
 	  new AttrDescriptor("mapping_source",config_control_designe_representation_map,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_mapped_item);
 	config_control_designe_mapped_item->AddExplicitAttr (a_433mapping_source);
 	a_434mapping_target =
 	  new AttrDescriptor("mapping_target",config_control_designe_representation_item,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_mapped_item);
 	config_control_designe_mapped_item->AddExplicitAttr (a_434mapping_target);
 	reg.AddEntity (*config_control_designe_mapped_item);
@@ -4651,12 +4651,12 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	config_control_designe_elementary_surface->AddSubtype(config_control_designe_conical_surface);
   a_435radius =
 	  new AttrDescriptor("radius",config_control_designt_length_measure,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_conical_surface);
 	config_control_designe_conical_surface->AddExplicitAttr (a_435radius);
   a_436semi_angle =
 	  new AttrDescriptor("semi_angle",config_control_designt_plane_angle_measure,
-	  SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_conical_surface);
 	config_control_designe_conical_surface->AddExplicitAttr (a_436semi_angle);
 	reg.AddEntity (*config_control_designe_conical_surface);
@@ -4675,7 +4675,7 @@ SdaiCONFIG_CONTROL_DESIGNInit (Registry& reg)
 	t_76->OriginatingSchema(s_config_control_design);
 	t_76->ReferentType(config_control_designt_unit);
   a_437units =
-	  new AttrDescriptor("units",t_76,SCLLOG(LFalse),SCLLOG(LFalse), AttrType_Explicit,
+	  new AttrDescriptor("units",t_76,LFalse,LFalse, AttrType_Explicit,
 	  *config_control_designe_global_unit_assigned_context);
 	config_control_designe_global_unit_assigned_context->AddExplicitAttr (a_437units);
 	reg.AddEntity (*config_control_designe_global_unit_assigned_context);

@@ -175,7 +175,7 @@ void EntityDescriptorBlock::Init(const EntityDescriptor *e, ButtonState *typeMes
 
 	const AttrDescriptor *ad = attrPtr->AttrDesc();
 
-	if( ad->Derived() == SCLLOG(LTrue) )
+	if( ad->Derived() == LTrue )
 	{
 	    str.Append('<');
 	    endchar = '>';
@@ -435,7 +435,7 @@ StepEntityDescriptor::LongestAttrInBlock(const EntityDescriptor *entity)
 	{
 	    attrStr = attrPtr->AttrDesc()->AttrExprDefStr(tmp);
 	    attrLen = strlen(attrStr);
-	    if( attrPtr->AttrDesc()->Derived() == SCLLOG(LTrue) )
+	    if( attrPtr->AttrDesc()->Derived() == LTrue )
 	    {
 		attrLen = attrLen + 2;
 	    }

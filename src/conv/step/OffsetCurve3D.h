@@ -40,7 +40,7 @@ private:
 protected:
 	Curve *basis_curve;
 	double distance;
-	SCLLOG_H(Logical) self_intersect;
+	Logical self_intersect;
 	Direction *ref_direction;
 
 public:

@@ -123,7 +123,7 @@ class SCLP23_NAME(BOOLEAN);
 // changing the file included above as #include <corbaIncludes.h> Go to that
 // file and change the name of the file included there.
 // If NO_BOOL_LOGS is not defined they will be defined here and must be 
-// prefixed with SCLBOOL() or SCLLOG() parameterized macro when used. (see 
+// prefixed with  or  parameterized macro when used. (see 
 // clstepcore/sclprefixes.h)
 // If you need Logical and Bool to be prefixed with something else because it 
 // is defined in another name space:
@@ -132,10 +132,13 @@ class SCLP23_NAME(BOOLEAN);
 //    macros (SCLBOOL, SCLBOOL_H, SCLLOG, and SCLLOG_H) in 
 //    clstepcore/sclprefixes.h  
 // DAS
-#ifndef NO_BOOLS_LOGS
-enum SCLBOOL_H(Boolean) { SCLBOOL_H(BFalse), SCLBOOL_H(BTrue), SCLBOOL_H(BUnset) };
-enum SCLLOG_H(Logical) { SCLLOG_H(LFalse), SCLLOG_H(LTrue), SCLLOG_H(LUnset), SCLLOG_H(LUnknown) };
-#endif
+/* #ifndef NO_BOOLS_LOGS */
+/* enum SCLBOOL_H(Boolean) { SCLBOOL_H(BFalse), SCLBOOL_H(BTrue), SCLBOOL_H(BUnset) }; */
+/* enum SCLLOG_H(Logical) { SCLLOG_H(LFalse), SCLLOG_H(LTrue), SCLLOG_H(LUnset), SCLLOG_H(LUnknown) }; */
+/* #endif */
+
+enum Boolean { BFalse, BTrue, BUnset };
+enum Logical { LFalse, LTrue, LUnset, LUnknown };
 
 // old SCL definition
 //enum LOGICAL { sdaiFALSE, sdaiTRUE, sdaiUNKNOWN };
@@ -146,7 +149,7 @@ public SCLP23_NAME(Enum)  {
     const char * Name() const;
 
     SCLP23_NAME(LOGICAL) (char * val =0);
-    SCLP23_NAME(LOGICAL) (SCLLOG_H(Logical) state);
+    SCLP23_NAME(LOGICAL) (Logical state);
     SCLP23_NAME(LOGICAL) (const SCLP23_NAME(LOGICAL)& source);
     SCLP23_NAME(LOGICAL) (int i);
 
@@ -164,7 +167,7 @@ public SCLP23_NAME(Enum)  {
     virtual const char * element_at (int n) const;
 
 //    operator int () const;
-    operator SCLLOG_H(Logical) () const;
+    operator Logical () const;
     SCLP23_NAME(LOGICAL)& operator=(const SCLP23_NAME(LOGICAL)& t);
 
     SCLP23_NAME(LOGICAL) operator==( const SCLP23_NAME(LOGICAL)& t ) const;
@@ -195,7 +198,7 @@ public SCLP23_NAME(Enum)  {
     const char * Name() const;
 
     SCLP23_NAME(BOOLEAN) (char * val = 0);
-    SCLP23_NAME(BOOLEAN) (SCLBOOL_H(Boolean) state);
+    SCLP23_NAME(BOOLEAN) (Boolean state);
     SCLP23_NAME(BOOLEAN) (const SCLP23_NAME(BOOLEAN)& source);
     SCLP23_NAME(BOOLEAN) (int i);
     SCLP23_NAME(BOOLEAN) (const SCLP23_NAME(LOGICAL)& val);
@@ -204,12 +207,12 @@ public SCLP23_NAME(Enum)  {
     virtual int no_elements () const;
     virtual const char * element_at (int n) const;
 
-    operator SCLBOOL_H(Boolean)() const;
+    operator Boolean() const;
     SCLP23_NAME(BOOLEAN)& operator=(const SCLP23_NAME(LOGICAL)& t);
 
-    SCLP23_NAME(BOOLEAN)& operator=(const SCLBOOL_H(Boolean) t);
+    SCLP23_NAME(BOOLEAN)& operator=(const Boolean t);
 //    operator int () const;
-//    operator SCLLOG_H(Logical) () const;
+//    operator Logical () const;
     SCLP23_NAME(LOGICAL) operator==( const SCLP23_NAME(LOGICAL)& t ) const;
 
 #ifdef __OSTORE__

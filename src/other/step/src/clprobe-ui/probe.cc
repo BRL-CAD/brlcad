@@ -1173,7 +1173,7 @@ void Probe::BuildSubtypeList(ListItemChooser *lic, EntityDescriptor *ed)
 
     // add the entity type referenced by the attribute to choices
     // available to be created if it is not an abstract entity
-    if(((EntityDescriptor *)ed)->AbstractEntity().asInt() == SCLLOG(LFalse))
+    if(((EntityDescriptor *)ed)->AbstractEntity().asInt() == LFalse)
     {
 	lic->Append(entityTypeName);
 //	choiceCount++;
@@ -1565,7 +1565,7 @@ int Probe::seeEnumEdit(StepEntityEditor *see)
 		    if(currAttr->BaseType() == LOGICAL_TYPE &&
 		       choice == 2)
 		    {
-			currAttr->ptr.e->put(SCLLOG(LUnknown));
+			currAttr->ptr.e->put(LUnknown);
 		    }
 		    else
 		    {
@@ -1847,9 +1847,9 @@ void Probe::ListEntityTypesCmd()
 	// I am purposely assigning this array starting at index 1 instead of 0
 	if(enDesc)
 	{
-	    if( (SCLLOG(Logical))(
+	    if( (Logical)(
 			   ((EntityDescriptor*)enDesc)->AbstractEntity() ) 
-		== SCLLOG(LTrue) )
+		== LTrue )
 	    {
 		arrSize = strlen(enDesc->Name()) + 2;
 		AbstractEntityArray[abstractCount] = new char[arrSize];
@@ -1861,9 +1861,9 @@ void Probe::ListEntityTypesCmd()
 		EntityNameArray[count] = AbstractEntityArray[abstractCount];
 		abstractCount++;
 	    }
-	    else if( (SCLLOG(Logical))(
+	    else if( (Logical)(
 			        ((EntityDescriptor*)enDesc)->ExtMapping() ) 
-		== SCLLOG(LTrue) )
+		== LTrue )
 	    {
 		arrSize = strlen(enDesc->Name()) + 2;
 		AbstractEntityArray[abstractCount] = new char[arrSize];

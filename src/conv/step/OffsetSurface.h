@@ -37,7 +37,7 @@ protected:
 	double distance;
 	//TODO: Fix all references to YAYA
 #ifdef YAYA
-	SCLLOG_H(Logical) self_intersect;
+	Logical self_intersect;
 #else
 	int self_intersect;
 #endif

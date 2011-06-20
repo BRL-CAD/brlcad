@@ -4010,51 +4010,51 @@ END_FUNCTION; -- acyclic_curve_replica
 
 	//	*****  Initialize the Entities
 	config_control_designe_representation_item = new EntityDescriptor(
-		  "Representation_Item", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Representation_Item", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiRepresentation_item );
 	s_config_control_design->AddEntity(config_control_designe_representation_item);
 	config_control_designe_representation_item->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (SIZEOF\n\t(using_representations\n\t(SELF)) > 0);\n");
 	config_control_designe_representation_item->_where_rules->Append(wr);
 	config_control_designe_geometric_representation_item = new EntityDescriptor(
-		  "Geometric_Representation_Item", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Geometric_Representation_Item", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiGeometric_representation_item );
 	s_config_control_design->AddEntity(config_control_designe_geometric_representation_item);
 	config_control_designe_geometric_representation_item->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (SIZEOF\n\t(QUERY \n\t( using_rep <* using_representations\n\t(SELF) | \n\t(NOT \n\t(        'CONFIG_CONTROL_DESIGN.GEOMETRIC_REPRESENTATION_CONTEXT' IN TYPEOF\n\t(        using_rep.context_of_items))) )) = 0);\n");
 	config_control_designe_geometric_representation_item->_where_rules->Append(wr);
 	config_control_designe_functionally_defined_transformation = new EntityDescriptor(
-		  "Functionally_Defined_Transformation", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Functionally_Defined_Transformation", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiFunctionally_defined_transformation );
 	s_config_control_design->AddEntity(config_control_designe_functionally_defined_transformation);
 	config_control_designe_cartesian_transformation_operator = new EntityDescriptor(
-		  "Cartesian_Transformation_Operator", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Cartesian_Transformation_Operator", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiCartesian_transformation_operator );
 	s_config_control_design->AddEntity(config_control_designe_cartesian_transformation_operator);
 	config_control_designe_cartesian_transformation_operator->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (scl > 0);\n");
 	config_control_designe_cartesian_transformation_operator->_where_rules->Append(wr);
 	config_control_designe_cartesian_transformation_operator_3d = new EntityDescriptor(
-		  "Cartesian_Transformation_Operator_3d", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Cartesian_Transformation_Operator_3d", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiCartesian_transformation_operator_3d );
 	s_config_control_design->AddEntity(config_control_designe_cartesian_transformation_operator_3d);
 	config_control_designe_cartesian_transformation_operator_3d->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (SELF\\geometric_representation_item.dim = 3);\n");
 	config_control_designe_cartesian_transformation_operator_3d->_where_rules->Append(wr);
 	config_control_designe_versioned_action_request = new EntityDescriptor(
-		  "Versioned_Action_Request", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Versioned_Action_Request", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiVersioned_action_request );
 	s_config_control_design->AddEntity(config_control_designe_versioned_action_request);
 	config_control_designe_representation = new EntityDescriptor(
-		  "Representation", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Representation", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiRepresentation );
 	s_config_control_design->AddEntity(config_control_designe_representation);
 	config_control_designe_shape_representation = new EntityDescriptor(
-		  "Shape_Representation", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Shape_Representation", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiShape_representation );
 	s_config_control_design->AddEntity(config_control_designe_shape_representation);
 	config_control_designe_manifold_surface_shape_representation = new EntityDescriptor(
-		  "Manifold_Surface_Shape_Representation", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Manifold_Surface_Shape_Representation", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiManifold_surface_shape_representation );
 	s_config_control_design->AddEntity(config_control_designe_manifold_surface_shape_representation);
 	config_control_designe_manifold_surface_shape_representation->_where_rules = new Where_rule__list;
@@ -4089,15 +4089,15 @@ END_FUNCTION; -- acyclic_curve_replica
 	wr = new Where_rule("wr15: (SIZEOF\n\t(QUERY \n\t( sbsm <* QUERY \n\t( it <* SELF.items | \n\t(        'CONFIG_CONTROL_DESIGN.SHELL_BASED_SURFACE_MODEL' IN TYPEOF\n\t(it)) )         | \n\t(NOT \n\t(SIZEOF\n\t(QUERY \n\t( cfs <* sbsm\\shell_based_surface_model.        sbsm_boundary | \n\t(NOT \n\t(SIZEOF\n\t(QUERY \n\t( fa <* cfs\\connected_face_set.        cfs_faces | \n\t(NOT \n\t(\n\t('CONFIG_CONTROL_DESIGN.ADVANCED_FACE' IN TYPEOF\n\t(        fa)) OR \n\t(SIZEOF\n\t(QUERY \n\t( vlp_fbnds <* QUERY \n\t( bnds <* fa.bounds | \n\t(        'CONFIG_CONTROL_DESIGN.VERTEX_LOOP' IN TYPEOF\n\t(bnds.bound)) ) | \n\t(        NOT \n\t(SIZEOF\n\t(['CONFIG_CONTROL_DESIGN.CARTESIAN_POINT',        'CONFIG_CONTROL_DESIGN.DEGENERATE_PCURVE',        'CONFIG_CONTROL_DESIGN.POINT_ON_CURVE',        'CONFIG_CONTROL_DESIGN.POINT_ON_SURFACE'] * TYPEOF\n\t(vlp_fbnds\\        vertex_loop.loop_vertex\\vertex_point.vertex_geometry)) = 1)) )) = 0))) ))         = 0)) )) = 0)) )) = 0);\n");
 	config_control_designe_manifold_surface_shape_representation->_where_rules->Append(wr);
 	config_control_designe_certification = new EntityDescriptor(
-		  "Certification", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Certification", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiCertification );
 	s_config_control_design->AddEntity(config_control_designe_certification);
 	config_control_designe_product_definition_relationship = new EntityDescriptor(
-		  "Product_Definition_Relationship", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Product_Definition_Relationship", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiProduct_definition_relationship );
 	s_config_control_design->AddEntity(config_control_designe_product_definition_relationship);
 	config_control_designe_product_definition_usage = new EntityDescriptor(
-		  "Product_Definition_Usage", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Product_Definition_Usage", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiProduct_definition_usage );
 	s_config_control_design->AddEntity(config_control_designe_product_definition_usage);
 	config_control_designe_product_definition_usage->_where_rules = new Where_rule__list;
@@ -4107,129 +4107,129 @@ END_FUNCTION; -- acyclic_curve_replica
 	ur = new Uniqueness_rule("UR1 : id, relating_product_definition, related_product_definition;\n");
 	config_control_designe_product_definition_usage->_uniqueness_rules->Append(ur);
 	config_control_designe_assembly_component_usage = new EntityDescriptor(
-		  "Assembly_Component_Usage", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Assembly_Component_Usage", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiAssembly_component_usage );
 	s_config_control_design->AddEntity(config_control_designe_assembly_component_usage);
 	config_control_designe_quantified_assembly_component_usage = new EntityDescriptor(
-		  "Quantified_Assembly_Component_Usage", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Quantified_Assembly_Component_Usage", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiQuantified_assembly_component_usage );
 	s_config_control_design->AddEntity(config_control_designe_quantified_assembly_component_usage);
 	config_control_designe_solid_model = new EntityDescriptor(
-		  "Solid_Model", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Solid_Model", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiSolid_model );
 	s_config_control_design->AddEntity(config_control_designe_solid_model);
 	config_control_designe_manifold_solid_brep = new EntityDescriptor(
-		  "Manifold_Solid_Brep", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Manifold_Solid_Brep", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiManifold_solid_brep );
 	s_config_control_design->AddEntity(config_control_designe_manifold_solid_brep);
 	config_control_designe_faceted_brep = new EntityDescriptor(
-		  "Faceted_Brep", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Faceted_Brep", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiFaceted_brep );
 	s_config_control_design->AddEntity(config_control_designe_faceted_brep);
 	config_control_designe_action_directive = new EntityDescriptor(
-		  "Action_Directive", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Action_Directive", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiAction_directive );
 	s_config_control_design->AddEntity(config_control_designe_action_directive);
 	config_control_designe_named_unit = new EntityDescriptor(
-		  "Named_Unit", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Named_Unit", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiNamed_unit );
 	s_config_control_design->AddEntity(config_control_designe_named_unit);
 	config_control_designe_plane_angle_unit = new EntityDescriptor(
-		  "Plane_Angle_Unit", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Plane_Angle_Unit", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiPlane_angle_unit );
 	s_config_control_design->AddEntity(config_control_designe_plane_angle_unit);
 	config_control_designe_plane_angle_unit->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (\n\t(SELF\\named_unit.dimensions.length_exponent = 0) AND \n\t(SELF\\named_unit.        dimensions.mass_exponent = 0) AND \n\t(SELF\\named_unit.dimensions.        time_exponent = 0) AND \n\t(SELF\\named_unit.dimensions.        electric_current_exponent = 0) AND \n\t(SELF\\named_unit.dimensions.        thermodynamic_temperature_exponent = 0) AND \n\t(SELF\\named_unit.        dimensions.amount_of_substance_exponent = 0) AND \n\t(SELF\\named_unit.        dimensions.luminous_intensity_exponent = 0));\n");
 	config_control_designe_plane_angle_unit->_where_rules->Append(wr);
 	config_control_designe_measure_with_unit = new EntityDescriptor(
-		  "Measure_With_Unit", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Measure_With_Unit", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiMeasure_with_unit );
 	s_config_control_design->AddEntity(config_control_designe_measure_with_unit);
 	config_control_designe_measure_with_unit->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (valid_units\n\t(SELF));\n");
 	config_control_designe_measure_with_unit->_where_rules->Append(wr);
 	config_control_designe_area_measure_with_unit = new EntityDescriptor(
-		  "Area_Measure_With_Unit", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Area_Measure_With_Unit", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiArea_measure_with_unit );
 	s_config_control_design->AddEntity(config_control_designe_area_measure_with_unit);
 	config_control_designe_area_measure_with_unit->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: ('CONFIG_CONTROL_DESIGN.AREA_UNIT' IN TYPEOF\n\t(SELF\\measure_with_unit.        unit_component));\n");
 	config_control_designe_area_measure_with_unit->_where_rules->Append(wr);
 	config_control_designe_effectivity = new EntityDescriptor(
-		  "Effectivity", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Effectivity", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiEffectivity );
 	s_config_control_design->AddEntity(config_control_designe_effectivity);
 	config_control_designe_serial_numbered_effectivity = new EntityDescriptor(
-		  "Serial_Numbered_Effectivity", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Serial_Numbered_Effectivity", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiSerial_numbered_effectivity );
 	s_config_control_design->AddEntity(config_control_designe_serial_numbered_effectivity);
 	config_control_designe_surface = new EntityDescriptor(
-		  "Surface", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Surface", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiSurface );
 	s_config_control_design->AddEntity(config_control_designe_surface);
 	config_control_designe_offset_surface = new EntityDescriptor(
-		  "Offset_Surface", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Offset_Surface", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiOffset_surface );
 	s_config_control_design->AddEntity(config_control_designe_offset_surface);
 	config_control_designe_placement = new EntityDescriptor(
-		  "Placement", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Placement", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiPlacement );
 	s_config_control_design->AddEntity(config_control_designe_placement);
 	config_control_designe_axis2_placement_2d = new EntityDescriptor(
-		  "Axis2_Placement_2d", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Axis2_Placement_2d", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiAxis2_placement_2d );
 	s_config_control_design->AddEntity(config_control_designe_axis2_placement_2d);
 	config_control_designe_axis2_placement_2d->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (SELF\\geometric_representation_item.dim = 2);\n");
 	config_control_designe_axis2_placement_2d->_where_rules->Append(wr);
 	config_control_designe_product_category = new EntityDescriptor(
-		  "Product_Category", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Product_Category", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiProduct_category );
 	s_config_control_design->AddEntity(config_control_designe_product_category);
 	config_control_designe_product_related_product_category = new EntityDescriptor(
-		  "Product_Related_Product_Category", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Product_Related_Product_Category", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiProduct_related_product_category );
 	s_config_control_design->AddEntity(config_control_designe_product_related_product_category);
 	config_control_designe_curve = new EntityDescriptor(
-		  "Curve", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Curve", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiCurve );
 	s_config_control_design->AddEntity(config_control_designe_curve);
 	config_control_designe_conic = new EntityDescriptor(
-		  "Conic", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Conic", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiConic );
 	s_config_control_design->AddEntity(config_control_designe_conic);
 	config_control_designe_hyperbola = new EntityDescriptor(
-		  "Hyperbola", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Hyperbola", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiHyperbola );
 	s_config_control_design->AddEntity(config_control_designe_hyperbola);
 	config_control_designe_address = new EntityDescriptor(
-		  "Address", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Address", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiAddress );
 	s_config_control_design->AddEntity(config_control_designe_address);
 	config_control_designe_address->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (EXISTS\n\t(internal_location) OR EXISTS\n\t(street_number) OR EXISTS\n\t(street) OR         EXISTS\n\t(postal_box) OR EXISTS\n\t(town) OR EXISTS\n\t(region) OR EXISTS\n\t(        postal_code) OR EXISTS\n\t(country) OR EXISTS\n\t(facsimile_number) OR         EXISTS\n\t(telephone_number) OR EXISTS\n\t(electronic_mail_address) OR         EXISTS\n\t(telex_number));\n");
 	config_control_designe_address->_where_rules->Append(wr);
 	config_control_designe_organizational_address = new EntityDescriptor(
-		  "Organizational_Address", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Organizational_Address", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiOrganizational_address );
 	s_config_control_design->AddEntity(config_control_designe_organizational_address);
 	config_control_designe_bounded_surface = new EntityDescriptor(
-		  "Bounded_Surface", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Bounded_Surface", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiBounded_surface );
 	s_config_control_design->AddEntity(config_control_designe_bounded_surface);
 	config_control_designe_b_spline_surface = new EntityDescriptor(
-		  "B_Spline_Surface", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "B_Spline_Surface", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiB_spline_surface );
 	s_config_control_design->AddEntity(config_control_designe_b_spline_surface);
 	config_control_designe_b_spline_surface->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (\n\t('CONFIG_CONTROL_DESIGN.UNIFORM_SURFACE' IN TYPEOF\n\t(SELF)) OR \n\t(        'CONFIG_CONTROL_DESIGN.QUASI_UNIFORM_SURFACE' IN TYPEOF\n\t(SELF)) OR \n\t(        'CONFIG_CONTROL_DESIGN.BEZIER_SURFACE' IN TYPEOF\n\t(SELF)) OR \n\t(        'CONFIG_CONTROL_DESIGN.B_SPLINE_SURFACE_WITH_KNOTS' IN TYPEOF\n\t(SELF)));\n");
 	config_control_designe_b_spline_surface->_where_rules->Append(wr);
 	config_control_designe_uniform_surface = new EntityDescriptor(
-		  "Uniform_Surface", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Uniform_Surface", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiUniform_surface );
 	s_config_control_design->AddEntity(config_control_designe_uniform_surface);
 	config_control_designe_geometrically_bounded_surface_shape_representation = new EntityDescriptor(
-		  "Geometrically_Bounded_Surface_Shape_Representation", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Geometrically_Bounded_Surface_Shape_Representation", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiGeometrically_bounded_surface_shape_representation );
 	s_config_control_design->AddEntity(config_control_designe_geometrically_bounded_surface_shape_representation);
 	config_control_designe_geometrically_bounded_surface_shape_representation->_where_rules = new Where_rule__list;
@@ -4248,25 +4248,25 @@ END_FUNCTION; -- acyclic_curve_replica
 	wr = new Where_rule("wr7: (SIZEOF\n\t(QUERY \n\t( gs <* QUERY \n\t( it <* SELF.items | \n\t(        'CONFIG_CONTROL_DESIGN.GEOMETRIC_SET' IN TYPEOF\n\t(it)) ) | \n\t(SIZEOF\n\t(        QUERY \n\t( gsel <* gs\\geometric_set.elements | \n\t(        'CONFIG_CONTROL_DESIGN.SURFACE' IN TYPEOF\n\t(gsel)) )) > 0) )) > 0);\n");
 	config_control_designe_geometrically_bounded_surface_shape_representation->_where_rules->Append(wr);
 	config_control_designe_axis1_placement = new EntityDescriptor(
-		  "Axis1_Placement", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Axis1_Placement", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiAxis1_placement );
 	s_config_control_design->AddEntity(config_control_designe_axis1_placement);
 	config_control_designe_axis1_placement->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (SELF\\geometric_representation_item.dim = 3);\n");
 	config_control_designe_axis1_placement->_where_rules->Append(wr);
 	config_control_designe_bounded_curve = new EntityDescriptor(
-		  "Bounded_Curve", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Bounded_Curve", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiBounded_curve );
 	s_config_control_design->AddEntity(config_control_designe_bounded_curve);
 	config_control_designe_b_spline_curve = new EntityDescriptor(
-		  "B_Spline_Curve", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "B_Spline_Curve", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiB_spline_curve );
 	s_config_control_design->AddEntity(config_control_designe_b_spline_curve);
 	config_control_designe_b_spline_curve->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (\n\t('CONFIG_CONTROL_DESIGN.UNIFORM_CURVE' IN TYPEOF\n\t(SELF)) OR \n\t(        'CONFIG_CONTROL_DESIGN.QUASI_UNIFORM_CURVE' IN TYPEOF\n\t(SELF)) OR \n\t(        'CONFIG_CONTROL_DESIGN.BEZIER_CURVE' IN TYPEOF\n\t(SELF)) OR \n\t(        'CONFIG_CONTROL_DESIGN.B_SPLINE_CURVE_WITH_KNOTS' IN TYPEOF\n\t(SELF)));\n");
 	config_control_designe_b_spline_curve->_where_rules->Append(wr);
 	config_control_designe_rational_b_spline_curve = new EntityDescriptor(
-		  "Rational_B_Spline_Curve", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Rational_B_Spline_Curve", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiRational_b_spline_curve );
 	s_config_control_design->AddEntity(config_control_designe_rational_b_spline_curve);
 	config_control_designe_rational_b_spline_curve->_where_rules = new Where_rule__list;
@@ -4275,52 +4275,52 @@ END_FUNCTION; -- acyclic_curve_replica
 	wr = new Where_rule("wr2: (curve_weights_positive\n\t(SELF));\n");
 	config_control_designe_rational_b_spline_curve->_where_rules->Append(wr);
 	config_control_designe_action_request_assignment = new EntityDescriptor(
-		  "Action_Request_Assignment", s_config_control_design, SCLLOG(LTrue), SCLLOG(LFalse),
+		  "Action_Request_Assignment", s_config_control_design, LTrue, LFalse,
 		  (Creator) create_SdaiAction_request_assignment );
 	s_config_control_design->AddEntity(config_control_designe_action_request_assignment);
 	config_control_designe_topological_representation_item = new EntityDescriptor(
-		  "Topological_Representation_Item", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Topological_Representation_Item", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiTopological_representation_item );
 	s_config_control_design->AddEntity(config_control_designe_topological_representation_item);
 	config_control_designe_face_bound = new EntityDescriptor(
-		  "Face_Bound", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Face_Bound", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiFace_bound );
 	s_config_control_design->AddEntity(config_control_designe_face_bound);
 	config_control_designe_length_measure_with_unit = new EntityDescriptor(
-		  "Length_Measure_With_Unit", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Length_Measure_With_Unit", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiLength_measure_with_unit );
 	s_config_control_design->AddEntity(config_control_designe_length_measure_with_unit);
 	config_control_designe_length_measure_with_unit->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: ('CONFIG_CONTROL_DESIGN.LENGTH_UNIT' IN TYPEOF\n\t(SELF\\measure_with_unit.        unit_component));\n");
 	config_control_designe_length_measure_with_unit->_where_rules->Append(wr);
 	config_control_designe_dated_effectivity = new EntityDescriptor(
-		  "Dated_Effectivity", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Dated_Effectivity", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiDated_effectivity );
 	s_config_control_design->AddEntity(config_control_designe_dated_effectivity);
 	config_control_designe_direction = new EntityDescriptor(
-		  "Direction", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Direction", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiDirection );
 	s_config_control_design->AddEntity(config_control_designe_direction);
 	config_control_designe_direction->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (SIZEOF\n\t(QUERY \n\t( tmp <* direction_ratios | \n\t(tmp <> 0) )) > 0);\n");
 	config_control_designe_direction->_where_rules->Append(wr);
 	config_control_designe_next_assembly_usage_occurrence = new EntityDescriptor(
-		  "Next_Assembly_Usage_Occurrence", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Next_Assembly_Usage_Occurrence", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiNext_assembly_usage_occurrence );
 	s_config_control_design->AddEntity(config_control_designe_next_assembly_usage_occurrence);
 	config_control_designe_edge = new EntityDescriptor(
-		  "Edge", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Edge", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiEdge );
 	s_config_control_design->AddEntity(config_control_designe_edge);
 	config_control_designe_oriented_edge = new EntityDescriptor(
-		  "Oriented_Edge", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Oriented_Edge", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiOriented_edge );
 	s_config_control_design->AddEntity(config_control_designe_oriented_edge);
 	config_control_designe_oriented_edge->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (NOT \n\t('CONFIG_CONTROL_DESIGN.ORIENTED_EDGE' IN TYPEOF\n\t(SELF.edge_element)));\n");
 	config_control_designe_oriented_edge->_where_rules->Append(wr);
 	config_control_designe_person = new EntityDescriptor(
-		  "Person", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Person", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiPerson );
 	s_config_control_design->AddEntity(config_control_designe_person);
 	config_control_designe_person->_where_rules = new Where_rule__list;
@@ -4330,66 +4330,66 @@ END_FUNCTION; -- acyclic_curve_replica
 	ur = new Uniqueness_rule("UR1 : id;\n");
 	config_control_designe_person->_uniqueness_rules->Append(ur);
 	config_control_designe_document = new EntityDescriptor(
-		  "Document", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Document", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiDocument );
 	s_config_control_design->AddEntity(config_control_designe_document);
 	config_control_designe_document->_uniqueness_rules = new Uniqueness_rule__set;
 	ur = new Uniqueness_rule("UR1 : id;\n");
 	config_control_designe_document->_uniqueness_rules->Append(ur);
 	config_control_designe_document_with_class = new EntityDescriptor(
-		  "Document_With_Class", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Document_With_Class", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiDocument_with_class );
 	s_config_control_design->AddEntity(config_control_designe_document_with_class);
 	config_control_designe_conversion_based_unit = new EntityDescriptor(
-		  "Conversion_Based_Unit", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Conversion_Based_Unit", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiConversion_based_unit );
 	s_config_control_design->AddEntity(config_control_designe_conversion_based_unit);
 	config_control_designe_point = new EntityDescriptor(
-		  "Point", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Point", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiPoint );
 	s_config_control_design->AddEntity(config_control_designe_point);
 	config_control_designe_point_on_surface = new EntityDescriptor(
-		  "Point_On_Surface", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Point_On_Surface", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiPoint_on_surface );
 	s_config_control_design->AddEntity(config_control_designe_point_on_surface);
 	config_control_designe_product_definition_formation = new EntityDescriptor(
-		  "Product_Definition_Formation", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Product_Definition_Formation", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiProduct_definition_formation );
 	s_config_control_design->AddEntity(config_control_designe_product_definition_formation);
 	config_control_designe_product_definition_formation->_uniqueness_rules = new Uniqueness_rule__set;
 	ur = new Uniqueness_rule("UR1 : id, of_product;\n");
 	config_control_designe_product_definition_formation->_uniqueness_rules->Append(ur);
 	config_control_designe_person_and_organization_assignment = new EntityDescriptor(
-		  "Person_And_Organization_Assignment", s_config_control_design, SCLLOG(LTrue), SCLLOG(LFalse),
+		  "Person_And_Organization_Assignment", s_config_control_design, LTrue, LFalse,
 		  (Creator) create_SdaiPerson_and_organization_assignment );
 	s_config_control_design->AddEntity(config_control_designe_person_and_organization_assignment);
 	config_control_designe_cc_design_person_and_organization_assignment = new EntityDescriptor(
-		  "Cc_Design_Person_And_Organization_Assignment", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Cc_Design_Person_And_Organization_Assignment", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiCc_design_person_and_organization_assignment );
 	s_config_control_design->AddEntity(config_control_designe_cc_design_person_and_organization_assignment);
 	config_control_designe_cc_design_person_and_organization_assignment->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (cc_design_person_and_organization_correlation\n\t(SELF));\n");
 	config_control_designe_cc_design_person_and_organization_assignment->_where_rules->Append(wr);
 	config_control_designe_offset_curve_3d = new EntityDescriptor(
-		  "Offset_Curve_3d", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Offset_Curve_3d", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiOffset_curve_3d );
 	s_config_control_design->AddEntity(config_control_designe_offset_curve_3d);
 	config_control_designe_offset_curve_3d->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (\n\t(basis_curve.dim = 3) AND \n\t(ref_direction.dim = 3));\n");
 	config_control_designe_offset_curve_3d->_where_rules->Append(wr);
 	config_control_designe_approval = new EntityDescriptor(
-		  "Approval", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Approval", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiApproval );
 	s_config_control_design->AddEntity(config_control_designe_approval);
 	config_control_designe_composite_curve = new EntityDescriptor(
-		  "Composite_Curve", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Composite_Curve", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiComposite_curve );
 	s_config_control_design->AddEntity(config_control_designe_composite_curve);
 	config_control_designe_composite_curve->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (\n\t(\n\t(NOT closed_curve) AND \n\t(SIZEOF\n\t(QUERY \n\t( temp <* segments | \n\t(temp.        transition = discontinuous) )) = 1)) OR \n\t(closed_curve AND \n\t(SIZEOF\n\t(        QUERY \n\t( temp <* segments | \n\t(temp.transition = discontinuous) )) = 0)));\n");
 	config_control_designe_composite_curve->_where_rules->Append(wr);
 	config_control_designe_composite_curve_on_surface = new EntityDescriptor(
-		  "Composite_Curve_On_Surface", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Composite_Curve_On_Surface", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiComposite_curve_on_surface );
 	s_config_control_design->AddEntity(config_control_designe_composite_curve_on_surface);
 	config_control_designe_composite_curve_on_surface->_where_rules = new Where_rule__list;
@@ -4398,66 +4398,66 @@ END_FUNCTION; -- acyclic_curve_replica
 	wr = new Where_rule("wr2: (constraints_composite_curve_on_surface\n\t(SELF));\n");
 	config_control_designe_composite_curve_on_surface->_where_rules->Append(wr);
 	config_control_designe_boundary_curve = new EntityDescriptor(
-		  "Boundary_Curve", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Boundary_Curve", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiBoundary_curve );
 	s_config_control_design->AddEntity(config_control_designe_boundary_curve);
 	config_control_designe_boundary_curve->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (SELF\\composite_curve.closed_curve);\n");
 	config_control_designe_boundary_curve->_where_rules->Append(wr);
 	config_control_designe_representation_context = new EntityDescriptor(
-		  "Representation_Context", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Representation_Context", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiRepresentation_context );
 	s_config_control_design->AddEntity(config_control_designe_representation_context);
 	config_control_designe_geometric_representation_context = new EntityDescriptor(
-		  "Geometric_Representation_Context", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Geometric_Representation_Context", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiGeometric_representation_context );
 	s_config_control_design->AddEntity(config_control_designe_geometric_representation_context);
 	config_control_designe_action_status = new EntityDescriptor(
-		  "Action_Status", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Action_Status", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiAction_status );
 	s_config_control_design->AddEntity(config_control_designe_action_status);
 	config_control_designe_application_context = new EntityDescriptor(
-		  "Application_Context", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Application_Context", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiApplication_context );
 	s_config_control_design->AddEntity(config_control_designe_application_context);
 	config_control_designe_change_request = new EntityDescriptor(
-		  "Change_Request", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Change_Request", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiChange_request );
 	s_config_control_design->AddEntity(config_control_designe_change_request);
 	config_control_designe_date_and_time = new EntityDescriptor(
-		  "Date_And_Time", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Date_And_Time", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiDate_and_time );
 	s_config_control_design->AddEntity(config_control_designe_date_and_time);
 	config_control_designe_approval_date_time = new EntityDescriptor(
-		  "Approval_Date_Time", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Approval_Date_Time", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiApproval_date_time );
 	s_config_control_design->AddEntity(config_control_designe_approval_date_time);
 	config_control_designe_approval_role = new EntityDescriptor(
-		  "Approval_Role", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Approval_Role", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiApproval_role );
 	s_config_control_design->AddEntity(config_control_designe_approval_role);
 	config_control_designe_application_context_element = new EntityDescriptor(
-		  "Application_Context_Element", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Application_Context_Element", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiApplication_context_element );
 	s_config_control_design->AddEntity(config_control_designe_application_context_element);
 	config_control_designe_product_context = new EntityDescriptor(
-		  "Product_Context", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Product_Context", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiProduct_context );
 	s_config_control_design->AddEntity(config_control_designe_product_context);
 	config_control_designe_elementary_surface = new EntityDescriptor(
-		  "Elementary_Surface", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Elementary_Surface", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiElementary_surface );
 	s_config_control_design->AddEntity(config_control_designe_elementary_surface);
 	config_control_designe_spherical_surface = new EntityDescriptor(
-		  "Spherical_Surface", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Spherical_Surface", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiSpherical_surface );
 	s_config_control_design->AddEntity(config_control_designe_spherical_surface);
 	config_control_designe_application_protocol_definition = new EntityDescriptor(
-		  "Application_Protocol_Definition", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Application_Protocol_Definition", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiApplication_protocol_definition );
 	s_config_control_design->AddEntity(config_control_designe_application_protocol_definition);
 	config_control_designe_specified_higher_usage_occurrence = new EntityDescriptor(
-		  "Specified_Higher_Usage_Occurrence", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Specified_Higher_Usage_Occurrence", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiSpecified_higher_usage_occurrence );
 	s_config_control_design->AddEntity(config_control_designe_specified_higher_usage_occurrence);
 	config_control_designe_specified_higher_usage_occurrence->_where_rules = new Where_rule__list;
@@ -4475,59 +4475,59 @@ END_FUNCTION; -- acyclic_curve_replica
 	ur = new Uniqueness_rule("UR1 : upper_usage, next_usage;\n");
 	config_control_designe_specified_higher_usage_occurrence->_uniqueness_rules->Append(ur);
 	config_control_designe_product_definition_formation_with_specified_source = new EntityDescriptor(
-		  "Product_Definition_Formation_With_Specified_Source", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Product_Definition_Formation_With_Specified_Source", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiProduct_definition_formation_with_specified_source );
 	s_config_control_design->AddEntity(config_control_designe_product_definition_formation_with_specified_source);
 	config_control_designe_action_request_solution = new EntityDescriptor(
-		  "Action_Request_Solution", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Action_Request_Solution", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiAction_request_solution );
 	s_config_control_design->AddEntity(config_control_designe_action_request_solution);
 	config_control_designe_uncertainty_measure_with_unit = new EntityDescriptor(
-		  "Uncertainty_Measure_With_Unit", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Uncertainty_Measure_With_Unit", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiUncertainty_measure_with_unit );
 	s_config_control_design->AddEntity(config_control_designe_uncertainty_measure_with_unit);
 	config_control_designe_uncertainty_measure_with_unit->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (valid_measure_value\n\t(SELF\\measure_with_unit.value_component));\n");
 	config_control_designe_uncertainty_measure_with_unit->_where_rules->Append(wr);
 	config_control_designe_edge_based_wireframe_model = new EntityDescriptor(
-		  "Edge_Based_Wireframe_Model", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Edge_Based_Wireframe_Model", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiEdge_based_wireframe_model );
 	s_config_control_design->AddEntity(config_control_designe_edge_based_wireframe_model);
 	config_control_designe_path = new EntityDescriptor(
-		  "Path", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Path", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiPath );
 	s_config_control_design->AddEntity(config_control_designe_path);
 	config_control_designe_path->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (path_head_to_tail\n\t(SELF));\n");
 	config_control_designe_path->_where_rules->Append(wr);
 	config_control_designe_connected_face_set = new EntityDescriptor(
-		  "Connected_Face_Set", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Connected_Face_Set", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiConnected_face_set );
 	s_config_control_design->AddEntity(config_control_designe_connected_face_set);
 	config_control_designe_open_shell = new EntityDescriptor(
-		  "Open_Shell", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Open_Shell", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiOpen_shell );
 	s_config_control_design->AddEntity(config_control_designe_open_shell);
 	config_control_designe_oriented_open_shell = new EntityDescriptor(
-		  "Oriented_Open_Shell", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Oriented_Open_Shell", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiOriented_open_shell );
 	s_config_control_design->AddEntity(config_control_designe_oriented_open_shell);
 	config_control_designe_oriented_open_shell->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (NOT \n\t('CONFIG_CONTROL_DESIGN.ORIENTED_OPEN_SHELL' IN TYPEOF\n\t(SELF.        open_shell_element)));\n");
 	config_control_designe_oriented_open_shell->_where_rules->Append(wr);
 	config_control_designe_solid_angle_unit = new EntityDescriptor(
-		  "Solid_Angle_Unit", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Solid_Angle_Unit", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiSolid_angle_unit );
 	s_config_control_design->AddEntity(config_control_designe_solid_angle_unit);
 	config_control_designe_solid_angle_unit->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (\n\t(SELF\\named_unit.dimensions.length_exponent = 0) AND \n\t(SELF\\named_unit.        dimensions.mass_exponent = 0) AND \n\t(SELF\\named_unit.dimensions.        time_exponent = 0) AND \n\t(SELF\\named_unit.dimensions.        electric_current_exponent = 0) AND \n\t(SELF\\named_unit.dimensions.        thermodynamic_temperature_exponent = 0) AND \n\t(SELF\\named_unit.        dimensions.amount_of_substance_exponent = 0) AND \n\t(SELF\\named_unit.        dimensions.luminous_intensity_exponent = 0));\n");
 	config_control_designe_solid_angle_unit->_where_rules->Append(wr);
 	config_control_designe_coordinated_universal_time_offset = new EntityDescriptor(
-		  "Coordinated_Universal_Time_Offset", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Coordinated_Universal_Time_Offset", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiCoordinated_universal_time_offset );
 	s_config_control_design->AddEntity(config_control_designe_coordinated_universal_time_offset);
 	config_control_designe_curve_replica = new EntityDescriptor(
-		  "Curve_Replica", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Curve_Replica", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiCurve_replica );
 	s_config_control_design->AddEntity(config_control_designe_curve_replica);
 	config_control_designe_curve_replica->_where_rules = new Where_rule__list;
@@ -4536,11 +4536,11 @@ END_FUNCTION; -- acyclic_curve_replica
 	wr = new Where_rule("wr2: (acyclic_curve_replica\n\t(SELF,parent_curve));\n");
 	config_control_designe_curve_replica->_where_rules->Append(wr);
 	config_control_designe_quasi_uniform_surface = new EntityDescriptor(
-		  "Quasi_Uniform_Surface", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Quasi_Uniform_Surface", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiQuasi_uniform_surface );
 	s_config_control_design->AddEntity(config_control_designe_quasi_uniform_surface);
 	config_control_designe_surface_curve = new EntityDescriptor(
-		  "Surface_Curve", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Surface_Curve", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiSurface_curve );
 	s_config_control_design->AddEntity(config_control_designe_surface_curve);
 	config_control_designe_surface_curve->_where_rules = new Where_rule__list;
@@ -4553,71 +4553,71 @@ END_FUNCTION; -- acyclic_curve_replica
 	wr = new Where_rule("wr4: (NOT \n\t('CONFIG_CONTROL_DESIGN.PCURVE' IN TYPEOF\n\t(curve_3d)));\n");
 	config_control_designe_surface_curve->_where_rules->Append(wr);
 	config_control_designe_action_request_status = new EntityDescriptor(
-		  "Action_Request_Status", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Action_Request_Status", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiAction_request_status );
 	s_config_control_design->AddEntity(config_control_designe_action_request_status);
 	config_control_designe_founded_item = new EntityDescriptor(
-		  "Founded_Item", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Founded_Item", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiFounded_item );
 	s_config_control_design->AddEntity(config_control_designe_founded_item);
 	config_control_designe_composite_curve_segment = new EntityDescriptor(
-		  "Composite_Curve_Segment", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Composite_Curve_Segment", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiComposite_curve_segment );
 	s_config_control_design->AddEntity(config_control_designe_composite_curve_segment);
 	config_control_designe_composite_curve_segment->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: ('CONFIG_CONTROL_DESIGN.BOUNDED_CURVE' IN TYPEOF\n\t(parent_curve));\n");
 	config_control_designe_composite_curve_segment->_where_rules->Append(wr);
 	config_control_designe_reparametrised_composite_curve_segment = new EntityDescriptor(
-		  "Reparametrised_Composite_Curve_Segment", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Reparametrised_Composite_Curve_Segment", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiReparametrised_composite_curve_segment );
 	s_config_control_design->AddEntity(config_control_designe_reparametrised_composite_curve_segment);
 	config_control_designe_reparametrised_composite_curve_segment->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (param_length > 0);\n");
 	config_control_designe_reparametrised_composite_curve_segment->_where_rules->Append(wr);
 	config_control_designe_representation_relationship = new EntityDescriptor(
-		  "Representation_Relationship", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Representation_Relationship", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiRepresentation_relationship );
 	s_config_control_design->AddEntity(config_control_designe_representation_relationship);
 	config_control_designe_representation_relationship_with_transformation = new EntityDescriptor(
-		  "Representation_Relationship_With_Transformation", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Representation_Relationship_With_Transformation", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiRepresentation_relationship_with_transformation );
 	s_config_control_design->AddEntity(config_control_designe_representation_relationship_with_transformation);
 	config_control_designe_representation_relationship_with_transformation->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (SELF\\representation_relationship.rep_1.context_of_items :<>: SELF\\        representation_relationship.rep_2.context_of_items);\n");
 	config_control_designe_representation_relationship_with_transformation->_where_rules->Append(wr);
 	config_control_designe_person_and_organization_role = new EntityDescriptor(
-		  "Person_And_Organization_Role", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Person_And_Organization_Role", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiPerson_and_organization_role );
 	s_config_control_design->AddEntity(config_control_designe_person_and_organization_role);
 	config_control_designe_quasi_uniform_curve = new EntityDescriptor(
-		  "Quasi_Uniform_Curve", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Quasi_Uniform_Curve", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiQuasi_uniform_curve );
 	s_config_control_design->AddEntity(config_control_designe_quasi_uniform_curve);
 	config_control_designe_swept_surface = new EntityDescriptor(
-		  "Swept_Surface", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Swept_Surface", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiSwept_surface );
 	s_config_control_design->AddEntity(config_control_designe_swept_surface);
 	config_control_designe_property_definition = new EntityDescriptor(
-		  "Property_Definition", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Property_Definition", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiProperty_definition );
 	s_config_control_design->AddEntity(config_control_designe_property_definition);
 	config_control_designe_global_uncertainty_assigned_context = new EntityDescriptor(
-		  "Global_Uncertainty_Assigned_Context", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Global_Uncertainty_Assigned_Context", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiGlobal_uncertainty_assigned_context );
 	s_config_control_design->AddEntity(config_control_designe_global_uncertainty_assigned_context);
 	config_control_designe_organization_relationship = new EntityDescriptor(
-		  "Organization_Relationship", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Organization_Relationship", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiOrganization_relationship );
 	s_config_control_design->AddEntity(config_control_designe_organization_relationship);
 	config_control_designe_parabola = new EntityDescriptor(
-		  "Parabola", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Parabola", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiParabola );
 	s_config_control_design->AddEntity(config_control_designe_parabola);
 	config_control_designe_parabola->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (focal_dist <> 0);\n");
 	config_control_designe_parabola->_where_rules->Append(wr);
 	config_control_designe_rectangular_composite_surface = new EntityDescriptor(
-		  "Rectangular_Composite_Surface", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Rectangular_Composite_Surface", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiRectangular_composite_surface );
 	s_config_control_design->AddEntity(config_control_designe_rectangular_composite_surface);
 	config_control_designe_rectangular_composite_surface->_where_rules = new Where_rule__list;
@@ -4626,82 +4626,82 @@ END_FUNCTION; -- acyclic_curve_replica
 	wr = new Where_rule("wr2: (constraints_rectangular_composite_surface\n\t(SELF));\n");
 	config_control_designe_rectangular_composite_surface->_where_rules->Append(wr);
 	config_control_designe_lot_effectivity = new EntityDescriptor(
-		  "Lot_Effectivity", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Lot_Effectivity", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiLot_effectivity );
 	s_config_control_design->AddEntity(config_control_designe_lot_effectivity);
 	config_control_designe_surface_of_linear_extrusion = new EntityDescriptor(
-		  "Surface_Of_Linear_Extrusion", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Surface_Of_Linear_Extrusion", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiSurface_of_linear_extrusion );
 	s_config_control_design->AddEntity(config_control_designe_surface_of_linear_extrusion);
 	config_control_designe_shell_based_surface_model = new EntityDescriptor(
-		  "Shell_Based_Surface_Model", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Shell_Based_Surface_Model", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiShell_based_surface_model );
 	s_config_control_design->AddEntity(config_control_designe_shell_based_surface_model);
 	config_control_designe_shell_based_surface_model->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (constraints_geometry_shell_based_surface_model\n\t(SELF));\n");
 	config_control_designe_shell_based_surface_model->_where_rules->Append(wr);
 	config_control_designe_uniform_curve = new EntityDescriptor(
-		  "Uniform_Curve", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Uniform_Curve", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiUniform_curve );
 	s_config_control_design->AddEntity(config_control_designe_uniform_curve);
 	config_control_designe_bezier_curve = new EntityDescriptor(
-		  "Bezier_Curve", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Bezier_Curve", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiBezier_curve );
 	s_config_control_design->AddEntity(config_control_designe_bezier_curve);
 	config_control_designe_loop = new EntityDescriptor(
-		  "Loop", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Loop", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiLoop );
 	s_config_control_design->AddEntity(config_control_designe_loop);
 	config_control_designe_edge_loop = new EntityDescriptor(
-		  "Edge_Loop", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Edge_Loop", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiEdge_loop );
 	s_config_control_design->AddEntity(config_control_designe_edge_loop);
 	config_control_designe_edge_loop->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (SELF\\path.edge_list[1].edge_start :=: SELF\\path.edge_list[ne].edge_end);\n");
 	config_control_designe_edge_loop->_where_rules->Append(wr);
 	config_control_designe_date = new EntityDescriptor(
-		  "Date", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Date", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiDate );
 	s_config_control_design->AddEntity(config_control_designe_date);
 	config_control_designe_calendar_date = new EntityDescriptor(
-		  "Calendar_Date", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Calendar_Date", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiCalendar_date );
 	s_config_control_design->AddEntity(config_control_designe_calendar_date);
 	config_control_designe_calendar_date->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (valid_calendar_date\n\t(SELF));\n");
 	config_control_designe_calendar_date->_where_rules->Append(wr);
 	config_control_designe_toroidal_surface = new EntityDescriptor(
-		  "Toroidal_Surface", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Toroidal_Surface", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiToroidal_surface );
 	s_config_control_design->AddEntity(config_control_designe_toroidal_surface);
 	config_control_designe_promissory_usage_occurrence = new EntityDescriptor(
-		  "Promissory_Usage_Occurrence", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Promissory_Usage_Occurrence", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiPromissory_usage_occurrence );
 	s_config_control_design->AddEntity(config_control_designe_promissory_usage_occurrence);
 	config_control_designe_approval_assignment = new EntityDescriptor(
-		  "Approval_Assignment", s_config_control_design, SCLLOG(LTrue), SCLLOG(LFalse),
+		  "Approval_Assignment", s_config_control_design, LTrue, LFalse,
 		  (Creator) create_SdaiApproval_assignment );
 	s_config_control_design->AddEntity(config_control_designe_approval_assignment);
 	config_control_designe_configuration_item = new EntityDescriptor(
-		  "Configuration_Item", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Configuration_Item", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiConfiguration_item );
 	s_config_control_design->AddEntity(config_control_designe_configuration_item);
 	config_control_designe_configuration_item->_uniqueness_rules = new Uniqueness_rule__set;
 	ur = new Uniqueness_rule("UR1 : id;\n");
 	config_control_designe_configuration_item->_uniqueness_rules->Append(ur);
 	config_control_designe_contract_assignment = new EntityDescriptor(
-		  "Contract_Assignment", s_config_control_design, SCLLOG(LTrue), SCLLOG(LFalse),
+		  "Contract_Assignment", s_config_control_design, LTrue, LFalse,
 		  (Creator) create_SdaiContract_assignment );
 	s_config_control_design->AddEntity(config_control_designe_contract_assignment);
 	config_control_designe_vector = new EntityDescriptor(
-		  "Vector", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Vector", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiVector );
 	s_config_control_design->AddEntity(config_control_designe_vector);
 	config_control_designe_vector->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (magnitude >= 0);\n");
 	config_control_designe_vector->_where_rules->Append(wr);
 	config_control_designe_pcurve = new EntityDescriptor(
-		  "Pcurve", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Pcurve", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiPcurve );
 	s_config_control_design->AddEntity(config_control_designe_pcurve);
 	config_control_designe_pcurve->_where_rules = new Where_rule__list;
@@ -4712,14 +4712,14 @@ END_FUNCTION; -- acyclic_curve_replica
 	wr = new Where_rule("wr3: (reference_to_curve\\representation.items[1]\\geometric_representation_item.        dim = 2);\n");
 	config_control_designe_pcurve->_where_rules->Append(wr);
 	config_control_designe_bounded_pcurve = new EntityDescriptor(
-		  "Bounded_Pcurve", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Bounded_Pcurve", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiBounded_pcurve );
 	s_config_control_design->AddEntity(config_control_designe_bounded_pcurve);
 	config_control_designe_bounded_pcurve->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: ('CONFIG_CONTROL_DESIGN.BOUNDED_CURVE' IN TYPEOF\n\t(SELF\\pcurve.        reference_to_curve.items[1]));\n");
 	config_control_designe_bounded_pcurve->_where_rules->Append(wr);
 	config_control_designe_intersection_curve = new EntityDescriptor(
-		  "Intersection_Curve", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Intersection_Curve", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiIntersection_curve );
 	s_config_control_design->AddEntity(config_control_designe_intersection_curve);
 	config_control_designe_intersection_curve->_where_rules = new Where_rule__list;
@@ -4728,7 +4728,7 @@ END_FUNCTION; -- acyclic_curve_replica
 	wr = new Where_rule("wr2: (associated_surface\n\t(SELF\\surface_curve.associated_geometry[1]) <>         associated_surface\n\t(SELF\\surface_curve.associated_geometry[2]));\n");
 	config_control_designe_intersection_curve->_where_rules->Append(wr);
 	config_control_designe_trimmed_curve = new EntityDescriptor(
-		  "Trimmed_Curve", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Trimmed_Curve", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiTrimmed_curve );
 	s_config_control_design->AddEntity(config_control_designe_trimmed_curve);
 	config_control_designe_trimmed_curve->_where_rules = new Where_rule__list;
@@ -4737,58 +4737,58 @@ END_FUNCTION; -- acyclic_curve_replica
 	wr = new Where_rule("wr2: (\n\t(HIINDEX\n\t(trim_2) = 1) OR \n\t(TYPEOF\n\t(trim_2[1]) <> TYPEOF\n\t(trim_2[2])));\n");
 	config_control_designe_trimmed_curve->_where_rules->Append(wr);
 	config_control_designe_product_definition_context = new EntityDescriptor(
-		  "Product_Definition_Context", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Product_Definition_Context", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiProduct_definition_context );
 	s_config_control_design->AddEntity(config_control_designe_product_definition_context);
 	config_control_designe_bounded_surface_curve = new EntityDescriptor(
-		  "Bounded_Surface_Curve", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Bounded_Surface_Curve", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiBounded_surface_curve );
 	s_config_control_design->AddEntity(config_control_designe_bounded_surface_curve);
 	config_control_designe_bounded_surface_curve->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: ('CONFIG_CONTROL_DESIGN.BOUNDED_CURVE' IN TYPEOF\n\t(SELF\\surface_curve.        curve_3d));\n");
 	config_control_designe_bounded_surface_curve->_where_rules->Append(wr);
 	config_control_designe_item_defined_transformation = new EntityDescriptor(
-		  "Item_Defined_Transformation", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Item_Defined_Transformation", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiItem_defined_transformation );
 	s_config_control_design->AddEntity(config_control_designe_item_defined_transformation);
 	config_control_designe_action_method = new EntityDescriptor(
-		  "Action_Method", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Action_Method", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiAction_method );
 	s_config_control_design->AddEntity(config_control_designe_action_method);
 	config_control_designe_product_category_relationship = new EntityDescriptor(
-		  "Product_Category_Relationship", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Product_Category_Relationship", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiProduct_category_relationship );
 	s_config_control_design->AddEntity(config_control_designe_product_category_relationship);
 	config_control_designe_product_category_relationship->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (acyclic_product_category_relationship\n\t(SELF,[SELF.sub_category]));\n");
 	config_control_designe_product_category_relationship->_where_rules->Append(wr);
 	config_control_designe_plane_angle_measure_with_unit = new EntityDescriptor(
-		  "Plane_Angle_Measure_With_Unit", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Plane_Angle_Measure_With_Unit", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiPlane_angle_measure_with_unit );
 	s_config_control_design->AddEntity(config_control_designe_plane_angle_measure_with_unit);
 	config_control_designe_plane_angle_measure_with_unit->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: ('CONFIG_CONTROL_DESIGN.PLANE_ANGLE_UNIT' IN TYPEOF\n\t(SELF\\measure_with_unit.        unit_component));\n");
 	config_control_designe_plane_angle_measure_with_unit->_where_rules->Append(wr);
 	config_control_designe_vertex = new EntityDescriptor(
-		  "Vertex", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Vertex", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiVertex );
 	s_config_control_design->AddEntity(config_control_designe_vertex);
 	config_control_designe_representation_map = new EntityDescriptor(
-		  "Representation_Map", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Representation_Map", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiRepresentation_map );
 	s_config_control_design->AddEntity(config_control_designe_representation_map);
 	config_control_designe_representation_map->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (item_in_context\n\t(SELF.mapping_origin,SELF.mapped_representation.        context_of_items));\n");
 	config_control_designe_representation_map->_where_rules->Append(wr);
 	config_control_designe_product_definition_effectivity = new EntityDescriptor(
-		  "Product_Definition_Effectivity", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Product_Definition_Effectivity", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiProduct_definition_effectivity );
 	s_config_control_design->AddEntity(config_control_designe_product_definition_effectivity);
 	config_control_designe_product_definition_effectivity->_uniqueness_rules = new Uniqueness_rule__set;
 	ur = new Uniqueness_rule("UR1 : usage, id;\n");
 	config_control_designe_product_definition_effectivity->_uniqueness_rules->Append(ur);
 	config_control_designe_configuration_effectivity = new EntityDescriptor(
-		  "Configuration_Effectivity", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Configuration_Effectivity", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiConfiguration_effectivity );
 	s_config_control_design->AddEntity(config_control_designe_configuration_effectivity);
 	config_control_designe_configuration_effectivity->_where_rules = new Where_rule__list;
@@ -4798,15 +4798,15 @@ END_FUNCTION; -- acyclic_curve_replica
 	ur = new Uniqueness_rule("UR1 : configuration, usage, id;\n");
 	config_control_designe_configuration_effectivity->_uniqueness_rules->Append(ur);
 	config_control_designe_ellipse = new EntityDescriptor(
-		  "Ellipse", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Ellipse", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiEllipse );
 	s_config_control_design->AddEntity(config_control_designe_ellipse);
 	config_control_designe_context_dependent_unit = new EntityDescriptor(
-		  "Context_Dependent_Unit", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Context_Dependent_Unit", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiContext_dependent_unit );
 	s_config_control_design->AddEntity(config_control_designe_context_dependent_unit);
 	config_control_designe_alternate_product_relationship = new EntityDescriptor(
-		  "Alternate_Product_Relationship", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Alternate_Product_Relationship", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiAlternate_product_relationship );
 	s_config_control_design->AddEntity(config_control_designe_alternate_product_relationship);
 	config_control_designe_alternate_product_relationship->_where_rules = new Where_rule__list;
@@ -4816,93 +4816,93 @@ END_FUNCTION; -- acyclic_curve_replica
 	ur = new Uniqueness_rule("UR1 : alternate, base;\n");
 	config_control_designe_alternate_product_relationship->_uniqueness_rules->Append(ur);
 	config_control_designe_document_type = new EntityDescriptor(
-		  "Document_Type", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Document_Type", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiDocument_type );
 	s_config_control_design->AddEntity(config_control_designe_document_type);
 	config_control_designe_document_reference = new EntityDescriptor(
-		  "Document_Reference", s_config_control_design, SCLLOG(LTrue), SCLLOG(LFalse),
+		  "Document_Reference", s_config_control_design, LTrue, LFalse,
 		  (Creator) create_SdaiDocument_reference );
 	s_config_control_design->AddEntity(config_control_designe_document_reference);
 	config_control_designe_mechanical_context = new EntityDescriptor(
-		  "Mechanical_Context", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Mechanical_Context", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiMechanical_context );
 	s_config_control_design->AddEntity(config_control_designe_mechanical_context);
 	config_control_designe_mechanical_context->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (SELF.discipline_type = 'mechanical');\n");
 	config_control_designe_mechanical_context->_where_rules->Append(wr);
 	config_control_designe_shell_based_wireframe_model = new EntityDescriptor(
-		  "Shell_Based_Wireframe_Model", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Shell_Based_Wireframe_Model", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiShell_based_wireframe_model );
 	s_config_control_design->AddEntity(config_control_designe_shell_based_wireframe_model);
 	config_control_designe_shell_based_wireframe_model->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (constraints_geometry_shell_based_wireframe_model\n\t(SELF));\n");
 	config_control_designe_shell_based_wireframe_model->_where_rules->Append(wr);
 	config_control_designe_contract = new EntityDescriptor(
-		  "Contract", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Contract", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiContract );
 	s_config_control_design->AddEntity(config_control_designe_contract);
 	config_control_designe_dimensional_exponents = new EntityDescriptor(
-		  "Dimensional_Exponents", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Dimensional_Exponents", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiDimensional_exponents );
 	s_config_control_design->AddEntity(config_control_designe_dimensional_exponents);
 	config_control_designe_start_request = new EntityDescriptor(
-		  "Start_Request", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Start_Request", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiStart_request );
 	s_config_control_design->AddEntity(config_control_designe_start_request);
 	config_control_designe_cc_design_specification_reference = new EntityDescriptor(
-		  "Cc_Design_Specification_Reference", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Cc_Design_Specification_Reference", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiCc_design_specification_reference );
 	s_config_control_design->AddEntity(config_control_designe_cc_design_specification_reference);
 	config_control_designe_supplied_part_relationship = new EntityDescriptor(
-		  "Supplied_Part_Relationship", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Supplied_Part_Relationship", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiSupplied_part_relationship );
 	s_config_control_design->AddEntity(config_control_designe_supplied_part_relationship);
 	config_control_designe_context_dependent_shape_representation = new EntityDescriptor(
-		  "Context_Dependent_Shape_Representation", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Context_Dependent_Shape_Representation", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiContext_dependent_shape_representation );
 	s_config_control_design->AddEntity(config_control_designe_context_dependent_shape_representation);
 	config_control_designe_context_dependent_shape_representation->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: ('CONFIG_CONTROL_DESIGN.PRODUCT_DEFINITION_RELATIONSHIP' IN TYPEOF\n\t(SELF.        represented_product_relation.definition));\n");
 	config_control_designe_context_dependent_shape_representation->_where_rules->Append(wr);
 	config_control_designe_degenerate_toroidal_surface = new EntityDescriptor(
-		  "Degenerate_Toroidal_Surface", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Degenerate_Toroidal_Surface", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiDegenerate_toroidal_surface );
 	s_config_control_design->AddEntity(config_control_designe_degenerate_toroidal_surface);
 	config_control_designe_degenerate_toroidal_surface->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (major_radius < minor_radius);\n");
 	config_control_designe_degenerate_toroidal_surface->_where_rules->Append(wr);
 	config_control_designe_ordinal_date = new EntityDescriptor(
-		  "Ordinal_Date", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Ordinal_Date", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiOrdinal_date );
 	s_config_control_design->AddEntity(config_control_designe_ordinal_date);
 	config_control_designe_ordinal_date->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (\n\t(\n\t(NOT leap_year\n\t(SELF.year_component)) AND \n\t(1 <= day_component) AND \n\t(        day_component <= 365)) OR \n\t(leap_year\n\t(SELF.year_component) AND \n\t(1 <=         day_component) AND \n\t(day_component <= 366)));\n");
 	config_control_designe_ordinal_date->_where_rules->Append(wr);
 	config_control_designe_face_outer_bound = new EntityDescriptor(
-		  "Face_Outer_Bound", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Face_Outer_Bound", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiFace_outer_bound );
 	s_config_control_design->AddEntity(config_control_designe_face_outer_bound);
 	config_control_designe_mass_measure_with_unit = new EntityDescriptor(
-		  "Mass_Measure_With_Unit", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Mass_Measure_With_Unit", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiMass_measure_with_unit );
 	s_config_control_design->AddEntity(config_control_designe_mass_measure_with_unit);
 	config_control_designe_mass_measure_with_unit->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: ('CONFIG_CONTROL_DESIGN.MASS_UNIT' IN TYPEOF\n\t(SELF\\measure_with_unit.        unit_component));\n");
 	config_control_designe_mass_measure_with_unit->_where_rules->Append(wr);
 	config_control_designe_brep_with_voids = new EntityDescriptor(
-		  "Brep_With_Voids", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Brep_With_Voids", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiBrep_with_voids );
 	s_config_control_design->AddEntity(config_control_designe_brep_with_voids);
 	config_control_designe_week_of_year_and_day_date = new EntityDescriptor(
-		  "Week_Of_Year_And_Day_Date", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Week_Of_Year_And_Day_Date", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiWeek_of_year_and_day_date );
 	s_config_control_design->AddEntity(config_control_designe_week_of_year_and_day_date);
 	config_control_designe_point_on_curve = new EntityDescriptor(
-		  "Point_On_Curve", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Point_On_Curve", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiPoint_on_curve );
 	s_config_control_design->AddEntity(config_control_designe_point_on_curve);
 	config_control_designe_shell_based_wireframe_shape_representation = new EntityDescriptor(
-		  "Shell_Based_Wireframe_Shape_Representation", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Shell_Based_Wireframe_Shape_Representation", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiShell_based_wireframe_shape_representation );
 	s_config_control_design->AddEntity(config_control_designe_shell_based_wireframe_shape_representation);
 	config_control_designe_shell_based_wireframe_shape_representation->_where_rules = new Where_rule__list;
@@ -4933,7 +4933,7 @@ END_FUNCTION; -- acyclic_curve_replica
 	wr = new Where_rule("wr13: (SELF.context_of_items\\geometric_representation_context.        coordinate_space_dimension = 3);\n");
 	config_control_designe_shell_based_wireframe_shape_representation->_where_rules->Append(wr);
 	config_control_designe_face = new EntityDescriptor(
-		  "Face", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Face", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiFace );
 	s_config_control_design->AddEntity(config_control_designe_face);
 	config_control_designe_face->_where_rules = new Where_rule__list;
@@ -4942,22 +4942,22 @@ END_FUNCTION; -- acyclic_curve_replica
 	wr = new Where_rule("wr2: (SIZEOF\n\t(QUERY \n\t( temp <* bounds | \n\t('CONFIG_CONTROL_DESIGN.FACE_OUTER_BOUND'         IN TYPEOF\n\t(temp)) )) <= 1);\n");
 	config_control_designe_face->_where_rules->Append(wr);
 	config_control_designe_face_surface = new EntityDescriptor(
-		  "Face_Surface", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Face_Surface", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiFace_surface );
 	s_config_control_design->AddEntity(config_control_designe_face_surface);
 	config_control_designe_oriented_face = new EntityDescriptor(
-		  "Oriented_Face", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Oriented_Face", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiOriented_face );
 	s_config_control_design->AddEntity(config_control_designe_oriented_face);
 	config_control_designe_oriented_face->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (NOT \n\t('CONFIG_CONTROL_DESIGN.ORIENTED_FACE' IN TYPEOF\n\t(SELF.face_element)));\n");
 	config_control_designe_oriented_face->_where_rules->Append(wr);
 	config_control_designe_surface_of_revolution = new EntityDescriptor(
-		  "Surface_Of_Revolution", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Surface_Of_Revolution", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiSurface_of_revolution );
 	s_config_control_design->AddEntity(config_control_designe_surface_of_revolution);
 	config_control_designe_advanced_brep_shape_representation = new EntityDescriptor(
-		  "Advanced_Brep_Shape_Representation", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Advanced_Brep_Shape_Representation", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiAdvanced_brep_shape_representation );
 	s_config_control_design->AddEntity(config_control_designe_advanced_brep_shape_representation);
 	config_control_designe_advanced_brep_shape_representation->_where_rules = new Where_rule__list;
@@ -4974,11 +4974,11 @@ END_FUNCTION; -- acyclic_curve_replica
 	wr = new Where_rule("wr6: (SIZEOF\n\t(QUERY \n\t( mi <* QUERY \n\t( it <* items | \n\t(        'CONFIG_CONTROL_DESIGN.MAPPED_ITEM' IN TYPEOF\n\t(it)) ) | \n\t(NOT \n\t(        'CONFIG_CONTROL_DESIGN.ADVANCED_BREP_SHAPE_REPRESENTATION' IN         TYPEOF\n\t(mi\\mapped_item.mapping_source.mapped_representation))) )) =         0);\n");
 	config_control_designe_advanced_brep_shape_representation->_where_rules->Append(wr);
 	config_control_designe_edge_curve = new EntityDescriptor(
-		  "Edge_Curve", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Edge_Curve", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiEdge_curve );
 	s_config_control_design->AddEntity(config_control_designe_edge_curve);
 	config_control_designe_point_replica = new EntityDescriptor(
-		  "Point_Replica", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Point_Replica", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiPoint_replica );
 	s_config_control_design->AddEntity(config_control_designe_point_replica);
 	config_control_designe_point_replica->_where_rules = new Where_rule__list;
@@ -4987,18 +4987,18 @@ END_FUNCTION; -- acyclic_curve_replica
 	wr = new Where_rule("wr2: (acyclic_point_replica\n\t(SELF,parent_pt));\n");
 	config_control_designe_point_replica->_where_rules->Append(wr);
 	config_control_designe_product = new EntityDescriptor(
-		  "Product", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Product", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiProduct );
 	s_config_control_design->AddEntity(config_control_designe_product);
 	config_control_designe_product->_uniqueness_rules = new Uniqueness_rule__set;
 	ur = new Uniqueness_rule("UR1 : id;\n");
 	config_control_designe_product->_uniqueness_rules->Append(ur);
 	config_control_designe_shape_aspect_relationship = new EntityDescriptor(
-		  "Shape_Aspect_Relationship", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Shape_Aspect_Relationship", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiShape_aspect_relationship );
 	s_config_control_design->AddEntity(config_control_designe_shape_aspect_relationship);
 	config_control_designe_rectangular_trimmed_surface = new EntityDescriptor(
-		  "Rectangular_Trimmed_Surface", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Rectangular_Trimmed_Surface", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiRectangular_trimmed_surface );
 	s_config_control_design->AddEntity(config_control_designe_rectangular_trimmed_surface);
 	config_control_designe_rectangular_trimmed_surface->_where_rules = new Where_rule__list;
@@ -5011,64 +5011,64 @@ END_FUNCTION; -- acyclic_curve_replica
 	wr = new Where_rule("wr4: (\n\t('CONFIG_CONTROL_DESIGN.SPHERICAL_SURFACE' IN TYPEOF\n\t(basis_surface)) OR \n\t(        'CONFIG_CONTROL_DESIGN.TOROIDAL_SURFACE' IN TYPEOF\n\t(basis_surface))         OR \n\t(vsense = \n\t(v2 > v1)));\n");
 	config_control_designe_rectangular_trimmed_surface->_where_rules->Append(wr);
 	config_control_designe_plane = new EntityDescriptor(
-		  "Plane", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Plane", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiPlane );
 	s_config_control_design->AddEntity(config_control_designe_plane);
 	config_control_designe_action_assignment = new EntityDescriptor(
-		  "Action_Assignment", s_config_control_design, SCLLOG(LTrue), SCLLOG(LFalse),
+		  "Action_Assignment", s_config_control_design, LTrue, LFalse,
 		  (Creator) create_SdaiAction_assignment );
 	s_config_control_design->AddEntity(config_control_designe_action_assignment);
 	config_control_designe_change = new EntityDescriptor(
-		  "Change", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Change", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiChange );
 	s_config_control_design->AddEntity(config_control_designe_change);
 	config_control_designe_circle = new EntityDescriptor(
-		  "Circle", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Circle", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiCircle );
 	s_config_control_design->AddEntity(config_control_designe_circle);
 	config_control_designe_line = new EntityDescriptor(
-		  "Line", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Line", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiLine );
 	s_config_control_design->AddEntity(config_control_designe_line);
 	config_control_designe_line->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (dir.dim = pnt.dim);\n");
 	config_control_designe_line->_where_rules->Append(wr);
 	config_control_designe_property_definition_representation = new EntityDescriptor(
-		  "Property_Definition_Representation", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Property_Definition_Representation", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiProperty_definition_representation );
 	s_config_control_design->AddEntity(config_control_designe_property_definition_representation);
 	config_control_designe_geometric_set = new EntityDescriptor(
-		  "Geometric_Set", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Geometric_Set", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiGeometric_set );
 	s_config_control_design->AddEntity(config_control_designe_geometric_set);
 	config_control_designe_geometric_curve_set = new EntityDescriptor(
-		  "Geometric_Curve_Set", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Geometric_Curve_Set", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiGeometric_curve_set );
 	s_config_control_design->AddEntity(config_control_designe_geometric_curve_set);
 	config_control_designe_geometric_curve_set->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (SIZEOF\n\t(QUERY \n\t( temp <* SELF\\geometric_set.elements | \n\t(        'CONFIG_CONTROL_DESIGN.SURFACE' IN TYPEOF\n\t(temp)) )) = 0);\n");
 	config_control_designe_geometric_curve_set->_where_rules->Append(wr);
 	config_control_designe_personal_address = new EntityDescriptor(
-		  "Personal_Address", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Personal_Address", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiPersonal_address );
 	s_config_control_design->AddEntity(config_control_designe_personal_address);
 	config_control_designe_document_relationship = new EntityDescriptor(
-		  "Document_Relationship", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Document_Relationship", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiDocument_relationship );
 	s_config_control_design->AddEntity(config_control_designe_document_relationship);
 	config_control_designe_outer_boundary_curve = new EntityDescriptor(
-		  "Outer_Boundary_Curve", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Outer_Boundary_Curve", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiOuter_boundary_curve );
 	s_config_control_design->AddEntity(config_control_designe_outer_boundary_curve);
 	config_control_designe_shape_representation_relationship = new EntityDescriptor(
-		  "Shape_Representation_Relationship", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Shape_Representation_Relationship", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiShape_representation_relationship );
 	s_config_control_design->AddEntity(config_control_designe_shape_representation_relationship);
 	config_control_designe_shape_representation_relationship->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: ('CONFIG_CONTROL_DESIGN.SHAPE_REPRESENTATION' IN \n\t(TYPEOF\n\t(SELF\\        representation_relationship.rep_1) + TYPEOF\n\t(SELF\\        representation_relationship.rep_2)));\n");
 	config_control_designe_shape_representation_relationship->_where_rules->Append(wr);
 	config_control_designe_assembly_component_usage_substitute = new EntityDescriptor(
-		  "Assembly_Component_Usage_Substitute", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Assembly_Component_Usage_Substitute", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiAssembly_component_usage_substitute );
 	s_config_control_design->AddEntity(config_control_designe_assembly_component_usage_substitute);
 	config_control_designe_assembly_component_usage_substitute->_where_rules = new Where_rule__list;
@@ -5080,7 +5080,7 @@ END_FUNCTION; -- acyclic_curve_replica
 	ur = new Uniqueness_rule("UR1 : base, substitute;\n");
 	config_control_designe_assembly_component_usage_substitute->_uniqueness_rules->Append(ur);
 	config_control_designe_degenerate_pcurve = new EntityDescriptor(
-		  "Degenerate_Pcurve", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Degenerate_Pcurve", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiDegenerate_pcurve );
 	s_config_control_design->AddEntity(config_control_designe_degenerate_pcurve);
 	config_control_designe_degenerate_pcurve->_where_rules = new Where_rule__list;
@@ -5091,42 +5091,42 @@ END_FUNCTION; -- acyclic_curve_replica
 	wr = new Where_rule("wr3: (reference_to_curve\\representation.items[1]\\geometric_representation_item.        dim = 2);\n");
 	config_control_designe_degenerate_pcurve->_where_rules->Append(wr);
 	config_control_designe_evaluated_degenerate_pcurve = new EntityDescriptor(
-		  "Evaluated_Degenerate_Pcurve", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Evaluated_Degenerate_Pcurve", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiEvaluated_degenerate_pcurve );
 	s_config_control_design->AddEntity(config_control_designe_evaluated_degenerate_pcurve);
 	config_control_designe_solid_angle_measure_with_unit = new EntityDescriptor(
-		  "Solid_Angle_Measure_With_Unit", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Solid_Angle_Measure_With_Unit", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiSolid_angle_measure_with_unit );
 	s_config_control_design->AddEntity(config_control_designe_solid_angle_measure_with_unit);
 	config_control_designe_solid_angle_measure_with_unit->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: ('CONFIG_CONTROL_DESIGN.SOLID_ANGLE_UNIT' IN TYPEOF\n\t(SELF\\measure_with_unit.        unit_component));\n");
 	config_control_designe_solid_angle_measure_with_unit->_where_rules->Append(wr);
 	config_control_designe_connected_edge_set = new EntityDescriptor(
-		  "Connected_Edge_Set", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Connected_Edge_Set", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiConnected_edge_set );
 	s_config_control_design->AddEntity(config_control_designe_connected_edge_set);
 	config_control_designe_action = new EntityDescriptor(
-		  "Action", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Action", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiAction );
 	s_config_control_design->AddEntity(config_control_designe_action);
 	config_control_designe_executed_action = new EntityDescriptor(
-		  "Executed_Action", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Executed_Action", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiExecuted_action );
 	s_config_control_design->AddEntity(config_control_designe_executed_action);
 	config_control_designe_directed_action = new EntityDescriptor(
-		  "Directed_Action", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Directed_Action", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiDirected_action );
 	s_config_control_design->AddEntity(config_control_designe_directed_action);
 	config_control_designe_organizational_project = new EntityDescriptor(
-		  "Organizational_Project", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Organizational_Project", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiOrganizational_project );
 	s_config_control_design->AddEntity(config_control_designe_organizational_project);
 	config_control_designe_date_time_role = new EntityDescriptor(
-		  "Date_Time_Role", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Date_Time_Role", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiDate_time_role );
 	s_config_control_design->AddEntity(config_control_designe_date_time_role);
 	config_control_designe_curve_bounded_surface = new EntityDescriptor(
-		  "Curve_Bounded_Surface", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Curve_Bounded_Surface", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiCurve_bounded_surface );
 	s_config_control_design->AddEntity(config_control_designe_curve_bounded_surface);
 	config_control_designe_curve_bounded_surface->_where_rules = new Where_rule__list;
@@ -5139,22 +5139,22 @@ END_FUNCTION; -- acyclic_curve_replica
 	wr = new Where_rule("wr4: (SIZEOF\n\t(QUERY \n\t( temp <* boundaries | \n\t(temp\\composite_curve_on_surface.        basis_surface[1] <> SELF.basis_surface) )) = 0);\n");
 	config_control_designe_curve_bounded_surface->_where_rules->Append(wr);
 	config_control_designe_closed_shell = new EntityDescriptor(
-		  "Closed_Shell", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Closed_Shell", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiClosed_shell );
 	s_config_control_design->AddEntity(config_control_designe_closed_shell);
 	config_control_designe_design_make_from_relationship = new EntityDescriptor(
-		  "Design_Make_From_Relationship", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Design_Make_From_Relationship", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiDesign_make_from_relationship );
 	s_config_control_design->AddEntity(config_control_designe_design_make_from_relationship);
 	config_control_designe_definitional_representation = new EntityDescriptor(
-		  "Definitional_Representation", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Definitional_Representation", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiDefinitional_representation );
 	s_config_control_design->AddEntity(config_control_designe_definitional_representation);
 	config_control_designe_definitional_representation->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: ('CONFIG_CONTROL_DESIGN.PARAMETRIC_REPRESENTATION_CONTEXT' IN TYPEOF\n\t(SELF\\        representation.context_of_items));\n");
 	config_control_designe_definitional_representation->_where_rules->Append(wr);
 	config_control_designe_product_definition_shape = new EntityDescriptor(
-		  "Product_Definition_Shape", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Product_Definition_Shape", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiProduct_definition_shape );
 	s_config_control_design->AddEntity(config_control_designe_product_definition_shape);
 	config_control_designe_product_definition_shape->_where_rules = new Where_rule__list;
@@ -5164,27 +5164,27 @@ END_FUNCTION; -- acyclic_curve_replica
 	ur = new Uniqueness_rule("UR1 : definition;\n");
 	config_control_designe_product_definition_shape->_uniqueness_rules->Append(ur);
 	config_control_designe_si_unit = new EntityDescriptor(
-		  "Si_Unit", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Si_Unit", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiSi_unit );
 	s_config_control_design->AddEntity(config_control_designe_si_unit);
 	config_control_designe_bezier_surface = new EntityDescriptor(
-		  "Bezier_Surface", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Bezier_Surface", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiBezier_surface );
 	s_config_control_design->AddEntity(config_control_designe_bezier_surface);
 	config_control_designe_certification_assignment = new EntityDescriptor(
-		  "Certification_Assignment", s_config_control_design, SCLLOG(LTrue), SCLLOG(LFalse),
+		  "Certification_Assignment", s_config_control_design, LTrue, LFalse,
 		  (Creator) create_SdaiCertification_assignment );
 	s_config_control_design->AddEntity(config_control_designe_certification_assignment);
 	config_control_designe_start_work = new EntityDescriptor(
-		  "Start_Work", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Start_Work", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiStart_work );
 	s_config_control_design->AddEntity(config_control_designe_start_work);
 	config_control_designe_contract_type = new EntityDescriptor(
-		  "Contract_Type", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Contract_Type", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiContract_type );
 	s_config_control_design->AddEntity(config_control_designe_contract_type);
 	config_control_designe_b_spline_curve_with_knots = new EntityDescriptor(
-		  "B_Spline_Curve_With_Knots", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "B_Spline_Curve_With_Knots", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiB_spline_curve_with_knots );
 	s_config_control_design->AddEntity(config_control_designe_b_spline_curve_with_knots);
 	config_control_designe_b_spline_curve_with_knots->_where_rules = new Where_rule__list;
@@ -5193,11 +5193,11 @@ END_FUNCTION; -- acyclic_curve_replica
 	wr = new Where_rule("wr2: (SIZEOF\n\t(knot_multiplicities) = upper_index_on_knots);\n");
 	config_control_designe_b_spline_curve_with_knots->_where_rules->Append(wr);
 	config_control_designe_cc_design_approval = new EntityDescriptor(
-		  "Cc_Design_Approval", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Cc_Design_Approval", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiCc_design_approval );
 	s_config_control_design->AddEntity(config_control_designe_cc_design_approval);
 	config_control_designe_edge_based_wireframe_shape_representation = new EntityDescriptor(
-		  "Edge_Based_Wireframe_Shape_Representation", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Edge_Based_Wireframe_Shape_Representation", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiEdge_based_wireframe_shape_representation );
 	s_config_control_design->AddEntity(config_control_designe_edge_based_wireframe_shape_representation);
 	config_control_designe_edge_based_wireframe_shape_representation->_where_rules = new Where_rule__list;
@@ -5220,7 +5220,7 @@ END_FUNCTION; -- acyclic_curve_replica
 	wr = new Where_rule("wr9: (SELF.context_of_items\\geometric_representation_context.        coordinate_space_dimension = 3);\n");
 	config_control_designe_edge_based_wireframe_shape_representation->_where_rules->Append(wr);
 	config_control_designe_geometrically_bounded_wireframe_shape_representation = new EntityDescriptor(
-		  "Geometrically_Bounded_Wireframe_Shape_Representation", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Geometrically_Bounded_Wireframe_Shape_Representation", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiGeometrically_bounded_wireframe_shape_representation );
 	s_config_control_design->AddEntity(config_control_designe_geometrically_bounded_wireframe_shape_representation);
 	config_control_designe_geometrically_bounded_wireframe_shape_representation->_where_rules = new Where_rule__list;
@@ -5239,18 +5239,18 @@ END_FUNCTION; -- acyclic_curve_replica
 	wr = new Where_rule("wr7: (SIZEOF\n\t(QUERY \n\t( mi <* QUERY \n\t( it <* SELF.items | \n\t(        'CONFIG_CONTROL_DESIGN.MAPPED_ITEM' IN TYPEOF\n\t(it)) ) | \n\t(NOT \n\t(\n\t(        'CONFIG_CONTROL_DESIGN.' +         'GEOMETRICALLY_BOUNDED_WIREFRAME_SHAPE_REPRESENTATION') IN TYPEOF\n\t(        mi\\mapped_item.mapping_source.mapped_representation))) )) = 0);\n");
 	config_control_designe_geometrically_bounded_wireframe_shape_representation->_where_rules->Append(wr);
 	config_control_designe_product_concept = new EntityDescriptor(
-		  "Product_Concept", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Product_Concept", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiProduct_concept );
 	s_config_control_design->AddEntity(config_control_designe_product_concept);
 	config_control_designe_product_concept->_uniqueness_rules = new Uniqueness_rule__set;
 	ur = new Uniqueness_rule("UR1 : id;\n");
 	config_control_designe_product_concept->_uniqueness_rules->Append(ur);
 	config_control_designe_cc_design_contract = new EntityDescriptor(
-		  "Cc_Design_Contract", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Cc_Design_Contract", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiCc_design_contract );
 	s_config_control_design->AddEntity(config_control_designe_cc_design_contract);
 	config_control_designe_seam_curve = new EntityDescriptor(
-		  "Seam_Curve", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Seam_Curve", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiSeam_curve );
 	s_config_control_design->AddEntity(config_control_designe_seam_curve);
 	config_control_designe_seam_curve->_where_rules = new Where_rule__list;
@@ -5263,7 +5263,7 @@ END_FUNCTION; -- acyclic_curve_replica
 	wr = new Where_rule("wr4: ('CONFIG_CONTROL_DESIGN.PCURVE' IN TYPEOF\n\t(SELF\\surface_curve.        associated_geometry[2]));\n");
 	config_control_designe_seam_curve->_where_rules->Append(wr);
 	config_control_designe_axis2_placement_3d = new EntityDescriptor(
-		  "Axis2_Placement_3d", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Axis2_Placement_3d", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiAxis2_placement_3d );
 	s_config_control_design->AddEntity(config_control_designe_axis2_placement_3d);
 	config_control_designe_axis2_placement_3d->_where_rules = new Where_rule__list;
@@ -5276,7 +5276,7 @@ END_FUNCTION; -- acyclic_curve_replica
 	wr = new Where_rule("wr4: (\n\t(NOT EXISTS\n\t(axis)) OR \n\t(NOT EXISTS\n\t(ref_direction)) OR \n\t(cross_product\n\t(axis,        ref_direction).magnitude > 0));\n");
 	config_control_designe_axis2_placement_3d->_where_rules->Append(wr);
 	config_control_designe_rational_b_spline_surface = new EntityDescriptor(
-		  "Rational_B_Spline_Surface", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Rational_B_Spline_Surface", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiRational_b_spline_surface );
 	s_config_control_design->AddEntity(config_control_designe_rational_b_spline_surface);
 	config_control_designe_rational_b_spline_surface->_where_rules = new Where_rule__list;
@@ -5285,37 +5285,37 @@ END_FUNCTION; -- acyclic_curve_replica
 	wr = new Where_rule("wr2: (surface_weights_positive\n\t(SELF));\n");
 	config_control_designe_rational_b_spline_surface->_where_rules->Append(wr);
 	config_control_designe_configuration_design = new EntityDescriptor(
-		  "Configuration_Design", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Configuration_Design", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiConfiguration_design );
 	s_config_control_design->AddEntity(config_control_designe_configuration_design);
 	config_control_designe_configuration_design->_uniqueness_rules = new Uniqueness_rule__set;
 	ur = new Uniqueness_rule("UR1 : configuration, design;\n");
 	config_control_designe_configuration_design->_uniqueness_rules->Append(ur);
 	config_control_designe_design_context = new EntityDescriptor(
-		  "Design_Context", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Design_Context", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiDesign_context );
 	s_config_control_design->AddEntity(config_control_designe_design_context);
 	config_control_designe_design_context->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (SELF.life_cycle_stage = 'design');\n");
 	config_control_designe_design_context->_where_rules->Append(wr);
 	config_control_designe_product_definition = new EntityDescriptor(
-		  "Product_Definition", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Product_Definition", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiProduct_definition );
 	s_config_control_design->AddEntity(config_control_designe_product_definition);
 	config_control_designe_product_definition_with_associated_documents = new EntityDescriptor(
-		  "Product_Definition_With_Associated_Documents", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Product_Definition_With_Associated_Documents", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiProduct_definition_with_associated_documents );
 	s_config_control_design->AddEntity(config_control_designe_product_definition_with_associated_documents);
 	config_control_designe_organization = new EntityDescriptor(
-		  "Organization", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Organization", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiOrganization );
 	s_config_control_design->AddEntity(config_control_designe_organization);
 	config_control_designe_cc_design_certification = new EntityDescriptor(
-		  "Cc_Design_Certification", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Cc_Design_Certification", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiCc_design_certification );
 	s_config_control_design->AddEntity(config_control_designe_cc_design_certification);
 	config_control_designe_b_spline_surface_with_knots = new EntityDescriptor(
-		  "B_Spline_Surface_With_Knots", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "B_Spline_Surface_With_Knots", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiB_spline_surface_with_knots );
 	s_config_control_design->AddEntity(config_control_designe_b_spline_surface_with_knots);
 	config_control_designe_b_spline_surface_with_knots->_where_rules = new Where_rule__list;
@@ -5328,71 +5328,71 @@ END_FUNCTION; -- acyclic_curve_replica
 	wr = new Where_rule("wr4: (SIZEOF\n\t(v_multiplicities) = knot_v_upper);\n");
 	config_control_designe_b_spline_surface_with_knots->_where_rules->Append(wr);
 	config_control_designe_certification_type = new EntityDescriptor(
-		  "Certification_Type", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Certification_Type", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiCertification_type );
 	s_config_control_design->AddEntity(config_control_designe_certification_type);
 	config_control_designe_oriented_path = new EntityDescriptor(
-		  "Oriented_Path", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Oriented_Path", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiOriented_path );
 	s_config_control_design->AddEntity(config_control_designe_oriented_path);
 	config_control_designe_oriented_path->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (NOT \n\t('CONFIG_CONTROL_DESIGN.ORIENTED_PATH' IN TYPEOF\n\t(SELF.path_element)));\n");
 	config_control_designe_oriented_path->_where_rules->Append(wr);
 	config_control_designe_security_classification = new EntityDescriptor(
-		  "Security_Classification", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Security_Classification", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiSecurity_classification );
 	s_config_control_design->AddEntity(config_control_designe_security_classification);
 	config_control_designe_vertex_loop = new EntityDescriptor(
-		  "Vertex_Loop", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Vertex_Loop", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiVertex_loop );
 	s_config_control_design->AddEntity(config_control_designe_vertex_loop);
 	config_control_designe_approval_status = new EntityDescriptor(
-		  "Approval_Status", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Approval_Status", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiApproval_status );
 	s_config_control_design->AddEntity(config_control_designe_approval_status);
 	config_control_designe_cartesian_point = new EntityDescriptor(
-		  "Cartesian_Point", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Cartesian_Point", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiCartesian_point );
 	s_config_control_design->AddEntity(config_control_designe_cartesian_point);
 	config_control_designe_date_and_time_assignment = new EntityDescriptor(
-		  "Date_And_Time_Assignment", s_config_control_design, SCLLOG(LTrue), SCLLOG(LFalse),
+		  "Date_And_Time_Assignment", s_config_control_design, LTrue, LFalse,
 		  (Creator) create_SdaiDate_and_time_assignment );
 	s_config_control_design->AddEntity(config_control_designe_date_and_time_assignment);
 	config_control_designe_parametric_representation_context = new EntityDescriptor(
-		  "Parametric_Representation_Context", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Parametric_Representation_Context", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiParametric_representation_context );
 	s_config_control_design->AddEntity(config_control_designe_parametric_representation_context);
 	config_control_designe_product_concept_context = new EntityDescriptor(
-		  "Product_Concept_Context", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Product_Concept_Context", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiProduct_concept_context );
 	s_config_control_design->AddEntity(config_control_designe_product_concept_context);
 	config_control_designe_surface_patch = new EntityDescriptor(
-		  "Surface_Patch", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Surface_Patch", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiSurface_patch );
 	s_config_control_design->AddEntity(config_control_designe_surface_patch);
 	config_control_designe_surface_patch->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (NOT \n\t('CONFIG_CONTROL_DESIGN.CURVE_BOUNDED_SURFACE' IN TYPEOF\n\t(        parent_surface)));\n");
 	config_control_designe_surface_patch->_where_rules->Append(wr);
 	config_control_designe_length_unit = new EntityDescriptor(
-		  "Length_Unit", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Length_Unit", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiLength_unit );
 	s_config_control_design->AddEntity(config_control_designe_length_unit);
 	config_control_designe_length_unit->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (\n\t(SELF\\named_unit.dimensions.length_exponent = 1) AND \n\t(SELF\\named_unit.        dimensions.mass_exponent = 0) AND \n\t(SELF\\named_unit.dimensions.        time_exponent = 0) AND \n\t(SELF\\named_unit.dimensions.        electric_current_exponent = 0) AND \n\t(SELF\\named_unit.dimensions.        thermodynamic_temperature_exponent = 0) AND \n\t(SELF\\named_unit.        dimensions.amount_of_substance_exponent = 0) AND \n\t(SELF\\named_unit.        dimensions.luminous_intensity_exponent = 0));\n");
 	config_control_designe_length_unit->_where_rules->Append(wr);
 	config_control_designe_shape_aspect = new EntityDescriptor(
-		  "Shape_Aspect", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Shape_Aspect", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiShape_aspect );
 	s_config_control_design->AddEntity(config_control_designe_shape_aspect);
 	config_control_designe_volume_measure_with_unit = new EntityDescriptor(
-		  "Volume_Measure_With_Unit", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Volume_Measure_With_Unit", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiVolume_measure_with_unit );
 	s_config_control_design->AddEntity(config_control_designe_volume_measure_with_unit);
 	config_control_designe_volume_measure_with_unit->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: ('CONFIG_CONTROL_DESIGN.VOLUME_UNIT' IN TYPEOF\n\t(SELF\\measure_with_unit.        unit_component));\n");
 	config_control_designe_volume_measure_with_unit->_where_rules->Append(wr);
 	config_control_designe_advanced_face = new EntityDescriptor(
-		  "Advanced_Face", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Advanced_Face", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiAdvanced_face );
 	s_config_control_design->AddEntity(config_control_designe_advanced_face);
 	config_control_designe_advanced_face->_where_rules = new Where_rule__list;
@@ -5417,38 +5417,38 @@ END_FUNCTION; -- acyclic_curve_replica
 	wr = new Where_rule("wr10: (\n\t(\n\t(NOT \n\t('CONFIG_CONTROL_DESIGN.SWEPT_SURFACE' IN TYPEOF\n\t(face_geometry))) OR         \n\t(NOT \n\t('CONFIG_CONTROL_DESIGN.POLYLINE' IN TYPEOF\n\t(face_geometry\\        swept_surface.swept_curve))) OR \n\t(SIZEOF\n\t(face_geometry\\swept_surface        .swept_curve\\polyline.points) >= 3)) AND \n\t(SIZEOF\n\t(        QUERY \n\t( elp_fbnds <* QUERY \n\t( bnds <* bounds | \n\t(        'CONFIG_CONTROL_DESIGN.EDGE_LOOP' IN TYPEOF\n\t(bnds.bound)) ) | \n\t(NOT \n\t(        SIZEOF\n\t(QUERY \n\t( oe <* elp_fbnds.bound\\path.edge_list | \n\t(\n\t(        'CONFIG_CONTROL_DESIGN.POLYLINE' IN TYPEOF\n\t(oe\\oriented_edge.        edge_element\\edge_curve.edge_geometry)) AND \n\t(NOT \n\t(SIZEOF\n\t(oe\\        oriented_edge.edge_element\\edge_curve.edge_geometry\\polyline.points)         >= 3))) )) = 0)) )) = 0));\n");
 	config_control_designe_advanced_face->_where_rules->Append(wr);
 	config_control_designe_security_classification_level = new EntityDescriptor(
-		  "Security_Classification_Level", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Security_Classification_Level", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiSecurity_classification_level );
 	s_config_control_design->AddEntity(config_control_designe_security_classification_level);
 	config_control_designe_approval_relationship = new EntityDescriptor(
-		  "Approval_Relationship", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Approval_Relationship", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiApproval_relationship );
 	s_config_control_design->AddEntity(config_control_designe_approval_relationship);
 	config_control_designe_polyline = new EntityDescriptor(
-		  "Polyline", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Polyline", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiPolyline );
 	s_config_control_design->AddEntity(config_control_designe_polyline);
 	config_control_designe_approval_person_organization = new EntityDescriptor(
-		  "Approval_Person_Organization", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Approval_Person_Organization", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiApproval_person_organization );
 	s_config_control_design->AddEntity(config_control_designe_approval_person_organization);
 	config_control_designe_surface_replica = new EntityDescriptor(
-		  "Surface_Replica", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Surface_Replica", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiSurface_replica );
 	s_config_control_design->AddEntity(config_control_designe_surface_replica);
 	config_control_designe_surface_replica->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (acyclic_surface_replica\n\t(SELF,parent_surface));\n");
 	config_control_designe_surface_replica->_where_rules->Append(wr);
 	config_control_designe_security_classification_assignment = new EntityDescriptor(
-		  "Security_Classification_Assignment", s_config_control_design, SCLLOG(LTrue), SCLLOG(LFalse),
+		  "Security_Classification_Assignment", s_config_control_design, LTrue, LFalse,
 		  (Creator) create_SdaiSecurity_classification_assignment );
 	s_config_control_design->AddEntity(config_control_designe_security_classification_assignment);
 	config_control_designe_cc_design_security_classification = new EntityDescriptor(
-		  "Cc_Design_Security_Classification", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Cc_Design_Security_Classification", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiCc_design_security_classification );
 	s_config_control_design->AddEntity(config_control_designe_cc_design_security_classification);
 	config_control_designe_faceted_brep_shape_representation = new EntityDescriptor(
-		  "Faceted_Brep_Shape_Representation", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Faceted_Brep_Shape_Representation", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiFaceted_brep_shape_representation );
 	s_config_control_design->AddEntity(config_control_designe_faceted_brep_shape_representation);
 	config_control_designe_faceted_brep_shape_representation->_where_rules = new Where_rule__list;
@@ -5467,80 +5467,80 @@ END_FUNCTION; -- acyclic_curve_replica
 	wr = new Where_rule("wr7: (SIZEOF\n\t(QUERY \n\t( mi <* QUERY \n\t( it <* items | \n\t(        'CONFIG_CONTROL_DESIGN.MAPPED_ITEM' IN TYPEOF\n\t(it)) ) | \n\t(NOT \n\t(        'CONFIG_CONTROL_DESIGN.FACETED_BREP_SHAPE_REPRESENTATION' IN         TYPEOF\n\t(mi\\mapped_item.mapping_source.mapped_representation))) )) =         0);\n");
 	config_control_designe_faceted_brep_shape_representation->_where_rules->Append(wr);
 	config_control_designe_document_usage_constraint = new EntityDescriptor(
-		  "Document_Usage_Constraint", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Document_Usage_Constraint", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiDocument_usage_constraint );
 	s_config_control_design->AddEntity(config_control_designe_document_usage_constraint);
 	config_control_designe_vertex_point = new EntityDescriptor(
-		  "Vertex_Point", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Vertex_Point", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiVertex_point );
 	s_config_control_design->AddEntity(config_control_designe_vertex_point);
 	config_control_designe_cc_design_date_and_time_assignment = new EntityDescriptor(
-		  "Cc_Design_Date_And_Time_Assignment", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Cc_Design_Date_And_Time_Assignment", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiCc_design_date_and_time_assignment );
 	s_config_control_design->AddEntity(config_control_designe_cc_design_date_and_time_assignment);
 	config_control_designe_cc_design_date_and_time_assignment->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (cc_design_date_time_correlation\n\t(SELF));\n");
 	config_control_designe_cc_design_date_and_time_assignment->_where_rules->Append(wr);
 	config_control_designe_oriented_closed_shell = new EntityDescriptor(
-		  "Oriented_Closed_Shell", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Oriented_Closed_Shell", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiOriented_closed_shell );
 	s_config_control_design->AddEntity(config_control_designe_oriented_closed_shell);
 	config_control_designe_oriented_closed_shell->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (NOT \n\t('CONFIG_CONTROL_DESIGN.ORIENTED_CLOSED_SHELL' IN TYPEOF\n\t(SELF.        closed_shell_element)));\n");
 	config_control_designe_oriented_closed_shell->_where_rules->Append(wr);
 	config_control_designe_person_and_organization = new EntityDescriptor(
-		  "Person_And_Organization", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Person_And_Organization", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiPerson_and_organization );
 	s_config_control_design->AddEntity(config_control_designe_person_and_organization);
 	config_control_designe_cylindrical_surface = new EntityDescriptor(
-		  "Cylindrical_Surface", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Cylindrical_Surface", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiCylindrical_surface );
 	s_config_control_design->AddEntity(config_control_designe_cylindrical_surface);
 	config_control_designe_local_time = new EntityDescriptor(
-		  "Local_Time", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Local_Time", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiLocal_time );
 	s_config_control_design->AddEntity(config_control_designe_local_time);
 	config_control_designe_local_time->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (valid_time\n\t(SELF));\n");
 	config_control_designe_local_time->_where_rules->Append(wr);
 	config_control_designe_mass_unit = new EntityDescriptor(
-		  "Mass_Unit", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Mass_Unit", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiMass_unit );
 	s_config_control_design->AddEntity(config_control_designe_mass_unit);
 	config_control_designe_mass_unit->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (\n\t(SELF\\named_unit.dimensions.length_exponent = 0) AND \n\t(SELF\\named_unit.        dimensions.mass_exponent = 1) AND \n\t(SELF\\named_unit.dimensions.        time_exponent = 0) AND \n\t(SELF\\named_unit.dimensions.        electric_current_exponent = 0) AND \n\t(SELF\\named_unit.dimensions.        thermodynamic_temperature_exponent = 0) AND \n\t(SELF\\named_unit.        dimensions.amount_of_substance_exponent = 0) AND \n\t(SELF\\named_unit.        dimensions.luminous_intensity_exponent = 0));\n");
 	config_control_designe_mass_unit->_where_rules->Append(wr);
 	config_control_designe_vertex_shell = new EntityDescriptor(
-		  "Vertex_Shell", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Vertex_Shell", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiVertex_shell );
 	s_config_control_design->AddEntity(config_control_designe_vertex_shell);
 	config_control_designe_poly_loop = new EntityDescriptor(
-		  "Poly_Loop", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Poly_Loop", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiPoly_loop );
 	s_config_control_design->AddEntity(config_control_designe_poly_loop);
 	config_control_designe_wire_shell = new EntityDescriptor(
-		  "Wire_Shell", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Wire_Shell", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiWire_shell );
 	s_config_control_design->AddEntity(config_control_designe_wire_shell);
 	config_control_designe_wire_shell->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (NOT mixed_loop_type_set\n\t(wire_shell_extent));\n");
 	config_control_designe_wire_shell->_where_rules->Append(wr);
 	config_control_designe_area_unit = new EntityDescriptor(
-		  "Area_Unit", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Area_Unit", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiArea_unit );
 	s_config_control_design->AddEntity(config_control_designe_area_unit);
 	config_control_designe_area_unit->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (\n\t(SELF\\named_unit.dimensions.length_exponent = 2) AND \n\t(SELF\\named_unit.        dimensions.mass_exponent = 0) AND \n\t(SELF\\named_unit.dimensions.        time_exponent = 0) AND \n\t(SELF\\named_unit.dimensions.        electric_current_exponent = 0) AND \n\t(SELF\\named_unit.dimensions.        thermodynamic_temperature_exponent = 0) AND \n\t(SELF\\named_unit.        dimensions.amount_of_substance_exponent = 0) AND \n\t(SELF\\named_unit.        dimensions.luminous_intensity_exponent = 0));\n");
 	config_control_designe_area_unit->_where_rules->Append(wr);
 	config_control_designe_mapped_item = new EntityDescriptor(
-		  "Mapped_Item", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Mapped_Item", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiMapped_item );
 	s_config_control_design->AddEntity(config_control_designe_mapped_item);
 	config_control_designe_mapped_item->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (acyclic_mapped_representation\n\t(using_representations\n\t(SELF),[SELF]));\n");
 	config_control_designe_mapped_item->_where_rules->Append(wr);
 	config_control_designe_shape_definition_representation = new EntityDescriptor(
-		  "Shape_Definition_Representation", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Shape_Definition_Representation", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiShape_definition_representation );
 	s_config_control_design->AddEntity(config_control_designe_shape_definition_representation);
 	config_control_designe_shape_definition_representation->_where_rules = new Where_rule__list;
@@ -5549,21 +5549,21 @@ END_FUNCTION; -- acyclic_curve_replica
 	wr = new Where_rule("wr2: ('CONFIG_CONTROL_DESIGN.SHAPE_REPRESENTATION' IN TYPEOF\n\t(SELF.        used_representation));\n");
 	config_control_designe_shape_definition_representation->_where_rules->Append(wr);
 	config_control_designe_volume_unit = new EntityDescriptor(
-		  "Volume_Unit", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Volume_Unit", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiVolume_unit );
 	s_config_control_design->AddEntity(config_control_designe_volume_unit);
 	config_control_designe_volume_unit->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (\n\t(SELF\\named_unit.dimensions.length_exponent = 3) AND \n\t(SELF\\named_unit.        dimensions.mass_exponent = 0) AND \n\t(SELF\\named_unit.dimensions.        time_exponent = 0) AND \n\t(SELF\\named_unit.dimensions.        electric_current_exponent = 0) AND \n\t(SELF\\named_unit.dimensions.        thermodynamic_temperature_exponent = 0) AND \n\t(SELF\\named_unit.        dimensions.amount_of_substance_exponent = 0) AND \n\t(SELF\\named_unit.        dimensions.luminous_intensity_exponent = 0));\n");
 	config_control_designe_volume_unit->_where_rules->Append(wr);
 	config_control_designe_conical_surface = new EntityDescriptor(
-		  "Conical_Surface", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Conical_Surface", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiConical_surface );
 	s_config_control_design->AddEntity(config_control_designe_conical_surface);
 	config_control_designe_conical_surface->_where_rules = new Where_rule__list;
 	wr = new Where_rule("wr1: (radius >= 0);\n");
 	config_control_designe_conical_surface->_where_rules->Append(wr);
 	config_control_designe_global_unit_assigned_context = new EntityDescriptor(
-		  "Global_Unit_Assigned_Context", s_config_control_design, SCLLOG(LFalse), SCLLOG(LFalse),
+		  "Global_Unit_Assigned_Context", s_config_control_design, LFalse, LFalse,
 		  (Creator) create_SdaiGlobal_unit_assigned_context );
 	s_config_control_design->AddEntity(config_control_designe_global_unit_assigned_context);
 

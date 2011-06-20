@@ -40,7 +40,7 @@ private:
 protected:
 	Surface *face_geometry;
 #ifdef YAYA
-	SCLBOOL_H(Boolean) same_sense;
+	Boolean same_sense;
 #else
 	int same_sense;
 #endif

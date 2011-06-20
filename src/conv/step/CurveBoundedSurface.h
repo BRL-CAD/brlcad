@@ -42,7 +42,7 @@ protected:
 	LIST_OF_BOUNDARIES boundaries;
 	//TODO: Fix all references to YAYA
 #ifdef YAYA
-	SCLBOOL_H(Boolean) implicit_outer;
+	Boolean implicit_outer;
 #else
 	int implicit_outer;
 #endif

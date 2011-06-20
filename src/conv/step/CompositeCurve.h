@@ -38,7 +38,7 @@ private:
 
 protected:
 	LIST_OF_SEGMENTS segments;
-	SCLLOG_H(Logical) self_intersect;
+	Logical self_intersect;
 
 public:
 	CompositeCurve();

@@ -41,8 +41,8 @@ protected:
 	LIST_OF_POINTS control_points_list;
 #ifdef YAYA
 	B_spline_curve_form curve_form;
-	SCLLOG_H(Logical) closed_curve;
-	SCLLOG_H(Logical) self_intersect;
+	Logical closed_curve;
+	Logical self_intersect;
 #else
 	int curve_form;
 	int closed_curve;

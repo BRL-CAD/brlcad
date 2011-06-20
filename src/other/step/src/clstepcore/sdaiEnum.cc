@@ -28,10 +28,10 @@
 // are initialized here instead of in the header file in order to avoid
 // multiple inclusions when building SCL applications.
 /*
-const SCLP23(BOOLEAN) SCLP23(TRUE)( SCLBOOL(BTrue) );
-const SCLP23(BOOLEAN) SCLP23(FALSE)( SCLBOOL(BFalse) );
-const SCLP23(BOOLEAN) SCLP23(UNSET)( SCLBOOL(BUnset) );
-const SCLP23(LOGICAL) SCLP23(UNKNOWN)( SCLLOG(LUnknown) );
+const SCLP23(BOOLEAN) SCLP23(TRUE)( BTrue );
+const SCLP23(BOOLEAN) SCLP23(FALSE)( BFalse );
+const SCLP23(BOOLEAN) SCLP23(UNSET)( BUnset );
+const SCLP23(LOGICAL) SCLP23(UNKNOWN)( LUnknown );
 */
 //#endif 
 //#endif 
@@ -53,7 +53,7 @@ SCLP23(LOGICAL)::SCLP23_NAME(LOGICAL) (char * val)
     set_value (val);
 }
 
-SCLP23(LOGICAL)::SCLP23_NAME(LOGICAL) (SCLLOG(Logical) state)
+SCLP23(LOGICAL)::SCLP23_NAME(LOGICAL) (Logical state)
 {
     set_value (state);
 }
@@ -66,9 +66,9 @@ SCLP23(LOGICAL)::SCLP23_NAME(LOGICAL) (const SCLP23(LOGICAL)& source)
 SCLP23(LOGICAL)::SCLP23_NAME(LOGICAL) (int i)  
 {
     if (i == 0)
-      v =  SCLLOG(LFalse) ;
+      v =  LFalse ;
     else
-      v =  SCLLOG(LTrue) ;
+      v =  LTrue ;
 }
 
 /*
@@ -109,9 +109,9 @@ const char *
 SCLP23(LOGICAL)::element_at (int n) const
 {
   switch (n)  {
-  case  SCLLOG(LUnknown) :  return "U";
-  case  SCLLOG(LFalse) : return "F";
-  case  SCLLOG(LTrue) : return "T";
+  case  LUnknown :  return "U";
+  case  LFalse : return "F";
+  case  LTrue : return "T";
   default: return "UNSET";
   }
 }
@@ -132,7 +132,7 @@ SCLP23(LOGICAL)::nullify() // change the receiver to an unset status
 
 SCLP23(LOGICAL)::operator int () const  {
  // anything other than BFalse should return 1 according to Part 23
-  if (v ==  SCLLOG(LFalse) ) return 0;
+  if (v ==  LFalse ) return 0;
   //#endif
   else return 1;
 /*
@@ -150,13 +150,13 @@ SCLP23(LOGICAL)::operator int () const  {
 
 #endif
 
-SCLP23(LOGICAL)::operator  SCLLOG(Logical) () const  {
+SCLP23(LOGICAL)::operator  Logical () const  {
   switch (v) {
-  case  SCLLOG(LFalse) : return  SCLLOG(LFalse) ;
-  case  SCLLOG(LTrue) : return  SCLLOG(LTrue) ;
-  case  SCLLOG(LUnknown) :  return  SCLLOG(LUnknown) ;
-  case  SCLLOG(LUnset) :
-  default: return  SCLLOG(LUnset) ;
+  case  LFalse : return  LFalse ;
+  case  LTrue : return  LTrue ;
+  case  LUnknown :  return  LUnknown ;
+  case  LUnset :
+  default: return  LUnset ;
 }}
 
 
@@ -171,8 +171,8 @@ SCLP23(LOGICAL)::operator= (const SCLP23(LOGICAL)& t)
 SCLP23(LOGICAL) SCLP23(LOGICAL)::operator ==( const SCLP23(LOGICAL)& t ) const
 {
   if( v == t.asInt() )
-      return  SCLLOG(LTrue) ;
-  return  SCLLOG(LFalse) ;
+      return  LTrue ;
+  return  LFalse ;
 }
 
 int
@@ -376,7 +376,7 @@ SCLP23(BOOLEAN)::SCLP23_NAME(BOOLEAN) (char * val)
     set_value (val);
 }
 
-SCLP23(BOOLEAN)::SCLP23_NAME(BOOLEAN) (SCLBOOL(Boolean) state)
+SCLP23(BOOLEAN)::SCLP23_NAME(BOOLEAN) (Boolean state)
 {
     set_value (state);
 }
@@ -399,15 +399,15 @@ SCLP23(BOOLEAN)::no_elements () const
 SCLP23(BOOLEAN)::SCLP23_NAME(BOOLEAN) (int i)
 {
   if (i == 0)
-    v =  SCLBOOL(BFalse) ;
+    v =  BFalse ;
   else
-    v =  SCLBOOL(BTrue) ;
+    v =  BTrue ;
 }
 
 SCLP23(BOOLEAN)::SCLP23_NAME(BOOLEAN) (const SCLP23(LOGICAL)& val)  {
-  if (val.asInt() == SCLLOG(LUnknown)) 
+  if (val.asInt() == LUnknown) 
   { // this should set error code sdaiVT_NVLD i.e. Invalid value type.
-      v = SCLBOOL(BUnset); return; 
+      v = BUnset; return; 
   }
   set_value (val);
 }
@@ -423,12 +423,12 @@ SCLP23(BOOLEAN)::Access_hook_in(void *object,
 }
 #endif
 
-SCLP23(BOOLEAN)::operator  SCLBOOL(Boolean) () const  {
+SCLP23(BOOLEAN)::operator  Boolean () const  {
   switch (v) {
-  case  SCLBOOL(BFalse) : return  SCLBOOL(BFalse) ;
-  case  SCLBOOL(BTrue) : return  SCLBOOL(BTrue) ;
-  case  SCLBOOL(BUnset) :
-  default: return  SCLBOOL(BUnset) ;
+  case  BFalse : return  BFalse ;
+  case  BTrue : return  BTrue ;
+  case  BUnset :
+  default: return  BUnset ;
 }}
 
 SCLP23(BOOLEAN)& 
@@ -439,7 +439,7 @@ SCLP23(BOOLEAN)::operator= (const SCLP23(LOGICAL)& t)
 }
 
 SCLP23(BOOLEAN)& 
-SCLP23(BOOLEAN)::operator= (const  SCLBOOL(Boolean) t)
+SCLP23(BOOLEAN)::operator= (const  Boolean t)
 {
     v = t;
     return *this;
@@ -450,19 +450,19 @@ SCLP23(BOOLEAN)::operator= (const  SCLBOOL(Boolean) t)
 SCLP23(BOOLEAN)::operator int () const  {
  // anything other than BFalse should return 1 according to Part 23
   switch (v) {
-  case  SCLBOOL(BFalse) : return 0;
-  case  SCLBOOL(BTrue) : return 1;
-  case  SCLBOOL(BUnset) :  // BUnset or anything other than t or f should set 
+  case  BFalse : return 0;
+  case  BTrue : return 1;
+  case  BUnset :  // BUnset or anything other than t or f should set 
 		// error sdaiVA_NSET i.e. value unset
   default: return 1;
 }}
 
-SCLP23(BOOLEAN)::operator  SCLLOG(Logical) () const  {
+SCLP23(BOOLEAN)::operator  Logical () const  {
   switch (v) {
-  case  SCLBOOL(BFalse) : return  SCLLOG(LFalse) ;
-  case  SCLBOOL(BTrue) : return  SCLLOG(LTrue) ;
-  case  SCLBOOL(BUnset) : return  SCLLOG(LUnset) ;
-  default: return  SCLLOG(LUnknown) ;
+  case  BFalse : return  LFalse ;
+  case  BTrue : return  LTrue ;
+  case  BUnset : return  LUnset ;
+  default: return  LUnknown ;
 }}
 
 #endif
@@ -470,8 +470,8 @@ SCLP23(BOOLEAN)::operator  SCLLOG(Logical) () const  {
 const char * 
 SCLP23(BOOLEAN)::element_at (int n)  const {
   switch (n)  {
-  case  SCLBOOL(BFalse) : return "F";
-  case  SCLBOOL(BTrue) : return "T";
+  case  BFalse : return "F";
+  case  BTrue : return "T";
   default: return "UNSET";
   }
 }
@@ -479,8 +479,8 @@ SCLP23(BOOLEAN)::element_at (int n)  const {
 SCLP23(LOGICAL) SCLP23(BOOLEAN)::operator ==( const SCLP23(LOGICAL)& t ) const
 {
   if( v == t.asInt() )
-      return  SCLLOG(LTrue) ;
-  return  SCLLOG(LFalse) ;
+      return  LTrue ;
+  return  LFalse ;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

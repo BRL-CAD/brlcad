@@ -409,11 +409,11 @@ AccessType (Type t)
       return nm;
     }
     if ( class == Class_Logical_Type)
-        strncpy (nm, "SCLLOG(Logical)", BUFSIZ -2);
+        strncpy (nm, "Logical", BUFSIZ -2);
 
     /*    case TYPE_BOOLEAN:	*/
     if (class == Class_Boolean_Type)
-        strncpy (nm, "SCLBOOL(Boolean)", BUFSIZ -2);
+        strncpy (nm, "Boolean", BUFSIZ -2);
     return nm;
 }
 

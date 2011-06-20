@@ -43,7 +43,7 @@ protected:
 	int ON_face_index;
 	bool inner;
 #ifdef YAYA
-	SCLBOOL_H(Boolean) orientation;
+	Boolean orientation;
 #else
 	int orientation;
 #endif

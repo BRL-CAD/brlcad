@@ -39,8 +39,8 @@ protected:
 	BoundedSurface *parent_surface;
 	Transition_code u_transition;
 	Transition_code v_transition;
-	SCLBOOL_H(Boolean) u_sense;
-	SCLBOOL_H(Boolean) v_sense;
+	Boolean u_sense;
+	Boolean v_sense;
 
 public:
 	SurfacePatch();

@@ -417,8 +417,8 @@ SchRename::rename( const char *schnm, char *newnm ) const
 AttrDescriptor::AttrDescriptor(
 		       const char * name,	   // i.e. char *
 		       const TypeDescriptor *domainType, 
-		       SCLLOG(Logical) optional,   // i.e. F U or T
-		       SCLLOG(Logical) unique,	   // i.e. F U or T
+		       Logical optional,   // i.e. F U or T
+		       Logical unique,	   // i.e. F U or T
 		       AttrType_Enum at, // AttrType_Explicit,AttrType_Inverse,
 				       // AttrType_Deriving,AttrType_Redefining
 		       const EntityDescriptor & owner )
@@ -437,36 +437,36 @@ _owner ((EntityDescriptor&)owner)
 AttrDescriptor::~AttrDescriptor () 
 { }
 
-SCLLOG(Logical)
+Logical
 AttrDescriptor::Explicit() const 
 { 
     if(_attrType == AttrType_Explicit)
-      return SCLLOG(LTrue);
-    return SCLLOG(LFalse);
+      return LTrue;
+    return LFalse;
 }
 
-SCLLOG(Logical)
+Logical
 AttrDescriptor::Inverse() const 
 { 
     if(_attrType == AttrType_Inverse)
-      return SCLLOG(LTrue);
-    return SCLLOG(LFalse);
+      return LTrue;
+    return LFalse;
 }
 
-SCLLOG(Logical)
+Logical
 AttrDescriptor::Redefining() const 
 { 
     if(_attrType == AttrType_Redefining)
-      return SCLLOG(LTrue);
-    return SCLLOG(LFalse);
+      return LTrue;
+    return LFalse;
 }
 
-SCLLOG(Logical)
+Logical
 AttrDescriptor::Deriving() const 
 { 
     if(_attrType == AttrType_Deriving)
-      return SCLLOG(LTrue);
-    return SCLLOG(LFalse);
+      return LTrue;
+    return LFalse;
 }
 
 // outdated function
@@ -481,9 +481,9 @@ AttrDescriptor::Derived (SCLP23(LOGICAL) x)
 
 // outdated function
 void 
-AttrDescriptor::Derived (SCLLOG(Logical) x)
+AttrDescriptor::Derived (Logical x)
 { 
-    if(x == SCLLOG(LTrue))
+    if(x == LTrue)
       _attrType = AttrType_Deriving;
     else
       _attrType = AttrType_Explicit;
@@ -503,8 +503,8 @@ AttrDescriptor::Derived (const char *x)
 Derived_attribute::Derived_attribute(
 		       const char * name,	   // i.e. char *
 		       const TypeDescriptor *domainType, 
-		       SCLLOG(Logical) optional,   // i.e. F U or T
-		       SCLLOG(Logical) unique,	   // i.e. F U or T
+		       Logical optional,   // i.e. F U or T
+		       Logical unique,	   // i.e. F U or T
 		       AttrType_Enum at, // AttrType_Explicit,AttrType_Inverse,
 				       // AttrType_Deriving,AttrType_Redefining
 		       const EntityDescriptor & owner )

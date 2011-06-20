@@ -184,7 +184,7 @@ STEPcomplex::AssignDerives()
 	while( attrPtr != 0 )
 	{
 	    ad = attrPtr->AttrDesc();
-	    if( ( ad->Derived() ) == SCLLOG(LTrue) )
+	    if( ( ad->Derived() ) == LTrue )
 	    {
 		const char *nm = ad->Name();
 		const char *attrNm = 0;
@@ -488,7 +488,7 @@ STEPcomplex::BuildAttrs(const char *s )
 	{
 	    const AttrDescriptor *ad = attrPtr->AttrDesc();
 
-	    if( ( ad->Derived() ) != SCLLOG(LTrue) )
+	    if( ( ad->Derived() ) != LTrue )
 	    {
 
 		switch ( ad->NonRefType() )

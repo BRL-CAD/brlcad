@@ -39,7 +39,7 @@ SCLP23(Model_contents__list)::SCLP23_NAME(Model_contents__list) (int defaultSize
 #ifdef __OSTORE__
  : _rep(os_List<SCLP23(Model_contents_ptr)>::create(os_database::of(this)) ), 
    _cursor(_rep),
-   _first(SCLBOOL(BTrue))
+   _first(BTrue)
 {
 //    _rep = os_List<Model_contents*>::create(os_database::of(this));
 #else

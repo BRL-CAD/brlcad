@@ -40,7 +40,7 @@ public:
 #ifdef __OSTORE__
     os_Collection<SCLP23_NAME(Entity_extent_ptr)> &_rep;
     os_Cursor<SCLP23_NAME(Entity_extent_ptr)> _cursor;
-    SCLBOOL_H(Boolean) _first;
+    Boolean _first;
 #endif
 
     SCLP23_NAME(Entity_extent__set)(int = 16);

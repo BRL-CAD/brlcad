@@ -95,7 +95,7 @@ FaceSurface::Print(int level) {
 	TAB(level+1); std::cout << "face_geometry:" << std::endl;
 	face_geometry->Print(level+1);
 
-	TAB(level+1); std::cout << "same_sense:" << step->getBooleanString((SCLBOOL_H(Boolean))same_sense) << std::endl;
+	TAB(level+1); std::cout << "same_sense:" << step->getBooleanString((Boolean)same_sense) << std::endl;
 
 	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	Face::Print(level+1);
