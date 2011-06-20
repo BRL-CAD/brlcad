@@ -6,8 +6,7 @@
 #include "nbtool_config.h"
 #endif
 
-#define __P(args)       args
-int yywrap __P((void));
+int yywrap(void);
 
 int
 yywrap()
