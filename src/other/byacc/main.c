@@ -1,7 +1,20 @@
 /* $Id$ */
 
 #include <signal.h>
-#include <unistd.h>		/* for _exit() */
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#  define NOMINMAX
+#  include <windows.h>
+#  include <io.h>
+
+#   undef rad1 /* Win32 radio button 1 */
+#   undef rad2 /* Win32 radio button 2 */
+#   undef small /* defined as part of the Microsoft Interface Definition Language (MIDL) */
+#   undef IN
+#   undef OUT
+
+#else
+#  include <unistd.h>		/* for _exit() */
+#endif
 
 #include "defs.h"
 
