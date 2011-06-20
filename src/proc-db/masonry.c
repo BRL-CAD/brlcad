@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file masonry.c
+/** @file proc-db/masonry.c
  *
  * build a wall out of various materials.
  *

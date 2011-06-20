@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixtest.c
+/** @file rttherm/pixtest.c
  *
  * This is a tool for testing the spectral conversion routines and the
  * underlying libraries.  Take an RGB .pix file, convert it to

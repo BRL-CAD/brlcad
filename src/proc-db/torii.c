@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file torii.c
+/** @file proc-db/torii.c
  *
  * Create a bunch of torii.
  *

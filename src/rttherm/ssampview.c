@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ssampview.c
+/** @file rttherm/ssampview.c
  *
  * Program to display spectral curves on the framebuffer.
  * Uses a Tcl script to handle the GUI.

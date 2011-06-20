@@ -18,7 +18,7 @@
  * information.
  */
 /** @{ */
-/** @file surfaceintersect.cpp
+/** @file proc-db/surfaceintersect.cpp
  *
  * This code was originally written by Joe Doliner: jdoliner@gmail.com
  */

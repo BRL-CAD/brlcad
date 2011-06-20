@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mkbuilding.c
+/** @file proc-db/mkbuilding.c
  *
  * application entry point for mkbuilding proc-db
  *

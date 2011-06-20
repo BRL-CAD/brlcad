@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tea_nmg.c
+/** @file proc-db/tea_nmg.c
  *
  * Convert the Utah Teapot description from the IEEE CG&A database to
  * the BRL-CAD t-NURBS NMG format. (Note that this has the closed

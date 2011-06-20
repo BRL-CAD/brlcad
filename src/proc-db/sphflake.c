@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sphflake.c
+/** @file proc-db/sphflake.c
  *
  * Program to create a sphere-flake utilizing libwdb
  *

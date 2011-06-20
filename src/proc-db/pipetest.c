@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pipetest.c
+/** @file proc-db/pipetest.c
  *
  * Program to generate test pipes and particles.
  *

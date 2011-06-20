@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file common.c
+/** @file proc-db/common.c
  *
  * Subroutines common to several procedural database generators.
  *

@@ -18,7 +18,7 @@
  * information.
  */
 
-/** @file ringworld.c
+/** @file proc-db/ringworld.c
  *
  * Generate a 'ringworld', as imagined by Larry Niven.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file vegetation.h
+/** @file proc-db/vegetation.h
  *
  * This is the header file to the program that generages geometry
  * that resembles or approximates a plant.  More specifically,

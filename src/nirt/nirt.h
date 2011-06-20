@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file nirt.h
+/** @file nirt/nirt.h
  *
  * Common defines and declarations used by nirt.
  *

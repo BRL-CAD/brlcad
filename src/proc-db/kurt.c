@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file kurt.c
+/** @file proc-db/kurt.c
  *
  * Program to generate polygons from a multi-valued function.
  *

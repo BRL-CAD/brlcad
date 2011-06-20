@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file interact.c
+/** @file nirt/interact.c
  *
  * handle user interaction with nirt.
  *

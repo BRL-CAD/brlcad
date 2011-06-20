@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file showshot.c
+/** @file nirt/showshot.c
  *
  * Filter output from NIRT(1) to generate an MGED(1) object
  * representing a shotline through some geometry.

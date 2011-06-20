@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ssamp-bw.c
+/** @file rttherm/ssamp-bw.c
  *
  * Program to convert spectral sample data into a single-channel
  * monocrome image.

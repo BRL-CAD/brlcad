@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file command.c
+/** @file nirt/command.c
  *
  * process nirt commands
  *

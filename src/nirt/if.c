@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file if.c
+/** @file nirt/if.c
  *
  * This program is an Interactive Ray-Tracer
  *

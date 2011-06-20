@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file brep_cube.c
+/** @file proc-db/brep_cube.c
  *
  * Creates a brep with the following topology making direct use of
  * the openNURBS API:

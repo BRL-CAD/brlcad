@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sketch.c
+/** @file proc-db/sketch.c
  *
  * Program to generate test sketches
  *

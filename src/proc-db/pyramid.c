@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pyramid.c
+/** @file proc-db/pyramid.c
  *
  * Program to generate recursive 3-d pyramids (arb4).
  * Inspired by the SigGraph paper of Glasser.

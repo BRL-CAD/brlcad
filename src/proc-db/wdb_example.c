@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file wdb_example.c
+/** @file proc-db/wdb_example.c
  * Create a BRL-CAD geometry database from C code.
  *
  * Note that this is for writing (creating/appending) a database.

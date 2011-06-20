@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file molecule.c
+/** @file proc-db/molecule.c
  *
  * Create a molecule from G. Adams format
  *

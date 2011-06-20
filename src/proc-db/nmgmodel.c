@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file nmgmodel.c
+/** @file proc-db/nmgmodel.c
  *
  * build a really hairy nmg solid in a database
  *

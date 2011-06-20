@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file vegetation.c
+/** @file proc-db/vegetation.c
  *
  * This is for a program that generages geometry that resembles or
  * approximates a plant.  More specifically, the generator is geared

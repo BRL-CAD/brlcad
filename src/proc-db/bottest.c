@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bottest.c
+/** @file proc-db/bottest.c
  *
  * Program to generate test BOT solids
  *

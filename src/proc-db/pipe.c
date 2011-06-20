@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pipe.c
+/** @file proc-db/pipe.c
  *
  * Generate piping (fuel, hydraulic lines, etc) in MGED format from
  * input (points in space defining the routing).  Makes both tubing

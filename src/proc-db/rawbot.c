@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rawbot.c
+/** @file proc-db/rawbot.c
  *
  * Program to generate a BoT from raw triangle data in a file
  *
