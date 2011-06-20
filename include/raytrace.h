@@ -2063,7 +2063,7 @@ struct rt_functab {
     void (*ft_curve)(struct curvature *cvp,
 		     struct hit *hitp,
 		     struct soltab *stp);
-    int (*ft_classify)(const struct soltab */*stp*/, const vect_t /*min*/, const vect_t /*max*/, const struct bn_tol * /*tol*/);
+    int (*ft_classify)(const struct soltab * /*stp*/, const vect_t /*min*/, const vect_t /*max*/, const struct bn_tol * /*tol*/);
     void (*ft_free)(struct soltab * /*stp*/);
     int (*ft_plot)(struct bu_list * /*vhead*/,
 		   struct rt_db_internal * /*ip*/,
