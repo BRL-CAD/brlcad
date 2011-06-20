@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file AreaConversionBasedUnit.h
+/** @file step/AreaConversionBasedUnit.h
  *
  * Class definition used to convert STEP "AreaConversionBasedUnit" to BRL-CAD BREP
  * structures.

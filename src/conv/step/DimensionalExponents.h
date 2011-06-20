@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file DimensionalExponents.h
+/** @file step/DimensionalExponents.h
  *
  * Class definition used to convert STEP "DimensionalExponents" to BRL-CAD BREP
  * structures.

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file view_bot_faces.c
+/** @file rt/view_bot_faces.c
  *
  * Ray Tracing program view module to find visible bot faces
  *

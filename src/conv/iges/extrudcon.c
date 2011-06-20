@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file extrudcon.c
+/** @file iges/extrudcon.c
  *
  * Create a TGC from a ellipse extrusion.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file BoundedSurface.h
+/** @file step/BoundedSurface.h
  *
  * Class definition used to interface to STEP "BoundedSurface".
  *

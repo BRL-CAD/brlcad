@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ParametricRepresentationContext.h
+/** @file step/ParametricRepresentationContext.h
  *
  * Class definition used to convert STEP "ParametricRepresentationContext" to BRL-CAD BREP
  * structures.

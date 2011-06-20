@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file SphericalSurface.h
+/** @file step/SphericalSurface.h
  *
  * Class definition used to interface to STEP "SphericalSurface".
  *

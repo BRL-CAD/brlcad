@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Axis2Placement2D.cpp
+/** @file step/Axis2Placement2D.cpp
  *
  * Routines to convert STEP "Axis2Placement2D" to BRL-CAD BREP
  * structures.

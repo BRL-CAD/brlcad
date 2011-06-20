@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file std.h
+/** @file vdeck/std.h
     std.h -- Douglas A. Gwyn's standard C programming definitions
     (UNIX System V version)
 

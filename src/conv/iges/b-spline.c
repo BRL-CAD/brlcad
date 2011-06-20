@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file b-spline.c
+/** @file iges/b-spline.c
  *
  * These functions evaluate a Rational B-Spline Curve
  *

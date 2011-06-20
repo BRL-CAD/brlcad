@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ext.h
+/** @file rt/ext.h
  *
  * External variable declarations for the RT family of analysis programs.
  *

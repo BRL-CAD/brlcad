@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file FaceBound.cpp
+/** @file step/FaceBound.cpp
  *
  * Routines to convert STEP "FaceBound" to BRL-CAD BREP
  * structures.

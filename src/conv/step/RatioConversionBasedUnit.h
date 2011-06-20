@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file RatioConversionBasedUnit.h
+/** @file step/RatioConversionBasedUnit.h
  *
  * Class definition used to convert STEP "RatioConversionBasedUnit" to BRL-CAD BREP
  * structures.

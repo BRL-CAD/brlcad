@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rad.h
+/** @file rt/rad.h
  *  GIFT/SRIM Radfile record format
  *
  *  Five kinds of records, each 72 (18*4) bytes long consisting of

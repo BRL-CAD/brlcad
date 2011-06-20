@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file viewarea.c
+/** @file rt/viewarea.c
  *
  * Computes the exposed and presented surface area projections of
  * specified geometry.  Exposed area is the occluded 2D projection,

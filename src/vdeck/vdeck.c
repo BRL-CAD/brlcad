@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file vdeck.c
+/** @file vdeck/vdeck.c
  *
  * Derived from KARDS, written by Keith Applin.
  *

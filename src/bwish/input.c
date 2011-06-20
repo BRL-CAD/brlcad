@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file input.c
+/** @file bwish/input.c
  *
  * Input handling routines. Some of this code was borrowed from mged/ged.c
  * and modified for use in this application.

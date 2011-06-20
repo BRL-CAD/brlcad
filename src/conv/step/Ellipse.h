@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Ellipse.h
+/** @file step/Ellipse.h
  *
  * Class definition used to convert STEP "Ellipse" to BRL-CAD BREP
  * structures.

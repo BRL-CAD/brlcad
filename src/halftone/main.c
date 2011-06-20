@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file main.c
+/** @file halftone/main.c
  *
  * given a bw file, generate a ht file.
  *

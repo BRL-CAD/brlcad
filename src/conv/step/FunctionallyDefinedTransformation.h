@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file FunctionallyDefinedTransformation.h
+/** @file step/FunctionallyDefinedTransformation.h
  *
  * Class definition used to convert STEP "FunctionallyDefinedTransformation" to BRL-CAD BREP
  * structures.

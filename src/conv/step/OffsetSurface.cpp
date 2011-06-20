@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file OffsetSurface.cpp
+/** @file step/OffsetSurface.cpp
  *
  * Routines to interface to STEP "OffsetSurface".
  *

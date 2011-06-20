@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file conv_drawings.c
+/** @file iges/conv_drawings.c
  *
  * Routine to convert IGES drawings to wire edges in BRL-CAD NMG
  * structures.

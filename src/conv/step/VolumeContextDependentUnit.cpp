@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file VolumeContextDependentUnit.cpp
+/** @file step/VolumeContextDependentUnit.cpp
  *
  * Routines to convert STEP "VolumeContextDependentUnit" to BRL-CAD BREP
  * structures.

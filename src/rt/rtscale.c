@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rtscale.c
+/** @file rt/rtscale.c
  *
  *
  *  This is a program will compute and plot an appropriate scale in the lower

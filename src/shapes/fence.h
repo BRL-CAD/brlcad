@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file fence.h
+/** @file shapes/fence.h
  *
  * This is the header file to the program that generages a chain-link
  * fence.  Every parameter of the fence may be adjusted by changing

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file SolidModel.h
+/** @file step/SolidModel.h
  *
  * Class definition used to convert STEP "SolidModel" to BRL-CAD BREP
  * structures.

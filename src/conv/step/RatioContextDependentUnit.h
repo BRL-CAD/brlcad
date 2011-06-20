@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file RatioContextDependentUnit.h
+/** @file step/RatioContextDependentUnit.h
  *
  * Class definition used to convert STEP "RatioContextDependentUnit" to BRL-CAD BREP
  * structures.

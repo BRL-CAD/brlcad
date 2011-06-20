@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file RectangularTrimmedSurface.h
+/** @file step/RectangularTrimmedSurface.h
  *
  * Class definition used to interface to STEP "RectangularTrimmedSurface".
  *

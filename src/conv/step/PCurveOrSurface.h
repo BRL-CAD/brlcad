@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file PCurveOrSurface.h
+/** @file step/PCurveOrSurface.h
  *
  * Class definition used to convert STEP "PCurveOrSurface" to BRL-CAD BREP
  * structures.

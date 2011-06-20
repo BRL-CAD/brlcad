@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ElectricCurrentContextDependentUnit.cpp
+/** @file step/ElectricCurrentContextDependentUnit.cpp
  *
  * Routines to convert STEP "ElectricCurrentContextDependentUnit" to BRL-CAD BREP
  * structures.

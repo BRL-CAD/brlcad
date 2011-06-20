@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file iges.c
+/** @file iges/iges.c
  *
  * Code to support the g-iges converter
  *

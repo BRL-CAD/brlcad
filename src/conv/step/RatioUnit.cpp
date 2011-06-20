@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file RatioUnit.cpp
+/** @file step/RatioUnit.cpp
  *
  * Routines to convert STEP "RatioUnit" to BRL-CAD BREP
  * structures.

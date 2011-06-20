@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file viewedge.c
+/** @file rt/viewedge.c
  *
  * Ray Tracing program RTEDGE bottom half.
  *

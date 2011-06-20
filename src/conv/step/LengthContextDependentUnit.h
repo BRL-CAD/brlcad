@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file LengthContextDependentUnit.h
+/** @file step/LengthContextDependentUnit.h
  *
  * Class definition used to convert STEP "LengthContextDependentUnit" to BRL-CAD BREP
  * structures.

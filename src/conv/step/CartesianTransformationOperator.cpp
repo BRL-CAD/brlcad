@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file CartesianTransformationOperator.cpp
+/** @file step/CartesianTransformationOperator.cpp
  *
  * Routines to convert STEP "CartesianTransformationOperator" to BRL-CAD BREP
  * structures.

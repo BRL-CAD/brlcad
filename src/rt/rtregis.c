@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rtregis.c
+/** @file rt/rtregis.c
  *
  * This is a program will register a Unix-Plot file with its companion
  * pix file.  It is assumed that both images were ray-traced at the

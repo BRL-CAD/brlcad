@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file viewg3.c
+/** @file rt/viewg3.c
  *
  * Ray Tracing program RTG3 bottom half.
  *

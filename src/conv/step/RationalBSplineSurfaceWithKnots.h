@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file RationalBSplineSurfaceWithKnots.h
+/** @file step/RationalBSplineSurfaceWithKnots.h
  *
  * Class definition used to convert STEP "RationalBSplineSurfaceWithKnots" to BRL-CAD BREP
  * structures.

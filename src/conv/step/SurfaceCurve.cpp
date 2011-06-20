@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file SurfaceCurve.cpp
+/** @file step/SurfaceCurve.cpp
  *
  * Routines to convert STEP "SurfaceCurve" to BRL-CAD BREP
  * structures.

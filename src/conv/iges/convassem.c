@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file convassem.c
+/** @file iges/convassem.c
  *
  * This routine controls the conversion of IGES solid assemblies to
  * BRL-CAD groups

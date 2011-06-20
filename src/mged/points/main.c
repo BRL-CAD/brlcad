@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file main.c
+/** @file points/main.c
  *
  * Author -
  *   Christopher Sean Morrison

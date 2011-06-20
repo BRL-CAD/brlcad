@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file TrimmedCurve.h
+/** @file step/TrimmedCurve.h
  *
  * Class definition used to convert STEP "TrimmedCurve" to BRL-CAD BREP
  * structures.

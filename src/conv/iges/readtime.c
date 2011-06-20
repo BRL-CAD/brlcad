@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file readtime.c
+/** @file iges/readtime.c
  *
  * This routine reads the next field in "card" buffer
  *	It expects the field to contain a string of the form:

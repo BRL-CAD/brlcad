@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file RationalBSplineCurve.h
+/** @file step/RationalBSplineCurve.h
  *
  * Class definition used to convert STEP "RationalBSplineCurve" to BRL-CAD BREP
  * structures.

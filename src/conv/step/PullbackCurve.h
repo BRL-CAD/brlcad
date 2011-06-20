@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file PullbackCurve.h
+/** @file step/PullbackCurve.h
  *
  * Pull an arbitrary model-space *curve* onto the given *surface* as a
  * curve within the surface's domain when, for each point c = C(t) on

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file BezierSurface.h
+/** @file step/BezierSurface.h
  *
  * Class definition used to convert STEP "BezierSurface" to BRL-CAD BREP
  * structures.

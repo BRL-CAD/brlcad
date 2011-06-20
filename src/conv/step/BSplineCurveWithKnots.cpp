@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file BSplineCurveWithKnots.cpp
+/** @file step/BSplineCurveWithKnots.cpp
  *
  * Routines to convert STEP "BSplineCurveWithKnots" to BRL-CAD BREP
  * structures.

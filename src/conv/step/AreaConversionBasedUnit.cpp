@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file AreaConversionBasedUnit.cpp
+/** @file step/AreaConversionBasedUnit.cpp
  *
  * Routines to convert STEP "AreaConversionBasedUnit" to BRL-CAD BREP
  * structures.

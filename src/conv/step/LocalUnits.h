@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file LocalUnits.h
+/** @file step/LocalUnits.h
  *
  * Class definition used to hold STEP unit conversion factors.
  *

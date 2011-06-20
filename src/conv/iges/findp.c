@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file findp.c
+/** @file iges/findp.c
  *
  * This routine reads the last record in the IGES file.  That record
  * contains the nunber of records in each section.  These numbers are

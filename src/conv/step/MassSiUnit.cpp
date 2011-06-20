@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file MassSiUnit.cpp
+/** @file step/MassSiUnit.cpp
  *
  * Routines to convert STEP "MassSiUnit" to BRL-CAD BREP
  * structures.

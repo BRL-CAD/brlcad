@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Axis1Placement.h
+/** @file step/Axis1Placement.h
  *
  * Class definition used to convert STEP "Axis1Placement" to BRL-CAD BREP
  * structures.

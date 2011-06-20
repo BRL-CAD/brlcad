@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file STEPWrapper.cpp
+/** @file step/STEPWrapper.cpp
  *
  * C++ wrapper to NIST STEP parser/database functions.
  *

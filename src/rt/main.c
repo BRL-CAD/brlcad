@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file main.c
+/** @file rt/main.c
  *
  * Ray Tracing User Interface (RTUIF) main program, using LIBRT
  * library.

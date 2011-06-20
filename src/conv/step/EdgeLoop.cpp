@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file EdgeLoop.cpp
+/** @file step/EdgeLoop.cpp
  *
  * Routines to convert STEP "EdgeLoop" to BRL-CAD BREP
  * structures.

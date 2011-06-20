@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file viewpp.c
+/** @file rt/viewpp.c
  *
  * Ray Tracing program RTPP bottom half.
  *

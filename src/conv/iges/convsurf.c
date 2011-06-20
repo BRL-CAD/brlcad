@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file convsurf.c
+/** @file iges/convsurf.c
  *
  * This routine loops through all the directory entries and calls
  * appropriate routines to convert solid entities to BRL-CAD

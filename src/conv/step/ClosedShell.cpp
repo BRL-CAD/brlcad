@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ClosedShell.cpp
+/** @file step/ClosedShell.cpp
  *
  * Routines to convert STEP "ClosedShell" to BRL-CAD BREP
  * structures.

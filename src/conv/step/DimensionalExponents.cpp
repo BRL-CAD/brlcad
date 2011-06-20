@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file DimensionalExponents.cpp
+/** @file step/DimensionalExponents.cpp
  *
  * Routines to convert STEP "DimensionalExponents" to BRL-CAD BREP
  * structures.

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file do.c
+/** @file rt/do.c
  *
  * Routines that process the various commands, and manage the overall
  * process of running the raytracing process.

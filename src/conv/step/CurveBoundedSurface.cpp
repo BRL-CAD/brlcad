@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file CurveBoundedSurface.cpp
+/** @file step/CurveBoundedSurface.cpp
  *
  * Routines to interface to STEP "CurveBoundedSurface".
  *

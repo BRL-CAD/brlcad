@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file view.c
+/** @file rt/view.c
  *
  * Ray Tracing program, lighting model manager.
  *

@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file cvt.c
+/** @file comgeom/cvt.c
  *
  *	This is the mainline for converting COM-GEOM
  * cards to a GED style database.

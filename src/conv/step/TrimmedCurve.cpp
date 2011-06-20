@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file TrimmedCurve.cpp
+/** @file step/TrimmedCurve.cpp
  *
  * Routines to convert STEP "TrimmedCurve" to BRL-CAD BREP
  * structures.

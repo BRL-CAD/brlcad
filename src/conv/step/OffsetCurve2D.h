@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file OffsetCurve2D.h
+/** @file step/OffsetCurve2D.h
  *
  * Class definition used to convert STEP "OffsetCurve2D" to BRL-CAD BREP
  * structures.

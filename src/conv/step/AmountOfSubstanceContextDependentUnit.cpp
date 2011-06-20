@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file AmountOfSubstanceContextDependentUnit.cpp
+/** @file step/AmountOfSubstanceContextDependentUnit.cpp
  *
  * Routines to convert STEP "AmountOfSubstanceContextDependentUnit" to BRL-CAD BREP
  * structures.

@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file unixMain.c
+/** @file bwish/unixMain.c
  *
  * This file provides the main() function for
  * BWISH and BTCLSH on Unix platforms.

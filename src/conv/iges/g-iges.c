@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file g-iges.c
+/** @file iges/g-iges.c
  *
  * Program to convert a BRL-CAD model (in a .g file) to an IGES BREP
  * file or an IGES CSG file

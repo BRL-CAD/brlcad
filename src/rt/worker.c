@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file worker.c
+/** @file rt/worker.c
  *
  * Routines to handle initialization of the grid, and dispatch of the
  * first rays from the eye.

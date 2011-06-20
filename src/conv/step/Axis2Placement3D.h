@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Axis2Placement3D.h
+/** @file step/Axis2Placement3D.h
  *
  * Class definition used to convert STEP "Axis2Placement3D" to BRL-CAD BREP
  * structures.

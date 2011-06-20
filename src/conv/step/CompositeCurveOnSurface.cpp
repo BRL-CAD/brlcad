@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file CompositeCurveOnSurface.cpp
+/** @file step/CompositeCurveOnSurface.cpp
  *
  * Routines to convert STEP "CompositeCurveOnSurface" to BRL-CAD BREP
  * structures.

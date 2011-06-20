@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Placement.cpp
+/** @file step/Placement.cpp
  *
  * Routines to convert STEP "Placement" to BRL-CAD BREP
  * structures.

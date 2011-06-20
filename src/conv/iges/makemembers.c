@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file makemembers.c
+/** @file iges/makemembers.c
  *
  * This routine traverses a boolean tree that has been converted to a
  * BRL-CAD acceptable format, and creates the member records for the

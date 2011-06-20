@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file RationalQuasiUniformCurve.h
+/** @file step/RationalQuasiUniformCurve.h
  *
  * Class definition used to convert STEP "RationalQuasiUniformCurve" to BRL-CAD BREP
  * structures.

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file RectangularCompositeSurface.h
+/** @file step/RectangularCompositeSurface.h
  *
  * Class definition used to interface to STEP "RectangularCompositeSurface".
  *

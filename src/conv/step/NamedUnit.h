@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file NamedUnit.h
+/** @file step/NamedUnit.h
  *
  * Class definition used to convert STEP "NamedUnit" to BRL-CAD BREP
  * structures.

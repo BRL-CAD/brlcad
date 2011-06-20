@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ConversionBasedUnit.cpp
+/** @file step/ConversionBasedUnit.cpp
  *
  * Routines to convert STEP "ConversionBasedUnit" to BRL-CAD BREP
  * structures.

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file viewscat.c
+/** @file rt/viewscat.c
  *
  *  Ray Tracing program RTRAD bottom half.
  *

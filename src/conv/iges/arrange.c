@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file arrange.c
+/** @file iges/arrange.c
  *
  * This routine manipulates the boolean tree towards the form that
  * BRL-CAD likes, i.e. (((a+b)-c)+d) as opposed to (a+(b-(c-d))).  The

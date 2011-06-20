@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Direction.h
+/** @file step/Direction.h
  *
  * Class definition used to convert STEP "Direction" to BRL-CAD BREP
  * structures.

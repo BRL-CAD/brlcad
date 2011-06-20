@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file PCurve.cpp
+/** @file step/PCurve.cpp
  *
  * Routines to convert STEP "PCurve" to BRL-CAD BREP
  * structures.

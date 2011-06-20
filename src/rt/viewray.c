@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file viewray.c
+/** @file rt/viewray.c
  *
  *  Ray Tracing program RTRAY bottom half.
  *

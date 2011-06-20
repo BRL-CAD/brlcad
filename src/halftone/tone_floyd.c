@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tone_floyd.c
+/** @file halftone/tone_floyd.c
  *
  *  Author -
  *	Christopher T. Johnson	- 90/03/21

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file viewweight.c
+/** @file rt/viewweight.c
  *
  *  Ray Tracing program RTWEIGHT bottom half.
  *

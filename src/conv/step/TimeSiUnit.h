@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file TimeSiUnit.h
+/** @file step/TimeSiUnit.h
  *
  * Class definition used to convert STEP "TimeSiUnit" to BRL-CAD BREP
  * structures.

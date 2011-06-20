@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file f2a.c
+/** @file comgeom/f2a.c
  *
  * convert float to ascii.
  */

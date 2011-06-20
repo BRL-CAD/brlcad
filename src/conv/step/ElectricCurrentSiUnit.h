@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ElectricCurrentSiUnit.h
+/** @file step/ElectricCurrentSiUnit.h
  *
  * Class definition used to convert STEP "ElectricCurrentSiUnit" to BRL-CAD BREP
  * structures.

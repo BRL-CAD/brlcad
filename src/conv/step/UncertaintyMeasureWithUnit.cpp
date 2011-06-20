@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file UncertaintyMeasureWithUnit.cpp
+/** @file step/UncertaintyMeasureWithUnit.cpp
  *
  * Routines to convert STEP "UncertaintyMeasureWithUnit" to BRL-CAD BREP
  * structures.

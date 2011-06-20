@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file SolidAngleConversionBasedUnit.cpp
+/** @file step/SolidAngleConversionBasedUnit.cpp
  *
  * Routines to convert STEP "SolidAngleConversionBasedUnit" to BRL-CAD BREP
  * structures.

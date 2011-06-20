@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file process.c
+/** @file points/process.c
  *
  * Data structures for the comma-separated value point file parser.
  *

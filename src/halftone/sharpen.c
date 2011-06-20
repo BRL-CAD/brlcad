@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sharpen.c
+/** @file halftone/sharpen.c
  *
  * return a sharpened tone mapped buffer.
  *

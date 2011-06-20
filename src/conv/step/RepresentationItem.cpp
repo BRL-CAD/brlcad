@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file RepresentationItem.cpp
+/** @file step/RepresentationItem.cpp
  *
  * Routines to convert STEP "RepresentationItem" to BRL-CAD BREP
  * structures.

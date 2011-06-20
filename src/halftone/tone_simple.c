@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tone_simple.c
+/** @file halftone/tone_simple.c
  *
  *  Author -
  *	Christopher T. Johnson	- 90/03/21

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file SurfaceReplica.cpp
+/** @file step/SurfaceReplica.cpp
  *
  * Routines to interface to STEP "SurfaceReplica".
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file cgarbs.c
+/** @file vdeck/cgarbs.c
  *
  *  Routines to take a generalized ARB in 8-point form,
  *  determine which points are equivalent,

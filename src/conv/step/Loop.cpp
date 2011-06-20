@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Loop.cpp
+/** @file step/Loop.cpp
  *
  * Routines to convert STEP "Loop" to BRL-CAD BREP
  * structures.

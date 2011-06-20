@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file PlaneAngleContextDependentUnit.cpp
+/** @file step/PlaneAngleContextDependentUnit.cpp
  *
  * Routines to convert STEP "PlaneAngleContextDependentUnit" to BRL-CAD BREP
  * structures.

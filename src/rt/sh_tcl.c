@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_tcl.c
+/** @file rt/sh_tcl.c
  *
  *  Tcl interfaces to RT material & shader routines.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file FunctionallyDefinedTransformation.cpp
+/** @file step/FunctionallyDefinedTransformation.cpp
  *
  * Routines to convert STEP "FunctionallyDefinedTransformation" to BRL-CAD BREP
  * structures.

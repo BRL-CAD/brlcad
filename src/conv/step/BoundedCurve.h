@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file BoundedCurve.h
+/** @file step/BoundedCurve.h
  *
  * Class definition used to convert STEP "BoundedCurve" to BRL-CAD BREP
  * structures.

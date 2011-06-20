@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file SurfaceOfRevolution.h
+/** @file step/SurfaceOfRevolution.h
  *
  * Class definition used to interface to STEP "SurfaceOfRevolution".
  *

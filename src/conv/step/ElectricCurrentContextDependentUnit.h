@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ElectricCurrentContextDependentUnit.h
+/** @file step/ElectricCurrentContextDependentUnit.h
  *
  * Class definition used to convert STEP "ElectricCurrentContextDependentUnit" to BRL-CAD BREP
  * structures.

@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file solid.c
+/** @file comgeom/solid.c
  *
  *  Subroutine to convert solids from
  *  COMGEOM card decks into GED object files.  This conversion routine

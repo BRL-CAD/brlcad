@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file scanline.c
+/** @file rt/scanline.c
 *
  * Source and implementation of scanline functions.
  *

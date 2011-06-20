@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bubbleup.c
+/** @file iges/bubbleup.c
  *
  * This routine finds union operators in the boolean tree that cannot
  * be handled by BRL-CAD (due to BRL-CAD's odd way of handling the

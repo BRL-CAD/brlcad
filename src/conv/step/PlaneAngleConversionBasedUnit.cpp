@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file PlaneAngleConversionBasedUnit.cpp
+/** @file step/PlaneAngleConversionBasedUnit.cpp
  *
  * Routines to convert STEP "PlaneAngleConversionBasedUnit" to BRL-CAD BREP
  * structures.

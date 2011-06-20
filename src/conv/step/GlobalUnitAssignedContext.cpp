@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file GlobalUnitAssignedContext.cpp
+/** @file step/GlobalUnitAssignedContext.cpp
  *
  * Routines to convert STEP "GlobalUnitAssignedContext" to BRL-CAD BREP
  * structures.

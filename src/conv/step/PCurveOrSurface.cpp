@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file PCurveOrSurface.cpp
+/** @file step/PCurveOrSurface.cpp
  *
  * Routines to convert STEP "PCurveOrSurface" to BRL-CAD BREP
  * structures.

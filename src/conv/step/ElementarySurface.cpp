@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ElementarySurface.cpp
+/** @file step/ElementarySurface.cpp
  *
  * Routines to interface to STEP "ElementarySurface".
  *

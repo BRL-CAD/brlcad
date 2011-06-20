@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file OpenNurbsInterfaces.cpp
+/** @file step/OpenNurbsInterfaces.cpp
  *
  * Routines to convert STEP "OpenNurbsInterfaces" to BRL-CAD BREP
  * structures.

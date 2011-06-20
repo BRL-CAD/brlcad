@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file makegroup.c
+/** @file iges/makegroup.c
  *
  * This routine creates a group called "all" consisting of all
  * unreferenced entities.

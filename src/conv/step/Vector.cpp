@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Vector.cpp
+/** @file step/Vector.cpp
  *
  * Routines to convert STEP "Vector" to BRL-CAD BREP
  * structures.

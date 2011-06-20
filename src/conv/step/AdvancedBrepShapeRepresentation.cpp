@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file AdvancedBrepShapeRepresentation.cpp
+/** @file step/AdvancedBrepShapeRepresentation.cpp
  *
  * Routines to convert STEP "AdvancedBrepShapeRepresentation" to BRL-CAD BREP
  * structures.

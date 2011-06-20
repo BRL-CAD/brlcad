@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Curve.cpp
+/** @file step/Curve.cpp
  *
  * Routines to convert STEP "Curve" to BRL-CAD BREP
  * structures.

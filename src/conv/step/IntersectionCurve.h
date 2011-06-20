@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file IntersectionCurve.h
+/** @file step/IntersectionCurve.h
  *
  * Class definition used to convert STEP "IntersectionCurve" to BRL-CAD BREP
  * structures.

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file TimeSiUnit.cpp
+/** @file step/TimeSiUnit.cpp
  *
  * Routines to convert STEP "TimeSiUnit" to BRL-CAD BREP
  * structures.

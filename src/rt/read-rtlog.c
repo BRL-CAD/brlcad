@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file read-rtlog.c
+/** @file rt/read-rtlog.c
  *
  * This is a program will read an RT log file.  It is meant to be used
  * by any other program that needs to read an RT log file to extract

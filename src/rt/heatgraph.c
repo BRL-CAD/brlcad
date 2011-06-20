@@ -18,7 +18,7 @@
  * information.
  */
 
-/** @file heatgraph.c
+/** @file rt/heatgraph.c
  *
  * Holds information on the time table used for the heat graph, which
  * is a light mode used in view.c

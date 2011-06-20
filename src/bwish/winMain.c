@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file winMain.c
+/** @file bwish/winMain.c
  *
  * This file provides the WinMain() function for BWISH.
  *

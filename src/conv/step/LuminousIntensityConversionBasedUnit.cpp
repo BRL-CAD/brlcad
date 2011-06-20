@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file LuminousIntensityConversionBasedUnit.cpp
+/** @file step/LuminousIntensityConversionBasedUnit.cpp
  *
  * Routines to convert STEP "LuminousIntensityConversionBasedUnit" to BRL-CAD BREP
  * structures.

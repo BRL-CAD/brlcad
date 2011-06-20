@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file AmountOfSubstanceContextDependentUnit.h
+/** @file step/AmountOfSubstanceContextDependentUnit.h
  *
  * Class definition used to convert STEP "AmountOfSubstanceContextDependentUnit" to BRL-CAD BREP
  * structures.

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file RationalBezierCurve.h
+/** @file step/RationalBezierCurve.h
  *
  * Class definition used to convert STEP "RationalBezierCurve" to BRL-CAD BREP
  * structures.

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file viewmlt.c
+/** @file rt/viewmlt.c
  *
  * Implementation of the Metropolis Light Transport algorithm.
  */

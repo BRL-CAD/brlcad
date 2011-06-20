@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file CartesianTransformationOperator3D.h
+/** @file step/CartesianTransformationOperator3D.h
  *
  * Class definition used to convert STEP "CartesianTransformationOperator3D" to BRL-CAD BREP
  * structures.

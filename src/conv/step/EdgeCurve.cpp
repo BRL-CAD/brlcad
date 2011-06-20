@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file EdgeCurve.cpp
+/** @file step/EdgeCurve.cpp
  *
  * Routines to convert STEP "EdgeCurve" to BRL-CAD BREP
  * structures.

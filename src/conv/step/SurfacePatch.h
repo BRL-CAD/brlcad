@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file SurfacePatch.h
+/** @file step/SurfacePatch.h
  *
  * Class definition used to convert STEP "SurfacePatch" to BRL-CAD BREP
  * structures.

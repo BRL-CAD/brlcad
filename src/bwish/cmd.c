@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file cmd.c
+/** @file bwish/cmd.c
  *
  * This is the place where BWISH/BTCLSH's commands live.  The history
  * routines were borrowed from mged/history.c and modified for use in

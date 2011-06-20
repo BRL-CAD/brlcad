@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Path.cpp
+/** @file step/Path.cpp
  *
  * Routines to convert STEP "Path" to BRL-CAD BREP
  * structures.

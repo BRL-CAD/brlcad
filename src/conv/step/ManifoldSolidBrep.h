@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ManifoldSolidBrep.h
+/** @file step/ManifoldSolidBrep.h
  *
  * Class definition used to convert STEP "ManifoldSolidBrep" to BRL-CAD BREP
  * structures.

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file BSplineCurve.h
+/** @file step/BSplineCurve.h
  *
  * Class definition used to convert STEP "BSplineCurve" to BRL-CAD BREP
  * structures.

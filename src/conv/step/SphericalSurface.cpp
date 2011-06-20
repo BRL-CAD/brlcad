@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file SphericalSurface.cpp
+/** @file step/SphericalSurface.cpp
  *
  * Routines to interface to STEP "SphericalSurface".
  *

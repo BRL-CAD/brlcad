@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file EdgeLoop.h
+/** @file step/EdgeLoop.h
  *
  * Class definition used to convert STEP "EdgeLoop" to BRL-CAD BREP
  * structures.

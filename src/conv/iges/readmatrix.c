@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file readmatrix.c
+/** @file iges/readmatrix.c
  * 
  * Routine to read a transformation matrix from the IGES file.  xform
  * is the pointer to the parameter entry for the matrix, rot is where

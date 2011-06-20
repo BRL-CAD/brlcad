@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file PullbackCurve.cpp
+/** @file step/PullbackCurve.cpp
  *
  * Pull curve back into UV space from 3D space
  *

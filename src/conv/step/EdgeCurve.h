@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file EdgeCurve.h
+/** @file step/EdgeCurve.h
  *
  * Class definition used to convert STEP "EdgeCurve" to BRL-CAD BREP
  * structures.

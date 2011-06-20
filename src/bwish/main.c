@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file main.c
+/** @file bwish/main.c
  *
  * This file provides the main() function for both BWISH and BTCLSH.
  * While initializing Tcl, Itcl and various BRL-CAD libraries it sets

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file MeasureValue.h
+/** @file step/MeasureValue.h
  *
  * Class definition used to convert STEP "MeasureValue" to BRL-CAD BREP
  * structures.

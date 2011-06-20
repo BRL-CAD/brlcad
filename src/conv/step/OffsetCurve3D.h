@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file OffsetCurve3D.h
+/** @file step/OffsetCurve3D.h
  *
  * Class definition used to convert STEP "OffsetCurve3D" to BRL-CAD BREP
  * structures.

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Edge.cpp
+/** @file step/Edge.cpp
  *
  * Routines to convert STEP "Edge" to BRL-CAD BREP
  * structures.

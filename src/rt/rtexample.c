@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rtexample.c
+/** @file rt/rtexample.c
  *
  * This is a heavily commented example of a program that uses librt to
  * shoot a single ray at some geometry in a .g database.

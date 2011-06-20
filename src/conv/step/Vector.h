@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Vector.h
+/** @file step/Vector.h
  *
  * Class definition used to convert STEP "Vector" to BRL-CAD BREP
  * structures.

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file AdvancedFace.cpp
+/** @file step/AdvancedFace.cpp
  *
  * Routines to convert STEP "AdvancedFace" to BRL-CAD BREP
  * structures.

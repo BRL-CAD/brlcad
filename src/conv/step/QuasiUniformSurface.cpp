@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file QuasiUniformSurface.cpp
+/** @file step/QuasiUniformSurface.cpp
  *
  * Routines to interface to STEP "QuasiUniformSurface".
  *

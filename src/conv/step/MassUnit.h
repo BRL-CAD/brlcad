@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file MassUnit.h
+/** @file step/MassUnit.h
  *
  * Class definition used to convert STEP "MassUnit" to BRL-CAD BREP
  * structures.

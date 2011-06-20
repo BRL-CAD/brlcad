@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file LocalUnits.cpp
+/** @file step/LocalUnits.cpp
  *
  * Routines to hold local STEP Unit conversion factors.
  *

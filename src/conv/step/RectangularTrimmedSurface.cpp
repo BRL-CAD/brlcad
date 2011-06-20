@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file RectangularTrimmedSurface.cpp
+/** @file step/RectangularTrimmedSurface.cpp
  *
  * Routines to interface to STEP "RectangularTrimmedSurface".
  *

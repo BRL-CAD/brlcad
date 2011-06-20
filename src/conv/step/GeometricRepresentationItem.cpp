@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file GeometricRepresentationItem.cpp
+/** @file step/GeometricRepresentationItem.cpp
  *
  * Routines to convert STEP "GeometricRepresentationItem" to BRL-CAD BREP
  * structures.

@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file count.c
+/** @file points/count.c
  *
  * Basic counting structure and functions.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file GeometricRepresentationContext.cpp
+/** @file step/GeometricRepresentationContext.cpp
  *
  * Routines to convert STEP "GeometricRepresentationContext" to BRL-CAD BREP
  * structures.

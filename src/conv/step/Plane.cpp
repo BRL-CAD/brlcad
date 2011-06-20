@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Plane.cpp
+/** @file step/Plane.cpp
  *
  * Routines to interface to STEP "Plane".
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file viewsil.c
+/** @file rt/viewsil.c
  *
  *  Application-specific code for rtsil(1)
  *

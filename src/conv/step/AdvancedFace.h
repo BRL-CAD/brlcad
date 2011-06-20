@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file AdvancedFace.h
+/** @file step/AdvancedFace.h
  *
  * Class definition used to convert STEP "AdvancedFace" to BRL-CAD BREP
  * structures.

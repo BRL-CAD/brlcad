@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file TrimmingSelect.cpp
+/** @file step/TrimmingSelect.cpp
  *
  * Routines to convert STEP "TrimmingSelect" to BRL-CAD BREP
  * structures.

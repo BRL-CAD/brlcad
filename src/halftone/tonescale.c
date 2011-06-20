@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tonescale.c
+/** @file halftone/tonescale.c
  *
  * Given a raw pixel value, return a scaled value.
  *

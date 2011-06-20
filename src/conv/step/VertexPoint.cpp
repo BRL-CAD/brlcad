@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file VertexPoint.cpp
+/** @file step/VertexPoint.cpp
  *
  * Routines to convert STEP "VertexPoint" to BRL-CAD BREP
  * structures.

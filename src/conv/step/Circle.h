@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Circle.h
+/** @file step/Circle.h
  *
  * Class definition used to convert STEP "Circle" to BRL-CAD BREP
  * structures.

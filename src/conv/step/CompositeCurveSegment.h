@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file CompositeCurveSegment.h
+/** @file step/CompositeCurveSegment.h
  *
  * Class definition used to convert STEP "CompositeCurveSegment" to BRL-CAD BREP
  * structures.

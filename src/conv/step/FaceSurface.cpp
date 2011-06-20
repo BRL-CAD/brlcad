@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file FaceSurface.cpp
+/** @file step/FaceSurface.cpp
  *
  * Routines to convert STEP "FaceSurface" to BRL-CAD BREP
  * structures.

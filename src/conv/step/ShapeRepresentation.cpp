@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ShapeRepresentation.cpp
+/** @file step/ShapeRepresentation.cpp
  *
  * Routines to convert STEP "ShapeRepresentation" to BRL-CAD BREP
  * structures.

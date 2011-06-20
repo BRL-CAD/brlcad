@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file convtree.c
+/** @file iges/convtree.c
  *
  * This routine controls the conversion of IGES boolean trees
  * to BRL-CAD objects.

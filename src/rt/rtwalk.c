@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rtwalk.c
+/** @file rt/rtwalk.c
  *
  * Demonstration Ray Tracing main program, using RT library.  Walk a
  * path *without running into any geometry*, given the start and goal

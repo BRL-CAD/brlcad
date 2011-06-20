@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file SolidAngleUnit.h
+/** @file step/SolidAngleUnit.h
  *
  * Class definition used to convert STEP "SolidAngleUnit" to BRL-CAD BREP
  * structures.

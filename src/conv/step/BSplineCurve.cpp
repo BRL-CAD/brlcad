@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file BSplineCurve.cpp
+/** @file step/BSplineCurve.cpp
  *
  * Routines to convert STEP "BSplineCurve" to BRL-CAD BREP
  * structures.

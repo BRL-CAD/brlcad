@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Representation.h
+/** @file step/Representation.h
  *
  * Class definition used to convert STEP "Representation" to BRL-CAD BREP
  * structures.

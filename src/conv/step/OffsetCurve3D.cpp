@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file OffsetCurve3D.cpp
+/** @file step/OffsetCurve3D.cpp
  *
  * Routines to convert STEP "OffsetCurve3D" to BRL-CAD BREP
  * structures.

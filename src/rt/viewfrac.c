@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file viewfrac.c
+/** @file rt/viewfrac.c
  *
  *  An experimental volume fractions code.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file RationalBezierCurve.cpp
+/** @file step/RationalBezierCurve.cpp
  *
  * Routines to convert STEP "RationalBezierCurve" to BRL-CAD BREP
  * structures.

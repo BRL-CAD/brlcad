@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Hyperbola.h
+/** @file step/Hyperbola.h
  *
  * Class definition used to convert STEP "Hyperbola" to BRL-CAD BREP
  * structures.

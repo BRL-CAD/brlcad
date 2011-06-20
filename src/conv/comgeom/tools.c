@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file tools.c
+/** @file comgeom/tools.c
  *
  */
 

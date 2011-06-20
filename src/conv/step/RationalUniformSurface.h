@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file RationalUniformSurface.h
+/** @file step/RationalUniformSurface.h
  *
  * Class definition used to convert STEP "RationalUniformSurface" to BRL-CAD BREP
  * structures.

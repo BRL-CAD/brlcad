@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file fbserv.c
+/** @file fbserv/fbserv.c
  *
  *  Remote libfb server (originally rfbd).
  *

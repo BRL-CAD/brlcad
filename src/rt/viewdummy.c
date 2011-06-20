@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file viewdummy.c
+/** @file rt/viewdummy.c
  *
  *  A dummy or example "view" module.
  *  This code may be used as a prototype for building a new application

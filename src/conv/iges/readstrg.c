@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file readstrg.c
+/** @file iges/readstrg.c
  *
  * This routine reads the next field in "card" buffer.  It expects the
  * field to contain a character string of the form "nHstring" where n
