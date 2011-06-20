@@ -19,10 +19,10 @@
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
+#include "common.h"
 #include "parser.h"
 #include <stdlib.h>
 #include <errno.h>
-#include <stdint.h>
 #include <limits.h>
 
 extern int mimic_gnu;
