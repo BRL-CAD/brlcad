@@ -667,7 +667,7 @@ $ECHO
 
 # determine raytracer version
 $ECHO "RT reports the following version information:"
-versions="`$RT 2>&1 | grep BRL-CAD`"
+versions="`$RT 2>&1 | grep BRL-CAD | grep Release`"
 if test "x$versions" = "x" ; then
     $ECHO "Unknown"
 else
@@ -675,17 +675,27 @@ else
 fi
 $ECHO
 
+
 # if expr works, let the user know about how long this might take
 if test "x`expr 1 - 1 2>/dev/null`" = "x0" ; then
-    mintime="`expr $TIMEFRAME \* 6`"
+    mintime="`expr 6 \* $TIMEFRAME`"
+    if test $mintime -lt 1 ; then
+	mintime=0 # zero is okay
+    fi
     $ECHO "Minimum run time is `$ELP $mintime`"
-    maxtime="`expr $MAXTIME \* 6`"
+    maxtime="`expr 6 \* $MAXTIME`"
+    if test $maxtime -lt 1 ; then
+	maxtime=1 # zero would be misleading
+    fi
     $ECHO "Maximum run time is `$ELP $maxtime`"
-    estimate="`expr $mintime \* 3`"
+    estimate="`expr 3 \* $mintime`"
+    if test $estimate -lt 1 ; then
+	estimate=1 # zero would be misleading
+    fi
     if test $estimate -gt $maxtime ; then
 	estimate="$maxtime"
     fi
-    $ECHO "Estimated   time is `$ELP $estimate`"
+    $ECHO "Estimated time is `$ELP $estimate`"
     $ECHO
 else
     $ECHO "WARNING: expr is unavailable, unable to compute statistics"
@@ -922,11 +932,16 @@ bench ( ) {
     bench_start_time="`date '+%H %M %S'`"
     bench_overall_elapsed=0
 
-    while test $bench_overall_elapsed -lt $MAXTIME ; do
+    # clear out before we begin
+    if test -f ${bench_testname}.pix; then mv -f ${bench_testname}.pix ${bench_testname}.pix.$$; fi
+    if test -f ${bench_testname}.log; then mv -f ${bench_testname}.log ${bench_testname}.log.$$; fi
+
+    while test $bench_overall_elapsed -le $MAXTIME ; do
 
 	bench_elapsed=0
-	while test $bench_elapsed -lt $TIMEFRAME ; do
+	while test $bench_elapsed -le $TIMEFRAME ; do
 
+	    # clear out any previous run
 	    if test -f ${bench_testname}.pix; then mv -f ${bench_testname}.pix ${bench_testname}.pix.$$; fi
 	    if test -f ${bench_testname}.log; then mv -f ${bench_testname}.log ${bench_testname}.log.$$; fi
 
@@ -1004,7 +1019,7 @@ EOF
 
 	    # see if we need to break out early
 	    bench_overall_elapsed="`$ELP --seconds $bench_start_time`"
-	    if test $bench_overall_elapsed -ge $MAXTIME ; then
+	    if test $bench_overall_elapsed -gt $MAXTIME ; then
 		break;
 	    fi
 	done
