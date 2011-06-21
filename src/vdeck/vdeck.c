@@ -28,13 +28,14 @@
  * table, and Ident table, which when concatenated in that order, make
  * a COM-GEOM deck.  The record formats in the order that they appear,
  * are described below, and are strictly column oriented.
-
+ *
  * Note that the Solid table begins with a Title and a Control card,
  * the rest of the record types appear once for each object, that is,
  * one Solid record for each Solid, one Region and one Ident record
  * for each Region as totaled on the Control card, however, the Solid
  * and Region records may span more than 1 card.
  *
+ @code
  --------------------------------------------------------------------------------
  |File|Record  :             Contents              :       Format               |
  |----|-------------------------------------------------------------------------|
@@ -49,6 +50,7 @@
  | 3  |Flag    : a -1 marks end of region table    : i5                         |
  |    |Idents  : reg_#, ident, space, mat,%, desc  : 5i5, 5x, a50               |
  --------------------------------------------------------------------------------
+ @endcode
  *
  */
 
