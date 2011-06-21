@@ -74,6 +74,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* implement http network transfer tool for crash reports and benchmark
+  analyses (via libfetch)
+
+* reimplement benchmark suite in C/C++
+
 * implement oed+tra/sca/rot functionality consistently in libged as
   translate/scale/rotate with a signature similar to:
 
