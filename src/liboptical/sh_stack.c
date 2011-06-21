@@ -151,7 +151,7 @@ retry:
 	optical_shader_init(&shaders);
     }
 
-    for (mfp = shaders; mfp != MF_NULL; mfp = mfp->mf_forw) {
+    for (mfp = shaders; mfp && mfp->mf_name != NULL; mfp = mfp->mf_forw) {
 	if (matname[0] != mfp->mf_name[0]  ||
 	    !BU_STR_EQUAL(matname, mfp->mf_name))
 	    continue;
@@ -183,7 +183,7 @@ found:
 	bu_vls_strcat(&arg, ++cp);
     if (rdebug&RDEBUG_MATERIAL)
 	bu_log("calling %s with %s\n", mfp->mf_name, bu_vls_addr(&arg));
-    if (mfp->mf_setup(rp, &arg, dpp, mfp, rtip) < 0) {
+    if (!mfp || !mfp->mf_setup || mfp->mf_setup(rp, &arg, dpp, mfp, rtip) < 0) {
 	/* Setup has failed */
 	bu_vls_free(&arg);
 	ret = -1;		/* BAD */
@@ -288,7 +288,7 @@ sh_stk_render(struct application *ap, const struct partition *pp, struct shadewo
     register struct stk_specific *sp =
 	(struct stk_specific *)dp;
     int i;
-    int ret_status;
+    int ret_status = 0;
     char tmp[128];
 
     for (i = 0; i < 16 && sp->mfuncs[i] != NULL; i++) {
@@ -302,9 +302,10 @@ sh_stk_render(struct application *ap, const struct partition *pp, struct shadewo
 	 * Every shader takes the shadework structure as its
 	 * input and updates it as the "output".
 	 */
-	ret_status = sp->mfuncs[i]->mf_render(ap, pp, swp, sp->udata[i]);
-
-	if (! ret_status) return ret_status;
+	if (sp && sp->mfuncs[i] && sp->mfuncs[i]->mf_render)
+	    ret_status = sp->mfuncs[i]->mf_render(ap, pp, swp, sp->udata[i]);
+	if (ret_status != 1)
+	    return 0;
 
     }
     return 1;
@@ -325,7 +326,11 @@ sh_stk_print(register struct region *rp, genptr_t dp)
 
     for (i = 0; i < 16 && sp->mfuncs[i] != NULL; i++) {
 	bu_log("~~~~stack entry %d:\n", i);
-	sp->mfuncs[i]->mf_print(rp, sp->udata[i]);
+	if (sp && sp->mfuncs[i] && sp->mfuncs[i]->mf_print) {
+	    sp->mfuncs[i]->mf_print(rp, sp->udata[i]);
+	} else {
+	    bu_log("WARNING: unexpected NULL print function encountered\n");
+	}
     }
 
     bu_log("~~~~ending stack print\n");
@@ -343,7 +348,9 @@ sh_stk_free(genptr_t cp)
     int i;
 
     for (i = 0; i < 16 && sp->mfuncs[i] != NULL; i++) {
-	sp->mfuncs[i]->mf_free(sp->udata[i]);
+	if (sp && sp->mfuncs[i] && sp->mfuncs[i]->mf_free) {
+	    sp->mfuncs[i]->mf_free(sp->udata[i]);
+	}
     }
 
     bu_free(cp, "stk_specific");

@@ -54,7 +54,7 @@ mlib_add_shader(struct mfuncs **headp, struct mfuncs *mfp1)
     register struct mfuncs *mfp;
 
     RT_CK_MF(mfp1);
-    for (mfp = mfp1; mfp->mf_name != (char *)0; mfp++) {
+    for (mfp = mfp1; mfp && mfp->mf_name != (char *)0; mfp++) {
 	RT_CK_MF(mfp);
 	mfp->mf_forw = *headp;
 	*headp = mfp;
@@ -108,7 +108,7 @@ found:
 	bu_log("%s_mfuncs table found\n", shader_name);
 
     /* make sure the shader we were looking for is in the mfuncs table */
-    for (mfp = shader_mfuncs; mfp->mf_name != (char *)NULL; mfp++) {
+    for (mfp = shader_mfuncs; mfp && mfp->mf_name != (char *)NULL; mfp++) {
 	RT_CK_MF(mfp);
 
 	if (BU_STR_EQUAL(mfp->mf_name, shader_name))
@@ -207,7 +207,7 @@ mlib_setup(struct mfuncs **headp,
     struct mfuncs *mfp_new = NULL;
 
     const struct mfuncs *mfp;
-    int ret;
+    int ret = -1;
     struct bu_vls params;
     struct bu_vls name;
     const char *material;
@@ -239,7 +239,7 @@ mlib_setup(struct mfuncs **headp,
     bu_vls_strncpy(&name, material, mlen);
 
 retry:
-    for (mfp = *headp; mfp != MF_NULL; mfp = mfp->mf_forw) {
+    for (mfp = *headp; mfp && mfp->mf_name != NULL; mfp = mfp->mf_forw) {
 	if (material[0] != mfp->mf_name[0] || !BU_STR_EQUAL(bu_vls_addr(&name), mfp->mf_name))
 	    continue;
 	goto found;
@@ -285,7 +285,10 @@ found:
 
     if (R_DEBUG&RDEBUG_MATERIAL)
 	bu_log("mlib_setup(%s) shader=%s\n", rp->reg_name, mfp->mf_name);
-    if ((ret = mfp->mf_setup(rp, &params, &rp->reg_udata, mfp, rtip)) < 0) {
+
+    if (mfp && mfp->mf_setup)
+	ret = mfp->mf_setup(rp, &params, &rp->reg_udata, mfp, rtip);
+    if (ret < 0) {
 	bu_log("ERROR mlib_setup(%s) failed. material='%s', parameters='%s'.\n",
 	       rp->reg_name, bu_vls_addr(&name), bu_vls_addr(&params));
 	if (material != mdefault) {
@@ -326,7 +329,8 @@ mlib_free(register struct region *rp)
 	return;
     }
 
-    if (mfp->mf_free) mfp->mf_free(rp->reg_udata);
+    if (mfp->mf_free)
+	mfp->mf_free(rp->reg_udata);
     rp->reg_mfuncs = (char *)0;
     rp->reg_udata = (char *)0;
 }
