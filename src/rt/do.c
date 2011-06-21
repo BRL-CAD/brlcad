@@ -365,7 +365,7 @@ int cm_multiview(int UNUSED(argc), char **UNUSED(argv))
  *
  * Experimental animation code
  *
- * Usage:  anim <path> <type> args
+ * Usage: anim path type args
  */
 int cm_anim(int argc, const char **argv)
 {
