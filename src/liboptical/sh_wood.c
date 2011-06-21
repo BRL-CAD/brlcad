@@ -84,7 +84,6 @@ extern fastf_t turb_table[20][20][20];
  * Sundry routine declarations
  */
 
-HIDDEN int wood_init(void);
 HIDDEN int wood_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
 HIDDEN int wood_render(struct application *ap, const struct partition *partp, struct shadework *swp, genptr_t dp);
 HIDDEN void wood_print(register struct region *rp, genptr_t dp);
@@ -97,19 +96,11 @@ HIDDEN void wood_D_set(const struct bu_structparse *, const char *, const char *
  * functions block for the shader
  */
 
-#ifdef eRT
-struct mfuncs wood_mfuncs[] = {
-    {MF_MAGIC,	"wood",		0,	MFI_HIT|MFI_UV|MFI_NORMAL,	0,	wood_init,	wood_setup,	wood_render,	wood_print,	wood_free},
-    {MF_MAGIC,	"w",		0,	MFI_HIT|MFI_UV|MFI_NORMAL,	0,	wood_init,	wood_setup,	wood_render,	wood_print,	wood_free},
-    {0,		(char *)0,	0,	0,				0,	0,		0,		0,		0,		0}
-};
-#else
 struct mfuncs wood_mfuncs[] = {
     {MF_MAGIC,	"wood",		0,	MFI_HIT|MFI_UV|MFI_NORMAL,	0,	wood_setup,	wood_render,	wood_print,	wood_free},
     {MF_MAGIC,	"w",		0,	MFI_HIT|MFI_UV|MFI_NORMAL,	0,	wood_setup,	wood_render,	wood_print,	wood_free},
     {0,		(char *)0,	0,	0,				0,	0,		0,		0,		0}
 };
-#endif
 
 /*
  * Impure storage area for shader
@@ -163,7 +154,7 @@ HIDDEN void wood_setup_2(struct wood_specific *);
  * Listhead for multi-region wood combinations
  */
 
-static struct wood_specific *Wood_Chain;
+static struct wood_specific *Wood_Chain = WOOD_NULL;
 
 /*
  * MATPARM parsing structure
@@ -214,33 +205,6 @@ struct bu_structparse wood_parse[] = {
 #define IPOINTS 10			/* undithered number of points */
 #define TPOINTS 20			/* Dithering space */
 
-static int wood_done = 0;
-
-
-/*
- * W O O D _ I N I T
- *
- * This routine is called at the beginning of RT's cycle to initialize
- * the noise table.
- */
-
-HIDDEN int
-wood_init(void)
-{
-
-    /*
-     * Initialize the wood chain
-     */
-
-    Wood_Chain = WOOD_NULL;
-
-    /*
-     * Return to caller
-     */
-
-    return 1;
-}
-
 
 /*
  * M I S C _ S E T U P _ F U N C T I O N S
@@ -283,18 +247,6 @@ wood_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
 
     extern struct resource rt_uniresource;
     register struct resource *resp = &rt_uniresource;
-
-#ifndef eRT
-    /*
-     * If this isn't the customized RT, then call "wood_init"
-     * here to prep the noise tables.
-     */
-
-    if (!wood_done) {
-	wood_init();
-	wood_done = 1;
-    }
-#endif
 
     /*
      * Get the impure storage for the control block
