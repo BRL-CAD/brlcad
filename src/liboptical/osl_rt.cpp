@@ -243,7 +243,7 @@ int main (){
 
 			    // if(id != 7)
 			    //     break;
-
+			    
 			    info.depth++;
 			    Vec3 origin;
 			    Vec3 dir;

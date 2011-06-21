@@ -63,7 +63,11 @@ IF(BRLCAD-ENABLE_OSL)
     include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${OSL_INCLUDES} 
-	${OPENIMAGEIO_INCLUDES})
+	${OPENIMAGEIO_INCLUDES}
+        # This is required for brep.h to find opennurbs.h
+        # (TODO: better way to include this dir?)
+        ../other/openNURBS/
+        )
 
     message("Oslexec: ${OSLEXEC_LIBRARY}")
     message("Oslcomp: ${OSLCOMP_LIBRARY}")
@@ -84,6 +88,8 @@ IF(BRLCAD-ENABLE_OSL)
     IF(NOT Boost_FILESYSTEM_LIBRARY)
       message("Cheking if BOOST ROOT was FOUND")
     ENDIF()
+    
+    message("Test ------------------ ${libpng_public_hdrs}")
 
     message("Boost filesystem: ${Boost_FILESYSTEM_LIBRARY}")
     message("Boost regex: ${Boost_REGEX_LIBRARY}")
@@ -93,7 +99,6 @@ IF(BRLCAD-ENABLE_OSL)
     set(OSLRT_LIBS "${OSLEXEC_LIBRARY} ${OSLCOMP_LIBRARY} ${OSLQUERY_LIBRARY} ${OPENIMAGEIO_LIBRARY} ${Boost_LIBRARIES} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY}")
     
     STRING(REGEX REPLACE ";" " " OSLRT_LIBS2 "${OSLRT_LIBS}")
-    message("novas bibliotecas: ${OSLRT_LIBS2}")
 
     BRLCAD_ADDLIB(osl-renderer "${OSLRT_SOURCES}" "${OSLRT_LIBS2}")
 
@@ -102,7 +107,7 @@ IF(BRLCAD-ENABLE_OSL)
     ##########################################
 
     # Add the osl shader to the list of shaders
-    set(LIBOPTICAL_SOURCES ${LIBOPTICAL_SOURCES} sh_osl.c)
+    set(LIBOPTICAL_SOURCES ${LIBOPTICAL_SOURCES} sh_osl.cpp)
 
     # Link liboptical with osl-renderer library
     BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt libbn libbu osl-renderer")
@@ -113,8 +118,6 @@ IF(BRLCAD-ENABLE_OSL)
 
     BRLCAD_ADDEXEC(osl_rt "osl_rt.cpp" "osl-renderer ${OSLRT_LIBS2}")
 
-    BRLCAD_ADDEXEC(osl_rt2 "osl_rt2.c" "osl-renderer ${OSLRT_LIBS2}")
-    
 
 ELSE(BRLCAD-ENABLE_OSL)
 

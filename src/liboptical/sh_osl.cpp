@@ -1,5 +1,5 @@
 
-/*                        S H _ X X X . C
+/*                        S H _ O S L . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2011 United States Government as represented by
@@ -18,46 +18,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file liboptical/sh_xxx.c
+/** @file liboptical/sh_osl.c
  *
- * To add a new shader to the "rt" program's LIBOPTICAL library:
+ * This shader is an interface for OSL shadying system. More information
+ * when more features are implemented.
  *
- * 1) Copy this file to sh_shadername.c
- *
- * 2) edit sh_shadername.c:
- *	change "X X X" to "S H A D E R N A M E"
- *	change "xxx" to "shadername"
- *	Set a new number for the xxx_MAGIC define
- *	define shader specific structure and defaults
- *	edit/build parse table for bu_structparse from xxx_parse
- *	edit/build shader_mfuncs tables from xxx_mfuncs for
- *		each shader name being built.
- *	edit the xxx_setup function to do shader-specific setup
- *	edit the xxx_render function to do the actual rendering
- *
- * If you are building a dynamically loaded shader, compile this into a
- * shared library called "shadername.so".  If you have a number of shaders
- * for you are adding, you can create a single library called "shaders.so"
- * which contains all of your DSO shaders.
- *
- * RT will look in the following locations for DSO shaders:
- *		./
- *		$prefix/lib/
- *		$LD_LIBRARY_PATH
- *
- * If you are adding the shader to "rt" as a permanent shader, then the
- * following steps are necessary:
- *
- * 3) Edit init.c to add extern for osl_mfuncs and a call to
- * mlib_add_shader().
- *
- * 4) Edit Makefile.am to add shader file to the compilation
- *
- * 5) replace this list with a description of the shader, its
- * parameters and use.
- *
- * 6) Edit shaders.tcl and comb.tcl in the ../tclscripts/mged
- * directory to add a new gui for this shader.
  */
 
 #include "common.h"
@@ -79,22 +44,19 @@
 #define CK_OSL_SP(_p) BU_CKMAG(_p, OSL_MAGIC, "osl_specific")
 
 /*
- * the shader specific structure contains all variables which are unique
+ * The shader specific structure contains all variables which are unique
  * to any particular use of the shader.
  */
 struct osl_specific {
     long magic;              	 /* magic # for memory validity check */
-    OSLRenderer* oslr;           /* reference to osl ray tracer */
+    /*OSLRenderer* oslr;*/           /* reference to osl ray tracer */
 };
-
 
 /* The default values for the variables in the shader specific structure */
 static const
 struct osl_specific osl_defaults = {
     OSL_MAGIC,
-    NULL
 };
-
 
 #define SHDR_NULL ((struct osl_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct osl_specific, m)
@@ -109,9 +71,20 @@ struct bu_structparse osl_parse_tab[] = {
     {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), osl_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void osl_print(register struct region *rp, char *dp), osl_free(char *cp);
+    HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm, 
+			 char **dpp, struct mfuncs *mfp, struct rt_i *rtip);
+    HIDDEN int osl_render(struct application *ap, struct partition *pp, 
+			  struct shadework *swp, char *dp);
+    HIDDEN void osl_print(register struct region *rp, char *dp);
+    HIDDEN void osl_free(char *cp);
+
+#ifdef __cplusplus
+}
+#endif
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -126,6 +99,12 @@ struct mfuncs osl_mfuncs[] = {
     {0,		(char *)0,	0,		0,		0,     0,		0,		0,		0 }
 };
 
+/* 
+ * The remaining code should be hidden from C callers
+ * 
+ */
+#ifdef __cplusplus
+
 /* O S L _ S E T U P
  *
  * This routine is called (at prep time)
@@ -139,11 +118,6 @@ struct mfuncs osl_mfuncs[] = {
  */
 HIDDEN int
 osl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
-
-
-/* pointer to reg_udata in *rp */
-
-/* New since 4.4 release */
 {
     register struct osl_specific *osl_sp;
 
@@ -194,7 +168,7 @@ osl_free(char *cp)
 {
     register struct osl_specific *osl_sp =
 	(struct osl_specific *)cp;
-    oslrenderer_free(&(osl_sp->oslr));
+    /*oslrenderer_free(&(osl_sp->oslr));*/
     bu_free(cp, "osl_specific");
 }
 
@@ -217,13 +191,13 @@ osl_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 	(struct osl_specific *)dp;
     point_t pt;
     RenderInfo info;
-    static int first = 1;
-    static OSLRenderer *oslr = NULL;
+    /* static int first = 1; */
+    /*static OSLRenderer *oslr = NULL;*/
 
-    if(first == 1){
-	oslr = oslrenderer_init("yellow");
-    }
-    first = 0;
+    /* if(first == 1){ */
+    /* 	oslr = oslrenderer_init("yellow"); */
+    /* } */
+    /* first = 0; */
 
     VSETALL(pt, 0);
 
@@ -236,32 +210,32 @@ osl_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 	bu_struct_print("osl_render Parameters:", osl_print_tab, (char *)osl_sp);
     /* OSL perform shading operations here */
 
-    /* Fill in all necessary information for the OSL renderer */
-    VMOVE(info.P, swp->sw_hit.hit_point);
-    printf("[DEB] %.2lf %.2lf %.2lf\n", info.P[0], info.P[1], info.P[2]);
-    VMOVE(info.N, swp->sw_hit.hit_normal);
-    printf("[DEB] N %.2lf %.2lf %.2lf\n", info.N[0], info.N[1], info.N[2]);
-    /*VMOVE(info.I, ap->a_inv_dir);*/
-    VMOVE(info.I, ap->a_inv_dir);
-    /*printf("[DEB] I %.8lf %.8lf %.8lf\n", info.I[0], info.I[1], info.I[2]);*/
-    info.u = swp->sw_uv.uv_u;
-    info.v = swp->sw_uv.uv_v;
-    info.screen_x = ap->a_x;
-    info.screen_y = ap->a_y;
+    /* /\* Fill in all necessary information for the OSL renderer *\/ */
+    /* VMOVE(info.P, swp->sw_hit.hit_point); */
+    /* printf("[DEB] %.2lf %.2lf %.2lf\n", info.P[0], info.P[1], info.P[2]); */
+    /* VMOVE(info.N, swp->sw_hit.hit_normal); */
+    /* printf("[DEB] N %.2lf %.2lf %.2lf\n", info.N[0], info.N[1], info.N[2]); */
+    /* /\*VMOVE(info.I, ap->a_inv_dir);*\/ */
+    /* VMOVE(info.I, ap->a_inv_dir); */
+    /* /\*printf("[DEB] I %.8lf %.8lf %.8lf\n", info.I[0], info.I[1], info.I[2]);*\/ */
+    /* info.u = swp->sw_uv.uv_u; */
+    /* info.v = swp->sw_uv.uv_v; */
+    /* info.screen_x = ap->a_x; */
+    /* info.screen_y = ap->a_y; */
 
-    /* FIXME */
-    VSETALL(info.dPdu, 0.0f);
-    VSETALL(info.dPdv, 0.0f);
-    info.depth = ap->a_level;
-    info.isbackfacing = 0;
-    info.surfacearea = 1.0f;
+    /* /\* FIXME *\/ */
+    /* VSETALL(info.dPdu, 0.0f); */
+    /* VSETALL(info.dPdv, 0.0f); */
+    /* info.depth = ap->a_level; */
+    /* info.isbackfacing = 0; */
+    /* info.surfacearea = 1.0f; */
 
-    /* a priori we won't do reflection. If OSLRender decides to do
-     so, it will set it to 1 */
-    info.doreflection = 0; 
+    /* /\* a priori we won't do reflection. If OSLRender decides to do */
+    /*  so, it will set it to 1 *\/ */
+    /* info.doreflection = 0;  */
 
-    oslrenderer_query_color(oslr, &info);
-    VMOVE(swp->sw_color, info.pc);    
+    /* oslrenderer_query_color(oslr, &info); */
+    /* VMOVE(swp->sw_color, info.pc);     */
 
     /* if(info.doreflection == 1){ */
     /* 	ap->a_onehit = 0; */
@@ -283,6 +257,7 @@ osl_render(struct application *ap, struct partition *pp, struct shadework *swp, 
     return 1;
 }
 
+#endif /* __cplusplus */
 
 /*
  * Local Variables:

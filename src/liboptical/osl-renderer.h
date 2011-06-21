@@ -35,7 +35,6 @@ typedef struct Ray {
     point_t origin;
 } Ray;
 
-
 /* Shared struct by which the C shader and the C++ render system may
    exchange information
 */
@@ -59,14 +58,6 @@ struct RenderInfo {
     int doreflection;     /* 1 if there will be reflection 0, otherwise */
     Ray out_ray;      /* output ray (in case of reflection) */
 };
-
-
-#ifndef WITH_OSL
-
-typedef struct OSLRenderer OSLRenderer;
-typedef struct RenderInfo RenderInfo;
-
-#else /* WITH_OSL */
 
 #  include "oslclosure.h"
 #  include "render_svc.h"
@@ -137,23 +128,23 @@ public:
 
 };
 
-#endif /* WITH_OSL */
+/* extern "C" { */
 
-extern "C" {
+/*     /\* Wrapper for OSLRenderer constructor *\/ */
+/*     OSLRenderer * oslrenderer_init(); */
 
-    /* Wrapper for OSLRenderer constructor */
-    OSLRenderer * oslrenderer_init(const char *shadername);
+/*     /\* Wrapper for OSLRenderer::AddShader *\/ */
+/*     void oslrenderer_add_shader(OSLRenderer *oslr, const char *shadername); */
 
-    /* Wrapper for OSLRenderer::QueryColor */
-    void oslrenderer_query_color(OSLRenderer *oslr, RenderInfo *info);
+/*     /\* Wrapper for OSLRenderer::QueryColor *\/ */
+/*     void oslrenderer_query_color(OSLRenderer *oslr, RenderInfo *info); */
 
-    /* Wrapper for OSLRenderer destructor */
-    void oslrenderer_free(OSLRenderer **osl);
+/*     /\* Wrapper for OSLRenderer destructor *\/ */
+/*     void oslrenderer_free(OSLRenderer **osl); */
 
-}
+/* } */
 
-#endif /* OSL_RENDERER_H */
-
+#endif
 
 /*
  * Local Variables:

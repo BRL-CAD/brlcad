@@ -252,9 +252,12 @@ void OSLRenderer::SamplePrimitiveRecurse(const ClosurePrimitive*& r_prim, Color3
 /* -----------------------------------------------
  * Wrapper methods
  * ----------------------------------------------- */
-OSLRenderer* oslrenderer_init(const char *shadername){
+OSLRenderer* oslrenderer_init(){
     OSLRenderer* oslr = new OSLRenderer();
     return oslr;
+}
+void oslrenderer_add_shader(OSLRenderer *oslr, const char *shadername){
+    oslr->AddShader(shadername);
 }
 void oslrenderer_query_color(OSLRenderer *oslr, RenderInfo *info){
     Color3 pc = oslr->QueryColor(info);
