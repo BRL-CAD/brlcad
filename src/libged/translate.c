@@ -45,9 +45,9 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     const char *cmd_name = argv[0];
     static const char *usage = "[-k keypoint:object]"
-				" [[-a] | [-r]]" 
-				" x [y [z]]"
-				" objects";
+			       " [[-a] | [-r]]"
+			       " x [y [z]]"
+			       " objects";
     /* testing */
     mat_t modelchanges, incr, old;
     vect_t model_incr, ed_sol_pt, new_vertex;
@@ -68,7 +68,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     /* get short arguments */
     bu_optind = 1; /* re-init bu_getopt() */
     while ((c = bu_getopt(argc, (char * const *)argv, "ak:r")) != -1) {
-        switch (c) {
+	switch (c) {
 	case 'a':
 	    abs_flag = 1;
 	    break;
@@ -104,7 +104,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 			      bu_optopt);
 		return GED_ERROR;
 	    }
-        }
+	}
     }
 
     /* needs to be either absolute or relative positioning */
@@ -136,19 +136,19 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 	new_vertex[i] = atof(argv[bu_optind]);
 
     /* set combination object */
-    if (db_string_to_path(&obj, dbip, argv[bu_optind++]) < 0) {                            
-        db_free_full_path(&obj);                                                 
+    if (db_string_to_path(&obj, dbip, argv[bu_optind++]) < 0) {
+	db_free_full_path(&obj);
 	bu_vls_printf(&gedp->ged_result_str, "bad object path");
-        return TCL_ERROR;                                                        
+	return TCL_ERROR;
     }
 
     /* set object being translated */
     /* FIXME: needs to handle >1 obj */
-    if (db_string_to_path(&obj, dbip, argv[bu_optind++]) < 0) {                            
-        db_free_full_path(&obj);                                                 
+    if (db_string_to_path(&obj, dbip, argv[bu_optind++]) < 0) {
+	db_free_full_path(&obj);
 	bu_vls_printf(&gedp->ged_result_str, "bad object path");
-        return TCL_ERROR;                                                        
-    }   
+	return TCL_ERROR;
+    }
 
     /* do translation */
     MAT_IDN(incr);
