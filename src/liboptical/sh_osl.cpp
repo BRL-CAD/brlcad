@@ -42,12 +42,8 @@
 #define OSL_MAGIC 0x1834    /* make this a unique number for each shader */
 #define CK_OSL_SP(_p) BU_CKMAG(_p, OSL_MAGIC, "osl_specific")
 
-#ifdef __cplusplus
-
 /* Oslrenderer system */
 OSLRenderer *oslr = NULL;
-#endif
-
 
 /*
  * The shader specific structure contains all variables which are unique
@@ -77,9 +73,7 @@ struct bu_structparse osl_parse_tab[] = {
     {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
-#ifdef __cplusplus
 extern "C" {
-#endif
 
     HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm, 
 			 genptr_t *dpp, const struct mfuncs *mfp, 
@@ -90,9 +84,7 @@ extern "C" {
     HIDDEN void osl_print(register struct region *rp, genptr_t dp);
     HIDDEN void osl_free(genptr_t cp);
 
-#ifdef __cplusplus
 }
-#endif
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -124,9 +116,7 @@ struct mfuncs osl_mfuncs[] = {
  * -1 failure
  */
 
-#ifdef __cplusplus
 extern "C" {
-#endif
 
 HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm, 
 		     genptr_t *dpp, const struct mfuncs *mfp, 
@@ -299,10 +289,7 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 
     return 1;
 }
-
-#ifdef __cplusplus
 }
-#endif
 
 
 /*
