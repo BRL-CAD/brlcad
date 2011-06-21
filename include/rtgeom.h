@@ -21,13 +21,12 @@
 /** @{ */
 /** @file rtgeom.h
  *
- * @brief
- *  Details of the internal forms used by the LIBRT geometry routines
- *  for the different solids.
+ * @brief Details of the internal forms used by the LIBRT geometry
+ * routines for the different solids.
  *
- *  These structures are what the struct rt_db_internal
- *  generic pointer idb_ptr points at,
- *  based on idb_type indicating a solid id ID_xxx, such as ID_TGC.
+ * These structures are what the struct rt_db_internal generic pointer
+ * idb_ptr points at, based on idb_type indicating a solid id ID_xxx,
+ * such as ID_TGC.
  *
  */
 
@@ -105,32 +104,34 @@ struct rt_superell_internal {
 #define RT_SUPERELL_CK_MAGIC(_p)        BU_CKMAG(_p, RT_SUPERELL_INTERNAL_MAGIC, "rt_superell_internal")
 
 /**
- *  ID_METABALL
+ * ID_METABALL
  *
- *  The "metaball" primitive contains a method ID, threshold 
- *  value, and an unordered set of control points. Each control 
- *  point contains a 3d location, a "field strength", and 
- *  possibly a "blobbiness" value (called "goo" in
- *  rt_metaball_add_point).
+ * The "metaball" primitive contains a method ID, threshold value, and
+ * an unordered set of control points. Each control point contains a
+ * 3d location, a "field strength", and possibly a "blobbiness" value
+ * (called "goo" in rt_metaball_add_point).
  *  
- *  There are three method ID's defined
+ * There are three method ID's defined:
  *  
- *  1. "metaball", which is the Tokyo Metaball approximation 
- *     of the Blinn Blobby Surface. This method is not implemented 
- *     yet.
+ * 1. "metaball", which is the Tokyo Metaball approximation of the
+ *    Blinn Blobby Surface. This method is not implemented yet.
  *  
- *  2. "blob", the Blinn method. 
+ * 2. "blob", the Blinn method. 
  *
- *  3. "iso", which is a simple \Sum_{i}\frac{f_{i}}{d^{2}} 
- *     computation like you'd see for computing gravitational 
- *     magnitude or point charge in a basic physics course.
+ * 3. "iso", which is a simple computation like you'd see for
+ *    computing gravitational magnitude or point charge in a basic
+ *    physics course.  Blending function in latex notation is:
+ *
+ @code
+		\Sum_{i}\frac{f_{i}}{d^{2}}
+ @endcode
  *  
- *  The surface of the primitive exists where the summation of 
- *  the points contribution is equal to the threshold, with the 
- *  general fldstr/distance^2 pattern.
+ * The surface of the primitive exists where the summation of the
+ * points contribution is equal to the threshold, with the general
+ * fldstr/distance^2 pattern.
  *  
- *  The blobbiness value is only used in the blob method, and 
- *  modifies the gusseting effect.
+ * The blobbiness value is only used in the blob method, and modifies
+ * the gusseting effect.
  *
  */
 struct rt_metaball_internal {
@@ -331,7 +332,7 @@ struct rt_part_internal {
     fastf_t	part_vrad;
     fastf_t	part_hrad;
     /* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
-    int	part_type;		/**< @brief  sphere, cylinder, cone */
+    int	part_type;	/**< @brief  sphere, cylinder, cone */
 };
 #define RT_PART_CK_MAGIC(_p)	BU_CKMAG(_p, RT_PART_INTERNAL_MAGIC, "rt_part_internal")
 
@@ -606,11 +607,19 @@ struct rt_bot_list {
 /* modes for BOT */
 #define RT_BOT_SURFACE			1	/**< @brief  triangles represent a surface (no volume) */
 #define RT_BOT_SOLID			2	/**< @brief  triangles respresent the boundary of a solid object */
-#define	RT_BOT_PLATE			3	/**< @brief  triangles represent plates. Thicknesses are specified in "thickness" array,
-						 * and face mode is specified in "face_mode" bit vector.
-						 * This is the FASTGEN "plate" mode. Orientation is ignored. */
-#define RT_BOT_PLATE_NOCOS		4	/**< @brief  same as plate mode, but LOS is set equal to face thickness, not
-						 * the thickness divided by the cosine of the obliquity angle */
+
+/**
+ * triangles represent plates. Thicknesses are specified in
+ * "thickness" array, and face mode is specified in "face_mode" bit
+ * vector.  This is the FASTGEN "plate" mode. Orientation is ignored.
+ */
+#define	RT_BOT_PLATE			3
+
+/**
+ * same as plate mode, but LOS is set equal to face thickness, not the
+ * thickness divided by the cosine of the obliquity angle.
+ */
+#define RT_BOT_PLATE_NOCOS		4
 
 /* flags for bot_flags */
 #define RT_BOT_HAS_SURFACE_NORMALS    0x1       /**< @brief  This primitive may have surface normals at each face vertex */
