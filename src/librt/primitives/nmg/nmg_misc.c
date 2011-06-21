@@ -4790,18 +4790,18 @@ nmg_unbreak_region_edges(unsigned long *magic_p)
  * Find the distance from a point P to a line described by the
  * endpoint A and direction dir, and the point of closest approach
  * (PCA).
- *
- *		P
- *	       *
- *	      /.
- *	     / .
- *	    /  .
- *	   /   . (dist)
- *	  /    .
- *	 /     .
- *	*------*-------->
- *	A      PCA    dir
- *
+ @code
+ 			P
+ 		       *
+ 		      /.
+ 		     / .
+ 		    /  .
+ 		   /   . (dist)
+ 		  /    .
+ 		 /     .
+ 		*------*-------->
+ 		A      PCA    dir
+ @endcode
  * There are three distinct cases, with these return codes -
  *   0 => P is within tolerance of point A.  *dist = 0, pca=A.
  *   1 => P is within tolerance of line.  *dist = 0, pca=computed.
@@ -6586,20 +6586,20 @@ nmg_dist_to_cross(const struct intersect_fus *i_fus, const struct intersect_fus 
  *
  * Detect situations where edges have been split, but new vertices are
  * in wrong order. This typically happens as shown:
- *
- *                  new face planes
- *                  |
- *                  |
- *   \       \   /  |    /
- *    \       \ /<--|   /
- *     \       X       /
- *      \     / \     /
- *       \   /___\   /
- *        \         /
- *         \       /<- original face planes
- *          \     /
- *           \___/
- *
+ @code
+                   new face planes
+                   |
+                   |
+    \       \   /  |    /
+     \       \ /<--|   /
+      \       X       /
+       \     / \     /
+        \   /___\   /
+         \         /
+          \       /<- original face planes
+           \     /
+            \___/
+ @endcode
  * This can be detected by checking if the edges leaving from the new
  * vertices cross. If so, the middle face is deleted and the two
  * vertices are fused.
@@ -9054,7 +9054,8 @@ rt_join_cnurbs(struct bu_list *crv_head)
 }
 
 
-/** R T _ A R C 2 D _ T O _ C N U R B
+/**
+ * R T _ A R C 2 D _ T O _ C N U R B
  *
  * Convert a 2D arc to a NURB curve.
  *
