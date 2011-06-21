@@ -110,10 +110,8 @@ struct bu_structparse osl_parse_tab[] = {
 };
 
 
-HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int osl_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void osl_print(register struct region *rp, genptr_t dp);
-HIDDEN void osl_free(genptr_t cp);
+HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), osl_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
+HIDDEN void osl_print(register struct region *rp, char *dp), osl_free(char *cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -140,7 +138,7 @@ struct mfuncs osl_mfuncs[] = {
  * -1 failure
  */
 HIDDEN int
-osl_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+osl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -159,7 +157,7 @@ osl_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 
     /* Get memory for the shader parameters and shader-specific data */
     BU_GETSTRUCT(osl_sp, osl_specific);
-    *dpp = osl_sp;
+    *dpp = (char *)osl_sp;
 
     /* -----------------------------------
      * Initialize the osl specific values
@@ -182,7 +180,7 @@ osl_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
  * O S L _ P R I N T
  */
 HIDDEN void
-osl_print(register struct region *rp, genptr_t dp)
+osl_print(register struct region *rp, char *dp)
 {
     bu_struct_print(rp->reg_name, osl_print_tab, (char *)dp);
 }
@@ -192,7 +190,7 @@ osl_print(register struct region *rp, genptr_t dp)
  * O S L _ F R E E
  */
 HIDDEN void
-osl_free(genptr_t cp)
+osl_free(char *cp)
 {
     register struct osl_specific *osl_sp =
 	(struct osl_specific *)cp;
@@ -209,7 +207,7 @@ osl_free(genptr_t cp)
  * structure.
  */
 int
-osl_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+osl_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 
 
 /* defined in ../h/shadework.h */
