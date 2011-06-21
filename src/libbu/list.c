@@ -60,9 +60,10 @@ bu_list_len(register const struct bu_list *hd)
 void
 bu_list_reverse(register struct bu_list *hd)
 {
-    struct bu_list tmp_hd = BU_LIST_INIT_ZERO;
+    struct bu_list tmp_hd;
     register struct bu_list *ep = NULL;
 
+    BU_LIST_INIT(&tmp_hd);
     BU_CK_LIST_HEAD(hd);
     BU_LIST_INSERT_LIST(&tmp_hd, hd);
 
