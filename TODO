@@ -87,8 +87,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   where 'oed' is basically converted into the --keypoint option and
   object(s) to work on.
 
-* merge erase and erase_all
-
 * make bu_basename/bu_dirname not allocation memory.  have caller pass
   buffer in as a parameter with size ala snprintf/memcpy.
 
