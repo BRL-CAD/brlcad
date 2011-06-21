@@ -12,6 +12,33 @@ IF(BRLCAD-DISABLE_SRC_OTHER_WARN)
 	add_definitions(-w)
 ENDIF(BRLCAD-DISABLE_SRC_OTHER_WARN)
 
+# Most third party items have a list calling out files for distcheck - these
+# are stored in files in the dlists directory.  Ignore that directory for
+# distcheck
+FILE(GLOB dlists "*.dist")
+FOREACH(ITEM ${dlists})
+	get_filename_component(dlist ${ITEM} NAME)
+	DISTCHECK_IGNORE_ITEM(${dlist})
+ENDFOREACH(ITEM ${dlists})
+
+#---------------------------------------------------------------------------------
+# Optionally Building Local Copies of External Libraries 
+#
+# Need to get a bit fancy here - since we want to be able to turn local libs
+# on/off at will, need to be careful about how we handle key variables. Approach
+# is to stash values in BRLCAD_* prefixed versions, then restore them after
+# the various Find*.cmake commands do their thing.  If NOT doing local build,
+# then the BRLCAD_* and standard variables will be the same.  It remains to be
+# seen if there will be enough consistency for a macro - the variables that
+# need to be overridden will vary depending on the particular tests made by each
+# subdirectory's CMake logic.
+#---------------------------------------------------------------------------------
+
+# libregex library -  needed by tools, so do this one first.
+THIRD_PARTY_OPTION(REGEX regex)
+THIRD_PARTY_SUBDIR(REGEX libregex)
+BRLCAD_INCLUDE_FILE(regex.h HAVE_REGEX_H)
+
 #---------------------------------------------------------------------------------
 # Local Copies of Tools
 #---------------------------------------------------------------------------------
@@ -41,28 +68,6 @@ ADD_SUBDIRECTORY(m4)
 # sure it IS correct...) and a system m4 might do unexpected things.
 ADD_SUBDIRECTORY(flex)
 ENDIF(BUILD_LOCAL_TOOLS)
-
-#---------------------------------------------------------------------------------
-# Optionally Building Local Copies of External Libraries 
-#
-# Need to get a bit fancy here - since we want to be able to turn local libs
-# on/off at will, need to be careful about how we handle key variables. Approach
-# is to stash values in BRLCAD_* prefixed versions, then restore them after
-# the various Find*.cmake commands do their thing.  If NOT doing local build,
-# then the BRLCAD_* and standard variables will be the same.  It remains to be
-# seen if there will be enough consistency for a macro - the variables that
-# need to be overridden will vary depending on the particular tests made by each
-# subdirectory's CMake logic.
-#---------------------------------------------------------------------------------
-
-# Most third party items have a list calling out files for distcheck - these
-# are stored in files in the dlists directory.  Ignore that directory for
-# distcheck
-FILE(GLOB dlists "*.dist")
-FOREACH(ITEM ${dlists})
-	get_filename_component(dlist ${ITEM} NAME)
-	DISTCHECK_IGNORE_ITEM(${dlist})
-ENDFOREACH(ITEM ${dlists})
 
 # Ignore the boost subdir - it's only used for the boost headers and is not
 # compiled
@@ -132,12 +137,6 @@ MARK_AS_ADVANCED(PNG_SHARED)
 MARK_AS_ADVANCED(PNG_STATIC)
 MARK_AS_ADVANCED(PNG_TESTS)
 MARK_AS_ADVANCED(uname_executable)
-
-
-# libregex Library
-THIRD_PARTY_OPTION(REGEX regex)
-THIRD_PARTY_SUBDIR(REGEX libregex)
-BRLCAD_INCLUDE_FILE(regex.h HAVE_REGEX_H)
 
 
 # libutahrle Library - The directory to perform ADD_SUBDIRECTORY on and the
