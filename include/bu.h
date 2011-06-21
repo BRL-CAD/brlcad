@@ -458,10 +458,10 @@ BU_EXPORT extern int bu_cv_itemlen(int cookie);
  *
  * A worst case would be:	ns16 on vax to ns32
  @code
- *	ns16 	-> hs16
- *		-> hd
- *		-> hs32
- *		-> ns32
+ 	ns16 	-> hs16
+ 		-> hd
+ 		-> hs32
+ 		-> ns32
  @endcode
  * The worst case is probably the easiest to deal with because all
  * steps are done.  The more difficult cases are when only a subset of
@@ -469,72 +469,72 @@ BU_EXPORT extern int bu_cv_itemlen(int cookie);
  *
  * @par Method:
  @code
- *	HOSTDBL defined as true or false
- *	if ! hostother then
- *		hostother = (Endian == END_BIG) ? SAME : DIFFERENT;
- *	fi
- *	if (infmt == double) then
- *		if (HOSTDBL == SAME) {
- *			inIsHost = host;
- *		fi
- *	else
- *		if (hostother == SAME) {
- *			inIsHost = host;
- *		fi
- *	fi
- *	if (outfmt == double) then
- *		if (HOSTDBL == SAME) {
- *			outIsHost == host;
- *	else
- *		if (hostother == SAME) {
- *			outIsHost = host;
- *		fi
- *	fi
- *	if (infmt == outfmt) {
- *		if (inIsHost == outIsHost) {
- *			copy(in, out)
- *			exit
- *		else if (inIsHost == net) {
- *			ntoh?(in, out);
- *			exit
- *		else
- *			hton?(in, out);
- *			exit
- *		fi
- *	fi
- *
- *	while not done {
- *		from = in;
- *
- *		if (inIsHost == net) {
- *			ntoh?(from, t1);
- *			from = t1;
- *		fi
- *		if (infmt != double) {
- *			if (outIsHost == host) {
- *				to = out;
- *			else
- *				to = t2;
- *			fi
- *			castdbl(from, to);
- *			from = to;
- *		fi
- *
- *		if (outfmt == double) {
- *			if (outIsHost == net) {
- *				hton?(from, out);
- *			fi
- *		else
- *			if (outIsHost == host) {
- *				dblcast(from, out);
- *			else
- *				dblcast(from, t3);
- *				hton?(t3, out);
- *			fi
- *		fi
- *	done
+ 	HOSTDBL defined as true or false
+ 	if ! hostother then
+ 		hostother = (Endian == END_BIG) ? SAME : DIFFERENT;
+ 	fi
+ 	if (infmt == double) then
+ 		if (HOSTDBL == SAME) {
+ 			inIsHost = host;
+ 		fi
+ 	else
+ 		if (hostother == SAME) {
+ 			inIsHost = host;
+ 		fi
+ 	fi
+ 	if (outfmt == double) then
+ 		if (HOSTDBL == SAME) {
+ 			outIsHost == host;
+ 	else
+ 		if (hostother == SAME) {
+ 			outIsHost = host;
+ 		fi
+ 	fi
+ 	if (infmt == outfmt) {
+ 		if (inIsHost == outIsHost) {
+ 			copy(in, out)
+ 			exit
+ 		else if (inIsHost == net) {
+ 			ntoh?(in, out);
+ 			exit
+ 		else
+ 			hton?(in, out);
+ 			exit
+ 		fi
+ 	fi
+ 
+ 	while not done {
+ 		from = in;
+ 
+ 		if (inIsHost == net) {
+ 			ntoh?(from, t1);
+ 			from = t1;
+ 		fi
+ 		if (infmt != double) {
+ 			if (outIsHost == host) {
+ 				to = out;
+ 			else
+ 				to = t2;
+ 			fi
+ 			castdbl(from, to);
+ 			from = to;
+ 		fi
+ 
+ 		if (outfmt == double) {
+ 			if (outIsHost == net) {
+ 				hton?(from, out);
+ 			fi
+ 		else
+ 			if (outIsHost == host) {
+ 				dblcast(from, out);
+ 			else
+ 				dblcast(from, t3);
+ 				hton?(t3, out);
+ 			fi
+ 		fi
+ 	done
  @endcode
-*/
+ */
 BU_EXPORT extern size_t bu_cv_w_cookie(genptr_t, int, size_t, genptr_t, int, size_t);
 
 /**
@@ -547,19 +547,17 @@ BU_EXPORT extern size_t bu_cv_w_cookie(genptr_t, int, size_t, genptr_t, int, siz
  * real work to do.  Ntohs does no checking to see if it is reasonable
  * to do any conversions.
  *
- *
  * @param in	generic pointer for input.
  * @param count	number of shorts to be generated.
  * @param out	short pointer for output
  * @param size	number of bytes of space reserved for out.
  *
- *
  * @return	number of conversions done.
  */
-BU_EXPORT extern size_t bu_cv_ntohss(signed short *,
-				     size_t,
-				     genptr_t,
-				     size_t);
+BU_EXPORT extern size_t bu_cv_ntohss(signed short *in,
+				     size_t count,
+				     genptr_t out,
+				     size_t size);
 BU_EXPORT extern size_t bu_cv_ntohus(unsigned short *,
 				     size_t,
 				     genptr_t,
@@ -692,13 +690,13 @@ BU_EXPORT extern bu_endian_t bu_byteorder(void);
  * user-provided structure, e.g. &((p)->l), or for the case of "old"
  * it may also be in the list head.
  *
- * --- BEGIN EXAMPLE ---
- * @code
+ @code
+ --- BEGIN EXAMPLE ---
 
  // make bu_list the first element in your structure
  struct my_structure {
- struct bu_list l;
- int my_data;
+   struct bu_list l;
+   int my_data;
  };
 
  // your actual list
@@ -718,14 +716,14 @@ BU_EXPORT extern bu_endian_t bu_byteorder(void);
  // iterate over your list, remove all items
  struct my_structure *entry;
  while (BU_LIST_WHILE(entry, my_structure, &(my_list->l))) {
- bu_log("Entry value is %d\n", entry->my_data);
- BU_LIST_DEQUEUE(&(entry->l));
- bu_free(entry, "free my_structure entry");
+   bu_log("Entry value is %d\n", entry->my_data);
+   BU_LIST_DEQUEUE(&(entry->l));
+   bu_free(entry, "free my_structure entry");
  }
  bu_free(my_list, "free my_structure list head");
 
- * @endcode
- * --- END EXAMPLE ---
+ --- END EXAMPLE ---
+ @endcode
  *
  * Dequeueing the head of a list is a valid and well defined operation
  * which should be performed with caution.  Unless a pointer to some
@@ -1350,7 +1348,7 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
  @code
 
  BU_BITV_LOOP_START(bv) {
- fiddle(BU_BITV_LOOP_INDEX);
+   fiddle(BU_BITV_LOOP_INDEX);
  } BU_BITV_LOOP_END;
 
  @endcode
@@ -1783,16 +1781,16 @@ typedef struct bu_attribute_value_set bu_avs_t;
  * Example Use:
  @code
  void
- print_avs(struct bu_attribute_value_set *avs)
- {
- struct bu_attribute_value_pair *avpp;
+ print_avs(struct bu_attribute_value_set *avs) {
+   struct bu_attribute_value_pair *avpp;
 
- for (BU_AVS_FOR(avpp, avs)) {
- bu_log("key=%s, value=%s\n", avpp->name, avpp->value);
- }
+   for (BU_AVS_FOR(avpp, avs)) {
+     bu_log("key=%s, value=%s\n", avpp->name, avpp->value);
+   }
  }
  @endcode
-*/
+ *
+ */
 #define BU_AVS_FOR(_pp, _avp) \
     (_pp) = ((_avp) != NULL) ? ((_avp)->count > 0 ? &(_avp)->avp[(_avp)->count-1] : NULL) : NULL; ((_pp) != NULL) && ((_avp) != NULL) && (_avp)->avp && (_pp) >= (_avp)->avp; (_pp)--
 
@@ -2069,28 +2067,28 @@ BU_EXPORT extern int bu_debug;
  * Collections of these are combined to describe entire structures (or at
  * least those portions for which parse/print/import/export support is
  * desired.  For example:
- *@code
+ *
+ @code
 
  struct data_structure {
- char a_char;
- char str[32];
- short a_short;
- int a_int;
- double a_double;
+   char a_char;
+   char str[32];
+   short a_short;
+   int a_int;
+   double a_double;
  }
 
- struct data_structure default =
- { 'c', "the default string", 32767, 1, 1.0 };
+ struct data_structure default = { 'c', "the default string", 32767, 1, 1.0 };
 
  struct data_structure my_values;
 
  struct bu_structparse data_sp[] ={
- {"%c", 1,     "a_char",   bu_offsetof(data_structure, a_char), BU_STRUCTPARSE_FUNC_NULL,                      "a single character", (void*)&default.a_char},
- {"%s", 32,       "str", bu_offsetofarray(data_structure, str), BU_STRUCTPARSE_FUNC_NULL,         "This is a full character string", (void*)default.str},
- {"%i", 1,    "a_short",  bu_offsetof(data_structure, a_short), BU_STRUCTPARSE_FUNC_NULL,                         "A 16bit integer", (void*)&default.a_short},
- {"%d", 1,      "a_int",    bu_offsetof(data_structure, a_int), BU_STRUCTPARSE_FUNC_NULL,                          "A full integer", (void*)&default.a_int},
- {"%f", 1,   "a_double", bu_offsetof(data_structure, a_double), BU_STRUCTPARSE_FUNC_NULL, "A double-precision floating point value", (void*)&default.a_double},
- {  "", 0, (char *)NULL,                                     0, BU_STRUCTPARSE_FUNC_NULL,                              (char *)NULL, (void *)NULL}
+   {"%c", 1,     "a_char",   bu_offsetof(data_structure, a_char), BU_STRUCTPARSE_FUNC_NULL,                      "a single character", (void*)&default.a_char},
+   {"%s", 32,       "str", bu_offsetofarray(data_structure, str), BU_STRUCTPARSE_FUNC_NULL,         "This is a full character string", (void*)default.str},
+   {"%i", 1,    "a_short",  bu_offsetof(data_structure, a_short), BU_STRUCTPARSE_FUNC_NULL,                         "A 16bit integer", (void*)&default.a_short},
+   {"%d", 1,      "a_int",    bu_offsetof(data_structure, a_int), BU_STRUCTPARSE_FUNC_NULL,                          "A full integer", (void*)&default.a_int},
+   {"%f", 1,   "a_double", bu_offsetof(data_structure, a_double), BU_STRUCTPARSE_FUNC_NULL, "A double-precision floating point value", (void*)&default.a_double},
+   {  "", 0, (char *)NULL,                                     0, BU_STRUCTPARSE_FUNC_NULL,                              (char *)NULL, (void *)NULL}
  };
 
  @endcode
@@ -3098,17 +3096,17 @@ BU_EXPORT extern const char *bu_whereis(const char *cmd);
  *
  * Typical usage:
  @code
- *	static int n = 0;
- *	FILE *fp;
- *
- *	fp = bu_fopen_uniq("writing to %s for results", "output%d.pl", n++);
- *	...
- *	fclose(fp);
- *
- *
- *	fp = bu_fopen_uniq((char *)NULL, "output%d.pl", n++);
- *	...
- *	fclose(fp);
+ 	static int n = 0;
+ 	FILE *fp;
+ 
+ 	fp = bu_fopen_uniq("writing to %s for results", "output%d.pl", n++);
+ 	...
+ 	fclose(fp);
+ 
+ 
+ 	fp = bu_fopen_uniq((char *)NULL, "output%d.pl", n++);
+ 	...
+ 	fclose(fp);
  @endcode
  *
  * DEPRECATED
@@ -3143,22 +3141,20 @@ DEPRECATED BU_EXPORT extern FILE *bu_fopen_uniq(const char *outfmt, const char *
  *
  * Typical Use:
  @code
- * FILE *fp;
- * char filename[MAXPATHLEN];
- * fp = bu_temp_file(&filename, MAXPATHLEN); // get file name
- * ...
- * fclose(fp); // optional, auto-closed on exit
- *
- * ...
- *
- * fp = bu_temp_file(NULL, 0); // don't need file name
- *      fchmod(fileno(fp), 0777);
- * ...
- * rewind(fp);
- * while (fputc(0, fp) == 0);
- * fclose(fp);
+  FILE *fp;
+  char filename[MAXPATHLEN];
+  fp = bu_temp_file(&filename, MAXPATHLEN); // get file name
+  ...
+  fclose(fp); // optional, auto-closed on exit
+  ...
+  fp = bu_temp_file(NULL, 0); // don't need file name
+  fchmod(fileno(fp), 0777);
+  ...
+  rewind(fp);
+  while (fputc(0, fp) == 0);
+  fclose(fp);
  @endcode
-*/
+ */
 BU_EXPORT extern FILE *bu_temp_file(char *filepath, size_t len);
 
 /** @} */
@@ -3503,29 +3499,29 @@ BU_EXPORT extern void bu_call_hook(struct bu_hook_list *hlp,
  * should not be relied upon and may be changed to STDOUT in the
  * future without notice.
  *
- * --- BEGIN EXAMPLE ---
- * @code
+ @code
+ --- BEGIN EXAMPLE ---
 
  int log_output_to_file(genptr_t data, genptr_t str)
  {
- FILE *fp = (FILE *)data;
- fprintf(fp, "LOG: %s", str);
- return 0;
+   FILE *fp = (FILE *)data;
+   fprintf(fp, "LOG: %s", str);
+   return 0;
  }
 
  int main(int ac, char *av[])
  {
- FILE *fp = fopen("whatever.log", "w+");
- bu_log_add_hook(log_output_to_file, (genptr_t)fp);
- bu_log("Logging to file.\n");
- bu_log_delete_hook(log_output_to_file, (genptr_t)fp);
- bu_log("Logging to stderr.\n");
- fclose(fp);
- return 0;
+   FILE *fp = fopen("whatever.log", "w+");
+   bu_log_add_hook(log_output_to_file, (genptr_t)fp);
+   bu_log("Logging to file.\n");
+   bu_log_delete_hook(log_output_to_file, (genptr_t)fp);
+   bu_log("Logging to stderr.\n");
+   fclose(fp);
+   return 0;
  }
 
- * @endcode
- * --- END EXAMPLE ---
+ --- END EXAMPLE ---
+ @endcode
  *
  */
 
@@ -4213,17 +4209,16 @@ BU_EXPORT extern void bu_structparse_get_terse_form(struct bu_vls *logstr,
  *
  * Operates on argv[0] and argv[1], then on argv[2] and argv[3], ...
  *
- *
- * @param log	- vls for dumping info that might have gone to bu_log
- * @param argc	- number of elements in argv
- * @param argv	- contains the keyword-value pairs
- * @param desc	- structure description
- * @param base	- base addr of users struct
+ * @param str  - vls for dumping info that might have gone to bu_log
+ * @param argc - number of elements in argv
+ * @param argv - contains the keyword-value pairs
+ * @param desc - structure description
+ * @param base - base addr of users struct
  *
  * @retval TCL_OK if successful,
  * @retval TCL_ERROR on failure
  */
-BU_EXPORT extern int bu_structparse_argv(struct bu_vls *logstr,
+BU_EXPORT extern int bu_structparse_argv(struct bu_vls *str,
 					 int argc,
 					 const char **argv,
 					 const struct bu_structparse *desc,
@@ -6243,7 +6238,7 @@ BU_EXPORT extern struct bu_hash_entry *bu_find_hash_entry(struct bu_hash_tbl *hs
 							  unsigned char *key,
 							  int key_len,
 							  struct bu_hash_entry **prev,
-							  unsigned long *index2);
+							  unsigned long *idx);
 
 /**
  * B U _ S E T _ H A S H _ V A L U E
@@ -6279,8 +6274,8 @@ BU_EXPORT extern unsigned char *bu_get_hash_key(struct bu_hash_entry *hsh_entry)
  * @param[in] key - the key (any byte string)
  * @param[in] key_len - the number of bytes in the key
  *
- * @param[out] new - a flag, non-zero indicates that a new entry was
- * created.  zero indicates that an entry already exists with the
+ * @param[out] new_entry - a flag, non-zero indicates that a new entry
+ * was created.  zero indicates that an entry already exists with the
  * specified key and key length
  *
  * @return
