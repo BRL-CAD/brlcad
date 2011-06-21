@@ -144,7 +144,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * make the converters export all top-level objects by default
 
-* rename all the g_* tools sans "_" [save until 7.20]
+* rename all the g_* tools sans "_" [save until 7.22]
 
 * vls name wrapping (reversible argv-to-vls, vls-to-argv).  look at
   src/libged/glob.c code, very similar.
