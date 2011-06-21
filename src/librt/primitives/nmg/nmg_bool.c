@@ -1287,17 +1287,6 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
 	nmg_merge_models(tl->tr_d.td_r->m_p, tr->tr_d.td_r->m_p);
     }
 
-    /* The 'nmg_model_fuse' function is best to be run here, i.e. just before
-     * the actual boolean operation is performed because at this point all
-     * the geometry to be operated upon is in one single nmg model structure
-     * which is necessary for all the geometry to be fused. Pointer compares
-     * are done in some cases instead of distance testing to determine if
-     * geometry is equal, if fuse is not performed, equal geometry will not
-     * have the same address pointer and therefore an equal test will fail
-     * and break the logic used to perform the boolean operation.
-     */
-    nmg_model_fuse(tl->tr_d.td_r->m_p, tol);
-
     /* input r1 and r2 are destroyed, output is new region */
     reg = nmg_do_bool(tl->tr_d.td_r, tr->tr_d.td_r, op, tol);
 
