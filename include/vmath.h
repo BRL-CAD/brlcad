@@ -1645,6 +1645,15 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	(_pt)[Z] >= (_lo)[Z]-(_t)->dist && (_pt)[Z] <= (_hi)[Z]+(_t)->dist)
 
 /**
+ * @brief Is the point outside the RPP by at least the distance tolerance?
+ * This will not return true if the point is on the RPP.
+ */
+#define V3PT_OUT_RPP_TOL(_pt, _lo, _hi, _t)      (\
+        (_pt)[X] < (_lo)[X]-(_t)->dist || (_pt)[X] > (_hi)[X]+(_t)->dist || \
+        (_pt)[Y] < (_lo)[Y]-(_t)->dist || (_pt)[Y] > (_hi)[Y]+(_t)->dist || \
+        (_pt)[Z] < (_lo)[Z]-(_t)->dist || (_pt)[Z] > (_hi)[Z]+(_t)->dist)
+
+/**
  * @brief Determine if one bounding box is within another.  Also
  * returns true if the boxes are the same.
  */
