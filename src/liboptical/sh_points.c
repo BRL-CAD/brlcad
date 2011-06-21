@@ -61,8 +61,10 @@ struct bu_structparse points_parse[] = {
 };
 
 
-HIDDEN int points_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), points_render(struct application *ap, struct partition *partp, struct shadework *swp, char *dp);
-HIDDEN void points_print(register struct region *rp, char *dp), points_mfree(char *cp);
+HIDDEN int points_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int points_render(struct application *ap, const struct partition *partp, struct shadework *swp, genptr_t dp);
+HIDDEN void points_print(register struct region *rp, genptr_t dp);
+HIDDEN void points_mfree(genptr_t cp);
 
 struct mfuncs points_mfuncs[] = {
     {MF_MAGIC,	"points",	0,		MFI_UV,		0,     points_setup,	points_render,	points_print,	points_mfree },
@@ -86,7 +88,7 @@ struct points {
  * >0 success
  */
 HIDDEN int
-points_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
+points_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
 
 /* New since 4.4 release */
@@ -97,13 +99,13 @@ points_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, char **
 
     BU_CK_VLS(matparm);
     BU_GETSTRUCT(ptp, points_specific);
-    *dpp = (char *)ptp;
+    *dpp = ptp;
 
     /* get or default shader parameters */
     ptp->pt_file[0] = '\0';
     ptp->pt_size = -1;
     if (bu_struct_parse(matparm, points_parse, (char *)ptp) < 0) {
-	bu_free((char *)ptp, "points_specific");
+	bu_free((genptr_t)ptp, "points_specific");
 	return -1;
     }
     if (ptp->pt_size < 0)
@@ -144,7 +146,7 @@ points_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, char **
 
     return 1;
 fail:
-    bu_free((char *)ptp, "points_specific");
+    bu_free((genptr_t)ptp, "points_specific");
     return -1;
 }
 
@@ -157,7 +159,7 @@ fail:
  * color of the "brightest" point (if any) within that region.
  */
 HIDDEN int
-points_render(struct application *ap, struct partition *UNUSED(partp), struct shadework *swp, char *dp)
+points_render(struct application *ap, const struct partition *UNUSED(partp), struct shadework *swp, genptr_t dp)
 {
     register struct points_specific *ptp =
 	(struct points_specific *)dp;
@@ -222,7 +224,7 @@ points_render(struct application *ap, struct partition *UNUSED(partp), struct sh
  * P O I N T S _ P R I N T
  */
 HIDDEN void
-points_print(register struct region *UNUSED(rp), char *dp)
+points_print(register struct region *UNUSED(rp), genptr_t dp)
 {
     bu_struct_print("points_setup", points_parse, (char *)dp);
     /* Should be more here */
@@ -230,7 +232,7 @@ points_print(register struct region *UNUSED(rp), char *dp)
 
 
 HIDDEN void
-points_mfree(char *cp)
+points_mfree(genptr_t cp)
 {
     /* XXX - free linked lists in every bin! */
     bn_spm_free((bn_spm_map_t *)cp);

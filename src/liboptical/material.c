@@ -208,7 +208,8 @@ mlib_setup(struct mfuncs **headp,
 
     const struct mfuncs *mfp;
     int ret;
-    struct bu_vls param;
+    struct bu_vls params;
+    struct bu_vls name;
     const char *material;
     size_t mlen;
 
@@ -219,7 +220,8 @@ mlib_setup(struct mfuncs **headp,
 	bu_log("mlib_setup:  region %s already setup\n", rp->reg_name);
 	return -1;
     }
-    bu_vls_init(&param);
+    bu_vls_init(&name);
+    bu_vls_init(&params);
     material = rp->reg_mater.ma_shader;
     if (material == NULL || material[0] == '\0') {
 	material = mdefault;
@@ -229,15 +231,16 @@ mlib_setup(struct mfuncs **headp,
 	endp = strchr(material, ' ');
 	if (endp) {
 	    mlen = endp - material;
-	    bu_vls_strcpy(&param, rp->reg_mater.ma_shader+mlen+1);
+	    bu_vls_strcpy(&params, rp->reg_mater.ma_shader+mlen+1);
 	} else {
 	    mlen = strlen(material);
 	}
     }
+    bu_vls_strncpy(&name, material, mlen);
+
 retry:
     for (mfp = *headp; mfp != MF_NULL; mfp = mfp->mf_forw) {
-	if (material[0] != mfp->mf_name[0] ||
-	    strncmp(material, mfp->mf_name, strlen(mfp->mf_name)))
+	if (material[0] != mfp->mf_name[0] || !BU_STR_EQUAL(bu_vls_addr(&name), mfp->mf_name))
 	    continue;
 	goto found;
     }
@@ -247,11 +250,12 @@ retry:
      * dynamically load it.
      */
 
-    bu_log("Shader \"%s\"... ", material);
+    bu_log("Shader (name: \"%V\" parameters: \"%V\")... ", &name, &params);
 
-    if ((mfp_new = load_dynamic_shader(material))) {
+    mfp_new = load_dynamic_shader(bu_vls_addr(&name));
+    if (mfp_new) {
 	mlib_add_shader(headp, mfp_new);
-	bu_log("retrying\n");
+	bu_log("Found a dynamic load shader, retrying\n");
 	goto retry;
     }
 
@@ -262,16 +266,18 @@ retry:
      * table) and search again.
      */
 
-    bu_log("WARNING Unknown shader settings on %s\nDefault (plastic) material used instead of '%s'.\n\n",
-	   rp->reg_name, material);
+    bu_log("WARNING Unknown shader settings on %s\nDefault (plastic) material used instead of '%V'.\n\n",
+	   rp->reg_name, &name);
 
     if (material != mdefault) {
 	material = mdefault;
 	mlen = strlen(mdefault);
-	bu_vls_trunc(&param, 0);
+	bu_vls_trunc(&params, 0);
+	bu_vls_strcpy(&name, mdefault);
 	goto retry;
     }
-    bu_vls_free(&param);
+    bu_vls_free(&params);
+    bu_vls_free(&name);
     return -1;
 found:
     rp->reg_mfuncs = (char *)mfp;
@@ -279,20 +285,22 @@ found:
 
     if (R_DEBUG&RDEBUG_MATERIAL)
 	bu_log("mlib_setup(%s) shader=%s\n", rp->reg_name, mfp->mf_name);
-    if ((ret = mfp->mf_setup(rp, &param, &rp->reg_udata, mfp, rtip, headp)) < 0) {
-	bu_log("ERROR mlib_setup(%s) failed. Material='%s', param='%s'.\n",
-	       rp->reg_name, material, bu_vls_addr(&param));
+    if ((ret = mfp->mf_setup(rp, &params, &rp->reg_udata, mfp, rtip)) < 0) {
+	bu_log("ERROR mlib_setup(%s) failed. material='%s', parameters='%s'.\n",
+	       rp->reg_name, bu_vls_addr(&name), bu_vls_addr(&params));
 	if (material != mdefault) {
 	    /* If not default material, change to default & retry */
 	    bu_log("\tChanging %s material to default and retrying.\n", rp->reg_name);
 	    material = mdefault;
-	    bu_vls_trunc(&param, 0);
+	    bu_vls_trunc(&params, 0);
+	    bu_vls_strcpy(&name, mdefault);
 	    goto retry;
 	}
 	/* What to do if default setup fails? */
 	bu_log("mlib_setup(%s) error recovery failed.\n", rp->reg_name);
     }
-    bu_vls_free(&param);
+    bu_vls_free(&params);
+    bu_vls_free(&name);
     return ret;		/* Good or bad, as mf_setup says */
 }
 

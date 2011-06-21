@@ -34,11 +34,11 @@
 #include "optical.h"
 
 
-HIDDEN int sh_stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mf_p, struct rt_i *rtip, struct mfuncs **headp);
-HIDDEN int sh_stk_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void sh_stk_print(register struct region *rp, char *dp);
-HIDDEN void sh_stk_free(char *cp);
-HIDDEN int ext_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mf_p, struct rt_i *rtip, struct mfuncs **headp);
+HIDDEN int sh_stk_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mf_p, struct rt_i *rtip);
+HIDDEN int sh_stk_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
+HIDDEN void sh_stk_print(register struct region *rp, genptr_t dp);
+HIDDEN void sh_stk_free(genptr_t cp);
+HIDDEN int ext_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mf_p, struct rt_i *rtip);
 
 struct mfuncs stk_mfuncs[] = {
     {MF_MAGIC,	"stack",	0,		0,	0,     sh_stk_setup,	sh_stk_render,	sh_stk_print,	sh_stk_free},
@@ -49,7 +49,7 @@ struct mfuncs stk_mfuncs[] = {
 
 struct stk_specific {
     struct mfuncs *mfuncs[16];
-    char *udata[16];
+    genptr_t udata[16];
 };
 #define STK_NULL ((struct stk_specific *)0)
 #define STK_O(m) bu_offsetof(struct stk_specific, m)
@@ -65,7 +65,7 @@ struct bu_structparse stk_parse[] = {
  * Returns 0 on failure, 1 on success.
  */
 HIDDEN int
-ext_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mf_p, struct rt_i *rtip, struct mfuncs **headp)
+ext_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mf_p, struct rt_i *rtip)
 
 /* parameter string */
 /* pointer to user data pointer */
@@ -99,7 +99,7 @@ ext_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 
     bu_close_mapped_file(parameter_file);
 
-    status = sh_stk_setup(rp, &parameter_data, dpp, mf_p, rtip, headp);
+    status = sh_stk_setup(rp, &parameter_data, dpp, mf_p, rtip);
 
     bu_vls_free(&parameter_data);
 
@@ -110,7 +110,8 @@ ext_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 /*
  * S T K _ D O S E T U P
  */
-static int sh_stk_dosetup(char *cp, struct region *rp, char **dpp, char **mpp, struct rt_i *rtip, struct mfuncs **headp)
+HIDDEN int
+sh_stk_dosetup(char *cp, struct region *rp, genptr_t *dpp, struct mfuncs **mpp, struct rt_i *rtip)
 
 
 /* udata pointer address */
@@ -124,6 +125,7 @@ static int sh_stk_dosetup(char *cp, struct region *rp, char **dpp, char **mpp, s
     char matname[32];
     int ret;
     int i;
+    struct mfuncs *shaders = MF_NULL;
 
     RT_CK_RTI(rtip);
 
@@ -144,7 +146,12 @@ static int sh_stk_dosetup(char *cp, struct region *rp, char **dpp, char **mpp, s
     matname[i] = '\0';	/* ensure null termination */
 
 retry:
-    for (mfp = *headp; mfp != MF_NULL; mfp = mfp->mf_forw) {
+    /* get list of available shaders */
+    if (!shaders) {
+	optical_shader_init(&shaders);
+    }
+
+    for (mfp = shaders; mfp != MF_NULL; mfp = mfp->mf_forw) {
 	if (matname[0] != mfp->mf_name[0]  ||
 	    !BU_STR_EQUAL(matname, mfp->mf_name))
 	    continue;
@@ -159,7 +166,7 @@ retry:
     bu_log("Shader \"%s\"... ", matname);
 
     if ((mfp_new = load_dynamic_shader(matname))) {
-	mlib_add_shader(headp, mfp_new);
+	mlib_add_shader(&shaders, mfp_new);
 	goto retry;
     }
 
@@ -169,14 +176,14 @@ retry:
     goto out;
 
 found:
-    *mpp = (char *)mfp;
+    *mpp = mfp;
     *dpp = (char *)0;
     bu_vls_init(&arg);
     if (*cp != '\0')
 	bu_vls_strcat(&arg, ++cp);
     if (rdebug&RDEBUG_MATERIAL)
 	bu_log("calling %s with %s\n", mfp->mf_name, bu_vls_addr(&arg));
-    if (mfp->mf_setup(rp, &arg, dpp, mfp, rtip, headp) < 0) {
+    if (mfp->mf_setup(rp, &arg, dpp, mfp, rtip) < 0) {
 	/* Setup has failed */
 	bu_vls_free(&arg);
 	ret = -1;		/* BAD */
@@ -197,7 +204,7 @@ out:
  * Returns 0 on failure, 1 on success.
  */
 HIDDEN int
-sh_stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mf_p), struct rt_i *rtip, struct mfuncs **headp)
+sh_stk_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mf_p), struct rt_i *rtip)
 
 /* parameter string */
 /* pointer to user data pointer */
@@ -214,7 +221,7 @@ sh_stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
     RT_CK_RTI(rtip);
 
     BU_GETSTRUCT(sp, stk_specific);
-    *dpp = (char *)sp;
+    *dpp = sp;
 
     /*bu_struct_parse(matparm, sh_stk_parse, (char *)sp);*/
 
@@ -231,8 +238,7 @@ sh_stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
 		return 0;
 	    }
 	    /* add one */
-	    if (sh_stk_dosetup(start, rp, &sp->udata[i],
-			       (char **)&sp->mfuncs[i], rtip, headp) == 0) {
+	    if (sh_stk_dosetup(start, rp, &sp->udata[i], &sp->mfuncs[i], rtip) == 0) {
 		inputs |= sp->mfuncs[i]->mf_inputs;
 		i++;
 	    } else {
@@ -250,8 +256,7 @@ sh_stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
 	    return 0;
 	}
 	/* add one */
-	if (sh_stk_dosetup(start, rp, &sp->udata[i], (char **)&sp->mfuncs[i],
-			   rtip, headp) == 0) {
+	if (sh_stk_dosetup(start, rp, &sp->udata[i], &sp->mfuncs[i], rtip) == 0) {
 	    inputs |= sp->mfuncs[i]->mf_inputs;
 	    i++;
 	} else {
@@ -278,7 +283,7 @@ sh_stk_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
  * 1 stack processed to completion
  */
 HIDDEN int
-sh_stk_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+sh_stk_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
 {
     register struct stk_specific *sp =
 	(struct stk_specific *)dp;
@@ -297,8 +302,7 @@ sh_stk_render(struct application *ap, struct partition *pp, struct shadework *sw
 	 * Every shader takes the shadework structure as its
 	 * input and updates it as the "output".
 	 */
-	ret_status = sp->mfuncs[i]->mf_render(ap, pp, swp,
-					      sp->udata[i]);
+	ret_status = sp->mfuncs[i]->mf_render(ap, pp, swp, sp->udata[i]);
 
 	if (! ret_status) return ret_status;
 
@@ -311,7 +315,7 @@ sh_stk_render(struct application *ap, struct partition *pp, struct shadework *sw
  * S T K _ P R I N T
  */
 HIDDEN void
-sh_stk_print(register struct region *rp, char *dp)
+sh_stk_print(register struct region *rp, genptr_t dp)
 {
     register struct stk_specific *sp =
 	(struct stk_specific *)dp;
@@ -332,7 +336,7 @@ sh_stk_print(register struct region *rp, char *dp)
  * S T K _ F R E E
  */
 HIDDEN void
-sh_stk_free(char *cp)
+sh_stk_free(genptr_t cp)
 {
     register struct stk_specific *sp =
 	(struct stk_specific *)cp;

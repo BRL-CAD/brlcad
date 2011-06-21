@@ -391,8 +391,10 @@ struct bu_structparse img_print_tab[] = {
 };
 
 
-HIDDEN int prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), prj_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void prj_print(register struct region *rp, char *dp), prj_free(char *cp);
+HIDDEN int prj_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int prj_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
+HIDDEN void prj_print(register struct region *rp, genptr_t dp);
+HIDDEN void prj_free(genptr_t cp);
 
 /**
  * The "mfuncs" structure defines the external interface to the shader.
@@ -419,7 +421,7 @@ struct mfuncs prj_mfuncs[] = {
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+prj_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -446,7 +448,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 
     /* Get memory for the shader parameters and shader-specific data */
     BU_GETSTRUCT(prj_sp, prj_specific);
-    *dpp = (char *)prj_sp;
+    *dpp = prj_sp;
 
     prj_sp->magic = prj_MAGIC;
     memcpy(&prj_sp->prj_images, &IMG_INIT, sizeof(struct img_specific));
@@ -561,7 +563,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
  * P R J _ P R I N T
  */
 HIDDEN void
-prj_print(register struct region *rp, char *dp)
+prj_print(register struct region *rp, genptr_t dp)
 {
     struct prj_specific *prj_sp = (struct prj_specific *)dp;
     struct img_specific *img_sp;
@@ -576,7 +578,7 @@ prj_print(register struct region *rp, char *dp)
  * P R J _ F R E E
  */
 HIDDEN void
-prj_free(char *cp)
+prj_free(genptr_t cp)
 {
     struct prj_specific *prj_sp = (struct prj_specific *)cp;
 
@@ -592,7 +594,7 @@ prj_free(char *cp)
 	bu_vls_vlsfree(&img_sp->i_name);
 
 	BU_LIST_DEQUEUE(&img_sp->l);
-	bu_free((char *)img_sp, "img_specific");
+	bu_free((genptr_t)img_sp, "img_specific");
     }
 
     if (prj_sp->prj_plfd) {
@@ -658,7 +660,7 @@ project_point(point_t sh_color, struct img_specific *img_sp, struct prj_specific
  * structure.
  */
 int
-prj_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+prj_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
 
 
 /* defined in material.h */

@@ -67,7 +67,7 @@ OPTICAL_EXPORT extern void mlib_void();
 
 /* defined in refract.c */
 OPTICAL_EXPORT extern int
-rr_render(struct application *app, struct partition *pp, struct shadework *swp);
+rr_render(struct application *app, const struct partition *pp, struct shadework *swp);
 
 /* defined in shade.c */
 OPTICAL_EXPORT extern void

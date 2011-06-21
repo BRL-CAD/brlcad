@@ -39,7 +39,7 @@ struct phong_specific {
     double	refrac_index;
     double	extinction;
     double	emission[3];
-    struct	mfuncs *mfp;
+    const struct mfuncs *mfp;
 };
 
 extern struct bu_structparse phong_parse[];

@@ -55,10 +55,10 @@ HIDDEN void aim_set(const struct bu_structparse *sdp, const char *name, const ch
 HIDDEN void light_cvt_visible(const struct bu_structparse *sdp, const char *name, char *base, const char *value);
 HIDDEN void light_pt_set(const struct bu_structparse *sdp, const char *name, char *base, const char *value);
 
-HIDDEN int light_setup(struct region *rp, struct bu_vls *matparm, genptr_t *dpp, struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int light_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void light_print(register struct region *rp, char *dp);
-HIDDEN void light_free(char *cp);
+HIDDEN int light_setup(struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int light_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
+HIDDEN void light_print(register struct region *rp, genptr_t dp);
+HIDDEN void light_free(genptr_t cp);
 
 
 /** callback registration table for this shader in optical_shader_init() */
@@ -254,7 +254,7 @@ light_pt_set(register const struct bu_structparse *sdp, register const char *nam
  * away.
  */
 HIDDEN int
-light_render(struct application *ap, struct partition *UNUSED(pp), struct shadework *swp, char *dp)
+light_render(struct application *ap, const struct partition *UNUSED(pp), struct shadework *swp, genptr_t dp)
 {
     register struct light_specific *lsp = (struct light_specific *)dp;
     register fastf_t f;
@@ -559,7 +559,7 @@ light_gen_sample_pts(struct application *upap,
  * L I G H T _ P R I N T
  */
 HIDDEN void
-light_print(register struct region *rp, char *dp)
+light_print(register struct region *rp, genptr_t dp)
 {
     bu_struct_print(rp->reg_name, light_print_tab, (char *)dp);
 }
@@ -569,7 +569,7 @@ light_print(register struct region *rp, char *dp)
  * L I G H T _ F R E E
  */
 void
-light_free(char *cp)
+light_free(genptr_t cp)
 {
     register struct light_specific *lsp = (struct light_specific *)cp;
 
@@ -583,7 +583,7 @@ light_free(char *cp)
 	bu_free(lsp->lt_sample_pts, "free light samples array");
     }
     lsp->l.magic = 0;	/* sanity */
-    bu_free((char *)lsp, "light_specific");
+    bu_free((genptr_t)lsp, "light_specific");
 }
 
 
@@ -593,11 +593,7 @@ light_free(char *cp)
  * Called once for each light-emitting region.
  */
 HIDDEN int
-light_setup(register struct region *rp,
-	    struct bu_vls *matparm,
-	    genptr_t *dpp,
-	    struct mfuncs *UNUSED(mfp),
-	    struct rt_i *UNUSED(rtip))
+light_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 {
     register struct light_specific *lsp;
     register struct soltab *stp;
@@ -622,7 +618,7 @@ light_setup(register struct region *rp,
     lsp->lt_name = bu_strdup(rp->reg_name);
 
     if (bu_struct_parse(matparm, light_parse, (char *)lsp) < 0) {
-	light_free((char *)lsp);
+	light_free((genptr_t)lsp);
 	return -1;
     }
 
@@ -731,7 +727,7 @@ light_setup(register struct region *rp,
 	return 2;	/* don't show light, destroy it later */
     }
 
-    *dpp = (genptr_t)lsp;	/* Associate lsp with reg_udata */
+    *dpp = lsp;	/* Associate lsp with reg_udata */
     return 1;
 }
 

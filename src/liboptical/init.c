@@ -51,9 +51,6 @@ vect_t background = VINIT_ZERO; /* Black */
     { extern struct mfuncs _name[]; mlib_add_shader(headp, _name); }
 
 
-/*
- * O P T I C A L _ S H A D E R _ I N I T
- */
 void
 optical_shader_init(struct mfuncs **headp)
 {

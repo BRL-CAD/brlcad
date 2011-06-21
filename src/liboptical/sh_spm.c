@@ -53,8 +53,10 @@ struct bu_structparse spm_parse[] = {
 };
 
 
-HIDDEN int spm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), spm_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void spm_print(register struct region *rp, char *dp), spm_mfree(char *cp);
+HIDDEN int spm_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int spm_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
+HIDDEN void spm_print(register struct region *rp, genptr_t dp);
+HIDDEN void spm_mfree(genptr_t cp);
 
 struct mfuncs spm_mfuncs[] = {
     {MF_MAGIC,	"spm",		0,		MFI_UV,		0,     spm_setup,	spm_render,	spm_print,	spm_mfree },
@@ -69,7 +71,7 @@ struct mfuncs spm_mfuncs[] = {
  * return a pointer to the relevant pixel.
  */
 HIDDEN int
-spm_render(struct application *UNUSED(ap), struct partition *UNUSED(pp), struct shadework *swp, char *dp)
+spm_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp), struct shadework *swp, genptr_t dp)
 {
     register struct spm_specific *spp =
 	(struct spm_specific *)dp;
@@ -90,13 +92,14 @@ spm_render(struct application *UNUSED(ap), struct partition *UNUSED(pp), struct 
 
 
 HIDDEN void
-spm_mfree(char *cp)
+spm_mfree(genptr_t cp)
 {
     struct spm_specific *spm;
 
     spm = (struct spm_specific *)cp;
 
-    if (spm->sp_map) bn_spm_free(spm->sp_map);
+    if (spm->sp_map)
+	bn_spm_free(spm->sp_map);
     spm->sp_map = BN_SPM_MAP_NULL;
     bu_free(cp, "spm_specific");
 }
@@ -110,7 +113,7 @@ spm_mfree(char *cp)
  * >0 success
  */
 HIDDEN int
-spm_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
+spm_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
 
 /* New since 4.4 release */
@@ -119,12 +122,12 @@ spm_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, char **dpp
 
     BU_CK_VLS(matparm);
     BU_GETSTRUCT(spp, spm_specific);
-    *dpp = (char *)spp;
+    *dpp = spp;
 
     spp->sp_file[0] = '\0';
     spp->sp_w = -1;
     if (bu_struct_parse(matparm, spm_parse, (char *)spp) < 0) {
-	bu_free((char *)spp, "spm_specific");
+	bu_free((genptr_t)spp, "spm_specific");
 	return -1;
     }
     if (spp->sp_w < 0) spp->sp_w = 512;
@@ -136,7 +139,7 @@ spm_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, char **dpp
 	goto fail;
     return 1;
 fail:
-    spm_mfree((char *)spp);
+    spm_mfree((genptr_t)spp);
     return -1;
 }
 
@@ -145,13 +148,13 @@ fail:
  * S P M _ P R I N T
  */
 HIDDEN void
-spm_print(register struct region *rp, char *dp)
+spm_print(register struct region *rp, genptr_t dp)
 {
     struct spm_specific *spm;
 
     spm = (struct spm_specific *)dp;
 
-    bu_log("spm_print(rp=x%x, dp=x%x)\n", rp, dp);
+    bu_log("spm_print(rp=x%x, dp = x%x)\n", rp, dp);
     (void)bu_struct_print("spm_print", spm_parse, (char *)dp);
     if (spm->sp_map) bn_spm_dump(spm->sp_map, 0);
 }

@@ -36,10 +36,6 @@
 #include "optical.h"
 
 
-extern int rr_render(struct application *ap,
-		     struct partition *pp,
-		     struct shadework *swp);
-
 #define SHADE_CONT 0
 #define SHADE_ABORT_GRASS 1 /* bit_flag */
 #define SHADE_ABORT_STACK 2 /* bit_flag */
@@ -221,10 +217,10 @@ struct bu_structparse grass_parse_tab[] = {
 };
 
 
-HIDDEN int grass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int grass_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void grass_print(register struct region *rp, char *dp);
-HIDDEN void grass_free(char *cp);
+HIDDEN int grass_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int grass_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
+HIDDEN void grass_print(register struct region *rp, genptr_t dp);
+HIDDEN void grass_free(genptr_t cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -497,7 +493,7 @@ make_proto(struct grass_specific *grass_sp)
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-grass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+grass_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -517,7 +513,7 @@ grass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 
     /* Get memory for the shader parameters and shader-specific data */
     BU_GETSTRUCT(grass_sp, grass_specific);
-    *dpp = (char *)grass_sp;
+    *dpp = grass_sp;
 
     /* initialize the default values for the shader */
     memcpy(grass_sp, &grass_defaults, sizeof(struct grass_specific));
@@ -561,7 +557,7 @@ grass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
  * G R A S S _ P R I N T
  */
 HIDDEN void
-grass_print(register struct region *rp, char *dp)
+grass_print(register struct region *rp, genptr_t dp)
 {
     bu_struct_print(rp->reg_name, grass_print_tab, (char *)dp);
 }
@@ -571,7 +567,7 @@ grass_print(register struct region *rp, char *dp)
  * G R A S S _ F R E E
  */
 HIDDEN void
-grass_free(char *cp)
+grass_free(genptr_t cp)
 {
     bu_free(cp, "grass_specific");
 }
@@ -1125,7 +1121,7 @@ do_cells(long int *cell_num, struct grass_ray *r, short int flags, struct shadew
  * structure.
  */
 int
-grass_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+grass_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
 
 
 /* defined in material.h */
