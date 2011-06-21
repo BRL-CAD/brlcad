@@ -265,41 +265,58 @@ WDB_EXPORT WDB_EXTERN(int mk_binunif, (struct rt_wdb *fp, const char *name, cons
 /* bot.c */
 WDB_EXPORT int
 mk_bot(
-    struct rt_wdb *fp,
-    const char *name,
-    unsigned char	mode,
-    unsigned char	orientation,
-    unsigned char	error_mode,	/**<  may be used to indicate error handling (ignored for now) */
-    size_t		num_vertices,
-    size_t		num_faces,
-    fastf_t		*vertices,	/**<  array of floats for vertices [num_vertices*3] */
-    int			*faces,		/**<  array of ints for faces [num_faces*3] */
-    fastf_t		*thickness,	/**<  array of plate mode thicknesses (corresponds to array of faces)
-					 * NULL for modes RT_BOT_SURFACE and RT_BOT_SOLID.
+    struct rt_wdb *fp,			/**< database file pointer to write to */
+    const char *name,			/**< name of bot object to write out */
+    unsigned char	mode,		/**< bot mode */
+    unsigned char	orientation,	/**< bot orientation */
+    unsigned char	error_mode,	/**< may be used to indicate error handling (ignored for now) */
+    size_t		num_vertices,	/**< number of vertices */
+    size_t		num_faces,	/**< number of faces */
+    fastf_t		*vertices,	/**< array of floats for vertices [num_vertices*3] */
+    int			*faces,		/**< array of ints for faces [num_faces*3] */
+    fastf_t		*thickness,	/**< array of plate mode
+					 * thicknesses (corresponds to
+					 * array of faces) NULL for
+					 * modes RT_BOT_SURFACE and
+					 * RT_BOT_SOLID.
 					 */
-    struct bu_bitv	*face_mode );	/**<  a flag for each face indicating thickness is appended to hit point,
-					 * otherwise thickness is centered about hit point
+    struct bu_bitv	*face_mode 	/**< a flag for each face
+					 * indicating thickness is
+					 * appended to hit point,
+					 * otherwise thickness is
+					 * centered about hit point
 					 */
+    );
 WDB_EXPORT int
 mk_bot_w_normals(
-    struct rt_wdb *fp,
-    const char *name,
-    unsigned char	mode,
-    unsigned char	orientation,
-    unsigned char	flags,
-    size_t		num_vertices,
-    size_t		num_faces,
-    fastf_t		*vertices,	/**<  array of floats for vertices [num_vertices*3] */
-    int			*faces,		/**<  array of ints for faces [num_faces*3] */
-    fastf_t		*thickness,	/**<  array of plate mode thicknesses (corresponds to array of faces)
-					 * NULL for modes RT_BOT_SURFACE and RT_BOT_SOLID.
+    struct rt_wdb *fp,			/**< database file pointer to write to */
+    const char *name,			/**< name of bot object to write out */
+    unsigned char	mode,		/**< bot mode */
+    unsigned char	orientation,	/**< bot orientation */
+    unsigned char	flags,		/**< additional bot flags */
+    size_t		num_vertices,	/**< number of bot vertices */
+    size_t		num_faces,	/**< number of bot faces */
+    fastf_t		*vertices,	/**< array of floats for vertices [num_vertices*3] */
+    int			*faces,		/**< array of ints for faces [num_faces*3] */
+    fastf_t		*thickness,	/**< array of plate mode
+					 * thicknesses (corresponds to
+					 * array of faces) NULL for
+					 * modes RT_BOT_SURFACE and
+					 * RT_BOT_SOLID.
 					 */
-    struct bu_bitv	*face_mode,	/**<  a flag for each face indicating thickness is appended to hit point,
-					 * otherwise thickness is centered about hit point
+    struct bu_bitv	*face_mode,	/**< a flag for each face
+					 * indicating thickness is
+					 * appended to hit point,
+					 * otherwise thickness is
+					 * centered about hit point
 					 */
-    size_t		num_normals,	/**<  number of unit normals in normals array */
-    fastf_t		*normals,	/**<  array of floats for normals [num_normals*3] */
-    int			*face_normals );/**<  array of ints (indices into normals array), must have 3*num_faces entries */
+    size_t		num_normals,	/**< number of unit normals in normals array */
+    fastf_t		*normals,	/**< array of floats for normals [num_normals*3] */
+    int			*face_normals	/**< array of ints (indices
+					 * into normals array), must
+					 * have 3*num_faces entries
+					 */
+    );
 
 /* brep.cpp */
 WDB_EXPORT int mk_brep( struct rt_wdb* wdbp, const char* name, ON_Brep* brep );
