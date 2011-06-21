@@ -38,10 +38,8 @@
  * @brief returns the value that is closest to the given value but in
  * the given interval
  */
-double ClosestValue(
-    double value,
-    ON_Interval interval
-    )
+double
+ClosestValue(double value, ON_Interval interval)
 {
     if (interval.Includes(value, true)) {
 	return value;
@@ -58,12 +56,8 @@ double ClosestValue(
  *
  * @brief updates s and t using an X, Y, Z vector
  */
-void Push(
-    const ON_Surface *surf,
-    double *s,
-    double *t,
-    ON_3dVector vec
-    )
+void
+Push(const ON_Surface *surf, double *s, double *t, ON_3dVector vec)
 {
     ON_3dVector ds, dt;
     ON_3dPoint value;
@@ -81,7 +75,8 @@ void Push(
  * @brief advances s1, s2, t1, t2 along the curve of intersection of
  * the two surfaces by a distance of step size.
  */
-void Step(
+void
+Step(
     const ON_Surface *surf1,
     const ON_Surface *surf2,
     double *s1,
@@ -110,7 +105,8 @@ void Step(
  * about and find a closer * point returns the new distance between
  * the points.
  */
-double Jiggle(
+double
+Jiggle(
     const ON_Surface *surf1,
     const ON_Surface *surf2,
     double *s1,
@@ -139,10 +135,8 @@ double Jiggle(
  * @brief Split's a trim at a point, and replaces the references to
  * that trim with the pieces
  */
-void SplitTrim(
-    ON_BrepTrim *trim,
-    double t
-    )
+void
+SplitTrim(ON_BrepTrim *trim, double t)
 {
     ON_Curve *left, *right;
     bool rv = trim->Split(t, left, right);
@@ -163,10 +157,8 @@ void SplitTrim(
  * @brief after slicing a loop up in to pieces, this destroys the loop
  * itself and drops the pieces into an array
  */
-void ShatterLoop(
-    ON_BrepLoop *loop,
-    ON_SimpleArray<ON_Curve*> curves
-    )
+void
+ShatterLoop(ON_BrepLoop *loop, ON_SimpleArray<ON_Curve*> curves)
 {
     int i;
     for (i = 0; i < loop->TrimCount(); i++) {
@@ -184,10 +176,8 @@ void ShatterLoop(
  * @brief Compares two ON_X_EVENTS by the value of the parameter of the
  * first curve.
  */
-int Compare_X_Parameter(
-    const ON_X_EVENT *a,
-    const ON_X_EVENT *b
-    )
+int
+Compare_X_Parameter(const ON_X_EVENT *a, const ON_X_EVENT *b)
 {
     if (a->m_a[0] < b->m_a[0]) {
 	return -1;
@@ -204,10 +194,8 @@ int Compare_X_Parameter(
  *
  * @brief Compares the start points of the curve profiles
  */
-int Curve_Compare_start(
-    ON_Curve *const *a,
-    ON_Curve *const *b
-    )
+int
+Curve_Compare_start(ON_Curve *const *a, ON_Curve *const *b)
 {
     ON_3dVector A = ON_2dVector((*a)->PointAtStart().x, (*a)->PointAtStart().y);
     ON_3dVector B = ON_2dVector((*b)->PointAtStart().x, (*b)->PointAtStart().y);
@@ -234,10 +222,8 @@ int Curve_Compare_start(
  *
  * @brief Compares the end points of the curve profiles
  */
-int Curve_Compare_end(
-    const ON_Curve **a,
-    const ON_Curve **b
-    )
+int
+Curve_Compare_end(const ON_Curve **a, const ON_Curve **b)
 {
     ON_3dVector A = ON_2dVector((*a)->PointAtEnd().x, (*a)->PointAtEnd().y);
     ON_3dVector B = ON_2dVector((*b)->PointAtEnd().x, (*b)->PointAtEnd().y);
@@ -272,12 +258,7 @@ Face_X_Event::Face_X_Event()
  *
  * @brief create a new Face_X_Event using a set of given values
  */
-Face_X_Event::Face_X_Event(
-    ON_BrepFace *f1,
-    ON_BrepFace *f2,
-    ON_Curve *c1,
-    ON_Curve *c2
-    )
+Face_X_Event::Face_X_Event(ON_BrepFace *f1, ON_BrepFace *f2, ON_Curve *c1, ON_Curve *c2)
 {
     this->face1 = f1;
     this->face2 = f2;
@@ -309,7 +290,8 @@ ON_X_EVENT::ON_X_EVENT()
  * curves it is segmented in to This assumes the convention that to
  * the left of a curve is below.
  */
-int Face_X_Event::Render_Curves()
+int
+Face_X_Event::Render_Curves()
 {
     /* the curve can be active or inactive in either face */
     bool active1 = false, active2 = false;
@@ -379,7 +361,8 @@ int Face_X_Event::Render_Curves()
  * will come out as long strings of points, and will probably take a
  * long time to compute.
  */
-int CurveCurveIntersect(
+int
+CurveCurveIntersect(
     const ON_Curve *curve1,
     const ON_Curve *curve2,
     ON_SimpleArray<ON_X_EVENT>& x,
@@ -433,7 +416,8 @@ int CurveCurveIntersect(
  * is 'below' a curve refers to the portion to the right of the curve
  * wrt N
  */
-bool SetCurveCurveIntersectionDir(
+bool
+SetCurveCurveIntersectionDir(
     ON_3dVector N,
     int xcount,
     ON_X_EVENT* xevent,
@@ -481,7 +465,8 @@ bool SetCurveCurveIntersectionDir(
  * curves and the trims of the faces, stores them in the x field in
  * the class
  */
-int Face_X_Event::Get_ON_X_Events(double tol)
+int
+Face_X_Event::Get_ON_X_Events(double tol)
 {
     ON_SimpleArray<ON_X_EVENT> out;
     x.Empty();
@@ -534,7 +519,8 @@ int Face_X_Event::Get_ON_X_Events(double tol)
  *
  * Note: destroys the arrays it's given.
  */
-int MakeLoops(
+int
+MakeLoops(
     ON_BrepFace *face,
     ON_SimpleArray<ON_Curve*>& new_trims,
     ON_SimpleArray<ON_Curve*>& old_trims,
@@ -610,10 +596,8 @@ int MakeLoops(
  * one another and have at least one point not within tol of either of
  * them.
  */
-bool IsClosed(
-    const ON_2dPointArray l,
-    double tol
-    )
+bool
+IsClosed(const ON_2dPointArray l, double tol)
 {
     if (l.Count() < 3) {
 	return false;
@@ -637,7 +621,8 @@ bool IsClosed(
  * @brief walks the intersection between 2 brepfaces, returns lines
  * segmented by the trimming curves
  */
-void WalkIntersection(
+void
+WalkIntersection(
     const ON_Surface *surf1,
     const ON_Surface *surf2,
     double s1,
@@ -708,7 +693,8 @@ void WalkIntersection(
  * @brief Subdibivides the surface recursively to zoom in on
  * intersection points internal to the surfaces.
  */
-bool GetStartPointsInternal(
+bool
+GetStartPointsInternal(
     const ON_Surface *surf1,
     const ON_Surface *surf2,
     ON_2dPointArray& start_points1,
@@ -759,7 +745,8 @@ bool GetStartPointsInternal(
  *
  * @brief Find starting points that are on the edges of the surfaces
  */
-bool GetStartPointsEdges(
+bool
+GetStartPointsEdges(
     const ON_Surface *surf1,
     const ON_Surface *surf2,
     ON_2dPointArray& start_points1,
@@ -831,7 +818,8 @@ bool GetStartPointsEdges(
  * @brief finds the intersection curves of two faces and returns them
  * as Face_X_Events.
  */
-int FaceFaceIntersect(
+int
+FaceFaceIntersect(
     ON_BrepFace *face1,
     ON_BrepFace *face2,
     double stepsize,
@@ -884,7 +872,8 @@ int FaceFaceIntersect(
  * @brief calls SurfaceSurfaceIntersect on the {m_S}X{m_S} then
  * intersects the results with the trim curves of the brepfaces.
  */
-bool BrepBrepIntersect(
+bool
+BrepBrepIntersect(
     ON_Brep *brep1,
     ON_Brep *brep2,
     double stepsize,
@@ -1348,7 +1337,8 @@ printPoints(struct rt_brep_internal* bi)
 }
 
 
-int main()
+int
+main()
 {
     ON_3dPointArray pts1, pts2;
     pts1.Append(ON_3dPoint(1.0, 1.0, 0.0));
