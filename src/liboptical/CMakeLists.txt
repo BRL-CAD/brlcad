@@ -108,7 +108,7 @@ IF(BRLCAD-ENABLE_OSL)
 
     # Add the osl shader to the list of shaders
     # FIXME - not including sh_osl.cpp due to dependence errors
-    #set(LIBOPTICAL_SOURCES ${LIBOPTICAL_SOURCES} sh_osl.cpp)
+    set(LIBOPTICAL_SOURCES ${LIBOPTICAL_SOURCES} sh_osl.cpp)
     
     # Link liboptical with osl-renderer library
     BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt libbn libbu osl-renderer")

@@ -37,7 +37,6 @@ OSLRenderer::OSLRenderer(){
 
 OSLRenderer::~OSLRenderer(){
 
-    fprintf(stderr, "[DEB] destructor\n");
     ssi->release_context(ctx, handle);
     ssi->destroy_thread_info(handle);
     ShadingSystem::destroy(shadingsys);
