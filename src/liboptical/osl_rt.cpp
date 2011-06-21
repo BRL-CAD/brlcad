@@ -84,9 +84,13 @@ Sphere spheres[] = {
     Sphere(1e5,  Vec3d(50, 1e5, 81.6),       "cornell_wall", false), // front
     Sphere(1e5,  Vec3d(50, -1e5+81.6, 81.6), "cornell_wall", false), // bottom
     Sphere(1e5,  Vec3d(50, 40.8, -1e5+170),  "cornell_wall", false), // top
-    Sphere(16.5, Vec3d(27, 16.5, 47),        "mirror",       false), // left ball
     Sphere(16.5, Vec3d(73, 16.5, 78),        "yellow",        false), // right ball
-    Sphere(600,  Vec3d(50, 681.6-1.27, 81.6),"emitter",      true)   // light
+    Sphere(600,  Vec3d(50, 681.6-1.27, 81.6),"emitter",      true),   // light
+
+    // this sphere will be renderer as a fake shader 
+    Sphere(16.5, Vec3d(27, 16.5, 47),        "yellow",       false) 
+								    
+								    
 };
 
 int numSpheres = sizeof(spheres)/sizeof(Sphere);
@@ -102,6 +106,19 @@ inline bool intersect(const Ray2 &r, double &t, int &id)
 	}
 
     return t<inf;
+}
+Color3 fake_mirror_shader(RenderInfo *info){
+    if(info->depth >= 3) return Color3(0.0f);
+
+    fastf_t cosine = VDOT(info->N, info->I);
+    point_t tmp;
+    VSCALE(tmp, info->N, 2*cosine);  
+    VSUB2(info->out_ray.dir, tmp, info->I);    
+
+    VMOVE(info->out_ray.origin, info->P);
+    VUNITIZE(info->out_ray.dir);
+    info->doreflection = 1;
+    return Color3(1.0f);
 }
 
 void write_image(float *buffer, int w, int h)
@@ -184,11 +201,6 @@ int main (){
 			    int id = 0; // id of the sphere
 			    if(!intersect(ray, t, id)) break;
 
-			    // check if this is a recursion ray
-			    if(info.depth > 0){
-				//printf("this is a recursive ray\n");
-			    }
-
 			    Sphere &obj = spheres[id];
 
 			    info.I[0] = -ray.d[0];
@@ -227,7 +239,6 @@ int main (){
 			    info.dPdv[1] = dPdv[1];
 			    info.dPdv[2] = dPdv[2];
 
-			    info.depth = 0;
 			    info.isbackfacing = 0;
 			    info.surfacearea = 1.0;
 
@@ -236,8 +247,11 @@ int main (){
 			    info.shadername = spheres[id].shadername;
 
 			    //fprintf(stderr, "\n\nid: %d\n", id);
-			    Color3 wx =
-				oslr.QueryColor(&info);
+			    Color3 wx;
+			    if (id <= 7)
+				wx = oslr.QueryColor(&info);
+			    else
+				wx = fake_mirror_shader(&info);
 
 			    pixel_color *= wx;
 
