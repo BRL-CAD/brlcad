@@ -39,8 +39,10 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     int abs_flag = 0;		/* use absolute position */
     int rel_flag = 0;		/* use relative distance */
     char *kp_arg = NULL;
-    const char *obj_name; /* FIXME: needs to handle >1 obj */
+    struct db_full_path comb;
+    struct db_full_path obj; /* FIXME: needs to handle >1 obj */
     point_t keypoint;
+    struct db_i *dbip = gedp->ged_wdbp->dbip;
     const char *cmd_name = argv[0];
     static const char *usage = "[-k keypoint:object]"
 				" [[-a] | [-r]]" 
@@ -48,7 +50,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 				" objects";
     /* testing */
     mat_t modelchanges, incr, old;
-    vect_t model_sol_pt, model_incr, ed_sol_pt, new_vertex;
+    vect_t model_incr, ed_sol_pt, new_vertex;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -131,22 +133,35 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     /* set 3d coords */
     /* FIXME: will crash if arguments are in wrong order */
     for (i = 0; i < 3; ++i, ++bu_optind)
-	new_vertex[i] = atof(argv[bu_optind]) *
-	    gedp->ged_wdbp->dbip->dbi_local2base;
-    
+	new_vertex[i] = atof(argv[bu_optind]);
+
+    /* set combination object */
+    if (db_string_to_path(&obj, dbip, argv[bu_optind++]) < 0) {                            
+        db_free_full_path(&obj);                                                 
+	bu_vls_printf(&gedp->ged_result_str, "bad object path");
+        return TCL_ERROR;                                                        
+    }
+
+    /* set object being translated */
     /* FIXME: needs to handle >1 obj */
-    obj_name = argv[bu_optind];
+    if (db_string_to_path(&obj, dbip, argv[bu_optind++]) < 0) {                            
+        db_free_full_path(&obj);                                                 
+	bu_vls_printf(&gedp->ged_result_str, "bad object path");
+        return TCL_ERROR;                                                        
+    }   
 
     /* do translation */
     MAT_IDN(incr);
     MAT_IDN(old);
-    VMOVE(model_sol_pt, keypoint);
-    MAT4X3PNT(ed_sol_pt, modelchanges, model_sol_pt);
+    MAT4X3PNT(ed_sol_pt, modelchanges, keypoint);
     VSUB2(model_incr, new_vertex, ed_sol_pt);
     MAT_DELTAS_VEC(incr, model_incr);
     MAT_COPY(old, modelchanges);
     bn_mat_mul(modelchanges, incr, old);
     //new_edit_mats();
+
+    db_free_full_path(&comb);
+    db_free_full_path(&obj);
 
     return GED_OK;
     disabled:
