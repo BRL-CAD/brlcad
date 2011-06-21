@@ -640,7 +640,7 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
 	bu_log("nmg_class_pt_s:\tpt=(%g, %g, %g), s=x%x\n",
 	       V3ARGS(pt), s);
 
-    if (!V3PT_IN_RPP_TOL(pt, s->sa_p->min_pt, s->sa_p->max_pt, tol)) {
+    if (V3PT_OUT_RPP_TOL(pt, s->sa_p->min_pt, s->sa_p->max_pt, tol)) {
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 	    bu_log("	OUT, point not in RPP\n");
 	return NMG_CLASS_AoutB;
@@ -873,6 +873,8 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, char **classlist, const struc
     pointp_t eupt, matept;
     char *reason = "Unknown";
     int class;
+    vect_t e_min_pt;
+    vect_t e_max_pt;
 
     if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 	bu_log("class_eu_vs_s(eu=x%x (e_p=x%x, lu=x%x), s=x%x)\n", eu, eu->e_p, eu->up.lu_p, s);
@@ -898,6 +900,24 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, char **classlist, const struc
 	goto out;
     }
     if (NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], eu->e_p)) {
+	status = OUTSIDE;
+	goto out;
+    }
+
+    /* find the bounding box of the edge */
+    VMOVE(e_min_pt, eu->vu_p->v_p->vg_p->coord);
+    VMIN(e_min_pt, eu->eumate_p->vu_p->v_p->vg_p->coord);
+    VMOVE(e_max_pt, eu->vu_p->v_p->vg_p->coord);
+    VMAX(e_max_pt, eu->eumate_p->vu_p->v_p->vg_p->coord);
+
+    /* if the edge and shell bounding boxes do not overlap
+     * then the edge is outside the shell. also both vertices
+     * of the edge are outside the shell.
+     */
+    if (!V3RPP_OVERLAP_TOL(e_min_pt, e_max_pt, s->sa_p->min_pt, s->sa_p->max_pt, tol)) {
+        NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->e_p);
+        NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->vu_p->v_p);
+        NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->eumate_p->vu_p->v_p);
 	status = OUTSIDE;
 	goto out;
     }
@@ -1841,18 +1861,39 @@ static void
 class_fu_vs_s(struct faceuse *fu, struct shell *s, char **classlist, const struct bn_tol *tol)
 {
     struct loopuse *lu;
+    int class, in, out, on;
     plane_t n;
 
     NMG_CK_FACEUSE(fu);
     NMG_CK_SHELL(s);
 
-    NMG_GET_FU_PLANE(n, fu);
-
-    if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+    if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
+        NMG_GET_FU_PLANE(n, fu);
 	PLPRINT("\nclass_fu_vs_s plane equation:", n);
+    }
 
-    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd))
-	(void)class_lu_vs_s(lu, s, classlist, tol);
+    in = out = on = 0;
+    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+        NMG_CK_LOOPUSE(lu);
+        class = class_lu_vs_s(lu, s, classlist, tol);
+        switch (class) {
+            case INSIDE	        : ++in;
+                break;
+            case OUTSIDE        : ++out;
+                break;
+            case ON_SURF        : ++on;
+                break;
+            default             : bu_bomb("class_fu_vs_s: bad class for faceuse\n");
+        }
+    }
+
+    if (in == 0 && out == 0 && on > 0) {
+        NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared], fu->f_p);
+    } else if (in == 0 && out > 0 && on == 0) {
+        NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], fu->f_p);
+    } else {
+        NMG_INDEX_SET(classlist[NMG_CLASS_AinB], fu->f_p);
+    }
 
     if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 	bu_log("class_fu_vs_s() END\n");
@@ -2520,3 +2561,4 @@ nmg_classify_s_vs_s(struct shell *s2, struct shell *s, const struct bn_tol *tol)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+
