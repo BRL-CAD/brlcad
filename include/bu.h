@@ -768,10 +768,12 @@ typedef struct bu_list bu_list_t;
 	(_hp)->magic = BU_LIST_HEAD_MAGIC;	/* used by circ. macros */ }
 
 /**
- * macro suitable for declaration statement initialization of a
- * bu_list struct.  does not allocate memory.
+ * macro suitable for declaration statement zero-initialization of a
+ * bu_list struct, but not suitably for validation with
+ * BU_CK_LIST_HEAD() as the list pointers are NULL.  does not allocate
+ * memory
  */
-#define BU_LIST_INIT_ZERO { BU_LIST_HEAD_MAGIC, BU_LIST_NULL, BU_LIST_NULL }
+#define BU_LIST_INIT_ZERO { 0, BU_LIST_NULL, BU_LIST_NULL }
 
 /**
  * returns truthfully whether a bu_list has been initialized via
