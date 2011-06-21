@@ -158,7 +158,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     MAT_DELTAS_VEC(incr, model_incr);
     MAT_COPY(old, modelchanges);
     bn_mat_mul(modelchanges, incr, old);
-    //new_edit_mats();
+    /* new_edit_mats(); */
 
     db_free_full_path(&comb);
     db_free_full_path(&obj);
