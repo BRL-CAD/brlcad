@@ -52,7 +52,7 @@
  */
 struct bn_vlblock *
 bn_vlblock_init(struct bu_list *free_vlist_hd, /**< where to get/put free vlists */
-		int max_ent)
+		int max_ent /**< maximum number of entities to get/put */)
 {
     struct bn_vlblock *vbp;
     size_t i;
