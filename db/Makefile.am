@@ -71,6 +71,7 @@ MODELS = \
 
 EXTRA_DIST = \
 	${MODELS} \
+	cornell.rt \
 	db.php \
 	terra.dsp \
 	CMakeLists.txt
