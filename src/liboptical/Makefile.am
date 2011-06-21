@@ -73,8 +73,7 @@ noinst_HEADERS = \
 
 EXTRA_DIST = \
 	${osl_srcs} \
-	CMakeLists.txt \
-	liboptical.dsp
+	CMakeLists.txt
 
 DEPENDS = src/librt
 

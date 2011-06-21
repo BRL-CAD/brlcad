@@ -206,7 +206,6 @@ EXTRA_DIST = \
 	dm-tk.c \
 	fbserv_win32.c \
 	mged.bat \
-	mged.dsp \
 	red.c \
 	CMakeLists.txt
 
