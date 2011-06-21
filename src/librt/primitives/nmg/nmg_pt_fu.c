@@ -1391,8 +1391,7 @@ nmg_class_pt_lu_except(fastf_t *pt, const struct loopuse *lu, const struct edge 
 	       V3ARGS(pt), V4ARGS(fpi.norm), dist);
     }
 
-
-    if (!V3PT_IN_RPP(pt, lu->l_p->lg_p->min_pt, lu->l_p->lg_p->max_pt)) {
+    if (V3PT_OUT_RPP_TOL(pt, lu->l_p->lg_p->min_pt, lu->l_p->lg_p->max_pt, tol)) {
 	/* point is not in RPP of loop */
 
 	if (rt_g.NMG_debug & DEBUG_PT_FU)
