@@ -42,15 +42,18 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 			       " x [y [z]]"
 			       " combination"
 			       " object";
-    int i;			/* iterator */
-    int c;			/* bu_getopt return value */
-    int abs_flag = 0;		/* use absolute position */
-    int rel_flag = 0;		/* use relative distance */
-    char *kp_arg = NULL;        /* keypoint argument */
+    int i;				/* iterator */
+    int c;				/* bu_getopt return value */
+    int abs_flag = 0;			/* use absolute position */
+    int rel_flag = 0;			/* use relative distance */
+    char *kp_arg = NULL;        	/* keypoint argument */
+    const char *s_comb;			/* combination string */
+    const char *s_obj;			/* object string */
+    const char *s_full_path;		/* comb + obj string */
     struct db_full_path comb;
-    struct db_full_path obj; /* FIXME: needs to handle >1 obj */
-    struct db_full_path comb_and_obj; /* comb + obj paths together */
-    struct directory *full_dir;
+    struct db_full_path obj;		/* FIXME: needs to handle >1 obj */
+    struct db_full_path full_path;	/* comb + obj path */
+    struct directory *full_dir;         /* comb + obj directory */
     struct directory *comb_dir;
     point_t keypoint;
     char *endchr = NULL;       /* for strtof's */
@@ -163,8 +166,9 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 	return GED_HELP;
     }
-    if (db_string_to_path(&comb, dbip, argv[bu_optind++]) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "bad combination path");
+    s_comb = argv[bu_optind++];
+    if (db_string_to_path(&comb, dbip, s_comb) < 0) {
+	bu_vls_printf(&gedp->ged_result_str, "invalid path to 'combination'");
 	return GED_ERROR;
     }
 
@@ -177,26 +181,28 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
     /* FIXME: needs to handle >1 obj */
-    if (db_string_to_path(&obj, dbip, argv[bu_optind++]) < 0) {
+    s_obj = argv[bu_optind++];
+    if (db_string_to_path(&obj, dbip, s_obj) < 0) {
 	db_free_full_path(&comb);
 	bu_vls_printf(&gedp->ged_result_str, "bad object path");
 	return GED_ERROR;
     }
 
     /* verify existence of combination path */
-    comb_dir = db_lookup(dbip, db_path_to_string(&comb), LOOKUP_QUIET);
+    comb_dir = db_lookup(dbip, s_comb, LOOKUP_NOISY);
     if (comb_dir == RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "invalid path to 'combination'");
 	return GED_ERROR;
     }
     /* verify existence of obj within combination path */
-    db_full_path_init(&comb_and_obj);
-    db_dup_full_path(&comb_and_obj, &comb);
-    db_append_full_path(&comb_and_obj, &obj);
-    full_dir = db_lookup(dbip, db_path_to_string(&comb_and_obj), LOOKUP_QUIET);
+    db_full_path_init(&full_path);
+    db_dup_full_path(&full_path, &comb);
+    db_append_full_path(&full_path, &obj);
+    s_full_path = db_path_to_string(&full_path);
+    full_dir = db_lookup(dbip, s_full_path, LOOKUP_NOISY);
     if (full_dir == RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "'object' is not within"
-					     "'combination'");
+					     " 'combination'");
 	return GED_ERROR;
     }
 
