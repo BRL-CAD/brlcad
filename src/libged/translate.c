@@ -185,7 +185,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     /* disabled until functional */
     if ((bu_optind + 1) <= argc)
 	bu_vls_printf(&gedp->ged_result_str, "multiple objects not yet"
-					     "supported; ");
+					     " supported; ");
     goto disabled;
 
     /* do translation */
