@@ -579,10 +579,10 @@ MakeLoops(
 /**
  * IsClosed
  *
- * @check if a 2dPointarrray is closed. To be closed an array must
- * have >2 points in it, have the first and last points within tol of
- * one another and have at least one point not within tol of either of
- * them.
+ * @brief check if a 2dPointarrray is closed. To be closed an array
+ * must have >2 points in it, have the first and last points within
+ * tol of one another and have at least one point not within tol of
+ * either of them.
  */
 bool
 IsClosed(const ON_2dPointArray l, double tol)
