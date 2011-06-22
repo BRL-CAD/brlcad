@@ -17,7 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libbu */
+/** @addtogroup cmd */
+/** @ingroup data */
 /** @{ */
 /** @file cmdhist.c
  *

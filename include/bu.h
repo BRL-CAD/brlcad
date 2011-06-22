@@ -17,9 +17,39 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @defgroup libbu BRL-AD Utility Library */
-/** @addtogroup libbu */
-/** @{ */
+
+/** @defgroup container Data Containers */
+/**   @defgroup avs Attribute/Value Sets */
+/**   @defgroup bitv Bit Vectors */
+/**   @defgroup color Color */
+/**   @defgroup hash Hash Tables */
+/**   @defgroup list Linked Lists */
+/**   @defgroup parse Structure Parsing */
+/**   @defgroup ptbl Pointer Tables */
+/**   @defgroup rb Red-Black Trees */
+/**   @defgroup vlb Variable-length Byte Buffers */
+/**   @defgroup vls Variable-length Strings */
+/** @defgroup memory Memory Management */
+/**   @defgroup magic Magic Numbers */
+/**   @defgroup malloc Allocation & Deallocation */
+/**   @defgroup mf Memory-mapped Files */
+/** @defgroup io Input/Output */
+/**   @defgroup log Logging */
+/**   @defgroup debug Debugging */
+/**   @defgroup file File Processing */
+/**   @defgroup vfont Vector Fonts */
+/** @defgroup data Data Management */
+/**   @defgroup cmd Command History */
+/**   @defgroup conv Data Conversion */
+/**   @defgroup image Image Management */
+/**   @defgroup getopt Command-line Option Parsing*/
+/**   @defgroup hton Network Byte-order Conversion */
+/**   @defgroup hist Histogram Handling */
+/** @defgroup parallel  Parallel Processing */
+/**   @defgroup thread Multithreading */
+/** @defgroup binding Language Bindings */
+/**   @defgroup tcl Tcl Interfacing */
+
 /** @file bu.h
  *
  * Main header file for the BRL-CAD Utility Library, LIBBU.
@@ -343,7 +373,7 @@ typedef void *genptr_t;
 
 /*----------------------------------------------------------------------*/
 /** @addtogroup hton */
-/** @ingroup libbu */
+/** @ingroup data */
 /** @{ */
 /**
  * Sizes of "network" format data.  We use the same convention as the
@@ -361,7 +391,7 @@ typedef void *genptr_t;
 
 /*----------------------------------------------------------------------*/
 /** @addtogroup conv */
-/** @ingroup libbu */
+/** @ingroup data */
 /** @{*/
 /** @file libbu/convert.c
  *
@@ -635,8 +665,8 @@ BU_EXPORT extern bu_endian_t bu_byteorder(void);
 
 /*----------------------------------------------------------------------*/
 
-/** @addtogroup bu_list */
-/** @ingroup libbu */
+/** @addtogroup list */
+/** @ingroup container */
 /** @{ */
 /** @file libbu/list.c
  *
@@ -1132,7 +1162,7 @@ typedef double fastf_t;
 
 /*----------------------------------------------------------------------*/
 /** @addtogroup bitv */
-/** @ingroup libbu */
+/** @ingroup container */
 /** @{*/
 /** @file libbu/bitv.c
  *
@@ -1359,8 +1389,8 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 /** @} */
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup bu_hist */
-/** @ingroup libbu */
+/** @addtogroup hist */
+/** @ingroup data */
 /** @{ */
 /** @file libbu/hist.c
  *
@@ -1439,7 +1469,7 @@ typedef struct bu_hist bu_hist_t;
 /*----------------------------------------------------------------------*/
 /* ptbl.c */
 /** @addtogroup ptbl */
-/** @ingroup libbu */
+/** @ingroup container */
 /** @{ */
 /** @file libbu/ptbl.c
  *
@@ -1532,7 +1562,7 @@ typedef struct bu_ptbl bu_ptbl_t;
 
 /*----------------------------------------------------------------------*/
 /** @addtogroup mf */
-/** @ingroup libbu */
+/** @ingroup memory */
 /** @{ */
 /** @file libbu/mappedfile.c
  *
@@ -1670,7 +1700,7 @@ BU_EXPORT extern struct bu_hook_list bu_bomb_hook_list;
 
 /*----------------------------------------------------------------------*/
 /** @addtogroup avs */
-/** @ingroup libbu */
+/** @ingroup container */
 /** @{ */
 /** @file libbu/avs.c
  *
@@ -1774,7 +1804,7 @@ typedef struct bu_attribute_value_set bu_avs_t;
 
 /*----------------------------------------------------------------------*/
 /** @addtogroup vls */
-/** @ingroup libbu */
+/** @ingroup container */
 /** @{ */
 /** @file libbu/vls.c
  *
@@ -1831,7 +1861,7 @@ typedef struct bu_vls bu_vls_t;
 
 /*----------------------------------------------------------------------*/
 /** @addtogroup vlb */
-/** @ingroup libbu */
+/** @ingroup container */
 /** @{ */
 /** @file libbu/vlb.c
  *
@@ -1886,11 +1916,9 @@ typedef struct bu_vlb bu_vlb_t;
 
 
 /*----------------------------------------------------------------------*/
-/**
- * @addtogroup bu_debug Debugging
- * @ingroup libbu
- * @{
- */
+/** @addtogroup debug Debugging */
+/** @ingroup io */
+/** @{ */
 
 /**
  * controls the libbu debug level
@@ -1944,7 +1972,7 @@ BU_EXPORT extern int bu_debug;
 /*----------------------------------------------------------------------*/
 /* parse.c */
 /** @addtogroup parse */
-/** @ingroup libbu */
+/** @ingroup container */
 /** @{ */
 /*
  * Structure parse/print
@@ -2185,9 +2213,8 @@ typedef struct bu_color bu_color_t;
 
 
 /*----------------------------------------------------------------------*/
-/* red-black tree support */
 /** @addtogroup rb */
-/** @ingroup libbu */
+/** @ingroup container */
 /** @{ */
 /*
  * The data structures and constants for red-black trees.
@@ -2428,7 +2455,7 @@ struct bu_cmdtab {
 /**@}*/
 
 /** @addtogroup avs */
-/** @ingroup libbu */
+/** @ingroup container */
 /** @{ */
 /* avs.c */
 
@@ -2518,7 +2545,7 @@ BU_EXPORT extern void bu_avs_add_nonunique(struct bu_attribute_value_set *avsp,
 /** @} */
 
 /** @addtogroup bitv */
-/** @ingroup libbu */
+/** @ingroup container */
 /** @{ */
 
 /**
@@ -2586,8 +2613,8 @@ BU_EXPORT extern struct bu_bitv *bu_bitv_dup(const struct bu_bitv *bv);
 
 /** @} */
 
-/** @addtogroup bu_log */
-/** @ingroup libbu */
+/** @addtogroup log */
+/** @ingroup io */
 /** @{ */
 /** @file libbu/backtrace.c
  *
@@ -2700,7 +2727,7 @@ BU_EXPORT extern char *bu_fgets(char *s, int size, FILE *stream);
 
 /** @} */
 /** @addtogroup color */
-/** @ingroup libbu */
+/** @ingroup container */
 /** @{ */
 
 /**
@@ -2736,7 +2763,7 @@ BU_EXPORT extern int bu_color_to_rgb_floats(struct bu_color *cp, fastf_t *rgb);
 
 /** @} */
 /** @addtogroup file */
-/** @ingroup libbu */
+/** @ingroup io */
 /** @{ */
 
 /** @file libbu/stat.c
@@ -3016,7 +3043,7 @@ BU_EXPORT extern FILE *bu_temp_file(char *filepath, size_t len);
 
 /** @} */
 /** @addtogroup getopt */
-/** @ingroup libbu */
+/** @ingroup data */
 /** @{ */
 
 /** @file libbu/getopt.c
@@ -3067,8 +3094,8 @@ BU_EXPORT extern char *bu_optarg;
 BU_EXPORT extern int bu_getopt(int nargc, char * const nargv[], const char *ostr);
 
 /** @} */
-/** @addtogroup bu_hist */
-/** @ingroup libbu */
+/** @addtogroup hist */
+/** @ingroup data */
 /** @{ */
 
 /* hist.c */
@@ -3096,7 +3123,7 @@ BU_EXPORT extern void bu_hist_pr(const struct bu_hist *histp, const char *title)
 /** @} */
 
 /** @addtogroup hton */
-/** @ingroup libbu */
+/** @ingroup data */
 /** @{ */
 /** @file libbu/htond.c
  *
@@ -3174,7 +3201,7 @@ BU_EXPORT extern void ntohf(unsigned char *out,
 /** @} */
 
 /** @addtogroup thread */
-/** @ingroup libbu */
+/** @ingroup parallel */
 /** @{ */
 /** @file libbu/ispar.c
  *
@@ -3202,8 +3229,8 @@ BU_EXPORT extern void bu_kill_parallel();
 
 /** @} */
 
-/** @addtogroup bu_log */
-/** @ingroup libbu */
+/** @addtogroup log */
+/** @ingroup io */
 /** @{ */
 /** @file libbu/linebuf.c
  *
@@ -3215,8 +3242,8 @@ BU_EXPORT extern void bu_setlinebuf(FILE *fp);
 
 /** @} */
 
-/** @addtogroup bu_list */
-/** @ingroup libbu */
+/** @addtogroup list */
+/** @ingroup container */
 /** @{ */
 
 /**
@@ -3286,8 +3313,8 @@ BU_EXPORT extern void bu_ck_list_magic(const struct bu_list *hd,
 
 /** @} */
 
-/** @addtogroup bu_log */
-/** @ingroup libbu */
+/** @addtogroup log */
+/** @ingroup io */
 /** @{ */
 /** @file libbu/hook.c
  *
@@ -3306,8 +3333,8 @@ BU_EXPORT extern void bu_call_hook(struct bu_hook_list *hlp,
 				   genptr_t buf);
 
 /** @} */
-/** @addtogroup bu_log */
-/** @ingroup libbu */
+/** @addtogroup log */
+/** @ingroup io */
 /** @{ */
 /** @file libbu/log.c
  *
@@ -3398,7 +3425,7 @@ BU_EXPORT extern void bu_flog(FILE *, const char *, ...) __BU_ATTR_FORMAT23;
 /** @} */
 
 /** @addtogroup malloc */
-/** @ingroup libbu */
+/** @ingroup memory */
 /** @{ */
 /** @file libbu/malloc.c
  *
@@ -3502,8 +3529,8 @@ BU_EXPORT extern void bu_ck_malloc_ptr(genptr_t ptr, const char *str);
 BU_EXPORT extern int bu_mem_barriercheck();
 /** @} */
 
-/** @addtogroup bu_log */
-/** @ingroup libbu */
+/** @addtogroup log */
+/** @ingroup io */
 /** @{ */
 /** @file libbu/dirname.c
  *
@@ -3561,7 +3588,7 @@ BU_EXPORT extern char *bu_basename(const char *cp);
 /** @} */
 
 /** @addtogroup mf */
-/** @ingroup libbu */
+/** @ingroup io */
 /** @{ */
 
 /**
@@ -3618,7 +3645,7 @@ BU_EXPORT extern struct bu_mapped_file *bu_open_mapped_file_with_path(char * con
 /** @} */
 
 /** @addtogroup thread */
-/** @ingroup libbu */
+/** @ingroup parallel */
 /** @{ */
 /** @file libbu/kill.c
  *
@@ -3736,7 +3763,7 @@ BU_EXPORT extern void bu_parallel(void (*func)(int ncpu, genptr_t arg), int ncpu
 /** @} */
 
 /** @addtogroup parse */
-/** @ingroup libbu */
+/** @ingroup container */
 /** @{ */
 /** @file libbu/parse.c
  *
@@ -3991,7 +4018,7 @@ BU_EXPORT extern int bu_str_false(const char *str);
 
 /** @} */
 /** @addtogroup bitv */
-/** @ingroup libbu */
+/** @ingroup container */
 /** @{ */
 /** @file libbu/printb.c
  *
@@ -4026,7 +4053,7 @@ BU_EXPORT extern void bu_printb(const char *s,
 /** @} */
 
 /** @addtogroup ptbl */
-/** @ingroup libbu */
+/** @ingroup container */
 /** @{ */
 
 /**
@@ -4134,7 +4161,7 @@ BU_EXPORT extern void bu_ptbl_trunc(struct bu_ptbl *tbl,
 /** @} */
 
 /** @addtogroup rb */
-/** @ingroup libbu */
+/** @ingroup container */
 /** @{ */
 /** @file libbu/rb_create.c
  *
@@ -4436,7 +4463,7 @@ BU_EXPORT extern void bu_rb_walk(struct bu_rb_tree *tree, int order, void (*visi
 
 /** @} */
 /** @addtogroup thread */
-/** @ingroup libbu */
+/** @ingroup parallel */
 /** @{ */
 
 /** @file libbu/semaphore.c
@@ -4502,7 +4529,7 @@ BU_EXPORT extern void bu_semaphore_release(unsigned int i);
 
 /** @} */
 /** @addtogroup vls */
-/** @ingroup libbu */
+/** @ingroup container */
 /** @{ */
 
 /**
@@ -4847,7 +4874,7 @@ BU_EXPORT extern void bu_vls_decode(struct bu_vls *vp, const char *str);
 
 /** @} */
 /** @addtogroup vlb */
-/** @ingroup libbu */
+/** @ingroup container */
 /** @{ */
 
 /**
@@ -4991,8 +5018,8 @@ BU_EXPORT extern int bu_strcmpm(const char *string1, const char *string2, const 
 
 /** @} */
 
-/** @addtogroup bu_log */
-/** @ingroup libbu */
+/** @addtogroup log */
+/** @ingroup io */
 /** @{ */
 
 /** @file libbu/units.c
@@ -5057,7 +5084,7 @@ BU_EXPORT extern void bu_mm_cvt(const struct bu_structparse *sdp,
 /** @} */
 
 /** @addtogroup hton */
-/** @ingroup libbu */
+/** @ingroup data */
 /** @{ */
 /** @file libbu/htester.c
  *
@@ -5145,7 +5172,7 @@ DEPRECATED BU_EXPORT extern unsigned char *bu_plonglong(unsigned char *msgp, uin
 /** @} */
 
 /** @addtogroup tcl */
-/** @ingroup libbu */
+/** @ingroup binding */
 /** @{ */
 /** @file libbu/observer.c
  *
@@ -5540,8 +5567,8 @@ BU_EXPORT extern int Bu_Init(Tcl_Interp *interp);
 
 /** @} */
 
-/** @addtogroup bu_log */
-/** @ingroup libbu */
+/** @addtogroup log */
+/** @ingroup io */
 /** @{ */
 /** @file libbu/lex.c
  *
@@ -5615,8 +5642,8 @@ BU_EXPORT extern long int bu_mread(int fd, void *bufp, long int n);
 
 /** @} */
 
-/** @addtogroup bu_hash */
-/** @ingroup libbu */
+/** @addtogroup hash */
+/** @ingroup container */
 /** @{ */
 /** @file libbu/hash.c
  *
@@ -5863,7 +5890,7 @@ BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_next(struct bu_hash_record *r
 /** @} */
 
 /** @addtogroup image */
-/** @ingroup libbu */
+/** @ingroup data */
 /** @{ */
 /** @file libbu/image.c
  *
@@ -5960,7 +5987,7 @@ BU_EXPORT extern int bu_image_save(unsigned char *data,
 /* end image utilities */
 
 /** @addtogroup file */
-/** @ingroup libbu */
+/** @ingroup io */
 /** @{ */
 /** @file libbu/fchmod.c
  *
@@ -6064,7 +6091,7 @@ BU_EXPORT extern int bu_restore_interrupts();
 /** @} */
 
 /** @addtogroup file */
-/** @ingroup libbu */
+/** @ingroup io */
 /** @{ */
 /** @file libbu/simd.c
  * Detect SIMD type at runtime.
@@ -6080,7 +6107,7 @@ BU_EXPORT extern int bu_simd_level();
 /** @} */
 
 /** @addtogroup file */
-/** @ingroup libbu */
+/** @ingroup io */
 /** @{ */
 /** @file libbu/timer.c
  * Return microsecond accuracy time information.
@@ -6090,7 +6117,7 @@ BU_EXPORT extern int64_t bu_gettime();
 /** @} */
 
 /** @addtogroup file */
-/** @ingroup libbu */
+/** @ingroup io */
 /** @{ */
 /** @file libbu/dlfcn.c
  * Dynamic Library functionality
@@ -6117,8 +6144,6 @@ BU_EXPORT extern const char *bu_dlerror();
 __END_DECLS
 
 #endif  /* __BU_H__ */
-
-/** @} libbu */
 
 /*
  * Local Variables:

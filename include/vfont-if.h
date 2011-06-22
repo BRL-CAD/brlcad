@@ -18,6 +18,7 @@
  * information.
  */
 /** @addtogroup vfont */
+/** @ingroup io */
 /** @{ */
 /** @file vfont-if.h
  *
