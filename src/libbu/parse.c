@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup parse */
-/** @{ */
 
 #include "common.h"
 
@@ -2547,8 +2545,6 @@ bu_structparse_argv(struct bu_vls *logstr,
     return BRLCAD_OK;
 }
 
-
-/** @} */
 
 /*
  * Local Variables:

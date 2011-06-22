@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup malloc */
-/** @{ */
 
 #include "common.h"
 
@@ -665,7 +663,6 @@ bu_mem_barriercheck(void)
     return 0;			/* OK */
 }
 
-/** @} */
 
 /*
  * Local Variables:

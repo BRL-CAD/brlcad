@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup rb */
-/** @{ */
 
 #include "common.h"
 
@@ -384,7 +382,6 @@ void bu_rb_uniq_all_off(struct bu_rb_tree *tree)
     _rb_set_uniq_all(tree, 0);
 }
 
-/** @} */
 
 /*
  * Local Variables:

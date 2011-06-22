@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup rb */
-/** @{ */
 
 #include "common.h"
 
@@ -112,7 +110,6 @@ int bu_rb_rank(struct bu_rb_tree *tree, int order)
     return rank;
 }
 
-/** @} */
 
 /*
  * Local Variables:

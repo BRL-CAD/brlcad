@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup thread */
-/** @{ */
 
 #include "common.h"
 
@@ -1117,8 +1115,6 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     return;
 }
 
-
-/** @} */
 
 /*
  * Local Variables:

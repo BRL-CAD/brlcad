@@ -17,14 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup rb */
-/** @{ */
-/** @file rb_internals.h
- *
- * The constants, macro functions, etc. need within LIBBU(3) to handle
- * the red-black tree utilities.
- *
- */
 
 #include "common.h"
 
@@ -207,7 +199,6 @@ extern void rb_free_package(struct bu_rb_package *package);
 
 #endif /* BU_RB_INTERNALS_H */
 
-/** @} */
 
 /*
  * Local Variables:

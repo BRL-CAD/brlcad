@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup rb */
-/** @{ */
 
 #include "common.h"
 
@@ -85,8 +83,6 @@ void *bu_rb_search (struct bu_rb_tree *tree, int order, void *data)
 	return rb_data(node, order);
 }
 
-
-/** @} */
 
 /*
  * Local Variables:

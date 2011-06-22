@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup butcl */
-/** @{ */
 
 #include "common.h"
 
@@ -214,7 +212,6 @@ bu_observer_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char 
 }
 
 
-/** @} */
 /*
  * Local Variables:
  * mode: C

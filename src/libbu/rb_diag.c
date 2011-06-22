@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup rb */
-/** @{ */
 
 #include "common.h"
 
@@ -118,7 +116,6 @@ bu_rb_summarize_tree(struct bu_rb_tree *tree)
     bu_log("-------------------------------------------------\n");
 }
 
-/** @} */
 
 /*
  * Local Variables:

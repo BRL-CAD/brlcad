@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_log */
-/** @{ */
 
 #include "common.h"
 
@@ -542,8 +540,6 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
     return NULL;
 }
 
-
-/** @} */
 
 /*
  * Local Variables:

@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libbu */
-/** @{ */
 
 #include "common.h"
 
@@ -262,7 +260,6 @@ bu_cmdhist_next(ClientData clientData, Tcl_Interp *interp, int argc, const char 
     return TCL_OK;
 }
 
-/** @} */
 
 /*
  * Local Variables:

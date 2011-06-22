@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup rb */
-/** @{ */
 
 #include "common.h"
 
@@ -190,7 +188,6 @@ bu_rb_delete(struct bu_rb_tree *tree, int order)
     bu_free((genptr_t) node, "node list");
 }
 
-/** @} */
 
 /*
  * Local Variables:

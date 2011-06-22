@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup rb */
-/** @{ */
 
 #include "common.h"
 
@@ -187,7 +185,6 @@ bu_rb_walk(struct bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int tr
     rb_walk(tree, order, visit, WALK_DATA, trav_type);
 }
 
-/** @} */
 
 /*
  * Local Variables:

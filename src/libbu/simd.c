@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_simd */
-/** @{ */
 
 #include "common.h"
 #include "bu.h"
@@ -44,7 +42,6 @@ bu_simd_level()
     return BU_SIMD_NONE;
 }
 
-/** @} */
 
 /*
  * Local Variables:

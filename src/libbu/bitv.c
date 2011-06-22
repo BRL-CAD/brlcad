@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bitv */
-/** @{ */
 
 #include "common.h"
 
@@ -308,8 +306,6 @@ bu_bitv_dup(register const struct bu_bitv *bv)
     return bv2;
 }
 
-
-/** @} */
 
 /*
  * Local Variables:
