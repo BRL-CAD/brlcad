@@ -52,6 +52,7 @@
 
 #if defined(_WIN32)
 typedef int pid_t;
+#define snprintf(BUF,SIZ,...) sprintf(BUF,__VA_ARGS__)
 #endif
 
 int mimic_gnu = 0;

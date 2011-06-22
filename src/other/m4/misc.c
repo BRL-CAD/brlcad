@@ -50,6 +50,11 @@
 #include "extern.h"
 #include "pathnames.h"
 
+#ifdef WIN32
+void err(int code, const char *fmt, ...);
+void verr(int code, const char *fmt, va_list args);
+long long strtoll(const char *);
+#endif
 
 char *ep;		/* first free char in strspace */
 static char *strspace;	/* string space for evaluation */
@@ -494,7 +499,7 @@ getopt(int nargc, char * const nargv[], const char *ostr)
 /* end of LGPL code. */
 
 void
-warnx()
+warnx(const char *fmt, ...)
 {
 	fprintf(stderr, "%s: ", getprogname());
 	fprintf(stderr, "%s at line %lu: ", CURRENT_NAME, CURRENT_LINE);
@@ -508,11 +513,57 @@ warnx()
 	fprintf(stderr, "\n");
 }
 
+void
+err(int code, const char *fmt, ...)
+{
+	fprintf(stderr, "%s: ", getprogname());
+	fprintf(stderr, "%s at line %lu: ", CURRENT_NAME, CURRENT_LINE);
+	if (fmt != NULL) {
+		va_list ap;
+
+		va_start(ap, fmt);
+		vfprintf(stderr, fmt, ap);
+		va_end(ap);
+	}
+	fprintf(stderr, "\n");
+	exit(code);
+}
+
 int
 mkstemp(char *file)
 {
 	fprintf(stderr, "Whu?\n");
 	return -1;
+}
+
+void
+verr(int code, const char *fmt, va_list args)
+{
+	vprintf(fmt, args);
+	exit(code);
+}
+
+long long
+strtoll(const char *buf)
+{
+	long long val;
+	sscanf(buf, "%d", &val);
+	return val;
+}
+
+char *
+strsep(char **string, char *delim)
+{
+	char *s = *string;
+	while(*s) {
+		char *d = delim;
+		while(*d)
+			if(*d == *s)
+				return *string = s+1;
+			d++;
+		s++;
+	}
+	return NULL;
 }
 
 #endif
