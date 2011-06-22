@@ -264,20 +264,20 @@ mk_freemembers(struct bu_list *headp)
  */
 int
 mk_comb(
-    struct rt_wdb *wdbp,	/* the database to write to */
-    const char *combname,	/* the name of the combination */
-    struct bu_list *headp,	/* Made by mk_addmember() */
-    int region_kind,		/* 1 => region.  'P' and 'V' for FASTGEN */
-    const char *shadername,	/* shader name, or NULL */
-    const char *shaderargs,	/* shader args, or NULL */
-    const unsigned char *rgb,	/* NULL => no color */
-    int id,			/* region_id */
-    int air,			/* aircode */
-    int material,		/* GIFTmater */
-    int los,			/* line-of-sight thickness equivalence */
-    int inherit,		/* whether objects below this comb inherit from this comb */
-    int append_ok,		/* 0 = obj must not exit */
-    int gift_semantics)		/* 0 = pure, 1 = gift */
+    struct rt_wdb *wdbp,
+    const char *combname,
+    struct bu_list *headp,
+    int region_kind,
+    const char *shadername,
+    const char *shaderargs,
+    const unsigned char *rgb,
+    int id,
+    int air,
+    int material,
+    int los,
+    int inherit,
+    int append_ok,
+    int gift_semantics)
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;

@@ -407,19 +407,19 @@ WDB_EXPORT WDB_EXTERN (struct wmember *mk_addmember,
 		rgb, id, air, material, los, inherit_flag, 0, 0 )
 
 WDB_EXPORT int mk_comb(
-    struct rt_wdb	*wdbp,
-    const char		*combname,
-    struct bu_list	*headp,		/**<  Made by mk_addmember() */
-    int			region_kind,	/**<  1 => region.  'P' and 'V' for FASTGEN */
-    const char		*shadername,	/**<  shader name, or NULL */
-    const char		*shaderargs,	/**<  shader args, or NULL */
-    const unsigned char	*rgb,		/**<  NULL => no color */
-    int			id,		/**<  region_id */
-    int			air,		/**<  aircode */
-    int			material,	/**<  GIFTmater */
-    int			los,
-    int			inherit,
-    int			append_ok,	/**<  0 = obj must not exit */
+    struct rt_wdb	*wdbp,			/**< database to write to */
+    const char		*combname,		/**< name of the combination */
+    struct bu_list	*headp,			/**< Made by mk_addmember() */
+    int			region_kind,		/**< 1 => region.  'P' and 'V' for FASTGEN */
+    const char		*shadername,		/**< shader name, or NULL */
+    const char		*shaderargs,		/**< shader args, or NULL */
+    const unsigned char	*rgb,			/**< NULL => no color */
+    int			id,			/**< region_id */
+    int			air,			/**< aircode */
+    int			material,		/**< GIFTmater */
+    int			los,			/**< line-of-sight thickness equivalence */
+    int			inherit,		/**< whether objects below inherit from this comb */
+    int			append_ok,		/**< 0 = obj must not exit */
     int			gift_semantics);	/**<  0 = pure, 1 = gift */
 
 /** Convenience routines for quickly making combinations */
