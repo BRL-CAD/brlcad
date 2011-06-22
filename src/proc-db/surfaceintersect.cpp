@@ -272,18 +272,6 @@ Face_X_Event::Face_X_Event(ON_BrepFace *f1, ON_BrepFace *f2, ON_Curve *c1, ON_Cu
 
 
 /**
- * ON_X_EVENT::ON_X_EVENT
- *
- * @brief create a new ON_X_EVENT This is implemented in
- * opennurbs_x.cpp:19, not sure why the compiler is failing to see it
- */
-ON_X_EVENT::ON_X_EVENT()
-{
-    memset(this, 0, sizeof(*this));
-}
-
-
-/**
  * Face_X_Event::Render_Curves
  *
  * @brief Renders the Curves in the Face_X_Event as the different
