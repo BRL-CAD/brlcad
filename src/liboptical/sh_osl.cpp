@@ -39,7 +39,7 @@
 #include "raytrace.h"
 #include "optical.h"
 
-#define OSL_MAGIC 0x1834    /* make this a unique number for each shader */
+#define OSL_MAGIC 0x1837    /* make this a unique number for each shader */
 #define CK_OSL_SP(_p) BU_CKMAG(_p, OSL_MAGIC, "osl_specific")
 
 /* Oslrenderer system */
@@ -51,7 +51,7 @@ OSLRenderer *oslr = NULL;
  */
 struct osl_specific {
     long magic;              	 /* magic # for memory validity check */
-    /*OSLRenderer* oslr;*/           /* reference to osl ray tracer */
+    struct bu_vls shadername;
 };
 
 /* The default values for the variables in the shader specific structure */
@@ -66,11 +66,14 @@ struct osl_specific osl_defaults = {
 
 /* description of how to parse/print the arguments to the shader */
 struct bu_structparse osl_print_tab[] = {
-    {"",	0, (char *)0,		0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+    {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
+
+/* Parse rule to arguments */
 struct bu_structparse osl_parse_tab[] = {
-    {"%p",	bu_byteoffset(osl_print_tab[0]), "osl_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+    {"%V", 1, "shadername", SHDR_O(shadername), BU_STRUCTPARSE_FUNC_NULL, 
+     NULL, NULL},
+    {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
 extern "C" {
@@ -140,11 +143,25 @@ HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm,
      * Initialize the osl specific values
      * -----------------------------------
      */
-    memcpy(osl_sp, &osl_defaults, sizeof(struct osl_specific));
 
-    /* parse the user's arguments for this use of the shader. */
-    if (bu_struct_parse(matparm, osl_parse_tab, (char *)osl_sp) < 0)
+    bu_vls_init(&osl_sp->shadername);
+    osl_sp->magic = OSL_MAGIC;
+
+    /* Parse the user's arguments to fill osl specifics */
+    if (bu_struct_parse(matparm, osl_parse_tab, (char *)osl_sp) < 0){
+	bu_free((genptr_t)osl_sp, "osl_specific");
 	return -1;
+    }
+
+    /* -----------------------------------
+     * Check for errors
+     * -----------------------------------
+     */
+    if (bu_vls_strlen(&osl_sp->shadername) <= 0){
+	/* FIXME shadername was not set. Use the default value */
+	fprintf(stderr, "[Error] shadername was not set");
+	return -1;
+    }
 
     /* -----------------------------------
      * Initialize osl render system
@@ -156,7 +173,8 @@ HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm,
 	oslr = new OSLRenderer();
     }
     /* Add this shader to OSL system */
-    oslr->AddShader("yellow");
+    oslr->AddShader(osl_sp->shadername.vls_str);
+    printf("Adding shader: %s\n", osl_sp->shadername.vls_str);
   
     if (rdebug&RDEBUG_SHADE) {
 	bu_struct_print(" Parameters:", osl_print_tab, (char *)osl_sp);
@@ -164,7 +182,7 @@ HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm,
 
     return 1;
 }
-
+    
 /*
  * O S L _ P R I N T
  */
@@ -221,7 +239,7 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
     point_t scolor;
     VSETALL(scolor, 0.0f);
 
-    int nsamples = 4;
+    int nsamples = 1;
     for(int s=0; s<nsamples; s++){
 
 	/* -----------------------------------
@@ -253,7 +271,7 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 	info.isbackfacing = 0;
 	info.surfacearea = 1.0f;
     
-	info.shadername = "yellow";
+	info.shadername = osl_sp->shadername.vls_str;
 
 	/* We only perform reflection if application decides to */
 	info.doreflection = 0;
