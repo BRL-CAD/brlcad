@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file g-xxx.c
+/** @file conv/g-xxx.c
  *
  * Sample code for converting BRL-CAD models to some other format.
  * This code assumes that your receiving format can handle CSG

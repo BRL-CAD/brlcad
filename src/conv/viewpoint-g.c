@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file viewpoint-g.c
+/** @file conv/viewpoint-g.c
  *
  * Converter from Viewpoint Datalabs coor/elem format to BRL-CAD
  * format.  Will assign vertex normals if they are present in the

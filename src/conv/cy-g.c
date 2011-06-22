@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file cy-g.c
+/** @file conv/cy-g.c
  *
  *	This routine converts Cyberware Digitizer Data (laser scan data)
  *	to a single BRL-CAD ARS solid. The data must be in cylindrical scan

@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file obj-g.c
+/** @file conv/obj-g.c
  *
  * Convert wavefront obj format files to BRL-CAD .g binary format
  */

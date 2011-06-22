@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file g-x3d.c
+/** @file conv/g-x3d.c
  *
  * Program to convert a BRL-CAD model (in a .g file) to a X3D facetted
  * model by calling on the NMG booleans. This program is a modified

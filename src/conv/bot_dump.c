@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file bot_dump.c
+/** @file conv/bot_dump.c
  *
  */
 

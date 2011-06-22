@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file walk_example.c
+/** @file conv/walk_example.c
  *
  * @brief Example of how to traverse a BRL-CAD database heirarchy
  *

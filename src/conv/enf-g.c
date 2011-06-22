@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file enf-g.c
+/** @file conv/enf-g.c
  *
  * Program to convert the tessellated Elysium Neutral File format to
  * BRL-CAD format.

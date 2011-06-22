@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file fast4-g.c
+/** @file conv/fast4-g.c
  *
  * Program to convert the FASTGEN4 format to BRL-CAD.
  *

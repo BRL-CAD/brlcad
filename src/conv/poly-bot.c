@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file poly-bot.c
+/** @file conv/poly-bot.c
  *
  * Program to convert all the polysolids in a BRL-CAD model (in a .g
  * file) to BOT solids

@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file g4-g5.c
+/** @file conv/g4-g5.c
  *               g4-g5: program to convert version 4 databases to version 5
  *
  *               Imports version 4 database objects and writes out the equivalent v5 database

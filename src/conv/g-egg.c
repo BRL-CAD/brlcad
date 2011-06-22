@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file g-egg.c
+/** @file conv/g-egg.c
  *
  * Program to convert a BRL-CAD model (in a .g file) to a panda3d egg file by
  * calling on the NMG booleans.  Based on g-stl.c.

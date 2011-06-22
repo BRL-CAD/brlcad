@@ -19,7 +19,7 @@
  * information.
  *
  */
-/** @file g-obj.c
+/** @file conv/g-obj.c
  *
  * Program to convert a BRL-CAD model (in a .g file) to a Wavefront
  * '.obj' file by calling on the NMG booleans.

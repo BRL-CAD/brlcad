@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file g-acad.c
+/** @file conv/g-acad.c
  *
  * Program to convert a BRL-CAD model (in a .g file) to the Lockheed
  * Martin "Advanced Computer-Aided Design" (ACAD) file format by

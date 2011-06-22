@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file conv-vg2g.c
+/** @file conv/conv-vg2g.c
  *
  *  Converts .vg files to .g (latest style, with idents).
  *

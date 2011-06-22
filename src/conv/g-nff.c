@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file g-nff.c
+/** @file conv/g-nff.c
  *
  * Program to convert a BRL-CAD model (in a .g file) to an NFF file by
  * calling on the NMG booleans.
