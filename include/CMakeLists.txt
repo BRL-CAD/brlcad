@@ -87,7 +87,6 @@ SET(brlcadinclude_misc
 	brlcad_config.h.in
 	conf
 	config_win.h
-	osl-renderer.h
 	sed4
 	)
 
