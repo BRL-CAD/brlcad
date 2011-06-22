@@ -36,6 +36,7 @@
 
 class VCSet;
 
+
 class Parameter
 {
 public:
@@ -74,6 +75,10 @@ protected:
     std::string name;
     Varlist Variables;
 };
+
+
+extern Parameter::iterator makeIterator(Parameter::Varlist::iterator i);
+extern Parameter::const_iterator makeIterator(Parameter::Varlist::const_iterator i);
 
 
 class Vector : public Parameter
