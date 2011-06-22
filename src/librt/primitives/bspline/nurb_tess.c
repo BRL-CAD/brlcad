@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_tess.c
+/** @file primitives/bspline/nurb_tess.c
  *
  * Given Epsilon, compute the number of internal knots to add so that
  * every triangle generated in parametric space is within epsilon of

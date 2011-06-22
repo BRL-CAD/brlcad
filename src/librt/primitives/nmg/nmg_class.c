@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_class.c
+/** @file primitives/nmg/nmg_class.c
  *
  * Subroutines to classify one object with respect to another.
  * Possible classifications are AinB, AoutB, AinBshared, AinBanti.

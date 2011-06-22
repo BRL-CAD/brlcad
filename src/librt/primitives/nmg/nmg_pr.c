@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_pr.c
+/** @file primitives/nmg/nmg_pr.c
  *
  * Contains routines to print or describe NMG data structures.
  * These routines are always available (not conditionally compiled)

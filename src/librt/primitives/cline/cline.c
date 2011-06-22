@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file cline.c
+/** @file primitives/cline/cline.c
  *
  * Intersect a ray with a FASTGEN4 CLINE element.
  *

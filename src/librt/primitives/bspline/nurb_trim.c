@@ -19,7 +19,7 @@
  */
 /** @addtogroup */
 /** @{ */
-/** @file nurb_trim.c
+/** @file primitives/bspline/nurb_trim.c
  *
  * Trimming curve routines.
  *

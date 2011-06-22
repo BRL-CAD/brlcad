@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file xxx.c
+/** @file primitives/xxx/xxx.c
  *
  * Intersect a ray with an 'xxx' primitive object.
  *

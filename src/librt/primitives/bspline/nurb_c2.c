@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_c2.c
+/** @file primitives/bspline/nurb_c2.c
  *
  * Given parametric u, v values, return the curvature of the surface.
  *

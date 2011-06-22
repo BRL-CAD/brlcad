@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rpc_mirror.c
+/** @file primitives/rpc/rpc_mirror.c
  *
  * mirror support
  *

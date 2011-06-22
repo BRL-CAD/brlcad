@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file epa_mirror.c
+/** @file primitives/epa/epa_mirror.c
  *
  * mirror support
  *

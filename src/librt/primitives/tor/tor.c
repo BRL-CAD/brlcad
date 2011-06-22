@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file tor.c
+/** @file primitives/tor/tor.c
  *
  * Intersect a ray with a Torus
  *

@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file tgc.c
+/** @file primitives/tgc/tgc.c
  *
  * Intersect a ray with a Truncated General Cone.
  *

@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file ebm.c
+/** @file primitives/ebm/ebm.c
  *
  * Intersect a ray with an Extruded Bitmap, where the bitmap is taken
  * from a bw(5) file.

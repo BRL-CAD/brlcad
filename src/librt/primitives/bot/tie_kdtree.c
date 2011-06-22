@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tie_kdtree.c
+/** @file primitives/bot/tie_kdtree.c
  *  tie_kdtree.c
  *
  */

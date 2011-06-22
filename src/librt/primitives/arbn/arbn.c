@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file arbn.c
+/** @file primitives/arbn/arbn.c
  *
  * Intersect a ray with an Arbitrary Regular Polyhedron with an
  * arbitrary number of faces.

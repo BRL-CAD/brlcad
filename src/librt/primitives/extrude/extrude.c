@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file extrude.c
+/** @file primitives/extrude/extrude.c
  *
  * Provide support for solids of extrusion.
  *

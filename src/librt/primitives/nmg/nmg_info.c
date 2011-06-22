@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_info.c
+/** @file primitives/nmg/nmg_info.c
  *
  * A companion module to nmg_mod.c which contains routines to
  * answer questions about n-Manifold Geometry data structures.

@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file sph.c
+/** @file primitives/sph/sph.c
  *
  * Intersect a ray with a Sphere.
  * Special case of the Generalized Ellipsoid

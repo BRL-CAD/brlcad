@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file nmg.c
+/** @file primitives/nmg/nmg.c
  *
  * Intersect a ray with an NMG solid.
  *

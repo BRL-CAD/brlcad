@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_fuse.c
+/** @file primitives/nmg/nmg_fuse.c
  *
  * Routines to "fuse" entities together that are geometrically
  * identical (within tolerance) into entities that share underlying

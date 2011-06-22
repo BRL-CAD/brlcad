@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_mesh.c
+/** @file primitives/nmg/nmg_mesh.c
  *
  * Meshing routines for n-Manifold Geometry.
  * This stuff is destined to be absorbed into nmg_fuse.c.

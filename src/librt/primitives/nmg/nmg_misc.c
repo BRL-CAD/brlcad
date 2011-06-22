@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_misc.c
+/** @file primitives/nmg/nmg_misc.c
  *
  * As the name implies, these are miscellaneous routines that work with
  * the NMG structures.

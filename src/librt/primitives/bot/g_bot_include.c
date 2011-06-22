@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file g_bot_include.c
+/** @file primitives/bot/g_bot_include.c
  *
  * This file contains all the routines for "g_bot.c" that contain
  * references to "tri_specific" structs. This file is included in

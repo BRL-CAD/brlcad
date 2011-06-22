@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file superell.c
+/** @file primitives/superell/superell.c
  *
  * Intersect a ray with a Superquadratic Ellipsoid.
  *

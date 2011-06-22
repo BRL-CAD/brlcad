@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_bound.c
+/** @file primitives/bspline/nurb_bound.c
  *
  * Find the bounding box for the a NURB surface.
  *

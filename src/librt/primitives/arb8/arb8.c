@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file arb8.c
+/** @file primitives/arb8/arb8.c
  *
  * Intersect a ray with an Arbitrary Regular Polyhedron with as many
  * as 8 vertices.

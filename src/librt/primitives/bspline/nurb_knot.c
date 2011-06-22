@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_knot.c
+/** @file primitives/bspline/nurb_knot.c
  *
  * Various knot vector routines.
  *

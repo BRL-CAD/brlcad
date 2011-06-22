@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file vol.c
+/** @file primitives/vol/vol.c
  *
  * Intersect a ray with a 3-D volume.  The volume is described as a
  * concatenation of bw(5) files.

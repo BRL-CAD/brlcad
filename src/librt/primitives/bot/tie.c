@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tie.c
+/** @file primitives/bot/tie.c
  *  tie.c
  *
  */

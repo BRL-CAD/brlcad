@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file revolve.c
+/** @file primitives/revolve/revolve.c
  *
  * Intersect a ray with an 'revolve' primitive object.
  *

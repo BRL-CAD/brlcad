@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file nmg_mirror.c
+/** @file primitives/nmg/nmg_mirror.c
  *
  * mirror support
  *

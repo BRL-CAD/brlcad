@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pipe_mirror.c
+/** @file primitives/pipe/pipe_mirror.c
  *
  * mirror support
  *

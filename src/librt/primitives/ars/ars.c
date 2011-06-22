@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file ars.c
+/** @file primitives/ars/ars.c
  *
  * Intersect a ray with an ARS (Arbitrary faceted solid).
  *

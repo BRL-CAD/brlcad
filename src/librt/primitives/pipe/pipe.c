@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file pipe.c
+/** @file primitives/pipe/pipe.c
  *
  * Intersect a ray with a pipe solid.
  *

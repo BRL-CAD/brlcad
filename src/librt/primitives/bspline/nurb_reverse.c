@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_reverse.c
+/** @file primitives/bspline/nurb_reverse.c
  *
  * Reverse the direction of a nurb surface by transposing the control
  * points

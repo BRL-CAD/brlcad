@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_plot.c
+/** @file primitives/nmg/nmg_plot.c
  *
  * This file contains routines that create VLISTs and UNIX-plot files.
  * Some routines are essential to the MGED interface, some are more

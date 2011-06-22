@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tor_mirror.c
+/** @file primitives/tor/tor_mirror.c
  *
  * mirror support
  *

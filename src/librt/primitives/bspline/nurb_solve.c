@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_solve.c
+/** @file primitives/bspline/nurb_solve.c
  *
  * Decompose a matrix into its LU decomposition using pivoting.
  *

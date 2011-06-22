@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_mk.c
+/** @file primitives/nmg/nmg_mk.c
  *
  * Support routines for n-Manifold Geometry.
  *

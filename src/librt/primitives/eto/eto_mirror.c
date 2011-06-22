@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file eto_mirror.c
+/** @file primitives/eto/eto_mirror.c
  *
  * mirror support
  *

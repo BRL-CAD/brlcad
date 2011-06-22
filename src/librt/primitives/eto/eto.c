@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file eto.c
+/** @file primitives/eto/eto.c
  *
  * Intersect a ray with an Elliptical Torus.
  *

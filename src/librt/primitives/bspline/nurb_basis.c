@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_basis.c
+/** @file primitives/bspline/nurb_basis.c
  *
  * Evaluate the B-Spline Basis Functions.
  *

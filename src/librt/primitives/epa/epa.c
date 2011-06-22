@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file epa.c
+/** @file primitives/epa/epa.c
  *
  * Intersect a ray with an Elliptical Paraboloid.
  *

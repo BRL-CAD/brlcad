@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_tri_mc.c
+/** @file primitives/nmg/nmg_tri_mc.c
  *
  * Triangulate the faces of a polygonal NMG using the marching cubes
  * algorithm.

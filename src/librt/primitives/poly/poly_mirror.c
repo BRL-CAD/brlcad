@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file poly_mirror.c
+/** @file primitives/poly/poly_mirror.c
  *
  * mirror support
  *

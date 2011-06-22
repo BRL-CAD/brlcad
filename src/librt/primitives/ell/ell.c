@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file ell.c
+/** @file primitives/ell/ell.c
  *
  * Intersect a ray with a Generalized Ellipsoid.
  *

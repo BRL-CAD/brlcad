@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file dsp.c
+/** @file primitives/dsp/dsp.c
  *
  * Intersect a ray with a displacement map.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file hyp_mirror.c
+/** @file primitives/hyp/hyp_mirror.c
  *
  * mirror support
  *

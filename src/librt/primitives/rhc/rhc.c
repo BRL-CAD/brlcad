@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file rhc.c
+/** @file primitives/rhc/rhc.c
  *
  * Intersect a ray with a Right Hyperbolic Cylinder.
  *

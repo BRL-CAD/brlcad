@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_refine.c
+/** @file primitives/bspline/nurb_refine.c
  *
  * Refines a surface by inserting knots with respect to the row or
  * columns of the control points resulting in the same surface with new

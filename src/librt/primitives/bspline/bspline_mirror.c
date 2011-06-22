@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bspline_mirror.c
+/** @file primitives/bspline/bspline_mirror.c
  *
  * mirror support
  *

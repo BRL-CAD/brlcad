@@ -20,7 +20,7 @@
 
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_bool.c
+/** @file primitives/nmg/nmg_bool.c
  *
  * Support for boolean operations on NMG objects.  Most of the
  * routines in here are static/local to this file.  The interfaces

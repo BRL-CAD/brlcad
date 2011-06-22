@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tgc_mirror.c
+/** @file primitives/tgc/tgc_mirror.c
  *
  * mirror support
  *

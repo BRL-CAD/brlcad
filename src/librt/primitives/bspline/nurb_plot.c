@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_plot.c
+/** @file primitives/bspline/nurb_plot.c
  *
  * Utilities for spline debuging.
  *

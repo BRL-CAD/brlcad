@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file btgf.c
+/** @file primitives/bot/btgf.c
  *
  * the bot/tie float glue.
  *

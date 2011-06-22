@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file metaball.c
+/** @file primitives/metaball/metaball.c
  *
  * Intersect a ray with a metaball implicit surface.
  *

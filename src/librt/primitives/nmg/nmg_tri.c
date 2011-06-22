@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_tri.c
+/** @file primitives/nmg/nmg_tri.c
  *
  * Triangulate the faces of a polygonal NMG.
  *

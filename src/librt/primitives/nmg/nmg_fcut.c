@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_fcut.c
+/** @file primitives/nmg/nmg_fcut.c
  *
  * After two faces have been intersected, cut or join loops crossed
  * by the line of intersection.  (Formerly nmg_comb.c)

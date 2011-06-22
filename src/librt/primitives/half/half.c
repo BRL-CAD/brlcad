@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file half.c
+/** @file primitives/half/half.c
  *
  * Intersect a ray with a Halfspace.
  *

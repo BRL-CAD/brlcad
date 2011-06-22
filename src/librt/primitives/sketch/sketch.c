@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file sketch.c
+/** @file primitives/sketch/sketch.c
  *
  * Provide support for 2D sketches.
  *

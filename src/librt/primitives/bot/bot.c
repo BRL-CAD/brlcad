@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file bot.c
+/** @file primitives/bot/bot.c
  *
  * Intersect a ray with a bag o' triangles.
  *

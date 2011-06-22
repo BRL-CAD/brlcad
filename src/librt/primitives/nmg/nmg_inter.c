@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_inter.c
+/** @file primitives/nmg/nmg_inter.c
  *
  * Routines to intersect two NMG regions.  When complete, all loops in
  * each region have a single classification w.r.t. the other region,

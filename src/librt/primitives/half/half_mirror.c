@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file half_mirror.c
+/** @file primitives/half/half_mirror.c
  *
  * mirror support
  *

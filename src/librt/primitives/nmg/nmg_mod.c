@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_mod.c
+/** @file primitives/nmg/nmg_mod.c
  *
  * Routines for modifying n-Manifold Geometry data structures.
  *

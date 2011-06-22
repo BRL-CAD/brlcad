@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file ehy.c
+/** @file primitives/ehy/ehy.c
  *
  * Intersect a ray with an Elliptical Hyperboloid.
  *

@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_visit.c
+/** @file primitives/nmg/nmg_visit.c
  *
  * A generalized, object-oriented subroutine family to
  * visit all the data structures "below" a given structure.

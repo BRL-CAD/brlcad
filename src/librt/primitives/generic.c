@@ -19,7 +19,7 @@
  */
 /** @addtogroup g_ */
 /** @{ */
-/** @file generic.c
+/** @file primitives/generic.c
  *
  * Generic routines applicable across most primitives
  *

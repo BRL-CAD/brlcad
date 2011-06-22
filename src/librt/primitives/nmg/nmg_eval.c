@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_eval.c
+/** @file primitives/nmg/nmg_eval.c
  *
  * Evaluate boolean operations on NMG objects.
  *

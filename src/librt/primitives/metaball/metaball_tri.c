@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file metaball.c
+/** @file primitives/metaball/metaball_tri.c
  *
  * Tesselation/facetization routines for the metaball primitive.
  *

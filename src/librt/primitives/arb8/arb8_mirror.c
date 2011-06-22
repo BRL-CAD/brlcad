@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file arb8_mirror.c
+/** @file primitives/arb8/arb8_mirror.c
  *
  * mirror support
  *

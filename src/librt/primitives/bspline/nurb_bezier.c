@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_bezier.c
+/** @file primitives/bspline/nurb_bezier.c
  *
  * Convert a NURB surface or curve into Bezier form, with no internal
  * knots.
