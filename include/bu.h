@@ -190,10 +190,6 @@ __BEGIN_DECLS
 BU_EXPORT extern Tcl_Interp *brlcad_interp;
 
 /**
- * B U _ F O R T R A N
- *
- * @def BU_FORTRAN
- *
  * This macro is used to take the 'C' function name, and convert it at
  * compile time to the FORTRAN calling convention.
  *
@@ -219,8 +215,6 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 
 
 /**
- * B U _ G E T T Y P E
- *
  * Acquire storage for a given TYPE, eg, BU_GETTYPE(ptr, typename);
  * Equivalent to BU_GETSTRUCT, except without the 'struct' Useful
  * for typedef'ed objects.
@@ -230,8 +224,6 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 
 
 /**
- * B U _ A S S E R T
- *
  * @def BU_ASSERT(eqn)
  * Quick and easy macros to generate an informative error message and
  * abort execution if the specified condition does not hold true.
@@ -373,7 +365,6 @@ typedef void *genptr_t;
 /** @{*/
 /** @file libbu/convert.c
  *
- * @brief
  * Routines to translate data formats.  The data formats are:
  *
  * \li Host/Network		is the data in host format or local format
@@ -389,9 +380,6 @@ typedef void *genptr_t;
 
 
 /**
- * b u _ c v
- *
- * @brief
  * convert from one format to another.
  *
  * @param in		input pointer
@@ -405,9 +393,6 @@ typedef void *genptr_t;
 BU_EXPORT extern size_t bu_cv(genptr_t out, char *outfmt, size_t size, genptr_t in, char *infmt, int count);
 
 /**
- * b u _ c v _ c o o k i e
- *
- * @brief
  * Set's a bit vector after parsing an input string.
  *
  * Set up the conversion tables/flags for vert.
@@ -428,8 +413,6 @@ BU_EXPORT extern size_t bu_cv(genptr_t out, char *outfmt, size_t size, genptr_t 
 BU_EXPORT extern int bu_cv_cookie(const char *in);
 
 /**
- * C V _ O P T I M I Z E
- *
  * It is always more efficient to handle host data, rather than
  * network.  If host and network formats are the same, and the request
  * was for network format, modify the cookie to request host format.
@@ -437,16 +420,11 @@ BU_EXPORT extern int bu_cv_cookie(const char *in);
 BU_EXPORT extern int bu_cv_optimize(int cookie);
 
 /**
- * C V _ I T E M L E N
- *
  * Returns the number of bytes each "item" of type "cookie" occupies.
  */
 BU_EXPORT extern int bu_cv_itemlen(int cookie);
 
 /**
- * bu_cv_w_cookie
- *
- * @brief
  * convert with cookie
  *
  * @param in		input pointer
@@ -536,7 +514,7 @@ BU_EXPORT extern int bu_cv_itemlen(int cookie);
  	done
  @endcode
  */
-BU_EXPORT extern size_t bu_cv_w_cookie(genptr_t, int, size_t, genptr_t, int, size_t);
+BU_EXPORT extern size_t bu_cv_w_cookie(genptr_t out, int outcookie, size_t sz, genptr_t in, int incookie, size_t cnt);
 
 /**
  * bu_cv_ntohss
@@ -637,8 +615,6 @@ typedef enum {
 
 
 /**
- * b u _ b y t e o r d e r
- *
  * returns the platform byte ordering (e.g., big-/little-endian)
  */
 BU_EXPORT extern bu_endian_t bu_byteorder(void);
@@ -1212,7 +1188,6 @@ typedef unsigned char bitv_t;
 #define BU_BITV_MASK ((1<<BU_BITV_SHIFT)-1)
 
 /**
- * @brief
  * Bit vector data structure.
  *
  * bu_bitv uses a little-endian encoding, placing bit 0 on the right
@@ -1229,9 +1204,9 @@ typedef unsigned char bitv_t;
  * 0 is at the right).  Note that MUVES does it differently.
  */
 struct bu_bitv {
-    struct bu_list l;		/**< @brief linked list for caller's use */
-    unsigned int nbits;		/**< @brief actual size of bits[], in bits */
-    bitv_t bits[2];	/**< @brief variable size array */
+    struct bu_list l;		/**< linked list for caller's use */
+    unsigned int nbits;		/**< actual size of bits[], in bits */
+    bitv_t bits[2];	/**< variable size array */
 };
 typedef struct bu_bitv bu_bitv_t;
 #define BU_BITV_NULL ((struct bu_bitv *)0)
@@ -1265,8 +1240,6 @@ typedef struct bu_bitv bu_bitv_t;
 #define BU_BITV_IS_INITIALIZED(_bp) (((struct bu_bitv *)(_bp) != BU_BITV_NULL) && LIKELY((_bp)->l.magic == BU_BITV_MAGIC))
 
 /**
- * b u _ b i t v _ s h i f t
- *
  * returns floor(log2(sizeof(bitv_t)*8.0)), i.e. the number of bits
  * required with base-2 encoding to index any bit in an array of
  * length sizeof(bitv_t)*8.0 bits long.  users should not call this
@@ -1391,7 +1364,6 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 /** @{ */
 /** @file libbu/hist.c
  *
- * @brief
  * General purpose histogram handling routines.
  *
  * The macro RT_HISTOGRAM_TALLY is used to record items that
@@ -1401,19 +1373,16 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
  */
 
 /**
- * B U _ H I S T
- *
- * @struct bu_hist bu.h
- * @brief histogram support
+ * histogram support
  */
 struct bu_hist  {
-    unsigned long magic;	/**< @brief magic # for id/check */
-    fastf_t hg_min;		/**< @brief minimum value */
-    fastf_t hg_max;		/**< @brief maximum value */
-    fastf_t hg_clumpsize;	/**< @brief (max-min+1)/nbins+1 */
-    long hg_nsamples;		/**< @brief total number of samples spread into histogram */
-    long hg_nbins;		/**< @brief # of bins in hg_bins[]  */
-    long *hg_bins;		/**< @brief array of counters */
+    unsigned long magic;	/**< magic # for id/check */
+    fastf_t hg_min;		/**< minimum value */
+    fastf_t hg_max;		/**< maximum value */
+    fastf_t hg_clumpsize;	/**< (max-min+1)/nbins+1 */
+    long hg_nsamples;		/**< total number of samples spread into histogram */
+    long hg_nbins;		/**< # of bins in hg_bins[]  */
+    long *hg_bins;		/**< array of counters */
 };
 typedef struct bu_hist bu_hist_t;
 #define BU_HIST_NULL ((struct bu_hist *)0)
@@ -1474,7 +1443,7 @@ typedef struct bu_hist bu_hist_t;
 /** @{ */
 /** @file libbu/ptbl.c
  *
- * @brief Support for generalized "pointer tables"
+ * Support for generalized "pointer tables"
  *
  * Support for generalized "pointer tables", kept compactly in a
  * dynamic array.
@@ -1488,15 +1457,13 @@ typedef struct bu_hist bu_hist_t;
 
 
 /**
- * @struct bu_ptbl
- * @brief
  * Support for generalized "pointer tables".
  */
 struct bu_ptbl {
-    struct bu_list l; /**< @brief linked list for caller's use */
-    off_t end; /**< @brief index into buffer of first available location */
-    size_t blen; /**< @brief # of (long *)'s worth of storage at *buffer */
-    long **buffer; /**< @brief data storage area */
+    struct bu_list l; /**< linked list for caller's use */
+    off_t end; /**< index into buffer of first available location */
+    size_t blen; /**< # of (long *)'s worth of storage at *buffer */
+    long **buffer; /**< data storage area */
 };
 typedef struct bu_ptbl bu_ptbl_t;
 #define BU_PTBL_NULL ((struct bu_ptbl *)0)
@@ -1569,7 +1536,6 @@ typedef struct bu_ptbl bu_ptbl_t;
 /** @{ */
 /** @file libbu/mappedfile.c
  *
- * @brief
  * Routines for sharing large read-only data files.
  *
  * Routines for sharing large read-only data files like height fields,
@@ -1593,7 +1559,6 @@ typedef struct bu_ptbl bu_ptbl_t;
 /**
  * @struct bu_mapped_file bu.h
  *
- * @brief
  * Structure for opening a mapped file.
  *
  * Each file is opened and mapped only once (per application, as
@@ -1613,16 +1578,16 @@ typedef struct bu_ptbl bu_ptbl_t;
  */
 struct bu_mapped_file {
     struct bu_list l;
-    char *name;		/**< @brief bu_strdup() of file name */
-    genptr_t buf;	/**< @brief In-memory copy of file (may be mmapped)  */
-    size_t buflen;	/**< @brief # bytes in 'buf'  */
-    int is_mapped;	/**< @brief 1=mmap() used, 0=bu_malloc/fread */
-    char *appl;		/**< @brief bu_strdup() of tag for application using 'apbuf'  */
-    genptr_t apbuf;	/**< @brief opt: application-specific buffer */
-    size_t apbuflen;	/**< @brief opt: application-specific buflen */
-    long modtime;	/**< @brief date stamp, in case file is modified */
-    int uses;		/**< @brief # ptrs to this struct handed out */
-    int dont_restat;	/**< @brief 1=on subsequent opens, don't re-stat()  */
+    char *name;		/**< bu_strdup() of file name */
+    genptr_t buf;	/**< In-memory copy of file (may be mmapped)  */
+    size_t buflen;	/**< # bytes in 'buf'  */
+    int is_mapped;	/**< 1=mmap() used, 0=bu_malloc/fread */
+    char *appl;		/**< bu_strdup() of tag for application using 'apbuf'  */
+    genptr_t apbuf;	/**< opt: application-specific buffer */
+    size_t apbuflen;	/**< opt: application-specific buflen */
+    long modtime;	/**< date stamp, in case file is modified */
+    int uses;		/**< # ptrs to this struct handed out */
+    int dont_restat;	/**< 1=on subsequent opens, don't re-stat()  */
 };
 typedef struct bu_mapped_file bu_mapped_file_t;
 #define BU_MAPPED_FILE_NULL ((struct bu_mapped_file *)0)
@@ -1664,9 +1629,9 @@ typedef struct bu_mapped_file bu_mapped_file_t;
 typedef int (*bu_hook_t)(genptr_t, genptr_t);
 
 struct bu_hook_list {
-    struct bu_list l; /**< @brief linked list */
-    bu_hook_t hookfunc; /**< @brief function to call */
-    genptr_t clientdata; /**< @brief data for caller */
+    struct bu_list l; /**< linked list */
+    bu_hook_t hookfunc; /**< function to call */
+    genptr_t clientdata; /**< data for caller */
 };
 typedef struct bu_hook_list bu_hook_list_t;
 #define BU_HOOK_LIST_NULL ((struct bu_hook_list *) 0)
@@ -1709,26 +1674,20 @@ BU_EXPORT extern struct bu_hook_list bu_bomb_hook_list;
 /** @{ */
 /** @file libbu/avs.c
  *
- * @brief
  * Routines to manage attribute/value sets.
- *
  */
 
 /**
- * B U _ A T T R I B U T E _ V A L U E _ P A I R
- *
  * These strings may or may not be individually allocated, it depends
  * on usage.
  */
 struct bu_attribute_value_pair {
-    const char *name;	/**< @brief attribute name */
-    const char *value; /**< @brief attribute value */
+    const char *name;	/**< attribute name */
+    const char *value; /**< attribute value */
 };
 
 
 /**
- * B U _ A T T R I B U T E _ V A L U E _ S E T
- *
  * A variable-sized attribute-value-pair array.
  *
  * avp points to an array of [max] slots.  The interface routines will
@@ -1742,11 +1701,11 @@ struct bu_attribute_value_pair {
  */
 struct bu_attribute_value_set {
     unsigned long magic;
-    unsigned int count;	/**< @brief # valid entries in avp */
-    unsigned int max;	/**< @brief # allocated slots in avp */
+    unsigned int count;	/**< # valid entries in avp */
+    unsigned int max;	/**< # allocated slots in avp */
     genptr_t readonly_min;
     genptr_t readonly_max;
-    struct bu_attribute_value_pair *avp;	/**< @brief array[max]  */
+    struct bu_attribute_value_pair *avp;	/**< array[max]  */
 };
 typedef struct bu_attribute_value_set bu_avs_t;
 #define BU_AVS_NULL ((struct bu_attribute_value_set *)0)
@@ -1779,9 +1738,7 @@ typedef struct bu_attribute_value_set bu_avs_t;
 
 
 /**
- * B U _ A V S _ F O R
- *
- * @brief for loop iterator for avs structures
+ * For loop iterator for avs structures.
  *
  * Provide an attribute value pair struct pointer and an attribute
  * value set, and this will iterate over all entries.  iteration order
@@ -1833,9 +1790,9 @@ typedef struct bu_attribute_value_set bu_avs_t;
  */
 struct bu_vls  {
     unsigned long vls_magic;
-    char *vls_str;	/**< @brief Dynamic memory for buffer */
-    size_t vls_offset;	/**< @brief Offset into vls_str where data is good */
-    size_t vls_len;	/**< @brief Length, not counting the null */
+    char *vls_str;	/**< Dynamic memory for buffer */
+    size_t vls_offset;	/**< Offset into vls_str where data is good */
+    size_t vls_len;	/**< Length, not counting the null */
     size_t vls_max;
 };
 typedef struct bu_vls bu_vls_t;
@@ -1878,7 +1835,7 @@ typedef struct bu_vls bu_vls_t;
 /** @{ */
 /** @file libbu/vlb.c
  *
- * @brief The variable length buffer package.
+ * The variable length buffer package.
  *
  * The variable length buffer package.
  *
@@ -1889,9 +1846,9 @@ typedef struct bu_vls bu_vls_t;
  */
 struct bu_vlb {
     unsigned long magic;
-    unsigned char *buf;     /**< @brief Dynamic memory for the buffer */
-    size_t bufCapacity;     /**< @brief Current capacity of the buffer */
-    size_t nextByte;        /**< @brief Number of bytes currently used in the buffer */
+    unsigned char *buf;     /**< Dynamic memory for the buffer */
+    size_t bufCapacity;     /**< Current capacity of the buffer */
+    size_t nextByte;        /**< Number of bytes currently used in the buffer */
 };
 typedef struct bu_vlb bu_vlb_t;
 #define BU_VLB_NULL ((struct bu_vlb *)0)
@@ -1998,9 +1955,6 @@ BU_EXPORT extern int bu_debug;
  */
 
 /**
- * b u _ o f f s e t o f
- * b u _ o f f s e t o f a r r a y
- *
  * The general problem of word-addressed hardware where (int *) and
  * (char *) have different representations is handled in the parsing
  * routines that use sp_offset, because of the limitations placed on
@@ -2022,8 +1976,6 @@ BU_EXPORT extern int bu_debug;
 
 
 /**
- * b u _ b y t e o f f s e t
- *
  * Convert address of global data object into byte "offset" from
  * address 0.
  *
@@ -2098,13 +2050,13 @@ BU_EXPORT extern int bu_debug;
  * probably shouldn't use this technique.
  */
 struct bu_structparse {
-    char sp_fmt[4];		/**< @brief "%i" or "%f", etc */
-    size_t sp_count;		/**< @brief number of elements */
-    char *sp_name;		/**< @brief Element's symbolic name */
-    size_t sp_offset;		/**< @brief Byte offset in struct */
-    void (*sp_hook)();		/**< @brief Optional hooked function, or indir ptr */
-    char *sp_desc;		/**< @brief description of element */
-    void *sp_default;		/**< @brief ptr to default value */
+    char sp_fmt[4];		/**< "%i" or "%f", etc */
+    size_t sp_count;		/**< number of elements */
+    char *sp_name;		/**< Element's symbolic name */
+    size_t sp_offset;		/**< Byte offset in struct */
+    void (*sp_hook)();		/**< Optional hooked function, or indir ptr */
+    char *sp_desc;		/**< description of element */
+    void *sp_default;		/**< ptr to default value */
 };
 typedef struct bu_structparse bu_structparse_t;
 #define BU_STRUCTPARSE_NULL ((struct bu_structparse *)0)
@@ -2147,8 +2099,6 @@ typedef struct bu_structparse bu_structparse_t;
 
 /*----------------------------------------------------------------------*/
 /**
- * B U _ E X T E R N A L
- *
  * An "opaque" handle for holding onto objects, typically in some kind
  * of external form that is not directly usable without passing
  * through an "importation" function.
@@ -2249,9 +2199,7 @@ typedef struct bu_color bu_color_t;
  */
 
 /**
- * B U _ R B _ L I S T
- *
- * List of nodes or packages
+ * List of nodes or packages.
  *
  * The red-black tree package uses this structure to maintain lists of
  * all the nodes and all the packages in the tree.  Applications
@@ -2276,8 +2224,6 @@ struct bu_rb_list
 
 
 /**
- * B U _ R B _ T R E E
- *
  * This is the only data structure used in the red-black tree package
  * to which application software need make any explicit reference.
  *
@@ -2293,23 +2239,23 @@ struct bu_rb_list
  */
 struct bu_rb_tree {
     /***** CLASS I - Applications may read directly. ****************/
-    unsigned long rbt_magic;           /**< @brief Magic no. for integrity check */
-    int rbt_nm_nodes;                  /**< @brief Number of nodes */
+    unsigned long rbt_magic;           /**< Magic no. for integrity check */
+    int rbt_nm_nodes;                  /**< Number of nodes */
 
     /**** CLASS II - Applications may read/write directly. **********/
-    void (*rbt_print)(void *);         /**< @brief Data pretty-print function */
-    int rbt_debug;                     /**< @brief Debug bits */
-    char *rbt_description;             /**< @brief Comment for diagnostics */
+    void (*rbt_print)(void *);         /**< Data pretty-print function */
+    int rbt_debug;                     /**< Debug bits */
+    char *rbt_description;             /**< Comment for diagnostics */
 
     /*** CLASS III - Applications should NOT manipulate directly. ***/
-    int rbt_nm_orders;                 /**< @brief Number of simultaneous orders */
-    int (**rbt_order)();               /**< @brief Comparison functions */
-    struct bu_rb_node **rbt_root;      /**< @brief The actual trees */
-    char *rbt_unique;                  /**< @brief Uniqueness flags */
-    struct bu_rb_node *rbt_current;    /**< @brief Current node */
-    struct bu_rb_list rbt_nodes;       /**< @brief All nodes */
-    struct bu_rb_list rbt_packages;    /**< @brief All packages */
-    struct bu_rb_node *rbt_empty_node; /**< @brief Sentinel representing nil */
+    int rbt_nm_orders;                 /**< Number of simultaneous orders */
+    int (**rbt_order)();               /**< Comparison functions */
+    struct bu_rb_node **rbt_root;      /**< The actual trees */
+    char *rbt_unique;                  /**< Uniqueness flags */
+    struct bu_rb_node *rbt_current;    /**< Current node */
+    struct bu_rb_list rbt_nodes;       /**< All nodes */
+    struct bu_rb_list rbt_packages;    /**< All packages */
+    struct bu_rb_node *rbt_empty_node; /**< Sentinel representing nil */
 };
 typedef struct bu_rb_tree bu_rb_tree_t;
 #define BU_RB_TREE_NULL ((struct bu_rb_tree *) 0)
@@ -2354,16 +2300,14 @@ typedef struct bu_rb_tree bu_rb_tree_t;
 /*
  * Debug bit flags for member rbt_debug
  */
-#define BU_RB_DEBUG_INSERT 0x00000001	/**< @brief Insertion process */
-#define BU_RB_DEBUG_UNIQ 0x00000002	/**< @brief Uniqueness of inserts */
-#define BU_RB_DEBUG_ROTATE 0x00000004	/**< @brief Rotation process */
-#define BU_RB_DEBUG_OS 0x00000008	/**< @brief Order-statistic operations */
-#define BU_RB_DEBUG_DELETE 0x00000010	/**< @brief Deletion process */
+#define BU_RB_DEBUG_INSERT 0x00000001	/**< Insertion process */
+#define BU_RB_DEBUG_UNIQ 0x00000002	/**< Uniqueness of inserts */
+#define BU_RB_DEBUG_ROTATE 0x00000004	/**< Rotation process */
+#define BU_RB_DEBUG_OS 0x00000008	/**< Order-statistic operations */
+#define BU_RB_DEBUG_DELETE 0x00000010	/**< Deletion process */
 
 /**
- * B U _ R B _ P A C K A G E
- *
- * Wrapper for application data
+ * Wrapper for application data.
  *
  * This structure provides a level of indirection between the
  * application software's data and the red-black nodes in which the
@@ -2374,16 +2318,14 @@ typedef struct bu_rb_tree bu_rb_tree_t;
  */
 struct bu_rb_package
 {
-    unsigned long rbp_magic;	/**< @brief Magic no. for integrity check */
-    struct bu_rb_node **rbp_node;	/**< @brief Containing nodes */
-    struct bu_rb_list *rbp_list_pos;	/**< @brief Place in the list of all pkgs.  */
-    void *rbp_data;	/**< @brief Application data */
+    unsigned long rbp_magic;	/**< Magic no. for integrity check */
+    struct bu_rb_node **rbp_node;	/**< Containing nodes */
+    struct bu_rb_list *rbp_list_pos;	/**< Place in the list of all pkgs.  */
+    void *rbp_data;	/**< Application data */
 };
 #define BU_RB_PKG_NULL ((struct bu_rb_package *) 0)
 
 /**
- * B U _ R B _ N O D E
- *
  * For the most part, there is a one-to-one correspondence between
  * nodes and chunks of application data.  When a node is created, all
  * of its package pointers (one per order of the tree) point to the
@@ -2392,16 +2334,16 @@ struct bu_rb_package
  */
 struct bu_rb_node
 {
-    unsigned long rbn_magic;		/**< @brief Magic no. for integrity check */
-    struct bu_rb_tree *rbn_tree;	/**< @brief Tree containing this node */
-    struct bu_rb_node **rbn_parent;	/**< @brief Parents */
-    struct bu_rb_node **rbn_left;	/**< @brief Left subtrees */
-    struct bu_rb_node **rbn_right;	/**< @brief Right subtrees */
-    char *rbn_color;			/**< @brief Colors of this node */
-    int *rbn_size;			/**< @brief Sizes of subtrees rooted here */
-    struct bu_rb_package **rbn_package;	/**< @brief Contents of this node */
-    int rbn_pkg_refs;			/**< @brief How many orders are being used?  */
-    struct bu_rb_list *rbn_list_pos;	/**< @brief Place in the list of all nodes */
+    unsigned long rbn_magic;		/**< Magic no. for integrity check */
+    struct bu_rb_tree *rbn_tree;	/**< Tree containing this node */
+    struct bu_rb_node **rbn_parent;	/**< Parents */
+    struct bu_rb_node **rbn_left;	/**< Left subtrees */
+    struct bu_rb_node **rbn_right;	/**< Right subtrees */
+    char *rbn_color;			/**< Colors of this node */
+    int *rbn_size;			/**< Sizes of subtrees rooted here */
+    struct bu_rb_package **rbn_package;	/**< Contents of this node */
+    int rbn_pkg_refs;			/**< How many orders are being used?  */
+    struct bu_rb_list *rbn_list_pos;	/**< Place in the list of all nodes */
 };
 #define BU_RB_NODE_NULL ((struct bu_rb_node *) 0)
 
@@ -2424,7 +2366,7 @@ struct bu_rb_node
 
 
 /**
- * B U _ O B S E R V E R
+ * TBD
  */
 struct bu_observer {
     struct bu_list l;
@@ -2463,10 +2405,10 @@ typedef struct bu_observer bu_observer_t;
 
 
 /**
- * B U _ C M D T A B
+ * @DEPRECATED
  *
- * DEPRECATED: use not recommended due to k&r callback (provides no
- * type checking)
+ * Usage not recommended due to k&r callback (provides no type
+ * checking)
  */
 struct bu_cmdtab {
     char *ct_name;
@@ -2492,24 +2434,18 @@ struct bu_cmdtab {
 
 
 /**
- * B U _ A V S _ I N I T
- *
- * initialize avs with storage for len entries
+ * Initialize avs with storage for len entries.
  */
 BU_EXPORT extern void bu_avs_init(struct bu_attribute_value_set *avp,
 				  int len,
 				  const char *str);
 
 /**
- * B U _ A V S _ I N I T _ E M P T Y
- *
- * initialize an empty avs
+ * Initialize an empty avs.
  */
 BU_EXPORT extern void bu_avs_init_empty(struct bu_attribute_value_set *avp);
 
 /**
- * B U _ A V S _ N E W
- *
  * Allocate storage for a new attribute/value set, with at least 'len'
  * slots pre-allocated.
  */
@@ -2517,8 +2453,6 @@ BU_EXPORT extern struct bu_attribute_value_set *bu_avs_new(int len,
 							   const char *str);
 
 /**
- * B U _ A V S _ A D D
- *
  * If the given attribute exists it will recieve the new value,
  * othwise the set will be extended to have a new attribute/value
  * pair.
@@ -2533,8 +2467,6 @@ BU_EXPORT extern int bu_avs_add(struct bu_attribute_value_set *avp,
 				const char *value);
 
 /**
- * B U _ A V S _ A D D _ V L S
- *
  * Add a bu_vls string as an attribute to a given attribute set.
  */
 BU_EXPORT extern int bu_avs_add_vls(struct bu_attribute_value_set *avp,
@@ -2542,8 +2474,6 @@ BU_EXPORT extern int bu_avs_add_vls(struct bu_attribute_value_set *avp,
 				    const struct bu_vls *value_vls);
 
 /**
- * B U _ A V S _ M E R G E
- *
  * Take all the attributes from 'src' and merge them into 'dest' by
  * replacing an attribute if it already exists.
  */
@@ -2551,16 +2481,12 @@ BU_EXPORT extern void bu_avs_merge(struct bu_attribute_value_set *dest,
 				   const struct bu_attribute_value_set *src);
 
 /**
- * B U _ A V S _ G E T
- *
  * Get the value of a given attribute from an attribute set.
  */
 BU_EXPORT extern const char *bu_avs_get(const struct bu_attribute_value_set *avp,
 					const char *attribute);
 
 /**
- * B U _ A V S _ R E M O V E
- *
  * Remove the given attribute from an attribute set.
  *
  * @return
@@ -2572,15 +2498,11 @@ BU_EXPORT extern int bu_avs_remove(struct bu_attribute_value_set *avp,
 				   const char *attribute);
 
 /**
- * B U _ A V S _ F R E E
- *
  * Release all attributes in an attribute set.
  */
 BU_EXPORT extern void bu_avs_free(struct bu_attribute_value_set *avp);
 
 /**
- * B U _ A V S _ P R I N T
- *
  * Print all attributes in an attribute set in "name = value" form,
  * using the provided title.
  */
@@ -2588,8 +2510,6 @@ BU_EXPORT extern void bu_avs_print(const struct bu_attribute_value_set *avp,
 				   const char *title);
 
 /**
- * B U _ A V S _ A D D _ N O N U N I Q U E
- *
  * Add a name/value pair even if the name already exists in this AVS.
  */
 BU_EXPORT extern void bu_avs_add_nonunique(struct bu_attribute_value_set *avsp,
@@ -2602,8 +2522,6 @@ BU_EXPORT extern void bu_avs_add_nonunique(struct bu_attribute_value_set *avsp,
 /** @{ */
 
 /**
- * B U _ B I T V _ N E W
- * @brief
  * Allocate storage for a new bit vector of at least 'nbits' in
  * length.  The bit vector itself is guaranteed to be initialized to
  * all zero.
@@ -2611,8 +2529,6 @@ BU_EXPORT extern void bu_avs_add_nonunique(struct bu_attribute_value_set *avsp,
 BU_EXPORT extern struct bu_bitv *bu_bitv_new(unsigned int nbits);
 
 /**
- * B U _ B I T V _ F R E E
- * @brief
  * Release all internal storage for this bit vector.
  *
  * It is the caller's responsibility to not use the pointer 'bv' any
@@ -2622,8 +2538,6 @@ BU_EXPORT extern struct bu_bitv *bu_bitv_new(unsigned int nbits);
 BU_EXPORT extern void bu_bitv_free(struct bu_bitv *bv);
 
 /**
- * B U _ B I T V _ C L E A R
- * @brief
  * Set all the bits in the bit vector to zero.
  *
  * Also available as a BU_BITV_ZEROALL macro if you don't desire the
@@ -2632,49 +2546,39 @@ BU_EXPORT extern void bu_bitv_free(struct bu_bitv *bv);
 BU_EXPORT extern void bu_bitv_clear(struct bu_bitv *bv);
 
 /**
- * B U _ B I T V _ O R
+ * TBD
  */
 BU_EXPORT extern void bu_bitv_or(struct bu_bitv *ov,  const struct bu_bitv *iv);
 
 /**
- * B U _ B I T V _ A N D
+ * TBD
  */
 BU_EXPORT extern void bu_bitv_and(struct bu_bitv *ov, const struct bu_bitv *iv);
 
 /**
- * B U _ B I T V _ V L S
- * @brief
  * Print the bits set in a bit vector.
  */
 BU_EXPORT extern void bu_bitv_vls(struct bu_vls *v, const struct bu_bitv *bv);
 
 /**
- * B U _ P R _ B I T V
- * @brief
  * Print the bits set in a bit vector.  Use bu_vls stuff, to make only
  * a single call to bu_log().
  */
 BU_EXPORT extern void bu_pr_bitv(const char *str, const struct bu_bitv *bv);
 
 /**
- * B U _ B I T V _ T O _ H E X
- * @brief
  * Convert a bit vector to an ascii string of hex digits.  The string
  * is from MSB to LSB (bytes and bits).
  */
 BU_EXPORT extern void bu_bitv_to_hex(struct bu_vls *v, const struct bu_bitv *bv);
 
 /**
- * B U _ H E X _ T O _ B I T V
- * @brief
  * Convert a string of HEX digits (as produces by bu_bitv_to_hex) into
  * a bit vector.
  */
 BU_EXPORT extern struct bu_bitv *bu_hex_to_bitv(const char *str);
 
 /**
- * B U _ B I T V _ D U P
- * @brief
  * Make a copy of a bit vector
  */
 BU_EXPORT extern struct bu_bitv *bu_bitv_dup(const struct bu_bitv *bv);
@@ -2692,8 +2596,6 @@ BU_EXPORT extern struct bu_bitv *bu_bitv_dup(const struct bu_bitv *bv);
  */
 
 /**
- * b u _ b a c k t r a c e
- *
  * this routine provides a trace of the call stack to the caller,
  * generally called either directly, via a signal handler, or through
  * bu_bomb() with the appropriate bu_debug flags set.
@@ -2711,8 +2613,6 @@ BU_EXPORT extern struct bu_bitv *bu_bitv_dup(const struct bu_bitv *bv);
 BU_EXPORT extern int bu_backtrace(FILE *fp);
 
 /**
- * B U _ B O M B
- * @brief
  * Abort the running process.
  *
  * The bu_bomb routine is called on a fatal error, generally where no
@@ -2749,8 +2649,6 @@ BU_EXPORT extern int bu_backtrace(FILE *fp);
 BU_EXPORT extern void bu_bomb(const char *str) __BU_ATTR_NORETURN;
 
 /**
- * b u _ e x i t
- *
  * Semi-graceful termination of the application that doesn't cause a
  * stack trace, exiting with the specified status after printing the
  * given message.  It's okay for this routine to use the stack,
@@ -2772,8 +2670,6 @@ BU_EXPORT extern void bu_exit(int status, const char *fmt, ...) __BU_ATTR_NORETU
  */
 
 /**
- * b u _ c r a s h r e p o r t
- *
  * this routine writes out details of the currently running process to
  * the specified file, including an informational header about the
  * execution environment, stack trace details, kernel and hardware
@@ -2792,8 +2688,6 @@ BU_EXPORT extern int bu_crashreport(const char *filename);
  */
 
 /**
- * b u _ f g e t s
- *
  * Reads in at most one less than size characters from stream and
  * stores them into the buffer pointed to by s. Reading stops after an
  * EOF, CR, LF, or a CR/LF combination. If a LF or CR is read, it is
@@ -2854,8 +2748,6 @@ BU_EXPORT extern int bu_color_to_rgb_floats(struct bu_color *cp, fastf_t *rgb);
  */
 
 /**
- * b u _ f i l e _ e x i s t s
- *
  * Returns truthfully whether the given file path exists or not.  An
  * empty or NULL path name is treated as a non-existent file and, as
  * such, will return false.
@@ -2866,8 +2758,6 @@ BU_EXPORT extern int bu_color_to_rgb_floats(struct bu_color *cp, fastf_t *rgb);
 BU_EXPORT extern int bu_file_exists(const char *path);
 
 /**
- * b u _ s a m e _ f i l e
- *
  * Returns truthfully as to whether the two provided filenames are the
  * same file.  If either file does not exist, the result is false.  If
  * either filename is empty or NULL, it is treated as non-existent
@@ -2876,8 +2766,6 @@ BU_EXPORT extern int bu_file_exists(const char *path);
 BU_EXPORT extern int bu_same_file(const char *fn1, const char *fn2);
 
 /**
- * b u _ s a m e _ f d
- *
  * returns truthfully as to whether or not the two provided file
  * descriptors are the same file.  if either file does not exist, the
  * result is false.
@@ -2885,24 +2773,18 @@ BU_EXPORT extern int bu_same_file(const char *fn1, const char *fn2);
 BU_EXPORT extern int bu_same_fd(int fd1, int fd2);
 
 /**
- * b u _ f i l e _ r e a d a b l e
- *
  * returns truthfully if current user can read the specified file or
  * directory.
  */
 BU_EXPORT extern int bu_file_readable(const char *path);
 
 /**
- * b u _ f i l e _ w r i t a b l e
- *
  * returns truthfully if current user can write to the specified file
  * or directory.
  */
 BU_EXPORT extern int bu_file_writable(const char *path);
 
 /**
- * b u _ f i l e _ e x e c u t a b l e
- *
  * returns truthfully if current user can run the specified file or
  * directory.
  */
@@ -2945,8 +2827,6 @@ BU_EXPORT extern void bu_list_path(char *path, char *substr, char **filearray);
  */
 
 /**
- * b u _ a r g v 0
- *
  * this routine is used by the brlcad-path-finding routines when
  * attempting to locate binaries, libraries, and resources.  This
  * routine will set argv0 if path is provided and should generally be
@@ -2961,8 +2841,6 @@ BU_EXPORT extern void bu_list_path(char *path, char *substr, char **filearray);
 DEPRECATED BU_EXPORT extern const char *bu_argv0(void);
 
 /**
- * b u _ a r g v 0 _ f u l l _ p a t h
- *
  * returns the full path to argv0, regardless of how the application
  * was invoked.
  *
@@ -2975,8 +2853,6 @@ DEPRECATED BU_EXPORT extern const char *bu_argv0(void);
 BU_EXPORT extern const char *bu_argv0_full_path(void);
 
 /**
- * b u _ g e t p r o g n a m e
- *
  * get the name of the running application if they ran
  * bu_setprogname() first or if we know what it's supposed to be
  * anyways.
@@ -2984,8 +2860,6 @@ BU_EXPORT extern const char *bu_argv0_full_path(void);
 BU_EXPORT extern const char *bu_getprogname(void);
 
 /**
- * b u _ s e t p r o g n a m e
- *
  * Set the name of the running application.  This isn't necessary on
  * modern systems that support getprogname() and call setprogname()
  * before main() for you, but necessary otherwise for portability.
@@ -2993,16 +2867,12 @@ BU_EXPORT extern const char *bu_getprogname(void);
 BU_EXPORT extern void bu_setprogname(const char *path);
 
 /**
- * b u _ g e t c w d
- *
  * returns the pathname for the current working directory.
  *
  */
 BU_EXPORT extern char *bu_getcwd(char *buf, size_t size);
 
 /**
- * b u _ b r l c a d _ r o o t
- *
  * Locate where the BRL-CAD applications and libraries are installed.
  *
  * The BRL-CAD root is searched for in the following order of
@@ -3023,8 +2893,6 @@ BU_EXPORT extern char *bu_getcwd(char *buf, size_t size);
 BU_EXPORT extern const char *bu_brlcad_root(const char *rhs, int fail_quietly);
 
 /**
- * b u _ b r l c a d _ d a t a
- *
  * Locate where the BRL-CAD data resources are installed.
  *
  * The BRL-CAD data resources are searched for in the following order
@@ -3044,8 +2912,6 @@ BU_EXPORT extern const char *bu_brlcad_root(const char *rhs, int fail_quietly);
 BU_EXPORT extern const char *bu_brlcad_data(const char *rhs, int fail_quietly);
 
 /**
- * b u _ w h i c h
- *
  * returns the first USER path match to a given executable name.
  *
  * Routine to provide BSD "which" functionality, locating binaries of
@@ -3061,8 +2927,6 @@ BU_EXPORT extern const char *bu_brlcad_data(const char *rhs, int fail_quietly);
 BU_EXPORT extern const char *bu_which(const char *cmd);
 
 /**
- * b u _ w h e r e i s
- *
  * returns the first SYSTEM path match to a given executable cmd name.
  *
  * Routine to provide BSD "whereis" functionality, locating binaries
@@ -3079,14 +2943,14 @@ BU_EXPORT extern const char *bu_whereis(const char *cmd);
 
 /** @file libbu/fopen_uniq.c
  *
- * @brief DEPRECATED: Routine to open a unique filename.
+ * DEPRECATED: Routine to open a unique filename.
  *
  */
 
 /**
- * B U _ F O P E N _ U N I Q
+ * @DEPRECATED
  *
- * @brief Open a file for output.  Assures that the file did not previously
+ * Open a file for output assuring that the file did not previously
  * exist.
  *
  * This routine is DEPRECATED.  Do not use.
@@ -3106,7 +2970,6 @@ BU_EXPORT extern const char *bu_whereis(const char *cmd);
  	fclose(fp);
  @endcode
  *
- * DEPRECATED
  */
 DEPRECATED BU_EXPORT extern FILE *bu_fopen_uniq(const char *outfmt, const char *namefmt, int n);
 
@@ -3117,8 +2980,6 @@ DEPRECATED BU_EXPORT extern FILE *bu_fopen_uniq(const char *outfmt, const char *
  */
 
 /**
- * b u _ t e m p _ f i l e
- *
  * Create a temporary file.  The first readable/writable directory
  * will be used, searching TMPDIR/TEMP/TMP environment variable
  * directories followed by default system temp directories and
@@ -3194,9 +3055,7 @@ BU_EXPORT extern int bu_optopt;
 BU_EXPORT extern char *bu_optarg;
 
 /**
- * B U _ G E T O P T
- *
- * get option letter from argument vector.
+ * Get option letter from argument vector.
  *
  * returns the next known option character in ostr.  If bu_getopt()
  * encounters a character not found in ostr or if it detects a missing
@@ -3216,13 +3075,10 @@ BU_EXPORT extern int bu_getopt(int nargc, char * const nargv[], const char *ostr
 /* hist.c */
 
 /**
- * B U _ H I S T _ F R E E
  */
 BU_EXPORT extern void bu_hist_free(struct bu_hist *histp);
 
 /**
- * B U _ H I S T _ I N I T
- *
  * Initialize a bu_hist structure.
  *
  * It is expected that the structure is junk upon entry.
@@ -3230,14 +3086,11 @@ BU_EXPORT extern void bu_hist_free(struct bu_hist *histp);
 BU_EXPORT extern void bu_hist_init(struct bu_hist *histp, fastf_t min, fastf_t max, unsigned int nbins);
 
 /**
- * B U _ H I S T _ R A N G E
  */
 BU_EXPORT extern void bu_hist_range(struct bu_hist *hp, fastf_t low, fastf_t high);
 
 /**
- * B U _ H I S T _ P R
- *
- * The original interface.
+ * The original command history interface.
  */
 BU_EXPORT extern void bu_hist_pr(const struct bu_hist *histp, const char *title);
 
@@ -3248,8 +3101,7 @@ BU_EXPORT extern void bu_hist_pr(const struct bu_hist *histp, const char *title)
 /** @{ */
 /** @file libbu/htond.c
  *
- * @brief
- * convert doubles to host/network format
+ * Convert doubles to host/network format.
  *
  * Library routines for conversion between the local host 64-bit
  * ("double precision") representation, and 64-bit IEEE double
@@ -3285,18 +3137,14 @@ BU_EXPORT extern void bu_hist_pr(const struct bu_hist *histp, const char *title)
  */
 
 /**
- * H T O N D
- *
- * @brief Host to Network Doubles
+ * Host to Network Doubles
  */
 BU_EXPORT extern void htond(unsigned char *out,
 			    const unsigned char *in,
 			    size_t count);
 
 /**
- * N T O H D
- *
- * @brief Network to Host Doubles
+ * Network to Host Doubles
  */
 BU_EXPORT extern void ntohd(unsigned char *out,
 			    const unsigned char *in,
@@ -3304,15 +3152,13 @@ BU_EXPORT extern void ntohd(unsigned char *out,
 
 /** @file libbu/htonf.c
  *
- * @brief convert floats to host/network format
+ * convert floats to host/network format
  *
  * Host to Network Floats  +  Network to Host Floats.
  *
  */
 
 /**
- * H T O N F
- *
  * Host to Network Floats
  */
 BU_EXPORT extern void htonf(unsigned char *out,
@@ -3320,8 +3166,6 @@ BU_EXPORT extern void htonf(unsigned char *out,
 			    size_t count);
 
 /**
- * N T O H F
- *
  * Network to Host Floats
  */
 BU_EXPORT extern void ntohf(unsigned char *out,
@@ -3335,7 +3179,6 @@ BU_EXPORT extern void ntohf(unsigned char *out,
 /** @{ */
 /** @file libbu/ispar.c
  *
- * @brief
  * subroutine to determine if we are multi-threaded
  *
  * This subroutine is separated off from parallel.c so that bu_bomb()
@@ -3346,8 +3189,6 @@ BU_EXPORT extern void ntohf(unsigned char *out,
  */
 
 /**
- * B U _ I S _ P A R A L L E L
- *
  * A clean way for bu_bomb() to tell if this is a parallel
  * application.  If bu_parallel() is active, this routine will return
  * non-zero.
@@ -3355,8 +3196,6 @@ BU_EXPORT extern void ntohf(unsigned char *out,
 BU_EXPORT extern int bu_is_parallel();
 
 /**
- * B U _ K I L L _ P A R A L L E L
- *
  * Used by bu_bomb() to help terminate parallel threads,
  * without dragging in the whole parallel library if it isn't being used.
  */
@@ -3382,36 +3221,26 @@ BU_EXPORT extern void bu_setlinebuf(FILE *fp);
 /** @{ */
 
 /**
- * B U _ L I S T _ N E W
- *
  * Creates and initializes a bu_list head structure
  */
 BU_EXPORT extern struct bu_list *bu_list_new();
 
 /**
- * B U _ L I S T _ P O P
- *
  * Returns the results of BU_LIST_POP
  */
 BU_EXPORT extern struct bu_list *bu_list_pop(struct bu_list *hp);
 
 /**
- * B U _ L I S T _ L E N
- *
  * Returns the number of elements on a bu_list brand linked list.
  */
 BU_EXPORT extern int bu_list_len(const struct bu_list *hd);
 
 /**
- * B U _ L I S T _ R E V E R S E
- *
  * Reverses the order of elements in a bu_list linked list.
  */
 BU_EXPORT extern void bu_list_reverse(struct bu_list *hd);
 
 /**
- * B U _ L I S T _ F R E E
- *
  * Given a list of structures allocated with bu_malloc() enrolled
  * on a bu_list head, walk the list and free the structures.
  * This routine can only be used when the structures have no interior
@@ -3420,8 +3249,6 @@ BU_EXPORT extern void bu_list_reverse(struct bu_list *hd);
 BU_EXPORT extern void bu_list_free(struct bu_list *hd);
 
 /**
- * B U _ L I S T _ P A R A L L E L _ A P P E N D
- *
  * Simple parallel-safe routine for appending a data structure to the
  * end of a bu_list doubly-linked list.
  *
@@ -3433,8 +3260,6 @@ BU_EXPORT extern void bu_list_parallel_append(struct bu_list *headp,
 					      struct bu_list *itemp);
 
 /**
- * B U _ L I S T _ P A R A L L E L _ D E Q U E U E
- *
  * Simple parallel-safe routine for dequeueing one data structure from
  * the head of a bu_list doubly-linked list.
  * If the list is empty, wait until some other thread puts something on
@@ -3447,16 +3272,12 @@ BU_EXPORT extern void bu_list_parallel_append(struct bu_list *headp,
 BU_EXPORT extern struct bu_list *bu_list_parallel_dequeue(struct bu_list *headp);
 
 /**
- * B U _ C K _ L I S T
- *
  * Generic bu_list doubly-linked list checker.
  */
 BU_EXPORT extern void bu_ck_list(const struct bu_list *hd,
 				 const char *str);
 
 /**
- * B U _ C K _ L I S T _ M A G I C
- *
  * bu_list doubly-linked list checker which checks the magic number for
  * all elements in the linked list
  */
@@ -3532,16 +3353,12 @@ BU_EXPORT extern void bu_call_hook(struct bu_hook_list *hlp,
 
 
 /**
- * B U _ L O G _ I N D E N T _ D E L T A
- *
  * Change global indentation level by indicated number of characters.
  * Call with a large negative number to cancel all indentation.
  */
 BU_EXPORT extern void bu_log_indent_delta(int delta);
 
 /**
- * B U _ L O G _ I N D E N T _ V L S
- *
  * For multi-line vls generators, honor logindent level like bu_log() does,
  * and prefix the proper number of spaces.
  * Should be called at the front of each new line.
@@ -3549,8 +3366,6 @@ BU_EXPORT extern void bu_log_indent_delta(int delta);
 BU_EXPORT extern void bu_log_indent_vls(struct bu_vls *v);
 
 /**
- * B U _ L O G _ A D D _ H O O K
- *
  * Adds a hook to the list of bu_log hooks.  The top (newest) one of these
  * will be called with its associated client data and a string to be
  * processed.  Typcially, these hook functions will display the output
@@ -3561,30 +3376,22 @@ BU_EXPORT extern void bu_log_indent_vls(struct bu_vls *v);
 BU_EXPORT extern void bu_log_add_hook(bu_hook_t func, genptr_t clientdata);
 
 /**
- * B U _ L O G _ D E L E T E _ H O O K
- *
  * Removes the hook matching the function and clientdata parameters from
  * the hook list.  Note that it is not necessarily the active (top) hook.
  */
 BU_EXPORT extern void bu_log_delete_hook(bu_hook_t func, genptr_t clientdata);
 
 /**
- * B U _ P U T C H A R
- *
  * Log a single character with no flushing.
  */
 BU_EXPORT extern void bu_putchar(int c);
 
 /**
- * B U _ L O G
- *
  * The routine is primarily called to log library events.
  */
 BU_EXPORT extern void bu_log(const char *, ...) __BU_ATTR_FORMAT12;
 
 /**
- * B U _ F L O G
- *
  * Log a library event in the Standard way, to a specified file.
  */
 BU_EXPORT extern void bu_flog(FILE *, const char *, ...) __BU_ATTR_FORMAT23;
@@ -3610,8 +3417,6 @@ BU_EXPORT extern long bu_n_free;
 BU_EXPORT extern long bu_n_realloc;
 
 /**
- * B U _ M A L L O C
- *
  * This routine only returns on successful allocation.  We promise
  * never to return a NULL pointer; caller doesn't have to check.
  * Allocation failure results in bu_bomb() being called.
@@ -3620,8 +3425,6 @@ BU_EXPORT extern genptr_t bu_malloc(size_t siz,
 				    const char *str);
 
 /**
- * B U _ C A L L O C
- *
  * This routine only returns on successful allocation.
  * We promise never to return a NULL pointer; caller doesn't have to check.
  * Failure results in bu_bomb() being called.
@@ -3631,15 +3434,11 @@ BU_EXPORT extern genptr_t bu_calloc(size_t nelem,
 				    const char *str);
 
 /**
- * B U _ F R E E
- *
  */
 BU_EXPORT extern void bu_free(genptr_t ptr,
 			      const char *str);
 
 /**
- * B U _ R E A L L O C
- *
  * bu_malloc()/bu_free() compatible wrapper for realloc().
  *
  * this routine mimics the C99 standard behavior of realloc() except
@@ -3656,15 +3455,11 @@ BU_EXPORT extern genptr_t bu_realloc(genptr_t ptr,
 				     const char *str);
 
 /**
- * B U _ P R M E M
- *
  * Print map of memory currently in use.
  */
 BU_EXPORT extern void bu_prmem(const char *str);
 
 /**
- * B U _ M A L L O C _ L E N _ R O U N D U P
- *
  * On systems with the CalTech malloc(), the amount of storage
  * ACTUALLY ALLOCATED is the amount requested rounded UP to the
  * nearest power of two.  For structures which are acquired and
@@ -3682,8 +3477,6 @@ BU_EXPORT extern void bu_prmem(const char *str);
 BU_EXPORT extern int bu_malloc_len_roundup(int nbytes);
 
 /**
- * B U _ C K _ M A L L O C _ P T R
- *
  * For a given pointer allocated by bu_malloc(), check the magic
  * number stored after the allocation area when BU_DEBUG_MEM_CHECK is
  * set.
@@ -3696,8 +3489,6 @@ BU_EXPORT extern int bu_malloc_len_roundup(int nbytes);
 BU_EXPORT extern void bu_ck_malloc_ptr(genptr_t ptr, const char *str);
 
 /**
- * B U _ M E M _ B A R R I E R C H E C K
- *
  * Check *all* entries in the memory debug table for barrier word
  * corruption.  Intended to be called periodicly through an
  * application during debugging.  Has to run single-threaded, to
@@ -3723,8 +3514,6 @@ BU_EXPORT extern int bu_mem_barriercheck();
  */
 
 /**
- * B U _ D I R N A M E
- *
  * Given a filesystem pathname, return a pointer to a dynamic string
  * which is the parent directory of that file/directory.
  *
@@ -3750,8 +3539,6 @@ BU_EXPORT extern int bu_mem_barriercheck();
 BU_EXPORT extern char *bu_dirname(const char *cp);
 
 /**
- * B U _ B A S E N A M E
- *
  * Given a string containing slashes such as a pathname, return a
  * pointer to the first character after the last slash.
  *
@@ -3779,8 +3566,6 @@ BU_EXPORT extern char *bu_basename(const char *cp);
 /** @{ */
 
 /**
- * B U _ O P E N _ M A P P E D _ F I L E
- *
  * If the file can not be opened, as descriptive an error message as
  * possible will be printed, to simplify code handling in the caller.
  *
@@ -3793,8 +3578,6 @@ BU_EXPORT extern struct bu_mapped_file *bu_open_mapped_file(const char *name,
 							    const char *appl);
 
 /**
- * B U _ C L O S E _ M A P P E D _ F I L E
- *
  * Release a use of a mapped file.  Because it may be re-used shortly,
  * e.g. by the next frame of an animation, don't release the memory
  * even on final close, so that it's available when next needed.
@@ -3807,15 +3590,11 @@ BU_EXPORT extern struct bu_mapped_file *bu_open_mapped_file(const char *name,
 BU_EXPORT extern void bu_close_mapped_file(struct bu_mapped_file *mp);
 
 /**
- * B U _ P R _ M A P P E D _ F I L E
- *
  */
 BU_EXPORT extern void bu_pr_mapped_file(const char *title,
 					const struct bu_mapped_file *mp);
 
 /**
- * B U _ F R E E _ M A P P E D _ F I L E S
- *
  * Release storage being used by mapped files with no remaining users.
  * This entire routine runs inside a critical section, for parallel
  * protection.  Only call this routine if you're SURE that ALL these
@@ -3825,8 +3604,6 @@ BU_EXPORT extern void bu_pr_mapped_file(const char *title,
 BU_EXPORT extern void bu_free_mapped_files(int verbose);
 
 /**
- * B U _ O P E N _ M A P P E D _ F I L E _ W I T H _ P A T H
- *
  * A wrapper for bu_open_mapped_file() which uses a search path to
  * locate the file.
  *
@@ -3851,8 +3628,6 @@ BU_EXPORT extern struct bu_mapped_file *bu_open_mapped_file_with_path(char * con
  */
 
 /**
- * b u _ t e r m i n a t e
- *
  * terminate a given process.
  *
  * returns truthfully whether the process could be killed.
@@ -3872,7 +3647,7 @@ BU_EXPORT extern int bu_process_id();
 
 /** @file libbu/parallel.c
  *
- * @brief routines for parallel processing
+ * routines for parallel processing
  *
  * Machine-specific routines for parallel processing.
  * Primarily calling functions in multiple threads on multiple CPUs.
@@ -3880,8 +3655,6 @@ BU_EXPORT extern int bu_process_id();
  */
 
 /**
- * B U _ N I C E _ S E T
- *
  * Without knowing what the current UNIX "nice" value is, change to a
  * new absolute "nice" value.  (The system routine makes a relative
  * change).
@@ -3889,31 +3662,23 @@ BU_EXPORT extern int bu_process_id();
 BU_EXPORT extern void bu_nice_set(int newnice);
 
 /**
- * B U _ C P U L I M I T _ G E T
- *
  * Return the current CPU limit, in seconds. Zero or negative return
  * indicates that limits are not in effect.
  */
 BU_EXPORT extern int bu_cpulimit_get();
 
 /**
- * B U _ C P U L I M I T _ S E T
- *
  * Set CPU time limit, in seconds.
  */
 BU_EXPORT extern void bu_cpulimit_set(int sec);
 
 /**
- * B U _ A V A I L _ C P U S
- *
  * Return the maximum number of physical CPUs that are considered to
  * be available to this process now.
  */
 BU_EXPORT extern int bu_avail_cpus();
 
 /**
- * B U _ G E T _ L O A D _ A V E R A G E
- *
  * A generally portable method for obtaining the 1-minute load average.
  * Vendor-specific methods which don't involve a fork/exec sequence
  * would be preferable.
@@ -3924,8 +3689,6 @@ BU_EXPORT extern int bu_avail_cpus();
 BU_EXPORT extern fastf_t bu_get_load_average();
 
 /**
- * B U _ G E T _ P U B L I C _ C P U S
- *
  * A general mechanism for non-privleged users of a server system to
  * control how many processors of their server get consumed by
  * multi-thread cruncher processes, by leaving a world-writable file.
@@ -3943,8 +3706,6 @@ BU_EXPORT extern fastf_t bu_get_load_average();
 DEPRECATED BU_EXPORT extern int bu_get_public_cpus();
 
 /**
- * B U _ S E T _ R E A L T I M E
- *
  * If possible, mark this process for real-time scheduler priority.
  * Will often need root privs to succeed.
  *
@@ -3955,8 +3716,6 @@ DEPRECATED BU_EXPORT extern int bu_get_public_cpus();
 BU_EXPORT extern int bu_set_realtime();
 
 /**
- * B U _ P A R A L L E L
- *
  * Create 'ncpu' copies of function 'func' all running in parallel,
  * with private stack areas.  Locking and work dispatching are handled
  * by 'func' using a "self-dispatching" paradigm.
@@ -3982,7 +3741,7 @@ BU_EXPORT extern void bu_parallel(void (*func)(int ncpu, genptr_t arg), int ncpu
 /** @{ */
 /** @file libbu/parse.c
  *
- * @brief routines for parsing arbitrary structures
+ * routines for parsing arbitrary structures
  *
  * Routines to assign values to elements of arbitrary structures.  The
  * layout of a structure to be processed is described by a structure
@@ -4000,24 +3759,18 @@ BU_EXPORT extern void bu_parallel(void (*func)(int ncpu, genptr_t arg), int ncpu
  */
 
 /**
- * B U _ S T R U C T _ E X P O R T
- *
  */
 BU_EXPORT extern int bu_struct_export(struct bu_external *ext,
 				      const genptr_t base,
 				      const struct bu_structparse *imp);
 
 /**
- * B U _ S T R U C T _ I M P O R T
- *
  */
 BU_EXPORT extern int bu_struct_import(genptr_t base,
 				      const struct bu_structparse *imp,
 				      const struct bu_external *ext);
 
 /**
- * B U _ S T R U C T _ P U T
- *
  * Put a structure in external form to a stdio file.  All formatting
  * must have been accomplished previously.
  *
@@ -4029,8 +3782,6 @@ BU_EXPORT extern size_t bu_struct_put(FILE *fp,
 				      const struct bu_external *ext);
 
 /**
- * B U _ S T R U C T _ G E T
- *
  * Obtain the next structure in external form from a stdio file.
  *
  * Returns number of bytes read into the bu_external.  On error, zero
@@ -4040,8 +3791,6 @@ BU_EXPORT extern size_t bu_struct_get(struct bu_external *ext,
 				      FILE *fp);
 
 /**
- * B U _ S T R U C T _ W R A P _ B U F
- *
  * Given a buffer with an external representation of a structure
  * (e.g. the ext_buf portion of the output from bu_struct_export),
  * check it for damage in shipment, and if it's OK, wrap it up in an
@@ -4051,8 +3800,6 @@ BU_EXPORT extern void bu_struct_wrap_buf(struct bu_external *ext,
 					 genptr_t buf);
 
 /**
- * B U _ S T R U C T P A R S E
- *
  * Parse the structure element description in the vls string "vls"
  * according to the structure description in "parsetab"
  *
@@ -4064,16 +3811,12 @@ BU_EXPORT extern int bu_struct_parse(const struct bu_vls *in_vls,
 				     const char *base);
 
 /**
- * B U _ S T R U C T P R I N T
- *
  */
 BU_EXPORT extern void bu_struct_print(const char *title,
 				      const struct bu_structparse *parsetab,
 				      const char *base);
 
 /**
- * B U _ V L S _ S T R U C T P R I N T
- *
  * This differs from bu_struct_print in that this output is less
  * readable by humans, but easier to parse with the computer.
  */
@@ -4082,8 +3825,6 @@ BU_EXPORT extern void bu_vls_struct_print(struct bu_vls *vls,
 					  const char *base);
 
 /**
- * B U _ V L S _ S T R U C T P R I N T 2
- *
  * This differs from bu_struct_print in that it prints to a vls.
  */
 BU_EXPORT extern void bu_vls_struct_print2(struct bu_vls *vls,
@@ -4092,8 +3833,6 @@ BU_EXPORT extern void bu_vls_struct_print2(struct bu_vls *vls,
 					   const char *base);
 
 /**
- * b u _ v l s _ s t r u c t _ i t e m
- *
  * Convert a structure element (indicated by sdp) to its ASCII
  * representation in a VLS.
  */
@@ -4103,8 +3842,6 @@ BU_EXPORT extern void bu_vls_struct_item(struct bu_vls *vp,
 					 int sep_char);
 
 /**
- * B U _ V L S _ S T R U C T _ I T E M _ N A M E D
- *
  * Convert a structure element called "name" to an ASCII
  * representation in a VLS.
  */
@@ -4115,8 +3852,6 @@ BU_EXPORT extern int bu_vls_struct_item_named(struct bu_vls *vp,
 					      int sep_char);
 
 /**
- * b u _ p a r s e _ m m
- *
  * This allows us to specify the "size" parameter as values like ".5m"
  * or "27in" rather than using mm all the time.
  */
@@ -4126,15 +3861,12 @@ BU_EXPORT extern void bu_parse_mm(const struct bu_structparse *sdp,
 				  const char *value);
 
 /**
- *
  */
 BU_EXPORT extern int bu_key_eq_to_key_val(const char *in,
 					  const char **next,
 					  struct bu_vls *vls);
 
 /**
- * B U _ S H A D E R _ T O _ T C L _ L I S T
- *
  * Take an old v4 shader specification of the form
  *
  * shadername arg1=value1 arg2=value2 color=1/2/3
@@ -4156,14 +3888,10 @@ BU_EXPORT extern int bu_shader_to_tcl_list(const char *in,
 					   struct bu_vls *vls);
 
 /**
- * B U _ S H A D E R _ T O _ K E Y _ E Q
- *
  */
 BU_EXPORT extern int bu_shader_to_key_eq(const char *in, struct bu_vls *vls);
 
 /**
- * B U _ F W R I T E _ E X T E R N A L
- *
  * Take a block of memory, and write it into a file.
  *
  * Caller is responsible for freeing memory of external representation,
@@ -4176,28 +3904,20 @@ BU_EXPORT extern int bu_fwrite_external(FILE *fp,
 					const struct bu_external *ep);
 
 /**
- * B U _ H E X D U M P _ E X T E R N A L
- *
  */
 BU_EXPORT extern void bu_hexdump_external(FILE *fp, const struct bu_external *ep,
 					  const char *str);
 
 /**
- * B U _ F R E E _ E X T E R N A L
- *
  */
 BU_EXPORT extern void bu_free_external(struct bu_external *ep);
 
 /**
- * B U _ C O P Y _ E X T E R N A L
- *
  */
 BU_EXPORT extern void bu_copy_external(struct bu_external *op,
 				       const struct bu_external *ip);
 
 /**
- * B U _ N E X T _ T O K E N
- *
  * Advance pointer through string over current token,
  * across white space, to beginning of next token.
  */
@@ -4210,8 +3930,6 @@ BU_EXPORT extern void bu_structparse_get_terse_form(struct bu_vls *logstr,
 						    const struct bu_structparse *sp);
 
 /**
- * b u _ s t r u c t p a r s e _ a r g v
- *
  * Support routine for db adjust and db put.  Much like the
  * bu_struct_parse routine which takes its input as a bu_vls. This
  * routine, however, takes the arguments as lists, a more Tcl-friendly
@@ -4235,8 +3953,6 @@ BU_EXPORT extern int bu_structparse_argv(struct bu_vls *str,
 					 char *base);
 
 /**
- * b u _ s p _ s k i p _ s e p
- *
  * Skip the separator(s) (i.e. whitespace and open-braces)
  *
  * @param _cp	- character pointer
@@ -4249,12 +3965,10 @@ BU_EXPORT extern int bu_structparse_argv(struct bu_vls *str,
 
 /** @file libbu/booleanize.c
  *
- * @brief routines for parsing boolean values from strings
+ * routines for parsing boolean values from strings
  */
 
 /**
- * B U _ S T R _ T R U E
- *
  * Returns truthfully if a given input string represents an
  * "affirmative string".
  *
@@ -4266,8 +3980,6 @@ BU_EXPORT extern int bu_structparse_argv(struct bu_vls *str,
 BU_EXPORT extern int bu_str_true(const char *str);
 
 /**
- * B U _ S T R _ F A L S E
- *
  * Returns truthfully if a given input string represents a
  * "negative string".
  *
@@ -4284,13 +3996,11 @@ BU_EXPORT extern int bu_str_false(const char *str);
 /** @{ */
 /** @file libbu/printb.c
  *
- * @brief print bitfields
+ * print bitfields
  *
  */
 
 /**
- * B U _ V L S _ P R I N T B
- *
  * Format a value a la the %b format of the kernel's printf
  *
  * @param   vls	variable length string to put output in
@@ -4308,8 +4018,6 @@ BU_EXPORT extern void bu_vls_printb(struct bu_vls *vls,
 				    const char *bits);
 
 /**
- * B U _ P R I N T B
- *
  * Format and print, like bu_vls_printb().
  */
 BU_EXPORT extern void bu_printb(const char *s,
@@ -4323,8 +4031,6 @@ BU_EXPORT extern void bu_printb(const char *s,
 /** @{ */
 
 /**
- * B U _ P T B L _ I N I T
- *
  * Initialize struct & get storage for table.
  * Recommend 8 or 64 for initial len.
  */
@@ -4333,24 +4039,18 @@ BU_EXPORT extern void bu_ptbl_init(struct bu_ptbl *b,
 				   const char *str);
 
 /**
- * B U _ P T B L _ R E S E T
- *
  * Reset the table to have no elements, but retain any existing
  * storage.
  */
 BU_EXPORT extern void bu_ptbl_reset(struct bu_ptbl *b);
 
 /**
- * B U _ P T B L _ I N S
- *
  * Append/Insert a (long *) item to/into the table.
  */
 BU_EXPORT extern int bu_ptbl_ins(struct bu_ptbl *b,
 				 long *p);
 
 /**
- * B U _ P T B L _ L O C A T E
- *
  * locate a (long *) in an existing table
  *
  *
@@ -4365,8 +4065,6 @@ BU_EXPORT extern int bu_ptbl_locate(const struct bu_ptbl *b,
 				    const long *p);
 
 /**
- * B U _ P T B L _ Z E R O
- *
  * Set all occurrences of "p" in the table to zero.  This is different
  * than deleting them.
  */
@@ -4374,8 +4072,6 @@ BU_EXPORT extern void bu_ptbl_zero(struct bu_ptbl *b,
 				   const long *p);
 
 /**
- * B U _ P T B L _ I N S _ U N I Q U E
- *
  * Append item to table, if not already present.  Unique insert.
  *
  * @return index of first matching element in array, if found.  (table unchanged)
@@ -4388,8 +4084,6 @@ BU_EXPORT extern void bu_ptbl_zero(struct bu_ptbl *b,
 BU_EXPORT extern int bu_ptbl_ins_unique(struct bu_ptbl *b, long *p);
 
 /**
- * B U _ P T B L _ R M
- *
  * Remove all occurrences of an item from a table
  *
  * @return Number of copies of 'p' that were removed from the table.
@@ -4404,8 +4098,6 @@ BU_EXPORT extern int bu_ptbl_rm(struct bu_ptbl *b,
 				const long *p);
 
 /**
- * B U _ P T B L _ C A T
- *
  * Catenate one table onto end of another.  There is no checking for
  * duplication.
  */
@@ -4413,8 +4105,6 @@ BU_EXPORT extern void bu_ptbl_cat(struct bu_ptbl *dest,
 				  const struct bu_ptbl *src);
 
 /**
- * B U _ P T B L _ C A T _ U N I Q
- *
  * Catenate one table onto end of another, ensuring that no entry is
  * duplicated.  Duplications between multiple items in 'src' are not
  * caught.  The search is a nasty n**2 one.  The tables are expected
@@ -4424,16 +4114,12 @@ BU_EXPORT extern void bu_ptbl_cat_uniq(struct bu_ptbl *dest,
 				       const struct bu_ptbl *src);
 
 /**
- * B U _ P T B L _ F R E E
- *
  * Deallocate dynamic buffer associated with a table, and render this
  * table unusable without a subsequent bu_ptbl_init().
  */
 BU_EXPORT extern void bu_ptbl_free(struct bu_ptbl *b);
 
 /**
- * B U _ P R _ P T B L
- *
  * Print a bu_ptbl array for inspection.
  */
 BU_EXPORT extern void bu_pr_ptbl(const char *title,
@@ -4441,8 +4127,6 @@ BU_EXPORT extern void bu_pr_ptbl(const char *title,
 				 int verbose);
 
 /**
- * B U _ P T B L _ T R U N C
- *
  * truncate a bu_ptbl
  */
 BU_EXPORT extern void bu_ptbl_trunc(struct bu_ptbl *tbl,
@@ -4460,8 +4144,6 @@ BU_EXPORT extern void bu_ptbl_trunc(struct bu_ptbl *tbl,
  */
 
 /**
- * B U _ R B _ C R E A T E
- *
  * Create a red-black tree
  *
  * This function has three parameters: a comment describing the tree
@@ -4472,8 +4154,6 @@ BU_EXPORT extern void bu_ptbl_trunc(struct bu_ptbl *tbl,
 BU_EXPORT extern struct bu_rb_tree *bu_rb_create(char *description, int nm_orders, int (**order_funcs)());
 
 /**
- * B U _ R B _ C R E A T E 1
- *
  * Create a single-order red-black tree
  *
  * This function has two parameters: a comment describing the tree to
@@ -4495,8 +4175,6 @@ BU_EXPORT extern struct bu_rb_tree *bu_rb_create1(char *description, int (*order
  */
 
 /**
- * B U _ R B _ D E L E T E
- *
  * Applications interface to _rb_delete()
  *
  * This function has two parameters: the tree and order from which to
@@ -4515,8 +4193,6 @@ BU_EXPORT extern void bu_rb_delete(struct bu_rb_tree *tree,
  */
 
 /**
- * B U _ R B _ D I A G N O S E _ T R E E
- *
  * Produce a diagnostic printout of a red-black tree
  *
  * This function has three parameters: the root and order of the tree
@@ -4528,8 +4204,6 @@ BU_EXPORT extern void bu_rb_diagnose_tree(struct bu_rb_tree *tree,
 					  int trav_type);
 
 /**
- * B U _ R B _ S U M M A R I Z E _ T R E E
- *
  * Describe a red-black tree
  *
  * This function has one parameter: a pointer to a red-black tree.
@@ -4547,8 +4221,6 @@ BU_EXPORT extern void bu_rb_summarize_tree(struct bu_rb_tree *tree);
 
 
 /**
- * B U _ R B _ E X T R E M E
- *
  * Applications interface to rb_extreme()
  *
  * This function has three parameters: the tree in which to find an
@@ -4561,8 +4233,6 @@ BU_EXPORT extern void *bu_rb_extreme(struct bu_rb_tree *tree,
 				     int sense);
 
 /**
- * B U _ R B _ N E I G H B O R
- *
  * Return a node adjacent to the current red-black node
  *
  * This function has three parameters: the tree and order on which to
@@ -4577,8 +4247,6 @@ BU_EXPORT extern void *bu_rb_neighbor(struct bu_rb_tree *tree,
 				      int sense);
 
 /**
- * B U _ R B _ C U R R
- *
  * Return the current red-black node
  *
  * This function has two parameters: the tree and order in which to
@@ -4596,8 +4264,6 @@ BU_EXPORT extern void *bu_rb_curr(struct bu_rb_tree *tree,
  */
 
 /**
- * B U _ R B _ F R E E
- *
  * Free a red-black tree
  *
  * This function has two parameters: the tree to free and a function
@@ -4625,8 +4291,6 @@ BU_EXPORT extern void bu_rb_free(struct bu_rb_tree *tree, void (*free_data)());
  */
 
 /**
- * B U _ R B _ I N S E R T
- *
  * Applications interface to _rb_insert()
  *
  * This function has two parameters: the tree into which to insert the
@@ -4641,8 +4305,6 @@ BU_EXPORT extern int bu_rb_insert(struct bu_rb_tree *tree,
 				  void *data);
 
 /**
- * B U _ R B _ I S _ U N I Q
- *
  * Query the uniqueness flag for one order of a red-black tree
  *
  * This function has two parameters: the tree and the order for which
@@ -4653,8 +4315,6 @@ BU_EXPORT extern int bu_rb_is_uniq(struct bu_rb_tree *tree,
 #define bu_rb_is_uniq1(t) bu_rb_is_uniq((t), 0)
 
 /**
- * B U _ R B _ S E T _ U N I Q V
- *
  * Set the uniqueness flags for all the linear orders of a red-black
  * tree
  *
@@ -4668,24 +4328,18 @@ BU_EXPORT extern void bu_rb_set_uniqv(struct bu_rb_tree *tree,
 				      bitv_t vec);
 
 /**
- * B U _ R B _ U N I Q _ A L L _ O F F
- *
  * These functions have one parameter: the tree for which to
  * require uniqueness/permit nonuniqueness.
  */
 BU_EXPORT extern void bu_rb_uniq_all_off(struct bu_rb_tree *tree);
 
 /**
- * B U _ R B _ U N I Q _ A L L _ O N
- *
  * These functions have one parameter: the tree for which to
  * require uniqueness/permit nonuniqueness.
  */
 BU_EXPORT extern void bu_rb_uniq_all_on(struct bu_rb_tree *tree);
 
 /**
- * B U _ R B _ U N I Q _ O N
- *
  * Has two parameters: the tree and the order for which to require
  * uniqueness/permit nonuniqueness.  Each sets the specified flag to
  * the specified value and returns the previous value of the flag.
@@ -4695,8 +4349,6 @@ BU_EXPORT extern int bu_rb_uniq_on(struct bu_rb_tree *tree,
 #define bu_rb_uniq_on1(t) bu_rb_uniq_on((t), 0)
 
 /**
- * B U _ R B _ U N I Q _ O F F
- *
  * Has two parameters: the tree and the order for which to require
  * uniqueness/permit nonuniqueness.  Each sets the specified flag to
  * the specified value and returns the previous value of the flag.
@@ -4712,9 +4364,7 @@ BU_EXPORT extern int bu_rb_uniq_off(struct bu_rb_tree *tree,
  */
 
 /**
- * B U _ R B _ R A N K
- *
- * Determines the rank of a node in one order of a red-black tree
+ * Determines the rank of a node in one order of a red-black tree.
  *
  * This function has two parameters: the tree in which to search and
  * the order on which to do the searching.  If the current node is
@@ -4727,8 +4377,6 @@ BU_EXPORT extern int bu_rb_rank(struct bu_rb_tree *tree,
 #define bu_rb_rank1(t) bu_rb_rank1((t), 0)
 
 /**
- * B U _ R B _ S E L E C T
- *
  * This function has three parameters: the tree in which to search,
  * the order on which to do the searching, and the rank of interest.
  * On success, bu_rb_select() returns a pointer to the data block in
@@ -4746,8 +4394,6 @@ BU_EXPORT extern void *bu_rb_select(struct bu_rb_tree *tree,
  */
 
 /**
- * B U _ R B _ S E A R C H
- *
  * This function has three parameters: the tree in which to search,
  * the order on which to do the searching, and a data block containing
  * the desired value of the key.  On success, bu_rb_search() returns a
@@ -4782,8 +4428,6 @@ BU_EXPORT extern void *bu_rb_search(struct bu_rb_tree *tree,
  */
 
 /**
- * B U _ R B _ W A L K ()
- *
  * This function has four parameters: the tree to traverse, the order
  * on which to do the walking, the function to apply to each node, and
  * the type of traversal (preorder, inorder, or postorder).
@@ -4798,7 +4442,7 @@ BU_EXPORT extern void bu_rb_walk(struct bu_rb_tree *tree, int order, void (*visi
 
 /** @file libbu/semaphore.c
  *
- * @brief semaphore implementation
+ * semaphore implementation
  *
  * Machine-specific routines for parallel processing.  Primarily for
  * handling semaphores for critical sections.
@@ -4833,8 +4477,6 @@ BU_EXPORT extern jmp_buf bu_jmpbuf;			/* for BU_SETJMP() */
 
 
 /**
- * B U _ S E M A P H O R E _ I N I T
- *
  * Prepare 'nsemaphores' independent critical section semaphores.  Die
  * on error.
  *
@@ -4846,22 +4488,16 @@ BU_EXPORT extern jmp_buf bu_jmpbuf;			/* for BU_SETJMP() */
 BU_EXPORT extern void bu_semaphore_init(unsigned int nsemaphores);
 
 /**
- * B U _ S E M A P H O R E _ R E I N I T
- *
  * Prepare 'nsemaphores' independent critical section semaphores.  Die
  * on error.
  */
 BU_EXPORT extern void bu_semaphore_reinit(unsigned int nsemaphores);
 
 /**
- * B U _ S E M A P H O R E _ A C Q U I R E
- *
  */
 BU_EXPORT extern void bu_semaphore_acquire(unsigned int i);
 
 /**
- * B U _ S E M A P H O R E _ R E L E A S E
- *
  */
 BU_EXPORT extern void bu_semaphore_release(unsigned int i);
 
@@ -4871,8 +4507,6 @@ BU_EXPORT extern void bu_semaphore_release(unsigned int i);
 /** @{ */
 
 /**
- * b u _ v l s _ i n i t
- *
  * No storage should be allocated at this point, and bu_vls_addr()
  * must be able to live with that.
  */
@@ -4887,8 +4521,6 @@ BU_EXPORT extern void bu_vls_init(struct bu_vls *vp);
 DEPRECATED BU_EXPORT extern void bu_vls_init_if_uninit(struct bu_vls *vp);
 
 /**
- * b u _ v l s _ v l s i n i t
- *
  * Allocate storage for a struct bu_vls, call bu_vls_init on it, and
  * return the result.  Allows for creation of dynamically allocated
  * VLS strings.
@@ -4896,16 +4528,12 @@ DEPRECATED BU_EXPORT extern void bu_vls_init_if_uninit(struct bu_vls *vp);
 BU_EXPORT extern struct bu_vls *bu_vls_vlsinit();
 
 /**
- * b u _ v l s _ a d d r
- *
  * Return a pointer to the null-terminated string in the vls array.
  * If no storage has been allocated yet, give back a valid string.
  */
 BU_EXPORT extern char *bu_vls_addr(const struct bu_vls *vp);
 
 /**
- * b u _ v l s _ e x t e n d
- *
  * Ensure that the provided VLS has at least 'extra' characters of
  * space available.  Additional space is allocated in minimum step
  * sized amounts and may allocate more than requested.
@@ -4914,8 +4542,6 @@ BU_EXPORT extern void bu_vls_extend(struct bu_vls *vp,
 				    unsigned int extra);
 
 /**
- * b u _ v l s _ s e t l e n
- *
  * Ensure that the vls has a length of at least 'newlen', and make
  * that the current length.
  *
@@ -4928,16 +4554,12 @@ BU_EXPORT extern void bu_vls_extend(struct bu_vls *vp,
 BU_EXPORT extern void bu_vls_setlen(struct bu_vls *vp,
 				    size_t newlen);
 /**
- * b u _ v l s _ s t r l e n
- *
  * Return length of the string, in bytes, not including the null
  * terminator.
  */
 BU_EXPORT extern size_t bu_vls_strlen(const struct bu_vls *vp);
 
 /**
- * b u _ v l s _ t r u n c
- *
  * Truncate string to at most 'len' characters.  If 'len' is negative,
  * trim off that many from the end.  If 'len' is zero, don't release
  * storage -- user is probably just going to refill it again,
@@ -4947,8 +4569,6 @@ BU_EXPORT extern void bu_vls_trunc(struct bu_vls *vp,
 				   int len);
 
 /**
- * b u _ v l s _ t r u n c 2
- *
  * Son of bu_vls_trunc().  Same as bu_vls_trunc() except that it
  * doesn't truncate (or do anything) if the len is negative.
  */
@@ -4956,8 +4576,6 @@ BU_EXPORT extern void bu_vls_trunc2(struct bu_vls *vp,
 				    int len);
 
 /**
- * b u _ v l s _ n i b b l e
- *
  * "Nibble" 'len' characters off the front of the string.  Changes the
  * length and offset; no data is copied.
  *
@@ -4968,22 +4586,16 @@ BU_EXPORT extern void bu_vls_nibble(struct bu_vls *vp,
 				    int len);
 
 /**
- * b u _ v l s _ f r e e
- *
  * Releases the memory used for the string buffer.
  */
 BU_EXPORT extern void bu_vls_free(struct bu_vls *vp);
 
 /**
- * b u _ v l s _ v l s f r e e
- *
  * Releases the memory used for the string buffer and the memory for
  * the vls structure
  */
 BU_EXPORT extern void bu_vls_vlsfree(struct bu_vls *vp);
 /**
- * b u _ v l s _ s t r d u p
- *
  * Make an "ordinary" string copy of a vls string.  Storage for the
  * regular string is acquired using malloc.
  *
@@ -4992,8 +4604,6 @@ BU_EXPORT extern void bu_vls_vlsfree(struct bu_vls *vp);
 BU_EXPORT extern char *bu_vls_strdup(const struct bu_vls *vp);
 
 /**
- * b u _ v l s _ s t r g r a b
- *
  * Like bu_vls_strdup(), but destructively grab the string from the
  * source argument 'vp'.  This is more efficient than bu_vls_strdup()
  * for those instances where the source argument 'vp' is no longer
@@ -5005,16 +4615,12 @@ BU_EXPORT extern char *bu_vls_strdup(const struct bu_vls *vp);
 BU_EXPORT extern char *bu_vls_strgrab(struct bu_vls *vp);
 
 /**
- * b u _ v l s _ s t r c p y
- *
  * Empty the vls string, and copy in a regular string.
  */
 BU_EXPORT extern void bu_vls_strcpy(struct bu_vls *vp,
 				    const char *s);
 
 /**
- * b u _ v l s _ s t r n c p y
- *
  * Empty the vls string, and copy in a regular string, up to N bytes
  * long.
  */
@@ -5023,16 +4629,12 @@ BU_EXPORT extern void bu_vls_strncpy(struct bu_vls *vp,
 				     size_t n);
 
 /**
- * b u _ v l s _ s t r c a t
- *
  * Concatenate a new string onto the end of the existing vls string.
  */
 BU_EXPORT extern void bu_vls_strcat(struct bu_vls *vp,
 				    const char *s);
 
 /**
- * b u _ v l s _ s t r n c a t
- *
  * Concatenate a new string onto the end of the existing vls string.
  */
 BU_EXPORT extern void bu_vls_strncat(struct bu_vls *vp,
@@ -5040,8 +4642,6 @@ BU_EXPORT extern void bu_vls_strncat(struct bu_vls *vp,
 				     size_t n);
 
 /**
- * b u _ v l s _ v l s c a t
- *
  * Concatenate a new vls string onto the end of an existing vls
  * string.  The storage of the source string is not affected.
  */
@@ -5049,8 +4649,6 @@ BU_EXPORT extern void bu_vls_vlscat(struct bu_vls *dest,
 				    const struct bu_vls *src);
 
 /**
- * b u _ v l s _ v l s c a t z a p
- *
  * Concatenate a new vls string onto the end of an existing vls
  * string.  The storage of the source string is released (zapped).
  */
@@ -5058,8 +4656,6 @@ BU_EXPORT extern void bu_vls_vlscatzap(struct bu_vls *dest,
 				       struct bu_vls *src);
 
 /**
- * b u _ v l s _ s t r c m p
- *
  * Lexicographically compare two vls strings.  Returns an integer
  * greater than, equal to, or less than 0, according as the string s1
  * is greater than, equal to, or less than the string s2.
@@ -5068,8 +4664,6 @@ BU_EXPORT extern int bu_vls_strcmp(struct bu_vls *s1,
 				   struct bu_vls *s2);
 
 /**
- * b u _ v l s _ s t r n c m p
- *
  * Lexicographically compare two vls strings up to n characters.
  * Returns an integer greater than, equal to, or less than 0,
  * according as the string s1 is greater than, equal to, or less than
@@ -5080,8 +4674,6 @@ BU_EXPORT extern int bu_vls_strncmp(struct bu_vls *s1,
 				    size_t n);
 
 /**
- * b u _ v l s _ f r o m _ a r g v
- *
  * Given and argc & argv pair, convert them into a vls string of
  * space-separated words.
  */
@@ -5090,8 +4682,6 @@ BU_EXPORT extern void bu_vls_from_argv(struct bu_vls *vp,
 				       const char *argv[]);
 
 /**
- * b u _ a r g v _ f r o m _ s t r i n g
- *
  * Build argv[] array from input buffer, by splitting whitespace
  * separated "words" into null terminated strings.
  *
@@ -5113,24 +4703,18 @@ BU_EXPORT extern int bu_argv_from_string(char *argv[],
 					 char *lp);
 
 /**
- * b u _ v l s _ f w r i t e
- *
  * Write the VLS to the provided file pointer.
  */
 BU_EXPORT extern void bu_vls_fwrite(FILE *fp,
 				    const struct bu_vls *vp);
 
 /**
- * b u _ v l s _ w r i t e
- *
  * Write the VLS to the provided file descriptor.
  */
 BU_EXPORT extern void bu_vls_write(int fd,
 				   const struct bu_vls *vp);
 
 /**
- * b u _ v l s _ r e a d
- *
  * Read the remainder of a UNIX file onto the end of a vls.
  *
  * Returns -
@@ -5142,8 +4726,6 @@ BU_EXPORT extern int bu_vls_read(struct bu_vls *vp,
 				 int fd);
 
 /**
- * b u _ v l s _ g e t s
- *
  * Append a newline-terminated string from the file pointed to by "fp"
  * to the end of the vls pointed to by "vp".  The newline from the
  * file is read, but not stored into the vls.
@@ -5159,24 +4741,18 @@ BU_EXPORT extern int bu_vls_gets(struct bu_vls *vp,
 				 FILE *fp);
 
 /**
- * b u _ v l s _ p u t c
- *
  * Append the given character to the vls.
  */
 BU_EXPORT extern void bu_vls_putc(struct bu_vls *vp,
 				  int c);
 
 /**
- * b u _ v l s _ t r i m s p a c e
- *
  * Remove leading and trailing white space from a vls string.
  */
 BU_EXPORT extern void bu_vls_trimspace(struct bu_vls *vp);
 
 
 /**
- * b u _ v l s _ v p r i n t f
- *
  * Format a string into a vls.  This version should work on
  * practically any machine, but it serves to highlight the the
  * grossness of the varargs package requiring the size of a parameter
@@ -5193,16 +4769,12 @@ BU_EXPORT extern void bu_vls_vprintf(struct bu_vls *vls,
 				     va_list ap);
 
 /**
- * b u _ v l s _ p r i n t f
- *
  * Initializes the va_list, then calls the above bu_vls_vprintf.
  */
 BU_EXPORT extern void bu_vls_printf(struct bu_vls *vls,
 				    const char *fmt, ...) __BU_ATTR_FORMAT23;
 
 /**
- * b u _ v l s _ s p r i n t f
- *
  * Format a string into a vls, setting the vls to the given print
  * specifier expansion.  This routine truncates any existing vls
  * contents beforehand (i.e. it doesn't append, see bu_vls_vprintf for
@@ -5215,16 +4787,12 @@ BU_EXPORT extern void bu_vls_sprintf(struct bu_vls *vls,
 				     const char *fmt, ...) __BU_ATTR_FORMAT23;
 
 /**
- * b u _ v l s _ s p a c e s
- *
  * Efficiently append 'cnt' spaces to the current vls.
  */
 BU_EXPORT extern void bu_vls_spaces(struct bu_vls *vp,
 				    int cnt);
 
 /**
- * b u _ v l s _ p r i n t _ p o s i t i o n s _ u s e d
- *
  * Returns number of printed spaces used on final output line of a
  * potentially multi-line vls.  Useful for making decisions on when to
  * line-wrap.
@@ -5239,8 +4807,6 @@ BU_EXPORT extern void bu_vls_spaces(struct bu_vls *vp,
 BU_EXPORT extern int bu_vls_print_positions_used(const struct bu_vls *vp);
 
 /**
- * b u _ v l s _ d e t a b
- *
  * Given a vls, return a version of that string which has had all
  * "tab" characters converted to the appropriate number of spaces
  * according to the UNIX tab convention.
@@ -5248,16 +4814,12 @@ BU_EXPORT extern int bu_vls_print_positions_used(const struct bu_vls *vp);
 BU_EXPORT extern void bu_vls_detab(struct bu_vls *vp);
 
 /**
- * b u _ v l s _ p r e p e n d
- *
  * Add a string to the begining of the vls.
  */
 BU_EXPORT extern void bu_vls_prepend(struct bu_vls *vp,
 				     char *str);
 
 /**
- * b u _ v l s _ e n c o d e
- *
  * given an input string, wrap the string in double quotes if there is
  * a space.  escape any existing double quotes.
  *
@@ -5275,8 +4837,6 @@ BU_EXPORT extern void bu_vls_encode(struct bu_vls *vp, const char *str);
 
 
 /**
- * b u _ v l s _ d e c o d e
- *
  * given an encoded input string, unwrap the string from any
  * surrounding double quotes and unescape any embedded double quotes.
  *
@@ -5363,8 +4923,6 @@ BU_EXPORT extern void bu_vlb_print(struct bu_vlb *vlb,
 				   FILE *fd);
 
 /**
- * B U _ P R _ V L B
- * @brief
  * Print the bytes set in a variable-length byte array.
  */
 BU_EXPORT extern void bu_pr_vlb(const char *title, const struct bu_vlb *vlb);
@@ -5378,8 +4936,6 @@ BU_EXPORT extern void bu_pr_vlb(const char *title, const struct bu_vlb *vlb);
  */
 
 /**
- * b u _ s t r l c a t / b u _ s t r l c a t m
- *
  * concatenate one string onto the end of another, returning the
  * length of the dst string after the concatenation.
  *
@@ -5390,8 +4946,6 @@ BU_EXPORT extern size_t bu_strlcatm(char *dst, const char *src, size_t size, con
 #define bu_strlcat(dst, src, size) bu_strlcatm(dst, src, size, BU_FLSTR)
 
 /**
- * b u _ s t r l c p y / b u _ s t r l c p y m
- *
  * copies one string into another, returning the length of the dst
  * string after the copy.
  *
@@ -5402,8 +4956,6 @@ BU_EXPORT extern size_t bu_strlcpym(char *dst, const char *src, size_t size, con
 #define bu_strlcpy(dst, src, size) bu_strlcpym(dst, src, size, BU_FLSTR)
 
 /**
- * b u _ s t r d u p  / b u _ s t r d u p m
- *
  * Given a string, allocate enough memory to hold it using bu_malloc(),
  * duplicate the strings, returns a pointer to the new string.
  *
@@ -5414,8 +4966,6 @@ BU_EXPORT extern char *bu_strdupm(const char *cp, const char *label);
 #define bu_strdup(s) bu_strdupm(s, BU_FLSTR)
 
 /**
- * b u _ s t r c m p  / b u _ s t r c m p m
- *
  * Compares two strings more gracefully as standard library's strcmp().
  * It accepts NULL as valid input values and considers "" and NULL as equal.
  *
@@ -5453,8 +5003,6 @@ BU_EXPORT extern int bu_strcmpm(const char *string1, const char *string2, const 
  */
 
 /**
- * B U _ U N I T S _ C O N V E R S I O N
- *
  * Given a string representation of a unit of distance (eg, "feet"),
  * return the multiplier which will convert that unit into the default
  * unit for the dimension (millimeters for length, mm^3 for volume,
@@ -5465,8 +5013,6 @@ BU_EXPORT extern int bu_strcmpm(const char *string1, const char *string2, const 
 BU_EXPORT extern double bu_units_conversion(const char *str);
 
 /**
- * B U _ U N I T S _ S T R I N G
- *
  * Given a conversion factor to mm, search the table to find what unit
  * this represents.
  *
@@ -5481,8 +5027,6 @@ BU_EXPORT extern const char *bu_units_string(const double mm);
 BU_EXPORT extern struct bu_vls *bu_units_strings_vls();
 
 /**
- * B U _ N E A R E S T _ U N I T S _ S T R I N G
- *
  * Given a conversion factor to mm, search the table to find the
  * closest matching unit.
  *
@@ -5493,8 +5037,6 @@ BU_EXPORT extern struct bu_vls *bu_units_strings_vls();
 BU_EXPORT extern const char *bu_nearest_units_string(const double mm);
 
 /**
- * B U _ M M _ V A L U E
- *
  * Given a string of the form "25cm" or "5.2ft" returns the
  * corresponding distance in mm.
  *
@@ -5505,8 +5047,6 @@ BU_EXPORT extern const char *bu_nearest_units_string(const double mm);
 BU_EXPORT extern double bu_mm_value(const char *s);
 
 /**
- * B U _ M M _ C V T
- *
  * Used primarily as a hooked function for bu_structparse tables to
  * allow input of floating point values in other units.
  */
@@ -5616,23 +5156,17 @@ DEPRECATED BU_EXPORT extern unsigned char *bu_plonglong(unsigned char *msgp, uin
  */
 
 /**
- * b u _ o b s e r v e r _ c m d
- *
  * runs a given command, calling the corresponding observer callback
  * if it matches.
  */
 BU_EXPORT extern int bu_observer_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]);
 
 /**
- * b u _ o b s e r v e r _ n o t i f y
- *
  * Notify observers.
  */
 BU_EXPORT extern void bu_observer_notify(Tcl_Interp *interp, struct bu_observer *headp, char *self);
 
 /**
- * b u _ o b s e r v e r _ f r e e
- *
  * Free observers.
  */
 BU_EXPORT extern void bu_observer_free(struct bu_observer *);
@@ -5647,8 +5181,6 @@ BU_EXPORT extern void bu_observer_free(struct bu_observer *);
  */
 
 /**
- * b u _ t c l _ s t r u c t p a r s e _ g e t _ t e r s e _ f o r m
- *
  * Convert the "form" of a bu_structparse table into a TCL result
  * string, with parameter-name data-type pairs:
  *
@@ -5669,8 +5201,6 @@ BU_EXPORT extern void bu_tcl_structparse_get_terse_form(Tcl_Interp *interp,
 							const struct bu_structparse *sp);
 
 /**
- * b u _ t c l _ s t r u c t p a r s e _ a r g v
- *
  * Support routine for db adjust and db put.  Much like the bu_struct_parse routine
  * which takes its input as a bu_vls. This routine, however, takes the arguments
  * as lists, a more Tcl-friendly method. Also knows about the Tcl result string,
@@ -5695,8 +5225,6 @@ BU_EXPORT extern int bu_tcl_structparse_argv(Tcl_Interp *interp,
 					     char *base);
 
 /**
- * b u _ t c l _ m e m _ b a r r i e r c h e c k
- *
  * A tcl wrapper for bu_mem_barriercheck.
  *
  * @param clientData	- associated data/state
@@ -5712,8 +5240,6 @@ BU_EXPORT extern int bu_tcl_mem_barriercheck(ClientData clientData,
 					     const char **argv);
 
 /**
- * b u _ t c l _ c k _ m a l l o c _ p t r
- *
  * A tcl wrapper for bu_ck_malloc_ptr.
  *
  * @param clientData	- associated data/state
@@ -5729,8 +5255,6 @@ BU_EXPORT extern int bu_tcl_ck_malloc_ptr(ClientData clientData,
 					  const char **argv);
 
 /**
- * b u _ t c l _ m a l l o c _ l e n _ r o u n d u p
- *
  * A tcl wrapper for bu_malloc_len_roundup.
  *
  * @param clientData	- associated data/state
@@ -5746,8 +5270,6 @@ BU_EXPORT extern int bu_tcl_malloc_len_roundup(ClientData clientData,
 					       const char **argv);
 
 /**
- * b u _ t c l _ p r m e m
- *
  * A tcl wrapper for bu_prmem. Prints map of
  * memory currently in use, to stderr.
  *
@@ -5764,8 +5286,6 @@ BU_EXPORT extern int bu_tcl_prmem(ClientData clientData,
 				  const char **argv);
 
 /**
- * b u _ t c l _ p r i n t b
- *
  * A tcl wrapper for bu_vls_printb.
  *
  * @param clientData	- associated data/state
@@ -5781,8 +5301,6 @@ BU_EXPORT extern int bu_tcl_printb(ClientData clientData,
 				   const char **argv);
 
 /**
- * b u _ t c l _ g e t _ v a l u e _ b y _ k e y w o r d
- *
  * Given arguments of alternating keywords and values and a specific
  * keyword ("Iwant"), return the value associated with that keyword.
  *
@@ -5811,8 +5329,6 @@ BU_EXPORT extern int bu_tcl_get_value_by_keyword(ClientData clientData,
 						 const char **argv);
 
 /**
- * b u _ t c l _ g e t _ a l l _ k e y w o r d _ v a l u e s
- *
  * Given arguments of alternating keywords and values, establish local
  * variables named after the keywords, with the indicated
  * values. Returns in interp a list of the variable names that were
@@ -5858,8 +5374,6 @@ BU_EXPORT extern int bu_tcl_get_all_keyword_values(ClientData clientData,
 						   const char **argv);
 
 /**
- * b u _ t c l _ r g b _ t o _ h s v
- *
  * A tcl wrapper for bu_rgb_to_hsv.
  *
  * @param clientData	- associated data/state
@@ -5875,8 +5389,6 @@ BU_EXPORT extern int bu_tcl_rgb_to_hsv(ClientData clientData,
 				       const char **argv);
 
 /**
- * b u _ t c l _ h s v _ t o _ r g b
- *
  * A tcl wrapper for bu_hsv_to_rgb.
  *
  * @param clientData	- associated data/state
@@ -5892,8 +5404,6 @@ BU_EXPORT extern int bu_tcl_hsv_to_rgb(ClientData clientData,
 				       const char **argv);
 
 /**
- * b u _ t c l _ k e y _ e q _ t o _ k e y _ v a l
- *
  * Converts key=val to "key val" pairs.
  *
  * @param clientData	- associated data/state
@@ -5909,8 +5419,6 @@ BU_EXPORT extern int bu_tcl_key_eq_to_key_val(ClientData clientData,
 					      const char **argv);
 
 /**
- * b u _ t c l _ s h a d e r _ t o _ k e y _ v a l
- *
  * Converts a shader string to a tcl list.
  *
  * @param clientData	- associated data/state
@@ -5926,8 +5434,6 @@ BU_EXPORT extern int bu_tcl_shader_to_key_val(ClientData clientData,
 					      const char **argv);
 
 /**
- * b u _ t c l _ k e y _ v a l _ t o _ k e y _ e q
- *
  * Converts "key value" pairs to key=value.
  *
  * @param clientData	- associated data/state
@@ -5943,8 +5449,6 @@ BU_EXPORT extern int bu_tcl_key_val_to_key_eq(ClientData clientData,
 					      const char **argv);
 
 /**
- * b u _ t c l _ s h a d e r _ t o _ k e y _ e q
- *
  * Converts a shader tcl list into a shader string.
  *
  * @param clientData	- associated data/state
@@ -6082,7 +5586,6 @@ struct bu_lex_key {
 
 
 /**
- * B U _ L E X
  */
 BU_EXPORT extern int bu_lex(union bu_lex_token *token,
 			    struct bu_vls *rtstr,
@@ -6092,7 +5595,7 @@ BU_EXPORT extern int bu_lex(union bu_lex_token *token,
 
 /** @file libbu/mread.c
  *
- * @brief multiple-read to fill a buffer
+ * multiple-read to fill a buffer
  *
  * Provide a general means to a read some count of items from a file
  * descriptor reading multiple times until the quantity desired is
@@ -6241,16 +5744,12 @@ typedef struct bu_hash_record bu_hash_record_t;
 
 
 /**
- * B U _ H A S H
- *
  * the hashing function
  */
 BU_EXPORT extern unsigned long bu_hash(unsigned char *str,
 				       int len);
 
 /**
- * B U _ C R E A T E _ H A S H _ T B L
- * @brief
  * Create an empty hash table
  *
  * The input is the number of desired hash bins.  This number will be
@@ -6259,9 +5758,6 @@ BU_EXPORT extern unsigned long bu_hash(unsigned char *str,
 BU_EXPORT extern struct bu_hash_tbl *bu_create_hash_tbl(unsigned long tbl_size);
 
 /**
- * B U _ F I N D _ H A S H _ E N T R Y
- *
- * @brief
  * Find the hash table entry corresponding to the provided key
  *
  * @param[in] hsh_tbl - The hash table to look in
@@ -6283,8 +5779,6 @@ BU_EXPORT extern struct bu_hash_entry *bu_find_hash_entry(struct bu_hash_tbl *hs
 							  unsigned long *idx);
 
 /**
- * B U _ S E T _ H A S H _ V A L U E
- * @brief
  * Set the value for a hash table entry
  *
  * Note that this is just a pointer copy, the hash table does not
@@ -6294,22 +5788,16 @@ BU_EXPORT extern void bu_set_hash_value(struct bu_hash_entry *hsh_entry,
 					unsigned char *value);
 
 /**
- * B U _ G E T _ H A S H _ V A L U E
- *
  * get the value pointer stored for the specified hash table entry
  */
 BU_EXPORT extern unsigned char *bu_get_hash_value(struct bu_hash_entry *hsh_entry);
 
 /**
- * B U _ G E T _ H A S H _ K E Y
- *
  * get the key pointer stored for the specified hash table entry
  */
 BU_EXPORT extern unsigned char *bu_get_hash_key(struct bu_hash_entry *hsh_entry);
 
 /**
- * B U _ H A S H _ A D D _ E N T R Y
- *
  * Add an new entry to a hash table
  *
  * @param[in] hsh_tbl - the hash table to accept thye new entry
@@ -6331,8 +5819,6 @@ BU_EXPORT extern struct bu_hash_entry *bu_hash_add_entry(struct bu_hash_tbl *hsh
 							 int *new_entry);
 
 /**
- * B U _ H A S H _ T B L _ P R
- * @brief
  * Print the specified hash table to stderr.
  *
  * (Note that the keys and values are printed as pointers)
@@ -6341,8 +5827,6 @@ BU_EXPORT extern void bu_hash_tbl_pr(struct bu_hash_tbl *hsh_tbl,
 				     char *str);
 
 /**
- * B U _ H A S H _ T B L _ F R E E
- * @brief
  * Free all the memory associated with the specified hash table.
  *
  * Note that the keys are freed (they are copies), but the "values"
@@ -6351,8 +5835,6 @@ BU_EXPORT extern void bu_hash_tbl_pr(struct bu_hash_tbl *hsh_tbl,
 BU_EXPORT extern void bu_hash_tbl_free(struct bu_hash_tbl *hsh_tbl);
 
 /**
- * B U _ H A S H _ T B L _ F I R S T
- * @brief
  * get the "first" entry in a hash table
  *
  * @param[in] hsh_tbl - the hash table of interest
@@ -6367,8 +5849,6 @@ BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_first(struct bu_hash_tbl *hsh
 							 struct bu_hash_record *rec);
 
 /**
- * B U _ H A S H _ T B L _ N E X T
- *
  * get the "next" entry in a hash table
  *
  * input:
@@ -6388,7 +5868,7 @@ BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_next(struct bu_hash_record *r
 /** @{ */
 /** @file libbu/image.c
  *
- * @brief image save/load routines
+ * image save/load routines
  *
  * save or load images in a variety of formats.
  *
@@ -6490,8 +5970,6 @@ BU_EXPORT extern int bu_image_save(unsigned char *data,
  */
 
 /**
- * b u _ f c h m o d
- *
  */
 BU_EXPORT extern int bu_fchmod(FILE *fp, unsigned long pmode);
 
@@ -6510,8 +5988,6 @@ BU_EXPORT extern int bu_fchmod(FILE *fp, unsigned long pmode);
 BU_EXPORT extern void bu_free_argv(int argc, char *argv[]);
 
 /**
- * b u _ f r e e _ a r r a y
- *
  * free up to argc elements of memory allocated to an array without
  * free'ing the array itself.
  */
