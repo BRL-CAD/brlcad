@@ -514,7 +514,7 @@ BU_EXPORT extern int bu_cv_itemlen(int cookie);
  	done
  @endcode
  */
-BU_EXPORT extern size_t bu_cv_w_cookie(genptr_t out, int outcookie, size_t sz, genptr_t in, int incookie, size_t cnt);
+BU_EXPORT extern size_t bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in, int incookie, size_t count);
 
 /**
  * bu_cv_ntohss
@@ -2405,7 +2405,7 @@ typedef struct bu_observer bu_observer_t;
 
 
 /**
- * @DEPRECATED
+ * DEPRECATED.
  *
  * Usage not recommended due to k&r callback (provides no type
  * checking)
@@ -2827,6 +2827,9 @@ BU_EXPORT extern void bu_list_path(char *path, char *substr, char **filearray);
  */
 
 /**
+ * DEPRECATED: This routine is replaced by bu_argv0_full_path().
+ *             Do not use.
+ *
  * this routine is used by the brlcad-path-finding routines when
  * attempting to locate binaries, libraries, and resources.  This
  * routine will set argv0 if path is provided and should generally be
@@ -2834,21 +2837,19 @@ BU_EXPORT extern void bu_list_path(char *path, char *substr, char **filearray);
  *
  * this routine will return "(unknown)" if argv[0] cannot be
  * identified but should never return NULL.
- *
- * DEPRECATED: This routine is replaced by bu_argv0_full_path().
- *             Do not use.
  */
 DEPRECATED BU_EXPORT extern const char *bu_argv0(void);
 
 /**
+ * DEPRECATED: This routine is replaced by bu_getcwd().
+ *             Do not use.
+ *
  * returns the full path to argv0, regardless of how the application
  * was invoked.
  *
  * this routine will return "(unknown)" if argv[0] cannot be
  * identified but should never return NULL.
  *
- * DEPRECATED: This routine is replaced by bu_getcwd().
- *             Do not use.
  */
 BU_EXPORT extern const char *bu_argv0_full_path(void);
 
@@ -2948,12 +2949,10 @@ BU_EXPORT extern const char *bu_whereis(const char *cmd);
  */
 
 /**
- * @DEPRECATED
+ * DEPRECATED.  Do not use.
  *
  * Open a file for output assuring that the file did not previously
  * exist.
- *
- * This routine is DEPRECATED.  Do not use.
  *
  * Typical usage:
  @code
@@ -3689,6 +3688,10 @@ BU_EXPORT extern int bu_avail_cpus();
 BU_EXPORT extern fastf_t bu_get_load_average();
 
 /**
+ * DEPRECATED: this routine's use of a temporary file is deprecated
+ * and should not be relied upon.  a future implementation will
+ * utilize environment variables instead of temporary files.
+ *
  * A general mechanism for non-privleged users of a server system to
  * control how many processors of their server get consumed by
  * multi-thread cruncher processes, by leaving a world-writable file.
@@ -3698,10 +3701,6 @@ BU_EXPORT extern fastf_t bu_get_load_average();
  *
  * Returns the number of processors presently available for "public"
  * use.
- *
- * DEPRECATED: this routine's use of a temporary file is deprecated
- * and should not be relied upon.  a future implementation will
- * utilize environment variables instead of temporary files.
  */
 DEPRECATED BU_EXPORT extern int bu_get_public_cpus();
 
@@ -5072,7 +5071,7 @@ BU_EXPORT extern void bu_mm_cvt(const struct bu_structparse *sdp,
 
 /** @file libbu/xdr.c
  *
- * DEPRECATED
+ * DEPRECATED.
  *
  * Routines to implement an external data representation (XDR)
  * compatible with the usual InterNet standards, e.g.:
