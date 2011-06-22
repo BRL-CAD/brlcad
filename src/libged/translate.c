@@ -34,21 +34,24 @@
 int
 ged_translate(struct ged *gedp, int argc, const char *argv[])
 {
-    int i;			/* iterator */
-    int c;			/* bu_getopt return value */
-    int abs_flag = 0;		/* use absolute position */
-    int rel_flag = 0;		/* use relative distance */
-    char *kp_arg = NULL;
-    struct db_full_path comb;
-    struct db_full_path obj; /* FIXME: needs to handle >1 obj */
-    point_t keypoint;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     const char *cmd_name = argv[0];
     static const char *usage = "[-k keypoint:object]"
 			       " [[-a] | [-r]]"
 			       " x [y [z]]"
-			       " objects";
-    /* testing */
+			       " combination"
+			       " object";
+    int i;			/* iterator */
+    int c;			/* bu_getopt return value */
+    int abs_flag = 0;		/* use absolute position */
+    int rel_flag = 0;		/* use relative distance */
+    char *kp_arg = NULL;        /* keypoint argument */
+    struct db_full_path comb;
+    struct db_full_path obj; /* FIXME: needs to handle >1 obj */
+    point_t keypoint;
+    char *endchr = NULL;       /* for strtof's */
+
+        /* testing */
     mat_t modelchanges, incr, old;
     vect_t model_incr, ed_sol_pt, new_vertex;
 
@@ -59,7 +62,8 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
-    /* must be wanting help */
+    /* must be wanting help -- argc < 4 is wrong too, but more helpful
+       msgs may be given later, by saying which args are missing */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 	return GED_HELP;
@@ -116,10 +120,8 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    /* disabled until functional */
-    goto disabled;
 
-    /* set reasonable default keypoint */
+    /* FIXME: set reasonable default keypoint */
     #if 0
     if (!keypoint)
 	;
@@ -131,24 +133,60 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     keypoint[2] = 0;
 
     /* set 3d coords */
-    /* FIXME: will crash if arguments are in wrong order */
-    for (i = 0; i < 3; ++i, ++bu_optind)
-	new_vertex[i] = atof(argv[bu_optind]);
+    /* FIXME: will crash if arguments are in wrong order, or not all
+              supplied, etc */
+    if ((bu_optind + 1) > argc) {
+	bu_vls_printf(&gedp->ged_result_str, "missing x coordinate");
+	return GED_HELP;
+    }
+    new_vertex[0] = strtof(argv[bu_optind], &endchr);
+    if (!endchr || argv[bu_optind] == endchr) {
+	bu_vls_printf(&gedp->ged_result_str, "missing or invalid x coordinate");
+	return GED_ERROR;
+    }
+    ++bu_optind;
+    for (i = 1; i < 3; ++i, ++bu_optind) {
+	if ((bu_optind + 1) > argc)
+	    break;
+	new_vertex[i] = strtof(argv[bu_optind], &endchr);
+	if (!endchr || argv[bu_optind] == endchr) /* invalid y or z coord */
+	    break;
+    }
 
     /* set combination object */
-    if (db_string_to_path(&obj, dbip, argv[bu_optind++]) < 0) {
-	db_free_full_path(&obj);
-	bu_vls_printf(&gedp->ged_result_str, "bad object path");
-	return TCL_ERROR;
+    if ((bu_optind + 1) > argc) {
+	bu_vls_printf(&gedp->ged_result_str,
+		      "missing 'combination' and 'object' arguments\n");
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
+	return GED_HELP;
+    }
+    if (db_string_to_path(&comb, dbip, argv[bu_optind++]) < 0) {
+	bu_vls_printf(&gedp->ged_result_str, "bad combination path");
+	return GED_ERROR;
     }
 
+    /*FIXME: perform equivalent of mged matpick, privately */
+
     /* set object being translated */
+    if ((bu_optind + 1) > argc) {
+	/* assume the last path was the combination */
+	bu_vls_printf(&gedp->ged_result_str,
+		      "missing 'object' argument\n");
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
+	return GED_HELP;
+    }
     /* FIXME: needs to handle >1 obj */
     if (db_string_to_path(&obj, dbip, argv[bu_optind++]) < 0) {
-	db_free_full_path(&obj);
+	db_free_full_path(&comb);
 	bu_vls_printf(&gedp->ged_result_str, "bad object path");
-	return TCL_ERROR;
+	return GED_ERROR;
     }
+
+    /* disabled until functional */
+    if ((bu_optind + 1) <= argc)
+	bu_vls_printf(&gedp->ged_result_str, "multiple objects not yet"
+					     "supported");
+    goto disabled;
 
     /* do translation */
     MAT_IDN(incr);
@@ -165,6 +203,8 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
     disabled:
+    db_free_full_path(&comb);
+    db_free_full_path(&obj);
     bu_vls_printf(&gedp->ged_result_str, "Not yet implemented");
     return GED_ERROR;
 }
