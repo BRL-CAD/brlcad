@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pix-ps.c
+/** @file util/pix-ps.c
  *
  * Convert an RGB (pix) file to an 24-bit color PostScript image.
  *

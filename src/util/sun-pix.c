@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sun-pix.c
+/** @file util/sun-pix.c
  *
  * Program to take Sun bitmap files created with Sun's ``screendump''
  * command, and convert them to pix(5) format files.

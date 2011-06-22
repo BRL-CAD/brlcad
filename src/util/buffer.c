@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file buffer.c
+/** @file util/buffer.c
  *
  * This program is intended to be use as part of a complex pipeline.
  * It serves somewhat the same purpose as the Prolog "cut" operator.

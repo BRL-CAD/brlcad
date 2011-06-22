@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file png_info.c
+/** @file util/png_info.c
  *
  * Display info about a PNG (Portable Network Graphics) format file
  *

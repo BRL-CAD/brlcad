@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pix-bw3.c
+/** @file util/pix-bw3.c
  *
  * Converts a RGB pix file into 3 8-bit BW files.
  * (i.e. seperates the colors)

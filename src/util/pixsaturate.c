@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixsaturate.c
+/** @file util/pixsaturate.c
  *
  * A saturation value of 0 gives monochrome,
  * 1.0 gives the original image,

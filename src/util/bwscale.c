@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bwscale.c
+/** @file util/bwscale.c
  *
  * Scale a black and white picture.
  *

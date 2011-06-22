@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixfields.c
+/** @file util/pixfields.c
  *
  * pixfields takes two input pictures and extracts field 1 from the
  * first pix file and field 2 comes from the second pix file.  This is

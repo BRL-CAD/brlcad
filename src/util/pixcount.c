@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixcount.c
+/** @file util/pixcount.c
  *
  * Sort the pixels of an input stream by color value.
  *

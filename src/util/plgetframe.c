@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file plgetframe.c
+/** @file util/plgetframe.c
  *
  * Program to separate Plot3(5) file with flush/clear commands into
  * separate files.

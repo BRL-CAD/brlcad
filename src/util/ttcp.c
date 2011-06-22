@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ttcp.c
+/** @file util/ttcp.c
  *
  * Test TCP connection.  Makes a connection on port 2000
  * and transfers zero buffers or data copied from stdin.

@@ -1,4 +1,4 @@
-/*                    B I N A R Y _ O B J . C
+/*                       B I N U N I F . C
  * BRL-CAD
  *
  * Copyright (c) 2001-2011 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @addtogroup db5 */
 /** @{ */
-/** @file binary_obj.c
+/** @file binunif.c
  *
  * Routines for writing binary objects to a BRL-CAD database
  * Assumes that some of the structure of such databases are known

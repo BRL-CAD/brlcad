@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bw-imp.c
+/** @file util/bw-imp.c
  *
  * Borrows heavily from Steve Hawley's & Geoffrey Cooper's "traceconv"
  * program.

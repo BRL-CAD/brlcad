@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixtile.c
+/** @file util/pixtile.c
  *
  * Given multiple .pix files with ordinary lines of pixels, produce a
  * single image with each image side-by-side, right to left, bottom to

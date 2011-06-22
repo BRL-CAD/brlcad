@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pl-X.c
+/** @file util/pl-X.c
  *
  * Display plot3(5) on an X Window System display (X11R2)
  *

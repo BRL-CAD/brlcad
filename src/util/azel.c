@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file azel.c
+/** @file util/azel.c
  *
  * This program reads data for points in Euclidean 3-space
  * and prints out the same data, having transformed the coordinates

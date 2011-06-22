@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file plrot.c
+/** @file util/plrot.c
  *
  * Rotate, Translate, and Scale a Unixplot file.
  *

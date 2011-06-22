@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libged */
+/** @addtogroup libtclcad */
 /** @{ */
-/** @file libtclcad/ged_obj.c
+/** @file libtclcad/tclcad_obj.c
  *
  * A quasi-object-oriented database interface.
  *

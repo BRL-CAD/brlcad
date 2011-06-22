@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixhalve.c
+/** @file util/pixhalve.c
  *
  * Reduce the resolution of a .pix file by one half in each direction,
  * using a 5x5 pyramid filter.

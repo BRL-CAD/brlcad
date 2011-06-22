@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pldebug.c
+/** @file util/pldebug.c
  *
  * Plot3(5) debugger
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dsp_add.c
+/** @file util/dsp_add.c
  *
  * add 2 files of network unsigned shorts
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pix-ppm.c
+/** @file util/pix-ppm.c
  *
  * convert BRL .pix files to ppm
  *

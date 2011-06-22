@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file gencolor.c
+/** @file util/gencolor.c
  *
  * Output a pattern of bytes either forever or the requested
  * number of times.  It gets the byte values either from the

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rle-pix.c
+/** @file util/rle-pix.c
  *
  * Decode a Utah Raster Toolkit RLE image, and output as a pix(5)
  * file.

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bwhist.c
+/** @file util/bwhist.c
  *
  * Display, and optionally dump to tty, a histogram of a
  * black and white file.  Black is top of screen, white bottom.

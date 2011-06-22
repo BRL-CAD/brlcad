@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file double-asc.c
+/** @file util/double-asc.c
  *
  * Take a stream of IEEE doubles and make them ASCII
  *

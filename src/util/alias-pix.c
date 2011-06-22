@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file alias-pix.c
+/** @file util/alias-pix.c
  *
  * Convert ALIAS(tm) PIX format image files to BRL PIX fomat files.
  *

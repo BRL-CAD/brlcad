@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bwmod.c
+/** @file util/bwmod.c
  *
  * Modify intensities in Black and White files.
  *

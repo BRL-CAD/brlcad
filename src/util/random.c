@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file random.c
+/** @file util/random.c
  *
  * Generate a random number between the two values given. The number
  * can be uniform across the entire range or it can be a gaussian

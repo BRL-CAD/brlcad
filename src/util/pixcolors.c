@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixcolors.c
+/** @file util/pixcolors.c
  *
  * Count the number of different pixel values in a PIX format image.
  * If the "-v" option is selected, list each unique pixel value to the

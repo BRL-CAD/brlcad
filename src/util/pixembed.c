@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixembed.c
+/** @file util/pixembed.c
  *
  * Embed a smaller pix file in a larger space, replicating the boundary
  * pixels to fill out the borders, and output as a pix file.

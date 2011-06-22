@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file hex.c
+/** @file util/hex.c
  *
  * Give a good ole' CPM style Hex dump of a file or standard input.
  *

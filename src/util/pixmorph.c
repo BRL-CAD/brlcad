@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixmorph.c
+/** @file util/pixmorph.c
  *
  * Utility for morphing two BRL-CAD pix files.
  *

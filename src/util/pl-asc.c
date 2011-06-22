@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pl-asc.c
+/** @file util/pl-asc.c
  *
  * Plot3(5) to ASCII converter.  Grew out of pldebug to be more
  * generally useful as an ascii editable plot file format.

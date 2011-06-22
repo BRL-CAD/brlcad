@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pix-spm.c
+/** @file util/pix-spm.c
  *
  * Turn a pix file into sphere map data.
  *

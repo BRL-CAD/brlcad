@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixpaste.c
+/** @file util/pixpaste.c
  *
  * pixpaste will insert an arbitrary pix file into another pixfile.
  * If the image being pasted does not fit within the destination file

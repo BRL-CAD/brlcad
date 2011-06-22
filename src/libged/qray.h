@@ -19,7 +19,7 @@
  */
 /** @addtogroup libged */
 /** @{ */
-/** @file qray.h
+/** @file libged/qray.h
  *
  * Private header file for "Query Ray" variables.
  *

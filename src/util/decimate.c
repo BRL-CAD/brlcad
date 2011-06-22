@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file decimate.c
+/** @file util/decimate.c
  *
  * Program to take M by N array of tuples, and reduce it down to
  * being an I by J array of tuples, by discarding unnecessary stuff.

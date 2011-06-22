@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pix-png.c
+/** @file util/pix-png.c
  *
  * Convert pix file to PNG (Portable Network Graphics) format
  *

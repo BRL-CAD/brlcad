@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixhist3d.c
+/** @file util/pixhist3d.c
  *
  * Display R x G, R x B, B x G on a framebuffer, where the
  * intensity is the relative frequency for that plane.

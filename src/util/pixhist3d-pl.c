@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixhist3d-pl.c
+/** @file util/pixhist3d-pl.c
  *
  * RGB color space utilization to unix plot.
  *

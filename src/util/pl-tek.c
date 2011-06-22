@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pl-tek.c
+/** @file util/pl-tek.c
  *
  * Convert 3-D color extended UNIX-plot file to Tektronix 4014 plot.
  * Gets rid of (floating point, flush, 3D, color, text).

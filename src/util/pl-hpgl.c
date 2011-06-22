@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pl-hpgl.c
+/** @file util/pl-hpgl.c
  *
  * Description -
  * Convert a unix-plot file to hpgl codes.

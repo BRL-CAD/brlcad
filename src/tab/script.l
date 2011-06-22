@@ -17,9 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file script.l
- *
- */
 %option nounput
 %{
 /*                        S C R I P T . C
@@ -40,9 +37,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
- */
-/** @file script.c
- *
  */
 
 #include "../tab/tokens.h"

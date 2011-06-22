@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixrect.c
+/** @file util/pixrect.c
  *
  * Remove a portion of a potentially huge pix file.
  *

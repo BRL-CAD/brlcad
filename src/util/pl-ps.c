@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pl-ps.c
+/** @file util/pl-ps.c
  *
  * Display plot3(5) as PostScript.
  * Based on pl-X.c and bw-ps.c

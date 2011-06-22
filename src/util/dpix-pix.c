@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dpix-pix.c
+/** @file util/dpix-pix.c
  *
  * Convert double precision images in .dpix form to a .pix file.  By
  * default, will determin min/max values to drive exposure

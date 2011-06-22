@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file asc-pl.c
+/** @file util/asc-pl.c
  *
  * Produce UNIX plot commands in PLOT3(5) format from ASCII
  * representation.

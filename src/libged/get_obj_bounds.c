@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/orot.c
+/** @file libged/get_obj_bounds.c
  *
  * The orot command.
  *

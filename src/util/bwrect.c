@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bwrect.c
+/** @file util/bwrect.c
  *
  * Remove a portion of a potentially huge .bw file.
  *

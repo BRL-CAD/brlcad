@@ -17,9 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/skel.c
+/** @file libged/solids_on_ray.c
  *
- * The skel command.
  *
  */
 

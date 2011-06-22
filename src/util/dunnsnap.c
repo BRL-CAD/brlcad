@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dunnsnap.c
+/** @file util/dunnsnap.c
  *
  * Checks status of the Dunn camera and exposes the number of frames
  * of film specified in the argument (default is 1 frame).

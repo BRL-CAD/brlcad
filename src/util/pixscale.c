@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixscale.c
+/** @file util/pixscale.c
  *
  * Scale an RGB pix file.
  *

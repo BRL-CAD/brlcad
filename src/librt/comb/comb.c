@@ -1,4 +1,4 @@
-/*                      D B 5 _ C O M B . C
+/*                          C O M B . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2011 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @addtogroup db5 */
 /** @{ */
-/** @file db5_comb.c
+/** @file comb.c
  *
  * Implement support for combinations in v5 format.
  *

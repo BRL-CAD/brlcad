@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bwcrop.c
+/** @file util/bwcrop.c
  *
  * Crop Black and White files.
  *

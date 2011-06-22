@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/anal.c
+/** @file libged/analyze.c
  *
  * The analyze command.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pix-orle.c
+/** @file util/pix-orle.c
  *
  * Encode a .pix file using the old ORLE library
  *

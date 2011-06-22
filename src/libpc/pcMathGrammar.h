@@ -1,4 +1,4 @@
-/*                 P C M A T H G R A M M A R . C P P
+/*                   P C M A T H G R A M M A R . H
  * BRL-CAD
  *
  * Copyright (c) 2008-2011 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @addtogroup pcsolver */
 /** @{ */
-/** @file pcMathGrammar.cpp
+/** @file pcMathGrammar.h
  *
  * Math Grammar
  *

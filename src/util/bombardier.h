@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bombardier.h
+/** @file util/bombardier.h
  *
  * interface header for the bombardier tool, provides an icon bitmap
  * for a startup dialog.

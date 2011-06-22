@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file plline2.c
+/** @file util/plline2.c
  *
  * Output a 2-D line with double coordinates in UNIX plot format.
  *

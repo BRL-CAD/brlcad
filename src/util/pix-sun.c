@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pix-sun.c
+/** @file util/pix-sun.c
  *
  * Program to take a BRL-CAD PIX format image file and convert the
  * image to a Sun Microsystems 8-bit deep color "rasterfile" format

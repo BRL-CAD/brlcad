@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file roots_example.c
+/** @file util/roots_example.c
  *
  * Simple example of how to use libbn for solving the roots to an
  * arbitrary polynomial.

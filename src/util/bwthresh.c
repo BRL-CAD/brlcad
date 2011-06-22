@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bwthresh.c
+/** @file util/bwthresh.c
  *
  * Threshold data in BW(5) format.
  *

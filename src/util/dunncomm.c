@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dunncomm.c
+/** @file util/dunncomm.c
  *
  * Common routines needed for both dunncolor and dunnsnap
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bwshrink.c
+/** @file util/bwshrink.c
  *
  * scale down a picture by a uniform factor.
  *
