@@ -108,6 +108,7 @@ set(OPENNURBS_SOURCES
     opennurbs_viewport.cpp
     opennurbs_workspace.cpp
     opennurbs_wstring.cpp
+    opennurbs_x.cpp
     opennurbs_xform.cpp
     opennurbs_zlib.cpp
 )

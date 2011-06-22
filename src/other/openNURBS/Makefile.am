@@ -209,6 +209,7 @@ ON_SRC = \
 	opennurbs_viewport.cpp \
 	opennurbs_workspace.cpp \
 	opennurbs_wstring.cpp \
+	opennurbs_x.cpp \
 	opennurbs_xform.cpp \
 	opennurbs_zlib.cpp
 
@@ -231,8 +232,7 @@ ON_EXTRA = \
 	opennurbs_dll.cpp \
 	opennurbs_dll_resource.h \
 	opennurbs_gl.cpp \
-	opennurbs_precompiledheader.cpp \
-	opennurbs_x.cpp
+	opennurbs_precompiledheader.cpp
 
 EXTRA_DIST = \
 	${ON_EXTRA} \
