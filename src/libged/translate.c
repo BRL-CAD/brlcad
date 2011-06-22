@@ -29,6 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 #include "vmath.h"
+#include "raytrace.h"
 #include "ged.h"
 
 int
@@ -48,6 +49,9 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     char *kp_arg = NULL;        /* keypoint argument */
     struct db_full_path comb;
     struct db_full_path obj; /* FIXME: needs to handle >1 obj */
+    struct db_full_path comb_and_obj; /* comb + obj paths together */
+    struct directory *full_dir;
+    struct directory *comb_dir;
     point_t keypoint;
     char *endchr = NULL;       /* for strtof's */
 
@@ -133,8 +137,6 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     keypoint[2] = 0;
 
     /* set 3d coords */
-    /* FIXME: will crash if arguments are in wrong order, or not all
-              supplied, etc */
     if ((bu_optind + 1) > argc) {
 	bu_vls_printf(&gedp->ged_result_str, "missing x coordinate");
 	return GED_HELP;
@@ -149,7 +151,8 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 	if ((bu_optind + 1) > argc)
 	    break;
 	new_vertex[i] = strtof(argv[bu_optind], &endchr);
-	if (!endchr || argv[bu_optind] == endchr) /* invalid y or z coord */
+	if (!endchr || argv[bu_optind] == endchr)
+	    /* invalid y or z coord */
 	    break;
     }
 
@@ -164,8 +167,6 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "bad combination path");
 	return GED_ERROR;
     }
-
-    /*FIXME: perform equivalent of mged matpick, privately */
 
     /* set object being translated */
     if ((bu_optind + 1) > argc) {
@@ -182,7 +183,28 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    /* disabled until functional */
+    /* verify existence of combination path */
+    comb_dir = db_lookup(dbip, db_path_to_string(&comb), LOOKUP_QUIET);
+    if (comb_dir == RT_DIR_NULL) {
+	bu_vls_printf(&gedp->ged_result_str, "invalid path to 'combination'");
+	return GED_ERROR;
+    }
+    /* verify existence of obj within combination path */
+    db_full_path_init(&comb_and_obj);
+    db_dup_full_path(&comb_and_obj, &comb);
+    db_append_full_path(&comb_and_obj, &obj);
+    full_dir = db_lookup(dbip, db_path_to_string(&comb_and_obj), LOOKUP_QUIET);
+    if (full_dir == RT_DIR_NULL) {
+	bu_vls_printf(&gedp->ged_result_str, "'object' is not within"
+					     "'combination'");
+	return GED_ERROR;
+    }
+
+    /* FIXME: perform equivalent of mged matpick, privately */
+
+
+
+    /* XXX disabled until functional */
     if ((bu_optind + 1) <= argc)
 	bu_vls_printf(&gedp->ged_result_str, "multiple objects not yet"
 					     " supported; ");
@@ -200,8 +222,8 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 
     db_free_full_path(&comb);
     db_free_full_path(&obj);
-
     return GED_OK;
+
     disabled:
     db_free_full_path(&comb);
     db_free_full_path(&obj);
