@@ -326,13 +326,8 @@ proc gets {channelId args} {
     if {[lindex $lines end] == {}} {
 	set lines [lreplace $lines end end]
     }
-    
-    if {[llength $lines] == 1} {
-	set vname [lindex $lines 0]
-    } else {
-	# first line is the gets line, skip it
-	set vname [lindex $lines 1]
-    }
+
+    set vname [lindex $lines end]
 
     # if a var is provided, return the length.  otherwise return the
     # string itself.  this matches gets behavior.
