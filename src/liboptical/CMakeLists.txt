@@ -130,8 +130,7 @@ CMAKEFILES(
 	osl-renderer.cpp 
 	oslexec_pvt.h 
 	render_svc.h 
-	sh_osl.c 
-	osl_rt2.c 
+	sh_osl.cpp
 	osl-renderer.h 
 	constantpool.h 
 	osl_rt.cpp 
