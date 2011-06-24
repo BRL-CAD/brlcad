@@ -34,10 +34,10 @@
 #include "ged.h"
 
 /*
- * A recursive function that is only called by ged_ispath
+ * A recursive function that is only called by ged_is_path
  */
 int
-_ispath_recurse(struct ged *gedp, struct db_full_path *path,
+_is_path_recurse(struct ged *gedp, struct db_full_path *path,
 		       struct directory *roots_child)
 {
     struct rt_db_internal intern;
@@ -59,26 +59,27 @@ _ispath_recurse(struct ged *gedp, struct db_full_path *path,
     if (!(node_count > (size_t)0))
 	return GED_ERROR; /* path lists children when there aren't any */
 
-    /* check combination's tree for roots_child */
-
-    rt_db_free_internal(&intern);
-    /* FIXME: see if we really have a child of the root dir */
-    if (0) {
+    /* see if we really have a child of the root dir */
+    if (db_find_named_leaf(comb->tree, roots_child->d_namep) != TREE_NULL) {
+	rt_db_free_internal(&intern);
 	if (!(path->fp_len > 2))
 	    return GED_OK; /* no more children */
 	else if (roots_child->d_flags & RT_DIR_COMB) {
 	    /* remove root dir */
 	    ++(path->fp_names);
 	    --(path->fp_len);
-	    _ispath_recurse(gedp, path, DB_FULL_PATH_GET(path, 1));
+	    _is_path_recurse(gedp, path, DB_FULL_PATH_GET(path, 1));
 	} else
 	    return GED_ERROR; /* non-combinations shouldn't have children */
-    } else
+    } else {
+	rt_db_free_internal(&intern);
 	return GED_ERROR; /* that child doesn't exist under root */
+    }
+    return GED_OK; /* for compiler */
 }
 
 int 
-ged_ispath(struct ged *gedp, struct db_full_path path)
+ged_is_path(struct ged *gedp, struct db_full_path path)
 {
     /*
      * Since this is a db_full_path, we already know that each
@@ -94,7 +95,7 @@ ged_ispath(struct ged *gedp, struct db_full_path path)
     if (!(root->d_flags & RT_DIR_COMB))
 	return GED_ERROR; /* has children, but isn't a combination */
 
-    return _ispath_recurse(gedp, &path, DB_FULL_PATH_GET(&path, 1));
+    return _is_path_recurse(gedp, &path, DB_FULL_PATH_GET(&path, 1));
 }
 
 int
@@ -244,7 +245,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* verify existence of path */
-    if (ged_ispath(gedp, path) != GED_ERROR) {
+    if (ged_is_path(gedp, path) == GED_ERROR) {
 	bu_vls_printf(&gedp->ged_result_str, "path \"%s\" doesn't exist",
 		      s_path);
 	db_free_full_path(&path);
@@ -254,9 +255,9 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 
     /* ensure object exists under last directory in path */
     db_full_path_init(&full_obj_path);
-    db_dup_path_tail(&full_obj_path, &path, full_obj_path.fp_len - 1);
+    db_dup_path_tail(&full_obj_path, &path, path.fp_len - 1);
     db_append_full_path(&full_obj_path, &obj);
-    if (ged_ispath(gedp, full_obj_path) != GED_ERROR) {
+    if (ged_is_path(gedp, full_obj_path) == GED_ERROR) {
 	bu_vls_printf(&gedp->ged_result_str, "object \"%s\" not found"
 		      " under path \"%s\"", s_obj, s_path);
 	db_free_full_path(&path);
