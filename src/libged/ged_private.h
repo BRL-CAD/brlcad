@@ -146,6 +146,10 @@ extern struct directory *_ged_combadd(struct ged *gedp,
 				      int ident,
 				      int air);
 
+/* defined in path.c */
+extern int _ged_path_validate(struct ged *gedp,
+			      struct db_full_path path);
+
 /* defined in draw.c */
 extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
 				       struct bn_vlblock *vbp,

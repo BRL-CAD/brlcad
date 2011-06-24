@@ -136,6 +136,7 @@ set(LIBGED_SOURCES
     oscale.c
     otranslate.c
     overlay.c
+    path.c
     pathlist.c
     pathsum.c
     perspective.c

@@ -140,6 +140,7 @@ libged_nil_la_SOURCES = \
 	oscale.c \
 	otranslate.c \
 	overlay.c \
+	path.c \
 	pathlist.c \
 	pathsum.c \
 	perspective.c \
