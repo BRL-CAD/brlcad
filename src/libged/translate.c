@@ -53,12 +53,6 @@ _is_path_recurse(struct ged *gedp, struct db_full_path *path,
     }
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 
-    if (!(comb->tree))
-	return GED_ERROR; /* path lists children when there aren't any */
-    node_count = db_tree_nleaves(comb->tree);
-    if (!(node_count > (size_t)0))
-	return GED_ERROR; /* path lists children when there aren't any */
-
     /* see if we really have a child of the root dir */
     if (db_find_named_leaf(comb->tree, roots_child->d_namep) != TREE_NULL) {
 	rt_db_free_internal(&intern);
