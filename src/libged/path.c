@@ -79,7 +79,7 @@ _ged_path_validate_recurse(struct ged *gedp, struct db_full_path *path,
  * true, or GED_ERROR if false.
  */
 int 
-_ged_path_validate(struct ged *gedp, struct db_full_path path)
+ged_path_validate(struct ged *gedp, struct db_full_path path)
 {
     /* Since this is a db_full_path, we already know that each
      * directory exists at root, and just need to check the order */

@@ -180,7 +180,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* verify existence of path */
-    if (_ged_path_validate(gedp, path) == GED_ERROR) {
+    if (ged_path_validate(gedp, path) == GED_ERROR) {
 	bu_vls_printf(&gedp->ged_result_str, "path \"%s\" doesn't exist",
 		      s_path);
 	db_free_full_path(&path);
@@ -192,7 +192,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     db_full_path_init(&full_obj_path);
     db_dup_path_tail(&full_obj_path, &path, path.fp_len - 1);
     db_append_full_path(&full_obj_path, &obj);
-    if (_ged_path_validate(gedp, full_obj_path) == GED_ERROR) {
+    if (ged_path_validate(gedp, full_obj_path) == GED_ERROR) {
 	bu_vls_printf(&gedp->ged_result_str, "object \"%s\" not found"
 		      " under path \"%s\"", s_obj, s_path);
 	db_free_full_path(&path);

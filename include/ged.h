@@ -1846,6 +1846,12 @@ GED_EXPORT extern int ged_pathlist(struct ged *gedp, int argc, const char *argv[
 GED_EXPORT extern int ged_pathsum(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Checks that each directory in the supplied path actually has the subdirectories
+ * that are implied by the path.
+ */
+GED_EXPORT extern int ged_path_validate(struct ged *gedp, struct db_full_path path);
+
+/**
  * Set/get the perspective angle.
  */
 GED_EXPORT extern int ged_perspective(struct ged *gedp, int argc, const char *argv[]);
