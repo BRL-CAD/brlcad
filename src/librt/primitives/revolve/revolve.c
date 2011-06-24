@@ -823,7 +823,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     }
 
     if (nhits%2 != 0) {
-	bu_log("odd number of hits: %d\n", nhits);
+	bu_log("odd number of hits: %zu\n", nhits);
 	for (i=0; i<nhits; i++) {
 	    bu_log("\t(%6.2f, %6.2f)\t%6.2f\t%2d\n",
 		   hits[i]->hit_point[X], hits[i]->hit_point[Y], hits[i]->hit_dist, hits[i]->hit_surfno);
@@ -849,7 +849,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	    }
 	}
 	if (in == -1 || out == -1) {
-	    bu_log("failed to find valid segment. nhits: %d\n", nhits);
+	    bu_log("failed to find valid segment. nhits: %zu\n", nhits);
 	    break;
 	}
 

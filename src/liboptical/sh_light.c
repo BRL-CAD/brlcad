@@ -171,7 +171,7 @@ light_cvt_visible(register const struct bu_structparse *sdp, register const char
     struct light_specific *lsp = (struct light_specific *)base;
 
     if (rdebug & RDEBUG_LIGHT) {
-	bu_log("light_cvt_visible(%s, %d)\n", name, sdp->sp_offset);
+	bu_log("light_cvt_visible(%s, %zu)\n", name, sdp->sp_offset);
 	bu_log("visible: %d invisible: %d\n",
 	       LIGHT_O(lt_visible),
 	       LIGHT_O(lt_invisible));

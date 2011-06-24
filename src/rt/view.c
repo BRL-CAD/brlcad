@@ -557,7 +557,7 @@ view_end(struct application *ap)
 	fastf_t **timeTable;
 	timeTable = timeTable_init(0, 0);
 	bu_log("Building Heat-Graph!\n");
-	bu_log("X:%d Y:%d W:%d H%d\n", ap->a_x, ap->a_y, width, height);
+	bu_log("X:%d Y:%d W:%zu H%zu\n", ap->a_x, ap->a_y, width, height);
 	timeTable_process(timeTable, ap, fbp);
     }
 #endif
@@ -1504,7 +1504,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 		size_t j = 1<<incr_level;
 		size_t w = 1<<(incr_nlevel-incr_level);
 
-		bu_log("Incremental resolution %d\n", j);
+		bu_log("Incremental resolution %zu\n", j);
 
 		/* Diminish buffer expectations on work-saved lines */
 		for (i=0; i<j; i++) {

@@ -650,7 +650,7 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    continue;
 
 	if ((fu=nmg_cmface(s, corners, 3)) == (struct faceuse *)NULL) {
-	    bu_log("rt_bot_tess() nmg_cmface() failed for face #%d\n", i);
+	    bu_log("rt_bot_tess() nmg_cmface() failed for face #%zu\n", i);
 	    continue;
 	}
 
@@ -670,7 +670,7 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    corners[0] = corners[2];
 	    corners[2] = tmp;
 	    if ((fu=nmg_cmface(s, corners, 3)) == (struct faceuse *)NULL)
-		bu_log("rt_bot_tess() nmg_cmface() failed for face #%d\n", i);
+		bu_log("rt_bot_tess() nmg_cmface() failed for face #%zu\n", i);
 	    else
 		nmg_calc_face_g(fu);
 	}
@@ -909,7 +909,7 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     }
 
     if (bip->vertices == NULL || bip->faces == NULL)
-	bu_log("WARNING: BoT contains %d vertices, %d faces\n", bip->num_vertices, bip->num_faces);
+	bu_log("WARNING: BoT contains %zu vertices, %zu faces\n", bip->num_vertices, bip->num_faces);
 
     if (mat == NULL)
 	mat = bn_mat_identity;

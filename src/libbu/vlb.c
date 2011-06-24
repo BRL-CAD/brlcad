@@ -42,7 +42,7 @@ void
 bu_vlb_initialize(struct bu_vlb *vlb, size_t initialSize)
 {
     if (UNLIKELY(initialSize <= 0)) {
-	bu_log("bu_vlb_initialize: WARNING - illegal initial size (%d), ignored\n", initialSize);
+	bu_log("bu_vlb_initialize: WARNING - illegal initial size (%zu), ignored\n", initialSize);
 	bu_vlb_init(vlb);
 	return;
     }

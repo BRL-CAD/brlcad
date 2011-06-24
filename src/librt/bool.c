@@ -1260,7 +1260,7 @@ rt_default_logoverlap(struct application *ap, const struct partition *pp, const 
 	if (regp == REGION_NULL) continue;
 	RT_CK_REGION(regp);
 
-	bu_vls_printf(&str, "OVERLAP%d: %s\n", i+1, regp->reg_name);
+	bu_vls_printf(&str, "OVERLAP%zu: %s\n", i+1, regp->reg_name);
     }
 
     /* List all the information common to this whole partition */

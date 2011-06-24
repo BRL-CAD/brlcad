@@ -224,7 +224,7 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
 	if ((int)i == EOF)
 	    break;
 	if (i != 3) {
-	    bu_log("error parsing line %d of density file.\n%d args recognized instead of 3\n", line, i);
+	    bu_log("error parsing line %d of density file.\n%zu args recognized instead of 3\n", line, i);
 	    continue;
 	}
 

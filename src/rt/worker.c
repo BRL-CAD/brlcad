@@ -677,7 +677,7 @@ grid_setup(void)
 	bu_exit(EXIT_FAILURE, "cell size");
     }
     if (width <= 0 || height <= 0) {
-	bu_log("grid_setup: ERROR bad image size (%d, %d)\n",
+	bu_log("grid_setup: ERROR bad image size (%zu, %zu)\n",
 	       width, height);
 	bu_exit(EXIT_FAILURE, "bad size");
     }

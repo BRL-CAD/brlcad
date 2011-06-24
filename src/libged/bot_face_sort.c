@@ -90,7 +90,7 @@ ged_bot_face_sort(struct ged *gedp, int argc, const char *argv[])
 	bot = (struct rt_bot_internal *)intern.idb_ptr;
 	RT_BOT_CK_MAGIC(bot);
 
-	bu_log("processing %s (%d triangles)\n", dp->d_namep, bot->num_faces);
+	bu_log("processing %s (%zu triangles)\n", dp->d_namep, bot->num_faces);
 
 	if (rt_bot_sort_faces(bot, tris_per_piece)) {
 	    rt_db_free_internal(&intern);

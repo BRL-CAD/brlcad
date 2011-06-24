@@ -607,7 +607,7 @@ ph_options(struct pkg_conn *UNUSED(pc), char *buf)
 	npsw = 1;
 
     if ( width <= 0 || height <= 0 )
-	bu_exit(3, "ph_options:  width=%d, height=%d\n", width, height);
+	bu_exit(3, "ph_options:  width=%zu, height=%zu\n", width, height);
     (void)free(buf);
 }
 
@@ -855,7 +855,7 @@ ph_unexp(struct pkg_conn *pc, char *buf)
     for ( i=0; pc->pkc_switch[i].pks_handler != NULL; i++ )  {
 	if ( pc->pkc_switch[i].pks_type == pc->pkc_type )  break;
     }
-    bu_log("ph_unexp: unable to handle %s message: len %d",
+    bu_log("ph_unexp: unable to handle %s message: len %zu",
 	   pc->pkc_switch[i].pks_title, pc->pkc_len);
     *buf = '*';
     (void)free(buf);

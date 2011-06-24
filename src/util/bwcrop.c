@@ -140,7 +140,7 @@ main(int argc, char **argv)
 	    perror("scanf");
 	scanlen = len;
 	if (scanlen <= 0) {
-	    bu_exit(4, "bwcrop: scanlen = %d, don't be ridiculous\n", scanlen);
+	    bu_exit(4, "bwcrop: scanlen = %zu, don't be ridiculous\n", scanlen);
 	}
 	printf("Line Length and Number of scan lines (in new file)?: ");
 	ret = scanf("%f%f", &xnum, &ynum);

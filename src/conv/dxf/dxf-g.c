@@ -3317,62 +3317,62 @@ main( int argc, char *argv[] )
 	}
 
 	if ( layers[i]->line_count ) {
-	    bu_log( "\t%d lines\n", layers[i]->line_count );
+	    bu_log( "\t%zu lines\n", layers[i]->line_count );
 	}
 
 	if ( layers[i]->solid_count ) {
-	    bu_log( "\t%d solids\n", layers[i]->solid_count );
+	    bu_log( "\t%zu solids\n", layers[i]->solid_count );
 	}
 
 	if ( layers[i]->polyline_count ) {
-	    bu_log( "\t%d polylines\n", layers[i]->polyline_count );
+	    bu_log( "\t%zu polylines\n", layers[i]->polyline_count );
 	}
 
 	if ( layers[i]->lwpolyline_count ) {
-	    bu_log( "\t%d lwpolylines\n", layers[i]->lwpolyline_count );
+	    bu_log( "\t%zu lwpolylines\n", layers[i]->lwpolyline_count );
 	}
 
 	if ( layers[i]->ellipse_count ) {
-	    bu_log( "\t%d ellipses\n", layers[i]->ellipse_count );
+	    bu_log( "\t%zu ellipses\n", layers[i]->ellipse_count );
 	}
 
 	if ( layers[i]->circle_count ) {
-	    bu_log( "\t%d circles\n", layers[i]->circle_count );
+	    bu_log( "\t%zu circles\n", layers[i]->circle_count );
 	}
 
 	if ( layers[i]->arc_count ) {
-	    bu_log( "\t%d arcs\n", layers[i]->arc_count );
+	    bu_log( "\t%zu arcs\n", layers[i]->arc_count );
 	}
 
 	if ( layers[i]->text_count ) {
-	    bu_log( "\t%d texts\n", layers[i]->text_count );
+	    bu_log( "\t%zu texts\n", layers[i]->text_count );
 	}
 
 	if ( layers[i]->mtext_count ) {
-	    bu_log( "\t%d mtexts\n", layers[i]->mtext_count );
+	    bu_log( "\t%zu mtexts\n", layers[i]->mtext_count );
 	}
 
 	if ( layers[i]->attrib_count ) {
-	    bu_log( "\t%d attribs\n", layers[i]->attrib_count );
+	    bu_log( "\t%zu attribs\n", layers[i]->attrib_count );
 	}
 
 	if ( layers[i]->dimension_count ) {
-	    bu_log( "\t%d dimensions\n", layers[i]->dimension_count );
+	    bu_log( "\t%zu dimensions\n", layers[i]->dimension_count );
 	}
 
 	if ( layers[i]->leader_count ) {
-	    bu_log( "\t%d leaders\n", layers[i]->leader_count );
+	    bu_log( "\t%zu leaders\n", layers[i]->leader_count );
 	}
 
 	if ( layers[i]->face3d_count ) {
-	    bu_log( "\t%d 3d faces\n", layers[i]->face3d_count );
+	    bu_log( "\t%zu 3d faces\n", layers[i]->face3d_count );
 	}
 
 	if ( layers[i]->point_count ) {
-	    bu_log( "\t%d points\n", layers[i]->point_count );
+	    bu_log( "\t%zu points\n", layers[i]->point_count );
 	}
 	if ( layers[i]->spline_count ) {
-	    bu_log( "\t%d splines\n", layers[i]->spline_count );
+	    bu_log( "\t%zu splines\n", layers[i]->spline_count );
 	}
 
 

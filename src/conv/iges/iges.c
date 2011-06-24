@@ -2816,14 +2816,14 @@ write_att_entity(props, fp_dir, fp_param)
     /* material name */
     str_len = strlen(props->material_name);
     if (str_len)
-	bu_vls_printf(&str, ", %dH%s", str_len, props->material_name);
+	bu_vls_printf(&str, ", %zuH%s", str_len, props->material_name);
     else
 	bu_vls_strcat(&str, ", ");
 
     /* material parameters */
     str_len = strlen(props->material_params);
     if (str_len)
-	bu_vls_printf(&str, ", %dH%s", str_len, props->material_params);
+	bu_vls_printf(&str, ", %zuH%s", str_len, props->material_params);
     else
 	bu_vls_strcat(&str, ", ");
 

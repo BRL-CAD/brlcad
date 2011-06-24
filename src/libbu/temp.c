@@ -226,7 +226,7 @@ bu_temp_file(char *filepath, size_t len)
 
     if (filepath) {
 	if (UNLIKELY(len < strlen(tempfile))) {
-	    bu_log("WARNING: bu_temp_file filepath buffer size is insufficient (%d < %d)\n", len, strlen(tempfile));
+	    bu_log("WARNING: bu_temp_file filepath buffer size is insufficient (%zu < %zu)\n", len, strlen(tempfile));
 	} else {
 	    snprintf(filepath, len, "%s", tempfile);
 	}

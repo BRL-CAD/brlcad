@@ -615,7 +615,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
      * and matricies in the order they are encountered.
      */
     if (max_stack_depth > MAX_V5_STACK) {
-	bu_log("Combination needs stack depth %d, only have %d, aborted\n",
+	bu_log("Combination needs stack depth %zu, only have %d, aborted\n",
 	       max_stack_depth, MAX_V5_STACK);
 	return -1;
     }

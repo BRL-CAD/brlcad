@@ -241,7 +241,7 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
     while ((dp=db_lookup(wdbp->dbip, bu_vls_addr(&tmp_name), LOOKUP_QUIET)) != RT_DIR_NULL) {
 	count++;
 	bu_vls_trunc(&tmp_name, base_len);
-	bu_vls_printf(&tmp_name, "%d", count);
+	bu_vls_printf(&tmp_name, "%zu", count);
     }
 
     /* build the RCC based on parameters passed in */

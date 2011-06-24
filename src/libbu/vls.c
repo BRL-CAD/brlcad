@@ -113,7 +113,7 @@ bu_vls_addr(const struct bu_vls *vp)
     if (vp->vls_str == (char *)NULL ||
 	vp->vls_len + vp->vls_offset >= vp->vls_max)
     {
-	bu_log("bu_vls_addr: bad VLS.  max=%d, len=%d, offset=%d\n",
+	bu_log("bu_vls_addr: bad VLS.  max=%zu, len=%zu, offset=%zu\n",
 	       vp->vls_max, vp->vls_len, vp->vls_offset);
 	bu_bomb("bu_vls_addr\n");
     }

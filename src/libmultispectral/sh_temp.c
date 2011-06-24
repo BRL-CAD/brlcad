@@ -256,7 +256,7 @@ temp_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
 
     /* Ensure file is large enough */
     if ( tp->mp->buflen < tp->t_w * tp->t_n * pixelbytes )  {
-	bu_log("\ntemp_setup() ERROR %s %s needs %d bytes, '%s' only has %d\n",
+	bu_log("\ntemp_setup() ERROR %s %s needs %zu bytes, '%s' only has %zu\n",
 	       rp->reg_name,
 	       mfp->mf_name,
 	       tp->t_w * tp->t_n * pixelbytes,

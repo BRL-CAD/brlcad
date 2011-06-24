@@ -555,7 +555,7 @@ do_prep(struct rt_i *rtip)
     }
     memory_summary();
     if (rt_verbosity & VERBOSE_STATS) {
-	bu_log("%s: %d nu, %d cut, %d box (%d empty)\n",
+	bu_log("%s: %d nu, %d cut, %d box (%zu empty)\n",
 	       rtip->rti_space_partition == RT_PART_NUGRID ?
 	       "NUGrid" : "NUBSP",
 	       rtip->rti_ncut_by_type[CUT_NUGRIDNODE],
@@ -595,7 +595,7 @@ do_frame(int framenumber)
     do_prep(rtip);
 
     if (rt_verbosity & VERBOSE_VIEWDETAIL)
-	bu_log("Tree: %d solids in %d regions\n", rtip->nsolids, rtip->nregions);
+	bu_log("Tree: %zu solids in %zu regions\n", rtip->nsolids, rtip->nregions);
 
     if (Query_one_pixel) {
 	query_rdebug = R_DEBUG;
@@ -656,7 +656,7 @@ do_frame(int framenumber)
 	    HPRINT("reconstructed orientation:", newquat);
 	}
 #endif
-	bu_log("Grid: (%g, %g) mm, (%d, %d) pixels\n",
+	bu_log("Grid: (%g, %g) mm, (%zu, %zu) pixels\n",
 	       cell_width, cell_height,
 	       width, height);
 	bu_log("Beam: radius=%g mm, divergence=%g mm/1mm\n",
@@ -787,7 +787,7 @@ do_frame(int framenumber)
 	}
 
 	if (rt_verbosity & VERBOSE_OUTPUTFILE)
-	    bu_log("Output file is '%s' %dx%d pixels\n",
+	    bu_log("Output file is '%s' %zux%zu pixels\n",
 		   framename, width, height);
     }
 
@@ -891,16 +891,16 @@ do_frame(int framenumber)
 	bu_log("pruned %.1f%%:  %ld model RPP, %ld dups skipped, %ld solid RPP\n",
 	       rtip->nshots>0?((double)rtip->nhits*100.0)/rtip->nshots:100.0,
 	       rtip->nmiss_model, rtip->ndup, rtip->nmiss_solid);
-	bu_log("Frame %2d: %10d pixels in %9.2f sec = %12.2f pixels/sec\n",
+	bu_log("Frame %2d: %10zu pixels in %9.2f sec = %12.2f pixels/sec\n",
 	       framenumber,
 	       width*height, nutime, ((double)(width*height))/nutime);
-	bu_log("Frame %2d: %10d rays   in %9.2f sec = %12.2f rays/sec (RTFM)\n",
+	bu_log("Frame %2d: %10zu rays   in %9.2f sec = %12.2f rays/sec (RTFM)\n",
 	       framenumber,
 	       rtip->rti_nrays, nutime, ((double)(rtip->rti_nrays))/nutime);
-	bu_log("Frame %2d: %10d rays   in %9.2f sec = %12.2f rays/CPU_sec\n",
+	bu_log("Frame %2d: %10zu rays   in %9.2f sec = %12.2f rays/CPU_sec\n",
 	       framenumber,
 	       rtip->rti_nrays, utime, ((double)(rtip->rti_nrays))/utime);
-	bu_log("Frame %2d: %10d rays   in %9.2f sec = %12.2f rays/sec (wallclock)\n",
+	bu_log("Frame %2d: %10zu rays   in %9.2f sec = %12.2f rays/sec (wallclock)\n",
 	       framenumber,
 	       rtip->rti_nrays,
 	       wallclock, ((double)(rtip->rti_nrays))/wallclock);

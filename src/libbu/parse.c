@@ -1116,7 +1116,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 			(struct bu_vls *)loc;
 
 		    bu_log_indent_delta(delta);
-		    bu_log(" %s=(vls_magic)0x%lx (vls_offset)%d (vls_len)%d (vls_max)%d\n",
+		    bu_log(" %s=(vls_magic)0x%lx (vls_offset)%zu (vls_len)%zu (vls_max)%zu\n",
 			   sdp->sp_name, vls->vls_magic,
 			   vls->vls_offset,
 			   vls->vls_len, vls->vls_max);
@@ -1450,7 +1450,7 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 			(struct bu_vls *)loc;
 
 		    bu_log_indent_delta(delta);
-		    bu_vls_printf(vls_out, " %s=(vls_magic)%ld (vls_offset)%d (vls_len)%d (vls_max)%d\n",
+		    bu_vls_printf(vls_out, " %s=(vls_magic)%ld (vls_offset)%zu (vls_len)%zu (vls_max)%zu\n",
 				  sdp->sp_name, vls->vls_magic,
 				  vls->vls_offset,
 				  vls->vls_len, vls->vls_max);
@@ -2440,7 +2440,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 		    for (ii = 0; ii < sdp->sp_count; ii++) {
 			if (*cp == '\0') {
 			    bu_vls_printf(logstr,
-					  "not enough values for \"%s\" argument: should have %ld, only %d given",
+					  "not enough values for \"%s\" argument: should have %ld, only %zu given",
 					  sdp->sp_name,
 					  sdp->sp_count,
 					  ii);

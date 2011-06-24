@@ -117,7 +117,7 @@ deb_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
     if (ifp->if_debug & FB_DEBUG_RW) {
 	for (i = 0; i < count; i++) {
 	    if (i % 4 == 0)
-		fb_log("%4d:", i);
+		fb_log("%4zu:", i);
 	    fb_log("  [%3d, %3d, %3d]", *(pixelp+(i*3)+RED),
 		   *(pixelp+(i*3)+GRN), *(pixelp+(i*3)+BLU));
 	    if (i % 4 == 3)

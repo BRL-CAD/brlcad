@@ -377,7 +377,7 @@ ged_get_new_name(const char		*name,
 	/* make sure it fits for v4 */
 	if ( db_version(cc_data->old_dbip) < 5 ) {
 	    if (bu_vls_strlen(&new_name) > _GED_V4_MAXNAME) {
-		bu_log("ERROR: generated new name [%s] is too long (%d > %d)\n", bu_vls_addr(&new_name), bu_vls_strlen(&new_name), _GED_V4_MAXNAME);
+		bu_log("ERROR: generated new name [%s] is too long (%zu > %d)\n", bu_vls_addr(&new_name), bu_vls_strlen(&new_name), _GED_V4_MAXNAME);
 	    }
 	    return NULL;
 	}

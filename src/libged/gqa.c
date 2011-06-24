@@ -1987,7 +1987,7 @@ terminate_check(struct cstate *state)
 			    if (hits == 0) {
 				bu_vls_printf(&_ged_current_gedp->ged_result_str, "%s was not hit\n", regp->reg_name);
 			    } else {
-				bu_vls_printf(&_ged_current_gedp->ged_result_str, "%s hit only %lu times (< %u)\n",
+				bu_vls_printf(&_ged_current_gedp->ged_result_str, "%s hit only %zu times (< %zu)\n",
 					      regp->reg_name, hits, require_num_hits);
 			    }
 			}
@@ -2312,7 +2312,7 @@ summary_reports(struct cstate *state)
 	    if (hits == 0) {
 		bu_vls_printf(&_ged_current_gedp->ged_result_str, "%s was not hit\n", regp->reg_name);
 	    } else {
-		bu_vls_printf(&_ged_current_gedp->ged_result_str, "%s hit only %lu times (< %u)\n",
+		bu_vls_printf(&_ged_current_gedp->ged_result_str, "%s hit only %zu times (< %zu)\n",
 			      regp->reg_name, hits, require_num_hits);
 	    }
 

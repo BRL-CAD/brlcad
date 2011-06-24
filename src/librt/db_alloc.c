@@ -53,7 +53,7 @@ db_alloc(register struct db_i *dbip, register struct directory *dp, size_t count
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_alloc(%s) x%x, x%x, count=%d\n",
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_alloc(%s) x%x, x%x, count=%zu\n",
 				    dp->d_namep, dbip, dp, count);
     if (count <= 0) {
 	bu_log("db_alloc(0)\n");
@@ -189,7 +189,7 @@ db_zapper(struct db_i *dbip, struct directory *dp, size_t start)
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_zapper(%s) x%x, x%x, start=%d\n",
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_zapper(%s) x%x, x%x, start=%zu\n",
 				    dp->d_namep, dbip, dp, start);
 
     if (dp->d_flags & RT_DIR_INMEM) bu_bomb("db_zapper() called on RT_DIR_INMEM object\n");

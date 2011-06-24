@@ -3177,7 +3177,7 @@ bn_isect_planes(fastf_t *pt, const fastf_t (*planes)[4], const size_t pl_count)
     if (bu_debug & BU_DEBUG_MATH) {
 	bu_log("bn_isect_planes:\n");
 	for (i=0; i<pl_count; i++) {
-	    bu_log("Plane #%d (%f %f %f %f)\n", i, V4ARGS(planes[i]));
+	    bu_log("Plane #%zu (%f %f %f %f)\n", i, V4ARGS(planes[i]));
 	}
     }
 

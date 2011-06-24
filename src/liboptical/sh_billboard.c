@@ -219,7 +219,7 @@ bbd_setup(struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct
 	return -1;
 
     if (bbd_sp->img_count > MAX_IMAGES) {
-	bu_log("too many images (%d) in shader for %s sb < %d\n",
+	bu_log("too many images (%zu) in shader for %s sb < %d\n",
 	       bbd_sp->img_count, rp->reg_name, MAX_IMAGES);
 	bu_bomb("excessive image count\n");
     }

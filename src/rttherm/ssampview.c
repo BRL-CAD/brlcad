@@ -190,7 +190,7 @@ getspectrum(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
     Tcl_ResetResult(interp);
 
     if (argc <= 1) {
-	bu_vls_printf(&vls, "%d", spectrum->nx);
+	bu_vls_printf(&vls, "%zu", spectrum->nx);
 	Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
 	bu_vls_free(&vls);
 	return TCL_OK;
@@ -202,7 +202,7 @@ getspectrum(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
     wl = atoi(argv[2]);
 
     if (wl > spectrum->nx) {
-	bu_vls_printf(&vls, "getspectrum: wavelength %d out of range 0..%d", wl, spectrum->nx);
+	bu_vls_printf(&vls, "getspectrum: wavelength %zu out of range 0..%zu", wl, spectrum->nx);
 	Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -610,7 +610,7 @@ main(int argc, char **argv)
 	bu_exit(EXIT_FAILURE, "Unable to read spectrum\n");
     }
     BN_CK_TABLE(spectrum);
-    bu_log("spectrum has %d samples\n", spectrum->nx);
+    bu_log("spectrum has %zu samples\n", spectrum->nx);
     nwave = spectrum->nx;	/* shared with Tcl */
 
     /* Read atmosphere curve -- input is in microns, not nm */
@@ -672,7 +672,7 @@ doit1(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    bu_log("doit1 %d: %g um to %g um\n",
+    bu_log("doit1 %zu: %g um to %g um\n",
 	   wl,
 	   spectrum->x[wl] * 0.001,
 	   spectrum->x[wl+1] * 0.001);

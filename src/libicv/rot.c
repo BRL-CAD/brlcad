@@ -359,7 +359,7 @@ icv_rot(int argc, char **argv)
 		if (wrote != buflines) {
 		    ret = 4;
 		    perror("fwrite");
-		    bu_log("ERROR: %s can't out write image data (wrote %d of %d)\n", wrote, buflines);
+		    bu_log("ERROR: %s can't out write image data (wrote %zu of %d)\n", wrote, buflines);
 		    goto done;
 		}
 		outplace += buflines*pixbytes;
@@ -389,7 +389,7 @@ icv_rot(int argc, char **argv)
 		if (wrote != buflines) {
 		    ret = 4;
 		    perror("fwrite");
-		    bu_log("ERROR: %s can't out write image data (wrote %d of %d)\n", wrote, buflines);
+		    bu_log("ERROR: %s can't out write image data (wrote %zu of %d)\n", wrote, buflines);
 		    goto done;
 		}
 		outplace += buflines*pixbytes;
@@ -411,7 +411,7 @@ icv_rot(int argc, char **argv)
 		if (wrote != scanbytes) {
 		    ret = 4;
 		    perror("fwrite");
-		    bu_log("ERROR: %s can't out write image data (wrote %d of %d)\n", wrote, scanbytes);
+		    bu_log("ERROR: %s can't out write image data (wrote %zu of %d)\n", wrote, scanbytes);
 		    goto done;
 		}
 		outplace += scanbytes;
@@ -423,7 +423,7 @@ icv_rot(int argc, char **argv)
 		if (wrote != scanbytes) {
 		    ret = 4;
 		    perror("fwrite");
-		    bu_log("ERROR: %s can't out write image data (wrote %d of %d)\n", wrote, scanbytes);
+		    bu_log("ERROR: %s can't out write image data (wrote %zu of %d)\n", wrote, scanbytes);
 		    goto done;
 		}
 	    }

@@ -158,9 +158,9 @@ HIDDEN int img_load_datasource(struct img_specific *image, struct db_i *dbInstan
 
 	    /* check size of object */
 	    if (image->i_binunifp->count < size) {
-		bu_log("\nWARNING: %V needs %d bytes, binary object only has %d\n", &image->i_name, size, image->i_binunifp->count);
+		bu_log("\nWARNING: %V needs %d bytes, binary object only has %zu\n", &image->i_name, size, image->i_binunifp->count);
 	    } else if (image->i_binunifp->count > size) {
-		bu_log("\nWARNING: Binary object is larger than specified image size\n\tBinary Object: %d pixels\n\tSpecified Image Size: %d pixels\n...continuing to load using image subsection...", image->i_binunifp->count);
+		bu_log("\nWARNING: Binary object is larger than specified image size\n\tBinary Object: %zu pixels\n\tSpecified Image Size: %zu pixels\n...continuing to load using image subsection...", image->i_binunifp->count);
 	    }
 	    image->i_img = (unsigned char *) image->i_binunifp->u.uint8;
 
@@ -181,7 +181,7 @@ HIDDEN int img_load_datasource(struct img_specific *image, struct db_i *dbInstan
 	if (image->i_data->buflen < size) {
 	    bu_log("\nWARNING: %V needs %d bytes, file only has %d\n", &image->i_name, size, image->i_data->buflen);
 	} else if (image->i_data->buflen > size) {
-	    bu_log("\nWARNING: Image file size is larger than specified image size\n\tInput File: %d pixels\n\tSpecified Image Size: %d pixels\n...continuing to load using image subsection...", image->i_data->buflen, size);
+	    bu_log("\nWARNING: Image file size is larger than specified image size\n\tInput File: %zu pixels\n\tSpecified Image Size: %d pixels\n...continuing to load using image subsection...", image->i_data->buflen, size);
 	}
 
 	image->i_img = (unsigned char *) image->i_data->buf;

@@ -556,7 +556,7 @@ bn_pr_poly(const char *title, register const struct bn_poly *eqn)
 	}
 	bu_vls_printf(&str, "%g", coeff);
 	if (exponent > 1) {
-	    bu_vls_printf(&str, " *X^%d", exponent);
+	    bu_vls_printf(&str, " *X^%zu", exponent);
 	} else if (exponent == 1) {
 
 	    bu_vls_strcat(&str, " *X");

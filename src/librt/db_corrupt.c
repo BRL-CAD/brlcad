@@ -143,7 +143,7 @@ rt_db_flip_endian(struct db_i *dbip)
     /* it has to help more than it hurts */
     if (cnt.found > 0 && (double)cnt.fixed > ((double)cnt.found / 2.0)) {
 	if (cnt.fixed != cnt.found)
-	    bu_log("%d of %d objects were NOT fixed by flipping endian interpretation.  Manual inspection and repair required.\n", cnt.found - cnt.fixed, cnt.found);
+	    bu_log("%zu of %zu objects were NOT fixed by flipping endian interpretation.  Manual inspection and repair required.\n", cnt.found - cnt.fixed, cnt.found);
 	return 1;
     }
 

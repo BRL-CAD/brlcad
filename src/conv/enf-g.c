@@ -210,7 +210,7 @@ List_assem( struct obj_info *assem )
 	bu_log( "ERROR: List_assem called for non-assembly\n" );
     }
     bu_log( "Assembly: %s (id=%d)\n", assem->obj_name, assem->obj_id );
-    bu_log( "\t%d members\n", assem->part_count );
+    bu_log( "\t%zu members\n", assem->part_count );
     for ( i=0; i<assem->part_count; i++ ) {
 	bu_log( "\t\ty %s\n", assem->members[i]->obj_name );
     }

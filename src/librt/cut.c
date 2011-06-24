@@ -501,7 +501,7 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 		    pos - nugnp->nu_axis[i][axi].nu_spos;
 		if (axi >= nu_max_ncells-1) {
 		    bu_log(
-			"NUgrid ran off end, axis=%d, axi=%d\n",
+			"NUgrid ran off end, axis=%zu, axi=%d\n",
 			i, axi);
 		    bu_bomb("rt_nugrid_cut: NUgrid ran off end");
 		}
@@ -856,7 +856,7 @@ rt_cut_it(register struct rt_i *rtip, int ncpu)
     if (rtip->rti_cutdepth < 12) rtip->rti_cutdepth = 12;
     if (rtip->rti_cutdepth > 24) rtip->rti_cutdepth = 24;     /* !! */
     if (RT_G_DEBUG&DEBUG_CUT)
-	bu_log("Before Space Partitioning: Max Tree Depth=%d, Cuttoff primitive count=%d\n",
+	bu_log("Before Space Partitioning: Max Tree Depth=%zu, Cuttoff primitive count=%zu\n",
 	       rtip->rti_cutdepth, rtip->rti_cutlen);
 
     bu_ptbl_init(&rtip->rti_cuts_waiting, rtip->nsolids,
@@ -1396,7 +1396,7 @@ rt_ct_box(struct rt_i *rtip, register union cutter *cutp, register int axis, dou
 	 */
 	if (RT_G_DEBUG&DEBUG_CUTDETAIL) {
 	    static char axis_str[] = "XYZw";
-	    bu_log("rt_ct_box:  no luck, len=%d, axis=%c\n",
+	    bu_log("rt_ct_box:  no luck, len=%zu, axis=%c\n",
 		   cutp->bn.bn_len, axis_str[axis]);
 	}
 	rt_ct_free(rtip, rhs);
@@ -1519,7 +1519,7 @@ rt_ct_optim(struct rt_i *rtip, register union cutter *cutp, size_t depth)
 
     oldlen = rt_ct_piececount(cutp);	/* save before rt_ct_box() */
     if (RT_G_DEBUG&DEBUG_CUTDETAIL)
-	bu_log("rt_ct_optim(cutp=%p, depth=%d) piececount=%d\n", (void *)cutp, depth, oldlen);
+	bu_log("rt_ct_optim(cutp=%p, depth=%zu) piececount=%zu\n", (void *)cutp, depth, oldlen);
 
     /*
      * BOXNODE (leaf)
@@ -1594,7 +1594,7 @@ rt_ct_optim(struct rt_i *rtip, register union cutter *cutp, size_t depth)
 	if (rt_ct_piececount(cutp->cn.cn_l) >= oldlen &&
 	    rt_ct_piececount(cutp->cn.cn_r) >= oldlen) {
 	    if (RT_G_DEBUG&DEBUG_CUTDETAIL)
-		bu_log("rt_ct_optim(cutp=%p, depth=%d) oldlen=%d, lhs=%d, rhs=%d, hopeless\n",
+		bu_log("rt_ct_optim(cutp=%p, depth=%zu) oldlen=%zu, lhs=%zu, rhs=%zu, hopeless\n",
 		       (void *)cutp, depth, oldlen,
 		       rt_ct_piececount(cutp->cn.cn_l),
 		       rt_ct_piececount(cutp->cn.cn_r));
@@ -1881,7 +1881,7 @@ rt_pr_cut(const union cutter *cutp, int lvl)
 	    return;
 
 	case CUT_BOXNODE:
-	    bu_log("BOX Contains %d primitives (%d alloc), %d primitives with pieces:\n",
+	    bu_log("BOX Contains %zu primitives (%zu alloc), %zu primitives with pieces:\n",
 		   cutp->bn.bn_len, cutp->bn.bn_maxlen,
 		   cutp->bn.bn_piecelen);
 	    bu_log("        ");
