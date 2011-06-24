@@ -54,7 +54,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     struct db_full_path obj;
     struct db_full_path path;
     struct db_full_path full_obj_path;	/* full path to object */
-    char *endchr = NULL;		/* for strtof's */
+    char *endchr = NULL;		/* for strtod's */
 
     /* testing */
     mat_t modelchanges, incr, old;
@@ -142,7 +142,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "missing x coordinate");
 	return GED_HELP;
     }
-    new_vertex[0] = strtof(argv[bu_optind], &endchr);
+    new_vertex[0] = strtod(argv[bu_optind], &endchr);
     if (!endchr || argv[bu_optind] == endchr) {
 	bu_vls_printf(&gedp->ged_result_str, "missing or invalid x coordinate");
 	return GED_ERROR;
@@ -151,7 +151,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     for (i = 1; i < 3; ++i, ++bu_optind) {
 	if ((bu_optind + 1) > argc)
 	    break;
-	new_vertex[i] = strtof(argv[bu_optind], &endchr);
+	new_vertex[i] = strtod(argv[bu_optind], &endchr);
 	if (!endchr || argv[bu_optind] == endchr)
 	    /* invalid y or z coord */
 	    break;
