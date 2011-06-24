@@ -43,31 +43,38 @@ _ispath_recurse(struct ged *gedp, struct db_full_path *path,
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     struct directory *root = DB_FULL_PATH_ROOT_DIR(path);
+    size_t node_count;
 
     /* get comb object */
     if (rt_db_get_internal(&intern, root, gedp->ged_wdbp->dbip,
 			   (fastf_t *)NULL, &rt_uniresource) < 0) {
         bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
-        return 0; /* FALSE; (failure) */
+        return GED_ERROR;
     }
     comb = (struct rt_comb_internal *)intern.idb_ptr;
+
     if (!(comb->tree))
-	return 0; /* FALSE; path lists children when there aren't any */
+	return GED_ERROR; /* path lists children when there aren't any */
+    node_count = db_tree_nleaves(comb->tree);
+    if (!(node_count > (size_t)0))
+	return GED_ERROR; /* path lists children when there aren't any */
+
+    /* check combination's tree for roots_child */
 
     rt_db_free_internal(&intern);
-    /* FIXME: see if if we really have a child of the root dir */
+    /* FIXME: see if we really have a child of the root dir */
     if (0) {
 	if (!(path->fp_len > 2))
-	    return 1; /* TRUE; no more children */
+	    return GED_OK; /* no more children */
 	else if (roots_child->d_flags & RT_DIR_COMB) {
 	    /* remove root dir */
 	    ++(path->fp_names);
 	    --(path->fp_len);
 	    _ispath_recurse(gedp, path, DB_FULL_PATH_GET(path, 1));
 	} else
-	    return 0; /* FALSE; non-combinations shouldn't have children */
+	    return GED_ERROR; /* non-combinations shouldn't have children */
     } else
-	return 0; /* FALSE */
+	return GED_ERROR; /* that child doesn't exist under root */
 }
 
 int 
@@ -82,10 +89,10 @@ ged_ispath(struct ged *gedp, struct db_full_path path)
     struct directory *root = DB_FULL_PATH_ROOT_DIR(&path);
 
     if (path.fp_len <= 1)
-	return 1; /* TRUE; no children */
+	return GED_OK; /* TRUE; no children */
 
     if (!(root->d_flags & RT_DIR_COMB))
-	return 0; /* FALSE; has children, but isn't a combination */
+	return GED_ERROR; /* has children, but isn't a combination */
 
     return _ispath_recurse(gedp, &path, DB_FULL_PATH_GET(&path, 1));
 }
@@ -237,7 +244,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* verify existence of path */
-    if (!(ged_ispath(gedp, path))) {
+    if (ged_ispath(gedp, path) != GED_ERROR) {
 	bu_vls_printf(&gedp->ged_result_str, "path \"%s\" doesn't exist",
 		      s_path);
 	db_free_full_path(&path);
@@ -249,7 +256,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     db_full_path_init(&full_obj_path);
     db_dup_path_tail(&full_obj_path, &path, full_obj_path.fp_len - 1);
     db_append_full_path(&full_obj_path, &obj);
-    if (!(ged_ispath(gedp, full_obj_path))) {
+    if (ged_ispath(gedp, full_obj_path) != GED_ERROR) {
 	bu_vls_printf(&gedp->ged_result_str, "object \"%s\" not found"
 		      " under path \"%s\"", s_obj, s_path);
 	db_free_full_path(&path);
