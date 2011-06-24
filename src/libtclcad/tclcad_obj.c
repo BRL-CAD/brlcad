@@ -941,7 +941,7 @@ static struct to_cmdtab to_cmds[] = {
     {"tops",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_tops},
     {"tra",	"[-m|-v] x y z", 6, to_view_func_plus, ged_tra},
     {"track",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_track},
-    {"translate", "x [y [z]]", TO_UNLIMITED, to_pass_through_func, ged_translate},
+    {"translate", (char *)0, TO_UNLIMITED, to_pass_through_func, ged_translate},
     {"translate_mode",	"x y", TO_UNLIMITED, to_translate_mode, GED_FUNC_PTR_NULL},
     {"transparency",	"[val]", TO_UNLIMITED, to_transparency, GED_FUNC_PTR_NULL},
     {"tree",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_tree},
