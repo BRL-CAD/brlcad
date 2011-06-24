@@ -29,8 +29,66 @@
 #include <ctype.h>
 #include <string.h>
 #include "vmath.h"
+#include "db.h"
 #include "raytrace.h"
 #include "ged.h"
+
+/*
+ * A recursive function that is only called by ged_ispath
+ */
+int
+_ispath_recurse(struct ged *gedp, struct db_full_path *path,
+		       struct directory *roots_child)
+{
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
+    struct directory *root = DB_FULL_PATH_ROOT_DIR(path);
+
+    /* get comb object */
+    if (rt_db_get_internal(&intern, root, gedp->ged_wdbp->dbip,
+			   (fastf_t *)NULL, &rt_uniresource) < 0) {
+        bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
+        return 0; /* FALSE; (failure) */
+    }
+    comb = (struct rt_comb_internal *)intern.idb_ptr;
+    if (!(comb->tree))
+	return 0; /* FALSE; path lists children when there aren't any */
+
+    rt_db_free_internal(&intern);
+    /* FIXME: see if if we really have a child of the root dir */
+    if (0) {
+	if (!(path->fp_len > 2))
+	    return 1; /* TRUE; no more children */
+	else if (roots_child->d_flags & RT_DIR_COMB) {
+	    /* remove root dir */
+	    ++(path->fp_names);
+	    --(path->fp_len);
+	    _ispath_recurse(gedp, path, DB_FULL_PATH_GET(path, 1));
+	} else
+	    return 0; /* FALSE; non-combinations shouldn't have children */
+    } else
+	return 0; /* FALSE */
+}
+
+int 
+ged_ispath(struct ged *gedp, struct db_full_path path)
+{
+    /*
+     * Since this is a db_full_path, we already know that each
+     * directory exists at root, and just need to check the order
+     * (note: this command is not registered anywhere yet, and
+     * may not need to be).
+     */
+    struct directory *root = DB_FULL_PATH_ROOT_DIR(&path);
+
+    if (path.fp_len <= 1)
+	return 1; /* TRUE; no children */
+
+    if (!(root->d_flags & RT_DIR_COMB))
+	return 0; /* FALSE; has children, but isn't a combination */
+
+    return _ispath_recurse(gedp, &path, DB_FULL_PATH_GET(&path, 1));
+}
 
 int
 ged_translate(struct ged *gedp, int argc, const char *argv[])
@@ -40,25 +98,22 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "[-k keypoint:object]"
 			       " [[-a] | [-r]]"
 			       " x [y [z]]"
-			       " combination"
+			       " path"
 			       " object";
-    int i;				/* iterator */
+    size_t i;				/* iterator */
     int c;				/* bu_getopt return value */
     int abs_flag = 0;			/* use absolute position */
     int rel_flag = 0;			/* use relative distance */
     char *kp_arg = NULL;        	/* keypoint argument */
-    const char *s_comb;			/* combination string */
-    const char *s_obj;			/* object string */
-    const char *s_full_path;		/* comb + obj string */
-    struct db_full_path comb;
-    struct db_full_path obj;		/* FIXME: needs to handle >1 obj */
-    struct db_full_path full_path;	/* comb + obj path */
-    struct directory *full_dir;         /* comb + obj directory */
-    struct directory *comb_dir;
     point_t keypoint;
-    char *endchr = NULL;       /* for strtof's */
+    const char *s_obj;
+    const char *s_path;
+    struct db_full_path obj;
+    struct db_full_path path;
+    struct db_full_path full_obj_path;	/* full path to object */
+    char *endchr = NULL;		/* for strtof's */
 
-        /* testing */
+    /* testing */
     mat_t modelchanges, incr, old;
     vect_t model_incr, ed_sol_pt, new_vertex;
 
@@ -70,7 +125,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
     /* must be wanting help -- argc < 4 is wrong too, but more helpful
-       msgs may be given later, by saying which args are missing */
+       msgs are given later, by saying which args are missing */
     if (argc == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 	return GED_HELP;
@@ -159,53 +214,50 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 	    break;
     }
 
-    /* set combination object */
-    if ((bu_optind + 1) > argc) {
+    /* set path */
+    if ((bu_optind + 1) >= argc) {
 	bu_vls_printf(&gedp->ged_result_str,
-		      "missing 'combination' and 'object' arguments\n");
+		      "missing path and/or object\n");
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 	return GED_HELP;
     }
-    s_comb = argv[bu_optind++];
-    if (db_string_to_path(&comb, dbip, s_comb) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "invalid path to 'combination'");
+    s_path = argv[bu_optind++];
+    if (db_string_to_path(&path, dbip, s_path) < 0) {
+	bu_vls_printf(&gedp->ged_result_str, "invalid path \"%s\"", s_path);
 	return GED_ERROR;
     }
 
-    /* set object being translated */
-    if ((bu_optind + 1) > argc) {
-	/* assume the last path was the combination */
-	bu_vls_printf(&gedp->ged_result_str,
-		      "missing 'object' argument\n");
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
-	return GED_HELP;
-    }
-    /* FIXME: needs to handle >1 obj */
+    /* set object */
     s_obj = argv[bu_optind++];
-    if (db_string_to_path(&obj, dbip, s_obj) < 0) {
-	db_free_full_path(&comb);
-	bu_vls_printf(&gedp->ged_result_str, "bad object path");
+    if (db_string_to_path(&obj, dbip, s_obj) < 0 || obj.fp_len != (size_t)1) {
+	bu_vls_printf(&gedp->ged_result_str, "invalid object \"%s\"",
+		      s_obj);
+	db_free_full_path(&path);
 	return GED_ERROR;
     }
 
-    /* verify existence of combination path */
-    comb_dir = db_lookup(dbip, s_comb, LOOKUP_NOISY);
-    if (comb_dir == RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "invalid path to 'combination'");
-	return GED_ERROR;
-    }
-    /* verify existence of obj within combination path */
-    db_full_path_init(&full_path);
-    db_dup_full_path(&full_path, &comb);
-    db_append_full_path(&full_path, &obj);
-    s_full_path = db_path_to_string(&full_path);
-    full_dir = db_lookup(dbip, s_full_path, LOOKUP_NOISY);
-    if (full_dir == RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "'object' is not within"
-					     " 'combination'");
+    /* verify existence of path */
+    if (!(ged_ispath(gedp, path))) {
+	bu_vls_printf(&gedp->ged_result_str, "path \"%s\" doesn't exist",
+		      s_path);
+	db_free_full_path(&path);
+	db_free_full_path(&obj);
 	return GED_ERROR;
     }
 
+    /* ensure object exists under last directory in path */
+    db_full_path_init(&full_obj_path);
+    db_dup_path_tail(&full_obj_path, &path, full_obj_path.fp_len - 1);
+    db_append_full_path(&full_obj_path, &obj);
+    if (!(ged_ispath(gedp, full_obj_path))) {
+	bu_vls_printf(&gedp->ged_result_str, "object \"%s\" not found"
+		      " under path \"%s\"", s_obj, s_path);
+	db_free_full_path(&path);
+	db_free_full_path(&obj);
+	db_free_full_path(&full_obj_path);
+	return GED_ERROR;
+    }
+   
     /* FIXME: perform equivalent of mged matpick, privately */
 
 
@@ -226,13 +278,15 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     bn_mat_mul(modelchanges, incr, old);
     /* new_edit_mats(); */
 
-    db_free_full_path(&comb);
+    db_free_full_path(&path);
     db_free_full_path(&obj);
+    db_free_full_path(&full_obj_path);
     return GED_OK;
 
     disabled:
-    db_free_full_path(&comb);
+    db_free_full_path(&path);
     db_free_full_path(&obj);
+    db_free_full_path(&full_obj_path);
     bu_vls_printf(&gedp->ged_result_str, "function not yet implemented");
     return GED_ERROR;
 }
