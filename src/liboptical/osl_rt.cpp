@@ -26,6 +26,13 @@
 #include "osl-renderer.h"
 #include <vector>
 
+/* BRL-CAD headers */
+#include "common.h"
+#include "bio.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "shadefuncs.h"
+
 using namespace OpenImageIO;
 
 static std::string outputfile = "image.png";
@@ -44,83 +51,6 @@ struct Ray2 {
 
 typedef Imath::Vec3<double> Vec3d;
 
-struct Sphere {
-    double radius;
-    Vec3d p;
-    ShadingAttribStateRef shaderstate;
-    const char *shadername;
-    bool light;
-
-    Sphere(double radius_, Vec3d p_, const char *shadername_, bool light_)
-	: radius(radius_), p(p_), shadername(shadername_), light(light_) {}
-
-    // returns distance, 0 if no hit
-    double intersect(const Ray2 &r) const
-    {
-	// Solve t^2*d.d + 2*t*(o-p).d +(o-p).(o-p)-R^2 = 0
-	Vec3d op = p - Vec3d(r.o.x, r.o.y, r.o.z);
-	double t, eps = 1e-4;
-	double b = op.dot(Vec3(r.d.x, r.d.y, r.d.z));
-	double det = b*b - op.dot(op) + radius*radius;
-
-	if(det<0) return 0;
-	else {
-	    det=sqrt(det);
-	    return(t=b-det) > eps ? t :((t=b+det)>eps ? t : 0);
-	}
-    }
-
-    Vec3 normal(const Vec3& P)
-    {
-	return Vec3(P[0] - p[0], P[1] - p[1], P[2] - p[2]).normalized();
-    }
-};
-
-// Scene(modified cornell box): radius, position, shader name
-Sphere spheres[] = {
-    Sphere(1e5,  Vec3d(1e5+1, 40.8, 81.6),   "cornell_wall", false), // left
-    Sphere(1e5,  Vec3d(-1e5+99, 40.8, 81.6), "cornell_wall", false), // right
-    Sphere(1e5,  Vec3d(50, 40.8, 1e5),       "cornell_wall", false), // back
-    Sphere(1e5,  Vec3d(50, 1e5, 81.6),       "cornell_wall", false), // front
-    Sphere(1e5,  Vec3d(50, -1e5+81.6, 81.6), "cornell_wall", false), // bottom
-    Sphere(1e5,  Vec3d(50, 40.8, -1e5+170),  "cornell_wall", false), // top
-    Sphere(16.5, Vec3d(73, 16.5, 78),        "yellow",        false), // right ball
-    Sphere(600,  Vec3d(50, 681.6-1.27, 81.6),"emitter",      true),   // light
-
-    // this sphere will be renderer as a fake shader 
-    Sphere(16.5, Vec3d(27, 16.5, 47),        "yellow",       false) 
-								    
-								    
-};
-
-int numSpheres = sizeof(spheres)/sizeof(Sphere);
-
-inline bool intersect(const Ray2 &r, double &t, int &id)
-{
-    double d, inf=t=1e20;
-
-    for(int i=sizeof(spheres)/sizeof(Sphere); i--;)
-	if((d=spheres[i].intersect(r))&&d<t) {
-	    t=d;
-	    id=i;
-	}
-
-    return t<inf;
-}
-Color3 fake_mirror_shader(RenderInfo *info){
-    if(info->depth >= 3) return Color3(0.0f);
-
-    fastf_t cosine = VDOT(info->N, info->I);
-    point_t tmp;
-    VSCALE(tmp, info->N, 2*cosine);  
-    VSUB2(info->out_ray.dir, tmp, info->I);    
-
-    VMOVE(info->out_ray.origin, info->P);
-    VUNITIZE(info->out_ray.dir);
-    info->doreflection = 1;
-    return Color3(1.0f);
-}
-
 void write_image(float *buffer, int w, int h)
 {
     // write image using OIIO
@@ -134,16 +64,223 @@ void write_image(float *buffer, int w, int h)
     delete out;
 }
 
+/* Copy of OSL specific (just for tests) */
+struct osl_specific {
+    long magic;              	 
+    struct bu_vls shadername;
+};
 
-int main (){
+/**
+ * rt_shootray() was told to call this on a hit.
+ *
+ * This callback routine utilizes the application structure which
+ * describes the current state of the raytrace.
+ *
+ * This callback routine is provided a circular linked list of
+ * partitions, each one describing one in and out segment of one
+ * region for each region encountered.
+ *
+ * The 'segs' segment list is unused in this example.
+ */
+int
+hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
+{
+    /* iterating over partitions, this will keep track of the current
+     * partition we're working on.
+     */
+    struct partition *pp;
 
-    // camera parameters
-    Vec3 cam_o = Vec3(50, 52, 295.6); // positions
-    Vec3 cam_d = Vec3(0, -0.042612, -1).normalized(); // direction
-    Vec3 cam_x = Vec3(w*.5135/h, 0.0, 0.0); // ???
-    Vec3 cam_y = (cam_x.cross(cam_d)).normalized()*.5135; // ???
+    /* will serve as a pointer for the entry and exit hitpoints */
+    struct hit *hitp;
 
-    // pixels
+    /* will serve as a pointer to the solid primitive we hit */
+    struct soltab *stp;
+
+    /* will contain surface curvature information at the entry */
+    struct curvature cur;
+
+    /* will contain our hit point coordinate */
+    point_t pt;
+
+    /* will contain normal vector where ray enters geometry */
+     vect_t inormal;
+
+    /* will contain normal vector where ray exits geometry */
+    vect_t onormal;
+
+    /* iterate over each partition until we get back to the head.
+     * each partition corresponds to a specific homogeneous region of
+     * material.
+     */
+    for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
+
+	/* print the name of the region we hit as well as the name of
+	 * the primitives encountered on entry and exit.
+	 */
+	bu_log("\n--- Hit region %s (in %s, out %s)\n",
+	       pp->pt_regionp->reg_name,
+	       pp->pt_inseg->seg_stp->st_name,
+	       pp->pt_outseg->seg_stp->st_name );
+
+	/* entry hit point, so we type less */
+	hitp = pp->pt_inhit;
+
+	/* construct the actual (entry) hit-point from the ray and the
+	 * distance to the intersection point (i.e., the 't' value).
+	 */
+	VJOIN1(pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
+
+	/* primitive we encountered on entry */
+	stp = pp->pt_inseg->seg_stp;
+
+	/* compute the normal vector at the entry point, flipping the
+	 * normal if necessary.
+	 */
+	RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
+
+	/* print the entry hit point info */
+	rt_pr_hit("  In", hitp);
+	VPRINT(   "  Ipoint", pt);
+	VPRINT(   "  Inormal", inormal);
+
+	/* This next macro fills in the curvature information which
+	 * consists on a principle direction vector, and the inverse
+	 * radii of curvature along that direction and perpendicular
+	 * to it.  Positive curvature bends toward the outward
+	 * pointing normal.
+	 */
+	RT_CURVATURE(&cur, hitp, pp->pt_inflip, stp);
+
+	/* print the entry curvature information */
+	VPRINT("PDir", cur.crv_pdir);
+	bu_log(" c1=%g\n", cur.crv_c1);
+	bu_log(" c2=%g\n", cur.crv_c2);
+
+	/* exit point, so we type less */
+	hitp = pp->pt_outhit;
+
+	/* construct the actual (exit) hit-point from the ray and the
+	 * distance to the intersection point (i.e., the 't' value).
+	 */
+	VJOIN1(pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
+
+	/* primitive we exited from */
+	stp = pp->pt_outseg->seg_stp;
+
+	/* compute the normal vector at the exit point, flipping the
+	 * normal if necessary.
+	 */
+	RT_HIT_NORMAL(onormal, hitp, stp, &(ap->a_ray), pp->pt_outflip);
+
+	/* print the exit hit point info */
+	rt_pr_hit("  Out", hitp);
+	VPRINT(   "  Opoint", pt);
+	VPRINT(   "  Onormal", onormal);
+    }
+
+    /* A more complicated application would probably fill in a new
+     * local application structure and describe, for example, a
+     * reflected or refracted ray, and then call rt_shootray() for
+     * those rays.
+     */
+
+    /* Hit routine callbacks generally return 1 on hit or 0 on miss.
+     * This value is returned by rt_shootray().
+     */
+    return 1;
+}
+
+/**
+ * This is a callback routine that is invoked for every ray that
+ * entirely misses hitting any geometry.  This function is invoked by
+ * rt_shootray() if the ray encounters nothing.
+ */
+int
+miss(struct application *UNUSED(ap))
+{
+    return 0;
+}
+
+int main (int argc, char **argv){
+
+    /* Every application needs one of these.  The "application"
+     * structure carries information about how the ray-casting should
+     * be performed.  Defined in the raytrace.h header.
+     */
+    struct application ap;
+
+    /* The "raytrace instance" structure contains definitions for
+     * librt which are specific to the particular model being
+     * processed.  One copy exists for each model.  Defined in
+     * the raytrace.h header and is returned by rt_dirbuild().
+     */
+    static struct rt_i *rtip;
+
+    /* optional parameter to rt_dirbuild() what can be used to capture
+     * a title if the geometry database has one set.
+     */
+    char title[1024] = {0};
+
+    /* Check for command-line arguments.  Make sure we have at least a
+     * geometry file and one geometry object on the command line.
+     */
+    if (argc < 3) {
+	bu_exit(1, "Usage: %s model.g objects...\n", argv[0]);
+    }
+
+    /* Load the specified geometry database (i.e., a ".g" file).
+     * rt_dirbuild() returns an "instance" pointer which describes the
+     * database to be raytraced.  It also gives you back the title
+     * string if you provide a buffer.  This builds a directory of the
+     * geometry (i.e., a table of contents) in the file.
+     */
+    rtip = rt_dirbuild(argv[1], title, sizeof(title));
+    if (rtip == RTI_NULL) {
+	bu_exit(2, "Building the database directory for [%s] FAILED\n", argv[1]);
+    }
+
+    /* Walk the geometry trees.  Here you identify any objects in the
+     * database that you want included in the ray trace by iterating
+     * of the object names that were specified on the command-line.
+     */
+    while (argc > 2)  {
+	if (rt_gettree(rtip, argv[2]) < 0)
+	    bu_log("Loading the geometry for [%s] FAILED\n", argv[2]);
+	argc--;
+	argv++;
+    }
+
+    /* This next call gets the database ready for ray tracing.  This
+     * causes some values to be precomputed, sets up space
+     * partitioning, computes boudning volumes, etc.
+     */
+    rt_prep_parallel(rtip, 1);
+
+    /* initialize all values in application structure to zero */
+    RT_APPLICATION_INIT(&ap);
+
+    /* your application uses the raytrace instance containing the
+     * geometry we loaded.  this describes what we're shooting at.
+     */
+    ap.a_rt_i = rtip;
+
+    /* Stop at the first point of intersection.
+     */
+    ap.a_onehit = 1;
+
+    /* This is what callback to perform on a hit. */
+    ap.a_hit = hit;
+
+    /* This is what callback to perform on a miss. */
+    ap.a_miss = miss;
+
+    /* Camera parameters */
+    Vec3 cam_o = Vec3(2.78e2, 3.71e2, -4.54e2); // Position
+    Vec3 cam_d = Vec3(-2.6237e-15, -0.169642, 0.985506).normalized(); // direction
+    Vec3 cam_x = Vec3(w*.5135/h, 0.0, 0.0); // x displacement vector
+    Vec3 cam_y = (cam_x.cross(cam_d)).normalized()*.5135; // y displacement vector
+
+    // Pixel matrix
     Color3 *buffer = new Color3[w*h];
     for(int i=0; i<w*h; i++)
 	buffer[i] = Color3(0.0f);
@@ -154,9 +291,10 @@ int main (){
     /* Initialize the shading system*/
     OSLRenderer oslr;
 
-    /* Initialize each shader */
-    for(int i=0; i<numSpheres; i++)
-	oslr.AddShader(spheres[i].shadername);
+    /* Initialize each shader that will be used */
+    oslr.AddShader("cornell_wall");
+    oslr.AddShader("yellow");
+    oslr.AddShader("emitter");
 
     /* Ray trace */
     for(int y=0; y<h; y++) {
@@ -186,101 +324,17 @@ int main (){
 			Vec3 d = cam_x*(((sx+.5 + dx)/2 + x)/w - .5) +
 			    cam_y*(((sy+.5 + dy)/2 + y)/h - .5) + cam_d;
 
-			Ray2 ray(cam_o + d*130, d.normalized());
-			RenderInfo info;
-			info.screen_x = x;
-			info.screen_y = y;
-			info.depth = 0;
+			Vec3 dir = d.normalized();
+			Vec3 origin = cam_o + d*130;
 
 			Color3 pixel_color(1.0);
-
-			do {
-
-			    // find the sphere that was hit
-			    double t; // distance to intersection
-			    int id = 0; // id of the sphere
-			    if(!intersect(ray, t, id)) break;
-
-			    Sphere &obj = spheres[id];
-
-			    info.I[0] = -ray.d[0];
-			    info.I[1] = -ray.d[1];
-			    info.I[2] = -ray.d[2];
-
-			    Vec3 P = ray.o + ray.d*t;
-			    info.P[0] = P[0];
-			    info.P[1] = P[1];
-			    info.P[2] = P[2];
-
-			    Vec3 N = obj.normal(P);
-			    info.N[0] = N[0];
-			    info.N[1] = N[1];
-			    info.N[2] = N[2];
-
-			    float phi = atan2(P.y, P.x);
-			    if(phi < 0.) phi += 2*M_PI;
-			    info.u = phi/(2*M_PI);
-			    info.v = acos(P.z/obj.radius)/M_PI;
-
-			    // tangents
-			    float invzr = 1./sqrt(P.x*P.x + P.y*P.y);
-			    float cosphi = P.x*invzr;
-			    float sinphi = P.y*invzr;
-
-			    Vec3 dPdu = Vec3(-2*M_PI*P.y, -2*M_PI*P.x, 0.);
-			    Vec3 dPdv = Vec3(P.z*cosphi, P.z*sinphi,
-					     -obj.radius*sin(info.v*M_PI))*M_PI;
-
-			    info.dPdu[0] = dPdu[0];
-			    info.dPdu[1] = dPdu[1];
-			    info.dPdu[2] = dPdu[2];
-
-			    info.dPdv[0] = dPdv[0];
-			    info.dPdv[1] = dPdv[1];
-			    info.dPdv[2] = dPdv[2];
-
-			    info.isbackfacing = 0;
-			    info.surfacearea = 1.0;
-
-			    info.doreflection = 0;
-
-			    info.shadername = spheres[id].shadername;
-
-			    //fprintf(stderr, "\n\nid: %d\n", id);
-			    Color3 wx;
-			    if (id <= 7)
-				wx = oslr.QueryColor(&info);
-			    else
-				wx = fake_mirror_shader(&info);
-
-			    pixel_color *= wx;
-
-			    // if(id != 7)
-			    //     break;
-			    
-			    info.depth++;
-			    Vec3 origin;
-			    Vec3 dir;
-
-			    // fprintf(stderr, "[DEB] r = %.2lf %.2lf %.2lf\n",
-			    //         r[0], r[1], r[2]);
-
-			    origin[0] = info.out_ray.origin[0];
-			    origin[1] = info.out_ray.origin[1];
-			    origin[2] = info.out_ray.origin[2];
-
-			    dir[0] = info.out_ray.dir[0];
-			    dir[1] = info.out_ray.dir[1];
-			    dir[2] = info.out_ray.dir[2];
-
-			    // printf("Dir: %.2lf %.2lf %.2lf\n",
-			    //        dir[0], dir[1], dir[2]);
-
-			    ray = Ray2(origin, dir);
-
-			} while(info.doreflection);
-
 			r += pixel_color;
+
+			/* Shoot the ray */
+			VMOVE(ap.a_ray.r_dir, dir);
+			VMOVE(ap.a_ray.r_pt, origin);
+
+			(void)rt_shootray(&ap);
 		    }
 
 		    // normalize

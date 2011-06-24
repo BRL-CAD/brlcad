@@ -46,8 +46,6 @@ include_directories(
 )
 
 IF(BRLCAD-ENABLE_OSL)
-
-    message("[Kunigami] OSL was enabled. Will compile shader OSL...")
     
     ##########################################
     # Build OSL-renderer
@@ -107,7 +105,6 @@ IF(BRLCAD-ENABLE_OSL)
     ##########################################
 
     # Add the osl shader to the list of shaders
-    # FIXME - not including sh_osl.cpp due to dependence errors
     set(LIBOPTICAL_SOURCES ${LIBOPTICAL_SOURCES} sh_osl.cpp)
     
     # Link liboptical with osl-renderer library
@@ -117,8 +114,7 @@ IF(BRLCAD-ENABLE_OSL)
     # Renderer test 
     ##########################################
 
-    BRLCAD_ADDEXEC(osl_rt "osl_rt.cpp" "osl-renderer ${OSLRT_LIBS2}")
-
+    BRLCAD_ADDEXEC(osl_rt "osl_rt.cpp" "osl-renderer ${OSLRT_LIBS2} librt libfb liboptical")
 
 ELSE(BRLCAD-ENABLE_OSL)
 
