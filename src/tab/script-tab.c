@@ -268,7 +268,7 @@ struct command_tab rt_cmdtab[] = {
      cm_lookat_pt,	4, 5},
     {"viewrot", "4x4 matrix", "set view direction from matrix",
      cm_vrot,	17, 17},
-    {"orientation", "quaturnion", "set view direction from quaturnion",
+    {"orientation", "quaternion", "set view direction from quaturnion",
      cm_orientation,	5, 5},
     {"end", 	"", "end of frame setup, begin raytrace",
      cm_end,		1, 1},

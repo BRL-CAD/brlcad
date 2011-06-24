@@ -51,7 +51,7 @@ struct command_tab ged_loadview_cmdtab[] = {
      _ged_cm_lookat_pt,	4, 5},
     {"viewrot", "4x4 matrix", "set view direction from matrix",
      _ged_cm_vrot,	17, 17},
-    {"orientation", "quaturnion", "set view direction from quaturnion",
+    {"orientation", "quaternion", "set view direction from quaturnion",
      _ged_cm_orientation,	5, 5},
     {"set", 	"", "show or set parameters",
      _ged_cm_set,		1, 999},
