@@ -71,15 +71,18 @@ _ged_path_validate_recurse(struct ged *gedp, struct db_full_path *path,
     return GED_OK; /* for compiler */
 }
 
+/**
+ * _ G E D _ P A T H _ V A L I D A T E
+ *
+ * Checks that each directory in the supplied path actually has the
+ * subdirectories that are implied by the path. Returns GED_OK if 
+ * true, or GED_ERROR if false.
+ */
 int 
 _ged_path_validate(struct ged *gedp, struct db_full_path path)
 {
-    /*
-     * Since this is a db_full_path, we already know that each
-     * directory exists at root, and just need to check the order
-     * (note: this command is not registered anywhere yet, and
-     * may not need to be).
-     */
+    /* Since this is a db_full_path, we already know that each
+     * directory exists at root, and just need to check the order */
     struct directory *root = DB_FULL_PATH_ROOT_DIR(&path);
 
     if (path.fp_len <= 1)
