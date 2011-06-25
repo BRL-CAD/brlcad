@@ -59,7 +59,6 @@ void OSLRenderer::AddShader(const char *shadername){
 Color3 OSLRenderer::QueryColor(RenderInfo *info){
 
     if(info->depth >= 5){
-	//printf("[DEB] maximum level of recursion reached\n");
 	return Color3(0.0f);
     }
 
@@ -74,7 +73,7 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info){
     const ClosureColor *closure = ExecuteShaders(globals, info);
 
     if(closure == NULL){
-	fprintf(stderr, "closure is null\n");
+	fprintf(stderr, "closure %s is null\n", info->shadername);
     }
 
     Color3 weight = Color3(0.0f);
@@ -95,6 +94,7 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info){
 
 	    if(pdf != 0.0f) {
 		OSLRenderer::Vec3toPoint_t(globals.P, info->out_ray.origin);
+
 		OSLRenderer::Vec3toPoint_t(omega_in, info->out_ray.dir);
 		info->doreflection = 1;
 		return weight*eval/pdf;
@@ -105,11 +105,6 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info){
 
 	    EmissiveClosure *emissive = (EmissiveClosure*)prim;
 	    Color3 l = weight*emissive->eval(globals.Ng, globals.I);
-	    /*
-	      printf("[DEB] Returning a light: %.2lf %.2lf %.2lf\n",
-	      l[0], l[1], l[2]);
-	    */
-
 	    return l;
 	}
 	else if(prim->category() == OSL::ClosurePrimitive::Background) {
@@ -159,6 +154,7 @@ ExecuteShaders(ShaderGlobals &globals, RenderInfo *info){
 
     VMOVE(globals.P, info->P);
     VMOVE(globals.I, info->I);
+    VREVERSE(globals.I, globals.I);
     VMOVE(globals.Ng, info->N);
 
     globals.N = globals.Ng;

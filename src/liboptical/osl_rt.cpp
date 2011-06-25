@@ -40,6 +40,8 @@ static int w = 1024, h = 768;
 static int samples = 4;
 static unsigned short Xi[3];
 
+OSLRenderer *oslr = NULL;
+
 inline double clamp(double x) { return x<0 ? 0 : x>1 ? 1 : x; }
 
 struct Ray2 {
@@ -64,11 +66,55 @@ void write_image(float *buffer, int w, int h)
     delete out;
 }
 
-/* Copy of OSL specific (just for tests) */
-struct osl_specific {
-    long magic;              	 
-    struct bu_vls shadername;
-};
+/* Get shadername from regioname */
+const char* get_shadername(const char *regioname){
+
+    if(!strcmp(regioname, "/all.g/back_wall.r"))
+	return "blue";
+    if(!strcmp(regioname, "/all.g/ceiling.r"))
+	return "blue";
+    if(!strcmp(regioname, "/all.g/floor.r"))
+	return "red";
+    if(!strcmp(regioname, "/all.g/left_wall.r"))
+	return "blue";
+    if(!strcmp(regioname, "/all.g/right_wall.r"))
+	return "blue";
+    // light
+    if(!strcmp(regioname, "/all.g/light.r")){
+	return "emitter";
+    }
+    // boxes
+    if(!strcmp(regioname, "/all.g/short_box.r"))
+	return "mirror";
+    if(!strcmp(regioname, "/all.g/tall_box.r"))
+	return "yellow";
+
+    fprintf(stderr, "shader not found\n");
+}
+
+/* Associate each object with a color in order to identify them in the scene */
+Color3 get_color(const char *regioname){
+
+    if(!strcmp(regioname, "/all.g/back_wall.r"))
+	return Color3(1.0f, 0.0, 0.0); //red
+    if(!strcmp(regioname, "/all.g/ceiling.r"))
+	return Color3(0.0, 1.0, 0.0); //green
+    if(!strcmp(regioname, "/all.g/floor.r"))
+	return Color3(0.0, 0.0, 1.0); // blue
+    if(!strcmp(regioname, "/all.g/left_wall.r"))
+	return Color3(1.0, 1.0, 0.0); // yellow
+    if(!strcmp(regioname, "/all.g/right_wall.r"))
+	return Color3(1.0, 0.0, 1.0); // purple
+    // light
+    if(!strcmp(regioname, "/all.g/light.r")){
+	return Color3(1.0, 1.0, 1.0); // white
+    }
+    // boxes
+    if(!strcmp(regioname, "/all.g/short_box.r"))
+	return Color3(0.0, 1.0, 1.0); // cyan
+    if(!strcmp(regioname, "/all.g/tall_box.r"))
+	return Color3(0.0, 1.0, 1.0); // cyan
+}
 
 /**
  * rt_shootray() was told to call this on a hit.
@@ -117,72 +163,79 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	/* print the name of the region we hit as well as the name of
 	 * the primitives encountered on entry and exit.
 	 */
-	bu_log("\n--- Hit region %s (in %s, out %s)\n",
-	       pp->pt_regionp->reg_name,
-	       pp->pt_inseg->seg_stp->st_name,
-	       pp->pt_outseg->seg_stp->st_name );
+	/*
 
-	/* entry hit point, so we type less */
+	/* Get shadername from the region */
+	const char *shadername = get_shadername(pp->pt_regionp->reg_name);
+
+	/**
+	 * Fill in render information 
+	 *
+	 */
+
+	RenderInfo info;
+
+	/* Set hit point */
 	hitp = pp->pt_inhit;
-
-	/* construct the actual (entry) hit-point from the ray and the
-	 * distance to the intersection point (i.e., the 't' value).
-	 */
 	VJOIN1(pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
-
-	/* primitive we encountered on entry */
+	VMOVE(info.P, pt);
+	
+	/* Set normal at the point */
 	stp = pp->pt_inseg->seg_stp;
-
-	/* compute the normal vector at the entry point, flipping the
-	 * normal if necessary.
-	 */
 	RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
+	VMOVE(info.N, inormal);
 
-	/* print the entry hit point info */
-	rt_pr_hit("  In", hitp);
-	VPRINT(   "  Ipoint", pt);
-	VPRINT(   "  Inormal", inormal);
+	/* Set incidence ray direction */
+	VMOVE(info.I, ap->a_ray.r_dir);
+    
+	/* U-V mapping stuff */
+	info.u = 0;
+	info.v = 0;
+	VSETALL(info.dPdu, 0.0f);
+	VSETALL(info.dPdv, 0.0f);
+    
+	/* x and y pixel coordinates */
+	info.screen_x = ap->a_x;
+	info.screen_y = ap->a_y;
 
-	/* This next macro fills in the curvature information which
-	 * consists on a principle direction vector, and the inverse
-	 * radii of curvature along that direction and perpendicular
-	 * to it.  Positive curvature bends toward the outward
-	 * pointing normal.
-	 */
-	RT_CURVATURE(&cur, hitp, pp->pt_inflip, stp);
+	info.depth = ap->a_level;
+	info.surfacearea = 1.0f;
+    
+	info.shadername = shadername;
 
-	/* print the entry curvature information */
-	VPRINT("PDir", cur.crv_pdir);
-	bu_log(" c1=%g\n", cur.crv_c1);
-	bu_log(" c2=%g\n", cur.crv_c2);
+	info.doreflection = 0;
 
-	/* exit point, so we type less */
-	hitp = pp->pt_outhit;
 
-	/* construct the actual (exit) hit-point from the ray and the
-	 * distance to the intersection point (i.e., the 't' value).
-	 */
-	VJOIN1(pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
+	Color3 weight = oslr->QueryColor(&info);
+	
+	if(info.doreflection){
 
-	/* primitive we exited from */
-	stp = pp->pt_outseg->seg_stp;
+	    /* Fire another ray */
+	    struct application new_ap;
+	    RT_APPLICATION_INIT(&new_ap);
 
-	/* compute the normal vector at the exit point, flipping the
-	 * normal if necessary.
-	 */
-	RT_HIT_NORMAL(onormal, hitp, stp, &(ap->a_ray), pp->pt_outflip);
+	    new_ap.a_rt_i = ap->a_rt_i;
+	    new_ap.a_onehit = 1;
+	    new_ap.a_hit = ap->a_hit;
+	    new_ap.a_miss = ap->a_miss;
+	    new_ap.a_level = ap->a_level + 1;
 
-	/* print the exit hit point info */
-	rt_pr_hit("  Out", hitp);
-	VPRINT(   "  Opoint", pt);
-	VPRINT(   "  Onormal", onormal);
+	    VMOVE(new_ap.a_ray.r_dir, info.out_ray.dir);
+	    VMOVE(new_ap.a_ray.r_pt, info.out_ray.origin);
+
+	    rt_shootray(&new_ap);
+
+	    Color3 rec;
+	    VMOVE(rec, new_ap.a_color);
+	    
+	    weight = weight*rec;
+	    VMOVE(ap->a_color, weight);
+
+
+	} else {
+	    VMOVE(ap->a_color, weight);
+	}
     }
-
-    /* A more complicated application would probably fill in a new
-     * local application structure and describe, for example, a
-     * reflected or refracted ray, and then call rt_shootray() for
-     * those rays.
-     */
 
     /* Hit routine callbacks generally return 1 on hit or 0 on miss.
      * This value is returned by rt_shootray().
@@ -274,11 +327,68 @@ int main (int argc, char **argv){
     /* This is what callback to perform on a miss. */
     ap.a_miss = miss;
 
+#if 0
+
+    /* Code to find the direction from the orientation. NOT WORKING! */
+
+    /* Data from script cornell.rt */
+    fastf_t viewsize = 6.0e3;
+    quat_t quat;
+    quat[0] = 0.0;
+    quat[1] = 9.961946980917455e-01;
+    quat[2] = 8.715574274765824e-02;
+    quat[3] = 0.0;
+    vect_t eye_model;
+    eye_model[0] = 2.780000000000000e+02;
+    eye_model[1] = 3.709445330007912e+02;
+    eye_model[2] = -4.544232590366239e+02;
+
+  
+    /* Piece copied from do.c @ l644 */
+    mat_t rotscale;
+    quat_quat2mat(rotscale, quat);
+    rotscale[15] = viewsize;
+
+    mat_t xlate;
+    MAT_IDN(xlate);
+    MAT_DELTAS_VEC_NEG(xlate, eye_model);
+
+    mat_t model2view, view2model;
+    bn_mat_mul(model2view, rotscale, xlate);
+    bn_mat_inv(view2model, model2view);
+
+    vect_t work, work1;
+    vect_t zdir, xdir, cam_dir;
+    VSET(work, 0.0, 0.0, 1.0);       /* view z-direction */
+    MAT4X3VEC(zdir, view2model, work);
+    VSET(work1, 1.0, 0.0, 0.0);      /* view x-direction */
+    MAT4X3VEC(xdir, view2model, work1);
+
+    VADD2(cam_dir, zdir, xdir);
+    VREVERSE(cam_dir, cam_dir);
+
     /* Camera parameters */
-    Vec3 cam_o = Vec3(2.78e2, 3.71e2, -4.54e2); // Position
+    Vec3 cam_o; // Position
     Vec3 cam_d = Vec3(-2.6237e-15, -0.169642, 0.985506).normalized(); // direction
+
+    VMOVE(cam_o, eye_model);
+    cam_d = cam_d.normalized();
+
     Vec3 cam_x = Vec3(w*.5135/h, 0.0, 0.0); // x displacement vector
     Vec3 cam_y = (cam_x.cross(cam_d)).normalized()*.5135; // y displacement vector
+
+    cam_o = cam_o;
+
+#else
+
+    Vec3 cam_o = Vec3(2.780000000000000e+02, 3.709445330007912e+02, -4.544232590366239e+02);
+    Vec3 cam_d = Vec3(-2.6237e-15, -0.169642, 0.985506).normalized(); // direction
+    Vec3 cam_x = Vec3(w*.5135/h, 0.0, 0.0);
+    Vec3 cam_y = (cam_x.cross(cam_d)).normalized()*.5135;
+
+    cam_o = cam_o - cam_d*600;
+
+#endif
 
     // Pixel matrix
     Color3 *buffer = new Color3[w*h];
@@ -286,15 +396,18 @@ int main (int argc, char **argv){
 	buffer[i] = Color3(0.0f);
 
     float scale = 10.0f;
-    int samps = 1; // number of samples
+    int samps = 25; // number of samples
 
     /* Initialize the shading system*/
-    OSLRenderer oslr;
-
-    /* Initialize each shader that will be used */
-    oslr.AddShader("cornell_wall");
-    oslr.AddShader("yellow");
-    oslr.AddShader("emitter");
+    oslr = new OSLRenderer();
+    
+    /* Initialize each shader that may be used */
+    oslr->AddShader("cornell_wall");
+    oslr->AddShader("yellow");
+    oslr->AddShader("emitter");
+    oslr->AddShader("mirror");
+    oslr->AddShader("blue");
+    oslr->AddShader("red");
 
     /* Ray trace */
     for(int y=0; y<h; y++) {
@@ -307,7 +420,7 @@ int main (int argc, char **argv){
 
 	for(int x=0; x<w; x++) {
 
-	    int i = (h - y - 1)*w + x;
+	    int i = y*w + x;
 
 	    // 2x2 subixel with tent filter
 	    for(int sy = 0; sy < 2; sy++) {
@@ -327,14 +440,16 @@ int main (int argc, char **argv){
 			Vec3 dir = d.normalized();
 			Vec3 origin = cam_o + d*130;
 
-			Color3 pixel_color(1.0);
-			r += pixel_color;
+			Color3 pixel_color(0.0f);
 
 			/* Shoot the ray */
 			VMOVE(ap.a_ray.r_dir, dir);
 			VMOVE(ap.a_ray.r_pt, origin);
 
-			(void)rt_shootray(&ap);
+			if (rt_shootray(&ap))
+			    VMOVE(pixel_color, ap.a_color);
+
+			r = r + pixel_color*(1.0f/samps);
 		    }
 
 		    // normalize
