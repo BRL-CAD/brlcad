@@ -43,6 +43,7 @@ BRLCAD_INCLUDE_FILE(regex.h HAVE_REGEX_H)
 # Local Copies of Tools
 #---------------------------------------------------------------------------------
 OPTION(BUILD_LOCAL_TOOLS "Build local copies of m4, byacc and flex" OFF)
+MARK_AS_ADVANCED(BUILD_LOCAL_TOOLS)
 IF(BUILD_LOCAL_TOOLS)
 # Build Berkeley Yacc - guarantees certain extensions added originally by GNU
 # Bison are supported, as well as yacc itself (problematic on, say, Windows.)
