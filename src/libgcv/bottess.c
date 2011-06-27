@@ -32,14 +32,15 @@
 #include "gcv.h"
 
 /* these are just for debugging during development. */
-extern int rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local);
 static void prbot(char *prefix, union tree *tr)
 {
     struct bu_vls s;
     struct rt_db_internal ip;
+    const struct rt_functab *ft = &rt_functab[ID_BOT];
+
     bu_vls_init(&s);
     ip.idb_ptr = (struct rt_bot_internal*)tr->tr_d.td_r->m_p;
-    rt_bot_describe(&s, &ip, 1, 1.0);
+    ft->ft_describe(&s, &ip, 1, 1.0, 0, 0);
     if(prefix)bu_log("*** %s\n", prefix);
     bu_log(bu_vls_addr(&s));
 }
