@@ -239,7 +239,7 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
     point_t scolor;
     VSETALL(scolor, 0.0f);
 
-    int nsamples = 1;
+    int nsamples = 4;
     for(int s=0; s<nsamples; s++){
 
 	/* -----------------------------------
@@ -280,21 +280,25 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 
 	if(info.doreflection == 1){
 	
-	    /* We shoot another ray */
-	    ap->a_level++;
+	    /* Fire another ray */
+	    struct application new_ap;
+	    RT_APPLICATION_INIT(&new_ap);
 
-	    point_t inv_dir;
-	    VREVERSE(inv_dir, info.out_ray.dir);
+	    new_ap.a_rt_i = ap->a_rt_i;
+	    new_ap.a_onehit = 1;
+	    new_ap.a_hit = ap->a_hit;
+	    new_ap.a_miss = ap->a_miss;
+	    new_ap.a_level = ap->a_level + 1;
 
-	    VMOVE(ap->a_ray.r_pt, info.out_ray.origin);
-	    VMOVE(ap->a_ray.r_dir, info.out_ray.dir);
+	    VMOVE(new_ap.a_ray.r_dir, info.out_ray.dir);
+	    VMOVE(new_ap.a_ray.r_pt, info.out_ray.origin);
 
-	    (void)rt_shootray(ap);
+	    (void)rt_shootray(&new_ap);
 
-	    ap->a_level--;
 	    /* The resulting color is always on ap_color, but
 	       we need to update it through sw_color */
-	    Color3 rec(ap->a_color[0], ap->a_color[1], ap->a_color[2]);
+	    Color3 rec;
+	    VMOVE(rec, new_ap.a_color);
 	    Color3 res = rec*weight;
 	    VADD2(scolor, scolor, res);
 	}
