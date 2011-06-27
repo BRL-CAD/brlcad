@@ -1128,8 +1128,8 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
     union tree *tl;
     union tree *tr;
     struct nmgregion *reg;
-    int op = 0;
-    const char *op_str = NULL;
+    int op = NMG_BOOL_ADD;      /* default value */
+    const char *op_str = " u "; /* default value */
     size_t rem;
     char *name;
 
