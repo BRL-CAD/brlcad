@@ -70,6 +70,10 @@ ADD_SUBDIRECTORY(m4)
 ADD_SUBDIRECTORY(flex)
 ENDIF(BUILD_LOCAL_TOOLS)
 
+DISTCHECK_IGNORE_ITEM(byacc)
+DISTCHECK_IGNORE_ITEM(m4)
+DISTCHECK_IGNORE_ITEM(flex)
+
 # Ignore the boost subdir - it's only used for the boost headers and is not
 # compiled
 DISTCHECK_IGNORE_ITEM(boost)

@@ -67,6 +67,6 @@ SET(misc_ignore_files
 	libtool.m4
 	macosx
 	nsis
-	win32-msvc8
+	win32-msvc
 	)
 CMAKEFILES(${misc_ignore_files})
