@@ -54,6 +54,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     struct db_full_path obj;
     struct db_full_path path;
     struct db_full_path full_obj_path;	/* full path to object */
+    struct directory *d_obj;
     char *endchr = NULL;		/* for strtod's */
 
     /* testing */
@@ -116,17 +117,24 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    /* needs to be either absolute or relative positioning */
-    if (!abs_flag && !rel_flag)
-	rel_flag = 1;
-    else if (abs_flag && rel_flag) {
+    
+    /* need to use either absolute or relative positioning, but not both */
+    if (abs_flag && rel_flag) {
 	bu_vls_printf(&gedp->ged_result_str,
 		      "options '-a' and '-r' are mutually exclusive");
 	return GED_ERROR;
     }
+    /* perhaps rel_flag was set by mistake */
+    if (rel_flag && kp_arg) {
+	bu_vls_printf(&gedp->ged_result_str,
+		      "relative translations do not have keypoints");
+	return GED_ERROR;
+    }
+    /* default to relative positioning */
+    if (!abs_flag && !rel_flag)
+	rel_flag = 1;
 
-
-    /* FIXME: set reasonable default keypoint */
+        /* TODO: set reasonable default keypoint */
     #if 0
     if (!keypoint)
 	;
@@ -170,7 +178,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    /* set object */
+    /* set object (no path accepted) */
     s_obj = argv[bu_optind++];
     if (db_string_to_path(&obj, dbip, s_obj) < 0 || obj.fp_len != (size_t)1) {
 	bu_vls_printf(&gedp->ged_result_str, "invalid object \"%s\"",
@@ -188,7 +196,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    /* ensure object exists under last directory in path */
+    /* verify that object exists under current directory in path */
     db_full_path_init(&full_obj_path);
     db_dup_path_tail(&full_obj_path, &path, path.fp_len - 1);
     db_append_full_path(&full_obj_path, &obj);
@@ -200,10 +208,23 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 	db_free_full_path(&full_obj_path);
 	return GED_ERROR;
     }
-   
-    /* FIXME: perform equivalent of mged matpick, privately */
 
-
+    /* 
+     * Perform transations
+     */
+    d_obj = DB_FULL_PATH_ROOT_DIR(&obj);
+    if (d_obj->d_flags & RT_DIR_SOLID) {
+       /* TODO: translation of solids (note:'p' cmd is not yet available) */
+	bu_vls_printf(&gedp->ged_result_str, "translation of solids not yet"
+					     " supported; ");
+	goto disabled;
+    }
+    if (d_obj->d_flags & (RT_DIR_REGION | RT_DIR_COMB)) {
+       /* translation of combinations */
+	bu_vls_printf(&gedp->ged_result_str, "translation of combinations not"
+					     " yet supported; ");
+	goto disabled;
+    }
 
     /* XXX disabled until functional */
     if ((bu_optind + 1) <= argc)
