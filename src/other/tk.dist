@@ -60,7 +60,6 @@ unix/install-sh
 unix/installManPage
 unix/license.terms
 unix/tcl.m4
-unix/tk.spec
 unix/tkConfig.h.in
 unix/tkConfig.sh.in
 unix/tkUnixDefault.h
