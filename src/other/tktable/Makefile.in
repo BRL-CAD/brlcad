@@ -475,9 +475,6 @@ dist: dist-clean
 	mkdir $(DIST_DIR)/tests
 	cp -p $(srcdir)/tests/*.{tcl,test} $(DIST_DIR)/tests/
 
-	mkdir $(DIST_DIR)/unix
-	cp -p $(srcdir)/unix/tktable.spec $(DIST_DIR)/unix/
-
 	mkdir $(DIST_DIR)/win
 	cp -p $(srcdir)/win/makefile.vc $(DIST_DIR)/win/
 

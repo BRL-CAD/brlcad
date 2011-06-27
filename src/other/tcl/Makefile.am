@@ -341,7 +341,6 @@ EXTRA_DIST = \
 	unix/installManPage \
 	unix/ldAix \
 	unix/tcl.m4 \
-	unix/tcl.spec \
 	unix/tclAppInit.c \
 	unix/tclConfig.h.in \
 	unix/tclConfig.sh.in \

@@ -160,7 +160,6 @@ EXTRA_DIST = \
 	unix/installManPage \
 	unix/license.terms \
 	unix/tcl.m4 \
-	unix/tk.spec \
 	unix/tkAppInit.c \
 	unix/tkConfig.h.in \
 	unix/tkConfig.sh.in \
