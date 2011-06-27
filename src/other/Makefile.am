@@ -173,6 +173,9 @@ endif
 
 EXTRA_DIST = \
 	boost \
+	byacc \
+	flex \
+	m4 \
 	togl \
 	CMakeLists.txt
 
