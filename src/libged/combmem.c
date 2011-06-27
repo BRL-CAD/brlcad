@@ -977,6 +977,7 @@ ged_combmem(struct ged *gedp, int argc, const char *argv[])
     char c;
     enum etypes iflag = ETYPES_ABS;
     enum etypes rflag = ETYPES_NULL;
+    const char *cmd_name = argv[0];
     static const char *usage = "[-i type] [-r type] comb [op1 name1 az1 el1 tw1 x1 y1 z1 sa1 sx1 sy1 sz1 ...]";
 
     /* initialize result */
@@ -984,7 +985,7 @@ ged_combmem(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 	return GED_HELP;
     }
 
@@ -1066,7 +1067,7 @@ ged_combmem(struct ged *gedp, int argc, const char *argv[])
     }
 
 bad:
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
     return GED_ERROR;
 }
 
