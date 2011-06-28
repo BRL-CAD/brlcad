@@ -34,12 +34,13 @@
 
 #include "./ged_private.h"
 
+
 int
 ged_arb(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
-    struct rt_db_internal	internal;
-    struct rt_arb_internal	*arb;
+    struct rt_db_internal internal;
+    struct rt_arb_internal *arb;
     int i, j;
     fastf_t rota, fb;
     vect_t norm1, norm2, norm3;
@@ -80,8 +81,8 @@ ged_arb(struct ged *gedp, int argc, const char *argv[])
     rota *= bn_degtorad;
     fb *= bn_degtorad;
 
-    BU_GETSTRUCT( arb, rt_arb_internal );
-    RT_DB_INTERNAL_INIT( &internal );
+    BU_GETSTRUCT(arb, rt_arb_internal);
+    RT_DB_INTERNAL_INIT(&internal);
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_ARB8;
     internal.idb_meth = &rt_functab[ID_ARB8];
@@ -102,30 +103,31 @@ ged_arb(struct ged *gedp, int argc, const char *argv[])
 
     /* find two perpendicular vectors which are perpendicular to norm */
     j = 0;
-    for ( i = 0; i < 3; i++ )  {
-	if ( fabs(norm1[i]) < fabs(norm1[j]) )
+    for (i = 0; i < 3; i++) {
+	if (fabs(norm1[i]) < fabs(norm1[j]))
 	    j = i;
     }
-    VSET( norm2, 0.0, 0.0, 0.0 );
+    VSET(norm2, 0.0, 0.0, 0.0);
     norm2[j] = 1.0;
-    VCROSS( norm3, norm2, norm1 );
-    VCROSS( norm2, norm3, norm1 );
+    VCROSS(norm3, norm2, norm1);
+    VCROSS(norm2, norm3, norm1);
 
     /* create new rpp 20x20x2 */
     /* the 20x20 faces are in rot, fb plane */
-    VUNITIZE( norm2 );
-    VUNITIZE( norm3 );
-    VJOIN1( arb->pt[1], arb->pt[0], 508.0, norm2 );
-    VJOIN1( arb->pt[3], arb->pt[0], -508.0, norm3 );
-    VJOIN2( arb->pt[2], arb->pt[0], 508.0, norm2, -508.0, norm3 );
-    for ( i=0; i<4; i++ )
-	VJOIN1( arb->pt[i+4], arb->pt[i], -50.8, norm1 );
+    VUNITIZE(norm2);
+    VUNITIZE(norm3);
+    VJOIN1(arb->pt[1], arb->pt[0], 508.0, norm2);
+    VJOIN1(arb->pt[3], arb->pt[0], -508.0, norm3);
+    VJOIN2(arb->pt[2], arb->pt[0], 508.0, norm2, -508.0, norm3);
+    for (i=0; i<4; i++)
+	VJOIN1(arb->pt[i+4], arb->pt[i], -50.8, norm1);
 
     GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&internal.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
 
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

@@ -36,9 +36,9 @@ int
 ged_adjust(struct ged *gedp, int argc, const char *argv[])
 {
     int status;
-    struct directory	*dp;
-    char			*name;
-    struct rt_db_internal	 intern;
+    struct directory *dp;
+    char *name;
+    struct rt_db_internal intern;
     static const char *usage = "object attr value ?attr value?";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

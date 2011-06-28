@@ -32,6 +32,7 @@
 
 #include "./ged_private.h"
 
+
 int
 ged_ae2dir(struct ged *gedp, int argc, const char *argv[])
 {
@@ -81,6 +82,7 @@ ged_ae2dir(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

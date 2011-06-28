@@ -37,7 +37,7 @@ int
 _ged_cmpattr(const void *p1, const void *p2)
 {
     return bu_strcmp((char * const)((struct bu_attribute_value_pair *)p1)->name,
-              	    (char * const)((struct bu_attribute_value_pair *)p2)->name);
+		     (char * const)((struct bu_attribute_value_pair *)p2)->name);
 }
 
 

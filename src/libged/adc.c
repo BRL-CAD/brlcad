@@ -75,12 +75,12 @@ adc_usage(struct bu_vls *vp, const char *name)
 
 /*
  * Note - this needs to be rewritten to accept keyword/value pairs so
- *        that multiple attributes can be set with a single command call.
+ * that multiple attributes can be set with a single command call.
  */
 int
-ged_adc(struct ged	*gedp,
-	int		argc,
-	const char	*argv[])
+ged_adc(struct ged *gedp,
+	int argc,
+	const char *argv[])
 {
     char *command;
     char *parameter;
@@ -594,6 +594,7 @@ ged_adc(struct ged	*gedp,
     return GED_ERROR;
 }
 
+
 static void
 ged_adc_model_To_adc_view(struct ged_view *gvp)
 {
@@ -601,6 +602,7 @@ ged_adc_model_To_adc_view(struct ged_view *gvp)
     gvp->gv_adc.gas_dv_x = gvp->gv_adc.gas_pos_view[X] * GED_MAX;
     gvp->gv_adc.gas_dv_y = gvp->gv_adc.gas_pos_view[Y] * GED_MAX;
 }
+
 
 static void
 ged_adc_grid_To_adc_view(struct ged_view *gvp)
@@ -615,6 +617,7 @@ ged_adc_grid_To_adc_view(struct ged_view *gvp)
     gvp->gv_adc.gas_dv_y = gvp->gv_adc.gas_pos_view[Y] * GED_MAX;
 }
 
+
 static void
 ged_adc_view_To_adc_grid(struct ged_view *gvp)
 {
@@ -625,6 +628,7 @@ ged_adc_view_To_adc_grid(struct ged_view *gvp)
     MAT4X3PNT(view_pt, gvp->gv_model2view, model_pt);
     VSUB2(gvp->gv_adc.gas_pos_grid, gvp->gv_adc.gas_pos_view, view_pt);
 }
+
 
 void
 ged_calc_adc_pos(struct ged_view *gvp)
@@ -640,6 +644,7 @@ ged_calc_adc_pos(struct ged_view *gvp)
 	MAT4X3PNT(gvp->gv_adc.gas_pos_model, gvp->gv_view2model, gvp->gv_adc.gas_pos_view);
     }
 }
+
 
 void
 ged_calc_adc_a1(struct ged_view *gvp)
@@ -659,6 +664,7 @@ ged_calc_adc_a1(struct ged_view *gvp)
     }
 }
 
+
 void
 ged_calc_adc_a2(struct ged_view *gvp)
 {
@@ -676,6 +682,7 @@ ged_calc_adc_a2(struct ged_view *gvp)
 	}
     }
 }
+
 
 void
 ged_calc_adc_dst(struct ged_view *gvp)
@@ -695,6 +702,7 @@ ged_calc_adc_dst(struct ged_view *gvp)
     } else
 	gvp->gv_adc.gas_dst = (gvp->gv_adc.gas_dv_dist * INV_GED + 1.0) * M_SQRT1_2;
 }
+
 
 static void
 ged_adc_reset(struct ged_view *gvp)
@@ -718,6 +726,7 @@ ged_adc_reset(struct ged_view *gvp)
     gvp->gv_adc.gas_anchor_a2 = 0;
     gvp->gv_adc.gas_anchor_dst = 0;
 }
+
 
 static void
 ged_adc_vls_print(struct ged_view *gvp, fastf_t base2local, struct bu_vls *out_vp)

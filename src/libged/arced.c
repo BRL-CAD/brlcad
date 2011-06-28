@@ -114,7 +114,7 @@ ged_arced(struct ged *gedp, int argc, const char *argv[])
 	goto fail;
     }
 
-    if (bn_mat_is_identity( tp->tr_l.tl_mat)) {
+    if (bn_mat_is_identity(tp->tr_l.tl_mat)) {
 	bu_free((genptr_t)tp->tr_l.tl_mat, "tl_mat");
 	tp->tr_l.tl_mat = (matp_t)NULL;
     }
@@ -126,7 +126,7 @@ ged_arced(struct ged *gedp, int argc, const char *argv[])
     db_free_1anim(anp);
     return GED_OK;
 
- fail:
+fail:
     rt_db_free_internal(&intern);
     db_free_1anim(anp);
     return GED_ERROR;
