@@ -46,6 +46,9 @@ bench: run
 clean:
 	@${SH} ${srcdir}/run.sh clean
 
+distclean:
+	@${SH} ${srcdir}/run.sh clean
+
 clobber:
 	@${SH} ${srcdir}/run.sh clobber
 
