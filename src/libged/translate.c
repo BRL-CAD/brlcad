@@ -81,7 +81,7 @@ translate(struct ged *gedp, point_t * const keypoint,
     /* or */
     /* path supplied; modify this instance of obj only */
 
-    // ged_combmem(gedp, argc, argv);
+    /* ged_combmem(gedp, argc, argv); */
 
     db_free_full_path(&full_obj_path);
     return GED_OK;
