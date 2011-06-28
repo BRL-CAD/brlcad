@@ -18,6 +18,5 @@ mac
 misc
 tclconfig
 tests
-unix
 win
 CMake
