@@ -36,18 +36,18 @@
 int
 ged_copymat(struct ged *gedp, int argc, const char *argv[])
 {
-    char			*child = NULL;
-    char			*parent = NULL;
-    struct bu_vls		pvls;
-    int				i;
-    int				sep;
-    int				status;
-    struct db_tree_state	ts;
-    struct directory		*dp;
-    struct rt_comb_internal	*comb;
-    struct rt_db_internal	intern;
-    struct animate		*anp;
-    union tree			*tp;
+    char *child = NULL;
+    char *parent = NULL;
+    struct bu_vls pvls;
+    int i;
+    int sep;
+    int status;
+    struct db_tree_state ts;
+    struct directory *dp;
+    struct rt_comb_internal *comb;
+    struct rt_db_internal intern;
+    struct animate *anp;
+    union tree *tp;
     static const char *usage = "a/b c/d";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -69,7 +69,7 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
     }
 
     /*
-     *	Ensure that each argument contains exactly one slash
+     * Ensure that each argument contains exactly one slash
      */
     for (i = 1; i <= 2; ++i) {
 	if (((child = strchr(argv[i], '/')) == NULL)
@@ -100,8 +100,7 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
     parent = bu_vls_addr(&pvls);
     sep = strchr(parent, '/') - parent;
     bu_vls_trunc(&pvls, sep);
-    switch (rt_db_lookup_internal(gedp->ged_wdbp->dbip, parent, &dp, &intern, LOOKUP_NOISY, &rt_uniresource))
-    {
+    switch (rt_db_lookup_internal(gedp->ged_wdbp->dbip, parent, &dp, &intern, LOOKUP_NOISY, &rt_uniresource)) {
 	case ID_COMBINATION:
 	    if (dp->d_flags & RT_DIR_COMB)
 		break;
@@ -130,23 +129,19 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
     }
 
     /*
-     *	Finally, copy the matrix
+     * Finally, copy the matrix
      */
-    if (!bn_mat_is_identity(ts.ts_mat))
-    {
+    if (!bn_mat_is_identity(ts.ts_mat)) {
 	if (tp->tr_l.tl_mat == NULL)
 	    tp->tr_l.tl_mat = bn_mat_dup(ts.ts_mat);
 	else
 	    MAT_COPY(tp->tr_l.tl_mat, ts.ts_mat);
-    }
-    else if (tp->tr_l.tl_mat != NULL)
-    {
+    } else if (tp->tr_l.tl_mat != NULL) {
 	bu_free((genptr_t) tp->tr_l.tl_mat, "tl_mat");
 	tp->tr_l.tl_mat = (matp_t) 0;
     }
 
-    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0)
-    {
+    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: Database write error, aborting\n", argv[0]);
 	status = GED_ERROR;
 	goto wrapup;
@@ -154,13 +149,14 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
 
     status = GED_OK;
 
- wrapup:
+wrapup:
 
     bu_vls_free(&pvls);
     if (status == GED_ERROR)
 	rt_db_free_internal(&intern);
     return status;
 }
+
 
 /*
  * Local Variables:

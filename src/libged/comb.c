@@ -104,23 +104,24 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
+
 /*
- *			G E D _ C O M B A D D
+ * G E D _ C O M B A D D
  *
  * Add an instance of object 'objp' to combination 'name'.
  * If the combination does not exist, it is created.
  * region_flag is 1 (region), or 0 (group).
  *
- *  Preserves the GIFT semantics.
+ * Preserves the GIFT semantics.
  */
 struct directory *
-_ged_combadd(struct ged			*gedp,
-	    struct directory	*objp,
-	    char			*combname,
-	    int				region_flag,	/* true if adding region */
-	    int				relation,	/* = UNION, SUBTRACT, INTERSECT */
-	    int				ident,		/* "Region ID" */
-	    int				air		/* Air code */)
+_ged_combadd(struct ged *gedp,
+	     struct directory *objp,
+	     char *combname,
+	     int region_flag,	/* true if adding region */
+	     int relation,	/* = UNION, SUBTRACT, INTERSECT */
+	     int ident,		/* "Region ID" */
+	     int air		/* Air code */)
 {
     struct directory *dp;
     struct rt_db_internal intern;
@@ -167,9 +168,9 @@ _ged_combadd(struct ged			*gedp,
 	} else {
 	    comb->region_flag = 0;
 	}
-	RT_GET_TREE( tp, &rt_uniresource );
+	RT_GET_TREE(tp, &rt_uniresource);
 	tp->tr_l.tl_op = OP_DB_LEAF;
-	tp->tr_l.tl_name = bu_strdup( objp->d_namep );
+	tp->tr_l.tl_name = bu_strdup(objp->d_namep);
 	tp->tr_l.tl_mat = (matp_t)NULL;
 	comb->tree = tp;
 
@@ -201,8 +202,8 @@ _ged_combadd(struct ged			*gedp,
     }
 
     /* make space for an extra leaf */
-    node_count = db_tree_nleaves( comb->tree ) + 1;
-    tree_list = (struct rt_tree_array *)bu_calloc(node_count, sizeof( struct rt_tree_array ), "tree list");
+    node_count = db_tree_nleaves(comb->tree) + 1;
+    tree_list = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
 
     /* flatten tree */
     if (comb->tree) {
@@ -227,14 +228,14 @@ _ged_combadd(struct ged			*gedp,
     }
 
     /* make new leaf node, and insert at end of list */
-    RT_GET_TREE( tp, &rt_uniresource );
+    RT_GET_TREE(tp, &rt_uniresource);
     tree_list[node_count-1].tl_tree = tp;
     tp->tr_l.tl_op = OP_DB_LEAF;
-    tp->tr_l.tl_name = bu_strdup( objp->d_namep );
+    tp->tr_l.tl_name = bu_strdup(objp->d_namep);
     tp->tr_l.tl_mat = (matp_t)NULL;
 
     /* rebuild the tree */
-    comb->tree = (union tree *)db_mkgift_tree( tree_list, node_count, &rt_uniresource );
+    comb->tree = (union tree *)db_mkgift_tree(tree_list, node_count, &rt_uniresource);
 
     /* and finally, write it out */
     GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, 0);

@@ -70,7 +70,7 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
 
     argc -= bu_optind - 1;
     argv += bu_optind - 1;
-    
+
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
@@ -80,11 +80,11 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    fprintf( fp, "%s", hdr );
+    fprintf(fp, "%s", hdr);
     for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
-	(void)fprintf( fp, "%d\t%d\t%3d\t%3d\t%3d",
-		       mp->mt_low, mp->mt_high,
-		       mp->mt_r, mp->mt_g, mp->mt_b);
+	(void)fprintf(fp, "%d\t%d\t%3d\t%3d\t%3d",
+		      mp->mt_low, mp->mt_high,
+		      mp->mt_r, mp->mt_g, mp->mt_b);
 	(void)fprintf(fp, "\n");
     }
     (void)fclose(fp);
@@ -95,7 +95,7 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Read file and process it */
-    if ((fp = fopen( tmpfil, "r")) == NULL) {
+    if ((fp = fopen(tmpfil, "r")) == NULL) {
 	perror(tmpfil);
 	return GED_ERROR;
     }
@@ -194,6 +194,7 @@ ged_edcolor(struct ged *gedp, int argc, const char *argv[])
     return _ged_edcolor(gedp, argc, argv);
 }
 
+
 int
 ged_color(struct ged *gedp, int argc, const char *argv[])
 {
@@ -289,15 +290,11 @@ ged_color(struct ged *gedp, int argc, const char *argv[])
 
 
 /**
- *  			G E D _ C O L O R _ P U T R E C
- *@brief
- *  Used to create a database record and get it written out to a granule.
- *  In some cases, storage will need to be allocated.
+ * Used to create a database record and get it written out to a granule.
+ * In some cases, storage will need to be allocated.
  */
 void
-_ged_color_putrec(struct ged		*gedp,
-		 struct mater	*mp)
-		 
+_ged_color_putrec(struct ged *gedp, struct mater *mp)
 {
     struct directory dir;
     union record rec;
@@ -312,7 +309,7 @@ _ged_color_putrec(struct ged		*gedp,
     rec.md.md_b = mp->mt_b;
 
     /* Fake up a directory entry for db_* routines */
-    RT_DIR_SET_NAMEP( &dir, "_ged_color_putrec" );
+    RT_DIR_SET_NAMEP(&dir, "_ged_color_putrec");
     dir.d_magic = RT_DIR_MAGIC;
     dir.d_flags = 0;
 
@@ -334,15 +331,12 @@ _ged_color_putrec(struct ged		*gedp,
     }
 }
 
+
 /**
- *  			W D B _ C O L O R _ Z A P R E C
- *@brief
- *  Used to release database resources occupied by a material record.
+ * Used to release database resources occupied by a material record.
  */
 void
-_ged_color_zaprec(struct ged		*gedp,
-		 struct mater	*mp)
-		 
+_ged_color_zaprec(struct ged *gedp, struct mater *mp)
 {
     struct directory dir;
 
@@ -351,7 +345,7 @@ _ged_color_zaprec(struct ged		*gedp,
 	return;
 
     dir.d_magic = RT_DIR_MAGIC;
-    RT_DIR_SET_NAMEP( &dir, "_ged_color_zaprec" );
+    RT_DIR_SET_NAMEP(&dir, "_ged_color_zaprec");
     dir.d_len = 1;
     dir.d_addr = mp->mt_daddr;
     dir.d_flags = 0;
@@ -362,6 +356,7 @@ _ged_color_zaprec(struct ged		*gedp,
     }
     mp->mt_daddr = MATER_NO_ADDR;
 }
+
 
 /*
  * Local Variables:

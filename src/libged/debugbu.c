@@ -51,7 +51,7 @@ ged_debugbu(struct ged *gedp, int argc, const char *argv[])
 
     /* get libbu's debug bit vector */
     if (argc == 1) {
-	bu_vls_printb(&gedp->ged_result_str, "Possible flags", 0xffffffffL, BU_DEBUG_FORMAT );
+	bu_vls_printb(&gedp->ged_result_str, "Possible flags", 0xffffffffL, BU_DEBUG_FORMAT);
 	bu_vls_printf(&gedp->ged_result_str, "\n");
     } else {
 	/* set libbu's debug bit vector */
@@ -61,7 +61,7 @@ ged_debugbu(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    bu_vls_printb(&gedp->ged_result_str, "bu_debug", bu_debug, BU_DEBUG_FORMAT );
+    bu_vls_printb(&gedp->ged_result_str, "bu_debug", bu_debug, BU_DEBUG_FORMAT);
     bu_vls_printf(&gedp->ged_result_str, "\n");
 
     return GED_OK;

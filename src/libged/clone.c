@@ -41,12 +41,12 @@
  *     from 'mess.s1-1' to 'mess.s1.c1'.  Also, prims need to increment
  *     by the 'i' number but combs, regions, and assemblies (.c#, .r#, or
  *     just name with a # at the end) should increment by 1.  So you end
- *     up with widget_1, widget_2, widget_3   and not widget_1, widget_4,
+ *     up with widget_1, widget_2, widget_3 and not widget_1, widget_4,
  *     widget_7...
  *  5. Tree structure - please retain tree structure to the extent that
  *     you can and try not to re-create prims or combs used more than once.
  *     No warning needed for redundant copies.  Warnings can come later...
- * D6. Display - do display clones but do not resize or re-center view. 
+ * D6. Display - do display clones but do not resize or re-center view.
  */
 
 #include "common.h"
@@ -72,24 +72,26 @@
  * requested and values necessary to perform the cloning operation.
  */
 struct ged_clone_state {
-    struct ged		*gedp;
-    struct directory	*src;		/* Source object */
-    int			incr;		/* Amount to increment between copies */
-    size_t		n_copies;	/* Number of copies to make */
-    hvect_t		trans;		/* Translation between copies */
-    hvect_t		rot;		/* Rotation between copies */
-    hvect_t		rpnt;		/* Point to rotate about (default 0 0 0) */
-    int			miraxis;	/* Axis to mirror copy */
-    fastf_t		mirpos;		/* Point on axis to mirror copy */
-    int			autoview;	/* Execute autoview after drawing all objects */
-    int			updpos;		/* Position of number to update (for -c) */
-    struct bu_vls	olist;          /* List of cloned object names */
+    struct ged *gedp;
+    struct directory *src;	/* Source object */
+    int incr;			/* Amount to increment between copies */
+    size_t n_copies;		/* Number of copies to make */
+    hvect_t trans;		/* Translation between copies */
+    hvect_t rot;		/* Rotation between copies */
+    hvect_t rpnt;		/* Point to rotate about (default 0 0 0) */
+    int miraxis;		/* Axis to mirror copy */
+    fastf_t mirpos;		/* Point on axis to mirror copy */
+    int autoview;		/* Execute autoview after drawing all objects */
+    int updpos;			/* Position of number to update (for -c) */
+    struct bu_vls olist;        /* List of cloned object names */
 };
+
 
 struct name {
     struct bu_vls src;		/* source object name */
     struct bu_vls *dest;	/* dest object names */
 };
+
 
 /**
  * structure used to store the names of objects that are to be
@@ -103,6 +105,7 @@ struct nametbl {
     int names_used;
 };
 
+
 static struct nametbl obj_list;
 
 /**
@@ -113,9 +116,10 @@ struct knot {
     fastf_t c[3][4];
 };
 
+
 /**
  * a spline path with various segments, break points, and polynamial
- *  values.
+ * values.
  */
 struct spline {
     int n_segs;
@@ -123,11 +127,13 @@ struct spline {
     struct knot *k; /* polynomials */
 };
 
+
 struct link {
     struct bu_vls name;
     fastf_t len;
     fastf_t pct;
 };
+
 
 /**
  * initialize the name list used for stashing destination names
@@ -148,6 +154,7 @@ init_list(struct nametbl *l, int s)
     l->names_len = 10;
     l->names_used = 0;
 }
+
 
 /**
  * add a new name to the name list
@@ -175,6 +182,7 @@ add_to_list(struct nametbl *l, char *name)
     return l->names_used-1; /* return number of available slots */
 }
 
+
 /**
  * returns the location of 'name' in the list if it exists, returns
  * -1 otherwise.
@@ -190,6 +198,7 @@ index_in_list(struct nametbl l, char *name)
     return -1;
 }
 
+
 /**
  * returns truthfully if 'name' exists in the list
  */
@@ -198,6 +207,7 @@ is_in_list(struct nametbl l, char *name)
 {
     return index_in_list(l, name) != -1;
 }
+
 
 /**
  * returns the next available/unused name, using a consistent naming
@@ -214,12 +224,12 @@ clone_get_name(struct directory *dp, struct ged_clone_state *state, size_t iter)
     newname = bu_vls_vlsinit();
 
     /* Ugh. This needs much repair/cleanup. */
-    if ( state->updpos == 0 ) {
-	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%512s", prefix, &num, suffix, suffix2); /* CLONE_BUFSIZE */
+    if (state->updpos == 0) {
+	sscanf(dp->d_namep, "%[!-/, :-~]%d%[!-/, :-~]%512s", prefix, &num, suffix, suffix2); /* CLONE_BUFSIZE */
 	snprintf(suffix, CLONE_BUFSIZE, "%s%s", suffix, suffix2);
-    } else if ( state->updpos == 1 ) {
+    } else if (state->updpos == 1) {
 	int num2 = 0;
-	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%d%[!-/,:-~]", prefix, &num2, suffix2, &num, suffix);
+	sscanf(dp->d_namep, "%[!-/, :-~]%d%[!-/, :-~]%d%[!-/, :-~]", prefix, &num2, suffix2, &num, suffix);
         if (num > 0) {
 	    snprintf(prefix, CLONE_BUFSIZE, "%s%d%s", prefix, num2, suffix2);
 	} else {
@@ -253,6 +263,7 @@ clone_get_name(struct directory *dp, struct ged_clone_state *state, size_t iter)
     } while (db_lookup(state->gedp->ged_wdbp->dbip, bu_vls_addr(newname), LOOKUP_QUIET) != NULL);
     return newname;
 }
+
 
 /**
  * make a copy of a v4 solid by adding it to our book-keeping list,
@@ -341,6 +352,7 @@ copy_v4_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 
     return;
 }
+
 
 /**
  * make a copy of a v5 solid by adding it to our book-keeping list,
@@ -435,6 +447,7 @@ copy_v5_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
     return;
 }
 
+
 /**
  * make n copies of a database combination by adding it to our
  * book-keeping list, adding it to the directory, then writing it out
@@ -465,6 +478,7 @@ copy_solid(struct db_i *dbip, struct directory *proto, genptr_t clientData)
 	(void)copy_v5_solid(dbip, proto, (struct ged_clone_state *)state, idx);
     return;
 }
+
 
 /**
  * make n copies of a v4 combination.
@@ -539,6 +553,7 @@ copy_v4_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
     return dp;
 }
 
+
 /*
  * update the v5 combination tree with the new names.
  * DESTRUCTIVE RECURSIVE
@@ -571,6 +586,7 @@ copy_v5_comb_tree(struct ged_clone_state *state, union tree *tree, size_t idx)
     }
     return 0;
 }
+
 
 /**
  * make n copies of a v5 combination.
@@ -616,7 +632,7 @@ copy_v5_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
 		return NULL;
 	    }
 
-	    if ((dp=db_diradd(dbip, bu_vls_addr(name), RT_DIR_PHONY_ADDR, 0, proto->d_flags, (genptr_t)&proto->d_minor_type)) == RT_DIR_NULL ) {
+	    if ((dp=db_diradd(dbip, bu_vls_addr(name), RT_DIR_PHONY_ADDR, 0, proto->d_flags, (genptr_t)&proto->d_minor_type)) == RT_DIR_NULL) {
 		bu_vls_printf(&state->gedp->ged_result_str, "An error has occured while adding a new object to the database.");
 		return NULL;
 	    }
@@ -645,6 +661,7 @@ copy_v5_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
 
     return dp;
 }
+
 
 /**
  * make n copies of a database combination by adding it to our
@@ -677,6 +694,7 @@ copy_comb(struct db_i *dbip, struct directory *proto, genptr_t clientData)
 
     return;
 }
+
 
 /**
  * recursively copy a tree of geometry
@@ -712,7 +730,7 @@ copy_tree(struct directory *dp, struct resource *resp, struct ged_clone_state *s
 	     * if it is a combination/region, copy the objects that
 	     * make up the object.
 	     */
-	    for (i = 1; i < dp->d_len; i++ ) {
+	    for (i = 1; i < dp->d_len; i++) {
 		if ((mdp = db_lookup(state->gedp->ged_wdbp->dbip, rp[i].M.m_instname, LOOKUP_NOISY)) == RT_DIR_NULL) {
 		    errors++;
 		    bu_vls_printf(&state->gedp->ged_result_str, "WARNING: failed to locate \"%s\"\n", rp[i].M.m_instname);
@@ -748,7 +766,7 @@ copy_tree(struct directory *dp, struct resource *resp, struct ged_clone_state *s
     else
 	copy = db_lookup(state->gedp->ged_wdbp->dbip, bu_vls_addr(copyname), LOOKUP_QUIET);
 
- done_copy_tree:
+done_copy_tree:
     if (rp)
 	bu_free((char *)rp, "copy_tree record[]");
     if (copyname)
@@ -758,6 +776,7 @@ copy_tree(struct directory *dp, struct resource *resp, struct ged_clone_state *s
 
     return copy;
 }
+
 
 /**
  * copy an object, recursivley copying all of the object's contents
@@ -793,6 +812,7 @@ deep_copy_object(struct resource *resp, struct ged_clone_state *state)
     return copy;
 }
 
+
 /**
  * how to use clone.  blissfully simple interface.
  */
@@ -815,6 +835,7 @@ print_usage(struct bu_vls *str)
     bu_vls_printf(str, "-v\t\t\t- Prints version info.\n");
     return;
 }
+
 
 /**
  * process the user-provided arguments. stash their operations into
@@ -929,6 +950,7 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
 
     return GED_OK;
 }
+
 
 int
 ged_clone(struct ged *gedp, int argc, const char *argv[])

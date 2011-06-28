@@ -43,14 +43,15 @@ struct tokens {
     union tree *tp;
 };
 
+
 /* token types */
-#define	GED_TOK_NULL	0
-#define	GED_TOK_LPAREN	1
-#define	GED_TOK_RPAREN	2
-#define	GED_TOK_UNION	3
-#define	GED_TOK_INTER	4
-#define	GED_TOK_SUBTR	5
-#define	GED_TOK_TREE	6
+#define GED_TOK_NULL	0
+#define GED_TOK_LPAREN	1
+#define GED_TOK_RPAREN	2
+#define GED_TOK_UNION	3
+#define GED_TOK_INTER	4
+#define GED_TOK_SUBTR	5
+#define GED_TOK_TREE	6
 
 HIDDEN void
 ged_free_tokens(struct bu_list *hp)
@@ -67,18 +68,20 @@ ged_free_tokens(struct bu_list *hp)
     }
 }
 
+
 HIDDEN void
 ged_append_union(struct bu_list *hp)
 {
     struct tokens *tok;
 
-    BU_CK_LIST_HEAD( hp );
+    BU_CK_LIST_HEAD(hp);
 
     tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
     tok->type = GED_TOK_UNION;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
 }
+
 
 HIDDEN void
 ged_append_inter(struct bu_list *hp)
@@ -90,8 +93,9 @@ ged_append_inter(struct bu_list *hp)
     tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
     tok->type = GED_TOK_INTER;
     tok->tp = (union tree *)NULL;
-    BU_LIST_INSERT( hp, &tok->l );
+    BU_LIST_INSERT(hp, &tok->l);
 }
+
 
 HIDDEN void
 ged_append_subtr(struct bu_list *hp)
@@ -103,8 +107,9 @@ ged_append_subtr(struct bu_list *hp)
     tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
     tok->type = GED_TOK_SUBTR;
     tok->tp = (union tree *)NULL;
-    BU_LIST_INSERT( hp, &tok->l );
+    BU_LIST_INSERT(hp, &tok->l);
 }
+
 
 HIDDEN void
 ged_append_lparen(struct bu_list *hp)
@@ -116,8 +121,9 @@ ged_append_lparen(struct bu_list *hp)
     tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
     tok->type = GED_TOK_LPAREN;
     tok->tp = (union tree *)NULL;
-    BU_LIST_INSERT( hp, &tok->l );
+    BU_LIST_INSERT(hp, &tok->l);
 }
+
 
 HIDDEN void
 ged_append_rparen(struct bu_list *hp)
@@ -132,6 +138,7 @@ ged_append_rparen(struct bu_list *hp)
     BU_LIST_INSERT(hp, &tok->l);
 }
 
+
 HIDDEN int
 ged_add_operator(struct ged *gedp, struct bu_list *hp, char ch, short int *last_tok)
 {
@@ -139,8 +146,7 @@ ged_add_operator(struct ged *gedp, struct bu_list *hp, char ch, short int *last_
 
     BU_CK_LIST_HEAD(hp);
 
-    switch ( ch )
-    {
+    switch (ch) {
 	case 'u':
 	    ged_append_union(hp);
 	    *last_tok = GED_TOK_UNION;
@@ -163,6 +169,7 @@ ged_add_operator(struct ged *gedp, struct bu_list *hp, char ch, short int *last_
     return GED_OK;
 }
 
+
 HIDDEN int
 ged_add_operand(struct ged *gedp, struct bu_list *hp, char *name)
 {
@@ -177,7 +184,7 @@ ged_add_operand(struct ged *gedp, struct bu_list *hp, char *name)
     ptr_lparen = strchr(name, '(');
     ptr_rparen = strchr(name, ')');
 
-    RT_GET_TREE( node, &rt_uniresource );
+    RT_GET_TREE(node, &rt_uniresource);
     node->tr_op = OP_DB_LEAF;
     node->tr_l.tl_mat = (matp_t)NULL;
     if (ptr_lparen || ptr_rparen) {
@@ -201,13 +208,12 @@ ged_add_operand(struct ged *gedp, struct bu_list *hp, char *name)
 		name_len = tmp1;
 	    else
 		name_len = tmp2;
-	}
-	else {
+	} else {
 	    bu_vls_printf(&gedp->ged_result_str, "Cannot determine length of operand name: %s, aborting\n", name);
 	    return 0;
 	}
     } else
-	name_len = (int)strlen( name );
+	name_len = (int)strlen(name);
 
     node->tr_l.tl_name = (char *)bu_malloc(name_len+1, "node name");
     bu_strlcpy(node->tr_l.tl_name, name, name_len+1);
@@ -219,20 +225,21 @@ ged_add_operand(struct ged *gedp, struct bu_list *hp, char *name)
     return name_len;
 }
 
+
 HIDDEN void
 ged_do_inter(struct bu_list *hp)
 {
     struct tokens *tok;
 
-    for (BU_LIST_FOR(tok, tokens, hp )) {
+    for (BU_LIST_FOR(tok, tokens, hp)) {
 	struct tokens *prev, *next;
 	union tree *tp;
 
 	if (tok->type != GED_TOK_INTER)
 	    continue;
 
-	prev = BU_LIST_PREV( tokens, &tok->l );
-	next = BU_LIST_NEXT( tokens, &tok->l );
+	prev = BU_LIST_PREV(tokens, &tok->l);
+	next = BU_LIST_NEXT(tokens, &tok->l);
 
 	if (prev->type !=GED_TOK_TREE || next->type != GED_TOK_TREE)
 	    continue;
@@ -244,14 +251,15 @@ ged_do_inter(struct bu_list *hp)
 	tp->tr_b.tb_regionp = (struct region *)NULL;
 	tp->tr_b.tb_left = prev->tp;
 	tp->tr_b.tb_right = next->tp;
-	BU_LIST_DEQUEUE( &tok->l );
-	bu_free( (char *)tok, "tok" );
-	BU_LIST_DEQUEUE( &prev->l );
-	bu_free( (char *)prev, "prev" );
+	BU_LIST_DEQUEUE(&tok->l);
+	bu_free((char *)tok, "tok");
+	BU_LIST_DEQUEUE(&prev->l);
+	bu_free((char *)prev, "prev");
 	next->tp = tp;
 	tok = next;
     }
 }
+
 
 HIDDEN void
 ged_do_union_subtr(struct bu_list *hp)
@@ -265,8 +273,8 @@ ged_do_union_subtr(struct bu_list *hp)
 	if (tok->type != GED_TOK_UNION && tok->type != GED_TOK_SUBTR)
 	    continue;
 
-	prev = BU_LIST_PREV( tokens, &tok->l );
-	next = BU_LIST_NEXT( tokens, &tok->l );
+	prev = BU_LIST_PREV(tokens, &tok->l);
+	next = BU_LIST_NEXT(tokens, &tok->l);
 
 	if (prev->type !=GED_TOK_TREE || next->type != GED_TOK_TREE)
 	    continue;
@@ -290,6 +298,7 @@ ged_do_union_subtr(struct bu_list *hp)
     }
 }
 
+
 HIDDEN int
 ged_do_paren(struct bu_list *hp)
 {
@@ -301,8 +310,8 @@ ged_do_paren(struct bu_list *hp)
 	if (tok->type != GED_TOK_TREE)
 	    continue;
 
-	prev = BU_LIST_PREV( tokens, &tok->l );
-	next = BU_LIST_NEXT( tokens, &tok->l );
+	prev = BU_LIST_PREV(tokens, &tok->l);
+	next = BU_LIST_NEXT(tokens, &tok->l);
 
 	if (prev->type !=GED_TOK_LPAREN || next->type != GED_TOK_RPAREN)
 	    continue;
@@ -322,6 +331,7 @@ ged_do_paren(struct bu_list *hp)
 	return 0;	/* more to do */
 
 }
+
 
 HIDDEN union tree *
 ged_eval_bool(struct bu_list *hp)
@@ -347,6 +357,7 @@ ged_eval_bool(struct bu_list *hp)
     return (union tree *)NULL;
 }
 
+
 HIDDEN int
 ged_check_syntax(struct ged *gedp, struct bu_list *hp, char *comb_name, struct directory *dp)
 {
@@ -365,12 +376,12 @@ ged_check_syntax(struct ged *gedp, struct bu_list *hp, char *comb_name, struct d
 	switch (tok->type) {
 	    case GED_TOK_LPAREN:
 		paren_count++;
-		if ( last_tok == GED_TOK_RPAREN )
+		if (last_tok == GED_TOK_RPAREN)
 		    missing_op++;
 		break;
 	    case GED_TOK_RPAREN:
 		paren_count--;
-		if ( last_tok == GED_TOK_LPAREN )
+		if (last_tok == GED_TOK_LPAREN)
 		    missing_exp++;
 		break;
 	    case GED_TOK_UNION:
@@ -380,9 +391,9 @@ ged_check_syntax(struct ged *gedp, struct bu_list *hp, char *comb_name, struct d
 		break;
 	    case GED_TOK_TREE:
 		arg_count++;
-		if ( !dp && BU_STR_EQUAL( comb_name, tok->tp->tr_l.tl_name ) )
+		if (!dp && BU_STR_EQUAL(comb_name, tok->tp->tr_l.tl_name))
 		    circular_ref++;
-		else if ( db_lookup( gedp->ged_wdbp->dbip, tok->tp->tr_l.tl_name, LOOKUP_QUIET ) == RT_DIR_NULL )
+		else if (db_lookup(gedp->ged_wdbp->dbip, tok->tp->tr_l.tl_name, LOOKUP_QUIET) == RT_DIR_NULL)
 		    bu_vls_printf(&gedp->ged_result_str, "WARNING: '%s' does not actually exist\n", tok->tp->tr_l.tl_name);
 		break;
 	}
@@ -423,6 +434,7 @@ ged_check_syntax(struct ged *gedp, struct bu_list *hp, char *comb_name, struct d
 
     return 0;
 }
+
 
 int
 ged_comb_std(struct ged *gedp, int argc, const char *argv[])
@@ -487,7 +499,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 
     if ((region_flag != -1) && (argc == 0)) {
 	/*
-	 *	Set/Reset the REGION flag of an existing combination
+	 * Set/Reset the REGION flag of an existing combination
 	 */
 	GED_DB_LOOKUP(gedp, dp, comb_name, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
 
@@ -501,7 +513,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	RT_CK_COMB(comb);
 
 	if (region_flag) {
-	    if ( !comb->region_flag ) {
+	    if (!comb->region_flag) {
 		/* assign values from the defaults */
 		comb->region_id = gedp->ged_wdbp->wdb_item_default++;
 		comb->aircode = gedp->ged_wdbp->wdb_air_default;
@@ -509,8 +521,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 		comb->los = gedp->ged_wdbp->wdb_los_default;
 	    }
 	    comb->region_flag = 1;
-	}
-	else
+	} else
 	    comb->region_flag = 0;
 
 	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
@@ -518,12 +529,12 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
     }
     /*
-     *	At this point, we know we have a Boolean expression.
-     *	If the combination already existed and region_flag is -1,
-     *	then leave its region_flag alone.
-     *	If the combination didn't exist yet,
-     *	then pretend region_flag was 0.
-     *	Otherwise, make sure to set its c_flags according to region_flag.
+     * At this point, we know we have a Boolean expression.
+     * If the combination already existed and region_flag is -1,
+     * then leave its region_flag alone.
+     * If the combination didn't exist yet,
+     * then pretend region_flag was 0.
+     * Otherwise, make sure to set its c_flags according to region_flag.
      */
 
     GED_CHECK_EXISTS(gedp, comb_name, LOOKUP_QUIET, GED_ERROR);
@@ -542,11 +553,11 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	    while (*ptr == '(' || *ptr == ')') {
 		switch (*ptr) {
 		    case '(':
-			ged_append_lparen( &tok_hd.l );
+			ged_append_lparen(&tok_hd.l);
 			last_tok = GED_TOK_LPAREN;
 			break;
 		    case ')':
-			ged_append_rparen( &tok_hd.l );
+			ged_append_rparen(&tok_hd.l);
 			last_tok = GED_TOK_RPAREN;
 			break;
 		}
@@ -569,7 +580,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 		/* next token MUST be an operand */
 		int name_len;
 
-		name_len = ged_add_operand(gedp, &tok_hd.l, ptr );
+		name_len = ged_add_operand(gedp, &tok_hd.l, ptr);
 		if (name_len < 1) {
 		    ged_free_tokens(&tok_hd.l);
 		    if (dp != RT_DIR_NULL)
@@ -593,7 +604,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 		/* must be an operand */
 		int name_len;
 
-		name_len = ged_add_operand(gedp, &tok_hd.l, ptr );
+		name_len = ged_add_operand(gedp, &tok_hd.l, ptr);
 		if (name_len < 1) {
 		    ged_free_tokens(&tok_hd.l);
 		    if (dp != RT_DIR_NULL)
@@ -626,7 +637,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 		    break;
 		case GED_TOK_TREE:
 		    if (tok->tp && BU_STR_EQUAL(tok->tp->tr_l.tl_name, comb_name)) {
-			db_free_tree( tok->tp, &rt_uniresource );
+			db_free_tree(tok->tp, &rt_uniresource);
 			GED_DB_GET_INTERNAL(gedp, &intern1, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
 			comb1 = (struct rt_comb_internal *)intern1.idb_ptr;
 			RT_CK_COMB(comb1);

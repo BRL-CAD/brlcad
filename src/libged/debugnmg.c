@@ -51,7 +51,7 @@ ged_debugnmg(struct ged *gedp, int argc, const char *argv[])
 
     /* get librt's NMG debug bit vector */
     if (argc == 1) {
-	bu_vls_printb(&gedp->ged_result_str, "Possible flags", 0xffffffffL, NMG_DEBUG_FORMAT );
+	bu_vls_printb(&gedp->ged_result_str, "Possible flags", 0xffffffffL, NMG_DEBUG_FORMAT);
 	bu_vls_printf(&gedp->ged_result_str, "\n");
     } else {
 	/* set librt's NMG debug bit vector */
@@ -61,7 +61,7 @@ ged_debugnmg(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    bu_vls_printb(&gedp->ged_result_str, "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
+    bu_vls_printb(&gedp->ged_result_str, "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT);
     bu_vls_printf(&gedp->ged_result_str, "\n");
 
     return GED_OK;

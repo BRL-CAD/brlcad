@@ -80,6 +80,7 @@ ged_copy(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
+
 int
 ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const char *to, int fflag)
 {

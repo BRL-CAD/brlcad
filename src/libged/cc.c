@@ -19,7 +19,7 @@
  */
 /** @file libged/cc.c
  *
- * The cc (create constraint)  command.
+ * The cc (create constraint) command.
  *
  */
 
@@ -47,9 +47,9 @@ ged_cc(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "name constraint_expression";
 
-    struct rt_db_internal	internal;
-    struct rt_constraint_internal	*con_ip;
-    struct directory	*dp;
+    struct rt_db_internal internal;
+    struct rt_constraint_internal *con_ip;
+    struct directory *dp;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -61,7 +61,7 @@ ged_cc(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
-    
+
     GED_CHECK_EXISTS(gedp, argv[1], LOOKUP_QUIET, GED_ERROR);
     GED_CHECK_EXISTS(gedp, argv[2], LOOKUP_QUIET, GED_ERROR);
 
@@ -75,14 +75,15 @@ ged_cc(struct ged *gedp, int argc, const char *argv[])
     con_ip->id = 324;
     con_ip->type = 4;
     bu_vls_init(&(con_ip->expression));
-    bu_vls_strcat(&(con_ip->expression),argv[2]);
+    bu_vls_strcat(&(con_ip->expression), argv[2]);
 
-    GED_DB_DIRADD(gedp,dp,argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_NON_GEOM , (genptr_t)&internal.idb_type,GED_ERROR);
+    GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_NON_GEOM , (genptr_t)&internal.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
 
     bu_vls_printf(&gedp->ged_result_str, "Constraint saved");
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

@@ -374,7 +374,7 @@ ged_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp
     rt_db_free_internal(&intern);
     return 0;
 
- out:
+out:
     {
 	struct db_full_path pp;
 	db_full_path_init(&pp);
@@ -405,7 +405,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 
     } else {
 	/* catch */
-	char  *sofar = db_path_to_string(pathp);
+	char *sofar = db_path_to_string(pathp);
 
 	bu_vls_printf(&dgcdp->gedp->ged_result_str, "WARNING: Boolean evaluation of %s failed!!!\n", sofar);
 	bu_free((genptr_t)sofar, "path string");
@@ -429,7 +429,7 @@ process_triangulation(struct db_tree_state *tsp, const struct db_full_path *path
     } else {
 	/* catch */
 
-	char  *sofar = db_path_to_string(pathp);
+	char *sofar = db_path_to_string(pathp);
 
 	bu_vls_printf(&dgcdp->gedp->ged_result_str, "WARNING: Triangulation of %s failed!!!\n", sofar);
 	bu_free((genptr_t)sofar, "path string");
@@ -1376,7 +1376,7 @@ ged_addToDisplay(struct ged *gedp,
     bu_vls_init(&gdlp->gdl_path);
     bu_vls_printf(&gdlp->gdl_path, "%s", name);
 
- end:
+end:
     if (found_namepath)
 	db_free_full_path(&namepath);
 
