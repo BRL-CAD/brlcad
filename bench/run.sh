@@ -930,16 +930,18 @@ bench ( ) {
     bench_rtfms=""
     bench_percent=100
     bench_start_time="`date '+%H %M %S'`"
-    bench_overall_elapsed=0
+    bench_overall_elapsed=-1
 
     # clear out before we begin
     if test -f ${bench_testname}.pix; then mv -f ${bench_testname}.pix ${bench_testname}.pix.$$; fi
     if test -f ${bench_testname}.log; then mv -f ${bench_testname}.log ${bench_testname}.log.$$; fi
 
-    while test $bench_overall_elapsed -le $MAXTIME ; do
+    # use -lt since -le makes causes a "floor(elapsed)" comparison and too many iterations
+    while test $bench_overall_elapsed -lt $MAXTIME ; do
 
-	bench_elapsed=0
-	while test $bench_elapsed -le $TIMEFRAME ; do
+	bench_elapsed=-1
+	# use -lt since -le makes causes a "floor(elapsed)" comparison and too many iterations
+	while test $bench_elapsed -lt $TIMEFRAME ; do
 
 	    # clear out any previous run
 	    if test -f ${bench_testname}.pix; then mv -f ${bench_testname}.pix ${bench_testname}.pix.$$; fi
@@ -1019,7 +1021,7 @@ EOF
 
 	    # see if we need to break out early
 	    bench_overall_elapsed="`$ELP --seconds $bench_start_time`"
-	    if test $bench_overall_elapsed -gt $MAXTIME ; then
+	    if test $bench_overall_elapsed -ge $MAXTIME ; then
 		break;
 	    fi
 	done
