@@ -110,6 +110,7 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
+
 /*
  * Local Variables:
  * tab-width: 8

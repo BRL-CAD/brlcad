@@ -74,9 +74,9 @@ ged_bot_smooth(struct ged *gedp, int argc, const char *argv[])
 
     while (*argv[arg_index] == '-') {
 	/* this is an option */
-	if ( BU_STR_EQUAL( argv[arg_index], "-t" ) ) {
+	if (BU_STR_EQUAL(argv[arg_index], "-t")) {
 	    arg_index++;
-	    tolerance_angle = atof( argv[arg_index] );
+	    tolerance_angle = atof(argv[arg_index]);
 	} else {
 	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
@@ -84,7 +84,7 @@ ged_bot_smooth(struct ged *gedp, int argc, const char *argv[])
 	arg_index++;
     }
 
-    if ( arg_index >= argc ) {
+    if (arg_index >= argc) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -94,7 +94,7 @@ ged_bot_smooth(struct ged *gedp, int argc, const char *argv[])
 
     GED_DB_LOOKUP(gedp, dp_old, old_bot_name, LOOKUP_QUIET, GED_ERROR);
 
-    if ( !BU_STR_EQUAL( old_bot_name, new_bot_name ) ) {
+    if (!BU_STR_EQUAL(old_bot_name, new_bot_name)) {
 	GED_CHECK_EXISTS(gedp, new_bot_name, LOOKUP_QUIET, GED_ERROR);
     } else {
 	dp_new = dp_old;
@@ -109,15 +109,15 @@ ged_bot_smooth(struct ged *gedp, int argc, const char *argv[])
     }
 
     old_bot = (struct rt_bot_internal *)intern.idb_ptr;
-    RT_BOT_CK_MAGIC( old_bot );
+    RT_BOT_CK_MAGIC(old_bot);
 
-    if ( rt_bot_smooth( old_bot, old_bot_name, gedp->ged_wdbp->dbip, tolerance_angle*M_PI/180.0 ) ) {
+    if (rt_bot_smooth(old_bot, old_bot_name, gedp->ged_wdbp->dbip, tolerance_angle*M_PI/180.0)) {
 	bu_vls_printf(&gedp->ged_result_str, "Failed to smooth %s\n", old_bot_name);
 	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
 
-    if ( dp_new == RT_DIR_NULL ) {
+    if (dp_new == RT_DIR_NULL) {
 	GED_DB_DIRADD(gedp, dp_new, new_bot_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
     }
 
@@ -126,6 +126,7 @@ ged_bot_smooth(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

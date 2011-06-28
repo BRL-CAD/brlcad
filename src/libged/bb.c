@@ -42,7 +42,7 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
     point_t rpp_min, rpp_max;
     point_t obj_min, obj_max;
     int c;
-    int	use_air = 1;
+    int use_air = 1;
     int print_header = 1;
     int print_rpp = 0;
     int print_dim = 0;
@@ -56,7 +56,7 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
     double zlen;
     double vol;
     char bbname[64];
-    
+
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -160,9 +160,9 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (make_bb == 1) {
-	struct directory    *dp;
-	struct rt_arb_internal      *arb;
-	struct rt_db_internal       new_intern;
+	struct directory *dp;
+	struct rt_arb_internal *arb;
+	struct rt_db_internal new_intern;
 	arb = (struct rt_arb_internal *)bu_malloc(sizeof(struct rt_arb_internal), "arb");
    	VMOVE(arb->pt[0], rpp_min);
    	VSET(arb->pt[1], rpp_min[X], rpp_min[Y], rpp_max[Z]);
@@ -173,25 +173,25 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
    	VMOVE(arb->pt[6], rpp_max);
     	VSET(arb->pt[7], rpp_max[X], rpp_max[Y], rpp_min[Z]);
    	arb->magic = RT_ARB_INTERNAL_MAGIC;
-       	
+
    	/* set up internal structure */
    	RT_DB_INTERNAL_INIT(&new_intern);
    	new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
    	new_intern.idb_type = ID_ARB8;
    	new_intern.idb_meth = &rt_functab[ID_ARB8];
    	new_intern.idb_ptr = (genptr_t)arb;
-       	
+
    	if ((dp=db_diradd(gedp->ged_wdbp->dbip, bbname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type)) == RT_DIR_NULL) {
    	    bu_vls_printf(&gedp->ged_result_str, "Cannot add %s to directory\n", bbname);
    	    return GED_ERROR;
    	}
-       	
+
    	if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &new_intern, gedp->ged_wdbp->wdb_resp) < 0) {
    	    rt_db_free_internal(&new_intern);
    	    bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting.\n");
 	}
     }
-    
+
     return GED_OK;
 }
 

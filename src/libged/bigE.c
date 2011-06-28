@@ -59,8 +59,8 @@ union E_tree *build_etree(union tree *tp, struct _ged_client_data *dgcdp);
 #define MY_FREE_SEG_LIST(_segheadp, _res) { \
 	struct seg *_a; \
 	while (BU_LIST_WHILE (_a, seg, (_segheadp))) { \
-		BU_LIST_DEQUEUE(&(_a->l)); \
-		RT_FREE_SEG(_a, _res); \
+	    BU_LIST_DEQUEUE(&(_a->l)); \
+	    RT_FREE_SEG(_a, _res); \
 	} }
 
 /* stolen from g_half.c */
@@ -69,7 +69,7 @@ struct half_specific {
     vect_t half_Xbase;             /* "X" basis direction */
     vect_t half_Ybase;             /* "Y" basis direction */
 };
-#define HALF_NULL       ((struct half_specific *)0)
+#define HALF_NULL ((struct half_specific *)0)
 
 /* structures for building a tree corresponding to the region to be
  * drawn uses the same "op" values as "union tree"
@@ -101,8 +101,9 @@ union E_tree {
     } l;
 };
 
+
 #define E_TREE_MAGIC 0x45545245
-#define CK_ETREE(_p)		BU_CKMAG(_p, E_TREE_MAGIC, "struct E_tree")
+#define CK_ETREE(_p) BU_CKMAG(_p, E_TREE_MAGIC, "struct E_tree")
 
 
 HIDDEN union E_tree *
@@ -222,6 +223,7 @@ add_solid(const struct directory *dp,
     return eptr;
 }
 
+
 /* build an E_tree corresponding to the region tree (tp) */
 union E_tree *
 build_etree(union tree *tp,
@@ -270,6 +272,7 @@ build_etree(union tree *tp,
     return eptr;
 }
 
+
 /* a handy routine (for debugging) that prints asegment list */
 void
 show_seg(struct bu_list *seg, int str)
@@ -298,6 +301,7 @@ show_seg(struct bu_list *seg, int str)
 	}
     }
 }
+
 
 /* given a segment list, eliminate any overlaps in the segments */
 HIDDEN void
@@ -333,6 +337,7 @@ eliminate_overlaps(struct bu_list *seghead,
 	a = BU_LIST_PNEXT(seg, &a->l);
     }
 }
+
 
 /* perform the intersection of two segments the result is assigned the
  * provided type
@@ -375,6 +380,7 @@ do_intersect(struct seg *A,
 
     return;
 }
+
 
 /* perform the subtraction of one segment from another the result is
  * assigned the type from segment A
@@ -427,6 +433,7 @@ do_subtract(struct seg *A,
 	}
     }
 }
+
 
 HIDDEN void
 promote_ints(struct bu_list *head,
@@ -626,6 +633,7 @@ promote_ints(struct bu_list *head,
     show_seg(head, "SEGS");
 #endif
 }
+
 
 /* Evaluate an operation on the operands (segment lists) */
 HIDDEN struct bu_list *
@@ -948,6 +956,7 @@ eval_op(struct bu_list *A,
 
 }
 
+
 /* evaluate an E-tree */
 HIDDEN struct bu_list *
 eval_etree(union E_tree *eptr,
@@ -990,6 +999,7 @@ eval_etree(union E_tree *eptr,
     return (struct bu_list *)NULL;	/* for the compilers */
 }
 
+
 HIDDEN void
 inverse_dir(vect_t dir, vect_t inv_dir)
 {
@@ -1013,6 +1023,7 @@ inverse_dir(vect_t dir, vect_t inv_dir)
 	dir[Z] = 0.0;
     }
 }
+
 
 HIDDEN struct soltab *
 classify_seg(struct seg *segp, struct soltab *shoot, struct xray *rp, struct _ged_client_data *dgcdp)
@@ -1098,6 +1109,7 @@ classify_seg(struct seg *segp, struct soltab *shoot, struct xray *rp, struct _ge
 #endif
     return ret;
 }
+
 
 /* Shoot rays (corresponding to possible edges in the result) at the
  * solids, put the results in the E-tree leaves as type IN_SOL.  Call
@@ -1332,6 +1344,7 @@ shoot_and_plot(point_t start_pt,
 	bu_log("Error at end of shoot_and_plot()\n");
 
 }
+
 
 #define HITS_BLOCK 20
 
@@ -1698,6 +1711,7 @@ Eplot(union E_tree *eptr,
     bu_free((char *)hits2, "hits2");
 }
 
+
 HIDDEN void
 free_etree(union E_tree *eptr,
 	   struct _ged_client_data *dgcdp)
@@ -1734,6 +1748,7 @@ free_etree(union E_tree *eptr,
 	    break;
     }
 }
+
 
 /* convert all "half" solids to polysolids */
 HIDDEN void
@@ -2011,6 +2026,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
     }
 }
 
+
 int
 ged_E(struct ged *gedp, int argc, const char *argv[])
 {
@@ -2058,16 +2074,16 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 		    char *cp = bu_optarg;
 
 		    r = atoi(cp);
-		    while ((*cp >= '0' && *cp <= '9'))  cp++;
+		    while ((*cp >= '0' && *cp <= '9')) cp++;
 		    while (*cp && (*cp < '0' || *cp > '9')) cp++;
 		    g = atoi(cp);
-		    while ((*cp >= '0' && *cp <= '9'))  cp++;
+		    while ((*cp >= '0' && *cp <= '9')) cp++;
 		    while (*cp && (*cp < '0' || *cp > '9')) cp++;
 		    b = atoi(cp);
 
-		    if (r < 0 || r > 255)  r = 255;
-		    if (g < 0 || g > 255)  g = 255;
-		    if (b < 0 || b > 255)  b = 255;
+		    if (r < 0 || r > 255) r = 255;
+		    if (g < 0 || g > 255) g = 255;
+		    if (b < 0 || b > 255) b = 255;
 
 		    dgcdp->wireframe_color_override = 1;
 		    dgcdp->wireframe_color[0] = r;
@@ -2165,6 +2181,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

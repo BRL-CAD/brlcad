@@ -71,9 +71,9 @@ ged_bot_vertex_fuse(struct ged *gedp, int argc, const char *argv[])
     }
 
     bot = (struct rt_bot_internal *)intern.idb_ptr;
-    RT_BOT_CK_MAGIC( bot );
+    RT_BOT_CK_MAGIC(bot);
 
-    count = rt_bot_vertex_fuse( bot );
+    count = rt_bot_vertex_fuse(bot);
     bu_log("Fused %d vertices\n", count);
 
     GED_DB_DIRADD(gedp, new_dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
@@ -81,6 +81,7 @@ ged_bot_vertex_fuse(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

@@ -1,4 +1,4 @@
-/*                         B O T _ F A C E _ S O R T . C
+/*                   B O T _ F A C E _ S O R T . C
  * BRL-CAD
  *
  * Copyright (c) 2008-2011 United States Government as represented by

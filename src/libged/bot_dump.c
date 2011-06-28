@@ -46,7 +46,7 @@
 #include "./ged_private.h"
 
 
-#define V3ARGS_SCALE(_a)       (_a)[X]*cfactor, (_a)[Y]*cfactor, (_a)[Z]*cfactor
+#define V3ARGS_SCALE(_a) (_a)[X]*cfactor, (_a)[Y]*cfactor, (_a)[Z]*cfactor
 
 static char usage[] = "\
 Usage: %s [-b] [-n] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [bot1 bot2 ...]\n";
@@ -58,12 +58,14 @@ enum otype {
     OTYPE_STL
 };
 
+
 struct _ged_bot_dump_client_data {
     struct ged *gedp;
     FILE *fp;
     int fd;
     char *file_ext;
 };
+
 
 struct _ged_obj_material {
     struct bu_list l;
@@ -73,6 +75,7 @@ struct _ged_obj_material {
     unsigned char b;
     fastf_t a;
 };
+
 
 static int using_dbot_dump;
 struct bu_list HeadObjMaterials;
@@ -112,6 +115,7 @@ lswap(unsigned int *v)
 	| ((r & 0xff000000) >> 24);
 }
 
+
 static struct _ged_obj_material *
 ged_get_obj_material(int red, int green, int blue, fastf_t transparency)
 {
@@ -147,6 +151,7 @@ ged_get_obj_material(int red, int green, int blue, fastf_t transparency)
     return gomp;
 }
 
+
 static void
 ged_free_obj_materials() {
     struct _ged_obj_material *gomp;
@@ -157,6 +162,7 @@ ged_free_obj_materials() {
 	bu_free(gomp, "_ged_obj_material");
     }
 }
+
 
 static void
 write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *UNUSED(name))
@@ -227,17 +233,17 @@ write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *UNUSED(name))
     first_coedge = curr_line_num;
     curr_loop_id = first_coedge+num_faces*7;
     for (i = 0; i < num_faces; i++) {
-	fprintf( fp, "-%d coedge $-1 $%d $%d $%d $%d forward $%d $-1 #\n",
-		 curr_line_num, curr_line_num+1, curr_line_num+2, curr_line_num,
-		 curr_line_num+num_faces*3, curr_loop_id);
+	fprintf(fp, "-%d coedge $-1 $%d $%d $%d $%d forward $%d $-1 #\n",
+		curr_line_num, curr_line_num+1, curr_line_num+2, curr_line_num,
+		curr_line_num+num_faces*3, curr_loop_id);
 	++curr_line_num;
-	fprintf( fp, "-%d coedge $-1 $%d $%d $%d $%d forward $%d $-1 #\n",
-		 curr_line_num, curr_line_num+1, curr_line_num-1, curr_line_num,
-		 curr_line_num+num_faces*3, curr_loop_id);
+	fprintf(fp, "-%d coedge $-1 $%d $%d $%d $%d forward $%d $-1 #\n",
+		curr_line_num, curr_line_num+1, curr_line_num-1, curr_line_num,
+		curr_line_num+num_faces*3, curr_loop_id);
 	++curr_line_num;
-	fprintf( fp, "-%d coedge $-1 $%d $%d $%d $%d forward $%d $-1 #\n",
-		 curr_line_num, curr_line_num-2, curr_line_num-1, curr_line_num,
-		 curr_line_num+num_faces*3,  curr_loop_id);
+	fprintf(fp, "-%d coedge $-1 $%d $%d $%d $%d forward $%d $-1 #\n",
+		curr_line_num, curr_line_num-2, curr_line_num-1, curr_line_num,
+		curr_line_num+num_faces*3,  curr_loop_id);
 	++curr_line_num;
 	++curr_loop_id;
     }
@@ -355,6 +361,7 @@ write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *UNUSED(name))
     }
 }
 
+
 static void
 write_bot_dxf(struct rt_bot_internal *bot, FILE *fp, char *name)
 {
@@ -396,6 +403,7 @@ write_bot_dxf(struct rt_bot_internal *bot, FILE *fp, char *name)
 
 }
 
+
 static void
 write_bot_obj(struct rt_bot_internal *bot, FILE *fp, char *name)
 {
@@ -408,7 +416,7 @@ write_bot_obj(struct rt_bot_internal *bot, FILE *fp, char *name)
     vect_t BmA;
     vect_t CmA;
     vect_t norm;
-    int i,vi;
+    int i, vi;
     struct _ged_obj_material *gomp;
 
     if (using_dbot_dump) {
@@ -465,6 +473,7 @@ write_bot_obj(struct rt_bot_internal *bot, FILE *fp, char *name)
     v_offset += num_vertices;
 }
 
+
 static void
 write_bot_stl(struct rt_bot_internal *bot, FILE *fp, char *name)
 {
@@ -512,6 +521,7 @@ write_bot_stl(struct rt_bot_internal *bot, FILE *fp, char *name)
     }
     fprintf(fp, "endsolid %s\n", name);
 }
+
 
 static void
 write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *UNUSED(name))
@@ -582,6 +592,7 @@ write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *UNUSED(name))
 	}
     }
 }
+
 
 static void
 bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, const char *file_ext, const char *db_name)
@@ -657,37 +668,37 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, co
 	    }
 
 	    switch (output_type) {
-	    case OTYPE_DXF:
-		fprintf(fp,
-			"0\nSECTION\n2\nHEADER\n999\n%s (BOT from %s)\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n",
-			dp->d_namep, db_name);
-		write_bot_dxf(bot, fp, dp->d_namep);
-		fprintf(fp, "0\nENDSEC\n0\nEOF\n");
-		break;
-	    case OTYPE_OBJ:
-		v_offset = 1;
-		fprintf(fp, "mtllib %s\n", bu_vls_addr(&obj_materials_file));
-		write_bot_obj(bot, fp, dp->d_namep);
-		break;
-	    case OTYPE_SAT:
-		curr_line_num = 0;
+		case OTYPE_DXF:
+		    fprintf(fp,
+			    "0\nSECTION\n2\nHEADER\n999\n%s (BOT from %s)\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n",
+			    dp->d_namep, db_name);
+		    write_bot_dxf(bot, fp, dp->d_namep);
+		    fprintf(fp, "0\nENDSEC\n0\nEOF\n");
+		    break;
+		case OTYPE_OBJ:
+		    v_offset = 1;
+		    fprintf(fp, "mtllib %s\n", bu_vls_addr(&obj_materials_file));
+		    write_bot_obj(bot, fp, dp->d_namep);
+		    break;
+		case OTYPE_SAT:
+		    curr_line_num = 0;
 
-		fprintf(fp, "400 0 1 0\n");
-		/*XXX Temporarily hardwired */
+		    fprintf(fp, "400 0 1 0\n");
+		    /*XXX Temporarily hardwired */
 #if 1
-		fprintf(fp, "37 SolidWorks(2008000)-Sat-Convertor-2.0 11 ACIS 8.0 NT 24 Wed Dec 03 09:26:53 2003\n");
+		    fprintf(fp, "37 SolidWorks(2008000)-Sat-Convertor-2.0 11 ACIS 8.0 NT 24 Wed Dec 03 09:26:53 2003\n");
 #else
-		fprintf(fp, "08 BRL-CAD-bot_dump-4.0 11 ACIS 4.0 NT 24 Thur Sep 25 15:00:00 2008\n");
+		    fprintf(fp, "08 BRL-CAD-bot_dump-4.0 11 ACIS 4.0 NT 24 Thur Sep 25 15:00:00 2008\n");
 #endif
-		fprintf(fp, "1 9.9999999999999995e-007 1e-010\n");
+		    fprintf(fp, "1 9.9999999999999995e-007 1e-010\n");
 
-		write_bot_sat(bot, fp, dp->d_namep);
-		fprintf(fp, "End-of-ACIS-data\n");
-		break;
-	    case OTYPE_STL:
-	    default:
-		write_bot_stl(bot, fp, dp->d_namep);
-		break;
+		    write_bot_sat(bot, fp, dp->d_namep);
+		    fprintf(fp, "End-of-ACIS-data\n");
+		    break;
+		case OTYPE_STL:
+		default:
+		    write_bot_stl(bot, fp, dp->d_namep);
+		    break;
 	    }
 
 	    fclose(fp);
@@ -700,29 +711,30 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, co
 	    write_bot_stl_binary(bot, fd, dp->d_namep);
 	} else {
 	    switch (output_type) {
-	    case OTYPE_DXF:
-		write_bot_dxf(bot, fp, dp->d_namep);
-		break;
-	    case OTYPE_OBJ:
-		write_bot_obj(bot, fp, dp->d_namep);
-		break;
-	    case OTYPE_SAT:
-		write_bot_sat(bot, fp, dp->d_namep);
-		break;
-	    case OTYPE_STL:
-	    default:
-		write_bot_stl(bot, fp, dp->d_namep);
-		break;
+		case OTYPE_DXF:
+		    write_bot_dxf(bot, fp, dp->d_namep);
+		    break;
+		case OTYPE_OBJ:
+		    write_bot_obj(bot, fp, dp->d_namep);
+		    break;
+		case OTYPE_SAT:
+		    write_bot_sat(bot, fp, dp->d_namep);
+		    break;
+		case OTYPE_STL:
+		default:
+		    write_bot_stl(bot, fp, dp->d_namep);
+		    break;
 	    }
 	}
     }
 }
 
+
 static union tree *
-ged_bot_dump_leaf(struct db_tree_state	*tsp,
+ged_bot_dump_leaf(struct db_tree_state *tsp,
 		  const struct db_full_path *pathp,
-		  struct rt_db_internal	*ip,
-		  genptr_t		client_data)
+		  struct rt_db_internal *ip,
+		  genptr_t client_data)
 {
     int ret;
     union tree *curtree;
@@ -766,6 +778,7 @@ ged_bot_dump_leaf(struct db_tree_state	*tsp,
 
     return curtree;
 }
+
 
 static int
 ged_bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
@@ -828,6 +841,7 @@ ged_bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
+
 
 int
 ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
@@ -1054,6 +1068,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
+
 static void
 write_data_arrows(struct ged_data_arrow_state *gdasp, FILE *fp, int sflag)
 {
@@ -1128,6 +1143,7 @@ write_data_arrows(struct ged_data_arrow_state *gdasp, FILE *fp, int sflag)
     }
 }
 
+
 static void
 write_data_axes(struct ged_data_axes_state *gdasp, FILE *fp, int sflag)
 {
@@ -1199,10 +1215,11 @@ write_data_axes(struct ged_data_axes_state *gdasp, FILE *fp, int sflag)
 	    fprintf(fp, "l %d %d\n", (i*6)+v_offset+4, (i*6)+v_offset+5);
 	}
 
-	
+
 	v_offset += (gdasp->gdas_num_points*6);
     }
 }
+
 
 static void
 write_data_lines(struct ged_data_line_state *gdlsp, FILE *fp, int sflag)
@@ -1241,6 +1258,7 @@ write_data_lines(struct ged_data_line_state *gdlsp, FILE *fp, int sflag)
     }
 }
 
+
 static void
 write_data_obj(struct ged *gedp, FILE *fp)
 {
@@ -1254,53 +1272,55 @@ write_data_obj(struct ged *gedp, FILE *fp)
     write_data_lines(&gedp->ged_gvp->gv_sdata_lines, fp, 1);
 }
 
+
 static int
 ged_data_dump(struct ged *gedp, FILE *fp)
 {
     switch (output_type) {
-    case OTYPE_DXF:
-	break;
-    case OTYPE_OBJ:
-	if (output_directory) {
-	    char *cp;
-	    struct bu_vls filepath;
-	    FILE *data_fp;
+	case OTYPE_DXF:
+	    break;
+	case OTYPE_OBJ:
+	    if (output_directory) {
+		char *cp;
+		struct bu_vls filepath;
+		FILE *data_fp;
 
-	    cp = strrchr(output_directory, '/');
-	    if (!cp)
-		cp = (char *)output_directory;
-	    else
-		++cp;
+		cp = strrchr(output_directory, '/');
+		if (!cp)
+		    cp = (char *)output_directory;
+		else
+		    ++cp;
 
-	    if (*cp == '\0') {
-		bu_vls_printf(&gedp->ged_result_str, "ged_data_dump: bad dirname - %s\n", output_directory);
-		return GED_ERROR;
-	    }
+		if (*cp == '\0') {
+		    bu_vls_printf(&gedp->ged_result_str, "ged_data_dump: bad dirname - %s\n", output_directory);
+		    return GED_ERROR;
+		}
 
-	    bu_vls_init(&filepath);
-	    bu_vls_printf(&filepath, "%s/%s_data.obj", output_directory, cp);
+		bu_vls_init(&filepath);
+		bu_vls_printf(&filepath, "%s/%s_data.obj", output_directory, cp);
 
-	    if ((data_fp=fopen(bu_vls_addr(&filepath), "wb+")) == NULL) {
-		bu_vls_printf(&gedp->ged_result_str, "ged_data_dump: failed to open %V\n", &filepath);
+		if ((data_fp=fopen(bu_vls_addr(&filepath), "wb+")) == NULL) {
+		    bu_vls_printf(&gedp->ged_result_str, "ged_data_dump: failed to open %V\n", &filepath);
+		    bu_vls_free(&filepath);
+		    return GED_ERROR;
+		}
+
 		bu_vls_free(&filepath);
-		return GED_ERROR;
-	    }
-
-	    bu_vls_free(&filepath);
-	    write_data_obj(gedp, data_fp);
-	    fclose(data_fp);
-	} else
-	    write_data_obj(gedp, fp);
-	break;
-    case OTYPE_SAT:
-	break;
-    case OTYPE_STL:
-    default:
-	break;
+		write_data_obj(gedp, data_fp);
+		fclose(data_fp);
+	    } else
+		write_data_obj(gedp, fp);
+	    break;
+	case OTYPE_SAT:
+	    break;
+	case OTYPE_STL:
+	default:
+	    break;
     }
 
     return GED_OK;
 }
+
 
 int
 ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])

@@ -94,13 +94,13 @@ ged_bo(struct ged *gedp, int argc, const char *argv[])
     argc -= bu_optind;
     argv += bu_optind;
 
-    if ( (input_mode && argc != 4) || (output_mode && argc != 2) ) {
+    if ((input_mode && argc != 4) || (output_mode && argc != 2)) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
 
-    if ( input_mode ) {
+    if (input_mode) {
 	if (argv[0][0] == 'u') {
 
 	    if (argv[1][1] != '\0') {
@@ -166,7 +166,7 @@ ged_bo(struct ged *gedp, int argc, const char *argv[])
 	file_name = (char *)*argv;
 
 	/* make a binunif of the entire file */
-	if ( rt_mk_binunif( gedp->ged_wdbp, obj_name, file_name, minor_type, 0) ) {
+	if (rt_mk_binunif (gedp->ged_wdbp, obj_name, file_name, minor_type, 0)) {
 	    bu_vls_printf(&gedp->ged_result_str, "Error creating %s", obj_name);
 	    return GED_ERROR;
 	}
@@ -181,20 +181,20 @@ ged_bo(struct ged *gedp, int argc, const char *argv[])
 
 	obj_name = (char *)*argv;
 
-	if ( (dp=db_lookup(gedp->ged_wdbp->dbip, obj_name, LOOKUP_NOISY )) == RT_DIR_NULL ) {
+	if ((dp=db_lookup(gedp->ged_wdbp->dbip, obj_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    return GED_ERROR;
 	}
-	if ( !( dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK) ) {
+	if (!(dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK)) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s is not a binary object", obj_name);
 	    return GED_ERROR;
 	}
 
-	if ( dp->d_major_type != DB5_MAJORTYPE_BINARY_UNIF ) {
+	if (dp->d_major_type != DB5_MAJORTYPE_BINARY_UNIF) {
 	    bu_vls_printf(&gedp->ged_result_str, "source must be a uniform binary object");
 	    return GED_ERROR;
 	}
 
-	fp = fopen( file_name, "w+b");
+	fp = fopen(file_name, "w+b");
 	if (fp == NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "Error: cannot open file %s for writing", file_name);
 	    return GED_ERROR;
@@ -207,7 +207,7 @@ ged_bo(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
-	RT_CK_DB_INTERNAL( &intern );
+	RT_CK_DB_INTERNAL(&intern);
 
 	bip = (struct rt_binunif_internal *)intern.idb_ptr;
 	if (bip->count < 1) {
@@ -217,15 +217,15 @@ ged_bo(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
-	if ( fwrite( bip->u.int8, bip->count * db5_type_sizeof_h_binu( bip->type ),
-		     1, fp) != 1 ) {
+	if (fwrite(bip->u.int8, bip->count * db5_type_sizeof_h_binu(bip->type),
+		   1, fp) != 1) {
 	    bu_vls_printf(&gedp->ged_result_str, "Error writing contents to file");
-	    fclose( fp );
+	    fclose(fp);
 	    rt_db_free_internal(&intern);
 	    return GED_ERROR;
 	}
 
-	fclose( fp );
+	fclose(fp);
 	rt_db_free_internal(&intern);
 
     } else {

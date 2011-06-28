@@ -52,14 +52,14 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     int real_flag;
     char commtag[64];
     char namebuf[64];
-    
+
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-    
+
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
-    
+
     /* must be wanting help */
     if (argc <= 2) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
@@ -72,12 +72,12 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "\tplot F [index] - plot specific BREP 'face'\n");
 	return GED_HELP;
     }
-    
+
     if (argc < 2 || argc > 6) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
-    
+
     solid_name = (char *)argv[1];
     if ((ndp = db_lookup(gedp->ged_wdbp->dbip,  solid_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "Error: %s is not a solid or does not exist in database", solid_name);
@@ -85,27 +85,27 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     } else {
         real_flag = (ndp->d_addr == RT_DIR_PHONY_ADDR) ? 0 : 1;
     }
-    
+
     if (!real_flag) {
         /* solid doesnt exists - don't kill */
         bu_vls_printf(&gedp->ged_result_str, "Error: %s is not a real solid", solid_name);
         return GED_OK;
     }
-    
+
     GED_DB_GET_INTERNAL(gedp, &intern, ndp, bn_mat_identity, &rt_uniresource, GED_ERROR);
-    
-    
+
+
     RT_CK_DB_INTERNAL(&intern);
     bi = (struct rt_brep_internal*)intern.idb_ptr;
-    
+
     if (!RT_BREP_TEST_MAGIC(bi)) {
         /* solid doesnt exists - don't kill */
         bu_vls_printf(&gedp->ged_result_str, "Error: %s is not a BREP solid.", solid_name);
         return GED_OK;
     }
-    
+
     BU_GETSTRUCT(stp, soltab);
-    
+
     if ((bs = (struct brep_specific*)stp->st_specific) == NULL) {
 	bs = (struct brep_specific*)bu_malloc(sizeof(struct brep_specific), "brep_specific");
 	bs->brep = bi->brep;
@@ -123,7 +123,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     vbp = (struct bn_vlblock *)NULL;
 
     rt_db_free_internal(&intern);
-    
+
     return GED_OK;
 }
 

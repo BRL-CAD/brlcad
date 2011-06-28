@@ -31,7 +31,7 @@
  * Erase all currently displayed geometry and draw the specified object(s)
  *
  * Usage:
- *        blast object(s)
+ * blast object(s)
  *
  */
 int
