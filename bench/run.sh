@@ -979,19 +979,27 @@ EOF
 
 		# increase the number of rays exponentially if we are
 		# considerably faster than the TIMEFRAME required.
-		if test `expr $bench_elapsed \* 32` -le ${TIMEFRAME} ; then
+		if test `expr $bench_elapsed \* 128` -lt ${TIMEFRAME} ; then
+		    # 128x increase, skip six frames
+		    bench_hypersample="`expr $bench_hypersample \* 128 + 127`"
+		    bench_frame="`expr $bench_frame + 7`"
+		elif test `expr $bench_elapsed \* 64` -lt ${TIMEFRAME} ; then
+		    # 64x increase, skip five frames
+		    bench_hypersample="`expr $bench_hypersample \* 64 + 63`"
+		    bench_frame="`expr $bench_frame + 6`"
+		elif test `expr $bench_elapsed \* 32` -lt ${TIMEFRAME} ; then
 		    # 32x increase, skip four frames
 		    bench_hypersample="`expr $bench_hypersample \* 32 + 31`"
 		    bench_frame="`expr $bench_frame + 5`"
-		elif test `expr $bench_elapsed \* 16` -le ${TIMEFRAME} ; then
+		elif test `expr $bench_elapsed \* 16` -lt ${TIMEFRAME} ; then
 		    # 16x increase, skip three frames
 		    bench_hypersample="`expr $bench_hypersample \* 16 + 15`"
 		    bench_frame="`expr $bench_frame + 4`"
-		elif test `expr $bench_elapsed \* 8` -le ${TIMEFRAME} ; then
+		elif test `expr $bench_elapsed \* 8` -lt ${TIMEFRAME} ; then
 		    # 8x increase, skip two frames
 		    bench_hypersample="`expr $bench_hypersample \* 8 + 7`"
 		    bench_frame="`expr $bench_frame + 3`"
-		elif test `expr $bench_elapsed \* 4` -le ${TIMEFRAME} ; then
+		elif test `expr $bench_elapsed \* 4` -lt ${TIMEFRAME} ; then
 		    # 4x increase, skip a frame
 		    bench_hypersample="`expr $bench_hypersample \* 4 + 3`"
 		    bench_frame="`expr $bench_frame + 2`"
