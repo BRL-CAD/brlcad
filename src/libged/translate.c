@@ -106,7 +106,7 @@ translate(struct ged *gedp, point_t * const keypoint,
 	return GED_ERROR;
     } else if (d_obj->d_flags & (RT_DIR_REGION | RT_DIR_COMB)) {
 	if (path->fp_len > 0)
-	    /* path supplied; move obj instance only (obj's parent
+	    /* path supplied; move obj instance only (obj's CWD
 	     * modified) */
 	    d_comb_to_modify = DB_FULL_PATH_CUR_DIR(path);
 	else
