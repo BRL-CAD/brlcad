@@ -107,8 +107,8 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls p_vls;
     struct bu_vls t_vls;
     struct bn_vlblock *vbp = NULL;
-    struct ged_qray_dataList *ndlp = NULL;
-    struct ged_qray_dataList HeadQRayData;
+    struct qray_dataList *ndlp = NULL;
+    struct qray_dataList HeadQRayData;
 
     const char *bin = NULL;
     char nirt[256] = {0};
@@ -473,7 +473,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    }
 
-	    BU_GETSTRUCT(ndlp, ged_qray_dataList);
+	    BU_GETSTRUCT(ndlp, qray_dataList);
 	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
 	    ret = sscanf(bu_vls_addr(&v), "%le %le %le %le", &ndlp->x_in, &ndlp->y_in, &ndlp->z_in, &ndlp->los);
@@ -484,7 +484,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	vbp = rt_vlblock_init();
-	ged_qray_data_to_vlist(gedp, vbp, &HeadQRayData, dir, 0);
+	qray_data_to_vlist(gedp, vbp, &HeadQRayData, dir, 0);
 	bu_list_free(&HeadQRayData.l);
 	_ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->ged_gdp->gd_qray_basename), 0);
 	rt_vlblock_free(vbp);
@@ -494,13 +494,13 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_trunc(&v, 0);
 	    bu_vls_strcpy(&v, line);
 	    bu_vls_trimspace(&v);
-	    
+
 	    if (line[0] == '\n' || line[0] == '\r') {
 		bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(&v));
 		break;
 	    }
 
-	    BU_GETSTRUCT(ndlp, ged_qray_dataList);
+	    BU_GETSTRUCT(ndlp, qray_dataList);
 	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
 	    ret = sscanf(bu_vls_addr(&v), "%le %le %le %le",
@@ -513,7 +513,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free(&v);
 
 	vbp = rt_vlblock_init();
-	ged_qray_data_to_vlist(gedp, vbp, &HeadQRayData, dir, 1);
+	qray_data_to_vlist(gedp, vbp, &HeadQRayData, dir, 1);
 	bu_list_free(&HeadQRayData.l);
 	_ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->ged_gdp->gd_qray_basename), 0);
 	rt_vlblock_free(vbp);

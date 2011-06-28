@@ -50,6 +50,7 @@
 #include "solid.h"
 
 #include "./ged_private.h"
+#include "./qray.h"
 
 
 /* FIXME: this function should not exist.  passing pointers as strings
@@ -79,7 +80,7 @@ ged_close(struct ged *gedp)
     gedp->ged_wdbp = RT_WDB_NULL;
 
     if (gedp->ged_gdp != GED_DRAWABLE_NULL) {
-	ged_free_qray(gedp->ged_gdp);
+	qray_free(gedp->ged_gdp);
 	bu_free((genptr_t)gedp->ged_gdp, "struct ged_drawable");
 	gedp->ged_gdp = GED_DRAWABLE_NULL;
     }
@@ -132,7 +133,7 @@ ged_init(struct ged *gedp)
 
 	gedp->ged_gdp->gd_freeSolids = &_FreeSolid;
 	gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
-	ged_init_qray(gedp->ged_gdp);
+	qray_init(gedp->ged_gdp);
     }
 }
 

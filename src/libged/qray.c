@@ -47,7 +47,7 @@ static struct ged_qray_color def_qray_even_color = { 255, 255, 0 };
 static struct ged_qray_color def_qray_void_color = { 255, 0, 255 };
 static struct ged_qray_color def_qray_overlap_color = { 255, 255, 255 };
 
-static struct ged_qray_fmt_data def_qray_fmt_data[] = {
+static struct qray_fmt_data def_qray_fmt_data[] = {
     {'r', "\"Origin (x y z) = (%.2f %.2f %.2f)  (h v d) = (%.2f %.2f %.2f)\\nDirection (x y z) = (%.4f %.4f %.4f)  (az el) = (%.2f %.2f)\\n\" x_orig y_orig z_orig h v d_orig x_dir y_dir z_dir a e"},
     {'h', "\"    Region Name               Entry (x y z) LOS  Obliq_in\\n\""},
     {'p', "\"%-20s (%9.3f %9.3f %9.3f) %8.2f %8.3f\\n\" reg_name x_in y_in z_in los obliq_in"},
@@ -423,11 +423,11 @@ ged_qray(struct ged	*gedp,
 
 
 void
-ged_init_qray(struct ged_drawable *gdp)
+qray_init(struct ged_drawable *gdp)
 {
     int i;
     int n = 0;
-    struct ged_qray_fmt_data *qfdp;
+    struct qray_fmt_data *qfdp;
 
     bu_vls_init(&gdp->gd_qray_basename);
     bu_vls_strcpy(&gdp->gd_qray_basename, DG_QRAY_BASENAME);
@@ -457,7 +457,7 @@ ged_init_qray(struct ged_drawable *gdp)
 
 
 void
-ged_free_qray(struct ged_drawable *gdp)
+qray_free(struct ged_drawable *gdp)
 {
     int i;
 
@@ -470,19 +470,19 @@ ged_free_qray(struct ged_drawable *gdp)
 
 
 void
-ged_qray_data_to_vlist(struct ged		*gedp,
-		       struct bn_vlblock	*vbp,
-		       struct ged_qray_dataList	*headp,
-		       vect_t			dir,
-		       int			do_overlaps)
+qray_data_to_vlist(struct ged *gedp,
+		   struct bn_vlblock *vbp,
+		   struct qray_dataList *headp,
+		   vect_t dir,
+		   int do_overlaps)
 {
     int i = 1;			/* start out odd */
     struct bu_list *vhead;
-    struct ged_qray_dataList *ndlp;
+    struct qray_dataList *ndlp;
     vect_t in_pt, out_pt;
     vect_t last_out_pt = { 0, 0, 0 };
 
-    for (BU_LIST_FOR(ndlp, ged_qray_dataList, &headp->l)) {
+    for (BU_LIST_FOR(ndlp, qray_dataList, &headp->l)) {
 	if (do_overlaps)
 	    vhead = rt_vlblock_find(vbp,
 				    gedp->ged_gdp->gd_qray_overlap_color.r,

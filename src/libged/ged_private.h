@@ -46,7 +46,7 @@ __BEGIN_DECLS
 #define _GED_LISTPATH    1
 #define _GED_LISTEVAL    2
 #define _GED_EVAL_ONLY   3
-        
+
 #define _GED_WIREFRAME        0
 #define _GED_SHADED_MODE_BOTS 1
 #define _GED_SHADED_MODE_ALL  2
@@ -443,12 +443,13 @@ extern int _ged_do_zoom(struct ged *gedp,
 /* defined in ged_util.c */
 extern int _ged_results_append_str(struct ged *gedp,
 				   char *result_string);
-	    
+
 extern int _ged_results_append_vls(struct ged *gedp,
 				   struct bu_vls *result_vls);
 
 extern int _ged_results_clear(struct ged *gedp);
-	
+
+
 __END_DECLS
 
 #endif /* __GED_PRIVATE_H__ */
