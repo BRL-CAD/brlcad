@@ -70,17 +70,6 @@ ged_decode_dbip(const char *dbip_string, struct db_i **dbipp)
 
 
 void
-ged_drawable_close(struct ged_drawable *gdp)
-{
-    if (gdp == GED_DRAWABLE_NULL)
-	return;
-
-    ged_free_qray(gdp);
-    bu_free((genptr_t)gdp, "struct ged_drawable");
-}
-
-
-void
 ged_close(struct ged *gedp)
 {
     if (gedp == GED_NULL)
@@ -89,8 +78,11 @@ ged_close(struct ged *gedp)
     wdb_close(gedp->ged_wdbp);
     gedp->ged_wdbp = RT_WDB_NULL;
 
-    ged_drawable_close(gedp->ged_gdp);
-    gedp->ged_gdp = GED_DRAWABLE_NULL;
+    if (gedp->ged_gdp != GED_DRAWABLE_NULL) {
+	ged_free_qray(gedp->ged_gdp);
+	bu_free((genptr_t)gedp->ged_gdp, "struct ged_drawable");
+	gedp->ged_gdp = GED_DRAWABLE_NULL;
+    }
 
     ged_free(gedp);
 }

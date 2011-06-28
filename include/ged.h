@@ -619,7 +619,6 @@ GED_EXPORT extern void ged_erasePathFromDisplay(struct ged *gedp,
 
 /* defined in ged.c */
 GED_EXPORT extern void ged_close(struct ged *gedp);
-GED_EXPORT extern void ged_drawable_close(struct ged_drawable *gdp);
 GED_EXPORT extern void ged_free(struct ged *gedp);
 GED_EXPORT extern void ged_init(struct ged *gedp);
 GED_EXPORT extern struct ged *ged_open(const char *dbtype,
