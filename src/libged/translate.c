@@ -23,6 +23,10 @@
  *
  */
 
+/*  TODO:
+ *    -reject paths with fp_len > 1; it's meaningless and misleading
+ */
+
 #include "common.h"
 
 #include <stdlib.h>
@@ -34,24 +38,38 @@
 #include "ged.h"
 
 /* 
- * it's concievable that this could be exposed, so keep a clean break from
- * the ged cmd and don't make assumptions
+ * it's concievable that this could be exposed, so keep a clean break
+ * from the ged cmd and don't make assumptions
  */
 HIDDEN int
 translate(struct ged *gedp, point_t * const keypoint,
 	  struct db_full_path * const path, struct directory * const d_obj,
 	  int * const rel_flag) { 
 
-    struct db_full_path full_obj_path;	/* full path to object */
+    struct db_full_path full_obj_path;
+    struct directory *d_comb_to_modify = NULL;
+    struct rt_comb_internal *comb_to_modify;
+    char **argv = NULL;
+    int argc = 0;
+
+    /* for retrieving a tree */
+    struct rt_db_internal old_intern;
+    union tree *old_ntp = NULL;
+    struct rt_tree_array *old_rt_tree_array = NULL;
+    size_t old_node_count = (size_t)0;
+    RT_DB_INTERNAL_INIT(&old_intern);
+
 
     /* XXX quiet compiler for now */
     (void)keypoint;
     (void)rel_flag;
+    (void)argv;
+    (void)argc;
 
     /* verify existence of path */
     if (ged_path_validate(gedp, path) == GED_ERROR) {
 	char *s_path = db_path_to_string(path);
-	bu_vls_printf(&gedp->ged_result_str, "path \"%s\" doesn't exist\n",
+	bu_vls_printf(&gedp->ged_result_str, "path \"%s\" doesn't exist",
 		      s_path);
 	bu_free((genptr_t)s_path, "path string");
 	return GED_ERROR;
@@ -59,12 +77,13 @@ translate(struct ged *gedp, point_t * const keypoint,
 
     /* verify that object exists under current directory in path */
     db_full_path_init(&full_obj_path);
-    db_dup_path_tail(&full_obj_path, path, path->fp_len - 1);
+    if (path->fp_len > 0) /* if there's no path, obj is at root */
+	db_dup_path_tail(&full_obj_path, path, path->fp_len - (size_t)1);
     db_add_node_to_full_path(&full_obj_path, d_obj);
     if (ged_path_validate(gedp, &full_obj_path) == GED_ERROR) {
 	char *s_path = db_path_to_string(path);
 	bu_vls_printf(&gedp->ged_result_str, "object \"%s\" not found under"
-		      " path \"%s\"\n", d_obj->d_namep, s_path);
+		      " path \"%s\"", d_obj->d_namep, s_path);
 	db_free_full_path(&full_obj_path);
 	bu_free((genptr_t)s_path, "path string");
 	return GED_ERROR;
@@ -77,10 +96,63 @@ translate(struct ged *gedp, point_t * const keypoint,
      *   -call ged_combmem
      */
 
-    /* no path; modify all instances of obj */
-    /* or */
-    /* path supplied; modify this instance of obj only */
+    /* determine what is being translated */
+    if (d_obj->d_flags & RT_DIR_SOLID) {
+	/* TODO: translation of solids (note:ged_p cmd is not yet
+	 * available) */
+	db_free_full_path(&full_obj_path);
+	bu_vls_printf(&gedp->ged_result_str, "translation of solids not yet"
+					     " supported");
+	return GED_ERROR;
+    } else if (d_obj->d_flags & (RT_DIR_REGION | RT_DIR_COMB)) {
+	if (path->fp_len > 0)
+	    /* path supplied; move obj instance only (obj's parent
+	     * modified) */
+	    d_comb_to_modify = DB_FULL_PATH_CUR_DIR(path);
+	else
+	    /* no path; move all obj instances (obj's entire tree
+	     * modified) */
+	    d_comb_to_modify = d_obj;
 
+	/* get comb tree */
+	if (rt_db_get_internal(&old_intern, d_comb_to_modify,
+	    		       gedp->ged_wdbp->dbip, (matp_t)NULL,
+			       &rt_uniresource) < 0) {
+	    bu_vls_printf(&(gedp)->ged_result_str,
+			  "Database read error, aborting");
+	    return GED_ERROR;
+	}
+	comb_to_modify = (struct rt_comb_internal *)(old_intern).idb_ptr;
+	RT_CK_COMB(comb_to_modify);
+	if (comb_to_modify->tree) {
+	    old_ntp = db_dup_subtree(comb_to_modify->tree, &rt_uniresource);
+	    RT_CK_TREE(old_ntp);
+
+	    /* Convert to "v4 / GIFT style", so that the
+	     * flatten makes sense. */
+	    if (db_ck_v4gift_tree(old_ntp) < 0)
+		db_non_union_push((old_ntp), &rt_uniresource);
+	    RT_CK_TREE(old_ntp);
+
+	    old_node_count = db_tree_nleaves(old_ntp);
+	    old_rt_tree_array = (struct rt_tree_array *)bu_calloc(
+		(old_node_count), sizeof(struct rt_tree_array),
+		"rt_tree_array");
+
+	    /* free=0 means that the tree won't have any leaf nodes freed */
+	    (void)db_flatten_tree((old_rt_tree_array), (old_ntp), OP_UNION, 0,
+				  &rt_uniresource);
+	} else {
+	    old_ntp = TREE_NULL;
+	    old_node_count = 0;
+	    old_rt_tree_array = (struct rt_tree_array *)0;
+	}
+    } else {
+	db_free_full_path(&full_obj_path);
+	bu_vls_printf(&gedp->ged_result_str, "unsupported object type; ");
+	return GED_ERROR;
+    }
+    
     /* ged_combmem(gedp, argc, argv); */
 
     db_free_full_path(&full_obj_path);
@@ -246,30 +318,12 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
      * Perform translations
      */
     d_obj = DB_FULL_PATH_ROOT_DIR(&obj);
-    if (d_obj->d_flags & RT_DIR_SOLID) {
-	/* TODO: translation of solids (note:ged_p cmd is not yet available) */
-	bu_vls_printf(&gedp->ged_result_str, "translation of solids not yet"
-					     " supported; ");
-	goto disabled;
-    } else if (d_obj->d_flags & (RT_DIR_REGION | RT_DIR_COMB)) {
-	/* translation of combinations */
-	if (translate(gedp, &keypoint, &path, d_obj, &rel_flag) == GED_ERROR) {
-	    db_free_full_path(&path);
-	    db_free_full_path(&obj);
-	    bu_vls_printf(&gedp->ged_result_str, "translation failed");
-	    return GED_ERROR;
-	}
-
-	bu_vls_printf(&gedp->ged_result_str, "translation of combinations not"
-					     " yet supported; ");
-	goto disabled;
-    } else {
+    if (translate(gedp, &keypoint, &path, d_obj, &rel_flag) == GED_ERROR) {
 	db_free_full_path(&path);
 	db_free_full_path(&obj);
-	bu_vls_printf(&gedp->ged_result_str, "unsupported object type");
+	bu_vls_printf(&gedp->ged_result_str, "; translation failed");
 	return GED_ERROR;
     }
-	
 
     /* XXX disabled until functional */
     goto disabled;
