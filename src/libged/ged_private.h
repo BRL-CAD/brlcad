@@ -133,7 +133,7 @@ extern struct db_i *_ged_open_dbip(const char *filename,
 /* defined in color.c */
 extern void _ged_color_putrec(struct ged *gedp,
 			      struct mater *mp);
-	    
+
 extern void _ged_color_zaprec(struct ged *gedp,
 			      struct mater *mp);
 
@@ -171,7 +171,7 @@ extern void _ged_drawH_part2(int dashflag,
 			     struct _ged_client_data *dgcdp);
 
 /* defined in editit.c */
-extern int _ged_editit(const char *editstring, 
+extern int _ged_editit(const char *editstring,
 		       const char *file);
 
 /* defined in erase.c */

@@ -122,7 +122,7 @@ mktemp_comb(struct ged *gedp, const char *str)
 
     /* leave room for 5 digits */
     bu_strlcpy(name, str, NAMESIZE - 5);
-    
+
     ptr = name;
     while (*ptr != '\0')
 	ptr++;

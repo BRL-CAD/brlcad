@@ -213,14 +213,14 @@ Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t d1, fastf
 /**
  * Create General Conic Matrix for Ellipse describing the top part of
  * the tire side
- * 
+ *
  * Note:  zside1 is the z height of the maximum tire width
- * 
+ *
  * This is the most complex of the required solutions.  There are four
  * constraints used that result in five equations:
  * 1.  Equality of the new ellipse with the ellipse defining the top surface
- *     at the intersection, 
- * 2.  Equality of the partial derivative of the new ellipse with the 
+ *     at the intersection,
+ * 2.  Equality of the partial derivative of the new ellipse with the
  *     partial derivative of the top surface ellipse at
  *     the point of intersection,
  * 3.  The new ellipse must intersect the point zside1, dyside1/2
@@ -233,7 +233,7 @@ Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t d1, fastf
  * allow for the definition of two more equations.  First, the symmetric
  * intersection point's y and z values must be found.  The y value is the
  * same y value as the y value at intersection.  To find that value, we
- * first define the magnitude of the z component of the distance from 
+ * first define the magnitude of the z component of the distance from
  * the intersection point to the max point as:
  *
  *       ztire - dztread - zside1
@@ -251,7 +251,7 @@ Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t d1, fastf
  * is constrained to be the negative of the partial derivative at the
  * intersection point, five equations are now known and the conic equation
  * coefficients can be found.
- *  
+ *
  */
 static void
 Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred,
@@ -425,7 +425,7 @@ SolveEchelon(fastf_t **mat, fastf_t *result1)
  *   start by looking into methods of graphing the General Conic.     *
  *   In particular, either here or even earlier in the process a      *
  *   type check should be done to ensure an elliptical geometry has   *
- *   been found, rather than parabolic or hyperboloic.                * 
+ *   been found, rather than parabolic or hyperboloic.                *
  *                                                                    *
  **********************************************************************/
 static void
@@ -1822,20 +1822,20 @@ MakeAirRegion(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t zhub, 
     mk_rcc(file, bu_vls_addr(&str), origin, height, zhub);
 
     if (usewheel != 0) {
-        BU_LIST_INIT(&wheelair.l);
-        bu_vls_sprintf(&str, "Air-Cyl%s.s", suffix);
-        (void)mk_addmember(bu_vls_addr(&str), &wheelair.l, NULL, WMOP_UNION);
-        bu_vls_sprintf(&str, "wheel-rim-solid%s.c", suffix);
-        (void)mk_addmember(bu_vls_addr(&str), &wheelair.l, NULL, WMOP_SUBTRACT);
-        bu_vls_sprintf(&str, "wheel-air%s.c", suffix);
-        mk_lcomb(file, bu_vls_addr(&str), &wheelair, 0,  NULL, NULL, NULL, 0);
+	BU_LIST_INIT(&wheelair.l);
+	bu_vls_sprintf(&str, "Air-Cyl%s.s", suffix);
+	(void)mk_addmember(bu_vls_addr(&str), &wheelair.l, NULL, WMOP_UNION);
+	bu_vls_sprintf(&str, "wheel-rim-solid%s.c", suffix);
+	(void)mk_addmember(bu_vls_addr(&str), &wheelair.l, NULL, WMOP_SUBTRACT);
+	bu_vls_sprintf(&str, "wheel-air%s.c", suffix);
+	mk_lcomb(file, bu_vls_addr(&str), &wheelair, 0,  NULL, NULL, NULL, 0);
     }
-    
+
     BU_LIST_INIT(&air);
-    
+
     if (usewheel != 0) {
-        bu_vls_sprintf(&str, "wheel-air%s.c", suffix);
-        (void)mk_addmember(bu_vls_addr(&str), &air, NULL, WMOP_UNION);
+	bu_vls_sprintf(&str, "wheel-air%s.c", suffix);
+	(void)mk_addmember(bu_vls_addr(&str), &air, NULL, WMOP_UNION);
     }
     bu_vls_sprintf(&str, "tire-cut%s.c", suffix);
     (void)mk_addmember(bu_vls_addr(&str), &air, NULL, WMOP_UNION);
@@ -1938,7 +1938,7 @@ ReadArgs(struct ged *gedp,
 		*tire_thickness = tthickness;
 		break;
 	    case 'w':
-	        sscanf(bu_optarg, "%d", &usewheelc);
+		sscanf(bu_optarg, "%d", &usewheelc);
 		*usewheel = usewheelc;
 		break;
 	    default:
@@ -2107,7 +2107,7 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
 
     /* Make the wheel region*/
     if (usewheel != 0) {
-        MakeWheelRims(gedp->ged_wdbp, bu_vls_addr(&dimen),
+	MakeWheelRims(gedp->ged_wdbp, bu_vls_addr(&dimen),
 		      dyhub, zhub, bolts, bolt_diam, bolt_circ_diam,
 		      spigot_diam, fixing_offset, bead_height, bead_width, rim_thickness);
     }
@@ -2121,8 +2121,8 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     bu_vls_sprintf(&str, "air%s.r", bu_vls_addr(&dimen));
     (void)mk_addmember(bu_vls_addr(&str), &wheel_and_tire.l, NULL, WMOP_UNION);
     if (usewheel != 0) {
-        bu_vls_sprintf(&str, "wheel%s.r",bu_vls_addr(&dimen));
-        (void)mk_addmember(bu_vls_addr(&str), &wheel_and_tire.l, NULL, WMOP_UNION);
+	bu_vls_sprintf(&str, "wheel%s.r",bu_vls_addr(&dimen));
+	(void)mk_addmember(bu_vls_addr(&str), &wheel_and_tire.l, NULL, WMOP_UNION);
     }
     mk_lcomb(gedp->ged_wdbp, bu_vls_addr(&name), &wheel_and_tire, 0,  NULL, NULL, NULL, 0);
 

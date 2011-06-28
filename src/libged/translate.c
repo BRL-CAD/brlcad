@@ -37,14 +37,14 @@
 #include "raytrace.h"
 #include "ged.h"
 
-/* 
+/*
  * it's concievable that this could be exposed, so keep a clean break
  * from the ged cmd and don't make assumptions
  */
 HIDDEN int
 translate(struct ged *gedp, point_t * const keypoint,
 	  struct db_full_path * const path, struct directory * const d_obj,
-	  int * const rel_flag) { 
+	  int * const rel_flag) {
 
     struct db_full_path full_obj_path;
     struct directory *d_comb_to_modify = NULL;
@@ -90,7 +90,7 @@ translate(struct ged *gedp, point_t * const keypoint,
     }
 
     /* build ged_combmem command arguments:
-     *   -everything in obj's tree is fetched and coords modified 
+     *   -everything in obj's tree is fetched and coords modified
      *    as necessary
      *   -build argv
      *   -call ged_combmem
@@ -116,7 +116,7 @@ translate(struct ged *gedp, point_t * const keypoint,
 
 	/* get comb tree */
 	if (rt_db_get_internal(&old_intern, d_comb_to_modify,
-	    		       gedp->ged_wdbp->dbip, (matp_t)NULL,
+			       gedp->ged_wdbp->dbip, (matp_t)NULL,
 			       &rt_uniresource) < 0) {
 	    bu_vls_printf(&(gedp)->ged_result_str,
 			  "Database read error, aborting");
@@ -152,7 +152,7 @@ translate(struct ged *gedp, point_t * const keypoint,
 	bu_vls_printf(&gedp->ged_result_str, "unsupported object type; ");
 	return GED_ERROR;
     }
-    
+
     /* ged_combmem(gedp, argc, argv); */
 
     db_free_full_path(&full_obj_path);
@@ -239,7 +239,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    
+
     /* need to use either absolute||relative positioning; not both */
     if (abs_flag && rel_flag) {
 	bu_vls_printf(&gedp->ged_result_str,
@@ -256,7 +256,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     if (!abs_flag && !rel_flag)
 	rel_flag = 1;
 
-        /* TODO: set reasonable default keypoint */
+	/* TODO: set reasonable default keypoint */
     #if 0
     if (!keypoint)
 	;
@@ -314,7 +314,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 	goto disabled;
     }
 
-    /* 
+    /*
      * Perform translations
      */
     d_obj = DB_FULL_PATH_ROOT_DIR(&obj);
@@ -327,7 +327,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 
     /* XXX disabled until functional */
     goto disabled;
-   
+
     db_free_full_path(&path);
     db_free_full_path(&obj);
     return GED_OK;

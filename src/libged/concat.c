@@ -106,20 +106,20 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
     while ((c=bu_getopt(argc, (char * const *)argv, "utcsp")) != -1) {
 	switch (c) {
 	    case 'u':
-                importUnits = 1;
-                break;
+		importUnits = 1;
+		break;
 	    case 't':
-                importTitle = 1;
-                break;
+		importTitle = 1;
+		break;
 	    case 'c':
-                importColorTable = 1;
-                break;
-            case 'p':
-                cc_data.copy_mode |= AUTO_PREFIX;
-                break;
-            case 's':
-                cc_data.copy_mode |= AUTO_SUFFIX;
-                break;
+		importColorTable = 1;
+		break;
+	    case 'p':
+		cc_data.copy_mode |= AUTO_PREFIX;
+		break;
+	    case 's':
+		cc_data.copy_mode |= AUTO_SUFFIX;
+		break;
 	    default:
 		{
 		    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", commandName, usage);
@@ -215,18 +215,18 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
     Tcl_InitHashTable(&used_names_tbl, TCL_STRING_KEYS);
 
     if (importUnits || importTitle || importColorTable) {
-        saveGlobalAttrs = 1;
+	saveGlobalAttrs = 1;
     }
     FOR_ALL_DIRECTORY_START(dp, newdbp) {
 	if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
-            if (saveGlobalAttrs) {
-                if (db5_get_attributes(newdbp, &g_avs, dp)) {
-                    bu_vls_printf(&gedp->ged_result_str, "%s: Can't get global attributes from %s", commandName, oldfile);
-                    return GED_ERROR;
-                }
-            }
-            continue;
-        }
+	    if (saveGlobalAttrs) {
+		if (db5_get_attributes(newdbp, &g_avs, dp)) {
+		    bu_vls_printf(&gedp->ged_result_str, "%s: Can't get global attributes from %s", commandName, oldfile);
+		    return GED_ERROR;
+		}
+	    }
+	    continue;
+	}
 	ged_copy_object(gedp, dp, newdbp, gedp->ged_wdbp->dbip, &name_tbl, &used_names_tbl, &cc_data);
     } FOR_ALL_DIRECTORY_END;
 
@@ -237,44 +237,44 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
     db_close(newdbp);
 
     if (importColorTable) {
-        colorTab = bu_strdup(bu_avs_get(&g_avs, "regionid_colortable"));
-        db5_import_color_table(colorTab);
-        bu_free(colorTab, "colorTab");
+	colorTab = bu_strdup(bu_avs_get(&g_avs, "regionid_colortable"));
+	db5_import_color_table(colorTab);
+	bu_free(colorTab, "colorTab");
     } else if (saveGlobalAttrs) {
-        bu_avs_remove(&g_avs, "regionid_colortable");
+	bu_avs_remove(&g_avs, "regionid_colortable");
     }
 
     if (importTitle) {
-        if ((cp = bu_avs_get(&g_avs, "title")) != NULL) {
-            char *oldTitle = gedp->ged_wdbp->dbip->dbi_title;
-            gedp->ged_wdbp->dbip->dbi_title = bu_strdup(cp);
-            if (oldTitle) {
-                bu_free(oldTitle, "old title");
-            }
-        }
+	if ((cp = bu_avs_get(&g_avs, "title")) != NULL) {
+	    char *oldTitle = gedp->ged_wdbp->dbip->dbi_title;
+	    gedp->ged_wdbp->dbip->dbi_title = bu_strdup(cp);
+	    if (oldTitle) {
+		bu_free(oldTitle, "old title");
+	    }
+	}
     } else if (saveGlobalAttrs) {
-        bu_avs_remove(&g_avs, "title");
+	bu_avs_remove(&g_avs, "title");
     }
 
     if (importUnits) {
-        if ((cp = bu_avs_get(&g_avs, "units")) != NULL) {
-            double dd;
-            if (sscanf(cp, "%lf", &dd) != 1 || NEAR_ZERO(dd, VUNITIZE_TOL)) {
-                bu_log("ged_copy_object(%s): improper database, %s object attribute 'units'=%s is invalid\n",
+	if ((cp = bu_avs_get(&g_avs, "units")) != NULL) {
+	    double dd;
+	    if (sscanf(cp, "%lf", &dd) != 1 || NEAR_ZERO(dd, VUNITIZE_TOL)) {
+		bu_log("ged_copy_object(%s): improper database, %s object attribute 'units'=%s is invalid\n",
 		       oldfile, DB5_GLOBAL_OBJECT_NAME, cp);
-                bu_avs_remove(&g_avs, "units");
-            } else {
-                gedp->ged_wdbp->dbip->dbi_local2base = dd;
-                gedp->ged_wdbp->dbip->dbi_base2local = 1 / dd;
-            }
-        }
+		bu_avs_remove(&g_avs, "units");
+	    } else {
+		gedp->ged_wdbp->dbip->dbi_local2base = dd;
+		gedp->ged_wdbp->dbip->dbi_base2local = 1 / dd;
+	    }
+	}
     } else if (saveGlobalAttrs) {
-        bu_avs_remove(&g_avs, "units");
+	bu_avs_remove(&g_avs, "units");
     }
 
     if (saveGlobalAttrs) {
-        dp = db_lookup(gedp->ged_wdbp->dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_NOISY);
-        db5_update_attributes(dp, &g_avs, gedp->ged_wdbp->dbip);
+	dp = db_lookup(gedp->ged_wdbp->dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_NOISY);
+	db5_update_attributes(dp, &g_avs, gedp->ged_wdbp->dbip);
     }
 
     db_sync(gedp->ged_wdbp->dbip);	/* force changes to disk */

@@ -230,7 +230,7 @@ clone_get_name(struct directory *dp, struct ged_clone_state *state, size_t iter)
     } else if (state->updpos == 1) {
 	int num2 = 0;
 	sscanf(dp->d_namep, "%[!-/, :-~]%d%[!-/, :-~]%d%[!-/, :-~]", prefix, &num2, suffix2, &num, suffix);
-        if (num > 0) {
+	if (num > 0) {
 	    snprintf(prefix, CLONE_BUFSIZE, "%s%d%s", prefix, num2, suffix2);
 	} else {
 	    num = num2;
@@ -244,21 +244,21 @@ clone_get_name(struct directory *dp, struct ged_clone_state *state, size_t iter)
 	bu_vls_trunc(newname, 0);
 	bu_vls_strcpy(newname, prefix);
 
-        if ((dp->d_flags & RT_DIR_SOLID) || (dp->d_flags & RT_DIR_REGION)) {
+	if ((dp->d_flags & RT_DIR_SOLID) || (dp->d_flags & RT_DIR_REGION)) {
 	    /* primitives and regions */
-    	    if (suffix[0] != 0)
-    		if ((i == 1) && is_in_list(obj_list, buf)) {
-    		    j = index_in_list(obj_list, buf);
-    		    snprintf(buf, CLONE_BUFSIZE, "%s%d", prefix, num);	/* save the name for the next pass */
+	    if (suffix[0] != 0)
+		if ((i == 1) && is_in_list(obj_list, buf)) {
+		    j = index_in_list(obj_list, buf);
+		    snprintf(buf, CLONE_BUFSIZE, "%s%d", prefix, num);	/* save the name for the next pass */
 		    /* clear and set the name */
 		    bu_vls_trunc(newname, 0);
 		    bu_vls_printf(newname, "%s%s", obj_list.names[j].dest[iter], suffix);
-    		} else
+		} else
 		    bu_vls_printf(newname, "%d%s", num+i*state->incr, suffix);
-    	    else
-    		bu_vls_printf(newname, "%d", num + i*state->incr);
+	    else
+		bu_vls_printf(newname, "%d", num + i*state->incr);
 	} else /* non-region combinations */
-    	    bu_vls_printf(newname, "%d", (num==0)?i+1:i+num);
+	    bu_vls_printf(newname, "%d", (num==0)?i+1:i+num);
 	i++;
     } while (db_lookup(state->gedp->ged_wdbp->dbip, bu_vls_addr(newname), LOOKUP_QUIET) != NULL);
     return newname;
@@ -378,7 +378,7 @@ copy_v5_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 
     /* rotation */
     if (!ZERO(state->rot[W])) {
-    	mat_t m2, t;
+	mat_t m2, t;
 
 	bn_mat_angles(m2, state->rot[X], state->rot[Y], state->rot[Z]);
 	if (!ZERO(state->rpnt[W])) {

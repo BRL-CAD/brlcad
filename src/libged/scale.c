@@ -58,23 +58,23 @@ ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf1, fas
     }
 
     if (argc == 2) {
-        if (sscanf(argv[1], "%lf", sf1) != 1) {
-            bu_vls_printf(&gedp->ged_result_str, "\nbad scale factor '%s'", argv[1]);
+	if (sscanf(argv[1], "%lf", sf1) != 1) {
+	    bu_vls_printf(&gedp->ged_result_str, "\nbad scale factor '%s'", argv[1]);
 	    return GED_ERROR;
-        }
+	}
     } else {
-        if (sscanf(argv[1], "%lf", sf1) != 1) {
-            bu_vls_printf(&gedp->ged_result_str, "\nbad x scale factor '%s'", argv[1]);
+	if (sscanf(argv[1], "%lf", sf1) != 1) {
+	    bu_vls_printf(&gedp->ged_result_str, "\nbad x scale factor '%s'", argv[1]);
 	    ret = GED_ERROR;
-        }
-        if (sscanf(argv[2], "%lf", sf2) != 1) {
-            bu_vls_printf(&gedp->ged_result_str, "\nbad y scale factor '%s'", argv[2]);
+	}
+	if (sscanf(argv[2], "%lf", sf2) != 1) {
+	    bu_vls_printf(&gedp->ged_result_str, "\nbad y scale factor '%s'", argv[2]);
 	    ret = GED_ERROR;
-        }
-        if (sscanf(argv[3], "%lf", sf3) != 1) {
-            bu_vls_printf(&gedp->ged_result_str, "\nbad z scale factor '%s'", argv[3]);
+	}
+	if (sscanf(argv[3], "%lf", sf3) != 1) {
+	    bu_vls_printf(&gedp->ged_result_str, "\nbad z scale factor '%s'", argv[3]);
 	    ret = GED_ERROR;
-        }
+	}
     }
     return ret;
 }
@@ -120,4 +120,3 @@ ged_scale(struct ged *gedp, int argc, const char *argv[])
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

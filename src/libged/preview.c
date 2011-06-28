@@ -258,7 +258,7 @@ ged_loadframe(struct ged *gedp, FILE *fp)
     }
 
     if (end) {
-    	return GED_OK; /* possible more frames */
+	return GED_OK; /* possible more frames */
     }
     return GED_ERROR; /* end of frames */
 }
@@ -370,7 +370,7 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
     vp = &_ged_current_gedp->ged_gdp->gd_rt_cmd[0];
     while ((vp != NULL) && (*vp))
 	bu_vls_printf(&gedp->ged_result_str, "%s ", *vp++);
-    
+
     bu_vls_printf(&gedp->ged_result_str, "\n");
 
     preview_vbp = rt_vlblock_init();
@@ -428,7 +428,7 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
     fp = NULL;
 
     if (draw_eye_path)
-    	_ged_cvt_vlblock_to_solids(gedp, preview_vbp, "EYE_PATH", 0);
+	_ged_cvt_vlblock_to_solids(gedp, preview_vbp, "EYE_PATH", 0);
 
     if (preview_vbp) {
 	rt_vlblock_free(preview_vbp);

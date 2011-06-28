@@ -216,7 +216,7 @@ libged_nil_la_SOURCES = \
 	size.c \
 	slew.c \
 	solids_on_ray.c \
-        sphgroup.c \
+	sphgroup.c \
 	summary.c \
 	sync.c \
 	tables.c \
@@ -291,7 +291,7 @@ libged_la_LIBADD = \
 
 EXTRA_DIST = \
 	subtype.c \
-        CMakeLists.txt
+	CMakeLists.txt
 
 DEPENDS = src/librt src/libwdb src/libanalyze src/libfb
 

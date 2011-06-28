@@ -93,7 +93,7 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 	    if (EQUAL(propVal, tmp)) {
 		bu_vls_printf(&gedp->ged_result_str, "%d", (int) propVal);
 	    }
-	    
+
 	    /* float result */
 	    else {
 		bu_vls_printf(&gedp->ged_result_str, "%f", propVal);

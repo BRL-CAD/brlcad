@@ -1192,7 +1192,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	if (!ptr_A && !ptr_o) {
 	    bu_vls_putc(&vls, ' ');
 	    bu_vls_strcat(&vls, argv[i]);
- 	    continue;
+	    continue;
 	}
 
 	if (strlen(argv[i]) == ((size_t)1 + (ptr_A != NULL) + (ptr_o != NULL))) {

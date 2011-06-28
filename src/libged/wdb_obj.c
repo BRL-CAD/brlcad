@@ -1321,7 +1321,7 @@ wdb_form_cmd(struct rt_wdb *UNUSED(wdbp),
 	struct bu_vls logstr;
 
 	bu_vls_init(&logstr);
-	
+
 	if (!ftp->ft_form)
 	    return TCL_ERROR;
 
@@ -7508,7 +7508,7 @@ wdb_unhide_tcl(ClientData clientData,
  * rm - remove an attribute
  *		append - append to an existing attribute
  *		edit - invoke an editor to edit all attributes
- * 
+ *
  * argv[2] is the name of the object
  *
  * for "get" or "show", remaining args are attribute names (or none for all)
@@ -7537,7 +7537,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 	Tcl_AppendResult(interp, "Attributes are not available for this database format.\nPlease upgrade your database format using \"dbupgrade\" to enable attributes.", (char *)NULL);
 	return TCL_ERROR;
     }
-    
+
     if (argc < 3) {
 	struct bu_vls vls;
 
@@ -7621,7 +7621,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 	    return TCL_ERROR;
 	}
 
-	i = 3;	
+	i = 3;
 	while (i < argc) {
 	    if (BU_STR_EQUAL(argv[i], "region") && BU_STR_EQUAL(argv[i+1], "R")) {
 		dp->d_flags |= RT_DIR_REGION;
@@ -7702,7 +7702,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 	struct bu_vls vls;
 	int max_attr_name_len=0;
 	int tabs1=0;
-	
+
 	/* pretty print */
 	bu_vls_init(&vls);
 	if (dp->d_flags & RT_DIR_COMB) {
@@ -7951,7 +7951,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 	}
     }
     bu_ptbl_free(&faces);
-    
+
 
     /* count shells */
     for (BU_LIST_FOR (r, nmgregion, &m->r_hd)) {
@@ -9067,7 +9067,7 @@ wdb_vls_col_pr4v(struct bu_vls *vls,
  *
  */
 void
-wdb_vls_long_dpp(struct rt_wdb *wdbp, 
+wdb_vls_long_dpp(struct rt_wdb *wdbp,
 		 struct bu_vls *vls,
 		 struct directory **list_of_names,
 		 int num_in_list,

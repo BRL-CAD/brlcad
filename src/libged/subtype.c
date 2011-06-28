@@ -35,7 +35,7 @@
 
 
 char *
-_ged_arb8_subtype(struct ged *gedp, struct rt_arb_internal *arb) 
+_ged_arb8_subtype(struct ged *gedp, struct rt_arb_internal *arb)
 {
 	int arb_type;
 	RT_ARB_CK_MAGIC(arb);
@@ -46,17 +46,17 @@ _ged_arb8_subtype(struct ged *gedp, struct rt_arb_internal *arb)
 		break;
 	     case ARB5:
 		return "arb5";
-	        break;
+		break;
 	     case ARB6:
 		return "arb6";
-	        break;
+		break;
 	     case ARB7:
 		return "arb7";
-	        break;
+		break;
 	     default:
 		return 0;
 		break;
-        }
+	}
 	return 0;
 }
 
@@ -74,13 +74,13 @@ _ged_ell_subtype(struct ged *gedp, struct rt_ell_internal *ell)
 char *
 _ged_tgc_subtype(struct ged *gedp, struct rt_tgc_internal *tgc)
 {
-        return 0;
+	return 0;
 }
 
 char *
 _ged_eto_subtype(struct ged *gedp, struct rt_eto_internal *tgc)
 {
-        return 0;
+	return 0;
 }
 
 /*
@@ -107,7 +107,7 @@ _ged_subtype(struct ged	*gedp)
 	case DB5_MINORTYPE_BRLCAD_TGC:
 	    return _ged_tgc_subtype(gedp, (struct rt_ell_internal *)intern.idb_ptr);
 	    break;
-        case DB5_MINORTYPE_BRLCAD_ETO:
+	case DB5_MINORTYPE_BRLCAD_ETO:
 	    return _ged_eto_subtype(gedp, (struct rt_ell_internal *)intern.idb_ptr);
 	    break;
 

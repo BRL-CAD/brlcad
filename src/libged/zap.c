@@ -77,7 +77,7 @@ ged_zap(struct ged *gedp, int argc, const char *argv[])
 	BU_LIST_DEQUEUE(&gdlp->l);
 	bu_vls_free(&gdlp->gdl_path);
 	free((void *)gdlp);
-    }    
+    }
 
     return GED_OK;
 }

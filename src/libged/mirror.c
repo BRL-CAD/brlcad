@@ -162,7 +162,7 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
     mirror_offset *= gedp->ged_wdbp->dbip->dbi_local2base;
     VUNITIZE(mirror_dir);
     VJOIN1(mirror_pt, mirror_pt, mirror_offset, mirror_dir);
-    
+
     /* mirror the object */
     ip = rt_mirror(gedp->ged_wdbp->dbip,
 		   &internal,

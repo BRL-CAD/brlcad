@@ -61,7 +61,7 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
     while ((c = bu_getopt(argc, (char * const *)argv, "E:")) != -1) {
 	switch (c) {
 	    case 'E' :
-	    	editstring = bu_optarg;
+		editstring = bu_optarg;
 		break;
 	    default :
 		break;

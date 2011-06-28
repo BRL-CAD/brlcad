@@ -156,13 +156,13 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* First, grab the editstring off of the argv list */
-    
+
     bu_optind = 1;
     /* First, grab the editstring off of the argv list */
     while ((c = bu_getopt(argc, (char * const *)argv, "E:")) != -1) {
 	switch (c) {
 	    case 'E' :
-	    	editstring = bu_optarg;
+		editstring = bu_optarg;
 		break;
 	    default :
 		break;

@@ -65,7 +65,7 @@ wcodes_printnode(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union
 
     fp = (FILE *)user_ptr1;
     pathpos = (size_t *)user_ptr2;
-    gedp = (struct ged *)user_ptr3; 
+    gedp = (struct ged *)user_ptr3;
 
     /* recurse on combinations */
     if (nextdp->d_flags & RT_DIR_COMB)

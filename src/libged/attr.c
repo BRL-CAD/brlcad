@@ -131,8 +131,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	i = 3;
 	while (i < (size_t)argc) {
 	    if (BU_STR_EQUAL(argv[i], "region") && BU_STR_EQUAL(argv[i+1], "R")) {
- 		dp->d_flags |= RT_DIR_REGION;
- 	    }
+		dp->d_flags |= RT_DIR_REGION;
+	    }
 	    (void)bu_avs_add(&avs, argv[i], argv[i+1]);
 	    i += 2;
 	}
@@ -150,9 +150,9 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 	i = 3;
 	while (i < (size_t)argc) {
-    	    if (BU_STR_EQUAL(argv[i], "region")) {
- 		dp->d_flags = dp->d_flags & ~(RT_DIR_REGION);
- 	    }
+	    if (BU_STR_EQUAL(argv[i], "region")) {
+		dp->d_flags = dp->d_flags & ~(RT_DIR_REGION);
+	    }
 	    (void)bu_avs_remove(&avs, argv[i]);
 	    i++;
 	}
@@ -177,8 +177,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	while (i < (size_t)argc) {
 	    const char *old_val;
 	    if (BU_STR_EQUAL(argv[i], "region") && BU_STR_EQUAL(argv[i+1], "R")) {
- 		dp->d_flags |= RT_DIR_REGION;
- 	    }
+		dp->d_flags |= RT_DIR_REGION;
+	    }
 	    old_val = bu_avs_get(&avs, argv[i]);
 	    if (!old_val) {
 		(void)bu_avs_add(&avs, argv[i], argv[i+1]);
@@ -244,8 +244,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    }
 	    for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
 		bu_vls_printf(&gedp->ged_result_str, "\t%-*.*s    %s\n",
-                              max_attr_name_len, max_attr_name_len,
-                              avpp->name, avpp->value);
+			      max_attr_name_len, max_attr_name_len,
+			      avpp->name, avpp->value);
 	    }
 	} else {
 	    const char *val;

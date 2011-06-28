@@ -58,7 +58,7 @@ killtree_callback(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 	return;
 
     if (gktdp->nflag) {
-	if (!gktdp->killrefs) 
+	if (!gktdp->killrefs)
 	    bu_vls_printf(&gktdp->gedp->ged_result_str, "%s ", dp->d_namep);
 	else {
 	    if ((size_t)(gktdp->ac + 2) >= gktdp->av_capacity) {

@@ -353,7 +353,7 @@ eraseAllSubpathsFromSolidList(struct ged_display_list *gdlp,
  * the exception that the first path element is skipped if skip_first is true.
  *
  * Note - name is not expected to contain path separators.
- * 
+ *
  */
 void
 _ged_eraseAllNamesFromDisplay(struct ged *gedp,

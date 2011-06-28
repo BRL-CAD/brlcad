@@ -594,7 +594,7 @@ booleanize(const char *answer)
 	"false",
 	NULL
     };
-	
+
     if (!answer || (strlen(answer) <= 0)) {
 	return 0;
     }
@@ -1426,7 +1426,7 @@ ell_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     }
 
     if (BU_STR_EQUAL("ell", cmd_argvs[2])) {
- 	/* everything's ok */
+	/* everything's ok */
 	/* V, A, B, C */
 	VMOVE(eip->v, &vals[0]);
 	VMOVE(eip->a, &vals[3]);
@@ -2117,20 +2117,20 @@ hyp_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 
 
     if (MAGNITUDE(rip->hyp_Hi)*0.5 < RT_LEN_TOL
-	|| MAGNITUDE(rip->hyp_A) * rip->hyp_bnr <= RT_LEN_TOL 
+	|| MAGNITUDE(rip->hyp_A) * rip->hyp_bnr <= RT_LEN_TOL
 	|| rip->hyp_b <= RT_LEN_TOL) {
 	bu_vls_printf(&gedp->ged_result_str, "ERROR, height, axes, and distance to asymptotes must be greater than zero!\n");
 	return GED_ERROR;
     }
 
     if (!NEAR_ZERO(VDOT(rip->hyp_Hi, rip->hyp_A), RT_DOT_TOL)) {
-    	bu_vls_printf(&gedp->ged_result_str, "ERROR, major axis must be perpendicular to height vector!\n");
-      	return GED_ERROR;
+	bu_vls_printf(&gedp->ged_result_str, "ERROR, major axis must be perpendicular to height vector!\n");
+	return GED_ERROR;
     }
 
     if (inC >= 1 || inC <=0) {
-   	bu_vls_printf(&gedp->ged_result_str, "ERROR, neck to base ratio must be between 0 and 1!\n");
-     	return GED_ERROR;
+	bu_vls_printf(&gedp->ged_result_str, "ERROR, neck to base ratio must be between 0 and 1!\n");
+	return GED_ERROR;
 
     }
 
@@ -2455,51 +2455,51 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 
     /* prompt if points file */
     if (argc < 4) {
-        bu_vls_printf(&gedp->ged_result_str, "%s", prompt[0]);
-        return GED_MORE;
+	bu_vls_printf(&gedp->ged_result_str, "%s", prompt[0]);
+	return GED_MORE;
     }
 
     /* if points are in a file */
     if ((BU_STR_EQUAL(argv[3], "yes")) || (BU_STR_EQUAL(argv[3], "y"))) {
 
-        /* prompt for point file path and name */
-        if (argc < 5) {
-            bu_vls_printf(&gedp->ged_result_str, "%s", prompt[16]);
-            return GED_MORE;
-        }
+	/* prompt for point file path and name */
+	if (argc < 5) {
+	    bu_vls_printf(&gedp->ged_result_str, "%s", prompt[16]);
+	    return GED_MORE;
+	}
 
-        /* prompt for file data format */
-        if (argc < 6) {
-            bu_vls_printf(&gedp->ged_result_str, "%s", prompt[17]);
-            return GED_MORE;
-        }
+	/* prompt for file data format */
+	if (argc < 6) {
+	    bu_vls_printf(&gedp->ged_result_str, "%s", prompt[17]);
+	    return GED_MORE;
+	}
 
-        /* prompt for file data units */
-        if (argc < 7) {
-            bu_vls_printf(&gedp->ged_result_str, "%s", prompt[18]);
-            return GED_MORE;
-        }
+	/* prompt for file data units */
+	if (argc < 7) {
+	    bu_vls_printf(&gedp->ged_result_str, "%s", prompt[18]);
+	    return GED_MORE;
+	}
 
-        /* prompt for default point size */
-        if (argc < 8) {
-            bu_vls_printf(&gedp->ged_result_str, "%s", prompt[5]);
-            return GED_MORE;
-        }
+	/* prompt for default point size */
+	if (argc < 8) {
+	    bu_vls_printf(&gedp->ged_result_str, "%s", prompt[5]);
+	    return GED_MORE;
+	}
 
-        /* call function(s) to validate 'point file data format string' and return the
-         * point-cloud type.
-         */
+	/* call function(s) to validate 'point file data format string' and return the
+	 * point-cloud type.
+	 */
 
-        /* call function(s) to validate the units string and return the converion factor to
-         * milimeters.
-         */
+	/* call function(s) to validate the units string and return the converion factor to
+	 * milimeters.
+	 */
 
-        /* call function(s) to read point cloud data and save into database.
-         */
+	/* call function(s) to read point cloud data and save into database.
+	 */
 
-        bu_log("The ability to create a pnts primitive from a data file is not yet implemented.\n");
+	bu_log("The ability to create a pnts primitive from a data file is not yet implemented.\n");
 
-        return GED_ERROR;
+	return GED_ERROR;
 
     } /* endif to process point data file */
 
@@ -2588,12 +2588,12 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     } else {
 	numPoints = (unsigned long)readPoints;
     }
-    
+
     /* prompt for X, Y, Z of points */
     if ((unsigned long)argc < numPoints * (unsigned long)valuesPerPoint) {
 	int nextAsk = nextPrompt + 6;
 	struct bu_vls vls;
-        bu_vls_init(&vls);
+	bu_vls_init(&vls);
 
 	switch (type) {
 	    case RT_PNT_TYPE_PNT:
@@ -2636,8 +2636,8 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 
 	bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(&vls));
 
-        bu_vls_free(&vls);
-        return GED_MORE;
+	bu_vls_free(&vls);
+	return GED_MORE;
     }
 
     /* now we have everything we need to allocate an internal */
@@ -2690,7 +2690,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 	    BU_GETSTRUCT(headPoint, pnt_color_scale_normal);
 	    BU_LIST_INIT(&(((struct pnt_color_scale_normal *)headPoint)->l));
 	    break;
-    }    
+    }
     pnts->point = headPoint;
 
     /* store points in list */

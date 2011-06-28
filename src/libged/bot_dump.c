@@ -446,7 +446,7 @@ write_bot_obj(struct rt_bot_internal *bot, FILE *fp, char *name)
 	    VSET(B, vertices[vi], vertices[vi+1], vertices[vi+2]);
 	    vi = 3*faces[3*i+2];
 	    VSET(C, vertices[vi], vertices[vi+1], vertices[vi+2]);
-	    
+
 	    VSUB2(BmA, B, A);
 	    VSUB2(CmA, C, A);
 	    if (bot->orientation != RT_BOT_CW) {
@@ -455,7 +455,7 @@ write_bot_obj(struct rt_bot_internal *bot, FILE *fp, char *name)
 		VCROSS(norm, CmA, BmA);
 	    }
 	    VUNITIZE(norm);
-	    
+
 	    fprintf(fp, "vn %f %f %f\n", V3ARGS(norm));
 	}
     }
@@ -1511,7 +1511,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 
 	fprintf(fp, "mtllib %s\n", bu_vls_addr(&obj_materials_file));
     }
- 
+
     MAT_IDN(mat);
 
     for (BU_LIST_FOR(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {

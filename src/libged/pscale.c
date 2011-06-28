@@ -72,7 +72,7 @@ ged_pscale(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return BRLCAD_ERROR;
 	}
-    } else 
+    } else
 	rflag = 0;
 
     if (sscanf(argv[3], "%lf", &sf) != 1 ||

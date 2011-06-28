@@ -83,13 +83,13 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "Error: %s is not a solid or does not exist in database", solid_name);
 	return GED_ERROR;
     } else {
-        real_flag = (ndp->d_addr == RT_DIR_PHONY_ADDR) ? 0 : 1;
+	real_flag = (ndp->d_addr == RT_DIR_PHONY_ADDR) ? 0 : 1;
     }
 
     if (!real_flag) {
-        /* solid doesnt exists - don't kill */
-        bu_vls_printf(&gedp->ged_result_str, "Error: %s is not a real solid", solid_name);
-        return GED_OK;
+	/* solid doesnt exists - don't kill */
+	bu_vls_printf(&gedp->ged_result_str, "Error: %s is not a real solid", solid_name);
+	return GED_OK;
     }
 
     GED_DB_GET_INTERNAL(gedp, &intern, ndp, bn_mat_identity, &rt_uniresource, GED_ERROR);
@@ -99,9 +99,9 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     bi = (struct rt_brep_internal*)intern.idb_ptr;
 
     if (!RT_BREP_TEST_MAGIC(bi)) {
-        /* solid doesnt exists - don't kill */
-        bu_vls_printf(&gedp->ged_result_str, "Error: %s is not a BREP solid.", solid_name);
-        return GED_OK;
+	/* solid doesnt exists - don't kill */
+	bu_vls_printf(&gedp->ged_result_str, "Error: %s is not a BREP solid.", solid_name);
+	return GED_OK;
     }
 
     BU_GETSTRUCT(stp, soltab);

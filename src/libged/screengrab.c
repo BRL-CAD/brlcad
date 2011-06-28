@@ -88,7 +88,7 @@ ged_screen_grab(struct ged *gedp,int argc, const char *argv[])
 
     /* create image file */
     if ((bif = bu_image_save_open(argv[1], BU_IMAGE_AUTO, width, height, bytes_per_pixel)) == NULL)  {
-    	bu_vls_printf(&gedp->ged_result_str, "%s: could not create bu_image_ write structure.", argv[1]);
+	bu_vls_printf(&gedp->ged_result_str, "%s: could not create bu_image_ write structure.", argv[1]);
 		return GED_ERROR;
 	}
 
@@ -102,7 +102,7 @@ ged_screen_grab(struct ged *gedp,int argc, const char *argv[])
     }
 
     if (bif != NULL)
-    	bu_image_save_close(bif);
+	bu_image_save_close(bif);
     bif = NULL;
 
     bu_free(rows, "rows");

@@ -106,8 +106,8 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 
     /* default to local units when not specified on command line */
     if (!units_supplied) {
-    	*vp++ = "-u";
-    	*vp++ = "model";
+	*vp++ = "-u";
+	*vp++ = "model";
     }
 
     /* XXX why is this different for win32 only? */
@@ -534,7 +534,7 @@ ged_build_tops(struct ged *gedp, char **start, char **end)
     }
 
     if ((vp != NULL) && (vp < end)) {
-    	*vp = (char *) 0;
+	*vp = (char *) 0;
     }
 
     return vp-start;

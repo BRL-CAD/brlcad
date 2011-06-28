@@ -22,7 +22,7 @@
 /** @file libged/ged_util.c
  *
  * Utility routines for common operations in libged.
- * 
+ *
  */
 /** @} */
 

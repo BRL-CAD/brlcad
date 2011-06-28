@@ -262,7 +262,7 @@ ged_draw_png_solid(struct ged *gedp, unsigned char **image, struct solid *sp, ma
 	    coord2.x = fin[0] * half_size + half_size;
 	    coord2.y = fin[1] * half_size + half_size;
 	    ged_draw_stroke(image, &coord1, &coord2, sp->s_color);
-			    
+
 	    useful = 1;
 	}
     }

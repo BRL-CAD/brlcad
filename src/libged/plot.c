@@ -102,7 +102,7 @@ ged_plot(struct ged *gedp, int argc, const char *argv[])
 	case 'z':
 	case 'Z':
 	    /* Enable Z clipping */
-	    bu_vls_printf(&gedp->ged_result_str, "%s: Clipped in Z to viewing cube\n", argv[0]); 
+	    bu_vls_printf(&gedp->ged_result_str, "%s: Clipped in Z to viewing cube\n", argv[0]);
 	    Z_clip = 1;
 	    break;
 	default:

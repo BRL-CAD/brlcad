@@ -464,7 +464,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 	 * Verify the names, and add pointers to them to the array.
 	 */
 	for (i = 0; i < (size_t)argc; i++) {
-	    if (qflag) {	
+	    if (qflag) {
 		    dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_QUIET);
 	    } else {
 		    dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY);

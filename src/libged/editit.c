@@ -166,7 +166,7 @@ _ged_editit(char *editstring, const char *filename)
 	    bu_free(editor_basename, "editor_basename free");
 
 	    if (!terminal && !editor_opt) {
-    		(void)execlp(editor, editor, file, NULL);
+		(void)execlp(editor, editor, file, NULL);
 	    } else if (!terminal) {
 		(void)execlp(editor, editor, editor_opt, file, NULL);
 	    } else if (terminal && !terminal_opt) {

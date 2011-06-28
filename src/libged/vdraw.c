@@ -570,7 +570,7 @@ ged_vdraw_send(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "ERROR: missing parameter after [%s]", argv[0]);
 	return GED_ERROR;
     }
-	
+
     if (!gedp->ged_gdp->gd_currVHead) {
 	bu_vls_printf(&gedp->ged_result_str, "%s %s: no vlist is currently open.", argv[0], argv[1]);
 	return GED_ERROR;

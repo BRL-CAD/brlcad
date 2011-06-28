@@ -190,7 +190,7 @@ ged_select(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	return _ged_select(gedp, vx, vy, vw, vh, 0);
-    } 
+    }
 }
 
 /*
@@ -223,7 +223,6 @@ ged_rselect(struct ged *gedp, int argc, const char *argv[])
 		       gedp->ged_gvp->gv_rect.grs_height,
 		       0);
 }
-
 
 
 /*
