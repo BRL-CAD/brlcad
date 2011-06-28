@@ -2547,12 +2547,7 @@ mged_finish(int exitcode)
     Tcl_Eval(INTERP, "rename .inmem \"\"");
     Tcl_Release((ClientData)INTERP);
 
-    if (gedp->ged_gdp) {
-	ged_drawable_close(gedp->ged_gdp);
-	gedp->ged_gdp = GED_DRAWABLE_NULL;
-    }
-
-    ged_free(gedp);
+    ged_close(gedp);
     gedp = GED_NULL;
 
     /* XXX should deallocate libbu semaphores */
@@ -2940,10 +2935,8 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
 
     log_event("CEASE", "(close)");
 
-    ged_drawable_close(gedp->ged_gdp);
-    gedp->ged_gdp = NULL;
-
-    gedp->ged_wdbp = RT_WDB_NULL;
+    ged_close(gedp);
+    gedp = GED_NULL;
 
     /* wipe out the global pointers */
     dbip = DBI_NULL;
