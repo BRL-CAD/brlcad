@@ -280,7 +280,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 	return;
     }
 
- out:
+out:
     bu_free((char *)tree_list, "new_tables: tree_list");
     intern.idb_meth->ft_ifree(&intern);
     return;
@@ -450,7 +450,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 	(void)unlink("/tmp/ord_id\0");
     }
 
- end:
+end:
     bu_vls_free(&cmd);
     bu_vls_free(&tmp_vls);
     bu_ptbl_free(&cur_path);

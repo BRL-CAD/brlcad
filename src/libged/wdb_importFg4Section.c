@@ -486,7 +486,7 @@ make_bot_object(char *name,
     while (*(_cp) != '\0' && \
 	   *(_cp) != '\n') \
 	++(_cp); \
-\
+    \
     if (*(_cp) == '\0') \
 	_eosFlag = 1; \
     else \

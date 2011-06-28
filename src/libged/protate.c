@@ -96,23 +96,23 @@ ged_protate(struct ged *gedp, int argc, const char *argv[])
     bn_mat_angles(rmat, rx, ry, rz);
 
     switch (intern.idb_minor_type) {
-    case DB5_MINORTYPE_BRLCAD_ETO:
-	ret = _ged_rotate_eto(gedp, (struct rt_eto_internal *)intern.idb_ptr, argv[2], rmat);
-	break;
-    case DB5_MINORTYPE_BRLCAD_EXTRUDE:
-	ret = _ged_rotate_extrude(gedp, (struct rt_extrude_internal *)intern.idb_ptr, argv[2], rmat);
-	break;
-    case DB5_MINORTYPE_BRLCAD_HYP:
-	ret = _ged_rotate_hyp(gedp, (struct rt_hyp_internal *)intern.idb_ptr, argv[2], rmat);
-	break;
-    case DB5_MINORTYPE_BRLCAD_TGC:
-	ret = _ged_rotate_tgc(gedp, (struct rt_tgc_internal *)intern.idb_ptr, argv[2], rmat);
-	break;
-    default:
-	bu_vls_printf(&gedp->ged_result_str, "%s: Object not yet supported.", argv[0]);
-	rt_db_free_internal(&intern);
+	case DB5_MINORTYPE_BRLCAD_ETO:
+	    ret = _ged_rotate_eto(gedp, (struct rt_eto_internal *)intern.idb_ptr, argv[2], rmat);
+	    break;
+	case DB5_MINORTYPE_BRLCAD_EXTRUDE:
+	    ret = _ged_rotate_extrude(gedp, (struct rt_extrude_internal *)intern.idb_ptr, argv[2], rmat);
+	    break;
+	case DB5_MINORTYPE_BRLCAD_HYP:
+	    ret = _ged_rotate_hyp(gedp, (struct rt_hyp_internal *)intern.idb_ptr, argv[2], rmat);
+	    break;
+	case DB5_MINORTYPE_BRLCAD_TGC:
+	    ret = _ged_rotate_tgc(gedp, (struct rt_tgc_internal *)intern.idb_ptr, argv[2], rmat);
+	    break;
+	default:
+	    bu_vls_printf(&gedp->ged_result_str, "%s: Object not yet supported.", argv[0]);
+	    rt_db_free_internal(&intern);
 
-	return GED_ERROR;
+	    return GED_ERROR;
     }
 
     if (ret == GED_OK) {

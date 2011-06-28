@@ -249,7 +249,7 @@ ged_loadframe(struct ged *gedp, FILE *fp)
 	}
 
 	if ( cmd[0] == 'e' && strncmp( cmd, "end", 3 ) == 0 ) {
-		end = 1;
+	    end = 1;
 	}
 
 	if (rt_do_cmd((struct rt_i *)0, cmd, ged_preview_cmdtab) < 0)
@@ -327,7 +327,7 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
 	    case 'e':
 		draw_eye_path = 1;
 		break;
-		case 'K':
+	    case 'K':
 		preview_finalframe = atof(bu_optarg);
 		break;
 	    case 'o':
@@ -409,7 +409,7 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
 	    screengrab_args[screengrab_argc++] = "screengrab";
 
 	    bu_vls_sprintf(&fullname, "%s%05d%s", bu_vls_addr(&name),
-		    preview_currentframe, bu_vls_addr(&extension));
+			   preview_currentframe, bu_vls_addr(&extension));
 	    screengrab_args[screengrab_argc++] = bu_vls_addr(&fullname);
 
 	    /* ged_png(gedp,screengrab_argc,screengrab_args); */

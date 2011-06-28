@@ -154,7 +154,7 @@ ged_tops(struct ged *gedp, int argc, const char *argv[])
  */
 struct directory **
 _ged_dir_getspace(struct db_i	*dbip,
-		 int	num_entries)
+		  int	num_entries)
 {
     struct directory *dp;
     int i;

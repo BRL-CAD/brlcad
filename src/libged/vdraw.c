@@ -118,9 +118,9 @@
 #endif
 
 #define REV_BU_LIST_FOR(p, structure, hp)	\
-	(p)=BU_LIST_LAST(structure, hp);	\
-	BU_LIST_NOT_HEAD(p, hp);		\
-	(p)=BU_LIST_PLAST(structure, p)
+    (p)=BU_LIST_LAST(structure, hp);	\
+       BU_LIST_NOT_HEAD(p, hp);		\
+       (p)=BU_LIST_PLAST(structure, p)
 
 static int ged_vdraw_cmd(struct ged *gedp, int argc, const char *argv[]);
 static int ged_vdraw_write(struct ged *gedp, int argc, const char *argv[]);
@@ -591,10 +591,10 @@ ged_vdraw_send(struct ged *gedp, int argc, const char *argv[])
 
     /* 0 means OK, -1 means conflict with real solid name */
     idx = _ged_invent_solid(gedp,
-			     solid_name,
-			     &(gedp->ged_gdp->gd_currVHead->vdc_vhd),
-			     gedp->ged_gdp->gd_currVHead->vdc_rgb,
-			     1, 0.0, 0);
+			    solid_name,
+			    &(gedp->ged_gdp->gd_currVHead->vdc_vhd),
+			    gedp->ged_gdp->gd_currVHead->vdc_rgb,
+			    1, 0.0, 0);
 
     bu_vls_printf(&gedp->ged_result_str, "%d", idx);
 

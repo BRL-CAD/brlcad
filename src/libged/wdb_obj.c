@@ -55,7 +55,7 @@
 
 #define WDB_TCL_READ_ERR { \
 	Tcl_AppendResult(interp, "Database read error, aborting.\n", (char *)NULL); \
-	}
+    }
 
 #define WDB_TCL_READ_ERR_return { \
 	WDB_TCL_READ_ERR; \
@@ -80,7 +80,7 @@ An error has occured while adding a new object to the database.\n", (char *)NULL
 
 #define WDB_TCL_DELETE_ERR(_name) { \
 	Tcl_AppendResult(interp, "An error has occurred while deleting '", _name, \
-	"' from the database.\n", (char *)NULL);\
+			 "' from the database.\n", (char *)NULL);\
 	WDB_TCL_ERROR_RECOVERY_SUGGESTION; }
 
 #define WDB_TCL_DELETE_ERR_return(_name) {  \
@@ -89,7 +89,7 @@ An error has occured while adding a new object to the database.\n", (char *)NULL
 
 /* A verbose message to attempt to soothe and advise the user */
 #define WDB_TCL_ERROR_RECOVERY_SUGGESTION\
-	Tcl_AppendResult(interp, "\
+    Tcl_AppendResult(interp, "\
 The in-memory table of contents may not match the status of the on-disk\n\
 database.  The on-disk database should still be intact.  For safety, \n\
 you should exit now, and resolve the I/O problem, before continuing.\n", (char *)NULL)
@@ -120,7 +120,7 @@ you should exit now, and resolve the I/O problem, before continuing.\n", (char *
 
 /* A verbose message to attempt to soothe and advise the user */
 #define WDB_ERROR_RECOVERY_SUGGESTION\
-	bu_log(WDB_ERROR_RECOVERY_MESSAGE)
+    bu_log(WDB_ERROR_RECOVERY_MESSAGE)
 
 #define WDB_ERROR_RECOVERY_MESSAGE "\
 The in-memory table of contents may not match the status of the on-disk\n\
@@ -128,14 +128,14 @@ database.  The on-disk database should still be intact.  For safety, \n\
 you should exit now, and resolve the I/O problem, before continuing.\n"
 
 #define WDB_TCL_CHECK_READ_ONLY \
-	if (interp) { \
-		if (wdbp->dbip->dbi_read_only) { \
-			Tcl_AppendResult(interp, "Sorry, this database is READ-ONLY\n", (char *)NULL); \
-			return TCL_ERROR; \
-		} \
-	} else { \
-		bu_log("Sorry, this database is READ-ONLY\n"); \
-	}
+    if (interp) { \
+	if (wdbp->dbip->dbi_read_only) { \
+	    Tcl_AppendResult(interp, "Sorry, this database is READ-ONLY\n", (char *)NULL); \
+	    return TCL_ERROR; \
+	} \
+    } else { \
+	bu_log("Sorry, this database is READ-ONLY\n"); \
+    }
 
 struct wdb_killtree_data {
     Tcl_Interp *interp;
@@ -165,21 +165,21 @@ struct concat_data {
 
 /* Defined in wdb_cmd_std.c */
 extern int wdb_comb_std_tcl(ClientData clientData,
-	   Tcl_Interp *interp,
-	   int argc,
-	   char *argv[]);
+			    Tcl_Interp *interp,
+			    int argc,
+			    char *argv[]);
 
 /* Defined in dg_obj.c */
 extern void dgo_impending_wdb_close(struct rt_wdb *wdbp,
-	   Tcl_Interp *interp);
+				    Tcl_Interp *interp);
 extern void dgo_zapall(struct rt_wdb *wdbp,
-	   Tcl_Interp *interp);
+		       Tcl_Interp *interp);
 extern void dgo_eraseobjall_callback(struct db_i *dbip,
-	   Tcl_Interp *interp,
-	   struct directory *dp,
-	   int notify);
+				     Tcl_Interp *interp,
+				     struct directory *dp,
+				     int notify);
 extern void dgo_notifyWdb(struct rt_wdb *wdbp,
-	   Tcl_Interp *interp);
+			  Tcl_Interp *interp);
 
 
 int wdb_init_obj(Tcl_Interp *interp, struct rt_wdb *wdbp, const char *oname);
@@ -5254,7 +5254,7 @@ wdb_lt_cmd(struct rt_wdb *wdbp,
 
     return wdb_list_children(wdbp, interp, dp);
 
- bad:
+bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias wdb_lt %s", argv[0]);
     Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -5791,7 +5791,7 @@ struct wdb_push_id {
 
 #define WDB_MAGIC_PUSH_ID 0x50495323
 #define FOR_ALL_WDB_PUSH_SOLIDS(_p, _phead) \
-	for (_p=_phead.forw; _p!=&_phead; _p=_p->forw)
+    for (_p=_phead.forw; _p!=&_phead; _p=_p->forw)
 
 struct wdb_push_data {
     Tcl_Interp *interp;
@@ -8282,21 +8282,21 @@ wdb_summary_cmd(struct rt_wdb *wdbp,
 
     cp = argv[1];
     while (*cp) switch (*cp++) {
-	case 'p':
-	    flags |= RT_DIR_SOLID;
-	    break;
-	case 'r':
-	    flags |= RT_DIR_REGION;
-	    break;
-	case 'g':
-	    flags |= RT_DIR_COMB;
-	    break;
-	default:
-	    Tcl_AppendResult(interp, "summary:  P R or G are only valid parmaters\n",
-			     (char *)NULL);
-	    bad = 1;
-	    break;
-    }
+	    case 'p':
+		flags |= RT_DIR_SOLID;
+		break;
+	    case 'r':
+		flags |= RT_DIR_REGION;
+		break;
+	    case 'g':
+		flags |= RT_DIR_COMB;
+		break;
+	    default:
+		Tcl_AppendResult(interp, "summary:  P R or G are only valid parmaters\n",
+				 (char *)NULL);
+		bad = 1;
+		break;
+	}
 
     wdb_dir_summary(wdbp->dbip, interp, flags);
     return bad ? TCL_ERROR : TCL_OK;

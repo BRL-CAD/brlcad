@@ -122,7 +122,7 @@ ged_nmg_collapse(struct ged *gedp, int argc, const char *argv[])
 	    bu_log( "\tnot planar\n" );
 	    bu_ptbl_free(&faces);
 	    bu_vls_printf(&gedp->ged_result_str,
-		"nmg_collapse can only be applied to NMG primitives with planar faces\n");
+			  "nmg_collapse can only be applied to NMG primitives with planar faces\n");
 	    return GED_ERROR;
 	}
     }

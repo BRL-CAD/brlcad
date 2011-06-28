@@ -465,9 +465,9 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 	 */
 	for (i = 0; i < (size_t)argc; i++) {
 	    if (qflag) {
-		    dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_QUIET);
+		dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_QUIET);
 	    } else {
-		    dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY);
+		dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY);
 	    }
 	    if (dp  == RT_DIR_NULL)
 		continue;

@@ -46,13 +46,13 @@ _ged_rotate_hyp(struct ged *gedp, struct rt_hyp_internal *hyp, const char *attri
     }
 
     switch (attribute[0]) {
-    case 'h':
-    case 'H':
-	MAT4X3VEC(hyp->hyp_Hi, rmat, hyp->hyp_Hi);
-	break;
-    default:
-	bu_vls_printf(&gedp->ged_result_str, "bad hyp attribute - %s", attribute);
-	return GED_ERROR;
+	case 'h':
+	case 'H':
+	    MAT4X3VEC(hyp->hyp_Hi, rmat, hyp->hyp_Hi);
+	    break;
+	default:
+	    bu_vls_printf(&gedp->ged_result_str, "bad hyp attribute - %s", attribute);
+	    return GED_ERROR;
     }
 
     return GED_OK;

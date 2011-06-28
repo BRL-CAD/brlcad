@@ -61,19 +61,21 @@ ged_summary(struct ged *gedp, int argc, const char *argv[])
     }
 
     cp = (char *)argv[1];
-    while (*cp)  switch (*cp++) {
-	case 'p':
-	    flags |= RT_DIR_SOLID;
-	    break;
-	case 'r':
-	    flags |= RT_DIR_REGION;
-	    break;
-	case 'g':
-	    flags |= RT_DIR_COMB;
-	    break;
-	default:
-	    bu_vls_printf(&gedp->ged_result_str, "%s:  p, r or g are the only valid parmaters\n", argv[0]);
-	    return GED_ERROR;
+    while (*cp) {
+	switch (*cp++) {
+	    case 'p':
+		flags |= RT_DIR_SOLID;
+		break;
+	    case 'r':
+		flags |= RT_DIR_REGION;
+		break;
+	    case 'g':
+		flags |= RT_DIR_COMB;
+		break;
+	    default:
+		bu_vls_printf(&gedp->ged_result_str, "%s:  p, r or g are the only valid parmaters\n", argv[0]);
+		return GED_ERROR;
+	}
     }
 
     ged_dir_summary(gedp, flags);

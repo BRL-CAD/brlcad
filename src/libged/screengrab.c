@@ -57,9 +57,9 @@ ged_screen_grab(struct ged *gedp,int argc, const char *argv[])
     struct dm *dmp = NULL;
 
     if ((dmp = ( struct dm *)gedp->ged_dmp) == NULL) {
-		bu_vls_printf(&gedp->ged_result_str, "Bad display pointer.");
-		return GED_ERROR;
-	}
+	bu_vls_printf(&gedp->ged_result_str, "Bad display pointer.");
+	return GED_ERROR;
+    }
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_VIEW(gedp, GED_ERROR);
@@ -89,8 +89,8 @@ ged_screen_grab(struct ged *gedp,int argc, const char *argv[])
     /* create image file */
     if ((bif = bu_image_save_open(argv[1], BU_IMAGE_AUTO, width, height, bytes_per_pixel)) == NULL)  {
 	bu_vls_printf(&gedp->ged_result_str, "%s: could not create bu_image_ write structure.", argv[1]);
-		return GED_ERROR;
-	}
+	return GED_ERROR;
+    }
 
     rows = (unsigned char **)bu_calloc(height, sizeof(unsigned char *), "rows");
 

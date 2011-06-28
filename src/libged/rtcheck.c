@@ -534,7 +534,7 @@ ged_rtcheck_output_handler(ClientData clientData, int mask)
 
 void
 _ged_wait_status(struct bu_vls	*logstr,
-		int		status)
+		 int		status)
 {
     int	sig = status & 0x7f;
     int	core = status & 0x80;

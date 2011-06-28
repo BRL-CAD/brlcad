@@ -98,9 +98,9 @@ _ged_mat_aet(struct ged_view *gvp)
 
 int
 _ged_do_rot(struct ged	*gedp,
-	   char		coord,
-	   mat_t	rmat,
-	   int		(*func)())
+	    char		coord,
+	    mat_t	rmat,
+	    int		(*func)())
 {
     mat_t temp1, temp2;
 
@@ -174,9 +174,9 @@ _ged_do_slew(struct ged *gedp, vect_t svec)
 
 int
 _ged_do_tra(struct ged	*gedp,
-	   char		coord,
-	   vect_t	tvec,
-	   int		(*func)())
+	    char		coord,
+	    vect_t	tvec,
+	    int		(*func)())
 {
     point_t delta;
     point_t work;
@@ -341,9 +341,9 @@ ged_mike_persp_mat(mat_t		pmat,
  */
 void
 ged_deering_persp_mat(fastf_t *m, const fastf_t *l, const fastf_t *h, const fastf_t *eye)
-    /* lower left corner of screen */
-    /* upper right (high) corner of screen */
-    /* eye location.  Traditionally at (0, 0, 1) */
+/* lower left corner of screen */
+/* upper right (high) corner of screen */
+/* eye location.  Traditionally at (0, 0, 1) */
 {
     vect_t	diff;	/* H - L */
     vect_t	sum;	/* H + L */

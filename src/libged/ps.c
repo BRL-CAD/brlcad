@@ -340,84 +340,84 @@ ged_ps(struct ged *gedp, int argc, const char *argv[])
 	fastf_t tmp_f;
 
 	switch (k) {
-	case 'a':
-	    bu_vls_trunc(&creator, 0);
-	    bu_vls_printf(&creator, "%s", bu_optarg);
+	    case 'a':
+		bu_vls_trunc(&creator, 0);
+		bu_vls_printf(&creator, "%s", bu_optarg);
 
-	    break;
-	case 'b':
-	    border = 1;
-	    break;
-	case 'c':
-	    if (sscanf(bu_optarg, "%d%*c%d%*c%d", &r, &g, &b) != 3) {
-		bu_vls_printf(&gedp->ged_result_str, "%s: bad color - %s", argv[0], bu_optarg);
-		return GED_ERROR;
-	    }
+		break;
+	    case 'b':
+		border = 1;
+		break;
+	    case 'c':
+		if (sscanf(bu_optarg, "%d%*c%d%*c%d", &r, &g, &b) != 3) {
+		    bu_vls_printf(&gedp->ged_result_str, "%s: bad color - %s", argv[0], bu_optarg);
+		    return GED_ERROR;
+		}
 
-	    /* Clamp color values */
-	    if (r < 0)
-		r = 0;
-	    else if (r > 255)
-		r = 255;
+		/* Clamp color values */
+		if (r < 0)
+		    r = 0;
+		else if (r > 255)
+		    r = 255;
 
-	    if (g < 0)
-		g = 0;
-	    else if (g > 255)
-		g = 255;
+		if (g < 0)
+		    g = 0;
+		else if (g > 255)
+		    g = 255;
 
-	    if (b < 0)
-		b = 0;
-	    else if (b > 255)
-		b = 255;
+		if (b < 0)
+		    b = 0;
+		else if (b > 255)
+		    b = 255;
 
-	    border_red = GED_TO_PS_COLOR(r);
-	    border_green = GED_TO_PS_COLOR(g);
-	    border_blue = GED_TO_PS_COLOR(b);
+		border_red = GED_TO_PS_COLOR(r);
+		border_green = GED_TO_PS_COLOR(g);
+		border_blue = GED_TO_PS_COLOR(b);
 
-	    break;
-	case 'f':
-	    bu_vls_trunc(&font, 0);
-	    bu_vls_printf(&font, "%s", bu_optarg);
+		break;
+	    case 'f':
+		bu_vls_trunc(&font, 0);
+		bu_vls_printf(&font, "%s", bu_optarg);
 
-	    break;
-	case 's':
-	    if (sscanf(bu_optarg, "%lf", &tmp_f) != 1) {
-		bu_vls_printf(&gedp->ged_result_str, "%s: bad size - %s", argv[0], bu_optarg);
+		break;
+	    case 's':
+		if (sscanf(bu_optarg, "%lf", &tmp_f) != 1) {
+		    bu_vls_printf(&gedp->ged_result_str, "%s: bad size - %s", argv[0], bu_optarg);
+		    goto bad;
+		}
+
+		if (tmp_f < 0.0 || NEAR_ZERO(tmp_f, 0.1)) {
+		    bu_vls_printf(&gedp->ged_result_str, "%s: bad size - %s, must be greater than 0.1 inches\n", argv[0], bu_optarg);
+		    goto bad;
+		}
+
+		scale = tmp_f * ged_default_ps_ppi / 4096.0;
+
+		break;
+	    case 't':
+		bu_vls_trunc(&title, 0);
+		bu_vls_printf(&title, "%s", bu_optarg);
+
+		break;
+	    case 'x':
+		if (sscanf(bu_optarg, "%lf", &tmp_f) != 1) {
+		    bu_vls_printf(&gedp->ged_result_str, "%s: bad x offset - %s", argv[0], bu_optarg);
+		    goto bad;
+		}
+		xoffset = (int)(tmp_f * ged_default_ps_ppi);
+
+		break;
+	    case 'y':
+		if (sscanf(bu_optarg, "%lf", &tmp_f) != 1) {
+		    bu_vls_printf(&gedp->ged_result_str, "%s: bad y offset - %s", argv[0], bu_optarg);
+		    goto bad;
+		}
+		yoffset = (int)(tmp_f * ged_default_ps_ppi);
+
+		break;
+	    default:
+		bu_vls_printf(&gedp->ged_result_str, "%s: Unrecognized option - %s", argv[0], argv[bu_optind-1]);
 		goto bad;
-	    }
-
-	    if (tmp_f < 0.0 || NEAR_ZERO(tmp_f, 0.1)) {
-		bu_vls_printf(&gedp->ged_result_str, "%s: bad size - %s, must be greater than 0.1 inches\n", argv[0], bu_optarg);
-		goto bad;
-	    }
-
-	    scale = tmp_f * ged_default_ps_ppi / 4096.0;
-
-	    break;
-	case 't':
-	    bu_vls_trunc(&title, 0);
-	    bu_vls_printf(&title, "%s", bu_optarg);
-
-	    break;
-	case 'x':
-	    if (sscanf(bu_optarg, "%lf", &tmp_f) != 1) {
-		bu_vls_printf(&gedp->ged_result_str, "%s: bad x offset - %s", argv[0], bu_optarg);
-		goto bad;
-	    }
-	    xoffset = (int)(tmp_f * ged_default_ps_ppi);
-
-	    break;
-	case 'y':
-	    if (sscanf(bu_optarg, "%lf", &tmp_f) != 1) {
-		bu_vls_printf(&gedp->ged_result_str, "%s: bad y offset - %s", argv[0], bu_optarg);
-		goto bad;
-	    }
-	    yoffset = (int)(tmp_f * ged_default_ps_ppi);
-
-	    break;
-	default:
-	    bu_vls_printf(&gedp->ged_result_str, "%s: Unrecognized option - %s", argv[0], argv[bu_optind-1]);
-	    goto bad;
 	}
     }
 
@@ -445,7 +445,7 @@ ged_ps(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 
-  bad:
+bad:
     bu_vls_free(&font);
     bu_vls_free(&title);
     bu_vls_free(&creator);

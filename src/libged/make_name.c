@@ -57,15 +57,15 @@ ged_make_name(struct ged *gedp, int argc, const char *argv[])
 		return GED_OK;
 	    }
 	case 3:
-	{
-	    int	new_i;
+	    {
+		int	new_i;
 
-	    if ((BU_STR_EQUAL(argv[1], "-s"))
-		&& (sscanf(argv[2], "%d", &new_i) == 1)) {
-		i = new_i;
-		return GED_OK;
+		if ((BU_STR_EQUAL(argv[1], "-s"))
+		    && (sscanf(argv[2], "%d", &new_i) == 1)) {
+		    i = new_i;
+		    return GED_OK;
+		}
 	    }
-	}
 	default:
 	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;

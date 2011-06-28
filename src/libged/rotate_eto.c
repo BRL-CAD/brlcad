@@ -46,13 +46,13 @@ _ged_rotate_eto(struct ged *gedp, struct rt_eto_internal *eto, const char *attri
     }
 
     switch (attribute[0]) {
-    case 'c':
-    case 'C':
-	MAT4X3VEC(eto->eto_C, rmat, eto->eto_C);
-	break;
-    default:
-	bu_vls_printf(&gedp->ged_result_str, "bad eto attribute - %s", attribute);
-	return GED_ERROR;
+	case 'c':
+	case 'C':
+	    MAT4X3VEC(eto->eto_C, rmat, eto->eto_C);
+	    break;
+	default:
+	    bu_vls_printf(&gedp->ged_result_str, "bad eto attribute - %s", attribute);
+	    return GED_ERROR;
     }
 
     return GED_OK;

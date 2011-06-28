@@ -3092,7 +3092,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
- do_new_update:
+do_new_update:
     /* The function may have already written via LIBWDB */
     if (internal.idb_ptr != NULL) {
 	dp=db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&internal.idb_type);

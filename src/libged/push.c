@@ -37,7 +37,7 @@
 
 #define GED_MAGIC_PUSH_ID	0x50495323
 #define FOR_ALL_GED_PUSH_SOLIDS(_p, _phead) \
-	for (_p=_phead.forw; _p!=&_phead; _p=_p->forw)
+    for (_p=_phead.forw; _p!=&_phead; _p=_p->forw)
 
 /** structure to hold all solids that have been pushed. */
 struct ged_push_id {

@@ -1422,7 +1422,7 @@ MakeTreadSolid(struct rt_wdb (*file), char *suffix,
     bu_vls_sprintf(&str, "TopTreadClipL%s.s", suffix);
     (void)mk_addmember(bu_vls_addr(&str), &premtreadshape.l, NULL, WMOP_SUBTRACT);
     bu_vls_sprintf(&str, "TopTreadClipR%s.s", suffix);
-   (void)mk_addmember(bu_vls_addr(&str), &premtreadshape.l, NULL, WMOP_SUBTRACT);
+    (void)mk_addmember(bu_vls_addr(&str), &premtreadshape.l, NULL, WMOP_SUBTRACT);
     bu_vls_sprintf(&str, "Ellipse2tread%s.s", suffix);
     (void)mk_addmember(bu_vls_addr(&str), &premtreadshape.l, NULL, WMOP_UNION);
     bu_vls_sprintf(&str, "InnerTreadCut%s.s", suffix);
@@ -1585,18 +1585,18 @@ MakeTreadSolid1(struct rt_wdb (*file), char *suffix,
 }
 
 typedef void (*MakeTreadProfile)
-	(struct rt_wdb (*file),
-	 char *suffix,
-	 fastf_t *ell2coefficients,
-	 fastf_t ztire,
-	 fastf_t dztred,
-	 fastf_t d1,
-	 fastf_t dytred,
-	 fastf_t dyhub,
-	 fastf_t zhub,
-	 fastf_t dyside1,
-	 int number_of_tread_patterns,
-	 int patterntype);
+(struct rt_wdb (*file),
+ char *suffix,
+ fastf_t *ell2coefficients,
+ fastf_t ztire,
+ fastf_t dztred,
+ fastf_t d1,
+ fastf_t dytred,
+ fastf_t dyhub,
+ fastf_t zhub,
+ fastf_t dyside1,
+ int number_of_tread_patterns,
+ int patterntype);
 
 /**********************************************************************
  *                                                                    *

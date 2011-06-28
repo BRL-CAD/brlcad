@@ -106,17 +106,17 @@ ged_ptranslate(struct ged *gedp, int argc, const char *argv[])
     }
 
     switch (intern.idb_minor_type) {
-    case DB5_MINORTYPE_BRLCAD_TGC:
-	ret = _ged_translate_tgc(gedp, (struct rt_tgc_internal *)intern.idb_ptr, argv[2], tvec, rflag);
-	break;
-    case DB5_MINORTYPE_BRLCAD_EXTRUDE:
-	ret = _ged_translate_extrude(gedp, (struct rt_extrude_internal *)intern.idb_ptr, argv[2], tvec, rflag);
-	break;
-    default:
-	bu_vls_printf(&gedp->ged_result_str, "%s: Object not yet supported.", argv[0]);
-	rt_db_free_internal(&intern);
+	case DB5_MINORTYPE_BRLCAD_TGC:
+	    ret = _ged_translate_tgc(gedp, (struct rt_tgc_internal *)intern.idb_ptr, argv[2], tvec, rflag);
+	    break;
+	case DB5_MINORTYPE_BRLCAD_EXTRUDE:
+	    ret = _ged_translate_extrude(gedp, (struct rt_extrude_internal *)intern.idb_ptr, argv[2], tvec, rflag);
+	    break;
+	default:
+	    bu_vls_printf(&gedp->ged_result_str, "%s: Object not yet supported.", argv[0]);
+	    rt_db_free_internal(&intern);
 
-	return GED_ERROR;
+	    return GED_ERROR;
     }
 
     if (ret == GED_OK) {

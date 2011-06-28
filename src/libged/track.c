@@ -575,7 +575,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
 
     return edit_result;
 
- end:
+end:
     bu_free((genptr_t)solname, "solid name");
     bu_free((genptr_t)regname, "region name");
     bu_free((genptr_t)grpname, "group name");

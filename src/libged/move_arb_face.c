@@ -166,26 +166,26 @@ ged_move_arb_face(struct ged *gedp, int argc, const char *argv[])
 	int arb_pt_index;
 
 	switch (arb_type) {
-	case ARB4:
-	    arb_pt_index = ged_arb4_faces_first_vertex[face];
-	    break;
-	case ARB5:
-	    arb_pt_index = ged_arb5_faces_first_vertex[face];
-	    break;
-	case ARB6:
-	    arb_pt_index = ged_arb6_faces_first_vertex[face];
-	    break;
-	case ARB7:
-	    arb_pt_index = ged_arb7_faces_first_vertex[face];
-	    break;
-	case ARB8:
-	    arb_pt_index = ged_arb8_faces_first_vertex[face];
-	    break;
-	default:
-	    bu_vls_printf(&gedp->ged_result_str, "unrecognized arb type");
-	    rt_db_free_internal(&intern);
+	    case ARB4:
+		arb_pt_index = ged_arb4_faces_first_vertex[face];
+		break;
+	    case ARB5:
+		arb_pt_index = ged_arb5_faces_first_vertex[face];
+		break;
+	    case ARB6:
+		arb_pt_index = ged_arb6_faces_first_vertex[face];
+		break;
+	    case ARB7:
+		arb_pt_index = ged_arb7_faces_first_vertex[face];
+		break;
+	    case ARB8:
+		arb_pt_index = ged_arb8_faces_first_vertex[face];
+		break;
+	    default:
+		bu_vls_printf(&gedp->ged_result_str, "unrecognized arb type");
+		rt_db_free_internal(&intern);
 
-	    return GED_ERROR;
+		return GED_ERROR;
 	}
 
 	VADD2(pt, pt, arb->pt[arb_pt_index]);

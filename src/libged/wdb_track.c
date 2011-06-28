@@ -49,16 +49,16 @@
 
 /*XXX The following WDB_ defines need to go inside of a header file */
 #define WDB_TCL_CHECK_READ_ONLY \
-	if (interp) { \
-		if (wdbp->dbip->dbi_read_only) { \
-			Tcl_AppendResult(interp, "Sorry, this database is READ-ONLY\n", (char *)NULL); \
-			return TCL_ERROR; \
-		} \
-	} else { \
-		bu_log("Sorry, this database is READ-ONLY\n"); \
-	}
+    if (interp) { \
+	if (wdbp->dbip->dbi_read_only) { \
+	    Tcl_AppendResult(interp, "Sorry, this database is READ-ONLY\n", (char *)NULL); \
+	    return TCL_ERROR; \
+	} \
+    } else { \
+	bu_log("Sorry, this database is READ-ONLY\n"); \
+    }
 #define WDB_TCL_ERROR_RECOVERY_SUGGESTION\
-	Tcl_AppendResult(interp, "\
+    Tcl_AppendResult(interp, "\
 The in-memory table of contents may not match the status of the on-disk\n\
 database.  The on-disk database should still be intact.  For safety, \n\
 you should exit now, and resolve the I/O problem, before continuing.\n", (char *)NULL)
@@ -595,7 +595,7 @@ wdb_track_cmd(struct rt_wdb *wdbp,
 
     return edit_result;
 
- end:
+end:
     bu_free((genptr_t)solname, "solid name");
     bu_free((genptr_t)regname, "region name");
     bu_free((genptr_t)grpname, "group name");

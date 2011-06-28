@@ -82,28 +82,28 @@ _ged_select(struct ged *gedp, fastf_t vx, fastf_t vy, fastf_t vwidth, fastf_t vh
 		point_t *pt = vp->pt;
 		point_t vpt;
 		for (j = 0; j < nused; j++, cmd++, pt++) {
-		   switch (*cmd) {
-		      case BN_VLIST_POLY_START:
-		      case BN_VLIST_POLY_VERTNORM:
-			 /* Has normal vector, not location */
-			 break;
-		      case BN_VLIST_LINE_MOVE:
-		      case BN_VLIST_LINE_DRAW:
-		      case BN_VLIST_POLY_MOVE:
-		      case BN_VLIST_POLY_DRAW:
-		      case BN_VLIST_POLY_END:
-			 MAT4X3PNT(vpt, gedp->ged_gvp->gv_model2view, *pt);
-			 V_MIN(vmin[X], vpt[X]);
-			 V_MAX(vmax[X], vpt[X]);
-			 V_MIN(vmin[Y], vpt[Y]);
-			 V_MAX(vmax[Y], vpt[Y]);
-			 V_MIN(vmin[Z], vpt[Z]);
-			 V_MAX(vmax[Z], vpt[Z]);
-			 break;
-		      default:
-		      {
-			 bu_vls_printf(&gedp->ged_result_str, "unknown vlist op %d\n", *cmd);
-		      }
+		    switch (*cmd) {
+			case BN_VLIST_POLY_START:
+			case BN_VLIST_POLY_VERTNORM:
+			    /* Has normal vector, not location */
+			    break;
+			case BN_VLIST_LINE_MOVE:
+			case BN_VLIST_LINE_DRAW:
+			case BN_VLIST_POLY_MOVE:
+			case BN_VLIST_POLY_DRAW:
+			case BN_VLIST_POLY_END:
+			    MAT4X3PNT(vpt, gedp->ged_gvp->gv_model2view, *pt);
+			    V_MIN(vmin[X], vpt[X]);
+			    V_MAX(vmax[X], vpt[X]);
+			    V_MIN(vmin[Y], vpt[Y]);
+			    V_MAX(vmax[Y], vpt[Y]);
+			    V_MIN(vmin[Z], vpt[Z]);
+			    V_MAX(vmax[Z], vpt[Z]);
+			    break;
+			default:
+			    {
+				bu_vls_printf(&gedp->ged_result_str, "unknown vlist op %d\n", *cmd);
+			    }
 		    }
 		}
 	    }

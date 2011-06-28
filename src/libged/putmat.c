@@ -138,7 +138,7 @@ ged_getmat(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
     }
 
- fail:
+fail:
     rt_db_free_internal(&intern);
     return GED_ERROR;
 }

@@ -191,7 +191,7 @@ Make_new_name(struct db_i *dbip,
 	    use->dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, dp->d_flags, (genptr_t)&dp->d_minor_type);
 	    if (use->dp == RT_DIR_NULL) {
 		bu_vls_printf(&gedp->ged_result_str, "\nAn error has occured while adding a new object to the database.\n"); \
-																 return;
+		return;
 	    }
 	}
 

@@ -102,7 +102,7 @@ translate(struct ged *gedp, point_t * const keypoint,
 	 * available) */
 	db_free_full_path(&full_obj_path);
 	bu_vls_printf(&gedp->ged_result_str, "translation of solids not yet"
-					     " supported");
+		      " supported");
 	return GED_ERROR;
     } else if (d_obj->d_flags & (RT_DIR_REGION | RT_DIR_COMB)) {
 	if (path->fp_len > 0)
@@ -165,10 +165,10 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     const char *cmd_name = argv[0];
     static const char *usage = "[-k keypoint:object]"
-			       " [[-a] | [-r]]"
-			       " x [y [z]]"
-			       " path"
-			       " object";
+	" [[-a] | [-r]]"
+	" x [y [z]]"
+	" path"
+	" object";
     size_t i;				/* iterator */
     int c;				/* bu_getopt return value */
     int abs_flag = 0;			/* use absolute position */
@@ -201,41 +201,41 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     bu_optind = 1; /* re-init bu_getopt() */
     while ((c = bu_getopt(argc, (char * const *)argv, "ak:r")) != -1) {
 	switch (c) {
-	case 'a':
-	    abs_flag = 1;
-	    break;
-	case 'k':
-	    kp_arg = bu_optarg;
-	    if (kp_arg[0] == '-') {
-		/* that's an option, not an arg */
-		bu_vls_printf(&gedp->ged_result_str,
-			      "Missing argument for option -%c", bu_optopt);
-		return GED_ERROR;
-	    }
-	    break;
-	case 'r':
-	    rel_flag = 1;
-	    break;
-	default:
-	    /* options that require arguments */
-	    switch (bu_optopt) {
+	    case 'a':
+		abs_flag = 1;
+		break;
 	    case 'k':
-		bu_vls_printf(&gedp->ged_result_str,
-			      "Missing argument for option -%c", bu_optopt);
-		return GED_ERROR;
-	    }
+		kp_arg = bu_optarg;
+		if (kp_arg[0] == '-') {
+		    /* that's an option, not an arg */
+		    bu_vls_printf(&gedp->ged_result_str,
+				  "Missing argument for option -%c", bu_optopt);
+		    return GED_ERROR;
+		}
+		break;
+	    case 'r':
+		rel_flag = 1;
+		break;
+	    default:
+		/* options that require arguments */
+		switch (bu_optopt) {
+		    case 'k':
+			bu_vls_printf(&gedp->ged_result_str,
+				      "Missing argument for option -%c", bu_optopt);
+			return GED_ERROR;
+		}
 
-	    /* unknown options */
-	    if (isprint(bu_optopt)) {
-		bu_vls_printf(&gedp->ged_result_str,
-			      "Unknown option '-%c'", bu_optopt);
-		return GED_ERROR;
-	    } else {
-		bu_vls_printf(&gedp->ged_result_str,
-			      "Unknown option character '\\x%x'",
-			      bu_optopt);
-		return GED_ERROR;
-	    }
+		/* unknown options */
+		if (isprint(bu_optopt)) {
+		    bu_vls_printf(&gedp->ged_result_str,
+				  "Unknown option '-%c'", bu_optopt);
+		    return GED_ERROR;
+		} else {
+		    bu_vls_printf(&gedp->ged_result_str,
+				  "Unknown option character '\\x%x'",
+				  bu_optopt);
+		    return GED_ERROR;
+		}
 	}
     }
 
@@ -256,11 +256,11 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     if (!abs_flag && !rel_flag)
 	rel_flag = 1;
 
-	/* TODO: set reasonable default keypoint */
-    #if 0
+    /* TODO: set reasonable default keypoint */
+#if 0
     if (!keypoint)
 	;
-    #endif
+#endif
 
     /* XXX testing */
     keypoint[0] = 0;
@@ -310,7 +310,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     }
     if ((bu_optind + 1) <= argc) {
 	bu_vls_printf(&gedp->ged_result_str, "multiple objects not yet"
-					     " supported; ");
+		      " supported; ");
 	goto disabled;
     }
 
@@ -332,7 +332,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     db_free_full_path(&obj);
     return GED_OK;
 
-    disabled:
+disabled:
     db_free_full_path(&path);
     db_free_full_path(&obj);
     bu_vls_printf(&gedp->ged_result_str, "function not yet implemented");

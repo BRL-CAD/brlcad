@@ -117,9 +117,9 @@
 #endif
 
 #define REV_BU_LIST_FOR(p, structure, hp)	\
-	(p)=BU_LIST_LAST(structure, hp);	\
-	BU_LIST_NOT_HEAD(p, hp);		\
-	(p)=BU_LIST_PLAST(structure, p)
+    (p)=BU_LIST_LAST(structure, hp);	\
+       BU_LIST_NOT_HEAD(p, hp);		\
+       (p)=BU_LIST_PLAST(structure, p)
 
 static int vdraw_write_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 static int vdraw_insert_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);

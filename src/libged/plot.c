@@ -86,28 +86,28 @@ ged_plot(struct ged *gedp, int argc, const char *argv[])
     floating = 0;
     while (argv[1] != (char *)0 && argv[1][0] == '-') {
 	switch (argv[1][1]) {
-	case 'f':
-	    floating = 1;
-	    break;
-	case '3':
-	    Three_D = 1;
-	    break;
-	case '2':
-	    Three_D = 0;		/* 2-D, for portability */
-	    break;
-	case 'g':
-	    /* do grid */
-	    bu_vls_printf(&gedp->ged_result_str, "%s: grid unimplemented\n", argv[0]);
-	    break;
-	case 'z':
-	case 'Z':
-	    /* Enable Z clipping */
-	    bu_vls_printf(&gedp->ged_result_str, "%s: Clipped in Z to viewing cube\n", argv[0]);
-	    Z_clip = 1;
-	    break;
-	default:
-	    bu_vls_printf(&gedp->ged_result_str, "%s: bad PLOT option %s\n", argv[0], argv[1]);
-	    break;
+	    case 'f':
+		floating = 1;
+		break;
+	    case '3':
+		Three_D = 1;
+		break;
+	    case '2':
+		Three_D = 0;		/* 2-D, for portability */
+		break;
+	    case 'g':
+		/* do grid */
+		bu_vls_printf(&gedp->ged_result_str, "%s: grid unimplemented\n", argv[0]);
+		break;
+	    case 'z':
+	    case 'Z':
+		/* Enable Z clipping */
+		bu_vls_printf(&gedp->ged_result_str, "%s: Clipped in Z to viewing cube\n", argv[0]);
+		Z_clip = 1;
+		break;
+	    default:
+		bu_vls_printf(&gedp->ged_result_str, "%s: bad PLOT option %s\n", argv[0], argv[1]);
+		break;
 	}
 	argv++;
     }
@@ -223,22 +223,22 @@ ged_plot(struct ged *gedp, int argc, const char *argv[])
 		point_t *pt = vp->pt;
 		for (i = 0; i < nused; i++, cmd++, pt++)  {
 		    switch (*cmd)  {
-		    case BN_VLIST_POLY_START:
-		    case BN_VLIST_POLY_VERTNORM:
-			continue;
-		    case BN_VLIST_POLY_MOVE:
-		    case BN_VLIST_LINE_MOVE:
-			/* Move, not draw */
-			MAT4X3PNT(last, gedp->ged_gvp->gv_model2view, *pt);
-			continue;
-		    case BN_VLIST_POLY_DRAW:
-		    case BN_VLIST_POLY_END:
-		    case BN_VLIST_LINE_DRAW:
-			/* draw */
-			MAT4X3PNT(fin, gedp->ged_gvp->gv_model2view, *pt);
-			VMOVE(start, last);
-			VMOVE(last, fin);
-			break;
+			case BN_VLIST_POLY_START:
+			case BN_VLIST_POLY_VERTNORM:
+			    continue;
+			case BN_VLIST_POLY_MOVE:
+			case BN_VLIST_LINE_MOVE:
+			    /* Move, not draw */
+			    MAT4X3PNT(last, gedp->ged_gvp->gv_model2view, *pt);
+			    continue;
+			case BN_VLIST_POLY_DRAW:
+			case BN_VLIST_POLY_END:
+			case BN_VLIST_LINE_DRAW:
+			    /* draw */
+			    MAT4X3PNT(fin, gedp->ged_gvp->gv_model2view, *pt);
+			    VMOVE(start, last);
+			    VMOVE(last, fin);
+			    break;
 		    }
 		    if (ged_vclip(start, fin, clipmin, clipmax) == 0)
 			continue;

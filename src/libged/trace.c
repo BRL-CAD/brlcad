@@ -80,9 +80,9 @@ ged_do_trace(struct db_i		*dbip,
  */
 void
 _ged_trace(struct directory	*dp,
-	  int				pathpos,
-	  const mat_t			old_xlate,
-	  struct _ged_trace_data		*gtdp)
+	   int				pathpos,
+	   const mat_t			old_xlate,
+	   struct _ged_trace_data		*gtdp)
 {
     struct rt_db_internal	intern;
     struct rt_comb_internal	*comb;

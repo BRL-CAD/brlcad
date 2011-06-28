@@ -76,7 +76,7 @@ ged_shaded_mode(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
     }
 
- bad:
+bad:
     bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
