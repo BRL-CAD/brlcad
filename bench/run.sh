@@ -350,8 +350,8 @@ if test "x$CLEAN" = "x1" ; then
     $ECHO
 
     for i in moss world star bldg391 m35 sphflake ; do
-	$ECHO rm -f $i.log $i.pix $i.log.[0-9]* $i.pix.[0-9]*
-	rm -f $i.log $i.pix $i.log.[0-9]* $i.pix.[0-9]*
+	$ECHO rm -f $i.log $i.pix $i-[0-9]*.log $i-[0-9]*.pix
+	rm -f $i.log $i.pix $i-[0-9]*.log $i-[0-9]*.pix
     done
     if test "x$CLOBBER" = "x1" ; then
 	# NEVER automatically delete the summary file, but go ahead with the rest
@@ -900,6 +900,43 @@ sqrt ( ) {
 
 
 #
+# clean_obstacles base_filename
+#   conditionally removes or saves backup of any .pix or .log files
+#   output during bench.
+#
+clean_obstacles ( ) {
+    base="$1" ; shift
+
+    if test "x$base" = "x" ; then
+	$ECHO "ERROR: argument mismatch, cleaner is missing base name"
+	exit 1
+    fi
+
+    # look for an image file
+    if test -f ${base}.pix; then
+	if test -f ${base}-$$.pix ; then
+	    # backup already exists, just delete obstacle
+	    rm -f ${base}.pix
+	else
+	    # no backup exists yet, so keep it
+	    mv -f ${base}.pix ${base}-$$.pix
+	fi
+    fi
+
+    # look for a log file
+    if test -f ${base}.log; then
+	if test -f ${base}-$$.log ; then
+	    # backup already exists, just delete obstacle
+	    rm -f ${base}.log
+	else
+	    # no backup exists yet, so keep it
+	    mv -f ${base}.log ${base}-$$.log
+	fi
+    fi
+}
+
+
+#
 # bench test_name geometry [..rt args..]
 #   runs a series of benchmark tests assuming the following are preset:
 #
@@ -932,9 +969,8 @@ bench ( ) {
     bench_start_time="`date '+%H %M %S'`"
     bench_overall_elapsed=-1
 
-    # clear out before we begin
-    if test -f ${bench_testname}.pix; then mv -f ${bench_testname}.pix ${bench_testname}.pix.$$; fi
-    if test -f ${bench_testname}.log; then mv -f ${bench_testname}.log ${bench_testname}.log.$$; fi
+    # clear out before we begin, only saving backup on first encounter
+    clean_obstacles "$bench_testname"
 
     # use -lt since -le makes causes a "floor(elapsed)" comparison and too many iterations
     while test $bench_overall_elapsed -lt $MAXTIME ; do
@@ -943,9 +979,8 @@ bench ( ) {
 	# use -lt since -le makes causes a "floor(elapsed)" comparison and too many iterations
 	while test $bench_elapsed -lt $TIMEFRAME ; do
 
-	    # clear out any previous run
-	    if test -f ${bench_testname}.pix; then mv -f ${bench_testname}.pix ${bench_testname}.pix.$$; fi
-	    if test -f ${bench_testname}.log; then mv -f ${bench_testname}.log ${bench_testname}.log.$$; fi
+	    # clear out any previous run, only saving backup on first encounter
+	    clean_obstacles "$bench_testname"
 
 	    bench_frame_start_time="`date '+%H %M %S'`"
 
