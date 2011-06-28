@@ -138,7 +138,8 @@ translate(struct ged *gedp, point_t * const keypoint,
 	    old_rt_tree_array = (struct rt_tree_array *)bu_calloc(
 		old_node_count, sizeof(struct rt_tree_array), "rt_tree_array");
 
-	    /* free=0 means that the tree won't have any leaf nodes freed */
+	    /* free=0 means that the tree won't have any leaf nodes
+	     * freed */
 	    (void)db_flatten_tree(old_rt_tree_array, old_ntp, OP_UNION, 0,
 				  &rt_uniresource);
 	} else {
@@ -174,7 +175,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     int rel_flag = 0;			/* use relative distance */
     char *kp_arg = NULL;        	/* keypoint argument */
     point_t keypoint;
-    vect_t new_vertex;			/* distance/position to translate to */
+    vect_t new_vertex;			/* dist/pos to translate to */
     const char *s_obj;
     const char *s_path;
     struct db_full_path obj;
@@ -239,7 +240,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     }
 
     
-    /* need to use either absolute or relative positioning, but not both */
+    /* need to use either absolute||relative positioning; not both */
     if (abs_flag && rel_flag) {
 	bu_vls_printf(&gedp->ged_result_str,
 		      "options '-a' and '-r' are mutually exclusive");
