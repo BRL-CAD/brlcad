@@ -411,12 +411,14 @@ struct ged_run_rt {
     int aborted;
 };
 
+/* FIXME: should be private */
 struct ged_qray_color {
     unsigned char r;
     unsigned char g;
     unsigned char b;
 };
 
+/* FIXME: should be private */
 struct ged_qray_fmt {
     char type;
     struct bu_vls fmt;
@@ -430,6 +432,7 @@ struct ged_display_list {
     int			gdl_wflag;
 };
 
+/* FIXME: should be private */
 struct ged_drawable {
     struct bu_list		l;
     struct bu_list		gd_headDisplay;		/**< @brief  head of display list */
