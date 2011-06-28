@@ -40,6 +40,8 @@ static int w = 1024, h = 768;
 static int samples = 4;
 static unsigned short Xi[3];
 
+static bool inside;
+
 OSLRenderer *oslr = NULL;
 
 inline double clamp(double x) { return x<0 ? 0 : x>1 ? 1 : x; }
@@ -85,9 +87,9 @@ const char* get_shadername(const char *regioname){
     }
     // boxes
     if(!strcmp(regioname, "/all.g/short_box.r"))
-	return "mirror";
-    if(!strcmp(regioname, "/all.g/tall_box.r"))
 	return "yellow";
+    if(!strcmp(regioname, "/all.g/tall_box.r"))
+	return "glass";
 
     fprintf(stderr, "shader not found\n");
 }
@@ -184,6 +186,8 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	stp = pp->pt_inseg->seg_stp;
 	RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
 	VMOVE(info.N, inormal);
+	if(inside)
+	    VREVERSE(info.N, info.N);
 
 	/* Set incidence ray direction */
 	VMOVE(info.I, ap->a_ray.r_dir);
@@ -205,6 +209,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 
 	info.doreflection = 0;
 
+	inside = false;
 
 	Color3 weight = oslr->QueryColor(&info);
 	
@@ -223,6 +228,15 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	    VMOVE(new_ap.a_ray.r_dir, info.out_ray.dir);
 	    VMOVE(new_ap.a_ray.r_pt, info.out_ray.origin);
 
+	    /* Check if the out ray is internal */
+	    Vec3 out_ray;
+	    VMOVE(out_ray, new_ap.a_ray.r_dir);
+	    Vec3 normal;
+	    VMOVE(normal, info.N);
+	    /* The next hit will revert the normal */
+	    if (normal.dot(out_ray) < 0.0f)
+		inside = true;
+
 	    rt_shootray(&new_ap);
 
 	    Color3 rec;
@@ -230,7 +244,6 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	    
 	    weight = weight*rec;
 	    VMOVE(ap->a_color, weight);
-
 
 	} else {
 	    VMOVE(ap->a_color, weight);
@@ -396,7 +409,7 @@ int main (int argc, char **argv){
 	buffer[i] = Color3(0.0f);
 
     float scale = 10.0f;
-    int samps = 25; // number of samples
+    int samps = 5; // number of samples
 
     /* Initialize the shading system*/
     oslr = new OSLRenderer();
@@ -408,11 +421,12 @@ int main (int argc, char **argv){
     oslr->AddShader("mirror");
     oslr->AddShader("blue");
     oslr->AddShader("red");
+    oslr->AddShader("glass");
 
     /* Ray trace */
     for(int y=0; y<h; y++) {
 
-	fprintf(stderr, "\rRendering5 (%d spp) %5.2f%%", samps*4, 100.*y/(h-1));
+	fprintf(stderr, "\rRendering (%d samples) %5.2f%%", samps*4, 100.*y/(h-1));
 
 	Xi[0] = 0;
 	Xi[1] = 0;
