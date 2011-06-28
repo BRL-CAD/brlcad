@@ -34,14 +34,14 @@
  * Returns the views eyemodel
  *
  * Usage:
- *        get_eyemodel
+ * get_eyemodel
  *
  */
 int
 ged_get_eyemodel(struct ged *gedp, int argc, const char *argv[])
 {
-    quat_t		quat;
-    vect_t		eye_model;
+    quat_t quat;
+    vect_t eye_model;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);

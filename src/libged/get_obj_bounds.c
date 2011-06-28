@@ -35,17 +35,17 @@
 
 
 int
-_ged_get_obj_bounds(struct ged	*gedp,
-		   int		argc,
-		   const char	*argv[],
-		   int		use_air,
-		   point_t	rpp_min,
-		   point_t	rpp_max)
+_ged_get_obj_bounds(struct ged *gedp,
+		    int argc,
+		    const char *argv[],
+		    int use_air,
+		    point_t rpp_min,
+		    point_t rpp_max)
 {
-    int	i;
-    struct rt_i		*rtip;
-    struct db_full_path	path;
-    struct region	*regp;
+    int i;
+    struct rt_i *rtip;
+    struct db_full_path path;
+    struct region *regp;
 
     /* Make a new rt_i instance from the existing db_i sructure */
     if ((rtip=rt_new_rti(gedp->ged_wdbp->dbip)) == RTI_NULL) {
@@ -112,14 +112,14 @@ _ged_get_obj_bounds(struct ged	*gedp,
 	    if (*argv[i] != '/' && *reg_name == '/')
 		reg_name++;
 
-	    if (BU_STR_EQUAL( reg_name, argv[i]))
+	    if (BU_STR_EQUAL(reg_name, argv[i]))
 		goto found;
 	}
 	goto not_found;
 
     found:
 	if (regp != REGION_NULL) {
-	    /* input name was a region  */
+	    /* input name was a region */
 	    if (rt_bound_tree(regp->reg_treetop, reg_min, reg_max)) {
 		bu_vls_printf(&gedp->ged_result_str, "rt_bound_tree failed for %s\n", regp->reg_name);
 		rt_free_rti(rtip);
@@ -134,8 +134,8 @@ _ged_get_obj_bounds(struct ged	*gedp,
 	    /* input name may be a group, need to check all regions under
 	     * that group
 	     */
-	    name_len = strlen( argv[i] );
-	    for (BU_LIST_FOR( regp, region, &(rtip->HeadRegion))) {
+	    name_len = strlen(argv[i]);
+	    for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
 		reg_name = regp->reg_name;
 		if (*argv[i] != '/' && *reg_name == '/')
 		    reg_name++;
@@ -160,21 +160,22 @@ _ged_get_obj_bounds(struct ged	*gedp,
     return TCL_OK;
 }
 
+
 /**
  *
  *
  */
 static int
-ged_get_objpath_mat(struct ged			*gedp,
-		    int				argc,
-		    const char			*argv[],
-		    struct _ged_trace_data	*gtdp)
+ged_get_objpath_mat(struct ged *gedp,
+		    int argc,
+		    const char *argv[],
+		    struct _ged_trace_data *gtdp)
 {
     int i, pos_in;
 
     /*
-     *	paths are matched up to last input member
-     *      ANY path the same up to this point is considered as matching
+     * paths are matched up to last input member
+     * ANY path the same up to this point is considered as matching
      */
 
     /* initialize gtd */
@@ -222,17 +223,18 @@ ged_get_objpath_mat(struct ged			*gedp,
     return GED_OK;
 }
 
+
 /**
  * @brief
  * This version works if the last member of the path is a primitive.
  */
 int
-_ged_get_obj_bounds2(struct ged			*gedp,
-		    int				argc,
-		    const char			*argv[],
-		    struct _ged_trace_data	*gtdp,
-		    point_t			rpp_min,
-		    point_t			rpp_max)
+_ged_get_obj_bounds2(struct ged *gedp,
+		     int argc,
+		     const char *argv[],
+		     struct _ged_trace_data *gtdp,
+		     point_t rpp_min,
+		     point_t rpp_max)
 {
     struct directory *dp;
     struct rt_db_internal intern;
@@ -273,10 +275,11 @@ _ged_get_obj_bounds2(struct ged			*gedp,
 
     rt_free_rti(rtip);
     rt_db_free_internal(&intern);
-    bu_free( (char *)stp, "struct soltab" );
+    bu_free((char *)stp, "struct soltab");
 
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

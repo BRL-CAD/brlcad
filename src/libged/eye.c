@@ -36,9 +36,9 @@
 int
 ged_eye(struct ged *gedp, int argc, const char *argv[])
 {
-    point_t		eye_model;
-    vect_t		xlate;
-    vect_t		new_cent;
+    point_t eye_model;
+    vect_t xlate;
+    vect_t new_cent;
     static const char *usage = "x y z";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -94,8 +94,8 @@ ged_eye(struct ged *gedp, int argc, const char *argv[])
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, eye_model);
     ged_view_update(gedp->ged_gvp);
 
-    /*  Second step:  put eye at view 0, 0, 1.
-     *  For eye to be at 0, 0, 1, the old 0, 0, -1 needs to become 0, 0, 0.
+    /* Second step:  put eye at view 0, 0, 1.
+     * For eye to be at 0, 0, 1, the old 0, 0, -1 needs to become 0, 0, 0.
      */
     VSET(xlate, 0.0, 0.0, -1.0);	/* correction factor */
     MAT4X3PNT(new_cent, gedp->ged_gvp->gv_view2model, xlate);
@@ -104,6 +104,7 @@ ged_eye(struct ged *gedp, int argc, const char *argv[])
 
     return TCL_OK;
 }
+
 
 /*
  * Local Variables:

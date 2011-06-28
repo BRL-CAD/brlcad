@@ -2511,7 +2511,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 
     } while (terminate_check(&state));
 
- aborted:
+aborted:
     if (plot_overlaps) fclose(plot_overlaps);
     if (plot_weight) fclose(plot_weight);
     if (plot_volume) fclose(plot_volume);

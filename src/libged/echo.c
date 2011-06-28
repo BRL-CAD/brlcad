@@ -52,7 +52,7 @@ ged_echo(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    for (i=1; i < argc; i++)  {
+    for (i=1; i < argc; i++) {
 	bu_vls_printf(&gedp->ged_result_str, "%s%s", i==1 ? "" : " ", argv[i]);
     }
 
@@ -60,6 +60,7 @@ ged_echo(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

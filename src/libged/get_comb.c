@@ -37,9 +37,9 @@ int
 ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
-    struct rt_db_internal	intern;
+    struct rt_db_internal intern;
     struct rt_comb_internal *comb;
-    struct rt_tree_array	*rt_tree_array;
+    struct rt_tree_array *rt_tree_array;
     size_t i;
     size_t node_count;
     size_t actual_count;
@@ -164,6 +164,7 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
+
 
 void
 _ged_vls_print_matrix(struct bu_vls *vls, matp_t matrix)

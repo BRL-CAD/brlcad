@@ -33,8 +33,54 @@
 #include "./ged_private.h"
 
 
-static void ged_debackslash(struct bu_vls *dest, struct bu_vls *src);
-static void ged_backslash_specials(struct bu_vls *dest, struct bu_vls *src);
+/**
+ * unescapes various special characters
+ */
+static void
+ged_debackslash(struct bu_vls *dest, struct bu_vls *src)
+{
+    char *ptr;
+
+    ptr = bu_vls_addr(src);
+    while (*ptr) {
+	if (*ptr == '\\')
+	    ++ptr;
+	if (*ptr == '\0')
+	    break;
+	bu_vls_putc(dest, *ptr++);
+    }
+}
+
+
+/**
+ * escapes various special characters
+ */
+static void
+ged_backslash_specials(struct bu_vls *dest, struct bu_vls *src)
+{
+    int backslashed;
+    char *ptr, buf[2];
+
+    buf[1] = '\0';
+    backslashed = 0;
+    for (ptr = bu_vls_addr(src); *ptr; ptr++) {
+	if (*ptr == '[' && !backslashed)
+	    bu_vls_strcat(dest, "\\[");
+	else if (*ptr == ']' && !backslashed)
+	    bu_vls_strcat(dest, "\\]");
+	else if (backslashed) {
+	    bu_vls_strcat(dest, "\\");
+	    buf[0] = *ptr;
+	    bu_vls_strcat(dest, buf);
+	    backslashed = 0;
+	} else if (*ptr == '\\')
+	    backslashed = 1;
+	else {
+	    buf[0] = *ptr;
+	    bu_vls_strcat(dest, buf);
+	}
+    }
+}
 
 
 int
@@ -71,21 +117,21 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
 
     start = end = bu_vls_addr(&src);
     firstword = 1;
-    while ( *end != '\0' ) {
+    while (*end != '\0') {
 	/* Run through entire string */
 
 	/* First, pass along leading whitespace. */
 
 	start = end;                   /* Begin where last word ended */
-	while ( *start != '\0' ) {
-	    if ( *start == ' '  ||
-		 *start == '\t' ||
-		 *start == '\n' )
-		bu_vls_putc( &gedp->ged_result_str, *start++ );
+	while (*start != '\0') {
+	    if (*start == ' '  ||
+		*start == '\t' ||
+		*start == '\n')
+		bu_vls_putc(&gedp->ged_result_str, *start++);
 	    else
 		break;
 	}
-	if ( *start == '\0' )
+	if (*start == '\0')
 	    break;
 
 	/* Next, advance "end" pointer to the end of the word, while adding
@@ -93,21 +139,21 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
 	   unbackslashed wildcard characters. */
 
 	end = start;
-	bu_vls_trunc( &word, 0 );
+	bu_vls_trunc(&word, 0);
 	regexp = 0;
 	backslashed = 0;
-	while ( *end != '\0' ) {
-	    if ( *end == ' '  ||
-		 *end == '\t' ||
-		 *end == '\n' )
+	while (*end != '\0') {
+	    if (*end == ' '  ||
+		*end == '\t' ||
+		*end == '\n')
 		break;
-	    if ( (*end == '*' || *end == '?' || *end == '[') && !backslashed )
+	    if ((*end == '*' || *end == '?' || *end == '[') && !backslashed)
 		regexp = 1;
-	    if ( *end == '\\' && !backslashed )
+	    if (*end == '\\' && !backslashed)
 		backslashed = 1;
 	    else
 		backslashed = 0;
-	    bu_vls_putc( &word, *end++ );
+	    bu_vls_putc(&word, *end++);
 	}
 
 	/* Now, if the word was suspected of being a wildcard, try to match
@@ -115,15 +161,15 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
 
 	if (regexp) {
 	    GED_CHECK_DATABASE_OPEN(gedp, GED_INITIALIZED(gedp) ? GED_ERROR : GED_OK);
-	    bu_vls_trunc( &temp, 0 );
-	    if ( db_regexp_match_all( &temp, gedp->ged_wdbp->dbip,
-				      bu_vls_addr(&word) ) == 0 ) {
-		ged_debackslash( &temp, &word );
-		ged_backslash_specials( &gedp->ged_result_str, &temp );
+	    bu_vls_trunc(&temp, 0);
+	    if (db_regexp_match_all(&temp, gedp->ged_wdbp->dbip,
+				    bu_vls_addr(&word)) == 0) {
+		ged_debackslash(&temp, &word);
+		ged_backslash_specials(&gedp->ged_result_str, &temp);
 	    } else
-		bu_vls_vlscat( &gedp->ged_result_str, &temp );
+		bu_vls_vlscat(&gedp->ged_result_str, &temp);
 	} else {
-	    ged_debackslash( &gedp->ged_result_str, &word );
+	    ged_debackslash(&gedp->ged_result_str, &word);
 	}
 
 	firstword = 0;
@@ -134,56 +180,6 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&src);
 
     return GED_OK;
-}
-
-
-/**
- * unescapes various special characters
- */
-static void
-ged_debackslash(struct bu_vls *dest, struct bu_vls *src)
-{
-    char *ptr;
-
-    ptr = bu_vls_addr(src);
-    while ( *ptr ) {
-	if ( *ptr == '\\' )
-	    ++ptr;
-	if ( *ptr == '\0' )
-	    break;
-	bu_vls_putc( dest, *ptr++ );
-    }
-}
-
-
-/**
- * escapes various special characters
- */
-static void
-ged_backslash_specials(struct bu_vls *dest, struct bu_vls *src)
-{
-    int backslashed;
-    char *ptr, buf[2];
-
-    buf[1] = '\0';
-    backslashed = 0;
-    for ( ptr = bu_vls_addr( src ); *ptr; ptr++ ) {
-	if ( *ptr == '[' && !backslashed )
-	    bu_vls_strcat( dest, "\\[" );
-	else if ( *ptr == ']' && !backslashed )
-	    bu_vls_strcat( dest, "\\]" );
-	else if ( backslashed ) {
-	    bu_vls_strcat( dest, "\\" );
-	    buf[0] = *ptr;
-	    bu_vls_strcat( dest, buf );
-	    backslashed = 0;
-	} else if ( *ptr == '\\' )
-	    backslashed = 1;
-	else {
-	    buf[0] = *ptr;
-	    bu_vls_strcat( dest, buf );
-	}
-    }
 }
 
 

@@ -63,7 +63,7 @@ ged_group(struct ged *gedp, int argc, const char *argv[])
     for (i = 2; i < argc; i++) {
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL) {
 	    if (_ged_combadd(gedp, dp, (char *)argv[1], 0,
-			    WMOP_UNION, 0, 0) == RT_DIR_NULL)
+			     WMOP_UNION, 0, 0) == RT_DIR_NULL)
 		return GED_ERROR;
 	}  else
 	    bu_vls_printf(&gedp->ged_result_str, "skip member %s\n", argv[i]);

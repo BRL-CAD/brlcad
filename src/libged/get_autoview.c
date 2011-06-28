@@ -31,7 +31,7 @@
  * Get the view size and center such that all displayed solids would be in view
  *
  * Usage:
- *        get_autoview
+ * get_autoview
  *
  */
 int
@@ -39,14 +39,14 @@ ged_get_autoview(struct ged *gedp, int argc, const char *argv[])
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
-    struct solid	*sp;
+    struct solid *sp;
     int is_empty = 1;
-    vect_t		min, max;
-    vect_t		minus, plus;
-    vect_t		center;
-    vect_t		radial;
+    vect_t min, max;
+    vect_t minus, plus;
+    vect_t center;
+    vect_t radial;
     int pflag = 0;
-    int	c;
+    int c;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);

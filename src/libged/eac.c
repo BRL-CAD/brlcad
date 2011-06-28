@@ -86,8 +86,8 @@ ged_eac(struct ged *gedp, int argc, const char *argv[])
 		return GED_ERROR;
 	    }
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
-	    if (comb->region_id != 0 ||
-		comb->aircode != item)
+	    if (comb->region_id != 0
+		|| comb->aircode != item)
 	    {
 		intern.idb_meth->ft_ifree(&intern);
 		continue;

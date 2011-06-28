@@ -34,8 +34,25 @@
 
 
 static void
-ged_scrape_escapes_AppendResult(struct bu_vls	*result,
-				const char	*str);
+ged_scrape_escapes_AppendResult(struct bu_vls *result, const char *str)
+{
+    char buf[2];
+    buf[1] = '\0';
+
+    while (*str) {
+	buf[0] = *str;
+	if (*str != '\\') {
+	    bu_vls_printf(result, "%s", buf);
+	} else if (*(str+1) == '\\') {
+	    bu_vls_printf(result, "%s", buf);
+	    ++str;
+	}
+	if (*str == '\0')
+	    break;
+	++str;
+    }
+}
+
 
 int
 ged_expand(struct ged *gedp, int argc, const char *argv[])
@@ -112,27 +129,6 @@ ged_expand(struct ged *gedp, int argc, const char *argv[])
     }
 
     return GED_OK;
-}
-
-static void
-ged_scrape_escapes_AppendResult(struct bu_vls	*result,
-				const char	*str)
-{
-    char buf[2];
-    buf[1] = '\0';
-
-    while (*str) {
-	buf[0] = *str;
-	if (*str != '\\') {
-	    bu_vls_printf(result, "%s", buf);
-	} else if (*(str+1) == '\\') {
-	    bu_vls_printf(result, "%s", buf);
-	    ++str;
-	}
-	if (*str == '\0')
-	    break;
-	++str;
-    }
 }
 
 

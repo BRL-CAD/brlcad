@@ -36,7 +36,7 @@
 int
 ged_eye_pos(struct ged *gedp, int argc, const char *argv[])
 {
-    point_t		eye_pos;
+    point_t eye_pos;
     static const char *usage = "x y z";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -89,6 +89,7 @@ ged_eye_pos(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

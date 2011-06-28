@@ -39,7 +39,7 @@
  * Returns "how" an object is being displayed.
  *
  * Usage:
- *        how [-b] object
+ * how [-b] object
  *
  */
 int
@@ -115,7 +115,7 @@ ged_how(struct ged *gedp, int argc, const char *argv[])
     /* match NOT found */
     bu_vls_printf(&gedp->ged_result_str, "-1");
 
- good:
+good:
     if (dpp != (struct directory **)NULL)
 	bu_free((genptr_t)dpp, "ged_how: directory pointers");
 
@@ -125,7 +125,7 @@ ged_how(struct ged *gedp, int argc, const char *argv[])
 
 struct directory **
 _ged_build_dpp(struct ged *gedp,
-	      const char *path) {
+	       const char *path) {
     struct directory *dp;
     struct directory **dpp;
     int i;
@@ -198,6 +198,7 @@ _ged_build_dpp(struct ged *gedp,
     bu_vls_free(&vls);
     return dpp;
 }
+
 
 /*
  * Local Variables:

@@ -50,6 +50,7 @@ _ged_results_append_str(struct ged *gedp, char *result_string)
     return GED_OK;
 }
 
+
 int
 _ged_results_append_vls(struct ged *gedp, struct bu_vls *result_vls)
 {
@@ -57,12 +58,14 @@ _ged_results_append_vls(struct ged *gedp, struct bu_vls *result_vls)
     return GED_OK;
 }
 
+
 int
 _ged_results_clear(struct ged *gedp)
 {
     bu_vls_trunc(&gedp->ged_result_str, 0);
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

@@ -375,26 +375,26 @@ _ged_print_node(struct ged *gedp,
 
     /* cflag = don't show shapes, so return if this is not a combination */
     if (cflag && !(dp->d_flags & RT_DIR_COMB)) {
-		return;
+	return;
     }
 
     /* need another string for aflag */
     if (aflag)
-      bu_vls_init(&tmp_str);
+	bu_vls_init(&tmp_str);
 
     /* set up spacing from the left margin */
     for (i = 0; i < pathpos; i++) {
 	if (indentSize < 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "\t");
             if (aflag)
-              bu_vls_printf(&tmp_str, "\t");
+		bu_vls_printf(&tmp_str, "\t");
 
 	} else {
 	    int j;
 	    for (j = 0; j < indentSize; j++) {
 		bu_vls_printf(&gedp->ged_result_str, " ");
                 if (aflag)
-                  bu_vls_printf(&tmp_str, " ");
+		    bu_vls_printf(&tmp_str, " ");
 	    }
 	}
     }
@@ -403,7 +403,7 @@ _ged_print_node(struct ged *gedp,
     if (prefix) {
 	bu_vls_printf(&gedp->ged_result_str, "%c ", prefix);
         if (aflag)
-          bu_vls_printf(&tmp_str, " ");
+	    bu_vls_printf(&tmp_str, " ");
     }
 
     /* now the object name */
@@ -420,37 +420,37 @@ _ged_print_node(struct ged *gedp,
 
     /* output attributes if any and if desired */
     if (aflag) {
-      struct bu_attribute_value_set avs;
-      bu_avs_init_empty(&avs);
-      if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
-	bu_vls_printf(&gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-	/* need a bombing macro or set an error code here: return GED_ERROR; */
-        bu_vls_free(&tmp_str);
-        return;
-      }
+	struct bu_attribute_value_set avs;
+	bu_avs_init_empty(&avs);
+	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	    bu_vls_printf(&gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+	    /* need a bombing macro or set an error code here: return GED_ERROR; */
+	    bu_vls_free(&tmp_str);
+	    return;
+	}
 
-      /* list all the attributes, if any */
-      if (avs.count) {
-        struct bu_attribute_value_pair *avpp;
-        int max_attr_name_len = 0;
+	/* list all the attributes, if any */
+	if (avs.count) {
+	    struct bu_attribute_value_pair *avpp;
+	    int max_attr_name_len = 0;
 
-        /* sort attribute-value set array by attribute name */
-        qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr);
+	    /* sort attribute-value set array by attribute name */
+	    qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr);
 
-        for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
-          int len = (int)strlen(avpp->name);
-          if (len > max_attr_name_len) {
-            max_attr_name_len = len;
-          }
-        }
-        for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
-          bu_vls_printf(&gedp->ged_result_str, "%s       @ %-*.*s    %s\n",
-                        tmp_str.vls_str,
-                        max_attr_name_len, max_attr_name_len,
-                        avpp->name, avpp->value);
-        }
-      }
-      bu_vls_free(&tmp_str);
+	    for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
+		int len = (int)strlen(avpp->name);
+		if (len > max_attr_name_len) {
+		    max_attr_name_len = len;
+		}
+	    }
+	    for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
+		bu_vls_printf(&gedp->ged_result_str, "%s       @ %-*.*s    %s\n",
+			      tmp_str.vls_str,
+			      max_attr_name_len, max_attr_name_len,
+			      avpp->name, avpp->value);
+	    }
+	}
+	bu_vls_free(&tmp_str);
     }
 
     if (!(dp->d_flags & RT_DIR_COMB))

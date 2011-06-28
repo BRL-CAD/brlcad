@@ -99,7 +99,7 @@
  * text?
  * color?
  * visibility?
- * 
+ *
  */
 
 #include "common.h"

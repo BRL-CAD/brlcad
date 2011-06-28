@@ -140,11 +140,10 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	    case 't':
 		nmg_use_tnurbs = 1;
 		break;
-	    default:
-		{
-		    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		    return GED_ERROR;
-		}
+	    default: {
+		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		return GED_ERROR;
+	    }
 	}
     }
     argc -= bu_optind;

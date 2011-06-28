@@ -33,9 +33,56 @@
 #include "./ged_private.h"
 
 
-static void ged_add_nmg_part(struct ged *gedp, char *newname, struct model *m);
-
 static int frac_stat;
+
+
+static void
+ged_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
+{
+    struct rt_db_internal new_intern;
+    struct directory *new_dp;
+    struct nmgregion *r;
+
+    if (db_lookup(gedp->ged_wdbp->dbip,  newname, LOOKUP_QUIET) != RT_DIR_NULL) {
+	bu_vls_printf(&gedp->ged_result_str, "%s: already exists\n", newname);
+	/* Free memory here */
+	nmg_km(m);
+	frac_stat = 1;
+	return;
+    }
+
+    new_dp=db_diradd(gedp->ged_wdbp->dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
+    if (new_dp == RT_DIR_NULL) {
+	bu_vls_printf(&gedp->ged_result_str,
+		      "Failed to add new object name (%s) to directory - aborting!!\n",
+		      newname);
+	return;
+    }
+
+    /* make sure the geometry/bounding boxes are up to date */
+    for (BU_LIST_FOR(r, nmgregion, &m->r_hd))
+	nmg_region_a(r, &gedp->ged_wdbp->wdb_tol);
+
+
+    /* Export NMG as a new solid */
+    RT_DB_INTERNAL_INIT(&new_intern);
+    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    new_intern.idb_type = ID_NMG;
+    new_intern.idb_meth = &rt_functab[ID_NMG];
+    new_intern.idb_ptr = (genptr_t)m;
+
+    if (rt_db_put_internal(new_dp, gedp->ged_wdbp->dbip, &new_intern, &rt_uniresource) < 0) {
+	/* Free memory */
+	nmg_km(m);
+	bu_vls_printf(&gedp->ged_result_str, "rt_db_put_internal() failure\n");
+	frac_stat = 1;
+	return;
+    }
+    /* Internal representation has been freed by rt_db_put_internal */
+    new_intern.idb_ptr = (genptr_t)NULL;
+    frac_stat = 0;
+}
+
 
 int
 ged_fracture(struct ged *gedp, int argc, const char *argv[])
@@ -122,7 +169,6 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
 		NMG_CK_VERTEX(s->vu_p->v_p);
 		v = s->vu_p->v_p;
 
-/*	nmg_start_dup(m); */
 		new_model = nmg_mm();
 		new_r = nmg_mrsv(new_model);
 		new_s = BU_LIST_FIRST(shell, &r->s_hd);
@@ -130,7 +176,6 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
 		if (v->vg_p) {
 		    nmg_vertex_gv(v_new, v->vg_p->coord);
 		}
-/*	nmg_end_dup(); */
 
 		snprintf(newname, 32, "%s%0*d", prefix, maxdigits, i++);
 
@@ -149,11 +194,9 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
 		new_r = nmg_mrsv(new_model);
 		NMG_CK_REGION(new_r);
 		new_s = BU_LIST_FIRST(shell, &new_r->s_hd);
-		NMG_CK_SHELL(new_s);
-/*	nmg_start_dup(m); */
+
 		NMG_CK_SHELL(new_s);
 		nmg_dup_face(fu, new_s);
-/*	nmg_end_dup(); */
 
 		snprintf(newname, 32, "%s%0*d", prefix, maxdigits, i++);
 		ged_add_nmg_part(gedp, newname, new_model);
@@ -163,54 +206,6 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
     }
 
     return GED_OK;
-}
-
-
-static void
-ged_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
-{
-    struct rt_db_internal new_intern;
-    struct directory *new_dp;
-    struct nmgregion *r;
-
-    if (db_lookup(gedp->ged_wdbp->dbip,  newname, LOOKUP_QUIET) != RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: already exists\n", newname);
-	/* Free memory here */
-	nmg_km(m);
-	frac_stat = 1;
-	return;
-    }
-
-    new_dp=db_diradd(gedp->ged_wdbp->dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
-    if (new_dp == RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str,
-		      "Failed to add new object name (%s) to directory - aborting!!\n",
-		      newname);
-	return;
-    }
-
-    /* make sure the geometry/bounding boxes are up to date */
-    for (BU_LIST_FOR(r, nmgregion, &m->r_hd))
-	nmg_region_a(r, &gedp->ged_wdbp->wdb_tol);
-
-
-    /* Export NMG as a new solid */
-    RT_DB_INTERNAL_INIT(&new_intern);
-    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    new_intern.idb_type = ID_NMG;
-    new_intern.idb_meth = &rt_functab[ID_NMG];
-    new_intern.idb_ptr = (genptr_t)m;
-
-    if (rt_db_put_internal(new_dp, gedp->ged_wdbp->dbip, &new_intern, &rt_uniresource) < 0) {
-	/* Free memory */
-	nmg_km(m);
-	bu_vls_printf(&gedp->ged_result_str, "rt_db_put_internal() failure\n");
-	frac_stat = 1;
-	return;
-    }
-    /* Internal representation has been freed by rt_db_put_internal */
-    new_intern.idb_ptr = (genptr_t)NULL;
-    frac_stat = 0;
 }
 
 

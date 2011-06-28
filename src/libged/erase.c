@@ -409,6 +409,7 @@ _ged_eraseAllNamesFromDisplay(struct ged *gedp,
     }
 }
 
+
 int
 _ged_eraseFirstSubpath(struct ged *gedp,
 		       struct ged_display_list *gdlp,
@@ -453,6 +454,7 @@ _ged_eraseFirstSubpath(struct ged *gedp,
 
     return 0;
 }
+
 
 /*
  * Erase/remove display list item from headDisplay if path is a subset of item's path.
