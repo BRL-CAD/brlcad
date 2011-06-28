@@ -122,7 +122,7 @@ translate(struct ged *gedp, point_t * const keypoint,
 			  "Database read error, aborting");
 	    return GED_ERROR;
 	}
-	comb_to_modify = (struct rt_comb_internal *)(old_intern).idb_ptr;
+	comb_to_modify = (struct rt_comb_internal *)old_intern.idb_ptr;
 	RT_CK_COMB(comb_to_modify);
 	if (comb_to_modify->tree) {
 	    old_ntp = db_dup_subtree(comb_to_modify->tree, &rt_uniresource);
@@ -131,16 +131,15 @@ translate(struct ged *gedp, point_t * const keypoint,
 	    /* Convert to "v4 / GIFT style", so that the
 	     * flatten makes sense. */
 	    if (db_ck_v4gift_tree(old_ntp) < 0)
-		db_non_union_push((old_ntp), &rt_uniresource);
+		db_non_union_push(old_ntp, &rt_uniresource);
 	    RT_CK_TREE(old_ntp);
 
 	    old_node_count = db_tree_nleaves(old_ntp);
 	    old_rt_tree_array = (struct rt_tree_array *)bu_calloc(
-		(old_node_count), sizeof(struct rt_tree_array),
-		"rt_tree_array");
+		old_node_count, sizeof(struct rt_tree_array), "rt_tree_array");
 
 	    /* free=0 means that the tree won't have any leaf nodes freed */
-	    (void)db_flatten_tree((old_rt_tree_array), (old_ntp), OP_UNION, 0,
+	    (void)db_flatten_tree(old_rt_tree_array, old_ntp, OP_UNION, 0,
 				  &rt_uniresource);
 	} else {
 	    old_ntp = TREE_NULL;
