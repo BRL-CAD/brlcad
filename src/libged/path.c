@@ -85,11 +85,14 @@ ged_path_validate(struct ged *gedp, struct db_full_path * const path)
 {
     /* Since this is a db_full_path, we already know that each
      * directory exists at root, and just need to check the order */
-    struct directory *root = DB_FULL_PATH_ROOT_DIR(path);
+    struct directory *root;
+
+    RT_CK_FULL_PATH(path);
 
     if (path->fp_len <= 1)
 	return GED_OK; /* TRUE; no children */
 
+    root = DB_FULL_PATH_ROOT_DIR(path);
     if (!(root->d_flags & RT_DIR_COMB))
 	return GED_ERROR; /* has children, but isn't a combination */
 
