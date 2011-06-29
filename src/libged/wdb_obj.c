@@ -464,10 +464,7 @@ wdb_deleteProc(ClientData clientData)
     /* notify drawable geometry objects of the impending close */
     dgo_impending_wdb_close(wdbp, wdbp->wdb_interp);
 
-    RT_CK_WDB(wdbp);
-    BU_LIST_DEQUEUE(&wdbp->l);
-    bu_vls_free(&wdbp->wdb_name);
-    bu_vls_free(&wdbp->wdb_prestr);
+    /* close up shop */
     wdb_close(wdbp);
 }
 
