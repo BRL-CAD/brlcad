@@ -45,17 +45,25 @@
 #include "./cmd.h"
 
 
+/* catch auto-formatting errors in this file.  be careful as there are
+ * mged_display() vars that use comma too.
+ */
+#define COMMA ','
+
+
 extern Tk_Window tkwin; /* in cmd.c */
 
 extern void init_qray(void);
 extern void mged_global_variable_setup(Tcl_Interp *interpreter);
 
+const char cmd3525[] = {'3', '5', COMMA, '2', '5', '\0'};
+const char cmd4545[] = {'4', '5', COMMA, '4', '5', '\0'};
 
 static struct cmdtab mged_cmdtab[] = {
     {"%", f_comm, GED_FUNC_PTR_NULL},
-    {"35,25", f_bv_35_25, GED_FUNC_PTR_NULL},
+    {cmd3525, f_bv_35_25, GED_FUNC_PTR_NULL}, /* 35,25 */
     {"3ptarb", cmd_ged_more_wrapper, ged_3ptarb},
-    {"45,45", f_bv_45_45, GED_FUNC_PTR_NULL},
+    {cmd4545, f_bv_45_45, GED_FUNC_PTR_NULL}, /* 45,45 */
     {"B", cmd_blast, GED_FUNC_PTR_NULL},
     {"accept", f_be_accept, GED_FUNC_PTR_NULL},
     {"adc", f_adc, GED_FUNC_PTR_NULL},
