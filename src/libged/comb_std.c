@@ -45,16 +45,16 @@ struct tokens {
 
 
 /* token types */
-#define GED_TOK_NULL	0
-#define GED_TOK_LPAREN	1
-#define GED_TOK_RPAREN	2
-#define GED_TOK_UNION	3
-#define GED_TOK_INTER	4
-#define GED_TOK_SUBTR	5
-#define GED_TOK_TREE	6
+#define TOK_NULL	0
+#define TOK_LPAREN	1
+#define TOK_RPAREN	2
+#define TOK_UNION	3
+#define TOK_INTER	4
+#define TOK_SUBTR	5
+#define TOK_TREE	6
 
 HIDDEN void
-ged_free_tokens(struct bu_list *hp)
+free_tokens(struct bu_list *hp)
 {
     struct tokens *tok;
 
@@ -62,7 +62,7 @@ ged_free_tokens(struct bu_list *hp)
 
     while (BU_LIST_WHILE(tok, tokens, hp)) {
 	BU_LIST_DEQUEUE(&tok->l);
-	if (tok->type == GED_TOK_TREE) {
+	if (tok->type == TOK_TREE) {
 	    db_free_tree(tok->tp, &rt_uniresource);
 	}
     }
@@ -70,77 +70,77 @@ ged_free_tokens(struct bu_list *hp)
 
 
 HIDDEN void
-ged_append_union(struct bu_list *hp)
+append_union(struct bu_list *hp)
 {
     struct tokens *tok;
 
     BU_CK_LIST_HEAD(hp);
 
     tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
-    tok->type = GED_TOK_UNION;
+    tok->type = TOK_UNION;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
 }
 
 
 HIDDEN void
-ged_append_inter(struct bu_list *hp)
+append_inter(struct bu_list *hp)
 {
     struct tokens *tok;
 
     BU_CK_LIST_HEAD(hp);
 
     tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
-    tok->type = GED_TOK_INTER;
+    tok->type = TOK_INTER;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
 }
 
 
 HIDDEN void
-ged_append_subtr(struct bu_list *hp)
+append_subtr(struct bu_list *hp)
 {
     struct tokens *tok;
 
     BU_CK_LIST_HEAD(hp);
 
     tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
-    tok->type = GED_TOK_SUBTR;
+    tok->type = TOK_SUBTR;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
 }
 
 
 HIDDEN void
-ged_append_lparen(struct bu_list *hp)
+append_lparen(struct bu_list *hp)
 {
     struct tokens *tok;
 
     BU_CK_LIST_HEAD(hp);
 
     tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
-    tok->type = GED_TOK_LPAREN;
+    tok->type = TOK_LPAREN;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
 }
 
 
 HIDDEN void
-ged_append_rparen(struct bu_list *hp)
+append_rparen(struct bu_list *hp)
 {
     struct tokens *tok;
 
     BU_CK_LIST_HEAD(hp);
 
     tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
-    tok->type = GED_TOK_RPAREN;
+    tok->type = TOK_RPAREN;
     tok->tp = (union tree *)NULL;
     BU_LIST_INSERT(hp, &tok->l);
 }
 
 
 HIDDEN int
-ged_add_operator(struct ged *gedp, struct bu_list *hp, char ch, short int *last_tok)
+add_operator(struct ged *gedp, struct bu_list *hp, char ch, short int *last_tok)
 {
     char illegal[2];
 
@@ -148,22 +148,22 @@ ged_add_operator(struct ged *gedp, struct bu_list *hp, char ch, short int *last_
 
     switch (ch) {
 	case 'u':
-	    ged_append_union(hp);
-	    *last_tok = GED_TOK_UNION;
+	    append_union(hp);
+	    *last_tok = TOK_UNION;
 	    break;
 	case '+':
-	    ged_append_inter(hp);
-	    *last_tok = GED_TOK_INTER;
+	    append_inter(hp);
+	    *last_tok = TOK_INTER;
 	    break;
 	case '-':
-	    ged_append_subtr(hp);
-	    *last_tok = GED_TOK_SUBTR;
+	    append_subtr(hp);
+	    *last_tok = TOK_SUBTR;
 	    break;
 	default:
 	    illegal[0] = ch;
 	    illegal[1] = '\0';
 	    bu_vls_printf(&gedp->ged_result_str, "Illegal operator: %s, aborting\n", illegal);
-	    ged_free_tokens(hp);
+	    free_tokens(hp);
 	    return GED_ERROR;
     }
     return GED_OK;
@@ -171,7 +171,7 @@ ged_add_operator(struct ged *gedp, struct bu_list *hp, char ch, short int *last_
 
 
 HIDDEN int
-ged_add_operand(struct ged *gedp, struct bu_list *hp, char *name)
+add_operand(struct ged *gedp, struct bu_list *hp, char *name)
 {
     char *ptr_lparen;
     char *ptr_rparen;
@@ -219,7 +219,7 @@ ged_add_operand(struct ged *gedp, struct bu_list *hp, char *name)
     bu_strlcpy(node->tr_l.tl_name, name, name_len+1);
 
     tok = (struct tokens *)bu_malloc(sizeof(struct tokens), "tok");
-    tok->type = GED_TOK_TREE;
+    tok->type = TOK_TREE;
     tok->tp = node;
     BU_LIST_INSERT(hp, &tok->l);
     return name_len;
@@ -227,7 +227,7 @@ ged_add_operand(struct ged *gedp, struct bu_list *hp, char *name)
 
 
 HIDDEN void
-ged_do_inter(struct bu_list *hp)
+do_inter(struct bu_list *hp)
 {
     struct tokens *tok;
 
@@ -235,13 +235,13 @@ ged_do_inter(struct bu_list *hp)
 	struct tokens *prev, *next;
 	union tree *tp;
 
-	if (tok->type != GED_TOK_INTER)
+	if (tok->type != TOK_INTER)
 	    continue;
 
 	prev = BU_LIST_PREV(tokens, &tok->l);
 	next = BU_LIST_NEXT(tokens, &tok->l);
 
-	if (prev->type !=GED_TOK_TREE || next->type != GED_TOK_TREE)
+	if (prev->type !=TOK_TREE || next->type != TOK_TREE)
 	    continue;
 
 	/* this is an eligible intersection operation */
@@ -262,7 +262,7 @@ ged_do_inter(struct bu_list *hp)
 
 
 HIDDEN void
-ged_do_union_subtr(struct bu_list *hp)
+do_union_subtr(struct bu_list *hp)
 {
     struct tokens *tok;
 
@@ -270,19 +270,19 @@ ged_do_union_subtr(struct bu_list *hp)
 	struct tokens *prev, *next;
 	union tree *tp;
 
-	if (tok->type != GED_TOK_UNION && tok->type != GED_TOK_SUBTR)
+	if (tok->type != TOK_UNION && tok->type != TOK_SUBTR)
 	    continue;
 
 	prev = BU_LIST_PREV(tokens, &tok->l);
 	next = BU_LIST_NEXT(tokens, &tok->l);
 
-	if (prev->type !=GED_TOK_TREE || next->type != GED_TOK_TREE)
+	if (prev->type !=TOK_TREE || next->type != TOK_TREE)
 	    continue;
 
 	/* this is an eligible operation */
 	BU_GETUNION(tp, tree);
 	RT_TREE_INIT(tp);
-	if (tok->type == GED_TOK_UNION)
+	if (tok->type == TOK_UNION)
 	    tp->tr_b.tb_op = OP_UNION;
 	else
 	    tp->tr_b.tb_op = OP_SUBTRACT;
@@ -300,20 +300,20 @@ ged_do_union_subtr(struct bu_list *hp)
 
 
 HIDDEN int
-ged_do_paren(struct bu_list *hp)
+do_paren(struct bu_list *hp)
 {
     struct tokens *tok;
 
     for (BU_LIST_FOR(tok, tokens, hp)) {
 	struct tokens *prev, *next;
 
-	if (tok->type != GED_TOK_TREE)
+	if (tok->type != TOK_TREE)
 	    continue;
 
 	prev = BU_LIST_PREV(tokens, &tok->l);
 	next = BU_LIST_NEXT(tokens, &tok->l);
 
-	if (prev->type !=GED_TOK_LPAREN || next->type != GED_TOK_RPAREN)
+	if (prev->type !=TOK_LPAREN || next->type != TOK_RPAREN)
 	    continue;
 
 	/* this is an eligible operand surrounded by parens */
@@ -334,16 +334,16 @@ ged_do_paren(struct bu_list *hp)
 
 
 HIDDEN union tree *
-ged_eval_bool(struct bu_list *hp)
+eval_bool(struct bu_list *hp)
 {
     int done=0;
     union tree *final_tree;
     struct tokens *tok;
 
     while (done != 1) {
-	ged_do_inter(hp);
-	ged_do_union_subtr(hp);
-	done = ged_do_paren(hp);
+	do_inter(hp);
+	do_union_subtr(hp);
+	done = do_paren(hp);
     }
 
     if (done == 1) {
@@ -359,7 +359,7 @@ ged_eval_bool(struct bu_list *hp)
 
 
 HIDDEN int
-ged_check_syntax(struct ged *gedp, struct bu_list *hp, char *comb_name, struct directory *dp)
+check_syntax(struct ged *gedp, struct bu_list *hp, char *comb_name, struct directory *dp)
 {
     struct tokens *tok;
     int paren_count=0;
@@ -370,26 +370,26 @@ ged_check_syntax(struct ged *gedp, struct bu_list *hp, char *comb_name, struct d
     int arg_count=0;
     int circular_ref=0;
     int errors=0;
-    short last_tok=GED_TOK_NULL;
+    short last_tok=TOK_NULL;
 
     for (BU_LIST_FOR(tok, tokens, hp)) {
 	switch (tok->type) {
-	    case GED_TOK_LPAREN:
+	    case TOK_LPAREN:
 		paren_count++;
-		if (last_tok == GED_TOK_RPAREN)
+		if (last_tok == TOK_RPAREN)
 		    missing_op++;
 		break;
-	    case GED_TOK_RPAREN:
+	    case TOK_RPAREN:
 		paren_count--;
-		if (last_tok == GED_TOK_LPAREN)
+		if (last_tok == TOK_LPAREN)
 		    missing_exp++;
 		break;
-	    case GED_TOK_UNION:
-	    case GED_TOK_SUBTR:
-	    case GED_TOK_INTER:
+	    case TOK_UNION:
+	    case TOK_SUBTR:
+	    case TOK_INTER:
 		op_count++;
 		break;
-	    case GED_TOK_TREE:
+	    case TOK_TREE:
 		arg_count++;
 		if (!dp && BU_STR_EQUAL(comb_name, tok->tp->tr_l.tl_name))
 		    circular_ref++;
@@ -542,9 +542,9 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 
     /* parse Boolean expression */
     BU_LIST_INIT(&tok_hd.l);
-    tok_hd.type = GED_TOK_NULL;
+    tok_hd.type = TOK_NULL;
 
-    last_tok = GED_TOK_LPAREN;
+    last_tok = TOK_LPAREN;
     for (i=0; i<argc; i++) {
 	char *ptr;
 
@@ -553,12 +553,12 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	    while (*ptr == '(' || *ptr == ')') {
 		switch (*ptr) {
 		    case '(':
-			ged_append_lparen(&tok_hd.l);
-			last_tok = GED_TOK_LPAREN;
+			append_lparen(&tok_hd.l);
+			last_tok = TOK_LPAREN;
 			break;
 		    case ')':
-			ged_append_rparen(&tok_hd.l);
-			last_tok = GED_TOK_RPAREN;
+			append_rparen(&tok_hd.l);
+			last_tok = TOK_RPAREN;
 			break;
 		}
 		ptr++;
@@ -567,58 +567,58 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	    if (*ptr == '\0')
 		continue;
 
-	    if (last_tok == GED_TOK_RPAREN) {
+	    if (last_tok == TOK_RPAREN) {
 		/* next token MUST be an operator */
-		if (ged_add_operator(gedp, &tok_hd.l, *ptr, &last_tok) == GED_ERROR) {
-		    ged_free_tokens(&tok_hd.l);
+		if (add_operator(gedp, &tok_hd.l, *ptr, &last_tok) == GED_ERROR) {
+		    free_tokens(&tok_hd.l);
 		    if (dp != RT_DIR_NULL)
 			rt_db_free_internal(&intern);
 		    return GED_ERROR;
 		}
 		ptr++;
-	    } else if (last_tok == GED_TOK_LPAREN) {
+	    } else if (last_tok == TOK_LPAREN) {
 		/* next token MUST be an operand */
 		int name_len;
 
-		name_len = ged_add_operand(gedp, &tok_hd.l, ptr);
+		name_len = add_operand(gedp, &tok_hd.l, ptr);
 		if (name_len < 1) {
-		    ged_free_tokens(&tok_hd.l);
+		    free_tokens(&tok_hd.l);
 		    if (dp != RT_DIR_NULL)
 			rt_db_free_internal(&intern);
 		    return GED_ERROR;
 		}
-		last_tok = GED_TOK_TREE;
+		last_tok = TOK_TREE;
 		ptr += name_len;
-	    } else if (last_tok == GED_TOK_TREE) {
+	    } else if (last_tok == TOK_TREE) {
 		/* must be an operator */
-		if (ged_add_operator(gedp, &tok_hd.l, *ptr, &last_tok) == GED_ERROR) {
-		    ged_free_tokens(&tok_hd.l);
+		if (add_operator(gedp, &tok_hd.l, *ptr, &last_tok) == GED_ERROR) {
+		    free_tokens(&tok_hd.l);
 		    if (dp != RT_DIR_NULL)
 			rt_db_free_internal(&intern);
 		    return GED_ERROR;
 		}
 		ptr++;
-	    } else if (last_tok == GED_TOK_UNION ||
-		       last_tok == GED_TOK_INTER ||
-		       last_tok == GED_TOK_SUBTR) {
+	    } else if (last_tok == TOK_UNION ||
+		       last_tok == TOK_INTER ||
+		       last_tok == TOK_SUBTR) {
 		/* must be an operand */
 		int name_len;
 
-		name_len = ged_add_operand(gedp, &tok_hd.l, ptr);
+		name_len = add_operand(gedp, &tok_hd.l, ptr);
 		if (name_len < 1) {
-		    ged_free_tokens(&tok_hd.l);
+		    free_tokens(&tok_hd.l);
 		    if (dp != RT_DIR_NULL)
 			rt_db_free_internal(&intern);
 		    return GED_ERROR;
 		}
-		last_tok = GED_TOK_TREE;
+		last_tok = TOK_TREE;
 		ptr += name_len;
 	    }
 	}
     }
 
-    if (ged_check_syntax(gedp, &tok_hd.l, comb_name, dp)) {
-	ged_free_tokens(&tok_hd.l);
+    if (check_syntax(gedp, &tok_hd.l, comb_name, dp)) {
+	free_tokens(&tok_hd.l);
 	return GED_ERROR;
     }
 
@@ -629,13 +629,13 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	    struct rt_comb_internal *comb1;
 
 	    switch (tok->type) {
-		case GED_TOK_LPAREN:
-		case GED_TOK_RPAREN:
-		case GED_TOK_UNION:
-		case GED_TOK_INTER:
-		case GED_TOK_SUBTR:
+		case TOK_LPAREN:
+		case TOK_RPAREN:
+		case TOK_UNION:
+		case TOK_INTER:
+		case TOK_SUBTR:
 		    break;
-		case GED_TOK_TREE:
+		case TOK_TREE:
 		    if (tok->tp && BU_STR_EQUAL(tok->tp->tr_l.tl_name, comb_name)) {
 			db_free_tree(tok->tp, &rt_uniresource);
 			GED_DB_GET_INTERNAL(gedp, &intern1, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
@@ -649,13 +649,13 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 		    break;
 		default:
 		    bu_vls_printf(&gedp->ged_result_str, "ERROR: Unrecognized token type\n");
-		    ged_free_tokens(&tok_hd.l);
+		    free_tokens(&tok_hd.l);
 		    return GED_ERROR;
 	    }
 	}
     }
 
-    final_tree = ged_eval_bool(&tok_hd.l);
+    final_tree = eval_bool(&tok_hd.l);
 
     if (dp == RT_DIR_NULL) {
 	int flags;
