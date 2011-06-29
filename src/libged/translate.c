@@ -36,7 +36,6 @@
 #include "db.h"
 #include "raytrace.h"
 #include "ged.h"
-#include "./ged_private.h"
 
 /*
  * it's concievable that this could be exposed, so keep a clean break
@@ -45,24 +44,25 @@
 HIDDEN int
 translate(struct ged *gedp, point_t * const keypoint,
 	  struct db_full_path * const path, struct directory * const d_obj,
-	  vect_t delta) {
+	  int * const rel_flag) {
 
     struct db_full_path full_obj_path;
     struct directory *d_comb_to_modify = NULL;
+    struct rt_comb_internal *comb_to_modify;
     char **argv = NULL;
     int argc = 0;
 
-    struct rt_db_internal intern;
-    struct _ged_trace_data gtd;
-    mat_t dmat;
-    mat_t emat;
-    mat_t tmpMat;
-    mat_t invXform;
-    point_t rpp_min;
-    point_t rpp_max;
+    /* for retrieving a tree */
+    struct rt_db_internal old_intern;
+    union tree *old_ntp = NULL;
+    struct rt_tree_array *old_rt_tree_array = NULL;
+    size_t old_node_count = (size_t)0;
+    RT_DB_INTERNAL_INIT(&old_intern);
+
 
     /* XXX quiet compiler for now */
     (void)keypoint;
+    (void)rel_flag;
     (void)argv;
     (void)argc;
 
@@ -89,11 +89,17 @@ translate(struct ged *gedp, point_t * const keypoint,
 	return GED_ERROR;
     }
 
-    /*
-     * Determine what is being translated
+    /* build ged_combmem command arguments:
+     *   -everything in obj's tree is fetched and coords modified
+     *    as necessary
+     *   -build argv
+     *   -call ged_combmem
      */
+
+    /* determine what is being translated */
     if (d_obj->d_flags & RT_DIR_SOLID) {
-	/* TODO: translation of solids */
+	/* TODO: translation of solids (note:ged_p cmd is not yet
+	 * available) */
 	db_free_full_path(&full_obj_path);
 	bu_vls_printf(&gedp->ged_result_str, "translation of solids not yet"
 		      " supported");
@@ -107,44 +113,47 @@ translate(struct ged *gedp, point_t * const keypoint,
 	    /* no path; move all obj instances (obj's entire tree
 	     * modified) */
 	    d_comb_to_modify = d_obj;
+
+	/* get comb tree */
+	if (rt_db_get_internal(&old_intern, d_comb_to_modify,
+			       gedp->ged_wdbp->dbip, (matp_t)NULL,
+			       &rt_uniresource) < 0) {
+	    bu_vls_printf(&(gedp)->ged_result_str,
+			  "Database read error, aborting");
+	    return GED_ERROR;
+	}
+	comb_to_modify = (struct rt_comb_internal *)old_intern.idb_ptr;
+	RT_CK_COMB(comb_to_modify);
+	if (comb_to_modify->tree) {
+	    old_ntp = db_dup_subtree(comb_to_modify->tree, &rt_uniresource);
+	    RT_CK_TREE(old_ntp);
+
+	    /* Convert to "v4 / GIFT style", so that the
+	     * flatten makes sense. */
+	    if (db_ck_v4gift_tree(old_ntp) < 0)
+		db_non_union_push(old_ntp, &rt_uniresource);
+	    RT_CK_TREE(old_ntp);
+
+	    old_node_count = db_tree_nleaves(old_ntp);
+	    old_rt_tree_array = (struct rt_tree_array *)bu_calloc(
+		old_node_count, sizeof(struct rt_tree_array), "rt_tree_array");
+
+	    /* free=0 means that the tree won't have any leaf nodes
+	     * freed */
+	    (void)db_flatten_tree(old_rt_tree_array, old_ntp, OP_UNION, 0,
+				  &rt_uniresource);
+	} else {
+	    old_ntp = TREE_NULL;
+	    old_node_count = 0;
+	    old_rt_tree_array = (struct rt_tree_array *)0;
+	}
     } else {
 	db_free_full_path(&full_obj_path);
-	bu_vls_printf(&gedp->ged_result_str, "unsupported object type");
+	bu_vls_printf(&gedp->ged_result_str, "unsupported object type; ");
 	return GED_ERROR;
     }
 
-    /*
-     * Perform translations
-     */
-    if (d_comb_to_modify == d_obj) {
-	/* move all obj instances */
-	if (_ged_get_obj_bounds2(gedp, 1,
-				 (const char **)&d_comb_to_modify->d_namep,
-				 &gtd, rpp_min, rpp_max) == GED_ERROR)
-	    return GED_ERROR;
-	d_comb_to_modify = gtd.gtd_obj[gtd.gtd_objpos-1];
-	if (!(d_comb_to_modify->d_flags & RT_DIR_SOLID))
-	    if (_ged_get_obj_bounds(gedp, 1,
-		(const char **)&d_comb_to_modify->d_namep, 1, rpp_min, rpp_max)
-		== GED_ERROR)
-		return GED_ERROR;
-	MAT_IDN(dmat);
-	VSCALE(delta, delta, gedp->ged_wdbp->dbip->dbi_local2base);
-	MAT_DELTAS_VEC(dmat, delta);
-
-	bn_mat_inv(invXform, gtd.gtd_xform);
-	bn_mat_mul(tmpMat, invXform, dmat);
-	bn_mat_mul(emat, tmpMat, gtd.gtd_xform);
-
-	GED_DB_GET_INTERNAL(gedp, &intern, d_comb_to_modify, emat,
-			    &rt_uniresource, GED_ERROR);
-	RT_CK_DB_INTERNAL(&intern);
-	GED_DB_PUT_INTERNAL(gedp, d_comb_to_modify, &intern, &rt_uniresource,
-			    GED_ERROR);
-    } else {
-	bu_vls_printf(&gedp->ged_result_str, "function not yet implemented");
-	return GED_ERROR;
-    }
+    /* ged_combmem(gedp, argc, argv); */
 
     db_free_full_path(&full_obj_path);
     return GED_OK;
@@ -167,7 +176,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     int rel_flag = 0;			/* use relative distance */
     char *kp_arg = NULL;        	/* keypoint argument */
     point_t keypoint;
-    vect_t delta;			/* dist/pos to translate to */
+    vect_t new_vertex;			/* dist/pos to translate to */
     const char *s_obj;
     const char *s_path;
     struct db_full_path obj;
@@ -264,7 +273,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, "missing x coordinate");
 	return GED_HELP;
     }
-    delta[0] = strtod(argv[bu_optind], &endchr);
+    new_vertex[0] = strtod(argv[bu_optind], &endchr);
     if (!endchr || argv[bu_optind] == endchr) {
 	bu_vls_printf(&gedp->ged_result_str, "missing or invalid x coordinate");
 	return GED_ERROR;
@@ -273,7 +282,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     for (i = 1; i < 3; ++i, ++bu_optind) {
 	if ((bu_optind + 1) > argc)
 	    break;
-	delta[i] = strtod(argv[bu_optind], &endchr);
+	new_vertex[i] = strtod(argv[bu_optind], &endchr);
 	if (!endchr || argv[bu_optind] == endchr)
 	    /* invalid y or z coord */
 	    break;
@@ -310,7 +319,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
      * Perform translations
      */
     d_obj = DB_FULL_PATH_ROOT_DIR(&obj);
-    if (translate(gedp, &keypoint, &path, d_obj, delta) == GED_ERROR) {
+    if (translate(gedp, &keypoint, &path, d_obj, &rel_flag) == GED_ERROR) {
 	db_free_full_path(&path);
 	db_free_full_path(&obj);
 	bu_vls_printf(&gedp->ged_result_str, "; translation failed");
