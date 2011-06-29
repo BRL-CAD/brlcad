@@ -226,7 +226,7 @@ ged_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, 
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
 
-	bu_vls_printf(&dgcdp->gedp->ged_result_str, "dgo_wireframe_leaf(%s) path='%s'\n",
+	bu_vls_printf(&dgcdp->gedp->ged_result_str, "wireframe_leaf(%s) path='%s'\n",
 		      ip->idb_meth->ft_name, sofar);
 	bu_free((genptr_t)sofar, "path string");
     }
@@ -300,7 +300,7 @@ ged_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp
 
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
-	bu_vls_printf(&dgcdp->gedp->ged_result_str, "dgo_nmg_region_start(%s)\n", sofar);
+	bu_vls_printf(&dgcdp->gedp->ged_result_str, "nmg_region_start(%s)\n", sofar);
 	bu_free((genptr_t)sofar, "path string");
 	rt_pr_tree(combp->tree, 1);
 	db_pr_tree_state(tsp);
@@ -463,7 +463,7 @@ ged_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, 
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
 
-	bu_vls_printf(&dgcdp->gedp->ged_result_str, "dgo_nmg_region_end() path='%s'\n", sofar);
+	bu_vls_printf(&dgcdp->gedp->ged_result_str, "nmg_region_end() path='%s'\n", sofar);
 	bu_free((genptr_t)sofar, "path string");
     } else {
 	char *sofar = db_path_to_string(pathp);
@@ -586,9 +586,9 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     int ret = 0;
     int c;
     int ncpu = 1;
-    int dgo_nmg_use_tnurbs = 0;
-    int dgo_enable_fastpath = 0;
-    struct model *dgo_nmg_model;
+    int nmg_use_tnurbs = 0;
+    int enable_fastpath = 0;
+    struct model *nmg_model;
     struct _ged_client_data *dgcdp;
     int i;
     int ac = 1;
@@ -634,7 +634,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	/* -1 indicates flag not set */
 	dgcdp->shaded_mode_override = -1;
 
-	dgo_enable_fastpath = 0;
+	enable_fastpath = 0;
 
 	/* Parse options. */
 	bu_optind = 0;		/* re-init bu_getopt() */
@@ -647,7 +647,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    dgcdp->draw_solid_lines_only = 1;
 		    break;
 		case 't':
-		    dgo_nmg_use_tnurbs = 1;
+		    nmg_use_tnurbs = 1;
 		    break;
 		case 'v':
 		    dgcdp->shade_per_vertex_normals = 1;
@@ -674,7 +674,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    dgcdp->draw_nmg_only = 1;
 		    break;
 		case 'f':
-		    dgo_enable_fastpath = 1;
+		    enable_fastpath = 1;
 		    break;
 		case 'C':
 		    {
@@ -814,8 +814,8 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	case 3:
 	    {
 		/* NMG */
-		dgo_nmg_model = nmg_mm();
-		gedp->ged_wdbp->wdb_initial_tree_state.ts_m = &dgo_nmg_model;
+		nmg_model = nmg_mm();
+		gedp->ged_wdbp->wdb_initial_tree_state.ts_m = &nmg_model;
 		if (dgcdp->draw_edge_uses) {
 		    bu_vls_printf(&gedp->ged_result_str, "Doing the edgeuse thang (-u)\n");
 		    dgcdp->draw_edge_uses_vbp = rt_vlblock_init();
@@ -834,9 +834,9 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 				       (const char **)av,
 				       ncpu,
 				       &gedp->ged_wdbp->wdb_initial_tree_state,
-				       dgo_enable_fastpath ? ged_nmg_region_start : 0,
+				       enable_fastpath ? ged_nmg_region_start : 0,
 				       ged_nmg_region_end,
-				       dgo_nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : nmg_booltree_leaf_tess,
+				       nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : nmg_booltree_leaf_tess,
 				       (genptr_t)dgcdp);
 		}
 
@@ -847,7 +847,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		}
 
 		/* Destroy NMG */
-		nmg_km(dgo_nmg_model);
+		nmg_km(nmg_model);
 		break;
 	    }
     }
@@ -924,7 +924,7 @@ ged_bot_check_leaf(struct db_tree_state *tsp,
 		_ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
 	    } else {
 		/* save shaded mode states */
-		int save_dgo_shaded_mode = dgcdp->gedp->ged_gdp->gd_shaded_mode;
+		int save_shaded_mode = dgcdp->gedp->ged_gdp->gd_shaded_mode;
 		int save_shaded_mode_override = dgcdp->shaded_mode_override;
 		int save_dmode = dgcdp->dmode;
 
@@ -936,7 +936,7 @@ ged_bot_check_leaf(struct db_tree_state *tsp,
 		_ged_drawtrees(dgcdp->gedp, ac, av, 1, client_data);
 
 		/* restore shaded mode states */
-		dgcdp->gedp->ged_gdp->gd_shaded_mode = save_dgo_shaded_mode;
+		dgcdp->gedp->ged_gdp->gd_shaded_mode = save_shaded_mode;
 		dgcdp->shaded_mode_override = save_shaded_mode_override;
 		dgcdp->dmode = save_dmode;
 	    }
@@ -963,7 +963,7 @@ ged_bot_check_leaf(struct db_tree_state *tsp,
 		    _ged_drawtrees(dgcdp->gedp, ac, av, 3, client_data);
 	    } else {
 		/* save shaded mode states */
-		int save_dgo_shaded_mode = dgcdp->gedp->ged_gdp->gd_shaded_mode;
+		int save_shaded_mode = dgcdp->gedp->ged_gdp->gd_shaded_mode;
 		int save_shaded_mode_override = dgcdp->shaded_mode_override;
 		int save_dmode = dgcdp->dmode;
 
@@ -975,7 +975,7 @@ ged_bot_check_leaf(struct db_tree_state *tsp,
 		_ged_drawtrees(dgcdp->gedp, ac, av, 1, client_data);
 
 		/* restore shaded mode states */
-		dgcdp->gedp->ged_gdp->gd_shaded_mode = save_dgo_shaded_mode;
+		dgcdp->gedp->ged_gdp->gd_shaded_mode = save_shaded_mode;
 		dgcdp->shaded_mode_override = save_shaded_mode_override;
 		dgcdp->dmode = save_dmode;
 	    }
@@ -983,7 +983,7 @@ ged_bot_check_leaf(struct db_tree_state *tsp,
 	    break;
     }
 
-    bu_free((genptr_t)av[0], "dgo_bot_check_leaf: av[0]");
+    bu_free((genptr_t)av[0], "bot_check_leaf: av[0]");
 
     return curtree;
 }
