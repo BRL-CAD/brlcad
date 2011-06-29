@@ -282,7 +282,12 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
 
     RT_CK_DBI(dbip);
 
-    /* Count slashes */
+    /* assume NULL str is '/' */
+    if (!str) {
+	db_full_path_init(pp);
+	return 0;
+    }
+
     while ( *str == '/' )  str++; /* strip off leading slashes */
     if ( *str == '\0' )  {
 	/* Path of a lone slash */
