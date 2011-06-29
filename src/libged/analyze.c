@@ -40,207 +40,17 @@
 /* Conversion factor for Gallons to cubic millimeters */
 #define GALLONS_TO_MM3 3785411.784
 
-static void ged_do_anal(struct ged *gedp, const struct rt_db_internal *ip);
-static void ged_arb_anal(struct ged *gedp, const struct rt_db_internal *ip);
-static double ged_anal_face(struct ged *gedp, int face, fastf_t *center_pt, const struct rt_arb_internal *arb, int type, const struct bn_tol *tol);
-static void ged_anal_edge(struct ged *gedp, int edge, const struct rt_arb_internal *arb, int type);
-static double ged_find_vol(int loc, struct rt_arb_internal *arb, struct bn_tol *tol);
-static void ged_tgc_anal(struct ged *gedp, const struct rt_db_internal *ip);
-static void ged_ell_anal(struct ged *gedp, const struct rt_db_internal *ip);
-static void ged_tor_anal(struct ged *gedp, const struct rt_db_internal *ip);
-static void ged_ars_anal(struct ged *gedp, const struct rt_db_internal *ip);
-static void ged_rpc_anal(struct ged *gedp, const struct rt_db_internal *ip);
-static void ged_rhc_anal(struct ged *gedp, const struct rt_db_internal *ip);
-static void ged_part_anal(struct ged *gedp, const struct rt_db_internal *ip);
-static void ged_superell_anal(struct ged *gedp, const struct rt_db_internal *ip);
-
-/*
- * Analyze command - prints loads of info about a solid
- * Format:	analyze [name]
- * if 'name' is missing use solid being edited
- */
-
-int
-ged_analyze(struct ged *gedp, int argc, const char *argv[])
-{
-    struct directory *ndp;
-    int i;
-    struct rt_db_internal intern;
-    static const char *usage = "object(s)";
-
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-
-    /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
-
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
-
-    if (argc < 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    /* use the names that were input */
-    for (i = 1; i < argc; i++) {
-	if ((ndp = db_lookup(gedp->ged_wdbp->dbip,  argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
-	    continue;
-
-	GED_DB_GET_INTERNAL(gedp, &intern, ndp, bn_mat_identity, &rt_uniresource, GED_ERROR);
-
-	_ged_do_list(gedp, ndp, 1);
-	ged_do_anal(gedp, &intern);
-	rt_db_free_internal(&intern);
-    }
-
-    return GED_OK;
-}
-
-
-/* Analyze solid in internal form */
-static void
-ged_do_anal(struct ged *gedp, const struct rt_db_internal *ip)
-{
-    /* XXX Could give solid name, and current units, here */
-
-    switch (ip->idb_type) {
-
-	case ID_ARS:
-	    ged_ars_anal(gedp, ip);
-	    break;
-
-	case ID_ARB8:
-	    ged_arb_anal(gedp, ip);
-	    break;
-
-	case ID_TGC:
-	    ged_tgc_anal(gedp, ip);
-	    break;
-
-	case ID_ELL:
-	    ged_ell_anal(gedp, ip);
-	    break;
-
-	case ID_TOR:
-	    ged_tor_anal(gedp, ip);
-	    break;
-
-	case ID_RPC:
-	    ged_rpc_anal(gedp, ip);
-	    break;
-
-	case ID_RHC:
-	    ged_rhc_anal(gedp, ip);
-	    break;
-
-	case ID_PARTICLE:
-	    ged_part_anal(gedp, ip);
-	    break;
-
-	case ID_SUPERELL:
-	    ged_superell_anal(gedp, ip);
-	    break;
-
-	default:
-	    bu_vls_printf(&gedp->ged_result_str, "analyze: unable to process %s solid\n",
-			  rt_functab[ip->idb_type].ft_name);
-	    break;
-    }
-}
-
-
-/* edge definition array */
-static const int nedge[5][24] = {
-    {0, 1, 1, 2, 2, 0, 0, 3, 3, 2, 1, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},	/* ARB4 */
-    {0, 1, 1, 2, 2, 3, 0, 3, 0, 4, 1, 4, 2, 4, 3, 4, -1, -1, -1, -1, -1, -1, -1, -1},	/* ARB5 */
-    {0, 1, 1, 2, 2, 3, 0, 3, 0, 4, 1, 4, 2, 5, 3, 5, 4, 5, -1, -1, -1, -1, -1, -1},	/* ARB6 */
-    {0, 1, 1, 2, 2, 3, 0, 3, 0, 4, 3, 4, 1, 5, 2, 6, 4, 5, 5, 6, 4, 6, -1, -1},		/* ARB7 */
-    {0, 1, 1, 2, 2, 3, 0, 3, 0, 4, 4, 5, 1, 5, 5, 6, 6, 7, 4, 7, 3, 7, 2, 6},
-};
-
-
-/*
- * A R B _ A N A L
- */
-static void
-ged_arb_anal(struct ged *gedp, const struct rt_db_internal *ip)
-{
-    struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
-    int i;
-    point_t center_pt;
-    double tot_vol;
-    double tot_area;
-    int cgtype;		/* COMGEOM arb type: # of vertices */
-    int type;
-
-    /* find the specific arb type, in GIFT order. */
-    if ((cgtype = rt_arb_std_type(ip, &gedp->ged_wdbp->wdb_tol)) == 0) {
-	bu_vls_printf(&gedp->ged_result_str, "ged_arb_anal: bad ARB\n");
-	return;
-    }
-
-    tot_area = tot_vol = 0.0;
-
-    type = cgtype - 4;
-
-    /* analyze each face, use center point of arb for reference */
-    bu_vls_printf(&gedp->ged_result_str, "\n------------------------------------------------------------------------------\n");
-    bu_vls_printf(&gedp->ged_result_str, "| FACE |   ROT     FB  |        PLANE EQUATION            |   SURFACE AREA   |\n");
-    bu_vls_printf(&gedp->ged_result_str, "|------|---------------|----------------------------------|------------------|\n");
-    rt_arb_centroid(center_pt, arb, cgtype);
-
-    for (i=0; i<6; i++)
-	tot_area += ged_anal_face(gedp, i, center_pt, arb, type, &gedp->ged_wdbp->wdb_tol);
-
-    bu_vls_printf(&gedp->ged_result_str, "------------------------------------------------------------------------------\n");
-
-    /* analyze each edge */
-    bu_vls_printf(&gedp->ged_result_str, "    | EDGE     LEN   | EDGE     LEN   | EDGE     LEN   | EDGE     LEN   |\n");
-    bu_vls_printf(&gedp->ged_result_str, "    |----------------|----------------|----------------|----------------|\n  ");
-
-    /* set up the records for arb4's and arb6's */
-    {
-	struct rt_arb_internal earb;
-
-	earb = *arb;		/* struct copy */
-	if (cgtype == 4) {
-	    VMOVE(earb.pt[3], earb.pt[4]);
-	} else if (cgtype == 6) {
-	    VMOVE(earb.pt[5], earb.pt[6]);
-	}
-	for (i=0; i<12; i++) {
-	    ged_anal_edge(gedp, i, &earb, type);
-	    if (nedge[type][i*2] == -1)
-		break;
-	}
-    }
-    bu_vls_printf(&gedp->ged_result_str, "  ---------------------------------------------------------------------\n");
-
-    /* find the volume - break arb8 into 6 arb4s */
-    for (i=0; i<6; i++)
-	tot_vol += ged_find_vol(i, arb, &gedp->ged_wdbp->wdb_tol);
-
-    bu_vls_printf(&gedp->ged_result_str, "      | Volume = %18.8f    Surface Area = %15.8f |\n",
-		  tot_vol*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
-		  tot_area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
-    bu_vls_printf(&gedp->ged_result_str, "      |          %18.8f gal                               |\n",
-		  tot_vol/GALLONS_TO_MM3);
-    bu_vls_printf(&gedp->ged_result_str, "      -----------------------------------------------------------------\n");
-}
-
 
 /* ARB face printout array */
 static const int prface[5][6] = {
-    {123, 124, 234, 134, -111, -111},	/* ARB4 */
-    {1234, 125, 235, 345, 145, -111},	/* ARB5 */
-    {1234, 2365, 1564, 512, 634, -111},	/* ARB6 */
-    {1234, 567, 145, 2376, 1265, 4375},	/* ARB7 */
+    {123, 124, 234, 134, -111, -111},		/* ARB4 */
+    {1234, 125, 235, 345, 145, -111},		/* ARB5 */
+    {1234, 2365, 1564, 512, 634, -111},		/* ARB6 */
+    {1234, 567, 145, 2376, 1265, 4375},		/* ARB7 */
     {1234, 5678, 1584, 2376, 1265, 4378},	/* ARB8 */
 };
+
+
 /* division of an arb8 into 6 arb4s */
 static const int farb4[6][4] = {
     {0, 1, 2, 4},
@@ -249,6 +59,16 @@ static const int farb4[6][4] = {
     {0, 2, 3, 4},
     {4, 6, 7, 2},
     {2, 3, 7, 4},
+};
+
+
+/* edge definition array */
+static const int nedge[5][24] = {
+    {0, 1, 1, 2, 2, 0, 0, 3, 3, 2, 1, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},	/* ARB4 */
+    {0, 1, 1, 2, 2, 3, 0, 3, 0, 4, 1, 4, 2, 4, 3, 4, -1, -1, -1, -1, -1, -1, -1, -1},		/* ARB5 */
+    {0, 1, 1, 2, 2, 3, 0, 3, 0, 4, 1, 4, 2, 5, 3, 5, 4, 5, -1, -1, -1, -1, -1, -1},		/* ARB6 */
+    {0, 1, 1, 2, 2, 3, 0, 3, 0, 4, 3, 4, 1, 5, 2, 6, 4, 5, 5, 6, 4, 6, -1, -1},			/* ARB7 */
+    {0, 1, 1, 2, 2, 3, 0, 3, 0, 4, 4, 5, 1, 5, 5, 6, 6, 7, 4, 7, 3, 7, 2, 6},			/* ARB8 */
 };
 
 
@@ -307,7 +127,7 @@ findang(fastf_t *angles, fastf_t *unitv)
 /* Analyzes an arb face
  */
 static double
-ged_anal_face(struct ged *gedp, int face, fastf_t *center_pt, const struct rt_arb_internal *arb, int type, const struct bn_tol *tol)
+analyze_face(struct ged *gedp, int face, fastf_t *center_pt, const struct rt_arb_internal *arb, int type, const struct bn_tol *tol)
 
 
 /* reference center point */
@@ -392,7 +212,7 @@ ged_anal_face(struct ged *gedp, int face, fastf_t *center_pt, const struct rt_ar
 
 /* Analyzes arb edges - finds lengths */
 static void
-ged_anal_edge(struct ged *gedp, int edge, const struct rt_arb_internal *arb, int type)
+analyze_edge(struct ged *gedp, int edge, const struct rt_arb_internal *arb, int type)
 {
     int a, b;
     static vect_t v_temp;
@@ -427,7 +247,7 @@ ged_anal_edge(struct ged *gedp, int edge, const struct rt_arb_internal *arb, int
 
 /* Finds volume of an arb4 defined by farb4[loc][] 	*/
 static double
-ged_find_vol(int loc, struct rt_arb_internal *arb, struct bn_tol *tol)
+analyze_find_vol(int loc, struct rt_arb_internal *arb, struct bn_tol *tol)
 {
     int a, b, c, d;
     fastf_t vol, height, len[3], temp, areabase;
@@ -461,9 +281,79 @@ ged_find_vol(int loc, struct rt_arb_internal *arb, struct bn_tol *tol)
 }
 
 
+/*
+ * A R B _ A N A L
+ */
+static void
+analyze_arb(struct ged *gedp, const struct rt_db_internal *ip)
+{
+    struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
+    int i;
+    point_t center_pt;
+    double tot_vol;
+    double tot_area;
+    int cgtype;		/* COMGEOM arb type: # of vertices */
+    int type;
+
+    /* find the specific arb type, in GIFT order. */
+    if ((cgtype = rt_arb_std_type(ip, &gedp->ged_wdbp->wdb_tol)) == 0) {
+	bu_vls_printf(&gedp->ged_result_str, "analyze_arb: bad ARB\n");
+	return;
+    }
+
+    tot_area = tot_vol = 0.0;
+
+    type = cgtype - 4;
+
+    /* analyze each face, use center point of arb for reference */
+    bu_vls_printf(&gedp->ged_result_str, "\n------------------------------------------------------------------------------\n");
+    bu_vls_printf(&gedp->ged_result_str, "| FACE |   ROT     FB  |        PLANE EQUATION            |   SURFACE AREA   |\n");
+    bu_vls_printf(&gedp->ged_result_str, "|------|---------------|----------------------------------|------------------|\n");
+    rt_arb_centroid(center_pt, arb, cgtype);
+
+    for (i=0; i<6; i++)
+	tot_area += analyze_face(gedp, i, center_pt, arb, type, &gedp->ged_wdbp->wdb_tol);
+
+    bu_vls_printf(&gedp->ged_result_str, "------------------------------------------------------------------------------\n");
+
+    /* analyze each edge */
+    bu_vls_printf(&gedp->ged_result_str, "    | EDGE     LEN   | EDGE     LEN   | EDGE     LEN   | EDGE     LEN   |\n");
+    bu_vls_printf(&gedp->ged_result_str, "    |----------------|----------------|----------------|----------------|\n  ");
+
+    /* set up the records for arb4's and arb6's */
+    {
+	struct rt_arb_internal earb;
+
+	earb = *arb;		/* struct copy */
+	if (cgtype == 4) {
+	    VMOVE(earb.pt[3], earb.pt[4]);
+	} else if (cgtype == 6) {
+	    VMOVE(earb.pt[5], earb.pt[6]);
+	}
+	for (i=0; i<12; i++) {
+	    analyze_edge(gedp, i, &earb, type);
+	    if (nedge[type][i*2] == -1)
+		break;
+	}
+    }
+    bu_vls_printf(&gedp->ged_result_str, "  ---------------------------------------------------------------------\n");
+
+    /* find the volume - break arb8 into 6 arb4s */
+    for (i=0; i<6; i++)
+	tot_vol += analyze_find_vol(i, arb, &gedp->ged_wdbp->wdb_tol);
+
+    bu_vls_printf(&gedp->ged_result_str, "      | Volume = %18.8f    Surface Area = %15.8f |\n",
+		  tot_vol*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
+		  tot_area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
+    bu_vls_printf(&gedp->ged_result_str, "      |          %18.8f gal                               |\n",
+		  tot_vol/GALLONS_TO_MM3);
+    bu_vls_printf(&gedp->ged_result_str, "      -----------------------------------------------------------------\n");
+}
+
+
 /* analyze a torus */
 static void
-ged_tor_anal(struct ged *gedp, const struct rt_db_internal *ip)
+analyze_tor(struct ged *gedp, const struct rt_db_internal *ip)
 {
     struct rt_tor_internal *tor = (struct rt_tor_internal *)ip->idb_ptr;
     fastf_t r1, r2, vol, sur_area;
@@ -490,7 +380,7 @@ ged_tor_anal(struct ged *gedp, const struct rt_db_internal *ip)
 
 /* analyze an ell */
 static void
-ged_ell_anal(struct ged *gedp, const struct rt_db_internal *ip)
+analyze_ell(struct ged *gedp, const struct rt_db_internal *ip)
 {
     struct rt_ell_internal *ell = (struct rt_ell_internal *)ip->idb_ptr;
     fastf_t ma, mb, mc;
@@ -587,7 +477,7 @@ ged_ell_anal(struct ged *gedp, const struct rt_db_internal *ip)
 
 /* analyze an superell */
 static void
-ged_superell_anal(struct ged *gedp, const struct rt_db_internal *ip)
+analyze_superell(struct ged *gedp, const struct rt_db_internal *ip)
 {
     struct rt_superell_internal *superell = (struct rt_superell_internal *)ip->idb_ptr;
     fastf_t ma, mb, mc;
@@ -688,7 +578,7 @@ ged_superell_anal(struct ged *gedp, const struct rt_db_internal *ip)
 
 /* analyze tgc */
 static void
-ged_tgc_anal(struct ged *gedp, const struct rt_db_internal *ip)
+analyze_tgc(struct ged *gedp, const struct rt_db_internal *ip)
 {
     struct rt_tgc_internal *tgc = (struct rt_tgc_internal *)ip->idb_ptr;
     fastf_t maxb, ma, mb, mc, md, mh;
@@ -773,7 +663,7 @@ ged_tgc_anal(struct ged *gedp, const struct rt_db_internal *ip)
 
 /* analyze ars */
 static void
-ged_ars_anal(struct ged *gedp, const struct rt_db_internal *ip)
+analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
 
@@ -783,7 +673,7 @@ ged_ars_anal(struct ged *gedp, const struct rt_db_internal *ip)
 
 /* XXX analyze spline needed
  * static void
- * ged_spline_anal(&gedp->ged_result_str, ip)
+ * analyze_spline(&gedp->ged_result_str, ip)
  * struct bu_vls *vp;
  * const struct rt_db_internal *ip;
  * {
@@ -793,7 +683,7 @@ ged_ars_anal(struct ged *gedp, const struct rt_db_internal *ip)
 
 /* analyze particle */
 static void
-ged_part_anal(struct ged *gedp, const struct rt_db_internal *ip)
+analyze_part(struct ged *gedp, const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
 
@@ -805,7 +695,7 @@ ged_part_anal(struct ged *gedp, const struct rt_db_internal *ip)
 
 /* analyze rpc */
 static void
-ged_rpc_anal(struct ged *gedp, const struct rt_db_internal *ip)
+analyze_rpc(struct ged *gedp, const struct rt_db_internal *ip)
 {
     fastf_t area_parab, area_body, b, h, r, vol_parab;
     struct rt_rpc_internal *rpc = (struct rt_rpc_internal *)ip->idb_ptr;
@@ -839,7 +729,7 @@ ged_rpc_anal(struct ged *gedp, const struct rt_db_internal *ip)
 
 /* analyze rhc */
 static void
-ged_rhc_anal(struct ged *gedp, const struct rt_db_internal *ip)
+analyze_rhc(struct ged *gedp, const struct rt_db_internal *ip)
 {
     fastf_t area_hyperb, area_body, b, c, h, r, vol_hyperb,	work1;
     struct rt_rhc_internal *rhc = (struct rt_rhc_internal *)ip->idb_ptr;
@@ -876,6 +766,105 @@ ged_rhc_anal(struct ged *gedp, const struct rt_db_internal *ip)
 		  (2*area_hyperb+2*r*h+2*area_body)*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
 		  vol_hyperb*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
 		  vol_hyperb/GALLONS_TO_MM3);
+}
+
+
+/*
+ * Analyze command - prints loads of info about a solid
+ * Format:	analyze [name]
+ * if 'name' is missing use solid being edited
+ */
+
+/* Analyze solid in internal form */
+static void
+analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
+{
+    /* XXX Could give solid name, and current units, here */
+
+    switch (ip->idb_type) {
+
+	case ID_ARS:
+	    analyze_ars(gedp, ip);
+	    break;
+
+	case ID_ARB8:
+	    analyze_arb(gedp, ip);
+	    break;
+
+	case ID_TGC:
+	    analyze_tgc(gedp, ip);
+	    break;
+
+	case ID_ELL:
+	    analyze_ell(gedp, ip);
+	    break;
+
+	case ID_TOR:
+	    analyze_tor(gedp, ip);
+	    break;
+
+	case ID_RPC:
+	    analyze_rpc(gedp, ip);
+	    break;
+
+	case ID_RHC:
+	    analyze_rhc(gedp, ip);
+	    break;
+
+	case ID_PARTICLE:
+	    analyze_part(gedp, ip);
+	    break;
+
+	case ID_SUPERELL:
+	    analyze_superell(gedp, ip);
+	    break;
+
+	default:
+	    bu_vls_printf(&gedp->ged_result_str, "analyze: unable to process %s solid\n",
+			  rt_functab[ip->idb_type].ft_name);
+	    break;
+    }
+}
+
+
+int
+ged_analyze(struct ged *gedp, int argc, const char *argv[])
+{
+    struct directory *ndp;
+    int i;
+    struct rt_db_internal intern;
+    static const char *usage = "object(s)";
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc < 2) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    /* use the names that were input */
+    for (i = 1; i < argc; i++) {
+	if ((ndp = db_lookup(gedp->ged_wdbp->dbip,  argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
+	    continue;
+
+	GED_DB_GET_INTERNAL(gedp, &intern, ndp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+
+	_ged_do_list(gedp, ndp, 1);
+	analyze_do(gedp, &intern);
+	rt_db_free_internal(&intern);
+    }
+
+    return GED_OK;
 }
 
 
