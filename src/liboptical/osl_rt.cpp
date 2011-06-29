@@ -305,9 +305,9 @@ int main (int argc, char **argv){
 
     int samps = 1;                          /* default number of samples */
     /* Process options */
-    if(argv[1] == '-'){
+    if(argv[1][0] == '-'){
 	if(strcmp(argv[1], "-s") == 0){
-	    sscanf(argv[2] "%d", &samps);
+	    sscanf(argv[2], "%d", &samps);
 	}
 	argc--;
 	argc--;
@@ -360,7 +360,7 @@ int main (int argc, char **argv){
 
     /* This is what callback to perform on a miss. */
     ap.a_miss = miss;
-
+    
 #if 0
 
     /* Code to find the direction from the orientation. NOT WORKING! */

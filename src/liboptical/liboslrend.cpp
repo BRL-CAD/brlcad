@@ -23,7 +23,8 @@
  * add OSL shaders and query colors, given some global parameters
  */
 
-#include "osl-renderer.h"
+#include "liboslrend.h"
+
 
 OSLRenderer::OSLRenderer(){
 

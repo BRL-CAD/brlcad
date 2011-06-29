@@ -33,7 +33,7 @@
 #include <math.h>
 #include <string.h>
 
-#include "./osl-renderer.h"
+#include "./liboslrend.h"
 
 #include "vmath.h"
 #include "raytrace.h"

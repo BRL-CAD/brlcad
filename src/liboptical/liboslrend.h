@@ -4,6 +4,7 @@
  * Copyright (c) 2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
+
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
  * version 2.1 as published by the Free Software Foundation.
@@ -24,11 +25,18 @@
  *
  */
 
-#ifndef OSL_RENDERER_H
-#define OSL_RENDERER_H
+#ifndef LIB_OSL_RENDERER_H
+#define LIB_OSL_RENDERER_H
 
 #include <stdio.h>
 #include "vmath.h"
+
+#  include "oslclosure.h"
+#  include "render_svc.h"
+/* FIXME  -- Add my own ShaderSystem? */
+#  include "./oslexec_pvt.h"
+
+using namespace OSL;
 
 typedef struct Ray {
     point_t dir;
@@ -58,13 +66,6 @@ struct RenderInfo {
     int doreflection;     /* 1 if there will be reflection 0, otherwise */
     Ray out_ray;      /* output ray (in case of reflection) */
 };
-
-#  include "oslclosure.h"
-#  include "render_svc.h"
-/* FIXME  -- Add my own ShaderSystem? */
-#  include "./oslexec_pvt.h"
-
-using namespace OSL;
 
 struct ThreadInfo {
     void *handle;
@@ -127,22 +128,6 @@ public:
     }
 
 };
-
-/* extern "C" { */
-
-/*     /\* Wrapper for OSLRenderer constructor *\/ */
-/*     OSLRenderer * oslrenderer_init(); */
-
-/*     /\* Wrapper for OSLRenderer::AddShader *\/ */
-/*     void oslrenderer_add_shader(OSLRenderer *oslr, const char *shadername); */
-
-/*     /\* Wrapper for OSLRenderer::QueryColor *\/ */
-/*     void oslrenderer_query_color(OSLRenderer *oslr, RenderInfo *info); */
-
-/*     /\* Wrapper for OSLRenderer destructor *\/ */
-/*     void oslrenderer_free(OSLRenderer **osl); */
-
-/* } */
 
 #endif
 

@@ -48,7 +48,7 @@ include_directories(
 IF(BRLCAD-ENABLE_OSL)
     
     ##########################################
-    # Build OSL-renderer
+    # Build OSL-renderer Library
     ##########################################
 
     # Find dependencies (TODO: build this altogether)
@@ -71,8 +71,7 @@ IF(BRLCAD-ENABLE_OSL)
     message("Oslcomp: ${OSLCOMP_LIBRARY}")
     message("Oslquery: ${OSLQUERY_LIBRARY}")
 
-    
-    set (OSLRT_SOURCES osl-renderer.cpp render_svc.cpp)
+    set (OSLRT_SOURCES liboslrend.cpp render_svc.cpp)
 
     #set (OSLRT_LIBS ${OSLEXEC_LIBRARY} ${OSLCOMP_LIBRARY} ${OSLQUERY_LIBRARY} ${OPENIMAGEIO_LIBRARY} ${Boost_LIBRARIES})
     message("OSLRT_SOURCES: ${OSLRT_SOURCES}")
@@ -86,8 +85,6 @@ IF(BRLCAD-ENABLE_OSL)
     IF(NOT Boost_FILESYSTEM_LIBRARY)
       message("Cheking if BOOST ROOT was FOUND")
     ENDIF()
-    
-    message("Test ------------------ ${libpng_public_hdrs}")
 
     message("Boost filesystem: ${Boost_FILESYSTEM_LIBRARY}")
     message("Boost regex: ${Boost_REGEX_LIBRARY}")
@@ -98,23 +95,23 @@ IF(BRLCAD-ENABLE_OSL)
     
     STRING(REGEX REPLACE ";" " " OSLRT_LIBS2 "${OSLRT_LIBS}")
 
-    BRLCAD_ADDLIB(osl-renderer "${OSLRT_SOURCES}" "${OSLRT_LIBS2}")
+    BRLCAD_ADDLIB(liboslrend "${OSLRT_SOURCES}" "${OSLRT_LIBS2}")
 
     ##########################################
-    # OSL Shader 
+    # Build OSL Shader 
     ##########################################
 
     # Add the osl shader to the list of shaders
     set(LIBOPTICAL_SOURCES ${LIBOPTICAL_SOURCES} sh_osl.cpp)
     
     # Link liboptical with osl-renderer library
-    BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt libbn libbu osl-renderer")
+    BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt libbn libbu liboslrend")
 
     ##########################################
-    # Renderer test 
+    # Build Renderer test 
     ##########################################
 
-    BRLCAD_ADDEXEC(osl_rt "osl_rt.cpp" "osl-renderer ${OSLRT_LIBS2} librt libfb liboptical")
+    #BRLCAD_ADDEXEC(osl_rt "osl_rt.cpp" "liboslrend ${OSLRT_LIBS2} librt libfb liboptical")
 
 ELSE(BRLCAD-ENABLE_OSL)
 
@@ -123,11 +120,11 @@ ELSE(BRLCAD-ENABLE_OSL)
 ENDIF(BRLCAD-ENABLE_OSL)
 
 CMAKEFILES(
-	osl-renderer.cpp 
+        liboslrend.cpp 
 	oslexec_pvt.h 
 	render_svc.h 
 	sh_osl.cpp
-	osl-renderer.h 
+	liboslrend.h 
 	constantpool.h 
 	osl_rt.cpp 
 	render_svc.cpp
