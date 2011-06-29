@@ -5519,7 +5519,13 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::translate {args} {
-    eval gedWrapper translate 0 0 0 0 $args
+    set result [eval gedWrapper translate 0 0 1 0 $args]
+
+    if {[llength $args] > 1} {
+	redrawObj [lindex $args end] 0
+    }
+
+    return $result
 }
 
 ::itcl::body ArcherCore::unhide {args} {

@@ -36,33 +36,33 @@
 #include "db.h"
 #include "raytrace.h"
 #include "ged.h"
+#include "./ged_private.h"
 
 /*
- * it's concievable that this could be exposed, so keep a clean break
- * from the ged cmd and don't make assumptions
+ * at some point this will be exposed, so keep a clean break from the
+ * ged cmd and don't make assumptions
  */
 HIDDEN int
-translate(struct ged *gedp, point_t * const keypoint,
+translate(struct ged *gedp, pointp_t const keypoint,
 	  struct db_full_path * const path, struct directory * const d_obj,
-	  int * const rel_flag) {
+	  vect_t delta, int relative_pos_flag) {
 
     struct db_full_path full_obj_path;
-    struct directory *d_comb_to_modify = NULL;
-    struct rt_comb_internal *comb_to_modify;
+    struct directory *d_to_modify = NULL;
     char **argv = NULL;
     int argc = 0;
 
-    /* for retrieving a tree */
-    struct rt_db_internal old_intern;
-    union tree *old_ntp = NULL;
-    struct rt_tree_array *old_rt_tree_array = NULL;
-    size_t old_node_count = (size_t)0;
-    RT_DB_INTERNAL_INIT(&old_intern);
-
+    struct rt_db_internal intern;
+    struct _ged_trace_data gtd;
+    mat_t dmat;
+    mat_t emat;
+    mat_t tmpMat;
+    mat_t invXform;
+    point_t rpp_min;
+    point_t rpp_max;
 
     /* XXX quiet compiler for now */
     (void)keypoint;
-    (void)rel_flag;
     (void)argv;
     (void)argc;
 
@@ -84,76 +84,83 @@ translate(struct ged *gedp, point_t * const keypoint,
 	char *s_path = db_path_to_string(path);
 	bu_vls_printf(&gedp->ged_result_str, "object \"%s\" not found under"
 		      " path \"%s\"", d_obj->d_namep, s_path);
-	db_free_full_path(&full_obj_path);
 	bu_free((genptr_t)s_path, "path string");
+	db_free_full_path(&full_obj_path);
 	return GED_ERROR;
     }
 
-    /* build ged_combmem command arguments:
-     *   -everything in obj's tree is fetched and coords modified
-     *    as necessary
-     *   -build argv
-     *   -call ged_combmem
+    /*
+     * Determine what is being translated
      */
-
-    /* determine what is being translated */
     if (d_obj->d_flags & RT_DIR_SOLID) {
-	/* TODO: translation of solids (note:ged_p cmd is not yet
-	 * available) */
-	db_free_full_path(&full_obj_path);
-	bu_vls_printf(&gedp->ged_result_str, "translation of solids not yet"
-		      " supported");
-	return GED_ERROR;
-    } else if (d_obj->d_flags & (RT_DIR_REGION | RT_DIR_COMB)) {
-	if (path->fp_len > 0)
-	    /* path supplied; move obj instance only (obj's CWD
-	     * modified) */
-	    d_comb_to_modify = DB_FULL_PATH_CUR_DIR(path);
-	else
-	    /* no path; move all obj instances (obj's entire tree
-	     * modified) */
-	    d_comb_to_modify = d_obj;
-
-	/* get comb tree */
-	if (rt_db_get_internal(&old_intern, d_comb_to_modify,
-			       gedp->ged_wdbp->dbip, (matp_t)NULL,
-			       &rt_uniresource) < 0) {
-	    bu_vls_printf(&(gedp)->ged_result_str,
-			  "Database read error, aborting");
+	d_to_modify = d_obj;
+	if (path->fp_len > 0) { 
+	    /* path supplied; translate this instance of primitive
+	     * only */
+	    bu_vls_printf(&gedp->ged_result_str, "translating a single instance"
+			  " of a primitive is not yet supported");
+	    db_free_full_path(&full_obj_path);
 	    return GED_ERROR;
 	}
-	comb_to_modify = (struct rt_comb_internal *)old_intern.idb_ptr;
-	RT_CK_COMB(comb_to_modify);
-	if (comb_to_modify->tree) {
-	    old_ntp = db_dup_subtree(comb_to_modify->tree, &rt_uniresource);
-	    RT_CK_TREE(old_ntp);
-
-	    /* Convert to "v4 / GIFT style", so that the
-	     * flatten makes sense. */
-	    if (db_ck_v4gift_tree(old_ntp) < 0)
-		db_non_union_push(old_ntp, &rt_uniresource);
-	    RT_CK_TREE(old_ntp);
-
-	    old_node_count = db_tree_nleaves(old_ntp);
-	    old_rt_tree_array = (struct rt_tree_array *)bu_calloc(
-		old_node_count, sizeof(struct rt_tree_array), "rt_tree_array");
-
-	    /* free=0 means that the tree won't have any leaf nodes
-	     * freed */
-	    (void)db_flatten_tree(old_rt_tree_array, old_ntp, OP_UNION, 0,
-				  &rt_uniresource);
-	} else {
-	    old_ntp = TREE_NULL;
-	    old_node_count = 0;
-	    old_rt_tree_array = (struct rt_tree_array *)0;
-	}
-    } else {
+	/* no path; translate all instances of this primitive */
+	bu_vls_printf(&gedp->ged_result_str, "primitive translations are not"
+		      " yet supported");
 	db_free_full_path(&full_obj_path);
-	bu_vls_printf(&gedp->ged_result_str, "unsupported object type; ");
+	return GED_ERROR;
+    } else if (d_obj->d_flags & (RT_DIR_REGION | RT_DIR_COMB)) {
+	if (path->fp_len > 0) {
+	    /* path supplied; move obj instance only (obj's CWD
+	     * modified) */
+	    d_to_modify = DB_FULL_PATH_CUR_DIR(path);
+	    bu_vls_printf(&gedp->ged_result_str, "translating a single instance"
+	    		  " of a combination is not yet supported");
+	    db_free_full_path(&full_obj_path);
+	    return GED_ERROR;
+	}
+	/* no path; move all obj instances (obj's entire tree
+	 * modified) */
+	d_to_modify = d_obj;
+    } else {
+	bu_vls_printf(&gedp->ged_result_str, "unsupported object type");
+	db_free_full_path(&full_obj_path);
 	return GED_ERROR;
     }
 
-    /* ged_combmem(gedp, argc, argv); */
+    /*
+     * Perform translations
+     */
+    if (!relative_pos_flag) {
+	bu_vls_printf(&gedp->ged_result_str, "translations to absolute"
+		      " positions are not yet supported");
+	db_free_full_path(&full_obj_path);
+	return GED_ERROR;
+    }
+
+    /* move all obj instances */
+    if (_ged_get_obj_bounds2(gedp, 1, (const char **)&d_to_modify->d_namep,
+			     &gtd, rpp_min, rpp_max) == GED_ERROR) {
+	db_free_full_path(&full_obj_path);
+	return GED_ERROR;
+    }
+    d_to_modify = gtd.gtd_obj[gtd.gtd_objpos-1];
+    if (!(d_to_modify->d_flags & RT_DIR_SOLID))
+	if (_ged_get_obj_bounds(gedp, 1, (const char **)&d_to_modify->d_namep,
+	    1, rpp_min, rpp_max) == GED_ERROR) {
+	    db_free_full_path(&full_obj_path);
+	    return GED_ERROR;
+	}
+    MAT_IDN(dmat);
+    VSCALE(delta, delta, gedp->ged_wdbp->dbip->dbi_local2base);
+    MAT_DELTAS_VEC(dmat, delta);
+
+    bn_mat_inv(invXform, gtd.gtd_xform);
+    bn_mat_mul(tmpMat, invXform, dmat);
+    bn_mat_mul(emat, tmpMat, gtd.gtd_xform);
+
+    GED_DB_GET_INTERNAL(gedp, &intern, d_to_modify, emat, &rt_uniresource,
+			GED_ERROR);
+    RT_CK_DB_INTERNAL(&intern);
+    GED_DB_PUT_INTERNAL(gedp, d_to_modify, &intern, &rt_uniresource, GED_ERROR);
 
     db_free_full_path(&full_obj_path);
     return GED_OK;
@@ -168,17 +175,17 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "[-k keypoint:object]"
 	" [[-a] | [-r]]"
 	" x [y [z]]"
-	" path"
+	" [path]"
 	" object";
     size_t i;				/* iterator */
     int c;				/* bu_getopt return value */
     int abs_flag = 0;			/* use absolute position */
     int rel_flag = 0;			/* use relative distance */
     char *kp_arg = NULL;        	/* keypoint argument */
-    point_t keypoint;
-    vect_t new_vertex;			/* dist/pos to translate to */
+    pointp_t keypoint = NULL;
+    vect_t delta;			/* dist/pos to translate to */
     const char *s_obj;
-    const char *s_path;
+    const char *s_path = NULL;
     struct db_full_path obj;
     struct db_full_path path;
     struct directory *d_obj;
@@ -262,18 +269,17 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     if (!keypoint)
 	;
 #endif
-
-    /* XXX testing */
-    keypoint[0] = 0;
-    keypoint[1] = 0;
-    keypoint[2] = 0;
+    if (kp_arg) {
+	bu_vls_printf(&gedp->ged_result_str, "keypoints not yet supported");
+	return GED_ERROR;
+    }
 
     /* set 3d coords */
     if ((bu_optind + 1) > argc) {
 	bu_vls_printf(&gedp->ged_result_str, "missing x coordinate");
 	return GED_HELP;
     }
-    new_vertex[0] = strtod(argv[bu_optind], &endchr);
+    delta[0] = strtod(argv[bu_optind], &endchr);
     if (!endchr || argv[bu_optind] == endchr) {
 	bu_vls_printf(&gedp->ged_result_str, "missing or invalid x coordinate");
 	return GED_ERROR;
@@ -282,20 +288,23 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     for (i = 1; i < 3; ++i, ++bu_optind) {
 	if ((bu_optind + 1) > argc)
 	    break;
-	new_vertex[i] = strtod(argv[bu_optind], &endchr);
+	delta[i] = strtod(argv[bu_optind], &endchr);
 	if (!endchr || argv[bu_optind] == endchr)
 	    /* invalid y or z coord */
 	    break;
     }
 
-    /* set path */
-    if ((bu_optind + 1) >= argc) {
+    /* no args left, but we expect more */
+    if ((bu_optind + 1) > argc) {
 	bu_vls_printf(&gedp->ged_result_str,
-		      "missing path and/or object\n");
+		      "missing object argument\n");
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 	return GED_HELP;
     }
-    s_path = argv[bu_optind++];
+
+    /* path was supplied if we're not on the last arg; otherwise, '/' is used */
+    if ((bu_optind + 1) != argc)
+	s_path = argv[bu_optind++];
     if (db_string_to_path(&path, dbip, s_path) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "invalid path \"%s\"", s_path);
 	return GED_ERROR;
@@ -312,32 +321,26 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     if ((bu_optind + 1) <= argc) {
 	bu_vls_printf(&gedp->ged_result_str, "multiple objects not yet"
 		      " supported; ");
-	goto disabled;
+	db_free_full_path(&path);
+	db_free_full_path(&obj);
+	return GED_ERROR;
     }
 
     /*
      * Perform translations
      */
     d_obj = DB_FULL_PATH_ROOT_DIR(&obj);
-    if (translate(gedp, &keypoint, &path, d_obj, &rel_flag) == GED_ERROR) {
+    if (translate(gedp, keypoint, &path, d_obj, delta, rel_flag) ==
+	GED_ERROR) {
 	db_free_full_path(&path);
 	db_free_full_path(&obj);
 	bu_vls_printf(&gedp->ged_result_str, "; translation failed");
 	return GED_ERROR;
     }
 
-    /* XXX disabled until functional */
-    goto disabled;
-
     db_free_full_path(&path);
     db_free_full_path(&obj);
     return GED_OK;
-
-disabled:
-    db_free_full_path(&path);
-    db_free_full_path(&obj);
-    bu_vls_printf(&gedp->ged_result_str, "function not yet implemented");
-    return GED_ERROR;
 }
 
 
