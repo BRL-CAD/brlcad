@@ -567,6 +567,57 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     m = rA->m_p;
     NMG_CK_MODEL(m);
 
+    if (sA->r_p->m_p != sB->r_p->m_p) {
+        bu_bomb("nmg_bool(): internal error, both shells are not in the same nmg model\n");
+    }
+
+    /* for the simple case where shells sA and sB do not overlap, we
+     * can skip most of the steps to perform the boolean operation
+     */
+    if (!V3RPP_OVERLAP_TOL(sA->sa_p->min_pt, sA->sa_p->max_pt, 
+                           sB->sa_p->min_pt, sB->sa_p->max_pt, tol)) {
+        switch (oper) {
+            case NMG_BOOL_ADD: {
+                struct faceuse *fu;
+                /* move all the faceuse from shell sB to shell sA */
+                for (BU_LIST_FOR(fu, faceuse, &sB->fu_hd)) {
+                    fu->s_p = sA;
+                }
+                BU_LIST_APPEND_LIST(&(sA->fu_hd), &(sB->fu_hd));
+                /* kill shell sB */
+                nmg_ks(sB);
+                nmg_shell_coplanar_face_merge(sA, tol, 1);
+                (void)nmg_model_edge_g_fuse(m, tol);
+                nmg_shell_a(sA, tol);
+                break;
+            }
+            case NMG_BOOL_SUB:
+                /* kill shell sB */
+                nmg_ks(sB);
+                break;
+            case NMG_BOOL_ISECT:
+                /* kill the contents of shell sA */
+                while (BU_LIST_NON_EMPTY(&sA->fu_hd)) {
+                    (void)nmg_kfu(BU_LIST_FIRST(faceuse, &sA->fu_hd));
+                }
+                while (BU_LIST_NON_EMPTY(&sA->lu_hd)) {
+                    (void)nmg_klu(BU_LIST_FIRST(loopuse, &sA->lu_hd));
+                }
+                while (BU_LIST_NON_EMPTY(&sA->eu_hd)) {
+                    (void)nmg_keu(BU_LIST_FIRST(edgeuse, &sA->eu_hd));
+                }
+                if (sA->vu_p) {
+                    nmg_kvu(sA->vu_p);
+                }
+                /* kill shell sB */
+                nmg_ks(sB);
+                break;
+            default:
+                bu_bomb("nmg_bool(): unknown operation\n");
+        }
+        return sA;
+    }
+
     debug_file_count++;
     if (rt_g.NMG_debug & DEBUG_VERIFY) {
 	/* Sometimes the tessllations of non-participating regions
@@ -807,6 +858,9 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	   nelem*sizeof(char));
     memcpy((char *)classlist[4+NMG_CLASS_AonBanti],
 	   (char *)classlist[0+NMG_CLASS_AonBanti],
+	   nelem*sizeof(char));
+    memcpy((char *)classlist[4+NMG_CLASS_AoutB],
+	   (char *)classlist[0+NMG_CLASS_AoutB],
 	   nelem*sizeof(char));
     nmg_class_shells(sB, sA, &classlist[4], tol);
 
