@@ -119,7 +119,9 @@ ged_init(struct ged *gedp)
     bu_vls_init(&gedp->ged_log);
     bu_vls_init(&gedp->ged_result_str);
 
-    BU_GETSTRUCT(gedp->ged_gdp, ged_drawable);
+    if (!gedp->ged_gdp) {
+	BU_GETSTRUCT(gedp->ged_gdp, ged_drawable);
+    }
 
     /* yuck */
     if (!BU_LIST_IS_INITIALIZED(&_FreeSolid.l)) {
