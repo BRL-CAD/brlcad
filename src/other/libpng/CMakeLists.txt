@@ -213,6 +213,7 @@ endif()
 # Creates a symlink from src to dest (if possible) or alternatively
 # copies if different.
 macro(CREATE_SYMLINK SRC_FILE DEST_FILE)
+	FILE(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/${DEST_FILE})
 	if(WIN32 AND NOT CYGWIN)
 		execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${SRC_FILE} ${DEST_FILE} WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 	else(WIN32 AND NOT CYGWIN)
