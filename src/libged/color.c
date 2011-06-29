@@ -37,11 +37,80 @@
 #include "./ged_private.h"
 
 
+/**
+ * Used to create a database record and get it written out to a granule.
+ * In some cases, storage will need to be allocated.
+ */
+void
+color_putrec(struct ged *gedp, struct mater *mp)
+{
+    struct directory dir;
+    union record rec;
+
+    /* we get here only if database is NOT read-only */
+
+    rec.md.md_id = ID_MATERIAL;
+    rec.md.md_low = mp->mt_low;
+    rec.md.md_hi = mp->mt_high;
+    rec.md.md_r = mp->mt_r;
+    rec.md.md_g = mp->mt_g;
+    rec.md.md_b = mp->mt_b;
+
+    /* Fake up a directory entry for db_* routines */
+    RT_DIR_SET_NAMEP(&dir, "color_putrec");
+    dir.d_magic = RT_DIR_MAGIC;
+    dir.d_flags = 0;
+
+    if (mp->mt_daddr == MATER_NO_ADDR) {
+	/* Need to allocate new database space */
+	if (db_alloc(gedp->ged_wdbp->dbip, &dir, 1)) {
+	    bu_vls_printf(&gedp->ged_result_str, "Database alloc error, aborting");
+	    return;
+	}
+	mp->mt_daddr = dir.d_addr;
+    } else {
+	dir.d_addr = mp->mt_daddr;
+	dir.d_len = 1;
+    }
+
+    if (db_put(gedp->ged_wdbp->dbip, &dir, &rec, 0, 1)) {
+	bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting");
+	return;
+    }
+}
+
+
+/**
+ * Used to release database resources occupied by a material record.
+ */
+void
+color_zaprec(struct ged *gedp, struct mater *mp)
+{
+    struct directory dir;
+
+    /* we get here only if database is NOT read-only */
+    if (mp->mt_daddr == MATER_NO_ADDR)
+	return;
+
+    dir.d_magic = RT_DIR_MAGIC;
+    RT_DIR_SET_NAMEP(&dir, "color_zaprec");
+    dir.d_len = 1;
+    dir.d_addr = mp->mt_daddr;
+    dir.d_flags = 0;
+
+    if (db_delete(gedp->ged_wdbp->dbip, &dir) != 0) {
+	bu_vls_printf(&gedp->ged_result_str, "Database delete error, aborting");
+	return;
+    }
+    mp->mt_daddr = MATER_NO_ADDR;
+}
+
+
 /*
  * used by the 'color' command when provided the -e option
  */
 static int
-_ged_edcolor(struct ged *gedp, int argc, const char *argv[])
+edcolor(struct ged *gedp, int argc, const char *argv[])
 {
     struct mater *mp;
     struct mater *zot;
@@ -111,7 +180,7 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
 	while (rt_material_head() != MATER_NULL) {
 	    zot = rt_material_head();
 	    rt_new_material_head(zot->mt_forw);
-	    _ged_color_zaprec(gedp, zot);
+	    color_zaprec(gedp, zot);
 	    bu_free((genptr_t)zot, "mater rec");
 	}
 
@@ -134,7 +203,7 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
 	    mp->mt_b = b;
 	    mp->mt_daddr = MATER_NO_ADDR;
 	    rt_insert_color(mp);
-	    _ged_color_putrec(gedp, mp);
+	    color_putrec(gedp, mp);
 	}
     } else {
 	struct bu_vls vls;
@@ -191,7 +260,7 @@ ged_edcolor(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    return _ged_edcolor(gedp, argc, argv);
+    return edcolor(gedp, argc, argv);
 }
 
 
@@ -224,7 +293,7 @@ ged_color(struct ged *gedp, int argc, const char *argv[])
     /* edcolor */
     if (argc == 2) {
 	if (argv[1][0] == '-' && argv[1][1] == 'e' && argv[1][2] == '\0') {
-	    return _ged_edcolor(gedp, argc, argv);
+	    return edcolor(gedp, argc, argv);
 	} else {
 	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
@@ -236,7 +305,7 @@ ged_color(struct ged *gedp, int argc, const char *argv[])
 	mp = rt_material_head();
 	while (mp != MATER_NULL) {
 	    next_mater = mp->mt_forw;
-	    _ged_color_zaprec(gedp, mp);
+	    color_zaprec(gedp, mp);
 	    mp = next_mater;
 	}
 
@@ -256,7 +325,7 @@ ged_color(struct ged *gedp, int argc, const char *argv[])
 	mp = rt_material_head();
 	while (mp != MATER_NULL) {
 	    next_mater = mp->mt_forw;
-	    _ged_color_putrec(gedp, mp);
+	    color_putrec(gedp, mp);
 	    mp = next_mater;
 	}
     } else {
@@ -286,75 +355,6 @@ ged_color(struct ged *gedp, int argc, const char *argv[])
     }
 
     return GED_OK;
-}
-
-
-/**
- * Used to create a database record and get it written out to a granule.
- * In some cases, storage will need to be allocated.
- */
-void
-_ged_color_putrec(struct ged *gedp, struct mater *mp)
-{
-    struct directory dir;
-    union record rec;
-
-    /* we get here only if database is NOT read-only */
-
-    rec.md.md_id = ID_MATERIAL;
-    rec.md.md_low = mp->mt_low;
-    rec.md.md_hi = mp->mt_high;
-    rec.md.md_r = mp->mt_r;
-    rec.md.md_g = mp->mt_g;
-    rec.md.md_b = mp->mt_b;
-
-    /* Fake up a directory entry for db_* routines */
-    RT_DIR_SET_NAMEP(&dir, "_ged_color_putrec");
-    dir.d_magic = RT_DIR_MAGIC;
-    dir.d_flags = 0;
-
-    if (mp->mt_daddr == MATER_NO_ADDR) {
-	/* Need to allocate new database space */
-	if (db_alloc(gedp->ged_wdbp->dbip, &dir, 1)) {
-	    bu_vls_printf(&gedp->ged_result_str, "Database alloc error, aborting");
-	    return;
-	}
-	mp->mt_daddr = dir.d_addr;
-    } else {
-	dir.d_addr = mp->mt_daddr;
-	dir.d_len = 1;
-    }
-
-    if (db_put(gedp->ged_wdbp->dbip, &dir, &rec, 0, 1)) {
-	bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting");
-	return;
-    }
-}
-
-
-/**
- * Used to release database resources occupied by a material record.
- */
-void
-_ged_color_zaprec(struct ged *gedp, struct mater *mp)
-{
-    struct directory dir;
-
-    /* we get here only if database is NOT read-only */
-    if (mp->mt_daddr == MATER_NO_ADDR)
-	return;
-
-    dir.d_magic = RT_DIR_MAGIC;
-    RT_DIR_SET_NAMEP(&dir, "_ged_color_zaprec");
-    dir.d_len = 1;
-    dir.d_addr = mp->mt_daddr;
-    dir.d_flags = 0;
-
-    if (db_delete(gedp->ged_wdbp->dbip, &dir) != 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Database delete error, aborting");
-	return;
-    }
-    mp->mt_daddr = MATER_NO_ADDR;
 }
 
 

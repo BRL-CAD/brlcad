@@ -130,13 +130,6 @@ extern void _ged_print_node(struct ged *gedp,
 extern struct db_i *_ged_open_dbip(const char *filename,
 				   int existing_only);
 
-/* defined in color.c */
-extern void _ged_color_putrec(struct ged *gedp,
-			      struct mater *mp);
-
-extern void _ged_color_zaprec(struct ged *gedp,
-			      struct mater *mp);
-
 /* defined in comb.c */
 extern struct directory *_ged_combadd(struct ged *gedp,
 				      struct directory *objp,
