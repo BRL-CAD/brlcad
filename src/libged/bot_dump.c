@@ -117,7 +117,7 @@ lswap(unsigned int *v)
 
 
 static struct _ged_obj_material *
-ged_get_obj_material(int red, int green, int blue, fastf_t transparency)
+get_obj_material(int red, int green, int blue, fastf_t transparency)
 {
     struct _ged_obj_material *gomp;
 
@@ -153,7 +153,7 @@ ged_get_obj_material(int red, int green, int blue, fastf_t transparency)
 
 
 static void
-ged_free_obj_materials() {
+free_obj_materials() {
     struct _ged_obj_material *gomp;
 
     while (BU_LIST_WHILE(gomp, _ged_obj_material, &HeadObjMaterials)) {
@@ -420,7 +420,7 @@ write_bot_obj(struct rt_bot_internal *bot, FILE *fp, char *name)
     struct _ged_obj_material *gomp;
 
     if (using_dbot_dump) {
-	gomp = ged_get_obj_material(curr_obj_red,
+	gomp = get_obj_material(curr_obj_red,
 				    curr_obj_green,
 				    curr_obj_blue,
 				    curr_obj_alpha);
@@ -731,7 +731,7 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, co
 
 
 static union tree *
-ged_bot_dump_leaf(struct db_tree_state *tsp,
+bot_dump_leaf(struct db_tree_state *tsp,
 		  const struct db_full_path *pathp,
 		  struct rt_db_internal *ip,
 		  genptr_t client_data)
@@ -781,7 +781,7 @@ ged_bot_dump_leaf(struct db_tree_state *tsp,
 
 
 static int
-ged_bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
+bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
 {
     char c;
 
@@ -871,7 +871,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 
     using_dbot_dump = 0;
 
-    if (ged_bot_dump_get_args(gedp, argc, argv) == GED_ERROR)
+    if (bot_dump_get_args(gedp, argc, argv) == GED_ERROR)
 	return GED_ERROR;
 
     if (bu_optind > argc) {
@@ -1024,7 +1024,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 			       &gedp->ged_wdbp->wdb_initial_tree_state,
 			       0,
 			       0,
-			       ged_bot_dump_leaf,
+			       bot_dump_leaf,
 			       (genptr_t)gbdcdp);
 	}
 
@@ -1077,7 +1077,7 @@ write_data_arrows(struct ged_data_arrow_state *gdasp, FILE *fp, int sflag)
     if (gdasp->gdas_draw) {
 	struct _ged_obj_material *gomp;
 
-	gomp = ged_get_obj_material(gdasp->gdas_color[0],
+	gomp = get_obj_material(gdasp->gdas_color[0],
 				    gdasp->gdas_color[1],
 				    gdasp->gdas_color[2],
 				    1);
@@ -1155,7 +1155,7 @@ write_data_axes(struct ged_data_axes_state *gdasp, FILE *fp, int sflag)
 
 	halfAxesSize = gdasp->gdas_size * 0.5;
 
-	gomp = ged_get_obj_material(gdasp->gdas_color[0],
+	gomp = get_obj_material(gdasp->gdas_color[0],
 				    gdasp->gdas_color[1],
 				    gdasp->gdas_color[2],
 				    1);
@@ -1229,7 +1229,7 @@ write_data_lines(struct ged_data_line_state *gdlsp, FILE *fp, int sflag)
     if (gdlsp->gdls_draw) {
 	struct _ged_obj_material *gomp;
 
-	gomp = ged_get_obj_material(gdlsp->gdls_color[0],
+	gomp = get_obj_material(gdlsp->gdls_color[0],
 				    gdlsp->gdls_color[1],
 				    gdlsp->gdls_color[2],
 				    1);
@@ -1274,7 +1274,7 @@ write_data_obj(struct ged *gedp, FILE *fp)
 
 
 static int
-ged_data_dump(struct ged *gedp, FILE *fp)
+data_dump(struct ged *gedp, FILE *fp)
 {
     switch (output_type) {
 	case OTYPE_DXF:
@@ -1292,7 +1292,7 @@ ged_data_dump(struct ged *gedp, FILE *fp)
 		    ++cp;
 
 		if (*cp == '\0') {
-		    bu_vls_printf(&gedp->ged_result_str, "ged_data_dump: bad dirname - %s\n", output_directory);
+		    bu_vls_printf(&gedp->ged_result_str, "data_dump: bad dirname - %s\n", output_directory);
 		    return GED_ERROR;
 		}
 
@@ -1300,7 +1300,7 @@ ged_data_dump(struct ged *gedp, FILE *fp)
 		bu_vls_printf(&filepath, "%s/%s_data.obj", output_directory, cp);
 
 		if ((data_fp=fopen(bu_vls_addr(&filepath), "wb+")) == NULL) {
-		    bu_vls_printf(&gedp->ged_result_str, "ged_data_dump: failed to open %V\n", &filepath);
+		    bu_vls_printf(&gedp->ged_result_str, "data_dump: failed to open %V\n", &filepath);
 		    bu_vls_free(&filepath);
 		    return GED_ERROR;
 		}
@@ -1349,7 +1349,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 
     using_dbot_dump = 1;
 
-    if (ged_bot_dump_get_args(gedp, argc, argv) == GED_ERROR)
+    if (bot_dump_get_args(gedp, argc, argv) == GED_ERROR)
 	return GED_ERROR;
 
     if (bu_optind != argc) {
@@ -1543,7 +1543,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 #if 0
 		struct _ged_obj_material *gomp;
 
-		gomp = ged_get_obj_material(sp->s_color[0],
+		gomp = get_obj_material(sp->s_color[0],
 					    sp->s_color[1],
 					    sp->s_color[2],
 					    sp->s_transparency);
@@ -1564,7 +1564,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    ged_data_dump(gedp, fp);
+    data_dump(gedp, fp);
 
     if (output_file) {
 	if (binary && output_type == OTYPE_STL) {
@@ -1601,7 +1601,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 
     if (output_type == OTYPE_OBJ) {
 	bu_vls_free(&obj_materials_file);
-	ged_free_obj_materials();
+	free_obj_materials();
 	fclose(obj_materials_fp);
     }
 
