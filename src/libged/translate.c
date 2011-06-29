@@ -234,7 +234,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 		/* unknown options */
 		if (isprint(bu_optopt)) {
 		    char *c2;
-		    strtod((const char * restrict)&c, &c2);
+		    strtod((const char *)&c, &c2);
 		    if (*c2 != '\0') {
 			--bu_optind;
 			goto no_more_args;
