@@ -106,6 +106,7 @@ _ged_make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory
     return GED_OK;
 }
 
+
 static const char *
 mktemp_comb(struct ged *gedp, const char *str)
 {
@@ -199,6 +200,7 @@ _ged_restore_comb(struct ged *gedp, struct directory *dp, const char *oldname)
 
     bu_free(name, "bu_strdup'd name");
 }
+
 
 struct line_list{
     struct bu_list l;

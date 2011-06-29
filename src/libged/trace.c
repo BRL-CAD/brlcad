@@ -29,18 +29,18 @@
 
 
 static void
-ged_do_trace(struct db_i		*dbip,
-	     struct rt_comb_internal	*UNUSED(comb),
-	     union tree			*comb_leaf,
-	     genptr_t			user_ptr1,
-	     genptr_t			user_ptr2,
-	     genptr_t			user_ptr3)
+ged_do_trace(struct db_i *dbip,
+	     struct rt_comb_internal *UNUSED(comb),
+	     union tree *comb_leaf,
+	     genptr_t user_ptr1,
+	     genptr_t user_ptr2,
+	     genptr_t user_ptr3)
 {
-    int			*pathpos;
-    matp_t			old_xlate;
-    mat_t			new_xlate;
-    struct directory	*nextdp;
-    struct _ged_trace_data	*gtdp;
+    int *pathpos;
+    matp_t old_xlate;
+    mat_t new_xlate;
+    struct directory *nextdp;
+    struct _ged_trace_data *gtdp;
 
     RT_CK_DBI(dbip);
     RT_CK_TREE(comb_leaf);
@@ -74,21 +74,22 @@ ged_do_trace(struct db_i		*dbip,
     _ged_trace(nextdp, (*pathpos)+1, new_xlate, gtdp);
 }
 
+
 /**
  *
  *
  */
 void
-_ged_trace(struct directory	*dp,
-	   int				pathpos,
-	   const mat_t			old_xlate,
-	   struct _ged_trace_data		*gtdp)
+_ged_trace(struct directory *dp,
+	   int pathpos,
+	   const mat_t old_xlate,
+	   struct _ged_trace_data *gtdp)
 {
-    struct rt_db_internal	intern;
-    struct rt_comb_internal	*comb;
-    int			i;
-    int			id;
-    struct bu_vls		str;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
+    int i;
+    int id;
+    struct bu_vls str;
 
     bu_vls_init(&str);
 
@@ -119,13 +120,13 @@ _ged_trace(struct directory	*dp,
 	return;
     }
 
-    /* not a combination  -  should have a solid */
+    /* not a combination -  should have a solid */
 
     /* last (bottom) position */
     gtdp->gtd_path[pathpos] = dp;
 
     /* check for desired path */
-    if ( gtdp->gtd_flag == _GED_CPEVAL ) {
+    if (gtdp->gtd_flag == _GED_CPEVAL) {
 	for (i=0; i<=pathpos; i++) {
 	    if (gtdp->gtd_path[i]->d_addr != gtdp->gtd_obj[i]->d_addr) {
 		/* not the desired path */

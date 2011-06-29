@@ -64,7 +64,7 @@ _ged_translate_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *at
 
 		    VMOVE(tgc->h, hvec);
 
-		    /* have new height vector --  redefine rest of tgc */
+		    /* have new height vector -- redefine rest of tgc */
 		    la = MAGNITUDE(tgc->a);
 		    lb = MAGNITUDE(tgc->b);
 		    lc = MAGNITUDE(tgc->c);

@@ -40,21 +40,26 @@ static const int ged_arb8_faces_first_vertex[6] = {
     0, 4, 0, 1, 0, 2
 };
 
+
 static const int ged_arb7_faces_first_vertex[6] = {
     0, 0, 1, 1, 1
 };
+
 
 static const int ged_arb6_faces_first_vertex[5] = {
     0, 1, 0, 0, 2
 };
 
+
 static const int ged_arb5_faces_first_vertex[5] = {
     0, 0, 1, 2, 0
 };
 
+
 static const int ged_arb4_faces_first_vertex[4] = {
     0, 0, 1, 0
 };
+
 
 int
 ged_move_arb_face(struct ged *gedp, int argc, const char *argv[])

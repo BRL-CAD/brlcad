@@ -36,9 +36,9 @@
 int
 ged_whatid(struct ged *gedp, int argc, const char *argv[])
 {
-    struct directory	*dp;
-    struct rt_db_internal	intern;
-    struct rt_comb_internal	*comb;
+    struct directory *dp;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
     static const char *usage = "region";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

@@ -54,6 +54,7 @@ increment_uses(struct db_i *UNUSED(db_ip), struct directory *dp, genptr_t UNUSED
     dp->d_uses++;
 }
 
+
 /**
  *
  *
@@ -101,6 +102,7 @@ Free_uses(struct db_i *dbip)
     }
 
 }
+
 
 /**
  *
@@ -328,6 +330,7 @@ Copy_solid(struct ged *gedp,
 
     return found;
 }
+
 
 /**
  *

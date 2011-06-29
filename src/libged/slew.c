@@ -53,7 +53,7 @@ ged_slew(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (argc == 2) {
-	int	n;
+	int n;
 
 	if ((n = bn_decode_vect(svec, argv[1])) != 3) {
 	    if (n != 2) {
@@ -92,6 +92,7 @@ ged_slew(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
+
 
 /*
  * Local Variables:

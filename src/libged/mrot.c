@@ -69,6 +69,7 @@ ged_mrot(struct ged *gedp, int argc, const char *argv[])
     return ged_rot(gedp, ac, (const char **)av);
 }
 
+
 /*
  * Local Variables:
  * tab-width: 8

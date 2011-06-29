@@ -39,8 +39,8 @@ ged_kill(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     int i;
     int c;
-    int	is_phony;
-    int	verbose = LOOKUP_NOISY;
+    int is_phony;
+    int verbose = LOOKUP_NOISY;
     int force = 0;
     int nflag = 0;
     static const char *usage = "[-f|-n] object(s)";
@@ -61,7 +61,7 @@ ged_kill(struct ged *gedp, int argc, const char *argv[])
 
     bu_optind = 1;
     while ((c = bu_getopt(argc, (char * const *)argv, "fn")) != -1) {
-	switch( c ) {
+	switch(c) {
 	    case 'f':
 		force = 1;
 		break;
@@ -93,11 +93,11 @@ ged_kill(struct ged *gedp, int argc, const char *argv[])
 
     for (i = 1; i < argc; i++) {
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[i], verbose)) != RT_DIR_NULL) {
-	    if ( !force && dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY && dp->d_minor_type == 0 ) {
+	    if (!force && dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY && dp->d_minor_type == 0) {
 		bu_vls_printf(&gedp->ged_result_str, "You attempted to delete the _GLOBAL object.\n");
-		bu_vls_printf(&gedp->ged_result_str, "\tIf you delete the \"_GLOBAL\" object you will be losing some important information\n" );
-		bu_vls_printf(&gedp->ged_result_str, "\tsuch as your preferred units and the title of the database.\n" );
-		bu_vls_printf(&gedp->ged_result_str, "\tUse the \"-f\" option, if you really want to do this.\n" );
+		bu_vls_printf(&gedp->ged_result_str, "\tIf you delete the \"_GLOBAL\" object you will be losing some important information\n");
+		bu_vls_printf(&gedp->ged_result_str, "\tsuch as your preferred units and the title of the database.\n");
+		bu_vls_printf(&gedp->ged_result_str, "\tUse the \"-f\" option, if you really want to do this.\n");
 		continue;
 	    }
 

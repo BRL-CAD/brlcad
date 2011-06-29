@@ -64,7 +64,7 @@ ged_log(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str,"Usage: %s %s", argv[0], usage);
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -86,6 +86,7 @@ ged_log(struct ged *gedp, int argc, const char *argv[])
     bu_log("Usage: %s %s ", argv[0], usage);
     return GED_ERROR;
 }
+
 
 /*
  * Local Variables:

@@ -29,7 +29,7 @@
  * Arrange for objects' label(s) to be drawn.
  *
  * Usage:
- *        label object(s)
+ * label object(s)
  *
  */
 int

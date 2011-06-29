@@ -36,7 +36,7 @@
  * Set/get the shaded mode.
  *
  * Usage:
- *        shaded_mode [0|1|2]
+ * shaded_mode [0|1|2]
  *
  */
 int

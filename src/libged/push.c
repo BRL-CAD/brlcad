@@ -35,32 +35,34 @@
 #include "./ged_private.h"
 
 
-#define GED_MAGIC_PUSH_ID	0x50495323
+#define GED_MAGIC_PUSH_ID 0x50495323
 #define FOR_ALL_GED_PUSH_SOLIDS(_p, _phead) \
     for (_p=_phead.forw; _p!=&_phead; _p=_p->forw)
 
 /** structure to hold all solids that have been pushed. */
 struct ged_push_id {
-    long	magic;
+    long magic;
     struct ged_push_id *forw, *back;
     struct directory *pi_dir;
-    mat_t	pi_mat;
+    mat_t pi_mat;
 };
+
 
 struct ged_push_data {
-    struct ged		*gedp;
-    struct ged_push_id	pi_head;
-    int			push_error;
+    struct ged *gedp;
+    struct ged_push_id pi_head;
+    int push_error;
 };
 
+
 static void
-ged_identitize(struct directory	*dp,
-	       struct db_i	*dbip,
-	       struct bu_vls	*msg);
+ged_identitize(struct directory *dp,
+	       struct db_i *dbip,
+	       struct bu_vls *msg);
 
 
 /**
- *		P U S H _ L E A F
+ * P U S H _ L E A F
  *
  * This routine must be prepared to run in parallel.
  *
@@ -71,12 +73,12 @@ ged_identitize(struct directory	*dp,
  * enough to do hear with out them.
  */
 static union tree *
-ged_push_leaf(struct db_tree_state	*tsp,
+ged_push_leaf(struct db_tree_state *tsp,
 	      const struct db_full_path *pathp,
-	      struct rt_db_internal	*ip,
-	      genptr_t			client_data)
+	      struct rt_db_internal *ip,
+	      genptr_t client_data)
 {
-    union tree	*curtree;
+    union tree *curtree;
     struct directory *dp;
     struct ged_push_id *gpip;
     struct ged_push_data *gpdp = (struct ged_push_data *)client_data;
@@ -100,12 +102,12 @@ ged_push_leaf(struct db_tree_state	*tsp,
  * match and do the "right" thing.
  *
  * (There is a question as to whether dp->d_uses is reset to zero
- *  for each tree walk.  If it is not, then d_uses is NOT a safe
- *  way to check and this method will always work.)
+ * for each tree walk.  If it is not, then d_uses is NOT a safe
+ * way to check and this method will always work.)
  */
     bu_semaphore_acquire(RT_SEM_WORKER);
     FOR_ALL_GED_PUSH_SOLIDS(gpip, gpdp->pi_head) {
-	if (gpip->pi_dir == dp ) {
+	if (gpip->pi_dir == dp) {
 	    if (!bn_mat_is_equal(gpip->pi_mat,
 				 tsp->ts_mat, tsp->ts_tol)) {
 		char *sofar = db_path_to_string(pathp);
@@ -133,7 +135,7 @@ ged_push_leaf(struct db_tree_state	*tsp,
     gpip->forw = &gpdp->pi_head;
     gpip->back->forw = gpip;
     bu_semaphore_release(RT_SEM_WORKER);
-    RT_GET_TREE( curtree, tsp->ts_resp );
+    RT_GET_TREE(curtree, tsp->ts_resp);
     curtree->tr_op = OP_NOP;
     return curtree;
 }
@@ -156,11 +158,11 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
     struct ged_push_data *gpdp;
     struct ged_push_id *gpip;
     struct rt_db_internal es_int;
-    int			i;
-    int			ncpu;
-    int			c;
-    int			old_debug;
-    int			push_error;
+    int i;
+    int ncpu;
+    int c;
+    int old_debug;
+    int push_error;
     static const char *usage = "object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -311,16 +313,17 @@ ged_do_identitize(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), unio
     ged_identitize(dp, dbip, msg);
 }
 
+
 /*
- *			W D B _ I D E N T I T I Z E ( )
+ * W D B _ I D E N T I T I Z E ()
  *
- *	Traverses an objects paths, setting all member matrices == identity
+ * Traverses an objects paths, setting all member matrices == identity
  *
  */
 static void
-ged_identitize(struct directory	*dp,
-	       struct db_i	*dbip,
-	       struct bu_vls	*msg)
+ged_identitize(struct directory *dp,
+	       struct db_i *dbip,
+	       struct bu_vls *msg)
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;

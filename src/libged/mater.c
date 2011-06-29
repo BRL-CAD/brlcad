@@ -132,7 +132,8 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&vls);
 
     /* Color */
-    if (offset) {  /* means strncmp(argv[3], "del", 3) is 0 */
+    if (offset) {
+	/* means strncmp(argv[3], "del", 3) is 0 */
 	/* remove the color */
 	comb->rgb_valid = 0;
 	comb->rgb[0] = comb->rgb[1] = comb->rgb[2] = 0;

@@ -100,10 +100,9 @@ _ged_select(struct ged *gedp, fastf_t vx, fastf_t vy, fastf_t vwidth, fastf_t vh
 			    V_MIN(vmin[Z], vpt[Z]);
 			    V_MAX(vmax[Z], vpt[Z]);
 			    break;
-			default:
-			    {
-				bu_vls_printf(&gedp->ged_result_str, "unknown vlist op %d\n", *cmd);
-			    }
+			default: {
+			    bu_vls_printf(&gedp->ged_result_str, "unknown vlist op %d\n", *cmd);
+			}
 		    }
 		}
 	    }
@@ -149,7 +148,7 @@ _ged_select(struct ged *gedp, fastf_t vx, fastf_t vy, fastf_t vwidth, fastf_t vh
  * Returns a list of items within the specified rectangle or circle.
  *
  * Usage:
- *        select vx vy {vr | vw vh}
+ * select vx vy {vr | vw vh}
  *
  */
 int
@@ -193,11 +192,12 @@ ged_select(struct ged *gedp, int argc, const char *argv[])
     }
 }
 
+
 /*
  * Returns a list of items within the previously defined rectangle.
  *
  * Usage:
- *        rselect
+ * rselect
  *
  */
 int

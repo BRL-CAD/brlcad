@@ -66,12 +66,12 @@ usage(struct ged *gedp, const char *argv0)
 
 /*
  * Note - this needs to be rewritten to accept keyword/value pairs so
- *        that multiple attributes can be set with a single command call.
+ * that multiple attributes can be set with a single command call.
  */
 int
-ged_rect(struct ged	*gedp,
-	 int		argc,
-	 const char	*argv[])
+ged_rect(struct ged *gedp,
+	 int argc,
+	 const char *argv[])
 {
     char *command;
     char *parameter;
@@ -287,6 +287,7 @@ ged_rect(struct ged	*gedp,
     return GED_ERROR;
 }
 
+
 static void
 ged_rect_vls_print(struct ged *gedp)
 {
@@ -312,6 +313,7 @@ ged_rect_vls_print(struct ged *gedp)
 		  gedp->ged_gvp->gv_rect.grs_pos[Y]);
 }
 
+
 /*
  * Given position and dimensions in image coordinates, calculate
  * position and dimensions in normalized view coordinates.
@@ -324,6 +326,7 @@ ged_rect_image2view(struct ged_rect_state *grsp)
     grsp->grs_width = grsp->grs_dim[X] * 2.0 / (fastf_t)grsp->grs_cdim[X];
     grsp->grs_height = grsp->grs_dim[Y] * 2.0 / (fastf_t)grsp->grs_cdim[X];
 }
+
 
 /*
  * Adjust the rubber band rectangle to have the same aspect ratio as the window.
@@ -355,6 +358,7 @@ ged_rect_adjust_for_zoom(struct ged_rect_state *grsp)
 	    grsp->grs_width = -height * grsp->grs_aspect;
     }
 }
+
 
 static int
 ged_rect_rt(struct ged *gedp, int port)
@@ -414,7 +418,7 @@ ged_rect_rt(struct ged *gedp, int port)
 	bu_vls_printf(&nvls, "%d", gedp->ged_gvp->gv_rect.grs_cdim[Y]);
 	bu_vls_printf(&vvls, "%lf", gedp->ged_gvp->gv_rect.grs_aspect);
 	bu_vls_printf(&fvls, "%d", port);
-	bu_vls_printf(&jvls, "%d,%d,%d,%d", xmin, ymin, xmax, ymax);
+	bu_vls_printf(&jvls, "%d, %d, %d, %d", xmin, ymin, xmax, ymax);
 	bu_vls_printf(&cvls, "%d/%d/%d",
 		      gedp->ged_gvp->gv_rect.grs_bg[0],
 		      gedp->ged_gvp->gv_rect.grs_bg[1],
@@ -447,6 +451,7 @@ ged_rect_rt(struct ged *gedp, int port)
 	return ret;
     }
 }
+
 
 static int
 ged_rect_zoom(struct ged *gedp)

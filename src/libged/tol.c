@@ -58,14 +58,14 @@ ged_tol(struct ged *gedp, int argc, const char *argv[])
 
 	if (gedp->ged_wdbp->wdb_ttol.rel > 0.0) {
 	    bu_vls_printf(&gedp->ged_result_str, "\trel %g (%g%%)\n",
-			  gedp->ged_wdbp->wdb_ttol.rel, gedp->ged_wdbp->wdb_ttol.rel * 100.0 );
+			  gedp->ged_wdbp->wdb_ttol.rel, gedp->ged_wdbp->wdb_ttol.rel * 100.0);
 	} else {
 	    bu_vls_printf(&gedp->ged_result_str, "\trel None\n");
 	}
 
 	if (gedp->ged_wdbp->wdb_ttol.norm > 0.0) {
-	    int	deg, min;
-	    double	sec;
+	    int deg, min;
+	    double sec;
 
 	    sec = gedp->ged_wdbp->wdb_ttol.norm * bn_radtodeg;
 	    deg = (int)(sec);

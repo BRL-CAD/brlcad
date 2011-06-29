@@ -37,10 +37,10 @@
 int
 ged_region(struct ged *gedp, int argc, const char *argv[])
 {
-    struct directory	*dp;
-    int				i;
-    int				ident, air;
-    char			oper;
+    struct directory *dp;
+    int i;
+    int ident, air;
+    char oper;
     static const char *usage = "reg_name <op obj ...>";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -86,14 +86,14 @@ ged_region(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 	oper = argv[i][0];
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[i+1], LOOKUP_NOISY )) == RT_DIR_NULL) {
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[i+1], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "skipping %s\n", argv[i+1]);
 	    continue;
 	}
 
 	if (oper != WMOP_UNION && oper != WMOP_SUBTRACT && oper != WMOP_INTERSECT) {
 	    bu_vls_printf(&gedp->ged_result_str, "bad operation: %c skip member: %s\n",
-			  oper, dp->d_namep );
+			  oper, dp->d_namep);
 	    continue;
 	}
 

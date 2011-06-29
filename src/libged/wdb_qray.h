@@ -47,6 +47,7 @@ struct dg_qray_fmt_data {
     char *fmt;
 };
 
+
 struct dg_qray_dataList {
     struct bu_list l;
     fastf_t x_in;
@@ -54,6 +55,7 @@ struct dg_qray_dataList {
     fastf_t z_in;
     fastf_t los;
 };
+
 
 #endif
 

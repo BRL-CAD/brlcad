@@ -79,6 +79,7 @@ ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf1, fas
     return ret;
 }
 
+
 int
 ged_scale(struct ged *gedp, int argc, const char *argv[])
 {

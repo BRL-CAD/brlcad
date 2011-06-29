@@ -117,9 +117,9 @@ ged_nmg_collapse(struct ged *gedp, int argc, const char *argv[])
 
     /* check that all faces are planar */
     nmg_face_tabulate(&faces, &m->magic);
-    for (BU_PTBL_FOR( fp, (struct face *), &faces)) {
-	if( fp->g.magic_p != NULL && *(fp->g.magic_p) != NMG_FACE_G_PLANE_MAGIC) {
-	    bu_log( "\tnot planar\n" );
+    for (BU_PTBL_FOR(fp, (struct face *), &faces)) {
+	if (fp->g.magic_p != NULL && *(fp->g.magic_p) != NMG_FACE_G_PLANE_MAGIC) {
+	    bu_log("\tnot planar\n");
 	    bu_ptbl_free(&faces);
 	    bu_vls_printf(&gedp->ged_result_str,
 			  "nmg_collapse can only be applied to NMG primitives with planar faces\n");

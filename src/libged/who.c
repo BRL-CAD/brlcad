@@ -31,7 +31,7 @@
  * List the objects currently prepped for drawing
  *
  * Usage:
- *        who [r(eal)|p(hony)|b(oth)]
+ * who [r(eal)|p(hony)|b(oth)]
  *
  */
 int

@@ -1,4 +1,4 @@
-/*                         R O T A T E _ E T O . C
+/*                      R O T A T E _ E T O . C
  * BRL-CAD
  *
  * Copyright (c) 2008-2011 United States Government as represented by

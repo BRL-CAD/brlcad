@@ -122,8 +122,8 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 
     /* check that all faces are planar */
     nmg_face_tabulate(&faces, &m->magic);
-    for (BU_PTBL_FOR( fp, (struct face *), &faces)) {
-	if( fp->g.magic_p != NULL && *(fp->g.magic_p) != NMG_FACE_G_PLANE_MAGIC) {
+    for (BU_PTBL_FOR(fp, (struct face *), &faces)) {
+	if (fp->g.magic_p != NULL && *(fp->g.magic_p) != NMG_FACE_G_PLANE_MAGIC) {
 	    bu_ptbl_free(&faces);
 	    bu_vls_printf(&gedp->ged_result_str,
 			  "%s cannot be applied to \"%s\" because it has non-planar faces\n",
@@ -142,7 +142,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
     if ((do_arb || do_all) && shell_count == 1) {
 	struct rt_arb_internal *arb_int;
 
-	BU_GETSTRUCT( arb_int, rt_arb_internal );
+	BU_GETSTRUCT(arb_int, rt_arb_internal);
 
 	if (nmg_to_arb(m, arb_int)) {
 	    new_intern.idb_ptr = (genptr_t)(arb_int);
@@ -153,13 +153,13 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	} else if (do_arb) {
 	    /* see if we can get an arb by simplifying the NMG */
 
-	    r = BU_LIST_FIRST( nmgregion, &m->r_hd );
-	    s = BU_LIST_FIRST( shell, &r->s_hd );
-	    nmg_shell_coplanar_face_merge( s, &gedp->ged_wdbp->wdb_tol, 1 );
+	    r = BU_LIST_FIRST(nmgregion, &m->r_hd);
+	    s = BU_LIST_FIRST(shell, &r->s_hd);
+	    nmg_shell_coplanar_face_merge(s, &gedp->ged_wdbp->wdb_tol, 1);
 	    if (!nmg_kill_cracks(s)) {
-		(void) nmg_model_edge_fuse( m, &gedp->ged_wdbp->wdb_tol );
-		(void) nmg_model_edge_g_fuse( m, &gedp->ged_wdbp->wdb_tol );
-		(void) nmg_unbreak_region_edges( &r->l.magic );
+		(void) nmg_model_edge_fuse(m, &gedp->ged_wdbp->wdb_tol);
+		(void) nmg_model_edge_g_fuse(m, &gedp->ged_wdbp->wdb_tol);
+		(void) nmg_unbreak_region_edges(&r->l.magic);
 		if (nmg_to_arb(m, arb_int)) {
 		    new_intern.idb_ptr = (genptr_t)(arb_int);
 		    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -179,7 +179,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
     if ((do_tgc || do_all) && !success && shell_count == 1) {
 	struct rt_tgc_internal *tgc_int;
 
-	BU_GETSTRUCT( tgc_int, rt_tgc_internal );
+	BU_GETSTRUCT(tgc_int, rt_tgc_internal);
 
 	if (nmg_to_tgc(m, tgc_int, &gedp->ged_wdbp->wdb_tol)) {
 	    new_intern.idb_ptr = (genptr_t)(tgc_int);
@@ -198,23 +198,22 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
     if ((do_arb || do_all) && !success && shell_count == 1) {
 	struct rt_arb_internal *arb_int;
 
-	BU_GETSTRUCT( arb_int, rt_arb_internal );
+	BU_GETSTRUCT(arb_int, rt_arb_internal);
 
-	r = BU_LIST_FIRST( nmgregion, &m->r_hd );
-	s = BU_LIST_FIRST( shell, &r->s_hd );
-	nmg_shell_coplanar_face_merge( s, &gedp->ged_wdbp->wdb_tol, 1 );
+	r = BU_LIST_FIRST(nmgregion, &m->r_hd);
+	s = BU_LIST_FIRST(shell, &r->s_hd);
+	nmg_shell_coplanar_face_merge(s, &gedp->ged_wdbp->wdb_tol, 1);
 	if (!nmg_kill_cracks(s)) {
-	    (void) nmg_model_edge_fuse( m, &gedp->ged_wdbp->wdb_tol );
-	    (void) nmg_model_edge_g_fuse( m, &gedp->ged_wdbp->wdb_tol );
-	    (void) nmg_unbreak_region_edges( &r->l.magic );
-	    if (nmg_to_arb(m, arb_int )) {
+	    (void) nmg_model_edge_fuse(m, &gedp->ged_wdbp->wdb_tol);
+	    (void) nmg_model_edge_g_fuse(m, &gedp->ged_wdbp->wdb_tol);
+	    (void) nmg_unbreak_region_edges(&r->l.magic);
+	    if (nmg_to_arb(m, arb_int)) {
 		new_intern.idb_ptr = (genptr_t)(arb_int);
 		new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		new_intern.idb_type = ID_ARB8;
 		new_intern.idb_meth = &rt_functab[ID_ARB8];
 		success = 1;
-	    }
-	    else if (do_arb) {
+	    } else if (do_arb) {
 		rt_db_free_internal(&nmg_intern);
 		bu_vls_printf(&gedp->ged_result_str, "Failed to construct an ARB equivalent to %s\n", nmg_name);
 		return GED_OK;
@@ -225,16 +224,15 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
     if ((do_poly || do_all) && !success) {
 	struct rt_pg_internal *poly_int;
 
-	poly_int = (struct rt_pg_internal *)bu_malloc( sizeof( struct rt_pg_internal ), "f_nmg_simplify: poly_int" );
+	poly_int = (struct rt_pg_internal *)bu_malloc(sizeof(struct rt_pg_internal), "f_nmg_simplify: poly_int");
 
-	if (nmg_to_poly( m, poly_int, &gedp->ged_wdbp->wdb_tol)) {
+	if (nmg_to_poly(m, poly_int, &gedp->ged_wdbp->wdb_tol)) {
 	    new_intern.idb_ptr = (genptr_t)(poly_int);
 	    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    new_intern.idb_type = ID_POLY;
 	    new_intern.idb_meth = &rt_functab[ID_POLY];
 	    success = 1;
-	}
-	else if (do_poly) {
+	} else if (do_poly) {
 	    rt_db_free_internal(&nmg_intern);
 	    bu_vls_printf(&gedp->ged_result_str, "%s is not a closed surface, cannot make a polysolid\n", nmg_name);
 	    return GED_OK;
@@ -242,10 +240,10 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (success) {
-	r = BU_LIST_FIRST( nmgregion, &m->r_hd );
-	s = BU_LIST_FIRST( shell, &r->s_hd );
+	r = BU_LIST_FIRST(nmgregion, &m->r_hd);
+	s = BU_LIST_FIRST(shell, &r->s_hd);
 
-	if (BU_LIST_NON_EMPTY( &s->lu_hd))
+	if (BU_LIST_NON_EMPTY(&s->lu_hd))
 	    bu_vls_printf(&gedp->ged_result_str, "wire loops in %s have been ignored in conversion\n",  nmg_name);
 
 	if (BU_LIST_NON_EMPTY(&s->eu_hd))

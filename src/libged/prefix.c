@@ -33,7 +33,36 @@
 #include "./ged_private.h"
 
 
-static void ged_do_prefix(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t prefix_ptr, genptr_t obj_ptr, genptr_t user_ptr3);
+static void
+ged_do_prefix(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t prefix_ptr, genptr_t obj_ptr, genptr_t UNUSED(user_ptr3))
+{
+    char *prefix, *obj;
+    char tempstring_v4[NAMESIZE+1];
+    size_t len = NAMESIZE+1;
+
+    RT_CK_DBI(dbip);
+    RT_CK_TREE(comb_leaf);
+
+    prefix = (char *)prefix_ptr;
+    obj = (char *)obj_ptr;
+
+    if (!BU_STR_EQUAL(comb_leaf->tr_l.tl_name, obj))
+	return;
+
+    bu_free(comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name");
+    if (db_version(dbip) < 5) {
+	bu_strlcpy(tempstring_v4, prefix, len);
+	bu_strlcat(tempstring_v4, obj, len);
+	comb_leaf->tr_l.tl_name = bu_strdup(tempstring_v4);
+    } else {
+	len = strlen(prefix)+strlen(obj)+1;
+	comb_leaf->tr_l.tl_name = (char *)bu_malloc(len, "Adding prefix");
+
+	bu_strlcpy(comb_leaf->tr_l.tl_name , prefix, len);
+	bu_strlcat(comb_leaf->tr_l.tl_name , obj, len);
+    }
+}
+
 
 int
 ged_prefix(struct ged *gedp, int argc, const char *argv[])
@@ -95,13 +124,13 @@ ged_prefix(struct ged *gedp, int argc, const char *argv[])
 	    tempstring = bu_vls_addr(&tempstring_v5);
 	}
 
-	if (db_lookup( gedp->ged_wdbp->dbip, tempstring, LOOKUP_QUIET) != RT_DIR_NULL) {
+	if (db_lookup(gedp->ged_wdbp->dbip, tempstring, LOOKUP_QUIET) != RT_DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: already exists\n", tempstring);
 	    argv[i] = "";
 	    continue;
 	}
 
-	/*  Change object name in the directory. */
+	/* Change object name in the directory. */
 	if (db_rename(gedp->ged_wdbp->dbip, dp, tempstring) < 0) {
 	    bu_vls_free(&tempstring_v5);
 	    bu_vls_printf(&gedp->ged_result_str, "error in rename to %s, aborting\n", tempstring);
@@ -113,7 +142,7 @@ ged_prefix(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
-	/*  Change object name on disk. */
+	/* Change object name on disk. */
 	if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource)) {
 	    bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting");
 	    return GED_ERROR;
@@ -144,36 +173,6 @@ ged_prefix(struct ged *gedp, int argc, const char *argv[])
     } FOR_ALL_DIRECTORY_END;
 
     return GED_OK;
-}
-
-static void
-ged_do_prefix(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t prefix_ptr, genptr_t obj_ptr, genptr_t UNUSED(user_ptr3))
-{
-    char *prefix, *obj;
-    char tempstring_v4[NAMESIZE+1];
-    size_t len = NAMESIZE+1;
-
-    RT_CK_DBI( dbip );
-    RT_CK_TREE( comb_leaf );
-
-    prefix = (char *)prefix_ptr;
-    obj = (char *)obj_ptr;
-
-    if ( !BU_STR_EQUAL( comb_leaf->tr_l.tl_name, obj ) )
-	return;
-
-    bu_free( comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name" );
-    if ( db_version(dbip) < 5 ) {
-	bu_strlcpy( tempstring_v4, prefix, len);
-	bu_strlcat( tempstring_v4, obj, len);
-	comb_leaf->tr_l.tl_name = bu_strdup( tempstring_v4 );
-    } else {
-	len = strlen(prefix)+strlen(obj)+1;
-	comb_leaf->tr_l.tl_name = (char *)bu_malloc( len, "Adding prefix" );
-
-	bu_strlcpy( comb_leaf->tr_l.tl_name , prefix, len);
-	bu_strlcat( comb_leaf->tr_l.tl_name , obj, len );
-    }
 }
 
 

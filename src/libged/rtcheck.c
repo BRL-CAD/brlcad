@@ -45,35 +45,35 @@
 
 struct ged_rtcheck {
 #ifdef _WIN32
-    HANDLE		fd;
-    HANDLE		hProcess;
-    DWORD		pid;
+    HANDLE fd;
+    HANDLE hProcess;
+    DWORD pid;
 #ifdef TCL_OK
-    Tcl_Channel		chan;
+    Tcl_Channel chan;
 #else
-    genptr_t		chan;
+    genptr_t chan;
 #endif
 #else
-    int			fd;
-    int			pid;
+    int fd;
+    int pid;
 #endif
-    FILE		*fp;
-    struct bn_vlblock	*vbp;
-    struct bu_list	*vhead;
-    double		csize;
-    struct ged		*gedp;
-    Tcl_Interp		*interp;
+    FILE *fp;
+    struct bn_vlblock *vbp;
+    struct bu_list *vhead;
+    double csize;
+    struct ged *gedp;
+    Tcl_Interp *interp;
 };
 
 struct ged_rtcheck_output {
 #ifdef _WIN32
-    HANDLE	fd;
-    Tcl_Channel	chan;
+    HANDLE fd;
+    Tcl_Channel chan;
 #else
-    int		fd;
+    int fd;
 #endif
-    struct ged	*gedp;
-    Tcl_Interp	*interp;
+    struct ged *gedp;
+    Tcl_Interp *interp;
 };
 
 
@@ -85,7 +85,7 @@ static void ged_rtcheck_output_handler(ClientData clientData, int mask);
  * Check for overlaps in the current view.
  *
  * Usage:
- *        rtcheck options
+ * rtcheck options
  *
  */
 int
@@ -95,21 +95,21 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     int i;
 #ifndef _WIN32
     int ret;
-    int	pid;
-    int	i_pipe[2];	/* object reads results for building vectors */
-    int	o_pipe[2];	/* object writes view parameters */
-    int	e_pipe[2];	/* object reads textual results */
+    int pid;
+    int i_pipe[2];	/* object reads results for building vectors */
+    int o_pipe[2];	/* object writes view parameters */
+    int e_pipe[2];	/* object reads textual results */
 #else
-    HANDLE	i_pipe[2], pipe_iDup;	/* READS results for building vectors */
-    HANDLE	o_pipe[2], pipe_oDup;	/* WRITES view parameters */
-    HANDLE	e_pipe[2], pipe_eDup;	/* READS textual results */
+    HANDLE i_pipe[2], pipe_iDup;	/* READS results for building vectors */
+    HANDLE o_pipe[2], pipe_oDup;	/* WRITES view parameters */
+    HANDLE e_pipe[2], pipe_eDup;	/* READS textual results */
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
     SECURITY_ATTRIBUTES sa;
     char line[2048];
     char name[256];
 #endif
-    FILE	*fp;
+    FILE *fp;
     struct ged_rtcheck *rtcp;
     struct ged_rtcheck_output *rtcop;
     vect_t eye_model;
@@ -533,12 +533,12 @@ ged_rtcheck_output_handler(ClientData clientData, int mask)
 #endif
 
 void
-_ged_wait_status(struct bu_vls	*logstr,
-		 int		status)
+_ged_wait_status(struct bu_vls *logstr,
+		 int status)
 {
-    int	sig = status & 0x7f;
-    int	core = status & 0x80;
-    int	ret = status >> 8;
+    int sig = status & 0x7f;
+    int core = status & 0x80;
+    int ret = status >> 8;
 
     if (status == 0) {
 	bu_vls_printf(logstr, "Normal exit\n");

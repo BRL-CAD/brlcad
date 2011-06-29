@@ -480,6 +480,7 @@ ged_png(struct ged *gedp, int argc, const char *argv[])
     return ret;
 }
 
+
 /*
  * Local Variables:
  * tab-width: 8

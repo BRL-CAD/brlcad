@@ -85,7 +85,7 @@ ged_units(struct ged *gedp, int argc, const char *argv[])
 
     /* Set units */
     /* Allow inputs of the form "25cm" or "3ft" */
-    if ((loc2mm = bu_mm_value(argv[1]) ) <= 0) {
+    if ((loc2mm = bu_mm_value(argv[1])) <= 0) {
 	bu_vls_printf(&gedp->ged_result_str,
 		      "%s: unrecognized unit\nvalid units: <um|mm|cm|m|km|in|ft|yd|mi>\n",
 		      argv[1]);

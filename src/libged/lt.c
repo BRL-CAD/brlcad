@@ -34,8 +34,8 @@
 
 
 static int
-ged_list_children(struct ged			*gedp,
-		  struct directory	*dp);
+ged_list_children(struct ged *gedp,
+		  struct directory *dp);
 
 int
 ged_lt(struct ged *gedp, int argc, const char *argv[])
@@ -68,6 +68,7 @@ ged_lt(struct ged *gedp, int argc, const char *argv[])
     return ged_list_children(gedp, dp);
 }
 
+
 static int
 ged_list_children(struct ged *gedp, struct directory *dp)
 {
@@ -99,12 +100,12 @@ ged_list_children(struct ged *gedp, struct directory *dp)
 	}
 	node_count = db_tree_nleaves(comb->tree);
 	if (node_count > 0) {
-	    rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count,
-							       sizeof( struct rt_tree_array ), "tree list" );
+	    rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count,
+							      sizeof(struct rt_tree_array), "tree list");
 	    actual_count = (struct rt_tree_array *)db_flatten_tree(
 		rt_tree_array, comb->tree, OP_UNION,
-		1, &rt_uniresource ) - rt_tree_array;
-	    BU_ASSERT_SIZE_T( actual_count, ==, node_count );
+		1, &rt_uniresource) - rt_tree_array;
+	    BU_ASSERT_SIZE_T(actual_count, ==, node_count);
 	    comb->tree = TREE_NULL;
 	} else {
 	    actual_count = 0;
@@ -131,7 +132,7 @@ ged_list_children(struct ged *gedp, struct directory *dp)
 	    }
 
 	    bu_vls_printf(&gedp->ged_result_str, "{%c %s} ", op, rt_tree_array[i].tl_tree->tr_l.tl_name);
-	    db_free_tree( rt_tree_array[i].tl_tree, &rt_uniresource );
+	    db_free_tree(rt_tree_array[i].tl_tree, &rt_uniresource);
 	}
 
 	if (rt_tree_array)

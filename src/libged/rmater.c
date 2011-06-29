@@ -30,11 +30,11 @@ static int
 extract_mater_from_line(char *line,
 			char *name,
 			char *shader,
-			int  *r,
-			int  *g,
-			int  *b,
-			int  *override,
-			int  *inherit)
+			int *r,
+			int *g,
+			int *b,
+			int *override,
+			int *inherit)
 {
     int i, j, k;
     char *str[3];
@@ -85,8 +85,8 @@ ged_rmater(struct ged *gedp, int argc, const char *argv[])
     int status = GED_OK;
     FILE *fp;
     struct directory *dp;
-    struct rt_db_internal	intern;
-    struct rt_comb_internal	*comb;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
     char line[LINELEN];
     char name[128];
     char shader[256];

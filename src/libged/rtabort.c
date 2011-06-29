@@ -35,7 +35,7 @@
  * Abort the current raytrace processes.
  *
  * Usage:
- *        rtabort
+ * rtabort
  *
  */
 int

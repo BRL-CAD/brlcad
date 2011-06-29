@@ -232,6 +232,7 @@ struct command_tab ged_preview_cmdtab[] = {
      0,		0, 0}	/* END */
 };
 
+
 int
 ged_loadframe(struct ged *gedp, FILE *fp)
 {
@@ -248,7 +249,7 @@ ged_loadframe(struct ged *gedp, FILE *fp)
 	    }
 	}
 
-	if ( cmd[0] == 'e' && strncmp( cmd, "end", 3 ) == 0 ) {
+	if (cmd[0] == 'e' && strncmp(cmd, "end", 3) == 0) {
 	    end = 1;
 	}
 
@@ -262,6 +263,7 @@ ged_loadframe(struct ged *gedp, FILE *fp)
     }
     return GED_ERROR; /* end of frames */
 }
+
 
 /**
  * Preview a new style RT animation script.
@@ -336,17 +338,16 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
 	    case 'v':
 		preview_mode = 3;	/* Like "ev" */
 		break;
-	    default:
-		{
-		    bu_vls_printf(&gedp->ged_result_str, "option '%c' unknown\n", c);
-		    bu_vls_printf(&gedp->ged_result_str, "        -d#     inter-frame delay\n");
-		    bu_vls_printf(&gedp->ged_result_str, "        -e      overlay plot of eye path\n");
-		    bu_vls_printf(&gedp->ged_result_str, "        -v      polygon rendering (visual)\n");
-		    bu_vls_printf(&gedp->ged_result_str, "        -D#     desired starting frame\n");
-		    bu_vls_printf(&gedp->ged_result_str, "        -K#     final frame\n");
-		    bu_vls_printf(&gedp->ged_result_str, "        -o image_name.ext     output frame to file typed by extension(defaults to PIX)\n");
-		    return GED_ERROR;
-		}
+	    default: {
+		bu_vls_printf(&gedp->ged_result_str, "option '%c' unknown\n", c);
+		bu_vls_printf(&gedp->ged_result_str, "        -d#     inter-frame delay\n");
+		bu_vls_printf(&gedp->ged_result_str, "        -e      overlay plot of eye path\n");
+		bu_vls_printf(&gedp->ged_result_str, "        -v      polygon rendering (visual)\n");
+		bu_vls_printf(&gedp->ged_result_str, "        -D#     desired starting frame\n");
+		bu_vls_printf(&gedp->ged_result_str, "        -K#     final frame\n");
+		bu_vls_printf(&gedp->ged_result_str, "        -o image_name.ext     output frame to file typed by extension(defaults to PIX)\n");
+		return GED_ERROR;
+	    }
 
 		break;
 	}
@@ -412,7 +413,7 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
 			   preview_currentframe, bu_vls_addr(&extension));
 	    screengrab_args[screengrab_argc++] = bu_vls_addr(&fullname);
 
-	    /* ged_png(gedp,screengrab_argc,screengrab_args); */
+	    /* ged_png(gedp, screengrab_argc, screengrab_args); */
 	    ged_screen_grab(gedp, screengrab_argc, screengrab_args);
 
 	    bu_vls_free(&fullname);

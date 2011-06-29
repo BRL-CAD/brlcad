@@ -970,53 +970,52 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
     /* get thicknesses and calculate parameters for newrec */
     switch (ip->idb_type) {
 
-	case ID_ARB8:
-	    {
-		char **prompt = p_arb6;
-		struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
+	case ID_ARB8: {
+	    char **prompt = p_arb6;
+	    struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
 
-		nface = 6;
+	    nface = 6;
 
-		switch (cgtype) {
-		    case 8:
-			prompt = p_arb8;
-			break;
+	    switch (cgtype) {
+		case 8:
+		    prompt = p_arb8;
+		    break;
 
-		    case 7:
-			prompt = p_arb7;
-			break;
+		case 7:
+		    prompt = p_arb7;
+		    break;
 
-		    case 6:
-			prompt = p_arb6;
-			nface = 5;
-			VMOVE(arb->pt[5], arb->pt[6]);
-			break;
+		case 6:
+		    prompt = p_arb6;
+		    nface = 5;
+		    VMOVE(arb->pt[5], arb->pt[6]);
+		    break;
 
-		    case 5:
-			prompt = p_arb5;
-			nface = 5;
-			break;
+		case 5:
+		    prompt = p_arb5;
+		    nface = 5;
+		    break;
 
-		    case 4:
-			prompt = p_arb4;
-			nface = 4;
-			VMOVE(arb->pt[3], arb->pt[4]);
-			break;
-		}
-
-		for (i=0; i<nface; i++) {
-		    if (argc < arg+1) {
-			bu_vls_printf(&gedp->ged_result_str, "%s", prompt[i]);
-			return GED_MORE;
-		    }
-		    thick[i] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
-		    ++arg;
-		}
-
-		if (arbin(gedp, ip, thick, nface, cgtype, planes))
-		    return GED_ERROR;
-		break;
+		case 4:
+		    prompt = p_arb4;
+		    nface = 4;
+		    VMOVE(arb->pt[3], arb->pt[4]);
+		    break;
 	    }
+
+	    for (i=0; i<nface; i++) {
+		if (argc < arg+1) {
+		    bu_vls_printf(&gedp->ged_result_str, "%s", prompt[i]);
+		    return GED_MORE;
+		}
+		thick[i] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
+		++arg;
+	    }
+
+	    if (arbin(gedp, ip, thick, nface, cgtype, planes))
+		return GED_ERROR;
+	    break;
+	}
 
 	case ID_TGC:
 	    for (i=0; i<3; i++) {

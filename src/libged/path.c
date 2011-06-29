@@ -33,6 +33,7 @@
 #include "raytrace.h"
 #include "ged.h"
 
+
 /*
  * A recursive function that is only called by _ged_path_validate
  */
@@ -71,6 +72,7 @@ _ged_path_validate_recurse(struct ged *gedp, struct db_full_path *path,
     return GED_OK; /* for compiler */
 }
 
+
 /**
  * _ G E D _ P A T H _ V A L I D A T E
  *
@@ -93,6 +95,7 @@ ged_path_validate(struct ged *gedp, struct db_full_path * const path)
 
     return _ged_path_validate_recurse(gedp, path, DB_FULL_PATH_GET(path, 1));
 }
+
 
 /*
  * Local Variables:

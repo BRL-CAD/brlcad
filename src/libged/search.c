@@ -57,6 +57,7 @@ int _path_scrub(struct bu_vls *path) {
     return islocal;
 }
 
+
 void _add_toplevel(struct db_full_path_list *path_list, int local) {
     struct db_full_path_list *new_entry;
     BU_GETSTRUCT(new_entry, db_full_path_list);
@@ -135,7 +136,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	    /* OK, no plan - will use default behavior */
 	    plan_found = 1;
 	} else {
-	    if (!((argv[plan_argv][0] == '-') || (argv[plan_argv][0] == '!')  || (argv[plan_argv][0] == '(')) ) {
+	    if (!((argv[plan_argv][0] == '-') || (argv[plan_argv][0] == '!')  || (argv[plan_argv][0] == '('))) {
 		/* We seem to have a path - make sure it's valid */
 		path_found = 1;
 		if (BU_STR_EQUAL(argv[plan_argv], "/")) {
@@ -205,7 +206,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	return GED_ERROR;
     } else {
 	islocal = 1;
-	for(BU_LIST_FOR_BACKWARDS(entry, db_full_path_list, &(path_list->l))) {
+	for (BU_LIST_FOR_BACKWARDS(entry, db_full_path_list, &(path_list->l))) {
 	    if (!entry->local) islocal = 0;
 	}
 	/* If all searches are local, use all supplied paths in the search to
@@ -213,7 +214,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	 * each path is treated as its own search */
 	if (islocal) {
 	    int search_all = 0;
-	    for(BU_LIST_FOR_BACKWARDS(entry, db_full_path_list, &(path_list->l))) {
+	    for (BU_LIST_FOR_BACKWARDS(entry, db_full_path_list, &(path_list->l))) {
 		if (entry->path->fp_maxlen == 0) {
 		    search_all = 1;
 		}
@@ -233,7 +234,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	    }
 	    bu_ptbl_free(uniq_db_objs);
 	} else {
-	    for(BU_LIST_FOR_BACKWARDS(entry, db_full_path_list, &(path_list->l))) {
+	    for (BU_LIST_FOR_BACKWARDS(entry, db_full_path_list, &(path_list->l))) {
 		if (entry->path->fp_maxlen == 0) {
 		    BU_GETSTRUCT(local_list, db_full_path_list);
 		    BU_LIST_INIT(&(local_list->l));
@@ -247,7 +248,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 			bu_ptbl_free(uniq_db_objs);
 		    } else {
 			search_results = db_search_full_paths(dbplan, local_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
-			for(BU_LIST_FOR_BACKWARDS(result, db_full_path_list, &(search_results->l))) {
+			for (BU_LIST_FOR_BACKWARDS(result, db_full_path_list, &(search_results->l))) {
 			    bu_vls_printf(&gedp->ged_result_str, "%s\n", db_path_to_string(result->path));
 			}
 			db_free_full_path_list(search_results);
@@ -268,7 +269,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 			bu_ptbl_free(uniq_db_objs);
 		    } else {
 			search_results = db_search_full_paths(dbplan, dispatch_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
-			for(BU_LIST_FOR_BACKWARDS(result, db_full_path_list, &(search_results->l))) {
+			for (BU_LIST_FOR_BACKWARDS(result, db_full_path_list, &(search_results->l))) {
 			    bu_vls_printf(&gedp->ged_result_str, "%s\n", db_path_to_string(result->path));
 			}
 			db_free_full_path_list(search_results);

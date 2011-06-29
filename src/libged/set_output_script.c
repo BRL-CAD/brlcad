@@ -30,7 +30,7 @@
  * Get/set the output handler script
  *
  * Usage:
- *        set_output_script [script]
+ * set_output_script [script]
  *
  */
 int

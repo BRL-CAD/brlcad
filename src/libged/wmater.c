@@ -33,8 +33,8 @@ ged_wmater(struct ged *gedp, int argc, const char *argv[])
     int status = GED_OK;
     FILE *fp;
     struct directory *dp;
-    struct rt_db_internal	intern;
-    struct rt_comb_internal	*comb;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
 
     static const char *usage = "filename comb1 [comb2 ...]";
 
@@ -62,17 +62,17 @@ ged_wmater(struct ged *gedp, int argc, const char *argv[])
     }
 
     for (i = 2; i < argc; ++i) {
-	if ( (dp = db_lookup( gedp->ged_wdbp->dbip,  argv[i], LOOKUP_NOISY )) == RT_DIR_NULL ) {
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: Failed to find %s", argv[0], argv[i]);
 	    status = GED_ERROR;
 	    continue;
 	}
-	if ( (dp->d_flags & RT_DIR_COMB) == 0 )  {
+	if ((dp->d_flags & RT_DIR_COMB) == 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a combination", argv[0], dp->d_namep);
 	    status = GED_ERROR;
 	    continue;
 	}
-	if ( rt_db_get_internal( &intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
+	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: Unable to read %s from database", argv[0], argv[i]);
 	    status = GED_ERROR;
 	    continue;

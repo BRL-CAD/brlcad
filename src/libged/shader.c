@@ -30,8 +30,8 @@ int
 ged_shader(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
-    struct rt_db_internal	intern;
-    struct rt_comb_internal	*comb;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
     static const char *usage = "combination shader_material [shader_argument(s)]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -55,11 +55,11 @@ ged_shader(struct ged *gedp, int argc, const char *argv[])
 
     if (argc == 2) {
 	/* Return the current shader string */
-	bu_vls_printf(&gedp->ged_result_str,"%s", bu_vls_addr(&comb->shader));
+	bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(&comb->shader));
 	rt_db_free_internal(&intern);
     } else {
 	if (gedp->ged_wdbp->dbip->dbi_read_only) {
-	    bu_vls_printf(&gedp->ged_result_str,"Sorry, this database is READ-ONLY");
+	    bu_vls_printf(&gedp->ged_result_str, "Sorry, this database is READ-ONLY");
 	    rt_db_free_internal(&intern);
 
 	    return GED_ERROR;

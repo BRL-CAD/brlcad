@@ -33,15 +33,34 @@
 #include "./ged_private.h"
 
 
-static void ged_usejoy(struct ged *gedp, double xangle, double yangle, double zangle);
+/*
+ * Apply the "joystick" delta rotation to the viewing direction,
+ * where the delta is specified in terms of the *viewing* axes.
+ * Rotation is performed about the view center, for now.
+ * Angles are in radians.
+ */
+static void
+ged_usejoy(struct ged *gedp, double xangle, double yangle, double zangle)
+{
+    mat_t newrot;		/* NEW rot matrix, from joystick */
+
+    /* NORMAL CASE.
+     * Apply delta viewing rotation for non-edited parts.
+     * The view rotates around the VIEW CENTER.
+     */
+    MAT_IDN(newrot);
+    bn_mat_angles_rad(newrot, xangle, yangle, zangle);
+    bn_mat_mul2(newrot, gedp->ged_gvp->gv_rotation);
+}
+
 
 int
 ged_qvrot(struct ged *gedp, int argc, const char *argv[])
 {
-    double	dx, dy, dz;
-    double	az;
-    double	el;
-    double	theta;
+    double dx, dy, dz;
+    double az;
+    double el;
+    double theta;
     static const char *usage = "x y z angle";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -98,26 +117,6 @@ ged_qvrot(struct ged *gedp, int argc, const char *argv[])
     ged_view_update(gedp->ged_gvp);
 
     return GED_OK;
-}
-
-/*
- *  Apply the "joystick" delta rotation to the viewing direction,
- *  where the delta is specified in terms of the *viewing* axes.
- *  Rotation is performed about the view center, for now.
- *  Angles are in radians.
- */
-static void
-ged_usejoy(struct ged *gedp, double xangle, double yangle, double zangle)
-{
-    mat_t	newrot;		/* NEW rot matrix, from joystick */
-
-    /* NORMAL CASE.
-     * Apply delta viewing rotation for non-edited parts.
-     * The view rotates around the VIEW CENTER.
-     */
-    MAT_IDN(newrot);
-    bn_mat_angles_rad(newrot, xangle, yangle, zangle);
-    bn_mat_mul2(newrot, gedp->ged_gvp->gv_rotation);
 }
 
 

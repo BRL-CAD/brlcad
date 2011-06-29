@@ -91,25 +91,26 @@ ged_draw_ps_header(FILE *fp, char *font, char *title, char *creator, int linewid
 	%f %f scale	%% 0-4096 to 324 units (4.5 inches)\n\
 } def\n\
 \n\
-FntH  setfont\n\
+FntH setfont\n\
 NEWPG\n\
 ",
 	    xoffset, yoffset, scale, scale);
 }
 
+
 static void
 ged_draw_ps_solid(struct ged *gedp, FILE *fp, struct solid *sp, matp_t psmat)
 {
-    static vect_t		last;
-    point_t			clipmin = {-1.0, -1.0, -MAX_FASTF};
-    point_t			clipmax = {1.0, 1.0, MAX_FASTF};
-    struct bn_vlist	*tvp;
-    point_t		*pt_prev=NULL;
-    fastf_t		dist_prev=1.0;
-    fastf_t		dist;
-    struct bn_vlist 	*vp = (struct bn_vlist *)&sp->s_vlist;
-    fastf_t			delta;
-    int 			useful = 0;
+    static vect_t last;
+    point_t clipmin = {-1.0, -1.0, -MAX_FASTF};
+    point_t clipmax = {1.0, 1.0, MAX_FASTF};
+    struct bn_vlist *tvp;
+    point_t *pt_prev=NULL;
+    fastf_t dist_prev=1.0;
+    fastf_t dist;
+    struct bn_vlist *vp = (struct bn_vlist *)&sp->s_vlist;
+    fastf_t delta;
+    int useful = 0;
 
     fprintf(fp, "%f %f %f setrgbcolor\n",
 	    GED_TO_PS_COLOR(sp->s_color[0]),
@@ -121,19 +122,19 @@ ged_draw_ps_solid(struct ged *gedp, FILE *fp, struct solid *sp, matp_t psmat)
      * This value is a SWAG that seems to work OK.
      */
     delta = psmat[15]*0.0001;
-    if ( delta < 0.0 )
+    if (delta < 0.0)
 	delta = -delta;
-    if ( delta < SQRT_SMALL_FASTF )
+    if (delta < SQRT_SMALL_FASTF)
 	delta = SQRT_SMALL_FASTF;
 
-    for ( BU_LIST_FOR( tvp, bn_vlist, &vp->l ) )  {
-	int	i;
-	int	nused = tvp->nused;
-	int	*cmd = tvp->cmd;
+    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
+	int i;
+	int nused = tvp->nused;
+	int *cmd = tvp->cmd;
 	point_t *pt = tvp->pt;
-	for ( i = 0; i < nused; i++, cmd++, pt++ )  {
-	    static vect_t	start, fin;
-	    switch ( *cmd )  {
+	for (i = 0; i < nused; i++, cmd++, pt++) {
+	    static vect_t start, fin;
+	    switch (*cmd) {
 		case BN_VLIST_POLY_START:
 		case BN_VLIST_POLY_VERTNORM:
 		    continue;
@@ -144,22 +145,18 @@ ged_draw_ps_solid(struct ged *gedp, FILE *fp, struct solid *sp, matp_t psmat)
 			/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
 			 */
-			dist = VDOT( *pt, &psmat[12] ) + psmat[15];
-			if ( dist <= 0.0 )
-			{
+			dist = VDOT(*pt, &psmat[12]) + psmat[15];
+			if (dist <= 0.0) {
 			    pt_prev = pt;
 			    dist_prev = dist;
 			    continue;
-			}
-			else
-			{
-			    MAT4X3PNT( last, psmat, *pt );
+			} else {
+			    MAT4X3PNT(last, psmat, *pt);
 			    dist_prev = dist;
 			    pt_prev = pt;
 			}
-		    }
-		    else
-			MAT4X3PNT( last, psmat, *pt );
+		    } else
+			MAT4X3PNT(last, psmat, *pt);
 		    continue;
 		case BN_VLIST_POLY_DRAW:
 		case BN_VLIST_POLY_END:
@@ -169,54 +166,44 @@ ged_draw_ps_solid(struct ged *gedp, FILE *fp, struct solid *sp, matp_t psmat)
 			/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
 			 */
-			dist = VDOT( *pt, &psmat[12] ) + psmat[15];
-			if ( dist <= 0.0 )
-			{
-			    if ( dist_prev <= 0.0 )
-			    {
+			dist = VDOT(*pt, &psmat[12]) + psmat[15];
+			if (dist <= 0.0) {
+			    if (dist_prev <= 0.0) {
 				/* nothing to plot */
 				dist_prev = dist;
 				pt_prev = pt;
 				continue;
-			    }
-			    else
-			    {
+			    } else {
 				fastf_t alpha;
 				vect_t diff;
 				point_t tmp_pt;
 
 				/* clip this end */
-				VSUB2( diff, *pt, *pt_prev );
-				alpha = (dist_prev - delta) / ( dist_prev - dist );
-				VJOIN1( tmp_pt, *pt_prev, alpha, diff );
-				MAT4X3PNT( fin, psmat, tmp_pt );
+				VSUB2(diff, *pt, *pt_prev);
+				alpha = (dist_prev - delta) / (dist_prev - dist);
+				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
+				MAT4X3PNT(fin, psmat, tmp_pt);
 			    }
-			}
-			else
-			{
-			    if ( dist_prev <= 0.0 )
-			    {
+			} else {
+			    if (dist_prev <= 0.0) {
 				fastf_t alpha;
 				vect_t diff;
 				point_t tmp_pt;
 
 				/* clip other end */
-				VSUB2( diff, *pt, *pt_prev );
-				alpha = (-dist_prev + delta) / ( dist - dist_prev );
-				VJOIN1( tmp_pt, *pt_prev, alpha, diff );
-				MAT4X3PNT( last, psmat, tmp_pt );
-				MAT4X3PNT( fin, psmat, *pt );
-			    }
-			    else
-			    {
-				MAT4X3PNT( fin, psmat, *pt );
+				VSUB2(diff, *pt, *pt_prev);
+				alpha = (-dist_prev + delta) / (dist - dist_prev);
+				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
+				MAT4X3PNT(last, psmat, tmp_pt);
+				MAT4X3PNT(fin, psmat, *pt);
+			    } else {
+				MAT4X3PNT(fin, psmat, *pt);
 			    }
 			}
-		    }
-		    else
-			MAT4X3PNT( fin, psmat, *pt );
-		    VMOVE( start, last );
-		    VMOVE( last, fin );
+		    } else
+			MAT4X3PNT(fin, psmat, *pt);
+		    VMOVE(start, last);
+		    VMOVE(last, fin);
 		    break;
 	    }
 
@@ -225,14 +212,15 @@ ged_draw_ps_solid(struct ged *gedp, FILE *fp, struct solid *sp, matp_t psmat)
 
 	    fprintf(fp,
 		    "newpath %d %d moveto %d %d lineto stroke\n",
-		    GED_TO_PS( start[0] * 2047 ),
-		    GED_TO_PS( start[1] * 2047 ),
-		    GED_TO_PS( fin[0] * 2047 ),
-		    GED_TO_PS( fin[1] * 2047 ) );
+		    GED_TO_PS(start[0] * 2047),
+		    GED_TO_PS(start[1] * 2047),
+		    GED_TO_PS(fin[0] * 2047),
+		    GED_TO_PS(fin[1] * 2047));
 	    useful = 1;
 	}
     }
 }
+
 
 static void
 ged_draw_ps_body(struct ged *gedp, FILE *fp)
@@ -279,6 +267,7 @@ ged_draw_ps_body(struct ged *gedp, FILE *fp)
     }
 }
 
+
 static void
 ged_draw_ps_border(FILE *fp)
 {
@@ -289,12 +278,14 @@ ged_draw_ps_border(FILE *fp)
     fprintf(fp, "newpath 0 4096 moveto 0 0 lineto stroke\n");
 }
 
+
 static void
 ged_draw_ps_footer(FILE *fp)
 {
     fputs("% showpage	% uncomment to use raw file\n", fp);
     fputs("%end(plot)\n", fp);
 }
+
 
 int
 ged_ps(struct ged *gedp, int argc, const char *argv[])
@@ -452,6 +443,7 @@ bad:
 
     return GED_ERROR;
 }
+
 
 /*
  * Local Variables:

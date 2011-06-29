@@ -172,14 +172,13 @@ _ged_scale_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *attrib
 		case 'v':
 		case 'V':
 		    switch (attribute[2]) {
-			case '\0':
-			    {
-				point_t old_top;
+			case '\0': {
+			    point_t old_top;
 
-				VADD2(old_top, tgc->v, tgc->h);
-				VSCALE(tgc->h, tgc->h, sf);
-				VSUB2(tgc->v, old_top, tgc->h);
-			    }
+			    VADD2(old_top, tgc->v, tgc->h);
+			    VSCALE(tgc->h, tgc->h, sf);
+			    VSUB2(tgc->v, old_top, tgc->h);
+			}
 
 			    break;
 			case 'a':

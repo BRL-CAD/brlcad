@@ -88,6 +88,7 @@ show_help(struct ged *gedp, const char *name)
     return;
 }
 
+
 /**
  * Return matrix needed to rotate an object around the y axis by theta
  * degrees
@@ -131,6 +132,7 @@ GetEllPartialAtPoint(fastf_t *inarray, fastf_t x, fastf_t y)
     partial = -(D + y * B + 2 * x * A) / (E + 2 * y * C + x * B);
     return partial;
 }
+
 
 /**
  * Evaluate z value of Ellipse Equation at a point
@@ -209,6 +211,7 @@ Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t d1, fastf
     mat[4][4] = z_5;
     mat[4][5] = -1;
 }
+
 
 /**
  * Create General Conic Matrix for Ellipse describing the top part of
@@ -290,6 +293,7 @@ Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred,
     mat[4][5] = 0;
 }
 
+
 /**
  * Create General Conic Matrix for Ellipse describing the bottom part
  * of the tire side.
@@ -338,6 +342,7 @@ Create_Ell3_Mat(fastf_t **mat, fastf_t UNUSED(dytred), fastf_t UNUSED(dztred),
     mat[4][5] = -1;
 }
 
+
 /**********************************************************************
  *                                                                    *
  *                 Matrix Routines for Solving General                *
@@ -369,6 +374,7 @@ SortRows(fastf_t **mat, int colnum)
     }
 }
 
+
 /**
  * Convert 5x6 matrix to Reduced Echelon Form
  */
@@ -391,6 +397,7 @@ Echelon(fastf_t **mat)
 	}
     }
 }
+
 
 /**
  * Take Reduced Echelon form of Matrix and solve for General Conic
@@ -534,7 +541,7 @@ MakeWheelCenter(struct rt_wdb (*file), char *suffix,
     VSET(height, 0, dyhub / 2, 0);
     bu_vls_sprintf(&str, "Hub-Hole%s.s", suffix);
     mk_rcc(file, bu_vls_addr(&str), vertex, height,
-	   (zhub - (bolt_circ_diam / 2 + bolt_diam / 2)) / 6.5 );
+	   (zhub - (bolt_circ_diam / 2 + bolt_diam / 2)) / 6.5);
 
 
     BU_LIST_INIT(&hubhole.l);
@@ -556,7 +563,7 @@ MakeWheelCenter(struct rt_wdb (*file), char *suffix,
     VSET(vertex, 0, 0, bolt_circ_diam / 2);
     VSET(height, 0, dyhub / 2, 0);
     bu_vls_sprintf(&str, "Bolt-Hole%s.s", suffix);
-    mk_rcc(file, bu_vls_addr(&str), vertex, height, bolt_diam / 2 );
+    mk_rcc(file, bu_vls_addr(&str), vertex, height, bolt_diam / 2);
 
 
     BU_LIST_INIT(&bolthole.l);
@@ -818,17 +825,17 @@ MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts,
     skt->magic = RT_SKETCH_INTERNAL_MAGIC;
 
     /* Set vertex and orientation vectors?? */
-    VSET( V, 0, -tirewidth/2, zbase-.1*zbase );
-    VSET( u_vec, 1, 0, 0 );
-    VSET( v_vec, 0, 1, 0 );
-    VMOVE( skt->V, V );
-    VMOVE( skt->u_vec, u_vec );
-    VMOVE( skt->v_vec, v_vec );
+    VSET(V, 0, -tirewidth/2, zbase-.1*zbase);
+    VSET(u_vec, 1, 0, 0);
+    VSET(v_vec, 0, 1, 0);
+    VMOVE(skt->V, V);
+    VMOVE(skt->u_vec, u_vec);
+    VMOVE(skt->v_vec, v_vec);
 
     /* Define links between/order of vertices */
     skt->vert_count = vertcount;
-    skt->verts = (point2d_t *)bu_calloc(skt->vert_count, sizeof( point2d_t ), "verts");
-    for (i = 0; i < skt->vert_count; i++ ) {
+    skt->verts = (point2d_t *)bu_calloc(skt->vert_count, sizeof(point2d_t), "verts");
+    for (i = 0; i < skt->vert_count; i++) {
 	V2SET(skt->verts[i],
 	      verts[i][0] * patternwidth2 - patternwidth2 / 2,
 	      verts[i][1] * tirewidth);
@@ -860,27 +867,28 @@ MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts,
 
     /* Make the sketch */
     bu_vls_sprintf(&str, "sketch%s", suffix);
-    mk_sketch(file, bu_vls_addr(&str), skt );
+    mk_sketch(file, bu_vls_addr(&str), skt);
 
 
     /* Make first slanted extrusion for depth vs. width of tread effect */
-    VSET( h, patternwidth1 / 2 - patternwidth2 / 2, 0, ztire - (zbase - .11 * zbase));
+    VSET(h, patternwidth1 / 2 - patternwidth2 / 2, 0, ztire - (zbase - .11 * zbase));
     bu_vls_sprintf(&str2, "extrude1%s", suffix);
     mk_extrusion(file, bu_vls_addr(&str2), bu_vls_addr(&str), V, h, u_vec, v_vec, 0);
 
     /* Make second slanted extrusion for depth vs. width effect */
-    VSET( h, -patternwidth1 / 2 + patternwidth2 / 2, 0, ztire - (zbase - .11 * zbase));
+    VSET(h, -patternwidth1 / 2 + patternwidth2 / 2, 0, ztire - (zbase - .11 * zbase));
     bu_vls_sprintf(&str2, "extrude2%s", suffix);
     mk_extrusion(file, bu_vls_addr(&str2), bu_vls_addr(&str), V, h, u_vec, v_vec, 0);
 
     /* Direct extrusion */
-    VSET( h, 0, 0, ztire - (zbase - .11 * zbase));
+    VSET(h, 0, 0, ztire - (zbase - .11 * zbase));
     bu_vls_sprintf(&str2, "extrude3%s", suffix);
     mk_extrusion(file, bu_vls_addr(&str2), bu_vls_addr(&str), V, h, u_vec, v_vec, 0);
 
     bu_vls_free(&str);
     bu_vls_free(&str2);
 }
+
 
 #define SKETCHNUM2 4
 static void
@@ -952,7 +960,7 @@ MakeTreadPattern2(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 
     BU_LIST_INIT(&treadpattern.l);
 
-    for ( i = 0; i < SKETCHNUM2; i++ ) {
+    for (i = 0; i < SKETCHNUM2; i++) {
 	bu_vls_sprintf(&str, "-%d%s", i + 1, suffix);
 	MakeExtrude(file, bu_vls_addr(&str), verts[i], vertcounts[i],
 		    2 * patternwidth1, 2 * patternwidth2, dwidth, z_base,
@@ -971,7 +979,7 @@ MakeTreadPattern2(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 
     bu_vls_sprintf(&str2, "tire-tread-shape%s.c", suffix);
     (void)mk_addmember(bu_vls_addr(&str2), &tread.l, NULL, WMOP_UNION);
-    for ( i = 1; i <= number_of_patterns; i++) {
+    for (i = 1; i <= number_of_patterns; i++) {
 	bu_vls_sprintf(&str, "tread_master%s.c", suffix);
 	getYRotMat(&y, i * 2 * M_PI / number_of_patterns);
 	(void)mk_addmember(bu_vls_addr(&str), &tread.l, y, WMOP_SUBTRACT);
@@ -1102,7 +1110,7 @@ MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 
     BU_LIST_INIT(&treadpattern.l);
 
-    for ( i = 0; i < SKETCHNUM1; i++ ) {
+    for (i = 0; i < SKETCHNUM1; i++) {
 	bu_vls_sprintf(&str, "-%d%s", i+1, suffix);
 	MakeExtrude(file, bu_vls_addr(&str), verts[i], vertcounts[i],
 		    2 * patternwidth1, 2 * patternwidth2, dwidth, z_base,
@@ -1241,15 +1249,15 @@ MakeTireSurface(struct rt_wdb (*file), char *suffix,
     BU_LIST_INIT(&innersolid.l);
     bu_vls_sprintf(&str, "InnerSolid%s.s", suffix);
     (void)mk_addmember(bu_vls_addr(&str), &innersolid.l, NULL, WMOP_UNION);
-    if ( (dytred / 2 - dyhub / 2) > 0 &&
-	 !ZERO(dytred / 2 - dyhub / 2) ) {
+    if ((dytred / 2 - dyhub / 2) > 0 &&
+	!ZERO(dytred / 2 - dyhub / 2)) {
 	bu_vls_sprintf(&str, "LeftCone%s.s", suffix);
 	(void)mk_addmember(bu_vls_addr(&str), &innersolid.l, NULL, WMOP_SUBTRACT);
 	bu_vls_sprintf(&str, "RightCone%s.s", suffix);
 	(void)mk_addmember(bu_vls_addr(&str), &innersolid.l, NULL, WMOP_SUBTRACT);
     }
-    if ( (dytred / 2 - dyhub / 2) < 0 &&
-	 !ZERO(dytred / 2 - dyhub / 2) ) {
+    if ((dytred / 2 - dyhub / 2) < 0 &&
+	!ZERO(dytred / 2 - dyhub / 2)) {
 	bu_vls_sprintf(&str, "LeftCone%s.s", suffix);
 	(void)mk_addmember(bu_vls_addr(&str), &innersolid.l, NULL, WMOP_UNION);
 	bu_vls_sprintf(&str, "RightCone%s.s", suffix);
@@ -1330,6 +1338,7 @@ MakeTireSurface(struct rt_wdb (*file), char *suffix,
 
     bu_vls_free(&str);
 }
+
 
 /**********************************************************************
  *                                                                    *
@@ -1583,6 +1592,7 @@ MakeTreadSolid1(struct rt_wdb (*file), char *suffix,
 
     bu_vls_free(&str);
 }
+
 
 typedef void (*MakeTreadProfile)
 (struct rt_wdb (*file),
@@ -1844,6 +1854,7 @@ MakeAirRegion(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t zhub, 
 
     bu_vls_free(&str);
 }
+
 
 /* Process command line arguments */
 static int
@@ -2121,7 +2132,7 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     bu_vls_sprintf(&str, "air%s.r", bu_vls_addr(&dimen));
     (void)mk_addmember(bu_vls_addr(&str), &wheel_and_tire.l, NULL, WMOP_UNION);
     if (usewheel != 0) {
-	bu_vls_sprintf(&str, "wheel%s.r",bu_vls_addr(&dimen));
+	bu_vls_sprintf(&str, "wheel%s.r", bu_vls_addr(&dimen));
 	(void)mk_addmember(bu_vls_addr(&str), &wheel_and_tire.l, NULL, WMOP_UNION);
     }
     mk_lcomb(gedp->ged_wdbp, bu_vls_addr(&name), &wheel_and_tire, 0,  NULL, NULL, NULL, 0);

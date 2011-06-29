@@ -93,6 +93,7 @@ ged_rot_args(struct ged *gedp, int argc, const char *argv[], char *coord, mat_t 
     return GED_OK;
 }
 
+
 int
 ged_rot(struct ged *gedp, int argc, const char *argv[])
 {
@@ -105,6 +106,7 @@ ged_rot(struct ged *gedp, int argc, const char *argv[])
 
     return _ged_do_rot(gedp, coord, rmat, (int (*)())0);
 }
+
 
 /*
  * Local Variables:

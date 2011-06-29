@@ -29,12 +29,9 @@
 int
 ged_mirror(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char *usage = "[-h] [-p \"point\"] [-d \"dir\"] [-x|-y|-z] [-o offset] old new"; /* trailing
-												   * x|y|z
-												   * intentionally
-												   * not
-												   * documented
-												   */
+    /* trailing x|y|z intentionally not documented */
+    static const char *usage = "[-h] [-p \"point\"] [-d \"dir\"] [-x|-y|-z] [-o offset] old new";
+
     int k;
     point_t mirror_pt = {0.0, 0.0, 0.0};
     vect_t mirror_dir = {1.0, 0.0, 0.0};
@@ -186,8 +183,8 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    /* draw the new object */
     {
+	/* draw the new object */
 	const char *object = (const char *)argv[bu_optind+1];
 	const char *e_argv[3] = {0, 0, 0};
 

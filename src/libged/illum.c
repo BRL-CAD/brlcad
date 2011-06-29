@@ -33,7 +33,7 @@
  * Illuminate/highlight database object
  *
  * Usage:
- *        illum [-n] obj
+ * illum [-n] obj
  *
  */
 int

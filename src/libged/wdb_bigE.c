@@ -94,16 +94,16 @@ union E_tree
 {
     long magic;
 
-    struct E_node	/* the operator nodes */
-    {
+    struct E_node {
+	/* the operator nodes */
 	long magic;
 	int op;
 	union E_tree *left;
 	union E_tree *right;
     } n;
 
-    struct E_leaf	/* the leaf nodes */
-    {
+    struct E_leaf {
+	/* the leaf nodes */
 	long magic;
 	int op;
 	struct model *m;		/* NMG version of this leaf solid */
@@ -442,6 +442,7 @@ wdb_do_subtract(struct seg *A,
 	}
     }
 }
+
 
 HIDDEN void
 wdb_promote_ints(struct bu_list *head,
@@ -2055,43 +2056,41 @@ dgo_E_cmd(struct dg_obj *dgop,
     bu_optind = 1;          /* re-init bu_getopt() */
     while ((c=bu_getopt(argc, argv, "sC:")) != -1) {
 	switch (c) {
-	    case 'C':
-		{
-		    int r, g, b;
-		    char *cp = bu_optarg;
+	    case 'C': {
+		int r, g, b;
+		char *cp = bu_optarg;
 
-		    r = atoi(cp);
-		    while ((*cp >= '0' && *cp <= '9')) cp++;
-		    while (*cp && (*cp < '0' || *cp > '9')) cp++;
-		    g = atoi(cp);
-		    while ((*cp >= '0' && *cp <= '9')) cp++;
-		    while (*cp && (*cp < '0' || *cp > '9')) cp++;
-		    b = atoi(cp);
+		r = atoi(cp);
+		while ((*cp >= '0' && *cp <= '9')) cp++;
+		while (*cp && (*cp < '0' || *cp > '9')) cp++;
+		g = atoi(cp);
+		while ((*cp >= '0' && *cp <= '9')) cp++;
+		while (*cp && (*cp < '0' || *cp > '9')) cp++;
+		b = atoi(cp);
 
-		    if (r < 0 || r > 255) r = 255;
-		    if (g < 0 || g > 255) g = 255;
-		    if (b < 0 || b > 255) b = 255;
+		if (r < 0 || r > 255) r = 255;
+		if (g < 0 || g > 255) g = 255;
+		if (b < 0 || b > 255) b = 255;
 
-		    dgcdp->wireframe_color_override = 1;
-		    dgcdp->wireframe_color[0] = r;
-		    dgcdp->wireframe_color[1] = g;
-		    dgcdp->wireframe_color[2] = b;
-		}
+		dgcdp->wireframe_color_override = 1;
+		dgcdp->wireframe_color[0] = r;
+		dgcdp->wireframe_color[1] = g;
+		dgcdp->wireframe_color[2] = b;
+	    }
 		break;
 	    case 's':
 		dgcdp->do_polysolids = 1;
 		break;
-	    default:
-		{
-		    struct bu_vls vls;
+	    default: {
+		struct bu_vls vls;
 
-		    bu_vls_init(&vls);
-		    bu_vls_printf(&vls, "help %s", argv[0]);
-		    Tcl_Eval(interp, bu_vls_addr(&vls));
-		    bu_vls_free(&vls);
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "help %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
 
-		    return TCL_ERROR;
-		}
+		return TCL_ERROR;
+	    }
 	}
     }
     argc -= bu_optind;

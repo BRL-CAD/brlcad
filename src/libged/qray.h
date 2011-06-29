@@ -49,6 +49,7 @@ struct qray_fmt_data {
     char *fmt;
 };
 
+
 struct qray_dataList {
     struct bu_list l;
     fastf_t x_in;
@@ -56,6 +57,7 @@ struct qray_dataList {
     fastf_t z_in;
     fastf_t los;
 };
+
 
 /* defined in qray.c */
 extern void qray_init(struct ged_drawable *gdp);

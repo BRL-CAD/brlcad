@@ -34,11 +34,12 @@
 
 
 struct showmats_data {
-    struct ged	*smd_gedp;
-    int		smd_count;
-    char	*smd_child;
-    mat_t	smd_mat;
+    struct ged *smd_gedp;
+    int smd_count;
+    char *smd_child;
+    mat_t smd_mat;
 };
+
 
 static void
 Do_showmats(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t UNUSED(user_ptr3))
@@ -75,6 +76,7 @@ Do_showmats(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree
     }
 }
 
+
 static int
 Run_showmats(struct ged *gedp, const char *path, int aflag)
 {
@@ -88,7 +90,7 @@ Run_showmats(struct ged *gedp, const char *path, int aflag)
 
     parent = strtok((char *)path, "/");
     while ((sm_data.smd_child = strtok((char *)NULL, "/")) != NULL) {
-	struct rt_db_internal	intern;
+	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
 
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, parent, LOOKUP_NOISY)) == RT_DIR_NULL)
@@ -147,6 +149,7 @@ Run_showmats(struct ged *gedp, const char *path, int aflag)
 
     return GED_OK;
 }
+
 
 int
 ged_showmats(struct ged *gedp, int argc, const char *argv[])

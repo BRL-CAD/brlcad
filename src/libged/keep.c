@@ -39,6 +39,7 @@ struct keep_node_data {
     struct ged *gedp;
 };
 
+
 /*
  * Supports for the 'keep' method.
  * Write each node encountered exactly once.
@@ -214,6 +215,7 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
     wdb_close(keepfp);
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

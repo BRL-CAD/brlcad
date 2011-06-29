@@ -32,7 +32,7 @@ ged_make_name(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls obj_name;
     char *cp, *tp;
     static int i = 0;
-    int	len;
+    int len;
     static const char *usage = "template | -s [num]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -58,7 +58,7 @@ ged_make_name(struct ged *gedp, int argc, const char *argv[])
 	    }
 	case 3:
 	    {
-		int	new_i;
+		int new_i;
 
 		if ((BU_STR_EQUAL(argv[1], "-s"))
 		    && (sscanf(argv[2], "%d", &new_i) == 1)) {

@@ -89,6 +89,7 @@ struct command_tab ged_loadview_cmdtab[] = {
      0,		0, 0	/* END */}
 };
 
+
 int
 ged_loadview(struct ged *gedp, int argc, const char *argv[])
 {
@@ -98,7 +99,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 
     /* data pulled from script file */
     int perspective=-1;
-#define MAX_DBNAME	2048
+#define MAX_DBNAME 2048
     char dbName[MAX_DBNAME] = {0};
     char objects[10000] = {0};
     char *editArgv[3];
@@ -125,7 +126,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* open the file for reading */
-    if ((fp = fopen( argv[1], "r")) == NULL) {
+    if ((fp = fopen(argv[1], "r")) == NULL) {
 	perror(argv[1]);
 	return GED_ERROR;
     }
@@ -152,7 +153,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 	    buffer[0]=' ';
 	    buffer[1]=' ';
 	    sscanf(buffer, "%d", &perspective);
-	    /*      bu_log("perspective=%d\n", perspective);*/
+	    /* bu_log("perspective=%d\n", perspective);*/
 	    gedp->ged_gvp->gv_perspective = perspective;
 
 	} else if (strncmp(buffer, "$*", 2)==0) {
@@ -169,10 +170,10 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 	     * remove it (it should always be unless the user
 	     * modifies the file)
 	     */
-	    if ( *(dbName + strlen(dbName) - 1)=='\\' ) {
+	    if (*(dbName + strlen(dbName) - 1)=='\\') {
 		memset(dbName+strlen(dbName)-1, 0, 1);
 	    }
-	    /*      bu_log("dbName=%s\n", dbName); */
+	    /* bu_log("dbName=%s\n", dbName); */
 
 	    if (!bu_same_file(gedp->ged_wdbp->dbip->dbi_filename, dbName)) {
 		/* stop here if they are not the same file,
@@ -197,7 +198,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 	    if (ret != 1)
 		bu_log("Failed to read object names\n");
 
-	    /*		  bu_log("OBJECTS=%s\n", objects);*/
+	    /* bu_log("OBJECTS=%s\n", objects);*/
 	    while ((!feof(fp)) && (strncmp(objects, "\\", 1)!=0)) {
 
 		/* clean off the single quotes... */
@@ -225,14 +226,14 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 	    char *cmdBuffer = NULL;
 	    /* we are almost done .. read in the view commands */
 
-	    while ( (cmdBuffer = rt_read_cmd( fp )) != NULL ) {
+	    while ((cmdBuffer = rt_read_cmd(fp)) != NULL) {
 		/* even unsupported commands should return successfully as
 		 * they should be calling ged_cm_null()
 		 */
-		if ( rt_do_cmd( (struct rt_i *)0, cmdBuffer, ged_loadview_cmdtab ) < 0 ) {
+		if (rt_do_cmd((struct rt_i *)0, cmdBuffer, ged_loadview_cmdtab) < 0) {
 		    bu_vls_printf(&gedp->ged_result_str, "command failed: %s\n", cmdBuffer);
 		}
-		bu_free( (genptr_t)cmdBuffer, "loadview cmdBuffer" );
+		bu_free((genptr_t)cmdBuffer, "loadview cmdBuffer");
 	    }
 	    /* end iteration over rt commands */
 
@@ -259,7 +260,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 int
 _ged_cm_vsize(int argc, char **argv)
 {
-    if ( argc < 2 )
+    if (argc < 2)
 	return -1;
     /* for some reason, scale is supposed to be half of size... */
     _ged_current_gedp->ged_gvp->gv_size = atof(argv[1]);
@@ -272,7 +273,7 @@ _ged_cm_vsize(int argc, char **argv)
 int
 _ged_cm_eyept(int argc, char **argv)
 {
-    if ( argc < 4 )
+    if (argc < 4)
 	return -1;
     _ged_eye_model[X] = atof(argv[1]);
     _ged_eye_model[Y] = atof(argv[2]);
@@ -285,17 +286,17 @@ _ged_cm_eyept(int argc, char **argv)
 int
 _ged_cm_lookat_pt(int argc, char **argv)
 {
-    point_t	pt;
-    vect_t	dir;
+    point_t pt;
+    vect_t dir;
 
-    if ( argc < 4 )
+    if (argc < 4)
 	return -1;
     pt[X] = atof(argv[1]);
     pt[Y] = atof(argv[2]);
     pt[Z] = atof(argv[3]);
 
-    VSUB2( dir, pt, _ged_eye_model );
-    VUNITIZE( dir );
+    VSUB2(dir, pt, _ged_eye_model);
+    VUNITIZE(dir);
 
 #if 1
     /*
@@ -306,14 +307,14 @@ _ged_cm_lookat_pt(int argc, char **argv)
 	vect_t neg_Z_axis;
 
 	VSET(neg_Z_axis, 0.0, 0.0, -1.0);
-	bn_mat_fromto( _ged_viewrot, dir, neg_Z_axis);
+	bn_mat_fromto(_ged_viewrot, dir, neg_Z_axis);
     }
 #else
-    bn_mat_lookat( _ged_viewrot, dir, yflip );
+    bn_mat_lookat(_ged_viewrot, dir, yflip);
 #endif
 
-    /*  Final processing is deferred until ged_cm_end(), but eye_pt
-     *  must have been specified before here (for now)
+    /* Final processing is deferred until ged_cm_end(), but eye_pt
+     * must have been specified before here (for now)
      */
     return 0;
 }
@@ -322,37 +323,40 @@ _ged_cm_lookat_pt(int argc, char **argv)
 int
 _ged_cm_vrot(int argc, char **argv)
 {
-    int	i;
+    int i;
 
-    if ( argc < 17 )
+    if (argc < 17)
 	return -1;
-    for ( i=0; i<16; i++ )
+    for (i=0; i<16; i++)
 	_ged_viewrot[i] = atof(argv[i+1]);
     /* Processing is deferred until ged_cm_end() */
     return 0;
 }
 
+
 int
 _ged_cm_orientation(int argc, char **argv)
 {
-    int	i;
+    int i;
     quat_t quat;
 
     if (argc < 4)
 	return -1;
 
-    for ( i=0; i<4; i++ )
-	quat[i] = atof( argv[i+1] );
-    quat_quat2mat( _ged_viewrot, quat );
+    for (i=0; i<4; i++)
+	quat[i] = atof(argv[i+1]);
+    quat_quat2mat(_ged_viewrot, quat);
 
     return 0;
 }
+
 
 int
 _ged_cm_set(int UNUSED(argc), char **UNUSED(argv))
 {
     return -1;
 }
+
 
 /**
  * any commands that are not supported or implemented may call this null

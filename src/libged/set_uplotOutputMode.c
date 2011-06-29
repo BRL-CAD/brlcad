@@ -31,7 +31,7 @@
  * Set/get the unix plot output mode
  *
  * Usage:
- *        set_uplotOutputMode [binary|text]
+ * set_uplotOutputMode [binary|text]
  *
  */
 int

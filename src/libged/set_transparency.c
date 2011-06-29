@@ -36,7 +36,7 @@
  * Set the transparency of the specified object
  *
  * Usage:
- *        set_transparency obj tr
+ * set_transparency obj tr
  *
  */
 int

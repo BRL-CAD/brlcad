@@ -106,7 +106,7 @@ ged_tops(struct ged *gedp, int argc, const char *argv[])
 	for (i = 0; i < RT_DBNHASH; i++)
 	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i];
 		 dp != RT_DIR_NULL;
-		 dp = dp->d_forw)  {
+		 dp = dp->d_forw) {
 		if (dp->d_nref == 0)
 		    *dirp++ = dp;
 	    }
@@ -118,18 +118,18 @@ ged_tops(struct ged *gedp, int argc, const char *argv[])
 		    continue;
 		}
 
-		if ( (aflag) ||
-		     (hflag && (dp->d_flags & RT_DIR_HIDDEN)) ||
-		     (pflag && dp->d_addr == RT_DIR_PHONY_ADDR) ||
-		     (gflag && dp->d_major_type == DB5_MAJORTYPE_BRLCAD) ||
-		     (uflag && !(dp->d_flags & RT_DIR_HIDDEN)) ) {
+		if ((aflag) ||
+		    (hflag && (dp->d_flags & RT_DIR_HIDDEN)) ||
+		    (pflag && dp->d_addr == RT_DIR_PHONY_ADDR) ||
+		    (gflag && dp->d_major_type == DB5_MAJORTYPE_BRLCAD) ||
+		    (uflag && !(dp->d_flags & RT_DIR_HIDDEN))) {
 
 		    /* add object because it matches an option */
 		    *dirp++ = dp;
 
-		} else if ( !aflag && !hflag && !pflag && !gflag && !uflag &&
-			    !(dp->d_flags & RT_DIR_HIDDEN) &&
-			    (dp->d_addr != RT_DIR_PHONY_ADDR) ) {
+		} else if (!aflag && !hflag && !pflag && !gflag && !uflag &&
+			   !(dp->d_flags & RT_DIR_HIDDEN) &&
+			   (dp->d_addr != RT_DIR_PHONY_ADDR)) {
 
 		    /* add non-hidden real object */
 		    *dirp++ = dp;
@@ -144,25 +144,26 @@ ged_tops(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
+
 /*
- *			G E D _ D I R _ G E T S P A C E
+ * G E D _ D I R _ G E T S P A C E
  *
  * This routine walks through the directory entry list and mallocs enough
  * space for pointers to hold:
- *  a) all of the entries if called with an argument of 0, or
- *  b) the number of entries specified by the argument if > 0.
+ * a) all of the entries if called with an argument of 0, or
+ * b) the number of entries specified by the argument if > 0.
  */
 struct directory **
-_ged_dir_getspace(struct db_i	*dbip,
-		  int	num_entries)
+_ged_dir_getspace(struct db_i *dbip,
+		  int num_entries)
 {
     struct directory *dp;
     int i;
     struct directory **dir_basep;
 
     if (num_entries < 0) {
-	bu_log( "dir_getspace: was passed %d, used 0\n",
-		num_entries);
+	bu_log("dir_getspace: was passed %d, used 0\n",
+	       num_entries);
 	num_entries = 0;
     }
     if (num_entries == 0) {

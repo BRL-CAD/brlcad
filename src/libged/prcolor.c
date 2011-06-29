@@ -37,19 +37,60 @@
 
 
 static void
-ged_pr_mater(struct ged				*gedp,
-	     const struct mater	*mp,
-	     int				*ccp,
-	     int				*clp);
+ged_vls_col_item(struct bu_vls *str,
+		 char *cp,
+		 int *ccp,		/* column count pointer */
+		 int *clp)		/* column length pointer */
+{
+    /* Output newline if last column printed. */
+    if (*ccp >= _GED_COLUMNS || (*clp+_GED_V4_MAXNAME-1) >= _GED_TERMINAL_WIDTH) {
+	/* line now full */
+	bu_vls_putc(str, '\n');
+	*ccp = 0;
+    } else if (*ccp != 0) {
+	/* Space over before starting new column */
+	do {
+	    bu_vls_putc(str, ' ');
+	    ++*clp;
+	}  while ((*clp % _GED_V4_MAXNAME) != 0);
+    }
+    /* Output string and save length for next tab. */
+    *clp = 0;
+    while (*cp != '\0') {
+	bu_vls_putc(str, *cp);
+	++cp;
+	++*clp;
+    }
+    ++*ccp;
+}
+
+
 static void
-ged_vls_col_item(struct bu_vls	*str,
-		 char	*cp,
-		 int		*ccp,
-		 int		*clp);
+ged_vls_col_eol(struct bu_vls *str,
+		int *ccp,
+		int *clp)
+{
+    if (*ccp != 0)		/* partial line */
+	bu_vls_putc(str, '\n');
+    *ccp = 0;
+    *clp = 0;
+}
+
+
 static void
-ged_vls_col_eol(struct bu_vls	*str,
-		int		*ccp,
-		int		*clp);
+ged_pr_mater(struct ged *gedp,
+	     const struct mater *mp,
+	     int *ccp,
+	     int *clp)
+{
+    char buf[128];
+
+    (void)sprintf(buf, "%5d..%d", mp->mt_low, mp->mt_high);
+    ged_vls_col_item(&gedp->ged_result_str, buf, ccp, clp);
+    (void)sprintf(buf, "%3d, %3d, %3d", mp->mt_r, mp->mt_g, mp->mt_b);
+    ged_vls_col_item(&gedp->ged_result_str, buf, ccp, clp);
+    ged_vls_col_eol(&gedp->ged_result_str, ccp, clp);
+}
 
 
 int
@@ -82,65 +123,6 @@ ged_prcolor(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
-static void
-ged_pr_mater(struct ged				*gedp,
-	     const struct mater	*mp,
-	     int				*ccp,
-	     int				*clp)
-{
-    char buf[128];
-
-    (void)sprintf(buf, "%5d..%d", mp->mt_low, mp->mt_high );
-    ged_vls_col_item(&gedp->ged_result_str, buf, ccp, clp);
-    (void)sprintf( buf, "%3d,%3d,%3d", mp->mt_r, mp->mt_g, mp->mt_b);
-    ged_vls_col_item(&gedp->ged_result_str, buf, ccp, clp);
-    ged_vls_col_eol(&gedp->ged_result_str, ccp, clp);
-}
-
-/**
- *			V L S _ C O L _ I T E M
- */
-static void
-ged_vls_col_item(struct bu_vls	*str,
-		 char	*cp,
-		 int		*ccp,		/* column count pointer */
-		 int		*clp)		/* column length pointer */
-{
-    /* Output newline if last column printed. */
-    if (*ccp >= _GED_COLUMNS || (*clp+_GED_V4_MAXNAME-1) >= _GED_TERMINAL_WIDTH) {
-	/* line now full */
-	bu_vls_putc(str, '\n');
-	*ccp = 0;
-    } else if (*ccp != 0) {
-	/* Space over before starting new column */
-	do {
-	    bu_vls_putc(str, ' ');
-	    ++*clp;
-	}  while ((*clp % _GED_V4_MAXNAME) != 0);
-    }
-    /* Output string and save length for next tab. */
-    *clp = 0;
-    while (*cp != '\0') {
-	bu_vls_putc(str, *cp);
-	++cp;
-	++*clp;
-    }
-    ++*ccp;
-}
-
-/**
- *
- */
-static void
-ged_vls_col_eol(struct bu_vls	*str,
-		int		*ccp,
-		int		*clp)
-{
-    if (*ccp != 0)		/* partial line */
-	bu_vls_putc(str, '\n');
-    *ccp = 0;
-    *clp = 0;
-}
 
 /*
  * Local Variables:

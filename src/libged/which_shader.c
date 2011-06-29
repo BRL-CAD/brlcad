@@ -71,23 +71,23 @@ ged_which_shader(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    for ( j=1; j<myArgc; j++) {
+    for (j=1; j<myArgc; j++) {
 
 	if (!sflag)
 	    bu_vls_printf(&gedp->ged_result_str, "Combination[s] with shader %s:\n", myArgv[j]);
 
 	/* Examine all COMB nodes */
 	FOR_ALL_DIRECTORY_START(dp, gedp->ged_wdbp->dbip) {
-	    if ( !(dp->d_flags & RT_DIR_COMB) )
+	    if (!(dp->d_flags & RT_DIR_COMB))
 		continue;
 
-	    if ( rt_db_get_internal( &intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
+	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 		bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting.\n");
 		return GED_ERROR;
 	    }
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 
-	    if ( !strstr( bu_vls_addr( &comb->shader ), myArgv[j] ) )
+	    if (!strstr(bu_vls_addr(&comb->shader), myArgv[j]))
 		continue;
 
 	    if (sflag)

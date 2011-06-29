@@ -40,22 +40,22 @@
  * Return the object hierarchy for all object(s) specified or for all currently displayed
  *
  * Usage:
- *        tree [-a] [-c] [-o outfile] [-i indentSize] [-d displayDepth] [object(s)]
+ * tree [-a] [-c] [-o outfile] [-i indentSize] [-d displayDepth] [object(s)]
  *
  */
 int
 ged_tree(struct ged *gedp, int argc, const char *argv[])
 {
-    struct directory	*dp;
-    int		j;
-    unsigned                    flags = 0;
-    int				indentSize = -1;
-    int                         displayDepth = INT_MAX;
-    int				c;
-    FILE			*fdout = NULL;
-    char			*buffer = NULL;
+    struct directory *dp;
+    int j;
+    unsigned flags = 0;
+    int indentSize = -1;
+    int displayDepth = INT_MAX;
+    int c;
+    FILE *fdout = NULL;
+    char *buffer = NULL;
 #define WHOARGVMAX 256
-    char				*whoargv[WHOARGVMAX+1] = {0};
+    char *whoargv[WHOARGVMAX+1] = {0};
     static const char *usage = "[-a] [-c] [-o outfile] [-i indentSize] [-d displayDepth] [object(s)]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

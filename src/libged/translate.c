@@ -23,8 +23,8 @@
  *
  */
 
-/*  TODO:
- *    -reject paths with fp_len > 1; it's meaningless and misleading
+/* TODO:
+ *  -reject paths with fp_len > 1; it's meaningless and misleading
  */
 
 #include "common.h"
@@ -158,6 +158,7 @@ translate(struct ged *gedp, point_t * const keypoint,
     db_free_full_path(&full_obj_path);
     return GED_OK;
 }
+
 
 int
 ged_translate(struct ged *gedp, int argc, const char *argv[])
@@ -338,6 +339,7 @@ disabled:
     bu_vls_printf(&gedp->ged_result_str, "function not yet implemented");
     return GED_ERROR;
 }
+
 
 /*
  * Local Variables:

@@ -33,9 +33,63 @@
 #include "./ged_private.h"
 
 
+/*
+ * G E D _ D I R _ S U M M A R Y
+ *
+ * Summarize the contents of the directory by categories
+ * (solid, comb, region).  If flag is != 0, it is interpreted
+ * as a request to print all the names in that category (eg, RT_DIR_SOLID).
+ */
 static void
-ged_dir_summary(struct ged	*gedp,
-		int		flag);
+ged_dir_summary(struct ged *gedp,
+		int flag)
+{
+    struct directory *dp;
+    int i;
+    static int sol, comb, reg;
+    struct directory **dirp;
+    struct directory **dirp0 = (struct directory **)NULL;
+
+    sol = comb = reg = 0;
+    for (i = 0; i < RT_DBNHASH; i++) {
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (dp->d_flags & RT_DIR_SOLID)
+		sol++;
+	    if (dp->d_flags & RT_DIR_COMB) {
+		if (dp->d_flags & RT_DIR_REGION)
+		    reg++;
+		else
+		    comb++;
+	    }
+	}
+    }
+
+    bu_vls_printf(&gedp->ged_result_str, "Summary:\n");
+    bu_vls_printf(&gedp->ged_result_str, "  %5d primitives\n", sol);
+    bu_vls_printf(&gedp->ged_result_str, "  %5d region; %d non-region combinations\n", reg, comb);
+    bu_vls_printf(&gedp->ged_result_str, "  %5d total objects\n\n", sol+reg+comb);
+
+    if (flag == 0)
+	return;
+
+    /* Print all names matching the flags parameter */
+    /* THIS MIGHT WANT TO BE SEPARATED OUT BY CATEGORY */
+
+    dirp = _ged_dir_getspace(gedp->ged_wdbp->dbip, 0);
+    dirp0 = dirp;
+    /*
+     * Walk the directory list adding pointers (to the directory entries
+     * of interest) to the array
+     */
+    for (i = 0; i < RT_DBNHASH; i++)
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw)
+	    if (dp->d_flags & flag)
+		*dirp++ = dp;
+
+    _ged_vls_col_pr4v(&gedp->ged_result_str, dirp0, (int)(dirp - dirp0), 0);
+    bu_free((genptr_t)dirp0, "dir_getspace");
+}
+
 
 int
 ged_summary(struct ged *gedp, int argc, const char *argv[])
@@ -80,64 +134,6 @@ ged_summary(struct ged *gedp, int argc, const char *argv[])
 
     ged_dir_summary(gedp, flags);
     return GED_OK;
-}
-
-
-/*
- *  			G E D _ D I R _ S U M M A R Y
- *
- * Summarize the contents of the directory by categories
- * (solid, comb, region).  If flag is != 0, it is interpreted
- * as a request to print all the names in that category (eg, RT_DIR_SOLID).
- */
-static void
-ged_dir_summary(struct ged	*gedp,
-		int		flag)
-{
-    struct directory *dp;
-    int i;
-    static int sol, comb, reg;
-    struct directory **dirp;
-    struct directory **dirp0 = (struct directory **)NULL;
-
-    sol = comb = reg = 0;
-    for (i = 0; i < RT_DBNHASH; i++)  {
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (dp->d_flags & RT_DIR_SOLID)
-		sol++;
-	    if (dp->d_flags & RT_DIR_COMB) {
-		if (dp->d_flags & RT_DIR_REGION)
-		    reg++;
-		else
-		    comb++;
-	    }
-	}
-    }
-
-    bu_vls_printf(&gedp->ged_result_str, "Summary:\n");
-    bu_vls_printf(&gedp->ged_result_str, "  %5d primitives\n", sol);
-    bu_vls_printf(&gedp->ged_result_str, "  %5d region; %d non-region combinations\n", reg, comb);
-    bu_vls_printf(&gedp->ged_result_str, "  %5d total objects\n\n", sol+reg+comb );
-
-    if (flag == 0)
-	return;
-
-    /* Print all names matching the flags parameter */
-    /* THIS MIGHT WANT TO BE SEPARATED OUT BY CATEGORY */
-
-    dirp = _ged_dir_getspace(gedp->ged_wdbp->dbip, 0);
-    dirp0 = dirp;
-    /*
-     * Walk the directory list adding pointers (to the directory entries
-     * of interest) to the array
-     */
-    for (i = 0; i < RT_DBNHASH; i++)
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw)
-	    if (dp->d_flags & flag)
-		*dirp++ = dp;
-
-    _ged_vls_col_pr4v(&gedp->ged_result_str, dirp0, (int)(dirp - dirp0), 0);
-    bu_free((genptr_t)dirp0, "dir_getspace");
 }
 
 

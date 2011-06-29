@@ -25,7 +25,7 @@
 
 #include "common.h"
 
-#include  <stdlib.h>
+#include <stdlib.h>
 
 #include "bio.h"
 
@@ -38,7 +38,7 @@
  * Erase all currently displayed geometry
  *
  * Usage:
- *        zap
+ * zap
  *
  */
 int

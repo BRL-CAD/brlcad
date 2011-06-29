@@ -31,10 +31,10 @@ ged_item(struct ged *gedp, int argc, const char *argv[])
 {
     int status = GED_OK;
     struct directory *dp;
-    int			ident, air, GIFTmater=0, los=0;
-    int			GIFTmater_set, los_set;
-    struct rt_db_internal	intern;
-    struct rt_comb_internal	*comb;
+    int ident, air, GIFTmater=0, los=0;
+    int GIFTmater_set, los_set;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
     static const char *usage = "region ident [air [material [los]]]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -68,16 +68,16 @@ ged_item(struct ged *gedp, int argc, const char *argv[])
      * If, on the other hand, either of <GIFTmater> and <los>
      * is not included, it is left unchanged.
      */
-    if (argc > 3)  {
+    if (argc > 3) {
 	air = atoi(argv[3]);
     }
 
-    if (argc > 4)  {
+    if (argc > 4) {
 	GIFTmater = atoi(argv[4]);
 	GIFTmater_set = 1;
     }
 
-    if (argc > 5)  {
+    if (argc > 5) {
 	los = atoi(argv[5]);
 	los_set = 1;
     }

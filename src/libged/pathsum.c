@@ -53,8 +53,8 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
     }
 
     /*
-     *	paths are matched up to last input member
-     *      ANY path the same up to this point is considered as matching
+     * paths are matched up to last input member
+     * ANY path the same up to this point is considered as matching
      */
 
     /* initialize gtd */

@@ -35,7 +35,36 @@
 #include "./ged_private.h"
 
 
-static char *ged_basename_without_suffix(const char *p1, const char *suff);
+/**
+ * Return basename of path, removing leading slashes and trailing suffix.
+ */
+static char *
+ged_basename_without_suffix(const char *p1, const char *suff)
+{
+    char *p2, *p3;
+    static char buf[128];
+
+    /* find the basename */
+    p2 = (char *)p1;
+    while (*p1) {
+	if (*p1++ == '/')
+	    p2 = (char *)p1;
+    }
+
+    /* find the end of suffix */
+    for (p3=(char *)suff; *p3; p3++)
+	;
+
+    /* early out */
+    while (p1>p2 && p3>suff) {
+	if (*--p3 != *--p1)
+	    return p2;
+    }
+
+    /* stash and return filename, sans suffix */
+    bu_strlcpy(buf, p2, p1-p2+1);
+    return buf;
+}
 
 
 int
@@ -96,7 +125,7 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if ( (fp = fopen( argv[1], "a")) == NULL )  {
+    if ((fp = fopen(argv[1], "a")) == NULL) {
 	perror(argv[1]);
 	return GED_ERROR;
     }
@@ -112,7 +141,7 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    base = ged_basename_without_suffix( argv[1], ".sh" );
+    base = ged_basename_without_suffix(argv[1], ".sh");
     if (outpix[0] == '\0') {
 	snprintf(outpix, 255, "%s.pix", base);
     }
@@ -122,12 +151,12 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
 
     /* Do not specify -v option to rt; batch jobs must print everything. -Mike */
     (void)fprintf(fp, "#!/bin/sh\n%s -M ", rtcmd);
-    if ( gedp->ged_gvp->gv_perspective > 0 )
+    if (gedp->ged_gvp->gv_perspective > 0)
 	(void)fprintf(fp, "-p%g ", gedp->ged_gvp->gv_perspective);
-    for ( i=2; i < argc; i++ )
+    for (i=2; i < argc; i++)
 	(void)fprintf(fp, "%s ", argv[i]);
 
-    if (strncmp(rtcmd,"nirt",4) != 0)
+    if (strncmp(rtcmd, "nirt", 4) != 0)
 	(void)fprintf(fp, "\\\n -o %s\\\n $*\\\n", outpix);
 
     if (inputg[0] == '\0') {
@@ -153,40 +182,9 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
     }
 
     (void)fprintf(fp, "\nEOF\n");
-    (void)fclose( fp );
+    (void)fclose(fp);
 
     return GED_OK;
-}
-
-/**
- *  Return basename of path, removing leading slashes and trailing suffix.
- */
-static char *
-ged_basename_without_suffix(const char *p1, const char *suff)
-{
-    char *p2, *p3;
-    static char buf[128];
-
-    /* find the basename */
-    p2 = (char *)p1;
-    while (*p1) {
-	if (*p1++ == '/')
-	    p2 = (char *)p1;
-    }
-
-    /* find the end of suffix */
-    for (p3=(char *)suff; *p3; p3++)
-	;
-
-    /* early out */
-    while (p1>p2 && p3>suff) {
-	if (*--p3 != *--p1)
-	    return p2;
-    }
-
-    /* stash and return filename, sans suffix */
-    bu_strlcpy( buf, p2, p1-p2+1 );
-    return buf;
 }
 
 

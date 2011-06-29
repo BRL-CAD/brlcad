@@ -38,8 +38,8 @@ int
 ged_move(struct ged *gedp, int argc, const char *argv[])
 {
     struct ged_display_list *gdlp;
-    struct directory	*dp;
-    struct rt_db_internal		intern;
+    struct directory *dp;
+    struct rt_db_internal intern;
     static const char *usage = "from to";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -73,7 +73,7 @@ ged_move(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    /*  Change object name in the in-memory directory. */
+    /* Change object name in the in-memory directory. */
     if (db_rename(gedp->ged_wdbp->dbip, dp, argv[2]) < 0) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(&gedp->ged_result_str, "error in db_rename to %s, aborting", argv[2]);

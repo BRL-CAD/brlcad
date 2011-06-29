@@ -53,7 +53,7 @@ ged_rrt(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     vp = &gedp->ged_gdp->gd_rt_cmd[0];
-    for ( i=1; i < argc; i++ )
+    for (i=1; i < argc; i++)
 	*vp++ = (char *)argv[i];
     *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
 

@@ -89,6 +89,7 @@ ged_tra_args(struct ged *gedp, int argc, const char *argv[], char *coord, vect_t
     return GED_OK;
 }
 
+
 int
 ged_tra(struct ged *gedp, int argc, const char *argv[])
 {

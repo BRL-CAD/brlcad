@@ -114,7 +114,7 @@
 
 
 #ifndef M_SQRT2
-#  define M_SQRT2		1.41421356237309504880
+#  define M_SQRT2 1.41421356237309504880
 #endif
 
 #define REV_BU_LIST_FOR(p, structure, hp)	\
@@ -154,6 +154,7 @@ ged_vdraw(struct ged *gedp, int argc, const char *argv[])
     return ged_vdraw_cmd(gedp, argc, argv);
 }
 
+
 int
 ged_vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
 {
@@ -184,6 +185,7 @@ ged_vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
 
     return GED_ERROR;
 }
+
 
 /*
  * Usage:
@@ -291,6 +293,7 @@ ged_vdraw_write(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
+
 /*
  * Usage:
  *        vdraw insert i c x y z
@@ -381,6 +384,7 @@ ged_vdraw_insert(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
+
 /*
  * Usage:
  *        vdraw delete i|last|all
@@ -434,7 +438,7 @@ ged_vdraw_delete(struct ged *gedp, int argc, const char *argv[])
 	    /* this is the right vlist */
 	    break;
 	}
-	if ( vp->nused == 0) {
+	if (vp->nused == 0) {
 	    /* no point going further */
 	    break;
 	}
@@ -477,6 +481,7 @@ ged_vdraw_delete(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
+
 
 /*
  * Usage:
@@ -535,7 +540,7 @@ ged_vdraw_read(struct ged *gedp, int argc, const char *argv[])
 	    /* this is the right vlist */
 	    break;
 	}
-	if ( vp->nused == 0) {
+	if (vp->nused == 0) {
 	    /* no point going further */
 	    break;
 	}
@@ -553,6 +558,7 @@ ged_vdraw_read(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
+
 
 /*
  * Usage:
@@ -601,6 +607,7 @@ ged_vdraw_send(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
+
 /*
  * Usage:
  *        vdraw params color|name
@@ -634,7 +641,7 @@ ged_vdraw_params(struct ged *gedp, int argc, const char *argv[])
     if (argv[2][0] == 'n') {
 	/* check for conflicts with existing vlists*/
 	for (BU_LIST_FOR(rcp, vd_curve, &gedp->ged_gdp->gd_headVDraw)) {
-	    if (!strncmp( rcp->vdc_name, argv[2], RT_VDRW_MAXNAME)) {
+	    if (!strncmp(rcp->vdc_name, argv[2], RT_VDRW_MAXNAME)) {
 		bu_vls_printf(&gedp->ged_result_str, "%s %s: name %.40s is already in use\n", argv[0], argv[1], argv[2]);
 		return GED_ERROR;
 	    }
@@ -648,6 +655,7 @@ ged_vdraw_params(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
+
 
 /*
  * Usage:
@@ -714,6 +722,7 @@ ged_vdraw_open(struct ged *gedp, int argc, const char *argv[])
     }
 }
 
+
 /*
  * Usage:
  *        vdraw vlist list
@@ -776,6 +785,7 @@ ged_vdraw_vlist(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
     }
 }
+
 
 /*
  * Local Variables:

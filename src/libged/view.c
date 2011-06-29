@@ -84,6 +84,7 @@ ged_view(struct ged *gedp, int argc, const char *argv[])
     return GED_ERROR;
 }
 
+
 /*
  * Local Variables:
  * tab-width: 8

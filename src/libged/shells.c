@@ -96,7 +96,7 @@ ged_shells(struct ged *gedp, int argc, const char *argv[])
 	    nmg_m_reindex(m, 0);
 
 	    bu_vls_printf(&shell_name, "shell.%d", shell_count);
-	    while (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr( &shell_name), 0) != RT_DIR_NULL) {
+	    while (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&shell_name), 0) != RT_DIR_NULL) {
 		bu_vls_trunc(&shell_name, 0);
 		shell_count++;
 		bu_vls_printf(&shell_name, "shell.%d", shell_count);

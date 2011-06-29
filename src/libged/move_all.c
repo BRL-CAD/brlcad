@@ -37,7 +37,7 @@
 HIDDEN int
 ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 {
-    int	i;
+    int i;
     struct ged_display_list *gdlp;
     struct directory *dp;
     struct rt_db_internal intern;
@@ -45,7 +45,7 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
     struct bu_ptbl stack;
 
     /* rename the record itself */
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, old, LOOKUP_NOISY )) == RT_DIR_NULL)
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, old, LOOKUP_NOISY)) == RT_DIR_NULL)
 	return GED_ERROR;
 
     if (db_lookup(gedp->ged_wdbp->dbip, new, LOOKUP_QUIET) != RT_DIR_NULL) {
@@ -99,7 +99,7 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
     }
 
     if (!nflag) {
-	/*  Change object name in the directory. */
+	/* Change object name in the directory. */
 	if (db_rename(gedp->ged_wdbp->dbip, dp, new) < 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "error in rename to %s, aborting", new);
 	    return GED_ERROR;
@@ -123,9 +123,9 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
     /* Examine all COMB nodes */
     for (i = 0; i < RT_DBNHASH; i++) {
 	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    union tree	*comb_leaf;
-	    int		done=0;
-	    int		changed=0;
+	    union tree *comb_leaf;
+	    int done=0;
+	    int changed=0;
 
 
 	    if (!(dp->d_flags & RT_DIR_COMB))
@@ -161,7 +161,7 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 		    }
 		    comb_leaf = (union tree *)BU_PTBL_GET(&stack, BU_PTBL_END(&stack)-1);
 		    if (comb_leaf->tr_op != OP_DB_LEAF) {
-			bu_ptbl_rm( &stack, (long *)comb_leaf );
+			bu_ptbl_rm(&stack, (long *)comb_leaf);
 			comb_leaf = comb_leaf->tr_b.tb_right;
 		    }
 		}
@@ -169,12 +169,11 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 
 	    if (changed) {
 		if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource)) {
-		    bu_ptbl_free( &stack );
+		    bu_ptbl_free(&stack);
 		    bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting");
 		    return GED_ERROR;
 		}
-	    }
-	    else
+	    } else
 		rt_db_free_internal(&intern);
 	}
     }
@@ -225,6 +224,7 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
     return GED_OK;
 }
 
+
 HIDDEN int
 ged_move_all_file(struct ged *gedp, int nflag, const char *file)
 {
@@ -254,6 +254,7 @@ ged_move_all_file(struct ged *gedp, int nflag, const char *file)
 
     return GED_OK;
 }
+
 
 int
 ged_move_all(struct ged *gedp, int argc, const char *argv[])

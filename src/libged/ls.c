@@ -170,6 +170,7 @@ _ged_vls_col_pr4v(struct bu_vls *vls,
     }
 }
 
+
 static void
 vls_long_dpp(struct ged *gedp,
 	     struct directory **list_of_names,
@@ -287,6 +288,7 @@ vls_long_dpp(struct ged *gedp,
 	}
     }
 }
+
 
 /**
  * G E D _ V L S _ L I N E _ D P P

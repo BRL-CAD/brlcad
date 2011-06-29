@@ -46,13 +46,13 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     fastf_t scale = 1;
     point_t origin = {0.0, 0.0, 0.0};
-    struct rt_db_internal	internal;
-    struct rt_arb_internal	*arb_ip;
-    struct rt_ars_internal	*ars_ip;
-    struct rt_tgc_internal	*tgc_ip;
-    struct rt_ell_internal	*ell_ip;
-    struct rt_tor_internal	*tor_ip;
-    struct rt_grip_internal	*grp_ip;
+    struct rt_db_internal internal;
+    struct rt_arb_internal *arb_ip;
+    struct rt_ars_internal *ars_ip;
+    struct rt_tgc_internal *tgc_ip;
+    struct rt_ell_internal *ell_ip;
+    struct rt_tor_internal *tor_ip;
+    struct rt_grip_internal *grp_ip;
     struct rt_half_internal *half_ip;
     struct rt_rpc_internal *rpc_ip;
     struct rt_rhc_internal *rhc_ip;
@@ -65,8 +65,8 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
     struct rt_extrude_internal *extrude_ip;
     struct rt_bot_internal *bot_ip;
     struct rt_arbn_internal *arbn_ip;
-    struct rt_superell_internal	*superell_ip;
-    struct rt_metaball_internal	*metaball_ip;
+    struct rt_superell_internal *superell_ip;
+    struct rt_metaball_internal *metaball_ip;
     struct rt_pnts_internal *pnts_ip;
     static const char *usage = "-h | -t | -o origin -s sf name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|ehy|ell|ell1|epa|eto|extrude|grip|half|hyp|nmg|part|pipe|pnts|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>";
 
@@ -600,7 +600,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_PNTS;
 	internal.idb_meth = &rt_functab[ID_PNTS];
-	internal.idb_ptr = (genptr_t) bu_malloc(sizeof(struct rt_pnts_internal),"rt_pnts_internal");
+	internal.idb_ptr = (genptr_t) bu_malloc(sizeof(struct rt_pnts_internal), "rt_pnts_internal");
 
 	pnts_ip = (struct rt_pnts_internal *) internal.idb_ptr;
 	pnts_ip->magic = RT_PNTS_INTERNAL_MAGIC;

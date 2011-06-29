@@ -630,44 +630,42 @@ wrobj(struct rt_wdb *wdbp,
 
     RT_DB_INTERNAL_INIT(&intern);
     switch (sol.s_type) {
-	case ID_ARB8:
-	    {
-		struct rt_arb_internal *arb;
+	case ID_ARB8: {
+	    struct rt_arb_internal *arb;
 
-		BU_GETSTRUCT(arb, rt_arb_internal);
+	    BU_GETSTRUCT(arb, rt_arb_internal);
 
-		arb->magic = RT_ARB_INTERNAL_MAGIC;
+	    arb->magic = RT_ARB_INTERNAL_MAGIC;
 
-		VMOVE(arb->pt[0], &sol.s_values[0]);
-		for (i=1; i<8; i++)
-		    VADD2(arb->pt[i], &sol.s_values[i*3], arb->pt[0])
+	    VMOVE(arb->pt[0], &sol.s_values[0]);
+	    for (i=1; i<8; i++)
+		VADD2(arb->pt[i], &sol.s_values[i*3], arb->pt[0])
 
-			intern.idb_ptr = (genptr_t)arb;
-		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-		intern.idb_type = ID_ARB8;
-		intern.idb_meth = &rt_functab[ID_ARB8];
-	    }
+		    intern.idb_ptr = (genptr_t)arb;
+	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	    intern.idb_type = ID_ARB8;
+	    intern.idb_meth = &rt_functab[ID_ARB8];
+	}
 	    break;
-	case ID_TGC:
-	    {
-		struct rt_tgc_internal *tgc;
+	case ID_TGC: {
+	    struct rt_tgc_internal *tgc;
 
-		BU_GETSTRUCT(tgc, rt_tgc_internal);
+	    BU_GETSTRUCT(tgc, rt_tgc_internal);
 
-		tgc->magic = RT_TGC_INTERNAL_MAGIC;
+	    tgc->magic = RT_TGC_INTERNAL_MAGIC;
 
-		VMOVE(tgc->v, &sol.s_values[0]);
-		VMOVE(tgc->h, &sol.s_values[3]);
-		VMOVE(tgc->a, &sol.s_values[6]);
-		VMOVE(tgc->b, &sol.s_values[9]);
-		VMOVE(tgc->c, &sol.s_values[12]);
-		VMOVE(tgc->d, &sol.s_values[15]);
+	    VMOVE(tgc->v, &sol.s_values[0]);
+	    VMOVE(tgc->h, &sol.s_values[3]);
+	    VMOVE(tgc->a, &sol.s_values[6]);
+	    VMOVE(tgc->b, &sol.s_values[9]);
+	    VMOVE(tgc->c, &sol.s_values[12]);
+	    VMOVE(tgc->d, &sol.s_values[15]);
 
-		intern.idb_ptr = (genptr_t)tgc;
-		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-		intern.idb_type = ID_TGC;
-		intern.idb_meth = &rt_functab[ID_TGC];
-	    }
+	    intern.idb_ptr = (genptr_t)tgc;
+	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	    intern.idb_type = ID_TGC;
+	    intern.idb_meth = &rt_functab[ID_TGC];
+	}
 	    break;
 	default:
 	    Tcl_AppendResult(interp, "Unrecognized solid type in 'wrobj', aborting\n", (char *)NULL);

@@ -1,4 +1,4 @@
-/*                         R O T A T E _ A R B _ F A C E . C
+/*                  R O T A T E _ A R B _ F A C E . C
  * BRL-CAD
  *
  * Copyright (c) 2008-2011 United States Government as represented by
@@ -41,6 +41,7 @@ static const short int ged_arb_vertices[5][24] = {
     { 1, 2, 3, 4, 5, 6, 7, 0, 1, 4, 5, 0, 2, 3, 7, 6, 1, 2, 6, 5, 4, 3, 7, 5 },	/* arb7 */
     { 1, 2, 3, 4, 5, 6, 7, 8, 1, 5, 8, 4, 2, 3, 7, 6, 1, 2, 6, 5, 4, 3, 7, 8 }	/* arb8 */
 };
+
 
 int
 ged_rotate_arb_face(struct ged *gedp, int argc, const char *argv[])
@@ -166,7 +167,7 @@ ged_rotate_arb_face(struct ged *gedp, int argc, const char *argv[])
     if (arb_type == ARB7) {
 	/* check if point 5 is in the face */
 	pnt5 = 0;
-	for (i=0; i<4; i++)  {
+	for (i=0; i<4; i++) {
 	    if (ged_arb_vertices[arb_type-4][face*4+i]==5)
 		pnt5=1;
 	}
@@ -179,7 +180,7 @@ ged_rotate_arb_face(struct ged *gedp, int argc, const char *argv[])
 	/* Apply incremental changes */
 	vect_t tempvec;
 	vect_t work;
-	fastf_t	*plane;
+	fastf_t *plane;
 	mat_t rmat;
 
 	bn_mat_angles(rmat, pt[X], pt[Y], pt[Z]);
