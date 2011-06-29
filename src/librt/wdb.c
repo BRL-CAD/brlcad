@@ -372,7 +372,8 @@ wdb_export(
 void
 wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
 {
-    wdbp->l.magic = RT_WDB_MAGIC;
+    BU_LIST_INIT(&wdbp->l);
+    BU_LIST_MAGIC_SET(&wdbp->l, RT_WDB_MAGIC);
     wdbp->type = mode;
     wdbp->dbip = dbip;
     wdbp->dbip->dbi_wdbp = wdbp;
@@ -388,6 +389,8 @@ wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
     wdbp->wdb_ttol.abs = 0.0;
     wdbp->wdb_ttol.rel = 0.01;
     wdbp->wdb_ttol.norm = 0;
+
+    bu_vls_init(&wdbp->wdb_name);
     bu_vls_init(&wdbp->wdb_prestr);
 
     /* initialize tree state */
