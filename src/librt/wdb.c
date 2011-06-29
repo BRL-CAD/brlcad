@@ -422,6 +422,7 @@ wdb_close(struct rt_wdb *wdbp)
     RT_CK_WDB(wdbp);
 
     BU_LIST_DEQUEUE(&wdbp->l);
+    BU_LIST_MAGIC_SET(&wdbp->l, 0); /* sanity */
 
     /* XXX Flush any unwritten "struct matter" records here */
 
@@ -435,7 +436,7 @@ wdb_close(struct rt_wdb *wdbp)
     bu_vls_free(&wdbp->wdb_prestr);
 
     /* sanity */
-    wdbp->l.magic = wdbp->type = 0;
+    wdbp->type = 0;
     wdbp->wdb_resp = NULL;
     wdbp->wdb_interp = NULL;
 
