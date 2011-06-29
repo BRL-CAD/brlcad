@@ -114,7 +114,7 @@ ged_init(struct ged *gedp)
 	return;
 
     BU_LIST_INIT(&gedp->l);
-    gedp->wdbp = RT_WDB_NULL;
+    gedp->ged_wdbp = RT_WDB_NULL;
 
     bu_vls_init(&gedp->ged_log);
     bu_vls_init(&gedp->ged_result_str);
@@ -140,7 +140,7 @@ ged_init(struct ged *gedp)
     gedp->ged_refresh_clientdata = NULL;
     gedp->ged_refresh_handler = NULL;
     gedp->ged_output_handler = NULL;
-    gedp->get_output_script = NULL;
+    gedp->ged_output_script = NULL;
     gedp->ged_internal_call = 0;
 
 }
