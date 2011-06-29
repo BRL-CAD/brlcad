@@ -258,7 +258,7 @@ GED_EXPORT extern int	dg_E_cmd(struct dg_obj *dgop,
 
 
 /* functions defined in vdraw.c */
-GED_EXPORT extern int	vdraw_cmd(struct dg_obj *dgop,
+GED_EXPORT extern int	vdraw_cmd_tcl(struct dg_obj *dgop,
 				  Tcl_Interp *interp,
 				  int argc,
 				  char **argv);
