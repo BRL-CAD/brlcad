@@ -418,13 +418,25 @@ wdb_close(struct rt_wdb *wdbp)
 
     RT_CK_WDB(wdbp);
 
+    BU_LIST_DEQUEUE(&wdbp->l);
+
     /* XXX Flush any unwritten "struct matter" records here */
 
-    db_close(wdbp->dbip);
-    wdbp->dbip = NULL;
+    if (wdbp->dbip) {
+	db_close(wdbp->dbip);
+	wdbp->dbip = NULL;
+    }
 
+    /* release allocated member memory */
+    bu_vls_free(&wdbp->wdb_name);
     bu_vls_free(&wdbp->wdb_prestr);
 
+    /* sanity */
+    wdbp->l.magic = wdbp->type = 0;
+    wdbp->wdb_resp = NULL;
+    wdbp->wdb_interp = NULL;
+
+    /* release memory */
     bu_free((genptr_t)wdbp, "struct rt_wdb");
     wdbp = NULL;
 }
