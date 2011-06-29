@@ -275,7 +275,6 @@ SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 19.0.1 SOVERSION 19)
 SET(ged_ignore_files
 	ged_private.h
 	qray.h
-	subtype.c
 	wdb_qray.h
 	)
 CMAKEFILES(${ged_ignore_files})
