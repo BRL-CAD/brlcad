@@ -89,7 +89,7 @@ const char* get_shadername(const char *regioname){
     if(!strcmp(regioname, "/all.g/short_box.r"))
 	return "yellow";
     if(!strcmp(regioname, "/all.g/tall_box.r"))
-	return "glass";
+	return "glass2";
 
     fprintf(stderr, "shader not found\n");
 }
@@ -186,8 +186,11 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	stp = pp->pt_inseg->seg_stp;
 	RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
 	VMOVE(info.N, inormal);
+	
+#if 0
 	if(inside)
 	    VREVERSE(info.N, info.N);
+#endif
 
 	/* Set incidence ray direction */
 	VMOVE(info.I, ap->a_ray.r_dir);
@@ -232,10 +235,16 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	    Vec3 out_ray;
 	    VMOVE(out_ray, new_ap.a_ray.r_dir);
 	    Vec3 normal;
-	    VMOVE(normal, info.N);
+	    VMOVE(normal, inormal);
 	    /* The next hit will revert the normal */
-	    if (normal.dot(out_ray) < 0.0f)
+	    if (normal.dot(out_ray) < 0.0f){
 		inside = true;
+		/* Forward the point a little bit to avoid the ray to hit this same point again */
+		Vec3 tmp;
+		VSCALE(tmp, info.out_ray.dir, 1e-4);
+		VADD2(new_ap.a_ray.r_pt, new_ap.a_ray.r_pt, tmp);
+	    }
+
 
 	    rt_shootray(&new_ap);
 
@@ -291,8 +300,20 @@ int main (int argc, char **argv){
      * geometry file and one geometry object on the command line.
      */
     if (argc < 3) {
-	bu_exit(1, "Usage: %s model.g objects...\n", argv[0]);
+	bu_exit(1, "Usage: %s [OPTIONS] model.g objects ...\n", argv[0]);
     }
+
+    int samps = 1;                          /* default number of samples */
+    /* Process options */
+    if(argv[1] == '-'){
+	if(strcmp(argv[1], "-s") == 0){
+	    sscanf(argv[2] "%d", &samps);
+	}
+	argc--;
+	argc--;
+	argv++;
+	argv++;
+    } 
 
     /* Load the specified geometry database (i.e., a ".g" file).
      * rt_dirbuild() returns an "instance" pointer which describes the
@@ -409,7 +430,6 @@ int main (int argc, char **argv){
 	buffer[i] = Color3(0.0f);
 
     float scale = 10.0f;
-    int samps = 5; // number of samples
 
     /* Initialize the shading system*/
     oslr = new OSLRenderer();
@@ -421,7 +441,7 @@ int main (int argc, char **argv){
     oslr->AddShader("mirror");
     oslr->AddShader("blue");
     oslr->AddShader("red");
-    oslr->AddShader("glass");
+    oslr->AddShader("glass2");
 
     /* Ray trace */
     for(int y=0; y<h; y++) {
