@@ -146,7 +146,7 @@ static struct bu_cmdtab vdraw_cmds[] = {
  * figure out which vdraw command we're running, used by dg
  */
 int
-vdraw_cmd(struct dg_obj *dgop,
+vdraw_cmd_tcl(struct dg_obj *dgop,
 	  Tcl_Interp *interp,
 	  int argc,
 	  char *argv[])

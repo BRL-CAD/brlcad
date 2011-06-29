@@ -118,77 +118,13 @@
        BU_LIST_NOT_HEAD(p, hp);		\
        (p)=BU_LIST_PLAST(structure, p)
 
-static int ged_vdraw_cmd(struct ged *gedp, int argc, const char *argv[]);
-static int ged_vdraw_write(struct ged *gedp, int argc, const char *argv[]);
-static int ged_vdraw_insert(struct ged *gedp, int argc, const char *argv[]);
-static int ged_vdraw_delete(struct ged *gedp, int argc, const char *argv[]);
-static int ged_vdraw_read(struct ged *gedp, int argc, const char *argv[]);
-static int ged_vdraw_send(struct ged *gedp, int argc, const char *argv[]);
-static int ged_vdraw_params(struct ged *gedp, int argc, const char *argv[]);
-static int ged_vdraw_open(struct ged *gedp, int argc, const char *argv[]);
-static int ged_vdraw_vlist(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * view draw command table
- */
-static struct bu_cmdtab vdraw_cmds[] = {
-    {"write",		ged_vdraw_write},
-    {"insert",		ged_vdraw_insert},
-    {"delete",		ged_vdraw_delete},
-    {"read",		ged_vdraw_read},
-    {"send",		ged_vdraw_send},
-    {"params",		ged_vdraw_params},
-    {"open",		ged_vdraw_open},
-    {"vlist",		ged_vdraw_vlist},
-    {(char *)0,		(int (*)())0 }
-};
-
-
-int
-ged_vdraw(struct ged *gedp, int argc, const char *argv[])
-{
-    return ged_vdraw_cmd(gedp, argc, argv);
-}
-
-
-int
-ged_vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
-{
-    struct bu_cmdtab *ctp;
-    static const char *usage = "write|insert|delete|read|send|params|open|vlist [args]";
-
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-
-    /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
-
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
-
-    for (ctp = vdraw_cmds; ctp->ct_name != (char *)0; ctp++) {
-	if (ctp->ct_name[0] == argv[1][0] &&
-	    BU_STR_EQUAL(ctp->ct_name, argv[1])) {
-	    return (*ctp->ct_func)(gedp, argc, argv);
-	}
-    }
-
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-
-    return GED_ERROR;
-}
-
 
 /*
  * Usage:
  *        vdraw write i|next c x y z
  */
 static int
-ged_vdraw_write(struct ged *gedp, int argc, const char *argv[])
+vdraw_write(struct ged *gedp, int argc, const char *argv[])
 {
     size_t idx;
     unsigned long uind = 0;
@@ -295,7 +231,7 @@ ged_vdraw_write(struct ged *gedp, int argc, const char *argv[])
  *        vdraw insert i c x y z
  */
 int
-ged_vdraw_insert(struct ged *gedp, int argc, const char *argv[])
+vdraw_insert(struct ged *gedp, int argc, const char *argv[])
 {
     struct bn_vlist *vp, *cp, *wp;
     size_t i;
@@ -386,7 +322,7 @@ ged_vdraw_insert(struct ged *gedp, int argc, const char *argv[])
  *        vdraw delete i|last|all
  */
 int
-ged_vdraw_delete(struct ged *gedp, int argc, const char *argv[])
+vdraw_delete(struct ged *gedp, int argc, const char *argv[])
 {
     struct bn_vlist *vp, *wp;
     size_t i;
@@ -484,7 +420,7 @@ ged_vdraw_delete(struct ged *gedp, int argc, const char *argv[])
  *        vdraw read i|color|length|name
  */
 static int
-ged_vdraw_read(struct ged *gedp, int argc, const char *argv[])
+vdraw_read(struct ged *gedp, int argc, const char *argv[])
 {
     struct bn_vlist *vp;
     unsigned long uind = 0;
@@ -561,7 +497,7 @@ ged_vdraw_read(struct ged *gedp, int argc, const char *argv[])
  *        vdraw send
  */
 static int
-ged_vdraw_send(struct ged *gedp, int argc, const char *argv[])
+vdraw_send(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     char solid_name [RT_VDRW_MAXNAME+RT_VDRW_PREFIX_LEN+1];
@@ -609,7 +545,7 @@ ged_vdraw_send(struct ged *gedp, int argc, const char *argv[])
  *        vdraw params color|name
  */
 static int
-ged_vdraw_params(struct ged *gedp, int argc, const char *argv[])
+vdraw_params(struct ged *gedp, int argc, const char *argv[])
 {
     struct vd_curve *rcp;
     unsigned long rgb;
@@ -658,7 +594,7 @@ ged_vdraw_params(struct ged *gedp, int argc, const char *argv[])
  *        vdraw open [name]
  */
 static int
-ged_vdraw_open(struct ged *gedp, int argc, const char *argv[])
+vdraw_open(struct ged *gedp, int argc, const char *argv[])
 {
     struct vd_curve *rcp;
     struct bn_vlist *vp;
@@ -725,7 +661,7 @@ ged_vdraw_open(struct ged *gedp, int argc, const char *argv[])
  *        vdraw vlist delete name
  */
 static int
-ged_vdraw_vlist(struct ged *gedp, int argc, const char *argv[])
+vdraw_vlist(struct ged *gedp, int argc, const char *argv[])
 {
     struct vd_curve *rcp, *rcp2;
     static const char *usage = "list\n\tdelete name";
@@ -780,6 +716,61 @@ ged_vdraw_vlist(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(&gedp->ged_result_str, "%s %s: unknown option to vdraw vlist", argv[0], argv[1]);
 	    return GED_ERROR;
     }
+}
+
+
+/**
+ * view draw command table
+ */
+static struct bu_cmdtab vdraw_cmds[] = {
+    {"write",		vdraw_write},
+    {"insert",		vdraw_insert},
+    {"delete",		vdraw_delete},
+    {"read",		vdraw_read},
+    {"send",		vdraw_send},
+    {"params",		vdraw_params},
+    {"open",		vdraw_open},
+    {"vlist",		vdraw_vlist},
+    {(char *)0,		(int (*)())0 }
+};
+
+
+static int
+vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
+{
+    struct bu_cmdtab *ctp;
+    static const char *usage = "write|insert|delete|read|send|params|open|vlist [args]";
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    for (ctp = vdraw_cmds; ctp->ct_name != (char *)0; ctp++) {
+	if (ctp->ct_name[0] == argv[1][0] &&
+	    BU_STR_EQUAL(ctp->ct_name, argv[1])) {
+	    return (*ctp->ct_func)(gedp, argc, argv);
+	}
+    }
+
+    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+
+    return GED_ERROR;
+}
+
+
+int
+ged_vdraw(struct ged *gedp, int argc, const char *argv[])
+{
+    return vdraw_cmd(gedp, argc, argv);
 }
 
 

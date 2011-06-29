@@ -336,7 +336,7 @@ dgo_vdraw_tcl(ClientData clientData,
 
     DGO_CHECK_WDBP_NULL(dgop, interp);
 
-    return vdraw_cmd(dgop, interp, argc-1, argv+1);
+    return vdraw_cmd_tcl(dgop, interp, argc-1, argv+1);
 }
 
 
