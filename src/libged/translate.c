@@ -25,6 +25,7 @@
 
 /* TODO:
  *  -reject paths with fp_len > 1; it's meaningless and misleading
+ *  -consider merging path/object into a single argument
  */
 
 #include "common.h"
@@ -103,10 +104,7 @@ translate(struct ged *gedp, pointp_t const keypoint,
 	    return GED_ERROR;
 	}
 	/* no path; translate all instances of this primitive */
-	bu_vls_printf(&gedp->ged_result_str, "primitive translations are not"
-		      " yet supported");
-	db_free_full_path(&full_obj_path);
-	return GED_ERROR;
+	d_to_modify = d_obj;
     } else if (d_obj->d_flags & (RT_DIR_REGION | RT_DIR_COMB)) {
 	if (path->fp_len > 0) {
 	    /* path supplied; move obj instance only (obj's CWD
@@ -145,7 +143,7 @@ translate(struct ged *gedp, pointp_t const keypoint,
     d_to_modify = gtd.gtd_obj[gtd.gtd_objpos-1];
     if (!(d_to_modify->d_flags & RT_DIR_SOLID))
 	if (_ged_get_obj_bounds(gedp, 1, (const char **)&d_to_modify->d_namep,
-	    1, rpp_min, rpp_max) == GED_ERROR) {
+				1, rpp_min, rpp_max) == GED_ERROR) {
 	    db_free_full_path(&full_obj_path);
 	    return GED_ERROR;
 	}
@@ -235,9 +233,16 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 
 		/* unknown options */
 		if (isprint(bu_optopt)) {
-		    bu_vls_printf(&gedp->ged_result_str,
-				  "Unknown option '-%c'", bu_optopt);
-		    return GED_ERROR;
+		    char *c2;
+		    strtod((const char * restrict)&c, &c2);
+		    if (*c2 != '\0') {
+			--bu_optind;
+			goto no_more_args;
+		    }
+			/* it's neither a negative number nor an option */
+			bu_vls_printf(&gedp->ged_result_str,
+				      "Unknown option '-%c'", bu_optopt);
+			return GED_ERROR;
 		} else {
 		    bu_vls_printf(&gedp->ged_result_str,
 				  "Unknown option character '\\x%x'",
@@ -246,7 +251,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 		}
 	}
     }
-
+no_more_args:
 
     /* need to use either absolute||relative positioning; not both */
     if (abs_flag && rel_flag) {
