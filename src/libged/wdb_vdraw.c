@@ -112,10 +112,6 @@
 #include "ged.h"
 
 
-#ifndef M_SQRT2
-#  define M_SQRT2 1.41421356237309504880
-#endif
-
 #define REV_BU_LIST_FOR(p, structure, hp)	\
     (p)=BU_LIST_LAST(structure, hp);	\
        BU_LIST_NOT_HEAD(p, hp);		\
