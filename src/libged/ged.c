@@ -76,8 +76,10 @@ ged_close(struct ged *gedp)
     if (gedp == GED_NULL)
 	return;
 
-    wdb_close(gedp->ged_wdbp);
-    gedp->ged_wdbp = RT_WDB_NULL;
+    if (gedp->ged_wdbp) {
+	wdb_close(gedp->ged_wdbp);
+	gedp->ged_wdbp = RT_WDB_NULL;
+    }
 
     if (gedp->ged_gdp != GED_DRAWABLE_NULL) {
 	qray_free(gedp->ged_gdp);
