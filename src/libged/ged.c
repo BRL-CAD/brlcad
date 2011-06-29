@@ -113,30 +113,36 @@ ged_init(struct ged *gedp)
     if (gedp == GED_NULL)
 	return;
 
+    BU_LIST_INIT(&gedp->l);
+    gedp->wdbp = RT_WDB_NULL;
+
     bu_vls_init(&gedp->ged_log);
     bu_vls_init(&gedp->ged_result_str);
 
-    bu_vls_extend(&gedp->ged_log, 1);
-    bu_vls_extend(&gedp->ged_result_str, 1);
-
     BU_GETSTRUCT(gedp->ged_gdp, ged_drawable);
 
-    /* initialize the drawable struct */
-    if (gedp->ged_gdp != GED_DRAWABLE_NULL) {
-
-	/* yuck */
-	if (!BU_LIST_IS_INITIALIZED(&_FreeSolid.l)) {
-	    BU_LIST_INIT(&_FreeSolid.l);
-	}
-
-	BU_LIST_INIT(&gedp->ged_gdp->gd_headDisplay);
-	BU_LIST_INIT(&gedp->ged_gdp->gd_headVDraw);
-	BU_LIST_INIT(&gedp->ged_gdp->gd_headRunRt.l);
-
-	gedp->ged_gdp->gd_freeSolids = &_FreeSolid;
-	gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
-	qray_init(gedp->ged_gdp);
+    /* yuck */
+    if (!BU_LIST_IS_INITIALIZED(&_FreeSolid.l)) {
+	BU_LIST_INIT(&_FreeSolid.l);
     }
+
+    BU_LIST_INIT(&gedp->ged_gdp->gd_headDisplay);
+    BU_LIST_INIT(&gedp->ged_gdp->gd_headVDraw);
+    BU_LIST_INIT(&gedp->ged_gdp->gd_headRunRt.l);
+
+    gedp->ged_gdp->gd_freeSolids = &_FreeSolid;
+    gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
+    qray_init(gedp->ged_gdp);
+
+    /* (in)sanity */
+    gedp->ged_fbsp = NULL;
+    gedp->ged_dmp = NULL;
+    gedp->ged_refresh_clientdata = NULL;
+    gedp->ged_refresh_handler = NULL;
+    gedp->ged_output_handler = NULL;
+    gedp->get_output_script = NULL;
+    gedp->ged_internal_call = 0;
+
 }
 
 
