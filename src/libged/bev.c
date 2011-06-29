@@ -35,16 +35,12 @@
 #include "./ged_private.h"
 
 
-static union tree *ged_facetize_tree;
-static struct model *ged_nmg_model;
+static union tree *bev_facetize_tree;
+static struct model *bev_nmg_model;
 
-/*
- * M G E D _ F A C E T I Z E _ R E G I O N _ E N D
- *
- * This routine must be prepared to run in parallel.
- */
+
 static union tree *
-ged_facetize_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+bev_facetize_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     struct bu_list vhead;
     struct ged *gedp = (struct ged *)client_data;
@@ -54,24 +50,24 @@ ged_facetize_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
 
-	bu_vls_printf(&gedp->ged_result_str, "ged_facetize_region_end() path='%s'\n", sofar);
+	bu_vls_printf(&gedp->ged_result_str, "bev_facetize_region_end() path='%s'\n", sofar);
 	bu_free((genptr_t)sofar, "path string");
     }
 
     if (curtree->tr_op == OP_NOP) return curtree;
 
     bu_semaphore_acquire(RT_SEM_MODEL);
-    if (ged_facetize_tree) {
+    if (bev_facetize_tree) {
 	union tree *tr;
 	BU_GETUNION(tr, tree);
 	RT_TREE_INIT(tr);
 	tr->tr_op = OP_UNION;
 	tr->tr_b.tb_regionp = REGION_NULL;
-	tr->tr_b.tb_left = ged_facetize_tree;
+	tr->tr_b.tb_left = bev_facetize_tree;
 	tr->tr_b.tb_right = curtree;
-	ged_facetize_tree = tr;
+	bev_facetize_tree = tr;
     } else {
-	ged_facetize_tree = curtree;
+	bev_facetize_tree = curtree;
     }
     bu_semaphore_release(RT_SEM_MODEL);
 
@@ -170,9 +166,9 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 		  gedp->ged_wdbp->wdb_ttol.rel,
 		  gedp->ged_wdbp->wdb_ttol.norm);
 
-    ged_facetize_tree = (union tree *)0;
-    ged_nmg_model = nmg_mm();
-    gedp->ged_wdbp->wdb_initial_tree_state.ts_m = &ged_nmg_model;
+    bev_facetize_tree = (union tree *)0;
+    bev_nmg_model = nmg_mm();
+    gedp->ged_wdbp->wdb_initial_tree_state.ts_m = &bev_nmg_model;
 
     op = ' ';
     tmp_tree = (union tree *)NULL;
@@ -182,14 +178,14 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 			 ncpu,
 			 &gedp->ged_wdbp->wdb_initial_tree_state,
 			 0,			/* take all regions */
-			 ged_facetize_region_end,
+			 bev_facetize_region_end,
 			 nmg_booltree_leaf_tess,
 			 (genptr_t)gedp);
 
 	if (i < 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: error in db_walk_tree()\n", cmdname);
 	    /* Destroy NMG */
-	    nmg_km(ged_nmg_model);
+	    nmg_km(bev_nmg_model);
 	    return GED_ERROR;
 	}
 	argc--;
@@ -203,7 +199,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 
 	    new_tree->tr_b.tb_regionp = REGION_NULL;
 	    new_tree->tr_b.tb_left = tmp_tree;
-	    new_tree->tr_b.tb_right = ged_facetize_tree;
+	    new_tree->tr_b.tb_right = bev_facetize_tree;
 
 	    switch (op) {
 		case 'u':
@@ -219,18 +215,18 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 		default: {
 		    bu_vls_printf(&gedp->ged_result_str, "%s: Unrecognized operator: (%c)\nAborting\n",
 				  argv[0], op);
-		    db_free_tree(ged_facetize_tree, &rt_uniresource);
-		    nmg_km(ged_nmg_model);
+		    db_free_tree(bev_facetize_tree, &rt_uniresource);
+		    nmg_km(bev_nmg_model);
 		    return GED_ERROR;
 		}
 	    }
 
 	    tmp_tree = new_tree;
-	    ged_facetize_tree = (union tree *)NULL;
+	    bev_facetize_tree = (union tree *)NULL;
 	} else if (!tmp_tree && op == ' ') {
 	    /* just starting out */
-	    tmp_tree = ged_facetize_tree;
-	    ged_facetize_tree = (union tree *)NULL;
+	    tmp_tree = bev_facetize_tree;
+	    bev_facetize_tree = (union tree *)NULL;
 	}
 
 	if (argc) {
@@ -253,12 +249,12 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 	    if (tmp_tree)
 		db_free_tree(tmp_tree, &rt_uniresource);
 	    tmp_tree = (union tree *)NULL;
-	    nmg_km(ged_nmg_model);
-	    ged_nmg_model = (struct model *)NULL;
+	    nmg_km(bev_nmg_model);
+	    bev_nmg_model = (struct model *)NULL;
 	    return GED_ERROR;
 	}
 
-	failed = nmg_boolean(tmp_tree, ged_nmg_model, &gedp->ged_wdbp->wdb_tol, &rt_uniresource);
+	failed = nmg_boolean(tmp_tree, bev_nmg_model, &gedp->ged_wdbp->wdb_tol, &rt_uniresource);
 	BU_UNSETJUMP;
     } else
 	failed = 1;
@@ -268,15 +264,15 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 	if (tmp_tree)
 	    db_free_tree(tmp_tree, &rt_uniresource);
 	tmp_tree = (union tree *)NULL;
-	nmg_km(ged_nmg_model);
-	ged_nmg_model = (struct model *)NULL;
+	nmg_km(bev_nmg_model);
+	bev_nmg_model = (struct model *)NULL;
 	return GED_ERROR;
     }
     /* New region remains part of this nmg "model" */
     NMG_CK_REGION(tmp_tree->tr_d.td_r);
     bu_vls_printf(&gedp->ged_result_str, "%s: facetize %s\n", cmdname, tmp_tree->tr_d.td_name);
 
-    nmg_vmodel(ged_nmg_model);
+    nmg_vmodel(bev_nmg_model);
 
     /* Triangulate model, if requested */
     if (triangulate) {
@@ -287,11 +283,11 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 	    if (tmp_tree)
 		db_free_tree(tmp_tree, &rt_uniresource);
 	    tmp_tree = (union tree *)NULL;
-	    nmg_km(ged_nmg_model);
-	    ged_nmg_model = (struct model *)NULL;
+	    nmg_km(bev_nmg_model);
+	    bev_nmg_model = (struct model *)NULL;
 	    return GED_ERROR;
 	}
-	nmg_triangulate_model(ged_nmg_model, &gedp->ged_wdbp->wdb_tol);
+	nmg_triangulate_model(bev_nmg_model, &gedp->ged_wdbp->wdb_tol);
 	BU_UNSETJUMP;
     }
 
@@ -302,8 +298,8 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_type = ID_NMG;
     intern.idb_meth = &rt_functab[ID_NMG];
-    intern.idb_ptr = (genptr_t)ged_nmg_model;
-    ged_nmg_model = (struct model *)NULL;
+    intern.idb_ptr = (genptr_t)bev_nmg_model;
+    bev_nmg_model = (struct model *)NULL;
 
     GED_DB_DIRADD(gedp, dp, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
