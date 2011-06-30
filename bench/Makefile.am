@@ -43,10 +43,10 @@ run: all
 
 bench: run
 
-clean:
+clean-local:
 	@${SH} ${srcdir}/run.sh clean
 
-distclean:
+distclean-local:
 	@${SH} ${srcdir}/run.sh clean
 
 clobber:
