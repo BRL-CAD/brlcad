@@ -17,8 +17,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* fix mater command (not setting RGB)
-
 * test revolve typein
 
 * eliminate dbi_filepath (perhaps replace with dbi_filedir) as we
