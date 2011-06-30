@@ -129,7 +129,10 @@ ged_init(struct ged *gedp)
     BU_LIST_INIT(&gedp->l);
     gedp->ged_wdbp = RT_WDB_NULL;
 
+    BU_GETSTRUCT(gedp->ged_log, bu_vls);
     bu_vls_init(gedp->ged_log);
+
+    BU_GETSTRUCT(gedp->ged_result_str, bu_vls);
     bu_vls_init(gedp->ged_result_str);
 
     BU_GETSTRUCT(gedp->ged_gdp, ged_drawable);
