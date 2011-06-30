@@ -89,7 +89,7 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 	if (strncmp(bu_vls_addr(&color), "del", 3) == 0) {
 	    offset=2;
 	}
-	bu_vls_free(&vls);
+	bu_vls_free(&color);
     }
 
     /* need more arguments */
