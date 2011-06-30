@@ -370,7 +370,10 @@ SET(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} /usr/local/include)
 # Types.  It's very rare to want to NOT specify a build type, so
 # make it a little more work to do so.
 IF(NOT CMAKE_BUILD_TYPE)
-	MESSAGE("CMake build type not set - performing Debug build.  To use optimized settings intended for a package or system install, specify a Release build (e.g. -DCMAKE_BUILD_TYPE=Release). To force CMake to not set build type, specify -DCMAKE_BUILD_TYPE=NONE")
+	MESSAGE("CMake build type not set - performing Debug build.")
+   MESSAGE("* To use optimized settings intended for a package or system install,")
+	MESSAGE("  specify a Release build (on the command line, -DCMAKE_BUILD_TYPE=Release).") 
+	MESSAGE("* To force CMake to not set build type, specify -DCMAKE_BUILD_TYPE=NONE")
 	SET(CMAKE_BUILD_TYPE Debug)
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
