@@ -89,6 +89,7 @@ translate(struct ged *gedp, pointp_t const keypoint,
 	db_free_full_path(&full_obj_path);
 	return GED_ERROR;
     }
+    db_free_full_path(&full_obj_path);
 
     /*
      * Determine what is being translated
@@ -100,27 +101,23 @@ translate(struct ged *gedp, pointp_t const keypoint,
 	     * only */
 	    bu_vls_printf(&gedp->ged_result_str, "translating a single instance"
 			  " of a primitive is not yet supported");
-	    db_free_full_path(&full_obj_path);
 	    return GED_ERROR;
+	} else {
+	    /* no path; translate all instances of this primitive */
+	    d_to_modify = d_obj;
 	}
-	/* no path; translate all instances of this primitive */
-	d_to_modify = d_obj;
     } else if (d_obj->d_flags & (RT_DIR_REGION | RT_DIR_COMB)) {
 	if (path->fp_len > 0) {
 	    /* path supplied; move obj instance only (obj's CWD
 	     * modified) */
 	    d_to_modify = DB_FULL_PATH_CUR_DIR(path);
-	    bu_vls_printf(&gedp->ged_result_str, "translating a single instance"
-	    		  " of a combination is not yet supported");
-	    db_free_full_path(&full_obj_path);
-	    return GED_ERROR;
+	} else {
+	    /* no path; move all obj instances (obj's entire tree
+	     * modified) */
+	    d_to_modify = d_obj;
 	}
-	/* no path; move all obj instances (obj's entire tree
-	 * modified) */
-	d_to_modify = d_obj;
     } else {
 	bu_vls_printf(&gedp->ged_result_str, "unsupported object type");
-	db_free_full_path(&full_obj_path);
 	return GED_ERROR;
     }
 
@@ -130,37 +127,54 @@ translate(struct ged *gedp, pointp_t const keypoint,
     if (!relative_pos_flag) {
 	bu_vls_printf(&gedp->ged_result_str, "translations to absolute"
 		      " positions are not yet supported");
-	db_free_full_path(&full_obj_path);
 	return GED_ERROR;
-    }
-
-    /* move all obj instances */
-    if (_ged_get_obj_bounds2(gedp, 1, (const char **)&d_to_modify->d_namep,
-			     &gtd, rpp_min, rpp_max) == GED_ERROR) {
-	db_free_full_path(&full_obj_path);
-	return GED_ERROR;
-    }
-    d_to_modify = gtd.gtd_obj[gtd.gtd_objpos-1];
-    if (!(d_to_modify->d_flags & RT_DIR_SOLID))
-	if (_ged_get_obj_bounds(gedp, 1, (const char **)&d_to_modify->d_namep,
-				1, rpp_min, rpp_max) == GED_ERROR) {
-	    db_free_full_path(&full_obj_path);
+    } else {
+	if (_ged_get_obj_bounds2(gedp, 1, (const char **)&d_to_modify->d_namep,
+				 &gtd, rpp_min, rpp_max) == GED_ERROR)
 	    return GED_ERROR;
+	if (!(d_to_modify->d_flags & RT_DIR_SOLID))
+	    if (_ged_get_obj_bounds(gedp, 1,
+				    (const char **)&d_to_modify->d_namep,
+				    1, rpp_min, rpp_max) == GED_ERROR)
+		return GED_ERROR;
+
+	if (path->fp_len > 0) {
+	    /* move single instance */
+	    struct rt_comb_internal *comb;
+	    union tree *leaf_to_modify;
+
+	    GED_DB_GET_INTERNAL(gedp, &intern, d_to_modify, (fastf_t *)NULL,
+				&rt_uniresource, GED_ERROR);
+	    comb = (struct rt_comb_internal *)intern.idb_ptr;
+
+	    leaf_to_modify = db_find_named_leaf(comb->tree, d_obj->d_namep);
+
+	    if (leaf_to_modify == TREE_NULL) {
+		bu_vls_printf(&gedp->ged_result_str, "leaf not found where it"
+			      " should be; this should not happen");
+		rt_db_free_internal(&intern);
+		return GED_ERROR;
+	    }
+	    MAT_DELTAS_ADD_VEC(leaf_to_modify->tr_l.tl_mat, delta); 
+	} else {
+	    /* move all instances */
+	    MAT_IDN(dmat);
+	    VSCALE(delta, delta, gedp->ged_wdbp->dbip->dbi_local2base);
+	    MAT_DELTAS_VEC(dmat, delta);
+
+	    bn_mat_inv(invXform, gtd.gtd_xform); 
+	    bn_mat_mul(tmpMat, invXform, dmat);
+	    bn_mat_mul(emat, tmpMat, gtd.gtd_xform);
+
+	    GED_DB_GET_INTERNAL(gedp, &intern, d_to_modify, emat,
+				&rt_uniresource, GED_ERROR);
 	}
-    MAT_IDN(dmat);
-    VSCALE(delta, delta, gedp->ged_wdbp->dbip->dbi_local2base);
-    MAT_DELTAS_VEC(dmat, delta);
+	RT_CK_DB_INTERNAL(&intern);
+	GED_DB_PUT_INTERNAL(gedp, d_to_modify, &intern, &rt_uniresource,
+			    GED_ERROR);
+	rt_db_free_internal(&intern);
+    }
 
-    bn_mat_inv(invXform, gtd.gtd_xform);
-    bn_mat_mul(tmpMat, invXform, dmat);
-    bn_mat_mul(emat, tmpMat, gtd.gtd_xform);
-
-    GED_DB_GET_INTERNAL(gedp, &intern, d_to_modify, emat, &rt_uniresource,
-			GED_ERROR);
-    RT_CK_DB_INTERNAL(&intern);
-    GED_DB_PUT_INTERNAL(gedp, d_to_modify, &intern, &rt_uniresource, GED_ERROR);
-
-    db_free_full_path(&full_obj_path);
     return GED_OK;
 }
 
