@@ -19,6 +19,13 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * test revolve typein
 
+
+* fix osX link line to stop mixing X libs (causes segfault on GL stuff)
+
+
+THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------------
+
 * eliminate dbi_filepath (perhaps replace with dbi_filedir) as we
   shouldn't need to search.  we were told where the database was.
 
@@ -26,12 +33,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * upgrade source repository back-end to the latest SVN 1.5 so we can
   benefit from proper merge tracking.
-
-* fix osX link line to stop mixing X libs (causes segfault on GL stuff)
-
-
-THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
--------------------------------------------------------
 
 * implement support for the other file entity types to libbu
 
