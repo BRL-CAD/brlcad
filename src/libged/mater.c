@@ -76,7 +76,6 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
     db5_standardize_avs(&avs);
-    bu_avs_print(&avs, "initial avs");
 
     /* deleting the color means we don't need to prompt for the green
      * and blue color channels, so offset our argument indices.
@@ -239,9 +238,7 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
     }
 
     db5_sync_comb_to_attr(&avs, comb);
-    bu_avs_print(&avs, "post avs");
     db5_standardize_avs(&avs);
-    bu_avs_print(&avs, "post sync");
 
     GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
 
@@ -253,7 +250,7 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_avs_free(&avs);
-    
+
     return GED_OK;
 }
 
