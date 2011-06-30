@@ -34,8 +34,6 @@
 
 
 /**
- * G E D _ R T _ O L D W R I T E
- *
  * Write out the information that RT's -M option needs to show current view.
  * Note that the model-space location of the eye is a parameter,
  * as it can be computed in different ways.
@@ -43,7 +41,7 @@
  * due to some oddball hackery in RT to determine old -vs- new format.
  */
 static void
-ged_rt_oldwrite(struct ged *gedp, FILE *fp, fastf_t *eye_model)
+savekey_rt_oldwrite(struct ged *gedp, FILE *fp, fastf_t *eye_model)
 {
     int i;
 
@@ -99,7 +97,7 @@ ged_savekey(struct ged *gedp, int argc, const char *argv[])
      */
     VSET(temp, 0.0, 0.0, 1.0);
     MAT4X3PNT(eye_model, gedp->ged_gvp->gv_view2model, temp);
-    ged_rt_oldwrite(gedp, fp, eye_model);
+    savekey_rt_oldwrite(gedp, fp, eye_model);
     (void)fclose(fp);
 
     return GED_OK;

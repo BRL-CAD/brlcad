@@ -38,19 +38,19 @@
 #include "./ged_private.h"
 
 
-static fastf_t ged_default_ps_ppi = 72.0;
-static fastf_t ged_default_ps_scale = 4.5 * 72.0 / 4096.0;
-static fastf_t ged_ps_color_sf = 1.0/255.0;
+static fastf_t ps_default_ppi = 72.0;
+static fastf_t ps_default_scale = 4.5 * 72.0 / 4096.0;
+static fastf_t ps_color_sf = 1.0/255.0;
 
 static float border_red = 0.0;
 static float border_green = 0.0;
 static float border_blue = 0.0;
 
-#define GED_TO_PS(_x) ((int)((_x)+2048))
-#define GED_TO_PS_COLOR(_c) ((_c)*ged_ps_color_sf)
+#define PS_COORD(_x) ((int)((_x)+2048))
+#define PS_COLOR(_c) ((_c)*ps_color_sf)
 
 static void
-ged_draw_ps_header(FILE *fp, char *font, char *title, char *creator, int linewidth, fastf_t scale, int xoffset, int yoffset)
+ps_draw_header(FILE *fp, char *font, char *title, char *creator, int linewidth, fastf_t scale, int xoffset, int yoffset)
 {
     fprintf(fp, "%%!PS-Adobe-1.0\n\
 %%begin(plot)\n\
@@ -99,7 +99,7 @@ NEWPG\n\
 
 
 static void
-ged_draw_ps_solid(struct ged *gedp, FILE *fp, struct solid *sp, matp_t psmat)
+ps_draw_solid(struct ged *gedp, FILE *fp, struct solid *sp, matp_t psmat)
 {
     static vect_t last;
     point_t clipmin = {-1.0, -1.0, -MAX_FASTF};
@@ -113,9 +113,9 @@ ged_draw_ps_solid(struct ged *gedp, FILE *fp, struct solid *sp, matp_t psmat)
     int useful = 0;
 
     fprintf(fp, "%f %f %f setrgbcolor\n",
-	    GED_TO_PS_COLOR(sp->s_color[0]),
-	    GED_TO_PS_COLOR(sp->s_color[1]),
-	    GED_TO_PS_COLOR(sp->s_color[2]));
+	    PS_COLOR(sp->s_color[0]),
+	    PS_COLOR(sp->s_color[1]),
+	    PS_COLOR(sp->s_color[2]));
 
     /* delta is used in clipping to insure clipped endpoint is slightly
      * in front of eye plane (perspective mode only).
@@ -212,10 +212,10 @@ ged_draw_ps_solid(struct ged *gedp, FILE *fp, struct solid *sp, matp_t psmat)
 
 	    fprintf(fp,
 		    "newpath %d %d moveto %d %d lineto stroke\n",
-		    GED_TO_PS(start[0] * 2047),
-		    GED_TO_PS(start[1] * 2047),
-		    GED_TO_PS(fin[0] * 2047),
-		    GED_TO_PS(fin[1] * 2047));
+		    PS_COORD(start[0] * 2047),
+		    PS_COORD(start[1] * 2047),
+		    PS_COORD(fin[0] * 2047),
+		    PS_COORD(fin[1] * 2047));
 	    useful = 1;
 	}
     }
@@ -223,7 +223,7 @@ ged_draw_ps_solid(struct ged *gedp, FILE *fp, struct solid *sp, matp_t psmat)
 
 
 static void
-ged_draw_ps_body(struct ged *gedp, FILE *fp)
+ps_draw_body(struct ged *gedp, FILE *fp)
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
@@ -260,7 +260,7 @@ ged_draw_ps_body(struct ged *gedp, FILE *fp)
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    ged_draw_ps_solid(gedp, fp, sp, mat);
+	    ps_draw_solid(gedp, fp, sp, mat);
 	}
 
 	gdlp = next_gdlp;
@@ -269,7 +269,7 @@ ged_draw_ps_body(struct ged *gedp, FILE *fp)
 
 
 static void
-ged_draw_ps_border(FILE *fp)
+ps_draw_border(FILE *fp)
 {
     fprintf(fp, "%f %f %f setrgbcolor\n", border_red, border_green, border_blue);
     fprintf(fp, "newpath 0 0 moveto 4096 0 lineto stroke\n");
@@ -280,7 +280,7 @@ ged_draw_ps_border(FILE *fp)
 
 
 static void
-ged_draw_ps_footer(FILE *fp)
+ps_draw_footer(FILE *fp)
 {
     fputs("% showpage	% uncomment to use raw file\n", fp);
     fputs("%end(plot)\n", fp);
@@ -294,7 +294,7 @@ ged_ps(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls creator;
     struct bu_vls font;
     struct bu_vls title;
-    fastf_t scale = ged_default_ps_scale;
+    fastf_t scale = ps_default_scale;
     int linewidth = 4;
     int xoffset = 0;
     int yoffset = 0;
@@ -361,9 +361,9 @@ ged_ps(struct ged *gedp, int argc, const char *argv[])
 		else if (b > 255)
 		    b = 255;
 
-		border_red = GED_TO_PS_COLOR(r);
-		border_green = GED_TO_PS_COLOR(g);
-		border_blue = GED_TO_PS_COLOR(b);
+		border_red = PS_COLOR(r);
+		border_green = PS_COLOR(g);
+		border_blue = PS_COLOR(b);
 
 		break;
 	    case 'f':
@@ -382,7 +382,7 @@ ged_ps(struct ged *gedp, int argc, const char *argv[])
 		    goto bad;
 		}
 
-		scale = tmp_f * ged_default_ps_ppi / 4096.0;
+		scale = tmp_f * ps_default_ppi / 4096.0;
 
 		break;
 	    case 't':
@@ -395,7 +395,7 @@ ged_ps(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_printf(&gedp->ged_result_str, "%s: bad x offset - %s", argv[0], bu_optarg);
 		    goto bad;
 		}
-		xoffset = (int)(tmp_f * ged_default_ps_ppi);
+		xoffset = (int)(tmp_f * ps_default_ppi);
 
 		break;
 	    case 'y':
@@ -403,7 +403,7 @@ ged_ps(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_printf(&gedp->ged_result_str, "%s: bad y offset - %s", argv[0], bu_optarg);
 		    goto bad;
 		}
-		yoffset = (int)(tmp_f * ged_default_ps_ppi);
+		yoffset = (int)(tmp_f * ps_default_ppi);
 
 		break;
 	    default:
@@ -422,11 +422,11 @@ ged_ps(struct ged *gedp, int argc, const char *argv[])
 	goto bad;
     }
 
-    ged_draw_ps_header(fp, bu_vls_addr(&font), bu_vls_addr(&title), bu_vls_addr(&creator), linewidth, scale, xoffset, yoffset);
+    ps_draw_header(fp, bu_vls_addr(&font), bu_vls_addr(&title), bu_vls_addr(&creator), linewidth, scale, xoffset, yoffset);
     if (border)
-	ged_draw_ps_border(fp);
-    ged_draw_ps_body(gedp, fp);
-    ged_draw_ps_footer(fp);
+	ps_draw_border(fp);
+    ps_draw_body(gedp, fp);
+    ps_draw_footer(fp);
 
     fclose(fp);
 

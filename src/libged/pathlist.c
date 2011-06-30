@@ -37,7 +37,7 @@ static int pathListNoLeaf = 0;
 
 
 static union tree *
-ged_pathlist_leaf_func(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+pathlist_leaf_func(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
 {
     struct ged *gedp = (struct ged *)client_data;
     char *str;
@@ -97,7 +97,7 @@ ged_pathlist(struct ged *gedp, int argc, const char *argv[])
 
     if (db_walk_tree(gedp->ged_wdbp->dbip, argc-1, (const char **)argv+1, 1,
 		     &gedp->ged_wdbp->wdb_initial_tree_state,
-		     0, 0, ged_pathlist_leaf_func, (genptr_t)gedp) < 0) {
+		     0, 0, pathlist_leaf_func, (genptr_t)gedp) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "ged_pathlist: db_walk_tree() error");
 	return GED_ERROR;
     }

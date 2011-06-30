@@ -37,7 +37,7 @@
 
 
 static void
-ged_vls_col_item(struct bu_vls *str,
+pr_vls_col_item(struct bu_vls *str,
 		 char *cp,
 		 int *ccp,		/* column count pointer */
 		 int *clp)		/* column length pointer */
@@ -66,7 +66,7 @@ ged_vls_col_item(struct bu_vls *str,
 
 
 static void
-ged_vls_col_eol(struct bu_vls *str,
+pr_vls_col_eol(struct bu_vls *str,
 		int *ccp,
 		int *clp)
 {
@@ -78,7 +78,7 @@ ged_vls_col_eol(struct bu_vls *str,
 
 
 static void
-ged_pr_mater(struct ged *gedp,
+pr_mater(struct ged *gedp,
 	     const struct mater *mp,
 	     int *ccp,
 	     int *clp)
@@ -86,10 +86,10 @@ ged_pr_mater(struct ged *gedp,
     char buf[128];
 
     (void)sprintf(buf, "%5d..%d", mp->mt_low, mp->mt_high);
-    ged_vls_col_item(&gedp->ged_result_str, buf, ccp, clp);
+    pr_vls_col_item(&gedp->ged_result_str, buf, ccp, clp);
     (void)sprintf(buf, "%3d, %3d, %3d", mp->mt_r, mp->mt_g, mp->mt_b);
-    ged_vls_col_item(&gedp->ged_result_str, buf, ccp, clp);
-    ged_vls_col_eol(&gedp->ged_result_str, ccp, clp);
+    pr_vls_col_item(&gedp->ged_result_str, buf, ccp, clp);
+    pr_vls_col_eol(&gedp->ged_result_str, ccp, clp);
 }
 
 
@@ -118,7 +118,7 @@ ged_prcolor(struct ged *gedp, int argc, const char *argv[])
     }
 
     for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw)
-	ged_pr_mater(gedp, mp, &col_count, &col_len);
+	pr_mater(gedp, mp, &col_count, &col_len);
 
     return GED_OK;
 }

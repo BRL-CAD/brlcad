@@ -30,14 +30,12 @@
 
 
 /*
- * D G O _ P R _ S C H A I N
- *
  * Given a pointer to a member of the circularly linked list of solids
  * (typically the head), chase the list and print out the information
  * about each solid structure.
  */
 static void
-ged_print_schain(struct ged *gedp, int lvl)
+print_schain(struct ged *gedp, int lvl)
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
@@ -131,7 +129,7 @@ ged_print_schain(struct ged *gedp, int lvl)
  * for each structure.
  */
 static void
-ged_print_schain_vlcmds(struct ged *gedp)
+print_schain_vlcmds(struct ged *gedp)
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
@@ -205,9 +203,9 @@ ged_report(struct ged *gedp, int argc, const char *argv[])
     lvl = atoi(argv[1]);
 
     if (lvl <= 3)
-	ged_print_schain(gedp, lvl);
+	print_schain(gedp, lvl);
     else
-	ged_print_schain_vlcmds(gedp);
+	print_schain_vlcmds(gedp);
 
     return GED_OK;
 }

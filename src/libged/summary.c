@@ -34,14 +34,12 @@
 
 
 /*
- * G E D _ D I R _ S U M M A R Y
- *
  * Summarize the contents of the directory by categories
  * (solid, comb, region).  If flag is != 0, it is interpreted
  * as a request to print all the names in that category (eg, RT_DIR_SOLID).
  */
 static void
-ged_dir_summary(struct ged *gedp,
+summary_dir(struct ged *gedp,
 		int flag)
 {
     struct directory *dp;
@@ -105,7 +103,7 @@ ged_summary(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
     if (argc == 1) {
-	ged_dir_summary(gedp, 0);
+	summary_dir(gedp, 0);
 	return GED_OK;
     }
 
@@ -132,7 +130,7 @@ ged_summary(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    ged_dir_summary(gedp, flags);
+    summary_dir(gedp, flags);
     return GED_OK;
 }
 

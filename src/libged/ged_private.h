@@ -256,21 +256,6 @@ extern void _ged_setup_rt(struct ged *gedp,
 extern char _ged_tmpfil[MAXPATHLEN];
 
 
-extern int _ged_make_tree(struct ged *gedp,
-			  struct rt_comb_internal *comb,
-			  struct directory *dp,
-			  size_t node_count,
-			  const char *old_name,
-			  const char *new_name,
-			  struct rt_tree_array *rt_tree_array,
-			  int tree_index);
-extern const char *_ged_save_comb(struct ged *gedp,
-				  struct directory *dpold);
-extern void _ged_restore_comb(struct ged *gedp,
-			      struct directory *dp,
-			      const char *name);
-extern void _ged_print_matrix(FILE *fp, matp_t matrix);
-
 /* defined in rt.c */
 extern void _ged_rt_set_eye_model(struct ged *gedp,
 				  vect_t eye_model);

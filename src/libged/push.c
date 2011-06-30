@@ -35,30 +35,57 @@
 #include "./ged_private.h"
 
 
-#define GED_MAGIC_PUSH_ID 0x50495323
-#define FOR_ALL_GED_PUSH_SOLIDS(_p, _phead) \
+#define PUSH_MAGIC_ID 0x50495323
+#define FOR_ALL_PUSH_SOLIDS(_p, _phead) \
     for (_p=_phead.forw; _p!=&_phead; _p=_p->forw)
 
 /** structure to hold all solids that have been pushed. */
-struct ged_push_id {
+struct push_id {
     long magic;
-    struct ged_push_id *forw, *back;
+    struct push_id *forw, *back;
     struct directory *pi_dir;
     mat_t pi_mat;
 };
 
 
-struct ged_push_data {
+struct push_data {
     struct ged *gedp;
-    struct ged_push_id pi_head;
+    struct push_id pi_head;
     int push_error;
 };
 
 
 static void
-ged_identitize(struct directory *dp,
-	       struct db_i *dbip,
-	       struct bu_vls *msg);
+do_identitize(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t UNUSED(user_ptr2), genptr_t UNUSED(user_ptr3));
+
+
+/**
+ * Traverses an objects paths, setting all member matrices == identity
+ */
+static void
+identitize(struct directory *dp,
+	   struct db_i *dbip,
+	   struct bu_vls *msg)
+{
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
+
+    if (dp->d_flags & RT_DIR_SOLID)
+	return;
+    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	bu_vls_printf(msg, "Database read error, aborting\n");
+	return;
+    }
+    comb = (struct rt_comb_internal *)intern.idb_ptr;
+    if (comb->tree) {
+	db_tree_funcleaf(dbip, comb, comb->tree, do_identitize,
+			 (genptr_t)msg, (genptr_t)NULL, (genptr_t)NULL);
+	if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+	    bu_vls_printf(msg, "Cannot write modified combination (%s) to database\n", dp->d_namep);
+	    return;
+	}
+    }
+}
 
 
 /**
@@ -73,15 +100,15 @@ ged_identitize(struct directory *dp,
  * enough to do hear with out them.
  */
 static union tree *
-ged_push_leaf(struct db_tree_state *tsp,
-	      const struct db_full_path *pathp,
-	      struct rt_db_internal *ip,
-	      genptr_t client_data)
+push_leaf(struct db_tree_state *tsp,
+	  const struct db_full_path *pathp,
+	  struct rt_db_internal *ip,
+	  genptr_t client_data)
 {
     union tree *curtree;
     struct directory *dp;
-    struct ged_push_id *gpip;
-    struct ged_push_data *gpdp = (struct ged_push_data *)client_data;
+    struct push_id *gpip;
+    struct push_data *gpdp = (struct push_data *)client_data;
 
     RT_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
@@ -92,7 +119,7 @@ ged_push_leaf(struct db_tree_state *tsp,
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
 
-	bu_vls_printf(&gpdp->gedp->ged_result_str, "ged_push_leaf(%s) path='%s'\n", ip->idb_meth->ft_name, sofar);
+	bu_vls_printf(&gpdp->gedp->ged_result_str, "push_leaf(%s) path='%s'\n", ip->idb_meth->ft_name, sofar);
 	bu_free((genptr_t)sofar, "path string");
     }
 /*
@@ -106,13 +133,13 @@ ged_push_leaf(struct db_tree_state *tsp,
  * way to check and this method will always work.)
  */
     bu_semaphore_acquire(RT_SEM_WORKER);
-    FOR_ALL_GED_PUSH_SOLIDS(gpip, gpdp->pi_head) {
+    FOR_ALL_PUSH_SOLIDS(gpip, gpdp->pi_head) {
 	if (gpip->pi_dir == dp) {
 	    if (!bn_mat_is_equal(gpip->pi_mat,
 				 tsp->ts_mat, tsp->ts_tol)) {
 		char *sofar = db_path_to_string(pathp);
 
-		bu_vls_printf(&gpdp->gedp->ged_result_str, "ged_push_leaf: matrix mismatch between '%s' and prior reference.\n", sofar);
+		bu_vls_printf(&gpdp->gedp->ged_result_str, "push_leaf: matrix mismatch between '%s' and prior reference.\n", sofar);
 		bu_free((genptr_t)sofar, "path string");
 		gpdp->push_error = 1;
 	    }
@@ -126,8 +153,8 @@ ged_push_leaf(struct db_tree_state *tsp,
 /*
  * This is the first time we have seen this solid.
  */
-    gpip = (struct ged_push_id *) bu_malloc(sizeof(struct ged_push_id), "Push ident");
-    gpip->magic = GED_MAGIC_PUSH_ID;
+    gpip = (struct push_id *) bu_malloc(sizeof(struct push_id), "Push ident");
+    gpip->magic = PUSH_MAGIC_ID;
     gpip->pi_dir = dp;
     MAT_COPY(gpip->pi_mat, tsp->ts_mat);
     gpip->back = gpdp->pi_head.back;
@@ -146,7 +173,7 @@ ged_push_leaf(struct db_tree_state *tsp,
  * A null routine that does nothing.
  */
 static union tree *
-ged_push_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *UNUSED(curtree), genptr_t UNUSED(client_data))
+push_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *UNUSED(curtree), genptr_t UNUSED(client_data))
 {
     return curtree;
 }
@@ -155,8 +182,8 @@ ged_push_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path
 int
 ged_push(struct ged *gedp, int argc, const char *argv[])
 {
-    struct ged_push_data *gpdp;
-    struct ged_push_id *gpip;
+    struct push_data *gpdp;
+    struct push_id *gpip;
     struct rt_db_internal es_int;
     int i;
     int ncpu;
@@ -178,10 +205,10 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    BU_GETSTRUCT(gpdp, ged_push_data);
+    BU_GETSTRUCT(gpdp, push_data);
     gpdp->gedp = gedp;
     gpdp->push_error = 0;
-    gpdp->pi_head.magic = GED_MAGIC_PUSH_ID;
+    gpdp->pi_head.magic = PUSH_MAGIC_ID;
     gpdp->pi_head.forw = gpdp->pi_head.back = &gpdp->pi_head;
     gpdp->pi_head.pi_dir = (struct directory *) 0;
 
@@ -221,8 +248,8 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 		     ncpu,
 		     &gedp->ged_wdbp->wdb_initial_tree_state,
 		     0,				/* take all regions */
-		     ged_push_region_end,
-		     ged_push_leaf, (genptr_t)gpdp);
+		     push_region_end,
+		     push_leaf, (genptr_t)gpdp);
 
     /*
      * If there was any error, then just free up the solid
@@ -244,7 +271,7 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
  * We've built the push solid list, now all we need to do is apply
  * the matrix we've stored for each solid.
  */
-    FOR_ALL_GED_PUSH_SOLIDS(gpip, gpdp->pi_head) {
+    FOR_ALL_PUSH_SOLIDS(gpip, gpdp->pi_head) {
 	if (rt_db_get_internal(&es_int, gpip->pi_dir, gedp->ged_wdbp->dbip, gpip->pi_mat, &rt_uniresource) < 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "ged_push: Read error fetching '%s'\n", gpip->pi_dir->d_namep);
 	    gpdp->push_error = -1;
@@ -272,7 +299,7 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 	struct directory *db;
 	db = db_lookup(gedp->ged_wdbp->dbip, *argv++, 0);
 	if (db)
-	    ged_identitize(db, gedp->ged_wdbp->dbip, &gedp->ged_result_str);
+	    identitize(db, gedp->ged_wdbp->dbip, &gedp->ged_result_str);
 	--argc;
     }
 
@@ -295,7 +322,7 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 
 
 static void
-ged_do_identitize(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t UNUSED(user_ptr2), genptr_t UNUSED(user_ptr3))
+do_identitize(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t UNUSED(user_ptr2), genptr_t UNUSED(user_ptr3))
 {
     struct directory *dp;
     struct bu_vls *msg = (struct bu_vls *)user_ptr1;
@@ -310,39 +337,7 @@ ged_do_identitize(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), unio
     if ((dp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 	return;
 
-    ged_identitize(dp, dbip, msg);
-}
-
-
-/*
- * W D B _ I D E N T I T I Z E ()
- *
- * Traverses an objects paths, setting all member matrices == identity
- *
- */
-static void
-ged_identitize(struct directory *dp,
-	       struct db_i *dbip,
-	       struct bu_vls *msg)
-{
-    struct rt_db_internal intern;
-    struct rt_comb_internal *comb;
-
-    if (dp->d_flags & RT_DIR_SOLID)
-	return;
-    if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	bu_vls_printf(msg, "Database read error, aborting\n");
-	return;
-    }
-    comb = (struct rt_comb_internal *)intern.idb_ptr;
-    if (comb->tree) {
-	db_tree_funcleaf(dbip, comb, comb->tree, ged_do_identitize,
-			 (genptr_t)msg, (genptr_t)NULL, (genptr_t)NULL);
-	if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
-	    bu_vls_printf(msg, "Cannot write modified combination (%s) to database\n", dp->d_namep);
-	    return;
-	}
-    }
+    identitize(dp, dbip, msg);
 }
 
 

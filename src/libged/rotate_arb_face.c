@@ -34,7 +34,7 @@
 #include "./ged_private.h"
 
 
-static const short int ged_arb_vertices[5][24] = {
+static const short int arb_vertices[5][24] = {
     { 1, 2, 3, 0, 1, 2, 4, 0, 2, 3, 4, 0, 1, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0 },	/* arb4 */
     { 1, 2, 3, 4, 1, 2, 5, 0, 2, 3, 5, 0, 3, 4, 5, 0, 1, 4, 5, 0, 0, 0, 0, 0 },	/* arb5 */
     { 1, 2, 3, 4, 2, 3, 6, 5, 1, 5, 6, 4, 1, 2, 5, 0, 3, 4, 6, 0, 0, 0, 0, 0 },	/* arb6 */
@@ -168,7 +168,7 @@ ged_rotate_arb_face(struct ged *gedp, int argc, const char *argv[])
 	/* check if point 5 is in the face */
 	pnt5 = 0;
 	for (i=0; i<4; i++) {
-	    if (ged_arb_vertices[arb_type-4][face*4+i]==5)
+	    if (arb_vertices[arb_type-4][face*4+i]==5)
 		pnt5=1;
 	}
 

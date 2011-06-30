@@ -47,7 +47,6 @@ static unsigned char bg_red = 255;
 static unsigned char bg_green = 255;
 static unsigned char bg_blue = 255;
 
-#define GED_TO_PNG(_x) ((int)((_x)+half_size))
 
 struct coord {
     short x;
@@ -56,12 +55,12 @@ struct coord {
 
 
 struct stroke {
-    struct coord pixel;		/* starting scan, nib */
-    short xsign;		/* 0 or +1 */
-    short ysign;		/* -1, 0, or +1 */
+    struct coord pixel;	/* starting scan, nib */
+    short xsign;	/* 0 or +1 */
+    short ysign;	/* -1, 0, or +1 */
     int ymajor; 	/* true iff Y is major dir. */
-    short major;		/* major dir delta (nonneg) */
-    short minor;		/* minor dir delta (nonneg) */
+    short major;	/* major dir delta (nonneg) */
+    short minor;	/* minor dir delta (nonneg) */
     short e;		/* DDA error accumulator */
     short de;		/* increment for `e' */
 };
@@ -73,7 +72,7 @@ struct stroke {
  * a zero-length stroke.
  */
 static void
-ged_raster(unsigned char **image, struct stroke *vp, unsigned char *color)
+raster(unsigned char **image, struct stroke *vp, unsigned char *color)
 {
     size_t dy;		/* raster within active band */
 
@@ -99,7 +98,7 @@ ged_raster(unsigned char **image, struct stroke *vp, unsigned char *color)
 	    /* advance major only */
 	    if (vp->ymajor)	/* Y is major dir */
 		++dy;
-	    else			/* X is major dir */
+	    else		/* X is major dir */
 		vp->pixel.x += vp->xsign;
 	    vp->e -= vp->minor;
 	}
@@ -108,7 +107,7 @@ ged_raster(unsigned char **image, struct stroke *vp, unsigned char *color)
 
 
 static void
-ged_draw_stroke(unsigned char **image, struct coord *coord1, struct coord *coord2, unsigned char *color)
+draw_stroke(unsigned char **image, struct coord *coord1, struct coord *coord2, unsigned char *color)
 {
     struct stroke cur_stroke;
     struct stroke *vp = &cur_stroke;
@@ -144,12 +143,12 @@ ged_draw_stroke(unsigned char **image, struct coord *coord1, struct coord *coord
     vp->e = vp->major / 2 - vp->minor;	/* initial DDA error */
     vp->de = vp->major - vp->minor;
 
-    ged_raster(image, vp, color);
+    raster(image, vp, color);
 }
 
 
 static void
-ged_draw_png_solid(struct ged *gedp, unsigned char **image, struct solid *sp, matp_t psmat)
+draw_png_solid(struct ged *gedp, unsigned char **image, struct solid *sp, matp_t psmat)
 {
     static vect_t last;
     point_t clipmin = {-1.0, -1.0, -MAX_FASTF};
@@ -261,7 +260,7 @@ ged_draw_png_solid(struct ged *gedp, unsigned char **image, struct solid *sp, ma
 	    coord1.y = start[1] * half_size + half_size;
 	    coord2.x = fin[0] * half_size + half_size;
 	    coord2.y = fin[1] * half_size + half_size;
-	    ged_draw_stroke(image, &coord1, &coord2, sp->s_color);
+	    draw_stroke(image, &coord1, &coord2, sp->s_color);
 
 	    useful = 1;
 	}
@@ -270,7 +269,7 @@ ged_draw_png_solid(struct ged *gedp, unsigned char **image, struct solid *sp, ma
 
 
 static void
-ged_draw_png_body(struct ged *gedp, unsigned char **image)
+draw_png_body(struct ged *gedp, unsigned char **image)
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
@@ -307,7 +306,7 @@ ged_draw_png_body(struct ged *gedp, unsigned char **image)
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    ged_draw_png_solid(gedp, image, sp, mat);
+	    draw_png_solid(gedp, image, sp, mat);
 	}
 
 	gdlp = next_gdlp;
@@ -316,7 +315,7 @@ ged_draw_png_body(struct ged *gedp, unsigned char **image)
 
 
 static int
-ged_draw_png(struct ged *gedp, FILE *fp)
+draw_png(struct ged *gedp, FILE *fp)
 {
     long i;
     png_structp png_p;
@@ -325,13 +324,13 @@ ged_draw_png(struct ged *gedp, FILE *fp)
 #if 1
     size_t num_bytes_per_row = (size+1) * 3;
     size_t num_bytes = num_bytes_per_row * (size+1);
-    unsigned char **image = (unsigned char **)bu_malloc(sizeof(unsigned char *) * (size+1), "ged_draw_png, image");
+    unsigned char **image = (unsigned char **)bu_malloc(sizeof(unsigned char *) * (size+1), "draw_png, image");
 #else
     size_t num_bytes_per_row = size * 3;
     size_t num_bytes = num_bytes_per_row * size;
-    unsigned char **image = (unsigned char **)bu_malloc(sizeof(unsigned char *) * size, "ged_draw_png, image");
+    unsigned char **image = (unsigned char **)bu_malloc(sizeof(unsigned char *) * size, "draw_png, image");
 #endif
-    unsigned char *bytes = (unsigned char *)bu_malloc(num_bytes, "ged_draw_png, bytes");
+    unsigned char *bytes = (unsigned char *)bu_malloc(num_bytes, "draw_png, bytes");
 
     /* Initialize bytes using the background color */
     if (bg_red == bg_green && bg_red == bg_blue)
@@ -353,8 +352,8 @@ ged_draw_png(struct ged *gedp, FILE *fp)
     info_p = png_create_info_struct(png_p);
     if (!info_p) {
 	bu_vls_printf(&gedp->ged_result_str, "Could not create PNG info structure\n");
-	bu_free((void *)image, "ged_draw_png, image");
-	bu_free((void *)bytes, "ged_draw_png, bytes");
+	bu_free((void *)image, "draw_png, image");
+	bu_free((void *)bytes, "draw_png, bytes");
 
 	return GED_ERROR;
     }
@@ -376,14 +375,14 @@ ged_draw_png(struct ged *gedp, FILE *fp)
 	image[i] = (unsigned char *)(bytes + ((size-i) * num_bytes_per_row));
     }
 
-    ged_draw_png_body(gedp, image);
+    draw_png_body(gedp, image);
 
     /* Write out pixels */
     png_write_image(png_p, image);
     png_write_end(png_p, NULL);
 
-    bu_free((void *)image, "ged_draw_png, image");
-    bu_free((void *)bytes, "ged_draw_png, bytes");
+    bu_free((void *)image, "draw_png, image");
+    bu_free((void *)bytes, "draw_png, bytes");
 
     return GED_OK;
 }
@@ -474,7 +473,7 @@ ged_png(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    ret = ged_draw_png(gedp, fp);
+    ret = draw_png(gedp, fp);
     fclose(fp);
 
     return ret;

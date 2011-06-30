@@ -40,7 +40,7 @@
  * Angles are in radians.
  */
 static void
-ged_usejoy(struct ged *gedp, double xangle, double yangle, double zangle)
+usejoy(struct ged *gedp, double xangle, double yangle, double zangle)
 {
     mat_t newrot;		/* NEW rot matrix, from joystick */
 
@@ -113,7 +113,7 @@ ged_qvrot(struct ged *gedp, int argc, const char *argv[])
     el = atan2(dz, sqrt(dx * dx + dy * dy));
 
     bn_mat_angles(gedp->ged_gvp->gv_rotation, 270.0 + el * bn_radtodeg, 0.0, 270.0 - az * bn_radtodeg);
-    ged_usejoy(gedp, 0.0, 0.0, theta*bn_degtorad);
+    usejoy(gedp, 0.0, 0.0, theta*bn_degtorad);
     ged_view_update(gedp->ged_gvp);
 
     return GED_OK;

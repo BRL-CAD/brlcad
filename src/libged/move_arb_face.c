@@ -35,28 +35,28 @@
 #include "./ged_private.h"
 
 
-/* The ged_arbX_faces arrays are used for relative face movement. */
-static const int ged_arb8_faces_first_vertex[6] = {
+/* The arbX_faces arrays are used for relative face movement. */
+static const int arb8_faces_first_vertex[6] = {
     0, 4, 0, 1, 0, 2
 };
 
 
-static const int ged_arb7_faces_first_vertex[6] = {
+static const int arb7_faces_first_vertex[6] = {
     0, 0, 1, 1, 1
 };
 
 
-static const int ged_arb6_faces_first_vertex[5] = {
+static const int arb6_faces_first_vertex[5] = {
     0, 1, 0, 0, 2
 };
 
 
-static const int ged_arb5_faces_first_vertex[5] = {
+static const int arb5_faces_first_vertex[5] = {
     0, 0, 1, 2, 0
 };
 
 
-static const int ged_arb4_faces_first_vertex[4] = {
+static const int arb4_faces_first_vertex[4] = {
     0, 0, 1, 0
 };
 
@@ -172,19 +172,19 @@ ged_move_arb_face(struct ged *gedp, int argc, const char *argv[])
 
 	switch (arb_type) {
 	    case ARB4:
-		arb_pt_index = ged_arb4_faces_first_vertex[face];
+		arb_pt_index = arb4_faces_first_vertex[face];
 		break;
 	    case ARB5:
-		arb_pt_index = ged_arb5_faces_first_vertex[face];
+		arb_pt_index = arb5_faces_first_vertex[face];
 		break;
 	    case ARB6:
-		arb_pt_index = ged_arb6_faces_first_vertex[face];
+		arb_pt_index = arb6_faces_first_vertex[face];
 		break;
 	    case ARB7:
-		arb_pt_index = ged_arb7_faces_first_vertex[face];
+		arb_pt_index = arb7_faces_first_vertex[face];
 		break;
 	    case ARB8:
-		arb_pt_index = ged_arb8_faces_first_vertex[face];
+		arb_pt_index = arb8_faces_first_vertex[face];
 		break;
 	    default:
 		bu_vls_printf(&gedp->ged_result_str, "unrecognized arb type");

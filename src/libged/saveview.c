@@ -39,7 +39,7 @@
  * Return basename of path, removing leading slashes and trailing suffix.
  */
 static char *
-ged_basename_without_suffix(const char *p1, const char *suff)
+basename_without_suffix(const char *p1, const char *suff)
 {
     char *p2, *p3;
     static char buf[128];
@@ -141,7 +141,7 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    base = ged_basename_without_suffix(argv[1], ".sh");
+    base = basename_without_suffix(argv[1], ".sh");
     if (outpix[0] == '\0') {
 	snprintf(outpix, 255, "%s.pix", base);
     }

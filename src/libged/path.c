@@ -35,10 +35,10 @@
 
 
 /*
- * A recursive function that is only called by _ged_path_validate
+ * A recursive function that is only called by ged_path_validate()
  */
 HIDDEN int
-_ged_path_validate_recurse(struct ged *gedp, struct db_full_path *path,
+path_validate_recurse(struct ged *gedp, struct db_full_path *path,
 			   struct directory *roots_child)
 {
     struct rt_db_internal intern;
@@ -62,7 +62,7 @@ _ged_path_validate_recurse(struct ged *gedp, struct db_full_path *path,
 	    /* remove root dir */
 	    ++(path->fp_names);
 	    --(path->fp_len);
-	    _ged_path_validate_recurse(gedp, path, DB_FULL_PATH_GET(path, 1));
+	    path_validate_recurse(gedp, path, DB_FULL_PATH_GET(path, 1));
 	} else
 	    return GED_ERROR; /* non-combinations shouldn't have children */
     } else {
@@ -74,8 +74,6 @@ _ged_path_validate_recurse(struct ged *gedp, struct db_full_path *path,
 
 
 /**
- * _ G E D _ P A T H _ V A L I D A T E
- *
  * Checks that each directory in the supplied path actually has the
  * subdirectories that are implied by the path. Returns GED_OK if
  * true, or GED_ERROR if false.
@@ -96,7 +94,7 @@ ged_path_validate(struct ged *gedp, struct db_full_path * const path)
     if (!(root->d_flags & RT_DIR_COMB))
 	return GED_ERROR; /* has children, but isn't a combination */
 
-    return _ged_path_validate_recurse(gedp, path, DB_FULL_PATH_GET(path, 1));
+    return path_validate_recurse(gedp, path, DB_FULL_PATH_GET(path, 1));
 }
 
 

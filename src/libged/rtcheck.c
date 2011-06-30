@@ -65,7 +65,7 @@ struct ged_rtcheck {
     Tcl_Interp *interp;
 };
 
-struct ged_rtcheck_output {
+struct rtcheck_output {
 #ifdef _WIN32
     HANDLE fd;
     Tcl_Channel chan;
@@ -77,8 +77,195 @@ struct ged_rtcheck_output {
 };
 
 
-static void ged_rtcheck_vector_handler(ClientData clientData, int mask);
-static void ged_rtcheck_output_handler(ClientData clientData, int mask);
+void
+_ged_wait_status(struct bu_vls *logstr,
+		 int status)
+{
+    int sig = status & 0x7f;
+    int core = status & 0x80;
+    int ret = status >> 8;
+
+    if (status == 0) {
+	bu_vls_printf(logstr, "Normal exit\n");
+	return;
+    }
+
+    bu_vls_printf(logstr, "Abnormal exit x%x", status);
+
+    if (core)
+	bu_vls_printf(logstr, ", core dumped");
+
+    if (sig)
+	bu_vls_printf(logstr, ", terminating signal = %d", sig);
+    else
+	bu_vls_printf(logstr, ", return (exit) code = %d", ret);
+}
+
+
+#ifndef _WIN32
+static void
+rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
+{
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    int value;
+    struct solid *sp;
+    struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
+
+    /* Get vector output from rtcheck */
+    if ((value = getc(rtcp->fp)) == EOF) {
+	int retcode;
+	int rpid;
+
+	Tcl_DeleteFileHandler(rtcp->fd);
+	fclose(rtcp->fp);
+
+	gdlp = BU_LIST_NEXT(ged_display_list, &rtcp->gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, &rtcp->gedp->ged_gdp->gd_headDisplay)) {
+	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
+		sp->s_flag = DOWN;
+
+	    gdlp = next_gdlp;
+	}
+
+	/* Add overlay */
+	_ged_cvt_vlblock_to_solids(rtcp->gedp, rtcp->vbp, "OVERLAPS", 0);
+	rt_vlblock_free(rtcp->vbp);
+
+	/* wait for the forked process */
+	while ((rpid = wait(&retcode)) != rtcp->pid && rpid != -1) {
+
+	    _ged_wait_status(&rtcp->gedp->ged_result_str, retcode);
+	}
+
+	/* free rtcp */
+	bu_free((genptr_t)rtcp, "rtcheck_vector_handler: rtcp");
+
+	return;
+    }
+
+    (void)rt_process_uplot_value(&rtcp->vhead,
+				 rtcp->vbp,
+				 rtcp->fp,
+				 value,
+				 rtcp->csize,
+				 rtcp->gedp->ged_gdp->gd_uplotOutputMode);
+}
+
+static void
+rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
+{
+    int count;
+    char line[RT_MAXLINE] = {0};
+    struct rtcheck_output *rtcop = (struct rtcheck_output *)clientData;
+
+    /* Get textual output from rtcheck */
+    count = read((int)rtcop->fd, line, RT_MAXLINE);
+    if (count <= 0) {
+	if (count < 0) {
+	    perror("READ ERROR");
+	}
+	Tcl_DeleteFileHandler(rtcop->fd);
+	close(rtcop->fd);
+
+	if (rtcop->gedp->ged_gdp->gd_rtCmdNotify != (void (*)())0)
+	    rtcop->gedp->ged_gdp->gd_rtCmdNotify(0);
+
+	bu_free((genptr_t)rtcop, "rtcheck_output_handler: rtcop");
+	return;
+    }
+
+    line[count] = '\0';
+    if (rtcop->gedp->ged_output_handler != (void (*)())0)
+	rtcop->gedp->ged_output_handler(rtcop->gedp, line);
+    else
+	bu_vls_printf(&rtcop->gedp->ged_result_str, "%s", line);
+}
+
+#else
+
+void
+rtcheck_vector_handler(ClientData clientData, int mask)
+{
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    int value;
+    struct solid *sp;
+    struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
+
+    /* Get vector output from rtcheck */
+    if (feof(rtcp->fp)) {
+	Tcl_DeleteChannelHandler(rtcp->chan,
+				 rtcheck_vector_handler,
+				 (ClientData)rtcp);
+	Tcl_Close(rtcp->interp, rtcp->chan);
+
+	gdlp = BU_LIST_NEXT(ged_display_list, &rtcp->gedp->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, &rtcp->gedp->ged_gdp->gd_headDisplay)) {
+	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+
+	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
+		sp->s_flag = DOWN;
+
+	    gdlp = next_gdlp;
+	}
+
+	/* Add overlay */
+	_ged_cvt_vlblock_to_solids(rtcp->gedp, rtcp->vbp, "OVERLAPS", 0);
+	rt_vlblock_free(rtcp->vbp);
+
+	/* wait for the forked process */
+	WaitForSingleObject( rtcp->hProcess, INFINITE );
+
+	/* free rtcp */
+	bu_free((genptr_t)rtcp, "rtcheck_vector_handler: rtcp");
+
+	return;
+    }
+
+    value = getc(rtcp->fp);
+    (void)rt_process_uplot_value(&rtcp->vhead,
+				 rtcp->vbp,
+				 rtcp->fp,
+				 value,
+				 rtcp->csize,
+				 rtcp->gedp->ged_gdp->gd_uplotOutputMode);
+}
+
+void
+rtcheck_output_handler(ClientData clientData, int mask)
+{
+    DWORD count;
+    char line[RT_MAXLINE];
+    struct rtcheck_output *rtcop = (struct rtcheck_output *)clientData;
+
+    /* Get textual output from rtcheck */
+    if (Tcl_Eof(rtcop->chan) ||
+	(!ReadFile(rtcop->fd, line, RT_MAXLINE, &count, 0))) {
+
+	Tcl_DeleteChannelHandler(rtcop->chan,
+				 rtcheck_output_handler,
+				 (ClientData)rtcop);
+	Tcl_Close(rtcop->interp, rtcop->chan);
+
+	if (rtcop->gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
+	    rtcop->gedp->ged_gdp->gd_rtCmdNotify(0);
+
+	bu_free((genptr_t)rtcop, "rtcheck_output_handler: rtcop");
+
+	return;
+    }
+
+    line[count] = '\0';
+    if (rtcop->gedp->ged_output_handler != (void (*)())0)
+	rtcop->gedp->ged_output_handler(rtcop->gedp, line);
+    else
+	bu_vls_printf(&rtcop->gedp->ged_result_str, "%s", line);
+}
+
+#endif
 
 
 /*
@@ -111,7 +298,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 #endif
     FILE *fp;
     struct ged_rtcheck *rtcp;
-    struct ged_rtcheck_output *rtcop;
+    struct rtcheck_output *rtcop;
     vect_t eye_model;
 
     const char *bin;
@@ -242,15 +429,15 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 
     /* file handlers */
     Tcl_CreateFileHandler(i_pipe[0], TCL_READABLE,
-			  ged_rtcheck_vector_handler, (ClientData)rtcp);
+			  rtcheck_vector_handler, (ClientData)rtcp);
 
-    BU_GETSTRUCT(rtcop, ged_rtcheck_output);
+    BU_GETSTRUCT(rtcop, rtcheck_output);
     rtcop->fd = e_pipe[0];
     rtcop->gedp = gedp;
     rtcop->interp = brlcad_interp;
     Tcl_CreateFileHandler(rtcop->fd,
 			  TCL_READABLE,
-			  ged_rtcheck_output_handler,
+			  rtcheck_output_handler,
 			  (ClientData)rtcop);
 
 #else
@@ -347,17 +534,17 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 
     rtcp->chan = Tcl_MakeFileChannel(pipe_iDup, TCL_READABLE);
     Tcl_CreateChannelHandler(rtcp->chan, TCL_READABLE,
-			     ged_rtcheck_vector_handler,
+			     rtcheck_vector_handler,
 			     (ClientData)rtcp);
 
-    BU_GETSTRUCT(rtcop, ged_rtcheck_output);
+    BU_GETSTRUCT(rtcop, rtcheck_output);
     rtcop->fd = pipe_eDup;
     rtcop->chan = Tcl_MakeFileChannel(pipe_eDup, TCL_READABLE);
     rtcop->gedp = gedp;
     rtcop->interp = brlcad_interp;
     Tcl_CreateChannelHandler(rtcop->chan,
 			     TCL_READABLE,
-			     ged_rtcheck_output_handler,
+			     rtcheck_output_handler,
 			     (ClientData)rtcop);
 #endif
 
@@ -365,195 +552,6 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_gdp->gd_rt_cmd = NULL;
 
     return GED_OK;
-}
-
-#ifndef _WIN32
-static void
-ged_rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
-{
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
-    int value;
-    struct solid *sp;
-    struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
-
-    /* Get vector output from rtcheck */
-    if ((value = getc(rtcp->fp)) == EOF) {
-	int retcode;
-	int rpid;
-
-	Tcl_DeleteFileHandler(rtcp->fd);
-	fclose(rtcp->fp);
-
-	gdlp = BU_LIST_NEXT(ged_display_list, &rtcp->gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, &rtcp->gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
-
-	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
-		sp->s_flag = DOWN;
-
-	    gdlp = next_gdlp;
-	}
-
-	/* Add overlay */
-	_ged_cvt_vlblock_to_solids(rtcp->gedp, rtcp->vbp, "OVERLAPS", 0);
-	rt_vlblock_free(rtcp->vbp);
-
-	/* wait for the forked process */
-	while ((rpid = wait(&retcode)) != rtcp->pid && rpid != -1) {
-
-	    _ged_wait_status(&rtcp->gedp->ged_result_str, retcode);
-	}
-
-	/* free rtcp */
-	bu_free((genptr_t)rtcp, "ged_rtcheck_vector_handler: rtcp");
-
-	return;
-    }
-
-    (void)rt_process_uplot_value(&rtcp->vhead,
-				 rtcp->vbp,
-				 rtcp->fp,
-				 value,
-				 rtcp->csize,
-				 rtcp->gedp->ged_gdp->gd_uplotOutputMode);
-}
-
-static void
-ged_rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
-{
-    int count;
-    char line[RT_MAXLINE] = {0};
-    struct ged_rtcheck_output *rtcop = (struct ged_rtcheck_output *)clientData;
-
-    /* Get textual output from rtcheck */
-    count = read((int)rtcop->fd, line, RT_MAXLINE);
-    if (count <= 0) {
-	if (count < 0) {
-	    perror("READ ERROR");
-	}
-	Tcl_DeleteFileHandler(rtcop->fd);
-	close(rtcop->fd);
-
-	if (rtcop->gedp->ged_gdp->gd_rtCmdNotify != (void (*)())0)
-	    rtcop->gedp->ged_gdp->gd_rtCmdNotify(0);
-
-	bu_free((genptr_t)rtcop, "ged_rtcheck_output_handler: rtcop");
-	return;
-    }
-
-    line[count] = '\0';
-    if (rtcop->gedp->ged_output_handler != (void (*)())0)
-	rtcop->gedp->ged_output_handler(rtcop->gedp, line);
-    else
-	bu_vls_printf(&rtcop->gedp->ged_result_str, "%s", line);
-}
-
-#else
-
-void
-ged_rtcheck_vector_handler(ClientData clientData, int mask)
-{
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
-    int value;
-    struct solid *sp;
-    struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
-
-    /* Get vector output from rtcheck */
-    if (feof(rtcp->fp)) {
-	Tcl_DeleteChannelHandler(rtcp->chan,
-				 ged_rtcheck_vector_handler,
-				 (ClientData)rtcp);
-	Tcl_Close(rtcp->interp, rtcp->chan);
-
-	gdlp = BU_LIST_NEXT(ged_display_list, &rtcp->gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, &rtcp->gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
-
-	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
-		sp->s_flag = DOWN;
-
-	    gdlp = next_gdlp;
-	}
-
-	/* Add overlay */
-	_ged_cvt_vlblock_to_solids(rtcp->gedp, rtcp->vbp, "OVERLAPS", 0);
-	rt_vlblock_free(rtcp->vbp);
-
-	/* wait for the forked process */
-	WaitForSingleObject( rtcp->hProcess, INFINITE );
-
-	/* free rtcp */
-	bu_free((genptr_t)rtcp, "ged_rtcheck_vector_handler: rtcp");
-
-	return;
-    }
-
-    value = getc(rtcp->fp);
-    (void)rt_process_uplot_value(&rtcp->vhead,
-				 rtcp->vbp,
-				 rtcp->fp,
-				 value,
-				 rtcp->csize,
-				 rtcp->gedp->ged_gdp->gd_uplotOutputMode);
-}
-
-void
-ged_rtcheck_output_handler(ClientData clientData, int mask)
-{
-    DWORD count;
-    char line[RT_MAXLINE];
-    struct ged_rtcheck_output *rtcop = (struct ged_rtcheck_output *)clientData;
-
-    /* Get textual output from rtcheck */
-    if (Tcl_Eof(rtcop->chan) ||
-	(!ReadFile(rtcop->fd, line, RT_MAXLINE, &count, 0))) {
-
-	Tcl_DeleteChannelHandler(rtcop->chan,
-				 ged_rtcheck_output_handler,
-				 (ClientData)rtcop);
-	Tcl_Close(rtcop->interp, rtcop->chan);
-
-	if (rtcop->gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
-	    rtcop->gedp->ged_gdp->gd_rtCmdNotify(0);
-
-	bu_free((genptr_t)rtcop, "ged_rtcheck_output_handler: rtcop");
-
-	return;
-    }
-
-    line[count] = '\0';
-    if (rtcop->gedp->ged_output_handler != (void (*)())0)
-	rtcop->gedp->ged_output_handler(rtcop->gedp, line);
-    else
-	bu_vls_printf(&rtcop->gedp->ged_result_str, "%s", line);
-}
-
-#endif
-
-void
-_ged_wait_status(struct bu_vls *logstr,
-		 int status)
-{
-    int sig = status & 0x7f;
-    int core = status & 0x80;
-    int ret = status >> 8;
-
-    if (status == 0) {
-	bu_vls_printf(logstr, "Normal exit\n");
-	return;
-    }
-
-    bu_vls_printf(logstr, "Abnormal exit x%x", status);
-
-    if (core)
-	bu_vls_printf(logstr, ", core dumped");
-
-    if (sig)
-	bu_vls_printf(logstr, ", terminating signal = %d", sig);
-    else
-	bu_vls_printf(logstr, ", return (exit) code = %d", ret);
 }
 
 

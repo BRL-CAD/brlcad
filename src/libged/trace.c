@@ -29,7 +29,7 @@
 
 
 static void
-ged_do_trace(struct db_i *dbip,
+trace_do(struct db_i *dbip,
 	     struct rt_comb_internal *UNUSED(comb),
 	     union tree *comb_leaf,
 	     genptr_t user_ptr1,
@@ -112,7 +112,7 @@ _ged_trace(struct directory *dp,
 	gtdp->gtd_path[pathpos] = dp;
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	if (comb->tree)
-	    db_tree_funcleaf(gtdp->gtd_gedp->ged_wdbp->dbip, comb, comb->tree, ged_do_trace,
+	    db_tree_funcleaf(gtdp->gtd_gedp->ged_wdbp->dbip, comb, comb->tree, trace_do,
 			     (genptr_t)&pathpos, (genptr_t)old_xlate, (genptr_t)gtdp);
 
 	rt_db_free_internal(&intern);
