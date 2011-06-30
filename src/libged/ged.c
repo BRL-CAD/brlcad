@@ -88,7 +88,7 @@ ged_close(struct ged *gedp)
     }
 
     ged_free(gedp);
-    bu_free(gedp);
+    bu_free((genptr_t)gedp, "struct ged");
 }
 
 
@@ -103,13 +103,13 @@ ged_free(struct ged *gedp)
 
     if (gedp->ged_log) {
 	bu_vls_free(gedp->ged_log);
-	bu_free(gedp->ged_log);
+	bu_free(gedp->ged_log, "release ged_log");
 	gedp->ged_log = NULL; /* sanity */
     }
 
     if (gedp->ged_result_str) {
 	bu_vls_free(gedp->ged_result_str);
-	bu_free(gedp->ged_result_str);
+	bu_free(gedp->ged_result_str, "release ged_result_str");
 	gedp->ged_result_str = NULL; /* sanity */
     }
 
@@ -117,8 +117,6 @@ ged_free(struct ged *gedp)
 	bu_free(gedp->ged_gdp, "release ged_gdp");
 	gedp->ged_gdp = NULL; /* sanity */
     }
-
-    bu_free((genptr_t)gedp, "struct ged");
 }
 
 
