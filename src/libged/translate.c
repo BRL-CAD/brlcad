@@ -94,19 +94,7 @@ translate(struct ged *gedp, pointp_t const keypoint,
     /*
      * Determine what is being translated
      */
-    if (d_obj->d_flags & RT_DIR_SOLID) {
-	d_to_modify = d_obj;
-	if (path->fp_len > 0) { 
-	    /* path supplied; translate this instance of primitive
-	     * only */
-	    bu_vls_printf(&gedp->ged_result_str, "translating a single instance"
-			  " of a primitive is not yet supported");
-	    return GED_ERROR;
-	} else {
-	    /* no path; translate all instances of this primitive */
-	    d_to_modify = d_obj;
-	}
-    } else if (d_obj->d_flags & (RT_DIR_REGION | RT_DIR_COMB)) {
+    if (d_obj->d_flags & (RT_DIR_SOLID | RT_DIR_REGION | RT_DIR_COMB)) {
 	if (path->fp_len > 0) {
 	    /* path supplied; move obj instance only (obj's CWD
 	     * modified) */
@@ -128,7 +116,28 @@ translate(struct ged *gedp, pointp_t const keypoint,
 	bu_vls_printf(&gedp->ged_result_str, "translations to absolute"
 		      " positions are not yet supported");
 	return GED_ERROR;
+    }
+
+    if (path->fp_len > 0) {
+	/* move single instance */
+	struct rt_comb_internal *comb;
+	union tree *leaf_to_modify;
+
+	GED_DB_GET_INTERNAL(gedp, &intern, d_to_modify, (fastf_t *)NULL,
+			    &rt_uniresource, GED_ERROR);
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+
+	leaf_to_modify = db_find_named_leaf(comb->tree, d_obj->d_namep);
+
+	if (leaf_to_modify == TREE_NULL) {
+	    bu_vls_printf(&gedp->ged_result_str, "leaf not found where it"
+			  " should be; this should not happen");
+	    rt_db_free_internal(&intern);
+	    return GED_ERROR;
+	}
+	MAT_DELTAS_ADD_VEC(leaf_to_modify->tr_l.tl_mat, delta); 
     } else {
+	/* move all instances */
 	if (_ged_get_obj_bounds2(gedp, 1, (const char **)&d_to_modify->d_namep,
 				 &gtd, rpp_min, rpp_max) == GED_ERROR)
 	    return GED_ERROR;
@@ -138,43 +147,22 @@ translate(struct ged *gedp, pointp_t const keypoint,
 				    1, rpp_min, rpp_max) == GED_ERROR)
 		return GED_ERROR;
 
-	if (path->fp_len > 0) {
-	    /* move single instance */
-	    struct rt_comb_internal *comb;
-	    union tree *leaf_to_modify;
+	MAT_IDN(dmat);
+	VSCALE(delta, delta, gedp->ged_wdbp->dbip->dbi_local2base);
+	MAT_DELTAS_VEC(dmat, delta);
 
-	    GED_DB_GET_INTERNAL(gedp, &intern, d_to_modify, (fastf_t *)NULL,
-				&rt_uniresource, GED_ERROR);
-	    comb = (struct rt_comb_internal *)intern.idb_ptr;
+	bn_mat_inv(invXform, gtd.gtd_xform); 
+	bn_mat_mul(tmpMat, invXform, dmat);
+	bn_mat_mul(emat, tmpMat, gtd.gtd_xform);
 
-	    leaf_to_modify = db_find_named_leaf(comb->tree, d_obj->d_namep);
-
-	    if (leaf_to_modify == TREE_NULL) {
-		bu_vls_printf(&gedp->ged_result_str, "leaf not found where it"
-			      " should be; this should not happen");
-		rt_db_free_internal(&intern);
-		return GED_ERROR;
-	    }
-	    MAT_DELTAS_ADD_VEC(leaf_to_modify->tr_l.tl_mat, delta); 
-	} else {
-	    /* move all instances */
-	    MAT_IDN(dmat);
-	    VSCALE(delta, delta, gedp->ged_wdbp->dbip->dbi_local2base);
-	    MAT_DELTAS_VEC(dmat, delta);
-
-	    bn_mat_inv(invXform, gtd.gtd_xform); 
-	    bn_mat_mul(tmpMat, invXform, dmat);
-	    bn_mat_mul(emat, tmpMat, gtd.gtd_xform);
-
-	    GED_DB_GET_INTERNAL(gedp, &intern, d_to_modify, emat,
-				&rt_uniresource, GED_ERROR);
-	}
-	RT_CK_DB_INTERNAL(&intern);
-	GED_DB_PUT_INTERNAL(gedp, d_to_modify, &intern, &rt_uniresource,
-			    GED_ERROR);
-	rt_db_free_internal(&intern);
+	GED_DB_GET_INTERNAL(gedp, &intern, d_to_modify, emat,
+			    &rt_uniresource, GED_ERROR);
     }
 
+    RT_CK_DB_INTERNAL(&intern);
+    GED_DB_PUT_INTERNAL(gedp, d_to_modify, &intern, &rt_uniresource,
+			GED_ERROR);
+    rt_db_free_internal(&intern);
     return GED_OK;
 }
 
