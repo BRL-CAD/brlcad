@@ -239,7 +239,13 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
     point_t scolor;
     VSETALL(scolor, 0.0f);
 
-    int nsamples = 4;
+    /* Just shoot several rays if we are rendering the first pixel */
+    int nsamples;
+    if(ap->a_level == 0)
+	nsamples = 25;
+    else
+	nsamples = 1;
+
     for(int s=0; s<nsamples; s++){
 
 	/* -----------------------------------
@@ -255,8 +261,9 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 	VMOVE(info.N, swp->sw_hit.hit_normal);
     
 	/* Set incidence ray direction */
-	VMOVE(info.I, ap->a_inv_dir);
-    
+	//VMOVE(info.I, ap->a_inv_dir);
+	VMOVE(info.I, ap->a_ray.r_dir);
+	
 	/* U-V mapping stuff */
 	info.u = swp->sw_uv.uv_u;
 	info.v = swp->sw_uv.uv_v;
@@ -268,7 +275,6 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 	info.screen_y = ap->a_y;
 
 	info.depth = ap->a_level;
-	info.isbackfacing = 0;
 	info.surfacearea = 1.0f;
     
 	info.shadername = osl_sp->shadername.vls_str;
@@ -289,9 +295,26 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 	    new_ap.a_hit = ap->a_hit;
 	    new_ap.a_miss = ap->a_miss;
 	    new_ap.a_level = ap->a_level + 1;
+	    new_ap.a_flag = 0;
 
 	    VMOVE(new_ap.a_ray.r_dir, info.out_ray.dir);
 	    VMOVE(new_ap.a_ray.r_pt, info.out_ray.origin);
+
+	    /* This ray is from refraction */
+	    	    /* This next ray is from refraction */
+	    if (VDOT(info.N, info.out_ray.dir) < 0.0f){
+
+#if 0     
+		/* Displace the hit point a little bit in the direction
+		   of the next ray */
+	     	Vec3 tmp;
+	     	VSCALE(tmp, info.out_ray.dir, 1e-4);
+	     	VADD2(new_ap.a_ray.r_pt, new_ap.a_ray.r_pt, tmp);
+#endif
+		new_ap.a_onehit = 1;
+		new_ap.a_refrac_index = 1.5;
+		new_ap.a_flag = 1;
+	    }
 
 	    (void)rt_shootray(&new_ap);
 
@@ -307,7 +330,7 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 	    VADD2(scolor, scolor, weight);
 	}
     }
-    VSCALE(swp->sw_color, scolor, 1.0/nsamples);
+    VSCALE(swp->sw_color, scolor, 2.0/nsamples);
 
     return 1;
 }

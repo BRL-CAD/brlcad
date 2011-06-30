@@ -45,7 +45,7 @@ static unsigned short Xi[3];
 static bool inside;
 
 static int vmajor = 1;
-static int vminor = 3;
+static int vminor = 4;
 
 OSLRenderer *oslr = NULL;
 
@@ -203,7 +203,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	info.doreflection = 0;
 
 	inside = false;
-
+ 
 	Color3 weight = oslr->QueryColor(&info);
 	
 	if(info.doreflection){
@@ -494,11 +494,18 @@ int main (int argc, char **argv){
 			double r1 = 2*erand48(Xi);
 			double r2 = 2*erand48(Xi);
 
+#if 0
 			double dx = (r1 < 1)? sqrt(r1)-1: 1-sqrt(2-r1);
 			double dy = (r2 < 1)? sqrt(r2)-1: 1-sqrt(2-r2);
-
+			
 			Vec3 d = cam_x*(((sx+.5 + dx)/2 + x)/w - .5) +
 			    cam_y*(((sy+.5 + dy)/2 + y)/h - .5) + cam_d;
+
+#else
+			/* Shoot many rays in the same direction */
+			Vec3 d = cam_x*(1.0*x/w - .5) +
+			    cam_y*((1.0*y)/h - .5) + cam_d;
+#endif
 
 			Vec3 dir = d.normalized();
 			Vec3 origin = cam_o + d*130;
