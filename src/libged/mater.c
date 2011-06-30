@@ -82,9 +82,14 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
      * and blue color channels, so offset our argument indices.
      */
     if (argc > 3) {
-	if (strncmp(argv[3], "del", 3) == 0) {
+	struct bu_vls color;
+	bu_vls_init(&color);
+	bu_vls_strcat(&color, argv[3]);
+	bu_vls_trimspace(&color);
+	if (strncmp(bu_vls_addr(&color), "del", 3) == 0) {
 	    offset=2;
 	}
+	bu_vls_free(&vls);
     }
 
     /* need more arguments */
@@ -146,62 +151,80 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 
     /* Color */
     if (offset) {
-	/* means strncmp(argv[3], "del", 3) is 0 */
-	/* remove the color */
+	/* means argv[3] == "del" so remove the color */
 	comb->rgb_valid = 0;
 	comb->rgb[0] = comb->rgb[1] = comb->rgb[2] = 0;
     } else {
-	if (BU_STR_EQUAL(argv[3], ".")) {
+	struct bu_vls rgb;
+	bu_vls_init(&rgb);
+
+	bu_vls_strcpy(&rgb, argv[3]); /* RED */
+	bu_vls_trimspace(&rgb);
+
+	if (BU_STR_EQUAL(bu_vls_addr(&rgb), ".")) {
 	    if (!comb->rgb_valid) {
 		bu_vls_printf(gedp->ged_result_str, "Color is not set, cannot skip by using existing RED color value");
 		rt_db_free_internal(&intern);
+		bu_vls_free(&rgb);
 		bu_avs_free(&avs);
 		return GED_ERROR;
 	    }
 	} else {
-	    if (sscanf(argv[3], "%d", &r) != 1 || r < 0 || 255 < r) {
-		bu_vls_printf(gedp->ged_result_str, "Bad color value - %s", argv[3]);
+	    if (sscanf(bu_vls_addr(&rgb), "%d", &r) != 1 || r < 0 || 255 < r) {
+		bu_vls_printf(gedp->ged_result_str, "Bad color value [%s]", argv[3]);
 		rt_db_free_internal(&intern);
+		bu_vls_free(&rgb);
 		bu_avs_free(&avs);
 		return GED_ERROR;
 	    }
 	    comb->rgb[0] = r;
 	}
 
-	if (BU_STR_EQUAL(argv[4], ".")) {
+	bu_vls_strcpy(&rgb, argv[4]); /* GRN */
+	bu_vls_trimspace(&rgb);
+
+	if (BU_STR_EQUAL(bu_vls_addr(&rgb), ".")) {
 	    if (!comb->rgb_valid) {
 		bu_vls_printf(gedp->ged_result_str, "Color is not set, cannot skip by using existing GREEN color value");
 		rt_db_free_internal(&intern);
+		bu_vls_free(&rgb);
 		bu_avs_free(&avs);
 		return GED_ERROR;
 	    }
 	} else {
-	    if (sscanf(argv[4], "%d", &g) != 1 || g < 0 || 255 < g) {
-		bu_vls_printf(gedp->ged_result_str, "Bad color value - %s", argv[4]);
+	    if (sscanf(bu_vls_addr(&rgb), "%d", &g) != 1 || g < 0 || 255 < g) {
+		bu_vls_printf(gedp->ged_result_str, "Bad color value [%s]", argv[4]);
 		rt_db_free_internal(&intern);
+		bu_vls_free(&rgb);
 		bu_avs_free(&avs);
 		return GED_ERROR;
 	    }
 	    comb->rgb[1] = g;
 	}
 
-	if (BU_STR_EQUAL(argv[5], ".")) {
+	bu_vls_strcpy(&rgb, argv[5]); /* BLU */
+	bu_vls_trimspace(&rgb);
+
+	if (BU_STR_EQUAL(bu_vls_addr(&rgb), ".")) {
 	    if (!comb->rgb_valid) {
 		bu_vls_printf(gedp->ged_result_str, "Color is not set, cannot skip by using existing BLUE color value");
 		rt_db_free_internal(&intern);
+		bu_vls_free(&rgb);
 		bu_avs_free(&avs);
 		return GED_ERROR;
 	    }
 	} else {
-	    if (sscanf(argv[5], "%d", &b) != 1 || b < 0 || 255 < b) {
-		bu_vls_printf(gedp->ged_result_str, "Bad color value - %s", argv[5]);
+	    if (sscanf(bu_vls_addr(&rgb), "%d", &b) != 1 || b < 0 || 255 < b) {
+		bu_vls_printf(gedp->ged_result_str, "Bad color value [%s]", argv[5]);
 		rt_db_free_internal(&intern);
+		bu_vls_free(&rgb);
 		bu_avs_free(&avs);
 		return GED_ERROR;
 	    }
 	    comb->rgb[2] = b;
 	}
 
+	bu_vls_free(&rgb);
 	comb->rgb_valid = 1;
     }
 
