@@ -111,7 +111,7 @@ IF(BRLCAD-ENABLE_OSL)
     # Build Renderer test 
     ##########################################
 
-    #BRLCAD_ADDEXEC(osl_rt "osl_rt.cpp" "liboslrend ${OSLRT_LIBS2} librt libfb liboptical")
+    BRLCAD_ADDEXEC(osl_rt "osl_rt.cpp" "liboslrend ${OSLRT_LIBS2} librt libfb liboptical")
 
 ELSE(BRLCAD-ENABLE_OSL)
 

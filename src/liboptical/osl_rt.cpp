@@ -23,7 +23,7 @@
  *
  */
 
-#include "osl-renderer.h"
+#include "liboslrend.h"
 #include <vector>
 
 /* BRL-CAD headers */
@@ -33,6 +33,8 @@
 #include "raytrace.h"
 #include "shadefuncs.h"
 
+//#define DEB
+
 using namespace OpenImageIO;
 
 static std::string outputfile = "image.png";
@@ -41,6 +43,9 @@ static int samples = 4;
 static unsigned short Xi[3];
 
 static bool inside;
+
+static int vmajor = 1;
+static int vminor = 3;
 
 OSLRenderer *oslr = NULL;
 
@@ -89,33 +94,13 @@ const char* get_shadername(const char *regioname){
     if(!strcmp(regioname, "/all.g/short_box.r"))
 	return "yellow";
     if(!strcmp(regioname, "/all.g/tall_box.r"))
+	return "glass";
+    //glass ball (DEBUG)
+    if(!strcmp(regioname, "/all.g/ball.r")){
 	return "glass2";
+    }
 
     fprintf(stderr, "shader not found\n");
-}
-
-/* Associate each object with a color in order to identify them in the scene */
-Color3 get_color(const char *regioname){
-
-    if(!strcmp(regioname, "/all.g/back_wall.r"))
-	return Color3(1.0f, 0.0, 0.0); //red
-    if(!strcmp(regioname, "/all.g/ceiling.r"))
-	return Color3(0.0, 1.0, 0.0); //green
-    if(!strcmp(regioname, "/all.g/floor.r"))
-	return Color3(0.0, 0.0, 1.0); // blue
-    if(!strcmp(regioname, "/all.g/left_wall.r"))
-	return Color3(1.0, 1.0, 0.0); // yellow
-    if(!strcmp(regioname, "/all.g/right_wall.r"))
-	return Color3(1.0, 0.0, 1.0); // purple
-    // light
-    if(!strcmp(regioname, "/all.g/light.r")){
-	return Color3(1.0, 1.0, 1.0); // white
-    }
-    // boxes
-    if(!strcmp(regioname, "/all.g/short_box.r"))
-	return Color3(0.0, 1.0, 1.0); // cyan
-    if(!strcmp(regioname, "/all.g/tall_box.r"))
-	return Color3(0.0, 1.0, 1.0); // cyan
 }
 
 /**
@@ -178,20 +163,25 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	RenderInfo info;
 
 	/* Set hit point */
-	hitp = pp->pt_inhit;
+	if(ap->a_flag == 1){
+	    hitp = pp->pt_outhit;
+	}
+	else {
+	    hitp = pp->pt_inhit;
+	}
 	VJOIN1(pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
 	VMOVE(info.P, pt);
+	
+#ifdef DEB
+	fprintf(stderr, "---------\n");
+	VPRINT("Hit a sphere in ", info.P);
+#endif
 	
 	/* Set normal at the point */
 	stp = pp->pt_inseg->seg_stp;
 	RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
 	VMOVE(info.N, inormal);
-	
-#if 0
-	if(inside)
-	    VREVERSE(info.N, info.N);
-#endif
-
+      
 	/* Set incidence ray direction */
 	VMOVE(info.I, ap->a_ray.r_dir);
     
@@ -227,6 +217,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	    new_ap.a_hit = ap->a_hit;
 	    new_ap.a_miss = ap->a_miss;
 	    new_ap.a_level = ap->a_level + 1;
+	    new_ap.a_flag = 0;
 
 	    VMOVE(new_ap.a_ray.r_dir, info.out_ray.dir);
 	    VMOVE(new_ap.a_ray.r_pt, info.out_ray.origin);
@@ -236,18 +227,31 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	    VMOVE(out_ray, new_ap.a_ray.r_dir);
 	    Vec3 normal;
 	    VMOVE(normal, inormal);
-	    /* The next hit will revert the normal */
-	    if (normal.dot(out_ray) < 0.0f){
-		inside = true;
-		/* Forward the point a little bit to avoid the ray to hit this same point again */
-		Vec3 tmp;
-		VSCALE(tmp, info.out_ray.dir, 1e-4);
-		VADD2(new_ap.a_ray.r_pt, new_ap.a_ray.r_pt, tmp);
-	    }
 
+	    /* This next ray is from refraction */
+	    if (normal.dot(out_ray) < 0.0f){
+
+	     	Vec3 tmp;
+	     	VSCALE(tmp, info.out_ray.dir, 1e-4);
+	     	VADD2(new_ap.a_ray.r_pt, new_ap.a_ray.r_pt, tmp);
+		new_ap.a_onehit = 1;
+		new_ap.a_refrac_index = 1.5;
+		new_ap.a_flag = 1;
+	    }
+	
+
+#ifdef DEB
+
+	    VPRINT("Exit point ", info.out_ray.origin);
+	    VPRINT("Exit ray ", info.out_ray.dir);
+	    VPRINT("Next point ", new_ap.a_ray.r_pt);
+	    VPRINT("Next ray ", new_ap.a_ray.r_dir);
+	    fprintf(stderr, "---------\n");
+	    
+#endif
 
 	    rt_shootray(&new_ap);
-
+	    
 	    Color3 rec;
 	    VMOVE(rec, new_ap.a_color);
 	    
@@ -424,6 +428,31 @@ int main (int argc, char **argv){
 
 #endif
 
+#ifdef DEB
+
+    /* Debug:
+       Shoot a given ray several times in a glass unit ball sphere.
+     */
+    
+    fprintf(stderr, "DEBUGGING\n");
+
+    cam_o = Vec3(-10.0, 0.0, 0.0);
+    cam_d = Vec3(+1.0, 0.0, 0.0);
+    
+    /* Initialize the shading system*/
+    oslr = new OSLRenderer();
+    oslr->AddShader("glass2");
+    
+    VMOVE(ap.a_ray.r_dir, cam_d);
+    VMOVE(ap.a_ray.r_pt, cam_o);
+    
+    for(int i=0; i<1; i++)
+	rt_shootray(&ap);
+
+    return 0;
+  
+#endif
+
     // Pixel matrix
     Color3 *buffer = new Color3[w*h];
     for(int i=0; i<w*h; i++)
@@ -441,12 +470,12 @@ int main (int argc, char **argv){
     oslr->AddShader("mirror");
     oslr->AddShader("blue");
     oslr->AddShader("red");
-    oslr->AddShader("glass2");
+    oslr->AddShader("glass");
 
     /* Ray trace */
     for(int y=0; y<h; y++) {
 
-	fprintf(stderr, "\rRendering (%d samples) %5.2f%%", samps*4, 100.*y/(h-1));
+	fprintf(stderr, "\rRendering %d.%d (%d samples) %5.2f%%", vmajor, vminor, samps*4, 100.*y/(h-1));
 
 	Xi[0] = 0;
 	Xi[1] = 0;
