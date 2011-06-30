@@ -57,7 +57,7 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
     struct dm *dmp = NULL;
 
     if ((dmp = (struct dm *)gedp->ged_dmp) == NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "Bad display pointer.");
+	bu_vls_printf(gedp->ged_result_str, "Bad display pointer.");
 	return GED_ERROR;
     }
 
@@ -67,16 +67,16 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -88,7 +88,7 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
 
     /* create image file */
     if ((bif = bu_image_save_open(argv[1], BU_IMAGE_AUTO, width, height, bytes_per_pixel)) == NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: could not create bu_image_ write structure.", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s: could not create bu_image_ write structure.", argv[1]);
 	return GED_ERROR;
     }
 

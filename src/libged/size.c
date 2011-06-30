@@ -44,11 +44,11 @@ ged_size(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* get view size */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%g",
+	bu_vls_printf(gedp->ged_result_str, "%g",
 		      gedp->ged_gvp->gv_size * gedp->ged_wdbp->dbip->dbi_base2local);
 	return GED_OK;
     }
@@ -58,7 +58,7 @@ ged_size(struct ged *gedp, int argc, const char *argv[])
 	if (sscanf(argv[1], "%lf", &size) != 1 ||
 	    size <= 0 ||
 	    ZERO(size)) {
-	    bu_vls_printf(&gedp->ged_result_str, "bad size - %s", argv[1]);
+	    bu_vls_printf(gedp->ged_result_str, "bad size - %s", argv[1]);
 	    return GED_ERROR;
 	}
 
@@ -72,7 +72,7 @@ ged_size(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
 

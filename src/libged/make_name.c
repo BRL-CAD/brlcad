@@ -40,11 +40,11 @@ ged_make_name(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -67,7 +67,7 @@ ged_make_name(struct ged *gedp, int argc, const char *argv[])
 		}
 	    }
 	default:
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
     }
 
@@ -91,7 +91,7 @@ ged_make_name(struct ged *gedp, int argc, const char *argv[])
     }
     while (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&obj_name), LOOKUP_QUIET) != RT_DIR_NULL);
 
-    bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(&obj_name));
+    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&obj_name));
     bu_vls_free(&obj_name);
 
     return GED_OK;

@@ -49,16 +49,16 @@ ged_make_bb(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 3) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -75,13 +75,13 @@ ged_make_bb(struct ged *gedp, int argc, const char *argv[])
 
     /* Since arguments may be paths, make sure first argument isn't */
     if (strchr(argv[i], '/')) {
-	bu_vls_printf(&gedp->ged_result_str, "Do not use '/' in solid names: %s\n", argv[i]);
+	bu_vls_printf(gedp->ged_result_str, "Do not use '/' in solid names: %s\n", argv[i]);
 	return GED_ERROR;
     }
 
     new_name = (char *)argv[i++];
     if (db_lookup(gedp->ged_wdbp->dbip, new_name, LOOKUP_QUIET) != RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s already exists\n", new_name);
+	bu_vls_printf(gedp->ged_result_str, "%s already exists\n", new_name);
 	return GED_ERROR;
     }
 
@@ -109,13 +109,13 @@ ged_make_bb(struct ged *gedp, int argc, const char *argv[])
 
     dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
     if (dp == RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "Cannot add %s to directory\n", new_name);
+	bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", new_name);
 	return GED_ERROR;
     }
 
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &new_intern, gedp->ged_wdbp->wdb_resp) < 0) {
 	rt_db_free_internal(&new_intern);
-	bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting.\n");
+	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting.\n");
 	return GED_ERROR;
     }
 

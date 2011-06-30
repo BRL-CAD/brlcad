@@ -51,16 +51,16 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -70,12 +70,12 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 
     if (dp != RT_DIR_NULL) {
 	if (!(dp->d_flags & RT_DIR_COMB)) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s is not a combination, so cannot be edited this way\n", argv[1]);
+	    bu_vls_printf(gedp->ged_result_str, "%s is not a combination, so cannot be edited this way\n", argv[1]);
 	    return GED_ERROR;
 	}
 
 	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting\n");
+	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting\n");
 	    return GED_ERROR;
 	}
 
@@ -84,7 +84,7 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 	if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
 	    db_non_union_push(comb->tree, &rt_uniresource);
 	    if (db_ck_v4gift_tree(comb->tree) < 0) {
-		bu_vls_printf(&gedp->ged_result_str, "Cannot flatten tree for editing\n");
+		bu_vls_printf(gedp->ged_result_str, "Cannot flatten tree for editing\n");
 		return GED_ERROR;
 	    }
 	}
@@ -106,28 +106,28 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 	    actual_count = 0;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "%s", dp->d_namep);
+	bu_vls_printf(gedp->ged_result_str, "%s", dp->d_namep);
 	if (comb->region_flag) {
-	    bu_vls_printf(&gedp->ged_result_str, " Yes %ld %ld %ld %ld",
+	    bu_vls_printf(gedp->ged_result_str, " Yes %ld %ld %ld %ld",
 			  comb->region_id, comb->aircode, comb->GIFTmater, comb->los);
 	} else {
-	    bu_vls_printf(&gedp->ged_result_str, " No");
+	    bu_vls_printf(gedp->ged_result_str, " No");
 	}
 
 	if (comb->rgb_valid) {
-	    bu_vls_printf(&gedp->ged_result_str, " {%d %d %d}", V3ARGS(comb->rgb));
+	    bu_vls_printf(gedp->ged_result_str, " {%d %d %d}", V3ARGS(comb->rgb));
 	} else
-	    bu_vls_printf(&gedp->ged_result_str, " {}");
+	    bu_vls_printf(gedp->ged_result_str, " {}");
 
-	bu_vls_printf(&gedp->ged_result_str, " {%s}", bu_vls_addr(&comb->shader));
+	bu_vls_printf(gedp->ged_result_str, " {%s}", bu_vls_addr(&comb->shader));
 
 	if (comb->inherit)
-	    bu_vls_printf(&gedp->ged_result_str, " Yes");
+	    bu_vls_printf(gedp->ged_result_str, " Yes");
 	else
-	    bu_vls_printf(&gedp->ged_result_str, " No");
+	    bu_vls_printf(gedp->ged_result_str, " No");
 
 
-	bu_vls_printf(&gedp->ged_result_str, " {");
+	bu_vls_printf(gedp->ged_result_str, " {");
 	for (i = 0; i < actual_count; i++) {
 	    char op;
 
@@ -142,19 +142,19 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 		    op = '-';
 		    break;
 		default:
-		    bu_vls_printf(&gedp->ged_result_str, "\nIllegal op code in tree\n");
+		    bu_vls_printf(gedp->ged_result_str, "\nIllegal op code in tree\n");
 		    return GED_ERROR;
 	    }
 
-	    bu_vls_printf(&gedp->ged_result_str, " %c %s\t", op, rt_tree_array[i].tl_tree->tr_l.tl_name);
-	    _ged_vls_print_matrix(&gedp->ged_result_str, rt_tree_array[i].tl_tree->tr_l.tl_mat);
-	    bu_vls_printf(&gedp->ged_result_str, "\n");
+	    bu_vls_printf(gedp->ged_result_str, " %c %s\t", op, rt_tree_array[i].tl_tree->tr_l.tl_name);
+	    _ged_vls_print_matrix(gedp->ged_result_str, rt_tree_array[i].tl_tree->tr_l.tl_mat);
+	    bu_vls_printf(gedp->ged_result_str, "\n");
 	    db_free_tree(rt_tree_array[i].tl_tree, &rt_uniresource);
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "}");
+	bu_vls_printf(gedp->ged_result_str, "}");
     } else {
-	bu_vls_printf(&gedp->ged_result_str, "%s Yes %d %d %d %d {} {} No {}",
+	bu_vls_printf(gedp->ged_result_str, "%s Yes %d %d %d %d {} {} No {}",
 		      argv[1],
 		      gedp->ged_wdbp->wdb_item_default,
 		      gedp->ged_wdbp->wdb_air_default,

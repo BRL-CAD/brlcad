@@ -184,10 +184,10 @@ ged_adc(struct ged *gedp,
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc < 2 || 6 < argc) {
-	adc_usage(&gedp->ged_result_str, argv[0]);
+	adc_usage(gedp->ged_result_str, argv[0]);
 	return GED_ERROR;
     }
 
@@ -195,7 +195,7 @@ ged_adc(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[1], "-i")) {
 	if (argc < 5) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: -i option specified without an op-val pair", command);
+	    bu_vls_printf(gedp->ged_result_str, "%s: -i option specified without an op-val pair", command);
 	    return GED_ERROR;
 	}
 
@@ -212,13 +212,13 @@ ged_adc(struct ged *gedp,
 
     for (i = 0; i < argc; ++i)
 	if (sscanf(argp[i], "%lf", &user_pt[i]) != 1) {
-	    adc_usage(&gedp->ged_result_str, command);
+	    adc_usage(gedp->ged_result_str, command);
 	    return GED_ERROR;
 	}
 
     if (BU_STR_EQUAL(parameter, "draw")) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_adc.gas_draw);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_adc.gas_draw);
 	    return GED_OK;
 	} else if (argc == 1) {
 	    i = (int)user_pt[X];
@@ -231,13 +231,13 @@ ged_adc(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s draw' command accepts 0 or 1 argument\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s draw' command accepts 0 or 1 argument\n", command);
 	return GED_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "a1")) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%g", gedp->ged_gvp->gv_adc.gas_a1);
+	    bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_gvp->gv_adc.gas_a1);
 	    return GED_OK;
 	} else if (argc == 1) {
 	    if (!gedp->ged_gvp->gv_adc.gas_anchor_a1) {
@@ -252,13 +252,13 @@ ged_adc(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s a1' command accepts only 1 argument\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s a1' command accepts only 1 argument\n", command);
 	return GED_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "a2")) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%g", gedp->ged_gvp->gv_adc.gas_a2);
+	    bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_gvp->gv_adc.gas_a2);
 	    return GED_OK;
 	} else if (argc == 1) {
 	    if (!gedp->ged_gvp->gv_adc.gas_anchor_a2) {
@@ -273,13 +273,13 @@ ged_adc(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s a2' command accepts only 1 argument\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s a2' command accepts only 1 argument\n", command);
 	return GED_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "dst")) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%g", gedp->ged_gvp->gv_adc.gas_dst * gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
+	    bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_gvp->gv_adc.gas_dst * gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
 	    return GED_OK;
 	} else if (argc == 1) {
 	    if (!gedp->ged_gvp->gv_adc.gas_anchor_dst) {
@@ -294,13 +294,13 @@ ged_adc(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s dst' command accepts 0 or 1 argument\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s dst' command accepts 0 or 1 argument\n", command);
 	return GED_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "odst")) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_adc.gas_dv_dist);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_adc.gas_dv_dist);
 	    return GED_OK;
 	} else if (argc == 1) {
 	    if (!gedp->ged_gvp->gv_adc.gas_anchor_dst) {
@@ -315,7 +315,7 @@ ged_adc(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s odst' command accepts 0 or 1 argument\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s odst' command accepts 0 or 1 argument\n", command);
 	return GED_ERROR;
     }
 
@@ -330,7 +330,7 @@ ged_adc(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s dh' command requires 1 argument\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s dh' command requires 1 argument\n", command);
 	return GED_ERROR;
     }
 
@@ -345,13 +345,13 @@ ged_adc(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s dv' command requires 1 argument\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s dv' command requires 1 argument\n", command);
 	return GED_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "hv")) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%g %g",
+	    bu_vls_printf(gedp->ged_result_str, "%g %g",
 			  gedp->ged_gvp->gv_adc.gas_pos_grid[X] * gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local,
 			  gedp->ged_gvp->gv_adc.gas_pos_grid[Y] * gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
 	    return GED_OK;
@@ -373,7 +373,7 @@ ged_adc(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s hv' command requires 0 or 2 arguments\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s hv' command requires 0 or 2 arguments\n", command);
 	return GED_ERROR;
     }
 
@@ -388,7 +388,7 @@ ged_adc(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s dx' command requires 1 argument\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s dx' command requires 1 argument\n", command);
 	return GED_ERROR;
     }
 
@@ -403,7 +403,7 @@ ged_adc(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s dy' command requires 1 argument\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s dy' command requires 1 argument\n", command);
 	return GED_ERROR;
     }
 
@@ -418,14 +418,14 @@ ged_adc(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s dz' command requires 1 argument\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s dz' command requires 1 argument\n", command);
 	return GED_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "xyz")) {
 	if (argc == 0) {
 	    VSCALE(scaled_pos, gedp->ged_gvp->gv_adc.gas_pos_model, gedp->ged_wdbp->dbip->dbi_base2local);
-	    bu_vls_printf(&gedp->ged_result_str, "%g %g %g", V3ARGS(scaled_pos));
+	    bu_vls_printf(gedp->ged_result_str, "%g %g %g", V3ARGS(scaled_pos));
 	    return GED_OK;
 	} else if (argc == 3) {
 	    VSCALE(user_pt, user_pt, gedp->ged_wdbp->dbip->dbi_local2base);
@@ -442,13 +442,13 @@ ged_adc(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s xyz' command requires 0 or 3 arguments\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s xyz' command requires 0 or 3 arguments\n", command);
 	return GED_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "x")) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_adc.gas_dv_x);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_adc.gas_dv_x);
 	    return GED_OK;
 	} else if (argc == 1) {
 	    if (!gedp->ged_gvp->gv_adc.gas_anchor_pos) {
@@ -467,13 +467,13 @@ ged_adc(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s x' command requires 0 or 1 argument\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s x' command requires 0 or 1 argument\n", command);
 	return GED_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "y")) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_adc.gas_dv_y);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_adc.gas_dv_y);
 	    return GED_OK;
 	} else if (argc == 1) {
 	    if (!gedp->ged_gvp->gv_adc.gas_anchor_pos) {
@@ -492,19 +492,19 @@ ged_adc(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s y' command requires 0 or 1 argument\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s y' command requires 0 or 1 argument\n", command);
 	return GED_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "anchor_pos")) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_adc.gas_anchor_pos);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_adc.gas_anchor_pos);
 	    return GED_OK;
 	} else if (argc == 1) {
 	    i = (int)user_pt[X];
 
 	    if (i < 0 || 2 < i) {
-		bu_vls_printf(&gedp->ged_result_str, "The '%d anchor_pos' parameter accepts values of 0, 1, or 2.", i);
+		bu_vls_printf(gedp->ged_result_str, "The '%d anchor_pos' parameter accepts values of 0, 1, or 2.", i);
 		return GED_ERROR;
 	    }
 
@@ -514,13 +514,13 @@ ged_adc(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s anchor_pos' command accepts 0 or 1 argument\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s anchor_pos' command accepts 0 or 1 argument\n", command);
 	return GED_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "anchor_a1")) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_adc.gas_anchor_a1);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_adc.gas_anchor_a1);
 	    return GED_OK;
 	} else if (argc == 1) {
 	    i = (int)user_pt[X];
@@ -535,14 +535,14 @@ ged_adc(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s anchor_a1' command accepts 0 or 1 argument\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s anchor_a1' command accepts 0 or 1 argument\n", command);
 	return GED_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "anchorpoint_a1")) {
 	if (argc == 0) {
 	    VSCALE(scaled_pos, gedp->ged_gvp->gv_adc.gas_anchor_pt_a1, gedp->ged_wdbp->dbip->dbi_base2local);
-	    bu_vls_printf(&gedp->ged_result_str, "%g %g %g", V3ARGS(scaled_pos));
+	    bu_vls_printf(gedp->ged_result_str, "%g %g %g", V3ARGS(scaled_pos));
 
 	    return GED_OK;
 	} else if (argc == 3) {
@@ -559,13 +559,13 @@ ged_adc(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s anchorpoint_a1' command accepts 0 or 3 arguments\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s anchorpoint_a1' command accepts 0 or 3 arguments\n", command);
 	return GED_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "anchor_a2")) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_adc.gas_anchor_a2);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_adc.gas_anchor_a2);
 
 	    return GED_OK;
 	} else if (argc == 1) {
@@ -581,7 +581,7 @@ ged_adc(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s anchor_a2' command accepts 0 or 1 argument\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s anchor_a2' command accepts 0 or 1 argument\n", command);
 	return GED_ERROR;
     }
 
@@ -589,7 +589,7 @@ ged_adc(struct ged *gedp,
 	if (argc == 0) {
 	    VSCALE(scaled_pos, gedp->ged_gvp->gv_adc.gas_anchor_pt_a2, gedp->ged_wdbp->dbip->dbi_base2local);
 
-	    bu_vls_printf(&gedp->ged_result_str, "%g %g %g", V3ARGS(scaled_pos));
+	    bu_vls_printf(gedp->ged_result_str, "%g %g %g", V3ARGS(scaled_pos));
 
 	    return GED_OK;
 	} else if (argc == 3) {
@@ -606,13 +606,13 @@ ged_adc(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s anchorpoint_a2' command accepts 0 or 3 arguments\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s anchorpoint_a2' command accepts 0 or 3 arguments\n", command);
 	return GED_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "anchor_dst")) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_adc.gas_anchor_dst);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_adc.gas_anchor_dst);
 
 	    return GED_OK;
 	} else if (argc == 1) {
@@ -628,14 +628,14 @@ ged_adc(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s anchor_dst' command accepts 0 or 1 argument\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s anchor_dst' command accepts 0 or 1 argument\n", command);
 	return GED_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "anchorpoint_dst")) {
 	if (argc == 0) {
 	    VSCALE(scaled_pos, gedp->ged_gvp->gv_adc.gas_anchor_pt_dst, gedp->ged_wdbp->dbip->dbi_base2local);
-	    bu_vls_printf(&gedp->ged_result_str, "%g %g %g", V3ARGS(scaled_pos));
+	    bu_vls_printf(gedp->ged_result_str, "%g %g %g", V3ARGS(scaled_pos));
 
 	    return GED_OK;
 	} else if (argc == 3) {
@@ -652,7 +652,7 @@ ged_adc(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s anchorpoint_dst' command accepts 0 or 3 arguments\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s anchorpoint_dst' command accepts 0 or 3 arguments\n", command);
 	return GED_ERROR;
     }
 
@@ -663,22 +663,22 @@ ged_adc(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s reset' command accepts no arguments\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s reset' command accepts no arguments\n", command);
 	return GED_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "vars")) {
-	adc_vls_print(gedp->ged_gvp, gedp->ged_wdbp->dbip->dbi_base2local, &gedp->ged_result_str);
+	adc_vls_print(gedp->ged_gvp, gedp->ged_wdbp->dbip->dbi_base2local, gedp->ged_result_str);
 	return GED_OK;
     }
 
     if (BU_STR_EQUAL(parameter, "help")) {
-	adc_usage(&gedp->ged_result_str, command);
+	adc_usage(gedp->ged_result_str, command);
 	return GED_HELP;
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "%s: unrecognized command '%s'\n", command, parameter);
-    adc_usage(&gedp->ged_result_str, command);
+    bu_vls_printf(gedp->ged_result_str, "%s: unrecognized command '%s'\n", command, parameter);
+    adc_usage(gedp->ged_result_str, command);
 
     return GED_ERROR;
 }

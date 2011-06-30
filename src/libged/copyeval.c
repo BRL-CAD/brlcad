@@ -51,16 +51,16 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 3) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -98,7 +98,7 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 	/* Make sure that final component in path is a solid */
 	if (internal.idb_type == ID_COMBINATION) {
 	    rt_db_free_internal(&internal);
-	    bu_vls_printf(&gedp->ged_result_str, "final component on path must be a primitive!\n");
+	    bu_vls_printf(gedp->ged_result_str, "final component on path must be a primitive!\n");
 	    return GED_ERROR;
 	}
 
@@ -106,12 +106,12 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 	_ged_trace(gtd.gtd_obj[0], 0, start_mat, &gtd);
 
 	if (gtd.gtd_prflag == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "PATH:  ");
+	    bu_vls_printf(gedp->ged_result_str, "PATH:  ");
 
 	    for (i=0; i<gtd.gtd_objpos; i++)
-		bu_vls_printf(&gedp->ged_result_str, "/%s", gtd.gtd_obj[i]->d_namep);
+		bu_vls_printf(gedp->ged_result_str, "/%s", gtd.gtd_obj[i]->d_namep);
 
-	    bu_vls_printf(&gedp->ged_result_str, "  NOT FOUND\n");
+	    bu_vls_printf(gedp->ged_result_str, "  NOT FOUND\n");
 	    rt_db_free_internal(&internal);
 	    return GED_ERROR;
 	}
@@ -124,7 +124,7 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 	if (rt_generic_xform(&new_int, gtd.gtd_xform,
 			     &internal, 0, gedp->ged_wdbp->dbip, &rt_uniresource)) {
 	    rt_db_free_internal(&internal);
-	    bu_vls_printf(&gedp->ged_result_str, "ged_copyeval: rt_generic_xform failed\n");
+	    bu_vls_printf(gedp->ged_result_str, "ged_copyeval: rt_generic_xform failed\n");
 	    return GED_ERROR;
 	}
 
@@ -140,7 +140,7 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 	rt_db_free_internal(&internal);
 	if (ip == &new_int)
 	    rt_db_free_internal(&new_int);
-	bu_vls_printf(&gedp->ged_result_str, "An error has occured while adding a new object to the database.");
+	bu_vls_printf(gedp->ged_result_str, "An error has occured while adding a new object to the database.");
 	return GED_ERROR;
     }
 
@@ -157,7 +157,7 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 	if (ip == &new_int)
 	    rt_db_free_internal(&internal);
 
-	bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting");
+	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	return GED_ERROR;
     }
 

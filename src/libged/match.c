@@ -42,19 +42,19 @@ ged_match(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     for (++argv; *argv != NULL; ++argv) {
-	if (db_regexp_match_all(&gedp->ged_result_str, gedp->ged_wdbp->dbip, *argv) > 0)
-	    bu_vls_strcat(&gedp->ged_result_str, " ");
+	if (db_regexp_match_all(gedp->ged_result_str, gedp->ged_wdbp->dbip, *argv) > 0)
+	    bu_vls_strcat(gedp->ged_result_str, " ");
     }
-    bu_vls_trimspace(&gedp->ged_result_str);
+    bu_vls_trimspace(gedp->ged_result_str);
 
     return GED_OK;
 }

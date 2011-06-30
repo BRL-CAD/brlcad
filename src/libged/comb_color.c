@@ -41,16 +41,16 @@ ged_comb_color(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 5) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -63,7 +63,7 @@ ged_comb_color(struct ged *gedp, int argc, const char *argv[])
 
     for (i = 0; i < 3; ++i) {
 	if (sscanf(argv[i+2], "%d", &val) != 1 || val < 0 || 255 < val) {
-	    bu_vls_printf(&gedp->ged_result_str, "RGB value out of range: %s", argv[i + 2]);
+	    bu_vls_printf(gedp->ged_result_str, "RGB value out of range: %s", argv[i + 2]);
 	    rt_db_free_internal(&intern);
 	    return GED_ERROR;
 	} else

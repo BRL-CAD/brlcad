@@ -53,11 +53,11 @@ ged_get_autoview(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
 	return GED_HELP;
     }
 
@@ -69,7 +69,7 @@ ged_get_autoview(struct ged *gedp, int argc, const char *argv[])
 		pflag = 1;
 		break;
 	    default: {
-		bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
 		return GED_ERROR;
 	    }
 	}
@@ -122,7 +122,7 @@ ged_get_autoview(struct ged *gedp, int argc, const char *argv[])
     VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_base2local);
     radial[X] *= gedp->ged_wdbp->dbip->dbi_base2local;
 
-    bu_vls_printf(&gedp->ged_result_str, "center {%g %g %g} size %g", V3ARGS(center), radial[X] * 2.0);
+    bu_vls_printf(gedp->ged_result_str, "center {%g %g %g} size %g", V3ARGS(center), radial[X] * 2.0);
 
     return GED_OK;
 }

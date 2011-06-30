@@ -107,37 +107,37 @@ grid_vsnap(struct ged *gedp)
 HIDDEN void
 grid_vls_print(struct ged *gedp)
 {
-    bu_vls_printf(&gedp->ged_result_str, "anchor = %g %g %g\n",
+    bu_vls_printf(gedp->ged_result_str, "anchor = %g %g %g\n",
 		  gedp->ged_gvp->gv_grid.ggs_anchor[0] * gedp->ged_wdbp->dbip->dbi_base2local,
 		  gedp->ged_gvp->gv_grid.ggs_anchor[1] * gedp->ged_wdbp->dbip->dbi_base2local,
 		  gedp->ged_gvp->gv_grid.ggs_anchor[2] * gedp->ged_wdbp->dbip->dbi_base2local);
-    bu_vls_printf(&gedp->ged_result_str, "color = %d %d %d\n",
+    bu_vls_printf(gedp->ged_result_str, "color = %d %d %d\n",
 		  gedp->ged_gvp->gv_grid.ggs_color[0],
 		  gedp->ged_gvp->gv_grid.ggs_color[1],
 		  gedp->ged_gvp->gv_grid.ggs_color[2]);
-    bu_vls_printf(&gedp->ged_result_str, "draw = %d\n", gedp->ged_gvp->gv_grid.ggs_draw);
-    bu_vls_printf(&gedp->ged_result_str, "mrh = %d\n", gedp->ged_gvp->gv_grid.ggs_res_major_h);
-    bu_vls_printf(&gedp->ged_result_str, "mrv = %d\n", gedp->ged_gvp->gv_grid.ggs_res_major_v);
-    bu_vls_printf(&gedp->ged_result_str, "rh = %g\n", gedp->ged_gvp->gv_grid.ggs_res_h * gedp->ged_wdbp->dbip->dbi_base2local);
-    bu_vls_printf(&gedp->ged_result_str, "rv = %g\n", gedp->ged_gvp->gv_grid.ggs_res_v * gedp->ged_wdbp->dbip->dbi_base2local);
-    bu_vls_printf(&gedp->ged_result_str, "snap = %d\n", gedp->ged_gvp->gv_grid.ggs_snap);
+    bu_vls_printf(gedp->ged_result_str, "draw = %d\n", gedp->ged_gvp->gv_grid.ggs_draw);
+    bu_vls_printf(gedp->ged_result_str, "mrh = %d\n", gedp->ged_gvp->gv_grid.ggs_res_major_h);
+    bu_vls_printf(gedp->ged_result_str, "mrv = %d\n", gedp->ged_gvp->gv_grid.ggs_res_major_v);
+    bu_vls_printf(gedp->ged_result_str, "rh = %g\n", gedp->ged_gvp->gv_grid.ggs_res_h * gedp->ged_wdbp->dbip->dbi_base2local);
+    bu_vls_printf(gedp->ged_result_str, "rv = %g\n", gedp->ged_gvp->gv_grid.ggs_res_v * gedp->ged_wdbp->dbip->dbi_base2local);
+    bu_vls_printf(gedp->ged_result_str, "snap = %d\n", gedp->ged_gvp->gv_grid.ggs_snap);
 }
 
 
 HIDDEN void
 grid_usage(struct ged *gedp, const char *argv0)
 {
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s\n", argv0);
-    bu_vls_printf(&gedp->ged_result_str, "%s", "  grid vname color [r g b]	set or get the color\n");
-    bu_vls_printf(&gedp->ged_result_str, "%s", "  grid vname draw [0|1]		set or get the draw parameter\n");
-    bu_vls_printf(&gedp->ged_result_str, "%s", "  grid vname help		prints this help message\n");
-    bu_vls_printf(&gedp->ged_result_str, "%s", "  grid vname mrh [ival]		set or get the major resolution (horizontal)\n");
-    bu_vls_printf(&gedp->ged_result_str, "%s", "  grid vname mrv [ival]		set or get the major resolution (vertical)\n");
-    bu_vls_printf(&gedp->ged_result_str, "%s", "  grid vname rh [fval]		set or get the resolution (horizontal)\n");
-    bu_vls_printf(&gedp->ged_result_str, "%s", "  grid vname rv [fval]		set or get the resolution (vertical)\n");
-    bu_vls_printf(&gedp->ged_result_str, "%s", "  grid vname snap [0|1]		set or get the snap parameter\n");
-    bu_vls_printf(&gedp->ged_result_str, "%s", "  grid vname vars		print a list of all variables (i.e. var = val)\n");
-    bu_vls_printf(&gedp->ged_result_str, "%s", "  grid vname vsnap		snaps the view center to the nearest grid point\n");
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", argv0);
+    bu_vls_printf(gedp->ged_result_str, "%s", "  grid vname color [r g b]	set or get the color\n");
+    bu_vls_printf(gedp->ged_result_str, "%s", "  grid vname draw [0|1]		set or get the draw parameter\n");
+    bu_vls_printf(gedp->ged_result_str, "%s", "  grid vname help		prints this help message\n");
+    bu_vls_printf(gedp->ged_result_str, "%s", "  grid vname mrh [ival]		set or get the major resolution (horizontal)\n");
+    bu_vls_printf(gedp->ged_result_str, "%s", "  grid vname mrv [ival]		set or get the major resolution (vertical)\n");
+    bu_vls_printf(gedp->ged_result_str, "%s", "  grid vname rh [fval]		set or get the resolution (horizontal)\n");
+    bu_vls_printf(gedp->ged_result_str, "%s", "  grid vname rv [fval]		set or get the resolution (vertical)\n");
+    bu_vls_printf(gedp->ged_result_str, "%s", "  grid vname snap [0|1]		set or get the snap parameter\n");
+    bu_vls_printf(gedp->ged_result_str, "%s", "  grid vname vars		print a list of all variables (i.e. var = val)\n");
+    bu_vls_printf(gedp->ged_result_str, "%s", "  grid vname vsnap		snaps the view center to the nearest grid point\n");
 }
 
 
@@ -159,7 +159,7 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc == 1) {
 	grid_usage(gedp, argv[0]);
@@ -184,7 +184,7 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
 
     if (BU_STR_EQUAL(parameter, "draw")) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_grid.ggs_draw);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_grid.ggs_draw);
 	    return GED_OK;
 	} else if (argc == 1) {
 	    i = (int)user_pt[X];
@@ -197,7 +197,7 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s draw' command accepts 0 or 1 argument\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s draw' command accepts 0 or 1 argument\n", command);
 	return GED_ERROR;
     }
 
@@ -207,13 +207,13 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s vsnap' command accepts no arguments\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s vsnap' command accepts no arguments\n", command);
 	return GED_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "snap")) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_grid.ggs_snap);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_grid.ggs_snap);
 	    return GED_OK;
 	} else if (argc == 1) {
 	    i = (int)user_pt[X];
@@ -226,13 +226,13 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s snap' command accepts 0 or 1 argument\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s snap' command accepts 0 or 1 argument\n", command);
 	return GED_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "rh")) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%g",
+	    bu_vls_printf(gedp->ged_result_str, "%g",
 			  gedp->ged_gvp->gv_grid.ggs_res_h * gedp->ged_wdbp->dbip->dbi_base2local);
 	    return GED_OK;
 	} else if (argc == 1) {
@@ -241,13 +241,13 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s rh' command accepts 0 or 1 argument\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s rh' command accepts 0 or 1 argument\n", command);
 	return GED_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "rv")) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%g",
+	    bu_vls_printf(gedp->ged_result_str, "%g",
 			  gedp->ged_gvp->gv_grid.ggs_res_v * gedp->ged_wdbp->dbip->dbi_base2local);
 	    return GED_OK;
 	} else if (argc == 1) {
@@ -256,13 +256,13 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s rv' command accepts 0 or 1 argument\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s rv' command accepts 0 or 1 argument\n", command);
 	return GED_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "mrh")) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_grid.ggs_res_major_h);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_grid.ggs_res_major_h);
 	    return GED_OK;
 	} else if (argc == 1) {
 	    gedp->ged_gvp->gv_grid.ggs_res_major_h = (int)user_pt[X];
@@ -270,13 +270,13 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s mrh' command accepts 0 or 1 argument\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s mrh' command accepts 0 or 1 argument\n", command);
 	return GED_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "mrv")) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_grid.ggs_res_major_v);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_grid.ggs_res_major_v);
 	    return GED_OK;
 	} else if (argc == 1) {
 	    gedp->ged_gvp->gv_grid.ggs_res_major_v = (int)user_pt[X];
@@ -284,13 +284,13 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s mrv' command accepts 0 or 1 argument\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s mrv' command accepts 0 or 1 argument\n", command);
 	return GED_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "anchor")) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%g %g %g",
+	    bu_vls_printf(gedp->ged_result_str, "%g %g %g",
 			  gedp->ged_gvp->gv_grid.ggs_anchor[X] * gedp->ged_wdbp->dbip->dbi_base2local,
 			  gedp->ged_gvp->gv_grid.ggs_anchor[Y] * gedp->ged_wdbp->dbip->dbi_base2local,
 			  gedp->ged_gvp->gv_grid.ggs_anchor[Z] * gedp->ged_wdbp->dbip->dbi_base2local);
@@ -303,13 +303,13 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s anchor' command requires 0 or 3 arguments\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s anchor' command requires 0 or 3 arguments\n", command);
 	return GED_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "color")) {
 	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
+	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
 			  gedp->ged_gvp->gv_grid.ggs_color[X],
 			  gedp->ged_gvp->gv_grid.ggs_color[Y],
 			  gedp->ged_gvp->gv_grid.ggs_color[Z]);
@@ -322,7 +322,7 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s color' command requires 0 or 3 arguments\n", command);
+	bu_vls_printf(gedp->ged_result_str, "The '%s color' command requires 0 or 3 arguments\n", command);
 	return GED_ERROR;
     }
 
@@ -336,7 +336,7 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "%s: unrecognized command '%s'\n", command);
+    bu_vls_printf(gedp->ged_result_str, "%s: unrecognized command '%s'\n", command);
     grid_usage(gedp, argv[0]);
 
     return GED_ERROR;

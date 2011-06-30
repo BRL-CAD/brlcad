@@ -68,7 +68,7 @@ _ged_scale_tor(struct ged *gedp, struct rt_tor_internal *tor, const char *attrib
 		tor->r_h = newrad;
 	    break;
 	default:
-	    bu_vls_printf(&gedp->ged_result_str, "bad tor attribute - %s", attribute);
+	    bu_vls_printf(gedp->ged_result_str, "bad tor attribute - %s", attribute);
 	    return GED_ERROR;
     }
 

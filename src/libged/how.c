@@ -59,16 +59,16 @@ ged_how(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (3 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -102,9 +102,9 @@ ged_how(struct ged *gedp, int argc, const char *argv[])
 
 	    /* found a match */
 	    if (both)
-		bu_vls_printf(&gedp->ged_result_str, "%d %g", sp->s_dmode, sp->s_transparency);
+		bu_vls_printf(gedp->ged_result_str, "%d %g", sp->s_dmode, sp->s_transparency);
 	    else
-		bu_vls_printf(&gedp->ged_result_str, "%d", sp->s_dmode);
+		bu_vls_printf(gedp->ged_result_str, "%d", sp->s_dmode);
 
 	    goto good;
 	}
@@ -113,7 +113,7 @@ ged_how(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* match NOT found */
-    bu_vls_printf(&gedp->ged_result_str, "-1");
+    bu_vls_printf(gedp->ged_result_str, "-1");
 
 good:
     if (dpp != (struct directory **)NULL)
@@ -157,7 +157,7 @@ _ged_build_dpp(struct ged *gedp,
     list = bu_vls_addr(&vls);
 
     if (Tcl_SplitList((Tcl_Interp *)brlcad_interp, list, &ac, &av_orig) != TCL_OK) {
-	bu_vls_printf(&gedp->ged_result_str, "-1");
+	bu_vls_printf(gedp->ged_result_str, "-1");
 	bu_vls_free(&vls);
 	return (struct directory **)NULL;
     }
@@ -183,7 +183,7 @@ _ged_build_dpp(struct ged *gedp,
 	    dpp[i] = dp;
 	else {
 	    /* object is not currently being displayed */
-	    bu_vls_printf(&gedp->ged_result_str, "-1");
+	    bu_vls_printf(gedp->ged_result_str, "-1");
 
 	    bu_free((genptr_t)dpp, "_ged_build_dpp: directory pointers");
 	    Tcl_Free((char *)av_orig);

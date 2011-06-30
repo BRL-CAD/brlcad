@@ -49,16 +49,16 @@ ged_shaded_mode(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc > 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     /* get shaded mode */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gdp->gd_shaded_mode);
+	bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gdp->gd_shaded_mode);
 	return GED_OK;
     }
 
@@ -77,7 +77,7 @@ ged_shaded_mode(struct ged *gedp, int argc, const char *argv[])
     }
 
 bad:
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
 

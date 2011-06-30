@@ -96,16 +96,16 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "expression";
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -127,7 +127,7 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
 	    if (*start == ' '  ||
 		*start == '\t' ||
 		*start == '\n')
-		bu_vls_putc(&gedp->ged_result_str, *start++);
+		bu_vls_putc(gedp->ged_result_str, *start++);
 	    else
 		break;
 	}
@@ -165,11 +165,11 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
 	    if (db_regexp_match_all(&temp, gedp->ged_wdbp->dbip,
 				    bu_vls_addr(&word)) == 0) {
 		debackslash(&temp, &word);
-		backslash(&gedp->ged_result_str, &temp);
+		backslash(gedp->ged_result_str, &temp);
 	    } else
-		bu_vls_vlscat(&gedp->ged_result_str, &temp);
+		bu_vls_vlscat(gedp->ged_result_str, &temp);
 	} else {
-	    debackslash(&gedp->ged_result_str, &word);
+	    debackslash(gedp->ged_result_str, &word);
 	}
 
 	firstword = 0;

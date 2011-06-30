@@ -93,7 +93,7 @@ itoa(struct ged *gedp,
      */
     for (j = i; j < w; j++) s[j] = ' ';
     if (i > w)
-	bu_vls_printf(&gedp->ged_result_str, "itoa: field length too small\n");
+	bu_vls_printf(gedp->ged_result_str, "itoa: field length too small\n");
     s[w] = '\0';
     /* reverse the array
      */
@@ -138,7 +138,7 @@ crregion(struct ged *gedp,
 	solidname[grpname_len + extraTypeChars] = '\0';
 	crname(gedp, solidname, members[i], maxlen);
 	if (db_lookup(gedp->ged_wdbp->dbip, solidname, LOOKUP_QUIET) == RT_DIR_NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "region: %s will skip member: %s\n", region, solidname);
+	    bu_vls_printf(gedp->ged_result_str, "region: %s will skip member: %s\n", region, solidname);
 	    continue;
 	}
 	track_mk_addmember(solidname, &head, NULL, op[i]);
@@ -177,16 +177,16 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 15) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -213,7 +213,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     lw[0] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
 
     if (fw[0] <= lw[0]) {
-	bu_vls_printf(&gedp->ged_result_str, "First wheel after last wheel - STOP\n");
+	bu_vls_printf(gedp->ged_result_str, "First wheel after last wheel - STOP\n");
 	edit_result = GED_ERROR;
 	goto end;
     }
@@ -227,7 +227,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     fw[2] = lw[2] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
 
     if (fw[2] <= 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Radius <= 0 - STOP\n");
+	bu_vls_printf(gedp->ged_result_str, "Radius <= 0 - STOP\n");
 	edit_result = GED_ERROR;
 	goto end;
     }
@@ -237,7 +237,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     dw[0] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
 
     if (dw[0] >= lw[0]) {
-	bu_vls_printf(&gedp->ged_result_str, "DRIVE wheel not in the rear - STOP \n");
+	bu_vls_printf(gedp->ged_result_str, "DRIVE wheel not in the rear - STOP \n");
 	edit_result = GED_ERROR;
 	goto end;
     }
@@ -251,7 +251,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     dw[2] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
 
     if (dw[2] <= 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Radius <= 0 - STOP\n");
+	bu_vls_printf(gedp->ged_result_str, "Radius <= 0 - STOP\n");
 	edit_result = GED_ERROR;
 	goto end;
     }
@@ -261,7 +261,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     iw[0] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
 
     if (iw[0] <= fw[0]) {
-	bu_vls_printf(&gedp->ged_result_str, "IDLER wheel not in the front - STOP \n");
+	bu_vls_printf(gedp->ged_result_str, "IDLER wheel not in the front - STOP \n");
 	edit_result = GED_ERROR;
 	goto end;
     }
@@ -275,7 +275,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     iw[2] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
 
     if (iw[2] <= 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Radius <= 0 - STOP\n");
+	bu_vls_printf(gedp->ged_result_str, "Radius <= 0 - STOP\n");
 	edit_result = GED_ERROR;
 	goto end;
     }
@@ -289,12 +289,12 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     tr[1] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
 
     if (EQUAL(tr[0], tr[1])) {
-	bu_vls_printf(&gedp->ged_result_str, "MIN == MAX ... STOP\n");
+	bu_vls_printf(gedp->ged_result_str, "MIN == MAX ... STOP\n");
 	edit_result = GED_ERROR;
 	goto end;
     }
     if (tr[0] > tr[1]) {
-	bu_vls_printf(&gedp->ged_result_str, "MIN > MAX .... will switch\n");
+	bu_vls_printf(gedp->ged_result_str, "MIN > MAX .... will switch\n");
 	tr[1] = tr[0];
 	tr[0] = tr[2];
     }
@@ -304,7 +304,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
     tr[2] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
 
     if (tr[2] <= 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Track thickness <= 0 - STOP\n");
+	bu_vls_printf(gedp->ged_result_str, "Track thickness <= 0 - STOP\n");
 	edit_result = GED_ERROR;
 	goto end;
     }
@@ -348,7 +348,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
 	if ((db_lookup(gedp->ged_wdbp->dbip, solname, LOOKUP_QUIET) != RT_DIR_NULL) ||
 	    (db_lookup(gedp->ged_wdbp->dbip, regname, LOOKUP_QUIET) != RT_DIR_NULL)) {
 	    /* name already exists */
-	    bu_vls_printf(&gedp->ged_result_str, "Track: naming error -- STOP\n");
+	    bu_vls_printf(gedp->ged_result_str, "Track: naming error -- STOP\n");
 	    edit_result = GED_ERROR;
 	    goto end;
 	}
@@ -549,7 +549,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
 	regname[grpname_len + extraTypeChars] = '\0';
 	crname(gedp, regname, i, len);
 	if (db_lookup(gedp->ged_wdbp->dbip, regname, LOOKUP_QUIET) == RT_DIR_NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "group: %s will skip member: %s\n", grpname, regname);
+	    bu_vls_printf(gedp->ged_result_str, "group: %s will skip member: %s\n", grpname, regname);
 	    continue;
 	}
 	track_mk_addmember(regname, &head, NULL, WMOP_UNION);
@@ -560,7 +560,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
 		      0, NULL, NULL, NULL,
 		      0, 0, 0, 0,
 		      0, 1, 1) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "An error has occured while adding '%s' to the database.\n", grpname);
+	bu_vls_printf(gedp->ged_result_str, "An error has occured while adding '%s' to the database.\n", grpname);
     }
 
     Trackpos += 10;
@@ -597,12 +597,12 @@ wrobj(struct ged *gedp,
 	return 0;
 
     if (db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET) != RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "track naming error: %s already exists\n", name);
+	bu_vls_printf(gedp->ged_result_str, "track naming error: %s already exists\n", name);
 	return GED_ERROR;
     }
 
     if (flags != RT_DIR_SOLID) {
-	bu_vls_printf(&gedp->ged_result_str, "wrobj can only write solids, aborting\n");
+	bu_vls_printf(gedp->ged_result_str, "wrobj can only write solids, aborting\n");
 	return GED_ERROR;
     }
 
@@ -646,21 +646,21 @@ wrobj(struct ged *gedp,
 	}
 	    break;
 	default:
-	    bu_vls_printf(&gedp->ged_result_str, "Unrecognized solid type in 'wrobj', aborting\n");
+	    bu_vls_printf(gedp->ged_result_str, "Unrecognized solid type in 'wrobj', aborting\n");
 	    return GED_ERROR;
     }
 
     tdp = db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type);
     if (tdp == RT_DIR_NULL) {
 	rt_db_free_internal(&intern);
-	bu_vls_printf(&gedp->ged_result_str, "Cannot add '%s' to directory, aborting\n", name);
+	bu_vls_printf(gedp->ged_result_str, "Cannot add '%s' to directory, aborting\n", name);
 	return GED_ERROR;
     }
 
     if (rt_db_put_internal(tdp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	rt_db_free_internal(&intern);
-	bu_vls_printf(&gedp->ged_result_str, "wrobj(gedp, %s):  write error\n", name);
-	bu_vls_printf(&gedp->ged_result_str, "The in-memory table of contents may not match the status of the on-disk\ndatabase.  The on-disk database should still be intact.  For safety, \nyou should exit now, and resolve the I/O problem, before continuing.\n");
+	bu_vls_printf(gedp->ged_result_str, "wrobj(gedp, %s):  write error\n", name);
+	bu_vls_printf(gedp->ged_result_str, "The in-memory table of contents may not match the status of the on-disk\ndatabase.  The on-disk database should still be intact.  For safety, \nyou should exit now, and resolve the I/O problem, before continuing.\n");
 
 	return GED_ERROR;
     }
@@ -684,7 +684,7 @@ tancir(struct ged *gedp,
     if (mag > 1.0e-20 || mag < -1.0e-20) {
 	f = 1.0/mag;
     } else {
-	bu_vls_printf(&gedp->ged_result_str, "tancir():  0-length vector!\n");
+	bu_vls_printf(gedp->ged_result_str, "tancir():  0-length vector!\n");
 	return;
     }
     VSCALE(work, work, f);

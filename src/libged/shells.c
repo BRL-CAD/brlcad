@@ -51,16 +51,16 @@ ged_shells(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -68,12 +68,12 @@ ged_shells(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
 
     if (rt_db_get_internal(&old_intern, old_dp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "rt_db_get_internal() error\n");
+	bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal() error\n");
 	return GED_ERROR;
     }
 
     if (old_intern.idb_type != ID_NMG) {
-	bu_vls_printf(&gedp->ged_result_str, "Object is not an NMG!!!\n");
+	bu_vls_printf(gedp->ged_result_str, "Object is not an NMG!!!\n");
 	return GED_ERROR;
     }
 
@@ -111,7 +111,7 @@ ged_shells(struct ged *gedp, int argc, const char *argv[])
 
 	    new_dp=db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&shell_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
 	    if (new_dp == RT_DIR_NULL) {
-		bu_vls_printf(&gedp->ged_result_str, "An error has occured while adding a new object to the database.\n");
+		bu_vls_printf(gedp->ged_result_str, "An error has occured while adding a new object to the database.\n");
 		return GED_ERROR;
 	    }
 
@@ -121,7 +121,7 @@ ged_shells(struct ged *gedp, int argc, const char *argv[])
 	    if (rt_db_put_internal(new_dp, gedp->ged_wdbp->dbip, &new_intern, &rt_uniresource) < 0) {
 		/* Free memory */
 		nmg_km(m_tmp);
-		bu_vls_printf(&gedp->ged_result_str, "rt_db_put_internal() failure\n");
+		bu_vls_printf(gedp->ged_result_str, "rt_db_put_internal() failure\n");
 		return GED_ERROR;
 	    }
 	    /* Internal representation has been freed by rt_db_put_internal */

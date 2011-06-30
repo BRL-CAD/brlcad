@@ -309,11 +309,11 @@ ged_ps(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -341,7 +341,7 @@ ged_ps(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    case 'c':
 		if (sscanf(bu_optarg, "%d%*c%d%*c%d", &r, &g, &b) != 3) {
-		    bu_vls_printf(&gedp->ged_result_str, "%s: bad color - %s", argv[0], bu_optarg);
+		    bu_vls_printf(gedp->ged_result_str, "%s: bad color - %s", argv[0], bu_optarg);
 		    return GED_ERROR;
 		}
 
@@ -373,12 +373,12 @@ ged_ps(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    case 's':
 		if (sscanf(bu_optarg, "%lf", &tmp_f) != 1) {
-		    bu_vls_printf(&gedp->ged_result_str, "%s: bad size - %s", argv[0], bu_optarg);
+		    bu_vls_printf(gedp->ged_result_str, "%s: bad size - %s", argv[0], bu_optarg);
 		    goto bad;
 		}
 
 		if (tmp_f < 0.0 || NEAR_ZERO(tmp_f, 0.1)) {
-		    bu_vls_printf(&gedp->ged_result_str, "%s: bad size - %s, must be greater than 0.1 inches\n", argv[0], bu_optarg);
+		    bu_vls_printf(gedp->ged_result_str, "%s: bad size - %s, must be greater than 0.1 inches\n", argv[0], bu_optarg);
 		    goto bad;
 		}
 
@@ -392,7 +392,7 @@ ged_ps(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    case 'x':
 		if (sscanf(bu_optarg, "%lf", &tmp_f) != 1) {
-		    bu_vls_printf(&gedp->ged_result_str, "%s: bad x offset - %s", argv[0], bu_optarg);
+		    bu_vls_printf(gedp->ged_result_str, "%s: bad x offset - %s", argv[0], bu_optarg);
 		    goto bad;
 		}
 		xoffset = (int)(tmp_f * ps_default_ppi);
@@ -400,25 +400,25 @@ ged_ps(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    case 'y':
 		if (sscanf(bu_optarg, "%lf", &tmp_f) != 1) {
-		    bu_vls_printf(&gedp->ged_result_str, "%s: bad y offset - %s", argv[0], bu_optarg);
+		    bu_vls_printf(gedp->ged_result_str, "%s: bad y offset - %s", argv[0], bu_optarg);
 		    goto bad;
 		}
 		yoffset = (int)(tmp_f * ps_default_ppi);
 
 		break;
 	    default:
-		bu_vls_printf(&gedp->ged_result_str, "%s: Unrecognized option - %s", argv[0], argv[bu_optind-1]);
+		bu_vls_printf(gedp->ged_result_str, "%s: Unrecognized option - %s", argv[0], argv[bu_optind-1]);
 		goto bad;
 	}
     }
 
     if ((argc - bu_optind) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	goto bad;
     }
 
     if ((fp = fopen(argv[bu_optind], "wb")) == NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Error opening file - %s\n", argv[0], argv[bu_optind]);
+	bu_vls_printf(gedp->ged_result_str, "%s: Error opening file - %s\n", argv[0], argv[bu_optind]);
 	goto bad;
     }
 

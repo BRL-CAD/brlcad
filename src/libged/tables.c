@@ -128,7 +128,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 	return;
 
     if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting\n");
+	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting\n");
 	return;
     }
 
@@ -138,7 +138,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
     if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
 	db_non_union_push(comb->tree, &rt_uniresource);
 	if (db_ck_v4gift_tree(comb->tree) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "Cannot flatten tree for editing\n");
+	    bu_vls_printf(gedp->ged_result_str, "Cannot flatten tree for editing\n");
 	    intern.idb_meth->ft_ifree(&intern);
 	    return;
 	}
@@ -242,7 +242,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 
 		if (!rt_functab[sol_intern.idb_type].ft_describe ||
 		    rt_functab[sol_intern.idb_type].ft_describe(&tmp_vls, &sol_intern, 1, gedp->ged_wdbp->dbip->dbi_base2local, &rt_uniresource, gedp->ged_wdbp->dbip) < 0) {
-		    bu_vls_printf(&gedp->ged_result_str, "%s describe error\n", tree_list[i].tl_tree->tr_l.tl_name);
+		    bu_vls_printf(gedp->ged_result_str, "%s describe error\n", tree_list[i].tl_tree->tr_l.tl_name);
 		}
 		fprintf(tabptr, "%s", bu_vls_addr(&tmp_vls));
 		bu_vls_free(&tmp_vls);
@@ -262,7 +262,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 
 	    nextdp = db_lookup(gedp->ged_wdbp->dbip, tree_list[i].tl_tree->tr_l.tl_name, LOOKUP_NOISY);
 	    if (nextdp == RT_DIR_NULL) {
-		bu_vls_printf(&gedp->ged_result_str, "\tskipping this object\n");
+		bu_vls_printf(gedp->ged_result_str, "\tskipping this object\n");
 		continue;
 	    }
 
@@ -276,7 +276,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 	    bu_ptbl_trunc(cur_path, cur_length);
 	}
     } else {
-	bu_vls_printf(&gedp->ged_result_str, "Illegal flags for %s skipping\n", dp->d_namep);
+	bu_vls_printf(gedp->ged_result_str, "Illegal flags for %s skipping\n", dp->d_namep);
 	return;
     }
 
@@ -310,16 +310,16 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 3) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -342,14 +342,14 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 	flag = ID_TABLE;
     } else {
 	/* should never reach here */
-	bu_vls_printf(&gedp->ged_result_str, "%s:  input error\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s:  input error\n", argv[0]);
 	status = GED_ERROR;
 	goto end;
     }
 
     /* open the file */
     if ((tabptr=fopen(argv[1], "w+")) == NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s:  Can't open %s\n", argv[0], argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s:  Can't open %s\n", argv[0], argv[1]);
 	status = GED_ERROR;
 	goto end;
     }
@@ -403,17 +403,17 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL)
 	    tables_new(gedp, dp, &cur_path, (const fastf_t *)bn_mat_identity, flag, &numreg, &numsol);
 	else
-	    bu_vls_printf(&gedp->ged_result_str, "%s:  skip this object\n", argv[i]);
+	    bu_vls_printf(gedp->ged_result_str, "%s:  skip this object\n", argv[i]);
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "Summary written in: %s\n", argv[1]);
+    bu_vls_printf(gedp->ged_result_str, "Summary written in: %s\n", argv[1]);
 
     if (flag == SOL_TABLE || flag == REG_TABLE) {
 	(void)unlink("/tmp/mged_discr\0");
 	(void)fprintf(tabptr, "\n\nNumber Primitives = %ld  Number Regions = %ld\n",
 		      numsol, numreg);
 
-	bu_vls_printf(&gedp->ged_result_str, "Processed %d Primitives and %d Regions\n",
+	bu_vls_printf(gedp->ged_result_str, "Processed %d Primitives and %d Regions\n",
 		      numsol, numreg);
 
 	(void)fclose(tabptr);
@@ -423,7 +423,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 	(void)fprintf(tabptr, "* 9999999\n* 9999999\n* 9999999\n* 9999999\n* 9999999\n");
 	(void)fclose(tabptr);
 
-	bu_vls_printf(&gedp->ged_result_str, "Processed %d Regions\n", numreg);
+	bu_vls_printf(gedp->ged_result_str, "Processed %d Regions\n", numreg);
 
 	/* make ordered idents - tries newer gnu 'sort' syntax if not successful */
 	bu_vls_strcpy(&cmd, sortcmd_orig);
@@ -437,12 +437,12 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 	    if (ret != 0)
 		bu_log("WARNING: sort failure detected\n");
 	}
-	bu_vls_printf(&gedp->ged_result_str, "%V\n", &cmd);
+	bu_vls_printf(gedp->ged_result_str, "%V\n", &cmd);
 
 	bu_vls_trunc(&cmd, 0);
 	bu_vls_strcpy(&cmd, catcmd);
 	bu_vls_strcat(&cmd, argv[1]);
-	bu_vls_printf(&gedp->ged_result_str, "%V\n", &cmd);
+	bu_vls_printf(gedp->ged_result_str, "%V\n", &cmd);
 	ret = system(bu_vls_addr(&cmd));
 	if (ret != 0)
 	    bu_log("WARNING: cat failure detected\n");

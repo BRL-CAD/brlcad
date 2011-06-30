@@ -60,7 +60,7 @@ ged_nmg_fix_normals(struct ged *gedp, int argc, const char *argv[])
     tol.para = 0.999;
 
     if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -68,17 +68,17 @@ ged_nmg_fix_normals(struct ged *gedp, int argc, const char *argv[])
     nmg_name = argv[1];
 
     if ((dp=db_lookup(gedp->ged_wdbp->dbip, nmg_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s does not exist\n", nmg_name);
+	bu_vls_printf(gedp->ged_result_str, "%s does not exist\n", nmg_name);
 	return GED_ERROR;
     }
 
     if (rt_db_get_internal(&nmg_intern, dp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "rt_db_get_internal() error\n");
+	bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal() error\n");
 	return GED_ERROR;
     }
 
     if (nmg_intern.idb_type != ID_NMG) {
-	bu_vls_printf(&gedp->ged_result_str, "%s is not an NMG solid\n", nmg_name);
+	bu_vls_printf(gedp->ged_result_str, "%s is not an NMG solid\n", nmg_name);
 	rt_db_free_internal(&nmg_intern);
 	return GED_ERROR;
     }

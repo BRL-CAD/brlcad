@@ -297,13 +297,13 @@ copy_v4_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 	/* add the object to the directory */
 	dp = db_diradd(dbip, bu_vls_addr(&obj_list.names[idx].dest[i]), RT_DIR_PHONY_ADDR, proto->d_len, proto->d_flags, &proto->d_minor_type);
 	if ((dp == RT_DIR_NULL) || db_alloc(dbip, dp, proto->d_len)) {
-	    bu_vls_printf(&state->gedp->ged_result_str, "Database alloc error, aborting\n");
+	    bu_vls_printf(state->gedp->ged_result_str, "Database alloc error, aborting\n");
 	    return;
 	}
 
 	/* get an in-memory reference to the object being copied */
 	if ((rp = db_getmrec(dbip, proto)) == (union record *)0) {
-	    bu_vls_printf(&state->gedp->ged_result_str, "Database read error, aborting\n");
+	    bu_vls_printf(state->gedp->ged_result_str, "Database read error, aborting\n");
 	    return;
 	}
 
@@ -339,11 +339,11 @@ copy_v4_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 		    VADD2(rp->s.s_values, rp->s.s_values, state->rpnt);
 	    }
 	} else
-	    bu_vls_printf(&state->gedp->ged_result_str, "mods not available on %s\n", proto->d_namep);
+	    bu_vls_printf(state->gedp->ged_result_str, "mods not available on %s\n", proto->d_namep);
 
 	/* write the object to disk */
 	if (db_put(dbip, dp, rp, 0, dp->d_len)) {
-	    bu_vls_printf(&state->gedp->ged_result_str, "ERROR: clone internal error writing to the database\n");
+	    bu_vls_printf(state->gedp->ged_result_str, "ERROR: clone internal error writing to the database\n");
 	    return;
 	}
     }
@@ -419,11 +419,11 @@ copy_v5_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 	argv[3] = (char *)0;
 	ret = ged_copy(state->gedp, 3, (const char **)argv);
 	if (ret != GED_OK)
-	    bu_vls_printf(&state->gedp->ged_result_str, "WARNING: failure cloning \"%s\" to \"%s\"\n", proto->d_namep, name);
+	    bu_vls_printf(state->gedp->ged_result_str, "WARNING: failure cloning \"%s\" to \"%s\"\n", proto->d_namep, name);
 
 	/* get the original objects matrix */
 	if (rt_db_get_internal(&intern, dp, dbip, matrix, &rt_uniresource) < 0) {
-	    bu_vls_printf(&state->gedp->ged_result_str, "ERROR: clone internal error copying %s\n", proto->d_namep);
+	    bu_vls_printf(state->gedp->ged_result_str, "ERROR: clone internal error copying %s\n", proto->d_namep);
 	    bu_vls_free(name);
 	    return;
 	}
@@ -438,7 +438,7 @@ copy_v5_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 
 	/* write the new matrix to the new object */
 	if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0)
-	    bu_vls_printf(&state->gedp->ged_result_str, "ERROR: clone internal error copying %s\n", proto->d_namep);
+	    bu_vls_printf(state->gedp->ged_result_str, "ERROR: clone internal error copying %s\n", proto->d_namep);
 
 	bu_vls_printf(&state->olist, "%V ", name);
 	bu_vls_free(name);
@@ -460,7 +460,7 @@ copy_solid(struct db_i *dbip, struct directory *proto, genptr_t clientData)
     int idx;
 
     if (is_in_list(obj_list, proto->d_namep)) {
-	bu_vls_printf(&state->gedp->ged_result_str, "Solid primitive %s already cloned?\n", proto->d_namep);
+	bu_vls_printf(state->gedp->ged_result_str, "Solid primitive %s already cloned?\n", proto->d_namep);
 	return;
     }
 
@@ -468,7 +468,7 @@ copy_solid(struct db_i *dbip, struct directory *proto, genptr_t clientData)
 
     /* sanity check that the item was really added */
     if ((idx < 0) || !is_in_list(obj_list, proto->d_namep)) {
-	bu_vls_printf(&state->gedp->ged_result_str, "ERROR: clone internal error copying %s\n", proto->d_namep);
+	bu_vls_printf(state->gedp->ged_result_str, "ERROR: clone internal error copying %s\n", proto->d_namep);
 	return;
     }
 
@@ -495,13 +495,13 @@ copy_v4_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
 
 	/* get a v4 in-memory reference to the object being copied */
 	if ((rp = db_getmrec(dbip, proto)) == (union record *)0) {
-	    bu_vls_printf(&state->gedp->ged_result_str, "Database read error, aborting\n");
+	    bu_vls_printf(state->gedp->ged_result_str, "Database read error, aborting\n");
 	    return NULL;
 	}
 
 	if (proto->d_flags & RT_DIR_REGION) {
 	    if (!is_in_list(obj_list, rp[1].M.m_instname)) {
-		bu_vls_printf(&state->gedp->ged_result_str, "ERROR: clone internal error looking up %s\n", rp[1].M.m_instname);
+		bu_vls_printf(state->gedp->ged_result_str, "ERROR: clone internal error looking up %s\n", rp[1].M.m_instname);
 		return NULL;
 	    }
 	    bu_vls_strcpy(&obj_list.names[idx].dest[i], bu_vls_addr(&obj_list.names[index_in_list(obj_list, rp[1].M.m_instname)].dest[i]));
@@ -526,14 +526,14 @@ copy_v4_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
 	/* add the object to the directory */
 	dp = db_diradd(dbip, rp->c.c_name, RT_DIR_PHONY_ADDR, proto->d_len, proto->d_flags, &proto->d_minor_type);
 	if ((dp == NULL) || db_alloc(dbip, dp, proto->d_len)) {
-	    bu_vls_printf(&state->gedp->ged_result_str, "Database alloc error, aborting\n");
+	    bu_vls_printf(state->gedp->ged_result_str, "Database alloc error, aborting\n");
 	    return NULL;
 	}
 
 	for (j = 1; j < proto->d_len; j++) {
 	    struct bu_vls *vp;
 	    if (!is_in_list(obj_list, rp[j].M.m_instname)) {
-		bu_vls_printf(&state->gedp->ged_result_str, "ERROR: clone internal error looking up %s\n", rp[j].M.m_instname);
+		bu_vls_printf(state->gedp->ged_result_str, "ERROR: clone internal error looking up %s\n", rp[j].M.m_instname);
 		return NULL;
 	    }
 	    vp = &obj_list.names[index_in_list(obj_list, rp[j].M.m_instname)].dest[i];
@@ -542,7 +542,7 @@ copy_v4_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
 
 	/* write the object to disk */
 	if (db_put(dbip, dp, rp, 0, dp->d_len)) {
-	    bu_vls_printf(&state->gedp->ged_result_str, "ERROR: clone internal error writing to the database\n");
+	    bu_vls_printf(state->gedp->ged_result_str, "ERROR: clone internal error writing to the database\n");
 	    return NULL;
 	}
 
@@ -581,7 +581,7 @@ copy_v5_comb_tree(struct ged_clone_state *state, union tree *tree, size_t idx)
 	    bu_free(buf, "node name");
 	    break;
 	default:
-	    bu_vls_printf(&state->gedp->ged_result_str, "clone v5 - OPCODE NOT IMPLEMENTED: %d\n", tree->tr_op);
+	    bu_vls_printf(state->gedp->ged_result_str, "clone v5 - OPCODE NOT IMPLEMENTED: %d\n", tree->tr_op);
 	    return -1;
     }
     return 0;
@@ -600,7 +600,7 @@ copy_v5_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
 
     /* sanity */
     if (!proto) {
-	bu_vls_printf(&state->gedp->ged_result_str, "ERROR: clone internal consistency error\n");
+	bu_vls_printf(state->gedp->ged_result_str, "ERROR: clone internal consistency error\n");
 	return (struct directory *)NULL;
     }
 
@@ -628,12 +628,12 @@ copy_v5_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
 		continue;
 	    }
 	    if (rt_db_get_internal(&dbintern, dp, dbip, bn_mat_identity, &rt_uniresource) < 0) {
-		bu_vls_printf(&state->gedp->ged_result_str, "ERROR: clone internal error copying %s\n", proto->d_namep);
+		bu_vls_printf(state->gedp->ged_result_str, "ERROR: clone internal error copying %s\n", proto->d_namep);
 		return NULL;
 	    }
 
 	    if ((dp=db_diradd(dbip, bu_vls_addr(name), RT_DIR_PHONY_ADDR, 0, proto->d_flags, (genptr_t)&proto->d_minor_type)) == RT_DIR_NULL) {
-		bu_vls_printf(&state->gedp->ged_result_str, "An error has occured while adding a new object to the database.");
+		bu_vls_printf(state->gedp->ged_result_str, "An error has occured while adding a new object to the database.");
 		return NULL;
 	    }
 
@@ -646,7 +646,7 @@ copy_v5_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
 	    copy_v5_comb_tree(state, comb->tree, i);
 
 	    if (rt_db_put_internal(dp, dbip, &dbintern, &rt_uniresource) < 0) {
-		bu_vls_printf(&state->gedp->ged_result_str, "ERROR: clone internal error copying %s\n", proto->d_namep);
+		bu_vls_printf(state->gedp->ged_result_str, "ERROR: clone internal error copying %s\n", proto->d_namep);
 		bu_vls_free(name);
 		return NULL;
 	    }
@@ -675,7 +675,7 @@ copy_comb(struct db_i *dbip, struct directory *proto, genptr_t clientData)
     int idx;
 
     if (is_in_list(obj_list, proto->d_namep)) {
-	bu_vls_printf(&state->gedp->ged_result_str, "Combination %s already cloned?\n", proto->d_namep);
+	bu_vls_printf(state->gedp->ged_result_str, "Combination %s already cloned?\n", proto->d_namep);
 	return;
     }
 
@@ -683,7 +683,7 @@ copy_comb(struct db_i *dbip, struct directory *proto, genptr_t clientData)
 
     /* sanity check that the item was really added to our bookkeeping */
     if ((idx < 0) || !is_in_list(obj_list, proto->d_namep)) {
-	bu_vls_printf(&state->gedp->ged_result_str, "ERROR: clone internal error copying %s\n", proto->d_namep);
+	bu_vls_printf(state->gedp->ged_result_str, "ERROR: clone internal error copying %s\n", proto->d_namep);
 	return;
     }
 
@@ -723,7 +723,7 @@ copy_tree(struct directory *dp, struct resource *resp, struct ged_clone_state *s
 
 	    /* get an in-memory record of this object */
 	    if ((rp = db_getmrec(state->gedp->ged_wdbp->dbip, dp)) == (union record *)0) {
-		bu_vls_printf(&state->gedp->ged_result_str, "Database read error, aborting\n");
+		bu_vls_printf(state->gedp->ged_result_str, "Database read error, aborting\n");
 		goto done_copy_tree;
 	    }
 	    /*
@@ -733,18 +733,18 @@ copy_tree(struct directory *dp, struct resource *resp, struct ged_clone_state *s
 	    for (i = 1; i < dp->d_len; i++) {
 		if ((mdp = db_lookup(state->gedp->ged_wdbp->dbip, rp[i].M.m_instname, LOOKUP_NOISY)) == RT_DIR_NULL) {
 		    errors++;
-		    bu_vls_printf(&state->gedp->ged_result_str, "WARNING: failed to locate \"%s\"\n", rp[i].M.m_instname);
+		    bu_vls_printf(state->gedp->ged_result_str, "WARNING: failed to locate \"%s\"\n", rp[i].M.m_instname);
 		    continue;
 		}
 		copy = copy_tree(mdp, resp, state);
 		if (!copy) {
 		    errors++;
-		    bu_vls_printf(&state->gedp->ged_result_str, "WARNING: unable to fully clone \"%s\"\n", rp[i].M.m_instname);
+		    bu_vls_printf(state->gedp->ged_result_str, "WARNING: unable to fully clone \"%s\"\n", rp[i].M.m_instname);
 		}
 	    }
 
 	    if (errors) {
-		bu_vls_printf(&state->gedp->ged_result_str, "WARNING: some elements of \"%s\" could not be cloned\n", dp->d_namep);
+		bu_vls_printf(state->gedp->ged_result_str, "WARNING: some elements of \"%s\" could not be cloned\n", dp->d_namep);
 	    }
 
 	    /* copy this combination itself */
@@ -756,13 +756,13 @@ copy_tree(struct directory *dp, struct resource *resp, struct ged_clone_state *s
 	/* leaf node -- make a copy the object */
 	copy_solid(state->gedp->ged_wdbp->dbip, dp, (genptr_t)state);
     else {
-	bu_vls_printf(&state->gedp->ged_result_str, "%s is neither a combination or a primitive?\n", dp->d_namep);
+	bu_vls_printf(state->gedp->ged_result_str, "%s is neither a combination or a primitive?\n", dp->d_namep);
 	goto done_copy_tree;
     }
 
     nextname = clone_get_name(dp, state, 0);
     if (bu_vls_strcmp(copyname, nextname) == 0)
-	bu_vls_printf(&state->gedp->ged_result_str, "ERROR: unable to successfully clone \"%s\" to \"%s\"\n", dp->d_namep, copyname);
+	bu_vls_printf(state->gedp->ged_result_str, "ERROR: unable to successfully clone \"%s\" to \"%s\"\n", dp->d_namep, copyname);
     else
 	copy = db_lookup(state->gedp->ged_wdbp->dbip, bu_vls_addr(copyname), LOOKUP_QUIET);
 
@@ -886,7 +886,7 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
 		state->autoview = 0;
 		break;
 	    case 'h':
-		print_usage(&gedp->ged_result_str);
+		print_usage(gedp->ged_result_str);
 		return GED_ERROR;
 		break;
 	    case 'i':
@@ -918,23 +918,23 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
 		state->trans[W] = 1;
 		break;
 	    case 'v':
-		bu_vls_printf(&gedp->ged_result_str, CLONE_VERSION);
+		bu_vls_printf(gedp->ged_result_str, CLONE_VERSION);
 		return GED_ERROR;
 		break;
 	    default:
-		print_usage(&gedp->ged_result_str);
+		print_usage(gedp->ged_result_str);
 		return GED_ERROR;
 	}
     }
 
     /* make sure not too few/many args */
     if ((argc - bu_optind) == 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Need to specify an <object> to be cloned.\n");
-	print_usage(&gedp->ged_result_str);
+	bu_vls_printf(gedp->ged_result_str, "Need to specify an <object> to be cloned.\n");
+	print_usage(gedp->ged_result_str);
 	return GED_ERROR;
     } else if (bu_optind + 1 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "clone:  Can only clone exactly one <object> at a time right now.\n");
-	print_usage(&gedp->ged_result_str);
+	bu_vls_printf(gedp->ged_result_str, "clone:  Can only clone exactly one <object> at a time right now.\n");
+	print_usage(gedp->ged_result_str);
 	return GED_ERROR;
     }
 
@@ -963,11 +963,11 @@ ged_clone(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	print_usage(&gedp->ged_result_str);
+	print_usage(gedp->ged_result_str);
 	return GED_HELP;
     }
 
@@ -978,9 +978,9 @@ ged_clone(struct ged *gedp, int argc, const char *argv[])
     bu_vls_init(&state.olist);
 
     if ((copy = deep_copy_object(&rt_uniresource, &state)) != (struct directory *)NULL)
-	bu_vls_printf(&gedp->ged_result_str, "%s", copy->d_namep);
+	bu_vls_printf(gedp->ged_result_str, "%s", copy->d_namep);
 
-    bu_vls_printf(&gedp->ged_result_str, " {%V}", &state.olist);
+    bu_vls_printf(gedp->ged_result_str, " {%V}", &state.olist);
     bu_vls_free(&state.olist);
 
     return GED_OK;

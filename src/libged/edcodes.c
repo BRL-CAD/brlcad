@@ -104,7 +104,7 @@ edcodes_collect_regnames(struct ged *gedp, struct directory *dp, int pathpos)
 
     if ((id=rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip,
 			       (matp_t)NULL, &rt_uniresource)) < 0) {
-	bu_vls_printf(&gedp->ged_result_str,
+	bu_vls_printf(gedp->ged_result_str,
 		      "Cannot get records for %s\n", dp->d_namep);
 	return EDCODES_NOTOK;
     }
@@ -118,7 +118,7 @@ edcodes_collect_regnames(struct ged *gedp, struct directory *dp, int pathpos)
     RT_CK_COMB(comb);
 
     if (comb->region_flag) {
-	bu_vls_printf(&gedp->ged_result_str, " %s", dp->d_namep);
+	bu_vls_printf(gedp->ged_result_str, " %s", dp->d_namep);
 	intern.idb_meth->ft_ifree(&intern);
 	return EDCODES_OK;
     }
@@ -173,11 +173,11 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
     argv += bu_optind - 1;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -197,7 +197,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
     }
 
     if ((nflag + sort_by_ident + sort_by_region) > 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -213,7 +213,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 
 		if (status != EDCODES_OK) {
 		    if (status == EDCODES_HALT)
-			bu_vls_printf(&gedp->ged_result_str, "%s: nesting is too deep\n", argv[0]);
+			bu_vls_printf(gedp->ged_result_str, "%s: nesting is too deep\n", argv[0]);
 
 		    return GED_ERROR;
 		}
@@ -251,7 +251,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 	int j;
 
 	if ((f_srt=fopen(tmpfil, "r+")) == NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: Failed to open temp file for sorting\n", argv[0]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: Failed to open temp file for sorting\n", argv[0]);
 	    (void)unlink(tmpfil);
 	    return GED_ERROR;
 	}

@@ -75,19 +75,19 @@ _ged_scale_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *attrib
 				mb = MAGNITUDE(tgc->d);
 				VSCALE(tgc->d, tgc->d, ma/mb);
 			    } else {
-				bu_vls_printf(&gedp->ged_result_str, "bad tgc attribute - %s", attribute);
+				bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
 				return GED_ERROR;
 			    }
 
 			    break;
 			default:
-			    bu_vls_printf(&gedp->ged_result_str, "bad tgc attribute - %s", attribute);
+			    bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
 			    return GED_ERROR;
 		    }
 
 		    break;
 		default:
-		    bu_vls_printf(&gedp->ged_result_str, "bad tgc attribute - %s", attribute);
+		    bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
 		    return GED_ERROR;
 	    }
 
@@ -116,7 +116,7 @@ _ged_scale_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *attrib
 		    VSCALE(tgc->d, tgc->d, ma/mb);
 		    break;
 		default:
-		    bu_vls_printf(&gedp->ged_result_str, "bad tgc attribute - %s", attribute);
+		    bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
 		    return GED_ERROR;
 	    }
 
@@ -164,7 +164,7 @@ _ged_scale_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *attrib
 			    VSCALE(tgc->h, tgc->h, sf);
 			}
 		    } else {
-			bu_vls_printf(&gedp->ged_result_str, "bad tgc attribute - %s", attribute);
+			bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
 			return GED_ERROR;
 		    }
 
@@ -211,25 +211,25 @@ _ged_scale_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *attrib
 				    VSUB2(tgc->v, old_top, tgc->h);
 				}
 			    } else {
-				bu_vls_printf(&gedp->ged_result_str, "bad tgc attribute - %s", attribute);
+				bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
 				return GED_ERROR;
 			    }
 
 			    break;
 			default:
-			    bu_vls_printf(&gedp->ged_result_str, "bad tgc attribute - %s", attribute);
+			    bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
 			    return GED_ERROR;
 		    } /* switch (attribute[2]) */
 
 		    break;
 		default:
-		    bu_vls_printf(&gedp->ged_result_str, "bad tgc attribute - %s", attribute);
+		    bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
 		    return GED_ERROR;
 	    } /* switch (attribute[1]) */
 
 	    break;
 	default:
-	    bu_vls_printf(&gedp->ged_result_str, "bad tgc attribute - %s", attribute);
+	    bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
 	    return GED_ERROR;
     } /* switch (attribute[0]) */
 

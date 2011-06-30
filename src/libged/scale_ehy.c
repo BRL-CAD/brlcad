@@ -77,7 +77,7 @@ _ged_scale_ehy(struct ged *gedp, struct rt_ehy_internal *ehy, const char *attrib
 
 	    break;
 	default:
-	    bu_vls_printf(&gedp->ged_result_str, "bad ehy attribute - %s", attribute);
+	    bu_vls_printf(gedp->ged_result_str, "bad ehy attribute - %s", attribute);
 	    return GED_ERROR;
     }
 

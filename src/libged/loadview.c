@@ -111,11 +111,11 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -180,7 +180,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 		 * otherwise, we may proceed as expected, and load
 		 * the objects.
 		 */
-		bu_vls_printf(&gedp->ged_result_str, "View script references a different database\nCannot load the view without closing the current database\n(i.e. run \"opendb %s\")\n", dbName);
+		bu_vls_printf(gedp->ged_result_str, "View script references a different database\nCannot load the view without closing the current database\n(i.e. run \"opendb %s\")\n", dbName);
 
 		/* restore state before leaving */
 		gedp->ged_gvp->gv_perspective = prevPerspective;
@@ -212,7 +212,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 		editArgv[1] = objects;
 		editArgv[2] = (char *)NULL;
 		if (ged_draw(gedp, 2, (const char **)editArgv) != GED_OK) {
-		    bu_vls_printf(&gedp->ged_result_str, "Unable to load object: %s\n", objects);
+		    bu_vls_printf(gedp->ged_result_str, "Unable to load object: %s\n", objects);
 		}
 
 		/* bu_log("objects=%s\n", objects);*/
@@ -231,7 +231,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 		 * they should be calling ged_cm_null()
 		 */
 		if (rt_do_cmd((struct rt_i *)0, cmdBuffer, ged_loadview_cmdtab) < 0) {
-		    bu_vls_printf(&gedp->ged_result_str, "command failed: %s\n", cmdBuffer);
+		    bu_vls_printf(gedp->ged_result_str, "command failed: %s\n", cmdBuffer);
 		}
 		bu_free((genptr_t)cmdBuffer, "loadview cmdBuffer");
 	    }

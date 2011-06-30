@@ -70,7 +70,7 @@ translate(struct ged *gedp, pointp_t const keypoint,
     /* verify existence of path */
     if (ged_path_validate(gedp, path) == GED_ERROR) {
 	char *s_path = db_path_to_string(path);
-	bu_vls_printf(&gedp->ged_result_str, "path \"%s\" doesn't exist",
+	bu_vls_printf(gedp->ged_result_str, "path \"%s\" doesn't exist",
 		      s_path);
 	bu_free((genptr_t)s_path, "path string");
 	return GED_ERROR;
@@ -83,7 +83,7 @@ translate(struct ged *gedp, pointp_t const keypoint,
     db_add_node_to_full_path(&full_obj_path, d_obj);
     if (ged_path_validate(gedp, &full_obj_path) == GED_ERROR) {
 	char *s_path = db_path_to_string(path);
-	bu_vls_printf(&gedp->ged_result_str, "object \"%s\" not found under"
+	bu_vls_printf(gedp->ged_result_str, "object \"%s\" not found under"
 		      " path \"%s\"", d_obj->d_namep, s_path);
 	bu_free((genptr_t)s_path, "path string");
 	db_free_full_path(&full_obj_path);
@@ -105,7 +105,7 @@ translate(struct ged *gedp, pointp_t const keypoint,
 	    d_to_modify = d_obj;
 	}
     } else {
-	bu_vls_printf(&gedp->ged_result_str, "unsupported object type");
+	bu_vls_printf(gedp->ged_result_str, "unsupported object type");
 	return GED_ERROR;
     }
 
@@ -113,7 +113,7 @@ translate(struct ged *gedp, pointp_t const keypoint,
      * Perform translations
      */
     if (!relative_pos_flag) {
-	bu_vls_printf(&gedp->ged_result_str, "translations to absolute"
+	bu_vls_printf(gedp->ged_result_str, "translations to absolute"
 		      " positions are not yet supported");
 	return GED_ERROR;
     }
@@ -130,7 +130,7 @@ translate(struct ged *gedp, pointp_t const keypoint,
 	leaf_to_modify = db_find_named_leaf(comb->tree, d_obj->d_namep);
 
 	if (leaf_to_modify == TREE_NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "leaf not found where it"
+	    bu_vls_printf(gedp->ged_result_str, "leaf not found where it"
 			  " should be; this should not happen");
 	    rt_db_free_internal(&intern);
 	    return GED_ERROR;
@@ -196,12 +196,12 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help -- argc < 4 is wrong too, but more helpful
        msgs are given later, by saying which args are missing */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 	return GED_HELP;
     }
 
@@ -216,7 +216,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 		kp_arg = bu_optarg;
 		if (kp_arg[0] == '-') {
 		    /* that's an option, not an arg */
-		    bu_vls_printf(&gedp->ged_result_str,
+		    bu_vls_printf(gedp->ged_result_str,
 				  "Missing argument for option -%c", bu_optopt);
 		    return GED_ERROR;
 		}
@@ -228,7 +228,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 		/* options that require arguments */
 		switch (bu_optopt) {
 		    case 'k':
-			bu_vls_printf(&gedp->ged_result_str,
+			bu_vls_printf(gedp->ged_result_str,
 				      "Missing argument for option -%c", bu_optopt);
 			return GED_ERROR;
 		}
@@ -242,11 +242,11 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 			goto no_more_args;
 		    }
 			/* it's neither a negative number nor an option */
-			bu_vls_printf(&gedp->ged_result_str,
+			bu_vls_printf(gedp->ged_result_str,
 				      "Unknown option '-%c'", bu_optopt);
 			return GED_ERROR;
 		} else {
-		    bu_vls_printf(&gedp->ged_result_str,
+		    bu_vls_printf(gedp->ged_result_str,
 				  "Unknown option character '\\x%x'",
 				  bu_optopt);
 		    return GED_ERROR;
@@ -257,13 +257,13 @@ no_more_args:
 
     /* need to use either absolute||relative positioning; not both */
     if (abs_flag && rel_flag) {
-	bu_vls_printf(&gedp->ged_result_str,
+	bu_vls_printf(gedp->ged_result_str,
 		      "options '-a' and '-r' are mutually exclusive");
 	return GED_ERROR;
     }
     /* perhaps rel_flag was set by mistake */
     if (rel_flag && kp_arg) {
-	bu_vls_printf(&gedp->ged_result_str,
+	bu_vls_printf(gedp->ged_result_str,
 		      "relative translations do not have keypoints");
 	return GED_ERROR;
     }
@@ -277,18 +277,18 @@ no_more_args:
 	;
 #endif
     if (kp_arg) {
-	bu_vls_printf(&gedp->ged_result_str, "keypoints not yet supported");
+	bu_vls_printf(gedp->ged_result_str, "keypoints not yet supported");
 	return GED_ERROR;
     }
 
     /* set 3d coords */
     if ((bu_optind + 1) > argc) {
-	bu_vls_printf(&gedp->ged_result_str, "missing x coordinate");
+	bu_vls_printf(gedp->ged_result_str, "missing x coordinate");
 	return GED_HELP;
     }
     delta[0] = strtod(argv[bu_optind], &endchr);
     if (!endchr || argv[bu_optind] == endchr) {
-	bu_vls_printf(&gedp->ged_result_str, "missing or invalid x coordinate");
+	bu_vls_printf(gedp->ged_result_str, "missing or invalid x coordinate");
 	return GED_ERROR;
     }
     ++bu_optind;
@@ -303,9 +303,9 @@ no_more_args:
 
     /* no args left, but we expect more */
     if ((bu_optind + 1) > argc) {
-	bu_vls_printf(&gedp->ged_result_str,
+	bu_vls_printf(gedp->ged_result_str,
 		      "missing object argument\n");
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 	return GED_HELP;
     }
 
@@ -313,20 +313,20 @@ no_more_args:
     if ((bu_optind + 1) != argc)
 	s_path = argv[bu_optind++];
     if (db_string_to_path(&path, dbip, s_path) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "invalid path \"%s\"", s_path);
+	bu_vls_printf(gedp->ged_result_str, "invalid path \"%s\"", s_path);
 	return GED_ERROR;
     }
 
     /* set object (no path accepted) */
     s_obj = argv[bu_optind++];
     if (db_string_to_path(&obj, dbip, s_obj) < 0 || obj.fp_len != (size_t)1) {
-	bu_vls_printf(&gedp->ged_result_str, "invalid object \"%s\"",
+	bu_vls_printf(gedp->ged_result_str, "invalid object \"%s\"",
 		      s_obj);
 	db_free_full_path(&path);
 	return GED_ERROR;
     }
     if ((bu_optind + 1) <= argc) {
-	bu_vls_printf(&gedp->ged_result_str, "multiple objects not yet"
+	bu_vls_printf(gedp->ged_result_str, "multiple objects not yet"
 		      " supported; ");
 	db_free_full_path(&path);
 	db_free_full_path(&obj);
@@ -341,7 +341,7 @@ no_more_args:
 	GED_ERROR) {
 	db_free_full_path(&path);
 	db_free_full_path(&obj);
-	bu_vls_printf(&gedp->ged_result_str, "; translation failed");
+	bu_vls_printf(gedp->ged_result_str, "; translation failed");
 	return GED_ERROR;
     }
 

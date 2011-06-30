@@ -56,11 +56,11 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmdName, usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmdName, usage);
 	return GED_HELP;
     }
 
@@ -95,7 +95,7 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 	last_opt = i;
 
 	if (!ptr_A && !ptr_o) {
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmdName, usage);
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmdName, usage);
 	    return GED_ERROR;
 	}
 
@@ -104,7 +104,7 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmdName, usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmdName, usage);
 	return GED_ERROR;
     }
 
@@ -119,7 +119,7 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 
 	remaining_args = argc - last_opt - 1;
 	if (remaining_args < 2 || remaining_args%2) {
-	    bu_vls_printf(&gedp->ged_result_str, "Error: must have even number of arguments (name/value pairs)\n");
+	    bu_vls_printf(gedp->ged_result_str, "Error: must have even number of arguments (name/value pairs)\n");
 	    bu_vls_free(&vls);
 	    return GED_ERROR;
 	}
@@ -270,7 +270,7 @@ ged_erasePathFromDisplay(struct ged *gedp,
 		RT_CK_DIR(dp);
 		if (dp->d_addr == RT_DIR_PHONY_ADDR) {
 		    if (db_dirdelete(gedp->ged_wdbp->dbip, dp) < 0) {
-			bu_vls_printf(&gedp->ged_result_str, "ged_erasePathFromDisplay: db_dirdelete failed\n");
+			bu_vls_printf(gedp->ged_result_str, "ged_erasePathFromDisplay: db_dirdelete failed\n");
 		    }
 		}
 
@@ -521,7 +521,7 @@ _ged_freeDisplayListItem (struct ged *gedp,
 	RT_CK_DIR(dp);
 	if (dp->d_addr == RT_DIR_PHONY_ADDR) {
 	    if (db_dirdelete(gedp->ged_wdbp->dbip, dp) < 0) {
-		bu_vls_printf(&gedp->ged_result_str, "_ged_freeDisplayListItem: db_dirdelete failed\n");
+		bu_vls_printf(gedp->ged_result_str, "_ged_freeDisplayListItem: db_dirdelete failed\n");
 	    }
 	}
 

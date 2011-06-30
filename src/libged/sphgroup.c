@@ -52,21 +52,21 @@ ged_sphgroup(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc != 3) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     if ((sphdp = db_lookup(gedp->ged_wdbp->dbip, argv[argc-1], LOOKUP_NOISY)) == RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "Specified bounding sphere %s not found\n", argv[argc-1]);
+	bu_vls_printf(gedp->ged_result_str, "Specified bounding sphere %s not found\n", argv[argc-1]);
 	return GED_ERROR;
     } else {
 	rt_db_get_internal(&sph_intern, sphdp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource);
 	if ((sph_intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ELL) && (sph_intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_SPH)) {
-	    bu_vls_printf(&gedp->ged_result_str, "Specified bounding object %s not a sphere\n", argv[argc-1]);
+	    bu_vls_printf(gedp->ged_result_str, "Specified bounding object %s not a sphere\n", argv[argc-1]);
 	    return GED_ERROR;
 	}
 	bsph = (struct rt_ell_internal *)sph_intern.idb_ptr;

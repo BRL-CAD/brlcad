@@ -51,16 +51,16 @@ ged_ptranslate(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 	return GED_HELP;
     }
 
     if (argc < 4 || argc > 5) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 	return GED_ERROR;
     }
 
@@ -70,14 +70,14 @@ ged_ptranslate(struct ged *gedp, int argc, const char *argv[])
 	    --argc;
 	    ++argv;
 	} else {
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 	    return GED_ERROR;
 	}
     } else
 	rflag = 0;
 
     if (sscanf(argv[3], "%lf %lf %lf", &tvec[0], &tvec[1], &tvec[2]) != 3) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: bad translation vector - %s", cmd_name, argv[3]);
+	bu_vls_printf(gedp->ged_result_str, "%s: bad translation vector - %s", cmd_name, argv[3]);
 	return GED_ERROR;
     }
 
@@ -87,12 +87,12 @@ ged_ptranslate(struct ged *gedp, int argc, const char *argv[])
 	++last;
 
     if (last[0] == '\0') {
-	bu_vls_printf(&gedp->ged_result_str, "%s: illegal input - %s", cmd_name, argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s: illegal input - %s", cmd_name, argv[1]);
 	return GED_ERROR;
     }
 
     if ((dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET)) == RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: %s not found", cmd_name, argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s: %s not found", cmd_name, argv[1]);
 	return GED_ERROR;
     }
 
@@ -100,7 +100,7 @@ ged_ptranslate(struct ged *gedp, int argc, const char *argv[])
     RT_CK_DB_INTERNAL(&intern);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Object not eligible for translating.", cmd_name);
+	bu_vls_printf(gedp->ged_result_str, "%s: Object not eligible for translating.", cmd_name);
 	rt_db_free_internal(&intern);
 
 	return GED_ERROR;
@@ -114,7 +114,7 @@ ged_ptranslate(struct ged *gedp, int argc, const char *argv[])
 	    ret = _ged_translate_extrude(gedp, (struct rt_extrude_internal *)intern.idb_ptr, argv[2], tvec, rflag);
 	    break;
 	default:
-	    bu_vls_printf(&gedp->ged_result_str, "%s: Object not yet supported.", cmd_name);
+	    bu_vls_printf(gedp->ged_result_str, "%s: Object not yet supported.", cmd_name);
 	    rt_db_free_internal(&intern);
 
 	    return GED_ERROR;

@@ -62,13 +62,13 @@ _ged_scale_superell(struct ged *gedp, struct rt_superell_internal *superell, con
 			mb = MAGNITUDE(superell->c);
 			VSCALE(superell->c, superell->c, ma/mb);
 		    } else {
-			bu_vls_printf(&gedp->ged_result_str, "bad ell attribute - %s", attribute);
+			bu_vls_printf(gedp->ged_result_str, "bad ell attribute - %s", attribute);
 			return GED_ERROR;
 		    }
 
 		    break;
 		default:
-		    bu_vls_printf(&gedp->ged_result_str, "bad ell attribute - %s", attribute);
+		    bu_vls_printf(gedp->ged_result_str, "bad ell attribute - %s", attribute);
 		    return GED_ERROR;
 	    }
 
@@ -88,7 +88,7 @@ _ged_scale_superell(struct ged *gedp, struct rt_superell_internal *superell, con
 	    VSCALE(superell->c, superell->c, sf);
 	    break;
 	default:
-	    bu_vls_printf(&gedp->ged_result_str, "bad superell attribute - %s", attribute);
+	    bu_vls_printf(gedp->ged_result_str, "bad superell attribute - %s", attribute);
 	    return GED_ERROR;
     }
 

@@ -43,11 +43,11 @@ ged_rmat(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* get the rotation matrix */
     if (argc == 1) {
-	bn_encode_mat(&gedp->ged_result_str, gedp->ged_gvp->gv_rotation);
+	bn_encode_mat(gedp->ged_result_str, gedp->ged_gvp->gv_rotation);
 	return GED_OK;
     } else if (argc == 2) {
 	/* set rotation matrix */
@@ -60,7 +60,7 @@ ged_rmat(struct ged *gedp, int argc, const char *argv[])
 	return TCL_OK;
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
     return GED_ERROR;
 }
 

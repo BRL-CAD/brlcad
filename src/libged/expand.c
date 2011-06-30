@@ -67,11 +67,11 @@ ged_expand(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -97,8 +97,8 @@ ged_expand(struct ged *gedp, int argc, const char *argv[])
 	if (regexp == 0) {
 	    if (db_lookup(gedp->ged_wdbp->dbip, argv[whicharg], LOOKUP_QUIET) != RT_DIR_NULL) {
 		if (nummatch > 0)
-		    bu_vls_printf(&gedp->ged_result_str, " ");
-		expand_scrape_escapes(&gedp->ged_result_str, argv[whicharg]);
+		    bu_vls_printf(gedp->ged_result_str, " ");
+		expand_scrape_escapes(gedp->ged_result_str, argv[whicharg]);
 		++nummatch;
 	    }
 	    continue;
@@ -119,9 +119,9 @@ ged_expand(struct ged *gedp, int argc, const char *argv[])
 		    continue;
 		/* Successful match */
 		if (nummatch == 0)
-		    bu_vls_printf(&gedp->ged_result_str, "%s", dp->d_namep);
+		    bu_vls_printf(gedp->ged_result_str, "%s", dp->d_namep);
 		else
-		    bu_vls_printf(&gedp->ged_result_str, " %s", dp->d_namep);
+		    bu_vls_printf(gedp->ged_result_str, " %s", dp->d_namep);
 		++nummatch;
 		++thismatch;
 	    }

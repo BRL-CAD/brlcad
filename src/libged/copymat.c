@@ -55,16 +55,16 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 3) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -75,7 +75,7 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
 	if (((child = strchr(argv[i], '/')) == NULL)
 	    || (strchr(++child, '/') != NULL))
 	{
-	    bu_vls_printf(&gedp->ged_result_str, "%s: bad arc: '%s'\n", argv[0], argv[i]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad arc: '%s'\n", argv[0], argv[i]);
 	    return GED_ERROR;
 	}
     }
@@ -91,7 +91,7 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
     if (child == NULL
 	|| db_follow_path_for_state(&ts, &(anp->an_path), argv[1], LOOKUP_NOISY) < 0)
     {
-	bu_vls_printf(&gedp->ged_result_str, "%s: cannot follow path for arc: '%s'\n", argv[0], argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s: cannot follow path for arc: '%s'\n", argv[0], argv[1]);
 	return GED_ERROR;
     }
 
@@ -105,13 +105,13 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
 	    if (dp->d_flags & RT_DIR_COMB)
 		break;
 	    else {
-		bu_vls_printf(&gedp->ged_result_str,
+		bu_vls_printf(gedp->ged_result_str,
 			      "%s: Non-combination directory <%p> '%s' for combination rt_db_internal <%p>\nThis should not happen\n",
 			      argv[0], (void *)dp, dp->d_namep, (void *)&intern);
 	    }
 	    /* Fall through this case */
 	default:
-	    bu_vls_printf(&gedp->ged_result_str, "%s: Object '%s' is not a combination\n", argv[0], parent);
+	    bu_vls_printf(gedp->ged_result_str, "%s: Object '%s' is not a combination\n", argv[0], parent);
 	    /* Fall through this case */
 	case ID_NULL:
 	    bu_vls_free(&pvls);
@@ -122,7 +122,7 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
 
     tp = db_find_named_leaf(comb->tree, child);
     if (tp == TREE_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: unable to find instance of '%s' in combination '%s'\n",
+	bu_vls_printf(gedp->ged_result_str, "%s: unable to find instance of '%s' in combination '%s'\n",
 		      argv[0], child, dp->d_namep);
 	status = GED_ERROR;
 	goto wrapup;
@@ -142,7 +142,7 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Database write error, aborting\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s: Database write error, aborting\n", argv[0]);
 	status = GED_ERROR;
 	goto wrapup;
     }

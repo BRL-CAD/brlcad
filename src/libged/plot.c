@@ -67,16 +67,16 @@ ged_plot(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -97,22 +97,22 @@ ged_plot(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    case 'g':
 		/* do grid */
-		bu_vls_printf(&gedp->ged_result_str, "%s: grid unimplemented\n", argv[0]);
+		bu_vls_printf(gedp->ged_result_str, "%s: grid unimplemented\n", argv[0]);
 		break;
 	    case 'z':
 	    case 'Z':
 		/* Enable Z clipping */
-		bu_vls_printf(&gedp->ged_result_str, "%s: Clipped in Z to viewing cube\n", argv[0]);
+		bu_vls_printf(gedp->ged_result_str, "%s: Clipped in Z to viewing cube\n", argv[0]);
 		Z_clip = 1;
 		break;
 	    default:
-		bu_vls_printf(&gedp->ged_result_str, "%s: bad PLOT option %s\n", argv[0], argv[1]);
+		bu_vls_printf(gedp->ged_result_str, "%s: bad PLOT option %s\n", argv[0], argv[1]);
 		break;
 	}
 	argv++;
     }
     if (argv[1] == (char *)0) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: no filename or filter specified\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s: no filename or filter specified\n", argv[0]);
 	return GED_ERROR;
     }
     if (argv[1][0] == '|') {
@@ -128,7 +128,7 @@ ged_plot(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "piped to %s\n", bu_vls_addr(&str));
+	bu_vls_printf(gedp->ged_result_str, "piped to %s\n", bu_vls_addr(&str));
 	bu_vls_free(&str);
 	is_pipe = 1;
     } else {
@@ -137,7 +137,7 @@ ged_plot(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "plot stored in %s\n", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "plot stored in %s\n", argv[1]);
 	is_pipe = 0;
     }
 

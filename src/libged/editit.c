@@ -213,7 +213,7 @@ ged_editit(struct ged *gedp, int argc, const char *argv[])
      * edit string and temp file.  should use bu_getopt().
      */
     if (argc != 5) {
-	bu_vls_printf(&gedp->ged_result_str, "Internal Error: \"%s -e editstring -f tmpfile\" is malformed (argc == %d)", argv[0], argc);
+	bu_vls_printf(gedp->ged_result_str, "Internal Error: \"%s -e editstring -f tmpfile\" is malformed (argc == %d)", argv[0], argc);
 	return TCL_ERROR;
     } else {
 	char *edstr = bu_strdup((char *)argv[2]);

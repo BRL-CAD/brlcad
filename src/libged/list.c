@@ -47,11 +47,11 @@ _ged_do_list(struct ged *gedp, struct directory *dp, int verbose)
 	struct bu_attribute_value_set avs;
 	struct bu_attribute_value_pair *avp;
 
-	bu_vls_strcat(&gedp->ged_result_str, dp->d_namep);
-	bu_vls_strcat(&gedp->ged_result_str, ": global attributes object\n");
+	bu_vls_strcat(gedp->ged_result_str, dp->d_namep);
+	bu_vls_strcat(gedp->ged_result_str, ": global attributes object\n");
 	bu_avs_init_empty(&avs);
 	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
-	    bu_vls_printf(&gedp->ged_result_str, "Cannot get attributes for %s\n", dp->d_namep);
+	    bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for %s\n", dp->d_namep);
 	    return;
 	}
 /* !!! left off here*/
@@ -61,39 +61,39 @@ _ged_do_list(struct ged *gedp, struct directory *dp, int verbose)
 		const char *str;
 
 		conv = atof(avp->value);
-		bu_vls_strcat(&gedp->ged_result_str, "\tunits: ");
+		bu_vls_strcat(gedp->ged_result_str, "\tunits: ");
 		if ((str=bu_units_string(conv)) == NULL) {
-		    bu_vls_strcat(&gedp->ged_result_str, "Unrecognized units\n");
+		    bu_vls_strcat(gedp->ged_result_str, "Unrecognized units\n");
 		} else {
-		    bu_vls_strcat(&gedp->ged_result_str, str);
-		    bu_vls_putc(&gedp->ged_result_str, '\n');
+		    bu_vls_strcat(gedp->ged_result_str, str);
+		    bu_vls_putc(gedp->ged_result_str, '\n');
 		}
 	    } else {
-		bu_vls_putc(&gedp->ged_result_str, '\t');
-		bu_vls_strcat(&gedp->ged_result_str, avp->name);
-		bu_vls_strcat(&gedp->ged_result_str, ": ");
-		bu_vls_strcat(&gedp->ged_result_str, avp->value);
-		bu_vls_putc(&gedp->ged_result_str, '\n');
+		bu_vls_putc(gedp->ged_result_str, '\t');
+		bu_vls_strcat(gedp->ged_result_str, avp->name);
+		bu_vls_strcat(gedp->ged_result_str, ": ");
+		bu_vls_strcat(gedp->ged_result_str, avp->value);
+		bu_vls_putc(gedp->ged_result_str, '\n');
 	    }
 	}
     } else {
 
 	if ((id = rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip,
 				     (fastf_t *)NULL, &rt_uniresource)) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "rt_db_get_internal(%s) failure\n", dp->d_namep);
+	    bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal(%s) failure\n", dp->d_namep);
 	    return;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "%s:  ", dp->d_namep);
+	bu_vls_printf(gedp->ged_result_str, "%s:  ", dp->d_namep);
 
 	if (!rt_functab[id].ft_describe ||
-	    rt_functab[id].ft_describe(&gedp->ged_result_str,
+	    rt_functab[id].ft_describe(gedp->ged_result_str,
 				       &intern,
 				       verbose,
 				       gedp->ged_wdbp->dbip->dbi_base2local,
 				       &rt_uniresource,
 				       gedp->ged_wdbp->dbip) < 0)
-	    bu_vls_printf(&gedp->ged_result_str, "%s: describe error\n", dp->d_namep);
+	    bu_vls_printf(gedp->ged_result_str, "%s: describe error\n", dp->d_namep);
 	rt_db_free_internal(&intern);
     }
 }
@@ -114,11 +114,11 @@ ged_list(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -159,16 +159,16 @@ ged_list(struct ged *gedp, int argc, const char *argv[])
 	    dp = DB_FULL_PATH_CUR_DIR(&path);
 
 	    if ((id = rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, ts.ts_mat, &rt_uniresource)) < 0) {
-		bu_vls_printf(&gedp->ged_result_str, "rt_db_get_internal(%s) failure", dp->d_namep);
+		bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal(%s) failure", dp->d_namep);
 		continue;
 	    }
 
 	    db_free_full_path(&path);
 
-	    bu_vls_printf(&gedp->ged_result_str, "%s:  ", argv[arg]);
+	    bu_vls_printf(gedp->ged_result_str, "%s:  ", argv[arg]);
 
-	    if (!rt_functab[id].ft_describe || rt_functab[id].ft_describe(&gedp->ged_result_str, &intern, 99, gedp->ged_wdbp->dbip->dbi_base2local, &rt_uniresource, gedp->ged_wdbp->dbip) < 0)
-		bu_vls_printf(&gedp->ged_result_str, "%s: describe error", dp->d_namep);
+	    if (!rt_functab[id].ft_describe || rt_functab[id].ft_describe(gedp->ged_result_str, &intern, 99, gedp->ged_wdbp->dbip->dbi_base2local, &rt_uniresource, gedp->ged_wdbp->dbip) < 0)
+		bu_vls_printf(gedp->ged_result_str, "%s: describe error", dp->d_namep);
 
 	    rt_db_free_internal(&intern);
 	} else {

@@ -44,7 +44,7 @@ list_children(struct ged *gedp, struct directory *dp)
 	return GED_OK;
 
     if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
+	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	return GED_ERROR;
     }
     comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -58,7 +58,7 @@ list_children(struct ged *gedp, struct directory *dp)
 	if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
 	    db_non_union_push(comb->tree, &rt_uniresource);
 	    if (db_ck_v4gift_tree(comb->tree) < 0) {
-		bu_vls_printf(&gedp->ged_result_str, "Cannot flatten tree for listing");
+		bu_vls_printf(gedp->ged_result_str, "Cannot flatten tree for listing");
 		return GED_ERROR;
 	    }
 	}
@@ -95,7 +95,7 @@ list_children(struct ged *gedp, struct directory *dp)
 		    break;
 	    }
 
-	    bu_vls_printf(&gedp->ged_result_str, "{%c %s} ", op, rt_tree_array[i].tl_tree->tr_l.tl_name);
+	    bu_vls_printf(gedp->ged_result_str, "{%c %s} ", op, rt_tree_array[i].tl_tree->tr_l.tl_name);
 	    db_free_tree(rt_tree_array[i].tl_tree, &rt_uniresource);
 	}
 
@@ -118,21 +118,21 @@ ged_lt(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 

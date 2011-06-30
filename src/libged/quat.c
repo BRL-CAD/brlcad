@@ -44,17 +44,17 @@ ged_quat(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* return Viewrot as a quaternion */
     if (argc == 1) {
 	quat_mat2quat(quat, gedp->ged_gvp->gv_rotation);
-	bu_vls_printf(&gedp->ged_result_str, "%.12g %.12g %.12g %.12g", V4ARGS(quat));
+	bu_vls_printf(gedp->ged_result_str, "%.12g %.12g %.12g %.12g", V4ARGS(quat));
 	return GED_OK;
     }
 
     if (argc != 5) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: view %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: view %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -64,7 +64,7 @@ ged_quat(struct ged *gedp, int argc, const char *argv[])
 	|| sscanf(argv[3], "%lf", quat+2) != 1
 	|| sscanf(argv[4], "%lf", quat+3) != 1)
     {
-	bu_vls_printf(&gedp->ged_result_str, "view %s: bad value detected - %s %s %s %s",
+	bu_vls_printf(gedp->ged_result_str, "view %s: bad value detected - %s %s %s %s",
 		      argv[0], argv[1], argv[2], argv[3], argv[4]);
 	return GED_ERROR;
     }

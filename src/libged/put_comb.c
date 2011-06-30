@@ -67,14 +67,14 @@ make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp,
 
 	if (dp != RT_DIR_NULL) {
 	    if (db_delete(gedp->ged_wdbp->dbip, dp) || db_dirdelete(gedp->ged_wdbp->dbip, dp)) {
-		bu_vls_printf(&gedp->ged_result_str, "make_tree: Unable to delete directory entry for %s\n", old_name);
+		bu_vls_printf(gedp->ged_result_str, "make_tree: Unable to delete directory entry for %s\n", old_name);
 		intern.idb_meth->ft_ifree(&intern);
 		return GED_ERROR;
 	    }
 	}
 
 	if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "make_tree: Cannot add %s to directory, no changes made\n", new_name);
+	    bu_vls_printf(gedp->ged_result_str, "make_tree: Cannot add %s to directory, no changes made\n", new_name);
 	    intern.idb_meth->ft_ifree(&intern);
 	    return 1;
 	}
@@ -87,7 +87,7 @@ make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp,
 	    flags = RT_DIR_COMB;
 
 	if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "make_tree: Cannot add %s to directory, no changes made\n", new_name);
+	    bu_vls_printf(gedp->ged_result_str, "make_tree: Cannot add %s to directory, no changes made\n", new_name);
 	    intern.idb_meth->ft_ifree(&intern);
 	    return GED_ERROR;
 	}
@@ -99,7 +99,7 @@ make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory *dp,
     }
 
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "make_tree: Unable to write new combination into database.\n");
+	bu_vls_printf(gedp->ged_result_str, "make_tree: Unable to write new combination into database.\n");
 	return GED_ERROR;
     }
 
@@ -158,17 +158,17 @@ save_comb(struct ged *gedp, struct directory *dpold)
     const char *name = mktemp_comb(gedp, tmpcomb);
 
     if (rt_db_get_internal(&intern, dpold, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "save_comb: Database read error, aborting\n");
+	bu_vls_printf(gedp->ged_result_str, "save_comb: Database read error, aborting\n");
 	return NULL;
     }
 
     if ((dp = db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, dpold->d_flags, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "save_comb: Cannot save copy of %s, no changed made\n", dpold->d_namep);
+	bu_vls_printf(gedp->ged_result_str, "save_comb: Cannot save copy of %s, no changed made\n", dpold->d_namep);
 	return NULL;
     }
 
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "save_comb: Cannot save copy of %s, no changed made\n", dpold->d_namep);
+	bu_vls_printf(gedp->ged_result_str, "save_comb: Cannot save copy of %s, no changed made\n", dpold->d_namep);
 	return NULL;
     }
 
@@ -230,7 +230,7 @@ count_nodes(struct ged *gedp, char *line)
 	relation = (*ptr);
 
 	if (relation != '+' && relation != 'u' && relation != '-') {
-	    bu_vls_printf(&gedp->ged_result_str, " %c is not a legal operator\n", relation);
+	    bu_vls_printf(gedp->ged_result_str, " %c is not a legal operator\n", relation);
 	    return -1;
 	}
 
@@ -238,7 +238,7 @@ count_nodes(struct ged *gedp, char *line)
 	name = strtok((char *)NULL, _delims);
 
 	if (name == NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, " operand name missing\n");
+	    bu_vls_printf(gedp->ged_result_str, " operand name missing\n");
 	    return -1;
 	}
 
@@ -255,7 +255,7 @@ count_nodes(struct ged *gedp, char *line)
 	    for (k=1; k<16; k++) {
 		ptr = strtok((char *)NULL, _delims);
 		if (!ptr) {
-		    bu_vls_printf(&gedp->ged_result_str, "expecting a matrix\n");
+		    bu_vls_printf(gedp->ged_result_str, "expecting a matrix\n");
 		    return -1;
 		}
 	    }
@@ -498,16 +498,16 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 7 || 11 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -515,12 +515,12 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
     dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET);
     if (dp != RT_DIR_NULL) {
 	if (!(dp->d_flags & RT_DIR_COMB)) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a combination, so cannot be edited this way\n", argv[0], argv[1]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: %s is not a combination, so cannot be edited this way\n", argv[0], argv[1]);
 	    return GED_ERROR;
 	}
 
 	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: Database read error, aborting\n", argv[0]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: Database read error, aborting\n", argv[0]);
 	    return GED_ERROR;
 	}
 
@@ -559,8 +559,8 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 
     if (comb->region_flag) {
 	if (argc != 11) {
-	    bu_vls_printf(&gedp->ged_result_str, "region_flag is set, incorrect number of arguments supplied.\n");
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], regionusage);
+	    bu_vls_printf(gedp->ged_result_str, "region_flag is set, incorrect number of arguments supplied.\n");
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], regionusage);
 	    return GED_ERROR;
 	}
 
@@ -572,8 +572,8 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	offset = 6;
     } else {
 	if (argc != 7) {
-	    bu_vls_printf(&gedp->ged_result_str, "region_flag is not set, incorrect number of arguments supplied.\n");
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], noregionusage);
+	    bu_vls_printf(gedp->ged_result_str, "region_flag is not set, incorrect number of arguments supplied.\n");
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], noregionusage);
 	    return GED_ERROR;
 	}
 	offset = 2;
@@ -590,7 +590,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
     if (put_tree_into_comb(gedp, comb, dp, argv[1], new_name, argv[offset + 4]) == GED_ERROR) {
 	if (comb) {
 	    restore_comb(gedp, dp, saved_name);
-	    bu_vls_printf(&gedp->ged_result_str, "%s: \toriginal restored\n", argv[0]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: \toriginal restored\n", argv[0]);
 	}
 	(void)unlink(_ged_tmpfil);
 	return GED_ERROR;

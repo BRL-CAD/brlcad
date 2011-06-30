@@ -124,18 +124,18 @@ ged_fb2pix(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     screen_height = screen_width = 512;		/* Defaults */
 
     if (!get_args(argc, (char **)argv)) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -145,7 +145,7 @@ ged_fb2pix(struct ged *gedp, int argc, const char *argv[])
 
     ret = fb_write_fp(gedp->ged_fbsp->fbs_fbp, outfp,
 		      screen_width, screen_height,
-		      crunch, inverse, &gedp->ged_result_str);
+		      crunch, inverse, gedp->ged_result_str);
 
     if (outfp != stdout)
 	fclose(outfp);

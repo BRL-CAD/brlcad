@@ -128,7 +128,7 @@ skewer_solids(struct ged *gedp, int argc, const char **argv, fastf_t *ray_orig, 
     struct bu_list sol_list;
 
     if (argc <= 0) {
-	bu_vls_printf(&gedp->ged_result_str, "skewer_solids argc<=0\n");
+	bu_vls_printf(gedp->ged_result_str, "skewer_solids argc<=0\n");
 	return (char **) 0;
     }
 
@@ -137,7 +137,7 @@ skewer_solids(struct ged *gedp, int argc, const char **argv, fastf_t *ray_orig, 
     rtip->useair = 1;
     rtip->rti_dont_instance = 1;	/* full paths to solids, too. */
     if (rt_gettrees(rtip, argc, argv, 1) == -1) {
-	bu_vls_printf(&gedp->ged_result_str, "rt_gettrees() failed\n");
+	bu_vls_printf(gedp->ged_result_str, "rt_gettrees() failed\n");
 	rt_clean(rtip);
 	bu_free((genptr_t)rtip, "struct rt_i");
 	return (char **) 0;
@@ -203,28 +203,28 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 1 && argc != 3) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     if (argc == 3 &&
 	(sscanf(argv[1], "%d", &h) != 1 ||
 	 sscanf(argv[2], "%d", &v) != 1)) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     if ((int)GED_VMIN > h || h > (int)GED_VMAX || (int)GED_VMIN > v || v > (int)GED_VMAX) {
-	bu_vls_printf(&gedp->ged_result_str, "Screen coordinates out of range\nMust be between +/-2048");
+	bu_vls_printf(gedp->ged_result_str, "Screen coordinates out of range\nMust be between +/-2048");
 	return GED_ERROR;
     }
 
@@ -283,12 +283,12 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
     solids_on_ray_cmd_vec = NULL;
 
     if (snames == 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Error executing skewer_solids: ");
+	bu_vls_printf(gedp->ged_result_str, "Error executing skewer_solids: ");
 	return GED_ERROR;
     }
 
     for (i = 0; snames[i] != 0; ++i)
-	bu_vls_printf(&gedp->ged_result_str, " %s", snames[i]);
+	bu_vls_printf(gedp->ged_result_str, " %s", snames[i]);
 
     bu_free((genptr_t) snames, "solid names");
 

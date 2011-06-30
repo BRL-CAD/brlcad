@@ -49,16 +49,16 @@ ged_eac(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -79,10 +79,10 @@ ged_eac(struct ged *gedp, int argc, const char *argv[])
 	    if (!(dp->d_flags & RT_DIR_REGION))
 		continue;
 
-	    bu_vls_printf(&gedp->ged_result_str, "%s: looking at %s\n", argv[0], dp->d_namep);
+	    bu_vls_printf(gedp->ged_result_str, "%s: looking at %s\n", argv[0], dp->d_namep);
 
 	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-		bu_vls_printf(&gedp->ged_result_str, "%s: Database read error, aborting\n", argv[0]);
+		bu_vls_printf(gedp->ged_result_str, "%s: Database read error, aborting\n", argv[0]);
 		return GED_ERROR;
 	    }
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;

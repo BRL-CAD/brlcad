@@ -44,11 +44,11 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -100,11 +100,11 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
 
     if (gtd.gtd_prflag == 0) {
 	/* path not found */
-	bu_vls_printf(&gedp->ged_result_str, "PATH:  ");
+	bu_vls_printf(gedp->ged_result_str, "PATH:  ");
 	for (i=0; i<gtd.gtd_objpos; i++)
-	    bu_vls_printf(&gedp->ged_result_str, "/%s", gtd.gtd_obj[i]->d_namep);
+	    bu_vls_printf(gedp->ged_result_str, "/%s", gtd.gtd_obj[i]->d_namep);
 
-	bu_vls_printf(&gedp->ged_result_str, "  NOT FOUND\n");
+	bu_vls_printf(gedp->ged_result_str, "  NOT FOUND\n");
     }
 
     return GED_OK;

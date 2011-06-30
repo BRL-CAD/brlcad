@@ -44,38 +44,38 @@ ged_setview(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 2 && argc != 4) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     /* set view center */
     if (argc == 2) {
 	if (bn_decode_vect(rvec, argv[1]) != 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
 	}
     } else {
 	if (sscanf(argv[1], "%lf", &rvec[X]) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "ged_setview: bad X value - %s\n", argv[1]);
+	    bu_vls_printf(gedp->ged_result_str, "ged_setview: bad X value - %s\n", argv[1]);
 	    return GED_ERROR;
 	}
 
 	if (sscanf(argv[2], "%lf", &rvec[Y]) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "ged_setview: bad Y value - %s\n", argv[2]);
+	    bu_vls_printf(gedp->ged_result_str, "ged_setview: bad Y value - %s\n", argv[2]);
 	    return GED_ERROR;
 	}
 
 	if (sscanf(argv[3], "%lf", &rvec[Z]) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "ged_setview: bad Z value - %s\n", argv[3]);
+	    bu_vls_printf(gedp->ged_result_str, "ged_setview: bad Z value - %s\n", argv[3]);
 	    return GED_ERROR;
 	}
     }

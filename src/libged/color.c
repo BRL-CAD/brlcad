@@ -64,7 +64,7 @@ color_putrec(struct ged *gedp, struct mater *mp)
     if (mp->mt_daddr == MATER_NO_ADDR) {
 	/* Need to allocate new database space */
 	if (db_alloc(gedp->ged_wdbp->dbip, &dir, 1)) {
-	    bu_vls_printf(&gedp->ged_result_str, "Database alloc error, aborting");
+	    bu_vls_printf(gedp->ged_result_str, "Database alloc error, aborting");
 	    return;
 	}
 	mp->mt_daddr = dir.d_addr;
@@ -74,7 +74,7 @@ color_putrec(struct ged *gedp, struct mater *mp)
     }
 
     if (db_put(gedp->ged_wdbp->dbip, &dir, &rec, 0, 1)) {
-	bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting");
+	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	return;
     }
 }
@@ -99,7 +99,7 @@ color_zaprec(struct ged *gedp, struct mater *mp)
     dir.d_flags = 0;
 
     if (db_delete(gedp->ged_wdbp->dbip, &dir) != 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Database delete error, aborting");
+	bu_vls_printf(gedp->ged_result_str, "Database delete error, aborting");
 	return;
     }
     mp->mt_daddr = MATER_NO_ADDR;
@@ -141,11 +141,11 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
     argv += bu_optind - 1;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     fp = bu_temp_file(tmpfil, MAXPATHLEN);
     if (fp == NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: could not create tmp file", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s: could not create tmp file", argv[0]);
 	return GED_ERROR;
     }
 
@@ -159,7 +159,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
     (void)fclose(fp);
 
     if (!_ged_editit(editstring, (const char *)tmpfil)) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: editor returned bad status. Aborted\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s: editor returned bad status. Aborted\n", argv[0]);
 	return GED_ERROR;
     }
 
@@ -171,7 +171,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
 
     if (bu_fgets(line, sizeof (line), fp) == NULL ||
 	line[0] != hdr[0]) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Header line damaged, aborting\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s: Header line damaged, aborting\n", argv[0]);
 	return GED_ERROR;
     }
 
@@ -192,7 +192,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
 	    cnt = sscanf(line, "%d%*c%d%*c%d%*c%d%*c%d",
 			 &low, &hi, &r, &g, &b);
 	    if (cnt != 9) {
-		bu_vls_printf(&gedp->ged_result_str, "%s: Discarding %s\n", argv[0], line);
+		bu_vls_printf(gedp->ged_result_str, "%s: Discarding %s\n", argv[0], line);
 		continue;
 	    }
 	    BU_GETSTRUCT(mp, mater);
@@ -223,7 +223,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
 
 	    /* check to see if line is reasonable */
 	    if (cnt != 5) {
-		bu_vls_printf(&gedp->ged_result_str, "%s: Discarding %s\n", argv[0], line);
+		bu_vls_printf(gedp->ged_result_str, "%s: Discarding %s\n", argv[0], line);
 		continue;
 	    }
 	    bu_vls_printf(&vls, "{%d %d %d %d %d} ", low, hi, r, g, b);
@@ -253,10 +253,10 @@ ged_edcolor(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc != 3) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
 	return GED_ERROR;
     }
 
@@ -277,16 +277,16 @@ ged_color(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 6 && argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -295,7 +295,7 @@ ged_color(struct ged *gedp, int argc, const char *argv[])
 	if (argv[1][0] == '-' && argv[1][1] == 'e' && argv[1][2] == '\0') {
 	    return edcolor(gedp, argc, argv);
 	} else {
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
 	}
     }

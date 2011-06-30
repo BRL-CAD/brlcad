@@ -51,16 +51,16 @@ ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 5 || argc > 9) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -72,7 +72,7 @@ ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
 	    case 'c':
 		max_chord_error = atof(bu_optarg);
 		if (max_chord_error < 0.0) {
-		    bu_vls_printf(&gedp->ged_result_str,
+		    bu_vls_printf(gedp->ged_result_str,
 				  "Maximum chord error cannot be less than zero");
 		    return GED_ERROR;
 		}
@@ -80,7 +80,7 @@ ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
 	    case 'n':
 		max_normal_error = atof(bu_optarg);
 		if (max_normal_error < 0.0) {
-		    bu_vls_printf(&gedp->ged_result_str,
+		    bu_vls_printf(gedp->ged_result_str,
 				  "Maximum normal error cannot be less than zero");
 		    return GED_ERROR;
 		}
@@ -88,13 +88,13 @@ ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
 	    case 'e':
 		min_edge_length = atof(bu_optarg);
 		if (min_edge_length < 0.0) {
-		    bu_vls_printf(&gedp->ged_result_str,
+		    bu_vls_printf(gedp->ged_result_str,
 				  "minumum edge length cannot be less than zero");
 		    return GED_ERROR;
 		}
 		break;
 	    default: {
-		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		return GED_ERROR;
 	    }
 	}
@@ -115,7 +115,7 @@ ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
 
     /* make sure this is a BOT solid */
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
-	bu_vls_printf(&gedp->ged_result_str, "%s is not a BOT solid\n", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s is not a BOT solid\n", argv[1]);
 	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
@@ -134,7 +134,7 @@ ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
 
     /* do the decimation */
     if (rt_bot_decimate(bot, max_chord_error, max_normal_error, min_edge_length) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Decimation Error\n");
+	bu_vls_printf(gedp->ged_result_str, "Decimation Error\n");
 	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
@@ -142,7 +142,7 @@ ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
     /* save the result to the database */
     /* XXX - should this be rt_db_put_internal() instead? */
     if (wdb_put_internal(gedp->ged_wdbp, argv[0], &intern, 1.0) < 0) {
-	bu_vls_printf(&gedp->ged_result_str,
+	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to write decimated BOT back to database\n");
 	return GED_ERROR;
     }

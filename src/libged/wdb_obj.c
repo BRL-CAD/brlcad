@@ -437,7 +437,7 @@ wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
     for (ctp = wdb_newcmds; ctp->ct_name != (char *)0; ctp++) {
 	if (BU_STR_EQUAL(ctp->ct_name, argv[1])) {
 	    ret = (*ctp->ct_func)(&ged, argc-1, argv+1);
-	    Tcl_SetResult(interp, bu_vls_addr(&ged.ged_result_str), TCL_VOLATILE);
+	    Tcl_SetResult(interp, bu_vls_addr(ged.ged_result_str), TCL_VOLATILE);
 	    if (ret == GED_OK)
 		return TCL_OK;
 	    return TCL_ERROR;
@@ -10392,8 +10392,8 @@ wdb_newcmds_tcl(ClientData clientData,
 
     /* Command not found. */
     if (ctp->ct_name == (char *)0) {
-	bu_vls_trunc(&ged.ged_result_str, 0);
-	bu_vls_printf(&ged.ged_result_str, "%s not found", argv[1]);
+	bu_vls_trunc(ged.ged_result_str, 0);
+	bu_vls_printf(ged.ged_result_str, "%s not found", argv[1]);
 	ret = GED_ERROR;
     }
 
@@ -10404,10 +10404,10 @@ wdb_newcmds_tcl(ClientData clientData,
     else
 	bu_vls_strcat(&vls, "0 ");
 
-    if (strchr(bu_vls_addr(&ged.ged_result_str), ' '))
-	bu_vls_printf(&vls, "\"%V\"", &ged.ged_result_str);
+    if (strchr(bu_vls_addr(ged.ged_result_str), ' '))
+	bu_vls_printf(&vls, "\"%V\"", ged.ged_result_str);
     else
-	bu_vls_vlscat(&vls, &ged.ged_result_str);
+	bu_vls_vlscat(&vls, ged.ged_result_str);
 
     Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
     bu_vls_free(&vls);

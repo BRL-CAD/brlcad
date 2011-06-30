@@ -65,7 +65,7 @@ int main(int ac, char *av[])
 
     if (ret) {
 	unlink(filename);
-	bu_exit(1, "%s", bu_vls_addr(&ged.ged_result_str));
+	bu_exit(1, "%s", bu_vls_addr(ged.ged_result_str));
     }
 
     return 0;

@@ -70,7 +70,7 @@ _ged_scale_rhc(struct ged *gedp, struct rt_rhc_internal *rhc, const char *attrib
 
 	    break;
 	default:
-	    bu_vls_printf(&gedp->ged_result_str, "bad rhc attribute - %s", attribute);
+	    bu_vls_printf(gedp->ged_result_str, "bad rhc attribute - %s", attribute);
 	    return GED_ERROR;
     }
 

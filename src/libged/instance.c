@@ -46,16 +46,16 @@ ged_instance(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 3 || 4 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -69,7 +69,7 @@ ged_instance(struct ged *gedp, int argc, const char *argv[])
     if (oper != WMOP_UNION &&
 	oper != WMOP_SUBTRACT &&
 	oper != WMOP_INTERSECT) {
-	bu_vls_printf(&gedp->ged_result_str, "bad operation: %c\n", oper);
+	bu_vls_printf(gedp->ged_result_str, "bad operation: %c\n", oper);
 	return GED_ERROR;
     }
 

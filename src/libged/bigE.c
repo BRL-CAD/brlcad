@@ -122,7 +122,7 @@ add_solid(const struct directory *dp,
 
     id = rt_db_get_internal(&intern, dp, dgcdp->gedp->ged_wdbp->dbip, mat, &rt_uniresource);
     if (id < 0) {
-	bu_vls_printf(&dgcdp->gedp->ged_result_str, "Failed to get internal form of %s\n", dp->d_namep);
+	bu_vls_printf(dgcdp->gedp->ged_result_str, "Failed to get internal form of %s\n", dp->d_namep);
 	eptr->l.m = (struct model *)NULL;
 	return eptr;
     }
@@ -188,7 +188,7 @@ add_solid(const struct directory *dp,
 		eptr->l.stp->st_id = id;
 		eptr->l.stp->st_meth = &rt_functab[id];
 		if (rt_obj_prep(eptr->l.stp, &intern, dgcdp->rtip) < 0) {
-		    bu_vls_printf(&dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", dp->d_namep);
+		    bu_vls_printf(dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", dp->d_namep);
 		}
 	    } else {
 		RT_DB_INTERNAL_INIT(&intern2);
@@ -199,7 +199,7 @@ add_solid(const struct directory *dp,
 		eptr->l.stp->st_id = ID_BOT;
 		eptr->l.stp->st_meth = &rt_functab[ID_BOT];
 		if (rt_obj_prep(eptr->l.stp, &intern2, dgcdp->rtip) < 0) {
-		    bu_vls_printf(&dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", dp->d_namep);
+		    bu_vls_printf(dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", dp->d_namep);
 		}
 
 		rt_db_free_internal(&intern2);
@@ -210,7 +210,7 @@ add_solid(const struct directory *dp,
 	    eptr->l.stp->st_id = id;
 	    eptr->l.stp->st_meth = &rt_functab[id];
 	    if (rt_obj_prep(eptr->l.stp, &intern, dgcdp->rtip) < 0)
-		bu_vls_printf(&dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", dp->d_namep);
+		bu_vls_printf(dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", dp->d_namep);
 	}
     }
 
@@ -1372,7 +1372,7 @@ Eplot(union E_tree *eptr,
 	leaf_ptr = (union E_tree *)BU_PTBL_GET(&dgcdp->leaf_list, leaf_no);
 	CK_ETREE(leaf_ptr);
 	if (leaf_ptr->l.op != OP_DB_LEAF && leaf_ptr->l.op != OP_SOLID) {
-	    bu_vls_printf(&dgcdp->gedp->ged_result_str, "Eplot: Bad leaf node!!!\n");
+	    bu_vls_printf(dgcdp->gedp->ged_result_str, "Eplot: Bad leaf node!!!\n");
 	    return;
 	}
 
@@ -1777,7 +1777,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
     }
 
     if (!count) {
-	bu_vls_printf(&dgcdp->gedp->ged_result_str, "A 'half' solid is the only solid in a region (ignored)\n");
+	bu_vls_printf(dgcdp->gedp->ged_result_str, "A 'half' solid is the only solid in a region (ignored)\n");
 	return;
     }
 
@@ -2000,7 +2000,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 
 	if (!nmg_to_poly(tp->l.m, pg, tol)) {
 	    bu_free((char *)pg, "rt_pg_internal");
-	    bu_vls_printf(&dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", tp->l.stp->st_dp->d_namep);
+	    bu_vls_printf(dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", tp->l.stp->st_dp->d_namep);
 	} else {
 	    struct rt_db_internal intern2;
 
@@ -2016,7 +2016,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 	    VSETALL(tp->l.stp->st_max, -INFINITY);
 	    VSETALL(tp->l.stp->st_min,  INFINITY);
 	    if (rt_obj_prep(tp->l.stp, &intern2, dgcdp->rtip) < 0) {
-		bu_vls_printf(&dgcdp->gedp->ged_result_str,
+		bu_vls_printf(dgcdp->gedp->ged_result_str,
 			      "Prep failure for polysolid version of solid '%s'",
 			      tp->l.stp->st_dp->d_namep);
 	    }
@@ -2042,11 +2042,11 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -2096,7 +2096,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    default:
 		{
-		    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		    return GED_ERROR;
 		}
 	}
@@ -2136,7 +2136,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 	    bu_free((char *)dgcdp->rtip, "rt_i structure for 'E'");
 	    bu_free(dgcdp, "dgcdp");
 
-	    bu_vls_printf(&gedp->ged_result_str, "Failed to get objects\n");
+	    bu_vls_printf(gedp->ged_result_str, "Failed to get objects\n");
 	    return GED_ERROR;
 	}
 	{
@@ -2176,7 +2176,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
     /* free leaf_list */
     bu_ptbl_free(&dgcdp->leaf_list);
 
-    bu_vls_printf(&gedp->ged_result_str, "E: %ld vectors in %ld sec\n",
+    bu_vls_printf(gedp->ged_result_str, "E: %ld vectors in %ld sec\n",
 		  dgcdp->nvectors, (long)(dgcdp->etime - dgcdp->start_time));
 
     return GED_OK;

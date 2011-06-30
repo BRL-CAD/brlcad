@@ -63,7 +63,7 @@ ged_tree(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* Parse options */
     bu_optind = 1;	/* re-init bu_getopt() */
@@ -80,20 +80,20 @@ ged_tree(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    case 'o':
 		if ((fdout = fopen(bu_optarg, "w+b")) == NULL) {
-		    bu_vls_printf(&gedp->ged_result_str, "Failed to open output file, %d", errno);
+		    bu_vls_printf(gedp->ged_result_str, "Failed to open output file, %d", errno);
 		    return GED_ERROR;
 		}
 		break;
 	    case 'd':
 		displayDepth = atoi(bu_optarg);
 		if (displayDepth < 0) {
-		    bu_vls_printf(&gedp->ged_result_str, "Negative number supplied as depth - unsupported.");
+		    bu_vls_printf(gedp->ged_result_str, "Negative number supplied as depth - unsupported.");
 		    return GED_ERROR;
 		}
 		break;
 	    case '?':
 	    default:
-		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		return GED_ERROR;
 	}
     }
@@ -105,8 +105,8 @@ ged_tree(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	char *whocmd[2] = {"who", NULL};
 	if (ged_who(gedp, 1, (const char **)whocmd) == GED_OK) {
-	    buffer = bu_strdup(bu_vls_addr(&gedp->ged_result_str));
-	    bu_vls_trunc(&gedp->ged_result_str, 0);
+	    buffer = bu_strdup(bu_vls_addr(gedp->ged_result_str));
+	    bu_vls_trunc(gedp->ged_result_str, 0);
 
 	    argc += bu_argv_from_string(whoargv, WHOARGVMAX, buffer);
 	}
@@ -119,7 +119,7 @@ ged_tree(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	if (j > 1)
-	    bu_vls_printf(&gedp->ged_result_str, "\n");
+	    bu_vls_printf(gedp->ged_result_str, "\n");
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, next, LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 	_ged_print_node(gedp, dp, 0, indentSize, 0, flags, displayDepth, 0);
@@ -131,7 +131,7 @@ ged_tree(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (fdout != NULL) {
-	fprintf(fdout, "%s", bu_vls_addr(&gedp->ged_result_str));
+	fprintf(fdout, "%s", bu_vls_addr(gedp->ged_result_str));
 	fclose(fdout);
     }
 

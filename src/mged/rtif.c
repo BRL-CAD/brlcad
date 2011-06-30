@@ -90,7 +90,7 @@ cmd_rt(ClientData UNUSED(clientData),
     else
 	ret = ged_rt(gedp, argc, (const char **)argv);
 
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == GED_OK)
@@ -131,7 +131,7 @@ cmd_rrt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
     Tcl_DStringInit(&ds);
 
     ret = ged_rrt(gedp, argc, (const char **)argv);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == GED_OK)
@@ -391,7 +391,7 @@ f_nirt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 	ret = ged_nirt(gedp, argc, (const char **)argv);
     }
 
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == GED_OK)
@@ -418,7 +418,7 @@ f_vnirt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
     ret = ged_vnirt(gedp, argc, (const char **)argv);
 
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == GED_OK)

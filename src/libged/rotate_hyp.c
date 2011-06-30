@@ -41,7 +41,7 @@ _ged_rotate_hyp(struct ged *gedp, struct rt_hyp_internal *hyp, const char *attri
     RT_HYP_CK_MAGIC(hyp);
 
     if (attribute[1] != '\0') {
-	bu_vls_printf(&gedp->ged_result_str, "bad hyp attribute - %s", attribute);
+	bu_vls_printf(gedp->ged_result_str, "bad hyp attribute - %s", attribute);
 	return GED_ERROR;
     }
 
@@ -51,7 +51,7 @@ _ged_rotate_hyp(struct ged *gedp, struct rt_hyp_internal *hyp, const char *attri
 	    MAT4X3VEC(hyp->hyp_Hi, rmat, hyp->hyp_Hi);
 	    break;
 	default:
-	    bu_vls_printf(&gedp->ged_result_str, "bad hyp attribute - %s", attribute);
+	    bu_vls_printf(gedp->ged_result_str, "bad hyp attribute - %s", attribute);
 	    return GED_ERROR;
     }
 

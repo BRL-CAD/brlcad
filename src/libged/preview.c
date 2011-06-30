@@ -58,7 +58,7 @@ ged_cm_anim(int argc, char **argv)
 	return 0;
 
     if (db_parse_anim(_ged_current_gedp->ged_wdbp->dbip, argc, (const char **)argv) < 0) {
-	bu_vls_printf(&_ged_current_gedp->ged_result_str, "cm_anim:  %s %s failed\n", argv[1], argv[2]);
+	bu_vls_printf(_ged_current_gedp->ged_result_str, "cm_anim:  %s %s failed\n", argv[1], argv[2]);
 	return -1;		/* BAD */
     }
 
@@ -254,7 +254,7 @@ ged_loadframe(struct ged *gedp, FILE *fp)
 	}
 
 	if (rt_do_cmd((struct rt_i *)0, cmd, ged_preview_cmdtab) < 0)
-	    bu_vls_printf(&gedp->ged_result_str, "command failed: %s\n", cmd);
+	    bu_vls_printf(gedp->ged_result_str, "command failed: %s\n", cmd);
 	bu_free((genptr_t)cmd, "preview cmd");
     }
 
@@ -295,16 +295,16 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_VIEW(gedp, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -339,13 +339,13 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
 		preview_mode = 3;	/* Like "ev" */
 		break;
 	    default: {
-		bu_vls_printf(&gedp->ged_result_str, "option '%c' unknown\n", c);
-		bu_vls_printf(&gedp->ged_result_str, "        -d#     inter-frame delay\n");
-		bu_vls_printf(&gedp->ged_result_str, "        -e      overlay plot of eye path\n");
-		bu_vls_printf(&gedp->ged_result_str, "        -v      polygon rendering (visual)\n");
-		bu_vls_printf(&gedp->ged_result_str, "        -D#     desired starting frame\n");
-		bu_vls_printf(&gedp->ged_result_str, "        -K#     final frame\n");
-		bu_vls_printf(&gedp->ged_result_str, "        -o image_name.ext     output frame to file typed by extension(defaults to PIX)\n");
+		bu_vls_printf(gedp->ged_result_str, "option '%c' unknown\n", c);
+		bu_vls_printf(gedp->ged_result_str, "        -d#     inter-frame delay\n");
+		bu_vls_printf(gedp->ged_result_str, "        -e      overlay plot of eye path\n");
+		bu_vls_printf(gedp->ged_result_str, "        -v      polygon rendering (visual)\n");
+		bu_vls_printf(gedp->ged_result_str, "        -D#     desired starting frame\n");
+		bu_vls_printf(gedp->ged_result_str, "        -K#     final frame\n");
+		bu_vls_printf(gedp->ged_result_str, "        -o image_name.ext     output frame to file typed by extension(defaults to PIX)\n");
 		return GED_ERROR;
 	    }
 
@@ -370,13 +370,13 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
     /* Print out the command we are about to run */
     vp = &_ged_current_gedp->ged_gdp->gd_rt_cmd[0];
     while ((vp != NULL) && (*vp))
-	bu_vls_printf(&gedp->ged_result_str, "%s ", *vp++);
+	bu_vls_printf(gedp->ged_result_str, "%s ", *vp++);
 
-    bu_vls_printf(&gedp->ged_result_str, "\n");
+    bu_vls_printf(gedp->ged_result_str, "\n");
 
     preview_vbp = rt_vlblock_init();
 
-    bu_vls_printf(&gedp->ged_result_str, "eyepoint at (0, 0, 1) viewspace\n");
+    bu_vls_printf(gedp->ged_result_str, "eyepoint at (0, 0, 1) viewspace\n");
 
 
     /*

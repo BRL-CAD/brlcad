@@ -48,43 +48,43 @@ ged_pov(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 6) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     /***************** Get the arguments *******************/
 
     if (bn_decode_vect(center, argv[1]) != 3) {
-	bu_vls_printf(&gedp->ged_result_str, "ged_pov: bad center - %s\n", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "ged_pov: bad center - %s\n", argv[1]);
 	return TCL_ERROR;
     }
 
     if (bn_decode_quat(quat, argv[2]) != 4) {
-	bu_vls_printf(&gedp->ged_result_str, "ged_pov: bad quat - %s\n", argv[2]);
+	bu_vls_printf(gedp->ged_result_str, "ged_pov: bad quat - %s\n", argv[2]);
 	return TCL_ERROR;
     }
 
     if (sscanf(argv[3], "%lf", &scale) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "ged_pov: bad scale - %s\n", argv[3]);
+	bu_vls_printf(gedp->ged_result_str, "ged_pov: bad scale - %s\n", argv[3]);
 	return TCL_ERROR;
     }
 
     if (bn_decode_vect(eye_pos, argv[4]) != 3) {
-	bu_vls_printf(&gedp->ged_result_str, "ged_pov: bad eye position - %s\n", argv[4]);
+	bu_vls_printf(gedp->ged_result_str, "ged_pov: bad eye position - %s\n", argv[4]);
 	return TCL_ERROR;
     }
 
     if (sscanf(argv[5], "%lf", &perspective) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "ged_pov: bad perspective - %s\n", argv[5]);
+	bu_vls_printf(gedp->ged_result_str, "ged_pov: bad perspective - %s\n", argv[5]);
 	return TCL_ERROR;
     }
 

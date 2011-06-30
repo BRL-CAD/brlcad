@@ -58,29 +58,29 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc <= 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	bu_vls_printf(&gedp->ged_result_str, "commands:\n");
-	bu_vls_printf(&gedp->ged_result_str, "\tinfo - return count information for specific BREP\n");
-	bu_vls_printf(&gedp->ged_result_str, "\tinfo S [index] - return information for specific BREP 'surface'\n");
-	bu_vls_printf(&gedp->ged_result_str, "\tinfo F [index] - return information for specific BREP 'face'\n");
-	bu_vls_printf(&gedp->ged_result_str, "\tplot - plot entire BREP\n");
-	bu_vls_printf(&gedp->ged_result_str, "\tplot S [index] - plot specific BREP 'surface'\n");
-	bu_vls_printf(&gedp->ged_result_str, "\tplot F [index] - plot specific BREP 'face'\n");
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "commands:\n");
+	bu_vls_printf(gedp->ged_result_str, "\tinfo - return count information for specific BREP\n");
+	bu_vls_printf(gedp->ged_result_str, "\tinfo S [index] - return information for specific BREP 'surface'\n");
+	bu_vls_printf(gedp->ged_result_str, "\tinfo F [index] - return information for specific BREP 'face'\n");
+	bu_vls_printf(gedp->ged_result_str, "\tplot - plot entire BREP\n");
+	bu_vls_printf(gedp->ged_result_str, "\tplot S [index] - plot specific BREP 'surface'\n");
+	bu_vls_printf(gedp->ged_result_str, "\tplot F [index] - plot specific BREP 'face'\n");
 	return GED_HELP;
     }
 
     if (argc < 2 || argc > 6) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     solid_name = (char *)argv[1];
     if ((ndp = db_lookup(gedp->ged_wdbp->dbip,  solid_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "Error: %s is not a solid or does not exist in database", solid_name);
+	bu_vls_printf(gedp->ged_result_str, "Error: %s is not a solid or does not exist in database", solid_name);
 	return GED_ERROR;
     } else {
 	real_flag = (ndp->d_addr == RT_DIR_PHONY_ADDR) ? 0 : 1;
@@ -88,7 +88,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
     if (!real_flag) {
 	/* solid doesnt exists - don't kill */
-	bu_vls_printf(&gedp->ged_result_str, "Error: %s is not a real solid", solid_name);
+	bu_vls_printf(gedp->ged_result_str, "Error: %s is not a real solid", solid_name);
 	return GED_OK;
     }
 
@@ -100,7 +100,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
     if (!RT_BREP_TEST_MAGIC(bi)) {
 	/* solid doesnt exists - don't kill */
-	bu_vls_printf(&gedp->ged_result_str, "Error: %s is not a BREP solid.", solid_name);
+	bu_vls_printf(gedp->ged_result_str, "Error: %s is not a BREP solid.", solid_name);
 	return GED_OK;
     }
 
@@ -115,7 +115,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
     vbp = rt_vlblock_init();
 
-    brep_command(&gedp->ged_result_str, bs, bi, vbp, argc, argv, commtag);
+    brep_command(gedp->ged_result_str, bs, bi, vbp, argc, argv, commtag);
 
     snprintf(namebuf, 64, "%s%s_", commtag, solid_name);
     _ged_cvt_vlblock_to_solids(gedp, vbp, namebuf, 0);

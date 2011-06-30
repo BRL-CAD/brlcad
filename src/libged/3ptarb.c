@@ -68,15 +68,15 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc > 15) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     if (argc < 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Enter name for this arb: ");
+	bu_vls_printf(gedp->ged_result_str, "Enter name for this arb: ");
 	return GED_MORE;
     }
 
@@ -85,7 +85,7 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
     /* read the three points */
     prompts = &p_arb3pt[0];
     if (argc < 11) {
-	bu_vls_printf(&gedp->ged_result_str, "%s", prompts[argc-2]);
+	bu_vls_printf(gedp->ged_result_str, "%s", prompts[argc-2]);
 	return GED_MORE;
     }
 
@@ -97,30 +97,30 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
     VCROSS(norm, vec1, vec2);
     length = MAGNITUDE(norm);
     if (ZERO(length)) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: points are colinear\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s: points are colinear\n", argv[0]);
 	return GED_ERROR;
     }
     VSCALE(norm, norm, 1.0/length);
 
     if (argc < 12) {
-	bu_vls_printf(&gedp->ged_result_str, "Enter coordinate to solve for (x, y, or z): ");
+	bu_vls_printf(gedp->ged_result_str, "Enter coordinate to solve for (x, y, or z): ");
 	return GED_MORE;
     }
 
     switch (argv[11][0]) {
 	case 'x':
 	    if (ZERO(norm[0])) {
-		bu_vls_printf(&gedp->ged_result_str, "%s: X not unique in this face\n", argv[0]);
+		bu_vls_printf(gedp->ged_result_str, "%s: X not unique in this face\n", argv[0]);
 		return GED_ERROR;
 	    }
 	    solve = X;
 
 	    if (argc < 13) {
-		bu_vls_printf(&gedp->ged_result_str, "Enter the Y, Z coordinate values: ");
+		bu_vls_printf(gedp->ged_result_str, "Enter the Y, Z coordinate values: ");
 		return GED_MORE;
 	    }
 	    if (argc < 14) {
-		bu_vls_printf(&gedp->ged_result_str, "Enter the Z coordinate value: ");
+		bu_vls_printf(gedp->ged_result_str, "Enter the Z coordinate value: ");
 		return GED_MORE;
 	    }
 
@@ -130,17 +130,17 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
 
 	case 'y':
 	    if (ZERO(norm[1])) {
-		bu_vls_printf(&gedp->ged_result_str, "%s: Y not unique in this face\n", argv[0]);
+		bu_vls_printf(gedp->ged_result_str, "%s: Y not unique in this face\n", argv[0]);
 		return GED_ERROR;
 	    }
 	    solve = Y;
 
 	    if (argc < 13) {
-		bu_vls_printf(&gedp->ged_result_str, "Enter the X, Z coordinate values: ");
+		bu_vls_printf(gedp->ged_result_str, "Enter the X, Z coordinate values: ");
 		return GED_MORE;
 	    }
 	    if (argc < 14) {
-		bu_vls_printf(&gedp->ged_result_str, "Enter the Z coordinate value: ");
+		bu_vls_printf(gedp->ged_result_str, "Enter the Z coordinate value: ");
 		return GED_MORE;
 	    }
 
@@ -150,17 +150,17 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
 
 	case 'z':
 	    if (ZERO(norm[2])) {
-		bu_vls_printf(&gedp->ged_result_str, "%s: Z not unique in this face\n", argv[0]);
+		bu_vls_printf(gedp->ged_result_str, "%s: Z not unique in this face\n", argv[0]);
 		return GED_ERROR;
 	    }
 	    solve = Z;
 
 	    if (argc < 13) {
-		bu_vls_printf(&gedp->ged_result_str, "Enter the X, Y coordinate values: ");
+		bu_vls_printf(gedp->ged_result_str, "Enter the X, Y coordinate values: ");
 		return GED_MORE;
 	    }
 	    if (argc < 14) {
-		bu_vls_printf(&gedp->ged_result_str, "Enter the Y coordinate value: ");
+		bu_vls_printf(gedp->ged_result_str, "Enter the Y coordinate value: ");
 		return GED_MORE;
 	    }
 
@@ -169,18 +169,18 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
 	    break;
 
 	default:
-	    bu_vls_printf(&gedp->ged_result_str, "%s: coordinate must be x, y, or z\n", argv[0]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: coordinate must be x, y, or z\n", argv[0]);
 	    return GED_ERROR;
     }
 
     if (argc < 15) {
-	bu_vls_printf(&gedp->ged_result_str, "Enter thickness for this arb: ");
+	bu_vls_printf(gedp->ged_result_str, "Enter thickness for this arb: ");
 	return GED_MORE;
     }
 
     thick = atof(argv[14]);
     if (ZERO(thick)) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: thickness = 0.0\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s: thickness = 0.0\n", argv[0]);
 	return GED_ERROR;
     }
 
@@ -239,7 +239,7 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
 
 	default:
 	    bu_free((genptr_t)internal.idb_ptr, "rt_arb_internal");
-	    bu_vls_printf(&gedp->ged_result_str, "%s: bad coordinate to solve for\n", argv[0]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad coordinate to solve for\n", argv[0]);
 	    return GED_ERROR;
     }
 

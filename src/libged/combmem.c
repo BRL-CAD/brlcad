@@ -285,13 +285,13 @@ combmem_vls_print_member_info(struct ged *gedp, char op, union tree *itp, enum e
     switch (etype) {
 	case ETYPES_ABS:
 	    if (!itp->tr_l.tl_mat) {
-		bu_vls_printf(&gedp->ged_result_str, "%c {%s} 0.0 0.0 0.0 0.0 0.0 0.0 1.0 1.0 1.0 1.0 0.0 0.0 0.0",
+		bu_vls_printf(gedp->ged_result_str, "%c {%s} 0.0 0.0 0.0 0.0 0.0 0.0 1.0 1.0 1.0 1.0 0.0 0.0 0.0",
 			      op, itp->tr_l.tl_name);
 	    } else {
 		if (combmem_disassemble_mat(itp->tr_l.tl_mat, &az, &el, &tw, &tx, &ty, &tz, &sa, &sx, &sy, &sz))
 		    bu_log("Found bad matrix for %s\n", itp->tr_l.tl_name);
 
-		bu_vls_printf(&gedp->ged_result_str, "%c {%s} %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf 0.0 0.0 0.0",
+		bu_vls_printf(gedp->ged_result_str, "%c {%s} %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf 0.0 0.0 0.0",
 			      op, itp->tr_l.tl_name,
 			      az * bn_radtodeg,
 			      el * bn_radtodeg,
@@ -302,27 +302,27 @@ combmem_vls_print_member_info(struct ged *gedp, char op, union tree *itp, enum e
 
 	    break;
 	case ETYPES_REL:
-	    bu_vls_printf(&gedp->ged_result_str, "%c {%s} 0.0 0.0 0.0 0.0 0.0 0.0 1.0 1.0 1.0 1.0 0.0 0.0 0.0",
+	    bu_vls_printf(gedp->ged_result_str, "%c {%s} 0.0 0.0 0.0 0.0 0.0 0.0 1.0 1.0 1.0 1.0 0.0 0.0 0.0",
 			  op, itp->tr_l.tl_name);
 	    break;
 	case ETYPES_ROT_AET:
-	    bu_vls_printf(&gedp->ged_result_str, "%c {%s} 0.0 0.0 0.0 0.0 0.0 0.0",
+	    bu_vls_printf(gedp->ged_result_str, "%c {%s} 0.0 0.0 0.0 0.0 0.0 0.0",
 			  op, itp->tr_l.tl_name);
 	    break;
 	case ETYPES_ROT_XYZ:
-	    bu_vls_printf(&gedp->ged_result_str, "%c {%s} 0.0 0.0 0.0 0.0 0.0 0.0",
+	    bu_vls_printf(gedp->ged_result_str, "%c {%s} 0.0 0.0 0.0 0.0 0.0 0.0",
 			  op, itp->tr_l.tl_name);
 	    break;
 	case ETYPES_ROT_ARBITRARY_AXIS:
-	    bu_vls_printf(&gedp->ged_result_str, "%c {%s} 0.0 0.0 0.0 0.0 0.0 0.0 0.0",
+	    bu_vls_printf(gedp->ged_result_str, "%c {%s} 0.0 0.0 0.0 0.0 0.0 0.0 0.0",
 			  op, itp->tr_l.tl_name);
 	    break;
 	case ETYPES_TRA:
-	    bu_vls_printf(&gedp->ged_result_str, "%c {%s} 0.0 0.0 0.0",
+	    bu_vls_printf(gedp->ged_result_str, "%c {%s} 0.0 0.0 0.0",
 			  op, itp->tr_l.tl_name);
 	    break;
 	case ETYPES_SCA:
-	    bu_vls_printf(&gedp->ged_result_str, "%c {%s} 1.0 1.0 1.0 1.0 0.0 0.0 0.0",
+	    bu_vls_printf(gedp->ged_result_str, "%c {%s} 1.0 1.0 1.0 1.0 0.0 0.0 0.0",
 			  op, itp->tr_l.tl_name);
 	default:
 	    break;
@@ -335,17 +335,17 @@ combmem_vls_print_member_info(struct ged *gedp, char op, union tree *itp, enum e
 	struct rt_comb_internal *_comb; \
 	\
 	if ((_dp = db_lookup((_gedp)->ged_wdbp->dbip, (_name), LOOKUP_NOISY)) == RT_DIR_NULL) { \
-	    bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not found in database.\n", (_cmd), (_name)); \
+	    bu_vls_printf(gedp->ged_result_str, "%s: Warning - %s not found in database.\n", (_cmd), (_name)); \
 	    return GED_ERROR; \
 	} \
 	\
 	if (!(_dp->d_flags & RT_DIR_COMB)) { \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "%s: Warning - %s not a combination\n", (_cmd), (_name)); \
+	    bu_vls_printf((_gedp)->ged_result_str, "%s: Warning - %s not a combination\n", (_cmd), (_name)); \
 	    return GED_ERROR; \
 	} \
 	\
 	if (rt_db_get_internal(&(_intern), _dp, (_gedp)->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource) < 0) { \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "Database read error, aborting"); \
+	    bu_vls_printf((_gedp)->ged_result_str, "Database read error, aborting"); \
 	    return GED_ERROR; \
 	} \
 	\
@@ -386,7 +386,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
     size_t node_count;
 
     if (argc < 2) {
-	bu_vls_printf(&gedp->ged_result_str, "ERROR argument missing after [%s]\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "ERROR argument missing after [%s]\n", argv[0]);
 	return GED_ERROR;
     }
 
@@ -415,7 +415,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 	}
 
 	combmem_vls_print_member_info(gedp, op, itp, etype);
-	bu_vls_printf(&gedp->ged_result_str, "\n");
+	bu_vls_printf(gedp->ged_result_str, "\n");
     }
 
     rt_db_free_internal(&intern);
@@ -427,7 +427,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 
 #define COMBMEM_SET_PART_I(_gedp, _argc, _cmd, _name, _num_params, _intern, _dp, _comb, _node_count, _rt_tree_array) { \
 	if (rt_db_get_internal(&(_intern), (_dp), (_gedp)->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource) < 0) { \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "Database read error, aborting"); \
+	    bu_vls_printf((_gedp)->ged_result_str, "Database read error, aborting"); \
 	    return GED_ERROR;							\
 	}									\
 	\
@@ -454,7 +454,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 		(_rt_tree_array)[(_tree_index)].tl_op = OP_SUBTRACT; \
 		break; \
 	    default: \
-		bu_vls_printf(&(_gedp)->ged_result_str, "combmem_set: unrecognized relation (assume UNION)\n"); \
+		bu_vls_printf((_gedp)->ged_result_str, "combmem_set: unrecognized relation (assume UNION)\n"); \
 	    case 'u': \
 		(_rt_tree_array)[(_tree_index)].tl_op = OP_UNION; \
 		break; \
@@ -488,7 +488,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 		      (_comb)->tree = (_final_tree); \
 		      \
 		      if (rt_db_put_internal((_dp), (_gedp)->ged_wdbp->dbip, &(_intern), &rt_uniresource) < 0) { \
-			  bu_vls_printf(&(_gedp)->ged_result_str, "Unable to write new combination into database.\n"); \
+			  bu_vls_printf((_gedp)->ged_result_str, "Unable to write new combination into database.\n"); \
 			  \
 			  rt_db_free_internal(&(_old_intern)); \
 			  if (_old_rt_tree_array) \
@@ -940,22 +940,22 @@ combmem_set_empty(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
 
     if (argc < 2) {
-	bu_vls_printf(&gedp->ged_result_str, "ERROR argument missing after [%s]\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "ERROR argument missing after [%s]\n", argv[0]);
 	return GED_ERROR;
     }
 
     if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not found in database.\n", argv[0], argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s: Warning - %s not found in database.\n", argv[0], argv[1]);
 	return GED_ERROR;
     }
 
     if (!(dp->d_flags & RT_DIR_COMB)) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not a combination\n", argv[0], argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s: Warning - %s not a combination\n", argv[0], argv[1]);
 	return GED_ERROR;
     }									\
 
     if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
+	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	return GED_ERROR;
     }
     comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -965,7 +965,7 @@ combmem_set_empty(struct ged *gedp, int argc, const char *argv[])
     comb->tree = NULL;
 
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Unable to write combination into database - %s\n", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "Unable to write combination into database - %s\n", argv[1]);
 	return GED_ERROR;
     }
 
@@ -986,11 +986,11 @@ ged_combmem(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "[-i type] [-r type] comb [op1 name1 az1 el1 tw1 x1 y1 z1 sa1 sx1 sy1 sz1 ...]";
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 	return GED_HELP;
     }
 
@@ -1072,7 +1072,7 @@ ged_combmem(struct ged *gedp, int argc, const char *argv[])
     }
 
 bad:
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
     return GED_ERROR;
 }
 

@@ -192,7 +192,7 @@ Make_new_name(struct db_i *dbip,
 	    /* Add new name to directory */
 	    use->dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, dp->d_flags, (genptr_t)&dp->d_minor_type);
 	    if (use->dp == RT_DIR_NULL) {
-		bu_vls_printf(&gedp->ged_result_str, "\nAn error has occured while adding a new object to the database.\n"); \
+		bu_vls_printf(gedp->ged_result_str, "\nAn error has occured while adding a new object to the database.\n"); \
 		return;
 	    }
 	}
@@ -239,7 +239,7 @@ Do_copy_membs(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tr
 
     /* Copy member with current tranform matrix */
     if ((dp_new=Copy_object(gedp, dp, new_xform)) == RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "Failed to copy object %s", dp->d_namep);
+	bu_vls_printf(gedp->ged_result_str, "Failed to copy object %s", dp->d_namep);
 	return;
     }
 
@@ -271,7 +271,7 @@ Copy_solid(struct ged *gedp,
     RT_CK_DIR(dp);
 
     if (!(dp->d_flags & RT_DIR_SOLID)) {
-	bu_vls_printf(&gedp->ged_result_str, "Copy_solid: %s is not a solid!!!!\n", dp->d_namep);
+	bu_vls_printf(gedp->ged_result_str, "Copy_solid: %s is not a solid!!!!\n", dp->d_namep);
 	return RT_DIR_NULL;
     }
 
@@ -313,18 +313,18 @@ Copy_solid(struct ged *gedp,
     }
 
     if (found == RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "Ran out of uses for solid %s\n", dp->d_namep);
+	bu_vls_printf(gedp->ged_result_str, "Ran out of uses for solid %s\n", dp->d_namep);
 	return RT_DIR_NULL;
     }
 
     if (rt_db_get_internal(&sol_int, dp, gedp->ged_wdbp->dbip, xform, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Cannot import solid %s\n", dp->d_namep);
+	bu_vls_printf(gedp->ged_result_str, "Cannot import solid %s\n", dp->d_namep);
 	return RT_DIR_NULL;
     }
 
     RT_CK_DB_INTERNAL(&sol_int);
     if (rt_db_put_internal(found, gedp->ged_wdbp->dbip, &sol_int, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Cannot write copy solid (%s) to database\n", found->d_namep);
+	bu_vls_printf(gedp->ged_result_str, "Cannot write copy solid (%s) to database\n", found->d_namep);
 	return RT_DIR_NULL;
     }
 
@@ -385,12 +385,12 @@ Copy_comb(struct ged *gedp,
     }
 
     if (found == RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "Ran out of uses for combination %s\n", dp->d_namep);
+	bu_vls_printf(gedp->ged_result_str, "Ran out of uses for combination %s\n", dp->d_namep);
 	return RT_DIR_NULL;
     }
 
     if (rt_db_put_internal(found, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "rt_db_put_internal failed for %s\n", dp->d_namep);
+	bu_vls_printf(gedp->ged_result_str, "rt_db_put_internal failed for %s\n", dp->d_namep);
 	rt_db_free_internal(&intern);
 	return RT_DIR_NULL;
     }
@@ -457,16 +457,16 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -507,7 +507,7 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
 		continue;
 
 	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-		bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting.\n");
+		bu_vls_printf(gedp->ged_result_str, "Database read error, aborting.\n");
 		return GED_ERROR;
 	    }
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -565,8 +565,8 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
 
     /* Make new objects */
     if (rt_db_get_internal(&intern, old_dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "ERROR: cannot load %s feom the database!!!\n", old_dp->d_namep);
-	bu_vls_printf(&gedp->ged_result_str, "\tNothing has been changed!!\n");
+	bu_vls_printf(gedp->ged_result_str, "ERROR: cannot load %s feom the database!!!\n", old_dp->d_namep);
+	bu_vls_printf(gedp->ged_result_str, "\tNothing has been changed!!\n");
 	Free_uses(gedp->ged_wdbp->dbip);
 	return GED_ERROR;
     }
@@ -581,7 +581,7 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
 		     (genptr_t)xform, (genptr_t)gedp, (genptr_t)0);
 
     if (rt_db_put_internal(old_dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "rt_db_put_internal failed for %s\n", old_dp->d_namep);
+	bu_vls_printf(gedp->ged_result_str, "rt_db_put_internal failed for %s\n", old_dp->d_namep);
 	rt_db_free_internal(&intern);
 	Free_uses(gedp->ged_wdbp->dbip);
 	return GED_ERROR;

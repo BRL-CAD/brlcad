@@ -49,16 +49,16 @@ ged_getmat(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -77,7 +77,7 @@ ged_getmat(struct ged *gedp, int argc, const char *argv[])
 	    !(first_fs = strchr(begin, '/')) ||
 	    !(last_fs = strrchr(begin, '/')) ||
 	    first_fs != last_fs) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: bad path specification '%s'", argv[0], argv[1]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad path specification '%s'", argv[0], argv[1]);
 	    return GED_ERROR;
 	}
 
@@ -85,7 +85,7 @@ ged_getmat(struct ged *gedp, int argc, const char *argv[])
 
 	end = strrchr(begin, '\0');
 	if (last_fs == end-1) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: bad path specification '%s'", argv[0], argv[1]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad path specification '%s'", argv[0], argv[1]);
 	    return GED_ERROR;
 	}
 	strncpy(name1, begin, (size_t)(last_fs-begin));
@@ -94,36 +94,36 @@ ged_getmat(struct ged *gedp, int argc, const char *argv[])
     }
 
     if ((dp = db_lookup(gedp->ged_wdbp->dbip, name1, LOOKUP_NOISY)) == RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not found in database.\n", argv[0], name1);
+	bu_vls_printf(gedp->ged_result_str, "%s: Warning - %s not found in database.\n", argv[0], name1);
 	return GED_ERROR;
     }
 
     if (!(dp->d_flags & RT_DIR_COMB)) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not a combination\n", argv[0], name1);
+	bu_vls_printf(gedp->ged_result_str, "%s: Warning - %s not a combination\n", argv[0], name1);
 	return GED_ERROR;
     }
 
     if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
+	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	return GED_ERROR;
     }
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB(comb);
     if (!comb->tree) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: empty combination", dp->d_namep);
+	bu_vls_printf(gedp->ged_result_str, "%s: empty combination", dp->d_namep);
 	goto fail;
     }
 
     /* Search for first mention of arc */
     if ((tp = db_find_named_leaf(comb->tree, name2)) == TREE_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "Unable to find instance of '%s' in combination '%s', error",
+	bu_vls_printf(gedp->ged_result_str, "Unable to find instance of '%s' in combination '%s', error",
 		      name2, name1);
 	goto fail;
     }
 
     if (!tp->tr_l.tl_mat) {
-	bu_vls_printf(&gedp->ged_result_str, "1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1");
+	bu_vls_printf(gedp->ged_result_str, "1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1");
 	rt_db_free_internal(&intern);
 
 	return GED_OK;
@@ -131,7 +131,7 @@ ged_getmat(struct ged *gedp, int argc, const char *argv[])
 	register int i;
 
 	for (i=0; i<16; i++)
-	    bu_vls_printf(&gedp->ged_result_str, "%lf ", tp->tr_l.tl_mat[i]);
+	    bu_vls_printf(gedp->ged_result_str, "%lf ", tp->tr_l.tl_mat[i]);
 
 	rt_db_free_internal(&intern);
 
@@ -180,11 +180,11 @@ ged_putmat(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -192,12 +192,12 @@ ged_putmat(struct ged *gedp, int argc, const char *argv[])
 	return ged_getmat(gedp, argc, argv);
 
     if (argc < 3 || 18 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     if (!strchr(argv[1], '/')) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: bad path spec '%s'\n", argv[0], argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s: bad path spec '%s'\n", argv[0], argv[1]);
 	return GED_ERROR;
     }
     switch (argc) {
@@ -218,7 +218,7 @@ ged_putmat(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_strcat(avp, argv[2]);
 	    break;
 	default:
-	    bu_vls_printf(&gedp->ged_result_str, "%s: error in matrix specification (wrong number of args)\n", argv[0]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: error in matrix specification (wrong number of args)\n", argv[0]);
 	    return GED_ERROR;
     }
     newargv[0] = "arced";
@@ -228,7 +228,7 @@ ged_putmat(struct ged *gedp, int argc, const char *argv[])
 
     got = bu_argv_from_string(&newargv[4], 16, bu_vls_addr(avp));
     if (got != 16) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: %s:%d: bad matrix, only got %d elements\n",
+	bu_vls_printf(gedp->ged_result_str, "%s: %s:%d: bad matrix, only got %d elements\n",
 		      argv[0], __FILE__, __LINE__, got);
 	result = GED_ERROR;
     }

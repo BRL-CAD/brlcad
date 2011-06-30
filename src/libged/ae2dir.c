@@ -45,11 +45,11 @@ ged_ae2dir(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -61,13 +61,13 @@ ged_ae2dir(struct ged *gedp, int argc, const char *argv[])
 	iflag = 0;
 
     if (argc != 3) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[1], "%lf", &az) != 1 ||
 	sscanf(argv[2], "%lf", &el) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -78,7 +78,7 @@ ged_ae2dir(struct ged *gedp, int argc, const char *argv[])
     if (iflag)
 	VSCALE(dir, dir, -1);
 
-    bn_encode_vect(&gedp->ged_result_str, dir);
+    bn_encode_vect(gedp->ged_result_str, dir);
 
     return GED_OK;
 }

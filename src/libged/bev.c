@@ -50,7 +50,7 @@ bev_facetize_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
 
-	bu_vls_printf(&gedp->ged_result_str, "bev_facetize_region_end() path='%s'\n", sofar);
+	bu_vls_printf(gedp->ged_result_str, "bev_facetize_region_end() path='%s'\n", sofar);
 	bu_free((genptr_t)sofar, "path string");
     }
 
@@ -100,16 +100,16 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 3) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -139,7 +139,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 		triangulate = 1;
 		break;
 	    default: {
-		bu_vls_printf(&gedp->ged_result_str, "%s: option '%c' unknown\n", cmdname, c);
+		bu_vls_printf(gedp->ged_result_str, "%s: option '%c' unknown\n", cmdname, c);
 	    }
 
 		break;
@@ -153,13 +153,13 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
     argc--;
 
     if (argc < 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Nothing to evaluate!!!\n", cmdname);
+	bu_vls_printf(gedp->ged_result_str, "%s: Nothing to evaluate!!!\n", cmdname);
 	return GED_ERROR;
     }
 
     GED_CHECK_EXISTS(gedp, newname, LOOKUP_QUIET, GED_ERROR);
 
-    bu_vls_printf(&gedp->ged_result_str,
+    bu_vls_printf(gedp->ged_result_str,
 		  "%s:  tessellating primitives with tolerances a=%g, r=%g, n=%g\n",
 		  argv[0],
 		  gedp->ged_wdbp->wdb_ttol.abs,
@@ -183,7 +183,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 			 (genptr_t)gedp);
 
 	if (i < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: error in db_walk_tree()\n", cmdname);
+	    bu_vls_printf(gedp->ged_result_str, "%s: error in db_walk_tree()\n", cmdname);
 	    /* Destroy NMG */
 	    nmg_km(bev_nmg_model);
 	    return GED_ERROR;
@@ -213,7 +213,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 		    new_tree->tr_op = OP_INTERSECT;
 		    break;
 		default: {
-		    bu_vls_printf(&gedp->ged_result_str, "%s: Unrecognized operator: (%c)\nAborting\n",
+		    bu_vls_printf(gedp->ged_result_str, "%s: Unrecognized operator: (%c)\nAborting\n",
 				  argv[0], op);
 		    db_free_tree(bev_facetize_tree, &rt_uniresource);
 		    nmg_km(bev_nmg_model);
@@ -240,12 +240,12 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 
     if (tmp_tree) {
 	/* Now, evaluate the boolean tree into ONE region */
-	bu_vls_printf(&gedp->ged_result_str, "%s: evaluating boolean expressions\n", cmdname);
+	bu_vls_printf(gedp->ged_result_str, "%s: evaluating boolean expressions\n", cmdname);
 
 	if (BU_SETJUMP) {
 	    BU_UNSETJUMP;
 
-	    bu_vls_printf(&gedp->ged_result_str, "%s: WARNING: Boolean evaluation failed!!!\n", cmdname);
+	    bu_vls_printf(gedp->ged_result_str, "%s: WARNING: Boolean evaluation failed!!!\n", cmdname);
 	    if (tmp_tree)
 		db_free_tree(tmp_tree, &rt_uniresource);
 	    tmp_tree = (union tree *)NULL;
@@ -260,7 +260,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 	failed = 1;
 
     if (failed) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: no resulting region, aborting\n", cmdname);
+	bu_vls_printf(gedp->ged_result_str, "%s: no resulting region, aborting\n", cmdname);
 	if (tmp_tree)
 	    db_free_tree(tmp_tree, &rt_uniresource);
 	tmp_tree = (union tree *)NULL;
@@ -270,16 +270,16 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
     }
     /* New region remains part of this nmg "model" */
     NMG_CK_REGION(tmp_tree->tr_d.td_r);
-    bu_vls_printf(&gedp->ged_result_str, "%s: facetize %s\n", cmdname, tmp_tree->tr_d.td_name);
+    bu_vls_printf(gedp->ged_result_str, "%s: facetize %s\n", cmdname, tmp_tree->tr_d.td_name);
 
     nmg_vmodel(bev_nmg_model);
 
     /* Triangulate model, if requested */
     if (triangulate) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: triangulating resulting object\n", cmdname);
+	bu_vls_printf(gedp->ged_result_str, "%s: triangulating resulting object\n", cmdname);
 	if (BU_SETJUMP) {
 	    BU_UNSETJUMP;
-	    bu_vls_printf(&gedp->ged_result_str, "%s: WARNING: Triangulation failed!!!\n", cmdname);
+	    bu_vls_printf(gedp->ged_result_str, "%s: WARNING: Triangulation failed!!!\n", cmdname);
 	    if (tmp_tree)
 		db_free_tree(tmp_tree, &rt_uniresource);
 	    tmp_tree = (union tree *)NULL;
@@ -291,7 +291,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
 	BU_UNSETJUMP;
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "%s: converting NMG to database format\n", cmdname);
+    bu_vls_printf(gedp->ged_result_str, "%s: converting NMG to database format\n", cmdname);
 
     /* Export NMG as a new solid */
     RT_DB_INTERNAL_INIT(&intern);

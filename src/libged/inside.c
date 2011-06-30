@@ -175,7 +175,7 @@ arbin(struct ged *gedp,
     /* find the new vertices by intersecting the new face planes */
     for (i=0; i<num_pts; i++) {
 	if (rt_arb_3face_intersect(arb->pt[i], (const plane_t *)planes, cgtype, i*3) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "cannot find inside arb\n");
+	    bu_vls_printf(gedp->ged_result_str, "cannot find inside arb\n");
 	    return GED_ERROR;
 	}
     }
@@ -193,35 +193,35 @@ arbin(struct ged *gedp,
 
 	/* calculate the four possible intersect points */
 	if (bn_mkpoint_3planes(pt[0], planes[1], planes[2], planes[3])) {
-	    bu_vls_printf(&gedp->ged_result_str, "Cannot find inside arb5\n");
-	    bu_vls_printf(&gedp->ged_result_str, "Cannot find intersection of three planes for point 0:\n");
-	    bu_vls_printf(&gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[1]));
-	    bu_vls_printf(&gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[2]));
-	    bu_vls_printf(&gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[3]));
+	    bu_vls_printf(gedp->ged_result_str, "Cannot find inside arb5\n");
+	    bu_vls_printf(gedp->ged_result_str, "Cannot find intersection of three planes for point 0:\n");
+	    bu_vls_printf(gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[1]));
+	    bu_vls_printf(gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[2]));
+	    bu_vls_printf(gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[3]));
 	    return GED_ERROR;
 	}
 	if (bn_mkpoint_3planes(pt[1], planes[2], planes[3], planes[4])) {
-	    bu_vls_printf(&gedp->ged_result_str, "Cannot find inside arb5\n");
-	    bu_vls_printf(&gedp->ged_result_str, "Cannot find intersection of three planes for point 1:\n");
-	    bu_vls_printf(&gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[2]));
-	    bu_vls_printf(&gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[3]));
-	    bu_vls_printf(&gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[4]));
+	    bu_vls_printf(gedp->ged_result_str, "Cannot find inside arb5\n");
+	    bu_vls_printf(gedp->ged_result_str, "Cannot find intersection of three planes for point 1:\n");
+	    bu_vls_printf(gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[2]));
+	    bu_vls_printf(gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[3]));
+	    bu_vls_printf(gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[4]));
 	    return GED_ERROR;
 	}
 	if (bn_mkpoint_3planes(pt[2], planes[3], planes[4], planes[1])) {
-	    bu_vls_printf(&gedp->ged_result_str, "Cannot find inside arb5\n");
-	    bu_vls_printf(&gedp->ged_result_str, "Cannot find intersection of three planes for point 2:\n");
-	    bu_vls_printf(&gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[3]));
-	    bu_vls_printf(&gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[4]));
-	    bu_vls_printf(&gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[1]));
+	    bu_vls_printf(gedp->ged_result_str, "Cannot find inside arb5\n");
+	    bu_vls_printf(gedp->ged_result_str, "Cannot find intersection of three planes for point 2:\n");
+	    bu_vls_printf(gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[3]));
+	    bu_vls_printf(gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[4]));
+	    bu_vls_printf(gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[1]));
 	    return GED_ERROR;
 	}
 	if (bn_mkpoint_3planes(pt[3], planes[4], planes[1], planes[2])) {
-	    bu_vls_printf(&gedp->ged_result_str, "Cannot find inside arb5\n");
-	    bu_vls_printf(&gedp->ged_result_str, "Cannot find intersection of three planes for point 3:\n");
-	    bu_vls_printf(&gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[4]));
-	    bu_vls_printf(&gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[1]));
-	    bu_vls_printf(&gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[2]));
+	    bu_vls_printf(gedp->ged_result_str, "Cannot find inside arb5\n");
+	    bu_vls_printf(gedp->ged_result_str, "Cannot find intersection of three planes for point 3:\n");
+	    bu_vls_printf(gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[4]));
+	    bu_vls_printf(gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[1]));
+	    bu_vls_printf(gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[2]));
 	    return GED_ERROR;
 	}
 
@@ -281,7 +281,7 @@ arbin(struct ged *gedp,
 
 	/* get an NMG version of this arb7 */
 	if (!rt_functab[ip->idb_type].ft_tessellate || rt_functab[ip->idb_type].ft_tessellate(&r, m, ip, &ttol, &gedp->ged_wdbp->wdb_tol)) {
-	    bu_vls_printf(&gedp->ged_result_str, "Cannot tessellate arb7\n");
+	    bu_vls_printf(gedp->ged_result_str, "Cannot tessellate arb7\n");
 	    rt_db_free_internal(ip);
 	    return GED_ERROR;
 	}
@@ -317,7 +317,7 @@ arbin(struct ged *gedp,
 		}
 	    }
 	    if (!found) {
-		bu_vls_printf(&gedp->ged_result_str, "Could not move face plane for arb7, face #%d\n", i);
+		bu_vls_printf(gedp->ged_result_str, "Could not move face plane for arb7, face #%d\n", i);
 		nmg_km(m);
 		return GED_ERROR;
 	    }
@@ -335,7 +335,7 @@ arbin(struct ged *gedp,
 	    NMG_CK_VERTEX(v);
 
 	    if (nmg_in_vert(v, 0, &gedp->ged_wdbp->wdb_tol)) {
-		bu_vls_printf(&gedp->ged_result_str, "Could not find coordinates for inside arb7\n");
+		bu_vls_printf(gedp->ged_result_str, "Could not find coordinates for inside arb7\n");
 		nmg_km(m);
 		bu_ptbl_free(&vert_tab);
 		return GED_ERROR;
@@ -402,7 +402,7 @@ tgcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
     }
 
     if ((thick[0] + thick[1]) >= normal_height) {
-	bu_vls_printf(&gedp->ged_result_str, "TGC shorter than base and top thicknesses\n");
+	bu_vls_printf(gedp->ged_result_str, "TGC shorter than base and top thicknesses\n");
 	return GED_ERROR;
     }
 
@@ -413,7 +413,7 @@ tgcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
 
     if ((mag_a < VDIVIDE_TOL && mag_c < VDIVIDE_TOL) ||
 	(mag_b < VDIVIDE_TOL && mag_d < VDIVIDE_TOL)) {
-	bu_vls_printf(&gedp->ged_result_str, "TGC is too small too create inside solid");
+	bu_vls_printf(gedp->ged_result_str, "TGC is too small too create inside solid");
 	return GED_ERROR;
     }
 
@@ -488,7 +488,7 @@ tgcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
 	if ((thick[2] >= new_mag_a || thick[2] >= new_mag_b) &&
 	    (thick[2] >= new_mag_c || thick[2] >= new_mag_d)) {
 	    /* can't make a small enough TGC */
-	    bu_vls_printf(&gedp->ged_result_str, "Side thickness too large\n");
+	    bu_vls_printf(gedp->ged_result_str, "Side thickness too large\n");
 	    return GED_ERROR;
 	}
 
@@ -525,7 +525,7 @@ tgcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
 	if ((delta_ac > new_mag_a || delta_bd > new_mag_b) &&
 	    (delta_ac > new_mag_c || delta_bd > new_mag_d)) {
 	    /* Can't make TGC small enough */
-	    bu_vls_printf(&gedp->ged_result_str, "Side thickness too large\n");
+	    bu_vls_printf(gedp->ged_result_str, "Side thickness too large\n");
 	    return GED_ERROR;
 	}
 
@@ -655,12 +655,12 @@ torin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
 
     if (thick[0] < 0) {
 	if ((tor->r_h - thick[0]) > (tor->r_a + .01)) {
-	    bu_vls_printf(&gedp->ged_result_str, "cannot do: r2 > r1\n");
+	    bu_vls_printf(gedp->ged_result_str, "cannot do: r2 > r1\n");
 	    return GED_ERROR;
 	}
     }
     if (thick[0] >= tor->r_h) {
-	bu_vls_printf(&gedp->ged_result_str, "cannot do: r2 <= 0\n");
+	bu_vls_printf(gedp->ged_result_str, "cannot do: r2 <= 0\n");
 	return GED_ERROR;
     }
 
@@ -707,7 +707,7 @@ ellgin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
 
     for (i=0; i<3; i++) {
 	if ((nmag[i] = mag[i] - thick[i]) <= 0.0)
-	    bu_vls_printf(&gedp->ged_result_str, "Warning: new vector [%d] length <= 0 \n", i);
+	    bu_vls_printf(gedp->ged_result_str, "Warning: new vector [%d] length <= 0 \n", i);
     }
     VSCALE(ell->a, ell->a, nmag[0]/mag[0]);
     VSCALE(ell->b, ell->b, nmag[1]/mag[1]);
@@ -905,7 +905,7 @@ nmgin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick)
     }
 
     if (BU_LIST_IS_EMPTY(&m->r_hd)) {
-	bu_vls_printf(&gedp->ged_result_str, "No inside created\n");
+	bu_vls_printf(gedp->ged_result_str, "No inside created\n");
 	nmg_km(m);
 	return GED_ERROR;
     } else
@@ -925,7 +925,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
     char *newname;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (ip->idb_type == ID_ARB8) {
 	/* find the comgeom arb type, & reorganize */
@@ -933,7 +933,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	struct bu_vls error_msg;
 
 	if (rt_arb_get_cgtype(&cgtype, ip->idb_ptr, &gedp->ged_wdbp->wdb_tol, uvec, svec) == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: BAD ARB\n", o_name);
+	    bu_vls_printf(gedp->ged_result_str, "%s: BAD ARB\n", o_name);
 	    return GED_ERROR;
 	}
 
@@ -942,7 +942,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	 */
 	bu_vls_init(&error_msg);
 	if (rt_arb_calc_planes(&error_msg, ip->idb_ptr, cgtype, planes, &gedp->ged_wdbp->wdb_tol) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s\nrt_arb_calc_planes(%s): failed\n", bu_vls_addr(&error_msg), o_name);
+	    bu_vls_printf(gedp->ged_result_str, "%s\nrt_arb_calc_planes(%s): failed\n", bu_vls_addr(&error_msg), o_name);
 	    bu_vls_free(&error_msg);
 	    return GED_ERROR;
 	}
@@ -953,15 +953,15 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 
     /* get the inside solid name */
     if (argc < arg+1) {
-	bu_vls_printf(&gedp->ged_result_str, "Enter name of the inside solid: ");
+	bu_vls_printf(gedp->ged_result_str, "Enter name of the inside solid: ");
 	return GED_MORE;
     }
     if (db_lookup(gedp->ged_wdbp->dbip, argv[arg], LOOKUP_QUIET) != RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: %s already exists.\n", argv[0], argv[arg]);
+	bu_vls_printf(gedp->ged_result_str, "%s: %s already exists.\n", argv[0], argv[arg]);
 	return GED_ERROR;
     }
     if (db_version(gedp->ged_wdbp->dbip) < 5 && (int)strlen(argv[arg]) > NAMESIZE) {
-	bu_vls_printf(&gedp->ged_result_str, "Database version 4 names are limited to %d characters\n", NAMESIZE);
+	bu_vls_printf(gedp->ged_result_str, "Database version 4 names are limited to %d characters\n", NAMESIZE);
 	return GED_ERROR;
     }
     newname = (char *)argv[arg];
@@ -1005,7 +1005,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 
 	    for (i=0; i<nface; i++) {
 		if (argc < arg+1) {
-		    bu_vls_printf(&gedp->ged_result_str, "%s", prompt[i]);
+		    bu_vls_printf(gedp->ged_result_str, "%s", prompt[i]);
 		    return GED_MORE;
 		}
 		thick[i] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
@@ -1020,7 +1020,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	case ID_TGC:
 	    for (i=0; i<3; i++) {
 		if (argc < arg+1) {
-		    bu_vls_printf(&gedp->ged_result_str, "%s", p_tgcin[i]);
+		    bu_vls_printf(gedp->ged_result_str, "%s", p_tgcin[i]);
 		    return GED_MORE;
 		}
 		thick[i] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
@@ -1033,7 +1033,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 
 	case ID_ELL:
 	    if (argc < arg+1) {
-		bu_vls_printf(&gedp->ged_result_str, "Enter desired thickness: ");
+		bu_vls_printf(gedp->ged_result_str, "Enter desired thickness: ");
 		return GED_MORE;
 	    }
 	    thick[0] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
@@ -1045,7 +1045,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 
 	case ID_TOR:
 	    if (argc < arg+1) {
-		bu_vls_printf(&gedp->ged_result_str, "Enter desired thickness: ");
+		bu_vls_printf(gedp->ged_result_str, "Enter desired thickness: ");
 		return GED_MORE;
 	    }
 	    thick[0] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
@@ -1058,7 +1058,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	case ID_PARTICLE:
 	    for (i = 0; i < 1; i++) {
 		if (argc < arg+1) {
-		    bu_vls_printf(&gedp->ged_result_str, "%s", p_partin[i]);
+		    bu_vls_printf(gedp->ged_result_str, "%s", p_partin[i]);
 		    return GED_MORE;
 		}
 		thick[i] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
@@ -1072,7 +1072,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	case ID_RPC:
 	    for (i = 0; i < 4; i++) {
 		if (argc < arg+1) {
-		    bu_vls_printf(&gedp->ged_result_str, "%s", p_rpcin[i]);
+		    bu_vls_printf(gedp->ged_result_str, "%s", p_rpcin[i]);
 		    return GED_MORE;
 		}
 		thick[i] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
@@ -1086,7 +1086,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	case ID_RHC:
 	    for (i = 0; i < 4; i++) {
 		if (argc < arg+1) {
-		    bu_vls_printf(&gedp->ged_result_str, "%s", p_rhcin[i]);
+		    bu_vls_printf(gedp->ged_result_str, "%s", p_rhcin[i]);
 		    return GED_MORE;
 		}
 		thick[i] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
@@ -1100,7 +1100,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	case ID_EPA:
 	    for (i = 0; i < 2; i++) {
 		if (argc < arg+1) {
-		    bu_vls_printf(&gedp->ged_result_str, "%s", p_epain[i]);
+		    bu_vls_printf(gedp->ged_result_str, "%s", p_epain[i]);
 		    return GED_MORE;
 		}
 		thick[i] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
@@ -1114,7 +1114,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	case ID_EHY:
 	    for (i = 0; i < 2; i++) {
 		if (argc < arg+1) {
-		    bu_vls_printf(&gedp->ged_result_str, "%s", p_ehyin[i]);
+		    bu_vls_printf(gedp->ged_result_str, "%s", p_ehyin[i]);
 		    return GED_MORE;
 		}
 		thick[i] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
@@ -1128,7 +1128,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	case ID_ETO:
 	    for (i = 0; i < 1; i++) {
 		if (argc < arg+1) {
-		    bu_vls_printf(&gedp->ged_result_str, "%s", p_etoin[i]);
+		    bu_vls_printf(gedp->ged_result_str, "%s", p_etoin[i]);
 		    return GED_MORE;
 		}
 		thick[i] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
@@ -1141,7 +1141,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 
 	case ID_NMG:
 	    if (argc < arg+1) {
-		bu_vls_printf(&gedp->ged_result_str, "%s", *p_nmgin);
+		bu_vls_printf(gedp->ged_result_str, "%s", *p_nmgin);
 		return GED_MORE;
 	    }
 	    thick[0] = atof(argv[arg]) * gedp->ged_wdbp->dbip->dbi_local2base;
@@ -1151,22 +1151,22 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
 	    break;
 
 	default:
-	    bu_vls_printf(&gedp->ged_result_str, "Cannot find inside for '%s' solid\n", rt_functab[ip->idb_type].ft_name);
+	    bu_vls_printf(gedp->ged_result_str, "Cannot find inside for '%s' solid\n", rt_functab[ip->idb_type].ft_name);
 	    return GED_ERROR;
     }
 
     /* Add to in-core directory */
     dp = db_diradd(gedp->ged_wdbp->dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&ip->idb_type);
     if (dp == RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Database alloc error, aborting\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s: Database alloc error, aborting\n", argv[0]);
 	return GED_ERROR;
     }
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, ip, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Database write error, aborting\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s: Database write error, aborting\n", argv[0]);
 	return GED_ERROR;
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "%s", argv[2]);
+    bu_vls_printf(gedp->ged_result_str, "%s", argv[2]);
     return GED_OK;
 }
 
@@ -1183,22 +1183,22 @@ ged_inside(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     RT_DB_INTERNAL_INIT(&intern);
 
     if (argc < arg+1) {
-	bu_vls_printf(&gedp->ged_result_str, "Enter name of outside solid: ");
+	bu_vls_printf(gedp->ged_result_str, "Enter name of outside solid: ");
 	return GED_MORE;
     }
     if ((outdp = db_lookup(gedp->ged_wdbp->dbip,  argv[arg], LOOKUP_QUIET)) == RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: %s not found", argv[0], argv[arg]);
+	bu_vls_printf(gedp->ged_result_str, "%s: %s not found", argv[0], argv[arg]);
 	return GED_ERROR;
     }
     ++arg;
 
     if (rt_db_get_internal(&intern, outdp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
+	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	return GED_ERROR;
     }
 

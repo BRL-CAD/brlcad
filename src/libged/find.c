@@ -55,7 +55,7 @@ find_ref(struct db_i *dbip,
 
     comb_name = (char *)comb_name_ptr;
 
-    bu_vls_printf(&gedp->ged_result_str, "%s ", comb_name);
+    bu_vls_printf(gedp->ged_result_str, "%s ", comb_name);
 }
 
 
@@ -74,11 +74,11 @@ ged_find(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -89,7 +89,7 @@ ged_find(struct ged *gedp, int argc, const char *argv[])
 		aflag = 1;
 		break;
 	    default:
-		bu_vls_printf(&gedp->ged_result_str, "Unrecognized option - %c", c);
+		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", c);
 		return GED_ERROR;
 	}
     }
@@ -108,7 +108,7 @@ ged_find(struct ged *gedp, int argc, const char *argv[])
 				   gedp->ged_wdbp->dbip,
 				   (fastf_t *)NULL,
 				   &rt_uniresource) < 0) {
-		bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
+		bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 		return GED_ERROR;
 	    }
 

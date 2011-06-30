@@ -106,8 +106,8 @@ main(int argc, char *argv[])
     bu_semaphore_reinit(GED_SEM_LAST);
 
     (void)ged_gqa(gedp, j, av);
-    if (bu_vls_strlen(&gedp->ged_result_str) > 0)
-	bu_log("%s", bu_vls_addr(&gedp->ged_result_str));
+    if (bu_vls_strlen(gedp->ged_result_str) > 0)
+	bu_log("%s", bu_vls_addr(gedp->ged_result_str));
     ged_close(gedp);
 
     bu_free(av, "av");

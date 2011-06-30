@@ -62,7 +62,7 @@ _ged_scale_rpc(struct ged *gedp, struct rt_rpc_internal *rpc, const char *attrib
 
 	    break;
 	default:
-	    bu_vls_printf(&gedp->ged_result_str, "bad rpc attribute - %s", attribute);
+	    bu_vls_printf(gedp->ged_result_str, "bad rpc attribute - %s", attribute);
 	    return GED_ERROR;
     }
 

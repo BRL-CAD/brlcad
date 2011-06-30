@@ -161,16 +161,16 @@ ged_dup(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc > 3) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -191,22 +191,22 @@ ged_dup(struct ged *gedp, int argc, const char *argv[])
     /* open the input file */
     if ((newdbp = db_open(argv[1], "r")) == DBI_NULL) {
 	perror(argv[1]);
-	bu_vls_printf(&gedp->ged_result_str, "dup: Can't open %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "dup: Can't open %s", argv[1]);
 	return GED_ERROR;
     }
 
-    bu_vls_printf(&gedp->ged_result_str,
+    bu_vls_printf(gedp->ged_result_str,
 		  "\n*** Comparing %s with %s for duplicate names\n",
 		  gedp->ged_wdbp->dbip->dbi_filename, argv[1]);
     if (gedp->ged_wdbp->wdb_ncharadd) {
-	bu_vls_printf(&gedp->ged_result_str,
+	bu_vls_printf(gedp->ged_result_str,
 		      "  For comparison, all names in %s were prefixed with: %s\n",
 		      argv[1], bu_vls_addr(&gedp->ged_wdbp->wdb_prestr));
     }
 
     /* Get array to hold names of duplicates */
     if ((dirp0 = _ged_getspace(gedp->ged_wdbp->dbip, 0)) == (struct directory **) 0) {
-	bu_vls_printf(&gedp->ged_result_str, "f_dup: unable to get memory\n");
+	bu_vls_printf(gedp->ged_result_str, "f_dup: unable to get memory\n");
 	db_close(newdbp);
 	return GED_ERROR;
     }
@@ -217,14 +217,14 @@ ged_dup(struct ged *gedp, int argc, const char *argv[])
     dcs.dup_dirp = dirp0;
     if (db_version(newdbp) < 5) {
 	if (db_scan(newdbp, dup_dir_check, 0, (genptr_t)&dcs) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "dup: db_scan failure");
+	    bu_vls_printf(gedp->ged_result_str, "dup: db_scan failure");
 	    bu_free((genptr_t)dirp0, "_ged_getspace array");
 	    db_close(newdbp);
 	    return GED_ERROR;
 	}
     } else {
 	if (db5_scan(newdbp, dup_dir_check5, (genptr_t)&dcs) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "dup: db_scan failure");
+	    bu_vls_printf(gedp->ged_result_str, "dup: db_scan failure");
 	    bu_free((genptr_t)dirp0, "_ged_getspace array");
 	    db_close(newdbp);
 	    return GED_ERROR;
@@ -232,8 +232,8 @@ ged_dup(struct ged *gedp, int argc, const char *argv[])
     }
     rt_mempurge(&(newdbp->dbi_freep));        /* didn't really build a directory */
 
-    _ged_vls_col_pr4v(&gedp->ged_result_str, dirp0, (int)(dcs.dup_dirp - dirp0), 0);
-    bu_vls_printf(&gedp->ged_result_str, "\n -----  %d duplicate names found  -----", gedp->ged_wdbp->wdb_num_dups);
+    _ged_vls_col_pr4v(gedp->ged_result_str, dirp0, (int)(dcs.dup_dirp - dirp0), 0);
+    bu_vls_printf(gedp->ged_result_str, "\n -----  %d duplicate names found  -----", gedp->ged_wdbp->wdb_num_dups);
     bu_free((genptr_t)dirp0, "_ged_getspace array");
     db_close(newdbp);
 

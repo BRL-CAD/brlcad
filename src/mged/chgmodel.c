@@ -103,7 +103,7 @@ f_make(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 	ret = ged_make(gedp, argc, (const char **)argv);
 
     Tcl_DStringInit(&ds);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == GED_OK) {

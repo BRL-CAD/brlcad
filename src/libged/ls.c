@@ -279,11 +279,11 @@ vls_long_dpp(struct ged *gedp,
 	    (cflag && isComb) ||
 	    (rflag && isRegion) ||
 	    (sflag && isSolid)) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s", dp->d_namep);
-	    bu_vls_spaces(&gedp->ged_result_str, (int)(max_nam_len - strlen(dp->d_namep)));
-	    bu_vls_printf(&gedp->ged_result_str, " %s", type);
-	    bu_vls_spaces(&gedp->ged_result_str, (int)(max_type_len - strlen(type)));
-	    bu_vls_printf(&gedp->ged_result_str,  " %2d %2d %ld\n",
+	    bu_vls_printf(gedp->ged_result_str, "%s", dp->d_namep);
+	    bu_vls_spaces(gedp->ged_result_str, (int)(max_nam_len - strlen(dp->d_namep)));
+	    bu_vls_printf(gedp->ged_result_str, " %s", type);
+	    bu_vls_spaces(gedp->ged_result_str, (int)(max_type_len - strlen(type)));
+	    bu_vls_printf(gedp->ged_result_str,  " %2d %2d %ld\n",
 			  dp->d_major_type, dp->d_minor_type, (long)(dp->d_len));
 	}
     }
@@ -336,7 +336,7 @@ vls_line_dpp(struct ged *gedp,
 	    (cflag && isComb) ||
 	    (rflag && isRegion) ||
 	    (sflag && isSolid)) {
-	    bu_vls_printf(&gedp->ged_result_str,  "%s ", list_of_names[i]->d_namep);
+	    bu_vls_printf(gedp->ged_result_str,  "%s ", list_of_names[i]->d_namep);
 	}
     }
 }
@@ -370,7 +370,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     bu_vls_init(&vls);
 
@@ -403,7 +403,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 		lflag = 1;
 		break;
 	    default:
-		bu_vls_printf(&gedp->ged_result_str, "Unrecognized option - %c", c);
+		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", c);
 		return GED_ERROR;
 	}
     }
@@ -421,7 +421,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
 	if ((argc < 2) || (argc%2 != 0)) {
 	    /* should be even number of name/value pairs */
 	    bu_log("ls -A option expects even number of 'name value' pairs\n");
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return TCL_ERROR;
 	}
 
@@ -496,7 +496,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
     else if (aflag || cflag || rflag || sflag)
 	vls_line_dpp(gedp, dirp0, (int)(dirp - dirp0), aflag, cflag, rflag, sflag);
     else
-	_ged_vls_col_pr4v(&gedp->ged_result_str, dirp0, (int)(dirp - dirp0), 0);
+	_ged_vls_col_pr4v(gedp->ged_result_str, dirp0, (int)(dirp - dirp0), 0);
 
     bu_free((genptr_t)dirp0, "_ged_getspace dp[]");
 

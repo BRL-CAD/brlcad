@@ -821,7 +821,7 @@ bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
 		else if (BU_STR_EQUAL("stl", bu_optarg))
 		    output_type = OTYPE_STL;
 		else {
-		    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		    return GED_ERROR;
 		}
 		break;
@@ -834,7 +834,7 @@ bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
 
 		break;
 	    default:
-		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		return GED_ERROR;
 	}
     }
@@ -861,11 +861,11 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, usage, argv[0]);
+	bu_vls_printf(gedp->ged_result_str, usage, argv[0]);
 	return GED_HELP;
     }
 
@@ -875,7 +875,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
 
     if (bu_optind > argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -886,7 +886,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 
     if (!output_file && !output_directory) {
 	if (binary) {
-	    bu_vls_printf(&gedp->ged_result_str, "Can't output binary to stdout\nUsage: %s %s", argv[0], usage);
+	    bu_vls_printf(gedp->ged_result_str, "Can't output binary to stdout\nUsage: %s %s", argv[0], usage);
 	    return GED_ERROR;
 	}
 	fp = stdout;
@@ -902,7 +902,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 	    /* Open binary output file */
 	    if ((fd=open(output_file, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0) {
 		perror(argv[0]);
-		bu_vls_printf(&gedp->ged_result_str, "Cannot open binary output file (%s) for writing\n", output_file);
+		bu_vls_printf(gedp->ged_result_str, "Cannot open binary output file (%s) for writing\n", output_file);
 		return GED_ERROR;
 	    }
 
@@ -924,7 +924,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 	    /* Open ASCII output file */
 	    if ((fp=fopen(output_file, "wb+")) == NULL) {
 		perror(argv[0]);
-		bu_vls_printf(&gedp->ged_result_str, "Cannot open ascii output file (%s) for writing\n", output_file);
+		bu_vls_printf(gedp->ged_result_str, "Cannot open ascii output file (%s) for writing\n", output_file);
 		return GED_ERROR;
 	    }
 
@@ -1292,7 +1292,7 @@ data_dump(struct ged *gedp, FILE *fp)
 		    ++cp;
 
 		if (*cp == '\0') {
-		    bu_vls_printf(&gedp->ged_result_str, "data_dump: bad dirname - %s\n", output_directory);
+		    bu_vls_printf(gedp->ged_result_str, "data_dump: bad dirname - %s\n", output_directory);
 		    return GED_ERROR;
 		}
 
@@ -1300,7 +1300,7 @@ data_dump(struct ged *gedp, FILE *fp)
 		bu_vls_printf(&filepath, "%s/%s_data.obj", output_directory, cp);
 
 		if ((data_fp=fopen(bu_vls_addr(&filepath), "wb+")) == NULL) {
-		    bu_vls_printf(&gedp->ged_result_str, "data_dump: failed to open %V\n", &filepath);
+		    bu_vls_printf(gedp->ged_result_str, "data_dump: failed to open %V\n", &filepath);
 		    bu_vls_free(&filepath);
 		    return GED_ERROR;
 		}
@@ -1339,11 +1339,11 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, usage, argv[0]);
+	bu_vls_printf(gedp->ged_result_str, usage, argv[0]);
 	return GED_HELP;
     }
 
@@ -1353,7 +1353,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
 
     if (bu_optind != argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -1364,7 +1364,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 
     if (!output_file && !output_directory) {
 	if (binary) {
-	    bu_vls_printf(&gedp->ged_result_str, "Can't output binary to stdout\nUsage: %s %s", argv[0], usage);
+	    bu_vls_printf(gedp->ged_result_str, "Can't output binary to stdout\nUsage: %s %s", argv[0], usage);
 	    return GED_ERROR;
 	}
 	fp = stdout;
@@ -1380,7 +1380,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 	    /* Open binary output file */
 	    if ((fd=open(output_file, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0) {
 		perror(argv[0]);
-		bu_vls_printf(&gedp->ged_result_str, "Cannot open binary output file (%s) for writing\n", output_file);
+		bu_vls_printf(gedp->ged_result_str, "Cannot open binary output file (%s) for writing\n", output_file);
 		return GED_ERROR;
 	    }
 
@@ -1402,7 +1402,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 	    /* Open ASCII output file */
 	    if ((fp=fopen(output_file, "wb+")) == NULL) {
 		perror(argv[0]);
-		bu_vls_printf(&gedp->ged_result_str, "Cannot open ascii output file (%s) for writing\n", output_file);
+		bu_vls_printf(gedp->ged_result_str, "Cannot open ascii output file (%s) for writing\n", output_file);
 		return GED_ERROR;
 	    }
 
@@ -1453,7 +1453,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 			++cp;
 
 		    if (*cp == '\0') {
-			bu_vls_printf(&gedp->ged_result_str, "%s: bad dirname - %s\n", cmd_name, output_directory);
+			bu_vls_printf(gedp->ged_result_str, "%s: bad dirname - %s\n", cmd_name, output_directory);
 			return GED_ERROR;
 		    }
 
@@ -1464,7 +1464,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_printf(&filepath, "%s/%V", output_directory, &obj_materials_file);
 
 		    if ((obj_materials_fp=fopen(bu_vls_addr(&filepath), "wb+")) == NULL) {
-			bu_vls_printf(&gedp->ged_result_str, "%s: failed to open %V\n", cmd_name, &filepath);
+			bu_vls_printf(gedp->ged_result_str, "%s: failed to open %V\n", cmd_name, &filepath);
 			bu_vls_free(&obj_materials_file);
 			bu_vls_free(&filepath);
 			return GED_ERROR;
@@ -1502,7 +1502,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 	BU_LIST_INIT(&HeadObjMaterials);
 
 	if ((obj_materials_fp=fopen(bu_vls_addr(&obj_materials_file), "wb+")) == NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: failed to open %V\n", cmd_name, &obj_materials_file);
+	    bu_vls_printf(gedp->ged_result_str, "%s: failed to open %V\n", cmd_name, &obj_materials_file);
 	    bu_vls_free(&obj_materials_file);
 	    return GED_ERROR;
 	}

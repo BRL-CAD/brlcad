@@ -162,7 +162,7 @@ add_operator(struct ged *gedp, struct bu_list *hp, char ch, short int *last_tok)
 	default:
 	    illegal[0] = ch;
 	    illegal[1] = '\0';
-	    bu_vls_printf(&gedp->ged_result_str, "Illegal operator: %s, aborting\n", illegal);
+	    bu_vls_printf(gedp->ged_result_str, "Illegal operator: %s, aborting\n", illegal);
 	    free_tokens(hp);
 	    return GED_ERROR;
     }
@@ -209,7 +209,7 @@ add_operand(struct ged *gedp, struct bu_list *hp, char *name)
 	    else
 		name_len = tmp2;
 	} else {
-	    bu_vls_printf(&gedp->ged_result_str, "Cannot determine length of operand name: %s, aborting\n", name);
+	    bu_vls_printf(gedp->ged_result_str, "Cannot determine length of operand name: %s, aborting\n", name);
 	    return 0;
 	}
     } else
@@ -394,7 +394,7 @@ check_syntax(struct ged *gedp, struct bu_list *hp, char *comb_name, struct direc
 		if (!dp && BU_STR_EQUAL(comb_name, tok->tp->tr_l.tl_name))
 		    circular_ref++;
 		else if (db_lookup(gedp->ged_wdbp->dbip, tok->tp->tr_l.tl_name, LOOKUP_QUIET) == RT_DIR_NULL)
-		    bu_vls_printf(&gedp->ged_result_str, "WARNING: '%s' does not actually exist\n", tok->tp->tr_l.tl_name);
+		    bu_vls_printf(gedp->ged_result_str, "WARNING: '%s' does not actually exist\n", tok->tp->tr_l.tl_name);
 		break;
 	}
 	if (paren_count < 0)
@@ -403,32 +403,32 @@ check_syntax(struct ged *gedp, struct bu_list *hp, char *comb_name, struct direc
     }
 
     if (paren_count || paren_error) {
-	bu_vls_printf(&gedp->ged_result_str, "ERROR: unbalanced parenthesis\n");
+	bu_vls_printf(gedp->ged_result_str, "ERROR: unbalanced parenthesis\n");
 	errors++;
     }
 
     if (missing_exp) {
-	bu_vls_printf(&gedp->ged_result_str, "ERROR: empty parenthesis (missing expression)\n");
+	bu_vls_printf(gedp->ged_result_str, "ERROR: empty parenthesis (missing expression)\n");
 	errors++;
     }
 
     if (missing_op) {
-	bu_vls_printf(&gedp->ged_result_str, "ERROR: must have operator between ')('\n");
+	bu_vls_printf(gedp->ged_result_str, "ERROR: must have operator between ')('\n");
 	errors++;
     }
 
     if (op_count != arg_count-1) {
-	bu_vls_printf(&gedp->ged_result_str, "ERROR: mismatch of operators and operands\n");
+	bu_vls_printf(gedp->ged_result_str, "ERROR: mismatch of operators and operands\n");
 	errors++;
     }
 
     if (circular_ref) {
-	bu_vls_printf(&gedp->ged_result_str, "ERROR: combination cannot reference itself during initial creation\n");
+	bu_vls_printf(gedp->ged_result_str, "ERROR: combination cannot reference itself during initial creation\n");
 	errors++;
     }
 
     if (errors) {
-	bu_vls_printf(&gedp->ged_result_str, "\t---------aborting!\n");
+	bu_vls_printf(gedp->ged_result_str, "\t---------aborting!\n");
 	return 1;
     }
 
@@ -457,16 +457,16 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 3) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -484,7 +484,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 		/* XXX How about -p and -v for FASTGEN? */
 	    case '?':
 	    default:
-		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		return GED_OK;
 	}
     }
@@ -493,7 +493,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 
     comb_name = (char *)*argv++;
     if (argc == -1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_OK;
     }
 
@@ -504,7 +504,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	GED_DB_LOOKUP(gedp, dp, comb_name, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
 
 	if (!(dp->d_flags & RT_DIR_COMB)) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s is not a combination\n", comb_name);
+	    bu_vls_printf(gedp->ged_result_str, "%s is not a combination\n", comb_name);
 	    return GED_ERROR;
 	}
 
@@ -648,7 +648,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 		    }
 		    break;
 		default:
-		    bu_vls_printf(&gedp->ged_result_str, "ERROR: Unrecognized token type\n");
+		    bu_vls_printf(gedp->ged_result_str, "ERROR: Unrecognized token type\n");
 		    free_tokens(&tok_hd.l);
 		    return GED_ERROR;
 	    }
@@ -678,7 +678,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 	    comb->aircode = gedp->ged_wdbp->wdb_air_default;
 	    comb->los = gedp->ged_wdbp->wdb_los_default;
 	    comb->GIFTmater = gedp->ged_wdbp->wdb_mat_default;
-	    bu_vls_printf(&gedp->ged_result_str,
+	    bu_vls_printf(gedp->ged_result_str,
 			  "Creating region id=%ld, air=%ld, los=%ld, GIFTmaterial=%ld\n",
 			  comb->region_id, comb->aircode, comb->los, comb->GIFTmater);
 

@@ -62,11 +62,11 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -94,7 +94,7 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
 		print_vol = 1;
 		break;
 	    default:
-		bu_vls_printf(&gedp->ged_result_str, "Unrecognized option - %c", c);
+		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", c);
 		return GED_ERROR;
 	}
     }
@@ -111,7 +111,7 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: bb %s", usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: bb %s", usage);
 	return GED_HELP;
     }
 
@@ -131,16 +131,16 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
 
     /* Print Header */
     if (print_header == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Bounding Box Dimensions, Object(s)");
+	bu_vls_printf(gedp->ged_result_str, "Bounding Box Dimensions, Object(s)");
 	for (i = 0; i < argc - 1 ; i++) {
-	    bu_vls_printf(&gedp->ged_result_str, " %s, ", argv[i]);
+	    bu_vls_printf(gedp->ged_result_str, " %s, ", argv[i]);
 	}
-	bu_vls_printf(&gedp->ged_result_str, " %s:\n", argv[argc-1]);
+	bu_vls_printf(gedp->ged_result_str, " %s:\n", argv[argc-1]);
     }
 
     /* Print rpp */
     if (print_rpp == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "min {%f %f %f} max {%f %f %f}\n", rpp_min[0], rpp_min[1], rpp_min[2], rpp_max[0], rpp_max[1], rpp_max[2]);
+	bu_vls_printf(gedp->ged_result_str, "min {%f %f %f} max {%f %f %f}\n", rpp_min[0], rpp_min[1], rpp_min[2], rpp_max[0], rpp_max[1], rpp_max[2]);
     }
 
     /* Print dim info */
@@ -148,7 +148,7 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
 	xlen = fabs(rpp_max[X] - rpp_min[X])*gedp->ged_wdbp->dbip->dbi_base2local;
 	ylen = fabs(rpp_max[Y] - rpp_min[Y])*gedp->ged_wdbp->dbip->dbi_base2local;
 	zlen = fabs(rpp_max[Z] - rpp_min[Z])*gedp->ged_wdbp->dbip->dbi_base2local;
-	bu_vls_printf(&gedp->ged_result_str, "X Length: %.1f %s\nY Length: %.1f %s\nZ Length: %.1f %s\n", xlen, str, ylen, str, zlen, str);
+	bu_vls_printf(gedp->ged_result_str, "X Length: %.1f %s\nY Length: %.1f %s\nZ Length: %.1f %s\n", xlen, str, ylen, str, zlen, str);
     }
 
     if (print_vol == 1) {
@@ -156,7 +156,7 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
 	ylen = fabs(rpp_max[Y] - rpp_min[Y])*gedp->ged_wdbp->dbip->dbi_base2local;
 	zlen = fabs(rpp_max[Z] - rpp_min[Z])*gedp->ged_wdbp->dbip->dbi_base2local;
 	vol = xlen * ylen * zlen;
-	bu_vls_printf(&gedp->ged_result_str, "Bounding Box Volume: %.1f %s^3\n", vol, str);
+	bu_vls_printf(gedp->ged_result_str, "Bounding Box Volume: %.1f %s^3\n", vol, str);
     }
 
     if (make_bb == 1) {
@@ -182,13 +182,13 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
 	new_intern.idb_ptr = (genptr_t)arb;
 
 	if ((dp=db_diradd(gedp->ged_wdbp->dbip, bbname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type)) == RT_DIR_NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "Cannot add %s to directory\n", bbname);
+	    bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", bbname);
 	    return GED_ERROR;
 	}
 
 	if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &new_intern, gedp->ged_wdbp->wdb_resp) < 0) {
 	    rt_db_free_internal(&new_intern);
-	    bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting.\n");
+	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting.\n");
 	}
     }
 

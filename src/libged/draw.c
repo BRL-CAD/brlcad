@@ -202,7 +202,7 @@ bound_solid(struct ged *gedp, struct solid *sp)
 		    break;
 		default:
 		    {
-			bu_vls_printf(&gedp->ged_result_str, "unknown vlist op %d\n", *cmd);
+			bu_vls_printf(gedp->ged_result_str, "unknown vlist op %d\n", *cmd);
 		    }
 	    }
 	}
@@ -338,7 +338,7 @@ wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, stru
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
 
-	bu_vls_printf(&dgcdp->gedp->ged_result_str, "wireframe_leaf(%s) path='%s'\n",
+	bu_vls_printf(dgcdp->gedp->ged_result_str, "wireframe_leaf(%s) path='%s'\n",
 		      ip->idb_meth->ft_name, sofar);
 	bu_free((genptr_t)sofar, "path string");
     }
@@ -351,7 +351,7 @@ wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, stru
     if (!ip->idb_meth->ft_plot
 	|| ip->idb_meth->ft_plot(&vhead, ip, tsp->ts_ttol, tsp->ts_tol) < 0)
     {
-	bu_vls_printf(&dgcdp->gedp->ged_result_str, "%s: plot failure\n", DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
+	bu_vls_printf(dgcdp->gedp->ged_result_str, "%s: plot failure\n", DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
 	return TREE_NULL;		/* ERROR */
     }
 
@@ -412,7 +412,7 @@ draw_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
 
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
-	bu_vls_printf(&dgcdp->gedp->ged_result_str, "nmg_region_start(%s)\n", sofar);
+	bu_vls_printf(dgcdp->gedp->ged_result_str, "nmg_region_start(%s)\n", sofar);
 	bu_free((genptr_t)sofar, "path string");
 	rt_pr_tree(combp->tree, 1);
 	db_pr_tree_state(tsp);
@@ -519,7 +519,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* catch */
 	char *sofar = db_path_to_string(pathp);
 
-	bu_vls_printf(&dgcdp->gedp->ged_result_str, "WARNING: Boolean evaluation of %s failed!!!\n", sofar);
+	bu_vls_printf(dgcdp->gedp->ged_result_str, "WARNING: Boolean evaluation of %s failed!!!\n", sofar);
 	bu_free((genptr_t)sofar, "path string");
     } BU_UNSETJUMP;
 
@@ -543,7 +543,7 @@ process_triangulation(struct db_tree_state *tsp, const struct db_full_path *path
 
 	char *sofar = db_path_to_string(pathp);
 
-	bu_vls_printf(&dgcdp->gedp->ged_result_str, "WARNING: Triangulation of %s failed!!!\n", sofar);
+	bu_vls_printf(dgcdp->gedp->ged_result_str, "WARNING: Triangulation of %s failed!!!\n", sofar);
 	bu_free((genptr_t)sofar, "path string");
 
     } BU_UNSETJUMP;
@@ -575,12 +575,12 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
 
-	bu_vls_printf(&dgcdp->gedp->ged_result_str, "nmg_region_end() path='%s'\n", sofar);
+	bu_vls_printf(dgcdp->gedp->ged_result_str, "nmg_region_end() path='%s'\n", sofar);
 	bu_free((genptr_t)sofar, "path string");
     } else {
 	char *sofar = db_path_to_string(pathp);
 
-	bu_vls_printf(&dgcdp->gedp->ged_result_str, "%s:\n", sofar);
+	bu_vls_printf(dgcdp->gedp->ged_result_str, "%s:\n", sofar);
 	bu_free((genptr_t)sofar, "path string");
     }
 
@@ -596,7 +596,7 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 	}
 
     } else if (curtree->tr_op != OP_NMG_TESS) {
-	bu_vls_printf(&dgcdp->gedp->ged_result_str, "Cannot use '-d' option when Boolean evaluation is required\n");
+	bu_vls_printf(dgcdp->gedp->ged_result_str, "Cannot use '-d' option when Boolean evaluation is required\n");
 	db_free_tree(curtree, tsp->ts_resp);
 	return (union tree *)NULL;
     }
@@ -840,7 +840,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    break;
 		default:
 		    {
-			bu_vls_printf(&gedp->ged_result_str, "unrecognized option - %c\n", c);
+			bu_vls_printf(gedp->ged_result_str, "unrecognized option - %c\n", c);
 			bu_free((genptr_t)dgcdp, "_ged_drawtrees: dgcdp");
 			--drawtrees_depth;
 			return GED_ERROR;
@@ -870,7 +870,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
     switch (kind) {
 	default:
-	    bu_vls_printf(&gedp->ged_result_str, "ERROR, bad kind\n");
+	    bu_vls_printf(gedp->ged_result_str, "ERROR, bad kind\n");
 	    bu_free((genptr_t)dgcdp, "_ged_drawtrees: dgcdp");
 	    --drawtrees_depth;
 	    return -1;
@@ -919,7 +919,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	    }
 	    break;
 	case 2:		/* Big-E */
-	    bu_vls_printf(&gedp->ged_result_str, "drawtrees:  can't do big-E here\n");
+	    bu_vls_printf(gedp->ged_result_str, "drawtrees:  can't do big-E here\n");
 	    bu_free((genptr_t)dgcdp, "_ged_drawtrees: dgcdp");
 	    --drawtrees_depth;
 	    return -1;
@@ -929,7 +929,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		nmg_model = nmg_mm();
 		gedp->ged_wdbp->wdb_initial_tree_state.ts_m = &nmg_model;
 		if (dgcdp->draw_edge_uses) {
-		    bu_vls_printf(&gedp->ged_result_str, "Doing the edgeuse thang (-u)\n");
+		    bu_vls_printf(gedp->ged_result_str, "Doing the edgeuse thang (-u)\n");
 		    dgcdp->draw_edge_uses_vbp = rt_vlblock_init();
 		}
 
@@ -1008,7 +1008,7 @@ _ged_invent_solid(struct ged *gedp,
 
     if ((dp = db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET)) != RT_DIR_NULL) {
 	if (dp->d_addr != RT_DIR_PHONY_ADDR) {
-	    bu_vls_printf(&gedp->ged_result_str,
+	    bu_vls_printf(gedp->ged_result_str,
 			  "_ged_invent_solid(%s) would clobber existing database entry, ignored\n", name);
 	    return -1;
 	}
@@ -1148,11 +1148,11 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -1213,7 +1213,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 
 	remaining_args = argc - last_opt - 1;
 	if (remaining_args < 2 || remaining_args%2) {
-	    bu_vls_printf(&gedp->ged_result_str, "Error: must have even number of arguments (name/value pairs)\n");
+	    bu_vls_printf(gedp->ged_result_str, "Error: must have even number of arguments (name/value pairs)\n");
 	    bu_vls_free(&vls);
 	    return GED_ERROR;
 	}

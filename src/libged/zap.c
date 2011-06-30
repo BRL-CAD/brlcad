@@ -53,10 +53,10 @@ ged_zap(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
 	return GED_ERROR;
     }
 
@@ -66,7 +66,7 @@ ged_zap(struct ged *gedp, int argc, const char *argv[])
 	    RT_CK_DIR(dp);
 	    if (dp->d_addr == RT_DIR_PHONY_ADDR) {
 		if (db_dirdelete(gedp->ged_wdbp->dbip, dp) < 0) {
-		    bu_vls_printf(&gedp->ged_result_str, "ged_zap: db_dirdelete failed\n");
+		    bu_vls_printf(gedp->ged_result_str, "ged_zap: db_dirdelete failed\n");
 		}
 	    }
 

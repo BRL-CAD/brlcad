@@ -51,12 +51,12 @@ ged_killrefs(struct ged *gedp, int argc, const char *argv[])
 
     if (!gedp->ged_internal_call) {
 	/* initialize result */
-	bu_vls_trunc(&gedp->ged_result_str, 0);
+	bu_vls_trunc(gedp->ged_result_str, 0);
     }
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -80,7 +80,7 @@ ged_killrefs(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 
 	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "rt_db_get_internal(%s) failure", dp->d_namep);
+	    bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal(%s) failure", dp->d_namep);
 	    ret = GED_ERROR;
 	    continue;
 	}
@@ -96,18 +96,18 @@ ged_killrefs(struct ged *gedp, int argc, const char *argv[])
 	    if (code == -2)
 		continue;	/* empty tree */
 	    if (code < 0) {
-		bu_vls_printf(&gedp->ged_result_str, "ERROR: Failure deleting %s/%s\n", dp->d_namep, argv[k]);
+		bu_vls_printf(gedp->ged_result_str, "ERROR: Failure deleting %s/%s\n", dp->d_namep, argv[k]);
 		ret = GED_ERROR;
 	    } else {
 		if (nflag)
-		    bu_vls_printf(&gedp->ged_result_str, "%s ", dp->d_namep);
+		    bu_vls_printf(gedp->ged_result_str, "%s ", dp->d_namep);
 		else
-		    bu_vls_printf(&gedp->ged_result_str, "deleted %s/%s\n", dp->d_namep, argv[k]);
+		    bu_vls_printf(gedp->ged_result_str, "deleted %s/%s\n", dp->d_namep, argv[k]);
 	    }
 	}
 
 	if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "ERROR: Unable to write new combination into database.\n");
+	    bu_vls_printf(gedp->ged_result_str, "ERROR: Unable to write new combination into database.\n");
 	    ret = GED_ERROR;
 	    continue;
 	}

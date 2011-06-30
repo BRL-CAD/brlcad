@@ -64,25 +64,25 @@ show_help(struct ged *gedp, const char *name)
 	cp++;
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "usage: %s [-%s] [tire_name]\n", name, bu_vls_addr(&str));
-    bu_vls_printf(&gedp->ged_result_str, "options:\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-a\n\t\tAuto-generate top-level object name using\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t\t(tire-<width>-<aspect>R<rim size>)\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-n <name>\n\t\tSpecify custom top-level object name\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-c <count>\n\t\tSpecify number of tread patterns around tire\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-d <width>/<aspect>R<rim size>\n\t\tSpecify tire dimensions\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t\t(U.S. customary units, integer values only)\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-W <width>\n\t\tSpecify tire width in inches (overrides -d)\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-R <aspect>\n\t\tSpecify tire aspect ratio (#/100) (overrides -d)\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-D <rim size>\n\t\tSpecify rim size in inches (overrides -d)\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-g <depth>\n\t\tSpecify tread depth in terms of 32nds of an inch.\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-j <width>\n\t\tSpecify rim width in inches.\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-p <type>\n\t\tGenerate tread with tread pattern as specified\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-s <radius>\n\t\tSpecify the radius of the maximum sidewall width\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-t <type>\n\t\tGenerate tread with tread type as specified\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-u <thickness>\n\t\tSpecify tire thickness in mm\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-w <0|1>\n\t\tWhether to include the wheel or not\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-h\n\t\tShow help\n\n");
+    bu_vls_printf(gedp->ged_result_str, "usage: %s [-%s] [tire_name]\n", name, bu_vls_addr(&str));
+    bu_vls_printf(gedp->ged_result_str, "options:\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-a\n\t\tAuto-generate top-level object name using\n");
+    bu_vls_printf(gedp->ged_result_str, "\t\t(tire-<width>-<aspect>R<rim size>)\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-n <name>\n\t\tSpecify custom top-level object name\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-c <count>\n\t\tSpecify number of tread patterns around tire\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-d <width>/<aspect>R<rim size>\n\t\tSpecify tire dimensions\n");
+    bu_vls_printf(gedp->ged_result_str, "\t\t(U.S. customary units, integer values only)\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-W <width>\n\t\tSpecify tire width in inches (overrides -d)\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-R <aspect>\n\t\tSpecify tire aspect ratio (#/100) (overrides -d)\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-D <rim size>\n\t\tSpecify rim size in inches (overrides -d)\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-g <depth>\n\t\tSpecify tread depth in terms of 32nds of an inch.\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-j <width>\n\t\tSpecify rim width in inches.\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-p <type>\n\t\tGenerate tread with tread pattern as specified\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-s <radius>\n\t\tSpecify the radius of the maximum sidewall width\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-t <type>\n\t\tGenerate tread with tread type as specified\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-u <thickness>\n\t\tSpecify tire thickness in mm\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-w <0|1>\n\t\tWhether to include the wheel or not\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-h\n\t\tShow help\n\n");
 
     bu_vls_free(&str);
     return;
@@ -1906,7 +1906,7 @@ ReadArgs(struct ged *gedp,
 		break;
 	    case 'd' :
 		sscanf(bu_optarg, "%d%c%d%c%d", &d1, &spacer1, &d2, &tiretype, &d3);
-		bu_vls_printf(&gedp->ged_result_str, "Dimensions: Width=%2.0dmm, Ratio=%2.0d, Wheel Diameter=%2.0din\n", d1, d2, d3);
+		bu_vls_printf(gedp->ged_result_str, "Dimensions: Width=%2.0dmm, Ratio=%2.0d, Wheel Diameter=%2.0din\n", d1, d2, d3);
 		bu_vls_printf(dimens, "%d-%dR%d", d1, d2, d3);
 		isoarray[0] = d1;
 		isoarray[1] = d2;
@@ -1953,7 +1953,7 @@ ReadArgs(struct ged *gedp,
 		*usewheel = usewheelc;
 		break;
 	    default:
-		bu_vls_printf(&gedp->ged_result_str, "%s: illegal option -- %c\n", argv[0], c);
+		bu_vls_printf(gedp->ged_result_str, "%s: illegal option -- %c\n", argv[0], c);
 		show_help(gedp, argv[0]);
 		return GED_ERROR;
 	    case 'h':
@@ -1968,7 +1968,7 @@ ReadArgs(struct ged *gedp,
     }
 
     if (!have_name) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: need top-level object name\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s: need top-level object name\n", argv[0]);
 	show_help(gedp, argv[0]);
 	return GED_ERROR;
     }
@@ -2006,7 +2006,7 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* Set Default Parameters - 215/55R17 */
     isoarray[0] = 215;
@@ -2066,9 +2066,9 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     if (overridearray[1] > 0) isoarray[1] = overridearray[1];
     if (overridearray[2] > 0) isoarray[2] = overridearray[2];
 
-    bu_vls_printf(&gedp->ged_result_str, "width = %f\n", isoarray[0]);
-    bu_vls_printf(&gedp->ged_result_str, "ratio = %f\n", isoarray[1]);
-    bu_vls_printf(&gedp->ged_result_str, "radius = %f\n", isoarray[2]);
+    bu_vls_printf(gedp->ged_result_str, "width = %f\n", isoarray[0]);
+    bu_vls_printf(gedp->ged_result_str, "ratio = %f\n", isoarray[1]);
+    bu_vls_printf(gedp->ged_result_str, "radius = %f\n", isoarray[2]);
 
     /* Automatic conversion from std dimension info to geometry */
     width = isoarray[0];
@@ -2094,7 +2094,7 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     if (ZERO(tire_thickness))
 	tire_thickness = dztred;
 
-    bu_vls_printf(&gedp->ged_result_str, "radius of sidewall max: %f\n", zside1);
+    bu_vls_printf(gedp->ged_result_str, "radius of sidewall max: %f\n", zside1);
 
     if (tread_type == 1 && pattern_type == 0) pattern_type = 1;
     if (tread_type == 2 && pattern_type == 0) pattern_type = 2;

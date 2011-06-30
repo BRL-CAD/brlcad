@@ -44,21 +44,21 @@ ged_dump(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     if ((op = wdb_fopen(argv[1])) == RT_WDB_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "dump: %s: cannot create", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "dump: %s: cannot create", argv[1]);
 	return GED_ERROR;
     }
 
@@ -66,7 +66,7 @@ ged_dump(struct ged *gedp, int argc, const char *argv[])
     wdb_close(op);
 
     if (ret < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "dump: %s: db_dump() error", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "dump: %s: db_dump() error", argv[1]);
 	return GED_ERROR;
     }
 

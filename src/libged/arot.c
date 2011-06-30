@@ -45,36 +45,36 @@ ged_arot_args(struct ged *gedp, int argc, const char *argv[], mat_t rmat)
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 5) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[1], "%lf", &axis[X]) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: bad X value - %s\n", argv[0], argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s: bad X value - %s\n", argv[0], argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[2], "%lf", &axis[Y]) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: bad Y value - %s\n", argv[0], argv[2]);
+	bu_vls_printf(gedp->ged_result_str, "%s: bad Y value - %s\n", argv[0], argv[2]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[3], "%lf", &axis[Z]) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: bad Z value - %s\n", argv[0], argv[3]);
+	bu_vls_printf(gedp->ged_result_str, "%s: bad Z value - %s\n", argv[0], argv[3]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[4], "%lf", &angle) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: bad angle - %s\n", argv[0], argv[4]);
+	bu_vls_printf(gedp->ged_result_str, "%s: bad angle - %s\n", argv[0], argv[4]);
 	return GED_ERROR;
     }
 

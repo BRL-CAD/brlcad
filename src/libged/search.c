@@ -114,7 +114,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     bu_vls_init(&argvls);
 
     if (argc < 2) {
-	bu_vls_printf(&gedp->ged_result_str, " [path] [expressions...]\n");
+	bu_vls_printf(gedp->ged_result_str, " [path] [expressions...]\n");
 	return TCL_OK;
     }
 
@@ -129,7 +129,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     while (!plan_found) {
 	if (!argv[plan_argv]) {
@@ -159,14 +159,14 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 			plan_argv++;
 		    } else {
 			if (!bu_vls_strlen(&argvls)) {
-			    bu_vls_printf(&gedp->ged_result_str,  "Search path %s not found in database.\n", argv[plan_argv]);
+			    bu_vls_printf(gedp->ged_result_str,  "Search path %s not found in database.\n", argv[plan_argv]);
 			    db_free_full_path(&dfp);
 			    bu_vls_free(&argvls);
 			    bu_free_argv(argc, argv);
 			    return GED_ERROR;
 			}
 			if (db_string_to_path(&dfp, gedp->ged_wdbp->dbip, bu_vls_addr(&argvls)) == -1) {
-			    bu_vls_printf(&gedp->ged_result_str,  "Search path %s not found in database.\n", bu_vls_addr(&argvls));
+			    bu_vls_printf(gedp->ged_result_str,  "Search path %s not found in database.\n", bu_vls_addr(&argvls));
 			    db_free_full_path(&dfp);
 			    bu_vls_free(&argvls);
 			    bu_free_argv(argc, argv);
@@ -198,7 +198,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 
     dbplan = db_search_formplan(&argv[plan_argv], gedp->ged_wdbp->dbip, gedp->ged_wdbp);
     if (!dbplan) {
-	bu_vls_printf(&gedp->ged_result_str,  "Failed to build find plan.\n");
+	bu_vls_printf(gedp->ged_result_str,  "Failed to build find plan.\n");
 	db_free_full_path(&dfp);
 	bu_vls_free(&argvls);
 	bu_free_argv(argc, argv);
@@ -230,7 +230,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	    }
 	    for (i=(int)BU_PTBL_LEN(uniq_db_objs) - 1; i >=0 ; i--) {
 		dp = (struct directory *)BU_PTBL_GET(uniq_db_objs, i);
-		bu_vls_printf(&gedp->ged_result_str, "%s\n", dp->d_namep);
+		bu_vls_printf(gedp->ged_result_str, "%s\n", dp->d_namep);
 	    }
 	    bu_ptbl_free(uniq_db_objs);
 	} else {
@@ -243,13 +243,13 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 			uniq_db_objs = db_search_unique_objects(dbplan, local_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
 			for (i=(int)BU_PTBL_LEN(uniq_db_objs) - 1; i >=0 ; i--) {
 			    dp = (struct directory *)BU_PTBL_GET(uniq_db_objs, i);
-			    bu_vls_printf(&gedp->ged_result_str, "%s\n", dp->d_namep);
+			    bu_vls_printf(gedp->ged_result_str, "%s\n", dp->d_namep);
 			}
 			bu_ptbl_free(uniq_db_objs);
 		    } else {
 			search_results = db_search_full_paths(dbplan, local_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
 			for (BU_LIST_FOR_BACKWARDS(result, db_full_path_list, &(search_results->l))) {
-			    bu_vls_printf(&gedp->ged_result_str, "%s\n", db_path_to_string(result->path));
+			    bu_vls_printf(gedp->ged_result_str, "%s\n", db_path_to_string(result->path));
 			}
 			db_free_full_path_list(search_results);
 		    }
@@ -264,13 +264,13 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 			uniq_db_objs = db_search_unique_objects(dbplan, dispatch_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
 			for (i=(int)BU_PTBL_LEN(uniq_db_objs) - 1; i >=0 ; i--) {
 			    dp = (struct directory *)BU_PTBL_GET(uniq_db_objs, i);
-			    bu_vls_printf(&gedp->ged_result_str, "%s\n", dp->d_namep);
+			    bu_vls_printf(gedp->ged_result_str, "%s\n", dp->d_namep);
 			}
 			bu_ptbl_free(uniq_db_objs);
 		    } else {
 			search_results = db_search_full_paths(dbplan, dispatch_list, gedp->ged_wdbp->dbip, gedp->ged_wdbp);
 			for (BU_LIST_FOR_BACKWARDS(result, db_full_path_list, &(search_results->l))) {
-			    bu_vls_printf(&gedp->ged_result_str, "%s\n", db_path_to_string(result->path));
+			    bu_vls_printf(gedp->ged_result_str, "%s\n", db_path_to_string(result->path));
 			}
 			db_free_full_path_list(search_results);
 		    }

@@ -51,11 +51,11 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -88,7 +88,7 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
 	GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
 
 	if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a BOT solid!  Skipping.\n", argv[0], argv[i]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT solid!  Skipping.\n", argv[0], argv[i]);
 	    continue;
 	}
 
@@ -111,7 +111,7 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
 	/* check for surface normals */
 	if (bots[0]->mode) {
 	    if (bots[0]->mode != bots[i]->mode) {
-		bu_vls_printf(&gedp->ged_result_str, "%s: Warning: not all bots share same mode\n", argv[0]);
+		bu_vls_printf(gedp->ged_result_str, "%s: Warning: not all bots share same mode\n", argv[0]);
 	    }
 	} else {
 	    bots[0]->mode = bots[i]->mode;

@@ -69,7 +69,7 @@ _ged_scale_epa(struct ged *gedp, struct rt_epa_internal *epa, const char *attrib
 		epa->epa_r2 = newrad;
 	    break;
 	default:
-	    bu_vls_printf(&gedp->ged_result_str, "bad epa attribute - %s", attribute);
+	    bu_vls_printf(gedp->ged_result_str, "bad epa attribute - %s", attribute);
 	    return GED_ERROR;
     }
 

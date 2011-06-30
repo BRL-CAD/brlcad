@@ -49,10 +49,10 @@ ged_which_shader(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -67,14 +67,14 @@ ged_which_shader(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (myArgc < 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     for (j=1; j<myArgc; j++) {
 
 	if (!sflag)
-	    bu_vls_printf(&gedp->ged_result_str, "Combination[s] with shader %s:\n", myArgv[j]);
+	    bu_vls_printf(gedp->ged_result_str, "Combination[s] with shader %s:\n", myArgv[j]);
 
 	/* Examine all COMB nodes */
 	FOR_ALL_DIRECTORY_START(dp, gedp->ged_wdbp->dbip) {
@@ -82,7 +82,7 @@ ged_which_shader(struct ged *gedp, int argc, const char *argv[])
 		continue;
 
 	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-		bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting.\n");
+		bu_vls_printf(gedp->ged_result_str, "Database read error, aborting.\n");
 		return GED_ERROR;
 	    }
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -91,9 +91,9 @@ ged_which_shader(struct ged *gedp, int argc, const char *argv[])
 		continue;
 
 	    if (sflag)
-		bu_vls_printf(&gedp->ged_result_str, " %s", dp->d_namep);
+		bu_vls_printf(gedp->ged_result_str, " %s", dp->d_namep);
 	    else
-		bu_vls_printf(&gedp->ged_result_str, "   %s\n", dp->d_namep);
+		bu_vls_printf(gedp->ged_result_str, "   %s\n", dp->d_namep);
 	    intern.idb_meth->ft_ifree(&intern);
 	} FOR_ALL_DIRECTORY_END;
     }

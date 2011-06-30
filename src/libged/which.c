@@ -52,7 +52,7 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (BU_STR_EQUAL(argv[0], "whichair"))
 	isAir = 1;
@@ -62,9 +62,9 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	if (isAir)
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usageAir);
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usageAir);
 	else
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usageIds);
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usageIds);
 	return GED_HELP;
     }
 
@@ -74,9 +74,9 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
 
 	if (argc < 2) {
 	    if (isAir)
-		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usageAir);
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usageAir);
 	    else
-		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usageIds);
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usageIds);
 
 	    return GED_ERROR;
 	}
@@ -147,7 +147,7 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
 		continue;
 
 	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-		bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
+		bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 		return GED_ERROR;
 	    }
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -171,15 +171,15 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
     /* place data in interp and free memory */
     while (BU_LIST_WHILE(itnp, _ged_id_to_names, &headIdName.l)) {
 	if (!sflag) {
-	    bu_vls_printf(&gedp->ged_result_str, "Region[s] with %s %d:\n",
+	    bu_vls_printf(gedp->ged_result_str, "Region[s] with %s %d:\n",
 			  isAir ? "air code" : "ident", itnp->id);
 	}
 
 	while (BU_LIST_WHILE(inp, _ged_id_names, &itnp->headName.l)) {
 	    if (sflag)
-		bu_vls_printf(&gedp->ged_result_str, " %V", &inp->name);
+		bu_vls_printf(gedp->ged_result_str, " %V", &inp->name);
 	    else
-		bu_vls_printf(&gedp->ged_result_str, "   %V\n", &inp->name);
+		bu_vls_printf(gedp->ged_result_str, "   %V\n", &inp->name);
 
 	    BU_LIST_DEQUEUE(&inp->l);
 	    bu_vls_free(&inp->name);

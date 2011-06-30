@@ -132,7 +132,7 @@ __BEGIN_DECLS
     if (((_dp)->d_flags & RT_DIR_COMB) == 0) { \
 	int ged_check_comb_quiet = (_flags) & GED_QUIET; \
 	if (!ged_check_comb_quiet) { \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "%s is not a combination", (_dp)->d_namep); \
+	    bu_vls_printf((_gedp)->ged_result_str, "%s is not a combination", (_dp)->d_namep); \
 	} \
 	return (_flags); \
     }
@@ -143,8 +143,8 @@ __BEGIN_DECLS
 	int ged_check_database_open_quiet = (_flags) & GED_QUIET; \
 	if (!ged_check_database_open_quiet) { \
 	    if ((_gedp) != GED_NULL) { \
-		bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
-		bu_vls_printf(&(_gedp)->ged_result_str, "A database is not open!"); \
+		bu_vls_trunc((_gedp)->ged_result_str, 0); \
+		bu_vls_printf((_gedp)->ged_result_str, "A database is not open!"); \
 	    } else {\
 		bu_log("A database is not open!\n"); \
 	    } \
@@ -157,8 +157,8 @@ __BEGIN_DECLS
     if (_gedp->ged_gdp == GED_DRAWABLE_NULL) { \
 	int ged_check_drawable_quiet = (_flags) & GED_QUIET; \
 	if (!ged_check_drawable_quiet) { \
-	    bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "A drawable does not exist."); \
+	    bu_vls_trunc((_gedp)->ged_result_str, 0); \
+	    bu_vls_printf((_gedp)->ged_result_str, "A drawable does not exist."); \
 	} \
 	return (_flags); \
     }
@@ -168,8 +168,8 @@ __BEGIN_DECLS
     if (_gedp->ged_gvp == GED_VIEW_NULL) { \
 	int ged_check_view_quiet = (_flags) & GED_QUIET; \
 	if (!ged_check_view_quiet) { \
-	    bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "A view does not exist."); \
+	    bu_vls_trunc((_gedp)->ged_result_str, 0); \
+	    bu_vls_printf((_gedp)->ged_result_str, "A view does not exist."); \
 	} \
 	return (_flags); \
     }
@@ -178,8 +178,8 @@ __BEGIN_DECLS
     if (_gedp->ged_fbsp == FBSERV_OBJ_NULL) { \
 	int ged_check_view_quiet = (_flags) & GED_QUIET; \
 	if (!ged_check_view_quiet) { \
-	    bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "A framebuffer server object does not exist."); \
+	    bu_vls_trunc((_gedp)->ged_result_str, 0); \
+	    bu_vls_printf((_gedp)->ged_result_str, "A framebuffer server object does not exist."); \
 	} \
 	return (_flags); \
     }
@@ -188,8 +188,8 @@ __BEGIN_DECLS
     if (_gedp->ged_fbsp->fbs_fbp == FBIO_NULL) { \
 	int ged_check_view_quiet = (_flags) & GED_QUIET; \
 	if (!ged_check_view_quiet) { \
-	    bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "A framebuffer IO structure does not exist."); \
+	    bu_vls_trunc((_gedp)->ged_result_str, 0); \
+	    bu_vls_printf((_gedp)->ged_result_str, "A framebuffer IO structure does not exist."); \
 	} \
 	return (_flags); \
     }
@@ -199,7 +199,7 @@ __BEGIN_DECLS
     if (db_lookup((_gedp)->ged_wdbp->dbip, (_name), (_noisy)) != RT_DIR_NULL) { \
 	int ged_check_exists_quiet = (_flags) & GED_QUIET; \
 	if (!ged_check_exists_quiet) { \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "%s already exists.", (_name)); \
+	    bu_vls_printf((_gedp)->ged_result_str, "%s already exists.", (_name)); \
 	} \
 	return (_flags); \
     }
@@ -209,8 +209,8 @@ __BEGIN_DECLS
     if ((_gedp)->ged_wdbp->dbip->dbi_read_only) { \
 	int ged_check_read_only_quiet = (_flags) & GED_QUIET; \
 	if (!ged_check_read_only_quiet) { \
-	    bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "Sorry, this database is READ-ONLY."); \
+	    bu_vls_trunc((_gedp)->ged_result_str, 0); \
+	    bu_vls_printf((_gedp)->ged_result_str, "Sorry, this database is READ-ONLY."); \
 	} \
 	return (_flags); \
     }
@@ -220,7 +220,7 @@ __BEGIN_DECLS
     if (((_dp)->d_flags & RT_DIR_REGION) == 0) { \
 	int ged_check_region_quiet = (_flags) & GED_QUIET; \
 	if (!ged_check_region_quiet) { \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "%s is not a region.", (_dp)->d_namep); \
+	    bu_vls_printf((_gedp)->ged_result_str, "%s is not a region.", (_dp)->d_namep); \
 	} \
 	return (_flags); \
     }
@@ -230,8 +230,8 @@ __BEGIN_DECLS
     if ((_argc) < 1) { \
 	int ged_check_argc_gt_0_quiet = (_flags) & GED_QUIET; \
 	if (!ged_check_argc_gt_0_quiet) { \
-	    bu_vls_trunc(&(_gedp)->ged_result_str, 0); \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "Command name not provided on (%s:%d).", __FILE__, __LINE__); \
+	    bu_vls_trunc((_gedp)->ged_result_str, 0); \
+	    bu_vls_printf((_gedp)->ged_result_str, "Command name not provided on (%s:%d).", __FILE__, __LINE__); \
 	} \
 	return (_flags); \
     }
@@ -241,7 +241,7 @@ __BEGIN_DECLS
     if (((_dp) = db_diradd((_gedp)->ged_wdbp->dbip, (_name), (_laddr), (_len), (_dirflags), (_ptr))) == RT_DIR_NULL) { \
 	int ged_db_diradd_quiet = (_flags) & GED_QUIET; \
 	if (!ged_db_diradd_quiet) { \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "Unable to add %s to the database.", (_name)); \
+	    bu_vls_printf((_gedp)->ged_result_str, "Unable to add %s to the database.", (_name)); \
 	} \
 	return (_flags); \
     }
@@ -251,7 +251,7 @@ __BEGIN_DECLS
     if (((_dp) = db_lookup((_gedp)->ged_wdbp->dbip, (_name), (_noisy))) == RT_DIR_NULL) { \
 	int ged_db_lookup_quiet = (_flags) & GED_QUIET; \
 	if (!ged_db_lookup_quiet) { \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "Unable to find %s in the database.", (_name)); \
+	    bu_vls_printf((_gedp)->ged_result_str, "Unable to find %s in the database.", (_name)); \
 	} \
 	return (_flags); \
     }
@@ -261,7 +261,7 @@ __BEGIN_DECLS
     if (rt_db_get_internal((_intern), (_dp), (_gedp)->ged_wdbp->dbip, (_mat), (_resource)) < 0) { \
 	int ged_db_get_internal_quiet = (_flags) & GED_QUIET; \
 	if (!ged_db_get_internal_quiet) { \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "Database read failure."); \
+	    bu_vls_printf((_gedp)->ged_result_str, "Database read failure."); \
 	} \
 	return (_flags); \
     }
@@ -271,7 +271,7 @@ __BEGIN_DECLS
     if (rt_db_put_internal((_dp), (_gedp)->ged_wdbp->dbip, (_intern), (_resource)) < 0) { \
 	int ged_db_put_internal_quiet = (_flags) & GED_QUIET; \
 	if (!ged_db_put_internal_quiet) { \
-	    bu_vls_printf(&(_gedp)->ged_result_str, "Database write failure."); \
+	    bu_vls_printf((_gedp)->ged_result_str, "Database write failure."); \
 	} \
 	return (_flags); \
     }
@@ -512,10 +512,10 @@ struct ged {
     struct rt_wdb		*ged_wdbp;
 
     /** for catching log messages */
-    struct bu_vls		ged_log;
+    struct bu_vls		*ged_log;
 
     /** for setting results */
-    struct bu_vls		ged_result_str;
+    struct bu_vls		*ged_result_str;
 
     struct ged_drawable		*ged_gdp;
     struct ged_view		*ged_gvp;

@@ -137,7 +137,7 @@ rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 	/* wait for the forked process */
 	while ((rpid = wait(&retcode)) != rtcp->pid && rpid != -1) {
 
-	    _ged_wait_status(&rtcp->gedp->ged_result_str, retcode);
+	    _ged_wait_status(rtcp->gedp->ged_result_str, retcode);
 	}
 
 	/* free rtcp */
@@ -181,7 +181,7 @@ rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
     if (rtcop->gedp->ged_output_handler != (void (*)())0)
 	rtcop->gedp->ged_output_handler(rtcop->gedp, line);
     else
-	bu_vls_printf(&rtcop->gedp->ged_result_str, "%s", line);
+	bu_vls_printf(rtcop->gedp->ged_result_str, "%s", line);
 }
 
 #else
@@ -262,7 +262,7 @@ rtcheck_output_handler(ClientData clientData, int mask)
     if (rtcop->gedp->ged_output_handler != (void (*)())0)
 	rtcop->gedp->ged_output_handler(rtcop->gedp, line);
     else
-	bu_vls_printf(&rtcop->gedp->ged_result_str, "%s", line);
+	bu_vls_printf(rtcop->gedp->ged_result_str, "%s", line);
 }
 
 #endif
@@ -311,7 +311,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     bin = bu_brlcad_root("bin", 1);
     if (bin) {

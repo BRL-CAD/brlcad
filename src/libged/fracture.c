@@ -44,7 +44,7 @@ fracture_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
     struct nmgregion *r;
 
     if (db_lookup(gedp->ged_wdbp->dbip,  newname, LOOKUP_QUIET) != RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: already exists\n", newname);
+	bu_vls_printf(gedp->ged_result_str, "%s: already exists\n", newname);
 	/* Free memory here */
 	nmg_km(m);
 	frac_stat = 1;
@@ -53,7 +53,7 @@ fracture_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
 
     new_dp=db_diradd(gedp->ged_wdbp->dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
     if (new_dp == RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str,
+	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to add new object name (%s) to directory - aborting!!\n",
 		      newname);
 	return;
@@ -74,7 +74,7 @@ fracture_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
     if (rt_db_put_internal(new_dp, gedp->ged_wdbp->dbip, &new_intern, &rt_uniresource) < 0) {
 	/* Free memory */
 	nmg_km(m);
-	bu_vls_printf(&gedp->ged_result_str, "rt_db_put_internal() failure\n");
+	bu_vls_printf(gedp->ged_result_str, "rt_db_put_internal() failure\n");
 	frac_stat = 1;
 	return;
     }
@@ -106,34 +106,34 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (3 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "fracture:");
+    bu_vls_printf(gedp->ged_result_str, "fracture:");
     for (i=0; i < argc; i++)
-	bu_vls_printf(&gedp->ged_result_str, " %s", argv[i]);
-    bu_vls_printf(&gedp->ged_result_str, "\n");
+	bu_vls_printf(gedp->ged_result_str, " %s", argv[i]);
+    bu_vls_printf(gedp->ged_result_str, "\n");
 
     if ((old_dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return GED_ERROR;
 
     if (rt_db_get_internal(&old_intern, old_dp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "rt_db_get_internal() error\n");
+	bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal() error\n");
 	return GED_ERROR;
     }
 
     if (old_intern.idb_type != ID_NMG) {
-	bu_vls_printf(&gedp->ged_result_str, " is not an NMG solid!!\n");
+	bu_vls_printf(gedp->ged_result_str, " is not an NMG solid!!\n");
 	rt_db_free_internal(&old_intern);
 	return GED_ERROR;
     }
@@ -146,7 +146,7 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
 
     maxdigits = (int)(log10((double)(tf+tw+tp)) + 1.0);
 
-    bu_vls_printf(&gedp->ged_result_str, "%ld = %d digits\n", (long)(tf+tw+tp), maxdigits);
+    bu_vls_printf(gedp->ged_result_str, "%ld = %d digits\n", (long)(tf+tw+tp), maxdigits);
 
     /* for (maxdigits=1, i=tf+tw+tp; i > 0; i /= 10)
      * maxdigits++;

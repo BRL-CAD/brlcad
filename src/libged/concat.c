@@ -231,7 +231,7 @@ copy_object(struct ged *gedp,
     char *new_name;
 
     if (rt_db_get_internal(&ip, input_dp, input_dbip, NULL, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str,
+	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to get internal form of object (%s) - aborting!!!\n",
 		      input_dp->d_namep);
 	return GED_ERROR;
@@ -278,14 +278,14 @@ copy_object(struct ged *gedp,
     }
     if ((new_dp = db_diradd(curr_dbip, new_name, RT_DIR_PHONY_ADDR, 0, input_dp->d_flags,
 			    (genptr_t)&input_dp->d_minor_type)) == RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str,
+	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to add new object name (%s) to directory - aborting!!\n",
 		      new_name);
 	return GED_ERROR;
     }
 
     if (rt_db_put_internal(new_dp, curr_dbip, &ip, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str,
+	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to write new object (%s) to database - aborting!!\n",
 		      new_name);
 	return GED_ERROR;
@@ -322,10 +322,10 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc < 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -354,7 +354,7 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
 		cc_data.copy_mode |= AUTO_SUFFIX;
 		break;
 	    default: {
-		    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", commandName, usage);
+		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", commandName, usage);
 		    bu_vls_free(&cc_data.affix);
 		    return GED_ERROR;
 		}
@@ -364,7 +364,7 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
     argv += bu_optind;
 
     if (argc == 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", commandName, usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", commandName, usage);
 	return GED_ERROR;
     }
 
@@ -396,7 +396,7 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
 
 	} else {
 	    bu_vls_free(&cc_data.affix);
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", commandName, usage);
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", commandName, usage);
 	    return GED_ERROR;
 	}
 
@@ -426,13 +426,13 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
     if ((newdbp = db_open(oldfile, "r")) == DBI_NULL) {
 	bu_vls_free(&cc_data.affix);
 	perror(oldfile);
-	bu_vls_printf(&gedp->ged_result_str, "%s: Can't open %s", commandName, oldfile);
+	bu_vls_printf(gedp->ged_result_str, "%s: Can't open %s", commandName, oldfile);
 	return GED_ERROR;
     }
 
     if (db_version(newdbp) > 4 && db_version(gedp->ged_wdbp->dbip) < 5) {
 	bu_vls_free(&cc_data.affix);
-	bu_vls_printf(&gedp->ged_result_str, "%s: databases are incompatible, use dbupgrade on %s first",
+	bu_vls_printf(gedp->ged_result_str, "%s: databases are incompatible, use dbupgrade on %s first",
 		      commandName, gedp->ged_wdbp->dbip->dbi_filename);
 	return GED_ERROR;
     }
@@ -453,7 +453,7 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
 	if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
 	    if (saveGlobalAttrs) {
 		if (db5_get_attributes(newdbp, &g_avs, dp)) {
-		    bu_vls_printf(&gedp->ged_result_str, "%s: Can't get global attributes from %s", commandName, oldfile);
+		    bu_vls_printf(gedp->ged_result_str, "%s: Can't get global attributes from %s", commandName, oldfile);
 		    return GED_ERROR;
 		}
 	    }

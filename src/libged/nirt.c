@@ -123,7 +123,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     args = argc + 20 + 2 + ged_count_tops(gedp);
     gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
@@ -274,16 +274,16 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	vp = &gedp->ged_gdp->gd_rt_cmd[0];
 
 	while (*vp)
-	    bu_vls_printf(&gedp->ged_result_str, "%s ", *vp++);
+	    bu_vls_printf(gedp->ged_result_str, "%s ", *vp++);
 
-	bu_vls_printf(&gedp->ged_result_str, "\n");
+	bu_vls_printf(gedp->ged_result_str, "\n");
     }
 
     if (use_input_orig) {
-	bu_vls_printf(&gedp->ged_result_str, "\nFiring from (%lf, %lf, %lf)...\n",
+	bu_vls_printf(gedp->ged_result_str, "\nFiring from (%lf, %lf, %lf)...\n",
 		      center_model[X], center_model[Y], center_model[Z]);
     } else
-	bu_vls_printf(&gedp->ged_result_str, "\nFiring from view center...\n");
+	bu_vls_printf(gedp->ged_result_str, "\nFiring from view center...\n");
 
 #ifndef _WIN32
     ret = pipe(pipe_in);
@@ -469,7 +469,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_trimspace(&v);
 
 	    if (line[0] == '\n' || line[0] == '\r') {
-		bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(&v));
+		bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&v));
 		break;
 	    }
 
@@ -496,7 +496,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_trimspace(&v);
 
 	    if (line[0] == '\n' || line[0] == '\r') {
-		bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(&v));
+		bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&v));
 		break;
 	    }
 
@@ -526,7 +526,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_trunc(&v, 0);
 	    bu_vls_strcpy(&v, line);
 	    bu_vls_trimspace(&v);
-	    bu_vls_printf(&gedp->ged_result_str, "%s\n", bu_vls_addr(&v));
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&v));
 	}
     }
 
@@ -536,7 +536,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_trunc(&v, 0);
 	bu_vls_strcpy(&v, line);
 	bu_vls_trimspace(&v);
-	bu_vls_printf(&gedp->ged_result_str, "%s\n", bu_vls_addr(&v));
+	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&v));
     }
     (void)fclose(fp_err);
 
@@ -549,7 +549,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	;	/* NULL */
 
     if (retcode != 0)
-	_ged_wait_status(&gedp->ged_result_str, retcode);
+	_ged_wait_status(gedp->ged_result_str, retcode);
 #else
     /* Wait for program to finish */
     WaitForSingleObject(pi.hProcess, INFINITE);
@@ -593,16 +593,16 @@ ged_vnirt(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 3) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 

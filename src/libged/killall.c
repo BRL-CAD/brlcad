@@ -46,11 +46,11 @@ ged_killall(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -60,24 +60,24 @@ ged_killall(struct ged *gedp, int argc, const char *argv[])
 	nflag = 1;
 
 	/* Objects that would be killed are in the first sublist */
-	bu_vls_printf(&gedp->ged_result_str, "{");
+	bu_vls_printf(gedp->ged_result_str, "{");
 	for (i = 2; i < argc; i++)
-	    bu_vls_printf(&gedp->ged_result_str, "%s ", argv[i]);
-	bu_vls_printf(&gedp->ged_result_str, "} {");
+	    bu_vls_printf(gedp->ged_result_str, "%s ", argv[i]);
+	bu_vls_printf(gedp->ged_result_str, "} {");
     } else
 	nflag = 0;
 
     gedp->ged_internal_call = 1;
     if ((ret = ged_killrefs(gedp, argc, argv)) != GED_OK) {
 	gedp->ged_internal_call = 0;
-	bu_vls_printf(&gedp->ged_result_str, "KILL skipped because of earlier errors.\n");
+	bu_vls_printf(gedp->ged_result_str, "KILL skipped because of earlier errors.\n");
 	return ret;
     }
     gedp->ged_internal_call = 0;
 
     if (nflag) {
 	/* Close the sublist of objects that reference the would-be killed objects. */
-	bu_vls_printf(&gedp->ged_result_str, "}");
+	bu_vls_printf(gedp->ged_result_str, "}");
 	return GED_OK;
     }
 

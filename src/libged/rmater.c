@@ -100,21 +100,21 @@ ged_rmater(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     if ((fp = fopen(argv[1], "r")) == NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "ged_rmater: Failed to read file - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "ged_rmater: Failed to read file - %s", argv[1]);
 	return GED_ERROR;
     }
 
@@ -124,13 +124,13 @@ ged_rmater(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_NOISY)) == RT_DIR_NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "ged_rmater: Failed to find %s\n", name);
+	    bu_vls_printf(gedp->ged_result_str, "ged_rmater: Failed to find %s\n", name);
 	    status = GED_ERROR;
 	    continue;
 	}
 
 	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting\n");
+	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting\n");
 	    status = GED_ERROR;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -150,7 +150,7 @@ ged_rmater(struct ged *gedp, int argc, const char *argv[])
 
 	/* Write new values to database */
 	if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting\n");
+	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting\n");
 	    status = GED_ERROR;
 	}
     }

@@ -41,7 +41,7 @@ _ged_rotate_eto(struct ged *gedp, struct rt_eto_internal *eto, const char *attri
     RT_ETO_CK_MAGIC(eto);
 
     if (attribute[1] != '\0') {
-	bu_vls_printf(&gedp->ged_result_str, "bad eto attribute - %s", attribute);
+	bu_vls_printf(gedp->ged_result_str, "bad eto attribute - %s", attribute);
 	return GED_ERROR;
     }
 
@@ -51,7 +51,7 @@ _ged_rotate_eto(struct ged *gedp, struct rt_eto_internal *eto, const char *attri
 	    MAT4X3VEC(eto->eto_C, rmat, eto->eto_C);
 	    break;
 	default:
-	    bu_vls_printf(&gedp->ged_result_str, "bad eto attribute - %s", attribute);
+	    bu_vls_printf(gedp->ged_result_str, "bad eto attribute - %s", attribute);
 	    return GED_ERROR;
     }
 

@@ -119,7 +119,7 @@ push_leaf(struct db_tree_state *tsp,
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
 
-	bu_vls_printf(&gpdp->gedp->ged_result_str, "push_leaf(%s) path='%s'\n", ip->idb_meth->ft_name, sofar);
+	bu_vls_printf(gpdp->gedp->ged_result_str, "push_leaf(%s) path='%s'\n", ip->idb_meth->ft_name, sofar);
 	bu_free((genptr_t)sofar, "path string");
     }
 /*
@@ -139,7 +139,7 @@ push_leaf(struct db_tree_state *tsp,
 				 tsp->ts_mat, tsp->ts_tol)) {
 		char *sofar = db_path_to_string(pathp);
 
-		bu_vls_printf(&gpdp->gedp->ged_result_str, "push_leaf: matrix mismatch between '%s' and prior reference.\n", sofar);
+		bu_vls_printf(gpdp->gedp->ged_result_str, "push_leaf: matrix mismatch between '%s' and prior reference.\n", sofar);
 		bu_free((genptr_t)sofar, "path string");
 		gpdp->push_error = 1;
 	    }
@@ -197,11 +197,11 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -230,7 +230,7 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    case '?':
 	    default:
-		bu_vls_printf(&gedp->ged_result_str, "ged_push: usage push [-P processors] [-d] root [root2 ...]\n");
+		bu_vls_printf(gedp->ged_result_str, "ged_push: usage push [-P processors] [-d] root [root2 ...]\n");
 		break;
 	}
     }
@@ -264,7 +264,7 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 	}
 	rt_g.debug = old_debug;
 	bu_free((genptr_t)gpdp, "ged_push: gpdp");
-	bu_vls_printf(&gedp->ged_result_str, "ged_push:\tdb_walk_tree failed or there was a solid moving\n\tin two or more directions");
+	bu_vls_printf(gedp->ged_result_str, "ged_push:\tdb_walk_tree failed or there was a solid moving\n\tin two or more directions");
 	return GED_ERROR;
     }
 /*
@@ -273,14 +273,14 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
  */
     FOR_ALL_PUSH_SOLIDS(gpip, gpdp->pi_head) {
 	if (rt_db_get_internal(&es_int, gpip->pi_dir, gedp->ged_wdbp->dbip, gpip->pi_mat, &rt_uniresource) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "ged_push: Read error fetching '%s'\n", gpip->pi_dir->d_namep);
+	    bu_vls_printf(gedp->ged_result_str, "ged_push: Read error fetching '%s'\n", gpip->pi_dir->d_namep);
 	    gpdp->push_error = -1;
 	    continue;
 	}
 	RT_CK_DB_INTERNAL(&es_int);
 
 	if (rt_db_put_internal(gpip->pi_dir, gedp->ged_wdbp->dbip, &es_int, &rt_uniresource) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "ged_push(%s): solid export failure\n", gpip->pi_dir->d_namep);
+	    bu_vls_printf(gedp->ged_result_str, "ged_push(%s): solid export failure\n", gpip->pi_dir->d_namep);
 	}
 	rt_db_free_internal(&es_int);
     }
@@ -299,7 +299,7 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 	struct directory *db;
 	db = db_lookup(gedp->ged_wdbp->dbip, *argv++, 0);
 	if (db)
-	    identitize(db, gedp->ged_wdbp->dbip, &gedp->ged_result_str);
+	    identitize(db, gedp->ged_wdbp->dbip, gedp->ged_result_str);
 	--argc;
     }
 

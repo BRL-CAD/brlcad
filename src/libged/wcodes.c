@@ -85,7 +85,7 @@ wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, size_t pathp
 	return GED_OK;
 
     if ((id=rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource)) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Cannot get records for %s\n", dp->d_namep);
+	bu_vls_printf(gedp->ged_result_str, "Cannot get records for %s\n", dp->d_namep);
 	return GED_ERROR;
     }
 
@@ -138,21 +138,21 @@ ged_wcodes(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc == 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     if ((fp = fopen(argv[1], "w")) == NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Failed to open file - %s",
+	bu_vls_printf(gedp->ged_result_str, "%s: Failed to open file - %s",
 		      argv[0], argv[1]);
 	return GED_ERROR;
     }

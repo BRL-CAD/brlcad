@@ -43,11 +43,11 @@ ged_reopen(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* get database filename */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%s", gedp->ged_wdbp->dbip->dbi_filename);
+	bu_vls_printf(gedp->ged_result_str, "%s", gedp->ged_wdbp->dbip->dbi_filename);
 	return GED_OK;
     }
 
@@ -56,7 +56,7 @@ ged_reopen(struct ged *gedp, int argc, const char *argv[])
 	char *av[2];
 
 	if ((dbip = _ged_open_dbip(argv[1], 0)) == DBI_NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "ged_reopen: failed to open %s\n", argv[1]);
+	    bu_vls_printf(gedp->ged_result_str, "ged_reopen: failed to open %s\n", argv[1]);
 	    return GED_ERROR;
 	}
 
@@ -69,11 +69,11 @@ ged_reopen(struct ged *gedp, int argc, const char *argv[])
 
 	gedp->ged_wdbp->dbip = dbip;
 
-	bu_vls_printf(&gedp->ged_result_str, "%s", gedp->ged_wdbp->dbip->dbi_filename);
+	bu_vls_printf(gedp->ged_result_str, "%s", gedp->ged_wdbp->dbip->dbi_filename);
 	return GED_OK;
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
 
