@@ -17,11 +17,22 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* fix osX link line to stop mixing X libs (causes segfault on GL stuff)
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* fix osX link line to stop mixing X libs (causes segfault on GL stuff)
+  Assuming this is CMake - this will involve making FindX11 "smarter"
+  about ensuring that all of the various X11 libraries it finds share
+  a common directory structure.  The problem appears to manifest when
+  both XQuartz (Apple's X11) and one of the third party packaging
+  systems' X11 (Fink, Macports, etc.) are installed simultaneously.
+  Probably the way to do this will be to find the "main" X11 library,
+  search for other libraries in that specific parent path to develop
+  a results set, and then do that again for any other "main" X11
+  libraries.  Will need some decision criteria if multiple valid
+  installs are found. - CY
 
 * eliminate dbi_filepath (perhaps replace with dbi_filedir) as we
   shouldn't need to search.  we were told where the database was.
