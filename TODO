@@ -17,9 +17,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* test revolve typein
-
-
 * fix osX link line to stop mixing X libs (causes segfault on GL stuff)
 
 
