@@ -121,6 +121,8 @@ struct mfuncs osl_mfuncs[] = {
 
 extern "C" {
 
+int osl_refraction_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs));
+
 HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm, 
 		     genptr_t *dpp, const struct mfuncs *mfp, 
 		     struct rt_i *rtip)
@@ -313,7 +315,8 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 #endif
 		new_ap.a_onehit = 1;
 		new_ap.a_refrac_index = 1.5;
-		new_ap.a_flag = 1;
+		new_ap.a_flag = 2; /* mark as refraction */
+		new_ap.a_hit = osl_refraction_hit;
 	    }
 
 	    (void)rt_shootray(&new_ap);
@@ -336,6 +339,73 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 }
 }
 
+int
+osl_refraction_hit(struct application *ap, struct partition *PartHeadp, struct seg *finished_segs)
+{
+
+    /* iterating over partitions, this will keep track of the current
+     * partition we're working on.
+     */
+    struct partition *pp;
+
+    /* will serve as a pointer for the entry and exit hitpoints */
+    struct hit *hitp;
+
+    /* will serve as a pointer to the solid primitive we hit */
+    struct soltab *stp;
+
+    /* will contain surface curvature information at the entry */
+    struct curvature cur;
+
+    /* will contain our hit point coordinate */
+    point_t pt;
+
+    /* will contain normal vector where ray enters geometry */
+     vect_t inormal;
+
+    /* will contain normal vector where ray exits geometry */
+    vect_t onormal;
+
+    struct shadework sw;
+
+    /* iterate over each partition until we get back to the head.
+     * each partition corresponds to a specific homogeneous region of
+     * material.
+     */
+    for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
+
+	register const struct mfuncs *mfp;
+	register const struct region *rp;
+
+	memset((char *)&sw, 0, sizeof(sw));
+	sw.sw_transmit = sw.sw_reflect = 0.0;
+	sw.sw_refrac_index = 1.0;
+	sw.sw_extinction = 0;
+	sw.sw_xmitonly = 0;		/* want full data */
+	sw.sw_inputs = 0;		/* no fields filled yet */
+	//sw.sw_frame = curframe;
+	//sw.sw_pixeltime = sw.sw_frametime = curframe * frame_delta_t;
+	sw.sw_segs = finished_segs;
+	VSETALL(sw.sw_color, 1);
+	VSETALL(sw.sw_basecolor, 1);
+    
+	rp = pp->pt_regionp;
+	mfp = (struct mfuncs *)pp->pt_regionp->reg_mfuncs;
+
+	sw.sw_hit = *(pp->pt_outhit);		/* struct copy */
+    	VJOIN1(pt, ap->a_ray.r_pt, sw.sw_hit.hit_dist, ap->a_ray.r_dir);
+
+	stp = pp->pt_inseg->seg_stp;
+	RT_HIT_NORMAL(sw.sw_hit.hit_normal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
+
+	/* Invoke the actual shader (may be a tree of them) */
+	if (mfp && mfp->mf_render)
+	    (void)mfp->mf_render(ap, pp, &sw, rp->reg_udata);
+	
+	VMOVE(ap->a_color, sw.sw_color);
+    }
+    return 1;
+}
 
 /*
  * Local Variables:
