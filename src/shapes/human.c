@@ -56,8 +56,15 @@ int main(int ac, char *av[])
     wdb_close(db_fp);
 
     if (ret) {
-	bu_exit(1, "%s", bu_vls_addr(ged.ged_result_str));
+	unlink(filename);
+	bu_log("%s", bu_vls_addr(ged.ged_result_str));
+	ged_free(&ged);
+	return 1;
     }
+
+    /* release our ged instance memory */
+    ged_free(&ged);
+
     return 0;
 
 }
