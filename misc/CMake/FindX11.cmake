@@ -60,20 +60,24 @@ IF (UNIX)
     /usr/X11R6/include 
     /usr/X11R7/include 
     /usr/include/X11
-	 /usr/local/include
-	 /usr/local/include/X11
+    /usr/local/include
+    /usr/local/include/X11
     /usr/openwin/include 
     /usr/openwin/share/include 
     /opt/graphics/OpenGL/include
   )
 
   SET(X11_LIB_SEARCH_PATH
+    /usr/X11/lib
+    /usr/X11R6/lib
+    /usr/X11R7/lib
+    /usr/lib/X11
+    /usr/lib64/X11
+    /usr/lib32/X11
     /usr/lib64
     /usr/lib32
     /usr/lib
     /usr/pkg/xorg/lib
-    /usr/X11R6/lib
-    /usr/X11R7/lib
     /usr/openwin/lib 
   )
 
