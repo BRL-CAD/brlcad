@@ -103,6 +103,11 @@ ged_free(struct ged *gedp)
     bu_vls_free(&gedp->ged_log);
     bu_vls_free(&gedp->ged_result_str);
 
+    if (gedp->ged_gdp) {
+	bu_free(gedp->ged_gdp, "release ged_gdp");
+	gedp->ged_gdp = NULL; /* sanity */
+    }
+
     bu_free((genptr_t)gedp, "struct ged");
 }
 
@@ -119,24 +124,22 @@ ged_init(struct ged *gedp)
     bu_vls_init(&gedp->ged_log);
     bu_vls_init(&gedp->ged_result_str);
 
-    if (!gedp->ged_gdp) {
-	BU_GETSTRUCT(gedp->ged_gdp, ged_drawable);
-    }
+    BU_GETSTRUCT(gedp->ged_gdp, ged_drawable);
+    BU_LIST_INIT(&gedp->ged_gdp->gd_headDisplay);
+    BU_LIST_INIT(&gedp->ged_gdp->gd_headVDraw);
+    BU_LIST_INIT(&gedp->ged_gdp->gd_headRunRt.l);
 
     /* yuck */
     if (!BU_LIST_IS_INITIALIZED(&_FreeSolid.l)) {
 	BU_LIST_INIT(&_FreeSolid.l);
     }
 
-    BU_LIST_INIT(&gedp->ged_gdp->gd_headDisplay);
-    BU_LIST_INIT(&gedp->ged_gdp->gd_headVDraw);
-    BU_LIST_INIT(&gedp->ged_gdp->gd_headRunRt.l);
-
     gedp->ged_gdp->gd_freeSolids = &_FreeSolid;
     gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
     qray_init(gedp->ged_gdp);
 
     /* (in)sanity */
+    gedp->ged_gvp = NULL;
     gedp->ged_fbsp = NULL;
     gedp->ged_dmp = NULL;
     gedp->ged_refresh_clientdata = NULL;
