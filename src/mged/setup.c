@@ -587,9 +587,14 @@ mged_setup(Tcl_Interp **interpreter)
     view_state->vs_gvp->gv_clientData = (genptr_t)view_state;
     MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_gvp->gv_center);
 
-    BU_GETSTRUCT(gedp, ged);
+    if (gedp) {
+	/* release any allocated memory */
+	ged_free(gedp);
+    } else {
+	BU_GETSTRUCT(gedp, ged);
+    }
     GED_INIT(gedp, NULL);
-    
+
     gedp->ged_output_handler = mged_output_handler;
     gedp->ged_refresh_handler = mged_refresh_handler;
 

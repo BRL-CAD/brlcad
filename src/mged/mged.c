@@ -2815,9 +2815,10 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     if (!gedp) {
 	BU_GETSTRUCT(gedp, ged);
     }
-    if ((ged_wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK)) != RT_WDB_NULL) {
-	GED_INIT(gedp, ged_wdbp);
-    }
+
+    /* initialize a separate wdbp for libged to manage */
+    ged_wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+    GED_INIT(gedp, ged_wdbp);
 
     /* increment use count for gedp db instance */
     (void)db_clone_dbi(dbip, NULL);
@@ -2825,6 +2826,12 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     /* Provide LIBWDB C access to the on-disk database */
     if ((wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK)) == RT_WDB_NULL) {
 	Tcl_AppendResult(interpreter, "wdb_dbopen() failed?\n", (char *)NULL);
+
+	/* release any allocated memory */
+	ged_free(gedp);
+	bu_free((genptr_t)gedp, "struct ged");
+	gedp = NULL;
+
 	return TCL_ERROR;
     }
 
@@ -2836,6 +2843,12 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	bu_vls_printf(&msg, "%s\n%s\n", Tcl_GetStringResult(interpreter), Tcl_GetVar(interpreter, "errorInfo", TCL_GLOBAL_ONLY));
 	Tcl_AppendResult(interpreter, bu_vls_addr(&msg), (char *)NULL);
 	bu_vls_free(&msg);
+
+	/* release any allocated memory */
+	ged_free(gedp);
+	bu_free((genptr_t)gedp, "struct ged");
+	gedp = NULL;
+
 	return TCL_ERROR;
     }
 
@@ -2844,6 +2857,12 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	bu_vls_printf(&msg, "%s\n%s\n", Tcl_GetStringResult(interpreter), Tcl_GetVar(interpreter, "errorInfo", TCL_GLOBAL_ONLY));
 	Tcl_AppendResult(interpreter, bu_vls_addr(&msg), (char *)NULL);
 	bu_vls_free(&msg);
+
+	/* release any allocated memory */
+	ged_free(gedp);
+	bu_free((genptr_t)gedp, "struct ged");
+	gedp = NULL;
+
 	return TCL_ERROR;
     }
 
@@ -2861,6 +2880,12 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	    Tcl_AppendResult(interpreter, bu_vls_addr(&msg), (char *)NULL);
 	    bu_vls_free(&msg);
 	    bu_vls_free(&cmd);
+
+	    /* release any allocated memory */
+	    ged_free(gedp);
+	    bu_free((genptr_t)gedp, "struct ged");
+	    gedp = NULL;
+
 	    return TCL_ERROR;
 	}
 

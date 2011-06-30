@@ -438,11 +438,18 @@ wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 	if (BU_STR_EQUAL(ctp->ct_name, argv[1])) {
 	    ret = (*ctp->ct_func)(&ged, argc-1, argv+1);
 	    Tcl_SetResult(interp, bu_vls_addr(ged.ged_result_str), TCL_VOLATILE);
+
+	    /* release any allocated memory */
+	    ged_free(&ged);
+
 	    if (ret == GED_OK)
 		return TCL_OK;
 	    return TCL_ERROR;
 	}
     }
+
+    /* release any allocated memory */
+    ged_free(&ged);
 
     /* not a new command -- look for the command in the old command table */
     return bu_cmd(clientData, interp, argc, (const char **)argv, wdb_cmds, 1);
@@ -2368,8 +2375,13 @@ wdb_pathsum_cmd(struct rt_wdb *wdbp,
 
 	tok = strtok(argv[1], "/");
 	while (tok) {
-	    if ((gtd.gtd_obj[gtd.gtd_objpos++] = db_lookup(wdbp->dbip, tok, LOOKUP_NOISY)) == RT_DIR_NULL)
+	    if ((gtd.gtd_obj[gtd.gtd_objpos++] = db_lookup(wdbp->dbip, tok, LOOKUP_NOISY)) == RT_DIR_NULL) {
+
+		/* release any allocated memory */
+		ged_free(&ged);
+
 		return TCL_ERROR;
+	    }
 	    tok = strtok((char *)NULL, "/");
 	}
     } else {
@@ -2377,8 +2389,13 @@ wdb_pathsum_cmd(struct rt_wdb *wdbp,
 
 	/* build directory pointer array for desired path */
 	for (i=0; i<gtd.gtd_objpos; i++) {
-	    if ((gtd.gtd_obj[i] = db_lookup(wdbp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == RT_DIR_NULL)
+	    if ((gtd.gtd_obj[i] = db_lookup(wdbp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == RT_DIR_NULL) {
+
+		/* release any allocated memory */
+		ged_free(&ged);
+
 		return TCL_ERROR;
+	    }
 	}
     }
 
@@ -2394,6 +2411,9 @@ wdb_pathsum_cmd(struct rt_wdb *wdbp,
 
 	Tcl_AppendResult(interp, "  NOT FOUND\n", (char *)NULL);
     }
+
+    /* release any allocated memory */
+    ged_free(&ged);
 
     return TCL_OK;
 }
@@ -3661,6 +3681,10 @@ wdb_copyeval_cmd(struct rt_wdb *wdbp,
     /* check if new solid name already exists in description */
     if (db_lookup(wdbp->dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
 	Tcl_AppendResult(interp, argv[1], ": already exists\n", (char *)NULL);
+
+	/* release any allocated memory */
+	ged_free(&ged);
+
 	return TCL_ERROR;
     }
 
@@ -3674,14 +3698,22 @@ wdb_copyeval_cmd(struct rt_wdb *wdbp,
 
 	tok = strtok(argv[2], "/");
 	while (tok) {
-	    if ((gtd.gtd_obj[endpos++] = db_lookup(wdbp->dbip, tok, LOOKUP_NOISY)) == RT_DIR_NULL)
+	    if ((gtd.gtd_obj[endpos++] = db_lookup(wdbp->dbip, tok, LOOKUP_NOISY)) == RT_DIR_NULL) {
+		/* release any allocated memory */
+		ged_free(&ged);
+
 		return TCL_ERROR;
+	    }
 	    tok = strtok((char *)NULL, "/");
 	}
     } else {
 	for (i=2; i<argc; i++) {
-	    if ((gtd.gtd_obj[i-2] = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
+	    if ((gtd.gtd_obj[i-2] = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
+		/* release any allocated memory */
+		ged_free(&ged);
+
 		return TCL_ERROR;
+	    }
 	}
 	endpos = argc - 2;
     }
@@ -3692,12 +3724,20 @@ wdb_copyeval_cmd(struct rt_wdb *wdbp,
     if ((id = rt_db_get_internal(&internal, gtd.gtd_obj[endpos - 1], wdbp->dbip, bn_mat_identity, &rt_uniresource)) < 0) {
 	Tcl_AppendResult(interp, "import failure on ",
 			 argv[argc-1], "\n", (char *)NULL);
+
+	/* release any allocated memory */
+	ged_free(&ged);
+
 	return TCL_ERROR;
     }
 
     if (id >= ID_COMBINATION) {
 	rt_db_free_internal(&internal);
 	Tcl_AppendResult(interp, "final component on path must be a solid!!!\n", (char *)NULL);
+
+	/* release any allocated memory */
+	ged_free(&ged);
+
 	return TCL_ERROR;
     }
 
@@ -3711,6 +3751,10 @@ wdb_copyeval_cmd(struct rt_wdb *wdbp,
 
 	Tcl_AppendResult(interp, "  NOT FOUND\n", (char *)NULL);
 	rt_db_free_internal(&internal);
+
+	/* release any allocated memory */
+	ged_free(&ged);
+
 	return TCL_ERROR;
     }
 
@@ -3723,10 +3767,18 @@ wdb_copyeval_cmd(struct rt_wdb *wdbp,
 			 &internal, 0, wdbp->dbip, &rt_uniresource)) {
 	rt_db_free_internal(&internal);
 	Tcl_AppendResult(interp, "wdb_copyeval_cmd: rt_generic_xform failed\n", (char *)NULL);
+
+	/* release any allocated memory */
+	ged_free(&ged);
+
 	return TCL_ERROR;
     }
 
     dp=db_diradd(wdbp->dbip, argv[1], RT_DIR_PHONY_ADDR, 0, gtd.gtd_obj[endpos-1]->d_flags, (genptr_t)&new_int.idb_type);
+
+    /* release any allocated memory */
+    ged_free(&ged);
+
     if (dp == RT_DIR_NULL) {
 	rt_db_free_internal(&internal);
 	rt_db_free_internal(&new_int);
@@ -7119,17 +7171,32 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
     /* Since arguments may be paths, make sure first argument isn't */
     if (strchr(argv[i], '/')) {
 	Tcl_AppendResult(interp, "Do not use '/' in solid names: ", argv[i], "\n", (char *)NULL);
+
+	/* release any allocated memory */
+	ged_free(&ged);
+
 	return TCL_ERROR;
     }
 
     new_name = argv[i++];
     if (db_lookup(wdbp->dbip, new_name, LOOKUP_QUIET) != RT_DIR_NULL) {
 	Tcl_AppendResult(interp, new_name, " already exists\n", (char *)NULL);
+
+	/* release any allocated memory */
+	ged_free(&ged);
+
 	return TCL_ERROR;
     }
 
-    if (_ged_get_obj_bounds(&ged, argc-2, (const char **)argv+2, use_air, rpp_min, rpp_max) == TCL_ERROR)
+    if (_ged_get_obj_bounds(&ged, argc-2, (const char **)argv+2, use_air, rpp_min, rpp_max) == TCL_ERROR) {
+	/* release any allocated memory */
+	ged_free(&ged);
+
 	return TCL_ERROR;
+    }
+
+    /* release any allocated memory */
+    ged_free(&ged);
 
     /* build bounding RPP */
     arb = (struct rt_arb_internal *)bu_malloc(sizeof(struct rt_arb_internal), "arb");
@@ -7159,6 +7226,7 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
     if (rt_db_put_internal(dp, wdbp->dbip, &new_intern, wdbp->wdb_resp) < 0) {
 	rt_db_free_internal(&new_intern);
 	Tcl_AppendResult(interp, "Database write error, aborting.\n", (char *)NULL);
+
 	return TCL_ERROR;
     }
 
@@ -10394,6 +10462,7 @@ wdb_newcmds_tcl(ClientData clientData,
     if (ctp->ct_name == (char *)0) {
 	bu_vls_trunc(ged.ged_result_str, 0);
 	bu_vls_printf(ged.ged_result_str, "%s not found", argv[1]);
+
 	ret = GED_ERROR;
     }
 
@@ -10411,6 +10480,9 @@ wdb_newcmds_tcl(ClientData clientData,
 
     Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
     bu_vls_free(&vls);
+
+    /* release any allocated memory */
+    ged_free(&ged);
 
     if (ret == GED_ERROR)
 	return TCL_ERROR;
