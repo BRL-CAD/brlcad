@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2011-06-XX  Release 7.20.2                                     ---
 ----------------------------------------------------------------------
 
+* fixed crash rendering scenes with all invalid lights - Sean Morrison
 * improved reliability of ARS tessellation/conversion - Richard Weiss
 * improved tessellation performance and reliability - Richard Weiss
 * replaced 'erase_all' command with 'erase -r' - Brandon Hinesley
