@@ -69,14 +69,6 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB(comb);
 
-    bu_avs_init_empty(&avs);
-    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
-	bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-	bu_avs_free(&avs);
-	return GED_ERROR;
-    }
-    db5_standardize_avs(&avs);
-
     /* deleting the color means we don't need to prompt for the green
      * and blue color channels, so offset our argument indices.
      */
@@ -115,7 +107,6 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[argc+offset-1]);
-	bu_avs_free(&avs);
 	return GED_MORE;
     }
 
@@ -123,7 +114,6 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
     /* too much */
     if ((!offset && argc > 7) || (offset && argc > 5)) {
 	bu_vls_printf(gedp->ged_result_str, "Too many arguments.\nUsage: %s %s", argv[0], usage);
-	bu_avs_free(&avs);
 	return GED_ERROR;
     }
 
@@ -141,7 +131,6 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "Problem with shader string [%s]", argv[2]);
 		rt_db_free_internal(&intern);
 		bu_vls_free(&vls);
-		bu_avs_free(&avs);
 		return GED_ERROR;
 	    }
 	}
@@ -165,7 +154,6 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "Color is not set, cannot skip by using existing RED color value");
 		rt_db_free_internal(&intern);
 		bu_vls_free(&rgb);
-		bu_avs_free(&avs);
 		return GED_ERROR;
 	    }
 	} else {
@@ -173,7 +161,6 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "Bad color value [%s]", argv[3]);
 		rt_db_free_internal(&intern);
 		bu_vls_free(&rgb);
-		bu_avs_free(&avs);
 		return GED_ERROR;
 	    }
 	    comb->rgb[0] = r;
@@ -187,7 +174,6 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "Color is not set, cannot skip by using existing GREEN color value");
 		rt_db_free_internal(&intern);
 		bu_vls_free(&rgb);
-		bu_avs_free(&avs);
 		return GED_ERROR;
 	    }
 	} else {
@@ -195,7 +181,6 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "Bad color value [%s]", argv[4]);
 		rt_db_free_internal(&intern);
 		bu_vls_free(&rgb);
-		bu_avs_free(&avs);
 		return GED_ERROR;
 	    }
 	    comb->rgb[1] = g;
@@ -209,7 +194,6 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "Color is not set, cannot skip by using existing BLUE color value");
 		rt_db_free_internal(&intern);
 		bu_vls_free(&rgb);
-		bu_avs_free(&avs);
 		return GED_ERROR;
 	    }
 	} else {
@@ -217,7 +201,6 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "Bad color value [%s]", argv[5]);
 		rt_db_free_internal(&intern);
 		bu_vls_free(&rgb);
-		bu_avs_free(&avs);
 		return GED_ERROR;
 	    }
 	    comb->rgb[2] = b;
@@ -232,19 +215,24 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 	if (comb->inherit > 1) {
 	    bu_vls_printf(gedp->ged_result_str, "Inherit value should be 0 or 1");
 	    rt_db_free_internal(&intern);
-	    bu_avs_free(&avs);
 	    return GED_ERROR;
 	}
     }
 
+    bu_avs_init_empty(&avs);
+    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+	bu_avs_free(&avs);
+	return GED_ERROR;
+    }
+    db5_standardize_avs(&avs);
     db5_sync_comb_to_attr(&avs, comb);
     db5_standardize_avs(&avs);
 
     GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
 
     if (db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
-	bu_vls_printf(gedp->ged_result_str,
-		"Error: failed to update attributes\n");
+	bu_vls_printf(gedp->ged_result_str, "ERROR: failed to update attributes\n");
 	bu_avs_free(&avs);
 	return GED_ERROR;
     }
