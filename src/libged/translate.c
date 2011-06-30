@@ -67,6 +67,10 @@ translate(struct ged *gedp, pointp_t const keypoint,
     (void)argv;
     (void)argc;
 
+    /*
+     * Validate parameters
+     */
+
     /* verify existence of path */
     if (ged_path_validate(gedp, path) == GED_ERROR) {
 	char *s_path = db_path_to_string(path);
@@ -91,53 +95,45 @@ translate(struct ged *gedp, pointp_t const keypoint,
     }
     db_free_full_path(&full_obj_path);
 
-    /*
-     * Determine what is being translated
-     */
-    if (d_obj->d_flags & (RT_DIR_SOLID | RT_DIR_REGION | RT_DIR_COMB)) {
-	if (path->fp_len > 0) {
-	    /* path supplied; move obj instance only (obj's CWD
-	     * modified) */
-	    d_to_modify = DB_FULL_PATH_CUR_DIR(path);
-	} else {
-	    /* no path; move all obj instances (obj's entire tree
-	     * modified) */
-	    d_to_modify = d_obj;
-	}
-    } else {
+    if (!(d_obj->d_flags & (RT_DIR_SOLID | RT_DIR_REGION | RT_DIR_COMB))) {
 	bu_vls_printf(gedp->ged_result_str, "unsupported object type");
 	return GED_ERROR;
     }
 
-    /*
-     * Perform translations
-     */
     if (!relative_pos_flag) {
 	bu_vls_printf(gedp->ged_result_str, "translations to absolute"
 		      " positions are not yet supported");
 	return GED_ERROR;
     }
 
+    /*
+     * Perform translations
+     */
+
     if (path->fp_len > 0) {
-	/* move single instance */
+	/* path supplied; move obj instance only (obj's CWD
+	 * modified) */
 	struct rt_comb_internal *comb;
 	union tree *leaf_to_modify;
 
+	d_to_modify = DB_FULL_PATH_CUR_DIR(path);
 	GED_DB_GET_INTERNAL(gedp, &intern, d_to_modify, (fastf_t *)NULL,
 			    &rt_uniresource, GED_ERROR);
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
 	leaf_to_modify = db_find_named_leaf(comb->tree, d_obj->d_namep);
-
 	if (leaf_to_modify == TREE_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "leaf not found where it"
 			  " should be; this should not happen");
 	    rt_db_free_internal(&intern);
 	    return GED_ERROR;
 	}
+
 	MAT_DELTAS_ADD_VEC(leaf_to_modify->tr_l.tl_mat, delta); 
     } else {
-	/* move all instances */
+	/* no path; move all obj instances (obj's entire tree
+	 * modified) */
+	d_to_modify = d_obj;
 	if (_ged_get_obj_bounds2(gedp, 1, (const char **)&d_to_modify->d_namep,
 				 &gtd, rpp_min, rpp_max) == GED_ERROR)
 	    return GED_ERROR;
@@ -195,17 +191,19 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
-    /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* must be wanting help -- argc < 4 is wrong too, but more helpful
-       msgs are given later, by saying which args are missing */
+    /*
+     * Get short arguments
+     */
+
+    /* must be wanting help; argc < 3 is wrong too, but more helpful
+     * msgs are given later, by saying which args are missing */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 	return GED_HELP;
     }
 
-    /* get short arguments */
     bu_optind = 1; /* re-init bu_getopt() */
     while ((c = bu_getopt(argc, (char * const *)argv, "ak:r")) != -1) {
 	switch (c) {
@@ -241,7 +239,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 			--bu_optind;
 			goto no_more_args;
 		    }
-			/* it's neither a negative number nor an option */
+			/* it's neither a negative # nor an option */
 			bu_vls_printf(gedp->ged_result_str,
 				      "Unknown option '-%c'", bu_optopt);
 			return GED_ERROR;
@@ -253,21 +251,27 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
 		}
 	}
     }
-no_more_args:
+no_more_args: /* for breaking out, above */
 
+    /* 
+     * Validate arguments
+     */
+    
     /* need to use either absolute||relative positioning; not both */
     if (abs_flag && rel_flag) {
 	bu_vls_printf(gedp->ged_result_str,
 		      "options '-a' and '-r' are mutually exclusive");
 	return GED_ERROR;
     }
-    /* perhaps rel_flag was set by mistake */
+
+    /* perhaps relative positioning was enabled by mistake */
     if (rel_flag && kp_arg) {
 	bu_vls_printf(gedp->ged_result_str,
 		      "relative translations do not have keypoints");
 	return GED_ERROR;
     }
-    /* default to relative positioning */
+
+    /* set default positioning type */
     if (!abs_flag && !rel_flag)
 	rel_flag = 1;
 
@@ -281,7 +285,7 @@ no_more_args:
 	return GED_ERROR;
     }
 
-    /* set 3d coords */
+    /* set delta coordinates for translation */
     if ((bu_optind + 1) > argc) {
 	bu_vls_printf(gedp->ged_result_str, "missing x coordinate");
 	return GED_HELP;
@@ -301,7 +305,7 @@ no_more_args:
 	    break;
     }
 
-    /* no args left, but we expect more */
+    /* no args left, but more are expected */
     if ((bu_optind + 1) > argc) {
 	bu_vls_printf(gedp->ged_result_str,
 		      "missing object argument\n");
@@ -309,8 +313,9 @@ no_more_args:
 	return GED_HELP;
     }
 
-    /* path was supplied if we're not on the last arg; otherwise, '/' is used */
+    /* if a path was not supplied, root is used as path */
     if ((bu_optind + 1) != argc)
+	/* if >1 object was supplied, the first must be a path */
 	s_path = argv[bu_optind++];
     if (db_string_to_path(&path, dbip, s_path) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "invalid path \"%s\"", s_path);
@@ -325,6 +330,7 @@ no_more_args:
 	db_free_full_path(&path);
 	return GED_ERROR;
     }
+
     if ((bu_optind + 1) <= argc) {
 	bu_vls_printf(gedp->ged_result_str, "multiple objects not yet"
 		      " supported; ");
@@ -336,6 +342,7 @@ no_more_args:
     /*
      * Perform translations
      */
+
     d_obj = DB_FULL_PATH_ROOT_DIR(&obj);
     if (translate(gedp, keypoint, &path, d_obj, delta, rel_flag) ==
 	GED_ERROR) {
