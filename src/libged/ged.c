@@ -88,6 +88,7 @@ ged_close(struct ged *gedp)
     }
 
     ged_free(gedp);
+    bu_free(gedp);
 }
 
 
