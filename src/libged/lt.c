@@ -34,43 +34,7 @@
 
 
 static int
-ged_list_children(struct ged *gedp,
-		  struct directory *dp);
-
-int
-ged_lt(struct ged *gedp, int argc, const char *argv[])
-{
-    struct directory *dp;
-    static const char *usage = "object";
-
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-
-    /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
-
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
-
-    if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    return ged_list_children(gedp, dp);
-}
-
-
-static int
-ged_list_children(struct ged *gedp, struct directory *dp)
+list_children(struct ged *gedp, struct directory *dp)
 {
     size_t i;
     struct rt_db_internal intern;
@@ -141,6 +105,38 @@ ged_list_children(struct ged *gedp, struct directory *dp)
     rt_db_free_internal(&intern);
 
     return GED_OK;
+}
+
+
+int
+ged_lt(struct ged *gedp, int argc, const char *argv[])
+{
+    struct directory *dp;
+    static const char *usage = "object";
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 2) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    return list_children(gedp, dp);
 }
 
 

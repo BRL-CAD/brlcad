@@ -36,7 +36,7 @@
 #define AV_STEP 4096
 
 
-struct ged_killtree_data {
+struct killtree_data {
     struct ged *gedp;
     int killrefs;
     int nflag;
@@ -46,13 +46,10 @@ struct ged_killtree_data {
 };
 
 
-/*
- * K I L L T R E E
- */
 HIDDEN void
 killtree_callback(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 {
-    struct ged_killtree_data *gktdp = (struct ged_killtree_data *)ptr;
+    struct killtree_data *gktdp = (struct killtree_data *)ptr;
 
     if (dbip == DBI_NULL)
 	return;
@@ -107,7 +104,7 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     int i;
     int c;
-    struct ged_killtree_data gktd;
+    struct killtree_data gktd;
     static const char *usage = "[-a|-n] object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -188,7 +185,7 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
 	for (i=1; i<gktd.ac; i++) {
 	    if (!gktd.nflag)
 		bu_vls_printf(&gedp->ged_result_str, "Freeing %s\n", gktd.av[i]);
-	    bu_free((genptr_t)gktd.av[i], "ged_killtree_data");
+	    bu_free((genptr_t)gktd.av[i], "killtree_data");
 	    gktd.av[i] = NULL;
 	}
     }

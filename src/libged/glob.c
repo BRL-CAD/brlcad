@@ -37,7 +37,7 @@
  * unescapes various special characters
  */
 static void
-ged_debackslash(struct bu_vls *dest, struct bu_vls *src)
+debackslash(struct bu_vls *dest, struct bu_vls *src)
 {
     char *ptr;
 
@@ -56,7 +56,7 @@ ged_debackslash(struct bu_vls *dest, struct bu_vls *src)
  * escapes various special characters
  */
 static void
-ged_backslash_specials(struct bu_vls *dest, struct bu_vls *src)
+backslash(struct bu_vls *dest, struct bu_vls *src)
 {
     int backslashed;
     char *ptr, buf[2];
@@ -164,12 +164,12 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_trunc(&temp, 0);
 	    if (db_regexp_match_all(&temp, gedp->ged_wdbp->dbip,
 				    bu_vls_addr(&word)) == 0) {
-		ged_debackslash(&temp, &word);
-		ged_backslash_specials(&gedp->ged_result_str, &temp);
+		debackslash(&temp, &word);
+		backslash(&gedp->ged_result_str, &temp);
 	    } else
 		bu_vls_vlscat(&gedp->ged_result_str, &temp);
 	} else {
-	    ged_debackslash(&gedp->ged_result_str, &word);
+	    debackslash(&gedp->ged_result_str, &word);
 	}
 
 	firstword = 0;

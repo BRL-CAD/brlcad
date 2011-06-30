@@ -35,7 +35,7 @@
 #include "./ged_private.h"
 
 HIDDEN int
-ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
+move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 {
     int i;
     struct ged_display_list *gdlp;
@@ -226,7 +226,7 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 
 
 HIDDEN int
-ged_move_all_file(struct ged *gedp, int nflag, const char *file)
+move_all_file(struct ged *gedp, int nflag, const char *file)
 {
     FILE *fp;
     char line[512];
@@ -247,7 +247,7 @@ ged_move_all_file(struct ged *gedp, int nflag, const char *file)
 	if (bu_argv_from_string(new_av, 2, line) != 2)
 	    continue;
 
-	ged_move_all_func(gedp, nflag, (const char *)new_av[0], (const char *)new_av[1]);
+	move_all_func(gedp, nflag, (const char *)new_av[0], (const char *)new_av[1]);
     }
 
     fclose(fp);
@@ -311,7 +311,7 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
-	return ged_move_all_file(gedp, nflag, argv[0]);
+	return move_all_file(gedp, nflag, argv[0]);
     }
 
     if (argc != 2) {
@@ -319,7 +319,7 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    return ged_move_all_func(gedp, nflag, argv[0], argv[1]);
+    return move_all_func(gedp, nflag, argv[0], argv[1]);
 }
 
 

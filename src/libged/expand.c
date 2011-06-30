@@ -34,7 +34,7 @@
 
 
 static void
-ged_scrape_escapes_AppendResult(struct bu_vls *result, const char *str)
+expand_scrape_escapes(struct bu_vls *result, const char *str)
 {
     char buf[2];
     buf[1] = '\0';
@@ -98,7 +98,7 @@ ged_expand(struct ged *gedp, int argc, const char *argv[])
 	    if (db_lookup(gedp->ged_wdbp->dbip, argv[whicharg], LOOKUP_QUIET) != RT_DIR_NULL) {
 		if (nummatch > 0)
 		    bu_vls_printf(&gedp->ged_result_str, " ");
-		ged_scrape_escapes_AppendResult(&gedp->ged_result_str, argv[whicharg]);
+		expand_scrape_escapes(&gedp->ged_result_str, argv[whicharg]);
 		++nummatch;
 	    }
 	    continue;

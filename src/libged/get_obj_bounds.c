@@ -166,7 +166,7 @@ _ged_get_obj_bounds(struct ged *gedp,
  *
  */
 static int
-ged_get_objpath_mat(struct ged *gedp,
+get_objpath_mat(struct ged *gedp,
 		    int argc,
 		    const char *argv[],
 		    struct _ged_trace_data *gtdp)
@@ -195,7 +195,7 @@ ged_get_objpath_mat(struct ged *gedp,
 	while (tok) {
 	    if ((gtdp->gtd_obj[gtdp->gtd_objpos++] =
 		 db_lookup(gedp->ged_wdbp->dbip, tok, LOOKUP_NOISY)) == RT_DIR_NULL) {
-		bu_vls_printf(&gedp->ged_result_str, "ged_get_objpath_mat: Failed to find %s", tok);
+		bu_vls_printf(&gedp->ged_result_str, "get_objpath_mat: Failed to find %s", tok);
 		free(av0);
 		return GED_ERROR;
 	    }
@@ -211,7 +211,7 @@ ged_get_objpath_mat(struct ged *gedp,
 	for (i=0; i<gtdp->gtd_objpos; i++) {
 	    if ((gtdp->gtd_obj[i] =
 		 db_lookup(gedp->ged_wdbp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == RT_DIR_NULL) {
-		bu_vls_printf(&gedp->ged_result_str, "ged_get_objpath_mat: Failed to find %s", argv[pos_in+i]);
+		bu_vls_printf(&gedp->ged_result_str, "get_objpath_mat: Failed to find %s", argv[pos_in+i]);
 		return GED_ERROR;
 	    }
 	}
@@ -246,7 +246,7 @@ _ged_get_obj_bounds2(struct ged *gedp,
     VSETALL(rpp_min, MAX_FASTF);
     VREVERSE(rpp_max, rpp_min);
 
-    if (ged_get_objpath_mat(gedp, argc, argv, gtdp) == TCL_ERROR)
+    if (get_objpath_mat(gedp, argc, argv, gtdp) == TCL_ERROR)
 	return GED_ERROR;
 
     dp = gtdp->gtd_obj[gtdp->gtd_objpos-1];

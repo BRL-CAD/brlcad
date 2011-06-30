@@ -23,15 +23,19 @@
  *
  */
 
+#include "common.h"
+
 #include <string.h>
+
 #include "ged.h"
+
 
 /**
  * Get the output from bu_log and append it to clientdata vls.
  */
 static int
-ged_logHook(genptr_t clientdata,
-	    genptr_t str)
+log_hook(genptr_t clientdata,
+	 genptr_t str)
 {
     struct bu_vls *vp = (struct bu_vls *)clientdata;
     int len;
@@ -74,12 +78,12 @@ ged_log(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (argv[1][0] == 's' && BU_STR_EQUAL(argv[1], "start")) {
-	bu_log_add_hook(ged_logHook, (genptr_t)&gedp->ged_log);
+	bu_log_add_hook(log_hook, (genptr_t)&gedp->ged_log);
 	return GED_OK;
     }
 
     if (argv[1][0] == 's' && BU_STR_EQUAL(argv[1], "stop")) {
-	bu_log_delete_hook(ged_logHook, (genptr_t)&gedp->ged_log);
+	bu_log_delete_hook(log_hook, (genptr_t)&gedp->ged_log);
 	return GED_OK;
     }
 

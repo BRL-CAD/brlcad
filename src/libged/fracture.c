@@ -37,7 +37,7 @@ static int frac_stat;
 
 
 static void
-ged_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
+fracture_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
 {
     struct rt_db_internal new_intern;
     struct directory *new_dp;
@@ -179,7 +179,7 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
 
 		snprintf(newname, 32, "%s%0*d", prefix, maxdigits, i++);
 
-		ged_add_nmg_part(gedp, newname, new_model);
+		fracture_add_nmg_part(gedp, newname, new_model);
 		if (frac_stat) return GED_ERROR;
 		continue;
 	    }
@@ -199,7 +199,7 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
 		nmg_dup_face(fu, new_s);
 
 		snprintf(newname, 32, "%s%0*d", prefix, maxdigits, i++);
-		ged_add_nmg_part(gedp, newname, new_model);
+		fracture_add_nmg_part(gedp, newname, new_model);
 		if (frac_stat) return GED_ERROR;
 	    }
 	}
