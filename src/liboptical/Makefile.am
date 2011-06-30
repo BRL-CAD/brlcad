@@ -61,13 +61,13 @@ librtms_la_SOURCES = \
 	shade.c
 
 osl_srcs = \
-	osl-renderer.cpp \
+	liboslrend.cpp \
 	render_svc.cpp \
 	sh_osl.cpp
 
 noinst_HEADERS = \
 	constantpool.h \
-	osl-renderer.h \
+	liboslrend.h \
 	oslexec_pvt.h \
 	render_svc.h
 
