@@ -176,7 +176,6 @@ package provide cadwidgets::Ged 1.0
 	method edcomb {args}
 	method edmater {args}
 	method erase {args}
-	method erase_all {args}
 	method ev {args}
 	method expand {args}
 	method eye {args}
@@ -476,6 +475,7 @@ package provide cadwidgets::Ged 1.0
 	method tops {args}
 	method tra {args}
 	method track {args}
+	method translate {args}
 	method translate_mode {args}
 	method transparency {args}
 	method transparency_all {args}
@@ -1230,10 +1230,6 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::erase {args} {
     eval $mGed erase $args
-}
-
-::itcl::body cadwidgets::Ged::erase_all {args} {
-    eval $mGed erase_all $args
 }
 
 ::itcl::body cadwidgets::Ged::ev {args} {
@@ -2512,6 +2508,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed track $args
 }
 
+::itcl::body cadwidgets::Ged::translate {args} {
+    eval $mGed translate $args
+}
+
 ::itcl::body cadwidgets::Ged::translate_mode {args} {
     eval $mGed translate_mode $itk_component($itk_option(-pane)) $args
 }
@@ -3129,7 +3129,7 @@ package provide cadwidgets::Ged 1.0
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_ray $dm %x %y]; break"
+	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_ray $dm %x %y]; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> ""
     }
 }
@@ -3138,7 +3138,7 @@ package provide cadwidgets::Ged 1.0
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_arrow $dm %x %y]; break"
+	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_arrow $dm %x %y]; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_data_arrow $dm]; break"
     }
 }
@@ -3147,7 +3147,7 @@ package provide cadwidgets::Ged 1.0
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_data_label $dm %x %y]; break"
+	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_data_label $dm %x %y]; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> ""
     }
 }
@@ -3156,7 +3156,7 @@ package provide cadwidgets::Ged 1.0
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_line $dm %x %y]; break"
+	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_line $dm %x %y]; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_data_line $dm]; break"
     }
 }
@@ -3165,7 +3165,7 @@ package provide cadwidgets::Ged 1.0
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_move $dm %x %y]; break"
+	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_move $dm %x %y]; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_data_move $dm]; break"
     }
 }
@@ -3174,12 +3174,14 @@ package provide cadwidgets::Ged 1.0
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_data_pick $dm %x %y]; break"
+	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_data_pick $dm %x %y]; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> ""
     }
 }
 
 ::itcl::body cadwidgets::Ged::init_view_bindings {{_type default}} {
+    global tcl_platform
+
     switch -- $_type {
 	brlcad {
 	    foreach pane {ul ur ll lr} {
@@ -3198,13 +3200,22 @@ package provide cadwidgets::Ged 1.0
 	    }
 	}
     }
+
+    # Turn off <Enter> bindings. This fixes the problem where various
+    # various dialogs disappear when the mouse enters the geometry
+    # window when on the "windows" platform.
+    if {$tcl_platform(platform) == "windows"} {
+	foreach dm {ur ul ll lr} {
+	    bind $itk_component($dm) <Enter> {}
+	}
+    }
 }
 
 ::itcl::body cadwidgets::Ged::init_view_center {{_button 1}} {
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "$mGed vslew $itk_component($dm) %x %y; break"
+	bind $itk_component($dm) <$_button> "$mGed vslew $itk_component($dm) %x %y; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_view_translate $dm]; break"
     }
 }
@@ -3213,13 +3224,13 @@ package provide cadwidgets::Ged 1.0
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_part1_button> "[::itcl::code $this begin_view_measure $dm $_part1_button $_part2_button %x %y]; break"
+	bind $itk_component($dm) <$_part1_button> "[::itcl::code $this begin_view_measure $dm $_part1_button $_part2_button %x %y]; focus %W; break"
     }
 }
 
 ::itcl::body cadwidgets::Ged::init_view_measure_part2 {_button} {
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_view_measure_part2 $dm $_button %x %y]; break"
+	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_view_measure_part2 $dm $_button %x %y]; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_view_measure_part2 $dm $_button]; break"
     }
 }
@@ -3228,7 +3239,7 @@ package provide cadwidgets::Ged 1.0
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "$mGed rect_mode $itk_component($dm) %x %y; break"
+	bind $itk_component($dm) <$_button> "$mGed rect_mode $itk_component($dm) %x %y; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_view_rect $dm]; break"
     }
 }
@@ -3237,7 +3248,7 @@ package provide cadwidgets::Ged 1.0
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "$mGed rotate_mode $itk_component($dm) %x %y; break"
+	bind $itk_component($dm) <$_button> "$mGed rotate_mode $itk_component($dm) %x %y; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_view_rotate $dm]; break"
     }
 }
@@ -3246,7 +3257,7 @@ package provide cadwidgets::Ged 1.0
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "$mGed scale_mode $itk_component($dm) %x %y; break"
+	bind $itk_component($dm) <$_button> "$mGed scale_mode $itk_component($dm) %x %y; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_view_scale $dm]; break"
     }
 }
@@ -3255,7 +3266,7 @@ package provide cadwidgets::Ged 1.0
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "$mGed translate_mode $itk_component($dm) %x %y; break"
+	bind $itk_component($dm) <$_button> "$mGed translate_mode $itk_component($dm) %x %y; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_view_translate $dm]; break"
     }
 }
@@ -4099,7 +4110,6 @@ package provide cadwidgets::Ged 1.0
     $help add edcomb		{{comb rflag rid air los mid} {modify combination record information}}
     $help add edmater		{{comb1 [comb2 ...]} {edit combination materials}}
     $help add erase		{{<objects>} {remove objects from the screen}}
-    $help add erase_all		{{<objects>} {remove all occurrences of object(s) from the screen}}
     $help add ev		{{"[-dfnqstuvwT] [-P #] <objects>"} {evaluate objects via NMG tessellation}}
     $help add expand		{{expression} {globs expression against database objects}}
     $help add eye		{{mx my mz} {set eye point to given model coordinates}}
@@ -4231,6 +4241,7 @@ package provide cadwidgets::Ged 1.0
     $help add tops		{{} {find all top level objects}}
     $help add tra		{{[-v|-m] "x y z"} {translate the view}}
     $help add track		{{args} {create a track}}
+    $help add translate		{{x [y [z]] object(s)} {translate object(s)}}
     $help add tree		{{[-c] [-i n] [-d n] [-o outfile] object(s)} {print out a tree of all members of an object, or all members to depth n in the tree if n -d option is supplied}}
     $help add unhide		{{[objects]} {unset the "hidden" flag for the specified objects so they will appear in a "t" or "ls" command output}}
     $help add units		{{[mm|cm|m|in|ft|...]}	{change units}}

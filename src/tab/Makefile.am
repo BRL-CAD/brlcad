@@ -36,7 +36,8 @@ EXTRA_DIST = \
 	$(BUILT_SOURCES) \
 	$(man_MANS) \
 	script.l \
-	scriptsort.c
+	scriptsort.c \
+	CMakeLists.txt
 
 DEPENDS = src/librt
 

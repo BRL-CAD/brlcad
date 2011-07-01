@@ -41,7 +41,7 @@
 #include "raytrace.h"
 
 
-BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
+extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 
 static char	usage[] = "Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
 
@@ -104,7 +104,7 @@ fastf_print(FILE *out, size_t length, fastf_t f)
     ptr = strchr(buffer, '.');
     if ((size_t)(ptr - buffer) > length)
     {
-	bu_exit(1, "ERROR: Value (%f) too large for format length (%d)\n", f, length);
+	bu_exit(1, "ERROR: Value (%f) too large for format length (%zu)\n", f, length);
     }
 
     for (i=0; i<length; i++)
@@ -794,7 +794,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
     BU_GETUNION(curtree, tree);
-    RT_INIT_TREE(curtree);
+    RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
     return curtree;
 }

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file usrfmt.h
+/** @file nirt/usrfmt.h
  *
  * Common defines and declarations used by nirt.
  *

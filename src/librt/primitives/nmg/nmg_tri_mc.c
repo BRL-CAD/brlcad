@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_tri_mc.c
+/** @file primitives/nmg/nmg_tri_mc.c
  *
  * Triangulate the faces of a polygonal NMG using the marching cubes
  * algorithm.
@@ -420,9 +420,9 @@ nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol
 		bn_3pts_collinear(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol)) {
 	    bu_log("Heh, throwing away a triangle %d/%d/%d (%g %g %g | %g %g %g | %g %g %g)\n",
 		V3ARGS(vi), V3ARGS(edges[vi[0]]), V3ARGS(edges[vi[1]]), V3ARGS(edges[vi[2]]));
-	    if(NEAR_ZERO(edges[vi[0]][X]-VOODOO, tol->dist) ||
-		NEAR_ZERO(edges[vi[1]][X]-VOODOO, tol->dist) ||
-		NEAR_ZERO(edges[vi[2]][X]-VOODOO, tol->dist)) {
+	    if(NEAR_EQUAL(edges[vi[0]][X], VOODOO, tol->dist) ||
+		NEAR_EQUAL(edges[vi[1]][X], VOODOO, tol->dist) ||
+		NEAR_EQUAL(edges[vi[2]][X], VOODOO, tol->dist)) {
 		bu_log("Heh, VOODOO!\n");
 	    }
 	    vi+=3;
@@ -628,7 +628,7 @@ rt_nmg_mc_pew(struct shell *s, struct whack  *primp[4], struct application *a, f
 	    MEH(10,2,6);
 	    MEH(11,3,7);
 #undef MEH
-#define MEH(A,B,C,D) if(NEAR_ZERO(edges[B][Z]-p[A][Z], tol->dist)) { VMOVE(edges[C], p[A]); VMOVE(edges[D], p[A]); }
+#define MEH(A,B,C,D) if(NEAR_EQUAL(edges[B][Z], p[A][Z], tol->dist)) { VMOVE(edges[C], p[A]); VMOVE(edges[D], p[A]); }
 	    MEH(0,3,0,8);
 	    MEH(1,1,0,9);
 	    MEH(2,1,2,10);

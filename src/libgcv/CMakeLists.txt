@@ -1,10 +1,11 @@
 set(LIBGCV_SOURCES
+    bottess.c
     region_end.c
     region_end_mc.c
 )
 
 include_directories(
-	 ${REGEX_INCLUDE_DIR}
+    ${REGEX_INCLUDE_DIR}
     ${TCL_INCLUDE_DIRS}
 )
 

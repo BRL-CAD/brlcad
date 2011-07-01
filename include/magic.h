@@ -18,6 +18,7 @@
  * information.
  */
 /** @addtogroup magic */
+/** @ingroup memory */
 /** @{ */
 /** @file magic.h
  *
@@ -84,6 +85,7 @@
 
 #define BN_GAUSS_MAGIC			512256128
 #define BN_POLY_MAGIC			0x506f4c79 /**< PoLy */
+#define BN_SPM_MAGIC			0x41278678
 #define BN_TABDATA_MAGIC		0x53736d70
 #define BN_TABLE_MAGIC			0x53706374
 #define BN_TOL_MAGIC			0x98c734bb
@@ -167,7 +169,7 @@
 #define RT_COMB_MAGIC			0x436f6d49 /**< ComI */
 #define RT_CONSTRAINT_MAGIC		0x7063696d /**< pcim */
 #define RT_CTS_MAGIC			0x98989123
-#define RT_DBTR_MAGIC			0x64627472 /**< dbtr */
+#define RT_DB_TRAVERSE_MAGIC			0x64627472 /**< dbtr */
 #define RT_DBTS_MAGIC			0x64627473 /**< dbts */
 #define RT_DB_INTERNAL_MAGIC		0x0dbbd867
 #define RT_DIR_MAGIC			0x05551212 /**< Directory assistance */
@@ -205,7 +207,6 @@
 #define PT_MAGIC			0x87687681
 #define RESOURCE_MAGIC			0x83651835
 #define RTI_MAGIC			0x99101658
-#define SPM_MAGIC			0x41278678
 #define VERT_TREE_MAGIC			0x56455254 /**< VERT */
 #define WDB_METABALLPT_MAGIC		0x6D627074 /**< mbpt */
 #define WDB_PIPESEG_MAGIC		0x9723ffef
@@ -226,16 +227,16 @@
 #  define BU_CKMAG(_ptr, _magic, _str) { \
 	uintptr_t _ptrval = (uintptr_t)(_ptr); \
 	if (UNLIKELY((_ptrval == 0) || (_ptrval & (sizeof(_ptrval)-1)) || *((unsigned long *)(_ptr)) != (unsigned long)(_magic))) { \
-		bu_badmagic((unsigned long *)(_ptr), (unsigned long)_magic, _str, __FILE__, __LINE__); \
+	    bu_badmagic((unsigned long *)(_ptr), (unsigned long)_magic, _str, __FILE__, __LINE__); \
 	} \
-}
+    }
 #  define BU_CKMAG_TCL(_interp, _ptr, _magic, _str) { \
 	uintptr_t _ptrval = (uintptr_t)(_ptr); \
 	if (UNLIKELY((_ptrval == 0) || (_ptrval & (sizeof(_ptrval)-1)) || *((unsigned long *)(_ptr)) != (_magic))) { \
-		bu_badmagic_tcl((_interp), (unsigned long *)(_ptr), (unsigned long)_magic, _str, __FILE__, __LINE__); \
-		return TCL_ERROR; \
+	    bu_badmagic_tcl((_interp), (unsigned long *)(_ptr), (unsigned long)_magic, _str, __FILE__, __LINE__); \
+	    return TCL_ERROR; \
 	} \
-}
+    }
 #endif
 
 
@@ -244,7 +245,7 @@
  *
  *  Support routine for BU_CKMAG macro.
  */
-BU_EXPORT BU_EXTERN(void bu_badmagic, (const unsigned long *ptr, unsigned long magic, const char *str, const char *file, int line));
+BU_EXPORT extern void bu_badmagic(const unsigned long *ptr, unsigned long magic, const char *str, const char *file, int line);
 
 /**
  * b u _ b a d m a g i c _ t c l
@@ -267,7 +268,7 @@ BU_EXPORT BU_EXTERN(void bu_badmagic, (const unsigned long *ptr, unsigned long m
  * @return
  * void
  */
-BU_EXPORT BU_EXTERN(void bu_badmagic_tcl, (Tcl_Interp *interp, const unsigned long *ptr, unsigned long magic, const char *str, const char *file, int line));
+BU_EXPORT extern void bu_badmagic_tcl(Tcl_Interp *interp, const unsigned long *ptr, unsigned long magic, const char *str, const char *file, int line);
 
 
 /**
@@ -279,7 +280,7 @@ BU_EXPORT BU_EXTERN(void bu_badmagic_tcl, (Tcl_Interp *interp, const unsigned lo
  * macro BU_CK_MAGIC() to provide a "hint" as to what sort of pointer
  * error might have been made.
  */
-BU_EXPORT BU_EXTERN(const char *bu_identify_magic, (unsigned long magic));
+BU_EXPORT extern const char *bu_identify_magic(unsigned long magic);
 
 
 #endif /* __MAGIC_H__ */

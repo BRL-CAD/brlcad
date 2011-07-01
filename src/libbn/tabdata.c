@@ -19,7 +19,7 @@
  */
 /** @addtogroup anim */
 /** @{ */
-/** @file tabdata.c
+/** @file libbn/tabdata.c
  *
  * @brief
  *  Routines for processing tables (curves) of data with one independent
@@ -113,7 +113,7 @@ bn_table_make_uniform(size_t num, double first, double last)
     fastf_t			delta;
     int			j;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_make_uniform( num=%d, %g, %g )\n", num, first, last );
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_make_uniform( num=%zu, %g, %g )\n", num, first, last );
 
     if ( first >= last )  bu_bomb("bn_table_make_uniform() first >= last\n");
 
@@ -958,7 +958,7 @@ bn_pr_table(const char *title, const struct bn_table *tabp)
     BN_CK_TABLE(tabp);
 
     for ( j=0; j <= tabp->nx; j++ )  {
-	bu_log("%3d: %g\n", j, tabp->x[j] );
+	bu_log("%3zu: %g\n", j, tabp->x[j] );
     }
 }
 
@@ -1074,7 +1074,7 @@ bn_read_table_and_tabdata(const char *filename)
     for ( i=0; i < count; i++ )  {
 	buf[0] = '\0';
 	if ( bu_fgets( buf, sizeof(buf), fp ) == NULL )  {
-	    bu_log("bn_read_table_and_tabdata(%s) unexpected EOF on line %d\n", filename, i);
+	    bu_log("bn_read_table_and_tabdata(%s) unexpected EOF on line %zu\n", filename, i);
 	    break;
 	}
 	sscanf( buf, "%lf %lf", &tabp->x[i], &data->y[i] );
@@ -1104,7 +1104,7 @@ bn_tabdata_binary_read(const char *filename, size_t num, const struct bn_table *
     int	fd;
     long i;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_binary_read(%s, num=%d, %p)\n", filename, num, (void *)tabp);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_binary_read(%s, num=%zu, %p)\n", filename, num, (void *)tabp);
 
     BN_CK_TABLE(tabp);
 
@@ -1175,7 +1175,7 @@ bn_tabdata_malloc_array(const struct bn_table *tabp, size_t num)
     size_t nw;
     size_t nbytes;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_malloc_array(%p, num=%d)\n", (void *)tabp, num);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_malloc_array(%p, num=%zu)\n", (void *)tabp, num);
 
     BN_CK_TABLE(tabp);
     nw = tabp->nx;
@@ -1310,7 +1310,7 @@ bn_tabdata_to_tcl(struct bu_vls *vp, const struct bn_tabdata *data)
 	if ( val < minval )  minval = val;
 	if ( val > maxval )  maxval = val;
     }
-    bu_vls_printf( vp, "} nx %d ymin %g ymax %g",
+    bu_vls_printf( vp, "} nx %zu ymin %g ymax %g",
 		   tabp->nx, minval, maxval );
 }
 
@@ -1400,7 +1400,7 @@ bn_table_interval_num_samples(const struct bn_table *tabp, double low, double hi
 	if ( tabp->x[i] >= low && tabp->x[i] <= hi )  count++;
     }
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_interval_num_samples(%p, low=%g, hi=%g) = %d\n", (void *)tabp, low, hi, count);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_interval_num_samples(%p, low=%g, hi=%g) = %zu\n", (void *)tabp, low, hi, count);
     return count;
 }
 

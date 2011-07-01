@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file char.c
+/** @file fbed/char.c
  *	Author:		Gary S. Moss
  */
 
@@ -227,12 +227,6 @@ menu_char(int x_adjust, int menu_wid, int odd, unsigned char *menu_border)
 int
 bitx(char *bitstring, int posn)
 {
-#if 0 /* Was #ifdef vax, but doesn't work on 4.3BSD */
-    field;
-
-    asm("extzv	r10,$1,(r11), r8");
-    return field;
-#else
     for (; posn >= 8; posn -= 8, bitstring++ )
 	;
 #if defined( CANT_DO_ZERO_SHIFT )
@@ -241,7 +235,6 @@ bitx(char *bitstring, int posn)
     else
 #endif
 	return (int)(*bitstring) & (1<<posn);
-#endif
 }
 
 /*

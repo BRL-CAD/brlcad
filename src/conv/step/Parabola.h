@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Parabola.h
+/** @file step/Parabola.h
  *
  * Class definition used to convert STEP "Parabola" to BRL-CAD BREP
  * structures.

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixhist.c
+/** @file util/pixhist.c
  *
  * Display a color histogram of a pix file.
  * 0 is top of screen, 255 bottom.

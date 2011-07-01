@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bwfilter.c
+/** @file util/bwfilter.c
  *
  * Filters a black and white file with an arbitrary 3x3 kernel.
  * Leaves the outer rows untouched.  Allows an alternate divisor and

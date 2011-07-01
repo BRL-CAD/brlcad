@@ -144,7 +144,7 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
 	if (yp < 0) yp = 0;
 
 	if (status==STATUS_EMPTY) {
-	    if (NEAR_ZERO(xp-yp, 1.0e-5)) {
+	    if (NEAR_EQUAL(xp, yp, 1.0e-5)) {
 		fstate->same += xp;
 		status = (STATUS_PP | STATUS_MP);
 		lastpt = xp;
@@ -159,7 +159,7 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
 		status = STATUS_MP;
 	    }
 	} else if (status == (STATUS_MP | STATUS_PP)) {
-	    if (NEAR_ZERO(xp-yp, 1.0e-5)) {
+	    if (NEAR_EQUAL(xp, yp, 1.0e-5)) {
 		fstate->same += xp - lastpt;
 		status = STATUS_EMPTY;
 		pp = pp->pt_forw;
@@ -180,7 +180,7 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
 	}
 
 	else if (status == STATUS_PP) {
-	    if (NEAR_ZERO(xp-yp, 1.0e-5)) {
+	    if (NEAR_EQUAL(xp, yp, 1.0e-5)) {
 		fstate->diff += xp - lastpt;
 		status = STATUS_MP;
 		lastpt = yp;
@@ -197,7 +197,7 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
 	    }
 	}
 	else if (status == STATUS_MP) {
-	    if (NEAR_ZERO(xp-yp, 1.0e-5)) {
+	    if (NEAR_EQUAL(xp, yp, 1.0e-5)) {
 		fstate->diff += yp - lastpt;
 		status = STATUS_PP;
 		lastpt = xp;

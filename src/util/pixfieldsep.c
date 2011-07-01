@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixfieldsep.c
+/** @file util/pixfieldsep.c
  *
  * Separate an interlaced video image into two separate .pix files.
  *

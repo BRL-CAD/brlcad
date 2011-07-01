@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixcount.c
+/** @file util/pixcount.c
  *
  * Sort the pixels of an input stream by color value.
  *
@@ -137,18 +137,11 @@ int compare_pixels (void *v1, void *v2)
 /*
  * L O O K U P _ P I X E L ()
  */
-struct pixel *lookup_pixel(bu_rb_tree *palette, unsigned char *color)
+struct pixel *lookup_pixel(struct bu_rb_tree *palette, unsigned char *color)
 {
     int rc = 0;	/* Return code from bu_rb_insert() */
     struct pixel *qpp = NULL;	/* The query */
     struct pixel *pp = NULL;	/* Value to return */
-
-#if 0
-    bu_log("lookup_pixel(");
-    for (i = 0; i < pixel_size; ++i)
-	bu_log("%3d ", color[i]);
-    bu_log(")...");
-#endif
 
     /*
      * Prepare the palette query
@@ -163,16 +156,10 @@ struct pixel *lookup_pixel(bu_rb_tree *palette, unsigned char *color)
      */
     switch (rc = bu_rb_insert(palette, (void *) qpp)) {
 	case -1:
-#if 0
-	    bu_log(" already existed\n");
-#endif
 	    pp = (struct pixel *) bu_rb_curr1(palette);
 	    free_pixel(qpp);
 	    break;
 	case 0:
-#if 0
-	    bu_log(" newly added\n");
-#endif
 	    pp = qpp;
 	    break;
 	default:
@@ -186,7 +173,7 @@ struct pixel *lookup_pixel(bu_rb_tree *palette, unsigned char *color)
 int
 main (int argc, char **argv)
 {
-    bu_rb_tree *palette;	/* Pixel palette */
+    struct bu_rb_tree *palette;	/* Pixel palette */
     char *inf_name;	/* name of input stream */
     char *outf_name;	/* " " output " */
     unsigned char *buf;		/* the current input pixel */

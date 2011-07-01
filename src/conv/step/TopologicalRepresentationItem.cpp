@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file TopologicalRepresentationItem.cpp
+/** @file step/TopologicalRepresentationItem.cpp
  *
  * Routines to convert STEP "TopologicalRepresentationItem" to BRL-CAD BREP
  * structures.

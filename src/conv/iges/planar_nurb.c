@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file planar_nurb.c
+/** @file iges/planar_nurb.c
  *
  * Checks if nurb surface is planar, returns 1 if so, 0 otherwise
  *

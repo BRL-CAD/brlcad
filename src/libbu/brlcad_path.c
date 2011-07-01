@@ -17,18 +17,16 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_log */
-/** @{ */
 
 #include "common.h"
+
+#ifdef HAVE_SYS_PARAM_H /* for MAXPATHLEN */
+#  include <sys/param.h>
+#endif
 
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
-
-#ifdef HAVE_SYS_PARAM_H
-#  include <sys/param.h>
-#endif
 
 #include "bu.h"
 #include "sysv.h"
@@ -47,10 +45,6 @@
 #define MAX_WHERE_SIZE (size_t)((MAXPATHLEN*2) + 64)
 
 
-/* internal storage for bu_getprogname/bu_setprogname */
-static char bu_progname[MAXPATHLEN] = {0};
-
-
 HIDDEN const char *
 _brlcad_data()
 {
@@ -66,188 +60,6 @@ _brlcad_data()
     return path;
 }
 
-
-/**
- * b u _ i p w d
- *
- * set/return the path to the initial working directory.
- * bu_setprogname() must be called on app startup for the correct pwd to
- * be acquired/set.
- */
-HIDDEN const char *
-_bu_ipwd()
-{
-    /* private stash */
-    static const char *ipwd = NULL;
-    static char buffer[MAXPATHLEN] = {0};
-    const char *pwd = NULL;
-
-    /* already found the path before */
-    if (ipwd) {
-	return ipwd;
-    }
-
-    /* FIRST: try environment */
-    pwd = getenv("PWD"); /* not our memory to free */
-    if (pwd && strlen(pwd) > 0) {
-#ifdef HAVE_REALPATH
-	ipwd = realpath(pwd, buffer);
-	if (ipwd) {
-	    return ipwd;
-	}
-#endif
-	ipwd = pwd;
-	return ipwd;
-    }
-
-    /* SECOND: try to query path */
-#ifdef HAVE_REALPATH
-    ipwd = realpath(".", buffer);
-    if (ipwd && strlen(ipwd) > 0) {
-	return ipwd;
-    }
-#endif
-
-    /* THIRD: try calling the 'pwd' command */
-    ipwd = bu_which("pwd");
-    if (ipwd) {
-#if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
-	FILE *fp = NULL;
-
-	fp = popen(ipwd, "r");
-	if (LIKELY(fp != NULL)) {
-	    if (bu_fgets(buffer, MAXPATHLEN, fp)) {
-		ipwd = buffer;
-	    } else {
-		ipwd = ".";
-	    }
-	} else {
-	    ipwd = ".";
-	}
-#else
-	memset(buffer, 0, MAXPATHLEN); /* quellage */
-	ipwd = ".";
-#endif
-    }
-
-    /* LAST: punt (but do not return NULL) */
-    ipwd = ".";
-    return ipwd;
-}
-
-
-HIDDEN const char *
-_bu_argv0(void)
-{
-    /* private stash */
-    static const char *argv0 = NULL;
-
-    /* set initial pwd if we have not already */
-    (void)_bu_ipwd();
-
-    if (bu_progname[0] != '\0') {
-	argv0 = bu_progname;
-    }
-
-#ifdef HAVE_GETPROGNAME
-    if (!argv0) {
-	/* do not call bu_getgrogname() */
-	argv0 = getprogname(); /* not malloc'd memory */
-    }
-#endif
-
-    if (!argv0) {
-	argv0 = "(unknown)";
-    }
-
-    return argv0;
-}
-
-
-const char *
-bu_argv0_full_path(void)
-{
-    static char buffer[MAXPATHLEN] = {0};
-
-    const char *argv0 = _bu_argv0();
-    const char *ipwd = _bu_ipwd();
-
-    const char *which = bu_which(argv0);
-
-    if (argv0[0] == BU_DIR_SEPARATOR) {
-	/* seems to already be a full path */
-	snprintf(buffer, MAXPATHLEN, "%s", argv0);
-	return buffer;
-    }
-
-    /* running from PATH */
-    if (which) {
-	snprintf(buffer, MAXPATHLEN, "%s", which);
-	return buffer;
-    }
-
-    while (argv0[0] == '.' && argv0[1] == BU_DIR_SEPARATOR) {
-	/* remove ./ if present, relative paths are appended to pwd */
-	argv0 += 2;
-    }
-
-    /* running from relative dir */
-    snprintf(buffer, MAXPATHLEN, "%s%c%s", ipwd, BU_DIR_SEPARATOR, argv0);
-    if (bu_file_exists(buffer)) {
-	return buffer;
-    }
-
-    /* give up */
-    snprintf(buffer, MAXPATHLEN, "%s", argv0);
-    return buffer;
-}
-
-
-const char *
-bu_getprogname(void) {
-    const char *name = NULL;
-
-    if (bu_progname[0] != '\0') {
-	return bu_basename(bu_progname);
-    }
-
-#ifdef HAVE_GETPROGNAME
-    name = getprogname(); /* not malloc'd memory */
-#endif
-
-    if (!name) {
-	name = _bu_argv0();
-    }
-
-    snprintf(bu_progname, MAXPATHLEN, "%s", name);
-
-    return bu_basename(bu_progname);
-}
-
-
-void
-bu_setprogname(const char *argv0)
-{
-#ifdef HAVE_SETPROGNAME
-    setprogname(argv0);
-#endif
-
-    if (argv0) {
-	snprintf(bu_progname, MAXPATHLEN, "%s", argv0);
-    }
-
-    (void)_bu_ipwd();
-
-    return;
-}
-
-
-/* DEPRECATED: Do not use. */
-const char *
-bu_argv0(void)
-{
-    return _bu_argv0();
-}
 
 
 /**
@@ -345,7 +157,7 @@ _bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct 
 
     /* be safe */
     if (rlen + 2 > MAXPATHLEN) {
-	bu_log("Warning: path is way too long (%d characters > %d)\n", rlen+2, MAXPATHLEN);
+	bu_log("Warning: path is way too long (%zu characters > %d)\n", rlen+2, MAXPATHLEN);
 	if (searched && where) {
 	    bu_vls_strcat(searched, where);
 	}
@@ -377,7 +189,7 @@ _bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct 
     /* be safe again */
     llen = strlen(result);
     if (llen + rlen + 3 > MAXPATHLEN) {
-	bu_log("Warning: path is way too long (%d characters > %d)\n", llen+rlen+3, MAXPATHLEN);
+	bu_log("Warning: path is way too long (%zu characters > %d)\n", llen+rlen+3, MAXPATHLEN);
 	if (searched && where) {
 	    bu_vls_strcat(searched, where);
 	}
@@ -728,8 +540,6 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
     return NULL;
 }
 
-
-/** @} */
 
 /*
  * Local Variables:

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tube.c
+/** @file proc-db/tube.c
  *
  * Program to generate a gun-tube as a procedural spline.
  * The tube's core lies on the X axis.

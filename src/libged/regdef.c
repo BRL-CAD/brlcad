@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file regdef.c
+/** @file libged/regdef.c
  *
  * The regdef command.
  *
@@ -37,11 +37,11 @@ ged_regdef(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* Get region defaults */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "ident %d air %d los %d material %d",
+	bu_vls_printf(gedp->ged_result_str, "ident %d air %d los %d material %d",
 		      gedp->ged_wdbp->wdb_item_default,
 		      gedp->ged_wdbp->wdb_air_default,
 		      gedp->ged_wdbp->wdb_los_default,
@@ -50,12 +50,12 @@ ged_regdef(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (argc < 2 || 5 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[1], "%d", &item) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
     gedp->ged_wdbp->wdb_item_default = item;
@@ -64,7 +64,7 @@ ged_regdef(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
 
     if (sscanf(argv[2], "%d", &air) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
     gedp->ged_wdbp->wdb_air_default = air;
@@ -77,7 +77,7 @@ ged_regdef(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
 
     if (sscanf(argv[3], "%d", &los) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
     gedp->ged_wdbp->wdb_los_default = los;
@@ -86,7 +86,7 @@ ged_regdef(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
 
     if (sscanf(argv[4], "%d", &mat) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
     gedp->ged_wdbp->wdb_mat_default = mat;

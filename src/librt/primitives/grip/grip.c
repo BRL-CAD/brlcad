@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file grip.c
+/** @file primitives/grip/grip.c
  *
  * Intersect a ray with a "grip" and return nothing.
  *

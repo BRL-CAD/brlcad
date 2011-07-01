@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_fuse.c
+/** @file primitives/nmg/nmg_fuse.c
  *
  * Routines to "fuse" entities together that are geometrically
  * identical (within tolerance) into entities that share underlying
@@ -53,12 +53,11 @@ struct pt_list
 };
 
 
-BU_EXTERN(void nmg_split_trim,
-	  (const struct edge_g_cnurb *cnrb,
-	   const struct face_g_snurb *snrb,
-	   fastf_t t,
-	   struct pt_list *pt0, struct pt_list *pt1,
-	   const struct bn_tol *tol));
+extern void nmg_split_trim(const struct edge_g_cnurb *cnrb,
+			   const struct face_g_snurb *snrb,
+			   fastf_t t,
+			   struct pt_list *pt0, struct pt_list *pt1,
+			   const struct bn_tol *tol);
 
 /**
  * N M G _ I S _ C O M M O N _ B I G L O O P
@@ -333,7 +332,7 @@ nmg_cnurb_is_linear(const struct edge_g_cnurb *cnrb)
 
     linear = 1;
 
- out:
+out:
     if (rt_g.NMG_debug & DEBUG_MESH)
 	bu_log("nmg_cnurb_is_linear(x%x) returning %d\n", cnrb, linear);
 
@@ -485,7 +484,7 @@ nmg_snurb_is_planar(const struct face_g_snurb *srf, const struct bn_tol *tol)
     }
 
     planar = 1;
- out:
+out:
     if (rt_g.NMG_debug & DEBUG_MESH)
 	bu_log("nmg_snurb_is_planar(x%x) returning %d\n", srf, planar);
 
@@ -1264,6 +1263,8 @@ nmg_two_face_fuse(struct face *f1, struct face *f2, const struct bn_tol *tol)
     register struct face_g_plane *fg1;
     register struct face_g_plane *fg2;
     int flip2 = 0;
+    int code;
+    fastf_t dist;
 
     NMG_CK_FACE(f1);
     NMG_CK_FACE(f2);
@@ -1283,81 +1284,51 @@ nmg_two_face_fuse(struct face *f1, struct face *f2, const struct bn_tol *tol)
     NMG_CK_FACE_G_PLANE(fg1);
     NMG_CK_FACE_G_PLANE(fg2);
 
+    /* test if the face geometry (i.e. face plane) is already fused */
     if (fg1 == fg2) {
 	if (rt_g.NMG_debug & DEBUG_MESH) {
-	    bu_log("nmg_two_face_fuse(x%x, x%x) fg already shared\n",
-		   f1, f2);
-	}
-	return 0;	/* Already shared */
-    }
-#ifdef TOPOLOGY_CHECK
-    /*
-     * First, a topology check.
-     * If the two faces share one entire loop (of at least 3 verts)
-     * according to topology, then by all rights the faces MUST be
-     * shared.
-     */
-
-    if (fabs(VDOT(fg1->N, fg2->N)) >= 0.99  &&
-	fabs(fg1->N[3]) - fabs(fg2->N[3]) < 100 * tol->dist  &&
-	nmg_is_common_bigloop(f1, f2)) {
-	if (VDOT(fg1->N, fg2->N) < 0) flip2 = 1;
-	if (rt_g.NMG_debug & DEBUG_MESH) {
-	    bu_log("nmg_two_face_fuse(x%x, x%x) faces have a common loop, they MUST be fused.  flip2=%d\n",
-		   f1, f2, flip2);
-	}
-	goto must_fuse;
-    }
-
-    /* See if faces are coplanar */
-    code = bn_coplanar(fg1->N, fg2->N, tol);
-    if (code <= 0) {
-	if (rt_g.NMG_debug & DEBUG_MESH) {
-	    bu_log("nmg_two_face_fuse(x%x, x%x) faces non-coplanar\n",
-		   f1, f2);
+	    bu_log("nmg_two_face_fuse(x%x, x%x) fg already shared\n", f1, f2);
 	}
 	return 0;
     }
-    if (code == 1)
-	flip2 = 0;
-    else
-	flip2 = 1;
+
+    /* verify the bounding box of each faceuse overlaps the other
+     * faceuse bounding box
+     */
+    if (!V3RPP_OVERLAP_TOL(f1->min_pt, f1->max_pt, f2->min_pt, f2->max_pt, tol)) {
+	return 0;
+    }
+
+    /* check the distance between the planes at their center */
+    dist = fabs(fg1->N[W] - fg2->N[W]);
+    if (!NEAR_ZERO(dist, tol->dist)) {
+        return 0;
+    }
+
+    /* check that each vertex of each faceuse is within tolerance of
+     * the plane of the other faceuse 
+     */
+    if (nmg_ck_fg_verts(f1->fu_p, f2, tol) || nmg_ck_fg_verts(f2->fu_p, f1, tol)) {
+	if (rt_g.NMG_debug & DEBUG_MESH) {
+	    bu_log("nmg_two_face_fuse: verts not within tol of surface, can't fuse\n");
+	}
+	return 0;
+    }
 
     if (rt_g.NMG_debug & DEBUG_MESH) {
 	bu_log("nmg_two_face_fuse(x%x, x%x) coplanar faces, bn_coplanar code=%d, flip2=%d\n",
 	       f1, f2, code, flip2);
     }
-#else
-    if (VDOT(fg1->N, fg2->N) > SMALL_FASTF)
+
+    /* check if normals are pointing in the same direction */
+    if (VDOT(fg1->N, fg2->N) >= SMALL_FASTF) {
+        /* same direction */
 	flip2 = 0;
-    else
+    } else {
+        /* opposite direction */
 	flip2 = 1;
-
-    if (nmg_ck_fg_verts(f1->fu_p, f2, tol) != 0) {
-	if (rt_g.NMG_debug & DEBUG_MESH) {
-	    bu_log("nmg_two_face_fuse: f1 verts not within tol of f2's surface, can't fuse\n");
-	}
-	return 0;
-    }
-#endif
-
-    /*
-     * Plane equations match, within tol.
-     * Before conducting a merge, verify that
-     * all the verts in f2 are within tol->dist
-     * of f1's surface.
-     */
-    if (nmg_ck_fg_verts(f2->fu_p, f1, tol) != 0) {
-	if (rt_g.NMG_debug & DEBUG_MESH) {
-	    bu_log("nmg_two_face_fuse: f2 verts not within tol of f1's surface, can't fuse\n");
-	}
-	return 0;
     }
 
-#ifdef TOPPLOGY_CHECK
- must_fuse:
-#endif
-    /* All points are on the plane, it's OK to fuse */
     if (flip2 == 0) {
 	if (rt_g.NMG_debug & DEBUG_MESH) {
 	    bu_log("joining face geometry (same dir) f1=x%x, f2=x%x\n", f1, f2);
@@ -1430,15 +1401,6 @@ nmg_model_face_fuse(struct model *m, const struct bn_tol *tol)
 
 	fg1 = f1->g.plane_p;
 	NMG_CK_FACE_G_PLANE(fg1);
-
-	/* Check that all the verts of f1 are within tol of face */
-	if (nmg_ck_fu_verts(f1->fu_p, f1, tol) != 0) {
-	    if (rt_g.NMG_debug) {
-		PLPRINT(" f1", f1->g.plane_p->N);
-		nmg_pr_fu_briefly(f1->fu_p, 0);
-	    }
-	    bu_bomb("nmg_model_face_fuse(): verts not within tol of containing face\n");
-	}
 
 	for (j = i-1; j >= 0; j--) {
 	    register struct face *f2;
@@ -1932,10 +1894,10 @@ nmg_insure_radial_list_is_increasing(struct bu_list *hd, fastf_t amin, fastf_t a
 void
 nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existing, struct edgeuse *eu, const fastf_t *xvec, const fastf_t *yvec, const fastf_t *zvec, const struct bn_tol *tol)
 
-    /* may be null */
+/* may be null */
 
 
-    /* for printing */
+/* for printing */
 {
     struct edgeuse *teu;
     struct nmg_radial *rad;
@@ -2284,7 +2246,7 @@ const struct edgeuse *
 nmg_find_next_use_of_2e_in_lu(const struct edgeuse *eu, const struct edge *e1, const struct edge *e2)
 
 
-    /* may be NULL */
+/* may be NULL */
 {
     register const struct edgeuse *neu;
 
@@ -2322,7 +2284,7 @@ void
 nmg_radial_mark_cracks(struct bu_list *hd, const struct edge *e1, const struct edge *e2, const struct bn_tol *tol)
 
 
-    /* may be NULL */
+/* may be NULL */
 
 {
     struct nmg_radial *rad;
@@ -2648,9 +2610,9 @@ nmg_radial_check_parity(const struct bu_list *hd, const struct bu_ptbl *shells, 
 void
 nmg_radial_implement_decisions(struct bu_list *hd, const struct bn_tol *tol, struct edgeuse *eu1, fastf_t *xvec, fastf_t *yvec, fastf_t *zvec)
 
-    /* for printing */
-    /* temp */
-    /*** temp ***/
+/* for printing */
+/* temp */
+/*** temp ***/
 {
     struct nmg_radial *rad;
     struct nmg_radial *prev;
@@ -2662,7 +2624,7 @@ nmg_radial_implement_decisions(struct bu_list *hd, const struct bn_tol *tol, str
     if (rt_g.NMG_debug & DEBUG_BASIC)
 	bu_log("nmg_radial_implement_decisions() BEGIN\n");
 
- again:
+again:
     skipped = 0;
     for (BU_LIST_FOR(rad, nmg_radial, hd)) {
 	struct edgeuse *dest;
@@ -2756,7 +2718,7 @@ nmg_pr_radial(const char *title, const struct nmg_radial *rad)
 void
 nmg_pr_radial_list(const struct bu_list *hd, const struct bn_tol *tol)
 
-    /* for printing */
+/* for printing */
 {
     struct nmg_radial *rad;
 
@@ -2893,7 +2855,7 @@ nmg_do_radial_join(struct bu_list *hd, struct edgeuse *eu1ref, fastf_t *xvec, fa
     if (rt_g.NMG_debug & DEBUG_MESH_EU)
 	bu_log("ref_dir = (%g %g %g)\n", V3ARGS(ref_dir));
 
- top:
+top:
 
     if (rt_g.NMG_debug & DEBUG_MESH_EU) {
 	bu_log("At top of nmg_do_radial_join:\n");
@@ -3109,7 +3071,7 @@ nmg_radial_join_eu_NEW(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn
 void
 nmg_radial_exchange_marked(struct bu_list *hd, const struct bn_tol *tol)
 
-    /* for printing */
+/* for printing */
 {
     struct nmg_radial *rad;
 

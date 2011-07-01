@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file scale.c
+/** @file libdm/scale.c
  *
  * Functions -
  *	dm_draw_scale	Draws the view scale.

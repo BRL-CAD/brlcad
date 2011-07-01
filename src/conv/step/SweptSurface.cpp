@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file SweptSurface.cpp
+/** @file step/SweptSurface.cpp
  *
  * Routines to interface to STEP "SweptSurface".
  *

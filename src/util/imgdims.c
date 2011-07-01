@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file imgdims.c
+/** @file util/imgdims.c
  *
  * Guess the dimensions of an image
  *

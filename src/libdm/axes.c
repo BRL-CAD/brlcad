@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file axes.c
+/** @file libdm/axes.c
  *
  * Functions -
  *	draw_axes	Common axes drawing routine that draws axes at the

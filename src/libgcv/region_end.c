@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file region_end.c
+/** @file libgcv/region_end.c
  *
  * Routines to process regions during a db_walk_tree.
  *
@@ -49,7 +49,7 @@ _gcv_cleanup(int state, union tree *tp)
     db_free_tree(tp, &rt_uniresource); /* Does an nmg_kr() */
 
     BU_GETUNION(tp, tree);
-    RT_INIT_TREE(tp);
+    RT_TREE_INIT(tp);
     tp->tr_op = OP_NOP;
     return tp;
 }

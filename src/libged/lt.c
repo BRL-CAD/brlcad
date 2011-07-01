@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file lt.c
+/** @file libged/lt.c
  *
  * The lt command.
  *
@@ -34,42 +34,7 @@
 
 
 static int
-ged_list_children(struct ged			*gedp,
-		  struct directory	*dp);
-
-int
-ged_lt(struct ged *gedp, int argc, const char *argv[])
-{
-    struct directory *dp;
-    static const char *usage = "object";
-
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-
-    /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
-
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
-
-    if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    return ged_list_children(gedp, dp);
-}
-
-static int
-ged_list_children(struct ged *gedp, struct directory *dp)
+list_children(struct ged *gedp, struct directory *dp)
 {
     size_t i;
     struct rt_db_internal intern;
@@ -79,7 +44,7 @@ ged_list_children(struct ged *gedp, struct directory *dp)
 	return GED_OK;
 
     if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
+	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	return GED_ERROR;
     }
     comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -93,18 +58,18 @@ ged_list_children(struct ged *gedp, struct directory *dp)
 	if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
 	    db_non_union_push(comb->tree, &rt_uniresource);
 	    if (db_ck_v4gift_tree(comb->tree) < 0) {
-		bu_vls_printf(&gedp->ged_result_str, "Cannot flatten tree for listing");
+		bu_vls_printf(gedp->ged_result_str, "Cannot flatten tree for listing");
 		return GED_ERROR;
 	    }
 	}
 	node_count = db_tree_nleaves(comb->tree);
 	if (node_count > 0) {
-	    rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count,
-							       sizeof( struct rt_tree_array ), "tree list" );
+	    rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count,
+							      sizeof(struct rt_tree_array), "tree list");
 	    actual_count = (struct rt_tree_array *)db_flatten_tree(
 		rt_tree_array, comb->tree, OP_UNION,
-		1, &rt_uniresource ) - rt_tree_array;
-	    BU_ASSERT_SIZE_T( actual_count, ==, node_count );
+		1, &rt_uniresource) - rt_tree_array;
+	    BU_ASSERT_SIZE_T(actual_count, ==, node_count);
 	    comb->tree = TREE_NULL;
 	} else {
 	    actual_count = 0;
@@ -130,8 +95,8 @@ ged_list_children(struct ged *gedp, struct directory *dp)
 		    break;
 	    }
 
-	    bu_vls_printf(&gedp->ged_result_str, "{%c %s} ", op, rt_tree_array[i].tl_tree->tr_l.tl_name);
-	    db_free_tree( rt_tree_array[i].tl_tree, &rt_uniresource );
+	    bu_vls_printf(gedp->ged_result_str, "{%c %s} ", op, rt_tree_array[i].tl_tree->tr_l.tl_name);
+	    db_free_tree(rt_tree_array[i].tl_tree, &rt_uniresource);
 	}
 
 	if (rt_tree_array)
@@ -140,6 +105,38 @@ ged_list_children(struct ged *gedp, struct directory *dp)
     rt_db_free_internal(&intern);
 
     return GED_OK;
+}
+
+
+int
+ged_lt(struct ged *gedp, int argc, const char *argv[])
+{
+    struct directory *dp;
+    static const char *usage = "object";
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 2) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    return list_children(gedp, dp);
 }
 
 

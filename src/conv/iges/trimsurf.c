@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file trimsurf.c
+/** @file iges/trimsurf.c
  *
  * This routine loops through all the directory entries and calls
  * appropriate routines to convert trimmed surface entities to BRL-CAD
@@ -1230,7 +1230,7 @@ adjust_flips(hit_list, ray_dir)
     for (BU_LIST_FOR(hit, snurb_hit, hit_list)) {
 	fastf_t dot;
 
-	if (!NEAR_ZERO(hit->dist - prev_dist, tol.dist))
+	if (!NEAR_EQUAL(hit->dist, prev_dist, tol.dist))
 	    enter = !enter;
 
 	dot = VDOT(hit->norm, ray_dir);

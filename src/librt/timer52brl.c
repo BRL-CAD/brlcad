@@ -19,7 +19,7 @@
  */
 /** @addtogroup timer */
 /** @{ */
-/** @file timer52brl.c
+/** @file librt/timer52brl.c
  *
  * To provide timing information for RT.
  * This version for System V, Release TWO, under 4.2 BSD,

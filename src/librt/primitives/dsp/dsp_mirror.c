@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dsp_mirror.c
+/** @file primitives/dsp/dsp_mirror.c
  *
  * mirror support
  *

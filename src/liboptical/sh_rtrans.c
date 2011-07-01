@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_rtrans.c
+/** @file liboptical/sh_rtrans.c
  *
  * Random transparency shader. A random number from 0 to 1 is drawn
  * for each pixel rendered. If the random number is less than the threshold
@@ -37,9 +37,6 @@
 #include "optical.h"
 
 
-extern int rr_render(struct application *ap,
-		     struct partition *pp,
-		     struct shadework *swp);
 #define RTRANS_MAGIC 0x4a6f686e
 struct rtrans_specific {
     long magic;
@@ -66,8 +63,10 @@ struct bu_structparse rtrans_parse[] = {
 };
 
 
-HIDDEN int rtrans_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), rtrans_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void rtrans_print(register struct region *rp, char *dp), rtrans_free(char *cp);
+HIDDEN int rtrans_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int rtrans_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
+HIDDEN void rtrans_print(register struct region *rp, genptr_t dp);
+HIDDEN void rtrans_free(genptr_t cp);
 
 struct mfuncs rtrans_mfuncs[] = {
     {MF_MAGIC,	"rtrans",	0,		0,	0,     rtrans_setup,	rtrans_render,	rtrans_print,	rtrans_free },
@@ -82,7 +81,7 @@ struct mfuncs rtrans_mfuncs[] = {
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-rtrans_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+rtrans_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -95,7 +94,7 @@ rtrans_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
     BU_CK_VLS(matparm);
     RT_CK_REGION(rp);
     BU_GETSTRUCT(rtrans_sp, rtrans_specific);
-    *dpp = (char *)rtrans_sp;
+    *dpp = rtrans_sp;
 
     memcpy(rtrans_sp, &rtrans_defaults, sizeof(struct rtrans_specific));
 
@@ -115,7 +114,7 @@ rtrans_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
  * R T R A N S _ P R I N T
  */
 HIDDEN void
-rtrans_print(register struct region *rp, char *dp)
+rtrans_print(register struct region *rp, genptr_t dp)
 {
     bu_struct_print(rp->reg_name, rtrans_parse, (char *)dp);
 }
@@ -125,7 +124,7 @@ rtrans_print(register struct region *rp, char *dp)
  * R T R A N S _ F R E E
  */
 HIDDEN void
-rtrans_free(char *cp)
+rtrans_free(genptr_t cp)
 {
     bu_free(cp, "rtrans_specific");
 }
@@ -138,7 +137,7 @@ rtrans_free(char *cp)
  * once for each hit point to be shaded.
  */
 int
-rtrans_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+rtrans_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
 {
     register struct rtrans_specific *rtrans_sp =
 	(struct rtrans_specific *)dp;

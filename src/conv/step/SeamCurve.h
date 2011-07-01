@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file SeamCurve.h
+/** @file step/SeamCurve.h
  *
  * Class definition used to convert STEP "SeamCurve" to BRL-CAD BREP
  * structures.

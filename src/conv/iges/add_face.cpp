@@ -68,18 +68,6 @@ Add_face_to_shell(s , entityno , face_orient)
     /* Check that this is a planar surface */
     if (dir[(surf_de-1)/2]->type == 190) /* plane entity */
 	planar = 1;
-#if 0
-    else if (dir[(surf_de-1)/2]->type == 128) {
-	/* This is a NURB, but it might still be planar */
-	if (dir[(surf_de-1)/2]->form == 1) /* planar form */
-	    planar = 1;
-	else if (dir[(surf_de-1)/2]->form == 0) {
-	    /* They don't want to tell us */
-	    if (planar_nurb((surf_de-1)/2))
-		planar = 1;
-	}
-    }
-#endif
 
     if (planar) {
 	fu = Make_planar_face(s , (loop_de[0]-1)/2 , face_orient);

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dm-plot.c
+/** @file mged/dm-plot.c
  *
  * Routines specific to MGED's use of LIBDM's Plot display manager.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file flat.c
+/** @file librender/flat.c
  *
  */
 

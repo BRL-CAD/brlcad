@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ap-pix.c
+/** @file util/ap-pix.c
  *
  * Applicon color ink jet printer to .pix file converter.
  *

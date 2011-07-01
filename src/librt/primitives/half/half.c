@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file half.c
+/** @file primitives/half/half.c
  *
  * Intersect a ray with a Halfspace.
  *
@@ -503,7 +503,7 @@ rt_hlf_xform(
     RT_CK_DB_INTERNAL(op);
 
     if (op != ip) {
-	RT_INIT_DB_INTERNAL(op);
+	RT_DB_INTERNAL_INIT(op);
 	hop = (struct rt_half_internal *)bu_malloc(sizeof(struct rt_half_internal), "hop");
 	hop->magic = RT_HALF_INTERNAL_MAGIC;
 	op->idb_ptr = (genptr_t)hop;

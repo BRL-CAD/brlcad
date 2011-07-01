@@ -63,7 +63,7 @@ STEPattribute::StrToVal (const char* s, InstMgr * instances, int addFileId)
     //  set the value to be null (reinitialize the attribute value)
     set_null();
 
-    int nullable = ( aDesc->Optional().asInt() == SCLBOOL(BTrue) );
+    int nullable = ( aDesc->Optional().asInt() == BTrue );
 
     // an empty str gets assigned NULL
     if (!s )

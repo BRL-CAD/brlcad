@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file process.c
+/** @file points/process.c
  *
  * Data structures for the comma-separated value point file parser.
  *
@@ -324,7 +324,7 @@ delete_points(point_line_t **plta, int count, double tolerance) {
 #endif
 
 
-#if 0
+#if PRINT_ARRAY
     bu_log("--- BEFORE ---\n");
     print_array(plta, count);
 #endif
@@ -332,7 +332,7 @@ delete_points(point_line_t **plta, int count, double tolerance) {
     /* resort the list, put nulls at the end */
     count = condense_points(plta, count);
 
-#if 0
+#if PRINT_ARRAY
     bu_log("--- AFTER ---\n");
     print_array(plta, count);
 #endif

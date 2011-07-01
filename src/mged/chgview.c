@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file chgview.c
+/** @file mged/chgview.c
  *
  */
 
@@ -146,7 +146,7 @@ cmd_center(ClientData UNUSED(clientData),
 
     ret = ged_center(gedp, argc, (const char **)argv);
     Tcl_DStringInit(&ds);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret != GED_OK)
@@ -200,7 +200,7 @@ cmd_size(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 
     ret = ged_size(gedp, argc, (const char **)argv);
     Tcl_DStringInit(&ds);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == GED_OK) {
@@ -387,12 +387,12 @@ edit_com(int argc,
 
 	ret = ged_draw(gedp, new_argc, (const char **)new_argv);
 	if (ret == GED_ERROR) {
-	    bu_log("ERROR: %s\n", bu_vls_addr(&gedp->ged_result_str));
+	    bu_log("ERROR: %s\n", bu_vls_addr(gedp->ged_result_str));
 	    bu_vls_free(&vls);
 	    bu_free((char *)new_argv, "edit_com new_argv");
 	    return ret;
 	} else if (ret == GED_HELP) {
-	    bu_log("%s\n", bu_vls_addr(&gedp->ged_result_str));
+	    bu_log("%s\n", bu_vls_addr(gedp->ged_result_str));
 	    bu_vls_free(&vls);
 	    bu_free((char *)new_argv, "edit_com new_argv");
 	    return ret;
@@ -414,10 +414,10 @@ edit_com(int argc,
 		break;
 	}
 	if (ret == GED_ERROR) {
-	    bu_log("ERROR: %s\n", bu_vls_addr(&gedp->ged_result_str));
+	    bu_log("ERROR: %s\n", bu_vls_addr(gedp->ged_result_str));
 	    return TCL_ERROR;
 	} else if (ret == GED_HELP) {
-	    bu_log("%s\n", bu_vls_addr(&gedp->ged_result_str));
+	    bu_log("%s\n", bu_vls_addr(gedp->ged_result_str));
 	    return TCL_OK;
 	}
     }
@@ -1436,12 +1436,6 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	    if (argc - 1) {
 		i = atoi(argv[1]);
 		f = atof(argv[1]);
-#if 0
-		if (f < -1.0)
-		    f = -1.0;
-		else if (f > 1.0)
-		    f = 1.0;
-#endif
 	    } else
 		goto usage;
 
@@ -1449,12 +1443,6 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	    ++argv;
 
 	    if (cmd[1] == '\0') {
-#if 0
-		if (f < -1.0)
-		    f = -1.0;
-		else if (f > 1.0)
-		    f = 1.0;
-#endif
 
 		switch (cmd[0]) {
 		    case 'x':
@@ -2579,7 +2567,7 @@ mged_zoom(double val)
 
     ret = ged_zoom(gedp, 2, (const char **)av);
     Tcl_DStringInit(&ds);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
     Tcl_DStringResult(INTERP, &ds);
 
     if (ret != GED_OK)
@@ -2687,7 +2675,7 @@ cmd_setview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 
     ret = ged_setview(gedp, argc, (const char **)argv);
     Tcl_DStringInit(&ds);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret != GED_OK)
@@ -2725,7 +2713,7 @@ f_slewview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
     Tcl_DStringInit(&ds);
 
     ret = ged_slew(gedp, argc, (const char **)argv);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret != GED_OK)
@@ -3433,7 +3421,7 @@ cmd_mrot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	/* We're only interested in getting rmat set */
 	if (ged_rot_args(gedp, argc, (const char **)argv, &coord, rmat) != GED_OK) {
 	    Tcl_DStringInit(&ds);
-	    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+	    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
 	    Tcl_DStringResult(interp, &ds);
 
 	    return TCL_ERROR;
@@ -3446,7 +3434,7 @@ cmd_mrot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	Tcl_DStringInit(&ds);
 
 	ret = ged_mrot(gedp, argc, (const char **)argv);
-	Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+	Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
 	Tcl_DStringResult(interp, &ds);
 
 	if (ret != GED_OK)
@@ -3563,7 +3551,7 @@ cmd_vrot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
     Tcl_DStringInit(&ds);
 
     ret = ged_vrot(gedp, argc, (const char **)argv);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret != GED_OK)
@@ -3591,7 +3579,7 @@ cmd_rot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
 	if (ged_rot_args(gedp, argc, (const char **)argv, &coord, rmat) != GED_OK) {
 	    Tcl_DStringInit(&ds);
-	    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+	    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
 	    Tcl_DStringResult(interp, &ds);
 
 	    return TCL_ERROR;
@@ -3604,7 +3592,7 @@ cmd_rot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	Tcl_DStringInit(&ds);
 
 	ret = ged_rot(gedp, argc, (const char **)argv);
-	Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+	Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
 	Tcl_DStringResult(interp, &ds);
 
 	if (ret != GED_OK)
@@ -3632,7 +3620,7 @@ cmd_arot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 
 	if (ged_arot_args(gedp, argc, (const char **)argv, rmat) != GED_OK) {
 	    Tcl_DStringInit(&ds);
-	    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+	    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
 	    Tcl_DStringResult(interp, &ds);
 
 	    return TCL_ERROR;
@@ -3645,7 +3633,7 @@ cmd_arot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	Tcl_DStringInit(&ds);
 
 	ret = ged_arot(gedp, argc, (const char **)argv);
-	Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+	Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
 	Tcl_DStringResult(interp, &ds);
 
 	if (ret != GED_OK)
@@ -3800,7 +3788,7 @@ cmd_tra(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
 	if (ged_tra_args(gedp, argc, (const char **)argv, &coord, tvec) != GED_OK) {
 	    Tcl_DStringInit(&ds);
-	    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+	    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
 	    Tcl_DStringResult(interp, &ds);
 
 	    return TCL_ERROR;
@@ -3813,7 +3801,7 @@ cmd_tra(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	Tcl_DStringInit(&ds);
 
 	ret = ged_tra(gedp, argc, (const char **)argv);
-	Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+	Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
 	Tcl_DStringResult(interp, &ds);
 
 	if (ret != GED_OK)
@@ -3966,7 +3954,7 @@ cmd_sca(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
 	if (ged_scale_args(gedp, argc, (const char **)argv, &sf1, &sf2, &sf3) != GED_OK) {
 	    Tcl_DStringInit(&ds);
-	    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+	    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
 	    Tcl_DStringResult(interp, &ds);
 	    return TCL_ERROR;
 	}
@@ -4007,7 +3995,7 @@ cmd_sca(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
 	Tcl_DStringInit(&ds);
 	ret = ged_scale(gedp, argc, (const char **)argv);
-	Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+	Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
 	Tcl_DStringResult(interp, &ds);
 
 	if (ret != GED_OK)
@@ -4043,7 +4031,7 @@ cmd_pov(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
     Tcl_DStringInit(&ds);
 
     ret = ged_pov(gedp, argc, (const char **)argv);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret != GED_OK)

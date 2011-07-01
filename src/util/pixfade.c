@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixfade.c
+/** @file util/pixfade.c
  *
  * Fade a pixture
  *
@@ -26,15 +26,15 @@
  * channel greater than param to param, and scale which will change
  * a channel to param percent of its orignal value (limited by 0-255)
  *
- * entry:
+ * Inputs:
  *	-m	integer max value
  *	-f	fraction to fade
  *	-p	percentage of fade (fraction = percentage/100)
  *	file	a pixture file.
- *	<stdin>	a pixture file if file is not given.
+ *	STDIN	a pixture file if 'file' is not given.
  *
- * Exit:
- *	<stdout>	the faded pixture.
+ * Output:
+ *	STDOUT	the faded pixture.
  *
  * Calls:
  *	get_args

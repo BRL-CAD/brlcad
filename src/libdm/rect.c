@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rect.c
+/** @file libdm/rect.c
  *
  * Rubber band rectangle.
  *
@@ -39,11 +39,6 @@ dm_draw_rect(struct dm *dmp, struct ged_rect_state *grsp)
     if (ZERO(grsp->grs_width) &&
 	ZERO(grsp->grs_height))
 	return;
-
-#if 0
-    if (grsp->grs_active && mged_variables->mv_mouse_behavior == 'z')
-	ged_adjust_rect_for_zoom();
-#endif
 
     /* draw rectangle */
     DM_SET_FGCOLOR(dmp,

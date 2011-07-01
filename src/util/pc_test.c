@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pc_test.c
+/** @file util/pc_test.c
  *
  * Simple test file for checking various aspects of libpc through the
  * initial development phase

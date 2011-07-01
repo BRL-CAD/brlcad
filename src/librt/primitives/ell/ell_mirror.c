@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ell_mirror.c
+/** @file primitives/ell/ell_mirror.c
  *
  * mirror support
  *

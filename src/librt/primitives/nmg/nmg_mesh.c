@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_mesh.c
+/** @file primitives/nmg/nmg_mesh.c
  *
  * Meshing routines for n-Manifold Geometry.
  * This stuff is destined to be absorbed into nmg_fuse.c.
@@ -57,11 +57,11 @@ int
 nmg_is_angle_in_wedge(double a, double b, double t)
 {
     /* XXX What tolerance to use here (in radians)? */
-    if (NEAR_ZERO(a-t, 1.0e-8)) return -2;
-    if (NEAR_ZERO(b-t, 1.0e-8)) return -1;
+    if (NEAR_EQUAL(a, t, 1.0e-8)) return -2;
+    if (NEAR_EQUAL(b, t, 1.0e-8)) return -1;
 
     /* If A==B, if T is not also equal, its outside the wedge */
-    if (NEAR_ZERO(a-b, 1.0e-8)) return 0;
+    if (NEAR_EQUAL(a, b, 1.0e-8)) return 0;
 
     if (b < a) {
 	/* B angle has wrapped past zero, add on 2pi */
@@ -71,7 +71,7 @@ nmg_is_angle_in_wedge(double a, double b, double t)
 	}
 	b += bn_twopi;
     }
-    if (NEAR_ZERO(b-t, 1.0e-8)) return -1;
+    if (NEAR_EQUAL(b, t, 1.0e-8)) return -1;
 
     if (t < a) return 0;
     if (t > b) return 0;
@@ -335,7 +335,7 @@ nmg_radial_join_eu(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_tol
 	    }
 
 	    /* If abs1 == absr, warn about unfused faces, and skip. */
-	    if (NEAR_ZERO(abs1-absr, 1.0e-8)) {
+	    if (NEAR_EQUAL(abs1, absr, 1.0e-8)) {
 		if (fu1->f_p->g.plane_p == fur->f_p->g.plane_p) {
 		    /* abs1 == absr, faces are fused, don't insert here. */
 		    if (rt_g.NMG_debug & DEBUG_MESH_EU) {

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file CartesianPoint.cpp
+/** @file step/CartesianPoint.cpp
  *
  * Routines to interface to STEP "CartesianPoint".
  *

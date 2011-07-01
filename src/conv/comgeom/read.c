@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file read.c
+/** @file comgeom/read.c
  *
  * This module contains all of the routines necessary to read in
  * a COMGEOM input file, and put the information into internal form.

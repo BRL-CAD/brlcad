@@ -40,7 +40,7 @@
 #include "plot3.h"
 
 
-BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
+extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 
 
 static const char usage[] = "Usage: %s [-v] [-d] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-p prefix] brlcad_db.g object(s)\n";
@@ -292,7 +292,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 
     if (r != 0) {
 	FILE	*fp_psurf;
-	int	i;
+	size_t	i;
 	struct bu_vls	file_base;
 	struct bu_vls	file;
 
@@ -387,7 +387,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
     BU_GETUNION(curtree, tree);
-    RT_INIT_TREE(curtree);
+    RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
     return curtree;
 }
@@ -403,8 +403,8 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 
 static void
 nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
-    /* NMG region to be converted. */
-    /* Jack format file to write vertex list to. */
+/* NMG region to be converted. */
+/* Jack format file to write vertex list to. */
 {
     int			i;
     int			*map;	/* map from v->index to Jack vert # */
@@ -450,8 +450,8 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
  */
 static void
 jack_faces(struct nmgregion *r, FILE *fp_psurf, int *map)
-    /* NMG region to be converted. */
-    /* Jack format file to write face vertices to. */
+/* NMG region to be converted. */
+/* Jack format file to write face vertices to. */
 
 {
     struct edgeuse		*eu;

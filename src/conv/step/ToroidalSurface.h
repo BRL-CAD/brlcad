@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ToroidalSurface.h
+/** @file step/ToroidalSurface.h
  *
  * Class definition used to interface to STEP "ToroidalSurface".
  *

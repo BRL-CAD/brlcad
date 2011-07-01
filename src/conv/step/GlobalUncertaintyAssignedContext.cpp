@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file GlobalUncertaintyAssignedContext.cpp
+/** @file step/GlobalUncertaintyAssignedContext.cpp
  *
  * Routines to convert STEP "GlobalUncertaintyAssignedContext" to BRL-CAD BREP
  * structures.

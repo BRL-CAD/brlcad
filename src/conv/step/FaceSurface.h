@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file FaceSurface.h
+/** @file step/FaceSurface.h
  *
  * Class definition used to convert STEP "FaceSurface" to BRL-CAD BREP
  * structures.
@@ -40,7 +40,7 @@ private:
 protected:
 	Surface *face_geometry;
 #ifdef YAYA
-	SCLBOOL_H(Boolean) same_sense;
+	Boolean same_sense;
 #else
 	int same_sense;
 #endif

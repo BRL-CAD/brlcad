@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Direction.cpp
+/** @file step/Direction.cpp
  *
  * Routines to convert STEP "Direction" to BRL-CAD BREP
  * structures.

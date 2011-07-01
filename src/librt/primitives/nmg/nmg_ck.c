@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_ck.c
+/** @file primitives/nmg/nmg_ck.c
  *
  * Validators and consistency checkers for NMG data structures.
  *

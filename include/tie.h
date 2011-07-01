@@ -19,7 +19,6 @@
  */
 /** @file tie.h
  *
- * Brief description
  *
  */
 
@@ -126,8 +125,8 @@ struct tie_s {
     fastf_t radius;
 };
 
-TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_kdtree_free), (struct tie_s *tie));
-TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_kdtree_prep), (struct tie_s *tie));
+TIE_EXPORT extern void TIE_VAL(tie_kdtree_free)(struct tie_s *tie);
+TIE_EXPORT extern void TIE_VAL(tie_kdtree_prep)(struct tie_s *tie);
 TIE_EXPORT extern fastf_t TIE_PREC;
 
 /* compatability macros */
@@ -136,11 +135,11 @@ TIE_EXPORT extern fastf_t TIE_PREC;
 
 TIE_EXPORT extern int tie_check_degenerate;
 
-TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_init), (struct tie_s *tie, unsigned int tri_num, unsigned int kdmethod));
-TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_free), (struct tie_s *tie));
-TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_prep), (struct tie_s *tie));
-TIE_EXPORT BU_EXTERN(void* TIE_VAL(tie_work), (struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_s *id, void *(*hitfunc)(struct tie_ray_s*, struct tie_id_s*, struct tie_tri_s*, void *ptr), void *ptr));
-TIE_EXPORT BU_EXTERN(void TIE_VAL(tie_push), (struct tie_s *tie, TIE_3 **tlist, unsigned int tnum, void *plist, unsigned int pstride));
+TIE_EXPORT extern void TIE_VAL(tie_init)(struct tie_s *tie, unsigned int tri_num, unsigned int kdmethod);
+TIE_EXPORT extern void TIE_VAL(tie_free)(struct tie_s *tie);
+TIE_EXPORT extern void TIE_VAL(tie_prep)(struct tie_s *tie);
+TIE_EXPORT extern void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_s *id, void *(*hitfunc)(struct tie_ray_s*, struct tie_id_s*, struct tie_tri_s*, void *ptr), void *ptr);
+TIE_EXPORT extern void TIE_VAL(tie_push)(struct tie_s *tie, TIE_3 **tlist, unsigned int tnum, void *plist, unsigned int pstride);
 
 /* backwards compatible macros */
 #define tie_init TIE_VAL(tie_init)

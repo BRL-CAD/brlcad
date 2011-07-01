@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file scale_tor.c
+/** @file libged/scale_tor.c
  *
  * The scale_tor command.
  *
@@ -43,33 +43,33 @@ _ged_scale_tor(struct ged *gedp, struct rt_tor_internal *tor, const char *attrib
     RT_TOR_CK_MAGIC(tor);
 
     switch (attribute[0]) {
-    case 'a':
-    case 'A':
-	if (rflag)
-	    newrad = tor->r_a * sf;
-	else
-	    newrad = sf;
+	case 'a':
+	case 'A':
+	    if (rflag)
+		newrad = tor->r_a * sf;
+	    else
+		newrad = sf;
 
-	if (newrad < SMALL)
-	    newrad = 4*SMALL;
-	if (tor->r_h <= newrad)
-	    tor->r_a = newrad;
-	break;
-    case 'h':
-    case 'H':
-	if (rflag)
-	    newrad = tor->r_h * sf;
-	else
-	    newrad = sf;
+	    if (newrad < SMALL)
+		newrad = 4*SMALL;
+	    if (tor->r_h <= newrad)
+		tor->r_a = newrad;
+	    break;
+	case 'h':
+	case 'H':
+	    if (rflag)
+		newrad = tor->r_h * sf;
+	    else
+		newrad = sf;
 
-	if (newrad < SMALL)
-	    newrad = 4*SMALL;
-	if (newrad <= tor->r_a)
-	    tor->r_h = newrad;
-	break;
-    default:
-	bu_vls_printf(&gedp->ged_result_str, "bad tor attribute - %s", attribute);
-	return GED_ERROR;
+	    if (newrad < SMALL)
+		newrad = 4*SMALL;
+	    if (newrad <= tor->r_a)
+		tor->r_h = newrad;
+	    break;
+	default:
+	    bu_vls_printf(gedp->ged_result_str, "bad tor attribute - %s", attribute);
+	    return GED_ERROR;
     }
 
     return GED_OK;

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dm-ps.c
+/** @file mged/dm-ps.c
  *
  * Routines specific to MGED's use of LIBDM's Postscript display manager.
  *

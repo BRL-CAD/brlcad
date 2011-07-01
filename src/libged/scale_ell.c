@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file scale_ell.c
+/** @file libged/scale_ell.c
  *
  * The scale_ell command.
  */
@@ -41,55 +41,55 @@ _ged_scale_ell(struct ged *gedp, struct rt_ell_internal *ell, const char *attrib
     RT_ELL_CK_MAGIC(ell);
 
     switch (attribute[0]) {
-    case 'a':
-    case 'A':
-	if (!rflag)
-	    sf /= MAGNITUDE(ell->a);
+	case 'a':
+	case 'A':
+	    if (!rflag)
+		sf /= MAGNITUDE(ell->a);
 
-	switch (attribute[1]) {
-	case '\0':
-	    VSCALE(ell->a, ell->a, sf);
-	    break;
-	case 'b':
-	case 'B':
-	    if ((attribute[2] == 'c' || attribute[2] == 'C') &&
-		attribute[3] == '\0') {
-		/* set A, B, and C lengths the same */
-		VSCALE(ell->a, ell->a, sf);
-		ma = MAGNITUDE(ell->a);
-		mb = MAGNITUDE(ell->b);
-		VSCALE(ell->b, ell->b, ma/mb);
-		mb = MAGNITUDE(ell->c);
-		VSCALE(ell->c, ell->c, ma/mb);
-	    } else {
-		bu_vls_printf(&gedp->ged_result_str, "bad ell attribute - %s", attribute);
-		return GED_ERROR;
+	    switch (attribute[1]) {
+		case '\0':
+		    VSCALE(ell->a, ell->a, sf);
+		    break;
+		case 'b':
+		case 'B':
+		    if ((attribute[2] == 'c' || attribute[2] == 'C') &&
+			attribute[3] == '\0') {
+			/* set A, B, and C lengths the same */
+			VSCALE(ell->a, ell->a, sf);
+			ma = MAGNITUDE(ell->a);
+			mb = MAGNITUDE(ell->b);
+			VSCALE(ell->b, ell->b, ma/mb);
+			mb = MAGNITUDE(ell->c);
+			VSCALE(ell->c, ell->c, ma/mb);
+		    } else {
+			bu_vls_printf(gedp->ged_result_str, "bad ell attribute - %s", attribute);
+			return GED_ERROR;
+		    }
+
+		    break;
+		default:
+		    bu_vls_printf(gedp->ged_result_str, "bad ell attribute - %s", attribute);
+		    return GED_ERROR;
 	    }
 
 	    break;
+	case 'b':
+	case 'B':
+	    if (!rflag)
+		sf /= MAGNITUDE(ell->b);
+
+	    VSCALE(ell->b, ell->b, sf);
+	    break;
+	case 'c':
+	case 'C':
+	    if (!rflag)
+		sf /= MAGNITUDE(ell->c);
+
+	    VSCALE(ell->c, ell->c, sf);
+	    break;
 	default:
-	    bu_vls_printf(&gedp->ged_result_str, "bad ell attribute - %s", attribute);
+	    bu_vls_printf(gedp->ged_result_str, "bad ell attribute - %s", attribute);
 	    return GED_ERROR;
-	}
-
-	break;
-    case 'b':
-    case 'B':
-	if (!rflag)
-	    sf /= MAGNITUDE(ell->b);
-
-	VSCALE(ell->b, ell->b, sf);
-	break;
-    case 'c':
-    case 'C':
-	if (!rflag)
-	    sf /= MAGNITUDE(ell->c);
-
-	VSCALE(ell->c, ell->c, sf);
-	break;
-    default:
-	bu_vls_printf(&gedp->ged_result_str, "bad ell attribute - %s", attribute);
-	return GED_ERROR;
     }
 
     return GED_OK;

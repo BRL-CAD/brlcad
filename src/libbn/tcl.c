@@ -1,4 +1,4 @@
-/*                        B N _ T C L . C
+/*                           T C L . C
  * BRL-CAD
  *
  * Copyright (c) 1995-2011 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @addtogroup bntcl */
 /** @{ */
-/** @file bn_tcl.c
+/** @file libbn/tcl.c
  *
  * @brief
  * Tcl interfaces to all the LIBBN math routines.

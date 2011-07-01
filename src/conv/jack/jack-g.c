@@ -50,7 +50,7 @@ static struct bn_tol	tol;
 
 static const char usage[] = "Usage: %s [-r region] [-g group] [jack_db] [brlcad_db]\n";
 
-BU_EXTERN( fastf_t nmg_loop_plane_area, (const struct loopuse *lu, plane_t pl ) );
+extern fastf_t nmg_loop_plane_area(const struct loopuse *lu, plane_t pl );
 
 int	psurf_to_nmg(struct model *m, FILE *fp, char *jfile);
 int	create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *grp_name);
@@ -162,8 +162,8 @@ jack_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name,
  */
 int
 read_psurf_vertices(FILE *fp, struct vlist *vert)
-    /* Psurf file pointer. */
-    /* Array of read in vertices. */
+/* Psurf file pointer. */
+/* Array of read in vertices. */
 {
     fastf_t	x, y, z;
     int	i;
@@ -223,9 +223,9 @@ read_psurf_face(FILE *fp, int *lst)
  */
 int
 psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
-    /* Input/output, nmg model. */
-    /* Input, pointer to psurf data file. */
-    /* Name of Jack data base file. */
+/* Input/output, nmg model. */
+/* Input, pointer to psurf data file. */
+/* Name of Jack data base file. */
 {
     int		face, fail, i, lst[MAX_NUM_PTS], nf, nv;
     struct faceuse	*outfaceuses[MAX_NUM_PTS];

@@ -579,10 +579,6 @@ x24_setup(FBIO *ifp, int width, int height)
 	return -1;
     }
 
-#if 0
-    print_display_info(xi->xi_dpy);
-#endif
-
     /* Use the screen we connected to */
     xi->xi_screen = DefaultScreen(xi->xi_dpy);
 
@@ -1239,7 +1235,7 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 		    /* Calculate the number of lines needed */
 		    /*
 		     * If we are zoomed, then it is possable that not
-		     * all of that zoomed pixel will be showned.  y1ht
+		     * all of that zoomed pixel will be shown.  y1ht
 		     * is the number of lines allocated for the bottom
 		     * most line.  y2ht is the number of lines for the
 		     * top most line.  if_yzoom is for everything
@@ -1356,34 +1352,6 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 		     * duplication.
 		     */
 		    holdit = (unsigned char *)opix;
-
-#if 0
-		    /*
-		     * If we are zoomed, we need to duplicate all
-		     * that work from above, or we can just copy
-		     * that one line to N others.
-		     */
-		    while (pyht-- > 1) {
-			/*
-			 * move to the beginning of the next
-			 * line up in the X server.
-			 */
-			opix -= xi->xi_image->bytes_per_line;
-			p = (unsigned char *)opix;
-
-#if BLIT_DBG_PIX
-			if (opix < xi->xi_pix) {
-			    bu_log("X24_blit: about to clobber memory 3\n");
-			    bu_log("\topix - Ox%lx\txi->xi_pix - 0x%lx\n", opix, xi->xi_pix);
-			    break;
-			}
-#endif
-			/*
-			 * copy the first line
-			 */
-			memcpy(p, holdit, xi->xi_image->bytes_per_line);
-		    }
-#endif
 
 		    /*
 		     * And again, move to the beginning of the next
@@ -2810,9 +2778,6 @@ int
 _X24_open_existing(FBIO *ifp, Display *dpy, Window win, Window cwinp, Colormap cmap, XVisualInfo *vip, int width, int height, GC gc)
 {
     struct xinfo *xi;
-#if 0
-    XRectangle rect;
-#endif
     int getmem_stat;
 
     ifp->if_width = width;
@@ -2935,19 +2900,9 @@ _X24_open_existing(FBIO *ifp, Display *dpy, Window win, Window cwinp, Colormap c
 	return -1;
     }
 
-#if 0
-    /* Initialize the valid region */
-    xi->xi_reg = XCreateRegion();
-    rect.x = 0;
-    rect.y = 0;
-    rect.width = xi->xi_xwidth;
-    rect.height = xi->xi_xheight;
-    XUnionRectWithRegion(&rect, xi->xi_reg, xi->xi_reg);
-#else
     /* We're not using Region's */
     xi->xi_reg = (Region)0;
     xi->xi_usereg = 0;
-#endif
 
     /* this will be reallocated in the call to X24_configureWindow */
     if ((xi->xi_pix = (unsigned char *) calloc(1, 1)) == NULL) {
@@ -3601,10 +3556,6 @@ X24_poll(FBIO *ifp)
     XEvent event;
 
     FB_CK_FBIO(ifp);
-
-#if 0
-    printf("X24_poll(ifp:0x%x) entered\n", ifp);
-#endif
 
     /* Check for and dispatch event */
     while (XCheckMaskEvent(xi->xi_dpy, ~NoEventMask, &event))

@@ -19,10 +19,10 @@
  */
 /** @addtogroup libged */
 /** @{ */
-/** @file ged_util.c
+/** @file libged/ged_util.c
  *
  * Utility routines for common operations in libged.
- * 
+ *
  */
 /** @} */
 
@@ -46,23 +46,26 @@
 int
 _ged_results_append_str(struct ged *gedp, char *result_string)
 {
-    bu_vls_printf(&gedp->ged_result_str, "%s", result_string);
+    bu_vls_printf(gedp->ged_result_str, "%s", result_string);
     return GED_OK;
 }
+
 
 int
 _ged_results_append_vls(struct ged *gedp, struct bu_vls *result_vls)
 {
-    bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(result_vls));
+    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(result_vls));
     return GED_OK;
 }
+
 
 int
 _ged_results_clear(struct ged *gedp)
 {
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

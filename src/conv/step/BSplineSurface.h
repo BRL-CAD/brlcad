@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file BSplineSurface.h
+/** @file step/BSplineSurface.h
  *
  * Class definition used to interface to STEP "BSplineSurface".
  *
@@ -45,9 +45,9 @@ protected:
 	LIST_OF_LIST_OF_POINTS *control_points_list;
 #ifdef YAYA
 	B_spline_surface_form surface_form;
-	SCLLOG_H(Logical) u_closed;
-	SCLLOG_H(Logical) v_closed;
-	SCLLOG_H(Logical) self_intersect;
+	Logical u_closed;
+	Logical v_closed;
+	Logical self_intersect;
 #else
 	int surface_form;
 	int u_closed;

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file FaceOuterBound.cpp
+/** @file step/FaceOuterBound.cpp
  *
  * Routines to convert STEP "FaceOuterBound" to BRL-CAD BREP
  * structures.

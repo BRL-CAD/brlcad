@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file count.h
+/** @file points/count.h
  *
  * Basic counting structure and functions.
  *

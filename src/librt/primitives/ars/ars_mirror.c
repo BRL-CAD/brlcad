@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ars_mirror.c
+/** @file primitives/ars/ars_mirror.c
  *
  * mirror support
  *

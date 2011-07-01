@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file metaball.c
+/** @file proc-db/metaball.c
  *
  * This is an example of how to programmatically create and combine
  * metaball primitives together.

@@ -1255,8 +1255,7 @@ INCLUDE_FILE_PATTERNS  =
 # undefined via #undef or recursively expanded use the := operator 
 # instead of the = operator.
 
-PREDEFINED             = "BU_EXTERN(type_and_name,args)=extern type_and_name args" \
-                         "BU_EXPORT=" \
+PREDEFINED             = "BU_EXPORT=" \
                          "BN_EXPORT=" \
                          "BN_EXPORT=" \
                          "FB_EXPORT="

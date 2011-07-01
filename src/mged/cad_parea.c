@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file cad_parea.c
+/** @file mged/cad_parea.c
  *
  * cad_parea -- area of polygon
  *

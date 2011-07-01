@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bw-ps.c
+/** @file util/bw-ps.c
  *
  * Convert a black and white (bw) file to an 8-bit PostScript image.
  *

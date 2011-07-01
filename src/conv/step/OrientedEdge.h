@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file OrientedEdge.h
+/** @file step/OrientedEdge.h
  *
  * Class definition used to convert STEP "OrientedEdge" to BRL-CAD BREP
  * structures.
@@ -35,7 +35,7 @@ private:
 
 protected:
 #ifdef YAYA
-	SCLBOOL_H(Boolean) orientation;
+	Boolean orientation;
 #else
 	int orientation;
 #endif

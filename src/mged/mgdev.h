@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mgdev.h
+/** @file mged/mgdev.h
  *
  * This file contains definitions for building displaylists for the Megatek,
  * and will ordinarily be included in all user programs which use the Megatek.

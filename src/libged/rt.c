@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt.c
+/** @file libged/rt.c
  *
  * The rt command.
  *
@@ -69,7 +69,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     args = argc + 7 + 2 + ged_count_tops(gedp);
     gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
@@ -106,8 +106,8 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 
     /* default to local units when not specified on command line */
     if (!units_supplied) {
-    	*vp++ = "-u";
-    	*vp++ = "model";
+	*vp++ = "-u";
+	*vp++ = "model";
     }
 
     /* XXX why is this different for win32 only? */
@@ -136,9 +136,9 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 	*vp = 0;
 	vp = &gedp->ged_gdp->gd_rt_cmd[0];
 	while (*vp)
-	    bu_vls_printf(&gedp->ged_result_str, "%s ", *vp++);
+	    bu_vls_printf(gedp->ged_result_str, "%s ", *vp++);
 
-	bu_vls_printf(&gedp->ged_result_str, "\n");
+	bu_vls_printf(gedp->ged_result_str, "\n");
     }
     (void)_ged_run_rt(gedp);
     bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
@@ -491,7 +491,7 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
     if (drcdp->gedp->ged_output_handler != (void (*)())0)
 	drcdp->gedp->ged_output_handler(drcdp->gedp, line);
     else
-	bu_vls_printf(&drcdp->gedp->ged_result_str, "%s", line);
+	bu_vls_printf(drcdp->gedp->ged_result_str, "%s", line);
 }
 
 
@@ -528,13 +528,13 @@ ged_build_tops(struct ged *gedp, char **start, char **end)
 	if ((vp != NULL) && (vp < end))
 	    *vp++ = bu_strdup(bu_vls_addr(&gdlp->gdl_path));
 	else {
-	    bu_vls_printf(&gedp->ged_result_str, "libged: ran out of command vector space at %s\n", gdlp->gdl_dp->d_namep);
+	    bu_vls_printf(gedp->ged_result_str, "libged: ran out of command vector space at %s\n", gdlp->gdl_dp->d_namep);
 	    break;
 	}
     }
 
     if ((vp != NULL) && (vp < end)) {
-    	*vp = (char *) 0;
+	*vp = (char *) 0;
     }
 
     return vp-start;

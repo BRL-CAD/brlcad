@@ -341,7 +341,6 @@ EXTRA_DIST = \
 	unix/installManPage \
 	unix/ldAix \
 	unix/tcl.m4 \
-	unix/tcl.spec \
 	unix/tclAppInit.c \
 	unix/tclConfig.h.in \
 	unix/tclConfig.sh.in \
@@ -367,7 +366,17 @@ EXTRA_DIST = \
 	unix/tclUnixTime.c \
 	unix/tclXtNotify.c \
 	unix/tclXtTest.c \
-	win
+	win \
+	CMake/CheckCFileRuns.cmake \
+	CMake/CheckPrototypeExists.cmake \
+	CMake/CheckSystemFunctionality.cmake \
+	CMake/ResolveCompilerPaths.cmake \
+	CMake/ac_std_funcs.cmake \
+	CMake/tcl.cmake \
+	CMake/test_sources/alloca_header_test.c \
+	CMake/test_sources/alloca_test.c \
+	CMake/test_sources/ctypes_test.c \
+	CMake/test_sources/sys_wait_test.c
 
 DISTCLEANFILES = \
 	unix/autom4te.cache \

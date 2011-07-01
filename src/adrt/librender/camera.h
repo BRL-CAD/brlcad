@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file camera.h
+/** @file librender/camera.h
  *
  */
 
@@ -89,16 +89,16 @@ typedef struct render_camera_thread_data_s
 } render_camera_thread_data_t;
 
 
-BU_EXPORT BU_EXTERN(void render_camera_init, (render_camera_t *camera, int threads));
-BU_EXPORT BU_EXTERN(void render_camera_free, (render_camera_t *camera));
-BU_EXPORT BU_EXTERN(void render_camera_prep, (render_camera_t *camera));
-BU_EXPORT BU_EXTERN(void render_camera_render, (render_camera_t *camera, struct tie_s *tie, camera_tile_t *tile, tienet_buffer_t *result));
+BU_EXPORT extern void render_camera_init(render_camera_t *camera, int threads);
+BU_EXPORT extern void render_camera_free(render_camera_t *camera);
+BU_EXPORT extern void render_camera_prep(render_camera_t *camera);
+BU_EXPORT extern void render_camera_render(render_camera_t *camera, struct tie_s *tie, camera_tile_t *tile, tienet_buffer_t *result);
 
-BU_EXPORT BU_EXTERN(int render_shader_init, (render_t *, const char *name, const char *buf));
-BU_EXPORT BU_EXTERN(const char *render_shader_load_plugin, (const char *filename));
+BU_EXPORT extern int render_shader_init(render_t *, const char *name, const char *buf);
+BU_EXPORT extern const char *render_shader_load_plugin(const char *filename);
 /* r is passed in so something ... sane(?) can be done if the shader being
  * unloaded is in use. */
-BU_EXPORT BU_EXTERN(int render_shader_unload_plugin, (render_t *r, const char *name));
+BU_EXPORT extern int render_shader_unload_plugin(render_t *r, const char *name);
 
 #endif
 

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file iges.c
+/** @file iges/iges.c
  *
  * Code to support the g-iges converter
  *
@@ -78,15 +78,15 @@ extern int comb_form;
 extern int do_nurbs;
 extern int mode;
 
-BU_EXTERN(int write_dir_entry, (FILE *fp, int entry[]));
-BU_EXTERN(int write_vertex_list, (struct nmgregion *r, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param));
-BU_EXTERN(int write_edge_list, (struct nmgregion *r, int vert_de, struct bu_ptbl *etab, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param));
-BU_EXTERN(int write_shell_face_loop, (char *name, struct nmgregion *r, int dependent, int edge_de, struct bu_ptbl *etab, int vert_de, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param));
-BU_EXTERN(int write_solid_assembly, (char *name, int de_list[], int length, int dependent, FILE *fp_dir, FILE *fp_param));
-BU_EXTERN(int write_planar_nurb, (struct faceuse *fu, vect_t u_dir, vect_t v_dir, fastf_t *u_max, fastf_t *v_max, point_t base_pt, FILE *fp_dir, FILE *fp_param));
-BU_EXTERN(int write_name_entity, (char *name, FILE *fp_dir, FILE *fp_param));
-BU_EXTERN(int write_att_entity, (struct iges_properties *props, FILE *fp_dir, FILE *fp_param));
-BU_EXTERN(int nmg_to_iges, (struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param));
+extern int write_dir_entry(FILE *fp, int entry[]);
+extern int write_vertex_list(struct nmgregion *r, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
+extern int write_edge_list(struct nmgregion *r, int vert_de, struct bu_ptbl *etab, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
+extern int write_shell_face_loop(char *name, struct nmgregion *r, int dependent, int edge_de, struct bu_ptbl *etab, int vert_de, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
+extern int write_solid_assembly(char *name, int de_list[], int length, int dependent, FILE *fp_dir, FILE *fp_param);
+extern int write_planar_nurb(struct faceuse *fu, vect_t u_dir, vect_t v_dir, fastf_t *u_max, fastf_t *v_max, point_t base_pt, FILE *fp_dir, FILE *fp_param);
+extern int write_name_entity(char *name, FILE *fp_dir, FILE *fp_param);
+extern int write_att_entity(struct iges_properties *props, FILE *fp_dir, FILE *fp_param);
+extern int nmg_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param);
 
 #define NO_OF_TYPES 31
 static int type_count[NO_OF_TYPES][2]={
@@ -2381,8 +2381,8 @@ tgc_to_iges(ip, name, fp_dir, fp_param)
 	return nmg_to_iges(ip, name, fp_dir, fp_param);
     }
 
-    if (NEAR_ZERO(a_len-b_len, tol.dist) &&
-	NEAR_ZERO(c_len-d_len, tol.dist)) {
+    if (NEAR_EQUAL(a_len, b_len, tol.dist) &&
+	NEAR_EQUAL(c_len, d_len, tol.dist)) {
 	/* this tgc is either an rcc or a trc */
 
 	/* write name entity */
@@ -2394,7 +2394,7 @@ tgc_to_iges(ip, name, fp_dir, fp_param)
 	for (i=0; i<21; i++)
 	    dir_entry[i] = DEFAULT;
 
-	if (NEAR_ZERO(a_len-c_len, tol.dist)) {
+	if (NEAR_EQUAL(a_len, c_len, tol.dist)) {
 	    /* its an rcc */
 	    iges_type = 154;
 	    bu_vls_printf(&str, "154, %g, %g, %g, %g, %g, %g, %g, %g" ,
@@ -2816,14 +2816,14 @@ write_att_entity(props, fp_dir, fp_param)
     /* material name */
     str_len = strlen(props->material_name);
     if (str_len)
-	bu_vls_printf(&str, ", %dH%s", str_len, props->material_name);
+	bu_vls_printf(&str, ", %zuH%s", str_len, props->material_name);
     else
 	bu_vls_strcat(&str, ", ");
 
     /* material parameters */
     str_len = strlen(props->material_params);
     if (str_len)
-	bu_vls_printf(&str, ", %dH%s", str_len, props->material_params);
+	bu_vls_printf(&str, ", %zuH%s", str_len, props->material_params);
     else
 	bu_vls_strcat(&str, ", ");
 

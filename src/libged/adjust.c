@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file adjust.c
+/** @file libged/adjust.c
  *
  * The adjust command.
  *
@@ -36,9 +36,9 @@ int
 ged_adjust(struct ged *gedp, int argc, const char *argv[])
 {
     int status;
-    struct directory	*dp;
-    char			*name;
-    struct rt_db_internal	 intern;
+    struct directory *dp;
+    char *name;
+    struct rt_db_internal intern;
     static const char *usage = "object attr value ?attr value?";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -46,16 +46,16 @@ ged_adjust(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 4) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -73,21 +73,16 @@ ged_adjust(struct ged *gedp, int argc, const char *argv[])
     RT_CK_FUNCTAB(intern.idb_meth);
 
     if (!intern.idb_meth->ft_adjust) {
-	bu_vls_printf(&gedp->ged_result_str, "wdb_export(%s) adjust failure", name);
+	bu_vls_printf(gedp->ged_result_str, "wdb_export(%s) adjust failure", name);
 	return GED_ERROR;
     }
 
-    status = intern.idb_meth->ft_adjust(&gedp->ged_result_str, &intern, argc-2, argv+2);
+    status = intern.idb_meth->ft_adjust(gedp->ged_result_str, &intern, argc-2, argv+2);
     if (status == GED_OK && wdb_put_internal(gedp->ged_wdbp, name, &intern, 1.0) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "wdb_export(%s) failure", name);
+	bu_vls_printf(gedp->ged_result_str, "wdb_export(%s) failure", name);
 	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
-
-#if 0
-    /* notify observers */
-    bu_observer_notify(interp, &wdbp->wdb_observers, bu_vls_addr(&wdbp->wdb_name));
-#endif
 
     return GED_OK;
 }

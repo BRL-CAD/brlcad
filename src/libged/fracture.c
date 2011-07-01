@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file fracture.c
+/** @file libged/fracture.c
  *
  * The fracture command.
  *
@@ -33,9 +33,56 @@
 #include "./ged_private.h"
 
 
-static void ged_add_nmg_part(struct ged *gedp, char *newname, struct model *m);
-
 static int frac_stat;
+
+
+static void
+fracture_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
+{
+    struct rt_db_internal new_intern;
+    struct directory *new_dp;
+    struct nmgregion *r;
+
+    if (db_lookup(gedp->ged_wdbp->dbip,  newname, LOOKUP_QUIET) != RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "%s: already exists\n", newname);
+	/* Free memory here */
+	nmg_km(m);
+	frac_stat = 1;
+	return;
+    }
+
+    new_dp=db_diradd(gedp->ged_wdbp->dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
+    if (new_dp == RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str,
+		      "Failed to add new object name (%s) to directory - aborting!!\n",
+		      newname);
+	return;
+    }
+
+    /* make sure the geometry/bounding boxes are up to date */
+    for (BU_LIST_FOR(r, nmgregion, &m->r_hd))
+	nmg_region_a(r, &gedp->ged_wdbp->wdb_tol);
+
+
+    /* Export NMG as a new solid */
+    RT_DB_INTERNAL_INIT(&new_intern);
+    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    new_intern.idb_type = ID_NMG;
+    new_intern.idb_meth = &rt_functab[ID_NMG];
+    new_intern.idb_ptr = (genptr_t)m;
+
+    if (rt_db_put_internal(new_dp, gedp->ged_wdbp->dbip, &new_intern, &rt_uniresource) < 0) {
+	/* Free memory */
+	nmg_km(m);
+	bu_vls_printf(gedp->ged_result_str, "rt_db_put_internal() failure\n");
+	frac_stat = 1;
+	return;
+    }
+    /* Internal representation has been freed by rt_db_put_internal */
+    new_intern.idb_ptr = (genptr_t)NULL;
+    frac_stat = 0;
+}
+
 
 int
 ged_fracture(struct ged *gedp, int argc, const char *argv[])
@@ -59,34 +106,34 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (3 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "fracture:");
+    bu_vls_printf(gedp->ged_result_str, "fracture:");
     for (i=0; i < argc; i++)
-	bu_vls_printf(&gedp->ged_result_str, " %s", argv[i]);
-    bu_vls_printf(&gedp->ged_result_str, "\n");
+	bu_vls_printf(gedp->ged_result_str, " %s", argv[i]);
+    bu_vls_printf(gedp->ged_result_str, "\n");
 
     if ((old_dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return GED_ERROR;
 
     if (rt_db_get_internal(&old_intern, old_dp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "rt_db_get_internal() error\n");
+	bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal() error\n");
 	return GED_ERROR;
     }
 
     if (old_intern.idb_type != ID_NMG) {
-	bu_vls_printf(&gedp->ged_result_str, " is not an NMG solid!!\n");
+	bu_vls_printf(gedp->ged_result_str, " is not an NMG solid!!\n");
 	rt_db_free_internal(&old_intern);
 	return GED_ERROR;
     }
@@ -99,7 +146,7 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
 
     maxdigits = (int)(log10((double)(tf+tw+tp)) + 1.0);
 
-    bu_vls_printf(&gedp->ged_result_str, "%ld = %d digits\n", (long)(tf+tw+tp), maxdigits);
+    bu_vls_printf(gedp->ged_result_str, "%ld = %d digits\n", (long)(tf+tw+tp), maxdigits);
 
     /* for (maxdigits=1, i=tf+tw+tp; i > 0; i /= 10)
      * maxdigits++;
@@ -122,7 +169,6 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
 		NMG_CK_VERTEX(s->vu_p->v_p);
 		v = s->vu_p->v_p;
 
-/*	nmg_start_dup(m); */
 		new_model = nmg_mm();
 		new_r = nmg_mrsv(new_model);
 		new_s = BU_LIST_FIRST(shell, &r->s_hd);
@@ -130,11 +176,10 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
 		if (v->vg_p) {
 		    nmg_vertex_gv(v_new, v->vg_p->coord);
 		}
-/*	nmg_end_dup(); */
 
 		snprintf(newname, 32, "%s%0*d", prefix, maxdigits, i++);
 
-		ged_add_nmg_part(gedp, newname, new_model);
+		fracture_add_nmg_part(gedp, newname, new_model);
 		if (frac_stat) return GED_ERROR;
 		continue;
 	    }
@@ -149,97 +194,18 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
 		new_r = nmg_mrsv(new_model);
 		NMG_CK_REGION(new_r);
 		new_s = BU_LIST_FIRST(shell, &new_r->s_hd);
-		NMG_CK_SHELL(new_s);
-/*	nmg_start_dup(m); */
+
 		NMG_CK_SHELL(new_s);
 		nmg_dup_face(fu, new_s);
-/*	nmg_end_dup(); */
 
 		snprintf(newname, 32, "%s%0*d", prefix, maxdigits, i++);
-		ged_add_nmg_part(gedp, newname, new_model);
+		fracture_add_nmg_part(gedp, newname, new_model);
 		if (frac_stat) return GED_ERROR;
 	    }
-#if 0
-	    while (BU_LIST_NON_EMPTY(&s->lu_hd)) {
-		lu = BU_LIST_FIRST(loopuse, &s->lu_hd);
-		new_model = nmg_mm();
-		r = nmg_mrsv(new_model);
-		new_s = BU_LIST_FIRST(shell, &r->s_hd);
-
-		nmg_dup_loop(lu, new_s);
-		nmg_klu(lu);
-
-		snprintf(newname, 32, "%s%0*d", prefix, maxdigits, i++);
-		ged_add_nmg_part(gedp, newname, new_model);
-		if (frac_stat) return GED_ERROR;
-	    }
-	    while (BU_LIST_NON_EMPTY(&s->eu_hd)) {
-		eu = BU_LIST_FIRST(edgeuse, &s->eu_hd);
-		new_model = nmg_mm();
-		r = nmg_mrsv(new_model);
-		new_s = BU_LIST_FIRST(shell, &r->s_hd);
-
-		nmg_dup_edge(eu, new_s);
-		nmg_keu(eu);
-
-		snprintf(newname, 32, "%s%0*d", prefix, maxdigits, i++);
-
-		ged_add_nmg_part(gedp, newname, new_model);
-		if (frac_stat) return GED_ERROR;
-	    }
-#endif
 	}
     }
 
     return GED_OK;
-}
-
-
-static void
-ged_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
-{
-    struct rt_db_internal new_intern;
-    struct directory *new_dp;
-    struct nmgregion *r;
-
-    if (db_lookup(gedp->ged_wdbp->dbip,  newname, LOOKUP_QUIET) != RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: already exists\n", newname);
-	/* Free memory here */
-	nmg_km(m);
-	frac_stat = 1;
-	return;
-    }
-
-    new_dp=db_diradd(gedp->ged_wdbp->dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
-    if (new_dp == RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str,
-		      "Failed to add new object name (%s) to directory - aborting!!\n",
-		      newname);
-	return;
-    }
-
-    /* make sure the geometry/bounding boxes are up to date */
-    for (BU_LIST_FOR(r, nmgregion, &m->r_hd))
-	nmg_region_a(r, &gedp->ged_wdbp->wdb_tol);
-
-
-    /* Export NMG as a new solid */
-    RT_INIT_DB_INTERNAL(&new_intern);
-    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    new_intern.idb_type = ID_NMG;
-    new_intern.idb_meth = &rt_functab[ID_NMG];
-    new_intern.idb_ptr = (genptr_t)m;
-
-    if (rt_db_put_internal(new_dp, gedp->ged_wdbp->dbip, &new_intern, &rt_uniresource) < 0) {
-	/* Free memory */
-	nmg_km(m);
-	bu_vls_printf(&gedp->ged_result_str, "rt_db_put_internal() failure\n");
-	frac_stat = 1;
-	return;
-    }
-    /* Internal representation has been freed by rt_db_put_internal */
-    new_intern.idb_ptr = (genptr_t)NULL;
-    frac_stat = 0;
 }
 
 

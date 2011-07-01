@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file vextern.h
+/** @file vdeck/vextern.h
  *	Author:		Gary Moss
  */
 

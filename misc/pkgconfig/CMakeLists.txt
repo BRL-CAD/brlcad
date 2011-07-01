@@ -43,5 +43,5 @@ SET(pkgconfig_DATA
 FOREACH(pkgfile ${pkgconfig_DATA})
   STRING(REGEX REPLACE "([0-9a-z_-]*).pc.in" "\\1" filename_root "${pkgfile}")
   configure_file(${pkgfile} ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.pc @ONLY)
-  INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.pc DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_LIB_DIR}/pkgconfig)
+  INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.pc DESTINATION ${LIB_DIR}/pkgconfig)
 ENDFOREACH(pkgfile ${pkgconfig_DATA})

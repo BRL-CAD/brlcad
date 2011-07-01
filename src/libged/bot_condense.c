@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bot_condense.c
+/** @file libged/bot_condense.c
  *
  * The bot_condense command.
  *
@@ -49,16 +49,16 @@ ged_bot_condense(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 3) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -66,21 +66,22 @@ ged_bot_condense(struct ged *gedp, int argc, const char *argv[])
     GED_DB_GET_INTERNAL(gedp, &intern,  old_dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a BOT solid!\n", argv[0], argv[2]);
+	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT solid!\n", argv[0], argv[2]);
 	return GED_ERROR;
     }
 
     bot = (struct rt_bot_internal *)intern.idb_ptr;
-    RT_BOT_CK_MAGIC( bot );
+    RT_BOT_CK_MAGIC(bot);
 
-    count2 = rt_bot_condense( bot );
-    bu_vls_printf(&gedp->ged_result_str, "%s: %d dead vertices eliminated\n", argv[0], count2);
+    count2 = rt_bot_condense(bot);
+    bu_vls_printf(gedp->ged_result_str, "%s: %d dead vertices eliminated\n", argv[0], count2);
 
     GED_DB_DIRADD(gedp, new_dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, new_dp, &intern, &rt_uniresource, GED_ERROR);
 
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

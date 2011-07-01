@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file PCurve.h
+/** @file step/PCurve.h
  *
  * Class definition used to convert STEP "PCurve" to BRL-CAD BREP
  * structures.

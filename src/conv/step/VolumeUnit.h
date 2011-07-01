@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file VolumeUnit.h
+/** @file step/VolumeUnit.h
  *
  * Class definition used to convert STEP "VolumeUnit" to BRL-CAD BREP
  * structures.

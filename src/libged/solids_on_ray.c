@@ -17,9 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file skel.c
+/** @file libged/solids_on_ray.c
  *
- * The skel command.
  *
  */
 
@@ -39,14 +38,12 @@
 
 
 /*
- * G E D _ N O _ O P
- *
  * Null event handler for use by rt_shootray().
  *
  * Does nothing.  Returns 1.
  */
 static int
-ged_no_op(struct application *ap, struct partition *ph, struct region *r1, struct region *r2, struct partition *hp)
+no_op(struct application *ap, struct partition *ph, struct region *r1, struct region *r2, struct partition *hp)
 {
     if (ap) RT_CK_APPLICATION(ap);
     if (ph) RT_CK_PARTITION(ph);
@@ -59,8 +56,6 @@ ged_no_op(struct application *ap, struct partition *ph, struct region *r1, struc
 
 
 /*
- * R P T _ H I T S _ M I K E
- *
  * Each partition represents a segment, i.e. a single solid.
  *
  * Boolean operations have not been performed.
@@ -70,7 +65,7 @@ ged_no_op(struct application *ap, struct partition *ph, struct region *r1, struc
  * piercing the torus twice.
  */
 static int
-ged_rpt_hits_mike(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp))
+rpt_hits(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
     struct partition *pp;
     int len;
@@ -94,15 +89,13 @@ ged_rpt_hits_mike(struct application *ap, struct partition *PartHeadp, struct se
 
 
 /*
- * R P T _ M I S S
- *
  * Miss handler for use by rt_shootray().
  *
  * Stuffs the address of a null string in ap->a_uptr and returns 0.
  */
 
 static int
-ged_rpt_miss(struct application *ap)
+rpt_miss(struct application *ap)
 {
     ap->a_uptr = NULL;
 
@@ -128,14 +121,14 @@ ged_rpt_miss(struct application *ap)
  * of solid names.
  */
 static char **
-ged_skewer_solids (struct ged *gedp, int argc, const char **argv, fastf_t *ray_orig, fastf_t *ray_dir, int UNUSED(full_path))
+skewer_solids(struct ged *gedp, int argc, const char **argv, fastf_t *ray_orig, fastf_t *ray_dir, int UNUSED(full_path))
 {
     struct application ap;
     struct rt_i *rtip;
     struct bu_list sol_list;
 
     if (argc <= 0) {
-	bu_vls_printf(&gedp->ged_result_str, "skewer_solids argc<=0\n");
+	bu_vls_printf(gedp->ged_result_str, "skewer_solids argc<=0\n");
 	return (char **) 0;
     }
 
@@ -144,7 +137,7 @@ ged_skewer_solids (struct ged *gedp, int argc, const char **argv, fastf_t *ray_o
     rtip->useair = 1;
     rtip->rti_dont_instance = 1;	/* full paths to solids, too. */
     if (rt_gettrees(rtip, argc, argv, 1) == -1) {
-	bu_vls_printf(&gedp->ged_result_str, "rt_gettrees() failed\n");
+	bu_vls_printf(gedp->ged_result_str, "rt_gettrees() failed\n");
 	rt_clean(rtip);
 	bu_free((genptr_t)rtip, "struct rt_i");
 	return (char **) 0;
@@ -162,10 +155,10 @@ ged_skewer_solids (struct ged *gedp, int argc, const char **argv, fastf_t *ray_o
     RT_APPLICATION_INIT(&ap);
     ap.a_magic = RT_AP_MAGIC;
     ap.a_ray.magic = RT_RAY_MAGIC;
-    ap.a_hit = ged_rpt_hits_mike;
-    ap.a_miss = ged_rpt_miss;
+    ap.a_hit = rpt_hits;
+    ap.a_miss = rpt_miss;
     ap.a_resource = RESOURCE_NULL;
-    ap.a_overlap = ged_no_op;
+    ap.a_overlap = no_op;
     ap.a_onehit = 0;
     ap.a_user = 1;	/* Requests full paths to solids, not just basenames */
     ap.a_rt_i = rtip;
@@ -210,28 +203,28 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 1 && argc != 3) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     if (argc == 3 &&
 	(sscanf(argv[1], "%d", &h) != 1 ||
 	 sscanf(argv[2], "%d", &v) != 1)) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     if ((int)GED_VMIN > h || h > (int)GED_VMAX || (int)GED_VMIN > v || v > (int)GED_VMAX) {
-	bu_vls_printf(&gedp->ged_result_str, "Screen coordinates out of range\nMust be between +/-2048");
+	bu_vls_printf(gedp->ged_result_str, "Screen coordinates out of range\nMust be between +/-2048");
 	return GED_ERROR;
     }
 
@@ -284,18 +277,18 @@ ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[])
      */
     solids_on_ray_cmd_vec_len = ged_build_tops(gedp, &solids_on_ray_cmd_vec[0], &solids_on_ray_cmd_vec[args]);
 
-    snames = ged_skewer_solids(gedp, solids_on_ray_cmd_vec_len, (const char **)solids_on_ray_cmd_vec, ray_orig, ray_dir, 1);
+    snames = skewer_solids(gedp, solids_on_ray_cmd_vec_len, (const char **)solids_on_ray_cmd_vec, ray_orig, ray_dir, 1);
 
     bu_free(solids_on_ray_cmd_vec, "free solids_on_ray_cmd_vec");
     solids_on_ray_cmd_vec = NULL;
 
     if (snames == 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Error executing ged_skewer_solids: ");
+	bu_vls_printf(gedp->ged_result_str, "Error executing skewer_solids: ");
 	return GED_ERROR;
     }
 
     for (i = 0; snames[i] != 0; ++i)
-	bu_vls_printf(&gedp->ged_result_str, " %s", snames[i]);
+	bu_vls_printf(gedp->ged_result_str, " %s", snames[i]);
 
     bu_free((genptr_t) snames, "solid names");
 

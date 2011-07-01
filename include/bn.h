@@ -38,7 +38,7 @@
 __BEGIN_DECLS
 
 /* interface headers */
-#include "bu.h"		/* required for BU_EXTERN, BU_CKMAG */
+#include "bu.h"		/* required for BU_CKMAG */
 #include "vmath.h"	/* required for mat_t, vect_t */
 
 
@@ -111,11 +111,11 @@ struct bn_tol {
 };
 #define BN_CK_TOL(_p)	BU_CKMAG(_p, BN_TOL_MAGIC, "bn_tol")
 
-#define BN_VECT_ARE_PARALLEL(_dot, _tol)		\
-	(((_dot) <= -SMALL_FASTF) ? (NEAR_ZERO((_dot) + 1.0, (_tol)->perp)) : (NEAR_ZERO((_dot) - 1.0, (_tol)->perp)))
+#define BN_VECT_ARE_PARALLEL(_dot, _tol)				\
+    (((_dot) <= -SMALL_FASTF) ? (NEAR_EQUAL((_dot), -1.0, (_tol)->perp)) : (NEAR_EQUAL((_dot), 1.0, (_tol)->perp)))
 
-#define BN_VECT_ARE_PERP(_dot, _tol)		\
-	(((_dot) < 0) ? ((-(_dot))<=(_tol)->perp) : ((_dot) <= (_tol)->perp))
+#define BN_VECT_ARE_PERP(_dot, _tol)					\
+    (((_dot) < 0) ? ((-(_dot))<=(_tol)->perp) : ((_dot) <= (_tol)->perp))
 
 #define BN_APPROXEQUAL(_a, _b, _tol) (fabs((_a) - (_b)) <= _tol->dist)
 
@@ -150,8 +150,7 @@ struct bn_tol {
  * matrix.  Given a matrix designed to operate on an object, yield a
  * matrix which operates on the view.
  */
-BN_EXPORT BU_EXTERN(void anim_v_permute,
-		    (mat_t m));
+BN_EXPORT extern void anim_v_permute(mat_t m);
 
 /**
  * @brief Undo the mapping done by anim_v_permute().
@@ -161,14 +160,12 @@ BN_EXPORT BU_EXTERN(void anim_v_permute,
  * matrix.  Given a matrix designed to operate on the view, yield a
  * matrix which operates on an object.
  */
-BN_EXPORT BU_EXTERN(void anim_v_unpermute,
-		    (mat_t m));
+BN_EXPORT extern void anim_v_unpermute(mat_t m);
 
 /**
  * @brief Transpose matrix in place
  */
-BN_EXPORT BU_EXTERN(void anim_tran,
-		    (mat_t m));
+BN_EXPORT extern void anim_tran(mat_t m);
 
 /**
  * @brief
@@ -178,9 +175,8 @@ BN_EXPORT BU_EXTERN(void anim_tran,
  * x, y, z. A return value of ERROR1 means that arbitrary assumptions
  * were necessary. ERROR2 means that the conversion failed.
  */
-BN_EXPORT BU_EXTERN(int anim_mat2zyx,
-		    (const mat_t viewrot,
-		     vect_t angle));
+BN_EXPORT extern int anim_mat2zyx(const mat_t viewrot,
+				  vect_t angle);
 
 /**
  * @brief
@@ -191,9 +187,8 @@ BN_EXPORT BU_EXTERN(int anim_mat2zyx,
  * y, p, r.  A return of ERROR1 means that arbitrary assumptions were
  * necessary.  ERROR2 means that the conversion failed.
  */
-BN_EXPORT BU_EXTERN(int anim_mat2ypr,
-		    (mat_t viewrot,
-		     vect_t angle));
+BN_EXPORT extern int anim_mat2ypr(mat_t viewrot,
+				  vect_t angle);
 
 /**
  * @brief
@@ -203,18 +198,16 @@ BN_EXPORT BU_EXTERN(int anim_mat2ypr,
  * Animating Rotation with Quaternion Curves, 1985 SIGGraph Conference
  * Proceeding, p.245.
  */
-BN_EXPORT BU_EXTERN(int anim_mat2quat,
-		    (quat_t quat,
-		     const mat_t viewrot));
+BN_EXPORT extern int anim_mat2quat(quat_t quat,
+				   const mat_t viewrot);
 
 /**
  * @brief Create a premultiplication rotation matrix to turn the front
  * of an object (its x-axis) to the given yaw, pitch, and roll, which
  * is stored in radians in the vector a.
  */
-BN_EXPORT BU_EXTERN(void anim_ypr2mat,
-		    (mat_t m,
-		     const vect_t a));
+BN_EXPORT extern void anim_ypr2mat(mat_t m,
+				   const vect_t a);
 
 /**
  * @brief Create a post-multiplication rotation matrix, which could be
@@ -228,83 +221,75 @@ BN_EXPORT BU_EXTERN(void anim_ypr2mat,
  * v_permute(matrix);
  * transpose(matrix;
  */
-BN_EXPORT BU_EXTERN(void anim_ypr2vmat,
-		    (mat_t m,
-		     const vect_t a));
+BN_EXPORT extern void anim_ypr2vmat(mat_t m,
+				    const vect_t a);
 
 /**
  * @brief
  * Make matrix to rotate an object to the given yaw, pitch, and
  * roll. (Specified in radians.)
  */
-BN_EXPORT BU_EXTERN(void anim_y_p_r2mat,
-		    (mat_t m,
-		     double y,
-		     double p,
-		     double r));
+BN_EXPORT extern void anim_y_p_r2mat(mat_t m,
+				     double y,
+				     double p,
+				     double r);
 
 /**
  * @brief Make matrix to rotate an object to the given yaw, pitch, and
  * roll. (Specified in degrees.)
  */
-BN_EXPORT BU_EXTERN(void anim_dy_p_r2mat,
-		    (mat_t m,
-		     double y,
-		     double p,
-		     double r));
+BN_EXPORT extern void anim_dy_p_r2mat(mat_t m,
+				      double y,
+				      double p,
+				      double r);
 
 /**
  * @brief Make a view rotation matrix, given desired yaw, pitch and
  * roll. (Note that the matrix is a permutation of the object rotation
  * matrix).
  */
-BN_EXPORT BU_EXTERN(void anim_dy_p_r2vmat,
-		    (mat_t m,
-		     double yaw,
-		     double pch,
-		     double rll));
+BN_EXPORT extern void anim_dy_p_r2vmat(mat_t m,
+				       double yaw,
+				       double pch,
+				       double rll);
 
 /**
  * @brief Make a rotation matrix corresponding to a rotation of "x"
  * radians about the x-axis, "y" radians about the y-axis, and then
  * "z" radians about the z-axis.
  */
-BN_EXPORT BU_EXTERN(void anim_x_y_z2mat,
-		    (mat_t m,
-		     double x,
-		     double y,
-		     double z));
+BN_EXPORT extern void anim_x_y_z2mat(mat_t m,
+				     double x,
+				     double y,
+				     double z);
 
 /**
  * @brief Make a rotation matrix corresponding to a rotation of "x"
  * degrees about the x-axis, "y" degrees about the y-axis, and then
  * "z" degrees about the z-axis.
  */
-BN_EXPORT BU_EXTERN(void anim_dx_y_z2mat,
-		    (mat_t m,
-		     double x,
-		     double y,
-		     double z));
+BN_EXPORT extern void anim_dx_y_z2mat(mat_t m,
+				      double x,
+				      double y,
+				      double z);
 
 /**
  * @brief Make a rotation matrix corresponding to a rotation of "z"
  * radians about the z-axis, "y" radians about the y-axis, and then
  * "x" radians about the x-axis.
  */
-BN_EXPORT BU_EXTERN(void anim_zyx2mat,
-		    (mat_t m,
-		     const vect_t a));
+BN_EXPORT extern void anim_zyx2mat(mat_t m,
+				   const vect_t a);
 
 /**
  * @brief Make a rotation matrix corresponding to a rotation of "z"
  * radians about the z-axis, "y" radians about the y-axis, and then
  * "x" radians about the x-axis.
  */
-BN_EXPORT BU_EXTERN(void anim_z_y_x2mat,
-		    (mat_t m,
-		     double x,
-		     double y,
-		     double z));
+BN_EXPORT extern void anim_z_y_x2mat(mat_t m,
+				     double x,
+				     double y,
+				     double z);
 
 /**
  * @brief
@@ -312,11 +297,10 @@ BN_EXPORT BU_EXTERN(void anim_z_y_x2mat,
  * about the z-axis, "y" degrees about the y-axis, and then "x"
  * degrees about the x-axis.
  */
-BN_EXPORT BU_EXTERN(void anim_dz_y_x2mat,
-		    (mat_t m,
-		     double x,
-		     double y,
-		     double z));
+BN_EXPORT extern void anim_dz_y_x2mat(mat_t m,
+				      double x,
+				      double y,
+				      double z);
 
 /**
  * @brief
@@ -324,9 +308,8 @@ BN_EXPORT BU_EXTERN(void anim_dz_y_x2mat,
  * are the conjugates of the quaternions used in the librt/qmath.c
  * quat_quat2mat()
  */
-BN_EXPORT BU_EXTERN(void anim_quat2mat,
-		    (mat_t m,
-		     const quat_t qq));
+BN_EXPORT extern void anim_quat2mat(mat_t m,
+				    const quat_t qq);
 
 /**
  * @brief
@@ -336,10 +319,9 @@ BN_EXPORT BU_EXTERN(void anim_quat2mat,
  * given direction is vertical. This is intended to represent the the
  * direction from a previous frame.
  */
-BN_EXPORT BU_EXTERN(void anim_dir2mat,
-		    (mat_t m,
-		     const vect_t d,
-		     const vect_t d2));
+BN_EXPORT extern void anim_dir2mat(mat_t m,
+				   const vect_t d,
+				   const vect_t d2);
 
 /**
  * @brief make a matrix which turns a vehicle from the x-axis to point
@@ -349,10 +331,9 @@ BN_EXPORT BU_EXTERN(void anim_dir2mat,
  * the vehicle's x and z axes should be put. A good choice to put here
  * is the direction of the vehicle's y-axis in the previous frame.
  */
-BN_EXPORT BU_EXTERN(void anim_dirn2mat,
-		    (mat_t m,
-		     const vect_t dx,
-		     const vect_t dn));
+BN_EXPORT extern void anim_dirn2mat(mat_t m,
+				    const vect_t dx,
+				    const vect_t dn);
 
 /**
  * @brief given the next frame's position, remember the value of the
@@ -362,10 +343,9 @@ BN_EXPORT BU_EXTERN(void anim_dirn2mat,
  * arguments; return 1 as the normal value, and 0 when there is not
  * yet information to remember.
  */
-BN_EXPORT BU_EXTERN(int anim_steer_mat,
-		    (mat_t mat,
-		     vect_t point,
-		     int end));
+BN_EXPORT extern int anim_steer_mat(mat_t mat,
+				    vect_t point,
+				    int end);
 
 /**
  * @brief Add pre- and post- translation to a rotation matrix.  The
@@ -373,79 +353,63 @@ BN_EXPORT BU_EXTERN(int anim_steer_mat,
  * translation, followed by the rotation, followed by the second
  * translation.
  */
-BN_EXPORT BU_EXTERN(void anim_add_trans,
-		    (mat_t m,
-		     const vect_t post,
-		     const vect_t pre));
+BN_EXPORT extern void anim_add_trans(mat_t m,
+				     const vect_t post,
+				     const vect_t pre);
 
 /**
  * @brief Rotate the vector "d" through "a" radians about the z-axis.
  */
-BN_EXPORT BU_EXTERN(void anim_rotatez,
-		    (fastf_t a,
-		     vect_t d));
+BN_EXPORT extern void anim_rotatez(fastf_t a,
+				   vect_t d);
 
 /**
  * @brief print out 4X4 matrix, with optional colon
  */
-BN_EXPORT BU_EXTERN(void anim_mat_print,
-		    (FILE *fp,
-		     const mat_t m,
-		     int s_colon));
+BN_EXPORT extern void anim_mat_print(FILE *fp,
+				     const mat_t m,
+				     int s_colon);
 
 /** 
  * @brief print out 4X4 matrix.  formstr must be less than twenty
  * chars
  */
-BN_EXPORT BU_EXTERN(void anim_mat_printf,
-		    (FILE *fp,
-		     const mat_t m,
-		     const char *formstr,
-		     const char *linestr,
-		     const char *endstr));
+BN_EXPORT extern void anim_mat_printf(FILE *fp,
+				      const mat_t m,
+				      const char *formstr,
+				      const char *linestr,
+				      const char *endstr);
 
 /**
  * @brief Reverse the direction of a view matrix, keeping it
  * right-side up
  */
-BN_EXPORT BU_EXTERN(void anim_view_rev,
-		    (mat_t m));
+BN_EXPORT extern void anim_view_rev(mat_t m);
 
 
 /*----------------------------------------------------------------------*/
 /* bn_tcl.c */
-BN_EXPORT BU_EXTERN(int bn_decode_mat,
-		    (mat_t m,
-		     const char *str));
-BN_EXPORT BU_EXTERN(int bn_decode_quat,
-		    (quat_t q,
-		     const char *str));
-BN_EXPORT BU_EXTERN(int bn_decode_vect,
-		    (vect_t v,
-		     const char *str));
-BN_EXPORT BU_EXTERN(int bn_decode_hvect,
-		    (hvect_t v,
-		     const char *str));
-BN_EXPORT BU_EXTERN(void bn_encode_mat,
-		    (struct bu_vls *vp,
-		     const mat_t m));
-BN_EXPORT BU_EXTERN(void bn_encode_quat,
-		    (struct bu_vls *vp,
-		     const quat_t q));
-BN_EXPORT BU_EXTERN(void bn_encode_vect,
-		    (struct bu_vls *vp,
-		     const vect_t v));
-BN_EXPORT BU_EXTERN(void bn_encode_hvect,
-		    (struct bu_vls *vp,
-		     const hvect_t v));
+BN_EXPORT extern int bn_decode_mat(mat_t m,
+				   const char *str);
+BN_EXPORT extern int bn_decode_quat(quat_t q,
+				    const char *str);
+BN_EXPORT extern int bn_decode_vect(vect_t v,
+				    const char *str);
+BN_EXPORT extern int bn_decode_hvect(hvect_t v,
+				     const char *str);
+BN_EXPORT extern void bn_encode_mat(struct bu_vls *vp,
+				    const mat_t m);
+BN_EXPORT extern void bn_encode_quat(struct bu_vls *vp,
+				     const quat_t q);
+BN_EXPORT extern void bn_encode_vect(struct bu_vls *vp,
+				     const vect_t v);
+BN_EXPORT extern void bn_encode_hvect(struct bu_vls *vp,
+				      const hvect_t v);
 
 /* The presence of Tcl_Interp as an arg prevents giving arg list */
-BN_EXPORT BU_EXTERN(void bn_tcl_setup,
-		    ());
-BN_EXPORT BU_EXTERN(int Bn_Init,
-		    ());
-BN_EXPORT BU_EXTERN(void bn_tcl_mat_print,
-		    ());
+BN_EXPORT extern void bn_tcl_setup();
+BN_EXPORT extern int Bn_Init();
+BN_EXPORT extern void bn_tcl_mat_print();
 
 /** @} */
 /*----------------------------------------------------------------------*/
@@ -479,7 +443,7 @@ typedef struct bn_complex {
 #define bn_cx_sub(ap, bp) { (ap)->re -= (bp)->re; (ap)->im -= (bp)->im;}
 
 #define bn_cx_mul(ap, bp)	 	\
-	{ register fastf_t a__re, b__re; \
+    { register fastf_t a__re, b__re; \
 	(ap)->re = ((a__re=(ap)->re)*(b__re=(bp)->re)) - (ap)->im*(bp)->im; \
 	(ap)->im = a__re*(bp)->im + (ap)->im*b__re; }
 
@@ -488,12 +452,10 @@ typedef struct bn_complex {
 	(ap)->re = (cp)->re * (bp)->re - (cp)->im * (bp)->im; \
 	(ap)->im = (cp)->re * (bp)->im + (cp)->im * (bp)->re; }
 
-BN_EXPORT BU_EXTERN(void bn_cx_div,
-		    (bn_complex_t *ap,
-		     const bn_complex_t *bp));
-BN_EXPORT BU_EXTERN(void bn_cx_sqrt,
-		    (bn_complex_t *op,
-		     const bn_complex_t *ip));
+BN_EXPORT extern void bn_cx_div(bn_complex_t *ap,
+				const bn_complex_t *bp);
+BN_EXPORT extern void bn_cx_sqrt(bn_complex_t *op,
+				 const bn_complex_t *ip);
 
 /*----------------------------------------------------------------------*/
 /* mat.c */
@@ -502,37 +464,33 @@ BN_EXPORT BU_EXTERN(void bn_cx_sqrt,
  */
 BN_EXPORT extern const mat_t bn_mat_identity;
 
-BN_EXPORT BU_EXTERN(void bn_mat_print,
-		    (const char *title,
-		     const mat_t m));
-BN_EXPORT BU_EXTERN(void bn_mat_print_guts,
-		    (const char *title,
-		     const mat_t m,
-		     char *buf,
-		     int buflen));
-BN_EXPORT BU_EXTERN(void bn_mat_print_vls,
-		    (const char *title,
-		     const mat_t m,
-		     struct bu_vls *vls));
-BN_EXPORT BU_EXTERN(double bn_atan2,
-		    (double x, double y));
+BN_EXPORT extern void bn_mat_print(const char *title,
+				   const mat_t m);
+BN_EXPORT extern void bn_mat_print_guts(const char *title,
+					const mat_t m,
+					char *buf,
+					int buflen);
+BN_EXPORT extern void bn_mat_print_vls(const char *title,
+				       const mat_t m,
+				       struct bu_vls *vls);
+BN_EXPORT extern double bn_atan2(double x, double y);
 
 #define bn_mat_zero(_m) { \
 	bu_log("%s:%d bn_mat_zero() is deprecated, use MAT_ZERO()\n", \
-			__FILE__, __LINE__); \
+	       __FILE__, __LINE__); \
 	(_m)[0] = (_m)[1] = (_m)[2] = (_m)[3] = \
-	(_m)[4] = (_m)[5] = (_m)[6] = (_m)[7] = \
-	(_m)[8] = (_m)[9] = (_m)[10] = (_m)[11] = \
-	(_m)[12] = (_m)[13] = (_m)[14] = (_m)[15] = 0.0; }
+	    (_m)[4] = (_m)[5] = (_m)[6] = (_m)[7] = \
+	    (_m)[8] = (_m)[9] = (_m)[10] = (_m)[11] = \
+	    (_m)[12] = (_m)[13] = (_m)[14] = (_m)[15] = 0.0; }
 /*
   #define bn_mat_zero(_m)	(void)memset((void *)_m, 0, sizeof(mat_t))
 */
 #define bn_mat_idn(_m) { \
 	bu_log("%s:%d bn_mat_idn() is deprecated, use MAT_IDN()\n", \
-			__FILE__, __LINE__); \
+	       __FILE__, __LINE__); \
 	(_m)[1] = (_m)[2] = (_m)[3] = (_m)[4] = \
-	(_m)[6] = (_m)[7] = (_m)[8] = (_m)[9] = \
-	(_m)[11] = (_m)[12] = (_m)[13] = (_m)[14] = 0.0; \
+	    (_m)[6] = (_m)[7] = (_m)[8] = (_m)[9] = \
+	    (_m)[11] = (_m)[12] = (_m)[13] = (_m)[14] = 0.0; \
 	(_m)[0] = (_m)[5] = (_m)[10] = (_m)[15] = 1.0; }
 /*
   #define bn_mat_idn(_m)	(void)memcpy((void *)_m, (const void *)bn_mat_identity, sizeof(mat_t))
@@ -540,7 +498,7 @@ BN_EXPORT BU_EXTERN(double bn_atan2,
 
 #define bn_mat_copy(_d, _s) { \
 	bu_log("%s:%d bn_mat_copy() is deprecated, use MAT_COPY()\n", \
-			__FILE__, __LINE__); \
+	       __FILE__, __LINE__); \
 	(_d)[0] = (_s)[0];\
 	(_d)[1] = (_s)[1];\
 	(_d)[2] = (_s)[2];\
@@ -562,151 +520,115 @@ BN_EXPORT BU_EXTERN(double bn_atan2,
 */
 
 
-BN_EXPORT BU_EXTERN(void bn_mat_mul,
-		    (mat_t o,
-		     const mat_t a,
-		     const mat_t b));
-BN_EXPORT BU_EXTERN(void bn_mat_mul2,
-		    (const mat_t i,
-		     mat_t o));
-BN_EXPORT BU_EXTERN(void bn_mat_mul3,
-		    (mat_t o,
-		     const mat_t a,
-		     const mat_t b,
-		     const mat_t c));
-BN_EXPORT BU_EXTERN(void bn_mat_mul4,
-		    (mat_t o,
-		     const mat_t a,
-		     const mat_t b,
-		     const mat_t c,
-		     const mat_t d));
-BN_EXPORT BU_EXTERN(void bn_matXvec,
-		    (hvect_t ov,
-		     const mat_t im,
-		     const hvect_t iv));
-BN_EXPORT BU_EXTERN(void bn_mat_inv,
-		    (mat_t output,
-		     const mat_t input));
-BN_EXPORT BU_EXTERN(int bn_mat_inverse,
-		    (mat_t output,
-		     const mat_t input));
-BN_EXPORT BU_EXTERN(void bn_vtoh_move,
-		    (vect_t h,
-		     const vect_t v));
-BN_EXPORT BU_EXTERN(void bn_htov_move,
-		    (vect_t v,
-		     const vect_t h));
-BN_EXPORT BU_EXTERN(void bn_mat_trn,
-		    (mat_t om,
-		     const mat_t im));
-BN_EXPORT BU_EXTERN(void bn_mat_ae,
-		    (mat_t m,
-		     double azimuth,
-		     double elev));
-BN_EXPORT BU_EXTERN(void bn_ae_vec,
-		    (fastf_t *azp,
-		     fastf_t *elp,
-		     const vect_t v));
-BN_EXPORT BU_EXTERN(void bn_aet_vec,
-		    (fastf_t *az,
-		     fastf_t *el,
-		     fastf_t *twist,
-		     vect_t vec_ae,
-		     vect_t vec_twist,
-		     fastf_t accuracy));
-BN_EXPORT BU_EXTERN(void bn_vec_ae,
-		    (vect_t vec,
-		     fastf_t az,
-		     fastf_t el));
-BN_EXPORT BU_EXTERN(void bn_vec_aed,
-		    (vect_t vec,
-		     fastf_t az,
-		     fastf_t el,
-		     fastf_t dist));
+BN_EXPORT extern void bn_mat_mul(mat_t o,
+				 const mat_t a,
+				 const mat_t b);
+BN_EXPORT extern void bn_mat_mul2(const mat_t i,
+				  mat_t o);
+BN_EXPORT extern void bn_mat_mul3(mat_t o,
+				  const mat_t a,
+				  const mat_t b,
+				  const mat_t c);
+BN_EXPORT extern void bn_mat_mul4(mat_t o,
+				  const mat_t a,
+				  const mat_t b,
+				  const mat_t c,
+				  const mat_t d);
+BN_EXPORT extern void bn_matXvec(hvect_t ov,
+				 const mat_t im,
+				 const hvect_t iv);
+BN_EXPORT extern void bn_mat_inv(mat_t output,
+				 const mat_t input);
+BN_EXPORT extern int bn_mat_inverse(mat_t output,
+				    const mat_t input);
+BN_EXPORT extern void bn_vtoh_move(vect_t h,
+				   const vect_t v);
+BN_EXPORT extern void bn_htov_move(vect_t v,
+				   const vect_t h);
+BN_EXPORT extern void bn_mat_trn(mat_t om,
+				 const mat_t im);
+BN_EXPORT extern void bn_mat_ae(mat_t m,
+				double azimuth,
+				double elev);
+BN_EXPORT extern void bn_ae_vec(fastf_t *azp,
+				fastf_t *elp,
+				const vect_t v);
+BN_EXPORT extern void bn_aet_vec(fastf_t *az,
+				 fastf_t *el,
+				 fastf_t *twist,
+				 vect_t vec_ae,
+				 vect_t vec_twist,
+				 fastf_t accuracy);
+BN_EXPORT extern void bn_vec_ae(vect_t vec,
+				fastf_t az,
+				fastf_t el);
+BN_EXPORT extern void bn_vec_aed(vect_t vec,
+				 fastf_t az,
+				 fastf_t el,
+				 fastf_t dist);
 
-BN_EXPORT BU_EXTERN(void bn_mat_angles,
-		    (mat_t mat,
-		     double alpha,
-		     double beta, double ggamma));
-BN_EXPORT BU_EXTERN(void bn_mat_angles_rad,
-		    (mat_t mat,
-		     double alpha,
-		     double beta,
-		     double ggamma));
+BN_EXPORT extern void bn_mat_angles(mat_t mat,
+				    double alpha,
+				    double beta, double ggamma);
+BN_EXPORT extern void bn_mat_angles_rad(mat_t mat,
+					double alpha,
+					double beta,
+					double ggamma);
 
-BN_EXPORT BU_EXTERN(void bn_eigen2x2,
-		    (fastf_t *val1,
-		     fastf_t *val2,
-		     vect_t vec1,
-		     vect_t vec2,
-		     fastf_t a,
-		     fastf_t b,
-		     fastf_t c));
+BN_EXPORT extern void bn_eigen2x2(fastf_t *val1,
+				  fastf_t *val2,
+				  vect_t vec1,
+				  vect_t vec2,
+				  fastf_t a,
+				  fastf_t b,
+				  fastf_t c);
 
-BN_EXPORT BU_EXTERN(void bn_vec_perp,
-		    (vect_t new_vec,
-		     const vect_t old_vec));
-BN_EXPORT BU_EXTERN(void bn_mat_fromto,
-		    (mat_t m,
-		     const vect_t from,
-		     const vect_t to));
-BN_EXPORT BU_EXTERN(void bn_mat_xrot,
-		    (mat_t m,
-		     double sinx,
-		     double cosx));
-BN_EXPORT BU_EXTERN(void bn_mat_yrot,
-		    (mat_t m,
-		     double siny,
-		     double cosy));
-BN_EXPORT BU_EXTERN(void bn_mat_zrot,
-		    (mat_t m,
-		     double sinz,
-		     double cosz));
-BN_EXPORT BU_EXTERN(void bn_mat_lookat,
-		    (mat_t rot,
-		     const vect_t dir,
-		     int yflip));
-BN_EXPORT BU_EXTERN(void bn_vec_ortho,
-		    (vect_t out,
-		     const vect_t in));
-BN_EXPORT BU_EXTERN(int bn_mat_scale_about_pt,
-		    (mat_t mat,
-		     const point_t pt,
-		     const double scale));
-BN_EXPORT BU_EXTERN(void bn_mat_xform_about_pt,
-		    (mat_t mat,
-		     const mat_t xform,
-		     const point_t pt));
-BN_EXPORT BU_EXTERN(int bn_mat_is_equal,
-		    (const mat_t a,
-		     const mat_t b,
-		     const struct bn_tol *tol));
-BN_EXPORT BU_EXTERN(int bn_mat_is_identity,
-		    (const mat_t m));
-BN_EXPORT BU_EXTERN(void bn_mat_arb_rot,
-		    (mat_t m,
-		     const point_t pt,
-		     const vect_t dir,
-		     const fastf_t ang));
-BN_EXPORT BU_EXTERN(matp_t bn_mat_dup,
-		    (const mat_t in));
-BN_EXPORT BU_EXTERN(int bn_mat_ck,
-		    (const char *title,
-		     const mat_t m));
-BN_EXPORT BU_EXTERN(fastf_t bn_mat_det3,
-		    (const mat_t m));
-BN_EXPORT BU_EXTERN(fastf_t bn_mat_determinant,
-		    (const mat_t m));
+BN_EXPORT extern void bn_vec_perp(vect_t new_vec,
+				  const vect_t old_vec);
+BN_EXPORT extern void bn_mat_fromto(mat_t m,
+				    const vect_t from,
+				    const vect_t to);
+BN_EXPORT extern void bn_mat_xrot(mat_t m,
+				  double sinx,
+				  double cosx);
+BN_EXPORT extern void bn_mat_yrot(mat_t m,
+				  double siny,
+				  double cosy);
+BN_EXPORT extern void bn_mat_zrot(mat_t m,
+				  double sinz,
+				  double cosz);
+BN_EXPORT extern void bn_mat_lookat(mat_t rot,
+				    const vect_t dir,
+				    int yflip);
+BN_EXPORT extern void bn_vec_ortho(vect_t out,
+				   const vect_t in);
+BN_EXPORT extern int bn_mat_scale_about_pt(mat_t mat,
+					   const point_t pt,
+					   const double scale);
+BN_EXPORT extern void bn_mat_xform_about_pt(mat_t mat,
+					    const mat_t xform,
+					    const point_t pt);
+BN_EXPORT extern int bn_mat_is_equal(const mat_t a,
+				     const mat_t b,
+				     const struct bn_tol *tol);
+BN_EXPORT extern int bn_mat_is_identity(const mat_t m);
+BN_EXPORT extern void bn_mat_arb_rot(mat_t m,
+				     const point_t pt,
+				     const vect_t dir,
+				     const fastf_t ang);
+BN_EXPORT extern matp_t bn_mat_dup(const mat_t in);
+BN_EXPORT extern int bn_mat_ck(const char *title,
+			       const mat_t m);
+BN_EXPORT extern fastf_t bn_mat_det3(const mat_t m);
+BN_EXPORT extern fastf_t bn_mat_determinant(const mat_t m);
 
-BN_EXPORT BU_EXTERN(int bn_mat_is_non_unif,
-		    (const mat_t m));
+BN_EXPORT extern int bn_mat_is_non_unif(const mat_t m);
 
-BN_EXPORT BU_EXTERN(void bn_wrt_point_direc,
-		    (mat_t out,
-		     const mat_t change,
-		     const mat_t in,
-		     const point_t point,
-		     const vect_t direc));
+BN_EXPORT extern void bn_wrt_point_direc(mat_t out,
+					 const mat_t change,
+					 const mat_t in,
+					 const point_t point,
+					 const vect_t direc);
 
 /** @} */
 /*----------------------------------------------------------------------*/
@@ -748,51 +670,44 @@ struct bn_gauss {
     double *msr_gausses;
 };
 
-BN_EXPORT BU_EXTERN(struct bn_unif *bn_unif_init,
-		    (long setseed,
-		     int method));
-BN_EXPORT BU_EXTERN(void bn_unif_free,
-		    (struct bn_unif *p));
-BN_EXPORT BU_EXTERN(long bn_unif_long_fill,
-		    (struct bn_unif *p));
-BN_EXPORT BU_EXTERN(double bn_unif_double_fill,
-		    (struct bn_unif *p));
-BN_EXPORT BU_EXTERN(struct bn_gauss *bn_gauss_init,
-		    (long setseed,
-		     int method));
-BN_EXPORT BU_EXTERN(void bn_gauss_free,
-		    (struct bn_gauss *p));
-BN_EXPORT BU_EXTERN(double bn_gauss_fill,
-		    (struct bn_gauss *p));
+BN_EXPORT extern struct bn_unif *bn_unif_init(long setseed,
+					      int method);
+BN_EXPORT extern void bn_unif_free(struct bn_unif *p);
+BN_EXPORT extern long bn_unif_long_fill(struct bn_unif *p);
+BN_EXPORT extern double bn_unif_double_fill(struct bn_unif *p);
+BN_EXPORT extern struct bn_gauss *bn_gauss_init(long setseed,
+						int method);
+BN_EXPORT extern void bn_gauss_free(struct bn_gauss *p);
+BN_EXPORT extern double bn_gauss_fill(struct bn_gauss *p);
 
 #define BN_UNIF_LONG(_p)	\
-	 (((_p)->msr_long_ptr) ? \
-		(_p)->msr_longs[--(_p)->msr_long_ptr] : \
-		bn_unif_long_fill(_p))
+    (((_p)->msr_long_ptr) ? \
+     (_p)->msr_longs[--(_p)->msr_long_ptr] : \
+     bn_unif_long_fill(_p))
 #define BN_UNIF_DOUBLE(_p)	\
-	(((_p)->msr_double_ptr) ? \
-		(_p)->msr_doubles[--(_p)->msr_double_ptr] : \
-		bn_unif_double_fill(_p))
+    (((_p)->msr_double_ptr) ? \
+     (_p)->msr_doubles[--(_p)->msr_double_ptr] : \
+     bn_unif_double_fill(_p))
 
 #define BN_UNIF_CIRCLE(_p, _x, _y, _r) { \
 	do { \
-		(_x) = 2.0*BN_UNIF_DOUBLE((_p)); \
-		(_y) = 2.0*BN_UNIF_DOUBLE((_p)); \
-		(_r) = (_x)*(_x)+(_y)*(_y); \
+	    (_x) = 2.0*BN_UNIF_DOUBLE((_p)); \
+	    (_y) = 2.0*BN_UNIF_DOUBLE((_p)); \
+	    (_r) = (_x)*(_x)+(_y)*(_y); \
 	} while ((_r) >= 1.0);  }
 
 #define BN_UNIF_SPHERE(_p, _x, _y, _z, _r) { \
 	do { \
-		(_x) = 2.0*BN_UNIF_DOUBLE(_p); \
-		(_y) = 2.0*BN_UNIF_DOUBLE(_p); \
-		(_z) = 2.0*BN_UNIF_DOUBLE(_p); \
-		(_r) = (_x)*(_x)+(_y)*(_y)+(_z)*(_z);\
+	    (_x) = 2.0*BN_UNIF_DOUBLE(_p); \
+	    (_y) = 2.0*BN_UNIF_DOUBLE(_p); \
+	    (_z) = 2.0*BN_UNIF_DOUBLE(_p); \
+	    (_r) = (_x)*(_x)+(_y)*(_y)+(_z)*(_z);\
 	} while ((_r) >= 1.0) }
 
 #define BN_GAUSS_DOUBLE(_p)	\
-	(((_p)->msr_gauss_ptr) ? \
-		(_p)->msr_gausses[--(_p)->msr_gauss_ptr] : \
-		bn_gauss_fill(_p))
+    (((_p)->msr_gauss_ptr) ? \
+     (_p)->msr_gausses[--(_p)->msr_gauss_ptr] : \
+     bn_gauss_fill(_p))
 
 /** @} */
 /*----------------------------------------------------------------------*/
@@ -803,36 +718,29 @@ BN_EXPORT BU_EXTERN(double bn_gauss_fill,
  * fractal noise support
  */
 
-BN_EXPORT BU_EXTERN(void bn_noise_init,
-		    ());
-BN_EXPORT BU_EXTERN(double bn_noise_perlin,
-		    (point_t pt));
+BN_EXPORT extern void bn_noise_init();
+BN_EXPORT extern double bn_noise_perlin(point_t pt);
 /* FIXME: Why isn't the result listed first? */
-BN_EXPORT BU_EXTERN(void bn_noise_vec,
-		    (point_t point,
-		     point_t result));
-BN_EXPORT BU_EXTERN(double bn_noise_fbm,
-		    (point_t point,
-		     double h_val,
-		     double lacunarity,
-		     double octaves));
-BN_EXPORT BU_EXTERN(double bn_noise_turb,
-		    (point_t point,
-		     double h_val,
-		     double lacunarity,
-		     double octaves));
-BN_EXPORT BU_EXTERN(double bn_noise_mf,
-		    (point_t point,
-		     double h_val,
-		     double lacunarity,
-		     double octaves,
-		     double offset));
-BN_EXPORT BU_EXTERN(double bn_noise_ridged,
-		    (point_t point,
-		     double h_val,
-		     double lacunarity,
-		     double octaves,
-		     double offset));
+BN_EXPORT extern void bn_noise_vec(point_t point,
+				   point_t result);
+BN_EXPORT extern double bn_noise_fbm(point_t point,
+				     double h_val,
+				     double lacunarity,
+				     double octaves);
+BN_EXPORT extern double bn_noise_turb(point_t point,
+				      double h_val,
+				      double lacunarity,
+				      double octaves);
+BN_EXPORT extern double bn_noise_mf(point_t point,
+				    double h_val,
+				    double lacunarity,
+				    double octaves,
+				    double offset);
+BN_EXPORT extern double bn_noise_ridged(point_t point,
+					double h_val,
+					double lacunarity,
+					double octaves,
+					double offset);
 
 /*----------------------------------------------------------------------*/
 /* plane.c */
@@ -841,237 +749,196 @@ BN_EXPORT BU_EXTERN(double bn_noise_ridged,
  */
 
 
-BN_EXPORT BU_EXTERN(int bn_distsq_line3_line3,
-		    (fastf_t dist[3],
-		     point_t P,
-		     vect_t d,
-		     point_t Q,
-		     vect_t e,
-		     point_t pt1,
-		     point_t pt2));
+BN_EXPORT extern int bn_distsq_line3_line3(fastf_t dist[3],
+					   point_t P,
+					   vect_t d,
+					   point_t Q,
+					   vect_t e,
+					   point_t pt1,
+					   point_t pt2);
 
-BN_EXPORT BU_EXTERN(int bn_dist_pt3_lseg3,
-		    (fastf_t *dist,
-		     point_t pca,
-		     const point_t a,
-		     const point_t b,
-		     const point_t p,
-		     const struct bn_tol *tol));
-BN_EXPORT BU_EXTERN(int bn_3pts_collinear,
-		    (point_t a,
-		     point_t b,
-		     point_t c,
-		     const struct bn_tol *tol));
-BN_EXPORT BU_EXTERN(int bn_pt3_pt3_equal,
-		    (const point_t a,
-		     const point_t b,
-		     const struct bn_tol *tol));
-BN_EXPORT BU_EXTERN(int bn_dist_pt2_lseg2,
-		    (fastf_t *dist_sq,
-		     fastf_t pca[2],
-		     const point_t a,
-		     const point_t b,
-		     const point_t p,
-		     const struct bn_tol *tol));
+BN_EXPORT extern int bn_dist_pt3_lseg3(fastf_t *dist,
+				       point_t pca,
+				       const point_t a,
+				       const point_t b,
+				       const point_t p,
+				       const struct bn_tol *tol);
+BN_EXPORT extern int bn_3pts_collinear(point_t a,
+				       point_t b,
+				       point_t c,
+				       const struct bn_tol *tol);
+BN_EXPORT extern int bn_pt3_pt3_equal(const point_t a,
+				      const point_t b,
+				      const struct bn_tol *tol);
+BN_EXPORT extern int bn_dist_pt2_lseg2(fastf_t *dist_sq,
+				       fastf_t pca[2],
+				       const point_t a,
+				       const point_t b,
+				       const point_t p,
+				       const struct bn_tol *tol);
 #ifdef TRI_PROTOTYPE
-BN_EXPORT BU_EXTERN(int bn_isect_lseg3_lseg3_new,
-                    (fastf_t *dist,
-                     const point_t p, const vect_t pdir,
-                     const point_t q, const vect_t qdir,
-                     const struct bn_tol *tol));
+BN_EXPORT extern int bn_isect_lseg3_lseg3_new(fastf_t *dist,
+					      const point_t p, const vect_t pdir,
+					      const point_t q, const vect_t qdir,
+					      const struct bn_tol *tol);
 #endif
-BN_EXPORT BU_EXTERN(int bn_isect_lseg3_lseg3,
-		    (fastf_t *dist,
-		     const point_t p, const vect_t pdir,
-		     const point_t q, const vect_t qdir,
-		     const struct bn_tol *tol));
+BN_EXPORT extern int bn_isect_lseg3_lseg3(fastf_t *dist,
+					  const point_t p, const vect_t pdir,
+					  const point_t q, const vect_t qdir,
+					  const struct bn_tol *tol);
 #ifdef TRI_PROTOTYPE
-BN_EXPORT BU_EXTERN(int bn_isect_line3_line3_new,
-                    (fastf_t *s, fastf_t *t,
-                     const point_t p0,
-                     const vect_t u,
-                     const point_t q0,
-                     const vect_t v,
-                     const struct bn_tol *tol));
+BN_EXPORT extern int bn_isect_line3_line3_new(fastf_t *s, fastf_t *t,
+					      const point_t p0,
+					      const vect_t u,
+					      const point_t q0,
+					      const vect_t v,
+					      const struct bn_tol *tol);
 #endif
-BN_EXPORT BU_EXTERN(int bn_isect_line3_line3,
-		    (fastf_t *t, fastf_t *u,
-		     const point_t p,
-		     const vect_t d,
-		     const point_t a,
-		     const vect_t c,
-		     const struct bn_tol *tol));
-BN_EXPORT BU_EXTERN(int bn_2line3_colinear,
-		    (const point_t p1,
-		     const vect_t d1,
-		     const point_t p2,
-		     const vect_t d2,
-		     double range,
-		     const struct bn_tol *tol));
-BN_EXPORT BU_EXTERN(int bn_isect_pt2_lseg2,
-		    (fastf_t *dist,
-		     const point_t a,
-		     const point_t b,
-		     const point_t p,
-		     const struct bn_tol *tol));
-BN_EXPORT BU_EXTERN(int bn_isect_line2_lseg2,
-		    (fastf_t *dist,
-		     const point_t p,
-		     const vect_t d,
-		     const point_t a,
-		     const vect_t c,
-		     const struct bn_tol *tol));
-BN_EXPORT BU_EXTERN(int bn_isect_lseg2_lseg2,
-		    (fastf_t *dist,
-		     const point_t p,
-		     const vect_t pdir,
-		     const point_t q,
-		     const vect_t qdir,
-		     const struct bn_tol *tol));
-BN_EXPORT BU_EXTERN(int bn_isect_line2_line2,
-		    (fastf_t *dist,
-		     const point_t p,
-		     const vect_t d,
-		     const point_t a,
-		     const vect_t c,
-		     const struct bn_tol *tol));
-BN_EXPORT BU_EXTERN(double bn_dist_pt3_pt3,
-		    (const point_t a,
-		     const point_t b));
-BN_EXPORT BU_EXTERN(int bn_3pts_distinct,
-		    (const point_t a,
-		     const point_t b,
-		     const point_t c,
-		     const struct bn_tol *tol));
-BN_EXPORT BU_EXTERN(int bn_npts_distinct,
-		    (const int npts,
-		     const point_t *pts,
-		     const struct bn_tol *tol));
-BN_EXPORT BU_EXTERN(int bn_mk_plane_3pts,
-		    (plane_t plane,
-		     const point_t a,
-		     const point_t b,
-		     const point_t c,
-		     const struct bn_tol *tol));
-BN_EXPORT BU_EXTERN(int bn_mkpoint_3planes,
-		    (point_t pt,
-		     const plane_t a,
-		     const plane_t b,
-		     const plane_t c));
-BN_EXPORT BU_EXTERN(int bn_isect_line3_plane,
-		    (fastf_t *dist,
-		     const point_t pt,
-		     const vect_t dir,
-		     const plane_t plane,
-		     const struct bn_tol *tol));
-BN_EXPORT BU_EXTERN(int bn_isect_2planes,
-		    (point_t pt,
-		     vect_t dir,
-		     const plane_t a,
-		     const plane_t b,
-		     const vect_t rpp_min,
-		     const struct bn_tol *tol));
-BN_EXPORT BU_EXTERN(int bn_isect_2lines,
-		    (fastf_t *t,
-		     fastf_t *u,
-		     const point_t p,
-		     const vect_t d,
-		     const point_t a,
-		     const vect_t c,
-		     const struct bn_tol *tol));
-BN_EXPORT BU_EXTERN(int bn_isect_line_lseg,
-		    (fastf_t *t, const point_t p,
-		     const vect_t d,
-		     const point_t a,
-		     const point_t b,
-		     const struct bn_tol *tol));
-BN_EXPORT BU_EXTERN(double bn_dist_line3_pt3,
-		    (const point_t pt,
-		     const vect_t dir,
-		     const point_t a));
-BN_EXPORT BU_EXTERN(double bn_distsq_line3_pt3,
-		    (const point_t pt,
-		     const vect_t dir,
-		     const point_t a));
-BN_EXPORT BU_EXTERN(double bn_dist_line_origin,
-		    (const point_t pt,
-		     const vect_t dir));
-BN_EXPORT BU_EXTERN(double bn_dist_line2_point2,
-		    (const point_t pt,
-		     const vect_t dir,
-		     const point_t a));
-BN_EXPORT BU_EXTERN(double bn_distsq_line2_point2,
-		    (const point_t pt,
-		     const vect_t dir,
-		     const point_t a));
-BN_EXPORT BU_EXTERN(double bn_area_of_triangle,
-		    (const point_t a,
-		     const point_t b,
-		     const point_t c));
-BN_EXPORT BU_EXTERN(int bn_isect_pt_lseg,
-		    (fastf_t *dist,
-		     const point_t a,
-		     const point_t b,
-		     const point_t p,
-		     const struct bn_tol *tol));
-BN_EXPORT BU_EXTERN(double bn_dist_pt_lseg,
-		    (point_t pca,
-		     const point_t a,
-		     const point_t b,
-		     const point_t p,
-		     const struct bn_tol *tol));
-BN_EXPORT BU_EXTERN(void bn_rotate_bbox,
-		    (point_t omin,
-		     point_t omax,
-		     const mat_t mat,
-		     const point_t imin,
-		     const point_t imax));
-BN_EXPORT BU_EXTERN(void bn_rotate_plane,
-		    (plane_t oplane,
-		     const mat_t mat,
-		     const plane_t iplane));
-BN_EXPORT BU_EXTERN(int bn_coplanar,
-		    (const plane_t a,
-		     const plane_t b,
-		     const struct bn_tol *tol));
-BN_EXPORT BU_EXTERN(double bn_angle_measure,
-		    (vect_t vec,
-		     const vect_t x_dir,
-		     const vect_t y_dir));
-BN_EXPORT BU_EXTERN(double bn_dist_pt3_along_line3,
-		    (const point_t p,
-		     const vect_t d,
-		     const point_t x));
-BN_EXPORT BU_EXTERN(double bn_dist_pt2_along_line2,
-		    (const point_t p,
-		     const vect_t d,
-		     const point_t x));
-BN_EXPORT BU_EXTERN(int bn_between,
-		    (double left,
-		     double mid,
-		     double right,
-		     const struct bn_tol *tol));
-BN_EXPORT BU_EXTERN(int bn_does_ray_isect_tri,
-		    (const point_t pt,
-		     const vect_t dir,
-		     const point_t V,
-		     const point_t A,
-		     const point_t B,
-		     point_t inter));
-BN_EXPORT BU_EXTERN(int bn_hlf_class,
-		    (const plane_t half_eqn,
-		     const vect_t min, const vect_t max,
-		     const struct bn_tol *tol));
+BN_EXPORT extern int bn_isect_line3_line3(fastf_t *t, fastf_t *u,
+					  const point_t p,
+					  const vect_t d,
+					  const point_t a,
+					  const vect_t c,
+					  const struct bn_tol *tol);
+BN_EXPORT extern int bn_2line3_colinear(const point_t p1,
+					const vect_t d1,
+					const point_t p2,
+					const vect_t d2,
+					double range,
+					const struct bn_tol *tol);
+BN_EXPORT extern int bn_isect_pt2_lseg2(fastf_t *dist,
+					const point_t a,
+					const point_t b,
+					const point_t p,
+					const struct bn_tol *tol);
+BN_EXPORT extern int bn_isect_line2_lseg2(fastf_t *dist,
+					  const point_t p,
+					  const vect_t d,
+					  const point_t a,
+					  const vect_t c,
+					  const struct bn_tol *tol);
+BN_EXPORT extern int bn_isect_lseg2_lseg2(fastf_t *dist,
+					  const point_t p,
+					  const vect_t pdir,
+					  const point_t q,
+					  const vect_t qdir,
+					  const struct bn_tol *tol);
+BN_EXPORT extern int bn_isect_line2_line2(fastf_t *dist,
+					  const point_t p,
+					  const vect_t d,
+					  const point_t a,
+					  const vect_t c,
+					  const struct bn_tol *tol);
+BN_EXPORT extern double bn_dist_pt3_pt3(const point_t a,
+					const point_t b);
+BN_EXPORT extern int bn_3pts_distinct(const point_t a,
+				      const point_t b,
+				      const point_t c,
+				      const struct bn_tol *tol);
+BN_EXPORT extern int bn_npts_distinct(const int npts,
+				      const point_t *pts,
+				      const struct bn_tol *tol);
+BN_EXPORT extern int bn_mk_plane_3pts(plane_t plane,
+				      const point_t a,
+				      const point_t b,
+				      const point_t c,
+				      const struct bn_tol *tol);
+BN_EXPORT extern int bn_mkpoint_3planes(point_t pt,
+					const plane_t a,
+					const plane_t b,
+					const plane_t c);
+BN_EXPORT extern int bn_isect_line3_plane(fastf_t *dist,
+					  const point_t pt,
+					  const vect_t dir,
+					  const plane_t plane,
+					  const struct bn_tol *tol);
+BN_EXPORT extern int bn_isect_2planes(point_t pt,
+				      vect_t dir,
+				      const plane_t a,
+				      const plane_t b,
+				      const vect_t rpp_min,
+				      const struct bn_tol *tol);
+BN_EXPORT extern int bn_isect_2lines(fastf_t *t,
+				     fastf_t *u,
+				     const point_t p,
+				     const vect_t d,
+				     const point_t a,
+				     const vect_t c,
+				     const struct bn_tol *tol);
+BN_EXPORT extern int bn_isect_line_lseg(fastf_t *t, const point_t p,
+					const vect_t d,
+					const point_t a,
+					const point_t b,
+					const struct bn_tol *tol);
+BN_EXPORT extern double bn_dist_line3_pt3(const point_t pt,
+					  const vect_t dir,
+					  const point_t a);
+BN_EXPORT extern double bn_distsq_line3_pt3(const point_t pt,
+					    const vect_t dir,
+					    const point_t a);
+BN_EXPORT extern double bn_dist_line_origin(const point_t pt,
+					    const vect_t dir);
+BN_EXPORT extern double bn_dist_line2_point2(const point_t pt,
+					     const vect_t dir,
+					     const point_t a);
+BN_EXPORT extern double bn_distsq_line2_point2(const point_t pt,
+					       const vect_t dir,
+					       const point_t a);
+BN_EXPORT extern double bn_area_of_triangle(const point_t a,
+					    const point_t b,
+					    const point_t c);
+BN_EXPORT extern int bn_isect_pt_lseg(fastf_t *dist,
+				      const point_t a,
+				      const point_t b,
+				      const point_t p,
+				      const struct bn_tol *tol);
+BN_EXPORT extern double bn_dist_pt_lseg(point_t pca,
+					const point_t a,
+					const point_t b,
+					const point_t p,
+					const struct bn_tol *tol);
+BN_EXPORT extern void bn_rotate_bbox(point_t omin,
+				     point_t omax,
+				     const mat_t mat,
+				     const point_t imin,
+				     const point_t imax);
+BN_EXPORT extern void bn_rotate_plane(plane_t oplane,
+				      const mat_t mat,
+				      const plane_t iplane);
+BN_EXPORT extern int bn_coplanar(const plane_t a,
+				 const plane_t b,
+				 const struct bn_tol *tol);
+BN_EXPORT extern double bn_angle_measure(vect_t vec,
+					 const vect_t x_dir,
+					 const vect_t y_dir);
+BN_EXPORT extern double bn_dist_pt3_along_line3(const point_t p,
+						const vect_t d,
+						const point_t x);
+BN_EXPORT extern double bn_dist_pt2_along_line2(const point_t p,
+						const vect_t d,
+						const point_t x);
+BN_EXPORT extern int bn_between(double left,
+				double mid,
+				double right,
+				const struct bn_tol *tol);
+BN_EXPORT extern int bn_does_ray_isect_tri(const point_t pt,
+					   const vect_t dir,
+					   const point_t V,
+					   const point_t A,
+					   const point_t B,
+					   point_t inter);
+BN_EXPORT extern int bn_hlf_class(const plane_t half_eqn,
+				  const vect_t min, const vect_t max,
+				  const struct bn_tol *tol);
 
 #define BN_CLASSIFY_UNIMPLEMENTED 0x0000
 #define BN_CLASSIFY_INSIDE        0x0001
 #define BN_CLASSIFY_OVERLAPPING   0x0002
 #define BN_CLASSIFY_OUTSIDE       0x0003
 
-BN_EXPORT BU_EXTERN(int bn_isect_planes,
-		    (point_t pt,
-		     const plane_t planes[],
-		     const size_t pl_count));
+BN_EXPORT extern int bn_isect_planes(point_t pt,
+				     const plane_t planes[],
+				     const size_t pl_count);
 
 /** @} */
 /*----------------------------------------------------------------------*/
@@ -1093,63 +960,48 @@ typedef struct bn_poly {
 #define BN_CK_POLY(_p) BU_CKMAG(_p, BN_POLY_MAGIC, "struct bn_poly")
 #define BN_POLY_NULL   ((struct bn_poly *)NULL)
 
-BN_EXPORT BU_EXTERN(struct bn_poly *bn_poly_mul,
-		    (struct bn_poly *product,
-		     const struct bn_poly *m1,
-		     const struct bn_poly *m2));
-BN_EXPORT BU_EXTERN(struct bn_poly *bn_poly_scale,
-		    (struct bn_poly *eqn,
-		     double factor));
-BN_EXPORT BU_EXTERN(struct bn_poly *bn_poly_add,
-		    (struct bn_poly *sum,
-		     const struct bn_poly *poly1,
-		     const struct bn_poly *poly2));
-BN_EXPORT BU_EXTERN(struct bn_poly *bn_poly_sub,
-		    (struct bn_poly *diff,
-		     const struct bn_poly *poly1,
-		     const struct bn_poly *poly2));
-BN_EXPORT BU_EXTERN(void bn_poly_synthetic_division,
-		    (struct bn_poly *quo,
-		     struct bn_poly *rem,
-		     const struct bn_poly *dvdend,
-		     const struct bn_poly *dvsor));
-BN_EXPORT BU_EXTERN(int bn_poly_quadratic_roots,
-		    (struct bn_complex roots[],
-		     const struct bn_poly *quadrat));
-BN_EXPORT BU_EXTERN(int bn_poly_cubic_roots,
-		    (struct bn_complex roots[],
-		     const struct bn_poly *eqn));
-BN_EXPORT BU_EXTERN(int bn_poly_quartic_roots,
-		    (struct bn_complex roots[],
-		     const struct bn_poly *eqn));
-BN_EXPORT BU_EXTERN(int bn_poly_findroot,
-		    (bn_poly_t *eqn, 
-		     bn_complex_t *nxZ, 
-		     const char *str));
-BN_EXPORT BU_EXTERN(void bn_poly_eval_w_2derivatives,
-		    (bn_complex_t *cZ,
-		     bn_poly_t *eqn,
-		     bn_complex_t *b,
-		     bn_complex_t *c,
-		     bn_complex_t *d));
-BN_EXPORT BU_EXTERN(int bn_poly_checkroots,
-		    (bn_poly_t *eqn,
-		     bn_complex_t *roots,
-		     int nroots));
-BN_EXPORT BU_EXTERN(void bn_poly_deflate,
-		    (bn_poly_t *oldP,
-		     bn_complex_t *root));
-BN_EXPORT BU_EXTERN(int bn_poly_roots,
-		    (bn_poly_t *eqn,
-		     bn_complex_t roots[],
-		     const char *name));
-BN_EXPORT BU_EXTERN(void bn_pr_poly,
-		    (const char *title,
-		     const struct bn_poly *eqn));
-BN_EXPORT BU_EXTERN(void bn_pr_roots,
-		    (const char *title,
-		     const struct bn_complex roots[],
-		     int n));
+BN_EXPORT extern struct bn_poly *bn_poly_mul(struct bn_poly *product,
+					     const struct bn_poly *m1,
+					     const struct bn_poly *m2);
+BN_EXPORT extern struct bn_poly *bn_poly_scale(struct bn_poly *eqn,
+					       double factor);
+BN_EXPORT extern struct bn_poly *bn_poly_add(struct bn_poly *sum,
+					     const struct bn_poly *poly1,
+					     const struct bn_poly *poly2);
+BN_EXPORT extern struct bn_poly *bn_poly_sub(struct bn_poly *diff,
+					     const struct bn_poly *poly1,
+					     const struct bn_poly *poly2);
+BN_EXPORT extern void bn_poly_synthetic_division(struct bn_poly *quo,
+						 struct bn_poly *rem,
+						 const struct bn_poly *dvdend,
+						 const struct bn_poly *dvsor);
+BN_EXPORT extern int bn_poly_quadratic_roots(struct bn_complex roots[],
+					     const struct bn_poly *quadrat);
+BN_EXPORT extern int bn_poly_cubic_roots(struct bn_complex roots[],
+					 const struct bn_poly *eqn);
+BN_EXPORT extern int bn_poly_quartic_roots(struct bn_complex roots[],
+					   const struct bn_poly *eqn);
+BN_EXPORT extern int bn_poly_findroot(bn_poly_t *eqn, 
+				      bn_complex_t *nxZ, 
+				      const char *str);
+BN_EXPORT extern void bn_poly_eval_w_2derivatives(bn_complex_t *cZ,
+						  bn_poly_t *eqn,
+						  bn_complex_t *b,
+						  bn_complex_t *c,
+						  bn_complex_t *d);
+BN_EXPORT extern int bn_poly_checkroots(bn_poly_t *eqn,
+					bn_complex_t *roots,
+					int nroots);
+BN_EXPORT extern void bn_poly_deflate(bn_poly_t *oldP,
+				      bn_complex_t *root);
+BN_EXPORT extern int bn_poly_roots(bn_poly_t *eqn,
+				   bn_complex_t roots[],
+				   const char *name);
+BN_EXPORT extern void bn_pr_poly(const char *title,
+				 const struct bn_poly *eqn);
+BN_EXPORT extern void bn_pr_roots(const char *title,
+				  const struct bn_complex roots[],
+				  int n);
 
 /** @} */
 /*----------------------------------------------------------------------*/
@@ -1176,47 +1028,36 @@ typedef struct bn_multipoly {
  * Quaternion support
  */
 
-BN_EXPORT BU_EXTERN(void quat_mat2quat,
-		    (quat_t quat,
-		     const mat_t mat));
-BN_EXPORT BU_EXTERN(void quat_quat2mat,
-		    (mat_t mat,
-		     const quat_t quat));
-BN_EXPORT BU_EXTERN(double quat_distance,
-		    (const quat_t q1,
-		     const quat_t q2));
-BN_EXPORT BU_EXTERN(void quat_double,
-		    (quat_t qout,
-		     const quat_t q1,
-		     const quat_t q2));
-BN_EXPORT BU_EXTERN(void quat_bisect,
-		    (quat_t qout,
-		     const quat_t q1,
-		     const quat_t q2));
-BN_EXPORT BU_EXTERN(void quat_slerp,
-		    (quat_t qout,
-		     const quat_t q1,
-		     const quat_t q2,
-		     double f));
-BN_EXPORT BU_EXTERN(void quat_sberp,
-		    (quat_t qout,
-		     const quat_t q1,
-		     const quat_t qa,
-		     const quat_t qb,
-		     const quat_t q2,
-		     double f));
-BN_EXPORT BU_EXTERN(void quat_make_nearest,
-		    (quat_t q1,
-		     const quat_t q2));
-BN_EXPORT BU_EXTERN(void quat_print,
-		    (const char *title,
-		     const quat_t quat));
-BN_EXPORT BU_EXTERN(void quat_exp,
-		    (quat_t out,
-		     const quat_t in));
-BN_EXPORT BU_EXTERN(void quat_log,
-		    (quat_t out,
-		     const quat_t in));
+BN_EXPORT extern void quat_mat2quat(quat_t quat,
+				    const mat_t mat);
+BN_EXPORT extern void quat_quat2mat(mat_t mat,
+				    const quat_t quat);
+BN_EXPORT extern double quat_distance(const quat_t q1,
+				      const quat_t q2);
+BN_EXPORT extern void quat_double(quat_t qout,
+				  const quat_t q1,
+				  const quat_t q2);
+BN_EXPORT extern void quat_bisect(quat_t qout,
+				  const quat_t q1,
+				  const quat_t q2);
+BN_EXPORT extern void quat_slerp(quat_t qout,
+				 const quat_t q1,
+				 const quat_t q2,
+				 double f);
+BN_EXPORT extern void quat_sberp(quat_t qout,
+				 const quat_t q1,
+				 const quat_t qa,
+				 const quat_t qb,
+				 const quat_t q2,
+				 double f);
+BN_EXPORT extern void quat_make_nearest(quat_t q1,
+					const quat_t q2);
+BN_EXPORT extern void quat_print(const char *title,
+				 const quat_t quat);
+BN_EXPORT extern void quat_exp(quat_t out,
+			       const quat_t in);
+BN_EXPORT extern void quat_log(quat_t out,
+			       const quat_t in);
 /** @} */
 /*----------------------------------------------------------------------*/
 /* rand.c */
@@ -1265,18 +1106,18 @@ BN_EXPORT extern float bn_rand_halftab[BN_RANDHALFTABSIZE];
  * except when benchmark flag is set, when this becomes a constant 0.0
  */
 #define bn_rand_half(_p)	\
-	((++(_p) >= &bn_rand_halftab[bn_randhalftabsize] || \
-	     (_p) < bn_rand_halftab) ? \
-		*((_p) = bn_rand_halftab) : *(_p))
+    ((++(_p) >= &bn_rand_halftab[bn_randhalftabsize] || \
+      (_p) < bn_rand_halftab) ? \
+     *((_p) = bn_rand_halftab) : *(_p))
 
 /**
  * initialize the seed for the large random number table (halftab)
  */
 #define bn_rand_init(_p, _seed)	\
-	(_p) = &bn_rand_halftab[ \
-		(int)(\
-		      (bn_rand_halftab[(_seed)%bn_randhalftabsize] + 0.5) * \
-		      (bn_randhalftabsize-1)) ]
+    (_p) = &bn_rand_halftab[ \
+	(int)(\
+	    (bn_rand_halftab[(_seed)%bn_randhalftabsize] + 0.5) * \
+	    (bn_randhalftabsize-1)) ]
 
 /**
  * random numbers in the closed interval 0.0 to 1.0 range (inclusive)
@@ -1287,8 +1128,8 @@ BN_EXPORT extern float bn_rand_halftab[BN_RANDHALFTABSIZE];
 #define BN_SINTABSIZE 2048
 BN_EXPORT extern double bn_sin_scale;
 #define bn_tab_sin(_a)	(((_a) > 0) ? \
-	(bn_sin_table[(int)((0.5+ (_a)*bn_sin_scale))&(BN_SINTABSIZE-1)]) :\
-	(-bn_sin_table[(int)((0.5- (_a)*bn_sin_scale))&(BN_SINTABSIZE-1)]))
+			 (bn_sin_table[(int)((0.5+ (_a)*bn_sin_scale))&(BN_SINTABSIZE-1)]) :\
+			 (-bn_sin_table[(int)((0.5- (_a)*bn_sin_scale))&(BN_SINTABSIZE-1)]))
 BN_EXPORT extern const float bn_sin_table[BN_SINTABSIZE];
 
 BN_EXPORT extern void bn_mathtab_constant();
@@ -1315,8 +1156,8 @@ BN_EXPORT extern void bn_mathtab_constant();
  *
  */
 
-BN_EXPORT BU_EXTERN(double bn_randmt, ());
-BN_EXPORT BU_EXTERN(void bn_randmt_seed, (unsigned long seed));
+BN_EXPORT extern double bn_randmt();
+BN_EXPORT extern void bn_randmt_seed(unsigned long seed);
 
 
 /*----------------------------------------------------------------------*/
@@ -1326,274 +1167,238 @@ BN_EXPORT BU_EXTERN(void bn_randmt_seed, (unsigned long seed));
 	register unsigned long j; \
 	register int ok; \
 	for (ok=0, j=0; j < sizeof(unsigned long) * 8; j++) { \
-		if ((unsigned long)(1<<j) == dimen) { ok = 1;  break; } \
+	    if ((unsigned long)(1<<j) == dimen) { ok = 1;  break; } \
 	} \
 	if (! ok) { \
-		bu_log("%s:%d value %ld should be power of 2 (2^%ld)\n", \
-			__FILE__, __LINE__, (long)dimen, (long)j); \
-		bu_bomb("CK_POW_2"); \
+	    bu_log("%s:%d value %ld should be power of 2 (2^%ld)\n", \
+		   __FILE__, __LINE__, (long)dimen, (long)j); \
+	    bu_bomb("CK_POW_2"); \
 	} \
-}
+    }
 
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_1d_double_decompose,
-		    (double *tbuf,
-		     double *buf,
-		     unsigned long dimen,
-		     unsigned long depth,
-		     unsigned long limit));
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_1d_double_reconstruct,
-		    (double *tbuf,
-		     double *buf,
-		     unsigned long dimen,
-		     unsigned long depth,
-		     unsigned long subimage_size,
-		     unsigned long limit));
+BN_EXPORT extern void bn_wlt_haar_1d_double_decompose(double *tbuf,
+						      double *buf,
+						      unsigned long dimen,
+						      unsigned long depth,
+						      unsigned long limit);
+BN_EXPORT extern void bn_wlt_haar_1d_double_reconstruct(double *tbuf,
+							double *buf,
+							unsigned long dimen,
+							unsigned long depth,
+							unsigned long subimage_size,
+							unsigned long limit);
 
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_1d_float_decompose,
-		    (float *tbuf,
-		     float *buf,
-		     unsigned long dimen,
-		     unsigned long depth,
-		     unsigned long limit));
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_1d_float_reconstruct,
-		    (float *tbuf,
-		     float *buf,
-		     unsigned long dimen,
-		     unsigned long depth,
-		     unsigned long subimage_size,
-		     unsigned long limit));
+BN_EXPORT extern void bn_wlt_haar_1d_float_decompose(float *tbuf,
+						     float *buf,
+						     unsigned long dimen,
+						     unsigned long depth,
+						     unsigned long limit);
+BN_EXPORT extern void bn_wlt_haar_1d_float_reconstruct(float *tbuf,
+						       float *buf,
+						       unsigned long dimen,
+						       unsigned long depth,
+						       unsigned long subimage_size,
+						       unsigned long limit);
 
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_1d_char_decompose,
-		    (char *tbuf,
-		     char *buf,
-		     unsigned long dimen,
-		     unsigned long depth,
-		     unsigned long limit));
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_1d_char_reconstruct,
-		    (char *tbuf, char *buf,
-		     unsigned long dimen,
-		     unsigned long depth,
-		     unsigned long subimage_size,
-		     unsigned long limit));
+BN_EXPORT extern void bn_wlt_haar_1d_char_decompose(char *tbuf,
+						    char *buf,
+						    unsigned long dimen,
+						    unsigned long depth,
+						    unsigned long limit);
+BN_EXPORT extern void bn_wlt_haar_1d_char_reconstruct(char *tbuf, char *buf,
+						      unsigned long dimen,
+						      unsigned long depth,
+						      unsigned long subimage_size,
+						      unsigned long limit);
 
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_1d_short_decompose,
-		    (short *tbuf, short *buf,
-		     unsigned long dimen,
-		     unsigned long depth,
-		     unsigned long limit));
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_1d_short_reconstruct,
-		    (short *tbuf, short *buf,
-		     unsigned long dimen,
-		     unsigned long depth,
-		     unsigned long subimage_size,
-		     unsigned long limit));
+BN_EXPORT extern void bn_wlt_haar_1d_short_decompose(short *tbuf, short *buf,
+						     unsigned long dimen,
+						     unsigned long depth,
+						     unsigned long limit);
+BN_EXPORT extern void bn_wlt_haar_1d_short_reconstruct(short *tbuf, short *buf,
+						       unsigned long dimen,
+						       unsigned long depth,
+						       unsigned long subimage_size,
+						       unsigned long limit);
 
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_1d_int_decompose,
-		    (int *tbuf, int *buf,
-		     unsigned long dimen,
-		     unsigned long depth,
-		     unsigned long limit));
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_1d_int_reconstruct,
-		    (int *tbuf,
-		     int *buf,
-		     unsigned long dimen,
-		     unsigned long depth,
-		     unsigned long subimage_size,
-		     unsigned long limit));
+BN_EXPORT extern void bn_wlt_haar_1d_int_decompose(int *tbuf, int *buf,
+						   unsigned long dimen,
+						   unsigned long depth,
+						   unsigned long limit);
+BN_EXPORT extern void bn_wlt_haar_1d_int_reconstruct(int *tbuf,
+						     int *buf,
+						     unsigned long dimen,
+						     unsigned long depth,
+						     unsigned long subimage_size,
+						     unsigned long limit);
 
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_1d_long_decompose,
-		    (long *tbuf, long *buf,
-		     unsigned long dimen,
-		     unsigned long depth,
-		     unsigned long limit));
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_1d_long_reconstruct,
-		    (long *tbuf, long *buf,
-		     unsigned long dimen,
-		     unsigned long depth,
-		     unsigned long subimage_size,
-		     unsigned long limit));
+BN_EXPORT extern void bn_wlt_haar_1d_long_decompose(long *tbuf, long *buf,
+						    unsigned long dimen,
+						    unsigned long depth,
+						    unsigned long limit);
+BN_EXPORT extern void bn_wlt_haar_1d_long_reconstruct(long *tbuf, long *buf,
+						      unsigned long dimen,
+						      unsigned long depth,
+						      unsigned long subimage_size,
+						      unsigned long limit);
 
 
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_double_decompose,
-		    (double *tbuf,
-		     double *buf,
-		     unsigned long dimen,
-		     unsigned long depth,
-		     unsigned long limit));
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_double_reconstruct,
-		    (double *tbuf,
-		     double *buf,
-		     unsigned long dimen,
-		     unsigned long depth,
-		     unsigned long subimage_size,
-		     unsigned long limit));
+BN_EXPORT extern void bn_wlt_haar_2d_double_decompose(double *tbuf,
+						      double *buf,
+						      unsigned long dimen,
+						      unsigned long depth,
+						      unsigned long limit);
+BN_EXPORT extern void bn_wlt_haar_2d_double_reconstruct(double *tbuf,
+							double *buf,
+							unsigned long dimen,
+							unsigned long depth,
+							unsigned long subimage_size,
+							unsigned long limit);
 
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_float_decompose,
-		    (float *tbuf,
-		     float *buf,
-		     unsigned long dimen,
-		     unsigned long depth,
-		     unsigned long limit));
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_float_reconstruct,
-		    (float *tbuf,
-		     float *buf,
-		     unsigned long dimen,
-		     unsigned long depth,
-		     unsigned long subimage_size,
-		     unsigned long limit));
+BN_EXPORT extern void bn_wlt_haar_2d_float_decompose(float *tbuf,
+						     float *buf,
+						     unsigned long dimen,
+						     unsigned long depth,
+						     unsigned long limit);
+BN_EXPORT extern void bn_wlt_haar_2d_float_reconstruct(float *tbuf,
+						       float *buf,
+						       unsigned long dimen,
+						       unsigned long depth,
+						       unsigned long subimage_size,
+						       unsigned long limit);
 
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_char_decompose,
-		    (char *tbuf,
-		     char *buf,
-		     unsigned long dimen,
-		     unsigned long depth,
-		     unsigned long limit));
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_char_reconstruct,
-		    (char *tbuf,
-		     char *buf,
-		     unsigned long dimen,
-		     unsigned long depth,
-		     unsigned long subimage_size,
-		     unsigned long limit));
+BN_EXPORT extern void bn_wlt_haar_2d_char_decompose(char *tbuf,
+						    char *buf,
+						    unsigned long dimen,
+						    unsigned long depth,
+						    unsigned long limit);
+BN_EXPORT extern void bn_wlt_haar_2d_char_reconstruct(char *tbuf,
+						      char *buf,
+						      unsigned long dimen,
+						      unsigned long depth,
+						      unsigned long subimage_size,
+						      unsigned long limit);
 
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_short_decompose,
-		    (short *tbuf,
-		     short *buf,
-		     unsigned long dimen,
-		     unsigned long depth,
-		     unsigned long limit));
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_short_reconstruct,
-		    (short *tbuf,
-		     short *buf,
-		     unsigned long dimen,
-		     unsigned long depth,
-		     unsigned long subimage_size,
-		     unsigned long limit));
+BN_EXPORT extern void bn_wlt_haar_2d_short_decompose(short *tbuf,
+						     short *buf,
+						     unsigned long dimen,
+						     unsigned long depth,
+						     unsigned long limit);
+BN_EXPORT extern void bn_wlt_haar_2d_short_reconstruct(short *tbuf,
+						       short *buf,
+						       unsigned long dimen,
+						       unsigned long depth,
+						       unsigned long subimage_size,
+						       unsigned long limit);
 
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_int_decompose,
-		    (int *tbuf,
-		     int *buf,
-		     unsigned long dimen,
-		     unsigned long depth,
-		     unsigned long limit));
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_int_reconstruct,
-		    (int *tbuf,
-		     int *buf,
-		     unsigned long dimen,
-		     unsigned long depth,
-		     unsigned long subimage_size,
-		     unsigned long limit));
+BN_EXPORT extern void bn_wlt_haar_2d_int_decompose(int *tbuf,
+						   int *buf,
+						   unsigned long dimen,
+						   unsigned long depth,
+						   unsigned long limit);
+BN_EXPORT extern void bn_wlt_haar_2d_int_reconstruct(int *tbuf,
+						     int *buf,
+						     unsigned long dimen,
+						     unsigned long depth,
+						     unsigned long subimage_size,
+						     unsigned long limit);
 
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_long_decompose,
-		    (long *tbuf,
-		     long *buf,
-		     unsigned long dimen,
-		     unsigned long depth,
-		     unsigned long limit));
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_long_reconstruct,
-		    (long *tbuf,
-		     long *buf,
-		     unsigned long dimen,
-		     unsigned long depth,
-		     unsigned long subimage_size,
-		     unsigned long limit));
+BN_EXPORT extern void bn_wlt_haar_2d_long_decompose(long *tbuf,
+						    long *buf,
+						    unsigned long dimen,
+						    unsigned long depth,
+						    unsigned long limit);
+BN_EXPORT extern void bn_wlt_haar_2d_long_reconstruct(long *tbuf,
+						      long *buf,
+						      unsigned long dimen,
+						      unsigned long depth,
+						      unsigned long subimage_size,
+						      unsigned long limit);
 
 
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_double_decompose2,
-		    (double *tbuf,
-		     double *buf,
-		     unsigned long dimen,
-		     unsigned long width,
-		     unsigned long height,
-		     unsigned long limit));
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_double_reconstruct2,
-		    (double *tbuf,
-		     double *buf,
-		     unsigned long dimen,
-		     unsigned long width,
-		     unsigned long height,
-		     unsigned long subimage_size,
-		     unsigned long limit));
+BN_EXPORT extern void bn_wlt_haar_2d_double_decompose2(double *tbuf,
+						       double *buf,
+						       unsigned long dimen,
+						       unsigned long width,
+						       unsigned long height,
+						       unsigned long limit);
+BN_EXPORT extern void bn_wlt_haar_2d_double_reconstruct2(double *tbuf,
+							 double *buf,
+							 unsigned long dimen,
+							 unsigned long width,
+							 unsigned long height,
+							 unsigned long subimage_size,
+							 unsigned long limit);
 
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_float_decompose2,
-		    (float *tbuf,
-		     float *buf,
-		     unsigned long dimen,
-		     unsigned long width,
-		     unsigned long height,
-		     unsigned long limit));
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_float_reconstruct2,
-		    (float *tbuf,
-		     float *buf,
-		     unsigned long dimen,
-		     unsigned long width,
-		     unsigned long height,
-		     unsigned long subimage_size,
-		     unsigned long limit));
+BN_EXPORT extern void bn_wlt_haar_2d_float_decompose2(float *tbuf,
+						      float *buf,
+						      unsigned long dimen,
+						      unsigned long width,
+						      unsigned long height,
+						      unsigned long limit);
+BN_EXPORT extern void bn_wlt_haar_2d_float_reconstruct2(float *tbuf,
+							float *buf,
+							unsigned long dimen,
+							unsigned long width,
+							unsigned long height,
+							unsigned long subimage_size,
+							unsigned long limit);
 
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_char_decompose2,
-		    (char *tbuf,
-		     char *buf,
-		     unsigned long dimen,
-		     unsigned long width,
-		     unsigned long height,
-		     unsigned long limit));
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_char_reconstruct2,
-		    (char *tbuf,
-		     char *buf,
-		     unsigned long dimen,
-		     unsigned long width,
-		     unsigned long height,
-		     unsigned long subimage_size,
-		     unsigned long limit));
+BN_EXPORT extern void bn_wlt_haar_2d_char_decompose2(char *tbuf,
+						     char *buf,
+						     unsigned long dimen,
+						     unsigned long width,
+						     unsigned long height,
+						     unsigned long limit);
+BN_EXPORT extern void bn_wlt_haar_2d_char_reconstruct2(char *tbuf,
+						       char *buf,
+						       unsigned long dimen,
+						       unsigned long width,
+						       unsigned long height,
+						       unsigned long subimage_size,
+						       unsigned long limit);
 
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_short_decompose2,
-		    (short *tbuf,
-		     short *buf,
-		     unsigned long dimen,
-		     unsigned long width,
-		     unsigned long height,
-		     unsigned long limit));
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_short_reconstruct2,
-		    (short *tbuf,
-		     short *buf,
-		     unsigned long dimen,
-		     unsigned long width,
-		     unsigned long height,
-		     unsigned long subimage_size,
-		     unsigned long limit));
+BN_EXPORT extern void bn_wlt_haar_2d_short_decompose2(short *tbuf,
+						      short *buf,
+						      unsigned long dimen,
+						      unsigned long width,
+						      unsigned long height,
+						      unsigned long limit);
+BN_EXPORT extern void bn_wlt_haar_2d_short_reconstruct2(short *tbuf,
+							short *buf,
+							unsigned long dimen,
+							unsigned long width,
+							unsigned long height,
+							unsigned long subimage_size,
+							unsigned long limit);
 
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_int_decompose2,
-		    (int *tbuf,
-		     int *buf,
-		     unsigned long dimen,
-		     unsigned long width,
-		     unsigned long height,
-		     unsigned long limit));
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_int_reconstruct2,
-		    (int *tbuf,
-		     int *buf,
-		     unsigned long dimen,
-		     unsigned long width,
-		     unsigned long height,
-		     unsigned long subimage_size,
-		     unsigned long limit));
+BN_EXPORT extern void bn_wlt_haar_2d_int_decompose2(int *tbuf,
+						    int *buf,
+						    unsigned long dimen,
+						    unsigned long width,
+						    unsigned long height,
+						    unsigned long limit);
+BN_EXPORT extern void bn_wlt_haar_2d_int_reconstruct2(int *tbuf,
+						      int *buf,
+						      unsigned long dimen,
+						      unsigned long width,
+						      unsigned long height,
+						      unsigned long subimage_size,
+						      unsigned long limit);
 
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_long_decompose2,
-		    (long *tbuf,
-		     long *buf,
-		     unsigned long dimen,
-		     unsigned long width,
-		     unsigned long height,
-		     unsigned long limit));
-BN_EXPORT BU_EXTERN(void bn_wlt_haar_2d_long_reconstruct2,
-		    (long *tbuf,
-		     long *buf,
-		     unsigned long dimen,
-		     unsigned long width,
-		     unsigned long height,
-		     unsigned long subimage_size,
-		     unsigned long limit));
+BN_EXPORT extern void bn_wlt_haar_2d_long_decompose2(long *tbuf,
+						     long *buf,
+						     unsigned long dimen,
+						     unsigned long width,
+						     unsigned long height,
+						     unsigned long limit);
+BN_EXPORT extern void bn_wlt_haar_2d_long_reconstruct2(long *tbuf,
+						       long *buf,
+						       unsigned long dimen,
+						       unsigned long width,
+						       unsigned long height,
+						       unsigned long subimage_size,
+						       unsigned long limit);
 
 
 /*----------------------------------------------------------------------*/
@@ -1661,15 +1466,15 @@ struct bn_table {
 #  define BN_GET_TABLE(_table, _nx) { \
 	if ((_nx) < 1)  bu_bomb("RT_GET_TABLE() _nx < 1\n"); \
 	_table = (struct bn_table *)bu_calloc(1, \
-		sizeof(struct bn_table) + sizeof(fastf_t)*(_nx), \
-		"struct bn_table"); \
+					      sizeof(struct bn_table) + sizeof(fastf_t)*(_nx), \
+					      "struct bn_table"); \
 	_table->magic = BN_TABLE_MAGIC; \
 	_table->nx = (_nx);  }
 #else
 #  define BN_GET_TABLE(_table, _nx) { \
 	_table = (struct bn_table *)bu_calloc(1, \
-		sizeof(struct bn_table) + sizeof(fastf_t)*(_nx), \
-		"struct bn_table"); \
+					      sizeof(struct bn_table) + sizeof(fastf_t)*(_nx), \
+					      "struct bn_table"); \
 	_table->magic = BN_TABLE_MAGIC; \
 	_table->nx = (_nx);  }
 #endif
@@ -1685,13 +1490,13 @@ struct bn_tabdata {
 
 #define BN_SIZEOF_TABDATA_Y(_tabdata)	sizeof(fastf_t)*((_tabdata)->ny)
 #define BN_SIZEOF_TABDATA(_table)	(sizeof(struct bn_tabdata) + \
-			sizeof(fastf_t)*((_table)->nx-1))
+					 sizeof(fastf_t)*((_table)->nx-1))
 
 /* Gets an bn_tabdata, with y[] having size _ny */
 #define BN_GET_TABDATA(_data, _table) { \
 	BN_CK_TABLE(_table);\
 	_data = (struct bn_tabdata *)bu_calloc(1, \
-		BN_SIZEOF_TABDATA(_table), "struct bn_tabdata"); \
+					       BN_SIZEOF_TABDATA(_table), "struct bn_tabdata"); \
 	_data->magic = BN_TABDATA_MAGIC; \
 	_data->ny = (_table)->nx; \
 	_data->table = (_table); }
@@ -1700,150 +1505,109 @@ struct bn_tabdata {
  * Routines
  */
 
-BN_EXPORT BU_EXTERN(void bn_table_free,
-		    (struct bn_table *tabp));
-BN_EXPORT BU_EXTERN(void bn_tabdata_free,
-		    (struct bn_tabdata *data));
-BN_EXPORT BU_EXTERN(void bn_ck_table,
-		    (const struct bn_table *tabp));
-BN_EXPORT BU_EXTERN(struct bn_table *bn_table_make_uniform,
-		    (size_t num,
-		     double first,
-		     double last));
-BN_EXPORT BU_EXTERN(void bn_tabdata_add,
-		    (struct bn_tabdata *out,
-		     const struct bn_tabdata *in1,
-		     const struct bn_tabdata *in2));
-BN_EXPORT BU_EXTERN(void bn_tabdata_mul,
-		    (struct bn_tabdata *out,
-		     const struct bn_tabdata *in1,
-		     const struct bn_tabdata *in2));
-BN_EXPORT BU_EXTERN(void bn_tabdata_mul3,
-		    (struct bn_tabdata *out,
-		     const struct bn_tabdata *in1,
-		     const struct bn_tabdata *in2,
-		     const struct bn_tabdata *in3));
-BN_EXPORT BU_EXTERN(void bn_tabdata_incr_mul3_scale,
-		    (struct bn_tabdata *out,
-		     const struct bn_tabdata *in1,
-		     const struct bn_tabdata *in2,
-		     const struct bn_tabdata *in3,
-		     double scale));
-BN_EXPORT BU_EXTERN(void bn_tabdata_incr_mul2_scale,
-		    (struct bn_tabdata *out,
-		     const struct bn_tabdata *in1,
-		     const struct bn_tabdata *in2,
-		     double scale));
-BN_EXPORT BU_EXTERN(void bn_tabdata_scale,
-		    (struct bn_tabdata *out,
-		     const struct bn_tabdata *in1,
-		     double scale));
-BN_EXPORT BU_EXTERN(void bn_table_scale,
-		    (struct bn_table *tabp,
-		     double scale));
-BN_EXPORT BU_EXTERN(void bn_tabdata_join1,
-		    (struct bn_tabdata *out,
-		     const struct bn_tabdata *in1,
-		     double scale,
-		     const struct bn_tabdata *in2));
-BN_EXPORT BU_EXTERN(void bn_tabdata_join2,
-		    (struct bn_tabdata *out,
-		     const struct bn_tabdata *in1,
-		     double scale2,
-		     const struct bn_tabdata *in2,
-		     double scale3,
-		     const struct bn_tabdata *in3));
-BN_EXPORT BU_EXTERN(void bn_tabdata_blend2,
-		    (struct bn_tabdata *out,
-		     double scale1,
-		     const struct bn_tabdata *in1,
-		     double scale2,
-		     const struct bn_tabdata *in2));
-BN_EXPORT BU_EXTERN(void bn_tabdata_blend3,
-		    (struct bn_tabdata *out,
-		     double scale1,
-		     const struct bn_tabdata *in1,
-		     double scale2,
-		     const struct bn_tabdata *in2,
-		     double scale3,
-		     const struct bn_tabdata *in3));
-BN_EXPORT BU_EXTERN(double bn_tabdata_area1,
-		    (const struct bn_tabdata *in));
-BN_EXPORT BU_EXTERN(double bn_tabdata_area2,
-		    (const struct bn_tabdata *in));
-BN_EXPORT BU_EXTERN(double bn_tabdata_mul_area1,
-		    (const struct bn_tabdata *in1,
-		     const struct bn_tabdata *in2));
-BN_EXPORT BU_EXTERN(double bn_tabdata_mul_area2,
-		    (const struct bn_tabdata *in1,
-		     const struct bn_tabdata *in2));
-BN_EXPORT BU_EXTERN(fastf_t bn_table_lin_interp,
-		    (const struct bn_tabdata *samp,
-		     double wl));
-BN_EXPORT BU_EXTERN(struct bn_tabdata *bn_tabdata_resample_max,
-		    (const struct bn_table *newtable,
-		     const struct bn_tabdata *olddata));
-BN_EXPORT BU_EXTERN(struct bn_tabdata *bn_tabdata_resample_avg,
-		    (const struct bn_table *newtable,
-		     const struct bn_tabdata *olddata));
-BN_EXPORT BU_EXTERN(int bn_table_write,
-		    (const char *filename,
-		     const struct bn_table *tabp));
-BN_EXPORT BU_EXTERN(struct bn_table *bn_table_read,
-		    (const char *filename));
-BN_EXPORT BU_EXTERN(void bn_pr_table,
-		    (const char *title,
-		     const struct bn_table *tabp));
-BN_EXPORT BU_EXTERN(void bn_pr_tabdata,
-		    (const char *title,
-		     const struct bn_tabdata *data));
-BN_EXPORT BU_EXTERN(int bn_print_table_and_tabdata,
-		    (const char *filename,
-		     const struct bn_tabdata *data));
-BN_EXPORT BU_EXTERN(struct bn_tabdata *bn_read_table_and_tabdata,
-		    (const char *filename));
-BN_EXPORT BU_EXTERN(struct bn_tabdata *bn_tabdata_binary_read,
-		    (const char *filename,
-		     size_t num,
-		     const struct bn_table *tabp));
-BN_EXPORT BU_EXTERN(struct bn_tabdata *bn_tabdata_malloc_array,
-		    (const struct bn_table *tabp,
-		     size_t num));
-BN_EXPORT BU_EXTERN(void bn_tabdata_copy,
-		    (struct bn_tabdata *out,
-		     const struct bn_tabdata *in));
-BN_EXPORT BU_EXTERN(struct bn_tabdata *bn_tabdata_dup,
-		    (const struct bn_tabdata *in));
-BN_EXPORT BU_EXTERN(struct bn_tabdata *bn_tabdata_get_constval,
-		    (double val,
-		     const struct bn_table *tabp));
-BN_EXPORT BU_EXTERN(void bn_tabdata_constval,
-		    (struct bn_tabdata *data,
-		     double val));
-BN_EXPORT BU_EXTERN(void bn_tabdata_to_tcl,
-		    (struct bu_vls *vp,
-		     const struct bn_tabdata *data));
-BN_EXPORT BU_EXTERN(struct bn_tabdata *bn_tabdata_from_array,
-		    (const double *array));
-BN_EXPORT BU_EXTERN(void bn_tabdata_freq_shift,
-		    (struct bn_tabdata *out,
-		     const struct bn_tabdata *in,
-		     double offset));
-BN_EXPORT BU_EXTERN(int bn_table_interval_num_samples,
-		    (const struct bn_table *tabp,
-		     double low,
-		     double hi));
-BN_EXPORT BU_EXTERN(int bn_table_delete_sample_pts,
-		    (struct bn_table *tabp,
-		     unsigned int i,
-		     unsigned int j));
-BN_EXPORT BU_EXTERN(struct bn_table *bn_table_merge2,
-		    (const struct bn_table *a,
-		     const struct bn_table *b));
-BN_EXPORT BU_EXTERN(struct bn_tabdata *bn_tabdata_mk_linear_filter,
-		    (const struct bn_table *spectrum,
-		     double lower_wavelen,
-		     double upper_wavelen));
+BN_EXPORT extern void bn_table_free(struct bn_table *tabp);
+BN_EXPORT extern void bn_tabdata_free(struct bn_tabdata *data);
+BN_EXPORT extern void bn_ck_table(const struct bn_table *tabp);
+BN_EXPORT extern struct bn_table *bn_table_make_uniform(size_t num,
+							double first,
+							double last);
+BN_EXPORT extern void bn_tabdata_add(struct bn_tabdata *out,
+				     const struct bn_tabdata *in1,
+				     const struct bn_tabdata *in2);
+BN_EXPORT extern void bn_tabdata_mul(struct bn_tabdata *out,
+				     const struct bn_tabdata *in1,
+				     const struct bn_tabdata *in2);
+BN_EXPORT extern void bn_tabdata_mul3(struct bn_tabdata *out,
+				      const struct bn_tabdata *in1,
+				      const struct bn_tabdata *in2,
+				      const struct bn_tabdata *in3);
+BN_EXPORT extern void bn_tabdata_incr_mul3_scale(struct bn_tabdata *out,
+						 const struct bn_tabdata *in1,
+						 const struct bn_tabdata *in2,
+						 const struct bn_tabdata *in3,
+						 double scale);
+BN_EXPORT extern void bn_tabdata_incr_mul2_scale(struct bn_tabdata *out,
+						 const struct bn_tabdata *in1,
+						 const struct bn_tabdata *in2,
+						 double scale);
+BN_EXPORT extern void bn_tabdata_scale(struct bn_tabdata *out,
+				       const struct bn_tabdata *in1,
+				       double scale);
+BN_EXPORT extern void bn_table_scale(struct bn_table *tabp,
+				     double scale);
+BN_EXPORT extern void bn_tabdata_join1(struct bn_tabdata *out,
+				       const struct bn_tabdata *in1,
+				       double scale,
+				       const struct bn_tabdata *in2);
+BN_EXPORT extern void bn_tabdata_join2(struct bn_tabdata *out,
+				       const struct bn_tabdata *in1,
+				       double scale2,
+				       const struct bn_tabdata *in2,
+				       double scale3,
+				       const struct bn_tabdata *in3);
+BN_EXPORT extern void bn_tabdata_blend2(struct bn_tabdata *out,
+					double scale1,
+					const struct bn_tabdata *in1,
+					double scale2,
+					const struct bn_tabdata *in2);
+BN_EXPORT extern void bn_tabdata_blend3(struct bn_tabdata *out,
+					double scale1,
+					const struct bn_tabdata *in1,
+					double scale2,
+					const struct bn_tabdata *in2,
+					double scale3,
+					const struct bn_tabdata *in3);
+BN_EXPORT extern double bn_tabdata_area1(const struct bn_tabdata *in);
+BN_EXPORT extern double bn_tabdata_area2(const struct bn_tabdata *in);
+BN_EXPORT extern double bn_tabdata_mul_area1(const struct bn_tabdata *in1,
+					     const struct bn_tabdata *in2);
+BN_EXPORT extern double bn_tabdata_mul_area2(const struct bn_tabdata *in1,
+					     const struct bn_tabdata *in2);
+BN_EXPORT extern fastf_t bn_table_lin_interp(const struct bn_tabdata *samp,
+					     double wl);
+BN_EXPORT extern struct bn_tabdata *bn_tabdata_resample_max(const struct bn_table *newtable,
+							    const struct bn_tabdata *olddata);
+BN_EXPORT extern struct bn_tabdata *bn_tabdata_resample_avg(const struct bn_table *newtable,
+							    const struct bn_tabdata *olddata);
+BN_EXPORT extern int bn_table_write(const char *filename,
+				    const struct bn_table *tabp);
+BN_EXPORT extern struct bn_table *bn_table_read(const char *filename);
+BN_EXPORT extern void bn_pr_table(const char *title,
+				  const struct bn_table *tabp);
+BN_EXPORT extern void bn_pr_tabdata(const char *title,
+				    const struct bn_tabdata *data);
+BN_EXPORT extern int bn_print_table_and_tabdata(const char *filename,
+						const struct bn_tabdata *data);
+BN_EXPORT extern struct bn_tabdata *bn_read_table_and_tabdata(const char *filename);
+BN_EXPORT extern struct bn_tabdata *bn_tabdata_binary_read(const char *filename,
+							   size_t num,
+							   const struct bn_table *tabp);
+BN_EXPORT extern struct bn_tabdata *bn_tabdata_malloc_array(const struct bn_table *tabp,
+							    size_t num);
+BN_EXPORT extern void bn_tabdata_copy(struct bn_tabdata *out,
+				      const struct bn_tabdata *in);
+BN_EXPORT extern struct bn_tabdata *bn_tabdata_dup(const struct bn_tabdata *in);
+BN_EXPORT extern struct bn_tabdata *bn_tabdata_get_constval(double val,
+							    const struct bn_table *tabp);
+BN_EXPORT extern void bn_tabdata_constval(struct bn_tabdata *data,
+					  double val);
+BN_EXPORT extern void bn_tabdata_to_tcl(struct bu_vls *vp,
+					const struct bn_tabdata *data);
+BN_EXPORT extern struct bn_tabdata *bn_tabdata_from_array(const double *array);
+BN_EXPORT extern void bn_tabdata_freq_shift(struct bn_tabdata *out,
+					    const struct bn_tabdata *in,
+					    double offset);
+BN_EXPORT extern int bn_table_interval_num_samples(const struct bn_table *tabp,
+						   double low,
+						   double hi);
+BN_EXPORT extern int bn_table_delete_sample_pts(struct bn_table *tabp,
+						unsigned int i,
+						unsigned int j);
+BN_EXPORT extern struct bn_table *bn_table_merge2(const struct bn_table *a,
+						  const struct bn_table *b);
+BN_EXPORT extern struct bn_tabdata *bn_tabdata_mk_linear_filter(const struct bn_table *spectrum,
+								double lower_wavelen,
+								double upper_wavelen);
 
 /*----------------------------------------------------------------------*/
 /* vlist.c */
@@ -1903,33 +1667,33 @@ struct bn_vlist  {
  * Note that BN_GET_VLIST and BN_FREE_VLIST are non-PARALLEL.
  */
 #define BN_GET_VLIST(_free_hd, p) {\
-		(p) = BU_LIST_FIRST(bn_vlist, (_free_hd)); \
-		if (BU_LIST_IS_HEAD((p), (_free_hd))) { \
-			(p) = (struct bn_vlist *)bu_malloc(sizeof(struct bn_vlist), "bn_vlist"); \
-			(p)->l.magic = BN_VLIST_MAGIC; \
-		} else { \
-			BU_LIST_DEQUEUE(&((p)->l)); \
-		} \
-		(p)->nused = 0; \
-	}
+	(p) = BU_LIST_FIRST(bn_vlist, (_free_hd)); \
+	if (BU_LIST_IS_HEAD((p), (_free_hd))) { \
+	    (p) = (struct bn_vlist *)bu_malloc(sizeof(struct bn_vlist), "bn_vlist"); \
+	    (p)->l.magic = BN_VLIST_MAGIC; \
+	} else { \
+	    BU_LIST_DEQUEUE(&((p)->l)); \
+	} \
+	(p)->nused = 0; \
+    }
 
 /** Place an entire chain of bn_vlist structs on the freelist _free_hd */
 #define BN_FREE_VLIST(_free_hd, hd) { \
 	BU_CK_LIST_HEAD((hd)); \
 	BU_LIST_APPEND_LIST((_free_hd), (hd)); \
-	}
+    }
 
 #define BN_ADD_VLIST(_free_hd, _dest_hd, pnt, draw) { \
 	register struct bn_vlist *_vp; \
 	BU_CK_LIST_HEAD(_dest_hd); \
 	_vp = BU_LIST_LAST(bn_vlist, (_dest_hd)); \
 	if (BU_LIST_IS_HEAD(_vp, (_dest_hd)) || _vp->nused >= BN_VLIST_CHUNK) { \
-		BN_GET_VLIST(_free_hd, _vp); \
-		BU_LIST_INSERT((_dest_hd), &(_vp->l)); \
+	    BN_GET_VLIST(_free_hd, _vp); \
+	    BU_LIST_INSERT((_dest_hd), &(_vp->l)); \
 	} \
 	VMOVE(_vp->pt[_vp->nused], (pnt)); \
 	_vp->cmd[_vp->nused++] = (draw); \
-	}
+    }
 
 /**
  * B N _ V L B L O C K
@@ -1947,21 +1711,19 @@ struct bn_vlblock {
 };
 #define BN_CK_VLBLOCK(_p)	BU_CKMAG((_p), BN_VLBLOCK_MAGIC, "bn_vlblock")
 
-BN_EXPORT BU_EXTERN(void bn_vlist_3string,
-		    (struct bu_list *vhead,
-		     struct bu_list *free_hd,
-		     const char *string,
-		     const point_t origin,
-		     const mat_t rot,
-		     double scale));
-BN_EXPORT BU_EXTERN(void bn_vlist_2string,
-		    (struct bu_list *vhead,
-		     struct bu_list *free_hd,
-		     const char *string,
-		     double x,
-		     double y,
-		     double scale,
-		     double theta));
+BN_EXPORT extern void bn_vlist_3string(struct bu_list *vhead,
+				       struct bu_list *free_hd,
+				       const char *string,
+				       const point_t origin,
+				       const mat_t rot,
+				       double scale);
+BN_EXPORT extern void bn_vlist_2string(struct bu_list *vhead,
+				       struct bu_list *free_hd,
+				       const char *string,
+				       double x,
+				       double y,
+				       double scale,
+				       double theta);
 
 
 /*----------------------------------------------------------------------*/
@@ -1989,38 +1751,32 @@ struct vert_root {
 
 #define BN_CK_VERT_TREE(_p) BU_CKMAG(_p, VERT_TREE_MAGIC, "vert_tree")
 
-BN_EXPORT BU_EXTERN(struct vert_root *create_vert_tree,
-		    ());
-BN_EXPORT BU_EXTERN(struct vert_root *create_vert_tree_w_norms,
-		    ());
-BN_EXPORT BU_EXTERN(void free_vert_tree,
-		    (struct vert_root *tree_root));
-BN_EXPORT BU_EXTERN(int Add_vert,
-		    (double x,
-		     double y,
-		     double z,
-		     struct vert_root *tree_root,
-		     fastf_t local_tol_sq));
-BN_EXPORT BU_EXTERN(int Add_vert_and_norm,
-		    (double x,
-		     double y,
-		     double z,
-		     double nx,
-		     double ny,
-		     double nz,
-		     struct vert_root *tree_root,
-		     fastf_t local_tol_sq));
-BN_EXPORT BU_EXTERN(void clean_vert_tree,
-		    (struct vert_root *tree_root));
+BN_EXPORT extern struct vert_root *create_vert_tree();
+BN_EXPORT extern struct vert_root *create_vert_tree_w_norms();
+BN_EXPORT extern void free_vert_tree(struct vert_root *tree_root);
+BN_EXPORT extern int Add_vert(double x,
+			      double y,
+			      double z,
+			      struct vert_root *tree_root,
+			      fastf_t local_tol_sq);
+BN_EXPORT extern int Add_vert_and_norm(double x,
+				       double y,
+				       double z,
+				       double nx,
+				       double ny,
+				       double nz,
+				       struct vert_root *tree_root,
+				       fastf_t local_tol_sq);
+BN_EXPORT extern void clean_vert_tree(struct vert_root *tree_root);
 
 /*----------------------------------------------------------------------*/
 /* vectfont.c */
-BN_EXPORT BU_EXTERN(void tp_setup, ());
+BN_EXPORT extern void tp_setup();
 
 /**
  * report version information about LIBBN
  */
-BN_EXPORT BU_EXTERN(const char *bn_version, (void));
+BN_EXPORT extern const char *bn_version(void);
 
 __END_DECLS
 

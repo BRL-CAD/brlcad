@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rrt.c
+/** @file libged/rrt.c
  *
  * The rrt command.
  *
@@ -47,13 +47,13 @@ ged_rrt(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     args = argc + 2 + ged_count_tops(gedp);
     gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     vp = &gedp->ged_gdp->gd_rt_cmd[0];
-    for ( i=1; i < argc; i++ )
+    for (i=1; i < argc; i++)
 	*vp++ = (char *)argv[i];
     *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
 

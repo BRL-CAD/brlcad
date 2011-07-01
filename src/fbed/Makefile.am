@@ -39,7 +39,7 @@ fbed_LDADD = \
 
 man_MANS = fbed.1
 
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = $(man_MANS) CMakeLists.txt
 
 DEPENDS = src/vfont
 

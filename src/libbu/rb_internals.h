@@ -17,14 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup rb */
-/** @{ */
-/** @file rb_internals.h
- *
- * The constants, macro functions, etc. need within LIBBU(3) to handle
- * the red-black tree utilities.
- *
- */
 
 #include "common.h"
 
@@ -49,7 +41,7 @@
     }
 
 /*
- * Access functions for fields of bu_rb_tree
+ * Access functions for fields of struct bu_rb_tree
  */
 #define rb_order_func(t, o) (((t)->rbt_order)[o])
 #define rb_print(t, p) (((t)->rbt_print)((p)->rbp_data))
@@ -135,7 +127,7 @@
  * the adjacent node.  This function is modeled after the routine
  * TREE-SUCCESSOR on p. 249 of Cormen et al.
  */
-BU_EXTERN(struct bu_rb_node *rb_neighbor, (struct bu_rb_node *node, int order, int sense));
+extern struct bu_rb_node *rb_neighbor(struct bu_rb_node *node, int order, int sense);
 
 /** @file rb_rotate.c
  *
@@ -153,7 +145,7 @@ BU_EXTERN(struct bu_rb_node *rb_neighbor, (struct bu_rb_node *node, int order, i
  * the routine called LEFT-ROTATE on p. 266 of Cormen et al, with
  * modification on p. 285.
  */
-BU_EXTERN(void rb_rot_left, (struct bu_rb_node *x, int order));
+extern void rb_rot_left(struct bu_rb_node *x, int order);
 
 /**
  * R B _ R O T _ R I G H T
@@ -164,7 +156,7 @@ BU_EXTERN(void rb_rot_left, (struct bu_rb_node *x, int order));
  * and the order to be rotated.  rb_rot_right() is hacked from
  * rb_rot_left() above.
  */
-BU_EXTERN(void rb_rot_right, (struct bu_rb_node *y, int order));
+extern void rb_rot_right(struct bu_rb_node *y, int order);
 
 /**
  * R B _ W A L K
@@ -179,7 +171,7 @@ BU_EXTERN(void rb_rot_right, (struct bu_rb_node *y, int order));
  * N.B. rb_walk() is not declared static because it is called by
  * bu_rb_diagnose_tree() in rb_diag.c.
  */
-BU_EXTERN(void rb_walk, (bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int what_to_visit, int trav_type));
+extern void rb_walk(struct bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int what_to_visit, int trav_type);
 
 
 /**
@@ -191,7 +183,7 @@ BU_EXTERN(void rb_walk, (bu_rb_tree *tree, int order, void (*visit) (/* ??? */),
  * frees the memory allocated for the various members of the node and
  * then frees the memory allocated for the node itself.
  */
-BU_EXTERN(void rb_free_node, (struct bu_rb_node *node));
+extern void rb_free_node(struct bu_rb_node *node);
 
 /**
  * R B _ F R E E _ P A C K A G E
@@ -203,11 +195,10 @@ BU_EXTERN(void rb_free_node, (struct bu_rb_node *node));
  * nodes that contained the package and then frees the memory
  * allocated for the package itself.
  */
-BU_EXTERN(void rb_free_package, (struct bu_rb_package *package));
+extern void rb_free_package(struct bu_rb_package *package);
 
 #endif /* BU_RB_INTERNALS_H */
 
-/** @} */
 
 /*
  * Local Variables:

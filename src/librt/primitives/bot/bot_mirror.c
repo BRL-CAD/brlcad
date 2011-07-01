@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bot_mirror.c
+/** @file primitives/bot/bot_mirror.c
  *
  * mirror support
  *

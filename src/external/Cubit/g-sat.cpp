@@ -1,4 +1,4 @@
-/*                         G - S A T . C
+/*                       G - S A T . C P P
  * BRL-CAD
  *
  * Copyright (c) 1993-2011 United States Government as represented by
@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file g-sat.cxx
+/** @file g-sat.cpp
  *
  * C++ code for converting BRL-CAD models to the ACIS SAT format for
  * importing into CUBIT.  This code assumes that your receiving format

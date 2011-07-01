@@ -20,7 +20,6 @@
 
 /** @file adrt.h
  *
- * Brief description
  *
  */
 
@@ -57,20 +56,6 @@ enum
     ADRT_WORK_END
 };
 
-#if 0
-/* FIXME: unused, remove? */
-static char *adrt_work_table[20] = {
-    "ADRT_WORK_INIT",
-    "ADRT_WORK_STATUS",
-    "ADRT_WORK_FRAME_ATTR",
-    "ADRT_WORK_FRAME",
-    "ADRT_WORK_SHOTLINE",
-    "ADRT_WORK_SPALL",
-    "ADRT_WORK_SELECT",
-    "ADRT_WORK_MINMAX",
-    NULL};
-#endif
-
 
 #define ADRT_NETOP_BASE 0x20
 /* top level messages */
@@ -87,19 +72,6 @@ enum
     ADRT_NETOP_END
 };
 
-#if 0
-/* FIXME: unused, remove? */
-static char *adrt_netop_table[20] = {
-    "ADRT_NETOP_NOP",
-    "ADRT_NETOP_INIT",
-    "ADRT_NETOP_REQWID",
-    "ADRT_NETOP_LOAD",
-    "ADRT_NETOP_WORK",
-    "ADRT_NETOP_MESG",
-    "ADRT_NETOP_QUIT",
-    "ADRT_NETOP_SHUTDOWN",
-    NULL};
-#endif
 
 /* fill in a human readable version of the adrt op (for debugging) */
 #define ADRT_MESSAGE_NAME(op) \
@@ -107,7 +79,7 @@ static char *adrt_netop_table[20] = {
     (op >= ADRT_NETOP_BASE && op <= ADRT_NETOP_END) ? adrt_netop_table[op-ADRT_NETOP_BASE] : \
     "Unknown"
 
-    /* use the high bit to indicate if mode has changed */
+/* use the high bit to indicate if mode has changed */
 #define ADRT_MESSAGE_MODE_CHANGE(x) (x |= 0x80)
 #define ADRT_MESSAGE_MODE_CHANGEP(x) (x & 0x80)
 #define ADRT_MESSAGE_MODE(x) (x & ~0x80)
@@ -152,8 +124,8 @@ static char *adrt_netop_table[20] = {
 
 #define TIENET_BUFFER_SIZE(_b, _s) { \
 	if (_s > _b.size) { \
-	  _b.data = bu_realloc(_b.data, _s, "tienet buffer size"); \
-	  _b.size = _s; \
+	    _b.data = bu_realloc(_b.data, _s, "tienet buffer size"); \
+	    _b.size = _s; \
         } }
 
 typedef struct tienet_buffer_s {
@@ -162,7 +134,7 @@ typedef struct tienet_buffer_s {
     uint32_t ind;
 } tienet_buffer_t;
 
-BU_EXPORT BU_EXTERN(int load_g, (struct tie_s *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **));
+BU_EXPORT extern int load_g(struct tie_s *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **);
 
 #endif
 

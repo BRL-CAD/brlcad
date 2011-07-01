@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file RepresentationContext.h
+/** @file step/RepresentationContext.h
  *
  * Class definition used to convert STEP "RepresentationContext" to BRL-CAD BREP
  * structures.

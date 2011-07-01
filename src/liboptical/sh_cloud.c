@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_cloud.c
+/** @file liboptical/sh_cloud.c
  *
  * An attempt at 2D Geoffrey Gardner style cloud texture map
  *
@@ -47,8 +47,10 @@ struct bu_structparse cloud_parse[] = {
 };
 
 
-HIDDEN int cloud_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), cloud_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void cloud_print(register struct region *rp, char *dp), cloud_free(char *cp);
+HIDDEN int cloud_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int cloud_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
+HIDDEN void cloud_print(register struct region *rp, genptr_t dp);
+HIDDEN void cloud_free(genptr_t cp);
 
 struct mfuncs cloud_mfuncs[] = {
     {MF_MAGIC,	"cloud",	0,		MFI_UV,		0,
@@ -115,13 +117,13 @@ cloud_texture(register fastf_t x, register fastf_t y, fastf_t Contrast, fastf_t 
  * C L O U D _ S E T U P
  */
 HIDDEN int
-cloud_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
+cloud_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 {
     register struct cloud_specific *cp;
 
     BU_CK_VLS(matparm);
     BU_GETSTRUCT(cp, cloud_specific);
-    *dpp = (char *)cp;
+    *dpp = cp;
 
     cp->cl_thresh = 0.35;
     cp->cl_range = 0.3;
@@ -136,7 +138,7 @@ cloud_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, char **d
  * C L O U D _ P R I N T
  */
 HIDDEN void
-cloud_print(register struct region *rp, char *dp)
+cloud_print(register struct region *rp, genptr_t dp)
 {
     bu_struct_print(rp->reg_name, cloud_parse, (char *)dp);
 }
@@ -146,7 +148,7 @@ cloud_print(register struct region *rp, char *dp)
  * C L O U D _ F R E E
  */
 HIDDEN void
-cloud_free(char *cp)
+cloud_free(genptr_t cp)
 {
     bu_free(cp, "cloud_specific");
 }
@@ -162,7 +164,7 @@ cloud_free(char *cp)
  * thresh=0.35, range=0.3 for decent clouds.
  */
 int
-cloud_render(struct application *UNUSED(ap), struct partition *UNUSED(pp), struct shadework *swp, char *dp)
+cloud_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp), struct shadework *swp, genptr_t dp)
 {
     register struct cloud_specific *cp =
 	(struct cloud_specific *)dp;

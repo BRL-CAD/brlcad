@@ -19,7 +19,7 @@
  */
 /** @addtogroup pcdbio */
 /** @{ */
-/** @file constraint.c
+/** @file libwdb/constraint.c
  *
  * @brief External C Routines of Parametrics and Constraints API
  *
@@ -41,7 +41,7 @@ mk_constraint(struct rt_wdb *wdbp, const char *name, const char *UNUSED(expr))
 
     RT_CK_WDB(wdbp);
 
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
 
     /* Create a fresh new object for export */
     BU_GETSTRUCT(constraint, rt_constraint_internal);

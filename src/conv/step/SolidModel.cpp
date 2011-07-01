@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file SolidModel.cpp
+/** @file step/SolidModel.cpp
  *
  * Routines to convert STEP "SolidModel" to BRL-CAD BREP
  * structures.

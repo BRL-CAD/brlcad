@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ElectricCurrentConversionBasedUnit.h
+/** @file step/ElectricCurrentConversionBasedUnit.h
  *
  * Class definition used to convert STEP "ElectricCurrentConversionBasedUnit" to BRL-CAD BREP
  * structures.

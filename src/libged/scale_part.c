@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file scale_part.c
+/** @file libged/scale_part.c
  *
  * The scale_part command.
  */
@@ -39,29 +39,29 @@ _ged_scale_part(struct ged *gedp, struct rt_part_internal *part, const char *att
     RT_PART_CK_MAGIC(part);
 
     switch (attribute[0]) {
-    case 'H':
-	if (!rflag)
-	    sf /= MAGNITUDE(part->part_H);
+	case 'H':
+	    if (!rflag)
+		sf /= MAGNITUDE(part->part_H);
 
-	VSCALE(part->part_H, part->part_H, sf);
-	break;
-    case 'v':
-	if (rflag)
-	    part->part_vrad *= sf;
-	else
-	    part->part_vrad = sf;
+	    VSCALE(part->part_H, part->part_H, sf);
+	    break;
+	case 'v':
+	    if (rflag)
+		part->part_vrad *= sf;
+	    else
+		part->part_vrad = sf;
 
-	break;
-    case 'h':
-	if (rflag)
-	    part->part_hrad *= sf;
-	else
-	    part->part_hrad = sf;
+	    break;
+	case 'h':
+	    if (rflag)
+		part->part_hrad *= sf;
+	    else
+		part->part_hrad = sf;
 
-	break;
-    default:
-	bu_vls_printf(&gedp->ged_result_str, "bad part attribute - %s", attribute);
-	return GED_ERROR;
+	    break;
+	default:
+	    bu_vls_printf(gedp->ged_result_str, "bad part attribute - %s", attribute);
+	    return GED_ERROR;
     }
 
     return GED_OK;

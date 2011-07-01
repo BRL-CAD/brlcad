@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file AdvancedBrepShapeRepresentation.h
+/** @file step/AdvancedBrepShapeRepresentation.h
  *
  * Class definition used to convert STEP "AdvancedBrepShapeRepresentation" to BRL-CAD BREP
  * structures.

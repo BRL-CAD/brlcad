@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file VertexLoop.h
+/** @file step/VertexLoop.h
  *
  * Class definition used to convert STEP "VertexLoop" to BRL-CAD BREP
  * structures.

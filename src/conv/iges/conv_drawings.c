@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file conv_drawings.c
+/** @file iges/conv_drawings.c
  *
  * Routine to convert IGES drawings to wire edges in BRL-CAD NMG
  * structures.
@@ -116,7 +116,7 @@ Note_to_vlist(entno, vhead)
     int nstrings=0;
     int i;
 
-    if (BU_LIST_UNINITIALIZED(&free_hd)) BU_LIST_INIT(&free_hd);
+    if (!BU_LIST_IS_INITIALIZED(&free_hd)) BU_LIST_INIT(&free_hd);
 
     Readrec(dir[entno]->param);
     Readint(&entity_type, "");

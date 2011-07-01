@@ -17,7 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libbu */
+/** @addtogroup cmd */
+/** @ingroup data */
 /** @{ */
 /** @file cmdhist.c
  *
@@ -98,7 +99,7 @@ struct bu_cmdhist_obj {
  *
  * @return TCL_OK if successful, otherwise, TCL_ERROR.
  */
-BU_EXPORT BU_EXTERN(int bu_cmd, (ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[], struct bu_cmdtab *cmds, int cmd_index));
+BU_EXPORT extern int bu_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[], struct bu_cmdtab *cmds, int cmd_index);
 
 /**
  * b u _ r e g i s t e r _ c m d s
@@ -113,7 +114,7 @@ BU_EXPORT BU_EXTERN(int bu_cmd, (ClientData clientData, Tcl_Interp *interp, int 
  * @return
  * void
  */
-BU_EXPORT BU_EXTERN(void bu_register_cmds, (Tcl_Interp *interp, struct bu_cmdtab *cmds));
+BU_EXPORT extern void bu_register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds);
 
 /**
  * @brief
@@ -122,7 +123,7 @@ BU_EXPORT BU_EXTERN(void bu_register_cmds, (Tcl_Interp *interp, struct bu_cmdtab
  * USAGE:
  * procname history [-delays] [-outfile filename]
  */
-BU_EXPORT BU_EXTERN(int bu_cmdhist_history, (ClientData clientData, Tcl_Interp *interp, int argc, const char **argv));
+BU_EXPORT extern int bu_cmdhist_history(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv);
 
 /**
  * @brief
@@ -131,7 +132,7 @@ BU_EXPORT BU_EXTERN(int bu_cmdhist_history, (ClientData clientData, Tcl_Interp *
  * USAGE:
  * procname add cmd
  */
-BU_EXPORT BU_EXTERN(int bu_cmdhist_add, (ClientData clientData, Tcl_Interp *interp, int argc, const char **argv));
+BU_EXPORT extern int bu_cmdhist_add(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv);
 
 /**
  * Return the current command.
@@ -139,7 +140,7 @@ BU_EXPORT BU_EXTERN(int bu_cmdhist_add, (ClientData clientData, Tcl_Interp *inte
  * USAGE:
  * procname curr
  */
-BU_EXPORT BU_EXTERN(int bu_cmdhist_curr, (ClientData clientData, Tcl_Interp *interp, int argc, const char **argv));
+BU_EXPORT extern int bu_cmdhist_curr(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv);
 
 /**
  * Set the current command to the next command.
@@ -147,7 +148,7 @@ BU_EXPORT BU_EXTERN(int bu_cmdhist_curr, (ClientData clientData, Tcl_Interp *int
  * USAGE:
  * procname next
  */
-BU_EXPORT BU_EXTERN(int bu_cmdhist_next, (ClientData clientData, Tcl_Interp *interp, int argc, const char **argv));
+BU_EXPORT extern int bu_cmdhist_next(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv);
 
 /**
  * Set the current command to the previous command.
@@ -155,7 +156,7 @@ BU_EXPORT BU_EXTERN(int bu_cmdhist_next, (ClientData clientData, Tcl_Interp *int
  * USAGE:
  * procname prev
  */
-BU_EXPORT BU_EXTERN(int bu_cmdhist_prev, (ClientData clientData, Tcl_Interp *interp, int argc, const char **argv));
+BU_EXPORT extern int bu_cmdhist_prev(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv);
 
 /**
  * @brief
@@ -164,7 +165,7 @@ BU_EXPORT BU_EXTERN(int bu_cmdhist_prev, (ClientData clientData, Tcl_Interp *int
  * USAGE:
  * ch_open name
  */
-BU_EXPORT BU_EXTERN(int cho_open_tcl, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+BU_EXPORT extern int cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 #endif  /* __CMD_H__ */
 /** @} */

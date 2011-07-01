@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_extrude.c
+/** @file primitives/nmg/nmg_extrude.c
  *
  * Routines for extruding nmg's.
  *

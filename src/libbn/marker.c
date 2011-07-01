@@ -19,7 +19,7 @@
  */
 /** @addtogroup plot */
 /** @{ */
-/** @file marker.c
+/** @file libbn/marker.c
  *
  *	This routine places a specified character (either from
  * the ASCII set, or one of the 5 special marker characters)

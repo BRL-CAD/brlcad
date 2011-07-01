@@ -18,10 +18,20 @@
  * information.
  */
 
-/** @file ringworld.c
+/** @file proc-db/ringworld.c
  *
  * Generate a 'ringworld', as imagined by Larry Niven.
  *
+ * Some urls/notes
+ *
+ * http://www.youtube.com/watch?v=sR2296df-bc
+ * http://www.freewebs.com/knownspace/rw.htm
+ * http://www.alcyone.com/max/reference/scifi/ringworld.html
+ *
+ * sun: 1.93e26g, 1.36e9m, 3.6e33ergs/sec
+ * ring: 2e30g, 1.53e11m radius, 1.605e9m width, 1600km rim walls 200' wide at
+ * top. 30m bottom plus 370m foam
+ * shadow squares: 20, 1.6e6x4e6m, 4.6e7m orbit
  */
 
 #include "common.h"

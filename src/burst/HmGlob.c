@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file HmGlob.c
+/** @file burst/HmGlob.c
  *
  */
 

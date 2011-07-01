@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file vol.c
+/** @file primitives/vol/vol.c
  *
  * Intersect a ray with a 3-D volume.  The volume is described as a
  * concatenation of bw(5) files.
@@ -77,8 +77,8 @@ const struct bu_structparse rt_vol_parse[] = {
 };
 
 
-BU_EXTERN(void rt_vol_plate, (point_t a, point_t b, point_t c, point_t d,
-			      mat_t mat, struct bu_list *vhead, struct rt_vol_internal *vip));
+extern void rt_vol_plate(point_t a, point_t b, point_t c, point_t d,
+			 mat_t mat, struct bu_list *vhead, struct rt_vol_internal *vip);
 
 /*
  * Codes to represent surface normals.
@@ -105,7 +105,7 @@ BU_EXTERN(void rt_vol_plate, (point_t a, point_t b, point_t c, point_t d,
 #define VOL(_vip, _xx, _yy, _zz)	(_vip)->map[ \
 	(((_zz)+VOL_ZWIDEN) * ((_vip)->ydim + VOL_YWIDEN*2)+ \
 	 ((_yy)+VOL_YWIDEN))* ((_vip)->xdim + VOL_XWIDEN*2)+ \
-	  (_xx)+VOL_XWIDEN ]
+	(_xx)+VOL_XWIDEN ]
 
 #define OK(_vip, _v)	((_v) >= (_vip)->lo && (_v) <= (_vip)->hi)
 
@@ -484,7 +484,7 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	    ret = fread(&VOL(vip, 0, y, z), vip->xdim, 1, fp); /* res_syscall */
 	    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
 	    if (ret < 1) {
-		bu_log("rt_vol_import4(%s): Unable to read whole VOL, y=%d, z=%d\n",
+		bu_log("rt_vol_import4(%s): Unable to read whole VOL, y=%zu, z=%zu\n",
 		       vip->file, y, z);
 		bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
 		fclose(fp);
@@ -623,7 +623,7 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	    ret = fread(&VOL(vip, 0, y, z), vip->xdim, 1, fp); /* res_syscall */
 	    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
 	    if (ret < 1) {
-		bu_log("rt_vol_import4(%s): Unable to read whole VOL, y=%d, z=%d\n",
+		bu_log("rt_vol_import4(%s): Unable to read whole VOL, y=%zu, z=%zu\n",
 		       vip->file, y, z);
 		bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
 		fclose(fp);
@@ -703,7 +703,7 @@ rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
    bu_vls_strcat(str, "\n"); */
 
     bu_vls_init(&substr);
-    bu_vls_printf(&substr, "  file=\"%s\" w=%d n=%d d=%d lo=%d hi=%d size=%g %g %g\n   mat=",
+    bu_vls_printf(&substr, "  file=\"%s\" w=%zu n=%zu d=%zu lo=%zu hi=%zu size=%g %g %g\n   mat=",
 		  vip->file, vip->xdim, vip->ydim, vip->zdim, vip->lo, vip->hi,
 		  V3INTCLAMPARGS(local));
     bu_vls_vlscat(str, &substr);
@@ -821,7 +821,7 @@ rt_vol_print(register const struct soltab *stp)
 	(struct rt_vol_specific *)stp->st_specific;
 
     bu_log("vol file = %s\n", volp->vol_i.file);
-    bu_log("dimensions = (%d, %d, %d)\n",
+    bu_log("dimensions = (%zu, %zu, %zu)\n",
 	   volp->vol_i.xdim, volp->vol_i.ydim,
 	   volp->vol_i.zdim);
     VPRINT("model cellsize", volp->vol_i.cellsize);
@@ -1303,7 +1303,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     return 0;
 
- fail:
+fail:
     nmg_km(m_tmp);
     *r = (struct nmgregion *)NULL;
 

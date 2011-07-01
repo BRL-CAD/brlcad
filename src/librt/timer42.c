@@ -19,7 +19,7 @@
  */
 /** @addtogroup timer */
 /** @{ */
-/** @file timer42.c
+/** @file librt/timer42.c
  *
  * To provide timing information for RT when running on 4.2 BSD UNIX.
  *

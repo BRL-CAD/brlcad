@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_treetherm.c
+/** @file liboptical/sh_treetherm.c
  *
  */
 
@@ -145,8 +145,10 @@ struct bu_structparse tthrm_parse[] = {
 };
 
 
-HIDDEN int tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), tthrm_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void tthrm_print(register struct region *rp, char *dp), tthrm_free(char *cp);
+HIDDEN int tthrm_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int tthrm_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
+HIDDEN void tthrm_print(register struct region *rp, genptr_t dp);
+HIDDEN void tthrm_free(genptr_t cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -218,7 +220,7 @@ build_tree(struct bu_list *br, struct region *rp)
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+tthrm_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -255,7 +257,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 
     /* Get memory for the shader parameters and shader-specific data */
     BU_GETSTRUCT(tthrm_sp, tthrm_specific);
-    *dpp = (char *)tthrm_sp;
+    *dpp = tthrm_sp;
     tthrm_sp->magic = tthrm_MAGIC;
 
     tthrm_sp->tt_name[0] = '\0';
@@ -461,15 +463,12 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
  * T R E E T H E R M _ P R I N T
  */
 HIDDEN void
-tthrm_print(register struct region *UNUSED(rp), char *dp)
+tthrm_print(register struct region *UNUSED(rp), genptr_t dp)
 {
     struct tthrm_specific *tthrm_sp = (struct tthrm_specific *)dp;
 
     bu_log("%s\n", tthrm_sp->tt_name);
     bn_mat_print("m_to_sh", tthrm_sp->tthrm_m_to_sh);
-#if 0
-    bu_struct_print(rp->reg_name, tthrm_print_tab, (char *)dp);
-#endif
 }
 
 
@@ -477,7 +476,7 @@ tthrm_print(register struct region *UNUSED(rp), char *dp)
  * T R E E T H E R M _ F R E E
  */
 HIDDEN void
-tthrm_free(char *cp)
+tthrm_free(genptr_t cp)
 {
     struct tthrm_specific *tthrm_sp = (struct tthrm_specific *)cp;
 
@@ -497,7 +496,7 @@ tthrm_free(char *cp)
  * of the solid that was hit.
  */
 static int
-get_solid_number(struct partition *pp)
+get_solid_number(const struct partition *pp)
 {
     char *solid_name;
     char *solid_digits;
@@ -537,7 +536,7 @@ get_solid_number(struct partition *pp)
  * structure.
  */
 int
-tthrm_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+tthrm_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
 
 
 /* defined in material.h */

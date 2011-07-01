@@ -350,8 +350,8 @@ if test "x$CLEAN" = "x1" ; then
     $ECHO
 
     for i in moss world star bldg391 m35 sphflake ; do
-	$ECHO rm -f $i.log $i.pix $i.log.[0-9]* $i.pix.[0-9]*
-	rm -f $i.log $i.pix $i.log.[0-9]* $i.pix.[0-9]*
+	$ECHO rm -f $i.log $i.pix $i-[0-9]*.log $i-[0-9]*.pix
+	rm -f $i.log $i.pix $i-[0-9]*.log $i-[0-9]*.pix
     done
     if test "x$CLOBBER" = "x1" ; then
 	# NEVER automatically delete the summary file, but go ahead with the rest
@@ -667,7 +667,7 @@ $ECHO
 
 # determine raytracer version
 $ECHO "RT reports the following version information:"
-versions="`$RT 2>&1 | grep BRL-CAD`"
+versions="`$RT 2>&1 | grep BRL-CAD | grep Release`"
 if test "x$versions" = "x" ; then
     $ECHO "Unknown"
 else
@@ -675,17 +675,27 @@ else
 fi
 $ECHO
 
+
 # if expr works, let the user know about how long this might take
 if test "x`expr 1 - 1 2>/dev/null`" = "x0" ; then
-    mintime="`expr $TIMEFRAME \* 6`"
+    mintime="`expr 6 \* $TIMEFRAME`"
+    if test $mintime -lt 1 ; then
+	mintime=0 # zero is okay
+    fi
     $ECHO "Minimum run time is `$ELP $mintime`"
-    maxtime="`expr $MAXTIME \* 6`"
+    maxtime="`expr 6 \* $MAXTIME`"
+    if test $maxtime -lt 1 ; then
+	maxtime=1 # zero would be misleading
+    fi
     $ECHO "Maximum run time is `$ELP $maxtime`"
-    estimate="`expr $mintime \* 3`"
+    estimate="`expr 3 \* $mintime`"
+    if test $estimate -lt 1 ; then
+	estimate=1 # zero would be misleading
+    fi
     if test $estimate -gt $maxtime ; then
 	estimate="$maxtime"
     fi
-    $ECHO "Estimated   time is `$ELP $estimate`"
+    $ECHO "Estimated time is `$ELP $estimate`"
     $ECHO
 else
     $ECHO "WARNING: expr is unavailable, unable to compute statistics"
@@ -890,6 +900,43 @@ sqrt ( ) {
 
 
 #
+# clean_obstacles base_filename
+#   conditionally removes or saves backup of any .pix or .log files
+#   output during bench.
+#
+clean_obstacles ( ) {
+    base="$1" ; shift
+
+    if test "x$base" = "x" ; then
+	$ECHO "ERROR: argument mismatch, cleaner is missing base name"
+	exit 1
+    fi
+
+    # look for an image file
+    if test -f ${base}.pix; then
+	if test -f ${base}-$$.pix ; then
+	    # backup already exists, just delete obstacle
+	    rm -f ${base}.pix
+	else
+	    # no backup exists yet, so keep it
+	    mv -f ${base}.pix ${base}-$$.pix
+	fi
+    fi
+
+    # look for a log file
+    if test -f ${base}.log; then
+	if test -f ${base}-$$.log ; then
+	    # backup already exists, just delete obstacle
+	    rm -f ${base}.log
+	else
+	    # no backup exists yet, so keep it
+	    mv -f ${base}.log ${base}-$$.log
+	fi
+    fi
+}
+
+
+#
 # bench test_name geometry [..rt args..]
 #   runs a series of benchmark tests assuming the following are preset:
 #
@@ -920,15 +967,20 @@ bench ( ) {
     bench_rtfms=""
     bench_percent=100
     bench_start_time="`date '+%H %M %S'`"
-    bench_overall_elapsed=0
+    bench_overall_elapsed=-1
 
+    # clear out before we begin, only saving backup on first encounter
+    clean_obstacles "$bench_testname"
+
+    # use -lt since -le makes causes a "floor(elapsed)" comparison and too many iterations
     while test $bench_overall_elapsed -lt $MAXTIME ; do
 
-	bench_elapsed=0
+	bench_elapsed=-1
+	# use -lt since -le makes causes a "floor(elapsed)" comparison and too many iterations
 	while test $bench_elapsed -lt $TIMEFRAME ; do
 
-	    if test -f ${bench_testname}.pix; then mv -f ${bench_testname}.pix ${bench_testname}.pix.$$; fi
-	    if test -f ${bench_testname}.log; then mv -f ${bench_testname}.log ${bench_testname}.log.$$; fi
+	    # clear out any previous run, only saving backup on first encounter
+	    clean_obstacles "$bench_testname"
 
 	    bench_frame_start_time="`date '+%H %M %S'`"
 
@@ -962,19 +1014,27 @@ EOF
 
 		# increase the number of rays exponentially if we are
 		# considerably faster than the TIMEFRAME required.
-		if test `expr $bench_elapsed \* 32` -le ${TIMEFRAME} ; then
+		if test `expr $bench_elapsed \* 128` -lt ${TIMEFRAME} ; then
+		    # 128x increase, skip six frames
+		    bench_hypersample="`expr $bench_hypersample \* 128 + 127`"
+		    bench_frame="`expr $bench_frame + 7`"
+		elif test `expr $bench_elapsed \* 64` -lt ${TIMEFRAME} ; then
+		    # 64x increase, skip five frames
+		    bench_hypersample="`expr $bench_hypersample \* 64 + 63`"
+		    bench_frame="`expr $bench_frame + 6`"
+		elif test `expr $bench_elapsed \* 32` -lt ${TIMEFRAME} ; then
 		    # 32x increase, skip four frames
 		    bench_hypersample="`expr $bench_hypersample \* 32 + 31`"
 		    bench_frame="`expr $bench_frame + 5`"
-		elif test `expr $bench_elapsed \* 16` -le ${TIMEFRAME} ; then
+		elif test `expr $bench_elapsed \* 16` -lt ${TIMEFRAME} ; then
 		    # 16x increase, skip three frames
 		    bench_hypersample="`expr $bench_hypersample \* 16 + 15`"
 		    bench_frame="`expr $bench_frame + 4`"
-		elif test `expr $bench_elapsed \* 8` -le ${TIMEFRAME} ; then
+		elif test `expr $bench_elapsed \* 8` -lt ${TIMEFRAME} ; then
 		    # 8x increase, skip two frames
 		    bench_hypersample="`expr $bench_hypersample \* 8 + 7`"
 		    bench_frame="`expr $bench_frame + 3`"
-		elif test `expr $bench_elapsed \* 4` -le ${TIMEFRAME} ; then
+		elif test `expr $bench_elapsed \* 4` -lt ${TIMEFRAME} ; then
 		    # 4x increase, skip a frame
 		    bench_hypersample="`expr $bench_hypersample \* 4 + 3`"
 		    bench_frame="`expr $bench_frame + 2`"

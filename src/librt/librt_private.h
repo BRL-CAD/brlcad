@@ -64,6 +64,14 @@ extern void flip_mat_dbmat(fastf_t *ff, const dbfloat_t *dbp, int flip);
 extern void flip_dbmat_mat(dbfloat_t *dbp, const fastf_t *ff);
 
 
+/**
+ * return angle required for smallest side to fall within tolerances
+ * for ellipse.  Smallest side is a side with an endpoint at (a, 0, 0)
+ * where a is the semi-major axis.
+ */
+extern fastf_t ell_angle(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol);
+
+
 __END_DECLS
 
 /*

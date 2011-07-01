@@ -6,7 +6,7 @@
  *
  * This software may be freely distributed without prior notice.
  */
-/** @file turb.c
+/** @file liboptical/turb.c
  *
  * Larger noise table for turbulence calculations.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file joints.h
+/** @file mged/joints.h
  *
  * Joint and constrant information.
  *

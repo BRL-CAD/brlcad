@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file splitditc.c
+/** @file libfft/splitditc.c
  *
  * Real valued, split-radix, decimation in time FFT code generator.
  *

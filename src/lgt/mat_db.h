@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mat_db.h
+/** @file lgt/mat_db.h
     Author:		Gary S. Moss
 */
 #ifndef INCL_MATDB

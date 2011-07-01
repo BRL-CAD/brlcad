@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file BRLCADWrapper.h
+/** @file step/BRLCADWrapper.h
  *
  * Class definition for C++ wrapper to BRL-CAD database functions.
  *

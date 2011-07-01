@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file PlaneAngleSiUnit.h
+/** @file step/PlaneAngleSiUnit.h
  *
  * Class definition used to convert STEP "PlaneAngleSiUnit" to BRL-CAD BREP
  * structures.

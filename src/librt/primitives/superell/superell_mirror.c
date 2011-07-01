@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file superell_mirror.c
+/** @file primitives/superell/superell_mirror.c
  *
  * mirror support
  *

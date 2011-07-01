@@ -14,7 +14,6 @@ add_definitions(
 
 IF(MSVC)
    add_definitions(
-	   -DBRLCAD_DLL
 	   -D_CRT_SECURE_NO_WARNINGS
 	   -DCMAKE_HEADERS
    )

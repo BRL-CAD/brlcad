@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file GeometricRepresentationContext.h
+/** @file step/GeometricRepresentationContext.h
  *
  * Class definition used to convert STEP "GeometricRepresentationContext" to BRL-CAD BREP
  * structures.

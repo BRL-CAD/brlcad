@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file BoundedCurve.cpp
+/** @file step/BoundedCurve.cpp
  *
  * Routines to convert STEP "BoundedCurve" to BRL-CAD BREP
  * structures.

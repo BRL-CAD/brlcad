@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file scale_rhc.c
+/** @file libged/scale_rhc.c
  *
  * The scale_rhc command.
  */
@@ -39,39 +39,39 @@ _ged_scale_rhc(struct ged *gedp, struct rt_rhc_internal *rhc, const char *attrib
     RT_RHC_CK_MAGIC(rhc);
 
     switch (attribute[0]) {
-    case 'b':
-    case 'B':
-	if (!rflag)
-	    sf /= MAGNITUDE(rhc->rhc_B);
+	case 'b':
+	case 'B':
+	    if (!rflag)
+		sf /= MAGNITUDE(rhc->rhc_B);
 
-	VSCALE(rhc->rhc_B, rhc->rhc_B, sf);
-	break;
-    case 'h':
-    case 'H':
-	if (!rflag)
-	    sf /= MAGNITUDE(rhc->rhc_H);
+	    VSCALE(rhc->rhc_B, rhc->rhc_B, sf);
+	    break;
+	case 'h':
+	case 'H':
+	    if (!rflag)
+		sf /= MAGNITUDE(rhc->rhc_H);
 
-	VSCALE(rhc->rhc_H, rhc->rhc_H, sf);
-	break;
-    case 'c':
-    case 'C':
-	if (rflag)
-	    rhc->rhc_c *= sf;
-	else
-	    rhc->rhc_c = sf;
+	    VSCALE(rhc->rhc_H, rhc->rhc_H, sf);
+	    break;
+	case 'c':
+	case 'C':
+	    if (rflag)
+		rhc->rhc_c *= sf;
+	    else
+		rhc->rhc_c = sf;
 
-	break;
-    case 'r':
-    case 'R':
-	if (rflag)
-	    rhc->rhc_r *= sf;
-	else
-	    rhc->rhc_r = sf;
+	    break;
+	case 'r':
+	case 'R':
+	    if (rflag)
+		rhc->rhc_r *= sf;
+	    else
+		rhc->rhc_r = sf;
 
-	break;
-    default:
-	bu_vls_printf(&gedp->ged_result_str, "bad rhc attribute - %s", attribute);
-	return GED_ERROR;
+	    break;
+	default:
+	    bu_vls_printf(gedp->ged_result_str, "bad rhc attribute - %s", attribute);
+	    return GED_ERROR;
     }
 
     return GED_OK;

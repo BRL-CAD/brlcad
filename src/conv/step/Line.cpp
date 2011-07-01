@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Line.cpp
+/** @file step/Line.cpp
  *
  * Routines to convert STEP "Line" to BRL-CAD BREP
  * structures.

@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file poly/poly.c
+/** @file primitives/poly/poly.c
  *
  * Intersect a ray with a Polygonal Object that has no explicit
  * topology.  It is assumed that the solid has no holes.
@@ -271,7 +271,7 @@ rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	VMOVE(hp->hit_normal, trip->tri_N);
 	hp->hit_surfno = trip->tri_surfno;
 	if (++nhits >= MAXHITS) {
-	    bu_log("rt_pg_shot(%s): too many hits (%d)\n", stp->st_name, nhits);
+	    bu_log("rt_pg_shot(%s): too many hits (%zu)\n", stp->st_name, nhits);
 	    break;
 	}
 	hp++;
@@ -328,7 +328,7 @@ rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	 */
 
 	if (nerrors++ < 6) {
-	    bu_log("rt_pg_shot(%s): WARNING %d hits:\n", stp->st_name, nhits);
+	    bu_log("rt_pg_shot(%s): WARNING %zu hits:\n", stp->st_name, nhits);
 	    bu_log("\tray start = (%g %g %g) ray dir = (%g %g %g)\n",
 		   V3ARGS(rp->r_pt), V3ARGS(rp->r_dir));
 	    for (i=0; i < nhits; i++) {
@@ -606,7 +606,7 @@ rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
 
 	/* Construct the face.  Verts should be in CCW order */
 	if ((fu = nmg_cmface(s, vertp, pp->npts)) == (struct faceuse *)0) {
-	    bu_log("rt_pg_tess() nmg_cmface failed, skipping face %d\n",
+	    bu_log("rt_pg_tess() nmg_cmface failed, skipping face %zu\n",
 		   p);
 	}
 
@@ -715,7 +715,7 @@ rt_pg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	if (pp->npts > pgp->max_npts) pgp->max_npts = pp->npts;
     }
     if (pgp->max_npts < 3) {
-	bu_log("rt_pg_import4: polysolid with all polygons of less than %d vertices!\n", pgp->max_npts);
+	bu_log("rt_pg_import4: polysolid with all polygons of less than %zu vertices!\n", pgp->max_npts);
 	/* XXX free storage */
 	return -1;
     }
@@ -758,7 +758,7 @@ rt_pg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	rno = p+1;
 	pp = &pgp->poly[p];
 	if (pp->npts < 3 || pp->npts > 5) {
-	    bu_log("rt_pg_export4:  unable to support npts=%d\n",
+	    bu_log("rt_pg_export4:  unable to support npts=%zu\n",
 		   pp->npts);
 	    return -1;
 	}

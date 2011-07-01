@@ -147,7 +147,8 @@ BUILT_SOURCES = \
 EXTRA_DIST = \
 	$(dist_tcl_DATA) \
 	rrmb.tcl \
-	$(tcl_SCRIPTS)
+	$(tcl_SCRIPTS) \
+	CMakeLists.txt
 
 # CLEANFILES = $(BUILT_SOURCES)
 

@@ -1,0 +1,24 @@
+M4 - original sources:
+http://ftp.netbsd.org/pub/NetBSD/NetBSD-current/src/usr.bin/m4/
+
+This is an extraction of the NetBSD port of the OpenBSD
+implementation of m4, with just enough extra files to
+make it (hopefully) buildable on different systems.  NetBSD
+did most of it, but a few extra files and definitions have
+been added and we will make any additional portability tweeks
+that are needed - flex relies heavily on m4 and getting a
+minimal m4 working from NetBSD looked to be the least ardious
+of the various options - the code is ~280K uncompressed so it
+isn't terribly huge.
+
+The generated files are the results of running flex and
+byacc on the parser.y and tokenizer.l files.  Unfortunately,
+since the main point of this m4 is to be able to boostrap
+a modern flex, at least the tokenizer.l file must be present
+in compilable form without assuming lex already present. (This
+is a true bootstrap scenario, so there is no way out of it - if
+I understand the comments from the OpenBSD commit of the relevant 
+m4 update correctly, it requires quite a modern m4 to compile flex.)
+The parser.y file might be able to use byacc once we get that
+up and running, but for now all lex/yacc files are built using
+their pre-generated sources.

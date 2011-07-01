@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file remove.c
+/** @file libged/remove.c
  *
  * The remove command.
  *
@@ -36,12 +36,12 @@
 int
 ged_remove(struct ged *gedp, int argc, const char *argv[])
 {
-    struct directory	*dp;
-    int			i;
-    int				num_deleted;
-    struct rt_db_internal		intern;
-    struct rt_comb_internal		*comb;
-    int				ret;
+    struct directory *dp;
+    int i;
+    int num_deleted;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
+    int ret;
     static const char *usage = "comb object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -50,16 +50,16 @@ ged_remove(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 3) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -67,12 +67,12 @@ ged_remove(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
 
     if ((dp->d_flags & RT_DIR_COMB) == 0) {
-	bu_vls_printf(&gedp->ged_result_str, "rm: %s is not a combination", dp->d_namep);
+	bu_vls_printf(gedp->ged_result_str, "rm: %s is not a combination", dp->d_namep);
 	return GED_ERROR;
     }
 
     if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
+	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	return GED_ERROR;
     }
 
@@ -83,8 +83,8 @@ ged_remove(struct ged *gedp, int argc, const char *argv[])
     num_deleted = 0;
     ret = TCL_OK;
     for (i = 2; i < argc; i++) {
-	if (db_tree_del_dbleaf( &(comb->tree), argv[i], &rt_uniresource, 0 ) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "  ERROR_deleting %s/%s\n", dp->d_namep, argv[i]);
+	if (db_tree_del_dbleaf(&(comb->tree), argv[i], &rt_uniresource, 0) < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "ERROR: Failure deleting %s/%s\n", dp->d_namep, argv[i]);
 	    ret = GED_ERROR;
 	} else {
 	    struct bu_vls path;
@@ -93,13 +93,13 @@ ged_remove(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(&path, "%s/%s", dp->d_namep, argv[i]);
 	    _ged_eraseAllPathsFromDisplay(gedp, bu_vls_addr(&path), 0);
 	    bu_vls_free(&path);
-	    bu_vls_printf(&gedp->ged_result_str, "deleted %s/%s\n", dp->d_namep, argv[i]);
+	    bu_vls_printf(gedp->ged_result_str, "deleted %s/%s\n", dp->d_namep, argv[i]);
 	    num_deleted++;
 	}
     }
 
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting");
+	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	return GED_ERROR;
     }
 

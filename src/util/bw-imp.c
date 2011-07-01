@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bw-imp.c
+/** @file util/bw-imp.c
  *
  * Borrows heavily from Steve Hawley's & Geoffrey Cooper's "traceconv"
  * program.
@@ -35,7 +35,6 @@
 
 #include "bu.h"
 
-typedef int bool;
 #define true 1
 #define false 0
 
@@ -87,16 +86,16 @@ static size_t im_width;		/* image size (in Imagen dots) */
 static size_t im_wpatches;		/* # 32-bit patches width */
 static size_t im_hpatches;		/* # 32-bit patches height */
 
-bool get_args(int argc, char **argv);
-bool im_close(void);
-bool im_header(void);
+int get_args(int argc, char **argv);
+int im_close(void);
+int im_header(void);
 void im_write(int y);
 
 char usage[] = "\
 Usage: bw-imp [-h -D] [-s squaresize] [-w width] [-n height]\n\
 	[-X page_xoff] [-Y page_yoff] [-t thresh] [file.bw] > impress\n";
 
-bool
+int
 get_args(int argc, char **argv)
 {
     int c;
@@ -204,7 +203,7 @@ main(int argc, char **argv)
 }
 
 
-bool
+int
 im_header(void)
 {
 
@@ -308,7 +307,7 @@ im_write(int y)
 }
 
 
-bool
+int
 im_close(void)
 {
 /* (void)putchar(219);		ENDPAGE */

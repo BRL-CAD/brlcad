@@ -19,7 +19,7 @@
  */
 /** @addtogroup libged */
 /** @{ */
-/** @file view_obj.c
+/** @file libged/view_obj.c
  *
  * A view object contains the attributes and methods for controlling
  * viewing transformations.
@@ -141,14 +141,16 @@ static struct bu_cmdtab vo_cmds[] =
     {(char *)0,		(int (*)())0}
 };
 
+
 static int
-vo_cmd(ClientData	clientData,
-       Tcl_Interp	*interp,
-       int		argc,
-       char		*argv[])
+vo_cmd(ClientData clientData,
+       Tcl_Interp *interp,
+       int argc,
+       char *argv[])
 {
     return bu_cmd(clientData, interp, argc, (const char **)argv, vo_cmds, 1);
 }
+
 
 int
 Vo_Init(Tcl_Interp *interp)
@@ -159,6 +161,7 @@ Vo_Init(Tcl_Interp *interp)
 
     return TCL_OK;
 }
+
 
 static void
 vo_deleteProc(ClientData clientData)
@@ -173,13 +176,14 @@ vo_deleteProc(ClientData clientData)
     bu_free((genptr_t)vop, "vo_deleteProc: vop");
 }
 
+
 /*
  * Create an command/object named "oname" in "interp".
  */
 struct view_obj *
-vo_open_cmd(const char	*oname)
+vo_open_cmd(const char *oname)
 {
-    Tcl_Interp	*interp = (Tcl_Interp *)NULL;
+    Tcl_Interp *interp = (Tcl_Interp *)NULL;
     struct view_obj *vop;
 
     BU_GETSTRUCT(vop, view_obj);
@@ -208,6 +212,7 @@ vo_open_cmd(const char	*oname)
     return vop;
 }
 
+
 /*
  * Open a view object.
  *
@@ -216,7 +221,7 @@ vo_open_cmd(const char	*oname)
 static int
 vo_open_tcl(ClientData UNUSED(clientData),
 	    Tcl_Interp *interp,
-	    int	argc,
+	    int argc,
 	    const char *argv[])
 {
     struct view_obj *vop;
@@ -246,38 +251,14 @@ vo_open_tcl(ClientData UNUSED(clientData),
     return TCL_OK;
 }
 
+
 /****************** View Object Methods ********************/
 
-#if 0
-/* skeleton functions for view_obj methods */
-int
-vo__cmd(struct view_obj	*vop,
-	Tcl_Interp	*interp,
-	int		argc,
-	char 		*argv[])
-{
-}
-
-/*
- * Usage:
- *        procname
- */
-static int
-vo__tcl(ClientData	clientData,
-	Tcl_Interp	*interp,
-	int		argc,
-	char		*argv[])
-{
-    struct view_obj *vop = (struct view_obj *)clientData;
-
-    return vo__cmd(vop, interp, argc-1, argv+1);
-}
-#endif
 
 void
-vo_size(struct view_obj	*vop,
-	Tcl_Interp	*interp,
-	fastf_t		size)
+vo_size(struct view_obj *vop,
+	Tcl_Interp *interp,
+	fastf_t size)
 {
     vop->vo_size = vop->vo_local2base * size;
     if (vop->vo_size < SQRT_SMALL_FASTF)
@@ -289,11 +270,12 @@ vo_size(struct view_obj	*vop,
     vo_update(vop, interp, 1);
 }
 
+
 int
-vo_size_cmd(struct view_obj	*vop,
-	    Tcl_Interp		*interp,
-	    int			argc,
-	    char 		*argv[])
+vo_size_cmd(struct view_obj *vop,
+	    Tcl_Interp *interp,
+	    int argc,
+	    char *argv[])
 {
     struct bu_vls vls;
     fastf_t size;
@@ -328,28 +310,30 @@ vo_size_cmd(struct view_obj	*vop,
     return TCL_ERROR;
 }
 
+
 /*
  * Get or set the view size.
  *
  * Usage:
- *        procname size [s]
+ * procname size [s]
  */
 static int
-vo_size_tcl(ClientData	clientData,
-	    Tcl_Interp	*interp,
-	    int	argc,
-	    char	*argv[])
+vo_size_tcl(ClientData clientData,
+	    Tcl_Interp *interp,
+	    int argc,
+	    char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_size_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 int
-vo_invSize_cmd(struct view_obj	*vop,
-	       Tcl_Interp	*interp,
-	       int		argc,
-	       char 		*argv[])
+vo_invSize_cmd(struct view_obj *vop,
+	       Tcl_Interp *interp,
+	       int argc,
+	       char *argv[])
 {
     struct bu_vls vls;
 
@@ -371,32 +355,34 @@ vo_invSize_cmd(struct view_obj	*vop,
     return TCL_ERROR;
 }
 
+
 /*
  * Get the inverse view size.
  *
  * Usage:
- *        procname
+ * procname
  */
 static int
-vo_invSize_tcl(ClientData	clientData,
-	       Tcl_Interp	*interp,
-	       int		argc,
-	       char		*argv[])
+vo_invSize_tcl(ClientData clientData,
+	       Tcl_Interp *interp,
+	       int argc,
+	       char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_invSize_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 int
-vo_aet_cmd(struct view_obj	*vop,
-	   Tcl_Interp		*interp,
-	   int			argc,
-	   char 		*argv[])
+vo_aet_cmd(struct view_obj *vop,
+	   Tcl_Interp *interp,
+	   int argc,
+	   char *argv[])
 {
-    struct bu_vls	vls;
-    vect_t		aet;
-    int		iflag = 0;
+    struct bu_vls vls;
+    vect_t aet;
+    int iflag = 0;
 
     if (argc == 1) {
 	/* get aet */
@@ -465,7 +451,7 @@ vo_aet_cmd(struct view_obj	*vop,
 	return TCL_OK;
     }
 
- bad:
+bad:
     /* compose error message */
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_aet %s", argv[0]);
@@ -475,28 +461,30 @@ vo_aet_cmd(struct view_obj	*vop,
     return TCL_ERROR;
 }
 
+
 /*
  * Get or set the azimuth, elevation and twist.
  *
  * Usage:
- *        procname ae [[-i] az el [tw]]
+ * procname ae [[-i] az el [tw]]
  */
 static int
-vo_aet_tcl(ClientData	clientData,
-	   Tcl_Interp	*interp,
-	   int		argc,
-	   char		*argv[])
+vo_aet_tcl(ClientData clientData,
+	   Tcl_Interp *interp,
+	   int argc,
+	   char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_aet_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 int
-vo_rmat_cmd(struct view_obj	*vop,
-	    Tcl_Interp		*interp,
-	    int			argc,
-	    char 		*argv[])
+vo_rmat_cmd(struct view_obj *vop,
+	    Tcl_Interp *interp,
+	    int argc,
+	    char *argv[])
 {
     struct bu_vls vls;
     mat_t rotation;
@@ -529,41 +517,44 @@ vo_rmat_cmd(struct view_obj	*vop,
     return TCL_ERROR;
 }
 
+
 /*
  * Get or set the rotation matrix.
  *
  * Usage:
- *        procname
+ * procname
  */
 static int
-vo_rmat_tcl(ClientData	clientData,
-	    Tcl_Interp	*interp,
-	    int		argc,
-	    char	*argv[])
+vo_rmat_tcl(ClientData clientData,
+	    Tcl_Interp *interp,
+	    int argc,
+	    char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_rmat_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 void
-vo_center(struct view_obj	*vop,
-	  Tcl_Interp		*interp,
-	  point_t		center)
+vo_center(struct view_obj *vop,
+	  Tcl_Interp *interp,
+	  point_t center)
 {
     VSCALE(center, center, vop->vo_local2base);
     MAT_DELTAS_VEC_NEG(vop->vo_center, center);
     vo_update(vop, interp, 1);
 }
 
+
 int
-vo_center_cmd(struct view_obj	*vop,
-	      Tcl_Interp	*interp,
-	      int		argc,
-	      char 		*argv[])
+vo_center_cmd(struct view_obj *vop,
+	      Tcl_Interp *interp,
+	      int argc,
+	      char *argv[])
 {
-    point_t		center;
-    struct bu_vls	vls;
+    point_t center;
+    struct bu_vls vls;
 
 
     /* get view center */
@@ -604,7 +595,7 @@ vo_center_cmd(struct view_obj	*vop,
 	return TCL_OK;
     }
 
- bad:
+bad:
     /* compose error message */
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_center %s", argv[0]);
@@ -614,28 +605,30 @@ vo_center_cmd(struct view_obj	*vop,
     return TCL_ERROR;
 }
 
+
 /*
  * Get or set the view center.
  *
  * Usage:
- *        procname
+ * procname
  */
 static int
-vo_center_tcl(ClientData	clientData,
-	      Tcl_Interp	*interp,
-	      int		argc,
-	      char		*argv[])
+vo_center_tcl(ClientData clientData,
+	      Tcl_Interp *interp,
+	      int argc,
+	      char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_center_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 int
-vo_model2view_cmd(struct view_obj	*vop,
-		  Tcl_Interp		*interp,
-		  int			argc,
-		  char 			*argv[])
+vo_model2view_cmd(struct view_obj *vop,
+		  Tcl_Interp *interp,
+		  int argc,
+		  char *argv[])
 {
     struct bu_vls vls;
 
@@ -657,28 +650,30 @@ vo_model2view_cmd(struct view_obj	*vop,
     return TCL_ERROR;
 }
 
+
 /*
  * Get the model2view matrix.
  *
  * Usage:
- *        procname
+ * procname
  */
 static int
-vo_model2view_tcl(ClientData	clientData,
-		  Tcl_Interp	*interp,
-		  int		argc,
-		  char		*argv[])
+vo_model2view_tcl(ClientData clientData,
+		  Tcl_Interp *interp,
+		  int argc,
+		  char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_model2view_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 int
-vo_pmodel2view_cmd(struct view_obj	*vop,
-		   Tcl_Interp		*interp,
-		   int			argc,
-		   char 		*argv[])
+vo_pmodel2view_cmd(struct view_obj *vop,
+		   Tcl_Interp *interp,
+		   int argc,
+		   char *argv[])
 {
     struct bu_vls vls;
 
@@ -700,28 +695,30 @@ vo_pmodel2view_cmd(struct view_obj	*vop,
     return TCL_ERROR;
 }
 
+
 /*
  * Get the pmodel2view matrix.
  *
  * Usage:
- *        procname pmodel2view
+ * procname pmodel2view
  */
 static int
-vo_pmodel2view_tcl(ClientData	clientData,
-		   Tcl_Interp	*interp,
-		   int		argc,
-		   char		*argv[])
+vo_pmodel2view_tcl(ClientData clientData,
+		   Tcl_Interp *interp,
+		   int argc,
+		   char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_pmodel2view_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 int
-vo_view2model_cmd(struct view_obj	*vop,
-		  Tcl_Interp		*interp,
-		  int			argc,
-		  char 			*argv[])
+vo_view2model_cmd(struct view_obj *vop,
+		  Tcl_Interp *interp,
+		  int argc,
+		  char *argv[])
 {
     struct bu_vls vls;
 
@@ -743,26 +740,28 @@ vo_view2model_cmd(struct view_obj	*vop,
     return TCL_ERROR;
 }
 
+
 /*
  * Usage:
- *        procname view2model
+ * procname view2model
  */
 static int
-vo_view2model_tcl(ClientData	clientData,
-		  Tcl_Interp	*interp,
-		  int		argc,
-		  char		*argv[])
+vo_view2model_tcl(ClientData clientData,
+		  Tcl_Interp *interp,
+		  int argc,
+		  char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_view2model_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 int
-vo_perspective_cmd(struct view_obj	*vop,
-		   Tcl_Interp		*interp,
-		   int			argc,
-		   char 		*argv[])
+vo_perspective_cmd(struct view_obj *vop,
+		   Tcl_Interp *interp,
+		   int argc,
+		   char *argv[])
 {
     struct bu_vls vls;
     fastf_t perspective;
@@ -808,28 +807,30 @@ vo_perspective_cmd(struct view_obj	*vop,
     return TCL_ERROR;
 }
 
+
 /*
  * Get/set the perspective angle.
  *
  * Usage:
- *        procname perspective [angle]
+ * procname perspective [angle]
  */
 static int
-vo_perspective_tcl(ClientData	clientData,
-		   Tcl_Interp	*interp,
-		   int		argc,
-		   char		*argv[])
+vo_perspective_tcl(ClientData clientData,
+		   Tcl_Interp *interp,
+		   int argc,
+		   char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_perspective_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 int
-vo_pmat_cmd(struct view_obj	*vop,
-	    Tcl_Interp		*interp,
-	    int			argc,
-	    char 		*argv[])
+vo_pmat_cmd(struct view_obj *vop,
+	    Tcl_Interp *interp,
+	    int argc,
+	    char *argv[])
 {
     struct bu_vls vls;
 
@@ -851,33 +852,35 @@ vo_pmat_cmd(struct view_obj	*vop,
     return TCL_ERROR;
 }
 
+
 /*
  * Get the perspective matrix.
  *
  * Usage:
- *        procname pmat
+ * procname pmat
  */
 static int
-vo_pmat_tcl(ClientData	clientData,
-	    Tcl_Interp	*interp,
-	    int		argc,
-	    char	*argv[])
+vo_pmat_tcl(ClientData clientData,
+	    Tcl_Interp *interp,
+	    int argc,
+	    char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_pmat_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 int
-vo_eye_cmd(struct view_obj	*vop,
-	   Tcl_Interp		*interp,
-	   int			argc,
-	   char 		*argv[])
+vo_eye_cmd(struct view_obj *vop,
+	   Tcl_Interp *interp,
+	   int argc,
+	   char *argv[])
 {
-    point_t		eye_model;
-    vect_t		xlate;
-    vect_t		new_cent;
-    struct bu_vls 	vls;
+    point_t eye_model;
+    vect_t xlate;
+    vect_t new_cent;
+    struct bu_vls vls;
 
     /* get eye */
     if (argc == 1) {
@@ -925,8 +928,8 @@ vo_eye_cmd(struct view_obj	*vop,
     MAT_DELTAS_VEC_NEG(vop->vo_center, eye_model);
     vo_update(vop, interp, 0);
 
-    /*  Second step:  put eye at view 0, 0, 1.
-     *  For eye to be at 0, 0, 1, the old 0, 0, -1 needs to become 0, 0, 0.
+    /* Second step:  put eye at view 0, 0, 1.
+     * For eye to be at 0, 0, 1, the old 0, 0, -1 needs to become 0, 0, 0.
      */
     VSET(xlate, 0.0, 0.0, -1.0);	/* correction factor */
     MAT4X3PNT(new_cent, vop->vo_view2model, xlate);
@@ -935,7 +938,7 @@ vo_eye_cmd(struct view_obj	*vop,
 
     return TCL_OK;
 
- bad:
+bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_eye %s", argv[0]);
     Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -943,31 +946,33 @@ vo_eye_cmd(struct view_obj	*vop,
     return TCL_ERROR;
 }
 
+
 /*
  * Get/set the eye point.
  *
  * Usage:
- *	procname eye [eye_point]
+ * procname eye [eye_point]
  */
 static int
-vo_eye_tcl(ClientData	clientData,
-	   Tcl_Interp	*interp,
-	   int		argc,
-	   char		*argv[])
+vo_eye_tcl(ClientData clientData,
+	   Tcl_Interp *interp,
+	   int argc,
+	   char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_eye_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 int
-vo_eye_pos_cmd(struct view_obj	*vop,
-	       Tcl_Interp	*interp,
-	       int		argc,
-	       char 		*argv[])
+vo_eye_pos_cmd(struct view_obj *vop,
+	       Tcl_Interp *interp,
+	       int argc,
+	       char *argv[])
 {
-    vect_t		eye_pos;
-    struct bu_vls	vls;
+    vect_t eye_pos;
+    struct bu_vls vls;
 
     if (argc != 2 && argc != 4)
 	goto bad;
@@ -1003,7 +1008,7 @@ vo_eye_pos_cmd(struct view_obj	*vop,
 
     return TCL_OK;
 
- bad:
+bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_eye_pos %s", argv[0]);
     Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -1011,28 +1016,30 @@ vo_eye_pos_cmd(struct view_obj	*vop,
     return TCL_ERROR;
 }
 
+
 /*
  * Set the eye position.
  *
  * Usage:
- *	procname eye_pos pos
+ * procname eye_pos pos
  */
 static int
-vo_eye_pos_tcl(ClientData	clientData,
-	       Tcl_Interp	*interp,
-	       int		argc,
-	       char		*argv[])
+vo_eye_pos_tcl(ClientData clientData,
+	       Tcl_Interp *interp,
+	       int argc,
+	       char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_eye_pos_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 int
-vo_lookat_cmd(struct view_obj	*vop,
-	      Tcl_Interp	*interp,
-	      int		argc,
-	      char 		*argv[])
+vo_lookat_cmd(struct view_obj *vop,
+	      Tcl_Interp *interp,
+	      int argc,
+	      char *argv[])
 {
     point_t look;
     point_t eye;
@@ -1084,7 +1091,7 @@ vo_lookat_cmd(struct view_obj	*vop,
 
     return TCL_OK;
 
- bad:
+bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_lookat %s", argv[0]);
     Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -1092,31 +1099,33 @@ vo_lookat_cmd(struct view_obj	*vop,
     return TCL_ERROR;
 }
 
+
 /*
  * Set look-at point.
  *
  * Usage:
- *	procname lookat lookat_point
+ * procname lookat lookat_point
  */
 static int
-vo_lookat_tcl(ClientData	clientData,
-	      Tcl_Interp	*interp,
-	      int		argc,
-	      char		*argv[])
+vo_lookat_tcl(ClientData clientData,
+	      Tcl_Interp *interp,
+	      int argc,
+	      char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_lookat_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 int
-vo_orientation_cmd(struct view_obj	*vop,
-		   Tcl_Interp		*interp,
-		   int			argc,
-		   char 		*argv[])
+vo_orientation_cmd(struct view_obj *vop,
+		   Tcl_Interp *interp,
+		   int argc,
+		   char *argv[])
 {
-    quat_t		quat;
-    struct bu_vls	vls;
+    quat_t quat;
+    struct bu_vls vls;
 
     if (argc != 2 && argc != 5)
 	goto bad;
@@ -1125,7 +1134,7 @@ vo_orientation_cmd(struct view_obj	*vop,
 	if (bn_decode_quat(quat, argv[1]) != 4)
 	    goto bad;
     } else {
-	int	i;
+	int i;
 
 	for (i = 1; i < 5; ++i)
 	    if (sscanf(argv[i], "%lf", &quat[i-1]) != 1)
@@ -1137,7 +1146,7 @@ vo_orientation_cmd(struct view_obj	*vop,
 
     return TCL_OK;
 
- bad:
+bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_orient %s", argv[0]);
     Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -1145,35 +1154,37 @@ vo_orientation_cmd(struct view_obj	*vop,
     return TCL_ERROR;
 }
 
+
 /*
  * Usage:
- *	procname orient quat
+ * procname orient quat
  */
 static int
-vo_orientation_tcl(ClientData	clientData,
-		   Tcl_Interp	*interp,
-		   int		argc,
-		   char		*argv[])
+vo_orientation_tcl(ClientData clientData,
+		   Tcl_Interp *interp,
+		   int argc,
+		   char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_orientation_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 int
-vo_pov_cmd(struct view_obj	*vop,
-	   Tcl_Interp		*interp,
-	   int			argc,
-	   char 		*argv[])
+vo_pov_cmd(struct view_obj *vop,
+	   Tcl_Interp *interp,
+	   int argc,
+	   char *argv[])
 {
-    vect_t		center;
-    quat_t		quat;
-    vect_t		eye_pos;
-    fastf_t		scale;
-    fastf_t		perspective;
+    vect_t center;
+    quat_t quat;
+    vect_t eye_pos;
+    fastf_t scale;
+    fastf_t perspective;
 
     if (argc != 6) {
-	struct bu_vls	vls;
+	struct bu_vls vls;
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias vo_pov %s", argv[0]);
@@ -1224,25 +1235,27 @@ vo_pov_cmd(struct view_obj	*vop,
     return TCL_OK;
 }
 
+
 /*
  * Usage:
- *	procname pov center quat scale eye_pos perspective
+ * procname pov center quat scale eye_pos perspective
  */
 static int
-vo_pov_tcl(ClientData	clientData,
-	   Tcl_Interp	*interp,
-	   int		argc,
-	   char		*argv[])
+vo_pov_tcl(ClientData clientData,
+	   Tcl_Interp *interp,
+	   int argc,
+	   char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_pov_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 int
-vo_zoom(struct view_obj	*vop,
-	Tcl_Interp	*interp,
-	fastf_t		sf)
+vo_zoom(struct view_obj *vop,
+	Tcl_Interp *interp,
+	fastf_t sf)
 {
     if (sf <= SMALL_FASTF || INFINITY < sf) {
 	Tcl_AppendResult(interp, "vo_zoom - scale factor out of range\n", (char *)0);
@@ -1259,11 +1272,12 @@ vo_zoom(struct view_obj	*vop,
     return TCL_OK;
 }
 
+
 int
-vo_zoom_cmd(struct view_obj	*vop,
-	    Tcl_Interp		*interp,
-	    int			argc,
-	    char 		*argv[])
+vo_zoom_cmd(struct view_obj *vop,
+	    Tcl_Interp *interp,
+	    int argc,
+	    char *argv[])
 {
     fastf_t sf;
 
@@ -1286,26 +1300,28 @@ vo_zoom_cmd(struct view_obj	*vop,
     return vo_zoom(vop, interp, sf);
 }
 
+
 /*
  * Usage:
- *	procname zoom scale_factor
+ * procname zoom scale_factor
  */
 static int
-vo_zoom_tcl(ClientData	clientData,
-	    Tcl_Interp	*interp,
-	    int		argc,
-	    char	*argv[])
+vo_zoom_tcl(ClientData clientData,
+	    Tcl_Interp *interp,
+	    int argc,
+	    char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_zoom_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 int
-vo_units_cmd(struct view_obj	*vop,
-	     Tcl_Interp		*interp,
-	     int		argc,
-	     char 		*argv[])
+vo_units_cmd(struct view_obj *vop,
+	     Tcl_Interp *interp,
+	     int argc,
+	     char *argv[])
 {
     struct bu_vls vls;
 
@@ -1347,28 +1363,30 @@ vo_units_cmd(struct view_obj	*vop,
     return TCL_ERROR;
 }
 
+
 /*
  * Set/get local units.
  *
  * Usage:
- *	procname units [unit_spec]
+ * procname units [unit_spec]
  */
 static int
-vo_units_tcl(ClientData	clientData,
-	     Tcl_Interp	*interp,
-	     int	argc,
-	     char	*argv[])
+vo_units_tcl(ClientData clientData,
+	     Tcl_Interp *interp,
+	     int argc,
+	     char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_units_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 int
-vo_base2local_cmd(struct view_obj	*vop,
-		  Tcl_Interp		*interp,
-		  int			argc,
-		  char 			*argv[])
+vo_base2local_cmd(struct view_obj *vop,
+		  Tcl_Interp *interp,
+		  int argc,
+		  char *argv[])
 {
     struct bu_vls vls;
 
@@ -1389,28 +1407,30 @@ vo_base2local_cmd(struct view_obj	*vop,
     return TCL_OK;
 }
 
+
 /*
  * Get base2local conversion factor.
  *
  * Usage:
- *	procname base2local
+ * procname base2local
  */
 static int
-vo_base2local_tcl(ClientData	clientData,
-		  Tcl_Interp	*interp,
-		  int		argc,
-		  char		*argv[])
+vo_base2local_tcl(ClientData clientData,
+		  Tcl_Interp *interp,
+		  int argc,
+		  char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_base2local_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 int
-vo_local2base_cmd(struct view_obj	*vop,
-		  Tcl_Interp		*interp,
-		  int			argc,
-		  char 			*argv[])
+vo_local2base_cmd(struct view_obj *vop,
+		  Tcl_Interp *interp,
+		  int argc,
+		  char *argv[])
 {
     struct bu_vls vls;
 
@@ -1431,30 +1451,32 @@ vo_local2base_cmd(struct view_obj	*vop,
     return TCL_OK;
 }
 
+
 /*
  * Get local2base conversion factor.
  *
  * Usage:
- *	procname local2base
+ * procname local2base
  */
 static int
-vo_local2base_tcl(ClientData	clientData,
-		  Tcl_Interp	*interp,
-		  int		argc,
-		  char		*argv[])
+vo_local2base_tcl(ClientData clientData,
+		  Tcl_Interp *interp,
+		  int argc,
+		  char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_local2base_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 int
-vo_rot(struct view_obj	*vop,
-       Tcl_Interp	*interp,
-       char		coord,
-       char		rotate_about,
-       mat_t		rmat,
-       int		(*func)())
+vo_rot(struct view_obj *vop,
+       Tcl_Interp *interp,
+       char coord,
+       char rotate_about,
+       mat_t rmat,
+       int (*func)())
 {
     mat_t temp1, temp2;
 
@@ -1475,11 +1497,11 @@ vo_rot(struct view_obj	*vop,
 
     /* Calculate new view center */
     if (rotate_about != 'v') {
-	point_t		rot_pt;
-	point_t		new_origin;
-	mat_t		viewchg, viewchginv;
-	point_t		new_cent_view;
-	point_t		new_cent_model;
+	point_t rot_pt;
+	point_t new_origin;
+	mat_t viewchg, viewchginv;
+	point_t new_cent_view;
+	point_t new_cent_model;
 
 	switch (rotate_about) {
 	    case 'e':
@@ -1493,8 +1515,7 @@ vo_rot(struct view_obj	*vop,
 		VSET(new_origin, 0.0, 0.0, 0.0);
 		MAT4X3PNT(rot_pt, vop->vo_model2view, new_origin);
 		break;
-	    default:
-	    {
+	    default: {
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -1522,17 +1543,18 @@ vo_rot(struct view_obj	*vop,
     return TCL_OK;
 }
 
+
 int
-vo_rot_cmd(struct view_obj	*vop,
-	   Tcl_Interp		*interp,
-	   int			argc,
-	   char 		*argv[],
-	   int			(*func)())
+vo_rot_cmd(struct view_obj *vop,
+	   Tcl_Interp *interp,
+	   int argc,
+	   char *argv[],
+	   int (*func)())
 {
-    vect_t		rvec;
-    mat_t		rmat;
-    char		coord = vop->vo_coord;
-    struct bu_vls	vls;
+    vect_t rvec;
+    mat_t rmat;
+    char coord = vop->vo_coord;
+    struct bu_vls vls;
 
     if (argc < 2 || 5 < argc)
 	goto bad;
@@ -1572,7 +1594,7 @@ vo_rot_cmd(struct view_obj	*vop,
 
     return vo_rot(vop, interp, coord, vop->vo_rotate_about, rmat, func);
 
- bad:
+bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_rot %s", argv[0]);
     Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -1581,29 +1603,31 @@ vo_rot_cmd(struct view_obj	*vop,
     return TCL_ERROR;
 }
 
+
 /*
  * Rotate the view according to xyz.
  *
  * Usage:
- *	procname rot [-v|-m] xyz
+ * procname rot [-v|-m] xyz
  */
 static int
-vo_rot_tcl(ClientData	clientData,
-	   Tcl_Interp	*interp,
-	   int		argc,
-	   char		*argv[])
+vo_rot_tcl(ClientData clientData,
+	   Tcl_Interp *interp,
+	   int argc,
+	   char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_rot_cmd(vop, interp, argc-1, argv+1, (int (*)())0);
 }
 
+
 int
-vo_tra(struct view_obj	*vop,
-       Tcl_Interp	*interp,
-       char		coord,
-       vect_t		tvec,
-       int		(*func)())
+vo_tra(struct view_obj *vop,
+       Tcl_Interp *interp,
+       char coord,
+       vect_t tvec,
+       int (*func)())
 {
     point_t delta;
     point_t work;
@@ -1633,16 +1657,17 @@ vo_tra(struct view_obj	*vop,
     return TCL_OK;
 }
 
+
 int
-vo_tra_cmd(struct view_obj	*vop,
-	   Tcl_Interp		*interp,
-	   int			argc,
-	   char 		*argv[],
-	   int			(*func)())
+vo_tra_cmd(struct view_obj *vop,
+	   Tcl_Interp *interp,
+	   int argc,
+	   char *argv[],
+	   int (*func)())
 {
-    vect_t		tvec;
-    char		coord = vop->vo_coord;
-    struct bu_vls	vls;
+    vect_t tvec;
+    char coord = vop->vo_coord;
+    struct bu_vls vls;
 
     if (argc < 2 || 5 < argc)
 	goto bad;
@@ -1679,7 +1704,7 @@ vo_tra_cmd(struct view_obj	*vop,
 
     return vo_tra(vop, interp, coord, tvec, func);
 
- bad:
+bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_tra %s", argv[0]);
     Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -1688,27 +1713,29 @@ vo_tra_cmd(struct view_obj	*vop,
     return TCL_ERROR;
 }
 
+
 /*
  * Translate the view according to xyz.
  *
  * Usage:
- *	procname tra [-v|-m] xyz
+ * procname tra [-v|-m] xyz
  */
 static int
-vo_tra_tcl(ClientData	clientData,
-	   Tcl_Interp	*interp,
-	   int		argc,
-	   char		*argv[])
+vo_tra_tcl(ClientData clientData,
+	   Tcl_Interp *interp,
+	   int argc,
+	   char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_tra_cmd(vop, interp, argc-1, argv+1, (int (*)())0);
 }
 
+
 int
-vo_slew(struct view_obj	*vop,
-	Tcl_Interp	*interp,
-	vect_t		svec)
+vo_slew(struct view_obj *vop,
+	Tcl_Interp *interp,
+	vect_t svec)
 {
     point_t model_center;
 
@@ -1719,17 +1746,18 @@ vo_slew(struct view_obj	*vop,
     return TCL_OK;
 }
 
+
 int
-vo_slew_cmd(struct view_obj	*vop,
-	    Tcl_Interp		*interp,
-	    int			argc,
-	    char 		*argv[])
+vo_slew_cmd(struct view_obj *vop,
+	    Tcl_Interp *interp,
+	    int argc,
+	    char *argv[])
 {
-    struct bu_vls	vls;
-    vect_t		svec;
+    struct bu_vls vls;
+    vect_t svec;
 
     if (argc == 2) {
-	int	n;
+	int n;
 
 	if ((n = bn_decode_vect(svec, argv[1])) != 3) {
 	    if (n != 2)
@@ -1763,7 +1791,7 @@ vo_slew_cmd(struct view_obj	*vop,
 	return vo_slew(vop, interp, svec);
     }
 
- bad:
+bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_slew %s", argv[0]);
     Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -1772,28 +1800,30 @@ vo_slew_cmd(struct view_obj	*vop,
     return TCL_ERROR;
 }
 
+
 /*
  * Make xyz the new view center.
  *
  * Usage:
- *	procname slew xy
+ * procname slew xy
  */
 static int
-vo_slew_tcl(ClientData	clientData,
-	    Tcl_Interp	*interp,
-	    int		argc,
-	    char		*argv[])
+vo_slew_tcl(ClientData clientData,
+	    Tcl_Interp *interp,
+	    int argc,
+	    char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_slew_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 int
-vo_observer_cmd(struct view_obj	*vop,
-		Tcl_Interp	*interp,
-		int		argc,
-		char 		*argv[])
+vo_observer_cmd(struct view_obj *vop,
+		Tcl_Interp *interp,
+		int argc,
+		char *argv[])
 {
     if (argc < 2) {
 	struct bu_vls vls;
@@ -1809,28 +1839,30 @@ vo_observer_cmd(struct view_obj	*vop,
     return bu_observer_cmd((ClientData)&vop->vo_observers, interp, argc-1, (const char **)argv+1);
 }
 
+
 /*
  * Attach/detach observers to/from list.
  *
  * Usage:
- *	  procname observer cmd [args]
+ * procname observer cmd [args]
  */
 static int
-vo_observer_tcl(ClientData	clientData,
-		Tcl_Interp	*interp,
-		int		argc,
-		char		*argv[])
+vo_observer_tcl(ClientData clientData,
+		Tcl_Interp *interp,
+		int argc,
+		char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_observer_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 int
-vo_coord_cmd(struct view_obj	*vop,
-	     Tcl_Interp		*interp,
-	     int		argc,
-	     char 		*argv[])
+vo_coord_cmd(struct view_obj *vop,
+	     Tcl_Interp *interp,
+	     int argc,
+	     char *argv[])
 {
     struct bu_vls vls;
 
@@ -1861,28 +1893,30 @@ vo_coord_cmd(struct view_obj	*vop,
     return TCL_ERROR;
 }
 
+
 /*
  * Get/set the coordinate system.
  *
  * Usage:
- *	  procname coord [v|m]
+ * procname coord [v|m]
  */
 static int
-vo_coord_tcl(ClientData	clientData,
-	     Tcl_Interp	*interp,
-	     int	argc,
-	     char	*argv[])
+vo_coord_tcl(ClientData clientData,
+	     Tcl_Interp *interp,
+	     int argc,
+	     char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_coord_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 int
-vo_rotate_about_cmd(struct view_obj	*vop,
-		    Tcl_Interp		*interp,
-		    int			argc,
-		    char 		*argv[])
+vo_rotate_about_cmd(struct view_obj *vop,
+		    Tcl_Interp *interp,
+		    int argc,
+		    char *argv[])
 {
     struct bu_vls vls;
 
@@ -1915,31 +1949,33 @@ vo_rotate_about_cmd(struct view_obj	*vop,
     return TCL_ERROR;
 }
 
+
 /*
  * Get/set the rotate about point.
  *
  * Usage:
- *	  procname rotate_about [e|k|m|v]
+ * procname rotate_about [e|k|m|v]
  */
 static int
-vo_rotate_about_tcl(ClientData	clientData,
-		    Tcl_Interp	*interp,
-		    int		argc,
-		    char		*argv[])
+vo_rotate_about_tcl(ClientData clientData,
+		    Tcl_Interp *interp,
+		    int argc,
+		    char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_rotate_about_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 int
-vo_keypoint_cmd(struct view_obj	*vop,
-		Tcl_Interp	*interp,
-		int		argc,
-		char 		*argv[])
+vo_keypoint_cmd(struct view_obj *vop,
+		Tcl_Interp *interp,
+		int argc,
+		char *argv[])
 {
-    struct bu_vls	vls;
-    vect_t		tvec;
+    struct bu_vls vls;
+    vect_t tvec;
 
     /* Get the keypoint */
     if (argc == 1) {
@@ -1975,7 +2011,7 @@ vo_keypoint_cmd(struct view_obj	*vop,
     VSCALE(vop->vo_keypoint, tvec, vop->vo_local2base);
     return TCL_OK;
 
- bad:
+bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_keypoint %s", argv[0]);
     Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -1983,25 +2019,27 @@ vo_keypoint_cmd(struct view_obj	*vop,
     return TCL_ERROR;
 }
 
+
 /*
  * Get/set the keypoint.
  *
  * Usage:
- *	  procname keypoint [point]
+ * procname keypoint [point]
  */
 static int
-vo_keypoint_tcl(ClientData	clientData,
-		Tcl_Interp	*interp,
-		int		argc,
-		char		*argv[])
+vo_keypoint_tcl(ClientData clientData,
+		Tcl_Interp *interp,
+		int argc,
+		char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_keypoint_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 /*
- *			V O _ S E T V I E W
+ * V O _ S E T V I E W
  *
  * Set the view.  Angles are DOUBLES, in degrees.
  *
@@ -2010,22 +2048,23 @@ vo_keypoint_tcl(ClientData	clientData,
  * (This assumes rotation around the view center).
  */
 void
-vo_setview(struct view_obj	*vop,
-	   Tcl_Interp		*interp,
-	   vect_t		rvec)		/* DOUBLE angles, in degrees */
+vo_setview(struct view_obj *vop,
+	   Tcl_Interp *interp,
+	   vect_t rvec)		/* DOUBLE angles, in degrees */
 {
     bn_mat_angles(vop->vo_rotation, rvec[X], rvec[Y], rvec[Z]);
     vo_update(vop, interp, 1);
 }
 
+
 int
-vo_setview_cmd(struct view_obj	*vop,
-	       Tcl_Interp	*interp,
-	       int		argc,
-	       char 		*argv[])
+vo_setview_cmd(struct view_obj *vop,
+	       Tcl_Interp *interp,
+	       int argc,
+	       char *argv[])
 {
-    vect_t		rvec;
-    struct bu_vls	vls;
+    vect_t rvec;
+    struct bu_vls vls;
 
     if (argc != 2 && argc != 4)
 	goto bad;
@@ -2053,7 +2092,7 @@ vo_setview_cmd(struct view_obj	*vop,
     vo_setview(vop, interp, rvec);
     return TCL_OK;
 
- bad:
+bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_setview %s", argv[0]);
     Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -2061,27 +2100,29 @@ vo_setview_cmd(struct view_obj	*vop,
     return TCL_ERROR;
 }
 
+
 /*
  * Usage:
- *        procname setview x y z
+ * procname setview x y z
  */
 static int
-vo_setview_tcl(ClientData	clientData,
-	       Tcl_Interp	*interp,
-	       int		argc,
-	       char		*argv[])
+vo_setview_tcl(ClientData clientData,
+	       Tcl_Interp *interp,
+	       int argc,
+	       char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_setview_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 int
-vo_arot_cmd(struct view_obj	*vop,
-	    Tcl_Interp		*interp,
-	    int			argc,
-	    char 		*argv[],
-	    int			(*func)())
+vo_arot_cmd(struct view_obj *vop,
+	    Tcl_Interp *interp,
+	    int argc,
+	    char *argv[],
+	    int (*func)())
 {
     mat_t newrot;
     point_t pt;
@@ -2126,30 +2167,32 @@ vo_arot_cmd(struct view_obj	*vop,
     return vo_rot(vop, interp, vop->vo_coord, vop->vo_rotate_about, newrot, func);
 }
 
+
 /*
  * Usage:
- *        procname arot x y z angle
+ * procname arot x y z angle
  */
 static int
-vo_arot_tcl(ClientData	clientData,
-	    Tcl_Interp	*interp,
-	    int		argc,
-	    char	*argv[])
+vo_arot_tcl(ClientData clientData,
+	    Tcl_Interp *interp,
+	    int argc,
+	    char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_arot_cmd(vop, interp, argc-1, argv+1, (int (*)())0);
 }
 
+
 int
-vo_vrot_cmd(struct view_obj	*vop,
-	    Tcl_Interp		*interp,
-	    int			argc,
-	    char 		*argv[])
+vo_vrot_cmd(struct view_obj *vop,
+	    Tcl_Interp *interp,
+	    int argc,
+	    char *argv[])
 {
-    vect_t		rvec;
-    mat_t		rmat;
-    struct bu_vls	vls;
+    vect_t rvec;
+    mat_t rmat;
+    struct bu_vls vls;
 
     if (argc != 2 && argc != 4)
 	goto bad;
@@ -2179,7 +2222,7 @@ vo_vrot_cmd(struct view_obj	*vop,
 
     return vo_rot(vop, interp, 'v', vop->vo_rotate_about, rmat, (int (*)())0);
 
- bad:
+bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_vrot %s", argv[0]);
     Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -2187,31 +2230,33 @@ vo_vrot_cmd(struct view_obj	*vop,
     return TCL_ERROR;
 }
 
+
 /*
  * Usage:
- *        procname vrot x y z
+ * procname vrot x y z
  */
 static int
-vo_vrot_tcl(ClientData	clientData,
-	    Tcl_Interp	*interp,
-	    int		argc,
-	    char	*argv[])
+vo_vrot_tcl(ClientData clientData,
+	    Tcl_Interp *interp,
+	    int argc,
+	    char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_vrot_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 int
-vo_mrot_cmd(struct view_obj	*vop,
-	    Tcl_Interp		*interp,
-	    int			argc,
-	    char 		*argv[],
-	    int			(*func)())
+vo_mrot_cmd(struct view_obj *vop,
+	    Tcl_Interp *interp,
+	    int argc,
+	    char *argv[],
+	    int (*func)())
 {
-    vect_t		rvec;
-    mat_t		rmat;
-    struct bu_vls	vls;
+    vect_t rvec;
+    mat_t rmat;
+    struct bu_vls vls;
 
     if (argc != 2 && argc != 4)
 	goto bad;
@@ -2241,7 +2286,7 @@ vo_mrot_cmd(struct view_obj	*vop,
 
     return vo_rot(vop, interp, 'm', vop->vo_rotate_about, rmat, func);
 
- bad:
+bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_mrot %s", argv[0]);
     Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -2249,28 +2294,30 @@ vo_mrot_cmd(struct view_obj	*vop,
     return TCL_ERROR;
 }
 
+
 /*
  * Usage:
- *        procname mrot x y z
+ * procname mrot x y z
  */
 static int
-vo_mrot_tcl(ClientData	clientData,
-	    Tcl_Interp	*interp,
-	    int		argc,
-	    char	*argv[])
+vo_mrot_tcl(ClientData clientData,
+	    Tcl_Interp *interp,
+	    int argc,
+	    char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_mrot_cmd(vop, interp, argc-1, argv+1, (int (*)())0);
 }
 
+
 int
-vo_mrotPoint_cmd(struct view_obj	*vop,
-		 Tcl_Interp	*interp,
-		 int		argc,
-		 char 		*argv[])
+vo_mrotPoint_cmd(struct view_obj *vop,
+		 Tcl_Interp *interp,
+		 int argc,
+		 char *argv[])
 {
-    struct bu_vls	vls;
+    struct bu_vls vls;
 
     /* Parse the incoming point */
     if (argc == 2 || argc == 4) {
@@ -2320,7 +2367,7 @@ vo_mrotPoint_cmd(struct view_obj	*vop,
 	return TCL_OK;
     }
 
- bad:
+bad:
     /* compose error message */
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_mrotPoint %s", argv[0]);
@@ -2330,30 +2377,32 @@ vo_mrotPoint_cmd(struct view_obj	*vop,
     return TCL_ERROR;
 }
 
+
 /*
  * Convert view point to a model point (rotation only).
  *
  * Usage:
- *        procname mrotPoint vx vy vz
+ * procname mrotPoint vx vy vz
  */
 static int
-vo_mrotPoint_tcl(ClientData	clientData,
-		 Tcl_Interp	*interp,
-		 int	argc,
-		 char	*argv[])
+vo_mrotPoint_tcl(ClientData clientData,
+		 Tcl_Interp *interp,
+		 int argc,
+		 char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_mrotPoint_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 int
-vo_m2vPoint_cmd(struct view_obj	*vop,
-		Tcl_Interp	*interp,
-		int		argc,
-		char 		*argv[])
+vo_m2vPoint_cmd(struct view_obj *vop,
+		Tcl_Interp *interp,
+		int argc,
+		char *argv[])
 {
-    struct bu_vls	vls;
+    struct bu_vls vls;
 
     /* Parse the incoming point */
     if (argc == 2 || argc == 4) {
@@ -2401,7 +2450,7 @@ vo_m2vPoint_cmd(struct view_obj	*vop,
 	return TCL_OK;
     }
 
- bad:
+bad:
     /* compose error message */
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_m2vPoint %s", argv[0]);
@@ -2411,30 +2460,32 @@ vo_m2vPoint_cmd(struct view_obj	*vop,
     return TCL_ERROR;
 }
 
+
 /*
  * Convert model point to a view point.
  *
  * Usage:
- *        procname m2vPoint vx vy vz
+ * procname m2vPoint vx vy vz
  */
 static int
-vo_m2vPoint_tcl(ClientData	clientData,
-		Tcl_Interp	*interp,
-		int		argc,
-		char		*argv[])
+vo_m2vPoint_tcl(ClientData clientData,
+		Tcl_Interp *interp,
+		int argc,
+		char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_m2vPoint_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 int
-vo_v2mPoint_cmd(struct view_obj	*vop,
-		Tcl_Interp	*interp,
-		int		argc,
-		char 		*argv[])
+vo_v2mPoint_cmd(struct view_obj *vop,
+		Tcl_Interp *interp,
+		int argc,
+		char *argv[])
 {
-    struct bu_vls	vls;
+    struct bu_vls vls;
 
     /* Parse the incoming point */
     if (argc == 2 || argc == 4) {
@@ -2482,7 +2533,7 @@ vo_v2mPoint_cmd(struct view_obj	*vop,
 	return TCL_OK;
     }
 
- bad:
+bad:
     /* compose error message */
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_v2mPoint %s", argv[0]);
@@ -2492,28 +2543,30 @@ vo_v2mPoint_cmd(struct view_obj	*vop,
     return TCL_ERROR;
 }
 
+
 /*
  * Convert view point to a model point.
  *
  * Usage:
- *        procname v2mPoint vx vy vz
+ * procname v2mPoint vx vy vz
  */
 static int
-vo_v2mPoint_tcl(ClientData	clientData,
-		Tcl_Interp	*interp,
-		int		argc,
-		char		*argv[])
+vo_v2mPoint_tcl(ClientData clientData,
+		Tcl_Interp *interp,
+		int argc,
+		char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_v2mPoint_cmd(vop, interp, argc-1, argv+1);
 }
 
+
 int
-vo_sca(struct view_obj	*vop,
-       Tcl_Interp	*interp,
-       fastf_t		sf,
-       int		(*func)())
+vo_sca(struct view_obj *vop,
+       Tcl_Interp *interp,
+       fastf_t sf,
+       int (*func)())
 {
     if (func != (int (*)())0)
 	return (*func)(vop, interp, sf);
@@ -2530,12 +2583,13 @@ vo_sca(struct view_obj	*vop,
     return TCL_OK;
 }
 
+
 int
-vo_sca_cmd(struct view_obj	*vop,
-	   Tcl_Interp		*interp,
-	   int			argc,
-	   char 		*argv[],
-	   int			(*func)())
+vo_sca_cmd(struct view_obj *vop,
+	   Tcl_Interp *interp,
+	   int argc,
+	   char *argv[],
+	   int (*func)())
 {
     fastf_t sf;
 
@@ -2557,26 +2611,28 @@ vo_sca_cmd(struct view_obj	*vop,
     return vo_sca(vop, interp, sf, func);
 }
 
+
 /*
  * Usage:
- *        procname sca [sf]
+ * procname sca [sf]
  */
 static int
-vo_sca_tcl(ClientData	clientData,
-	   Tcl_Interp	*interp,
-	   int		argc,
-	   char		*argv[])
+vo_sca_tcl(ClientData clientData,
+	   Tcl_Interp *interp,
+	   int argc,
+	   char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_sca_cmd(vop, interp, argc-1, argv+1, (int (*)())0);
 }
 
+
 int
-vo_viewDir_cmd(struct view_obj	*vop,
-	       Tcl_Interp	*interp,
-	       int		argc,
-	       char 		*argv[])
+vo_viewDir_cmd(struct view_obj *vop,
+	       Tcl_Interp *interp,
+	       int argc,
+	       char *argv[])
 {
     vect_t view;
     vect_t model;
@@ -2616,20 +2672,22 @@ vo_viewDir_cmd(struct view_obj	*vop,
     return TCL_OK;
 }
 
+
 /*
  * Usage:
- *        procname viewDir[-i]
+ * procname viewDir[-i]
  */
 static int
-vo_viewDir_tcl(ClientData	clientData,
-	       Tcl_Interp	*interp,
-	       int		argc,
-	       char		*argv[])
+vo_viewDir_tcl(ClientData clientData,
+	       Tcl_Interp *interp,
+	       int argc,
+	       char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
     return vo_viewDir_cmd(vop, interp, argc-1, argv+1);
 }
+
 
 /* skeleton functions for view_obj methods */
 int
@@ -2699,15 +2757,16 @@ vo_ae2dir_cmd(struct view_obj *UNUSED(vop), Tcl_Interp *interp, int argc, char *
     return TCL_OK;
 }
 
+
 /*
  * Usage:
- *        procname ae2dir [-i] az el
+ * procname ae2dir [-i] az el
  */
 static int
-vo_ae2dir_tcl(ClientData	clientData,
-	      Tcl_Interp	*interp,
-	      int		argc,
-	      char		*argv[])
+vo_ae2dir_tcl(ClientData clientData,
+	      Tcl_Interp *interp,
+	      int argc,
+	      char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -2775,13 +2834,13 @@ vo_dir2ae_cmd(struct view_obj *UNUSED(vop), Tcl_Interp *interp, int argc, char *
 
 /**
  * Usage:
- *        procname dir2ae [-i] x y z
+ * procname dir2ae [-i] x y z
  */
 static int
-vo_dir2ae_tcl(ClientData	clientData,
-	      Tcl_Interp	*interp,
-	      int		argc,
-	      char		*argv[])
+vo_dir2ae_tcl(ClientData clientData,
+	      Tcl_Interp *interp,
+	      int argc,
+	      char *argv[])
 {
     struct view_obj *vop = (struct view_obj *)clientData;
 
@@ -2789,37 +2848,11 @@ vo_dir2ae_tcl(ClientData	clientData,
 }
 
 
-#if 0
-/* skeleton functions for view_obj methods */
-int
-vo__cmd(struct view_obj	*vop,
-	Tcl_Interp	*interp,
-	int		argc,
-	char 		*argv[])
-{
-}
-
-/*
- * Usage:
- *        procname
- */
-static int
-vo__tcl(ClientData	clientData,
-	Tcl_Interp	*interp,
-	int		argc,
-	char		*argv[])
-{
-    struct view_obj *vop = (struct view_obj *)clientData;
-
-    return vo__cmd(vop, interp, argc-1, argv+1);
-}
-#endif
-
 /****************** Utility Routines ********************/
 void
-vo_update(struct view_obj	*vop,
-	  Tcl_Interp		*interp,
-	  int			oflag)
+vo_update(struct view_obj *vop,
+	  Tcl_Interp *interp,
+	  int oflag)
 {
     vect_t work, work1;
     vect_t temp, temp1;
@@ -2847,8 +2880,8 @@ vo_update(struct view_obj	*vop,
 	       temp, temp1, (fastf_t)0.005);
 
     /* Force azimuth range to be [0, 360] */
-    if ((NEAR_ZERO(vop->vo_aet[1] - 90.0, (fastf_t)0.005) ||
-	 NEAR_ZERO(vop->vo_aet[1] + 90.0, (fastf_t)0.005)) &&
+    if ((NEAR_EQUAL(vop->vo_aet[1], 90.0, (fastf_t)0.005) ||
+	 NEAR_EQUAL(vop->vo_aet[1], -90.0, (fastf_t)0.005)) &&
 	vop->vo_aet[0] < 0 &&
 	!NEAR_ZERO(vop->vo_aet[0], (fastf_t)0.005))
 	vop->vo_aet[0] += 360.0;
@@ -2863,6 +2896,7 @@ vo_update(struct view_obj	*vop,
     else if (oflag && interp != (Tcl_Interp *)NULL)
 	bu_observer_notify(interp, &vop->vo_observers, bu_vls_addr(&vop->vo_name));
 }
+
 
 void
 vo_mat_aet(struct view_obj *vop)
@@ -2895,14 +2929,14 @@ vo_mat_aet(struct view_obj *vop)
  * Manager).
  */
 static void
-vo_persp_mat(mat_t	m,
-	     fastf_t	fovy,
-	     fastf_t	aspect,
-	     fastf_t	near1,
-	     fastf_t	far1,
-	     fastf_t	backoff)
+vo_persp_mat(mat_t m,
+	     fastf_t fovy,
+	     fastf_t aspect,
+	     fastf_t near1,
+	     fastf_t far1,
+	     fastf_t backoff)
 {
-    mat_t	m2, tran;
+    mat_t m2, tran;
 
     fovy *= 3.1415926535/180.0;
 
@@ -2934,16 +2968,16 @@ vo_persp_mat(mat_t	m,
  * pmat = persp * xlate * shear
  */
 static void
-vo_mike_persp_mat(mat_t		pmat,
-		  const point_t	eye)
+vo_mike_persp_mat(mat_t pmat,
+		  const point_t eye)
 {
-    mat_t	shear;
-    mat_t	persp;
-    mat_t	xlate;
-    mat_t	t1, t2;
-    point_t	sheared_eye;
+    mat_t shear;
+    mat_t persp;
+    mat_t xlate;
+    mat_t t1, t2;
+    point_t sheared_eye;
 
-    if ( eye[Z] <= SMALL )  {
+    if (eye[Z] <= SMALL) {
 	VPRINT("mike_persp_mat(): ERROR, z<0, eye", eye);
 	return;
     }
@@ -2953,8 +2987,8 @@ vo_mike_persp_mat(mat_t		pmat,
     shear[2] = -eye[X]/eye[Z];
     shear[6] = -eye[Y]/eye[Z];
 
-    MAT4X3VEC( sheared_eye, shear, eye );
-    if ( !NEAR_ZERO(sheared_eye[X], .01) || !NEAR_ZERO(sheared_eye[Y], .01) )  {
+    MAT4X3VEC(sheared_eye, shear, eye);
+    if (!NEAR_ZERO(sheared_eye[X], .01) || !NEAR_ZERO(sheared_eye[Y], .01)) {
 	VPRINT("ERROR sheared_eye", sheared_eye);
 	return;
     }
@@ -2962,10 +2996,10 @@ vo_mike_persp_mat(mat_t		pmat,
     /* Translate along +Z axis to put sheared_eye at (0, 0, 1). */
     MAT_IDN(xlate);
     /* XXX should I use MAT_DELTAS_VEC_NEG()?  X and Y should be 0 now */
-    MAT_DELTAS( xlate, 0, 0, 1-sheared_eye[Z] );
+    MAT_DELTAS(xlate, 0, 0, 1-sheared_eye[Z]);
 
     /* Build perspective matrix inline, substituting fov=2*atan(1, Z) */
-    MAT_IDN( persp );
+    MAT_IDN(persp);
     /* From page 492 of Graphics Gems */
     persp[0] = sheared_eye[Z];	/* scaling: fov aspect term */
     persp[5] = sheared_eye[Z];	/* scaling: determines fov */
@@ -2974,13 +3008,13 @@ vo_mike_persp_mat(mat_t		pmat,
     /* Z center of projection at Z=+1, r=-1/1 */
     persp[14] = -1;
 
-    bn_mat_mul( t1, xlate, shear );
-    bn_mat_mul( t2, persp, t1 );
+    bn_mat_mul(t1, xlate, shear);
+    bn_mat_mul(t2, persp, t1);
 
     /* Now, move eye from Z=1 to Z=0, for clipping purposes */
-    MAT_DELTAS( xlate, 0, 0, -1 );
+    MAT_DELTAS(xlate, 0, 0, -1);
 
-    bn_mat_mul( pmat, xlate, t2 );
+    bn_mat_mul(pmat, xlate, t2);
 }
 
 

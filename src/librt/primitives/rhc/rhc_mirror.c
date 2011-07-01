@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rhc_mirror.c
+/** @file primitives/rhc/rhc_mirror.c
  *
  * mirror support
  *

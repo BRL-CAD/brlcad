@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file screengrab.c
+/** @file libged/screengrab.c
  *
  * The screengrab command.
  *
@@ -41,7 +41,7 @@
  * application logic calling this routine.
  */
 int
-ged_screen_grab(struct ged *gedp,int argc, const char *argv[])
+ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
 {
 
     int i;
@@ -56,10 +56,10 @@ ged_screen_grab(struct ged *gedp,int argc, const char *argv[])
     struct bu_image_file *bif = NULL;	/* bu image for saving image formats */
     struct dm *dmp = NULL;
 
-    if ((dmp = ( struct dm *)gedp->ged_dmp) == NULL) {
-		bu_vls_printf(&gedp->ged_result_str, "Bad display pointer.");
-		return GED_ERROR;
-	}
+    if ((dmp = (struct dm *)gedp->ged_dmp) == NULL) {
+	bu_vls_printf(gedp->ged_result_str, "Bad display pointer.");
+	return GED_ERROR;
+    }
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_VIEW(gedp, GED_ERROR);
@@ -67,16 +67,16 @@ ged_screen_grab(struct ged *gedp,int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -87,14 +87,14 @@ ged_screen_grab(struct ged *gedp,int argc, const char *argv[])
     bytes_per_line = dmp->dm_width * bytes_per_pixel;
 
     /* create image file */
-    if ((bif = bu_image_save_open(argv[1], BU_IMAGE_AUTO, width, height, bytes_per_pixel)) == NULL)  {
-    	bu_vls_printf(&gedp->ged_result_str, "%s: could not create bu_image_ write structure.", argv[1]);
-		return GED_ERROR;
-	}
+    if ((bif = bu_image_save_open(argv[1], BU_IMAGE_AUTO, width, height, bytes_per_pixel)) == NULL) {
+	bu_vls_printf(gedp->ged_result_str, "%s: could not create bu_image_ write structure.", argv[1]);
+	return GED_ERROR;
+    }
 
     rows = (unsigned char **)bu_calloc(height, sizeof(unsigned char *), "rows");
 
-    DM_GET_DISPLAY_IMAGE(dmp,&idata);
+    DM_GET_DISPLAY_IMAGE(dmp, &idata);
 
     for (i = 0; i < height; ++i) {
 	rows[i] = (unsigned char *)(idata + ((height-i-1)*bytes_per_line));
@@ -102,7 +102,7 @@ ged_screen_grab(struct ged *gedp,int argc, const char *argv[])
     }
 
     if (bif != NULL)
-    	bu_image_save_close(bif);
+	bu_image_save_close(bif);
     bif = NULL;
 
     bu_free(rows, "rows");
@@ -110,6 +110,7 @@ ged_screen_grab(struct ged *gedp,int argc, const char *argv[])
 
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

@@ -17,7 +17,7 @@ tcl_SCRIPTS = \
 	rtwizard.bat \
 	rtwizard.tcl
 
-EXTRA_DIST = $(tcl_SCRIPTS)
+EXTRA_DIST = $(tcl_SCRIPTS) CMakeLists.txt
 
 rtwizard: rtwizard.tcl
 	cp $(top_srcdir)/src/tclscripts/rtwizard/rtwizard.tcl rtwizard

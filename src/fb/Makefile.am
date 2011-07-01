@@ -1,7 +1,6 @@
 
 bin_PROGRAMS = \
 	bw-fb \
-	cat-fb \
 	cell-fb \
 	cmap-fb \
 	fb-bw \
@@ -49,9 +48,6 @@ AM_CFLAGS = ${STRICT_FLAGS}
 
 bw_fb_LDADD = ${FB}
 bw_fb_SOURCES = bw-fb.c
-
-cat_fb_LDADD = ${FB}
-cat_fb_SOURCES = cat-fb.c
 
 cell_fb_LDADD = ${FB} ${BN}
 cell_fb_SOURCES = cell-fb.c
@@ -187,7 +183,6 @@ spm_fb_SOURCES = spm-fb.c
 
 man_MANS = \
 	bw-fb.1 \
-	cat-fb.1 \
 	cell-fb.1 \
 	cmap-fb.1 \
 	fb-bw.1 \
@@ -226,13 +221,12 @@ man_MANS = \
 	pp-fb.1 \
 	rle-fb.1
 
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = $(man_MANS) CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \
 	$(bw_fb_OBJECTS) \
-	$(cat_fb_OBJECTS) \
 	$(cell_fb_OBJECTS) \
 	$(cmap_fb_OBJECTS) \
 	$(fb_bw_OBJECTS) \

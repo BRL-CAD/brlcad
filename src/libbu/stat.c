@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_log */
-/** @{ */
 
 #include "common.h"
 
@@ -228,7 +226,6 @@ bu_file_executable(const char *path)
     return _bu_file_access(path, X_OK);
 }
 
-/** @} */
 
 /*
  * Local Variables:

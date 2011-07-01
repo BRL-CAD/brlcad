@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rotate_extrude.c
+/** @file libged/rotate_extrude.c
  *
  * The rotate_extrude command.
  *
@@ -41,13 +41,13 @@ _ged_rotate_extrude(struct ged *gedp, struct rt_extrude_internal *extrude, const
     RT_EXTRUDE_CK_MAGIC(extrude);
 
     switch (attribute[0]) {
-    case 'h':
-    case 'H':
-	MAT4X3VEC(extrude->h, rmat, extrude->h);
-	break;
-    default:
-	bu_vls_printf(&gedp->ged_result_str, "bad extrude attribute - %s", attribute);
-	return GED_ERROR;
+	case 'h':
+	case 'H':
+	    MAT4X3VEC(extrude->h, rmat, extrude->h);
+	    break;
+	default:
+	    bu_vls_printf(gedp->ged_result_str, "bad extrude attribute - %s", attribute);
+	    return GED_ERROR;
     }
 
     return GED_OK;

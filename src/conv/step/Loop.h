@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Loop.h
+/** @file step/Loop.h
  *
  * Class definition used to convert STEP "Loop" to BRL-CAD BREP
  * structures.

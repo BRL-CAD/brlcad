@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup vfont */
-/** @{ */
 
 #include "common.h"
 
@@ -133,7 +131,6 @@ vfont_free(register struct vfont *vfp)
     bu_free((char *)vfp, "vfont");
 }
 
-/** @} */
 
 /*
  * Local Variables:

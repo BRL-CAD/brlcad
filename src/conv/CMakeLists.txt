@@ -94,9 +94,15 @@ BRLCAD_ADDEXEC(g-stl stl/g-stl.c "librt libgcv libbu ${WINSOCK_LIB}")
 
 add_executable(g4-g5 g4-g5.c)
 target_link_libraries(g4-g5 librt libbu)
+IF(MSVC)
+	SET_TARGET_PROPERTIES(g4-g5 PROPERTIES COMPILE_FLAGS "-DBRLCAD_DLL")
+ENDIF(MSVC)
 
 add_executable(g5-g4 g5-g4.c)
 target_link_libraries(g5-g4 libwdb librt libbu)
+IF(MSVC)
+	SET_TARGET_PROPERTIES(g5-g4 PROPERTIES COMPILE_FLAGS "-DBRLCAD_DLL")
+ENDIF(MSVC)
 
 BRLCAD_ADDEXEC(g-acad g-acad.c "librt libbu")
 
@@ -138,6 +144,9 @@ BRLCAD_ADDEXEC(viewpoint-g viewpoint-g.c "libwdb librt libbu")
 
 add_executable(g-xxx_facets g-xxx_facets.c)
 target_link_libraries(g-xxx_facets librt libbu)
+IF(MSVC)
+	SET_TARGET_PROPERTIES(g-xxx_facets PROPERTIES COMPILE_FLAGS "-DBRLCAD_DLL")
+ENDIF(MSVC)
 
 BRLCAD_ADDEXEC(g-shell-rect g-shell-rect.c "libwdb librt libbu")
 

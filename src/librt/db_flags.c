@@ -19,7 +19,7 @@
  */
 /** @addtogroup db4 */
 /** @{ */
-/** @file db_flags.c
+/** @file librt/db_flags.c
  *
  * Given an internal representation of a geometry object, there are
  * particular directory flags associated with it (at least for

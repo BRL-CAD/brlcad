@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file rec.c
+/** @file primitives/rec/rec.c
  *
  * Intersect a ray with a Right Eliptical Cylinder.  This is a special
  * (but common) case of the TGC, which is handled separately.

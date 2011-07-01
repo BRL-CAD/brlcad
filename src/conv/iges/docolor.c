@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file docolor.c
+/** @file iges/docolor.c
  *
  * This routine loops through all the directory entries and calls and
  * sets colors according to the directory entry field #13

@@ -100,3 +100,5 @@ FAST_OBJECTS = \
 	$(fftest_OBJECTS) \
 	$(ifftc_OBJECTS) \
 	$(bin_PROGRAMS)
+
+EXTRA_DIST = CMakeLists.txt

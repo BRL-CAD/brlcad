@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file scale_rpc.c
+/** @file libged/scale_rpc.c
  *
  * The scale_rpc command.
  */
@@ -39,31 +39,31 @@ _ged_scale_rpc(struct ged *gedp, struct rt_rpc_internal *rpc, const char *attrib
     RT_RPC_CK_MAGIC(rpc);
 
     switch (attribute[0]) {
-    case 'b':
-    case 'B':
-	if (!rflag)
-	    sf /= MAGNITUDE(rpc->rpc_B);
+	case 'b':
+	case 'B':
+	    if (!rflag)
+		sf /= MAGNITUDE(rpc->rpc_B);
 
-	VSCALE(rpc->rpc_B, rpc->rpc_B, sf);
-	break;
-    case 'h':
-    case 'H':
-	if (!rflag)
-	    sf /= MAGNITUDE(rpc->rpc_H);
+	    VSCALE(rpc->rpc_B, rpc->rpc_B, sf);
+	    break;
+	case 'h':
+	case 'H':
+	    if (!rflag)
+		sf /= MAGNITUDE(rpc->rpc_H);
 
-	VSCALE(rpc->rpc_H, rpc->rpc_H, sf);
-	break;
-    case 'r':
-    case 'R':
-	if (rflag)
-	    rpc->rpc_r *= sf;
-	else
-	    rpc->rpc_r = sf;
+	    VSCALE(rpc->rpc_H, rpc->rpc_H, sf);
+	    break;
+	case 'r':
+	case 'R':
+	    if (rflag)
+		rpc->rpc_r *= sf;
+	    else
+		rpc->rpc_r = sf;
 
-	break;
-    default:
-	bu_vls_printf(&gedp->ged_result_str, "bad rpc attribute - %s", attribute);
-	return GED_ERROR;
+	    break;
+	default:
+	    bu_vls_printf(gedp->ged_result_str, "bad rpc attribute - %s", attribute);
+	    return GED_ERROR;
     }
 
     return GED_OK;

@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_diff.c
+/** @file primitives/bspline/nurb_diff.c
  *
  * Differentiate a Non Uniform Rational B-Spline (NURB) Surface.
  *

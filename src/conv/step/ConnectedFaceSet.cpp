@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ConnectedFaceSet.cpp
+/** @file step/ConnectedFaceSet.cpp
  *
  * Routines to convert STEP "ConnectedFaceSet" to BRL-CAD BREP
  * structures.

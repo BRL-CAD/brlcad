@@ -106,7 +106,7 @@ get_args(int argc, char **argv)
  * Displays a sphere map on a framebuffer.
  */
 void
-spm_fb(spm_map_t *mapp)
+spm_fb(bn_spm_map_t *mapp)
 {
     int j;
 
@@ -130,7 +130,7 @@ spm_fb(spm_map_t *mapp)
  * Display a square sphere map on a framebuffer.
  */
 void
-spm_square(spm_map_t *mapp)
+spm_square(bn_spm_map_t *mapp)
 {
     int x, y;
     unsigned char *scanline;
@@ -139,7 +139,7 @@ spm_square(spm_map_t *mapp)
 
     for (y = 0; y < scr_height; y++) {
 	for (x = 0; x < scr_width; x++) {
-	    spm_read(mapp, &scanline[x],
+	    bn_spm_read(mapp, &scanline[x],
 		     (double)x/(double)scr_width,
 		     (double)y/(double)scr_height);
 	}
@@ -154,7 +154,7 @@ spm_square(spm_map_t *mapp)
 int
 main(int argc, char **argv)
 {
-    spm_map_t *mp;
+    bn_spm_map_t *mp;
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
@@ -166,18 +166,18 @@ main(int argc, char **argv)
     scr_width = fb_getwidth(fbp);
     scr_height = fb_getheight(fbp);
 
-    mp = spm_init(vsize, sizeof(RGBpixel));
-    if (mp == SPM_NULL || fbp == FBIO_NULL)
+    mp = bn_spm_init(vsize, sizeof(RGBpixel));
+    if (mp == BN_SPM_MAP_NULL || fbp == FBIO_NULL)
 	bu_exit(1, NULL);
 
-    spm_load(mp, file_name);
+    bn_spm_load(mp, file_name);
 
     if (square)
 	spm_square(mp);
     else
 	spm_fb(mp);
 
-    spm_free(mp);
+    bn_spm_free(mp);
     fb_close(fbp);
     return 0;
 }

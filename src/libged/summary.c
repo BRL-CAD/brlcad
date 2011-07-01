@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file summary.c
+/** @file libged/summary.c
  *
  * The summary command.
  *
@@ -33,64 +33,14 @@
 #include "./ged_private.h"
 
 
-static void
-ged_dir_summary(struct ged	*gedp,
-		int		flag);
-
-int
-ged_summary(struct ged *gedp, int argc, const char *argv[])
-{
-    char *cp;
-    int flags = 0;
-    static const char *usage = "[p r g]";
-
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-
-    /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
-
-    if (argc == 1) {
-	ged_dir_summary(gedp, 0);
-	return GED_OK;
-    }
-
-    if (2 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    cp = (char *)argv[1];
-    while (*cp)  switch (*cp++) {
-	case 'p':
-	    flags |= RT_DIR_SOLID;
-	    break;
-	case 'r':
-	    flags |= RT_DIR_REGION;
-	    break;
-	case 'g':
-	    flags |= RT_DIR_COMB;
-	    break;
-	default:
-	    bu_vls_printf(&gedp->ged_result_str, "%s:  p, r or g are the only valid parmaters\n", argv[0]);
-	    return GED_ERROR;
-    }
-
-    ged_dir_summary(gedp, flags);
-    return GED_OK;
-}
-
-
 /*
- *  			G E D _ D I R _ S U M M A R Y
- *
  * Summarize the contents of the directory by categories
  * (solid, comb, region).  If flag is != 0, it is interpreted
  * as a request to print all the names in that category (eg, RT_DIR_SOLID).
  */
 static void
-ged_dir_summary(struct ged	*gedp,
-		int		flag)
+summary_dir(struct ged *gedp,
+		int flag)
 {
     struct directory *dp;
     int i;
@@ -99,7 +49,7 @@ ged_dir_summary(struct ged	*gedp,
     struct directory **dirp0 = (struct directory **)NULL;
 
     sol = comb = reg = 0;
-    for (i = 0; i < RT_DBNHASH; i++)  {
+    for (i = 0; i < RT_DBNHASH; i++) {
 	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (dp->d_flags & RT_DIR_SOLID)
 		sol++;
@@ -112,10 +62,10 @@ ged_dir_summary(struct ged	*gedp,
 	}
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "Summary:\n");
-    bu_vls_printf(&gedp->ged_result_str, "  %5d primitives\n", sol);
-    bu_vls_printf(&gedp->ged_result_str, "  %5d region; %d non-region combinations\n", reg, comb);
-    bu_vls_printf(&gedp->ged_result_str, "  %5d total objects\n\n", sol+reg+comb );
+    bu_vls_printf(gedp->ged_result_str, "Summary:\n");
+    bu_vls_printf(gedp->ged_result_str, "  %5d primitives\n", sol);
+    bu_vls_printf(gedp->ged_result_str, "  %5d region; %d non-region combinations\n", reg, comb);
+    bu_vls_printf(gedp->ged_result_str, "  %5d total objects\n\n", sol+reg+comb);
 
     if (flag == 0)
 	return;
@@ -134,8 +84,54 @@ ged_dir_summary(struct ged	*gedp,
 	    if (dp->d_flags & flag)
 		*dirp++ = dp;
 
-    _ged_vls_col_pr4v(&gedp->ged_result_str, dirp0, (int)(dirp - dirp0), 0);
+    _ged_vls_col_pr4v(gedp->ged_result_str, dirp0, (int)(dirp - dirp0), 0);
     bu_free((genptr_t)dirp0, "dir_getspace");
+}
+
+
+int
+ged_summary(struct ged *gedp, int argc, const char *argv[])
+{
+    char *cp;
+    int flags = 0;
+    static const char *usage = "[p r g]";
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    if (argc == 1) {
+	summary_dir(gedp, 0);
+	return GED_OK;
+    }
+
+    if (2 < argc) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    cp = (char *)argv[1];
+    while (*cp) {
+	switch (*cp++) {
+	    case 'p':
+		flags |= RT_DIR_SOLID;
+		break;
+	    case 'r':
+		flags |= RT_DIR_REGION;
+		break;
+	    case 'g':
+		flags |= RT_DIR_COMB;
+		break;
+	    default:
+		bu_vls_printf(gedp->ged_result_str, "%s:  p, r or g are the only valid parmaters\n", argv[0]);
+		return GED_ERROR;
+	}
+    }
+
+    summary_dir(gedp, flags);
+    return GED_OK;
 }
 
 

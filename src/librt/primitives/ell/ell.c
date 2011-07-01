@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file ell.c
+/** @file primitives/ell/ell.c
  *
  * Intersect a ray with a Generalized Ellipsoid.
  *
@@ -43,8 +43,8 @@
 #include "../../librt_private.h"
 
 
-BU_EXTERN(int rt_sph_prep, (struct soltab *stp, struct rt_db_internal *ip,
-			    struct rt_i *rtip));
+extern int rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip,
+		       struct rt_i *rtip);
 
 const struct bu_structparse rt_ell_parse[] = {
     { "%f", 3, "V", bu_offsetof(struct rt_ell_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -399,10 +399,10 @@ rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap
  */
 void
 rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-    /* An array of solid pointers */
-    /* An array of ray pointers */
-    /* array of segs (results returned) */
-    /* Number of ray/object pairs */
+/* An array of solid pointers */
+/* An array of ray pointers */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
 
 {
     register int i;
@@ -1073,7 +1073,7 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
     bu_free((char *)strips, "strips[]");
     return 0;
- fail:
+fail:
     /* Release memory */
     /* All strips have vertices and normals */
     for (i=0; i<nstrips; i++) {
@@ -1673,6 +1673,45 @@ rt_ell_params(struct pc_pc_set *pcs, const struct rt_db_internal *ip)
     pcs->ps[3].pval.vectorp = (vectp_t) &(eip->c);
 #endif
     return 0;			/* OK */
+}
+
+
+/*
+ * Used by EHY, EPA, HYP.  See librt_private.h for details.
+ */
+fastf_t
+ell_angle(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
+{
+    fastf_t dist, intr, m, theta0, theta1;
+    point_t mpt, p0;
+    vect_t norm_line, norm_ell;
+
+    VSET(p0, a, 0., 0.);
+    /* slope and intercept of segment */
+    m = (p1[Y] - p0[Y]) / (p1[X] - p0[X]);
+    intr = p0[Y] - m * p0[X];
+    /* point on ellipse with max dist between ellipse and line */
+    mpt[X] = a / sqrt(b*b / (m*m*a*a) + 1);
+    mpt[Y] = b * sqrt(1 - mpt[X] * mpt[X] / (a*a));
+    mpt[Z] = 0;
+    /* max distance between that point and line */
+    dist = fabs(m * mpt[X] - mpt[Y] + intr) / sqrt(m * m + 1);
+    /* angles between normal of line and of ellipse at line endpoints */
+    VSET(norm_line, m, -1., 0.);
+    VSET(norm_ell, b * b * p0[X], a * a * p0[Y], 0.);
+    VUNITIZE(norm_line);
+    VUNITIZE(norm_ell);
+    theta0 = fabs(acos(VDOT(norm_line, norm_ell)));
+    VSET(norm_ell, b * b * p1[X], a * a * p1[Y], 0.);
+    VUNITIZE(norm_ell);
+    theta1 = fabs(acos(VDOT(norm_line, norm_ell)));
+    /* split segment at widest point if not within error tolerances */
+    if (dist > dtol || theta0 > ntol || theta1 > ntol) {
+	/* split segment */
+	return ell_angle(mpt, a, b, dtol, ntol);
+    } else
+	return(acos(VDOT(p0, p1)
+		    / (MAGNITUDE(p0) * MAGNITUDE(p1))));
 }
 
 

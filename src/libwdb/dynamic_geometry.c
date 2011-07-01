@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dynamic_geometry.c
+/** @file libwdb/dynamic_geometry.c
  *
  * Library for dynamically changing BRL-CAD geometry (i.e., changing
  * already prepped geometry)
@@ -165,14 +165,14 @@ make_hole(struct rt_wdb *wdbp,		/* datbase to be modified */
 
 	/* Build a new "subtract" node (will be the root of the new tree) */
 	BU_GETUNION(tree, tree);
-	RT_INIT_TREE(tree);
+	RT_TREE_INIT(tree);
 	tree->tr_b.tb_op = OP_SUBTRACT;
 	tree->tr_b.tb_left = comb->tree;	/* subtract from the original tree */
 	comb->tree = tree;
 
 	/* Build a node for the RCC to be subtracted */
 	BU_GETUNION(tree, tree);
-	RT_INIT_TREE(tree);
+	RT_TREE_INIT(tree);
 	tree->tr_l.tl_op = OP_DB_LEAF;
 	tree->tr_l.tl_mat = NULL;
 	tree->tr_l.tl_name = bu_strdup(bu_vls_addr(&tmp_name)); /* copy name of RCC */
@@ -241,7 +241,7 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
     while ((dp=db_lookup(wdbp->dbip, bu_vls_addr(&tmp_name), LOOKUP_QUIET)) != RT_DIR_NULL) {
 	count++;
 	bu_vls_trunc(&tmp_name, base_len);
-	bu_vls_printf(&tmp_name, "%d", count);
+	bu_vls_printf(&tmp_name, "%zu", count);
     }
 
     /* build the RCC based on parameters passed in */
@@ -301,7 +301,7 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
 
 	/* create a tree node for the subtraction operation, this will be the new tree root */
 	BU_GETUNION(treep, tree);
-	RT_INIT_TREE(treep);
+	RT_TREE_INIT(treep);
 	treep->tr_b.tb_op = OP_SUBTRACT;
 	treep->tr_b.tb_left = rp->reg_treetop;	/* subtract from the old treetop */
 	treep->tr_b.tb_regionp = rp;
@@ -311,7 +311,7 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
 
 	/* create a tree node for the new RCC */
 	BU_GETUNION(treep, tree);
-	RT_INIT_TREE(treep);
+	RT_TREE_INIT(treep);
 	treep->tr_a.tu_op = OP_SOLID;
 	treep->tr_a.tu_stp = stp;
 	treep->tr_a.tu_regionp = rp;

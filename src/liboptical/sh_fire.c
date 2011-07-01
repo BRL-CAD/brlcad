@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_fire.c
+/** @file liboptical/sh_fire.c
  *
  * Fire shader
  *
@@ -67,9 +67,6 @@
 #include "optical.h"
 
 
-extern int rr_render(struct application *ap,
-		     struct partition *pp,
-		     struct shadework *swp);
 #define fire_MAGIC 0x46697265   /* ``Fire'' */
 #define CK_fire_SP(_p) BU_CKMAG(_p, fire_MAGIC, "fire_specific")
 
@@ -157,8 +154,10 @@ struct bu_structparse fire_parse_tab[] = {
 };
 
 
-HIDDEN int fire_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), fire_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void fire_print(register struct region *rp, char *dp), fire_free(char *cp);
+HIDDEN int fire_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int fire_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
+HIDDEN void fire_print(register struct region *rp, genptr_t dp);
+HIDDEN void fire_free(genptr_t cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -206,7 +205,7 @@ const double flame_colors[18][3] = {
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-fire_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+fire_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -226,7 +225,7 @@ fire_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
 
     /* Get memory for the shader parameters and shader-specific data */
     BU_GETSTRUCT(fire_sp, fire_specific);
-    *dpp = (char *)fire_sp;
+    *dpp = fire_sp;
 
     /* initialize the default values for the shader */
     memcpy(fire_sp, &fire_defaults, sizeof(struct fire_specific));
@@ -276,7 +275,7 @@ fire_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
  * F I R E _ P R I N T
  */
 HIDDEN void
-fire_print(register struct region *rp, char *dp)
+fire_print(register struct region *rp, genptr_t dp)
 {
     bu_struct_print(rp->reg_name, fire_print_tab, (char *)dp);
 }
@@ -286,7 +285,7 @@ fire_print(register struct region *rp, char *dp)
  * F I R E _ F R E E
  */
 HIDDEN void
-fire_free(char *cp)
+fire_free(genptr_t cp)
 {
     bu_free(cp, "fire_specific");
 }
@@ -300,7 +299,7 @@ fire_free(char *cp)
  * structure.
  */
 int
-fire_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+fire_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
 
 
 /* defined in material.h */

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file btgf.c
+/** @file primitives/bot/btgf.c
  *
  * the bot/tie float glue.
  *
@@ -70,13 +70,6 @@ bottie_prep_float(struct soltab *stp,struct rt_bot_internal *bot, struct rt_i *U
     return 0;
 }
 
-#if 0
-static int
-hitfunc()
-{
-    return 0;
-}
-#endif
 
 int
 bottie_shot_float(struct soltab *UNUSED(stp), register struct xray *UNUSED(rp), struct application *UNUSED(ap), struct seg *UNUSED(seghead))

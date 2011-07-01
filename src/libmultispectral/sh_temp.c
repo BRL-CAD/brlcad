@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_temp.c
+/** @file libmultispectral/sh_temp.c
  *
  *  Temperature map lookup.
  *  Based upon liboptical/sh_text.c
@@ -37,18 +37,18 @@
 
 extern struct region	env_region;		/* import from view.c */
 
-HIDDEN int	temp_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, const struct mfuncs *mfp, struct rt_i *rtip), temp_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void	temp_print(register struct region *rp), temp_free(char *cp);
+HIDDEN int temp_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int temp_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
+HIDDEN void temp_print(register struct region *rp, genptr_t dp);
+HIDDEN void temp_free(genptr_t cp);
 
-extern int mlib_zero(), mlib_one();
-extern void	mlib_void();
+extern int mlib_zero();
+extern int mlib_one();
+extern void mlib_void();
 
 struct mfuncs temp_mfuncs[] = {
-    {MF_MAGIC,	"temp",		0,		MFI_UV,		0,
-     temp_setup,	temp_render,	temp_print,	temp_free },
-
-    {0,		(char *)0,	0,		0,		0,
-     0,		0,		0,		0 }
+    {MF_MAGIC,	"temp",		0,		MFI_UV,		0,	temp_setup,	temp_render,	temp_print,	temp_free },
+    {0,		(char *)0,	0,		0,		0,	0,		0,		0,		0 }
 };
 
 #define TXT_NAME_LEN 128
@@ -79,7 +79,7 @@ struct bu_structparse temp_parse[] = {
  *  which works out very naturally for the indexing scheme.
  */
 HIDDEN int
-temp_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+temp_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
 {
     register struct temp_specific *tp =
 	(struct temp_specific *)dp;
@@ -229,7 +229,7 @@ temp_render(struct application *ap, struct partition *pp, struct shadework *swp,
  *			T X T _ S E T U P
  */
 HIDDEN int
-temp_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, const struct mfuncs *mfp, struct rt_i *UNUSED(rtip))
+temp_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *UNUSED(rtip))
 
 
     /* New since 4.4 release */
@@ -239,7 +239,7 @@ temp_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, const
 
     BU_CK_VLS( matparm );
     BU_GETSTRUCT( tp, temp_specific );
-    *dpp = (char *)tp;
+    *dpp = tp;
 
     tp->t_file[0] = '\0';
     tp->t_w = tp->t_n = -1;
@@ -256,7 +256,7 @@ temp_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, const
 
     /* Ensure file is large enough */
     if ( tp->mp->buflen < tp->t_w * tp->t_n * pixelbytes )  {
-	bu_log("\ntemp_setup() ERROR %s %s needs %d bytes, '%s' only has %d\n",
+	bu_log("\ntemp_setup() ERROR %s %s needs %zu bytes, '%s' only has %zu\n",
 	       rp->reg_name,
 	       mfp->mf_name,
 	       tp->t_w * tp->t_n * pixelbytes,
@@ -272,7 +272,7 @@ temp_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, const
  *			T X T _ P R I N T
  */
 HIDDEN void
-temp_print(register struct region *rp)
+temp_print(register struct region *rp, genptr_t UNUSED(dp))
 {
     bu_struct_print(rp->reg_name, temp_parse, (char *)rp->reg_udata);
 }
@@ -281,7 +281,7 @@ temp_print(register struct region *rp)
  *			T X T _ F R E E
  */
 HIDDEN void
-temp_free(char *cp)
+temp_free(genptr_t cp)
 {
     struct temp_specific *tp =
 	(struct temp_specific *)cp;

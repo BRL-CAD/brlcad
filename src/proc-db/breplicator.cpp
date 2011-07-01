@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file breplicator.cpp
+/** @file proc-db/breplicator.cpp
  *
  * Breplicator is a tool for testing the new boundary representation
  * (BREP) primitive type in librt.  It creates primitives via

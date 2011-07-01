@@ -74,7 +74,8 @@ EXTRA_DIST = \
 	pictsgi.1 \
 	pictsgi.c \
 	pictx.1 \
-	pictx.c
+	pictx.c \
+	CMakeLists.txt
 
 DEPENDS = src/librt
 

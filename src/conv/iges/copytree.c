@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file copytree.c
+/** @file iges/copytree.c
  *
  * This routine copies a tree rooted at "root" by recursion the
  * "parent" field of the root of the new tree is filed by the "parent"

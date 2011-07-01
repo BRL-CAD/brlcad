@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file make_face.c
+/** @file iges/make_face.c
  *
  */
 

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file DefinitionalRepresentation.cpp
+/** @file step/DefinitionalRepresentation.cpp
  *
  * Routines to convert STEP "DefinitionalRepresentation" to BRL-CAD BREP
  * structures.

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file color.c
+/** @file libged/color.c
  *
  * The color command.
  *
@@ -37,11 +37,80 @@
 #include "./ged_private.h"
 
 
+/**
+ * Used to create a database record and get it written out to a granule.
+ * In some cases, storage will need to be allocated.
+ */
+void
+color_putrec(struct ged *gedp, struct mater *mp)
+{
+    struct directory dir;
+    union record rec;
+
+    /* we get here only if database is NOT read-only */
+
+    rec.md.md_id = ID_MATERIAL;
+    rec.md.md_low = mp->mt_low;
+    rec.md.md_hi = mp->mt_high;
+    rec.md.md_r = mp->mt_r;
+    rec.md.md_g = mp->mt_g;
+    rec.md.md_b = mp->mt_b;
+
+    /* Fake up a directory entry for db_* routines */
+    RT_DIR_SET_NAMEP(&dir, "color_putrec");
+    dir.d_magic = RT_DIR_MAGIC;
+    dir.d_flags = 0;
+
+    if (mp->mt_daddr == MATER_NO_ADDR) {
+	/* Need to allocate new database space */
+	if (db_alloc(gedp->ged_wdbp->dbip, &dir, 1)) {
+	    bu_vls_printf(gedp->ged_result_str, "Database alloc error, aborting");
+	    return;
+	}
+	mp->mt_daddr = dir.d_addr;
+    } else {
+	dir.d_addr = mp->mt_daddr;
+	dir.d_len = 1;
+    }
+
+    if (db_put(gedp->ged_wdbp->dbip, &dir, &rec, 0, 1)) {
+	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
+	return;
+    }
+}
+
+
+/**
+ * Used to release database resources occupied by a material record.
+ */
+void
+color_zaprec(struct ged *gedp, struct mater *mp)
+{
+    struct directory dir;
+
+    /* we get here only if database is NOT read-only */
+    if (mp->mt_daddr == MATER_NO_ADDR)
+	return;
+
+    dir.d_magic = RT_DIR_MAGIC;
+    RT_DIR_SET_NAMEP(&dir, "color_zaprec");
+    dir.d_len = 1;
+    dir.d_addr = mp->mt_daddr;
+    dir.d_flags = 0;
+
+    if (db_delete(gedp->ged_wdbp->dbip, &dir) != 0) {
+	bu_vls_printf(gedp->ged_result_str, "Database delete error, aborting");
+	return;
+    }
+    mp->mt_daddr = MATER_NO_ADDR;
+}
+
+
 /*
  * used by the 'color' command when provided the -e option
  */
 static int
-_ged_edcolor(struct ged *gedp, int argc, const char *argv[])
+edcolor(struct ged *gedp, int argc, const char *argv[])
 {
     struct mater *mp;
     struct mater *zot;
@@ -61,7 +130,7 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
     while ((c = bu_getopt(argc, (char * const *)argv, "E:")) != -1) {
 	switch (c) {
 	    case 'E' :
-	    	editstring = bu_optarg;
+		editstring = bu_optarg;
 		break;
 	    default :
 		break;
@@ -70,39 +139,39 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
 
     argc -= bu_optind - 1;
     argv += bu_optind - 1;
-    
+
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     fp = bu_temp_file(tmpfil, MAXPATHLEN);
     if (fp == NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: could not create tmp file", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s: could not create tmp file", argv[0]);
 	return GED_ERROR;
     }
 
-    fprintf( fp, "%s", hdr );
+    fprintf(fp, "%s", hdr);
     for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
-	(void)fprintf( fp, "%d\t%d\t%3d\t%3d\t%3d",
-		       mp->mt_low, mp->mt_high,
-		       mp->mt_r, mp->mt_g, mp->mt_b);
+	(void)fprintf(fp, "%d\t%d\t%3d\t%3d\t%3d",
+		      mp->mt_low, mp->mt_high,
+		      mp->mt_r, mp->mt_g, mp->mt_b);
 	(void)fprintf(fp, "\n");
     }
     (void)fclose(fp);
 
     if (!_ged_editit(editstring, (const char *)tmpfil)) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: editor returned bad status. Aborted\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s: editor returned bad status. Aborted\n", argv[0]);
 	return GED_ERROR;
     }
 
     /* Read file and process it */
-    if ((fp = fopen( tmpfil, "r")) == NULL) {
+    if ((fp = fopen(tmpfil, "r")) == NULL) {
 	perror(tmpfil);
 	return GED_ERROR;
     }
 
     if (bu_fgets(line, sizeof (line), fp) == NULL ||
 	line[0] != hdr[0]) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Header line damaged, aborting\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s: Header line damaged, aborting\n", argv[0]);
 	return GED_ERROR;
     }
 
@@ -111,7 +180,7 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
 	while (rt_material_head() != MATER_NULL) {
 	    zot = rt_material_head();
 	    rt_new_material_head(zot->mt_forw);
-	    _ged_color_zaprec(gedp, zot);
+	    color_zaprec(gedp, zot);
 	    bu_free((genptr_t)zot, "mater rec");
 	}
 
@@ -123,7 +192,7 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
 	    cnt = sscanf(line, "%d%*c%d%*c%d%*c%d%*c%d",
 			 &low, &hi, &r, &g, &b);
 	    if (cnt != 9) {
-		bu_vls_printf(&gedp->ged_result_str, "%s: Discarding %s\n", argv[0], line);
+		bu_vls_printf(gedp->ged_result_str, "%s: Discarding %s\n", argv[0], line);
 		continue;
 	    }
 	    BU_GETSTRUCT(mp, mater);
@@ -134,7 +203,7 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
 	    mp->mt_b = b;
 	    mp->mt_daddr = MATER_NO_ADDR;
 	    rt_insert_color(mp);
-	    _ged_color_putrec(gedp, mp);
+	    color_putrec(gedp, mp);
 	}
     } else {
 	struct bu_vls vls;
@@ -154,7 +223,7 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
 
 	    /* check to see if line is reasonable */
 	    if (cnt != 5) {
-		bu_vls_printf(&gedp->ged_result_str, "%s: Discarding %s\n", argv[0], line);
+		bu_vls_printf(gedp->ged_result_str, "%s: Discarding %s\n", argv[0], line);
 		continue;
 	    }
 	    bu_vls_printf(&vls, "{%d %d %d %d %d} ", low, hi, r, g, b);
@@ -184,15 +253,16 @@ ged_edcolor(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc != 3) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
 	return GED_ERROR;
     }
 
-    return _ged_edcolor(gedp, argc, argv);
+    return edcolor(gedp, argc, argv);
 }
+
 
 int
 ged_color(struct ged *gedp, int argc, const char *argv[])
@@ -207,25 +277,25 @@ ged_color(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 6 && argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     /* edcolor */
     if (argc == 2) {
 	if (argv[1][0] == '-' && argv[1][1] == 'e' && argv[1][2] == '\0') {
-	    return _ged_edcolor(gedp, argc, argv);
+	    return edcolor(gedp, argc, argv);
 	} else {
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
 	}
     }
@@ -235,7 +305,7 @@ ged_color(struct ged *gedp, int argc, const char *argv[])
 	mp = rt_material_head();
 	while (mp != MATER_NULL) {
 	    next_mater = mp->mt_forw;
-	    _ged_color_zaprec(gedp, mp);
+	    color_zaprec(gedp, mp);
 	    mp = next_mater;
 	}
 
@@ -255,7 +325,7 @@ ged_color(struct ged *gedp, int argc, const char *argv[])
 	mp = rt_material_head();
 	while (mp != MATER_NULL) {
 	    next_mater = mp->mt_forw;
-	    _ged_color_putrec(gedp, mp);
+	    color_putrec(gedp, mp);
 	    mp = next_mater;
 	}
     } else {
@@ -287,81 +357,6 @@ ged_color(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
-
-/**
- *  			G E D _ C O L O R _ P U T R E C
- *@brief
- *  Used to create a database record and get it written out to a granule.
- *  In some cases, storage will need to be allocated.
- */
-void
-_ged_color_putrec(struct ged		*gedp,
-		 struct mater	*mp)
-		 
-{
-    struct directory dir;
-    union record rec;
-
-    /* we get here only if database is NOT read-only */
-
-    rec.md.md_id = ID_MATERIAL;
-    rec.md.md_low = mp->mt_low;
-    rec.md.md_hi = mp->mt_high;
-    rec.md.md_r = mp->mt_r;
-    rec.md.md_g = mp->mt_g;
-    rec.md.md_b = mp->mt_b;
-
-    /* Fake up a directory entry for db_* routines */
-    RT_DIR_SET_NAMEP( &dir, "_ged_color_putrec" );
-    dir.d_magic = RT_DIR_MAGIC;
-    dir.d_flags = 0;
-
-    if (mp->mt_daddr == MATER_NO_ADDR) {
-	/* Need to allocate new database space */
-	if (db_alloc(gedp->ged_wdbp->dbip, &dir, 1)) {
-	    bu_vls_printf(&gedp->ged_result_str, "Database alloc error, aborting");
-	    return;
-	}
-	mp->mt_daddr = dir.d_addr;
-    } else {
-	dir.d_addr = mp->mt_daddr;
-	dir.d_len = 1;
-    }
-
-    if (db_put(gedp->ged_wdbp->dbip, &dir, &rec, 0, 1)) {
-	bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting");
-	return;
-    }
-}
-
-/**
- *  			W D B _ C O L O R _ Z A P R E C
- *@brief
- *  Used to release database resources occupied by a material record.
- */
-void
-_ged_color_zaprec(struct ged		*gedp,
-		 struct mater	*mp)
-		 
-{
-    struct directory dir;
-
-    /* we get here only if database is NOT read-only */
-    if (mp->mt_daddr == MATER_NO_ADDR)
-	return;
-
-    dir.d_magic = RT_DIR_MAGIC;
-    RT_DIR_SET_NAMEP( &dir, "_ged_color_zaprec" );
-    dir.d_len = 1;
-    dir.d_addr = mp->mt_daddr;
-    dir.d_flags = 0;
-
-    if (db_delete(gedp->ged_wdbp->dbip, &dir) != 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Database delete error, aborting");
-	return;
-    }
-    mp->mt_daddr = MATER_NO_ADDR;
-}
 
 /*
  * Local Variables:

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_light.c
+/** @file liboptical/sh_light.c
  *
  * Implement simple isotropic light sources as a material property.
  *
@@ -55,10 +55,10 @@ HIDDEN void aim_set(const struct bu_structparse *sdp, const char *name, const ch
 HIDDEN void light_cvt_visible(const struct bu_structparse *sdp, const char *name, char *base, const char *value);
 HIDDEN void light_pt_set(const struct bu_structparse *sdp, const char *name, char *base, const char *value);
 
-HIDDEN int light_setup(struct region *rp, struct bu_vls *matparm, genptr_t *dpp, struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int light_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void light_print(register struct region *rp, char *dp);
-HIDDEN void light_free(char *cp);
+HIDDEN int light_setup(struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int light_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
+HIDDEN void light_print(register struct region *rp, genptr_t dp);
+HIDDEN void light_free(genptr_t cp);
 
 
 /** callback registration table for this shader in optical_shader_init() */
@@ -171,7 +171,7 @@ light_cvt_visible(register const struct bu_structparse *sdp, register const char
     struct light_specific *lsp = (struct light_specific *)base;
 
     if (rdebug & RDEBUG_LIGHT) {
-	bu_log("light_cvt_visible(%s, %d)\n", name, sdp->sp_offset);
+	bu_log("light_cvt_visible(%s, %zu)\n", name, sdp->sp_offset);
 	bu_log("visible: %d invisible: %d\n",
 	       LIGHT_O(lt_visible),
 	       LIGHT_O(lt_invisible));
@@ -254,7 +254,7 @@ light_pt_set(register const struct bu_structparse *sdp, register const char *nam
  * away.
  */
 HIDDEN int
-light_render(struct application *ap, struct partition *UNUSED(pp), struct shadework *swp, char *dp)
+light_render(struct application *ap, const struct partition *UNUSED(pp), struct shadework *swp, genptr_t dp)
 {
     register struct light_specific *lsp = (struct light_specific *)dp;
     register fastf_t f;
@@ -559,7 +559,7 @@ light_gen_sample_pts(struct application *upap,
  * L I G H T _ P R I N T
  */
 HIDDEN void
-light_print(register struct region *rp, char *dp)
+light_print(register struct region *rp, genptr_t dp)
 {
     bu_struct_print(rp->reg_name, light_print_tab, (char *)dp);
 }
@@ -569,7 +569,7 @@ light_print(register struct region *rp, char *dp)
  * L I G H T _ F R E E
  */
 void
-light_free(char *cp)
+light_free(genptr_t cp)
 {
     register struct light_specific *lsp = (struct light_specific *)cp;
 
@@ -583,7 +583,7 @@ light_free(char *cp)
 	bu_free(lsp->lt_sample_pts, "free light samples array");
     }
     lsp->l.magic = 0;	/* sanity */
-    bu_free((char *)lsp, "light_specific");
+    bu_free((genptr_t)lsp, "light_specific");
 }
 
 
@@ -593,11 +593,7 @@ light_free(char *cp)
  * Called once for each light-emitting region.
  */
 HIDDEN int
-light_setup(register struct region *rp,
-	    struct bu_vls *matparm,
-	    genptr_t *dpp,
-	    struct mfuncs *UNUSED(mfp),
-	    struct rt_i *UNUSED(rtip))
+light_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 {
     register struct light_specific *lsp;
     register struct soltab *stp;
@@ -605,9 +601,11 @@ light_setup(register struct region *rp,
     fastf_t f;
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(lsp, light_specific);
 
+    BU_GETSTRUCT(lsp, light_specific);
+    BU_LIST_INIT(&(lsp->l));
     BU_LIST_MAGIC_SET(&(lsp->l), LIGHT_MAGIC);
+
     lsp->lt_intensity = 1.0;	/* Lumens */
     lsp->lt_fraction = -1.0;	/* Recomputed later */
     lsp->lt_visible = 1;	/* explicitly modeled */
@@ -622,7 +620,7 @@ light_setup(register struct region *rp,
     lsp->lt_name = bu_strdup(rp->reg_name);
 
     if (bu_struct_parse(matparm, light_parse, (char *)lsp) < 0) {
-	light_free((char *)lsp);
+	light_free((genptr_t)lsp);
 	return -1;
     }
 
@@ -719,7 +717,7 @@ light_setup(register struct region *rp,
     }
 
     /* Add to linked list of lights */
-    if (BU_LIST_UNINITIALIZED(&(LightHead.l))) {
+    if (!BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
 	BU_LIST_INIT(&(LightHead.l));
     }
     BU_LIST_INSERT(&(LightHead.l), &(lsp->l));
@@ -731,7 +729,7 @@ light_setup(register struct region *rp,
 	return 2;	/* don't show light, destroy it later */
     }
 
-    *dpp = (genptr_t)lsp;	/* Associate lsp with reg_udata */
+    *dpp = lsp;	/* Associate lsp with reg_udata */
     return 1;
 }
 
@@ -758,7 +756,7 @@ light_init(struct application *ap)
     register int nlights = 0;
     register fastf_t inten = 0.0;
 
-    if (BU_LIST_UNINITIALIZED(&(LightHead.l))) {
+    if (!BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
 	BU_LIST_INIT(&(LightHead.l));
     }
 
@@ -848,7 +846,7 @@ light_cleanup(void)
 {
     register struct light_specific *lsp, *zaplsp;
 
-    if (BU_LIST_UNINITIALIZED(&(LightHead.l))) {
+    if (!BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
 	BU_LIST_INIT(&(LightHead.l));
 	return;
     }
@@ -1850,7 +1848,8 @@ light_maker(int num, mat_t v2m)
 	}
 
 	BU_GETSTRUCT(lsp, light_specific);
-	lsp->l.magic = LIGHT_MAGIC;
+	BU_LIST_INIT(&(lsp->l));
+	BU_LIST_MAGIC_SET(&(lsp->l), LIGHT_MAGIC);
 
 #ifdef RT_MULTISPECTRAL
 	BN_GET_TABDATA(lsp->lt_spectrum, spectrum);
@@ -1879,7 +1878,7 @@ light_maker(int num, mat_t v2m)
 	lsp->lt_cosangle = -1;		/* cos(180) */
 	lsp->lt_infinite = 0;
 	lsp->lt_rp = REGION_NULL;
-	if (BU_LIST_UNINITIALIZED(&(LightHead.l))) {
+	if (!BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
 	    BU_LIST_INIT(&(LightHead.l));
 	}
 	BU_LIST_INSERT(&(LightHead.l), &(lsp->l));

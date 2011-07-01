@@ -83,8 +83,21 @@ SET(brlcadnoinst_HEADERS
 	sysv.h
 )
 
+SET(brlcadinclude_misc
+	brlcad_config.h.in
+	conf
+	config_win.h
+	sed4
+	)
+
 INSTALL(FILES ${brlcadinclude_required} DESTINATION include/brlcad)
+
 
 IF(NOT BRLCAD-BUILD_BENCHMARK_ONLY AND NOT BRLCAD-BUILD_RTSERVER_ONLY)
 	INSTALL(FILES ${brlcadinclude_wanted} DESTINATION include/brlcad)
 ENDIF(NOT BRLCAD-BUILD_BENCHMARK_ONLY AND NOT BRLCAD-BUILD_RTSERVER_ONLY)
+
+CMAKEFILES(${brlcadinclude_required})
+CMAKEFILES(${brlcadinclude_wanted})
+CMAKEFILES(${brlcadnoinst_HEADERS})
+CMAKEFILES(${brlcadinclude_misc})

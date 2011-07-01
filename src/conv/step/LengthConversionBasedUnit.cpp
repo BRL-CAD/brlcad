@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file LengthConversionBasedUnit.cpp
+/** @file step/LengthConversionBasedUnit.cpp
  *
  * Routines to convert STEP "LengthConversionBasedUnit" to BRL-CAD BREP
  * structures.

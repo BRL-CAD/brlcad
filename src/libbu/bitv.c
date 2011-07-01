@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bitv */
-/** @{ */
 
 #include "common.h"
 
@@ -91,8 +89,7 @@ bu_bitv_new(unsigned int nbits)
 
     /* get zero'd memory, otherwise need to call BU_BITV_ZEROALL */
     bv = (struct bu_bitv *)bu_calloc(1, (size_t)total_bytes, "struct bu_bitv");
-    BU_LIST_INIT(&bv->l);
-    bv->l.magic = BU_BITV_MAGIC;
+    BU_BITV_INIT(bv);
     bv->nbits = bv_bytes * 8;
 
     return bv;
@@ -309,8 +306,6 @@ bu_bitv_dup(register const struct bu_bitv *bv)
     return bv2;
 }
 
-
-/** @} */
 
 /*
  * Local Variables:

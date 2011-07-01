@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file fbed.c
+/** @file fbed/fbed.c
  *
  */
 
@@ -69,7 +69,7 @@ struct pointstack
 
 struct vfont font;
 
-bool AproxEqColor(unsigned int a, unsigned int b, long t)
+int AproxEqColor(unsigned int a, unsigned int b, long t)
 {
     long c = a-b;
     if ( Abs( c ) > t )
@@ -78,7 +78,7 @@ bool AproxEqColor(unsigned int a, unsigned int b, long t)
 	return true;
 }
 
-bool AproxPixel(RGBpixel a, RGBpixel b, int t)
+int AproxPixel(RGBpixel a, RGBpixel b, int t)
 {
     return (AproxEqColor(a[RED], b[RED], t) &&
 	    AproxEqColor(a[GRN], b[GRN], t) &&
@@ -103,11 +103,11 @@ static int pointpicked;
 static int tolerance = 0;
 
 HIDDEN RGBpixel *pixel_Avg();
-HIDDEN bool drawRect2D(Rect2D *rectp, unsigned char *pixelp);
-HIDDEN bool getColor(unsigned char *pixelp, char *prompt, char *buffer);
-HIDDEN bool paintNonBorder(unsigned char *borderpix, Point *pt);
-HIDDEN bool paintSolidRegion(unsigned char *regionpix, Point *pt);
-HIDDEN bool popPoint(Point *pt, PtStack **spp);
+HIDDEN int drawRect2D(Rect2D *rectp, unsigned char *pixelp);
+HIDDEN int getColor(unsigned char *pixelp, char *prompt, char *buffer);
+HIDDEN int paintNonBorder(unsigned char *borderpix, Point *pt);
+HIDDEN int paintSolidRegion(unsigned char *regionpix, Point *pt);
+HIDDEN int popPoint(Point *pt, PtStack **spp);
 HIDDEN int do_Bitpad(Point *pointp);
 HIDDEN int fb_Setup(void);
 HIDDEN int pars_Argv(int argc, char **argv);
@@ -428,7 +428,7 @@ main(int argc, char **argv)
     return 0; /* shut up stupid compilers */
 }
 
-HIDDEN bool
+HIDDEN int
 drawRect2D(Rect2D *rectp, unsigned char *pixelp)
 {	
     int x, y;
@@ -483,7 +483,7 @@ fillRect2D(Rect2D *rectp, RGBpixel (*pixelp))
     }
 }
 
-HIDDEN bool
+HIDDEN int
 paintNonBorder(unsigned char *borderpix, Point *pt)
 {
     RGBpixel currentpix;
@@ -504,7 +504,7 @@ paintNonBorder(unsigned char *borderpix, Point *pt)
 		return true;
 }
 
-HIDDEN bool
+HIDDEN int
 paintSolidRegion(unsigned char *regionpix, Point *pt)
 {
     RGBpixel currentpix;
@@ -537,7 +537,7 @@ pushPoint(Point *pt, PtStack **spp)
     *spp = new;
 }
 
-HIDDEN bool
+HIDDEN int
 popPoint(Point *pt, PtStack **spp)
 {
     PtStack *next;
@@ -622,7 +622,7 @@ do_Key_Cmd(int key, int n)
     return;
 }
 
-HIDDEN bool
+HIDDEN int
 getColor(unsigned char *pixelp, char *prompt, char *buffer)
 {
     static char promptbuf[PROMPT_LEN];

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file BoundedSurface.cpp
+/** @file step/BoundedSurface.cpp
  *
  * Routines to interface to STEP "BoundedSurface".
  *

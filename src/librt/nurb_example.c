@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_example.c
+/** @file librt/nurb_example.c
  *
  */
 /** @} */
@@ -50,18 +50,6 @@ interpolate_data()
     struct knot_vector new_kv;
 
     rt_nurb_sinterp(&srf, 4, (const fastf_t *)grid, 10, 10);
-
-#if 0
-    /* Draw control mesh in blue */
-    pl_color(stdout, 145, 145, 255);
-    rt_nurb_plot_snurb(stdout, &srf);
-#endif
-
-#if 0
-    rt_nurb_reverse_srf(&srf);
-    rt_nurb_kvnorm(&srf.u);
-    rt_nurb_kvnorm(&srf.v);
-#endif
 
     /* lets take a look at it.  Refine to 100 points in both directions. */
     rt_nurb_kvknot(&new_kv, srf.order[0], 0.0, 1.0, 100, (struct resource *)NULL);

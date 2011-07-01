@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file TimeConversionBasedUnit.h
+/** @file step/TimeConversionBasedUnit.h
  *
  * Class definition used to convert STEP "TimeConversionBasedUnit" to BRL-CAD BREP
  * structures.

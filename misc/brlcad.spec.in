@@ -19,16 +19,16 @@
 #
 ###
 
-Summary: @PACKAGE_NAME@
-Name: @PACKAGE_NAME@
-Version: @MAJOR_VERSION@.@MINOR_VERSION@
-Release: @PATCH_VERSION@
+Summary: BRL-CAD Open Source Solid Modeling
+Name: BRL-CAD
+Version: @BRLCAD_VERSION@
+Release: 1
 License: LGPL, BSD
 Vendor: BRL-CAD Open Source
 Url: http://brlcad.org
 Group: Productivity/Graphics/CAD
-Source0: http://prdownloads.sourceforge.net/@PACKAGE@/@PACKAGE@-@BRLCAD_VERSION@.tar.gz
-Buildroot: /var/tmp/redhat/BUILD/@PACKAGE@-@BRLCAD_VERSION@
+Source0: http://prdownloads.sourceforge.net/brlcad/brlcad-@BRLCAD_VERSION@.tar.gz
+Buildroot: /var/tmp/redhat/BUILD/brlcad-@BRLCAD_VERSION@
 
 %description
 
@@ -47,7 +47,7 @@ make DESTDIR=$RPM_BUILD_ROOT install
 rm -rf $RPM_BUILD_ROOT
 
 %files
-/usr/@PACKAGE@
+/usr/brlcad
 
 %changelog
 

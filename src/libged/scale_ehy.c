@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file scale_ehy.c
+/** @file libged/scale_ehy.c
  *
  * The scale_ehy command.
  */
@@ -41,44 +41,44 @@ _ged_scale_ehy(struct ged *gedp, struct rt_ehy_internal *ehy, const char *attrib
     RT_EHY_CK_MAGIC(ehy);
 
     switch (attribute[0]) {
-    case 'h':
-    case 'H':
-	if (!rflag)
-	    sf /= MAGNITUDE(ehy->ehy_H);
+	case 'h':
+	case 'H':
+	    if (!rflag)
+		sf /= MAGNITUDE(ehy->ehy_H);
 
-	VSCALE(ehy->ehy_H, ehy->ehy_H, sf);
-	break;
-    case 'a':
-    case 'A':
-	if (rflag)
-	    newrad = ehy->ehy_r1 * sf;
-	else
-	    newrad = sf;
+	    VSCALE(ehy->ehy_H, ehy->ehy_H, sf);
+	    break;
+	case 'a':
+	case 'A':
+	    if (rflag)
+		newrad = ehy->ehy_r1 * sf;
+	    else
+		newrad = sf;
 
-	if (newrad >= ehy->ehy_r2)
-	    ehy->ehy_r1 = newrad;
-	break;
-    case 'b':
-    case 'B':
-	if (rflag)
-	    newrad = ehy->ehy_r2 * sf;
-	else
-	    newrad = sf;
+	    if (newrad >= ehy->ehy_r2)
+		ehy->ehy_r1 = newrad;
+	    break;
+	case 'b':
+	case 'B':
+	    if (rflag)
+		newrad = ehy->ehy_r2 * sf;
+	    else
+		newrad = sf;
 
-	if (newrad <= ehy->ehy_r1)
-	    ehy->ehy_r2 = newrad;
-	break;
-    case 'c':
-    case 'C':
-	if (rflag)
-	    ehy->ehy_c *= sf;
-	else
-	    ehy->ehy_c = sf;
+	    if (newrad <= ehy->ehy_r1)
+		ehy->ehy_r2 = newrad;
+	    break;
+	case 'c':
+	case 'C':
+	    if (rflag)
+		ehy->ehy_c *= sf;
+	    else
+		ehy->ehy_c = sf;
 
-	break;
-    default:
-	bu_vls_printf(&gedp->ged_result_str, "bad ehy attribute - %s", attribute);
-	return GED_ERROR;
+	    break;
+	default:
+	    bu_vls_printf(gedp->ged_result_str, "bad ehy attribute - %s", attribute);
+	    return GED_ERROR;
     }
 
     return GED_OK;

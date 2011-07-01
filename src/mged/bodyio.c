@@ -118,7 +118,7 @@ cmd_import_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
 	mged_print_result(TCL_ERROR);
 	return TCL_ERROR;
     } else {
-	RT_INIT_DB_INTERNAL(&intern);
+	RT_DB_INTERNAL_INIT(&intern);
     }
 
     /*
@@ -172,7 +172,7 @@ cmd_import_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
 	    } else if (gotten < stat_buf.st_size) {
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls,
-			      "Incomplete read of object %s from file %s, got %d bytes\n",
+			      "Incomplete read of object %s from file %s, got %zu bytes\n",
 			      argv[1], argv[2], gotten);
 		Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
 		bu_vls_free(&vls);
@@ -180,11 +180,11 @@ cmd_import_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
 		return TCL_ERROR;
 	    }
 	    if (RT_G_DEBUG & DEBUG_VOL)
-		bu_log("gotten=%d,  minor_code is %d\n",
+		bu_log("gotten=%zu,  minor_code is %d\n",
 		       gotten, minor_code);
 	    bip->count = (long)(gotten / db5_type_sizeof_n_binu(minor_code));
 	    if (RT_G_DEBUG & DEBUG_VOL) {
-		bu_log("Got 'em!\nThink I own %d of 'em\n", bip->count);
+		bu_log("Got 'em!\nThink I own %zu of 'em\n", bip->count);
 		fflush(stderr);
 	    }
 	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -252,7 +252,7 @@ cmd_export_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
 	mged_print_result(TCL_ERROR);
 	return TCL_ERROR;
     }
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     if (rt_db_get_internal5(&intern, dp, dbip, NULL, &rt_uniresource)
 	!= ID_BINUNIF
 	|| db_get_external(&ext, dp, dbip) < 0) {
@@ -294,7 +294,7 @@ cmd_export_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
 		RT_CK_BINUNIF(bip);
 		rt_binunif_dump(bip);
 		bufp = (void *) bip->u.uint8;
-		bu_log("cmd_export_body() thinks bip->count=%d\n", bip->count);
+		bu_log("cmd_export_body() thinks bip->count=%zu\n", bip->count);
 		switch (bip->type) {
 		    case DB5_MINORTYPE_BINU_FLOAT:
 			if (RT_G_DEBUG & DEBUG_VOL)

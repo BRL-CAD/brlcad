@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file g-xxx.c
+/** @file conv/g-xxx.c
  *
  * Sample code for converting BRL-CAD models to some other format.
  * This code assumes that your receiving format can handle CSG
@@ -160,8 +160,6 @@ main(int argc, char *argv[])
  *      @param tsp tree state (for parsing the tree)
  *      @param pathp A listing of all the nodes traversed to get to this node in the database
  *      @param combp the combination record for this region
- *      @param client_data pointer that was passed as last argument to db_walk_tree()
- *
  */
 int
 region_start(struct db_tree_state *tsp,
@@ -209,7 +207,6 @@ region_start(struct db_tree_state *tsp,
  *      @param tsp
  *      @param pathp
  *      @param curtree
- *      @param client_data
  *
  *      @return TREE_NULL if data in curtree was "stolen", otherwise db_walk_tree will
  *      clean up the dta in the union tree * that is returned

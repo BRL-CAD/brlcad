@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sgi_dep.c
+/** @file lgt/sgi_dep.c
     Author:		Gary S. Moss
 
     SGI specific routines.  NOTE (XXX) getorigin() doesn't work for
@@ -82,7 +82,7 @@ static char	*winpupstr[] =
 };
 
 /*
-  bool tryGetOrigin( long *xp, long *yp )
+  int tryGetOrigin( long *xp, long *yp )
 
   There is no way to inquire as to the frame buffer window origin
   through the frame buffer library (libfb(3)), so we need to use
@@ -94,7 +94,7 @@ static char	*winpupstr[] =
   frame buffer since it doesn't advertise the values returned by
   fb_gettype().
 */
-static bool
+static int
 tryGetOrigin( xp, yp )
     long *xp, *yp;
 {

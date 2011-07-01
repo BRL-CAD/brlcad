@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file list.c
+/** @file libged/list.c
  *
  * The l command.
  *
@@ -34,28 +34,91 @@
 #include "./ged_private.h"
 
 
-void _ged_do_list(struct ged *gedp, struct directory *dp, int verbose);
+void
+_ged_do_list(struct ged *gedp, struct directory *dp, int verbose)
+{
+    int id;
+    struct rt_db_internal intern;
+
+    RT_CK_DBI(gedp->ged_wdbp->dbip);
+
+    if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
+	/* this is the _GLOBAL object */
+	struct bu_attribute_value_set avs;
+	struct bu_attribute_value_pair *avp;
+
+	bu_vls_strcat(gedp->ged_result_str, dp->d_namep);
+	bu_vls_strcat(gedp->ged_result_str, ": global attributes object\n");
+	bu_avs_init_empty(&avs);
+	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	    bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for %s\n", dp->d_namep);
+	    return;
+	}
+/* !!! left off here*/
+	for (BU_AVS_FOR(avp, &avs)) {
+	    if (BU_STR_EQUAL(avp->name, "units")) {
+		double conv;
+		const char *str;
+
+		conv = atof(avp->value);
+		bu_vls_strcat(gedp->ged_result_str, "\tunits: ");
+		if ((str=bu_units_string(conv)) == NULL) {
+		    bu_vls_strcat(gedp->ged_result_str, "Unrecognized units\n");
+		} else {
+		    bu_vls_strcat(gedp->ged_result_str, str);
+		    bu_vls_putc(gedp->ged_result_str, '\n');
+		}
+	    } else {
+		bu_vls_putc(gedp->ged_result_str, '\t');
+		bu_vls_strcat(gedp->ged_result_str, avp->name);
+		bu_vls_strcat(gedp->ged_result_str, ": ");
+		bu_vls_strcat(gedp->ged_result_str, avp->value);
+		bu_vls_putc(gedp->ged_result_str, '\n');
+	    }
+	}
+    } else {
+
+	if ((id = rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip,
+				     (fastf_t *)NULL, &rt_uniresource)) < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal(%s) failure\n", dp->d_namep);
+	    return;
+	}
+
+	bu_vls_printf(gedp->ged_result_str, "%s:  ", dp->d_namep);
+
+	if (!rt_functab[id].ft_describe ||
+	    rt_functab[id].ft_describe(gedp->ged_result_str,
+				       &intern,
+				       verbose,
+				       gedp->ged_wdbp->dbip->dbi_base2local,
+				       &rt_uniresource,
+				       gedp->ged_wdbp->dbip) < 0)
+	    bu_vls_printf(gedp->ged_result_str, "%s: describe error\n", dp->d_namep);
+	rt_db_free_internal(&intern);
+    }
+}
+
 
 int
 ged_list(struct ged *gedp, int argc, const char *argv[])
 {
-    struct directory	*dp;
-    int		arg;
-    int				id;
-    int				recurse = 0;
-    char			*listeval = "listeval";
-    struct rt_db_internal	intern;
+    struct directory *dp;
+    int arg;
+    int id;
+    int recurse = 0;
+    char *listeval = "listeval";
+    struct rt_db_internal intern;
     static const char *usage = "[-r] <objects>";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -84,7 +147,7 @@ ged_list(struct ged *gedp, int argc, const char *argv[])
 	    struct db_tree_state ts;
 	    struct db_full_path path;
 
-	    db_full_path_init( &path );
+	    db_full_path_init(&path);
 	    ts = gedp->ged_wdbp->wdb_initial_tree_state;     /* struct copy */
 	    ts.ts_dbip = gedp->ged_wdbp->dbip;
 	    ts.ts_resp = &rt_uniresource;
@@ -93,19 +156,19 @@ ged_list(struct ged *gedp, int argc, const char *argv[])
 	    if (db_follow_path_for_state(&ts, &path, argv[arg], 1))
 		continue;
 
-	    dp = DB_FULL_PATH_CUR_DIR( &path );
+	    dp = DB_FULL_PATH_CUR_DIR(&path);
 
 	    if ((id = rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, ts.ts_mat, &rt_uniresource)) < 0) {
-		bu_vls_printf(&gedp->ged_result_str, "rt_db_get_internal(%s) failure", dp->d_namep);
+		bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal(%s) failure", dp->d_namep);
 		continue;
 	    }
 
-	    db_free_full_path( &path );
+	    db_free_full_path(&path);
 
-	    bu_vls_printf(&gedp->ged_result_str, "%s:  ", argv[arg] );
+	    bu_vls_printf(gedp->ged_result_str, "%s:  ", argv[arg]);
 
-	    if (!rt_functab[id].ft_describe || rt_functab[id].ft_describe(&gedp->ged_result_str, &intern, 99, gedp->ged_wdbp->dbip->dbi_base2local, &rt_uniresource, gedp->ged_wdbp->dbip) < 0)
-		bu_vls_printf(&gedp->ged_result_str, "%s: describe error", dp->d_namep);
+	    if (!rt_functab[id].ft_describe || rt_functab[id].ft_describe(gedp->ged_result_str, &intern, 99, gedp->ged_wdbp->dbip->dbi_base2local, &rt_uniresource, gedp->ged_wdbp->dbip) < 0)
+		bu_vls_printf(gedp->ged_result_str, "%s: describe error", dp->d_namep);
 
 	    rt_db_free_internal(&intern);
 	} else {
@@ -117,74 +180,6 @@ ged_list(struct ged *gedp, int argc, const char *argv[])
     }
 
     return GED_OK;
-}
-
-
-/*
- *			G E D _ D O _ L I S T
- */
-void
-_ged_do_list(struct ged *gedp, struct directory *dp, int verbose)
-{
-    int			id;
-    struct rt_db_internal	intern;
-
-    RT_CK_DBI(gedp->ged_wdbp->dbip);
-
-    if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
-	/* this is the _GLOBAL object */
-	struct bu_attribute_value_set avs;
-	struct bu_attribute_value_pair	*avp;
-
-	bu_vls_strcat(&gedp->ged_result_str, dp->d_namep);
-	bu_vls_strcat(&gedp->ged_result_str, ": global attributes object\n");
-	bu_avs_init_empty(&avs);
-	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
-	    bu_vls_printf(&gedp->ged_result_str, "Cannot get attributes for %s\n", dp->d_namep);
-	    return;
-	}
-/* !!! left off here*/
-	for (BU_AVS_FOR( avp, &avs)) {
-	    if (BU_STR_EQUAL(avp->name, "units")) {
-		double conv;
-		const char *str;
-
-		conv = atof(avp->value);
-		bu_vls_strcat(&gedp->ged_result_str, "\tunits: ");
-		if ((str=bu_units_string(conv)) == NULL) {
-		    bu_vls_strcat(&gedp->ged_result_str, "Unrecognized units\n");
-		} else {
-		    bu_vls_strcat(&gedp->ged_result_str, str);
-		    bu_vls_putc(&gedp->ged_result_str, '\n');
-		}
-	    } else {
-		bu_vls_putc(&gedp->ged_result_str, '\t');
-		bu_vls_strcat(&gedp->ged_result_str, avp->name);
-		bu_vls_strcat(&gedp->ged_result_str, ": ");
-		bu_vls_strcat(&gedp->ged_result_str, avp->value);
-		bu_vls_putc(&gedp->ged_result_str, '\n');
-	    }
-	}
-    } else {
-
-	if ((id = rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip,
-				     (fastf_t *)NULL, &rt_uniresource)) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "rt_db_get_internal(%s) failure\n", dp->d_namep);
-	    return;
-	}
-
-	bu_vls_printf(&gedp->ged_result_str, "%s:  ", dp->d_namep);
-
-	if (!rt_functab[id].ft_describe ||
-	    rt_functab[id].ft_describe(&gedp->ged_result_str,
-				       &intern,
-				       verbose,
-				       gedp->ged_wdbp->dbip->dbi_base2local,
-				       &rt_uniresource,
-				       gedp->ged_wdbp->dbip) < 0)
-	    bu_vls_printf(&gedp->ged_result_str, "%s: describe error\n", dp->d_namep);
-	rt_db_free_internal(&intern);
-    }
 }
 
 

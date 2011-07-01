@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixdsplit.c
+/** @file util/pixdsplit.c
  *
  * Disentangle the chars from the doubles in a pixd(5) stream
  *

@@ -464,7 +464,7 @@ nmgbld(void)
     granules = atol(cp);
 
     /* Allocate storage for external v5 form of the body */
-    BU_INIT_EXTERNAL(&ext);
+    BU_EXTERNAL_INIT(&ext);
     ext.ext_nbytes = SIZEOF_NETWORK_LONG + 26*SIZEOF_NETWORK_LONG + 128 * granules;
     ext.ext_buf = bu_malloc(ext.ext_nbytes, "nmg ext_buf");
     *(uint32_t *)ext.ext_buf = htonl(version);
@@ -499,7 +499,7 @@ nmgbld(void)
     }
 
     /* Next, import this disk record into memory */
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     if (rt_functab[ID_NMG].ft_import5(&intern, &ext, bn_mat_identity, ofp->dbip, &rt_uniresource) < 0)
 	bu_exit(-1, "ft_import5 failed on NMG %s\n", name);
     bu_free_external(&ext);
@@ -510,7 +510,7 @@ nmgbld(void)
     /* Finally, squirt it back out through LIBWDB */
     mk_nmg(ofp, name, (struct model *)intern.idb_ptr);
     /* mk_nmg() frees the intern.idp_ptr pointer */
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
 
     bu_free(name, "name");
 }
@@ -1123,7 +1123,7 @@ polyhbld(void)
     }
 
     /* Convert the polysolid to a BoT */
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_type = ID_POLY;
     intern.idb_meth = &rt_functab[ID_POLY];
@@ -1181,148 +1181,6 @@ materbld(void)
 
     /* Put it on a linked list for output later */
     rt_color_addrec(low, hi, r, g, b, -1L);
-}
-
-
-/**
- * B S P L B L D
- *
- * This routine builds B-splines using libwdb.
- */
-void
-bsplbld(void)
-{
-#if 0
-    char	*cp;
-    char	*np;
-    short		nsurf;		/* number of surfaces */
-    fastf_t		resolution;	/* resolution of flatness */
-
-    cp = buf;
-    cp++;			/* ident */
-    cp = nxt_spc(cp);		/* skip the space */
-
-    np = name;
-    while (*cp != ' ') {
-	*np++ = *cp++;
-    }
-    *np = '\0';
-    cp = nxt_spc(cp);
-
-    nsurf = (short)atoi(cp);
-    cp = nxt_spc(cp);
-    resolution = atof(cp);
-
-    mk_bsolid(ofp, name, nsurf, resolution);
-#else
-    bu_exit(1, "bsplbld() needs to be upgraded to v5\n");
-#endif
-}
-
-
-/**
- * B S U R F B L D
- *
- * This routine builds d-spline surface descriptions using libwdb.
- */
-void
-bsurfbld(void)
-{
-#if 0
-
-    /* HELP! This involves mk_bsurf(filep, bp) where bp is a ptr to struct */
-
-    char	*cp;
-    int	i;
-    float	*vp;
-    int		nbytes, count;
-    float		*fp;
-
-    cp = buf;
-    record.d.d_id = *cp++;
-    cp = nxt_spc(cp);		/* skip the space */
-
-    record.d.d_order[0] = (short)atoi(cp);
-    cp = nxt_spc(cp);
-    record.d.d_order[1] = (short)atoi(cp);
-    cp = nxt_spc(cp);
-    record.d.d_kv_size[0] = (short)atoi(cp);
-    cp = nxt_spc(cp);
-    record.d.d_kv_size[1] = (short)atoi(cp);
-    cp = nxt_spc(cp);
-    record.d.d_ctl_size[0] = (short)atoi(cp);
-    cp = nxt_spc(cp);
-    record.d.d_ctl_size[1] = (short)atoi(cp);
-    cp = nxt_spc(cp);
-    record.d.d_geom_type = (short)atoi(cp);
-    cp = nxt_spc(cp);
-    record.d.d_nknots = (short)atoi(cp);
-    cp = nxt_spc(cp);
-    record.d.d_nctls = (short)atoi(cp);
-
-    record.d.d_nknots =
-	ngran(record.d.d_kv_size[0] + record.d.d_kv_size[1]);
-
-    record.d.d_nctls =
-	ngran(record.d.d_ctl_size[0] * record.d.d_ctl_size[1]
-	      * record.d.d_geom_type);
-
-    /* Write out the record */
-    (void)fwrite((char *)&record, sizeof record, 1, ofp);
-
-    /*
-     * The b_surf_head record is followed by d_nknots granules of knot
-     * vectors (first u, then v), and then by d_nctls granules of
-     * control mesh information.  Note that neither of these have an
-     * ID field!
-     *
-     * B-spline surface record, followed by
-     * d_kv_size[0] floats,
-     * d_kv_size[1] floats,
-     * padded to d_nknots granules, followed by
-     * ctl_size[0]*ctl_size[1]*geom_type floats,
-     * padded to d_nctls granules.
-     *
-     * IMPORTANT NOTE: granule == sizeof(union record)
-     */
-
-    /* Malloc and clear memory for the KNOT DATA and read it */
-    nbytes = record.d.d_nknots * sizeof(union record);
-    vp = (float *)bu_malloc(nbytes, "vp");
-    fp = vp;
-    memset((char *)vp, 0, nbytes);
-    /* Read the knot vector information */
-    count = record.d.d_kv_size[0] + record.d.d_kv_size[1];
-    for (i = 0; i < count; i++) {
-	bu_fgets(buf, BUFSIZE, ifp);
-	(void)sscanf(buf, "%f", vp++);
-    }
-    /* Write out the information */
-    (void)fwrite((char *)fp, nbytes, 1, ofp);
-
-    /* Free the knot data memory */
-    (void)bu_free((char *)fp, "knot data");
-
-    /* Malloc and clear memory for the CONTROL MESH data and read it */
-    nbytes = record.d.d_nctls * sizeof(union record);
-    vp = (float *)bu_malloc(nbytes, "vp");
-    fp = vp;
-    memset((char *)vp, 0, nbytes);
-    /* Read the control mesh information */
-    count = record.d.d_ctl_size[0] * record.d.d_ctl_size[1] *
-	record.d.d_geom_type;
-    for (i = 0; i < count; i++) {
-	bu_fgets(buf, BUFSIZE, ifp);
-	(void)sscanf(buf, "%f", vp++);
-    }
-    /* Write out the information */
-    (void)fwrite((char *)fp, nbytes, 1, ofp);
-
-    /* Free the control mesh memory */
-    (void)bu_free((char *)fp, "mesh data");
-#else
-    bu_exit(1, "bsrfbld() needs to be upgraded to v5\n");
-#endif
 }
 
 
@@ -1885,11 +1743,11 @@ main(int argc, char *argv[])
 		continue;
 
 	    case ID_BSOLID:
-		bsplbld();
+		bu_log("WARNING: conversion support for old B-spline solid geometry is not supported.  Contact devs@brlcad.org if you need this feature.");
 		continue;
 
 	    case ID_BSURF:
-		bsurfbld();
+		bu_log("WARNING: conversion support for old B-spline surface geometry is not supported.  contact devs@brlcad.org if you need this feature.");
 		continue;
 
 	    case DBID_PIPE:

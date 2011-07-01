@@ -49,7 +49,8 @@ EXTRA_DIST = \
 	BUGS \
 	README \
 	teach-jove \
-	teach-jove.in
+	teach-jove.in \
+	CMakeLists.txt
 
 BUILT_SOURCES = \
 	teach-jove

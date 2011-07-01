@@ -153,7 +153,7 @@ SCLP23(DAObject__set)::SCLP23_NAME(DAObject__set) (int defaultSize)
 // : _rep(os_Collection<DAObject_ptr>::create(os_database::of(this)) ), 
  : _rep(os_List<SCLP23(DAObject_ptr)>::create(os_database::of(this)) ), 
    _cursor(_rep),
-   _first(SCLBOOL(BTrue))
+   _first(BTrue)
 {
 //    _rep = os_Set<DAObject_ptr>::create(os_database::of(this));
 }

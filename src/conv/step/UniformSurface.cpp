@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file UniformSurface.cpp
+/** @file step/UniformSurface.cpp
  *
  * Routines to convert STEP "UniformSurface" to BRL-CAD BREP
  * structures.

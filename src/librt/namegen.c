@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file namegen.c
+/** @file librt/namegen.c
  *
  * Implements parser and next-name routines for BRL-CAD object names
  *

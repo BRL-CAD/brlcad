@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file if.c
+/** @file nirt/if.c
  *
  * This program is an Interactive Ray-Tracer
  *
@@ -162,11 +162,15 @@ if_hit(struct application *ap, struct partition *part_head, struct seg *finished
 	    ValTab[VTI_CLAIMANT_COUNT].value.ival = 0;
 	    for (rpp = part->pt_overlap_reg; *rpp != REGION_NULL; ++rpp) {
 		char tmpcp[512] = {0};
+		char *base = NULL;
 
 		if (ValTab[VTI_CLAIMANT_COUNT].value.ival++)
 		    bu_vls_strcat(&claimant_list, " ");
 		bu_strlcpy(tmpcp, (*rpp)->reg_name, sizeof(tmpcp));
-		bu_vls_strcat(&claimant_list, bu_basename(tmpcp));
+		
+		base = bu_basename(tmpcp);
+		bu_vls_strcat(&claimant_list, base);
+		bu_free(base, "bu_basename");
 	    }
 	    ValTab[VTI_CLAIMANT_LIST].value.sval =
 		bu_vls_addr(&claimant_list);

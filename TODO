@@ -17,28 +17,38 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* test CMake build in multiple configurations on multiple platforms
-  (Release/Debug, linux/mac/win/fbsd, x86/x86_64/ppc64/sparc)
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
-* environment variable (LIBRT_BOT_MINTIE) override so any librt
-  application can attempt tie evaluation.
+* fix osX link line to stop mixing X libs (causes segfault on GL stuff)
+  Assuming this is CMake - this will involve making FindX11 "smarter"
+  about ensuring that all of the various X11 libraries it finds share
+  a common directory structure.  The problem appears to manifest when
+  both XQuartz (Apple's X11) and one of the third party packaging
+  systems' X11 (Fink, Macports, etc.) are installed simultaneously.
+  Probably the way to do this will be to find the "main" X11 library,
+  search for other libraries in that specific parent path to develop
+  a results set, and then do that again for any other "main" X11
+  libraries.  Will need some decision criteria if multiple valid
+  installs are found. - CY
 
-* implement support for the other file entity types to libbu
+* eliminate dbi_filepath (perhaps replace with dbi_filedir) as we
+  shouldn't need to search.  we were told where the database was.
 
 * fix bottie crash on 32b builds
+
+* upgrade source repository back-end to the latest SVN 1.5 so we can
+  benefit from proper merge tracking.
+
+* implement support for the other file entity types to libbu
 
 * resolve bot bin sort optimization crash, disabled during release
 
 * implement new makesegs for tie
 
 * png support in rtwizard
-
-* upgrade source repository back-end to the latest SVN 1.5 so we can
-  benefit from proper merge tracking.
 
 * annotation primitive.  specifically a means to create an object in
   the database that can optionally be associated with an object and/or
@@ -65,6 +75,22 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* implement http network transfer tool for crash reports and benchmark
+  analyses (via libfetch)
+
+* reimplement benchmark suite in C/C++
+
+* implement oed+tra/sca/rot functionality consistently in libged as
+  translate/scale/rotate with a signature similar to:
+
+  {translate|rotate|scale} [--keypoint {bb_corner|bb_center}:{object_name} | {3d position}] [--relative xdist [ydist [zdist]] | --absolute xpos [ypos [zpos]]] object_name(s)
+
+  where 'oed' is basically converted into the --keypoint option and
+  object(s) to work on.
+
+* make bu_basename/bu_dirname not allocation memory.  have caller pass
+  buffer in as a parameter with size ala snprintf/memcpy.
 
 * solids regression is failing in optimized builds  - 3 off by many. 
   Looks to be floating fuzz overlap/pick issue? pixel 131329.
@@ -120,7 +146,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * make the converters export all top-level objects by default
 
-* rename all the g_* tools sans "_" [save until 7.20]
+* rename all the g_* tools sans "_" [save until 7.22]
 
 * vls name wrapping (reversible argv-to-vls, vls-to-argv).  look at
   src/libged/glob.c code, very similar.

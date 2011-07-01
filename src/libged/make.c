@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file make.c
+/** @file libged/make.c
  *
  * The make command.
  *
@@ -46,13 +46,13 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     fastf_t scale = 1;
     point_t origin = {0.0, 0.0, 0.0};
-    struct rt_db_internal	internal;
-    struct rt_arb_internal	*arb_ip;
-    struct rt_ars_internal	*ars_ip;
-    struct rt_tgc_internal	*tgc_ip;
-    struct rt_ell_internal	*ell_ip;
-    struct rt_tor_internal	*tor_ip;
-    struct rt_grip_internal	*grp_ip;
+    struct rt_db_internal internal;
+    struct rt_arb_internal *arb_ip;
+    struct rt_ars_internal *ars_ip;
+    struct rt_tgc_internal *tgc_ip;
+    struct rt_ell_internal *ell_ip;
+    struct rt_tor_internal *tor_ip;
+    struct rt_grip_internal *grp_ip;
     struct rt_half_internal *half_ip;
     struct rt_rpc_internal *rpc_ip;
     struct rt_rhc_internal *rhc_ip;
@@ -65,8 +65,8 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
     struct rt_extrude_internal *extrude_ip;
     struct rt_bot_internal *bot_ip;
     struct rt_arbn_internal *arbn_ip;
-    struct rt_superell_internal	*superell_ip;
-    struct rt_metaball_internal	*metaball_ip;
+    struct rt_superell_internal *superell_ip;
+    struct rt_metaball_internal *metaball_ip;
     struct rt_pnts_internal *pnts_ip;
     static const char *usage = "-h | -t | -o origin -s sf name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|ehy|ell|ell1|epa|eto|extrude|grip|half|hyp|nmg|part|pipe|pnts|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>";
 
@@ -75,11 +75,11 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -94,32 +94,32 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 			   &origin[X],
 			   &origin[Y],
 			   &origin[Z]) != 3) {
-		    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		    return GED_ERROR;
 		}
 		break;
 	    case 's':
 	    case 'S':
 		if (sscanf(bu_optarg, "%lf", &scale) != 1) {
-		    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		    return GED_ERROR;
 		}
 		break;
 	    case 't':
 	    case 'T':
 		if (argc == 2) {
-		    bu_vls_printf(&gedp->ged_result_str, "arb8 arb7 arb6 arb5 arb4 arbn ars bot ehy ell ell1 epa eto extrude grip half hyp nmg part pipe pnts rcc rec rhc rpc rpp sketch sph tec tgc tor trc superell metaball");
+		    bu_vls_printf(gedp->ged_result_str, "arb8 arb7 arb6 arb5 arb4 arbn ars bot ehy ell ell1 epa eto extrude grip half hyp nmg part pipe pnts rcc rec rhc rpc rpp sketch sph tec tgc tor trc superell metaball");
 		    return GED_HELP;
 		}
 
-		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		return GED_ERROR;
 	    case 'h':
 	    case 'H':
-		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		return GED_HELP;
 	    default:
-		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		return GED_ERROR;
 	}
     }
@@ -127,14 +127,14 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
     argc -= bu_optind;
 
     if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     save_bu_optind = bu_optind;
 
     GED_CHECK_EXISTS(gedp, argv[bu_optind], LOOKUP_QUIET, GED_ERROR);
-    RT_INIT_DB_INTERNAL(&internal);
+    RT_DB_INTERNAL_INIT(&internal);
 
     if (BU_STR_EQUAL(argv[bu_optind+1], "arb8") ||
 	BU_STR_EQUAL(argv[bu_optind+1],  "rpp")) {
@@ -600,7 +600,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_PNTS;
 	internal.idb_meth = &rt_functab[ID_PNTS];
-	internal.idb_ptr = (genptr_t) bu_malloc(sizeof(struct rt_pnts_internal),"rt_pnts_internal");
+	internal.idb_ptr = (genptr_t) bu_malloc(sizeof(struct rt_pnts_internal), "rt_pnts_internal");
 
 	pnts_ip = (struct rt_pnts_internal *) internal.idb_ptr;
 	pnts_ip->magic = RT_PNTS_INTERNAL_MAGIC;
@@ -658,7 +658,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	av[0] = "make_name";
 	av[1] = "skt_";
 	ged_make_name(gedp, 2, (const char **)av);
-	extrude_ip->sketch_name = bu_strdup(bu_vls_addr(&gedp->ged_result_str));
+	extrude_ip->sketch_name = bu_strdup(bu_vls_addr(gedp->ged_result_str));
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
 
 	sprintf(center_str, "%f %f %f", V3ARGS(origin));
@@ -772,11 +772,11 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	fprintf(stdout, "superell being made with %f and %f\n", superell_ip->n, superell_ip->e);
 
     } else if (BU_STR_EQUAL(argv[bu_optind+1], "hf")) {
-	bu_vls_printf(&gedp->ged_result_str, "make: the height field is deprecated and not supported by this command.\nUse the dsp primitive.\n");
+	bu_vls_printf(gedp->ged_result_str, "make: the height field is deprecated and not supported by this command.\nUse the dsp primitive.\n");
 	return GED_ERROR;
     } else if (BU_STR_EQUAL(argv[bu_optind+1], "pg") ||
 	       BU_STR_EQUAL(argv[bu_optind+1], "poly")) {
-	bu_vls_printf(&gedp->ged_result_str, "make: the polysolid is deprecated and not supported by this command.\nUse the bot primitive.");
+	bu_vls_printf(gedp->ged_result_str, "make: the polysolid is deprecated and not supported by this command.\nUse the bot primitive.");
 	return GED_ERROR;
     } else if (BU_STR_EQUAL(argv[bu_optind+1], "cline") ||
 	       BU_STR_EQUAL(argv[bu_optind+1], "dsp") ||
@@ -785,7 +785,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	       BU_STR_EQUAL(argv[bu_optind+1], "spline") ||
 	       BU_STR_EQUAL(argv[bu_optind+1], "submodel") ||
 	       BU_STR_EQUAL(argv[bu_optind+1], "vol")) {
-	bu_vls_printf(&gedp->ged_result_str, "make: the %s primitive is not supported by this command", argv[bu_optind+1]);
+	bu_vls_printf(gedp->ged_result_str, "make: the %s primitive is not supported by this command", argv[bu_optind+1]);
 	return GED_ERROR;
     } else if (BU_STR_EQUAL(argv[bu_optind+1], "metaball")) {
 	struct wdb_metaballpt *mbpt;
@@ -814,7 +814,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	bu_log("metaball being made with %f threshold and two points using the %s rendering method\n",
 	       metaball_ip->threshold, rt_metaball_lookup_type_name(metaball_ip->method));
     } else {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 

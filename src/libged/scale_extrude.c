@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file scale_extrude.c
+/** @file libged/scale_extrude.c
  *
  * The scale_extrude command.
  *
@@ -43,22 +43,22 @@ _ged_scale_extrude(struct ged *gedp, struct rt_extrude_internal *extrude, const 
     RT_EXTRUDE_CK_MAGIC(extrude);
 
     switch (attribute[0]) {
-    case 'h':
-    case 'H':
-	if (!rflag)
-	    sf /= MAGNITUDE(extrude->h);
+	case 'h':
+	case 'H':
+	    if (!rflag)
+		sf /= MAGNITUDE(extrude->h);
 
-	VSCALE(hvec, extrude->h, sf);
+	    VSCALE(hvec, extrude->h, sf);
 
-	/* Make sure hvec is not zero length */
-	if (MAGNITUDE(hvec) > SQRT_SMALL_FASTF) {
-	    VMOVE(extrude->h, hvec);
-	}
+	    /* Make sure hvec is not zero length */
+	    if (MAGNITUDE(hvec) > SQRT_SMALL_FASTF) {
+		VMOVE(extrude->h, hvec);
+	    }
 
-	break;
-    default:
-	bu_vls_printf(&gedp->ged_result_str, "bad extrude attribute - %s", attribute);
-	return GED_ERROR;
+	    break;
+	default:
+	    bu_vls_printf(gedp->ged_result_str, "bad extrude attribute - %s", attribute);
+	    return GED_ERROR;
     }
 
     return GED_OK;

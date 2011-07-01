@@ -149,7 +149,7 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     bi.brep = brep;
 
     struct rt_db_internal di;
-    RT_INIT_DB_INTERNAL(&di);
+    RT_DB_INTERNAL_INIT(&di);
     di.idb_ptr = (genptr_t)&bi;
 
     return rt_brep_prep(stp, &di, rtip);
@@ -187,15 +187,15 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_specific = (genptr_t)nurbs;
 
     /* zero thickness will get missed by the raytracer */
-    if (NEAR_ZERO(stp->st_min[X] - stp->st_max[X], los)) {
+    if (NEAR_EQUAL(stp->st_min[X], stp->st_max[X], los)) {
 	stp->st_min[X] -= los;
 	stp->st_max[X] += los;
     }
-    if (NEAR_ZERO(stp->st_min[Y] - stp->st_max[Y], los)) {
+    if (NEAR_EQUAL(stp->st_min[Y], stp->st_max[Y], los)) {
 	stp->st_min[Y] -= los;
 	stp->st_max[Y] += los;
     }
-    if (NEAR_ZERO(stp->st_min[Z] - stp->st_max[Z], los)) {
+    if (NEAR_EQUAL(stp->st_min[Z], stp->st_max[Z], los)) {
 	stp->st_min[Z] -= los;
 	stp->st_max[Z] += los;
     }
@@ -675,7 +675,7 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     bi.brep = brep;
 
     struct rt_db_internal di;
-    RT_INIT_DB_INTERNAL(&di);
+    RT_DB_INTERNAL_INIT(&di);
     di.idb_ptr = (genptr_t)&bi;
 
     return rt_brep_plot(vhead, &di, ttol, tol);
@@ -984,7 +984,7 @@ rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
      * calculating the number of bytes
      * needed for storage and add it to the total
      */
-    BU_INIT_EXTERNAL(ep);
+    BU_EXTERNAL_INIT(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_LONG;	/* number of surfaces */
     for (s = 0; s < sip->nsrf; s++) {
 	ep->ext_nbytes += rt_nurb_bytes(sip->srfs[s]);

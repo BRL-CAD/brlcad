@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file fftest.c
+/** @file libfft/fftest.c
  *
  * Complex Number and FFT Library
  *

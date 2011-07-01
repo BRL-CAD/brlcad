@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup conv */
-/** @{ */
 
 #include "common.h"
 
@@ -892,7 +890,6 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
     return number_done;
 }
 
-/** @} */
 
 /*
  * Local Variables:

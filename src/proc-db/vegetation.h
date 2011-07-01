@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file vegetation.h
+/** @file proc-db/vegetation.h
  *
  * This is the header file to the program that generages geometry
  * that resembles or approximates a plant.  More specifically,
@@ -85,10 +85,8 @@ typedef struct structure {
 #define TRUE 1
 #define FALSE 0
 
-typedef unsigned char bool;
-
 typedef struct growthPoint {
-    bool alive;
+    char alive;
     unsigned int growthEnergy;
     int growthEnergyDelta; /* amount growth energy changes per age */
     double length;

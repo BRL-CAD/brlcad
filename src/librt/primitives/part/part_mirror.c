@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file part_mirror.c
+/** @file primitives/part/part_mirror.c
  *
  * mirror support
  *

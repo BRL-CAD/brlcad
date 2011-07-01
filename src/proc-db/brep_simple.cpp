@@ -1,4 +1,4 @@
-/*                           B R E P _ C U B E . C
+/*                 B R E P _ S I M P L E . C P P
  * BRL-CAD
  *
  * Copyright (c) 2004-2011 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file brep_cube.c
+/** @file proc-db/brep_simple.cpp
  *
  * Creates a brep with the following topology making direct use of
  * the openNURBS API:

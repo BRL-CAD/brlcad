@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file wavelet.c
+/** @file util/wavelet.c
  *
  * This program performs a wavelet transformation on data.
  * Transformations possible are decompositions and reconstructions.

@@ -19,7 +19,6 @@
  */
 /** @file dvec.h
  *
- * Brief description
  *
  */
 
@@ -130,8 +129,11 @@ extern "C++" {
 	    (fabs(a.y()-b.y()) < VEQUALITY);
     }
 
+    // 2x2 row-major matrix
+    typedef fastf_t mat2d_t[4] VEC_ALIGN;
+
+    // 2d point
     typedef fastf_t pt2d_t[2] VEC_ALIGN;
-    typedef fastf_t mat2d_t[4] VEC_ALIGN; // row-major
 
     //--------------------------------------------------------------------------------
     // MATH / VECTOR ops

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file UniformCurve.h
+/** @file step/UniformCurve.h
  *
  * Class definition used to convert STEP "UniformCurve" to BRL-CAD BREP
  * structures.

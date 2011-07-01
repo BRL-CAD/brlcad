@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file VolumeSiUnit.cpp
+/** @file step/VolumeSiUnit.cpp
  *
  * Routines to convert STEP "VolumeSiUnit" to BRL-CAD BREP
  * structures.

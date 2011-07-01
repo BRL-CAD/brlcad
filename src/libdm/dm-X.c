@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dm-X.c
+/** @file libdm/dm-X.c
  *
  * An X Window System Display Manager.
  *
@@ -78,6 +78,7 @@ struct allocated_colors {
     int b;
     XColor c;
 };
+
 
 HIDDEN void
 get_color(Display *dpy, Colormap cmap, XColor *color)
@@ -739,11 +740,11 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	    }
 	}
     }
- Done:
+Done:
     XFreeDeviceList(olist);
 #endif
 
- Skip_dials:
+Skip_dials:
     (void)X_configureWin_guts(dmp, 1);
 
 #ifdef HAVE_TK
@@ -1098,7 +1099,7 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
  *
  */
 HIDDEN int
-X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data)
+X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {
@@ -1410,6 +1411,7 @@ X_setZBuffer(struct dm *dmp, int zbuffer_on)
     return TCL_OK;
 }
 
+
 HIDDEN int
 X_getDisplayImage(struct dm *dmp, unsigned char **image)
 {
@@ -1667,8 +1669,8 @@ struct dm dm_X = {
     1,
     0,
     0,
-    0,/* bytes per pixel */
-    0,/* bits per channel */
+    0, /* bytes per pixel */
+    0, /* bits per channel */
     0,
     0,
     1.0, /* aspect ratio */

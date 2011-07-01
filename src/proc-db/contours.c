@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file contours.c
+/** @file proc-db/contours.c
  *
  * Program to read "Brain Mapping Project" data and plot it.
  *

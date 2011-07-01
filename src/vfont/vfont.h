@@ -1,4 +1,4 @@
-/*                          F O N T . H
+/*                         V F O N T . H
  * BRL-CAD
  *
  * Copyright (c) 2004-2011 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file font.h
+/** @file vfont.h
  *
  * Header file for putting fonts up.
  *

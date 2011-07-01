@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file pipe.c
+/** @file primitives/pipe/pipe.c
  *
  * Intersect a ray with a pipe solid.
  *
@@ -863,8 +863,8 @@ bend_pipe_shot(struct soltab *stp, struct xray *rp, struct bend_pipe *bp, struct
             struct lin_pipe *lin = (struct lin_pipe *)prev;
             or2_sq = lin->pipe_rotop_sq;
             ir2_sq = lin->pipe_ritop_sq;
-            if (!NEAR_ZERO((or_sq - or2_sq), RT_LEN_TOL) ||
-		!NEAR_ZERO((ir_sq - ir2_sq), RT_LEN_TOL)) {
+            if (!NEAR_EQUAL(or_sq, or2_sq, RT_LEN_TOL) ||
+		!NEAR_EQUAL(ir_sq, ir2_sq, RT_LEN_TOL)) {
                 discont_radius_shot(rp, bp->bend_start, bp->bend_startNorm,
 				    or_sq, ir_sq, or2_sq, ir2_sq, hits, hit_count, seg_no, stp);
             }
@@ -877,8 +877,8 @@ bend_pipe_shot(struct soltab *stp, struct xray *rp, struct bend_pipe *bp, struct
             struct bend_pipe *bend = (struct bend_pipe *)next;
             or2_sq = bend->bend_or*bend->bend_or;
             ir2_sq = bend->bend_ir*bend->bend_ir;
-            if (!NEAR_ZERO((or_sq - or2_sq), RT_LEN_TOL) ||
-		!NEAR_ZERO((ir_sq - ir2_sq), RT_LEN_TOL)) {
+            if (!NEAR_EQUAL(or_sq, or2_sq, RT_LEN_TOL) ||
+		!NEAR_EQUAL(ir_sq, ir2_sq, RT_LEN_TOL)) {
                 discont_radius_shot(rp, bp->bend_end, bp->bend_endNorm,
 				    or_sq, ir_sq, or2_sq, ir2_sq, hits, hit_count, seg_no, stp);
             }
@@ -886,8 +886,8 @@ bend_pipe_shot(struct soltab *stp, struct xray *rp, struct bend_pipe *bp, struct
             struct lin_pipe *lin = (struct lin_pipe *)next;
             or2_sq = lin->pipe_robase_sq;
             ir2_sq = lin->pipe_ribase_sq;
-            if (!NEAR_ZERO((or_sq - or2_sq), RT_LEN_TOL) ||
-		!NEAR_ZERO((ir_sq - ir2_sq), RT_LEN_TOL)) {
+            if (!NEAR_EQUAL(or_sq, or2_sq, RT_LEN_TOL) ||
+		!NEAR_EQUAL(ir_sq, ir2_sq, RT_LEN_TOL)) {
                 discont_radius_shot(rp, bp->bend_end, bp->bend_endNorm,
 				    or_sq, ir_sq, or2_sq, ir2_sq, hits, hit_count, seg_no, stp);
             }
@@ -1201,7 +1201,7 @@ rt_pipe_elim_dups(struct hit *hit, int *nh, struct xray *rp, struct soltab *stp)
         hitp = &hit[hitNo];
         next_hit = &hit[hitNo+1];
         
-        if (NEAR_ZERO(hitp->hit_dist - next_hit->hit_dist, 0.00001) &&
+        if (NEAR_EQUAL(hitp->hit_dist, next_hit->hit_dist, 0.00001) &&
 	    hitp->hit_surfno == next_hit->hit_surfno) {
             int i;
             for (i=hitNo ; i<(*nh) ; i++) {
@@ -1501,20 +1501,7 @@ rt_pipe_free(struct soltab *stp)
     if (!stp)
 	return;
 
-#if 0
-    struct bu_list *head = (struct bu_list *)stp->st_specific;
-    
-    /* free linked list */
-    while (BU_LIST_NON_EMPTY(&head->id.l)) {
-        struct bu_list *pipe_ptr;
-        
-        pipe_ptr = (struct bu_list *)(&head->id.l)->forw;
-        bu_free((char *)pipe_ptr, "pipe_specific");
-    }
-    
-    /* free list head */
-    bu_free((char *)head, "pipe_specific head");
-#endif
+    /* FIXME: make sure we're not leaking memory here */
 }
 
 
@@ -1850,7 +1837,7 @@ tesselate_pipe_start(struct wdb_pipept *pipept, int arc_segs, double sin_del, do
         return;
     }
     
-    if (NEAR_ZERO(ir - or, tol->dist))
+    if (NEAR_EQUAL(ir, or, tol->dist))
         return;
 
 
@@ -3006,7 +2993,7 @@ tesselate_pipe_end(struct wdb_pipept *pipept, int arc_segs, struct vertex ***out
     if (pipept->pp_od <= tol->dist)
         return;
     
-    if (NEAR_ZERO(pipept->pp_od - pipept->pp_id, tol->dist))
+    if (NEAR_EQUAL(pipept->pp_od, pipept->pp_id, tol->dist))
         return;
     
     if ((fu = nmg_cface(s, *outer_loop, arc_segs)) == NULL) {

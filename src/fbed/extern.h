@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file extern.h
+/** @file fbed/extern.h
  *
  */
 
@@ -69,7 +69,7 @@ extern Point image_center;
 extern Point windo_center;
 extern Point windo_anchor;
 extern Try *try_rootp;
-extern bool isSGI;
+extern int isSGI;
 extern char cread_buf[MACROBUFSZ], *cptr;
 extern char macro_buf[MACROBUFSZ], *macro_ptr;
 extern int brush_sz;

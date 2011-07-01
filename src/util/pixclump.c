@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixclump.c
+/** @file util/pixclump.c
  *
  * Quantize the color values in a PIX(5) stream to a set of specified
  * values

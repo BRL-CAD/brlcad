@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file readrec.c
+/** @file iges/readrec.c
  *
  * This routine reads record number "recno" from the IGES file and
  * places it in the "card" buffer (available for reading by

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file RectangularCompositeSurface.cpp
+/** @file step/RectangularCompositeSurface.cpp
  *
  * Routines to interface to STEP "RectangularCompositeSurface".
  *

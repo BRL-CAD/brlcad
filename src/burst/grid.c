@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file grid.c
+/** @file burst/grid.c
  *
  */
 

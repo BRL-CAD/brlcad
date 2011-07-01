@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_tcl.c
+/** @file liboptical/sh_tcl.c
  *
  * To add a new shader to the "rt" program's LIBOPTICAL library:
  *
@@ -39,9 +39,6 @@
 #include "optical.h"
 
 
-extern int rr_render(struct application *ap,
-		     struct partition *pp,
-		     struct shadework *swp);
 #define tcl_MAGIC 0x54434C00    /* "TCL" */
 #define CK_tcl_SP(_p) BU_CKMAG(_p, tcl_MAGIC, "tcl_specific")
 
@@ -92,8 +89,10 @@ struct bu_structparse tcl_parse_tab[] = {
 };
 
 
-HIDDEN int tcl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), tcl_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void tcl_print(register struct region *rp, char *dp), tcl_free(char *cp);
+HIDDEN int tcl_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int tcl_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
+HIDDEN void tcl_print(register struct region *rp, genptr_t dp);
+HIDDEN void tcl_free(genptr_t cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -119,7 +118,7 @@ struct mfuncs tcl_mfuncs[] = {
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-tcl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+tcl_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -140,7 +139,7 @@ tcl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 
     /* Get memory for the shader parameters and shader-specific data */
     BU_GETSTRUCT(tcl_sp, tcl_specific);
-    *dpp = (char *)tcl_sp;
+    *dpp = tcl_sp;
 
     /* initialize the default values for the shader */
     memcpy(tcl_sp, &tcl_defaults, sizeof(struct tcl_specific));
@@ -148,16 +147,6 @@ tcl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
     /* parse the user's arguments for this use of the shader. */
     if (bu_struct_parse(matparm, tcl_parse_tab, (char *)tcl_sp) < 0)
 	return -1;
-
-#if 0
-    tcl_sp->tcl_mp = bu_open_mapped_file(bu_vls_addr(tcl_sp->tcl_file),
-					 "tclShader");
-    if (!tcl_sp->tcl_mp) {
-	bu_log("Error opening Tcl shader file \"%s\"\n",
-	       bu_vls_addr(tcl_sp->tcl_file));
-	bu_bomb("");
-    }
-#endif
 
     for (cpu=0; cpu < MAX_PSW; cpu++) {
 	tcl_sp->tcl_interp[cpu] = Tcl_CreateInterp();
@@ -187,7 +176,7 @@ tcl_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
  * T C L _ P R I N T
  */
 HIDDEN void
-tcl_print(register struct region *rp, char *dp)
+tcl_print(register struct region *rp, genptr_t dp)
 {
     bu_struct_print(rp->reg_name, tcl_print_tab, (char *)dp);
 }
@@ -197,7 +186,7 @@ tcl_print(register struct region *rp, char *dp)
  * T C L _ F R E E
  */
 HIDDEN void
-tcl_free(char *cp)
+tcl_free(genptr_t cp)
 {
     bu_free(cp, "tcl_specific");
 }
@@ -211,7 +200,7 @@ tcl_free(char *cp)
  * structure.
  */
 int
-tcl_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+tcl_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
 
 
 /* defined in material.h */

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ManifoldSolidBrep.cpp
+/** @file step/ManifoldSolidBrep.cpp
  *
  * Routines to convert STEP "ManifoldSolidBrep" to BRL-CAD BREP
  * structures.

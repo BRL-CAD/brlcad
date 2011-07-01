@@ -19,7 +19,7 @@
  */
 /** @addtogroup dbio */
 /** @{ */
-/** @file dir.c
+/** @file librt/dir.c
  *
  * Ray Tracing program, GED database directory manager.
  *
@@ -100,12 +100,12 @@ rt_db_get_internal(
     int id;
     int ret;
 
-    RT_INIT_DB_INTERNAL(ip);
+    RT_DB_INTERNAL_INIT(ip);
 
     if (dbip->dbi_version > 4)
 	return rt_db_get_internal5(ip, dp, dbip, mat, resp);
 
-    BU_INIT_EXTERNAL(&ext);
+    BU_EXTERNAL_INIT(&ext);
 
     if (db_get_external(&ext, dp, dbip) < 0)
 	return -2;		/* FAIL */
@@ -168,7 +168,7 @@ rt_db_put_internal(
 	return rt_db_put_internal5(dp, dbip, ip, resp,
 				   DB5_MAJORTYPE_BRLCAD);
 
-    BU_INIT_EXTERNAL(&ext);
+    BU_EXTERNAL_INIT(&ext);
 
     /* Scale change on export is 1.0 -- no change */
     ret = -1;
@@ -217,7 +217,7 @@ rt_fwrite_internal(
     int ret;
 
     RT_CK_DB_INTERNAL(ip);
-    BU_INIT_EXTERNAL(&ext);
+    BU_EXTERNAL_INIT(&ext);
     RT_CK_FUNCTAB(ip->idb_meth);
 
     ret = -1;
@@ -268,7 +268,7 @@ rt_db_free_internal(struct rt_db_internal *ip)
     if (ip->idb_avs.magic == BU_AVS_MAGIC) {
 	bu_avs_free(&ip->idb_avs);
     }
-    RT_INIT_DB_INTERNAL(ip);
+    RT_DB_INTERNAL_INIT(ip);
 }
 
 

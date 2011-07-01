@@ -37,13 +37,17 @@ HIDDEN void
 VMessage(const char *format, va_list ap)
 {
     struct bu_vls str;
+    char *tmp_basename;
 
     bu_vls_init(&str);
 
     bu_vls_printf(&str, format, ap);
-    bu_log("%s: %V\n", bu_basename(bu_getprogname()), &str);
+    tmp_basename = bu_basename(bu_getprogname());
+
+    bu_log("%s: %V\n", tmp_basename, &str);
 
     bu_vls_free(&str);
+    bu_free(tmp_basename, "bu_basename");
 }
 
 

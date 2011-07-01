@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file view2model_vec.c
+/** @file libged/view2model_vec.c
  *
  * The view2model_vec command.
  *
@@ -46,7 +46,7 @@ ged_view2model_vec(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc != 4)
 	goto bad;
@@ -59,12 +59,12 @@ ged_view2model_vec(struct ged *gedp, int argc, const char *argv[])
     bn_mat_inv(inv_Viewrot, gedp->ged_gvp->gv_rotation);
     MAT4X3PNT(model_vec, inv_Viewrot, view_vec);
 
-    bn_encode_vect(&gedp->ged_result_str, model_vec);
+    bn_encode_vect(gedp->ged_result_str, model_vec);
 
     return GED_OK;
 
 bad:
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
 

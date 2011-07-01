@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ps.c
+/** @file libged/ps.c
  *
  * The ps command.
  *
@@ -38,19 +38,19 @@
 #include "./ged_private.h"
 
 
-static fastf_t ged_default_ps_ppi = 72.0;
-static fastf_t ged_default_ps_scale = 4.5 * 72.0 / 4096.0;
-static fastf_t ged_ps_color_sf = 1.0/255.0;
+static fastf_t ps_default_ppi = 72.0;
+static fastf_t ps_default_scale = 4.5 * 72.0 / 4096.0;
+static fastf_t ps_color_sf = 1.0/255.0;
 
 static float border_red = 0.0;
 static float border_green = 0.0;
 static float border_blue = 0.0;
 
-#define GED_TO_PS(_x) ((int)((_x)+2048))
-#define GED_TO_PS_COLOR(_c) ((_c)*ged_ps_color_sf)
+#define PS_COORD(_x) ((int)((_x)+2048))
+#define PS_COLOR(_c) ((_c)*ps_color_sf)
 
 static void
-ged_draw_ps_header(FILE *fp, char *font, char *title, char *creator, int linewidth, fastf_t scale, int xoffset, int yoffset)
+ps_draw_header(FILE *fp, char *font, char *title, char *creator, int linewidth, fastf_t scale, int xoffset, int yoffset)
 {
     fprintf(fp, "%%!PS-Adobe-1.0\n\
 %%begin(plot)\n\
@@ -91,49 +91,50 @@ ged_draw_ps_header(FILE *fp, char *font, char *title, char *creator, int linewid
 	%f %f scale	%% 0-4096 to 324 units (4.5 inches)\n\
 } def\n\
 \n\
-FntH  setfont\n\
+FntH setfont\n\
 NEWPG\n\
 ",
 	    xoffset, yoffset, scale, scale);
 }
 
+
 static void
-ged_draw_ps_solid(struct ged *gedp, FILE *fp, struct solid *sp, matp_t psmat)
+ps_draw_solid(struct ged *gedp, FILE *fp, struct solid *sp, matp_t psmat)
 {
-    static vect_t		last;
-    point_t			clipmin = {-1.0, -1.0, -MAX_FASTF};
-    point_t			clipmax = {1.0, 1.0, MAX_FASTF};
-    struct bn_vlist	*tvp;
-    point_t		*pt_prev=NULL;
-    fastf_t		dist_prev=1.0;
-    fastf_t		dist;
-    struct bn_vlist 	*vp = (struct bn_vlist *)&sp->s_vlist;
-    fastf_t			delta;
-    int 			useful = 0;
+    static vect_t last;
+    point_t clipmin = {-1.0, -1.0, -MAX_FASTF};
+    point_t clipmax = {1.0, 1.0, MAX_FASTF};
+    struct bn_vlist *tvp;
+    point_t *pt_prev=NULL;
+    fastf_t dist_prev=1.0;
+    fastf_t dist;
+    struct bn_vlist *vp = (struct bn_vlist *)&sp->s_vlist;
+    fastf_t delta;
+    int useful = 0;
 
     fprintf(fp, "%f %f %f setrgbcolor\n",
-	    GED_TO_PS_COLOR(sp->s_color[0]),
-	    GED_TO_PS_COLOR(sp->s_color[1]),
-	    GED_TO_PS_COLOR(sp->s_color[2]));
+	    PS_COLOR(sp->s_color[0]),
+	    PS_COLOR(sp->s_color[1]),
+	    PS_COLOR(sp->s_color[2]));
 
     /* delta is used in clipping to insure clipped endpoint is slightly
      * in front of eye plane (perspective mode only).
      * This value is a SWAG that seems to work OK.
      */
     delta = psmat[15]*0.0001;
-    if ( delta < 0.0 )
+    if (delta < 0.0)
 	delta = -delta;
-    if ( delta < SQRT_SMALL_FASTF )
+    if (delta < SQRT_SMALL_FASTF)
 	delta = SQRT_SMALL_FASTF;
 
-    for ( BU_LIST_FOR( tvp, bn_vlist, &vp->l ) )  {
-	int	i;
-	int	nused = tvp->nused;
-	int	*cmd = tvp->cmd;
+    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
+	int i;
+	int nused = tvp->nused;
+	int *cmd = tvp->cmd;
 	point_t *pt = tvp->pt;
-	for ( i = 0; i < nused; i++, cmd++, pt++ )  {
-	    static vect_t	start, fin;
-	    switch ( *cmd )  {
+	for (i = 0; i < nused; i++, cmd++, pt++) {
+	    static vect_t start, fin;
+	    switch (*cmd) {
 		case BN_VLIST_POLY_START:
 		case BN_VLIST_POLY_VERTNORM:
 		    continue;
@@ -144,22 +145,18 @@ ged_draw_ps_solid(struct ged *gedp, FILE *fp, struct solid *sp, matp_t psmat)
 			/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
 			 */
-			dist = VDOT( *pt, &psmat[12] ) + psmat[15];
-			if ( dist <= 0.0 )
-			{
+			dist = VDOT(*pt, &psmat[12]) + psmat[15];
+			if (dist <= 0.0) {
 			    pt_prev = pt;
 			    dist_prev = dist;
 			    continue;
-			}
-			else
-			{
-			    MAT4X3PNT( last, psmat, *pt );
+			} else {
+			    MAT4X3PNT(last, psmat, *pt);
 			    dist_prev = dist;
 			    pt_prev = pt;
 			}
-		    }
-		    else
-			MAT4X3PNT( last, psmat, *pt );
+		    } else
+			MAT4X3PNT(last, psmat, *pt);
 		    continue;
 		case BN_VLIST_POLY_DRAW:
 		case BN_VLIST_POLY_END:
@@ -169,54 +166,44 @@ ged_draw_ps_solid(struct ged *gedp, FILE *fp, struct solid *sp, matp_t psmat)
 			/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
 			 */
-			dist = VDOT( *pt, &psmat[12] ) + psmat[15];
-			if ( dist <= 0.0 )
-			{
-			    if ( dist_prev <= 0.0 )
-			    {
+			dist = VDOT(*pt, &psmat[12]) + psmat[15];
+			if (dist <= 0.0) {
+			    if (dist_prev <= 0.0) {
 				/* nothing to plot */
 				dist_prev = dist;
 				pt_prev = pt;
 				continue;
-			    }
-			    else
-			    {
+			    } else {
 				fastf_t alpha;
 				vect_t diff;
 				point_t tmp_pt;
 
 				/* clip this end */
-				VSUB2( diff, *pt, *pt_prev );
-				alpha = (dist_prev - delta) / ( dist_prev - dist );
-				VJOIN1( tmp_pt, *pt_prev, alpha, diff );
-				MAT4X3PNT( fin, psmat, tmp_pt );
+				VSUB2(diff, *pt, *pt_prev);
+				alpha = (dist_prev - delta) / (dist_prev - dist);
+				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
+				MAT4X3PNT(fin, psmat, tmp_pt);
 			    }
-			}
-			else
-			{
-			    if ( dist_prev <= 0.0 )
-			    {
+			} else {
+			    if (dist_prev <= 0.0) {
 				fastf_t alpha;
 				vect_t diff;
 				point_t tmp_pt;
 
 				/* clip other end */
-				VSUB2( diff, *pt, *pt_prev );
-				alpha = (-dist_prev + delta) / ( dist - dist_prev );
-				VJOIN1( tmp_pt, *pt_prev, alpha, diff );
-				MAT4X3PNT( last, psmat, tmp_pt );
-				MAT4X3PNT( fin, psmat, *pt );
-			    }
-			    else
-			    {
-				MAT4X3PNT( fin, psmat, *pt );
+				VSUB2(diff, *pt, *pt_prev);
+				alpha = (-dist_prev + delta) / (dist - dist_prev);
+				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
+				MAT4X3PNT(last, psmat, tmp_pt);
+				MAT4X3PNT(fin, psmat, *pt);
+			    } else {
+				MAT4X3PNT(fin, psmat, *pt);
 			    }
 			}
-		    }
-		    else
-			MAT4X3PNT( fin, psmat, *pt );
-		    VMOVE( start, last );
-		    VMOVE( last, fin );
+		    } else
+			MAT4X3PNT(fin, psmat, *pt);
+		    VMOVE(start, last);
+		    VMOVE(last, fin);
 		    break;
 	    }
 
@@ -225,17 +212,18 @@ ged_draw_ps_solid(struct ged *gedp, FILE *fp, struct solid *sp, matp_t psmat)
 
 	    fprintf(fp,
 		    "newpath %d %d moveto %d %d lineto stroke\n",
-		    GED_TO_PS( start[0] * 2047 ),
-		    GED_TO_PS( start[1] * 2047 ),
-		    GED_TO_PS( fin[0] * 2047 ),
-		    GED_TO_PS( fin[1] * 2047 ) );
+		    PS_COORD(start[0] * 2047),
+		    PS_COORD(start[1] * 2047),
+		    PS_COORD(fin[0] * 2047),
+		    PS_COORD(fin[1] * 2047));
 	    useful = 1;
 	}
     }
 }
 
+
 static void
-ged_draw_ps_body(struct ged *gedp, FILE *fp)
+ps_draw_body(struct ged *gedp, FILE *fp)
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
@@ -272,15 +260,16 @@ ged_draw_ps_body(struct ged *gedp, FILE *fp)
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    ged_draw_ps_solid(gedp, fp, sp, mat);
+	    ps_draw_solid(gedp, fp, sp, mat);
 	}
 
 	gdlp = next_gdlp;
     }
 }
 
+
 static void
-ged_draw_ps_border(FILE *fp)
+ps_draw_border(FILE *fp)
 {
     fprintf(fp, "%f %f %f setrgbcolor\n", border_red, border_green, border_blue);
     fprintf(fp, "newpath 0 0 moveto 4096 0 lineto stroke\n");
@@ -289,12 +278,14 @@ ged_draw_ps_border(FILE *fp)
     fprintf(fp, "newpath 0 4096 moveto 0 0 lineto stroke\n");
 }
 
+
 static void
-ged_draw_ps_footer(FILE *fp)
+ps_draw_footer(FILE *fp)
 {
     fputs("% showpage	% uncomment to use raw file\n", fp);
     fputs("%end(plot)\n", fp);
 }
+
 
 int
 ged_ps(struct ged *gedp, int argc, const char *argv[])
@@ -303,7 +294,7 @@ ged_ps(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls creator;
     struct bu_vls font;
     struct bu_vls title;
-    fastf_t scale = ged_default_ps_scale;
+    fastf_t scale = ps_default_scale;
     int linewidth = 4;
     int xoffset = 0;
     int yoffset = 0;
@@ -318,11 +309,11 @@ ged_ps(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -340,102 +331,102 @@ ged_ps(struct ged *gedp, int argc, const char *argv[])
 	fastf_t tmp_f;
 
 	switch (k) {
-	case 'a':
-	    bu_vls_trunc(&creator, 0);
-	    bu_vls_printf(&creator, "%s", bu_optarg);
+	    case 'a':
+		bu_vls_trunc(&creator, 0);
+		bu_vls_printf(&creator, "%s", bu_optarg);
 
-	    break;
-	case 'b':
-	    border = 1;
-	    break;
-	case 'c':
-	    if (sscanf(bu_optarg, "%d%*c%d%*c%d", &r, &g, &b) != 3) {
-		bu_vls_printf(&gedp->ged_result_str, "%s: bad color - %s", argv[0], bu_optarg);
-		return GED_ERROR;
-	    }
+		break;
+	    case 'b':
+		border = 1;
+		break;
+	    case 'c':
+		if (sscanf(bu_optarg, "%d%*c%d%*c%d", &r, &g, &b) != 3) {
+		    bu_vls_printf(gedp->ged_result_str, "%s: bad color - %s", argv[0], bu_optarg);
+		    return GED_ERROR;
+		}
 
-	    /* Clamp color values */
-	    if (r < 0)
-		r = 0;
-	    else if (r > 255)
-		r = 255;
+		/* Clamp color values */
+		if (r < 0)
+		    r = 0;
+		else if (r > 255)
+		    r = 255;
 
-	    if (g < 0)
-		g = 0;
-	    else if (g > 255)
-		g = 255;
+		if (g < 0)
+		    g = 0;
+		else if (g > 255)
+		    g = 255;
 
-	    if (b < 0)
-		b = 0;
-	    else if (b > 255)
-		b = 255;
+		if (b < 0)
+		    b = 0;
+		else if (b > 255)
+		    b = 255;
 
-	    border_red = GED_TO_PS_COLOR(r);
-	    border_green = GED_TO_PS_COLOR(g);
-	    border_blue = GED_TO_PS_COLOR(b);
+		border_red = PS_COLOR(r);
+		border_green = PS_COLOR(g);
+		border_blue = PS_COLOR(b);
 
-	    break;
-	case 'f':
-	    bu_vls_trunc(&font, 0);
-	    bu_vls_printf(&font, "%s", bu_optarg);
+		break;
+	    case 'f':
+		bu_vls_trunc(&font, 0);
+		bu_vls_printf(&font, "%s", bu_optarg);
 
-	    break;
-	case 's':
-	    if (sscanf(bu_optarg, "%lf", &tmp_f) != 1) {
-		bu_vls_printf(&gedp->ged_result_str, "%s: bad size - %s", argv[0], bu_optarg);
+		break;
+	    case 's':
+		if (sscanf(bu_optarg, "%lf", &tmp_f) != 1) {
+		    bu_vls_printf(gedp->ged_result_str, "%s: bad size - %s", argv[0], bu_optarg);
+		    goto bad;
+		}
+
+		if (tmp_f < 0.0 || NEAR_ZERO(tmp_f, 0.1)) {
+		    bu_vls_printf(gedp->ged_result_str, "%s: bad size - %s, must be greater than 0.1 inches\n", argv[0], bu_optarg);
+		    goto bad;
+		}
+
+		scale = tmp_f * ps_default_ppi / 4096.0;
+
+		break;
+	    case 't':
+		bu_vls_trunc(&title, 0);
+		bu_vls_printf(&title, "%s", bu_optarg);
+
+		break;
+	    case 'x':
+		if (sscanf(bu_optarg, "%lf", &tmp_f) != 1) {
+		    bu_vls_printf(gedp->ged_result_str, "%s: bad x offset - %s", argv[0], bu_optarg);
+		    goto bad;
+		}
+		xoffset = (int)(tmp_f * ps_default_ppi);
+
+		break;
+	    case 'y':
+		if (sscanf(bu_optarg, "%lf", &tmp_f) != 1) {
+		    bu_vls_printf(gedp->ged_result_str, "%s: bad y offset - %s", argv[0], bu_optarg);
+		    goto bad;
+		}
+		yoffset = (int)(tmp_f * ps_default_ppi);
+
+		break;
+	    default:
+		bu_vls_printf(gedp->ged_result_str, "%s: Unrecognized option - %s", argv[0], argv[bu_optind-1]);
 		goto bad;
-	    }
-
-	    if (tmp_f < 0.0 || NEAR_ZERO(tmp_f, 0.1)) {
-		bu_vls_printf(&gedp->ged_result_str, "%s: bad size - %s, must be greater than 0.1 inches\n", argv[0], bu_optarg);
-		goto bad;
-	    }
-
-	    scale = tmp_f * ged_default_ps_ppi / 4096.0;
-
-	    break;
-	case 't':
-	    bu_vls_trunc(&title, 0);
-	    bu_vls_printf(&title, "%s", bu_optarg);
-
-	    break;
-	case 'x':
-	    if (sscanf(bu_optarg, "%lf", &tmp_f) != 1) {
-		bu_vls_printf(&gedp->ged_result_str, "%s: bad x offset - %s", argv[0], bu_optarg);
-		goto bad;
-	    }
-	    xoffset = (int)(tmp_f * ged_default_ps_ppi);
-
-	    break;
-	case 'y':
-	    if (sscanf(bu_optarg, "%lf", &tmp_f) != 1) {
-		bu_vls_printf(&gedp->ged_result_str, "%s: bad y offset - %s", argv[0], bu_optarg);
-		goto bad;
-	    }
-	    yoffset = (int)(tmp_f * ged_default_ps_ppi);
-
-	    break;
-	default:
-	    bu_vls_printf(&gedp->ged_result_str, "%s: Unrecognized option - %s", argv[0], argv[bu_optind-1]);
-	    goto bad;
 	}
     }
 
     if ((argc - bu_optind) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	goto bad;
     }
 
     if ((fp = fopen(argv[bu_optind], "wb")) == NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Error opening file - %s\n", argv[0], argv[bu_optind]);
+	bu_vls_printf(gedp->ged_result_str, "%s: Error opening file - %s\n", argv[0], argv[bu_optind]);
 	goto bad;
     }
 
-    ged_draw_ps_header(fp, bu_vls_addr(&font), bu_vls_addr(&title), bu_vls_addr(&creator), linewidth, scale, xoffset, yoffset);
+    ps_draw_header(fp, bu_vls_addr(&font), bu_vls_addr(&title), bu_vls_addr(&creator), linewidth, scale, xoffset, yoffset);
     if (border)
-	ged_draw_ps_border(fp);
-    ged_draw_ps_body(gedp, fp);
-    ged_draw_ps_footer(fp);
+	ps_draw_border(fp);
+    ps_draw_body(gedp, fp);
+    ps_draw_footer(fp);
 
     fclose(fp);
 
@@ -445,13 +436,14 @@ ged_ps(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 
-  bad:
+bad:
     bu_vls_free(&font);
     bu_vls_free(&title);
     bu_vls_free(&creator);
 
     return GED_ERROR;
 }
+
 
 /*
  * Local Variables:

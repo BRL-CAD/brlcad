@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixinterp2x.c
+/** @file util/pixinterp2x.c
  *
  * Read a .pix file of a given resolution, and produce one with
  * twice as many pixels by interpolating between the pixels.

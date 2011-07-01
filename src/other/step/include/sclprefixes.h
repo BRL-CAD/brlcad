@@ -1,31 +1,7 @@
 #ifndef SCLPREFIXES_H
 #define	SCLPREFIXES_H
 
-/* DAS
-   What I had in mind here is that there could be a different prefix or 
-   namespace for some types (like the ones defined in CORBA or some other 
-   software package). e.g. the Boolean and Logical enums are problematic 
-   with various other software packages. They will be defined by the IDL 
-   generated C++. In that case they should not be defined in SCL. In either
-   case their SCL uses are always prefixed with macros defined in this file
-   to help adapt the code as necessary.
-*/
-
 /* **********************
-If you define NO_BOOLS_LOGS when you build the SCL then SCL will not define
-Bool or Logical C++ enums. You will need to:
- 1. Define Bool and Logical yourself somewhere and #include the name of the 
-    header file that defines them in a corbaIncludes.h that can be seen by 
-    SCL Makefiles (currently found in sdaiOrbix/corbaIncludes.h)
- 2. Define SCLBOOL, SCLBOOL_H, SCLLOG, and SCLLOG_H to match their non-SCL
-    name space or name prefix.
-
-If you have NO_BOOLS_LOGS turned off (the default) when building SCL
-then the definitions for Bool and Logical will be defined in SCL in 
-clstepcore/sdaiEnum.h 
-
-You should use the parameterized macro definition of SCLBOOL or SCLLOG below 
-when using Bool or Logical.
 
 The macro SCLP23_NAME is used in header files and for constructor/destructor
 class function names in corresponding .cc files.
@@ -106,13 +82,6 @@ The macro SCLP23 is used everywhere else.
    #define TIE_IDL_MODULE(x,y) TIE_SDAI_##x(y)
  #endif
 
- // Define the namespace that contains the Bool and Logical enum definitions.
- // If PART26 is defined, Bool and Logical should be in the IDL-generated 
- // code (and namespace).
- // *note* Currently the IDL generated code is not in a namespace.
- #define BOOL_LOG_NAMESPACE P26_NAMESPACE
- #define BOOL_LOG_NAMESPACE_F(x) P26_NAMESPACE_F(x)
-
  // This would be the namespace for your application schema. 
  // This is for the ITI-developed code. It really shouldn't go here - DAS
  #define APP_NAMESPACE P26_Simple_geometry
@@ -135,19 +104,6 @@ The macro SCLP23 is used everywhere else.
  #define P26_NAMESPACE 
  #define P26_NAMESPACE_F(x) x
 
- // Define the namespace that contains the Bool and Logical enum definitions.
- // NO_BOOLS_LOGS is used to turn off the SCL definitions of Bool and Logical
- #ifndef NO_BOOLS_LOGS
-   // Unless otherwise necessary, if not defined by IDL generated code use the
-   // SCL namespace definitions.
-   #define BOOL_LOG_NAMESPACE P23_NAMESPACE
-   #define BOOL_LOG_NAMESPACE_F(x) P23_NAMESPACE_F(x)
- #else 
-   // if you turn the definitions off you need to define how they are used.
-   #define BOOL_LOG_NAMESPACE 
-   #define BOOL_LOG_NAMESPACE_F(x) x
- #endif
-
  // This would be the namespace for your application schema. 
  // This is for the ITI-developed code. It really shouldn't go here - DAS
  #define APP_NAMESPACE Simple_geometry
@@ -157,28 +113,6 @@ The macro SCLP23 is used everywhere else.
 
 #define CC_NO_NESTED_CLASSES 1
 #ifdef CC_NO_NESTED_CLASSES
-
-  // SCLBOOL_H and SCLLOG_H are used in the sdaiEnum.h header file where
-  // the C++ enums Bool and Logical are used.
-
-  // Use SCLBOOL_H and SCLLOG_H when Bool and Logical are used inside the 
-  // namespace definition i.e. inside SCL header files.
-  // This macro should not be relevant to users of SCL (other than to 
-  // understand the SCL header files).
-  #define SCLBOOL_H(x) BOOL_LOG_NAMESPACE_F(_##x)
-  #define SCLLOG_H(x) BOOL_LOG_NAMESPACE_F(_##x)
-  // or if you don't want them to use a name prefix
-  //#define SCLBOOL_H(x) x
-  //#define SCLLOG_H(x) x
-
-  // Use SCLBOOL and SCLLOG in all other files where the C++ enums Bool and 
-  // Logical are used. i.e. any uses outside the namespace definition.
-  // SCL users would always wrap uses of Bool and Logical enums inside these.
-  #define SCLBOOL(x) BOOL_LOG_NAMESPACE_F(_##x)
-  #define SCLLOG(x) BOOL_LOG_NAMESPACE_F(_##x)
-  // or if you don't want them to use a name prefix
-  //#define SCLBOOL(x) x
-  //#define SCLLOG(x) x
 
 ///////////////////////
   // Use this macro to enclose objects generated from IDL interface types.
@@ -232,49 +166,6 @@ The macro SCLP23 is used everywhere else.
 
 #else // nested classes are allowed by the compiler
 /////////////////////////////////////
-
-  // Use SCLBOOL_H and SCLLOG_H when Bool and Logical are used inside the 
-  // namespace definition i.e. inside SCL header files.
-  // This macro should not be relevant to users of SCL (other than to 
-  // understand the SCL header files).
-  #ifndef NO_BOOLS_LOGS
-    #define SCLBOOL_H(x) x
-    #define SCLLOG_H(x) x
-  #else
-    #ifdef PART26
-      #ifdef NO_P26_NAMESPACE
-        #define SCLBOOL_H(x) x
-        #define SCLLOG_H(x) x
-      #else
-        #define SCLBOOL_H(x) BOOL_LOG_NAMESPACE_F(::##x)
-        #define SCLLOG_H(x) BOOL_LOG_NAMESPACE_F(::##x)
-      #endif
-    #else
-      #define SCLBOOL_H(x) BOOL_LOG_NAMESPACE_F(::##x)
-      #define SCLLOG_H(x) BOOL_LOG_NAMESPACE_F(::##x)
-    #endif
-  #endif
-
-  // Use SCLBOOL and SCLLOG in all other files where the C++ enums Bool and 
-  // Logical are used. i.e. any uses outside the namespace definition.
-  // SCL users would always wrap uses of Bool and Logical enums inside these.
-  #ifndef NO_BOOLS_LOGS
-    #define SCLBOOL(x) BOOL_LOG_NAMESPACE_F(::##x)
-    #define SCLLOG(x) BOOL_LOG_NAMESPACE_F(::##x)
-  #else
-    #ifdef PART26
-      #ifdef NO_P26_NAMESPACE
-        #define SCLBOOL(x) x
-        #define SCLLOG(x) x
-      #else
-        #define SCLBOOL(x) BOOL_LOG_NAMESPACE_F(::##x)
-        #define SCLLOG(x) BOOL_LOG_NAMESPACE_F(::##x)
-      #endif
-    #else
-      #define SCLBOOL(x) BOOL_LOG_NAMESPACE_F(::##x)
-      #define SCLLOG(x) BOOL_LOG_NAMESPACE_F(::##x)
-    #endif
-  #endif
 
 ///////////////////////
   // Use this macro to enclose objects generated from IDL interface types.

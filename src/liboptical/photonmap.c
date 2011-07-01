@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file photonmap.c
+/** @file liboptical/photonmap.c
  *
  * Implemention of Photon Mapping
  *
@@ -194,25 +194,6 @@ LocatePhotons(struct PhotonSearch *Search, struct PNode *Root)
 	    LocatePhotons(Search, Root->L);
     }
 
-#if 0
-    /* HEAP, Find Distance between Root Photon and Search->Pos */
-    angle = VDOT(Search->Normal, Root->P.Normal);
-    Node.P = Root->P;
-    Node.Dist = (Root->P.Pos[0] - Search->Pos[0])*(Root->P.Pos[0] - Search->Pos[0]) + (Root->P.Pos[1] - Search->Pos[1])*(Root->P.Pos[1] - Search->Pos[1]) + (Root->P.Pos[2] - Search->Pos[2])*(Root->P.Pos[2] - Search->Pos[2]);
-    if (Node.Dist < Search->RadSq && angle > GPM_ATOL) {
-	/* Check that Result is within Radius and Angular Tolerance */
-	if (Search->Found < Search->Max) {
-	    Push(Search, Node);
-	} else {
-	    if (Node.Dist < Search->List[0].Dist) {
-		Pop(Search);
-		Push(Search, Node);
-	    }
-	}
-    }
-
-#else
-
     /* REPLACE, Find Distance between Root Photon and NP->Pos */
     Dist = (Root->P.Pos[0] - Search->Pos[0])*(Root->P.Pos[0] - Search->Pos[0]) + (Root->P.Pos[1] - Search->Pos[1])*(Root->P.Pos[1] - Search->Pos[1]) + (Root->P.Pos[2] - Search->Pos[2])*(Root->P.Pos[2] - Search->Pos[2]);
 
@@ -237,7 +218,6 @@ LocatePhotons(struct PhotonSearch *Search, struct PNode *Root)
 		Search->List[MaxInd].P = Root->P;
 	}
     }
-#endif
 }
 
 

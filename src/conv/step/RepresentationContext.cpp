@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file RepresentationContext.cpp
+/** @file step/RepresentationContext.cpp
  *
  * Routines to convert STEP "RepresentationContext" to BRL-CAD BREP
  * structures.

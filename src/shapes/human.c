@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file human.c
+/** @file shapes/human.c
  *
  * Generator for human models based on height, and other stuff eventually
  *
@@ -54,10 +54,17 @@ int main(int ac, char *av[])
     ret = ged_human(&ged, ac, (const char **)av);
     bu_log("Finished Building\n");
     wdb_close(db_fp);
-   
+
     if (ret) {
-	bu_exit(1, "%s", bu_vls_addr(&ged.ged_result_str));
+	unlink(filename);
+	bu_log("%s", bu_vls_addr(ged.ged_result_str));
+	ged_free(&ged);
+	return 1;
     }
+
+    /* release our ged instance memory */
+    ged_free(&ged);
+
     return 0;
 
 }

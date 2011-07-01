@@ -19,7 +19,7 @@
  */
 /** @addtogroup msr */
 /** @{ */
-/** @file msr.c
+/** @file libbn/msr.c
  *
  * @brief
  * Minimal Standard RANdom number generator

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bwrot.c
+/** @file util/bwrot.c
  *
  * Rotate, Invert, and/or Reverse the pixels in a Black
  * and White (.bw) file.

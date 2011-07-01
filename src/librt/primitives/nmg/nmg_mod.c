@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_mod.c
+/** @file primitives/nmg/nmg_mod.c
  *
  * Routines for modifying n-Manifold Geometry data structures.
  *
@@ -143,7 +143,9 @@ nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const i
 
 	    f2 = fu2->f_p;
 	    NMG_CK_FACE(f2);
+
 	    if (NMG_INDEX_TEST(flags2, f2)) continue;
+
 	    NMG_INDEX_SET(flags2, f2);
 
 	    fg2 = f2->g.plane_p;
@@ -155,22 +157,31 @@ nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const i
 	    /* See if face geometry is shared & same direction */
 	    if (fg1 != fg2 || f1->flip != f2->flip) {
 		/* If plane equations are different, done */
+
 		NMG_GET_FU_PLANE(n2, fu2);
 
-		/* Compare distances from origin */
-		dist = n1[W] - n2[W];
-		if (!NEAR_ZERO(dist, tol->dist)) continue;
-
-		/*
-		 * Compare angle between normals.  Can't just use
-		 * BN_VECT_ARE_PARALLEL here, because they must point
-		 * in the same direction.
-		 */
-		dist = VDOT(n1, n2);
-		if (!(dist >= tol->para)) continue;
-
-		if (nmg_ck_fu_verts(fu2, f1, tol))
+                /* test if the bounding boxes of the faceuse overlap */
+                if (!V3RPP_OVERLAP_TOL(f1->min_pt, f1->max_pt, f2->min_pt, f2->max_pt, tol)) {
 		    continue;
+                }
+
+		/* compare the distance between the faceuse planes at their center */
+		dist = fabs(n1[W] - n2[W]);
+		if (!NEAR_ZERO(dist, tol->dist)) {
+                    continue;
+                }
+
+                /* skip faceuse pairs if normals are not in the same general direction. */
+                if (VDOT(n1, n2) < SMALL_FASTF) {
+                    continue;
+                }
+
+                /* test if the vertices from each faceuse is within tolerance of the
+                 * plane from the other faceuse
+                 */
+		if (nmg_ck_fu_verts(fu2, f1, tol) || nmg_ck_fu_verts(fu1, f2, tol)) {
+		    continue;
+                }
 	    }
 
 	    /*

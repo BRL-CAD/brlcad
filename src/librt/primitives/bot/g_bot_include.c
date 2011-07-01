@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file g_bot_include.c
+/** @file primitives/bot/g_bot_include.c
  *
  * This file contains all the routines for "g_bot.c" that contain
  * references to "tri_specific" structs. This file is included in
@@ -77,7 +77,7 @@ XGLUE(rt_botface_w_normals_, TRI_TYPE)(struct soltab *stp,
 	bu_free((char *)trip, "getstruct tri_specific");
 
 	if (RT_G_DEBUG & DEBUG_SHOOT) {
-	    bu_log("%s: degenerate facet #%d\n",
+	    bu_log("%s: degenerate facet #%zu\n",
 		   stp->st_name, face_no);
 	    bu_log("\t(%g %g %g) (%g %g %g) (%g %g %g)\n",
 		   V3ARGS(ap), V3ARGS(bp), V3ARGS(cp));
@@ -278,7 +278,7 @@ XGLUE(rt_bot_prep_, TRI_TYPE)(struct soltab *stp, struct rt_bot_internal *bot_ip
 	    || pt2 >= bot_ip->num_vertices
 	    || pt3 >= bot_ip->num_vertices)
 	{
-	    bu_log("face number %d of bot(%s) references a non-existent vertex\n",
+	    bu_log("face number %zu of bot(%s) references a non-existent vertex\n",
 		   tri_index, stp->st_name);
 	    return -1;
 	}
@@ -340,15 +340,15 @@ XGLUE(rt_bot_prep_, TRI_TYPE)(struct soltab *stp, struct rt_bot_internal *bot_ip
     }
 
     /* zero thickness will get missed by the raytracer */
-    if (NEAR_ZERO(stp->st_min[X] - stp->st_max[X], los)) {
+    if (NEAR_EQUAL(stp->st_min[X], stp->st_max[X], los)) {
 	stp->st_min[X] -= los;
 	stp->st_max[X] += los;
     }
-    if (NEAR_ZERO(stp->st_min[Y] - stp->st_max[Y], los)) {
+    if (NEAR_EQUAL(stp->st_min[Y], stp->st_max[Y], los)) {
 	stp->st_min[Y] -= los;
 	stp->st_max[Y] += los;
     }
-    if (NEAR_ZERO(stp->st_min[Z] - stp->st_max[Z], los)) {
+    if (NEAR_EQUAL(stp->st_min[Z], stp->st_max[Z], los)) {
 	stp->st_min[Z] -= los;
 	stp->st_max[Z] += los;
     }
@@ -556,7 +556,7 @@ XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
     }
     if (nhits&1) {
 	if (RT_G_DEBUG & DEBUG_SHOOT) {
-	    bu_log("rt_bot_unoriented_segs(%s): WARNING: odd number of hits (%d), last hit ignored\n",
+	    bu_log("rt_bot_unoriented_segs(%s): WARNING: odd number of hits (%zu), last hit ignored\n",
 		   stp->st_name, nhits);
 	    bu_log("\tray = -p %g %g %g -d %g %g %g\n",
 		   V3ARGS(rp->r_pt), V3ARGS(rp->r_dir));
@@ -1107,7 +1107,7 @@ XGLUE(rt_bot_shot_, TRI_TYPE)(struct soltab *stp, struct xray *rp, struct applic
 	hp->hit_surfno = trip->tri_surfno;
 	hp->hit_rayp = &ap->a_ray;
 	if (++nhits >= MAXHITS) {
-	    bu_log("rt_bot_shot(%s): too many hits (%d)\n", stp->st_name, nhits);
+	    bu_log("rt_bot_shot(%s): too many hits (%zu)\n", stp->st_name, nhits);
 	    break;
 	}
 	hp++;
@@ -1173,7 +1173,7 @@ XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pieceli
     }
 
     if (debug_shoot) {
-	bu_log("In rt_bot_piece_shot(), looking at %d pieces\n", plp->npieces);
+	bu_log("In rt_bot_piece_shot(), looking at %zu pieces\n", plp->npieces);
     }
     sol_piece_subscr_p = &(plp->pieces[plp->npieces-1]);
     for (; sol_piece_subscr_p >= plp->pieces; sol_piece_subscr_p--) {

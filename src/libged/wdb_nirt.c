@@ -19,7 +19,7 @@
  */
 /** @addtogroup libged */
 /** @{ */
-/** @file nirt.c
+/** @file libged/nirt.c
  *
  * Routines to interface to nirt.
  *
@@ -67,16 +67,16 @@ extern void dgo_cvt_vlblock_to_solids(struct dg_obj *dgop, Tcl_Interp *interp, s
 extern void dgo_pr_wait_status(Tcl_Interp *interp, int status);
 
 /*
- *			F _ N I R T
+ * F _ N I R T
  *
- *  Invoke nirt with the current view & stuff
+ * Invoke nirt with the current view & stuff
  */
 int
-dgo_nirt_cmd(struct dg_obj	*dgop,
-	     struct view_obj	*vop,
-	     Tcl_Interp		*interp,
-	     int		argc,
-	     char		**argv)
+dgo_nirt_cmd(struct dg_obj *dgop,
+	     struct view_obj *vop,
+	     Tcl_Interp *interp,
+	     int argc,
+	     char **argv)
 {
     char **vp;
     FILE *fp_in;
@@ -101,7 +101,7 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
     int rem = 2048;
 #endif
     int use_input_orig = 0;
-    vect_t	center_model;
+    vect_t center_model;
     vect_t dir;
     vect_t cml;
     int i;
@@ -156,7 +156,7 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 	*vp++ = "-e";
 	*vp++ = DG_QRAY_FORMAT_NULL;
 
-	/* first ray  ---- returns partitions */
+	/* first ray ---- returns partitions */
 	*vp++ = "-e";
 	*vp++ = DG_QRAY_FORMAT_P;
 
@@ -164,7 +164,7 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 	*vp++ = "-e";
 	*vp++ = bu_vls_addr(&p_vls);
 
-	/* second ray  ---- returns overlaps */
+	/* second ray ---- returns overlaps */
 	*vp++ = "-e";
 	*vp++ = DG_QRAY_FORMAT_O;
 
@@ -284,15 +284,15 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
     if ((pid = fork()) == 0) {
 	/* Redirect stdin, stdout, stderr */
 	(void)close(0);
-	ret = dup( pipe_in[0] );
+	ret = dup(pipe_in[0]);
 	if (ret < 0)
 	    perror("dup");
 	(void)close(1);
-	ret = dup( pipe_out[1] );
+	ret = dup(pipe_out[1]);
 	if (ret < 0)
 	    perror("dup");
 	(void)close(2);
-	ret = dup( pipe_err[1] );
+	ret = dup(pipe_err[1]);
 	if (ret < 0)
 	    perror("dup");
 
@@ -340,7 +340,7 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
     sa.lpSecurityDescriptor = NULL;
 
     /* Create a pipe for the child process's STDOUT. */
-    CreatePipe( &pipe_out[0], &pipe_out[1], &sa, 0);
+    CreatePipe(&pipe_out[0], &pipe_out[1], &sa, 0);
 
     /* Create noninheritable read handle and close the inheritable read handle. */
     DuplicateHandle(GetCurrentProcess(), pipe_out[0],
@@ -350,7 +350,7 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
     CloseHandle(pipe_out[0]);
 
     /* Create a pipe for the child process's STDERR. */
-    CreatePipe( &pipe_err[0], &pipe_err[1], &sa, 0);
+    CreatePipe(&pipe_err[0], &pipe_err[1], &sa, 0);
 
     /* Create noninheritable read handle and close the inheritable read handle. */
     DuplicateHandle(GetCurrentProcess(), pipe_err[0],
@@ -435,7 +435,7 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
     setmode(fileno(fp_err), O_BINARY);
 
     /* send quit command to nirt */
-    fwrite( "q\n", 1, 2, fp_in );
+    fwrite("q\n", 1, 2, fp_in);
     (void)fclose(fp_in);
 
 #endif
@@ -517,11 +517,11 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
     while ((rpid = wait(&retcode)) != pid && rpid != -1)
 	;	/* NULL */
 
-    if ( retcode != 0 )
+    if (retcode != 0)
 	dgo_pr_wait_status(interp, retcode);
 #else
     /* Wait for program to finish */
-    WaitForSingleObject( pi.hProcess, INFINITE );
+    WaitForSingleObject(pi.hProcess, INFINITE);
 
 #endif
 
@@ -534,12 +534,13 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
     return TCL_OK;
 }
 
+
 int
-dgo_vnirt_cmd(struct dg_obj	*dgop,
-	      struct view_obj	*vop,
-	      Tcl_Interp	*interp,
-	      int		argc,
-	      char		**argv) {
+dgo_vnirt_cmd(struct dg_obj *dgop,
+	      struct view_obj *vop,
+	      Tcl_Interp *interp,
+	      int argc,
+	      char **argv) {
     int i;
     int status;
     fastf_t sf = 1.0 * DG_INV_GED;
@@ -610,6 +611,7 @@ dgo_vnirt_cmd(struct dg_obj	*dgop,
 
     return status;
 }
+
 
 /*
  * Local Variables:

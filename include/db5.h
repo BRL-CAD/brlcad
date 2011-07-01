@@ -210,13 +210,11 @@ struct db5_raw_internal {
 
 DB5_EXPORT extern const int db5_enc_len[4];	/* convert wid to nbytes */
 
-DB5_EXPORT BU_EXTERN(unsigned char *db5_encode_length,
-		     (unsigned char	*cp,
-		      size_t		val,
-		      int		format));
-DB5_EXPORT BU_EXTERN(const unsigned char *db5_get_raw_internal_ptr,
-		     (struct db5_raw_internal *rip,
-		      const unsigned char *ip));
+DB5_EXPORT extern unsigned char *db5_encode_length(unsigned char	*cp,
+						   size_t		val,
+						   int		format);
+DB5_EXPORT extern const unsigned char *db5_get_raw_internal_ptr(struct db5_raw_internal *rip,
+								const unsigned char *ip);
 
 
 __END_DECLS

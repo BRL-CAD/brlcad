@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file chgmodel.c
+/** @file mged/chgmodel.c
  *
  * This module contains functions which change particulars of the
  * model, generally on a single solid or combination.
@@ -103,7 +103,7 @@ f_make(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 	ret = ged_make(gedp, argc, (const char **)argv);
 
     Tcl_DStringInit(&ds);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == GED_OK) {
@@ -139,11 +139,8 @@ mged_rot_obj(int iflag, fastf_t *argvect)
     }
 
     /* find point for rotation to take place wrt */
-#if 0
-    MAT4X3PNT(model_pt, es_mat, es_keypoint);
-#else
     VMOVE(model_pt, es_keypoint);
-#endif
+
     MAT4X3PNT(point, modelchanges, model_pt);
 
     /* Find absolute translation vector to go from "model_pt" to
@@ -255,15 +252,6 @@ f_sc_obj(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 
     update_views = 1;
 
-#if 0
-    if (movedir != SARROW) {
-	/* Put in global object scale mode */
-	if (edobj == 0)
-	    edobj = BE_O_SCALE;	/* default is global scaling */
-	movedir = SARROW;
-    }
-#endif
-
     MAT_IDN(incr);
 
     /* switch depending on type of scaling to do */
@@ -291,11 +279,8 @@ f_sc_obj(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
     }
 
     /* find point the scaling is to take place wrt */
-#if 0
-    MAT4X3PNT(temp, es_mat, es_keypoint);
-#else
     VMOVE(temp, es_keypoint);
-#endif
+
     MAT4X3PNT(point, modelchanges, temp);
 
     wrt_point(modelchanges, incr, modelchanges, point);
@@ -359,11 +344,9 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
     for (i=0; i<3; i++) {
 	new_vertex[i] = atof(argv[i+1]) * local2base;
     }
-#if 0
-    MAT4X3PNT(model_sol_pt, es_mat, es_keypoint);
-#else
+
     VMOVE(model_sol_pt, es_keypoint);
-#endif
+
     MAT4X3PNT(ed_sol_pt, modelchanges, model_sol_pt);
     VSUB2(model_incr, new_vertex, ed_sol_pt);
     MAT_DELTAS_VEC(incr, model_incr);

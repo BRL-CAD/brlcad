@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file dspline.c
+/** @file librt/dspline.c
  *
  * Simple data (double) spline package.
  *

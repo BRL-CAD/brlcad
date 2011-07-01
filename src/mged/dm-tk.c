@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dm-tk.c
+/** @file mged/dm-tk.c
  *
  * Routines specific to MGED's use of LIBDM's Tk display manager.
  *

@@ -54,7 +54,7 @@ solver_test_LDADD = libpc.la ${PC_LIBS}
 vm_test_SOURCES = vm_test.cpp
 vm_test_LDADD = libpc.la ${PC_LIBS}
 
-EXTRA_DIST = NOTES
+EXTRA_DIST = NOTES CMakeLists.txt
 
 FAST_OBJECTS = \
 	$(libpc_nil_la_OBJECTS) \

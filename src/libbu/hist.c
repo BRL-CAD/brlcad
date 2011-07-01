@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_hist */
-/** @{ */
 
 #include "common.h"
 
@@ -177,7 +175,6 @@ bu_hist_pr(register const struct bu_hist *histp, const char *title)
     _bu_hist_pr_suppress(histp, title, 1);
 }
 
-/** @} */
 
 /*
  * Local Variables:

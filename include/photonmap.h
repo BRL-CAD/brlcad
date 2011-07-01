@@ -126,28 +126,26 @@ struct IrradCache {
 OPTICAL_EXPORT extern int PM_Activated;	/**< @brief Photon Mapping Activated, 0=off, 1=on */
 OPTICAL_EXPORT extern int PM_Visualize;	/**< @brief Photon Mapping Visualization of Irradiance Cache */
 
-OPTICAL_EXPORT BU_EXTERN(void BuildPhotonMap,
-			 (struct application *ap,
-			  point_t eye_pos,
-			  int cpus,
-			  int width,
-			  int height,
-			  int Hypersample,
-			  int GlobalPhotons,
-			  double CausticsPercent,
-			  int Rays,
-			  double AngularTolerance,
-			  int RandomSeed,
-			  int ImportanceMapping,
-			  int IrradianceHypersampling,
-			  int VisualizeIrradiance,
-			  double LightIntensity,
-			  char pmfile[255]));
-OPTICAL_EXPORT BU_EXTERN(void IrradianceEstimate,
-			 (struct application *ap,
-			  vect_t irrad,
-			  point_t pos,
-			  vect_t normal));
+OPTICAL_EXPORT extern void BuildPhotonMap(struct application *ap,
+					  point_t eye_pos,
+					  int cpus,
+					  int width,
+					  int height,
+					  int Hypersample,
+					  int GlobalPhotons,
+					  double CausticsPercent,
+					  int Rays,
+					  double AngularTolerance,
+					  int RandomSeed,
+					  int ImportanceMapping,
+					  int IrradianceHypersampling,
+					  int VisualizeIrradiance,
+					  double LightIntensity,
+					  char pmfile[255]);
+OPTICAL_EXPORT extern void IrradianceEstimate(struct application *ap,
+					      vect_t irrad,
+					      point_t pos,
+					      vect_t normal);
 /** @} */
 /*
  * Local Variables:

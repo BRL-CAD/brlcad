@@ -36,7 +36,8 @@ EXTRA_DIST = \
 	orbit.sh \
 	shtool \
 	template.sh \
-	ws.sh
+	ws.sh \
+	CMakeLists.txt
 
 
 include $(top_srcdir)/misc/Makefile.defs

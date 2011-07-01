@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file clip.c
+/** @file libdm/clip.c
  *
  * Authors - clip() was started on 14 October 81, Based on the
  * clipping routine in "Principles of Computer Graphics" by Newman and

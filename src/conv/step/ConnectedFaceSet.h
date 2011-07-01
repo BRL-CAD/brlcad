@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ConnectedFaceSet.h
+/** @file step/ConnectedFaceSet.h
  *
  * Class definition used to convert STEP "ConnectedFaceSet" to BRL-CAD BREP
  * structures.

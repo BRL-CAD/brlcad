@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file animedit.c
+/** @file mged/animedit.c
  *
  * Process all animation edit commands.
  *
@@ -269,191 +269,6 @@ hold_clear_flags(struct hold *hp)
 {
     hp->effector.flag = hp->objective.flag = 0;
 }
-#if 0
-static
-read_hold_point(pp, name, fip)
-    struct hold_point *pp;
-    char *name;
-    FILE *fip;
-{
-    char **arc;
-    int arc_last;
-    char text[TEXT_LEN];
-    int i;
-    struct directory *dp;
-    struct joint *jp;
-
-    if (!get_line(text, TEXT_LEN, fip)) {
-	Tcl_AppendResult(interp, "joint load constraint: unable to read ",
-			 name, " type\n", (char *)NULL);
-	return 0;
-    }
-    pp->type = atoi(text);
-    if (pp->type == 1) pp->type = ID_GRIP;
-    if (joint_debug & DEBUG_J_LOAD) {
-	static char *names[] = {
-	    "FIXED",
-	    "GRIP",
-	    "JOINT",
-	    "UNKNOWN"};
-	int t = pp->type;
-	if (t < 0 || t > 3) t = 3;
-	Tcl_AppendResult(interp, "joint load point: Type is ", names[t],
-			 "\n", (char *)NULL);
-    }
-    switch (pp->type) {
-	case HOLD_PT_FIXED:
-	    if (!get_line(text, TEXT_LEN, fip)) {
-		Tcl_AppendResult(interp, "joint load constraint: unable to read ",
-				 name, " 3space point\n", (char *)NULL);
-		return 0;
-	    }
-
-	    if (sscanf(text, "%lg %lg %lg", &pp->point[X], &pp->point[Y],
-		       &pp->point[Z]) != 3) {
-		Tcl_AppendResult(interp, "joint load constraint: unable to read points for ",
-				 name, ".\n", (char *)NULL);
-		return 0;
-	    }
-	    if (joint_debug & DEBUG_J_LOAD) {
-		struct bu_vls tmp_vls;
-
-		bu_vls_init(&tmp_vls);
-		bu_vls_printf(&tmp_vls, "joint load point: (%g %g %g)\n", pp->point[X],
-			      pp->point[Y], pp->point[Z]);
-		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-		bu_vls_free(&tmp_vls);
-	    }
-	    return 1;
-	case ID_GRIP:
-/*
- * XXX - Final method will be top grip_name.  For now, we will just use "arc"
- */
-	    if (!get_line(text, TEXT_LEN, fip)) {
-		Tcl_AppendResult(interp, "joint load constraint: unable to read ",
-				 name, " arc.\n", (char *)NULL);
-		return 0;
-	    }
-	    arc = parse_arc(&arc_last, text);
-	    /*
-	     * we are now going to build a full_path from the arc.
-	     */
-	    pp->path.fp_len=pp->path.fp_maxlen = arc_last+1;
-	    pp->path.fp_names = (struct directory **)
-		bu_malloc(sizeof(struct directory **)*pp->path.fp_maxlen,
-			  "db full path");
-	    for (i=0; i<=arc_last; i++) {
-		dp = db_lookup(dbip, arc[i], LOOKUP_NOISY);
-		if (!dp) break;
-		pp->path.fp_names[i] = dp;
-	    }
-	    if (!dp) {
-		Tcl_AppendResult(interp, "joint load constraint: arc '", text,
-				 "' for ", name, " is bad.\n", (char *)NULL);
-		for (i=0; i<=arc_last; i++) {
-		    bu_free((genptr_t)arc[i], "arc entry");
-		}
-		bu_free((genptr_t) arc, "arc table");
-		return 0;
-	    }
-	    pp->name = arc[arc_last];
-	    /*
-	     * NOTE: we are not freeing the last entry which should be
-	     * a grip as we save its name in pp->name.
-	     */
-	    for (i=0; i< arc_last; i++) {
-		bu_free((genptr_t)arc[i], "arc entry");
-	    }
-	    bu_free((genptr_t) arc, "arc table");
-	    return 1;
-	case HOLD_PT_JOINT:
-/*
- * XXX - Final method will be top joint_name.  For now, we will just use "arc"
- */
-	    if (!get_line(text, TEXT_LEN, fip)) {
-		Tcl_AppendResult(interp, "joint load constraint: unable to read ",
-				 name, " arc.\n", (char *)NULL);
-		return 0;
-	    }
-	    arc = parse_arc(&arc_last, text);
-	    /*
-	     * we are now going to build a full_path from the arc.
-	     */
-	    pp->path.fp_len=pp->path.fp_maxlen = arc_last+1;
-	    pp->path.fp_names = (struct directory **)
-		bu_malloc(sizeof(struct directory **)*pp->path.fp_maxlen,
-			  "db full path");
-	    /*
-	     * Except for the last entry which should be a joint name.
-	     */
-	    for (i=0; i<arc_last; i++) {
-		dp = db_lookup(dbip, arc[i], LOOKUP_NOISY);
-		if (!dp) break;
-		pp->path.fp_names[i] = dp;
-	    }
-	    if (dp) {
-		jp = joint_lookup(arc[arc_last]);
-		if (jp) {
-		    dp = db_lookup(dbip, jp->arc[jp->arc_last],
-				   LOOKUP_NOISY);
-		    if (dp) {
-			pp->path.fp_names[i] = dp;
-		    }
-		} else {
-		    Tcl_AppendResult(interp, "joint load constraint: ", name,
-				     " gave bad joint name.\n", (char *)NULL);
-		    dp = 0;
-		}
-	    }
-	    if (!dp) {
-		Tcl_AppendResult(interp, "joint load constraint: arc '", text,
-				 "' for ", name, " is bad.\n", (char *)NULL);
-		for (i=0; i<arc_last; i++) {
-		    bu_free((genptr_t)arc[i], "arc entry");
-		}
-		bu_free((genptr_t) arc, "arc table");
-		return 0;
-	    }
-	    pp->name = arc[arc_last];
-	    /*
-	     * NOTE: we are not freeing the last entry which should be
-	     * a joint as we save its name in pp->name.
-	     */
-	    for (i=0; i< arc_last; i++) {
-		bu_free((genptr_t)arc[i], "arc entry");
-	    }
-	    bu_free((genptr_t) arc, "arc table");
-	    return 1;
-	default:
-	    {
-		struct bu_vls tmp_vls;
-
-		bu_vls_init(&tmp_vls);
-		bu_vls_printf(&tmp_vls, "joint load constrain: Bad type (%d) for %s.\n",
-			      pp->type, name);
-		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-		bu_vls_free(&tmp_vls);
-	    }
-
-	    pp->type = HOLD_PT_FIXED;
-	    return 0;
-    }
-    /*NEVERREACHED*/
-}
-#endif /* 0 */
-#if 0
-if (!read_hold_point(&hp->effector, "effector", fip)) {
-    free_hold(hp);
-    return (struct hold*)0;
-}
-/*
- * objective.
- */
-if (!read_hold_point(&hp->objective, "objective", fip)) {
-    free_hold(hp);
-    return (struct hold *)0;
-}
-#endif /* 0 */
 
 int
 f_junload(int argc, const char *argv[])
@@ -604,7 +419,7 @@ static void
 parse_error(struct bu_vls *str, char *error)
 {
     char *text;
-    int i;
+    size_t i;
 
     if (!str->vls_str) {
 	struct bu_vls tmp_vls;
@@ -3475,7 +3290,7 @@ mesh_leaf(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, s
     }
 
     BU_GETUNION(curtree, tree);
-    RT_INIT_TREE(curtree);
+    RT_TREE_INIT(curtree);
     curtree->tr_op = OP_SOLID;
     curtree->tr_op = OP_NOP;
     dp = pathp->fp_names[pathp->fp_len-1];

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file PlaneAngleContextDependentUnit.h
+/** @file step/PlaneAngleContextDependentUnit.h
  *
  * Class definition used to convert STEP "PlaneAngleContextDependentUnit" to BRL-CAD BREP
  * structures.

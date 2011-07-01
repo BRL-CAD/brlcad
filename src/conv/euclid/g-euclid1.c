@@ -95,7 +95,7 @@ fastf_print(FILE *fp_out, size_t length, fastf_t f)
     ptr = strchr( buffer, '.' );
     if ( (size_t)(ptr - buffer) > length )
     {
-	bu_exit(1, "ERROR: Value (%f) too large for format length (%d)\n", f, length );
+	bu_exit(1, "ERROR: Value (%f) too large for format length (%zu)\n", f, length );
     }
 
     for ( i=0; i<length; i++ )
@@ -577,7 +577,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 	fclose( fp_out );
 
     BU_GETUNION(curtree, tree);
-    RT_INIT_TREE(curtree);
+    RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
     return curtree;
 }

@@ -71,6 +71,7 @@ MACRO(THIRD_PARTY_OPTION upper lower)
 	ELSE(NOT ${CMAKE_PROJECT_NAME}_BUILD_LOCAL_${upper} OR ${CMAKE_PROJECT_NAME}-ENABLE_SYSTEM_LIBS_ONLY)
 		SET(${upper}_LIBRARY "${lower}" CACHE STRING "set by THIRD_PARTY macro" FORCE)
 	ENDIF(NOT ${CMAKE_PROJECT_NAME}_BUILD_LOCAL_${upper} OR ${CMAKE_PROJECT_NAME}-ENABLE_SYSTEM_LIBS_ONLY)
+
 	MARK_AS_ADVANCED(${CMAKE_PROJECT_NAME}_BUILD_LOCAL_${upper})
 	MARK_AS_ADVANCED(${upper}_LIBRARY)
 	MARK_AS_ADVANCED(${upper}_INCLUDE_DIR)
@@ -81,6 +82,14 @@ MACRO(THIRD_PARTY_SUBDIR upper lower)
 	IF(${CMAKE_PROJECT_NAME}_BUILD_LOCAL_${upper} AND NOT ${CMAKE_PROJECT_NAME}-ENABLE_SYSTEM_LIBS_ONLY)
 		ADD_SUBDIRECTORY(${lower})
 		SET(${upper}_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/${lower};${CMAKE_CURRENT_BINARY_DIR}/${lower} CACHE STRING "set by THIRD_PARTY_SUBDIR macro" FORCE)
+		IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${lower}.dist)
+			FILE(STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/${lower}.dist ${lower}_ignore_files)
+			DISTCHECK_IGNORE(${lower} ${lower}_ignore_files)
+		ELSE(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${lower}.dist)
+			MESSAGE("Local build, but file ${CMAKE_CURRENT_SOURCE_DIR}/${lower}.dist not found")
+		ENDIF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${lower}.dist)
+	ELSE(${CMAKE_PROJECT_NAME}_BUILD_LOCAL_${upper} AND NOT ${CMAKE_PROJECT_NAME}-ENABLE_SYSTEM_LIBS_ONLY)
+		DISTCHECK_IGNORE_ITEM(${lower})
 	ENDIF(${CMAKE_PROJECT_NAME}_BUILD_LOCAL_${upper} AND NOT ${CMAKE_PROJECT_NAME}-ENABLE_SYSTEM_LIBS_ONLY)
 ENDMACRO(THIRD_PARTY_SUBDIR)
 
@@ -114,7 +123,7 @@ MACRO(THIRD_PARTY_CONFIGURE_EXTERNAL_PROJECT upper projname projpath srcpath ext
 			CONFIGURE_COMMAND mkdir -p
 			${${CMAKE_PROJECT_NAME}_BINARY_DIR}/${projpath}/ && cd
 			${${CMAKE_PROJECT_NAME}_BINARY_DIR}/${projpath}/ &&
-			<SOURCE_DIR>/configure --prefix=${${CMAKE_PROJECT_NAME}_PREFIX} --exec-prefix=${${CMAKE_PROJECT_NAME}_PREFIX} --mandir=${${CMAKE_PROJECT_NAME}_INSTALL_MAN_DIR} ${extraopts}
+			<SOURCE_DIR>/configure --prefix=${${CMAKE_PROJECT_NAME}_PREFIX} --exec-prefix=${${CMAKE_PROJECT_NAME}_PREFIX} --mandir=${MAN_DIR} ${extraopts}
 			BUILD_COMMAND cd ${${CMAKE_PROJECT_NAME}_BINARY_DIR}/${projpath}/ && $(MAKE)
 			INSTALL_COMMAND  cd ${${CMAKE_PROJECT_NAME}_BINARY_DIR}/${projpath}/ && $(MAKE) install
 			)
@@ -133,7 +142,7 @@ MACRO(THIRD_PARTY_AUTOCONF_EXTERNAL_PROJECT upper projname projpath srcpath extr
 			<SOURCE_DIR>/configure <SOURCE_DIR>/configure.in && mkdir -p
 			${${CMAKE_PROJECT_NAME}_BINARY_DIR}/${projpath}/ && cd
 			${${CMAKE_PROJECT_NAME}_BINARY_DIR}/${projpath}/ &&
-			<SOURCE_DIR>/configure --prefix=${${CMAKE_PROJECT_NAME}_PREFIX} --exec-prefix=${${CMAKE_PROJECT_NAME}_PREFIX} --mandir=${${CMAKE_PROJECT_NAME}_INSTALL_MAN_DIR} ${extraopts}
+			<SOURCE_DIR>/configure --prefix=${${CMAKE_PROJECT_NAME}_PREFIX} --exec-prefix=${${CMAKE_PROJECT_NAME}_PREFIX} --mandir=${MAN_DIR} ${extraopts}
 			BUILD_COMMAND cd ${${CMAKE_PROJECT_NAME}_BINARY_DIR}/${projpath}/ && $(MAKE)
 			INSTALL_COMMAND  cd ${${CMAKE_PROJECT_NAME}_BINARY_DIR}/${projpath}/ && $(MAKE) install
 			)
@@ -152,7 +161,7 @@ MACRO(THIRD_PARTY_AUTORECONF_EXTERNAL_PROJECT upper projname projpath srcpath ex
 			CONFIGURE_COMMAND cd <SOURCE_DIR> && autoreconf -i -f && mkdir -p
 			${${CMAKE_PROJECT_NAME}_BINARY_DIR}/${projpath}/ && cd
 			${${CMAKE_PROJECT_NAME}_BINARY_DIR}/${projpath}/ &&
-			<SOURCE_DIR>/configure --prefix=${${CMAKE_PROJECT_NAME}_PREFIX} --exec-prefix=${${CMAKE_PROJECT_NAME}_PREFIX} --mandir=${${CMAKE_PROJECT_NAME}_INSTALL_MAN_DIR} ${extraopts}
+			<SOURCE_DIR>/configure --prefix=${${CMAKE_PROJECT_NAME}_PREFIX} --exec-prefix=${${CMAKE_PROJECT_NAME}_PREFIX} --mandir=${MAN_DIR} ${extraopts}
 			BUILD_COMMAND cd ${${CMAKE_PROJECT_NAME}_BINARY_DIR}/${projpath}/ && $(MAKE)
 			INSTALL_COMMAND  cd ${${CMAKE_PROJECT_NAME}_BINARY_DIR}/${projpath}/ && $(MAKE) install
 			)

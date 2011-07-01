@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file brep.c
+/** @file libged/brep.c
  *
  * The brep command.
  *
@@ -33,8 +33,7 @@
 #include "./ged_private.h"
 
 #if 1
-RT_EXPORT BU_EXTERN(int brep_command,
-		    (struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag));
+RT_EXPORT extern int brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
 #else
 extern int brep_surface_plot(struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int index);
 #endif
@@ -53,60 +52,60 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     int real_flag;
     char commtag[64];
     char namebuf[64];
-    
+
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-    
+
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
-    
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
     /* must be wanting help */
     if (argc <= 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	bu_vls_printf(&gedp->ged_result_str, "commands:\n");
-	bu_vls_printf(&gedp->ged_result_str, "\tinfo - return count information for specific BREP\n");
-	bu_vls_printf(&gedp->ged_result_str, "\tinfo S [index] - return information for specific BREP 'surface'\n");
-	bu_vls_printf(&gedp->ged_result_str, "\tinfo F [index] - return information for specific BREP 'face'\n");
-	bu_vls_printf(&gedp->ged_result_str, "\tplot - plot entire BREP\n");
-	bu_vls_printf(&gedp->ged_result_str, "\tplot S [index] - plot specific BREP 'surface'\n");
-	bu_vls_printf(&gedp->ged_result_str, "\tplot F [index] - plot specific BREP 'face'\n");
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "commands:\n");
+	bu_vls_printf(gedp->ged_result_str, "\tinfo - return count information for specific BREP\n");
+	bu_vls_printf(gedp->ged_result_str, "\tinfo S [index] - return information for specific BREP 'surface'\n");
+	bu_vls_printf(gedp->ged_result_str, "\tinfo F [index] - return information for specific BREP 'face'\n");
+	bu_vls_printf(gedp->ged_result_str, "\tplot - plot entire BREP\n");
+	bu_vls_printf(gedp->ged_result_str, "\tplot S [index] - plot specific BREP 'surface'\n");
+	bu_vls_printf(gedp->ged_result_str, "\tplot F [index] - plot specific BREP 'face'\n");
 	return GED_HELP;
     }
-    
+
     if (argc < 2 || argc > 6) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
-    
+
     solid_name = (char *)argv[1];
     if ((ndp = db_lookup(gedp->ged_wdbp->dbip,  solid_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "Error: %s is not a solid or does not exist in database", solid_name);
+	bu_vls_printf(gedp->ged_result_str, "Error: %s is not a solid or does not exist in database", solid_name);
 	return GED_ERROR;
     } else {
-        real_flag = (ndp->d_addr == RT_DIR_PHONY_ADDR) ? 0 : 1;
+	real_flag = (ndp->d_addr == RT_DIR_PHONY_ADDR) ? 0 : 1;
     }
-    
+
     if (!real_flag) {
-        /* solid doesnt exists - don't kill */
-        bu_vls_printf(&gedp->ged_result_str, "Error: %s is not a real solid", solid_name);
-        return GED_OK;
+	/* solid doesnt exists - don't kill */
+	bu_vls_printf(gedp->ged_result_str, "Error: %s is not a real solid", solid_name);
+	return GED_OK;
     }
-    
+
     GED_DB_GET_INTERNAL(gedp, &intern, ndp, bn_mat_identity, &rt_uniresource, GED_ERROR);
-    
-    
+
+
     RT_CK_DB_INTERNAL(&intern);
     bi = (struct rt_brep_internal*)intern.idb_ptr;
-    
+
     if (!RT_BREP_TEST_MAGIC(bi)) {
-        /* solid doesnt exists - don't kill */
-        bu_vls_printf(&gedp->ged_result_str, "Error: %s is not a BREP solid.", solid_name);
-        return GED_OK;
+	/* solid doesnt exists - don't kill */
+	bu_vls_printf(gedp->ged_result_str, "Error: %s is not a BREP solid.", solid_name);
+	return GED_OK;
     }
-    
+
     BU_GETSTRUCT(stp, soltab);
-    
+
     if ((bs = (struct brep_specific*)stp->st_specific) == NULL) {
 	bs = (struct brep_specific*)bu_malloc(sizeof(struct brep_specific), "brep_specific");
 	bs->brep = bi->brep;
@@ -116,7 +115,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
     vbp = rt_vlblock_init();
 
-    brep_command(&gedp->ged_result_str, bs, bi, vbp, argc, argv, commtag);
+    brep_command(gedp->ged_result_str, bs, bi, vbp, argc, argv, commtag);
 
     snprintf(namebuf, 64, "%s%s_", commtag, solid_name);
     _ged_cvt_vlblock_to_solids(gedp, vbp, namebuf, 0);
@@ -124,7 +123,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     vbp = (struct bn_vlblock *)NULL;
 
     rt_db_free_internal(&intern);
-    
+
     return GED_OK;
 }
 

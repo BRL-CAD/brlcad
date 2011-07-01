@@ -262,6 +262,6 @@ dist_tcl_DATA = \
 	view_translate.png \
 	wizard.png
 
-EXTRA_DIST = $(dist_tcl_DATA)
+EXTRA_DIST = $(dist_tcl_DATA) CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file texture_mix.c
+/** @file librender/texture_mix.c
  *
  *  Comments -
  *      Texture Library - Mix two textures

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tea.c
+/** @file proc-db/tea.c
  *
  * Convert the Utah Teapot description from the IEEE CG&A database to
  * the BRL-CAD spline format. (Note that this has the closed bottom)

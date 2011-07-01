@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file view.c
+/** @file rt/view.c
  *
  * Ray Tracing program, lighting model manager.
  *
@@ -557,7 +557,7 @@ view_end(struct application *ap)
 	fastf_t **timeTable;
 	timeTable = timeTable_init(0, 0);
 	bu_log("Building Heat-Graph!\n");
-	bu_log("X:%d Y:%d W:%d H%d\n", ap->a_x, ap->a_y, width, height);
+	bu_log("X:%d Y:%d W:%zu H%zu\n", ap->a_x, ap->a_y, width, height);
 	timeTable_process(timeTable, ap, fbp);
     }
 #endif
@@ -1504,7 +1504,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 		size_t j = 1<<incr_level;
 		size_t w = 1<<(incr_nlevel-incr_level);
 
-		bu_log("Incremental resolution %d\n", j);
+		bu_log("Incremental resolution %zu\n", j);
 
 		/* Diminish buffer expectations on work-saved lines */
 		for (i=0; i<j; i++) {
@@ -1557,8 +1557,8 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	    /* If user did not specify any light sources then create
 	     * default light sources
 	     */
-	    if (BU_LIST_IS_EMPTY(&(LightHead.l))  ||
-		BU_LIST_UNINITIALIZED(&(LightHead.l))) {
+	    if (BU_LIST_IS_EMPTY(&(LightHead.l))
+		|| !BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
 		if (R_DEBUG&RDEBUG_SHOWERR)bu_log("No explicit light\n");
 		light_maker(1, view2model);
 	    }
@@ -1582,7 +1582,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 		/* If user did not specify any light sources then
 		 * create one.
 		 */
-		if (BU_LIST_IS_EMPTY(&(LightHead.l)) || BU_LIST_UNINITIALIZED(&(LightHead.l))) {
+		if (BU_LIST_IS_EMPTY(&(LightHead.l)) || !BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
 		    if (rdebug&RDEBUG_SHOWERR)
 			bu_log("No explicit light\n");
 		    light_maker(1, view2model);
@@ -1609,8 +1609,8 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	case 8:
 	    {
 		ap->a_hit = colorview;
-		if (BU_LIST_IS_EMPTY(&(LightHead.l))  ||
-		    BU_LIST_UNINITIALIZED(&(LightHead.l))) {
+		if (BU_LIST_IS_EMPTY(&(LightHead.l))
+		    || !BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
 		    if (R_DEBUG&RDEBUG_SHOWERR)bu_log("No explicit light\n");
 		    light_maker(1, view2model);	
 		}

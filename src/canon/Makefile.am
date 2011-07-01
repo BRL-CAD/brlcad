@@ -14,7 +14,7 @@ man_MANS = canonize.1
 canonize_SOURCES = canonize.c canonlib.c
 canonize_LDADD = ${FB} ${LIBDS}
 
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = $(man_MANS) CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs
 

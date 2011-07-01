@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pix-sun.c
+/** @file util/pix-sun.c
  *
  * Program to take a BRL-CAD PIX format image file and convert the
  * image to a Sun Microsystems 8-bit deep color "rasterfile" format
@@ -221,12 +221,12 @@ doit(void)
     i = ras.ras_width * ras.ras_height;
     /* allocate buffer for the pix file */
     if ((pix=(unsigned char *)malloc(i*3)) == (unsigned char *)NULL) {
-	bu_exit(1, "%s: cannot get memory for a %d x %d pix file\n",
+	bu_exit(1, "%s: cannot get memory for a %zu x %zu pix file\n",
 		progname, ras.ras_width, ras.ras_height);
     }
 
     if ((rast=(unsigned char *)malloc(i)) == (unsigned char *)NULL) {
-	bu_exit(1, "%s: cannot get memory for a %d x %d pixrect\n",
+	bu_exit(1, "%s: cannot get memory for a %zu x %zu pixrect\n",
 		progname, ras.ras_width, ras.ras_height);
     }
 
@@ -236,7 +236,7 @@ doit(void)
      */
     for (i=(long)ras.ras_height-1; i >= 0; i--)
 	if (fread(&pix[i*ras.ras_width*3], ras.ras_width*3, 1, stdin) != 1) {
-	    bu_exit(1, "%s: error reading %d x %d pix file scanline %d\n",
+	    bu_exit(1, "%s: error reading %zu x %zu pix file scanline %d\n",
 		    progname, ras.ras_width, ras.ras_height, i);
 	}
 

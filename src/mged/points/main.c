@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file main.c
+/** @file points/main.c
  *
  * Author -
  *   Christopher Sean Morrison
@@ -31,17 +31,13 @@
 extern FILE *yyin;
 extern int yyparse (void);
 
+#include "tcl.h"
+ClientData *cdata = NULL;
+Tcl_Interp *twerp = NULL;
 
-#if 0
-int main(int argc, char *argv[])
-#else
 
-#  include "tcl.h"
-    ClientData *cdata;
-    Tcl_Interp *twerp;
-
-    int parse_point_file(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
-#endif
+int
+parse_point_file(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
     long int datapoints;
 
@@ -92,6 +88,15 @@ int main(int argc, char *argv[])
 
     return 0;
 }
+
+
+#ifdef COMPILE_STANDALONE
+int
+main(int argc, char *argv[]) {
+    return parse_point_file(cdata, twerp, argc, argv);
+}
+#endif
+
 
 /*
  * Local Variables:

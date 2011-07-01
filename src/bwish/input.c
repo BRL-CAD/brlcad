@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file input.c
+/** @file bwish/input.c
  *
  * Input handling routines. Some of this code was borrowed from mged/ged.c
  * and modified for use in this application.
@@ -86,11 +86,11 @@ HIDDEN void insert_prompt(void);
 HIDDEN void insert_char(char ch);
 HIDDEN void insert_beep(void);
 
-HIDDEN struct bu_vls input_str;
-HIDDEN struct bu_vls input_str_prefix;
-HIDDEN int input_str_index;
-HIDDEN struct bu_vls scratchline;
-HIDDEN struct bu_vls prompt;
+static struct bu_vls input_str;
+static struct bu_vls input_str_prefix;
+static size_t input_str_index;
+static struct bu_vls scratchline;
+static struct bu_vls prompt;
 
 void
 initInput(void)
@@ -204,7 +204,7 @@ processChar(char ch)
 	    break;
 	case BACKSPACE:
 	case DELETE:
-	    if (input_str_index <= 0) {
+	    if (input_str_index == 0) {
 		insert_beep();
 		break;
 	    }

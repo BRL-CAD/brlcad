@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file render_internal.h
+/** @file librender/render_internal.h
  *
  */
 
@@ -56,7 +56,7 @@
 #define RENDER_MAX_DEPTH	24
 
 
-#define RENDER_SHADER(name) RENDER_EXPORT BU_EXTERN(int render_##name##_init, (render_t *, const char *))
+#define RENDER_SHADER(name) RENDER_EXPORT extern int render_##name##_init(render_t *, const char *)
 
 struct render_s;
 typedef void render_work_t(struct render_s *render, struct tie_s *tie, struct tie_ray_s *ray, vect_t *pixel);

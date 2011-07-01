@@ -346,11 +346,11 @@ TYPEget_idl_type (const Type t)
 
     /*    case TYPE_LOGICAL:	*/
     if ( class == Class_Logical_Type)
-        return ("SCLLOG(Logical)"); 
+        return ("Logical"); 
 
     /*    case TYPE_BOOLEAN:	*/
     if (class == Class_Boolean_Type)
-        return ("SCLBOOL(Boolean)"); 
+        return ("Boolean"); 
 
     /*      case TYPE_INTEGER:	*/
     if ( class == Class_Integer_Type)
@@ -704,12 +704,12 @@ ATTRsign_access_methods (Variable a, FILE* file)
     if (class == Class_Logical_Type)  {
 	if(corba_binding)
 	{
-	    fprintf (file, "\tconst SCLLOG(Logical) %s(", attrnm);
+	    fprintf (file, "\tconst Logical %s(", attrnm);
 	    fprintf (file, 
 		    "CORBA::Environment &IT_env=CORBA::default_environment) ");
 	    fprintf (file, 
 		     " const throw (CORBA::SystemException);\n");
-	    fprintf (file, "\tvoid %s (SCLLOG(Logical) x", attrnm  );
+	    fprintf (file, "\tvoid %s (Logical x", attrnm  );
 	    fprintf (file, 
 		   ", CORBA::Environment &IT_env=CORBA::default_environment)");
 	    fprintf (file, 
@@ -717,8 +717,8 @@ ATTRsign_access_methods (Variable a, FILE* file)
 	}
 	else
 	{
-	    fprintf (file, "\tconst SCLLOG(Logical) %s() const;\n", attrnm);
-	    fprintf (file, "\tvoid %s (SCLLOG(Logical) x);\n\n", attrnm);
+	    fprintf (file, "\tconst Logical %s() const;\n", attrnm);
+	    fprintf (file, "\tvoid %s (Logical x);\n\n", attrnm);
 	}
 	return;
     }    
@@ -726,12 +726,12 @@ ATTRsign_access_methods (Variable a, FILE* file)
     if (class == Class_Boolean_Type)  {
 	if(corba_binding)
 	{
-	    fprintf (file, "\tconst SCLBOOL(Boolean) %s(", attrnm);
+	    fprintf (file, "\tconst Boolean %s(", attrnm);
 	    fprintf (file, 
 		    "CORBA::Environment &IT_env=CORBA::default_environment) ");
 	    fprintf (file, 
 		     "const throw (CORBA::SystemException);\n");
-	    fprintf (file, "\tvoid %s (SCLBOOL(Boolean) x", attrnm  );
+	    fprintf (file, "\tvoid %s (Boolean x", attrnm  );
 	    fprintf (file, 
 		   ", CORBA::Environment &IT_env=CORBA::default_environment)");
 	    fprintf (file, 
@@ -739,8 +739,8 @@ ATTRsign_access_methods (Variable a, FILE* file)
 	}
 	else
 	{
-	    fprintf (file, "\tconst SCLBOOL(Boolean) %s() const;\n", attrnm);
-	    fprintf (file, "\tvoid %s (SCLBOOL(Boolean) x);\n\n", attrnm  );
+	    fprintf (file, "\tconst Boolean %s() const;\n", attrnm);
+	    fprintf (file, "\tvoid %s (Boolean x);\n\n", attrnm  );
 	}
 	return;
     }    
@@ -1009,13 +1009,13 @@ ATTRprint_access_methods_get_head (const char * classnm, Variable a,
     if (class == Class_Logical_Type)  {
       if(corba_binding)
       {
-	  fprintf (file, "\nconst SCLLOG(Logical)\n%s::%s(", classnm, funcnm);
+	  fprintf (file, "\nconst Logical\n%s::%s(", classnm, funcnm);
 	  fprintf (file, 
 	      "CORBA::Environment &IT_env) const throw (CORBA::SystemException)\n");
       }
       else
 	fprintf (file, 
-		 "\nconst SCLLOG(Logical) \n%s::%s() const\n", classnm, funcnm);
+		 "\nconst Logical \n%s::%s() const\n", classnm, funcnm);
 	return;
     }    
 
@@ -1023,13 +1023,13 @@ ATTRprint_access_methods_get_head (const char * classnm, Variable a,
     if (class == Class_Boolean_Type)  {
       if(corba_binding)
       {
-	  fprintf (file, "\nconst SCLBOOL(Boolean)\n%s::%s(", classnm, funcnm);
+	  fprintf (file, "\nconst Boolean\n%s::%s(", classnm, funcnm);
 	  fprintf (file, 
 	 "CORBA::Environment &IT_env) const throw (CORBA::SystemException)\n");
       }
       else
 	fprintf (file, 
-		 "\nconst SCLBOOL(Boolean)\n%s::%s() const\n", classnm, funcnm);
+		 "\nconst Boolean\n%s::%s() const\n", classnm, funcnm);
 	return;
     }    
 
@@ -1122,11 +1122,11 @@ ATTRprint_access_methods_put_head  (CONST char * entnm, Variable a, FILE* file)
 
   /*    case TYPE_LOGICAL:	*/
   if (class == Class_Logical_Type)
-    strcpy (ctype, "SCLLOG(Logical)");
+    strcpy (ctype, "Logical");
 
   /*    case TYPE_BOOLEAN:	*/
   if (class == Class_Boolean_Type)
-    strcpy (ctype, "SCLBOOL(Boolean)");
+    strcpy (ctype, "Boolean");
 
     /*    case TYPE_ENUM:	*/
   if ( class == Class_Enumeration_Type)  
@@ -1916,9 +1916,9 @@ ATTRprint_access_methods  (CONST char * entnm, Variable a, FILE* file)
 	if(corba_binding)
 	{
 	    if (class == Class_Boolean_Type) 
-	      fprintf (file, "    return (SCLBOOL(Boolean)) _%s;\n}\n", attrnm);
+	      fprintf (file, "    return (Boolean) _%s;\n}\n", attrnm);
 	    else if ( class == Class_Logical_Type)
-	      fprintf (file, "    return (SCLLOG(Logical)) _%s;\n}\n", attrnm);
+	      fprintf (file, "    return (Logical) _%s;\n}\n", attrnm);
 	}
 	else
 	  fprintf (file, "    return (%s) _%s;\n}\n", ctype, attrnm);
@@ -3414,10 +3414,10 @@ print_typechain(FILE *f,const Type t,char *buf,Schema schema)
 	    fprintf(f, "\t%s%d->Bound2(%d);\n", TD_PREFIX, count, 
 		    TYPEget_body(t)->upper->u.integer);
 	  if(TYPEget_body(t)->flags.unique)
-	    fprintf(f, "\t%s%d->UniqueElements(SCLLOG(LTrue));\n",
+	    fprintf(f, "\t%s%d->UniqueElements(LTrue);\n",
 		    TD_PREFIX, count);
 	  if(TYPEget_body(t)->flags.optional)
-	    fprintf(f, "\t%s%d->OptionalElements(SCLLOG(LTrue));\n",
+	    fprintf(f, "\t%s%d->OptionalElements(LTrue);\n",
 		    TD_PREFIX, count);
 	}
 	break;
@@ -3614,9 +3614,9 @@ ENTITYincode_print (Entity entity, FILE* file,Schema schema)  /*  ,FILES *files)
 				    TYPEget_body(v->type)->entity->superscope),
 				ENT_PREFIX,TYPEget_name(v->type), 
 
-				(VARget_optional(v)?"SCLLOG(LTrue)":"SCLLOG(LFalse)"),
+				(VARget_optional(v)?"LTrue":"LFalse"),
 
-				(VARget_unique(v)?"SCLLOG(LTrue)":"SCLLOG(LFalse)"),
+				(VARget_unique(v)?"LTrue":"LFalse"),
 
 /* Support REDEFINED */
 				(VARget_inverse (v) ? "" : 
@@ -3644,9 +3644,9 @@ ENTITYincode_print (Entity entity, FILE* file,Schema schema)  /*  ,FILES *files)
  				SCHEMAget_name(v->type->superscope),
  				TD_PREFIX,TYPEget_name(v->type),
 
-				(VARget_optional(v)?"SCLLOG(LTrue)":"SCLLOG(LFalse)"),
+				(VARget_optional(v)?"LTrue":"LFalse"),
 
-				(VARget_unique(v)?"SCLLOG(LTrue)":"SCLLOG(LFalse)"),
+				(VARget_unique(v)?"LTrue":"LFalse"),
 
 				(VARget_inverse (v) ? "" : 
 				 (VARis_derived(v) ? ", AttrType_Deriving" : 
@@ -3670,10 +3670,10 @@ ENTITYincode_print (Entity entity, FILE* file,Schema schema)  /*  ,FILES *files)
 					/* attribute name param */
 				generate_dict_attr_name(v, dict_attrnm),
 /* not sure about 0 here */	TD_PREFIX,FundamentalType(v->type,0),
-				(VARget_optional(v)?"SCLLOG(LTrue)":
-				                    "SCLLOG(LFalse)"),
-				(VARget_unique(v)?"SCLLOG(LTrue)":
-				                  "SCLLOG(LFalse)"),
+				(VARget_optional(v)?"LTrue":
+				                    "LFalse"),
+				(VARget_unique(v)?"LTrue":
+				                  "LFalse"),
 				(VARget_inverse (v) ? "" : 
 				 (VARis_derived(v) ? ", AttrType_Deriving" : 
 				  (VARis_type_shifter(v) ?
@@ -3697,10 +3697,10 @@ ENTITYincode_print (Entity entity, FILE* file,Schema schema)  /*  ,FILES *files)
 			    /* attribute name param */
 			    generate_dict_attr_name(v, dict_attrnm),
 			    typename_buf,
-			    (VARget_optional(v)?"SCLLOG(LTrue)":
-			     "SCLLOG(LFalse)"),
-			    (VARget_unique(v)?"SCLLOG(LTrue)":
-			     "SCLLOG(LFalse)"),
+			    (VARget_optional(v)?"LTrue":
+			     "LFalse"),
+			    (VARget_unique(v)?"LTrue":
+			     "LFalse"),
 			    (VARget_inverse (v) ? "" :
 			     (VARis_derived(v) ? ", AttrType_Deriving" :
 			      (VARis_type_shifter(v) ?
@@ -3798,8 +3798,8 @@ TODO   -- write algorithm for determining descriptor of this attribute\'s invers
 			  /* attribute's type  */
 			  TYPEget_name(TYPEget_body(v->type)->entity->superscope),ENT_PREFIX,attrnm,
 /*TYPEget_name(v->type), */
-			  (VARget_optional(v)?"SCLLOG(LTrue)":"SCLLOG(LFalse)"),
-			  (VARget_unique(v)?"SCLLOG(LTrue)":"SCLLOG(LFalse)"),
+			  (VARget_optional(v)?"LTrue":"LFalse"),
+			  (VARget_unique(v)?"LTrue":"LFalse"),
 			  schema_name,ENT_PREFIX, TYPEget_name(entity));
 
 		  fprintf(file,"\t%s%s%s->AddInverseAttr (%s%dI%s);\n",
@@ -3901,7 +3901,7 @@ MODELPrintConstructorBody(Entity entity, FILES* files,Schema schema
 
 		PrettyTmpName (ENTITYget_name(entity)),
 		SCHEMA_PREFIX,SCHEMAget_name(schema),
-		(ENTITYget_abstract(entity)?"SCLLOG(LTrue)":"SCLLOG(LFalse)"),
+		(ENTITYget_abstract(entity)?"LTrue":"LFalse"),
 		ENTITYget_classname (entity)  
 		);
 
@@ -3976,10 +3976,10 @@ ENTITYprint_new(Entity entity,FILES *files, Schema schema, int externMap)
 	fprintf(files->create, "  \"%s\", %s%s, %s, ",
 		PrettyTmpName (ENTITYget_name(entity)),
 		SCHEMA_PREFIX,SCHEMAget_name(schema),
-		(ENTITYget_abstract(entity) ? "SCLLOG(LTrue)" : 
-		 "SCLLOG(LFalse)"));
-	fprintf(files->create, "%s,\n\t\t", externMap ? "SCLLOG(LTrue)" :
-                "SCLLOG(LFalse)");
+		(ENTITYget_abstract(entity) ? "LTrue" : 
+		 "LFalse"));
+	fprintf(files->create, "%s,\n\t\t", externMap ? "LTrue" :
+                "LFalse");
 
 	fprintf(files->create, "  (Creator) create_%s );\n",
 		ENTITYget_classname (entity));
@@ -4154,7 +4154,7 @@ MODELprint_new(Entity entity,FILES *files, Schema schema)
 		SCHEMAget_name(schema),ENT_PREFIX,ENTITYget_name(entity),
 		PrettyTmpName (ENTITYget_name(entity)),
 		SCHEMA_PREFIX,SCHEMAget_name(schema),
-		(ENTITYget_abstract(entity)?"SCLLOG(LTrue)":"SCLLOG(LFalse)"),
+		(ENTITYget_abstract(entity)?"LTrue":"LFalse"),
 		ENTITYget_classname (entity)  
 		);
 */
@@ -5057,11 +5057,11 @@ TYPEprint_init (const Type type, FILE *ifile, Schema schema)
 	  fprintf(ifile, "\t%s->Bound2(%d);\n", tdnm, 
 		  TYPEget_body(type)->upper->u.integer);
 	if(TYPEget_body(type)->flags.unique)
-	  fprintf(ifile, "\t%s->UniqueElements(\"SCLLOG(LTrue)\");\n", tdnm);
+	  fprintf(ifile, "\t%s->UniqueElements(\"LTrue\");\n", tdnm);
 /*	  fprintf(ifile, "\t%s->UniqueElements(%d);\n", tdnm, 
 		  TYPEget_body(type)->flags.unique); */
 	if(TYPEget_body(type)->flags.optional)
-	  fprintf(ifile, "\t%s->OptionalElements(\"SCLLOG(LTrue)\");\n", tdnm);
+	  fprintf(ifile, "\t%s->OptionalElements(\"LTrue\");\n", tdnm);
 /*	  fprintf(ifile, "\t%s->OptionalElements(%d);\n", tdnm, 
 		  TYPEget_body(type)->flags.optional);*/
       }

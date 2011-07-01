@@ -19,7 +19,7 @@
  */
 /** @addtogroup db5 */
 /** @{ */
-/** @file db5_alloc.c
+/** @file librt/db5_alloc.c
  *
  * Handle disk space allocation in the BRL-CAD v5 database.
  *
@@ -62,7 +62,7 @@ db5_write_free( struct db_i *dbip, struct directory *dp, size_t length )
 
     if ( length <= 8192 )  {
 
-	BU_INIT_EXTERNAL( &ext );
+	BU_EXTERNAL_INIT( &ext );
 	db5_make_free_object( &ext, length );
 
 	if ( dp->d_flags & RT_DIR_INMEM )  {
@@ -81,7 +81,7 @@ db5_write_free( struct db_i *dbip, struct directory *dp, size_t length )
 
     /* Free object is "large", only write the header and trailer bytes. */
 
-    BU_INIT_EXTERNAL( &ext );
+    BU_EXTERNAL_INIT( &ext );
     db5_make_free_object_hdr( &ext, length );
 
     if ( dp->d_flags & RT_DIR_INMEM )  {
@@ -209,7 +209,7 @@ db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
     /* Start by zapping existing database object into a free object */
     if ( dp->d_addr != RT_DIR_PHONY_ADDR )  {
 	if (RT_G_DEBUG&DEBUG_DB)
-	    bu_log("db5_realloc(%s) releasing storage at x%x, len=%d\n", dp->d_namep, dp->d_addr, dp->d_len);
+	    bu_log("db5_realloc(%s) releasing storage at x%x, len=%zu\n", dp->d_namep, dp->d_addr, dp->d_len);
 
 	rt_memfree( &(dbip->dbi_freep), dp->d_len, dp->d_addr );
 	if ( db5_write_free( dbip, dp, dp->d_len ) < 0 )  return -1;
@@ -226,7 +226,7 @@ db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
 
 	if ( (mmp = rt_memalloc_nosplit( &(dbip->dbi_freep), ep->ext_nbytes )) != MAP_NULL )  {
 	    if (RT_G_DEBUG&DEBUG_DB)
-		bu_log("db5_realloc(%s) obtained free block at x%x, len=%d\n", dp->d_namep, mmp->m_addr, mmp->m_size );
+		bu_log("db5_realloc(%s) obtained free block at x%x, len=%zu\n", dp->d_namep, mmp->m_addr, mmp->m_size );
 	    BU_ASSERT_LONG( (size_t)mmp->m_size, >=, (size_t)ep->ext_nbytes );
 	    if ( (size_t)mmp->m_size == (size_t)ep->ext_nbytes )  {
 		/* No need to reformat, existing free object is perfect */
@@ -240,7 +240,7 @@ db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
 		dp->d_addr = mmp->m_addr + (off_t)ep->ext_nbytes;
 		dp->d_len = mmp->m_size - ep->ext_nbytes;
 		if (RT_G_DEBUG&DEBUG_DB)
-		    bu_log("db5_realloc(%s) returning surplus at x%x, len=%d\n", dp->d_namep, dp->d_addr, dp->d_len );
+		    bu_log("db5_realloc(%s) returning surplus at x%x, len=%zu\n", dp->d_namep, dp->d_addr, dp->d_len );
 		if ( db5_write_free( dbip, dp, dp->d_len ) < 0 )  return -1;
 		rt_memfree( &(dbip->dbi_freep), dp->d_len, dp->d_addr );
 		/* mmp is invalid beyond here! */
@@ -249,7 +249,7 @@ db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
 	    dp->d_len = ep->ext_nbytes;
 	    /* Erase the new place */
 	    if (RT_G_DEBUG&DEBUG_DB)
-		bu_log("db5_realloc(%s) utilizing free block at addr=x%x, len=%d\n", dp->d_namep, dp->d_addr, dp->d_len);
+		bu_log("db5_realloc(%s) utilizing free block at addr=x%x, len=%zu\n", dp->d_namep, dp->d_addr, dp->d_len);
 	    if ( db5_write_free( dbip, dp, dp->d_len ) < 0 )  return -1;
 	    return 0;
 	}
@@ -260,7 +260,7 @@ db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
     dbip->dbi_eof += (off_t)ep->ext_nbytes;
     dp->d_len = ep->ext_nbytes;
     if (RT_G_DEBUG&DEBUG_DB)
-	bu_log("db5_realloc(%s) extending database addr=x%x, len=%d\n", dp->d_namep, dp->d_addr, dp->d_len);
+	bu_log("db5_realloc(%s) extending database addr=x%x, len=%zu\n", dp->d_namep, dp->d_addr, dp->d_len);
     return 0;
 }
 

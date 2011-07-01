@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dodraw.c
+/** @file mged/dodraw.c
  *
  */
 
@@ -401,7 +401,7 @@ mged_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp,
 
     /* Indicate success by returning something other than TREE_NULL */
     BU_GETUNION(curtree, tree);
-    RT_INIT_TREE(curtree);
+    RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
 
     return curtree;
@@ -990,7 +990,7 @@ replot_modified_solid(
     struct rt_db_internal intern;
     struct bu_list vhead;
 
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
 
     BU_LIST_INIT(&vhead);
 

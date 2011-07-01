@@ -102,7 +102,9 @@ Do_subfigs()
 
 	    mat_scale[j] = 1.0;
 	    mag_sq = MAGSQ(&(*dir[i]->rot)[j*4]);
-	    if (!NEAR_ZERO(mag_sq - 1.0, 100.0*SQRT_SMALL_FASTF)) {
+
+	    /* FIXME: arbitrary undefined tolerance */
+	    if (!NEAR_EQUAL(mag_sq, 1.0, 100.0*SQRT_SMALL_FASTF)) {
 		mat_scale[j] = 1.0/sqrt(mag_sq);
 		non_unit = 1;
 	    }

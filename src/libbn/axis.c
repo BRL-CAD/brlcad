@@ -19,7 +19,7 @@
  */
 /** @addtogroup axis */
 /** @{ */
-/** @file axis.c
+/** @file libbn/axis.c
  *
  * @brief
  *	This routine is used to generate an axis for a graph.
@@ -52,14 +52,14 @@
 #define	NUM_YOFF	(3*char_width)	/**< @brief numbers offset from line */
 #define	TITLE_YOFF	(5*char_width)	/**< @brief title offset from line */
 
-void
 /**
  *
  */
-tp_3axis(FILE *fp,
+void
+tp_3axis(FILE *fp,		/**< output file */
 	 char *string,		/**< label for axis */
-	 fastf_t *origin,
-	 fastf_t *rot,
+	 fastf_t *origin,	/**< simple 3d point */
+	 fastf_t *rot,		/**< rotation angle */
 	 double length,		/**< length of axis */
 	 int ccw,    		/**< 0=clockwise, !0=counter clockwise (ccw) */
 	 int ndigits,		/**< # digits wide */

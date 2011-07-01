@@ -1,4 +1,4 @@
-/*                      D B 5 _ C O M B . C
+/*                          C O M B . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2011 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @addtogroup db5 */
 /** @{ */
-/** @file db5_comb.c
+/** @file comb.c
  *
  * Implement support for combinations in v5 format.
  *
@@ -313,7 +313,7 @@ rt_comb_export5(
 	tcs.leafbytes +		/* size for leaf nodes */
 	rpn_len;		/* storage for RPN expression */
 
-    BU_INIT_EXTERNAL(ep);
+    BU_EXTERNAL_INIT(ep);
     ep->ext_nbytes = need;
     ep->ext_buf = bu_calloc(1, need, "rt_comb_export5 ext_buf");
 
@@ -479,11 +479,9 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
     ip->idb_type = ID_COMBINATION;
     ip->idb_meth = &rt_functab[ID_COMBINATION];
     BU_GETSTRUCT(comb, rt_comb_internal);
+    RT_COMB_INTERNAL_INIT(comb);
+
     ip->idb_ptr = (genptr_t)comb;
-    comb->magic = RT_COMB_MAGIC;
-    bu_vls_init(&comb->shader);
-    bu_vls_init(&comb->material);
-    comb->temperature = -1;
 
     cp = ep->ext_buf;
     wid = *cp++;
@@ -617,7 +615,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
      * and matricies in the order they are encountered.
      */
     if (max_stack_depth > MAX_V5_STACK) {
-	bu_log("Combination needs stack depth %d, only have %d, aborted\n",
+	bu_log("Combination needs stack depth %zu, only have %d, aborted\n",
 	       max_stack_depth, MAX_V5_STACK);
 	return -1;
     }
@@ -1091,19 +1089,9 @@ rt_comb_make(const struct rt_functab *UNUSED(ftp), struct rt_db_internal *intern
 				"rt_comb_internal");
 
     comb = (struct rt_comb_internal *)intern->idb_ptr;
-    comb->magic = (long)RT_COMB_MAGIC;
-    comb->temperature = -1;
-    comb->tree = (union tree *)0;
-    comb->region_flag = 1;
-    comb->region_id = 0;
-    comb->aircode = 0;
-    comb->GIFTmater = 0;
-    comb->los = 0;
-    comb->rgb_valid = 0;
-    comb->rgb[0] = comb->rgb[1] = comb->rgb[2] = 0;
+    RT_COMB_INTERNAL_INIT(comb);
     bu_vls_init(&comb->shader);
     bu_vls_init(&comb->material);
-    comb->inherit = 0;
 }
 
 

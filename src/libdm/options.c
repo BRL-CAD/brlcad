@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file options.c
+/** @file libdm/options.c
  *
  * Option processing routines.
  *

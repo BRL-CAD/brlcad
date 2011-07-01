@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file solids_on_ray.c
+/** @file mged/solids_on_ray.c
  *
  * Routines to implement the click-to-pick-an-edit-solid feature.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file str_manip.c
+/** @file nirt/str_manip.c
  *
  * String manipulation
  *

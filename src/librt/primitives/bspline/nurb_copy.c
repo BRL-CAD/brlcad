@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_copy.c
+/** @file primitives/bspline/nurb_copy.c
  *
  * Duplicate the nurb surface.
  *

@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_tri.c
+/** @file primitives/nmg/nmg_tri.c
  *
  * Triangulate the faces of a polygonal NMG.
  *
@@ -43,13 +43,13 @@
 /* XXX maybe should use near zero tolerance instead */
 #define TOL_2D 1.0e-10
 #define P_GT_V(_p, _v) \
-	(((_p)->coord[Y] - (_v)->coord[Y]) > TOL_2D || (NEAR_ZERO((_p)->coord[Y] - (_v)->coord[Y], TOL_2D) && (_p)->coord[X] < (_v)->coord[X]))
+    (((_p)->coord[Y] - (_v)->coord[Y]) > TOL_2D || (NEAR_EQUAL((_p)->coord[Y], (_v)->coord[Y], TOL_2D) && (_p)->coord[X] < (_v)->coord[X]))
 #define P_LT_V(_p, _v) \
-	(((_p)->coord[Y] - (_v)->coord[Y]) < (-TOL_2D) || (NEAR_ZERO((_p)->coord[Y] - (_v)->coord[Y], TOL_2D) && (_p)->coord[X] > (_v)->coord[X]))
+    (((_p)->coord[Y] - (_v)->coord[Y]) < (-TOL_2D) || (NEAR_EQUAL((_p)->coord[Y], (_v)->coord[Y], TOL_2D) && (_p)->coord[X] > (_v)->coord[X]))
 #define P_GE_V(_p, _v) \
-	(((_p)->coord[Y] - (_v)->coord[Y]) > TOL_2D || (NEAR_ZERO((_p)->coord[Y] - (_v)->coord[Y], TOL_2D) && (_p)->coord[X] <= (_v)->coord[X]))
+    (((_p)->coord[Y] - (_v)->coord[Y]) > TOL_2D || (NEAR_EQUAL((_p)->coord[Y], (_v)->coord[Y], TOL_2D) && (_p)->coord[X] <= (_v)->coord[X]))
 #define P_LE_V(_p, _v) \
-	(((_p)->coord[Y] - (_v)->coord[Y]) < (-TOL_2D) || (NEAR_ZERO((_p)->coord[Y] - (_v)->coord[Y], TOL_2D) && (_p)->coord[X] >= (_v)->coord[X]))
+    (((_p)->coord[Y] - (_v)->coord[Y]) < (-TOL_2D) || (NEAR_EQUAL((_p)->coord[Y], (_v)->coord[Y], TOL_2D) && (_p)->coord[X] >= (_v)->coord[X]))
 
 #define NMG_PT2D_MAGIC 0x2d2d2d2d
 #define NMG_TRAP_MAGIC 0x1ab1ab
@@ -2738,7 +2738,7 @@ nmg_isect_lseg3_eu(struct vertexuse *vu1, struct vertexuse *vu2, struct faceuse 
 
                 if (((NEAR_ZERO(dist[0], SMALL_FASTF) && NEAR_ZERO(dist[1], SMALL_FASTF))
                     != (vu2->v_p == eu->vu_p->v_p)) ||
-                    ((NEAR_ZERO(dist[0] - 1.0, SMALL_FASTF) && NEAR_ZERO(dist[1], SMALL_FASTF))
+                    ((NEAR_EQUAL(dist[0], 1.0, SMALL_FASTF) && NEAR_ZERO(dist[1], SMALL_FASTF))
                     != (vu1->v_p == eu->vu_p->v_p))) {
                     bu_bomb("nmg_isect_lseg3_eu(): logic error possibly in 'bn_isect_lseg3_lseg3_new'\n");
                 }
@@ -2753,9 +2753,9 @@ nmg_isect_lseg3_eu(struct vertexuse *vu1, struct vertexuse *vu2, struct faceuse 
                  * everywhere else for intersections.
                  */
                 if ((NEAR_ZERO(dist[0], SMALL_FASTF) && NEAR_ZERO(dist[1], SMALL_FASTF)) || 
-                    (NEAR_ZERO(dist[0] - 1.0, SMALL_FASTF) && NEAR_ZERO(dist[1], SMALL_FASTF)) ||
-                    (NEAR_ZERO(dist[0], SMALL_FASTF) && NEAR_ZERO(dist[1] - 1.0, SMALL_FASTF)) ||
-                    (NEAR_ZERO(dist[0] - 1.0, SMALL_FASTF) && NEAR_ZERO(dist[1] - 1.0, SMALL_FASTF))) {
+                    (NEAR_EQUAL(dist[0], 1.0, SMALL_FASTF) && NEAR_ZERO(dist[1], SMALL_FASTF)) ||
+                    (NEAR_ZERO(dist[0], SMALL_FASTF) && NEAR_EQUAL(dist[1], 1.0, SMALL_FASTF)) ||
+                    (NEAR_EQUAL(dist[0], 1.0, SMALL_FASTF) && NEAR_EQUAL(dist[1], 1.0, SMALL_FASTF))) {
                 } else {
                     /* Set hit true so elsewhere logic can skip this
                      * pot-cut and try the next one.
@@ -2991,7 +2991,7 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
     struct edgeuse *eu;
     int loopuse_count_tmp = 0;
     int edgeuse_vert_count = 0;
-    struct loopuse *lu1;
+    struct loopuse *lu1, *lu_tmp;
     int lu_done = 0;
 
     size_t *book_keeping_array, *book_keeping_array_tmp;
@@ -3000,6 +3000,7 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
     int idx = 0;
     int done = 0;
     int match = 0;
+    int killed_lu = 0;
 
     BN_CK_TOL(tol);
     NMG_CK_FACEUSE(fu);
@@ -3016,25 +3017,46 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
             lu_done = 1;
         } else {
             NMG_CK_LOOPUSE(lu);
-
-            edgeuse_vert_count = 0;
-            for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-                edgeuse_vert_count++;
+            lu_tmp = lu;
+            killed_lu = 0;
+            if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
+                edgeuse_vert_count = 0;
+                for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+                    NMG_CK_EDGEUSE(eu);
+                    edgeuse_vert_count++;
+                }
+                if (edgeuse_vert_count < 3) {
+                    nmg_klu(lu);
+                    killed_lu = 1;
+                    bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- killed loopuse 0x%lx with %d vertices\n", 
+                            (unsigned long)fu, (unsigned long)lu_tmp, edgeuse_vert_count);
+                }
+            } else if ((BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) && 
+                       (BU_LIST_FIRST_MAGIC(&lu->lumate_p->down_hd) == NMG_VERTEXUSE_MAGIC)) {
+                nmg_kvu(BU_LIST_FIRST(vertexuse, &lu->down_hd));
+                nmg_kvu(BU_LIST_FIRST(vertexuse, &lu->lumate_p->down_hd));
+                nmg_klu(lu);
+                killed_lu = 1;
+                bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- killed single vertex loopuse 0x%lx\n",
+                        (unsigned long)fu, (unsigned long)lu_tmp);
+            } else {
+                bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- unknown loopuse content\n",
+                        (unsigned long)fu);
+                bu_bomb("nmg_triangulate_rm_degen_loopuse(): unknown loopuse content\n");
             }
 
-            if (edgeuse_vert_count < 3) {
-                bu_log("killed loopuse 0x%lx with %d vertices (i.e. < 3 vertices)\n", 
-                        (unsigned long)lu, edgeuse_vert_count);
-                nmg_klu(lu);
-
+            if (killed_lu) {
                 loopuse_count_tmp = 0;
                 for (BU_LIST_FOR(lu1, loopuse, &fu->lu_hd)) {
                     loopuse_count_tmp++;
                 }
 
-                bu_log("nmg_triangulate_rm_degen_loopuse(): %d loopuse remain in faceuse after killing loopuse\n", loopuse_count_tmp);
+                bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- %d loopuse remain in faceuse after killing loopuse 0x%lx\n", 
+                        (unsigned long)fu, loopuse_count_tmp, (unsigned long)lu_tmp);
                 if (loopuse_count_tmp < 1) {
                     lu_done = 1;
+                    bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- contains no loopuse\n",
+                            (unsigned long)fu);
                     bu_bomb("nmg_triangulate_rm_degen_loopuse(): faceuse contains no loopuse\n");
                 }
 
@@ -3061,6 +3083,16 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
                             for (idx = 0 ; idx < unique_vertex_cnt ; idx++) {
                                 if (book_keeping_array[idx] == (size_t)eu->vu_p->v_p->vg_p) {
                                     match = 1;
+                                    {
+                                        struct edgeuse *eu1;
+                                        int cnt = 0;
+                                        for (BU_LIST_FOR(eu1, edgeuse, &lu->down_hd)) {
+                                            cnt++;
+                                            bu_log("%d -- vu_p = %x vg_p = %x dup_vu_p = %x dup_vg_p = %x\n", 
+                                                   cnt, eu1->vu_p, eu1->vu_p->v_p->vg_p, 
+                                                   eu->vu_p, eu->vu_p->v_p->vg_p);
+                                        }
+                                    }
                                     bu_bomb("nmg_triangulate_rm_degen_loopuse(): found duplicate vertex\n");
                                     break;
                                 }
@@ -3083,16 +3115,16 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
                 } /* end of while-not-done loop */
 
                 if (unique_vertex_cnt < 3) {
-                    bu_log("killed loopuse 0x%lx with %d vertices (i.e. < 3 unique vertices)\n", 
-                            (unsigned long)lu, edgeuse_vert_count);
                     nmg_klu(lu);
+                    bu_log("killed loopuse 0x%lx with %d vertices (i.e. < 3 unique vertices)\n", 
+                            (unsigned long)lu_tmp, edgeuse_vert_count);
 
                     loopuse_count_tmp = 0;
                     for (BU_LIST_FOR(lu1, loopuse, &fu->lu_hd)) {
                         loopuse_count_tmp++;
                     }
 
-                    bu_log("nmg_triangulate_rm_degen_loopuse(): remaining loopuse in faceuse after killing loopuse %d\n", loopuse_count_tmp);
+                    bu_log("nmg_triangulate_rm_degen_loopuse(): %d remaining loopuse in faceuse after killing loopuse 0x%lx\n", loopuse_count_tmp, (unsigned long)lu_tmp);
                     if (loopuse_count_tmp < 1) {
                         lu_done = 1;
                         bu_bomb("nmg_triangulate_rm_degen_loopuse(): faceuse contains no loopuse\n");

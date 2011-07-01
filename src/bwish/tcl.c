@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file tcl.c
+/** @file bwish/tcl.c
  *
  * The supporting Tcl routines for BWISH and BTCLSH.
  *

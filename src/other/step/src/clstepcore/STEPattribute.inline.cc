@@ -141,5 +141,5 @@ STEPattribute::Nullable() const
     if ( _redefAttr )  {
 	return _redefAttr->Nullable();
     }
-    return ( aDesc->Optionality().asInt() == SCLLOG(LTrue) );
+    return ( aDesc->Optionality().asInt() == LTrue );
 }

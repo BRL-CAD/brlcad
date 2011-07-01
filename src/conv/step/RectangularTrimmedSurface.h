@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file RectangularTrimmedSurface.h
+/** @file step/RectangularTrimmedSurface.h
  *
  * Class definition used to interface to STEP "RectangularTrimmedSurface".
  *
@@ -43,8 +43,8 @@ protected:
 	double v2;
 	//TODO: Fix all references to YAYA
 #ifdef YAYA
-	SCLBOOL_H(Boolean) usense;
-	SCLBOOL_H(Boolean) vsense;
+	Boolean usense;
+	Boolean vsense;
 #else
 	int usense;
 	int vsense;

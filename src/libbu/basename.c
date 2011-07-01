@@ -21,22 +21,41 @@
 #include "common.h"
 
 #include "bu.h"
+#include <string.h>
 
-
-const char *
+char *
 bu_basename(const char *str)
 {
     register const char	*p = str;
+    char *base_str;
+    int len;
 
     if (UNLIKELY(!str)) {
-	return NULL;
+	base_str = bu_malloc(MAXPATHLEN, "bu_basename empty");;
+	base_str[0] = '.';
+	return base_str;
     }
 
+    /* Skip leading '/'s */
     while (*p != '\0')
-	if (*p++ == '/')
+	if (*p++ == '/' && *p != '/' && *p != '\0')
 	    str = p;
 
-    return str;
+    len = strlen(str);
+    
+    /* Remove trailing '/'s */
+    while (len > 1 && str[len - 1] == '/')
+	len--;
+    
+    /* Create a new string */
+    base_str = bu_calloc(len + 2, sizeof(char), "bu_basename alloc");
+    if (len > 0) {
+	bu_strlcpy(base_str, str, len+1);
+    } else {
+	base_str[0] = '.';
+    }
+
+    return base_str;
 }
 
 /*

@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file pmalloc.c
+/** @file librt/pmalloc.c
  *
  * The Princeton memory allocater.
  *

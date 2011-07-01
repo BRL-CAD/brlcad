@@ -19,7 +19,7 @@
  */
 /** @addtogroup plot */
 /** @{ */
-/** @file tplot.c
+/** @file libbn/tplot.c
  *
  * @brief
  *	This routine is designed to simplify the creation of

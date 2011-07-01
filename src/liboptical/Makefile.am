@@ -60,8 +60,21 @@ librtms_la_SOURCES = \
 	sh_stack.c \
 	shade.c
 
+osl_srcs = \
+	liboslrend.cpp \
+	render_svc.cpp \
+	sh_osl.cpp \
+	osl_rt.cpp
+
+noinst_HEADERS = \
+	constantpool.h \
+	liboslrend.h \
+	oslexec_pvt.h \
+	render_svc.h
+
 EXTRA_DIST = \
-	liboptical.dsp
+	${osl_srcs} \
+	CMakeLists.txt
 
 DEPENDS = src/librt
 

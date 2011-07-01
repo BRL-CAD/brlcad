@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file orient_loops.c
+/** @file iges/orient_loops.c
  *
  */
 

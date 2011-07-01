@@ -17,13 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file beset.h
- *
- * Brief description
- *
- * Author -
- *   Ben Poole
- */
 
 #ifndef __BESET_H__
 #define __BESET_H__

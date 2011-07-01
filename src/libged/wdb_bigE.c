@@ -19,7 +19,7 @@
  */
 /** @addtogroup libged */
 /** @{ */
-/** @file bigE.c
+/** @file libged/bigE.c
  *
  * This module implements the 'E' command.
  *
@@ -75,8 +75,8 @@ union E_tree *wdb_build_etree(union tree *tp, struct dg_client_data *dgcdp);
 #define MY_FREE_SEG_LIST(_segheadp, _res) { \
 	struct seg *_a; \
 	while (BU_LIST_WHILE(_a, seg, (_segheadp))) { \
-		BU_LIST_DEQUEUE(&(_a->l)); \
-		RT_FREE_SEG(_a, _res); \
+	    BU_LIST_DEQUEUE(&(_a->l)); \
+	    RT_FREE_SEG(_a, _res); \
 	} }
 
 /* stolen from g_half.c */
@@ -94,16 +94,16 @@ union E_tree
 {
     long magic;
 
-    struct E_node	/* the operator nodes */
-    {
+    struct E_node {
+	/* the operator nodes */
 	long magic;
 	int op;
 	union E_tree *left;
 	union E_tree *right;
     } n;
 
-    struct E_leaf	/* the leaf nodes */
-    {
+    struct E_leaf {
+	/* the leaf nodes */
 	long magic;
 	int op;
 	struct model *m;		/* NMG version of this leaf solid */
@@ -154,22 +154,6 @@ wdb_add_solid(const struct directory *dp,
 	rt_db_free_internal(&intern);
 	return eptr;
     }
-#if 0
-    if (id == ID_BOT) {
-	struct rt_bot_internal *bot = (struct rt_bot_internal *)intern.idb_ptr;
-
-	/* if this is a plate mode BOT, lie to the tesselator to get
-	 * an approximation
-	 */
-
-	RT_BOT_CK_MAGIC(bot);
-
-	if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
-	    solid_is_plate_mode_bot = 1;
-	    bot->mode = RT_BOT_SOLID;
-	}
-    }
-#endif
     if (id == ID_HALF) {
 	eptr->l.m = NULL;
 	dgcdp->num_halfs++;
@@ -217,7 +201,7 @@ wdb_add_solid(const struct directory *dp,
 		    Tcl_AppendResult(dgcdp->interp, "Prep failure for solid '", dp->d_namep,
 				     "'\n", (char *)NULL);
 	    } else {
-		RT_INIT_DB_INTERNAL(&intern2);
+		RT_DB_INTERNAL_INIT(&intern2);
 		intern2.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		intern2.idb_type = ID_BOT;
 		intern2.idb_meth = &rt_functab[ID_BOT];
@@ -458,6 +442,7 @@ wdb_do_subtract(struct seg *A,
 	}
     }
 }
+
 
 HIDDEN void
 wdb_promote_ints(struct bu_list *head,
@@ -1670,9 +1655,7 @@ wdb_Eplot(union E_tree *eptr,
 		    BU_LIST_INIT(B);
 
 		    for (i=1; i<hit_count1; i += 2) {
-			fastf_t distdiff;
-			distdiff = dists1[i] - dists1[i-1];
-			if (NEAR_ZERO(distdiff, tol->dist)) {
+			if (NEAR_EQUAL(dists1[i], dists1[i-1], tol->dist)) {
 			    continue;
 			}
 			RT_GET_SEG(aseg, dgcdp->ap->a_resource);
@@ -1687,9 +1670,7 @@ wdb_Eplot(union E_tree *eptr,
 		    }
 
 		    for (i=1; i<hit_count2; i += 2) {
-			fastf_t distdiff;
-			distdiff = dists2[i] - dists2[i-1];
-			if (NEAR_ZERO(distdiff, tol->dist)) {
+			if (NEAR_EQUAL(dists2[i], dists2[i-1], tol->dist)) {
 			    continue;
 			}
 			RT_GET_SEG(aseg, dgcdp->ap->a_resource);
@@ -2020,7 +2001,7 @@ wdb_fix_halfs(struct dg_client_data *dgcdp)
 	} else {
 	    struct rt_db_internal intern2;
 
-	    RT_INIT_DB_INTERNAL(&intern2);
+	    RT_DB_INTERNAL_INIT(&intern2);
 	    intern2.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern2.idb_type = ID_POLY;
 	    intern2.idb_meth = &rt_functab[ID_POLY];
@@ -2075,43 +2056,41 @@ dgo_E_cmd(struct dg_obj *dgop,
     bu_optind = 1;          /* re-init bu_getopt() */
     while ((c=bu_getopt(argc, argv, "sC:")) != -1) {
 	switch (c) {
-	    case 'C':
-		{
-		    int r, g, b;
-		    char *cp = bu_optarg;
+	    case 'C': {
+		int r, g, b;
+		char *cp = bu_optarg;
 
-		    r = atoi(cp);
-		    while ((*cp >= '0' && *cp <= '9')) cp++;
-		    while (*cp && (*cp < '0' || *cp > '9')) cp++;
-		    g = atoi(cp);
-		    while ((*cp >= '0' && *cp <= '9')) cp++;
-		    while (*cp && (*cp < '0' || *cp > '9')) cp++;
-		    b = atoi(cp);
+		r = atoi(cp);
+		while ((*cp >= '0' && *cp <= '9')) cp++;
+		while (*cp && (*cp < '0' || *cp > '9')) cp++;
+		g = atoi(cp);
+		while ((*cp >= '0' && *cp <= '9')) cp++;
+		while (*cp && (*cp < '0' || *cp > '9')) cp++;
+		b = atoi(cp);
 
-		    if (r < 0 || r > 255) r = 255;
-		    if (g < 0 || g > 255) g = 255;
-		    if (b < 0 || b > 255) b = 255;
+		if (r < 0 || r > 255) r = 255;
+		if (g < 0 || g > 255) g = 255;
+		if (b < 0 || b > 255) b = 255;
 
-		    dgcdp->wireframe_color_override = 1;
-		    dgcdp->wireframe_color[0] = r;
-		    dgcdp->wireframe_color[1] = g;
-		    dgcdp->wireframe_color[2] = b;
-		}
+		dgcdp->wireframe_color_override = 1;
+		dgcdp->wireframe_color[0] = r;
+		dgcdp->wireframe_color[1] = g;
+		dgcdp->wireframe_color[2] = b;
+	    }
 		break;
 	    case 's':
 		dgcdp->do_polysolids = 1;
 		break;
-	    default:
-		{
-		    struct bu_vls vls;
+	    default: {
+		struct bu_vls vls;
 
-		    bu_vls_init(&vls);
-		    bu_vls_printf(&vls, "help %s", argv[0]);
-		    Tcl_Eval(interp, bu_vls_addr(&vls));
-		    bu_vls_free(&vls);
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "help %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
 
-		    return TCL_ERROR;
-		}
+		return TCL_ERROR;
+	    }
 	}
     }
     argc -= bu_optind;
@@ -2119,16 +2098,11 @@ dgo_E_cmd(struct dg_obj *dgop,
 
     dgo_eraseobjpath(dgop, interp, argc, argv, LOOKUP_QUIET, 0);
 
-#if 0
-    dgop->dgo_wdbp->wdb_ttol.magic = RT_TESS_TOL_MAGIC;
-    dgop->dgo_wdbp->wdb_ttol.rel = 0.01;
-#endif
-
     dgcdp->ap = (struct application *)bu_malloc(sizeof(struct application), "Big E app");
     RT_APPLICATION_INIT(dgcdp->ap);
     dgcdp->ap->a_resource = &rt_uniresource;
     rt_uniresource.re_magic = RESOURCE_MAGIC;
-    if (BU_LIST_UNINITIALIZED(&rt_uniresource.re_nmgfree))
+    if (!BU_LIST_IS_INITIALIZED(&rt_uniresource.re_nmgfree))
 	BU_LIST_INIT(&rt_uniresource.re_nmgfree);
 
     bu_ptbl_init(&dgcdp->leaf_list, 8, "leaf_list");

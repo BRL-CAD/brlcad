@@ -67,6 +67,8 @@ bu_identify_magic(register unsigned long magic)
 	    return "red-black package";
 	case BU_RB_TREE_MAGIC:
 	    return "red-black tree";
+	case BN_SPM_MAGIC:
+	    return "spm.h bn_spm_map_t";
 	case BU_VLB_MAGIC:
 	    return "bu_vlb";
 	case BU_VLS_MAGIC:
@@ -233,7 +235,7 @@ bu_identify_magic(register unsigned long magic)
 	    return "librt rt_constraint_internal";
 	case RT_CTS_MAGIC:
 	    return "librt combined_tree_state";
-	case RT_DBTR_MAGIC:
+	case RT_DB_TRAVERSE_MAGIC:
 	    return "librt dbtr";
 	case RT_DBTS_MAGIC:
 	    return "librt dbts";
@@ -305,8 +307,6 @@ bu_identify_magic(register unsigned long magic)
 	    return "librt resource";
 	case RTI_MAGIC:
 	    return "rt_i";
-	case SPM_MAGIC:
-	    return "spm.h spm_map_t";
 	case VERT_TREE_MAGIC:
 	    return "vert_tree";
 	case WDB_METABALLPT_MAGIC:

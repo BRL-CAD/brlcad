@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file ehy.c
+/** @file primitives/ehy/ehy.c
  *
  * Intersect a ray with an Elliptical Hyperboloid.
  *
@@ -164,9 +164,6 @@
 #include "../../librt_private.h"
 
 
-extern fastf_t rt_ell_ang(fastf_t *, fastf_t, fastf_t, fastf_t, fastf_t);
-
-
 struct ehy_specific {
     point_t ehy_V;	/* vector to ehy origin */
     vect_t ehy_Hunit;	/* unit H vector */
@@ -234,7 +231,7 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     c = xip->ehy_c;
     /* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0, c > 0 */
     if (NEAR_ZERO(mag_h, RT_LEN_TOL)
-	|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
+	|| !NEAR_EQUAL(mag_a, 1.0, RT_LEN_TOL)
 	|| r1 < 0.0 || r2 < 0.0 || c < 0.0) {
 	return -2;		/* BAD, too small */
     }
@@ -666,7 +663,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     r2 = xip->ehy_r2;
     /* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0, c > 0 */
     if (NEAR_ZERO(mag_h, RT_LEN_TOL)
-	|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
+	|| !NEAR_EQUAL(mag_a, 1.0, RT_LEN_TOL)
 	|| r1 <= 0.0 || r2 <= 0.0 || c <= 0.) {
 	return -2;		/* BAD */
     }
@@ -824,7 +821,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	VJOIN1(V, xip->ehy_V, -pos_a->p[Z], Hu);
 
 	VSET(p1, 0., pos_b->p[Y], 0.);
-	theta_new = rt_ell_ang(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
+	theta_new = ell_angle(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
 	if (nseg == 0) {
 	    nseg = (int)(bn_twopi / theta_new) + 1;
 	    pts_dbl[i] = 0;
@@ -958,7 +955,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     r2 = xip->ehy_r2;
     /* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0, c > 0 */
     if (NEAR_ZERO(mag_h, RT_LEN_TOL)
-	|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
+	|| !NEAR_EQUAL(mag_a, 1.0, RT_LEN_TOL)
 	|| r1 <= 0.0 || r2 <= 0.0 || c <= 0.) {
 	return 1;		/* BAD */
     }
@@ -1126,7 +1123,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	VJOIN1(V, xip->ehy_V, -pos_a->p[Z], Hu);
 
 	VSET(p1, 0., pos_b->p[Y], 0.);
-	theta_new = rt_ell_ang(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
+	theta_new = ell_angle(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
 	if (nseg == 0) {
 	    nseg = (int)(bn_twopi / theta_new) + 1;
 	    pts_dbl[i] = 0;
@@ -1493,7 +1490,7 @@ rt_ehy_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     ehy->s.s_id = ID_SOLID;
     ehy->s.s_type = EHY;
 
-    if (!NEAR_ZERO(MAGNITUDE(xip->ehy_Au) - 1., RT_LEN_TOL)) {
+    if (!NEAR_EQUAL(MAGNITUDE(xip->ehy_Au), 1.0, RT_LEN_TOL)) {
 	bu_log("rt_ehy_export4: Au not a unit vector!\n");
 	return -1;
     }
@@ -1600,7 +1597,7 @@ rt_ehy_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 3*4;
     ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "ehy external");
 
-    if (!NEAR_ZERO(MAGNITUDE(xip->ehy_Au) - 1., RT_LEN_TOL)) {
+    if (!NEAR_EQUAL(MAGNITUDE(xip->ehy_Au), 1.0, RT_LEN_TOL)) {
 	bu_log("rt_ehy_export4: Au not a unit vector!\n");
 	return -1;
     }

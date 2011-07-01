@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file editit.c
+/** @file libged/editit.c
  *
  * The editit function.
  *
@@ -90,6 +90,8 @@ _ged_editit(char *editstring, const char *filename)
 	int length;
 	struct bu_vls str;
 	struct bu_vls sep;
+	char *editor_basename;
+
 	bu_vls_init(&str);
 	bu_vls_init(&sep);
 	if (terminal && editor_opt) {
@@ -101,13 +103,15 @@ _ged_editit(char *editstring, const char *filename)
 	} else {
 	    bu_log("Invoking [%s %s]\n\n", editor, file);
 	}
-	bu_vls_sprintf(&str, "\nNOTE: You must QUIT %s before %s will respond and continue.\n", bu_basename(editor), bu_getprogname());
+	editor_basename = bu_basename(editor);
+	bu_vls_sprintf(&str, "\nNOTE: You must QUIT %s before %s will respond and continue.\n", editor_basename, bu_getprogname());
 	for (length = bu_vls_strlen(&str) - 2; length > 0; length--) {
 	    bu_vls_putc(&sep, '*');
 	}
 	bu_log("%V%V%V\n\n", &sep, &str, &sep);
 	bu_vls_free(&str);
 	bu_vls_free(&sep);
+	bu_free(editor_basename, "editor_basename free");
     }
 
 #if defined(SIGINT) && defined(SIGQUIT)
@@ -132,6 +136,9 @@ _ged_editit(char *editstring, const char *filename)
 #endif
 
 	{
+
+	    char *editor_basename;
+
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	    char buffer[RT_MAXLINE + 1] = {0};
 	    STARTUPINFO si = {0};
@@ -150,14 +157,16 @@ _ged_editit(char *editstring, const char *filename)
 	    return 1;
 #else
 
-	    if (BU_STR_EQUAL(bu_basename(editor), "TextEdit")) {
+	    editor_basename = bu_basename(editor);
+	    if (BU_STR_EQUAL(editor_basename, "TextEdit")) {
 		/* close stdout/stderr so we don't get blather from TextEdit about service registration failure */
 		close(fileno(stdout));
 		close(fileno(stderr));
 	    }
+	    bu_free(editor_basename, "editor_basename free");
 
 	    if (!terminal && !editor_opt) {
-    		(void)execlp(editor, editor, file, NULL);
+		(void)execlp(editor, editor, file, NULL);
 	    } else if (!terminal) {
 		(void)execlp(editor, editor, editor_opt, file, NULL);
 	    } else if (terminal && !terminal_opt) {
@@ -204,7 +213,7 @@ ged_editit(struct ged *gedp, int argc, const char *argv[])
      * edit string and temp file.  should use bu_getopt().
      */
     if (argc != 5) {
-	bu_vls_printf(&gedp->ged_result_str, "Internal Error: \"%s -e editstring -f tmpfile\" is malformed (argc == %d)", argv[0], argc);
+	bu_vls_printf(gedp->ged_result_str, "Internal Error: \"%s -e editstring -f tmpfile\" is malformed (argc == %d)", argv[0], argc);
 	return TCL_ERROR;
     } else {
 	char *edstr = bu_strdup((char *)argv[2]);

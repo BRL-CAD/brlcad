@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dm-generic.c
+/** @file mged/dm-generic.c
  *
  * Routines common to MGED's interface to LIBDM.
  *

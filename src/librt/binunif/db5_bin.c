@@ -184,7 +184,7 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
 				   ep->ext_nbytes,
 				   ep->ext_buf, in_cookie, bip->count);
 		if (gotten != bip->count) {
-		    bu_log("%s:%d: Tried to convert %zu, did %d",
+		    bu_log("%s:%d: Tried to convert %zu, did %zu",
 			   __FILE__, __LINE__, bip->count, gotten);
 		    bu_bomb("\n");
 		}
@@ -256,7 +256,7 @@ rt_binunif_export5( struct bu_external		*ep,
     bip = (struct rt_binunif_internal *)ip->idb_ptr;
     RT_CK_BINUNIF(bip);
 
-    BU_INIT_EXTERNAL(ep);
+    BU_EXTERNAL_INIT(ep);
 
     /*
      * Convert from internal (host) to database (network) format
@@ -295,7 +295,7 @@ rt_binunif_export5( struct bu_external		*ep,
 				   bip->count);
 
 		if (gotten != bip->count) {
-		    bu_log("%s:%d: Tried to convert %zu, did %d",
+		    bu_log("%s:%d: Tried to convert %zu, did %zu",
 			   __FILE__, __LINE__, bip->count, gotten);
 		    bu_bomb("\n");
 		}
@@ -437,7 +437,7 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
     if ( (dp = db_lookup( dbip, name, LOOKUP_NOISY)) == RT_DIR_NULL )
 	return -1;
 
-    RT_INIT_DB_INTERNAL(intern);
+    RT_DB_INTERNAL_INIT(intern);
     if ( rt_db_get_internal5( intern, dp, dbip, NULL, &rt_uniresource)
 	 != ID_BINUNIF     || db_get_external( &ext, dp, dbip ) < 0 )
 	return -1;
@@ -463,7 +463,7 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
 	rt_binunif_dump(bip);
 
     if (RT_G_DEBUG & DEBUG_VOL)
-	bu_log("cmd_export_body() thinks bip->count=%d\n",
+	bu_log("cmd_export_body() thinks bip->count=%zu\n",
 	       bip->count);
 
     switch (bip->type) {

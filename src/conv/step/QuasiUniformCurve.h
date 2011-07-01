@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file QuasiUniformCurve.h
+/** @file step/QuasiUniformCurve.h
  *
  * Class definition used to convert STEP "QuasiUniformCurve" to BRL-CAD BREP
  * structures.

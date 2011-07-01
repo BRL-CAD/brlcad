@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged.c
+/** @file mged/mged.c
  *
  * Mainline portion of the Mutliple-display Graphics EDitor (MGED)
  *
@@ -165,7 +165,7 @@ int old_mged_gui=1;
 static int mged_init_flag = 1;	/* >0 means in initialization stage */
 
 struct bu_vls input_str, scratchline, input_str_prefix;
-int input_str_index = 0;
+size_t input_str_index = 0;
 
 char *dpy_string = (char *)NULL;
 
@@ -708,7 +708,7 @@ mged_process_char(char ch)
 	    break;
 	case DELETE:
 	case BACKSPACE:
-	    if (input_str_index <= 0) {
+	    if (input_str_index == 0) {
 		pr_beep();
 		break;
 	    }
@@ -1854,7 +1854,7 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 int
 cmd_stuff_str(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {
-    int i;
+    size_t i;
 
     if (argc != 2) {
 	struct bu_vls vls;
@@ -2540,20 +2540,15 @@ mged_finish(int exitcode)
 	bu_vls_free(&c->cl_more_default);
     }
 
-
     /* Be certain to close the database cleanly before exiting */
     Tcl_Preserve((ClientData)INTERP);
-    Tcl_Eval(INTERP, "rename db \"\"");
-    Tcl_Eval(INTERP, "rename .inmem \"\"");
+    Tcl_Eval(INTERP, "rename " MGED_DB_NAME " \"\"; rename .inmem \"\"");
     Tcl_Release((ClientData)INTERP);
 
-    if (gedp->ged_gdp) {
-	ged_drawable_close(gedp->ged_gdp);
-	gedp->ged_gdp = GED_DRAWABLE_NULL;
-    }
-
-    ged_free(gedp);
+    ged_close(gedp);
     gedp = GED_NULL;
+    wdbp = RT_WDB_NULL;
+    dbip = DBI_NULL;
 
     /* XXX should deallocate libbu semaphores */
 
@@ -2590,6 +2585,7 @@ mged_finish(int exitcode)
 int
 f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
+    struct rt_wdb *ged_wdbp = RT_WDB_NULL;
     struct ged *save_gedp;
     struct db_i *save_dbip = DBI_NULL;
     struct mater *save_materp = MATER_NULL;
@@ -2812,13 +2808,34 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     /* Quick -- before he gets away -- write a logfile entry! */
     log_event("START", argv[1]);
 
+    /* associate the gedp with a wdbp as well, but separate from the
+     * one we fed tcl.  must occur before the call to [get_dbip] since
+     * that hooks into a libged callback.
+     */
+    if (!gedp) {
+	BU_GETSTRUCT(gedp, ged);
+    }
+
+    /* initialize a separate wdbp for libged to manage */
+    ged_wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+    GED_INIT(gedp, ged_wdbp);
+
+    /* increment use count for gedp db instance */
+    (void)db_clone_dbi(dbip, NULL);
+
     /* Provide LIBWDB C access to the on-disk database */
     if ((wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK)) == RT_WDB_NULL) {
 	Tcl_AppendResult(interpreter, "wdb_dbopen() failed?\n", (char *)NULL);
+
+	/* release any allocated memory */
+	ged_free(gedp);
+	bu_free((genptr_t)gedp, "struct ged");
+	gedp = NULL;
+
 	return TCL_ERROR;
     }
 
-    /* increment use count for this db instance */
+    /* increment use count for tcl db instance */
     (void)db_clone_dbi(dbip, NULL);
 
     /* Establish LIBWDB TCL access to both disk and in-memory databases */
@@ -2826,17 +2843,26 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	bu_vls_printf(&msg, "%s\n%s\n", Tcl_GetStringResult(interpreter), Tcl_GetVar(interpreter, "errorInfo", TCL_GLOBAL_ONLY));
 	Tcl_AppendResult(interpreter, bu_vls_addr(&msg), (char *)NULL);
 	bu_vls_free(&msg);
+
+	/* release any allocated memory */
+	ged_free(gedp);
+	bu_free((genptr_t)gedp, "struct ged");
+	gedp = NULL;
+
 	return TCL_ERROR;
     }
-
-    /* associate the gedp with this wdbp */
-    GED_INIT(gedp, wdbp);
 
     /* This creates a "db" command object */
     if (wdb_create_cmd(interpreter, wdbp, MGED_DB_NAME) != TCL_OK) {
 	bu_vls_printf(&msg, "%s\n%s\n", Tcl_GetStringResult(interpreter), Tcl_GetVar(interpreter, "errorInfo", TCL_GLOBAL_ONLY));
 	Tcl_AppendResult(interpreter, bu_vls_addr(&msg), (char *)NULL);
 	bu_vls_free(&msg);
+
+	/* release any allocated memory */
+	ged_free(gedp);
+	bu_free((genptr_t)gedp, "struct ged");
+	gedp = NULL;
+
 	return TCL_ERROR;
     }
 
@@ -2854,6 +2880,12 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	    Tcl_AppendResult(interpreter, bu_vls_addr(&msg), (char *)NULL);
 	    bu_vls_free(&msg);
 	    bu_vls_free(&cmd);
+
+	    /* release any allocated memory */
+	    ged_free(gedp);
+	    bu_free((genptr_t)gedp, "struct ged");
+	    gedp = NULL;
+
 	    return TCL_ERROR;
 	}
 
@@ -2936,18 +2968,18 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     cmd_zap(clientData, interpreter, 1, av);
 
     /* Close the Tcl database objects */
-    Tcl_Eval(interpreter, "rename db \"\"; rename .inmem \"\"");
+    Tcl_Eval(interpreter, "rename " MGED_DB_NAME " \"\"; rename .inmem \"\"");
+
+    /* close the geometry instance */
+    ged_close(gedp);
+    gedp = GED_NULL;
+    wdbp = RT_WDB_NULL;
+    dbip = DBI_NULL;
+
+    /* wipe out the material list */
+    rt_new_material_head(MATER_NULL);
 
     log_event("CEASE", "(close)");
-
-    ged_drawable_close(gedp->ged_gdp);
-    gedp->ged_gdp = NULL;
-
-    gedp->ged_wdbp = RT_WDB_NULL;
-
-    /* wipe out the global pointers */
-    dbip = DBI_NULL;
-    rt_new_material_head(MATER_NULL);
 
     return TCL_OK;
 }

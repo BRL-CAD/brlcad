@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file opt.c
+/** @file rt/opt.c
  *
  * Option handling for Ray Tracing main program.
  *

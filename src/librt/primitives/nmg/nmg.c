@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file nmg.c
+/** @file primitives/nmg/nmg.c
  *
  * Intersect a ray with an NMG solid.
  *
@@ -395,9 +395,9 @@ rt_nmg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 }
 
 
-#define RT_CK_DISKMAGIC(_cp, _magic)	\
+#define NMG_CK_DISKMAGIC(_cp, _magic)	\
 	if (ntohl(*(uint32_t*)_cp) != _magic) { \
-		bu_log("RT_CK_DISKMAGIC: magic mis-match, got x%x, s/b x%x, file %s, line %d\n", \
+		bu_log("NMG_CK_DISKMAGIC: magic mis-match, got x%x, s/b x%x, file %s, line %d\n", \
 			ntohl(*(uint32_t*)_cp), _magic, __FILE__, __LINE__); \
 		bu_bomb("bad magic\n"); \
 	}
@@ -958,7 +958,7 @@ rt_nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, lon
 
 
 /**
- * R T _ N M G _ R E I N D E X
+ * R E I N D E X
  *
  * Depends on ecnt[0].byte_offset having been set to maxindex.
  *
@@ -967,8 +967,8 @@ rt_nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, lon
  * 0 substitute a null pointer when imported.
  * -1 substitute pointer to within-struct list head when imported.
  */
-int
-rt_nmg_reindex(genptr_t p, struct nmg_exp_counts *ecnt)
+HIDDEN int
+reindex(genptr_t p, struct nmg_exp_counts *ecnt)
 {
     int idx;
     int ret=0;	/* zero is NOT the default value, this is just to satisfy cray compilers */
@@ -982,35 +982,35 @@ rt_nmg_reindex(genptr_t p, struct nmg_exp_counts *ecnt)
 	if (idx == -1) {
 	    ret = DISK_INDEX_LISTHEAD; /* FLAG:  special list head */
 	} else if (idx < -1) {
-	    bu_bomb("rt_nmg_reindex(): unable to obtain struct index\n");
+	    bu_bomb("reindex(): unable to obtain struct index\n");
 	} else {
 	    ret = ecnt[idx].new_subscript;
 	    if (ecnt[idx].kind < 0) {
-		bu_log("rt_nmg_reindex(p=x%x), p->index=%d, ret=%d, kind=%d\n", p, idx, ret, ecnt[idx].kind);
-		bu_bomb("rt_nmg_reindex() This index not found in ecnt[]\n");
+		bu_log("reindex(p=x%x), p->index=%d, ret=%d, kind=%d\n", p, idx, ret, ecnt[idx].kind);
+		bu_bomb("reindex() This index not found in ecnt[]\n");
 	    }
 	    /* ret == 0 on supressed loop_g ptrs, etc */
 	    if (ret < 0 || ret > ecnt[0].byte_offset) {
-		bu_log("rt_nmg_reindex(p=x%x) %s, p->index=%d, ret=%d, maxindex=%d\n",
+		bu_log("reindex(p=x%x) %s, p->index=%d, ret=%d, maxindex=%d\n",
 		       p,
 		       bu_identify_magic(*(long *)p),
 		       idx, ret, ecnt[0].byte_offset);
-		bu_bomb("rt_nmg_reindex() subscript out of range\n");
+		bu_bomb("reindex() subscript out of range\n");
 	    }
 	}
     }
-/*bu_log("rt_nmg_reindex(p=x%x), p->index=%d, ret=%d\n", p, idx, ret);*/
+/*bu_log("reindex(p=x%x), p->index=%d, ret=%d\n", p, idx, ret);*/
     return ret;
 }
 
 
 /* forw may never be null;  back may be null for loopuse (sigh) */
-#define INDEX(o, i, elem) *(uint32_t *)(o)->elem = htonl(rt_nmg_reindex((genptr_t)((i)->elem), ecnt))
+#define INDEX(o, i, elem) *(uint32_t *)(o)->elem = htonl(reindex((genptr_t)((i)->elem), ecnt))
 #define INDEXL(oo, ii, elem) {						\
-	long _f = rt_nmg_reindex((genptr_t)((ii)->elem.forw), ecnt);	\
+	long _f = reindex((genptr_t)((ii)->elem.forw), ecnt);	\
 	if (_f == DISK_INDEX_NULL) bu_log("Warning rt_nmg_edisk: reindex forw to null?\n"); \
 	*(uint32_t *)((oo)->elem.forw) = htonl(_f);			\
-	*(uint32_t *)((oo)->elem.back) = htonl(rt_nmg_reindex((genptr_t)((ii)->elem.back), ecnt)); }
+	*(uint32_t *)((oo)->elem.back) = htonl(reindex((genptr_t)((ii)->elem.back), ecnt)); }
 #define PUTMAGIC(_magic) *(uint32_t *)d->magic = htonl(_magic)
 
 
@@ -1120,7 +1120,7 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, dou
 	    PUTMAGIC(DISK_FACE_MAGIC);
 	    INDEXL(d, f, l);	/* face is member of fg list */
 	    INDEX(d, f, fu_p);
-	    *(uint32_t *)d->g = htonl(rt_nmg_reindex((genptr_t)(f->g.magic_p), ecnt));
+	    *(uint32_t *)d->g = htonl(reindex((genptr_t)(f->g.magic_p), ecnt));
 	    *(uint32_t *)d->flip = htonl(f->flip);
 	}
 	    return;
@@ -1173,7 +1173,7 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, dou
 	    NMG_CK_LOOPUSE(lu);
 	    PUTMAGIC(DISK_LOOPUSE_MAGIC);
 	    INDEXL(d, lu, l);
-	    *(uint32_t *)d->up = htonl(rt_nmg_reindex((genptr_t)(lu->up.magic_p), ecnt));
+	    *(uint32_t *)d->up = htonl(reindex((genptr_t)(lu->up.magic_p), ecnt));
 	    INDEX(d, lu, lumate_p);
 	    *(uint32_t *)d->orientation = htonl(lu->orientation);
 	    INDEX(d, lu, l_p);
@@ -1215,13 +1215,13 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, dou
 	     * at the top of the edgeuse.  Beware on import.
 	     */
 	    INDEXL(d, eu, l2);
-	    *(uint32_t *)d->up = htonl(rt_nmg_reindex((genptr_t)(eu->up.magic_p), ecnt));
+	    *(uint32_t *)d->up = htonl(reindex((genptr_t)(eu->up.magic_p), ecnt));
 	    INDEX(d, eu, eumate_p);
 	    INDEX(d, eu, radial_p);
 	    INDEX(d, eu, e_p);
 	    *(uint32_t *)d->orientation = htonl(eu->orientation);
 	    INDEX(d, eu, vu_p);
-	    *(uint32_t *)d->g = htonl(rt_nmg_reindex((genptr_t)(eu->g.magic_p), ecnt));
+	    *(uint32_t *)d->g = htonl(reindex((genptr_t)(eu->g.magic_p), ecnt));
 	}
 	    return;
 	case NMG_KIND_EDGE: {
@@ -1285,10 +1285,10 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, dou
 	    NMG_CK_VERTEXUSE(vu);
 	    PUTMAGIC(DISK_VERTEXUSE_MAGIC);
 	    INDEXL(d, vu, l);
-	    *(uint32_t *)d->up = htonl(rt_nmg_reindex((genptr_t)(vu->up.magic_p), ecnt));
+	    *(uint32_t *)d->up = htonl(reindex((genptr_t)(vu->up.magic_p), ecnt));
 	    INDEX(d, vu, v_p);
 	    if (vu->a.magic_p)NMG_CK_VERTEXUSE_A_EITHER(vu->a.magic_p);
-	    *(uint32_t *)d->a = htonl(rt_nmg_reindex((genptr_t)(vu->a.magic_p), ecnt));
+	    *(uint32_t *)d->a = htonl(reindex((genptr_t)(vu->a.magic_p), ecnt));
 	}
 	    return;
 	case NMG_KIND_VERTEXUSE_A_PLANE: {
@@ -1401,7 +1401,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uns
 	    struct disk_model *d;
 	    d = &((struct disk_model *)ip)[iindex];
 	    NMG_CK_MODEL(m);
-	    RT_CK_DISKMAGIC(d->magic, DISK_MODEL_MAGIC);
+	    NMG_CK_DISKMAGIC(d->magic, DISK_MODEL_MAGIC);
 	    INDEXL_HD(d, m, r_hd, m->r_hd);
 	}
 	    return 0;
@@ -1410,7 +1410,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uns
 	    struct disk_nmgregion *d;
 	    d = &((struct disk_nmgregion *)ip)[iindex];
 	    NMG_CK_REGION(r);
-	    RT_CK_DISKMAGIC(d->magic, DISK_REGION_MAGIC);
+	    NMG_CK_DISKMAGIC(d->magic, DISK_REGION_MAGIC);
 	    INDEX(d, r, model, m_p);
 	    INDEX(d, r, nmgregion_a, ra_p);
 	    INDEXL_HD(d, r, s_hd, r->s_hd);
@@ -1424,7 +1424,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uns
 	    point_t min, max;
 	    d = &((struct disk_nmgregion_a *)ip)[iindex];
 	    NMG_CK_REGION_A(r);
-	    RT_CK_DISKMAGIC(d->magic, DISK_REGION_A_MAGIC);
+	    NMG_CK_DISKMAGIC(d->magic, DISK_REGION_A_MAGIC);
 	    ntohd((unsigned char *)min, d->min_pt, 3);
 	    ntohd((unsigned char *)max, d->max_pt, 3);
 	    bn_rotate_bbox(r->min_pt, r->max_pt, mat, min, max);
@@ -1435,7 +1435,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uns
 	    struct disk_shell *d;
 	    d = &((struct disk_shell *)ip)[iindex];
 	    NMG_CK_SHELL(s);
-	    RT_CK_DISKMAGIC(d->magic, DISK_SHELL_MAGIC);
+	    NMG_CK_DISKMAGIC(d->magic, DISK_SHELL_MAGIC);
 	    INDEX(d, s, nmgregion, r_p);
 	    INDEX(d, s, shell_a, sa_p);
 	    INDEXL_HD(d, s, fu_hd, s->fu_hd);
@@ -1452,7 +1452,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uns
 	    point_t min, max;
 	    d = &((struct disk_shell_a *)ip)[iindex];
 	    NMG_CK_SHELL_A(sa);
-	    RT_CK_DISKMAGIC(d->magic, DISK_SHELL_A_MAGIC);
+	    NMG_CK_DISKMAGIC(d->magic, DISK_SHELL_A_MAGIC);
 	    ntohd((unsigned char *)min, d->min_pt, 3);
 	    ntohd((unsigned char *)max, d->max_pt, 3);
 	    bn_rotate_bbox(sa->min_pt, sa->max_pt, mat, min, max);
@@ -1463,7 +1463,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uns
 	    struct disk_faceuse *d;
 	    d = &((struct disk_faceuse *)ip)[iindex];
 	    NMG_CK_FACEUSE(fu);
-	    RT_CK_DISKMAGIC(d->magic, DISK_FACEUSE_MAGIC);
+	    NMG_CK_DISKMAGIC(d->magic, DISK_FACEUSE_MAGIC);
 	    INDEX(d, fu, shell, s_p);
 	    INDEX(d, fu, faceuse, fumate_p);
 	    fu->orientation = ntohl(*(uint32_t*)(d->orientation));
@@ -1481,7 +1481,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uns
 
 	    d = &((struct disk_face *)ip)[iindex];
 	    NMG_CK_FACE(f);
-	    RT_CK_DISKMAGIC(d->magic, DISK_FACE_MAGIC);
+	    NMG_CK_DISKMAGIC(d->magic, DISK_FACE_MAGIC);
 	    INDEX(d, f, faceuse, fu_p);
 	    g_index = ntohl(*(uint32_t*)(d->g));
 	    f->g.magic_p = ptrs[g_index];
@@ -1498,7 +1498,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uns
 	    plane_t plane;
 	    d = &((struct disk_face_g_plane *)ip)[iindex];
 	    NMG_CK_FACE_G_PLANE(fg);
-	    RT_CK_DISKMAGIC(d->magic, DISK_FACE_G_PLANE_MAGIC);
+	    NMG_CK_DISKMAGIC(d->magic, DISK_FACE_G_PLANE_MAGIC);
 	    INDEXL_HD(d, fg, f_hd, fg->f_hd);
 	    ntohd((unsigned char *)plane, d->N, 4);
 	    bn_rotate_plane(fg->N, mat, plane);
@@ -1509,7 +1509,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uns
 	    struct disk_face_g_snurb *d;
 	    d = &((struct disk_face_g_snurb *)ip)[iindex];
 	    NMG_CK_FACE_G_SNURB(fg);
-	    RT_CK_DISKMAGIC(d->magic, DISK_FACE_G_SNURB_MAGIC);
+	    NMG_CK_DISKMAGIC(d->magic, DISK_FACE_G_SNURB_MAGIC);
 	    INDEXL_HD(d, fg, f_hd, fg->f_hd);
 	    fg->order[0] = ntohl(*(uint32_t*)(d->u_order));
 	    fg->order[1] = ntohl(*(uint32_t*)(d->v_order));
@@ -1539,7 +1539,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uns
 
 	    d = &((struct disk_loopuse *)ip)[iindex];
 	    NMG_CK_LOOPUSE(lu);
-	    RT_CK_DISKMAGIC(d->magic, DISK_LOOPUSE_MAGIC);
+	    NMG_CK_DISKMAGIC(d->magic, DISK_LOOPUSE_MAGIC);
 	    up_index = ntohl(*(uint32_t*)(d->up));
 	    lu->up.magic_p = ptrs[up_index];
 	    INDEX(d, lu, loopuse, lumate_p);
@@ -1562,7 +1562,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uns
 	    struct disk_loop *d;
 	    d = &((struct disk_loop *)ip)[iindex];
 	    NMG_CK_LOOP(loop);
-	    RT_CK_DISKMAGIC(d->magic, DISK_LOOP_MAGIC);
+	    NMG_CK_DISKMAGIC(d->magic, DISK_LOOP_MAGIC);
 	    INDEX(d, loop, loopuse, lu_p);
 	    INDEX(d, loop, loop_g, lg_p);
 	    NMG_CK_LOOPUSE(loop->lu_p);
@@ -1574,7 +1574,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uns
 	    point_t min, max;
 	    d = &((struct disk_loop_g *)ip)[iindex];
 	    NMG_CK_LOOP_G(lg);
-	    RT_CK_DISKMAGIC(d->magic, DISK_LOOP_G_MAGIC);
+	    NMG_CK_DISKMAGIC(d->magic, DISK_LOOP_G_MAGIC);
 	    ntohd((unsigned char *)min, d->min_pt, 3);
 	    ntohd((unsigned char *)max, d->max_pt, 3);
 	    bn_rotate_bbox(lg->min_pt, lg->max_pt, mat, min, max);
@@ -1588,7 +1588,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uns
 
 	    d = &((struct disk_edgeuse *)ip)[iindex];
 	    NMG_CK_EDGEUSE(eu);
-	    RT_CK_DISKMAGIC(d->magic, DISK_EDGEUSE_MAGIC);
+	    NMG_CK_DISKMAGIC(d->magic, DISK_EDGEUSE_MAGIC);
 	    up_index = ntohl(*(uint32_t*)(d->up));
 	    eu->up.magic_p = ptrs[up_index];
 	    INDEX(d, eu, edgeuse, eumate_p);
@@ -1624,7 +1624,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uns
 	    struct disk_edge *d;
 	    d = &((struct disk_edge *)ip)[iindex];
 	    NMG_CK_EDGE(e);
-	    RT_CK_DISKMAGIC(d->magic, DISK_EDGE_MAGIC);
+	    NMG_CK_DISKMAGIC(d->magic, DISK_EDGE_MAGIC);
 	    e->is_real = ntohl(*(uint32_t*)(d->is_real));
 	    INDEX(d, e, edgeuse, eu_p);
 	    NMG_CK_EDGEUSE(e->eu_p);
@@ -1638,7 +1638,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uns
 
 	    d = &((struct disk_edge_g_lseg *)ip)[iindex];
 	    NMG_CK_EDGE_G_LSEG(eg);
-	    RT_CK_DISKMAGIC(d->magic, DISK_EDGE_G_LSEG_MAGIC);
+	    NMG_CK_DISKMAGIC(d->magic, DISK_EDGE_G_LSEG_MAGIC);
 	    /* Forw subscript points to edgeuse, not edgeuse2 */
 	    INDEXL_HD2(d, eg, eu_hd2, eg->eu_hd2);
 	    ntohd((unsigned char *)pt, d->e_pt, 3);
@@ -1652,7 +1652,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uns
 	    struct disk_edge_g_cnurb *d;
 	    d = &((struct disk_edge_g_cnurb *)ip)[iindex];
 	    NMG_CK_EDGE_G_CNURB(eg);
-	    RT_CK_DISKMAGIC(d->magic, DISK_EDGE_G_CNURB_MAGIC);
+	    NMG_CK_DISKMAGIC(d->magic, DISK_EDGE_G_CNURB_MAGIC);
 	    INDEXL_HD2(d, eg, eu_hd2, eg->eu_hd2);
 	    eg->order = ntohl(*(uint32_t*)(d->order));
 
@@ -1689,7 +1689,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uns
 	    struct disk_vertexuse *d;
 	    d = &((struct disk_vertexuse *)ip)[iindex];
 	    NMG_CK_VERTEXUSE(vu);
-	    RT_CK_DISKMAGIC(d->magic, DISK_VERTEXUSE_MAGIC);
+	    NMG_CK_DISKMAGIC(d->magic, DISK_VERTEXUSE_MAGIC);
 	    vu->up.magic_p = ptrs[ntohl(*(uint32_t*)(d->up))];
 	    INDEX(d, vu, vertex, v_p);
 	    vu->a.magic_p = ptrs[ntohl(*(uint32_t*)(d->a))];
@@ -1704,7 +1704,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uns
 	    vect_t norm;
 	    d = &((struct disk_vertexuse_a_plane *)ip)[iindex];
 	    NMG_CK_VERTEXUSE_A_PLANE(vua);
-	    RT_CK_DISKMAGIC(d->magic, DISK_VERTEXUSE_A_PLANE_MAGIC);
+	    NMG_CK_DISKMAGIC(d->magic, DISK_VERTEXUSE_A_PLANE_MAGIC);
 	    ntohd((unsigned char *)norm, d->N, 3);
 	    MAT4X3VEC(vua->N, mat, norm);
 	}
@@ -1714,7 +1714,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uns
 	    struct disk_vertexuse_a_cnurb *d;
 	    d = &((struct disk_vertexuse_a_cnurb *)ip)[iindex];
 	    NMG_CK_VERTEXUSE_A_CNURB(vua);
-	    RT_CK_DISKMAGIC(d->magic, DISK_VERTEXUSE_A_CNURB_MAGIC);
+	    NMG_CK_DISKMAGIC(d->magic, DISK_VERTEXUSE_A_CNURB_MAGIC);
 	    /* These parameters are invarient w.r.t. 'mat' */
 	    ntohd((unsigned char *)vua->param, d->param, 3);
 	}
@@ -1724,7 +1724,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uns
 	    struct disk_vertex *d;
 	    d = &((struct disk_vertex *)ip)[iindex];
 	    NMG_CK_VERTEX(v);
-	    RT_CK_DISKMAGIC(d->magic, DISK_VERTEX_MAGIC);
+	    NMG_CK_DISKMAGIC(d->magic, DISK_VERTEX_MAGIC);
 	    INDEXL_HD(d, v, vu_hd, v->vu_hd);
 	    INDEX(d, v, vertex_g, vg_p);
 	}
@@ -1735,7 +1735,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uns
 	    point_t pt;
 	    d = &((struct disk_vertex_g *)ip)[iindex];
 	    NMG_CK_VERTEX_G(vg);
-	    RT_CK_DISKMAGIC(d->magic, DISK_VERTEX_G_MAGIC);
+	    NMG_CK_DISKMAGIC(d->magic, DISK_VERTEX_G_MAGIC);
 	    ntohd((unsigned char *)pt, d->coord, 3);
 	    MAT4X3PNT(vg->coord, mat, pt);
 	}
@@ -1976,10 +1976,10 @@ rt_nmg_i2alloc(struct nmg_exp_counts *ecnt, unsigned char *cp, int *kind_counts)
     }
 
     /* Should have found the first one now */
-    RT_CK_DISKMAGIC(cp + offset, DISK_DOUBLE_ARRAY_MAGIC);
+    NMG_CK_DISKMAGIC(cp + offset, DISK_DOUBLE_ARRAY_MAGIC);
     for (i=0; i < nkind; i++) {
 	int ndouble;
-	RT_CK_DISKMAGIC(cp + offset, DISK_DOUBLE_ARRAY_MAGIC);
+	NMG_CK_DISKMAGIC(cp + offset, DISK_DOUBLE_ARRAY_MAGIC);
 	ndouble = ntohl(*(uint32_t*)(cp + offset + 4));
 	ecnt[subscript].kind = NMG_KIND_DOUBLE_ARRAY;
 	/* Stored byte offset is from beginning of disk record */
@@ -2278,7 +2278,7 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
     tot_size += kind_counts[NMG_KIND_DOUBLE_ARRAY] * (4+4) +
 	double_count * 8;
 
-    ecnt[0].byte_offset = subscript; /* implicit arg to rt_nmg_reindex() */
+    ecnt[0].byte_offset = subscript; /* implicit arg to reindex() */
 
     additional_grans = (tot_size + sizeof(union record)-1) / sizeof(union record);
     BU_CK_EXTERNAL(ep);
@@ -2629,7 +2629,7 @@ rt_nmg_export5(
     tot_size += kind_counts[NMG_KIND_DOUBLE_ARRAY] * (4+4) +
 	double_count*8;
 
-    ecnt[0].byte_offset = subscript; /* implicit arg to rt_nmg_reindex() */
+    ecnt[0].byte_offset = subscript; /* implicit arg to reindex() */
     tot_size += SIZEOF_NETWORK_LONG*(NMG_N_KINDS + 1); /* one for magic */
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = tot_size;

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file brep.c
+/** @file brep.cpp
  *
  * Library for writing BREP objects into
  * MGED databases from arbitrary procedures.

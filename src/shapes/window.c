@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file window.c
+/** @file shapes/window.c
  *
  * Program to make a window using libwdb.  The objects will be in
  * millimeters.  The windows are composed of two arb8s and four

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file server.c
+/** @file fbserv/server.c
  *
  * Remote framebuffer server event handlers.
  *

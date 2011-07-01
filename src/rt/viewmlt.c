@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file viewmlt.c
+/** @file rt/viewmlt.c
  *
  * Implementation of the Metropolis Light Transport algorithm.
  */
@@ -288,21 +288,21 @@ view_2init(struct application *ap, char *UNUSED(framename))
      * This will be expanded to handle multiple BUFMODES,
      * as in view.c */
     /*if (sub_grid_mode)  {
-	    for (i = sub_ymin; i <= sub_ymax; i++)
-		    scanline[i].sl_left = sub_xmax-sub_xmin+1;
-	}
-    else {
-		for (i = 0; i < height; i++)
-		    scanline[i].sl_left = width;
+      for (i = sub_ymin; i <= sub_ymax; i++)
+      scanline[i].sl_left = sub_xmax-sub_xmin+1;
+      }
+      else {
+      for (i = 0; i < height; i++)
+      scanline[i].sl_left = width;
     }*/
 
 
     /* Setting Lights if the user did not specify */
-    if (BU_LIST_IS_EMPTY(&(LightHead.l)) ||
-       (BU_LIST_UNINITIALIZED(&(LightHead.l)))) {
-		if (R_DEBUG&RDEBUG_SHOWERR) bu_log("No explicit light\n");
-		light_maker(1, view2model);
-	}
+    if (BU_LIST_IS_EMPTY(&(LightHead.l))
+	|| (!BU_LIST_IS_INITIALIZED(&(LightHead.l)))) {
+	if (R_DEBUG&RDEBUG_SHOWERR) bu_log("No explicit light\n");
+	light_maker(1, view2model);
+    }
 
     ap->a_rt_i->rti_nlights = light_init(ap);
 }
@@ -388,12 +388,7 @@ view_pixel(register struct application *ap)
 		    ap->a_dist, ap->a_ray.r_dir );
 	    fp->ff_regp = (struct region *)ap->a_uptr;
 	    RT_CK_REGION(fp->ff_regp);
-#if 0
-	    {
-		point_t	new_view_pt;
-		MAT4X3PNT( new_view_pt, model2view, fp->ff_hitpt );
-	    }
-#endif
+
 	    /*
 	     *  This pixel was just computed.
 	     *  Look at next pixel on scanline,

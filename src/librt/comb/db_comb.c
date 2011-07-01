@@ -318,17 +318,18 @@ rt_comb_import4(
     else
 	tree = (union tree *)NULL;
 
-    RT_INIT_DB_INTERNAL(ip);
+    RT_DB_INTERNAL_INIT(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_COMBINATION;
     ip->idb_meth = &rt_functab[ID_COMBINATION];
-    comb = (struct rt_comb_internal *)bu_malloc(sizeof(struct rt_comb_internal), "rt_comb_import4: rt_comb_internal");
-    ip->idb_ptr = (genptr_t)comb;
-    comb->magic = RT_COMB_MAGIC;
-    bu_vls_init(&comb->shader);
-    bu_vls_init(&comb->material);
+
+    BU_GETSTRUCT(comb, rt_comb_internal);
+    RT_COMB_INTERNAL_INIT(comb);
+
     comb->tree = tree;
-    comb->temperature = -1;
+
+    ip->idb_ptr = (genptr_t)comb;
+
     switch (rp[0].c.c_flags) {
 	case DBV4_NON_REGION_NULL:
 	case DBV4_NON_REGION:
@@ -468,7 +469,7 @@ rt_comb_export4(
     }
 
     /* Reformat the data into the necessary V4 granules */
-    BU_INIT_EXTERNAL(ep);
+    BU_EXTERNAL_INIT(ep);
     ep->ext_nbytes = sizeof(union record) * (1 + node_count);
     ep->ext_buf = bu_calloc(1, ep->ext_nbytes, "v4 comb external");
     rp = (union record *)ep->ext_buf;
@@ -889,12 +890,7 @@ rt_comb_ifree(struct rt_db_internal *ip)
     if (comb) {
 	/* If tree hasn't been stolen, release it */
 	db_free_tree(comb->tree, &rt_uniresource);
-	comb->tree = NULL;
-
-	bu_vls_free(&comb->shader);
-	bu_vls_free(&comb->material);
-
-	comb->magic = 0;			/* sanity */
+	RT_FREE_COMB_INTERNAL(comb);
 	bu_free((genptr_t)comb, "comb ifree");
     }
     ip->idb_ptr = GENPTR_NULL;	/* sanity */

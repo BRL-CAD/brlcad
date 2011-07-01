@@ -19,7 +19,7 @@ FOREACH(script ${sh_SCRIPTS})
 	configure_file(${script} ${CMAKE_BINARY_DIR}/bin/${script} COPYONLY)
 ENDFOREACH(script ${sh_SCRIPTS})
 
-INSTALL(PROGRAMS ${sh_SCRIPTS} DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_BIN_DIR})
+INSTALL(PROGRAMS ${sh_SCRIPTS} DESTINATION ${BIN_DIR})
 
 SET(noinst_SCRIPTS
   cmakecheck.sh 
@@ -42,3 +42,5 @@ SET(noinst_SCRIPTS
   template.sh 
   ws.sh
 )
+CMAKEFILES(${sh_SCRIPTS})
+CMAKEFILES(${noinst_SCRIPTS})

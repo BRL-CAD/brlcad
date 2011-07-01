@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bombardier.c
+/** @file util/bombardier.c
  *
  * BRL-CAD Crash Reporter - this program takes a given log file and,
  * through a gui or non-interactively, will send back the results of a

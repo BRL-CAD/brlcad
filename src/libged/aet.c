@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file aet.c
+/** @file libged/aet.c
  *
  * The ae command.
  *
@@ -45,11 +45,11 @@ ged_aet(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* get aet */
     if (argc == 1) {
-	bn_encode_vect(&gedp->ged_result_str, gedp->ged_gvp->gv_aet);
+	bn_encode_vect(gedp->ged_result_str, gedp->ged_gvp->gv_aet);
 	return GED_OK;
     }
 
@@ -67,7 +67,7 @@ ged_aet(struct ged *gedp, int argc, const char *argv[])
 	if ((n = bn_decode_vect(aet, argv[1])) == 2)
 	    aet[2] = 0;
 	else if (n != 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
 	}
 
@@ -84,18 +84,18 @@ ged_aet(struct ged *gedp, int argc, const char *argv[])
 
     if (argc == 3 || argc == 4) {
 	if (sscanf(argv[1], "%lf", &aet[X]) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: bad azimuth - %s\n", argv[0], argv[1]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad azimuth - %s\n", argv[0], argv[1]);
 	    return GED_ERROR;
 	}
 
 	if (sscanf(argv[2], "%lf", &aet[Y]) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: bad elevation - %s\n", argv[0], argv[2]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad elevation - %s\n", argv[0], argv[2]);
 	    return GED_ERROR;
 	}
 
 	if (argc == 4) {
 	    if (sscanf(argv[3], "%lf", &aet[Z]) != 1) {
-		bu_vls_printf(&gedp->ged_result_str, "%s: bad twist - %s\n", argv[0], argv[3]);
+		bu_vls_printf(gedp->ged_result_str, "%s: bad twist - %s\n", argv[0], argv[3]);
 		return GED_ERROR;
 	    }
 	} else
@@ -112,7 +112,7 @@ ged_aet(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
 

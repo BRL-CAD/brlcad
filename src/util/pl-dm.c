@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pl-dm.c
+/** @file util/pl-dm.c
  *
  * Example application that shows how to hook into the display
  * manager.

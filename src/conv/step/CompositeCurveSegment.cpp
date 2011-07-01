@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file CompositeCurveSegment.cpp
+/** @file step/CompositeCurveSegment.cpp
  *
  * Routines to convert STEP "CompositeCurveSegment" to BRL-CAD BREP
  * structures.

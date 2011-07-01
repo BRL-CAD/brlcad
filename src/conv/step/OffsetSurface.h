@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file OffsetSurface.h
+/** @file step/OffsetSurface.h
  *
  * Class definition used to interface to STEP "OffsetSurface".
  *
@@ -37,7 +37,7 @@ protected:
 	double distance;
 	//TODO: Fix all references to YAYA
 #ifdef YAYA
-	SCLLOG_H(Logical) self_intersect;
+	Logical self_intersect;
 #else
 	int self_intersect;
 #endif

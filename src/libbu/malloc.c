@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup malloc */
-/** @{ */
 
 #include "common.h"
 
@@ -61,7 +59,7 @@ struct memqdebug {
 };
 
 static struct bu_list *bu_memq = BU_LIST_NULL;
-static struct bu_list bu_memqhd;
+static struct bu_list bu_memqhd = BU_LIST_INIT_ZERO;
 #define MEMQDEBUG_NULL ((struct memqdebug *)0)
 
 /* non-published globals */
@@ -665,7 +663,6 @@ bu_mem_barriercheck(void)
     return 0;			/* OK */
 }
 
-/** @} */
 
 /*
  * Local Variables:

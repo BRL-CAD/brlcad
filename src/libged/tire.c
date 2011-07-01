@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tire.c
+/** @file libged/tire.c
  *
  * Tire Generator
  *
@@ -64,29 +64,30 @@ show_help(struct ged *gedp, const char *name)
 	cp++;
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "usage: %s [-%s] [tire_name]\n", name, bu_vls_addr(&str));
-    bu_vls_printf(&gedp->ged_result_str, "options:\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-a\n\t\tAuto-generate top-level object name using\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t\t(tire-<width>-<aspect>R<rim size>)\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-n <name>\n\t\tSpecify custom top-level object name\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-c <count>\n\t\tSpecify number of tread patterns around tire\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-d <width>/<aspect>R<rim size>\n\t\tSpecify tire dimensions\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t\t(U.S. customary units, integer values only)\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-W <width>\n\t\tSpecify tire width in inches (overrides -d)\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-R <aspect>\n\t\tSpecify tire aspect ratio (#/100) (overrides -d)\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-D <rim size>\n\t\tSpecify rim size in inches (overrides -d)\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-g <depth>\n\t\tSpecify tread depth in terms of 32nds of an inch.\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-j <width>\n\t\tSpecify rim width in inches.\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-p <type>\n\t\tGenerate tread with tread pattern as specified\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-s <radius>\n\t\tSpecify the radius of the maximum sidewall width\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-t <type>\n\t\tGenerate tread with tread type as specified\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-u <thickness>\n\t\tSpecify tire thickness in mm\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-w <0|1>\n\t\tWhether to include the wheel or not\n");
-    bu_vls_printf(&gedp->ged_result_str, "\t-h\n\t\tShow help\n\n");
+    bu_vls_printf(gedp->ged_result_str, "usage: %s [-%s] [tire_name]\n", name, bu_vls_addr(&str));
+    bu_vls_printf(gedp->ged_result_str, "options:\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-a\n\t\tAuto-generate top-level object name using\n");
+    bu_vls_printf(gedp->ged_result_str, "\t\t(tire-<width>-<aspect>R<rim size>)\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-n <name>\n\t\tSpecify custom top-level object name\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-c <count>\n\t\tSpecify number of tread patterns around tire\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-d <width>/<aspect>R<rim size>\n\t\tSpecify tire dimensions\n");
+    bu_vls_printf(gedp->ged_result_str, "\t\t(U.S. customary units, integer values only)\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-W <width>\n\t\tSpecify tire width in inches (overrides -d)\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-R <aspect>\n\t\tSpecify tire aspect ratio (#/100) (overrides -d)\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-D <rim size>\n\t\tSpecify rim size in inches (overrides -d)\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-g <depth>\n\t\tSpecify tread depth in terms of 32nds of an inch.\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-j <width>\n\t\tSpecify rim width in inches.\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-p <type>\n\t\tGenerate tread with tread pattern as specified\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-s <radius>\n\t\tSpecify the radius of the maximum sidewall width\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-t <type>\n\t\tGenerate tread with tread type as specified\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-u <thickness>\n\t\tSpecify tire thickness in mm\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-w <0|1>\n\t\tWhether to include the wheel or not\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-h\n\t\tShow help\n\n");
 
     bu_vls_free(&str);
     return;
 }
+
 
 /**
  * Return matrix needed to rotate an object around the y axis by theta
@@ -131,6 +132,7 @@ GetEllPartialAtPoint(fastf_t *inarray, fastf_t x, fastf_t y)
     partial = -(D + y * B + 2 * x * A) / (E + 2 * y * C + x * B);
     return partial;
 }
+
 
 /**
  * Evaluate z value of Ellipse Equation at a point
@@ -210,17 +212,18 @@ Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t d1, fastf
     mat[4][5] = -1;
 }
 
+
 /**
  * Create General Conic Matrix for Ellipse describing the top part of
  * the tire side
- * 
+ *
  * Note:  zside1 is the z height of the maximum tire width
- * 
+ *
  * This is the most complex of the required solutions.  There are four
  * constraints used that result in five equations:
  * 1.  Equality of the new ellipse with the ellipse defining the top surface
- *     at the intersection, 
- * 2.  Equality of the partial derivative of the new ellipse with the 
+ *     at the intersection,
+ * 2.  Equality of the partial derivative of the new ellipse with the
  *     partial derivative of the top surface ellipse at
  *     the point of intersection,
  * 3.  The new ellipse must intersect the point zside1, dyside1/2
@@ -233,7 +236,7 @@ Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t d1, fastf
  * allow for the definition of two more equations.  First, the symmetric
  * intersection point's y and z values must be found.  The y value is the
  * same y value as the y value at intersection.  To find that value, we
- * first define the magnitude of the z component of the distance from 
+ * first define the magnitude of the z component of the distance from
  * the intersection point to the max point as:
  *
  *       ztire - dztread - zside1
@@ -251,7 +254,7 @@ Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t d1, fastf
  * is constrained to be the negative of the partial derivative at the
  * intersection point, five equations are now known and the conic equation
  * coefficients can be found.
- *  
+ *
  */
 static void
 Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred,
@@ -289,6 +292,7 @@ Create_Ell2_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred,
     mat[4][4] = -ell1partial;
     mat[4][5] = 0;
 }
+
 
 /**
  * Create General Conic Matrix for Ellipse describing the bottom part
@@ -338,6 +342,7 @@ Create_Ell3_Mat(fastf_t **mat, fastf_t UNUSED(dytred), fastf_t UNUSED(dztred),
     mat[4][5] = -1;
 }
 
+
 /**********************************************************************
  *                                                                    *
  *                 Matrix Routines for Solving General                *
@@ -369,6 +374,7 @@ SortRows(fastf_t **mat, int colnum)
     }
 }
 
+
 /**
  * Convert 5x6 matrix to Reduced Echelon Form
  */
@@ -391,6 +397,7 @@ Echelon(fastf_t **mat)
 	}
     }
 }
+
 
 /**
  * Take Reduced Echelon form of Matrix and solve for General Conic
@@ -425,7 +432,7 @@ SolveEchelon(fastf_t **mat, fastf_t *result1)
  *   start by looking into methods of graphing the General Conic.     *
  *   In particular, either here or even earlier in the process a      *
  *   type check should be done to ensure an elliptical geometry has   *
- *   been found, rather than parabolic or hyperboloic.                * 
+ *   been found, rather than parabolic or hyperboloic.                *
  *                                                                    *
  **********************************************************************/
 static void
@@ -534,7 +541,7 @@ MakeWheelCenter(struct rt_wdb (*file), char *suffix,
     VSET(height, 0, dyhub / 2, 0);
     bu_vls_sprintf(&str, "Hub-Hole%s.s", suffix);
     mk_rcc(file, bu_vls_addr(&str), vertex, height,
-	   (zhub - (bolt_circ_diam / 2 + bolt_diam / 2)) / 6.5 );
+	   (zhub - (bolt_circ_diam / 2 + bolt_diam / 2)) / 6.5);
 
 
     BU_LIST_INIT(&hubhole.l);
@@ -556,7 +563,7 @@ MakeWheelCenter(struct rt_wdb (*file), char *suffix,
     VSET(vertex, 0, 0, bolt_circ_diam / 2);
     VSET(height, 0, dyhub / 2, 0);
     bu_vls_sprintf(&str, "Bolt-Hole%s.s", suffix);
-    mk_rcc(file, bu_vls_addr(&str), vertex, height, bolt_diam / 2 );
+    mk_rcc(file, bu_vls_addr(&str), vertex, height, bolt_diam / 2);
 
 
     BU_LIST_INIT(&bolthole.l);
@@ -809,7 +816,6 @@ MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts,
     size_t i;
     struct bu_vls str;
     struct bu_vls str2;
-    point2d_t tmpvert[] = {{0, 0}};
 
     bu_vls_init(&str);
     bu_vls_init(&str2);
@@ -819,20 +825,20 @@ MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts,
     skt->magic = RT_SKETCH_INTERNAL_MAGIC;
 
     /* Set vertex and orientation vectors?? */
-    VSET( V, 0, -tirewidth/2, zbase-.1*zbase );
-    VSET( u_vec, 1, 0, 0 );
-    VSET( v_vec, 0, 1, 0 );
-    VMOVE( skt->V, V );
-    VMOVE( skt->u_vec, u_vec );
-    VMOVE( skt->v_vec, v_vec );
+    VSET(V, 0, -tirewidth/2, zbase-.1*zbase);
+    VSET(u_vec, 1, 0, 0);
+    VSET(v_vec, 0, 1, 0);
+    VMOVE(skt->V, V);
+    VMOVE(skt->u_vec, u_vec);
+    VMOVE(skt->v_vec, v_vec);
 
     /* Define links between/order of vertices */
     skt->vert_count = vertcount;
-    skt->verts = (point2d_t *)bu_calloc(skt->vert_count, sizeof( point2d_t ), "verts");
-    for (i = 0; i < skt->vert_count; i++ ) {
-	tmpvert[0][0] = verts[i][0] * patternwidth2 - patternwidth2 / 2;
-	tmpvert[0][1] = verts[i][1] * tirewidth;
-	V2MOVE( skt->verts[i], tmpvert[0] );
+    skt->verts = (point2d_t *)bu_calloc(skt->vert_count, sizeof(point2d_t), "verts");
+    for (i = 0; i < skt->vert_count; i++) {
+	V2SET(skt->verts[i],
+	      verts[i][0] * patternwidth2 - patternwidth2 / 2,
+	      verts[i][1] * tirewidth);
     }
 
     /* Specify number of segments and allocate memory for reverse??
@@ -861,27 +867,28 @@ MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts,
 
     /* Make the sketch */
     bu_vls_sprintf(&str, "sketch%s", suffix);
-    mk_sketch(file, bu_vls_addr(&str), skt );
+    mk_sketch(file, bu_vls_addr(&str), skt);
 
 
     /* Make first slanted extrusion for depth vs. width of tread effect */
-    VSET( h, patternwidth1 / 2 - patternwidth2 / 2, 0, ztire - (zbase - .11 * zbase));
+    VSET(h, patternwidth1 / 2 - patternwidth2 / 2, 0, ztire - (zbase - .11 * zbase));
     bu_vls_sprintf(&str2, "extrude1%s", suffix);
     mk_extrusion(file, bu_vls_addr(&str2), bu_vls_addr(&str), V, h, u_vec, v_vec, 0);
 
     /* Make second slanted extrusion for depth vs. width effect */
-    VSET( h, -patternwidth1 / 2 + patternwidth2 / 2, 0, ztire - (zbase - .11 * zbase));
+    VSET(h, -patternwidth1 / 2 + patternwidth2 / 2, 0, ztire - (zbase - .11 * zbase));
     bu_vls_sprintf(&str2, "extrude2%s", suffix);
     mk_extrusion(file, bu_vls_addr(&str2), bu_vls_addr(&str), V, h, u_vec, v_vec, 0);
 
     /* Direct extrusion */
-    VSET( h, 0, 0, ztire - (zbase - .11 * zbase));
+    VSET(h, 0, 0, ztire - (zbase - .11 * zbase));
     bu_vls_sprintf(&str2, "extrude3%s", suffix);
     mk_extrusion(file, bu_vls_addr(&str2), bu_vls_addr(&str), V, h, u_vec, v_vec, 0);
 
     bu_vls_free(&str);
     bu_vls_free(&str2);
 }
+
 
 #define SKETCHNUM2 4
 static void
@@ -953,7 +960,7 @@ MakeTreadPattern2(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 
     BU_LIST_INIT(&treadpattern.l);
 
-    for ( i = 0; i < SKETCHNUM2; i++ ) {
+    for (i = 0; i < SKETCHNUM2; i++) {
 	bu_vls_sprintf(&str, "-%d%s", i + 1, suffix);
 	MakeExtrude(file, bu_vls_addr(&str), verts[i], vertcounts[i],
 		    2 * patternwidth1, 2 * patternwidth2, dwidth, z_base,
@@ -972,7 +979,7 @@ MakeTreadPattern2(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 
     bu_vls_sprintf(&str2, "tire-tread-shape%s.c", suffix);
     (void)mk_addmember(bu_vls_addr(&str2), &tread.l, NULL, WMOP_UNION);
-    for ( i = 1; i <= number_of_patterns; i++) {
+    for (i = 1; i <= number_of_patterns; i++) {
 	bu_vls_sprintf(&str, "tread_master%s.c", suffix);
 	getYRotMat(&y, i * 2 * M_PI / number_of_patterns);
 	(void)mk_addmember(bu_vls_addr(&str), &tread.l, y, WMOP_SUBTRACT);
@@ -1103,7 +1110,7 @@ MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 
     BU_LIST_INIT(&treadpattern.l);
 
-    for ( i = 0; i < SKETCHNUM1; i++ ) {
+    for (i = 0; i < SKETCHNUM1; i++) {
 	bu_vls_sprintf(&str, "-%d%s", i+1, suffix);
 	MakeExtrude(file, bu_vls_addr(&str), verts[i], vertcounts[i],
 		    2 * patternwidth1, 2 * patternwidth2, dwidth, z_base,
@@ -1242,15 +1249,15 @@ MakeTireSurface(struct rt_wdb (*file), char *suffix,
     BU_LIST_INIT(&innersolid.l);
     bu_vls_sprintf(&str, "InnerSolid%s.s", suffix);
     (void)mk_addmember(bu_vls_addr(&str), &innersolid.l, NULL, WMOP_UNION);
-    if ( (dytred / 2 - dyhub / 2) > 0 &&
-	 !ZERO(dytred / 2 - dyhub / 2) ) {
+    if ((dytred / 2 - dyhub / 2) > 0 &&
+	!ZERO(dytred / 2 - dyhub / 2)) {
 	bu_vls_sprintf(&str, "LeftCone%s.s", suffix);
 	(void)mk_addmember(bu_vls_addr(&str), &innersolid.l, NULL, WMOP_SUBTRACT);
 	bu_vls_sprintf(&str, "RightCone%s.s", suffix);
 	(void)mk_addmember(bu_vls_addr(&str), &innersolid.l, NULL, WMOP_SUBTRACT);
     }
-    if ( (dytred / 2 - dyhub / 2) < 0 &&
-	 !ZERO(dytred / 2 - dyhub / 2) ) {
+    if ((dytred / 2 - dyhub / 2) < 0 &&
+	!ZERO(dytred / 2 - dyhub / 2)) {
 	bu_vls_sprintf(&str, "LeftCone%s.s", suffix);
 	(void)mk_addmember(bu_vls_addr(&str), &innersolid.l, NULL, WMOP_UNION);
 	bu_vls_sprintf(&str, "RightCone%s.s", suffix);
@@ -1331,6 +1338,7 @@ MakeTireSurface(struct rt_wdb (*file), char *suffix,
 
     bu_vls_free(&str);
 }
+
 
 /**********************************************************************
  *                                                                    *
@@ -1423,7 +1431,7 @@ MakeTreadSolid(struct rt_wdb (*file), char *suffix,
     bu_vls_sprintf(&str, "TopTreadClipL%s.s", suffix);
     (void)mk_addmember(bu_vls_addr(&str), &premtreadshape.l, NULL, WMOP_SUBTRACT);
     bu_vls_sprintf(&str, "TopTreadClipR%s.s", suffix);
-   (void)mk_addmember(bu_vls_addr(&str), &premtreadshape.l, NULL, WMOP_SUBTRACT);
+    (void)mk_addmember(bu_vls_addr(&str), &premtreadshape.l, NULL, WMOP_SUBTRACT);
     bu_vls_sprintf(&str, "Ellipse2tread%s.s", suffix);
     (void)mk_addmember(bu_vls_addr(&str), &premtreadshape.l, NULL, WMOP_UNION);
     bu_vls_sprintf(&str, "InnerTreadCut%s.s", suffix);
@@ -1585,19 +1593,20 @@ MakeTreadSolid1(struct rt_wdb (*file), char *suffix,
     bu_vls_free(&str);
 }
 
+
 typedef void (*MakeTreadProfile)
-	(struct rt_wdb (*file),
-	 char *suffix,
-	 fastf_t *ell2coefficients,
-	 fastf_t ztire,
-	 fastf_t dztred,
-	 fastf_t d1,
-	 fastf_t dytred,
-	 fastf_t dyhub,
-	 fastf_t zhub,
-	 fastf_t dyside1,
-	 int number_of_tread_patterns,
-	 int patterntype);
+(struct rt_wdb (*file),
+ char *suffix,
+ fastf_t *ell2coefficients,
+ fastf_t ztire,
+ fastf_t dztred,
+ fastf_t d1,
+ fastf_t dytred,
+ fastf_t dyhub,
+ fastf_t zhub,
+ fastf_t dyside1,
+ int number_of_tread_patterns,
+ int patterntype);
 
 /**********************************************************************
  *                                                                    *
@@ -1823,20 +1832,20 @@ MakeAirRegion(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t zhub, 
     mk_rcc(file, bu_vls_addr(&str), origin, height, zhub);
 
     if (usewheel != 0) {
-        BU_LIST_INIT(&wheelair.l);
-        bu_vls_sprintf(&str, "Air-Cyl%s.s", suffix);
-        (void)mk_addmember(bu_vls_addr(&str), &wheelair.l, NULL, WMOP_UNION);
-        bu_vls_sprintf(&str, "wheel-rim-solid%s.c", suffix);
-        (void)mk_addmember(bu_vls_addr(&str), &wheelair.l, NULL, WMOP_SUBTRACT);
-        bu_vls_sprintf(&str, "wheel-air%s.c", suffix);
-        mk_lcomb(file, bu_vls_addr(&str), &wheelair, 0,  NULL, NULL, NULL, 0);
+	BU_LIST_INIT(&wheelair.l);
+	bu_vls_sprintf(&str, "Air-Cyl%s.s", suffix);
+	(void)mk_addmember(bu_vls_addr(&str), &wheelair.l, NULL, WMOP_UNION);
+	bu_vls_sprintf(&str, "wheel-rim-solid%s.c", suffix);
+	(void)mk_addmember(bu_vls_addr(&str), &wheelair.l, NULL, WMOP_SUBTRACT);
+	bu_vls_sprintf(&str, "wheel-air%s.c", suffix);
+	mk_lcomb(file, bu_vls_addr(&str), &wheelair, 0,  NULL, NULL, NULL, 0);
     }
-    
+
     BU_LIST_INIT(&air);
-    
+
     if (usewheel != 0) {
-        bu_vls_sprintf(&str, "wheel-air%s.c", suffix);
-        (void)mk_addmember(bu_vls_addr(&str), &air, NULL, WMOP_UNION);
+	bu_vls_sprintf(&str, "wheel-air%s.c", suffix);
+	(void)mk_addmember(bu_vls_addr(&str), &air, NULL, WMOP_UNION);
     }
     bu_vls_sprintf(&str, "tire-cut%s.c", suffix);
     (void)mk_addmember(bu_vls_addr(&str), &air, NULL, WMOP_UNION);
@@ -1845,6 +1854,7 @@ MakeAirRegion(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t zhub, 
 
     bu_vls_free(&str);
 }
+
 
 /* Process command line arguments */
 static int
@@ -1896,7 +1906,7 @@ ReadArgs(struct ged *gedp,
 		break;
 	    case 'd' :
 		sscanf(bu_optarg, "%d%c%d%c%d", &d1, &spacer1, &d2, &tiretype, &d3);
-		bu_vls_printf(&gedp->ged_result_str, "Dimensions: Width=%2.0dmm, Ratio=%2.0d, Wheel Diameter=%2.0din\n", d1, d2, d3);
+		bu_vls_printf(gedp->ged_result_str, "Dimensions: Width=%2.0dmm, Ratio=%2.0d, Wheel Diameter=%2.0din\n", d1, d2, d3);
 		bu_vls_printf(dimens, "%d-%dR%d", d1, d2, d3);
 		isoarray[0] = d1;
 		isoarray[1] = d2;
@@ -1939,11 +1949,11 @@ ReadArgs(struct ged *gedp,
 		*tire_thickness = tthickness;
 		break;
 	    case 'w':
-	        sscanf(bu_optarg, "%d", &usewheelc);
+		sscanf(bu_optarg, "%d", &usewheelc);
 		*usewheel = usewheelc;
 		break;
 	    default:
-		bu_vls_printf(&gedp->ged_result_str, "%s: illegal option -- %c\n", argv[0], c);
+		bu_vls_printf(gedp->ged_result_str, "%s: illegal option -- %c\n", argv[0], c);
 		show_help(gedp, argv[0]);
 		return GED_ERROR;
 	    case 'h':
@@ -1958,7 +1968,7 @@ ReadArgs(struct ged *gedp,
     }
 
     if (!have_name) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: need top-level object name\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s: need top-level object name\n", argv[0]);
 	show_help(gedp, argv[0]);
 	return GED_ERROR;
     }
@@ -1996,7 +2006,7 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* Set Default Parameters - 215/55R17 */
     isoarray[0] = 215;
@@ -2056,9 +2066,9 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     if (overridearray[1] > 0) isoarray[1] = overridearray[1];
     if (overridearray[2] > 0) isoarray[2] = overridearray[2];
 
-    bu_vls_printf(&gedp->ged_result_str, "width = %f\n", isoarray[0]);
-    bu_vls_printf(&gedp->ged_result_str, "ratio = %f\n", isoarray[1]);
-    bu_vls_printf(&gedp->ged_result_str, "radius = %f\n", isoarray[2]);
+    bu_vls_printf(gedp->ged_result_str, "width = %f\n", isoarray[0]);
+    bu_vls_printf(gedp->ged_result_str, "ratio = %f\n", isoarray[1]);
+    bu_vls_printf(gedp->ged_result_str, "radius = %f\n", isoarray[2]);
 
     /* Automatic conversion from std dimension info to geometry */
     width = isoarray[0];
@@ -2084,7 +2094,7 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     if (ZERO(tire_thickness))
 	tire_thickness = dztred;
 
-    bu_vls_printf(&gedp->ged_result_str, "radius of sidewall max: %f\n", zside1);
+    bu_vls_printf(gedp->ged_result_str, "radius of sidewall max: %f\n", zside1);
 
     if (tread_type == 1 && pattern_type == 0) pattern_type = 1;
     if (tread_type == 2 && pattern_type == 0) pattern_type = 2;
@@ -2108,7 +2118,7 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
 
     /* Make the wheel region*/
     if (usewheel != 0) {
-        MakeWheelRims(gedp->ged_wdbp, bu_vls_addr(&dimen),
+	MakeWheelRims(gedp->ged_wdbp, bu_vls_addr(&dimen),
 		      dyhub, zhub, bolts, bolt_diam, bolt_circ_diam,
 		      spigot_diam, fixing_offset, bead_height, bead_width, rim_thickness);
     }
@@ -2122,8 +2132,8 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     bu_vls_sprintf(&str, "air%s.r", bu_vls_addr(&dimen));
     (void)mk_addmember(bu_vls_addr(&str), &wheel_and_tire.l, NULL, WMOP_UNION);
     if (usewheel != 0) {
-        bu_vls_sprintf(&str, "wheel%s.r",bu_vls_addr(&dimen));
-        (void)mk_addmember(bu_vls_addr(&str), &wheel_and_tire.l, NULL, WMOP_UNION);
+	bu_vls_sprintf(&str, "wheel%s.r", bu_vls_addr(&dimen));
+	(void)mk_addmember(bu_vls_addr(&str), &wheel_and_tire.l, NULL, WMOP_UNION);
     }
     mk_lcomb(gedp->ged_wdbp, bu_vls_addr(&name), &wheel_and_tire, 0,  NULL, NULL, NULL, 0);
 

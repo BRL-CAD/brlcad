@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_eval.c
+/** @file primitives/bspline/nurb_eval.c
  *
  * Evaluate a Non Uniform Rational B-spline curve or at the given (u,
  * v) values.

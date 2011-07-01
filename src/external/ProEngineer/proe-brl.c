@@ -149,9 +149,9 @@ static double hole_depth=0.0;		/* drilled hole depth */
 static double drill_angle=0.0;		/* drill tip angle */
 #define MIN_RADIUS	1.0e-7		/* BRL-CAD does not allow tgc's with zero radius */
 static Pro3dPnt end1, end2;		/* axis endpoints for holes */
-static bu_rb_tree *done_list_part=NULL;	/* list of parts already done */
-static bu_rb_tree *done_list_asm=NULL;	/* list of assemblies already done */
-static bu_rb_tree *brlcad_names=NULL;	/* list of BRL-CAD names in use */
+static struct bu_rb_tree *done_list_part=NULL;	/* list of parts already done */
+static struct bu_rb_tree *done_list_asm=NULL;	/* list of assemblies already done */
+static struct bu_rb_tree *brlcad_names=NULL;	/* list of BRL-CAD names in use */
 
 /* declaration of functions passed to the feature visit routine */
 static ProError assembly_comp( ProFeature *feat, ProError status, ProAppData app_data );
@@ -2997,7 +2997,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     int ret_status=0;
 
     empty_parts_root = (struct empty_parts *)NULL;
-    brlcad_names = (bu_rb_tree *)NULL;
+    brlcad_names = (struct bu_rb_tree *)NULL;
 
     ProStringToWstring( tmp_line, "Not processing" );
     status = ProUILabelTextSet( "proe_brl", "curr_proc", tmp_line );
@@ -3490,7 +3490,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	    fprintf( logger, "freeing name rb_tree\n" );
 	}
 	bu_rb_free( brlcad_names, NULL );	/* data was already freed by free_hash_values() */
-	brlcad_names = (bu_rb_tree *)NULL;
+	brlcad_names = (struct bu_rb_tree *)NULL;
     }
 
     if ( logger_type != LOGGER_TYPE_NONE ) {

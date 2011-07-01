@@ -19,7 +19,7 @@
  */
 /** @addtogroup db5 */
 /** @{ */
-/** @file db5_scan.c
+/** @file librt/db5_scan.c
  *
  * Scan a v5 database, sending each object off to a handler.
  *
@@ -304,7 +304,7 @@ db5_diradd_handler(
     if (rip->name.ext_buf == NULL) return;
 
     if (RT_G_DEBUG&DEBUG_DB) {
-	bu_log("db5_diradd_handler(dbip=x%x, name='%s', addr=x%x, len=%d)\n",
+	bu_log("db5_diradd_handler(dbip=x%x, name='%s', addr=x%x, len=%zu)\n",
 	       dbip, rip->name.ext_buf, laddr, rip->object_length);
     }
 
@@ -372,7 +372,7 @@ db_dirbuild(struct db_i *dbip)
 	    db5_update_ident(dbip, "Untitled BRL-CAD Database", 1.0);
 	    return 0;	/* not a fatal error, user may have deleted it */
 	}
-	BU_INIT_EXTERNAL(&ext);
+	BU_EXTERNAL_INIT(&ext);
 	if (db_get_external(&ext, dp, dbip) < 0 ||
 	    db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
 	    bu_log("db_dirbuild(%s): improper database, unable to read %s object\n",

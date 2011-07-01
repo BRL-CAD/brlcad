@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup rb */
-/** @{ */
 
 #include "common.h"
 
@@ -42,7 +40,7 @@
  * et al.
  */
 HIDDEN void
-_rb_fixup(bu_rb_tree *tree, struct bu_rb_node *node, int order)
+_rb_fixup(struct bu_rb_tree *tree, struct bu_rb_node *node, int order)
 {
     int direction;
     struct bu_rb_node *parent;
@@ -101,7 +99,7 @@ _rb_fixup(bu_rb_tree *tree, struct bu_rb_node *node, int order)
  * implementation of the routine RB-DELETE on p. 273 of Cormen et al.
  */
 HIDDEN void
-_rb_delete(bu_rb_tree *tree, struct bu_rb_node *node, int order)
+_rb_delete(struct bu_rb_tree *tree, struct bu_rb_node *node, int order)
 {
     struct bu_rb_node *y;		/* The node to splice out */
     struct bu_rb_node *parent;
@@ -151,7 +149,7 @@ _rb_delete(bu_rb_tree *tree, struct bu_rb_node *node, int order)
 
 
 void
-bu_rb_delete(bu_rb_tree *tree, int order)
+bu_rb_delete(struct bu_rb_tree *tree, int order)
 {
     int nm_orders;
     struct bu_rb_node **node;		/* Nodes containing data */
@@ -190,7 +188,6 @@ bu_rb_delete(bu_rb_tree *tree, int order)
     bu_free((genptr_t) node, "node list");
 }
 
-/** @} */
 
 /*
  * Local Variables:

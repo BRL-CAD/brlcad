@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rect.c
+/** @file libged/rect.c
  *
  * Rubber band rectangle.
  *
@@ -37,322 +37,57 @@
 #include "./ged_private.h"
 
 
-/* Defined in rect.c */
-static void ged_rect_vls_print(struct ged *gedp);
-static void ged_rect_image2view(struct ged_rect_state *grsp);
-static void ged_rect_adjust_for_zoom(struct ged_rect_state *grsp);
-static int ged_rect_rt(struct ged *gedp, int port);
-static int ged_rect_zoom(struct ged *gedp);
-
-
 static void
 usage(struct ged *gedp, const char *argv0)
 {
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s\n", argv0);
-    bu_vls_printf(&gedp->ged_result_str, " rect vname bg [r g b]		set or get the background color\n");
-    bu_vls_printf(&gedp->ged_result_str, " rect vname color [r g b]	set or get the color\n");
-    bu_vls_printf(&gedp->ged_result_str, " rect vname cdim w h		set or get the canvas dimension\n");
-    bu_vls_printf(&gedp->ged_result_str, " rect vname dim	w h		set or get the rectangle dimension\n");
-    bu_vls_printf(&gedp->ged_result_str, " rect vname draw [0|1]		set or get the draw parameter\n");
-    bu_vls_printf(&gedp->ged_result_str, " rect vname help		prints this help message\n");
-    bu_vls_printf(&gedp->ged_result_str, " rect vname lstyle [0|1]	set or get the line style, 0 - solid, 1 - dashed\n");
-    bu_vls_printf(&gedp->ged_result_str, " rect vname lwidth w		set or get the line width\n");
-    bu_vls_printf(&gedp->ged_result_str, " rect vname pos	x y		set or get the rectangle position\n");
-    bu_vls_printf(&gedp->ged_result_str, " rect vname rt port		render the geometry within the rectangular area\n");
-    bu_vls_printf(&gedp->ged_result_str, " rect vname vars		print a list of all variables (i.e. var = val)\n");
-    bu_vls_printf(&gedp->ged_result_str, " rect vname zoom		zoom view to tangle position\n");
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", argv0);
+    bu_vls_printf(gedp->ged_result_str, " rect vname bg [r g b]		set or get the background color\n");
+    bu_vls_printf(gedp->ged_result_str, " rect vname color [r g b]	set or get the color\n");
+    bu_vls_printf(gedp->ged_result_str, " rect vname cdim w h		set or get the canvas dimension\n");
+    bu_vls_printf(gedp->ged_result_str, " rect vname dim	w h		set or get the rectangle dimension\n");
+    bu_vls_printf(gedp->ged_result_str, " rect vname draw [0|1]		set or get the draw parameter\n");
+    bu_vls_printf(gedp->ged_result_str, " rect vname help		prints this help message\n");
+    bu_vls_printf(gedp->ged_result_str, " rect vname lstyle [0|1]	set or get the line style, 0 - solid, 1 - dashed\n");
+    bu_vls_printf(gedp->ged_result_str, " rect vname lwidth w		set or get the line width\n");
+    bu_vls_printf(gedp->ged_result_str, " rect vname pos	x y		set or get the rectangle position\n");
+    bu_vls_printf(gedp->ged_result_str, " rect vname rt port		render the geometry within the rectangular area\n");
+    bu_vls_printf(gedp->ged_result_str, " rect vname vars		print a list of all variables (i.e. var = val)\n");
+    bu_vls_printf(gedp->ged_result_str, " rect vname zoom		zoom view to tangle position\n");
 }
 
-
-/*
- * Note - this needs to be rewritten to accept keyword/value pairs so
- *        that multiple attributes can be set with a single command call.
- */
-int
-ged_rect(struct ged	*gedp,
-	 int		argc,
-	 const char	*argv[])
-{
-    char *command;
-    char *parameter;
-    char **argp = (char **)argv;
-    point_t user_pt;		/* Value(s) provided by user */
-    int i;
-
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-
-    /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
-
-    if (argc < 2 || 5 < argc) {
-	usage(gedp, argv[0]);
-	return GED_ERROR;
-    }
-
-    command = (char *)argv[0];
-    parameter = (char *)argv[1];
-    argc -= 2;
-    argp += 2;
-
-    for (i = 0; i < argc; ++i)
-	if (sscanf(argp[i], "%lf", &user_pt[i]) != 1) {
-	    usage(gedp, argv[0]);
-	    return GED_ERROR;
-	}
-
-    if (BU_STR_EQUAL(parameter, "draw")) {
-	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_rect.grs_draw);
-	    return GED_OK;
-	} else if (argc == 1) {
-	    i = (int)user_pt[X];
-
-	    if (i)
-		gedp->ged_gvp->gv_rect.grs_draw = 1;
-	    else
-		gedp->ged_gvp->gv_rect.grs_draw = 0;
-
-	    return GED_OK;
-	}
-
-	bu_vls_printf(&gedp->ged_result_str, "The '%s draw' command accepts 0 or 1 argument\n", command);
-	return GED_ERROR;
-    }
-
-    if (BU_STR_EQUAL(parameter, "cdim")) {
-	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d %d",
-			  gedp->ged_gvp->gv_rect.grs_cdim[X],
-			  gedp->ged_gvp->gv_rect.grs_cdim[Y]);
-	    return GED_OK;
-	} else if (argc == 2) {
-	    gedp->ged_gvp->gv_rect.grs_cdim[X] = user_pt[X];
-	    gedp->ged_gvp->gv_rect.grs_cdim[Y] = user_pt[Y];
-	    gedp->ged_gvp->gv_rect.grs_aspect = (fastf_t)gedp->ged_gvp->gv_rect.grs_cdim[X] / gedp->ged_gvp->gv_rect.grs_cdim[Y];
-
-	    ged_rect_image2view(&gedp->ged_gvp->gv_rect);
-
-#if 0
-	    if (gedp->ged_gvp->gv_rect.grs_draw)
-		return BRLCAD_REFRESH;
-#endif
-
-	    return GED_OK;
-	}
-
-	bu_vls_printf(&gedp->ged_result_str, "The '%s cdim' command requires 0 or 2 arguments\n", command);
-	return GED_ERROR;
-    }
-
-    if (BU_STR_EQUAL(parameter, "dim")) {
-	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d %d",
-			  gedp->ged_gvp->gv_rect.grs_dim[X],
-			  gedp->ged_gvp->gv_rect.grs_dim[Y]);
-	    return GED_OK;
-	} else if (argc == 2) {
-	    gedp->ged_gvp->gv_rect.grs_dim[X] = user_pt[X];
-	    gedp->ged_gvp->gv_rect.grs_dim[Y] = user_pt[Y];
-
-	    ged_rect_image2view(&gedp->ged_gvp->gv_rect);
-
-#if 0
-	    if (gedp->ged_gvp->gv_rect.grs_draw)
-		return BRLCAD_REFRESH;
-#endif
-
-	    return GED_OK;
-	}
-
-	bu_vls_printf(&gedp->ged_result_str, "The '%s dim' command requires 0 or 2 arguments\n", command);
-	return GED_ERROR;
-    }
-
-    if (BU_STR_EQUAL(parameter, "pos")) {
-	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d %d",
-			  gedp->ged_gvp->gv_rect.grs_pos[X],
-			  gedp->ged_gvp->gv_rect.grs_pos[Y]);
-	    return GED_OK;
-	} else if (argc == 2) {
-	    gedp->ged_gvp->gv_rect.grs_pos[X] = user_pt[X];
-	    gedp->ged_gvp->gv_rect.grs_pos[Y] = user_pt[Y];
-
-	    ged_rect_image2view(&gedp->ged_gvp->gv_rect);
-
-#if 0
-	    if (gedp->ged_gvp->gv_rect.grs_draw)
-		return BRLCAD_REFRESH;
-#endif
-
-	    return GED_OK;
-	}
-
-	bu_vls_printf(&gedp->ged_result_str, "The '%s pos' command requires 0 or 2 arguments\n", command);
-	return GED_ERROR;
-    }
-
-    if (BU_STR_EQUAL(parameter, "bg")) {
-	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
-			  gedp->ged_gvp->gv_rect.grs_bg[X],
-			  gedp->ged_gvp->gv_rect.grs_bg[Y],
-			  gedp->ged_gvp->gv_rect.grs_bg[Z]);
-	    return GED_OK;
-	} else if (argc == 3) {
-	    gedp->ged_gvp->gv_rect.grs_bg[0] = (int)user_pt[X];
-	    gedp->ged_gvp->gv_rect.grs_bg[1] = (int)user_pt[Y];
-	    gedp->ged_gvp->gv_rect.grs_bg[2] = (int)user_pt[Z];
-
-#if 0
-	    if (gedp->ged_gvp->gv_rect.grs_draw)
-		return BRLCAD_REFRESH;
-#endif
-
-	    return GED_OK;
-	}
-
-	bu_vls_printf(&gedp->ged_result_str, "The '%s bg' command requires 0 or 3 arguments\n", command);
-	return GED_ERROR;
-    }
-
-    if (BU_STR_EQUAL(parameter, "color")) {
-	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
-			  gedp->ged_gvp->gv_rect.grs_color[X],
-			  gedp->ged_gvp->gv_rect.grs_color[Y],
-			  gedp->ged_gvp->gv_rect.grs_color[Z]);
-	    return GED_OK;
-	} else if (argc == 3) {
-	    gedp->ged_gvp->gv_rect.grs_color[0] = (int)user_pt[X];
-	    gedp->ged_gvp->gv_rect.grs_color[1] = (int)user_pt[Y];
-	    gedp->ged_gvp->gv_rect.grs_color[2] = (int)user_pt[Z];
-
-#if 0
-	    if (gedp->ged_gvp->gv_rect.grs_draw)
-		return BRLCAD_REFRESH;
-#endif
-
-	    return GED_OK;
-	}
-
-	bu_vls_printf(&gedp->ged_result_str, "The '%s color' command requires 0 or 3 arguments\n", command);
-	return GED_ERROR;
-    }
-
-    if (BU_STR_EQUAL(parameter, "lstyle")) {
-	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_rect.grs_line_style);
-	    return GED_OK;
-	} else if (argc == 1) {
-	    i = (int)user_pt[X];
-
-	    if (i <= 0)
-		gedp->ged_gvp->gv_rect.grs_line_style = 0;
-	    else
-		gedp->ged_gvp->gv_rect.grs_line_style = 1;
-
-#if 0
-	    if (gedp->ged_gvp->gv_rect.grs_draw)
-		return BRLCAD_REFRESH;
-#endif
-
-	    return GED_OK;
-	}
-
-	bu_vls_printf(&gedp->ged_result_str, "The '%s lstyle' command accepts 0 or 1 argument\n", command);
-	return GED_ERROR;
-    }
-
-    if (BU_STR_EQUAL(parameter, "lwidth")) {
-	if (argc == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gedp->ged_gvp->gv_rect.grs_line_width);
-	    return GED_OK;
-	} else if (argc == 1) {
-	    i = (int)user_pt[X];
-
-	    if (i <= 0)
-		gedp->ged_gvp->gv_rect.grs_line_width = 0;
-	    else
-		gedp->ged_gvp->gv_rect.grs_line_width = i;
-
-#if 0
-	    if (gedp->ged_gvp->gv_rect.grs_draw)
-		return BRLCAD_REFRESH;
-#endif
-
-	    return GED_OK;
-	}
-
-	bu_vls_printf(&gedp->ged_result_str, "The '%s lwidth' command accepts 0 or 1 argument\n", command);
-	return GED_ERROR;
-    }
-
-    if (BU_STR_EQUAL(parameter, "rt")) {
-	if (argc == 1)
-	    return ged_rect_rt(gedp, (int)user_pt[X]);
-
-	bu_vls_printf(&gedp->ged_result_str, "The '%s rt' command accepts 1 argument\n", command);
-	return GED_ERROR;
-    }
-
-    if (BU_STR_EQUAL(parameter, "zoom")) {
-	if (argc == 0)
-	    return ged_rect_zoom(gedp);
-
-	bu_vls_printf(&gedp->ged_result_str, "The '%s zoom' command accepts no arguments\n", command);
-	return GED_ERROR;
-    }
-
-    if (BU_STR_EQUAL(parameter, "vars")) {
-	ged_rect_vls_print(gedp);
-	return GED_OK;
-    }
-
-    if (BU_STR_EQUAL(parameter, "help")) {
-	usage(gedp, command);
-	return GED_HELP;
-    }
-
-    bu_vls_printf(&gedp->ged_result_str, "%s: unrecognized command '%s'\n", command, parameter);
-    usage(gedp, command);
-
-    return GED_ERROR;
-}
 
 static void
-ged_rect_vls_print(struct ged *gedp)
+rect_vls_print(struct ged *gedp)
 {
-    bu_vls_printf(&gedp->ged_result_str, "bg = %d %d %d\n",
+    bu_vls_printf(gedp->ged_result_str, "bg = %d %d %d\n",
 		  gedp->ged_gvp->gv_rect.grs_bg[0],
 		  gedp->ged_gvp->gv_rect.grs_bg[1],
 		  gedp->ged_gvp->gv_rect.grs_bg[2]);
-    bu_vls_printf(&gedp->ged_result_str, "cdim = %d %d\n",
+    bu_vls_printf(gedp->ged_result_str, "cdim = %d %d\n",
 		  gedp->ged_gvp->gv_rect.grs_cdim[X],
 		  gedp->ged_gvp->gv_rect.grs_cdim[Y]);
-    bu_vls_printf(&gedp->ged_result_str, "color = %d %d %d\n",
+    bu_vls_printf(gedp->ged_result_str, "color = %d %d %d\n",
 		  gedp->ged_gvp->gv_rect.grs_color[0],
 		  gedp->ged_gvp->gv_rect.grs_color[1],
 		  gedp->ged_gvp->gv_rect.grs_color[2]);
-    bu_vls_printf(&gedp->ged_result_str, "dim = %d %d\n",
+    bu_vls_printf(gedp->ged_result_str, "dim = %d %d\n",
 		  gedp->ged_gvp->gv_rect.grs_dim[X],
 		  gedp->ged_gvp->gv_rect.grs_dim[Y]);
-    bu_vls_printf(&gedp->ged_result_str, "draw = %d\n", gedp->ged_gvp->gv_rect.grs_draw);
-    bu_vls_printf(&gedp->ged_result_str, "lstyle = %d\n", gedp->ged_gvp->gv_rect.grs_line_style);
-    bu_vls_printf(&gedp->ged_result_str, "lwidth = %d\n", gedp->ged_gvp->gv_rect.grs_line_width);
-    bu_vls_printf(&gedp->ged_result_str, "pos = %d %d\n",
+    bu_vls_printf(gedp->ged_result_str, "draw = %d\n", gedp->ged_gvp->gv_rect.grs_draw);
+    bu_vls_printf(gedp->ged_result_str, "lstyle = %d\n", gedp->ged_gvp->gv_rect.grs_line_style);
+    bu_vls_printf(gedp->ged_result_str, "lwidth = %d\n", gedp->ged_gvp->gv_rect.grs_line_width);
+    bu_vls_printf(gedp->ged_result_str, "pos = %d %d\n",
 		  gedp->ged_gvp->gv_rect.grs_pos[X],
 		  gedp->ged_gvp->gv_rect.grs_pos[Y]);
 }
+
 
 /*
  * Given position and dimensions in image coordinates, calculate
  * position and dimensions in normalized view coordinates.
  */
 static void
-ged_rect_image2view(struct ged_rect_state *grsp)
+rect_image2view(struct ged_rect_state *grsp)
 {
     grsp->grs_x = (grsp->grs_pos[X] / (fastf_t)grsp->grs_cdim[X] - 0.5) * 2.0;
     grsp->grs_y = ((0.5 - (grsp->grs_cdim[Y] - grsp->grs_pos[Y]) / (fastf_t)grsp->grs_cdim[Y]) / grsp->grs_aspect * 2.0);
@@ -360,11 +95,12 @@ ged_rect_image2view(struct ged_rect_state *grsp)
     grsp->grs_height = grsp->grs_dim[Y] * 2.0 / (fastf_t)grsp->grs_cdim[X];
 }
 
+
 /*
  * Adjust the rubber band rectangle to have the same aspect ratio as the window.
  */
 static void
-ged_rect_adjust_for_zoom(struct ged_rect_state *grsp)
+rect_adjust_for_zoom(struct ged_rect_state *grsp)
 {
     fastf_t width, height;
 
@@ -391,8 +127,9 @@ ged_rect_adjust_for_zoom(struct ged_rect_state *grsp)
     }
 }
 
+
 static int
-ged_rect_rt(struct ged *gedp, int port)
+rect_rt(struct ged *gedp, int port)
 {
     int xmin, xmax;
     int ymin, ymax;
@@ -400,14 +137,14 @@ ged_rect_rt(struct ged *gedp, int port)
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
 
     /* initialize result in case we need to report something here */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (ZERO(gedp->ged_gvp->gv_rect.grs_width) &&
 	ZERO(gedp->ged_gvp->gv_rect.grs_height))
 	return GED_OK;
 
     if (port < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "ged_rect_rt: invalid port number - %d\n", port);
+	bu_vls_printf(gedp->ged_result_str, "rect_rt: invalid port number - %d\n", port);
 	return GED_ERROR;
     }
 
@@ -449,7 +186,7 @@ ged_rect_rt(struct ged *gedp, int port)
 	bu_vls_printf(&nvls, "%d", gedp->ged_gvp->gv_rect.grs_cdim[Y]);
 	bu_vls_printf(&vvls, "%lf", gedp->ged_gvp->gv_rect.grs_aspect);
 	bu_vls_printf(&fvls, "%d", port);
-	bu_vls_printf(&jvls, "%d,%d,%d,%d", xmin, ymin, xmax, ymax);
+	bu_vls_printf(&jvls, "%d, %d, %d, %d", xmin, ymin, xmax, ymax);
 	bu_vls_printf(&cvls, "%d/%d/%d",
 		      gedp->ged_gvp->gv_rect.grs_bg[0],
 		      gedp->ged_gvp->gv_rect.grs_bg[1],
@@ -483,8 +220,9 @@ ged_rect_rt(struct ged *gedp, int port)
     }
 }
 
+
 static int
-ged_rect_zoom(struct ged *gedp)
+rect_zoom(struct ged *gedp)
 {
     fastf_t width, height;
     fastf_t sf;
@@ -497,13 +235,13 @@ ged_rect_zoom(struct ged *gedp)
     GED_CHECK_VIEW(gedp, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (ZERO(gedp->ged_gvp->gv_rect.grs_width) &&
 	ZERO(gedp->ged_gvp->gv_rect.grs_height))
 	return GED_OK;
 
-    ged_rect_adjust_for_zoom(&gedp->ged_gvp->gv_rect);
+    rect_adjust_for_zoom(&gedp->ged_gvp->gv_rect);
 
     /* find old view center */
     MAT_DELTAS_GET_NEG(old_model_center, gedp->ged_gvp->gv_center);
@@ -543,6 +281,230 @@ ged_rect_zoom(struct ged *gedp)
     ged_view_update(gedp->ged_gvp);
 
     return GED_OK;
+}
+
+
+/*
+ * Note - this needs to be rewritten to accept keyword/value pairs so
+ * that multiple attributes can be set with a single command call.
+ */
+int
+ged_rect(struct ged *gedp,
+	 int argc,
+	 const char *argv[])
+{
+    char *command;
+    char *parameter;
+    char **argp = (char **)argv;
+    point_t user_pt;		/* Value(s) provided by user */
+    int i;
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    if (argc < 2 || 5 < argc) {
+	usage(gedp, argv[0]);
+	return GED_ERROR;
+    }
+
+    command = (char *)argv[0];
+    parameter = (char *)argv[1];
+    argc -= 2;
+    argp += 2;
+
+    for (i = 0; i < argc; ++i)
+	if (sscanf(argp[i], "%lf", &user_pt[i]) != 1) {
+	    usage(gedp, argv[0]);
+	    return GED_ERROR;
+	}
+
+    if (BU_STR_EQUAL(parameter, "draw")) {
+	if (argc == 0) {
+	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_rect.grs_draw);
+	    return GED_OK;
+	} else if (argc == 1) {
+	    i = (int)user_pt[X];
+
+	    if (i)
+		gedp->ged_gvp->gv_rect.grs_draw = 1;
+	    else
+		gedp->ged_gvp->gv_rect.grs_draw = 0;
+
+	    return GED_OK;
+	}
+
+	bu_vls_printf(gedp->ged_result_str, "The '%s draw' command accepts 0 or 1 argument\n", command);
+	return GED_ERROR;
+    }
+
+    if (BU_STR_EQUAL(parameter, "cdim")) {
+	if (argc == 0) {
+	    bu_vls_printf(gedp->ged_result_str, "%d %d",
+			  gedp->ged_gvp->gv_rect.grs_cdim[X],
+			  gedp->ged_gvp->gv_rect.grs_cdim[Y]);
+	    return GED_OK;
+	} else if (argc == 2) {
+	    gedp->ged_gvp->gv_rect.grs_cdim[X] = user_pt[X];
+	    gedp->ged_gvp->gv_rect.grs_cdim[Y] = user_pt[Y];
+	    gedp->ged_gvp->gv_rect.grs_aspect = (fastf_t)gedp->ged_gvp->gv_rect.grs_cdim[X] / gedp->ged_gvp->gv_rect.grs_cdim[Y];
+
+	    rect_image2view(&gedp->ged_gvp->gv_rect);
+
+	    return GED_OK;
+	}
+
+	bu_vls_printf(gedp->ged_result_str, "The '%s cdim' command requires 0 or 2 arguments\n", command);
+	return GED_ERROR;
+    }
+
+    if (BU_STR_EQUAL(parameter, "dim")) {
+	if (argc == 0) {
+	    bu_vls_printf(gedp->ged_result_str, "%d %d",
+			  gedp->ged_gvp->gv_rect.grs_dim[X],
+			  gedp->ged_gvp->gv_rect.grs_dim[Y]);
+	    return GED_OK;
+	} else if (argc == 2) {
+	    gedp->ged_gvp->gv_rect.grs_dim[X] = user_pt[X];
+	    gedp->ged_gvp->gv_rect.grs_dim[Y] = user_pt[Y];
+
+	    rect_image2view(&gedp->ged_gvp->gv_rect);
+
+	    return GED_OK;
+	}
+
+	bu_vls_printf(gedp->ged_result_str, "The '%s dim' command requires 0 or 2 arguments\n", command);
+	return GED_ERROR;
+    }
+
+    if (BU_STR_EQUAL(parameter, "pos")) {
+	if (argc == 0) {
+	    bu_vls_printf(gedp->ged_result_str, "%d %d",
+			  gedp->ged_gvp->gv_rect.grs_pos[X],
+			  gedp->ged_gvp->gv_rect.grs_pos[Y]);
+	    return GED_OK;
+	} else if (argc == 2) {
+	    gedp->ged_gvp->gv_rect.grs_pos[X] = user_pt[X];
+	    gedp->ged_gvp->gv_rect.grs_pos[Y] = user_pt[Y];
+
+	    rect_image2view(&gedp->ged_gvp->gv_rect);
+
+	    return GED_OK;
+	}
+
+	bu_vls_printf(gedp->ged_result_str, "The '%s pos' command requires 0 or 2 arguments\n", command);
+	return GED_ERROR;
+    }
+
+    if (BU_STR_EQUAL(parameter, "bg")) {
+	if (argc == 0) {
+	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
+			  gedp->ged_gvp->gv_rect.grs_bg[X],
+			  gedp->ged_gvp->gv_rect.grs_bg[Y],
+			  gedp->ged_gvp->gv_rect.grs_bg[Z]);
+	    return GED_OK;
+	} else if (argc == 3) {
+	    gedp->ged_gvp->gv_rect.grs_bg[0] = (int)user_pt[X];
+	    gedp->ged_gvp->gv_rect.grs_bg[1] = (int)user_pt[Y];
+	    gedp->ged_gvp->gv_rect.grs_bg[2] = (int)user_pt[Z];
+
+	    return GED_OK;
+	}
+
+	bu_vls_printf(gedp->ged_result_str, "The '%s bg' command requires 0 or 3 arguments\n", command);
+	return GED_ERROR;
+    }
+
+    if (BU_STR_EQUAL(parameter, "color")) {
+	if (argc == 0) {
+	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
+			  gedp->ged_gvp->gv_rect.grs_color[X],
+			  gedp->ged_gvp->gv_rect.grs_color[Y],
+			  gedp->ged_gvp->gv_rect.grs_color[Z]);
+	    return GED_OK;
+	} else if (argc == 3) {
+	    gedp->ged_gvp->gv_rect.grs_color[0] = (int)user_pt[X];
+	    gedp->ged_gvp->gv_rect.grs_color[1] = (int)user_pt[Y];
+	    gedp->ged_gvp->gv_rect.grs_color[2] = (int)user_pt[Z];
+
+	    return GED_OK;
+	}
+
+	bu_vls_printf(gedp->ged_result_str, "The '%s color' command requires 0 or 3 arguments\n", command);
+	return GED_ERROR;
+    }
+
+    if (BU_STR_EQUAL(parameter, "lstyle")) {
+	if (argc == 0) {
+	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_rect.grs_line_style);
+	    return GED_OK;
+	} else if (argc == 1) {
+	    i = (int)user_pt[X];
+
+	    if (i <= 0)
+		gedp->ged_gvp->gv_rect.grs_line_style = 0;
+	    else
+		gedp->ged_gvp->gv_rect.grs_line_style = 1;
+
+	    return GED_OK;
+	}
+
+	bu_vls_printf(gedp->ged_result_str, "The '%s lstyle' command accepts 0 or 1 argument\n", command);
+	return GED_ERROR;
+    }
+
+    if (BU_STR_EQUAL(parameter, "lwidth")) {
+	if (argc == 0) {
+	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_rect.grs_line_width);
+	    return GED_OK;
+	} else if (argc == 1) {
+	    i = (int)user_pt[X];
+
+	    if (i <= 0)
+		gedp->ged_gvp->gv_rect.grs_line_width = 0;
+	    else
+		gedp->ged_gvp->gv_rect.grs_line_width = i;
+
+	    return GED_OK;
+	}
+
+	bu_vls_printf(gedp->ged_result_str, "The '%s lwidth' command accepts 0 or 1 argument\n", command);
+	return GED_ERROR;
+    }
+
+    if (BU_STR_EQUAL(parameter, "rt")) {
+	if (argc == 1)
+	    return rect_rt(gedp, (int)user_pt[X]);
+
+	bu_vls_printf(gedp->ged_result_str, "The '%s rt' command accepts 1 argument\n", command);
+	return GED_ERROR;
+    }
+
+    if (BU_STR_EQUAL(parameter, "zoom")) {
+	if (argc == 0)
+	    return rect_zoom(gedp);
+
+	bu_vls_printf(gedp->ged_result_str, "The '%s zoom' command accepts no arguments\n", command);
+	return GED_ERROR;
+    }
+
+    if (BU_STR_EQUAL(parameter, "vars")) {
+	rect_vls_print(gedp);
+	return GED_OK;
+    }
+
+    if (BU_STR_EQUAL(parameter, "help")) {
+	usage(gedp, command);
+	return GED_HELP;
+    }
+
+    bu_vls_printf(gedp->ged_result_str, "%s: unrecognized command '%s'\n", command, parameter);
+    usage(gedp, command);
+
+    return GED_ERROR;
 }
 
 

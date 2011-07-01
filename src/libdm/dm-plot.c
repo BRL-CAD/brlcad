@@ -17,15 +17,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dm-plot.c
+/** @file libdm/dm-plot.c
  *
  * An unsatisfying (but useful) hack to allow GED to generate
- * UNIX-plot files that not only contain the drawn objects, but
- * also contain the faceplate display as well.
- * Mostly, a useful hack for making viewgraphs and photographs
- * of an editing session.
- * We assume that the UNIX-plot filter used can at least discard
- * the non-standard extention to specify color (a Gwyn@BRL addition).
+ * UNIX-plot files that not only contain the drawn objects, but also
+ * contain the faceplate display as well.  Mostly, a useful hack for
+ * making viewgraphs and photographs of an editing session.  We assume
+ * that the UNIX-plot filter used can at least discard the
+ * non-standard extention to specify color (a Doug Gwyn addition).
  *
  */
 
@@ -60,7 +59,7 @@ struct plot_vars head_plot_vars;
 static mat_t plotmat;
 
 
-/*
+/**
  * P L O T _ C L O S E
  *
  * Gracefully release the display.
@@ -86,7 +85,7 @@ plot_close(struct dm *dmp)
 }
 
 
-/*
+/**
  * P L O T _ P R O L O G
  *
  * There are global variables which are parameters to this routine.
@@ -103,7 +102,7 @@ plot_drawBegin(struct dm *dmp)
 }
 
 
-/*
+/**
  * P L O T _ E P I L O G
  */
 HIDDEN int
@@ -120,7 +119,7 @@ plot_drawEnd(struct dm *dmp)
 }
 
 
-/*
+/**
  * P L O T _ L O A D M A T R I X
  *
  * Load a new transformation matrix.  This will be followed by
@@ -161,7 +160,7 @@ plot_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 }
 
 
-/*
+/**
  * P L O T _ O B J E C T
  *
  * Set up for an object, transformed as indicated, and with an
@@ -187,9 +186,9 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
 	return TCL_OK;
     }
 
-    /* delta is used in clipping to insure clipped endpoint is slightly
-     * in front of eye plane (perspective mode only).
-     * This value is a SWAG that seems to work OK.
+    /* delta is used in clipping to insure clipped endpoint is
+     * slightly in front of eye plane (perspective mode only).  This
+     * value is a SWAG that seems to work OK.
      */
     delta = plotmat[15]*0.0001;
     if (delta < 0.0)
@@ -305,11 +304,11 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
 }
 
 
-/*
+/**
  * P L O T _ D R A W
  */
 HIDDEN int
-plot_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data)
+plot_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {
@@ -328,12 +327,11 @@ plot_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *))
 }
 
 
-/*
+/**
  * P L O T _ N O R M A L
  *
- * Restore the display processor to a normal mode of operation
- * (ie, not scaled, rotated, displaced, etc).
- * Turns off windowing.
+ * Restore the display processor to a normal mode of operation (ie,
+ * not scaled, rotated, displaced, etc).  Turns off windowing.
  */
 HIDDEN int
 plot_normal(struct dm *dmp)
@@ -345,13 +343,12 @@ plot_normal(struct dm *dmp)
 }
 
 
-/*
+/**
  * P L O T _ P U T S
  *
  * Output a string into the displaylist.
  * The starting position of the beam is as specified.
  */
-/* ARGSUSED */
 HIDDEN int
 plot_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int UNUSED(use_aspect))
 {
@@ -370,9 +367,8 @@ plot_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int
 }
 
 
-/*
+/**
  * P L O T _ 2 D _ G O T O
- *
  */
 HIDDEN int
 plot_drawLine2D(struct dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fastf_t ypos2)
@@ -461,7 +457,6 @@ plot_setLineAttr(struct dm *dmp, int width, int style)
 }
 
 
-/* ARGSUSED */
 HIDDEN int
 plot_debug(struct dm *dmp, int lvl)
 {
@@ -499,7 +494,6 @@ plot_setWinBounds(struct dm *dmp, int *w)
 
     return TCL_OK;
 }
-
 
 
 struct dm dm_plot = {
@@ -543,20 +537,20 @@ struct dm dm_plot = {
     0,
     0,
     0,
-    0,/* bytes per pixel */
-    0,/* bits per channel */
+    0, /* bytes per pixel */
+    0, /* bits per channel */
     0,
     0,
     1.0, /* aspect ratio */
-    0,
+    NULL,
     {0, 0},
-    {0, 0, 0, 0, 0},		/* bu_vls path name*/
-    {0, 0, 0, 0, 0},		/* bu_vls full name drawing window */
-    {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls path name*/
+    BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
     {0, 0, 0},			/* bg color */
     {0, 0, 0},			/* fg color */
-    {0.0, 0.0, 0.0},		/* clipmin */
-    {0.0, 0.0, 0.0},		/* clipmax */
+    VINIT_ZERO,			/* clipmin */
+    VINIT_ZERO,			/* clipmax */
     0,				/* no debugging */
     0,				/* no perspective */
     0,				/* no lighting */
@@ -566,8 +560,9 @@ struct dm dm_plot = {
     0,				/* no zclipping */
     1,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */
-    0				/* Tcl interpreter */
+    NULL			/* Tcl interpreter */
 };
+
 
 /*
  * P L O T _ O P E N
@@ -628,11 +623,8 @@ plot_open(Tcl_Interp *interp, int argc, const char *argv[])
 	    case 'Z':
 		/* Enable Z clipping */
 		Tcl_AppendStringsToObj(obj, "Clipped in Z to viewing cube\n", (char *)NULL);
-#if 0
-		((struct plot_vars *)dmp->dm_vars.priv_vars)->zclip = 1;
-#else
+
 		dmp->dm_zclip = 1;
-#endif
 		break;
 	    default:
 		Tcl_AppendStringsToObj(obj, "bad PLOT option ", argv[0], "\n", (char *)NULL);

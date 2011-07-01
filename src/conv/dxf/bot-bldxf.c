@@ -396,7 +396,7 @@ r_start(struct db_tree_state *UNUSED(tsp), const struct db_full_path * pathp, co
 {
     size_t i;
     if (debug&DEBUG_NAMES) {
-	bu_log("r_start %d ", ((struct rt_bot_internal *)client_data)->num_vertices);
+	bu_log("r_start %zu ", ((struct rt_bot_internal *)client_data)->num_vertices);
 	for (i=0; i < pathp->fp_len; i++) {
 	    if (pathp->fp_len - (i+1)) {
 		bu_log("%s/", pathp->fp_names[i]->d_namep);
@@ -414,7 +414,7 @@ r_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path * pathp, unio
 {
     size_t i;
     if (debug&DEBUG_NAMES) {
-	bu_log("r_end %d ", ((struct rt_bot_internal *)client_data)->num_vertices);
+	bu_log("r_end %zu ", ((struct rt_bot_internal *)client_data)->num_vertices);
 	for (i=0; i < pathp->fp_len; i++) {
 	    if (pathp->fp_len - (i+1)) {
 		bu_log("%s/", pathp->fp_names[i]->d_namep);
@@ -437,7 +437,7 @@ void add_bots(struct rt_bot_internal *bot_dest,
     size_t limit;
 
     if (debug&DEBUG_BOTS)
-	bu_log("adding bots v:%d f:%d  v:%d f:%d\n",
+	bu_log("adding bots v:%zu f:%zu  v:%zu f:%zu\n",
 	       bot_dest->num_vertices, bot_dest->num_faces,
 	       bot_src->num_vertices, bot_src->num_faces);
 
@@ -467,7 +467,7 @@ void add_bots(struct rt_bot_internal *bot_dest,
     bot_dest->num_faces += bot_src->num_faces;
 
     if (debug&DEBUG_BOTS)
-	bu_log("...new bot v:%d f:%d\n",
+	bu_log("...new bot v:%zu f:%zu\n",
 	       bot_dest->num_vertices, bot_dest->num_faces);
 }
 
@@ -527,7 +527,7 @@ int main(int ac, char *av[])
 	return 1;
     }
 
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
 
     if ((rtip=rt_dirbuild(av[arg_count], idbuf, sizeof(idbuf)))==RTI_NULL) {
 	fprintf(stderr, "rtexample: rt_dirbuild failure\n");

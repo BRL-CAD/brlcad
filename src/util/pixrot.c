@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixrot.c
+/** @file util/pixrot.c
  *
  * Rotate, Invert, and/or Reverse the pixels in a RGB (.pix) file.
  *

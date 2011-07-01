@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file STEPWrapper.cpp
+/** @file step/STEPWrapper.cpp
  *
  * C++ wrapper to NIST STEP parser/database functions.
  *
@@ -169,10 +169,10 @@ STEPWrapper::getAttributes(int STEPid)
 }
 
 
-SCLBOOL_H(Boolean)
+Boolean
 STEPWrapper::getBooleanAttribute(int STEPid, const char *name)
 {
-    SCLBOOL_H(Boolean) retValue = SCLBOOL_H(BUnset);
+    Boolean retValue = BUnset;
 	SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
 
 	sse->ResetAttributes();
@@ -182,9 +182,9 @@ STEPWrapper::getBooleanAttribute(int STEPid, const char *name)
 	std::string attrname = attr->Name();
 
 		if (attrname.compare(name) == 0) {
-	    retValue = (SCLBOOL_H(Boolean))(*attr->ptr.e).asInt();
-			if (retValue > SCLBOOL_H(BUnset))
-				retValue = SCLBOOL_H(BUnset);
+	    retValue = (Boolean)(*attr->ptr.e).asInt();
+			if (retValue > BUnset)
+				retValue = BUnset;
 			break;
 		}
 	}
@@ -213,10 +213,10 @@ STEPWrapper::getEnumAttribute(int STEPid, const char *name)
 }
 
 
-SCLLOG_H(Logical)
+Logical
 STEPWrapper::getLogicalAttribute(int STEPid, const char *name)
 {
-	SCLLOG_H(Logical) retValue = SCLLOG_H(LUnknown);
+	Logical retValue = LUnknown;
 	SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
 
 	sse->ResetAttributes();
@@ -226,9 +226,9 @@ STEPWrapper::getLogicalAttribute(int STEPid, const char *name)
 	std::string attrname = attr->Name();
 
 		if (attrname.compare(name) == 0) {
-			retValue = (SCLLOG_H(Logical))(*attr->ptr.e).asInt();
-			if (retValue > SCLLOG_H(LUnknown))
-				retValue = SCLLOG_H(LUnknown);
+			retValue = (Logical)(*attr->ptr.e).asInt();
+			if (retValue > LUnknown)
+				retValue = LUnknown;
 			break;
 		}
 	}
@@ -237,21 +237,21 @@ STEPWrapper::getLogicalAttribute(int STEPid, const char *name)
 
 
 std::string
-STEPWrapper::getLogicalString(SCLLOG_H(Logical) v)
+STEPWrapper::getLogicalString(Logical v)
 {
     std::string retValue = "Unknown";
 
 	switch (v) {
-	case SCLLOG_H(LFalse):
+	case LFalse:
 		retValue = "LFalse";
 		break;
-	case SCLLOG_H(LTrue):
+	case LTrue:
 		retValue = "LTrue";
 		break;
-	case SCLLOG_H(LUnset):
+	case LUnset:
 		retValue = "LUnset";
 		break;
-	case SCLLOG_H(LUnknown):
+	case LUnknown:
 		retValue = "LUnknown";
 		break;
 	}
@@ -260,18 +260,18 @@ STEPWrapper::getLogicalString(SCLLOG_H(Logical) v)
 
 
 std::string
-STEPWrapper::getBooleanString(SCLBOOL_H(Boolean) v)
+STEPWrapper::getBooleanString(Boolean v)
 {
     std::string retValue = "Unknown";
 
 	switch (v) {
-	case SCLBOOL_H(BFalse):
+	case BFalse:
 		retValue = "BFalse";
 		break;
-	case SCLBOOL_H(BTrue):
+	case BTrue:
 		retValue = "BTrue";
 		break;
-	case SCLBOOL_H(BUnset):
+	case BUnset:
 		retValue = "BUnset";
 		break;
 	}
@@ -534,10 +534,10 @@ STEPWrapper::getAttributes( SCLP23(Application_instance) *sse) {
 }
 
 
-SCLBOOL_H(Boolean)
+Boolean
 STEPWrapper::getBooleanAttribute(SCLP23(Application_instance) *sse, const char *name)
 {
-    SCLBOOL_H(Boolean) retValue = SCLBOOL_H(BUnset);
+    Boolean retValue = BUnset;
 
 	sse->ResetAttributes();
 
@@ -546,9 +546,9 @@ STEPWrapper::getBooleanAttribute(SCLP23(Application_instance) *sse, const char *
 	std::string attrname = attr->Name();
 
 		if (attrname.compare(name) == 0) {
-	    retValue = (SCLBOOL_H(Boolean))(*attr->ptr.e).asInt();
-			if (retValue > SCLBOOL_H(BUnset))
-				retValue = SCLBOOL_H(BUnset);
+	    retValue = (Boolean)(*attr->ptr.e).asInt();
+			if (retValue > BUnset)
+				retValue = BUnset;
 			break;
 		}
 	}
@@ -604,10 +604,10 @@ STEPWrapper::getEntityAttribute(SCLP23(Application_instance) *sse, const char *n
 }
 
 
-SCLLOG_H(Logical)
+Logical
 STEPWrapper::getLogicalAttribute(SCLP23(Application_instance) *sse, const char *name)
 {
-	SCLLOG_H(Logical) retValue = SCLLOG_H(LUnknown);
+	Logical retValue = LUnknown;
 
 	sse->ResetAttributes();
 
@@ -616,9 +616,9 @@ STEPWrapper::getLogicalAttribute(SCLP23(Application_instance) *sse, const char *
 	std::string attrname = attr->Name();
 
 		if (attrname.compare(name) == 0) {
-			retValue = (SCLLOG_H(Logical))(*attr->ptr.e).asInt();
-			if (retValue > SCLLOG_H(LUnknown))
-				retValue = SCLLOG_H(LUnknown);
+			retValue = (Logical)(*attr->ptr.e).asInt();
+			if (retValue > LUnknown)
+				retValue = LUnknown;
 			break;
 		}
 	}

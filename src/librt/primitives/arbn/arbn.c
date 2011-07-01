@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file arbn.c
+/** @file primitives/arbn/arbn.c
  *
  * Intersect a ray with an Arbitrary Regular Polyhedron with an
  * arbitrary number of faces.
@@ -130,7 +130,7 @@ rt_arbn_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     /* If any planes were not used, then arbn is not convex */
     for (i=0; i<aip->neqn; i++) {
 	if (used[i] != 0) continue;	/* face was used */
-	bu_log("arbn(%s) face %d unused, solid is not convex\n",
+	bu_log("arbn(%s) face %zu unused, solid is not convex\n",
 	       stp->st_name, i);
 	bu_free((char *)used, "arbn used[]");
 	return -1;		/* BAD */
@@ -162,10 +162,10 @@ rt_arbn_print(const struct soltab *stp)
     struct rt_arbn_internal *arbp = (struct rt_arbn_internal *)stp->st_specific;
 
     RT_ARBN_CK_MAGIC(arbp);
-    bu_log("arbn bounded by %d planes\n", arbp->neqn);
+    bu_log("arbn bounded by %zu planes\n", arbp->neqn);
 
     for (i=0; i < arbp->neqn; i++) {
-	bu_log("\t%d: (%g, %g, %g) %g\n",
+	bu_log("\t%zu: (%g, %g, %g) %g\n",
 	       i,
 	       INTCLAMP(arbp->eqn[i][X]),		/* should have unit length */
 	       INTCLAMP(arbp->eqn[i][Y]),
@@ -270,7 +270,7 @@ rt_arbn_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
     h = hitp->hit_surfno;
     if (h > aip->neqn) {
-	bu_log("rt_arbn_norm(): hit_surfno=%d?\n", h);
+	bu_log("rt_arbn_norm(): hit_surfno=%zu?\n", h);
 	VSETALL(hitp->hit_normal, 0);
 	return;
     }
@@ -409,7 +409,7 @@ rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 		    if (MAGSQ(dist) < tol->dist_sq) continue;
 		    VSUB2(dist, pt, b);
 		    if (MAGSQ(dist) < tol->dist_sq) continue;
-		    bu_log("rt_arbn_plot() error, point_count=%d (>2) on edge %d/%d, non-convex\n",
+		    bu_log("rt_arbn_plot() error, point_count=%d (>2) on edge %zu/%zu, non-convex\n",
 			   point_count+1,
 			   i, j);
 		    VPRINT(" a", a);
@@ -1085,16 +1085,16 @@ rt_arbn_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 
     if (attr == (char *)NULL) {
 	bu_vls_strcpy(logstr, "arbn");
-	bu_vls_printf(logstr, " N %d", arbn->neqn);
+	bu_vls_printf(logstr, " N %zu", arbn->neqn);
 	for (i=0; i<arbn->neqn; i++) {
-	    bu_vls_printf(logstr, " P%d {%.25g %.25g %.25g %.25g}", i,
+	    bu_vls_printf(logstr, " P%zu {%.25g %.25g %.25g %.25g}", i,
 			  V4ARGS(arbn->eqn[i]));
 	}
     } else if (BU_STR_EQUAL(attr, "N")) {
-	bu_vls_printf(logstr, "%d", arbn->neqn);
+	bu_vls_printf(logstr, "%zu", arbn->neqn);
     } else if (BU_STR_EQUAL(attr, "P")) {
 	for (i=0; i<arbn->neqn; i++) {
-	    bu_vls_printf(logstr, " P%d {%.25g %.25g %.25g %.25g}", i,
+	    bu_vls_printf(logstr, " P%zu {%.25g %.25g %.25g %.25g}", i,
 			  V4ARGS(arbn->eqn[i]));
 	}
     } else if (attr[0] == 'P') {

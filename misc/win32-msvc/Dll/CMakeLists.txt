@@ -1,7 +1,7 @@
 # write brlcadversion.h
-file(READ ../../../include/conf/MAJOR majorVersionNumber)
-file(READ ../../../include/conf/MINOR minorVersionNumber)
-file(READ ../../../include/conf/PATCH patchVersionNumber)
+file(READ ${BRLCAD_SOURCE_DIR}/include/conf/MAJOR majorVersionNumber)
+file(READ ${BRLCAD_SOURCE_DIR}/include/conf/MINOR minorVersionNumber)
+file(READ ${BRLCAD_SOURCE_DIR}/include/conf/PATCH patchVersionNumber)
 
 set(brlcadVersionContent
     "#define BRLCAD_LIB_MAJOR ${majorVersionNumber}"
@@ -20,9 +20,12 @@ file(WRITE ../../../../rt^3/include/brlcad/brlcadversion.h
 
 # for all targets
 include_directories(
-    ../../../include
-    ../../../src/other/tcl/generic
+    ${BRLCAD_BINARY_DIR}/include
+    ${BRLCAD_SOURCE_DIR}/include
+    ${TCL_INCLUDE_DIRS}
 )
+
+remove_definitions(-DBRLCAD_DLL)
 
 
 # build the BrlcadCore.dll
@@ -34,15 +37,15 @@ set(BRLCADCORE_SOURCES
 add_library(BrlcadCore SHARED ${BRLCADCORE_SOURCES})
 
 target_link_libraries(BrlcadCore
-    libbn
-    libbu
-    libgcv
-    libged
-    libregex
-    librt
-    libsysv
-    libwdb
-    zlib
+    libbn-static
+    libbu-static
+    libgcv-static
+    libged-static
+    regex-static
+    librt-static
+    libsysv-static
+    libwdb-static
+    zlib-static
     openNURBS
     tcl85
 )
@@ -56,31 +59,6 @@ set(BRLCAD_SOURCES
     brlcad.def
     brlcad.rc
 )
-
-set(BRLCAD_HEADERS
-    ../../../include/bn.h
-    ../../../include/brlcad.h
-    ../../../include/brep.h
-    ../../../include/bu.h
-    ../../../include/common.h
-    ../../../include/db.h
-    ../../../include/db5.h
-    ../../../include/magic.h
-    ../../../include/nmg.h
-    ../../../include/nurb.h
-    ../../../include/pc.h
-    ../../../include/raytrace.h
-    ../../../include/rtgeom.h
-    ../../../include/vmath.h
-    ../../../include/wdb.h
-)
-
-if(MSVC)
-    set(BRLCAD_HEADERS
-        ${BRLCAD_HEADERS}
-        ../../../include/pstdint.h
-    )
-endif(MSVC)
 
 set(COREINTERFACE_SOURCES
     ../../../../rt^3/src/coreInterface/Arb8.cpp
@@ -108,8 +86,8 @@ file(GLOB COREINTERFACE_HEADERS ../../../../rt^3/include/brlcad/*.h)
 
 include_directories(
     ../../../../rt^3/include
-    ../../../src/other/libz
-    ../../../src/other/opennurbs
+    ${ZLIB_INCLUDE_DIR}
+    ${OPENNURBS_INCLUDE_DIR}
 )
 
 add_definitions(
@@ -122,15 +100,16 @@ add_library(brlcad SHARED
 )
 
 target_link_libraries(brlcad
-    libbn
-    libbu
-    libged
-    libregex
-    librt
-    libsysv
-    libwdb
-    zlib
+    libbn-static
+    libbu-static
+    libged-static
+    regex-static
+    librt-static
+    libsysv-static
+    libwdb-static
+    zlib-static
     openNURBS
+    Ws2_32
 )
 
 set_property(TARGET brlcad PROPERTY LINK_INTERFACE_LIBRARIES "")
@@ -140,7 +119,5 @@ install(TARGETS brlcad
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
 )
-
-install(FILES ${BRLCAD_HEADERS} DESTINATION include)
 
 install(FILES ${COREINTERFACE_HEADERS} DESTINATION include/brlcad)

@@ -19,7 +19,7 @@
  */
 /** @addtogroup libged */
 /** @{ */
-/** @file vdraw.c
+/** @file libged/vdraw.c
  *
  * Edit vector lists and display them as pseudosolids.
  *
@@ -112,14 +112,10 @@
 #include "ged.h"
 
 
-#ifndef M_SQRT2
-#  define M_SQRT2		1.41421356237309504880
-#endif
-
 #define REV_BU_LIST_FOR(p, structure, hp)	\
-	(p)=BU_LIST_LAST(structure, hp);	\
-	BU_LIST_NOT_HEAD(p, hp);		\
-	(p)=BU_LIST_PLAST(structure, p)
+    (p)=BU_LIST_LAST(structure, hp);	\
+       BU_LIST_NOT_HEAD(p, hp);		\
+       (p)=BU_LIST_PLAST(structure, p)
 
 static int vdraw_write_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 static int vdraw_insert_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
@@ -150,10 +146,10 @@ static struct bu_cmdtab vdraw_cmds[] = {
  * figure out which vdraw command we're running, used by dg
  */
 int
-vdraw_cmd(struct dg_obj	*dgop,
-	  Tcl_Interp	*interp,
-	  int		argc,
-	  char 		*argv[])
+vdraw_cmd_tcl(struct dg_obj *dgop,
+	  Tcl_Interp *interp,
+	  int argc,
+	  char *argv[])
 {
     return bu_cmd((ClientData)dgop, interp, argc-1, (const char **)argv+1, vdraw_cmds, 0);
 }
@@ -161,7 +157,7 @@ vdraw_cmd(struct dg_obj	*dgop,
 
 /*
  * Usage:
- *        write i|next c x y z
+ * write i|next c x y z
  */
 static int
 vdraw_write_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
@@ -260,9 +256,10 @@ vdraw_write_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[
     return TCL_OK;
 }
 
+
 /*
  * Usage:
- *        insert i c x y z
+ * insert i c x y z
  */
 int
 vdraw_insert_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
@@ -344,9 +341,10 @@ vdraw_insert_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv
     return TCL_OK;
 }
 
+
 /*
  * Usage:
- *        delete i|last|all
+ * delete i|last|all
  */
 int
 vdraw_delete_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
@@ -391,7 +389,7 @@ vdraw_delete_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv
 	    /* this is the right vlist */
 	    break;
 	}
-	if ( vp->nused == 0) {
+	if (vp->nused == 0) {
 	    /* no point going further */
 	    break;
 	}
@@ -435,9 +433,10 @@ vdraw_delete_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv
     return TCL_OK;
 }
 
+
 /*
  * Usage:
- *        read i|color|length|name
+ * read i|color|length|name
  */
 static int
 vdraw_read_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
@@ -496,7 +495,7 @@ vdraw_read_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]
 	    /* this is the right vlist */
 	    break;
 	}
-	if ( vp->nused == 0) {
+	if (vp->nused == 0) {
 	    /* no point going further */
 	    break;
 	}
@@ -518,9 +517,10 @@ vdraw_read_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]
     return TCL_OK;
 }
 
+
 /*
  * Usage:
- *        send
+ * send
  */
 static int
 vdraw_send_tcl(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), char *UNUSED(argv[]))
@@ -567,9 +567,10 @@ vdraw_send_tcl(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), char
     return TCL_OK;
 }
 
+
 /*
  * Usage:
- *        params color|name
+ * params color|name
  */
 static int
 vdraw_params_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
@@ -594,7 +595,7 @@ vdraw_params_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv
     if (argv[1][0] == 'n') {
 	/* check for conflicts with existing vlists*/
 	for (BU_LIST_FOR(rcp, vd_curve, &dgop->dgo_headVDraw)) {
-	    if (!strncmp( rcp->vdc_name, argv[1], RT_VDRW_MAXNAME)) {
+	    if (!strncmp(rcp->vdc_name, argv[1], RT_VDRW_MAXNAME)) {
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -613,9 +614,10 @@ vdraw_params_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv
     return TCL_OK;
 }
 
+
 /*
  * Usage:
- *        open [name]
+ * open [name]
  */
 static int
 vdraw_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
@@ -684,10 +686,11 @@ vdraw_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]
     }
 }
 
+
 /*
  * Usage:
- *        vlist list
- *        vlist delete name
+ * vlist list
+ * vlist delete name
  */
 static int
 vdraw_vlist_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
@@ -701,7 +704,7 @@ vdraw_vlist_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[
 	return TCL_ERROR;
     }
 
-    switch  (argv[1][0]) {
+    switch (argv[1][0]) {
 	case 'l':
 	    bu_vls_init(&vls);
 	    for (BU_LIST_FOR(rcp, vd_curve, &dgop->dgo_headVDraw)) {
@@ -747,6 +750,7 @@ vdraw_vlist_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[
 	    return TCL_ERROR;
     }
 }
+
 
 /*
  * Local Variables:

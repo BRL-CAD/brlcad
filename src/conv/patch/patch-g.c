@@ -971,35 +971,6 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
     bu_free((char *)flags, "Build_solid: flags");
     bu_free((char *)copy_tbl, "Build_solid: copy_tbl");
 
-#if 0
-    if (debug)
-	bu_log("Recalculate plane equations\n");
-    /* recalculate plane equations, since some of the vertices we
-     * calculated may not be exactly on the plane.
-     */
-    for (BU_LIST_FOR (s, shell, &r->s_hd)) {
-	for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
-	    if (fu->orientation == OT_SAME) {
-		plane_t pl1, pl2;
-
-		NMG_GET_FU_PLANE(pl1, fu);
-		if (nmg_fu_planeeqn(fu, tol)) {
-		    NMG_GET_FU_PLANE(pl2, fu);
-		    bu_log("Build_solid: Failed to re-calculate plane eqn for fu 0x%p:\n", fu);
-		    nmg_pr_fu_briefly(fu, (char *)NULL);
-		    rt_g.NMG_debug |= DEBUG_MESH;
-		    nmg_ck_fu_verts(fu, fu->f_p, tol);
-		    bu_log("Old plane was (%f %f %f %f)\n", V4ARGS(pl1));
-		    bu_log("New plane is (%f %f %f %f)\n", V4ARGS(pl2));
-		    nmg_face_g(fu, pl1);
-		    nmg_ck_fu_verts(fu, fu->f_p, tol);
-		    rt_g.NMG_debug &= ~DEBUG_MESH;
-		}
-	    }
-	}
-    }
-#endif
-
     bu_ptbl_reset(&faces);
 
     /* glue all the faces of the new shell together */
@@ -1435,7 +1406,7 @@ proc_plate(int cnt)
 
 		found_thick = 0;
 		for (thick_no=0; thick_no < nthicks; thick_no++) {
-		    if (NEAR_ZERO(list[k].thick - thicks[thick_no], TOL.dist)) {
+		    if (NEAR_EQUAL(list[k].thick, thicks[thick_no], TOL.dist)) {
 			list[k].thick = thicks[thick_no];
 			found_thick = 1;
 			break;

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file orot.c
+/** @file libged/get_obj_bounds.c
  *
  * The orot command.
  *
@@ -35,21 +35,21 @@
 
 
 int
-_ged_get_obj_bounds(struct ged	*gedp,
-		   int		argc,
-		   const char	*argv[],
-		   int		use_air,
-		   point_t	rpp_min,
-		   point_t	rpp_max)
+_ged_get_obj_bounds(struct ged *gedp,
+		    int argc,
+		    const char *argv[],
+		    int use_air,
+		    point_t rpp_min,
+		    point_t rpp_max)
 {
-    int	i;
-    struct rt_i		*rtip;
-    struct db_full_path	path;
-    struct region	*regp;
+    int i;
+    struct rt_i *rtip;
+    struct db_full_path path;
+    struct region *regp;
 
     /* Make a new rt_i instance from the existing db_i sructure */
     if ((rtip=rt_new_rti(gedp->ged_wdbp->dbip)) == RTI_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "rt_new_rti failure for %s\n", gedp->ged_wdbp->dbip->dbi_filename);
+	bu_vls_printf(gedp->ged_result_str, "rt_new_rti failure for %s\n", gedp->ged_wdbp->dbip->dbi_filename);
 	return GED_ERROR;
     }
 
@@ -62,7 +62,7 @@ _ged_get_obj_bounds(struct ged	*gedp,
 	/* Get full_path structure for argument */
 	db_full_path_init(&path);
 	if (db_string_to_path(&path,  rtip->rti_dbip, argv[i])) {
-	    bu_vls_printf(&gedp->ged_result_str, "db_string_to_path failed for %s\n", argv[i]);
+	    bu_vls_printf(gedp->ged_result_str, "db_string_to_path failed for %s\n", argv[i]);
 	    rt_free_rti(rtip);
 	    return GED_ERROR;
 	}
@@ -74,7 +74,7 @@ _ged_get_obj_bounds(struct ged	*gedp,
 
 	    db_full_path_init(&tmp_path);
 	    if (db_string_to_path(&tmp_path, rtip->rti_dbip, regp->reg_name)) {
-		bu_vls_printf(&gedp->ged_result_str, "db_string_to_path failed for %s\n", regp->reg_name);
+		bu_vls_printf(gedp->ged_result_str, "db_string_to_path failed for %s\n", regp->reg_name);
 		rt_free_rti(rtip);
 		db_free_full_path(&path);
 		return GED_ERROR;
@@ -88,7 +88,7 @@ _ged_get_obj_bounds(struct ged	*gedp,
 
 	/* if we don't already have it, get it */
 	if (!gottree && rt_gettree(rtip, path.fp_names[0]->d_namep)) {
-	    bu_vls_printf(&gedp->ged_result_str, "rt_gettree failed for %s\n", argv[i]);
+	    bu_vls_printf(gedp->ged_result_str, "rt_gettree failed for %s\n", argv[i]);
 	    rt_free_rti(rtip);
 	    db_free_full_path(&path);
 	    return GED_ERROR;
@@ -112,16 +112,16 @@ _ged_get_obj_bounds(struct ged	*gedp,
 	    if (*argv[i] != '/' && *reg_name == '/')
 		reg_name++;
 
-	    if (BU_STR_EQUAL( reg_name, argv[i]))
+	    if (BU_STR_EQUAL(reg_name, argv[i]))
 		goto found;
 	}
 	goto not_found;
 
     found:
 	if (regp != REGION_NULL) {
-	    /* input name was a region  */
+	    /* input name was a region */
 	    if (rt_bound_tree(regp->reg_treetop, reg_min, reg_max)) {
-		bu_vls_printf(&gedp->ged_result_str, "rt_bound_tree failed for %s\n", regp->reg_name);
+		bu_vls_printf(gedp->ged_result_str, "rt_bound_tree failed for %s\n", regp->reg_name);
 		rt_free_rti(rtip);
 		return TCL_ERROR;
 	    }
@@ -134,8 +134,8 @@ _ged_get_obj_bounds(struct ged	*gedp,
 	    /* input name may be a group, need to check all regions under
 	     * that group
 	     */
-	    name_len = strlen( argv[i] );
-	    for (BU_LIST_FOR( regp, region, &(rtip->HeadRegion))) {
+	    name_len = strlen(argv[i]);
+	    for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
 		reg_name = regp->reg_name;
 		if (*argv[i] != '/' && *reg_name == '/')
 		    reg_name++;
@@ -145,7 +145,7 @@ _ged_get_obj_bounds(struct ged	*gedp,
 
 		/* This is part of the group */
 		if (rt_bound_tree(regp->reg_treetop, reg_min, reg_max)) {
-		    bu_vls_printf(&gedp->ged_result_str, "rt_bound_tree failed for %s\n", regp->reg_name);
+		    bu_vls_printf(gedp->ged_result_str, "rt_bound_tree failed for %s\n", regp->reg_name);
 		    rt_free_rti(rtip);
 		    return TCL_ERROR;
 		}
@@ -160,21 +160,22 @@ _ged_get_obj_bounds(struct ged	*gedp,
     return TCL_OK;
 }
 
+
 /**
  *
  *
  */
 static int
-ged_get_objpath_mat(struct ged			*gedp,
-		    int				argc,
-		    const char			*argv[],
-		    struct _ged_trace_data	*gtdp)
+get_objpath_mat(struct ged *gedp,
+		    int argc,
+		    const char *argv[],
+		    struct _ged_trace_data *gtdp)
 {
     int i, pos_in;
 
     /*
-     *	paths are matched up to last input member
-     *      ANY path the same up to this point is considered as matching
+     * paths are matched up to last input member
+     * ANY path the same up to this point is considered as matching
      */
 
     /* initialize gtd */
@@ -194,7 +195,7 @@ ged_get_objpath_mat(struct ged			*gedp,
 	while (tok) {
 	    if ((gtdp->gtd_obj[gtdp->gtd_objpos++] =
 		 db_lookup(gedp->ged_wdbp->dbip, tok, LOOKUP_NOISY)) == RT_DIR_NULL) {
-		bu_vls_printf(&gedp->ged_result_str, "ged_get_objpath_mat: Failed to find %s", tok);
+		bu_vls_printf(gedp->ged_result_str, "get_objpath_mat: Failed to find %s", tok);
 		free(av0);
 		return GED_ERROR;
 	    }
@@ -210,7 +211,7 @@ ged_get_objpath_mat(struct ged			*gedp,
 	for (i=0; i<gtdp->gtd_objpos; i++) {
 	    if ((gtdp->gtd_obj[i] =
 		 db_lookup(gedp->ged_wdbp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == RT_DIR_NULL) {
-		bu_vls_printf(&gedp->ged_result_str, "ged_get_objpath_mat: Failed to find %s", argv[pos_in+i]);
+		bu_vls_printf(gedp->ged_result_str, "get_objpath_mat: Failed to find %s", argv[pos_in+i]);
 		return GED_ERROR;
 	    }
 	}
@@ -222,17 +223,18 @@ ged_get_objpath_mat(struct ged			*gedp,
     return GED_OK;
 }
 
+
 /**
  * @brief
  * This version works if the last member of the path is a primitive.
  */
 int
-_ged_get_obj_bounds2(struct ged			*gedp,
-		    int				argc,
-		    const char			*argv[],
-		    struct _ged_trace_data	*gtdp,
-		    point_t			rpp_min,
-		    point_t			rpp_max)
+_ged_get_obj_bounds2(struct ged *gedp,
+		     int argc,
+		     const char *argv[],
+		     struct _ged_trace_data *gtdp,
+		     point_t rpp_min,
+		     point_t rpp_max)
 {
     struct directory *dp;
     struct rt_db_internal intern;
@@ -244,7 +246,7 @@ _ged_get_obj_bounds2(struct ged			*gedp,
     VSETALL(rpp_min, MAX_FASTF);
     VREVERSE(rpp_max, rpp_min);
 
-    if (ged_get_objpath_mat(gedp, argc, argv, gtdp) == TCL_ERROR)
+    if (get_objpath_mat(gedp, argc, argv, gtdp) == TCL_ERROR)
 	return GED_ERROR;
 
     dp = gtdp->gtd_obj[gtdp->gtd_objpos-1];
@@ -252,7 +254,7 @@ _ged_get_obj_bounds2(struct ged			*gedp,
 
     /* Make a new rt_i instance from the existing db_i structure */
     if ((rtip=rt_new_rti(gedp->ged_wdbp->dbip)) == RTI_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "rt_new_rti failure for %s", gedp->ged_wdbp->dbip->dbi_filename);
+	bu_vls_printf(gedp->ged_result_str, "rt_new_rti failure for %s", gedp->ged_wdbp->dbip->dbi_filename);
 	return GED_ERROR;
     }
 
@@ -273,10 +275,11 @@ _ged_get_obj_bounds2(struct ged			*gedp,
 
     rt_free_rti(rtip);
     rt_db_free_internal(&intern);
-    bu_free( (char *)stp, "struct soltab" );
+    bu_free((char *)stp, "struct soltab");
 
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

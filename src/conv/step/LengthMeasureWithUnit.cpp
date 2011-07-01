@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file LengthMeasureWithUnit.cpp
+/** @file step/LengthMeasureWithUnit.cpp
  *
  * Routines to convert STEP "LengthMeasureWithUnit" to BRL-CAD BREP
  * structures.

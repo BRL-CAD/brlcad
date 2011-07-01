@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file cursors.h
+/** @file lgt/cursors.h
  *	Author:		Gary S. Moss
  * From AT&T's Teletype 5620 $DMD/icon directory, reformated slightly
  * to be an array of 32 unsigned chars, rather than a Texture16.

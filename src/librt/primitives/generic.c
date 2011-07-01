@@ -19,7 +19,7 @@
  */
 /** @addtogroup g_ */
 /** @{ */
-/** @file generic.c
+/** @file primitives/generic.c
  *
  * Generic routines applicable across most primitives
  *
@@ -68,7 +68,7 @@ rt_generic_xform(
     memset(&avs, 0, sizeof(struct bu_attribute_value_set));
 
     id = ip->idb_type;
-    BU_INIT_EXTERNAL(&ext);
+    BU_EXTERNAL_INIT(&ext);
     /* Scale change on export is 1.0 -- no change */
     switch (db_version(dbip)) {
 	case 4:
@@ -79,7 +79,7 @@ rt_generic_xform(
 	    }
 	    if ((release || op == ip)) rt_db_free_internal(ip);
 
-	    RT_INIT_DB_INTERNAL(op);
+	    RT_DB_INTERNAL_INIT(op);
 	    if (rt_functab[id].ft_import4(op, &ext, mat, dbip, resp) < 0) {
 		bu_log("rt_generic_xform():  solid import failure\n");
 		return -1;			/* FAIL */
@@ -95,7 +95,7 @@ rt_generic_xform(
 	    if ((release || op == ip)) {
 		if (ip->idb_avs.magic == BU_AVS_MAGIC) {
 		    /* grab the attributes before they are lost
-		     * by rt_db_free_internal or RT_INIT_DB_INTERNAL
+		     * by rt_db_free_internal or RT_DB_INTERNAL_INIT
 		     */
 		    bu_avs_init(&avs, ip->idb_avs.count, "avs");
 		    bu_avs_merge(&avs, &ip->idb_avs);
@@ -103,7 +103,7 @@ rt_generic_xform(
 		rt_db_free_internal(ip);
 	    }
 
-	    RT_INIT_DB_INTERNAL(op);
+	    RT_DB_INTERNAL_INIT(op);
 
 	    if (!release && op != ip) {
 		/* just copy the attributes from ip to op */

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file OffsetSurface.cpp
+/** @file step/OffsetSurface.cpp
  *
  * Routines to interface to STEP "OffsetSurface".
  *
@@ -88,7 +88,7 @@ OffsetSurface::Print(int level) {
 	basis_surface->Print(level+1);
 
 	TAB(level+1); std::cout << "distance:" << distance << std::endl;
-	TAB(level+1); std::cout << "self_intersect:" << step->getLogicalString((SCLLOG_H(Logical))self_intersect) << std::endl;
+	TAB(level+1); std::cout << "self_intersect:" << step->getLogicalString((Logical)self_intersect) << std::endl;
 
 	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	Surface::Print(level+1);

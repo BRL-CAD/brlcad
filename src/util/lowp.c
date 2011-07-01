@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file lowp.c
+/** @file util/lowp.c
  *
  * Read 3 .pix files, and do a 3D low-pass filter on them.
  *

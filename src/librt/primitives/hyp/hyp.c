@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file hyp.c
+/** @file primitives/hyp/hyp.c
  *
  * Intersect a ray with an elliptical hyperboloid of one sheet.
  *
@@ -44,8 +44,7 @@
 #include "raytrace.h"
 #include "rtgeom.h"
 
-
-extern fastf_t rt_ell_ang(fastf_t *, fastf_t, fastf_t, fastf_t, fastf_t);
+#include "../../librt_private.h"
 
 
 /* ray tracing form of solid, including precomputed terms */
@@ -720,7 +719,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     r3 = r1 / c;
     /* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0, c > 0 */
     if (NEAR_ZERO(mag_h, RT_LEN_TOL)
-	|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
+	|| !NEAR_EQUAL(mag_a, 1.0, RT_LEN_TOL)
 	|| r1 <= 0.0 || r2 <= 0.0 || c <= 0.) {
 	return 1;		/* BAD */
     }
@@ -884,7 +883,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	VJOIN1(V, xip->hyp_V, -pos_a->p[Z], Hu);
 
 	VSET(p1, 0., pos_b->p[Y], 0.);
-	theta_new = rt_ell_ang(p1, pos_a->p[X], pos_b->p[Y], dtol, ntol);
+	theta_new = ell_angle(p1, pos_a->p[X], pos_b->p[Y], dtol, ntol);
 	if (nseg == 0) {
 	    nseg = (int)(bn_twopi / theta_new) + 1;
 	    pts_dbl[i] = 0;

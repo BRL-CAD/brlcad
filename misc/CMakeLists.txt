@@ -1,3 +1,7 @@
+IF(BUILD_STATIC_LIBS AND BRLCAD-ENABLE_BRLCAD_LIBRARY)
+	ADD_SUBDIRECTORY(win32-msvc)
+ENDIF(BUILD_STATIC_LIBS AND BRLCAD-ENABLE_BRLCAD_LIBRARY)
+
 SET(prefix ${CMAKE_INSTALL_PREFIX})
 SET(exec_prefix "\${prefix}")
 SET(libdir "\${exec_prefix}/lib")
@@ -16,9 +20,9 @@ ENDIF(NOT WIN32)
 CONFIGURE_FILE(brlcad-config.in ${CMAKE_BINARY_DIR}/bin/brlcad-config @ONLY)
 
 BRLCAD_ADDFILE(fortran_example.f sample_applications)
-INSTALL(PROGRAMS ${CMAKE_BINARY_DIR}/bin/brlcad-config DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_BIN_DIR})
+INSTALL(PROGRAMS ${CMAKE_BINARY_DIR}/bin/brlcad-config DESTINATION ${BIN_DIR})
 FILE(COPY brlcad-config.1 DESTINATION ${CMAKE_BINARY_DIR}/${MAN_DIR}/man1)
-INSTALL(FILES brlcad-config.1 DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_MAN_DIR}/man1)
+INSTALL(FILES brlcad-config.1 DESTINATION ${MAN_DIR}/man1)
 
 SET(density_DATAFILES
   GQA_SAMPLE_DENSITIES
@@ -64,6 +68,5 @@ SET(misc_ignore_files
 	macosx
 	nsis
 	win32-msvc
-	win32-msvc8
 	)
 CMAKEFILES(${misc_ignore_files})

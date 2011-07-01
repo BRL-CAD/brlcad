@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file setup.c
+/** @file mged/setup.c
  *
  * routines to initialize mged
  *
@@ -45,17 +45,25 @@
 #include "./cmd.h"
 
 
+/* catch auto-formatting errors in this file.  be careful as there are
+ * mged_display() vars that use comma too.
+ */
+#define COMMA ','
+
+
 extern Tk_Window tkwin; /* in cmd.c */
 
 extern void init_qray(void);
 extern void mged_global_variable_setup(Tcl_Interp *interpreter);
 
+const char cmd3525[] = {'3', '5', COMMA, '2', '5', '\0'};
+const char cmd4545[] = {'4', '5', COMMA, '4', '5', '\0'};
 
 static struct cmdtab mged_cmdtab[] = {
     {"%", f_comm, GED_FUNC_PTR_NULL},
-    {"35,25", f_bv_35_25, GED_FUNC_PTR_NULL},
+    {cmd3525, f_bv_35_25, GED_FUNC_PTR_NULL}, /* 35,25 */
     {"3ptarb", cmd_ged_more_wrapper, ged_3ptarb},
-    {"45,45", f_bv_45_45, GED_FUNC_PTR_NULL},
+    {cmd4545, f_bv_45_45, GED_FUNC_PTR_NULL}, /* 45,45 */
     {"B", cmd_blast, GED_FUNC_PTR_NULL},
     {"accept", f_be_accept, GED_FUNC_PTR_NULL},
     {"adc", f_adc, GED_FUNC_PTR_NULL},
@@ -108,7 +116,6 @@ static struct cmdtab mged_cmdtab[] = {
     {"cp", cmd_ged_plain_wrapper, ged_copy},
     {"cpi", f_copy_inv, GED_FUNC_PTR_NULL},
     {"d", cmd_ged_erase_wrapper, ged_erase},
-    {"dall", cmd_ged_erase_wrapper, ged_erase_all},
     {"db", cmd_stub, GED_FUNC_PTR_NULL},
     {"db_glob", cmd_ged_plain_wrapper, ged_glob},
     {"dbconcat", cmd_ged_plain_wrapper, ged_concat},
@@ -139,7 +146,6 @@ static struct cmdtab mged_cmdtab[] = {
     {"edmater", f_edmater, GED_FUNC_PTR_NULL},
     {"em", cmd_emuves, GED_FUNC_PTR_NULL},
     {"erase", cmd_ged_erase_wrapper, ged_erase},
-    {"erase_all", cmd_ged_erase_wrapper, ged_erase_all},
     {"ev", cmd_ev, GED_FUNC_PTR_NULL},
     {"e_muves", f_e_muves, GED_FUNC_PTR_NULL},
     {"eqn", f_eqn, GED_FUNC_PTR_NULL},
@@ -343,6 +349,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"track", f_amtrack, GED_FUNC_PTR_NULL},
     {"tracker", f_tracker, GED_FUNC_PTR_NULL},
     {"translate", f_tr_obj, GED_FUNC_PTR_NULL},
+    {"translate2", cmd_ged_plain_wrapper, ged_translate},
     {"tree", cmd_ged_plain_wrapper, ged_tree},
     {"unhide", cmd_ged_plain_wrapper, ged_unhide},
     {"units", cmd_units, GED_FUNC_PTR_NULL},
@@ -580,9 +587,14 @@ mged_setup(Tcl_Interp **interpreter)
     view_state->vs_gvp->gv_clientData = (genptr_t)view_state;
     MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_gvp->gv_center);
 
-    BU_GETSTRUCT(gedp, ged);
+    if (gedp) {
+	/* release any allocated memory */
+	ged_free(gedp);
+    } else {
+	BU_GETSTRUCT(gedp, ged);
+    }
     GED_INIT(gedp, NULL);
-    
+
     gedp->ged_output_handler = mged_output_handler;
     gedp->ged_refresh_handler = mged_refresh_handler;
 

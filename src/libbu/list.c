@@ -61,11 +61,10 @@ void
 bu_list_reverse(register struct bu_list *hd)
 {
     struct bu_list tmp_hd;
-    register struct bu_list *ep;
-
-    BU_CK_LIST_HEAD(hd);
+    register struct bu_list *ep = NULL;
 
     BU_LIST_INIT(&tmp_hd);
+    BU_CK_LIST_HEAD(hd);
     BU_LIST_INSERT_LIST(&tmp_hd, hd);
 
     while (BU_LIST_WHILE(ep, bu_list, &tmp_hd)) {

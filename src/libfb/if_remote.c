@@ -602,11 +602,6 @@ rem_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xo
     if (ret < 0)
 	return -1;	/* Error from libpkg */
 
-#if 0
-    if (pkg_waitfor (MSG_RETURN, (char *)buf, NET_LONG_LEN, PCP(ifp)) < 1*NET_LONG_LEN)
-	return -2;
-    return ntohl(*(uint32_t *)buf);
-#else
     /* Since this call got somehow overlooked until Release 4.3, older
      * 'fbserv' programs won't have support for this request.  Rather
      * than dooming LGT users to endless frustration, simply launch
@@ -614,7 +609,6 @@ rem_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xo
      * never actually checks the return code of this routine anyway.
      */
     return 0;
-#endif
 }
 
 

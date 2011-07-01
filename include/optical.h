@@ -50,7 +50,12 @@ __BEGIN_DECLS
 #endif
 
 
-/* defined in init.c */
+/**
+ * this function sets the provided mfuncs head pointer to the list of
+ * available shaders.  the provided mfuncs head pointer should point
+ * to MF_NULL prior to getting passed to optical_shader_init() so that
+ * the same shader list may be returned repeatably.
+ */
 OPTICAL_EXPORT extern void optical_shader_init(struct mfuncs **headp);
 
 /* stub functions useful for debugging */
@@ -62,7 +67,7 @@ OPTICAL_EXPORT extern void mlib_void();
 
 /* defined in refract.c */
 OPTICAL_EXPORT extern int
-rr_render(struct application *app, struct partition *pp, struct shadework *swp);
+rr_render(struct application *app, const struct partition *pp, struct shadework *swp);
 
 /* defined in shade.c */
 OPTICAL_EXPORT extern void
@@ -166,10 +171,6 @@ OPTICAL_EXPORT extern struct bn_tabdata *background;
 OPTICAL_EXPORT extern vect_t background;
 #endif
 
-#if 0
-OPTICAL_EXPORT
-OPTICAL_EXPORT extern
-#endif
 /* defined in sh_text.c */
 OPTICAL_EXPORT extern struct region env_region; /* environment map region */
 

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file FoundedItem.cpp
+/** @file step/FoundedItem.cpp
  *
  * Routines to convert STEP "FoundedItem" to BRL-CAD BREP
  * structures.

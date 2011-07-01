@@ -402,3 +402,5 @@ include $(top_srcdir)/misc/Makefile.defs
 FAST_OBJECTS = \
 	$(step_g_OBJECTS) \
 	$(bin_PROGRAMS)
+
+EXTRA_DIST = CMakeLists.txt

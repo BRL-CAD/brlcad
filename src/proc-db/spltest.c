@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file spltest.c
+/** @file proc-db/spltest.c
  * spltest.c
  *
  * Simple spline test.

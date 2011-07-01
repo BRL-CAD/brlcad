@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixborder.c
+/** @file util/pixborder.c
  *
  * Add a 1-pixel-wide border to regions of a specified color.
  *

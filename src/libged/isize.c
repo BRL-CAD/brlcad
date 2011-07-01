@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file isize.c
+/** @file libged/isize.c
  *
  * The isize command.
  *
@@ -41,16 +41,16 @@ ged_isize(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* get the isize (i.e. inverse view size) */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%g",
+	bu_vls_printf(gedp->ged_result_str, "%g",
 		      gedp->ged_gvp->gv_isize * gedp->ged_wdbp->dbip->dbi_base2local);
 	return GED_OK;
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
     return GED_ERROR;
 }
 

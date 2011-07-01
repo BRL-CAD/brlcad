@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file scale.c
+/** @file libged/scale.c
  *
  * The scale command.
  *
@@ -44,40 +44,41 @@ ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf1, fas
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 2 && argc != 4) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     if (argc == 2) {
-        if (sscanf(argv[1], "%lf", sf1) != 1) {
-            bu_vls_printf(&gedp->ged_result_str, "\nbad scale factor '%s'", argv[1]);
+	if (sscanf(argv[1], "%lf", sf1) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "\nbad scale factor '%s'", argv[1]);
 	    return GED_ERROR;
-        }
+	}
     } else {
-        if (sscanf(argv[1], "%lf", sf1) != 1) {
-            bu_vls_printf(&gedp->ged_result_str, "\nbad x scale factor '%s'", argv[1]);
+	if (sscanf(argv[1], "%lf", sf1) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "\nbad x scale factor '%s'", argv[1]);
 	    ret = GED_ERROR;
-        }
-        if (sscanf(argv[2], "%lf", sf2) != 1) {
-            bu_vls_printf(&gedp->ged_result_str, "\nbad y scale factor '%s'", argv[2]);
+	}
+	if (sscanf(argv[2], "%lf", sf2) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "\nbad y scale factor '%s'", argv[2]);
 	    ret = GED_ERROR;
-        }
-        if (sscanf(argv[3], "%lf", sf3) != 1) {
-            bu_vls_printf(&gedp->ged_result_str, "\nbad z scale factor '%s'", argv[3]);
+	}
+	if (sscanf(argv[3], "%lf", sf3) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "\nbad z scale factor '%s'", argv[3]);
 	    ret = GED_ERROR;
-        }
+	}
     }
     return ret;
 }
+
 
 int
 ged_scale(struct ged *gedp, int argc, const char *argv[])
@@ -91,7 +92,7 @@ ged_scale(struct ged *gedp, int argc, const char *argv[])
 	return ret;
 
     if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Can not scale xyz independently on a view.");
+	bu_vls_printf(gedp->ged_result_str, "Can not scale xyz independently on a view.");
 	return GED_ERROR;
     }
 
@@ -120,4 +121,3 @@ ged_scale(struct ged *gedp, int argc, const char *argv[])
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

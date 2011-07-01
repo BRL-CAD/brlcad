@@ -36,6 +36,7 @@
 
 class VCSet;
 
+
 class Parameter
 {
 public:
@@ -54,17 +55,17 @@ public:
 
     iterator erase(iterator location);
     iterator erase(iterator begin, iterator end);
-    
+
     /** Data access methods */
     std::string getName() const;
     int getType() const;
     Varlist::size_type getSize() { return Variables.size(); }
     bool isConst();
-    
+
     /** Data modification methods */
     void setType(int n) { type = n; }
     void setConst(bool t);
- 
+
     /** Display method */
     void display() const;
 
@@ -74,6 +75,10 @@ protected:
     std::string name;
     Varlist Variables;
 };
+
+
+extern Parameter::iterator makeIterator(Parameter::Varlist::iterator i);
+extern Parameter::const_iterator makeIterator(Parameter::Varlist::const_iterator i);
 
 
 class Vector : public Parameter

@@ -373,12 +373,7 @@ multi_words( char *words[], int	word_count )
 	/* Expects azimuth, elev, optional twist */
 	az = atof(words[1]);
 	el = atof(words[2]);
-#if 0
-	if ( word_count == 3 )
-	    twist = 0.0;
-	else
-	    twist = atof(words[3]);
-#endif
+
 	MAT_IDN( mat );
 	/* XXX does not take twist, for now XXX */
 	bn_mat_ae( mat, az, el );

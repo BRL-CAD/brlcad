@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file BezierSurface.cpp
+/** @file step/BezierSurface.cpp
  *
  * Routines to convert STEP "BezierSurface" to BRL-CAD BREP
  * structures.

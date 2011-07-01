@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rotate_about.c
+/** @file libged/rotate_about.c
  *
  * The rotate_about command.
  *
@@ -43,11 +43,11 @@ ged_rotate_about(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* get "rotate about" point */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%c", gedp->ged_gvp->gv_rotate_about);
+	bu_vls_printf(gedp->ged_result_str, "%c", gedp->ged_gvp->gv_rotate_about);
 	return GED_OK;
     }
 
@@ -63,7 +63,7 @@ ged_rotate_about(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
 

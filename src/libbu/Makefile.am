@@ -2,7 +2,7 @@
 lib_LTLIBRARIES = libbu.la
 noinst_LTLIBRARIES = libbu_nil.la
 
-noinst_PROGRAMS = htester timetester
+noinst_PROGRAMS = htester timetester basenametester prognametester
 
 libbu_nil_la_SOURCES = \
 	argv.c \
@@ -22,11 +22,13 @@ libbu_nil_la_SOURCES = \
 	crashreport.c \
 	dirent.c \
 	dirname.c \
+	dlfcn.c \
 	endian.c \
 	fchmod.c \
 	fgets.c \
 	fnmatch.c \
 	fopen_uniq.c \
+	getcwd.c \
 	getopt.c \
 	globals.c \
 	hash.c \
@@ -51,6 +53,7 @@ libbu_nil_la_SOURCES = \
 	parse.c \
 	printb.c \
 	process.c \
+	progname.c \
 	ptbl.c \
 	quote.c \
 	rb_create.c \
@@ -92,6 +95,16 @@ htester_LDADD = \
 
 timetester_SOURCES = timetester.c
 timetester_LDADD = \
+	libbu.la \
+	${BU_LIBS}
+
+basenametester_SOURCES = basenametester.c
+basenametester_LDADD = \
+	libbu.la \
+	${BU_LIBS}
+
+prognametester_SOURCES = prognametester.c
+prognametester_LDADD = \
 	libbu.la \
 	${BU_LIBS}
 

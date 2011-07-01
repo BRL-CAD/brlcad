@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file SurfacePatch.cpp
+/** @file step/SurfacePatch.cpp
  *
  * Routines to convert STEP "SurfacePatch" to BRL-CAD BREP
  * structures.

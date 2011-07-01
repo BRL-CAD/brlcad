@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pix2g.c
+/** @file proc-db/pix2g.c
  *
  * Generates geometry from a pixmap file.
  *

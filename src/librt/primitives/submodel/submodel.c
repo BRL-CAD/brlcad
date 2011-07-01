@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file submodel.c
+/** @file primitives/submodel/submodel.c
  *
  * Intersect a ray with an entire subspace full of geometry, possibly
  * included from another .g file, with a subordinate instance of

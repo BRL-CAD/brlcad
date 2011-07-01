@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dm-rtgl.c
+/** @file libdm/dm-rtgl.c
  *
  * A Ray Tracing X11 OpenGL Display Manager.
  *
@@ -128,8 +128,8 @@ struct dm dm_rtgl = {
     1,
     0,
     0,
-    0,/* bytes per pixel */
-    0,/* bits per channel */
+    0, /* bytes per pixel */
+    0, /* bits per channel */
     0,
     0,
     1.0, /* aspect ratio */
@@ -1044,16 +1044,6 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-#if 0
-    /* Initial Material Properties */
-    {
-	GLfloat mat_specular[] = {.8, .8, .8, .8};
-	GLfloat mat_shininess[] = { 5.0 };
-	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
-	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
-    }
-#endif
-
     /* set light position now, so that it moves with the view */
     {
 	GLfloat light_position[] = { 1.0, 1.0, 1.0, 0.0 };
@@ -1281,10 +1271,6 @@ randShots(fastf_t *center, fastf_t radius, int flag)
 	    VADD2(pt, pt, center);
 
 	    /* jitter point */
-#if 0
-	    VSET(jit, jitter(halfRad), jitter(halfRad), jitter(halfRad));
-	    VADD2(pt, pt, jit);
-#endif
 	    VMOVE(app.a_ray.r_dir, pt);
 
 
@@ -1441,6 +1427,7 @@ shootGrid(struct jobList *jobs, vect_t min, vect_t max, double maxSpan, int pixe
     uDivs = pixels * (span[uAxis] / maxSpan);
     vDivs = pixels * (span[vAxis] / maxSpan);
 
+    /* provides an easy means to toggle quality during development */
 #if 0
     uDivs /= 2;
     vDivs /= 2;
@@ -1565,12 +1552,6 @@ drawPoints(float *view, int pointSize)
     /* drawing shaded points */
     glEnable(GL_LIGHTING);
     glPointSize(pointSize);
-
-#if 0
-    /* using vertex arrays */
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glEnableClientState(GL_VERTEX_ARRAY);
-#endif
 
     /* for all table entries */
     do {
@@ -1978,7 +1959,7 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
  *
  */
 HIDDEN int
-rtgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data)
+rtgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {
@@ -2460,10 +2441,6 @@ rtgl_configureWin_guts(struct dm *dmp, int force)
     }
 
     glViewport(0, 0, dmp->dm_width, dmp->dm_height);
-#if 0
-    glScissor(0,  0, (dmp->dm_width)+1,
-	      (dmp->dm_height)+1);
-#endif
 
     if (dmp->dm_zbuffer)
 	rtgl_setZBuffer(dmp, dmp->dm_zbuffer);

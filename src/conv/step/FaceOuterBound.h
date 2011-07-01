@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file FaceOuterBound.h
+/** @file step/FaceOuterBound.h
  *
  * Class definition used to convert STEP "FaceOuterBound" to BRL-CAD BREP
  * structures.

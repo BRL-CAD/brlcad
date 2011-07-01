@@ -19,7 +19,7 @@
  */
 /** @addtogroup db4 */
 /** @{ */
-/** @file db_io.c
+/** @file librt/db_io.c
  *
  * v4 database read/write I/O routines
  *
@@ -59,7 +59,7 @@ db_read(const struct db_i *dbip, genptr_t addr, size_t count, off_t offset)
 
     RT_CK_DBI(dbip);
     if (RT_G_DEBUG&DEBUG_DB) {
-	bu_log("db_read(dbip=x%x, addr=x%x, count=%d., offset=x%x)\n",
+	bu_log("db_read(dbip=x%x, addr=x%x, count=%zu., offset=x%x)\n",
 	       dbip, addr, count, offset);
     }
     if (count == 0) {
@@ -67,7 +67,7 @@ db_read(const struct db_i *dbip, genptr_t addr, size_t count, off_t offset)
     }
     if (offset+count > (size_t)dbip->dbi_eof) {
 	/* Attempt to read off the end of the file */
-	bu_log("db_read(%s) ERROR offset=%d, count=%d, dbi_eof=%d\n",
+	bu_log("db_read(%s) ERROR offset=%d, count=%zu, dbi_eof=%d\n",
 	       dbip->dbi_filename,
 	       offset, count, dbip->dbi_eof);
 	return -1;
@@ -87,7 +87,7 @@ db_read(const struct db_i *dbip, genptr_t addr, size_t count, off_t offset)
 
     if (got != count) {
 	perror(dbip->dbi_filename);
-	bu_log("db_read(%s):  read error.  Wanted %d, got %d bytes\n", dbip->dbi_filename, count, got);
+	bu_log("db_read(%s):  read error.  Wanted %zu, got %zu bytes\n", dbip->dbi_filename, count, got);
 	return -1;
     }
     return 0;			/* OK */
@@ -161,7 +161,7 @@ db_get(const struct db_i *dbip, const struct directory *dp, union record *where,
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_get(%s) x%x, x%x x%x off=%d len=%d\n",
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_get(%s) x%x, x%x x%x off=%d len=%zu\n",
 				    dp->d_namep, dbip, dp, where, offset, len);
 
     if (dp->d_addr == RT_DIR_PHONY_ADDR) {
@@ -169,7 +169,7 @@ db_get(const struct db_i *dbip, const struct directory *dp, union record *where,
 	return -1;
     }
     if (offset < 0 || len+(size_t)offset > dp->d_len) {
-	bu_log("db_get(%s):  xfer %d..%x exceeds 0..%d\n",
+	bu_log("db_get(%s):  xfer %d..%x exceeds 0..%zu\n",
 	       dp->d_namep, offset, offset+len, dp->d_len);
 	where->u_id = '\0';	/* undefined id */
 	return -1;
@@ -211,7 +211,7 @@ db_write(struct db_i *dbip, const genptr_t addr, size_t count, off_t offset)
 
     RT_CK_DBI(dbip);
     if (RT_G_DEBUG&DEBUG_DB) {
-	bu_log("db_write(dbip=x%x, addr=x%x, count=%d., offset=x%x)\n",
+	bu_log("db_write(dbip=x%x, addr=x%x, count=%zu., offset=x%x)\n",
 	       dbip, addr, count, offset);
     }
     if (dbip->dbi_read_only) {
@@ -237,7 +237,7 @@ db_write(struct db_i *dbip, const genptr_t addr, size_t count, off_t offset)
     bu_semaphore_release(BU_SEM_SYSCALL);
     if (got != count) {
 	perror("db_write");
-	bu_log("db_write(%s):  write error.  Wanted %d, got %d bytes.\nFile forced read-only.\n",
+	bu_log("db_write(%s):  write error.  Wanted %zu, got %zu bytes.\nFile forced read-only.\n",
 	       dbip->dbi_filename, count, got);
 	dbip->dbi_read_only = 1;
 	return -1;
@@ -266,7 +266,7 @@ db_put(struct db_i *dbip, const struct directory *dp, union record *where, off_t
 				    dp->d_namep, dbip, dp, where, offset, len);
 
     if ((len+(size_t)offset) > dp->d_len) {
-	bu_log("db_put(%s):  xfer %d..%x exceeds 0..%d\n",
+	bu_log("db_put(%s):  xfer %d..%x exceeds 0..%zu\n",
 	       dp->d_namep, offset, offset+len, dp->d_len);
 	return -1;
     }
@@ -319,7 +319,7 @@ db_get_external(register struct bu_external *ep, const struct directory *dp, con
     if ((dp->d_flags & RT_DIR_INMEM) == 0 && dp->d_addr == RT_DIR_PHONY_ADDR)
 	return -1;		/* was dummy DB entry */
 
-    BU_INIT_EXTERNAL(ep);
+    BU_EXTERNAL_INIT(ep);
     if (dbip->dbi_version < 5)
 	ep->ext_nbytes = dp->d_len * sizeof(union record);
     else
@@ -396,7 +396,7 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 	}
 	/* Sanity check */
 	if (ngran != dp->d_len) {
-	    bu_log("db_put_external(%s) ngran=%d != dp->d_len %d\n",
+	    bu_log("db_put_external(%s) ngran=%zu != dp->d_len %zu\n",
 		   dp->d_namep, ngran, dp->d_len);
 	    bu_bomb("db_io.c: db_put_external()");
 	}

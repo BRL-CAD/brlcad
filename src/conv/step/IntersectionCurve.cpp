@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file IntersectionCurve.cpp
+/** @file step/IntersectionCurve.cpp
  *
  * Routines to convert STEP "IntersectionCurve" to BRL-CAD BREP
  * structures.

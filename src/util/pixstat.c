@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixstat.c
+/** @file util/pixstat.c
  *
  * Compute statistics of pixels in a PIX file.
  * Gives min, max, mode, median, mean, s.d., var, and skew

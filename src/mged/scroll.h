@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file scroll.h
+/** @file mged/scroll.h
  *
  * Data structures for "scroll-bar" support
  *

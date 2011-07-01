@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file hf.c
+/** @file primitives/hf/hf.c
  *
  * Intersect a ray with a height field, where the heights are imported
  * from an external data file, and where some (or all) of the
@@ -1955,7 +1955,7 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	goto err1;
     }
     if (xip->w < 2 || xip->n < 2) {
-	bu_log("rt_hf_import4() w=%d, n=%d too small\n", xip->w, xip->n);
+	bu_log("rt_hf_import4() w=%zu, n=%zu too small\n", xip->w, xip->n);
 	goto err1;
     }
     if (xip->xlen <= 0 || xip->ylen <= 0) {

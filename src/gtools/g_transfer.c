@@ -202,7 +202,7 @@ server_geom(struct pkg_conn *UNUSED(connection), char *buf)
     /* initialize an external structure since the data seems valid and add/export
      * it to the directory.
      */
-    BU_INIT_EXTERNAL(&ext);
+    BU_EXTERNAL_INIT(&ext);
     ext.ext_buf = (uint8_t *)buf;
     ext.ext_nbytes = raw.object_length;
     flags = db_flags_raw_internal(&raw) | RT_DIR_INMEM;

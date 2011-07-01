@@ -51,225 +51,183 @@ extern "C" {
  *  The calling sequence is the same as the original Bell Labs routines,
  *  with the exception of the pl_ prefix on the name.
  */
-BN_EXPORT BU_EXTERN(int pl_getOutputMode,
-		    ());
-BN_EXPORT BU_EXTERN(void pl_setOutputMode,
-		    (int mode));
-BN_EXPORT BU_EXTERN(void pl_point,
-		    (FILE *plotfp,
+BN_EXPORT extern int pl_getOutputMode();
+BN_EXPORT extern void pl_setOutputMode(int mode);
+BN_EXPORT extern void pl_point(FILE *plotfp,
 		     int x,
-		     int y));
-BN_EXPORT BU_EXTERN(void pl_line,
-		    (FILE *plotfp,
+		     int y);
+BN_EXPORT extern void pl_line(FILE *plotfp,
 		     int fx,
 		     int fy,
 		     int tx,
-		     int ty));
-BN_EXPORT BU_EXTERN(void pl_linmod,
-		    (FILE *plotfp,
-		     char *s));
-BN_EXPORT BU_EXTERN(void pl_move,
-		    (FILE *plotfp,
+		     int ty);
+BN_EXPORT extern void pl_linmod(FILE *plotfp,
+		     char *s);
+BN_EXPORT extern void pl_move(FILE *plotfp,
 		     int x,
-		     int y));
-BN_EXPORT BU_EXTERN(void pl_cont,
-		    (FILE *plotfp,
+		     int y);
+BN_EXPORT extern void pl_cont(FILE *plotfp,
 		     int x,
-		     int y));
-BN_EXPORT BU_EXTERN(void pl_label,
-		    (FILE *plotfp,
-		     char *s));
-BN_EXPORT BU_EXTERN(void pl_space,
-		    (FILE *plotfp,
+		     int y);
+BN_EXPORT extern void pl_label(FILE *plotfp,
+		     char *s);
+BN_EXPORT extern void pl_space(FILE *plotfp,
 		     int x_1,
 		     int y_1,
 		     int x_2,
-		     int y_2));
-BN_EXPORT BU_EXTERN(void pl_erase,
-		    (FILE *plotfp));
-BN_EXPORT BU_EXTERN(void pl_circle,
-		    (FILE *plotfp,
+		     int y_2);
+BN_EXPORT extern void pl_erase(FILE *plotfp);
+BN_EXPORT extern void pl_circle(FILE *plotfp,
 		     int x,
 		     int y,
-		     int r));
-BN_EXPORT BU_EXTERN(void pl_arc,
-		    (FILE *plotfp,
+		     int r);
+BN_EXPORT extern void pl_arc(FILE *plotfp,
 		     int xc,
 		     int yc,
 		     int x_1,
 		     int y_1,
 		     int x_2,
-		     int y_2));
-BN_EXPORT BU_EXTERN(void pl_box,
-		    (FILE *plotfp,
+		     int y_2);
+BN_EXPORT extern void pl_box(FILE *plotfp,
 		     int x_1,
 		     int y_1,
 		     int x_2,
-		     int y_2));
+		     int y_2);
 
 /*
  * BRL extensions to the UNIX-plot file format.
  */
-BN_EXPORT BU_EXTERN(void pl_color,
-		    (FILE *plotfp,
+BN_EXPORT extern void pl_color(FILE *plotfp,
 		     int r,
 		     int g,
-		     int b));
-BN_EXPORT BU_EXTERN(void pl_flush,
-		    (FILE *plotfp));
-BN_EXPORT BU_EXTERN(void pl_3space,
-		    (FILE *plotfp,
+		     int b);
+BN_EXPORT extern void pl_flush(FILE *plotfp);
+BN_EXPORT extern void pl_3space(FILE *plotfp,
 		     int x_1,
 		     int y_1,
 		     int z_1,
 		     int x_2,
 		     int y_2,
-		     int z_2));
-BN_EXPORT BU_EXTERN(void pl_3point,
-		    (FILE *plotfp,
+		     int z_2);
+BN_EXPORT extern void pl_3point(FILE *plotfp,
 		     int x,
 		     int y,
-		     int z));
-BN_EXPORT BU_EXTERN(void pl_3move,
-		    (FILE *plotfp,
+		     int z);
+BN_EXPORT extern void pl_3move(FILE *plotfp,
 		     int x,
 		     int y,
-		     int z));
-BN_EXPORT BU_EXTERN(void pl_3cont,
-		    (FILE *plotfp,
+		     int z);
+BN_EXPORT extern void pl_3cont(FILE *plotfp,
 		     int x,
 		     int y,
-		     int z));
-BN_EXPORT BU_EXTERN(void pl_3line,
-		    (FILE *plotfp,
+		     int z);
+BN_EXPORT extern void pl_3line(FILE *plotfp,
 		     int x_1,
 		     int y_1,
 		     int z_1,
 		     int x_2,
 		     int y_2,
-		     int z_2));
-BN_EXPORT BU_EXTERN(void pl_3box,
-		    (FILE *plotfp,
+		     int z_2);
+BN_EXPORT extern void pl_3box(FILE *plotfp,
 		     int x_1,
 		     int y_1,
 		     int z_1,
 		     int x_2,
 		     int y_2,
-		     int z_2));
+		     int z_2);
 
 /* Double floating point versions */
-BN_EXPORT BU_EXTERN(void pd_point,
-		    (FILE *plotfp,
+BN_EXPORT extern void pd_point(FILE *plotfp,
 		     double x,
-		     double y));
-BN_EXPORT BU_EXTERN(void pd_line,
-		    (FILE *plotfp,
+		     double y);
+BN_EXPORT extern void pd_line(FILE *plotfp,
 		     double fx,
 		     double fy,
 		     double tx,
-		     double ty));
-BN_EXPORT BU_EXTERN(void pd_move,
-		    (FILE *plotfp,
+		     double ty);
+BN_EXPORT extern void pd_move(FILE *plotfp,
 		     double x,
-		     double y));
-BN_EXPORT BU_EXTERN(void pd_cont,
-		    (FILE *plotfp,
+		     double y);
+BN_EXPORT extern void pd_cont(FILE *plotfp,
 		     double x,
-		     double y));
-BN_EXPORT BU_EXTERN(void pd_space,
-		    (FILE *plotfp,
+		     double y);
+BN_EXPORT extern void pd_space(FILE *plotfp,
 		     double x_1,
 		     double y_1,
 		     double x_2,
-		     double y_2));
-BN_EXPORT BU_EXTERN(void pd_circle,
-		    (FILE *plotfp,
+		     double y_2);
+BN_EXPORT extern void pd_circle(FILE *plotfp,
 		     double x,
 		     double y,
-		     double r));
-BN_EXPORT BU_EXTERN(void pd_arc,
-		    (FILE *plotfp,
+		     double r);
+BN_EXPORT extern void pd_arc(FILE *plotfp,
 		     double xc,
 		     double yc,
 		     double x_1,
 		     double y_1,
 		     double x_2,
-		     double y_2));
-BN_EXPORT BU_EXTERN(void pd_box,
-		    (FILE *plotfp,
+		     double y_2);
+BN_EXPORT extern void pd_box(FILE *plotfp,
 		     double x_1,
 		     double y_1,
 		     double x_2,
-		     double y_2));
+		     double y_2);
 
 /* Double 3-D both in vector and enumerated versions */
 #ifdef __VMATH_H__
-BN_EXPORT BU_EXTERN(void pdv_3space,
-		    (FILE *plotfp,
+BN_EXPORT extern void pdv_3space(FILE *plotfp,
 		     const vect_t min,
-		     const vect_t max));
-BN_EXPORT BU_EXTERN(void pdv_3point,
-		    (FILE *plotfp,
-		     const vect_t pt));
-BN_EXPORT BU_EXTERN(void pdv_3move,
-		    (FILE *plotfp,
-		     const vect_t pt));
-BN_EXPORT BU_EXTERN(void pdv_3cont,
-		    (FILE *plotfp,
-		     const vect_t pt));
-BN_EXPORT BU_EXTERN(void pdv_3line,
-		    (FILE *plotfp,
+		     const vect_t max);
+BN_EXPORT extern void pdv_3point(FILE *plotfp,
+		     const vect_t pt);
+BN_EXPORT extern void pdv_3move(FILE *plotfp,
+		     const vect_t pt);
+BN_EXPORT extern void pdv_3cont(FILE *plotfp,
+		     const vect_t pt);
+BN_EXPORT extern void pdv_3line(FILE *plotfp,
 		     const vect_t a,
-		     const vect_t b));
-BN_EXPORT BU_EXTERN(void pdv_3box,
-		    (FILE *plotfp,
+		     const vect_t b);
+BN_EXPORT extern void pdv_3box(FILE *plotfp,
 		     const vect_t a,
-		     const vect_t b));
+		     const vect_t b);
 #endif /* __VMATH_H__ */
-BN_EXPORT BU_EXTERN(void pd_3space,
-		    (FILE *plotfp,
+BN_EXPORT extern void pd_3space(FILE *plotfp,
 		     double x_1,
 		     double y_1,
 		     double z_1,
 		     double x_2,
 		     double y_2,
-		     double z_2));
-BN_EXPORT BU_EXTERN(void pd_3point,
-		    (FILE *plotfp,
+		     double z_2);
+BN_EXPORT extern void pd_3point(FILE *plotfp,
 		     double x,
 		     double y,
-		     double z));
-BN_EXPORT BU_EXTERN(void pd_3move,
-		    (FILE *plotfp,
+		     double z);
+BN_EXPORT extern void pd_3move(FILE *plotfp,
 		     double x,
 		     double y,
-		     double z));
-BN_EXPORT BU_EXTERN(void pd_3cont,
-		    (FILE *plotfp,
+		     double z);
+BN_EXPORT extern void pd_3cont(FILE *plotfp,
 		     double x,
 		     double y,
-		     double z));
-BN_EXPORT BU_EXTERN(void pd_3line,
-		    (FILE *plotfp,
+		     double z);
+BN_EXPORT extern void pd_3line(FILE *plotfp,
 		     double x_1,
 		     double y_1,
 		     double z_1,
 		     double x_2,
 		     double y_2,
-		     double z_2));
-BN_EXPORT BU_EXTERN(void pd_3box,
-		    (FILE *plotfp,
+		     double z_2);
+BN_EXPORT extern void pd_3box(FILE *plotfp,
 		     double x_1,
 		     double y_1,
 		     double z_1,
 		     double x_2,
 		     double y_2,
-		     double z_2));
-BN_EXPORT BU_EXTERN(void pdv_3ray,
-		    (FILE *fp,
+		     double z_2);
+BN_EXPORT extern void pdv_3ray(FILE *fp,
 		     const point_t pt,
 		     const vect_t dir,
-		     double t));
+		     double t);
 
 /*
  *  The following routines are taken from the BRL TIG-PACK
@@ -280,126 +238,108 @@ BN_EXPORT BU_EXTERN(void pdv_3ray,
 
 #define PL_FORTRAN(lc, uc)	BU_FORTRAN(lc, uc)
 
-BN_EXPORT BU_EXTERN(void tp_i2list,
-		    (FILE *fp,
+BN_EXPORT extern void tp_i2list(FILE *fp,
 		     int *x,
 		     int *y,
-		     int npoints));
-BN_EXPORT BU_EXTERN(void tp_2list,
-		    (FILE *fp,
+		     int npoints);
+BN_EXPORT extern void tp_2list(FILE *fp,
 		     double *x,
 		     double *y,
-		     int npoints));
-BN_EXPORT BU_EXTERN(void BU_FORTRAN(f2list, F2LIST),
-		    (FILE **fpp,
+		     int npoints);
+BN_EXPORT extern void BU_FORTRAN(f2list, F2LIST)(FILE **fpp,
 		     float *x,
 		     float *y,
-		     int *n));
-BN_EXPORT BU_EXTERN(void tp_3list,
-		    (FILE *fp,
+		     int *n);
+BN_EXPORT extern void tp_3list(FILE *fp,
 		     double *x,
 		     double *y,
 		     double *z,
-		     int npoints));
-BN_EXPORT BU_EXTERN(void BU_FORTRAN(f3list, F3LIST),
-		    (FILE **fpp,
+		     int npoints);
+BN_EXPORT extern void BU_FORTRAN(f3list, F3LIST)(FILE **fpp,
 		     float *x,
 		     float *y,
 		     float *z,
-		     int *n));
-BN_EXPORT BU_EXTERN(void tp_2mlist,
-		    (FILE *fp,
+		     int *n);
+BN_EXPORT extern void tp_2mlist(FILE *fp,
 		     double *x,
 		     double *y,
 		     int npoints,
 		     int flag,
 		     int mark,
 		     int interval,
-		     double size));
-BN_EXPORT BU_EXTERN(void BU_FORTRAN(f2mlst, F2MLST),
-		    (FILE **fp,
+		     double size);
+BN_EXPORT extern void BU_FORTRAN(f2mlst, F2MLST)(FILE **fp,
 		     float *x,
 		     float *y,
 		     int *np,
 		     int *flag,
 		     int *mark,
 		     int *interval,
-		     float *size));
-BN_EXPORT BU_EXTERN(void tp_2marker,
-		    (FILE *fp,
+		     float *size);
+BN_EXPORT extern void tp_2marker(FILE *fp,
 		     int c,
 		     double x,
 		     double y,
-		     double scale));
-BN_EXPORT BU_EXTERN(void BU_FORTRAN(f2mark, F2MARK),
-		    (FILE **fp,
+		     double scale);
+BN_EXPORT extern void BU_FORTRAN(f2mark, F2MARK)(FILE **fp,
 		     int *c,
 		     float *x,
 		     float *y,
-		     float *scale));
-BN_EXPORT BU_EXTERN(void tp_3marker,
-		    (FILE *fp,
+		     float *scale);
+BN_EXPORT extern void tp_3marker(FILE *fp,
 		     int c,
 		     double x,
 		     double y,
 		     double z,
-		     double scale));
-BN_EXPORT BU_EXTERN(void BU_FORTRAN(f3mark, F3MARK),
-		    (FILE **fp,
+		     double scale);
+BN_EXPORT extern void BU_FORTRAN(f3mark, F3MARK)(FILE **fp,
 		     int *c,
 		     float *x,
 		     float *y,
 		     float *z,
-		     float *scale));
-BN_EXPORT BU_EXTERN(void tp_2number,
-		    (FILE *fp,
+		     float *scale);
+BN_EXPORT extern void tp_2number(FILE *fp,
 		     double input,
 		     int x,
 		     int y,
 		     int cscale,
 		     double theta,
-		     int digits));
-BN_EXPORT BU_EXTERN(void BU_FORTRAN(f2numb, F2NUMB),
-		    (FILE **fp,
+		     int digits);
+BN_EXPORT extern void BU_FORTRAN(f2numb, F2NUMB)(FILE **fp,
 		     float *input,
 		     int *x,
 		     int *y,
 		     float *cscale,
 		     float *theta,
-		     int *digits));
-BN_EXPORT BU_EXTERN(void tp_scale,
-		    (int idata[],
+		     int *digits);
+BN_EXPORT extern void tp_scale(int idata[],
 		     int elements,
 		     int mode,
 		     int length,
 		     int odata[],
 		     double *min,
-		     double *dx));
+		     double *dx);
 
-BN_EXPORT BU_EXTERN(void BU_FORTRAN(fscale, FSCALE),
-		    (int idata[],
+BN_EXPORT extern void BU_FORTRAN(fscale, FSCALE)(int idata[],
 		     int *elements,
 		     char *mode,
 		     int *length,
 		     int odata[],
 		     double *min,
-		     double *dx));
-BN_EXPORT BU_EXTERN(void tp_2symbol,
-		    (FILE *fp,
+		     double *dx);
+BN_EXPORT extern void tp_2symbol(FILE *fp,
 		     char *string,
 		     double x,
 		     double y,
 		     double scale,
-		     double theta));
-BN_EXPORT BU_EXTERN(void BU_FORTRAN(f2symb, F2SYMB),
-		    (FILE **fp,
+		     double theta);
+BN_EXPORT extern void BU_FORTRAN(f2symb, F2SYMB)(FILE **fp,
 		     char *string,
 		     float *x,
 		     float *y,
 		     float *scale,
-		     float *theta));
-BN_EXPORT BU_EXTERN(void tp_plot,
-		    (FILE *fp,
+		     float *theta);
+BN_EXPORT extern void tp_plot(FILE *fp,
 		     int xp,
 		     int yp,
 		     int xl,
@@ -409,9 +349,8 @@ BN_EXPORT BU_EXTERN(void tp_plot,
 		     float x[],
 		     float y[],
 		     int n,
-		     double cscale));
-BN_EXPORT BU_EXTERN(void BU_FORTRAN(fplot, FPLOT),
-		    (FILE **fp,
+		     double cscale);
+BN_EXPORT extern void BU_FORTRAN(fplot, FPLOT)(FILE **fp,
 		     int *xp,
 		     int *yp,
 		     int *xl,
@@ -421,27 +360,22 @@ BN_EXPORT BU_EXTERN(void BU_FORTRAN(fplot, FPLOT),
 		     float *x,
 		     float *y,
 		     int *n,
-		     float *cscale));
-BN_EXPORT BU_EXTERN(void tp_ftoa,
-		    (float x, char *s));
-BN_EXPORT BU_EXTERN(void tp_fixsc,
-		    (float *x,
+		     float *cscale);
+BN_EXPORT extern void tp_ftoa(float x, char *s);
+BN_EXPORT extern void tp_fixsc(float *x,
 		     int npts,
 		     float size,
 		     float *xs,
 		     float *xmin,
 		     float *xmax,
-		     float *dx));
-BN_EXPORT BU_EXTERN(void tp_sep,
-		    (float x,
+		     float *dx);
+BN_EXPORT extern void tp_sep(float x,
 		     float *coef,
-		     int *ex));
-BN_EXPORT BU_EXTERN(double tp_ipow,
-		    (double x,
-		     int n));
+		     int *ex);
+BN_EXPORT extern double tp_ipow(double x,
+		     int n);
 #ifdef __VMATH_H__
-BN_EXPORT BU_EXTERN(void tp_3axis,
-		    (FILE *fp,
+BN_EXPORT extern void tp_3axis(FILE *fp,
 		     char *string,
 		     point_t origin,
 		     mat_t rot,
@@ -451,9 +385,8 @@ BN_EXPORT BU_EXTERN(void tp_3axis,
 		     double label_start,
 		     double label_incr,
 		     double tick_separation,
-		     double char_width));
-BN_EXPORT BU_EXTERN(void BU_FORTRAN(f3axis, F3AXIS),
-		    (FILE **fp,
+		     double char_width);
+BN_EXPORT extern void BU_FORTRAN(f3axis, F3AXIS)(FILE **fp,
 		     char *string,
 		     float *x,
 		     float *y,
@@ -465,21 +398,18 @@ BN_EXPORT BU_EXTERN(void BU_FORTRAN(f3axis, F3AXIS),
 		     float *label_start,
 		     float *label_incr,
 		     float *tick_separation,
-		     float *char_width));
-BN_EXPORT BU_EXTERN(void tp_3symbol,
-		    (FILE *fp,
+		     float *char_width);
+BN_EXPORT extern void tp_3symbol(FILE *fp,
 		     char *string,
 		     point_t origin,
 		     mat_t rot,
-		     double scale));
-BN_EXPORT BU_EXTERN(void tp_3vector,
-		    (FILE *plotfp,
+		     double scale);
+BN_EXPORT extern void tp_3vector(FILE *plotfp,
 		     point_t from,
 		     point_t to,
 		     double fromheadfract,
-		     double toheadfract));
-BN_EXPORT BU_EXTERN(void BU_FORTRAN(f3vect, F3VECT),
-		    (FILE **fp,
+		     double toheadfract);
+BN_EXPORT extern void BU_FORTRAN(f3vect, F3VECT)(FILE **fp,
 		     float *fx,
 		     float *fy,
 		     float *fz,
@@ -487,7 +417,7 @@ BN_EXPORT BU_EXTERN(void BU_FORTRAN(f3vect, F3VECT),
 		     float *ty,
 		     float *tz,
 		     float *fl,
-		     float *tl));
+		     float *tl);
 #endif /* __VMATH_H__ */
 
 #ifdef __cplusplus

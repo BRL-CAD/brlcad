@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file RectangularTrimmedSurface.cpp
+/** @file step/RectangularTrimmedSurface.cpp
  *
  * Routines to interface to STEP "RectangularTrimmedSurface".
  *
@@ -97,8 +97,8 @@ RectangularTrimmedSurface::Print(int level) {
 	TAB(level+1); std::cout << "v1:" << u1 << std::endl;
 	TAB(level+1); std::cout << "v2:" << u2 << std::endl;
 
-	TAB(level+1); std::cout << "usense:" << step->getBooleanString((SCLBOOL_H(Boolean))usense) << std::endl;
-	TAB(level+1); std::cout << "vsense:" << step->getBooleanString((SCLBOOL_H(Boolean))vsense) << std::endl;
+	TAB(level+1); std::cout << "usense:" << step->getBooleanString((Boolean)usense) << std::endl;
+	TAB(level+1); std::cout << "vsense:" << step->getBooleanString((Boolean)vsense) << std::endl;
 
 	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	BoundedSurface::Print(level+1);

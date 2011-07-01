@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file bot_shell-vtk.c
+/** @file conv/bot_shell-vtk.c
  *
  * This program uses raytracing to determine which triangles of the
  * specified objects are external, and includes them in an output VTK

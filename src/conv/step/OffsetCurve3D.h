@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file OffsetCurve3D.h
+/** @file step/OffsetCurve3D.h
  *
  * Class definition used to convert STEP "OffsetCurve3D" to BRL-CAD BREP
  * structures.
@@ -40,7 +40,7 @@ private:
 protected:
 	Curve *basis_curve;
 	double distance;
-	SCLLOG_H(Logical) self_intersect;
+	Logical self_intersect;
 	Direction *ref_direction;
 
 public:

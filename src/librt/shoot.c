@@ -19,7 +19,7 @@
  */
 /** @addtogroup ray */
 /** @{ */
-/** @file shoot.c
+/** @file librt/shoot.c
  *
  * Ray Tracing program shot coordinator.
  *
@@ -982,7 +982,7 @@ rt_shootray(register struct application *ap)
     BU_LIST_INIT(&finished_segs.l);
     ap->a_finished_segs_hdp = &finished_segs;
 
-    if (BU_LIST_UNINITIALIZED(&resp->re_parthead)) {
+    if (!BU_LIST_IS_INITIALIZED(&resp->re_parthead)) {
 	/* XXX This shouldn't happen any more */
 	bu_log("rt_shootray() resp=x%x uninitialized, fixing it\n", resp);
 	/*
@@ -1673,7 +1673,7 @@ rt_cell_n_on_ray(register struct application *ap, int n)
     if (rtip->needprep)
 	rt_prep_parallel(rtip, 1);	/* Stay on our CPU */
 
-    if (BU_LIST_UNINITIALIZED(&resp->re_parthead)) {
+    if (!BU_LIST_IS_INITIALIZED(&resp->re_parthead)) {
 	/* XXX This shouldn't happen any more */
 	bu_log("rt_cell_n_on_ray() resp=x%x uninitialized, fixing it\n", resp);
 	/*

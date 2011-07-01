@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file revolve.c
+/** @file iges/revolve.c
  *
  * SOLID OF REVOLUTION
  *

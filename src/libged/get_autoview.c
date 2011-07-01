@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file get_autoview.c
+/** @file libged/get_autoview.c
  *
  * The get_autoview command.
  *
@@ -31,7 +31,7 @@
  * Get the view size and center such that all displayed solids would be in view
  *
  * Usage:
- *        get_autoview
+ * get_autoview
  *
  */
 int
@@ -39,25 +39,25 @@ ged_get_autoview(struct ged *gedp, int argc, const char *argv[])
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
-    struct solid	*sp;
+    struct solid *sp;
     int is_empty = 1;
-    vect_t		min, max;
-    vect_t		minus, plus;
-    vect_t		center;
-    vect_t		radial;
+    vect_t min, max;
+    vect_t minus, plus;
+    vect_t center;
+    vect_t radial;
     int pflag = 0;
-    int	c;
+    int c;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
 	return GED_HELP;
     }
 
@@ -69,7 +69,7 @@ ged_get_autoview(struct ged *gedp, int argc, const char *argv[])
 		pflag = 1;
 		break;
 	    default: {
-		bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
 		return GED_ERROR;
 	    }
 	}
@@ -122,7 +122,7 @@ ged_get_autoview(struct ged *gedp, int argc, const char *argv[])
     VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_base2local);
     radial[X] *= gedp->ged_wdbp->dbip->dbi_base2local;
 
-    bu_vls_printf(&gedp->ged_result_str, "center {%g %g %g} size %g", V3ARGS(center), radial[X] * 2.0);
+    bu_vls_printf(gedp->ged_result_str, "center {%g %g %g} size %g", V3ARGS(center), radial[X] * 2.0);
 
     return GED_OK;
 }

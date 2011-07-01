@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixelswap.c
+/** @file util/pixelswap.c
  *
  * interchange pixel values in an image
  *

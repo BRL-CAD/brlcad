@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_log */
-/** @{ */
 
 #include "common.h"
 
@@ -259,7 +257,6 @@ bu_flog(FILE *fp, const char *fmt, ...)
     bu_vls_free(&output);
 }
 
-/** @} */
 
 /*
  * Local Variables:

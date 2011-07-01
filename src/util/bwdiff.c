@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bwdiff.c
+/** @file util/bwdiff.c
  *
  * Take the difference between two BW files.
  * Output is: (file1-file2)/2 + 127

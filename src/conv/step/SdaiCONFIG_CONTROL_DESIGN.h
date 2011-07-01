@@ -1080,8 +1080,8 @@ class SdaiCharacterized_product_definition  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsProduct_definition() const;
-	SCLLOG(Logical) IsProduct_definition_relationship() const;
+	Logical IsProduct_definition() const;
+	Logical IsProduct_definition_relationship() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -1192,8 +1192,8 @@ class SdaiShape_definition  :  public SCLP23(Select) {
 	const SdaiShape_aspect_ptr relating_shape_aspect_() const;
 	void relating_shape_aspect_ (const SdaiShape_aspect_ptr x);
 
-	const SCLLOG(Logical) product_definitional_() const;
-	void product_definitional_ (const SCLLOG(Logical) x);
+	const Logical product_definitional_() const;
+	void product_definitional_ (const Logical x);
 
 	const SdaiProduct_definition_shape_ptr of_shape_() const;
 	void of_shape_ (const SdaiProduct_definition_shape_ptr x);
@@ -1222,9 +1222,9 @@ class SdaiShape_definition  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsProduct_definition_shape() const;
-	SCLLOG(Logical) IsShape_aspect() const;
-	SCLLOG(Logical) IsShape_aspect_relationship() const;
+	Logical IsProduct_definition_shape() const;
+	Logical IsShape_aspect() const;
+	Logical IsShape_aspect_relationship() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -1340,8 +1340,8 @@ class SdaiCharacterized_definition  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsCharacterized_product_definition() const;
-	SCLLOG(Logical) IsShape_definition() const;
+	Logical IsCharacterized_product_definition() const;
+	Logical IsShape_definition() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -1460,7 +1460,7 @@ class SdaiChange_request_item  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsProduct_definition_formation() const;
+	Logical IsProduct_definition_formation() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -1580,8 +1580,8 @@ class SdaiReversible_topology_item  :  public SCLP23(Select) {
 	const EntityAggregate_ptr cfs_faces_() const;
 	void cfs_faces_ (const EntityAggregate_ptr x);
 
-	const SCLBOOL(Boolean) orientation_() const;
-	void orientation_ (const SCLBOOL(Boolean) x);
+	const Boolean orientation_() const;
+	void orientation_ (const Boolean x);
 
 	const SdaiLoop_ptr bound_() const;
 	void bound_ (const SdaiLoop_ptr x);
@@ -1619,12 +1619,12 @@ class SdaiReversible_topology_item  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsEdge() const;
-	SCLLOG(Logical) IsPath() const;
-	SCLLOG(Logical) IsFace() const;
-	SCLLOG(Logical) IsFace_bound() const;
-	SCLLOG(Logical) IsClosed_shell() const;
-	SCLLOG(Logical) IsOpen_shell() const;
+	Logical IsEdge() const;
+	Logical IsPath() const;
+	Logical IsFace() const;
+	Logical IsFace_bound() const;
+	Logical IsClosed_shell() const;
+	Logical IsOpen_shell() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -1751,8 +1751,8 @@ class SdaiAxis2_placement  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsAxis2_placement_2d() const;
-	SCLLOG(Logical) IsAxis2_placement_3d() const;
+	Logical IsAxis2_placement_2d() const;
+	Logical IsAxis2_placement_3d() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -1853,8 +1853,8 @@ class SdaiSpecified_item  :  public SCLP23(Select) {
 	operator SdaiShape_aspect_ptr();
 
 	//  part 3
-	const SCLLOG(Logical) product_definitional_() const;
-	void product_definitional_ (const SCLLOG(Logical) x);
+	const Logical product_definitional_() const;
+	void product_definitional_ (const Logical x);
 
 	const SdaiProduct_definition_shape_ptr of_shape_() const;
 	void of_shape_ (const SdaiProduct_definition_shape_ptr x);
@@ -1888,8 +1888,8 @@ class SdaiSpecified_item  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsProduct_definition() const;
-	SCLLOG(Logical) IsShape_aspect() const;
+	Logical IsProduct_definition() const;
+	Logical IsShape_aspect() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -2015,18 +2015,18 @@ class SdaiMeasure_value  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsLength_measure() const;
-	SCLLOG(Logical) IsMass_measure() const;
-	SCLLOG(Logical) IsPlane_angle_measure() const;
-	SCLLOG(Logical) IsSolid_angle_measure() const;
-	SCLLOG(Logical) IsArea_measure() const;
-	SCLLOG(Logical) IsVolume_measure() const;
-	SCLLOG(Logical) IsParameter_value() const;
-	SCLLOG(Logical) IsContext_dependent_measure() const;
-	SCLLOG(Logical) IsDescriptive_measure() const;
-	SCLLOG(Logical) IsPositive_length_measure() const;
-	SCLLOG(Logical) IsPositive_plane_angle_measure() const;
-	SCLLOG(Logical) IsCount_measure() const;
+	Logical IsLength_measure() const;
+	Logical IsMass_measure() const;
+	Logical IsPlane_angle_measure() const;
+	Logical IsSolid_angle_measure() const;
+	Logical IsArea_measure() const;
+	Logical IsVolume_measure() const;
+	Logical IsParameter_value() const;
+	Logical IsContext_dependent_measure() const;
+	Logical IsDescriptive_measure() const;
+	Logical IsPositive_length_measure() const;
+	Logical IsPositive_plane_angle_measure() const;
+	Logical IsCount_measure() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -2177,9 +2177,9 @@ class SdaiPerson_organization_select  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsPerson() const;
-	SCLLOG(Logical) IsOrganization() const;
-	SCLLOG(Logical) IsPerson_and_organization() const;
+	Logical IsPerson() const;
+	Logical IsOrganization() const;
+	Logical IsPerson_and_organization() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -2303,8 +2303,8 @@ class SdaiPcurve_or_surface  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsPcurve() const;
-	SCLLOG(Logical) IsSurface() const;
+	Logical IsPcurve() const;
+	Logical IsSurface() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -2440,8 +2440,8 @@ class SdaiClassified_item  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsProduct_definition_formation() const;
-	SCLLOG(Logical) IsAssembly_component_usage() const;
+	Logical IsProduct_definition_formation() const;
+	Logical IsAssembly_component_usage() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -2559,8 +2559,8 @@ class SdaiFounded_item_select  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsFounded_item() const;
-	SCLLOG(Logical) IsRepresentation_item() const;
+	Logical IsFounded_item() const;
+	Logical IsRepresentation_item() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -2687,8 +2687,8 @@ class SdaiVector_or_direction  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsVector() const;
-	SCLLOG(Logical) IsDirection() const;
+	Logical IsVector() const;
+	Logical IsDirection() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -2812,8 +2812,8 @@ class SdaiWireframe_model  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsShell_based_wireframe_model() const;
-	SCLLOG(Logical) IsEdge_based_wireframe_model() const;
+	Logical IsShell_based_wireframe_model() const;
+	Logical IsEdge_based_wireframe_model() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -2936,9 +2936,9 @@ class SdaiGeometric_set_select  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsPoint() const;
-	SCLLOG(Logical) IsCurve() const;
-	SCLLOG(Logical) IsSurface() const;
+	Logical IsPoint() const;
+	Logical IsCurve() const;
+	Logical IsSurface() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -3057,7 +3057,7 @@ class SdaiStart_request_item  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsProduct_definition_formation() const;
+	Logical IsProduct_definition_formation() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -3251,16 +3251,16 @@ class SdaiPerson_organization_item  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsChange() const;
-	SCLLOG(Logical) IsStart_work() const;
-	SCLLOG(Logical) IsChange_request() const;
-	SCLLOG(Logical) IsStart_request() const;
-	SCLLOG(Logical) IsConfiguration_item() const;
-	SCLLOG(Logical) IsProduct() const;
-	SCLLOG(Logical) IsProduct_definition_formation() const;
-	SCLLOG(Logical) IsProduct_definition() const;
-	SCLLOG(Logical) IsContract() const;
-	SCLLOG(Logical) IsSecurity_classification() const;
+	Logical IsChange() const;
+	Logical IsStart_work() const;
+	Logical IsChange_request() const;
+	Logical IsStart_request() const;
+	Logical IsConfiguration_item() const;
+	Logical IsProduct() const;
+	Logical IsProduct_definition_formation() const;
+	Logical IsProduct_definition() const;
+	Logical IsContract() const;
+	Logical IsSecurity_classification() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -3452,15 +3452,15 @@ class SdaiDate_time_item  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsProduct_definition() const;
-	SCLLOG(Logical) IsChange_request() const;
-	SCLLOG(Logical) IsStart_request() const;
-	SCLLOG(Logical) IsChange() const;
-	SCLLOG(Logical) IsStart_work() const;
-	SCLLOG(Logical) IsApproval_person_organization() const;
-	SCLLOG(Logical) IsContract() const;
-	SCLLOG(Logical) IsSecurity_classification() const;
-	SCLLOG(Logical) IsCertification() const;
+	Logical IsProduct_definition() const;
+	Logical IsChange_request() const;
+	Logical IsStart_request() const;
+	Logical IsChange() const;
+	Logical IsStart_work() const;
+	Logical IsApproval_person_organization() const;
+	Logical IsContract() const;
+	Logical IsSecurity_classification() const;
+	Logical IsCertification() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -3597,10 +3597,10 @@ class SdaiShell  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsVertex_shell() const;
-	SCLLOG(Logical) IsWire_shell() const;
-	SCLLOG(Logical) IsOpen_shell() const;
-	SCLLOG(Logical) IsClosed_shell() const;
+	Logical IsVertex_shell() const;
+	Logical IsWire_shell() const;
+	Logical IsOpen_shell() const;
+	Logical IsClosed_shell() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -3727,8 +3727,8 @@ class SdaiTransformation  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsItem_defined_transformation() const;
-	SCLLOG(Logical) IsFunctionally_defined_transformation() const;
+	Logical IsItem_defined_transformation() const;
+	Logical IsFunctionally_defined_transformation() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -3841,7 +3841,7 @@ class SdaiBoolean_operand  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsSolid_model() const;
+	Logical IsSolid_model() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -3966,7 +3966,7 @@ class SdaiCertified_item  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsSupplied_part_relationship() const;
+	Logical IsSupplied_part_relationship() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -4107,9 +4107,9 @@ class SdaiDate_time_select  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsDate() const;
-	SCLLOG(Logical) IsLocal_time() const;
-	SCLLOG(Logical) IsDate_and_time() const;
+	Logical IsDate() const;
+	Logical IsLocal_time() const;
+	Logical IsDate_and_time() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -4214,8 +4214,8 @@ class SdaiCurve_on_surface  :  public SCLP23(Select) {
 	operator SdaiComposite_curve_on_surface_ptr();
 
 	//  part 3
-	const SCLLOG(Logical) self_intersect_() const;
-	void self_intersect_ (const SCLLOG(Logical) x);
+	const Logical self_intersect_() const;
+	void self_intersect_ (const Logical x);
 
 	const EntityAggregate_ptr segments_() const;
 	void segments_ (const EntityAggregate_ptr x);
@@ -4253,9 +4253,9 @@ class SdaiCurve_on_surface  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsPcurve() const;
-	SCLLOG(Logical) IsSurface_curve() const;
-	SCLLOG(Logical) IsComposite_curve_on_surface() const;
+	Logical IsPcurve() const;
+	Logical IsSurface_curve() const;
+	Logical IsComposite_curve_on_surface() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -4377,8 +4377,8 @@ class SdaiTrimming_select  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsCartesian_point() const;
-	SCLLOG(Logical) IsParameter_value() const;
+	Logical IsCartesian_point() const;
+	Logical IsParameter_value() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -4497,7 +4497,7 @@ class SdaiContracted_item  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsProduct_definition_formation() const;
+	Logical IsProduct_definition_formation() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -4610,7 +4610,7 @@ class SdaiUnit  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsNamed_unit() const;
+	Logical IsNamed_unit() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -4727,9 +4727,9 @@ class SdaiReversible_topology  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsReversible_topology_item() const;
-	SCLLOG(Logical) IsList_of_reversible_topology_item() const;
-	SCLLOG(Logical) IsSet_of_reversible_topology_item() const;
+	Logical IsReversible_topology_item() const;
+	Logical IsList_of_reversible_topology_item() const;
+	Logical IsSet_of_reversible_topology_item() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -4849,7 +4849,7 @@ class SdaiWork_item  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsProduct_definition_formation() const;
+	Logical IsProduct_definition_formation() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -4993,9 +4993,9 @@ class SdaiSupported_item  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsAction_directive() const;
-	SCLLOG(Logical) IsAction() const;
-	SCLLOG(Logical) IsAction_method() const;
+	Logical IsAction_directive() const;
+	Logical IsAction() const;
+	Logical IsAction_method() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -5200,17 +5200,17 @@ class SdaiApproved_item  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsProduct_definition_formation() const;
-	SCLLOG(Logical) IsProduct_definition() const;
-	SCLLOG(Logical) IsConfiguration_effectivity() const;
-	SCLLOG(Logical) IsConfiguration_item() const;
-	SCLLOG(Logical) IsSecurity_classification() const;
-	SCLLOG(Logical) IsChange_request() const;
-	SCLLOG(Logical) IsChange() const;
-	SCLLOG(Logical) IsStart_request() const;
-	SCLLOG(Logical) IsStart_work() const;
-	SCLLOG(Logical) IsCertification() const;
-	SCLLOG(Logical) IsContract() const;
+	Logical IsProduct_definition_formation() const;
+	Logical IsProduct_definition() const;
+	Logical IsConfiguration_effectivity() const;
+	Logical IsConfiguration_item() const;
+	Logical IsSecurity_classification() const;
+	Logical IsChange_request() const;
+	Logical IsChange() const;
+	Logical IsStart_request() const;
+	Logical IsStart_work() const;
+	Logical IsCertification() const;
+	Logical IsContract() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -5326,7 +5326,7 @@ class SdaiSurface_model  :  public SCLP23(Select) {
 #endif
 
 	//  part 5
-	SCLLOG(Logical) IsShell_based_surface_model() const;
+	Logical IsShell_based_surface_model() const;
 
 	//  part 6 ... UnderlyingTypeName () implemented in SCLP23(Select) class ...
 
@@ -5605,16 +5605,6 @@ class SdaiCartesian_transformation_operator  :    public SdaiGeometric_represent
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
-
-#if 0
-	const SdaiLabel name_() const;
-	void name_ (const SdaiLabel x);
-
-	const SdaiText description_() const;
-	void description_ (const SdaiText x);
-
-
-#endif
 
 #ifdef __OSTORE__
 	static os_typespec* get_os_typespec();
@@ -6972,8 +6962,8 @@ class SdaiOffset_surface  :    public SdaiSurface  {
 	const SdaiLength_measure distance_() const;
 	void distance_ (const SdaiLength_measure x);
 
-	const SCLLOG(Logical) self_intersect_() const;
-	void self_intersect_ (const SCLLOG(Logical) x);
+	const Logical self_intersect_() const;
+	void self_intersect_ (const Logical x);
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
@@ -7719,14 +7709,14 @@ class SdaiB_spline_surface  :    public SdaiBounded_surface  {
 	const SdaiB_spline_surface_form_var surface_form_() const;
 	void surface_form_ (const SdaiB_spline_surface_form_var x);
 
-	const SCLLOG(Logical) u_closed_() const;
-	void u_closed_ (const SCLLOG(Logical) x);
+	const Logical u_closed_() const;
+	void u_closed_ (const Logical x);
 
-	const SCLLOG(Logical) v_closed_() const;
-	void v_closed_ (const SCLLOG(Logical) x);
+	const Logical v_closed_() const;
+	void v_closed_ (const Logical x);
 
-	const SCLLOG(Logical) self_intersect_() const;
-	void self_intersect_ (const SCLLOG(Logical) x);
+	const Logical self_intersect_() const;
+	void self_intersect_ (const Logical x);
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
@@ -8031,11 +8021,11 @@ class SdaiB_spline_curve  :    public SdaiBounded_curve  {
 	const SdaiB_spline_curve_form_var curve_form_() const;
 	void curve_form_ (const SdaiB_spline_curve_form_var x);
 
-	const SCLLOG(Logical) closed_curve_() const;
-	void closed_curve_ (const SCLLOG(Logical) x);
+	const Logical closed_curve_() const;
+	void closed_curve_ (const Logical x);
 
-	const SCLLOG(Logical) self_intersect_() const;
-	void self_intersect_ (const SCLLOG(Logical) x);
+	const Logical self_intersect_() const;
+	void self_intersect_ (const Logical x);
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
@@ -8273,8 +8263,8 @@ class SdaiFace_bound  :    public SdaiTopological_representation_item  {
 	const SdaiLoop_ptr bound_() const;
 	void bound_ (const SdaiLoop_ptr x);
 
-	const SCLBOOL(Boolean) orientation_() const;
-	void orientation_ (const SCLBOOL(Boolean) x);
+	const Boolean orientation_() const;
+	void orientation_ (const Boolean x);
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
@@ -8640,8 +8630,8 @@ class SdaiOriented_edge  :    public SdaiEdge  {
 	const SdaiEdge_ptr edge_element_() const;
 	void edge_element_ (const SdaiEdge_ptr x);
 
-	const SCLBOOL(Boolean) orientation_() const;
-	void orientation_ (const SCLBOOL(Boolean) x);
+	const Boolean orientation_() const;
+	void orientation_ (const Boolean x);
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
@@ -9313,8 +9303,8 @@ class SdaiOffset_curve_3d  :    public SdaiCurve  {
 	const SdaiLength_measure distance_() const;
 	void distance_ (const SdaiLength_measure x);
 
-	const SCLLOG(Logical) self_intersect_() const;
-	void self_intersect_ (const SCLLOG(Logical) x);
+	const Logical self_intersect_() const;
+	void self_intersect_ (const Logical x);
 
 	const SdaiDirection_ptr ref_direction_() const;
 	void ref_direction_ (const SdaiDirection_ptr x);
@@ -9447,8 +9437,8 @@ class SdaiComposite_curve  :    public SdaiBounded_curve  {
 	const EntityAggregate_ptr segments_() const;
 	void segments_ (const EntityAggregate_ptr x);
 
-	const SCLLOG(Logical) self_intersect_() const;
-	void self_intersect_ (const SCLLOG(Logical) x);
+	const Logical self_intersect_() const;
+	void self_intersect_ (const Logical x);
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
@@ -10932,8 +10922,8 @@ class SdaiOriented_open_shell  :    public SdaiOpen_shell  {
 	const SdaiOpen_shell_ptr open_shell_element_() const;
 	void open_shell_element_ (const SdaiOpen_shell_ptr x);
 
-	const SCLBOOL(Boolean) orientation_() const;
-	void orientation_ (const SCLBOOL(Boolean) x);
+	const Boolean orientation_() const;
+	void orientation_ (const Boolean x);
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
@@ -11433,8 +11423,8 @@ class SdaiComposite_curve_segment  :    public SdaiFounded_item  {
 	const SdaiTransition_code_var transition_() const;
 	void transition_ (const SdaiTransition_code_var x);
 
-	const SCLBOOL(Boolean) same_sense_() const;
-	void same_sense_ (const SCLBOOL(Boolean) x);
+	const Boolean same_sense_() const;
+	void same_sense_ (const Boolean x);
 
 	const SdaiCurve_ptr parent_curve_() const;
 	void parent_curve_ (const SdaiCurve_ptr x);
@@ -12545,13 +12535,6 @@ class SdaiEdge_loop  :    public SdaiLoop  {
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
 
-#if 0
-	const EntityAggregate_ptr edge_list_() const;
-	void edge_list_ (const EntityAggregate_ptr x);
-
-
-#endif
-
 #ifdef __OSTORE__
 	static os_typespec* get_os_typespec();
 	virtual void Access_hook_in(void *object,
@@ -13174,10 +13157,6 @@ class SdaiBounded_pcurve  :    public SdaiPcurve  {
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
 
-#if 0
-
-#endif
-
 #ifdef __OSTORE__
 	static os_typespec* get_os_typespec();
 	virtual void Access_hook_in(void *object,
@@ -13306,8 +13285,8 @@ class SdaiTrimmed_curve  :    public SdaiBounded_curve  {
 	const SdaiTrimming_selects_ptr trim_2_() const;
 	void trim_2_ (const SdaiTrimming_selects_ptr x);
 
-	const SCLBOOL(Boolean) sense_agreement_() const;
-	void sense_agreement_ (const SCLBOOL(Boolean) x);
+	const Boolean sense_agreement_() const;
+	void sense_agreement_ (const Boolean x);
 
 	const SdaiTrimming_preference_var master_representation_() const;
 	void master_representation_ (const SdaiTrimming_preference_var x);
@@ -13429,10 +13408,6 @@ class SdaiBounded_surface_curve  :    public SdaiSurface_curve  {
 	int opcode ()  { return 127 ; }
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
-
-#if 0
-
-#endif
 
 #ifdef __OSTORE__
 	static os_typespec* get_os_typespec();
@@ -14842,8 +14817,8 @@ class SdaiDegenerate_toroidal_surface  :    public SdaiToroidal_surface  {
 #endif
 
 	int opcode ()  { return 149 ; }
-	const SCLBOOL(Boolean) select_outer_() const;
-	void select_outer_ (const SCLBOOL(Boolean) x);
+	const Boolean select_outer_() const;
+	void select_outer_ (const Boolean x);
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
@@ -15384,15 +15359,11 @@ class SdaiFace_surface  :    public SdaiFace  {
 	const SdaiSurface_ptr face_geometry_() const;
 	void face_geometry_ (const SdaiSurface_ptr x);
 
-	const SCLBOOL(Boolean) same_sense_() const;
-	void same_sense_ (const SCLBOOL(Boolean) x);
+	const Boolean same_sense_() const;
+	void same_sense_ (const Boolean x);
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
-
-#if 0
-
-#endif
 
 #ifdef __OSTORE__
 	static os_typespec* get_os_typespec();
@@ -15454,8 +15425,8 @@ class SdaiOriented_face  :    public SdaiFace  {
 	const SdaiFace_ptr face_element_() const;
 	void face_element_ (const SdaiFace_ptr x);
 
-	const SCLBOOL(Boolean) orientation_() const;
-	void orientation_ (const SCLBOOL(Boolean) x);
+	const Boolean orientation_() const;
+	void orientation_ (const Boolean x);
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
@@ -15635,15 +15606,11 @@ class SdaiEdge_curve  :    public SdaiEdge  {
 	const SdaiCurve_ptr edge_geometry_() const;
 	void edge_geometry_ (const SdaiCurve_ptr x);
 
-	const SCLBOOL(Boolean) same_sense_() const;
-	void same_sense_ (const SCLBOOL(Boolean) x);
+	const Boolean same_sense_() const;
+	void same_sense_ (const Boolean x);
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
-
-#if 0
-
-#endif
 
 #ifdef __OSTORE__
 	static os_typespec* get_os_typespec();
@@ -15938,11 +15905,11 @@ class SdaiRectangular_trimmed_surface  :    public SdaiBounded_surface  {
 	const SdaiParameter_value v2_() const;
 	void v2_ (const SdaiParameter_value x);
 
-	const SCLBOOL(Boolean) usense_() const;
-	void usense_ (const SCLBOOL(Boolean) x);
+	const Boolean usense_() const;
+	void usense_ (const Boolean x);
 
-	const SCLBOOL(Boolean) vsense_() const;
-	void vsense_ (const SCLBOOL(Boolean) x);
+	const Boolean vsense_() const;
+	void vsense_ (const Boolean x);
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
@@ -17363,8 +17330,8 @@ class SdaiCurve_bounded_surface  :    public SdaiBounded_surface  {
 	const EntityAggregate_ptr boundaries_() const;
 	void boundaries_ (const EntityAggregate_ptr x);
 
-	const SCLBOOL(Boolean) implicit_outer_() const;
-	void implicit_outer_ (const SCLBOOL(Boolean) x);
+	const Boolean implicit_outer_() const;
+	void implicit_outer_ (const Boolean x);
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
@@ -19029,8 +18996,8 @@ class SdaiOriented_path  :    public SdaiPath  {
 	const SdaiPath_ptr path_element_() const;
 	void path_element_ (const SdaiPath_ptr x);
 
-	const SCLBOOL(Boolean) orientation_() const;
-	void orientation_ (const SCLBOOL(Boolean) x);
+	const Boolean orientation_() const;
+	void orientation_ (const Boolean x);
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
@@ -19534,11 +19501,11 @@ class SdaiSurface_patch  :    public SdaiFounded_item  {
 	const SdaiTransition_code_var v_transition_() const;
 	void v_transition_ (const SdaiTransition_code_var x);
 
-	const SCLBOOL(Boolean) u_sense_() const;
-	void u_sense_ (const SCLBOOL(Boolean) x);
+	const Boolean u_sense_() const;
+	void u_sense_ (const Boolean x);
 
-	const SCLBOOL(Boolean) v_sense_() const;
-	void v_sense_ (const SCLBOOL(Boolean) x);
+	const Boolean v_sense_() const;
+	void v_sense_ (const Boolean x);
 
 	const EntityAggregate_ptr using_surfaces_() const;
 	void using_surfaces_ (const EntityAggregate_ptr x);
@@ -19670,8 +19637,8 @@ class SdaiShape_aspect  :    public SCLP23(Application_instance) {
 	const SdaiProduct_definition_shape_ptr of_shape_() const;
 	void of_shape_ (const SdaiProduct_definition_shape_ptr x);
 
-	const SCLLOG(Logical) product_definitional_() const;
-	void product_definitional_ (const SCLLOG(Logical) x);
+	const Logical product_definitional_() const;
+	void product_definitional_ (const Logical x);
 
 
 #ifdef __OSTORE__
@@ -20411,10 +20378,6 @@ class SdaiVertex_point  :    public SdaiVertex  {
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
 
-#if 0
-
-#endif
-
 #ifdef __OSTORE__
 	static os_typespec* get_os_typespec();
 	virtual void Access_hook_in(void *object,
@@ -20536,8 +20499,8 @@ class SdaiOriented_closed_shell  :    public SdaiClosed_shell  {
 	const SdaiClosed_shell_ptr closed_shell_element_() const;
 	void closed_shell_element_ (const SdaiClosed_shell_ptr x);
 
-	const SCLBOOL(Boolean) orientation_() const;
-	void orientation_ (const SCLBOOL(Boolean) x);
+	const Boolean orientation_() const;
+	void orientation_ (const Boolean x);
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
@@ -20913,10 +20876,6 @@ class SdaiPoly_loop  :    public SdaiLoop  {
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
-
-#if 0
-
-#endif
 
 #ifdef __OSTORE__
 	static os_typespec* get_os_typespec();

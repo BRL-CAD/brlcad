@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_fcut.c
+/** @file primitives/nmg/nmg_fcut.c
  *
  * After two faces have been intersected, cut or join loops crossed
  * by the line of intersection.  (Formerly nmg_comb.c)
@@ -978,7 +978,7 @@ nmg_compare_2_wedges(double a, double b, double c, double d)
 #define WEDGE_ANG_TOL 0.001	/* XXX Angular tolerance, in degrees */
 #define ANG_SMASH(_a) {\
 	if (_a <= WEDGE_ANG_TOL)  _a = 0; \
-	else if (NEAR_ZERO(_a - 180, WEDGE_ANG_TOL))  _a = 180; \
+	else if (NEAR_EQUAL(_a, 180, WEDGE_ANG_TOL))  _a = 180; \
 	else if (_a >= 360 - WEDGE_ANG_TOL)  _a = 360; }
 
     ANG_SMASH(a);
@@ -999,12 +999,12 @@ nmg_compare_2_wedges(double a, double b, double c, double d)
 	d = t;
     }
 
-    if (NEAR_ZERO(a-b, WEDGE_ANG_TOL)) a_eq_b = 1;
-    if (NEAR_ZERO(a-c, WEDGE_ANG_TOL)) a_eq_c = 1;
-    if (NEAR_ZERO(a-d, WEDGE_ANG_TOL)) a_eq_d = 1;
-    if (NEAR_ZERO(b-c, WEDGE_ANG_TOL)) b_eq_c = 1;
-    if (NEAR_ZERO(b-d, WEDGE_ANG_TOL)) b_eq_d = 1;
-    if (NEAR_ZERO(c-d, WEDGE_ANG_TOL)) c_eq_d = 1;
+    if (NEAR_EQUAL(a, b, WEDGE_ANG_TOL)) a_eq_b = 1;
+    if (NEAR_EQUAL(a, c, WEDGE_ANG_TOL)) a_eq_c = 1;
+    if (NEAR_EQUAL(a, d, WEDGE_ANG_TOL)) a_eq_d = 1;
+    if (NEAR_EQUAL(b, c, WEDGE_ANG_TOL)) b_eq_c = 1;
+    if (NEAR_EQUAL(b, d, WEDGE_ANG_TOL)) b_eq_d = 1;
+    if (NEAR_EQUAL(c, d, WEDGE_ANG_TOL)) c_eq_d = 1;
 
     /*
      * Test for TOUCHing wedges must come before INside test,
@@ -1316,8 +1316,8 @@ nmg_face_vu_compare(const void *aa, const void *bb)
     int hi_equal = 0;
     register int ret = 0;
 
-    lo_equal = NEAR_ZERO(a->lo_ang - b->lo_ang, WEDGE_ANG_TOL);
-    hi_equal = NEAR_ZERO(a->hi_ang - b->hi_ang, WEDGE_ANG_TOL);
+    lo_equal = NEAR_EQUAL(a->lo_ang, b->lo_ang, WEDGE_ANG_TOL);
+    hi_equal = NEAR_EQUAL(a->hi_ang, b->hi_ang, WEDGE_ANG_TOL);
     /* If both have the same assessment & angles match, => tie */
     if (a->wedge_class == b->wedge_class && lo_equal && hi_equal) {
 	/* Break the tie */
@@ -1613,7 +1613,7 @@ nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double
     if (outer_lu == inner_lu) {
 	struct loopuse *new_lu;
 	if (class2 == WEDGE2_IDENTICAL &&
-	    NEAR_ZERO(vs[inner_wedge].hi_ang - vs[inner_wedge].lo_ang, WEDGE_ANG_TOL)
+	    NEAR_EQUAL(vs[inner_wedge].hi_ang, vs[inner_wedge].lo_ang, WEDGE_ANG_TOL)
 	    ) {
 	    if (rt_g.NMG_debug&DEBUG_VU_SORT)
 		bu_log("nmg_special_wedge_processing:  inner and outer wedges from same loop, WEDGE2_IDENTICAL & 0deg spread, already in final form.\n");

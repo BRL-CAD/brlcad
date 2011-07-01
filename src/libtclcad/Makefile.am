@@ -54,7 +54,8 @@ libtclcad_la_CFLAGS = \
 libtclcad_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS}
 libtclcad_la_LIBADD = ${TCLCAD_LIBS}
 
-EXTRA_DIST = libtclcad.dsp
+EXTRA_DIST = \
+	CMakeLists.txt
 
 DEPENDS = src/libdm src/libged src/other/incrTcl
 

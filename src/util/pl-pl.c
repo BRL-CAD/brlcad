@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pl-pl.c
+/** @file util/pl-pl.c
  *
  * Plot smasher.
  *

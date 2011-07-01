@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file SweptSurface.h
+/** @file step/SweptSurface.h
  *
  * Class definition used to interface to STEP "SweptSurface".
  *

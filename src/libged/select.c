@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file select.c
+/** @file libged/select.c
  *
  * The select command.
  *
@@ -82,28 +82,27 @@ _ged_select(struct ged *gedp, fastf_t vx, fastf_t vy, fastf_t vwidth, fastf_t vh
 		point_t *pt = vp->pt;
 		point_t vpt;
 		for (j = 0; j < nused; j++, cmd++, pt++) {
-		   switch (*cmd) {
-		      case BN_VLIST_POLY_START:
-		      case BN_VLIST_POLY_VERTNORM:
-			 /* Has normal vector, not location */
-			 break;
-		      case BN_VLIST_LINE_MOVE:
-		      case BN_VLIST_LINE_DRAW:
-		      case BN_VLIST_POLY_MOVE:
-		      case BN_VLIST_POLY_DRAW:
-		      case BN_VLIST_POLY_END:
-			 MAT4X3PNT(vpt, gedp->ged_gvp->gv_model2view, *pt);
-			 V_MIN(vmin[X], vpt[X]);
-			 V_MAX(vmax[X], vpt[X]);
-			 V_MIN(vmin[Y], vpt[Y]);
-			 V_MAX(vmax[Y], vpt[Y]);
-			 V_MIN(vmin[Z], vpt[Z]);
-			 V_MAX(vmax[Z], vpt[Z]);
-			 break;
-		      default:
-		      {
-			 bu_vls_printf(&gedp->ged_result_str, "unknown vlist op %d\n", *cmd);
-		      }
+		    switch (*cmd) {
+			case BN_VLIST_POLY_START:
+			case BN_VLIST_POLY_VERTNORM:
+			    /* Has normal vector, not location */
+			    break;
+			case BN_VLIST_LINE_MOVE:
+			case BN_VLIST_LINE_DRAW:
+			case BN_VLIST_POLY_MOVE:
+			case BN_VLIST_POLY_DRAW:
+			case BN_VLIST_POLY_END:
+			    MAT4X3PNT(vpt, gedp->ged_gvp->gv_model2view, *pt);
+			    V_MIN(vmin[X], vpt[X]);
+			    V_MAX(vmax[X], vpt[X]);
+			    V_MIN(vmin[Y], vpt[Y]);
+			    V_MAX(vmax[Y], vpt[Y]);
+			    V_MIN(vmin[Z], vpt[Z]);
+			    V_MAX(vmax[Z], vpt[Z]);
+			    break;
+			default: {
+			    bu_vls_printf(gedp->ged_result_str, "unknown vlist op %d\n", *cmd);
+			}
 		    }
 		}
 	    }
@@ -127,13 +126,13 @@ _ged_select(struct ged *gedp, fastf_t vx, fastf_t vy, fastf_t vwidth, fastf_t vh
 		if (mag > vr)
 		    continue;
 
-		db_path_to_vls(&gedp->ged_result_str, &sp->s_fullpath);
-		bu_vls_printf(&gedp->ged_result_str, "\n");
+		db_path_to_vls(gedp->ged_result_str, &sp->s_fullpath);
+		bu_vls_printf(gedp->ged_result_str, "\n");
 	    } else {
 		if (vmin_x <= vmin[X] && vmax[X] <= vmax_x &&
 		    vmin_y <= vmin[Y] && vmax[Y] <= vmax_y) {
-		    db_path_to_vls(&gedp->ged_result_str, &sp->s_fullpath);
-		    bu_vls_printf(&gedp->ged_result_str, "\n");
+		    db_path_to_vls(gedp->ged_result_str, &sp->s_fullpath);
+		    bu_vls_printf(gedp->ged_result_str, "\n");
 		}
 	    }
 	}
@@ -149,7 +148,7 @@ _ged_select(struct ged *gedp, fastf_t vx, fastf_t vy, fastf_t vwidth, fastf_t vh
  * Returns a list of items within the specified rectangle or circle.
  *
  * Usage:
- *        select vx vy {vr | vw vh}
+ * select vx vy {vr | vw vh}
  *
  */
 int
@@ -164,10 +163,10 @@ ged_select(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc < 4 || 5 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -175,7 +174,7 @@ ged_select(struct ged *gedp, int argc, const char *argv[])
 	if (sscanf(argv[1], "%lf", &vx) != 1 ||
 	    sscanf(argv[2], "%lf", &vy) != 1 ||
 	    sscanf(argv[3], "%lf", &vr) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
 	}
 
@@ -185,19 +184,20 @@ ged_select(struct ged *gedp, int argc, const char *argv[])
 	    sscanf(argv[2], "%lf", &vy) != 1 ||
 	    sscanf(argv[3], "%lf", &vw) != 1 ||
 	    sscanf(argv[4], "%lf", &vh) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
 	}
 
 	return _ged_select(gedp, vx, vy, vw, vh, 0);
-    } 
+    }
 }
+
 
 /*
  * Returns a list of items within the previously defined rectangle.
  *
  * Usage:
- *        rselect
+ * rselect
  *
  */
 int
@@ -209,10 +209,10 @@ ged_rselect(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
 	return GED_ERROR;
     }
 
@@ -223,7 +223,6 @@ ged_rselect(struct ged *gedp, int argc, const char *argv[])
 		       gedp->ged_gvp->gv_rect.grs_height,
 		       0);
 }
-
 
 
 /*

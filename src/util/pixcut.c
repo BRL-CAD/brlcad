@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixcut.c
+/** @file util/pixcut.c
  *
  * Extract a piece of a pix file.  If the parameters of the file to be
  * extracted do not fit within the original pix file then the extra area is

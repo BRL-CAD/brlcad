@@ -34,6 +34,7 @@ EXTRA_DIST = \
 	libpc.pc.in \
 	libpkg.pc.in \
 	librt.pc.in \
-	libwdb.pc.in
+	libwdb.pc.in \
+	CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs

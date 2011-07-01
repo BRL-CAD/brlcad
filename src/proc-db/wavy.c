@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file wavy.c
+/** @file proc-db/wavy.c
  *
  * Create a random wavy surface spline model database.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file gastank.c
+/** @file shapes/gastank.c
  *
  * Program to create a gas tank using libwdb.  All dimensions are in
  * mm.  The gas tank is composed of 3 arb8s, 8 spheres, and 12

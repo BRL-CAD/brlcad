@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_grass.c
+/** @file liboptical/sh_grass.c
  *
  * A procedural shader to produce grass
  *
@@ -35,10 +35,6 @@
 #include "raytrace.h"
 #include "optical.h"
 
-
-extern int rr_render(struct application *ap,
-		     struct partition *pp,
-		     struct shadework *swp);
 
 #define SHADE_CONT 0
 #define SHADE_ABORT_GRASS 1 /* bit_flag */
@@ -221,10 +217,10 @@ struct bu_structparse grass_parse_tab[] = {
 };
 
 
-HIDDEN int grass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int grass_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void grass_print(register struct region *rp, char *dp);
-HIDDEN void grass_free(char *cp);
+HIDDEN int grass_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int grass_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
+HIDDEN void grass_print(register struct region *rp, genptr_t dp);
+HIDDEN void grass_free(genptr_t cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -497,7 +493,7 @@ make_proto(struct grass_specific *grass_sp)
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-grass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+grass_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -517,7 +513,7 @@ grass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 
     /* Get memory for the shader parameters and shader-specific data */
     BU_GETSTRUCT(grass_sp, grass_specific);
-    *dpp = (char *)grass_sp;
+    *dpp = grass_sp;
 
     /* initialize the default values for the shader */
     memcpy(grass_sp, &grass_defaults, sizeof(struct grass_specific));
@@ -561,7 +557,7 @@ grass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
  * G R A S S _ P R I N T
  */
 HIDDEN void
-grass_print(register struct region *rp, char *dp)
+grass_print(register struct region *rp, genptr_t dp)
 {
     bu_struct_print(rp->reg_name, grass_print_tab, (char *)dp);
 }
@@ -571,7 +567,7 @@ grass_print(register struct region *rp, char *dp)
  * G R A S S _ F R E E
  */
 HIDDEN void
-grass_free(char *cp)
+grass_free(genptr_t cp)
 {
     bu_free(cp, "grass_specific");
 }
@@ -696,52 +692,6 @@ hit_blade(const struct blade *UNUSED(bl), struct grass_ray *r, struct shadework 
 
     r->occlusion = 1.0;
     return;
-
-#if 0
-    if (ldist[0] < r->hit.hit_dist) {
-
-	/* we're the closest hit on the cell */
-	r->hit.hit_dist = ldist[0];
-	VJOIN1(r->hit.hit_point, r->r.r_pt, ldist[0], r->r.r_dir);
-
-	if (VDOT(bl->leaf[seg].N, r->r.r_dir) > 0.0) {
-	    VREVERSE(r->hit.hit_normal, bl->leaf[seg].N);
-	} else {
-	    VMOVE(r->hit.hit_normal, bl->leaf[seg].N);
-	}
-
-	if (blade_num == BLADE_LAST) {
-	    vect_t brown;
-	    double d;
-
-	    d = (1.0-fract) * .4;
-	    VSCALE(swp->sw_color, swp->sw_color, d);
-	    d = 1.0 - d;
-
-	    VSCALE(brown, grass_sp->brown, d);
-
-	    VADD2(swp->sw_color, swp->sw_color, brown);
-	}
-	fract = fract * 0.25 + .75;
-	VSCALE(swp->sw_color, swp->sw_color, fract);
-
-	if (rdebug&RDEBUG_SHADE) {
-	    bu_log("  New closest hit %g < %g\n",
-		   ldist[0], r->hit.hit_dist);
-	    bu_log("  pt:(%g %g %g)\n  Normal:(%g %g %g)\n",
-		   V3ARGS(r->hit.hit_point),
-		   V3ARGS(r->hit.hit_normal));
-	}
-
-
-	return /* SHADE_ABORT_GRASS */;
-    } else {
-	if (rdebug&RDEBUG_SHADE)
-	    bu_log("abandon hit in cell: %g > %g\n",
-		   ldist[0], r->hit.hit_dist);
-    }
-    return /* SHADE_CONT */;
-#endif
 }
 
 
@@ -945,14 +895,10 @@ stat_cell(fastf_t *UNUSED(cell_pos), struct grass_ray *r, struct grass_specific 
 	swp->sw_transmit -= ratio;
     }
 
-#if 0
-    bn_noise_vec(cell_pos, r->hit.hit_normal);
-    r->hit.hit_normal[Z] += 1.0;
-#else
     VADD2(tmp, r->hit.hit_point, grass_sp->delta);
     bn_noise_vec(tmp, r->hit.hit_normal);
     if (r->hit.hit_normal[Z] < 0.0) r->hit.hit_normal[Z] *= -1.0;
-#endif
+
     VUNITIZE(r->hit.hit_normal);
     if (VDOT(r->hit.hit_normal, r->r.r_dir) > 0.0) {
 	VREVERSE(r->hit.hit_normal, r->hit.hit_normal);
@@ -1175,7 +1121,7 @@ do_cells(long int *cell_num, struct grass_ray *r, short int flags, struct shadew
  * structure.
  */
 int
-grass_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+grass_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
 
 
 /* defined in material.h */

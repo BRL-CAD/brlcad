@@ -19,7 +19,7 @@
  */
 /** @addtogroup db4 */
 /** @{ */
-/** @file db_alloc.c
+/** @file librt/db_alloc.c
  *
  * v4 granule allocation routines
  *
@@ -53,7 +53,7 @@ db_alloc(register struct db_i *dbip, register struct directory *dp, size_t count
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_alloc(%s) x%x, x%x, count=%d\n",
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_alloc(%s) x%x, x%x, count=%zu\n",
 				    dp->d_namep, dbip, dp, count);
     if (count <= 0) {
 	bu_log("db_alloc(0)\n");
@@ -189,7 +189,7 @@ db_zapper(struct db_i *dbip, struct directory *dp, size_t start)
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_zapper(%s) x%x, x%x, start=%d\n",
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_zapper(%s) x%x, x%x, start=%zu\n",
 				    dp->d_namep, dbip, dp, start);
 
     if (dp->d_flags & RT_DIR_INMEM) bu_bomb("db_zapper() called on RT_DIR_INMEM object\n");
@@ -252,7 +252,7 @@ rt_alloc_seg_block(register struct resource *res)
 
     RT_CK_RESOURCE(res);
 
-    if (BU_LIST_UNINITIALIZED(&res->re_seg)) {
+    if (!BU_LIST_IS_INITIALIZED(&res->re_seg)) {
 	BU_LIST_INIT(&(res->re_seg));
 	bu_ptbl_init(&res->re_seg_blocks, 64, "re_seg_blocks ptbl");
     }

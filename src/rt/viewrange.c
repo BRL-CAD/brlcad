@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file viewrange.c
+/** @file rt/viewrange.c
  *
  *  RT-View-Module for visualizing range data.  The output is a
  *  UNIX-Plot file.  Direction vectors are preserved so that

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file termio.c
+/** @file libtermio/termio.c
  *
  */
 

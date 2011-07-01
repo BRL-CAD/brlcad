@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_noise.c
+/** @file liboptical/sh_noise.c
  *
  * Shaders:
  * gravel turbulence noise applied to color and surface normal
@@ -42,9 +42,6 @@
 #include "optical.h"
 
 
-extern int rr_render(struct application *ap,
-		     struct partition *pp,
-		     struct shadework *swp);
 #define noise_MAGIC 0x1847
 #define CK_noise_SP(_p) BU_CKMAG(_p, noise_MAGIC, "noise_specific")
 
@@ -178,7 +175,7 @@ struct bu_structparse noise_parse_tab[] = {
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-noise_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+noise_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -203,7 +200,7 @@ noise_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 
     /* Get memory for the shader parameters and shader-specific data */
     BU_GETSTRUCT(noise_sp, noise_specific);
-    *dpp = (char *)noise_sp;
+    *dpp = noise_sp;
 
     /* initialize the default values for the shader */
     memcpy(noise_sp, &noise_defaults, sizeof(struct noise_specific));
@@ -264,7 +261,7 @@ found:
  * G R A V E L _ P R I N T
  */
 HIDDEN void
-noise_print(register struct region *rp, char *dp)
+noise_print(register struct region *rp, genptr_t dp)
 {
     bu_struct_print(rp->reg_name, noise_print_tab, (char *)dp);
 }
@@ -274,7 +271,7 @@ noise_print(register struct region *rp, char *dp)
  * G R A V E L _ F R E E
  */
 HIDDEN void
-noise_free(char *cp)
+noise_free(genptr_t cp)
 {
     bu_free(cp, "noise_specific");
 }
@@ -361,7 +358,7 @@ norm_noise(fastf_t *pt, double val, struct noise_specific *noise_sp, double (*fu
  * structure.
  */
 int
-fractal_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+fractal_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
 
 
 /* defined in material.h */

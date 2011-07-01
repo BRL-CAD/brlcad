@@ -40,37 +40,22 @@ proc init_g2asc { id } {
     set top .$id.ascii
     catch { destroy $top }
 
+    # get the name of the ascii database to save
     set db_name [_mged_opendb]
-    set default_name [file rootname $db_name].asc
-    set ret [cad_input_dialog $top $mged_gui($id,screen) "Save as Ascii"\
-		 "Enter ascii filename:" ascii_filename\
-		 $default_name 0 {{ summary "Enter a filename to indicate where
-to put the acsii converted database."}} OK Cancel]
+    set default_name [file tail [file rootname $db_name]].asc
+    set ftypes {{{Ascii Database} {.asc}} {{All Files} {*}}}
+    set filename [tk_getSaveFile -parent .$id -filetypes $ftypes \
+                                 -initialdir $mged_gui(databaseDir) \
+                                 -initialfile $default_name \
+                                 -title "Extract Ascii Database"]
 
+    if { $filename != "" } {  
+        # save the current directory for subsequent file saves
+        set mged_gui(databaseDir) [ file dirname $filename ]
 
-    if { $ascii_filename != "" } {
-	if { $ret == 0 } {
-	    if [file exists $ascii_filename] {
-		set result [cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-				"Overwrite $ascii_filename?"\
-				"Overwrite $ascii_filename?"\
-				"" 0 OK Cancel]
-
-		if { $result } {
-		    return
-		}
-	    }
-
-	    set g2asc [file join [bu_brlcad_root "bin"] g2asc]
-	    catch {exec $g2asc $db_name $ascii_filename} msg
-	}
-    } else {
-	if { $ret == 0 } {
-	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
-		"No file name specified!"\
-		"No file name specified!"\
-		"" 0 OK
-	}
+        # convert binary database to ascii
+        set g2asc [bu_brlcad_root "bin/g2asc"]
+        catch {exec $g2asc $db_name $filename} msg
     }
 }
 

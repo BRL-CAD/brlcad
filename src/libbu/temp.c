@@ -111,6 +111,7 @@ _bu_add_to_list(const char *fn, int fd)
     }
 
     BU_GETSTRUCT(newtf, _bu_tf_list);
+    BU_LIST_INIT(&(_bu_tf->l));
     bu_vls_init(&_bu_tf->fn);
 
     bu_vls_strcpy(&_bu_tf->fn, fn);
@@ -225,7 +226,7 @@ bu_temp_file(char *filepath, size_t len)
 
     if (filepath) {
 	if (UNLIKELY(len < strlen(tempfile))) {
-	    bu_log("WARNING: bu_temp_file filepath buffer size is insufficient (%d < %d)\n", len, strlen(tempfile));
+	    bu_log("WARNING: bu_temp_file filepath buffer size is insufficient (%zu < %zu)\n", len, strlen(tempfile));
 	} else {
 	    snprintf(filepath, len, "%s", tempfile);
 	}

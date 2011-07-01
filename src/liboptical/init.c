@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file init.c
+/** @file liboptical/init.c
  *
  * This file represents the single function exported from the
  * shader library whose "name" is known.
@@ -51,9 +51,6 @@ vect_t background = VINIT_ZERO; /* Black */
     { extern struct mfuncs _name[]; mlib_add_shader(headp, _name); }
 
 
-/*
- * O P T I C A L _ S H A D E R _ I N I T
- */
 void
 optical_shader_init(struct mfuncs **headp)
 {
@@ -87,6 +84,11 @@ optical_shader_init(struct mfuncs **headp)
     MFUNCS(flat_mfuncs);
     MFUNCS(bbd_mfuncs);
     MFUNCS(toon_mfuncs);
+
+#ifdef OSL_ENABLED
+    /* This shader requires OSL, so it won't be compiled if this library was not enabled */
+    MFUNCS(osl_mfuncs);
+#endif
 }
 
 

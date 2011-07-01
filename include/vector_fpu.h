@@ -19,12 +19,13 @@
  */
 /** @file vector_fpu.h
  *
- * Brief description
  *
  */
 
 #ifndef __VECTOR_FPU
 #define __VECTOR_FPU
+
+#include "common.h"
 
 #ifdef __GNUC__
 #undef VEC_ALIGN

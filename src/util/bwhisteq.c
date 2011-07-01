@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bwhisteq.c
+/** @file util/bwhisteq.c
  *
  * Build up the histgram of a picture and output the "equalized"
  * version of it on stdout.

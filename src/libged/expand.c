@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file expand.c
+/** @file libged/expand.c
  *
  * The expand command.
  *
@@ -34,8 +34,25 @@
 
 
 static void
-ged_scrape_escapes_AppendResult(struct bu_vls	*result,
-				const char	*str);
+expand_scrape_escapes(struct bu_vls *result, const char *str)
+{
+    char buf[2];
+    buf[1] = '\0';
+
+    while (*str) {
+	buf[0] = *str;
+	if (*str != '\\') {
+	    bu_vls_printf(result, "%s", buf);
+	} else if (*(str+1) == '\\') {
+	    bu_vls_printf(result, "%s", buf);
+	    ++str;
+	}
+	if (*str == '\0')
+	    break;
+	++str;
+    }
+}
+
 
 int
 ged_expand(struct ged *gedp, int argc, const char *argv[])
@@ -50,11 +67,11 @@ ged_expand(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -80,8 +97,8 @@ ged_expand(struct ged *gedp, int argc, const char *argv[])
 	if (regexp == 0) {
 	    if (db_lookup(gedp->ged_wdbp->dbip, argv[whicharg], LOOKUP_QUIET) != RT_DIR_NULL) {
 		if (nummatch > 0)
-		    bu_vls_printf(&gedp->ged_result_str, " ");
-		ged_scrape_escapes_AppendResult(&gedp->ged_result_str, argv[whicharg]);
+		    bu_vls_printf(gedp->ged_result_str, " ");
+		expand_scrape_escapes(gedp->ged_result_str, argv[whicharg]);
 		++nummatch;
 	    }
 	    continue;
@@ -102,9 +119,9 @@ ged_expand(struct ged *gedp, int argc, const char *argv[])
 		    continue;
 		/* Successful match */
 		if (nummatch == 0)
-		    bu_vls_printf(&gedp->ged_result_str, "%s", dp->d_namep);
+		    bu_vls_printf(gedp->ged_result_str, "%s", dp->d_namep);
 		else
-		    bu_vls_printf(&gedp->ged_result_str, " %s", dp->d_namep);
+		    bu_vls_printf(gedp->ged_result_str, " %s", dp->d_namep);
 		++nummatch;
 		++thismatch;
 	    }
@@ -112,27 +129,6 @@ ged_expand(struct ged *gedp, int argc, const char *argv[])
     }
 
     return GED_OK;
-}
-
-static void
-ged_scrape_escapes_AppendResult(struct bu_vls	*result,
-				const char	*str)
-{
-    char buf[2];
-    buf[1] = '\0';
-
-    while (*str) {
-	buf[0] = *str;
-	if (*str != '\\') {
-	    bu_vls_printf(result, "%s", buf);
-	} else if (*(str+1) == '\\') {
-	    bu_vls_printf(result, "%s", buf);
-	    ++str;
-	}
-	if (*str == '\0')
-	    break;
-	++str;
-    }
 }
 
 

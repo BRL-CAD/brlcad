@@ -1,4 +1,5 @@
 set(LIBOPTICAL_SOURCES
+
 	init.c
 	material.c
 	photonmap.c
@@ -44,7 +45,91 @@ include_directories(
     ${TCL_INCLUDE_DIRS}
 )
 
-BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt libbn libbu")
+IF(BRLCAD-ENABLE_OSL)
+    
+    ##########################################
+    # Build OSL-renderer Library
+    ##########################################
+
+    # Find dependencies (TODO: build this altogether)
+    include(FindOSL)
+
+    # NOTE(boulos): Boost can only detect that you've disabled RTTI for
+    # gcc >= 4.3. My poor mac doesn't have that.
+    add_definitions("-fno-rtti -DBOOST_NO_RTTI -DBOOST_NO_TYPEID -DOSL_ENABLED")
+
+    include_directories(
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${OSL_INCLUDES} 
+	${OPENIMAGEIO_INCLUDES}
+        # This is required for brep.h to find opennurbs.h
+        # (TODO: better way to include this dir?)
+        ../other/openNURBS/
+        )
+
+    message("Oslexec: ${OSLEXEC_LIBRARY}")
+    message("Oslcomp: ${OSLCOMP_LIBRARY}")
+    message("Oslquery: ${OSLQUERY_LIBRARY}")
+
+    set (OSLRT_SOURCES liboslrend.cpp render_svc.cpp)
+
+    #set (OSLRT_LIBS ${OSLEXEC_LIBRARY} ${OSLCOMP_LIBRARY} ${OSLQUERY_LIBRARY} ${OPENIMAGEIO_LIBRARY} ${Boost_LIBRARIES})
+    message("OSLRT_SOURCES: ${OSLRT_SOURCES}")
+    #find_package(Boost)
+
+    # Try to find BOOST
+    set (Boost_COMPONENTS filesystem regex system thread)
+    find_package (Boost 1.46 REQUIRED 
+      COMPONENTS ${Boost_COMPONENTS})
+    # If it was not found, check if BOOST_ROOT was set
+    IF(NOT Boost_FILESYSTEM_LIBRARY)
+      message("Cheking if BOOST ROOT was FOUND")
+    ENDIF()
+
+    message("Boost filesystem: ${Boost_FILESYSTEM_LIBRARY}")
+    message("Boost regex: ${Boost_REGEX_LIBRARY}")
+    message("Boost system: ${Boost_SYSTEM_LIBRARY}")
+    message("Boost thread: ${Boost_THREAD_LIBRARY}")
+
+    set(OSLRT_LIBS "${OSLEXEC_LIBRARY} ${OSLCOMP_LIBRARY} ${OSLQUERY_LIBRARY} ${OPENIMAGEIO_LIBRARY} ${Boost_LIBRARIES} ${Boost_FILESYSTEM_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY}")
+    
+    STRING(REGEX REPLACE ";" " " OSLRT_LIBS2 "${OSLRT_LIBS}")
+
+    BRLCAD_ADDLIB(liboslrend "${OSLRT_SOURCES}" "${OSLRT_LIBS2}")
+
+    ##########################################
+    # Build OSL Shader 
+    ##########################################
+
+    # Add the osl shader to the list of shaders
+    set(LIBOPTICAL_SOURCES ${LIBOPTICAL_SOURCES} sh_osl.cpp)
+    
+    # Link liboptical with osl-renderer library
+    BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt libbn libbu liboslrend")
+
+    ##########################################
+    # Build Renderer test 
+    ##########################################
+
+    BRLCAD_ADDEXEC(osl_rt "osl_rt.cpp" "liboslrend ${OSLRT_LIBS2} librt libfb liboptical")
+
+ELSE(BRLCAD-ENABLE_OSL)
+
+    BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt libbn libbu")
+
+ENDIF(BRLCAD-ENABLE_OSL)
+
+CMAKEFILES(
+        liboslrend.cpp 
+	oslexec_pvt.h 
+	render_svc.h 
+	sh_osl.cpp
+	liboslrend.h 
+	constantpool.h 
+	osl_rt.cpp 
+	render_svc.cpp
+	)
+
 SET_TARGET_PROPERTIES(liboptical PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
 SET(LIBRTMS_SRCS
@@ -65,6 +150,5 @@ ENDIF(NOT WIN32)
 IF(WIN32)
 	SET_TARGET_PROPERTIES(librtms-static PROPERTIES PREFIX "lib")
 ENDIF(WIN32)
-INSTALL(TARGETS librtms-static DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_LIB_DIR})
+INSTALL(TARGETS librtms-static DESTINATION ${LIB_DIR})
 
-CMAKEFILES(liboptical.dsp)

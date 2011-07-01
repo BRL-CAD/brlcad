@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file texture_blend.c
+/** @file librender/texture_blend.c
  *
  *  Comments -
  *      Texture Library - Uses the R and B channels to blend 2 colors

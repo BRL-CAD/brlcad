@@ -19,7 +19,7 @@
  */
 /** @addtogroup libged */
 /** @{ */
-/** @file bigE.c
+/** @file libged/bigE.c
  *
  * This module implements the 'E' command.
  *
@@ -59,8 +59,8 @@ union E_tree *build_etree(union tree *tp, struct _ged_client_data *dgcdp);
 #define MY_FREE_SEG_LIST(_segheadp, _res) { \
 	struct seg *_a; \
 	while (BU_LIST_WHILE (_a, seg, (_segheadp))) { \
-		BU_LIST_DEQUEUE(&(_a->l)); \
-		RT_FREE_SEG(_a, _res); \
+	    BU_LIST_DEQUEUE(&(_a->l)); \
+	    RT_FREE_SEG(_a, _res); \
 	} }
 
 /* stolen from g_half.c */
@@ -69,7 +69,7 @@ struct half_specific {
     vect_t half_Xbase;             /* "X" basis direction */
     vect_t half_Ybase;             /* "Y" basis direction */
 };
-#define HALF_NULL       ((struct half_specific *)0)
+#define HALF_NULL ((struct half_specific *)0)
 
 /* structures for building a tree corresponding to the region to be
  * drawn uses the same "op" values as "union tree"
@@ -101,8 +101,9 @@ union E_tree {
     } l;
 };
 
+
 #define E_TREE_MAGIC 0x45545245
-#define CK_ETREE(_p)		BU_CKMAG(_p, E_TREE_MAGIC, "struct E_tree")
+#define CK_ETREE(_p) BU_CKMAG(_p, E_TREE_MAGIC, "struct E_tree")
 
 
 HIDDEN union E_tree *
@@ -121,7 +122,7 @@ add_solid(const struct directory *dp,
 
     id = rt_db_get_internal(&intern, dp, dgcdp->gedp->ged_wdbp->dbip, mat, &rt_uniresource);
     if (id < 0) {
-	bu_vls_printf(&dgcdp->gedp->ged_result_str, "Failed to get internal form of %s\n", dp->d_namep);
+	bu_vls_printf(dgcdp->gedp->ged_result_str, "Failed to get internal form of %s\n", dp->d_namep);
 	eptr->l.m = (struct model *)NULL;
 	return eptr;
     }
@@ -139,22 +140,6 @@ add_solid(const struct directory *dp,
 	rt_db_free_internal(&intern);
 	return eptr;
     }
-#if 0
-    if (id == ID_BOT) {
-	struct rt_bot_internal *bot = (struct rt_bot_internal *)intern.idb_ptr;
-
-	/* if this is a plate mode BOT, lie to the tesselator to get
-	 * an approximation
-	 */
-
-	RT_BOT_CK_MAGIC(bot);
-
-	if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
-	    solid_is_plate_mode_bot = 1;
-	    bot->mode = RT_BOT_SOLID;
-	}
-    }
-#endif
     if (id == ID_HALF) {
 	eptr->l.m = NULL;
 	dgcdp->num_halfs++;
@@ -203,10 +188,10 @@ add_solid(const struct directory *dp,
 		eptr->l.stp->st_id = id;
 		eptr->l.stp->st_meth = &rt_functab[id];
 		if (rt_obj_prep(eptr->l.stp, &intern, dgcdp->rtip) < 0) {
-		    bu_vls_printf(&dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", dp->d_namep);
+		    bu_vls_printf(dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", dp->d_namep);
 		}
 	    } else {
-		RT_INIT_DB_INTERNAL(&intern2);
+		RT_DB_INTERNAL_INIT(&intern2);
 		intern2.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		intern2.idb_type = ID_BOT;
 		intern2.idb_meth = &rt_functab[ID_BOT];
@@ -214,7 +199,7 @@ add_solid(const struct directory *dp,
 		eptr->l.stp->st_id = ID_BOT;
 		eptr->l.stp->st_meth = &rt_functab[ID_BOT];
 		if (rt_obj_prep(eptr->l.stp, &intern2, dgcdp->rtip) < 0) {
-		    bu_vls_printf(&dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", dp->d_namep);
+		    bu_vls_printf(dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", dp->d_namep);
 		}
 
 		rt_db_free_internal(&intern2);
@@ -225,7 +210,7 @@ add_solid(const struct directory *dp,
 	    eptr->l.stp->st_id = id;
 	    eptr->l.stp->st_meth = &rt_functab[id];
 	    if (rt_obj_prep(eptr->l.stp, &intern, dgcdp->rtip) < 0)
-		bu_vls_printf(&dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", dp->d_namep);
+		bu_vls_printf(dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", dp->d_namep);
 	}
     }
 
@@ -237,6 +222,7 @@ add_solid(const struct directory *dp,
 
     return eptr;
 }
+
 
 /* build an E_tree corresponding to the region tree (tp) */
 union E_tree *
@@ -286,6 +272,7 @@ build_etree(union tree *tp,
     return eptr;
 }
 
+
 /* a handy routine (for debugging) that prints asegment list */
 void
 show_seg(struct bu_list *seg, int str)
@@ -314,6 +301,7 @@ show_seg(struct bu_list *seg, int str)
 	}
     }
 }
+
 
 /* given a segment list, eliminate any overlaps in the segments */
 HIDDEN void
@@ -349,6 +337,7 @@ eliminate_overlaps(struct bu_list *seghead,
 	a = BU_LIST_PNEXT(seg, &a->l);
     }
 }
+
 
 /* perform the intersection of two segments the result is assigned the
  * provided type
@@ -391,6 +380,7 @@ do_intersect(struct seg *A,
 
     return;
 }
+
 
 /* perform the subtraction of one segment from another the result is
  * assigned the type from segment A
@@ -443,6 +433,7 @@ do_subtract(struct seg *A,
 	}
     }
 }
+
 
 HIDDEN void
 promote_ints(struct bu_list *head,
@@ -642,6 +633,7 @@ promote_ints(struct bu_list *head,
     show_seg(head, "SEGS");
 #endif
 }
+
 
 /* Evaluate an operation on the operands (segment lists) */
 HIDDEN struct bu_list *
@@ -964,6 +956,7 @@ eval_op(struct bu_list *A,
 
 }
 
+
 /* evaluate an E-tree */
 HIDDEN struct bu_list *
 eval_etree(union E_tree *eptr,
@@ -1006,6 +999,7 @@ eval_etree(union E_tree *eptr,
     return (struct bu_list *)NULL;	/* for the compilers */
 }
 
+
 HIDDEN void
 inverse_dir(vect_t dir, vect_t inv_dir)
 {
@@ -1029,6 +1023,7 @@ inverse_dir(vect_t dir, vect_t inv_dir)
 	dir[Z] = 0.0;
     }
 }
+
 
 HIDDEN struct soltab *
 classify_seg(struct seg *segp, struct soltab *shoot, struct xray *rp, struct _ged_client_data *dgcdp)
@@ -1114,6 +1109,7 @@ classify_seg(struct seg *segp, struct soltab *shoot, struct xray *rp, struct _ge
 #endif
     return ret;
 }
+
 
 /* Shoot rays (corresponding to possible edges in the result) at the
  * solids, put the results in the E-tree leaves as type IN_SOL.  Call
@@ -1349,6 +1345,7 @@ shoot_and_plot(point_t start_pt,
 
 }
 
+
 #define HITS_BLOCK 20
 
 HIDDEN void
@@ -1375,7 +1372,7 @@ Eplot(union E_tree *eptr,
 	leaf_ptr = (union E_tree *)BU_PTBL_GET(&dgcdp->leaf_list, leaf_no);
 	CK_ETREE(leaf_ptr);
 	if (leaf_ptr->l.op != OP_DB_LEAF && leaf_ptr->l.op != OP_SOLID) {
-	    bu_vls_printf(&dgcdp->gedp->ged_result_str, "Eplot: Bad leaf node!!!\n");
+	    bu_vls_printf(dgcdp->gedp->ged_result_str, "Eplot: Bad leaf node!!!\n");
 	    return;
 	}
 
@@ -1714,6 +1711,7 @@ Eplot(union E_tree *eptr,
     bu_free((char *)hits2, "hits2");
 }
 
+
 HIDDEN void
 free_etree(union E_tree *eptr,
 	   struct _ged_client_data *dgcdp)
@@ -1751,6 +1749,7 @@ free_etree(union E_tree *eptr,
     }
 }
 
+
 /* convert all "half" solids to polysolids */
 HIDDEN void
 fix_halfs(struct _ged_client_data *dgcdp)
@@ -1778,7 +1777,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
     }
 
     if (!count) {
-	bu_vls_printf(&dgcdp->gedp->ged_result_str, "A 'half' solid is the only solid in a region (ignored)\n");
+	bu_vls_printf(dgcdp->gedp->ged_result_str, "A 'half' solid is the only solid in a region (ignored)\n");
 	return;
     }
 
@@ -2001,11 +2000,11 @@ fix_halfs(struct _ged_client_data *dgcdp)
 
 	if (!nmg_to_poly(tp->l.m, pg, tol)) {
 	    bu_free((char *)pg, "rt_pg_internal");
-	    bu_vls_printf(&dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", tp->l.stp->st_dp->d_namep);
+	    bu_vls_printf(dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", tp->l.stp->st_dp->d_namep);
 	} else {
 	    struct rt_db_internal intern2;
 
-	    RT_INIT_DB_INTERNAL(&intern2);
+	    RT_DB_INTERNAL_INIT(&intern2);
 	    intern2.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern2.idb_type = ID_POLY;
 	    intern2.idb_meth = &rt_functab[ID_POLY];
@@ -2017,7 +2016,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 	    VSETALL(tp->l.stp->st_max, -INFINITY);
 	    VSETALL(tp->l.stp->st_min,  INFINITY);
 	    if (rt_obj_prep(tp->l.stp, &intern2, dgcdp->rtip) < 0) {
-		bu_vls_printf(&dgcdp->gedp->ged_result_str,
+		bu_vls_printf(dgcdp->gedp->ged_result_str,
 			      "Prep failure for polysolid version of solid '%s'",
 			      tp->l.stp->st_dp->d_namep);
 	    }
@@ -2026,6 +2025,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 	}
     }
 }
+
 
 int
 ged_E(struct ged *gedp, int argc, const char *argv[])
@@ -2042,11 +2042,11 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -2074,16 +2074,16 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 		    char *cp = bu_optarg;
 
 		    r = atoi(cp);
-		    while ((*cp >= '0' && *cp <= '9'))  cp++;
+		    while ((*cp >= '0' && *cp <= '9')) cp++;
 		    while (*cp && (*cp < '0' || *cp > '9')) cp++;
 		    g = atoi(cp);
-		    while ((*cp >= '0' && *cp <= '9'))  cp++;
+		    while ((*cp >= '0' && *cp <= '9')) cp++;
 		    while (*cp && (*cp < '0' || *cp > '9')) cp++;
 		    b = atoi(cp);
 
-		    if (r < 0 || r > 255)  r = 255;
-		    if (g < 0 || g > 255)  g = 255;
-		    if (b < 0 || b > 255)  b = 255;
+		    if (r < 0 || r > 255) r = 255;
+		    if (g < 0 || g > 255) g = 255;
+		    if (b < 0 || b > 255) b = 255;
 
 		    dgcdp->wireframe_color_override = 1;
 		    dgcdp->wireframe_color[0] = r;
@@ -2096,7 +2096,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    default:
 		{
-		    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		    return GED_ERROR;
 		}
 	}
@@ -2109,16 +2109,11 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 	ged_erasePathFromDisplay(gedp, argv[i], 0);
 	dgcdp->gdlp = ged_addToDisplay(dgcdp->gedp, argv[i]);
 
-#if 0
-	gedp->ged_wdbp->wdb_ttol.magic = RT_TESS_TOL_MAGIC;
-	gedp->ged_wdbp->wdb_ttol.rel = 0.01;
-#endif
-
 	dgcdp->ap = (struct application *)bu_malloc(sizeof(struct application), "Big E app");
 	RT_APPLICATION_INIT(dgcdp->ap);
 	dgcdp->ap->a_resource = &rt_uniresource;
 	rt_uniresource.re_magic = RESOURCE_MAGIC;
-	if (BU_LIST_UNINITIALIZED(&rt_uniresource.re_nmgfree))
+	if (!BU_LIST_IS_INITIALIZED(&rt_uniresource.re_nmgfree))
 	    BU_LIST_INIT(&rt_uniresource.re_nmgfree);
 
 	bu_ptbl_init(&dgcdp->leaf_list, 8, "leaf_list");
@@ -2141,7 +2136,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 	    bu_free((char *)dgcdp->rtip, "rt_i structure for 'E'");
 	    bu_free(dgcdp, "dgcdp");
 
-	    bu_vls_printf(&gedp->ged_result_str, "Failed to get objects\n");
+	    bu_vls_printf(gedp->ged_result_str, "Failed to get objects\n");
 	    return GED_ERROR;
 	}
 	{
@@ -2181,11 +2176,12 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
     /* free leaf_list */
     bu_ptbl_free(&dgcdp->leaf_list);
 
-    bu_vls_printf(&gedp->ged_result_str, "E: %ld vectors in %ld sec\n",
+    bu_vls_printf(gedp->ged_result_str, "E: %ld vectors in %ld sec\n",
 		  dgcdp->nvectors, (long)(dgcdp->etime - dgcdp->start_time));
 
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

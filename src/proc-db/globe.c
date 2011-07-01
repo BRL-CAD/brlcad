@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file globe.c
+/** @file proc-db/globe.c
  * Creates a set of concentric "shells" that, when put together, comprise a
  * unified solid spherical object.  Kinda like an onion, not a cake, an onion.
  *

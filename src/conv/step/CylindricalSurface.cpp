@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file CylindricalSurface.cpp
+/** @file step/CylindricalSurface.cpp
  *
  * Routines to interface to STEP "CylindricalSurface".
  *

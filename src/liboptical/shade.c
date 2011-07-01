@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file shade.c
+/** @file liboptical/shade.c
  *
  * Ray Tracing program, lighting model shader interface.
  *
@@ -280,9 +280,9 @@ viewshade(struct application *ap, const struct partition *pp, struct shadework *
     mfp = (struct mfuncs *)pp->pt_regionp->reg_mfuncs;
     RT_CK_MF(mfp);
 
-    if (!swp) {
+    if (!swp || !mfp) {
 	if (R_DEBUG&RDEBUG_SHADE) {
-	    bu_log("ERROR: NULL shadework structure encountered\n");
+	    bu_log("ERROR: NULL shadework or mfuncs structure encountered\n");
 	}
 	return 0;
     }
@@ -360,7 +360,8 @@ viewshade(struct application *ap, const struct partition *pp, struct shadework *
 
 
     /* Invoke the actual shader (may be a tree of them) */
-    (void)mfp->mf_render(ap, pp, swp, rp->reg_udata);
+    if (mfp && mfp->mf_render)
+	(void)mfp->mf_render(ap, pp, swp, rp->reg_udata);
 
     if (R_DEBUG&RDEBUG_SHADE) {
 	pr_shadework("after mf_render", swp);

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file get_eyemodel.c
+/** @file libged/get_eyemodel.c
  *
  * The get_eyemodel command.
  *
@@ -34,14 +34,14 @@
  * Returns the views eyemodel
  *
  * Usage:
- *        get_eyemodel
+ * get_eyemodel
  *
  */
 int
 ged_get_eyemodel(struct ged *gedp, int argc, const char *argv[])
 {
-    quat_t		quat;
-    vect_t		eye_model;
+    quat_t quat;
+    vect_t eye_model;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -49,20 +49,20 @@ ged_get_eyemodel(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
 	return GED_ERROR;
     }
 
     _ged_rt_set_eye_model(gedp, eye_model);
     quat_mat2quat(quat, gedp->ged_gvp->gv_rotation);
 
-    bu_vls_printf(&gedp->ged_result_str, "viewsize %.15e;\n", gedp->ged_gvp->gv_size);
-    bu_vls_printf(&gedp->ged_result_str, "orientation %.15e %.15e %.15e %.15e;\n",
+    bu_vls_printf(gedp->ged_result_str, "viewsize %.15e;\n", gedp->ged_gvp->gv_size);
+    bu_vls_printf(gedp->ged_result_str, "orientation %.15e %.15e %.15e %.15e;\n",
 		  V4ARGS(quat));
-    bu_vls_printf(&gedp->ged_result_str, "eye_pt %.15e %.15e %.15e;\n",
+    bu_vls_printf(gedp->ged_result_str, "eye_pt %.15e %.15e %.15e;\n",
 		  eye_model[X], eye_model[Y], eye_model[Z]);
 
     return GED_OK;

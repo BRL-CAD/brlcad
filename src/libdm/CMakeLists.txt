@@ -84,7 +84,6 @@ SET(libdm_ignore_files
 	dm-ogl.c
 	dm-rtgl.c
 	dm-tk.c
-	libdm.dsp
 	TODO
 	)
 CMAKEFILES(${libdm_ignore_files})

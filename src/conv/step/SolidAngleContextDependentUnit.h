@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file SolidAngleContextDependentUnit.h
+/** @file step/SolidAngleContextDependentUnit.h
  *
  * Class definition used to convert STEP "SolidAngleContextDependentUnit" to BRL-CAD BREP
  * structures.

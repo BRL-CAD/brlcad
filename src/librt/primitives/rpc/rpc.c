@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file rpc.c
+/** @file primitives/rpc/rpc.c
  *
  * Intersect a ray with a Right Parabolic Cylinder.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rcodes.c
+/** @file libged/rcodes.c
  *
  * The rcodes command.
  *
@@ -50,21 +50,21 @@ ged_rcodes(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s filename", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s filename", argv[0]);
 	return GED_HELP;
     }
 
     if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s filename", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s filename", argv[0]);
 	return GED_ERROR;
     }
 
     if ((fp = fopen(argv[1], "r")) == NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Failed to read file - %s", argv[0], argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s: Failed to read file - %s", argv[0], argv[1]);
 	return GED_ERROR;
     }
 
@@ -85,17 +85,17 @@ ged_rcodes(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, cp, LOOKUP_NOISY)) == RT_DIR_NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not found in database.\n", argv[1], cp);
+	    bu_vls_printf(gedp->ged_result_str, "%s: Warning - %s not found in database.\n", argv[1], cp);
 	    continue;
 	}
 
 	if (!(dp->d_flags & RT_DIR_REGION)) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not a region\n", argv[1], cp);
+	    bu_vls_printf(gedp->ged_result_str, "%s: Warning - %s not a region\n", argv[1], cp);
 	    continue;
 	}
 
 	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource) != ID_COMBINATION) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not a region\n", argv[1], cp);
+	    bu_vls_printf(gedp->ged_result_str, "%s: Warning - %s not a region\n", argv[1], cp);
 	    continue;
 	}
 
@@ -123,8 +123,8 @@ ged_rcodes(struct ged *gedp, int argc, const char *argv[])
 	if (changed) {
 	    /* write out all changes */
 	    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource)) {
-		bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting.\n");
-		bu_vls_printf(&gedp->ged_result_str,
+		bu_vls_printf(gedp->ged_result_str, "Database write error, aborting.\n");
+		bu_vls_printf(gedp->ged_result_str,
 			      "The in-memory table of contents may not match the status of the on-disk\ndatabase.  The on-disk database should still be intact.  For safety, \nyou should exit now, and resolve the I/O problem, before continuing.\n");
 
 		rt_db_free_internal(&intern);

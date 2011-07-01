@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file STEPWrapper.h
+/** @file step/STEPWrapper.h
  *
  * Class definition for C++ wrapper to NIST STEP parser/database functions.
  *
@@ -26,14 +26,6 @@
 #define STEPWRAPPER_H_
 
 #include "common.h"
-
-#if 0
-#ifdef DEBUG
-#define TRACE(arg) std::cerr << arg << std::endl
-#else
-#define TRACE(arg)
-#endif
-#endif
 
 #ifdef DEBUG
 #define ERROR(arg) std::cerr << __FILE__ << ":" << __LINE__ << ":" << __func__ << ":" << arg << std::endl
@@ -98,17 +90,17 @@ public:
 	SCLP23(Application_instance) *getEntity( int STEPid );
 	SCLP23(Application_instance) *getEntity( int STEPid, const char *name );
 	SCLP23(Application_instance) *getEntity( SCLP23(Application_instance) *, const char *name );
-	string getLogicalString( SCLLOG_H(Logical) v );
-	string getBooleanString( SCLBOOL_H(Boolean) v );
+	string getLogicalString( Logical v );
+	string getBooleanString( Boolean v );
 
 	// helper functions based on STEP id
 	STEPattribute *getAttribute( int STEPid, const char *name );
 	LIST_OF_STRINGS *getAttributes( int STEPid );
-	SCLBOOL_H(Boolean) getBooleanAttribute( int STEPid, const char *name );
+	Boolean getBooleanAttribute( int STEPid, const char *name );
 	SCLP23(Application_instance) *getEntityAttribute( int STEPid, const char *name );
 	int getEnumAttribute( int STEPid, const char *name );
 	int getIntegerAttribute( int STEPid, const char *name );
-	SCLLOG_H(Logical) getLogicalAttribute( int STEPid, const char *name );
+	Logical getLogicalAttribute( int STEPid, const char *name );
 	double getRealAttribute( int STEPid, const char *name );
 	LIST_OF_ENTITIES *getListOfEntities( int STEPid, const char *name );
 	LIST_OF_LIST_OF_POINTS *getListOfListOfPoints( int STEPid, const char *attrName);
@@ -120,12 +112,12 @@ public:
 	//helper functions based on entity instance pointer
 	STEPattribute *getAttribute( SCLP23(Application_instance) *sse, const char *name );
 	LIST_OF_STRINGS *getAttributes( SCLP23(Application_instance) *sse );
-	SCLBOOL_H(Boolean) getBooleanAttribute( SCLP23(Application_instance) *sse, const char *name );
+	Boolean getBooleanAttribute( SCLP23(Application_instance) *sse, const char *name );
 	SCLP23(Application_instance) *getEntityAttribute( SCLP23(Application_instance) *sse, const char *name );
 	SCLP23(Select) *getSelectAttribute( SCLP23(Application_instance) *sse, const char *name );
 	int getEnumAttribute( SCLP23(Application_instance) *sse, const char *name );
 	int getIntegerAttribute( SCLP23(Application_instance) *sse, const char *name );
-	SCLLOG_H(Logical) getLogicalAttribute( SCLP23(Application_instance) *sse, const char *name );
+	Logical getLogicalAttribute( SCLP23(Application_instance) *sse, const char *name );
 	double getRealAttribute( SCLP23(Application_instance) *sse, const char *name );
 	LIST_OF_ENTITIES *getListOfEntities( SCLP23(Application_instance) *sse, const char *name );
 	LIST_OF_SELECTS *getListOfSelects( SCLP23(Application_instance) *sse, const char *name );

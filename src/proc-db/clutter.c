@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file clutter.c
+/** @file proc-db/clutter.c
  *
  * Program to generate procedural clutter out of primitive
  * geometric objects.

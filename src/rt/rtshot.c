@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rtshot.c
+/** @file rt/rtshot.c
  *
  * Demonstration Ray Tracing main program, using RT library.
  * Fires a single ray, given any two of these three parameters:

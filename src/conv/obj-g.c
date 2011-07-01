@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file obj-g.c
+/** @file conv/obj-g.c
  *
  * Convert wavefront obj format files to BRL-CAD .g binary format
  */
@@ -101,7 +101,7 @@ int
 write_object(struct object_s *r, struct rt_wdb *out_fp)
 {
     int rval = -1;
-    const char *regname;
+    char *regname;
 
     if (r->bot->num_faces == 0) {
 	rval = 0;
@@ -117,6 +117,7 @@ write_object(struct object_s *r, struct rt_wdb *out_fp)
 	r->bot = NULL; /* released during export */
 	if (verbose)
 	    bu_log("Wrote %s (%d faces)\n", regname, faces);
+	bu_free(regname, "regname free");
     }
 
     /* done with this object, let it go */

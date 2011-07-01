@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file walk_example.c
+/** @file conv/walk_example.c
  *
  * @brief Example of how to traverse a BRL-CAD database heirarchy
  *
@@ -61,7 +61,8 @@ int verbose = 0;
 /**
  *	U S A G E
  *	@brief tell user how to invoke this program, then exit
- *	@param s an pointer to a null-terminated character string
+ *      @param name the name of the running program (argv[0])
+ *	@param str a pointer to a null-terminated character string
  *	@return never returns
  */
 void usage(const char *name, const char *str)
@@ -88,6 +89,7 @@ int parse_args(int ac, char *av[])
 {
     int  c;
     char *strrchr();
+    char *tmp_basename = NULL;
 
     /* Turn off bu_getopt's error messages */
     bu_opterr = 0;
@@ -101,7 +103,9 @@ int parse_args(int ac, char *av[])
 	    case '?':
 	    case 'h':
 	    default:
-		usage(bu_basename(av[0]), "Bad or help flag specified\n");
+                tmp_basename = bu_basename(av[0]);
+		usage(tmp_basename, "Bad or help flag specified\n");
+		bu_free(tmp_basename, "tmp_basename free");
 		break;
 	}
     }
@@ -116,11 +120,7 @@ int parse_args(int ac, char *av[])
  * @brief This routine is called when a region is first encountered in the
  * heirarchy when processing a tree
  *
- *	@param tsp tree state (for parsing the tree)
  *	@param pathp A listing of all the nodes traversed to get to this node in the database
- *	@param combp the combination record for this region
- *	@param client_data pointer that was passed as last argument to db_walk_tree()
- *
  */
 int
 region_start(struct db_tree_state *UNUSED(tsp),
@@ -143,10 +143,8 @@ region_start(struct db_tree_state *UNUSED(tsp),
  *
  * @brief This is called when all sub-elements of a region have been processed by leaf_func.
  *
- *	@param tsp
  *	@param pathp
  *	@param curtree
- *	@param client_data
  *
  *	@return TREE_NULL if data in curtree was "stolen", otherwise db_walk_tree will
  *	clean up the dta in the union tree * that is returned
@@ -251,6 +249,7 @@ int main(int ac, char *av[])
     struct db_tree_state init_state; /* state table for the heirarchy walker */
     char idbuf[1024] = {0};		/* Database title */
     int arg_count;
+    char *tmp_basename;
 
     /** @struct user_data
      * This is an example structure.
@@ -264,7 +263,9 @@ int main(int ac, char *av[])
     arg_count = parse_args(ac, av);
 
     if ((ac - arg_count) < 1) {
-	usage(bu_basename(av[0]), "bad arugment count");
+	tmp_basename = bu_basename(av[0]);
+	usage(tmp_basename, "bad arugment count");
+	bu_free(tmp_basename, "tmp_basename free");
     }
 
     /*

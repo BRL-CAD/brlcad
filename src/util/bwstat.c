@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bwstat.c
+/** @file util/bwstat.c
  *
  * Compute statistics of pixels in a black and white (BW) file.
  * Gives min, max, mode, median, mean, s.d., var, and skew.

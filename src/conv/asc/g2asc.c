@@ -463,7 +463,7 @@ get_ext(struct bu_external *ep, size_t ngran)
 {
     size_t count;
 
-    BU_INIT_EXTERNAL(ep);
+    BU_EXTERNAL_INIT(ep);
 
     ep->ext_nbytes = ngran * sizeof(union record);
     ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "get_ext ext_buf" );
@@ -646,7 +646,7 @@ cline_dump(void)
     get_ext( &ext, ngranules );
 
     /* Hand off to librt's import() routine */
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     if ( (rt_functab[ID_CLINE].ft_import4( &intern, &ext, id_mat, DBI_NULL, &rt_uniresource )) != 0 )  {
 	fprintf(stderr, "g2asc: cline import failure\n");
 	bu_exit(-1, NULL);
@@ -681,7 +681,7 @@ bot_dump(void)
     get_ext( &ext, ngranules );
 
     /* Hand off to librt's import() routine */
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     if ( (rt_functab[ID_BOT].ft_import4( &intern, &ext, id_mat, DBI_NULL, &rt_uniresource )) != 0 )  {
 	fprintf(stderr, "g2asc: bot import failure\n");
 	bu_exit(-1, NULL);
@@ -738,7 +738,7 @@ pipe_dump(void)	/* Print out Pipe record information */
     get_ext( &ext, ngranules );
 
     /* Hand off to librt's import() routine */
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     if ( (rt_functab[ID_PIPE].ft_import4( &intern, &ext, id_mat, NULL, &rt_uniresource )) != 0 )  {
 	fprintf(stderr, "g2asc: pipe import failure\n");
 	bu_exit(-1, NULL);
@@ -788,7 +788,7 @@ particle_dump(void)
     get_ext( &ext, 1 );
 
     /* Hand off to librt's import() routine */
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     if ( (rt_functab[ID_PARTICLE].ft_import4( &intern, &ext, id_mat, NULL, &rt_uniresource )) != 0 )  {
 	fprintf(stderr, "g2asc: particle import failure\n");
 	bu_exit(-1, NULL);
@@ -846,7 +846,7 @@ arbn_dump(void)
     get_ext( &ext, ngranules );
 
     /* Hand off to librt's import() routine */
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     if ( (rt_functab[ID_ARBN].ft_import4( &intern, &ext, id_mat, NULL, &rt_uniresource )) != 0 )  {
 	fprintf(stderr, "g2asc: arbn import failure\n");
 	bu_exit(-1, NULL);
@@ -1205,7 +1205,7 @@ extrdump(void)
     get_ext( &ext, ngranules );
 
     /* Hand off to librt's import() routine */
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     if ( (rt_functab[ID_EXTRUDE].ft_import4( &intern, &ext, id_mat, DBI_NULL, &rt_uniresource )) != 0 )  {
 	fprintf(stderr, "g2asc: extrusion import failure\n");
 	bu_exit(-1, NULL);
@@ -1240,7 +1240,7 @@ sketchdump(void)
     get_ext( &ext, ngranules );
 
     /* Hand off to librt's import() routine */
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     if ( (rt_functab[ID_SKETCH].ft_import4( &intern, &ext, id_mat, DBI_NULL, &rt_uniresource )) != 0 )  {
 	fprintf(stderr, "g2asc: sketch import failure\n");
 	bu_exit( -1, NULL );

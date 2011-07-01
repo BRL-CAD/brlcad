@@ -19,7 +19,7 @@
  */
 /** @addtogroup rnd */
 /** @{ */
-/** @file rand.c
+/** @file libbn/rand.c
  *
  * @brief
  * These are our tables of random numbers.

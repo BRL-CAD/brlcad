@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file viewdir.c
+/** @file rt/viewdir.c
  *
  *  RT-View-Module for printing out the hit point of a ray and the ray's
  *  direction on a user-specified grid.

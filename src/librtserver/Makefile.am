@@ -33,6 +33,8 @@ librtserver_la_LIBADD = \
 
 EXTRA_PROGRAMS = rtserverTest
 
+EXTRA_DIST = CMakeLists.txt
+
 rtserverTest_SOURCES = rtserverTest.c
 
 rtserverTest_LDADD = ${lib_LTLIBRARIES}

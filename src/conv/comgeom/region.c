@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file region.c
+/** @file comgeom/region.c
  *  Author -
  *	Michael John Muuss
  */

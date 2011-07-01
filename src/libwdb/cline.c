@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file cline.c
+/** @file libwdb/cline.c
  *
  * Support for cline solids (kludges from FASTGEN)
  *

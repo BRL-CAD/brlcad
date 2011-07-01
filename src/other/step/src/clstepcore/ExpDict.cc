@@ -740,7 +740,7 @@ AttrDescriptor::AttrExprDefStr(SCLstring & s) const
 
   s = Name ();
   s.Append (" : ");
-  if(_optional.asInt() == SCLLOG(LTrue))
+  if(_optional.asInt() == LTrue)
     s.Append( "OPTIONAL ");
   if(DomainType())
 	s.Append (DomainType()->AttrTypeName(buf));
@@ -823,7 +823,7 @@ const char *
 AttrDescriptor::ExpandedTypeName(SCLstring & s) const
 {
     s.set_null();
-    if (Derived() == SCLLOG(LTrue)) s = "DERIVE  ";
+    if (Derived() == LTrue) s = "DERIVE  ";
     if(_domainType)
     {
 	SCLstring tmp;
@@ -845,7 +845,7 @@ AttrDescriptor::GenerateExpress (SCLstring &buf) const
 //    buf = "";
     buf.Append(StrToLower(Name(),tmp));
     buf.Append(" : ");
-    if(_optional == SCLLOG(LTrue)) {
+    if(_optional == LTrue) {
 	buf.Append("OPTIONAL ");
     }
     buf.Append(TypeName());
@@ -871,7 +871,7 @@ Derived_attribute::AttrExprDefStr(SCLstring & s) const
   s.Append(Name ());
   s.Append (" : ");
 /*
-  if(_optional.asInt() == SCLLOG(LTrue))
+  if(_optional.asInt() == LTrue)
     s.Append( "OPTIONAL ");
 */
   if(DomainType())
@@ -895,7 +895,7 @@ Inverse_attribute::AttrExprDefStr(SCLstring & s) const
 
   s = Name ();
   s.Append (" : ");
-  if(_optional.asInt() == SCLLOG(LTrue))
+  if(_optional.asInt() == LTrue)
     s.Append( "OPTIONAL ");
   if(DomainType())
 	s.Append (DomainType()->AttrTypeName(buf));
@@ -1014,7 +1014,7 @@ EnumTypeDescriptor::GenerateExpress (SCLstring &buf) const
 ///////////////////////////////////////////////////////////////////////////////
 
 EntityDescriptor::EntityDescriptor ( ) 
-: _abstractEntity(SCLLOG(LUnknown)), _extMapping(SCLLOG(LUnknown)),
+: _abstractEntity(LUnknown), _extMapping(LUnknown),
   _uniqueness_rules((Uniqueness_rule__set_var)0), NewSTEPentity(0)
 {
 //    _derivedAttr = new StringAggregate;
@@ -1028,8 +1028,8 @@ EntityDescriptor::EntityDescriptor ( )
 
 EntityDescriptor::EntityDescriptor (const char * name, // i.e. char *
 				    Schema *origSchema, 
-				    SCLLOG(Logical) abstractEntity, // F U or T
-				    SCLLOG(Logical) extMapping,
+				    Logical abstractEntity, // F U or T
+				    Logical extMapping,
 				    Creator f
 /*
 				    EntityDescriptorList *subtypes,
@@ -2181,7 +2181,7 @@ AggrTypeDescriptor::AggrTypeDescriptor( ) :
 
 AggrTypeDescriptor::AggrTypeDescriptor(SCLP23(Integer) b1, 
 				       SCLP23(Integer) b2, 
-				       SCLLOG(Logical) uniqElem, 
+				       Logical uniqElem, 
 				       TypeDescriptor *aggrDomType)
 	      : _bound1(b1), _bound2(b2), _uniqueElements(uniqElem)
 {

@@ -209,7 +209,7 @@ sample_applications_DATA = rtexample.c
 EXTRA_DIST = \
 	$(ALLSRCS) \
 	$(man_MANS) \
-	rt.dsp
+	CMakeLists.txt
 
 DEPENDS = src/librt src/libfb src/liboptical
 

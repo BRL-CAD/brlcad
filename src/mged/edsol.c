@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file edsol.c
+/** @file mged/edsol.c
  *
  */
 
@@ -4573,7 +4573,7 @@ sedit(void)
 
 		if (extr->skt) {
 		    /* free the old sketch */
-		    RT_INIT_DB_INTERNAL(&tmp_ip);
+		    RT_DB_INTERNAL_INIT(&tmp_ip);
 		    tmp_ip.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		    tmp_ip.idb_type = ID_SKETCH;
 		    tmp_ip.idb_ptr = (genptr_t)extr->skt;
@@ -7307,7 +7307,7 @@ vls_solid(struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat)
     struct rt_db_internal intern;
     int id;
 
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
 
     if (dbip == DBI_NULL)
 	return;
@@ -8926,7 +8926,7 @@ f_get_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
     }
 
     /* apply matrices along the path */
-    RT_INIT_DB_INTERNAL(&ces_int);
+    RT_DB_INTERNAL_INIT(&ces_int);
     transform_editing_solid(&ces_int, es_mat, &es_int, 0);
 
     /* get solid type and parameters */

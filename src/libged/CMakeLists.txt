@@ -64,7 +64,6 @@ set(LIBGED_SOURCES
     editit.c
     edmater.c
     erase.c
-    erase_all.c
     expand.c
     eye.c
     eye_pos.c
@@ -137,6 +136,7 @@ set(LIBGED_SOURCES
     oscale.c
     otranslate.c
     overlay.c
+    path.c
     pathlist.c
     pathsum.c
     perspective.c
@@ -223,6 +223,7 @@ set(LIBGED_SOURCES
     tra.c
     trace.c
     track.c
+    translate.c
     translate_extrude.c
     translate_tgc.c
     tree.c
@@ -274,7 +275,6 @@ SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 19.0.1 SOVERSION 19)
 SET(ged_ignore_files
 	ged_private.h
 	qray.h
-	subtype.c
 	wdb_qray.h
 	)
 CMAKEFILES(${ged_ignore_files})

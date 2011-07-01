@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file recsize.c
+/** @file iges/recsize.c
  *
  * Routine to determine record size of IGES file.
  *

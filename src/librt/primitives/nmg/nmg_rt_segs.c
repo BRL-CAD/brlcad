@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_rt_segs.c
+/** @file primitives/nmg/nmg_rt_segs.c
  *
  * Support routines for raytracing an NMG.
  *

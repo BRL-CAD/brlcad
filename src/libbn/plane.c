@@ -19,7 +19,7 @@
  */
 /** @addtogroup plane */
 /** @{ */
-/** @file plane.c
+/** @file libbn/plane.c
  *
  * @brief
  * Some useful routines for dealing with planes and lines.
@@ -1451,12 +1451,12 @@ bn_isect_line3_line3_new(fastf_t *s,
     /* if all distances are within distance tolerance of each
      * other then they a parallel 
      */
-    if (NEAR_ZERO(d1-d2, tol->dist) &&
-        NEAR_ZERO(d1-d3, tol->dist) &&
-        NEAR_ZERO(d1-d4, tol->dist) &&
-        NEAR_ZERO(d2-d3, tol->dist) &&
-        NEAR_ZERO(d2-d4, tol->dist) &&
-        NEAR_ZERO(d3-d4, tol->dist)) {
+    if (NEAR_EQUAL(d1, d2, tol->dist) &&
+        NEAR_EQUAL(d1, d3, tol->dist) &&
+        NEAR_EQUAL(d1, d4, tol->dist) &&
+        NEAR_EQUAL(d2, d3, tol->dist) &&
+        NEAR_EQUAL(d2, d4, tol->dist) &&
+        NEAR_EQUAL(d3, d4, tol->dist)) {
 #if 0
         bu_log("all values within distance tolerance of each other\n");
 #endif
@@ -2685,7 +2685,7 @@ bn_coplanar(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
     vect_t pt_a, pt_b;
     BN_CK_TOL(tol);
 
-    if (!NEAR_ZERO(MAGSQ(a) - 1.0, VUNITIZE_TOL) || !NEAR_ZERO(MAGSQ(b) - 1.0, VUNITIZE_TOL)) {
+    if (!NEAR_EQUAL(MAGSQ(a), 1.0, VUNITIZE_TOL) || !NEAR_EQUAL(MAGSQ(b), 1.0, VUNITIZE_TOL)) {
 	bu_bomb("bn_coplanar(): input vector(s) 'a' and/or 'b' is not a unit vector.\n");
     }
 
@@ -2698,7 +2698,7 @@ bn_coplanar(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
     }
 
     /* parallel is when dot is within tol->perp of either -1 or 1 */
-    if ((dot <= -SMALL_FASTF) ? (NEAR_ZERO(dot + 1.0, tol->perp)) : (NEAR_ZERO(dot - 1.0, tol->perp))) {
+    if ((dot <= -SMALL_FASTF) ? (NEAR_EQUAL(dot, -1.0, tol->perp)) : (NEAR_EQUAL(dot, 1.0, tol->perp))) {
 	if (bn_pt3_pt3_equal(pt_a, pt_b, tol)) {
 	    /* test for coplanar */
 	    if (dot >= SMALL_FASTF) {
@@ -2828,7 +2828,7 @@ bn_between(double left, double mid, double right, const struct bn_tol *tol)
     BN_CK_TOL(tol);
 
     if (left < right) {
-	if (NEAR_ZERO(left-right, tol->dist*0.1)) {
+	if (NEAR_EQUAL(left, right, tol->dist*0.1)) {
 	    left -= tol->dist*0.1;
 	    right += tol->dist*0.1;
 	}
@@ -2836,7 +2836,7 @@ bn_between(double left, double mid, double right, const struct bn_tol *tol)
 	return 1;
     }
     /* The 'right' value is lowest */
-    if (NEAR_ZERO(left-right, tol->dist*0.1)) {
+    if (NEAR_EQUAL(left, right, tol->dist*0.1)) {
 	right -= tol->dist*0.1;
 	left += tol->dist*0.1;
     }
@@ -3177,7 +3177,7 @@ bn_isect_planes(fastf_t *pt, const fastf_t (*planes)[4], const size_t pl_count)
     if (bu_debug & BU_DEBUG_MATH) {
 	bu_log("bn_isect_planes:\n");
 	for (i=0; i<pl_count; i++) {
-	    bu_log("Plane #%d (%f %f %f %f)\n", i, V4ARGS(planes[i]));
+	    bu_log("Plane #%zu (%f %f %f %f)\n", i, V4ARGS(planes[i]));
 	}
     }
 

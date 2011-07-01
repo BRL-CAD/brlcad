@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Face.h
+/** @file step/Face.h
  *
  * Class definition used to convert STEP "Face" to BRL-CAD BREP
  * structures.

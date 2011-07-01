@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file RationalUniformCurve.h
+/** @file step/RationalUniformCurve.h
  *
  * Class definition used to convert STEP "RationalUniformCurve" to BRL-CAD BREP
  * structures.

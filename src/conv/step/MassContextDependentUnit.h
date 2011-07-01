@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file MassContextDependentUnit.h
+/** @file step/MassContextDependentUnit.h
  *
  * Class definition used to convert STEP "MassContextDependentUnit" to BRL-CAD BREP
  * structures.

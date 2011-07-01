@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file fb_ik.h
+/** @file fbed/fb_ik.h
  *	Author:		Gary S. Moss
  */
 

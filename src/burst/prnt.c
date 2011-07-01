@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file prnt.c
+/** @file burst/prnt.c
  *
  */
 

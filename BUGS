@@ -15,6 +15,15 @@ on-going issues.
 Recent Bugs
 -----------
 
+* opening a database in archer with the same name as a command doesn't
+  work.
+
+* both left and right mouse buttons in mged reportedly zoom in after a
+  recent change.
+
+* bu_log() with a width specifier does not align like printf().
+  Example: bu_log("%24s", str);
+
 * report that keep sometimes results in a .g file with unknown units
   dbconcat also is reported to set the units to unknown if concating
   a file with unknown units.

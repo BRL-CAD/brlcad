@@ -19,7 +19,7 @@
  */
 /** @addtogroup ray */
 /** @{ */
-/** @file prep.c
+/** @file librt/prep.c
  *
  * Manage one-time preparations to be done before actual ray-tracing
  * can commence.
@@ -41,7 +41,7 @@
 #include "plot3.h"
 
 
-BU_EXTERN(void rt_ck, (struct rt_i *rtip));
+extern void rt_ck(struct rt_i *rtip);
 
 HIDDEN void rt_solid_bitfinder(register union tree *treep, struct region *regp, struct resource *resp);
 
@@ -604,8 +604,8 @@ rt_plot_solid(
  * It shouldn't (but does for ptbl) allocate any dynamic memory, just
  * init pointers & lists.
  *
- * if (BU_LIST_UNINITIALIZED(&resp->re_parthead)) indicates that this
- * initialization is needed.
+ * if (!BU_LIST_IS_INITIALIZED(&resp->re_parthead)) indicates that
+ * this initialization is needed.
  *
  * Note that this routine is also called as part of
  * rt_clean_resource().
@@ -639,28 +639,28 @@ rt_init_resource(struct resource *resp,
 
     /* XXX resp->re_randptr is an "application" (rt) level field. For now. */
 
-    if (BU_LIST_UNINITIALIZED(&resp->re_seg))
-	BU_LIST_INIT(&resp->re_seg)
+    if (!BU_LIST_IS_INITIALIZED(&resp->re_seg))
+	BU_LIST_INIT(&resp->re_seg);
 
-	    if (BU_LIST_UNINITIALIZED(&resp->re_seg_blocks.l))
-		bu_ptbl_init(&resp->re_seg_blocks, 64, "re_seg_blocks ptbl");
+    if (!BU_LIST_IS_INITIALIZED(&resp->re_seg_blocks.l))
+	bu_ptbl_init(&resp->re_seg_blocks, 64, "re_seg_blocks ptbl");
 
-    if (BU_LIST_UNINITIALIZED(&resp->re_directory_blocks.l))
+    if (!BU_LIST_IS_INITIALIZED(&resp->re_directory_blocks.l))
 	bu_ptbl_init(&resp->re_directory_blocks, 64, "re_directory_blocks ptbl");
 
-    if (BU_LIST_UNINITIALIZED(&resp->re_parthead))
-	BU_LIST_INIT(&resp->re_parthead)
+    if (!BU_LIST_IS_INITIALIZED(&resp->re_parthead))
+	BU_LIST_INIT(&resp->re_parthead);
 
-	    if (BU_LIST_UNINITIALIZED(&resp->re_solid_bitv))
-		BU_LIST_INIT(&resp->re_solid_bitv)
+    if (!BU_LIST_IS_INITIALIZED(&resp->re_solid_bitv))
+	BU_LIST_INIT(&resp->re_solid_bitv);
 
-		    if (BU_LIST_UNINITIALIZED(&resp->re_region_ptbl))
-			BU_LIST_INIT(&resp->re_region_ptbl)
+    if (!BU_LIST_IS_INITIALIZED(&resp->re_region_ptbl))
+	BU_LIST_INIT(&resp->re_region_ptbl);
 
-			    if (BU_LIST_UNINITIALIZED(&resp->re_nmgfree))
-				BU_LIST_INIT(&resp->re_nmgfree)
+    if (!BU_LIST_IS_INITIALIZED(&resp->re_nmgfree))
+	BU_LIST_INIT(&resp->re_nmgfree);
 
-				    resp->re_boolstack = NULL;
+    resp->re_boolstack = NULL;
     resp->re_boolslen = 0;
 
     if (rtip == NULL)
@@ -1237,15 +1237,15 @@ int rt_load_attrs(struct rt_i *rtip, char **attrs)
 
         bu_avs_init_empty(&(regp->attr_values));
 	for (i=0; i<attr_count; i++) {
-		if ((attr = bu_avs_get(&avs, attrs[i])) == NULL)
-			continue;
+	    if ((attr = bu_avs_get(&avs, attrs[i])) == NULL)
+		continue;
 
-		bu_avs_add(&(regp->attr_values), attrs[i], attr);
-		did_set = 1;
+	    bu_avs_add(&(regp->attr_values), attrs[i], attr);
+	    did_set = 1;
 	}
 
 	if (did_set)
-		region_count++;
+	    region_count++;
 
 	bu_avs_free(&avs);
     }

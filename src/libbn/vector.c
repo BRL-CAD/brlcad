@@ -19,7 +19,7 @@
  */
 /** @addtogroup plot */
 /** @{ */
-/** @file vector.c
+/** @file libbn/vector.c
  *
  */
 

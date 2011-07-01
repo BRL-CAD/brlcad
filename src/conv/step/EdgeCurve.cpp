@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file EdgeCurve.cpp
+/** @file step/EdgeCurve.cpp
  *
  * Routines to convert STEP "EdgeCurve" to BRL-CAD BREP
  * structures.
@@ -98,7 +98,7 @@ EdgeCurve::Print(int level) {
 	TAB(level+1); std::cout << "edge_geometry:" << std::endl;
 	edge_geometry->Print(level+1);
 
-	TAB(level+1); std::cout << "same_sense:" << step->getBooleanString((SCLBOOL_H(Boolean))same_sense) << std::endl;
+	TAB(level+1); std::cout << "same_sense:" << step->getBooleanString((Boolean)same_sense) << std::endl;
 
 	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	Edge::Print(level+1);

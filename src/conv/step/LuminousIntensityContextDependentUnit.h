@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file LuminousIntensityContextDependentUnit.h
+/** @file step/LuminousIntensityContextDependentUnit.h
  *
  * Class definition used to convert STEP "LuminousIntensityContextDependentUnit" to BRL-CAD BREP
  * structures.

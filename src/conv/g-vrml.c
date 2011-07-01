@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file g-vrml.c
+/** @file conv/g-vrml.c
  *
  * Program to convert a BRL-CAD model (in a .g file) to a VRML (2.0)
  * facetted model by calling on the NMG booleans.
@@ -50,9 +50,9 @@
 #ifdef MEMORY_LEAK_CHECKING
 #define BARRIER_CHECK { \
 	if ( bu_mem_barriercheck() ) { \
-		bu_log( "memory is corrupted at line %d in file %d\n", __LINE__, __FILE__ ); \
+	    bu_log( "memory is corrupted at line %d in file %d\n", __LINE__, __FILE__ ); \
 	} \
-}
+    }
 #else
 #define BARRIER_CHECK /* */
 #endif
@@ -103,8 +103,8 @@ const struct bu_structparse vrml_mat_parse[]={
     {"",0, (char *)0,0,BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
-BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
-BU_EXTERN(union tree *nmg_region_end, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
+extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+extern union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 
 static const char usage[] = "Usage: %s [-v] [-xX lvl] [-d tolerance_distance (mm) ] [-a abs_tol (mm)] [-r rel_tol] [-n norm_tol] [-o out_file] [-u units] brlcad_db.g object(s)\n";
 
@@ -1390,7 +1390,7 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
     BU_GETUNION(curtree, tree);
-    RT_INIT_TREE(curtree);
+    RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
     BARRIER_CHECK;
     return curtree;

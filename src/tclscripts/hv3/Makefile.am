@@ -35,7 +35,8 @@ EXTRA_DIST = \
 	license_snit.txt \
 	demo/index.html \
 	demo/small-eagleCAD.gif \
-	demo/viewpage.tcl
+	demo/viewpage.tcl \
+	CMakeLists.txt
 
 # CLEANFILES = $(BUILT_SOURCES)
 

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file step-g.cpp
+/** @file step/step-g.cpp
  *
  * C++ main() for step-g converter.
  *

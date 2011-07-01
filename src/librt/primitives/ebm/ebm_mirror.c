@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ebm_mirror.c
+/** @file primitives/ebm/ebm_mirror.c
  *
  * mirror support
  *

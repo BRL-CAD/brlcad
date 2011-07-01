@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file mat.c
+/** @file comgeom/mat.c
  *
  * 4 x 4 Matrix manipulation functions..............
  *

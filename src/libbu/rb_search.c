@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup rb */
-/** @{ */
 
 #include "common.h"
 
@@ -46,7 +44,7 @@ HIDDEN struct bu_rb_node *
 _rb_search(struct bu_rb_node *root, int order_nm, int (*order) (/* ??? */), void *data)
 {
     int result;
-    bu_rb_tree *tree;
+    struct bu_rb_tree *tree;
 
     BU_CKMAG(root, BU_RB_NODE_MAGIC, "red-black node");
     tree = root->rbn_tree;
@@ -68,7 +66,7 @@ _rb_search(struct bu_rb_node *root, int order_nm, int (*order) (/* ??? */), void
 }
 
 
-void *bu_rb_search (bu_rb_tree *tree, int order, void *data)
+void *bu_rb_search (struct bu_rb_tree *tree, int order, void *data)
 {
 
     int (*compare)();
@@ -85,8 +83,6 @@ void *bu_rb_search (bu_rb_tree *tree, int order, void *data)
 	return rb_data(node, order);
 }
 
-
-/** @} */
 
 /*
  * Local Variables:

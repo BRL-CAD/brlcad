@@ -699,11 +699,6 @@ static int alive = 1;
 HIDDEN
 int x_linger(FBIO *ifp)
 {
-#if 0
-    if (fork() != 0)
-	return 1;	/* release the parent */
-#endif
-
     XSelectInput(XI(ifp)->dpy, XI(ifp)->win,
 		 ExposureMask|ButtonPressMask);
 
@@ -951,10 +946,6 @@ slowrect(FBIO *ifp, int xmin, int xmax, int ymin, int ymax)
 	iy = ymin + y/ifp->if_yzoom;
 	for (x = 0; x < sxlen; x++) {
 	    ix = xmin + x/ifp->if_xzoom;
-#if 0
-	    sx = sxmin + x;
-	    printf("S(%3d, %3d) <- I(%3d, %3d)\n", sx, sy, ix, iy);
-#endif
 	    pp = (RGBpixel *)&(XI(ifp)->mem[(iy*ifp->if_width+ix)*3]);
 	    scanbuf[x][RED] = (*pp)[RED];
 	    scanbuf[x][GRN] = (*pp)[GRN];

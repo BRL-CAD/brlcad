@@ -16,6 +16,6 @@ man_MANS = vdeck.1
 
 DEPENDS = src/librt
 
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = $(man_MANS) CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs

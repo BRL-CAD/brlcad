@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Factory.h
+/** @file step/Factory.h
  *
  * Class definition for STEP object "Factory".
  *

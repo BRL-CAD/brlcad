@@ -18,7 +18,7 @@
  * information.
  */
 /** @{ */
-/** @file brepintersect.cpp
+/** @file proc-db/brepintersect.cpp
  *
  * Until further notice this code is in a state of heavy flux as part of
  * GSoC 2009 as such it would be very foolish to write anything that

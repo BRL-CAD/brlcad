@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file VolumeContextDependentUnit.h
+/** @file step/VolumeContextDependentUnit.h
  *
  * Class definition used to convert STEP "VolumeContextDependentUnit" to BRL-CAD BREP
  * structures.

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ypr.c
+/** @file libged/ypr.c
  *
  * The ypr command.
  *
@@ -44,7 +44,7 @@ ged_ypr(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* return Viewrot as yaw, pitch and roll */
     if (argc == 1) {
@@ -54,18 +54,18 @@ ged_ypr(struct ged *gedp, int argc, const char *argv[])
 	anim_v_unpermute(mat);
 
 	if (anim_mat2ypr(pt, mat) == 2) {
-	    bu_vls_printf(&gedp->ged_result_str, "view %s - matrix is not a rotation matrix", argv[0]);
+	    bu_vls_printf(gedp->ged_result_str, "view %s - matrix is not a rotation matrix", argv[0]);
 	    return GED_ERROR;
 	}
 
 	VSCALE(pt, pt, bn_radtodeg);
-	bu_vls_printf(&gedp->ged_result_str, "%.12g %.12g %.12g", V3ARGS(pt));
+	bu_vls_printf(gedp->ged_result_str, "%.12g %.12g %.12g", V3ARGS(pt));
 
 	return GED_OK;
     }
 
     if (argc != 4) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: view %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: view %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -75,7 +75,7 @@ ged_ypr(struct ged *gedp, int argc, const char *argv[])
 	|| sscanf(argv[3], "%lf", ypr+2) != 1)
     {
 
-	bu_vls_printf(&gedp->ged_result_str, "view %s: bad value detected - %s %s %s",
+	bu_vls_printf(gedp->ged_result_str, "view %s: bad value detected - %s %s %s",
 		      argv[0], argv[1], argv[2], argv[3]);
 	return GED_ERROR;
     }
@@ -87,6 +87,7 @@ ged_ypr(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

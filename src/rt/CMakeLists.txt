@@ -206,7 +206,6 @@ SET(rt_ignore_files
 	ext.h
 	libfb-dummy.c
 	rad.h
-	rt.dsp
 	rtuif.h
 	scanline.h
 	viewdir.c

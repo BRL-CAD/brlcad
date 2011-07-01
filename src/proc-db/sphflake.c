@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sphflake.c
+/** @file proc-db/sphflake.c
  *
  * Program to create a sphere-flake utilizing libwdb
  *
@@ -38,12 +38,12 @@
 
 
 #define D2R(x) (((x)/180)*3.14159265358979)
-#define MATXPNT(d, m, v) { \
-  double _i = 1.0/((m)[12]*(v)[0] + (m)[13]*(v)[1] + (m)[14]*(v)[2] + (m)[15]*1); \
-	      (d)[0] = ((m)[0]*(v)[0] + (m)[1]*(v)[1] + (m)[2]*(v)[2] + (m)[3])*_i; \
-	      (d)[1] = ((m)[4]*(v)[0] + (m)[5]*(v)[1] + (m)[6]*(v)[2] + (m)[7])*_i; \
-	      (d)[2] = ((m)[8]*(v)[0] + (m)[9]*(v)[1] + (m)[10]*(v)[2] + (m)[11])*_i; \
-}
+#define MATXPNT(d, m, v) {						\
+	double _i = 1.0/((m)[12]*(v)[0] + (m)[13]*(v)[1] + (m)[14]*(v)[2] + (m)[15]*1); \
+	(d)[0] = ((m)[0]*(v)[0] + (m)[1]*(v)[1] + (m)[2]*(v)[2] + (m)[3])*_i; \
+	(d)[1] = ((m)[4]*(v)[0] + (m)[5]*(v)[1] + (m)[6]*(v)[2] + (m)[7])*_i; \
+	(d)[2] = ((m)[8]*(v)[0] + (m)[9]*(v)[1] + (m)[10]*(v)[2] + (m)[11])*_i; \
+    }
 
 
 #define DEFAULT_FILENAME "sflake.g"
@@ -117,17 +117,17 @@ int dir[9][2] = {  {0, -90},
 		   {360, -30} };
 
 /****** Function Prototypes ******/
-BU_EXTERN(void initializeInfo, (params_t *p, int inter, char *name, int depth));
-BU_EXTERN(void createSphereflake, (params_t *p));
-BU_EXTERN(void createLights, (params_t *p));
-BU_EXTERN(void createPlane, (params_t *p));
-BU_EXTERN(void createScene, (params_t *p));
-BU_EXTERN(void createEnvironMap, (params_t *p));
-BU_EXTERN(void getYRotMat, (mat_t *mat, fastf_t theta));
-BU_EXTERN(void getZRotMat, (mat_t *mat, fastf_t phi));
-BU_EXTERN(void getTrans, (mat_t *trans, int i, int j, fastf_t v));
-BU_EXTERN(void makeFlake, (int depth, mat_t *trans, point_t center, fastf_t radius, double delta, int maxDepth));
-BU_EXTERN(void usage, (char *n));
+extern void initializeInfo(params_t *p, int inter, char *name, int depth);
+extern void createSphereflake(params_t *p);
+extern void createLights(params_t *p);
+extern void createPlane(params_t *p);
+extern void createScene(params_t *p);
+extern void createEnvironMap(params_t *p);
+extern void getYRotMat(mat_t *mat, fastf_t theta);
+extern void getZRotMat(mat_t *mat, fastf_t phi);
+extern void getTrans(mat_t *trans, int i, int j, fastf_t v);
+extern void makeFlake(int depth, mat_t *trans, point_t center, fastf_t radius, double delta, int maxDepth);
+extern void usage(char *n);
 
 
 int main(int argc, char **argv)

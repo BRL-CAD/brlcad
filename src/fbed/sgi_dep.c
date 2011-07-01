@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sgi_dep.c
+/** @file fbed/sgi_dep.c
  *
  */
 

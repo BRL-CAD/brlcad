@@ -18,7 +18,7 @@
  * information.
  */
 /** @{ */
-/** @file brepintersect.h
+/** @file proc-db/brepintersect.h
  *
  */
 

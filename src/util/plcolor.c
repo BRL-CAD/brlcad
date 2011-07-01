@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file plcolor.c
+/** @file util/plcolor.c
  *
  * Output a color in UNIX plot format, for inclusion in a plot file.
  *

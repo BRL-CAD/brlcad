@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file AreaContextDependentUnit.cpp
+/** @file step/AreaContextDependentUnit.cpp
  *
  * Routines to convert STEP "AreaContextDependentUnit" to BRL-CAD BREP
  * structures.

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_camo.c
+/** @file liboptical/sh_camo.c
  *
  * A shader to apply a crude camoflage color pattern to an object
  * using a fractional Brownian motion of 3 colors
@@ -163,9 +163,12 @@ struct bu_structparse camo_parse[] = {
 };
 
 
-HIDDEN int marble_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), marble_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN int camo_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), camo_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void camo_print(register struct region *rp, char *dp), camo_free(char *cp);
+HIDDEN int marble_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int marble_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
+HIDDEN int camo_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int camo_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
+HIDDEN void camo_print(register struct region *rp, genptr_t dp);
+HIDDEN void camo_free(genptr_t cp);
 
 struct mfuncs camo_mfuncs[] = {
     {MF_MAGIC,	"camo",		0,		MFI_HIT,	0,
@@ -217,7 +220,7 @@ color_fix(register const struct bu_structparse *sdp, register const char *UNUSED
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-camo_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+camo_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -232,7 +235,7 @@ camo_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
     BU_CK_VLS(matparm);
     RT_CK_REGION(rp);
     BU_GETSTRUCT(camo_sp, camo_specific);
-    *dpp = (char *)camo_sp;
+    *dpp = camo_sp;
 
     if (rdebug&RDEBUG_SHADE) {
 	bu_log("camouflage parameters = '%s'\n", bu_vls_addr(matparm));
@@ -283,7 +286,7 @@ camo_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
  * C A M O _ P R I N T
  */
 HIDDEN void
-camo_print(register struct region *rp, char *dp)
+camo_print(register struct region *rp, genptr_t dp)
 {
     bu_struct_print(rp->reg_name, camo_print_tab, (char *)dp);
 }
@@ -293,7 +296,7 @@ camo_print(register struct region *rp, char *dp)
  * C A M O _ F R E E
  */
 HIDDEN void
-camo_free(char *cp)
+camo_free(genptr_t cp)
 {
     bu_free(cp, "camo_specific");
 }
@@ -306,7 +309,7 @@ camo_free(char *cp)
  * once for each hit point to be shaded.
  */
 int
-camo_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+camo_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
 {
     register struct camo_specific *camo_sp =
 	(struct camo_specific *)dp;
@@ -364,7 +367,7 @@ camo_render(struct application *ap, struct partition *pp, struct shadework *swp,
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-marble_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+marble_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -379,7 +382,7 @@ marble_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
     BU_CK_VLS(matparm);
     RT_CK_REGION(rp);
     BU_GETSTRUCT(camo_sp, camo_specific);
-    *dpp = (char *)camo_sp;
+    *dpp = camo_sp;
 
     if (rdebug&RDEBUG_SHADE) {
 	bu_log("marble parameters = '%s'\n", bu_vls_addr(matparm));
@@ -433,7 +436,7 @@ marble_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
  * once for each hit point to be shaded.
  */
 int
-marble_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+marble_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
 {
     register struct camo_specific *camo_sp =
 	(struct camo_specific *)dp;
@@ -460,13 +463,8 @@ marble_render(struct application *ap, struct partition *pp, struct shadework *sw
     val = bn_noise_turb(pt, camo_sp->noise_h_val,
 			camo_sp->noise_lacunarity, camo_sp->noise_octaves);
 
-#if 0
-    val *= 2.0;
-    CLAMP(val, 0.0, 1.0);
-#else
     val = sin(val*M_PI);
 
-#endif
     inv_val = 1.0 - val;
 
 #ifdef RT_MULTISPECTRAL

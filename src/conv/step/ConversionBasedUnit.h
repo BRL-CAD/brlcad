@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file SiUnit.h
+/** @file step/SiUnit.h
  *
  * Class definition used to convert STEP "SiUnit" to BRL-CAD BREP
  * structures.

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file try.h
+/** @file fbed/try.h
  *	Author:		Gary S. Moss
  */
 #define INCL_TRY

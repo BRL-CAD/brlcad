@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file RationalBSplineSurfaceWithKnots.cpp
+/** @file step/RationalBSplineSurfaceWithKnots.cpp
  *
  * Routines to convert STEP "RationalBSplineSurfaceWithKnots" to BRL-CAD BREP
  * structures.

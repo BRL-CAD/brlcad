@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file SiUnit.cpp
+/** @file step/SiUnit.cpp
  *
  * Routines to convert STEP "SiUnit" to BRL-CAD BREP
  * structures.

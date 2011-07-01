@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file translate_tgc.c
+/** @file libged/translate_tgc.c
  *
  * The translate_tgc command.
  *
@@ -46,76 +46,76 @@ _ged_translate_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *at
     VSCALE(tvec, tvec, gedp->ged_wdbp->dbip->dbi_local2base);
 
     switch (attribute[0]) {
-    case 'h':
-    case 'H':
-	switch (attribute[1]) {
-	case '\0':
-	    if (rflag) {
-		VADD2(hvec, tgc->h, tvec);
-	    } else {
-		VSUB2(hvec, tvec, tgc->v);
-	    }
-
-	    /* check for zero H vector */
-	    if (MAGNITUDE(hvec) <= SQRT_SMALL_FASTF) {
-		bu_vls_printf(&gedp->ged_result_str, "Zero H vector not allowed.");
-		return GED_ERROR;
-	    }
-
-	    VMOVE(tgc->h, hvec);
-
-	    /* have new height vector --  redefine rest of tgc */
-	    la = MAGNITUDE(tgc->a);
-	    lb = MAGNITUDE(tgc->b);
-	    lc = MAGNITUDE(tgc->c);
-	    ld = MAGNITUDE(tgc->d);
-
-	    /* find 2 perpendicular vectors normal to H for new A, B */
-	    bn_vec_perp(tgc->b, tgc->h);
-	    VCROSS(tgc->a, tgc->b, tgc->h);
-	    VUNITIZE(tgc->a);
-	    VUNITIZE(tgc->b);
-
-	    /* Create new C, D from unit length A, B, with previous len */
-	    VSCALE(tgc->c, tgc->a, lc);
-	    VSCALE(tgc->d, tgc->b, ld);
-
-	    /* Restore original vector lengths to A, B */
-	    VSCALE(tgc->a, tgc->a, la);
-	    VSCALE(tgc->b, tgc->b, lb);
-
-	    break;
 	case 'h':
 	case 'H':
-	    if (attribute[2] != '\0') {
-		bu_vls_printf(&gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-		return GED_ERROR;
-	    }
+	    switch (attribute[1]) {
+		case '\0':
+		    if (rflag) {
+			VADD2(hvec, tgc->h, tvec);
+		    } else {
+			VSUB2(hvec, tvec, tgc->v);
+		    }
 
-	    if (rflag) {
-		VADD2(hvec, tgc->h, tvec);
-	    } else {
-		VSUB2(hvec, tvec, tgc->v);
-	    }
+		    /* check for zero H vector */
+		    if (MAGNITUDE(hvec) <= SQRT_SMALL_FASTF) {
+			bu_vls_printf(gedp->ged_result_str, "Zero H vector not allowed.");
+			return GED_ERROR;
+		    }
 
-	    /* check for zero H vector */
-	    if (MAGNITUDE(hvec) <= SQRT_SMALL_FASTF) {
-		bu_vls_printf(&gedp->ged_result_str, "Zero H vector not allowed.");
-		return GED_ERROR;
-	    }
+		    VMOVE(tgc->h, hvec);
 
-	    VMOVE(tgc->h, hvec);
+		    /* have new height vector -- redefine rest of tgc */
+		    la = MAGNITUDE(tgc->a);
+		    lb = MAGNITUDE(tgc->b);
+		    lc = MAGNITUDE(tgc->c);
+		    ld = MAGNITUDE(tgc->d);
+
+		    /* find 2 perpendicular vectors normal to H for new A, B */
+		    bn_vec_perp(tgc->b, tgc->h);
+		    VCROSS(tgc->a, tgc->b, tgc->h);
+		    VUNITIZE(tgc->a);
+		    VUNITIZE(tgc->b);
+
+		    /* Create new C, D from unit length A, B, with previous len */
+		    VSCALE(tgc->c, tgc->a, lc);
+		    VSCALE(tgc->d, tgc->b, ld);
+
+		    /* Restore original vector lengths to A, B */
+		    VSCALE(tgc->a, tgc->a, la);
+		    VSCALE(tgc->b, tgc->b, lb);
+
+		    break;
+		case 'h':
+		case 'H':
+		    if (attribute[2] != '\0') {
+			bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
+			return GED_ERROR;
+		    }
+
+		    if (rflag) {
+			VADD2(hvec, tgc->h, tvec);
+		    } else {
+			VSUB2(hvec, tvec, tgc->v);
+		    }
+
+		    /* check for zero H vector */
+		    if (MAGNITUDE(hvec) <= SQRT_SMALL_FASTF) {
+			bu_vls_printf(gedp->ged_result_str, "Zero H vector not allowed.");
+			return GED_ERROR;
+		    }
+
+		    VMOVE(tgc->h, hvec);
+
+		    break;
+		default:
+		    bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
+		    return GED_ERROR;
+	    }
 
 	    break;
 	default:
-	    bu_vls_printf(&gedp->ged_result_str, "bad tgc attribute - %s", attribute);
+	    bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
 	    return GED_ERROR;
-	}
-
-	break;
-    default:
-	bu_vls_printf(&gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-	return GED_ERROR;
     }
 
     return GED_OK;

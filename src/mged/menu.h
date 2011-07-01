@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file menu.h
+/** @file mged/menu.h
  *
  * Each active menu is installed by haveing a non-null entry in
  * menu_array[] which is a pointer

@@ -10,8 +10,8 @@ SET(hv3_TCLSCRIPTS
 BRLCAD_ADDDATA(hv3_TCLSCRIPTS tclscripts/hv3)
 pkgIndex_BUILD(hv3 tclscripts/hv3)
 tclIndex_BUILD(hv3 tclscripts/hv3)
-install(FILES hv3.man DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_DATA_DIR}/doc)
-install(FILES tkhtml.n DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_MAN_DIR}/mann)
+install(FILES hv3.man DESTINATION ${DATA_DIR}/doc)
+install(FILES tkhtml.n DESTINATION ${MAN_DIR}/mann)
 SET(hv3_ignore_files
 	demo
 	hv3.man

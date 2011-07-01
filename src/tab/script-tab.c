@@ -268,7 +268,7 @@ struct command_tab rt_cmdtab[] = {
      cm_lookat_pt,	4, 5},
     {"viewrot", "4x4 matrix", "set view direction from matrix",
      cm_vrot,	17, 17},
-    {"orientation", "quaturnion", "set view direction from quaturnion",
+    {"orientation", "quaternion", "set view direction from quaturnion",
      cm_orientation,	5, 5},
     {"end", 	"", "end of frame setup, begin raytrace",
      cm_end,		1, 1},
@@ -312,9 +312,6 @@ main(int argc, char **argv)
      * called by rt_do_cmd().
      */
     while ((buf = rt_read_cmd(stdin)) != (char *)0) {
-#if 0
-	fprintf(stderr, "cmd: %s\n", buf);
-#endif
 	ret = rt_do_cmd(NULL, buf, rt_cmdtab);
 	if (ret < 0) {
 	    bu_log("Command failure on '%s'\n", buf);

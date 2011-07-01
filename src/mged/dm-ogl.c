@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dm-ogl.c
+/** @file mged/dm-ogl.c
  *
  * Routines specific to MGED's use of LIBDM's OpenGl display manager.
  *
@@ -29,12 +29,29 @@
 #include <math.h>
 #include <string.h>
 
+/* glx.h on Mac OS X (and perhaps elsewhere) defines a slew of
+ * parameter names that shadow system symbols.  protect the system
+ * symbols by redefining the parameters prior to header inclusion.
+ */
+#define j1 J1
+#define y1 Y1
+#define read rd
+#define index idx
+#define access acs
+#define remainder rem
 #ifdef HAVE_GL_GLX_H
 #  include <GL/glx.h>
 #endif
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
 #endif
+#undef remainder
+#undef access
+#undef index
+#undef read
+#undef y1
+#undef j1
+
 #ifdef HAVE_GL_DEVICE_H
 #  include <gl/device.h>
 #endif

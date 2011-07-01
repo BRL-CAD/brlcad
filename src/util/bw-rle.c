@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bw-rle.c
+/** @file util/bw-rle.c
  *
  * Encode a .bw file using the Utah Raster Toolkit RLE library
  *

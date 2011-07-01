@@ -224488,12 +224488,22 @@ EOF
     exit 1
 fi
 mv shaders.rt shaders.rt.orig
-sed "s,^rt,$RT -P 1 -B -U 1," < shaders.rt.orig > shaders.rt
+
+# use our RT instead of searching PATH
+sed "s,^rt,$RT," < shaders.rt.orig > shaders.rt
+
 rm shaders.rt.orig
 chmod 775 shaders.rt
 echo 'rendering shaders...'
-# the script 'shaders' creates shaders.rt.log
-./shaders.rt
+
+# NOTICE: -P1 and -B are required because the 25th shader (top-right
+# corner ellipsoid) is a random transparency shader.  that shader
+# pulls values from a random number generator for each pixel so the
+# render must run single-threaded in order to obtain a repeatably
+# matching sequence.
+
+./shaders.rt -B -U 1 -P 1
+# the script creates shaders.rt.log
 
 # determine the behavior of tail
 case "x`echo 'tail' | tail -n 1 2>&1`" in

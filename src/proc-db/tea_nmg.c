@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tea_nmg.c
+/** @file proc-db/tea_nmg.c
  *
  * Convert the Utah Teapot description from the IEEE CG&A database to
  * the BRL-CAD t-NURBS NMG format. (Note that this has the closed
@@ -153,12 +153,7 @@ dump_patch(int (*patch)[4])
     lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
     NMG_CK_LOOPUSE(lu);
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-#if 0
-	nmg_edge_g_cnurb(eu, 2, 0, (fastf_t *)NULL, 2 ,
-			 pt_type, (fastf_t *)NULL);
-#else
 	nmg_edge_g_cnurb_plinear(eu);
-#endif
     }
     nmg_face_bb(fu->f_p, &tol);
 }

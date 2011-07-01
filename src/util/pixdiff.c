@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixdiff.c
+/** @file util/pixdiff.c
  *
  * Compute the difference between two .pix files.  To establish
  * context, a half-intensity monochrome image is produced when there

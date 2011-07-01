@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file plot.c
+/** @file mged/plot.c
  *
  * Provide UNIX-plot output of the current view.
  *

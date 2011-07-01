@@ -19,7 +19,7 @@
  */
 /** @addtogroup libged */
 /** @{ */
-/** @file ged.c
+/** @file libged/ged.c
  *
  * A quasi-object-oriented database interface.
  *
@@ -50,6 +50,7 @@
 #include "solid.h"
 
 #include "./ged_private.h"
+#include "./qray.h"
 
 
 /* FIXME: this function should not exist.  passing pointers as strings
@@ -70,52 +71,24 @@ ged_decode_dbip(const char *dbip_string, struct db_i **dbipp)
 
 
 void
-ged_drawable_close(struct ged_drawable *gdp)
-{
-    if (gdp == GED_DRAWABLE_NULL)
-	return;
-
-    ged_free_qray(gdp);
-    bu_free((genptr_t)gdp, "struct ged_drawable");
-}
-
-
-void
 ged_close(struct ged *gedp)
 {
     if (gedp == GED_NULL)
 	return;
 
-    wdb_close(gedp->ged_wdbp);
-    gedp->ged_wdbp = RT_WDB_NULL;
-
-    ged_drawable_close(gedp->ged_gdp);
-    gedp->ged_gdp = GED_DRAWABLE_NULL;
-
-    ged_free(gedp);
-}
-
-
-void
-ged_drawable_init(struct ged_drawable *gdp)
-{
-    if (gdp == GED_DRAWABLE_NULL)
-	return;
-
-    if (BU_LIST_UNINITIALIZED(&_FreeSolid.l)) {
-	BU_LIST_INIT(&_FreeSolid.l);
+    if (gedp->ged_wdbp) {
+	wdb_close(gedp->ged_wdbp);
+	gedp->ged_wdbp = RT_WDB_NULL;
     }
 
-    BU_LIST_INIT(&gdp->gd_headDisplay);
-    BU_LIST_INIT(&gdp->gd_headVDraw);
-#if 0
-    BU_LIST_INIT(&gdp->gd_observers.l);
-#endif
-    BU_LIST_INIT(&gdp->gd_headRunRt.l);
+    if (gedp->ged_gdp != GED_DRAWABLE_NULL) {
+	qray_free(gedp->ged_gdp);
+	bu_free((genptr_t)gedp->ged_gdp, "struct ged_drawable");
+	gedp->ged_gdp = GED_DRAWABLE_NULL;
+    }
 
-    gdp->gd_freeSolids = &_FreeSolid;
-    gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
-    ged_init_qray(gdp);
+    ged_free(gedp);
+    bu_free((genptr_t)gedp, "struct ged");
 }
 
 
@@ -128,10 +101,22 @@ ged_free(struct ged *gedp)
     gedp->ged_wdbp = RT_WDB_NULL;
     gedp->ged_gdp = GED_DRAWABLE_NULL;
 
-    bu_vls_free(&gedp->ged_log);
-    bu_vls_free(&gedp->ged_result_str);
+    if (gedp->ged_log) {
+	bu_vls_free(gedp->ged_log);
+	bu_free(gedp->ged_log, "release ged_log");
+	gedp->ged_log = NULL; /* sanity */
+    }
 
-    bu_free((genptr_t)gedp, "struct ged");
+    if (gedp->ged_result_str) {
+	bu_vls_free(gedp->ged_result_str);
+	bu_free(gedp->ged_result_str, "release ged_result_str");
+	gedp->ged_result_str = NULL; /* sanity */
+    }
+
+    if (gedp->ged_gdp) {
+	bu_free(gedp->ged_gdp, "release ged_gdp");
+	gedp->ged_gdp = NULL; /* sanity */
+    }
 }
 
 
@@ -141,14 +126,39 @@ ged_init(struct ged *gedp)
     if (gedp == GED_NULL)
 	return;
 
-    bu_vls_init(&gedp->ged_log);
-    bu_vls_init(&gedp->ged_result_str);
+    BU_LIST_INIT(&gedp->l);
+    gedp->ged_wdbp = RT_WDB_NULL;
 
-    bu_vls_extend(&gedp->ged_log, 1);
-    bu_vls_extend(&gedp->ged_result_str, 1);
+    BU_GETSTRUCT(gedp->ged_log, bu_vls);
+    bu_vls_init(gedp->ged_log);
+
+    BU_GETSTRUCT(gedp->ged_result_str, bu_vls);
+    bu_vls_init(gedp->ged_result_str);
 
     BU_GETSTRUCT(gedp->ged_gdp, ged_drawable);
-    ged_drawable_init(gedp->ged_gdp);
+    BU_LIST_INIT(&gedp->ged_gdp->gd_headDisplay);
+    BU_LIST_INIT(&gedp->ged_gdp->gd_headVDraw);
+    BU_LIST_INIT(&gedp->ged_gdp->gd_headRunRt.l);
+
+    /* yuck */
+    if (!BU_LIST_IS_INITIALIZED(&_FreeSolid.l)) {
+	BU_LIST_INIT(&_FreeSolid.l);
+    }
+
+    gedp->ged_gdp->gd_freeSolids = &_FreeSolid;
+    gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
+    qray_init(gedp->ged_gdp);
+
+    /* (in)sanity */
+    gedp->ged_gvp = NULL;
+    gedp->ged_fbsp = NULL;
+    gedp->ged_dmp = NULL;
+    gedp->ged_refresh_clientdata = NULL;
+    gedp->ged_refresh_handler = NULL;
+    gedp->ged_output_handler = NULL;
+    gedp->ged_output_script = NULL;
+    gedp->ged_internal_call = 0;
+
 }
 
 
@@ -232,11 +242,8 @@ ged_view_init(struct ged_view *gvp)
     VSET(gvp->gv_view_scale.gos_text_color, 255, 255, 255);
 
     /* FIXME: this causes the shaders.sh regression to fail */
-#if 0
-    _ged_mat_aet(gvp);
-#else
     /* _ged_mat_aet(gvp); */
-#endif
+
     ged_view_update(gvp);
 }
 
@@ -392,82 +399,82 @@ _ged_print_node(struct ged *gedp,
 
     /* cflag = don't show shapes, so return if this is not a combination */
     if (cflag && !(dp->d_flags & RT_DIR_COMB)) {
-		return;
+	return;
     }
 
     /* need another string for aflag */
     if (aflag)
-      bu_vls_init(&tmp_str);
+	bu_vls_init(&tmp_str);
 
     /* set up spacing from the left margin */
     for (i = 0; i < pathpos; i++) {
 	if (indentSize < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "\t");
-            if (aflag)
-              bu_vls_printf(&tmp_str, "\t");
+	    bu_vls_printf(gedp->ged_result_str, "\t");
+	    if (aflag)
+		bu_vls_printf(&tmp_str, "\t");
 
 	} else {
 	    int j;
 	    for (j = 0; j < indentSize; j++) {
-		bu_vls_printf(&gedp->ged_result_str, " ");
-                if (aflag)
-                  bu_vls_printf(&tmp_str, " ");
+		bu_vls_printf(gedp->ged_result_str, " ");
+		if (aflag)
+		    bu_vls_printf(&tmp_str, " ");
 	    }
 	}
     }
 
     /* add the prefix if desired */
     if (prefix) {
-	bu_vls_printf(&gedp->ged_result_str, "%c ", prefix);
-        if (aflag)
-          bu_vls_printf(&tmp_str, " ");
+	bu_vls_printf(gedp->ged_result_str, "%c ", prefix);
+	if (aflag)
+	    bu_vls_printf(&tmp_str, " ");
     }
 
     /* now the object name */
-    bu_vls_printf(&gedp->ged_result_str, "%s", dp->d_namep);
+    bu_vls_printf(gedp->ged_result_str, "%s", dp->d_namep);
 
     /* suffix name if appropriate */
     /* Output Comb and Region flags (-F?) */
     if (dp->d_flags & RT_DIR_COMB)
-	bu_vls_printf(&gedp->ged_result_str, "/");
+	bu_vls_printf(gedp->ged_result_str, "/");
     if (dp->d_flags & RT_DIR_REGION)
-	bu_vls_printf(&gedp->ged_result_str, "R");
+	bu_vls_printf(gedp->ged_result_str, "R");
 
-    bu_vls_printf(&gedp->ged_result_str, "\n");
+    bu_vls_printf(gedp->ged_result_str, "\n");
 
     /* output attributes if any and if desired */
     if (aflag) {
-      struct bu_attribute_value_set avs;
-      bu_avs_init_empty(&avs);
-      if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
-	bu_vls_printf(&gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-	/* need a bombing macro or set an error code here: return GED_ERROR; */
-        bu_vls_free(&tmp_str);
-        return;
-      }
+	struct bu_attribute_value_set avs;
+	bu_avs_init_empty(&avs);
+	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	    bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
+	    /* need a bombing macro or set an error code here: return GED_ERROR; */
+	    bu_vls_free(&tmp_str);
+	    return;
+	}
 
-      /* list all the attributes, if any */
-      if (avs.count) {
-        struct bu_attribute_value_pair *avpp;
-        int max_attr_name_len = 0;
+	/* list all the attributes, if any */
+	if (avs.count) {
+	    struct bu_attribute_value_pair *avpp;
+	    int max_attr_name_len = 0;
 
-        /* sort attribute-value set array by attribute name */
-        qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr);
+	    /* sort attribute-value set array by attribute name */
+	    qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr);
 
-        for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
-          int len = (int)strlen(avpp->name);
-          if (len > max_attr_name_len) {
-            max_attr_name_len = len;
-          }
-        }
-        for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
-          bu_vls_printf(&gedp->ged_result_str, "%s       @ %-*.*s    %s\n",
-                        tmp_str.vls_str,
-                        max_attr_name_len, max_attr_name_len,
-                        avpp->name, avpp->value);
-        }
-      }
-      bu_vls_free(&tmp_str);
+	    for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
+		int len = (int)strlen(avpp->name);
+		if (len > max_attr_name_len) {
+		    max_attr_name_len = len;
+		}
+	    }
+	    for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
+		bu_vls_printf(gedp->ged_result_str, "%s       @ %-*.*s    %s\n",
+			      tmp_str.vls_str,
+			      max_attr_name_len, max_attr_name_len,
+			      avpp->name, avpp->value);
+	    }
+	}
+	bu_vls_free(&tmp_str);
     }
 
     if (!(dp->d_flags & RT_DIR_COMB))
@@ -479,7 +486,7 @@ _ged_print_node(struct ged *gedp,
      */
 
     if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
+	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	return;
     }
     comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -492,7 +499,7 @@ _ged_print_node(struct ged *gedp,
 	if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
 	    db_non_union_push(comb->tree, &rt_uniresource);
 	    if (db_ck_v4gift_tree(comb->tree) < 0) {
-		bu_vls_printf(&gedp->ged_result_str, "Cannot flatten tree for listing");
+		bu_vls_printf(gedp->ged_result_str, "Cannot flatten tree for listing");
 		return;
 	    }
 	}
@@ -532,10 +539,10 @@ _ged_print_node(struct ged *gedp,
 		size_t j;
 
 		for (j=0; j<pathpos+1; j++)
-		    bu_vls_printf(&gedp->ged_result_str, "\t");
+		    bu_vls_printf(gedp->ged_result_str, "\t");
 
-		bu_vls_printf(&gedp->ged_result_str, "%c ", op);
-		bu_vls_printf(&gedp->ged_result_str, "%s\n", rt_tree_array[i].tl_tree->tr_l.tl_name);
+		bu_vls_printf(gedp->ged_result_str, "%c ", op);
+		bu_vls_printf(gedp->ged_result_str, "%s\n", rt_tree_array[i].tl_tree->tr_l.tl_name);
 	    } else {
 		if (currdisplayDepth < displayDepth) {
 		    _ged_print_node(gedp, nextdp, pathpos+1, indentSize, op, flags, displayDepth, currdisplayDepth+1);

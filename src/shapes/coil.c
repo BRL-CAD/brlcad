@@ -18,7 +18,7 @@
  * information.
  */
 
-/** @file coil.c
+/** @file shapes/coil.c
  *
  * Coil Generator
  *

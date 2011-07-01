@@ -173,7 +173,30 @@ endif
 
 EXTRA_DIST = \
 	boost \
-	togl
+	byacc \
+	flex \
+	m4 \
+	togl \
+	CMakeLists.txt \
+	itcl.dist \
+	itk.dist \
+	iwidgets.dist \
+	jove.dist \
+	libpng.dist \
+	libregex.dist \
+	libtermlib.dist \
+	libutahrle.dist \
+	libz.dist \
+	openNURBS.dist \
+	step.dist \
+	tcl.dist \
+	tk.dist \
+	tkhtml.dist \
+	tkpng.dist \
+	tktable.dist \
+	togl.dist \
+	URToolkit.dist
+
 
 # FIXME: need to only traverse tcl/tk if configured
 DIST_SUBDIRS = \

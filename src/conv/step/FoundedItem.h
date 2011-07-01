@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file FoundedItem.h
+/** @file step/FoundedItem.h
  *
  * Class definition used to convert STEP "FoundedItem" to BRL-CAD BREP
  * structures.

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixrect.c
+/** @file util/pixrect.c
  *
  * Remove a portion of a potentially huge pix file.
  *
@@ -173,11 +173,6 @@ get_args(int argc, char **argv)
 	    return 0;
 	}
     }
-
-#if 0
-    if (argc > ++bu_optind)
-	fprintf(stderr, "pixrect: excess argument(s) ignored\n");
-#endif
 
     return 1;		/* OK */
 }

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file killrefs.c
+/** @file libged/killrefs.c
  *
  * The killrefs command.
  *
@@ -36,12 +36,12 @@
 int
 ged_killrefs(struct ged *gedp, int argc, const char *argv[])
 {
-    int		k;
-    struct directory	*dp;
-    struct rt_db_internal	intern;
-    struct rt_comb_internal	*comb;
-    int				nflag;
-    int				ret;
+    int k;
+    struct directory *dp;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
+    int nflag;
+    int ret;
     static const char *usage = "[-n] object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -51,12 +51,12 @@ ged_killrefs(struct ged *gedp, int argc, const char *argv[])
 
     if (!gedp->ged_internal_call) {
 	/* initialize result */
-	bu_vls_trunc(&gedp->ged_result_str, 0);
+	bu_vls_trunc(gedp->ged_result_str, 0);
     }
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -76,11 +76,11 @@ ged_killrefs(struct ged *gedp, int argc, const char *argv[])
     ret = GED_OK;
 
     FOR_ALL_DIRECTORY_START(dp, gedp->ged_wdbp->dbip) {
-	if ( !(dp->d_flags & RT_DIR_COMB) )
+	if (!(dp->d_flags & RT_DIR_COMB))
 	    continue;
 
 	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "rt_db_get_internal(%s) failure", dp->d_namep);
+	    bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal(%s) failure", dp->d_namep);
 	    ret = GED_ERROR;
 	    continue;
 	}
@@ -88,7 +88,7 @@ ged_killrefs(struct ged *gedp, int argc, const char *argv[])
 	RT_CK_COMB(comb);
 
 	for (k=1; k<argc; k++) {
-	    int	code;
+	    int code;
 
 	    code = db_tree_del_dbleaf(&(comb->tree), argv[k], &rt_uniresource, nflag);
 	    if (code == -1)
@@ -96,18 +96,18 @@ ged_killrefs(struct ged *gedp, int argc, const char *argv[])
 	    if (code == -2)
 		continue;	/* empty tree */
 	    if (code < 0) {
-		bu_vls_printf(&gedp->ged_result_str, "  ERROR_deleting %s/%s\n", dp->d_namep, argv[k]);
+		bu_vls_printf(gedp->ged_result_str, "ERROR: Failure deleting %s/%s\n", dp->d_namep, argv[k]);
 		ret = GED_ERROR;
 	    } else {
 		if (nflag)
-		    bu_vls_printf(&gedp->ged_result_str, "%s ", dp->d_namep);
+		    bu_vls_printf(gedp->ged_result_str, "%s ", dp->d_namep);
 		else
-		    bu_vls_printf(&gedp->ged_result_str, "deleted %s/%s\n", dp->d_namep, argv[k]);
+		    bu_vls_printf(gedp->ged_result_str, "deleted %s/%s\n", dp->d_namep, argv[k]);
 	    }
 	}
 
 	if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "ERROR: Unable to write new combination into database.\n");
+	    bu_vls_printf(gedp->ged_result_str, "ERROR: Unable to write new combination into database.\n");
 	    ret = GED_ERROR;
 	    continue;
 	}

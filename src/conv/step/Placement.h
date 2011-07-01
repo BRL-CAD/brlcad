@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Placement.h
+/** @file step/Placement.h
  *
  * Class definition used to convert STEP "Placement" to BRL-CAD BREP
  * structures.

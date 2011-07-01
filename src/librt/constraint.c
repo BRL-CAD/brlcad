@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file constraint.c
+/** @file librt/constraint.c
  *
  * Various functions associated with constraint object database I/O
  *
@@ -99,7 +99,7 @@ rt_constraint_export5(
     /*RT_CONSTRAINT_CK_MAGIC(cip);*/
     constraint = *cip;
 
-    BU_INIT_EXTERNAL(ep);
+    BU_EXTERNAL_INIT(ep);
 
     bu_vls_init(&str);
     bu_vls_struct_print(&str, rt_constraint_parse, (char *) &constraint);

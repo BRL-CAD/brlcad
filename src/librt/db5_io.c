@@ -19,7 +19,7 @@
  */
 /** @addtogroup db5 */
 /** @{ */
-/** @file db5_io.c
+/** @file librt/db5_io.c
  *
  * Handle import/export and IO of v5 database objects.
  *
@@ -305,9 +305,9 @@ db5_get_raw_internal_ptr(struct db5_raw_internal *rip, const unsigned char *ip)
 	return NULL;
     }
 
-    BU_INIT_EXTERNAL(&rip->name);
-    BU_INIT_EXTERNAL(&rip->body);
-    BU_INIT_EXTERNAL(&rip->attributes);
+    BU_EXTERNAL_INIT(&rip->name);
+    BU_EXTERNAL_INIT(&rip->body);
+    BU_EXTERNAL_INIT(&rip->attributes);
 
     /* Grab name, if present */
     if (rip->h_name_present) {
@@ -414,9 +414,9 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 	return -2;
     }
 
-    BU_INIT_EXTERNAL(&rip->name);
-    BU_INIT_EXTERNAL(&rip->body);
-    BU_INIT_EXTERNAL(&rip->attributes);
+    BU_EXTERNAL_INIT(&rip->name);
+    BU_EXTERNAL_INIT(&rip->body);
+    BU_EXTERNAL_INIT(&rip->attributes);
 
     /* Grab name, if present */
     if (rip->h_name_present) {
@@ -520,7 +520,7 @@ db5_export_object3(
     need += 8;	/* pad and magic2 */
 
     /* Allocate the buffer for the combined external representation */
-    BU_INIT_EXTERNAL(out);
+    BU_EXTERNAL_INIT(out);
     out->ext_buf = bu_malloc(need, "external object3");
     out->ext_nbytes = need;		/* will be trimmed, below */
 
@@ -727,9 +727,9 @@ rt_db_cvt_to_external5(
     RT_CK_RESOURCE(resp);
     
     /* prepare output */
-    BU_INIT_EXTERNAL(ext);
-    BU_INIT_EXTERNAL(&body);
-    BU_INIT_EXTERNAL(&attributes);
+    BU_EXTERNAL_INIT(ext);
+    BU_EXTERNAL_INIT(&body);
+    BU_EXTERNAL_INIT(&attributes);
 
     minor = ip->idb_type;	/* XXX not necessarily v5 numbers. */
 
@@ -795,7 +795,7 @@ db_wrap_v5_external(struct bu_external *ep, const char *name)
 	 * as new external object is constructed.
 	 */
 	tmp = *ep;		/* struct copy */
-	BU_INIT_EXTERNAL(ep);
+	BU_EXTERNAL_INIT(ep);
 
 	db5_export_object3(ep,
 			   DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
@@ -917,7 +917,7 @@ rt_db_put_internal5(
     RT_CK_RESOURCE(resp);
     BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
 
-    BU_INIT_EXTERNAL(&ext);
+    BU_EXTERNAL_INIT(&ext);
     if (rt_db_cvt_to_external5(&ext, dp->d_namep, ip, 1.0, dbip, resp, major) < 0) {
 	bu_log("rt_db_put_internal5(%s):  export failure\n",
 	       dp->d_namep);
@@ -1091,8 +1091,8 @@ rt_db_get_internal5(
     struct bu_external ext;
     int ret;
 
-    BU_INIT_EXTERNAL(&ext);
-    RT_INIT_DB_INTERNAL(ip);
+    BU_EXTERNAL_INIT(&ext);
+    RT_DB_INTERNAL_INIT(ip);
 
     BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
 
@@ -1185,7 +1185,7 @@ db5_get_attributes(const struct db_i *dbip, struct bu_attribute_value_set *avs, 
 
     RT_CK_DIR(dp);
 
-    BU_INIT_EXTERNAL(&ext);
+    BU_EXTERNAL_INIT(&ext);
 
     if (db_get_external(&ext, dp, dbip) < 0)
 	return -1;		/* FAIL */

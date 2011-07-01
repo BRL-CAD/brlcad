@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixbustup.c
+/** @file util/pixbustup.c
  *
  * Take concatenated .pix files, and write them into individual files.
  * Mostly a holdover from the days when RT wrote animations into one

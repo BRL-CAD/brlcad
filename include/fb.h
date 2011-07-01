@@ -28,6 +28,8 @@
 #ifndef __FB_H__
 #define __FB_H__
 
+#include "common.h"
+
 #include <stdlib.h>
 
 /*

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file whatid.c
+/** @file libged/whatid.c
  *
  * The whatid command.
  *
@@ -36,25 +36,25 @@
 int
 ged_whatid(struct ged *gedp, int argc, const char *argv[])
 {
-    struct directory	*dp;
-    struct rt_db_internal	intern;
-    struct rt_comb_internal	*comb;
+    struct directory *dp;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
     static const char *usage = "region";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -63,7 +63,7 @@ ged_whatid(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
 
     if (!(dp->d_flags & RT_DIR_REGION)) {
-	bu_vls_printf(&gedp->ged_result_str, "%s is not a region", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s is not a region", argv[1]);
 	return GED_ERROR;
     }
 
@@ -71,7 +71,7 @@ ged_whatid(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 
-    bu_vls_printf(&gedp->ged_result_str, "%d", comb->region_id);
+    bu_vls_printf(gedp->ged_result_str, "%d", comb->region_id);
     rt_db_free_internal(&intern);
 
     return GED_OK;

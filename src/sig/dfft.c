@@ -189,12 +189,14 @@ fftdisp(double *dat, int N)
 	    printf("%g %g\n", i/(double)N, mags[i]);
 	}
     } else {
+
 #if 0
 	/* normalize dB range from 0 to 1 */
 	value = (dB/mindB) + 1.0;
 	if (value < 0) value = 0;
 	else if (value > 1.0) value = 1.0;
 #endif
+
 	ret = fwrite(mags, sizeof(*mags), N/2, stdout);
 	if (ret != (size_t)(N/2))
 	    perror("fwrite");
@@ -219,14 +221,7 @@ fftmag2(double *mags, double *dat, int N)
     mags[N/2] = dat[N/2]*dat[N/2];
 
 
-    if (linear_output) {
-#if 0
-	for (i = 0; i <= N/2; i++) {
-	    mags[i] = sqrt(mags[i]);	/*XXX?*/
-	}
-#endif
-	;
-    } else {
+    if (!linear_output) {
 	/* Log output */
 	for (i = 0; i <= N/2; i++) {
 	    value = mags[i];

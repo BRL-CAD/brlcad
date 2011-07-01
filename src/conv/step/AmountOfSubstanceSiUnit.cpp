@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file AmountOfSubstanceSiUnit.cpp
+/** @file step/AmountOfSubstanceSiUnit.cpp
  *
  * Routines to convert STEP "AmountOfSubstanceSiUnit" to BRL-CAD BREP
  * structures.

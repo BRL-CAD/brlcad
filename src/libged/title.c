@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file title.c
+/** @file libged/title.c
  *
  * The title command.
  *
@@ -42,11 +42,11 @@ ged_title(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* get title */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%s", gedp->ged_wdbp->dbip->dbi_title);
+	bu_vls_printf(gedp->ged_result_str, "%s", gedp->ged_wdbp->dbip->dbi_title);
 	return GED_OK;
     }
 
@@ -58,7 +58,7 @@ ged_title(struct ged *gedp, int argc, const char *argv[])
 
     if (db_update_ident(gedp->ged_wdbp->dbip, bu_vls_addr(&title), gedp->ged_wdbp->dbip->dbi_local2base) < 0) {
 	bu_vls_free(&title);
-	bu_vls_printf(&gedp->ged_result_str, "Error: unable to change database title");
+	bu_vls_printf(gedp->ged_result_str, "Error: unable to change database title");
 	return GED_ERROR;
     }
 

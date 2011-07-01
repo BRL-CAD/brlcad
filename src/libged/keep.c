@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file keep.c
+/** @file libged/keep.c
  *
  * The keep command.
  *
@@ -39,6 +39,7 @@ struct keep_node_data {
     struct ged *gedp;
 };
 
+
 /*
  * Supports for the 'keep' method.
  * Write each node encountered exactly once.
@@ -55,7 +56,7 @@ node_write(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 	return;		/* already written */
 
     if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0) {
-	bu_vls_printf(&kndp->gedp->ged_result_str, "Database read error, aborting\n");
+	bu_vls_printf(kndp->gedp->ged_result_str, "Database read error, aborting\n");
 	return;
     }
 
@@ -87,7 +88,7 @@ node_write(struct db_i *dbip, struct directory *dp, genptr_t ptr)
     }
 
     if (wdb_put_internal(kndp->wdbp, dp->d_namep, &intern, 1.0) < 0) {
-	bu_vls_printf(&kndp->gedp->ged_result_str, "Database write error, aborting\n");
+	bu_vls_printf(kndp->gedp->ged_result_str, "Database write error, aborting\n");
 	return;
     }
 }
@@ -112,11 +113,11 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmd, usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
 	return GED_HELP;
     }
 
@@ -129,7 +130,7 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
 		flag_R = 1;
 		break;
 	    default:
-		bu_vls_printf(&gedp->ged_result_str, "Unrecognized option - %c", c);
+		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", c);
 		return GED_ERROR;
 	}
     }
@@ -138,8 +139,8 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
     argv += bu_optind;
 
     if (argc < 2) {
-	bu_vls_printf(&gedp->ged_result_str, "ERROR: missing file or object names\n");
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", cmd, usage);
+	bu_vls_printf(gedp->ged_result_str, "ERROR: missing file or object names\n");
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
 	return GED_ERROR;
     }
 
@@ -155,16 +156,16 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
 
     if (new_dbip != DBI_NULL) {
 	if (db_version(new_dbip) != db_version(gedp->ged_wdbp->dbip)) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: File format mismatch between '%s' and '%s'\n",
+	    bu_vls_printf(gedp->ged_result_str, "%s: File format mismatch between '%s' and '%s'\n",
 			  cmd, argv[0], gedp->ged_wdbp->dbip->dbi_filename);
 	    return GED_ERROR;
 	}
 
 	if ((keepfp = wdb_dbopen(new_dbip, RT_WDB_TYPE_DB_DISK)) == NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s:  Error opening '%s'\n", cmd, argv[0]);
+	    bu_vls_printf(gedp->ged_result_str, "%s:  Error opening '%s'\n", cmd, argv[0]);
 	    return GED_ERROR;
 	} else {
-	    bu_vls_printf(&gedp->ged_result_str, "%s:  Appending to '%s'\n", cmd, argv[0]);
+	    bu_vls_printf(gedp->ged_result_str, "%s:  Appending to '%s'\n", cmd, argv[0]);
 
 	    /* --- Scan geometry database and build in-memory directory --- */
 	    db_dirbuild(new_dbip);
@@ -191,7 +192,7 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
 
     if (db_update_ident(keepfp->dbip, bu_vls_addr(&title), gedp->ged_wdbp->dbip->dbi_local2base) < 0) {
 	perror("fwrite");
-	bu_vls_printf(&gedp->ged_result_str, "db_update_ident() failed\n");
+	bu_vls_printf(gedp->ged_result_str, "db_update_ident() failed\n");
 	wdb_close(keepfp);
 	bu_vls_free(&title);
 	return GED_ERROR;
@@ -214,6 +215,7 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
     wdb_close(keepfp);
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

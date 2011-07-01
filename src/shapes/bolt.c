@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bolt.c
+/** @file shapes/bolt.c
  *
  * Program to make a bolt using libwdb.  The objects will be in mm.
  *

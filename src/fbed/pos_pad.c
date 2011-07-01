@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pos_pad.c
+/** @file fbed/pos_pad.c
  *
  */
 

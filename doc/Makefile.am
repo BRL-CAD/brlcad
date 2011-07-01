@@ -228,7 +228,8 @@ EXTRA_DIST = \
 	$(documentation_DATA) \
 	$(man_MANS) \
 	STARTERS \
-	pad_file.xml.in
+	pad_file.xml.in \
+	CMakeLists.txt
 
 DISTCLEANFILES = \
 	pad_file.xml

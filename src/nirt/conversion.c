@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file conversion.c
+/** @file nirt/conversion.c
  *
  * handle ae/direction/grid conversions
  *

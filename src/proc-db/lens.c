@@ -18,7 +18,7 @@
  * information.
  */
 
-/** @file lens.c
+/** @file proc-db/lens.c
  *
  * Lens Generator
  *

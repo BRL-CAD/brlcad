@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pmodel2view.c
+/** @file libged/pmodel2view.c
  *
  * The pmodel2view command.
  *
@@ -40,15 +40,15 @@ ged_pmodel2view(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* get the pmodel2view matrix */
     if (argc == 1) {
-	bn_encode_mat(&gedp->ged_result_str, gedp->ged_gvp->gv_pmodel2view);
+	bn_encode_mat(gedp->ged_result_str, gedp->ged_gvp->gv_pmodel2view);
 	return GED_OK;
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
     return GED_ERROR;
 }
 

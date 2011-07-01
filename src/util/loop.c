@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file loop.c
+/** @file util/loop.c
  *
  * Simple program to output integers or floats or chars between
  * "start" and "finish", inclusive.  Default is an increment of +1 if

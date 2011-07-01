@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged.h
+/** @file mged/mged.h
  *
  * This file contains all of the definitions local to MGED
  *
@@ -222,14 +222,14 @@ extern void ellipse();
 extern void mged_view_callback(struct ged_view *gvp, genptr_t clientData);
 
 /* buttons.c */
-BU_EXTERN(void button, (int bnum));
-BU_EXTERN(void press, (char *str));
-BU_EXTERN(char *label_button, (int bnum));
-BU_EXTERN(int not_state, (int desired, char *str));
-BU_EXTERN(int chg_state, (int from, int to, char *str));
-BU_EXTERN(void state_err, (char *str));
+extern void button(int bnum);
+extern void press(char *str);
+extern char *label_button(int bnum);
+extern int not_state(int desired, char *str);
+extern int chg_state(int from, int to, char *str);
+extern void state_err(char *str);
 
-BU_EXTERN(int invoke_db_wrapper, (Tcl_Interp *interpreter, int argc, const char *argv[]));
+extern int invoke_db_wrapper(Tcl_Interp *interpreter, int argc, const char *argv[]);
 
 /* history.c */
 void history_record(struct bu_vls *cmdp, struct timeval *start, struct timeval *finish, int status); /* Either CMD_OK or CMD_BAD */
@@ -273,26 +273,26 @@ extern char *state_str[]; /* identifying strings */
 
 /* Cloned mged macros for use in Tcl/Tk */
 #define TCL_READ_ERR {\
-	  Tcl_AppendResult(INTERP, "Database read error, aborting\n", (char *)NULL);\
-	}
+	Tcl_AppendResult(INTERP, "Database read error, aborting\n", (char *)NULL);\
+    }
 
 #define TCL_READ_ERR_return {\
-	  TCL_READ_ERR;\
-	  return TCL_ERROR;\
-	}
+	TCL_READ_ERR;\
+	return TCL_ERROR;\
+    }
 
 #define TCL_WRITE_ERR { \
-	  Tcl_AppendResult(INTERP, "Database write error, aborting.\n", (char *)NULL);\
-	  TCL_ERROR_RECOVERY_SUGGESTION; }
+	Tcl_AppendResult(INTERP, "Database write error, aborting.\n", (char *)NULL);\
+	TCL_ERROR_RECOVERY_SUGGESTION; }
 
 #define TCL_WRITE_ERR_return { \
-	  TCL_WRITE_ERR; \
-	  return TCL_ERROR; }
+	TCL_WRITE_ERR; \
+	return TCL_ERROR; }
 
 #define TCL_ALLOC_ERR { \
-	  Tcl_AppendResult(INTERP, "\
+	Tcl_AppendResult(INTERP, "\
 An error has occured while adding a new object to the database.\n", (char *)NULL); \
-	  TCL_ERROR_RECOVERY_SUGGESTION; }
+	TCL_ERROR_RECOVERY_SUGGESTION; }
 
 #define TCL_ALLOC_ERR_return { \
 	TCL_ALLOC_ERR; \
@@ -301,7 +301,7 @@ An error has occured while adding a new object to the database.\n", (char *)NULL
 /* For errors from db_delete() or db_dirdelete() */
 #define TCL_DELETE_ERR(_name) { \
 	Tcl_AppendResult(INTERP, "An error has occurred while deleting '", _name, \
-	"' from the database.\n", (char *)NULL);\
+			 "' from the database.\n", (char *)NULL);\
 	TCL_ERROR_RECOVERY_SUGGESTION; }
 
 #define TCL_DELETE_ERR_return(_name) {  \
@@ -310,7 +310,7 @@ An error has occured while adding a new object to the database.\n", (char *)NULL
 
 /* A verbose message to attempt to soothe and advise the user */
 #define TCL_ERROR_RECOVERY_SUGGESTION\
-	Tcl_AppendResult(INTERP, "\
+    Tcl_AppendResult(INTERP, "\
 The in-memory table of contents may not match the status of the on-disk\n\
 database.  The on-disk database should still be intact.  For safety, \n\
 you should exit MGED now, and resolve the I/O problem, before continuing.\n", (char *)NULL)
@@ -364,24 +364,24 @@ An error has occurred while deleting '%s' from the database.\n", _name); \
 
 /* A verbose message to attempt to soothe and advise the user */
 #define ERROR_RECOVERY_SUGGESTION	\
-	(void)printf("\
+    (void)printf("\
 The in-memory table of contents may not match the status of the on-disk\n\
 database.  The on-disk database should still be intact.  For safety, \n\
 you should exit MGED now, and resolve the I/O problem, before continuing.\n")
 
 /* Check if database pointer is NULL */
 #define CHECK_DBI_NULL \
-	if (dbip == DBI_NULL) { \
-		Tcl_AppendResult(INTERP, "A database is not open!\n", (char *)NULL); \
-		return TCL_ERROR; \
-	}
+    if (dbip == DBI_NULL) { \
+	Tcl_AppendResult(INTERP, "A database is not open!\n", (char *)NULL); \
+	return TCL_ERROR; \
+    }
 
 /* Check if the database is read only, and if so return TCL_ERROR */
 #define CHECK_READ_ONLY	\
-	if (dbip->dbi_read_only) { \
-		Tcl_AppendResult(INTERP, "Sorry, this database is READ-ONLY\n", (char *)NULL); \
-		return TCL_ERROR; \
-	}
+    if (dbip->dbi_read_only) { \
+	Tcl_AppendResult(INTERP, "Sorry, this database is READ-ONLY\n", (char *)NULL); \
+	return TCL_ERROR; \
+    }
 
 
 #define FUNTAB_UNLIMITED -1

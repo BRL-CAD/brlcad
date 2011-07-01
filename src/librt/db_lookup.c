@@ -19,7 +19,7 @@
  */
 /** @addtogroup dbio */
 /** @{ */
-/** @file db_lookup.c
+/** @file librt/db_lookup.c
  *
  * v4/v5 database directory routines
  *
@@ -279,7 +279,7 @@ db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flag
     RT_CK_DBI(dbip);
 
     if (RT_G_DEBUG&DEBUG_DB) {
-	bu_log("db_diradd(dbip=0x%x, name='%s', addr=0x%x, len=%d, flags=0x%x, ptr=0x%x)\n",
+	bu_log("db_diradd(dbip=0x%x, name='%s', addr=0x%x, len=%zu, flags=0x%x, ptr=0x%x)\n",
 	       dbip, name, laddr, len, flags, ptr);
     }
 
@@ -475,7 +475,7 @@ db_pr_dir(const struct db_i *dbip)
 		flags = "COM";
 	    else
 		flags = "Bad";
-	    bu_log("x%.8x %s %s=x%.8x len=%.5d use=%.2d nref=%.2d %s",
+	    bu_log("x%.8x %s %s=x%.8x len=%.5zu use=%.2d nref=%.2d %s",
 		   dp,
 		   flags,
 		   dp->d_flags & RT_DIR_INMEM ? "  ptr " : "d_addr",

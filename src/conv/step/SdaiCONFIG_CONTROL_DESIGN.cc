@@ -1979,22 +1979,22 @@ SCLP23(Select)& SdaiCharacterized_product_definition::operator =( const SCLP23(S
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiCharacterized_product_definition::IsProduct_definition() const
+Logical SdaiCharacterized_product_definition::IsProduct_definition() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_product_definition )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiCharacterized_product_definition::IsProduct_definition_relationship() const
+Logical SdaiCharacterized_product_definition::IsProduct_definition_relationship() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_product_definition_relationship )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiCharacterized_product_definition
@@ -2441,7 +2441,7 @@ SdaiShape_definition::relating_shape_aspect_ (const SdaiShape_aspect_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SCLLOG(Logical)
+const Logical
 SdaiShape_definition::product_definitional_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect )
@@ -2449,12 +2449,12 @@ SdaiShape_definition::product_definitional_() const
 	return ((SdaiShape_aspect_ptr) _app_inst) ->product_definitional_();
    std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
-   return (SCLLOG(Logical)) 0;
+   return (Logical) 0;
 }
 
 
 void
-SdaiShape_definition::product_definitional_ (const SCLLOG(Logical) x)
+SdaiShape_definition::product_definitional_ (const Logical x)
 
 {
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect )
@@ -2675,31 +2675,31 @@ SCLP23(Select)& SdaiShape_definition::operator =( const SCLP23(Select)& o )
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiShape_definition::IsProduct_definition_shape() const
+Logical SdaiShape_definition::IsProduct_definition_shape() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_product_definition_shape )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiShape_definition::IsShape_aspect() const
+Logical SdaiShape_definition::IsShape_aspect() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_shape_aspect )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiShape_definition::IsShape_aspect_relationship() const
+Logical SdaiShape_definition::IsShape_aspect_relationship() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_shape_aspect_relationship )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiShape_definition
@@ -3074,22 +3074,22 @@ SCLP23(Select)& SdaiCharacterized_definition::operator =( const SCLP23(Select)& 
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiCharacterized_definition::IsCharacterized_product_definition() const
+Logical SdaiCharacterized_definition::IsCharacterized_product_definition() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designt_characterized_product_definition )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiCharacterized_definition::IsShape_definition() const
+Logical SdaiCharacterized_definition::IsShape_definition() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designt_shape_definition )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiCharacterized_definition
@@ -3482,13 +3482,13 @@ SCLP23(Select)& SdaiChange_request_item::operator =( const SCLP23(Select)& o )
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiChange_request_item::IsProduct_definition_formation() const
+Logical SdaiChange_request_item::IsProduct_definition_formation() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiChange_request_item
@@ -4095,7 +4095,7 @@ SdaiReversible_topology_item::cfs_faces_ (const EntityAggregate_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SCLBOOL(Boolean)
+const Boolean
 SdaiReversible_topology_item::orientation_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_face_bound )
@@ -4103,12 +4103,12 @@ SdaiReversible_topology_item::orientation_() const
 	return ((SdaiFace_bound_ptr) _app_inst) ->orientation_();
    std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
-   return (SCLBOOL(Boolean)) 0;
+   return (Boolean) 0;
 }
 
 
 void
-SdaiReversible_topology_item::orientation_ (const SCLBOOL(Boolean) x)
+SdaiReversible_topology_item::orientation_ (const Boolean x)
 
 {
   if( CurrentUnderlyingType () == config_control_designe_face_bound )
@@ -4429,58 +4429,58 @@ SCLP23(Select)& SdaiReversible_topology_item::operator =( const SCLP23(Select)& 
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiReversible_topology_item::IsEdge() const
+Logical SdaiReversible_topology_item::IsEdge() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_edge )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiReversible_topology_item::IsPath() const
+Logical SdaiReversible_topology_item::IsPath() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_path )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiReversible_topology_item::IsFace() const
+Logical SdaiReversible_topology_item::IsFace() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_face )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiReversible_topology_item::IsFace_bound() const
+Logical SdaiReversible_topology_item::IsFace_bound() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_face_bound )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiReversible_topology_item::IsClosed_shell() const
+Logical SdaiReversible_topology_item::IsClosed_shell() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_closed_shell )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiReversible_topology_item::IsOpen_shell() const
+Logical SdaiReversible_topology_item::IsOpen_shell() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_open_shell )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiReversible_topology_item
@@ -4997,22 +4997,22 @@ SCLP23(Select)& SdaiAxis2_placement::operator =( const SCLP23(Select)& o )
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiAxis2_placement::IsAxis2_placement_2d() const
+Logical SdaiAxis2_placement::IsAxis2_placement_2d() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_axis2_placement_2d )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiAxis2_placement::IsAxis2_placement_3d() const
+Logical SdaiAxis2_placement::IsAxis2_placement_3d() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_axis2_placement_3d )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiAxis2_placement
@@ -5343,7 +5343,7 @@ SdaiSpecified_item::operator SdaiShape_aspect_ptr()
 
 	//  part 3
 
-const SCLLOG(Logical)
+const Logical
 SdaiSpecified_item::product_definitional_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect )
@@ -5351,12 +5351,12 @@ SdaiSpecified_item::product_definitional_() const
 	return ((SdaiShape_aspect_ptr) _app_inst) ->product_definitional_();
    std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
-   return (SCLLOG(Logical)) 0;
+   return (Logical) 0;
 }
 
 
 void
-SdaiSpecified_item::product_definitional_ (const SCLLOG(Logical) x)
+SdaiSpecified_item::product_definitional_ (const Logical x)
 
 {
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect )
@@ -5597,22 +5597,22 @@ SCLP23(Select)& SdaiSpecified_item::operator =( const SCLP23(Select)& o )
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiSpecified_item::IsProduct_definition() const
+Logical SdaiSpecified_item::IsProduct_definition() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_product_definition )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiSpecified_item::IsShape_aspect() const
+Logical SdaiSpecified_item::IsShape_aspect() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_shape_aspect )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiSpecified_item
@@ -6168,112 +6168,112 @@ SCLP23(Select)& SdaiMeasure_value::operator =( const SCLP23(Select)& o )
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiMeasure_value::IsLength_measure() const
+Logical SdaiMeasure_value::IsLength_measure() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designt_length_measure )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiMeasure_value::IsMass_measure() const
+Logical SdaiMeasure_value::IsMass_measure() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designt_mass_measure )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiMeasure_value::IsPlane_angle_measure() const
+Logical SdaiMeasure_value::IsPlane_angle_measure() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designt_plane_angle_measure )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiMeasure_value::IsSolid_angle_measure() const
+Logical SdaiMeasure_value::IsSolid_angle_measure() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designt_solid_angle_measure )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiMeasure_value::IsArea_measure() const
+Logical SdaiMeasure_value::IsArea_measure() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designt_area_measure )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiMeasure_value::IsVolume_measure() const
+Logical SdaiMeasure_value::IsVolume_measure() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designt_volume_measure )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiMeasure_value::IsParameter_value() const
+Logical SdaiMeasure_value::IsParameter_value() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designt_parameter_value )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiMeasure_value::IsContext_dependent_measure() const
+Logical SdaiMeasure_value::IsContext_dependent_measure() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designt_context_dependent_measure )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiMeasure_value::IsDescriptive_measure() const
+Logical SdaiMeasure_value::IsDescriptive_measure() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designt_descriptive_measure )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiMeasure_value::IsPositive_length_measure() const
+Logical SdaiMeasure_value::IsPositive_length_measure() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designt_positive_length_measure )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiMeasure_value::IsPositive_plane_angle_measure() const
+Logical SdaiMeasure_value::IsPositive_plane_angle_measure() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designt_positive_plane_angle_measure )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiMeasure_value::IsCount_measure() const
+Logical SdaiMeasure_value::IsCount_measure() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designt_count_measure )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 
@@ -7021,31 +7021,31 @@ SCLP23(Select)& SdaiPerson_organization_select::operator =( const SCLP23(Select)
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiPerson_organization_select::IsPerson() const
+Logical SdaiPerson_organization_select::IsPerson() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_person )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiPerson_organization_select::IsOrganization() const
+Logical SdaiPerson_organization_select::IsOrganization() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_organization )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiPerson_organization_select::IsPerson_and_organization() const
+Logical SdaiPerson_organization_select::IsPerson_and_organization() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_person_and_organization )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiPerson_organization_select
@@ -7518,22 +7518,22 @@ SCLP23(Select)& SdaiPcurve_or_surface::operator =( const SCLP23(Select)& o )
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiPcurve_or_surface::IsPcurve() const
+Logical SdaiPcurve_or_surface::IsPcurve() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_pcurve )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiPcurve_or_surface::IsSurface() const
+Logical SdaiPcurve_or_surface::IsSurface() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_surface )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiPcurve_or_surface
@@ -8126,22 +8126,22 @@ SCLP23(Select)& SdaiClassified_item::operator =( const SCLP23(Select)& o )
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiClassified_item::IsProduct_definition_formation() const
+Logical SdaiClassified_item::IsProduct_definition_formation() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiClassified_item::IsAssembly_component_usage() const
+Logical SdaiClassified_item::IsAssembly_component_usage() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_assembly_component_usage )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiClassified_item
@@ -8550,22 +8550,22 @@ SCLP23(Select)& SdaiFounded_item_select::operator =( const SCLP23(Select)& o )
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiFounded_item_select::IsFounded_item() const
+Logical SdaiFounded_item_select::IsFounded_item() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_founded_item )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiFounded_item_select::IsRepresentation_item() const
+Logical SdaiFounded_item_select::IsRepresentation_item() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_representation_item )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiFounded_item_select
@@ -9066,22 +9066,22 @@ SCLP23(Select)& SdaiVector_or_direction::operator =( const SCLP23(Select)& o )
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiVector_or_direction::IsVector() const
+Logical SdaiVector_or_direction::IsVector() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_vector )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiVector_or_direction::IsDirection() const
+Logical SdaiVector_or_direction::IsDirection() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_direction )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiVector_or_direction
@@ -9554,22 +9554,22 @@ SCLP23(Select)& SdaiWireframe_model::operator =( const SCLP23(Select)& o )
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiWireframe_model::IsShell_based_wireframe_model() const
+Logical SdaiWireframe_model::IsShell_based_wireframe_model() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_shell_based_wireframe_model )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiWireframe_model::IsEdge_based_wireframe_model() const
+Logical SdaiWireframe_model::IsEdge_based_wireframe_model() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_edge_based_wireframe_model )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiWireframe_model
@@ -10066,31 +10066,31 @@ SCLP23(Select)& SdaiGeometric_set_select::operator =( const SCLP23(Select)& o )
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiGeometric_set_select::IsPoint() const
+Logical SdaiGeometric_set_select::IsPoint() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_point )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiGeometric_set_select::IsCurve() const
+Logical SdaiGeometric_set_select::IsCurve() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_curve )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiGeometric_set_select::IsSurface() const
+Logical SdaiGeometric_set_select::IsSurface() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_surface )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiGeometric_set_select
@@ -10483,13 +10483,13 @@ SCLP23(Select)& SdaiStart_request_item::operator =( const SCLP23(Select)& o )
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiStart_request_item::IsProduct_definition_formation() const
+Logical SdaiStart_request_item::IsProduct_definition_formation() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiStart_request_item
@@ -11931,94 +11931,94 @@ SCLP23(Select)& SdaiPerson_organization_item::operator =( const SCLP23(Select)& 
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiPerson_organization_item::IsChange() const
+Logical SdaiPerson_organization_item::IsChange() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_change )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiPerson_organization_item::IsStart_work() const
+Logical SdaiPerson_organization_item::IsStart_work() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_start_work )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiPerson_organization_item::IsChange_request() const
+Logical SdaiPerson_organization_item::IsChange_request() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_change_request )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiPerson_organization_item::IsStart_request() const
+Logical SdaiPerson_organization_item::IsStart_request() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_start_request )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiPerson_organization_item::IsConfiguration_item() const
+Logical SdaiPerson_organization_item::IsConfiguration_item() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_configuration_item )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiPerson_organization_item::IsProduct() const
+Logical SdaiPerson_organization_item::IsProduct() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_product )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiPerson_organization_item::IsProduct_definition_formation() const
+Logical SdaiPerson_organization_item::IsProduct_definition_formation() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiPerson_organization_item::IsProduct_definition() const
+Logical SdaiPerson_organization_item::IsProduct_definition() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_product_definition )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiPerson_organization_item::IsContract() const
+Logical SdaiPerson_organization_item::IsContract() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_contract )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiPerson_organization_item::IsSecurity_classification() const
+Logical SdaiPerson_organization_item::IsSecurity_classification() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_security_classification )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiPerson_organization_item
@@ -13355,85 +13355,85 @@ SCLP23(Select)& SdaiDate_time_item::operator =( const SCLP23(Select)& o )
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiDate_time_item::IsProduct_definition() const
+Logical SdaiDate_time_item::IsProduct_definition() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_product_definition )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiDate_time_item::IsChange_request() const
+Logical SdaiDate_time_item::IsChange_request() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_change_request )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiDate_time_item::IsStart_request() const
+Logical SdaiDate_time_item::IsStart_request() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_start_request )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiDate_time_item::IsChange() const
+Logical SdaiDate_time_item::IsChange() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_change )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiDate_time_item::IsStart_work() const
+Logical SdaiDate_time_item::IsStart_work() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_start_work )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiDate_time_item::IsApproval_person_organization() const
+Logical SdaiDate_time_item::IsApproval_person_organization() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_approval_person_organization )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiDate_time_item::IsContract() const
+Logical SdaiDate_time_item::IsContract() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_contract )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiDate_time_item::IsSecurity_classification() const
+Logical SdaiDate_time_item::IsSecurity_classification() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_security_classification )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiDate_time_item::IsCertification() const
+Logical SdaiDate_time_item::IsCertification() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_certification )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiDate_time_item
@@ -14102,40 +14102,40 @@ SCLP23(Select)& SdaiShell::operator =( const SCLP23(Select)& o )
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiShell::IsVertex_shell() const
+Logical SdaiShell::IsVertex_shell() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_vertex_shell )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiShell::IsWire_shell() const
+Logical SdaiShell::IsWire_shell() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_wire_shell )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiShell::IsOpen_shell() const
+Logical SdaiShell::IsOpen_shell() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_open_shell )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiShell::IsClosed_shell() const
+Logical SdaiShell::IsClosed_shell() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_closed_shell )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiShell
@@ -14644,22 +14644,22 @@ SCLP23(Select)& SdaiTransformation::operator =( const SCLP23(Select)& o )
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiTransformation::IsItem_defined_transformation() const
+Logical SdaiTransformation::IsItem_defined_transformation() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_item_defined_transformation )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiTransformation::IsFunctionally_defined_transformation() const
+Logical SdaiTransformation::IsFunctionally_defined_transformation() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_functionally_defined_transformation )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiTransformation
@@ -14996,13 +14996,13 @@ SCLP23(Select)& SdaiBoolean_operand::operator =( const SCLP23(Select)& o )
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiBoolean_operand::IsSolid_model() const
+Logical SdaiBoolean_operand::IsSolid_model() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_solid_model )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiBoolean_operand
@@ -15451,13 +15451,13 @@ SCLP23(Select)& SdaiCertified_item::operator =( const SCLP23(Select)& o )
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiCertified_item::IsSupplied_part_relationship() const
+Logical SdaiCertified_item::IsSupplied_part_relationship() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_supplied_part_relationship )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiCertified_item
@@ -16106,31 +16106,31 @@ SCLP23(Select)& SdaiDate_time_select::operator =( const SCLP23(Select)& o )
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiDate_time_select::IsDate() const
+Logical SdaiDate_time_select::IsDate() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_date )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiDate_time_select::IsLocal_time() const
+Logical SdaiDate_time_select::IsLocal_time() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_local_time )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiDate_time_select::IsDate_and_time() const
+Logical SdaiDate_time_select::IsDate_and_time() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_date_and_time )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiDate_time_select
@@ -16521,7 +16521,7 @@ SdaiCurve_on_surface::operator SdaiComposite_curve_on_surface_ptr()
 
 	//  part 3
 
-const SCLLOG(Logical)
+const Logical
 SdaiCurve_on_surface::self_intersect_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_composite_curve_on_surface )
@@ -16529,12 +16529,12 @@ SdaiCurve_on_surface::self_intersect_() const
 	return ((SdaiComposite_curve_on_surface_ptr) _app_inst) ->self_intersect_();
    std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
-   return (SCLLOG(Logical)) 0;
+   return (Logical) 0;
 }
 
 
 void
-SdaiCurve_on_surface::self_intersect_ (const SCLLOG(Logical) x)
+SdaiCurve_on_surface::self_intersect_ (const Logical x)
 
 {
   if( CurrentUnderlyingType () == config_control_designe_composite_curve_on_surface )
@@ -16827,31 +16827,31 @@ SCLP23(Select)& SdaiCurve_on_surface::operator =( const SCLP23(Select)& o )
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiCurve_on_surface::IsPcurve() const
+Logical SdaiCurve_on_surface::IsPcurve() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_pcurve )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiCurve_on_surface::IsSurface_curve() const
+Logical SdaiCurve_on_surface::IsSurface_curve() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_surface_curve )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiCurve_on_surface::IsComposite_curve_on_surface() const
+Logical SdaiCurve_on_surface::IsComposite_curve_on_surface() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_composite_curve_on_surface )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiCurve_on_surface
@@ -17276,22 +17276,22 @@ SCLP23(Select)& SdaiTrimming_select::operator =( const SCLP23(Select)& o )
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiTrimming_select::IsCartesian_point() const
+Logical SdaiTrimming_select::IsCartesian_point() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_cartesian_point )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiTrimming_select::IsParameter_value() const
+Logical SdaiTrimming_select::IsParameter_value() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designt_parameter_value )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiTrimming_select
@@ -17684,13 +17684,13 @@ SCLP23(Select)& SdaiContracted_item::operator =( const SCLP23(Select)& o )
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiContracted_item::IsProduct_definition_formation() const
+Logical SdaiContracted_item::IsProduct_definition_formation() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiContracted_item
@@ -18027,13 +18027,13 @@ SCLP23(Select)& SdaiUnit::operator =( const SCLP23(Select)& o )
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiUnit::IsNamed_unit() const
+Logical SdaiUnit::IsNamed_unit() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_named_unit )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiUnit
@@ -18428,31 +18428,31 @@ SCLP23(Select)& SdaiReversible_topology::operator =( const SCLP23(Select)& o )
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiReversible_topology::IsReversible_topology_item() const
+Logical SdaiReversible_topology::IsReversible_topology_item() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designt_reversible_topology_item )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiReversible_topology::IsList_of_reversible_topology_item() const
+Logical SdaiReversible_topology::IsList_of_reversible_topology_item() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designt_list_of_reversible_topology_item )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiReversible_topology::IsSet_of_reversible_topology_item() const
+Logical SdaiReversible_topology::IsSet_of_reversible_topology_item() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designt_set_of_reversible_topology_item )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 
@@ -18852,13 +18852,13 @@ SCLP23(Select)& SdaiWork_item::operator =( const SCLP23(Select)& o )
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiWork_item::IsProduct_definition_formation() const
+Logical SdaiWork_item::IsProduct_definition_formation() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiWork_item
@@ -19567,31 +19567,31 @@ SCLP23(Select)& SdaiSupported_item::operator =( const SCLP23(Select)& o )
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiSupported_item::IsAction_directive() const
+Logical SdaiSupported_item::IsAction_directive() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_action_directive )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiSupported_item::IsAction() const
+Logical SdaiSupported_item::IsAction() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_action )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiSupported_item::IsAction_method() const
+Logical SdaiSupported_item::IsAction_method() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_action_method )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiSupported_item
@@ -21156,103 +21156,103 @@ SCLP23(Select)& SdaiApproved_item::operator =( const SCLP23(Select)& o )
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiApproved_item::IsProduct_definition_formation() const
+Logical SdaiApproved_item::IsProduct_definition_formation() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiApproved_item::IsProduct_definition() const
+Logical SdaiApproved_item::IsProduct_definition() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_product_definition )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiApproved_item::IsConfiguration_effectivity() const
+Logical SdaiApproved_item::IsConfiguration_effectivity() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_configuration_effectivity )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiApproved_item::IsConfiguration_item() const
+Logical SdaiApproved_item::IsConfiguration_item() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_configuration_item )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiApproved_item::IsSecurity_classification() const
+Logical SdaiApproved_item::IsSecurity_classification() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_security_classification )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiApproved_item::IsChange_request() const
+Logical SdaiApproved_item::IsChange_request() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_change_request )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiApproved_item::IsChange() const
+Logical SdaiApproved_item::IsChange() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_change )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiApproved_item::IsStart_request() const
+Logical SdaiApproved_item::IsStart_request() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_start_request )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiApproved_item::IsStart_work() const
+Logical SdaiApproved_item::IsStart_work() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_start_work )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiApproved_item::IsCertification() const
+Logical SdaiApproved_item::IsCertification() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_certification )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
-SCLLOG(Logical) SdaiApproved_item::IsContract() const
+Logical SdaiApproved_item::IsContract() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_contract )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiApproved_item
@@ -21617,13 +21617,13 @@ SCLP23(Select)& SdaiSurface_model::operator =( const SCLP23(Select)& o )
 #endif
 
 	//  part 5
-SCLLOG(Logical) SdaiSurface_model::IsShell_based_surface_model() const
+Logical SdaiSurface_model::IsShell_based_surface_model() const
 {
    if( !exists() )
-      return SCLLOG(LUnknown);
+      return LUnknown;
    if( CurrentUnderlyingType () == config_control_designe_shell_based_surface_model )
-      return SCLLOG(LTrue);
-   return SCLLOG(LFalse);
+      return LTrue;
+   return LFalse;
 }
 
 //////////  END SELECT TYPE SdaiSurface_model
@@ -25523,14 +25523,14 @@ SdaiOffset_surface::distance_ (const SdaiLength_measure x)
     _distance = x;
 }
 
-const SCLLOG(Logical)
+const Logical
 SdaiOffset_surface::self_intersect_() const
 {
-    return (SCLLOG(Logical)) _self_intersect;
+    return (Logical) _self_intersect;
 }
 
 void
-SdaiOffset_surface::self_intersect_ (const SCLLOG(Logical) x)
+SdaiOffset_surface::self_intersect_ (const Logical x)
 
 {
     _self_intersect.put (x);
@@ -27647,40 +27647,40 @@ SdaiB_spline_surface::surface_form_ (const SdaiB_spline_surface_form_var x)
     _surface_form.put (x);
 }
 
-const SCLLOG(Logical)
+const Logical
 SdaiB_spline_surface::u_closed_() const
 {
-    return (SCLLOG(Logical)) _u_closed;
+    return (Logical) _u_closed;
 }
 
 void
-SdaiB_spline_surface::u_closed_ (const SCLLOG(Logical) x)
+SdaiB_spline_surface::u_closed_ (const Logical x)
 
 {
     _u_closed.put (x);
 }
 
-const SCLLOG(Logical)
+const Logical
 SdaiB_spline_surface::v_closed_() const
 {
-    return (SCLLOG(Logical)) _v_closed;
+    return (Logical) _v_closed;
 }
 
 void
-SdaiB_spline_surface::v_closed_ (const SCLLOG(Logical) x)
+SdaiB_spline_surface::v_closed_ (const Logical x)
 
 {
     _v_closed.put (x);
 }
 
-const SCLLOG(Logical)
+const Logical
 SdaiB_spline_surface::self_intersect_() const
 {
-    return (SCLLOG(Logical)) _self_intersect;
+    return (Logical) _self_intersect;
 }
 
 void
-SdaiB_spline_surface::self_intersect_ (const SCLLOG(Logical) x)
+SdaiB_spline_surface::self_intersect_ (const Logical x)
 
 {
     _self_intersect.put (x);
@@ -28355,27 +28355,27 @@ SdaiB_spline_curve::curve_form_ (const SdaiB_spline_curve_form_var x)
     _curve_form.put (x);
 }
 
-const SCLLOG(Logical)
+const Logical
 SdaiB_spline_curve::closed_curve_() const
 {
-    return (SCLLOG(Logical)) _closed_curve;
+    return (Logical) _closed_curve;
 }
 
 void
-SdaiB_spline_curve::closed_curve_ (const SCLLOG(Logical) x)
+SdaiB_spline_curve::closed_curve_ (const Logical x)
 
 {
     _closed_curve.put (x);
 }
 
-const SCLLOG(Logical)
+const Logical
 SdaiB_spline_curve::self_intersect_() const
 {
-    return (SCLLOG(Logical)) _self_intersect;
+    return (Logical) _self_intersect;
 }
 
 void
-SdaiB_spline_curve::self_intersect_ (const SCLLOG(Logical) x)
+SdaiB_spline_curve::self_intersect_ (const Logical x)
 
 {
     _self_intersect.put (x);
@@ -28879,14 +28879,14 @@ SdaiFace_bound::bound_ (const SdaiLoop_ptr x)
     _bound = x;
 }
 
-const SCLBOOL(Boolean)
+const Boolean
 SdaiFace_bound::orientation_() const
 {
-    return (SCLBOOL(Boolean)) _orientation;
+    return (Boolean) _orientation;
 }
 
 void
-SdaiFace_bound::orientation_ (const SCLBOOL(Boolean) x)
+SdaiFace_bound::orientation_ (const Boolean x)
 
 {
     _orientation.put (x);
@@ -29693,14 +29693,14 @@ SdaiOriented_edge::edge_element_ (const SdaiEdge_ptr x)
     _edge_element = x;
 }
 
-const SCLBOOL(Boolean)
+const Boolean
 SdaiOriented_edge::orientation_() const
 {
-    return (SCLBOOL(Boolean)) _orientation;
+    return (Boolean) _orientation;
 }
 
 void
-SdaiOriented_edge::orientation_ (const SCLBOOL(Boolean) x)
+SdaiOriented_edge::orientation_ (const Boolean x)
 
 {
     _orientation.put (x);
@@ -31602,14 +31602,14 @@ SdaiOffset_curve_3d::distance_ (const SdaiLength_measure x)
     _distance = x;
 }
 
-const SCLLOG(Logical)
+const Logical
 SdaiOffset_curve_3d::self_intersect_() const
 {
-    return (SCLLOG(Logical)) _self_intersect;
+    return (Logical) _self_intersect;
 }
 
 void
-SdaiOffset_curve_3d::self_intersect_ (const SCLLOG(Logical) x)
+SdaiOffset_curve_3d::self_intersect_ (const Logical x)
 
 {
     _self_intersect.put (x);
@@ -31953,14 +31953,14 @@ SdaiComposite_curve::segments_ (const EntityAggregate_ptr x)
 
 	{ _segments.ShallowCopy (*x); }
 
-const SCLLOG(Logical)
+const Logical
 SdaiComposite_curve::self_intersect_() const
 {
-    return (SCLLOG(Logical)) _self_intersect;
+    return (Logical) _self_intersect;
 }
 
 void
-SdaiComposite_curve::self_intersect_ (const SCLLOG(Logical) x)
+SdaiComposite_curve::self_intersect_ (const Logical x)
 
 {
     _self_intersect.put (x);
@@ -35363,14 +35363,14 @@ SdaiOriented_open_shell::open_shell_element_ (const SdaiOpen_shell_ptr x)
     _open_shell_element = x;
 }
 
-const SCLBOOL(Boolean)
+const Boolean
 SdaiOriented_open_shell::orientation_() const
 {
-    return (SCLBOOL(Boolean)) _orientation;
+    return (Boolean) _orientation;
 }
 
 void
-SdaiOriented_open_shell::orientation_ (const SCLBOOL(Boolean) x)
+SdaiOriented_open_shell::orientation_ (const Boolean x)
 
 {
     _orientation.put (x);
@@ -36574,14 +36574,14 @@ SdaiComposite_curve_segment::transition_ (const SdaiTransition_code_var x)
     _transition.put (x);
 }
 
-const SCLBOOL(Boolean)
+const Boolean
 SdaiComposite_curve_segment::same_sense_() const
 {
-    return (SCLBOOL(Boolean)) _same_sense;
+    return (Boolean) _same_sense;
 }
 
 void
-SdaiComposite_curve_segment::same_sense_ (const SCLBOOL(Boolean) x)
+SdaiComposite_curve_segment::same_sense_ (const Boolean x)
 
 {
     _same_sense.put (x);
@@ -41007,14 +41007,14 @@ SdaiTrimmed_curve::trim_2_ (const SdaiTrimming_selects_ptr x)
 
 	{ _trim_2.ShallowCopy (*x); }
 
-const SCLBOOL(Boolean)
+const Boolean
 SdaiTrimmed_curve::sense_agreement_() const
 {
-    return (SCLBOOL(Boolean)) _sense_agreement;
+    return (Boolean) _sense_agreement;
 }
 
 void
-SdaiTrimmed_curve::sense_agreement_ (const SCLBOOL(Boolean) x)
+SdaiTrimmed_curve::sense_agreement_ (const Boolean x)
 
 {
     _sense_agreement.put (x);
@@ -44907,14 +44907,14 @@ SdaiDegenerate_toroidal_surface::SdaiDegenerate_toroidal_surface (SCLP23(Applica
     MakeDerived ("dim");
 }
 
-const SCLBOOL(Boolean)
+const Boolean
 SdaiDegenerate_toroidal_surface::select_outer_() const
 {
-    return (SCLBOOL(Boolean)) _select_outer;
+    return (Boolean) _select_outer;
 }
 
 void
-SdaiDegenerate_toroidal_surface::select_outer_ (const SCLBOOL(Boolean) x)
+SdaiDegenerate_toroidal_surface::select_outer_ (const Boolean x)
 
 {
     _select_outer.put (x);
@@ -46085,14 +46085,14 @@ SdaiFace_surface::face_geometry_ (const SdaiSurface_ptr x)
     _face_geometry = x;
 }
 
-const SCLBOOL(Boolean)
+const Boolean
 SdaiFace_surface::same_sense_() const
 {
-    return (SCLBOOL(Boolean)) _same_sense;
+    return (Boolean) _same_sense;
 }
 
 void
-SdaiFace_surface::same_sense_ (const SCLBOOL(Boolean) x)
+SdaiFace_surface::same_sense_ (const Boolean x)
 
 {
     _same_sense.put (x);
@@ -46262,14 +46262,14 @@ SdaiOriented_face::face_element_ (const SdaiFace_ptr x)
     _face_element = x;
 }
 
-const SCLBOOL(Boolean)
+const Boolean
 SdaiOriented_face::orientation_() const
 {
-    return (SCLBOOL(Boolean)) _orientation;
+    return (Boolean) _orientation;
 }
 
 void
-SdaiOriented_face::orientation_ (const SCLBOOL(Boolean) x)
+SdaiOriented_face::orientation_ (const Boolean x)
 
 {
     _orientation.put (x);
@@ -46683,14 +46683,14 @@ SdaiEdge_curve::edge_geometry_ (const SdaiCurve_ptr x)
     _edge_geometry = x;
 }
 
-const SCLBOOL(Boolean)
+const Boolean
 SdaiEdge_curve::same_sense_() const
 {
-    return (SCLBOOL(Boolean)) _same_sense;
+    return (Boolean) _same_sense;
 }
 
 void
-SdaiEdge_curve::same_sense_ (const SCLBOOL(Boolean) x)
+SdaiEdge_curve::same_sense_ (const Boolean x)
 
 {
     _same_sense.put (x);
@@ -47724,27 +47724,27 @@ SdaiRectangular_trimmed_surface::v2_ (const SdaiParameter_value x)
     _v2 = x;
 }
 
-const SCLBOOL(Boolean)
+const Boolean
 SdaiRectangular_trimmed_surface::usense_() const
 {
-    return (SCLBOOL(Boolean)) _usense;
+    return (Boolean) _usense;
 }
 
 void
-SdaiRectangular_trimmed_surface::usense_ (const SCLBOOL(Boolean) x)
+SdaiRectangular_trimmed_surface::usense_ (const Boolean x)
 
 {
     _usense.put (x);
 }
 
-const SCLBOOL(Boolean)
+const Boolean
 SdaiRectangular_trimmed_surface::vsense_() const
 {
-    return (SCLBOOL(Boolean)) _vsense;
+    return (Boolean) _vsense;
 }
 
 void
-SdaiRectangular_trimmed_surface::vsense_ (const SCLBOOL(Boolean) x)
+SdaiRectangular_trimmed_surface::vsense_ (const Boolean x)
 
 {
     _vsense.put (x);
@@ -51055,14 +51055,14 @@ SdaiCurve_bounded_surface::boundaries_ (const EntityAggregate_ptr x)
 
 	{ _boundaries.ShallowCopy (*x); }
 
-const SCLBOOL(Boolean)
+const Boolean
 SdaiCurve_bounded_surface::implicit_outer_() const
 {
-    return (SCLBOOL(Boolean)) _implicit_outer;
+    return (Boolean) _implicit_outer;
 }
 
 void
-SdaiCurve_bounded_surface::implicit_outer_ (const SCLBOOL(Boolean) x)
+SdaiCurve_bounded_surface::implicit_outer_ (const Boolean x)
 
 {
     _implicit_outer.put (x);
@@ -54844,14 +54844,14 @@ SdaiOriented_path::path_element_ (const SdaiPath_ptr x)
     _path_element = x;
 }
 
-const SCLBOOL(Boolean)
+const Boolean
 SdaiOriented_path::orientation_() const
 {
-    return (SCLBOOL(Boolean)) _orientation;
+    return (Boolean) _orientation;
 }
 
 void
-SdaiOriented_path::orientation_ (const SCLBOOL(Boolean) x)
+SdaiOriented_path::orientation_ (const Boolean x)
 
 {
     _orientation.put (x);
@@ -56084,27 +56084,27 @@ SdaiSurface_patch::v_transition_ (const SdaiTransition_code_var x)
     _v_transition.put (x);
 }
 
-const SCLBOOL(Boolean)
+const Boolean
 SdaiSurface_patch::u_sense_() const
 {
-    return (SCLBOOL(Boolean)) _u_sense;
+    return (Boolean) _u_sense;
 }
 
 void
-SdaiSurface_patch::u_sense_ (const SCLBOOL(Boolean) x)
+SdaiSurface_patch::u_sense_ (const Boolean x)
 
 {
     _u_sense.put (x);
 }
 
-const SCLBOOL(Boolean)
+const Boolean
 SdaiSurface_patch::v_sense_() const
 {
-    return (SCLBOOL(Boolean)) _v_sense;
+    return (Boolean) _v_sense;
 }
 
 void
-SdaiSurface_patch::v_sense_ (const SCLBOOL(Boolean) x)
+SdaiSurface_patch::v_sense_ (const Boolean x)
 
 {
     _v_sense.put (x);
@@ -56442,14 +56442,14 @@ SdaiShape_aspect::of_shape_ (const SdaiProduct_definition_shape_ptr x)
     _of_shape = x;
 }
 
-const SCLLOG(Logical)
+const Logical
 SdaiShape_aspect::product_definitional_() const
 {
-    return (SCLLOG(Logical)) _product_definitional;
+    return (Logical) _product_definitional;
 }
 
 void
-SdaiShape_aspect::product_definitional_ (const SCLLOG(Logical) x)
+SdaiShape_aspect::product_definitional_ (const Logical x)
 
 {
     _product_definitional.put (x);
@@ -58491,14 +58491,14 @@ SdaiOriented_closed_shell::closed_shell_element_ (const SdaiClosed_shell_ptr x)
     _closed_shell_element = x;
 }
 
-const SCLBOOL(Boolean)
+const Boolean
 SdaiOriented_closed_shell::orientation_() const
 {
-    return (SCLBOOL(Boolean)) _orientation;
+    return (Boolean) _orientation;
 }
 
 void
-SdaiOriented_closed_shell::orientation_ (const SCLBOOL(Boolean) x)
+SdaiOriented_closed_shell::orientation_ (const Boolean x)
 
 {
     _orientation.put (x);

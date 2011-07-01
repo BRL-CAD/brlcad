@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file RationalBSplineCurve.cpp
+/** @file step/RationalBSplineCurve.cpp
  *
  * Routines to convert STEP "RationalBSplineCurve" to BRL-CAD BREP
  * structures.

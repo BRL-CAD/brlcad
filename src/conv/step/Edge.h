@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Edge.h
+/** @file step/Edge.h
  *
  * Class definition used to convert STEP "Edge" to BRL-CAD BREP
  * structures.

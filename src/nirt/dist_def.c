@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dist_def.c
+/** @file nirt/dist_def.c
  *
  * determine default distance
  *

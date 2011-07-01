@@ -1,4 +1,4 @@
-/*                         R O T A T E _ E T O . C
+/*                      R O T A T E _ E T O . C
  * BRL-CAD
  *
  * Copyright (c) 2008-2011 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rotate_eto.c
+/** @file libged/rotate_eto.c
  *
  * The rotate_eto command.
  *
@@ -41,18 +41,18 @@ _ged_rotate_eto(struct ged *gedp, struct rt_eto_internal *eto, const char *attri
     RT_ETO_CK_MAGIC(eto);
 
     if (attribute[1] != '\0') {
-	bu_vls_printf(&gedp->ged_result_str, "bad eto attribute - %s", attribute);
+	bu_vls_printf(gedp->ged_result_str, "bad eto attribute - %s", attribute);
 	return GED_ERROR;
     }
 
     switch (attribute[0]) {
-    case 'c':
-    case 'C':
-	MAT4X3VEC(eto->eto_C, rmat, eto->eto_C);
-	break;
-    default:
-	bu_vls_printf(&gedp->ged_result_str, "bad eto attribute - %s", attribute);
-	return GED_ERROR;
+	case 'c':
+	case 'C':
+	    MAT4X3VEC(eto->eto_C, rmat, eto->eto_C);
+	    break;
+	default:
+	    bu_vls_printf(gedp->ged_result_str, "bad eto attribute - %s", attribute);
+	    return GED_ERROR;
     }
 
     return GED_OK;

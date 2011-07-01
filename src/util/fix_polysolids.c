@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file fix_polysolids.c
+/** @file util/fix_polysolids.c
  *
  * Program to fix polysolids with bad normals.
  *

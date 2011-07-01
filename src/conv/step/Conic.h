@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Conic.h
+/** @file step/Conic.h
  *
  * Class definition used to convert STEP "Conic" to BRL-CAD BREP
  * structures.

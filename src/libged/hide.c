@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file hide.c
+/** @file libged/hide.c
  *
  * The hide command.
  *
@@ -36,12 +36,12 @@
 int
 ged_hide(struct ged *gedp, int argc, const char *argv[])
 {
-    struct directory		*dp;
-    struct db_i			*dbip;
-    struct bu_external		ext;
-    struct bu_external		tmp;
-    struct db5_raw_internal		raw;
-    int				i;
+    struct directory *dp;
+    struct db_i *dbip;
+    struct bu_external ext;
+    struct bu_external tmp;
+    struct db5_raw_internal raw;
+    int i;
     static const char *usage = "<objects>";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -49,18 +49,18 @@ ged_hide(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     dbip = gedp->ged_wdbp->dbip;
 
     if (db_version(dbip) < 5) {
-	bu_vls_printf(&gedp->ged_result_str, "Database was created with a previous release of BRL-CAD.\nSelect \"Tools->Upgrade Database...\" to enable support for this feature.");
+	bu_vls_printf(gedp->ged_result_str, "Database was created with a previous release of BRL-CAD.\nSelect \"Tools->Upgrade Database...\" to enable support for this feature.");
 	return GED_ERROR;
     }
 
@@ -69,39 +69,39 @@ ged_hide(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 
-	RT_CK_DIR( dp );
+	RT_CK_DIR(dp);
 
-	BU_INIT_EXTERNAL(&ext);
+	BU_EXTERNAL_INIT(&ext);
 
-	if ( db_get_external( &ext, dp, dbip ) < 0 ) {
-	    bu_vls_printf(&gedp->ged_result_str, "db_get_external failed for %s\n", dp->d_namep);
+	if (db_get_external(&ext, dp, dbip) < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "db_get_external failed for %s\n", dp->d_namep);
 	    continue;
 	}
 
 	if (db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "db5_get_raw_internal_ptr() failed for %s\n", dp->d_namep);
-	    bu_free_external( &ext );
+	    bu_vls_printf(gedp->ged_result_str, "db5_get_raw_internal_ptr() failed for %s\n", dp->d_namep);
+	    bu_free_external(&ext);
 	    continue;
 	}
 
 	raw.h_name_hidden = (unsigned char)(0x1);
 
-	BU_INIT_EXTERNAL( &tmp );
-	db5_export_object3( &tmp, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
-			    dp->d_namep,
-			    raw.h_name_hidden,
-			    &raw.attributes,
-			    &raw.body,
-			    raw.major_type, raw.minor_type,
-			    raw.a_zzz, raw.b_zzz );
-	bu_free_external( &ext );
+	BU_EXTERNAL_INIT(&tmp);
+	db5_export_object3(&tmp, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
+			   dp->d_namep,
+			   raw.h_name_hidden,
+			   &raw.attributes,
+			   &raw.body,
+			   raw.major_type, raw.minor_type,
+			   raw.a_zzz, raw.b_zzz);
+	bu_free_external(&ext);
 
 	if (db_put_external(&tmp, dp, dbip)) {
-	    bu_vls_printf(&gedp->ged_result_str, "db_put_external() failed for %s\n", dp->d_namep);
-	    bu_free_external( &tmp );
+	    bu_vls_printf(gedp->ged_result_str, "db_put_external() failed for %s\n", dp->d_namep);
+	    bu_free_external(&tmp);
 	    continue;
 	}
-	bu_free_external( &tmp );
+	bu_free_external(&tmp);
 	dp->d_flags |= RT_DIR_HIDDEN;
     }
 

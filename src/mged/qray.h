@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file qray.h
+/** @file mged/qray.h
  *
  * Header file for "Query Ray" variables.
  *

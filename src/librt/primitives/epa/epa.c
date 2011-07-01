@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file epa.c
+/** @file primitives/epa/epa.c
  *
  * Intersect a ray with an Elliptical Paraboloid.
  *
@@ -161,9 +161,6 @@
 #include "../../librt_private.h"
 
 
-extern fastf_t rt_ell_ang(fastf_t *, fastf_t, fastf_t, fastf_t, fastf_t);
-
-
 struct epa_specific {
     point_t epa_V;		/* vector to epa origin */
     vect_t epa_Hunit;		/* unit H vector */
@@ -231,7 +228,7 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     r2 = xip->epa_r2;
     /* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0 */
     if (NEAR_ZERO(mag_h, RT_LEN_TOL)
-	|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
+	|| !NEAR_EQUAL(mag_a, 1.0, RT_LEN_TOL)
 	|| r1 < 0.0 || r2 < 0.0) {
 	return 1;		/* BAD, too small */
     }
@@ -649,7 +646,7 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     r2 = xip->epa_r2;
     /* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0 */
     if (NEAR_ZERO(mag_h, RT_LEN_TOL)
-	|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
+	|| !NEAR_EQUAL(mag_a, 1.0, RT_LEN_TOL)
 	|| r1 <= 0.0 || r2 <= 0.0) {
 	return -2;		/* BAD */
     }
@@ -798,7 +795,7 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	VJOIN1(V, xip->epa_V, -pos_a->p[Z], Hu);
 
 	VSET(p1, 0., pos_b->p[Y], 0.);
-	theta_new = rt_ell_ang(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
+	theta_new = ell_angle(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
 	if (nseg == 0) {
 	    nseg = (int)(bn_twopi / theta_new) + 1;
 	    pts_dbl[i] = 0;
@@ -933,49 +930,6 @@ rt_ell(fastf_t *ov, const fastf_t *V, const fastf_t *A, const fastf_t *B, int si
 
 
 /**
- * R T _ E L L _ A N G
- *
- * Return angle required for smallest side to fall within tolerances
- * for ellipse.  Smallest side is a side with an endpoint at (a, 0, 0)
- * where a is the semi-major axis.
- */
-fastf_t
-rt_ell_ang(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
-{
-    fastf_t dist, intr, m, theta0, theta1;
-    point_t mpt, p0;
-    vect_t norm_line, norm_ell;
-
-    VSET(p0, a, 0., 0.);
-    /* slope and intercept of segment */
-    m = (p1[Y] - p0[Y]) / (p1[X] - p0[X]);
-    intr = p0[Y] - m * p0[X];
-    /* point on ellipse with max dist between ellipse and line */
-    mpt[X] = a / sqrt(b*b / (m*m*a*a) + 1);
-    mpt[Y] = b * sqrt(1 - mpt[X] * mpt[X] / (a*a));
-    mpt[Z] = 0;
-    /* max distance between that point and line */
-    dist = fabs(m * mpt[X] - mpt[Y] + intr) / sqrt(m * m + 1);
-    /* angles between normal of line and of ellipse at line endpoints */
-    VSET(norm_line, m, -1., 0.);
-    VSET(norm_ell, b * b * p0[X], a * a * p0[Y], 0.);
-    VUNITIZE(norm_line);
-    VUNITIZE(norm_ell);
-    theta0 = fabs(acos(VDOT(norm_line, norm_ell)));
-    VSET(norm_ell, b * b * p1[X], a * a * p1[Y], 0.);
-    VUNITIZE(norm_ell);
-    theta1 = fabs(acos(VDOT(norm_line, norm_ell)));
-    /* split segment at widest point if not within error tolerances */
-    if (dist > dtol || theta0 > ntol || theta1 > ntol) {
-	/* split segment */
-	return rt_ell_ang(mpt, a, b, dtol, ntol);
-    } else
-	return(acos(VDOT(p0, p1)
-		    / (MAGNITUDE(p0) * MAGNITUDE(p1))));
-}
-
-
-/**
  * R T _ E P A _ T E S S
  *
  * Returns -
@@ -1021,7 +975,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     r2 = xip->epa_r2;
     /* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0 */
     if (NEAR_ZERO(mag_h, RT_LEN_TOL)
-	|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
+	|| !NEAR_EQUAL(mag_a, 1.0, RT_LEN_TOL)
 	|| r1 <= 0.0 || r2 <= 0.0) {
 	return -2;		/* BAD */
     }
@@ -1182,7 +1136,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	VJOIN1(V, xip->epa_V, -pos_a->p[Z], Hu);
 
 	VSET(p1, 0., pos_b->p[Y], 0.);
-	theta_new = rt_ell_ang(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
+	theta_new = ell_angle(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
 	if (nseg == 0) {
 	    nseg = (int)(bn_twopi / theta_new) + 1;
 	    pts_dbl[i] = 0;
@@ -1530,7 +1484,7 @@ rt_epa_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     epa->s.s_id = ID_SOLID;
     epa->s.s_type = EPA;
 
-    if (!NEAR_ZERO(MAGNITUDE(xip->epa_Au) - 1., RT_LEN_TOL)) {
+    if (!NEAR_EQUAL(MAGNITUDE(xip->epa_Au), 1.0, RT_LEN_TOL)) {
 	bu_log("rt_epa_export4: Au not a unit vector!\n");
 	return -1;
     }
@@ -1636,7 +1590,7 @@ rt_epa_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 11;
     ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "epa external");
 
-    if (!NEAR_ZERO(MAGNITUDE(xip->epa_Au) - 1., RT_LEN_TOL)) {
+    if (!NEAR_EQUAL(MAGNITUDE(xip->epa_Au), 1.0, RT_LEN_TOL)) {
 	bu_log("rt_epa_export4: Au not a unit vector!\n");
 	return -1;
     }

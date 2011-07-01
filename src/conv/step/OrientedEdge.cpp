@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file OrientedEdge.cpp
+/** @file step/OrientedEdge.cpp
  *
  * Routines to convert STEP "OrientedEdge" to BRL-CAD BREP
  * structures.
@@ -71,7 +71,7 @@ OrientedEdge::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 		SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"edge_element");
 		if (entity) {
 			edge_element = dynamic_cast<Edge *>(Factory::CreateObject(sw,entity));
-			if (orientation == SCLBOOL_H(BTrue)) {
+			if (orientation == BTrue) {
 				edge_start = edge_element->GetEdgeStart();
 				edge_end = edge_element->GetEdgeEnd();
 			} else {
@@ -95,7 +95,7 @@ OrientedEdge::Print(int level) {
 	TAB(level); std::cout << "Attributes:" << std::endl;
 	TAB(level+1); std::cout << "edge_element:" << std::endl;
 	edge_element->Print(level+1);
-	TAB(level+1); std::cout << "orientation:" << step->getBooleanString((SCLBOOL_H(Boolean))orientation) << std::endl;
+	TAB(level+1); std::cout << "orientation:" << step->getBooleanString((Boolean)orientation) << std::endl;
 
 }
 
@@ -120,7 +120,7 @@ OrientedEdge::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 
 bool
 OrientedEdge::OrientWithEdge() {
-	if ((SCLBOOL_H(Boolean))orientation == SCLBOOL_H(BTrue)) {
+	if ((Boolean)orientation == BTrue) {
 		return true;
 	}
 	return false;

@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file plot.c
+/** @file burst/plot.c
  *
  */
 
@@ -74,7 +74,12 @@ plotRay(struct xray *rayp)
     VJOIN1(endpoint, rayp->r_pt, cellsz, rayp->r_dir);
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     pl_color(plotfp, R_BURST, G_BURST, B_BURST);
+
+    /* FIXME: would be nice to have some mechanism for toggling
+     * between lines and points (for large collections of rays)
+     */
 #if 0
+    /* draw line */
     pl_3line(plotfp,
 	     (int) rayp->r_pt[X],
 	     (int) rayp->r_pt[Y],
@@ -84,8 +89,10 @@ plotRay(struct xray *rayp)
 	     endpoint[Z]
 	);
 #else
+    /* draw point */
     pl_3point(plotfp, (int) endpoint[X], (int) endpoint[Y], (int) endpoint[Z]);
 #endif
+
     bu_semaphore_release(BU_SEM_SYSCALL);
     return;
 }

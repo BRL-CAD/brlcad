@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_eval.c
+/** @file primitives/nmg/nmg_eval.c
  *
  * Evaluate boolean operations on NMG objects.
  *
@@ -49,8 +49,8 @@ struct nmg_bool_state {
 };
 
 
-HIDDEN void nmg_eval_shell BU_ARGS((struct shell *s, struct nmg_bool_state *bs));
-HIDDEN void nmg_eval_plot BU_ARGS((struct nmg_bool_state *bs, int num));
+HIDDEN void nmg_eval_shell(struct shell *s, struct nmg_bool_state *bs);
+HIDDEN void nmg_eval_plot(struct nmg_bool_state *bs, int num);
 
 
 #define BACTION_KILL 1
@@ -342,7 +342,7 @@ nmg_eval_action(unsigned long *ptr, register struct nmg_bool_state *bs)
 	   ptr, bu_identify_magic(*((long *)ptr)));
     class = NMG_CLASS_BAD;
     ret = BACTION_RETAIN;
- out:
+out:
     if (rt_g.NMG_debug & DEBUG_BOOLEVAL) {
 	bu_log("nmg_eval_action(ptr=x%x) index=%d %s %s %s %s\n",
 	       ptr, index,

@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_interp.c
+/** @file primitives/bspline/nurb_interp.c
  *
  * Interpolatopn routines for fitting NURB curves and and surfaces to
  * existing data.

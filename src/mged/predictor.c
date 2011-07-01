@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file predictor.c
+/** @file mged/predictor.c
  *
  * Put a predictor frame into view, as an aid to velocity-based
  * navigation through an MGED model.

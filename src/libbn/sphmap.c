@@ -31,10 +31,10 @@
 
 
 void
-spm_free(spm_map_t *mp)
+bn_spm_free(bn_spm_map_t *mp)
 {
-    RT_CK_SPM(mp);
-    if (mp == SPM_NULL)
+    BN_CK_SPM_MAP(mp);
+    if (mp == BN_SPM_MAP_NULL)
 	return;
 
     if (mp->_data != NULL) {
@@ -52,32 +52,32 @@ spm_free(spm_map_t *mp)
 	mp->xbin = NULL;
     }
 
-    (void) bu_free((char *)mp, "spm_map_t");
+    (void) bu_free((char *)mp, "bn_spm_map_t");
 }
 
 
-spm_map_t *
-spm_init(int N, int elsize)
+bn_spm_map_t *
+bn_spm_init(int N, int elsize)
 {
     int i, nx, total, idx;
-    register spm_map_t *mapp;
+    register bn_spm_map_t *mapp;
 
-    mapp = (spm_map_t *)bu_malloc(sizeof(spm_map_t), "spm_map_t");
-    if (mapp == SPM_NULL)
-	return SPM_NULL;
-    memset((char *)mapp, 0, sizeof(spm_map_t));
+    mapp = (bn_spm_map_t *)bu_malloc(sizeof(bn_spm_map_t), "bn_spm_map_t");
+    if (mapp == BN_SPM_MAP_NULL)
+	return BN_SPM_MAP_NULL;
+    memset((char *)mapp, 0, sizeof(bn_spm_map_t));
 
     mapp->elsize = elsize;
     mapp->ny = N/2;
     mapp->nx = (int *) bu_malloc((unsigned)(N/2 * sizeof(*(mapp->nx))), "sph nx");
     if (mapp->nx == NULL) {
-	spm_free(mapp);
-	return SPM_NULL;
+	bn_spm_free(mapp);
+	return BN_SPM_MAP_NULL;
     }
     mapp->xbin = (unsigned char **) bu_malloc((unsigned)(N/2 * sizeof(char *)), "sph xbin");
     if (mapp->xbin == NULL) {
-	spm_free(mapp);
-	return SPM_NULL;
+	bn_spm_free(mapp);
+	return BN_SPM_MAP_NULL;
     }
 
     total = 0;
@@ -90,10 +90,10 @@ spm_init(int N, int elsize)
 	total += 2*nx;
     }
 
-    mapp->_data = (unsigned char *) bu_calloc((unsigned)total, elsize, "spm_init data");
+    mapp->_data = (unsigned char *) bu_calloc((unsigned)total, elsize, "bn_spm_init data");
     if (mapp->_data == NULL) {
-	spm_free(mapp);
-	return SPM_NULL;
+	bn_spm_free(mapp);
+	return BN_SPM_MAP_NULL;
     }
 
     idx = 0;
@@ -101,19 +101,19 @@ spm_init(int N, int elsize)
 	mapp->xbin[i] = &((mapp->_data)[idx]);
 	idx += elsize * mapp->nx[i];
     }
-    mapp->magic = SPM_MAGIC;
+    mapp->magic = BN_SPM_MAGIC;
     return mapp;
 }
 
 
 void
-spm_read(register spm_map_t *mapp, register unsigned char *valp, double u, double v)
+bn_spm_read(register bn_spm_map_t *mapp, register unsigned char *valp, double u, double v)
 {
     int x, y;
     register unsigned char *cp;
     register int i;
 
-    RT_CK_SPM(mapp);
+    BN_CK_SPM_MAP(mapp);
 
     y = v * mapp->ny;
     x = u * mapp->nx[y];
@@ -127,13 +127,13 @@ spm_read(register spm_map_t *mapp, register unsigned char *valp, double u, doubl
 
 
 void
-spm_write(register spm_map_t *mapp, register unsigned char *valp, double u, double v)
+bn_spm_write(register bn_spm_map_t *mapp, register unsigned char *valp, double u, double v)
 {
     int x, y;
     register unsigned char *cp;
     register int i;
 
-    RT_CK_SPM(mapp);
+    BN_CK_SPM_MAP(mapp);
 
     y = v * mapp->ny;
     x = u * mapp->nx[y];
@@ -147,12 +147,12 @@ spm_write(register spm_map_t *mapp, register unsigned char *valp, double u, doub
 
 
 char *
-spm_get(register spm_map_t *mapp, double u, double v)
+bn_spm_get(register bn_spm_map_t *mapp, double u, double v)
 {
     int x, y;
     register unsigned char *cp;
 
-    RT_CK_SPM(mapp);
+    BN_CK_SPM_MAP(mapp);
 
     y = v * mapp->ny;
     x = u * mapp->nx[y];
@@ -163,12 +163,12 @@ spm_get(register spm_map_t *mapp, double u, double v)
 
 
 int
-spm_load(spm_map_t *mapp, char *filename)
+bn_spm_load(bn_spm_map_t *mapp, char *filename)
 {
     int y, total;
     FILE *fp;
 
-    RT_CK_SPM(mapp);
+    BN_CK_SPM_MAP(mapp);
 
     if (BU_STR_EQUAL(filename, "-"))
 	fp = stdin;
@@ -197,13 +197,13 @@ spm_load(spm_map_t *mapp, char *filename)
 
 
 int
-spm_save(spm_map_t *mapp, char *filename)
+bn_spm_save(bn_spm_map_t *mapp, char *filename)
 {
     int i;
     int got;
     FILE *fp;
 
-    RT_CK_SPM(mapp);
+    BN_CK_SPM_MAP(mapp);
 
     if (BU_STR_EQUAL(filename, "-"))
 	fp = stdout;
@@ -221,7 +221,7 @@ spm_save(spm_map_t *mapp, char *filename)
 			  mapp->nx[i], fp);
 	bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
 	if (got != mapp->nx[i]) {
-	    bu_log("spm_save(%s): write error\n", filename);
+	    bu_log("WARNING: Unable to write SPM to [%s]\n", filename);
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
 	    (void) fclose(fp);
 	    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
@@ -238,7 +238,7 @@ spm_save(spm_map_t *mapp, char *filename)
 
 
 int
-spm_pix_load(spm_map_t *mapp, char *filename, int nx, int ny)
+bn_spm_pix_load(bn_spm_map_t *mapp, char *filename, int nx, int ny)
 {
     int i, j;			/* index input file */
     int x, y;			/* index texture map */
@@ -250,7 +250,7 @@ spm_pix_load(spm_map_t *mapp, char *filename, int nx, int ny)
     long count;
     FILE *fp;
 
-    RT_CK_SPM(mapp);
+    BN_CK_SPM_MAP(mapp);
 
     if (BU_STR_EQUAL(filename, "-"))
 	fp = stdin;
@@ -263,13 +263,13 @@ spm_pix_load(spm_map_t *mapp, char *filename, int nx, int ny)
     }
 
     /* Shamelessly suck it all in */
-    buffer = (unsigned char *)bu_malloc((unsigned)(nx*nx*3), "spm_pix_load buffer");
+    buffer = (unsigned char *)bu_malloc((unsigned)(nx*nx*3), "bn_spm_pix_load buffer");
     bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
     i = (int)fread((char *)buffer, 3, nx*ny, fp);	/* res_syscall */
     (void)fclose(fp);
     bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
     if (i != nx*ny) {
-	bu_log("spm_pix_load(%s) read error\n", filename);
+	bu_log("bn_spm_pix_load(%s) read error\n", filename);
 	return -1;
     }
 
@@ -299,21 +299,21 @@ spm_pix_load(spm_map_t *mapp, char *filename, int nx, int ny)
 	    *cp++ = (unsigned char)(blue/count);
 	}
     }
-    (void) bu_free((char *)buffer, "spm buffer");
+    (void) bu_free((char *)buffer, "bn_spm buffer");
 
     return 0;
 }
 
 
 int
-spm_pix_save(spm_map_t *mapp, char *filename, int nx, int ny)
+bn_spm_pix_save(bn_spm_map_t *mapp, char *filename, int nx, int ny)
 {
     int x, y;
     FILE *fp;
     unsigned char pixel[3];
     int got;
 
-    RT_CK_SPM(mapp);
+    BN_CK_SPM_MAP(mapp);
 
     if (BU_STR_EQUAL(filename, "-"))
 	fp = stdout;
@@ -327,12 +327,12 @@ spm_pix_save(spm_map_t *mapp, char *filename, int nx, int ny)
 
     for (y = 0; y < ny; y++) {
 	for (x = 0; x < nx; x++) {
-	    spm_read(mapp, pixel, (double)x/(double)nx, (double)y/(double)ny);
+	    bn_spm_read(mapp, pixel, (double)x/(double)nx, (double)y/(double)ny);
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
 	    got = (int)fwrite((char *)pixel, sizeof(pixel), 1, fp);	/* res_syscall */
 	    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
 	    if (got != 1) {
-		bu_log("spm_px_save(%s): write error\n", filename);
+		bu_log("bn_spm_px_save(%s): write error\n", filename);
 		bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
 		(void) fclose(fp);
 		bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
@@ -350,11 +350,11 @@ spm_pix_save(spm_map_t *mapp, char *filename, int nx, int ny)
 
 
 void
-spm_dump(spm_map_t *mp, int verbose)
+bn_spm_dump(bn_spm_map_t *mp, int verbose)
 {
     int i;
 
-    RT_CK_SPM(mp);
+    BN_CK_SPM_MAP(mp);
 
     bu_log("elsize = %d\n", mp->elsize);
     bu_log("ny = %d\n", mp->ny);

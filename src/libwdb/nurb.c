@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file nurb.c
+/** @file libwdb/nurb.c
  *
  * Library for writing NURB objects into
  * MGED databases from arbitrary procedures.

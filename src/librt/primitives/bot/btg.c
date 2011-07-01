@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file btg.c
+/** @file primitives/bot/btg.c
  *
  * the bot/tie glue.
  *

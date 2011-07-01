@@ -19,7 +19,7 @@
  */
 /** @addtogroup wdb */
 /** @{ */
-/** @file wdb.c
+/** @file librt/wdb.c
  *
  * Routines to allow libwdb to use librt's import/export interface,
  * rather than having to know about the database formats directly.
@@ -289,7 +289,7 @@ wdb_put_internal(
     RT_CK_DB_INTERNAL(ip);
 
     if (db_version(wdbp->dbip) < 5) {
-	BU_INIT_EXTERNAL(&ext);
+	BU_EXTERNAL_INIT(&ext);
 
 	ret = -1;
 	if (ip->idb_meth->ft_export4) {
@@ -359,7 +359,7 @@ wdb_export(
 	return -1;
     }
 
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_type = id;
     intern.idb_ptr = gp;
@@ -372,7 +372,8 @@ wdb_export(
 void
 wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
 {
-    wdbp->l.magic = RT_WDB_MAGIC;
+    BU_LIST_INIT(&wdbp->l);
+    BU_LIST_MAGIC_SET(&wdbp->l, RT_WDB_MAGIC);
     wdbp->type = mode;
     wdbp->dbip = dbip;
     wdbp->dbip->dbi_wdbp = wdbp;
@@ -388,6 +389,8 @@ wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
     wdbp->wdb_ttol.abs = 0.0;
     wdbp->wdb_ttol.rel = 0.01;
     wdbp->wdb_ttol.norm = 0;
+
+    bu_vls_init(&wdbp->wdb_name);
     bu_vls_init(&wdbp->wdb_prestr);
 
     /* initialize tree state */
@@ -418,13 +421,26 @@ wdb_close(struct rt_wdb *wdbp)
 
     RT_CK_WDB(wdbp);
 
+    BU_LIST_DEQUEUE(&wdbp->l);
+    BU_LIST_MAGIC_SET(&wdbp->l, 0); /* sanity */
+
     /* XXX Flush any unwritten "struct matter" records here */
 
-    db_close(wdbp->dbip);
-    wdbp->dbip = NULL;
+    if (wdbp->dbip) {
+	db_close(wdbp->dbip);
+	wdbp->dbip = NULL;
+    }
 
+    /* release allocated member memory */
+    bu_vls_free(&wdbp->wdb_name);
     bu_vls_free(&wdbp->wdb_prestr);
 
+    /* sanity */
+    wdbp->type = 0;
+    wdbp->wdb_resp = NULL;
+    wdbp->wdb_interp = NULL;
+
+    /* release memory */
     bu_free((genptr_t)wdbp, "struct rt_wdb");
     wdbp = NULL;
 }

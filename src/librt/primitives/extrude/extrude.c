@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file extrude.c
+/** @file primitives/extrude/extrude.c
  *
  * Provide support for solids of extrusion.
  *
@@ -290,7 +290,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 		fastf_t max_radius;
 
 		max_radius = sqrt(magsq_s2m);
-		if (NEAR_ZERO(max_radius - csg_extr->radius, RT_LEN_TOL)) {
+		if (NEAR_EQUAL(max_radius, csg_extr->radius, RT_LEN_TOL)) {
 		    csg_extr->radius = max_radius;
 		} else {
 		    bu_log("Impossible radius for circular arc in extrusion (%s), is %g, cannot be more than %g!\n",
@@ -934,7 +934,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	point_t pt;
 
 	if (hit_count != 1) {
-	    bu_log("ERROR: rt_extrude_shot(): odd number of hits (%d) (ignoring last hit)\n", hit_count);
+	    bu_log("ERROR: rt_extrude_shot(): odd number of hits (%zu) (ignoring last hit)\n", hit_count);
 	    bu_log("ray start = (%20.10f %20.10f %20.10f)\n", V3ARGS(rp->r_pt));
 	    bu_log("\tray dir = (%20.10f %20.10f %20.10f)", V3ARGS(rp->r_dir));
 	    VJOIN1(pt, rp->r_pt, hits[hit_count-1].hit_dist, rp->r_dir);
@@ -1894,7 +1894,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     }
 
     BU_LIST_INIT(&vhead);
-    if (BU_LIST_UNINITIALIZED(&rt_g.rtg_vlfree)) {
+    if (!BU_LIST_IS_INITIALIZED(&rt_g.rtg_vlfree)) {
 	BU_LIST_INIT(&rt_g.rtg_vlfree);
     }
     for (i=0; i<(size_t)BU_PTBL_END(outer_loop); i++) {
@@ -2329,7 +2329,7 @@ rt_extrude_ifree(struct rt_db_internal *ip)
     extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(extrude_ip);
     if (extrude_ip->skt) {
-	RT_INIT_DB_INTERNAL(&tmp_ip);
+	RT_DB_INTERNAL_INIT(&tmp_ip);
 	tmp_ip.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	tmp_ip.idb_type = ID_SKETCH;
 	tmp_ip.idb_ptr = (genptr_t)extrude_ip->skt;
@@ -2368,7 +2368,7 @@ rt_extrude_xform(
     }
 
     if (op != ip) {
-	RT_INIT_DB_INTERNAL(op);
+	RT_DB_INTERNAL_INIT(op);
 	eop = (struct rt_extrude_internal *)bu_malloc(sizeof(struct rt_extrude_internal), "eop");
 	eop->magic = RT_EXTRUDE_INTERNAL_MAGIC;
 	eop->sketch_name = bu_strdup(eip->sketch_name);

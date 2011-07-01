@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file tclcad.c
+/** @file libtclcad/tclcad.c
  *
  * Initialize BRL-CAD's Tcl interface.
  *

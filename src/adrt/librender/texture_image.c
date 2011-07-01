@@ -18,7 +18,7 @@
  * information.
  */
 /**
- * @file texture_image.c
+ * @file librender/texture_image.c
  *
  *  Comments -
  *      Texture Library - Projects an Image onto a Surface

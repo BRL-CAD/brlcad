@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file bbox.c
+/** @file librt/bbox.c
  *
  * Routines related to creating and processing bounding boxes.
  *
@@ -126,20 +126,28 @@ HIDDEN struct region *
 _rt_getregion(struct rt_i *rtip, const char *reg_name)
 {
     struct region *regp;
-    const char *reg_base = bu_basename(reg_name);
+    char *reg_base = bu_basename(reg_name);
 
     RT_CK_RTI(rtip);
     for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
-	const char *cp;
+	char *cp;
 	/* First, check for a match of the full path */
 	if (*reg_base == regp->reg_name[0] &&
-	    BU_STR_EQUAL(reg_base, regp->reg_name))
+	    BU_STR_EQUAL(reg_base, regp->reg_name)){
+	    bu_free(reg_base, "reg_base free");
 	    return regp;
+	}
 	/* Second, check for a match of the database node name */
 	cp = bu_basename(regp->reg_name);
-	if (*cp == *reg_name && BU_STR_EQUAL(cp, reg_name))
+	if (*cp == *reg_name && BU_STR_EQUAL(cp, reg_name)){
+	    bu_free(reg_base, "reg_base free");
+	    bu_free(cp, "cp free");
 	    return regp;
+	}
+	bu_free(cp, "cp free");
     }
+    bu_free(reg_base, "reg_base free");
+
     return REGION_NULL;
 }
 

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_text.c
+/** @file liboptical/sh_text.c
  *
  * Texture map lookup
  *
@@ -58,25 +58,10 @@ struct txt_specific {
 
 struct region env_region;  /* initialized in the app code view handler */
 
-extern int rr_render(struct application *ap,
-		     struct partition *pp,
-		     struct shadework *swp);
 
 HIDDEN void txt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *value);
 HIDDEN void txt_source_hook(const struct bu_structparse *ip, const char *sp_name, genptr_t base, char *p);
 HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const long unsigned int size);
-HIDDEN int bwtxt_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN int txt_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, const struct mfuncs *mfp, struct rt_i *rtip), txt_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN int ckr_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), ckr_render(struct application *ap, struct partition *pp, register struct shadework *swp, char *dp);
-HIDDEN void txt_print(register struct region *rp), txt_free(char *cp);
-HIDDEN void ckr_print(register struct region *rp), ckr_free(char *cp);
-HIDDEN int tstm_render(struct application *ap, struct partition *pp, register struct shadework *swp, char *dp);
-HIDDEN int star_render(register struct application *ap, register struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN int envmap_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, const struct mfuncs *mfp, struct rt_i *rtip, struct mfuncs **headp);
-extern int mlib_zero(), mlib_one();
-extern void mlib_void();
-
-
 
 
 struct bu_structparse txt_parse[] = {
@@ -102,7 +87,9 @@ struct bu_structparse txt_parse[] = {
  * looked up.  If neither is found, object name is left null so txt_setup() will
  * fail.
  */
-HIDDEN void txt_source_hook(const struct bu_structparse *UNUSED(ip), const char *sp_name, genptr_t base, char *UNUSED(p)) {
+HIDDEN void
+txt_source_hook(const struct bu_structparse *UNUSED(ip), const char *sp_name, genptr_t base, char *UNUSED(p))
+{
     struct txt_specific *textureSpecific = (struct txt_specific *)base;
     if (strncmp(sp_name, "file", 4)==0) {
 	textureSpecific->tx_datasrc=TXT_SRC_FILE;
@@ -141,7 +128,9 @@ txt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *UNUSED(
  * a file or from a db object.  The resources are released in txt_free()
  * (there is no specific unload_datasource function).
  */
-HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const unsigned long int size) {
+HIDDEN int
+txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const unsigned long int size)
+{
     struct directory *dirEntry;
 
     RT_CK_DBI(dbInstance);
@@ -165,7 +154,7 @@ HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInst
 	} else {
 	    struct rt_db_internal *dbip=(struct rt_db_internal *)bu_malloc(sizeof(struct rt_db_internal), "txt_load_datasource");
 
-	    RT_INIT_DB_INTERNAL(dbip);
+	    RT_DB_INTERNAL_INIT(dbip);
 	    RT_CK_DB_INTERNAL(dbip);
 	    RT_CK_DIR(dirEntry);
 
@@ -182,14 +171,14 @@ HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInst
 	    texture->tx_binunifp=(struct rt_binunif_internal *)dbip->idb_ptr; /* make it so */
 
 	    /* release the database instance pointer struct we created */
-	    RT_INIT_DB_INTERNAL(dbip);
+	    RT_DB_INTERNAL_INIT(dbip);
 	    bu_free(dbip, "txt_load_datasource");
 
 	    /* check size of object */
 	    if (texture->tx_binunifp->count < size) {
 		bu_log("\nWARNING: %V needs %d bytes, binary object only has %d\n", texture->tx_name, size, texture->tx_binunifp->count);
 	    } else if (texture->tx_binunifp->count > size) {
-		bu_log("\nWARNING: Binary object is larger than specified texture size\n\tBinary Object: %d pixels\n\tSpecified Texture Size: %d pixels\n...continuing to load using image subsection...", texture->tx_binunifp->count);
+		bu_log("\nWARNING: Binary object is larger than specified texture size\n\tBinary Object: %zu pixels\n\tSpecified Texture Size: %zu pixels\n...continuing to load using image subsection...", texture->tx_binunifp->count);
 	    }
 	}
     }
@@ -207,7 +196,7 @@ HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInst
 	if (texture->tx_mp->buflen < size) {
 	    bu_log("\nWARNING: %V needs %d bytes, file only has %d\n", &texture->tx_name, size, texture->tx_mp->buflen);
 	} else if (texture->tx_mp->buflen > size) {
-	    bu_log("\nWARNING: Texture file size is larger than specified texture size\n\tInput File: %d pixels\n\tSpecified Texture Size: %d pixels\n...continuing to load using image subsection...", texture->tx_mp->buflen, size);
+	    bu_log("\nWARNING: Texture file size is larger than specified texture size\n\tInput File: %zu pixels\n\tSpecified Texture Size: %d pixels\n...continuing to load using image subsection...", texture->tx_mp->buflen, size);
 	}
 
     }
@@ -228,7 +217,7 @@ HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInst
  * which works out very naturally for the indexing scheme.
  */
 HIDDEN int
-txt_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+txt_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
 {
     register struct txt_specific *tp =
 	(struct txt_specific *)dp;
@@ -497,7 +486,7 @@ txt_render(struct application *ap, struct partition *pp, struct shadework *swp, 
  * which works out very naturally for the indexing scheme.
  */
 HIDDEN int
-bwtxt_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+bwtxt_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
 {
     register struct txt_specific *tp =
 	(struct txt_specific *)dp;
@@ -617,13 +606,14 @@ bwtxt_render(struct application *ap, struct partition *pp, struct shadework *swp
  * T X T _ S E T U P
  */
 HIDDEN int
-txt_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, const struct mfuncs *mfp, struct rt_i *rtip) {
+txt_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip)
+{
     register struct txt_specific *tp;
     int pixelbytes = 3;
 
     BU_CK_VLS(matparm);
     BU_GETSTRUCT(tp, txt_specific);
-    *dpp = (char *)tp;
+    *dpp = tp;
 
     bu_vls_init(&tp->tx_name);
     /* !?! tp->tx_name[0] = '\0';*/
@@ -640,7 +630,7 @@ txt_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, const 
 
     /* load given values */
     if (bu_struct_parse(matparm, txt_parse, (char *)tp) < 0) {
-	bu_free((char *)tp, "txt_specific");
+	bu_free((genptr_t)tp, "txt_specific");
 	return -1;
     }
 
@@ -674,7 +664,7 @@ txt_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, const 
  * T X T _ P R I N T
  */
 HIDDEN void
-txt_print(register struct region *rp)
+txt_print(register struct region *rp, genptr_t UNUSED(dp))
 {
     bu_struct_print(rp->reg_name, txt_parse, (char *)rp->reg_udata);
 }
@@ -684,7 +674,7 @@ txt_print(register struct region *rp)
  * T X T _ F R E E
  */
 HIDDEN void
-txt_free(char *cp)
+txt_free(genptr_t cp)
 {
     struct txt_specific *tp =	(struct txt_specific *)cp;
 
@@ -717,7 +707,7 @@ struct bu_structparse ckr_parse[] = {
  * C K R _ R E N D E R
  */
 HIDDEN int
-ckr_render(struct application *ap, struct partition *pp, register struct shadework *swp, char *dp)
+ckr_render(struct application *ap, const struct partition *pp, register struct shadework *swp, genptr_t dp)
 {
     register struct ckr_specific *ckp =
 	(struct ckr_specific *)dp;
@@ -732,15 +722,6 @@ ckr_render(struct application *ap, struct partition *pp, register struct shadewo
     } else {
 	cp = ckp->ckr_b;
     }
-
-#if 0
-    if ((swp->sw_uv.uv_u < 0.5 && swp->sw_uv.uv_v < 0.5) ||
-	(swp->sw_uv.uv_u >=0.5 && swp->sw_uv.uv_v >=0.5)) {
-	cp = ckp->ckr_a;
-    } else {
-	cp = ckp->ckr_b;
-    }
-#endif
 
     VSET(swp->sw_color,
 	 (unsigned char)cp[0] * bn_inv255,
@@ -758,7 +739,7 @@ ckr_render(struct application *ap, struct partition *pp, register struct shadewo
  * C K R _ S E T U P
  */
 HIDDEN int
-ckr_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
+ckr_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
 
 /* New since 4.4 release */
@@ -767,12 +748,12 @@ ckr_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, char **dpp
 
     /* Default will be white and black checkers */
     BU_GETSTRUCT(ckp, ckr_specific);
-    *dpp = (char *)ckp;
+    *dpp = ckp;
     ckp->ckr_a[0] = ckp->ckr_a[1] = ckp->ckr_a[2] = 255;
     ckp->ckr_b[0] = ckp->ckr_b[1] = ckp->ckr_b[2] = 0;
     ckp->ckr_scale = 2.0;
     if (bu_struct_parse(matparm, ckr_parse, (char *)ckp) < 0) {
-	bu_free((char *)ckp, "ckr_specific");
+	bu_free((genptr_t)ckp, "ckr_specific");
 	return -1;
     }
     ckp->ckr_a[0] &= 0x0ff;
@@ -789,7 +770,7 @@ ckr_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, char **dpp
  * C K R _ P R I N T
  */
 HIDDEN void
-ckr_print(register struct region *rp)
+ckr_print(register struct region *rp, genptr_t UNUSED(dp))
 {
     bu_struct_print(rp->reg_name, ckr_parse, rp->reg_udata);
 }
@@ -799,7 +780,7 @@ ckr_print(register struct region *rp)
  * C K R _ F R E E
  */
 HIDDEN void
-ckr_free(char *cp)
+ckr_free(genptr_t cp)
 {
     bu_free(cp, "ckr_specific");
 }
@@ -812,7 +793,7 @@ ckr_free(char *cp)
  * Mostly useful for debugging ft_uv() routines.
  */
 HIDDEN int
-tstm_render(struct application *ap, struct partition *pp, register struct shadework *swp, char *UNUSED(dp))
+tstm_render(struct application *ap, const struct partition *pp, register struct shadework *swp, genptr_t UNUSED(dp))
 {
     VSET(swp->sw_color, swp->sw_uv.uv_u, 0, swp->sw_uv.uv_v);
 
@@ -824,22 +805,15 @@ tstm_render(struct application *ap, struct partition *pp, register struct shadew
 
 
 static vect_t star_colors[] = {
-    { 0.825769, 0.415579, 0.125303 }, {
-    /* 3000 */ 0.671567, 0.460987, 0.258868 },
+    { 0.825769, 0.415579, 0.125303 },
+    { /* 3000 */ 0.671567, 0.460987, 0.258868 },
     { 0.587580, 0.480149, 0.376395 },
     { 0.535104, 0.488881, 0.475879 },
     { 0.497639, 0.493881, 0.556825 },
     { 0.474349, 0.494836, 0.624460 },
     { 0.456978, 0.495116, 0.678378 },
-    { 0.446728, 0.493157, 0.727269 }, {
-    /* 10000 */ 0.446728, 0.493157, 0.727269 },	/* fake 11000 */
-#if 0
-    { 0.446728, 0.493157, 0.727269 }, {
-    /* fake 12000 */ 0.446728, 0.493157, 0.727269 }, {
-    /* fake 13000 */ 0.446728, 0.493157, 0.727269 }, {
-    /* fake 14000 */ 0.446728, 0.493157, 0.727269 },	/* fake 15000 */
-    { 0.393433 0.488079 0.940423 }		/* 20000 */
-#endif
+    { 0.446728, 0.493157, 0.727269 },
+    { /* 10000 */ 0.446728, 0.493157, 0.727269 }
 };
 
 
@@ -847,7 +821,7 @@ static vect_t star_colors[] = {
  * S T A R _ R E N D E R
  */
 HIDDEN int
-star_render(register struct application *ap, register struct partition *pp, struct shadework *swp, char *UNUSED(dp))
+star_render(register struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t UNUSED(dp))
 {
     /* Probably want to diddle parameters based on what part of sky */
     if (bn_rand0to1(ap->a_resource->re_randptr) >= 0.98) {
@@ -885,7 +859,7 @@ star_render(register struct application *ap, register struct partition *pp, stru
  * which works out very naturally for the indexing scheme.
  */
 HIDDEN int
-bmp_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+bmp_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
 {
     register struct txt_specific *tp =
 	(struct txt_specific *)dp;
@@ -964,15 +938,18 @@ bmp_render(struct application *ap, struct partition *pp, struct shadework *swp, 
  * E N V M A P _ S E T U P
  */
 HIDDEN int
-envmap_setup(register struct region *rp, struct bu_vls *matparm, char **UNUSED(dpp), const struct mfuncs *UNUSED(mfp), struct rt_i *rtip, struct mfuncs **headp)
+envmap_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *UNUSED(dpp), const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 {
+    struct mfuncs *shaders = MF_NULL;
 
     BU_CK_VLS(matparm);
     RT_CK_RTI(rtip);
+
     if (env_region.reg_mfuncs) {
 	bu_log("envmap_setup:  second environment map ignored\n");
 	return 0;		/* drop region */
     }
+
     env_region = *rp;		/* struct copy */
     /* Get copies of, or eliminate, references to dynamic structures */
     env_region.reg_name = bu_strdup(rp->reg_name);
@@ -980,11 +957,16 @@ envmap_setup(register struct region *rp, struct bu_vls *matparm, char **UNUSED(d
     env_region.l.forw = BU_LIST_NULL;
     env_region.l.back = BU_LIST_NULL;
     env_region.reg_mfuncs = (char *)0;
-
     env_region.reg_mater.ma_shader = bu_vls_strdup(matparm);
 
-    if (mlib_setup(headp, &env_region, rtip) < 0)
+    /* get list of available shaders */
+    if (!shaders) {
+	optical_shader_init(&shaders);
+    }
+    if (mlib_setup(&shaders, &env_region, rtip) < 0)
 	bu_log("envmap_setup() material '%s' failed\n", env_region.reg_mater);
+
+
 
     return 0;		/* This region should be dropped */
 }
@@ -1028,29 +1010,14 @@ mlib_void()
 }
 
 struct mfuncs txt_mfuncs[] = {
-    {MF_MAGIC,	"texture",	0,		MFI_UV,		0,
-     txt_setup,	txt_render,	txt_print,	txt_free },
-
-    {MF_MAGIC,	"bwtexture",	0,		MFI_UV,		0,
-     txt_setup,	bwtxt_render,	txt_print,	txt_free },
-
-    {MF_MAGIC,	"checker",	0,		MFI_UV,		0,
-     ckr_setup,	ckr_render,	ckr_print,	ckr_free },
-
-    {MF_MAGIC,	"testmap",	0,		MFI_UV,		0,
-     mlib_one,	tstm_render,	mlib_void,	mlib_void },
-
-    {MF_MAGIC,	"fakestar",	0,		0,		0,
-     mlib_one,	star_render,	mlib_void,	mlib_void },
-
-    {MF_MAGIC,	"bump",		0,		MFI_UV|MFI_NORMAL, 0,
-     txt_setup,	bmp_render,	txt_print,	txt_free },
-
-    {MF_MAGIC,	"envmap",	0,		0,		0,
-     envmap_setup,	mlib_zero,	mlib_void,	mlib_void },
-
-    {0,		(char *)0,	0,		0,		0,
-     0,		0,		0,		0 }
+    {MF_MAGIC,	"texture",	0,	MFI_UV,		0,	txt_setup,	txt_render,	txt_print,	txt_free },
+    {MF_MAGIC,	"bwtexture",	0,	MFI_UV,		0,	txt_setup,	bwtxt_render,	txt_print,	txt_free },
+    {MF_MAGIC,	"checker",	0,	MFI_UV,		0,	ckr_setup,	ckr_render,	ckr_print,	ckr_free },
+    {MF_MAGIC,	"testmap",	0,	MFI_UV,		0,	mlib_one,	tstm_render,	mlib_void,	mlib_void },
+    {MF_MAGIC,	"fakestar",	0,	0,		0,	mlib_one,	star_render,	mlib_void,	mlib_void },
+    {MF_MAGIC,	"bump",		0,	MFI_UV|MFI_NORMAL, 0,	txt_setup,	bmp_render,	txt_print,	txt_free },
+    {MF_MAGIC,	"envmap",	0,	0,		0,	envmap_setup,	mlib_zero,	mlib_void,	mlib_void },
+    {0,		(char *)0,	0,	0,		0,	0,		0,		0,		0 }
 };
 
 

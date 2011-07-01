@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file plstat.c
+/** @file util/plstat.c
  *
  * Print statistics about a Plot3(5) format file.
  *

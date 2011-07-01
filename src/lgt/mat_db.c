@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mat_db.c
+/** @file lgt/mat_db.c
     Author:		Gary S. Moss
 */
 

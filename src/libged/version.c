@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file version.c
+/** @file libged/version.c
  *
  * The version command.
  *
@@ -40,14 +40,14 @@ ged_version(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
 	return GED_ERROR;
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "%d", db_version(gedp->ged_wdbp->dbip));
+    bu_vls_printf(gedp->ged_result_str, "%d", db_version(gedp->ged_wdbp->dbip));
 
     return GED_OK;
 }

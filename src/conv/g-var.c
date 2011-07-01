@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file g-var.c
+/** @file conv/g-var.c
  *
  * BRL-CAD to (OpenGL) Vertex Array Exporter.
  *

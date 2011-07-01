@@ -161,7 +161,6 @@ set(mged_ignore_files
 	menu.h
 	mgdev.h
 	mged.bat
-	mged.dsp
 	mged.h
 	mged_dm.h
 	qray.h

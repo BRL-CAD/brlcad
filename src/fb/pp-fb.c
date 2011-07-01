@@ -144,15 +144,7 @@ main(int argc, char **argv)
     }
     for (i=1;i<argc;i++) {
 	if (BU_STR_EQUAL("-F", argv[i])) {
-#if 0
-	    argv[++i];
-#else
-	    /*
-	     * I don't know what the intent was above, so just
-	     * increment i as before. This gets rid of compiler warnings.
-	     */
 	    ++i;
-#endif
 	} else if (BU_STR_EQUAL("-W", argv[i])) {
 	    sscanf(argv[++i], "%d", &scr_w);
 	    scr_set=1;

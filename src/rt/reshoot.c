@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file reshoot.c
+/** @file rt/reshoot.c
  *
  * A program to shoot reshoot and compare results to previous runs.
  *

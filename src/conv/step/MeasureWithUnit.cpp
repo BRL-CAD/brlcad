@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file MeasureWithUnit.cpp
+/** @file step/MeasureWithUnit.cpp
  *
  * Routines to convert STEP "MeasureWithUnit" to BRL-CAD BREP
  * structures.

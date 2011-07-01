@@ -68,7 +68,6 @@ libged_nil_la_SOURCES = \
 	editit.c \
 	edmater.c \
 	erase.c \
-	erase_all.c \
 	expand.c \
 	eye.c \
 	eye_pos.c \
@@ -141,6 +140,7 @@ libged_nil_la_SOURCES = \
 	oscale.c \
 	otranslate.c \
 	overlay.c \
+	path.c \
 	pathlist.c \
 	pathsum.c \
 	perspective.c \
@@ -216,7 +216,7 @@ libged_nil_la_SOURCES = \
 	size.c \
 	slew.c \
 	solids_on_ray.c \
-        sphgroup.c \
+	sphgroup.c \
 	summary.c \
 	sync.c \
 	tables.c \
@@ -227,6 +227,7 @@ libged_nil_la_SOURCES = \
 	tra.c \
 	trace.c \
 	track.c \
+	translate.c \
 	translate_extrude.c \
 	translate_tgc.c \
 	tree.c \
@@ -289,8 +290,7 @@ libged_la_LIBADD = \
 	${GED_LIBS}
 
 EXTRA_DIST = \
-	subtype.c \
-        CMakeLists.txt
+	CMakeLists.txt
 
 DEPENDS = src/librt src/libwdb src/libanalyze src/libfb
 

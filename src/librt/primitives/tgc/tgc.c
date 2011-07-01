@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file tgc.c
+/** @file primitives/tgc/tgc.c
  *
  * Intersect a ray with a Truncated General Cone.
  *
@@ -47,7 +47,7 @@
 #include "../../librt_private.h"
 
 
-BU_EXTERN(int rt_rec_prep, (struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip));
+extern int rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip);
 
 struct tgc_specific {
     vect_t tgc_V;		/* Vector to center of base of TGC */
@@ -900,8 +900,8 @@ void
 rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, int n, struct application *ap)
 
 
-    /* array of segs (results returned) */
-    /* Number of ray/object pairs */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
 
 {
     register struct tgc_specific *tgc;

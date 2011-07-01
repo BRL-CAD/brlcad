@@ -9,6 +9,6 @@ dist_tcl_DATA = \
 	plus.xbm \
 	tip.gif
 
-EXTRA_DIST = $(dist_tcl_DATA)
+EXTRA_DIST = $(dist_tcl_DATA) CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs

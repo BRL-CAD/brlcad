@@ -232,14 +232,14 @@ BANode<BA>::BANode(const ON_Curve* curve, int adj_face_index, const BA& node,
     m_Horizontal = false;
     m_Vertical = false;
 
-    if (NEAR_ZERO(m_end[X]-m_start[X], 0.000001)) {
+    if (NEAR_EQUAL(m_end[X], m_start[X], 0.000001)) {
 	m_Vertical = true;
 	if (m_innerTrim) {
 	    m_XIncreasing = false;
 	} else {
 	    m_XIncreasing = true;
 	}
-    } else if (NEAR_ZERO(m_end[Y]-m_start[Y], 0.000001)) {
+    } else if (NEAR_EQUAL(m_end[Y], m_start[Y], 0.000001)) {
 	m_Horizontal = true;
 	if ((m_end[X] - m_start[X]) > 0.0) {
 	    m_XIncreasing = true;
@@ -563,7 +563,7 @@ BANode<BA>::getCurveEstimateOfV(fastf_t u, fastf_t tol) const
     p = m_trim->PointAt(guess);
 
     int cnt=0;
-    while ((cnt < 1000) && (!NEAR_ZERO(p[X]-u, tol))) {
+    while ((cnt < 1000) && (!NEAR_EQUAL(p[X], u, tol))) {
 	if (p[X] < u) {
 	    Ta = guess;
 	    VMOVE(A, p);
@@ -649,7 +649,7 @@ BANode<BA>::getCurveEstimateOfU(fastf_t v, fastf_t tol) const
     p = m_trim->PointAt(guess);
 
     int cnt=0;
-    while ((cnt < 1000) && (!NEAR_ZERO(p[Y]-v, tol))) {
+    while ((cnt < 1000) && (!NEAR_EQUAL(p[Y], v, tol))) {
 	if (p[Y] < v) {
 	    Ta = guess;
 	    VMOVE(A, p);

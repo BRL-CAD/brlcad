@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixblend.c
+/** @file util/pixblend.c
  *
  * Given two streams of data, typically pix(5) or bw(5) images,
  * generate an output stream of the same size, where the value of

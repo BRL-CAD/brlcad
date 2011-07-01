@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bw-a.c
+/** @file util/bw-a.c
  *
  *
  * Convert a bw file into an ASCII bitmap.

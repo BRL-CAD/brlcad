@@ -18,7 +18,8 @@ EXTRA_DIST = \
 	outgoing \
 	tclconfig \
 	tests \
-	win
+	win \
+	CMakeLists.txt
 
 DISTCLEANFILES = \
 	iwidgets.tcl \

@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file metaball.c
+/** @file primitives/metaball/metaball_tri.c
  *
  * Tesselation/facetization routines for the metaball primitive.
  *
@@ -137,9 +137,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 #define MEH(a,b,c) if(!(pv&(1<<b)&&pv&(1<<c))) { \
     rt_metaball_find_intersection(edges+a, mb, (const point_t *)(p+b), (const point_t *)(p+c), mtol, finalstep); \
 }
-#if 0
-    rt_metaball_norm_internal(n+a, p+a, mb); }
-#endif
+
 		    /* magic numbers! an edge, then the two attached vertices.
 		     * For edge/vertex mapping, refer to the awesome ascii art
 		     * at the beginning of this file. */

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file handle.c
+/** @file shapes/handle.c
  *
  * Program to make a handle using libwdb.  The objects will be in
  * millimeters.  This handle will be constructed using three

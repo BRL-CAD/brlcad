@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file STEPEntity.cpp
+/** @file step/STEPEntity.cpp
  *
  * STEPEntity.cpp
  *

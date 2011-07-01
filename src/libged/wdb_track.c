@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file track.c
+/** @file libged/track.c
  *
  * Adds "tracks" to the data file given the required info
  *
@@ -49,16 +49,16 @@
 
 /*XXX The following WDB_ defines need to go inside of a header file */
 #define WDB_TCL_CHECK_READ_ONLY \
-	if (interp) { \
-		if (wdbp->dbip->dbi_read_only) { \
-			Tcl_AppendResult(interp, "Sorry, this database is READ-ONLY\n", (char *)NULL); \
-			return TCL_ERROR; \
-		} \
-	} else { \
-		bu_log("Sorry, this database is READ-ONLY\n"); \
-	}
+    if (interp) { \
+	if (wdbp->dbip->dbi_read_only) { \
+	    Tcl_AppendResult(interp, "Sorry, this database is READ-ONLY\n", (char *)NULL); \
+	    return TCL_ERROR; \
+	} \
+    } else { \
+	bu_log("Sorry, this database is READ-ONLY\n"); \
+    }
 #define WDB_TCL_ERROR_RECOVERY_SUGGESTION\
-	Tcl_AppendResult(interp, "\
+    Tcl_AppendResult(interp, "\
 The in-memory table of contents may not match the status of the on-disk\n\
 database.  The on-disk database should still be intact.  For safety, \n\
 you should exit now, and resolve the I/O problem, before continuing.\n", (char *)NULL)
@@ -595,7 +595,7 @@ wdb_track_cmd(struct rt_wdb *wdbp,
 
     return edit_result;
 
- end:
+end:
     bu_free((genptr_t)solname, "solid name");
     bu_free((genptr_t)regname, "region name");
     bu_free((genptr_t)grpname, "group name");
@@ -628,46 +628,44 @@ wrobj(struct rt_wdb *wdbp,
 	return -1;
     }
 
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     switch (sol.s_type) {
-	case ID_ARB8:
-	    {
-		struct rt_arb_internal *arb;
+	case ID_ARB8: {
+	    struct rt_arb_internal *arb;
 
-		BU_GETSTRUCT(arb, rt_arb_internal);
+	    BU_GETSTRUCT(arb, rt_arb_internal);
 
-		arb->magic = RT_ARB_INTERNAL_MAGIC;
+	    arb->magic = RT_ARB_INTERNAL_MAGIC;
 
-		VMOVE(arb->pt[0], &sol.s_values[0]);
-		for (i=1; i<8; i++)
-		    VADD2(arb->pt[i], &sol.s_values[i*3], arb->pt[0])
+	    VMOVE(arb->pt[0], &sol.s_values[0]);
+	    for (i=1; i<8; i++)
+		VADD2(arb->pt[i], &sol.s_values[i*3], arb->pt[0])
 
-			intern.idb_ptr = (genptr_t)arb;
-		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-		intern.idb_type = ID_ARB8;
-		intern.idb_meth = &rt_functab[ID_ARB8];
-	    }
+		    intern.idb_ptr = (genptr_t)arb;
+	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	    intern.idb_type = ID_ARB8;
+	    intern.idb_meth = &rt_functab[ID_ARB8];
+	}
 	    break;
-	case ID_TGC:
-	    {
-		struct rt_tgc_internal *tgc;
+	case ID_TGC: {
+	    struct rt_tgc_internal *tgc;
 
-		BU_GETSTRUCT(tgc, rt_tgc_internal);
+	    BU_GETSTRUCT(tgc, rt_tgc_internal);
 
-		tgc->magic = RT_TGC_INTERNAL_MAGIC;
+	    tgc->magic = RT_TGC_INTERNAL_MAGIC;
 
-		VMOVE(tgc->v, &sol.s_values[0]);
-		VMOVE(tgc->h, &sol.s_values[3]);
-		VMOVE(tgc->a, &sol.s_values[6]);
-		VMOVE(tgc->b, &sol.s_values[9]);
-		VMOVE(tgc->c, &sol.s_values[12]);
-		VMOVE(tgc->d, &sol.s_values[15]);
+	    VMOVE(tgc->v, &sol.s_values[0]);
+	    VMOVE(tgc->h, &sol.s_values[3]);
+	    VMOVE(tgc->a, &sol.s_values[6]);
+	    VMOVE(tgc->b, &sol.s_values[9]);
+	    VMOVE(tgc->c, &sol.s_values[12]);
+	    VMOVE(tgc->d, &sol.s_values[15]);
 
-		intern.idb_ptr = (genptr_t)tgc;
-		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-		intern.idb_type = ID_TGC;
-		intern.idb_meth = &rt_functab[ID_TGC];
-	    }
+	    intern.idb_ptr = (genptr_t)tgc;
+	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	    intern.idb_type = ID_TGC;
+	    intern.idb_meth = &rt_functab[ID_TGC];
+	}
 	    break;
 	default:
 	    Tcl_AppendResult(interp, "Unrecognized solid type in 'wrobj', aborting\n", (char *)NULL);
@@ -938,7 +936,7 @@ track_mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
 	WDB_CK_WMEMBER(wp);
 
 	BU_GETUNION(leafp, tree);
-	RT_INIT_TREE(leafp);
+	RT_TREE_INIT(leafp);
 	leafp->tr_l.tl_op = OP_DB_LEAF;
 	leafp->tr_l.tl_name = bu_strdup(wp->wm_name);
 	if (!bn_mat_is_identity(wp->wm_mat)) {
@@ -951,7 +949,7 @@ track_mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
 	}
 	/* Build a left-heavy tree */
 	BU_GETUNION(nodep, tree);
-	RT_INIT_TREE(nodep);
+	RT_TREE_INIT(nodep);
 	switch (wp->wm_op) {
 	    case WMOP_UNION:
 		nodep->tr_b.tb_op = OP_UNION;
@@ -1041,7 +1039,7 @@ track_mk_tree_gift(struct rt_comb_internal *comb, struct bu_list *member_hd)
 
 	/* make new leaf node, and insert at end of array */
 	BU_GETUNION(tp, tree);
-	RT_INIT_TREE(tp);
+	RT_TREE_INIT(tp);
 	tree_list[node_count++].tl_tree = tp;
 	tp->tr_l.tl_op = OP_DB_LEAF;
 	tp->tr_l.tl_name = bu_strdup(wp->wm_name);
@@ -1164,7 +1162,7 @@ track_mk_comb(
 
     RT_CK_WDB(wdbp);
 
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
 
     if (append_ok &&
 	wdb_import(wdbp, &intern, combname, (matp_t)NULL) >= 0) {
@@ -1176,9 +1174,7 @@ track_mk_comb(
     } else {
 	/* Create a fresh new object for export */
 	BU_GETSTRUCT(comb, rt_comb_internal);
-	comb->magic = RT_COMB_MAGIC;
-	bu_vls_init(&comb->shader);
-	bu_vls_init(&comb->material);
+	RT_COMB_INTERNAL_INIT(comb);
 
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_COMBINATION;

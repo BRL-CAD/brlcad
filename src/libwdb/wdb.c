@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file wdb.c
+/** @file libwdb/wdb.c
  *
  * Library for writing MGED databases from arbitrary procedures.
  * Assumes that some of the structure of such databases are known by
@@ -932,7 +932,7 @@ mk_binunif (
 
     /* sanity check that our sizes are correct */
     if (bytes != db5_type_sizeof_h_binu(minor_type)) {
-	bu_log("mk_binunif: size inconsistency found, bytes=%d expecting bytes=%d\n",
+	bu_log("mk_binunif: size inconsistency found, bytes=%zu expecting bytes=%zu\n",
 	       bytes, db5_type_sizeof_h_binu(minor_type));
 	bu_log("Warning: the uniform-array binary data object was NOT created");
 	return -1;

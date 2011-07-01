@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file draw.c
+/** @file libged/draw.c
  *
  * The draw command.
  *
@@ -36,16 +36,128 @@
 
 
 /* declare our callbacks used by _ged_drawtrees() */
-static union tree *ged_bot_check_region_end(struct db_tree_state *tsp,
-					    const struct db_full_path *pathp,
-					    union tree *curtree,
-					    genptr_t client_data);
-static union tree *ged_bot_check_leaf(struct db_tree_state *tsp,
-				      const struct db_full_path *pathp,
-				      struct rt_db_internal *ip,
-				      genptr_t client_data);
+static int drawtrees_depth = 0;
 
-static int _ged_drawtrees_depth = 0;
+
+static union tree *
+draw_check_region_end(struct db_tree_state *tsp,
+			 const struct db_full_path *pathp,
+			 union tree *curtree,
+			 genptr_t UNUSED(client_data))
+{
+    if (tsp) RT_CK_DBTS(tsp);
+    if (pathp) RT_CK_FULL_PATH(pathp);
+    if (curtree) RT_CK_TREE(curtree);
+
+    return curtree;
+}
+
+
+static union tree *
+draw_check_leaf(struct db_tree_state *tsp,
+		   const struct db_full_path *pathp,
+		   struct rt_db_internal *ip,
+		   genptr_t client_data)
+{
+    union tree *curtree;
+    int ac = 1;
+    const char *av[2];
+    struct _ged_client_data *dgcdp = (struct _ged_client_data *)client_data;
+
+    av[0] = db_path_to_string(pathp);
+    av[1] = (char *)0;
+
+    /* Indicate success by returning something other than TREE_NULL */
+    RT_GET_TREE(curtree, tsp->ts_resp);
+    curtree->tr_op = OP_NOP;
+
+    /*
+     * Use gedp->ged_gdp->gd_shaded_mode if set and not being overridden. Otherwise use dgcdp->shaded_mode_override.
+     */
+
+    switch (dgcdp->dmode) {
+	case _GED_SHADED_MODE_BOTS:
+	    if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
+		ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BOT) {
+		struct bu_list vhead;
+
+		BU_LIST_INIT(&vhead);
+
+		(void)rt_bot_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
+		_ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+	    } else if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
+		       ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_POLY) {
+		struct bu_list vhead;
+
+		BU_LIST_INIT(&vhead);
+
+		(void)rt_pg_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
+		_ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+	    } else {
+		/* save shaded mode states */
+		int save_shaded_mode = dgcdp->gedp->ged_gdp->gd_shaded_mode;
+		int save_shaded_mode_override = dgcdp->shaded_mode_override;
+		int save_dmode = dgcdp->dmode;
+
+		/* turn shaded mode off for this non-bot/non-poly object */
+		dgcdp->gedp->ged_gdp->gd_shaded_mode = 0;
+		dgcdp->shaded_mode_override = -1;
+		dgcdp->dmode = _GED_WIREFRAME;
+
+		_ged_drawtrees(dgcdp->gedp, ac, av, 1, client_data);
+
+		/* restore shaded mode states */
+		dgcdp->gedp->ged_gdp->gd_shaded_mode = save_shaded_mode;
+		dgcdp->shaded_mode_override = save_shaded_mode_override;
+		dgcdp->dmode = save_dmode;
+	    }
+
+	    break;
+	case _GED_SHADED_MODE_ALL:
+	    if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
+		ip->idb_minor_type != DB5_MINORTYPE_BRLCAD_PIPE) {
+		if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BOT) {
+		    struct bu_list vhead;
+
+		    BU_LIST_INIT(&vhead);
+
+		    (void)rt_bot_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
+		    _ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+		} else if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_POLY) {
+		    struct bu_list vhead;
+
+		    BU_LIST_INIT(&vhead);
+
+		    (void)rt_pg_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
+		    _ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+		} else
+		    _ged_drawtrees(dgcdp->gedp, ac, av, 3, client_data);
+	    } else {
+		/* save shaded mode states */
+		int save_shaded_mode = dgcdp->gedp->ged_gdp->gd_shaded_mode;
+		int save_shaded_mode_override = dgcdp->shaded_mode_override;
+		int save_dmode = dgcdp->dmode;
+
+		/* turn shaded mode off for this pipe object */
+		dgcdp->gedp->ged_gdp->gd_shaded_mode = 0;
+		dgcdp->shaded_mode_override = -1;
+		dgcdp->dmode = _GED_WIREFRAME;
+
+		_ged_drawtrees(dgcdp->gedp, ac, av, 1, client_data);
+
+		/* restore shaded mode states */
+		dgcdp->gedp->ged_gdp->gd_shaded_mode = save_shaded_mode;
+		dgcdp->shaded_mode_override = save_shaded_mode_override;
+		dgcdp->dmode = save_dmode;
+	    }
+
+	    break;
+    }
+
+    bu_free((genptr_t)av[0], "bot_check_leaf: av[0]");
+
+    return curtree;
+}
 
 
 /**
@@ -56,7 +168,7 @@ static int _ged_drawtrees_depth = 0;
  * librt/vlist.c
  */
 static void
-ged_bound_solid(struct ged *gedp, struct solid *sp)
+bound_solid(struct ged *gedp, struct solid *sp)
 {
     struct bn_vlist *vp;
     double xmax, ymax, zmax;
@@ -90,7 +202,7 @@ ged_bound_solid(struct ged *gedp, struct solid *sp)
 		    break;
 		default:
 		    {
-			bu_vls_printf(&gedp->ged_result_str, "unknown vlist op %d\n", *cmd);
+			bu_vls_printf(gedp->ged_result_str, "unknown vlist op %d\n", *cmd);
 		    }
 	    }
 	}
@@ -141,7 +253,7 @@ _ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path 
      * Compute the min, max, and center points.
      */
     BU_LIST_APPEND_LIST(&(sp->s_vlist), vhead);
-    ged_bound_solid(dgcdp->gedp, sp);
+    bound_solid(dgcdp->gedp, sp);
 
     /*
      * If this solid is new, fill in its information.
@@ -192,7 +304,7 @@ _ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path 
 
 
 static union tree *
-ged_wireframe_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
+wireframe_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
 {
     if (tsp) RT_CK_DBTS(tsp);
     if (pathp) RT_CK_FULL_PATH(pathp);
@@ -208,7 +320,7 @@ ged_wireframe_region_end(struct db_tree_state *tsp, const struct db_full_path *p
  * This routine must be prepared to run in parallel.
  */
 static union tree *
-ged_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
 {
     int dashflag; /* draw with dashed lines */
     union tree *curtree;
@@ -226,7 +338,7 @@ ged_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, 
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
 
-	bu_vls_printf(&dgcdp->gedp->ged_result_str, "dgo_wireframe_leaf(%s) path='%s'\n",
+	bu_vls_printf(dgcdp->gedp->ged_result_str, "wireframe_leaf(%s) path='%s'\n",
 		      ip->idb_meth->ft_name, sofar);
 	bu_free((genptr_t)sofar, "path string");
     }
@@ -239,7 +351,7 @@ ged_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, 
     if (!ip->idb_meth->ft_plot
 	|| ip->idb_meth->ft_plot(&vhead, ip, tsp->ts_ttol, tsp->ts_tol) < 0)
     {
-	bu_vls_printf(&dgcdp->gedp->ged_result_str, "%s: plot failure\n", DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
+	bu_vls_printf(dgcdp->gedp->ged_result_str, "%s: plot failure\n", DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
 	return TREE_NULL;		/* ERROR */
     }
 
@@ -288,7 +400,7 @@ ged_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, 
  * (converted from FASTGEN) more rapidly.
  */
 static int
-ged_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+draw_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
 {
     union tree *tp;
     struct directory *dp;
@@ -300,7 +412,7 @@ ged_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp
 
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
-	bu_vls_printf(&dgcdp->gedp->ged_result_str, "dgo_nmg_region_start(%s)\n", sofar);
+	bu_vls_printf(dgcdp->gedp->ged_result_str, "nmg_region_start(%s)\n", sofar);
 	bu_free((genptr_t)sofar, "path string");
 	rt_pr_tree(combp->tree, 1);
 	db_pr_tree_state(tsp);
@@ -374,7 +486,7 @@ ged_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp
     rt_db_free_internal(&intern);
     return 0;
 
- out:
+out:
     {
 	struct db_full_path pp;
 	db_full_path_init(&pp);
@@ -405,9 +517,9 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 
     } else {
 	/* catch */
-	char  *sofar = db_path_to_string(pathp);
+	char *sofar = db_path_to_string(pathp);
 
-	bu_vls_printf(&dgcdp->gedp->ged_result_str, "WARNING: Boolean evaluation of %s failed!!!\n", sofar);
+	bu_vls_printf(dgcdp->gedp->ged_result_str, "WARNING: Boolean evaluation of %s failed!!!\n", sofar);
 	bu_free((genptr_t)sofar, "path string");
     } BU_UNSETJUMP;
 
@@ -429,9 +541,9 @@ process_triangulation(struct db_tree_state *tsp, const struct db_full_path *path
     } else {
 	/* catch */
 
-	char  *sofar = db_path_to_string(pathp);
+	char *sofar = db_path_to_string(pathp);
 
-	bu_vls_printf(&dgcdp->gedp->ged_result_str, "WARNING: Triangulation of %s failed!!!\n", sofar);
+	bu_vls_printf(dgcdp->gedp->ged_result_str, "WARNING: Triangulation of %s failed!!!\n", sofar);
 	bu_free((genptr_t)sofar, "path string");
 
     } BU_UNSETJUMP;
@@ -446,7 +558,7 @@ process_triangulation(struct db_tree_state *tsp, const struct db_full_path *path
  * This routine must be prepared to run in parallel.
  */
 static union tree *
-ged_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     struct nmgregion *r;
     struct bu_list vhead;
@@ -463,12 +575,12 @@ ged_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, 
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
 
-	bu_vls_printf(&dgcdp->gedp->ged_result_str, "dgo_nmg_region_end() path='%s'\n", sofar);
+	bu_vls_printf(dgcdp->gedp->ged_result_str, "nmg_region_end() path='%s'\n", sofar);
 	bu_free((genptr_t)sofar, "path string");
     } else {
 	char *sofar = db_path_to_string(pathp);
 
-	bu_vls_printf(&dgcdp->gedp->ged_result_str, "%s:\n", sofar);
+	bu_vls_printf(dgcdp->gedp->ged_result_str, "%s:\n", sofar);
 	bu_free((genptr_t)sofar, "path string");
     }
 
@@ -484,7 +596,7 @@ ged_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, 
 	}
 
     } else if (curtree->tr_op != OP_NMG_TESS) {
-	bu_vls_printf(&dgcdp->gedp->ged_result_str, "Cannot use '-d' option when Boolean evaluation is required\n");
+	bu_vls_printf(dgcdp->gedp->ged_result_str, "Cannot use '-d' option when Boolean evaluation is required\n");
 	db_free_tree(curtree, tsp->ts_resp);
 	return (union tree *)NULL;
     }
@@ -586,9 +698,9 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     int ret = 0;
     int c;
     int ncpu = 1;
-    int dgo_nmg_use_tnurbs = 0;
-    int dgo_enable_fastpath = 0;
-    struct model *dgo_nmg_model;
+    int nmg_use_tnurbs = 0;
+    int enable_fastpath = 0;
+    struct model *nmg_model;
     struct _ged_client_data *dgcdp;
     int i;
     int ac = 1;
@@ -599,7 +711,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     if (argc <= 0)
 	return -1;	/* FAIL */
 
-    ++_ged_drawtrees_depth;
+    ++drawtrees_depth;
     av[1] = (char *)0;
 
     /* options are already parsed into _dgcdp */
@@ -634,7 +746,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	/* -1 indicates flag not set */
 	dgcdp->shaded_mode_override = -1;
 
-	dgo_enable_fastpath = 0;
+	enable_fastpath = 0;
 
 	/* Parse options. */
 	bu_optind = 0;		/* re-init bu_getopt() */
@@ -647,7 +759,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    dgcdp->draw_solid_lines_only = 1;
 		    break;
 		case 't':
-		    dgo_nmg_use_tnurbs = 1;
+		    nmg_use_tnurbs = 1;
 		    break;
 		case 'v':
 		    dgcdp->shade_per_vertex_normals = 1;
@@ -674,7 +786,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    dgcdp->draw_nmg_only = 1;
 		    break;
 		case 'f':
-		    dgo_enable_fastpath = 1;
+		    enable_fastpath = 1;
 		    break;
 		case 'C':
 		    {
@@ -728,9 +840,9 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    break;
 		default:
 		    {
-			bu_vls_printf(&gedp->ged_result_str, "unrecognized option - %c\n", c);
+			bu_vls_printf(gedp->ged_result_str, "unrecognized option - %c\n", c);
 			bu_free((genptr_t)dgcdp, "_ged_drawtrees: dgcdp");
-			--_ged_drawtrees_depth;
+			--drawtrees_depth;
 			return GED_ERROR;
 		    }
 	    }
@@ -758,9 +870,9 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
     switch (kind) {
 	default:
-	    bu_vls_printf(&gedp->ged_result_str, "ERROR, bad kind\n");
+	    bu_vls_printf(gedp->ged_result_str, "ERROR, bad kind\n");
 	    bu_free((genptr_t)dgcdp, "_ged_drawtrees: dgcdp");
-	    --_ged_drawtrees_depth;
+	    --drawtrees_depth;
 	    return -1;
 	case 1:		/* Wireframes */
 	    {
@@ -779,15 +891,15 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		 * are drawn as shaded polygons.
 		 */
 		if (_GED_SHADED_MODE_BOTS <= dgcdp->dmode && dgcdp->dmode <= _GED_SHADED_MODE_ALL) {
-		    reg_end_func = ged_bot_check_region_end;
-		    leaf_func = ged_bot_check_leaf;
+		    reg_end_func = draw_check_region_end;
+		    leaf_func = draw_check_leaf;
 		} else {
-		    reg_end_func = ged_wireframe_region_end;
-		    leaf_func = ged_wireframe_leaf;
+		    reg_end_func = wireframe_region_end;
+		    leaf_func = wireframe_leaf;
 		}
 
 		for (i = 0; i < argc; ++i) {
-		    if (_ged_drawtrees_depth == 1)
+		    if (drawtrees_depth == 1)
 			dgcdp->gdlp = ged_addToDisplay(gedp, argv[i]);
 
 		    if (dgcdp->gdlp == GED_DISPLAY_LIST_NULL)
@@ -807,22 +919,22 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	    }
 	    break;
 	case 2:		/* Big-E */
-	    bu_vls_printf(&gedp->ged_result_str, "drawtrees:  can't do big-E here\n");
+	    bu_vls_printf(gedp->ged_result_str, "drawtrees:  can't do big-E here\n");
 	    bu_free((genptr_t)dgcdp, "_ged_drawtrees: dgcdp");
-	    --_ged_drawtrees_depth;
+	    --drawtrees_depth;
 	    return -1;
 	case 3:
 	    {
 		/* NMG */
-		dgo_nmg_model = nmg_mm();
-		gedp->ged_wdbp->wdb_initial_tree_state.ts_m = &dgo_nmg_model;
+		nmg_model = nmg_mm();
+		gedp->ged_wdbp->wdb_initial_tree_state.ts_m = &nmg_model;
 		if (dgcdp->draw_edge_uses) {
-		    bu_vls_printf(&gedp->ged_result_str, "Doing the edgeuse thang (-u)\n");
+		    bu_vls_printf(gedp->ged_result_str, "Doing the edgeuse thang (-u)\n");
 		    dgcdp->draw_edge_uses_vbp = rt_vlblock_init();
 		}
 
 		for (i = 0; i < argc; ++i) {
-		    if (_ged_drawtrees_depth == 1)
+		    if (drawtrees_depth == 1)
 			dgcdp->gdlp = ged_addToDisplay(gedp, argv[i]);
 
 		    if (dgcdp->gdlp == GED_DISPLAY_LIST_NULL)
@@ -834,9 +946,9 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 				       (const char **)av,
 				       ncpu,
 				       &gedp->ged_wdbp->wdb_initial_tree_state,
-				       dgo_enable_fastpath ? ged_nmg_region_start : 0,
-				       ged_nmg_region_end,
-				       dgo_nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : nmg_booltree_leaf_tess,
+				       enable_fastpath ? draw_nmg_region_start : 0,
+				       draw_nmg_region_end,
+				       nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : nmg_booltree_leaf_tess,
 				       (genptr_t)dgcdp);
 		}
 
@@ -847,12 +959,12 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		}
 
 		/* Destroy NMG */
-		nmg_km(dgo_nmg_model);
+		nmg_km(nmg_model);
 		break;
 	    }
     }
 
-    --_ged_drawtrees_depth;
+    --drawtrees_depth;
 
     if (dgcdp->fastpath_count) {
 	bu_log("%d region%s rendered through polygon fastpath\n",
@@ -865,127 +977,6 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	return -1;
 
     return 0;	/* OK */
-}
-
-
-static union tree *
-ged_bot_check_region_end(struct db_tree_state *tsp,
-			 const struct db_full_path *pathp,
-			 union tree *curtree,
-			 genptr_t UNUSED(client_data))
-{
-    if (tsp) RT_CK_DBTS(tsp);
-    if (pathp) RT_CK_FULL_PATH(pathp);
-    if (curtree) RT_CK_TREE(curtree);
-
-    return curtree;
-}
-
-
-static union tree *
-ged_bot_check_leaf(struct db_tree_state *tsp,
-		   const struct db_full_path *pathp,
-		   struct rt_db_internal *ip,
-		   genptr_t client_data)
-{
-    union tree *curtree;
-    int ac = 1;
-    const char *av[2];
-    struct _ged_client_data *dgcdp = (struct _ged_client_data *)client_data;
-
-    av[0] = db_path_to_string(pathp);
-    av[1] = (char *)0;
-
-    /* Indicate success by returning something other than TREE_NULL */
-    RT_GET_TREE(curtree, tsp->ts_resp);
-    curtree->tr_op = OP_NOP;
-
-    /*
-     * Use gedp->ged_gdp->gd_shaded_mode if set and not being overridden. Otherwise use dgcdp->shaded_mode_override.
-     */
-
-    switch (dgcdp->dmode) {
-	case _GED_SHADED_MODE_BOTS:
-	    if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
-		ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BOT) {
-		struct bu_list vhead;
-
-		BU_LIST_INIT(&vhead);
-
-		(void)rt_bot_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
-		_ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
-	    } else if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
-		       ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_POLY) {
-		struct bu_list vhead;
-
-		BU_LIST_INIT(&vhead);
-
-		(void)rt_pg_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
-		_ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
-	    } else {
-		/* save shaded mode states */
-		int save_dgo_shaded_mode = dgcdp->gedp->ged_gdp->gd_shaded_mode;
-		int save_shaded_mode_override = dgcdp->shaded_mode_override;
-		int save_dmode = dgcdp->dmode;
-
-		/* turn shaded mode off for this non-bot/non-poly object */
-		dgcdp->gedp->ged_gdp->gd_shaded_mode = 0;
-		dgcdp->shaded_mode_override = -1;
-		dgcdp->dmode = _GED_WIREFRAME;
-
-		_ged_drawtrees(dgcdp->gedp, ac, av, 1, client_data);
-
-		/* restore shaded mode states */
-		dgcdp->gedp->ged_gdp->gd_shaded_mode = save_dgo_shaded_mode;
-		dgcdp->shaded_mode_override = save_shaded_mode_override;
-		dgcdp->dmode = save_dmode;
-	    }
-
-	    break;
-	case _GED_SHADED_MODE_ALL:
-	    if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
-		ip->idb_minor_type != DB5_MINORTYPE_BRLCAD_PIPE) {
-		if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BOT) {
-		    struct bu_list vhead;
-
-		    BU_LIST_INIT(&vhead);
-
-		    (void)rt_bot_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
-		    _ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
-		} else if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_POLY) {
-		    struct bu_list vhead;
-
-		    BU_LIST_INIT(&vhead);
-
-		    (void)rt_pg_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
-		    _ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
-		} else
-		    _ged_drawtrees(dgcdp->gedp, ac, av, 3, client_data);
-	    } else {
-		/* save shaded mode states */
-		int save_dgo_shaded_mode = dgcdp->gedp->ged_gdp->gd_shaded_mode;
-		int save_shaded_mode_override = dgcdp->shaded_mode_override;
-		int save_dmode = dgcdp->dmode;
-
-		/* turn shaded mode off for this pipe object */
-		dgcdp->gedp->ged_gdp->gd_shaded_mode = 0;
-		dgcdp->shaded_mode_override = -1;
-		dgcdp->dmode = _GED_WIREFRAME;
-
-		_ged_drawtrees(dgcdp->gedp, ac, av, 1, client_data);
-
-		/* restore shaded mode states */
-		dgcdp->gedp->ged_gdp->gd_shaded_mode = save_dgo_shaded_mode;
-		dgcdp->shaded_mode_override = save_shaded_mode_override;
-		dgcdp->dmode = save_dmode;
-	    }
-
-	    break;
-    }
-
-    bu_free((genptr_t)av[0], "dgo_bot_check_leaf: av[0]");
-
-    return curtree;
 }
 
 
@@ -1017,7 +1008,7 @@ _ged_invent_solid(struct ged *gedp,
 
     if ((dp = db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET)) != RT_DIR_NULL) {
 	if (dp->d_addr != RT_DIR_PHONY_ADDR) {
-	    bu_vls_printf(&gedp->ged_result_str,
+	    bu_vls_printf(gedp->ged_result_str,
 			  "_ged_invent_solid(%s) would clobber existing database entry, ignored\n", name);
 	    return -1;
 	}
@@ -1042,7 +1033,7 @@ _ged_invent_solid(struct ged *gedp,
 	BU_LIST_APPEND_LIST(&(sp->s_vlist), vhead);
 	BU_LIST_INIT(vhead);
     }
-    ged_bound_solid(gedp, sp);
+    bound_solid(gedp, sp);
 
     /* set path information -- this is a top level node */
     db_add_node_to_full_path(&sp->s_fullpath, dp);
@@ -1157,11 +1148,11 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -1192,7 +1183,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	if (!ptr_A && !ptr_o) {
 	    bu_vls_putc(&vls, ' ');
 	    bu_vls_strcat(&vls, argv[i]);
- 	    continue;
+	    continue;
 	}
 
 	if (strlen(argv[i]) == ((size_t)1 + (ptr_A != NULL) + (ptr_o != NULL))) {
@@ -1222,7 +1213,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 
 	remaining_args = argc - last_opt - 1;
 	if (remaining_args < 2 || remaining_args%2) {
-	    bu_vls_printf(&gedp->ged_result_str, "Error: must have even number of arguments (name/value pairs)\n");
+	    bu_vls_printf(gedp->ged_result_str, "Error: must have even number of arguments (name/value pairs)\n");
 	    bu_vls_free(&vls);
 	    return GED_ERROR;
 	}
@@ -1376,7 +1367,7 @@ ged_addToDisplay(struct ged *gedp,
     bu_vls_init(&gdlp->gdl_path);
     bu_vls_printf(&gdlp->gdl_path, "%s", name);
 
- end:
+end:
     if (found_namepath)
 	db_free_full_path(&namepath);
 

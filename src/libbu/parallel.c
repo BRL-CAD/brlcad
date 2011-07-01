@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup thread */
-/** @{ */
 
 #include "common.h"
 
@@ -480,8 +478,8 @@ bu_get_public_cpus(void)
 	if (ret != 1)
 	    public_cpus = 1;
 	fclose(fp);
-	if (public_cpus < 0)  public_cpus = avail_cpus + public_cpus;
-	if (public_cpus > avail_cpus)  public_cpus = avail_cpus;
+	if (public_cpus < 0) public_cpus = avail_cpus + public_cpus;
+	if (public_cpus > avail_cpus) public_cpus = avail_cpus;
 	return public_cpus;
     }
 
@@ -521,6 +519,7 @@ bu_set_realtime(void)
 #	endif
     return 0;
 }
+
 
 /**********************************************************************/
 
@@ -577,7 +576,7 @@ extern int bu_pid_of_initiating_thread;
 static int _bu_nthreads_started = 0;	/* # threads started */
 static int _bu_nthreads_finished = 0;	/* # threads properly finished */
 static genptr_t _bu_parallel_arg;	/* User's arg to his threads */
-static void (*_bu_parallel_func) BU_ARGS((int, genptr_t));	/* user function to run in parallel */
+static void (*_bu_parallel_func)(int, genptr_t);	/* user function to run in parallel */
 
 
 /**
@@ -600,15 +599,6 @@ _bu_parallel_interface(void)
 {
     register int cpu;		/* our CPU (thread) number */
 
-#if 0
-#ifdef HAVE_PTHREAD_H
-    {
-	pthread_t pt;
-	pt = pthread_self();
-	fprintf(stderr, "_bu_parallel_interface, Thread ID = 0x%x\n", (unsigned int)pt);
-    }
-#endif
-#endif
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     cpu = _bu_nthreads_started++;
     bu_semaphore_release(BU_SEM_SYSCALL);
@@ -1125,7 +1115,6 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     return;
 }
 
-/** @} */
 
 /*
  * Local Variables:

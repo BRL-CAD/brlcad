@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Polyline.h
+/** @file step/Polyline.h
  *
  * Class definition used to convert STEP "Polyline" to BRL-CAD BREP
  * structures.

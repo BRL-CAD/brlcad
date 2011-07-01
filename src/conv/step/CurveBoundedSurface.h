@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file CurveBoundedSurface.h
+/** @file step/CurveBoundedSurface.h
  *
  * Class definition used to interface to STEP "CurveBoundedSurface".
  *
@@ -42,7 +42,7 @@ protected:
 	LIST_OF_BOUNDARIES boundaries;
 	//TODO: Fix all references to YAYA
 #ifdef YAYA
-	SCLBOOL_H(Boolean) implicit_outer;
+	Boolean implicit_outer;
 #else
 	int implicit_outer;
 #endif

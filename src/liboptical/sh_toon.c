@@ -18,7 +18,7 @@
  * information.
  */
 
-/** @file sh_toon.c
+/** @file liboptical/sh_toon.c
  *
  * uses simple binning based on the cosine between the ray and the vector from
  * the hitpoint to the light. Might be improved by using hit location curvature
@@ -77,8 +77,10 @@ struct bu_structparse toon_parse_tab[] = {
 };
 
 
-HIDDEN int toon_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), toon_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void toon_print(register struct region *rp, char *dp), toon_free(char *cp);
+HIDDEN int toon_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int toon_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
+HIDDEN void toon_print(register struct region *rp, genptr_t dp);
+HIDDEN void toon_free(genptr_t cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -109,7 +111,7 @@ struct mfuncs toon_mfuncs[] = {
  * -1 failure
  */
 HIDDEN int
-toon_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+toon_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -128,7 +130,7 @@ toon_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
 
     /* Get memory for the shader parameters and shader-specific data */
     BU_GETSTRUCT(toon_sp, toon_specific);
-    *dpp = (char *)toon_sp;
+    *dpp = toon_sp;
 
     /* initialize the default values for the shader */
     memcpy(toon_sp, &toon_defaults, sizeof(struct toon_specific));
@@ -149,7 +151,7 @@ toon_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
  * T O O N _ P R I N T
  */
 HIDDEN void
-toon_print(register struct region *rp, char *dp)
+toon_print(register struct region *rp, genptr_t dp)
 {
     bu_struct_print(rp->reg_name, toon_print_tab, (char *)dp);
 }
@@ -159,7 +161,7 @@ toon_print(register struct region *rp, char *dp)
  * T O O N _ F R E E
  */
 HIDDEN void
-toon_free(char *cp)
+toon_free(genptr_t cp)
 {
     bu_free(cp, "toon_specific");
 }
@@ -173,7 +175,7 @@ toon_free(char *cp)
  * structure.
  */
 int
-toon_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+toon_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
 {
     int i;
     struct toon_specific *toon_sp = (struct toon_specific *)dp;

@@ -154,7 +154,7 @@ extern "C" void
 rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
 {
     struct rt_db_internal *tmp_internal = (struct rt_db_internal *) bu_malloc(sizeof(struct rt_db_internal), "allocate structure");
-    RT_INIT_DB_INTERNAL(tmp_internal);
+    RT_DB_INTERNAL_INIT(tmp_internal);
     struct rt_revolve_internal *rip;
     struct rt_sketch_internal *eip;
 

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file translate_extrude.c
+/** @file libged/translate_extrude.c
  *
  * The translate_extrude command.
  *
@@ -45,26 +45,26 @@ _ged_translate_extrude(struct ged *gedp, struct rt_extrude_internal *extrude, co
     VSCALE(tvec, tvec, gedp->ged_wdbp->dbip->dbi_local2base);
 
     switch (attribute[0]) {
-    case 'h':
-    case 'H':
-	if (rflag) {
-	    VADD2(hvec, extrude->h, tvec);
-	} else {
-	    VSUB2(hvec, tvec, extrude->V);
-	}
+	case 'h':
+	case 'H':
+	    if (rflag) {
+		VADD2(hvec, extrude->h, tvec);
+	    } else {
+		VSUB2(hvec, tvec, extrude->V);
+	    }
 
-	/* check for zero H vector */
-	if (MAGNITUDE(hvec) <= SQRT_SMALL_FASTF) {
-	    bu_vls_printf(&gedp->ged_result_str, "Zero H vector not allowed.");
+	    /* check for zero H vector */
+	    if (MAGNITUDE(hvec) <= SQRT_SMALL_FASTF) {
+		bu_vls_printf(gedp->ged_result_str, "Zero H vector not allowed.");
+		return GED_ERROR;
+	    }
+
+	    VMOVE(extrude->h, hvec);
+
+	    break;
+	default:
+	    bu_vls_printf(gedp->ged_result_str, "bad extrude attribute - %s", attribute);
 	    return GED_ERROR;
-	}
-
-	VMOVE(extrude->h, hvec);
-
-	break;
-    default:
-	bu_vls_printf(&gedp->ged_result_str, "bad extrude attribute - %s", attribute);
-	return GED_ERROR;
     }
 
     return GED_OK;

@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_index.c
+/** @file primitives/nmg/nmg_index.c
  *
  * Handle counting and re-indexing of NMG data structures.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file reg.c
+/** @file libwdb/reg.c
  *
  * Library for writing MGED databases from arbitrary procedures.
  *
@@ -58,7 +58,7 @@ mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
 	WDB_CK_WMEMBER(wp);
 
 	BU_GETUNION(leafp, tree);
-	RT_INIT_TREE(leafp);
+	RT_TREE_INIT(leafp);
 	leafp->tr_l.tl_op = OP_DB_LEAF;
 	leafp->tr_l.tl_name = bu_strdup(wp->wm_name);
 	if (!bn_mat_is_identity(wp->wm_mat)) {
@@ -71,7 +71,7 @@ mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
 	}
 	/* Build a left-heavy tree */
 	BU_GETUNION(nodep, tree);
-	RT_INIT_TREE(nodep);
+	RT_TREE_INIT(nodep);
 	switch (wp->wm_op) {
 	    case WMOP_UNION:
 		nodep->tr_b.tb_op = OP_UNION;
@@ -162,7 +162,7 @@ mk_tree_gift(struct rt_comb_internal *comb, struct bu_list *member_hd)
 
 	/* make new leaf node, and insert at end of array */
 	BU_GETUNION(tp, tree);
-	RT_INIT_TREE(tp);
+	RT_TREE_INIT(tp);
 	tree_list[node_count++].tl_tree = tp;
 	tp->tr_l.tl_op = OP_DB_LEAF;
 	tp->tr_l.tl_name = bu_strdup(wp->wm_name);
@@ -266,18 +266,18 @@ int
 mk_comb(
     struct rt_wdb *wdbp,
     const char *combname,
-    struct bu_list *headp,	/* Made by mk_addmember() */
-    int region_kind,		/* 1 => region.  'P' and 'V' for FASTGEN */
-    const char *shadername,	/* shader name, or NULL */
-    const char *shaderargs,	/* shader args, or NULL */
-    const unsigned char *rgb,	/* NULL => no color */
-    int id,			/* region_id */
-    int air,			/* aircode */
-    int material,		/* GIFTmater */
+    struct bu_list *headp,
+    int region_kind,
+    const char *shadername,
+    const char *shaderargs,
+    const unsigned char *rgb,
+    int id,
+    int air,
+    int material,
     int los,
     int inherit,
-    int append_ok,		/* 0 = obj must not exit */
-    int gift_semantics)		/* 0 = pure, 1 = gift */
+    int append_ok,
+    int gift_semantics)
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -285,7 +285,7 @@ mk_comb(
 
     RT_CK_WDB(wdbp);
 
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
 
     if (append_ok &&
 	wdb_import(wdbp, &intern, combname, (matp_t)NULL) >= 0) {
@@ -297,9 +297,7 @@ mk_comb(
     } else {
 	/* Create a fresh new object for export */
 	BU_GETSTRUCT(comb, rt_comb_internal);
-	comb->magic = RT_COMB_MAGIC;
-	bu_vls_init(&comb->shader);
-	bu_vls_init(&comb->material);
+	RT_COMB_INTERNAL_INIT(comb);
 
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_COMBINATION;

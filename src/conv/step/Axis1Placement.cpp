@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Axis1Placement.cpp
+/** @file step/Axis1Placement.cpp
  *
  * Routines to convert STEP "Axis1Placement" to BRL-CAD BREP
  * structures.

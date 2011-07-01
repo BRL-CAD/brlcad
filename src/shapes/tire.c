@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tire.c
+/** @file shapes/tire.c
  *
  * Tire Generator
  *
@@ -65,8 +65,13 @@ int main(int ac, char *av[])
 
     if (ret) {
 	unlink(filename);
-	bu_exit(1, "%s", bu_vls_addr(&ged.ged_result_str));
+	bu_log("%s", bu_vls_addr(ged.ged_result_str));
+	ged_free(&ged);
+	return 1;
     }
+
+    /* release our ged instance memory */
+    ged_free(&ged);
 
     return 0;
 }

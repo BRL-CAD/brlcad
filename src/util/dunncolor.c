@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dunncolor.c
+/** @file util/dunncolor.c
  *
  * Sets the exposure values in the Dunn camera to the
  * specified arguments.

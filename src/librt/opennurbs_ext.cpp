@@ -165,7 +165,7 @@ CurveTree::CurveTree(ON_BrepFace* face) :
 		}
 		for (std::list<double>::iterator l = splitlist.begin(); l != splitlist.end(); l++) {
 		    double xmax = *l;
-		    if (!NEAR_ZERO(xmax-min, TOL)) {
+		    if (!NEAR_EQUAL(xmax, min, TOL)) {
 			m_root->addChild(subdivideCurve(trimCurve, adj_face_index, min, xmax, innerLoop, 0));
 		    }
 		    min = xmax;
@@ -178,7 +178,7 @@ CurveTree::CurveTree(ON_BrepFace* face) :
 		trimCurve->GetSpanVector(knots);
 		for (int knot_index = 1; knot_index <= knotcnt; knot_index++) {
 		    double xmax = knots[knot_index];
-		    if (!NEAR_ZERO(xmax-min, TOL)) {
+		    if (!NEAR_EQUAL(xmax, min, TOL)) {
 			m_root->addChild(subdivideCurve(trimCurve, adj_face_index, min, xmax, innerLoop, 0));
 		    }
 		    min = xmax;
@@ -186,7 +186,7 @@ CurveTree::CurveTree(ON_BrepFace* face) :
 		delete [] knots;
 	    }
 
-	    if (!NEAR_ZERO(max-min, TOL)) {
+	    if (!NEAR_EQUAL(max, min, TOL)) {
 		m_root->addChild(subdivideCurve(trimCurve, adj_face_index, min, max, innerLoop, 0));
 	    }
 	}
@@ -2357,7 +2357,7 @@ try_again:
 	double d = p.DistanceTo(point);
 	TRACE("dist: " << d);
 
-	if (NEAR_ZERO((d-d_last), tolerance)) {
+	if (NEAR_EQUAL(d, d_last, tolerance)) {
 	    found = true; break;
 	} else if (d > d_last) {
 	    TRACE("diverged!");
@@ -2510,10 +2510,10 @@ getCoefficients(BSpline& bspline, TNT::Array1D<double>& N, double u)
     // evaluate the b-spline basis function for the given parameter u
     // place the results in N[]
     N = 0.0;
-    if (NEAR_ZERO(u - bspline.knots[0], BREP_FCP_ROOT_EPSILON)) {
+    if (NEAR_EQUAL(u, bspline.knots[0], BREP_FCP_ROOT_EPSILON)) {
 	N[0] = 1.0;
 	return 0;
-    } else if (NEAR_ZERO(u - bspline.knots[bspline.m], BREP_FCP_ROOT_EPSILON)) {
+    } else if (NEAR_EQUAL(u, bspline.knots[bspline.m], BREP_FCP_ROOT_EPSILON)) {
 	N[bspline.n] = 1.0;
 	return bspline.n;
     }

@@ -48,7 +48,7 @@ SCLP23(Entity_extent__set)::SCLP23_NAME(Entity_extent__set) (int defaultSize)
 // : _rep(os_Collection<Entity_extent_ptr>::create(os_database::of(this)) ), 
  : _rep(os_List<SCLP23(Entity_extent_ptr)>::create(os_database::of(this)) ), 
    _cursor(_rep),
-   _first(SCLBOOL(BTrue))
+   _first(BTrue)
 {
 //    _rep = os_Set<Entity_extent_ptr>::create(os_database::of(this));
 }

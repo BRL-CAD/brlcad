@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file UncertaintyMeasureWithUnit.h
+/** @file step/UncertaintyMeasureWithUnit.h
  *
  * Class definition used to convert STEP "UncertaintyMeasureWithUnit" to BRL-CAD BREP
  * structures.

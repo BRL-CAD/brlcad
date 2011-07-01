@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file BRLCADWrapper.cpp
+/** @file step/BRLCADWrapper.cpp
  *
  * C++ wrapper to BRL-CAD database functions.
  *

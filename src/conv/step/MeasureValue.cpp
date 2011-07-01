@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file MeasureValue.cpp
+/** @file step/MeasureValue.cpp
  *
  * Routines to convert STEP "MeasureValue" to BRL-CAD BREP
  * structures.

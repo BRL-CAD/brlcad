@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_gauss.c
+/** @file liboptical/sh_gauss.c
  *
  * To add a new shader to the "rt" program:
  *
@@ -52,10 +52,6 @@
 #include "rtgeom.h"
 #include "optical.h"
 
-
-extern int rr_render(struct application *ap,
-		     struct partition *pp,
-		     struct shadework *swp);
 
 /* The internal representation of the solids must be stored so that we
  * can access their parameters at shading time.  This is done with
@@ -132,8 +128,10 @@ struct bu_structparse gauss_parse_tab[] = {
 };
 
 
-HIDDEN int gauss_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), gauss_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void gauss_print(register struct region *rp, char *dp), gauss_free(char *cp);
+HIDDEN int gauss_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int gauss_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
+HIDDEN void gauss_print(register struct region *rp, genptr_t dp);
+HIDDEN void gauss_free(genptr_t cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -293,7 +291,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-gauss_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+gauss_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -318,7 +316,7 @@ gauss_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 
     /* Get memory for the shader parameters and shader-specific data */
     BU_GETSTRUCT(gauss_sp, gauss_specific);
-    *dpp = (char *)gauss_sp;
+    *dpp = gauss_sp;
 
     /* initialize the default values for the shader */
     memcpy(gauss_sp, &gauss_defaults, sizeof(struct gauss_specific));
@@ -362,7 +360,7 @@ gauss_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
    * G A U S S _ P R I N T
    */
 HIDDEN void
-gauss_print(register struct region *rp, char *dp)
+gauss_print(register struct region *rp, genptr_t dp)
 {
     bu_struct_print(rp->reg_name, gauss_print_tab, (char *)dp);
 }
@@ -372,7 +370,7 @@ gauss_print(register struct region *rp, char *dp)
  * G A U S S _ F R E E
  */
 HIDDEN void
-gauss_free(char *cp)
+gauss_free(genptr_t cp)
 {
     register struct gauss_specific *gauss_sp =
 	(struct gauss_specific *)cp;
@@ -381,7 +379,7 @@ gauss_free(char *cp)
     while (BU_LIST_WHILE(p, reg_db_internals, &gauss_sp->dbil)) {
 	BU_LIST_DEQUEUE(&(p->l));
 	bu_free(p->ip.idb_ptr, "internal ptr");
-	bu_free((char *)p, "gauss reg_db_internals");
+	bu_free((genptr_t)p, "gauss reg_db_internals");
     }
 
     bu_free(cp, "gauss_specific");
@@ -483,7 +481,7 @@ eval_seg(struct application *ap, struct reg_db_internals *dbint, struct seg *seg
  * structure.
  */
 int
-gauss_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+gauss_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
 
 
 /* defined in material.h */

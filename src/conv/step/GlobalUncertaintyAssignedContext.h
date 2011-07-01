@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file GlobalUncertaintyAssignedContext.h
+/** @file step/GlobalUncertaintyAssignedContext.h
  *
  * Class definition used to convert STEP "GlobalUncertaintyAssignedContext" to BRL-CAD BREP
  * structures.

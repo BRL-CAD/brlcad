@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file FaceBound.cpp
+/** @file step/FaceBound.cpp
  *
  * Routines to convert STEP "FaceBound" to BRL-CAD BREP
  * structures.
@@ -91,7 +91,7 @@ FaceBound::Print(int level) {
 	TAB(level+1); std::cout << "bound:" << std::endl;
 	bound->Print(level+1);
 
-	TAB(level+1); std::cout << "orientation:" << step->getBooleanString((SCLBOOL_H(Boolean))orientation) << std::endl;
+	TAB(level+1); std::cout << "orientation:" << step->getBooleanString((Boolean)orientation) << std::endl;
 
 	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	TopologicalRepresentationItem::Print(level+1);
@@ -99,7 +99,7 @@ FaceBound::Print(int level) {
 
 bool
 FaceBound::Oriented() {
-    if (orientation == SCLBOOL_H(BTrue)) {
+    if (orientation == BTrue) {
 	return true;
     }
     return false;

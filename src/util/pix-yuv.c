@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pix-yuv.c
+/** @file util/pix-yuv.c
  *
  * Convert a .pix file to a .YUV file, i.e. in CCIR-601 format.
  * Only the active pixels are recorded in the file, as in

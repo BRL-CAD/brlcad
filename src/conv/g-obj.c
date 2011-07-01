@@ -19,7 +19,7 @@
  * information.
  *
  */
-/** @file g-obj.c
+/** @file conv/g-obj.c
  *
  * Program to convert a BRL-CAD model (in a .g file) to a Wavefront
  * '.obj' file by calling on the NMG booleans.
@@ -43,7 +43,7 @@
 
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
 
-BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
+extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 
 static char	usage[] = "\
 Usage: %s [-m][-v][-i][-u][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol]\n\
@@ -697,7 +697,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     }
 
     BU_GETUNION(curtree, tree);
-    RT_INIT_TREE(curtree);
+    RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
     return curtree;
 }

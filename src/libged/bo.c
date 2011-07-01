@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bo.c
+/** @file libged/bo.c
  *
  * The 'bo' binary object command, used for importing and exporting
  * between files and binary objects stored in a geometry database.
@@ -53,17 +53,17 @@ ged_bo(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     /* check that we are using a version 5 database */
     if (db_version(gedp->ged_wdbp->dbip) < 5) {
-	bu_vls_printf(&gedp->ged_result_str, "This is an older database version.\nIt does not support binary objects.Use \"dbupgrade\" to upgrade this database to the current version.\n");
+	bu_vls_printf(gedp->ged_result_str, "This is an older database version.\nIt does not support binary objects.Use \"dbupgrade\" to upgrade this database to the current version.\n");
 	return GED_ERROR;
     }
 
@@ -78,7 +78,7 @@ ged_bo(struct ged *gedp, int argc, const char *argv[])
 		output_mode = 1;
 		break;
 	    default:
-		bu_vls_printf(&gedp->ged_result_str, "Unrecognized option - %c", c);
+		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", c);
 		return GED_ERROR;
 
 	}
@@ -87,24 +87,24 @@ ged_bo(struct ged *gedp, int argc, const char *argv[])
     cname = (char *)argv[0];
 
     if (input_mode + output_mode != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     argc -= bu_optind;
     argv += bu_optind;
 
-    if ( (input_mode && argc != 4) || (output_mode && argc != 2) ) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    if ((input_mode && argc != 4) || (output_mode && argc != 2)) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
 
-    if ( input_mode ) {
+    if (input_mode) {
 	if (argv[0][0] == 'u') {
 
 	    if (argv[1][1] != '\0') {
-		bu_vls_printf(&gedp->ged_result_str, "Unrecognized minor type: %s", argv[1]);
+		bu_vls_printf(gedp->ged_result_str, "Unrecognized minor type: %s", argv[1]);
 		return GED_ERROR;
 	    }
 
@@ -140,11 +140,11 @@ ged_bo(struct ged *gedp, int argc, const char *argv[])
 		    minor_type = DB5_MINORTYPE_BINU_64BITINT_U;
 		    break;
 		default:
-		    bu_vls_printf(&gedp->ged_result_str, "Unrecognized minor type: %s", argv[1]);
+		    bu_vls_printf(gedp->ged_result_str, "Unrecognized minor type: %s", argv[1]);
 		    return GED_ERROR;
 	    }
 	} else {
-	    bu_vls_printf(&gedp->ged_result_str, "Unrecognized major type: %s", argv[0]);
+	    bu_vls_printf(gedp->ged_result_str, "Unrecognized major type: %s", argv[0]);
 	    return GED_ERROR;
 	}
 
@@ -153,7 +153,7 @@ ged_bo(struct ged *gedp, int argc, const char *argv[])
 	argv += 2;
 
 	if (minor_type == 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
 	}
 
@@ -166,8 +166,8 @@ ged_bo(struct ged *gedp, int argc, const char *argv[])
 	file_name = (char *)*argv;
 
 	/* make a binunif of the entire file */
-	if ( rt_mk_binunif( gedp->ged_wdbp, obj_name, file_name, minor_type, 0) ) {
-	    bu_vls_printf(&gedp->ged_result_str, "Error creating %s", obj_name);
+	if (rt_mk_binunif (gedp->ged_wdbp, obj_name, file_name, minor_type, 0)) {
+	    bu_vls_printf(gedp->ged_result_str, "Error creating %s", obj_name);
 	    return GED_ERROR;
 	}
 
@@ -181,55 +181,55 @@ ged_bo(struct ged *gedp, int argc, const char *argv[])
 
 	obj_name = (char *)*argv;
 
-	if ( (dp=db_lookup(gedp->ged_wdbp->dbip, obj_name, LOOKUP_NOISY )) == RT_DIR_NULL ) {
+	if ((dp=db_lookup(gedp->ged_wdbp->dbip, obj_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    return GED_ERROR;
 	}
-	if ( !( dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK) ) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s is not a binary object", obj_name);
-	    return GED_ERROR;
-	}
-
-	if ( dp->d_major_type != DB5_MAJORTYPE_BINARY_UNIF ) {
-	    bu_vls_printf(&gedp->ged_result_str, "source must be a uniform binary object");
+	if (!(dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK)) {
+	    bu_vls_printf(gedp->ged_result_str, "%s is not a binary object", obj_name);
 	    return GED_ERROR;
 	}
 
-	fp = fopen( file_name, "w+b");
+	if (dp->d_major_type != DB5_MAJORTYPE_BINARY_UNIF) {
+	    bu_vls_printf(gedp->ged_result_str, "source must be a uniform binary object");
+	    return GED_ERROR;
+	}
+
+	fp = fopen(file_name, "w+b");
 	if (fp == NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "Error: cannot open file %s for writing", file_name);
+	    bu_vls_printf(gedp->ged_result_str, "Error: cannot open file %s for writing", file_name);
 	    return GED_ERROR;
 	}
 
 	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, NULL,
 			       &rt_uniresource) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "Error reading %s from database", dp->d_namep);
+	    bu_vls_printf(gedp->ged_result_str, "Error reading %s from database", dp->d_namep);
 	    fclose(fp);
 	    return GED_ERROR;
 	}
 
-	RT_CK_DB_INTERNAL( &intern );
+	RT_CK_DB_INTERNAL(&intern);
 
 	bip = (struct rt_binunif_internal *)intern.idb_ptr;
 	if (bip->count < 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s has no contents", obj_name);
+	    bu_vls_printf(gedp->ged_result_str, "%s has no contents", obj_name);
 	    fclose(fp);
 	    rt_db_free_internal(&intern);
 	    return GED_ERROR;
 	}
 
-	if ( fwrite( bip->u.int8, bip->count * db5_type_sizeof_h_binu( bip->type ),
-		     1, fp) != 1 ) {
-	    bu_vls_printf(&gedp->ged_result_str, "Error writing contents to file");
-	    fclose( fp );
+	if (fwrite(bip->u.int8, bip->count * db5_type_sizeof_h_binu(bip->type),
+		   1, fp) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "Error writing contents to file");
+	    fclose(fp);
 	    rt_db_free_internal(&intern);
 	    return GED_ERROR;
 	}
 
-	fclose( fp );
+	fclose(fp);
 	rt_db_free_internal(&intern);
 
     } else {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 

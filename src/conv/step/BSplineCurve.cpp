@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file BSplineCurve.cpp
+/** @file step/BSplineCurve.cpp
  *
  * Routines to convert STEP "BSplineCurve" to BRL-CAD BREP
  * structures.
@@ -136,8 +136,8 @@ BSplineCurve::Print(int level) {
 		(*i)->Print(level+1);
 	}
 
-	TAB(level+1); std::cout << "closed_curve:" << step->getLogicalString((SCLLOG_H(Logical))closed_curve) << std::endl;
-	TAB(level+1); std::cout << "self_intersect:" << step->getLogicalString((SCLLOG_H(Logical))self_intersect) << std::endl;
+	TAB(level+1); std::cout << "closed_curve:" << step->getLogicalString((Logical)closed_curve) << std::endl;
+	TAB(level+1); std::cout << "self_intersect:" << step->getLogicalString((Logical)self_intersect) << std::endl;
 	TAB(level+1); std::cout << "degree:" << degree << std::endl;
 	TAB(level+1); std::cout << "curve_form:" << B_spline_curve_form_string[curve_form] << std::endl;
 

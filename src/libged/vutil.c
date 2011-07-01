@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file vutil.c
+/** @file libged/vutil.c
  *
  * This file contains view related utility functions.
  *
@@ -31,7 +31,7 @@
 
 
 void
-ged_view_update(struct ged_view	*gvp)
+ged_view_update(struct ged_view *gvp)
 {
     vect_t work, work1;
     vect_t temp, temp1;
@@ -56,8 +56,8 @@ ged_view_update(struct ged_view	*gvp)
 	       temp, temp1, (fastf_t)0.005);
 
     /* Force azimuth range to be [0, 360] */
-    if ((NEAR_ZERO(gvp->gv_aet[1] - 90.0, (fastf_t)0.005) ||
-	 NEAR_ZERO(gvp->gv_aet[1] + 90.0, (fastf_t)0.005)) &&
+    if ((NEAR_EQUAL(gvp->gv_aet[1], 90.0, (fastf_t)0.005) ||
+	 NEAR_EQUAL(gvp->gv_aet[1], -90.0, (fastf_t)0.005)) &&
 	gvp->gv_aet[0] < 0 &&
 	!NEAR_ZERO(gvp->gv_aet[0], (fastf_t)0.005))
 	gvp->gv_aet[0] += 360.0;
@@ -96,11 +96,12 @@ _ged_mat_aet(struct ged_view *gvp)
     bn_mat_mul2(tmat, gvp->gv_rotation);
 }
 
+
 int
-_ged_do_rot(struct ged	*gedp,
-	   char		coord,
-	   mat_t	rmat,
-	   int		(*func)())
+_ged_do_rot(struct ged *gedp,
+	    char coord,
+	    mat_t rmat,
+	    int (*func)())
 {
     mat_t temp1, temp2;
 
@@ -121,11 +122,11 @@ _ged_do_rot(struct ged	*gedp,
 
     /* Calculate new view center */
     if (gedp->ged_gvp->gv_rotate_about != 'v') {
-	point_t		rot_pt;
-	point_t		new_origin;
-	mat_t		viewchg, viewchginv;
-	point_t		new_cent_view;
-	point_t		new_cent_model;
+	point_t rot_pt;
+	point_t new_origin;
+	mat_t viewchg, viewchginv;
+	point_t new_cent_view;
+	point_t new_cent_model;
 
 	switch (gedp->ged_gvp->gv_rotate_about) {
 	    case 'e':
@@ -160,6 +161,7 @@ _ged_do_rot(struct ged	*gedp,
     return GED_OK;
 }
 
+
 int
 _ged_do_slew(struct ged *gedp, vect_t svec)
 {
@@ -172,11 +174,12 @@ _ged_do_slew(struct ged *gedp, vect_t svec)
     return GED_OK;
 }
 
+
 int
-_ged_do_tra(struct ged	*gedp,
-	   char		coord,
-	   vect_t	tvec,
-	   int		(*func)())
+_ged_do_tra(struct ged *gedp,
+	    char coord,
+	    vect_t tvec,
+	    int (*func)())
 {
     point_t delta;
     point_t work;
@@ -206,6 +209,7 @@ _ged_do_tra(struct ged	*gedp,
     return GED_OK;
 }
 
+
 int
 _ged_do_zoom(struct ged *gedp, fastf_t sf)
 {
@@ -230,14 +234,14 @@ _ged_do_zoom(struct ged *gedp, fastf_t sf)
  * Manager).
  */
 void
-ged_persp_mat(mat_t	m,
-	      fastf_t	fovy,
-	      fastf_t	aspect,
-	      fastf_t	near1,
-	      fastf_t	far1,
-	      fastf_t	backoff)
+ged_persp_mat(mat_t m,
+	      fastf_t fovy,
+	      fastf_t aspect,
+	      fastf_t near1,
+	      fastf_t far1,
+	      fastf_t backoff)
 {
-    mat_t	m2, tran;
+    mat_t m2, tran;
 
     fovy *= 3.1415926535/180.0;
 
@@ -269,16 +273,16 @@ ged_persp_mat(mat_t	m,
  * pmat = persp * xlate * shear
  */
 void
-ged_mike_persp_mat(mat_t		pmat,
-		   const point_t	eye)
+ged_mike_persp_mat(mat_t pmat,
+		   const point_t eye)
 {
-    mat_t	shear;
-    mat_t	persp;
-    mat_t	xlate;
-    mat_t	t1, t2;
-    point_t	sheared_eye;
+    mat_t shear;
+    mat_t persp;
+    mat_t xlate;
+    mat_t t1, t2;
+    point_t sheared_eye;
 
-    if ( eye[Z] <= SMALL )  {
+    if (eye[Z] <= SMALL) {
 	VPRINT("mike_persp_mat(): ERROR, z<0, eye", eye);
 	return;
     }
@@ -288,8 +292,8 @@ ged_mike_persp_mat(mat_t		pmat,
     shear[2] = -eye[X]/eye[Z];
     shear[6] = -eye[Y]/eye[Z];
 
-    MAT4X3VEC( sheared_eye, shear, eye );
-    if ( !NEAR_ZERO(sheared_eye[X], .01) || !NEAR_ZERO(sheared_eye[Y], .01) )  {
+    MAT4X3VEC(sheared_eye, shear, eye);
+    if (!NEAR_ZERO(sheared_eye[X], .01) || !NEAR_ZERO(sheared_eye[Y], .01)) {
 	VPRINT("ERROR sheared_eye", sheared_eye);
 	return;
     }
@@ -297,10 +301,10 @@ ged_mike_persp_mat(mat_t		pmat,
     /* Translate along +Z axis to put sheared_eye at (0, 0, 1). */
     MAT_IDN(xlate);
     /* XXX should I use MAT_DELTAS_VEC_NEG()?  X and Y should be 0 now */
-    MAT_DELTAS( xlate, 0, 0, 1-sheared_eye[Z] );
+    MAT_DELTAS(xlate, 0, 0, 1-sheared_eye[Z]);
 
     /* Build perspective matrix inline, substituting fov=2*atan(1, Z) */
-    MAT_IDN( persp );
+    MAT_IDN(persp);
     /* From page 492 of Graphics Gems */
     persp[0] = sheared_eye[Z];	/* scaling: fov aspect term */
     persp[5] = sheared_eye[Z];	/* scaling: determines fov */
@@ -309,44 +313,45 @@ ged_mike_persp_mat(mat_t		pmat,
     /* Z center of projection at Z=+1, r=-1/1 */
     persp[14] = -1;
 
-    bn_mat_mul( t1, xlate, shear );
-    bn_mat_mul( t2, persp, t1 );
+    bn_mat_mul(t1, xlate, shear);
+    bn_mat_mul(t2, persp, t1);
 
     /* Now, move eye from Z=1 to Z=0, for clipping purposes */
-    MAT_DELTAS( xlate, 0, 0, -1 );
+    MAT_DELTAS(xlate, 0, 0, -1);
 
-    bn_mat_mul( pmat, xlate, t2 );
+    bn_mat_mul(pmat, xlate, t2);
 }
 
+
 /*
- *  Map "display plate coordinates" (which can just be the screen viewing cube),
- *  into [-1,+1] coordinates, with perspective.
- *  Per "High Resolution Virtual Reality" by Michael Deering,
- *  Computer Graphics 26, 2, July 1992, pp 195-201.
+ * Map "display plate coordinates" (which can just be the screen viewing cube),
+ * into [-1, +1] coordinates, with perspective.
+ * Per "High Resolution Virtual Reality" by Michael Deering,
+ * Computer Graphics 26, 2, July 1992, pp 195-201.
  *
- *  L is lower left corner of screen, H is upper right corner.
- *  L[Z] is the front (near) clipping plane location.
- *  H[Z] is the back (far) clipping plane location.
+ * L is lower left corner of screen, H is upper right corner.
+ * L[Z] is the front (near) clipping plane location.
+ * H[Z] is the back (far) clipping plane location.
  *
- *  This corresponds to the SGI "window()" routine, but taking into account
- *  skew due to the eyepoint being offset parallel to the image plane.
+ * This corresponds to the SGI "window()" routine, but taking into account
+ * skew due to the eyepoint being offset parallel to the image plane.
  *
- *  The gist of the algorithm is to translate the display plate to the
- *  view center, shear the eye point to (0, 0, 1), translate back,
- *  then apply an off-axis perspective projection.
+ * The gist of the algorithm is to translate the display plate to the
+ * view center, shear the eye point to (0, 0, 1), translate back,
+ * then apply an off-axis perspective projection.
  *
- *  Another (partial) reference is "A comparison of stereoscopic cursors
- *  for the interactive manipulation of B-splines" by Barham & McAllister,
- *  SPIE Vol 1457 Stereoscopic Display & Applications, 1991, pg 19.
+ * Another (partial) reference is "A comparison of stereoscopic cursors
+ * for the interactive manipulation of B-splines" by Barham & McAllister,
+ * SPIE Vol 1457 Stereoscopic Display & Applications, 1991, pg 19.
  */
 void
 ged_deering_persp_mat(fastf_t *m, const fastf_t *l, const fastf_t *h, const fastf_t *eye)
-    /* lower left corner of screen */
-    /* upper right (high) corner of screen */
-    /* eye location.  Traditionally at (0, 0, 1) */
+/* lower left corner of screen */
+/* upper right (high) corner of screen */
+/* eye location.  Traditionally at (0, 0, 1) */
 {
-    vect_t	diff;	/* H - L */
-    vect_t	sum;	/* H + L */
+    vect_t diff;	/* H - L */
+    vect_t sum;	/* H + L */
 
     VSUB2(diff, h, l);
     VADD2(sum, h, l);

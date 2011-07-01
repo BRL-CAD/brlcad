@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file g-egg.c
+/** @file conv/g-egg.c
  *
  * Program to convert a BRL-CAD model (in a .g file) to a panda3d egg file by
  * calling on the NMG booleans.  Based on g-stl.c.
@@ -45,6 +45,8 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
+
+extern union tree *gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 
 struct gcv_data {
     void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
@@ -197,7 +199,7 @@ main(int argc, char *argv[])
 
 
     double percent;
-    int i, use_mc=0;
+    int i, use_mc=0, use_bottess=1;
 
     bu_setlinebuf(stderr);
 
@@ -231,7 +233,7 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((i = bu_getopt(argc, argv, "a:b8n:o:r:vx:D:P:X:i")) != -1) {
+    while ((i = bu_getopt(argc, argv, "a:b89n:o:r:vx:D:P:X:i")) != -1) {
 	switch (i) {
 	    case 'a':		/* Absolute tolerance. */
 		ttol.abs = atof(bu_optarg);
@@ -271,6 +273,9 @@ main(int argc, char *argv[])
 		break;
 	    case '8':
 		use_mc = 1;
+		break;
+	    case '9':
+		use_bottess = 1;
 		break;
 	    case '?':
 		bu_log("Unknown argument: \"%c\"\n", i);
@@ -337,7 +342,7 @@ main(int argc, char *argv[])
 			    1,		/* ncpu */
 			    &tree_state,	/* state */
 			    NULL,		/* start func */
-			    use_mc?gcv_region_end_mc:gcv_region_end,	/* end func */
+			    use_mc?gcv_region_end_mc:use_bottess?gcv_bottess_region_end:gcv_region_end,	/* end func */
 			    use_mc?NULL:nmg_booltree_leaf_tess, /* leaf func */
 			    (genptr_t)&gcvwriter);  /* client_data */
 	fprintf(gcvwriter.fp, "}\n");

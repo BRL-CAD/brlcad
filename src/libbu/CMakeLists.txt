@@ -12,7 +12,7 @@ set(LIBBU_SOURCES
     basename.c
     bitv.c
     bomb.c
-	 booleanize.c
+    booleanize.c
     brlcad_path.c
     cmd.c
     cmdhist.c
@@ -22,11 +22,13 @@ set(LIBBU_SOURCES
     crashreport.c
     dirent.c
     dirname.c
+    dlfcn.c
     endian.c
     fchmod.c
     fgets.c
     fnmatch.c
     fopen_uniq.c
+    getcwd.c
     getopt.c
     globals.c
     hash.c
@@ -51,6 +53,7 @@ set(LIBBU_SOURCES
     parse.c
     printb.c
     process.c
+    progname.c
     ptbl.c
     quote.c
     rb_create.c
@@ -69,7 +72,7 @@ set(LIBBU_SOURCES
     str.c
     tcl.c
     temp.c
-	 timer.c
+    timer.c
     units.c
     vers.c
     vfont.c
@@ -82,9 +85,6 @@ set(LIBBU_SOURCES
 
 IF(MSVC)
 	 SET(WIN32LIBS ${WINSOCK_LIB})
-    add_definitions(
-	    -DBU_EXPORT_DLL
-	 )    
 ENDIF(MSVC)
 
 BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT} ${PNG_LIBRARY} ${TCL_LIBRARY} ${WIN32LIBS}")
@@ -98,6 +98,15 @@ target_link_libraries(htester ${CMAKE_THREAD_LIBS_INIT} ${PNG_LIBRARY} libbu)
 
 add_executable(timetester timetester.c)
 target_link_libraries(timetester libbu)
+
+add_executable(basenametester  basenametester.c)
+target_link_libraries(basenametester libbu)
+IF(MSVC)
+	SET_TARGET_PROPERTIES(basenametester PROPERTIES COMPILE_FLAGS "-DBRLCAD_DLL")
+ENDIF(MSVC)
+
+add_executable(prognametester  prognametester.c)
+target_link_libraries(prognametester libbu)
 
 set(bu_MAN3
   htond.3

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file RatioSiUnit.h
+/** @file step/RatioSiUnit.h
  *
  * Class definition used to convert STEP "RatioSiUnit" to BRL-CAD BREP
  * structures.

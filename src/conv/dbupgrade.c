@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file dbupgrade.c
+/** @file conv/dbupgrade.c
  *
  * This is a program to upgrade database files to the current version.
  *

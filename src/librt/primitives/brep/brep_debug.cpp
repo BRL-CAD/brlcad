@@ -49,8 +49,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    RT_EXPORT BU_EXTERN(int brep_command,
-			(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag));
+    RT_EXPORT extern int brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
 #ifdef __cplusplus
 }
 #endif

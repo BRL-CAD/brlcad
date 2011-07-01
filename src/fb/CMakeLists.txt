@@ -13,7 +13,6 @@ IF(MSVC)
 					 )
 ENDIF(MSVC)
 BRLCAD_ADDEXEC(bw-fb bw-fb.c libfb)
-BRLCAD_ADDEXEC(cat-fb cat-fb.c libfb)
 BRLCAD_ADDEXEC(cell-fb cell-fb.c "libfb libbn")
 BRLCAD_ADDEXEC(cmap-fb cmap-fb.c libfb)
 BRLCAD_ADDEXEC(fb-bw fb-bw.c libfb)
@@ -71,7 +70,6 @@ BRLCAD_ADDEXEC(spm-fb spm-fb.c "libfb libbn")
 
 SET(fb_MANS
   bw-fb.1 
-  cat-fb.1 
   cell-fb.1 
   cmap-fb.1 
   fb-bw.1 

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file nmgmodel.c
+/** @file proc-db/nmgmodel.c
  *
  * build a really hairy nmg solid in a database
  *
@@ -509,9 +509,6 @@ make_1manifold_bits()
 void
 make_0manifold_bits()
 {
-#if 0
-    struct nmgregion *lrp;
-#endif
     struct shell *sp;
 
     /* make a shell of a single vertex in the same region
@@ -520,15 +517,6 @@ make_0manifold_bits()
     sp = nmg_msv(r);
     vertl[48] = sp->vu_p->v_p;
     nmg_vertex_g(vertl[48],  -10.0, 40.0, -10.0);
-
-
-#if 0
-    /* make a region &shell of a single vertex */
-    lrp = nmg_mrsv(m);
-    sp = BU_LIST_FIRST(shell, &lrp->s_hd);
-    vertl[47] = sp->vu_p->v_p;
-    nmg_vertex_g(vertl[47],  -10.0, 50.0, -10.0);
-#endif
 }
 
 

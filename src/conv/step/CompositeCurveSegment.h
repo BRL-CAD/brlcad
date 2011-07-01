@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file CompositeCurveSegment.h
+/** @file step/CompositeCurveSegment.h
  *
  * Class definition used to convert STEP "CompositeCurveSegment" to BRL-CAD BREP
  * structures.
@@ -38,7 +38,7 @@ private:
 protected:
 	Curve *parent_curve;
 	Transition_code transition;
-	SCLBOOL_H(Boolean) same_sense;
+	Boolean same_sense;
 
 public:
 	CompositeCurveSegment();

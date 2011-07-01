@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file vol_mirror.c
+/** @file primitives/vol/vol_mirror.c
  *
  * mirror support
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixuntile.c
+/** @file util/pixuntile.c
  *
  * Given a single .pix file with multiple images, each side-by-side,
  * right to left, bottom to top, break them up into separate .pix

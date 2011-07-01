@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file TimeContextDependentUnit.h
+/** @file step/TimeContextDependentUnit.h
  *
  * Class definition used to convert STEP "TimeContextDependentUnit" to BRL-CAD BREP
  * structures.

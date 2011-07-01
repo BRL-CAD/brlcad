@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file window_frame.c
+/** @file shapes/window_frame.c
  *
  * Program to make a window frame using libwdb.  The objects will be
  * in millimeters.  The window frames are composed of four arb8s and *

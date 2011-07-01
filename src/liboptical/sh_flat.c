@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_flat.c
+/** @file liboptical/sh_flat.c
  *
  * Notes -
  * This is a basic flat shader.  It will display an object with a set color
@@ -51,10 +51,10 @@
 #include "optical.h"
 
 
-extern int rr_render(struct application *ap, struct partition *pp, struct shadework *swp);
-
-HIDDEN int flat_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), flat_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void flat_print(register struct region *rp, char *dp), flat_free(char *cp);
+HIDDEN int flat_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int flat_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
+HIDDEN void flat_print(register struct region *rp, genptr_t dp);
+HIDDEN void flat_free(genptr_t cp);
 
 /* these are two helper functions to process input color and transparency values */
 void normalizedInput_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value);
@@ -190,7 +190,7 @@ singleNormalizedInput_hook(register const struct bu_structparse *sdp, register c
  * default values are set.  Then any user-given values override.
  */
 HIDDEN int
-flat_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip) {
+flat_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip) {
 
     register struct flat_specific *flat_sp;
 
@@ -204,7 +204,7 @@ flat_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
 
     /* Get memory for the shader parameters and shader-specific data */
     BU_GETSTRUCT(flat_sp, flat_specific);
-    *dpp = (char *)flat_sp;
+    *dpp = flat_sp;
 
     /* color priority:
      *
@@ -247,7 +247,7 @@ flat_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
  * one we are shading and blend accordingly with the flat color.
  */
 int
-flat_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp) {
+flat_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp) {
 
     register struct flat_specific *flat_sp = (struct flat_specific *)dp;
     const point_t unit = {1.0, 1.0, 1.0};
@@ -291,7 +291,7 @@ flat_render(struct application *ap, struct partition *pp, struct shadework *swp,
  * F L A T _ P R I N T
  */
 HIDDEN void
-flat_print(register struct region *rp, char *dp) {
+flat_print(register struct region *rp, genptr_t dp) {
     bu_struct_print(rp->reg_name, flat_parse_tab, (char *)dp);
 }
 
@@ -300,7 +300,7 @@ flat_print(register struct region *rp, char *dp) {
  * F L A T _ F R E E
  */
 HIDDEN void
-flat_free(char *cp) {
+flat_free(genptr_t cp) {
     bu_free(cp, "flat_specific");
 }
 

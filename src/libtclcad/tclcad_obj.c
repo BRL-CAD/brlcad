@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libged */
+/** @addtogroup libtclcad */
 /** @{ */
-/** @file ged_obj.c
+/** @file libtclcad/tclcad_obj.c
  *
  * A quasi-object-oriented database interface.
  *
@@ -89,12 +89,10 @@
 #endif /* DM_WGL */
 
 
-GED_EXPORT BU_EXTERN(void go_refresh,
-		     (struct ged_obj *gop,
-		      struct ged_dm_view *gdvp));
-GED_EXPORT BU_EXTERN(void go_refresh_draw,
-		     (struct ged_obj *gop,
-		      struct ged_dm_view *gdvp));
+GED_EXPORT extern void go_refresh(struct ged_obj *gop,
+				  struct ged_dm_view *gdvp);
+GED_EXPORT extern void go_refresh_draw(struct ged_obj *gop,
+				       struct ged_dm_view *gdvp);
 
 HIDDEN int to_autoview(struct ged *gedp,
 		       int argc,
@@ -157,11 +155,11 @@ HIDDEN int to_copy(struct ged *gedp,
 		   const char *usage,
 		   int maxargs);
 HIDDEN int to_data_arrows(struct ged *gedp,
-			int argc,
-			const char *argv[],
-			ged_func_ptr func,
-			const char *usage,
-			int maxargs);
+			  int argc,
+			  const char *argv[],
+			  ged_func_ptr func,
+			  const char *usage,
+			  int maxargs);
 HIDDEN int to_data_axes(struct ged *gedp,
 			int argc,
 			const char *argv[],
@@ -169,17 +167,17 @@ HIDDEN int to_data_axes(struct ged *gedp,
 			const char *usage,
 			int maxargs);
 HIDDEN int to_data_labels(struct ged *gedp,
-			int argc,
-			const char *argv[],
-			ged_func_ptr func,
-			const char *usage,
-			int maxargs);
+			  int argc,
+			  const char *argv[],
+			  ged_func_ptr func,
+			  const char *usage,
+			  int maxargs);
 HIDDEN int to_data_lines(struct ged *gedp,
-			int argc,
-			const char *argv[],
-			ged_func_ptr func,
-			const char *usage,
-			int maxargs);
+			 int argc,
+			 const char *argv[],
+			 ged_func_ptr func,
+			 const char *usage,
+			 int maxargs);
 HIDDEN int to_data_move(struct ged *gedp,
 			int argc,
 			const char *argv[],
@@ -634,11 +632,11 @@ HIDDEN int to_view_func_plus(struct ged *gedp,
 			     const char *usage,
 			     int maxargs);
 HIDDEN int to_dm_func(struct ged *gedp,
-			int argc,
-			const char *argv[],
-			ged_func_ptr func,
-			const char *usage,
-			int maxargs);
+		      int argc,
+		      const char *argv[],
+		      ged_func_ptr func,
+		      const char *usage,
+		      int maxargs);
 
 /* Utility Functions */
 HIDDEN int to_close_fbs(struct ged_dm_view *gdvp);
@@ -721,7 +719,6 @@ static struct to_cmdtab to_cmds[] = {
     {"cp",	"[-f] from to", TO_UNLIMITED, to_copy, GED_FUNC_PTR_NULL},
     {"cpi",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_cpi},
     {"d",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_erase},
-    {"dall",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_erase_all},
     {"data_arrows",	"???", TO_UNLIMITED, to_data_arrows, GED_FUNC_PTR_NULL},
     {"data_axes",	"???", TO_UNLIMITED, to_data_axes, GED_FUNC_PTR_NULL},
     {"data_labels",	"???", TO_UNLIMITED, to_data_labels, GED_FUNC_PTR_NULL},
@@ -748,7 +745,6 @@ static struct to_cmdtab to_cmds[] = {
     {"edcomb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_edcomb},
     {"edmater",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_edmater},
     {"erase",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_erase},
-    {"erase_all",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_erase_all},
     {"ev",	(char *)0, TO_UNLIMITED, to_autoview_func, ged_ev},
     {"expand",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_expand},
     {"eye",	"[x y z]", 5, to_view_func_plus, ged_eye},
@@ -945,6 +941,7 @@ static struct to_cmdtab to_cmds[] = {
     {"tops",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_tops},
     {"tra",	"[-m|-v] x y z", 6, to_view_func_plus, ged_tra},
     {"track",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_track},
+    {"translate", (char *)0, TO_UNLIMITED, to_pass_through_func, ged_translate},
     {"translate_mode",	"x y", TO_UNLIMITED, to_translate_mode, GED_FUNC_PTR_NULL},
     {"transparency",	"[val]", TO_UNLIMITED, to_transparency, GED_FUNC_PTR_NULL},
     {"tree",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_tree},
@@ -1072,7 +1069,7 @@ to_cmd(ClientData clientData,
 	return TCL_ERROR;
     }
 
-    Tcl_DStringAppend(&ds, bu_vls_addr(&top->to_gop->go_gedp->ged_result_str), -1);
+    Tcl_DStringAppend(&ds, bu_vls_addr(top->to_gop->go_gedp->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret & GED_ERROR)
@@ -1223,10 +1220,16 @@ Usage: go_open\n\
 
     /* initialize ged_obj */
     BU_GETSTRUCT(top->to_gop, ged_obj);
+
+    BU_ASSERT_PTR(gedp, !=, NULL);
     top->to_gop->go_gedp = gedp;
+
     top->to_gop->go_gedp->ged_output_handler = to_output_handler;
     top->to_gop->go_gedp->ged_refresh_handler = to_refresh_handler;
+
+    BU_ASSERT_PTR(gedp->ged_gdp, !=, NULL);
     top->to_gop->go_gedp->ged_gdp->gd_rtCmdNotify = to_rt_end_callback_internal;
+
     bu_vls_init(&top->to_gop->go_name);
     bu_vls_strcpy(&top->to_gop->go_name, argv[1]);
     bu_vls_init(&top->to_gop->go_more_args_callback);
@@ -1255,10 +1258,10 @@ to_autoview(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -1268,7 +1271,7 @@ to_autoview(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
@@ -1288,7 +1291,7 @@ to_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "draw")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_draw);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->gas_draw);
 	    return GED_OK;
 	}
 
@@ -1312,7 +1315,7 @@ to_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "axes_size")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%lf", gasp->gas_axes_size);
+	    bu_vls_printf(gedp->ged_result_str, "%lf", gasp->gas_axes_size);
 	    return GED_OK;
 	}
 
@@ -1333,7 +1336,7 @@ to_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "axes_pos")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%lf %lf %lf",
+	    bu_vls_printf(gedp->ged_result_str, "%lf %lf %lf",
 			  V3ARGS(gasp->gas_axes_pos));
 	    return GED_OK;
 	}
@@ -1357,7 +1360,7 @@ to_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "axes_color")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
+	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gasp->gas_axes_color));
 	    return GED_OK;
 	}
@@ -1388,7 +1391,7 @@ to_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "label_color")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
+	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gasp->gas_label_color));
 	    return GED_OK;
 	}
@@ -1419,7 +1422,7 @@ to_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "line_width")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_line_width);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->gas_line_width);
 	    return GED_OK;
 	}
 
@@ -1440,7 +1443,7 @@ to_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "pos_only")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_pos_only);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->gas_pos_only);
 	    return GED_OK;
 	}
 
@@ -1464,7 +1467,7 @@ to_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "tick_color")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
+	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gasp->gas_tick_color));
 	    return GED_OK;
 	}
@@ -1495,7 +1498,7 @@ to_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "tick_enable")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_tick_enabled);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->gas_tick_enabled);
 	    return GED_OK;
 	}
 
@@ -1519,7 +1522,7 @@ to_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "tick_interval")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_tick_interval);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->gas_tick_interval);
 	    return GED_OK;
 	}
 
@@ -1540,7 +1543,7 @@ to_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "tick_length")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_tick_length);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->gas_tick_length);
 	    return GED_OK;
 	}
 
@@ -1561,7 +1564,7 @@ to_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "tick_major_color")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
+	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gasp->gas_tick_major_color));
 	    return GED_OK;
 	}
@@ -1592,7 +1595,7 @@ to_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "tick_major_length")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_tick_major_length);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->gas_tick_major_length);
 	    return GED_OK;
 	}
 
@@ -1613,7 +1616,7 @@ to_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "ticks_per_major")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_ticks_per_major);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->gas_ticks_per_major);
 	    return GED_OK;
 	}
 
@@ -1634,7 +1637,7 @@ to_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "tick_threshold")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_tick_threshold);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->gas_tick_threshold);
 	    return GED_OK;
 	}
 
@@ -1658,7 +1661,7 @@ to_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "triple_color")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_triple_color);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gasp->gas_triple_color);
 	    return GED_OK;
 	}
 
@@ -1680,8 +1683,8 @@ to_axes(struct ged *gedp,
 	goto bad;
     }
 
- bad:
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+bad:
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
 
@@ -1694,9 +1697,9 @@ to_base2local(struct ged *gedp,
 	      int UNUSED(maxargs))
 {
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
-    bu_vls_printf(&gedp->ged_result_str, "%lf", current_top->to_gop->go_gedp->ged_wdbp->dbip->dbi_base2local);
+    bu_vls_printf(gedp->ged_result_str, "%lf", current_top->to_gop->go_gedp->ged_wdbp->dbip->dbi_base2local);
 
     return GED_OK;
 }
@@ -1713,16 +1716,16 @@ to_bg(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 2 && argc != 5) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -1732,13 +1735,13 @@ to_bg(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     /* get background color */
     if (argc == 2) {
-	bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
+	bu_vls_printf(gedp->ged_result_str, "%d %d %d",
 		      gdvp->gdv_dmp->dm_bg[0],
 		      gdvp->gdv_dmp->dm_bg[1],
 		      gdvp->gdv_dmp->dm_bg[2]);
@@ -1766,8 +1769,8 @@ to_bg(struct ged *gedp,
 
     return GED_OK;
 
- bad_color:
-    bu_vls_printf(&gedp->ged_result_str, "%s: %s %s %s", argv[0], argv[2], argv[3], argv[4]);
+bad_color:
+    bu_vls_printf(gedp->ged_result_str, "%s: %s %s %s", argv[0], argv[2], argv[3], argv[4]);
     return GED_ERROR;
 }
 
@@ -1804,16 +1807,16 @@ to_bounds(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 2 && argc != 3) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -1823,13 +1826,13 @@ to_bounds(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     /* get window bounds */
     if (argc == 2) {
-	bu_vls_printf(&gedp->ged_result_str, "%g %g %g %g %g %g",
+	bu_vls_printf(gedp->ged_result_str, "%g %g %g %g %g %g",
 		      gdvp->gdv_dmp->dm_clipmin[X],
 		      gdvp->gdv_dmp->dm_clipmax[X],
 		      gdvp->gdv_dmp->dm_clipmin[Y],
@@ -1844,7 +1847,7 @@ to_bounds(struct ged *gedp,
 	       &clipmin[X], &clipmax[X],
 	       &clipmin[Y], &clipmax[Y],
 	       &clipmin[Z], &clipmax[Z]) != 6) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: invalid bounds - %s", argv[0], argv[2]);
+	bu_vls_printf(gedp->ged_result_str, "%s: invalid bounds - %s", argv[0], argv[2]);
 	return GED_ERROR;
     }
 
@@ -1876,10 +1879,10 @@ to_configure(struct ged *gedp,
     int status;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -1889,7 +1892,7 @@ to_configure(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
@@ -1941,16 +1944,16 @@ to_constrain_rmode(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 5) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -1960,20 +1963,20 @@ to_constrain_rmode(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if ((argv[2][0] != 'x' &&
 	 argv[2][0] != 'y' &&
 	 argv[2][0] != 'z') || argv[2][1] != '\0') {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_OK;
     }
 
     if (sscanf(argv[3], "%lf", &x) != 1 ||
 	sscanf(argv[4], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -2006,16 +2009,16 @@ to_constrain_tmode(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 5) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -2025,20 +2028,20 @@ to_constrain_tmode(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if ((argv[2][0] != 'x' &&
 	 argv[2][0] != 'y' &&
 	 argv[2][0] != 'z') || argv[2][1] != '\0') {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_OK;
     }
 
     if (sscanf(argv[3], "%lf", &x) != 1 ||
 	sscanf(argv[4], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -2077,22 +2080,22 @@ to_copy(struct ged *gedp,
     int fflag;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 3 || 4 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     if (argc == 4) {
 	if (argv[1][0] != '-' || argv[1][1] != 'f' ||  argv[1][2] != '\0') {
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
 	}
 
@@ -2124,7 +2127,7 @@ to_copy(struct ged *gedp,
 
 	if (from_gedp == GED_NULL) {
 	    bu_vls_free(&from_vls);
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
 	}
     } else {
@@ -2150,7 +2153,7 @@ to_copy(struct ged *gedp,
 	if (to_gedp == GED_NULL) {
 	    bu_vls_free(&from_vls);
 	    bu_vls_free(&to_vls);
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
 	}
     } else {
@@ -2165,7 +2168,7 @@ to_copy(struct ged *gedp,
 			 fflag);
 
 	if (ret != GED_OK && from_gedp != gedp)
-	    bu_vls_strcpy(&gedp->ged_result_str, bu_vls_addr(&from_gedp->ged_result_str));
+	    bu_vls_strcpy(gedp->ged_result_str, bu_vls_addr(from_gedp->ged_result_str));
     } else {
 	ret = ged_dbcopy(from_gedp, to_gedp,
 			 bu_vls_addr(&from_vls),
@@ -2173,11 +2176,11 @@ to_copy(struct ged *gedp,
 			 fflag);
 
 	if (ret != GED_OK) {
-	    if (bu_vls_strlen((const struct bu_vls *)&from_gedp->ged_result_str)) {
+	    if (bu_vls_strlen(from_gedp->ged_result_str)) {
 		if (from_gedp != gedp)
-		    bu_vls_strcpy(&gedp->ged_result_str, bu_vls_addr(&from_gedp->ged_result_str));
-	    } else if (to_gedp != gedp && bu_vls_strlen((const struct bu_vls *)&to_gedp))
-		bu_vls_strcpy(&gedp->ged_result_str, bu_vls_addr(&to_gedp->ged_result_str));
+		    bu_vls_strcpy(gedp->ged_result_str, bu_vls_addr(from_gedp->ged_result_str));
+	    } else if (to_gedp != gedp && bu_vls_strlen(to_gedp->ged_result_str))
+		bu_vls_strcpy(gedp->ged_result_str, bu_vls_addr(to_gedp->ged_result_str));
 	}
     }
 
@@ -2199,16 +2202,16 @@ to_data_arrows(struct ged *gedp,
     struct ged_data_arrow_state *gdasp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 3 || 6 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -2218,7 +2221,7 @@ to_data_arrows(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
@@ -2229,7 +2232,7 @@ to_data_arrows(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "draw")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gdasp->gdas_draw);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gdasp->gdas_draw);
 	    return GED_OK;
 	}
 
@@ -2253,7 +2256,7 @@ to_data_arrows(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "color")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
+	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gdasp->gdas_color));
 	    return GED_OK;
 	}
@@ -2284,7 +2287,7 @@ to_data_arrows(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "line_width")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gdasp->gdas_line_width);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gdasp->gdas_line_width);
 	    return GED_OK;
 	}
 
@@ -2308,7 +2311,7 @@ to_data_arrows(struct ged *gedp,
 
 	if (argc == 3) {
 	    for (i = 0; i < gdasp->gdas_num_points; ++i) {
-		bu_vls_printf(&gedp->ged_result_str, " {%lf %lf %lf} ",
+		bu_vls_printf(gedp->ged_result_str, " {%lf %lf %lf} ",
 			      V3ARGS(gdasp->gdas_points[i]));
 	    }
 	    return GED_OK;
@@ -2319,12 +2322,12 @@ to_data_arrows(struct ged *gedp,
 	    const char **av;
 
 	    if (Tcl_SplitList(current_top->to_interp, argv[3], &ac, &av) != TCL_OK) {
-		bu_vls_printf(&gedp->ged_result_str, "%s", Tcl_GetStringResult(current_top->to_interp));
+		bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(current_top->to_interp));
 		return GED_ERROR;
 	    }
 
 	    if (ac % 2) {
-		bu_vls_printf(&gedp->ged_result_str, "%s: must be an even number of points", argv[0]);
+		bu_vls_printf(gedp->ged_result_str, "%s: must be an even number of points", argv[0]);
 		return GED_ERROR;
 	    }
 
@@ -2349,7 +2352,7 @@ to_data_arrows(struct ged *gedp,
 			   &gdasp->gdas_points[i][Y],
 			   &gdasp->gdas_points[i][Z]) != 3) {
 
-		    bu_vls_printf(&gedp->ged_result_str, "bad data point - %s\n", av[i]);
+		    bu_vls_printf(gedp->ged_result_str, "bad data point - %s\n", av[i]);
 
 		    bu_free((genptr_t)gdasp->gdas_points, "data points");
 		    gdasp->gdas_points = (point_t *)0;
@@ -2369,7 +2372,7 @@ to_data_arrows(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "tip_length")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gdasp->gdas_tip_length);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gdasp->gdas_tip_length);
 	    return GED_OK;
 	}
 
@@ -2390,7 +2393,7 @@ to_data_arrows(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "tip_width")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gdasp->gdas_tip_width);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gdasp->gdas_tip_width);
 	    return GED_OK;
 	}
 
@@ -2409,8 +2412,8 @@ to_data_arrows(struct ged *gedp,
 	goto bad;
     }
 
- bad:
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+bad:
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
 
@@ -2426,16 +2429,16 @@ to_data_axes(struct ged *gedp,
     struct ged_data_axes_state *gdasp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 3 || 6 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -2445,7 +2448,7 @@ to_data_axes(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
@@ -2456,7 +2459,7 @@ to_data_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "draw")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gdasp->gdas_draw);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gdasp->gdas_draw);
 	    return GED_OK;
 	}
 
@@ -2480,7 +2483,7 @@ to_data_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "color")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
+	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gdasp->gdas_color));
 	    return GED_OK;
 	}
@@ -2511,7 +2514,7 @@ to_data_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "line_width")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gdasp->gdas_line_width);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gdasp->gdas_line_width);
 	    return GED_OK;
 	}
 
@@ -2532,7 +2535,7 @@ to_data_axes(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "size")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%lf", gdasp->gdas_size);
+	    bu_vls_printf(gedp->ged_result_str, "%lf", gdasp->gdas_size);
 	    return GED_OK;
 	}
 
@@ -2556,7 +2559,7 @@ to_data_axes(struct ged *gedp,
 
 	if (argc == 3) {
 	    for (i = 0; i < gdasp->gdas_num_points; ++i) {
-		bu_vls_printf(&gedp->ged_result_str, " {%lf %lf %lf} ",
+		bu_vls_printf(gedp->ged_result_str, " {%lf %lf %lf} ",
 			      V3ARGS(gdasp->gdas_points[i]));
 	    }
 	    return GED_OK;
@@ -2567,7 +2570,7 @@ to_data_axes(struct ged *gedp,
 	    const char **av;
 
 	    if (Tcl_SplitList(current_top->to_interp, argv[3], &ac, &av) != TCL_OK) {
-		bu_vls_printf(&gedp->ged_result_str, "%s", Tcl_GetStringResult(current_top->to_interp));
+		bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(current_top->to_interp));
 		return GED_ERROR;
 	    }
 
@@ -2592,7 +2595,7 @@ to_data_axes(struct ged *gedp,
 			   &gdasp->gdas_points[i][Y],
 			   &gdasp->gdas_points[i][Z]) != 3) {
 
-		    bu_vls_printf(&gedp->ged_result_str, "bad data point - %s\n", av[i]);
+		    bu_vls_printf(gedp->ged_result_str, "bad data point - %s\n", av[i]);
 
 		    bu_free((genptr_t)gdasp->gdas_points, "data points");
 		    gdasp->gdas_points = (point_t *)0;
@@ -2610,8 +2613,8 @@ to_data_axes(struct ged *gedp,
 	}
     }
 
- bad:
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+bad:
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
 
@@ -2627,16 +2630,16 @@ to_data_labels(struct ged *gedp,
     struct ged_data_label_state *gdlsp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 3 || 6 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -2646,7 +2649,7 @@ to_data_labels(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
@@ -2657,7 +2660,7 @@ to_data_labels(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "draw")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gdlsp->gdls_draw);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gdlsp->gdls_draw);
 	    return GED_OK;
 	}
 
@@ -2681,7 +2684,7 @@ to_data_labels(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "color")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
+	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gdlsp->gdls_color));
 	    return GED_OK;
 	}
@@ -2717,8 +2720,8 @@ to_data_labels(struct ged *gedp,
 
 	if (argc == 3) {
 	    for (i = 0; i < gdlsp->gdls_num_labels; ++i) {
-		bu_vls_printf(&gedp->ged_result_str, "{{%s}", gdlsp->gdls_labels[i]);
-		bu_vls_printf(&gedp->ged_result_str, " {%lf %lf %lf}} ",
+		bu_vls_printf(gedp->ged_result_str, "{{%s}", gdlsp->gdls_labels[i]);
+		bu_vls_printf(gedp->ged_result_str, " {%lf %lf %lf}} ",
 			      V3ARGS(gdlsp->gdls_points[i]));
 	    }
 	    return GED_OK;
@@ -2729,7 +2732,7 @@ to_data_labels(struct ged *gedp,
 	    const char **av;
 
 	    if (Tcl_SplitList(current_top->to_interp, argv[3], &ac, &av) != TCL_OK) {
-		bu_vls_printf(&gedp->ged_result_str, "%s", Tcl_GetStringResult(current_top->to_interp));
+		bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(current_top->to_interp));
 		return GED_ERROR;
 	    }
 
@@ -2766,7 +2769,7 @@ to_data_labels(struct ged *gedp,
 		    gdlsp->gdls_points = (point_t *)0;
 		    gdlsp->gdls_num_labels = 0;
 
-		    bu_vls_printf(&gedp->ged_result_str, "%s", Tcl_GetStringResult(current_top->to_interp));
+		    bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(current_top->to_interp));
 		    Tcl_Free((char *)av);
 		    to_refresh_view(gdvp);
 		    return GED_ERROR;
@@ -2780,7 +2783,7 @@ to_data_labels(struct ged *gedp,
 		    gdlsp->gdls_points = (point_t *)0;
 		    gdlsp->gdls_num_labels = 0;
 
-		    bu_vls_printf(&gedp->ged_result_str, "Each list element must contain a label and a point (i.e. {{some label} {0 0 0}})");
+		    bu_vls_printf(gedp->ged_result_str, "Each list element must contain a label and a point (i.e. {{some label} {0 0 0}})");
 		    Tcl_Free((char *)sub_av);
 		    Tcl_Free((char *)av);
 		    to_refresh_view(gdvp);
@@ -2791,7 +2794,7 @@ to_data_labels(struct ged *gedp,
 			   &gdlsp->gdls_points[i][X],
 			   &gdlsp->gdls_points[i][Y],
 			   &gdlsp->gdls_points[i][Z]) != 3) {
-		    bu_vls_printf(&gedp->ged_result_str, "bad data point - %s\n", sub_av[1]);
+		    bu_vls_printf(gedp->ged_result_str, "bad data point - %s\n", sub_av[1]);
 
 		    /*XXX Need a macro for the following lines. Do something similar for the rest. */
 		    bu_free((genptr_t)gdlsp->gdls_labels, "data labels");
@@ -2818,7 +2821,7 @@ to_data_labels(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "size")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%lf", gdlsp->gdls_size);
+	    bu_vls_printf(gedp->ged_result_str, "%lf", gdlsp->gdls_size);
 	    return GED_OK;
 	}
 
@@ -2838,8 +2841,8 @@ to_data_labels(struct ged *gedp,
     }
 
 
- bad:
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+bad:
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
 
@@ -2855,16 +2858,16 @@ to_data_lines(struct ged *gedp,
     struct ged_data_line_state *gdlsp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 3 || 6 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -2874,7 +2877,7 @@ to_data_lines(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
@@ -2885,7 +2888,7 @@ to_data_lines(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "draw")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gdlsp->gdls_draw);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gdlsp->gdls_draw);
 	    return GED_OK;
 	}
 
@@ -2909,7 +2912,7 @@ to_data_lines(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "color")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
+	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gdlsp->gdls_color));
 	    return GED_OK;
 	}
@@ -2940,7 +2943,7 @@ to_data_lines(struct ged *gedp,
 
     if (BU_STR_EQUAL(argv[2], "line_width")) {
 	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gdlsp->gdls_line_width);
+	    bu_vls_printf(gedp->ged_result_str, "%d", gdlsp->gdls_line_width);
 	    return GED_OK;
 	}
 
@@ -2964,7 +2967,7 @@ to_data_lines(struct ged *gedp,
 
 	if (argc == 3) {
 	    for (i = 0; i < gdlsp->gdls_num_points; ++i) {
-		bu_vls_printf(&gedp->ged_result_str, " {%lf %lf %lf} ",
+		bu_vls_printf(gedp->ged_result_str, " {%lf %lf %lf} ",
 			      V3ARGS(gdlsp->gdls_points[i]));
 	    }
 	    return GED_OK;
@@ -2975,12 +2978,12 @@ to_data_lines(struct ged *gedp,
 	    const char **av;
 
 	    if (Tcl_SplitList(current_top->to_interp, argv[3], &ac, &av) != TCL_OK) {
-		bu_vls_printf(&gedp->ged_result_str, "%s", Tcl_GetStringResult(current_top->to_interp));
+		bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(current_top->to_interp));
 		return GED_ERROR;
 	    }
 
 	    if (ac % 2) {
-		bu_vls_printf(&gedp->ged_result_str, "%s: must be an even number of points", argv[0]);
+		bu_vls_printf(gedp->ged_result_str, "%s: must be an even number of points", argv[0]);
 		return GED_ERROR;
 	    }
 
@@ -3005,7 +3008,7 @@ to_data_lines(struct ged *gedp,
 			   &gdlsp->gdls_points[i][Y],
 			   &gdlsp->gdls_points[i][Z]) != 3) {
 
-		    bu_vls_printf(&gedp->ged_result_str, "bad data point - %s\n", av[i]);
+		    bu_vls_printf(gedp->ged_result_str, "bad data point - %s\n", av[i]);
 
 		    bu_free((genptr_t)gdlsp->gdls_points, "data points");
 		    gdlsp->gdls_points = (point_t *)0;
@@ -3023,8 +3026,8 @@ to_data_lines(struct ged *gedp,
 	}
     }
 
- bad:
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+bad:
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
 
@@ -3048,16 +3051,16 @@ to_data_move(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 5 || 6 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -3067,7 +3070,7 @@ to_data_move(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
@@ -3229,7 +3232,7 @@ to_data_move(struct ged *gedp,
     }
 
 bad:
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
 
@@ -3250,16 +3253,16 @@ to_data_pick(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 3 || 4 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -3269,7 +3272,7 @@ to_data_pick(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
@@ -3315,7 +3318,7 @@ to_data_pick(struct ged *gedp,
 #endif
 	    if (minX < vx && vx < maxX &&
 		minY < vy && vy < maxY) {
-		bu_vls_printf(&gedp->ged_result_str, "data_labels %d {{%s} {%lf %lf %lf}}",
+		bu_vls_printf(gedp->ged_result_str, "data_labels %d {{%s} {%lf %lf %lf}}",
 			      i, gdlsp->gdls_labels[i], V3ARGS(dpoint));
 		return GED_OK;
 	    }
@@ -3347,7 +3350,7 @@ to_data_pick(struct ged *gedp,
 #endif
 	    if (minX < vx && vx < maxX &&
 		minY < vy && vy < maxY) {
-		bu_vls_printf(&gedp->ged_result_str, "sdata_labels %d {{%s} {%lf %lf %lf}}",
+		bu_vls_printf(gedp->ged_result_str, "sdata_labels %d {{%s} {%lf %lf %lf}}",
 			      i, gdlsp->gdls_labels[i], V3ARGS(dpoint));
 		return GED_OK;
 	    }
@@ -3372,7 +3375,7 @@ to_data_pick(struct ged *gedp,
 	    maxY = vpoint[Y] + 0.015;
 	    if (minX < vx && vx < maxX &&
 		minY < vy && vy < maxY) {
-		bu_vls_printf(&gedp->ged_result_str, "data_lines %d {%lf %lf %lf}", i, V3ARGS(dpoint));
+		bu_vls_printf(gedp->ged_result_str, "data_lines %d {%lf %lf %lf}", i, V3ARGS(dpoint));
 		return GED_OK;
 	    }
 	}
@@ -3396,7 +3399,7 @@ to_data_pick(struct ged *gedp,
 	    maxY = vpoint[Y] + 0.015;
 	    if (minX < vx && vx < maxX &&
 		minY < vy && vy < maxY) {
-		bu_vls_printf(&gedp->ged_result_str, "sdata_lines %d {%lf %lf %lf}", i, V3ARGS(dpoint));
+		bu_vls_printf(gedp->ged_result_str, "sdata_lines %d {%lf %lf %lf}", i, V3ARGS(dpoint));
 		return GED_OK;
 	    }
 	}
@@ -3420,7 +3423,7 @@ to_data_pick(struct ged *gedp,
 	    maxY = vpoint[Y] + 0.015;
 	    if (minX < vx && vx < maxX &&
 		minY < vy && vy < maxY) {
-		bu_vls_printf(&gedp->ged_result_str, "data_arrows %d {%lf %lf %lf}", i, V3ARGS(dpoint));
+		bu_vls_printf(gedp->ged_result_str, "data_arrows %d {%lf %lf %lf}", i, V3ARGS(dpoint));
 		return GED_OK;
 	    }
 	}
@@ -3444,7 +3447,7 @@ to_data_pick(struct ged *gedp,
 	    maxY = vpoint[Y] + 0.015;
 	    if (minX < vx && vx < maxX &&
 		minY < vy && vy < maxY) {
-		bu_vls_printf(&gedp->ged_result_str, "sdata_arrows %d {%lf %lf %lf}", i, V3ARGS(dpoint));
+		bu_vls_printf(gedp->ged_result_str, "sdata_arrows %d {%lf %lf %lf}", i, V3ARGS(dpoint));
 		return GED_OK;
 	    }
 	}
@@ -3468,7 +3471,7 @@ to_data_pick(struct ged *gedp,
 	    maxY = vpoint[Y] + 0.015;
 	    if (minX < vx && vx < maxX &&
 		minY < vy && vy < maxY) {
-		bu_vls_printf(&gedp->ged_result_str, "data_axes %d {%lf %lf %lf}", i, V3ARGS(dpoint));
+		bu_vls_printf(gedp->ged_result_str, "data_axes %d {%lf %lf %lf}", i, V3ARGS(dpoint));
 		return GED_OK;
 	    }
 	}
@@ -3492,7 +3495,7 @@ to_data_pick(struct ged *gedp,
 	    maxY = vpoint[Y] + 0.015;
 	    if (minX < vx && vx < maxX &&
 		minY < vy && vy < maxY) {
-		bu_vls_printf(&gedp->ged_result_str, "sdata_axes %d {%lf %lf %lf}", i, V3ARGS(dpoint));
+		bu_vls_printf(gedp->ged_result_str, "sdata_axes %d {%lf %lf %lf}", i, V3ARGS(dpoint));
 		return GED_OK;
 	    }
 	}
@@ -3500,8 +3503,8 @@ to_data_pick(struct ged *gedp,
 
     return GED_OK;
 
- bad:
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+bad:
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
 
@@ -3541,18 +3544,21 @@ to_init_default_bindings(struct ged_dm_view *gdvp)
 		  &gdvp->gdv_name);
 
     /* Mouse Bindings */
-    bu_vls_printf(&bindings, "bind %V <2> {%V vslew %V %%x %%y; break}; ",
+    bu_vls_printf(&bindings, "bind %V <2> {%V vslew %V %%x %%y; focus %V; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
-		  &gdvp->gdv_name);
-    bu_vls_printf(&bindings, "bind %V <1> {%V zoom %V 0.5; break}; ",
+		  &gdvp->gdv_name,
+		  &gdvp->gdv_dmp->dm_pathName);
+    bu_vls_printf(&bindings, "bind %V <1> {%V zoom %V 0.5; focus %V; break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
-		  &gdvp->gdv_name);
-    bu_vls_printf(&bindings, "bind %V <3> {%V zoom %V 2.0; break}; ",
+		  &gdvp->gdv_name,
+		  &gdvp->gdv_dmp->dm_pathName);
+    bu_vls_printf(&bindings, "bind %V <3> {%V zoom %V 2.0; focus %V;  break}; ",
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
-		  &gdvp->gdv_name);
+		  &gdvp->gdv_name,
+		  &gdvp->gdv_dmp->dm_pathName);
 
     /* Idle Mode */
     bu_vls_printf(&bindings, "bind %V <ButtonRelease> {%V idle_mode %V; break}; ",
@@ -3736,16 +3742,16 @@ to_fontsize(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 2 || 3 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -3755,13 +3761,13 @@ to_fontsize(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     /* get the font size */
     if (argc == 2) {
-	bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_dmp->dm_fontsize);
+	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gdv_dmp->dm_fontsize);
 	return GED_OK;
     }
 
@@ -3776,8 +3782,8 @@ to_fontsize(struct ged *gedp,
 	return GED_OK;
     }
 
- bad_fontsize:
-    bu_vls_printf(&gedp->ged_result_str, "%s: %s", argv[0], argv[2]);
+bad_fontsize:
+    bu_vls_printf(gedp->ged_result_str, "%s: %s", argv[0], argv[2]);
     return GED_ERROR;
 }
 
@@ -3792,16 +3798,16 @@ to_init_view_bindings(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -3811,7 +3817,7 @@ to_init_view_bindings(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
@@ -3831,16 +3837,16 @@ to_delete_view(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -3850,7 +3856,7 @@ to_delete_view(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
@@ -3871,11 +3877,11 @@ to_faceplate(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -3888,14 +3894,14 @@ to_faceplate(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (BU_STR_EQUAL(argv[2], "center_dot")) {
 	if (BU_STR_EQUAL(argv[3], "draw")) {
 	    if (argc == 4) {
-		bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_view->gv_center_dot.gos_draw);
+		bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gdv_view->gv_center_dot.gos_draw);
 		return GED_OK;
 	    } else if (argc == 5) {
 		if (sscanf(argv[4], "%d", &i) != 1)
@@ -3913,7 +3919,7 @@ to_faceplate(struct ged *gedp,
 
 	if (BU_STR_EQUAL(argv[3], "color")) {
 	    if (argc == 4) {
-		bu_vls_printf(&gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gdv_view->gv_center_dot.gos_line_color));
+		bu_vls_printf(gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gdv_view->gv_center_dot.gos_line_color));
 		return GED_OK;
 	    } else if (argc == 7) {
 		int r, g, b;
@@ -3935,7 +3941,7 @@ to_faceplate(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "prim_labels")) {
 	if (BU_STR_EQUAL(argv[3], "draw")) {
 	    if (argc == 4) {
-		bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_view->gv_prim_labels.gos_draw);
+		bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gdv_view->gv_prim_labels.gos_draw);
 		return GED_OK;
 	    } else if (argc == 5) {
 		if (sscanf(argv[4], "%d", &i) != 1)
@@ -3953,7 +3959,7 @@ to_faceplate(struct ged *gedp,
 
 	if (BU_STR_EQUAL(argv[3], "color")) {
 	    if (argc == 4) {
-		bu_vls_printf(&gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gdv_view->gv_prim_labels.gos_text_color));
+		bu_vls_printf(gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gdv_view->gv_prim_labels.gos_text_color));
 		return GED_OK;
 	    } else if (argc == 7) {
 		int r, g, b;
@@ -3975,7 +3981,7 @@ to_faceplate(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "view_params")) {
 	if (BU_STR_EQUAL(argv[3], "draw")) {
 	    if (argc == 4) {
-		bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_view->gv_view_params.gos_draw);
+		bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gdv_view->gv_view_params.gos_draw);
 		return GED_OK;
 	    } else if (argc == 5) {
 		if (sscanf(argv[4], "%d", &i) != 1)
@@ -3993,7 +3999,7 @@ to_faceplate(struct ged *gedp,
 
 	if (BU_STR_EQUAL(argv[3], "color")) {
 	    if (argc == 4) {
-		bu_vls_printf(&gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gdv_view->gv_view_params.gos_text_color));
+		bu_vls_printf(gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gdv_view->gv_view_params.gos_text_color));
 		return GED_OK;
 	    } else if (argc == 7) {
 		int r, g, b;
@@ -4015,7 +4021,7 @@ to_faceplate(struct ged *gedp,
     if (BU_STR_EQUAL(argv[2], "view_scale")) {
 	if (BU_STR_EQUAL(argv[3], "draw")) {
 	    if (argc == 4) {
-		bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_view->gv_view_scale.gos_draw);
+		bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gdv_view->gv_view_scale.gos_draw);
 		return GED_OK;
 	    } else if (argc == 5) {
 		if (sscanf(argv[4], "%d", &i) != 1)
@@ -4033,7 +4039,7 @@ to_faceplate(struct ged *gedp,
 
 	if (BU_STR_EQUAL(argv[3], "color")) {
 	    if (argc == 4) {
-		bu_vls_printf(&gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gdv_view->gv_view_scale.gos_line_color));
+		bu_vls_printf(gedp->ged_result_str, "%d %d %d", V3ARGS(gdvp->gdv_view->gv_view_scale.gos_line_color));
 		return GED_OK;
 	    } else if (argc == 7) {
 		int r, g, b;
@@ -4052,8 +4058,8 @@ to_faceplate(struct ged *gedp,
 	goto bad;
     }
 
- bad:
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+bad:
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
 
@@ -4068,17 +4074,17 @@ to_handle_expose(struct ged *gedp,
     int count;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 3 ||
 	sscanf(argv[2], "%d", &count) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s, argv[2] - %s", argv[0], usage, argv[2]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s, argv[2] - %s", argv[0], usage, argv[2]);
 	return GED_ERROR;
     }
 
@@ -4101,7 +4107,7 @@ to_handle_refresh(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", name);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", name);
 	return GED_ERROR;
     }
 
@@ -4122,16 +4128,16 @@ to_idle_mode(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -4141,7 +4147,7 @@ to_idle_mode(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
@@ -4186,16 +4192,16 @@ to_light(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (3 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -4205,19 +4211,19 @@ to_light(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     /* get light flag */
     if (argc == 2) {
-	bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_dmp->dm_light);
+	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gdv_dmp->dm_light);
 	return GED_OK;
     }
 
     /* set light flag */
     if (sscanf(argv[2], "%d", &light) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -4243,15 +4249,15 @@ to_list_views(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
 	return GED_ERROR;
     }
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l))
-	bu_vls_printf(&gedp->ged_result_str, "%V ", &gdvp->gdv_name);
+	bu_vls_printf(gedp->ged_result_str, "%V ", &gdvp->gdv_name);
 
     return GED_OK;
 }
@@ -4267,16 +4273,16 @@ to_listen(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (3 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -4286,18 +4292,18 @@ to_listen(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (gdvp->gdv_fbs.fbs_fbp == FBIO_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s listen: framebuffer not open!\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s listen: framebuffer not open!\n", argv[0]);
 	return GED_ERROR;
     }
 
     /* return the port number */
     if (argc == 2) {
-	bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_fbs.fbs_listener.fbsl_port);
+	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gdv_fbs.fbs_listener.fbsl_port);
 	return GED_OK;
     }
 
@@ -4305,7 +4311,7 @@ to_listen(struct ged *gedp,
 	int port;
 
 	if (sscanf(argv[2], "%d", &port) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "listen: bad value - %s\n", argv[2]);
+	    bu_vls_printf(gedp->ged_result_str, "listen: bad value - %s\n", argv[2]);
 	    return GED_ERROR;
 	}
 
@@ -4314,11 +4320,11 @@ to_listen(struct ged *gedp,
 	else {
 	    fbs_close(&gdvp->gdv_fbs);
 	}
-	bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_fbs.fbs_listener.fbsl_port);
+	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gdv_fbs.fbs_listener.fbsl_port);
 	return GED_OK;
     }
 
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
 
@@ -4331,9 +4337,9 @@ to_local2base(struct ged *gedp,
 	      int UNUSED(maxargs))
 {
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
-    bu_vls_printf(&gedp->ged_result_str, "%lf", current_top->to_gop->go_gedp->ged_wdbp->dbip->dbi_local2base);
+    bu_vls_printf(gedp->ged_result_str, "%lf", current_top->to_gop->go_gedp->ged_wdbp->dbip->dbi_local2base);
 
     return GED_OK;
 }
@@ -4395,16 +4401,16 @@ to_model_axes(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 3 || 6 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -4414,7 +4420,7 @@ to_model_axes(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
@@ -4432,11 +4438,11 @@ to_more_args_callback(struct ged *gedp,
     register int i;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* get the callback string */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(&current_top->to_gop->go_more_args_callback));
+	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&current_top->to_gop->go_more_args_callback));
 	
 	return GED_OK;
     }
@@ -4467,16 +4473,16 @@ to_mouse_constrain_rot(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 5) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -4486,18 +4492,18 @@ to_mouse_constrain_rot(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if ((argv[2][0] != 'x' && argv[2][0] != 'y' && argv[2][0] != 'z') || argv[2][1] != '\0') {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[3], "%lf", &x) != 1 ||
 	sscanf(argv[4], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -4575,16 +4581,16 @@ to_mouse_constrain_trans(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 5) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -4594,18 +4600,18 @@ to_mouse_constrain_trans(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if ((argv[2][0] != 'x' && argv[2][0] != 'y' && argv[2][0] != 'z') || argv[2][1] != '\0') {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[3], "%lf", &x) != 1 ||
 	sscanf(argv[4], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -4685,16 +4691,16 @@ to_mouse_move_arb_edge(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 6) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -4704,13 +4710,13 @@ to_mouse_move_arb_edge(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[4], "%lf", &x) != 1 ||
 	sscanf(argv[5], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -4782,16 +4788,16 @@ to_mouse_move_arb_face(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 6) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -4801,13 +4807,13 @@ to_mouse_move_arb_face(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[4], "%lf", &x) != 1 ||
 	sscanf(argv[5], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -4880,16 +4886,16 @@ to_mouse_orotate(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 5) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -4899,13 +4905,13 @@ to_mouse_orotate(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[3], "%lf", &x) != 1 ||
 	sscanf(argv[4], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -4980,16 +4986,16 @@ to_mouse_oscale(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 5) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -4999,13 +5005,13 @@ to_mouse_oscale(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[3], "%lf", &x) != 1 ||
 	sscanf(argv[4], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -5078,16 +5084,16 @@ to_mouse_otranslate(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 5) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -5097,13 +5103,13 @@ to_mouse_otranslate(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[3], "%lf", &x) != 1 ||
 	sscanf(argv[4], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -5169,76 +5175,6 @@ to_mouse_ray(struct ged *UNUSED(gedp),
 	     const char *UNUSED(usage),
 	     int UNUSED(maxargs))
 {
-#if 0
-    int ret;
-    int ac;
-    char *av[4];
-    fastf_t x, y;
-    fastf_t inv_width;
-    point_t start;
-    point_t target;
-    point_t view;
-    struct bu_vls mouse_vls;
-    struct ged_dm_view *gdvp;
-
-
-    /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
-
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
-
-    if (argc != 4) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
-    }
-
-    if (sscanf(argv[2], "%lf", &x) != 1 ||
-	sscanf(argv[3], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
-    x *= inv_width * 2.0 - 1.0;
-    y *= inv_width * -2.0 + 1.0;
-    VSET(view, x, y, -1.0);
-    MAT4X3PNT(start, gdvp->ged_view->gv_view2model, view);
-    VSET(view, x, y, 0.0);
-    MAT4X3PNT(target, gdvp->ged_view->gv_view2model, view);
-
-#if 0
-    {
-	char *av[];
-
-	av[0] = "rt_gettrees";
-	av[1] = argv[1];
-	av[2] = "-i";
-	av[3] = "-u";
-
-	...
-
-	    av[n] = (char *)0;
-    }
-#endif
-
-    if (ret == GED_OK)
-	to_refresh_view(gdvp);
-
-#endif
     return GED_OK;
 }
 
@@ -5259,16 +5195,16 @@ to_mouse_rect(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 4) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -5278,13 +5214,13 @@ to_mouse_rect(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[2], "%d", &x) != 1 ||
 	sscanf(argv[3], "%d", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -5330,16 +5266,16 @@ to_mouse_rot(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 4) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -5349,13 +5285,13 @@ to_mouse_rot(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[2], "%lf", &x) != 1 ||
 	sscanf(argv[3], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -5421,16 +5357,16 @@ to_mouse_rotate_arb_face(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 7) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -5440,13 +5376,13 @@ to_mouse_rotate_arb_face(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[5], "%lf", &x) != 1 ||
 	sscanf(argv[6], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -5515,16 +5451,16 @@ to_mouse_scale(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 4) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -5534,13 +5470,13 @@ to_mouse_scale(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[2], "%lf", &x) != 1 ||
 	sscanf(argv[3], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -5610,16 +5546,16 @@ to_mouse_protate(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 6) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -5629,13 +5565,13 @@ to_mouse_protate(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[4], "%lf", &x) != 1 ||
 	sscanf(argv[5], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -5703,16 +5639,16 @@ to_mouse_pscale(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 6) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -5722,13 +5658,13 @@ to_mouse_pscale(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[4], "%lf", &x) != 1 ||
 	sscanf(argv[5], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -5801,16 +5737,16 @@ to_mouse_ptranslate(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 6) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -5820,13 +5756,13 @@ to_mouse_ptranslate(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[4], "%lf", &x) != 1 ||
 	sscanf(argv[5], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -5896,16 +5832,16 @@ to_mouse_trans(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 4) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -5915,13 +5851,13 @@ to_mouse_trans(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[2], "%lf", &x) != 1 ||
 	sscanf(argv[3], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -5991,16 +5927,16 @@ to_move_arb_edge_mode(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 6) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -6010,13 +5946,13 @@ to_move_arb_edge_mode(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[4], "%lf", &x) != 1 ||
 	sscanf(argv[5], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -6050,16 +5986,16 @@ to_move_arb_face_mode(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 6) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -6069,13 +6005,13 @@ to_move_arb_face_mode(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[4], "%lf", &x) != 1 ||
 	sscanf(argv[5], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -6112,16 +6048,16 @@ to_new_view(struct ged *gedp,
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 3) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -6147,7 +6083,7 @@ to_new_view(struct ged *gedp,
 #endif /* DM_WGL */
 
     if (type == DM_TYPE_BAD) {
-	bu_vls_printf(&gedp->ged_result_str, "ERROR:  Requisite display manager is not available.\nBRL-CAD may need to be recompiled with support for:  %s\nRun 'fbhelp' for a list of available display managers.\n", argv[2]);
+	bu_vls_printf(gedp->ged_result_str, "ERROR:  Requisite display manager is not available.\nBRL-CAD may need to be recompiled with support for:  %s\nRun 'fbhelp' for a list of available display managers.\n", argv[2]);
 	return GED_ERROR;
     }
 
@@ -6182,7 +6118,7 @@ to_new_view(struct ged *gedp,
 	    bu_free((genptr_t)new_gdvp, "ged_dm_view");
 	    bu_free((genptr_t)av, "to_new_view: av");
 
-	    bu_vls_printf(&gedp->ged_result_str, "Failed to create %s\n", argv[1]);
+	    bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", argv[1]);
 	    return GED_ERROR;
 	}
 
@@ -6225,7 +6161,7 @@ to_new_view(struct ged *gedp,
 			    (ClientData)new_gdvp,
 			    to_deleteViewProc);
 
-    bu_vls_printf(&gedp->ged_result_str, bu_vls_addr(&new_gdvp->gdv_name));
+    bu_vls_printf(gedp->ged_result_str, bu_vls_addr(&new_gdvp->gdv_name));
     return GED_OK;
 }
 
@@ -6242,16 +6178,16 @@ to_orotate_mode(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 5) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -6261,13 +6197,13 @@ to_orotate_mode(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[3], "%lf", &x) != 1 ||
 	sscanf(argv[4], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -6300,16 +6236,16 @@ to_oscale_mode(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 5) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -6319,13 +6255,13 @@ to_oscale_mode(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[3], "%lf", &x) != 1 ||
 	sscanf(argv[4], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -6358,16 +6294,16 @@ to_otranslate_mode(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 5) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -6377,13 +6313,13 @@ to_otranslate_mode(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[3], "%lf", &x) != 1 ||
 	sscanf(argv[4], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -6414,15 +6350,15 @@ to_paint_rect_area(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
     if (argc < 2 || 7 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -6432,7 +6368,7 @@ to_paint_rect_area(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
@@ -6469,15 +6405,15 @@ to_png(struct ged *gedp,
     int found_valid_dm = 0;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 3) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -6487,12 +6423,12 @@ to_png(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if ((fp = fopen(argv[2], "wb")) == NULL) {
-	bu_vls_printf(&gedp->ged_result_str,
+	bu_vls_printf(gedp->ged_result_str,
 		      "%s: cannot open \"%s\" for writing.",
 		      argv[0], argv[2]);
 	return GED_ERROR;
@@ -6500,14 +6436,14 @@ to_png(struct ged *gedp,
 
     png_p = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     if (!png_p) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: could not create PNG write structure.", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s: could not create PNG write structure.", argv[0]);
 	fclose(fp);
 	return GED_ERROR;
     }
 
     info_p = png_create_info_struct(png_p);
     if (!info_p) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: could not create PNG info structure.", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s: could not create PNG info structure.", argv[0]);
 	fclose(fp);
 	return GED_ERROR;
     }
@@ -6530,7 +6466,7 @@ to_png(struct ged *gedp,
 #  endif
 #endif
 	if (!make_ret) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: Couldn't make context current\n", argv[0]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: Couldn't make context current\n", argv[0]);
 	    fclose(fp);
 	    return GED_ERROR;
 	}
@@ -6621,7 +6557,7 @@ to_png(struct ged *gedp,
     }
 
     if (!found_valid_dm) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: not yet supported for this display manager.", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s: not yet supported for this display manager.", argv[0]);
 	fclose(fp);
 	return GED_ERROR;
     }
@@ -6657,7 +6593,7 @@ to_prim_label(struct ged *gedp,
     register int i;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* Free the previous list of primitives scheduled for labeling */
     if (current_top->to_gop->go_prim_label_list_size) {
@@ -6673,7 +6609,7 @@ to_prim_label(struct ged *gedp,
 	return GED_OK;
 
     current_top->to_gop->go_prim_label_list = bu_calloc(current_top->to_gop->go_prim_label_list_size,
-						   sizeof(struct bu_vls), "prim_label");
+							sizeof(struct bu_vls), "prim_label");
     for (i = 0; i < current_top->to_gop->go_prim_label_list_size; ++i) {
 	bu_vls_init(&current_top->to_gop->go_prim_label_list[i]);
 	bu_vls_printf(&current_top->to_gop->go_prim_label_list[i], "%s", argv[i+1]);
@@ -6698,16 +6634,16 @@ to_rect_mode(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 4) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -6717,7 +6653,7 @@ to_rect_mode(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
@@ -6725,7 +6661,7 @@ to_rect_mode(struct ged *gedp,
 
     if (sscanf(argv[2], "%d", &x) != 1 ||
 	sscanf(argv[3], "%d", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -6781,16 +6717,16 @@ to_refresh(struct ged *gedp,
 	   int UNUSED(maxargs))
 {
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -6806,7 +6742,7 @@ to_refresh_all(struct ged *gedp,
 	       int UNUSED(maxargs))
 {
     if (argc != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
 	return GED_ERROR;
     }
 
@@ -6827,19 +6763,19 @@ to_refresh_on(struct ged *gedp,
     int on;
 
     if (2 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
 	return GED_ERROR;
     }
 
     /* Get refresh_on state */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%d", current_top->to_gop->go_refresh_on);
+	bu_vls_printf(gedp->ged_result_str, "%d", current_top->to_gop->go_refresh_on);
 	return GED_OK;
     }
 
     /* Set refresh_on state */
     if (sscanf(argv[1], "%d", &on) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
 	return GED_ERROR;
     }
 
@@ -6861,16 +6797,16 @@ to_rotate_arb_face_mode(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 7) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -6880,13 +6816,13 @@ to_rotate_arb_face_mode(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[5], "%lf", &x) != 1 ||
 	sscanf(argv[6], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -6921,16 +6857,16 @@ to_rotate_mode(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 4) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -6940,13 +6876,13 @@ to_rotate_mode(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[2], "%lf", &x) != 1 ||
 	sscanf(argv[3], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -6998,11 +6934,11 @@ to_rt_end_callback(struct ged *gedp,
     register int i;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* get the callback string */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(&current_top->to_gop->go_rt_end_callback));
+	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&current_top->to_gop->go_rt_end_callback));
 	
 	return GED_OK;
     }
@@ -7038,16 +6974,16 @@ to_rt_gettrees(struct ged *gedp,
     char *newprocname;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 3) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -7067,7 +7003,7 @@ to_rt_gettrees(struct ged *gedp,
 			    (ClientData)ap, to_deleteProc_rt);
 
     /* Return new function name as result */
-    bu_vls_printf(&gedp->ged_result_str, "%s", newprocname);
+    bu_vls_printf(gedp->ged_result_str, "%s", newprocname);
 
     return GED_OK;
 }
@@ -7085,16 +7021,16 @@ to_protate_mode(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 6) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -7104,13 +7040,13 @@ to_protate_mode(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[4], "%lf", &x) != 1 ||
 	sscanf(argv[5], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -7144,16 +7080,16 @@ to_pscale_mode(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 6) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -7163,13 +7099,13 @@ to_pscale_mode(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[4], "%lf", &x) != 1 ||
 	sscanf(argv[5], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -7203,16 +7139,16 @@ to_ptranslate_mode(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 6) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -7222,13 +7158,13 @@ to_ptranslate_mode(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[4], "%lf", &x) != 1 ||
 	sscanf(argv[5], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -7262,16 +7198,16 @@ to_scale_mode(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 4) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -7281,13 +7217,13 @@ to_scale_mode(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[2], "%lf", &x) != 1 ||
 	sscanf(argv[3], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -7323,16 +7259,16 @@ to_screen2model(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 4) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -7342,13 +7278,13 @@ to_screen2model(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[2], "%lf", &x) != 1 ||
 	sscanf(argv[3], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -7360,7 +7296,7 @@ to_screen2model(struct ged *gedp,
     VSET(view, x, y, 0.0);
     MAT4X3PNT(model, gdvp->gdv_view->gv_view2model, view);
 
-    bu_vls_printf(&gedp->ged_result_str, "%lf %lf %lf", V3ARGS(model));
+    bu_vls_printf(gedp->ged_result_str, "%lf %lf %lf", V3ARGS(model));
 
     return GED_OK;
 }
@@ -7381,16 +7317,16 @@ to_screen2view(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 4) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -7400,13 +7336,13 @@ to_screen2view(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[2], "%lf", &x) != 1 ||
 	sscanf(argv[3], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -7417,7 +7353,7 @@ to_screen2view(struct ged *gedp,
     y = (y * inv_height * -2.0 + 1.0) * inv_aspect;
     VSET(view, x, y, 0.0);
 
-    bu_vls_printf(&gedp->ged_result_str, "%lf %lf %lf", V3ARGS(view));
+    bu_vls_printf(gedp->ged_result_str, "%lf %lf %lf", V3ARGS(view));
 
     return GED_OK;
 }
@@ -7433,16 +7369,16 @@ to_set_coord(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (3 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -7452,19 +7388,19 @@ to_set_coord(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     /* Get coord */
     if (argc == 2) {
-	bu_vls_printf(&gedp->ged_result_str, "%c", gdvp->gdv_view->gv_coord);
+	bu_vls_printf(gedp->ged_result_str, "%c", gdvp->gdv_view->gv_coord);
 	return GED_OK;
     }
 
     /* Set coord */
     if ((argv[2][0] != 'm' && argv[2][0] != 'v') || argv[2][1] != '\0') {
-	bu_vls_printf(&gedp->ged_result_str, "set_coord: bad value - %s\n", argv[2]);
+	bu_vls_printf(gedp->ged_result_str, "set_coord: bad value - %s\n", argv[2]);
 	return GED_ERROR;
     }
 
@@ -7485,16 +7421,16 @@ to_set_fb_mode(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (3 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -7504,19 +7440,19 @@ to_set_fb_mode(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     /* Get fb mode */
     if (argc == 2) {
-	bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_fbs.fbs_mode);
+	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gdv_fbs.fbs_mode);
 	return GED_OK;
     }
 
     /* Set fb mode */
     if (sscanf(argv[2], "%d", &mode) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "set_fb_mode: bad value - %s\n", argv[2]);
+	bu_vls_printf(gedp->ged_result_str, "set_fb_mode: bad value - %s\n", argv[2]);
 	return GED_ERROR;
     }
 
@@ -7543,16 +7479,16 @@ to_snap_view(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 4) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -7562,24 +7498,24 @@ to_snap_view(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[2], "%lf", &vx) != 1 ||
 	sscanf(argv[3], "%lf", &vy) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     gedp->ged_gvp = gdvp->gdv_view;
     if (!gedp->ged_gvp->gv_grid.ggs_snap) {
-	bu_vls_printf(&gedp->ged_result_str, "%lf %lf", vx, vy);
+	bu_vls_printf(gedp->ged_result_str, "%lf %lf", vx, vy);
 	return GED_OK;
     }
 
     ged_snap_to_grid(gedp, &vx, &vy);
-    bu_vls_printf(&gedp->ged_result_str, "%lf %lf", vx, vy);
+    bu_vls_printf(gedp->ged_result_str, "%lf %lf", vx, vy);
 
     return GED_OK;
 }
@@ -7597,16 +7533,16 @@ to_translate_mode(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 4) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -7616,13 +7552,13 @@ to_translate_mode(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[2], "%lf", &x) != 1 ||
 	sscanf(argv[3], "%lf", &y) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -7653,16 +7589,16 @@ to_transparency(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 2 && argc != 3) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -7672,20 +7608,20 @@ to_transparency(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     /* get transparency flag */
     if (argc == 2) {
-	bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_dmp->dm_transparency);
+	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gdv_dmp->dm_transparency);
 	return GED_OK;
     }
 
     /* set transparency flag */
     if (argc == 3) {
 	if (sscanf(argv[2], "%d", &transparency) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: invalid transparency value - %s", argv[2]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: invalid transparency value - %s", argv[2]);
 	    return GED_ERROR;
 	}
 
@@ -7707,16 +7643,16 @@ to_view_axes(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 3 || 6 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -7726,7 +7662,7 @@ to_view_axes(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
@@ -7745,11 +7681,11 @@ to_view_callback(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -7759,13 +7695,13 @@ to_view_callback(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     /* get the callback string */
     if (argc == 2) {
-	bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(&gdvp->gdv_callback));
+	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&gdvp->gdv_callback));
 	
 	return GED_OK;
     }
@@ -7790,16 +7726,16 @@ to_view_win_size(struct ged *gedp,
     int width, height;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc < 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc > 4) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -7809,30 +7745,30 @@ to_view_win_size(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (argc == 2) {
-	bu_vls_printf(&gedp->ged_result_str, "%d %d", gdvp->gdv_dmp->dm_width, gdvp->gdv_dmp->dm_height);
+	bu_vls_printf(gedp->ged_result_str, "%d %d", gdvp->gdv_dmp->dm_width, gdvp->gdv_dmp->dm_height);
 	return GED_OK;
     }
 
     if (argc == 3) {
 	if (sscanf(argv[2], "%d", &width) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: bad size %s", argv[0], argv[2]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad size %s", argv[0], argv[2]);
 	    return GED_ERROR;
 	}
 
 	height = width;
     } else {
 	if (sscanf(argv[2], "%d", &width) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: bad width %s", argv[0], argv[2]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad width %s", argv[0], argv[2]);
 	    return GED_ERROR;
 	}
 
 	if (sscanf(argv[3], "%d", &height) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: bad height %s", argv[0], argv[3]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad height %s", argv[0], argv[3]);
 	    return GED_ERROR;
 	}
     }
@@ -7856,16 +7792,16 @@ to_vmake(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 4) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -7875,7 +7811,7 @@ to_vmake(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
@@ -7931,16 +7867,16 @@ to_vslew(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 4) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -7950,13 +7886,13 @@ to_vslew(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[2], "%lf", &xpos1) != 1 ||
 	sscanf(argv[3], "%lf", &ypos1) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -8008,16 +7944,16 @@ to_zbuffer(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (3 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -8027,19 +7963,19 @@ to_zbuffer(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     /* get zbuffer flag */
     if (argc == 2) {
-	bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_dmp->dm_zbuffer);
+	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gdv_dmp->dm_zbuffer);
 	return GED_OK;
     }
 
     /* set zbuffer flag */
     if (sscanf(argv[2], "%d", &zbuffer) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -8066,16 +8002,16 @@ to_zclip(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (3 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -8085,19 +8021,19 @@ to_zclip(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
     /* get zclip flag */
     if (argc == 2) {
-	bu_vls_printf(&gedp->ged_result_str, "%d", gdvp->gdv_view->gv_zclip);
+	bu_vls_printf(gedp->ged_result_str, "%d", gdvp->gdv_view->gv_zclip);
 	return GED_OK;
     }
 
     /* set zclip flag */
     if (sscanf(argv[2], "%d", &zclip) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -8131,7 +8067,7 @@ to_autoview_func(struct ged *gedp,
     av[1] = (char *)0;
     ret = ged_who(gedp, 1, (const char **)av);
 
-    if (ret == GED_OK && strlen(bu_vls_addr(&gedp->ged_result_str)) == 0)
+    if (ret == GED_OK && strlen(bu_vls_addr(gedp->ged_result_str)) == 0)
 	aflag = 1;
 
     ret = (*func)(gedp, argc, (const char **)argv);
@@ -8148,8 +8084,8 @@ to_autoview_func(struct ged *gedp,
 
 HIDDEN int
 to_edit_redraw(struct ged *gedp,
-		    int argc,
-		    const char *argv[])
+	       int argc,
+	       const char *argv[])
 {
     size_t i;
     register struct ged_display_list *gdlp;
@@ -8261,11 +8197,11 @@ to_more_args_func(struct ged *gedp,
 	    bu_vls_trunc(&callback_cmd, 0);
 	    bu_vls_printf(&callback_cmd, "%s \"%s\"",
 			  bu_vls_addr(&current_top->to_gop->go_more_args_callback),
-			  bu_vls_addr(&gedp->ged_result_str));
+			  bu_vls_addr(gedp->ged_result_str));
 
 	    if (Tcl_Eval(current_top->to_interp, bu_vls_addr(&callback_cmd)) != TCL_OK) {
-		bu_vls_trunc(&gedp->ged_result_str, 0);
-		bu_vls_printf(&gedp->ged_result_str, "%s", Tcl_GetStringResult(current_top->to_interp));
+		bu_vls_trunc(gedp->ged_result_str, 0);
+		bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(current_top->to_interp));
 		Tcl_ResetResult(current_top->to_interp);
 		return GED_ERROR;
 	    }
@@ -8274,7 +8210,7 @@ to_more_args_func(struct ged *gedp,
 	    bu_vls_printf(&temp, Tcl_GetStringResult(current_top->to_interp));
 	    Tcl_ResetResult(current_top->to_interp);
 	} else {
-	    bu_log("\r%s", bu_vls_addr(&gedp->ged_result_str));
+	    bu_log("\r%s", bu_vls_addr(gedp->ged_result_str));
 	    bu_vls_trunc(&temp, 0);
 	    if (bu_vls_gets(&temp, stdin) < 0) {
 		break;
@@ -8376,17 +8312,17 @@ to_view_func_common(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
     av = bu_calloc(argc+1, sizeof(char *), "alloc av copy");
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (maxargs != TO_UNLIMITED && maxargs < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -8396,7 +8332,7 @@ to_view_func_common(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
@@ -8421,10 +8357,10 @@ to_view_func_common(struct ged *gedp,
 	    struct bu_vls save_result;
 
 	    bu_vls_init(&save_result);
-	    bu_vls_printf(&save_result, "%V", &gedp->ged_result_str);
+	    bu_vls_printf(&save_result, "%V", gedp->ged_result_str);
 	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&gdvp->gdv_callback));
-	    bu_vls_trunc(&gedp->ged_result_str, 0);
-	    bu_vls_printf(&gedp->ged_result_str,"%V", &save_result);
+	    bu_vls_trunc(gedp->ged_result_str, 0);
+	    bu_vls_printf(gedp->ged_result_str,"%V", &save_result);
 	    bu_vls_free(&save_result);
 	}
 
@@ -8447,11 +8383,11 @@ to_view_func_plus(struct ged *gedp,
 
 HIDDEN int
 to_dm_func(struct ged *gedp,
-	     int argc,
-	     const char *argv[],
-	     ged_func_ptr func,
-	     const char *usage,
-	     int maxargs)
+	   int argc,
+	   const char *argv[],
+	   ged_func_ptr func,
+	   const char *usage,
+	   int maxargs)
 {
     register int i;
     int ret;
@@ -8460,17 +8396,17 @@ to_dm_func(struct ged *gedp,
     struct ged_dm_view *gdvp;
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
     av = bu_calloc(argc+1, sizeof(char *), "alloc av copy");
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (maxargs != TO_UNLIMITED && maxargs < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -8480,7 +8416,7 @@ to_dm_func(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
 
@@ -9327,7 +9263,7 @@ to_rt_gettrees_application(struct ged *gedp,
     }
 
     if (rt_gettrees(rtip, argc, (const char **)&argv[0], 1) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "rt_gettrees() returned error");
+	bu_vls_printf(gedp->ged_result_str, "rt_gettrees() returned error");
 	rt_free_rti(rtip);
 	return RT_APPLICATION_NULL;
     }

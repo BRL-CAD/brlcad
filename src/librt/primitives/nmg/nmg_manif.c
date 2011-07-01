@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_manif.c
+/** @file primitives/nmg/nmg_manif.c
  *
  * Routines for assessing the manifold dimension of an object.
  *

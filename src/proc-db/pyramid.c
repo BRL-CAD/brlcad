@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pyramid.c
+/** @file proc-db/pyramid.c
  *
  * Program to generate recursive 3-d pyramids (arb4).
  * Inspired by the SigGraph paper of Glasser.
@@ -60,9 +60,6 @@ main(int argc, char **argv)
     mk_id(outfp, "3-D Pyramids");
 
     do_leaf("leaf");
-#if 0
-    do_pleaf("polyleaf");
-#endif
     do_tree("tree", "leaf", depth);
 
     return 0;
@@ -82,56 +79,6 @@ do_leaf(char *name)
     mk_arb4(outfp, name, &pt[0][X]);
 }
 
-#if 0
-/* Make a leaf node out of 4 polygons */
-void
-do_pleaf(name)
-    char *name;
-{
-    point_t pt[4];
-    fastf_t verts[5][3];
-    fastf_t norms[5][3];
-    point_t centroid;
-    int i;
-
-    VSET(pt[0], 0, 0, 0);
-    VSET(pt[1], 100, 0, 0);
-    VSET(pt[2], 50, 100*sin60, 0);
-    VSET(pt[3], 50, 100*sin60/3, 100*sin60);
-
-    VMOVE(centroid, pt[0]);
-    for (i=1; i<4; i++) {
-	VADD2(centroid, centroid, pt[i]);
-    }
-    VSCALE(centroid, centroid, 0.25);
-
-    mk_polysolid(outfp, name);
-
-    VMOVE(verts[0], pt[0]);
-    VMOVE(verts[1], pt[1]);
-    VMOVE(verts[2], pt[2]);
-    pnorms(norms, verts, centroid, 3);
-    mk_poly(outfp, 3, verts, norms);
-
-    VMOVE(verts[0], pt[0]);
-    VMOVE(verts[1], pt[1]);
-    VMOVE(verts[2], pt[3]);
-    pnorms(norms, verts, centroid, 3);
-    mk_poly(outfp, 3, verts, norms);
-
-    VMOVE(verts[0], pt[0]);
-    VMOVE(verts[1], pt[2]);
-    VMOVE(verts[2], pt[3]);
-    pnorms(norms, verts, centroid, 3);
-    mk_poly(outfp, 3, verts, norms);
-
-    VMOVE(verts[0], pt[1]);
-    VMOVE(verts[1], pt[2]);
-    VMOVE(verts[2], pt[3]);
-    pnorms(norms, verts, centroid, 3);
-    mk_poly(outfp, 3, verts, norms);
-}
-#endif
 
 /*
  * Find the single outward pointing normal for a facet.

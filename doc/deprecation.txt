@@ -48,8 +48,13 @@ new names should be listed for reference.
 7.20
 ----
 
+bu.h
+        bu_vls_init_if_uninit() -> bu_vls_init() [deprecated 7.20]
+autogen.sh && configure
+        GNU Autotools build system -> CMake build system [deprecated 7.20]
+        ./configure -> cmake . [deprecated 7.20]
 raytrace.h
-	rt_load_attrs()
+	rt_load_attrs() -> rt_gettrees_and_attrs() or db5_import_attributs() [deprecated 7.20]
 
 7.18
 ----
@@ -187,10 +192,6 @@ include/vmath.h
 ----
 include/raytrace.h
 	rt_functab size -> growing ft_label and new callbacks [deprecated 7.12]
-include/vmath.h
-	ELEMENTS_PER_PT -> ELEMENTS_PER_POINT
-	HVECT_LEN -> ELEMENTS_PER_HVECT
-	HPT_LEN -> ELEMENTS_PER_HPOINT
 srt/librt/cmd.c
 	rt_split_cmd() -> bu_argv_from_string() [deprecated 7.12]
 src/rt/viewarea.c
@@ -211,13 +212,25 @@ include/raytrace.h
 * OBSOLETE *
 ************
 
+7.20.2
+------
+cat-fb
+        obsolete hardware
+include/vmath.h
+	ELEMENTS_PER_PT -> ELEMENTS_PER_POINT [deprecated 7.12]
+	HVECT_LEN -> ELEMENTS_PER_HVECT [deprecated 7.12]
+	HPT_LEN -> ELEMENTS_PER_HPOINT [deprecated 7.12]
+
 7.20.0
 ------
+include/bu.h
 	bu_mro and related macros -> bu_attribute_value_set
 
 7.18.2
 ------
+include/raytrace.h
 	RT_HIT_NORM -> RT_HIT_NORMAL [deprecated pre-7.0]
+g-shell.rect
 	g-shell.rect renamed to g-shell-rect [minor tool rename]
 
 7.18.0
@@ -351,55 +364,417 @@ removing unused parameters.
 Basically, the impact can usually be considered minor if a static
 regular expression search-and-replace is all that is needed to update.
 Included in following are various minimally impacting API changes that
-have been identified in reverse chronological order.  As expressions
-are not extensively tested, use with caution.
+have been identified in chronological order.  As expressions are not
+extensively tested, use with caution.
 
-s/V2APPROXEQUAL(/V2NEAR_EQUAL(/g
-        V2APPROXEQUAL() renamed to V2NEAR_EQUAL() [7.18]
+Unless noted otherwise, expressions are shown using Perl syntax and
+may need adjustment (particularly quoting of '(', ')', and '|'
+characters) for other environments.  Most expressions will apply with:        
+	perl -0777 -pi -e 'EXPRESSION' FILE
 
-s/SMALL\([^_]\)/SMALL_FAST\1/g
-        SMALL renamed to SMALL_FASTF [7.18]
 
-s/db_shader_mat(/rt_shader_mat(/g
-        db_shader_mat() renamed to rt_shader_mat() [7.18]
+6.0 (sed lines)
+---
+g/struct structparse/s//struct bu_structparse/g
+g/struct rt_mapped_file/s//struct bu_mapped_file/g
+g/struct rt_list/s//struct bu_list/g
+g/struct histogram/s//struct bu_hist/g
+g/complex	/s//bn_complex_t	/g
+g/GETSTRUCT/s//BU_GETSTRUCT/g
+g/GETUNION/s//BU_GETUNION/g
+g/nmg_tbl.*(\(.*\), TBL_INIT[ ]*, \(.*\))/s//bu_ptbl_init(\1, 64, "\1")/
+g/nmg_tbl.*(\(.*\), TBL_RST[ ]*, \(.*\))/s//bu_ptbl_reset(\1)/
+g/nmg_tbl.*(\(.*\), TBL_INS[ ]*, \(.*\))/s//bu_ptbl_ins(\1, \2)/
+g/nmg_tbl.*(\(.*\), TBL_LOC[ ]*, \(.*\))/s//bu_ptbl_locate(\1, \2)/
+g/nmg_tbl.*(\(.*\), TBL_ZERO[ ]*, \(.*\))/s//bu_ptbl_zero(\1, \2)/
+g/nmg_tbl.*(\(.*\), TBL_INS_UNIQUE[ ]*, \(.*\))/s//bu_ptbl_ins_unique(\1, \2)/
+g/nmg_tbl.*(\(.*\), TBL_RM[ ]*, \(.*\))/s//bu_ptbl_rm(\1, \2)/
+g/nmg_tbl.*(\(.*\), TBL_CAT[ ]*, \(.*\))/s//bu_ptbl_cat(\1, \2)/
+g/nmg_tbl.*(\(.*\), TBL_FREE[ ]*, \(.*\))/s//bu_ptbl_free(\1)/
+g/nmg_tbl/s//bu_ptbl/g
+g/nmg_ptbl/s//bu_ptbl/g
+g/MSR_UNIF/s//BN_UNIF/g
+g/MSR_GAUSS/s//BN_GAUSS/g
+g/MSR_CK/s//BU_CK/g
+g/msr_unif/s//bn_unif/g
+g/msr_gauss/s//bn_gauss/g
+g/RT_CKMAG/s//BU_CKMAG/g
+g/RT_TOL_MAGIC/s//BN_TOL_MAGIC/g
+g/RT_CK_TOL/s//BN_CK_TOL/g
+g/RT_VECT_ARE_PARALLEL/s//BN_VECT_ARE_PARALLEL/g
+g/RT_VECT_ARE_PERP/s//BN_VECT_ARE_PERP/g
+g/rt_badmagic/s//bu_badmagic/g
+g/RT_SETJUMP/s//BU_SETJUMP/g
+g/RT_UNSETJUMP/s//BU_UNSETJUMP/g
+g/rt_twopi/s//bn_twopi/g
+g/rt_halfpi/s//bn_halfpi/g
+g/rt_quarterpi/s//bn_quarterpi/g
+g/rt_invpi/s//bn_invpi/g
+g/rt_inv2pi/s//bn_inv2pi/g
+g/rt_inv4pi/s//bn_inv4pi/g
+g/rt_inv255/s//bn_inv255/g
+g/rt_degtorad/s//bn_degtorad/g
+g/rt_radtodeg/s//bn_radtodeg/g
+g/RT_HISTOGRAM_MAGIC/s//BU_HIST_MAGIC/g
+g/RT_CK_HISTOGRAM/s//BU_CK_HIST/g
+g/RT_HISTOGRAM_TALLY/s//BU_HIST_TALLY/g
+g/rt_hist_free/s//bu_hist_free/g
+g/rt_hist_init/s//bu_hist_init/g
+g/rt_hist_range/s//bu_hist_range/g
+g/rt_hist_pr/s//bu_hist_pr/g
+g/RT_LIST_HEAD_MAGIC/s//BU_LIST_HEAD_MAGIC/g
+g/RT_LIST_NULL/s//BU_LIST_NULL/g
+g/RT_LIST_INSERT/s//BU_LIST_INSERT/g
+g/RT_LIST_APPEND/s//BU_LIST_APPEND/g
+g/RT_LIST_DEQUEUE/s//BU_LIST_DEQUEUE/g
+g/RT_LIST_PUSH/s//BU_LIST_PUSH/g
+g/RT_LIST_POP/s//BU_LIST_POP/g
+g/RT_LIST_INSERT_LIST/s//BU_LIST_INSERT_LIST/g
+g/RT_LIST_APPEND_LIST/s//BU_LIST_APPEND_LIST/g
+g/RT_LIST_IS_EMPTY/s//BU_LIST_IS_EMPTY/g
+g/RT_LIST_NON_EMPTY/s//BU_LIST_NON_EMPTY/g
+g/RT_LIST_NON_EMPTY_P/s//BU_LIST_NON_EMPTY_P/g
+g/RT_LIST_IS_CLEAR/s//BU_LIST_IS_CLEAR/g
+g/RT_LIST_UNINITIALIZED/s//BU_LIST_UNINITIALIZED/g
+g/RT_LIST_INIT/s//BU_LIST_INIT/g
+g/RT_LIST_MAGIC_SET/s//BU_LIST_MAGIC_SET/g
+g/RT_LIST_MAGIC_OK/s//BU_LIST_MAGIC_OK/g
+g/RT_LIST_MAGIC_WRONG/s//BU_LIST_MAGIC_WRONG/g
+g/RT_LIST_IS_HEAD/s//BU_LIST_IS_HEAD/g
+g/RT_LIST_NOT_HEAD/s//BU_LIST_NOT_HEAD/g
+g/RT_CK_LIST_HEAD/s//BU_CK_LIST_HEAD/g
+g/RT_LIST_NEXT_IS_HEAD/s//BU_LIST_NEXT_IS_HEAD/g
+g/RT_LIST_NEXT_NOT_HEAD/s//BU_LIST_NEXT_NOT_HEAD/g
+g/RT_LIST_FOR2/s//BU_LIST_FOR2/g
+g/RT_LIST_FOR/s//BU_LIST_FOR/g
+g/RT_LIST_WHILE/s//BU_LIST_WHILE/g
+g/RT_LIST_FIRST_MAGIC/s//BU_LIST_FIRST_MAGIC/g
+g/RT_LIST_LAST_MAGIC/s//BU_LIST_LAST_MAGIC/g
+g/RT_LIST_PNEXT_PNEXT/s//BU_LIST_PNEXT_PNEXT/g
+g/RT_LIST_PNEXT_PLAST/s//BU_LIST_PNEXT_PLAST/g
+g/RT_LIST_PLAST_PNEXT/s//BU_LIST_PLAST_PNEXT/g
+g/RT_LIST_PLAST_PLAST/s//BU_LIST_PLAST_PLAST/g
+g/RT_LIST_PNEXT_CIRC/s//BU_LIST_PNEXT_CIRC/g
+g/RT_LIST_PPREV_CIRC/s//BU_LIST_PPREV_CIRC/g
+g/RT_LIST_PLAST_CIRC/s//BU_LIST_PPREV_CIRC/g
+g/RT_LIST_MAIN_PTR/s//BU_LIST_MAIN_PTR/g
+g/RT_LIST_PNEXT/s//BU_LIST_PNEXT/g
+g/RT_LIST_PLAST/s//BU_LIST_PLAST/g
+g/RT_LIST_LAST/s//BU_LIST_LAST/g
+g/RT_LIST_PREV/s//BU_LIST_PREV/g
+g/RT_LIST_FIRST/s//BU_LIST_FIRST/g
+g/RT_LIST_NEXT/s//BU_LIST_NEXT/g
+g/rt_log/s//bu_log/g
+g/rt_add_hook/s//bu_add_hook/g
+g/rt_delete_hook/s//bu_delete_hook/g
+g/rt_putchar/s//bu_putchar/g
+g/rt_flog/s//bu_flog/g
+g/rt_identify_magic/s//bu_identify_magic/g
+g/rt_identity/s//bn_mat_identity/g
+g/rt_prmem/s//bu_prmem/g
+g/rt_strdup/s//bu_strdup/g
+g/rt_malloc/s//bu_malloc/g
+g/rt_calloc/s//bu_calloc/g
+g/rt_free/s//bu_free/g
+g/rt_byte_roundup/s//bu_malloc_len_roundup/g
+g/rt_mem_barriercheck/s//bu_mem_barriercheck/g
+g/rt_open_mapped_file/s//bu_open_mapped_file/g
+g/rt_close_mapped_file/s//bu_close_mapped_file/g
+g/RT_CK_MAPPED_FILE/s//BU_CK_MAPPED_FILE/g
+g/noise_init/s//bn_noise_init/g
+g/noise_perlin/s//bn_noise_perlin/g
+g/noise_vec/s//bn_noise_vec/g
+g/noise_fbm/s//bn_noise_fbm/g
+g/noise_turb/s//bn_noise_turb/g
+g/rt_pri_set/s//bu_nice_set/g
+g/rt_cpuget/s//bu_cpulimit_get/g
+g/rt_cpuset/s//bu_cpulimit_set/g
+g/rt_avail_cpus/s//bu_avail_cpus/g
+g/rt_parallel/s//bu_parallel/g
+g/rt_struct_export/s//bu_struct_export/g
+g/rt_struct_import/s//bu_struct_import/g
+g/rt_struct_put/s//bu_struct_put/g
+g/rt_struct_get/s//bu_struct_get/g
+g/rt_gshort/s//bu_gshort/g
+g/rt_glong/s//bu_glong/g
+g/rt_pshort/s//bu_pshort/g
+g/rt_plong/s//bu_plong/g
+g/rt_struct_buf/s//bu_struct_wrap_buf/g
+g/rt_structparse/s//bu_struct_parse/g
+g/rt_structprint/s//bu_struct_print/g
+g/rt_vls_structprint/s//bu_vls_struct_print/g
+g/offsetofarray/s//bu_offsetofarray/g
+g/ FUNC_NULL/s// BU_STRUCTPARSE_FUNC_NULL/g
+g/rt_external/s//bu_external/g
+g/RT_EXTERNAL_MAGIC/s//BU_EXTERNAL_MAGIC/g
+g/RT_EXTERN/s//BU_EXTERN/g
+g/RT_INIT_EXTERNAL/s//BU_INIT_EXTERNAL/g
+g/RT_CK_EXTERNAL/s//BU_CK_EXTERNAL/g
+g/rt_dist_pt3_lseg3/s//bn_dist_pt3_lseg3/g
+g/rt_3pts_collinear/s//bn_3pts_collinear/g
+g/rt_pt3_pt3_equal/s//bn_pt3_pt3_equal/g
+g/rt_dist_pt2_lseg2/s//bn_dist_pt2_lseg2/g
+g/rt_isect_lseg3_lseg3/s//bn_isect_lseg3_lseg3/g
+g/rt_isect_line3_line3/s//bn_isect_line3_line3/g
+g/rt_2line3_colinear/s//bn_2line3_colinear/g
+g/rt_isect_pt2_lseg2/s//bn_isect_pt2_lseg2/g
+g/rt_isect_line2_lseg2/s//bn_isect_line2_lseg2/g
+g/rt_isect_lseg2_lseg2/s//bn_isect_lseg2_lseg2/g
+g/rt_isect_line2_line2/s//bn_isect_line2_line2/g
+g/rt_dist_line_point/s//bn_dist_line3_pt3/g
+g/rt_dist_pt3_pt3/s//bn_dist_pt3_pt3/g
+g/rt_3pts_distinct/s//bn_3pts_distinct/g
+g/rt_mk_plane_3pts/s//bn_mk_plane_3pts/g
+g/rt_mkpoint_3planes/s//bn_mkpoint_3planes/g
+g/rt_isect_line3_plane/s//bn_isect_line3_plane/g
+g/rt_isect_2planes/s//bn_isect_2planes/g
+g/rt_isect_2lines/s//bn_isect_2lines/g
+g/rt_isect_line_lseg/s//bn_isect_line_lseg/g
+g/rt_dist_line3_pt3/s//bn_dist_line3_pt3/g
+g/rt_distsq_line3_pt3/s//bn_distsq_line3_pt3/g
+g/rt_dist_line_origin/s//bn_dist_line_origin/g
+g/rt_dist_line2_point2/s//bn_dist_line2_point2/g
+g/rt_distsq_line2_point2/s//bn_distsq_line2_point2/g
+g/rt_area_of_triangle/s//bn_area_of_triangle/g
+g/rt_isect_pt_lseg/s//bn_isect_pt_lseg/g
+g/rt_dist_pt_lseg/s//bn_dist_pt_lseg/g
+g/rt_rotate_bbox/s//bn_rotate_bbox/g
+g/rt_rotate_plane/s//bn_rotate_plane/g
+g/rt_coplanar/s//bn_coplanar/g
+g/rt_angle_measure/s//bn_angle_measure/g
+g/rt_dist_pt3_along_line3/s//bn_dist_pt3_along_line3/g
+g/rt_dist_pt2_along_line2/s//bn_dist_pt2_along_line2/g
+g/rt_between/s//bn_between/g
+g/rt_printb/s//bu_printb/g
+g/NMG_CK_PTBL/s//BU_CK_PTBL/g
+g/NMG_TBL_BASEADDR/s//BU_PTBL_BASEADDR/g
+g/NMG_TBL_LASTADDR/s//BU_PTBL_LASTADDR/g
+g/NMG_TBL_END/s//BU_PTBL_END/g
+g/NMG_TBL_GET/s//BU_PTBL_GET/g
+g/RT_RAND_TABSIZE/s//BN_RAND_TABSIZE/g
+g/RT_RANDSEED/s//BN_RANDSEED/g
+g/RT_RANDOM/s//BN_RANDOM/g
+g/rt_rand_table/s//bn_rand_table/g
+g/rt_tol/s//bn_tol/g
+g/RES_ACQUIRE(/s//bu_semaphore_acquire(/
+g/RES_RELEASE(/s//bu_semaphore_release(/
+g/&rt_g.res_syscall/s//BU_SEM_SYSCALL/
+g/&rt_g.res_worker/s//RT_SEM_WORKER/
+g/&rt_g.res_stats/s//RT_SEM_STATS/
+g/&rt_g.res_results/s//RT_SEM_RESULTS/
+g/&rt_g.res_model/s//RT_SEM_MODEL/
+g/RES_INIT(/s/RES_INIT.*;/bu_semaphore_init( RT_SEM_LAST );/p
+g/RT_VLS_CHECK/s//BU_CK_VLS/g
+g/RT_VLS_ADDR/s//bu_vls_addr/g
+g/RT_VLS_INIT/s//bu_vls_init/g
+g/rt_vls_init/s//bu_vls_init/g
+g/rt_vls_vlsinit/s//bu_vls_vlsinit/g
+g/rt_vls_addr/s//bu_vls_addr/g
+g/rt_vls_strdup/s//bu_vls_strdup/g
+g/rt_vls_strgrab/s//bu_vls_strgrab/g
+g/rt_vls_extend/s//bu_vls_extend/g
+g/rt_vls_setlen/s//bu_vls_setlen/g
+g/rt_vls_strlen/s//bu_vls_strlen/g
+g/rt_vls_trunc/s//bu_vls_trunc/g
+g/rt_vls_trunc2/s//bu_vls_trunc2/g
+g/rt_vls_nibble/s//bu_vls_nibble/g
+g/rt_vls_free/s//bu_vls_free/g
+g/rt_vls_vlsfree/s//bu_vls_vlsfree/g
+g/rt_vls_strcpy/s//bu_vls_strcpy/g
+g/rt_vls_strncpy/s//bu_vls_strncpy/g
+g/rt_vls_strcat/s//bu_vls_strcat/g
+g/rt_vls_strncat/s//bu_vls_strncat/g
+g/rt_vls_vlscat/s//bu_vls_vlscat/g
+g/rt_vls_vlscatzap/s//bu_vls_vlscatzap/g
+g/rt_vls_from_argv/s//bu_vls_from_argv/g
+g/rt_vls_fwrite/s//bu_vls_fwrite/g
+g/rt_vls_gets/s//bu_vls_gets/g
+g/rt_vls_putc/s//bu_vls_putc/g
+g/rt_vls_printf/s//bu_vls_printf/g
+g/CxCopy/s//bn_cx_copy/g
+g/CxNeg/s//bn_cx_neg/g
+g/CxReal/s//bn_cx_real/g
+g/CxImag/s//bn_cx_imag/g
+g/CxAdd/s//bn_cx_add/g
+g/CxAmplSq/s//bn_cx_amplsq/g
+g/CxAmpl/s//bn_cx_ampl/g
+g/CxConj/s//bn_cx_conj/g
+g/CxCons/s//bn_cx_cons/g
+g/CxPhas/s//bn_cx_phas/g
+g/CxScal/s//bn_cx_scal/g
+g/CxSub/s//bn_cx_sub/g
+g/CxMul/s//bn_cx_mul/g
+g/CxMul2/s//bn_cx_mul2/g
+g/CxDiv/s//bn_cx_div/g
+g/rt_poly_scale/s//bn_poly_scale/g
+g/rt_pr_poly/s//bn_pr_poly/g
+g/rt_pr_roots/s//bn_pr_roots/g
+g/TBL_INIT/s//BU_PTBL_INIT/g
+g/TBL_INS/s//BU_PTBL_INS/g
+g/TBL_LOC/s//BU_PTBL_LOC/g
+g/TBL_FREE/s//BU_PTBL_FREE/g
+g/TBL_RST/s//BU_PTBL_RST/g
+g/TBL_CAT/s//BU_PTBL_CAT/g
+g/TBL_RM/s//BU_PTBL_RM/g
+g/TBL_INS_UNIQUE/s//BU_PTBL_INS_UNIQUE/g
+g/TBL_ZERO/s//BU_PTBL_ZERO/g
+g/rt_pi/s//bn_pi/g
+g/matXvec/s//bn_matXvec/g
+g/mat_ae/s//bn_mat_ae/g
+g/mat_ae_vec/s//bn_ae_vec/g
+g/mat_aet_vec/s//bn_aet_vec/g
+g/mat_angles/s//bn_mat_angles/g
+g/mat_arb_rot/s//bn_mat_arb_rot/g
+g/mat_atan2/s//bn_atan2/g
+g/mat_copy/s//bn_mat_copy/g
+g/mat_degtorad/s//bn_degtorad/g
+g/mat_dup/s//bn_mat_dup/g
+g/mat_eigen2x2/s//bn_eigen2x2/g
+g/mat_fromto/s//bn_mat_fromto/g
+g/mat_htov_move/s//bn_htov_move/g
+g/mat_identity/s//bn_mat_identity/g
+g/mat_idn/s//MAT_IDN/g
+g/mat_inv/s//bn_mat_inv/g
+g/rt_mat_is_equal/s//bn_mat_is_equal/g
+g/mat_is_identity/s//bn_mat_is_identity/g
+g/mat_lookat/s//bn_mat_lookat/g
+g/mat_mul/s//bn_mat_mul/g
+g/mat_mul2/s//bn_mat_mul2/g
+g/mat_print/s//bn_mat_print/g
+g/mat_radtodeg/s//bn_radtodeg/g
+g/mat_scale_about_pt/s//bn_mat_scale_about_pt/g
+g/mat_trn/s//bn_mat_trn/g
+g/mat_vec_ortho/s//bn_vec_ortho/g
+g/mat_vec_perp/s//bn_vec_perp/g
+g/mat_vtoh_move/s//bn_vtoh_move/g
+g/mat_xform_about_pt/s//bn_mat_xform_about_pt/g
+g/mat_xrot/s//bn_mat_xrot/g
+g/mat_yrot/s//bn_mat_yrot/g
+g/mat_zrot/s//bn_mat_zrot/g
+g/mat_zero/s//bn_mat_zero/g
+g/rb_tree/s//bu_rb_tree/g
+g/RB_TREE_NULL/s//BU_RB_TREE_NULL/g
+g/rb_min/s//bu_rb_min/g
+g/rb_max/s//bu_rb_max/g
+g/rb_pred/s//bu_rb_pred/g
+g/rb_succ/s//bu_rb_succ/g
+g/rb_create/s//bu_rb_create/g
+g/rb_create1/s//bu_rb_create1/g
+g/rb_delete/s//bu_rb_delete/g
+g/rb_diagnose_tree/s//bu_rb_diagnose_tree/g
+g/rb_extreme/s//bu_rb_extreme/g
+g/rb_insert/s//bu_rb_insert/g
+g/rb_neighbor/s//bu_rb_neighbor/g
+g/rb_search/s//bu_rb_search/g
+g/rb_search1/s//bu_rb_search1/g
+g/rb_summarize_tree/s//bu_rb_summarize_tree/g
+g/rb_walk/s//bu_rb_walk/g
+g/rb_walk1/s//bu_rb_walk1/g
+g/RT_VLIST_CHUNK/s//BN_VLIST_CHUNK/g
+g/rt_vlist/s//bn_vlist/g
+g/RT_VLIST_NULL/s//BN_VLIST_NULL/g
+g/RT_VLIST_MAGIC/s//BN_VLIST_MAGIC/g
+g/RT_CK_VLIST/s//BN_CK_VLIST/g
+g/RT_VLIST_LINE_MOVE/s//BN_VLIST_LINE_MOVE/g
+g/RT_VLIST_LINE_DRAW/s//BN_VLIST_LINE_DRAW/g
+g/RT_VLIST_POLY_START/s//BN_VLIST_POLY_START/g
+g/RT_VLIST_POLY_MOVE/s//BN_VLIST_POLY_MOVE/g
+g/RT_VLIST_POLY_DRAW/s//BN_VLIST_POLY_DRAW/g
+g/RT_VLIST_POLY_END/s//BN_VLIST_POLY_END/g
+g/RT_VLIST_POLY_VERTNORM/s//BN_VLIST_POLY_VERTNORM/g
+g/rt_vlblock/s//bn_vlblock/g
+g/RT_VLBLOCK_MAGIC/s//BN_VLBLOCK_MAGIC/g
+g/RT_CK_VLBLOCK/s//BN_CK_VLBLOCK/g
+g/BU_BU_/s//BU_/g
+g/bu_bu_/s//bu_/g
+g/bn_bn_/s//bn_/g
+g/bn_pipe/s//rt_pipe/g
+        major API overhaul [6.0]
+7.14
+----
+s/rt_db_free_internal\(([^,]+),[^\)]*\)/rt_db_free_internal(\1)/g
+	struct resource pointer parameter removed [7.14]
 
-s/rt_get_seg(/rt_alloc_sed_block(/g
-        rt_get_seg() renamed to rt_alloc_seg_block() [7.18]
-
-s/db_get_directory(/db_alloc_directory_block(/g
-        db_get_directory() renamed to db_alloc_directory_block() [7.18]
-
-s/db_get_directory_size(/db_directory_size(/g
-        db_get_directory_size() renamed to db_directory_size() [7.18]
-
-s/db_get_version(/db_version(/g
-        db_get_version() renamed to db_version() [7.18]
-
-s/VAPPROXEQUAL(/VNEAR_EQUAL(/g
-        VAPPROXEQUAL() renamed to VNEAR_EQUAL() [7.18]
-
-s/bu_vlb_getBufferLength(/bu_vlb_buflen(/g
-        bu_vlb_getBufferLength() remamed to bu_vlb_buflen() [7.18]
-
-s/bu_vlb_getBuffer(/bu_vlb_addr(/g
-        bu_vlb_getBuffer() remamed to bu_vlb_addr() [7.18]
-
-s/nmg_struct_counts(/nmg_pr_m_struct_counts(/g
-        nmg_struct_counts() renamed to nmg_pr_m_struct_counts() [7.18]
-
-s/bu_ptbl(\([^,]*\),[[:space:]]*BU_PTBL_INIT\([^)]*\))/bu_ptbl_init(\1, 64, "init")/g
-s/bu_ptbl(\([^,]*\),[[:space:]]*BU_PTBL_RST\([^)]*\))/bu_ptbl_reset(\1)/g
-s/bu_ptbl(\([^,]*\),[[:space:]]*BU_PTBL_INS\([^)]*\))/bu_ptbl_ins(\1\2)/g
-s/bu_ptbl(\([^,]*\),[[:space:]]*BU_PTBL_LOC\([^)]*\))/bu_ptbl_locate(\1\2)/g
-s/bu_ptbl(\([^,]*\),[[:space:]]*BU_PTBL_ZERO\([^)]*\))/bu_ptbl_zero(\1\2/g
-s/bu_ptbl(\([^,]*\),[[:space:]]*BU_PTBL_INS_UNIQUE\([^)]*\))/bu_ptbl_ins_unique(\1\2)/g
-s/bu_ptbl(\([^,]*\),[[:space:]]*BU_PTBL_RM\([^)]*\))/bu_ptbl_rm(\1\2)/g
-s/bu_ptbl(\([^,]*\),[[:space:]]*BU_PTBL_CAT\([^)]*\))/bu_ptbl_cat(\1\2)/g
-s/bu_ptbl(\([^,]*\),[[:space:]]*BU_PTBL_FREE\([^)]*\))/bu_ptbl_free(\1)/g
-        bu_ptbl() removed [7.18]
-
-s/rt_ptalloc();/(struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");/g
+7.16
+----
+s/rt_ptalloc\(\);/(struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");/g
         rt_ptalloc() removed [7.16]
 
-s/rt_db_free_internal(\([^,]+\),[^)]*)/rt_db_free_internal(\1)/g
-	struct resource pointer parameter removed [7.14]
+7.18
+----
+s/bu_ptbl\(([^,]*),[[:space:]]*BU_PTBL_INIT([^\)]*)\)/bu_ptbl_init(\1, 64, "init")/g
+s/bu_ptbl\(([^,]*),[[:space:]]*BU_PTBL_RST([^\)]*)\)/bu_ptbl_reset(\1)/g
+s/bu_ptbl\(([^,]*),[[:space:]]*BU_PTBL_INS([^\)]*)\)/bu_ptbl_ins(\1\2)/g
+s/bu_ptbl\(([^,]*),[[:space:]]*BU_PTBL_LOC([^\)]*)\)/bu_ptbl_locate(\1\2)/g
+s/bu_ptbl\(([^,]*),[[:space:]]*BU_PTBL_ZERO([^\)]*)\)/bu_ptbl_zero(\1\2/g
+s/bu_ptbl\(([^,]*),[[:space:]]*BU_PTBL_INS_UNIQUE([^\)]*)\)/bu_ptbl_ins_unique(\1\2)/g
+s/bu_ptbl\(([^,]*),[[:space:]]*BU_PTBL_RM([^\)]*)\)/bu_ptbl_rm(\1\2)/g
+s/bu_ptbl\(([^,]*),[[:space:]]*BU_PTBL_CAT([^\)]*)\)/bu_ptbl_cat(\1\2)/g
+s/bu_ptbl\(([^,]*),[[:space:]]*BU_PTBL_FREE([^\)]*)\)/bu_ptbl_free(\1)/g
+        bu_ptbl() removed [7.18]
+
+s/nmg_struct_counts\(/nmg_pr_m_struct_counts(/g
+        nmg_struct_counts() renamed to nmg_pr_m_struct_counts() [7.18]
+
+s/bu_vlb_getBuffer\(/bu_vlb_addr(/g
+        bu_vlb_getBuffer() remamed to bu_vlb_addr() [7.18]
+
+s/bu_vlb_getBufferLength\(/bu_vlb_buflen(/g
+        bu_vlb_getBufferLength() remamed to bu_vlb_buflen() [7.18]
+
+s/V2APPROXEQUAL\(/V2NEAR_EQUAL(/g
+        V2APPROXEQUAL() renamed to V2NEAR_EQUAL() [7.18]
+
+s/VAPPROXEQUAL\(/VNEAR_EQUAL(/g
+        VAPPROXEQUAL() renamed to VNEAR_EQUAL() [7.18]
+
+s/db_get_version\(/db_version(/g
+        db_get_version() renamed to db_version() [7.18]
+
+s/db_get_directory_size\(/db_directory_size(/g
+        db_get_directory_size() renamed to db_directory_size() [7.18]
+
+s/db_get_directory\(/db_alloc_directory_block(/g
+        db_get_directory() renamed to db_alloc_directory_block() [7.18]
+
+s/rt_get_seg\(/rt_alloc_sed_block(/g
+        rt_get_seg() renamed to rt_alloc_seg_block() [7.18]
+
+s/db_shader_mat\(/rt_shader_mat(/g
+        db_shader_mat() renamed to rt_shader_mat() [7.18]
+
+s/SMALL([^_])/SMALL_FAST\1/g
+        SMALL renamed to SMALL_FASTF [7.18]
+
+7.20
+----
+s/spm_([^\)]*)/bn_spm_\1/g
+        spm functions and types renamed to bn_spm [7.20]
+
+s/RT_CK_SPM/BN_CK_SPM_MAP/g
+        RT_CK_SPM macro renamed to BN_CK_SPM MAP [7.20]
+
+s/SPM_MAGIC/BN_SPM_MAGIC/g
+        SPM_MAGIC renamed to BN_SPM_MAGIC [7.20]
+
+s/SPM_NULL/BN_SPM_MAP_NULL/g
+        SPM_NULL renamed to BN_SPM_MAP_NULL [7.20]
+
+s/BU_EXTERN[[:space:]]*\([[:space:]]*([^,]*?)[[:space:]]*,[[:space:]]*\([[:space:]]*([^)]*)[[:space:]]*\)[[:space:]]*\)/extern \1(\2)/g
+        BU_EXTERN() no longer necessary due to C89 minimum, use extern [7.20]
+
+s/[[:space:]]*BU_ARGS[[:space:]]*\([[:space:]]*([^)]*[[:space:]]*)[[:space:]]*\)/\1/g
+        BU_ARGS() no longer necessary due to C89 minimum, list args [7.20]
+
+s/BU_LIST_UNINITIALIZED/!BU_LIST_IS_INITIALIZED/g
+        BU_LIST_IS_INITIALIZED() removed for consistency [7.20]
+
+s/BU_INIT_EXTERNAL/BU_EXTERNAL_INIT/g
+        renamed for API consistency [7.20]
+
+s/RT_CK_DBTR/RT_CK_DB_TRAVERSE/g
+s/RT_DBTR_MAGIC/RT_DB_TRAVERSE_MAGIC/g
+        renamed for API consistency [7.20]
+
+s/RT_INIT_([A-Z_]*)/RT_\1_INIT/g
+        renamed all RT_INIT_[type] macros to RT_[type]_INIT for API consistency [7.20]

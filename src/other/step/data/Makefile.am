@@ -9,7 +9,8 @@ DATAFILES = \
 	select.exp 
 
 EXTRA_DIST = \
-	${DATAFILES}
+	${DATAFILES} \
+	CMakeLists.txt
 
 datafilesdir = $(SCL_DATA)/data
 

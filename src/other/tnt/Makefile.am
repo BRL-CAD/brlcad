@@ -29,4 +29,6 @@ include_HEADERS = \
 	tnt_vector.h \
 	tnt_version.h
 
+EXTRA_DIST = CMakeLists.txt
+
 include $(top_srcdir)/misc/Makefile.defs

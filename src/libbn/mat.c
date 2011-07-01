@@ -19,7 +19,7 @@
  */
 /** @addtogroup mat */
 /** @{ */
-/** @file mat.c
+/** @file libbn/mat.c
  *
  * @brief
  * 4 x 4 Matrix manipulation functions...
@@ -128,9 +128,9 @@ bn_atan2(double y, double x)
     if (x > -1.0e-20 && x < 1.0e-20) {
 	/* X is equal to zero, check Y */
 	if (y < -1.0e-20)
-	    return -3.14159265358979323/2;
+	    return -M_PI_2;
 	if (y > 1.0e-20)
-	    return 3.14159265358979323/2;
+	    return M_PI_2;
 	return 0.0;
     }
     return atan2(y, x);
@@ -506,11 +506,11 @@ bn_aet_vec(fastf_t *az, fastf_t *el, fastf_t *twist, fastf_t *vec_ae, fastf_t *v
 
     /* stabilize fluctuation bewteen 0 and 360
      * change azimuth near 360 to 0 */
-    if (NEAR_ZERO(*az - 360.0, accuracy))
+    if (NEAR_EQUAL(*az, 360.0, accuracy))
 	*az = 0.0;
 
     /* if elevation is +/-90 set twist to zero and calculate azimuth */
-    if (NEAR_ZERO(*el - 90.0, accuracy) || NEAR_ZERO(*el + 90.0, accuracy)) {
+    if (NEAR_EQUAL(*el, 90.0, accuracy) || NEAR_ZERO(*el + 90.0, accuracy)) {
 	*twist = 0.0;
 	*az = bn_atan2(-vec_twist[X], vec_twist[Y]) * bn_radtodeg;
     } else {
@@ -524,7 +524,7 @@ bn_aet_vec(fastf_t *az, fastf_t *el, fastf_t *twist, fastf_t *vec_ae, fastf_t *v
 	*twist = bn_atan2(VDOT(vec_twist, ninety_twist), VDOT(vec_twist, zero_twist)) * bn_radtodeg;
 
 	/* stabilize flutter between +/- 180 */
-	if (NEAR_ZERO(*twist + 180.0, accuracy))
+	if (NEAR_EQUAL(*twist, -180.0, accuracy))
 	    *twist = 180.0;
     }
 }

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file get_vertex.c
+/** @file iges/get_vertex.c
  *
  */
 

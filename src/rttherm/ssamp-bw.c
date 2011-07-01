@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ssamp-bw.c
+/** @file rttherm/ssamp-bw.c
  *
  * Program to convert spectral sample data into a single-channel
  * monocrome image.
@@ -163,7 +163,7 @@ main(int argc, char **argv)
 	bu_exit(EXIT_FAILURE, "ssamp-bw: Unable to read spectrum\n");
     }
     BN_CK_TABLE(spectrum);
-    if (verbose) bu_log("%s defines %d spectral samples\n", datafile_basename, spectrum->nx);
+    if (verbose) bu_log("%s defines %zu spectral samples\n", datafile_basename, spectrum->nx);
     nwave = spectrum->nx;	/* shared with Tcl */
 
     /* Allocate and read 2-D spectral samples array */

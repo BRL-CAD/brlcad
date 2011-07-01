@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file vdeck.c
+/** @file vdeck/vdeck.c
  *
  * Derived from KARDS, written by Keith Applin.
  *
@@ -28,13 +28,14 @@
  * table, and Ident table, which when concatenated in that order, make
  * a COM-GEOM deck.  The record formats in the order that they appear,
  * are described below, and are strictly column oriented.
-
+ *
  * Note that the Solid table begins with a Title and a Control card,
  * the rest of the record types appear once for each object, that is,
  * one Solid record for each Solid, one Region and one Ident record
  * for each Region as totaled on the Control card, however, the Solid
  * and Region records may span more than 1 card.
  *
+ @code
  --------------------------------------------------------------------------------
  |File|Record  :             Contents              :       Format               |
  |----|-------------------------------------------------------------------------|
@@ -49,6 +50,7 @@
  | 3  |Flag    : a -1 marks end of region table    : i5                         |
  |    |Idents  : reg_#, ident, space, mat,%, desc  : 5i5, 5x, a50               |
  --------------------------------------------------------------------------------
+ @endcode
  *
  */
 
@@ -176,8 +178,8 @@ extern int		delete();
 extern int		cgarbs();
 extern int		redoarb();
 
-BU_EXTERN(void ewrite, (FILE *fp, const char *buf, unsigned bytes) );
-BU_EXTERN(void blank_fill, (FILE *fp, int count) );
+extern void ewrite(FILE *fp, const char *buf, unsigned bytes);
+extern void blank_fill(FILE *fp, int count);
 
 /* Head of linked list of solids */
 struct soltab	sol_hd;
@@ -244,10 +246,6 @@ main( int argc, char *argv[] )
 
     toc();		/* Build table of contents from directory.	*/
 
-#if 0
-    rt_g.debug |= DEBUG_TREEWALK;
-#endif
-
     /*      C o m m a n d   I n t e r p r e t e r			*/
     (void) setjmp( env );/* Point of re-entry from aborted command.	*/
     prompt( CMD_PROMPT );
@@ -277,19 +275,19 @@ main( int argc, char *argv[] )
 		(void) insert( arg_list, arg_ct );
 		break;
 	    case LIST :
-	    {
-		int	i;
-		if ( arg_list[1] == 0 )
 		{
-		    (void) col_prt( curr_list, curr_ct );
+		    int	i;
+		    if ( arg_list[1] == 0 )
+		    {
+			(void) col_prt( curr_list, curr_ct );
+			break;
+		    }
+		    for ( tmp_ct = 0, i = 0; i < curr_ct; i++ )
+			if ( match( arg_list[1], curr_list[i] ) )
+			    tmp_list[tmp_ct++] = curr_list[i];
+		    (void) col_prt( tmp_list, tmp_ct );
 		    break;
 		}
-		for ( tmp_ct = 0, i = 0; i < curr_ct; i++ )
-		    if ( match( arg_list[1], curr_list[i] ) )
-			tmp_list[tmp_ct++] = curr_list[i];
-		(void) col_prt( tmp_list, tmp_ct );
-		break;
-	    }
 	    case MENU :
 		menu( cmd );
 		prompt( PROMPT );
@@ -336,7 +334,7 @@ main( int argc, char *argv[] )
 	}
 	prompt( CMD_PROMPT );
     }
- out:
+out:
     return 0;
 }
 
@@ -695,9 +693,9 @@ gettree_leaf( struct db_tree_state *tsp, const struct db_full_path *pathp, struc
     bu_vls_fwrite( solfp, &sol );
     bu_vls_free( &sol );
 
- found_it:
+found_it:
     BU_GETUNION( curtree, tree );
-    RT_INIT_TREE(curtree);
+    RT_TREE_INIT(curtree);
     curtree->tr_op = OP_SOLID;
     curtree->tr_a.tu_stp = stp;
     curtree->tr_a.tu_regionp = (struct region *)0;
@@ -1397,10 +1395,10 @@ list_toc( char *args[] )
 #define NAMESIZE	16
 #define MAX_COL	(NAMESIZE*5)
 #define SEND_LN()	{\
-			buf[column++] = '\n';\
-			ewrite( stdout, buf, (unsigned) column );\
-			column = 0;\
-			}
+	buf[column++] = '\n';\
+	ewrite( stdout, buf, (unsigned) column );\
+	column = 0;\
+    }
 
 
 /**

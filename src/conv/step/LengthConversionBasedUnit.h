@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file LengthConversionBasedUnit.h
+/** @file step/LengthConversionBasedUnit.h
  *
  * Class definition used to convert STEP "LengthConversionBasedUnit" to BRL-CAD BREP
  * structures.

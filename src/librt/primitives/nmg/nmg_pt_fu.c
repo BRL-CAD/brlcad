@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_pt_fu.c
+/** @file primitives/nmg/nmg_pt_fu.c
  *
  * Routines for classifying a point with respect to a faceuse.
  *
@@ -772,7 +772,7 @@ HIDDEN void make_near_list(struct edge_info *edge_list, struct bu_list *near1, c
     for (BU_LIST_FOR(ei, edge_info, &edge_list->l)) {
 	NMG_CK_EI(ei);
 	NMG_CK_VED(ei->ved_p);
-	if (NEAR_ZERO(ei->ved_p->dist - dist, tol->dist_sq)) {
+	if (NEAR_EQUAL(ei->ved_p->dist, dist, tol->dist_sq)) {
 	    ei_p = BU_LIST_PLAST(edge_info, &ei->l);
 	    BU_LIST_DEQUEUE(&ei->l);
 	    BU_LIST_APPEND(near1, &ei->l);
@@ -1021,7 +1021,7 @@ nmg_class_pt_lu(struct loopuse *lu, struct fpi *fpi, const int in_or_out_only)
     NMG_CK_LOOP_G(lu->l_p->lg_p);
 
 
-    if (!V3PT_IN_RPP(fpi->pt, lu->l_p->lg_p->min_pt, lu->l_p->lg_p->max_pt)) {
+    if (V3PT_OUT_RPP_TOL(fpi->pt, lu->l_p->lg_p->min_pt, lu->l_p->lg_p->max_pt, fpi->tol)) {
 	/* point is not in RPP of loop */
 
 	if (rt_g.NMG_debug & DEBUG_PT_FU) {
@@ -1247,7 +1247,7 @@ nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct
 	       V3ARGS(pt), V4ARGS(fpi.norm), dist);
     }
 
-    if (!V3PT_IN_RPP(pt, fu->f_p->min_pt, fu->f_p->max_pt)) {
+    if (V3PT_OUT_RPP_TOL(pt, fu->f_p->min_pt, fu->f_p->max_pt, tol)) {
 	/* point is not in RPP of face, so there's NO WAY this point
 	 * is anything but OUTSIDE
 	 */
@@ -1391,8 +1391,7 @@ nmg_class_pt_lu_except(fastf_t *pt, const struct loopuse *lu, const struct edge 
 	       V3ARGS(pt), V4ARGS(fpi.norm), dist);
     }
 
-
-    if (!V3PT_IN_RPP(pt, lu->l_p->lg_p->min_pt, lu->l_p->lg_p->max_pt)) {
+    if (V3PT_OUT_RPP_TOL(pt, lu->l_p->lg_p->min_pt, lu->l_p->lg_p->max_pt, tol)) {
 	/* point is not in RPP of loop */
 
 	if (rt_g.NMG_debug & DEBUG_PT_FU)

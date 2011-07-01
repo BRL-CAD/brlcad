@@ -19,7 +19,7 @@
  */
 /** @addtogroup dbio */
 /** @{ */
-/** @file db_open.c
+/** @file librt/db_open.c
  *
  * Routines for opening, creating, and replicating BRL-CAD geometry
  * database files.  BRL-CAD geometry database files are managed in a
@@ -55,26 +55,26 @@
 
 
 /**
- *  			D B _ O P E N
+ * D B _ O P E N
  *
- *  Open the named database.
- *  The 'mode' parameter specifies read-only or read-write mode.
+ * Open the named database.
+ * The 'mode' parameter specifies read-only or read-write mode.
  *
- *  As a convenience, dbi_filepath is a C-style argv array of dirs to search
- *  when attempting to open related files (such as data files for EBM
- *  solids or texture-maps).  The default values are "." and the
- *  directory containing the ".g" file.  They may be overriden by
- *  setting the environment variable BRLCAD_FILE_PATH.
+ * As a convenience, dbi_filepath is a C-style argv array of dirs to
+ * search when attempting to open related files (such as data files
+ * for EBM solids or texture-maps).  The default values are "." and
+ * the directory containing the ".g" file.  They may be overriden by
+ * setting the environment variable BRLCAD_FILE_PATH.
  *
- *  Returns:
- *	DBI_NULL	error
- *	db_i *		success
+ * Returns:
+ * DBI_NULL error
+ * db_i * success
  */
 struct db_i *
 db_open(const char *name, const char *mode)
 {
-    register struct db_i	*dbip = DBI_NULL;
-    register int		i;
+    register struct db_i *dbip = DBI_NULL;
+    register int i;
     char **argv;
 
     if (RT_G_DEBUG & DEBUG_DB) {
@@ -84,7 +84,7 @@ db_open(const char *name, const char *mode)
     if (mode && mode[0] == 'r' && mode[1] == '\0') {
 	/* Read-only mode */
 
-	struct bu_mapped_file	*mfp;
+	struct bu_mapped_file *mfp;
 
 	mfp = bu_open_mapped_file(name, "db_i");
 	if (mfp == NULL) {
@@ -129,7 +129,7 @@ db_open(const char *name, const char *mode)
 	}
 
 	dbip->dbi_read_only = 1;
-    }  else  {
+    } else {
 	/* Read-write mode */
 
 	BU_GETSTRUCT(dbip, db_i);
@@ -155,7 +155,14 @@ db_open(const char *name, const char *mode)
     dbip->dbi_title = (char *)0;
     dbip->dbi_uses = 1;
 
-    /* XXX At some point, expand with getenv("BRLCAD_FILE_PATH"); */
+    /* FIXME: At some point, expand argv search paths with
+     * getenv("BRLCAD_FILE_PATH") paths
+     */
+
+    /* intentionally acquiring dynamic memory here since we set
+     * dbip->dbi_filepath to argv.  arg values and array memory are
+     * released during db_close.
+     */
     argv = (char **)bu_malloc(3 * sizeof(char *), "dbi_filepath[3]");
     argv[0] = bu_strdup(".");
     argv[1] = bu_dirname(name);
@@ -216,7 +223,7 @@ db_open(const char *name, const char *mode)
 		dbip->dbi_version *= -1;
 	    dbip->dbi_read_only = 1;
 	    bu_log("WARNING: Binary-incompatible v4 geometry database detected.\n");
-	    bu_log("         Endianness flipped.  Converting to READ ONLY.\n");
+	    bu_log(" Endianness flipped.  Converting to READ ONLY.\n");
 	}
     }
 
@@ -231,9 +238,9 @@ db_open(const char *name, const char *mode)
 /**
  * D B _ C R E A T E
  *
- * Create a new database containing just a header record,
- * regardless of whether the database previously existed or not,
- * and open it for reading and writing.
+ * Create a new database containing just a header record, regardless
+ * of whether the database previously existed or not, and open it for
+ * reading and writing.
  *
  * This routine also calls db_dirbuild(), so the caller doesn't need
  * to.
@@ -245,8 +252,8 @@ db_open(const char *name, const char *mode)
 struct db_i *
 db_create(const char *name, int version)
 {
-    FILE	*fp;
-    struct db_i	*dbip;
+    FILE *fp;
+    struct db_i *dbip;
     int result;
 
     if (RT_G_DEBUG & DEBUG_DB)
@@ -285,10 +292,10 @@ db_create(const char *name, int version)
 
 
 /**
- *			D B _ C L O S E _ C L I E N T
+ * D B _ C L O S E _ C L I E N T
  *
- *  De-register a client of this database instance, if provided, and
- *  close out the instance.
+ * De-register a client of this database instance, if provided, and
+ * close out the instance.
  */
 void
 db_close_client(struct db_i *dbip, long int *client)
@@ -302,15 +309,15 @@ db_close_client(struct db_i *dbip, long int *client)
 
 
 /**
- *			D B _ C L O S E
+ * D B _ C L O S E
  *
- *  Close a database, releasing dynamic memory
- *  Wait until last user is done, though.
+ * Close a database, releasing dynamic memory Wait until last user is
+ * done, though.
  */
 void
 db_close(register struct db_i *dbip)
 {
-    register int		i;
+    register int i;
     register struct directory *dp, *nextdp;
 
     RT_CK_DBI(dbip);
@@ -330,14 +337,14 @@ db_close(register struct db_i *dbip)
     /* free up any mapped files */
     if (dbip->dbi_mf) {
 	/*
-	 *  We're using an instance of a memory mapped file.
-	 *  We have two choices:
-	 *  Either deassociate from the memory mapped file
-	 *  by clearing dbi_mf->apbuf, or
-	 *  keeping our already-scanned dbip ready for
-	 *  further use, with our dbi_uses counter at 0.
-	 *  For speed of re-open, at the price of some address space,
-	 *  the second choice is taken.
+	 * We're using an instance of a memory mapped file.
+	 * We have two choices:
+	 * Either deassociate from the memory mapped file
+	 * by clearing dbi_mf->apbuf, or
+	 * keeping our already-scanned dbip ready for
+	 * further use, with our dbi_uses counter at 0.
+	 * For speed of re-open, at the price of some address space,
+	 * the second choice is taken.
 	 */
 	bu_close_mapped_file(dbip->dbi_mf);
 	bu_free_mapped_files(0);
@@ -396,11 +403,8 @@ db_close(register struct db_i *dbip)
     }
 
     if (dbip->dbi_filepath != NULL) {
-	if (dbip->dbi_filepath[0] != NULL)
-	    bu_free((char *)dbip->dbi_filepath[0], "dbip->dbi_filepath[0]");
-	if (dbip->dbi_filepath[1] != NULL)
-	    bu_free((char *)dbip->dbi_filepath[1], "dbip->dbi_filepath[1]");
-	bu_free((char *)dbip->dbi_filepath, "dbip->dbi_filepath");
+	bu_free_argv(2, dbip->dbi_filepath);
+	dbip->dbi_filepath = NULL; /* sanity */
     }
 
     bu_free((char *)dbip, "struct db_i");
@@ -408,25 +412,25 @@ db_close(register struct db_i *dbip)
 
 
 /**
- *			D B _ D U M P
+ * D B _ D U M P
  *
- *  Dump a full copy of one database into another.
- *  This is a good way of committing a ".inmem" database to a ".g" file.
- *  The input is a database instance, the output is a LIBWDB object,
- *  which could be a disk file or another database instance.
+ * Dump a full copy of one database into another.  This is a good way
+ * of committing a ".inmem" database to a ".g" file.  The input is a
+ * database instance, the output is a LIBWDB object, which could be a
+ * disk file or another database instance.
  *
- *  Returns -
- *	-1	error
- *	0	success
+ * Returns -
+ * -1 error
+ * 0 success
  */
 int
 db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
-    /* output */
-    /* input */
+/* output */
+/* input */
 {
-    register int		i;
+    register int i;
     register struct directory *dp;
-    struct bu_external	ext;
+    struct bu_external ext;
 
     RT_CK_DBI(dbip);
     RT_CK_WDB(wdbp);
@@ -459,10 +463,10 @@ db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
 
 
 /**
- *			D B _ C L O N E _ D B I
+ * D B _ C L O N E _ D B I
  *
- *  Obtain an additional instance of this same database.  A new client
- *  is registered at the same time if one is specified.
+ * Obtain an additional instance of this same database.  A new client
+ * is registered at the same time if one is specified.
  */
 struct db_i *
 db_clone_dbi(struct db_i *dbip, long int *client)
@@ -478,10 +482,10 @@ db_clone_dbi(struct db_i *dbip, long int *client)
 
 
 /**
- *			D B _ S Y N C
+ * D B _ S Y N C
  *
- *  Ensure that the on-disk database has been completely written
- *  out of the operating system's cache.
+ * Ensure that the on-disk database has been completely written out of
+ * the operating system's cache.
  */
 void
 db_sync(struct db_i *dbip)
@@ -511,6 +515,7 @@ db_sync(struct db_i *dbip)
 
     bu_semaphore_release(BU_SEM_SYSCALL);
 }
+
 
 /** @} */
 /*

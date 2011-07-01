@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file TrimmingSelect.h
+/** @file step/TrimmingSelect.h
  *
  * Class definition used to convert STEP "TrimmingSelect" to BRL-CAD BREP
  * structures.

@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file revolve.c
+/** @file primitives/revolve/revolve.c
  *
  * Intersect a ray with an 'revolve' primitive object.
  *
@@ -344,7 +344,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     k = VDOT(dp, norm) / VDOT(ur, norm);
     h = pr[Z] + k*vr[Z];
 
-    if (NEAR_ZERO(fabs(ur[Z]) - 1.0, RT_DOT_TOL)) {
+    if (NEAR_EQUAL(fabs(ur[Z]), 1.0, RT_DOT_TOL)) {
 	aa = sqrt(pr[X]*pr[X] + pr[Y]*pr[Y]);
 	bb = MAX_FASTF;
     } else {
@@ -369,7 +369,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	for (i=0; i<rev->sk->vert_count && rev->ends[i] != -1; i++) {
 	    V2MOVE(pt1, rev->sk->verts[rev->ends[i]]);
 	    hit2d[Y] = pt1[Y];
-	    if (NEAR_ZERO(fabs(ur[Z])-1.0, RT_DOT_TOL)) {
+	    if (NEAR_EQUAL(fabs(ur[Z]), 1.0, RT_DOT_TOL)) {
 		/* ur[Z] == 1 */
 		hit2d[X] = aa;
 	    } else {
@@ -408,8 +408,8 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 		hitp->hit_vpriv[X] = pt1[X];
 		hitp->hit_vpriv[Y] = angle;
 		if (i+1 < rev->sk->vert_count && rev->ends[i+1] != -1 &&
-		    NEAR_ZERO(rev->sk->verts[rev->ends[i]][Y]
-			      - rev->sk->verts[rev->ends[i+1]][Y], SMALL)) {
+		    NEAR_EQUAL(rev->sk->verts[rev->ends[i]][Y],
+			       rev->sk->verts[rev->ends[i+1]][Y], SMALL)) {
 		    hitp->hit_vpriv[Z] = rev->sk->verts[rev->ends[i+1]][X];
 		    i++;
 		    if (fabs(hit2d[X]) < fabs(hitp->hit_vpriv[Z])) {
@@ -439,7 +439,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 		    m = dir[Y] / dir[X];
 		}
 
-		if (NEAR_ZERO(fabs(ur[Z]) - 1.0, RT_DOT_TOL)) {
+		if (NEAR_EQUAL(fabs(ur[Z]), 1.0, RT_DOT_TOL)) {
 		    /* ray is vertical line at x=aa */
 		    if (FMIN(pt1[X], pt2[X]) < aa && aa < FMAX(pt1[X], pt2[X])) {
 			/* check the positive side of the sketch (x > 0) */
@@ -747,7 +747,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 			    fastf_t max_radius;
 
 			    max_radius = sqrt(magsq_s2m);
-			    if (NEAR_ZERO(max_radius - csg->radius, RT_LEN_TOL)) {
+			    if (NEAR_EQUAL(max_radius, csg->radius, RT_LEN_TOL)) {
 				csg->radius = max_radius;
 			    } else {
 				bu_log("Impossible radius for circular arc in extrusion (%s), is %g, cannot be more than %g!\n",
@@ -823,7 +823,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     }
 
     if (nhits%2 != 0) {
-	bu_log("odd number of hits: %d\n", nhits);
+	bu_log("odd number of hits: %zu\n", nhits);
 	for (i=0; i<nhits; i++) {
 	    bu_log("\t(%6.2f, %6.2f)\t%6.2f\t%2d\n",
 		   hits[i]->hit_point[X], hits[i]->hit_point[Y], hits[i]->hit_dist, hits[i]->hit_surfno);
@@ -849,7 +849,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	    }
 	}
 	if (in == -1 || out == -1) {
-	    bu_log("failed to find valid segment. nhits: %d\n", nhits);
+	    bu_log("failed to find valid segment. nhits: %zu\n", nhits);
 	    break;
 	}
 
@@ -1428,7 +1428,7 @@ rt_revolve_xform(
     }
 
     if (op != ip) {
-	RT_INIT_DB_INTERNAL(op);
+	RT_DB_INTERNAL_INIT(op);
 	rop = (struct rt_revolve_internal *)bu_malloc(sizeof(struct rt_revolve_internal), "rop");
 	rop->magic = RT_REVOLVE_INTERNAL_MAGIC;
 	bu_vls_init(&rop->sketch_name);

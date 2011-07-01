@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file showmats.c
+/** @file libged/showmats.c
  *
  * The showmats command.
  *
@@ -34,11 +34,12 @@
 
 
 struct showmats_data {
-    struct ged	*smd_gedp;
-    int		smd_count;
-    char	*smd_child;
-    mat_t	smd_mat;
+    struct ged *smd_gedp;
+    int smd_count;
+    char *smd_child;
+    mat_t smd_mat;
 };
+
 
 static void
 Do_showmats(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t UNUSED(user_ptr3))
@@ -59,11 +60,11 @@ Do_showmats(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree
     smdp->smd_count++;
     if (!aflag) {
 	if (smdp->smd_count > 1) {
-	    bu_vls_printf(&smdp->smd_gedp->ged_result_str, "\n\tOccurrence #%d:\n", smdp->smd_count);
+	    bu_vls_printf(smdp->smd_gedp->ged_result_str, "\n\tOccurrence #%d:\n", smdp->smd_count);
 	}
 
 	bn_mat_print_guts("", comb_leaf->tr_l.tl_mat, obuf, 1024);
-	bu_vls_printf(&smdp->smd_gedp->ged_result_str, "%s", obuf);
+	bu_vls_printf(smdp->smd_gedp->ged_result_str, "%s", obuf);
     }
 
     if (smdp->smd_count == 1) {
@@ -74,6 +75,7 @@ Do_showmats(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree
 	}
     }
 }
+
 
 static int
 Run_showmats(struct ged *gedp, const char *path, int aflag)
@@ -88,23 +90,23 @@ Run_showmats(struct ged *gedp, const char *path, int aflag)
 
     parent = strtok((char *)path, "/");
     while ((sm_data.smd_child = strtok((char *)NULL, "/")) != NULL) {
-	struct rt_db_internal	intern;
+	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
 
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, parent, LOOKUP_NOISY)) == RT_DIR_NULL)
 	    return TCL_ERROR;
 
 	if (!aflag)
-	    bu_vls_printf(&gedp->ged_result_str, "%s\n", parent);
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", parent);
 
 	if (!(dp->d_flags & RT_DIR_COMB)) {
 	    if (!aflag)
-		bu_vls_printf(&gedp->ged_result_str, "\tThis is not a combination\n");
+		bu_vls_printf(gedp->ged_result_str, "\tThis is not a combination\n");
 	    break;
 	}
 
 	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting.\n");
+	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting.\n");
 	    return GED_ERROR;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -117,7 +119,7 @@ Run_showmats(struct ged *gedp, const char *path, int aflag)
 	rt_db_free_internal(&intern);
 
 	if (!sm_data.smd_count) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s is not a member of %s\n", sm_data.smd_child, parent);
+	    bu_vls_printf(gedp->ged_result_str, "%s is not a member of %s\n", sm_data.smd_child, parent);
 	    return GED_ERROR;
 	}
 	if (sm_data.smd_count > max_count)
@@ -129,24 +131,25 @@ Run_showmats(struct ged *gedp, const char *path, int aflag)
     if (!aflag) {
 	char obuf[1024];
 
-	bu_vls_printf(&gedp->ged_result_str, "%s\n", parent);
+	bu_vls_printf(gedp->ged_result_str, "%s\n", parent);
 
 	if (max_count > 1)
-	    bu_vls_printf(&gedp->ged_result_str, "\nAccumulated matrix (using first occurrence of each object):\n");
+	    bu_vls_printf(gedp->ged_result_str, "\nAccumulated matrix (using first occurrence of each object):\n");
 	else
-	    bu_vls_printf(&gedp->ged_result_str, "\nAccumulated matrix:\n");
+	    bu_vls_printf(gedp->ged_result_str, "\nAccumulated matrix:\n");
 
 	bn_mat_print_guts("", sm_data.smd_mat, obuf, 1024);
-	bu_vls_printf(&gedp->ged_result_str, "%s", obuf);
+	bu_vls_printf(gedp->ged_result_str, "%s", obuf);
     } else {
 	int i;
 
 	for (i=0; i<16; ++i)
-	    bu_vls_printf(&gedp->ged_result_str, " %lf", sm_data.smd_mat[i]);
+	    bu_vls_printf(gedp->ged_result_str, " %lf", sm_data.smd_mat[i]);
     }
 
     return GED_OK;
 }
+
 
 int
 ged_showmats(struct ged *gedp, int argc, const char *argv[])
@@ -158,11 +161,11 @@ ged_showmats(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -170,7 +173,7 @@ ged_showmats(struct ged *gedp, int argc, const char *argv[])
 	aflag = 1;
 	++argv;
     } else if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 

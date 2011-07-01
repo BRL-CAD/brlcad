@@ -27,6 +27,7 @@ scripties = \
 	hoc.tcl \
 	html_library.tcl \
 	libdm.tcl \
+	man_browser.tcl \
 	menu_override.tcl \
 	mouse.tcl \
 	vmath.tcl
@@ -39,7 +40,7 @@ tcl_SCRIPTS = \
 	$(BUILT_SOURCES) \
 	$(scripties)
 
-EXTRA_DIST = $(tcl_SCRIPTS)
+EXTRA_DIST = $(tcl_SCRIPTS) CMakeLists.txt
 
 # CLEANFILES = $(BUILT_SOURCES)
 

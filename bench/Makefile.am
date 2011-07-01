@@ -19,7 +19,8 @@ EXTRA_DIST = \
 	lgt.sh \
 	run.sh \
 	try.sh \
-	viewdiff.sh
+	viewdiff.sh \
+	CMakeLists.txt
 
 benchmark: run.sh
 	cp $(top_srcdir)/bench/run.sh benchmark
@@ -42,7 +43,10 @@ run: all
 
 bench: run
 
-clean:
+clean-local:
+	@${SH} ${srcdir}/run.sh clean
+
+distclean-local:
 	@${SH} ${srcdir}/run.sh clean
 
 clobber:

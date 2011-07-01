@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file viewcheck.c
+/** @file rt/viewcheck.c
  *
  *  Ray Tracing program RTCHECK bottom half.
  *

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file grid2model_lu.c
+/** @file libged/grid2model_lu.c
  *
  * The grid2model_lu command.
  *
@@ -48,7 +48,7 @@ ged_grid2model_lu(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc != 3)
 	goto bad;
@@ -65,12 +65,12 @@ ged_grid2model_lu(struct ged *gedp, int argc, const char *argv[])
     VADD2(view_pt, mo_view_pt, diff);
     MAT4X3PNT(model_pt, gedp->ged_gvp->gv_view2model, view_pt);
     VSCALE(model_pt, model_pt, gedp->ged_wdbp->dbip->dbi_base2local);
-    bn_encode_vect(&gedp->ged_result_str, model_pt);
+    bn_encode_vect(gedp->ged_result_str, model_pt);
 
     return GED_OK;
 
 bad:
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
 

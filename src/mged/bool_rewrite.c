@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bool_rewrite.c
+/** @file mged/bool_rewrite.c
  *
  * Conversion routines to mangle an arbitrary Boolean tree,
  * leaving it in GIFT-Boolean form.
@@ -284,9 +284,6 @@ int cvt_to_gift_bool (struct bool_tree_node *rp)
 
     for (cnr = 0; nr = _cvt_to_gift_bool(rp); cnr += nr) {
 	;
-#if 0
-	show_tree (rp, 1);
-#endif
     }
 
     return cnr;

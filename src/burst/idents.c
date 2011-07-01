@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file idents.c
+/** @file burst/idents.c
  *
  */
 

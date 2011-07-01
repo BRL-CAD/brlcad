@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup rb */
-/** @{ */
 
 #include "common.h"
 
@@ -46,7 +44,7 @@ static int d_order;	/* Used by describe_node() */
 HIDDEN void
 _rb_describe_node(struct bu_rb_node *node, int depth)
 {
-    bu_rb_tree *tree;
+    struct bu_rb_tree *tree;
     struct bu_rb_package *package;
     void (*pp)(void *);	/* Pretty print function */
 
@@ -73,7 +71,7 @@ _rb_describe_node(struct bu_rb_node *node, int depth)
 
 
 void
-bu_rb_diagnose_tree(bu_rb_tree *tree, int order, int trav_type)
+bu_rb_diagnose_tree(struct bu_rb_tree *tree, int order, int trav_type)
 {
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
     RB_CKORDER(tree, order);
@@ -90,7 +88,7 @@ bu_rb_diagnose_tree(bu_rb_tree *tree, int order, int trav_type)
 }
 
 void
-bu_rb_summarize_tree(bu_rb_tree *tree)
+bu_rb_summarize_tree(struct bu_rb_tree *tree)
 {
     int i;
 
@@ -118,7 +116,6 @@ bu_rb_summarize_tree(bu_rb_tree *tree)
     bu_log("-------------------------------------------------\n");
 }
 
-/** @} */
 
 /*
  * Local Variables:

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file spectrum.c
+/** @file rttherm/spectrum.c
  *
  * These are all the routines that are not ready to be moved to
  * LIBRT/spectrum.c

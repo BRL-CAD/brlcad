@@ -1566,7 +1566,8 @@ process_ellipse_entities_code( int code )
 	    VSET( zdir, 0, 0, 1 );
 	    VCROSS( ydir, zdir, xdir );
 
-	    if ( NEAR_ZERO( endAngle - startAngle, 0.001 ) ) {
+	    /* FIXME: arbitrary undefined tolerance */
+	    if ( NEAR_EQUAL( endAngle, startAngle, 0.001 ) ) {
 		fullCircle = 1;
 	    } else {
 		fullCircle = 0;
@@ -2218,7 +2219,7 @@ process_leader_entities_code( int code )
 static int
 process_mtext_entities_code( int code )
 {
-    static struct bu_vls vls;
+    static struct bu_vls *vls = NULL;
     static int attachPoint=0;
     static int drawingDirection=0;
     static double textHeight=0.0;
@@ -2233,12 +2234,18 @@ process_mtext_entities_code( int code )
 
     switch ( code ) {
 	case 3:
-	    bu_vls_init_if_uninit( &vls );
-	    bu_vls_strcat( &vls, line );
+	    if (!vls) {
+		BU_GETSTRUCT(vls, bu_vls);
+		bu_vls_init(vls);
+	    }
+	    bu_vls_strcat(vls, line);
 	    break;
 	case 1:
-	    bu_vls_init_if_uninit( &vls );
-	    bu_vls_strcat( &vls, line );
+	    if (!vls) {
+		BU_GETSTRUCT(vls, bu_vls);
+		bu_vls_init(vls);
+	    }
+	    bu_vls_strcat(vls, line);
 	    break;
 	case 8:		/* layer name */
 	    if ( curr_layer_name ) {
@@ -2287,7 +2294,7 @@ process_mtext_entities_code( int code )
 	    break;
 	case 0:
 	    if ( verbose ) {
-		bu_log( "MTEXT (%s), height = %g, entityHeight = %g, rectWidth = %g\n", bu_vls_addr( &vls ), textHeight, entityHeight, rectWidth );
+		bu_log( "MTEXT (%s), height = %g, entityHeight = %g, rectWidth = %g\n", (vls) ? bu_vls_addr(vls) : "NO_NAME", textHeight, entityHeight, rectWidth );
 		bu_log( "\tattachPoint = %d, charWidth = %g, insertPt = (%g %g %g)\n", attachPoint, charWidth, V3ARGS( insertionPoint ) );
 	    }
 	    /* draw the text */
@@ -2303,10 +2310,12 @@ process_mtext_entities_code( int code )
 	    MAT4X3PNT( tmp_pt, curr_state->xform, insertionPoint );
 	    VMOVE( insertionPoint, tmp_pt );
 
-	    drawMtext( bu_vls_addr( &vls ), attachPoint, drawingDirection, textHeight, entityHeight,
+	    drawMtext( (vls) ? bu_vls_addr(vls) : "NO_NAME", attachPoint, drawingDirection, textHeight, entityHeight,
 		       charWidth, rectWidth, rotationAngle, insertionPoint );
 
-	    bu_vls_free( &vls );
+	    bu_vls_free(vls);
+	    vls = NULL;
+
 	    attachPoint = 0;
 	    textHeight = 0.0;
 	    entityHeight = 0.0;
@@ -3305,70 +3314,65 @@ main( int argc, char *argv[] )
                 mk_sketch(out_fp, name, skt);
                 (void) mk_addmember(name, &head, NULL, WMOP_UNION);
             }
-#if 0
-	    sprintf( name, "nmg.%d", i );
-	    mk_nmg( out_fp, name, layers[i]->m );
-	    (void)mk_addmember( name, &head, NULL, WMOP_UNION );
-#endif
 	}
 
 	if ( layers[i]->line_count ) {
-	    bu_log( "\t%d lines\n", layers[i]->line_count );
+	    bu_log( "\t%zu lines\n", layers[i]->line_count );
 	}
 
 	if ( layers[i]->solid_count ) {
-	    bu_log( "\t%d solids\n", layers[i]->solid_count );
+	    bu_log( "\t%zu solids\n", layers[i]->solid_count );
 	}
 
 	if ( layers[i]->polyline_count ) {
-	    bu_log( "\t%d polylines\n", layers[i]->polyline_count );
+	    bu_log( "\t%zu polylines\n", layers[i]->polyline_count );
 	}
 
 	if ( layers[i]->lwpolyline_count ) {
-	    bu_log( "\t%d lwpolylines\n", layers[i]->lwpolyline_count );
+	    bu_log( "\t%zu lwpolylines\n", layers[i]->lwpolyline_count );
 	}
 
 	if ( layers[i]->ellipse_count ) {
-	    bu_log( "\t%d ellipses\n", layers[i]->ellipse_count );
+	    bu_log( "\t%zu ellipses\n", layers[i]->ellipse_count );
 	}
 
 	if ( layers[i]->circle_count ) {
-	    bu_log( "\t%d circles\n", layers[i]->circle_count );
+	    bu_log( "\t%zu circles\n", layers[i]->circle_count );
 	}
 
 	if ( layers[i]->arc_count ) {
-	    bu_log( "\t%d arcs\n", layers[i]->arc_count );
+	    bu_log( "\t%zu arcs\n", layers[i]->arc_count );
 	}
 
 	if ( layers[i]->text_count ) {
-	    bu_log( "\t%d texts\n", layers[i]->text_count );
+	    bu_log( "\t%zu texts\n", layers[i]->text_count );
 	}
 
 	if ( layers[i]->mtext_count ) {
-	    bu_log( "\t%d mtexts\n", layers[i]->mtext_count );
+	    bu_log( "\t%zu mtexts\n", layers[i]->mtext_count );
 	}
 
 	if ( layers[i]->attrib_count ) {
-	    bu_log( "\t%d attribs\n", layers[i]->attrib_count );
+	    bu_log( "\t%zu attribs\n", layers[i]->attrib_count );
 	}
 
 	if ( layers[i]->dimension_count ) {
-	    bu_log( "\t%d dimensions\n", layers[i]->dimension_count );
+	    bu_log( "\t%zu dimensions\n", layers[i]->dimension_count );
 	}
 
 	if ( layers[i]->leader_count ) {
-	    bu_log( "\t%d leaders\n", layers[i]->leader_count );
+	    bu_log( "\t%zu leaders\n", layers[i]->leader_count );
 	}
 
 	if ( layers[i]->face3d_count ) {
-	    bu_log( "\t%d 3d faces\n", layers[i]->face3d_count );
+	    bu_log( "\t%zu 3d faces\n", layers[i]->face3d_count );
 	}
 
 	if ( layers[i]->point_count ) {
-	    bu_log( "\t%d points\n", layers[i]->point_count );
+	    bu_log( "\t%zu points\n", layers[i]->point_count );
 	}
 	if ( layers[i]->spline_count ) {
-	    bu_log( "\t%d splines\n", layers[i]->spline_count );
+	    bu_log( "\t%zu splines\n", layers[i]->spline_count );
 	}
 
 
@@ -3393,7 +3397,6 @@ main( int argc, char *argv[] )
     if ( BU_LIST_NON_EMPTY( &head_all ) ) {
 	struct bu_vls top_name;
 	int count=0;
-
 
 	bu_vls_init(&top_name);
 	bu_vls_strcpy( &top_name, "all" );

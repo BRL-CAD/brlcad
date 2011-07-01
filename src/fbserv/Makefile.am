@@ -13,7 +13,8 @@ fbserv_SOURCES = \
 
 man_MANS = fbserv.1
 EXTRA_DIST = \
-	$(man_MANS)
+	$(man_MANS) \
+	CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs
 

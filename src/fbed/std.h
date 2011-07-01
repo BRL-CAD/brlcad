@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file std.h
+/** @file fbed/std.h
     std.h -- Douglas A. Gwyn's standard C programming definitions
     (UNIX System V version)
 
@@ -40,7 +40,6 @@
 #define NULL	0			/* null pointer, all types */
 #endif
 
-typedef int bool;			/* Boolean data */
 #define 	false	0
 #define 	true	1
 

@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file regionfix.c
+/** @file librt/regionfix.c
  *
  * Subroutines for adjusting old GIFT-style region-IDs, to take into
  * account the presence of instancing.

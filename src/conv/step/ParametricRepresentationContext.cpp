@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ParametricRepresentationContext.cpp
+/** @file step/ParametricRepresentationContext.cpp
  *
  * Routines to convert STEP "ParametricRepresentationContext" to BRL-CAD BREP
  * structures.

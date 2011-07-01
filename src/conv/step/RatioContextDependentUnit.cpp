@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file RatioContextDependentUnit.cpp
+/** @file step/RatioContextDependentUnit.cpp
  *
  * Routines to convert STEP "RatioContextDependentUnit" to BRL-CAD BREP
  * structures.

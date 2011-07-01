@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Curve.h
+/** @file step/Curve.h
  *
  * Class definition used to convert STEP "Curve" to BRL-CAD BREP
  * structures.

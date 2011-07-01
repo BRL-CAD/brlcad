@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file RationalBSplineSurface.cpp
+/** @file step/RationalBSplineSurface.cpp
  *
  * Routines to convert STEP "RationalBSplineSurface" to BRL-CAD BREP
  * structures.

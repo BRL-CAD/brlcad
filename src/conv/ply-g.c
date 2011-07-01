@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file ply-g.c
+/** @file conv/ply-g.c
  *
  */
 

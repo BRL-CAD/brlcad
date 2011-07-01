@@ -13,7 +13,7 @@ ENDIF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_TK)
 
 BRLCAD_ADDEXEC(rttherm "spectrum.c viewtherm.c" "libged libfb librttherm libmultispectral liboptical")
 SET_TARGET_PROPERTIES(rttherm PROPERTIES COMPILE_DEFINITIONS "RT_MULTISPECTRAL")
-INSTALL(PROGRAMS ssampview.tcl DESTINATION ${${CMAKE_PROJECT_NAME}_INSTALL_BIN_DIR})
+INSTALL(PROGRAMS ssampview.tcl DESTINATION ${BIN_DIR})
 
 BRLCAD_ADDEXEC(ssamp-bw ssamp-bw.c "liboptical")
 

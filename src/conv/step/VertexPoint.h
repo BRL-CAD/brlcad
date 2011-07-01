@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file VertexPoint.h
+/** @file step/VertexPoint.h
  *
  * Class definition used to convert STEP "VertexPoint" to BRL-CAD BREP
  * structures.

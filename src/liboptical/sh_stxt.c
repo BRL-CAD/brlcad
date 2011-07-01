@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_stxt.c
+/** @file liboptical/sh_stxt.c
  *
  * Routines to implement solid (ie, 3-D) texture maps.
  *
@@ -37,8 +37,12 @@
 #include "optical.h"
 
 
-HIDDEN int stxt_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), brick_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp), mbound_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp), rbound_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void stxt_print(register struct region *rp, char *dp), stxt_free(char *cp);
+HIDDEN int stxt_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int brick_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
+HIDDEN int mbound_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
+HIDDEN int rbound_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
+HIDDEN void stxt_print(register struct region *rp, genptr_t dp);
+HIDDEN void stxt_free(genptr_t cp);
 HIDDEN void stxt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *value);
 
 #define STX_NAME_LEN 128
@@ -159,7 +163,7 @@ stxt_read(register struct stxt_specific *stp)
  * S T X T _ S E T U P
  */
 HIDDEN int
-stxt_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
+stxt_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
 
 /* New since 4.4 release */
@@ -167,7 +171,7 @@ stxt_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
     register struct stxt_specific *stp;
 
     BU_GETSTRUCT(stp, stxt_specific);
-    *dpp = (char *)stp;
+    *dpp = stp;
 
     /** Set up defaults **/
     stp->stx_magic = STXT_MAGIC;
@@ -179,7 +183,7 @@ stxt_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
 
     /** Get input values **/
     if (bu_struct_parse(matparm, stxt_parse, (char *)stp) < 0) {
-	bu_free((char *)stp, "stxt_specific");
+	bu_free((genptr_t)stp, "stxt_specific");
 	return -1;
     }
     /*** DEFAULT SIZE OF STXT FILES ***/
@@ -203,7 +207,7 @@ stxt_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struc
  * S T X T _ F R E E
  */
 HIDDEN void
-stxt_free(char *cp)
+stxt_free(genptr_t cp)
 {
     register struct stxt_specific *stp =
 	(struct stxt_specific *)cp;
@@ -220,14 +224,14 @@ stxt_free(char *cp)
  * S T X T _ P R I N T
  */
 HIDDEN void
-stxt_print(register struct region *rp, char *dp)
+stxt_print(register struct region *rp, genptr_t dp)
 {
     bu_struct_print(rp->reg_name, stxt_parse, (char *)dp);
 }
 
 
 HIDDEN int
-brick_render(struct application *UNUSED(ap), struct partition *UNUSED(pp), struct shadework *swp, char *dp)
+brick_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp), struct shadework *swp, genptr_t dp)
 {
     register struct stxt_specific *stp =
 	(struct stxt_specific *)dp;
@@ -322,7 +326,7 @@ brick_render(struct application *UNUSED(ap), struct partition *UNUSED(pp), struc
  * Use region RPP to bound solid texture (rbound).
  */
 HIDDEN int
-rbound_render(struct application *UNUSED(ap), struct partition *UNUSED(pp), struct shadework *swp, char *dp)
+rbound_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp), struct shadework *swp, genptr_t dp)
 {
     register struct stxt_specific *stp =
 	(struct stxt_specific *)dp;
@@ -393,7 +397,7 @@ rbound_render(struct application *UNUSED(ap), struct partition *UNUSED(pp), stru
  * Use model RPP as solid texture bounds.  (mbound).
  */
 HIDDEN int
-mbound_render(struct application *ap, struct partition *UNUSED(pp), struct shadework *swp, char *dp)
+mbound_render(struct application *ap, const struct partition *UNUSED(pp), struct shadework *swp, genptr_t dp)
 {
     register struct stxt_specific *stp =
 	(struct stxt_specific *)dp;

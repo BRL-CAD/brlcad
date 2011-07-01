@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file RationalBezierSurface.cpp
+/** @file step/RationalBezierSurface.cpp
  *
  * Routines to convert STEP "RationalBezierSurface" to BRL-CAD BREP
  * structures.

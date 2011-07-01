@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup parse */
-/** @{ */
 
 #include "common.h"
 
@@ -121,7 +119,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
     size_t len;
     register size_t i;
 
-    BU_INIT_EXTERNAL(ext);
+    BU_EXTERNAL_INIT(ext);
 
     ext->ext_nbytes = 480;
     ext->ext_buf = (genptr_t)bu_malloc(ext->ext_nbytes,
@@ -423,7 +421,7 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
     size_t i;
     uint32_t len;
 
-    BU_INIT_EXTERNAL(ext);
+    BU_EXTERNAL_INIT(ext);
     ext->ext_buf = (genptr_t) bu_malloc(6, "bu_struct_get buffer head");
     bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
 
@@ -492,7 +490,7 @@ bu_struct_wrap_buf(struct bu_external *ext, genptr_t buf)
 {
     register long i, len;
 
-    BU_INIT_EXTERNAL(ext);
+    BU_EXTERNAL_INIT(ext);
     ext->ext_buf = buf;
     i = (((unsigned char *)(ext->ext_buf))[0] << 8) |
 	((unsigned char *)(ext->ext_buf))[1];
@@ -676,7 +674,6 @@ _bu_struct_lookup(register const struct bu_structparse *sdp, register const char
 	    case 'V':
 		{
 		    struct bu_vls *vls = (struct bu_vls *)loc;
-		    bu_vls_init_if_uninit(vls);
 		    bu_vls_strcpy(vls, value);
 		}
 		break;
@@ -1119,7 +1116,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 			(struct bu_vls *)loc;
 
 		    bu_log_indent_delta(delta);
-		    bu_log(" %s=(vls_magic)0x%lx (vls_offset)%d (vls_len)%d (vls_max)%d\n",
+		    bu_log(" %s=(vls_magic)0x%lx (vls_offset)%zu (vls_len)%zu (vls_max)%zu\n",
 			   sdp->sp_name, vls->vls_magic,
 			   vls->vls_offset,
 			   vls->vls_len, vls->vls_max);
@@ -1453,7 +1450,7 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 			(struct bu_vls *)loc;
 
 		    bu_log_indent_delta(delta);
-		    bu_vls_printf(vls_out, " %s=(vls_magic)%ld (vls_offset)%d (vls_len)%d (vls_max)%d\n",
+		    bu_vls_printf(vls_out, " %s=(vls_magic)%ld (vls_offset)%zu (vls_len)%zu (vls_max)%zu\n",
 				  sdp->sp_name, vls->vls_magic,
 				  vls->vls_offset,
 				  vls->vls_len, vls->vls_max);
@@ -1678,7 +1675,7 @@ bu_key_eq_to_key_val(const char *in, const char **next, struct bu_vls *vls)
 int
 bu_shader_to_tcl_list(const char *in, struct bu_vls *vls)
 {
-    int len;
+    size_t len;
     int is_stack=0;
     int shader_name_len=0;
     char *iptr;
@@ -2135,7 +2132,7 @@ void
 bu_copy_external(struct bu_external *op, const struct bu_external *ip)
 {
     BU_CK_EXTERNAL(ip);
-    BU_INIT_EXTERNAL(op);
+    BU_EXTERNAL_INIT(op);
 
     if (UNLIKELY(op == ip))
 	return;
@@ -2292,7 +2289,6 @@ bu_structparse_argv(struct bu_vls *logstr,
 
 			bu_vls_printf(logstr, "%s ", sdp->sp_name);
 
-			bu_vls_init_if_uninit(vls);
 			bu_vls_strcpy(vls, argv[0]);
 
 			bu_vls_printf(logstr, "%s ", argv[0]);
@@ -2444,7 +2440,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 		    for (ii = 0; ii < sdp->sp_count; ii++) {
 			if (*cp == '\0') {
 			    bu_vls_printf(logstr,
-					  "not enough values for \"%s\" argument: should have %ld, only %d given",
+					  "not enough values for \"%s\" argument: should have %ld, only %zu given",
 					  sdp->sp_name,
 					  sdp->sp_count,
 					  ii);
@@ -2549,8 +2545,6 @@ bu_structparse_argv(struct bu_vls *logstr,
     return BRLCAD_OK;
 }
 
-
-/** @} */
 
 /*
  * Local Variables:

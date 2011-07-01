@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bw3-pix.c
+/** @file util/bw3-pix.c
  *
  * Merge three BW files into one RGB pix file.
  * (i.e. combine the colors)

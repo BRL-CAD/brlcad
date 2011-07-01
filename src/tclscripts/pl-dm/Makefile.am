@@ -15,7 +15,7 @@ tcl_SCRIPTS = \
 	$(BUILT_SOURCES) \
 	$(scripties)
 
-EXTRA_DIST = $(tcl_SCRIPTS)
+EXTRA_DIST = $(tcl_SCRIPTS) CMakeLists.txt
 
 # CLEANFILES = $(BUILT_SOURCES)
 

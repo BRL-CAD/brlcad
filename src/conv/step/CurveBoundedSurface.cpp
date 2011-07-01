@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file CurveBoundedSurface.cpp
+/** @file step/CurveBoundedSurface.cpp
  *
  * Routines to interface to STEP "CurveBoundedSurface".
  *
@@ -112,7 +112,7 @@ CurveBoundedSurface::Print(int level) {
 		(*i)->Print(level+1);
 	}
 
-	TAB(level+1); std::cout << "implicit_outer:" << step->getBooleanString((SCLBOOL_H(Boolean))implicit_outer) << std::endl;
+	TAB(level+1); std::cout << "implicit_outer:" << step->getBooleanString((Boolean)implicit_outer) << std::endl;
 
 	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	BoundedSurface::Print(level+1);

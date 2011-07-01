@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file AreaContextDependentUnit.h
+/** @file step/AreaContextDependentUnit.h
  *
  * Class definition used to convert STEP "AreaContextDependentUnit" to BRL-CAD BREP
  * structures.

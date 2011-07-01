@@ -106,9 +106,6 @@
 #define creat _creat
 #define dup _dup
 #define dup2 _dup2
-#if 0
-#define eof _eof
-#endif
 /* #define filelength _filelength */
 #define isatty _isatty
 #define locking _locking

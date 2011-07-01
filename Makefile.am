@@ -96,8 +96,13 @@ documentation_DATA = \
 EXTRA_DIST = \
 	$(documentation_DATA) \
 	BUGS \
+	CMakeLists.txt \
 	ChangeLog \
+	HACKING.cmake \
+	INSTALL.cmake \
+	README.cmake \
 	TODO \
+	TODO.cmake \
 	autogen.sh \
 	libtool
 

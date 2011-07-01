@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file move_all.c
+/** @file libged/move_all.c
  *
  * The move_all command.
  *
@@ -35,9 +35,9 @@
 #include "./ged_private.h"
 
 HIDDEN int
-ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
+move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 {
-    int	i;
+    int i;
     struct ged_display_list *gdlp;
     struct directory *dp;
     struct rt_db_internal intern;
@@ -45,11 +45,11 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
     struct bu_ptbl stack;
 
     /* rename the record itself */
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, old, LOOKUP_NOISY )) == RT_DIR_NULL)
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, old, LOOKUP_NOISY)) == RT_DIR_NULL)
 	return GED_ERROR;
 
     if (db_lookup(gedp->ged_wdbp->dbip, new, LOOKUP_QUIET) != RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: already exists", new);
+	bu_vls_printf(gedp->ged_result_str, "%s: already exists", new);
 	return GED_ERROR;
     }
 
@@ -81,7 +81,7 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 
 		    if (BU_STR_EQUAL(extrude->sketch_name, old)) {
 			if (nflag) {
-			    bu_vls_printf(&gedp->ged_result_str, "%s ", dirp->d_namep);
+			    bu_vls_printf(gedp->ged_result_str, "%s ", dirp->d_namep);
 			    rt_db_free_internal(&intern);
 			} else {
 			    bu_free(extrude->sketch_name, "sketch name");
@@ -99,20 +99,20 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
     }
 
     if (!nflag) {
-	/*  Change object name in the directory. */
+	/* Change object name in the directory. */
 	if (db_rename(gedp->ged_wdbp->dbip, dp, new) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "error in rename to %s, aborting", new);
+	    bu_vls_printf(gedp->ged_result_str, "error in rename to %s, aborting", new);
 	    return GED_ERROR;
 	}
 
 	/* Change name in the file */
 	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "Database read error, aborting");
+	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	    return GED_ERROR;
 	}
 
 	if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting");
+	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	    return GED_ERROR;
 	}
     }
@@ -123,9 +123,9 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
     /* Examine all COMB nodes */
     for (i = 0; i < RT_DBNHASH; i++) {
 	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    union tree	*comb_leaf;
-	    int		done=0;
-	    int		changed=0;
+	    union tree *comb_leaf;
+	    int done=0;
+	    int changed=0;
 
 
 	    if (!(dp->d_flags & RT_DIR_COMB))
@@ -147,7 +147,7 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 
 		    if (BU_STR_EQUAL(comb_leaf->tr_l.tl_name, old)) {
 			if (nflag)
-			    bu_vls_printf(&gedp->ged_result_str, "%s ", dp->d_namep);
+			    bu_vls_printf(gedp->ged_result_str, "%s ", dp->d_namep);
 			else {
 			    bu_free(comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name");
 			    comb_leaf->tr_l.tl_name = bu_strdup(new);
@@ -161,7 +161,7 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 		    }
 		    comb_leaf = (union tree *)BU_PTBL_GET(&stack, BU_PTBL_END(&stack)-1);
 		    if (comb_leaf->tr_op != OP_DB_LEAF) {
-			bu_ptbl_rm( &stack, (long *)comb_leaf );
+			bu_ptbl_rm(&stack, (long *)comb_leaf);
 			comb_leaf = comb_leaf->tr_b.tb_right;
 		    }
 		}
@@ -169,12 +169,11 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 
 	    if (changed) {
 		if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource)) {
-		    bu_ptbl_free( &stack );
-		    bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting");
+		    bu_ptbl_free(&stack);
+		    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 		    return GED_ERROR;
 		}
-	    }
-	    else
+	    } else
 		rt_db_free_internal(&intern);
 	}
     }
@@ -225,14 +224,15 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
     return GED_OK;
 }
 
+
 HIDDEN int
-ged_move_all_file(struct ged *gedp, int nflag, const char *file)
+move_all_file(struct ged *gedp, int nflag, const char *file)
 {
     FILE *fp;
     char line[512];
 
     if ((fp=fopen(file, "r")) == NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "cannot open %s\n", file);
+	bu_vls_printf(gedp->ged_result_str, "cannot open %s\n", file);
 	return GED_ERROR;
     }
 
@@ -247,13 +247,14 @@ ged_move_all_file(struct ged *gedp, int nflag, const char *file)
 	if (bu_argv_from_string(new_av, 2, line) != 2)
 	    continue;
 
-	ged_move_all_func(gedp, nflag, (const char *)new_av[0], (const char *)new_av[1]);
+	move_all_func(gedp, nflag, (const char *)new_av[0], (const char *)new_av[1]);
     }
 
     fclose(fp);
 
     return GED_OK;
 }
+
 
 int
 ged_move_all(struct ged *gedp, int argc, const char *argv[])
@@ -268,21 +269,21 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 3 || 4 < argc) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     if (db_version(gedp->ged_wdbp->dbip) < 5 && (int)strlen(argv[2]) > NAMESIZE) {
-	bu_vls_printf(&gedp->ged_result_str, "ERROR: name length limited to %d characters in v4 databases\n", strlen(argv[2]));
+	bu_vls_printf(gedp->ged_result_str, "ERROR: name length limited to %zu characters in v4 databases\n", strlen(argv[2]));
 	return GED_ERROR;
     }
 
@@ -296,7 +297,7 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
 		nflag = 1;
 		break;
 	    default:
-		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		return GED_ERROR;
 	}
     }
@@ -306,19 +307,19 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
 
     if (fflag) {
 	if (argc != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
 	}
 
-	return ged_move_all_file(gedp, nflag, argv[0]);
+	return move_all_file(gedp, nflag, argv[0]);
     }
 
     if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
-    return ged_move_all_func(gedp, nflag, argv[0], argv[1]);
+    return move_all_func(gedp, nflag, argv[0], argv[1]);
 }
 
 

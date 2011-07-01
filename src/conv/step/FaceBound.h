@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file FaceBound.h
+/** @file step/FaceBound.h
  *
  * Class definition used to convert STEP "FaceBound" to BRL-CAD BREP
  * structures.
@@ -43,7 +43,7 @@ protected:
 	int ON_face_index;
 	bool inner;
 #ifdef YAYA
-	SCLBOOL_H(Boolean) orientation;
+	Boolean orientation;
 #else
 	int orientation;
 #endif

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file units.c
+/** @file libged/units.c
  *
  * The units command.
  *
@@ -45,10 +45,10 @@ ged_units(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc > 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -61,7 +61,7 @@ ged_units(struct ged *gedp, int argc, const char *argv[])
 	} else if (BU_STR_EQUAL(argv[1], "-t")) {
 	    struct bu_vls *vlsp = bu_units_strings_vls();
 
-	    bu_vls_printf(&gedp->ged_result_str, "%V", vlsp);
+	    bu_vls_printf(gedp->ged_result_str, "%V", vlsp);
 	    bu_vls_free(vlsp);
 	    bu_free(vlsp, "ged_units: vlsp");
 
@@ -75,9 +75,9 @@ ged_units(struct ged *gedp, int argc, const char *argv[])
 	if (!str) str = "Unknown_unit";
 
 	if (sflag)
-	    bu_vls_printf(&gedp->ged_result_str, "%s", str);
+	    bu_vls_printf(gedp->ged_result_str, "%s", str);
 	else
-	    bu_vls_printf(&gedp->ged_result_str, "You are editing in '%s'.  1 %s = %g mm \n",
+	    bu_vls_printf(gedp->ged_result_str, "You are editing in '%s'.  1 %s = %g mm \n",
 			  str, str, gedp->ged_wdbp->dbip->dbi_local2base);
 
 	return GED_OK;
@@ -85,15 +85,15 @@ ged_units(struct ged *gedp, int argc, const char *argv[])
 
     /* Set units */
     /* Allow inputs of the form "25cm" or "3ft" */
-    if ((loc2mm = bu_mm_value(argv[1]) ) <= 0) {
-	bu_vls_printf(&gedp->ged_result_str,
+    if ((loc2mm = bu_mm_value(argv[1])) <= 0) {
+	bu_vls_printf(gedp->ged_result_str,
 		      "%s: unrecognized unit\nvalid units: <um|mm|cm|m|km|in|ft|yd|mi>\n",
 		      argv[1]);
 	return GED_ERROR;
     }
 
     if (db_update_ident(gedp->ged_wdbp->dbip, gedp->ged_wdbp->dbip->dbi_title, loc2mm) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "Warning: unable to stash working units into database\n");
+	bu_vls_printf(gedp->ged_result_str, "Warning: unable to stash working units into database\n");
     }
 
     gedp->ged_wdbp->dbip->dbi_local2base = loc2mm;
@@ -101,7 +101,7 @@ ged_units(struct ged *gedp, int argc, const char *argv[])
 
     str = bu_units_string(gedp->ged_wdbp->dbip->dbi_local2base);
     if (!str) str = "Unknown_unit";
-    bu_vls_printf(&gedp->ged_result_str, "You are now editing in '%s'.  1 %s = %g mm \n",
+    bu_vls_printf(gedp->ged_result_str, "You are now editing in '%s'.  1 %s = %g mm \n",
 		  str, str, gedp->ged_wdbp->dbip->dbi_local2base);
 
     return GED_OK;

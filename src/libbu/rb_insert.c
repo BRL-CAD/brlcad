@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup rb */
-/** @{ */
 
 #include "common.h"
 
@@ -41,7 +39,7 @@
  * _rb_insert() returns 1.  Otherwise, it returns 0.
  */
 HIDDEN int
-_rb_insert(bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
+_rb_insert(struct bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
 {
     struct bu_rb_node *node;
     struct bu_rb_node *parent;
@@ -151,7 +149,7 @@ _rb_insert(bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
 
 
 int
-bu_rb_insert(bu_rb_tree *tree, void *data)
+bu_rb_insert(struct bu_rb_tree *tree, void *data)
 {
     int nm_orders;
     int order;
@@ -290,7 +288,7 @@ bu_rb_insert(bu_rb_tree *tree, void *data)
  * previous value of the flag.
  */
 HIDDEN int
-_rb_set_uniq(bu_rb_tree *tree, int order, int new_value)
+_rb_set_uniq(struct bu_rb_tree *tree, int order, int new_value)
 {
     int prev_value;
 
@@ -305,20 +303,20 @@ _rb_set_uniq(bu_rb_tree *tree, int order, int new_value)
 
 
 int
-bu_rb_uniq_on(bu_rb_tree *tree, int order)
+bu_rb_uniq_on(struct bu_rb_tree *tree, int order)
 {
     return _rb_set_uniq(tree, order, 1);
 }
 
 int
-bu_rb_uniq_off(bu_rb_tree *tree, int order)
+bu_rb_uniq_off(struct bu_rb_tree *tree, int order)
 {
     return _rb_set_uniq(tree, order, 0);
 }
 
 
 int
-bu_rb_is_uniq(bu_rb_tree *tree, int order)
+bu_rb_is_uniq(struct bu_rb_tree *tree, int order)
 {
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
     RB_CKORDER(tree, order);
@@ -328,7 +326,7 @@ bu_rb_is_uniq(bu_rb_tree *tree, int order)
 
 
 void
-bu_rb_set_uniqv(bu_rb_tree *tree, bitv_t flag_rep)
+bu_rb_set_uniqv(struct bu_rb_tree *tree, bitv_t flag_rep)
 {
     int nm_orders;
     int order;
@@ -359,7 +357,7 @@ bu_rb_set_uniqv(bu_rb_tree *tree, bitv_t flag_rep)
  * all the flags.
  */
 HIDDEN void
-_rb_set_uniq_all(bu_rb_tree *tree, int new_value)
+_rb_set_uniq_all(struct bu_rb_tree *tree, int new_value)
 {
     int nm_orders;
     int order;
@@ -373,18 +371,17 @@ _rb_set_uniq_all(bu_rb_tree *tree, int new_value)
 }
 
 
-void bu_rb_uniq_all_on(bu_rb_tree *tree)
+void bu_rb_uniq_all_on(struct bu_rb_tree *tree)
 {
     _rb_set_uniq_all(tree, 1);
 }
 
 
-void bu_rb_uniq_all_off(bu_rb_tree *tree)
+void bu_rb_uniq_all_off(struct bu_rb_tree *tree)
 {
     _rb_set_uniq_all(tree, 0);
 }
 
-/** @} */
 
 /*
  * Local Variables:

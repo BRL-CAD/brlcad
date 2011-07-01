@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file edcomb.c
+/** @file libged/edcomb.c
  *
  * The edcomb command.
  *
@@ -40,16 +40,16 @@ ged_edcomb(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 7) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
@@ -57,19 +57,19 @@ ged_edcomb(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_COMB(gedp, dp, GED_ERROR);
 
     if (sscanf(argv[3], "%d", &regionid) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Bad region identifier");
+	bu_vls_printf(gedp->ged_result_str, "Bad region identifier");
 	return GED_ERROR;
     }
     if (sscanf(argv[4], "%d", &air) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Bad air code");
+	bu_vls_printf(gedp->ged_result_str, "Bad air code");
 	return GED_ERROR;
     }
     if (sscanf(argv[5], "%d", &los) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Bad los line-of-sight equivalence factor");
+	bu_vls_printf(gedp->ged_result_str, "Bad los line-of-sight equivalence factor");
 	return GED_ERROR;
     }
     if (sscanf(argv[6], "%d", &mat) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Bad material identifier");
+	bu_vls_printf(gedp->ged_result_str, "Bad material identifier");
 	return GED_ERROR;
     }
 

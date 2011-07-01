@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file CompositeCurve.h
+/** @file step/CompositeCurve.h
  *
  * Class definition used to convert STEP "CompositeCurve" to BRL-CAD BREP
  * structures.
@@ -38,7 +38,7 @@ private:
 
 protected:
 	LIST_OF_SEGMENTS segments;
-	SCLLOG_H(Logical) self_intersect;
+	Logical self_intersect;
 
 public:
 	CompositeCurve();

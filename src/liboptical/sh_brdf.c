@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_brdf.c
+/** @file liboptical/sh_brdf.c
  *
  * Simple Isotropic Gaussian model with just one parameter (RMS slope).
  *
@@ -43,9 +43,6 @@
 #include "optical.h"
 #include "light.h"
 
-extern int rr_render(struct application *ap,
-		     struct partition *pp,
-		     struct shadework *swp);
 /* from view.c */
 extern double AmbientIntensity;
 
@@ -85,10 +82,10 @@ struct bu_structparse brdf_parse[] = {
 };
 
 
-HIDDEN int brdf_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int brdf_render(register struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void brdf_print(register struct region *rp, char *dp);
-HIDDEN void brdf_free(char *cp);
+HIDDEN int brdf_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int brdf_render(register struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
+HIDDEN void brdf_print(register struct region *rp, genptr_t dp);
+HIDDEN void brdf_free(genptr_t cp);
 
 struct mfuncs brdf_mfuncs[] = {
     {MF_MAGIC,	"brdf",		0,		MFI_NORMAL|MFI_LIGHT,	0,
@@ -105,13 +102,13 @@ struct mfuncs brdf_mfuncs[] = {
  * B R D F _ S E T U P
  */
 HIDDEN int
-brdf_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
+brdf_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 {
     register struct brdf_specific *pp;
 
     BU_CK_VLS(matparm);
     BU_GETSTRUCT(pp, brdf_specific);
-    *dpp = (char *)pp;
+    *dpp = pp;
 
     pp->magic = BRDF_MAGIC;
     pp->specular_refl = 0.7;
@@ -123,7 +120,7 @@ brdf_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, char **dp
     pp->rms_slope = 0.05;
 
     if (bu_struct_parse(matparm, brdf_parse, (char *)pp) < 0) {
-	bu_free((char *)pp, "brdf_specific");
+	bu_free((genptr_t)pp, "brdf_specific");
 	return -1;
     }
 
@@ -136,7 +133,7 @@ brdf_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, char **dp
  * B R D F _ P R I N T
  */
 HIDDEN void
-brdf_print(register struct region *rp, char *dp)
+brdf_print(register struct region *rp, genptr_t dp)
 {
     bu_struct_print(rp->reg_name, brdf_parse, (char *)dp);
 }
@@ -146,7 +143,7 @@ brdf_print(register struct region *rp, char *dp)
  * B R D F _ F R E E
  */
 HIDDEN void
-brdf_free(char *cp)
+brdf_free(genptr_t cp)
 {
     bu_free(cp, "brdf_specific");
 }
@@ -196,7 +193,7 @@ brdf_free(char *cp)
 
 */
 HIDDEN int
-brdf_render(register struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+brdf_render(register struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
 {
     register struct light_specific *lp;
     register fastf_t *intensity, *to_light;

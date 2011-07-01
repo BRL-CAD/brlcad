@@ -449,6 +449,11 @@ geometry database files.  The default behavior is to automatically
 detect whether flipping the endian interpretation will help LIBRT read
 a binary-incompatible v4 geometry database file.  Setting LIBRT_V4FLIP
 will override automatic detection.
+.PP
+The LIBRT_BOT_MINTIE environment variable may be set to the minimum
+number of faces a BoT primitive must have to exercise the Triangle
+Intersection Engine (TIE) raytrace evaluation.  A value less than or
+equal to zero will utilize traditional BoT raytracing instead of TIE.
 .SH BUGS
 On a VAX, the rootfinder detects ``hard'' cases by taking a SIGFPE
 and retrying

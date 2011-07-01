@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file g-xxx_facets.c
+/** @file conv/g-xxx_facets.c
  *
  * Program to convert a BRL-CAD model (in a .g file) to a facetted
  * format by calling on the NMG booleans.  Based on g-stl.c.
@@ -40,12 +40,12 @@
 
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
 #define VSETIN( a, b )	{\
-    (a)[X] = (b)[X]/25.4; \
-    (a)[Y] = (b)[Y]/25.4; \
-    (a)[Z] = (b)[Z]/25.4; \
-}
+	(a)[X] = (b)[X]/25.4; \
+	(a)[Y] = (b)[Y]/25.4; \
+	(a)[Z] = (b)[Z]/25.4; \
+    }
 
-BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
+extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 
 extern double nmg_eue_dist;		/* from nmg_plot.c */
 
@@ -485,7 +485,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
     BU_GETUNION(curtree, tree);
-    RT_INIT_TREE(curtree);
+    RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
     return curtree;
 }

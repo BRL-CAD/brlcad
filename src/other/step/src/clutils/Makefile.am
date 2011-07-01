@@ -39,7 +39,8 @@ noinst_HEADERS = \
 
 
 EXTRA_DIST = \
-	README
+	README \
+	CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs
 

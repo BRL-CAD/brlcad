@@ -18,11 +18,11 @@
  * information.
  *
  */
-/** @file fence.h
+/** @file shapes/fence.h
  *
  * This is the header file to the program that generages a chain-link
  * fence.  Every parameter of the fence may be adjusted by changing
- * the #defined macros below.
+ * the DEFAULT_* macros defined below.
  *
  */
 
@@ -42,7 +42,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-/*
+/**
  * these variables control the "behavior" of this program's output:
  *
  *   if debug is set, debug information (extra "useful" output is
@@ -67,31 +67,37 @@
 #define DEFAULT_DEBUG_OUTPUT stdout
 #define DEFAULT_VERBOSE_OUTPUT stderr
 
-/* this is the name of the default output file name
+/**
+ * this is the name of the default output file name
  */
 #define DEFAULT_OUTPUTFILENAME "fence.g"
 
-/* this is the default measuring units for the database file
+/**
+ * this is the default measuring units for the database file
  */
 #define DEFAULT_UNITS "mm"
 
-/* this is the identifying title or name for the database file
+/**
+ * this is the identifying title or name for the database file
  */
 #define DEFAULT_ID "Untitled"
 
-/* for all of the default names that are specified, a `.s' or `.r'
+/**
+ * for all of the default names that are specified, a `.s' or `.r'
  * suffix will automatically get appended where needed for the solid
  * and region objects that are generated, respectively, and do not
  * need to be added.
  */
 
-/* the fence generation is broken into four main parts, consisting of
+/**
+ * the fence generation is broken into four main parts, consisting of
  * one of the wires of the fence mesh, the mesh as a whole, the poles
  * that may attach to the mesh, and the fence as a whole (poles and
  * mesh).
  */
 
-/* these are the parameters for the main fence object that gets
+/**
+ * these are the parameters for the main fence object that gets
  * generated.
  *
  *   the name of the entire resulting fence object may be set as a
@@ -143,7 +149,8 @@
 #define DEFAULT_GENERATEPOLES 1
 #define DEFAULT_GENERATEMESH 1
 
-/* these are the parameters for the pole objects that get generated.
+/**
+ * these are the parameters for the pole objects that get generated.
  * every pole object is a separate object and may be individually
  * addressed.
  *
@@ -163,7 +170,8 @@
 #define DEFAULT_POLEMATERIALPARAMS "sh=16 sp=.5 di=.5"
 #define DEFAULT_POLEMATERIALCOLOR {128, 128, 128}
 
-/* these are the parameters for the mesh object that gets generated.
+/**
+ * these are the parameters for the mesh object that gets generated.
  * there is only one mesh object, consisting of two wires translated
  * across a region to form a mesh.
  *
@@ -178,13 +186,15 @@
 #define DEFAULT_MESHMATERIALPARAMS "sh=16 sp=.5 di=.5"
 #define DEFAULT_MESHMATERIALCOLOR {128, 128, 128}
 
-/*   the mesh piece count is a count of the number of actual wire
+/**
+ *   the mesh piece count is a count of the number of actual wire
  *     segments that form a single mesh cell.  this value should not
  *     be changed (20)
  */
 #define DEFAULT_MESHPIECECOUNT 20
 
-/* these are the parameters for the basic wires (2) that form the mesh
+/**
+ * these are the parameters for the basic wires (2) that form the mesh
  * object.  there are only two wires, and it is translated across the
  * span of the mesh when the mesh is generated.
  *
@@ -208,14 +218,16 @@
 #define DEFAULT_WIREMATERIALCOLOR {128, 128, 128}
 #define DEFAULT_WIRESEGMENTLENGTH 50.0
 #define DEFAULT_WIRESEGMENTSEPARATION DEFAULT_WIRERADIUS
-/* the max wire segments should not be changed as it is mearly a max
+/**
+ * the max wire segments should not be changed as it is mearly a max
  * upper bound on the maximum number of segments that may be generated
  * for any wire pair.  it is provided as a saveguard against having an
  * "out-of-control" program if invalid wire values are entered.
  */
 #define DEFAULT_MAXWIRESEGMENTS 1234567890L
 
-/* these are the format specifiers that get set for the pole and wire
+/**
+ * these are the format specifiers that get set for the pole and wire
  * names that get generated.  the format of the parameter specifier is
  * the same as "C" stdio specifications and should not usually need to
  * be changed.
@@ -223,13 +235,15 @@
 #define DEFAULT_POLEBASICPARAM "%s%d"
 #define DEFAULT_WIREBASICPARAM "%s%d"
 #define DEFAULT_REGIONSUFFIX ".r"
-/* this is an upper bounds restriction placed on the length of any and
+/**
+ * this is an upper bounds restriction placed on the length of any and
  * all names in the database.
  */
 #define DEFAULT_MAXNAMELENGTH 64
 
 
-/* this macro does the standard conversion of an angle to a radian
+/**
+ * this macro does the standard conversion of an angle to a radian
  * value.
  */
 #define RADIAN(x) ((x) * DEG2RAD)
@@ -241,27 +255,27 @@ extern "C" {
 #endif
 
 
-    BU_EXTERN(void argumentHelp, (FILE *fp, char *progname, char *message));
-    BU_EXTERN(void argumentExamples, (FILE *fp, char *progname));
-    BU_EXTERN(void defaultSettings, (FILE *fp));
-    BU_EXTERN(int parseArguments, (int argc, char *argv[]));
-    BU_EXTERN(void printMatrix, (FILE *fp, char *n, mat_t m));
-    BU_EXTERN(char *getName, (const char *base, int id, const char *suffix));
-    BU_EXTERN(char *getPrePostName, (char *prefix, char *base, char *suffix));
+    extern void argumentHelp(FILE *fp, char *progname, char *message);
+    extern void argumentExamples(FILE *fp, char *progname);
+    extern void defaultSettings(FILE *fp);
+    extern int parseArguments(int argc, char *argv[]);
+    extern void printMatrix(FILE *fp, char *n, mat_t m);
+    extern char *getName(const char *base, int id, const char *suffix);
+    extern char *getPrePostName(char *prefix, char *base, char *suffix);
 
-    BU_EXTERN(int generateFence_s, (struct rt_wdb *fp, char *fencename, point_t startpostion, point_t endposition));
-    BU_EXTERN(int generateFence, (struct rt_wdb *fp, char *fencename, point_t startpostion, vect_t heightvector, vect_t widthvector));
+    extern int generateFence_s(struct rt_wdb *fp, char *fencename, point_t startpostion, point_t endposition);
+    extern int generateFence(struct rt_wdb *fp, char *fencename, point_t startpostion, vect_t heightvector, vect_t widthvector);
 
-    BU_EXTERN(int generatePoles_s, (struct rt_wdb *fp, char *polename));
-    BU_EXTERN(int generatePoles, (struct rt_wdb *fp, char *polename, point_t startposition, vect_t heightvector, vect_t widthvector, double radius));
+    extern int generatePoles_s(struct rt_wdb *fp, char *polename);
+    extern int generatePoles(struct rt_wdb *fp, char *polename, point_t startposition, vect_t heightvector, vect_t widthvector, double radius);
 
-    BU_EXTERN(int generateMesh_s, (struct rt_wdb *fp, char *meshname));
-    BU_EXTERN(int generateMesh, (struct rt_wdb *fp, char *meshname, point_t startposition, vect_t heightvector, vect_t widthvector));
+    extern int generateMesh_s(struct rt_wdb *fp, char *meshname);
+    extern int generateMesh(struct rt_wdb *fp, char *meshname, point_t startposition, vect_t heightvector, vect_t widthvector);
 
-    BU_EXTERN(int generateWire_s, (struct rt_wdb *fp, char *wirename, point_t position));
-    BU_EXTERN(int generateWire, (struct rt_wdb *fp, char *wirename, point_t position, vect_t heightvector, vect_t widthvector, double radius, double angle, double wiresegmentlength));
+    extern int generateWire_s(struct rt_wdb *fp, char *wirename, point_t position);
+    extern int generateWire(struct rt_wdb *fp, char *wirename, point_t position, vect_t heightvector, vect_t widthvector, double radius, double angle, double wiresegmentlength);
 
-    BU_EXTERN(int createWire, (struct rt_wdb *fp, char *segmentname, vect_t heightvector, vect_t widthvector, double radius, double angle, double segmentlength, double segmentdepthseparation));
+    extern int createWire(struct rt_wdb *fp, char *segmentname, vect_t heightvector, vect_t widthvector, double radius, double angle, double segmentlength, double segmentdepthseparation);
 
 
 #ifdef __cplusplus

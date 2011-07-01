@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file CompositeCurveOnSurface.h
+/** @file step/CompositeCurveOnSurface.h
  *
  * Class definition used to convert STEP "CompositeCurveOnSurface" to BRL-CAD BREP
  * structures.

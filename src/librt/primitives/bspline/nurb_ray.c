@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_ray.c
+/** @file primitives/bspline/nurb_ray.c
  *
  * Functions which support the ray intersection for surfaces.
  *

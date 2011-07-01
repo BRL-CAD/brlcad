@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file readcols.c
+/** @file iges/readcols.c
  *
  * This routine reads a specific number of characters from the "card"
  * buffer.  The number is "cols".  The string of characters read is

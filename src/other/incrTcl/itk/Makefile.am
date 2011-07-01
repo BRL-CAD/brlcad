@@ -17,7 +17,14 @@ EXTRA_DIST = \
 	itkConfig.sh.in \
 	license.terms \
 	tests \
-	win
+	win \
+	CMakeLists.txt \
+	CMake/CheckCFileRuns.cmake \
+	CMake/CheckPrototypeExists.cmake \
+	CMake/CheckSystemFunctionality.cmake \
+	CMake/FindX11.cmake \
+	CMake/ResolveCompilerPaths.cmake \
+	CMake/tcl.cmake
 
 DISTCLEANFILES = pkgIndex.tcl
 

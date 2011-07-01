@@ -19,7 +19,7 @@
  */
 /** @addtogroup dbio */
 /** @{ */
-/** @file db_tree.c
+/** @file librt/db_tree.c
  *
  * Includes parallel tree walker routine.  Also includes routines to
  * return a matrix givne a name or path.
@@ -1155,7 +1155,7 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
     RT_CHECK_DBI(tsp->ts_dbip);
     RT_CK_RESOURCE(tsp->ts_resp);
     RT_CK_FULL_PATH(pathp);
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
 
     if (pathp->fp_len <= 0) {
 	bu_log("db_recurse() null path?\n");
@@ -1290,7 +1290,7 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
 	if (RT_G_DEBUG&DEBUG_TREEWALK)
 	    bu_log("db_recurse() rt_db_get_internal(%s) solid\n", dp->d_namep);
 
-	RT_INIT_DB_INTERNAL(&intern);
+	RT_DB_INTERNAL_INIT(&intern);
 	if (rt_db_get_internal(&intern, dp, tsp->ts_dbip, tsp->ts_mat, tsp->ts_resp) < 0) {
 	    bu_log("db_recurse() rt_db_get_internal(%s) FAIL\n", dp->d_namep);
 	    curtree = TREE_NULL;		/* FAIL */
@@ -2071,7 +2071,7 @@ HIDDEN void
 _db_walk_subtree(
     union tree *tp,
     struct combined_tree_state **region_start_statepp,
-    union tree *(*leaf_func) BU_ARGS((struct db_tree_state *, const struct db_full_path *, struct rt_db_internal *, void *)),
+    union tree *(*leaf_func)(struct db_tree_state *, const struct db_full_path *, struct rt_db_internal *, void *),
     genptr_t client_data,
     struct resource *resp)
 {
@@ -2676,15 +2676,17 @@ rt_shader_mat(
     mat_t m_tmp;
     vect_t v_tmp;
     struct rt_i *my_rtip;
-    const char *reg_name;
+    char *reg_name;
 
     RT_CK_RTI(rtip);
     RT_CK_RESOURCE(resp);
 
     reg_name = bu_basename(rp->reg_name);
     /* get model-to-region space mapping */
-    if (db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name, resp) < 0)
+    if (db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name, resp) < 0) {
+	bu_free(reg_name, "reg_name free");
 	return -1;
+    }
 
     if (VEQUAL(p_min, p_max)) {
 	/* User/shader did not specify bounding box, obtain bounding
@@ -2722,6 +2724,9 @@ rt_shader_mat(
     MAT_IDN(m_scale);
     MAT_SCALE_VEC(m_scale, v_tmp);
     bn_mat_mul(model_to_shader, m_scale, m_tmp);
+
+    bu_free(reg_name, "reg_name free");
+
     return 0;
 }
 

@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_poly.c
+/** @file primitives/bspline/nurb_poly.c
  *
  * Returns two polygons from a NURB surface.
  * Asumes that the surface is flat.

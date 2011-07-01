@@ -76,7 +76,6 @@ ADD_MAN_PAGE(3 libfb.3)
 SET(libfb_ignore_files
 	dmdfb.h
 	if_TEMPLATE.c
-	libfb.dsp
 	nilcursor.h
 	oglcursor.h
 	if_X.c

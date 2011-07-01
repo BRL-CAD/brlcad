@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_split.c
+/** @file primitives/bspline/nurb_split.c
  *
  * Subdivide a nurb surface by inserting a multiple knot of of the
  * surface order in a given direction and return the resulting

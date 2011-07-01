@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file readint.c
+/** @file iges/readint.c
  *
  * This routine reads the next field in "card" buffer.  It expects the
  * field to contain a string of integers.  The string of integers is

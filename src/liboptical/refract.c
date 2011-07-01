@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file refract.c
+/** @file liboptical/refract.c
  *
  */
 
@@ -363,7 +363,7 @@ rr_refract(vect_t v_1, vect_t norml, double ri_1, double ri_2, vect_t v_2)
  */
 int
 rr_render(register struct application *ap,
-	  struct partition *pp,
+	  const struct partition *pp,
 	  struct shadework *swp)
 {
     struct application sub_ap;

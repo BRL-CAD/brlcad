@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file comb.c
+/** @file libged/comb.c
  *
  * The comb command.
  *
@@ -47,22 +47,22 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc < 4) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     /* Check for odd number of arguments */
     if (argc & 01) {
-	bu_vls_printf(&gedp->ged_result_str, "error in number of args!");
+	bu_vls_printf(gedp->ged_result_str, "error in number of args!");
 	return GED_ERROR;
     }
 
@@ -70,7 +70,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
     comb_name = (char *)argv[1];
     if ((dp=db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET)) != RT_DIR_NULL) {
 	if (!(dp->d_flags & RT_DIR_COMB)) {
-	    bu_vls_printf(&gedp->ged_result_str, "ERROR: %s is not a combination", comb_name);
+	    bu_vls_printf(gedp->ged_result_str, "ERROR: %s is not a combination", comb_name);
 	    return GED_ERROR;
 	}
     }
@@ -78,23 +78,23 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
     /* Get operation and solid name for each solid */
     for (i = 2; i < argc; i += 2) {
 	if (argv[i][1] != '\0') {
-	    bu_vls_printf(&gedp->ged_result_str, "bad operation: %s skip member: %s\n", argv[i], argv[i+1]);
+	    bu_vls_printf(gedp->ged_result_str, "bad operation: %s skip member: %s\n", argv[i], argv[i+1]);
 	    continue;
 	}
 	oper = argv[i][0];
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[i+1], LOOKUP_NOISY)) == RT_DIR_NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "skipping %s\n", argv[i+1]);
+	    bu_vls_printf(gedp->ged_result_str, "skipping %s\n", argv[i+1]);
 	    continue;
 	}
 
 	if (oper != WMOP_UNION && oper != WMOP_SUBTRACT && oper != WMOP_INTERSECT) {
-	    bu_vls_printf(&gedp->ged_result_str, "bad operation: %c skip member: %s\n",
+	    bu_vls_printf(gedp->ged_result_str, "bad operation: %c skip member: %s\n",
 			  oper, dp->d_namep);
 	    continue;
 	}
 
 	if (_ged_combadd(gedp, dp, comb_name, 0, oper, 0, 0) == RT_DIR_NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "error in combadd");
+	    bu_vls_printf(gedp->ged_result_str, "error in combadd");
 	    return GED_ERROR;
 	}
     }
@@ -104,23 +104,24 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
+
 /*
- *			G E D _ C O M B A D D
+ * G E D _ C O M B A D D
  *
  * Add an instance of object 'objp' to combination 'name'.
  * If the combination does not exist, it is created.
  * region_flag is 1 (region), or 0 (group).
  *
- *  Preserves the GIFT semantics.
+ * Preserves the GIFT semantics.
  */
 struct directory *
-_ged_combadd(struct ged			*gedp,
-	    struct directory	*objp,
-	    char			*combname,
-	    int				region_flag,	/* true if adding region */
-	    int				relation,	/* = UNION, SUBTRACT, INTERSECT */
-	    int				ident,		/* "Region ID" */
-	    int				air		/* Air code */)
+_ged_combadd(struct ged *gedp,
+	     struct directory *objp,
+	     char *combname,
+	     int region_flag,	/* true if adding region */
+	     int relation,	/* = UNION, SUBTRACT, INTERSECT */
+	     int ident,		/* "Region ID" */
+	     int air		/* Air code */)
 {
     struct directory *dp;
     struct rt_db_internal intern;
@@ -141,7 +142,7 @@ _ged_combadd(struct ged			*gedp,
 	else
 	    flags = RT_DIR_COMB;
 
-	RT_INIT_DB_INTERNAL(&intern);
+	RT_DB_INTERNAL_INIT(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_COMBINATION;
 	intern.idb_meth = &rt_functab[ID_COMBINATION];
@@ -149,12 +150,9 @@ _ged_combadd(struct ged			*gedp,
 	GED_DB_DIRADD(gedp, dp, combname, -1, 0, flags, (genptr_t)&intern.idb_type, 0);
 
 	BU_GETSTRUCT(comb, rt_comb_internal);
+	RT_COMB_INTERNAL_INIT(comb);
+
 	intern.idb_ptr = (genptr_t)comb;
-	comb->magic = RT_COMB_MAGIC;
-	bu_vls_init(&comb->shader);
-	bu_vls_init(&comb->material);
-	comb->region_id = 0;  /* This makes a comb/group by default */
-	comb->tree = TREE_NULL;
 
 	if (region_flag) {
 	    comb->region_flag = 1;
@@ -162,7 +160,7 @@ _ged_combadd(struct ged			*gedp,
 	    comb->aircode = air;
 	    comb->los = gedp->ged_wdbp->wdb_los_default;
 	    comb->GIFTmater = gedp->ged_wdbp->wdb_mat_default;
-	    bu_vls_printf(&gedp->ged_result_str,
+	    bu_vls_printf(gedp->ged_result_str,
 			  "Creating region id=%d, air=%d, GIFTmaterial=%d, los=%d\n",
 			  ident, air,
 			  gedp->ged_wdbp->wdb_mat_default,
@@ -170,16 +168,16 @@ _ged_combadd(struct ged			*gedp,
 	} else {
 	    comb->region_flag = 0;
 	}
-	RT_GET_TREE( tp, &rt_uniresource );
+	RT_GET_TREE(tp, &rt_uniresource);
 	tp->tr_l.tl_op = OP_DB_LEAF;
-	tp->tr_l.tl_name = bu_strdup( objp->d_namep );
+	tp->tr_l.tl_name = bu_strdup(objp->d_namep);
 	tp->tr_l.tl_mat = (matp_t)NULL;
 	comb->tree = tp;
 
 	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, 0);
 	return dp;
     } else if (!(dp->d_flags & RT_DIR_COMB)) {
-	bu_vls_printf(&gedp->ged_result_str, "%s exists, but is not a combination\n", dp->d_namep);
+	bu_vls_printf(gedp->ged_result_str, "%s exists, but is not a combination\n", dp->d_namep);
 	return RT_DIR_NULL;
     }
 
@@ -190,22 +188,22 @@ _ged_combadd(struct ged			*gedp,
     RT_CK_COMB(comb);
 
     if (region_flag && !comb->region_flag) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: not a region\n", dp->d_namep);
+	bu_vls_printf(gedp->ged_result_str, "%s: not a region\n", dp->d_namep);
 	return RT_DIR_NULL;
     }
 
     if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
 	db_non_union_push(comb->tree, &rt_uniresource);
 	if (db_ck_v4gift_tree(comb->tree) < 0) {
-	    bu_vls_printf(&gedp->ged_result_str, "Cannot flatten tree for editing\n");
+	    bu_vls_printf(gedp->ged_result_str, "Cannot flatten tree for editing\n");
 	    rt_db_free_internal(&intern);
 	    return RT_DIR_NULL;
 	}
     }
 
     /* make space for an extra leaf */
-    node_count = db_tree_nleaves( comb->tree ) + 1;
-    tree_list = (struct rt_tree_array *)bu_calloc(node_count, sizeof( struct rt_tree_array ), "tree list");
+    node_count = db_tree_nleaves(comb->tree) + 1;
+    tree_list = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
 
     /* flatten tree */
     if (comb->tree) {
@@ -223,21 +221,21 @@ _ged_combadd(struct ged			*gedp,
 	    tree_list[node_count - 1].tl_op = OP_SUBTRACT;
 	    break;
 	default:
-	    bu_vls_printf(&gedp->ged_result_str, "unrecognized relation (assume UNION)\n");
+	    bu_vls_printf(gedp->ged_result_str, "unrecognized relation (assume UNION)\n");
 	case 'u':
 	    tree_list[node_count - 1].tl_op = OP_UNION;
 	    break;
     }
 
     /* make new leaf node, and insert at end of list */
-    RT_GET_TREE( tp, &rt_uniresource );
+    RT_GET_TREE(tp, &rt_uniresource);
     tree_list[node_count-1].tl_tree = tp;
     tp->tr_l.tl_op = OP_DB_LEAF;
-    tp->tr_l.tl_name = bu_strdup( objp->d_namep );
+    tp->tr_l.tl_name = bu_strdup(objp->d_namep);
     tp->tr_l.tl_mat = (matp_t)NULL;
 
     /* rebuild the tree */
-    comb->tree = (union tree *)db_mkgift_tree( tree_list, node_count, &rt_uniresource );
+    comb->tree = (union tree *)db_mkgift_tree(tree_list, node_count, &rt_uniresource);
 
     /* and finally, write it out */
     GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, 0);

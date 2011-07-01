@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file DefinitionalRepresentation.h
+/** @file step/DefinitionalRepresentation.h
  *
  * Class definition used to convert STEP "DefinitionalRepresentation" to BRL-CAD BREP
  * structures.

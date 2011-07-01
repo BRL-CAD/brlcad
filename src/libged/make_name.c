@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file make_name.c
+/** @file libged/make_name.c
  *
  * The make_name command.
  *
@@ -32,7 +32,7 @@ ged_make_name(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls obj_name;
     char *cp, *tp;
     static int i = 0;
-    int	len;
+    int len;
     static const char *usage = "template | -s [num]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -40,11 +40,11 @@ ged_make_name(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -57,17 +57,17 @@ ged_make_name(struct ged *gedp, int argc, const char *argv[])
 		return GED_OK;
 	    }
 	case 3:
-	{
-	    int	new_i;
+	    {
+		int new_i;
 
-	    if ((BU_STR_EQUAL(argv[1], "-s"))
-		&& (sscanf(argv[2], "%d", &new_i) == 1)) {
-		i = new_i;
-		return GED_OK;
+		if ((BU_STR_EQUAL(argv[1], "-s"))
+		    && (sscanf(argv[2], "%d", &new_i) == 1)) {
+		    i = new_i;
+		    return GED_OK;
+		}
 	    }
-	}
 	default:
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
     }
 
@@ -91,7 +91,7 @@ ged_make_name(struct ged *gedp, int argc, const char *argv[])
     }
     while (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&obj_name), LOOKUP_QUIET) != RT_DIR_NULL);
 
-    bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(&obj_name));
+    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&obj_name));
     bu_vls_free(&obj_name);
 
     return GED_OK;

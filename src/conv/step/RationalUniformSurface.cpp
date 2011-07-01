@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file RationalUniformSurface.cpp
+/** @file step/RationalUniformSurface.cpp
  *
  * Routines to convert STEP "RationalUniformSurface" to BRL-CAD BREP
  * structures.

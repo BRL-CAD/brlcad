@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file part.c
+/** @file primitives/part/part.c
  *
  * Intersect a ray with a "particle" solid, which can have three main
  * forms: sphere, hemisphere-tipped cylinder (lozenge), and

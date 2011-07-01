@@ -17,11 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file camera.c
- *
- * Brief description
- *
- */
 
 #include "common.h"
 
@@ -617,13 +612,13 @@ render_shader_load_plugin(const char *filename) {
     char *name;
     struct render_shader_s *s;
 
-    lh = dlopen(filename, RTLD_LOCAL|RTLD_LAZY);
+    lh = bu_dlopen(filename, RTLD_LOCAL|RTLD_LAZY);
 
-    if(lh == NULL) { bu_log("Faulty plugin %s: %s\n", filename, dlerror()); return NULL; }
-    name = dlsym(lh, "name");
+    if(lh == NULL) { bu_log("Faulty plugin %s: %s\n", filename, bu_dlerror()); return NULL; }
+    name = bu_dlsym(lh, "name");
     if(name == NULL) { bu_log("Faulty plugin %s: No name\n", filename); return NULL; }
     /* assumes function pointers can be stored as a number, which ISO C does not guarantee */
-    init = (int (*) (render_t *, const char *))(intptr_t)dlsym(lh, "init");
+    init = (int (*) (render_t *, const char *))(intptr_t)bu_dlsym(lh, "init");
     if(init == NULL) { bu_log("Faulty plugin %s: No init\n", filename); return NULL; }
     s = render_shader_register(name, init);
     s->dlh = lh;
@@ -653,7 +648,7 @@ render_shader_unload_plugin(render_t *r, const char *name)
 LOADED:
 
 	if(s->dlh)
-	    dlclose(s->dlh);
+	    bu_dlclose(s->dlh);
 	bu_free(s, "unload first shader");
 	shaders = t;
 	return 0;
@@ -664,7 +659,7 @@ LOADED:
 	    if(r)
 		render_shader_init(r, s->name, NULL);
 	    if(s->next->dlh)
-		dlclose(s->next->dlh);
+		bu_dlclose(s->next->dlh);
 	    t = s->next;
 	    s->next = s->next->next;
 	    bu_free(t, "unload shader");

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file viewweight.c
+/** @file rt/viewweight.c
  *
  *  Ray Tracing program RTWEIGHT bottom half.
  *
@@ -123,9 +123,6 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp
 	part_count++;
 	/* add the datapoint structure in and then calculate it
 	   in parallel, the region structures are a shared resource */
-#if 0
-	bu_log( "\nhit: partition %d\n", part_count );
-#endif
 	dp = (struct datapoint *) bu_malloc( sizeof(struct datapoint), "dp");
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	addp = reg->reg_udata;
@@ -147,14 +144,6 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp
 		(fastf_t) reg->reg_los *
 		cell_height * cell_height * 0.00001;
 	    dp->volume = depth * cell_height * cell_width;
-#if 0
-	    bu_semaphore_acquire( BU_SEM_SYSCALL );
-	    bu_log( "hit: reg_name=\"%s\"\n", reg->reg_name );
-	    bu_log( "hit: gmater=%d, los=%d, density=%gg/cc, depth=%gmm, wt=%gg\n",
-		    reg->reg_gmater, reg->reg_los, density[reg->reg_gmater],
-		    depth, dp->weight );
-	    bu_semaphore_release( BU_SEM_SYSCALL );
-#endif
 	}
     }
     return 1;	/* report hit to main routine */
@@ -235,7 +224,7 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int min
 	if ((int)i == EOF)
 	    break;
 	if (i != 3) {
-	    bu_log("error parsing line %d of density file.\n%d args recognized instead of 3\n", line, i);
+	    bu_log("error parsing line %d of density file.\n%zu args recognized instead of 3\n", line, i);
 	    continue;
 	}
 

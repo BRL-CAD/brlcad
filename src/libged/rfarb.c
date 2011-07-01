@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rfarb.c
+/** @file libged/rfarb.c
  *
  * The rfarb command.
  *
@@ -54,39 +54,39 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
     if (argc != 16) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     if (db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: %s already exists\n", argv[0], argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s: %s already exists\n", argv[0], argv[1]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[2], "%lf", &known_pt[X]) != 1 ||
 	sscanf(argv[3], "%lf", &known_pt[Y]) != 1 ||
 	sscanf(argv[4], "%lf", &known_pt[Z]) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: bad value - %s %s %s",
+	bu_vls_printf(gedp->ged_result_str, "%s: bad value - %s %s %s",
 		      argv[0], argv[2], argv[3], argv[4]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[5], "%lf", &rota) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: bad rotation angle - %s", argv[0], argv[5]);
+	bu_vls_printf(gedp->ged_result_str, "%s: bad rotation angle - %s", argv[0], argv[5]);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[6], "%lf", &fba) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: bad fallback angle - %s", argv[0], argv[6]);
+	bu_vls_printf(gedp->ged_result_str, "%s: bad fallback angle - %s", argv[0], argv[6]);
 	return GED_ERROR;
     }
 
@@ -102,14 +102,14 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
 	switch (argv[7+3*i][0]) {
 	    case 'x':
 		if (ZERO(norm[0])) {
-		    bu_vls_printf(&gedp->ged_result_str, "X not unique in this face\n");
+		    bu_vls_printf(gedp->ged_result_str, "X not unique in this face\n");
 		    return GED_ERROR;
 		}
 		solve[i] = X;
 
 		if (sscanf(argv[7+3*i+1], "%lf", &pt[i][X]) != 1 ||
 		    sscanf(argv[7+3*i+2], "%lf", &pt[i][Y]) != 1) {
-		    bu_vls_printf(&gedp->ged_result_str, "%s: atleast one bad value - %s %s",
+		    bu_vls_printf(gedp->ged_result_str, "%s: atleast one bad value - %s %s",
 				  argv[0], argv[7+3*i+1], argv[7+3*i+2]);
 		}
 
@@ -119,14 +119,14 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
 
 	    case 'y':
 		if (ZERO(norm[1])) {
-		    bu_vls_printf(&gedp->ged_result_str, "Y not unique in this face\n");
+		    bu_vls_printf(gedp->ged_result_str, "Y not unique in this face\n");
 		    return GED_ERROR;
 		}
 		solve[i] = Y;
 
 		if (sscanf(argv[7+3*i+1], "%lf", &pt[i][X]) != 1 ||
 		    sscanf(argv[7+3*i+2], "%lf", &pt[i][Y]) != 1) {
-		    bu_vls_printf(&gedp->ged_result_str, "%s: atleast one bad value - %s %s",
+		    bu_vls_printf(gedp->ged_result_str, "%s: atleast one bad value - %s %s",
 				  argv[0], argv[7+3*i+1], argv[7+3*i+2]);
 		}
 
@@ -136,14 +136,14 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
 
 	    case 'z':
 		if (ZERO(norm[2])) {
-		    bu_vls_printf(&gedp->ged_result_str, "Z not unique in this face\n");
+		    bu_vls_printf(gedp->ged_result_str, "Z not unique in this face\n");
 		    return GED_ERROR;
 		}
 		solve[i] = Z;
 
 		if (sscanf(argv[7+3*i+1], "%lf", &pt[i][X]) != 1 ||
 		    sscanf(argv[7+3*i+2], "%lf", &pt[i][Y]) != 1) {
-		    bu_vls_printf(&gedp->ged_result_str, "%s: atleast one bad value - %s %s",
+		    bu_vls_printf(gedp->ged_result_str, "%s: atleast one bad value - %s %s",
 				  argv[0], argv[7+3*i+1], argv[7+3*i+2]);
 		}
 
@@ -152,18 +152,18 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
 		break;
 
 	    default:
-		bu_vls_printf(&gedp->ged_result_str, "coordinate must be x, y, or z\n");
+		bu_vls_printf(gedp->ged_result_str, "coordinate must be x, y, or z\n");
 		return GED_ERROR;
 	}
     }
 
     if (sscanf(argv[7+3*3], "%lf", &thick) != 1 || ZERO(thick)) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: bad thicknes - %s", argv[0], argv[7+3*3]);
+	bu_vls_printf(gedp->ged_result_str, "%s: bad thicknes - %s", argv[0], argv[7+3*3]);
 	return GED_ERROR;
     }
     thick *= gedp->ged_wdbp->dbip->dbi_local2base;
 
-    RT_INIT_DB_INTERNAL(&internal);
+    RT_DB_INTERNAL_INIT(&internal);
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_ARB8;
     internal.idb_meth = &rt_functab[ID_ARB8];
@@ -222,13 +222,13 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
 
     dp = db_diradd(gedp->ged_wdbp->dbip, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&internal.idb_type);
     if (dp == RT_DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: Cannot add %s to the directory\n", argv[0], argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s: Cannot add %s to the directory\n", argv[0], argv[1]);
 	return GED_ERROR;
     }
 
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &internal, &rt_uniresource) < 0) {
 	rt_db_free_internal(&internal);
-	bu_vls_printf(&gedp->ged_result_str, "%s: Database write error, aborting.\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s: Database write error, aborting.\n", argv[0]);
     }
 
     return GED_OK;

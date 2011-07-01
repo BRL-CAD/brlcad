@@ -6,7 +6,7 @@ public:
 #ifdef __OSTORE__
     os_Collection<SCLP23_NAME(Model_contents_ptr)> &_rep;
     os_Cursor<SCLP23_NAME(Model_contents_ptr)> _cursor;
-    SCLBOOL_H(Boolean) _first;
+    Boolean _first;
 #endif
 
     SCLP23_NAME(Model_contents__list)(int = 16);

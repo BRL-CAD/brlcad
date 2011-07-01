@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file prcolor.c
+/** @file libged/prcolor.c
  *
  * The prcolor command.
  *
@@ -37,74 +37,10 @@
 
 
 static void
-ged_pr_mater(struct ged				*gedp,
-	     const struct mater	*mp,
-	     int				*ccp,
-	     int				*clp);
-static void
-ged_vls_col_item(struct bu_vls	*str,
-		 char	*cp,
-		 int		*ccp,
-		 int		*clp);
-static void
-ged_vls_col_eol(struct bu_vls	*str,
-		int		*ccp,
-		int		*clp);
-
-
-int
-ged_prcolor(struct ged *gedp, int argc, const char *argv[])
-{
-    const struct mater *mp;
-    int col_count = 0;
-    int col_len = 0;
-
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-
-    /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
-
-    if (argc != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
-	return GED_ERROR;
-    }
-
-    if (rt_material_head() == MATER_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "none");
-	return GED_OK;
-    }
-
-    for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw)
-	ged_pr_mater(gedp, mp, &col_count, &col_len);
-
-    return GED_OK;
-}
-
-static void
-ged_pr_mater(struct ged				*gedp,
-	     const struct mater	*mp,
-	     int				*ccp,
-	     int				*clp)
-{
-    char buf[128];
-
-    (void)sprintf(buf, "%5d..%d", mp->mt_low, mp->mt_high );
-    ged_vls_col_item(&gedp->ged_result_str, buf, ccp, clp);
-    (void)sprintf( buf, "%3d,%3d,%3d", mp->mt_r, mp->mt_g, mp->mt_b);
-    ged_vls_col_item(&gedp->ged_result_str, buf, ccp, clp);
-    ged_vls_col_eol(&gedp->ged_result_str, ccp, clp);
-}
-
-/**
- *			V L S _ C O L _ I T E M
- */
-static void
-ged_vls_col_item(struct bu_vls	*str,
-		 char	*cp,
-		 int		*ccp,		/* column count pointer */
-		 int		*clp)		/* column length pointer */
+pr_vls_col_item(struct bu_vls *str,
+		 char *cp,
+		 int *ccp,		/* column count pointer */
+		 int *clp)		/* column length pointer */
 {
     /* Output newline if last column printed. */
     if (*ccp >= _GED_COLUMNS || (*clp+_GED_V4_MAXNAME-1) >= _GED_TERMINAL_WIDTH) {
@@ -128,19 +64,65 @@ ged_vls_col_item(struct bu_vls	*str,
     ++*ccp;
 }
 
-/**
- *
- */
+
 static void
-ged_vls_col_eol(struct bu_vls	*str,
-		int		*ccp,
-		int		*clp)
+pr_vls_col_eol(struct bu_vls *str,
+		int *ccp,
+		int *clp)
 {
     if (*ccp != 0)		/* partial line */
 	bu_vls_putc(str, '\n');
     *ccp = 0;
     *clp = 0;
 }
+
+
+static void
+pr_mater(struct ged *gedp,
+	     const struct mater *mp,
+	     int *ccp,
+	     int *clp)
+{
+    char buf[128];
+
+    (void)sprintf(buf, "%5d..%d", mp->mt_low, mp->mt_high);
+    pr_vls_col_item(gedp->ged_result_str, buf, ccp, clp);
+    (void)sprintf(buf, "%3d, %3d, %3d", mp->mt_r, mp->mt_g, mp->mt_b);
+    pr_vls_col_item(gedp->ged_result_str, buf, ccp, clp);
+    pr_vls_col_eol(gedp->ged_result_str, ccp, clp);
+}
+
+
+int
+ged_prcolor(struct ged *gedp, int argc, const char *argv[])
+{
+    const struct mater *mp;
+    int col_count = 0;
+    int col_len = 0;
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    if (argc != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
+	return GED_ERROR;
+    }
+
+    if (rt_material_head() == MATER_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "none");
+	return GED_OK;
+    }
+
+    for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw)
+	pr_mater(gedp, mp, &col_count, &col_len);
+
+    return GED_OK;
+}
+
 
 /*
  * Local Variables:

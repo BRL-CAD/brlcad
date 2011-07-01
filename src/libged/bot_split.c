@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bot_split.c
+/** @file libged/bot_split.c
  *
  * The bot_split command.
  *
@@ -48,11 +48,11 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -60,7 +60,7 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 	struct rt_bot_list *headRblp;
 
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_QUIET)) == RT_DIR_NULL) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s: db_lookup(%s) error\n", argv[0], argv[i]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: db_lookup(%s) error\n", argv[0], argv[i]);
 	    continue;
 	}
 
@@ -68,7 +68,7 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 
 	if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	    rt_db_free_internal(&intern);
-	    bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a BOT solid!\n", argv[0], argv[i]);
+	    bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT solid!\n", argv[0], argv[i]);
 	    continue;
 	}
 
@@ -90,27 +90,27 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 		ged_make_name(gedp, ac, av);
 
 		/* Create the bot */
-		RT_INIT_DB_INTERNAL(&bot_intern);
+		RT_DB_INTERNAL_INIT(&bot_intern);
 		bot_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		bot_intern.idb_type = ID_BOT;
 		bot_intern.idb_meth = &rt_functab[ID_BOT];
 		bot_intern.idb_ptr = (genptr_t)rblp->bot;
 
-		dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&gedp->ged_result_str), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&bot_intern.idb_type);
+		dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(gedp->ged_result_str), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&bot_intern.idb_type);
 		if (dp == RT_DIR_NULL) {
-		    bu_vls_printf(&gedp->ged_result_str, " failed to be added to the database.");
+		    bu_vls_printf(gedp->ged_result_str, " failed to be added to the database.");
 		    rt_bot_list_free(headRblp, 0);
 		    rt_db_free_internal(&intern);
 		}
 
 		if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &bot_intern, &rt_uniresource) < 0) {
-		    bu_vls_printf(&gedp->ged_result_str, " failed to be added to the database.");
+		    bu_vls_printf(gedp->ged_result_str, " failed to be added to the database.");
 		    rt_bot_list_free(headRblp, 0);
 		    rt_db_free_internal(&intern);
 		}
 	    }
 
-	    bu_vls_trunc(&gedp->ged_result_str, 0);
+	    bu_vls_trunc(gedp->ged_result_str, 0);
 	}
 
 	rt_bot_list_free(headRblp, 0);
@@ -119,6 +119,7 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
+
 
 /*
  * Local Variables:

@@ -187,38 +187,24 @@ proc do_New { id } {
     global mged_gui
     global ::tk::Priv
 
-    set ret [cad_input_dialog .$id.new $mged_gui($id,screen)\
-		 "New MGED Database" \
-		 "Enter new database filename:" ia_filename "${mged_gui(databaseDir)}/" \
-		 0 {{ summary "Enter a new database name. Note - a database
-must not exist by this name."}}\
-		 OK Cancel]
+    set ftypes {{{MGED Database} {.g}} {{All Files} *}}
+    set filename [tk_getSaveFile -parent .$id \
+                                 -filetypes $ftypes \
+                                 -initialdir $mged_gui(databaseDir) \
+                                 -title "Create a New Database"]
 
-    if {$ia_filename != "" && $ret == 0} {
-	# save the directory
-	if [file isdirectory $ia_filename] {
-	    # the split followed by the join removes extra /'s
-	    set mged_gui(databaseDir) [eval file join [file split $ia_filename]]
-	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Not a database." \
-		"$ia_filename is a directory!" info 0 OK
-	    return
-	} else {
-	    set mged_gui(databaseDir) [file dirname $ia_filename]
-	}
+    if {$filename != ""} {
+        # save the current directory for subsequent file saves
+        set mged_gui(databaseDir) [file dirname $filename]
 
-	if [file exists $ia_filename] {
-	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Existing Database" \
-		"$ia_filename already exists" info 0 OK
-	} else {
-	    set ret [catch {opendb $ia_filename y} msg]
-	    if {$ret} {
-		cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Error" \
-		    $msg info 0 OK
-	    } else {
-		cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "File created" \
-		    $msg info 0 OK
-	    }
-	}
+        file delete $filename
+        if [catch {opendb $filename y} msg] {
+            cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
+            "Error" $msg info 0 OK
+        } else {
+            cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) \
+            "File created" $msg info 0 OK
+        }
     }
 }
 

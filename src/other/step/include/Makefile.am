@@ -15,3 +15,5 @@ noinst_HEADERS = \
 
 
 include $(top_srcdir)/misc/Makefile.defs
+
+EXTRA_DIST = CMakeLists.txt scl_cf_cmake.h.in

@@ -2301,6 +2301,7 @@ AC_CHECK_FUNCS(\
 	drand48 \
 	fchmod \
 	fsync \
+	getcwd \
 	getegid \
 	geteuid \
 	gethostname \
@@ -4280,7 +4281,6 @@ AC_CONFIG_FILES([
 	misc/pkgconfig/libpkg.pc
 	misc/pkgconfig/librt.pc
 	misc/pkgconfig/libwdb.pc
-	misc/win32-msvc8/Makefile
 	pix/Makefile
 	sh/Makefile
 	src/Makefile

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file killtree.c
+/** @file libged/killtree.c
  *
  * The killtree command.
  *
@@ -36,7 +36,7 @@
 #define AV_STEP 4096
 
 
-struct ged_killtree_data {
+struct killtree_data {
     struct ged *gedp;
     int killrefs;
     int nflag;
@@ -46,20 +46,17 @@ struct ged_killtree_data {
 };
 
 
-/*
- * K I L L T R E E
- */
 HIDDEN void
 killtree_callback(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 {
-    struct ged_killtree_data *gktdp = (struct ged_killtree_data *)ptr;
+    struct killtree_data *gktdp = (struct killtree_data *)ptr;
 
     if (dbip == DBI_NULL)
 	return;
 
     if (gktdp->nflag) {
-	if (!gktdp->killrefs) 
-	    bu_vls_printf(&gktdp->gedp->ged_result_str, "%s ", dp->d_namep);
+	if (!gktdp->killrefs)
+	    bu_vls_printf(gktdp->gedp->ged_result_str, "%s ", dp->d_namep);
 	else {
 	    if ((size_t)(gktdp->ac + 2) >= gktdp->av_capacity) {
 		gktdp->av = bu_realloc(gktdp->av, sizeof(char *) * (gktdp->av_capacity + AV_STEP), "realloc av");
@@ -68,18 +65,18 @@ killtree_callback(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 	    gktdp->av[gktdp->ac++] = bu_strdup(dp->d_namep);
 	    gktdp->av[gktdp->ac] = (char *)0;
 
-	    bu_vls_printf(&gktdp->gedp->ged_result_str, "%s ", dp->d_namep);
+	    bu_vls_printf(gktdp->gedp->ged_result_str, "%s ", dp->d_namep);
 	}
     } else {
 	_ged_eraseAllNamesFromDisplay(gktdp->gedp, dp->d_namep, 0);
 
-	bu_vls_printf(&gktdp->gedp->ged_result_str, "KILL %s:  %s\n",
+	bu_vls_printf(gktdp->gedp->ged_result_str, "KILL %s:  %s\n",
 		      (dp->d_flags & RT_DIR_COMB) ? "COMB" : "Solid",
 		      dp->d_namep);
 
 	if (!gktdp->killrefs) {
 	    if (db_delete(dbip, dp) != 0 || db_dirdelete(dbip, dp) != 0) {
-		bu_vls_printf(&gktdp->gedp->ged_result_str, "an error occurred while deleting %s\n", dp->d_namep);
+		bu_vls_printf(gktdp->gedp->ged_result_str, "an error occurred while deleting %s\n", dp->d_namep);
 	    }
 	} else {
 	    if ((size_t)(gktdp->ac + 2) >= gktdp->av_capacity) {
@@ -90,7 +87,7 @@ killtree_callback(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 	    gktdp->av[gktdp->ac] = (char *)0;
 
 	    if (db_delete(dbip, dp) != 0 || db_dirdelete(dbip, dp) != 0) {
-		bu_vls_printf(&gktdp->gedp->ged_result_str, "an error occurred while deleting %s\n", dp->d_namep);
+		bu_vls_printf(gktdp->gedp->ged_result_str, "an error occurred while deleting %s\n", dp->d_namep);
 
 		/* Remove from list */
 		bu_free((genptr_t)gktdp->av[--gktdp->ac], "killtree_callback");
@@ -107,7 +104,7 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     int i;
     int c;
-    struct ged_killtree_data gktd;
+    struct killtree_data gktd;
     static const char *usage = "[-a|-n] object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -115,11 +112,11 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -147,7 +144,7 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
 		gktd.av[gktd.ac] = (char *)0;
 		break;
 	    default:
-		bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		bu_free(gktd.av, "free av (error)");
 		gktd.av = NULL;
 		return GED_ERROR;
@@ -159,7 +156,7 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
 
     /* Objects that would be killed are in the first sublist */
     if (gktd.nflag)
-	bu_vls_printf(&gedp->ged_result_str, "{");
+	bu_vls_printf(gedp->ged_result_str, "{");
 
     for (i=1; i<argc; i++) {
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
@@ -178,7 +175,7 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
      * sublist of objects that reference the would-be killed objects.
      */
     if (gktd.nflag)
-	bu_vls_printf(&gedp->ged_result_str, "} {");
+	bu_vls_printf(gedp->ged_result_str, "} {");
 
     if (gktd.killrefs && gktd.ac > 1) {
 	gedp->ged_internal_call = 1;
@@ -187,14 +184,14 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
 
 	for (i=1; i<gktd.ac; i++) {
 	    if (!gktd.nflag)
-		bu_vls_printf(&gedp->ged_result_str, "Freeing %s\n", gktd.av[i]);
-	    bu_free((genptr_t)gktd.av[i], "ged_killtree_data");
+		bu_vls_printf(gedp->ged_result_str, "Freeing %s\n", gktd.av[i]);
+	    bu_free((genptr_t)gktd.av[i], "killtree_data");
 	    gktd.av[i] = NULL;
 	}
     }
 
     if (gktd.nflag)
-	bu_vls_printf(&gedp->ged_result_str, "}");
+	bu_vls_printf(gedp->ged_result_str, "}");
 
     bu_free(gktd.av, "free av");
     gktd.av = NULL;

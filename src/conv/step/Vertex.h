@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Vertex.h
+/** @file step/Vertex.h
  *
  * Class definition used to convert STEP "Vertex" to BRL-CAD BREP
  * structures.

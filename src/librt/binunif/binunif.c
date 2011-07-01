@@ -1,4 +1,4 @@
-/*                    B I N A R Y _ O B J . C
+/*                       B I N U N I F . C
  * BRL-CAD
  *
  * Copyright (c) 2001-2011 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @addtogroup db5 */
 /** @{ */
-/** @file binary_obj.c
+/** @file binunif.c
  *
  * Routines for writing binary objects to a BRL-CAD database
  * Assumes that some of the structure of such databases are known
@@ -114,7 +114,7 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
     bu_close_mapped_file(bu_fd);
 
     /* create the rt_internal form */
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     intern.idb_major_type = major_type;
     intern.idb_minor_type = minor_type;
     intern.idb_ptr = (genptr_t)bip;

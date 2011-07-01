@@ -39,11 +39,8 @@
 #include "bu.h"
 
 
-static struct bu_list bu_mapped_file_list = {
-    0,
-    (struct bu_list *)NULL,
-    (struct bu_list *)NULL
-};	/* list of currently open mapped files */
+/* list of currently open mapped files */
+static struct bu_list bu_mapped_file_list = BU_LIST_INIT_ZERO;
 
 
 struct bu_mapped_file *
@@ -65,7 +62,7 @@ bu_open_mapped_file(const char *name, const char *appl)
 
     /* See if file has already been mapped, and can be shared */
     bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
-    if (UNLIKELY(BU_LIST_UNINITIALIZED(&bu_mapped_file_list))) {
+    if (!BU_LIST_IS_INITIALIZED(&bu_mapped_file_list)) {
 	BU_LIST_INIT(&bu_mapped_file_list);
     }
     for (BU_LIST_FOR(mp, bu_mapped_file, &bu_mapped_file_list)) {

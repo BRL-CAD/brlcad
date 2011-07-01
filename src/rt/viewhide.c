@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file viewhide.c
+/** @file rt/viewhide.c
  *
  *  Ray Tracing program RTHIDE bottom half.
  *

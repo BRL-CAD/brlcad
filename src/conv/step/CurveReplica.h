@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file CurveReplica.h
+/** @file step/CurveReplica.h
  *
  * Class definition used to convert STEP "CurveReplica" to BRL-CAD BREP
  * structures.

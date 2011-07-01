@@ -41,7 +41,7 @@
 #include "raytrace.h"
 
 
-BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
+extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 
 static const char usage[] = "Usage:\n\
 	%s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-s surroundings_code] [-i idents_output_file] [-o out_file] brlcad_db.g object(s)\n\
@@ -141,161 +141,6 @@ leaf_stub(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, s
     return (union tree *)NULL;
 }
 
-#if 0
-/* Routine to identify external/void shells
- *	Marks external shells with a +1 in the flags array
- *	Marks void shells with a -1 in the flags array
- */
-static void
-nmg_find_void_shells( r, flags, ttol )
-    const struct nmgregion *r;
-    const struct bn_tol *ttol;
-    long *flags;
-{
-    struct model *m;
-    struct shell *s;
-
-    NMG_CK_REGION( r );
-
-    m = r->m_p;
-    NMG_CK_MODEL( m );
-
-    for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
-    {
-	struct face *f;
-	struct faceuse *fu;
-	vect_t normal;
-	int dir;
-
-	f = nmg_find_top_face( s, &dir, flags );
-	fu = f->fu_p;
-	if ( fu->orientation != OT_SAME )
-	    fu = fu->fumate_p;
-	if ( fu->orientation != OT_SAME )
-	    bu_exit(1, "nmg_find_void_shells: Neither faceuse nor mate have OT_SAME orient\n" );
-
-	NMG_GET_FU_NORMAL( normal, fu );
-	if ( normal[dir] > 0.0 )
-	{
-	    NMG_INDEX_ASSIGN( flags, s, 1 )	/* external shell */
-		}
-	else
-	{
-	    NMG_INDEX_ASSIGN( flags, s, -1 )	/* void shell */
-		}
-    }
-}
-
-static void
-nmg_assoc_void_shells( r, flags, ttol )
-    struct nmgregion *r;
-    long *flags;
-    const struct bn_tol *ttol;
-{
-    struct shell *s;
-    struct faceuse *fu;
-    struct loopuse *lu;
-    struct edgeuse *eu;
-    int ext_shell_id=1;
-
-    NMG_CK_REGION( r );
-
-    if ( !r->ra_p )
-	nmg_region_a( r, ttol );
-
-    for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
-    {
-
-	NMG_CK_SHELL( s );
-	if ( !s->sa_p )
-	    nmg_shell_a( s, ttol );
-
-	if ( NMG_INDEX_GET( flags, s ) == 1 )
-	{
-	    struct shell *void_s;
-
-	    /* identify this external shell */
-	    NMG_INDEX_ASSIGN( flags, s, ++ext_shell_id );
-
-	    /* found an external shell, look for voids */
-	    for ( BU_LIST_FOR( void_s, shell, &r->s_hd ) )
-	    {
-		int wrong_void=0;
-
-		if ( void_s == s )
-		    continue;
-
-		NMG_CK_SHELL( s );
-		if ( !s->sa_p )
-		    nmg_shell_a( s, ttol );
-
-		if ( NMG_INDEX_GET( flags, void_s ) == (-1) )
-		{
-		    struct shell *test_s;
-		    int breakout=0;
-		    int not_in_this_shell=0;
-
-		    /* this is a void shell
-		     * but does it belong with external shell s */
-		    if ( !V3RPP1_IN_RPP2( void_s->sa_p->min_pt, void_s->sa_p->max_pt, s->sa_p->min_pt, s->sa_p->max_pt ) )
-			continue;
-
-		    for ( BU_LIST_FOR( fu, faceuse, &void_s->fu_hd ) )
-		    {
-			for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
-			{
-			    if ( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
-				continue;
-			    for ( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
-			    {
-				int class;
-
-				class = nmg_class_pt_s( eu->vu_p->v_p->vg_p->coord, s, 1, ttol );
-
-				if ( class == NMG_CLASS_AoutB )
-				{
-				    breakout = 1;
-				    not_in_this_shell = 1;
-				    break;
-				}
-				else if ( class == NMG_CLASS_AinB )
-				{
-				    breakout = 1;
-				    break;
-				}
-			    }
-			    if ( breakout )
-				break;
-			}
-			if ( breakout )
-			    break;
-		    }
-
-		    if ( not_in_this_shell )
-			continue;
-
-		    /* Make sure there are no other external shells between these two */
-		    for ( BU_LIST_FOR( test_s, shell, &r->s_hd ) )
-		    {
-			if ( NMG_INDEX_GET( flags, test_s ) > 1 )
-			{
-
-			    if ( !V3RPP1_IN_RPP2( void_s->sa_p->min_pt, void_s->sa_p->max_pt, test_s->sa_p->min_pt, test_s->sa_p->max_pt ) )
-				continue;
-			}
-		    }
-		    if ( wrong_void )
-			continue;
-
-		    /* This void shell belongs with shell s
-		     * mark it with the negative of external shells flag id */
-		    NMG_INDEX_ASSIGN( flags, void_s, (-NMG_INDEX_GET( flags, s )) );
-		}
-	    }
-	}
-    }
-}
-#endif
 
 /*	Routine to write an nmgregion in the TANKILL format */
 static void
@@ -329,96 +174,11 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, const struc
 	    return;
 	}
     }
-#if 0
-
-    /* First make sure that each shell is broken down into maximally connected shells
-     * and while we're at it, split touching loops
-     */
-    bu_ptbl_init( &shells, 64, " &shells ");
-    for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
-    {
-	NMG_CK_SHELL( s );
-	bu_ptbl_ins( &shells, (long *)s );
-	nmg_s_split_touchingloops( s, &tol );
-    }
-
-    for ( i=0; i<BU_PTBL_END( &shells ); i++ )
-    {
-	s = (struct shell *)BU_PTBL_GET( &shells, i );
-	(void)nmg_decompose_shell( s, &tol );
-    }
-
-    bu_ptbl_free( &shells );
-
-    /* Now triangulate the entire model */
-    nmg_triangulate_model( r->m_p, &tol );
-
-    /* FIXME: temporary fix for OT_UNSPEC loops */
-    for ( BU_LIST_FOR( r, nmgregion, &l->r_hd ) )
-    {
-	for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
-	{
-	    struct faceuse *fu;
-
-	    for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
-	    {
-		struct loopuse *lu;
-
-		for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
-		{
-		    if ( lu->orientation == OT_UNSPEC )
-			lu->orientation = OT_SAME;
-		}
-	    }
-	}
-    }
-
-    r = BU_LIST_FIRST( nmgregion, &the_model->r_hd );
-
-    /* Need a flag array to insure that no loops are missed */
-    flags = (long *)bu_calloc( (*tsp->ts_m)->maxindex, sizeof( long ), "g-tankill: flags" );
-
-    /* Worry about external/void shells here
-     * void shells should be merged back into their respective external shells
-     * first mark all shells as external or void
-     */
-    nmg_find_void_shells( r, flags, &tol );
-
-    /* Now asociate void shells with their respective external shells */
-    nmg_assoc_void_shells( r, flags, &tol );
-
-    /* Now merge external shell with all its void shells */
-    for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
-    {
-	if ( NMG_INDEX_GET( flags, s ) > 1 )
-	{
-	    struct shell *s2;
-
-	    s2 = BU_LIST_FIRST( shell, &r->s_hd );
-	    while ( BU_LIST_NOT_HEAD( s2, &r->s_hd ) )
-	    {
-		if ( NMG_INDEX_GET( flags, s2 ) == (-NMG_INDEX_GET( flags, s ) ) )
-		{
-		    struct shell *s_next;
-
-		    s_next = BU_LIST_PNEXT( shell, s2 );
-		    nmg_js( s, s2, &tol );
-		    s2 = s_next;
-		}
-		else
-		    s2 = BU_LIST_PNEXT( shell, s2 );
-	    }
-	}
-	else if ( NMG_INDEX_GET( flags, s ) > (-2) )
-	    bu_log( "Shell x%x is incorrectly marked as %d\n", s, NMG_INDEX_GET( flags, s ) );
-    }
-#else
     /* Now triangulate the entire model */
     nmg_triangulate_model( m, &tol );
 
     /* Need a flag array to insure that no loops are missed */
     flags = (long *)bu_calloc( m->maxindex, sizeof( long ), "g-tankill: flags" );
-#endif
 
     /* Output each shell as a TANKILL object */
     bu_ptbl_init( &vertices, 64, " &vertices ");
@@ -618,7 +378,7 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, const struc
 		 tsp->ts_mater.ma_shader );
     }
 
- outt:	bu_free( (char *)flags, "g-tankill: flags" );
+outt:	bu_free( (char *)flags, "g-tankill: flags" );
     bu_ptbl_free( &vertices );
 }
 
@@ -984,7 +744,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
     BU_GETUNION(curtree, tree);
-    RT_INIT_TREE(curtree);
+    RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
     return curtree;
 }

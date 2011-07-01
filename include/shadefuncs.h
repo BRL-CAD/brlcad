@@ -26,6 +26,9 @@
 #ifndef SHADEFUNCS
 #define SHADEFUNCS
 
+#include "shadework.h"
+
+
 #ifndef OPTICAL_EXPORT
 #   if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
 #      ifdef OPTICAL_EXPORT_DLL
@@ -44,15 +47,23 @@
  *  The interface to the various material property & texture routines.
  */
 struct mfuncs {
-    unsigned long	mf_magic;	/**< @brief  To validate structure */
-    char		*mf_name;	/**< @brief  Keyword for material */
-    struct mfuncs	*mf_forw;	/**< @brief  Forward link */
-    int		mf_inputs;	/**< @brief  shadework inputs needed */
-    int		mf_flags;	/**< @brief  Flags describing shader */
-    int		(*mf_setup)();	/**< @brief  Routine for preparing */
-    int		(*mf_render)();	/**< @brief  Routine for rendering */
-    void		(*mf_print)();	/**< @brief  Routine for printing */
-    void		(*mf_free)();	/**< @brief  Routine for releasing storage */
+    unsigned long mf_magic;	/**< @brief To validate structure */
+    char *mf_name;		/**< @brief Keyword for material */
+    struct mfuncs *mf_forw;	/**< @brief Forward link */
+    int mf_inputs;		/**< @brief shadework inputs needed */
+    int mf_flags;		/**< @brief Flags describing shader */
+    int (*mf_setup)(struct region *rp,
+		    struct bu_vls *matparm,
+		    genptr_t *dpp,
+		    const struct mfuncs *mfp,
+		    struct rt_i *rtip); /**< @brief Routine for preparing */
+    int (*mf_render)(struct application *ap,
+		     const struct partition *pp,
+		     struct shadework *swp,
+		     genptr_t dp);	/**< @brief Routine for rendering */
+    void (*mf_print)(struct region *rp,
+		     genptr_t dp);	/**< @brief Routine for printing */
+    void (*mf_free)(genptr_t cp);	/**< @brief Routine for releasing storage */
 };
 #define MF_NULL		((struct mfuncs *)0)
 #define RT_CK_MF(_p)	BU_CKMAG(_p, MF_MAGIC, "mfuncs")
@@ -74,17 +85,14 @@ struct mfuncs {
 #define MFF_PROC	0x01		/**< @brief  shader is procedural, computes tr/re/hits */
 
 /* defined in material.c */
-OPTICAL_EXPORT BU_EXTERN(void mlib_add_shader,
-			 (struct mfuncs **headp,
-			  struct mfuncs *mfp1));
+OPTICAL_EXPORT extern void mlib_add_shader(struct mfuncs **headp,
+					   struct mfuncs *mfp1);
 
-OPTICAL_EXPORT BU_EXTERN(int mlib_setup,
-			 (struct mfuncs **headp,
-			  struct region *rp,
-			  struct rt_i *rtip));
+OPTICAL_EXPORT extern int mlib_setup(struct mfuncs **headp,
+				     struct region *rp,
+				     struct rt_i *rtip);
 
-OPTICAL_EXPORT BU_EXTERN(void mlib_free,
-			 (struct region *rp));
+OPTICAL_EXPORT extern void mlib_free(struct region *rp);
 
 /**
  * L O A D _ D Y N A M I C _ S H A D E R
@@ -92,7 +100,7 @@ OPTICAL_EXPORT BU_EXTERN(void mlib_free,
  * Given a shader/material name, try to find a DSO to supply the
  * shader.
  */
-OPTICAL_EXPORT BU_EXTERN(struct mfuncs *load_dynamic_shader, (const char *material));
+OPTICAL_EXPORT extern struct mfuncs *load_dynamic_shader(const char *material);
 
 #endif
 /** @} */

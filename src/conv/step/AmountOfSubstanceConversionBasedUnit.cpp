@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file AmountOfSubstanceConversionBasedUnit.cpp
+/** @file step/AmountOfSubstanceConversionBasedUnit.cpp
  *
  * Routines to convert STEP "AmountOfSubstanceConversionBasedUnit" to BRL-CAD BREP
  * structures.

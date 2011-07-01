@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tea.h
+/** @file proc-db/tea.h
  *
  * Utah Teapot vertex data (ducks) and patch data
  *

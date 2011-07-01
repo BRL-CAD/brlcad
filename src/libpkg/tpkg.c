@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file tpkg.c
+/** @file libpkg/tpkg.c
  *
  * Relatively simple example file transfer program using libpkg,
  * written in a ttcp style.

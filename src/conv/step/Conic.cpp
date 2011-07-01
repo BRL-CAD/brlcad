@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Conic.cpp
+/** @file step/Conic.cpp
  *
  * Routines to convert STEP "Conic" to BRL-CAD BREP
  * structures.

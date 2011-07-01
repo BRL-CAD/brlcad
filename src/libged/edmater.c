@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file edmater.c
+/** @file libged/edmater.c
  *
  * The edmater command.
  *
@@ -43,7 +43,6 @@ ged_edmater(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "comb(s)";
     char tmpfil[MAXPATHLEN];
     const char *editstring = NULL;
-    
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -54,7 +53,7 @@ ged_edmater(struct ged *gedp, int argc, const char *argv[])
     while ((c = bu_getopt(argc, (char * const *)argv, "E:")) != -1) {
 	switch (c) {
 	    case 'E' :
-	    	editstring = bu_optarg;
+		editstring = bu_optarg;
 		break;
 	    default :
 		break;
@@ -66,11 +65,11 @@ ged_edmater(struct ged *gedp, int argc, const char *argv[])
 
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file vrlink.c
+/** @file mged/vrlink.c
  *
  */
 
@@ -117,7 +117,7 @@ void
 vr_viewpoint_hook(void)
 {
     struct bu_vls str;
-    static struct bu_vls old_str;
+    static struct bu_vls *old_str = NULL;
     quat_t orient;
 
     if (vrmgr == PKC_NULL) {
@@ -125,14 +125,17 @@ vr_viewpoint_hook(void)
 	return;
     }
 
-    bu_vls_init_if_uninit(&old_str);
+    if (!old_str) {
+	BU_GETSTRUCT(old_str, bu_vls);
+	bu_vls_init(old_str);
+    }
     bu_vls_init(&str);
 
     quat_mat2quat(orient, view_state->vs_gvp->gv_rotation);
 
     /* Need to send current viewpoint to VR mgr */
     /* XXX more will be needed */
-    /* Eye point, quaturnion for orientation */
+    /* Eye point, quaternion for orientation */
     bu_vls_printf(&str, "pov {%e %e %e}   {%e %e %e %e}   %e   {%e %e %e}  %e\n",
 		  -view_state->vs_gvp->gv_center[MDX],
 		  -view_state->vs_gvp->gv_center[MDY],
@@ -142,7 +145,7 @@ vr_viewpoint_hook(void)
 		  V3ARGS(view_state->vs_gvp->gv_eye_pos),
 		  view_state->vs_gvp->gv_perspective);
 
-    if (bu_vls_strcmp(&old_str, &str) == 0) {
+    if (bu_vls_strcmp(old_str, &str) == 0) {
 	bu_vls_free(&str);
 	return;
     }
@@ -153,8 +156,8 @@ vr_viewpoint_hook(void)
 	vrmgr = PKC_NULL;
 	viewpoint_hook = 0;	/* Relinquish this hook */
     }
-    bu_vls_trunc(&old_str, 0);
-    bu_vls_vlscat(&old_str, &str);
+    bu_vls_trunc(old_str, 0);
+    bu_vls_vlscat(old_str, &str);
     bu_vls_free(&str);
 }
 

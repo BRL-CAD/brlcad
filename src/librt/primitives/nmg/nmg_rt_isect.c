@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_rt_isect.c
+/** @file primitives/nmg/nmg_rt_isect.c
  *
  * Support routines for raytracing an NMG.
  *
@@ -2687,7 +2687,7 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
     ap.a_resource = &rt_uniresource;
     rt_uniresource.re_magic = RESOURCE_MAGIC;
 
-    if (BU_LIST_UNINITIALIZED(&rt_uniresource.re_nmgfree))
+    if (!BU_LIST_IS_INITIALIZED(&rt_uniresource.re_nmgfree))
 	BU_LIST_INIT(&rt_uniresource.re_nmgfree);
 
     rd.rd_m = nmg_find_model(&s->l.magic);
@@ -2787,7 +2787,7 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
     NMG_FREE_HITLIST(&rd.rd_hit, &ap);
 
     /* free the hitmiss freelist, filled during NMG_FREE_HITLIST */
-    if (!BU_LIST_UNINITIALIZED(&rt_uniresource.re_nmgfree)) {
+    if (BU_LIST_IS_INITIALIZED(&rt_uniresource.re_nmgfree)) {
 	struct hitmiss *hitp;
 	while (BU_LIST_WHILE(hitp, hitmiss, &rt_uniresource.re_nmgfree)) {
 	    NMG_CK_HITMISS(hitp);

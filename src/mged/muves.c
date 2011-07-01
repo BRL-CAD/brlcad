@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file muves.c
+/** @file mged/muves.c
  *
  * Routines to support viewing of BRL-CAD models by using MUVES
  * component/system names

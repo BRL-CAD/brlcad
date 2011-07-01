@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file dsp.c
+/** @file primitives/dsp/dsp.c
  *
  * Intersect a ray with a displacement map.
  *
@@ -155,7 +155,7 @@ dsp_val(struct rt_dsp_internal *dsp_i, unsigned x, unsigned y, char *file, int l
     RT_DSP_CK_MAGIC(dsp_i);
 
     if (x >= dsp_i->dsp_xcnt || y >= dsp_i->dsp_ycnt) {
-	bu_log("%s:%d xy: %u, %u cnt: %u, %u\n",
+	bu_log("%s:%d xy: %u, %u cnt: %zu, %zu\n",
 	       file, line, x, y, dsp_i->dsp_xcnt, dsp_i->dsp_ycnt);
 	bu_bomb("");
     }
@@ -543,7 +543,7 @@ dsp_print_v4(struct bu_vls *vls, const struct rt_dsp_internal *dsp_ip)
     BU_CK_VLS(&dsp_ip->dsp_name);
     BU_CK_VLS(vls);
 
-    bu_vls_printf(vls, "Displacement Map\n  file='%s' w=%d n=%d sm=%d",
+    bu_vls_printf(vls, "Displacement Map\n  file='%s' w=%zu n=%zu sm=%d",
 		  bu_vls_addr(&dsp_ip->dsp_name),
 		  dsp_ip->dsp_xcnt,
 		  dsp_ip->dsp_ycnt,
@@ -602,7 +602,7 @@ dsp_print_v5(struct bu_vls *vls,
 	    break;
     }
 
-    bu_vls_printf(vls, "='%s'\n  w=%d n=%d sm=%d ",
+    bu_vls_printf(vls, "='%s'\n  w=%zu n=%zu sm=%d ",
 		  bu_vls_addr(&dsp_ip->dsp_name),
 		  dsp_ip->dsp_xcnt,
 		  dsp_ip->dsp_ycnt,
@@ -881,7 +881,7 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 #ifdef PLOT_LAYERS
     if (RT_G_DEBUG & DEBUG_HF) {
 	plot_layers(dsp);
-	bu_log("_  x:%d y:%d min %d max %d\n",
+	bu_log("_  x:%zu y:%zu min %d max %d\n",
 	       XCNT(dsp), YCNT(dsp), dsp_min, dsp_max);
     }
 #endif
@@ -3040,7 +3040,7 @@ rt_dsp_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	uvp->uv_dv = min_r_V;
 
     if (RT_G_DEBUG & DEBUG_HF)
-	bu_log("rt_dsp_uv(pt:%g, %g siz:%d, %d)\n U_len=%g V_len=%g\n r=%g rbeam=%g diverge=%g dist=%g\n u=%g v=%g du=%g dv=%g\n",
+	bu_log("rt_dsp_uv(pt:%g, %g siz:%zu, %zu)\n U_len=%g V_len=%g\n r=%g rbeam=%g diverge=%g dist=%g\n u=%g v=%g du=%g dv=%g\n",
 	       pt[X], pt[Y], XSIZ(dsp), YSIZ(dsp),
 	       U_len, V_len,
 	       r, ap->a_rbeam, ap->a_diverge, hitp->hit_dist,
@@ -3991,7 +3991,7 @@ get_file_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
     }
 
     if ((size_t)dsp_ip->dsp_mp->buflen != (size_t)(dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt*2)) {
-	bu_log("DSP buffer wrong size: %d s/b %d ",
+	bu_log("DSP buffer wrong size: %zu s/b %zu ",
 	       dsp_ip->dsp_mp->buflen, dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt*2);
 	return -1;
     }
@@ -4011,7 +4011,7 @@ get_file_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 	got = bu_cv_w_cookie(mf->apbuf, out_cookie, mf->apbuflen,
 			     mf->buf,    in_cookie, count);
 	if (got != (size_t)count) {
-	    bu_log("got %d != count %d", got, count);
+	    bu_log("got %zu != count %d", got, count);
 	    bu_bomb("\n");
 	}
 	dsp_ip->dsp_buf = dsp_ip->dsp_mp->apbuf;
@@ -4051,7 +4051,7 @@ get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
     bip = dsp_ip->dsp_bip->idb_ptr;
 
     if (RT_G_DEBUG & DEBUG_HF)
-	bu_log("binunif magic: 0x%08x  type: %d count:%d data[0]:%u\n",
+	bu_log("binunif magic: 0x%08x  type: %d count:%zu data[0]:%u\n",
 	       bip->magic, bip->type, bip->count, bip->u.uint16[0]);
 
 
@@ -4068,7 +4068,7 @@ get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 			     bip->u.uint16, in_cookie, bip->count);
 
 	if (got != bip->count) {
-	    bu_log("got %d != count %zu", got, bip->count);
+	    bu_log("got %zu != count %zu", got, bip->count);
 	    bu_bomb("\n");
 	}
     }
@@ -4331,7 +4331,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     dsp_ip->dsp_xcnt = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
     if (dsp_ip->dsp_xcnt < 2) {
-	bu_log("%s:%d DSP X dimension (%d) < 2 \n",
+	bu_log("%s:%d DSP X dimension (%zu) < 2 \n",
 	       __FILE__, __LINE__,
 	       dsp_ip->dsp_xcnt);
     }
@@ -4340,7 +4340,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     dsp_ip->dsp_ycnt = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
     if (dsp_ip->dsp_ycnt < 2) {
-	bu_log("%s:%d DSP X dimension (%d) < 2 \n",
+	bu_log("%s:%d DSP X dimension (%zu) < 2 \n",
 	       __FILE__, __LINE__,
 	       dsp_ip->dsp_ycnt);
     }

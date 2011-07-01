@@ -19,7 +19,7 @@
  */
 /** @addtogroup plot */
 /** @{ */
-/** @file plot3.c
+/** @file libbn/plot3.c
  *
  * @brief A public-domain UNIX plot library, for 2-D and 3-D plotting
  * in 16-bit VAX signed integer spaces, or 64-bit IEEE floating point.

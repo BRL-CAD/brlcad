@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ThermodynamicTemperatureUnit.h
+/** @file step/ThermodynamicTemperatureUnit.h
  *
  * Class definition used to convert STEP "ThermodynamicTemperatureUnit" to BRL-CAD BREP
  * structures.

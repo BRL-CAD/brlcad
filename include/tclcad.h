@@ -52,14 +52,6 @@ __BEGIN_DECLS
 #  endif
 #endif
 
-/*
- *  Macros for providing function prototypes, regardless of whether
- *  the compiler understands them or not.
- *  It is vital that the argument list given for "args" be enclosed
- *  in parens.
- */
-#define TCLCAD_EXTERN(type_and_name, args) extern type_and_name args
-#define TCLCAD_ARGS(args) args
 
 struct tclcad_obj {
     struct bu_list	l;
@@ -69,23 +61,20 @@ struct tclcad_obj {
 
 #define TCLCAD_OBJ_NULL (struct tclcad_obj *)0
 
-TCLCAD_EXPORT TCLCAD_EXTERN(int tclcad_tk_setup, (Tcl_Interp *interp));
-TCLCAD_EXPORT TCLCAD_EXTERN(void tclcad_auto_path, (Tcl_Interp *interp));
-TCLCAD_EXPORT TCLCAD_EXTERN(void tclcad_tcl_library, (Tcl_Interp *interp));
-TCLCAD_EXPORT TCLCAD_EXTERN(int Tclcad_Init, (Tcl_Interp *interp));
+TCLCAD_EXPORT extern int tclcad_tk_setup(Tcl_Interp *interp);
+TCLCAD_EXPORT extern void tclcad_auto_path(Tcl_Interp *interp);
+TCLCAD_EXPORT extern void tclcad_tcl_library(Tcl_Interp *interp);
+TCLCAD_EXPORT extern int Tclcad_Init(Tcl_Interp *interp);
 
 /* defined in tclcad_obj.c */
-TCLCAD_EXPORT BU_EXTERN(int Go_Init,
-			(Tcl_Interp *interp));
-TCLCAD_EXPORT BU_EXTERN(int to_open_tcl,
-			(ClientData UNUSED(clientData),
-			 Tcl_Interp *interp,
-			 int argc,
-			 const char **argv));
-TCLCAD_EXPORT BU_EXTERN(struct application *to_rt_gettrees_application,
-			(struct ged *gedp,
-			 int argc,
-			 const char *argv[]));
+TCLCAD_EXPORT extern int Go_Init(Tcl_Interp *interp);
+TCLCAD_EXPORT extern int to_open_tcl(ClientData UNUSED(clientData),
+				     Tcl_Interp *interp,
+				     int argc,
+				     const char **argv);
+TCLCAD_EXPORT extern struct application *to_rt_gettrees_application(struct ged *gedp,
+								    int argc,
+								    const char *argv[]);
 
 
 

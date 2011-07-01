@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ShapeRepresentation.h
+/** @file step/ShapeRepresentation.h
  *
  * Class definition used to convert STEP "ShapeRepresentation" to BRL-CAD BREP
  * structures.

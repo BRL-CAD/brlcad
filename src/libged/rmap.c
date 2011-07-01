@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rmap.c
+/** @file libged/rmap.c
  *
  * The rmap command.
  *
@@ -48,15 +48,15 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
 	return GED_ERROR;
     }
 
     if (db_version(gedp->ged_wdbp->dbip) < 5) {
-	bu_vls_printf(&gedp->ged_result_str, "%s is not available prior to version 5 of the .g file format\n", argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "%s is not available prior to version 5 of the .g file format\n", argv[0]);
 	return GED_ERROR;
     }
 
@@ -76,7 +76,7 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
 				   gedp->ged_wdbp->dbip,
 				   (fastf_t *)NULL,
 				   &rt_uniresource) < 0) {
-		bu_vls_printf(&gedp->ged_result_str, "%s: Database read error, aborting", argv[0]);
+		bu_vls_printf(gedp->ged_result_str, "%s: Database read error, aborting", argv[0]);
 		return GED_ERROR;
 	    }
 
@@ -120,18 +120,18 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
     while (BU_LIST_WHILE(itnp, _ged_id_to_names, &headIdName.l)) {
 
 	/* add this id to the list */
-	bu_vls_printf(&gedp->ged_result_str, "%d {", itnp->id);
+	bu_vls_printf(gedp->ged_result_str, "%d {", itnp->id);
 
 	/* start sublist of names associated with this id */
 	while (BU_LIST_WHILE(inp, _ged_id_names, &itnp->headName.l)) {
 	    /* add the this name to this sublist */
-	    bu_vls_printf(&gedp->ged_result_str, " %s", bu_vls_addr(&inp->name));
+	    bu_vls_printf(gedp->ged_result_str, " %s", bu_vls_addr(&inp->name));
 
 	    BU_LIST_DEQUEUE(&inp->l);
 	    bu_vls_free(&inp->name);
 	    bu_free((genptr_t)inp, "ged_rmap: inp");
 	}
-	bu_vls_printf(&gedp->ged_result_str, " } "); /* , itnp->id); */
+	bu_vls_printf(gedp->ged_result_str, " } "); /* , itnp->id); */
 
 	BU_LIST_DEQUEUE(&itnp->l);
 	bu_free((genptr_t)itnp, "ged_rmap: itnp");

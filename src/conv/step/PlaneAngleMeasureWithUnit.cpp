@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file PlaneAngleMeasureWithUnit.cpp
+/** @file step/PlaneAngleMeasureWithUnit.cpp
  *
  * Routines to convert STEP "PlaneAngleMeasureWithUnit" to BRL-CAD BREP
  * structures.

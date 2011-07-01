@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file viewcell.c
+/** @file rt/viewcell.c
  *
  *  Ray Tracing program RTCELL bottom half.
  *

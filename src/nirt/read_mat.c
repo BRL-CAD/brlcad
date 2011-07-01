@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file read_mat.c
+/** @file nirt/read_mat.c
  *
  * This program is Natalie's Interactive Ray-Tracer
  *

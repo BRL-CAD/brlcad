@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file main.c
+/** @file bwish/main.c
  *
  * This file provides the main() function for both BWISH and BTCLSH.
  * While initializing Tcl, Itcl and various BRL-CAD libraries it sets
@@ -263,7 +263,7 @@ Cad_AppInit(Tcl_Interp *interp)
 
     /* Initialize libtclcad's GED Object */
     if (Go_Init(interp) == TCL_ERROR) {
-	bu_log("Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	bu_log("Go_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
 

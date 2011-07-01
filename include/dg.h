@@ -117,192 +117,151 @@ GED_EXPORT extern struct dg_obj HeadDGObj;		/**< @brief  head of drawable geomet
 #define GED_DGO_NULL		((struct dg_obj *)NULL)
 
 /* defined in dg_obj.c */
-GED_EXPORT BU_EXTERN(int Dgo_Init,
-		    (Tcl_Interp *interp));
-GED_EXPORT BU_EXTERN(int dgo_cmd,
-		    (ClientData clientData,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char **argv));
-GED_EXPORT BU_EXTERN(int dgo_set_outputHandler_cmd,
-		    (struct dg_obj	*dgop,
-		     Tcl_Interp		*interp,
-		     int		argc,
-		     char 		**argv));
-GED_EXPORT BU_EXTERN(int dgo_set_transparency_cmd,
-		    (struct dg_obj	*dgop,
-		     Tcl_Interp		*interp,
-		     int		argc,
-		     char 		**argv));
-GED_EXPORT BU_EXTERN(int	dgo_observer_cmd,
-		    (struct dg_obj *dgop,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char **argv));
-GED_EXPORT BU_EXTERN(void dgo_deleteProc,
-		    (ClientData clientData));
-GED_EXPORT BU_EXTERN(void dgo_autoview,
-		    (struct dg_obj *dgop,
-		     struct view_obj *vop,
-		     Tcl_Interp *interp));
-GED_EXPORT BU_EXTERN(int	dgo_autoview_cmd,
-		    (struct dg_obj *dgop,
-		     struct view_obj *vop,
-		     Tcl_Interp *interp,
-		     int argc, char **argv));
-GED_EXPORT BU_EXTERN(int	dgo_blast_cmd,
-		    (struct dg_obj *dgop,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char **argv));
-GED_EXPORT BU_EXTERN(int	dgo_draw_cmd,
-		    (struct dg_obj *dgop,
-		     Tcl_Interp *interp,
-		     int argc, char **argv,
-		     int kind));
-GED_EXPORT BU_EXTERN(int	dgo_E_cmd,
-		    (struct dg_obj *dgop,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char **argv));
-GED_EXPORT BU_EXTERN(int	dgo_erase_cmd,
-		    (struct dg_obj *dgop,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char **argv));
-GED_EXPORT BU_EXTERN(int	dgo_erase_all_cmd,
-		    (struct dg_obj *dgop,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char **argv));
-GED_EXPORT BU_EXTERN(int	dgo_get_autoview_cmd,
-		    (struct dg_obj *dgop,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char **argv));
-GED_EXPORT BU_EXTERN(int	dgo_how_cmd,
-		    (struct dg_obj *dgop,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char **argv));
-GED_EXPORT BU_EXTERN(int	dgo_illum_cmd,
-		    (struct dg_obj *dgop,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char **argv));
-GED_EXPORT BU_EXTERN(int	dgo_label_cmd,
-		    (struct dg_obj *dgop,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char **argv));
-GED_EXPORT BU_EXTERN(struct dg_obj *dgo_open_cmd,
-		    (char *oname,
-		     struct rt_wdb *wdbp));
-GED_EXPORT BU_EXTERN(int	dgo_overlay_cmd,
-		    (struct dg_obj *dgop,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char **argv));
-GED_EXPORT BU_EXTERN(int	dgo_report_cmd,
-		    (struct dg_obj *dgop,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char **argv));
-GED_EXPORT BU_EXTERN(int	dgo_rt_cmd,
-		    (struct dg_obj *dgop,
-		     struct view_obj *vop,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char **argv));
-GED_EXPORT BU_EXTERN(int	dgo_rtabort_cmd,
-		    (struct dg_obj *dgop,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char **argv));
-GED_EXPORT BU_EXTERN(int	dgo_rtcheck_cmd,
-		    (struct dg_obj *dgop,
-		     struct view_obj *vop,
-		     Tcl_Interp *interp,
-		     int argc, char **argv));
-GED_EXPORT BU_EXTERN(int	dgo_who_cmd,
-		    (struct dg_obj *dgop,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char **argv));
-GED_EXPORT BU_EXTERN(void dgo_zap_cmd,
-		    (struct dg_obj *dgop,
-		     Tcl_Interp *interp));
-GED_EXPORT BU_EXTERN(int	dgo_shaded_mode_cmd,
-		    (struct dg_obj *dgop,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char **argv));
-GED_EXPORT BU_EXTERN(int dgo_tree_cmd,
-		    (struct dg_obj *dgop,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char **argv));
+GED_EXPORT extern int Dgo_Init(Tcl_Interp *interp);
+GED_EXPORT extern int dgo_cmd(ClientData clientData,
+			      Tcl_Interp *interp,
+			      int argc,
+			      char **argv);
+GED_EXPORT extern int dgo_set_outputHandler_cmd(struct dg_obj	*dgop,
+						Tcl_Interp		*interp,
+						int		argc,
+						char 		**argv);
+GED_EXPORT extern int dgo_set_transparency_cmd(struct dg_obj	*dgop,
+					       Tcl_Interp		*interp,
+					       int		argc,
+					       char 		**argv);
+GED_EXPORT extern int	dgo_observer_cmd(struct dg_obj *dgop,
+					 Tcl_Interp *interp,
+					 int argc,
+					 char **argv);
+GED_EXPORT extern void dgo_deleteProc(ClientData clientData);
+GED_EXPORT extern void dgo_autoview(struct dg_obj *dgop,
+				    struct view_obj *vop,
+				    Tcl_Interp *interp);
+GED_EXPORT extern int	dgo_autoview_cmd(struct dg_obj *dgop,
+					 struct view_obj *vop,
+					 Tcl_Interp *interp,
+					 int argc, char **argv);
+GED_EXPORT extern int	dgo_blast_cmd(struct dg_obj *dgop,
+				      Tcl_Interp *interp,
+				      int argc,
+				      char **argv);
+GED_EXPORT extern int	dgo_draw_cmd(struct dg_obj *dgop,
+				     Tcl_Interp *interp,
+				     int argc, char **argv,
+				     int kind);
+GED_EXPORT extern int	dgo_E_cmd(struct dg_obj *dgop,
+				  Tcl_Interp *interp,
+				  int argc,
+				  char **argv);
+GED_EXPORT extern int	dgo_erase_cmd(struct dg_obj *dgop,
+				      Tcl_Interp *interp,
+				      int argc,
+				      char **argv);
+GED_EXPORT extern int	dgo_erase_all_cmd(struct dg_obj *dgop,
+					  Tcl_Interp *interp,
+					  int argc,
+					  char **argv);
+GED_EXPORT extern int	dgo_get_autoview_cmd(struct dg_obj *dgop,
+					     Tcl_Interp *interp,
+					     int argc,
+					     char **argv);
+GED_EXPORT extern int	dgo_how_cmd(struct dg_obj *dgop,
+				    Tcl_Interp *interp,
+				    int argc,
+				    char **argv);
+GED_EXPORT extern int	dgo_illum_cmd(struct dg_obj *dgop,
+				      Tcl_Interp *interp,
+				      int argc,
+				      char **argv);
+GED_EXPORT extern int	dgo_label_cmd(struct dg_obj *dgop,
+				      Tcl_Interp *interp,
+				      int argc,
+				      char **argv);
+GED_EXPORT extern struct dg_obj *dgo_open_cmd(char *oname,
+					      struct rt_wdb *wdbp);
+GED_EXPORT extern int	dgo_overlay_cmd(struct dg_obj *dgop,
+					Tcl_Interp *interp,
+					int argc,
+					char **argv);
+GED_EXPORT extern int	dgo_report_cmd(struct dg_obj *dgop,
+				       Tcl_Interp *interp,
+				       int argc,
+				       char **argv);
+GED_EXPORT extern int	dgo_rt_cmd(struct dg_obj *dgop,
+				   struct view_obj *vop,
+				   Tcl_Interp *interp,
+				   int argc,
+				   char **argv);
+GED_EXPORT extern int	dgo_rtabort_cmd(struct dg_obj *dgop,
+					Tcl_Interp *interp,
+					int argc,
+					char **argv);
+GED_EXPORT extern int	dgo_rtcheck_cmd(struct dg_obj *dgop,
+					struct view_obj *vop,
+					Tcl_Interp *interp,
+					int argc, char **argv);
+GED_EXPORT extern int	dgo_who_cmd(struct dg_obj *dgop,
+				    Tcl_Interp *interp,
+				    int argc,
+				    char **argv);
+GED_EXPORT extern void dgo_zap_cmd(struct dg_obj *dgop,
+				   Tcl_Interp *interp);
+GED_EXPORT extern int	dgo_shaded_mode_cmd(struct dg_obj *dgop,
+					    Tcl_Interp *interp,
+					    int argc,
+					    char **argv);
+GED_EXPORT extern int dgo_tree_cmd(struct dg_obj *dgop,
+				   Tcl_Interp *interp,
+				   int argc,
+				   char **argv);
 
-GED_EXPORT BU_EXTERN(void dgo_color_soltab,
-		    ());
-GED_EXPORT BU_EXTERN(void dgo_eraseobjall_callback,
-		    (struct db_i	*dbip,
-		     Tcl_Interp		*interp,
-		     struct directory	*dp,
-		     int		notify));
-GED_EXPORT BU_EXTERN(void dgo_eraseobjpath,
-		    ());
-GED_EXPORT BU_EXTERN(void dgo_impending_wdb_close,
-		    ());
-GED_EXPORT BU_EXTERN(int dgo_invent_solid,
-		    ());
-GED_EXPORT BU_EXTERN(void dgo_notify,
-		    (struct dg_obj	*dgop,
-		     Tcl_Interp		*interp));
-GED_EXPORT BU_EXTERN(void dgo_notifyWdb,
-		    (struct rt_wdb *wdbp,
-		     Tcl_Interp    *interp));
-GED_EXPORT BU_EXTERN(void dgo_zapall,
-		    ());
+GED_EXPORT extern void dgo_color_soltab();
+GED_EXPORT extern void dgo_eraseobjall_callback(struct db_i	*dbip,
+						Tcl_Interp		*interp,
+						struct directory	*dp,
+						int		notify);
+GED_EXPORT extern void dgo_eraseobjpath();
+GED_EXPORT extern void dgo_impending_wdb_close();
+GED_EXPORT extern int dgo_invent_solid();
+GED_EXPORT extern void dgo_notify(struct dg_obj	*dgop,
+				  Tcl_Interp		*interp);
+GED_EXPORT extern void dgo_notifyWdb(struct rt_wdb *wdbp,
+				     Tcl_Interp    *interp);
+GED_EXPORT extern void dgo_zapall();
 
 /* defined in nirt.c */
-GED_EXPORT BU_EXTERN(int	dgo_nirt_cmd,
-		    (struct dg_obj *dgop,
-		     struct view_obj *vop,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char **argv));
-GED_EXPORT BU_EXTERN(int	dgo_vnirt_cmd,
-		    (struct dg_obj *dgop,
-		     struct view_obj *vop,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char **argv));
+GED_EXPORT extern int	dgo_nirt_cmd(struct dg_obj *dgop,
+				     struct view_obj *vop,
+				     Tcl_Interp *interp,
+				     int argc,
+				     char **argv);
+GED_EXPORT extern int	dgo_vnirt_cmd(struct dg_obj *dgop,
+				      struct view_obj *vop,
+				      Tcl_Interp *interp,
+				      int argc,
+				      char **argv);
 
 /* defined in qray.c */
-GED_EXPORT BU_EXTERN(int	dgo_qray_cmd,
-		    (struct dg_obj	*dgop,
-		     Tcl_Interp		*interp,
-		     int		argc,
-		     char 		**argv));
-GED_EXPORT BU_EXTERN(void dgo_init_qray,
-		    (struct dg_obj *dgop));
+GED_EXPORT extern int	dgo_qray_cmd(struct dg_obj	*dgop,
+				     Tcl_Interp		*interp,
+				     int		argc,
+				     char 		**argv);
+GED_EXPORT extern void dgo_init_qray(struct dg_obj *dgop);
 
 
 /* defined in bigE.c */
-GED_EXPORT BU_EXTERN(int	dg_E_cmd,
-		    (struct dg_obj *dgop,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char **argv));
+GED_EXPORT extern int	dg_E_cmd(struct dg_obj *dgop,
+				 Tcl_Interp *interp,
+				 int argc,
+				 char **argv);
 
 
 /* functions defined in vdraw.c */
-GED_EXPORT BU_EXTERN(int	vdraw_cmd,
-		    (struct dg_obj *dgop,
-		     Tcl_Interp *interp,
-		     int argc,
-		     char **argv));
+GED_EXPORT extern int	vdraw_cmd_tcl(struct dg_obj *dgop,
+				  Tcl_Interp *interp,
+				  int argc,
+				  char **argv);
 
 __END_DECLS
 

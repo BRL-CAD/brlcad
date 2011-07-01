@@ -14,7 +14,8 @@ EXTRA_DIST = \
 	NEWS \
 	README \
 	crypt.c \
-	configure.ac
+	configure.ac \
+	CMakeLists.txt
 
 DISTCLEANFILES = \
 	aclocal.m4 \

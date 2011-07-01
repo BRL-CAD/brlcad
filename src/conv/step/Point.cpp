@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Point.cpp
+/** @file step/Point.cpp
  *
  * Routines to convert STEP "Point" to BRL-CAD BREP
  * structures.

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dem-g.c
+/** @file conv/dem-g.c
  *
  * USGS ASCII DEM file to dsp primitive converter 
  *

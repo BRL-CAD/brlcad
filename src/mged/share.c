@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file share.c
+/** @file mged/share.c
  *
  * Description -
  * Routines for sharing resources among display managers.

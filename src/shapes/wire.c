@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file wire.c
+/** @file shapes/wire.c
  *
  * This is a program to create wiring or fuel lines.  The user Enters
  * only the coordinates of the endpoints and the radius of the lines.

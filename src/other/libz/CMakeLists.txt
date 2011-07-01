@@ -131,6 +131,11 @@ if(MINGW)
 endif(MINGW)
 
 add_library(zlib ${ZLIB_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
+
+if(BUILD_STATIC_LIBS)
+    add_library(zlib-static STATIC ${ZLIB_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
+endif(BUILD_STATIC_LIBS)
+
 set_target_properties(zlib PROPERTIES DEFINE_SYMBOL ZLIB_DLL)
 
 set_target_properties(zlib PROPERTIES SOVERSION 1)

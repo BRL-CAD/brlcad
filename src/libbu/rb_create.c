@@ -26,16 +26,16 @@
 #include "./rb_internals.h"
 
 
-bu_rb_tree *
+struct bu_rb_tree *
 bu_rb_create(char *description, int nm_orders, int (**order_funcs)())
 {
     int order;
-    bu_rb_tree *tree;
+    struct bu_rb_tree *tree;
 
     /*
      * Allocate memory for the tree
      */
-    tree = (bu_rb_tree *) bu_malloc(sizeof(bu_rb_tree), "red-black tree");
+    tree = (struct bu_rb_tree *) bu_malloc(sizeof(struct bu_rb_tree), "red-black tree");
     tree->rbt_root = (struct bu_rb_node **)
 	bu_malloc(nm_orders * sizeof(struct bu_rb_node),
 		  "red-black roots");
@@ -97,7 +97,7 @@ bu_rb_create(char *description, int nm_orders, int (**order_funcs)())
 }
 
 
-bu_rb_tree *
+struct bu_rb_tree *
 bu_rb_create1(char *description, int (*order_func) (/* ??? */))
 {
     int (**ofp)();

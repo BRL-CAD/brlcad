@@ -19,7 +19,7 @@
  */
 /** @addtogroup plot */
 /** @{ */
-/** @file vectfont.c
+/** @file libbn/vectfont.c
  *
  *	Terminal Independant Graphics Display Package.
  *		Mike Muuss  July 31, 1978

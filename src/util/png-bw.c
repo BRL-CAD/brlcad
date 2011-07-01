@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file png-bw.c
+/** @file util/png-bw.c
  *
  * Convert PNG (Portable Network Graphics) format to bw
  *

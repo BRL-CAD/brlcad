@@ -44,7 +44,8 @@ noinst_HEADERS = \
 EXTRA_DIST = \
 	ErrorMap.cc \
 	ErrorRpt.cc  \
-	StrUtil.cc
+	StrUtil.cc \
+	CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs
 

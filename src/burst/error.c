@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file error.c
+/** @file burst/error.c
  *
  * Ray Tracing library and Framebuffer library, error handling routines.
  *

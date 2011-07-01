@@ -41,7 +41,8 @@
  */
 #if 0
 Example use:
-grep '^BU_EXPORT BU_EXTERN' bu.h | sed 's/^[^,]*[[:space:]*]\([a-zA-Z_][a-zA-Z0-9_]*\),.*/\1/g' | xargs ./a.out
+/* FIXME: regex needs to be rewritten to find function names */
+grep '^BU_EXPORT' bu.h | sed 's/^[^,]*[[:space:]*]\([a-zA-Z_][a-zA-Z0-9_]*\),.*/\1/g' | xargs ./a.out
 #endif
 
 #include <stdio.h>
@@ -50,35 +51,35 @@ grep '^BU_EXPORT BU_EXTERN' bu.h | sed 's/^[^,]*[[:space:]*]\([a-zA-Z_][a-zA-Z0-
 int
 main(int ac, char *av[])
 {
-  void *handle;
-  int i;
+    void *handle;
+    int i;
 
-  typedef void (*func_t)();
-  func_t func;
+    typedef void (*func_t)();
+    func_t func;
 
-  const char *error;
+    const char *error;
 
-  printf("Opening libbu\n");
-  handle = dlopen("/usr/brlcad/lib/libbu.dylib", RTLD_LAZY);
-  if (!handle) {
-    printf("couldn't open libbu\n");
-  }
-
-  for (i = 1; i < ac; i++) { 
-    printf("Loading %s\n", av[i]);
-    func = (func_t)dlsym(handle, av[i]);
-    error = dlerror();
-    if (error) {
-      printf("couldn't find %s\n", av[i]);
-      dlclose(handle);
-      return 1;
+    printf("Opening libbu\n");
+    handle = dlopen("/usr/brlcad/lib/libbu.dylib", RTLD_LAZY);
+    if (!handle) {
+	printf("couldn't open libbu\n");
     }
 
-    /* try running it? */
-    //    func(0, 0, 0, 0, 0, 0, 0, 0);
-  }
+    for (i = 1; i < ac; i++) { 
+	printf("Loading %s\n", av[i]);
+	func = (func_t)dlsym(handle, av[i]);
+	error = dlerror();
+	if (error) {
+	    printf("couldn't find %s\n", av[i]);
+	    dlclose(handle);
+	    return 1;
+	}
 
-  return 0;
+	/* try running it? */
+	//    func(0, 0, 0, 0, 0, 0, 0, 0);
+    }
+
+    return 0;
 }
 
 /*

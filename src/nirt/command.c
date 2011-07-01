@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file command.c
+/** @file nirt/command.c
  *
  * process nirt commands
  *
@@ -67,7 +67,7 @@ bot_minpieces(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	++i;
     if (*(buffer+i) == '\0') {
 	/* display current rt_bot_minpieces */
-	bu_log("rt_bot_minpieces = %d\n", rt_bot_minpieces);
+	bu_log("rt_bot_minpieces = %zu\n", rt_bot_minpieces);
 	return;
     }
 
@@ -96,7 +96,7 @@ bot_mintie(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	++i;
     if (*(buffer+i) == '\0') {
 	/* display current rt_bot_mintie */
-	bu_log("rt_bot_mintie = %d\n", rt_bot_mintie);
+	bu_log("rt_bot_mintie = %zu\n", rt_bot_mintie);
 	return;
     }
 

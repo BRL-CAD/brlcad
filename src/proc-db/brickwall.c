@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file brickwall.c
+/** @file proc-db/brickwall.c
  *
  * builds a brick wall.
  *

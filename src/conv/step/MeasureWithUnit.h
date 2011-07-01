@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file MeasureWithUnit.h
+/** @file step/MeasureWithUnit.h
  *
  * Class definition used to convert STEP "MeasureWithUnit" to BRL-CAD BREP
  * structures.

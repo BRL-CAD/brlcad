@@ -256,14 +256,14 @@ class SCLP23_NAME(DAObject) : public SCLP23_NAME(sdaiObject)
 #endif
 
 #ifndef PART26
-    SCLBOOL_H(Boolean) dado_same(SCLP23_NAME(DAObject_ptr) obj) 
+    Boolean dado_same(SCLP23_NAME(DAObject_ptr) obj) 
 	{ 
 	    // this will make the compiler happy that we used obj
 	    strcmp(obj->dado_oid(),dado_oid()); 
-	    return SCLBOOL_H(BUnset);
+	    return BUnset;
 	}
 #else
-    virtual SCLBOOL_H(Boolean) dado_same (SCLP23_NAME(DAObject_ptr) obj, CORBA::Environment &IT_env=CORBA::IT_chooseDefaultEnv ()) throw (CORBA::SystemException) { return SCLBOOL_H(BUnset); }
+    virtual Boolean dado_same (SCLP23_NAME(DAObject_ptr) obj, CORBA::Environment &IT_env=CORBA::IT_chooseDefaultEnv ()) throw (CORBA::SystemException) { return BUnset; }
 #endif
 
         // Get persistent label (ISO/DIS 10303-22:1996(E) 10.11.6)
@@ -424,7 +424,7 @@ class SCLP23_NAME(DAObject_SDAI) : public SCLP23_NAME(DAObject) {
        5.3.10.1.3  Is same
      */
 
-    SCLLOG_H(Logical) IsSame(const SCLP23_NAME(sdaiObject_ptr)& otherEntity) const;
+    Logical IsSame(const SCLP23_NAME(sdaiObject_ptr)& otherEntity) const;
 
     /*
        Function:
@@ -489,9 +489,9 @@ class SCLP23_NAME(DAObject_SDAI) : public SCLP23_NAME(DAObject) {
        5.3.10.1.6  Is instance of
      */
 
-    SCLBOOL_H(Boolean) IsInstanceOf(const char* typeName) const; 
+    Boolean IsInstanceOf(const char* typeName) const; 
 #ifdef SDAI_CPP_LATE_BINDING
-    SCLBOOL_H(Boolean) IsInstanceOf(const Entity_ptr& otherEntity) const; 
+    Boolean IsInstanceOf(const Entity_ptr& otherEntity) const; 
 #endif
 
     /*
@@ -511,9 +511,9 @@ class SCLP23_NAME(DAObject_SDAI) : public SCLP23_NAME(DAObject) {
        5.3.10.1.7  Is kind of
      */
 
-    SCLBOOL_H(Boolean) IsKindOf(const char* typeName) const;
+    Boolean IsKindOf(const char* typeName) const;
 #ifdef SDAI_CPP_LATE_BINDING
-    SCLBOOL_H(Boolean) IsKindOf(const Entity_ptr& theType) const;
+    Boolean IsKindOf(const Entity_ptr& theType) const;
 #endif
 
     /*
@@ -531,10 +531,10 @@ class SCLP23_NAME(DAObject_SDAI) : public SCLP23_NAME(DAObject) {
        5.3.10.1.8  Is SDAI kind of
        */
 
-    SCLBOOL_H(Boolean) IsSDAIKindOf(const char* typeName) const;
+    Boolean IsSDAIKindOf(const char* typeName) const;
 
 #ifdef SDAI_CPP_LATE_BINDING
-    SCLBOOL_H(Boolean) IsSDAIKindOf(const Entity_ptr& theType) const;
+    Boolean IsSDAIKindOf(const Entity_ptr& theType) const;
 #endif
 
     /*
@@ -554,8 +554,8 @@ class SCLP23_NAME(DAObject_SDAI) : public SCLP23_NAME(DAObject) {
      */
 
 #ifdef SDAI_CPP_LATE_BINDING
-    SCLBOOL_H(Boolean) TestAttr(const Attribute_ptr& attDef);
-    SCLBOOL_H(Boolean) TestAttr(const char* attName) const;
+    Boolean TestAttr(const Attribute_ptr& attDef);
+    Boolean TestAttr(const char* attName) const;
 #endif
 
     /*
@@ -612,7 +612,7 @@ public:
 #ifdef __OSTORE__
     os_Collection<SCLP23_NAME(DAObject_ptr)> &_rep;
     os_Cursor<SCLP23_NAME(DAObject_ptr)> _cursor;
-    SCLBOOL_H(Boolean) _first;
+    Boolean _first;
 #endif
 
     SCLP23_NAME(DAObject__set)(int = 16);

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file AmountOfSubstanceConversionBasedUnit.h
+/** @file step/AmountOfSubstanceConversionBasedUnit.h
  *
  * Class definition used to convert STEP "AmountOfSubstanceConversionBasedUnit" to BRL-CAD BREP
  * structures.

@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup thread */
-/** @{ */
 
 #include "common.h"
 
@@ -488,7 +486,7 @@ bu_semaphore_free() {
 }
 #endif
 
-/** @} */
+
 /*
  * Local Variables:
  * mode: C

@@ -72,7 +72,7 @@ make_shape(struct rt_wdb *fd, int verbose, int debug, size_t idx, size_t num, po
     }
 
     if (verbose || debug)
-	bu_log("%d vertices\n", num);
+	bu_log("%zu vertices\n", num);
 
     skt = (struct rt_sketch_internal *)bu_calloc(1, sizeof(struct rt_sketch_internal), "sketch");
     skt->magic = RT_SKETCH_INTERNAL_MAGIC;
@@ -263,14 +263,14 @@ main(int argc, char *argv[])
 	/* print detail header */
 	if (opt_verbose) {
 	    if (object->bMeasureIsUsed) {
-		bu_log("\nShape:%d (%s)  nVertices=%d, nParts=%d\n"
+		bu_log("\nShape:%zu (%s)  nVertices=%d, nParts=%d\n"
 		       "  Bounds:(%12.3f,%12.3f, %g, %g)\n"
 		       "      to (%12.3f,%12.3f, %g, %g)\n",
 		       i+1, SHPTypeName(object->nSHPType), object->nVertices, object->nParts,
 		       object->dfXMin, object->dfYMin, object->dfZMin, object->dfMMin,
 		       object->dfXMax, object->dfYMax, object->dfZMax, object->dfMMax);
 	    } else {
-		bu_log("\nShape:%d (%s)  nVertices=%d, nParts=%d\n"
+		bu_log("\nShape:%zu (%s)  nVertices=%d, nParts=%d\n"
 		       "  Bounds:(%12.3f,%12.3f, %g)\n"
 		       "      to (%12.3f,%12.3f, %g)\n",
 		       i+1, SHPTypeName(object->nSHPType), object->nVertices, object->nParts,

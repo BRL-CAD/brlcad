@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file BoundaryCurve.cpp
+/** @file step/BoundaryCurve.cpp
  *
  * Routines to convert STEP "BoundaryCurve" to BRL-CAD BREP
  * structures.

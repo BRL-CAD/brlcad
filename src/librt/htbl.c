@@ -19,7 +19,7 @@
  */
 /** @addtogroup librt */
 /** @{ */
-/** @file htbl.c
+/** @file librt/htbl.c
  *
  *  Support for variable length arrays of "struct hit".
  *  Patterned after the libbu/ptbl.c idea.

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file xyz-pl.c
+/** @file util/xyz-pl.c
  *
  * Program to take input with up to 3 white-space separated columns,
  * expressed as

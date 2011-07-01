@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file DerivedUnitElement.h
+/** @file step/DerivedUnitElement.h
  *
  * Class definition used to convert STEP "DerivedUnitElement" to BRL-CAD BREP
  * structures.

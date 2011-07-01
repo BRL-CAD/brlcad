@@ -19,7 +19,7 @@
  */
 /** @addtogroup libged */
 /** @{ */
-/** @file qray.h
+/** @file libged/qray.h
  *
  * Private header file for "Query Ray" variables.
  *
@@ -44,12 +44,13 @@
 #define DG_GED_MAX 2047.0
 #define DG_GED_MIN -2048.0
 
-struct ged_qray_fmt_data {
+struct qray_fmt_data {
     char type;
     char *fmt;
 };
 
-struct ged_qray_dataList {
+
+struct qray_dataList {
     struct bu_list l;
     fastf_t x_in;
     fastf_t y_in;
@@ -57,8 +58,11 @@ struct ged_qray_dataList {
     fastf_t los;
 };
 
+
 /* defined in qray.c */
-extern void ged_qray_data_to_vlist(struct ged *gedp, struct bn_vlblock *vbp, struct ged_qray_dataList *headp, fastf_t *dir, int do_overlaps);
+extern void qray_init(struct ged_drawable *gdp);
+extern void qray_free(struct ged_drawable *gdp);
+extern void qray_data_to_vlist(struct ged *gdp, struct bn_vlblock *vbp, struct qray_dataList *headp, vect_t dir, int do_overlaps);
 
 #endif
 

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file VertexLoop.cpp
+/** @file step/VertexLoop.cpp
  *
  * Routines to convert STEP "VertexLoop" to BRL-CAD BREP
  * structures.

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_billboard.c
+/** @file liboptical/sh_billboard.c
  *
  * A billboard shader for use with RCC geometry
  *
@@ -40,9 +40,6 @@
 #include "plot3.h"
 
 
-extern int rr_render(struct application *ap,
-		     struct partition *pp,
-		     struct shadework *swp);
 #define bbd_MAGIC 0x62626400	/* "bbd" */
 #define CK_bbd_SP(_p) BU_CKMAG(_p, bbd_MAGIC, "bbd_specific")
 
@@ -127,26 +124,6 @@ struct bu_structparse bbd_parse_tab[] = {
 };
 
 
-HIDDEN int bbd_setup(), bbd_render();
-HIDDEN void bbd_print(), bbd_free();
-
-/* The "mfuncs" structure defines the external interface to the shader.
- * Note that more than one shader "name" can be associated with a given
- * shader by defining more than one mfuncs struct in this array.
- * See sh_phong.c for an example of building more than one shader "name"
- * from a set of source functions.  There you will find that "glass" "mirror"
- * and "plastic" are all names for the same shader with different default
- * values for the parameters.
- */
-struct mfuncs bbd_mfuncs[] = {
-    {MF_MAGIC,	"bbd",	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
-     bbd_setup,	bbd_render,	bbd_print,	bbd_free },
-
-    {0,		(char *)0,	0,		0,		0,
-     0,		0,		0,		0 }
-};
-
-
 void new_image(register const struct bu_structparse *UNUSED(sdp),	/*struct desc*/
 	       register const char *UNUSED(name),	/*member name*/
 	       char *base,	/*struct base*/
@@ -189,12 +166,7 @@ void new_image(register const struct bu_structparse *UNUSED(sdp),	/*struct desc*
  * -1 failure
  */
 HIDDEN int
-bbd_setup(struct region *rp,
-	  struct bu_vls *matparm,
-	  char **dpp, /* pointer to reg_udata in *rp */
-	  struct mfuncs *mfp,
-	  struct rt_i *rtip
-    )
+bbd_setup(struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip)
 {
     register struct bbd_specific *bbd_sp;
     struct rt_db_internal intern;
@@ -233,7 +205,7 @@ bbd_setup(struct region *rp,
 
     /* Get memory for the shader parameters and shader-specific data */
     BU_GETSTRUCT(bbd_sp, bbd_specific);
-    *dpp = (char *)bbd_sp;
+    *dpp = bbd_sp;
 
     /* initialize the default values for the shader */
     memcpy(bbd_sp, &bbd_defaults, sizeof(struct bbd_specific));
@@ -247,14 +219,14 @@ bbd_setup(struct region *rp,
 	return -1;
 
     if (bbd_sp->img_count > MAX_IMAGES) {
-	bu_log("too many images (%d) in shader for %s sb < %d\n",
+	bu_log("too many images (%zu) in shader for %s sb < %d\n",
 	       bbd_sp->img_count, rp->reg_name, MAX_IMAGES);
 	bu_bomb("excessive image count\n");
     }
 
 
     MAT_IDN(mat);
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     s = rt_db_get_internal(&intern, rp->reg_treetop->tr_a.tu_stp->st_dp, rtip->rti_dbip,
 			   mat, &rt_uniresource);
 
@@ -322,7 +294,7 @@ bbd_setup(struct region *rp,
  * B I L L B O A R D _ P R I N T
  */
 HIDDEN void
-bbd_print(struct region *rp, char *dp)
+bbd_print(struct region *rp, genptr_t dp)
 {
     bu_struct_print(rp->reg_name, bbd_print_tab, (char *)dp);
 }
@@ -332,7 +304,7 @@ bbd_print(struct region *rp, char *dp)
  * B I L L B O A R D _ F R E E
  */
 HIDDEN void
-bbd_free(char *cp)
+bbd_free(genptr_t cp)
 {
     bu_free(cp, "bbd_specific");
 }
@@ -340,7 +312,7 @@ bbd_free(char *cp)
 
 static void
 plot_ray_img(struct application *ap,
-	     struct partition *pp,
+	     const struct partition *pp,
 	     double dist,
 	     struct bbd_img *bi)
 {
@@ -393,7 +365,7 @@ plot_ray_img(struct application *ap,
  */
 static void
 do_ray_image(struct application *ap,
-	     struct partition *pp,
+	     const struct partition *pp,
 	     struct shadework *swp,	/* defined in ../h/shadework.h */
 	     struct bbd_specific *bbd_sp,
 	     struct bbd_img *bi,
@@ -542,7 +514,7 @@ imgdist_compare(const void *a, const void *b)
  * dp is a pointer to the shader-specific struct
  */
 int
-bbd_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+bbd_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
 {
     register struct bbd_specific *bbd_sp = (struct bbd_specific *)dp;
     union tree *tp;
@@ -608,6 +580,23 @@ bbd_render(struct application *ap, struct partition *pp, struct shadework *swp, 
     }
     return 1;
 }
+
+
+/* The "mfuncs" structure defines the external interface to the shader.
+ * Note that more than one shader "name" can be associated with a given
+ * shader by defining more than one mfuncs struct in this array.
+ * See sh_phong.c for an example of building more than one shader "name"
+ * from a set of source functions.  There you will find that "glass" "mirror"
+ * and "plastic" are all names for the same shader with different default
+ * values for the parameters.
+ */
+struct mfuncs bbd_mfuncs[] = {
+    {MF_MAGIC,	"bbd",	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
+     bbd_setup,	bbd_render,	bbd_print,	bbd_free },
+
+    {0,		(char *)0,	0,		0,		0,
+     0,		0,		0,		0 }
+};
 
 
 /*

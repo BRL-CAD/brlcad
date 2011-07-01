@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file nmg.c
+/** @file libwdb/nmg.c
  *
  * libwdb support for writing an NMG to disk.
  *

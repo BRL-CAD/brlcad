@@ -19,7 +19,7 @@
  */
 /** @addtogroup dbio */
 /** @{ */
-/** @file db_walk.c
+/** @file librt/db_walk.c
  *
  * No-frills tree-walker.
  *
@@ -52,7 +52,7 @@ db_traverse_subtree(union tree *tp,
     if ( !tp )
 	return;
 
-    RT_CK_DBTR( dtp );
+    RT_CK_DB_TRAVERSE( dtp );
     RT_CHECK_DBI( dtp->dbip );
     RT_CK_TREE( tp );
     RT_CK_RESOURCE( dtp->resp );
@@ -93,7 +93,7 @@ db_preorder_traverse( struct directory *dp,
 		      struct db_traverse *dtp )
 {
     register size_t i;
-    RT_CK_DBTR(dtp);
+    RT_CK_DB_TRAVERSE(dtp);
     RT_CK_DBI(dtp->dbip);
 
     if (RT_G_DEBUG & DEBUG_DB)

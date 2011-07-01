@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file RationalBezierSurface.h
+/** @file step/RationalBezierSurface.h
  *
  * Class definition used to convert STEP "RationalBezierSurface" to BRL-CAD BREP
  * structures.

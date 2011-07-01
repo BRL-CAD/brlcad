@@ -19,7 +19,7 @@
  */
 /** @addtogroup nmg */
 /** @{ */
-/** @file nmg_misc.c
+/** @file primitives/nmg/nmg_misc.c
  *
  * As the name implies, these are miscellaneous routines that work with
  * the NMG structures.
@@ -1850,12 +1850,12 @@ rt_dist_line3_line3(fastf_t *dist, const fastf_t *p1, const fastf_t *d1, const f
     else
 	tol_dist_sq = tol_dist * tol_dist;
 
-    if (!NEAR_ZERO(MAGSQ(d1) - 1.0, tol_dist_sq)) {
+    if (!NEAR_EQUAL(MAGSQ(d1), 1.0, tol_dist_sq)) {
 	bu_log("rt_dist_line3_line3: non-unit length direction vector (%f %f %f)\n", V3ARGS(d1));
 	bu_bomb("rt_dist_line3_line3\n");
     }
 
-    if (!NEAR_ZERO(MAGSQ(d2) - 1.0, tol_dist_sq)) {
+    if (!NEAR_EQUAL(MAGSQ(d2), 1.0, tol_dist_sq)) {
 	bu_log("rt_dist_line3_line3: non-unit length direction vector (%f %f %f)\n", V3ARGS(d2));
 	bu_bomb("rt_dist_line3_line3\n");
     }
@@ -4618,14 +4618,14 @@ nmg_stash_model_to_file(const char *filename, const struct model *m, const char 
 	return;
     }
 
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_type = ID_NMG;
     intern.idb_meth = &rt_functab[ID_NMG];
     intern.idb_ptr = (genptr_t)m;
 
     if (db_version(fp->dbip) < 5) {
-	BU_INIT_EXTERNAL(&ext);
+	BU_EXTERNAL_INIT(&ext);
 	ret = intern.idb_meth->ft_export4(&ext, &intern, 1.0, fp->dbip, &rt_uniresource);
 	if (ret < 0) {
 	    bu_log("rt_db_put_internal(%s):  solid export failure\n",
@@ -4790,18 +4790,18 @@ nmg_unbreak_region_edges(unsigned long *magic_p)
  * Find the distance from a point P to a line described by the
  * endpoint A and direction dir, and the point of closest approach
  * (PCA).
- *
- *		P
- *	       *
- *	      /.
- *	     / .
- *	    /  .
- *	   /   . (dist)
- *	  /    .
- *	 /     .
- *	*------*-------->
- *	A      PCA    dir
- *
+ @code
+ 			P
+ 		       *
+ 		      /.
+ 		     / .
+ 		    /  .
+ 		   /   . (dist)
+ 		  /    .
+ 		 /     .
+ 		*------*-------->
+ 		A      PCA    dir
+ @endcode
  * There are three distinct cases, with these return codes -
  *   0 => P is within tolerance of point A.  *dist = 0, pca=A.
  *   1 => P is within tolerance of line.  *dist = 0, pca=computed.
@@ -5042,7 +5042,7 @@ nmg_simple_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, const
 	    fp2 = (struct face *)BU_PTBL_GET(faces, 1);
 
 	    pl_dot = VDOT(fp1->g.plane_p->N, fp2->g.plane_p->N);
-	    if (NEAR_ZERO(pl_dot - 1.0, tol->perp) || NEAR_ZERO(pl_dot + 1.0, tol->perp)) {
+	    if (NEAR_EQUAL(pl_dot, 1.0, tol->perp) || NEAR_EQUAL(pl_dot, -1.0, tol->perp)) {
 		vect_t move_vect;
 
 		/* treat as a single plane */
@@ -6586,20 +6586,20 @@ nmg_dist_to_cross(const struct intersect_fus *i_fus, const struct intersect_fus 
  *
  * Detect situations where edges have been split, but new vertices are
  * in wrong order. This typically happens as shown:
- *
- *                  new face planes
- *                  |
- *                  |
- *   \       \   /  |    /
- *    \       \ /<--|   /
- *     \       X       /
- *      \     / \     /
- *       \   /___\   /
- *        \         /
- *         \       /<- original face planes
- *          \     /
- *           \___/
- *
+ @code
+                   new face planes
+                   |
+                   |
+    \       \   /  |    /
+     \       \ /<--|   /
+      \       X       /
+       \     / \     /
+        \   /___\   /
+         \         /
+          \       /<- original face planes
+           \     /
+            \___/
+ @endcode
  * This can be detected by checking if the edges leaving from the new
  * vertices cross. If so, the middle face is deleted and the two
  * vertices are fused.
@@ -9054,7 +9054,8 @@ rt_join_cnurbs(struct bu_list *crv_head)
 }
 
 
-/** R T _ A R C 2 D _ T O _ C N U R B
+/**
+ * R T _ A R C 2 D _ T O _ C N U R B
  *
  * Convert a 2D arc to a NURB curve.
  *
@@ -9149,7 +9150,7 @@ rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point
     }
 
     /* make sure radii are consistent */
-    if (!NEAR_ZERO(radius - tmp_radius, tol->dist)) {
+    if (!NEAR_EQUAL(radius, tmp_radius, tol->dist)) {
 	bu_log("rt_arc2d_to_cnurb: distances from center to start and center to end are different\n");
 	bu_log("                        (%g and %g)\n", radius, tmp_radius);
 	return (struct edge_g_cnurb *)NULL;
@@ -9452,7 +9453,7 @@ Shell_is_arb(struct shell *s, struct bu_ptbl *tab)
 
 		dot = VDOT(norm_radial, fu_norm);
 
-		if (!NEAR_ZERO(dot - 1.0, 0.00001)) {
+		if (!NEAR_EQUAL(dot, 1.0, 0.00001)) {
 
 		    VCROSS(cross, fu_norm, norm_radial);
 
@@ -9908,7 +9909,7 @@ nmg_to_tgc(
 	(base_vert_count*2 != three_vert_faces))
 	return 0;
 
-    if (!NEAR_ZERO(1.0 + VDOT(top_pl, base_pl), tol->perp))
+    if (!NEAR_EQUAL(VDOT(top_pl, base_pl), -1.0, tol->perp))
 	return 0;
 
     /* This looks like a good candidate,

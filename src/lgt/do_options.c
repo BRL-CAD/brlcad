@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file do_options.c
+/** @file lgt/do_options.c
  *
  * Handle lgt command-line options.
  *

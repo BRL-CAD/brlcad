@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file proe-g.c
+/** @file conv/proe-g.c
  *
  * Code to convert ascii output from Pro/Engineer to BRL-CAD
  * The required output is from the Pro/Develop application proe-brl

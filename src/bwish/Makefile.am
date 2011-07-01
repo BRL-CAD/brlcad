@@ -72,7 +72,8 @@ EXTRA_DIST = \
 	consoleMain.c \
 	unixMain.c \
 	cadAppInit.c \
-	winMain.c
+	winMain.c \
+	CMakeLists.txt
 
 DEPENDS = src/libdm
 

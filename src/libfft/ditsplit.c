@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ditsplit.c
+/** @file libfft/ditsplit.c
  *
  * Split Radix, Decimation in Frequency, Inverse Real-valued FFT.
  *

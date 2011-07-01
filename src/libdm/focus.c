@@ -1,3 +1,4 @@
+
 /*                         F O C U S . C
  * BRL-CAD
  *
@@ -17,7 +18,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file focus.c
+/** @file libdm/focus.c
  *
  * Routines for setting the current application focus, particularly
  * useful on Mac OS X where X11 applications are not necessarily given
@@ -29,25 +30,7 @@
 
 #ifdef HAVE_CARBON_CARBON_H
 #  define Cursor MyCursor
-/* Ew.  Incompatibility between newer gcc versions
- * in Macports and assumptions made by Apple headers.
- * http://gcc.gnu.org/bugzilla/show_bug.cgi?id=44981
- * Fake it by pretending to be gcc 4.0 when __APPLE_CC__
- * is less than or equal to 5600 - we'll see what that
- * breaks, but it at least builds.
- */
-#  if defined(__APPLE_CC__)
-#   if !(__APPLE_CC__ > 5600)
-#     define GNUC_MINOR_TMP __GNUC_MINOR__
-#     undef __GNUC_MINOR__
-#     define __GNUC_MINOR__ 0
-#     include <Carbon/Carbon.h>
-#     undef __GNUC_MINOR__
-#     define __GNUC_MINOR__ GNUC_MINOR_TMP
-#   else
-#     include <Carbon/Carbon.h>
-#   endif
-#  endif
+#  include <Carbon/Carbon.h>
 #  undef Cursor
 /* undef __QUICKDRAW__ is needed to prevent gl.h from declaring an
  * unrecognized pragma export warning on Mac OS X (10.5).

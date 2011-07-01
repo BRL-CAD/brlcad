@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ThermodynamicTemperatureUnit.cpp
+/** @file step/ThermodynamicTemperatureUnit.cpp
  *
  * Routines to convert STEP "ThermodynamicTemperatureUnit" to BRL-CAD BREP
  * structures.

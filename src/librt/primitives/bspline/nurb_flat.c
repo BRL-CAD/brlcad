@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_flat.c
+/** @file primitives/bspline/nurb_flat.c
  *
  * Tests the NURB surface to see if its flat depending on the epsilon
  * passed.

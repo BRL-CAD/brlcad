@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file TopologicalRepresentationItem.h
+/** @file step/TopologicalRepresentationItem.h
  *
  * Class definition used to convert STEP "TopologicalRepresentationItem" to BRL-CAD BREP
  * structures.

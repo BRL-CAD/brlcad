@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file scanline.h
+/** @file rt/scanline.h
  *
  * Header of scanline functions, common to viewmlt.c and view.c
  *

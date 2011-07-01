@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file db_corrupt.c
+/** @file librt/db_corrupt.c
  *
  * Routines to detect whether a geometry database file seems to be
  * corrupt or invalid due to flipped endian encoding.
@@ -61,7 +61,7 @@ db_corrupt_handler(struct db_i *dbip, const char *name, off_t offset, size_t siz
     }
 
     /* set up our buffer */
-    BU_INIT_EXTERNAL(&ext);
+    BU_EXTERNAL_INIT(&ext);
     ext.ext_nbytes = size * sizeof(union record);
     ext.ext_buf = (genptr_t)bu_calloc(ext.ext_nbytes, 1, "db_corrupt");
 
@@ -143,7 +143,7 @@ rt_db_flip_endian(struct db_i *dbip)
     /* it has to help more than it hurts */
     if (cnt.found > 0 && (double)cnt.fixed > ((double)cnt.found / 2.0)) {
 	if (cnt.fixed != cnt.found)
-	    bu_log("%d of %d objects were NOT fixed by flipping endian interpretation.  Manual inspection and repair required.\n", cnt.found - cnt.fixed, cnt.found);
+	    bu_log("%zu of %zu objects were NOT fixed by flipping endian interpretation.  Manual inspection and repair required.\n", cnt.found - cnt.fixed, cnt.found);
 	return 1;
     }
 

@@ -19,7 +19,7 @@
  */
 /** @addtogroup libsysv */
 /** @{ */
-/** @file memset.c
+/** @file libsysv/memset.c
  *
  */
 /** @} */

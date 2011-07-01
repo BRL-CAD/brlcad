@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bary.c
+/** @file util/bary.c
  *
  */
 

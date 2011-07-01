@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bw-pix.c
+/** @file util/bw-pix.c
  *
  * Convert an 8-bit black and white file to a 24-bit
  * color one by replicating each value three times.

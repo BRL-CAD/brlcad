@@ -17,11 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file surfel.c
- *
- * Brief description
- *
- */
 
 #include <stdio.h>
 #include <stdlib.h>

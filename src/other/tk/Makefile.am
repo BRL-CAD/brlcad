@@ -160,7 +160,6 @@ EXTRA_DIST = \
 	unix/installManPage \
 	unix/license.terms \
 	unix/tcl.m4 \
-	unix/tk.spec \
 	unix/tkAppInit.c \
 	unix/tkConfig.h.in \
 	unix/tkConfig.sh.in \
@@ -191,7 +190,15 @@ EXTRA_DIST = \
 	unix/tkUnixWm.c \
 	unix/tkUnixXId.c \
 	win \
-	xlib
+	xlib \
+	CMakeLists.txt \
+	CMake/CheckCFileRuns.cmake \
+	CMake/CheckPrototypeExists.cmake \
+	CMake/CheckSystemFunctionality.cmake \
+	CMake/FindX11.cmake \
+	CMake/ResolveCompilerPaths.cmake \
+	CMake/ac_std_funcs.cmake \
+	CMake/tcl.cmake
 
 DISTCLEANFILES = \
 	unix/autom4te.cache \

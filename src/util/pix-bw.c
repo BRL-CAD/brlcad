@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pix-bw.c
+/** @file util/pix-bw.c
  *
  * Converts a RGB pix file into an 8-bit BW file.
  *

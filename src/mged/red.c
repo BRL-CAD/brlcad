@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file red.c
+/** @file mged/red.c
  *
  * These routines allow editing of a combination using the text editor
  * of the users choice.
@@ -161,7 +161,7 @@ make_tree(struct rt_comb_internal *comb, struct directory *dp, size_t node_count
     else
 	final_tree = (union tree *)NULL;
 
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_type = ID_COMBINATION;
     intern.idb_meth = &rt_functab[ID_COMBINATION];

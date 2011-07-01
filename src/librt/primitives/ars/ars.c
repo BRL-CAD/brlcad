@@ -19,7 +19,7 @@
  */
 /** @addtogroup primitives */
 /** @{ */
-/** @file ars.c
+/** @file primitives/ars/ars.c
  *
  * Intersect a ray with an ARS (Arbitrary faceted solid).
  *
@@ -520,10 +520,10 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 	    if (code < 2) {
 		bu_log("ARS curve backtracks on itself!!!\n");
-		bu_log("\tCurve #%d, points #%d through %d are:\n", i, j-2, j);
-		bu_log("\t\t%d (%f %f %f)\n", j-2, V3ARGS(ARS_PT(0, -2)));
-		bu_log("\t\t%d (%f %f %f)\n", j-1, V3ARGS(ARS_PT(0, -1)));
-		bu_log("\t\t%d (%f %f %f)\n", j, V3ARGS(ARS_PT(0, 0)));
+		bu_log("\tCurve #%zu, points #%zu through %zu are:\n", i, j-2, j);
+		bu_log("\t\t%zu (%f %f %f)\n", j-2, V3ARGS(ARS_PT(0, -2)));
+		bu_log("\t\t%zu (%f %f %f)\n", j-1, V3ARGS(ARS_PT(0, -1)));
+		bu_log("\t\t%zu (%f %f %f)\n", j, V3ARGS(ARS_PT(0, 0)));
 		bad_ars = 1;
 		j++;
 	    }
@@ -588,7 +588,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		corners[2] = &verts[IJ(1, 1)];
 
 		if ((fu = nmg_cmface(s, corners, 3)) == (struct faceuse *)0) {
-		    bu_log("rt_ars_tess() nmg_cmface failed, skipping face a[%d][%d]\n",
+		    bu_log("rt_ars_tess() nmg_cmface failed, skipping face a[%zu][%zu]\n",
 			   i, j);
 		}
 
@@ -619,7 +619,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		corners[2] = &verts[IJ(1, 1)];
 
 		if ((fu = nmg_cmface(s, corners, 3)) == (struct faceuse *)0) {
-		    bu_log("rt_ars_tess() nmg_cmface failed, skipping face b[%d][%d]\n",
+		    bu_log("rt_ars_tess() nmg_cmface failed, skipping face b[%zu][%zu]\n",
 			   i, j);
 		}
 
@@ -654,6 +654,9 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
+
+    nmg_shell_coplanar_face_merge(s, tol, 0);
+    nmg_simplify_shell(s);
 
     return 0;
 }
@@ -967,11 +970,8 @@ rt_ars_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	}
 
 	for (i=0; i<nhits-1; i++) {
-	    fastf_t dist;
-
 	    RT_HIT_NORMAL(NULL, &hits[i+1], stp, 0, 0);
-	    dist = hits[i].hit_dist - hits[i+1].hit_dist;
-	    if (NEAR_ZERO(dist, ap->a_rt_i->rti_tol.dist) &&
+	    if (NEAR_EQUAL(hits[i].hit_dist, hits[i+1].hit_dist, ap->a_rt_i->rti_tol.dist) &&
 		VDOT(hits[i].hit_normal, rp->r_dir) *
 		VDOT(hits[i+1].hit_normal, rp->r_dir) > 0)
 	    {
@@ -1204,9 +1204,9 @@ rt_ars_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 
     if (attr == (char *)NULL) {
 	bu_vls_strcpy(logstr, "ars");
-	bu_vls_printf(logstr, " NC %d PPC %d", ars->ncurves, ars->pts_per_curve);
+	bu_vls_printf(logstr, " NC %zu PPC %zu", ars->ncurves, ars->pts_per_curve);
 	for (i=0; i<ars->ncurves; i++) {
-	    bu_vls_printf(logstr, " C%d {", i);
+	    bu_vls_printf(logstr, " C%zu {", i);
 	    for (j=0; j<ars->pts_per_curve; j++) {
 		bu_vls_printf(logstr, " { %.25g %.25g %.25g }",
 			      V3ARGS(&ars->curves[i][j*3]));
@@ -1214,16 +1214,16 @@ rt_ars_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 	    bu_vls_printf(logstr, " }");
 	}
     } else if (BU_STR_EQUAL(attr, "NC")) {
-	bu_vls_printf(logstr, "%d", ars->ncurves);
+	bu_vls_printf(logstr, "%zu", ars->ncurves);
     } else if (BU_STR_EQUAL(attr, "PPC")) {
-	bu_vls_printf(logstr, "%d", ars->pts_per_curve);
+	bu_vls_printf(logstr, "%zu", ars->pts_per_curve);
     } else if (attr[0] == 'C') {
 	char *ptr;
 
 	if (attr[1] == '\0') {
 	    /* all the curves */
 	    for (i=0; i<ars->ncurves; i++) {
-		bu_vls_printf(logstr, " C%d {", i);
+		bu_vls_printf(logstr, " C%zu {", i);
 		for (j=0; j<ars->pts_per_curve; j++) {
 		    bu_vls_printf(logstr, " { %.25g %.25g %.25g }",
 				  V3ARGS(&ars->curves[i][j*3]));

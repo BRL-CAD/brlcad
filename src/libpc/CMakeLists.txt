@@ -17,6 +17,7 @@ include_directories(
 	${CMAKE_SOURCE_DIR}/src/other
 	${OPENNURBS_INCLUDE_DIR}
 	${TCL_INCLUDE_DIRS}
+	${ZLIB_INCLUDE_DIR}
 	)
 
 SET(LIBPC_NOINST_HDRS

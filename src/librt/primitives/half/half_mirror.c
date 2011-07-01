@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file half_mirror.c
+/** @file primitives/half/half_mirror.c
  *
  * mirror support
  *
@@ -97,7 +97,7 @@ rt_half_mirror(struct rt_db_internal *ip, register const plane_t plane)
     bn_mat_arb_rot(rmat, origin, n2, ang*2);
     MAT4X3VEC(half->eqn, rmat, n1);
 
-    if (!NEAR_ZERO(VDOT(n1, half->eqn) - 1.0, tol_dist_sq)) {
+    if (!NEAR_EQUAL(VDOT(n1, half->eqn), 1.0, tol_dist_sq)) {
 	point_t ptA;
 	point_t ptB;
 	point_t ptC;

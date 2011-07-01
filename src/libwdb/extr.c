@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file extr.c
+/** @file libwdb/extr.c
  *
  * Support for extrusion solids
  *

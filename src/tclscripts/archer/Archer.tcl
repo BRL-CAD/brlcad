@@ -100,6 +100,7 @@ namespace eval Archer {
 LoadArcherLibs
 package require ArcherCore 1.0
 catch {package require Tktable 2.10} tktable
+package require ManBrowser 1.0
 package provide Archer 1.0
 
 ::itcl::class Archer {
@@ -109,6 +110,15 @@ package provide Archer 1.0
 	ArcherCore::constructor $_viewOnly $_noCopy
     } {}
     destructor {}
+
+
+    # Dynamically load methods
+    if {$Archer::methodDecls != ""} {
+	foreach meth $::Archer::methodDecls {
+	    eval $meth
+	}
+    }
+
 
     public {
 	# Public Class Variables
@@ -158,6 +168,7 @@ package provide Archer 1.0
 	method raytracePlus {}
 
 	# ArcherCore Override Section
+	method cmd                 {args}
 	method 3ptarb              {args}
 	method attr                {args}
 	method bo                  {args}
@@ -291,7 +302,6 @@ package provide Archer 1.0
 	# Miscellaneous Section
 	method buildAboutDialog {}
 	method buildarcherHelp {}
-	method buildarcherMan {}
 	method buildCommandViewNew {_mflag}
 	method buildDisplayPreferences {}
 	method buildGeneralPreferences {}
@@ -308,7 +318,6 @@ package provide Archer 1.0
 	method buildViewAxesPreferences {}
 	method doAboutArcher {}
 	method doarcherHelp {}
-	method doarcherMan {}
 	method handleConfigure {}
 	method launchDisplayMenuBegin {_dm _m _x _y}
 	method launchDisplayMenuEnd {}
@@ -496,7 +505,11 @@ package provide Archer 1.0
 #                      CONSTRUCTOR
 # ------------------------------------------------------------
 ::itcl::body Archer::constructor {{_viewOnly 0} {_noCopy 0} args} {
+
     # Append a few more commands
+    if {$Archer::extraMgedCommands != ""} {
+	eval lappend mArcherCoreCommands $Archer::extraMgedCommands
+    }
     lappend mArcherCoreCommands importFg4Sections
 
     if {!$mViewOnly} {
@@ -980,6 +993,15 @@ package provide Archer 1.0
     }
 
     return 0
+}
+
+
+::itcl::body Archer::cmd {args} {
+    set mCoreCmdLevel 1
+    set ret [eval ArcherCore::cmd $args]
+    set mCoreCmdLevel 0
+
+    return $ret
 }
 
 
@@ -1651,7 +1673,7 @@ package provide Archer 1.0
 
 	grid forget $itk_component(canvas)
 	if {!$mViewOnly} {
-	    grid $itk_component(ged) -row 1 -column 0 -columnspan 3 -sticky news
+	    grid $itk_component(ged) -row 0 -column 0 -columnspan 3 -sticky news
 	    after idle "$this component cmd configure -cmd_prefix \"[namespace tail $this] cmd\""
 	} else {
 	    grid $itk_component(ged) -row 1 -column 0 -sticky news
@@ -2594,7 +2616,7 @@ package provide Archer 1.0
 
     # If an item is in both sublists, remove it from mlist.
     foreach item $klist {
-	set l [lsearch -all $mlist $item]
+	set l [lsearch -all -sorted $mlist $item]
 	set l [lsort -decreasing $l]
 	foreach i $l {
 	    # Delete the item (i.e. it no longer exists)
@@ -2728,7 +2750,7 @@ package provide Archer 1.0
 	set mSelectedObj $new_name
 	checkpoint $mSelectedObj $LEDGER_MODIFY
 	regsub {([^/]+)$} $mSelectedObjPath $new_name mSelectedObjPath
-    } elseif {[lsearch $mlist $mSelectedObj] != -1} {
+    } elseif {[lsearch -sorted $mlist $mSelectedObj] != -1} {
 	checkpoint $mSelectedObj $LEDGER_MODIFY
     }
 
@@ -3242,107 +3264,6 @@ proc title_node_handler {node} {
 
     wm geometry $itk_component(archerHelp) "1100x800"
 }
-
-
-::itcl::body Archer::buildarcherMan {} {
-    global env
-    global archer_help_data
-    global manhtmlviewer
-    global manhtml
-
-    itk_component add archerMan {
-	::iwidgets::dialog $itk_interior.archerMan \
-	    -modality none \
-	    -title "MGED Manual Page Browser" \
-	    -background $SystemButtonFace
-    } {}
-    $itk_component(archerMan) hide 1
-    $itk_component(archerMan) hide 2
-    $itk_component(archerMan) hide 3
-    $itk_component(archerMan) configure \
-	-thickness 2 \
-	-buttonboxpady 0
-    $itk_component(archerMan) buttonconfigure 0 \
-	-defaultring yes \
-	-defaultringpad 3 \
-	-borderwidth 1 \
-	-pady 0
-
-    # ITCL can be nasty
-    set win [$itk_component(archerMan) component bbox component OK component hull]
-    after idle "$win configure -relief flat"
-
-    set tlparent [$itk_component(archerMan) childsite]
-
-    # Table of Contents
-    itk_component add archerManToC {
-	::tk::frame $tlparent.archerManToC
-    } {}
-    
-    set sfcstoc $itk_component(archerManToC)
-
-    itk_component add archerManS {
-	::ttk::scrollbar $itk_component(archerManToC).archerManS \
-	} {}
-
-    itk_component add mantree {
-        ::tk::listbox $itk_component(archerManToC).mantree -bd 2 -width 16 -exportselection false -yscroll "$itk_component(archerManS) set"
-    } {}
-
-    $itk_component(archerManS) configure -command "$itk_component(mantree) yview"
-
-    grid $itk_component(mantree) $itk_component(archerManS) -sticky nsew -in $sfcstoc
-
-    grid columnconfigure $sfcstoc 0 -weight 1
-    grid rowconfigure $sfcstoc 0 -weight 1
-
-    if {[file exists [file join [bu_brlcad_data "html"] mann en Introduction.html]]} {
-
-	# List of available help documents
-	set cmdfiles [glob -directory [file join [bu_brlcad_data "html"] mann en] *.html ]
-	set cmds [list ]
-	foreach cmdfile $cmdfiles {
-	    regexp {(.+/)(.+)(.html)} $cmdfile -> url cmdrootname htmlsuffix
-	    if {[string compare $cmdrootname "Introduction"]} {
-		set cmds [concat $cmds [list $cmdrootname]]
-	    }
-	}
-	set cmds [lsort $cmds]
-	foreach cmd $cmds {
-	    $itk_component(mantree) insert end $cmd
-	}
-
-	pack $itk_component(archerManToC) -side left -expand no -fill y
-
-
-	# Main HTML window
-
-	itk_component add archerManF {
-	    ::tk::frame $tlparent.archerManF
-	} {}
-	set sfcsman $itk_component(archerManF)
-	pack $sfcsman -expand yes -fill both 
-	
-	# HTML widget
-	set manhtmlviewer [::hv3::hv3 $sfcsman.htmlview]
-	set manhtml [$manhtmlviewer html]
-	$manhtml configure -parsemode html 
-	set help_fd [lindex [list [file join [bu_brlcad_data "html"] mann en Introduction.html]] 0]
-	get_html_data $help_fd
-	$manhtml parse $archer_help_data
-
-	grid $manhtmlviewer -sticky nsew -in $sfcsman
-
-	grid columnconfigure $sfcsman 0 -weight 1
-	grid rowconfigure $sfcsman 0 -weight 1
-
-	pack $itk_component(archerManF) -side left -expand yes -fill both
-    }
-    bind $itk_component(mantree) <Button-1> {handle_select %W %y; Archer::get_html_man_data [%W get [%W curselection]]; Archer::html_man_display $manhtml}
-
-    wm geometry $itk_component(archerMan) "800x600"
-}
-
 
 ::itcl::body Archer::buildDisplayPreferences {} {
     set oglParent $itk_component(preferenceTabs)
@@ -3859,7 +3780,10 @@ proc title_node_handler {node} {
 
     buildAboutDialog
     buildarcherHelp
-    buildarcherMan
+
+    # Build manual browser
+    ManBrowser $itk_interior.archerMan -parentName Archer
+
     buildMouseOverridesDialog
     #    buildInfoDialog mouseOverridesDialog \
 	"Mouse Overrides" $mMouseOverrideInfo \
@@ -4511,7 +4435,7 @@ proc title_node_handler {node} {
     }
     $itk_component(${_prefix}helpmenu) add command \
 	-label "Archer Man Pages..." \
-	-command [::itcl::code $this doarcherMan]
+	-command [::itcl::code $this man]
     $itk_component(${_prefix}helpmenu) add command \
 	-label "Archer Help..." \
 	-command [::itcl::code $this doarcherHelp]
@@ -4638,17 +4562,6 @@ proc title_node_handler {node} {
     ::update
     $itk_component(aboutDialog) activate
 }
-
-
-::itcl::body Archer::doarcherMan {} {
-    global tcl_platform
-
-    $itk_component(archerMan) center [namespace tail $this]
-    ::update
-    $itk_component(archerMan) activate
-
-}
-
 
 ::itcl::body Archer::doarcherHelp {} {
     global tcl_platform

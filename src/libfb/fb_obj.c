@@ -921,26 +921,6 @@ fbo_configure_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 }
 
 
-#if 0
-/*
- *
- * Usage:
- * procname
- */
-int
-fbo__tcl(clientData, interp, argc, argv)
-    ClientData clientData;
-    Tcl_Interp *interp;
-    int argc;
-    char **argv;
-{
-    struct fb_obj *fbop = (struct fb_obj *)clientData;
-    struct bu_vls vls;
-
-    return TCL_OK;
-}
-#endif
-
 /****************** utility routines ********************/
 HIDDEN int
 fbo_coords_ok(Tcl_Interp *interp, FBIO *fbp, int x, int y)

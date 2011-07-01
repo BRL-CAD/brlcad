@@ -378,7 +378,7 @@ main(int argc, char **argv)
                                 if (!BU_SETJUMP) {
                                     /* try */
                                     result = bn_distsq_line3_pt3(&d[0], &d[3], &d[6]); 
-                                    if (!NEAR_ZERO(result - d[9], VUNITIZE_TOL)) {
+                                    if (!NEAR_EQUAL(result, d[9], VUNITIZE_TOL)) {
                                         ret = 1;
                                         failed_cnt++;
                                         (void)fprintf(stream, "Failed function %lu test case on line %lu expected = %.15f result = %.15f\n",
@@ -453,7 +453,7 @@ main(int argc, char **argv)
                                         (void)fprintf(stream, "Failed function %lu test case on line %lu expected = %d result = %d\n",
 						      u[0], line_num, i[0], result); 
                                     } else if (result == 0) {
-                                        if (!NEAR_ZERO(t_out - d[0], tol.dist)) {
+                                        if (!NEAR_EQUAL(t_out, d[0], tol.dist)) {
                                             ret = 1;
                                             failed_cnt++;
                                             (void)fprintf(stream, "Failed function %lu test case on line %lu result = %d expected t = %.15f result t = %.15f\n",
@@ -462,8 +462,8 @@ main(int argc, char **argv)
                                             success_cnt++;
                                         }
                                     } else if (result == 1) {
-                                        t_fail = !NEAR_ZERO(t_out - d[0], tol.dist);
-                                        u_fail = !NEAR_ZERO(u_out - d[1], tol.dist);
+                                        t_fail = !NEAR_EQUAL(t_out, d[0], tol.dist);
+                                        u_fail = !NEAR_EQUAL(u_out, d[1], tol.dist);
                                         if (t_fail) {
                                             (void)fprintf(stream, "Failed function %lu test case on line %lu result = %d expected t = %.15f result t = %.15f\n",
 							  u[0], line_num, result, d[0], t_out); 
@@ -518,8 +518,8 @@ main(int argc, char **argv)
                                         (void)fprintf(stream, "Failed function %lu test case on line %lu expected = %d result = %d\n",
 						      u[0], line_num, i[0], result); 
                                     } else if (result == 0 || result == 1) {
-                                        d0_fail = !NEAR_ZERO(dist[0] - d[0], VUNITIZE_TOL);
-                                        d1_fail = !NEAR_ZERO(dist[1] - d[1], VUNITIZE_TOL);
+                                        d0_fail = !NEAR_EQUAL(dist[0], d[0], VUNITIZE_TOL);
+                                        d1_fail = !NEAR_EQUAL(dist[1], d[1], VUNITIZE_TOL);
                                         if (d0_fail) {
                                             (void)fprintf(stream, "Failed function %lu test case on line %lu result = %d expected dist[0] = %.15f result dist[0] = %.15f\n",
 							  u[0], line_num, result, d[0], dist[0]); 

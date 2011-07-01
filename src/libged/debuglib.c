@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file debuglib.c
+/** @file libged/debuglib.c
  *
  * The debuglib command.
  *
@@ -42,29 +42,29 @@ ged_debuglib(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc > 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     /* get librt's debug bit vector */
     if (argc == 1) {
-	bu_vls_printb(&gedp->ged_result_str, "Possible flags", 0xffffffffL, DEBUG_FORMAT);
-	bu_vls_printf(&gedp->ged_result_str, "\n");
+	bu_vls_printb(gedp->ged_result_str, "Possible flags", 0xffffffffL, DEBUG_FORMAT);
+	bu_vls_printf(gedp->ged_result_str, "\n");
     } else {
 	/* set librt's debug bit vector */
 	if (sscanf(argv[1], "%x", (unsigned int *)&rt_g.debug) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
 	}
 
 	if (RT_G_DEBUG) bu_debug |= BU_DEBUG_COREDUMP;
     }
 
-    bu_vls_printb(&gedp->ged_result_str, "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
-    bu_vls_printf(&gedp->ged_result_str, "\n");
+    bu_vls_printb(gedp->ged_result_str, "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
+    bu_vls_printf(gedp->ged_result_str, "\n");
 
     return GED_OK;
 }

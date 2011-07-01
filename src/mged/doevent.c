@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file doevent.c
+/** @file mged/doevent.c
  *
  * X event handling routines for MGED.
  *

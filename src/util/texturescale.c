@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file texturescale.c
+/** @file util/texturescale.c
  *
  * Scale a PIX(5) stream to map onto a curved solid
  *

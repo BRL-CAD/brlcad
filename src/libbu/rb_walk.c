@@ -17,8 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup rb */
-/** @{ */
 
 #include "common.h"
 
@@ -146,7 +144,7 @@ postwalkdata(struct bu_rb_node *root, int order, void (*visit) (/* ??? */), int 
 
 
 void
-rb_walk(bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int what_to_visit, int trav_type)
+rb_walk(struct bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int what_to_visit, int trav_type)
 {
     static void (*walk[][3])() = {
 	{ prewalknodes, inwalknodes, postwalknodes },
@@ -179,7 +177,7 @@ rb_walk(bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int what_to_visi
 }
 
 void
-bu_rb_walk(bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int trav_type)
+bu_rb_walk(struct bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int trav_type)
 {
     BU_CKMAG(tree, BU_RB_TREE_MAGIC, "red-black tree");
     RB_CKORDER(tree, order);
@@ -187,7 +185,6 @@ bu_rb_walk(bu_rb_tree *tree, int order, void (*visit) (/* ??? */), int trav_type
     rb_walk(tree, order, visit, WALK_DATA, trav_type);
 }
 
-/** @} */
 
 /*
  * Local Variables:

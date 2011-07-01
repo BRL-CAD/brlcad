@@ -19,7 +19,7 @@
  */
 /** @addtogroup nurb */
 /** @{ */
-/** @file nurb_util.c
+/** @file primitives/bspline/nurb_util.c
  *
  * Utilities for NURB curves and surfaces.
  *

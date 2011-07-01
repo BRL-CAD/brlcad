@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file set_output_script.c
+/** @file libged/set_output_script.c
  *
  * The set_output_script command.
  *
@@ -30,7 +30,7 @@
  * Get/set the output handler script
  *
  * Usage:
- *        set_output_script [script]
+ * set_output_script [script]
  *
  */
 int
@@ -42,16 +42,16 @@ ged_set_output_script(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc > 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     /* Get the output handler script */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "%s", gedp->ged_output_script);
+	bu_vls_printf(gedp->ged_result_str, "%s", gedp->ged_output_script);
 	return GED_OK;
     }
 

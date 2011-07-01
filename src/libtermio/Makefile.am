@@ -8,7 +8,7 @@ libtermio_la_LIBADD = ${TERMIO_LIBS}
 AM_CFLAGS = ${STRICT_FLAGS}
 
 EXTRA_DIST = \
-	libtermio.dsp \
-	termio_win32.c
+	termio_win32.c \
+	CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs

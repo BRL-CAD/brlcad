@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file blast.c
+/** @file libged/blast.c
  *
  * The blast command.
  *
@@ -31,7 +31,7 @@
  * Erase all currently displayed geometry and draw the specified object(s)
  *
  * Usage:
- *        blast object(s)
+ * blast object(s)
  *
  */
 int
@@ -44,11 +44,11 @@ ged_blast(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(&gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
 

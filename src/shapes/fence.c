@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file fence.c
+/** @file shapes/fence.c
  *
  * This program generages a chain-link fence.  Every parameter of the
  * fence may be adjusted.  Default values are held in fence.h Be wary

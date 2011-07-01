@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file main.c
+/** @file iges/main.c
  *
  * IGES to BRL-CAD converter
  *

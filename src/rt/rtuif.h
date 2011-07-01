@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rtuif.h
+/** @file rt/rtuif.h
  *
  * Private API header for developing applications that utilize rt's
  * common Ray Trace User Interface Framework (RTUIF).

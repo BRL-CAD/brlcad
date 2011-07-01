@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dbcp.c
+/** @file util/dbcp.c
  *
  * Double-buffered copy program for UNIX
  *

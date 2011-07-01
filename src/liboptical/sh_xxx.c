@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_xxx.c
+/** @file liboptical/sh_xxx.c
  *
  * To add a new shader to the "rt" program's LIBOPTICAL library:
  *
@@ -132,8 +132,10 @@ struct bu_structparse xxx_parse_tab[] = {
 };
 
 
-HIDDEN int xxx_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), xxx_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void xxx_print(register struct region *rp, char *dp), xxx_free(char *cp);
+HIDDEN int xxx_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int xxx_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
+HIDDEN void xxx_print(register struct region *rp, genptr_t dp);
+HIDDEN void xxx_free(genptr_t cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -161,7 +163,7 @@ struct mfuncs xxx_mfuncs[] = {
  * -1 failure
  */
 HIDDEN int
-xxx_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+xxx_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -181,7 +183,7 @@ xxx_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 
     /* Get memory for the shader parameters and shader-specific data */
     BU_GETSTRUCT(xxx_sp, xxx_specific);
-    *dpp = (char *)xxx_sp;
+    *dpp = xxx_sp;
 
     /* initialize the default values for the shader */
     memcpy(xxx_sp, &xxx_defaults, sizeof(struct xxx_specific));
@@ -226,7 +228,7 @@ xxx_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
  * X X X _ P R I N T
  */
 HIDDEN void
-xxx_print(register struct region *rp, char *dp)
+xxx_print(register struct region *rp, genptr_t dp)
 {
     bu_struct_print(rp->reg_name, xxx_print_tab, (char *)dp);
 }
@@ -236,7 +238,7 @@ xxx_print(register struct region *rp, char *dp)
  * X X X _ F R E E
  */
 HIDDEN void
-xxx_free(char *cp)
+xxx_free(genptr_t cp)
 {
     bu_free(cp, "xxx_specific");
 }
@@ -250,7 +252,7 @@ xxx_free(char *cp)
  * structure.
  */
 int
-xxx_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+xxx_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
 
 
 /* defined in ../h/shadework.h */

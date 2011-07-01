@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file grip_mirror.c
+/** @file primitives/grip/grip_mirror.c
  *
  * mirror support
  *

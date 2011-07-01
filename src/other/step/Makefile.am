@@ -30,7 +30,13 @@ EXTRA_DIST = \
 	ChangeLog \
 	libtool \
 	configure.ac \
-	TODO
+	TODO \
+	CMakeLists.txt  \
+	CMake/CheckCFileRuns.cmake \
+	CMake/FindLEX.cmake \
+	CMake/FindYACC.cmake \
+	CMake/SCL_Utils.cmake \
+	CMake/test_srcs/sys_wait_test.c
 
 DISTCLEANFILES = \
 	$(CONFIG_CACHE) \

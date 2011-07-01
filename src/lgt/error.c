@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file error.c
+/** @file lgt/error.c
  *
  *  Ray Tracing library and Framebuffer library, error handling routines.
  *

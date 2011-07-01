@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file readdbl.c
+/** @file iges/readdbl.c
  *
  * This routine reads the next field in "card" buffer.  It expects the
  * field to contain a string representing a "double".  The string is

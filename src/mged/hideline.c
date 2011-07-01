@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file hideline.c
+/** @file mged/hideline.c
  *
  * Takes the vector list for the current display and raytraces along
  * those vectors.  If the first point hit in the model is the same as

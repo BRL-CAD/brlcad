@@ -2112,7 +2112,7 @@ ph_default(struct pkg_conn *pc, char *buf)
     for ( i=0; pc->pkc_switch[i].pks_handler != NULL; i++ )  {
 	if ( pc->pkc_switch[i].pks_type == pc->pkc_type )  break;
     }
-    bu_log("ctl: unable to handle %s message: len %d",
+    bu_log("ctl: unable to handle %s message: len %zu",
 	   pc->pkc_switch[i].pks_title, pc->pkc_len);
     *buf = '*';
     (void)free(buf);
@@ -2285,7 +2285,7 @@ ph_pixels(struct pkg_conn *pc, char *buf)
 
     cnt = bu_struct_import( (genptr_t)&info, desc_line_info, &ext );
     if ( cnt < 0 )  {
-	bu_log("bu_struct_import error, %d\n", cnt);
+	bu_log("bu_struct_import error, %zu\n", cnt);
 	drop_server( sp, "bu_struct_import error" );
 	goto out;
     }
@@ -2344,7 +2344,7 @@ ph_pixels(struct pkg_conn *pc, char *buf)
     npix = info.li_endpix - info.li_startpix + 1;
     i = npix*3;
     if ( pc->pkc_len - ext.ext_nbytes < i )  {
-	bu_log("short scanline, s/b=%d, was=%d\n",
+	bu_log("short scanline, s/b=%zu, was=%zu\n",
 	       i, pc->pkc_len - ext.ext_nbytes );
 	i = pc->pkc_len - ext.ext_nbytes;
 	drop_server( sp, "short scanline" );
@@ -2364,7 +2364,7 @@ ph_pixels(struct pkg_conn *pc, char *buf)
     cnt = write( fd, buf+ext.ext_nbytes, i );
     if (cnt != (ssize_t)i) {
 	perror( fr->fr_filename );
-	bu_log("write s/b %d, got %d\n", i, cnt );
+	bu_log("write s/b %zu, got %zu\n", i, cnt );
 	/*
 	 *  Generally, a write error is caused by lack of disk space.
 	 *  In any case, it is indicative of bad problems.
@@ -2623,7 +2623,7 @@ init_fb(char *name)
     while ( yy < height )
 	yy <<= 1;
     if ( (fbp = fb_open( name?name:framebuffer, xx, yy )) == FBIO_NULL )  {
-	bu_log("fb_open %d,%d failed\n", xx, yy);
+	bu_log("fb_open %zu,%zu failed\n", xx, yy);
 	return -1;
     }
     /* New way:  center, zoom */
@@ -3110,7 +3110,7 @@ cd_f(int argc, char **argv)
     width = height = atoi( argv[1] );
     if ( width < 4 || width > 16*1024 )
 	width = 64;
-    bu_log("width=%d, height=%d, takes effect after next MAT\n",
+    bu_log("width=%zu, height=%zu, takes effect after next MAT\n",
 	   width, height);
     return 0;
 }

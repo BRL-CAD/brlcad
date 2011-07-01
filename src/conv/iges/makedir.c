@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file makedir.c
+/** @file iges/makedir.c
  *
  * Routine to read the directory section of an IGES file.  and store
  * needed info in the 'directory' structures.  dir[n] is the structure

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file lgt.h
+/** @file lgt/lgt.h
     Author:		Gary S. Moss
 */
 #ifndef INCL_LGT
@@ -80,8 +80,6 @@
 #define DEBUG_CELLSIZE	0x800000
 #define DEBUG_OCTREE	0x1000000
 
-typedef int	bool;
-
 /* Light source (LS) specific global information.
    Directions are with respect to the center of the model as calculated
    by 'librt.a'.
@@ -107,10 +105,10 @@ Lgt_Source;
 
 typedef struct
 {
-    bool	m_fullscreen;
-    bool	m_lgts;
-    bool	m_over;
-    bool	m_keys;
+    int	m_fullscreen;
+    int	m_lgts;
+    int	m_over;
+    int	m_keys;
     int	m_noframes;
     int	m_curframe;
     int	m_endframe;

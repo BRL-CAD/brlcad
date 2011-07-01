@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file facedef.c
+/** @file mged/facedef.c
  *
  */
 
@@ -92,7 +92,7 @@ f_facedef(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     int status = TCL_OK;
     struct bu_vls error_msg;
 
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
 
     if (argc < 2) {
 	struct bu_vls vls;

@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file nastran-g.c
+/** @file conv/nastran-g.c
  *
  * Code to convert a NASTRAN finite element model to BRL-CAD.
  *
@@ -1285,22 +1285,6 @@ main(int argc, char **argv)
 
 	get_coord_sys();
     }
-#if 0
-    bu_log("Original grid:\n");
-    for (i=0; i<grid_used; i++) {
-	bu_log("Grid point: gid=%d, cid=%d, (%g %g %g)\n", g_pts[i].gid,
-	       g_pts[i].cid, V3ARGS(g_pts[i].pt));
-    }
-
-    bu_log("\nOriginal coordinate systems:\n");
-    for (BU_LIST_FOR(cs, coord_sys, &coord_head.l)) {
-	bu_log("cid=%d, type=%c, rid=%d\n", cs->cid, cs->type, cs->rid);
-	bu_log("\torigin=(%g %g %g)\n", V3ARGS(cs->origin));
-	bu_log("\tv1=(%g %g %g)\n", V3ARGS(cs->v1));
-	bu_log("\tv2=(%g %g %g)\n", V3ARGS(cs->v2));
-	bu_log("\tv3=(%g %g %g)\n", V3ARGS(cs->v3));
-    }
-#endif
     /* convert everything to BRL-CAD coordinate system */
     i = 0;
     while (convert_all_cs() || convert_all_pts()) {
@@ -1309,23 +1293,6 @@ main(int argc, char **argv)
 	    bu_exit(1, "Cannot convert to default coordinate system, check for circular definition\n");
 	}
     }
-
-#if 0
-    bu_log("Converted grid:\n");
-    for (i=0; i<grid_used; i++) {
-	bu_log("Grid point: gid=%d, cid=%d, (%g %g %g)\n", g_pts[i].gid,
-	       g_pts[i].cid, V3ARGS(g_pts[i].pt));
-    }
-
-    bu_log("\nConverted coordinate systems:\n");
-    for (BU_LIST_FOR(cs, coord_sys, &coord_head.l)) {
-	bu_log("cid=%d, type=%c, rid=%d\n", cs->cid, cs->type, cs->rid);
-	bu_log("\torigin=(%g %g %g)\n", V3ARGS(cs->origin));
-	bu_log("\tv1=(%g %g %g)\n", V3ARGS(cs->v1));
-	bu_log("\tv2=(%g %g %g)\n", V3ARGS(cs->v2));
-	bu_log("\tv3=(%g %g %g)\n", V3ARGS(cs->v3));
-    }
-#endif
 
     mk_id(fpout, nastran_file);
 

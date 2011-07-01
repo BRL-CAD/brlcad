@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file VolumeConversionBasedUnit.cpp
+/** @file step/VolumeConversionBasedUnit.cpp
  *
  * Routines to convert STEP "VolumeConversionBasedUnit" to BRL-CAD BREP
  * structures.

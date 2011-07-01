@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_plastic.c
+/** @file liboptical/sh_plastic.c
  *
  * Notes -
  * The normals on all surfaces point OUT of the solid.
@@ -44,9 +44,6 @@
 #endif
 
 
-extern int rr_render(struct application *ap,
-		     struct partition *pp,
-		     struct shadework *swp);
 /* Fast approximation to specular term */
 #define PHAST_PHONG 1	/* See Graphics Gems IV pg 387 */
 
@@ -75,10 +72,12 @@ struct bu_structparse phong_parse[] = {
 };
 
 
-HIDDEN int phong_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), mirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), glass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int phong_render(register struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void phong_print(register struct region *rp, char *dp);
-HIDDEN void phong_free(char *cp);
+HIDDEN int phong_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int mirror_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int glass_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int phong_render(register struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
+HIDDEN void phong_print(register struct region *rp, genptr_t dp);
+HIDDEN void phong_free(genptr_t cp);
 
 /* This can't be const, so the forward link can be written later */
 struct mfuncs phg_mfuncs[] = {
@@ -101,13 +100,13 @@ extern double phg_ipow();
  * P H O N G _ S E T U P
  */
 HIDDEN int
-phong_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *UNUSED(rtip))
+phong_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *UNUSED(rtip))
 {
     register struct phong_specific *pp;
 
     BU_CK_VLS(matparm);
     BU_GETSTRUCT(pp, phong_specific);
-    *dpp = (char *)pp;
+    *dpp = pp;
 
     pp->magic = PL_MAGIC;
     pp->shine = 10;
@@ -120,7 +119,7 @@ phong_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
     pp->mfp = mfp;
 
     if (bu_struct_parse(matparm, phong_parse, (char *)pp) < 0) {
-	bu_free((char *)pp, "phong_specific");
+	bu_free((genptr_t)pp, "phong_specific");
 	return -1;
     }
 
@@ -134,13 +133,13 @@ phong_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
  * M I R R O R _ S E T U P
  */
 HIDDEN int
-mirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *UNUSED(rtip))
+mirror_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *UNUSED(rtip))
 {
     register struct phong_specific *pp;
 
     BU_CK_VLS(matparm);
     BU_GETSTRUCT(pp, phong_specific);
-    *dpp = (char *)pp;
+    *dpp = pp;
 
     pp->magic = PL_MAGIC;
     pp->shine = 4;
@@ -153,7 +152,7 @@ mirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
     pp->mfp = mfp;
 
     if (bu_struct_parse(matparm, phong_parse, (char *)pp) < 0) {
-	bu_free((char *)pp, "phong_specific");
+	bu_free((genptr_t)pp, "phong_specific");
 	return -1;
     }
 
@@ -167,13 +166,13 @@ mirror_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
  * G L A S S _ S E T U P
  */
 HIDDEN int
-glass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *UNUSED(rtip))
+glass_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *UNUSED(rtip))
 {
     register struct phong_specific *pp;
 
     BU_CK_VLS(matparm);
     BU_GETSTRUCT(pp, phong_specific);
-    *dpp = (char *)pp;
+    *dpp = pp;
 
     pp->magic = PL_MAGIC;
     pp->shine = 4;
@@ -187,7 +186,7 @@ glass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
     pp->mfp = mfp;
 
     if (bu_struct_parse(matparm, phong_parse, (char *)pp) < 0) {
-	bu_free((char *)pp, "phong_specific");
+	bu_free((genptr_t)pp, "phong_specific");
 	return -1;
     }
 
@@ -201,7 +200,7 @@ glass_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
  * P H O N G _ P R I N T
  */
 HIDDEN void
-phong_print(register struct region *rp, char *dp)
+phong_print(register struct region *rp, genptr_t dp)
 {
     bu_struct_print(rp->reg_name, phong_parse, (char *)dp);
 }
@@ -211,7 +210,7 @@ phong_print(register struct region *rp, char *dp)
  * P H O N G _ F R E E
  */
 HIDDEN void
-phong_free(char *cp)
+phong_free(genptr_t cp)
 {
     bu_free(cp, "phong_specific");
 }
@@ -284,7 +283,7 @@ phong_free(char *cp)
  `	n	'Shininess' of the material,  range 1 to 10.
 */
 HIDDEN int
-phong_render(register struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+phong_render(register struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
 {
     struct light_specific *lp;
 #ifndef RT_MULTISPECTRAL
@@ -308,7 +307,8 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
     struct phong_specific *ps =
 	(struct phong_specific *)dp;
 
-    if (ps->magic != PL_MAGIC) bu_log("phong_render: bad magic\n");
+    if (!ps || ps->magic != PL_MAGIC)
+	bu_bomb("phong_render: bad magic\n");
 
     if (rdebug&RDEBUG_SHADE)
 	bu_struct_print("phong_render", phong_parse, (char *)ps);

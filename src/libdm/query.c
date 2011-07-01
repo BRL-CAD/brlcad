@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file query.c
+/** @file libdm/query.c
  *
  */
 

@@ -19,7 +19,7 @@
  */
 /** @addtogroup plot */
 /** @{ */
-/** @file scale.c
+/** @file libbn/scale.c
  *
  * @brief scale geometry points.
  *

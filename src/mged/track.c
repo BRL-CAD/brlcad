@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file track.c
+/** @file mged/track.c
  *
  * f_amtrack():	Adds "tracks" to the data file given the required info
  *
@@ -587,7 +587,7 @@ wrobj(char name[], int flags)
 	return -1;
     }
 
-    RT_INIT_DB_INTERNAL(&intern);
+    RT_DB_INTERNAL_INIT(&intern);
     switch (sol.s_type) {
 	case ID_ARB8:
 	    {

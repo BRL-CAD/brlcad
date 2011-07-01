@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file MassConversionBasedUnit.cpp
+/** @file step/MassConversionBasedUnit.cpp
  *
  * Routines to convert STEP "MassConversionBasedUnit" to BRL-CAD BREP
  * structures.

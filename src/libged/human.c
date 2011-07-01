@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file human.c
+/** @file libged/human.c
  *
  * Generator for human models based on height, and other stuff eventually,
  * and for the humanwizard plugin (mostly).
@@ -35,7 +35,7 @@
  * shoulder*.r
  * - The shoulder*.r pivots around the X-axis in its XYZ center (half
  *   the distance in each axis to reach the center of the box).
- * 
+ *
  * upperchest.r and lowerchest.r
  * - No movement, but the upperchest.r is specifically centered above
  *   the lowerchest.r.
@@ -57,7 +57,7 @@
  *
  * thigh*.r and calf*.r
  * - The pivot point occurs at the XY center of the thigh*.r base.
- * 
+ *
  * calf*.r and foot*r
  * - The pivot point of the foot*.r is located in XYZ center of the
  *   overlap, meaning half way across the X-axis, Y-axis, and Z-axis
@@ -92,7 +92,7 @@
 /*
  * Default height is 5 feet, 8 inches, arbitrarily
  */
-#define DEFAULT_HEIGHT_INCHES 68.0 
+#define DEFAULT_HEIGHT_INCHES 68.0
 #define DEFAULT_FILENAME "human.g"
 #define DEFAULT_HUMANNAME "Body.c"
 
@@ -256,6 +256,7 @@ setDirection(fastf_t *inVect, fastf_t *resultVect, fastf_t *outMatrix, fastf_t x
     return *rotMatrix;
 }
 
+
 /**
  * Create a bounding box around the individual part, this one has only
  * 1 value for depth and width.  Currently is a big mess, as the boxes
@@ -265,7 +266,7 @@ setDirection(fastf_t *inVect, fastf_t *resultVect, fastf_t *outMatrix, fastf_t x
 HIDDEN void
 boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *lengthVector, fastf_t partWidth, fastf_t *rotMatrix)
 {
-    /* Make the arb8/rpp that will bound the part as it were straight up and down, 
+    /* Make the arb8/rpp that will bound the part as it were straight up and down,
      * And then rotate it to the current position as given in rotMatrix,
      * followed by naming it by taking name, and cat-ing BOX to the end of it.
      */
@@ -274,7 +275,7 @@ boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *lengt
     point_t finalPoints[8];
     vect_t distance;
     vect_t JVEC;
-    char newName[MAXLENGTH] = "a";	
+    char newName[MAXLENGTH] = "a";
     char debug[MAXLENGTH] = "a";
     int i = 0;
     int w=0;
@@ -335,7 +336,7 @@ boundingBox(struct rt_wdb *file, char *name, fastf_t *startPoint, fastf_t *lengt
     }
 
     MAT3X3VEC(JVEC, rotMatrix, lengthVector);
-    mk_trc_h(file, debug, startPoint, JVEC, 4, 1); 
+    mk_trc_h(file, debug, startPoint, JVEC, 4, 1);
     mk_arb8(file, newName, *vects);
 }
 
@@ -399,9 +400,9 @@ makeHead(struct rt_wdb (*file), char *name, struct human_data_t *dude, fastf_t *
     mk_sph(file, name, dude->joints.headJoint, head);
 
     VSET(headFix, dude->joints.headJoint[X], dude->joints.headJoint[Y], dude->joints.headJoint[Z]+head);
-	
+
     if (showBoxes) {
-	boundingBox(file, name, headFix, lengthVector, (lengthVector[Z]/2), rotMatrix); 
+	boundingBox(file, name, headFix, lengthVector, (lengthVector[Z]/2), rotMatrix);
     }
     return 0;
 }
@@ -416,7 +417,7 @@ makeNeck(struct rt_wdb *file, char *name, struct human_data_t *dude, fastf_t *di
     setDirection(startVector, dude->head.neckVector, rotMatrix, direction[X], direction[Y], direction[Z]);
     VADD2(dude->joints.neckJoint, dude->joints.headJoint, dude->head.neckVector);
     mk_rcc(file, name, dude->joints.headJoint, dude->head.neckVector, dude->head.neckWidth);
-	
+
     if (showBoxes) {
 	boundingBox(file, name, dude->joints.headJoint, startVector, dude->head.neckWidth, rotMatrix);
     }
@@ -436,7 +437,7 @@ makeUpperTorso(struct rt_wdb *file, char *name, struct human_data_t *dude, fastf
     VSET(startVector, 0, 0, dude->torso.topTorsoLength);
     setDirection(startVector, dude->torso.topTorsoVector, rotMatrix, direction[X], direction[Y], direction[Z]);
     VADD2(dude->joints.abdomenJoint, dude->joints.neckJoint, dude->torso.topTorsoVector);
-	
+
     /* change shoulder joints to match up to torso */
     VSET(leftVector, 0, (dude->torso.shoulderWidth+(dude->arms.upperArmWidth)), 0);
     VSET(rightVector, 0, (dude->torso.shoulderWidth+(dude->arms.upperArmWidth))*-1, 0);
@@ -513,13 +514,13 @@ makeShoulderJoint(struct rt_wdb *file, int isLeft, char *name, struct human_data
 	if (isLeft) {
 	    setDirection(startVector, lengthVector, rotMatrix, dude->arms.lArmDirection[X], dude->arms.lArmDirection[Y], dude->arms.lArmDirection[Z]);
 	    VSET(leftFix, dude->joints.leftShoulderJoint[X], dude->joints.leftShoulderJoint[Y], (dude->joints.leftShoulderJoint[Z]-shoulder));
-	    boundingBox(file, name, leftFix, lengthVector, (lengthVector[Z]/2), rotMatrix); 
+	    boundingBox(file, name, leftFix, lengthVector, (lengthVector[Z]/2), rotMatrix);
 	} else{
 	    setDirection(startVector, lengthVector, rotMatrix, dude->arms.rArmDirection[X], dude->arms.rArmDirection[Y], dude->arms.rArmDirection[Z]);
 	    VSET(rightFix, dude->joints.rightShoulderJoint[X], dude->joints.rightShoulderJoint[Y], (dude->joints.rightShoulderJoint[Z]-shoulder));
 	    boundingBox(file, name, rightFix, lengthVector, (lengthVector[Z]/2), rotMatrix);
 	}
-    } 
+    }
     return dude->torso.shoulderWidth;
 }
 
@@ -546,15 +547,15 @@ makeUpperArm(struct rt_wdb *file, int isLeft, char *partName, struct human_data_
 	setDirection(startVector, dude->arms.armVector, rotMatrix, dude->arms.rArmDirection[X], dude->arms.rArmDirection[Y], dude->arms.rArmDirection[Z]); /* set y to 180 to point down */
 	VADD2(dude->joints.elbowJoint, dude->joints.rightShoulderJoint, dude->arms.armVector);
 	mk_trc_h(file, partName, dude->joints.rightShoulderJoint, dude->arms.armVector, dude->arms.upperArmWidth, dude->arms.elbowWidth);
-    }	
+    }
 
-/* Vectors and equations for making TGC arms 
+/* Vectors and equations for making TGC arms
  *	vect_t a, b, c, d;
  *	VSET(a, upperArmWidth, 0 , 0);
  *	VSET(b, 0, upperArmWidth, 0);
  *	VSET(c, ((elbowWidth*3)/4), 0, 0)
  *	VSET(d, 0, elbowWidth, 0);
- *	
+ *
  *	mk_tgc(file, partName, ShoulderJoint, armVector, a, b, c, d);
  */
 
@@ -575,7 +576,7 @@ makeElbow(struct rt_wdb *file, int UNUSED(isLeft), char *name, struct human_data
     VSET(a, (dude->arms.elbowWidth), 0, 0);
     VSET(b, 0, (dude->arms.elbowWidth), 0);
     VSET(c, 0, 0, dude->arms.elbowWidth);
-	
+
     mk_ell(file, name, dude->joints.elbowJoint, a, b, c);
 /*
  *	mk_sph(file, name, dude->joints.elbowJoint, dude->arms.elbowWidth);
@@ -614,7 +615,7 @@ makeLowerArm(struct rt_wdb *file, int isLeft, char *name, struct human_data_t *d
     if (showBoxes) {
 	if (isLeft)
 	    boundingBox(file, name, dude->joints.elbowJoint, startVector, dude->arms.elbowWidth, rotMatrix);
-	else   
+	else
 	    boundingBox(file, name, dude->joints.elbowJoint, startVector, dude->arms.elbowWidth, rotMatrix);
     }
 
@@ -681,7 +682,7 @@ makeThigh(struct rt_wdb *file, int isLeft, char *name, struct human_data_t *dude
     if (showBoxes) {
 	if (isLeft)
 	    boundingBox(file, name, dude->joints.leftThighJoint, startVector, dude->legs.thighWidth, rotMatrix);
-	else   
+	else
 	    boundingBox(file, name, dude->joints.rightThighJoint, startVector, dude->legs.thighWidth, rotMatrix);
     }
     return dude->legs.kneeWidth;
@@ -691,7 +692,7 @@ makeThigh(struct rt_wdb *file, int isLeft, char *name, struct human_data_t *dude
 HIDDEN fastf_t
 makeKnee(struct rt_wdb *file, int UNUSED(isLeft), char *name, struct human_data_t *dude)
 {
-    mk_sph(file, name, dude->joints.kneeJoint, dude->legs.kneeWidth);	
+    mk_sph(file, name, dude->joints.kneeJoint, dude->legs.kneeWidth);
     return dude->legs.kneeWidth;
 }
 
@@ -753,7 +754,7 @@ makeFoot(struct rt_wdb *file, int isLeft, char *name, struct human_data_t *dude,
     if (showBoxes) {
 	if (isLeft)
 	    boundingBox(file, name, dude->joints.ankleJoint, boxVector, dude->legs.toeWidth, rotMatrix);
-	else  
+	else
 	    boundingBox(file, name, dude->joints.ankleJoint, boxVector, dude->legs.toeWidth, rotMatrix);
     }
     return 0;
@@ -797,7 +798,7 @@ makeTorso(struct rt_wdb (*file), char *suffix, struct human_data_t *dude, fastf_
     makeShoulder(file, 1, leftShoulderName, dude, showBoxes);
     makeShoulder(file, 0, rightShoulderName, dude, showBoxes);
 
-    makeLowerTorso(file, lowerTorsoName, dude, direction, showBoxes);	
+    makeLowerTorso(file, lowerTorsoName, dude, direction, showBoxes);
 }
 
 
@@ -901,8 +902,8 @@ makeBody(struct rt_wdb (*file), char *suffix, struct human_data_t *dude, fastf_t
 {
     vect_t direction;
     bu_log("Making Body\n");
-    /* 
-     * Make sure that vectors, points, and widths are sent to each function 
+    /*
+     * Make sure that vectors, points, and widths are sent to each function
      * for direction, location, and correct sizing, respectivly.
      */
     bu_log("Setting Direction\n");
@@ -926,7 +927,7 @@ makeBody(struct rt_wdb (*file), char *suffix, struct human_data_t *dude, fastf_t
     /*The second argument is whether or not it is the left side, 1 = yes, 0 = no) */
     makeArm(file, suffix, 1, dude, showBoxes);
     makeArm(file, suffix, 0, dude, showBoxes);
-	
+
     /**
      * Leg Parts
      */
@@ -959,7 +960,7 @@ makeArmy(struct rt_wdb (*file), struct human_data_t dude, int number, int showBo
 	    bu_strlcpy(suffix, testname, MAXLENGTH);
 	    RandAuto(&dude);	/*Generates random heights for random height, and thus random size, creation. */
 	    Auto(&dude);
-	    makeBody(file, suffix, &dude, locations, showBoxes); 
+	    makeBody(file, suffix, &dude, locations, showBoxes);
 	    VSET(locations, (locations[X]- (dude.torso.shoulderWidth + dude.arms.upperArmWidth)*4), locations[Y], 0);
 	    num++;
 	}
@@ -1014,7 +1015,7 @@ manualPosition(struct human_data_t *dude)
     grabCoordinates(positions);
     VMOVE(dude->arms.lWristDirection, positions);
 
-    printf("Right Arm\n");	
+    printf("Right Arm\n");
     printf("Upper Arm\n");
     grabCoordinates(positions);
     VMOVE(dude->arms.rArmDirection, positions);
@@ -1036,7 +1037,7 @@ manualPosition(struct human_data_t *dude)
     grabCoordinates(positions);
     VMOVE(dude->legs.lFootDirection, positions);
 
-    printf("Right Leg\n");	
+    printf("Right Leg\n");
     printf("Thigh\n");
     grabCoordinates(positions);
     VMOVE(dude->legs.rLegDirection, positions);
@@ -1085,7 +1086,7 @@ setStance(fastf_t stance, struct human_data_t *dude)
 	    VMOVE(dude->legs.lLegDirection, downVect);
 	    VMOVE(dude->legs.rLegDirection, downVect);
 	    VMOVE(dude->legs.lKneeDirection, downVect);
-	    VMOVE(dude->legs.rKneeDirection, downVect);		
+	    VMOVE(dude->legs.rKneeDirection, downVect);
 	    VMOVE(dude->legs.lFootDirection, forwardVect);
 	    VMOVE(dude->legs.rFootDirection, forwardVect);
 	    bu_log("Standing\n");
@@ -1133,14 +1134,15 @@ setStance(fastf_t stance, struct human_data_t *dude)
 	    VMOVE(dude->legs.lKneeDirection, downVect);
 	    VMOVE(dude->legs.rKneeDirection, downVect);
 	    VMOVE(dude->legs.lFootDirection, forwardVect);
-	    VMOVE(dude->legs.rFootDirection, forwardVect);		
+	    VMOVE(dude->legs.rFootDirection, forwardVect);
 	    break;
-        case 4: {
+	case 4: {
 	    vect_t larm4, rarm4, knee4, lleg4;
 	    bu_log("Making the Letterman\n");
 	    VSET(larm4, -32, 135, 0);
 	    VSET(rarm4, 32, 135, 0);
-	    VSET(knee4, 90, 5, 0);		VSET(lleg4, 0, 75, 0);
+	    VSET(knee4, 90, 5, 0);
+	    VSET(lleg4, 0, 75, 0);
 	    VMOVE(dude->arms.lArmDirection, larm4);
 	    VMOVE(dude->arms.rArmDirection, rarm4);
 	    VMOVE(dude->arms.lElbowDirection, larm4);
@@ -1155,7 +1157,7 @@ setStance(fastf_t stance, struct human_data_t *dude)
 	    VMOVE(dude->legs.rFootDirection, forwardVect);
 	}
 	    break;
-        case 5: {
+	case 5: {
 	    vect_t larm5, rarm5, llower5, rlower5;
 	    vect_t rthigh5;
 	    bu_log("Making the Captain\n");
@@ -1180,7 +1182,7 @@ setStance(fastf_t stance, struct human_data_t *dude)
 	    break;
 
 	    /*Following cases are tests */
-        case 10: {
+	case 10: {
 	    vect_t test1;
 	    vect_t test2;
 	    vect_t test3;
@@ -1247,7 +1249,7 @@ Auto(struct human_data_t *dude)
     dude->legs.legLength = ((dude->height * 4) / 8) * IN2MM;
     dude->torso.torsoLength = ((dude->height * 3) / 8) * IN2MM;
     dude->torso.topTorsoLength = (dude->torso.torsoLength *5) / 8;
-    dude->torso.lowTorsoLength = (dude->torso.torsoLength *3) / 8;     
+    dude->torso.lowTorsoLength = (dude->torso.torsoLength *3) / 8;
     dude->torso.shoulderWidth = (dude->height / 8) *IN2MM;
     dude->torso.shoulderDepth = (dude->torso.shoulderWidth/2);
     dude->torso.abWidth=(dude->height / 9) * IN2MM;
@@ -1291,7 +1293,7 @@ HIDDEN void
 Manual(struct human_data_t *dude)
 {
     int ret;
-    fastf_t x=0;	/*Variable to be used for all input */
+    fastf_t x=0; /*Variable to be used for all input */
     bu_log("Manual Size Mode. All data to be entered is in inches\n");
     bu_log("HeadSize, radius\n");
     ret = scanf("%lf", &x);
@@ -1321,7 +1323,7 @@ Manual(struct human_data_t *dude)
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
-    x=x*IN2MM;	
+    x=x*IN2MM;
     dude->torso.shoulderWidth=x;
     bu_log("Shoulder Depth\n");
     ret = scanf("%lf", &x);
@@ -1485,6 +1487,7 @@ Manual(struct human_data_t *dude)
     bu_log("Height=%lf\n", dude->height);
 }
 
+
 #if 0
 /**
  * Goes through the human struct and sets all measurements to needed
@@ -1503,39 +1506,39 @@ setMeasurements(struct human_data_t *UNUSED(dude), fastf_t percentile)
     bu_log("Setting %.0f percentile data\n", percentile);
 
 /*	Find a method of database storage first, then apply those values to here */
-  dude->head.headSize=
-  dude->head.neckLength=
-  dude->head.neckWidth=
+    dude->head.headSize=
+	dude->head.neckLength=
+	dude->head.neckWidth=
 
-  dude->torso.topTorsoLength=
-  dude->torso.lowTorsoLength=
-  dude->torso.shoulderWidth=
-  dude->torso.shoulderDepth=
-  dude->torso.abWidth=
-  dude->torso.abDepth=
-  dude->torso.pelvisWidth=
-  dude->torso.pelvisDepth=
-  dude->torso.torsoLength= dude->torso.topTorsoLength + dude->torso.lowTorsoLength;
+	dude->torso.topTorsoLength=
+	dude->torso.lowTorsoLength=
+	dude->torso.shoulderWidth=
+	dude->torso.shoulderDepth=
+	dude->torso.abWidth=
+	dude->torso.abDepth=
+	dude->torso.pelvisWidth=
+	dude->torso.pelvisDepth=
+	dude->torso.torsoLength= dude->torso.topTorsoLength + dude->torso.lowTorsoLength;
 
-  dude->arms.upperArmWidth=
-  dude->arms.upperArmLength=
-  dude->arms.lowerArmLength=
-  dude->arms.elbowWidth=
-  dude->arms.wristWidth=
-  dude->arms.handLength=
-  dude->arms.handWidth=
-  dude->arms.armLength=dude->arms.upperArmLength + dude->arms.lowerArmLength + dude->arms.handLength;
+    dude->arms.upperArmWidth=
+	dude->arms.upperArmLength=
+	dude->arms.lowerArmLength=
+	dude->arms.elbowWidth=
+	dude->arms.wristWidth=
+	dude->arms.handLength=
+	dude->arms.handWidth=
+	dude->arms.armLength=dude->arms.upperArmLength + dude->arms.lowerArmLength + dude->arms.handLength;
 
-  dude->legs.thighLength=
-  dude->legs.thighWidth=
-  dude->legs.calfLength=
-  dude->legs.kneeWidth=
-  dude->legs.footLength=
-  dude->legs.ankleWidth=
-  dude->legs.toeWidth=
-  dude->legs.legLength=dude->legs.thighLength + dude->legs.calfLength;
+    dude->legs.thighLength=
+	dude->legs.thighWidth=
+	dude->legs.calfLength=
+	dude->legs.kneeWidth=
+	dude->legs.footLength=
+	dude->legs.ankleWidth=
+	dude->legs.toeWidth=
+	dude->legs.legLength=dude->legs.thighLength + dude->legs.calfLength;
 
-  dude.height=(dude->torso.torsoLength + dude->legs.legLength + dude->head.headSize);
+    dude.height=(dude->torso.torsoLength + dude->legs.legLength + dude->head.headSize);
 }
 #endif
 
@@ -1639,40 +1642,40 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
 		fflush(stdin);
 		break;
 
-            case 'b':
-                *showBoxes = 1;                                             
-                bu_log("Drawing bounding boxes\n");
+	    case 'b':
+		*showBoxes = 1;
+		bu_log("Drawing bounding boxes\n");
 		fflush(stdin);
-                break;	
+		break;
 
-            case 'H':  
-                sscanf(bu_optarg, "%f", &height);
-                if (height < 1) {
+	    case 'H':
+		sscanf(bu_optarg, "%f", &height);
+		if (height < 1) {
 		    bu_log("Impossible height, setting default height!\n");
 		    height = DEFAULT_HEIGHT_INCHES;
 		    dude->height = DEFAULT_HEIGHT_INCHES;
 		    bu_log("%.2f = height in inches\n", height);
-                } else {
+		} else {
 		    dude->height = height;
 		    bu_log("%.2f = height in inches\n", height);
-                }
+		}
 		fflush(stdin);
-                Auto(dude);
+		Auto(dude);
 		break;
 
-            case 'h':
-            case '?':
-                show_help(*argv, options);
-                bu_exit(EXIT_SUCCESS, NULL);
+	    case 'h':
+	    case '?':
+		show_help(*argv, options);
+		bu_exit(EXIT_SUCCESS, NULL);
 		fflush(stdin);
-                break;
+		break;
 
-            case 'L':
+	    case 'L':
 	    case 'l':
 		bu_log("Location\n");
-                getLocation(location);
+		getLocation(location);
 		fflush(stdin);
-                break;
+		break;
 
 	    case 'm':
 		bu_log("Manual Mode\n");
@@ -1687,16 +1690,16 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
 		have_name = 1;
 		break;
 
-            case 'N':
-                sscanf(bu_optarg, "%d", &soldiers);
-                if (soldiers <= 1) {
+	    case 'N':
+		sscanf(bu_optarg, "%d", &soldiers);
+		if (soldiers <= 1) {
 		    bu_log("Only 1 person. Making 16\n");
 		    soldiers = 4;
-                }
-                bu_log("Auto %d (squared) troop formation\n", soldiers);
-                *troops = (float)soldiers;
+		}
+		bu_log("Auto %d (squared) troop formation\n", soldiers);
+		*troops = (float)soldiers;
 		fflush(stdin);
-                break;
+		break;
 /*
  *	    case 'o':
  *	    case 'O':
@@ -1880,7 +1883,7 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
 	    default:
 		show_help(*argv, options);
 		bu_log("%s: illegal option, yes, there is a couple. -- %c\n", bu_getprogname(), c);
-	    	bu_exit(EXIT_SUCCESS, NULL);
+		bu_exit(EXIT_SUCCESS, NULL);
 		fflush(stdin);
 		break;
 	}
@@ -1934,13 +1937,13 @@ text(struct human_data_t *dude)
     x = dude->head.headSize;
     y = x;
     z = x;
-    fprintf(dump, "Head\t%f\t%f\t%f\n", x, y, z);	
+    fprintf(dump, "Head\t%f\t%f\t%f\n", x, y, z);
 
     /*Neck*/
     x = dude->head.neckWidth * 2;
     y = x;
     z = dude->head.neckLength;
-    fprintf(dump, "Neck\t%f\t%f\t%f\n", x, y, z);	
+    fprintf(dump, "Neck\t%f\t%f\t%f\n", x, y, z);
 
     /*Upper Torso*/
     if (dude->torso.shoulderDepth > dude->torso.abDepth)
@@ -1949,7 +1952,7 @@ text(struct human_data_t *dude)
 	x = dude->torso.abDepth;
     y = dude->torso.shoulderWidth;
     z = dude->torso.topTorsoLength;
-    fprintf(dump, "UpperTorso\t%f\t%f\t%f\n", x, y, z);	
+    fprintf(dump, "UpperTorso\t%f\t%f\t%f\n", x, y, z);
 
     /*Lower Torso*/
     if (dude->torso.abDepth > dude->torso.pelvisDepth)
@@ -1958,79 +1961,79 @@ text(struct human_data_t *dude)
 	x = dude->torso.pelvisDepth;
     y = dude->torso.pelvisWidth;
     z = dude->torso.lowTorsoLength;
-    fprintf(dump, "LowerTorso\t%f\t%f\t%f\n", x, y, z);	
+    fprintf(dump, "LowerTorso\t%f\t%f\t%f\n", x, y, z);
 
     /*Shoulder*/
     x = dude->arms.upperArmWidth *2;
     y = x;
     z = y;
-    fprintf(dump, "ShoulderJoint\t%f\t%f\t%f\n", x, y, z);	
+    fprintf(dump, "ShoulderJoint\t%f\t%f\t%f\n", x, y, z);
 
     /*Upper Arm*/
     x = dude->arms.upperArmWidth *2;
     y = x;
     z = dude->arms.upperArmLength;
-    fprintf(dump, "UpperArm\t%f\t%f\t%f\n", x, y, z);	
+    fprintf(dump, "UpperArm\t%f\t%f\t%f\n", x, y, z);
 
     /*Lower Arm*/
     x = dude->arms.elbowWidth * 2;
     y = x;
     z = dude->arms.lowerArmLength;
-    fprintf(dump, "LowerArm\t%f\t%f\t%f\n", x, y, z);	
+    fprintf(dump, "LowerArm\t%f\t%f\t%f\n", x, y, z);
 
     /*Elbow*/
     x = dude->arms.elbowWidth *2;
     y = x;
     z = y;
-    fprintf(dump, "Elbow\t%f\t%f\t%f\n", x, y, z);	
+    fprintf(dump, "Elbow\t%f\t%f\t%f\n", x, y, z);
 
     /*Wrist*/
     x = dude->arms.wristWidth *2;
     y = x;
     z = y;
-    fprintf(dump, "Wrist\t%f\t%f\t%f\n", x, y, z);	
+    fprintf(dump, "Wrist\t%f\t%f\t%f\n", x, y, z);
 
     /*Hand*/
     x = dude->arms.handWidth;
     y = dude->arms.handWidth;
     z = dude->arms.handLength;
-    fprintf(dump, "Hand\t%f\t%f\t%f\n", x, y, z);	
+    fprintf(dump, "Hand\t%f\t%f\t%f\n", x, y, z);
 
     /*Thigh Joint*/
     x = dude->legs.thighWidth*2;
     y = x;
     z = y;
-    fprintf(dump, "ThighJoint\t%f\t%f\t%f\n", x, y, z);	
+    fprintf(dump, "ThighJoint\t%f\t%f\t%f\n", x, y, z);
 
     /*Thigh*/
     x = dude->legs.thighWidth*2;
     y = x;
     z = dude->legs.thighLength;
-    fprintf(dump, "Thigh\t%f\t%f\t%f\n", x, y, z);	
+    fprintf(dump, "Thigh\t%f\t%f\t%f\n", x, y, z);
 
     /*Knee*/
     x = dude->legs.kneeWidth;
     y = x;
     z = y;
-    fprintf(dump, "Knee\t%f\t%f\t%f\n", x, y, z);	
+    fprintf(dump, "Knee\t%f\t%f\t%f\n", x, y, z);
 
     /*Calf*/
     x = dude->legs.kneeWidth*2;
     y = x;
     z = dude->legs.calfLength;
-    fprintf(dump, "Calf\t%f\t%f\t%f\n", x, y, z);	
+    fprintf(dump, "Calf\t%f\t%f\t%f\n", x, y, z);
 
     /*Ankle*/
     x = dude->legs.ankleWidth * 2;
     y = x;
     z = y;
-    fprintf(dump, "Ankle\t%f\t%f\t%f\n", x, y, z);	
+    fprintf(dump, "Ankle\t%f\t%f\t%f\n", x, y, z);
 
     /*Foot*/
     x = dude->legs.footLength;
     y = dude->legs.toeWidth * 2;
     z = dude->legs.toeWidth * 2;
-    fprintf(dump, "Foot\t%f\t%f\t%f\n", x, y, z);	
+    fprintf(dump, "Foot\t%f\t%f\t%f\n", x, y, z);
 
     /*Total Height*/
     fprintf(dump, "Height\t%f\n", (dude->height * IN2MM));
@@ -2083,7 +2086,7 @@ verbose(struct human_data_t *dude)
     fprintf(dump, "toeWidth\t%f\n", dude->legs.toeWidth);
 
     fclose(dump);
-    bu_log("Verbose Output saved\n");	
+    bu_log("Verbose Output saved\n");
 }
 
 
@@ -2134,7 +2137,7 @@ verbIn(struct human_data_t *dude)
 	bu_log("Non-existant input file\n");
     } else {
 	bu_log("File opened, setting measurements\n");
-		
+
 	/* Inside this while loop, values which are input will be
 	 * placed into their respective holders in the human data
 	 * type, based upon name.
@@ -2245,7 +2248,7 @@ ged_human(struct ged *gedp, int ac, const char *av[])
     srand(time(NULL));
     human_data.height = DEFAULT_HEIGHT_INCHES;
     VSET(location, 0, 0, 0); /* Default standing location */
-   
+
     bu_vls_init(&name);
     bu_vls_init(&str);
 
@@ -2261,7 +2264,7 @@ ged_human(struct ged *gedp, int ac, const char *av[])
     bu_log("%.2f %.2f %.2f\n", location[X], location[Y], location[Z]);
 
 /******MAGIC******/
-/*Magically set pose, and apply pose to human geometry*/ 
+/*Magically set pose, and apply pose to human geometry*/
     /*setMeasurements(&human_data, percentile);*/
 
     /* This applies the generic end-name to the high-level object */
@@ -2269,7 +2272,7 @@ ged_human(struct ged *gedp, int ac, const char *av[])
     memset(humanName, 0, MAXLENGTH);
     bu_strlcpy(humanName, topLevel, MAXLENGTH);
 
-    setStance(stance, &human_data); 
+    setStance(stance, &human_data);
     if (human_data.textread==1)
 	getText(&human_data);
     if (human_data.verbread==1)
@@ -2277,7 +2280,7 @@ ged_human(struct ged *gedp, int ac, const char *av[])
     if (troops <= 1) {
 	makeBody(gedp->ged_wdbp, suffix, &human_data, location, showBoxes);
 	mk_id_units(gedp->ged_wdbp, "A single Human", "in");
-	
+
 	/*This function dumps out a text file of all dimentions of bounding boxes/antrho-data/whatever on human model.*/
 	if (human_data.textwrite==1)
 	    text(&human_data);
@@ -2286,14 +2289,14 @@ ged_human(struct ged *gedp, int ac, const char *av[])
     }
     if (troops > 1) {
 	makeArmy(gedp->ged_wdbp, human_data, troops, showBoxes);
-    	mk_id_units(gedp->ged_wdbp, "An army of people", "in");	
+	mk_id_units(gedp->ged_wdbp, "An army of people", "in");
     }
 /****End Magic****/
 
 /** Make the Regions (.r's) of the body */
 /* Make the .r for the real body */
     bu_log("Building Regions\n");
-    if (!troops) {    
+    if (!troops) {
 	BU_LIST_INIT(&human.l);
 	(void)mk_addmember("Head.s", &human.l, NULL, WMOP_UNION);
 	(void)mk_addmember("Neck.s", &human.l, NULL, WMOP_UNION);
@@ -2312,7 +2315,7 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 	(void)mk_addmember("LeftHand.s", &human.l, NULL, WMOP_UNION);
 	(void)mk_addmember("RightHand.s", &human.l, NULL, WMOP_UNION);
 	(void)mk_addmember("LeftThigh.s", &human.l, NULL, WMOP_UNION);
-	(void)mk_addmember("RightThigh.s", &human.l, NULL, WMOP_UNION);   
+	(void)mk_addmember("RightThigh.s", &human.l, NULL, WMOP_UNION);
 	(void)mk_addmember("LeftThighJoint.s", &human.l, NULL, WMOP_UNION);
 	(void)mk_addmember("RightThighJoint.s", &human.l, NULL, WMOP_UNION);
 	(void)mk_addmember("LeftKneeJoint.s", &human.l, NULL, WMOP_UNION);
@@ -2357,10 +2360,10 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 	    (void)mk_addmember("LeftCalf.sBox", &boxes.l, NULL, WMOP_UNION);
 	    (void)mk_addmember("RightCalf.sBox", &boxes.l, NULL, WMOP_UNION);
 	    (void)mk_addmember("LeftFoot.sBox", &boxes.l, NULL, WMOP_UNION);
-	    (void)mk_addmember("RightFoot.sBox", &boxes.l, NULL, WMOP_UNION); 
+	    (void)mk_addmember("RightFoot.sBox", &boxes.l, NULL, WMOP_UNION);
 	    is_region = 1;
 	    VSET(rgb2, 255, 128, 128); /* redish color */
-	    mk_lcomb(gedp->ged_wdbp,   
+	    mk_lcomb(gedp->ged_wdbp,
 		     "Boxes.r",
 		     &boxes,
 		     is_region,
@@ -2378,7 +2381,7 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 	    (void)mk_addmember("Head.s", &hollow.l, NULL, WMOP_SUBTRACT);
 
 	    (void)mk_addmember("Neck.sBox", &hollow.l, NULL, WMOP_UNION);
-	    (void)mk_addmember("Neck.s", &hollow.l, NULL, WMOP_SUBTRACT);   
+	    (void)mk_addmember("Neck.s", &hollow.l, NULL, WMOP_SUBTRACT);
 	    (void)mk_addmember("Head.s", &hollow.l, NULL, WMOP_SUBTRACT);
 
 	    (void)mk_addmember("UpperTorso.sBox", &hollow.l, NULL, WMOP_UNION);
@@ -2392,40 +2395,40 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 
 	    (void)mk_addmember("RightShoulderJoint.sBox", &hollow.l, NULL, WMOP_UNION);
 	    (void)mk_addmember("RightShoulderJoint.s", &hollow.l, NULL, WMOP_SUBTRACT);
-   
+
 	    (void)mk_addmember("LeftUpperArm.sBox", &hollow.l, NULL, WMOP_UNION);
 	    (void)mk_addmember("LeftUpperArm.s", &hollow.l, NULL, WMOP_SUBTRACT);
-    
+
 	    (void)mk_addmember("RightUpperArm.sBox", &hollow.l, NULL, WMOP_UNION);
 	    (void)mk_addmember("RightUpperArm.s", &hollow.l, NULL, WMOP_SUBTRACT);
-    
+
 	    (void)mk_addmember("LeftLowerArm.sBox", &hollow.l, NULL, WMOP_UNION);
 	    (void)mk_addmember("LeftLowerArm.s", &hollow.l, NULL, WMOP_SUBTRACT);
-    
+
 	    (void)mk_addmember("RightLowerArm.sBox", &hollow.l, NULL, WMOP_UNION);
 	    (void)mk_addmember("RightLowerArm.s", &hollow.l, NULL, WMOP_SUBTRACT);
-    
+
 	    (void)mk_addmember("LeftHand.sBox", &hollow.l, NULL, WMOP_UNION);
 	    (void)mk_addmember("LeftHand.s", &hollow.l, NULL, WMOP_SUBTRACT);
-    
+
 	    (void)mk_addmember("RightHand.sBox", &hollow.l, NULL, WMOP_UNION);
 	    (void)mk_addmember("RightHand.s", &hollow.l, NULL, WMOP_SUBTRACT);
-    
+
 	    (void)mk_addmember("LeftThigh.sBox", &hollow.l, NULL, WMOP_UNION);
 	    (void)mk_addmember("LeftThigh.s", &hollow.l, NULL, WMOP_SUBTRACT);
-    
+
 	    (void)mk_addmember("RightThigh.sBox", &hollow.l, NULL, WMOP_UNION);
 	    (void)mk_addmember("RightThigh.s", &hollow.l, NULL, WMOP_SUBTRACT);
-    
+
 	    (void)mk_addmember("LeftCalf.sBox", &hollow.l, NULL, WMOP_UNION);
 	    (void)mk_addmember("LeftCalf.s", &hollow.l, NULL, WMOP_SUBTRACT);
-    
+
 	    (void)mk_addmember("RightCalf.sBox", &hollow.l, NULL, WMOP_UNION);
 	    (void)mk_addmember("RightCalf.s", &hollow.l, NULL, WMOP_SUBTRACT);
-    
+
 	    (void)mk_addmember("LeftFoot.sBox", &hollow.l, NULL, WMOP_UNION);
 	    (void)mk_addmember("LeftFoot.s", &hollow.l, NULL, WMOP_SUBTRACT);
-    
+
 	    (void)mk_addmember("RightFoot.sBox", &hollow.l, NULL, WMOP_UNION);
 	    (void)mk_addmember("RightFoot.s", &hollow.l, NULL, WMOP_SUBTRACT);
 
@@ -2442,8 +2445,8 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 	}
     }
     if (troops) {
-    	/*Build body regions for each troop*/
-    	/*append number to end of part name, (Head.s0, LeftElbowJoint.s99, etc) */
+	/*Build body regions for each troop*/
+	/*append number to end of part name, (Head.s0, LeftElbowJoint.s99, etc) */
 	int num=0;
 	int w=0;
 	int x=0;
@@ -2476,7 +2479,7 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 	    if (showBoxes) {
 		BU_LIST_INIT(&boxes.l);
 	    }
- 		
+
 	    /*This value is the number of items in char names */
 	    while (x<28) {
 		bu_log("%s : ", names[x]);
@@ -2504,7 +2507,7 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 
 	    if (showBoxes) {
 		VSET(rgb2, 255, 128, 128); /* redish color */
-		mk_lcomb(gedp->ged_wdbp,   
+		mk_lcomb(gedp->ged_wdbp,
 			 box[0],
 			 &boxes,
 			 is_region,
@@ -2516,7 +2519,7 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 	    bu_log("%s\n", body[0]);
 	    num++;
 	}
-        is_region = 0;
+	is_region = 0;
 	for (z=0; z<(troops*troops); z++) {
 	    char comber[MAXLENGTH];
 
@@ -2526,7 +2529,7 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 	    bu_strlcpy(thing2, thing, MAXLENGTH);
 	    bu_strlcat(comber, thing2, MAXLENGTH);
 	    (void)mk_addmember(comber, &crowd.l, NULL, WMOP_UNION);
-    	}
+	}
     }
     if (troops)
 	mk_lcomb(gedp->ged_wdbp, "Crowd.c", &crowd, 0, NULL, NULL, NULL, 0);

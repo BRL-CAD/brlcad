@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file edarb.c
+/** @file mged/edarb.c
  *
  */
 
@@ -948,7 +948,7 @@ f_permute(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "ERROR: tuple '%s' too short to disambiguate ARB%d face\n",
 		      argv[1], es_type);
-	bu_vls_printf(&tmp_vls, "Need at least %d vertices\n", min_tuple_size[es_type]);
+	bu_vls_printf(&tmp_vls, "Need at least %zu vertices\n", min_tuple_size[es_type]);
 	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
 
@@ -959,7 +959,7 @@ f_permute(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	struct bu_vls tmp_vls;
 
 	bu_vls_init(&tmp_vls);
-	bu_vls_printf(&tmp_vls, "ERROR: tuple '%s' length exceeds ARB%d face size of %d\n",
+	bu_vls_printf(&tmp_vls, "ERROR: tuple '%s' length exceeds ARB%d face size of %zu\n",
 		      argv[1], es_type, face_size);
 	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);

@@ -19,7 +19,7 @@
  */
 /** @addtogroup ray */
 /** @{ */
-/** @file bool.c
+/** @file librt/bool.c
  *
  * Ray Tracing program, Boolean region evaluator.
  *
@@ -108,14 +108,14 @@ rt_weave0seg(struct seg *segp, struct partition *PartHdp, struct application *ap
      * XXX especially as the NMG ray-tracer starts reporting wire hits.
      */
     for (pp=PartHdp->pt_forw; pp != PartHdp; pp=pp->pt_forw) {
-	if (NEAR_ZERO(segp->seg_in.hit_dist  - pp->pt_inhit->hit_dist, tol_dist) ||
-	    NEAR_ZERO(segp->seg_out.hit_dist - pp->pt_inhit->hit_dist, tol_dist)
+	if (NEAR_EQUAL(segp->seg_in.hit_dist, pp->pt_inhit->hit_dist, tol_dist) ||
+	    NEAR_EQUAL(segp->seg_out.hit_dist, pp->pt_inhit->hit_dist, tol_dist)
 	    ) {
 	    if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("0-len segment ends right at start of existing partition.\n");
 	    return;
 	}
-	if (NEAR_ZERO(segp->seg_in.hit_dist  - pp->pt_outhit->hit_dist, tol_dist) ||
-	    NEAR_ZERO(segp->seg_out.hit_dist - pp->pt_outhit->hit_dist, tol_dist)
+	if (NEAR_EQUAL(segp->seg_in.hit_dist, pp->pt_outhit->hit_dist, tol_dist) ||
+	    NEAR_EQUAL(segp->seg_out.hit_dist, pp->pt_outhit->hit_dist, tol_dist)
 	    ) {
 	    if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("0-len segment ends right at end of existing partition.\n");
 	    return;
@@ -1260,7 +1260,7 @@ rt_default_logoverlap(struct application *ap, const struct partition *pp, const 
 	if (regp == REGION_NULL) continue;
 	RT_CK_REGION(regp);
 
-	bu_vls_printf(&str, "OVERLAP%d: %s\n", i+1, regp->reg_name);
+	bu_vls_printf(&str, "OVERLAP%zu: %s\n", i+1, regp->reg_name);
     }
 
     /* List all the information common to this whole partition */
@@ -1768,8 +1768,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 	RT_CHECK_SEG(pp->pt_outseg);
 
 	/* Force "very thin" partitions to have exactly zero thickness. */
-	diff = pp->pt_inhit->hit_dist - pp->pt_outhit->hit_dist;
-	if (NEAR_ZERO(diff, ap->a_rt_i->rti_tol.dist)) {
+	if (NEAR_EQUAL(pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist, ap->a_rt_i->rti_tol.dist)) {
 	    if (RT_G_DEBUG&DEBUG_PARTITION) bu_log(
 		"rt_boolfinal:  Zero thickness partition, prims %s %s (%.18e, %.18e) x%d y%d lvl%d\n",
 		pp->pt_inseg->seg_stp->st_name,
@@ -2036,7 +2035,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 	    lastpp = FinalHdp->pt_back;
 	    if (lastpp != FinalHdp &&
 		lastregion == lastpp->pt_regionp &&
-		NEAR_ZERO(newpp->pt_inhit->hit_dist -
+		NEAR_EQUAL(newpp->pt_inhit->hit_dist,
 			  lastpp->pt_outhit->hit_dist,
 			  ap->a_rt_i->rti_tol.dist) &&
 		(ap->a_rt_i->rti_save_overlaps == 0 ||

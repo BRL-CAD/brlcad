@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file clone.c
+/** @file mged/clone.c
  *
  * routines related to performing deep object copies
  *
@@ -257,9 +257,9 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
 		    bu_vls_trunc(newname, 0);
 		    bu_vls_printf(newname, "%s%s", obj_list.names[j].dest[iter], suffix);
     		} else
-		    bu_vls_printf(newname, "%d%s", num+i*state->incr, suffix);
+		    bu_vls_printf(newname, "%zu%s", num+i*state->incr, suffix);
     	    else
-    		bu_vls_printf(newname, "%d", num + i*state->incr);
+    		bu_vls_printf(newname, "%zu", num + i*state->incr);
 	} else /* non-region combinations */
     	    bu_vls_printf(newname, "%d", (num==0)?i+1:i+num);
 	i++;

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixfilter.c
+/** @file util/pixfilter.c
  *
  * Filters a color pix file with an arbitrary 3x3 kernel.
  * Leaves the outer rows untouched.

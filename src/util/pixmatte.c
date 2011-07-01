@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pixmatte.c
+/** @file util/pixmatte.c
  *
  * Given four streams of data elements,
  * where element is of arbitrary width,

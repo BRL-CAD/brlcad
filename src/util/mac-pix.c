@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mac-pix.c
+/** @file util/mac-pix.c
  *
  * Read MacPaint document and output pix(5) or bw(5) raster image
  *

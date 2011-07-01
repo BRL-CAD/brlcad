@@ -39,7 +39,7 @@ noinst_HEADERS = \
 	Sc.h \
 	trie.h
 
-EXTRA_DIST = burst.format
+EXTRA_DIST = burst.format CMakeLists.txt
 
 test:	burst $(top_builddir)/db/ktank.g
 	./burst -b < $(top_builddir)/db/ktank.in

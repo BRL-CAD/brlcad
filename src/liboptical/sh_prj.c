@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_prj.c
+/** @file liboptical/sh_prj.c
  *
  * Projection shader
  *
@@ -74,6 +74,7 @@ struct img_specific {
     fastf_t i_perspective;	/* perspective angle 0=ortho */
 };
 #define img_MAGIC 0x696d6700	/* "img" */
+#define IMG_SPECIFIC_INIT_ZERO {BU_LIST_INIT_ZERO, 0, BU_VLS_INIT_ZERO, '\0', NULL, NULL, NULL, 0, 0, 0.0, VINIT_ZERO, HINIT_ZERO, MAT_INIT_IDN, MAT_INIT_IDN, HINIT_ZERO, MAT_INIT_IDN, '\0', '\0', '\0', 0.0}
 
 
 /**
@@ -135,7 +136,7 @@ HIDDEN int img_load_datasource(struct img_specific *image, struct db_i *dbInstan
 	} else {
 	    struct rt_db_internal *dbip=(struct rt_db_internal *)bu_malloc(sizeof(struct rt_db_internal), "img_load_datasource");
 
-	    RT_INIT_DB_INTERNAL(dbip);
+	    RT_DB_INTERNAL_INIT(dbip);
 	    RT_CK_DB_INTERNAL(dbip);
 	    RT_CK_DIR(dirEntry);
 
@@ -152,14 +153,14 @@ HIDDEN int img_load_datasource(struct img_specific *image, struct db_i *dbInstan
 	    image->i_binunifp=(struct rt_binunif_internal *)dbip->idb_ptr; /* make it so */
 
 	    /* release the database struct we created */
-	    RT_INIT_DB_INTERNAL(dbip);
+	    RT_DB_INTERNAL_INIT(dbip);
 	    bu_free(dbip, "img_load_datasource");
 
 	    /* check size of object */
 	    if (image->i_binunifp->count < size) {
-		bu_log("\nWARNING: %V needs %d bytes, binary object only has %d\n", &image->i_name, size, image->i_binunifp->count);
+		bu_log("\nWARNING: %V needs %d bytes, binary object only has %zu\n", &image->i_name, size, image->i_binunifp->count);
 	    } else if (image->i_binunifp->count > size) {
-		bu_log("\nWARNING: Binary object is larger than specified image size\n\tBinary Object: %d pixels\n\tSpecified Image Size: %d pixels\n...continuing to load using image subsection...", image->i_binunifp->count);
+		bu_log("\nWARNING: Binary object is larger than specified image size\n\tBinary Object: %zu pixels\n\tSpecified Image Size: %zu pixels\n...continuing to load using image subsection...", image->i_binunifp->count);
 	    }
 	    image->i_img = (unsigned char *) image->i_binunifp->u.uint8;
 
@@ -180,7 +181,7 @@ HIDDEN int img_load_datasource(struct img_specific *image, struct db_i *dbInstan
 	if (image->i_data->buflen < size) {
 	    bu_log("\nWARNING: %V needs %d bytes, file only has %d\n", &image->i_name, size, image->i_data->buflen);
 	} else if (image->i_data->buflen > size) {
-	    bu_log("\nWARNING: Image file size is larger than specified image size\n\tInput File: %d pixels\n\tSpecified Image Size: %d pixels\n...continuing to load using image subsection...", image->i_data->buflen, size);
+	    bu_log("\nWARNING: Image file size is larger than specified image size\n\tInput File: %zu pixels\n\tSpecified Image Size: %d pixels\n...continuing to load using image subsection...", image->i_data->buflen, size);
 	}
 
 	image->i_img = (unsigned char *) image->i_data->buf;
@@ -249,24 +250,6 @@ dimen_hook(register const struct bu_structparse *sdp, register const char *UNUSE
 }
 
 
-#if 0
-HIDDEN void
-noop_hook(sdp, name, base, value)
-    register const struct bu_structparse *sdp;	/* structure description */
-    register const char *name;	/* struct member name */
-    char *base;	/* begining of structure */
-    const char *value;	/* string containing value */
-{
-    struct img_specific *img_sp = (struct img_specific *)base;
-
-    BU_CK_LIST_HEAD(&img_sp->l);
-
-    bu_log("%s \"%s\"\n", sdp->sp_name, value);
-
-    BU_CK_VLS(&img_sp->i_name);
-}
-#endif
-
 /**
  * This routine is responsible for duplicating the image list head to make
  * a new list element.  It used to read in pixel data for an image (this is
@@ -298,7 +281,6 @@ orient_hook(register const struct bu_structparse *UNUSED(sdp), register const ch
     BU_GETSTRUCT(img_new, img_specific);
     memcpy(img_new, img_sp, sizeof(struct img_specific));
     BU_CK_VLS(&img_sp->i_name);
-
 
     /* zero the filename for the next iteration */
     bu_vls_init(&img_sp->i_name);
@@ -334,10 +316,6 @@ orient_hook(register const struct bu_structparse *UNUSED(sdp), register const ch
     if (rdebug&RDEBUG_SHADE) {
 	point_t pt;
 
-#if 0
-	img_new->i_plane[H] =
-	    VDOT(img_new->i_plane, img_new->i_eye_pt);
-#endif
 	prj_sp = (struct prj_specific *)
 	    (base - (bu_offsetof(struct prj_specific, prj_images)));
 	CK_prj_SP(prj_sp);
@@ -413,8 +391,10 @@ struct bu_structparse img_print_tab[] = {
 };
 
 
-HIDDEN int prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), prj_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void prj_print(register struct region *rp, char *dp), prj_free(char *cp);
+HIDDEN int prj_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int prj_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
+HIDDEN void prj_print(register struct region *rp, genptr_t dp);
+HIDDEN void prj_free(genptr_t cp);
 
 /**
  * The "mfuncs" structure defines the external interface to the shader.
@@ -441,18 +421,19 @@ struct mfuncs prj_mfuncs[] = {
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+prj_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
 
 /* New since 4.4 release */
 {
+    /* we use this to initialize new img_specific objects */
+    static const struct img_specific IMG_INIT = IMG_SPECIFIC_INIT_ZERO;
+
     struct prj_specific *prj_sp;
     struct img_specific *img_sp;
-#if 0
-    char * fname;
-#endif
+
     struct bu_vls parameter_data;
     struct bu_mapped_file *parameter_file;
 
@@ -467,11 +448,11 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 
     /* Get memory for the shader parameters and shader-specific data */
     BU_GETSTRUCT(prj_sp, prj_specific);
-    *dpp = (char *)prj_sp;
+    *dpp = prj_sp;
 
     prj_sp->magic = prj_MAGIC;
+    memcpy(&prj_sp->prj_images, &IMG_INIT, sizeof(struct img_specific));
     BU_LIST_INIT(&prj_sp->prj_images.l);
-
 
     if (rdebug&RDEBUG_SHADE) {
 	if ((prj_sp->prj_plfd=fopen("prj.pl", "wb")) == (FILE *)NULL) {
@@ -481,13 +462,6 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 	prj_sp->prj_plfd = (FILE *)NULL;
     }
 
-#if 0
-    fname = bu_vls_addr(matparm);
-    if (! isspace(*fname))
-	bu_log("------ Stack shader fixed?  Remove hack from prj shader ----\n");
-    while (isspace(*fname)) fname++; /* XXX Hack till stack shader fixed */
-
-#endif
     if (! *(bu_vls_addr(matparm))) {
 	bu_log("ERROR: Null projection shader file or options?\n");
 	return -1;
@@ -526,11 +500,6 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
     prj_sp->prj_images.i_through = '0';
     prj_sp->prj_images.i_behind = '0';
     prj_sp->prj_images.i_datasrc = IMG_SRC_AUTO;
-
-    /* sanity */
-    prj_sp->prj_images.i_data = GENPTR_NULL;
-    prj_sp->prj_images.i_binunifp = GENPTR_NULL;
-    prj_sp->prj_images.i_img = GENPTR_NULL;
 
     if (bu_struct_parse(&parameter_data, img_parse_tab,
 			(char *)&prj_sp->prj_images) < 0) {
@@ -594,7 +563,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
  * P R J _ P R I N T
  */
 HIDDEN void
-prj_print(register struct region *rp, char *dp)
+prj_print(register struct region *rp, genptr_t dp)
 {
     struct prj_specific *prj_sp = (struct prj_specific *)dp;
     struct img_specific *img_sp;
@@ -609,7 +578,7 @@ prj_print(register struct region *rp, char *dp)
  * P R J _ F R E E
  */
 HIDDEN void
-prj_free(char *cp)
+prj_free(genptr_t cp)
 {
     struct prj_specific *prj_sp = (struct prj_specific *)cp;
 
@@ -625,7 +594,7 @@ prj_free(char *cp)
 	bu_vls_vlsfree(&img_sp->i_name);
 
 	BU_LIST_DEQUEUE(&img_sp->l);
-	bu_free((char *)img_sp, "img_specific");
+	bu_free((genptr_t)img_sp, "img_specific");
     }
 
     if (prj_sp->prj_plfd) {
@@ -639,40 +608,7 @@ prj_free(char *cp)
 HIDDEN const double cs = (1.0/255.0);
 HIDDEN const point_t delta = {0.5, 0.5, 0.0};
 
-#if 0
-HIDDEN int
-project_antialiased(point_t sh_color,
-		    const struct img_specific *img_sp,
-		    const struct prj_specific *prj_sp,
-		    const struct application *ap,
-		    const struct pixel_ext *r_pe, /* pts on plane of hit */
-		    const plane_t br_N,
-		    const point_t r_pt)
-{
-    int i, x, y;
-    point_t sh_pts[CORNER_PTS];
-    struct pixel_ext pe;
 
-    /* project hit plane corner points into image space */
-    for (i=0; i < CORNER_PTS; i++) {
-	MAT4X3PNT(sh_pts[i], img_sp->i_sh_to_img,
-		  pe.corner[i].r_pt);
-	/* compute image coordinates */
-
-	sh_pts[i][Z] = 0.0;
-	VADD2(sh_pts[i], sh_pts[i], delta);
-
-
-	sh_pts[i][X] *= img_sp->i_width - 1;
-	sh_pts[i][Y] *= img_sp->i_height - 1;
-	x = sh_pts[i][X];
-	y = sh_pts[i][Y];
-	sh_pts[i][X] = x;
-	sh_pts[i][y] = y;
-    }
-    return 0;
-}
-#endif
 HIDDEN int
 project_point(point_t sh_color, struct img_specific *img_sp, struct prj_specific *prj_sp, point_t r_pt)
 {
@@ -724,7 +660,7 @@ project_point(point_t sh_color, struct img_specific *img_sp, struct prj_specific
  * structure.
  */
 int
-prj_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+prj_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
 
 
 /* defined in material.h */
@@ -846,23 +782,9 @@ prj_render(struct application *ap, struct partition *pp, struct shadework *swp, 
 	    continue;
 	}
 
-#if 0
-	if (img_sp->i_antialias == '1') {
-	    if (ap->a_pixelext)
-		bu_bomb("pixel corners structure not set\n");
-
-	    if (project_antialiased(sh_color, img_sp, prj_sp,
-				    ap, &r_pe, r_N, r_pt))
-		continue;
-
-	} else {
-	    if (project_point(sh_color, img_sp, prj_sp, r_pt))
-		continue;
-	}
-#else
 	if (project_point(sh_color, img_sp, prj_sp, r_pt))
 	    continue;
-#endif
+
 	VSCALE(sh_color, sh_color, cs);
 	weight = VDOT(r_N, img_sp->i_plane);
 	if (img_sp->i_through != '0')

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ClosedShell.h
+/** @file step/ClosedShell.h
  *
  * Class definition used to convert STEP "ClosedShell" to BRL-CAD BREP
  * structures.

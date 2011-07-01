@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file sh_scloud.c
+/** @file liboptical/sh_scloud.c
  *
  * A 3D "solid" cloud shader
  *
@@ -35,10 +35,6 @@
 #include "optical.h"
 #include "light.h"
 
-
-extern int rr_render(struct application *ap,
-		     struct partition *pp,
-		     struct shadework *swp);
 
 #define FLOOR(x)	((int)(x) - ((x) < 0 && (x) != (int)(x)))
 #define CEIL(x)		((int)(x) + ((x) > 0 && (x) != (int)(x)))
@@ -105,8 +101,11 @@ struct bu_structparse scloud_parse[] = {
 };
 
 
-HIDDEN int scloud_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip), scloud_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp), tsplat_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-HIDDEN void scloud_print(register struct region *rp, char *dp), scloud_free(char *cp);
+HIDDEN int scloud_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int scloud_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
+HIDDEN int tsplat_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
+HIDDEN void scloud_print(register struct region *rp, genptr_t dp);
+HIDDEN void scloud_free(genptr_t cp);
 
 struct mfuncs scloud_mfuncs[] = {
     {MF_MAGIC,	"scloud",	0,	MFI_HIT, MFF_PROC,     scloud_setup,	scloud_render,	scloud_print,	scloud_free },
@@ -119,7 +118,7 @@ struct mfuncs scloud_mfuncs[] = {
  * S C L O U D _ S E T U P
  */
 HIDDEN int
-scloud_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct mfuncs *mfp, struct rt_i *rtip)
+scloud_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -134,7 +133,7 @@ scloud_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
 
     BU_CK_VLS(matparm);
     BU_GETSTRUCT(scloud, scloud_specific);
-    *dpp = (char *)scloud;
+    *dpp = scloud;
 
     if (rp->reg_aircode == 0) {
 	bu_log("WARNING(%s): air shader '%s' applied to non-air region.\n%s\n",
@@ -195,7 +194,7 @@ scloud_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, str
  * S C L O U D _ P R I N T
  */
 HIDDEN void
-scloud_print(register struct region *rp, char *dp)
+scloud_print(register struct region *rp, genptr_t dp)
 {
     (void)bu_struct_print(rp->reg_name, scloud_pr, (char *)dp);
 }
@@ -205,7 +204,7 @@ scloud_print(register struct region *rp, char *dp)
  * S C L O U D _ F R E E
  */
 HIDDEN void
-scloud_free(char *cp)
+scloud_free(genptr_t cp)
 {
     bu_free(cp, "scloud_specific");
 }
@@ -218,7 +217,7 @@ scloud_free(char *cp)
  * based upon noise value of surface spot.
  */
 int
-tsplat_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+tsplat_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
 {
     register struct scloud_specific *scloud_sp =
 	(struct scloud_specific *)dp;
@@ -249,7 +248,7 @@ tsplat_render(struct application *ap, struct partition *pp, struct shadework *sw
  * S C L O U D _ R E N D E R
  */
 int
-scloud_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
+scloud_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
 {
     register struct scloud_specific *scloud_sp =
 	(struct scloud_specific *)dp;
