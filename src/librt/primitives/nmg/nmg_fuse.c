@@ -1263,7 +1263,6 @@ nmg_two_face_fuse(struct face *f1, struct face *f2, const struct bn_tol *tol)
     register struct face_g_plane *fg1;
     register struct face_g_plane *fg2;
     int flip2 = 0;
-    int code;
     fastf_t dist;
 
     NMG_CK_FACE(f1);
@@ -1316,8 +1315,8 @@ nmg_two_face_fuse(struct face *f1, struct face *f2, const struct bn_tol *tol)
     }
 
     if (rt_g.NMG_debug & DEBUG_MESH) {
-	bu_log("nmg_two_face_fuse(x%x, x%x) coplanar faces, bn_coplanar code=%d, flip2=%d\n",
-	       f1, f2, code, flip2);
+	bu_log("nmg_two_face_fuse(x%x, x%x) coplanar faces, flip2=%d\n",
+	       f1, f2, flip2);
     }
 
     /* check if normals are pointing in the same direction */
