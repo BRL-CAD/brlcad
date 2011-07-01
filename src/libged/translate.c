@@ -45,19 +45,13 @@
  * at some point this will be exposed, so keep a clean break from the
  * ged cmd and don't make assumptions
  */
+#if 0
 HIDDEN int
 translate(struct ged *gedp, vect_t *keypoint,
 	  struct db_full_path *path,
 	  struct directory *d_obj, vect_t delta,
 	  int relative_pos_flag)
 {
-    (void) gedp;
-    (void) keypoint;
-    (void) path;
-    (void) d_obj;
-    (void) delta;
-    (void) relative_pos_flag;
-#if 0
     struct db_full_path full_obj_path;
     struct directory *d_to_modify = NULL;
 
@@ -176,9 +170,9 @@ translate(struct ged *gedp, vect_t *keypoint,
     GED_DB_PUT_INTERNAL(gedp, d_to_modify, &intern, &rt_uniresource,
 			GED_ERROR);
     rt_db_free_internal(&intern);
-#endif
     return GED_OK;
 }
+#endif
 
 /* ged_translate(): Proposed operations, and manual page
  *
