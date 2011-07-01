@@ -593,6 +593,11 @@ GED_EXPORT extern void ged_calc_adc_a1(struct ged_view *gvp);
 GED_EXPORT extern void ged_calc_adc_a2(struct ged_view *gvp);
 GED_EXPORT extern void ged_calc_adc_dst(struct ged_view *gvp);
 
+/**
+ * Translate object(s)
+ */
+GED_EXPORT extern int ged_alter(struct ged *gedp, int argc, const char *argv[]);
+
 /* defined in clip.c */
 GED_EXPORT extern int ged_clip(fastf_t *xp1,
 			       fastf_t *yp1,
@@ -2198,11 +2203,6 @@ GED_EXPORT extern int ged_tra(struct ged *gedp, int argc, const char *argv[]);
  * Create a track
  */
 GED_EXPORT extern int ged_track(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Translate object(s)
- */
-GED_EXPORT extern int ged_translate(struct ged *gedp, int argc, const char *argv[]);
 
 #if 0
 /**

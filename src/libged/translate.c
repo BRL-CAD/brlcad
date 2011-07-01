@@ -1,4 +1,4 @@
-/*                         T R A N S L A T E . C
+/*                         A L T E R . C
  * BRL-CAD
  *
  * Copyright (c) 2008-2011 United States Government as represented by
@@ -17,17 +17,193 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/translate.c
+/** @file libged/alter.c
  *
- * The translate command.
- *
+ * Command to alter objects by translating, rotating, and scaling.
  */
 
-/* THIS FILE IS UNDER MAJOR RECONSTRUCTION */
+/* Alter: to make different without changing into something else */
 
-/* TODO:
- *  -reject paths with fp_len > 1; it's meaningless and misleading
- *  -consider merging path/object into a single argument
+/* translate: Proposed operations, and manual page
+ *
+ * NAME
+ *	translate (alias for "alter translate")
+ *
+ * SYNOPSIS
+ *	translate [FROM] TO OBJECT...
+ * 	translate [[-n] -k {FROM_OBJECT | FROM_POS}] \
+ * 	    {[-n] [-a | -r] TO_OBJECT | TO_POS} [PATH/]OBJECT ...
+ *
+ *	FROM_OBJECT & TO_OBJECT & OBJECT
+ *	    [PATH/]OBJECT
+ *	
+ *	FROM_POS & TO_POS:
+ *	    {x | . [y | . [z | .]]} | {[x: x] [y: y] [z: z]}
+ *
+ * DESCRIPTION
+ *	Used to move one or more instances of primitive or 
+ *	combination objects.
+ *
+ *	If FROM is ommited, the bounding box center of the first
+ *	[PATH/]OBJECT is used instead. To use the natural origin of
+ *	the first [PATH/]OBJECT as FROM, FROM_OBJECT must be manually
+ *	set to [PATH/]OBJECT.
+ *
+ *	If FROM is "-k .", then each individual [PATH/]OBJECT argument
+ *	uses it's own bounding box center (or natural origin if
+ *	"-n -k ." is used). Likewise, if TO is "-a ." or "-n -a ."
+ *	
+ *	FROM_POS and TO_POS represent 3d points in "x y z"
+ *	coordinates. To specify one or more specific axis while
+ *	ignoring the others, the options "-x x", "-y y", "-z z" may be
+ *	used as FROM_POS or TO_POS. Alternatively, "." may be used in
+ *	place of any coordinates to ignore it's respective axis.
+ *
+ * OPTIONS
+ * 	-n
+ *	    Use the natural origin of FROM_OBJECT and/or TO_OBJECT,
+ *	    rather than the default of its bounding box center.
+ *
+ * 	-k
+ *	    Sets the keypoint to FROM_OBJECT's bounding box
+ *	    center (or natural origin if -n is used). If this option
+ *	    is ommitted, the keypoint defaults to OBJECT's bounding
+ *	    box center.
+ *
+ * 	-r
+ *	    Interpret TO_POS as the relative distance to move OBJECT
+ *          from FROM keypoint. Enabled by default if TO_POS is set.
+ *	    Must be ommited if TO_OBJECT is specified.
+ *
+ * 	-a
+ *	    Interpret TO_POS/TO_OBJECT as an absolute position. The
+ *	    vector implied by FROM and TO is used to move OBJECT. This
+ *	    option is required if TO_OBJECT is specified.
+ *
+ * Visual Example:
+ *	translate -n -k rcc.s -a sph.s table.c/box.c 
+ *      
+ *      Move the instance of box.c in table.c from the natural origin
+ *	of rcc.s to the bounding box center of sph.s:
+ *	====================================================
+ *      |                                                  |
+ *	|  |.| <=keypoint: natural origin of rcc.s         |
+ *	|                                                  |
+ *	|      o <= center of sph.2                        |
+ *      |                            [] <=box.c start      |
+ *	|                                                  |
+ *	|                               [] <=box.c moved   |
+ *      |                                                  |
+ *	====================================================
+ *
+ * EXAMPLES
+ *	# move all instances of sph.s to x=1, y=2, z=3
+ *	translate -a 1 2 3 /sph.s
+ *
+ *	    # these all have the same effect as above
+ *	    translate -a 1 2 3 sph.s
+ *	    translate -k sph.s -a 1 2 3 sph.s
+ *	    translate -k . -a 1 2 3 sph.s
+ *
+ *	# move all instances of sph.s x+1,y+2,z+3
+ *	translate 1 2 3 sph.s
+ *
+ *	    # these all have the same effect as above
+ *	    translate -r 1 2 3 sph.s
+ *	    translate -k sph.s -r 1 2 3 sph.s
+ *	    translate -k . -r 1 2 3 sph.s
+ *
+ *	# move instance of sph.s in bowl.c x+1,y+2
+ *	translate 1 2 bowl.c/sph.s
+ *
+ *	# move instance of sph.s in bowl.c z+7
+ *	translate -z 7 bowl.c/sph.s
+ *
+ *	    # exactly the same as above
+ *	    translate . . 7 bowl.c/sph.s
+ *
+ *      # move all sph.s from the bounding box center of sph.s to
+ *	# the natural origin of sph.s
+ *	translate -k sph.s -n -a sph.s sph.s
+ *	
+ *	    # these all have the same effect as above
+ *	    translate -n -a . sph.s
+ *	    translate -k . -n -a . sph.s
+ *
+ *	# move all instances of bowl.c, from sph.s's bounding
+ *	# box center to y=5, without changing the x and z coodinates.
+ *	translate -k sph.s -a -y 5 bowl.c	
+ *
+ *      # move instance of two.c, from instance of sph.s's
+ *      # matrix-modified natural origin to x=5
+ *      translate -n -k bowl.c/sph.s -a 5 one.c/two.c
+ *
+ *	# move all bowl.c instances and one instance of two.c from
+ *	# x=-23,y=4,z=17 to x=9,y=2,z=1
+ *	translate -k -23 4 17 -a 9 2 1 bowl.c one.c/two.c
+ *
+ *	    # exactly the same as above, using relative positioning
+ *	    translate -k . -r 32 -2 16 bowl.c one.c/two.c
+ *
+ *	# do nothing
+ *	translate -a . sph.s
+ *
+ *	    # same as above
+ *	    translate 0 sph.s
+ *	    translate -k 1 2 3 -a 1 2 3 sph.s
+ *	    translate -k 1 2 3 -r 0 sph.s
+ *	    translate -k . -a . sph.s
+ *	    translate -k . -a . sph.s
+ *	    translate -n -k . -n -a . sph.s
+ *	    translate -n -k sph.s -n -a sph.2 sph.s
+ *     
+ *	# center sph1.s and sph2.s on natural origin of rcc.s
+ *	translate -k . -n -a rcc.s sph1.s sph2.s
+ *
+ *      # center sph1.s on natural origin of rcc.s, and move sph.2
+ *	# from center of sph1.s to natural origin of rcc.s (keypoint
+ *	# is sph1.s's center, so sph2.s comes along for the ride)
+ *      translate -n -a rcc.s sph1.s sph2.s
+ *
+ *	# move each of sph.s, sph2.s and sph3.s a relative x+5
+ *	translate -k . -r 5 sph.s sph2.s sph3.s
+ *	    
+ *	    # same as above
+ *	    translate -n -k . -r 5 sph.s sph2.s sph3.s
+ *
+ *	# move sph.s to a point z+10 above bounding box center of
+ *	# /sph2.s
+ *	translate -k sph2.s -r -z 10 sph.s
+ *	    
+ *	# move the bounding box center of all instances of sph.s
+ *	# to the natural origin of rcc.s, and move sph2.s from
+ *	# the bounding box center of sph.s to the natural origin of 
+ *	# rcc.s (both sph.s and sph2.s stay the same relative distance
+ *	# from each other; they've shifted together)
+ *	translate -n -a rcc.s sph.s sph2.s
+ *
+ *	# move the natural origins of all instances of sph.s
+ *	# and sph2.s to the natural origin of rcc.s
+ *	translate -n -k . -n -a rcc.s sph.s sph2.s
+ *
+ *	# move instance of two.c from x=93.2 to x=-41.7
+ *	translate -k 93.2 -a -41.7 one.c/two.c
+ *
+ *	    # all of these have the same end result as above
+ *	    translate -k 93.2 . . -a -41.7 one.c/two.c
+ *	    translate -k -x 93.2 -a -41.7 one.c/two.c
+ *	    translate -k -x 93.2 -a -x -41.7 one.c/two.c
+ *	    translate -k 93.2 . . -a -41.7 0 0 one.c/two.c
+ *	    translate -k 93.2 . . -a -41.7 . . one.c/two.c
+ *	    translate -k 93.2 0 0 -a -41.7 0 0 one.c/two.c
+ *	    translate -k 93.2 21 32 -a -41.7 . . one.c/two.c
+ *	    translate -k 93.2 21 32 -a -41.7 21 32 one.c/two.c
+ * 
+ *	    # same result as above, using a relative distance
+ *	    translate -134.9 one.c/two.c
+ *	    translate -r -134.9 one.c/two.c
+ *	    translate -k . -r -134.9 one.c/two.c
+ *
  */
 
 #include "common.h"
@@ -35,16 +211,31 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
 #include "ged.h"
 #include "./ged_private.h"
 
-/*
- * at some point this will be exposed, so keep a clean break from the
- * ged cmd and don't make assumptions
- */
+#if 0
+HIDDEN int
+rotate(struct ged *gedp, vect_t *keypoint,
+	  struct db_full_path *path,
+	  struct directory *d_obj, vect_t delta,
+	  int relative_pos_flag)
+{
+}
+
+HIDDEN int
+scale(struct ged *gedp, vect_t *keypoint,
+	  struct db_full_path *path,
+	  struct directory *d_obj, vect_t delta,
+	  int relative_pos_flag)
+{
+}
+#endif
+
 #if 0
 HIDDEN int
 translate(struct ged *gedp, vect_t *keypoint,
@@ -174,115 +365,19 @@ translate(struct ged *gedp, vect_t *keypoint,
 }
 #endif
 
-/* ged_translate(): Proposed operations, and manual page
- *
- * Options:
- *
- * Synopsis:
- *	translate [FROM] TO object(s)
- *	translate [{-o|-c [FROM_PRIMITIVE]} | {-k x [y [z]]}] \
- *	    {{-o|-c [TO_PRIMITIVE]} | {[-r | -a] x [y [z]}} \
- *	    [PATH/]OBJECT [[PATH2/]OBJECT2] ...
- *
- * NEW Synopsis:
- *	translate [[-n] [-k {object|3dpos}]]
- *	    [[-n] -a|-r {object|3dpos}] object(s)
- *
- * Description:
- *	Used to move a primitive or combination. If all of the FROM
- *	options are ommited, the movement must be relative, and the
- *	x/y/z TO coordinates must be given. If any of the other TO
- *	options	are used, one of the FROM options must also be used.
- *	If -k is used, -a must also be used, since 
- *	Other than these two restrictions, any other combination
- *	of FROM and TO options may be used.
- *
- *	If FROM_PRIMITIVE or TO_PRIMITIVE are set to '-', the first
- *	[PATH/]OBJECT is used in its place (and must be a primitive).
- *	If any x, y, or z coordinates are set to '-', they are
- *	ignored.
- *
- * Options:
- * 	-r  relative distance (default)
- * 	-a  absolute position
- *
- * 	-o  origin of primitive
- * 	-c  center of primitive
- * 	-k  keypoint
- *
- * Examples:
- *	# Relative translations
- *
- *	    # move all instances of sph.s x+5,y+5,z+5
- *	    translate 5 5 5 /sph.s
- *
- *	    	# same as above
- *	    	translate 5 5 5 sph.s
- * 
- *	    # move instance of sph.s in bowl.c x+7,y+7
- *	    translate 7 7 bowl.c/sph.s
- *
- *	    # move instance of sph.s in bowl.c z+7
- *	    translate - - 7 bowl.c/sph.s
- * 
- *	# move all instances of bowl.c from sph.s's origin to y=5,
- *	# leaving x/z alone
- *	translate -o sph.s - 5 bowl.c	
- *
- *      # move instance of two.c from instance of sph.s's
- *      # matrix-modified origin to x=5
- *      translate -o bowl.c/sph.s 5 one.c/two.c
- *
- *	# move all bowl.c's instances and one instance of two.c from
- *	# x=-23,y=4,z=17 to x=9,y=2,z=1
- *	translate -k -23 4 17 9 2 1 bowl.c one.c/two.c
- *
- *	    # same effect as above, using relative positioning
- *	    translate 32 -2 16 bowl.c one.c/two.c
- *
- *	# move instance of sph.s from center of same instance of
- *	# sph.s to x=5,y=0,z=6
- *	translate -c bowl.c/sph.s 5 0 6 bowl.c/sph.s
- *
- *		# same as above; center this instance of sph.s on
- *		# x=5,y=0,z=6
- *		translate -c - 5 0 6 bowl.c/sph.s
- *
- *	# move instance of two.c from x=93.2 to x=-41.7
- *	translate -k 93.2 - - -41.7 - - one.c/two.c
- *
- *	    # all of these have the same end result as above
- *	    translate -k 93.2 - - -41.7 one.c/two.c
- *	    translate -k 93.2 - - -41.7 0 0 one.c/two.c
- *	    translate -k 93.2 - - -41.7 - - one.c/two.c
- *	    translate -k 93.2 0 0 -41.7 0 0 one.c/two.c
- *	    translate -k 93.2 21 32 -41.7 - - one.c/two.c
- *	    translate -k 93.2 21 32 -41.7 21 32 one.c/two.c
- * 
- *	    # same result as above, using a relative distance
- *	    translate -134.9 one.c/two.c
- *
- *	# move instance of sph.s from origin of instance of sph2.s
- *	# to center of instance of sph.s
- *	translate -o bowl.c/sph2.s -c - bowl.c/sph.s
- *
- *	# move /sph1.s from origin of instance of sph2.s to center of
- *	# instance of rcc.s 
- *	translate -o bowl.c/sph2.s -c bowl.c/rcc.s sph1.s
- */
-
 int
-ged_translate(struct ged *gedp, int argc, const char *argv[])
+ged_alter(struct ged *gedp, int argc, const char *argv[])
 {
-    (void) gedp;
-    (void) argc;
-    (void) argv;
+    (void)gedp;
+    (void)argc;
+    (void)argv;
 #if 0
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     const char *const cmd_name = argv[0];
-    static const char *usage = "[{-o|-c [FROM_PRIMITIVE]} | {-k x [y [z]]}]"
-	" {{-o|-c [TO_PRIMITIVE]} | {x [y [z]}}"
-	" [PATH/]OBJECT [[PATH2/]OBJECT2] ... )";
+    static const char *usage = "{translate | rotate | scale}"
+	" [[-n] -k {FROM_OBJECT|POS}]"
+	" {[-n] [-a | -r] TO_OBJECT|POS}" 
+	" [path/]object ..." ;
     static const char *skip_arg = ". ";
 
     int from_center_flag = 0;
@@ -296,7 +391,7 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     int to_origin_flag = 0;
     const char *s_to_primitive;
     struct db_full_path to_primitive;
-    vect_t delta;			/* dist/pos to translate to */
+    vect_t delta;			/* dist/pos to alter to */
 
     const char *s_obj[] = NULL;
     struct db_full_path obj[] = NULL;
@@ -410,7 +505,7 @@ no_more_args: /* for breaking out, above */
     if (!abs_flag && !rel_flag)
 	rel_flag = 1;
     
-    /* set delta coordinates for translation */
+    /* set delta coordinates for alter */
     if ((bu_optind + 1) > argc) {
 	bu_vls_printf(gedp->ged_result_str, "missing x coordinate");
 	return GED_HELP;
@@ -464,12 +559,12 @@ no_more_args: /* for breaking out, above */
     }
 
     /*
-     * Perform translations
+     * Perform alter
      */
 
     d_obj = DB_FULL_PATH_ROOT_DIR(&obj);
     if (!kp_arg) {
-	if (translate(gedp, (vect_t *)NULL, &path, d_obj, delta,
+	if (alter_translate(gedp, (vect_t *)NULL, &path, d_obj, delta,
 		      rel_flag) == GED_ERROR) {
 	    db_free_full_path(&path);
 	    db_free_full_path(&obj);
@@ -477,7 +572,7 @@ no_more_args: /* for breaking out, above */
 	    return GED_ERROR;
 	}
     } else {
-	if (translate(gedp, &keypoint, &path, d_obj, delta, rel_flag) ==
+	if (alter_translate(gedp, &keypoint, &path, d_obj, delta, rel_flag) ==
 	    GED_ERROR) {
 	    db_free_full_path(&path);
 	    db_free_full_path(&obj);
@@ -489,9 +584,9 @@ no_more_args: /* for breaking out, above */
     db_free_full_path(&path);
     db_free_full_path(&obj);
 #endif
-    return GED_OK;
+    bu_vls_printf(gedp->ged_result_str, "command not yet implemented");
+    return GED_ERROR;
 }
-
 
 /*
  * Local Variables:

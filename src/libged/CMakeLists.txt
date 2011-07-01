@@ -6,6 +6,7 @@ set(LIBGED_SOURCES
     aet.c
     analyze.c
     annotate.c
+    alter.c
     arb.c
     arced.c
     arot.c
@@ -223,7 +224,6 @@ set(LIBGED_SOURCES
     tra.c
     trace.c
     track.c
-    translate.c
     translate_extrude.c
     translate_tgc.c
     tree.c

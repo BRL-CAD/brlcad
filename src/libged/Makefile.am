@@ -8,6 +8,7 @@ libged_nil_la_SOURCES = \
 	adjust.c \
 	ae2dir.c \
 	aet.c \
+	alter.c \
 	analyze.c \
 	annotate.c \
 	arb.c \
@@ -227,7 +228,6 @@ libged_nil_la_SOURCES = \
 	tra.c \
 	trace.c \
 	track.c \
-	translate.c \
 	translate_extrude.c \
 	translate_tgc.c \
 	tree.c \
