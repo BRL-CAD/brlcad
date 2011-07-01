@@ -23,6 +23,8 @@
  *
  */
 
+/* THIS FILE IS UNDER MAJOR RECONSTRUCTION */
+
 /* TODO:
  *  -reject paths with fp_len > 1; it's meaningless and misleading
  *  -consider merging path/object into a single argument
@@ -43,15 +45,15 @@
  * at some point this will be exposed, so keep a clean break from the
  * ged cmd and don't make assumptions
  */
+#if 0
 HIDDEN int
-translate(struct ged *gedp, pointp_t const keypoint,
-	  struct db_full_path * const path, struct directory * const d_obj,
-	  vect_t delta, int relative_pos_flag) {
-
+translate(struct ged *gedp, vect_t *keypoint,
+	  struct db_full_path *path,
+	  struct directory *d_obj, vect_t delta,
+	  int relative_pos_flag)
+{
     struct db_full_path full_obj_path;
     struct directory *d_to_modify = NULL;
-    char **argv = NULL;
-    int argc = 0;
 
     struct rt_db_internal intern;
     struct _ged_trace_data gtd;
@@ -62,14 +64,23 @@ translate(struct ged *gedp, pointp_t const keypoint,
     point_t rpp_min;
     point_t rpp_max;
 
-    /* XXX quiet compiler for now */
-    (void)keypoint;
-    (void)argv;
-    (void)argc;
-
     /*
      * Validate parameters
      */
+
+    /* perhaps relative positioning was enabled by mistake */
+    if (relative_pos_flag && keypoint) {
+	bu_vls_printf(gedp->ged_result_str,
+		      "relative translations do not have keypoints");
+	return GED_ERROR;
+    }
+
+    /* TODO: set reasonable default keypoint */
+    if (!relative_pos_flag && !keypoint) {
+	*keypoint[0] = 0.0;
+	*keypoint[1] = 0.0;
+	*keypoint[2] = 0.0;
+    }
 
     /* verify existence of path */
     if (ged_path_validate(gedp, path) == GED_ERROR) {
@@ -100,15 +111,15 @@ translate(struct ged *gedp, pointp_t const keypoint,
 	return GED_ERROR;
     }
 
-    if (!relative_pos_flag) {
-	bu_vls_printf(gedp->ged_result_str, "translations to absolute"
-		      " positions are not yet supported");
-	return GED_ERROR;
-    }
-
     /*
      * Perform translations
      */
+
+    if (!relative_pos_flag)
+	    /* 'delta' is actually an absolute position; calculate
+	     * distance between it and the keypoint, so that delta
+	     * really is a delta */
+	    VSUB2(delta, delta, *keypoint);
 
     if (path->fp_len > 0) {
 	/* path supplied; move obj instance only (obj's CWD
@@ -128,7 +139,7 @@ translate(struct ged *gedp, pointp_t const keypoint,
 	    rt_db_free_internal(&intern);
 	    return GED_ERROR;
 	}
-
+	
 	MAT_DELTAS_ADD_VEC(leaf_to_modify->tr_l.tl_mat, delta); 
     } else {
 	/* no path; move all obj instances (obj's entire tree
@@ -161,30 +172,138 @@ translate(struct ged *gedp, pointp_t const keypoint,
     rt_db_free_internal(&intern);
     return GED_OK;
 }
+#endif
 
+/* ged_translate(): Proposed operations, and manual page
+ *
+ * Options:
+ *
+ * Synopsis:
+ *	translate [FROM] TO object(s)
+ *	translate [{-o|-c [FROM_PRIMITIVE]} | {-k x [y [z]]}] \
+ *	    {{-o|-c [TO_PRIMITIVE]} | {[-r | -a] x [y [z]}} \
+ *	    [PATH/]OBJECT [[PATH2/]OBJECT2] ...
+ *
+ * NEW Synopsis:
+ *	translate [[-n] [-k {object|3dpos}]]
+ *	    [[-n] -a|-r {object|3dpos}] object(s)
+ *
+ * Description:
+ *	Used to move a primitive or combination. If all of the FROM
+ *	options are ommited, the movement must be relative, and the
+ *	x/y/z TO coordinates must be given. If any of the other TO
+ *	options	are used, one of the FROM options must also be used.
+ *	If -k is used, -a must also be used, since 
+ *	Other than these two restrictions, any other combination
+ *	of FROM and TO options may be used.
+ *
+ *	If FROM_PRIMITIVE or TO_PRIMITIVE are set to '-', the first
+ *	[PATH/]OBJECT is used in its place (and must be a primitive).
+ *	If any x, y, or z coordinates are set to '-', they are
+ *	ignored.
+ *
+ * Options:
+ * 	-r  relative distance (default)
+ * 	-a  absolute position
+ *
+ * 	-o  origin of primitive
+ * 	-c  center of primitive
+ * 	-k  keypoint
+ *
+ * Examples:
+ *	# Relative translations
+ *
+ *	    # move all instances of sph.s x+5,y+5,z+5
+ *	    translate 5 5 5 /sph.s
+ *
+ *	    	# same as above
+ *	    	translate 5 5 5 sph.s
+ * 
+ *	    # move instance of sph.s in bowl.c x+7,y+7
+ *	    translate 7 7 bowl.c/sph.s
+ *
+ *	    # move instance of sph.s in bowl.c z+7
+ *	    translate - - 7 bowl.c/sph.s
+ * 
+ *	# move all instances of bowl.c from sph.s's origin to y=5,
+ *	# leaving x/z alone
+ *	translate -o sph.s - 5 bowl.c	
+ *
+ *      # move instance of two.c from instance of sph.s's
+ *      # matrix-modified origin to x=5
+ *      translate -o bowl.c/sph.s 5 one.c/two.c
+ *
+ *	# move all bowl.c's instances and one instance of two.c from
+ *	# x=-23,y=4,z=17 to x=9,y=2,z=1
+ *	translate -k -23 4 17 9 2 1 bowl.c one.c/two.c
+ *
+ *	    # same effect as above, using relative positioning
+ *	    translate 32 -2 16 bowl.c one.c/two.c
+ *
+ *	# move instance of sph.s from center of same instance of
+ *	# sph.s to x=5,y=0,z=6
+ *	translate -c bowl.c/sph.s 5 0 6 bowl.c/sph.s
+ *
+ *		# same as above; center this instance of sph.s on
+ *		# x=5,y=0,z=6
+ *		translate -c - 5 0 6 bowl.c/sph.s
+ *
+ *	# move instance of two.c from x=93.2 to x=-41.7
+ *	translate -k 93.2 - - -41.7 - - one.c/two.c
+ *
+ *	    # all of these have the same end result as above
+ *	    translate -k 93.2 - - -41.7 one.c/two.c
+ *	    translate -k 93.2 - - -41.7 0 0 one.c/two.c
+ *	    translate -k 93.2 - - -41.7 - - one.c/two.c
+ *	    translate -k 93.2 0 0 -41.7 0 0 one.c/two.c
+ *	    translate -k 93.2 21 32 -41.7 - - one.c/two.c
+ *	    translate -k 93.2 21 32 -41.7 21 32 one.c/two.c
+ * 
+ *	    # same result as above, using a relative distance
+ *	    translate -134.9 one.c/two.c
+ *
+ *	# move instance of sph.s from origin of instance of sph2.s
+ *	# to center of instance of sph.s
+ *	translate -o bowl.c/sph2.s -c - bowl.c/sph.s
+ *
+ *	# move /sph1.s from origin of instance of sph2.s to center of
+ *	# instance of rcc.s 
+ *	translate -o bowl.c/sph2.s -c bowl.c/rcc.s sph1.s
+ */
 
 int
 ged_translate(struct ged *gedp, int argc, const char *argv[])
 {
+    (void) gedp;
+    (void) argc;
+    (void) argv;
+#if 0
     struct db_i *dbip = gedp->ged_wdbp->dbip;
-    const char *cmd_name = argv[0];
-    static const char *usage = "[-k keypoint:object]"
-	" [[-a] | [-r]]"
-	" x [y [z]]"
-	" [path]"
-	" object";
+    const char *const cmd_name = argv[0];
+    static const char *usage = "[{-o|-c [FROM_PRIMITIVE]} | {-k x [y [z]]}]"
+	" {{-o|-c [TO_PRIMITIVE]} | {x [y [z]}}"
+	" [PATH/]OBJECT [[PATH2/]OBJECT2] ... )";
+    static const char *skip_arg = ". ";
+
+    int from_center_flag = 0;
+    int from_origin_flag = 0;
+    const char *s_from_primitive;
+    struct db_full_path from_primitive;
+    const char *kp_arg = NULL;        	/* keypoint argument */
+    vect_t keypoint;
+
+    int to_center_flag = 0;
+    int to_origin_flag = 0;
+    const char *s_to_primitive;
+    struct db_full_path to_primitive;
+    vect_t delta;			/* dist/pos to translate to */
+
+    const char *s_obj[] = NULL;
+    struct db_full_path obj[] = NULL;
+    struct directory *d_obj[] = NULL;
+
     size_t i;				/* iterator */
     int c;				/* bu_getopt return value */
-    int abs_flag = 0;			/* use absolute position */
-    int rel_flag = 0;			/* use relative distance */
-    char *kp_arg = NULL;        	/* keypoint argument */
-    pointp_t keypoint = NULL;
-    vect_t delta;			/* dist/pos to translate to */
-    const char *s_obj;
-    const char *s_path = NULL;
-    struct db_full_path obj;
-    struct db_full_path path;
-    struct directory *d_obj;
     char *endchr = NULL;		/* for strtod's */
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -205,21 +324,44 @@ ged_translate(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_optind = 1; /* re-init bu_getopt() */
-    while ((c = bu_getopt(argc, (char * const *)argv, "ak:r")) != -1) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "o:c:k:")) != -1) {
 	switch (c) {
-	    case 'a':
-		abs_flag = 1;
+	    case 'o':
+		if (from_origin_flag) {
+		    if (to_origin_flag) {
+			bu_vls_printf(gedp->ged_result_str,
+				      "too many -o options");
+			return GED_ERROR;
+		    }
+		    to_origin_flag = 1;
+		    s_to_primitive = bu_optarg;
+		} else {
+		    from_origin_flag = 1;
+		    s_from_primitive = bu_optarg;
+		}
 		break;
-	    case 'k':
-		kp_arg = bu_optarg;
-		if (kp_arg[0] == '-') {
+	    case 'c':
+		if (from_center_flag) {
+		    if (to_center_flag) {
+			bu_vls_printf(gedp->ged_result_str,
+				      "too many -c options");
+			return GED_ERROR;
+		    }
+		    to_origin_flag = 1;
+		    s_to_primitive = bu_optarg;
+		} else {
+		    from_origin_flag = 1;
+		    s_from_primitive = bu_optarg;
+		}
+
+		if (!(s_from_center[0] == skip_arg && kp_arg[1] == ' ')) {
 		    /* that's an option, not an arg */
 		    bu_vls_printf(gedp->ged_result_str,
 				  "Missing argument for option -%c", bu_optopt);
 		    return GED_ERROR;
 		}
 		break;
-	    case 'r':
+	    case 'k':
 		rel_flag = 1;
 		break;
 	    default:
@@ -264,27 +406,10 @@ no_more_args: /* for breaking out, above */
 	return GED_ERROR;
     }
 
-    /* perhaps relative positioning was enabled by mistake */
-    if (rel_flag && kp_arg) {
-	bu_vls_printf(gedp->ged_result_str,
-		      "relative translations do not have keypoints");
-	return GED_ERROR;
-    }
-
     /* set default positioning type */
     if (!abs_flag && !rel_flag)
 	rel_flag = 1;
-
-    /* TODO: set reasonable default keypoint */
-#if 0
-    if (!keypoint)
-	;
-#endif
-    if (kp_arg) {
-	bu_vls_printf(gedp->ged_result_str, "keypoints not yet supported");
-	return GED_ERROR;
-    }
-
+    
     /* set delta coordinates for translation */
     if ((bu_optind + 1) > argc) {
 	bu_vls_printf(gedp->ged_result_str, "missing x coordinate");
@@ -313,7 +438,6 @@ no_more_args: /* for breaking out, above */
 	return GED_HELP;
     }
 
-    /* if a path was not supplied, root is used as path */
     if ((bu_optind + 1) != argc)
 	/* if >1 object was supplied, the first must be a path */
 	s_path = argv[bu_optind++];
@@ -344,16 +468,27 @@ no_more_args: /* for breaking out, above */
      */
 
     d_obj = DB_FULL_PATH_ROOT_DIR(&obj);
-    if (translate(gedp, keypoint, &path, d_obj, delta, rel_flag) ==
-	GED_ERROR) {
-	db_free_full_path(&path);
-	db_free_full_path(&obj);
-	bu_vls_printf(gedp->ged_result_str, "; translation failed");
-	return GED_ERROR;
+    if (!kp_arg) {
+	if (translate(gedp, (vect_t *)NULL, &path, d_obj, delta,
+		      rel_flag) == GED_ERROR) {
+	    db_free_full_path(&path);
+	    db_free_full_path(&obj);
+	    bu_vls_printf(gedp->ged_result_str, "; translation failed");
+	    return GED_ERROR;
+	}
+    } else {
+	if (translate(gedp, &keypoint, &path, d_obj, delta, rel_flag) ==
+	    GED_ERROR) {
+	    db_free_full_path(&path);
+	    db_free_full_path(&obj);
+	    bu_vls_printf(gedp->ged_result_str, "; translation failed");
+	    return GED_ERROR;
+	}
     }
 
     db_free_full_path(&path);
     db_free_full_path(&obj);
+#endif
     return GED_OK;
 }
 

@@ -39,11 +39,15 @@
 #include "raytrace.h"
 #include "optical.h"
 
+
 #define OSL_MAGIC 0x1837    /* make this a unique number for each shader */
 #define CK_OSL_SP(_p) BU_CKMAG(_p, OSL_MAGIC, "osl_specific")
 
 /* Oslrenderer system */
 OSLRenderer *oslr = NULL;
+/* Save default a_hit */
+
+int (*default_a_hit)(struct application *, struct partition *, struct seg *);	
 
 /*
  * The shader specific structure contains all variables which are unique
@@ -174,8 +178,7 @@ HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm,
     }
     /* Add this shader to OSL system */
     oslr->AddShader(osl_sp->shadername.vls_str);
-    printf("Adding shader: %s\n", osl_sp->shadername.vls_str);
-  
+
     if (rdebug&RDEBUG_SHADE) {
 	bu_struct_print(" Parameters:", osl_print_tab, (char *)osl_sp);
     }
@@ -264,16 +267,25 @@ osl_refraction_hit(struct application *ap, struct partition *PartHeadp, struct s
 	rp = pp->pt_regionp;
 	mfp = (struct mfuncs *)pp->pt_regionp->reg_mfuncs;
 
+	/* Determine the hit point */
 	sw.sw_hit = *(pp->pt_outhit);		/* struct copy */
-    	VJOIN1(pt, ap->a_ray.r_pt, sw.sw_hit.hit_dist, ap->a_ray.r_dir);
+    	VJOIN1(sw.sw_hit.hit_point, ap->a_ray.r_pt, sw.sw_hit.hit_dist, ap->a_ray.r_dir);
 
-	stp = pp->pt_inseg->seg_stp;
-	RT_HIT_NORMAL(sw.sw_hit.hit_normal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
+#if 0
+	point_t pt;
+    	VJOIN1(pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
+	VPRINT("output point: ", sw.sw_hit.hit_point);
+	VPRINT(" input point: ", pt);
+#endif
+
+	/* Determine the normal point */
+	stp = pp->pt_outseg->seg_stp;
+	RT_HIT_NORMAL(sw.sw_hit.hit_normal, &(sw.sw_hit), stp, &(ap->a_ray), pp->pt_outflip);
 
 	/* Invoke the actual shader (may be a tree of them) */
 	if (mfp && mfp->mf_render)
 	    (void)mfp->mf_render(ap, pp, &sw, rp->reg_udata);
-	
+
 	VMOVE(ap->a_color, sw.sw_color);
     }
     return 1;
@@ -311,8 +323,10 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 
     /* Just shoot several rays if we are rendering the first pixel */
     int nsamples;
-    if(ap->a_level == 0)
+    if(ap->a_level == 0){
 	nsamples = 25;
+	default_a_hit = ap->a_hit; /* save the default hit callback (colorview @ rt) */
+    }
     else
 	nsamples = 1;
 
@@ -362,7 +376,7 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 
 	    new_ap.a_rt_i = ap->a_rt_i;
 	    new_ap.a_onehit = 1;
-	    new_ap.a_hit = ap->a_hit;
+	    new_ap.a_hit = default_a_hit;
 	    new_ap.a_miss = ap->a_miss;
 	    new_ap.a_level = ap->a_level + 1;
 	    new_ap.a_flag = 0;
@@ -374,7 +388,7 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 	    	    /* This next ray is from refraction */
 	    if (VDOT(info.N, info.out_ray.dir) < 0.0f){
 
-#if 0     
+#if 1     
 		/* Displace the hit point a little bit in the direction
 		   of the next ray */
 	     	Vec3 tmp;
@@ -389,10 +403,9 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 
 	    (void)rt_shootray(&new_ap);
 
-	    /* The resulting color is always on ap_color, but
-	       we need to update it through sw_color */
 	    Color3 rec;
 	    VMOVE(rec, new_ap.a_color);
+
 	    Color3 res = rec*weight;
 	    VADD2(scolor, scolor, res);
 	}
@@ -401,7 +414,17 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 	    VADD2(scolor, scolor, weight);
 	}
     }
+    /* Gamma correction */
+    /*
+    scolor[0] = pow(scolor[0], 1.0/2.2);
+    scolor[1] = pow(scolor[1], 1.0/2.2);
+    scolor[2] = pow(scolor[2], 1.0/2.2);
+    */
+
+    /* The resulting color is always on ap_color, but
+       we need to update it through sw_color */
     VSCALE(swp->sw_color, scolor, 2.0/nsamples);
+    
 
     return 1;
 }

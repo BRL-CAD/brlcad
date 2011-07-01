@@ -10,9 +10,10 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2011-06-XX  Release 7.20.2                                     ---
+--- 2011-07-01  Release 7.20.2                                     ---
 ----------------------------------------------------------------------
 
+* improved fusing of coplanar faces (tessellation) - Richard Weiss
 * fixed rtwizard issues with unknown units and freezing - Bob Parker
 * fixed problem with mater command setting color - Cliff Yapp
 * fixed crash rendering scenes with all invalid lights - Sean Morrison

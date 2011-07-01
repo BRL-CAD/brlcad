@@ -169,7 +169,7 @@ SET(manuals_mged_animmate_HTML
 	manuals/mged/animmate/viewget.html 
 	manuals/mged/animmate/vscript_doc.html
 )
-BRLCAD_ADDDATA(manuals_mged_animmate_HTML html/manuals/mged/animate)
+BRLCAD_ADDDATA(manuals_mged_animmate_HTML html/manuals/mged/animmate)
 
 SET(manuals_mged_HTML
 	manuals/mged/az_el.gif 

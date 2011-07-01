@@ -53,11 +53,10 @@ clobber:
 	@${SH} ${srcdir}/run.sh clobber
 
 CLEANFILES = \
-	benchmark
-
-DISTCLEANFILES = \
 	*.log \
-	*.pix
+	*.pix \
+	benchmark \
+	pixcmp
 
 DEPS=src/rt db
 

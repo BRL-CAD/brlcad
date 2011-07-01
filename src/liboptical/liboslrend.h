@@ -58,7 +58,6 @@ struct RenderInfo {
     point_t dPdu, dPdv;     /* uv tangents */
     int depth;              /* How many times the ray hit an object */
     fastf_t surfacearea;    /* FIXME */
-    int isbackfacing;       /* FIXME */
     const char *shadername; /* Name of the shader we are querying */
 
     /* -- output -- */

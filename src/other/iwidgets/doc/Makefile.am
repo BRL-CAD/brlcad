@@ -62,7 +62,8 @@ EXTRA_DIST = \
 	tk2html \
 	tk2html.awk \
 	tk2html.perl \
-	tk2html2.awk
+	tk2html2.awk \
+	CMakeLists.txt
 
 transform = s,^,iwidgets_,
 

@@ -42,8 +42,6 @@ static int w = 1024, h = 768;
 static int samples = 4;
 static unsigned short Xi[3];
 
-static bool inside;
-
 static int vmajor = 1;
 static int vminor = 4;
 
@@ -178,8 +176,14 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 #endif
 	
 	/* Set normal at the point */
-	stp = pp->pt_inseg->seg_stp;
-	RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
+	if(ap->a_flag == 1){
+	    stp = pp->pt_outseg->seg_stp;
+	    RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_outflip);
+	}
+	else {
+	    stp = pp->pt_inseg->seg_stp;
+	    RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
+	}
 	VMOVE(info.N, inormal);
       
 	/* Set incidence ray direction */
@@ -201,8 +205,6 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	info.shadername = shadername;
 
 	info.doreflection = 0;
-
-	inside = false;
  
 	Color3 weight = oslr->QueryColor(&info);
 	
