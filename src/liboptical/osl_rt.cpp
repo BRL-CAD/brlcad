@@ -176,8 +176,14 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 #endif
 	
 	/* Set normal at the point */
-	stp = pp->pt_inseg->seg_stp;
-	RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
+	if(ap->a_flag == 1){
+	    stp = pp->pt_outseg->seg_stp;
+	    RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_outflip);
+	}
+	else {
+	    stp = pp->pt_inseg->seg_stp;
+	    RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
+	}
 	VMOVE(info.N, inormal);
       
 	/* Set incidence ray direction */

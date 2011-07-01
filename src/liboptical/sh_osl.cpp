@@ -264,17 +264,114 @@ osl_refraction_hit(struct application *ap, struct partition *PartHeadp, struct s
 	rp = pp->pt_regionp;
 	mfp = (struct mfuncs *)pp->pt_regionp->reg_mfuncs;
 
+	/* Determine the hit point */
 	sw.sw_hit = *(pp->pt_outhit);		/* struct copy */
-    	VJOIN1(pt, ap->a_ray.r_pt, sw.sw_hit.hit_dist, ap->a_ray.r_dir);
+    	VJOIN1(sw.sw_hit.hit_point, ap->a_ray.r_pt, sw.sw_hit.hit_dist, ap->a_ray.r_dir);
 
-	stp = pp->pt_inseg->seg_stp;
-	RT_HIT_NORMAL(sw.sw_hit.hit_normal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
+#if 0
+	point_t pt;
+    	VJOIN1(pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
+	VPRINT("output point: ", sw.sw_hit.hit_point);
+	VPRINT(" input point: ", pt);
+#endif
+
+	/* Determine the normal point */
+	stp = pp->pt_outseg->seg_stp;
+	RT_HIT_NORMAL(sw.sw_hit.hit_normal, &(sw.sw_hit), stp, &(ap->a_ray), pp->pt_outflip);
+
+#if 1
+
+	/* Test: query the color directly (without calling the shader) */
+
+	RenderInfo info;
+	/* will contain normal vector where ray enters geometry */
+	vect_t inormal;
+	point_t pt;
+
+	/* Find the hit point */
+	hitp = pp->pt_outhit;
+	VJOIN1(pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
+	VMOVE(info.P, pt);
+
+	/* Find the normal */
+	stp = pp->pt_outseg->seg_stp;
+	RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_outflip);
+	VMOVE(info.N, inormal);
+
+	/* Set incidence ray direction */
+	VMOVE(info.I, ap->a_ray.r_dir);
+    
+	/* U-V mapping stuff */
+	info.u = 0;
+	info.v = 0;
+	VSETALL(info.dPdu, 0.0f);
+	VSETALL(info.dPdv, 0.0f);
+    
+	/* x and y pixel coordinates */
+	info.screen_x = ap->a_x;
+	info.screen_y = ap->a_y;
+
+	info.depth = ap->a_level;
+	info.surfacearea = 1.0f;
+    
+	info.shadername = "glass";
+
+	info.doreflection = 0;
+ 
+	Color3 weight = oslr->QueryColor(&info);
+	
+	if(info.doreflection){
+
+	    /* Fire another ray */
+	    struct application new_ap;
+	    RT_APPLICATION_INIT(&new_ap);
+
+	    new_ap.a_rt_i = ap->a_rt_i;
+	    new_ap.a_onehit = 1;
+	    new_ap.a_hit = ap->a_hit;
+	    new_ap.a_miss = ap->a_miss;
+	    new_ap.a_level = ap->a_level + 1;
+	    new_ap.a_flag = 0;
+
+	    VMOVE(new_ap.a_ray.r_dir, info.out_ray.dir);
+	    VMOVE(new_ap.a_ray.r_pt, info.out_ray.origin);
+
+	    /* Check if the out ray is internal */
+	    Vec3 out_ray;
+	    VMOVE(out_ray, new_ap.a_ray.r_dir);
+	    Vec3 normal;
+	    VMOVE(normal, inormal);
+
+	    /* This next ray is from refraction */
+	    if (normal.dot(out_ray) < 0.0f){
+
+	     	Vec3 tmp;
+	     	VSCALE(tmp, info.out_ray.dir, 1e-4);
+	     	VADD2(new_ap.a_ray.r_pt, new_ap.a_ray.r_pt, tmp);
+		new_ap.a_onehit = 1;
+		new_ap.a_refrac_index = 1.5;
+		new_ap.a_flag = 1;
+	    }
+	    rt_shootray(&new_ap);
+	    Color3 rec;
+	    VMOVE(rec, new_ap.a_color);
+	    
+	    weight = weight*rec;
+	    VMOVE(ap->a_color, weight);
+	}
+	else {
+	    VMOVE(ap->a_color, weight);
+	}
+
+#else
 
 	/* Invoke the actual shader (may be a tree of them) */
 	if (mfp && mfp->mf_render)
 	    (void)mfp->mf_render(ap, pp, &sw, rp->reg_udata);
-	
+
 	VMOVE(ap->a_color, sw.sw_color);
+#endif
+
     }
     return 1;
 }
@@ -374,7 +471,7 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 	    	    /* This next ray is from refraction */
 	    if (VDOT(info.N, info.out_ray.dir) < 0.0f){
 
-#if 0     
+#if 1     
 		/* Displace the hit point a little bit in the direction
 		   of the next ray */
 	     	Vec3 tmp;
@@ -389,8 +486,6 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 
 	    (void)rt_shootray(&new_ap);
 
-	    /* The resulting color is always on ap_color, but
-	       we need to update it through sw_color */
 	    Color3 rec;
 	    VMOVE(rec, new_ap.a_color);
 	    Color3 res = rec*weight;
@@ -401,6 +496,8 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 	    VADD2(scolor, scolor, weight);
 	}
     }
+    /* The resulting color is always on ap_color, but
+       we need to update it through sw_color */
     VSCALE(swp->sw_color, scolor, 2.0/nsamples);
 
     return 1;
