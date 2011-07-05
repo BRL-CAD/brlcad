@@ -24,7 +24,8 @@
 
 /* Alter: to make different without changing into something else */
 
-/* translate: Proposed operations, and manual page
+/*
+ * translate: Proposed operations, and manual page
  *
  * NAME
  *	translate (alias for "alter translate")
@@ -203,6 +204,70 @@
  *	    translate -134.9 one.c/two.c
  *	    translate -r -134.9 one.c/two.c
  *	    translate -k . -r -134.9 one.c/two.c
+ *
+ */
+
+/*
+ * rotate: Proposed operations, and manual page
+ *
+ * NAME
+ *	rotate (alias for "alter rotate")
+ *
+ * SYNOPSIS
+ *	rotate [FROM] TO OBJECT...
+ * 	rotate [[-n] -k {FROM_OBJECT | FROM_POS}] \
+ * 	    {[-n] [-a | -r] TO_OBJECT | TO_POS} [PATH/]OBJECT ...
+ *
+ *	FROM_OBJECT & TO_OBJECT & OBJECT
+ *	    [PATH/]OBJECT
+ *	
+ *	FROM_POS & TO_POS:
+ *	    {x | . [y | . [z | .]]} | {[x: x] [y: y] [z: z]}
+ *
+ * DESCRIPTION
+ *	Used to rotate one or more instances of primitive or 
+ *	combination objects.
+ *
+ *	If FROM is ommited, the bounding box center of the first
+ *	[PATH/]OBJECT is used instead. To use the natural origin of
+ *	the first [PATH/]OBJECT as FROM, FROM_OBJECT must be manually
+ *	set to [PATH/]OBJECT.
+ *
+ *	If FROM is "-k .", then each individual [PATH/]OBJECT argument
+ *	uses it's own bounding box center (or natural origin if
+ *	"-n -k ." is used). Likewise, if TO is "-a ." or "-n -a ."
+ *	
+ *	FROM_POS and TO_POS represent 3d points in "x y z"
+ *	coordinates. To specify one or more specific axis while
+ *	ignoring the others, the options "-x x", "-y y", "-z z" may be
+ *	used as FROM_POS or TO_POS. Alternatively, "." may be used in
+ *	place of any coordinates to ignore it's respective axis.
+ *
+ * OPTIONS
+ * 	-n
+ *	    Use the natural origin of FROM_OBJECT and/or TO_OBJECT,
+ *	    rather than the default of its bounding box center.
+ *
+ * 	-k
+ *	    Sets the keypoint to FROM_OBJECT's bounding box
+ *	    center (or natural origin if -n is used). If this option
+ *	    is ommitted, the keypoint defaults to OBJECT's bounding
+ *	    box center.
+ *
+ * 	-r
+ *	    Interpret TO_POS as the relative distance to move OBJECT
+ *          from FROM keypoint. Enabled by default if TO_POS is set.
+ *	    Must be ommited if TO_OBJECT is specified.
+ *
+ * 	-a
+ *	    Interpret TO_POS/TO_OBJECT as an absolute position. The
+ *	    vector implied by FROM and TO is used to move OBJECT. This
+ *	    option is required if TO_OBJECT is specified.
+ *
+ * Visual Example:
+ *
+ *
+ * EXAMPLES
  *
  */
 
