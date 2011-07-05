@@ -3510,8 +3510,8 @@ namespace eval ArcherCore {
 
     set mRenderMode [gedCmd how $_node]
     # do this in case "ev" was used from the command line
-    if {2 < $mRenderMode} {
-	set mRenderMode 2
+    if {!$mEnableBigE && 2 < $mRenderMode} {
+	set mRenderMode 0
     }
 
     if {$_nodeType == "leaf"} {
@@ -3977,7 +3977,6 @@ namespace eval ArcherCore {
 	if {$mEnableListViewAllAffected} {
 	    foreach path [string trim [gedCmd search / -name $mSelectedObj]] {
 		set path [regsub {^/} $path {}]
-		puts $path
 		foreach obj [split $path /] {
 		    if {$obj == $mSelectedObj} {
 			continue
@@ -3999,11 +3998,12 @@ namespace eval ArcherCore {
 	foreach path [string trim [gedCmd search / -name $mSelectedObj]] {
 	    set path [regsub {^/} $path {}]
 	    set pathNodes [getTreeNodes $path]
-	    set pnodes [lreverse [lindex $pathNodes 0]]
+#	    set pnodes [lreverse [lindex $pathNodes 0]]
+	    set pnodes [lindex $pathNodes 0]
 	    set cnodes [lindex $pathNodes 1]
 	    set found 0
 	    foreach pnode $pnodes {
-		if {![$itk_component(newtree) item $pnode -open]} {
+		if {[$itk_component(newtree) item $pnode -open]} {
 		    lappend mAffectedNodeList $pnode
 		    set found 1
 		    addTreeNodeTag $pnode $TREE_AFFECTED_TAG
