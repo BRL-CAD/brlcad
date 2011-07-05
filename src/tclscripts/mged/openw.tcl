@@ -1970,7 +1970,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     hoc_register_menu_data "Help" "About MGED" "About MGED"\
 	{ { summary "Information about MGED" } }
    .$id.menubar.help add command -label "Command Manual Pages" -underline 0\
-	-command "man Introduction"
+	-command "man"
     .$id.menubar.help add command -label "Shift Grips" -underline 0\
 	-command "hoc_dialog .$id.menubar.help \"Help,Shift Grips\""
     hoc_register_menu_data "Help" "Shift Grips" "Shift Grips"\
