@@ -32,14 +32,14 @@
  *
  * SYNOPSIS
  *	translate [FROM] TO OBJECT...
- * 	translate [[-n] -k {{FROM_OBJECT [OFFSET_POS]} | FROM_POS}] \
+ * 	translate [[-n] -k {FROM_OBJECT | FROM_POS}] \
  * 	    [-n] [-a | -r] {TO_OBJECT | TO_POS} OBJECT ...
  *
  *	*OBJECT:
- *	    [PATH/]OBJECT [OFFSET_POS]
+ *	    [PATH/]OBJECT [OFFSET_DIST]
  *	
- *	*POS:
- *	    {x [y [z]]} | {[-x x] [-y y] [-z z]}
+ *	*POS | *DIST:
+ *	    {x [y [z]]} | {[-x {x | X_OBJ}] [-y {y | Y_OBJ}] [-z {z | Z_OBJ}]}
  *
  * DESCRIPTION
  *	Used to move one or more instances of primitive or 
@@ -85,19 +85,15 @@
  *      
  *      Move the instance of box.c in table.c from the natural origin
  *	of rcc.s to the bounding box center of sph.s:
- *	====================================================
- *      |                                                  |
- *	|  |.| <=keypoint: natural origin of rcc.s         |
- *	|                                                  |
- *	|      o <= center of sph.2                        |
- *      |                            [] <=box.c start      |
- *	|                                                  |
- *	|                               [] <=box.c moved   |
- *      |                                                  |
- *	====================================================
- *
+ *	
+ *	   |.| <=keypoint: natural origin of rcc.s          
+ *	                                                    
+ *	       o <= center of sph.2                         
+ *                                   [] <=box.c start       
+ *	                                                    
+ *	                                [] <=box.c moved    
+ *                                                          
  * EXAMPLES
- *	XXX: no examples reflect the addition of [OFFSET_POS]
  *
  *	# move all instances of sph.s to x=1, y=2, z=3
  *	translate -a 1 2 3 /sph.s
@@ -106,6 +102,40 @@
  *	    translate -a 1 2 3 sph.s
  *	    translate -k sph.s -a 1 2 3 sph.s
  *	    translate -k . -a 1 2 3 sph.s
+ *
+ *      # A very practical use of 
+ *	translate -k . -a . -x sph2.s sph1.s
+ *
+ *	# move all instances of sph.s from a point 5 units above
+ *	# sph.s's center to x=1, y=2, z=3, by using OFFSET_DIST of
+ *	# "-z 5".
+ *	translate -a 1 2 3 sph.s -z 5
+ *
+ *	    # these all have the same effect as above
+ *	    translate -k . -z 5 -a 1 2 3 sph.s
+ *	    translate -k sph.s -z 5 -a 1 2 3 sph.s
+ *
+ *	# OFFSET_DIST of "-z 5" is meaningless here, since OBJECT is
+ *	# not implicitly used to calculate the translation. This
+ *	# produces an error.
+ *	#translate -k sph.s -a 1 2 3 sph.s -z 5
+ *
+ *      # Place sph1.s and sph2.s at the same height as cube.s using
+ *      # OFFSET_DIST of Z_OBJ, and leaving x/y positions alone.
+ *      translate -a . -z sph.s sph2.s sph3.s
+ *
+ *      # Move sph1.s and sph2.s to a height offset 20 units above
+ *      # cube.s, while leaving x/y positions alone
+ *      translate -k . -z -20 -a -z cube.s sph1.s sph2.s
+ *
+ *          # these all have the same effect as above
+ *          translate -k . -z -20 -a . -z cube.s sph1.s sph2.s
+ *          translate -k . -a -z cube.s sph1.s -z -20 sph2.s -z -20
+ *          translate -k -x . -y . -z -20 -a -z cube.s sph1.s sph2.s
+ *          translate -k 6 7 -20 -a -x 6 -y 7 -z cube.s sph1.s sph2.s
+ *
+ *	# move sph2.s twice as far away from sph.s as it is now
+ *	translate -k sph.s -a . sph2.s
  *
  *	# move all instances of sph.s x+1,y+2,z+3
  *	translate 1 2 3 sph.s
@@ -220,11 +250,11 @@
  * 	    [-n] [-a | -r] {ANGLE_TO_OBJECT | ANGLE_TO_POS}} OBJECT \
  * 	    ...
  *
- *	*OBJECT
- *	    [PATH/]OBJECT [OFFSET_POS]
+ *	*OBJECT:
+ *	    [PATH/]OBJECT [OFFSET_DIST]
  *	
- *	*POS:
- *	    {x [y [z]]} | {[-x x] [-y y] [-z z]}
+ *	*POS | *DIST:
+ *	    {x [y [z]]} | {[-x {x | X_OBJ}] [-y {y | Y_OBJ}] [-z {z | Z_OBJ}]}
  *
  * DESCRIPTION
  *	Used to rotate one or more instances of primitive or
