@@ -140,21 +140,6 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info){
  * Private methods
  * ----------------------------------------------- */
 
-// void OSLRenderer::InitShaders(const char *shadername){
-
-//     shadingsys->attribute("optimize", 2);
-//     shadingsys->attribute("lockgeom", 1);
-
-//     shadingsys->ShaderGroupBegin();
-//     shadingsys->Shader("surface", shadername, NULL);
-//     shadingsys->ShaderGroupEnd();
-
-//     fprintf(stderr, "[DEB] inicializando shader state\n");
-
-//     shaderstate = shadingsys->state();
-
-//     shadingsys->clear_state();
-// }
 const ClosureColor * OSLRenderer::
 ExecuteShaders(ShaderGlobals &globals, RenderInfo *info){
 
@@ -261,28 +246,6 @@ void OSLRenderer::SamplePrimitiveRecurse(const ClosurePrimitive*& r_prim, Color3
 	SamplePrimitiveRecurse(r_prim, r_weight, add->closureA, weight, totw, r);
 	SamplePrimitiveRecurse(r_prim, r_weight, add->closureB, weight, totw, r);
     }
-}
-
-/* -----------------------------------------------
- * Wrapper methods
- * ----------------------------------------------- */
-OSLRenderer* oslrenderer_init(){
-    OSLRenderer* oslr = new OSLRenderer();
-    return oslr;
-}
-void oslrenderer_add_shader(OSLRenderer *oslr, const char *shadername){
-    oslr->AddShader(shadername);
-}
-void oslrenderer_query_color(OSLRenderer *oslr, RenderInfo *info){
-    Color3 pc = oslr->QueryColor(info);
-    info->pc[0] = pc[0];
-    info->pc[1] = pc[1];
-    info->pc[2] = pc[2];
-    //if(pc[0] < 0.5) fprintf(stderr, "[DEB] Returning black point\n");
-}
-void oslrenderer_free(OSLRenderer **osl){
-    delete (*osl);
-    *osl = NULL;
 }
 
 // Local Variables:
