@@ -24,63 +24,63 @@
 
 /* Alter: to make different without changing into something else */
 
-/* translate: Proposed operations, and manual page
+/*
+ * translate: Proposed operations, and manual page
  *
  * NAME
  *	translate (alias for "alter translate")
  *
  * SYNOPSIS
  *	translate [FROM] TO OBJECT...
- * 	translate [[-n] -k {FROM_OBJECT | FROM_POS}] \
- * 	    {[-n] [-a | -r] TO_OBJECT | TO_POS} [PATH/]OBJECT ...
+ * 	translate [[-n] -k {{FROM_OBJECT [OFFSET_POS]} | FROM_POS}] \
+ * 	    [-n] [-a | -r] {TO_OBJECT | TO_POS} OBJECT ...
  *
- *	FROM_OBJECT & TO_OBJECT & OBJECT
- *	    [PATH/]OBJECT
+ *	*OBJECT:
+ *	    [PATH/]OBJECT [OFFSET_POS]
  *	
- *	FROM_POS & TO_POS:
- *	    {x | . [y | . [z | .]]} | {[x: x] [y: y] [z: z]}
+ *	*POS:
+ *	    {x [y [z]]} | {[-x x] [-y y] [-z z]}
  *
  * DESCRIPTION
  *	Used to move one or more instances of primitive or 
  *	combination objects.
  *
- *	If FROM is ommited, the bounding box center of the first
+ *	If FROM is omited, the bounding box center of the first
  *	[PATH/]OBJECT is used instead. To use the natural origin of
  *	the first [PATH/]OBJECT as FROM, FROM_OBJECT must be manually
  *	set to [PATH/]OBJECT.
  *
  *	If FROM is "-k .", then each individual [PATH/]OBJECT argument
- *	uses it's own bounding box center (or natural origin if
+ *	uses its own bounding box center (or natural origin if
  *	"-n -k ." is used). Likewise, if TO is "-a ." or "-n -a ."
  *	
  *	FROM_POS and TO_POS represent 3d points in "x y z"
  *	coordinates. To specify one or more specific axis while
  *	ignoring the others, the options "-x x", "-y y", "-z z" may be
- *	used as FROM_POS or TO_POS. Alternatively, "." may be used in
- *	place of any coordinates to ignore it's respective axis.
+ *	used as FROM_POS or TO_POS. 
  *
  * OPTIONS
- * 	-n
+ * 	-n FROM_OBJECT | TO_OBJECT
  *	    Use the natural origin of FROM_OBJECT and/or TO_OBJECT,
  *	    rather than the default of its bounding box center.
  *
- * 	-k
+ * 	-k FROM_OBJECT | FROM_POS
  *	    Sets the keypoint to FROM_OBJECT's bounding box
  *	    center (or natural origin if -n is used). If this option
- *	    is ommitted, the keypoint defaults to OBJECT's bounding
+ *	    is omitted, the keypoint defaults to OBJECT's bounding
  *	    box center.
  *
- * 	-r
+ * 	-r TO_POS
  *	    Interpret TO_POS as the relative distance to move OBJECT
- *          from FROM keypoint. Enabled by default if TO_POS is set.
- *	    Must be ommited if TO_OBJECT is specified.
+ *          from FROM keypoint. This is the default if TO_POS is set.
+ *	    Must be omited if TO_OBJECT is specified.
  *
- * 	-a
+ * 	-a TO_POS | TO_OBJECT
  *	    Interpret TO_POS/TO_OBJECT as an absolute position. The
  *	    vector implied by FROM and TO is used to move OBJECT. This
  *	    option is required if TO_OBJECT is specified.
  *
- * Visual Example:
+ * VISUAL EXAMPLE:
  *	translate -n -k rcc.s -a sph.s table.c/box.c 
  *      
  *      Move the instance of box.c in table.c from the natural origin
@@ -97,6 +97,8 @@
  *	====================================================
  *
  * EXAMPLES
+ *	XXX: no examples reflect the addition of [OFFSET_POS]
+ *
  *	# move all instances of sph.s to x=1, y=2, z=3
  *	translate -a 1 2 3 /sph.s
  *
@@ -119,8 +121,8 @@
  *	# move instance of sph.s in bowl.c z+7
  *	translate -z 7 bowl.c/sph.s
  *
- *	    # exactly the same as above
- *	    translate . . 7 bowl.c/sph.s
+ *	    # exactly the same as above (moving x+0 y+0 z+7)
+ *	    translate 0 0 7 bowl.c/sph.s
  *
  *      # move all sph.s from the bounding box center of sph.s to
  *	# the natural origin of sph.s
@@ -145,17 +147,15 @@
  *	    # exactly the same as above, using relative positioning
  *	    translate -k . -r 32 -2 16 bowl.c one.c/two.c
  *
- *	# do nothing
+ *	# these all do nothing
  *	translate -a . sph.s
- *
- *	    # same as above
- *	    translate 0 sph.s
- *	    translate -k 1 2 3 -a 1 2 3 sph.s
- *	    translate -k 1 2 3 -r 0 sph.s
- *	    translate -k . -a . sph.s
- *	    translate -k . -a . sph.s
- *	    translate -n -k . -n -a . sph.s
- *	    translate -n -k sph.s -n -a sph.2 sph.s
+ *	translate 0 sph.s
+ *	translate -k 1 2 3 -a 1 2 3 sph.s
+ *	translate -k 1 2 3 -r 0 sph.s
+ *	translate -k . -a . sph.s
+ *	translate -k sph.s -a sph.s sph.s
+ *	translate -n -k . -n -a . sph.s
+ *	translate -n -k sph.s -n -a sph.s sph.s
  *     
  *	# center sph1.s and sph2.s on natural origin of rcc.s
  *	translate -k . -n -a rcc.s sph1.s sph2.s
@@ -179,7 +179,7 @@
  *	# to the natural origin of rcc.s, and move sph2.s from
  *	# the bounding box center of sph.s to the natural origin of 
  *	# rcc.s (both sph.s and sph2.s stay the same relative distance
- *	# from each other; they've shifted together)
+ *	# from each other; they have shifted together)
  *	translate -n -a rcc.s sph.s sph2.s
  *
  *	# move the natural origins of all instances of sph.s
@@ -190,19 +190,152 @@
  *	translate -k 93.2 -a -41.7 one.c/two.c
  *
  *	    # all of these have the same end result as above
- *	    translate -k 93.2 . . -a -41.7 one.c/two.c
  *	    translate -k -x 93.2 -a -41.7 one.c/two.c
  *	    translate -k -x 93.2 -a -x -41.7 one.c/two.c
- *	    translate -k 93.2 . . -a -41.7 0 0 one.c/two.c
- *	    translate -k 93.2 . . -a -41.7 . . one.c/two.c
  *	    translate -k 93.2 0 0 -a -41.7 0 0 one.c/two.c
- *	    translate -k 93.2 21 32 -a -41.7 . . one.c/two.c
  *	    translate -k 93.2 21 32 -a -41.7 21 32 one.c/two.c
  * 
  *	    # same result as above, using a relative distance
  *	    translate -134.9 one.c/two.c
  *	    translate -r -134.9 one.c/two.c
  *	    translate -k . -r -134.9 one.c/two.c
+ *
+ */
+
+/*
+ * rotate: Proposed operations, and manual page
+ *
+ * NAME
+ *	rotate (alias for "alter rotate")
+ *
+ * SYNOPSIS
+ *	rotate [-R] [AXIS] [CENTER] ANGLE OBJECT ...
+ *	rotate [-R] [[AXIS_FROM] AXIS_TO] [CENTER] [ANGLE_FROM]
+ *		ANGLE_TO OBJECT ...
+ * 	rotate [-R] \
+ * 	    [[[-n] -k {AXIS_FROM_OBJECT | AXIS_FROM_POS}] \
+ * 	    [[-n] [-a | -r] {AXIS_TO_OBJECT | AXIS_TO_POS}]] \
+ * 	    [[-n] -c {CENTER_OBJECT | CENTER_POS}] \
+ * 	    {[[-n] -k {ANGLE_FROM_OBJECT | ANGLE_FROM_POS}] \
+ * 	    [-n] [-a | -r] {ANGLE_TO_OBJECT | ANGLE_TO_POS}} OBJECT \
+ * 	    ...
+ *
+ *	*OBJECT
+ *	    [PATH/]OBJECT [OFFSET_POS]
+ *	
+ *	*POS:
+ *	    {x [y [z]]} | {[-x x] [-y y] [-z z]}
+ *
+ * DESCRIPTION
+ *	Used to rotate one or more instances of primitive or
+ *	combination objects.
+ *
+ *	By default, AXIS is interpreted as the axis to rotate upon,
+ *	with the rotation angle ANGLE_TO_POS in relative degrees. The
+ *	default AXIS is the x-axis, with AXIS_FROM at the origin and
+ *	AXIS_TO at 1,0,0. If AXIS is provided, then all rotations
+ *	involving ANGLE_FROM are constrained to rotating around AXIS.
+ *	If AXIS is not supplied, then all rotations are unconstrained,
+ *	and may rotate freely around CENTER.
+ *
+ *	The angle to rotate is ANGLE. The default ANGLE_FROM is at
+ *	0,1,0, on the y-axis, if AXIS is not set. If any AXIS
+ *	arguments are set, the default ANGLE_FROM changes along with
+ *	them, in such a way that the angle created by the points
+ *	AXIS_FROM -> AXIS_TO -> ANGLE_FROM remains 90 degrees by
+ *	moving ANGLE_FROM as little as possible (FIXME: this is an
+ *	ill-defined default).
+ *
+ *	The angle to rotate is ANGLE.
+ *	XXX incomplete
+ *
+ * 	(see DESCRIPTION of translate command for other information)
+ *
+ * OPTIONS
+ *
+ * 	-R
+ * 	    Interpret AXIS_TO as the center of a circle to rotate
+ * 	    with, and the distance between AXIS_FROM and AXIS_TO as
+ * 	    its radius. ANGLE_TO_POS is then interpreted as the amount
+ * 	    to rotate OBJECT, in radians. If AXIS_TO is not provided,
+ * 	    the center of the circle defaults to OBJECT. To use the
+ * 	    natural origin of OBJECT as the center of the circle, use
+ * 	    OBJECT as AXIS_TO_OBJECT, and enable option "-n".
+ *
+ *	    If -R is not given, the default is to interpret AXIS_FROM
+ *	    as the "zero" point of a new axis of rotation, and AXIS_TO
+ *	    as its endpoint, with ANGLE_TO_POS interpreted as relative
+ *	    number of degrees to rotate from ANGLE_FROM.
+ *
+ *	-c CENTER_OBJECT | CENTER_POS
+ *	   Set CENTER of the rotation. If omitted, CENTER is set to
+ *	   the bounding box center of OBJECT by default.
+ *
+ * 	-n *_FROM_OBJECT | *_TO_OBJECT
+ *	    Use the natural origin of FROM_OBJECT and/or TO_OBJECT,
+ *	    rather than the default of its bounding box center.
+ *
+ * 	-k AXIS_FROM_* | ANGLE_FROM_*
+ *	    Sets the keypoint for the angle or axis of rotation. If
+ *	    the AXIS_FROM_* keypoint is omitted, it defaults to the
+ *	    origin (0,0,0). If the ANGLE_FROM_* keypoint is omitted,
+ *	    it defaults to OBJECT's bounding box center.
+ *
+ * 	-r ANGLE_TO_POS
+ *	    Interpret TO_POS as the relative distance to rotate OBJECT
+ *          from AXIS_FROM keypoint. This is the default if TO_POS is
+ *          set. Must be omited if ANGLE_TO_OBJECT is specified.
+ *
+ * 	-a ANGLE_TO_OBJECT | ANGLE_TO_POS
+ *	    Interpret ANGLE_TO_POS/ANGLE_TO_OBJECT as an absolute
+ *	    position. The OBJECT is rotated from CENTER -> ANGLE_FROM
+ *	    to CENTER -> ANGLE_TO, on AXIS. This option is required if
+ *	    ANGLE_TO_OBJECT is used.
+ *
+ * EXAMPLES
+ *
+ *	The following examples assume we are facing the top of a
+ *	cube, which is centered at the origin, and intersects the x
+ *	and y axes perpendicularly. Two spheres will serve to
+ *	illustrate how reference objects may be used to aid in complex
+ *	rotations. The angle between the spheres is intended to
+ *	exactly represent the angle between the points at the corners
+ *	of the cube that are facing us in the 2nd and 4th quadrants.
+ *
+ *			  +y     cube  sphere1
+ *			 ___|___ /    /
+ *			|q2 | q1|    o
+ *		   -x __|___|___|___________+x              
+ *			|q3 | q4|        o         
+ *			|___|___|       / 
+ *			    |    sphere2
+ *			   -y      
+ *
+ *	# Rotate the cube 45 degrees counterclockwise around its
+ *	# bounding box center, on the z-axis. The corner in the 1st
+ *	# quadrant will end up on the positive y-axis.
+ *	rotate -z 45 cube
+ *
+ * 		# same as above
+ * 		rotate 0 0 45 cube
+ *
+ *		# return it to the last position (clockwise)
+ *		rotate -z -45 cube
+ *
+ *		# return it to its last position (counterclockwise)
+ *		rotate -z 315 cube
+ *
+ *	# Rotate the cube (in 3d) so that the edge facing us in the
+ *	# positive y quadrants is rolled directly down and towards us,
+ *	# stopping where the edge in the negative y quadrants is now.
+ *	rotate 90 cube.s
+ *
+ *	# Rotate the cube in such a way that the corner facing us in
+ *	# the third quadrant is pointing directly at us (we are on a
+ *	# positive z)
+ *	rotate -45 45 cube
+ *
+ *	# XXX add more examples
  *
  */
 
@@ -377,7 +510,7 @@ ged_alter(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "{translate | rotate | scale}"
 	" [[-n] -k {FROM_OBJECT|POS}]"
 	" {[-n] [-a | -r] TO_OBJECT|POS}" 
-	" [path/]object ..." ;
+	" OBJECT ..." ;
     static const char *skip_arg = ". ";
 
     int from_center_flag = 0;
