@@ -228,26 +228,23 @@
  *
  * DESCRIPTION
  *	Used to rotate one or more instances of primitive or
- *	combination objects.
+ *	combination objects. OBJECT rotates around CENTER at ANGLE,
+ *	which is optionally constrained to rotating around AXIS.
  *
- *	By default, AXIS is interpreted as the axis to rotate upon,
- *	with the rotation angle ANGLE_TO_POS in relative degrees. The
- *	default AXIS is the x-axis, with AXIS_FROM at the origin and
- *	AXIS_TO at 1,0,0. If AXIS is provided, then all rotations
- *	involving ANGLE_FROM are constrained to rotating around AXIS.
- *	If AXIS is not supplied, then all rotations are unconstrained,
- *	and may rotate freely around CENTER.
+ *	CENTER defaults to the bounding box center of the first
+ *	OBJECT. To use the natural origin of the first OBJECT as 
+ *	CENTER, OBJECT must be manually specified as an argument to
+ *	CENTER. Set CENTER to "." to force each OBJECT to rotate
+ *	around its own center.
  *
- *	The angle to rotate is ANGLE. The default ANGLE_FROM is at
- *	0,1,0, on the y-axis, if AXIS is not set. If any AXIS
- *	arguments are set, the default ANGLE_FROM changes along with
- *	them, in such a way that the angle created by the points
- *	AXIS_FROM -> AXIS_TO -> ANGLE_FROM remains 90 degrees by
- *	moving ANGLE_FROM as little as possible (FIXME: this is an
- *	ill-defined default).
+ *	By default, AXIS is interpreted as the axis to rotate upon
+ *	(but does not specify where), with the rotation angle
+ *	ANGLE_TO_POS in relative degrees. The default AXIS is the
+ *	x-axis, with AXIS_FROM at the origin and AXIS_TO at 1,0,0.
  *
- *	The angle to rotate is ANGLE.
- *	XXX incomplete
+ *	Any *_OBJECT argument may be set to ".", which causes each
+ *	individual OBJECT to be used in its place (a batch operation
+ *	if there is more than one OBJECT).
  *
  * 	(see DESCRIPTION of translate command for other information)
  *
@@ -268,29 +265,75 @@
  *	    number of degrees to rotate from ANGLE_FROM.
  *
  *	-c CENTER_OBJECT | CENTER_POS
- *	   Set CENTER of the rotation. If omitted, CENTER is set to
- *	   the bounding box center of OBJECT by default.
+ *	    Set CENTER of the rotation. If omitted, CENTER is set to
+ *	    the bounding box center of OBJECT by default.
  *
  * 	-n *_FROM_OBJECT | *_TO_OBJECT
- *	    Use the natural origin of FROM_OBJECT and/or TO_OBJECT,
- *	    rather than the default of its bounding box center.
+ *	    Use the natural origin of *_FROM_OBJECT or *_TO_OBJECT,
+ *	    rather than the default of the bounding box center.
  *
- * 	-k AXIS_FROM_* | ANGLE_FROM_*
- *	    Sets the keypoint for the angle or axis of rotation. If
- *	    the AXIS_FROM_* keypoint is omitted, it defaults to the
- *	    origin (0,0,0). If the ANGLE_FROM_* keypoint is omitted,
- *	    it defaults to OBJECT's bounding box center.
+ * 	-k *_FROM_POS | *_FROM_OBJECT
+ *	    Sets the keypoint for the angle or axis of rotation.
  *
- * 	-r ANGLE_TO_POS
- *	    Interpret TO_POS as the relative distance to rotate OBJECT
- *          from AXIS_FROM keypoint. This is the default if TO_POS is
- *          set. Must be omited if ANGLE_TO_OBJECT is specified.
+ *	    If the AXIS_FROM keypoint is omitted, it defaults to the
+ *	    origin (0,0,0).
  *
- * 	-a ANGLE_TO_OBJECT | ANGLE_TO_POS
- *	    Interpret ANGLE_TO_POS/ANGLE_TO_OBJECT as an absolute
- *	    position. The OBJECT is rotated from CENTER -> ANGLE_FROM
- *	    to CENTER -> ANGLE_TO, on AXIS. This option is required if
- *	    ANGLE_TO_OBJECT is used.
+ *	    ANGLE_FROM defaults CENTER, offset -y 1, if AXIS is
+ *	    ommited. If AXIS is provided, then ANGLE_FROM_* is aligned
+ *	    to it in such a way that the 90 degree angle created by
+ *	    the following points is maintained (as illustrated below):
+ *
+ *	    1) ANGLE_FROM ->
+ *	    2) AXIS_TO superimposed onto CENTER ->
+ *	    3) AXIS_FROM the same relative distance from the
+ *	    superimposed AXIS_TO that it was from the actual AXIS_TO
+ *
+ *          Default:                        | Default 90 degree angle:
+ *                                          |
+ *                   +z    CENTER           |       AXIS_TO -> CENTER
+ *                    |   / (from OBJECT)   |  90  / 
+ *          AXIS_FROM |  o                  |    \o   ANGLE_FROM
+ *	             \|                     |     ^  /         
+ *	    AXIS_TO   o     o               |   o   o          _______
+ *	           \ / \     \              |    \            |compass
+ *	            o   \     ANGLE_FROM    |     AXIS_FROM   |  +z
+ *	         +x/     \+y  (CENTER -y 1) |                 |   |
+ *	                                    |                 |+x/ \+y
+ *
+ *	    degrees. This is achieved in a consistent manner by
+ *	    rotating the original default ANGLE_FROM_* around the
+ *	    z-axis only, by keeping its z position constant at zero.
+ *	    The result is that the default ANGLE_FROM_* is at some
+ *	    point on the x/y plane; exactly where that is depends upon
+ *	    AXIS.
+ *
+ *	    If ANGLE_FROM is set, the default AXIS is ignored, and
+ *	    the rotation to ANGLE_TO is unconstrained. This means that
+ *	    OBJECT may rotate from any ANGLE_FROM to any ANGLE_TO
+ *	    around CENTER. There is one exception: unconstrained
+ *	    rotations of exactly 180 degrees are ambiguous, and will
+ *	    therefore fail. To bypass this limitation, perform a
+ *	    relative rotation of 180 degrees in the direction
+ *	    required.
+ *
+ *	    If both ANGLE_FROM and AXIS are set, the rotation from
+ *	    ANGLE_FROM to ANGLE_TO is constrained around AXIS.
+ *	    This allows for the use of reference objects that are not
+ *	    perfectly lined up on AXIS.
+ *
+ * 	-r *_TO_POS
+ *	    Interpret *_TO_POS as a point a relative distance from
+ *	    its *_FROM_POS keypoint. This is the default if *_TO_POS
+ *	    is set but *_FROM_POS is omitted. Must be omited if
+ *	    *_TO_OBJECT is specified. If a matching *_FROM_POS or
+ *	    *_FROM_OBJECT keypoint is supplied, either "-a" or "-r"
+ *	    must be set.
+ *
+ * 	-a *_TO_POS | *_TO_OBJECT
+ *	    Interpret *_TO_POS or *_TO_OBJECT as an absolute position.
+ *	    This option is required if *_TO_OBJECT is supplied. If a
+ *	    matching *_FROM_POS or *_FROM_OBJECT keypoint is supplied,
+ *	    either "-a" or "-r" must be set.
  *
  * EXAMPLES
  *
