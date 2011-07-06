@@ -355,15 +355,17 @@
  *	    Interpret *_TO_POS as a point a relative distance from
  *	    its *_FROM_POS keypoint. This is the default if *_TO_POS
  *	    is set but *_FROM_POS is omitted. Must be omited if
- *	    *_TO_OBJECT is specified. If a matching *_FROM_POS or
- *	    *_FROM_OBJECT keypoint is supplied, either "-a" or "-r"
- *	    must be set.
+ *	    *_TO_OBJECT is specified.
+ *
+ *	    If any arguments preceed AXIS_TO or ANGLE_TO, a
+ *	    matching "-a" or "-r" must be set.
  *
  * 	-a *_TO_POS | *_TO_OBJECT
  *	    Interpret *_TO_POS or *_TO_OBJECT as an absolute position.
- *	    This option is required if *_TO_OBJECT is supplied. If a
- *	    matching *_FROM_POS or *_FROM_OBJECT keypoint is supplied,
- *	    either "-a" or "-r" must be set.
+ *	    This option is required if *_TO_OBJECT is supplied.
+ *
+ *	    If any arguments preceed AXIS_TO or ANGLE_TO, a
+ *	    matching "-a" or "-r" must be set.
  *
  * EXAMPLES
  *
@@ -386,11 +388,17 @@
  *
  *	# Rotate the cube 45 degrees counterclockwise around its
  *	# bounding box center, on the z-axis. The corner in the 1st
- *	# quadrant will end up on the positive y-axis.
+ *	# quadrant will end up on the positive y-axis, intersecting
+ *	# the y/z plane.
  *	rotate -z 45 cube
  *
- * 		# same as above
+ * 		# all of these have the same result as above
  * 		rotate 0 0 45 cube
+ * 		rotate -c 0 0 0 -r 0 0 45 cube
+ * 		rotate -c cube 0 0 45 cube
+ * 		rotate -c . 0 0 45 cube
+ * 		rotate -c -x . -y . -z . cube -z 45 cube
+ * 		rotate -c . -z 17 cube -z 45 cube -z -17
  *
  *		# return it to the last position (clockwise)
  *		rotate -z -45 cube
@@ -408,8 +416,93 @@
  *	# positive z)
  *	rotate -45 45 cube
  *
- *	# XXX add more examples
+ *	# Rotate the cube on its center, from sphere1 to sphere2
+ *	# (this just happens to be clockwise on the z-axis)
+ *	rotate -k sphere1 -a sphere2 cube
  *
+ *	    # all of these have the same result as above
+ *	    rotate -c cube -k sphere1 -a sphere2 cube
+ *	    rotate -c . -k sphere1 -a sphere2 cube
+ *	    rotate -k -z 0 -r -z 1 -k sphere1 -a sphere2 cube
+ *	    rotate -k -z 0 -a -z 1 -k sphere1 -a sphere2 cube
+ *	    rotate -k -z 0 -r -z 1 -c . -k sphere1 -a sphere2 cube
+ *
+ *	    # all of these rotate it back
+ *	    rotate -k -z 1 -r -1 -k sphere1 -a sphere2 cube
+ *	    rotate -k -z 1 -a 0 -k sphere1 -a sphere2 cube
+ *	    rotate -k -z 5000 -a 23 -k sphere1 -a sphere2 cube
+ *
+ *          # Note that in the examples where AXIS is specified, even
+ *          # if sphere1 and sphere2 had different z-coordinates for
+ *          # their centers, the rotate behavior would be the same as
+ *          # above. In the examples where AXIS is not specified,
+ *          # however, the cube would rotate unconstrained in the
+ *          # z-axis as well.
+ *
+ *
+ */
+
+/*
+ * scale: Proposed operations, and manual page
+ *
+ * NAME
+ *	scale (alias for "alter scale")
+ *
+ * SYNOPSIS
+ *	FIXME: ensure this translate syntax will work for scale
+ *	scale [FROM] TO OBJECT...
+ * 	scale [[-n] -k {FROM_OBJECT | FROM_POS}] \
+ * 	    [-n] [-a | -r] {TO_OBJECT | TO_POS} OBJECT ...
+ *
+ *	*OBJECT:
+ *	    [PATH/]OBJECT [OFFSET_DIST]
+ *	
+ *	*POS | *DIST:
+ *	    {x [y [z]]} | {[-x {x | X_OBJ}] [-y {y | Y_OBJ}] [-z {z | Z_OBJ}]}
+ *
+ * DESCRIPTION
+ *      FIXME: This is copied directly from translate
+ *	Used to move one or more instances of primitive or 
+ *	combination objects.
+ *
+ *	If FROM is omited, the bounding box center of the first
+ *	[PATH/]OBJECT is used instead. To use the natural origin of
+ *	the first [PATH/]OBJECT as FROM, FROM_OBJECT must be manually
+ *	set to [PATH/]OBJECT.
+ *
+ *	If FROM is "-k .", then each individual [PATH/]OBJECT argument
+ *	uses its own bounding box center (or natural origin if
+ *	"-n -k ." is used). Likewise, if TO is "-a ." or "-n -a ."
+ *	
+ *	FROM_POS and TO_POS represent 3d points in "x y z"
+ *	coordinates. To specify one or more specific axis while
+ *	ignoring the others, the options "-x x", "-y y", "-z z" may be
+ *	used as FROM_POS or TO_POS. 
+ *
+ * OPTIONS
+ * 	-n FROM_OBJECT | TO_OBJECT
+ *	    Use the natural origin of FROM_OBJECT and/or TO_OBJECT,
+ *	    rather than the default of its bounding box center.
+ *
+ * 	-k FROM_OBJECT | FROM_POS
+ *	    Sets the keypoint to FROM_OBJECT's bounding box
+ *	    center (or natural origin if -n is used). If this option
+ *	    is omitted, the keypoint defaults to OBJECT's bounding
+ *	    box center.
+ *
+ * 	-r TO_POS
+ *	    Interpret TO_POS as the relative distance to scale OBJECT
+ *          from FROM keypoint. This is the default if TO_POS is set.
+ *	    Must be omited if TO_OBJECT is specified.
+ *
+ * 	-a TO_POS | TO_OBJECT
+ *	    Interpret TO_POS/TO_OBJECT as an absolute position. The
+ *	    vector implied by FROM and TO is used to scale OBJECT.
+ *	    This option is required if TO_OBJECT is specified.
+ *
+ * EXAMPLES
+ *	XXX: add examples
+ *                                                          
  */
 
 #include "common.h"
