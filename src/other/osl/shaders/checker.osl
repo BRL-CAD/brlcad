@@ -1,0 +1,17 @@
+surface checker 
+ [[ string description = "Simple checker material" ]]
+(
+        float K = 2.0
+        [[  string description = "Tiling scale" ]]
+)
+{
+        int iu = (int)(u*K);
+        int iv = (int)(v*K);
+
+        if((iu & 1) == (iv & 1)){
+               Ci = color(1.0, 1.0, 1.0)*diffuse(N);
+        }
+        else {
+             Ci = color(0.0, 0.0, 0.0)*diffuse(N);
+        }
+}
