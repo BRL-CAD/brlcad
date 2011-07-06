@@ -42,8 +42,10 @@ OSLRenderer::~OSLRenderer(){
     ssi->destroy_thread_info(handle);
     ShadingSystem::destroy(shadingsys);
 }
+
 void OSLRenderer::AddShader(const char *shadername){
 
+    /*
     OSLShader osl_sh;
     osl_sh.name = std::string(shadername);
 
@@ -51,30 +53,33 @@ void OSLRenderer::AddShader(const char *shadername){
     shadingsys->Shader("surface", osl_sh.name.c_str(), NULL);
     shadingsys->ShaderGroupEnd();
 
-
     osl_sh.state = shadingsys->state();
     shadingsys->clear_state();
 
     shaders.push_back(osl_sh);
+    */
 }
-void OSLRenderer::AddShader(ShaderInfo &sh_info){
-
-    OSLShader osl_sh;
+ShadingAttribStateRef OSLRenderer::AddShader(ShaderGroupInfo &group_info){
 
     shadingsys->ShaderGroupBegin();
 
-    /* Set parameters */
-    for(size_t i = 0; i < sh_info.fparam.size(); i++)
-	shadingsys->Parameter(sh_info.fparam[i].first.c_str(), TypeDesc::TypeFloat, &(sh_info.fparam[i].second));
+    for(size_t i = 0; i < group_info.shader_layer.size(); i++){
 
-    shadingsys->Shader("surface", sh_info.shadername.c_str(), NULL);
+	ShaderInfo &sh_info = group_info.shader_layer[i];
+
+	/* Set parameters */
+	for(size_t i = 0; i < sh_info.fparam.size(); i++)
+	    shadingsys->Parameter(sh_info.fparam[i].first.c_str(), TypeDesc::TypeFloat, &(sh_info.fparam[i].second));
+
+	shadingsys->Shader("surface", sh_info.shadername.c_str(), NULL);
+    }	
+    
     shadingsys->ShaderGroupEnd();
-
-    osl_sh.name = sh_info.shadername;
-    osl_sh.state = shadingsys->state();
+    
+    ShadingAttribStateRef sh_ref = shadingsys->state();
     shadingsys->clear_state();
-
-    shaders.push_back(osl_sh);
+    
+    return sh_ref;
 }
 
 Color3 OSLRenderer::QueryColor(RenderInfo *info){
@@ -92,10 +97,6 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info){
     // execute shader
     ShaderGlobals globals;
     const ClosureColor *closure = ExecuteShaders(globals, info);
-
-    if(closure == NULL){
-	fprintf(stderr, "closure %s is null\n", info->shadername.c_str());
-    }
 
     Color3 weight = Color3(0.0f);
     // sample primitive from closure tree
@@ -143,19 +144,6 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info){
 const ClosureColor * OSLRenderer::
 ExecuteShaders(ShaderGlobals &globals, RenderInfo *info){
 
-    /* Search for the given shader */
-    int sh_id = -1;
-    for(size_t i = 0; i < shaders.size(); i++){
-	if (strcmp(shaders[i].name.c_str(), info->shadername.c_str()) == 0){
-	    sh_id = i;
-	    break;
-	}
-    }
-    if(sh_id == -1){
-	fprintf(stderr, "[DEB] shader not found\n");
-	return NULL;
-    }
-
     memset(&globals, 0, sizeof(globals));
 
     VMOVE(globals.P, info->P);
@@ -180,7 +168,7 @@ ExecuteShaders(ShaderGlobals &globals, RenderInfo *info){
     globals.Ci = NULL;
 
     // execute shader
-    ctx->execute(ShadUseSurface, *(shaders[sh_id].state),
+    ctx->execute(ShadUseSurface, *(info->shader_ref),
 		 globals);
 
     return globals.Ci;

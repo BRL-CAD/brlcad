@@ -54,8 +54,8 @@ int (*default_a_hit)(struct application *, struct partition *, struct seg *);
  * to any particular use of the shader.
  */
 struct osl_specific {
-    long magic;              	 /* magic # for memory validity check */
-    struct bu_vls shadername;
+    long magic;           /* magic # for memory validity check */
+    ShadingAttribStateRef shader_ref;  /* Reference to this shader in OSLRender system */
 };
 
 /* The default values for the variables in the shader specific structure */
@@ -71,13 +71,6 @@ struct osl_specific osl_defaults = {
 /* description of how to parse/print the arguments to the shader */
 struct bu_structparse osl_print_tab[] = {
     {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
-};
-
-/* Parse rule to arguments */
-struct bu_structparse osl_parse_tab[] = {
-    {"%V", 1, "shadername", SHDR_O(shadername), BU_STRUCTPARSE_FUNC_NULL, 
-     NULL, NULL},
-    {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
 extern "C" {
@@ -106,11 +99,48 @@ struct mfuncs osl_mfuncs[] = {
     {0,		(char *)0,	0,		0,		0,     0,		0,		0,		0 }
 };
 
+/**
+ * This function parses the input shaders
+ * Example:
+ * shadername=color#Cin#point#0.0#0.0#1.0
+ * shadername=glass
+ * shadername=checker#K#float#4.0
+ * join=color#Cout#shader#Cin1
+ * join=glass#Cout#shader#Cin1
+ **/
+int osl_parse_shader(char *shadername, ShaderInfo &sh_info){
+
+    /* Split string arount # */
+    const char *item;
+    item = strtok(shadername, "#");
+    sh_info.shadername = std::string(item);
+    
+    /* Check for parameters */
+    while((item = strtok(NULL, "#")) != NULL){
+	
+	/* Name of the parameter */
+	std::string param_name = item;
+	
+	/* Get the type of parameter being set */
+	item = strtok(NULL, "#");
+	if(item == NULL){
+	    fprintf(stderr, "[Error] Missing parameter type\n");
+	    return -1;
+	}
+	else if(strcmp(item, "float") == 0){
+	    item = strtok(NULL, "#");
+	    if(item == NULL){
+		fprintf(stderr, "[Error] Missing float value\n");
+		return -1;
+	    }
+	    float value = atof(item);
+	    sh_info.fparam.push_back(make_pair(param_name, value));
+	}
+    }
+}
+
 int
-osl_parse(const struct bu_vls *in_vls, ShaderInfo &sh_info)
-/* string to parse through */
-/* structure description */
-/* base addr of users struct */
+osl_parse(const struct bu_vls *in_vls, ShaderGroupInfo &group_info)
 {
     struct bu_vls vls;
     register char *cp;
@@ -175,34 +205,11 @@ osl_parse(const struct bu_vls *in_vls, ShaderInfo &sh_info)
 	if (*cp != '\0')
 	    *cp++ = '\0';
 
-	/* Split string arount # */
-	const char *item;
-	item = strtok(value, "#");
-	sh_info.shadername = std::string(item);
-
-	/* Check for parameters */
-	while((item = strtok(NULL, "#")) != NULL){
-
-	    /* Name of the parameter */
-	    std::string param_name = item;
-
-	    /* Get the type of parameter being set */
-	    item = strtok(NULL, "#");
-	    if(item == NULL){
-		fprintf(stderr, "[Error] Missing parameter type\n");
-		return -1;
-	    }
-	    else if(strcmp(item, "float") == 0){
-		item = strtok(NULL, "#");
-		if(item == NULL){
-		    fprintf(stderr, "[Error] Missing float value\n");
-		    return -1;
-		}
-		float value = atof(item);
-		sh_info.fparam.push_back(make_pair(param_name, value));
-	    }
+	if(strcmp(name, "shadername") == 0){
+	    ShaderInfo sh_info;
+	    osl_parse_shader(value, sh_info);
+	    group_info.shader_layer.push_back(sh_info);
 	}
-
     }
     bu_vls_free(&vls);
     return 0;
@@ -245,30 +252,11 @@ HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm,
      * -----------------------------------
      */
 
-    bu_vls_init(&osl_sp->shadername);
     osl_sp->magic = OSL_MAGIC;
 
     /* Parse the user's arguments to fill osl specifics */
-    if (bu_struct_parse(matparm, osl_parse_tab, (char *)osl_sp) < 0){
-	bu_free((genptr_t)osl_sp, "osl_specific");
-	return -1;
-    }
-
-    ShaderInfo sh_info;
-    sh_info.shadername = "";
-    if (osl_parse(matparm, sh_info) < 0){
-	return -1;
-    }
-    bu_vls_init(&(osl_sp->shadername));
-    bu_vls_strcpy(&(osl_sp->shadername), sh_info.shadername.c_str());
-
-    /* -----------------------------------
-     * Check for errors
-     * -----------------------------------
-     */
-    if (bu_vls_strlen(&osl_sp->shadername) <= 0){
-	/* FIXME shadername was not set. Use the default value */
-	fprintf(stderr, "[Error] shadername was not set");
+    ShaderGroupInfo group_info;
+    if (osl_parse(matparm, group_info) < 0){
 	return -1;
     }
 
@@ -282,7 +270,7 @@ HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm,
 	oslr = new OSLRenderer();
     }
     /* Add this shader to OSL system */
-    oslr->AddShader(sh_info);
+    osl_sp->shader_ref = oslr->AddShader(group_info);
 
     if (rdebug&RDEBUG_SHADE) {
 	bu_struct_print(" Parameters:", osl_print_tab, (char *)osl_sp);
@@ -460,8 +448,9 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
     info.depth = ap->a_level;
     info.surfacearea = 1.0f;
     
-    info.shadername = std::string(osl_sp->shadername.vls_str);
-    
+    //info.shadername = std::string(osl_sp->shadername.vls_str);
+    info.shader_ref = osl_sp->shader_ref;
+
     /* We only perform reflection if application decides to */
     info.doreflection = 0;
     

@@ -62,17 +62,31 @@ struct RenderInfo {
     point_t dPdu, dPdv;     /* uv tangents */
     int depth;              /* How many times the ray hit an object */
     fastf_t surfacearea;    /* FIXME */
-    std::string shadername; /* Name of the shader we are querying */
-    
+    ShadingAttribStateRef shader_ref;   /* Reference for the shader we're querying */
+
     /* -- output -- */
-    point_t pc; /* Color of the point (or multiplier) */
+    point_t pc;           /* Color of the point (or multiplier) */
     int doreflection;     /* 1 if there will be reflection 0, otherwise */
-    Ray out_ray;      /* output ray (in case of reflection) */
+    Ray out_ray;          /* output ray (in case of reflection) */
 };
 
+/* Required structure to initialize an OSL shader */
 struct ShaderInfo {
     std::string shadername;
     std::vector< std::pair<std::string, float> > fparam;
+};
+/* Represents a parameter a shader */
+struct ShaderParam {
+    std::string shadername;
+    std::string paramname;
+};
+/* Represents an edge from first to second  */
+typedef std::pair < ShaderParam, ShaderParam > ShaderEdge;
+
+/* Required structure to initialize an OSL shader group */
+struct ShaderGroupInfo {
+    std::vector< ShaderInfo > shader_layer;
+    std::vector< ShaderEdge > shader_edge;
 };
 
 struct ThreadInfo {
@@ -98,11 +112,13 @@ class OSLRenderer {
     unsigned short Xi[3];                /* seed for RNG */
 
     /* Information about each shader of the renderer */
+#if 0
     struct OSLShader{
 	std::string name;
 	ShadingAttribStateRef state;
     };
     std::vector<OSLShader> shaders;
+#endif
 
     const ClosureColor
 	*ExecuteShaders(ShaderGlobals &globals, RenderInfo *info);
@@ -126,7 +142,7 @@ public:
     /* Add an OSL shader to the system */
     void AddShader(const char *shadername);
 
-    void AddShader(ShaderInfo &sh_info);
+    ShadingAttribStateRef AddShader(ShaderGroupInfo &group_info);
 
     /* Query a color */
     Color3 QueryColor(RenderInfo *info);

@@ -19,7 +19,8 @@
  */
 /** @file osl_rt.cpp
  *
- * Brief description
+ * FIXME: Implement the changes that were done because of changes in the 
+ * OSL Render System
  *
  */
 
@@ -202,7 +203,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	info.depth = ap->a_level;
 	info.surfacearea = 1.0f;
     
-	info.shadername = shadername;
+	//info.shadername = shadername;
 
 	info.doreflection = 0;
  
