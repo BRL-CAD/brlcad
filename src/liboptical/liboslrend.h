@@ -29,6 +29,10 @@
 #define LIB_OSL_RENDERER_H
 
 #include <stdio.h>
+
+#include <string>
+#include <vector>
+
 #include "vmath.h"
 
 #  include "oslclosure.h"
@@ -58,12 +62,17 @@ struct RenderInfo {
     point_t dPdu, dPdv;     /* uv tangents */
     int depth;              /* How many times the ray hit an object */
     fastf_t surfacearea;    /* FIXME */
-    const char *shadername; /* Name of the shader we are querying */
-
+    std::string shadername; /* Name of the shader we are querying */
+    
     /* -- output -- */
     point_t pc; /* Color of the point (or multiplier) */
     int doreflection;     /* 1 if there will be reflection 0, otherwise */
     Ray out_ray;      /* output ray (in case of reflection) */
+};
+
+struct ShaderInfo {
+    std::string shadername;
+    std::vector< std::pair<std::string, float> > fparam;
 };
 
 struct ThreadInfo {
@@ -90,7 +99,7 @@ class OSLRenderer {
 
     /* Information about each shader of the renderer */
     struct OSLShader{
-	const char *name;
+	std::string name;
 	ShadingAttribStateRef state;
     };
     std::vector<OSLShader> shaders;
@@ -116,6 +125,8 @@ public:
 
     /* Add an OSL shader to the system */
     void AddShader(const char *shadername);
+
+    void AddShader(ShaderInfo &sh_info);
 
     /* Query a color */
     Color3 QueryColor(RenderInfo *info);

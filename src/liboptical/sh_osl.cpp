@@ -106,10 +106,107 @@ struct mfuncs osl_mfuncs[] = {
     {0,		(char *)0,	0,		0,		0,     0,		0,		0,		0 }
 };
 
-/* 
- * The remaining code should be hidden from C callers
- * 
- */
+int
+osl_parse(const struct bu_vls *in_vls, ShaderInfo &sh_info)
+/* string to parse through */
+/* structure description */
+/* base addr of users struct */
+{
+    struct bu_vls vls;
+    register char *cp;
+    char *name;
+    char *value;
+    int retval;
+
+    BU_CK_VLS(in_vls);
+
+    /* Duplicate the input string.  This algorithm is destructive. */
+    bu_vls_init(&vls);
+    bu_vls_vlscat(&vls, in_vls);
+    cp = bu_vls_addr(&vls);
+
+    while (*cp) {
+	/* NAME = VALUE white-space-separator */
+
+	/* skip any leading whitespace */
+	while (*cp != '\0' && isspace(*cp))
+	    cp++;
+
+	/* Find equal sign */
+	name = cp;
+	while (*cp != '\0' && *cp != '=')
+	    cp++;
+
+	if (*cp == '\0') {
+	    if (name == cp) break;
+
+	    /* end of string in middle of arg */
+	    bu_log("bu_structparse: input keyword '%s' is not followed by '=' in '%s'\nInput must be in keyword=value format.\n",
+		   name, bu_vls_addr(in_vls));
+	    bu_vls_free(&vls);
+	    return -2;
+	}
+
+	*cp++ = '\0';
+
+	/* Find end of value. */
+	if (*cp == '"') {
+	    /* strings are double-quote (") delimited skip leading " &
+	     * find terminating " while skipping escaped quotes (\")
+	     */
+	    for (value = ++cp; *cp != '\0'; ++cp)
+		if (*cp == '"' &&
+		    (cp == value || *(cp-1) != '\\'))
+		    break;
+
+	    if (*cp != '"') {
+		bu_log("bu_structparse: keyword '%s'=\" without closing \"\n",
+		       name);
+		bu_vls_free(&vls);
+		return -3;
+	    }
+	} else {
+	    /* non-strings are white-space delimited */
+	    value = cp;
+	    while (*cp != '\0' && !isspace(*cp))
+		cp++;
+	}
+
+	if (*cp != '\0')
+	    *cp++ = '\0';
+
+	/* Split string arount # */
+	const char *item;
+	item = strtok(value, "#");
+	sh_info.shadername = std::string(item);
+
+	/* Check for parameters */
+	while((item = strtok(NULL, "#")) != NULL){
+
+	    /* Name of the parameter */
+	    std::string param_name = item;
+
+	    /* Get the type of parameter being set */
+	    item = strtok(NULL, "#");
+	    if(item == NULL){
+		fprintf(stderr, "[Error] Missing parameter type\n");
+		return -1;
+	    }
+	    else if(strcmp(item, "float") == 0){
+		item = strtok(NULL, "#");
+		if(item == NULL){
+		    fprintf(stderr, "[Error] Missing float value\n");
+		    return -1;
+		}
+		float value = atof(item);
+		sh_info.fparam.push_back(make_pair(param_name, value));
+	    }
+	}
+
+    }
+    bu_vls_free(&vls);
+    return 0;
+}
 
 /* O S L _ S E T U P
  *
@@ -157,6 +254,14 @@ HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm,
 	return -1;
     }
 
+    ShaderInfo sh_info;
+    sh_info.shadername = "";
+    if (osl_parse(matparm, sh_info) < 0){
+	return -1;
+    }
+    bu_vls_init(&(osl_sp->shadername));
+    bu_vls_strcpy(&(osl_sp->shadername), sh_info.shadername.c_str());
+
     /* -----------------------------------
      * Check for errors
      * -----------------------------------
@@ -177,7 +282,7 @@ HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm,
 	oslr = new OSLRenderer();
     }
     /* Add this shader to OSL system */
-    oslr->AddShader(osl_sp->shadername.vls_str);
+    oslr->AddShader(sh_info);
 
     if (rdebug&RDEBUG_SHADE) {
 	bu_struct_print(" Parameters:", osl_print_tab, (char *)osl_sp);
@@ -291,6 +396,7 @@ osl_refraction_hit(struct application *ap, struct partition *PartHeadp, struct s
     return 1;
 }
 
+
 /*
  * O S L _ R E N D E R
  *
@@ -324,7 +430,7 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
     /* Just shoot several rays if we are rendering the first pixel */
     int nsamples;
     if(ap->a_level == 0){
-	nsamples = 25;
+	nsamples = 5;
 	default_a_hit = ap->a_hit; /* save the default hit callback (colorview @ rt) */
     }
     else
@@ -361,7 +467,7 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 	info.depth = ap->a_level;
 	info.surfacearea = 1.0f;
     
-	info.shadername = osl_sp->shadername.vls_str;
+	info.shadername = std::string(osl_sp->shadername.vls_str);
 
 	/* We only perform reflection if application decides to */
 	info.doreflection = 0;

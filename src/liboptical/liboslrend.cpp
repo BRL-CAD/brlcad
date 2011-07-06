@@ -45,12 +45,32 @@ OSLRenderer::~OSLRenderer(){
 void OSLRenderer::AddShader(const char *shadername){
 
     OSLShader osl_sh;
+    osl_sh.name = std::string(shadername);
 
     shadingsys->ShaderGroupBegin();
-    shadingsys->Shader("surface", shadername, NULL);
+    shadingsys->Shader("surface", osl_sh.name.c_str(), NULL);
     shadingsys->ShaderGroupEnd();
 
-    osl_sh.name = shadername;
+
+    osl_sh.state = shadingsys->state();
+    shadingsys->clear_state();
+
+    shaders.push_back(osl_sh);
+}
+void OSLRenderer::AddShader(ShaderInfo &sh_info){
+
+    OSLShader osl_sh;
+
+    shadingsys->ShaderGroupBegin();
+
+    /* Set parameters */
+    for(size_t i = 0; i < sh_info.fparam.size(); i++)
+	shadingsys->Parameter(sh_info.fparam[i].first.c_str(), TypeDesc::TypeFloat, &(sh_info.fparam[i].second));
+
+    shadingsys->Shader("surface", sh_info.shadername.c_str(), NULL);
+    shadingsys->ShaderGroupEnd();
+
+    osl_sh.name = sh_info.shadername;
     osl_sh.state = shadingsys->state();
     shadingsys->clear_state();
 
@@ -74,7 +94,7 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info){
     const ClosureColor *closure = ExecuteShaders(globals, info);
 
     if(closure == NULL){
-	fprintf(stderr, "closure %s is null\n", info->shadername);
+	fprintf(stderr, "closure %s is null\n", info->shadername.c_str());
     }
 
     Color3 weight = Color3(0.0f);
@@ -141,13 +161,13 @@ ExecuteShaders(ShaderGlobals &globals, RenderInfo *info){
     /* Search for the given shader */
     int sh_id = -1;
     for(size_t i = 0; i < shaders.size(); i++){
-	if (strcmp(shaders[i].name, info->shadername) == 0){
+	if (strcmp(shaders[i].name.c_str(), info->shadername.c_str()) == 0){
 	    sh_id = i;
 	    break;
 	}
     }
     if(sh_id == -1){
-	printf("[DEB] shader not found\n");
+	fprintf(stderr, "[DEB] shader not found\n");
 	return NULL;
     }
 
@@ -163,8 +183,6 @@ ExecuteShaders(ShaderGlobals &globals, RenderInfo *info){
     // u-v coordinates
     globals.u = info->u;
     globals.v = info->v;
-    globals.u = 0;
-    globals.v = 0;
 
     // u-v tangents
     VMOVE(globals.dPdu, info->dPdu);
