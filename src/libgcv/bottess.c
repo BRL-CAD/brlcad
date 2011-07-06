@@ -27,117 +27,173 @@
 
 #include "common.h"
 
+#include <math.h>
+
+#include "bn.h"
 #include "raytrace.h"
 #include "nmg.h"
 #include "gcv.h"
 
-/* these are just for debugging during development. */
-static void prbot(char *prefix, union tree *tr)
-{
-    struct bu_vls s;
-    struct rt_db_internal ip;
-    const struct rt_functab *ft = &rt_functab[ID_BOT];
-
-    bu_vls_init(&s);
-    ip.idb_ptr = (struct rt_bot_internal*)tr->tr_d.td_r->m_p;
-    ft->ft_describe(&s, &ip, 1, 1.0, 0, 0);
-    if(prefix)bu_log("*** %s\n", prefix);
-    bu_log(bu_vls_addr(&s));
-}
+void rt_bot_ifree2(struct rt_bot_internal *);
 
 /* hijack the top four bits of mode. For these operations, the mode should
  * necessarily be 0x02 */
-#define INSIDE		0x10
-#define OUTSIDE		0x20
-#define SAME		0x40
-#define OPPOSITE	0x80
+#define INSIDE		0x01
+#define OUTSIDE		0x02
+#define SAME		0x04
+#define OPPOSITE	0x08
+
+#define SOUP_MAGIC	0x534F5550	/* SOUP */
+#define SOUP_CKMAG(_ptr) BU_CKMAG(_ptr, SOUP_MAGIC, "soup")
+
+struct face_s {
+    point_t vert[3], min, max;	/* 5 * 3 * 4 = 60 */
+    vect_t norm;		/* 3 * 4 = 12 */
+    plane_t plane;		/* 4 * 4 = 16 */
+    uint32_t foo;		/* 4 */
+};				/* 60 + 12 + 16 + 4 = 92 */
+
+struct soup_s {
+    unsigned long magic;
+    struct face_s *faces;
+    unsigned long int nfaces, maxfaces;
+};
+
+static int
+split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *right, unsigned long int right_face) {
+    struct face_s *lf, *rf;
+    lf = left->faces+left_face;
+    rf = right->faces+right_face;
+    return 0;
+}
+
+/* assume 4096, seems common enough. a portable way to get to PAGE_SIZE might be
+ * better. */
+static const int faces_per_page = 4096 / sizeof(struct face_s);
+
+static struct soup_s *
+bot2soup(struct rt_bot_internal *bot, const struct bn_tol *tol)
+{
+    struct soup_s *s;
+    unsigned long int i;
+
+    RT_BOT_CK_MAGIC(bot);
+
+    if(bot->orientation != RT_BOT_CCW)
+	bu_bomb("Bad orientation out of nmg_bot\n");
+
+    s = bu_malloc(sizeof(struct soup_s), "bot soup");
+    s->magic = SOUP_MAGIC;
+    s->nfaces = bot->num_faces;
+    s->maxfaces = ceil(s->nfaces / (double)faces_per_page) * faces_per_page;
+    s->faces = bu_malloc(sizeof(struct face_s) * s->maxfaces, "bot soup faces");
+
+    for(i=0;i<s->nfaces;i++) {
+	struct face_s *f = s->faces + i;
+
+	/* copy vertex info in */
+	VMOVE(f->vert[0], (bot->vertices+3*bot->faces[i*3+0]));
+	VMOVE(f->vert[1], (bot->vertices+3*bot->faces[i*3+1]));
+	VMOVE(f->vert[2], (bot->vertices+3*bot->faces[i*3+2]));
+
+	/* solve the bounding box (should this be VMINMAX?) */
+	VMOVE(f->min, f->vert[0]); VMOVE(f->max, f->vert[0]);
+	VMIN(f->min, f->vert[1]); VMAX(f->max, f->vert[1]);
+	VMIN(f->min, f->vert[2]); VMAX(f->max, f->vert[2]);
+
+	/* solve the plane */
+	bn_mk_plane_3pts(f->plane, f->vert[0], f->vert[1], f->vert[2], tol);
+
+	/* set flags */
+	f->foo = OUTSIDE;
+    }
+
+    return s;
+}
+
+static void
+free_soup(struct soup_s *s) {
+    if(s == NULL)
+	bu_bomb("null soup");
+    if(s->faces)
+	bu_free(s->faces, "bot soup faces");
+    bu_free(s, "bot soup");
+    return;
+}
 
 static union tree *
 invert(union tree *tree)
 {
-    struct rt_bot_internal *b;
+    struct soup_s *s;
+    unsigned long int i;
+
     RT_CK_TREE(tree);
-    b = (struct rt_bot_internal *)tree->tr_d.td_r->m_p;
-    RT_BOT_CK_MAGIC(b);
-    if(b->orientation != RT_BOT_CW)
-	bu_bomb("bad order fed in\n");
-    if(rt_bot_flip(b))
-	bu_bomb("0 is no longer 0, universe ending\n");
-    b->orientation = RT_BOT_CW;
+    if(tree->tr_op != OP_NMG_TESS) {
+	bu_log("Erm, this isn't an nmg tess\n");
+	return tree;
+    }
+    s = (struct soup_s *)tree->tr_d.td_r->m_p;
+    SOUP_CKMAG(s);
+
+    for(i=0;i<s->nfaces;i++) {
+	point_t t;
+	VMOVE(t, s->faces[i].vert[0]);
+	VMOVE(s->faces[i].vert[0], s->faces[i].vert[1]);
+	VMOVE(s->faces[i].vert[0], t);
+    }
+    
     return tree;
 }
 
 static void
 split_faces(union tree *left_tree, union tree *right_tree)
 {
-    struct rt_bot_internal *l, *r;
-    bu_log(":%s:%s:%d\n",__FILE__,__FUNCTION__,__LINE__);
+    struct soup_s *l, *r;
     RT_CK_TREE(left_tree);
     RT_CK_TREE(right_tree);
-    l = (struct rt_bot_internal *)left_tree->tr_d.td_r->m_p;
-    r = (struct rt_bot_internal *)right_tree->tr_d.td_r->m_p;
-    RT_BOT_CK_MAGIC(l);
-    RT_BOT_CK_MAGIC(r);
+    l = (struct soup_s *)left_tree->tr_d.td_r->m_p;
+    r = (struct soup_s *)right_tree->tr_d.td_r->m_p;
     /* this is going to be big and hairy. Has to walk both meshes finding
      * all intersections and split intersecting faces so there are edges at
      * the intersections. Initially going to be O(n^2), then change to use
      * space partitioning (binning? octree? kd?). */
+    SOUP_CKMAG(l);
+    SOUP_CKMAG(r);
+    split_face(l, 0, r, 0);
 }
 
 static void
 classify_faces(union tree *left_tree, union tree *right_tree)
 {
-    struct rt_bot_internal *l, *r;
-    bu_log(":%s:%s:%d\n",__FILE__,__FUNCTION__,__LINE__);
+    struct soup_s *l, *r;
     RT_CK_TREE(left_tree);
     RT_CK_TREE(right_tree);
-    l = (struct rt_bot_internal *)left_tree->tr_d.td_r->m_p;
-    r = (struct rt_bot_internal *)right_tree->tr_d.td_r->m_p;
-    RT_BOT_CK_MAGIC(l);
-    RT_BOT_CK_MAGIC(r);
+    l = (struct soup_s *)left_tree->tr_d.td_r->m_p;
+    r = (struct soup_s *)right_tree->tr_d.td_r->m_p;
     /* walk the two trees, marking each face as being inside or outside.
      * O(n)? n^2? */
+    SOUP_CKMAG(l);
+    SOUP_CKMAG(r);
 }
 
 static union tree *
 compose(union tree *left_tree, union tree *right_tree, int face1, int face2, int face3)
 {
-    struct rt_bot_internal *l, *r;
-    bu_log(":%s:%s:%d\n",__FILE__,__FUNCTION__,__LINE__);
+    struct soup_s *l, *r;
     RT_CK_TREE(left_tree);
     RT_CK_TREE(right_tree);
-    l = (struct rt_bot_internal *)left_tree->tr_d.td_r->m_p;
-    r = (struct rt_bot_internal *)right_tree->tr_d.td_r->m_p;
-    RT_BOT_CK_MAGIC(l);
-    RT_BOT_CK_MAGIC(r);
+    l = (struct soup_s *)left_tree->tr_d.td_r->m_p;
+    r = (struct soup_s *)right_tree->tr_d.td_r->m_p;
     /* remove unnecessary faces and compose a single new internal */
     face1=face2=face3;
-    prbot("left_tree", left_tree);
-    prbot("right_tree", right_tree);
+    free_soup(r);
     return left_tree;
 }
 
 static union tree *
 evaluate(union tree *tr, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-    bu_log(":%s:%s:%d\n",__FILE__,__FUNCTION__,__LINE__);
     RT_CK_TREE(tr);
-    bu_log("	op: %x\t", tr->tr_op);
-    switch(tr->tr_op) {
-	case OP_SOLID: bu_log("OP_SOLID\n"); break;
-	case OP_UNION: bu_log("OP_UNION\n"); break;
-	case OP_INTERSECT: bu_log("OP_INTERSECT\n"); break;
-	case OP_SUBTRACT: bu_log("OP_SUBTRACT\n"); break;
-	case OP_XOR: bu_log("OP_XOR\n"); break;
-	case OP_REGION: bu_log("OP_REGION\n"); break;
-	case OP_NOP: bu_log("OP_NOP\n"); break;
-	case OP_NOT: bu_log("OP_NOT\n"); break;
-	case OP_GUARD: bu_log("OP_GUARD\n"); break;
-	case OP_XNOP: bu_log("OP_XNOP\n"); break;
-	case OP_NMG_TESS: bu_log("OP_NMG_TESS\n"); break;
-	case OP_DB_LEAF: bu_log("OP_DB_LEAF\n"); break;
-	case OP_FREE: bu_log("OP_FREE\n"); break;
-    }
 
     switch(tr->tr_op) {
 	case OP_NOP:
@@ -146,15 +202,42 @@ evaluate(union tree *tr, const struct rt_tess_tol *ttol, const struct bn_tol *to
 	    /* ugh, keep it as nmg_tess and just shove the rt_bot_internal ptr
 	     * in as nmgregion. :/ Also, only doing the first shell of the first
 	     * model. Primitives should only provide a single shell, right? */
-	    tr->tr_d.td_r->m_p = (struct model *)nmg_bot(BU_LIST_FIRST(shell, &BU_LIST_FIRST(nmgregion, &tr->tr_d.td_r->m_p->r_hd)->s_hd), tol);
+	    {
+		struct nmgregion *nmgr = BU_LIST_FIRST(nmgregion, &tr->tr_d.td_r->m_p->r_hd);
+		/* the bot temporary format may be unnecessary if we can walk
+		 * the nmg shells and generate soup from them directly. */
+		struct rt_bot_internal *bot = nmg_bot(BU_LIST_FIRST(shell, &nmgr->s_hd), tol);
+
+		/* causes a crash.
+		nmg_kr(nmgr);
+		free(nmgr);
+		*/
+
+		tr->tr_d.td_r->m_p = (struct model *)bot2soup(bot, tol);
+		SOUP_CKMAG((struct soup_s *)tr->tr_d.td_r->m_p);
+
+		rt_bot_ifree2(bot);
+	    }
 	    return tr;
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	    tr->tr_b.tb_left = evaluate(tr->tr_b.tb_left, ttol, tol);
 	    tr->tr_b.tb_right = evaluate(tr->tr_b.tb_right, ttol, tol);
+	    RT_CK_TREE(tr->tr_b.tb_left);
+	    RT_CK_TREE(tr->tr_b.tb_right);
+	    SOUP_CKMAG(tr->tr_b.tb_left->tr_d.td_r->m_p);
+	    SOUP_CKMAG(tr->tr_b.tb_right->tr_d.td_r->m_p);
 	    split_faces(tr->tr_b.tb_left, tr->tr_b.tb_right);
+	    RT_CK_TREE(tr->tr_b.tb_left);
+	    RT_CK_TREE(tr->tr_b.tb_right);
+	    SOUP_CKMAG(tr->tr_b.tb_left->tr_d.td_r->m_p);
+	    SOUP_CKMAG(tr->tr_b.tb_right->tr_d.td_r->m_p);
 	    classify_faces(tr->tr_b.tb_left, tr->tr_b.tb_right);
+	    RT_CK_TREE(tr->tr_b.tb_left);
+	    RT_CK_TREE(tr->tr_b.tb_right);
+	    SOUP_CKMAG(tr->tr_b.tb_left->tr_d.td_r->m_p);
+	    SOUP_CKMAG(tr->tr_b.tb_right->tr_d.td_r->m_p);
 	    break;
 	default:
 	    bu_bomb("bottess evaluate(): bad op (first pass)\n");
