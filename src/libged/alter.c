@@ -247,7 +247,7 @@
  * 	    [[-n] [-a | -r] {AXIS_TO_OBJECT | AXIS_TO_POS}]] \
  * 	    [[-n] -c {CENTER_OBJECT | CENTER_POS}] \
  * 	    {[[-n] -k {ANGLE_FROM_OBJECT | ANGLE_FROM_POS}] \
- * 	    [-n] [-a | -r | -d] {ANGLE_TO_OBJECT | ANGLE_TO_POS}} \
+ * 	    [-n | -o] [-a | -r | -d] {ANGLE_TO_OBJECT | ANGLE_TO_POS}} \
  * 	    OBJECT ...
  *
  *	*OBJECT:
@@ -320,10 +320,15 @@
  *	    If the AXIS_FROM keypoint is omitted, it defaults to the
  *	    origin (0,0,0).
  *
- *	    ANGLE_FROM defaults CENTER, offset -y 1, if AXIS is
- *	    ommited. If AXIS is provided, then ANGLE_FROM is aligned
- *	    to it in such a way that the 90 degree angle created by
- *	    the following points is maintained (as illustrated below):
+ *	    The line between the points CENTER and ANGLE_FROM
+ *	    defines the y-axis of a custom AXIS. Therefore, if AXIS is
+ *	    omitted, ANGLE_FROM defaults to a point y-offset +1 from
+ *	    CENTER; the y-axis of the drawing. In essense, ANGLE_FROM
+ *	    helps define the y-axis, and AXIS defines the x-axis.
+ *	    
+ *	    If AXIS is provided, then ANGLE_FROM is aligned to it in
+ *	    such a way that the 90 degree angle created by the
+ *	    following points is maintained (as illustrated below):
  *
  *	    1) ANGLE_FROM ->
  *	    2) AXIS_TO superimposed onto CENTER ->
@@ -342,12 +347,15 @@
  *	         +x/     \+y  (CENTER -y 1) |                 |   |
  *	                                    |                 |+x/ \+y
  *
- *	    degrees. This is achieved in a consistent manner by
- *	    rotating the original default ANGLE_FROM
- *	    counterclockwise around the z-axis only, by keeping its z
- *	    position constant at zero. The result is that the default
- *	    ANGLE_FROM is at some point on the x/y plane; exactly
- *	    where that is depends upon AXIS.
+ *	    This is achieved in a consistent manner by starting
+ *	    ANGLE_FROM at the x/y of the superimposed AXIS_FROM, and
+ *	    the z coordinate of CENTER, and rotating it
+ *	    counterclockwise around the z-axis of CENTER. The first
+ *	    encountered 90 degree angle is used. The result is that
+ *	    the line between CENTER and ANGLE_FROM defines the y-axis
+ *	    of the rotation, from the origin to positive-y. The
+ *	    rotation y-axis (ANGLE_FROM) is always perpendicular to
+ *	    the z-axis of the coordinate system.
  *
  *	    If ANGLE_FROM is set, the default AXIS is ignored, and
  *	    the rotation to ANGLE_TO is unconstrained. This means that
@@ -362,6 +370,14 @@
  *	    ANGLE_FROM to ANGLE_TO is constrained around AXIS.
  *	    This allows for the use of reference objects that are not
  *	    perfectly lined up on AXIS.
+ *
+ *	-o  ANGLE_TO_POS
+ *	    Overrides constraint to AXIS. Only allowed when AXIS is
+ *	    supplied, and ANGLE_TO_POS is given in degrees or radians.
+ *	    Use -o when the axis you would like to rotate on is
+ *	    difficult to reference, but you are able to set AXIS to an
+ *	    axis that is perpendicular to it. ANGLE_TO_POS options -y
+ *	    or -z would then enable rotation upon the desired axis.
  *
  * 	-a *_TO_POS | *_TO_OBJECT
  *	    Interpret *_TO_POS or *_TO_OBJECT as an absolute position.
@@ -437,8 +453,37 @@
  *	# the q3 is pointing directly at us (we are on a positive z)
  *	rotate -45 45 cube
  *
+ *	    # Same result as above, but showing how to use reference
+ *	    # objects to create a new axis (recall that the positions
+ *	    # of sphere1 and sphere2 match the angle between the
+ *	    # corners of q2 and q4 that are facing us, and that CENTER
+ *	    # defaults to the center of OBJECT)
+ *	    rotate -k sphere1 -a sphere2 -d -90 cube
+ *
+ *	    # same results as above
+ *	    rotate -k sphere1 -a sphere2 -c cube -d -90 cube
+ *	    rotate -k sphere1 -a sphere2 -c . -d -90 cube
+ *	    rotate -k sphere1 -a sphere2 -d 270 cube
+ *	    rotate -k sphere2 -a sphere1 -d 90 cube
+ *	    rotate -k sphere2 -a sphere1 -d -270 cube
+ *
+ *	    # same results as above; showing that OBJECT is
+ *	    # constrained to AXIS
+ *	    rotate -k sphere1 -a sphere2 -d -90 20349 3992.3 cube
+ *
+ *	    # same results as above, using coordinates to rotate
+ *	    # unconstrained by an axis
+ *	    rotate -k -1 -1 0 -a 0 0 -1 cube
+ *
+ *	# Rotate the cube so that the corner facing us in q1 is
+ *	# pointing directly at us. This is similar to the last
+ *	# examples in that it will use the same reference AXIS, but in
+ *	# this case, the constraint to AXIS will be overriden so that
+ *	# we can rotate perpendicular to AXIS.
+ *	rotate -k sphere1 -a sphere2 -o -d  
+ *
  *	# Rotate the cube on its center, from sphere1 to sphere2
- *	# (this just happens to be clockwise on the z-axis)
+ *	# (this just happens to be on the z-axis)
  *	rotate -k sphere1 -a sphere2 cube
  *
  *	    # all of these have the same result as above
@@ -468,7 +513,7 @@
  *          # same effect (preferred method)
  *          rotate -a 180 cube -x 25
  *
- *
+  *
  */
 
 /*
