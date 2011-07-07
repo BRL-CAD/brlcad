@@ -149,8 +149,8 @@ MACRO(BRLCAD_ADDDATA datalist targetdir)
 			SET(inputlist ${inputlist} ${CMAKE_CURRENT_SOURCE_DIR}/${filename})
 		ENDFOREACH(filename ${${datalist}})
 		SET(${targetprefix}_cmake_contents "
-		SET(FILES_TO_COPY ${inputlist})
-		FILE(COPY \${FILES_TO_COPY} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
+		SET(FILES_TO_COPY \"${inputlist}\")
+		FILE(COPY \${FILES_TO_COPY} DESTINATION \"${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}\")
 		")
 		FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${targetprefix}.cmake "${${targetprefix}_cmake_contents}")
 		ADD_CUSTOM_COMMAND(
