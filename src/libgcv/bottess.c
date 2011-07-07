@@ -216,7 +216,10 @@ evaluate(union tree *tr, const struct rt_tess_tol *ttol, const struct bn_tol *to
 		tr->tr_d.td_r->m_p = (struct model *)bot2soup(bot, tol);
 		SOUP_CKMAG((struct soup_s *)tr->tr_d.td_r->m_p);
 
+		/* rt_bot_ifree2 doesn't have an RT_EXPORT line, so is unavailable on windows. Just leak instead. */
+#ifndef _WIN32
 		rt_bot_ifree2(bot);
+#endif
 	    }
 	    return tr;
 	case OP_UNION:
