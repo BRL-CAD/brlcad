@@ -43,16 +43,16 @@ void rt_bot_ifree2(struct rt_bot_internal *);
 #define OUTSIDE		0x02
 #define SAME		0x04
 #define OPPOSITE	0x08
+#define INVERTED	0x10
 
 #define SOUP_MAGIC	0x534F5550	/* SOUP */
 #define SOUP_CKMAG(_ptr) BU_CKMAG(_ptr, SOUP_MAGIC, "soup")
 
 struct face_s {
-    point_t vert[3], min, max;	/* 5 * 3 * 4 = 60 */
-    vect_t norm;		/* 3 * 4 = 12 */
-    plane_t plane;		/* 4 * 4 = 16 */
-    uint32_t foo;		/* 4 */
-};				/* 60 + 12 + 16 + 4 = 92 */
+    point_t vert[3], min, max;
+    plane_t plane;
+    uint32_t foo;
+};
 
 struct soup_s {
     unsigned long magic;
@@ -95,6 +95,9 @@ soup_add_face(struct soup_s *s, point_t a, point_t b, point_t c, const struct bn
     VMOVE(f->min, f->vert[0]); VMOVE(f->max, f->vert[0]);
     VMIN(f->min, f->vert[1]); VMAX(f->max, f->vert[1]);
     VMIN(f->min, f->vert[2]); VMAX(f->max, f->vert[2]);
+    /* fluff the bounding box for fp fuzz */
+    f->min[X]-=.1; f->min[Y]-=.1; f->min[Z]-=.1;
+    f->max[X]+=.1; f->max[Y]+=.1; f->max[Z]+=.1;
 
     /* solve the plane */
     bn_mk_plane_3pts(f->plane, f->vert[0], f->vert[1], f->vert[2], tol);
@@ -110,11 +113,7 @@ split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *righ
     struct face_s *lf, *rf;
     lf = left->faces+left_face;
     rf = right->faces+right_face;
-    /*
-    bu_log("Possible collision! %d %d\n", left_face, right_face);
-    */
-    if(lf==rf)
-	soup_rm_face(left, 0);
+
     return 0;
 }
 
@@ -166,12 +165,15 @@ invert(union tree *tree)
     SOUP_CKMAG(s);
 
     for(i=0;i<s->nfaces;i++) {
+	struct face_s *f = s->faces+i;
 	point_t t;
-	VMOVE(t, s->faces[i].vert[0]);
-	VMOVE(s->faces[i].vert[0], s->faces[i].vert[1]);
-	VMOVE(s->faces[i].vert[0], t);
+	VMOVE(t, f->vert[0]);
+	VMOVE(f->vert[0], f->vert[1]);
+	VMOVE(f->vert[0], t);
+	/* flip the inverted bit. */
+	f->foo=(f->foo&~INVERTED)|(~(f->foo&INVERTED))&INVERTED;
     }
-    
+
     return tree;
 }
 
