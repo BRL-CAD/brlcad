@@ -70,6 +70,8 @@ ShadingAttribStateRef OSLRenderer::AddShader(ShaderGroupInfo &group_info){
 	/* Set parameters */
 	for(size_t i = 0; i < sh_info.fparam.size(); i++)
 	    shadingsys->Parameter(sh_info.fparam[i].first.c_str(), TypeDesc::TypeFloat, &(sh_info.fparam[i].second));
+	for(size_t i = 0; i < sh_info.cparam.size(); i++)
+	    shadingsys->Parameter(sh_info.cparam[i].first.c_str(), TypeDesc::TypeColor, &(sh_info.cparam[i].second));
 
 	shadingsys->Shader("surface", sh_info.shadername.c_str(), NULL);
     }	

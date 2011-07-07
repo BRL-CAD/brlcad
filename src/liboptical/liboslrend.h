@@ -74,6 +74,7 @@ struct RenderInfo {
 struct ShaderInfo {
     std::string shadername;
     std::vector< std::pair<std::string, float> > fparam;
+    std::vector< std::pair<std::string, Color3> > cparam;
 };
 /* Represents a parameter a shader */
 struct ShaderParam {

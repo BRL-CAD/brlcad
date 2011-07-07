@@ -99,16 +99,48 @@ struct mfuncs osl_mfuncs[] = {
     {0,		(char *)0,	0,		0,		0,     0,		0,		0,		0 }
 };
 
-/**
- * This function parses the input shaders
- * Example:
- * shadername=color#Cin#point#0.0#0.0#1.0
- * shadername=glass
- * shadername=checker#K#float#4.0
- * join=color#Cout#shader#Cin1
- * join=glass#Cout#shader#Cin1
- **/
-int osl_parse_shader(char *shadername, ShaderInfo &sh_info){
+int 
+osl_parse_edge(char *edge, ShaderEdge &sh_edge)
+{
+    /* Split string arount # */
+    const char *item;
+    
+    ShaderParam sh_param1, sh_param2;
+
+    /* Name of the first shader */
+    if((item = strtok(edge, "#")) == NULL){
+	fprintf(stderr, "[Error] Expecting the first shader name, found NULL.\n");
+	return -1;
+    }
+    sh_param1.shadername = item;
+
+    /* Parameter of the first shader */
+    if((item = strtok(NULL, "#")) == NULL){
+	fprintf(stderr, "[Error] Expecting the parameter of the first shader, found NULL.\n");
+	return -1;
+    }
+    sh_param1.paramname = item;
+
+    /* Name of the first shader */
+    if((item = strtok(NULL, "#")) == NULL){
+	fprintf(stderr, "[Error] Expecting the second shader name, found NULL.\n");
+	return -1;
+    }
+    sh_param2.shadername = item;
+
+    /* Name of the first shader */
+    if((item = strtok(NULL, "#")) == NULL){
+	fprintf(stderr, "[Error] Expecting the parameter of the second shader, found NULL.\n");
+	return -1;
+    }
+    sh_param2.paramname = item;
+
+    sh_edge = std::make_pair(sh_param1, sh_param2);
+}
+
+int 
+osl_parse_shader(char *shadername, ShaderInfo &sh_info)
+{
 
     /* Split string arount # */
     const char *item;
@@ -134,11 +166,32 @@ int osl_parse_shader(char *shadername, ShaderInfo &sh_info){
 		return -1;
 	    }
 	    float value = atof(item);
-	    sh_info.fparam.push_back(make_pair(param_name, value));
+	    sh_info.fparam.push_back(std::make_pair(param_name, value));
+	}
+	else if(strcmp(item, "color") == 0){
+	    Color3 color_value;
+	    for(int i=0; i<3; i++){
+		item = strtok(NULL, "#");
+		if(item == NULL){
+		    fprintf(stderr, "[Error] Missing %d-th component of color value\n", i);
+		    return -1;
+		}
+		color_value[i] = atof(item);
+	    }
+	    sh_info.cparam.push_back(std::make_pair(param_name, color_value));
 	}
     }
 }
 
+/**
+ * This function parses the input shaders
+ * Example:
+ * shadername=color#Cin#point#0.0#0.0#1.0
+ * shadername=glass
+ * shadername=checker#K#float#4.0
+ * join=color#Cout#shader#Cin1
+ * join=glass#Cout#shader#Cin1
+ **/
 int
 osl_parse(const struct bu_vls *in_vls, ShaderGroupInfo &group_info)
 {
@@ -209,6 +262,11 @@ osl_parse(const struct bu_vls *in_vls, ShaderGroupInfo &group_info)
 	    ShaderInfo sh_info;
 	    osl_parse_shader(value, sh_info);
 	    group_info.shader_layer.push_back(sh_info);
+	}
+	else if (strcmp(name, "join") == 0){
+	    ShaderEdge sh_edge;
+	    osl_parse_edge(value, sh_edge);
+	    group_info.shader_edge.push_back(sh_edge);
 	}
     }
     bu_vls_free(&vls);
