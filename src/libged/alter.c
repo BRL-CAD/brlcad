@@ -247,8 +247,8 @@
  * 	    [[-n] [-a | -r] {AXIS_TO_OBJECT | AXIS_TO_POS}]] \
  * 	    [[-n] -c {CENTER_OBJECT | CENTER_POS}] \
  * 	    {[[-n] -k {ANGLE_FROM_OBJECT | ANGLE_FROM_POS}] \
- * 	    [-n] [-a | -r] {ANGLE_TO_OBJECT | ANGLE_TO_POS}} OBJECT \
- * 	    ...
+ * 	    [-n] [-a | -r | -d] {ANGLE_TO_OBJECT | ANGLE_TO_POS}} \
+ * 	    OBJECT ...
  *
  *	*OBJECT:
  *	    [PATH/]OBJECT [OFFSET_DIST]
@@ -259,7 +259,19 @@
  * DESCRIPTION
  *	Used to rotate one or more instances of primitive or
  *	combination objects. OBJECT rotates around CENTER at ANGLE,
- *	which is optionally constrained to rotating around AXIS.
+ *	which is optionally constrained to rotating around AXIS. *POS
+ *	represents either coordinates, distance, degrees, or radians,
+ *	depending on context. 
+ *
+ *	AXIS_FROM_POS and ANGLE_FROM_POS are always treated as
+ *	absolute positions. AXIS_TO_POS may be either an absolute
+ *	position(-a), or a relative distance(-r) from AXIS_FROM.
+ *	OFFSET_DIST is always a relative distance. A special case is
+ *	made for ANGLE_TO_POS, which defaults to relative degrees from
+ *	ANGLE_FROM_POS(-d), but may also be interpreted a as relative
+ *	distance from ANGLE_FROM_POS(-r) or an absolute position (-a).
+ *	See documentation of the -R option to see how it can be used
+ *	to allow specification of radians.
  *
  *	CENTER defaults to the bounding box center of the first
  *	OBJECT. To use the natural origin of the first OBJECT as 
@@ -309,7 +321,7 @@
  *	    origin (0,0,0).
  *
  *	    ANGLE_FROM defaults CENTER, offset -y 1, if AXIS is
- *	    ommited. If AXIS is provided, then ANGLE_FROM_* is aligned
+ *	    ommited. If AXIS is provided, then ANGLE_FROM is aligned
  *	    to it in such a way that the 90 degree angle created by
  *	    the following points is maintained (as illustrated below):
  *
@@ -331,11 +343,11 @@
  *	                                    |                 |+x/ \+y
  *
  *	    degrees. This is achieved in a consistent manner by
- *	    rotating the original default ANGLE_FROM_* around the
- *	    z-axis only, by keeping its z position constant at zero.
- *	    The result is that the default ANGLE_FROM_* is at some
- *	    point on the x/y plane; exactly where that is depends upon
- *	    AXIS.
+ *	    rotating the original default ANGLE_FROM
+ *	    counterclockwise around the z-axis only, by keeping its z
+ *	    position constant at zero. The result is that the default
+ *	    ANGLE_FROM is at some point on the x/y plane; exactly
+ *	    where that is depends upon AXIS.
  *
  *	    If ANGLE_FROM is set, the default AXIS is ignored, and
  *	    the rotation to ANGLE_TO is unconstrained. This means that
@@ -351,21 +363,32 @@
  *	    This allows for the use of reference objects that are not
  *	    perfectly lined up on AXIS.
  *
+ * 	-a *_TO_POS | *_TO_OBJECT
+ *	    Interpret *_TO_POS or *_TO_OBJECT as an absolute position.
+ *	    This option is required if *_TO_OBJECT is supplied.
+ *
+ *	    If any arguments preceed AXIS_TO or ANGLE_TO, they are
+ *	    required to have a matching "-a", "-r", or, in the case of
+ *	    ANGLE_TO, "-d".
+ *
  * 	-r *_TO_POS
  *	    Interpret *_TO_POS as a point a relative distance from
  *	    its *_FROM_POS keypoint. This is the default if *_TO_POS
  *	    is set but *_FROM_POS is omitted. Must be omited if
  *	    *_TO_OBJECT is specified.
  *
- *	    If any arguments preceed AXIS_TO or ANGLE_TO, a
- *	    matching "-a" or "-r" must be set.
+ *	    If any arguments preceed AXIS_TO or ANGLE_TO, they are
+ *	    required to have a matching "-a", "-r", or, in the case of
+ *	    ANGLE_TO, "-d".
  *
- * 	-a *_TO_POS | *_TO_OBJECT
- *	    Interpret *_TO_POS or *_TO_OBJECT as an absolute position.
- *	    This option is required if *_TO_OBJECT is supplied.
+ * 	-d ANGLE_TO_POS
+ *	    Interpret ANGLE_TO_POS as relative degrees (or radians if
+ *	    -R is also set) to rotate its ANGLE_FROM_POS keypoint.
+ *	    This is the default, but in some cases it is required:
  *
- *	    If any arguments preceed AXIS_TO or ANGLE_TO, a
- *	    matching "-a" or "-r" must be set.
+ *	    If any arguments preceed ANGLE_TO, it is required to have
+ *	    matching "-a", "-r", or "-d".
+ *
  *
  * EXAMPLES
  *
@@ -387,14 +410,13 @@
  *			   -y      
  *
  *	# Rotate the cube 45 degrees counterclockwise around its
- *	# bounding box center, on the z-axis. The corner in the 1st
- *	# quadrant will end up on the positive y-axis, intersecting
- *	# the y/z plane.
+ *	# bounding box center, on the z-axis. The corner in q1 will
+ *	# end up on the positive y-axis, intersecting the y/z plane.
  *	rotate -z 45 cube
  *
  * 		# all of these have the same result as above
  * 		rotate 0 0 45 cube
- * 		rotate -c 0 0 0 -r 0 0 45 cube
+ * 		rotate -c 0 0 0 -d 0 0 45 cube
  * 		rotate -c cube 0 0 45 cube
  * 		rotate -c . 0 0 45 cube
  * 		rotate -c -x . -y . -z . cube -z 45 cube
@@ -412,8 +434,7 @@
  *	rotate 90 cube.s
  *
  *	# Rotate the cube in such a way that the corner facing us in
- *	# the third quadrant is pointing directly at us (we are on a
- *	# positive z)
+ *	# the q3 is pointing directly at us (we are on a positive z)
  *	rotate -45 45 cube
  *
  *	# Rotate the cube on its center, from sphere1 to sphere2
@@ -438,6 +459,14 @@
  *          # above. In the examples where AXIS is not specified,
  *          # however, the cube would rotate unconstrained in the
  *          # z-axis as well.
+ *
+ *      # Rotate the cube around a point 25 units in front of itself
+ *      # (the front is the right face in the diagram, sharing edge q1
+ *      # and q4 with the top) so that it faces the opposite direction
+ *      rotate -c . -x 25 -d 180 cube
+ *
+ *          # same effect (preferred method)
+ *          rotate -a 180 cube -x 25
  *
  *
  */
