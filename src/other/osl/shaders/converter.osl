@@ -1,0 +1,7 @@
+surface converter 
+(
+        closure color Cin = diffuse(N)
+)
+{
+        Ci = Cin;
+}
