@@ -72,13 +72,14 @@ struct RenderInfo {
 
 /* Required structure to initialize an OSL shader */
 struct ShaderInfo {
-    std::string shadername;
+    std::string shadername; // Name of the shader (type of shader)
+    std::string layername;  // Name of the layer  (name of this partilar instance)
     std::vector< std::pair<std::string, float> > fparam;
     std::vector< std::pair<std::string, Color3> > cparam;
 };
 /* Represents a parameter a shader */
 struct ShaderParam {
-    std::string shadername;
+    std::string layername;
     std::string paramname;
 };
 /* Represents an edge from first to second  */
@@ -86,8 +87,8 @@ typedef std::pair < ShaderParam, ShaderParam > ShaderEdge;
 
 /* Required structure to initialize an OSL shader group */
 struct ShaderGroupInfo {
-    std::vector< ShaderInfo > shader_layer;
-    std::vector< ShaderEdge > shader_edge;
+    std::vector< ShaderInfo > shader_layers;
+    std::vector< ShaderEdge > shader_edges;
 };
 
 struct ThreadInfo {

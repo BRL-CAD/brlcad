@@ -112,7 +112,7 @@ osl_parse_edge(char *edge, ShaderEdge &sh_edge)
 	fprintf(stderr, "[Error] Expecting the first shader name, found NULL.\n");
 	return -1;
     }
-    sh_param1.shadername = item;
+    sh_param1.layername = item;
 
     /* Parameter of the first shader */
     if((item = strtok(NULL, "#")) == NULL){
@@ -126,7 +126,7 @@ osl_parse_edge(char *edge, ShaderEdge &sh_edge)
 	fprintf(stderr, "[Error] Expecting the second shader name, found NULL.\n");
 	return -1;
     }
-    sh_param2.shadername = item;
+    sh_param2.layername = item;
 
     /* Name of the first shader */
     if((item = strtok(NULL, "#")) == NULL){
@@ -149,36 +149,50 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
     
     /* Check for parameters */
     while((item = strtok(NULL, "#")) != NULL){
-	
-	/* Name of the parameter */
-	std::string param_name = item;
-	
-	/* Get the type of parameter being set */
-	item = strtok(NULL, "#");
-	if(item == NULL){
-	    fprintf(stderr, "[Error] Missing parameter type\n");
-	    return -1;
-	}
-	else if(strcmp(item, "float") == 0){
+
+	/* Setting layer name, in case we're doing a shader group */
+	if(strcmp(item, "layername") == 0){
+
+	    /* Get the name of the layer being set */
 	    item = strtok(NULL, "#");
 	    if(item == NULL){
-		fprintf(stderr, "[Error] Missing float value\n");
+		fprintf(stderr, "[Error] Missing layer name\n");
 		return -1;
 	    }
-	    float value = atof(item);
-	    sh_info.fparam.push_back(std::make_pair(param_name, value));
+	    sh_info.layername = std::string(item);
 	}
-	else if(strcmp(item, "color") == 0){
-	    Color3 color_value;
-	    for(int i=0; i<3; i++){
+	else {
+	    /* Name of the parameter */
+	    std::string param_name = item;
+
+	
+	    /* Get the type of parameter being set */
+	    item = strtok(NULL, "#");
+	    if(item == NULL){
+		fprintf(stderr, "[Error] Missing parameter type\n");
+		return -1;
+	    }
+	    else if(strcmp(item, "float") == 0){
 		item = strtok(NULL, "#");
 		if(item == NULL){
-		    fprintf(stderr, "[Error] Missing %d-th component of color value\n", i);
+		    fprintf(stderr, "[Error] Missing float value\n");
 		    return -1;
 		}
-		color_value[i] = atof(item);
+		float value = atof(item);
+		sh_info.fparam.push_back(std::make_pair(param_name, value));
 	    }
-	    sh_info.cparam.push_back(std::make_pair(param_name, color_value));
+	    else if(strcmp(item, "color") == 0){
+		Color3 color_value;
+		for(int i=0; i<3; i++){
+		    item = strtok(NULL, "#");
+		    if(item == NULL){
+			fprintf(stderr, "[Error] Missing %d-th component of color value\n", i);
+			return -1;
+		    }
+		    color_value[i] = atof(item);
+		}
+		sh_info.cparam.push_back(std::make_pair(param_name, color_value));
+	    }
 	}
     }
 }
@@ -261,12 +275,12 @@ osl_parse(const struct bu_vls *in_vls, ShaderGroupInfo &group_info)
 	if(strcmp(name, "shadername") == 0){
 	    ShaderInfo sh_info;
 	    osl_parse_shader(value, sh_info);
-	    group_info.shader_layer.push_back(sh_info);
+	    group_info.shader_layers.push_back(sh_info);
 	}
 	else if (strcmp(name, "join") == 0){
 	    ShaderEdge sh_edge;
 	    osl_parse_edge(value, sh_edge);
-	    group_info.shader_edge.push_back(sh_edge);
+	    group_info.shader_edges.push_back(sh_edge);
 	}
     }
     bu_vls_free(&vls);
@@ -558,16 +572,10 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 	/* Final color */
 	VMOVE(scolor, weight);
     }
-    /* Gamma correction */
-    /*
-      scolor[0] = pow(scolor[0], 1.0/2.2);
-      scolor[1] = pow(scolor[1], 1.0/2.2);
-      scolor[2] = pow(scolor[2], 1.0/2.2);
-    */
-    
+
     /* The resulting color is always on ap_color, but
        we need to update it through sw_color */
-    VSCALE(swp->sw_color, scolor, 2.0);
+    VSCALE(swp->sw_color, scolor, 2);
     
     return 1;
 

@@ -63,9 +63,9 @@ ShadingAttribStateRef OSLRenderer::AddShader(ShaderGroupInfo &group_info){
 
     shadingsys->ShaderGroupBegin();
 
-    for(size_t i = 0; i < group_info.shader_layer.size(); i++){
+    for(size_t i = 0; i < group_info.shader_layers.size(); i++){
 
-	ShaderInfo &sh_info = group_info.shader_layer[i];
+	ShaderInfo &sh_info = group_info.shader_layers[i];
 
 	/* Set parameters */
 	for(size_t i = 0; i < sh_info.fparam.size(); i++)
@@ -73,8 +73,27 @@ ShadingAttribStateRef OSLRenderer::AddShader(ShaderGroupInfo &group_info){
 	for(size_t i = 0; i < sh_info.cparam.size(); i++)
 	    shadingsys->Parameter(sh_info.cparam[i].first.c_str(), TypeDesc::TypeColor, &(sh_info.cparam[i].second));
 
-	shadingsys->Shader("surface", sh_info.shadername.c_str(), NULL);
+	if(sh_info.layername == "")
+	    shadingsys->Shader("surface", sh_info.shadername.c_str(), NULL);
+	else
+	    shadingsys->Shader("surface", sh_info.shadername.c_str(), sh_info.layername.c_str());
+#if 0
+	printf("Adding a shader: %s, with name: %s\n", sh_info.shadername.c_str(), sh_info.layername.c_str());
+#endif
     }	
+
+    /* Set the edges between shader layers */
+    for(size_t i = 0; i < group_info.shader_edges.size(); i++){
+	ShaderParam &sh_param1 = group_info.shader_edges[i].first;
+	ShaderParam &sh_param2 = group_info.shader_edges[i].second;
+	shadingsys->ConnectShaders(sh_param1.layername.c_str(), sh_param1.paramname.c_str(),
+				  sh_param2.layername.c_str(), sh_param2.paramname.c_str());
+
+#if 0
+	printf("Adding an edge between %s,%s and %s,%s\n", sh_param1.layername.c_str(), sh_param1.paramname.c_str(),
+	       sh_param2.layername.c_str(), sh_param2.paramname.c_str());
+#endif
+    }
     
     shadingsys->ShaderGroupEnd();
     
