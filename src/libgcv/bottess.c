@@ -27,7 +27,8 @@
 
 #include "common.h"
 
-#include <math.h>
+#include <math.h>	/* ceil */
+#include <string.h>	/* memcpy */
 
 #include "bn.h"
 #include "raytrace.h"
@@ -59,17 +60,63 @@ struct soup_s {
     unsigned long int nfaces, maxfaces;
 };
 
+/* assume 4096, seems common enough. a portable way to get to PAGE_SIZE might be
+ * better. */
+static const int faces_per_page = 4096 / sizeof(struct face_s);
+
+
+static int
+soup_rm_face(struct soup_s *s, unsigned long int i)
+{
+    if(i>=s->nfaces) {
+	bu_log("trying to remove a nonexisant face? %d/%d\n", i, s->nfaces);
+	bu_bomb("Asploding\n");
+    }
+    memcpy(&s->faces[i], &s->faces[s->nfaces-1], sizeof(struct face_s));
+    return s->nfaces--;
+}
+
+static int
+soup_add_face(struct soup_s *s, point_t a, point_t b, point_t c, const struct bn_tol *tol) {
+    struct face_s *f;
+
+    /* grow face array if needed */
+    if(s->nfaces >= s->maxfaces) {
+	bu_log("Resizing, %d aint' enough\n", s->nfaces);
+	s->faces = bu_realloc(s->faces, (s->maxfaces += faces_per_page) * sizeof(struct face_s), "bot soup faces");
+    }
+    f = s->faces + s->nfaces;
+
+    VMOVE(f->vert[0], a);
+    VMOVE(f->vert[1], b);
+    VMOVE(f->vert[2], c);
+
+    /* solve the bounding box (should this be VMINMAX?) */
+    VMOVE(f->min, f->vert[0]); VMOVE(f->max, f->vert[0]);
+    VMIN(f->min, f->vert[1]); VMAX(f->max, f->vert[1]);
+    VMIN(f->min, f->vert[2]); VMAX(f->max, f->vert[2]);
+
+    /* solve the plane */
+    bn_mk_plane_3pts(f->plane, f->vert[0], f->vert[1], f->vert[2], tol);
+
+    /* set flags */
+    f->foo = OUTSIDE;
+    s->nfaces++;
+    return 0;
+}
+
 static int
 split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *right, unsigned long int right_face) {
     struct face_s *lf, *rf;
     lf = left->faces+left_face;
     rf = right->faces+right_face;
+    /*
+    bu_log("Possible collision! %d %d\n", left_face, right_face);
+    */
+    if(lf==rf)
+	soup_rm_face(left, 0);
     return 0;
 }
-
-/* assume 4096, seems common enough. a portable way to get to PAGE_SIZE might be
- * better. */
-static const int faces_per_page = 4096 / sizeof(struct face_s);
 
 static struct soup_s *
 bot2soup(struct rt_bot_internal *bot, const struct bn_tol *tol)
@@ -84,29 +131,12 @@ bot2soup(struct rt_bot_internal *bot, const struct bn_tol *tol)
 
     s = bu_malloc(sizeof(struct soup_s), "bot soup");
     s->magic = SOUP_MAGIC;
-    s->nfaces = bot->num_faces;
-    s->maxfaces = ceil(s->nfaces / (double)faces_per_page) * faces_per_page;
+    s->nfaces = 0;
+    s->maxfaces = ceil(bot->num_faces / (double)faces_per_page) * faces_per_page;
     s->faces = bu_malloc(sizeof(struct face_s) * s->maxfaces, "bot soup faces");
 
-    for(i=0;i<s->nfaces;i++) {
-	struct face_s *f = s->faces + i;
-
-	/* copy vertex info in */
-	VMOVE(f->vert[0], (bot->vertices+3*bot->faces[i*3+0]));
-	VMOVE(f->vert[1], (bot->vertices+3*bot->faces[i*3+1]));
-	VMOVE(f->vert[2], (bot->vertices+3*bot->faces[i*3+2]));
-
-	/* solve the bounding box (should this be VMINMAX?) */
-	VMOVE(f->min, f->vert[0]); VMOVE(f->max, f->vert[0]);
-	VMIN(f->min, f->vert[1]); VMAX(f->max, f->vert[1]);
-	VMIN(f->min, f->vert[2]); VMAX(f->max, f->vert[2]);
-
-	/* solve the plane */
-	bn_mk_plane_3pts(f->plane, f->vert[0], f->vert[1], f->vert[2], tol);
-
-	/* set flags */
-	f->foo = OUTSIDE;
-    }
+    for(i=0;i<bot->num_faces;i++)
+	soup_add_face(s, bot->vertices+3*bot->faces[i*3+0], bot->vertices+3*bot->faces[i*3+1], bot->vertices+3*bot->faces[i*3+2], tol);
 
     return s;
 }
@@ -149,44 +179,77 @@ static void
 split_faces(union tree *left_tree, union tree *right_tree)
 {
     struct soup_s *l, *r;
+    unsigned long int i, j;
+
     RT_CK_TREE(left_tree);
     RT_CK_TREE(right_tree);
     l = (struct soup_s *)left_tree->tr_d.td_r->m_p;
     r = (struct soup_s *)right_tree->tr_d.td_r->m_p;
+    SOUP_CKMAG(l);
+    SOUP_CKMAG(r);
+
     /* this is going to be big and hairy. Has to walk both meshes finding
      * all intersections and split intersecting faces so there are edges at
      * the intersections. Initially going to be O(n^2), then change to use
      * space partitioning (binning? octree? kd?). */
-    SOUP_CKMAG(l);
-    SOUP_CKMAG(r);
-    split_face(l, 0, r, 0);
+    for(i=0;i<l->nfaces;i++) {
+	struct face_s *lf = l->faces+i, *rf = NULL;
+	for(j=0;j<r->nfaces;j++) {
+	    rf = r->faces+j;
+	    /* quick bounding box test */
+	    if(lf->min[X]>rf->max[X] || lf->max[X]>lf->max[X] ||
+		lf->min[Y]>rf->max[Y] || lf->max[Y]>lf->max[Y] ||
+		lf->min[Z]>rf->max[Z] || lf->max[Z]>lf->max[Z])
+		continue;
+	    /* two possibly overlapping faces found */
+	    split_face(l, i, r, j);
+	}
+    }
 }
 
 static void
 classify_faces(union tree *left_tree, union tree *right_tree)
 {
     struct soup_s *l, *r;
+    unsigned long int i;
+
     RT_CK_TREE(left_tree);
     RT_CK_TREE(right_tree);
     l = (struct soup_s *)left_tree->tr_d.td_r->m_p;
     r = (struct soup_s *)right_tree->tr_d.td_r->m_p;
-    /* walk the two trees, marking each face as being inside or outside.
-     * O(n)? n^2? */
     SOUP_CKMAG(l);
     SOUP_CKMAG(r);
+    /* walk the two trees, marking each face as being inside or outside.
+     * O(n)? n^2? */
+    for(i=0;i<l->nfaces;i++)
+	l->faces[i].foo = 0;
+    for(i=0;i<r->nfaces;i++)
+	r->faces[i].foo = 0;
 }
 
 static union tree *
-compose(union tree *left_tree, union tree *right_tree, int face1, int face2, int face3)
+compose(union tree *left_tree, union tree *right_tree, unsigned long int face_status1, unsigned long int face_status2, unsigned long int face_status3)
 {
     struct soup_s *l, *r;
+    int i;
+
     RT_CK_TREE(left_tree);
     RT_CK_TREE(right_tree);
     l = (struct soup_s *)left_tree->tr_d.td_r->m_p;
     r = (struct soup_s *)right_tree->tr_d.td_r->m_p;
+
     /* remove unnecessary faces and compose a single new internal */
-    face1=face2=face3;
+    for(i=l->nfaces;i<=0;i--)
+	if(l->faces[i].foo != face_status1)
+	    soup_rm_face(l,i);
+    for(i=r->nfaces;i<=0;i--) {
+	if(r->faces[i].foo != face_status3)
+	    soup_rm_face(l,i);
+    }
+    face_status1=face_status2=face_status3;
+
     free_soup(r);
+    bu_free(right_tree, "union tree");
     return left_tree;
 }
 
@@ -282,6 +345,9 @@ gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 	return curtree;
 
     evaluate(curtree, tsp->ts_ttol, tsp->ts_tol);
+
+    /* convert it to a BoT or something. Since we seperated vertices, we may
+     * need to cluster them and recompact it. */
     /*
     rt_bot_tess(curtree->tr_d.td_r
     */
