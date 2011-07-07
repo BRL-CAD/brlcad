@@ -109,10 +109,23 @@ soup_add_face(struct soup_s *s, point_t a, point_t b, point_t c, const struct bn
 }
 
 static int
-split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *right, unsigned long int right_face) {
+split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *right, unsigned long int right_face, const struct bn_tol *tol) {
     struct face_s *lf, *rf;
+    fastf_t dot;
+
     lf = left->faces+left_face;
     rf = right->faces+right_face;
+
+    dot = VDOT(lf->plane, rf->plane);
+
+    if(BN_VECT_ARE_PARALLEL(dot, tol)) {
+	if(!NEAR_EQUAL(lf->plane[H],rf->plane[H],tol->dist))
+	    return 1;	/* parallel and not colocated. */
+	/* hm, colocated, need to figure out how to splice correctly? */
+	return 2;
+    }
+
+    /* test if the intersect line is on both triangles,  if so, alter the soup */
 
     return 0;
 }
@@ -171,14 +184,14 @@ invert(union tree *tree)
 	VMOVE(f->vert[0], f->vert[1]);
 	VMOVE(f->vert[0], t);
 	/* flip the inverted bit. */
-	f->foo=(f->foo&~INVERTED)|(~(f->foo&INVERTED))&INVERTED;
+	f->foo=(f->foo&~INVERTED)|((~(f->foo&INVERTED))&INVERTED);
     }
 
     return tree;
 }
 
 static void
-split_faces(union tree *left_tree, union tree *right_tree)
+split_faces(union tree *left_tree, union tree *right_tree, const struct bn_tol *tol)
 {
     struct soup_s *l, *r;
     unsigned long int i, j;
@@ -204,7 +217,7 @@ split_faces(union tree *left_tree, union tree *right_tree)
 		lf->min[Z]>rf->max[Z] || lf->max[Z]>lf->max[Z])
 		continue;
 	    /* two possibly overlapping faces found */
-	    split_face(l, i, r, j);
+	    split_face(l, i, r, j, tol);
 	}
     }
 }
@@ -296,7 +309,7 @@ evaluate(union tree *tr, const struct rt_tess_tol *ttol, const struct bn_tol *to
 	    RT_CK_TREE(tr->tr_b.tb_right);
 	    SOUP_CKMAG(tr->tr_b.tb_left->tr_d.td_r->m_p);
 	    SOUP_CKMAG(tr->tr_b.tb_right->tr_d.td_r->m_p);
-	    split_faces(tr->tr_b.tb_left, tr->tr_b.tb_right);
+	    split_faces(tr->tr_b.tb_left, tr->tr_b.tb_right, tol);
 	    RT_CK_TREE(tr->tr_b.tb_left);
 	    RT_CK_TREE(tr->tr_b.tb_right);
 	    SOUP_CKMAG(tr->tr_b.tb_left->tr_d.td_r->m_p);
