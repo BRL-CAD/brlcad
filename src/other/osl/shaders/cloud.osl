@@ -1,0 +1,65 @@
+float cloud_texture(
+                        float x,
+                        float y,
+                        float Contrast,
+                        float initFx,
+                        float initFy
+){
+
+      float t1 = 0.0;
+      float t2 = 0.0;
+
+      float Fx = 2.0 * M_PI * initFx;
+      float Fy = 2.0 * M_PI * initFy;
+      float Px = M_PI_2 * sin(0.5 * Fy * y);
+      float Py = M_PI_2 * sin(0.5 * Fx * x);
+
+      float C = 1.0;
+
+      int NUMSINES = 4;
+
+      for (int i = 0; i < NUMSINES; i++) {
+          /*
+           * Compute one term of each summation.
+           */
+           t1 += C * sin(Fx * x + Px) + Contrast;
+           t2 += C * sin(Fy * y + Py) + Contrast;
+
+          /*
+           * Compute the new phases and frequencies.
+           * N.B. The phases shouldn't vary the same way!
+           */
+           Px = M_PI_2 * sin(Fy * y);
+           Py = M_PI_2 * sin(Fx * x);
+           Fx *= 2.0;
+           Fy *= 2.0;
+           C *= 0.707;
+      }
+      /* Choose a magic k! */
+      /* Compute max possible summation */
+      float k =  NUMSINES * 2 * NUMSINES;
+      return t1 * t2 / k;
+}
+
+surface cloud (
+        float thresh = 0.35,
+        float range = 0.3
+        ){
+
+        float intensity = cloud_texture(u, v, 1.0, 2.0, 1.0);
+
+        /* Intensity is normalized - check bounds */
+        intensity = clamp(intensity, 0.0, 1.0);
+
+        /* Compute Translucency Function */
+        float TR = 1.0 - (intensity - thresh) / range;
+
+        clamp(TR, 0.0, 1.0);
+
+        color weight;
+
+        weight[0] = ((1-TR) * intensity + (TR * .31));	/* Red */
+        weight[1] = ((1-TR) * intensity + (TR * .31));	/* Green */
+        weight[2] = ((1-TR) * intensity + (TR * .78));	/* Blue */
+        Ci = weight*diffuse(N);
+}
