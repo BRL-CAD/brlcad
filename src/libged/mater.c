@@ -39,7 +39,7 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 	"R, G, B color values (0 to 255)? ('del' to delete, '.' to skip) ",
 	"G component color value? ('.' to skip) ",
 	"B component color value? ('.' to skip) ",
-	"Should this object's shader override lower nodes? ('.' to skip) "
+	"Should this object's shader override lower nodes? ([y/n] or '.' to skip) "
     };
 
     struct directory *dp = NULL;
@@ -210,8 +210,8 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 	comb->rgb_valid = 1;
     }
 
-    if (!BU_STR_EQUAL(argv[6], ".")) {
-	comb->inherit = bu_str_true(argv[6]);
+    if (!BU_STR_EQUAL(argv[argc - 1], ".")) {
+	comb->inherit = bu_str_true(argv[argc - 1]);
 	if (comb->inherit > 1) {
 	    bu_vls_printf(gedp->ged_result_str, "Inherit value should be 0 or 1");
 	    rt_db_free_internal(&intern);
