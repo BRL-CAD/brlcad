@@ -458,35 +458,6 @@
  *	# the q3 is pointing directly at us (we are on a positive z)
  *	rotate -45 45 cube
  *
- *	    # Same result as above, but showing how to use reference
- *	    # objects to create a new axis (recall that the positions
- *	    # of sphere1 and sphere2 match the angle between the
- *	    # corners of q2 and q4 that are facing us, and that CENTER
- *	    # defaults to the center of OBJECT)
- *	    rotate -k sphere1 -a sphere2 -d -90 cube
- *
- *	    # same results as above
- *	    rotate -k sphere1 -a sphere2 -c cube -d -90 cube
- *	    rotate -k sphere1 -a sphere2 -c . -d -90 cube
- *	    rotate -k sphere1 -a sphere2 -d 270 cube
- *	    rotate -k sphere2 -a sphere1 -d 90 cube
- *	    rotate -k sphere2 -a sphere1 -d -270 cube
- *
- *	    # same results as above; showing that OBJECT is
- *	    # constrained to AXIS
- *	    rotate -k sphere1 -a sphere2 -d -90 20349 3992.3 cube
- *
- *	    # same results as above, using coordinates to rotate
- *	    # unconstrained by an axis
- *	    rotate -k -1 -1 0 -a 0 0 -1 cube
- *
- *	# Rotate the cube so that the corner facing us in q1 is
- *	# pointing directly at us. This is similar to the last
- *	# examples in that it will use the same reference AXIS, but in
- *	# this case, the constraint to AXIS will be overriden so that
- *	# we can rotate perpendicular to AXIS.
- *	rotate -k sphere1 -a sphere2 -O -d  
- *
  *	# Rotate the cube on its center, from sphere1 to sphere2
  *	# (this just happens to be on the z-axis)
  *	rotate -k sphere1 -a sphere2 cube
@@ -499,9 +470,9 @@
  *	    rotate -k -z 0 -r -z 1 -c . -k sphere1 -a sphere2 cube
  *
  *	    # all of these rotate it back
- *	    rotate -k -z 1 -r -1 -k sphere1 -a sphere2 cube
- *	    rotate -k -z 1 -a 0 -k sphere1 -a sphere2 cube
- *	    rotate -k -z 5000 -a 23 -k sphere1 -a sphere2 cube
+ *	    rotate -k -z 1 -r -z -1 -k sphere1 -a sphere2 cube
+ *	    rotate -k -z 1 -a -z 0 -k sphere1 -a sphere2 cube
+ *	    rotate -k -z 5000 -a -z 23 -k sphere1 -a sphere2 cube
  *
  *          # Note that in the examples where AXIS is specified, even
  *          # if sphere1 and sphere2 had different z-coordinates for
