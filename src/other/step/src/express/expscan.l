@@ -434,6 +434,11 @@ exp_flex_init()
 {
 	/* yy_init is what tells flex to reinitialize its buffers */
 
+#  if (YY_FLEX_MAJOR_VERSION==2 && YY_FLEX_MINOR_VERSION==5 && YY_FLEX_SUBMINOR_VERSION>=33)
+	/* flex 2.5.33 flips the polarity of this flag */
+	yy_init = 0;
+#  else
 	yy_init = 1;
+#  endif
 }
 #endif
