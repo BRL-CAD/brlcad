@@ -31,19 +31,21 @@
  *	translate (alias for "alter translate")
  *
  * SYNOPSIS
- *	translate [FROM] TO OBJECT...
- * 	translate [[-n] -k {FROM_OBJECT | FROM_POS}] \
+ *	translate [FROM] TO OBJECT ...
+ * 	translate [[-n] -k {FROM_OBJECT | FROM_POS}]
  * 	    [-n] [-a | -r] {TO_OBJECT | TO_POS} OBJECT ...
  *
  *	*OBJECT:
  *	    [PATH/]OBJECT [OFFSET_DIST]
  *	
  *	*POS | *DIST:
- *	    {x [y [z]]} | {[-x {x | X_OBJ}] [-y {y | Y_OBJ}] [-z {z | Z_OBJ}]}
+ *	    {x [y [z]]} | {[-x {x | X_OBJ}] [-y {y | Y_OBJ}]
+ *	        [-z {z | Z_OBJ}]}
  *
  * DESCRIPTION
- *	Used to move one or more instances of primitive or 
- *	combination objects.
+ *	Used to move one or more instances of primitive or combination
+ *	objects. The positions of OBJECTs are translated from FROM to
+ *	TO.
  *
  *	If FROM is omited, the bounding box center of the first
  *	[PATH/]OBJECT is used instead. To use the natural origin of
@@ -70,15 +72,16 @@
  *	    is omitted, the keypoint defaults to OBJECT's bounding
  *	    box center.
  *
+ * 	-a TO_POS | TO_OBJECT
+ *	    Interpret TO_POS/TO_OBJECT as an absolute position. The
+ *	    vector implied by FROM and TO is used to move OBJECT. This
+ *	    option is required if TO_OBJECT is specified.
+ *
  * 	-r TO_POS
  *	    Interpret TO_POS as the relative distance to move OBJECT
  *          from FROM keypoint. This is the default if TO_POS is set.
  *	    Must be omited if TO_OBJECT is specified.
  *
- * 	-a TO_POS | TO_OBJECT
- *	    Interpret TO_POS/TO_OBJECT as an absolute position. The
- *	    vector implied by FROM and TO is used to move OBJECT. This
- *	    option is required if TO_OBJECT is specified.
  *
  * VISUAL EXAMPLE:
  *	translate -n -k rcc.s -a sph.s table.c/box.c 
@@ -240,27 +243,26 @@
  *
  * SYNOPSIS
  *	rotate [-R] [AXIS] [CENTER] ANGLE OBJECT ...
- *	rotate [-R] [[AXIS_FROM] AXIS_TO] [CENTER] [ANGLE_ORIGIN] \
+ *	rotate [-R] [[AXIS_FROM] AXIS_TO] [CENTER] [ANGLE_ORIGIN]
  *	    [ANGLE_FROM] ANGLE_TO OBJECT ...
- * 	rotate [-R] \
- * 	    [[[-n] -k {AXIS_FROM_OBJECT | AXIS_FROM_POS}] \
- * 	    [[-n] [-a | -r] {AXIS_TO_OBJECT | AXIS_TO_POS}]] \
- * 	    [[-n] -c {CENTER_OBJECT | CENTER_POS}] \
- * 	    [[-n] -O {ANGLE_ORIGIN_OBJECT| ANGLE_ORIGIN_POS}] \
- * 	    {[[-n] -k {ANGLE_FROM_OBJECT | ANGLE_FROM_POS}] \
- * 	    [-n | -o] [-a | -r | -d] \
- * 	    {ANGLE_TO_OBJECT | ANGLE_TO_POS}} OBJECT ...
+ * 	rotate [-R] [[[-n] -k {AXIS_FROM_OBJECT | AXIS_FROM_POS}]
+ * 	    [[-n] [-a | -r] {AXIS_TO_OBJECT | AXIS_TO_POS}]]
+ * 	    [[-n] -c {CENTER_OBJECT | CENTER_POS}]
+ * 	    [[-n] -O {ANGLE_ORIGIN_OBJECT| ANGLE_ORIGIN_POS}]
+ * 	    {[[-n] -k {ANGLE_FROM_OBJECT | ANGLE_FROM_POS}]
+ * 	    [-n | -o] [-a | -r | -d] {ANGLE_TO_OBJECT | ANGLE_TO_POS}}
+ * 	    OBJECT ...
  *
  *	*OBJECT:
  *	    [PATH/]OBJECT [OFFSET_DIST]
  *	
  *	*POS | *DIST:
- *	    {x [y [z]]} | {[-x {x | X_OBJECT}] [-y {y | Y_OBJECT}] \
+ *	    {x [y [z]]} | {[-x {x | X_OBJECT}] [-y {y | Y_OBJECT}]
  *	        [-z {z | Z_OBJECT}]}
  *
  * DESCRIPTION
  *	Used to rotate one or more instances of primitive or
- *	combination objects. OBJECT rotates around CENTER at ANGLE,
+ *	combination objects. OBJECTs rotate around CENTER at ANGLE,
  *	which is optionally constrained to rotating around AXIS. *POS
  *	represents either position, distance, degrees, or radians,
  *	depending on the context and supplied arguments. 
@@ -305,10 +307,11 @@
  *
  *	-c CENTER_OBJECT | CENTER_POS
  *	    Set CENTER of the rotation. If omitted, CENTER defaults to
- *	    the bounding box center of OBJECT. To use the natural
- *	    origin of the first OBJECT as CENTER, CENTER_OBJECT must
- *	    be set to OBJECT. Set CENTER_OBJECT to "." to to force
- *	    each OBJECT to rotate around its own center.
+ *	    the bounding box center of the first OBJECT. To use the
+ *	    natural origin of the first OBJECT as CENTER, you must set
+ *	    CENTER_OBJECT to OBJECT and enable the matching -n option.
+ *	    Set CENTER_OBJECT to "." to to force each OBJECT to rotate
+ *	    around its own center.
  *
  *	-O ANGLE_ORIGIN_OBJECT | ANGLE_ORIGIN_POS
  *	    Sets ANGLE_ORIGIN, the origin of ANGLE. ANGLE_ORIGIN
@@ -536,53 +539,75 @@
  *	scale (alias for "alter scale")
  *
  * SYNOPSIS
- *	FIXME: ensure this translate syntax will work for scale
- *	scale [FROM] TO OBJECT...
- * 	scale [[-n] -k {FROM_OBJECT | FROM_POS}] \
- * 	    [-n] [-a | -r] {TO_OBJECT | TO_POS} OBJECT ...
+ *	scale [SCALE] [CENTER] FACTOR OBJECT ...
+ *	scale [[SCALE_FROM] SCALE_TO] [CENTER] [FACTOR_FROM]
+ *	    FACTOR_TO OBJECT ...
+ * 	scale [[[-n] -k {SCALE_FROM_OBJECT | SCALE_FROM_POS}]
+ * 	    [-n] [-a | -r] {SCALE_TO_OBJECT | SCALE_TO_POS}] 
+ * 	    [[-n] -c {CENTER_OBJECT | CENTER_POS}]
+ * 	    [[-n] -k {FACTOR_FROM_OBJECT | FACTOR_FROM_POS}]
+ * 	    [-n] [-a | -r] {FACTOR_TO_OBJECT | FACTOR_TO_POS} OBJECT
+ * 	    ...
  *
  *	*OBJECT:
  *	    [PATH/]OBJECT [OFFSET_DIST]
  *	
  *	*POS | *DIST:
- *	    {x [y [z]]} | {[-x {x | X_OBJ}] [-y {y | Y_OBJ}] [-z {z | Z_OBJ}]}
+ *	    {x [y [z]]} | {[-x {x | X_OBJ}] [-y {y | Y_OBJ}]
+ *	        [-z {z | Z_OBJ}]}
  *
  * DESCRIPTION
- *      FIXME: This is copied directly from translate
- *	Used to move one or more instances of primitive or 
- *	combination objects.
+ *	Used to enlarge or reduce the size of one or more instances of
+ *	primitive or combination objects, by applying a scaling
+ *	factor. OBJECTs are scaled by a FACTOR of SCALE, at CENTER.
  *
- *	If FROM is omited, the bounding box center of the first
- *	[PATH/]OBJECT is used instead. To use the natural origin of
- *	the first [PATH/]OBJECT as FROM, FROM_OBJECT must be manually
- *	set to [PATH/]OBJECT.
+ *	It is important to note that FACTOR is intepreted as a factor
+ *	of SCALE. Although it might appear so, the distance between
+ *	SCALE and FACTOR points is irrelivant.
  *
- *	If FROM is "-k .", then each individual [PATH/]OBJECT argument
- *	uses its own bounding box center (or natural origin if
- *	"-n -k ." is used). Likewise, if TO is "-a ." or "-n -a ."
+ *	By default, the reference scale SCALE, is from a
+ *	SCALE_FROM_POS of (0,0,0) to a SCALE_TO_POS of (1,1,1). Given
+ *	these default SCALE values, specifying a FACTOR_TO_POS of
+ *	(2,2,2) would double the size of OBJECT, while (0.5,0.5,0.5)
+ *	would halve its size.
+ *
+ *	If SCALE were from a SCALE_FROM_POS of (0,0,0) to a
+ *	SCALE_TO_POS of (5,10,15), doubling the size of OBJECT would
+ *	require a FACTOR_TO_POS of (10,20,30), or of (2.5,5,7.5) in
+ *	order to halve it. Specifying a FACTOR_TO_POS of (30,30,30)
+ *	would result in the x-axes of all OBJECT's being stretched to
+ *	quintuple their original lengths, y-axes tripled in length,
+ *	and z-axes double in length. 
  *	
- *	FROM_POS and TO_POS represent 3d points in "x y z"
- *	coordinates. To specify one or more specific axis while
- *	ignoring the others, the options "-x x", "-y y", "-z z" may be
- *	used as FROM_POS or TO_POS. 
+ * 	(see DESCRIPTION of translate command for other information)
  *
  * OPTIONS
- * 	-n FROM_OBJECT | TO_OBJECT
- *	    Use the natural origin of FROM_OBJECT and/or TO_OBJECT,
- *	    rather than the default of its bounding box center.
+ * 	-n *_FROM_OBJECT | *_TO_OBJECT
+ *	    Use the natural origin of *_FROM_OBJECT and/or
+ *	    *_TO_OBJECT, rather than the default of its bounding box
+ *	    center.
  *
- * 	-k FROM_OBJECT | FROM_POS
- *	    Sets the keypoint to FROM_OBJECT's bounding box
- *	    center (or natural origin if -n is used). If this option
- *	    is omitted, the keypoint defaults to OBJECT's bounding
- *	    box center.
+ * 	-k *_FROM_OBJECT | *_FROM_POS
+ *	    Sets the keypoint to *_FROM_OBJECT's bounding box center
+ *	    (or natural origin if -n is used). If this option is
+ *	    omitted, the keypoint defaults to the first OBJECT's
+ *	    bounding box center.
  *
- * 	-r TO_POS
- *	    Interpret TO_POS as the relative distance to scale OBJECT
- *          from FROM keypoint. This is the default if TO_POS is set.
- *	    Must be omited if TO_OBJECT is specified.
+ *	-c CENTER_OBJECT | CENTER_POS
+ *	    Set CENTER of where the scale will occur. If omitted,
+ *	    CENTER defaults to the bounding box center of the first
+ *	    OBJECT. To use the natural origin of the first OBJECT as
+ *	    CENTER, you must set CENTER_OBJECT to OBJECT and enable
+ *	    the matching -n option. Set CENTER_OBJECT to "." to to
+ *	    force each OBJECT to scale from its own center.
  *
- * 	-a TO_POS | TO_OBJECT
+ * 	-r *_TO_POS
+ *	    Interpret *_TO_POS as the relative distance to scale
+ *	    OBJECTs from FROM keypoint. This is the default if TO_POS
+ *	    is set.  Must be omited to specify *_TO_OBJECT is
+ *	    specified.
+ *
+ * 	-a *_TO_POS | *_TO_OBJECT
  *	    Interpret TO_POS/TO_OBJECT as an absolute position. The
  *	    vector implied by FROM and TO is used to scale OBJECT.
  *	    This option is required if TO_OBJECT is specified.
@@ -607,7 +632,7 @@
 #if 0
 HIDDEN int
 rotate(struct ged *gedp, vect_t *keypoint,
-	  struct db_full_path *path,
+	  sruct db_full_path *path,
 	  struct directory *d_obj, vect_t delta,
 	  int relative_pos_flag)
 {
