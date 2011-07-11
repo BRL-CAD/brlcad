@@ -37,8 +37,9 @@
  *
  *	*OBJECT:
  *	    [PATH/]OBJECT [OFFSET_DIST]
+ *	    [PATH/]OBJECT [x [y [z]]]
  *	
- *	*POS | *DIST:
+ *	*POS:
  *	    {x [y [z]]} | {[-x {x | X_OBJ}] [-y {y | Y_OBJ}]
  *	        [-z {z | Z_OBJ}]}
  *
@@ -255,8 +256,9 @@
  *
  *	*OBJECT:
  *	    [PATH/]OBJECT [OFFSET_DIST]
+ *	    [PATH/]OBJECT [x [y [z]]]
  *	
- *	*POS | *DIST:
+ *	*POS:
  *	    {x [y [z]]} | {[-x {x | X_OBJECT}] [-y {y | Y_OBJECT}]
  *	        [-z {z | Z_OBJECT}]}
  *
@@ -551,12 +553,13 @@
  *
  *	*OBJECT:
  *	    [PATH/]OBJECT [OFFSET_DIST]
+ *	    [PATH/]OBJECT [x [y [z]]]
  *
  *	FACTOR_TO_POS:
  *	    {xyz_factor | {x y [z]}} | {[-x {x | X_OBJ}]
  *	        [-y {y | Y_OBJ}] [-z {z | Z_OBJ}]}
  *	
- *	*POS | *DIST (except FACTOR_TO_POS):
+ *	*POS (except FACTOR_TO_POS):
  *	    {x [y [z]]} | {[-x {x | X_OBJ}] [-y {y | Y_OBJ}]
  *	        [-z {z | Z_OBJ}]}
  *
