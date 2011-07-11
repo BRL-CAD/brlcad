@@ -38,14 +38,14 @@
 #
 # ******************************************************************
 #
-# Early versions of this CMakeLists.txt file were based on the VTK 
+# Early versions of this CMakeLists.txt file were based on the VTK
 # CMakeLists.txt file, also licensed under Modified BSD.
 
 # *******************************************************************
 # ***                 BRL-CAD's CMakeLists.txt                    ***
 # *******************************************************************
 #
-# This file define the toplevel CMake build logic for BRL-CAD.  
+# This file define the toplevel CMake build logic for BRL-CAD.
 # As best as is reasonably possible, proper ordering and
 # separation of tests and settings should be maintained per the
 # recommended standard layout.  The tests should be added to the
@@ -72,7 +72,7 @@
 # *******************************************************************
 # ***                 Top Level Settings                          ***
 # *******************************************************************
-# This file contains the top level CMakeLists.txt logic for the 
+# This file contains the top level CMakeLists.txt logic for the
 # BRL-CAD software package.
 # Minimum required version of CMake
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
@@ -92,12 +92,12 @@ PROJECT(BRLCAD)
 # older versions of libraries in install directories as search results.
 # Generally, the desired behavior is to ignore whatever libraries are
 # in the install directories, and only use external library results if
-# they are something already found on the system due to non-BRL-CAD 
+# they are something already found on the system due to non-BRL-CAD
 # installation (source compile, package managers, etc.).  Unfortunately,
 # CMake's standard behavior is to add a CMAKE_INSTALL_PREFIX to the
 # search path once defined, resulting in (for us) an unexpected behavior
 # of returning old installed libraries when CMake is re-run in a
-# directory.  
+# directory.
 #
 # To work around this, there are two possible approaches.  One,
 # identified by Maik Beckmann, operates on CMAKE_SYSTEM_PREFIX_PATH:
@@ -112,11 +112,11 @@ PROJECT(BRLCAD)
 # BRL-CAD initially operated on CMAKE_SYSTEM_PREFIX_PATH, but has
 # switched to using the *_IGNORE_PATH variables.
 #
-# The complication with ignoring install paths is if we are 
-# installing to a "legitimate" system search path - i.e. our 
-# CMAKE_INSTALL_PREFIX value is standard enough that it is a legitimate 
-# search target for find_package. In this case, we can't exclude 
-# accidental hits on our libraries without also excluding legitimate 
+# The complication with ignoring install paths is if we are
+# installing to a "legitimate" system search path - i.e. our
+# CMAKE_INSTALL_PREFIX value is standard enough that it is a legitimate
+# search target for find_package. In this case, we can't exclude
+# accidental hits on our libraries without also excluding legitimate
 # find_package results.  So the net results are:
 #
 # 1.  If you are planning to install to a system directory (typically
@@ -152,7 +152,7 @@ ENDIF(CMAKE_SYSTEM_IGNORE_PATH)
 MARK_AS_ADVANCED(CMAKE_SYSTEM_IGNORE_PATH)
 
 #---------------------------------------------------------------------
-# By default (as of version 2.8.2) CMake does not provide access to 
+# By default (as of version 2.8.2) CMake does not provide access to
 # global lists of executable and library targets.  This is useful
 # in a number of situations related to formulating custom rules and
 # target dependency management.  To avoid the necessity of replacing
@@ -176,10 +176,10 @@ MARK_AS_ADVANCED(CMAKE_SYSTEM_IGNORE_PATH)
 # results in the command override mechanism needed for target ordering
 # needing to serve two purposes at once.
 
-# First, define a macro for building lists of files.  Distcheck needs 
-# to know what files are "supposed" to be present in order to make 
-# sure the source tree is clean prior to building a distribution 
-# tarball, hence this macro stores its results in files and not 
+# First, define a macro for building lists of files.  Distcheck needs
+# to know what files are "supposed" to be present in order to make
+# sure the source tree is clean prior to building a distribution
+# tarball, hence this macro stores its results in files and not
 # variables  It's a no-op in a SUBBUILD.
 MACRO(CMAKEFILES)
 	IF(NOT BRLCAD-IS_SUBBUILD)
@@ -251,7 +251,7 @@ IF(NOT BRLCAD-IS_SUBBUILD)
 	# so remove any old cmakefiles.cmake file manually
 	FILE(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/cmakefiles.cmake)
 	FILE(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/cmakepaths.cmake)
-  
+
 	# The add_subdirectory wrapper must clear old files holding distcheck lists
 	# to avoid continually growing files over multiple configure runs, as well
 	# as adding directories to distcheck.
@@ -275,8 +275,8 @@ SET(CMAKE_MODULE_PATH "${BRLCAD_CMAKE_DIR};${CMAKE_MODULE_PATH}")
 INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_Util.cmake)
 
 #---------------------------------------------------------------------
-# Save the current LC_ALL, LC_MESSAGES, and LANG environment variables 
-# and set them to "C" so things like date output are as expected. 
+# Save the current LC_ALL, LC_MESSAGES, and LANG environment variables
+# and set them to "C" so things like date output are as expected.
 SET(_orig_lc_all      $ENV{LC_ALL})
 SET(_orig_lc_messages $ENV{LC_MESSAGES})
 SET(_orig_lang        $ENV{LANG})
@@ -303,22 +303,22 @@ SET(CAD_VERSION "${BRLCAD_MAJOR_VERSION}.${BRLCAD_MINOR_VERSION}.${BRLCAD_PATCH_
 SET(BRLCAD_VERSION "${CAD_VERSION}")
 
 #---------------------------------------------------------------------
-# Write out entries to populate a tm struct to be used for time deltas 
+# Write out entries to populate a tm struct to be used for time deltas
 # later
 IF(NOT BRLCAD-IS_SUBBUILD)
 	SET(DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/DELTA_START")
 	configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/timedelta_start.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_start.c)
-	TRY_RUN(TIME_RESULT TIME_COMPILED 
+	TRY_RUN(TIME_RESULT TIME_COMPILED
 		${CMAKE_BINARY_DIR}/CMakeTmp
 		${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_start.c
 		OUTPUT_VARIABLE COMPILEMESSAGES)
 ENDIF(NOT BRLCAD-IS_SUBBUILD)
 
 #---------------------------------------------------------------------
-# Unfortunately, CMake doesn't give you variables with current day, 
-# month, etc.  There are several possible approaches to this, but most 
-# (e.g. the date command) are not cross platform. We build a small C 
-# file which writes out the needed values to files in the build 
+# Unfortunately, CMake doesn't give you variables with current day,
+# month, etc.  There are several possible approaches to this, but most
+# (e.g. the date command) are not cross platform. We build a small C
+# file which writes out the needed values to files in the build
 # directory. Those files are then read and stripped by CMake.
 SET(CONFIG_TIME_DAY_FILE "${BRLCAD_BINARY_DIR}/include/conf/CONFIG_TIME_DAY")
 SET(CONFIG_TIME_MONTH_FILE "${BRLCAD_BINARY_DIR}/include/conf/CONFIG_TIME_MONTH")
@@ -327,7 +327,7 @@ SET(CONFIG_TIMESTAMP_FILE "${BRLCAD_BINARY_DIR}/include/conf/CONFIG_TIMESTAMP")
 FILE(MAKE_DIRECTORY "${BRLCAD_BINARY_DIR}/include")
 FILE(MAKE_DIRECTORY "${BRLCAD_BINARY_DIR}/include/conf")
 configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/time.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/time.c)
-TRY_RUN(TIME_RESULT TIME_COMPILED 
+TRY_RUN(TIME_RESULT TIME_COMPILED
 	${CMAKE_BINARY_DIR}/CMakeTmp
 	${CMAKE_BINARY_DIR}/CMakeTmp/time.c
 	OUTPUT_VARIABLE COMPILEMESSAGES)
@@ -361,18 +361,18 @@ IF(NOT WIN32)
 ENDIF(NOT WIN32)
 
 #---------------------------------------------------------------------
-# We want to check /usr/local by default, so add it 
+# We want to check /usr/local by default, so add it
 SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} /usr/local)
 SET(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} /usr/local/include)
 
 #---------------------------------------------------------------------
-# In the case of CMake, we're usually doing one of several Build 
+# In the case of CMake, we're usually doing one of several Build
 # Types.  It's very rare to want to NOT specify a build type, so
 # make it a little more work to do so.
 IF(NOT CMAKE_BUILD_TYPE)
 	MESSAGE("CMake build type not set - performing Debug build.")
    MESSAGE("* To use optimized settings intended for a package or system install,")
-	MESSAGE("  specify a Release build (on the command line, -DCMAKE_BUILD_TYPE=Release).") 
+	MESSAGE("  specify a Release build (on the command line, -DCMAKE_BUILD_TYPE=Release).")
 	MESSAGE("* To force CMake to not set build type, specify -DCMAKE_BUILD_TYPE=NONE")
 	SET(CMAKE_BUILD_TYPE Debug)
 ENDIF(NOT CMAKE_BUILD_TYPE)
@@ -382,7 +382,7 @@ IF(CMAKE_BUILD_TYPE MATCHES "NONE")
 ENDIF(CMAKE_BUILD_TYPE MATCHES "NONE")
 
 #---------------------------------------------------------------------
-# The location in which to install BRLCAD. Need a good Debug location 
+# The location in which to install BRLCAD. Need a good Debug location
 # for Windows.  Only do this if CMAKE_INSTALL_PREFIX hasn't been set
 # already, to try and allow parent builds (if any) some control.
 IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
@@ -401,8 +401,8 @@ ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 SET(BRLCAD_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE STRING "BRL-CAD install prefix")
 
 #---------------------------------------------------------------------
-# The following logic is what allows binaries to run successfully in 
-# the build directory AND install directory.  Thanks to plplot for 
+# The following logic is what allows binaries to run successfully in
+# the build directory AND install directory.  Thanks to plplot for
 # identifying the necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.
 
 # use, i.e. don't skip the full RPATH for the build tree
@@ -418,12 +418,12 @@ if (NOT APPLE)
 endif(NOT APPLE)
 SET(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
 
-# add the automatically determined parts of the RPATH which point to 
+# add the automatically determined parts of the RPATH which point to
 # directories outside the build tree to the install RPATH
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 #---------------------------------------------------------------------
-# Output directories - this is where built library and executable 
+# Output directories - this is where built library and executable
 # files will be placed after building but prior to install.
 IF(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
 	IF(WIN32)
@@ -490,7 +490,7 @@ IF(NOT PACKAGE_DIR)
 	SET(PACKAGE_DIR lib)
 ENDIF(NOT PACKAGE_DIR)
 
-# The location in which to install BRL-CAD data files 
+# The location in which to install BRL-CAD data files
 IF(NOT DATA_DIR)
 	SET(DATA_DIR "share/brlcad/${BRLCAD_VERSION}")
 ENDIF(NOT DATA_DIR)
@@ -500,17 +500,17 @@ IF(NOT MAN_DIR)
 	SET(MAN_DIR man)
 ENDIF(NOT MAN_DIR)
 
-# The location in which to install BRL-CAD documentation files 
+# The location in which to install BRL-CAD documentation files
 IF(NOT DOC_DIR)
 	SET(DOC_DIR ${DATA_DIR}/doc)
 ENDIF(NOT DOC_DIR)
 
 #---------------------------------------------------------------------
-# We will need a brlcad_config.h.in file to hold all the #cmakedefine 
-# statements, which will in turn be used to generate a brlcad_conf.h 
-# file.  In autotools this process is handled by autoheader - in the 
-# case of CMake we wrap the CHECK_* functions and the creation of the 
-# entry in the brlcad_config.h.in file into one step via a macro.  To 
+# We will need a brlcad_config.h.in file to hold all the #cmakedefine
+# statements, which will in turn be used to generate a brlcad_conf.h
+# file.  In autotools this process is handled by autoheader - in the
+# case of CMake we wrap the CHECK_* functions and the creation of the
+# entry in the brlcad_config.h.in file into one step via a macro.  To
 # run this macro, the config.h.in file must first be present, which
 # we take care of here:
 
@@ -544,7 +544,7 @@ ENDIF("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
 # *******************************************************************
 #
 # Now we define the various options for BRL-CAD - ways to enable and
-# disable features, select which parts of the system to build, etc.  
+# disable features, select which parts of the system to build, etc.
 # As much as possible, sane default options are either selected or
 # detected.
 
@@ -571,12 +571,12 @@ ELSE(CMAKE_BUILD_TYPE)
 	OPTION(BUILD_STATIC_LIBS "Build static libraries" ON)
 ENDIF(CMAKE_BUILD_TYPE)
 
-# Turn on librtserver build.  
+# Turn on librtserver build.
 OPTION(BRLCAD-ENABLE_RTSERVER "Enable the librtserver target." ON)
 
 # Turn off the brlcad.dll build.
 # It's an expert's setting at the moment.
-OPTION(BRLCAD-ENABLE_BRLCAD_LIBRARY "Use compiler warning flags" OFF)
+OPTION(BRLCAD-ENABLE_BRLCAD_LIBRARY "Build the brlcad.dll" OFF)
 MARK_AS_ADVANCED(BRLCAD-ENABLE_BRLCAD_LIBRARY)
 
 # Global third party controls - these options enable and disable ALL
@@ -671,8 +671,8 @@ OPTION(BRLCAD-BUILD_EXTRADOCS_PDF_MAN "Build PDF output from Docbook documentati
 
 #----------------------------------------------------------------------
 # The following are fine-grained options for enabling/disabling compiler
-# and source code definition settings.  Typically these are set to 
-# various configurations by the toplevel CMAKE_BUILD_TYPE setting, but 
+# and source code definition settings.  Typically these are set to
+# various configurations by the toplevel CMAKE_BUILD_TYPE setting, but
 # can also be individually set.
 
 # Enable/disable runtime debugging - these are protections for
@@ -699,7 +699,7 @@ IF(NOT BRLCAD-ENABLE_RUNTIME_DEBUG)
 	FILE(APPEND  ${CONFIG_H_FILE} "#define NO_DEBUG_CHECKING 1\n")
 ENDIF(NOT BRLCAD-ENABLE_RUNTIME_DEBUG)
 
-# Build with compiler warning flags 
+# Build with compiler warning flags
 OPTION(BRLCAD-ENABLE_COMPILER_WARNINGS "Use compiler warning flags" ON)
 MARK_AS_ADVANCED(BRLCAD-ENABLE_COMPILER_WARNINGS)
 
@@ -822,7 +822,7 @@ IF(BRLCAD-ENABLE_DTRACE)
 ENDIF(BRLCAD-ENABLE_DTRACE)
 
 
-# Load various wrapper macros for checking libraries, headers and 
+# Load various wrapper macros for checking libraries, headers and
 # functions
 INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_CheckFunctions.cmake)
 
@@ -840,8 +840,8 @@ ADD_SUBDIRECTORY(src/other)
 
 # While the primary purpose of this section is to identify libraries,
 # some of the headers we are looking for are associated with the
-# libraries checked here.  In those cases, we will handle the header 
-# logic here as opposed to separating the header logic from the 
+# libraries checked here.  In those cases, we will handle the header
+# logic here as opposed to separating the header logic from the
 # find_package call.
 
 # TODO - need to make LINKOPT vars for anything here that will
@@ -865,7 +865,7 @@ IF(APPLE)
 	IF(Carbon_FRAMEWORKS)
 		SET(Carbon_LIBRARIES "-framework Carbon" CACHE FILEPATH "Carbon framework" FORCE)
 	ENDIF(Carbon_FRAMEWORKS)
-	BRLCAD_INCLUDE_FILE(Carbon/Carbon.h HAVE_CARBON_CARBON_H) 
+	BRLCAD_INCLUDE_FILE(Carbon/Carbon.h HAVE_CARBON_CARBON_H)
 	CMAKE_FIND_FRAMEWORKS(Cocoa)
 	IF(Cocoa_FRAMEWORKS)
 		SET(Cocoa_LIBRARIES "-framework Cocoa" CACHE FILEPATH "Cocoa framework" FORCE)
@@ -876,7 +876,7 @@ ENDIF(APPLE)
 FIND_LIBRARY(CRYPT_LIBRARY NAMES crypt)
 MARK_AS_ADVANCED(CRYPT_LIBRARY)
 
-# Find Java and JNI - conditionalize the include settings on 
+# Find Java and JNI - conditionalize the include settings on
 # the success of the find_package calls.
 FIND_PACKAGE(Java)
 FIND_PACKAGE(JNI)
@@ -911,7 +911,7 @@ ENDIF(NOT WIN32)
 # socket library
 BRLCAD_CHECK_LIBRARY(SOCKET socket socket)
 
-# network socket library 
+# network socket library
 BRLCAD_CHECK_LIBRARY(NS nsl gethostbyaddr)
 
 # network library
@@ -985,7 +985,7 @@ BRLCAD_HEADER_SYS_WAIT()
 # so we need to check for it
 BRLCAD_INCLUDE_FILE(dirent.h HAVE_DIRENT_H)
 
-# Need to compare this with the configure.ac list 
+# Need to compare this with the configure.ac list
 BRLCAD_INCLUDE_FILE(arpa/inet.h HAVE_ARPA_INET_H)
 BRLCAD_INCLUDE_FILE(curses.h HAVE_CURSES_H)
 BRLCAD_INCLUDE_FILE(dlfcn.h HAVE_DLFCN_H)
@@ -1204,7 +1204,7 @@ if(BRLCAD_PRINT_VERBOSE_SUMMARY)
 		ELSE(path_label MATCHES "^CMAKE_INSTALL_PREFIX$")
 			MESSAGE("${CURRENT_LABEL}: ${CMAKE_INSTALL_PREFIX}/${${path_label}}")
 		ENDIF(path_label MATCHES "^CMAKE_INSTALL_PREFIX$")
-	ENDFOREACH() 
+	ENDFOREACH()
 	MESSAGE("")
 
 	STRING(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
@@ -1241,7 +1241,7 @@ if(BRLCAD_PRINT_VERBOSE_SUMMARY)
 			STRING(LENGTH ${CURRENT_LABEL} CURRENT_LENGTH)
 		ENDWHILE(${SETTING_LABEL_LENGTH} GREATER ${CURRENT_LENGTH})
 		MESSAGE("${CURRENT_LABEL} = ${${setting_label}}")
-	ENDFOREACH() 
+	ENDFOREACH()
 	MESSAGE("")
 
 	IF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
@@ -1320,9 +1320,9 @@ if(BRLCAD_PRINT_VERBOSE_SUMMARY)
 				STRING(LENGTH ${CURRENT_LABEL} CURRENT_LENGTH)
 			ENDWHILE(${SETTING_LABEL_LENGTH} GREATER ${CURRENT_LENGTH})
 			MESSAGE("${CURRENT_LABEL}..: ${${setting_label}}")
-		ENDFOREACH() 
+		ENDFOREACH()
 		MESSAGE("")
-	ENDFOREACH() 
+	ENDFOREACH()
 
 endif(BRLCAD_PRINT_VERBOSE_SUMMARY)
 
@@ -1343,12 +1343,12 @@ IF(NOT BRLCAD-IS_SUBBUILD)
 		COMMAND buildtimestart
 		COMMENT ""
 		)
-	ADD_CUSTOM_TARGET(timestamp ALL	
+	ADD_CUSTOM_TARGET(timestamp ALL
 		COMMAND printtimestamp
 		COMMAND ${CMAKE_COMMAND} -E rename ${BUILD_DELTA_FILE} ${BUILD_DELTA_START}
 		DEPENDS ${BUILD_DELTA_FILE}
 		)
-	ADD_CUSTOM_TARGET(buildtimedelta ALL	
+	ADD_CUSTOM_TARGET(buildtimedelta ALL
 		COMMAND buildtimeend
 		COMMAND ${CMAKE_COMMAND} -E remove ${BUILD_DELTA_START}
 		)
@@ -1424,34 +1424,34 @@ ENDIF(NOT BRLCAD-IS_SUBBUILD)
 
 # Generate the include/conf files
 
-# HOST 
+# HOST
 configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/report_hostname.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c)
 IF(NOT MSVC)
-TRY_RUN(TIME_RESULT TIME_COMPILED 
+TRY_RUN(TIME_RESULT TIME_COMPILED
 	${CMAKE_BINARY_DIR}/CMakeTmp
 	${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c
 	OUTPUT_VARIABLE COMPILEMESSAGES)
 ELSE(NOT MSVC)
 SET(CMAKE_REQUIRED_LIBRARIES ws2_32.lib)
-TRY_RUN(TIME_RESULT TIME_COMPILED 
+TRY_RUN(TIME_RESULT TIME_COMPILED
 	${CMAKE_BINARY_DIR}/CMakeTmp
 	${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c
 	OUTPUT_VARIABLE COMPILEMESSAGES
 	CMAKE_FLAGS "-DLINK_LIBRARIES:STRING=ws2_32.lib")
 ENDIF(NOT MSVC)
-FILE(APPEND ${BRLCAD_BINARY_DIR}/include/conf/HOST "\n") 
+FILE(APPEND ${BRLCAD_BINARY_DIR}/include/conf/HOST "\n")
 
 # USER
 configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/report_username.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c)
-TRY_RUN(TIME_RESULT TIME_COMPILED 
+TRY_RUN(TIME_RESULT TIME_COMPILED
 	${CMAKE_BINARY_DIR}/CMakeTmp
 	${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c
 	OUTPUT_VARIABLE COMPILEMESSAGES)
-FILE(APPEND ${BRLCAD_BINARY_DIR}/include/conf/USER "\n") 
+FILE(APPEND ${BRLCAD_BINARY_DIR}/include/conf/USER "\n")
 
 # PATH
-FILE(WRITE ${BRLCAD_BINARY_DIR}/include/conf/PATH "\"${CMAKE_INSTALL_PREFIX}\"") 
-FILE(APPEND ${BRLCAD_BINARY_DIR}/include/conf/PATH "\n") 
+FILE(WRITE ${BRLCAD_BINARY_DIR}/include/conf/PATH "\"${CMAKE_INSTALL_PREFIX}\"")
+FILE(APPEND ${BRLCAD_BINARY_DIR}/include/conf/PATH "\n")
 
 # COUNT - force CMake to look every time in case of manual removal of COUNT file
 set(countFile "countFile-NOTFOUND" CACHE STRING "Is there a count file?" FORCE)
@@ -1463,14 +1463,14 @@ else()
 	math(EXPR buildCounter "${buildCounter} + 1")
 endif()
 file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/COUNT "${buildCounter}")
-FILE(APPEND ${BRLCAD_BINARY_DIR}/include/conf/COUNT "\n") 
+FILE(APPEND ${BRLCAD_BINARY_DIR}/include/conf/COUNT "\n")
 MARK_AS_ADVANCED(countFile)
 
 # DATE
 file(READ ${CONFIG_TIMESTAMP_FILE} DATESTAMP)
 STRING(STRIP ${DATESTAMP} DATESTAMP)
 file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/DATE "\"${DATESTAMP}\"")
-FILE(APPEND ${BRLCAD_BINARY_DIR}/include/conf/DATE "\n") 
+FILE(APPEND ${BRLCAD_BINARY_DIR}/include/conf/DATE "\n")
 
 
 # Rules for the toplevel documentation files
@@ -1544,7 +1544,7 @@ IF(NOT BRLCAD-IS_SUBBUILD)
 ENDIF(NOT BRLCAD-IS_SUBBUILD)
 
 # Some files to ignore for distcheck
-SET(toplevel_ignore_files 
+SET(toplevel_ignore_files
 	${toplevel_DOCFILES}
 	BUGS
 	ChangeLog
@@ -1616,7 +1616,7 @@ IF(NOT BRLCAD-IS_SUBBUILD)
 		COMMAND ${CMAKE_COMMAND} -E remove summary
 		COMMAND ${CMAKE_COMMAND} -E remove run-*.log
 		COMMAND ${CMAKE_COMMAND} -E remove ${CPACK_SOURCE_PACKAGE_FILE_NAME}.*
-		)	
+		)
 ENDIF(NOT BRLCAD-IS_SUBBUILD)
 
 
@@ -1632,7 +1632,7 @@ MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 IF(NOT BRLCAD-IS_SUBBUILD)
 	SET(DELTA_END "${CMAKE_BINARY_DIR}/CMakeTmp/DELTA_END")
 	configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/timedelta_end.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_end.c)
-	TRY_RUN(TIME_RESULT TIME_COMPILED 
+	TRY_RUN(TIME_RESULT TIME_COMPILED
 		${CMAKE_BINARY_DIR}/CMakeTmp
 		${CMAKE_BINARY_DIR}/CMakeTmp/timedelta_end.c
 		OUTPUT_VARIABLE COMPILEMESSAGES)
