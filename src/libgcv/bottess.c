@@ -77,7 +77,8 @@ soup_rm_face(struct soup_s *s, unsigned long int i)
 }
 
 static int
-soup_add_face(struct soup_s *s, point_t a, point_t b, point_t c, const struct bn_tol *tol) {
+soup_add_face_precomputed(struct soup_s *s, point_t a, point_t b , point_t c, plane_t d, uint32_t foo)
+{
     struct face_s *f;
 
     /* grow face array if needed */
@@ -91,6 +92,8 @@ soup_add_face(struct soup_s *s, point_t a, point_t b, point_t c, const struct bn
     VMOVE(f->vert[1], b);
     VMOVE(f->vert[2], c);
 
+    HMOVE(f->plane, d);
+
     /* solve the bounding box (should this be VMINMAX?) */
     VMOVE(f->min, f->vert[0]); VMOVE(f->max, f->vert[0]);
     VMIN(f->min, f->vert[1]); VMAX(f->max, f->vert[1]);
@@ -99,33 +102,47 @@ soup_add_face(struct soup_s *s, point_t a, point_t b, point_t c, const struct bn
     f->min[X]-=.1; f->min[Y]-=.1; f->min[Z]-=.1;
     f->max[X]+=.1; f->max[Y]+=.1; f->max[Z]+=.1;
 
-    /* solve the plane */
-    bn_mk_plane_3pts(f->plane, f->vert[0], f->vert[1], f->vert[2], tol);
-
-    /* set flags */
-    f->foo = OUTSIDE;
+    f->foo = foo;
     s->nfaces++;
     return 0;
 }
 
 static int
+soup_add_face(struct soup_s *s, point_t a, point_t b, point_t c, const struct bn_tol *tol) {
+    plane_t p;
+
+    /* solve the plane */
+    bn_mk_plane_3pts(p, a, b, c, tol);
+
+    return soup_add_face_precomputed(s, a, b, c, p, OUTSIDE);
+}
+
+static int
 split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *right, unsigned long int right_face, const struct bn_tol *tol) {
     struct face_s *lf, *rf;
-    fastf_t dot;
+    fastf_t dot[3];
+    vect_t dir;
 
     lf = left->faces+left_face;
     rf = right->faces+right_face;
 
-    dot = VDOT(lf->plane, rf->plane);
+    *dot = VDOT(lf->plane, rf->plane);
 
-    if(BN_VECT_ARE_PARALLEL(dot, tol)) {
+    if(BN_VECT_ARE_PARALLEL(*dot, tol)) {
 	if(!NEAR_EQUAL(lf->plane[H],rf->plane[H],tol->dist))
 	    return 1;	/* parallel and not colocated. */
 	/* hm, colocated, need to figure out how to splice correctly? */
 	return 2;
     }
 
+    VCROSS(dir, lf->plane, rf->plane);
+
     /* test if the intersect line is on both triangles,  if so, alter the soup */
+#if 0
+    if(intersects()) {
+	point_t
+    }
+#endif
 
     return 0;
 }
@@ -343,7 +360,9 @@ gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 {
     union tree *ret_tree = NULL;
 
+#if 0
     bu_bomb("No\n");
+#endif
 
     if (!tsp || !curtree || !pathp || !client_data) {
 	bu_log("INTERNAL ERROR: gcv_bottess_region_end missing parameters\n");
