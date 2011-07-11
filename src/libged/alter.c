@@ -999,7 +999,7 @@ no_more_args: /* for breaking out, above */
 	    bu_vls_printf(gedp->ged_result_str, "; translation failed");
 	    return GED_ERROR;
 	}
-     else {
+    } else {
 	if (alter_translate(gedp, &keypoint, &path, d_obj, delta, rel_flag) ==
 	    GED_ERROR) {
 	    db_free_full_path(&path);
