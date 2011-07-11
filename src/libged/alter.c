@@ -551,8 +551,12 @@
  *
  *	*OBJECT:
  *	    [PATH/]OBJECT [OFFSET_DIST]
+ *
+ *	FACTOR_TO_POS:
+ *	    {xyz_factor | {x y [z]}} | {[-x {x | X_OBJ}]
+ *	        [-y {y | Y_OBJ}] [-z {z | Z_OBJ}]}
  *	
- *	*POS | *DIST:
+ *	*POS | *DIST (except FACTOR_TO_POS):
  *	    {x [y [z]]} | {[-x {x | X_OBJ}] [-y {y | Y_OBJ}]
  *	        [-z {z | Z_OBJ}]}
  *
@@ -614,11 +618,13 @@
  *
  * EXAMPLES
  *	# All of the following double the size of cube from its center
+ *	scale 2 cube
  *	scale 2 2 2 cube
  *	scale -r 2 2 2 cube
+ *	scale -r 2 cube
  *	scale -k 0 0 0 -a 2 2 2 cube
- *	scale -k 0 0 0 -a 1 1 1 -c cube -r 2 2 2 cube
- *	scale -k 0 0 0 -a 1 1 1 -c . -r 2 2 2 cube
+ *	scale -k 0 0 0 -a 1 1 1 -c cube -r 2 cube
+ *	scale -k 0 0 0 -a 1 1 1 -c . -r 2 cube
  *	scale -k 0 0 0 -a 1 1 1 -c . -a 2 2 2 cube
  *	scale -k 5 10 15 -a 7 11 -2 -r 4 2 34 cube
  *	scale -k 5 10 15 -a 7 11 -2 -k 0 0 0 -a 4 2 34 cube
@@ -993,7 +999,7 @@ no_more_args: /* for breaking out, above */
 	    bu_vls_printf(gedp->ged_result_str, "; translation failed");
 	    return GED_ERROR;
 	}
-    } else {
+     else {
 	if (alter_translate(gedp, &keypoint, &path, d_obj, delta, rel_flag) ==
 	    GED_ERROR) {
 	    db_free_full_path(&path);
