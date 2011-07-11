@@ -613,7 +613,18 @@
  *	    This option is required if TO_OBJECT is specified.
  *
  * EXAMPLES
- *	XXX: add examples
+ *	# All of the following double the size of cube from its center
+ *	scale 2 2 2 cube
+ *	scale -r 2 2 2 cube
+ *	scale -k 0 0 0 -a 2 2 2 cube
+ *	scale -k 0 0 0 -a 1 1 1 -c cube -r 2 2 2 cube
+ *	scale -k 0 0 0 -a 1 1 1 -c . -r 2 2 2 cube
+ *	scale -k 0 0 0 -a 1 1 1 -c . -a 2 2 2 cube
+ *	scale -k 5 10 15 -a 7 11 -2 -r 4 2 34 cube
+ *	scale -k 5 10 15 -a 7 11 -2 -k 0 0 0 -a 4 2 34 cube
+ *	scale -k 5 10 15 -a 7 11 -2 -k 0 0 0 -r 4 2 34 cube
+ *	scale -k 5 10 15 -a 7 11 -2 -k 3 6 9 -r 7 8 43 cube
+ *	scale -k 5 10 15 -a 7 11 -2 -c cube -k 3 6 9 -r 7 8 43 cube
  *                                                          
  */
 
