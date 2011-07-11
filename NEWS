@@ -42,19 +42,19 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 This release marks the introduction of a new CMake build system for
-BRL-CAD.  CMake is a cross-platform build system infrastructure
-capable of generating native build system logic for a wide variety of
+BRL-CAD.  CMake is cross-platform build system infrastructure capable
+of generating native build system logic for a wide variety of
 operating systems and compilation environments.  Cliff Yapp has been
 diligently working on this adaptation for a number of months in order
 to simplify the task of maintaining BRL-CAD on multiple platforms.
 
-Previously, there were two build sytems being maintained in BRL-CAD.
-One system was based on the GNU Autotools suite for Unix/Linux/BSD
-platforms (including Mac OSX); the other was Microsoft Visual Studio
-files for Windows.  The new build system handles all supported
-platforms including Windows from the same build logic.  This
-eliminates the need to manually update multiple build systems and
-improves BRL-CAD cross-platform maintainability.
+Previously, two separate build systems were being maintained: one
+system (GNU Autotools) for Linux, UNIX, and BSD platforms (including
+Mac OS X); and another separate system (Microsoft Visual Studio) for
+Windows.  The new build system supports all platforms (including
+Windows) from the same build logic.  This eliminates the need to
+manually update multiple build systems and improves BRL-CAD
+cross-platform maintainability.
 
 * cross-platform 64-bit ISST (cmake-only) - Cliff Yapp, Erik Greenwald
 * fixed mged zoom out mouse binding on Linux/*BSD - Cliff Yapp
