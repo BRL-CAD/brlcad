@@ -579,16 +579,33 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
         switch (oper) {
             case NMG_BOOL_ADD: {
                 struct faceuse *fu;
+                vect_t s_min_pt;
+                vect_t s_max_pt;
+
+                /* find new sA shell bounding box which combines the
+                 * bounding boxes of shells sA and sB.
+                 */
+                VSETALL(s_min_pt, MAX_FASTF);
+                VSETALL(s_max_pt, -MAX_FASTF);
+                VMIN(s_min_pt, sA->sa_p->min_pt);
+                VMIN(s_min_pt, sB->sa_p->min_pt);
+                VMIN(s_min_pt, sB->sa_p->max_pt);
+                VMAX(s_max_pt, sA->sa_p->max_pt);
+                VMAX(s_max_pt, sB->sa_p->min_pt);
+                VMAX(s_max_pt, sB->sa_p->max_pt);
+
                 /* move all the faceuse from shell sB to shell sA */
                 for (BU_LIST_FOR(fu, faceuse, &sB->fu_hd)) {
                     fu->s_p = sA;
                 }
                 BU_LIST_APPEND_LIST(&(sA->fu_hd), &(sB->fu_hd));
+
+                /* assign new bounding box to sA */
+                VMOVE(sA->sa_p->min_pt, s_min_pt);
+                VMOVE(sA->sa_p->max_pt, s_max_pt);
+
                 /* kill shell sB */
                 nmg_ks(sB);
-                nmg_shell_coplanar_face_merge(sA, tol, 1);
-                (void)nmg_edge_g_fuse(&m->magic, tol);
-                nmg_shell_a(sA, tol);
                 break;
             }
             case NMG_BOOL_SUB:
