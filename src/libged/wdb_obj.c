@@ -8043,7 +8043,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 	    nmg_shell_coplanar_face_merge(s, &wdbp->wdb_tol, 1);
 	    if (!nmg_kill_cracks(s)) {
 		(void) nmg_model_edge_fuse(m, &wdbp->wdb_tol);
-		(void) nmg_model_edge_g_fuse(m, &wdbp->wdb_tol);
+		(void) nmg_edge_g_fuse(&m->magic, &wdbp->wdb_tol);
 		(void) nmg_unbreak_region_edges(&r->l.magic);
 		if (nmg_to_arb(m, arb_int)) {
 		    new_intern.idb_ptr = (genptr_t)(arb_int);
@@ -8092,7 +8092,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 	nmg_shell_coplanar_face_merge(s, &wdbp->wdb_tol, 1);
 	if (!nmg_kill_cracks(s)) {
 	    (void) nmg_model_edge_fuse(m, &wdbp->wdb_tol);
-	    (void) nmg_model_edge_g_fuse(m, &wdbp->wdb_tol);
+	    (void) nmg_edge_g_fuse(&m->magic, &wdbp->wdb_tol);
 	    (void) nmg_unbreak_region_edges(&r->l.magic);
 	    if (nmg_to_arb(m, arb_int)) {
 		new_intern.idb_ptr = (genptr_t)(arb_int);

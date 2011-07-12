@@ -4442,7 +4442,7 @@ nmg_triangulate_model(struct model *m, const struct bn_tol *tol)
     if (rt_g.NMG_debug & DEBUG_TRI)
 	bu_log("Triangulating NMG\n");
 
-    (void)nmg_model_edge_g_fuse(m, tol);
+    (void)nmg_edge_g_fuse(&m->magic, tol);
 
     (void)nmg_unbreak_region_edges(&m->magic);
 

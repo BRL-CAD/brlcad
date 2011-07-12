@@ -1029,24 +1029,26 @@ nmg_model_edge_fuse(struct model *m, const struct bn_tol *tol)
 
 
 /**
- * N M G _ M O D E L _ E D G E _ G _ F U S E
+ * N M G _ E D G E _ G _ F U S E
  *
  * The present algorithm is a consequence of the old edge geom ptr structure.
  * XXX This might be better formulated by generating a list of all
  * edge_g structs in the model, and comparing *them* pairwise.
  */
 int
-nmg_model_edge_g_fuse(struct model *m, const struct bn_tol *tol)
+nmg_edge_g_fuse(const unsigned long *magic_p, const struct bn_tol *tol)
 {
+    struct model *m;
     struct bu_ptbl etab;
     int total = 0;
     register int i, j;
 
+    m = nmg_find_model(magic_p);
     NMG_CK_MODEL(m);
     BN_CK_TOL(tol);
 
     /* Make a list of all the edge geometry structs in the model */
-    nmg_edge_g_tabulate(&etab, &m->magic);
+    nmg_edge_g_tabulate(&etab, magic_p);
 
     for (i = BU_PTBL_END(&etab)-1; i >= 0; i--) {
 	struct edge_g_lseg *eg1;
@@ -1075,7 +1077,7 @@ nmg_model_edge_g_fuse(struct model *m, const struct bn_tol *tol)
 	    eu2 = BU_LIST_MAIN_PTR(edgeuse, BU_LIST_FIRST(bu_list, &eg2->eu_hd2), l2);
 	    NMG_CK_EDGEUSE(eu2);
 
-	    if (eg1 == eg2) bu_bomb("nmg_model_edge_g_fuse() edge_g listed twice in ptbl?\n");
+	    if (eg1 == eg2) bu_bomb("nmg_edge_g_fuse() edge_g listed twice in ptbl?\n");
 
 	    if (!nmg_2edgeuse_g_coincident(eu1, eu2, tol)) continue;
 
@@ -1092,7 +1094,7 @@ nmg_model_edge_g_fuse(struct model *m, const struct bn_tol *tol)
     }
     bu_ptbl_free(&etab);
     if (rt_g.NMG_debug & DEBUG_BASIC && total > 0)
-	bu_log("nmg_model_edge_g_fuse(): %d edge_g_lseg's fused\n", total);
+	bu_log("nmg_edge_g_fuse(): %d edge_g_lseg's fused\n", total);
     return total;
 }
 
@@ -1673,7 +1675,7 @@ nmg_model_fuse(struct model *m, const struct bn_tol *tol)
     /* Step 4 -- edge geometry */
     if (rt_g.NMG_debug & DEBUG_BASIC)
 	bu_log("nmg_model_fuse: edge geometries\n");
-    total += nmg_model_edge_g_fuse(m, tol);
+    total += nmg_edge_g_fuse(&m->magic, tol);
 
     if (rt_g.NMG_debug & DEBUG_BASIC && total > 0)
 	bu_log("nmg_model_fuse(): %d entities fused\n", total);

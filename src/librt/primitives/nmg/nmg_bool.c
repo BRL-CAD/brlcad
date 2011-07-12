@@ -587,7 +587,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
                 /* kill shell sB */
                 nmg_ks(sB);
                 nmg_shell_coplanar_face_merge(sA, tol, 1);
-                (void)nmg_model_edge_g_fuse(m, tol);
+                (void)nmg_edge_g_fuse(&m->magic, tol);
                 nmg_shell_a(sA, tol);
                 break;
             }

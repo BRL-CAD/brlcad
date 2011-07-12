@@ -5107,7 +5107,7 @@ RT_EXPORT extern int	nmg_cnurb_is_on_crv(const struct edgeuse *eu,
 					    const struct bn_tol *tol);
 RT_EXPORT extern int nmg_model_edge_fuse(struct model *m,
 					 const struct bn_tol *tol);
-RT_EXPORT extern int nmg_model_edge_g_fuse(struct model		*m,
+RT_EXPORT extern int nmg_edge_g_fuse(const unsigned long *magic_p,
 					   const struct bn_tol	*tol);
 RT_EXPORT extern int nmg_ck_fu_verts(struct faceuse *fu1,
 				     struct face *f2,
