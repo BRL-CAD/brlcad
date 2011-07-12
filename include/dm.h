@@ -336,6 +336,13 @@ struct dm_obj {
 #define DM_GET_DISPLAY_IMAGE(_dmp, _image) _dmp->dm_getDisplayImage(_dmp, _image)
 
 DM_EXPORT extern struct dm dm_Null;
+DM_EXPORT extern struct dm dm_ogl;
+DM_EXPORT extern struct dm dm_plot;
+DM_EXPORT extern struct dm dm_ps;
+DM_EXPORT extern struct dm dm_rtgl;
+DM_EXPORT extern struct dm dm_tk;
+DM_EXPORT extern struct dm dm_wgl;
+DM_EXPORT extern struct dm dm_X;
 
 DM_EXPORT extern int Dm_Init();
 DM_EXPORT extern struct dm *dm_open(Tcl_Interp *interp,
