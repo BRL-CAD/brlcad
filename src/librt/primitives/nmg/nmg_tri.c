@@ -3227,7 +3227,6 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
     struct pt2d *prev_orig, *next_orig;
     struct edgeuse *eu;
     int verts=0;
-    int vert_count_sq;	/* XXXXX Hack for catching infinite loop */
     int vert_count;
     int loop_count=0;	/* See above */
     static const int cut_color[3] = { 90, 255, 90};
@@ -3248,13 +3247,12 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
     fastf_t dist;
     int status;
 
-    int hit = 0;
+    struct faceuse *fu;
+    struct vertexuse *vu;
+    struct loopuse *lu2;
 
-#if 1
-    /* needed for ccw check after cut */
-    int ccw_result1, ccw_result2;
+    int ccw_result;
     vect_t fu_normal;
-#endif
 
     NMG_CK_TBL2D(tbl2d);
     BN_CK_TOL(tol);
@@ -3287,22 +3285,6 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
     }
     verts = 0;
 
-
-#if 0
-    for (BU_LIST_FOR(pt, pt2d, tbl2d)) {
-        bu_log("cut_unimonotone(): start, raw pt2d table, pt2d ptr = %x 2D coord = %g %g 3D coord = %g %g %g vu_p = %x eu_p = %x lu_p = %x lu_orient = %d fu_p = %x vg_p = %x\n",
-               pt,
-	       pt->coord[X], pt->coord[Y],
-	       V3ARGS(pt->vu_p->v_p->vg_p->coord),
-               pt->vu_p,
-               pt->vu_p->up.eu_p,
-               pt->vu_p->up.eu_p->up.lu_p,
-               pt->vu_p->up.eu_p->up.lu_p->orientation,
-               pt->vu_p->up.eu_p->up.lu_p->up.fu_p,
-	       pt->vu_p->v_p->vg_p);
-    }
-#endif
-
     /* find min/max points & count vertex points */
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 	new = find_pt2d(tbl2d, eu->vu_p);
@@ -3317,26 +3299,11 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 
 	verts++;
 
-#if 0
-        bu_log("finding min/max verts = %d pt2d ptr = %x 2D coord = %g %g 3D coord = %g %g %g vu_p = %x eu_p = %x lu_p = %x lu_orient = %d fu_p = %x vg_p = %x\n",
-               verts,
-               new,
-	       new->coord[X], new->coord[Y],
-	       V3ARGS(new->vu_p->v_p->vg_p->coord),
-               new->vu_p,
-               new->vu_p->up.eu_p,
-               new->vu_p->up.eu_p->up.lu_p,
-               new->vu_p->up.eu_p->up.lu_p->orientation,
-               new->vu_p->up.eu_p->up.lu_p->up.fu_p,
-	       new->vu_p->v_p->vg_p);
-#endif
-
 	if (!min || P_LT_V(new, min))
 	    min = new;
 	if (!max || P_GT_V(new, max))
 	    max = new;
     }
-    vert_count_sq = verts * verts;
     vert_count = verts;
 
     /* pick the pt which does NOT have the other as a "next" pt in loop
@@ -3356,9 +3323,6 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
     while (verts > 3) {
 
 	loop_count++;
-#if 0
-	if (loop_count > vert_count_sq) {
-#endif
 	if (loop_count > vert_count * 2) {
 	    bu_log("Cut_unimontone is in an infinite loop!!!\n");
             my_m2 = (struct model *)NULL;
@@ -3437,39 +3401,6 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
                     bu_log("point inside triangle, lu_p = %x, point = %g %g %g\n", lu, V3ARGS(pt->vu_p->v_p->vg_p->coord));
 #endif
                     inside_triangle = 1;
-#if 0
-                    VUNITIZE(v0);
-                    VUNITIZE(v1);
-                    dot01 = VDOT(v0, v1);
-                    /* allow ears to be degenerate, i.e. zero area */
-                    if (!BN_VECT_ARE_PARALLEL(dot01, tol)) {
-                        inside_triangle = 1;
-#if 0
-	                bu_log("cut_unimonotone(): inside triangle, lu_p = %x, 2Dprev = %g %g %g 2Dcurr = %g %g %g 2Dnext = %g %g %g 2Dpoint = %g %g %g\n",
-                            lu,
-                            V3ARGS(prev->coord),
-                            V3ARGS(current->coord),
-                            V3ARGS(next->coord),
-                            V3ARGS(pt->coord));
-#endif
-	                bu_log("cut_unimonotone(): inside triangle, lu_p = %x, 3Dprev = %g %g %g 3Dcurr = %g %g %g 3Dnext = %g %g %g 3Dpoint = %g %g %g, NOT PARALLEL, dot01 = %f\n",
-                            lu,
-                            V3ARGS(prev->vu_p->v_p->vg_p->coord),
-                            V3ARGS(current->vu_p->v_p->vg_p->coord),
-                            V3ARGS(next->vu_p->v_p->vg_p->coord),
-                            V3ARGS(pt->vu_p->v_p->vg_p->coord),
-                            dot01);
-                        break;
-                    } else {
-	                bu_log("cut_unimonotone(): inside triangle, lu_p = %x, 3Dprev = %g %g %g 3Dcurr = %g %g %g 3Dnext = %g %g %g 3Dpoint = %g %g %g, PARALLEL, dot01 = %f\n",
-                            lu,
-                            V3ARGS(prev->vu_p->v_p->vg_p->coord),
-                            V3ARGS(current->vu_p->v_p->vg_p->coord),
-                            V3ARGS(next->vu_p->v_p->vg_p->coord),
-                            V3ARGS(pt->vu_p->v_p->vg_p->coord),
-                            dot01);
-                    }
-#endif
                 } else {
 #ifdef DEBUG_TRI_P
 	            bu_log("cut_unimonotone(): outside triangle, lu_p = %x, 3Dprev = %g %g %g 3Dcurr = %g %g %g 3Dnext = %g %g %g 3Dpoint = %g %g %g is_convex = %d\n",
@@ -3485,7 +3416,7 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
             prev_vg_p = pt->vu_p->v_p->vg_p;
             } /* end of if-statement to skip testing vertices not in the current loopuse */
         }
-#if 1
+
 /* test if the line segment to be cut intersects with any vertices in 
  * the loopuse. 
  */
@@ -3515,26 +3446,7 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
             }
         }
 
-#endif
-#if 0
-        hit = nmg_isect_lseg3_eu(prev->vu_p, next->vu_p, next->vu_p->up.eu_p->up.lu_p->up.fu_p, tol);
-#endif
-
-        hit = 0;
-	if (is_convex(prev, current, next, tol) && !inside_triangle && !hit) {
-#if 0
-            bu_log("is convex\n");
-#endif
-#if 0
-	                bu_log("cut_unimonotone(): is convex, 2Dprev = %g %g %g 2Dcurr = %g %g %g 2Dnext = %g %g %g 3Dprev = %g %g %g 3Dcurr = %g %g %g 3Dnext = %g %g %g\n",
-                            V3ARGS(prev->coord),
-                            V3ARGS(current->coord),
-                            V3ARGS(next->coord),
-                            V3ARGS(prev->vu_p->v_p->vg_p->coord),
-                            V3ARGS(current->vu_p->v_p->vg_p->coord),
-                            V3ARGS(next->vu_p->v_p->vg_p->coord));
-#endif
-
+	if (is_convex(prev, current, next, tol) && !inside_triangle) {
             /* continue if this angle is convex and there are no vertices within
              * the triangle to be created by these two edges
              */
@@ -3559,55 +3471,48 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
                  V3ARGS(next->vu_p->v_p->vg_p->coord));
 #endif
 
-#if 0
-            bu_log("cut_unimonotone(): ---before cut orig_lu_p = %x lu_p = %x 3D %g %g %g --> lu_p = %x 3D %g %g %g\n", 
-                 orig_lu_p, 
-                 prev->vu_p->up.eu_p->up.lu_p,
-                 V3ARGS(prev->vu_p->v_p->vg_p->coord),
-                 next->vu_p->up.eu_p->up.lu_p,
-                 V3ARGS(next->vu_p->v_p->vg_p->coord));
-#endif
-
             prev_orig = prev;
             next_orig = next;
-
-#if 0
-            if (next->vu_p->v_p == prev->vu_p->v_p) {
-                if (next->vu_p->up.eu_p->up.lu_p == prev->vu_p->up.eu_p->up.lu_p) {
-                    bu_bomb("cutting apart loopuse\n");
-                }
-            } 
-#endif
 
 	    current = cut_mapped_loop(tbl2d, next, prev, cut_color, tol, 0);
 
             prev = prev_orig;
             next = next_orig;
 
-#if 1
             NMG_GET_FU_NORMAL(fu_normal, next->vu_p->up.eu_p->up.lu_p->up.fu_p);
+            ccw_result = nmg_loop_is_ccw(next->vu_p->up.eu_p->up.lu_p, fu_normal, tol);
 
-            ccw_result1 = nmg_loop_is_ccw(next->vu_p->up.eu_p->up.lu_p, fu_normal, tol);
+            if (ccw_result == -1) {
+                bu_log("cut_unimonotone(): after cut_mapped_loop, next loopuse was not ccw. lu_p = 0x%lx ccw_result = %d, +1=ccw -1=cw 0=err\n",
+                    (unsigned long)next->vu_p->up.eu_p->up.lu_p, ccw_result);
 
-            if (ccw_result1 != 1) {
-                bu_log("lu_p = 0x%lx ccw_result = %d, skipping loopuse +1=ccw -1=cw 0=err\n",
-                    (unsigned long)next->vu_p->up.eu_p->up.lu_p, ccw_result1);
-                bu_log("cut_unimonotone(): after cut_mapped_loop, next loopuse has ccw_result != 1\n");
-                nmg_lu_reorient(next->vu_p->up.eu_p->up.lu_p);
-                ccw_result2 = nmg_loop_is_ccw(next->vu_p->up.eu_p->up.lu_p, fu_normal, tol);
-                if (ccw_result2 != 1) {
-                    bu_log("cut_unimonotone(): lu reorient was run but failed to change to OT_SAME, lu_p = 0x%lx ccw_result = %d\n", (unsigned long)next->vu_p->up.eu_p->up.lu_p, ccw_result2);
+                if (BU_LIST_FIRST_MAGIC(&next->vu_p->up.eu_p->up.lu_p->down_hd) != NMG_EDGEUSE_MAGIC) {
+                    bu_bomb("cut_unimonotone(): internal error, loopuse contains no edgeuse\n");
+                }
+
+                fu = next->vu_p->up.eu_p->up.lu_p->up.fu_p;
+                lu2 = next->vu_p->up.eu_p->up.lu_p;
+
+                /* loop is in wrong direction, exchange lu and lu_mate */
+                BU_LIST_DEQUEUE(&lu2->l);
+                BU_LIST_DEQUEUE(&lu2->lumate_p->l);
+                BU_LIST_APPEND(&fu->lu_hd, &lu2->lumate_p->l);
+                lu2->lumate_p->up.fu_p = fu;
+                BU_LIST_APPEND(&fu->fumate_p->lu_hd, &lu2->l);
+                lu2->up.fu_p = fu->fumate_p;
+
+                orig_lu_p = next->vu_p->up.eu_p->up.lu_p->lumate_p;
+
+                /* need to find the correct next vertexuse which is 
+                 * associated with the loopuse mate
+                 */
+                for (BU_LIST_FOR(vu, vertexuse, &next->vu_p->v_p->vu_hd)) {
+                    if (vu->up.eu_p->up.lu_p == next->vu_p->up.eu_p->up.lu_p->lumate_p) {
+                        next->vu_p = vu;
+                        break;
+                    }
                 }
             }
-#endif
-
-#if 0
-            nmg_lu_reorient(next->vu_p->up.eu_p->up.lu_p);
-
-            if (prev->vu_p->up.eu_p->up.lu_p != next->vu_p->up.eu_p->up.lu_p) {
-                nmg_lu_reorient(prev->vu_p->up.eu_p->up.lu_p);
-            }
-#endif
 
 #ifdef DEBUG_TRI_P
             bu_log("cut_unimonotone(): ----after cut orig_lu_p = %x lu_p = %x 3D %g %g %g --> lu_p = %x 3D %g %g %g\n", 
@@ -3673,9 +3578,6 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 	    if (rt_g.NMG_debug & DEBUG_TRI)
 		nmg_tri_plfu(lu->up.fu_p, tbl2d);
 
-#if 0
-	    if (current->vu_p->v_p == first->vu_p->v_p) {
-#endif
 	    if (current->vu_p == first->vu_p) {
 		t = PT2D_NEXT(tbl2d, first);
 		if (rt_g.NMG_debug & DEBUG_TRI)
@@ -3697,18 +3599,6 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
                  V3ARGS(prev->vu_p->v_p->vg_p->coord),
                  next->vu_p->up.eu_p->up.lu_p,
                  V3ARGS(next->vu_p->v_p->vg_p->coord));
-#endif
-#if 0
-            bu_log("is not convex\n");
-#endif
-#if 0
-	                bu_log("cut_unimonotone(): not convex, 2Dprev = %g %g %g 2Dcurr = %g %g %g 2Dnext = %g %g %g 3Dprev = %g %g %g 3Dcurr = %g %g %g 3Dnext = %g %g %g\n",
-                            V3ARGS(prev->coord),
-                            V3ARGS(current->coord),
-                            V3ARGS(next->coord),
-                            V3ARGS(prev->vu_p->v_p->vg_p->coord),
-                            V3ARGS(current->vu_p->v_p->vg_p->coord),
-                            V3ARGS(next->vu_p->v_p->vg_p->coord));
 #endif
 
 	    if (rt_g.NMG_debug & DEBUG_TRI)
