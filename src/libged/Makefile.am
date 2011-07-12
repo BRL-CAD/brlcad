@@ -263,7 +263,7 @@ libged_nil_la_SOURCES = \
 	xpush.c \
 	ypr.c \
 	zap.c \
-	zoom.c
+	zoom/zoom.c
 
 AM_CFLAGS = ${STRICT_FLAGS}
 

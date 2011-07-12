@@ -69,7 +69,7 @@ set(LIBGED_SOURCES
     eye.c
     eye_pos.c
     facetize.c
-	 fb2pix.c
+    fb2pix.c
     find.c
     form.c
     fracture.c
@@ -141,7 +141,7 @@ set(LIBGED_SOURCES
     pathlist.c
     pathsum.c
     perspective.c
-	 pix2fb.c
+    pix2fb.c
     plot.c
     pmat.c
     pmodel2view.c
@@ -199,7 +199,7 @@ set(LIBGED_SOURCES
     scale_superell.c
     scale_tgc.c
     scale_tor.c
-	 screengrab.c
+    screengrab.c
     search.c
     select.c
     set_output_script.c
@@ -259,7 +259,7 @@ set(LIBGED_SOURCES
     xpush.c
     ypr.c
     zap.c
-    zoom.c
+    zoom/zoom.c
 )
 
 include_directories(
@@ -273,8 +273,8 @@ BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb librt libfb libbu libanalyze ${
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
 SET(ged_ignore_files
-	ged_private.h
-	qray.h
-	wdb_qray.h
-	)
+    ged_private.h
+    qray.h
+    wdb_qray.h
+)
 CMAKEFILES(${ged_ignore_files})
