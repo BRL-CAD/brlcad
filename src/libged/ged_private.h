@@ -415,8 +415,6 @@ extern int _ged_do_tra(struct ged *gedp,
 		       char coord,
 		       vect_t tvec,
 		       int (*func)());
-extern int _ged_do_zoom(struct ged *gedp,
-			fastf_t sf);
 
 /* defined in ged_util.c */
 extern int _ged_results_append_str(struct ged *gedp,

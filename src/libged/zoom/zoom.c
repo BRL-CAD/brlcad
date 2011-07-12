@@ -22,7 +22,22 @@
 
 #include "bio.h"
 
-#include "../ged_private.h"
+#include "bu.h"
+#include "ged.h"
+
+
+HIDDEN int
+zoom(struct ged *gedp, fastf_t sf)
+{
+    gedp->ged_gvp->gv_scale /= sf;
+    if (gedp->ged_gvp->gv_scale < RT_MINVIEWSCALE)
+	gedp->ged_gvp->gv_scale = RT_MINVIEWSCALE;
+    gedp->ged_gvp->gv_size = 2.0 * gedp->ged_gvp->gv_scale;
+    gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
+    ged_view_update(gedp->ged_gvp);
+
+    return GED_OK;
+}
 
 
 int
@@ -55,7 +70,7 @@ ged_zoom(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    return _ged_do_zoom(gedp, sf);
+    return zoom(gedp, sf);
 }
 
 
