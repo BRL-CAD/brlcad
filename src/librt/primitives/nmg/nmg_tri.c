@@ -4420,10 +4420,23 @@ nmg_triangulate_shell(struct shell *s, const struct bn_tol *tol)
     BN_CK_TOL(tol);
     NMG_CK_SHELL(s);
 
+    if (rt_g.NMG_debug & DEBUG_TRI) {
+	bu_log("nmg_triangulate_shell(): Triangulating NMG shell.\n");
+    }
+
+    (void)nmg_edge_g_fuse(&s->l.magic, tol);
+    (void)nmg_unbreak_region_edges(&s->l.magic);
+
     for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 	NMG_CK_FACEUSE(fu);
 	if (fu->orientation == OT_SAME)
 	    nmg_triangulate_fu(fu, tol);
+    }
+
+    nmg_vsshell(s, s->r_p);
+
+    if (rt_g.NMG_debug & DEBUG_TRI) {
+	bu_log("nmg_triangulate_shell(): Triangulating NMG shell completed.\n");
     }
 }
 
@@ -4433,35 +4446,24 @@ nmg_triangulate_model(struct model *m, const struct bn_tol *tol)
 {
     struct nmgregion *r;
     struct shell *s;
-    struct faceuse *fu;
 
     BN_CK_TOL(tol);
     NMG_CK_MODEL(m);
-    nmg_vmodel(m);
 
-    if (rt_g.NMG_debug & DEBUG_TRI)
-	bu_log("Triangulating NMG\n");
-
-    (void)nmg_edge_g_fuse(&m->magic, tol);
-
-    (void)nmg_unbreak_region_edges(&m->magic);
+    if (rt_g.NMG_debug & DEBUG_TRI) {
+	bu_log("nmg_triangulate_model(): Triangulating NMG model.\n");
+    }
 
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 	NMG_CK_REGION(r);
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	    NMG_CK_SHELL(s);
-
-	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-		NMG_CK_FACEUSE(fu);
-		if (fu->orientation == OT_SAME)
-		    nmg_triangulate_fu(fu, tol);
-	    }
+            nmg_triangulate_shell(s, tol);
 	}
     }
-    nmg_vmodel(m);
 
-    if (rt_g.NMG_debug & DEBUG_TRI)
-	bu_log("Triangulation completed\n");
+    if (rt_g.NMG_debug & DEBUG_TRI) {
+	bu_log("nmg_triangulate_model(): Triangulating NMG model completed.\n");
+    }
 }
 
 
