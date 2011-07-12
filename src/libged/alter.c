@@ -22,7 +22,24 @@
  * Command to alter objects by translating, rotating, and scaling.
  */
 
-/* Alter: to make different without changing into something else */
+/* alter: Proposed manual page
+ *
+ * NAME
+ *	alter
+ *
+ * SYNOPSIS
+ *	alter COMMAND_NAME ARGS OBJECT ...
+ *	alter {translate | rotate | scale} ARGS OBJECT ...
+ *
+ *	ARGS:
+ *	    see manual for given COMMAND_NAME
+ * 
+ * DESCRIPTION
+ *	Alter: to make different without changing into something else.
+ *
+ *	Used to change objects through the use of subcommands.
+ *
+ */
 
 /*
  * translate: Proposed operations, and manual page
@@ -649,26 +666,9 @@
 #include "ged.h"
 #include "./ged_private.h"
 
+/* This function will be removed soon */
 #if 0
-HIDDEN int
-rotate(struct ged *gedp, vect_t *keypoint,
-	  sruct db_full_path *path,
-	  struct directory *d_obj, vect_t delta,
-	  int relative_pos_flag)
-{
-}
-
-HIDDEN int
-scale(struct ged *gedp, vect_t *keypoint,
-	  struct db_full_path *path,
-	  struct directory *d_obj, vect_t delta,
-	  int relative_pos_flag)
-{
-}
-#endif
-
-#if 0
-HIDDEN int
+int
 translate(struct ged *gedp, vect_t *keypoint,
 	  struct db_full_path *path,
 	  struct directory *d_obj, vect_t delta,
@@ -796,20 +796,127 @@ translate(struct ged *gedp, vect_t *keypoint,
 }
 #endif
 
+#if 0
+int
+alter_translate(struct ged *gedp, point_t *from, point_t *to,
+		struct db_full_path *path)
+{
+    return GED_OK;
+}
+
+int
+alter_rotate(struct ged *gedp, point_t *axis_from, point_t *axis_to,
+	     point_t *center, point_t *angle_origin, point_t *angle_from,
+	     point_t *angle_to, struct db_full_path *path)
+{
+    return GED_OK;
+}
+
+int
+alter_scale(struct ged *gedp, point_t *scale_from, point_t *scale_to,
+	    point_t *center, point_t *factor_from, point_t *factor_to,
+	    struct db_full_path *path)
+{
+    return GED_OK;
+}
+#endif
+
+/* Number of of global options + max number of options for an arg */
+#define ALTER_MAX_ARG_OPTIONS 3
+
+static const char *const cmd_names[] = {"translate", "rotate", "scale"};
+
+/*
+ * Use one of these nodes for each argument for the alter subcommands
+ * (see manuals)
+ */
+struct alter_arg_node{
+    struct alter_arg_node *next; /* link to next argument */
+
+    /* command line options, e.g. "Rnk", to convert to option flags */
+    char cl_options[3];
+
+    /* flag which coords from the vector/object are being used */
+    unsigned int coords_used : 3; 
+
+    /* flag the argument type and type modifiers */
+    unsigned int type : 14;
+
+    struct db_full_path *object;
+
+    /* if object != NULL, vector is an offset distance from object */
+    point_t vector;
+};
+
+/*
+ * alter_arg_node flags of coordinates being used
+ */
+#define ALTER_X_POS 	0x1
+#define ALTER_Y_POS 	0x2
+#define ALTER_Z_POS 	0x4
+#define ALTER_ALL_POS (ALTER_X_POS + ALTER_Y_POS + ALTER_Z_POS)
+
+/*
+ * alter_arg_node argument type flags
+ */
+
+/* argument types */
+#define ALTER_FROM			0x0001 /* aka keypoint */
+#define ALTER_CENTER			0x0002 /* for rotate/scale */
+#define ALTER_TO			0x0004
+#define ALTER_TARGET_OBJ		0x0008 /* obj to operate on */
+
+/* argument "TO" type modifiers */
+#define ALTER_REL_DIST			0x0010
+#define ALTER_ABS_POS 			0x0020
+
+/* command-specific argument "FROM" and "TO" type modifiers */
+#define ALTER_SCALE_SCALE		0x0040
+#define ALTER_SCALE_FACTOR		0x0080
+#define ALTER_ROTATE_AXIS		0x0040
+#define ALTER_ROTATE_ANGLE		0x0080 /* use ALTER_ROTATE_ANGLE and ALTER_CENTER to set the angle origin */
+#define ALTER_ROTATE_DEGREES		0x0100
+#define ALTER_ROTATE_OVR_CONSTRAINT 	0x0200 /* override axis constraint */
+
+/* object argument type modifier flags */
+#define ALTER_NATURAL_ORIGIN		0x0400 /* use natural origin of object instead of center */
+#define ALTER_USE_TARGETS		0x0800 /* for batch ops */
+					  
+/**
+ * A wrapper for the alter commands. It adds the capability to perform
+ * batch operations, and accepts objects and distances in addition to
+ * coordinates.
+ */
+int
+alter(struct ged *gedp, struct alter_arg_node *args_head,
+      const char *global_opts)
+{
+    (void)gedp;
+    (void)args_head;
+    (void)global_opts;
+
+    return GED_OK;
+}
+
 int
 ged_alter(struct ged *gedp, int argc, const char *argv[])
 {
     (void)gedp;
     (void)argc;
     (void)argv;
+    (void)alter(gedp, NULL, NULL);
+
 #if 0
     struct db_i *dbip = gedp->ged_wdbp->dbip;
+
+    static const char *id_obj_as_arg = ". "; 
+    static const char *id_tuple[] = {"-x", "-y", "-z"};
+
     const char *const cmd_name = argv[0];
-    static const char *usage = "{translate | rotate | scale}"
-	" [[-n] -k {FROM_OBJECT|POS}]"
-	" {[-n] [-a | -r] TO_OBJECT|POS}" 
-	" OBJECT ..." ;
-    static const char *skip_arg = ". ";
+    static const char *usage = "{translate | rotate | scale} ARGS OBJECT ...";
+#endif
+
+#if 0
 
     int from_center_flag = 0;
     int from_origin_flag = 0;
@@ -1018,6 +1125,7 @@ no_more_args: /* for breaking out, above */
     bu_vls_printf(gedp->ged_result_str, "command not yet implemented");
     return GED_ERROR;
 }
+
 
 /*
  * Local Variables:
