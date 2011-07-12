@@ -1020,7 +1020,6 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, char **classlist, const struc
 	matept = eu->eumate_p->vu_p->v_p->vg_p->coord;
 	if (class == NMG_CLASS_Unknown) {
 	    VSUB2(eu_dir, matept, eupt);
-	    VUNITIZE(eu_dir);
 	}
 
 	try = 0;
@@ -1028,15 +1027,15 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, char **classlist, const struc
 	    /* Must resort to ray trace */
 	    switch (try) {
 		case 0 :
-		    VADD2SCALE(pt, eupt, matept, 0.5);
+		    VJOIN1(pt, eupt, 0.5, eu_dir);
 		    reason = "midpoint classification (both verts ON)";
 		    break;
 		case 1:
-		    VJOIN1(pt, eupt, 1.05*tol->dist, eu_dir);
+		    VJOIN1(pt, eupt, 0.1, eu_dir);
 		    reason = "point near EU start classification (both verts ON)";
 		    break;
 		case 2:
-		    VJOIN1(pt, matept, -1.05*tol->dist, eu_dir);
+		    VJOIN1(pt, eupt, 0.9, eu_dir);
 		    reason = "point near EU end classification (both verts ON)";
 		    break;
 	    }
