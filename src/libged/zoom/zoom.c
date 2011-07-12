@@ -43,7 +43,8 @@ zoom(struct ged *gedp, fastf_t sf)
 int
 ged_zoom(struct ged *gedp, int argc, const char *argv[])
 {
-    fastf_t sf;
+    int ret;
+    fastf_t sf = 1.0;
 
     GED_CHECK_VIEW(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -57,8 +58,9 @@ ged_zoom(struct ged *gedp, int argc, const char *argv[])
 	return (argc == 1) ? GED_HELP : GED_ERROR;
     }
 
-    if (sscanf(argv[1], "%lf", &sf) != 1 ||
-	sf <= 0 || sf <= SMALL_FASTF || INFINITY < sf) {
+    /* get the scale factor */
+    ret = sscanf(argv[1], "%lf", &sf);
+    if (ret != 1 || sf < SMALL_FASTF || sf > INFINITY) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: bad scale factor [%s]", argv[1]);
 	return GED_ERROR;
     }
