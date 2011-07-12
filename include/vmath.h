@@ -298,8 +298,8 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	 && NEAR_ZERO(v[Y], tol) \
 	 && NEAR_ZERO(v[Z], tol))
 
-/** 
- * @brief Test for all elements of `v' being smaller than `tol'. 
+/**
+ * @brief Test for all elements of `v' being smaller than `tol'.
  * Version for degree 2 vectors.
  */
 #define V2NEAR_ZERO(v, tol) (NEAR_ZERO(v[X], tol) && NEAR_ZERO(v[Y], tol))
