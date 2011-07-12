@@ -44,7 +44,6 @@ int
 ged_zoom(struct ged *gedp, int argc, const char *argv[])
 {
     fastf_t sf;
-    static const char *usage = "sf";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_VIEW(gedp, GED_ERROR);
@@ -54,19 +53,14 @@ ged_zoom(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
-
     if (argc != 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s scale_factor", argv[0]);
+	return (argc == 1) ? GED_HELP : GED_ERROR;
     }
 
     if (sscanf(argv[1], "%lf", &sf) != 1 ||
 	sf <= 0 || sf <= SMALL_FASTF || INFINITY < sf) {
-	bu_vls_printf(gedp->ged_result_str, "bad zoom value - %s", argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "ERROR: bad scale factor [%s]", argv[1]);
 	return GED_ERROR;
     }
 
