@@ -561,67 +561,71 @@ nmg_vfu(const struct bu_list *hp, const struct shell *s)
 
 
 /**
+ * N M G _ V S S H E L L
+ *
+ * validate a single shell and all elements under it
+ */
+void
+nmg_vsshell(const struct shell *s, const struct nmgregion *r)
+{
+    pointp_t lpt, hpt;
+
+    NMG_CK_SHELL(s);
+    if (s->r_p != r) {
+	bu_log("shell's r_p (%8x) doesn't point to parent (%8x)\n", s->r_p, r);
+	bu_bomb("nmg_vsshell()\n");
+    }
+
+    if (!s->l.forw) {
+	bu_bomb("nmg_vshell(): Shell's forw ptr is null\n");
+    } else if (s->l.forw->back != (struct bu_list *)s) {
+	bu_log("forw shell's back(%8x) is not me (%8x)\n", s->l.forw->back, s);
+	bu_bomb("nmg_vsshell()\n");
+    }
+
+    if (s->sa_p) {
+	NMG_CK_SHELL_A(s->sa_p);
+	/* we make sure that all values of min_pt are less than or
+         * equal to the values of max_pt
+	 */
+	lpt = s->sa_p->min_pt;
+	hpt = s->sa_p->max_pt;
+	if (lpt[0] > hpt[0] || lpt[1] > hpt[1] || lpt[2] > hpt[2]) {
+	    bu_log("nmg_vsshell(): ad min_pt/max_pt for shell(%8x)'s extent\n", s);
+	    bu_log("Min_pt %g %g %g\n", lpt[0], lpt[1], lpt[2]);
+	    bu_log("Max_pt %g %g %g\n", hpt[0], hpt[1], hpt[2]);
+	}
+    }
+
+    /* now we check out the "children" */
+    if (s->vu_p) {
+	if (BU_LIST_NON_EMPTY(&s->fu_hd) || BU_LIST_NON_EMPTY(&s->lu_hd) ||
+	    BU_LIST_NON_EMPTY(&s->eu_hd)) {
+	    bu_log("shell (%8x) with vertexuse (%8x) has other children\n", s, s->vu_p);
+	    bu_bomb("nmg_vsshell()\n");
+	}
+    }
+
+    nmg_vfu(&s->fu_hd, s);
+    nmg_vlu(&s->lu_hd, &s->l.magic);
+    nmg_veu(&s->eu_hd, &s->l.magic);
+}
+
+
+/**
  * N M G _ V S H E L L
  *
- * validate a list of shells and all elements under them
+ * Validate a list of shells and all elements under them.
  */
 void
 nmg_vshell(const struct bu_list *hp, const struct nmgregion *r)
 {
     struct shell *s;
-    pointp_t lpt, hpt;
 
     NMG_CK_REGION(r);
 
     for (BU_LIST_FOR(s, shell, hp)) {
-	NMG_CK_SHELL(s);
-	if (s->r_p != r) {
-	    bu_log("shell's r_p (%8x) doesn't point to parent (%8x)\n",
-		   s->r_p, r);
-	    bu_bomb("nmg_vshell()\n");
-	}
-
-	if (!s->l.forw) {
-	    bu_bomb("nmg_vshell(): Shell's forw ptr is null\n");
-	} else if (s->l.forw->back != (struct bu_list *)s) {
-	    bu_log("forw shell's back(%8x) is not me (%8x)\n",
-		   s->l.forw->back, s);
-	    bu_bomb("nmg_vshell()\n");
-	}
-
-	if (s->sa_p) {
-	    NMG_CK_SHELL_A(s->sa_p);
-	    /* we make sure that all values of min_pt
-	     * are less than or equal to the values of max_pt
-	     */
-	    lpt = s->sa_p->min_pt;
-	    hpt = s->sa_p->max_pt;
-	    if (lpt[0] > hpt[0] || lpt[1] > hpt[1] ||
-		lpt[2] > hpt[2]) {
-		bu_log("Bnmg_vshell() ad min_pt/max_pt for shell(%8x)'s extent\n", s);
-		bu_log("Min_pt %g %g %g\n", lpt[0], lpt[1],
-		       lpt[2]);
-		bu_log("Max_pt %g %g %g\n", hpt[0], hpt[1],
-		       hpt[2]);
-	    }
-	}
-
-	/* now we check out the "children"
-	 */
-
-	if (s->vu_p) {
-	    if (BU_LIST_NON_EMPTY(&s->fu_hd) ||
-		BU_LIST_NON_EMPTY(&s->lu_hd) ||
-		BU_LIST_NON_EMPTY(&s->eu_hd)) {
-		bu_log("shell (%8x) with vertexuse (%8x) has other children\n",
-		       s, s->vu_p);
-		bu_bomb("nmg_vshell()\n");
-	    }
-	}
-
-	nmg_vfu(&s->fu_hd, s);
-	nmg_vlu(&s->lu_hd, &s->l.magic);
-	nmg_veu(&s->eu_hd, &s->l.magic);
+	nmg_vsshell(s, r);
     }
 }
 
@@ -1731,3 +1735,4 @@ nmg_ck_vs_in_region(const struct nmgregion *r, const struct bn_tol *tol)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

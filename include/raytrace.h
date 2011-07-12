@@ -4826,6 +4826,8 @@ RT_EXPORT extern void nmg_vface(const struct face *f,
 				const struct faceuse *fup);
 RT_EXPORT extern void nmg_vfu(const struct bu_list	*hp,
 			      const struct shell *s);
+RT_EXPORT extern void nmg_vsshell(const struct shell *s,
+				 const struct nmgregion *r);
 RT_EXPORT extern void nmg_vshell(const struct bu_list *hp,
 				 const struct nmgregion *r);
 RT_EXPORT extern void nmg_vregion(const struct bu_list *hp,
