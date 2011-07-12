@@ -796,41 +796,14 @@ translate(struct ged *gedp, vect_t *keypoint,
 }
 #endif
 
-#if 0
-int
-alter_translate(struct ged *gedp, point_t *from, point_t *to,
-		struct db_full_path *path)
-{
-    return GED_OK;
-}
-
-int
-alter_rotate(struct ged *gedp, point_t *axis_from, point_t *axis_to,
-	     point_t *center, point_t *angle_origin, point_t *angle_from,
-	     point_t *angle_to, struct db_full_path *path)
-{
-    return GED_OK;
-}
-
-int
-alter_scale(struct ged *gedp, point_t *scale_from, point_t *scale_to,
-	    point_t *center, point_t *factor_from, point_t *factor_to,
-	    struct db_full_path *path)
-{
-    return GED_OK;
-}
-#endif
-
 /* Number of of global options + max number of options for an arg */
 #define ALTER_MAX_ARG_OPTIONS 3
-
-static const char *const cmd_names[] = {"translate", "rotate", "scale"};
 
 /*
  * Use one of these nodes for each argument for the alter subcommands
  * (see manuals)
  */
-struct alter_arg_node{
+struct alter_arg_node {
     struct alter_arg_node *next; /* link to next argument */
 
     /* command line options, e.g. "Rnk", to convert to option flags */
@@ -845,8 +818,76 @@ struct alter_arg_node{
     struct db_full_path *object;
 
     /* if object != NULL, vector is an offset distance from object */
-    point_t vector;
+    point_t *vector;
 };
+
+/* for union alter_arg.cmd */
+enum alter_arg_cmd {
+    ALTER_TRANSLATE,
+    ALTER_ROTATE,
+    ALTER_SCALE
+};
+
+/* argument structure of each command */
+union alter_arg {
+    enum alter_arg_cmd cmd;
+
+    struct {
+	enum alter_arg_cmd padding_for_cmd;
+	struct alter_arg_node objects;
+    } common;
+
+    struct {
+	enum alter_arg_cmd padding_for_cmd;
+	struct alter_arg_node objects;
+	struct alter_arg_node from;
+	struct alter_arg_node to;
+    } translate;
+
+    struct {
+	enum alter_arg_cmd padding_for_cmd;
+	struct alter_arg_node objects;
+	struct {
+	    struct alter_arg_node from;
+	    struct alter_arg_node to;
+	} axis;
+	struct alter_arg_node center;
+	struct alter_arg_node angle_origin;
+	struct {
+	    struct alter_arg_node from;
+	    struct alter_arg_node to;
+	} angle;
+    } rotate;
+
+    struct {
+	enum alter_arg_cmd padding_for_cmd;
+	struct alter_arg_node objects;
+	struct {
+	    struct alter_arg_node from;
+	    struct alter_arg_node to;
+	} ref_scale;
+	struct alter_arg_node center;
+	struct {
+	    struct alter_arg_node from;
+	    struct alter_arg_node to;
+	} factor;
+    } scale;
+};
+
+void
+alter_arg_add_node(struct alter_arg_node *node)
+{
+    struct alter_arg_node *pos = node;
+
+    while (pos->next)
+	pos = pos->next;
+
+    /* XXX: a function for freeing is needed, e.g.
+     * alter_arg_free(arg); */
+    pos->next = (struct alter_arg_node *)bu_calloc(1,
+		sizeof(struct alter_arg_node),
+		"alter_arg_node block for alter_arg_add_object()");
+}
 
 /*
  * alter_arg_node flags of coordinates being used
@@ -881,7 +922,32 @@ struct alter_arg_node{
 /* object argument type modifier flags */
 #define ALTER_NATURAL_ORIGIN		0x0400 /* use natural origin of object instead of center */
 #define ALTER_USE_TARGETS		0x0800 /* for batch ops */
-					  
+	
+#if 0
+int
+alter_translate(struct ged *gedp, point_t *from, point_t *to,
+		struct db_full_path *path)
+{
+    return GED_OK;
+}
+
+int
+alter_rotate(struct ged *gedp, point_t *axis_from, point_t *axis_to,
+	     point_t *center, point_t *angle_origin, point_t *angle_from,
+	     point_t *angle_to, struct db_full_path *path)
+{
+    return GED_OK;
+}
+
+int
+alter_scale(struct ged *gedp, point_t *scale_from, point_t *scale_to,
+	    point_t *center, point_t *factor_from, point_t *factor_to,
+	    struct db_full_path *path)
+{
+    return GED_OK;
+}
+#endif
+				  
 /**
  * A wrapper for the alter commands. It adds the capability to perform
  * batch operations, and accepts objects and distances in addition to
