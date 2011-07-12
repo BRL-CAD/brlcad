@@ -17,17 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/zoom.c
- *
- * The zoom command.
- *
- */
 
 #include "common.h"
 
-#include <stdlib.h>
-#include <ctype.h>
-#include <string.h>
 #include "bio.h"
 
 #include "./ged_private.h"
