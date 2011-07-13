@@ -776,17 +776,27 @@ typedef struct bu_list bu_list_t;
 	(_hp)->magic = BU_LIST_HEAD_MAGIC;	/* used by circ. macros */ }
 
 /**
+ * initializes a bu_list struct node with a particular non-head node
+ * magic number without allocating any memory.
+ */
+#define BU_LIST_INIT_MAGIC(_hp, _magic) { \
+	BU_LIST_INIT((_hp)); \
+	BU_LIST_MAGIC_SET((_hp), (_magic)); \
+    }
+
+/**
  * macro suitable for declaration statement zero-initialization of a
  * bu_list struct, but not suitably for validation with
  * BU_CK_LIST_HEAD() as the list pointers are NULL.  does not allocate
- * memory
+ * memory.
  */
 #define BU_LIST_INIT_ZERO { 0, BU_LIST_NULL, BU_LIST_NULL }
 
 /**
  * returns truthfully whether a bu_list has been initialized via
- * BU_LIST_INIT().  lists initialized with BU_LIST_INIT_ZERO will not
- * return true as their forward/backward pointers reference nothing.
+ * BU_LIST_INIT().  lists initialized with BU_LIST_INIT_ZERO or
+ * zero-allocated will not return true as their forward/backward
+ * pointers reference nothing.
  */
 #define BU_LIST_IS_INITIALIZED(_hp) (((struct bu_list *)(_hp) != BU_LIST_NULL) && LIKELY((_hp)->forw != BU_LIST_NULL))
 
