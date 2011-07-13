@@ -2375,7 +2375,7 @@ nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interi
 
 	/* linear cnurb on snurb face -- cnurb ctl pts are UV */
 	n.order = 2;
-	n.l.magic = RT_CNURB_MAGIC;
+	n.l.magic = NMG_EDGE_G_CNURB_MAGIC;
 	n.c_size = 2;
 	rt_nurb_gen_knot_vector(&n.k, n.order, 0.0, 1.0, (struct resource *)NULL);
 	n.pt_type = RT_NURB_MAKE_PT_TYPE(2, RT_NURB_PT_UV, RT_NURB_PT_NONRAT);

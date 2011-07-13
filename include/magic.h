@@ -166,7 +166,6 @@
 
 #define RT_ANP_MAGIC			0x41507270 /**< APrp */
 #define RT_AP_MAGIC			0x4170706c /**< Appl */
-#define RT_CNURB_MAGIC			0x636e7262 /**< cnrb => DUPLICATE !!! */
 #define RT_COMB_MAGIC			0x436f6d49 /**< ComI */
 #define RT_CONSTRAINT_MAGIC		0x7063696d /**< pcim */
 #define RT_CTS_MAGIC			0x98989123 /**< ???# */
@@ -182,7 +181,6 @@
 #define RT_RAY_MAGIC			0x78726179 /**< xray */
 #define RT_REGION_MAGIC			0xdffb8001 /**< ???? */
 #define RT_SEG_MAGIC			0x98bcdef1 /**< ???? */
-#define RT_SNURB_MAGIC			0x736e7262 /**< snrb => DUPLICATE !!! */
 #define RT_SOLTAB2_MAGIC		0x92bfcde2 /**< ???? => l2.magic */
 #define RT_SOLTAB_MAGIC			0x92bfcde0 /**< ???? => l.magic */
 #define RT_TESS_TOL_MAGIC		0xb9090dab /**< ???? */
