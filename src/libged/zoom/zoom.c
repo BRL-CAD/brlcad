@@ -69,6 +69,41 @@ ged_zoom(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+
+
+HIDDEN int
+zoom_load(struct ged *gedp)
+{
+    extern const struct ged_cmd *zoom_cmd(void);
+
+    const struct ged_cmd *cmd = zoom_cmd();
+    return gedp->add(cmd);
+}
+
+
+HIDDEN void
+zoom_unload(struct ged *gedp)
+{
+    gedp->del("zoom");
+}
+
+
+const struct ged_cmd *
+zoom_cmd(void)
+{
+    static struct ged_cmd cmd = {
+	BU_LIST_INIT_ZERO,
+	"zoom",
+	"zoom view by specified scale factor",
+	"zoom",
+	&zoom_load,
+	&zoom_unload,
+	&ged_zoom
+    };
+    BU_LIST_MAGIC_SET(&(cmd.l), GED_CMD_MAGIC);
+    return &cmd;
+}
+
 /*
  * Local Variables:
  * tab-width: 8
