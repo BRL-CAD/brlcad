@@ -796,8 +796,39 @@ translate(struct ged *gedp, vect_t *keypoint,
 }
 #endif
 
-/* Number of of global options + max number of options for an arg */
+/* Max # of global options + max number of options for a single arg */
 #define ALTER_MAX_ARG_OPTIONS 3
+
+/*
+ * alter_arg_node flags of coordinates being used
+ */
+#define ALTER_X_COORD 	0x1
+#define ALTER_Y_COORD 	0x2
+#define ALTER_Z_COORD 	0x4
+#define ALTER_ALL_COORDS (ALTER_X_COORD + ALTER_Y_COORD + \
+			  ALTER_Z_COORD)
+
+/*
+ * alter_arg_node argument type flags
+ */
+
+/* argument types */
+#define ALTER_FROM			0x001 /* aka keypoint */
+#define ALTER_CENTER			0x002 /* for rotate/scale */
+#define ALTER_TO			0x004
+#define ALTER_TARGET_OBJ		0x008 /* obj to operate on */
+
+/* argument "TO" type modifiers */
+#define ALTER_REL_DIST			0x010
+#define ALTER_ABS_POS 			0x020
+
+/* command-specific argument "FROM" and "TO" type modifiers */
+#define ALTER_ROTATE_DEGREES		0x040
+#define ALTER_ROTATE_OVRD_CONSTRAINT 	0x080 /* override axis constraint */
+
+/* object argument type modifier flags */
+#define ALTER_NATURAL_ORIGIN		0x100 /* use natural origin of object instead of center */
+#define ALTER_USE_TARGETS		0x200 /* for batch ops */
 
 /*
  * Use one of these nodes for each argument for the alter subcommands
@@ -807,18 +838,18 @@ struct alter_arg_node {
     struct alter_arg_node *next; /* link to next argument */
 
     /* command line options, e.g. "Rnk", to convert to option flags */
-    char cl_options[3];
+    char cl_options[ALTER_MAX_ARG_OPTIONS];
 
     /* flag which coords from the vector/object are being used */
     unsigned int coords_used : 3; 
 
     /* flag the argument type and type modifiers */
-    unsigned int type : 14;
+    unsigned int type : 10;
 
     struct db_full_path *object;
 
     /* if object != NULL, vector is an offset distance from object */
-    point_t *vector;
+    vect_t *vector;
 };
 
 /* for union alter_arg.cmd */
@@ -840,8 +871,10 @@ union alter_arg {
     struct {
 	enum alter_arg_cmd padding_for_cmd;
 	struct alter_arg_node objects;
-	struct alter_arg_node from;
-	struct alter_arg_node to;
+	struct {
+	    struct alter_arg_node from;
+	    struct alter_arg_node to;
+	} ref_vector;
     } translate;
 
     struct {
@@ -850,13 +883,13 @@ union alter_arg {
 	struct {
 	    struct alter_arg_node from;
 	    struct alter_arg_node to;
-	} axis;
+	} ref_axis;
 	struct alter_arg_node center;
-	struct alter_arg_node angle_origin;
 	struct {
+	    struct alter_arg_node origin;
 	    struct alter_arg_node from;
 	    struct alter_arg_node to;
-	} angle;
+	} ref_angle;
     } rotate;
 
     struct {
@@ -870,58 +903,52 @@ union alter_arg {
 	struct {
 	    struct alter_arg_node from;
 	    struct alter_arg_node to;
-	} factor;
+	} ref_factor;
     } scale;
 };
 
+/**
+ * Initialize a node.
+ */
 void
-alter_arg_add_node(struct alter_arg_node *node)
+alter_arg_node_init(struct alter_arg_node *node)
+{
+    node->next = (struct alter_arg_node *)NULL;
+    node->cl_options[0] = '\0';
+    node->coords_used = 0;
+    node->type = 0;
+    node->object = (struct db_full_path *)NULL;
+    node->vector = (vect_t *)NULL;
+}
+
+/**
+ * Allocate, initialize, and attach a new node to the end of the list.
+ */
+void
+alter_arg_node_postfix(struct alter_arg_node *node)
 {
     struct alter_arg_node *pos = node;
 
     while (pos->next)
 	pos = pos->next;
 
-    /* XXX: a function for freeing is needed, e.g.
-     * alter_arg_free(arg); */
-    pos->next = (struct alter_arg_node *)bu_calloc(1,
+    pos->next = (struct alter_arg_node *)bu_malloc(
 		sizeof(struct alter_arg_node),
-		"alter_arg_node block for alter_arg_add_object()");
+		"alter_arg_node block for alter_arg_node_postfix()");
+
+    alter_arg_node_init(pos->next);
 }
 
-/*
- * alter_arg_node flags of coordinates being used
+/**
+ * Free a node and all nodes down its list.
  */
-#define ALTER_X_POS 	0x1
-#define ALTER_Y_POS 	0x2
-#define ALTER_Z_POS 	0x4
-#define ALTER_ALL_POS (ALTER_X_POS + ALTER_Y_POS + ALTER_Z_POS)
-
-/*
- * alter_arg_node argument type flags
- */
-
-/* argument types */
-#define ALTER_FROM			0x0001 /* aka keypoint */
-#define ALTER_CENTER			0x0002 /* for rotate/scale */
-#define ALTER_TO			0x0004
-#define ALTER_TARGET_OBJ		0x0008 /* obj to operate on */
-
-/* argument "TO" type modifiers */
-#define ALTER_REL_DIST			0x0010
-#define ALTER_ABS_POS 			0x0020
-
-/* command-specific argument "FROM" and "TO" type modifiers */
-#define ALTER_SCALE_SCALE		0x0040
-#define ALTER_SCALE_FACTOR		0x0080
-#define ALTER_ROTATE_AXIS		0x0040
-#define ALTER_ROTATE_ANGLE		0x0080 /* use ALTER_ROTATE_ANGLE and ALTER_CENTER to set the angle origin */
-#define ALTER_ROTATE_DEGREES		0x0100
-#define ALTER_ROTATE_OVR_CONSTRAINT 	0x0200 /* override axis constraint */
-
-/* object argument type modifier flags */
-#define ALTER_NATURAL_ORIGIN		0x0400 /* use natural origin of object instead of center */
-#define ALTER_USE_TARGETS		0x0800 /* for batch ops */
+void
+alter_arg_node_free_all(struct alter_arg_node *node)
+{
+    if (node->next)
+	alter_arg_node_free_all(node->next);
+    bu_free(node, "alter_arg_node");
+}
 	
 #if 0
 int
@@ -971,6 +998,8 @@ ged_alter(struct ged *gedp, int argc, const char *argv[])
     (void)argc;
     (void)argv;
     (void)alter(gedp, NULL, NULL);
+    (void)alter_arg_node_postfix(NULL);
+    (void)alter_arg_node_free_all(NULL);
 
 #if 0
     struct db_i *dbip = gedp->ged_wdbp->dbip;
