@@ -43,6 +43,9 @@
 #define OSL_MAGIC 0x1837    /* make this a unique number for each shader */
 #define CK_OSL_SP(_p) BU_CKMAG(_p, OSL_MAGIC, "osl_specific")
 
+#define SH_SEM_OSL (RT_SEM_LAST)
+#define SH_SEM_LAST (SH_SEM_OSL + 1)
+
 /* Oslrenderer system */
 OSLRenderer *oslr = NULL;
 /* Save default a_hit */
@@ -338,11 +341,13 @@ HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm,
      */
     /* If OSL system was not initialized yet, do it */
     /* FIXME: take care of multi-thread issues */
+    bu_semaphore_acquire(8);
     if (oslr == NULL){
 	oslr = new OSLRenderer();
     }
     /* Add this shader to OSL system */
     osl_sp->shader_ref = oslr->AddShader(group_info);
+    bu_semaphore_release(8);
 
     if (rdebug&RDEBUG_SHADE) {
 	bu_struct_print(" Parameters:", osl_print_tab, (char *)osl_sp);
@@ -369,11 +374,14 @@ HIDDEN void osl_free(genptr_t cp)
 	(struct osl_specific *)cp;
     bu_free(cp, "osl_specific");
 
+    bu_semaphore_acquire(8);
+
     /* FIXME: take care of multi-thread issues */
     if(oslr != NULL){
 	delete oslr;
 	oslr = NULL;
     }
+    bu_semaphore_release(8);
 }
 
 /*
@@ -484,9 +492,6 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 	bu_struct_print("osl_render Parameters:", osl_print_tab,
 			(char *)osl_sp);
     
-    point_t scolor;
-    VSETALL(scolor, 0.0f);
-    
     /* Just shoot several rays if we are rendering the first pixel */
     int nsamples;
     if(ap->a_level == 0){
@@ -526,8 +531,10 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
     /* We only perform reflection if application decides to */
     info.doreflection = 0;
     
+    bu_semaphore_acquire(8);
     Color3 weight = oslr->QueryColor(&info);
-    
+    bu_semaphore_release(8);
+
     if(info.doreflection == 1){
 	
 	/* Fire another ray */
@@ -564,21 +571,15 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 	
 	Color3 rec;
 	VMOVE(rec, new_ap.a_color);
-	
+ 
 	Color3 res = rec*weight;
-	VMOVE(scolor, res);
+	VMOVE(swp->sw_color, res);
     }
     else {
 	/* Final color */
-	VMOVE(scolor, weight);
+	VMOVE(swp->sw_color, weight);
     }
-
-    /* The resulting color is always on ap_color, but
-       we need to update it through sw_color */
-    VSCALE(swp->sw_color, scolor, 2);
-    
     return 1;
-
 }
 }
 

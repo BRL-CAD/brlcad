@@ -91,11 +91,6 @@ struct ShaderGroupInfo {
     std::vector< ShaderEdge > shader_edges;
 };
 
-struct ThreadInfo {
-    void *handle;
-    ShadingContext *ctx;
-    unsigned short Xi[3];
-};
 
 /* Class 'OSLRenderer' holds global information about OSL shader system.
    These information are hidden from the calling C code */
