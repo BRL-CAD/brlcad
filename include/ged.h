@@ -507,6 +507,9 @@ struct ged_view {
     struct ged_rect_state 	gv_rect;
 };
 
+
+struct ged_cmd;
+
 struct ged {
     struct bu_list		l;
     struct rt_wdb		*ged_wdbp;
@@ -529,10 +532,33 @@ struct ged {
 
     /* FIXME -- this ugly hack needs to die.  the result string should be stored before the call. */
     int 			ged_internal_call;
+
+    /* FOR LIBGED INTERNAL USE */
+    struct ged_cmd *cmds;
+    int (*add)(const struct ged_cmd *cmd);
+    int (*del)(const char *name);
+    int (*run)(int ac, char *av[]);
 };
 
 typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
 typedef void (*ged_refresh_callback_ptr)(void *);
+
+
+/**
+ * describes a command plugin
+ */
+struct ged_cmd {
+    struct bu_list l;
+
+    const char *name;
+    const char description[80];
+    const char *manpage;
+
+    int (*load)(struct ged *);
+    void (*unload)(struct ged *);
+    int (*exec)(struct ged *, int, const char *[]);
+};
+
 
 /**
  * V I E W _ O B J
