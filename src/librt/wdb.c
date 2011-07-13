@@ -372,8 +372,8 @@ wdb_export(
 void
 wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
 {
-    BU_LIST_INIT(&wdbp->l);
-    BU_LIST_MAGIC_SET(&wdbp->l, RT_WDB_MAGIC);
+    BU_LIST_INIT_MAGIC(&wdbp->l, RT_WDB_MAGIC);
+
     wdbp->type = mode;
     wdbp->dbip = dbip;
     wdbp->dbip->dbi_wdbp = wdbp;

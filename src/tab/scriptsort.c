@@ -189,8 +189,7 @@ struct frame *getframe(FILE *in)
  * get a frame and set it up.
  */
     new = (struct frame *) bu_calloc(1, sizeof(struct frame), "struct frame");
-    BU_LIST_INIT(&(new->l));
-    BU_LIST_MAGIC_SET(&(new->l), MAGIC);
+    BU_LIST_INIT_MAGIC(&(new->l), MAGIC);
     new->number = atoi(yytext);
     new->number += frame_offset;
 /*

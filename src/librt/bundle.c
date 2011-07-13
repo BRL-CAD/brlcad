@@ -701,12 +701,10 @@ bundle_hit(register struct application *ap, struct partition *PartHeadp, struct 
     BU_GETSTRUCT(new_shotline, partition_list);
 
     /* steal partition list */
-    BU_LIST_INIT((struct bu_list *)&new_shotline->PartHeadp);
-    BU_LIST_MAGIC_SET((struct bu_list *)&new_shotline->PartHeadp, PT_HD_MAGIC);
+    BU_LIST_INIT_MAGIC((struct bu_list *)&new_shotline->PartHeadp, PT_HD_MAGIC);
     BU_LIST_APPEND_LIST((struct bu_list *)&new_shotline->PartHeadp, (struct bu_list *)PartHeadp);
 
-    BU_LIST_INIT(&new_shotline->segHeadp.l);
-    BU_LIST_MAGIC_SET(&new_shotline->segHeadp.l, RT_SEG_MAGIC);
+    BU_LIST_INIT_MAGIC(&new_shotline->segHeadp.l, RT_SEG_MAGIC);
     BU_LIST_APPEND_LIST(&new_shotline->segHeadp.l, &segp->l);
 
     new_shotline->ap = ap;

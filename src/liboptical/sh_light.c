@@ -603,8 +603,7 @@ light_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
     BU_CK_VLS(matparm);
 
     BU_GETSTRUCT(lsp, light_specific);
-    BU_LIST_INIT(&(lsp->l));
-    BU_LIST_MAGIC_SET(&(lsp->l), LIGHT_MAGIC);
+    BU_LIST_INIT_MAGIC(&(lsp->l), LIGHT_MAGIC);
 
     lsp->lt_intensity = 1.0;	/* Lumens */
     lsp->lt_fraction = -1.0;	/* Recomputed later */
@@ -1848,8 +1847,7 @@ light_maker(int num, mat_t v2m)
 	}
 
 	BU_GETSTRUCT(lsp, light_specific);
-	BU_LIST_INIT(&(lsp->l));
-	BU_LIST_MAGIC_SET(&(lsp->l), LIGHT_MAGIC);
+	BU_LIST_INIT_MAGIC(&(lsp->l), LIGHT_MAGIC);
 
 #ifdef RT_MULTISPECTRAL
 	BN_GET_TABDATA(lsp->lt_spectrum, spectrum);
