@@ -73,7 +73,7 @@ struct img_specific {
     char i_behind;	/* shade points behind img plane */
     fastf_t i_perspective;	/* perspective angle 0=ortho */
 };
-#define img_MAGIC 0x696d6700	/* "img" */
+#define IMG_MAGIC 0x696d6700	/* "img" */
 #define IMG_SPECIFIC_INIT_ZERO {BU_LIST_INIT_ZERO, 0, BU_VLS_INIT_ZERO, '\0', NULL, NULL, NULL, 0, 0, 0.0, VINIT_ZERO, HINIT_ZERO, MAT_INIT_IDN, MAT_INIT_IDN, HINIT_ZERO, MAT_INIT_IDN, '\0', '\0', '\0', 0.0}
 
 
@@ -280,6 +280,7 @@ orient_hook(register const struct bu_structparse *UNUSED(sdp), register const ch
      */
     BU_GETSTRUCT(img_new, img_specific);
     memcpy(img_new, img_sp, sizeof(struct img_specific));
+    BU_LIST_MAGIC_SET(&img_new->l, IMG_MAGIC);
     BU_CK_VLS(&img_sp->i_name);
 
     /* zero the filename for the next iteration */
@@ -355,7 +356,6 @@ orient_hook(register const struct bu_structparse *UNUSED(sdp), register const ch
 
     /* read in the pixel data now happens in prj_setup() */
     /* we add an image to the list of images regardless of whether the data is valid or not */
-    BU_LIST_MAGIC_SET(&img_new->l, img_MAGIC);
     BU_LIST_APPEND(&img_sp->l, &img_new->l);
 }
 
