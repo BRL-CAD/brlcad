@@ -188,6 +188,10 @@
 #define RT_TREE_MAGIC			0x91191191
 #define RT_WDB_MAGIC		       	0x5f576462
 
+/* ged */
+
+#define GED_CMD_MAGIC			0x65786563 /**< exec */
+
 /* misc */
 
 #define ANIMATE_MAGIC			0x414e4963 /**< 1095649635 */
