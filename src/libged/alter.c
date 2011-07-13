@@ -800,16 +800,15 @@ translate(struct ged *gedp, vect_t *keypoint,
 #define ALTER_MAX_ARG_OPTIONS 3
 
 /*
- * alter_arg_node flags of coordinates being used
+ * alter_arg flags of coordinates being used
  */
 #define ALTER_X_COORD 	0x1
 #define ALTER_Y_COORD 	0x2
 #define ALTER_Z_COORD 	0x4
-#define ALTER_ALL_COORDS (ALTER_X_COORD + ALTER_Y_COORD + \
-			  ALTER_Z_COORD)
+#define ALTER_ALL_COORDS (ALTER_X_COORD + ALTER_Y_COORD + ALTER_Z_COORD)
 
 /*
- * alter_arg_node argument type flags
+ * alter_arg argument type flags
  */
 
 /* argument types */
@@ -834,8 +833,8 @@ translate(struct ged *gedp, vect_t *keypoint,
  * Use one of these nodes for each argument for the alter subcommands
  * (see manuals)
  */
-struct alter_arg_node {
-    struct alter_arg_node *next; /* link to next argument */
+struct alter_arg {
+    struct alter_arg *next; /* link to next argument */
 
     /* command line options, e.g. "Rnk", to convert to option flags */
     char cl_options[ALTER_MAX_ARG_OPTIONS];
@@ -852,57 +851,56 @@ struct alter_arg_node {
     vect_t *vector;
 };
 
-/* for union alter_arg.cmd */
-enum alter_arg_cmd {
+enum alter_cmd_name {
     ALTER_TRANSLATE,
     ALTER_ROTATE,
     ALTER_SCALE
 };
 
 /* argument structure of each command */
-union alter_arg {
-    enum alter_arg_cmd cmd;
+union alter_cmd{
+    enum alter_cmd_name name;
 
     struct {
-	enum alter_arg_cmd padding_for_cmd;
-	struct alter_arg_node objects;
+	enum alter_cmd_name padding_for_name;
+	struct alter_arg objects;
     } common;
 
     struct {
-	enum alter_arg_cmd padding_for_cmd;
-	struct alter_arg_node objects;
+	enum alter_cmd_name padding_for_name;
+	struct alter_arg objects;
 	struct {
-	    struct alter_arg_node from;
-	    struct alter_arg_node to;
+	    struct alter_arg from;
+	    struct alter_arg to;
 	} ref_vector;
     } translate;
 
     struct {
-	enum alter_arg_cmd padding_for_cmd;
-	struct alter_arg_node objects;
+	enum alter_cmd_name padding_for_name;
+	struct alter_arg objects;
 	struct {
-	    struct alter_arg_node from;
-	    struct alter_arg_node to;
+	    struct alter_arg from;
+	    struct alter_arg to;
 	} ref_axis;
-	struct alter_arg_node center;
+	struct alter_arg center;
 	struct {
-	    struct alter_arg_node origin;
-	    struct alter_arg_node from;
-	    struct alter_arg_node to;
+	    struct alter_arg origin;
+	    struct alter_arg from;
+	    struct alter_arg to;
 	} ref_angle;
     } rotate;
 
     struct {
-	enum alter_arg_cmd padding_for_cmd;
-	struct alter_arg_node objects;
+	enum alter_cmd_name padding_for_cmd;
+	struct alter_arg objects;
 	struct {
-	    struct alter_arg_node from;
-	    struct alter_arg_node to;
+	    struct alter_arg from;
+	    struct alter_arg to;
 	} ref_scale;
-	struct alter_arg_node center;
+	struct alter_arg center;
 	struct {
-	    struct alter_arg_node from;
-	    struct alter_arg_node to;
+	    struct alter_arg from;
+	    struct alter_arg to;
 	} ref_factor;
     } scale;
 };
@@ -911,9 +909,9 @@ union alter_arg {
  * Initialize a node.
  */
 void
-alter_arg_node_init(struct alter_arg_node *node)
+alter_arg_init(struct alter_arg *node)
 {
-    node->next = (struct alter_arg_node *)NULL;
+    node->next = (struct alter_arg *)NULL;
     node->cl_options[0] = '\0';
     node->coords_used = 0;
     node->type = 0;
@@ -922,32 +920,82 @@ alter_arg_node_init(struct alter_arg_node *node)
 }
 
 /**
- * Allocate, initialize, and attach a new node to the end of the list.
+ * Attach a node to the front of the list.
  */
 void
-alter_arg_node_postfix(struct alter_arg_node *node)
+alter_arg_prefix(struct alter_arg *dest_node,
+		      struct alter_arg *src)
 {
-    struct alter_arg_node *pos = node;
+    struct alter_arg *pos = dest_node;
 
     while (pos->next)
 	pos = pos->next;
-
-    pos->next = (struct alter_arg_node *)bu_malloc(
-		sizeof(struct alter_arg_node),
-		"alter_arg_node block for alter_arg_node_postfix()");
-
-    alter_arg_node_init(pos->next);
+    pos->next = src;
 }
 
 /**
- * Free a node and all nodes down its list.
+ * Attach a node to the end of the list.
  */
 void
-alter_arg_node_free_all(struct alter_arg_node *node)
+alter_arg_postfix(struct alter_arg *head,
+		       struct alter_arg *node)
 {
-    if (node->next)
-	alter_arg_node_free_all(node->next);
-    bu_free(node, "alter_arg_node");
+    struct alter_arg *pos = head;
+
+    while (pos->next)
+	pos = pos->next;
+    pos->next = node;
+}
+
+/**
+ * Allocate space and attach a new node to the end of the list.
+ * Returns a pointer to the new node. Caller is responsible for
+ * freeing.
+ */
+struct alter_arg *
+alter_arg_postfix_new(struct alter_arg *head)
+{
+    alter_arg_postfix(head, (struct alter_arg *)bu_malloc(
+			   sizeof(struct alter_arg), "alter_arg block"
+			   "for alter_arg_postfix()"));
+
+    alter_arg_init(head->next);
+    return head->next;
+}
+
+/**
+ * Remove the head node and return its successor.
+ */
+struct alter_arg *
+alter_arg_rm_prefix (struct alter_arg *head)
+{
+    struct alter_arg *old_head = head;
+
+    head = head->next;
+    bu_free(old_head, "alter_arg");
+    return head;
+}
+
+/**
+ * Free an argument node and all nodes down its list.
+ */
+void
+alter_arg_free_all(struct alter_arg *arg)
+{
+    if (arg->next)
+	alter_arg_free_all(arg->next);
+    bu_free(arg, "alter_arg");
+}
+
+/**
+ * Free any dynamically allocated arg that may exist
+ */
+void
+alter_cmd_free(union alter_cmd *args)
+{
+    /* first object is automatic */
+    if (args->common.objects.next)
+	alter_arg_free_all(args->common.objects.next);
 }
 	
 #if 0
@@ -981,7 +1029,7 @@ alter_scale(struct ged *gedp, point_t *scale_from, point_t *scale_to,
  * coordinates.
  */
 int
-alter(struct ged *gedp, struct alter_arg_node *args_head,
+alter(struct ged *gedp, struct alter_arg *args_head,
       const char *global_opts)
 {
     (void)gedp;
@@ -991,6 +1039,9 @@ alter(struct ged *gedp, struct alter_arg_node *args_head,
     return GED_OK;
 }
 
+/**
+ * A command line interface to the alter commands.
+ */
 int
 ged_alter(struct ged *gedp, int argc, const char *argv[])
 {
@@ -998,8 +1049,20 @@ ged_alter(struct ged *gedp, int argc, const char *argv[])
     (void)argc;
     (void)argv;
     (void)alter(gedp, NULL, NULL);
-    (void)alter_arg_node_postfix(NULL);
-    (void)alter_arg_node_free_all(NULL);
+    (void)alter_arg_postfix_new(NULL);
+    (void)alter_arg_free_all(NULL);
+
+    /*
+     * testing
+     */
+#if 0
+    union alter_cmd cmd;
+    cmd.name = ALTER_TRANSLATE;
+
+    alter_arg_postfix_new(&cmd.common.objects);
+    alter_arg_postfix_new(&cmd.common.objects);
+    alter_cmd_free(&cmd);
+#endif
 
 #if 0
     struct db_i *dbip = gedp->ged_wdbp->dbip;
@@ -1044,8 +1107,8 @@ ged_alter(struct ged *gedp, int argc, const char *argv[])
      * Get short arguments
      */
 
-    /* must be wanting help; argc < 3 is wrong too, but more helpful
-     * msgs are given later, by saying which args are missing */
+    /* must want help; argc < 3 is wrong too, but more helpful msgs
+     * are given later, by saying which args are missing */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 	return GED_HELP;
