@@ -619,11 +619,6 @@ GED_EXPORT extern void ged_calc_adc_a1(struct ged_view *gvp);
 GED_EXPORT extern void ged_calc_adc_a2(struct ged_view *gvp);
 GED_EXPORT extern void ged_calc_adc_dst(struct ged_view *gvp);
 
-/**
- * Translate object(s)
- */
-GED_EXPORT extern int ged_alter(struct ged *gedp, int argc, const char *argv[]);
-
 /* defined in clip.c */
 GED_EXPORT extern int ged_clip(fastf_t *xp1,
 			       fastf_t *yp1,
@@ -645,6 +640,8 @@ GED_EXPORT extern int ged_dbcopy(struct ged *from_gedp,
 GED_EXPORT extern void ged_color_soltab(struct bu_list *hdlp);
 GED_EXPORT extern struct ged_display_list *ged_addToDisplay(struct ged *gedp,
 							    const char *name);
+/* defined in edit.c */
+GED_EXPORT extern int ged_edit(struct ged *gedp, int argc, const char *argv[]);
 
 /* defined in erase.c */
 GED_EXPORT extern void ged_erasePathFromDisplay(struct ged *gedp,

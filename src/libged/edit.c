@@ -1,4 +1,4 @@
-/*                         A L T E R . C
+/*                         E D I T . C
  * BRL-CAD
  *
  * Copyright (c) 2008-2011 United States Government as represented by
@@ -17,26 +17,24 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/alter.c
+/** @file libged/edit.c
  *
- * Command to alter objects by translating, rotating, and scaling.
+ * Command to edit objects by translating, rotating, and scaling.
  */
 
-/* alter: Proposed manual page
+/* edit: Proposed manual page
  *
  * NAME
- *	alter
+ *	edit
  *
  * SYNOPSIS
- *	alter COMMAND_NAME ARGS OBJECT ...
- *	alter {translate | rotate | scale} ARGS OBJECT ...
+ *	edit COMMAND_NAME ARGS OBJECT ...
+ *	edit {translate | rotate | scale} ARGS OBJECT ...
  *
  *	ARGS:
  *	    see manual for given COMMAND_NAME
  * 
  * DESCRIPTION
- *	Alter: to make different without changing into something else.
- *
  *	Used to change objects through the use of subcommands.
  *
  */
@@ -45,7 +43,7 @@
  * translate: Proposed operations, and manual page
  *
  * NAME
- *	translate (alias for "alter translate")
+ *	translate (alias for "edit translate")
  *
  * SYNOPSIS
  *	translate [FROM] TO OBJECT ...
@@ -257,7 +255,7 @@
  * rotate: Proposed operations, and manual page
  *
  * NAME
- *	rotate (alias for "alter rotate")
+ *	rotate (alias for "edit rotate")
  *
  * SYNOPSIS
  *	rotate [-R] [AXIS] [CENTER] ANGLE OBJECT ...
@@ -555,7 +553,7 @@
  * scale: Proposed operations, and manual page
  *
  * NAME
- *	scale (alias for "alter scale")
+ *	scale (alias for "edit scale")
  *
  * SYNOPSIS
  *	scale [SCALE] [CENTER] FACTOR OBJECT ...
@@ -797,47 +795,47 @@ translate(struct ged *gedp, vect_t *keypoint,
 #endif
 
 /* Max # of global options + max number of options for a single arg */
-#define ALTER_MAX_ARG_OPTIONS 3
+#define EDIT_MAX_ARG_OPTIONS 3
 
 /*
- * alter_arg flags of coordinates being used
+ * edit_arg flags of coordinates being used
  */
-#define ALTER_X_COORD 	0x1
-#define ALTER_Y_COORD 	0x2
-#define ALTER_Z_COORD 	0x4
-#define ALTER_ALL_COORDS (ALTER_X_COORD + ALTER_Y_COORD + ALTER_Z_COORD)
+#define EDIT_X_COORD 	0x1
+#define EDIT_Y_COORD 	0x2
+#define EDIT_Z_COORD 	0x4
+#define EDIT_ALL_COORDS (EDIT_X_COORD + EDIT_Y_COORD + EDIT_Z_COORD)
 
 /*
- * alter_arg argument type flags
+ * edit_arg argument type flags
  */
 
 /* argument types */
-#define ALTER_FROM			0x001 /* aka keypoint */
-#define ALTER_CENTER			0x002 /* for rotate/scale */
-#define ALTER_TO			0x004
-#define ALTER_TARGET_OBJ		0x008 /* obj to operate on */
+#define EDIT_FROM			0x001 /* aka keypoint */
+#define EDIT_CENTER			0x002 /* for rotate/scale */
+#define EDIT_TO			0x004
+#define EDIT_TARGET_OBJ		0x008 /* obj to operate on */
 
 /* argument "TO" type modifiers */
-#define ALTER_REL_DIST			0x010
-#define ALTER_ABS_POS 			0x020
+#define EDIT_REL_DIST			0x010
+#define EDIT_ABS_POS 			0x020
 
 /* command-specific argument "FROM" and "TO" type modifiers */
-#define ALTER_ROTATE_DEGREES		0x040
-#define ALTER_ROTATE_OVRD_CONSTRAINT 	0x080 /* override axis constraint */
+#define EDIT_ROTATE_DEGREES		0x040
+#define EDIT_ROTATE_OVRD_CONSTRAINT 	0x080 /* override axis constraint */
 
 /* object argument type modifier flags */
-#define ALTER_NATURAL_ORIGIN		0x100 /* use natural origin of object instead of center */
-#define ALTER_USE_TARGETS		0x200 /* for batch ops */
+#define EDIT_NATURAL_ORIGIN		0x100 /* use natural origin of object instead of center */
+#define EDIT_USE_TARGETS		0x200 /* for batch ops */
 
 /*
- * Use one of these nodes for each argument for the alter subcommands
+ * Use one of these nodes for each argument for the edit subcommands
  * (see manuals)
  */
-struct alter_arg {
-    struct alter_arg *next; /* link to next argument */
+struct edit_arg {
+    struct edit_arg *next; /* link to next argument */
 
     /* command line options, e.g. "Rnk", to convert to option flags */
-    char cl_options[ALTER_MAX_ARG_OPTIONS];
+    char cl_options[EDIT_MAX_ARG_OPTIONS];
 
     /* flag which coords from the vector/object are being used */
     unsigned int coords_used : 3; 
@@ -851,56 +849,56 @@ struct alter_arg {
     vect_t *vector;
 };
 
-enum alter_cmd_name {
-    ALTER_TRANSLATE,
-    ALTER_ROTATE,
-    ALTER_SCALE
+enum edit_cmd_name {
+    EDIT_TRANSLATE,
+    EDIT_ROTATE,
+    EDIT_SCALE
 };
 
 /* argument structure of each command */
-union alter_cmd{
-    enum alter_cmd_name name;
+union edit_cmd{
+    enum edit_cmd_name name;
 
     struct {
-	enum alter_cmd_name padding_for_name;
-	struct alter_arg objects;
+	enum edit_cmd_name padding_for_name;
+	struct edit_arg objects;
     } common;
 
     struct {
-	enum alter_cmd_name padding_for_name;
-	struct alter_arg objects;
+	enum edit_cmd_name padding_for_name;
+	struct edit_arg objects;
 	struct {
-	    struct alter_arg from;
-	    struct alter_arg to;
+	    struct edit_arg from;
+	    struct edit_arg to;
 	} ref_vector;
     } translate;
 
     struct {
-	enum alter_cmd_name padding_for_name;
-	struct alter_arg objects;
+	enum edit_cmd_name padding_for_name;
+	struct edit_arg objects;
 	struct {
-	    struct alter_arg from;
-	    struct alter_arg to;
+	    struct edit_arg from;
+	    struct edit_arg to;
 	} ref_axis;
-	struct alter_arg center;
+	struct edit_arg center;
 	struct {
-	    struct alter_arg origin;
-	    struct alter_arg from;
-	    struct alter_arg to;
+	    struct edit_arg origin;
+	    struct edit_arg from;
+	    struct edit_arg to;
 	} ref_angle;
     } rotate;
 
     struct {
-	enum alter_cmd_name padding_for_cmd;
-	struct alter_arg objects;
+	enum edit_cmd_name padding_for_cmd;
+	struct edit_arg objects;
 	struct {
-	    struct alter_arg from;
-	    struct alter_arg to;
+	    struct edit_arg from;
+	    struct edit_arg to;
 	} ref_scale;
-	struct alter_arg center;
+	struct edit_arg center;
 	struct {
-	    struct alter_arg from;
-	    struct alter_arg to;
+	    struct edit_arg from;
+	    struct edit_arg to;
 	} ref_factor;
     } scale;
 };
@@ -909,9 +907,9 @@ union alter_cmd{
  * Initialize a node.
  */
 void
-alter_arg_init(struct alter_arg *node)
+edit_arg_init(struct edit_arg *node)
 {
-    node->next = (struct alter_arg *)NULL;
+    node->next = (struct edit_arg *)NULL;
     node->cl_options[0] = '\0';
     node->coords_used = 0;
     node->type = 0;
@@ -923,10 +921,10 @@ alter_arg_init(struct alter_arg *node)
  * Attach a node to the front of the list.
  */
 void
-alter_arg_prefix(struct alter_arg *dest_node,
-		      struct alter_arg *src)
+edit_arg_prefix(struct edit_arg *dest_node,
+		      struct edit_arg *src)
 {
-    struct alter_arg *pos = dest_node;
+    struct edit_arg *pos = dest_node;
 
     while (pos->next)
 	pos = pos->next;
@@ -937,10 +935,10 @@ alter_arg_prefix(struct alter_arg *dest_node,
  * Attach a node to the end of the list.
  */
 void
-alter_arg_postfix(struct alter_arg *head,
-		       struct alter_arg *node)
+edit_arg_postfix(struct edit_arg *head,
+		       struct edit_arg *node)
 {
-    struct alter_arg *pos = head;
+    struct edit_arg *pos = head;
 
     while (pos->next)
 	pos = pos->next;
@@ -952,27 +950,27 @@ alter_arg_postfix(struct alter_arg *head,
  * Returns a pointer to the new node. Caller is responsible for
  * freeing.
  */
-struct alter_arg *
-alter_arg_postfix_new(struct alter_arg *head)
+struct edit_arg *
+edit_arg_postfix_new(struct edit_arg *head)
 {
-    alter_arg_postfix(head, (struct alter_arg *)bu_malloc(
-			   sizeof(struct alter_arg), "alter_arg block"
-			   "for alter_arg_postfix()"));
+    edit_arg_postfix(head, (struct edit_arg *)bu_malloc(
+			   sizeof(struct edit_arg), "edit_arg block"
+			   "for edit_arg_postfix()"));
 
-    alter_arg_init(head->next);
+    edit_arg_init(head->next);
     return head->next;
 }
 
 /**
  * Remove the head node and return its successor.
  */
-struct alter_arg *
-alter_arg_rm_prefix (struct alter_arg *head)
+struct edit_arg *
+edit_arg_rm_prefix (struct edit_arg *head)
 {
-    struct alter_arg *old_head = head;
+    struct edit_arg *old_head = head;
 
     head = head->next;
-    bu_free(old_head, "alter_arg");
+    bu_free(old_head, "edit_arg");
     return head;
 }
 
@@ -980,34 +978,34 @@ alter_arg_rm_prefix (struct alter_arg *head)
  * Free an argument node and all nodes down its list.
  */
 void
-alter_arg_free_all(struct alter_arg *arg)
+edit_arg_free_all(struct edit_arg *arg)
 {
     if (arg->next)
-	alter_arg_free_all(arg->next);
-    bu_free(arg, "alter_arg");
+	edit_arg_free_all(arg->next);
+    bu_free(arg, "edit_arg");
 }
 
 /**
  * Free any dynamically allocated arg that may exist
  */
 void
-alter_cmd_free(union alter_cmd *args)
+edit_cmd_free(union edit_cmd *args)
 {
     /* first object is automatic */
     if (args->common.objects.next)
-	alter_arg_free_all(args->common.objects.next);
+	edit_arg_free_all(args->common.objects.next);
 }
 	
 #if 0
 int
-alter_translate(struct ged *gedp, point_t *from, point_t *to,
+edit_translate(struct ged *gedp, point_t *from, point_t *to,
 		struct db_full_path *path)
 {
     return GED_OK;
 }
 
 int
-alter_rotate(struct ged *gedp, point_t *axis_from, point_t *axis_to,
+edit_rotate(struct ged *gedp, point_t *axis_from, point_t *axis_to,
 	     point_t *center, point_t *angle_origin, point_t *angle_from,
 	     point_t *angle_to, struct db_full_path *path)
 {
@@ -1015,7 +1013,7 @@ alter_rotate(struct ged *gedp, point_t *axis_from, point_t *axis_to,
 }
 
 int
-alter_scale(struct ged *gedp, point_t *scale_from, point_t *scale_to,
+edit_scale(struct ged *gedp, point_t *scale_from, point_t *scale_to,
 	    point_t *center, point_t *factor_from, point_t *factor_to,
 	    struct db_full_path *path)
 {
@@ -1024,12 +1022,12 @@ alter_scale(struct ged *gedp, point_t *scale_from, point_t *scale_to,
 #endif
 				  
 /**
- * A wrapper for the alter commands. It adds the capability to perform
+ * A wrapper for the edit commands. It adds the capability to perform
  * batch operations, and accepts objects and distances in addition to
  * coordinates.
  */
 int
-alter(struct ged *gedp, struct alter_arg *args_head,
+edit(struct ged *gedp, struct edit_arg *args_head,
       const char *global_opts)
 {
     (void)gedp;
@@ -1040,28 +1038,28 @@ alter(struct ged *gedp, struct alter_arg *args_head,
 }
 
 /**
- * A command line interface to the alter commands.
+ * A command line interface to the edit commands.
  */
 int
-ged_alter(struct ged *gedp, int argc, const char *argv[])
+ged_edit(struct ged *gedp, int argc, const char *argv[])
 {
     (void)gedp;
     (void)argc;
     (void)argv;
-    (void)alter(gedp, NULL, NULL);
-    (void)alter_arg_postfix_new(NULL);
-    (void)alter_arg_free_all(NULL);
+    (void)edit(gedp, NULL, NULL);
+    (void)edit_arg_postfix_new(NULL);
+    (void)edit_arg_free_all(NULL);
 
     /*
      * testing
      */
 #if 0
-    union alter_cmd cmd;
-    cmd.name = ALTER_TRANSLATE;
+    union edit_cmd cmd;
+    cmd.name = EDIT_TRANSLATE;
 
-    alter_arg_postfix_new(&cmd.common.objects);
-    alter_arg_postfix_new(&cmd.common.objects);
-    alter_cmd_free(&cmd);
+    edit_arg_postfix_new(&cmd.common.objects);
+    edit_arg_postfix_new(&cmd.common.objects);
+    edit_cmd_free(&cmd);
 #endif
 
 #if 0
@@ -1087,7 +1085,7 @@ ged_alter(struct ged *gedp, int argc, const char *argv[])
     int to_origin_flag = 0;
     const char *s_to_primitive;
     struct db_full_path to_primitive;
-    vect_t delta;			/* dist/pos to alter to */
+    vect_t delta;			/* dist/pos to edit to */
 
     const char *s_obj[] = NULL;
     struct db_full_path obj[] = NULL;
@@ -1201,7 +1199,7 @@ no_more_args: /* for breaking out, above */
     if (!abs_flag && !rel_flag)
 	rel_flag = 1;
     
-    /* set delta coordinates for alter */
+    /* set delta coordinates for edit */
     if ((bu_optind + 1) > argc) {
 	bu_vls_printf(gedp->ged_result_str, "missing x coordinate");
 	return GED_HELP;
@@ -1255,12 +1253,12 @@ no_more_args: /* for breaking out, above */
     }
 
     /*
-     * Perform alter
+     * Perform edit
      */
 
     d_obj = DB_FULL_PATH_ROOT_DIR(&obj);
     if (!kp_arg) {
-	if (alter_translate(gedp, (vect_t *)NULL, &path, d_obj, delta,
+	if (edit_translate(gedp, (vect_t *)NULL, &path, d_obj, delta,
 		      rel_flag) == GED_ERROR) {
 	    db_free_full_path(&path);
 	    db_free_full_path(&obj);
@@ -1268,7 +1266,7 @@ no_more_args: /* for breaking out, above */
 	    return GED_ERROR;
 	}
     } else {
-	if (alter_translate(gedp, &keypoint, &path, d_obj, delta, rel_flag) ==
+	if (edit_translate(gedp, &keypoint, &path, d_obj, delta, rel_flag) ==
 	    GED_ERROR) {
 	    db_free_full_path(&path);
 	    db_free_full_path(&obj);

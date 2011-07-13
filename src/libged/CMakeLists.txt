@@ -6,7 +6,6 @@ set(LIBGED_SOURCES
     aet.c
     analyze.c
     annotate.c
-    alter.c
     arb.c
     arced.c
     arot.c
@@ -62,6 +61,7 @@ set(LIBGED_SOURCES
     echo.c
     edcodes.c
     edcomb.c
+    edit.c
     editit.c
     edmater.c
     erase.c

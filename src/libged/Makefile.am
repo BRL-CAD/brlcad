@@ -8,7 +8,6 @@ libged_nil_la_SOURCES = \
 	adjust.c \
 	ae2dir.c \
 	aet.c \
-	alter.c \
 	analyze.c \
 	annotate.c \
 	arb.c \
@@ -66,6 +65,7 @@ libged_nil_la_SOURCES = \
 	echo.c \
 	edcodes.c \
 	edcomb.c \
+	edit.c \
 	editit.c \
 	edmater.c \
 	erase.c \

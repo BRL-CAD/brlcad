@@ -130,6 +130,7 @@ namespace eval ArcherCore {
 	# More to be added later...
 	method 3ptarb              {args}
 	method adjust              {args}
+	method edit                {args}
 	method arced               {args}
 	method attr                {args}
 	method bb                  {args}
@@ -440,7 +441,7 @@ namespace eval ArcherCore {
 	# This is mostly a list of wrapped Ged commands. However, it also contains
 	# a few commands that are implemented here in ArcherCore.
 	variable mArcherCoreCommands { \
-	    3ptarb adjust arced attr bb bev blast bo bot bot_condense \
+	    3ptarb adjust alter arced attr bb bev blast bo bot bot_condense \
 	    bot_decimate bot_face_fuse bot_face_sort bot_flip bot_merge \
 	    bot_smooth bot_split bot_sync bot_vertex_fuse c cd clear clone \
 	    closedb color comb comb_color combmem copy copyeval copymat cp \
@@ -4843,6 +4844,10 @@ namespace eval ArcherCore {
     eval gedWrapper adjust 0 1 1 1 $args
 }
 
+::itcl::body ArcherCore::edit {args} {
+    eval gedWrapper edit 0 0 1 0 $args
+}
+
 ::itcl::body ArcherCore::arced {args} {
     eval gedWrapper arced 0 0 1 0 $args
 }
@@ -5519,7 +5524,8 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::translate {args} {
-    set result [eval gedWrapper translate 0 0 1 0 $args]
+    #set args [linsert $args 0 "translate"]
+    set result [eval gedWrapper edit 0 0 1 0 $args]
 
     if {[llength $args] > 1} {
 	redrawObj [lindex $args end] 0
