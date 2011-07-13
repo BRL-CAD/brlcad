@@ -73,6 +73,7 @@
 #define BU_IMAGE_FILE_MAGIC		0x6269666d /**< bifm */
 #define BU_LIST_HEAD_MAGIC		0x01016580
 #define BU_MAPPED_FILE_MAGIC		0x4d617066 /**< Mapf */
+#define BU_OBSERVER_MAGIC		0x65796573 /**< eyes */
 #define BU_PTBL_MAGIC			0x7074626c /**< ptbl */
 #define BU_RB_LIST_MAGIC		0x72626c73
 #define BU_RB_NODE_MAGIC		0x72626e6f
