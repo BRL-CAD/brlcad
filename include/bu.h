@@ -760,6 +760,10 @@ struct bu_list {
 typedef struct bu_list bu_list_t;
 #define BU_LIST_NULL ((struct bu_list *)0)
 
+#define BU_LIST_MAGIC_SET(_hp, val) {(_hp)->magic = (val);}
+#define BU_LIST_MAGIC_OK(_hp, val) ((_hp)->magic == (val))
+#define BU_LIST_MAGIC_WRONG(_hp, val) ((_hp)->magic != (val))
+
 /**
  * there is no reliable way to assert the integrity of an arbitrary
  * bu_list struct since the magic can be anything, therefore there is
@@ -799,11 +803,6 @@ typedef struct bu_list bu_list_t;
  * pointers reference nothing.
  */
 #define BU_LIST_IS_INITIALIZED(_hp) (((struct bu_list *)(_hp) != BU_LIST_NULL) && LIKELY((_hp)->forw != BU_LIST_NULL))
-
-#define BU_LIST_MAGIC_SET(_hp, val) {(_hp)->magic = (val);}
-#define BU_LIST_MAGIC_OK(_hp, val) ((_hp)->magic == (val))
-#define BU_LIST_MAGIC_WRONG(_hp, val) ((_hp)->magic != (val))
-
 
 #define BU_LIST_CLOSE(_hp) { \
 	BU_ASSERT((_hp) != NULL); \
@@ -1269,8 +1268,7 @@ typedef struct bu_bitv bu_bitv_t;
  * macro is not suitable for initializing a head list node.
  */
 #define BU_BITV_INIT(_bp) { \
-	BU_LIST_INIT(&(_bp)->l); \
-	BU_LIST_MAGIC_SET(&(_bp)->l, BU_BITV_MAGIC); \
+	BU_LIST_INIT_MAGIC(&(_bp)->l, BU_BITV_MAGIC); \
 	(_bp)->nbits = 0; \
 	(_bp)->bits[0] = 0; \
 	(_bp)->bits[1] = 0; \
@@ -1526,8 +1524,7 @@ typedef struct bu_ptbl bu_ptbl_t;
  * macro is not suitable for initializing a list head node.
  */
 #define BU_PTBL_INIT(_p) { \
-	BU_LIST_INIT(&(_p)->l); \
-	BU_LIST_MAGIC_SET(&(_p)->l, BU_PTBL_MAGIC); \
+	BU_LIST_INIT_MAGIC(&(_p)->l, BU_PTBL_MAGIC); \
 	(_p)->end = 0; \
 	(_p)->blen = 0; \
 	(_p)->buffer = NULL; \
@@ -1649,8 +1646,7 @@ typedef struct bu_mapped_file bu_mapped_file_t;
  * initialize a bu_mapped_file struct without allocating any memory.
  */
 #define BU_MAPPED_FILE_INIT(_mf) { \
-	BU_LIST_INIT(&(_mf)->l); \
-	BU_LIST_MAGIC_SET(&(_mf)->l, BU_MAPPED_FILE_MAGIC); \
+	BU_LIST_INIT_MAGIC(&(_mf)->l, BU_MAPPED_FILE_MAGIC); \
 	(_mf)->name = (_mf)->buf = NULL; \
 	(_mf)->buflen = (_mf)->is_mapped = 0; \
 	(_mf)->appl = (_mf)->apbuf = NULL; \
@@ -1694,8 +1690,7 @@ typedef struct bu_hook_list bu_hook_list_t;
  * this macro is not suitable for initialization of a list head node.
  */
 #define BU_HOOK_LIST_INIT(_hl) { \
-	BU_LIST_INIT(&(_hl)->l); \
-	BU_LIST_MAGIC_SET(&(_hl)->l, BU_HOOK_LIST_MAGIC); \
+	BU_LIST_INIT_MAGIC(&(_hl)->l, BU_HOOK_LIST_MAGIC); \
 	(_hl)->hookfunc = (_hl)->clientdata = NULL; \
     }
 
@@ -2431,8 +2426,7 @@ typedef struct bu_observer bu_observer_t;
  * initializes a bu_observer struct without allocating any memory.
  */
 #define BU_OBSERVER_INIT(_op) { \
-	BU_LIST_INIT(&(_op)->l); \
-	BU_LIST_MAGIC_SET(&(_op)->l, 0); \
+	BU_LIST_INIT_MAGIC(&(_op)->l, 0); \
 	BU_VLS_INIT(&(_op)->observer); \
 	BU_VLS_INIT(&(_op)->cmd); \
     }
