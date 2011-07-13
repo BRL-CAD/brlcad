@@ -906,7 +906,7 @@ union edit_cmd{
 /**
  * Initialize a node.
  */
-void
+HIDDEN void
 edit_arg_init(struct edit_arg *node)
 {
     node->next = (struct edit_arg *)NULL;
@@ -920,7 +920,7 @@ edit_arg_init(struct edit_arg *node)
 /**
  * Attach a node to the front of the list.
  */
-void
+HIDDEN void
 edit_arg_prefix(struct edit_arg *dest_node,
 		      struct edit_arg *src)
 {
@@ -934,7 +934,7 @@ edit_arg_prefix(struct edit_arg *dest_node,
 /**
  * Attach a node to the end of the list.
  */
-void
+HIDDEN void
 edit_arg_postfix(struct edit_arg *head,
 		       struct edit_arg *node)
 {
@@ -950,7 +950,7 @@ edit_arg_postfix(struct edit_arg *head,
  * Returns a pointer to the new node. Caller is responsible for
  * freeing.
  */
-struct edit_arg *
+HIDDEN struct edit_arg *
 edit_arg_postfix_new(struct edit_arg *head)
 {
     edit_arg_postfix(head, (struct edit_arg *)bu_malloc(
@@ -964,7 +964,7 @@ edit_arg_postfix_new(struct edit_arg *head)
 /**
  * Remove the head node and return its successor.
  */
-struct edit_arg *
+HIDDEN struct edit_arg *
 edit_arg_rm_prefix (struct edit_arg *head)
 {
     struct edit_arg *old_head = head;
@@ -977,7 +977,7 @@ edit_arg_rm_prefix (struct edit_arg *head)
 /**
  * Free an argument node and all nodes down its list.
  */
-void
+HIDDEN void
 edit_arg_free_all(struct edit_arg *arg)
 {
     if (arg->next)
@@ -988,7 +988,7 @@ edit_arg_free_all(struct edit_arg *arg)
 /**
  * Free any dynamically allocated arg that may exist
  */
-void
+HIDDEN void
 edit_cmd_free(union edit_cmd *args)
 {
     /* first object is automatic */
@@ -1047,8 +1047,6 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     (void)argc;
     (void)argv;
     (void)edit(gedp, NULL, NULL);
-    (void)edit_arg_postfix_new(NULL);
-    (void)edit_arg_free_all(NULL);
 
     /*
      * testing
