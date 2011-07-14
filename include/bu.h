@@ -811,15 +811,6 @@ typedef struct bu_list bu_list_t;
  */
 #define BU_LIST_IS_INITIALIZED(_hp) (((struct bu_list *)(_hp) != BU_LIST_NULL) && LIKELY((_hp)->forw != BU_LIST_NULL))
 
-#define BU_LIST_CLOSE(_hp) { \
-	BU_ASSERT((_hp) != NULL); \
-	if ((_hp) == NULL) \
-	    return; \
-	BU_ASSERT(BU_LIST_IS_EMPTY((_hp))); \
-	bu_list_free((_hp)); \
-	bu_free((char *)(_hp), "bu_list head"); \
-    }
-
 
 /**
  * Insert "new" item in front of "old" item.  Often, "old" is the
