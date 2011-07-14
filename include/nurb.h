@@ -112,13 +112,6 @@ struct oslo_mat {
     fastf_t		* o_vec;
 };
 
-#if !defined(MAX)
-# define MAX(i, j)    ( (i) > (j) ? (i) : (j) )
-#endif
-#if !defined(MIN)
-# define MIN(i, j)    ( (i) < (j) ? (i) : (j) )
-#endif
-
 /* --- new way */
 
 struct bezier_2d_list {

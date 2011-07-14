@@ -132,10 +132,10 @@ ControlPolygonFlatEnough(
     max_distance_below = 0.0;
     for (i = 1; i < degree; i++) {
 	if (distance[i] < 0.0) {
-	    max_distance_below = MIN(max_distance_below, distance[i]);
+	    max_distance_below = FMIN(max_distance_below, distance[i]);
 	};
 	if (distance[i] > 0.0) {
-	    max_distance_above = MAX(max_distance_above, distance[i]);
+	    max_distance_above = FMAX(max_distance_above, distance[i]);
 	}
     }
     bu_free((char *)distance, "ControlPolygonFlatEnough" );
@@ -171,8 +171,8 @@ ControlPolygonFlatEnough(
     }
 
     /* Compute intercepts of bounding box	*/
-    left_intercept = MIN(intercept_1, intercept_2);
-    right_intercept = MAX(intercept_1, intercept_2);
+    left_intercept = FMIN(intercept_1, intercept_2);
+    right_intercept = FMAX(intercept_1, intercept_2);
 
     error = 0.5 * (right_intercept-left_intercept);
 
