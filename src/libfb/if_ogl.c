@@ -24,8 +24,8 @@
  * Frame Buffer Library interface for OpenGL.
  *
  * There are several different Frame Buffer modes supported.  Set your
- * environment FB_FILE to the appropriate type.  Note that some of the
- * /dev/sgi modes are not supported, and there are some new modes.
+ * environment FB_FILE to the appropriate type.
+ *
  * (see the modeflag definitions below).  /dev/ogl[options]
  *
  * This code is basically a port of the 4d Framebuffer interface from
