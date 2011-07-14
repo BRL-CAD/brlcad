@@ -37,8 +37,6 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#define min(_a, _b) ((_a) < (_b) ? (_a) : (_b))
-#define max(_a, _b) ((_a) > (_b) ? (_a) : (_b))
 
 /* declarations to support use of bu_getopt() system call */
 char *options = "w:o:n:t:b:u:c:rlhdm:T:R:";
@@ -619,8 +617,8 @@ frame_opening(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op)
 
 	    /* put the beam in */
 	    mk_h_rpp(fd, wm_hd,
-		     max(0.0, op->sx-bd_thin),
-		     min(WALL_WIDTH, op->ex+bd_thin),
+		     FMAX(0.0, op->sx-bd_thin),
+		     FMIN(WALL_WIDTH, op->ex+bd_thin),
 		     0.0, bd_thick,
 		     WALL_HEIGHT-bd_thin-beam_height,
 		     WALL_HEIGHT-bd_thin);
@@ -661,8 +659,8 @@ frame_opening(struct rt_wdb *fd, struct wmember *wm_hd, struct opening *op)
 	     */
 
 	    mk_h_rpp(fd, wm_hd,
-		     max(0.0, op->sx-bd_thin),
-		     min(WALL_WIDTH, op->ex+bd_thin),
+		     FMAX(0.0, op->sx-bd_thin),
+		     FMIN(WALL_WIDTH, op->ex+bd_thin),
 		     0.0, bd_thick,
 		     op->ez, WALL_HEIGHT-bd_thin);
 
