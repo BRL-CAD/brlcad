@@ -212,7 +212,7 @@ struct relvect {
 
 #define END -1, -1		/* end of stroke description */
 #define NIL 0, 0
-#define min(a, b)	((a)<(b)?(a):(b))
+
 /*
  * These character sets are taken from the Motorola MC6575 Pattern Generator,
  * page 5-119 of 'The Complete Motorola Microcomputer Data Library'
