@@ -137,7 +137,7 @@ __BEGIN_DECLS
 #	undef INFINITY
 #endif
 
-#if defined(vax) || (defined(sgi) && !defined(mips))
+#if defined(vax)
 #	define INFINITY	(1.0e20)	/* VAX limit is 10**37 */
 #else
 #	define INFINITY	(1.0e40)	/* IBM limit is 10**75 */

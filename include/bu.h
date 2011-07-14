@@ -1153,7 +1153,7 @@ typedef double fastf_t;
  * (DEPRECATED)
  *
  */
-#if defined(vax) || (defined(sgi) && !defined(mips))
+#if defined(vax)
 /* DEC VAX "D" format, the most restrictive */
 #  define MAX_FASTF		1.0e37	/* Very close to the largest number */
 #  define SQRT_MAX_FASTF	1.0e18	/* This squared just avoids overflow */
