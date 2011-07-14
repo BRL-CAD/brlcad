@@ -42,8 +42,6 @@
 #  undef X_NOT_POSIX
 #endif
 
-#define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
-
 #include <X11/extensions/XInput.h>
 #include <GL/glx.h>
 #include <GL/gl.h>

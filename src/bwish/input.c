@@ -31,9 +31,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
-#if defined(IRIX) && IRIX == 5
-#  define _BSD_COMPAT
-#endif
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif

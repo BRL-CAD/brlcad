@@ -181,12 +181,6 @@ fi
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
-# am_init_automake performs a ac_prog_install check so need to handle
-# problematic /usr/brl/bin/install on irix
-if test "x$build_vendor" = "xsgi" ; then
-   PATH="`echo $PATH | sed 's/\/brl\/bin/bin/g'`"
-fi
-
 # sanity check, make sure we have sources where we expect them
 AC_CONFIG_SRCDIR([src/librt/bool.c])
 
@@ -961,9 +955,6 @@ if test "x$bc_build_docs" != "xno" ; then
     AC_PATH_PROG(APACHEFOP, fop)
 fi
 
-# XXX tests for ranlib may be required.  "ar ts" was used in cake for
-# sgi and aix so more compensation may be required still.
-
 dnl Libtool may need AR so try to find it
 AC_PATH_PROG(AR, ar, [], $PATH:/usr/bin:/usr/local/bin:/usr/ccs/bin)
 AC_SUBST(AR)
@@ -987,21 +978,6 @@ compiler=unknown
 dnl Determine whether we are using GCC
 if test "x$GCC" = "xyes" ; then
     compiler=gnu
-fi
-
-dnl Determine whether we are using the MIPSpro compiler on SGI systems
-if test "x$build_vendor" = "xsgi" ; then
-    AC_MSG_CHECKING([whether we are using the MIPSpro compiler])
-    using_mipspro=no
-    AC_LINK_IFELSE([AC_LANG_SOURCE([#if defined(sgi) && defined(_COMPILER_VERSION) && !defined(__GNUC__)
-If we get here, we are using the MIPSPro compiler (and the link should fail).
-#endif
-int main() { return 0; }
-    ])], [using_mipspro=no], [using_mipspro=yes])
-    AC_MSG_RESULT($using_mipspro)
-    if test "x$using_mipspro" = "xyes" ; then
-	compiler=sgi
-    fi
 fi
 
 dnl Determine whether we are using the SUNWspro Sun Workshop compiler
@@ -1408,11 +1384,6 @@ dl_link_works=no
 LIBDL=""
 AC_CHECK_LIB(dl, dlopen, dl_link_works=yes ; LIBDL="-ldl")
 
-dnl check if the SGI generic SCSI library links
-ds_link_works=no
-LIBDS=""
-AC_CHECK_LIB(ds, dsopen, ds_link_works=yes ; LIBDS="-lds")
-
 dnl check if an OpenGL graphics library links
 gl_link_works=no
 LIBGL=""
@@ -1489,11 +1460,6 @@ LIBWGL=""
 if test "xbc_with_wgl" != "xno" ; then
     AC_CHECK_LIB(opengl32, glEnable, wgl_link_works=yes ; LIBWGL="-lopengl32")
 fi
-
-dnl check if the SGI graphics library links
-sgigl_link_works=no
-LIBSGIGL=""
-AC_CHECK_LIB(gl, gconfig, sgigl_link_works=yes ; LIBSGIGL="-lgl")
 
 dnl check if the Solaris lexer library links
 l_link_works=no
@@ -3480,11 +3446,6 @@ AC_MSG_CHECKING(for system dynamic linker library availability)
 AC_MSG_RESULT([$dl_link_works])
 AC_SUBST(LIBDL)
 
-dnl *** libds ***
-AC_MSG_CHECKING(for SGI /dev/scsi library availability)
-AC_MSG_RESULT([$ds_link_works])
-AC_SUBST(LIBDS)
-
 dnl *** libgl ***
 AC_MSG_CHECKING(for OpenGL library availability)
 AC_MSG_RESULT($gl_link_works)
@@ -3499,14 +3460,6 @@ dnl *** libopengl32 ***
 AC_MSG_CHECKING(for WindowsGL library availability)
 AC_MSG_RESULT($wgl_link_works)
 AC_SUBST(LIBWGL)
-
-dnl *** sgigl ***
-AC_MSG_CHECKING(for SGI graphics library availability)
-AC_MSG_RESULT($sgigl_link_works)
-AC_SUBST(LIBSGIGL)
-if test "x$sgigl_link_works" = "xyes" ; then
-    AC_DEFINE(HAS_SGIGL, 1, Irix GL is present.)
-fi
 
 dnl *** libl Solaris lexer library ***
 AC_MSG_CHECKING(for Solaris lexer library availability)
@@ -4141,11 +4094,6 @@ AC_SUBST(TERMIO_LIBS)
 AC_SUBST(WDB_LIBS)
 AC_SUBST(BRLCAD_LIBS)
 
-
-# if compiling with the MIPSpro 7.3 compiler, there is a bug when
-# trying to link using an rpath longer than 256 that causes the linker
-# to core dump.
-AM_CONDITIONAL(LINK_STATIC_REQUIRED, [test "x$build_vendor" = "xsgi" -a "x$compiler" = "xsgi" ])
 
 AM_CONDITIONAL(HAVE_DOXYGEN, false)
 

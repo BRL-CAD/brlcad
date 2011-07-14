@@ -2841,9 +2841,6 @@ add_host(struct ihost *ihp)
     check_input(1);
 }
 
-#ifdef sgi
-#	define RSH	"/usr/bsd/rsh"
-#endif
 #ifndef RSH
 #	define RSH	"/usr/ucb/rsh"
 #endif

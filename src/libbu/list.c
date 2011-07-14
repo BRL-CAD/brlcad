@@ -106,11 +106,6 @@ bu_list_parallel_dequeue(struct bu_list *headp)
 	    return p;
 	}
 	bu_semaphore_release(BU_SEM_LISTS);
-
-	/* List is empty, wait a moment and peek again */
-#if (defined(sgi) && defined(mips)) || (defined(__sgi) && defined(__mips))
-	sginap(1);
-#endif
     }
     /* NOTREACHED */
 }

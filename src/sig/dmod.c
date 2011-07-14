@@ -127,11 +127,7 @@ get_args(int argc, char **argv)
 int main(int argc, char **argv)
 {
     int	i, n;
-#ifdef sgi
-    double	*bp;		/* avoid SGI -Zf reg pointer ++ problem */
-#else
     double	*bp;
-#endif
     double	arg;
     int j;
     size_t ret;

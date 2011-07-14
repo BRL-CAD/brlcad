@@ -41,7 +41,7 @@
  *	   is achieved by saying " cat scale.pl file.pl >> out.file ".
  *	   The order of the files is very important: if not cat'ed in the
  *	   right order, the scales will be lost when plrot is applied though
- *	   they will still be seen with pl-sgi and mged. Later
+ *	   they will still be seen with pl-fb and mged. Later
  *	   this will be handled by scale.c as an fread() and fwrite().
  *
  */

@@ -48,7 +48,6 @@
 #  undef X_NOT_STDC_ENV
 #  undef X_NOT_POSIX
 #endif
-#define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
 
 #ifdef HAVE_TK
 #  include "tk.h"

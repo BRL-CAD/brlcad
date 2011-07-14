@@ -41,9 +41,6 @@
 #define SIGNMASK	~SIGNBIT
 #define TWOSCOMP(chr)	((~(chr)&0xff)+1)
 
-#if defined(mips)
-#  define CHARS_UNSIGNED_ONLY
-#endif
 #ifdef CHARS_UNSIGNED_ONLY
 #  define SignedChar(chr)	(((chr)&SIGNBIT) ? -TWOSCOMP(chr) : (chr))
 #else
