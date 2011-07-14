@@ -36,8 +36,7 @@ noinst_HEADERS = \
 
 EXTRA_DIST = \
 	$(man_MANS) \
-	CMakeLists.txt \
-	dist_def.c
+	CMakeLists.txt
 
 DEPENDS = src/libfb src/librt
 

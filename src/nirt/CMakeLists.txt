@@ -34,7 +34,6 @@ SET(nirt_sfiles
 BRLCAD_ADDDATA(nirt_sfiles nirt)
 
 SET(nirt_ignore_files
-	dist_def.c
 	nirt.h
 	usrfmt.h
 	)
