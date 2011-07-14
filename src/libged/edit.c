@@ -33,7 +33,7 @@
  *
  *	ARGS:
  *	    see manual for given COMMAND_NAME
- * 
+ *
  * DESCRIPTION
  *	Used to change objects through the use of subcommands.
  *
@@ -53,7 +53,7 @@
  *	*OBJECT:
  *	    [PATH/]OBJECT [OFFSET_DIST]
  *	    [PATH/]OBJECT [x [y [z]]]
- *	
+ *
  *	*POS:
  *	    {x [y [z]]} | {[-x {x | X_OBJ}] [-y {y | Y_OBJ}]
  *	        [-z {z | Z_OBJ}]}
@@ -71,11 +71,11 @@
  *	If FROM is "-k .", then each individual [PATH/]OBJECT argument
  *	uses its own bounding box center (or natural origin if
  *	"-n -k ." is used). Likewise, if TO is "-a ." or "-n -a ."
- *	
+ *
  *	FROM_POS and TO_POS represent 3d points in "x y z"
  *	coordinates. To specify one or more specific axis while
  *	ignoring the others, the options "-x x", "-y y", "-z z" may be
- *	used as FROM_POS or TO_POS. 
+ *	used as FROM_POS or TO_POS.
  *
  * OPTIONS
  * 	-n FROM_OBJECT | TO_OBJECT
@@ -100,18 +100,18 @@
  *
  *
  * VISUAL EXAMPLE:
- *	translate -n -k rcc.s -a sph.s table.c/box.c 
- *      
+ *	translate -n -k rcc.s -a sph.s table.c/box.c
+ *     
  *      Move the instance of box.c in table.c from the natural origin
  *	of rcc.s to the bounding box center of sph.s:
- *	
- *	   |.| <=keypoint: natural origin of rcc.s          
- *	                                                    
- *	       o <= center of sph.2                         
- *                                   [] <=box.c start       
- *	                                                    
- *	                                [] <=box.c moved    
- *                                                          
+ *
+ *	   |.| <=keypoint: natural origin of rcc.s         
+ *	                                                   
+ *	       o <= center of sph.2                        
+ *                                   [] <=box.c start      
+ *	                                                   
+ *	                                [] <=box.c moved   
+ *                                                         
  * EXAMPLES
  *
  *	# move all instances of sph.s to x=1, y=2, z=3
@@ -122,7 +122,7 @@
  *	    translate -k sph.s -a 1 2 3 sph.s
  *	    translate -k . -a 1 2 3 sph.s
  *
- *      # A very practical use of 
+ *      # A very practical use of
  *	translate -k . -a . -x sph2.s sph1.s
  *
  *	# move all instances of sph.s from a point 5 units above
@@ -176,14 +176,14 @@
  *      # move all sph.s from the bounding box center of sph.s to
  *	# the natural origin of sph.s
  *	translate -k sph.s -n -a sph.s sph.s
- *	
+ *
  *	    # these all have the same effect as above
  *	    translate -n -a . sph.s
  *	    translate -k . -n -a . sph.s
  *
  *	# move all instances of bowl.c, from sph.s's bounding
  *	# box center to y=5, without changing the x and z coodinates.
- *	translate -k sph.s -a -y 5 bowl.c	
+ *	translate -k sph.s -a -y 5 bowl.c
  *
  *      # move instance of two.c, from instance of sph.s's
  *      # matrix-modified natural origin to x=5
@@ -205,7 +205,7 @@
  *	translate -k sph.s -a sph.s sph.s
  *	translate -n -k . -n -a . sph.s
  *	translate -n -k sph.s -n -a sph.s sph.s
- *     
+ *    
  *	# center sph1.s and sph2.s on natural origin of rcc.s
  *	translate -k . -n -a rcc.s sph1.s sph2.s
  *
@@ -216,17 +216,17 @@
  *
  *	# move each of sph.s, sph2.s and sph3.s a relative x+5
  *	translate -k . -r 5 sph.s sph2.s sph3.s
- *	    
+ *	   
  *	    # same as above
  *	    translate -n -k . -r 5 sph.s sph2.s sph3.s
  *
  *	# move sph.s to a point z+10 above bounding box center of
  *	# /sph2.s
  *	translate -k sph2.s -r -z 10 sph.s
- *	    
+ *	   
  *	# move the bounding box center of all instances of sph.s
  *	# to the natural origin of rcc.s, and move sph2.s from
- *	# the bounding box center of sph.s to the natural origin of 
+ *	# the bounding box center of sph.s to the natural origin of
  *	# rcc.s (both sph.s and sph2.s stay the same relative distance
  *	# from each other; they have shifted together)
  *	translate -n -a rcc.s sph.s sph2.s
@@ -243,7 +243,7 @@
  *	    translate -k -x 93.2 -a -x -41.7 one.c/two.c
  *	    translate -k 93.2 0 0 -a -41.7 0 0 one.c/two.c
  *	    translate -k 93.2 21 32 -a -41.7 21 32 one.c/two.c
- * 
+ *
  *	    # same result as above, using a relative distance
  *	    translate -134.9 one.c/two.c
  *	    translate -r -134.9 one.c/two.c
@@ -272,7 +272,7 @@
  *	*OBJECT:
  *	    [PATH/]OBJECT [OFFSET_DIST]
  *	    [PATH/]OBJECT [x [y [z]]]
- *	
+ *
  *	*POS:
  *	    {x [y [z]]} | {[-x {x | X_OBJECT}] [-y {y | Y_OBJECT}]
  *	        [-z {z | Z_OBJECT}]}
@@ -282,7 +282,7 @@
  *	combination objects. OBJECTs rotate around CENTER at ANGLE,
  *	which is optionally constrained to rotating around AXIS. *POS
  *	represents either position, distance, degrees, or radians,
- *	depending on the context and supplied arguments. 
+ *	depending on the context and supplied arguments.
  *
  *	AXIS_FROM_POS is always treated as an absolute position.
  *	AXIS_TO_POS may be either an absolute position (-a), or a
@@ -350,7 +350,7 @@
  *	    ANGLE_ORIGIN; the y-axis of the drawing. In essense,
  *	    ANGLE_FROM helps define the y-axis, and AXIS defines the
  *	    x-axis.
- *	    
+ *	   
  *	    If AXIS is provided, then ANGLE_FROM is aligned to it in
  *	    such a way that the 90 degree angle created by the
  *	    following points is maintained (as illustrated below):
@@ -363,9 +363,9 @@
  *          Default:                        | Default 90 degree angle:
  *                                          |
  *                   +z    ANGLE_ORIGIN     |       AXIS_TO->ANGLE_ORIGIN
- *                    |   / (from OBJECT)   |  90  / 
+ *                    |   / (from OBJECT)   |  90  /
  *          AXIS_FROM |  o                  |    \o   ANGLE_FROM
- *	             \|                     |     ^  /         
+ *	             \|                     |     ^  /        
  *	    AXIS_TO   o     o               |   o   o          _______
  *	           \ / \     \              |    \            |compass
  *	            o   \     ANGLE_FROM    |     AXIS_FROM   |  +z
@@ -444,11 +444,11 @@
  *			  +y     cube  sphere1
  *			 ___|___ /    /
  *			|q2 | q1|    o
- *		   -x __|___|___|___________+x              
- *			|q3 | q4|        o         
- *			|___|___|       / 
+ *		   -x __|___|___|___________+x             
+ *			|q3 | q4|        o        
+ *			|___|___|       /
  *			    |    sphere2
- *			   -y      
+ *			   -y     
  *
  *	# Rotate the cube 45 degrees counterclockwise around its
  *	# bounding box center, on the z-axis. The corner in q1 will
@@ -560,7 +560,7 @@
  *	scale [[SCALE_FROM] SCALE_TO] [CENTER] [FACTOR_FROM]
  *	    FACTOR_TO OBJECT ...
  * 	scale [[[-n] -k {SCALE_FROM_OBJECT | SCALE_FROM_POS}]
- * 	    [-n] [-a | -r] {SCALE_TO_OBJECT | SCALE_TO_POS}] 
+ * 	    [-n] [-a | -r] {SCALE_TO_OBJECT | SCALE_TO_POS}]
  * 	    [[-n] -c {CENTER_OBJECT | CENTER_POS}]
  * 	    [[-n] -k {FACTOR_FROM_OBJECT | FACTOR_FROM_POS}]
  * 	    [-n] [-a | -r] {FACTOR_TO_OBJECT | FACTOR_TO_POS} OBJECT
@@ -573,7 +573,7 @@
  *	FACTOR_TO_POS:
  *	    {xyz_factor | {x y [z]}} | {[-x {x | X_OBJ}]
  *	        [-y {y | Y_OBJ}] [-z {z | Z_OBJ}]}
- *	
+ *
  *	*POS (except FACTOR_TO_POS):
  *	    {x [y [z]]} | {[-x {x | X_OBJ}] [-y {y | Y_OBJ}]
  *	        [-z {z | Z_OBJ}]}
@@ -599,8 +599,8 @@
  *	order to halve it. Specifying a FACTOR_TO_POS of (30,30,30)
  *	would result in the x-axes of all OBJECT's being stretched to
  *	quintuple their original lengths, y-axes tripled in length,
- *	and z-axes double in length. 
- *	
+ *	and z-axes double in length.
+ *
  * 	(see DESCRIPTION of translate command for other information)
  *
  * OPTIONS
@@ -649,7 +649,7 @@
  *	scale -k 5 10 15 -a 7 11 -2 -k 0 0 0 -r 4 2 34 cube
  *	scale -k 5 10 15 -a 7 11 -2 -k 3 6 9 -r 7 8 43 cube
  *	scale -k 5 10 15 -a 7 11 -2 -c cube -k 3 6 9 -r 7 8 43 cube
- *                                                          
+ *                                                         
  */
 
 #include "common.h"
@@ -759,8 +759,8 @@ translate(struct ged *gedp, vect_t *keypoint,
 	    rt_db_free_internal(&intern);
 	    return GED_ERROR;
 	}
-	
-	MAT_DELTAS_ADD_VEC(leaf_to_modify->tr_l.tl_mat, delta); 
+
+	MAT_DELTAS_ADD_VEC(leaf_to_modify->tr_l.tl_mat, delta);
     } else {
 	/* no path; move all obj instances (obj's entire tree
 	 * modified) */
@@ -778,7 +778,7 @@ translate(struct ged *gedp, vect_t *keypoint,
 	VSCALE(delta, delta, gedp->ged_wdbp->dbip->dbi_local2base);
 	MAT_DELTAS_VEC(dmat, delta);
 
-	bn_mat_inv(invXform, gtd.gtd_xform); 
+	bn_mat_inv(invXform, gtd.gtd_xform);
 	bn_mat_mul(tmpMat, invXform, dmat);
 	bn_mat_mul(emat, tmpMat, gtd.gtd_xform);
 
@@ -838,7 +838,7 @@ struct edit_arg {
     char cl_options[EDIT_MAX_ARG_OPTIONS];
 
     /* flag which coords from the vector/object are being used */
-    unsigned int coords_used : 3; 
+    unsigned int coords_used : 3;
 
     /* flag the argument type and type modifiers */
     unsigned int type : 10;
@@ -995,7 +995,7 @@ edit_cmd_free(union edit_cmd *args)
     if (args->common.objects.next)
 	edit_arg_free_all(args->common.objects.next);
 }
-	
+
 #if 0
 int
 edit_translate(struct ged *gedp, point_t *from, point_t *to,
@@ -1020,7 +1020,7 @@ edit_scale(struct ged *gedp, point_t *scale_from, point_t *scale_to,
     return GED_OK;
 }
 #endif
-				  
+				 
 /**
  * A wrapper for the edit commands. It adds the capability to perform
  * batch operations, and accepts objects and distances in addition to
@@ -1066,7 +1066,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 #if 0
     struct db_i *dbip = gedp->ged_wdbp->dbip;
 
-    static const char *id_obj_as_arg = ". "; 
+    static const char *id_obj_as_arg = ". ";
     static const char *id_tuple[] = {"-x", "-y", "-z"};
 
     const char *const cmd_name = argv[0];
@@ -1185,10 +1185,10 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     }
 no_more_args: /* for breaking out, above */
 
-    /* 
+    /*
      * Validate arguments
      */
-    
+   
     /* need to use either absolute||relative positioning; not both */
     if (abs_flag && rel_flag) {
 	bu_vls_printf(gedp->ged_result_str,
@@ -1199,7 +1199,7 @@ no_more_args: /* for breaking out, above */
     /* set default positioning type */
     if (!abs_flag && !rel_flag)
 	rel_flag = 1;
-    
+   
     /* set delta coordinates for edit */
     if ((bu_optind + 1) > argc) {
 	bu_vls_printf(gedp->ged_result_str, "missing x coordinate");
