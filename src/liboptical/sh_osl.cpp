@@ -43,14 +43,13 @@
 #define OSL_MAGIC 0x1837    /* make this a unique number for each shader */
 #define CK_OSL_SP(_p) BU_CKMAG(_p, OSL_MAGIC, "osl_specific")
 
-#define SH_SEM_OSL (RT_SEM_LAST)
-#define SH_SEM_LAST (SH_SEM_OSL + 1)
-
 /* Oslrenderer system */
 OSLRenderer *oslr = NULL;
+
 /* Save default a_hit */
 
 int (*default_a_hit)(struct application *, struct partition *, struct seg *);	
+int (*default_a_miss)(struct application *);	
 
 /*
  * The shader specific structure contains all variables which are unique
@@ -341,13 +340,13 @@ HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm,
      */
     /* If OSL system was not initialized yet, do it */
     /* FIXME: take care of multi-thread issues */
-    bu_semaphore_acquire(8);
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
     if (oslr == NULL){
 	oslr = new OSLRenderer();
     }
     /* Add this shader to OSL system */
     osl_sp->shader_ref = oslr->AddShader(group_info);
-    bu_semaphore_release(8);
+    bu_semaphore_release(BU_SEM_SYSCALL);
 
     if (rdebug&RDEBUG_SHADE) {
 	bu_struct_print(" Parameters:", osl_print_tab, (char *)osl_sp);
@@ -374,14 +373,14 @@ HIDDEN void osl_free(genptr_t cp)
 	(struct osl_specific *)cp;
     bu_free(cp, "osl_specific");
 
-    bu_semaphore_acquire(8);
-
-    /* FIXME: take care of multi-thread issues */
+#if 0
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
     if(oslr != NULL){
 	delete oslr;
 	oslr = NULL;
     }
-    bu_semaphore_release(8);
+    bu_semaphore_release(BU_SEM_SYSCALL);
+#endif
 }
 
 /*
@@ -479,9 +478,6 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 {
     register struct osl_specific *osl_sp =
 	(struct osl_specific *)dp;
-    point_t pt;
-    
-    VSETALL(pt, 0);
     
     /* check the validity of the arguments we got */
     RT_AP_CHECK(ap);
@@ -492,11 +488,13 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 	bu_struct_print("osl_render Parameters:", osl_print_tab,
 			(char *)osl_sp);
     
-    /* Just shoot several rays if we are rendering the first pixel */
-    int nsamples;
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
     if(ap->a_level == 0){
 	default_a_hit = ap->a_hit; /* save the default hit callback (colorview @ rt) */
+	default_a_miss = ap->a_miss;
     }
+    bu_semaphore_release(BU_SEM_SYSCALL);
+
     /* -----------------------------------
      * Fill in all necessary information for the OSL renderer
      * -----------------------------------
@@ -524,35 +522,32 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
     
     info.depth = ap->a_level;
     info.surfacearea = 1.0f;
-    
-    //info.shadername = std::string(osl_sp->shadername.vls_str);
+
     info.shader_ref = osl_sp->shader_ref;
 
     /* We only perform reflection if application decides to */
     info.doreflection = 0;
     
-    bu_semaphore_acquire(8);
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
     Color3 weight = oslr->QueryColor(&info);
-    bu_semaphore_release(8);
+    bu_semaphore_release(BU_SEM_SYSCALL);
 
+    /* Fire another ray */
     if(info.doreflection == 1){
 	
-	/* Fire another ray */
 	struct application new_ap;
 	RT_APPLICATION_INIT(&new_ap);
 	
-	new_ap.a_rt_i = ap->a_rt_i;
+	new_ap = *ap;
 	new_ap.a_onehit = 1;
 	new_ap.a_hit = default_a_hit;
-	new_ap.a_miss = ap->a_miss;
-	new_ap.a_level = ap->a_level + 1;
+	new_ap.a_level = info.depth + 1;
 	new_ap.a_flag = 0;
 
 	VMOVE(new_ap.a_ray.r_dir, info.out_ray.dir);
 	VMOVE(new_ap.a_ray.r_pt, info.out_ray.origin);
 	
-	/* This ray is from refraction */
-	/* This next ray is from refraction */
+	/* This next ray represents refraction */
 	if (VDOT(info.N, info.out_ray.dir) < 0.0f){
 	    
 	    /* Displace the hit point a little bit in the direction
@@ -565,10 +560,10 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 	    new_ap.a_refrac_index = 1.5;
 	    new_ap.a_flag = 2; /* mark as refraction */
 	    new_ap.a_hit = osl_refraction_hit;
-	}
-	
+	}	
+
 	(void)rt_shootray(&new_ap);
-	
+
 	Color3 rec;
 	VMOVE(rec, new_ap.a_color);
  
@@ -579,6 +574,7 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 	/* Final color */
 	VMOVE(swp->sw_color, weight);
     }
+
     return 1;
 }
 }
