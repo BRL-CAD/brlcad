@@ -67,9 +67,6 @@ EXTRA_DIST = \
 	$(man_MANS) \
 	${IRDISP_EXTRA} \
 	${IR_X_EXTRA} \
-	Compile.sgi \
-	pictsgi.1 \
-	pictsgi.c \
 	pictx.1 \
 	pictx.c \
 	CMakeLists.txt

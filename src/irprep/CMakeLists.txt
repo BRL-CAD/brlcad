@@ -25,7 +25,6 @@ SET(irprep_MANS
   shapefact.1
   showtherm.1
 )
-#  pictsgi.1
 #  pictx.1
 ADD_MAN_PAGES(1 irprep_MANS)
-CMAKEFILES(pictsgi.1 pictx.1 Compile.sgi pictsgi.c pictx.c)
+CMAKEFILES(pictx.1 pictx.c)

@@ -43,8 +43,6 @@ main(void)
 {
     int ichoice;		/*  Choice.  */
     char *irX = "ir-X";		/*  Calls ir-X program.  */
-    char *irsgi = "ir-sgi";	/*  Calls ir-sgi program.  */
-    char *X_or_SGI = NULL;	/*  will be set to one of the above */
     char showtherm[125];	/*  Calls showtherm program.  */
     char gfile[16];		/*  .g file.  */
     char group[26];		/*  Group names.  */
@@ -151,12 +149,12 @@ main(void)
     {
 	char choice[81];
 
-	/*  Call the program ir-X or ir-sgi so that a file that has been raytraced  */
+	/*  Call the program ir-X so that a file that has been raytraced  */
 	/*  may be displayed.  */
 	choice[0] = '\0';
-	while ( !BU_STR_EQUAL( choice, "sgi" ) && !BU_STR_EQUAL( choice, "X" ) && !BU_STR_EQUAL( choice, "x" ) )
+	while ( !BU_STR_EQUAL( choice, "X" ) && !BU_STR_EQUAL( choice, "x" ) )
 	{
-	    (void)printf("\nSelect display ('X' or 'sgi') -> " );
+	    (void)printf("\nSelect display ('X') -> " );
 	    (void)fflush(stdout);
 	    ret = scanf( "%80s", choice );
 	    if (ret == 0) {
@@ -165,20 +163,16 @@ main(void)
 		break;
 	    }
 	}
-	if ( BU_STR_EQUAL( choice, "X" ) || BU_STR_EQUAL( choice, "x" ) )
-	    X_or_SGI = irX;
-	else if ( BU_STR_EQUAL( choice, "sgi" ) )
-	    X_or_SGI = irsgi;
-	else
+	if ( !BU_STR_EQUAL( choice, "X" ) && !BU_STR_EQUAL( choice, "x" ) )
 	{
 	    bu_exit(1, "Bad choice for display (%s)\n", choice );
 	}
-	(void)printf("\nThe program %s in now being run.  If option\n", X_or_SGI);
+	(void)printf("\nThe program %s in now being run.  If option\n", irX);
 	(void)printf("0 or 1 was used when the name of a file is asked\n");
 	(void)printf("for enter the name of the file that was just\n");
 	(void)printf("stored.\n\n");
 	(void)fflush(stdout);
-	ret = system(X_or_SGI);
+	ret = system(irX);
 	if (ret == -1)
 	    perror("system");
     }
