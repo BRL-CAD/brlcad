@@ -916,7 +916,6 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 	olist = list = (XDeviceInfoPtr)XListInputDevices(pubvars->dpy, &ndevices);
     }
 
-    /* IRIX 4.0.5 bug workaround */
     if (list == (XDeviceInfoPtr)NULL ||
 	list == (XDeviceInfoPtr)1) goto Done;
 

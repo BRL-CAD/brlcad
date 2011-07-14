@@ -66,13 +66,6 @@
 #  include <sys/resource.h>
 #endif
 
-#if defined (IRIX) && IRIX == 5
-/* we need a struct timeval */
-struct timeval {
-    long tv_sec;         /* seconds */
-    long tv_usec;        /* and microseconds */
-};
-#endif
 
 struct sockaddr_in sinme;
 struct sockaddr_in sinhim;
