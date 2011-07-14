@@ -2312,20 +2312,14 @@ find_next_trimming_point(const ON_Curve* crv, const ON_Surface* s, double startd
     }
 }
 
+
 /* a binary predicate for std:list implemented as a function */
 bool near_equal(double first, double second) {
-	struct bn_tol tol;
-	struct bn_tol *ptr_tol;
-
-	tol.magic = BN_TOL_MAGIC;
-	tol.dist = 1e-6;
-	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 1e-6;
-	tol.para = 1 - tol.perp;
-
-	ptr_tol = &tol;
-	return BN_APPROXEQUAL(first, second, ptr_tol);
+    /* FIXME: arbitrary nearness tolerance */
+      return NEAR_EQUAL(first, second, 1e-6);
 }
+
+
 void plot_sum_surface(struct bu_list *vhead, const ON_Surface *surf,
 		int isocurveres, int gridres) {
 	double pt1[3], pt2[3];
