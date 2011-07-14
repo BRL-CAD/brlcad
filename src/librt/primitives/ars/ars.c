@@ -655,8 +655,10 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
 
+#ifdef TRI_PROTOTYPE
     nmg_shell_coplanar_face_merge(s, tol, 0);
     nmg_simplify_shell(s);
+#endif
 
     return 0;
 }
