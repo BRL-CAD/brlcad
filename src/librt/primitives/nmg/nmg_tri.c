@@ -777,7 +777,7 @@ poly_side_vertex(struct pt2d *pt, struct pt2d *tbl2d, struct bu_list *tlist)
 	}
     }
 
-    if (BU_LIST_MAGIC_WRONG(&tp->l, NMG_TRAP_MAGIC))
+    if (UNLIKELY(!BU_LIST_MAGIC_EQUAL(&tp->l, NMG_TRAP_MAGIC)))
 	bu_bomb ("didn't find trapezoid parent\n");
 
     /* complete trapezoid */

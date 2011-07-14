@@ -778,3 +778,7 @@ s/RT_DBTR_MAGIC/RT_DB_TRAVERSE_MAGIC/g
 
 s/RT_INIT_([A-Z_]*)/RT_\1_INIT/g
         renamed all RT_INIT_[type] macros to RT_[type]_INIT for API consistency [7.20]
+
+s/BU_LIST_MAGIC_OK/BU_LIST_MAGIC_EQUAL/g
+s/BU_LIST_MAGIC_WRONG/!BU_LIST_MAGIC_EQUAL/g
+        renamed and consolidated to be consistent with libbn [7.20]

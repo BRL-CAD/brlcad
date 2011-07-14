@@ -1014,8 +1014,10 @@ rt_shootray(register struct application *ap)
 	/* Initialize this processors 'solid pieces' state */
 	rt_res_pieces_init(resp, rtip);
     }
-    if (BU_LIST_MAGIC_WRONG(&resp->re_pieces_pending.l, BU_PTBL_MAGIC))
+    if (UNLIKELY(!BU_LIST_MAGIC_EQUAL(&resp->re_pieces_pending.l, BU_PTBL_MAGIC))) {
+	/* only happens first time through */
 	bu_ptbl_init(&resp->re_pieces_pending, 100, "re_pieces_pending");
+    }
     bu_ptbl_reset(&resp->re_pieces_pending);
 
     /* Verify that direction vector has unit length */

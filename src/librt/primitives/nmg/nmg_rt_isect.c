@@ -313,10 +313,10 @@ ray_miss_vertex(struct ray_data *rd, struct vertexuse *vu_p)
     myhit=NMG_INDEX_GET(rd->hitmiss, vu_p->v_p);
     if (myhit) {
 	/* vertex previously processed */
-	if (BU_LIST_MAGIC_OK((struct bu_list *)myhit, NMG_RT_HIT_MAGIC)) {
+	if (BU_LIST_MAGIC_EQUAL((struct bu_list *)myhit, NMG_RT_HIT_MAGIC)) {
 	    if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 		bu_log("ray_miss_vertex(vertex previously HIT!!!!)\n");
-	} else if (BU_LIST_MAGIC_OK((struct bu_list *)myhit, NMG_RT_HIT_SUB_MAGIC)) {
+	} else if (BU_LIST_MAGIC_EQUAL((struct bu_list *)myhit, NMG_RT_HIT_SUB_MAGIC)) {
 	    if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 		bu_log("ray_miss_vertex(vertex previously HIT_SUB!?!?)\n");
 	}
@@ -970,7 +970,7 @@ ray_hit_vertex(struct ray_data *rd, struct vertexuse *vu_p, int status)
 
     myhit = NMG_INDEX_GET(rd->hitmiss, vu_p->v_p);
     if (myhit) {
-	if (BU_LIST_MAGIC_OK((struct bu_list *)myhit, NMG_RT_HIT_MAGIC))
+	if (BU_LIST_MAGIC_EQUAL((struct bu_list *)myhit, NMG_RT_HIT_MAGIC))
 	    return;
 	/* oops, we have to change a MISS into a HIT */
 	BU_LIST_DEQUEUE(&myhit->l);
@@ -1042,7 +1042,7 @@ isect_ray_vertexuse(struct ray_data *rd, struct vertexuse *vu_p)
 
     myhit = NMG_INDEX_GET(rd->hitmiss, vu_p->v_p);
     if (myhit) {
-	if (BU_LIST_MAGIC_OK((struct bu_list *)myhit, NMG_RT_HIT_MAGIC)) {
+	if (BU_LIST_MAGIC_EQUAL((struct bu_list *)myhit, NMG_RT_HIT_MAGIC)) {
 	    /* we've previously hit this vertex */
 	    if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 		bu_log(" previously hit\n");
@@ -1577,16 +1577,16 @@ isect_ray_edgeuse(struct ray_data *rd, struct edgeuse *eu_p)
 
     myhit = NMG_INDEX_GET(rd->hitmiss, eu_p->e_p);
     if (myhit) {
-	if (BU_LIST_MAGIC_OK((struct bu_list *)myhit, NMG_RT_HIT_MAGIC)) {
+	if (BU_LIST_MAGIC_EQUAL((struct bu_list *)myhit, NMG_RT_HIT_MAGIC)) {
 	    /* previously hit vertex or edge */
 	    if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 		bu_log("\tedge previously hit\n");
 	    return;
-	} else if (BU_LIST_MAGIC_OK((struct bu_list *)myhit, NMG_RT_HIT_SUB_MAGIC)) {
+	} else if (BU_LIST_MAGIC_EQUAL((struct bu_list *)myhit, NMG_RT_HIT_SUB_MAGIC)) {
 	    if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 		bu_log("\tvertex of edge previously hit\n");
 	    return;
-	} else if (BU_LIST_MAGIC_OK((struct bu_list *)myhit, NMG_RT_MISS_MAGIC)) {
+	} else if (BU_LIST_MAGIC_EQUAL((struct bu_list *)myhit, NMG_RT_MISS_MAGIC)) {
 	    if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 		bu_log("\tedge previously missed\n");
 	    return;
@@ -2224,15 +2224,15 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
     /* if this face already processed, we are done. */
     myhit = NMG_INDEX_GET(rd->hitmiss, fp);
     if (myhit) {
-	if (BU_LIST_MAGIC_OK((struct bu_list *)myhit,
+	if (BU_LIST_MAGIC_EQUAL((struct bu_list *)myhit,
 			     NMG_RT_HIT_MAGIC)) {
 	    if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 		bu_log(" previously hit\n");
-	} else if (BU_LIST_MAGIC_OK((struct bu_list *)myhit,
+	} else if (BU_LIST_MAGIC_EQUAL((struct bu_list *)myhit,
 				    NMG_RT_HIT_SUB_MAGIC)) {
 	    if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 		bu_log(" previously hit sub-element\n");
-	} else if (BU_LIST_MAGIC_OK((struct bu_list *)myhit,
+	} else if (BU_LIST_MAGIC_EQUAL((struct bu_list *)myhit,
 				    NMG_RT_MISS_MAGIC)) {
 	    if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 		bu_log(" previously missed\n");

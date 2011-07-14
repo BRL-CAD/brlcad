@@ -997,7 +997,7 @@ rt_clean(register struct rt_i *rtip)
      * them for us to use here.  rt_uniresource may or may not be in
      * this table.
      */
-    if (BU_LIST_MAGIC_OK(&rtip->rti_resources.l, BU_PTBL_MAGIC)) {
+    if (BU_LIST_MAGIC_EQUAL(&rtip->rti_resources.l, BU_PTBL_MAGIC)) {
 	struct resource **rpp;
 	BU_CK_PTBL(&rtip->rti_resources);
 	for (BU_PTBL_FOR(rpp, (struct resource **), &rtip->rti_resources)) {

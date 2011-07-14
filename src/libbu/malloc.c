@@ -320,7 +320,7 @@ bu_free(genptr_t ptr, const char *str)
 	}
     } else if (UNLIKELY(bu_debug&BU_DEBUG_MEM_QCHECK)) {
 	struct memqdebug *mp = ((struct memqdebug *)ptr)-1;
-	if (UNLIKELY(BU_LIST_MAGIC_WRONG(&(mp->q), MDB_MAGIC))) {
+	if (UNLIKELY(!BU_LIST_MAGIC_EQUAL(&(mp->q), MDB_MAGIC))) {
 	    fprintf(stderr, "ERROR bu_free(%p, %s) pointer bad, or not allocated with bu_malloc!  Ignored.\n", ptr, str);
 	} else {
 	    ptr = (genptr_t)mp;
@@ -407,7 +407,7 @@ bu_realloc(register genptr_t ptr, size_t siz, const char *str)
 	siz = (siz + 2*sizeof(struct memqdebug) - 1)
 	    &(~(sizeof(struct memqdebug)-1));
 
-	if (UNLIKELY(BU_LIST_MAGIC_WRONG(&(mqp->q), MDB_MAGIC))) {
+	if (UNLIKELY(!BU_LIST_MAGIC_EQUAL(&(mqp->q), MDB_MAGIC))) {
 	    fprintf(stderr, "ERROR bu_realloc(%p, %s) pointer bad, "
 		    "or not allocated with bu_malloc!  Ignored.\n",
 		    ptr, str);
@@ -533,8 +533,8 @@ bu_prmem(const char *str)
     if (bu_memq != BU_LIST_NULL) {
 	fprintf(stderr, "memdebug queue\n Address Length Purpose\n");
 	BU_LIST_EACH(bu_memq, mqp, struct memqdebug) {
-	    if (BU_LIST_MAGIC_WRONG(&(mqp->q), MDB_MAGIC)
-		|| BU_LIST_MAGIC_WRONG(&(mqp->m), MDB_MAGIC))
+	    if (!BU_LIST_MAGIC_EQUAL(&(mqp->q), MDB_MAGIC)
+		|| !BU_LIST_MAGIC_EQUAL(&(mqp->m), MDB_MAGIC))
 		bu_bomb("bu_prmem() malloc tracing queue corrupted!\n");
 	    if (mqp->m.mdb_str == bu_strdup_message) {
 		fprintf(stderr, "%p %llu bu_strdup: \"%s\"\n",
@@ -623,7 +623,7 @@ bu_ck_malloc_ptr(genptr_t ptr, const char *str)
 	pointer not in table of allocated memory.\n", ptr, str);
     } else if (UNLIKELY(bu_debug&BU_DEBUG_MEM_QCHECK)) {
 	struct memqdebug *mqp = (struct memqdebug *)ptr;
-	if (UNLIKELY(BU_LIST_MAGIC_WRONG(&(mqp->q), MDB_MAGIC) || mqp->m.magic != MDB_MAGIC)) {
+	if (UNLIKELY(!BU_LIST_MAGIC_EQUAL(&(mqp->q), MDB_MAGIC) || mqp->m.magic != MDB_MAGIC)) {
 	    fprintf(stderr, "WARNING: bu_ck_malloc_ptr(%p, %s)"
 		    " memory corrupted.\n", ptr, str);
 	}

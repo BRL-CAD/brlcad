@@ -760,9 +760,16 @@ struct bu_list {
 typedef struct bu_list bu_list_t;
 #define BU_LIST_NULL ((struct bu_list *)0)
 
-#define BU_LIST_MAGIC_SET(_hp, val) {(_hp)->magic = (val);}
-#define BU_LIST_MAGIC_OK(_hp, val) ((_hp)->magic == (val))
-#define BU_LIST_MAGIC_WRONG(_hp, val) ((_hp)->magic != (val))
+/**
+ * macro for setting the magic number of a non-head list node
+ */
+#define BU_LIST_MAGIC_SET(_l, _magic) {(_l)->magic = (_magic);}
+
+/**
+ * macro for testing whether a list node's magic number is equal to a
+ * specific magic number
+ */
+#define BU_LIST_MAGIC_EQUAL(_l, _magic) ((_l)->magic == (_magic))
 
 /**
  * there is no reliable way to assert the integrity of an arbitrary
