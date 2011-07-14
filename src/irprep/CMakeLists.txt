@@ -15,14 +15,12 @@ ENDIF(BRLCAD-ENABLE_X11)
 BRLCAD_ADDEXEC(all_sf all_sf.c librt)
 BRLCAD_ADDEXEC(showtherm showtherm.c librt)
 BRLCAD_ADDEXEC(firpass "firpass.c subroutines.c" librt)
-BRLCAD_ADDEXEC(ir-sgi ir-sgi.c libbu)
 BRLCAD_ADDEXEC(secpass "secpass.c subroutines.c" librt)
 BRLCAD_ADDEXEC(shapefact shapefact.c librt)
 
 SET(irprep_MANS
   ${irprep_X_MANS}
   firpass.1 
-  ir-sgi.1 
   secpass.1 
   shapefact.1
   showtherm.1

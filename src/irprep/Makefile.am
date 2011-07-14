@@ -40,9 +40,6 @@ irdisp_LDADD = \
 	${X_LIBS}
 endif
 
-ir_sgi_SOURCES = ir-sgi.c
-ir_sgi_LDADD = ${BU}
-
 if WITH_X11
 ir_X_SOURCES = ir-X.c
 ir_X_CFLAGS = ${X_CFLAGS}
@@ -86,7 +83,6 @@ FAST_OBJECTS = \
 	$(showtherm_OBJECTS) \
 	$(firpass_OBJECTS) \
 	$(ir_X_OBJECTS) \
-	$(ir_sgi_OBJECTS) \
 	$(irdisp_OBJECTS) \
 	$(secpass_OBJECTS) \
 	$(shapefact_OBJECTS) \
