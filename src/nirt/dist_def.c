@@ -82,7 +82,7 @@ dist_default(void)
 	    Gr[DIST] = targ[i][X] * ce * ca
 		+ targ[i][Y] * ce * sa
 		+ targ[i][Z] * se;
-	    g_max = fmax(g_max, Gr[DIST]);
+	    g_max = FMAX(g_max, Gr[DIST]);
 	}
 	first_time = 0;
     }
