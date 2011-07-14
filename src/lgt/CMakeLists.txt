@@ -19,7 +19,6 @@ SET(lgt_SOURCES
   octree.c 
   prnt.c 
   reflect.c 
-  sgi_dep.c 
   texture.c 
   trie.c
 )

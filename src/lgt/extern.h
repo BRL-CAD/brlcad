@@ -146,8 +146,6 @@ extern int query_region;
 extern int report_overlaps;
 extern int reverse_video;
 extern int save_view_flag;
-extern int sgi_console;
-extern int sgi_usemouse;
 extern int shadowing;
 extern int tracking_cursor;
 extern int tty;
@@ -173,15 +171,6 @@ extern struct rt_i *rt_ip;
 #define C_QUERYREG	4
 #define XSCR2MEM(_x)	(_x)
 #define YSCR2MEM(_y)	(_y)
-
-#ifdef sgi
-extern int win_active;
-#define	SGI_XCVT( v_ ) (((v_) - xwin) / (fbiop->if_width/grid_sz))
-#define SGI_YCVT( v_ ) (((v_) - ywin) / (fbiop->if_width/grid_sz))
-#else
-#define	SGI_XCVT( v_ ) (v_)
-#define SGI_YCVT( v_ ) (v_)
-#endif
 
 /*
  * Local Variables:

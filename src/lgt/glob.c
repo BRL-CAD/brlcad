@@ -152,8 +152,6 @@ int query_region = false;	/* If (true) spit out region info.	*/
 int report_overlaps = true;	/* If (false) shut-up about overlaps.	*/
 int reverse_video = false;	/* If (true) HL drawing white-on-black.	*/
 int save_view_flag = false;	/* View specified in "model2view".	*/
-int sgi_console = false;	/* Logged in to IRIS console.		*/
-int sgi_usemouse = false;	/* User wants to use the IRIS mouse.	*/
 int shadowing = true;		/* If (false) no shadows are computed.	*/
 int tracking_cursor=false;	/* Cursor is on by default.		*/
 int tty;			/* Is input attached to a terminal.	*/
