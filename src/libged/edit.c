@@ -1027,8 +1027,7 @@ edit_scale(struct ged *gedp, point_t *scale_from, point_t *scale_to,
  * coordinates.
  */
 int
-edit(struct ged *gedp, struct edit_arg *args_head,
-      const char *global_opts)
+edit(struct ged *gedp, struct edit_arg *args_head, const char *global_opts)
 {
     (void)gedp;
     (void)args_head;
@@ -1043,10 +1042,14 @@ edit(struct ged *gedp, struct edit_arg *args_head,
 int
 ged_edit(struct ged *gedp, int argc, const char *argv[])
 {
-    (void)gedp;
-    (void)argc;
     (void)argv;
     (void)edit(gedp, NULL, NULL);
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /*
      * testing

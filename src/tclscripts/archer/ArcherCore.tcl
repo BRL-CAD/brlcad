@@ -227,7 +227,9 @@ namespace eval ArcherCore {
 	method rfarb               {args}
 	method rm                  {args}
 	method rmater              {args}
+	method rotate              {args}
 	method rotate_arb_face     {args}
+	method scale		   {args}
 	method search		   {args}
 	method sed		   {_prim}
 	method shader              {args}
@@ -441,19 +443,21 @@ namespace eval ArcherCore {
 	# This is mostly a list of wrapped Ged commands. However, it also contains
 	# a few commands that are implemented here in ArcherCore.
 	variable mArcherCoreCommands { \
-	    3ptarb adjust alter arced attr bb bev blast bo bot bot_condense \
-	    bot_decimate bot_face_fuse bot_face_sort bot_flip bot_merge \
-	    bot_smooth bot_split bot_sync bot_vertex_fuse c cd clear clone \
-	    closedb color comb comb_color combmem copy copyeval copymat cp \
-	    cpi dbconcat dbExpand decompose delete draw E edcodes edcolor \
-	    edcomb edmater erase ev exit facetize fracture g group \
-	    hide human i importFg4Section in inside item kill killall \
-	    killrefs killtree ls make make_bb make_pnts man mater mirror move \
-	    move_arb_edge move_arb_face mv mvall nmg_collapse nmg_simplify \
-	    ocenter opendb orotate oscale otranslate p q quit packTree prefix \
-	    protate pscale ptranslate push put put_comb putmat pwd r rcodes \
-	    red rfarb rm rmater rotate_arb_face search sed shader shells tire \
-	    title track translate unhide units unpackTree vmake wmater xpush \
+	    3ptarb adjust arced attr bb bev blast bo bot bot_condense \
+	    bot_decimate bot_face_fuse bot_face_sort bot_flip \
+	    bot_merge bot_smooth bot_split bot_sync bot_vertex_fuse \
+	    c cd clear clone closedb color comb comb_color combmem \
+	    copy copyeval copymat cp cpi dbconcat dbExpand decompose \
+	    delete draw E edcodes edcolor edcomb edit edmater erase ev \
+	    exit facetize fracture g group hide human i \
+	    importFg4Section in inside item kill killall killrefs \
+	    killtree ls make make_bb make_pnts man mater mirror move \
+	    move_arb_edge move_arb_face mv mvall nmg_collapse \
+	    nmg_simplify ocenter opendb orotate oscale otranslate p q \
+	    quit packTree prefix protate pscale ptranslate push put \
+	    put_comb putmat pwd r rcodes red rfarb rm rmater rotate \
+	    rotate_arb_face scale search sed shader shells tire title \
+	    track translate unhide units unpackTree vmake wmater xpush \
 	    Z zap
 	}
 
@@ -4845,7 +4849,17 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::edit {args} {
+    # For some reason, if args is empty ged_edit isn't called.
+    if {[llength $args] == 0} {
+	set args "help"
+    }
+
     eval gedWrapper edit 0 0 1 0 $args
+
+    #FIXME: not right at all; we need to redraw all edited objects
+    if {[llength $args] > 2} {
+	redrawObj [lindex $args end] 0
+    }
 }
 
 ::itcl::body ArcherCore::arced {args} {
@@ -5476,8 +5490,24 @@ namespace eval ArcherCore {
     eval gedWrapper rmater 0 0 1 1 $args
 }
 
+::itcl::body ArcherCore::rotate {args} {
+    # FIXME: once the edit command is fully functional, remove 
+    # Archer translate/rotate/scale command aliases in favor of
+    # mapping command names directly to ged_edit
+    set args [linsert $args 0 "rotate"]
+    eval gedWrapper edit 0 0 1 0 $args
+}
+
 ::itcl::body ArcherCore::rotate_arb_face {args} {
     eval gedWrapper rotate_arb_face 0 0 1 0 $args
+}
+
+::itcl::body ArcherCore::scale {args} {
+    # FIXME: once the edit command is fully functional, remove 
+    # Archer translate/rotate/scale command aliases in favor of
+    # mapping command names directly to ged_edit
+    set args [linsert $args 0 "scale"]
+    eval gedWrapper edit 0 0 1 0 $args
 }
 
 ::itcl::body ArcherCore::search {args} {
@@ -5524,14 +5554,11 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::translate {args} {
-    #set args [linsert $args 0 "translate"]
-    set result [eval gedWrapper edit 0 0 1 0 $args]
-
-    if {[llength $args] > 1} {
-	redrawObj [lindex $args end] 0
-    }
-
-    return $result
+    # FIXME: once the edit command is fully functional, remove 
+    # Archer translate/rotate/scale command aliases in favor of
+    # mapping command names directly to ged_edit
+    set args [linsert $args 0 "translate"]
+    eval gedWrapper edit 0 0 1 0 $args
 }
 
 ::itcl::body ArcherCore::unhide {args} {

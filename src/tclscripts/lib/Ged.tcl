@@ -174,6 +174,7 @@ package provide cadwidgets::Ged 1.0
 	method edcodes {args}
 	method edcolor {args}
 	method edcomb {args}
+	method edit {args}
 	method edmater {args}
 	method erase {args}
 	method ev {args}
@@ -420,6 +421,7 @@ package provide cadwidgets::Ged 1.0
 	method rot {args}
 	method rot_about {args}
 	method rot_point {args}
+	method rotate {args}
 	method rotate_arb_face {args}
 	method rotate_arb_face_mode {args}
 	method rotate_mode {args}
@@ -443,6 +445,7 @@ package provide cadwidgets::Ged 1.0
 	method pscale_mode {args}
 	method ptranslate {args}
 	method ptranslate_mode {args}
+	method scale {args}
 	method scale_mode {args}
 	method screen2view {args}
 	method sdata_arrows {args}
@@ -1222,6 +1225,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::edcomb {args} {
     eval $mGed edcomb $args
+}
+
+::itcl::body cadwidgets::Ged::edit {args} {
+    eval $mGed edit $args
 }
 
 ::itcl::body cadwidgets::Ged::edmater {args} {
