@@ -46,7 +46,6 @@
 #  undef X_NOT_POSIX
 #endif
 
-#define XLIB_ILLEGAL_ACCESS /* we peek into the Display for the fd */
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
@@ -688,7 +687,7 @@ X_open_fb(FBIO *ifp, char *file, int width, int height)
 
     /* Make the Display connection available for selecting on */
 
-    ifp->if_selfd = XI(ifp)->dpy->fd;
+    ifp->if_selfd = ConnectionNumber(XI(ifp)->dpy);
 
     return 0;
 }
