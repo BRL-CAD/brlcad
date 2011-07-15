@@ -1064,6 +1064,8 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     union edit_cmd subcmd = {.name = EDIT_CMD_UNKNOWN};
     int i; /* iterator */
 
+    (void)subcmd_usage;
+
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
