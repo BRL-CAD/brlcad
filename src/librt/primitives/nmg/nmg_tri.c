@@ -2511,11 +2511,6 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *t
     struct loopuse *lu;
     struct edgeuse *eu;
     int vert_count;
-#if 0
-    int loopuse_count_tmp = 0;
-    struct loopuse *lu1;
-#endif
-
     int edgeuse_vert_count = 0;
     int non_consec_edgeuse_vert_count = 0;
     int faceuse_loopuse_count = 0;
@@ -2530,32 +2525,7 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *t
     FILE *plotfp;
     struct bu_vls plot_file_name;
 
-    temp = tol->dist; /* used to quiet compiler until this variable is used */
-
-#if 0
-    /* loop to remove loopuse with < 3 vertices */
-    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-        edgeuse_vert_count = 0;
-	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-            edgeuse_vert_count++;
-        }
-        if (edgeuse_vert_count < 3) {
-            bu_log("killed loopuse 0x%lx with < 3 vertices\n", (unsigned long)lu);
-            nmg_klu(lu);
-            loopuse_count_tmp = 0;
-            for (BU_LIST_FOR(lu1, loopuse, &fu->lu_hd)) {
-                loopuse_count_tmp++;
-            }
-            bu_log("loopuse_count_tmp = %d\n", loopuse_count_tmp);
-            if (loopuse_count_tmp < 1) {
-                bu_bomb("stopped after 'nmg_klu' within nmg_triangulate_fu\n");
-            }
-            lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
-            continue;
-        }
-        edgeuse_vert_count = 0;
-    }
-#endif
+    temp = tol->dist;
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 
@@ -2575,11 +2545,6 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *t
         bu_vls_sprintf(&plot_file_name, "%s_faceuse_%x_loopuse_%x.pl", prefix, fu, lu);
         plotfp = fopen(bu_vls_addr(&plot_file_name), "wb");
 
-#if 0
-	if (!((lu->orientation == OT_SAME) || (lu->orientation == OT_OPPOSITE))) {
-   	    bu_bomb("nmg_plot_fu(): loopuse orientation not OT_SAME or OT_OPPOSITE\n");
-	}
-#endif
 	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
             curr_v_p = eu->vu_p->v_p; 
             curr_eu = eu;
@@ -2610,37 +2575,16 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *t
             if (curr_v_p != prev_v_p) {
                 non_consec_edgeuse_vert_count++;
             }
-            if (edgeuse_vert_count == 1) {
-#if 0
-                bu_log("curr loopuse (%x) first edgeuse (%x) edge is_real (%ld) first coord (%lf) (%lf) (%lf) \n", lu, eu, eu->e_p->is_real, curr_v_p->vg_p->coord[0], curr_v_p->vg_p->coord[1], curr_v_p->vg_p->coord[2]);
-#endif
-            }
             if (edgeuse_vert_count > 1) {
                 dist_btw_prev_curr = bn_dist_pt3_pt3(prev_v_p->vg_p->coord,curr_v_p->vg_p->coord);
-#if 0
-                bu_log("curr loopuse (%x) curr edgeuse (%x) edge is_real (%ld) dist btw prev curr (%lf) curr coord (%lf) (%lf) (%lf) \n", lu, eu, eu->e_p->is_real, dist_btw_prev_curr, curr_v_p->vg_p->coord[0], curr_v_p->vg_p->coord[1], curr_v_p->vg_p->coord[2]);
-#endif
                 pdv_3line(plotfp, prev_v_p->vg_p->coord, curr_v_p->vg_p->coord);
             }
             prev_v_p = curr_v_p;
             prev_eu = curr_eu;
         }
 
-#if 0
-        bu_log("faceuse (%x) loopuse (%x) loopuse# (%d) loopuse ori (%d) edgeuse cnt (%d) non consec edgeuse cnt (%d) \n", 
-            fu, lu, faceuse_loopuse_count, lu->orientation, edgeuse_vert_count, non_consec_edgeuse_vert_count);
-#endif
-
-#if 0
-        if (edgeuse_vert_count < 3) {
-   	    bu_bomb("nmg_plot_fu(): found loopuse with fewer than 3 edgeuse\n");
-        }
-#endif
         if (curr_v_p && first_v_p) {
             dist_btw_prev_curr = bn_dist_pt3_pt3(first_v_p->vg_p->coord,curr_v_p->vg_p->coord);
-#if 0
-            bu_log("curr loopuse (%x) dist btw last first (%lf) \n\n", lu, dist_btw_prev_curr);
-#endif
             if (curr_eu->e_p->is_real) {
                 /* set last segment if is_real to cyan */
                 pl_color(plotfp, 0, 255, 255);
