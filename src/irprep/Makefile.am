@@ -14,7 +14,6 @@ bin_PROGRAMS = \
 	showtherm \
 	firpass \
 	${IR_X_BIN} \
-	ir-sgi \
 	${IRDISP_BIN} \
 	secpass \
 	shapefact
@@ -58,7 +57,6 @@ man_MANS = \
 	showtherm.1 \
 	firpass.1 \
 	${IRDISP_MAN} \
-	ir-sgi.1 \
 	${IR_X_MAN} \
 	secpass.1 \
 	shapefact.1
