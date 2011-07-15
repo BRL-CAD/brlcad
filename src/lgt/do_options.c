@@ -1391,7 +1391,7 @@ f_GridConfig(char **args)
 		    return	-1;
 		}
 	    }
-    setGridSize(grid_sz);
+    setGridSize();
     if (! force_viewsz)
 	view_size = modl_radius * 2.0;
     return	1;
@@ -1545,7 +1545,7 @@ static void
 wait_For_User(void)
 {
     (void) get_Input(input_ln, MAX_LN, "Continue ? [<return>] ");
-    (void) f_Redraw((char **) 0);
+    (void) f_Redraw();
     return;
 }
 
@@ -1738,7 +1738,7 @@ f_Movie()
 	goto	error_exit;
     }
     grid_sz = movie.m_frame_sz; /* Grid size must match. */
-    setGridSize(grid_sz);
+    setGridSize();
 
     locargs[1] = buf;
     locargs[1] = strtok(input_ln, " \t\n\r");
@@ -3086,7 +3086,7 @@ exec_start :
 	    args[1] = NULL;
 	    goto	exec_start;
 	}
-	(void) f_Redraw((char **) 0);
+	(void) f_Redraw();
     }
     return	1;
 }
@@ -3592,7 +3592,7 @@ pars_Argv(int argc, char **argv)
 	InitTermCap(stdout);
 	li = LI;	/* Default window size from termcap. */
 	co = CO;
-	(void) f_Redraw((char **) 0);
+	(void) f_Redraw();
 	(void) fflush(stdout);
     }
     rt_prep_timer();
@@ -3709,7 +3709,7 @@ stop_sig(int sig)
 #endif
 
     (void) signal(sig, stop_sig);
-    (void) f_Redraw((char **) 0);
+    (void) f_Redraw();
     return;
 }
 
