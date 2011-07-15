@@ -1140,7 +1140,7 @@ INCLUDE(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
 
 # Spot undefined symbols in objects
 IF(NOT MSVC)
-	SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
+	#SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
 ENDIF(NOT MSVC)
 
 # *******************************************************************
