@@ -245,7 +245,6 @@ wood_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
     register int i;
     register struct wood_specific *wd;
 
-    extern struct resource rt_uniresource;
     register struct resource *resp = &rt_uniresource;
 
     /*
@@ -415,7 +414,6 @@ wood_setup_2(struct wood_specific *wd)
     int i;
     vect_t a_vertex, a_dir;
 
-    extern struct resource rt_uniresource;
     register struct resource *resp = &rt_uniresource;
 
     /*
@@ -546,7 +544,6 @@ wood_noise(double x, double y, double z, struct wood_specific *wd)
 HIDDEN double
 wood_turb(double x, double y, double z, struct wood_specific *wd)
 {
-    extern struct resource rt_uniresource;
     register struct resource *resp = &rt_uniresource;
 
     int i;
