@@ -2067,7 +2067,7 @@ general_Handler(int sig)
 #endif
 #if defined(SIGTSTP)
 	case SIGTSTP :
-	    (void) f_Stop( (char *) NULL );
+	    (void) f_Stop();
 	    break;
 #endif
 #if defined(SIGCONT)
