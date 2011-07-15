@@ -543,7 +543,6 @@ main(int argc, char **argv)
 
     /* NOTE: For visualization purposes, in the debug plot files */
     {
-	extern fastf_t	nmg_eue_dist;	/* librt/nmg_plot.c */
 	/* WTF: This value is specific to the Bradley */
 	nmg_eue_dist = 2.0;
     }

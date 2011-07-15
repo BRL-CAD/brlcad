@@ -149,7 +149,6 @@ set_dirty_flag(void)
 static void
 nmg_eu_dist_set(void)
 {
-    extern double nmg_eue_dist;
     struct bu_vls tmp_vls;
 
     nmg_eue_dist = mged_variables->mv_nmg_eu_dist;

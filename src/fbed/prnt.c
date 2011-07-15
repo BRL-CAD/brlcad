@@ -105,7 +105,6 @@ init_Status(void)
     char **p = screen_template;
     int template_co;
     char buf[MAX_LN];
-    extern int CO;
     template_co = Min( CO, MAX_LN );
     if ( ! tty )
 	return;

@@ -51,9 +51,6 @@ static struct bn_tol tol;
 void
 dump_patch(int (*patch)[4])
 {
-    /* Vertex data of teapot */
-    extern dt ducks[DUCK_COUNT];
-
     struct vertex *verts[4];
     struct faceuse *fu;
     struct loopuse *lu;
@@ -162,9 +159,6 @@ dump_patch(int (*patch)[4])
 int
 main(int argc, char **argv)
 {
-    /* Patch data of teapot */
-    extern pt patches[PATCH_COUNT];
-
     struct nmgregion *r;
     char *id_name = "BRL-CAD t-NURBS NMG Example";
     char *tea_name = "UtahTeapot";

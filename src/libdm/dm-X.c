@@ -408,8 +408,6 @@ X_close(struct dm *dmp)
 struct dm *
 X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 {
-    extern struct dm dm_X;
-
     static int count = 0;
     int make_square = -1;
     XGCValues gcv;

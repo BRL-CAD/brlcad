@@ -43,9 +43,6 @@
 void
 dump_patch(struct face_g_snurb **surfp, pt patch)
 {
-    /* Vertex data of teapot */
-    extern dt ducks[DUCK_COUNT];
-
     struct face_g_snurb *b_patch;
     int i, j, pt_type;
     fastf_t *mesh_pointer;
@@ -93,9 +90,6 @@ dump_patch(struct face_g_snurb **surfp, pt patch)
 int
 main(int argc, char **argv)
 {
-    /* Patch data of teapot */
-    extern pt patches[PATCH_COUNT];
-
     const char *id_name = "Spline Example";
     const char *tea_name = "UtahTeapot";
 

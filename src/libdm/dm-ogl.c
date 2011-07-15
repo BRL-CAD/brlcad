@@ -689,8 +689,6 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     struct dm_xvars *pubvars = NULL;
     struct ogl_vars *privvars = NULL;
 
-    extern struct dm dm_ogl;
-
     if ((tkwin = Tk_MainWindow(interp)) == NULL) {
 	return DM_NULL;
     }

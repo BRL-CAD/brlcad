@@ -340,7 +340,6 @@ read_Trie(FILE *fp)
     Trie	*triep;
     F_Hdr_Ptlist	hdr_ptlist;
     int		min, max;
-    extern Trie	*reg_triep;
     /* Read temperature range information.				*/
     if (	fread( (char *) &min, (int) sizeof(int), 1, fp ) != 1
 		||	fread( (char *) &max, (int) sizeof(int), 1, fp ) != 1
@@ -454,8 +453,6 @@ get_Region_Name(char *inbuf, int bufsz, char *msg)
     char	*p = buffer;
     int	c;
     OcList		*oclistp = OCLIST_NULL;
-    extern Trie	*reg_triep;
-    extern int	tty;
     if ( tty )
     {
 	save_Tty( 0 );
