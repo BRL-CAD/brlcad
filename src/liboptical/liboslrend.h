@@ -53,6 +53,7 @@ typedef struct Ray {
 struct RenderInfo {
 
     /* -- input -- */
+    void *thread_info;
     fastf_t screen_x;       /* Coordinates of the screen (if applicable) */
     fastf_t screen_y;
     point_t P;              /* Query point */
@@ -96,17 +97,12 @@ struct ShaderGroupInfo {
    These information are hidden from the calling C code */
 class OSLRenderer {
 
-    const char *shadername;              /* name of the shader */
     ErrorHandler errhandler;
-    ShaderGlobals globals;
-
+    
     ShadingSystem *shadingsys;
     ShadingSystemImpl *ssi;
     SimpleRenderer rend;
-    ShadingContext *ctx;
     void *handle;
-
-    unsigned short Xi[3];                /* seed for RNG */
 
     /* Information about each shader of the renderer */
 #if 0
@@ -117,8 +113,8 @@ class OSLRenderer {
     std::vector<OSLShader> shaders;
 #endif
 
-    const ClosureColor
-	*ExecuteShaders(ShaderGlobals &globals, RenderInfo *info);
+    static const ClosureColor
+	*ExecuteShaders(ShaderGlobals &globals, RenderInfo *info, ShadingSystemImpl *ssi);
 
     /* Sample a primitive from the shaders group */
     const ClosurePrimitive* SamplePrimitive(Color3& weight,

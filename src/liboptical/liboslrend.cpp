@@ -33,12 +33,10 @@ OSLRenderer::OSLRenderer(){
     ssi = (ShadingSystemImpl *)shadingsys;
     
     handle = ssi->create_thread_info();
-    ctx = ssi->get_context(handle);
 }
 
 OSLRenderer::~OSLRenderer(){
 
-    ssi->release_context(ctx, handle);
     ssi->destroy_thread_info(handle);
     ShadingSystem::destroy(shadingsys);
 }
@@ -111,13 +109,17 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info){
 
     fastf_t y = info->screen_y;
 
+    unsigned short Xi[3];                /* seed for RNG */
     Xi[0] = rand();
     Xi[1] = rand();
     Xi[2] = rand();
 
+    /* Thread specifics */
+    info->thread_info = handle;
+
     // execute shader
     ShaderGlobals globals;
-    const ClosureColor *closure = ExecuteShaders(globals, info);
+    const ClosureColor *closure = ExecuteShaders(globals, info, ssi);
 
     Color3 weight = Color3(0.0f);
     // sample primitive from closure tree
@@ -163,7 +165,7 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info){
  * ----------------------------------------------- */
 
 const ClosureColor * OSLRenderer::
-ExecuteShaders(ShaderGlobals &globals, RenderInfo *info){
+ExecuteShaders(ShaderGlobals &globals, RenderInfo *info, ShadingSystemImpl *ssi){
 
     memset(&globals, 0, sizeof(globals));
 
@@ -189,9 +191,11 @@ ExecuteShaders(ShaderGlobals &globals, RenderInfo *info){
     globals.Ci = NULL;
 
     // execute shader
+    ShadingContext* ctx = ssi->get_context(info->thread_info);
     ctx->execute(ShadUseSurface, *(info->shader_ref),
 		 globals);
-
+    ssi->release_context(ctx, info->thread_info);
+    
     return globals.Ci;
 }
 

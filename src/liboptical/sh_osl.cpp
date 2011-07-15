@@ -538,7 +538,7 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 	struct application new_ap;
 	RT_APPLICATION_INIT(&new_ap);
 	
-	new_ap = *ap;
+	new_ap = *ap;                     /* struct copy */
 	new_ap.a_onehit = 1;
 	new_ap.a_hit = default_a_hit;
 	new_ap.a_level = info.depth + 1;
