@@ -4115,6 +4115,7 @@ package provide cadwidgets::Ged 1.0
     $help add edcodes		{{object(s)} {edit the various codes for the specified objects}}
     $help add edcolor		{{} {edit the color table}}
     $help add edcomb		{{comb rflag rid air los mid} {modify combination record information}}
+    $help add edit		{{[help] subcmd args} {edit objects via subcommands}}
     $help add edmater		{{comb1 [comb2 ...]} {edit combination materials}}
     $help add erase		{{<objects>} {remove objects from the screen}}
     $help add ev		{{"[-dfnqstuvwT] [-P #] <objects>"} {evaluate objects via NMG tessellation}}
@@ -4248,7 +4249,6 @@ package provide cadwidgets::Ged 1.0
     $help add tops		{{} {find all top level objects}}
     $help add tra		{{[-v|-m] "x y z"} {translate the view}}
     $help add track		{{args} {create a track}}
-    $help add translate		{{x [y [z]] object(s)} {translate object(s)}}
     $help add tree		{{[-c] [-i n] [-d n] [-o outfile] object(s)} {print out a tree of all members of an object, or all members to depth n in the tree if n -d option is supplied}}
     $help add unhide		{{[objects]} {unset the "hidden" flag for the specified objects so they will appear in a "t" or "ls" command output}}
     $help add units		{{[mm|cm|m|in|ft|...]}	{change units}}

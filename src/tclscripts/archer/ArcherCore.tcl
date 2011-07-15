@@ -4848,20 +4848,6 @@ namespace eval ArcherCore {
     eval gedWrapper adjust 0 1 1 1 $args
 }
 
-::itcl::body ArcherCore::edit {args} {
-    # For some reason, if args is empty ged_edit isn't called.
-    if {[llength $args] == 0} {
-	set args "help"
-    }
-
-    eval gedWrapper edit 0 0 1 0 $args
-
-    #FIXME: not right at all; we need to redraw all edited objects
-    if {[llength $args] > 2} {
-	redrawObj [lindex $args end] 0
-    }
-}
-
 ::itcl::body ArcherCore::arced {args} {
     eval gedWrapper arced 0 0 1 0 $args
 }
@@ -5134,6 +5120,16 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::edcomb {args} {
     eval gedWrapper edcomb 0 0 1 1 $args
+}
+
+::itcl::body ArcherCore::edit {args} {
+    eval gedWrapper edit 0 0 1 0 $args
+
+    #FIXME: not right at all; we need to redraw all edited objects
+    #set len [llength $args]
+    #if {$len > 2} {
+	#redrawObj [lindex $args end] 0
+    #}
 }
 
 ::itcl::body ArcherCore::edmater {args} {

@@ -63,6 +63,7 @@ option add *Mged.height 400 widgetDefault
 	method dup {args}
 	method E {args}
 	method edcomb {args}
+	method edit {args}
 	method edmater {args}
 	method erase {args}
 	method ev {args}
@@ -634,6 +635,10 @@ option add *Mged.height 400 widgetDefault
 
 ::itcl::body Mged::edcomb {args} {
     return [eval run_cmd edcomb $args]
+}
+
+::itcl::body Mged::edit {args} {
+    return [eval run_cmd edit $args]
 }
 
 ::itcl::body Mged::edmater {args} {

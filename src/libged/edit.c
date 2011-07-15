@@ -22,6 +22,18 @@
  * Command to edit objects by translating, rotating, and scaling.
  */
 
+#include "common.h"
+
+#include <stdlib.h>
+#include <ctype.h>
+#include <string.h>
+
+#include "vmath.h"
+#include "db.h"
+#include "raytrace.h"
+#include "ged.h"
+#include "./ged_private.h"
+
 /* edit: Proposed manual page
  *
  * NAME
@@ -652,18 +664,6 @@
  *                                                         
  */
 
-#include "common.h"
-
-#include <stdlib.h>
-#include <ctype.h>
-#include <string.h>
-
-#include "vmath.h"
-#include "db.h"
-#include "raytrace.h"
-#include "ged.h"
-#include "./ged_private.h"
-
 /* This function will be removed soon */
 #if 0
 int
@@ -798,6 +798,28 @@ translate(struct ged *gedp, vect_t *keypoint,
 #define EDIT_MAX_ARG_OPTIONS 3
 
 /*
+ * Use one of these nodes for each argument for the edit subcommands
+ * (see manuals)
+ */
+struct edit_arg {
+    struct edit_arg *next; /* link to next argument */
+
+    /* command line options, e.g. "Rnk", to convert to option flags */
+    char cl_options[EDIT_MAX_ARG_OPTIONS];
+
+    /* flag which coords from the vector/object are being used */
+    unsigned int coords_used : 3;
+
+    /* flag the argument type and type modifiers */
+    unsigned int type : 10;
+
+    struct db_full_path *object;
+
+    /* if object != NULL, vector is an offset distance from object */
+    vect_t *vector;
+};
+
+/*
  * edit_arg flags of coordinates being used
  */
 #define EDIT_X_COORD 	0x1
@@ -827,32 +849,23 @@ translate(struct ged *gedp, vect_t *keypoint,
 #define EDIT_NATURAL_ORIGIN		0x100 /* use natural origin of object instead of center */
 #define EDIT_USE_TARGETS		0x200 /* for batch ops */
 
-/*
- * Use one of these nodes for each argument for the edit subcommands
- * (see manuals)
- */
-struct edit_arg {
-    struct edit_arg *next; /* link to next argument */
-
-    /* command line options, e.g. "Rnk", to convert to option flags */
-    char cl_options[EDIT_MAX_ARG_OPTIONS];
-
-    /* flag which coords from the vector/object are being used */
-    unsigned int coords_used : 3;
-
-    /* flag the argument type and type modifiers */
-    unsigned int type : 10;
-
-    struct db_full_path *object;
-
-    /* if object != NULL, vector is an offset distance from object */
-    vect_t *vector;
-};
-
 enum edit_cmd_name {
-    EDIT_TRANSLATE,
-    EDIT_ROTATE,
-    EDIT_SCALE
+    /* alphabetize */
+    EDIT_CMD_HELP,
+    EDIT_CMD_ROTATE,
+    EDIT_CMD_SCALE,
+    EDIT_CMD_TRANSLATE,
+    /* end alphabetize */
+
+    EDIT_CMD_MAX, /* count of commands, size of char array */
+    EDIT_CMD_UNKNOWN = EDIT_CMD_MAX
+};
+static const char * const edit_cmd_names[EDIT_CMD_MAX] = {
+    /* alphabetize to keep in same order as enum edit_cmd_name */
+    "help",
+    "rotate",
+    "scale",
+    "translate"
 };
 
 /* argument structure of each command */
@@ -1026,6 +1039,7 @@ edit_scale(struct ged *gedp, point_t *scale_from, point_t *scale_to,
  * batch operations, and accepts objects and distances in addition to
  * coordinates.
  */
+#if 0
 int
 edit(struct ged *gedp, struct edit_arg *args_head, const char *global_opts)
 {
@@ -1035,6 +1049,7 @@ edit(struct ged *gedp, struct edit_arg *args_head, const char *global_opts)
 
     return GED_OK;
 }
+#endif
 
 /**
  * A command line interface to the edit commands.
@@ -1042,25 +1057,61 @@ edit(struct ged *gedp, struct edit_arg *args_head, const char *global_opts)
 int
 ged_edit(struct ged *gedp, int argc, const char *argv[])
 {
-    (void)argv;
-    (void)edit(gedp, NULL, NULL);
+    const char * const cmd_name = argv[0];
+    const char *subcmd_name;
+    static const char * const usage = "subcmd args";
+    static char *subcmd_usage;
+    union edit_cmd subcmd = {.name = EDIT_CMD_UNKNOWN};
+    int i; /* iterator */
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
+    /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
+        return GED_HELP;
+    }
+
+    subcmd_name = argv[1];
+    /*
+     * validate subcommand name
+     */
+
+    for (i = 0; i < EDIT_CMD_MAX; ++i)
+	if (BU_STR_EQUAL(edit_cmd_names[i], subcmd_name))
+	    break;
+
+    subcmd.name = (enum edit_cmd_name)i;
+    switch (subcmd.name) {
+	case EDIT_CMD_UNKNOWN:
+	    bu_vls_printf(gedp->ged_result_str, "unknown subcommand: %s\n",
+	    		  subcmd_name);
+	    /* fall through */
+	case EDIT_CMD_HELP:
+	    bu_vls_printf(gedp->ged_result_str, "Available subcommands: ");
+	    for (i = 0; i < EDIT_CMD_MAX; ++i)
+		bu_vls_printf(gedp->ged_result_str, "%s ",
+			      edit_cmd_names[i]);
+	    return (subcmd.name == EDIT_CMD_HELP ? GED_HELP : GED_ERROR);
+	default: /* quiet compiler */
+	    break;
+    }
+
+    /* TODO: set subcmd_usage */
 
     /*
      * testing
      */
-#if 0
-    union edit_cmd cmd;
-    cmd.name = EDIT_TRANSLATE;
 
-    edit_arg_postfix_new(&cmd.common.objects);
-    edit_arg_postfix_new(&cmd.common.objects);
-    edit_cmd_free(&cmd);
+#if 0
+    edit_arg_postfix_new(&subcmd.common.objects);
+    edit_arg_postfix_new(&subcmd.common.objects);
+    edit_cmd_free(&subcmd);
 #endif
 
 #if 0

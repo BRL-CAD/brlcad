@@ -45,6 +45,7 @@
 	method dump {args}
 	method dup {args}
 	method edcomb {args}
+	method edit {args}
 	method edmater {args}
 	method expand {args}
 	method facetize {args}
@@ -324,6 +325,10 @@
     eval $db edcomb $args
 }
 
+::itcl::body Db::edit {args} {
+    eval $db edit $args
+}
+
 ::itcl::body Db::edmater {args} {
     eval $db edmater $args
 }
@@ -561,6 +566,7 @@
     $help add dump	{{file} {write current state of database object to file}}
     $help add dup	{{file [prefix]} {check for dup names in 'file'}}
     $help add edcomb	{{comb rflag rid air los mid} {modify combination record information}}
+    $help add edit      {{[help] subcmd args} {edit objects via subcommands}}
     $help add edmater	{{comb1 [comb2 ...]} {edit combination materials}}
     $help add expand	{{expression} {globs expression against database objects}}
     $help add find	{{[-s] <objects>} {find all references to objects}}
