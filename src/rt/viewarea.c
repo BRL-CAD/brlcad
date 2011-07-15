@@ -466,12 +466,6 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
     register struct area *cell;
     struct area *cellp;
 
-/* exposed hit sums */
-    extern unsigned long int exposed_hit_sum;
-    extern fastf_t exposed_hit_x_sum;
-    extern fastf_t exposed_hit_y_sum;
-    extern fastf_t exposed_hit_z_sum;
-
     if ( pp == PartHeadp )
 	return 0;		/* nothing was actually hit?? */
 

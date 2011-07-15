@@ -174,8 +174,6 @@ view_end(void)
 int
 view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
-    extern double azimuth, elevation;
-
     ap->a_hit = pphit;
     ap->a_miss = ppmiss;
     ap->a_onehit = 1;
