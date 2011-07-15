@@ -640,8 +640,6 @@ GED_EXPORT extern int ged_dbcopy(struct ged *from_gedp,
 GED_EXPORT extern void ged_color_soltab(struct bu_list *hdlp);
 GED_EXPORT extern struct ged_display_list *ged_addToDisplay(struct ged *gedp,
 							    const char *name);
-/* defined in edit.c */
-GED_EXPORT extern int ged_edit(struct ged *gedp, int argc, const char *argv[]);
 
 /* defined in erase.c */
 GED_EXPORT extern void ged_erasePathFromDisplay(struct ged *gedp,
@@ -1494,6 +1492,11 @@ GED_EXPORT extern int ged_edcodes(struct ged *gedp, int argc, const char *argv[]
  * Edit combination.
  */
 GED_EXPORT extern int ged_edcomb(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Edit objects, by using subcommands.
+ */
+GED_EXPORT extern int ged_edit(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Edit file.
