@@ -104,6 +104,12 @@ CHECK_CXX_FLAG(ftemplate-depth-50)
 # Check for gnu c99 support
 CHECK_C_FLAG("std=gnu99")
 
+# Silence check for unused arguments (used to silence clang warnings about
+# unused options on the command line). By default clang generates a lot of
+# warnings about such arguments, and we don't really care. 
+CHECK_C_FLAG(Qunused-arguments)
+CHECK_CXX_FLAG(Qunused-arguments)
+
 # 64bit compilation flags
 IF(BRLCAD-ENABLE_64BIT)
 	CHECK_C_FLAG(m64 64BIT_FLAG)
