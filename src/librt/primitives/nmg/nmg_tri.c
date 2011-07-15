@@ -3592,65 +3592,89 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 void
 nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 {
-    mat_t TformMat;
+    int ccw_result;
+    int loopuse_count_before = 0;
+    int loopuse_count_tmp = 0;
+    int edgeuse_vert_count = 0;
+    int vert_count;
+
+    /* boolean variables */
+    int fu_done = 0;
+    int lu_done = 0;
+    int run_cut = 0;
+    int need_triangulation = 0;
+
     struct bu_list *tbl2d;
     struct loopuse *lu;
     struct edgeuse *eu;
     struct pt2d *pt;
-    int vert_count;
-    static int iter=0;
-    vect_t N;
 
-    int loopuse_count_before = 0;
-    int loopuse_count_tmp = 0;
-
-    char db_name[32];
-
-    int need_triangulation = 0;
-    int edgeuse_vert_count = 0;
-
-#if 0
-    struct loopuse *lu_tmp;
-#endif
-
-    int fu_done = 0;
-    int lu_done = 0;
-#if 0
-    int eu_done = 0;
-#endif
-    int run_cut = 0;
-    int ccw_result;
     vect_t fu_normal;
-
-    VSETALL(N, 0);
+    mat_t TformMat;
 
     BN_CK_TOL(tol);
     NMG_CK_FACEUSE(fu);
 
     if (rt_g.NMG_debug & DEBUG_TRI) {
-	NMG_GET_FU_NORMAL(N, fu);
+	NMG_GET_FU_NORMAL(fu_normal, fu);
 	bu_log("---------------- Triangulate face fu_p = 0x%lx fu Normal = %g %g %g\n",
-	       (unsigned long)fu, V3ARGS(N));
+	       (unsigned long)fu, V3ARGS(fu_normal));
     }
 
-#ifdef DEBUG_TRI_P
-    nmg_plot_fu("before_cleanup_before_degen_loopuse_killed", fu, tol);
-#endif
+    if (rt_g.NMG_debug & DEBUG_TRI) {
+        nmg_plot_fu("nmg_triangulate_fu_unprocessed_faceuse", fu, tol);
+    }
 
-#if 0
-    nmg_dump_model(fu->s_p->r_p->m_p);
-#endif
+    /* test if this faceuse needs triangulation. this for-loop is
+     * to prevent extra processing on simple faceuse. after 
+     * initial processing of more complex faceuse we will need to
+     * test the faceuse again if it needs to be triangulated
+     */
+    need_triangulation = 0;
+    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+        NMG_CK_LOOPUSE(lu);
+        edgeuse_vert_count = 0;
+        if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
+            continue;
+        }
+        if (lu->orientation != OT_SAME) {
+            /* the faceuse must contain only exterior loopuse
+             * to possibly skip triangulation
+             */
+            need_triangulation++;
+        } else {
+            for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+                edgeuse_vert_count++;
+            }
+            if (edgeuse_vert_count != 3) {
+                /* we want to process the loopuse if any have more
+                 * or less than 3 vertices. if less than 3, we want
+                 * to remove these loopuse, if greater than 3 we
+                 * want to triangulate them
+                 */
+                need_triangulation++;
+            }
+        }
+    }
+    if (!need_triangulation) {
+        return;
+    }
 
-    /* attempt to do some cleanup before anything else */
-    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd))
+    /* do some cleanup before anything else */
+    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	(void)nmg_loop_split_at_touching_jaunt(lu, tol);
-    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd))
+    }
+    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	nmg_split_touchingloops(lu, tol);
-    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd))
+    }
+    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	nmg_lu_reorient(lu);
+    }
 
-    /* removes loopuse with < 3 vertices i.e. degenerate loopuse */
-    /* does not check if returning faceuse contains no loopuse */
+    /* remove loopuse with < 3 vertices i.e. degenerate loopuse, this
+     * function does not check if returning faceuse contains no loopuse.
+     * the above cleanup can create loopuse with < 3 vertices
+     */
     nmg_triangulate_rm_degen_loopuse(fu, tol);
 
     /* check to see if we need to triangulate this faceuse also test
@@ -3691,9 +3715,9 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
         bu_bomb("nmg_triangulate_fu(): faceuse contains no loopuse\n");
     }
 
-#ifdef DEBUG_TRI_P
-    nmg_plot_fu("after_cleanup_after_degen_loopuse_killed", fu, tol);
-#endif
+    if (rt_g.NMG_debug & DEBUG_TRI) {
+        nmg_plot_fu("nmg_triangulate_fu_after_cleanup_after_degen_loopuse_killed", fu, tol);
+    }
 
     vert_count = 0;
 
@@ -3702,9 +3726,8 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
     }
 
     if (rt_g.NMG_debug & DEBUG_TRI) {
-	vect_t normal;
-	NMG_GET_FU_NORMAL(normal, fu);
-	bu_log("---------------- proceeding to triangulate face %g %g %g\n", V3ARGS(normal));
+	NMG_GET_FU_NORMAL(fu_normal, fu);
+	bu_log("---------------- proceeding to triangulate face %g %g %g\n", V3ARGS(fu_normal));
     }
 
     /* count loopuse */
@@ -3716,40 +3739,10 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
     /* convert 3D face to face in the X-Y plane */
     tbl2d = nmg_flatten_face(fu, TformMat);
 
-#if 0
-    nmg_plot_fu("before_remove_holes", fu, tol);
-#endif
-
     /* remove holes from faceuse */
     nmg_triangulate_rm_holes(fu, tbl2d, tol);
 
-#if 0
-    nmg_plot_fu("after_remove_holes", fu, tol);
-#endif
-
-    if (rt_g.NMG_debug & DEBUG_TRI) {
-	sprintf(db_name, "uni%d.g", iter);
-	nmg_stash_model_to_file(db_name,
-				nmg_find_model(&fu->s_p->l.magic),
-				"trangles and unimonotones");
-    }
-
-    if (rt_g.NMG_debug & DEBUG_TRI) {
-	sprintf(db_name, "uni_sj%d.g", iter);
-	nmg_stash_model_to_file(db_name,
-				nmg_find_model(&fu->s_p->l.magic),
-				"after split_at_touching_jaunt");
-    }
-
-    if (rt_g.NMG_debug & DEBUG_TRI) {
-	sprintf(db_name, "uni_split%d.g", iter++);
-	nmg_stash_model_to_file(db_name,
-				nmg_find_model(&fu->s_p->l.magic),
-				"split trangles and unimonotones");
-    }
-
-
-/* the start of new while-loop to perform cut_unimonotone */
+    /* the start of while-loop to perform cut_unimonotone */
     fu_done = 0;
     while(!fu_done) {
         lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
@@ -3765,7 +3758,9 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
                 NMG_CK_LOOPUSE(lu);
                 if (lu->orientation == OT_OPPOSITE) {
                     /* block structure of logic allow skipping this condition instead of bomb */
-                    nmg_plot_fu("found_ot_opposite_but_should_not_exist", fu, tol);
+                    if (1 || rt_g.NMG_debug & DEBUG_TRI) {
+                        nmg_plot_fu("nmg_triangulate_fu_found_ot_opposite_loopuse", fu, tol);
+                    }
                     bu_log("nmg_triangulate_fu(): found OT_OPPOSITE loopuse %lx, all should have been removed\n",
                            (unsigned long)lu);
                     bu_bomb("nmg_triangulate_fu(): found OT_OPPOSITE loopuse, all should have been removed\n");
@@ -3778,9 +3773,9 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
                         /* block structure of logic allow skipping this condition instead of bomb */
                         bu_log("nmg_triangulate_fu(): found loopuse with < 3 vertices, all these loopuse should have been removed\n");
                     } else if (edgeuse_vert_count == 3) {
-#ifdef DEBUG_TRI_P
-                        bu_log("nmg_triangulate_fu(): skipping already triangulated loopuse\n");
-#endif
+                        if (rt_g.NMG_debug & DEBUG_TRI) {
+                            bu_log("nmg_triangulate_fu(): skipping already triangulated loopuse\n");
+                        }
                     } else {
                         /* loopuse contains > 3 vertices */
                         NMG_GET_FU_NORMAL(fu_normal, fu);
@@ -3788,14 +3783,14 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
                         if (ccw_result != 1) {
                             bu_log("nmg_triangulate_fu(): lu_p = 0x%lx ccw_result = %d, skipping loopuse\n",
                                     (unsigned long)lu, ccw_result);
-#ifdef DEBUG_TRI_P
-                            edgeuse_vert_count = 0;
-                            for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-                                edgeuse_vert_count++;
-	                        bu_log("nmg_triangulate_fu(): unknown ccw, vert %d lu_p = %x coord = %g %g %g\n", 
-                                       edgeuse_vert_count, lu, V3ARGS(eu->vu_p->v_p->vg_p->coord));
+                            if (rt_g.NMG_debug & DEBUG_TRI) {
+                                edgeuse_vert_count = 0;
+                                for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+                                    edgeuse_vert_count++;
+	                            bu_log("nmg_triangulate_fu(): unknown ccw, vert %d lu_p = %x coord = %g %g %g\n", 
+                                           edgeuse_vert_count, lu, V3ARGS(eu->vu_p->v_p->vg_p->coord));
+                                }
                             }
-#endif
                         } else if (lu->orientation != OT_SAME) {
                             /* block structure of logic allow skipping this condition instead of bomb */
                             /* the logic should have exited before this block if the current loopuse
@@ -3841,16 +3836,13 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
                         edgeuse_vert_count++;
                         if (edgeuse_vert_count > 3) {
                             fu_done = 0;
-                            bu_log("loop running cut_unimonotone found remaining loopuse(s) with #verts > 3\n");
+                            bu_log("nmg_triangulate_fu(): loop running cut_unimonotone found remaining loopuse(s) with #verts > 3\n");
                             break;
                         }
                     }
                     if (edgeuse_vert_count != 3) {
-                        bu_log("loop running cut_unimonotone found remaining loopuse(s) with %d #verts != 3\n",
+                        bu_log("nmg_triangulate_fu(): loop running cut_unimonotone found remaining loopuse(s) with %d #verts != 3\n",
                                  edgeuse_vert_count);
-#if 0
-                        bu_bomb("loop running cut_unimonotone found remaining loopuse(s) with #verts != 3\n");
-#endif
                     }
                 }
             }
@@ -3859,204 +3851,16 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
             }
         }
         if (fu_done == 0) {
-            bu_bomb("restarting loop running cut_unimonotone\n");
+            /* at this point all loopuse should have 3 or less vertices,
+             * if this is not the case then we have a problem.
+             */
+            bu_bomb("nmg_triangulate_fu(): loop running cut_unimonotone found unfinished loopuse.\n");
         }
     } /* close of while fu_done loop */
 
-/* the end of new while-loop to perform cut_unimonotone */
-
-#if 0
-    NMG_GET_FU_NORMAL(fu_normal, fu);
-    fu_done = 0;
-    while(!fu_done) {
-
-    lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
-    lu_done = 0;
-    while(!lu_done) {
-
-        /* When we encounter the head of the loopuse bu_list and
-         * cut_unimonotone was not run, we either have a faceuse
-         * with no loopuse or all the loopuse have 3 or less
-         * vertices, ie all have been triangulated.
-         */
-#if 0
-        if (BU_LIST_IS_HEAD(lu, &fu->lu_hd) && run_cut == 0) {
-#endif
-        if (BU_LIST_IS_HEAD(lu, &fu->lu_hd)) {
-            lu_done = 1;
-        } else {
-
-            if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
-                bu_bomb("loopuse has no vertexuse?\n");
-            }
-
-            NMG_CK_LOOPUSE(lu);
-
-
-            /* for this new triangulation logic to work, we need all
-             * the loopuse at this point in the process to have an
-             * orientation be OT_SAME meaning they are an outer loop,
-             * not a hole. all holes should have been converted to
-             * outer loops in the trapezoid creation and cut steps.
-             */
- 
-            if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
-                bu_bomb("loopuse does not contain any edgeuse, skipping loopuse\n");
-                lu = BU_LIST_PNEXT(loopuse, lu);
-            } else if (lu->orientation == OT_OPPOSITE) {
-#if 0
-                bu_log("lu_p = 0x%lx orientation = %d\n", (unsigned long)lu, lu->orientation);
-                bu_log("expecting non-hole loopuse, skipping loopuse\n");
-#endif
-                lu = BU_LIST_PNEXT(loopuse, lu);
-            } else if (ccw_result != 1) {
-                bu_log("lu_p = 0x%lx ccw_result = %d, skipping loopuse\n", (unsigned long)lu, ccw_result);
-
-                /* WEISS */ 
-                edgeuse_vert_count = 0;
-                for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-                    edgeuse_vert_count++;
-	            bu_log("nmg_triangulate_fu(): unknown ccw, lu_p = %x coord = %g %g %g\n", lu, V3ARGS(eu->vu_p->v_p->vg_p->coord));
-                }
-
-                if (edgeuse_vert_count < 3) {
-                    lu_tmp = lu;
-                    lu = BU_LIST_PNEXT(loopuse, lu);
-                    nmg_klu(lu_tmp);
-                } else {
-                    lu = BU_LIST_PNEXT(loopuse, lu);
-                }
-#if 0
-                bu_bomb("ccw_result != 1\n");
-#endif
-            } else {
-
-#if 0
-                bu_log("lu_p = 0x%lx orientation = %d\n", (unsigned long)lu, lu->orientation);
-#endif
-
-                eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
-                /* if edgeuse is head, this means the loopuse has no edgeuse,
-                 * meaning go to next loopuse
-                 */
-                if (BU_LIST_IS_HEAD(eu, &lu->down_hd)) {
-                    bu_bomb("loopuse contains no edgeuse, skipping loopuse\n");
-                    lu = BU_LIST_PNEXT(loopuse, lu);
-                } else {
-
-                    NMG_CK_EDGEUSE(eu);
-                    vert_count = 1; /* start at 1 */
-                    eu_done = 0;
-
-                    /* while loops tests if loop has more than 3 vertices */
-                    while (!eu_done) {
-                      eu = BU_LIST_PNEXT(edgeuse, eu);
-                      if (BU_LIST_IS_HEAD(eu, &lu->down_hd)) {
-                          eu_done = 1;
-                      } else if (vert_count > 3) {
-                          eu_done = 1;
-                      } else {
-                          vert_count++;
-                      }
-                    }
-
-                    if (vert_count < 3) {
-                        bu_bomb("degenerate loopuse\n");
-                    }
-
-                    run_cut = 0;
-                    if (vert_count > 3) {
-                        /* needs pt2d table and adds more entires as needed */
-
-                        if (lu->up.fu_p->orientation != OT_SAME) {
-                            bu_bomb("fu_p->orientation != OT_SAME\n");
-                        }
-
-#if 0
-                        bu_log("lu_p = 0x%lx fu plane distance = %g\n", 
-                               (unsigned long)lu, lu->up.fu_p->f_p->g.plane_p->N[W]);
-#endif
-
-
-                        NMG_GET_FU_NORMAL(fu_normal, lu->up.fu_p);
-                        ccw_result = nmg_loop_is_ccw(lu, fu_normal, tol);
-                        if (ccw_result != 1) {
-                            bu_log("lu_p = 0x%lx ccw_result = %d, skipping loopuse\n", (unsigned long)lu, ccw_result);
-                            bu_bomb("just before calling cut_unimonotone, ccw_result != 1\n");
-                        }
-
-                        cut_unimonotone(tbl2d, lu, tol);
-
-#if 0
-                        run_cut = 1;
-#endif
-#if 0
-                        lu_done = 1; /* test logic to only run cut_unimonotone once */
-#endif
-                                     /* test logic to only run cut_unimonotone once
-                                      * for this faceuse. with the assumption that
-                                      * after boolean operations, there is only one
-                                      * OT_SAME loopuse per faceuse and there may be
-                                      * multiple OT_OPPOSITE, then cut_unimonotone is
-                                      * run there should be only one loopuse which
-                                      * us the original OT_SAME with all the OT_OPPOSITE
-                                      * joined into it. once this single joined loopuse
-                                      * is triangulated using ear-clipping, there should
-                                      * be nothing more to trinagulate for the current
-                                      * faceuse
-                                      */
-#if 0
-                        lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
-                    } else {
-                        lu = BU_LIST_PNEXT(loopuse, lu);
-#endif
-                    }
-                    lu = BU_LIST_PNEXT(loopuse, lu);
-                }
-            }
-        }
-    }
-
-    /* test if fu has any more lu of ot-same and verts > 3, if not
-     * the set fu_done = 1 WEISS
-     */
-    edgeuse_vert_count = 0;
-    fu_done = 1;
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-        if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
-#if 0
-            if (lu->orientation == OT_SAME) {
-#endif
-            if (lu->orientation != OT_OPPOSITE) {
-                edgeuse_vert_count = 0;
-                for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-                    edgeuse_vert_count++;
-                    if (edgeuse_vert_count > 3) {
-                        fu_done = 0;
-                        bu_bomb("loop running cut_unimonotone found remaining loopuse(s) with #verts > 3\n");
-                        break;
-                    }
-                }
-                if (edgeuse_vert_count != 3) {
-                    bu_log("loop running cut_unimonotone found remaining loopuse(s) with %d #verts != 3\n",
-                             edgeuse_vert_count);
-                    bu_bomb("loop running cut_unimonotone found remaining loopuse(s) with #verts != 3\n");
-                }
-            }
-        }
-        if (fu_done == 0) {
-            break;
-        }
-    }
-
-    } /* end of fu_done while-loop */
-#endif
-
-    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd))
 	nmg_lu_reorient(lu);
-
-    if (rt_g.NMG_debug & DEBUG_TRI)
-	nmg_tri_plfu(fu, tbl2d);
+    }
 
     while (BU_LIST_WHILE(pt, pt2d, tbl2d)) {
 	BU_LIST_DEQUEUE(&pt->l);
