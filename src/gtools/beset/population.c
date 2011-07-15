@@ -471,7 +471,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 
 
 	    /* cross trees */
-	    *cross_parent = chosen_node->s_child, resp;
+	    *cross_parent = chosen_node->s_child;
 	    *chosen_node->s_parent =cpoint;
 
 	    while (BU_LIST_WHILE(add, node, &node->l)) {
