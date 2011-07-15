@@ -761,10 +761,6 @@ rt_tcl_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const cha
 void
 rt_tcl_setup(Tcl_Interp *interp)
 {
-    extern size_t rt_bot_minpieces;	/* from globals.c */
-    extern size_t rt_bot_tri_per_piece;	/* from globals.c */
-    extern size_t rt_bot_mintie;	/* from globals.c */
-
     Tcl_LinkVar(interp, "rt_bot_minpieces", (char *)&rt_bot_minpieces, TCL_LINK_WIDE_INT);
 
     Tcl_LinkVar(interp, "rt_bot_tri_per_piece",
