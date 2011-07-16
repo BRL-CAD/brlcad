@@ -2775,7 +2775,7 @@ BU_EXPORT extern int bu_color_to_rgb_floats(struct bu_color *cp, fastf_t *rgb);
 /** @ingroup io */
 /** @{ */
 
-/** @file libbu/stat.c
+/** @file libbu/file.c
  *
  * Support routines for identifying properties of files and
  * directories such as whether they exist or are the same as another

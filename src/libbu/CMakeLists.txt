@@ -26,6 +26,7 @@ set(LIBBU_SOURCES
     endian.c
     fchmod.c
     fgets.c
+    file.c
     fnmatch.c
     fopen_uniq.c
     getcwd.c
@@ -68,7 +69,6 @@ set(LIBBU_SOURCES
     rb_walk.c
     semaphore.c
     simd.c
-    stat.c
     str.c
     tcl.c
     temp.c
