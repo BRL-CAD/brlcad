@@ -1,4 +1,4 @@
-/*                         S T A T . C
+/*                         F I L E . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2011 United States Government as represented by
@@ -136,7 +136,7 @@ bu_same_fd(int fd1, int fd2)
  * specified file.
  */
 HIDDEN int
-_bu_file_access(const char *path, int access_level)
+file_access(const char *path, int access_level)
 {
     struct stat sb;
     int mask = 0;
@@ -209,21 +209,21 @@ _bu_file_access(const char *path, int access_level)
 int
 bu_file_readable(const char *path)
 {
-    return _bu_file_access(path, R_OK);
+    return file_access(path, R_OK);
 }
 
 
 int
 bu_file_writable(const char *path)
 {
-    return _bu_file_access(path, W_OK);
+    return file_access(path, W_OK);
 }
 
 
 int
 bu_file_executable(const char *path)
 {
-    return _bu_file_access(path, X_OK);
+    return file_access(path, X_OK);
 }
 
 
