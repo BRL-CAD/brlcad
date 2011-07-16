@@ -77,10 +77,10 @@ GetFileNameFromHandle(HANDLE hFile, char filepath[])
 	    if (GetMappedFileName (GetCurrentProcess(), pMem, pszFilename, MAXPATHLEN)) {
 
 		/* Translate path with device name to drive letters. */
-		TCHAR szTemp[BUFSIZE];
+		TCHAR szTemp[MAXPATHLEN+1];
 		szTemp[0] = '\0';
 
-		if (GetLogicalDriveStrings(BUFSIZE-1, szTemp)) {
+		if (GetLogicalDriveStrings(MAXPATHLEN, szTemp)) {
 		    TCHAR szName[MAXPATHLEN];
 		    TCHAR szDrive[3] = TEXT(" :");
 		    int bFound = 0;
@@ -119,8 +119,12 @@ GetFileNameFromHandle(HANDLE hFile, char filepath[])
 
 	CloseHandle(hFileMap);
     }
-    wcstombs(filename, pszFilename, MAXPATHLEN);
-    bu_strlcpy(filepath, filename, MAXPATHLEN);
+    if (sizeof(TCHAR) == sizeof(wchar_t)) {
+	wcstombs(filename, pszFilename, MAXPATHLEN);
+	bu_strlcpy(filepath, filename, MAXPATHLEN);
+    } else {
+	bu_strlcpy(filepath, pszFilename, MAXPATHLEN);
+    }
     return(bSuccess);
 }
 #endif
@@ -147,11 +151,11 @@ bu_fchmod(FILE *fp,
      * it's rather unreliable.
      */
     {
-	const char filepath[MAXPATHLEN+1];
+	char filepath[MAXPATHLEN+1];
 	int fd = fileno(fp);
 	HANDLE h = (HANDLE)_get_osfhandle(fd);
-        GetFileNameFromHandle(h, &filepath);
-	return chmod(filepath, (mode_t)pmode);
+        GetFileNameFromHandle(h, filepath);
+	return chmod(filepath, pmode);
     }
 #endif
 }
