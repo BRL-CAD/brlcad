@@ -832,10 +832,16 @@ struct edit_arg {
  */
 
 /* argument types */
+/*FIXME: some of these first few flags can probably go away, as the
+ * edit_cmd union makes them redundant. The edit_cmd union object in 
+ * ged_edit may require one or two of them, to distinguish between
+ * target object arguments and reference arguments. This is because
+ * ged_edit does not use the structs inside edit_cmd, in order to
+ * remain agnostic of subcommands. */
 #define EDIT_FROM			0x001 /* aka keypoint */
 #define EDIT_CENTER			0x002 /* for rotate/scale */
-#define EDIT_TO			0x004
-#define EDIT_TARGET_OBJ		0x008 /* obj to operate on */
+#define EDIT_TO				0x004
+#define EDIT_TARGET_OBJ			0x008 /* obj to operate on */
 
 /* argument "TO" type modifiers */
 #define EDIT_REL_DIST			0x010
@@ -849,36 +855,54 @@ struct edit_arg {
 #define EDIT_NATURAL_ORIGIN		0x100 /* use natural origin of object instead of center */
 #define EDIT_USE_TARGETS		0x200 /* for batch ops */
 
-enum edit_cmd_name {
-    /* alphabetize */
-    EDIT_CMD_HELP,
-    EDIT_CMD_ROTATE,
-    EDIT_CMD_SCALE,
-    EDIT_CMD_TRANSLATE,
-    /* end alphabetize */
-
-    EDIT_CMD_MAX, /* count of commands, size of char array */
-    EDIT_CMD_UNKNOWN = EDIT_CMD_MAX
-};
-static const char * const edit_cmd_names[EDIT_CMD_MAX] = {
-    /* alphabetize to keep in same order as enum edit_cmd_name */
-    "help",
-    "rotate",
-    "scale",
-    "translate"
+struct edit_cmd_tab {
+    char *name;
+    char *opt_global;
+    char *usage;
+    char *help;
+    /*FIXME: add *function, and full syntax, aliases, etc */
 };
 
-/* argument structure of each command */
+static const struct edit_cmd_tab edit_cmds[] = {
+    {"help",		(char *)NULL,	"[subcmd]",	(char *)NULL},
+#define EDIT_CMD_HELP 0 /* idx of "help" in edit_cmds */
+    {"rotate",		"R",
+	"[-R] [AXIS] [CENTER] ANGLE OBJECT ...",
+	"[[-n] [-a | -r] {AXIS_TO_OBJECT | AXIS_TO_POS}]]\n"
+	    "[[-n] -c {CENTER_OBJECT | CENTER_POS}]\n"
+	    "[[-n] -O {ANGLE_ORIGIN_OBJECT| ANGLE_ORIGIN_POS}]\n"
+	    "[[-n] -k {ANGLE_FROM_OBJECT | ANGLE_FROM_POS}]\n"
+	    "[-n | -o] [-a | -r | -d]"
+		"{ANGLE_TO_OBJECT | ANGLE_TO_POS}} OBJECT ..."
+    },
+    {"scale",		(char *)NULL,
+	"[SCALE] [CENTER] FACTOR OBJECT ...",
+	"[[[-n] -k {SCALE_FROM_OBJECT | SCALE_FROM_POS}]\n"
+	    "[-n] [-a | -r] {SCALE_TO_OBJECT | SCALE_TO_POS}]\n"
+	    "[[-n] -c {CENTER_OBJECT | CENTER_POS}]\n"
+	    "[[-n] -k {FACTOR_FROM_OBJECT | FACTOR_FROM_POS}]\n"
+	    "[-n] [-a | -r] {FACTOR_TO_OBJECT | FACTOR_TO_POS}"
+		" OBJECT ..."
+    },
+    {"translate",	(char *)NULL,
+	"[FROM] TO OBJECT ...",
+	"[[-n] -k {FROM_OBJECT | FROM_POS}]\n"
+	    "[-n] [-a | -r] {TO_OBJECT | TO_POS} OBJECT ..."
+    },
+    {(char *)NULL,	(char *)NULL,	(char *)NULL,	(char *)NULL}
+};
+
+/* arg groupings for each command */
 union edit_cmd{
-    enum edit_cmd_name name;
+    const struct edit_cmd_tab *cmd;
 
     struct {
-	enum edit_cmd_name padding_for_name;
+	const struct edit_cmd_tab *padding_for_cmd;
 	struct edit_arg objects;
     } common;
 
     struct {
-	enum edit_cmd_name padding_for_name;
+	const struct edit_cmd_tab *padding_for_cmd;
 	struct edit_arg objects;
 	struct {
 	    struct edit_arg from;
@@ -887,7 +911,7 @@ union edit_cmd{
     } translate;
 
     struct {
-	enum edit_cmd_name padding_for_name;
+	const struct edit_cmd_tab *padding_for_cmd;
 	struct edit_arg objects;
 	struct {
 	    struct edit_arg from;
@@ -902,7 +926,7 @@ union edit_cmd{
     } rotate;
 
     struct {
-	enum edit_cmd_name padding_for_cmd;
+	const struct edit_cmd_tab *padding_for_cmd;
 	struct edit_arg objects;
 	struct {
 	    struct edit_arg from;
@@ -1052,18 +1076,19 @@ edit(struct ged *gedp, struct edit_arg *args_head, const char *global_opts)
 #endif
 
 /**
- * A command line interface to the edit commands.
+ * A command line interface to the edit commands. Will handle any 
+ * new commands without modification.
  */
 int
 ged_edit(struct ged *gedp, int argc, const char *argv[])
 {
     const char * const cmd_name = argv[0];
-    const char *subcmd_name;
-    static const char * const usage = "subcmd args";
+    const char *subcmd_name = NULL;
     union edit_cmd subcmd;
+    static const char * const usage = "[subcommand] [args]";
     int i; /* iterator */
 
-    subcmd.name = EDIT_CMD_UNKNOWN;
+    subcmd.cmd = (const struct edit_cmd_tab *)NULL;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -1072,38 +1097,130 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* must be wanting help */
-    if (argc == 1) {
-        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
-        return GED_HELP;
+    /*
+     * Validate command name
+     */
+    
+/* FIXME: usage/help messages for subcommands should contain the name
+ * of the 'parent' command when necessary: i.e.: 'edit translate'
+ * rather than just 'translate'. */
+
+    for (i = 0; edit_cmds[i].name; ++i) {
+	/* search for command name in the table */
+	if (BU_STR_EQUAL(edit_cmds[i].name, cmd_name)) {
+	    subcmd_name = cmd_name; /* saves a strcmp later */
+	    subcmd.cmd = &edit_cmds[i];
+	    /* match of cmd name takes precedence over match of subcmd
+	     * name */
+	    break; 
+	}
+	/* treat first arg as a cmd, and search for it in table */
+	if (!subcmd_name && argc > 1 &&
+	    BU_STR_EQUAL(edit_cmds[i].name, argv[1])) {
+	    subcmd_name = argv[1];
+	    subcmd.cmd = &edit_cmds[i];
+	}
     }
 
-    subcmd_name = argv[1];
+    if (subcmd_name == cmd_name) { /* ptr cmp */
+	/* command name is serving as the subcommand */
+	--argc;
+	++argv;
+    } else if (subcmd.cmd) {
+	/* first arg is the subcommand */
+	argc -= 2;
+	argv += 2;
+    } else {
+	/* no subcommand was found */
+        int ret = GED_HELP;
+
+	if (argc > 1) {
+	    /* no arguments accepted without a subcommand */
+	    bu_vls_printf(gedp->ged_result_str, "unknown subcommand \"%s\"\n",
+	    		  argv[1]);
+	    ret = GED_ERROR;
+	}
+
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s"
+		      "\nAvailable subcommands: ", cmd_name, usage);
+	for (i = 0; edit_cmds[i].name; ++i)
+	    bu_vls_printf(gedp->ged_result_str, "%s ", edit_cmds[i].name);
+	return ret;
+    }
+
     /*
-     * validate subcommand name
+     * Subcommand help system
      */
 
-    for (i = 0; i < EDIT_CMD_MAX; ++i)
-	if (BU_STR_EQUAL(edit_cmd_names[i], subcmd_name))
-	    break;
-
-    subcmd.name = (enum edit_cmd_name)i;
-    switch (subcmd.name) {
-	case EDIT_CMD_UNKNOWN:
-	    bu_vls_printf(gedp->ged_result_str, "unknown subcommand: %s\n",
-	    		  subcmd_name);
-	    /* fall through */
+    /* switch on idx of subcmd.cmd in edit_cmds[] */
+    switch (subcmd.cmd - edit_cmds) { 
 	case EDIT_CMD_HELP:
-	    bu_vls_printf(gedp->ged_result_str, "Available subcommands: ");
-	    for (i = 0; i < EDIT_CMD_MAX; ++i)
-		bu_vls_printf(gedp->ged_result_str, "%s ",
-			      edit_cmd_names[i]);
-	    return (subcmd.name == EDIT_CMD_HELP ? GED_HELP : GED_ERROR);
-	default: /* quiet compiler */
-	    break;
+	    if (argc == 0) {
+		/* get generic help */
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n",
+			      subcmd.cmd->name, subcmd.cmd->usage);
+		bu_vls_printf(gedp->ged_result_str, "Available subcommands: ");
+		for (i = 0; edit_cmds[i].name; ++i)
+		    bu_vls_printf(gedp->ged_result_str, "%s ",
+				  edit_cmds[i].name);
+		return GED_HELP;
+	    } else {
+		/* get (long) help on a specific command */
+		for (i = 0; edit_cmds[i].name; ++i)
+		    /* search for command name in the table */
+		    if (BU_STR_EQUAL(edit_cmds[i].name, argv[0]))
+			break; /* for loop */
+
+		if (!edit_cmds[i].name) {
+		    bu_vls_printf(gedp->ged_result_str,
+		   		  "unknown subcommand \"%s\"\n",
+				  argv[0]);
+		    bu_vls_printf(gedp->ged_result_str,
+				  "Available subcommands: ");
+		    for (i = 0; edit_cmds[i].name; ++i)
+			bu_vls_printf(gedp->ged_result_str, "%s ",
+				      edit_cmds[i].name);
+		    return GED_ERROR;
+		}
+
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n\n%s %s",
+			      edit_cmds[i].name, edit_cmds[i].usage,
+			      edit_cmds[i].name, edit_cmds[i].help);
+		return GED_HELP;
+	    }
+	default:
+	    if (argc == 0) { 
+		/* no args to subcommand; must want usage */
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s",
+			      subcmd.cmd->name, subcmd.cmd->usage);
+		return GED_HELP;
+	    }
+
+	    /* Handle "subcmd help" (identical to "help subcmd"),
+	     * but only if there are no more args. Wouldn't want to
+	     * match an object named "help". This syntax is needed 
+	     * to access the help system when subcmd is an actual
+	     * command */
+	    if (argc == 1 &&
+		BU_STR_EQUAL(edit_cmds[EDIT_CMD_HELP].name,
+		argv[0])) {
+		bu_vls_printf(gedp->ged_result_str,
+			      "Usage: %s %s\n\n%s %s",
+			      subcmd.cmd->name, subcmd.cmd->usage,
+			      subcmd.cmd->name, subcmd.cmd->help);
+		return GED_HELP;
+	    }
     }
 
-    /* TODO: set subcmd_usage */
+    /*
+     * Create a linked list of all arguments to the subcommand.
+     * 
+     * The object of the game is to remain agnostic of argument
+     * structures for specific commands (i.e. inside the ged_cmd
+     * union). Therefore, we will simply chain all of the arguments
+     * together with edit_arg structs.
+     */
+
 
     /*
      * testing
