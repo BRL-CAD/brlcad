@@ -91,6 +91,13 @@ viewshade(struct application *app, const struct partition *pp, struct shadework 
 OPTICAL_EXPORT extern const char *optical_version(void);
 
 /* for libmultispectral */
+
+/* FIXME: these should not need to be declared for libmultispectral.
+ * breaks encapsulation/modularity of shaders if we have to list them
+ * in more than one place.  maybe give multispectral arrays their own
+ * suffix so as not to conflict.
+ */
+
 OPTICAL_EXPORT extern struct mfuncs camo_mfuncs[];
 OPTICAL_EXPORT extern struct mfuncs light_mfuncs[];
 OPTICAL_EXPORT extern struct mfuncs stk_mfuncs[];
