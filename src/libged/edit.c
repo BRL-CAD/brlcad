@@ -75,7 +75,7 @@
  *	objects. The positions of OBJECTs are translated from FROM to
  *	TO.
  *
- *	If FROM is omited, the bounding box center of the first
+ *	If FROM is omitted, the bounding box center of the first
  *	[PATH/]OBJECT is used instead. To use the natural origin of
  *	the first [PATH/]OBJECT as FROM, FROM_OBJECT must be manually
  *	set to [PATH/]OBJECT.
@@ -108,7 +108,7 @@
  * 	-r TO_POS
  *	    Interpret TO_POS as the relative distance to move OBJECT
  *          from FROM keypoint. This is the default if TO_POS is set.
- *	    Must be omited if TO_OBJECT is specified.
+ *	    Must be omitted if TO_OBJECT is specified.
  *
  *
  * VISUAL EXAMPLE:
@@ -194,7 +194,7 @@
  *	    translate -k . -n -a . sph.s
  *
  *	# move all instances of bowl.c, from sph.s's bounding
- *	# box center to y=5, without changing the x and z coodinates.
+ *	# box center to y=5, without changing the x and z coordinates.
  *	translate -k sph.s -a -y 5 bowl.c
  *
  *      # move instance of two.c, from instance of sph.s's
@@ -374,9 +374,9 @@
  *
  *          Default:                        | Default 90 degree angle:
  *                                          |
- *                   +z    ANGLE_ORIGIN     |       AXIS_TO->ANGLE_ORIGIN
- *                    |   / (from OBJECT)   |  90  /
- *          AXIS_FROM |  o                  |    \o   ANGLE_FROM
+ *                   +z    ANGLE_ORIGIN     |   AXIS_TO->ANGLE_ORIGIN
+ *                    |   / (from OBJECT)   |    \  90
+ *          AXIS_FROM |  o                  |     o/  ANGLE_FROM
  *	             \|                     |     ^  /        
  *	    AXIS_TO   o     o               |   o   o          _______
  *	           \ / \     \              |    \            |compass
@@ -419,17 +419,17 @@
  *	    Interpret *_TO_POS or *_TO_OBJECT as an absolute position.
  *	    This option is required if *_TO_OBJECT is supplied.
  *
- *	    If any arguments preceed AXIS_TO or ANGLE_TO, they are
+ *	    If any arguments precede AXIS_TO or ANGLE_TO, they are
  *	    required to have a matching "-a", "-r", or, in the case of
  *	    ANGLE_TO, "-d".
  *
  * 	-r *_TO_POS
  *	    Interpret *_TO_POS as a point a relative distance from
  *	    its *_FROM_POS keypoint. This is the default if *_TO_POS
- *	    is set but *_FROM_POS is omitted. Must be omited if
+ *	    is set but *_FROM_POS is omitted. Must be omitted if
  *	    *_TO_OBJECT is specified.
  *
- *	    If any arguments preceed AXIS_TO or ANGLE_TO, they are
+ *	    If any arguments precede AXIS_TO or ANGLE_TO, they are
  *	    required to have a matching "-a", "-r", or, in the case of
  *	    ANGLE_TO, "-d".
  *
@@ -440,7 +440,7 @@
  *	    to AXIS is not helpful in this case. This option (-d) is
  *	    the default, but in some cases it is required:
  *
- *	    If any arguments preceed ANGLE_TO, it is required to have
+ *	    If any arguments precede ANGLE_TO, it is required to have
  *	    matching "-a", "-r", or "-d".
  *
  * EXAMPLES
@@ -546,9 +546,9 @@
  *          # the spheres
  *          rotate -k sphere2 -a wphere1 -c sphere1 -d 90 cube
  *
- *      # Rotate both spheres individually around seperate axis,
+ *      # Rotate both spheres individually around separate axis,
  *      # so that the same points on each sphere are still facing
- *      # cube, but they are upsidedown.
+ *      # cube, but they are upside down.
  *      rotate -k . -a cube -c . -d 180 sphere1 sphere2
  *
  *      # Rotate both spheres around an axis in the middle of them,
@@ -595,7 +595,7 @@
  *	primitive or combination objects, by applying a scaling
  *	factor. OBJECTs are scaled by a FACTOR of SCALE, at CENTER.
  *
- *	It is important to note that FACTOR is intepreted as a factor
+ *	It is important to note that FACTOR is interpreted as a factor
  *	of SCALE. Although it might appear so, the distance between
  *	SCALE and FACTOR points is irrelivant.
  *
@@ -638,7 +638,7 @@
  * 	-r *_TO_POS
  *	    Interpret *_TO_POS as the relative distance to scale
  *	    OBJECTs from FROM keypoint. This is the default if TO_POS
- *	    is set.  Must be omited to specify *_TO_OBJECT is
+ *	    is set.  Must be omitted to specify *_TO_OBJECT is
  *	    specified.
  *
  * 	-a *_TO_POS | *_TO_OBJECT
@@ -868,6 +868,7 @@ static const struct edit_cmd_tab edit_cmds[] = {
 #define EDIT_CMD_HELP 0 /* idx of "help" in edit_cmds */
     {"rotate",		"R",
 	"[-R] [AXIS] [CENTER] ANGLE OBJECT ...",
+  	"[-R] [[[-n] -k {AXIS_FROM_OBJECT | AXIS_FROM_POS}]\n"
 	"[[-n] [-a | -r] {AXIS_TO_OBJECT | AXIS_TO_POS}]]\n"
 	    "[[-n] -c {CENTER_OBJECT | CENTER_POS}]\n"
 	    "[[-n] -O {ANGLE_ORIGIN_OBJECT| ANGLE_ORIGIN_POS}]\n"
@@ -892,7 +893,9 @@ static const struct edit_cmd_tab edit_cmds[] = {
     {(char *)NULL,	(char *)NULL,	(char *)NULL,	(char *)NULL}
 };
 
-/* arg groupings for each command */
+/*
+ * Arg groupings for each command. 
+ */
 union edit_cmd{
     const struct edit_cmd_tab *cmd;
 
@@ -1103,7 +1106,9 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     
 /* FIXME: usage/help messages for subcommands should contain the name
  * of the 'parent' command when necessary: i.e.: 'edit translate'
- * rather than just 'translate'. */
+ * rather than just 'translate'. Also, the help option of subcommands
+ * is not displayed in usage; it should display when command is called
+ * directly, i.e. 'translate', but not 'edit translate' */
 
     for (i = 0; edit_cmds[i].name; ++i) {
 	/* search for command name in the table */
@@ -1215,12 +1220,43 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     /*
      * Create a linked list of all arguments to the subcommand.
      * 
-     * The object of the game is to remain agnostic of argument
-     * structures for specific commands (i.e. inside the ged_cmd
+     * The object of the game is to remain agnostic of unique aspects
+     * of argument structures of subcommands (i.e. inside the edit_cmd
      * union). Therefore, we will simply chain all of the arguments
-     * together with edit_arg structs.
+     * together with edit_arg structs for fuller parsing elsewhere.
+     *
+     * There are, however, a several things that are standardized for
+     * each command (and for any newly added command).
+     *     1) interpretation of nonstandard options:
+     *        a) nonstandard options (not -n/-k/-a/-r/-x/-y/-z)
+     *            that *precede* either an argument specifier
+     *            (-k/-a/-r) or an option (-n), modify the argument
+     *            specifier's interpretation
+     *        b) all other nonstandard options are considered argument
+     *           specifiers themselves
+     *        c) unique global options not recognized at this point;
+     *           therefore, they will be recorded in the same way as
+     *           nonstandard options that modify argument specifiers
+     *           (a, above), and parsed elsewhere
+     *     2) keypoints ('FROM' arg options) are always preceded by
+     *        '-k'
+     *     3) keypoints are all considered optional at this point
+     *     4) if a keypoint is specified, the argument is the first in
+     *        a pair; therefore a matching 'TO' argument is required
+     *     5) any object specification string may:
+     *        a) contain a full path:[PATH/]OBJECT
+     *        b) use an offset: [x [y [z]]] ('-x' style not supported
+     *           in this context)
+     *        c) be used for a specific coordinate: -x/-y/-z OBJECT
+     *        d) be used for a specific coordinate and use an offset
+     *           simultaneously; ex: -x OBJECT 5 0 2
+     *     6) any objects not being operated on may use the batch
+     *        object substitution character ("." at the time of
+     *        writing)
+     *     7) at least one object must be operated on
+     *     8) the last argument is a list of objects to be operated on
+     *       
      */
-
 
     /*
      * testing
