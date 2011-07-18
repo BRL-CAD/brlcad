@@ -31,8 +31,6 @@ OSLRenderer::OSLRenderer(){
     shadingsys = ShadingSystem::create(&rend, NULL, &errhandler);
     
     ssi = (ShadingSystemImpl *)shadingsys;
-    
-    handle = ssi->create_thread_info();
 }
 
 OSLRenderer::~OSLRenderer(){
@@ -101,7 +99,7 @@ ShadingAttribStateRef OSLRenderer::AddShader(ShaderGroupInfo &group_info){
     return sh_ref;
 }
 
-Color3 OSLRenderer::QueryColor(RenderInfo *info){
+Color3 OSLRenderer::QueryColor(RenderInfo *info) const {
 
     if(info->depth >= 5){
 	return Color3(0.0f);
@@ -114,12 +112,9 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info){
     Xi[1] = rand();
     Xi[2] = rand();
 
-    /* Thread specifics */
-    info->thread_info = handle;
-
     // execute shader
     ShaderGlobals globals;
-    const ClosureColor *closure = ExecuteShaders(globals, info, ssi);
+    const ClosureColor *closure = ExecuteShaders(globals, info);
 
     Color3 weight = Color3(0.0f);
     // sample primitive from closure tree
@@ -160,12 +155,18 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info){
     }
     return Color3(0.0f);
 }
+/* Return thread specific information */
+void* OSLRenderer::CreateThreadInfo(){
+    return ssi->create_thread_info();
+}
+
+
 /* -----------------------------------------------
  * Private methods
  * ----------------------------------------------- */
 
 const ClosureColor * OSLRenderer::
-ExecuteShaders(ShaderGlobals &globals, RenderInfo *info, ShadingSystemImpl *ssi){
+ExecuteShaders(ShaderGlobals &globals, RenderInfo *info) const {
 
     memset(&globals, 0, sizeof(globals));
 
@@ -199,7 +200,7 @@ ExecuteShaders(ShaderGlobals &globals, RenderInfo *info, ShadingSystemImpl *ssi)
     return globals.Ci;
 }
 
-const ClosurePrimitive * OSLRenderer::SamplePrimitive(Color3& weight, const ClosureColor *closure, float r){
+const ClosurePrimitive * OSLRenderer::SamplePrimitive(Color3& weight, const ClosureColor *closure, float r) const {
 
     if(closure) {
 	const ClosurePrimitive *prim = NULL;
@@ -213,7 +214,7 @@ const ClosurePrimitive * OSLRenderer::SamplePrimitive(Color3& weight, const Clos
     return NULL;
 }
 void OSLRenderer::SamplePrimitiveRecurse(const ClosurePrimitive*& r_prim, Color3& r_weight, const ClosureColor *closure,
-					 const Color3& weight, float& totw, float& r){
+					 const Color3& weight, float& totw, float& r) const {
 
     if(closure->type == ClosureColor::COMPONENT) {
 

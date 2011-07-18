@@ -46,9 +46,17 @@
 /* Oslrenderer system */
 OSLRenderer *oslr = NULL;
 
-/* Save default a_hit */
+/* Every time a thread reaches osl_render for the first time,
+   we save the address of their own buffers, which is an ugly way to
+   identify them */
+std::vector<struct resource *> visited_addrs;
+/* Holds information about the context necessary to correctly execute a
+   shader */
+std::vector<void *> thread_infos;
 
+/* Save default a_hit */
 int (*default_a_hit)(struct application *, struct partition *, struct seg *);	
+/* Save default a_miss */
 int (*default_a_miss)(struct application *);	
 
 /*
@@ -339,14 +347,11 @@ HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm,
      * -----------------------------------
      */
     /* If OSL system was not initialized yet, do it */
-    /* FIXME: take care of multi-thread issues */
-    bu_semaphore_acquire(BU_SEM_SYSCALL);
     if (oslr == NULL){
 	oslr = new OSLRenderer();
     }
     /* Add this shader to OSL system */
-    osl_sp->shader_ref = oslr->AddShader(group_info);
-    bu_semaphore_release(BU_SEM_SYSCALL);
+    osl_sp->shader_ref = oslr->AddShader(group_info); 
 
     if (rdebug&RDEBUG_SHADE) {
 	bu_struct_print(" Parameters:", osl_print_tab, (char *)osl_sp);
@@ -479,6 +484,8 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
     register struct osl_specific *osl_sp =
 	(struct osl_specific *)dp;
     
+    void * thread_info;
+
     /* check the validity of the arguments we got */
     RT_AP_CHECK(ap);
     RT_CHECK_PT(pp);
@@ -487,8 +494,25 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
     if (rdebug&RDEBUG_SHADE)
 	bu_struct_print("osl_render Parameters:", osl_print_tab,
 			(char *)osl_sp);
-    
+
     bu_semaphore_acquire(BU_SEM_SYSCALL);
+    
+    /* Check if it is the first time this thread is calling this function */
+    bool visited = false;
+    for(size_t i = 0; i < visited_addrs.size(); i++){
+	if(ap->a_resource == visited_addrs[i]){
+	    visited = true;
+	    thread_info = thread_infos[i];
+	    break;
+	}
+    } 
+    if(!visited){
+	visited_addrs.push_back(ap->a_resource);
+	/* Get thread specific information from OSLRender system */
+	thread_info = oslr->CreateThreadInfo();
+	thread_infos.push_back(thread_info);
+    }
+
     if(ap->a_level == 0){
 	default_a_hit = ap->a_hit; /* save the default hit callback (colorview @ rt) */
 	default_a_miss = ap->a_miss;
@@ -527,10 +551,12 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 
     /* We only perform reflection if application decides to */
     info.doreflection = 0;
-    
-    bu_semaphore_acquire(BU_SEM_SYSCALL);
+
+    /* We assume that the only information that will be written is thread_info,
+       so that oslr->QueryColor is thread safe */
+    info.thread_info = thread_info;
+
     Color3 weight = oslr->QueryColor(&info);
-    bu_semaphore_release(BU_SEM_SYSCALL);
 
     /* Fire another ray */
     if(info.doreflection == 1){

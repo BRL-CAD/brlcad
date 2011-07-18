@@ -53,7 +53,7 @@ typedef struct Ray {
 struct RenderInfo {
 
     /* -- input -- */
-    void *thread_info;
+    void *thread_info;      /* Thread specific information */
     fastf_t screen_x;       /* Coordinates of the screen (if applicable) */
     fastf_t screen_y;
     point_t P;              /* Query point */
@@ -64,7 +64,7 @@ struct RenderInfo {
     int depth;              /* How many times the ray hit an object */
     fastf_t surfacearea;    /* FIXME */
     ShadingAttribStateRef shader_ref;   /* Reference for the shader we're querying */
-
+ 
     /* -- output -- */
     point_t pc;           /* Color of the point (or multiplier) */
     int doreflection;     /* 1 if there will be reflection 0, otherwise */
@@ -113,19 +113,19 @@ class OSLRenderer {
     std::vector<OSLShader> shaders;
 #endif
 
-    static const ClosureColor
-	*ExecuteShaders(ShaderGlobals &globals, RenderInfo *info, ShadingSystemImpl *ssi);
+    const ClosureColor
+	*ExecuteShaders(ShaderGlobals &globals, RenderInfo *info) const;
 
     /* Sample a primitive from the shaders group */
     const ClosurePrimitive* SamplePrimitive(Color3& weight,
 					    const ClosureColor *closure,
-					    float r);
+					    float r) const;
 
     /* Helper function for SamplePrimitive */
     void SamplePrimitiveRecurse(const ClosurePrimitive*& r_prim,
 				Color3& r_weight,
 				const ClosureColor *closure,
-				const Color3& weight, float& totw, float& r);
+				const Color3& weight, float& totw, float& r) const;
 
 public:
 
@@ -138,7 +138,10 @@ public:
     ShadingAttribStateRef AddShader(ShaderGroupInfo &group_info);
 
     /* Query a color */
-    Color3 QueryColor(RenderInfo *info);
+    Color3 QueryColor(RenderInfo *info) const;
+
+    /* Return thread specific information */
+    void * CreateThreadInfo();
 
     static void Vec3toPoint_t(Vec3 s, point_t t){
 	t[0] = s[0];
