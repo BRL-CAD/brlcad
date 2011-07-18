@@ -3064,7 +3064,7 @@ BU_EXPORT extern FILE *bu_temp_file(char *filepath, size_t len);
  * getopt routines found in libc.
  *
  * Important note -
- * If bu_getopt() it going to be used more than once, it is necessary
+ * If bu_getopt() is going to be used more than once, it is necessary
  * to reinitialize bu_optind=1 before beginning on the next argument
  * list.
  */
