@@ -1933,6 +1933,129 @@ bn_isect_line3_line3(fastf_t *t,
 int
 bn_isect_line_lseg(fastf_t *t, const fastf_t *p, const fastf_t *d, const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 {
+#ifdef TRI_PROTOTYPE
+    vect_t ab, pa, pb;		/* direction vectors a->b, p->a, p->b */
+    auto fastf_t u;		/* As in, A + u * C = X */
+    register int ret;
+
+    fastf_t ab_mag;
+    fastf_t pa_mag_sq;
+    fastf_t pb_mag_sq;
+    fastf_t d_mag_sq;
+
+    BN_CK_TOL(tol);
+
+    d_mag_sq = MAGSQ(d);
+    if (ZERO(d_mag_sq)) {
+        bu_bomb("bn_isect_line_lseg(): ray direction vector zero magnitude\n");
+    }
+
+    VSUB2(ab, b, a);
+    ab_mag = MAGNITUDE(ab);
+    if (ab_mag < tol->dist) {
+	/* points A and B are not distinct */
+	return -4;
+    }
+
+    VSUB2(pa, a, p);
+    pa_mag_sq = MAGSQ(pa);
+    if (pa_mag_sq < tol->dist_sq) {
+        /* Intersection at vertex A */
+        *t = sqrt(pa_mag_sq);
+        return 1;
+    }
+
+    VSUB2(pb, b, p);
+    pb_mag_sq = MAGSQ(pb);
+    if (pb_mag_sq < tol->dist_sq) {
+        /* Intersection at vertex B */
+        *t = sqrt(pb_mag_sq);
+        return 2;
+    }
+
+    /* Detecting colinearity is difficult, and very very important.
+     * As a first step, check to see if both points A and B lie within
+     * tolerance of the line.  If so, then the line segment AC is ON
+     * the line.
+     */
+    if (bn_distsq_line3_pt3(p, d, a) <= tol->dist_sq  &&
+	bn_distsq_line3_pt3(p, d, b) <= tol->dist_sq) {
+	if (bu_debug & BU_DEBUG_MATH) {
+	    bu_log("bn_isect_line3_lseg3() pts A and B within tol of line\n");
+	}
+	/* Find the parametric distance along the ray */
+	*t = bn_dist_pt3_along_line3(p, d, a);
+
+        if (*t < -tol->dist) {
+            /* intersection of ray and line segment but in the 
+             * negative direction of the ray
+             */
+            return -1;
+        } else {
+            if (ZERO(*t)) {
+                *t = 0.0;
+            }
+	    /* co-linear (t was computed for point A, u=0) */
+	    return 0;
+        }
+    }
+
+    if ((ret = bn_isect_line3_line3_new(t, &u, p, d, a, ab, tol)) < 0) {
+	/* No intersection found */
+	return -1;
+    }
+
+    if (ret == 0) {
+	/* co-linear (t was computed for point A, u=0) */
+	return 0;
+    }
+
+    if (ZERO(*t)) {
+        *t = 0.0;
+    }
+
+    if (ZERO(u)) {
+        u = 0.0;
+    }
+
+    if (*t < -tol->dist) {
+        /* intersection of ray and line segment but in the 
+         * negative direction of the ray
+         */
+        return -1;
+    }
+
+    if (NEAR_ZERO(u, tol->dist)) {
+        /* Intersection at vertex A */
+        /* use actual distance instead of hit point */
+        *t = sqrt(pa_mag_sq);
+        return 1;
+    }
+    if (u < -tol->dist) {
+        /* Intersection exists, < A (t is returned) */
+        return -3;
+    }
+
+    /* the computation (u - ab_mag) might cause some problems
+     * because 'u' can be negative but 'ab_mag' can not
+     */
+    if (NEAR_ZERO(u - ab_mag, tol->dist)) {
+        /* Intersection at vertex B */
+        /* use actual distance instead of hit point */
+        *t = sqrt(pb_mag_sq);
+        return 2;
+    }
+
+    if (u > ab_mag + tol->dist) {
+        /* Intersection exists, > B (t is returned) */
+        return -2;
+    }
+
+    /* Intersection between A and B */
+    return 3;
+
+#else
+
     vect_t c;		/* Direction vector from A to B */
     auto fastf_t u;		/* As in, A + u * C = X */
     register fastf_t f;
@@ -1995,6 +2118,8 @@ bn_isect_line_lseg(fastf_t *t, const fastf_t *p, const fastf_t *d, const fastf_t
 	return 2;		/* Intersection at B */
 
     return 3;			/* Intersection between A and B */
+
+#endif
 }
 
 
@@ -3307,9 +3432,4 @@ bn_isect_lseg_rpp(fastf_t *a,
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-
-
-
-
-
 
