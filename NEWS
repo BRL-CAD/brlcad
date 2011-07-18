@@ -9,15 +9,16 @@ first and are grouped by release.  Each release also includes optional
 descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
------------------------------------------------------------------------
+----------------------------------------------------------------------
 --- 2011-07-XX  Release 7.20.4                                     ---
 ----------------------------------------------------------------------
 
+* fixed infinite loop bug plotting NURBS wireframes - Sean Morrison
 * added ringworld proc-db - Erik Greenwald
 * fixed mged Manual page item in help menu - Brandon Hinesley
 
 
----------------------------------------------------------------------
+----------------------------------------------------------------------
 --- 2011-07-01  Release 7.20.2                                     ---
 ----------------------------------------------------------------------
 

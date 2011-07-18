@@ -541,6 +541,12 @@ BANode<BA>::getCurveEstimateOfV(fastf_t u, fastf_t tol) const
     while (du > 0.05) {
     	guess = Ta + dT/2;
     	p = m_trim->PointAt(guess);
+
+	if (UNLIKELY(NEAR_EQUAL(p[X], u, SMALL_FASTF))) {
+	    /* hit 'u' exactly, done deal */
+	    return p[Y];
+	}
+
     	if (p[X] < u) {
     	    Ta = guess;
     	    VMOVE(A, p);
