@@ -949,6 +949,7 @@ union edit_cmd{
     } scale;
 };
 
+#if 0 /* unused */
 /**
  * Initialize a node.
  */
@@ -1019,6 +1020,7 @@ edit_arg_rm_prefix (struct edit_arg *head)
     bu_free(old_head, "edit_arg");
     return head;
 }
+#endif
 
 /**
  * Free an argument node and all nodes down its list.
@@ -1034,6 +1036,7 @@ edit_arg_free_all(struct edit_arg *arg)
 /**
  * Free any dynamically allocated arg that may exist
  */
+#if 0 /* unused */
 HIDDEN void
 edit_cmd_free(union edit_cmd *args)
 {
@@ -1041,6 +1044,7 @@ edit_cmd_free(union edit_cmd *args)
     if (args->common.objects.next)
 	edit_arg_free_all(args->common.objects.next);
 }
+#endif
 
 #if 0
 int
