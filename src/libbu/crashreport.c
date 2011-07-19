@@ -107,8 +107,7 @@ bu_crashreport(const char *filename)
 	    fprintf(fp, "\nSystem characteristics:\n");
 	    fflush(fp);
 	    while (bu_fgets(buffer, CR_BUFSIZE, popenfp)) {
-		int ret;
-		ret = fwrite(buffer, 1, strlen(buffer), fp);
+		(void)fwrite(buffer, 1, strlen(buffer), fp);
 	    }
 	}
 #if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
@@ -134,11 +133,10 @@ bu_crashreport(const char *filename)
 	    fprintf(fp, "\nSystem information:\n");
 	    fflush(fp);
 	    while (bu_fgets(buffer, CR_BUFSIZE, popenfp)) {
-		int ret;
 		if ((strlen(buffer) == 0) || ((strlen(buffer) == 1) && (buffer[0] == '\n'))) {
 		    continue;
 		}
-		ret = fwrite(buffer, 1, strlen(buffer), fp);
+		(void)fwrite(buffer, 1, strlen(buffer), fp);
 	    }
 	}
 #if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
