@@ -1089,13 +1089,98 @@ edit(struct ged *gedp, struct edit_arg *args_head, const char *global_opts)
 #endif
 
 /**
+ * Convert a string to an edit_arg. The arg is NULL if the string
+ * contains an object not in the database, or if an instance of the
+ * object does not exist at the specified path. See subcommand manuals
+ * for examples of acceptible argument strings.
+ *
+ * Returns GED_ERROR on failure, and GED_OK on success.
+ */
+HIDDEN int
+edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg) {
+    /* XXX if there is a slash, treat it as an object for sure. If
+     * there isn't a slash, then try to look it up in the db.  If that
+     * fails too, then try to treat it as a number.  If it isn't a
+     * number either, then the argument is invalid. */
+
+    char const *path_start;
+    char const *path_end;
+    char const *first_slash;
+
+    /* after leading slashes */
+    path_start = str;
+    while (path_start[0] == '/')
+	++path_start;
+
+    /* before trailing slashes */
+    path_end = path_start + strlen(path_start) - (size_t)1;
+    while (path_end[0] == '/')
+	--path_end;
+
+    first_slash = strchr(path_start, '/');
+    if (first_slash >= path_end) {
+	/* path contained nothing but '/' char(s) */
+	bu_vls_printf(gedp->ged_result_str, "cannot use root path "
+		      "alone");
+	return GED_ERROR;
+    }
+
+    if (first_slash != NULL) {
+	/* an arg with a slash is interpreted as a path */
+	if (first_slash != strrchr(str, '/')) {
+	    bu_vls_printf(gedp->ged_result_str,
+			  "it is only meaningful to have one or two "
+			  "directories in a path in this context.\n"
+			  "Ex: OBJECT (equivalently, /OBJECT/) or "
+			  "PATH/OBJECT (equivalently, /PATH/OBJECT/");
+	    return GED_ERROR;
+	}
+	arg->object = (struct db_full_path *)bu_malloc(
+			 sizeof(struct db_full_path),
+			 "db_full_path block for ged_edit()");
+	if (!db_string_to_path(arg->object, gedp->ged_wdbp->dbip,
+			       str)) {
+	    db_free_full_path(arg->object);
+	    bu_vls_printf(gedp->ged_result_str,
+			  "a directory in the path %s does not exist",
+			  str);
+	    return GED_ERROR;
+	}
+	if (ged_path_validate(gedp, arg->object) == GED_ERROR) {
+	    db_free_full_path(arg->object);
+	    bu_vls_printf(gedp->ged_result_str,
+			  "invalid path, \"%s\"", str);
+	    return GED_ERROR;
+	}
+
+	/* FIXME: temporary */
+	db_free_full_path(arg->object);
+    }
+	/* there is no slash, so check db for object */
+#if 0
+	struct directory *argd = db_lookup(dbip, argv[bu_optind + 1],
+					   LOOKUP_QUIET);
+	if (argd == RT_DIR_NULL)
+	    NULL;
+	    /* not an object */
+	    /* XXX if it is a number, fall back to treating it
+	     * as one, otherwise, throw an error saying that
+	     * it is an invalid object */
+	else
+	    /* treat it as an object */
+	    NULL;
+#endif
+	return GED_OK;
+}
+
+/**
  * A command line interface to the edit commands. Will handle any 
  * new commands without modification.
  */
 int
 ged_edit(struct ged *gedp, int argc, const char *argv[])
 {
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    /* struct db_i *dbip = gedp->ged_wdbp->dbip; */
     const char * const cmd_name = argv[0];
     const char *subcmd_name = NULL;
     union edit_cmd subcmd;
@@ -1322,8 +1407,13 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 		    isalpha(argv[bu_optind + 1][1]))
 		    /* an opt is next; cur opt doesn't take an arg */
 		    cur_arg.cl_options[cur_opt++] = bu_optopt;
-		else
-		    goto get_argument;
+		else {
+		    /* an arg is next; try to convert to cur_arg */
+		    if (edit_str_to_arg(gedp, argv[bu_optind + 1],
+			&cur_arg) == GED_ERROR)
+			return GED_ERROR;
+		    continue;
+		}
 		break;
 	    case ':': /* missing arg */
 		bu_vls_printf(gedp->ged_result_str,
@@ -1331,87 +1421,6 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 		return GED_ERROR;
 	    default: /* quiet compiler */
 		break;
-	}
-	continue;
-
-/* FIXME: this is getting big... should probably be a separate func */
-get_argument: 
-        {
-	    /* determine if argument is an object in the db */
-
-	    /* XXX if there is a slash, treat it as an object for
-	     * sure. If there isn't a slash, then try to look it up in
-	     * the db.  If that fails too, then try to treat it as
-	     * a number.  If it isn't a number either, then the
-	     * argument is invalid. */
-
-	    char const *path_start;
-	    char const *path_end;
-	    char const *first_slash;
-
-	    /* after leading slashes */
-	    path_start = argv[bu_optind + 1];
-	    while (path_start[0] == '/')
-		++path_start;
-
-	    /* before trailing slashes */
-	    path_end = argv[strlen(argv[bu_optind + 1]) - 1];
-	    while (path_end[0] == '/')
-		--path_end;
-
-	    first_slash = strchr(path_start, '/');
-	    if (first_slash >= path_end) {
-		/* path contained nothing but '/' char(s) */
-		bu_vls_printf(gedp->ged_result_str, "cannot use root path "
-			      "alone");
-		return GED_ERROR;
-	    }
-
-	    if (first_slash != NULL) {
-		/* an arg with a slash is interpreted as a path */
-		if (first_slash != strrchr(argv[bu_optind + 1], '/')) {
-		    bu_vls_printf(gedp->ged_result_str,
-				  "it is only meaningful to have one or two "
-				  "directories in a path in this context.\n"
-				  "Ex: OBJECT (equivalently, /OBJECT/) or "
-				  "PATH/OBJECT (equivalently, /PATH/OBJECT/");
-		    return GED_ERROR;
-		}
-		cur_arg.object = (struct db_full_path *)bu_malloc(
-				 sizeof(struct db_full_path),
-				 "db_full_path block for ged_edit()");
-		if (!db_string_to_path(cur_arg.object, dbip,
-				       argv[bu_optind + 1])) {
-		    db_free_full_path(cur_arg.object);
-		    bu_vls_printf(gedp->ged_result_str,
-				  "a directory in the path %s does not exist",
-				  argv[bu_optind + 1]);
-		    return GED_ERROR;
-		}
-		if (ged_path_validate(gedp, cur_arg.object) == GED_ERROR) {
-		    db_free_full_path(cur_arg.object);
-		    bu_vls_printf(gedp->ged_result_str, "invalid path, \"%s\"",
-				  argv[bu_optind + 1]);
-		    return GED_ERROR;
-		}
-
-		/* FIXME: temporary */
-		db_free_full_path(cur_arg.object);
-	    }
-	    /* there is no slash, so check db for object */
-#if 0
-	    struct directory *argd = db_lookup(dbip, argv[bu_optind + 1],
-					       LOOKUP_QUIET);
-	    if (argd == RT_DIR_NULL)
-		NULL;
-		/* not an object */
-		/* XXX if it is a number, fall back to treating it
-		 * as one, otherwise, throw an error saying that
-		 * it is an invalid object */
-	    else
-		/* treat it as an object */
-		NULL;
-#endif
 	}
 	continue;
 
