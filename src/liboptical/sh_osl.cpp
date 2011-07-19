@@ -155,8 +155,9 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
     /* Split string arount # */
     const char *item;
     item = strtok(shadername, "#");
-    sh_info.shadername = std::string(item);
-    
+    /* We are going to look for shader in ../shaders/ */
+    sh_info.shadername = "../shaders/" + std::string(item);  
+
     /* Check for parameters */
     while((item = strtok(NULL, "#")) != NULL){
 
