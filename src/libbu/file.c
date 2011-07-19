@@ -33,6 +33,7 @@
 #ifdef HAVE_GRP_H
 #  include <grp.h>
 #endif
+
 #include "bio.h"
 
 #include "bu.h"
@@ -224,6 +225,56 @@ int
 bu_file_executable(const char *path)
 {
     return file_access(path, X_OK);
+}
+
+
+int
+bu_file_delete(const char *path)
+{
+    int ret = 0;
+    int retry = 0;
+    struct stat sb;
+
+    /* reject empty, special, or non-existent paths */
+    if (!path
+	|| BU_STR_EQUAL(path, "")
+	|| BU_STR_EQUAL(path, ".")
+	|| BU_STR_EQUAL(path, "..")
+	|| !bu_file_exists(path))
+    {
+	return 0;
+    }
+
+    do {
+
+	if (retry++) {
+	    /* second pass, try to force deletion by changing file
+	     * permissions (similar to rm -f).
+	     */
+	    if (stat(path, &sb) == -1) {
+		break;
+	    }
+	    chmod(path, (sb.st_mode|S_IRWXU));
+	}
+
+	ret = (remove(path) == 0) ? 0 : 1;
+
+    } while (ret == 0 && retry < 2);
+
+    /* all boils down to whether the file still exists, not whether
+     * remove thinks it succeeded.
+     */
+    if (bu_file_exists(path)) {
+	/* failure */
+	if (retry > 1) {
+	    /* restore original file permission */
+	    chmod(path, sb.st_mode);
+	}
+	return 0;
+    } else {
+	/* deleted */
+	return 1;
+    }
 }
 
 

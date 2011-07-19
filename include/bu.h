@@ -2826,6 +2826,13 @@ BU_EXPORT extern int bu_file_writable(const char *path);
  */
 BU_EXPORT extern int bu_file_executable(const char *path);
 
+/**
+ * deletes a specified file.  returns truthfully if the specified file
+ * was deleted.
+ */
+BU_EXPORT extern int bu_file_delete(const char *path);
+
+
 /** @file libbu/fnmatch.c
  *
  */
