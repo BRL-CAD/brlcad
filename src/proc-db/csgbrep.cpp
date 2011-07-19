@@ -259,7 +259,7 @@ main(int argc, char** argv)
     tmp_internal->idb_meth = &rt_functab[ID_ARB8];
     tmp_internal->idb_meth->ft_tessellate(&r, m, tmp_internal, ttol, tol);
     tmp_internal->idb_ptr = (genptr_t)m;
-    tmp_internal->idb_meth = &rt_functab[ID_ARBN];
+    tmp_internal->idb_meth = &rt_functab[ID_NMG];
     tmp_internal->idb_meth->ft_brep(&nmgbrep, tmp_internal, tol);
     const char* nmg_name = "nmg_nurb.s";
     mk_brep(outfp, nmg_name, nmgbrep);
