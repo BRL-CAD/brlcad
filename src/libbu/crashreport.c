@@ -143,7 +143,9 @@ bu_crashreport(const char *filename)
 		size_t len;
 		
 		len = strlen(buffer);
-		if ((len == 0) || (len == 1) && (buffer[0] == '\n')) {
+		if ((len == 0)
+		    || ((len == 1) && (buffer[0] == '\n')))
+		{
 		    continue;
 		}
 
