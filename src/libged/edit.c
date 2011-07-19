@@ -906,6 +906,12 @@ union edit_cmd{
 
     struct {
 	const struct edit_cmd_tab *padding_for_cmd;
+	/* a synonym for 'objects', used when parsing cl args */
+	struct edit_arg args; 
+    } cmd_line;
+
+    struct {
+	const struct edit_cmd_tab *padding_for_cmd;
 	struct edit_arg objects;
 	struct {
 	    struct edit_arg from;
@@ -1085,11 +1091,15 @@ edit(struct ged *gedp, struct edit_arg *args_head, const char *global_opts)
 int
 ged_edit(struct ged *gedp, int argc, const char *argv[])
 {
+    struct db_i *dbip = gedp->ged_wdbp->dbip;
     const char * const cmd_name = argv[0];
     const char *subcmd_name = NULL;
     union edit_cmd subcmd;
+    struct edit_arg cur_arg = subcmd.cmd_line.args;
+    int cur_opt = 0; /* pos in options array for current arg */
     static const char * const usage = "[subcommand] [args]";
     int i; /* iterator */
+    int c; /* for bu_getopt */
 
     subcmd.cmd = (const struct edit_cmd_tab *)NULL;
 
@@ -1219,7 +1229,9 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 
     /*
      * Create a linked list of all arguments to the subcommand.
-     * 
+     */
+
+    /*
      * The object of the game is to remain agnostic of unique aspects
      * of argument structures of subcommands (i.e. inside the edit_cmd
      * union). Therefore, we will simply chain all of the arguments
@@ -1228,7 +1240,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
      * There are, however, a several things that are standardized for
      * each command (and for any newly added command).
      *     1) interpretation of nonstandard options:
-     *        a) nonstandard options (not -n/-k/-a/-r/-x/-y/-z)
+     *        a) nonstandard options (not -k/-a/-r/-x/-y/-z)
      *            that *precede* either an argument specifier
      *            (-k/-a/-r) or an option (-n), modify the argument
      *            specifier's interpretation
@@ -1257,6 +1269,165 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
      *     8) the last argument is a list of objects to be operated on
      *       
      */
+
+    goto disabled;
+
+    bu_optind = 1; /* re-init bu_getopt() */
+    bu_opterr = 0; /* suppress errors; accept unknown options */
+    while ((c = bu_getopt(argc, (char * const *)argv, ":k:a:r:x:y:z:")) != -1) {
+	switch (c) {
+	    case 'k': /* keypoint; FROM* argument */
+	    case 'a': /* relative TO* distance argument */
+	    case 'r': /* absolute TO* position argument */
+	        /* get coordinates or object */
+		cur_arg.cl_options[cur_opt] = bu_optopt;
+		cur_opt = 0;
+		break;
+	    case 'x': /* individual coordinate argument */
+	    case 'y':
+	    case 'z':
+	        /* get coordinate or object, and optionally an
+		 * offset */
+		/* XXX */
+		bu_vls_printf(gedp->ged_result_str,
+			      "Specification of individual coordinates is not"
+			      " yet supported");
+		return GED_ERROR;
+		break;
+	    case '?': /* nonstandard or unknown option */
+		/*
+		 * if a non-option is next, the current option is an
+		 * argument specifier
+		 */
+
+		if (bu_optind + 1 >= argc)
+		    goto err_no_operand;
+
+		if (cur_opt >= EDIT_MAX_ARG_OPTIONS)
+		    goto err_option_overload;
+
+		if (!isprint(bu_optopt)) {
+		    bu_vls_printf(gedp->ged_result_str,
+				  "Unknown option character '\\x%x'",
+				  bu_optopt);
+		    return GED_ERROR;
+		}
+
+		/* check next argv element to help intepret cur opt */
+		if (argv[bu_optind + 1][0] == '-' && 
+		    isalpha(argv[bu_optind + 1][1]))
+		    /* an opt is next; cur opt doesn't take an arg */
+		    cur_arg.cl_options[cur_opt++] = bu_optopt;
+		else
+		    goto get_argument;
+		break;
+	    case ':': /* missing arg */
+		bu_vls_printf(gedp->ged_result_str,
+			      "Missing argument for option -%c", bu_optopt);
+		return GED_ERROR;
+	    default: /* quiet compiler */
+		break;
+	}
+	continue;
+
+/* FIXME: this is getting big... should probably be a separate func */
+get_argument: 
+        {
+	    /* determine if argument is an object in the db */
+
+	    /* XXX if there is a slash, treat it as an object for
+	     * sure. If there isn't a slash, then try to look it up in
+	     * the db.  If that fails too, then try to treat it as
+	     * a number.  If it isn't a number either, then the
+	     * argument is invalid. */
+
+	    char const *path_start;
+	    char const *path_end;
+	    char const *first_slash;
+
+	    /* after leading slashes */
+	    path_start = argv[bu_optind + 1];
+	    while (path_start[0] == '/')
+		++path_start;
+
+	    /* before trailing slashes */
+	    path_end = argv[strlen(argv[bu_optind + 1]) - 1];
+	    while (path_end[0] == '/')
+		--path_end;
+
+	    first_slash = strchr(path_start, '/');
+	    if (first_slash >= path_end) {
+		/* path contained nothing but '/' char(s) */
+		bu_vls_printf(gedp->ged_result_str, "cannot use root path "
+			      "alone");
+		return GED_ERROR;
+	    }
+
+	    if (first_slash != NULL) {
+		/* an arg with a slash is interpreted as a path */
+		if (first_slash != strrchr(argv[bu_optind + 1], '/')) {
+		    bu_vls_printf(gedp->ged_result_str,
+				  "it is only meaningful to have one or two "
+				  "directories in a path in this context.\n"
+				  "Ex: OBJECT (equivalently, /OBJECT/) or "
+				  "PATH/OBJECT (equivalently, /PATH/OBJECT/");
+		    return GED_ERROR;
+		}
+		cur_arg.object = (struct db_full_path *)bu_malloc(
+				 sizeof(struct db_full_path),
+				 "db_full_path block for ged_edit()");
+		if (!db_string_to_path(cur_arg.object, dbip,
+				       argv[bu_optind + 1])) {
+		    db_free_full_path(cur_arg.object);
+		    bu_vls_printf(gedp->ged_result_str,
+				  "a directory in the path %s does not exist",
+				  argv[bu_optind + 1]);
+		    return GED_ERROR;
+		}
+		if (ged_path_validate(gedp, cur_arg.object) == GED_ERROR) {
+		    db_free_full_path(cur_arg.object);
+		    bu_vls_printf(gedp->ged_result_str, "invalid path, \"%s\"",
+				  argv[bu_optind + 1]);
+		    return GED_ERROR;
+		}
+
+		/* FIXME: temporary */
+		db_free_full_path(cur_arg.object);
+	    }
+	    /* there is no slash, so check db for object */
+#if 0
+	    struct directory *argd = db_lookup(dbip, argv[bu_optind + 1],
+					       LOOKUP_QUIET);
+	    if (argd == RT_DIR_NULL)
+		NULL;
+		/* not an object */
+		/* XXX if it is a number, fall back to treating it
+		 * as one, otherwise, throw an error saying that
+		 * it is an invalid object */
+	    else
+		/* treat it as an object */
+		NULL;
+#endif
+	}
+	continue;
+
+err_no_operand:
+	{
+	    bu_vls_printf(gedp->ged_result_str,
+			  "No OBJECT provided; nothing to operate on");
+	    return GED_ERROR;
+	}
+
+err_option_overload:
+	{
+	    bu_vls_printf(gedp->ged_result_str, "too many options: ");
+	    for (i = 0; i < EDIT_MAX_ARG_OPTIONS; ++i)
+		bu_vls_printf(gedp->ged_result_str, "-%c/",
+			      cur_arg.cl_options[i]);
+	    bu_vls_printf(gedp->ged_result_str, "-%c", c);
+	    return GED_ERROR;
+	}
+    }
 
     /*
      * testing
@@ -1484,6 +1655,7 @@ no_more_args: /* for breaking out, above */
     db_free_full_path(&path);
     db_free_full_path(&obj);
 #endif
+disabled:
     bu_vls_printf(gedp->ged_result_str, "command not yet implemented");
     return GED_ERROR;
 }
