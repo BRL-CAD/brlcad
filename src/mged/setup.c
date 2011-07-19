@@ -445,22 +445,6 @@ cmd_setup(void)
 }
 
 
-static void
-mged_output_handler(struct ged *UNUSED(gp), char *line)
-{
-    if (line)
-	bu_log("%s", line);
-}
-
-
-static void
-mged_refresh_handler(void *UNUSED(clientdata))
-{
-    view_state->vs_flag = 1;
-    refresh();
-}
-
-
 /*
  * Initialize mged, configure the path, set up the tcl interpreter.
  */
@@ -594,9 +578,6 @@ mged_setup(Tcl_Interp **interpreter)
 	BU_GETSTRUCT(gedp, ged);
     }
     GED_INIT(gedp, NULL);
-
-    gedp->ged_output_handler = mged_output_handler;
-    gedp->ged_refresh_handler = mged_refresh_handler;
 
     /* register commands */
     cmd_setup();

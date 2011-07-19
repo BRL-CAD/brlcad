@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2011-07-XX  Release 7.20.4                                     ---
 ----------------------------------------------------------------------
 
+* restored mged 'rt' command output to console window - Sean Morrison
 * fixed infinite loop bug plotting NURBS wireframes - Sean Morrison
 * added ringworld proc-db - Erik Greenwald
 * fixed mged Manual page item in help menu - Brandon Hinesley

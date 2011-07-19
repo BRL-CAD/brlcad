@@ -2567,6 +2567,22 @@ mged_finish(int exitcode)
 }
 
 
+static void
+mged_output_handler(struct ged *UNUSED(gp), char *line)
+{
+    if (line)
+	bu_log("%s", line);
+}
+
+
+static void
+mged_refresh_handler(void *UNUSED(clientdata))
+{
+    view_state->vs_flag = 1;
+    refresh();
+}
+
+
 /**
  * F _ O P E N D B
  *
@@ -2819,6 +2835,8 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     /* initialize a separate wdbp for libged to manage */
     ged_wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
     GED_INIT(gedp, ged_wdbp);
+    gedp->ged_output_handler = mged_output_handler;
+    gedp->ged_refresh_handler = mged_refresh_handler;
 
     /* increment use count for gedp db instance */
     (void)db_clone_dbi(dbip, NULL);
