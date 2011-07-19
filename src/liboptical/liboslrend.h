@@ -77,6 +77,7 @@ struct ShaderInfo {
     std::string layername;  // Name of the layer  (name of this partilar instance)
     std::vector< std::pair<std::string, float> > fparam;
     std::vector< std::pair<std::string, Color3> > cparam;
+    std::vector< std::pair<std::string, std::string> > sparam;
 };
 /* Represents a parameter a shader */
 struct ShaderParam {

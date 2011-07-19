@@ -176,7 +176,6 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
 	    /* Name of the parameter */
 	    std::string param_name = item;
 
-	
 	    /* Get the type of parameter being set */
 	    item = strtok(NULL, "#");
 	    if(item == NULL){
@@ -203,6 +202,20 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
 		    color_value[i] = atof(item);
 		}
 		sh_info.cparam.push_back(std::make_pair(param_name, color_value));
+	    }
+	    else if(strcmp(item, "string") == 0){
+		item = strtok(NULL, "#");
+		if(item == NULL){
+		    fprintf(stderr, "[Error] Missing string\n");
+		    return -1;
+		}
+		std::string string_value = item;
+		sh_info.sparam.push_back(std::make_pair(param_name, string_value));
+	    }
+	    else {
+		/* FIXME: add support to TypeInt, TypePoint, TypeVector, TypeNormal, TypeString parameters */
+		fprintf(stderr, "[Error] Unknown parameter type\n");
+		return -1;			
 	    }
 	}
     }
