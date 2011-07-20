@@ -296,7 +296,7 @@
  *	represents either position, distance, degrees, or radians,
  *	depending on the context and supplied arguments.
  *
- *	AXIS_FROM_POS is always treated as an absolute position.
+ *	AXIS_FROM_POS is always interpreted as an absolute position.
  *	AXIS_TO_POS may be either an absolute position (-a), or a
  *	relative distance (-r) from AXIS_FROM. OFFSET_DIST is always a
  *	relative distance. A special case is made for ANGLE_TO_POS,
@@ -305,7 +305,7 @@
  *	ANGLE_FROM_POS (-r) or an absolute position (-a). See
  *	documentation of the -R option to see how it can be used to
  *	allow specification of radians. All *_TO_OBJECT arguments are
- *	always treated as absolute positions (-a).
+ *	always interpreted as absolute positions (-a).
  *
  *	By default, AXIS is interpreted as the axis to rotate upon
  *	(but does not specify where), with the rotation angle
@@ -664,7 +664,7 @@
  *                                                         
  */
 
-/* This function will be removed soon */
+/* This function is obsolete and will be removed soon */
 #if 0
 int
 translate(struct ged *gedp, vect_t *keypoint,
@@ -949,7 +949,6 @@ union edit_cmd{
     } scale;
 };
 
-#if 0 /* unused */
 /**
  * Initialize a node.
  */
@@ -957,13 +956,14 @@ HIDDEN void
 edit_arg_init(struct edit_arg *node)
 {
     node->next = (struct edit_arg *)NULL;
-    node->cl_options[0] = '\0';
-    node->coords_used = 0;
+    (void)memset((void *)&node->cl_options[0], 0, EDIT_MAX_ARG_OPTIONS);
+    node->coords_used = EDIT_ALL_COORDS;
     node->type = 0;
     node->object = (struct db_full_path *)NULL;
     node->vector = (vect_t *)NULL;
 }
 
+#if 0 /* unused */
 /**
  * Attach a node to the front of the list.
  */
@@ -977,6 +977,7 @@ edit_arg_prefix(struct edit_arg *dest_node,
 	pos = pos->next;
     pos->next = src;
 }
+#endif
 
 /**
  * Attach a node to the end of the list.
@@ -1000,14 +1001,16 @@ edit_arg_postfix(struct edit_arg *head,
 HIDDEN struct edit_arg *
 edit_arg_postfix_new(struct edit_arg *head)
 {
-    edit_arg_postfix(head, (struct edit_arg *)bu_malloc(
-			   sizeof(struct edit_arg), "edit_arg block"
-			   "for edit_arg_postfix()"));
+    struct edit_arg *node;
 
-    edit_arg_init(head->next);
-    return head->next;
+    node = (struct edit_arg *)bu_malloc(sizeof(struct edit_arg),
+	   "edit_arg block for edit_arg_postfix_new");
+    edit_arg_postfix(head, node);
+    edit_arg_init(node);
+    return node;
 }
 
+#if 0
 /**
  * Remove the head node and return its successor.
  */
@@ -1030,13 +1033,16 @@ edit_arg_free_all(struct edit_arg *arg)
 {
     if (arg->next)
 	edit_arg_free_all(arg->next);
+    if (arg->object)
+	db_free_full_path(arg->object);
+    if (arg->vector)
+	bu_free(arg->vector, "vect_t");
     bu_free(arg, "edit_arg");
 }
 
 /**
  * Free any dynamically allocated arg that may exist
  */
-#if 0 /* unused */
 HIDDEN void
 edit_cmd_free(union edit_cmd *args)
 {
@@ -1044,7 +1050,6 @@ edit_cmd_free(union edit_cmd *args)
     if (args->common.objects.next)
 	edit_arg_free_all(args->common.objects.next);
 }
-#endif
 
 #if 0
 int
@@ -1074,19 +1079,17 @@ edit_scale(struct ged *gedp, point_t *scale_from, point_t *scale_to,
 /**
  * A wrapper for the edit commands. It adds the capability to perform
  * batch operations, and accepts objects and distances in addition to
- * coordinates.
+ * coordinates. Normally, gedp should be set to NULL; it is only used
+ * when arguments are built via command line (see ged_edit).
  */
-#if 0
 int
-edit(struct ged *gedp, struct edit_arg *args_head, const char *global_opts)
+edit(struct ged *gedp, union edit_cmd * const cmd)
 {
     (void)gedp;
-    (void)args_head;
-    (void)global_opts;
+    (void)cmd;
 
     return GED_OK;
 }
-#endif
 
 /**
  * Convert a string to an edit_arg. The arg is NULL if the string
@@ -1098,9 +1101,9 @@ edit(struct ged *gedp, struct edit_arg *args_head, const char *global_opts)
  */
 HIDDEN int
 edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg) {
-    /* XXX if there is a slash, treat it as an object for sure. If
+    /* XXX if there is a slash, interpret it as an object for sure. If
      * there isn't a slash, then try to look it up in the db.  If that
-     * fails too, then try to treat it as a number.  If it isn't a
+     * fails too, then try to interpret it as a number.  If it isn't a
      * number either, then the argument is invalid. */
 
     char const *path_start;
@@ -1163,11 +1166,11 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg) {
 	if (argd == RT_DIR_NULL)
 	    NULL;
 	    /* not an object */
-	    /* XXX if it is a number, fall back to treating it
+	    /* XXX if it is a number, fall back to intepreting it
 	     * as one, otherwise, throw an error saying that
 	     * it is an invalid object */
 	else
-	    /* treat it as an object */
+	    /* interpret it as an object */
 	    NULL;
 #endif
 	return GED_OK;
@@ -1184,8 +1187,9 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     const char * const cmd_name = argv[0];
     const char *subcmd_name = NULL;
     union edit_cmd subcmd;
-    struct edit_arg cur_arg = subcmd.cmd_line.args;
-    int cur_opt = 0; /* pos in options array for current arg */
+    struct edit_arg *cur_arg = &subcmd.cmd_line.args;
+    int idx_cur_opt = 0; /* pos in options array for current arg */
+    int last_arg_opt = 0; /* the last processed option that takes an arg */
     static const char * const usage = "[subcommand] [args]";
     int i; /* iterator */
     int c; /* for bu_getopt */
@@ -1218,7 +1222,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	     * name */
 	    break; 
 	}
-	/* treat first arg as a cmd, and search for it in table */
+	/* interpret first arg as a cmd, and search for it in table */
 	if (!subcmd_name && argc > 1 &&
 	    BU_STR_EQUAL(edit_cmds[i].name, argv[1])) {
 	    subcmd_name = argv[1];
@@ -1301,7 +1305,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    /* Handle "subcmd help" (identical to "help subcmd"),
-	     * but only if there are no more args. Wouldn't want to
+	     * but only if there are no more args; wouldn't want to
 	     * match an object named "help". This syntax is needed 
 	     * to access the help system when subcmd is an actual
 	     * command */
@@ -1317,7 +1321,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     }
 
     /*
-     * Create a linked list of all arguments to the subcommand.
+     * Parse all subcmd args and pass to edit()
      */
 
     /*
@@ -1341,7 +1345,8 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
      *           (a, above), and parsed elsewhere
      *     2) keypoints ('FROM' arg options) are always preceded by
      *        '-k'
-     *     3) keypoints are all considered optional at this point
+     *     3) keypoints are all considered optional as far as this
+     *        function is concerned
      *     4) if a keypoint is specified, the argument is the first in
      *        a pair; therefore a matching 'TO' argument is required
      *     5) any object specification string may:
@@ -1356,112 +1361,116 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
      *        writing)
      *     7) at least one object must be operated on
      *     8) the last argument is a list of objects to be operated on
-     *       
      */
 
-    goto disabled;
+    /* no options are required if none of the optional arguments are
+     * specified */
+    if (edit_str_to_arg(gedp, argv[0], cur_arg) == GED_OK) {
+	if (argc == 1)
+	    return edit(gedp, &subcmd);
+	--argc;
+	++argv;
+	cur_arg = edit_arg_postfix_new(&subcmd.cmd_line.args);
+    }
 
     bu_optind = 1; /* re-init bu_getopt() */
     bu_opterr = 0; /* suppress errors; accept unknown options */
+    --argv; /* bu_getopt doesn't expect the first element to be an arg */
+    ++argc;
     while ((c = bu_getopt(argc, (char * const *)argv, ":k:a:r:x:y:z:")) != -1) {
+	if (bu_optind + 1 >= argc)
+	    /* last element is an option */
+	    goto err_no_operand;
+
 	switch (c) {
-	    case 'k': /* keypoint; FROM* argument */
-	    case 'a': /* relative TO* distance argument */
-	    case 'r': /* absolute TO* position argument */
-	        /* get coordinates or object */
-		cur_arg.cl_options[cur_opt] = bu_optopt;
-		cur_opt = 0;
-		break;
-	    case 'x': /* individual coordinate argument */
+	    case 'k': /* standard arg specification options */
+	    case 'a':
+	    case 'r':
+		if (last_arg_opt == c)
+		    goto err_redundant_options;
+		last_arg_opt = c;
+	    case 'x': /* singular coordinate specification options */
 	    case 'y':
 	    case 'z':
-	        /* get coordinate or object, and optionally an
-		 * offset */
-		/* XXX */
-		bu_vls_printf(gedp->ged_result_str,
-			      "Specification of individual coordinates is not"
-			      " yet supported");
-		return GED_ERROR;
-		break;
+	        break; /* nothing needed */
 	    case '?': /* nonstandard or unknown option */
-		/*
-		 * if a non-option is next, the current option is an
-		 * argument specifier
-		 */
-
-		if (bu_optind + 1 >= argc)
-		    goto err_no_operand;
-
-		if (cur_opt >= EDIT_MAX_ARG_OPTIONS)
-		    goto err_option_overload;
-
 		if (!isprint(bu_optopt)) {
 		    bu_vls_printf(gedp->ged_result_str,
 				  "Unknown option character '\\x%x'",
 				  bu_optopt);
+		    edit_cmd_free(&subcmd);
 		    return GED_ERROR;
 		}
 
-		/* check next argv element to help intepret cur opt */
-		if (argv[bu_optind + 1][0] == '-' && 
-		    isalpha(argv[bu_optind + 1][1]))
-		    /* an opt is next; cur opt doesn't take an arg */
-		    cur_arg.cl_options[cur_opt++] = bu_optopt;
-		else {
-		    /* an arg is next; try to convert to cur_arg */
-		    if (edit_str_to_arg(gedp, argv[bu_optind + 1],
-			&cur_arg) == GED_ERROR)
-			return GED_ERROR;
-		    continue;
-		}
-		break;
+		if (last_arg_opt == c)
+		    goto err_redundant_options;
+		last_arg_opt = bu_optopt;
 	    case ':': /* missing arg */
 		bu_vls_printf(gedp->ged_result_str,
 			      "Missing argument for option -%c", bu_optopt);
+		edit_cmd_free(&subcmd);
 		return GED_ERROR;
 	    default: /* quiet compiler */
 		break;
 	}
-	continue;
 
-err_no_operand:
-	{
-	    bu_vls_printf(gedp->ged_result_str,
-			  "No OBJECT provided; nothing to operate on");
-	    return GED_ERROR;
+	/* record option */
+	if ((idx_cur_opt + 1) >= EDIT_MAX_ARG_OPTIONS)
+	    goto err_option_overflow;
+	cur_arg->cl_options[idx_cur_opt] = bu_optopt;
+	++idx_cur_opt;
+
+	/* try to read in an argument */
+	if (bu_optind + 1 <= argc) {
+	    if (edit_str_to_arg(gedp, argv[bu_optind + 1], cur_arg) == GED_OK) {
+		/* init for next arg */
+		cur_arg = edit_arg_postfix_new(&subcmd.cmd_line.args);
+	    }
 	}
 
-err_option_overload:
-	{
-	    bu_vls_printf(gedp->ged_result_str, "too many options: ");
-	    for (i = 0; i < EDIT_MAX_ARG_OPTIONS; ++i)
-		bu_vls_printf(gedp->ged_result_str, "-%c/",
-			      cur_arg.cl_options[i]);
-	    bu_vls_printf(gedp->ged_result_str, "-%c", c);
+	continue;
+
+    }
+
+    /* remaining arguments are interpreted as operands */
+    for (i = bu_optind; (i + 1) <= argc; ++i) {
+	if (edit_str_to_arg(gedp, argv[i], cur_arg) == GED_OK) {
+
+	    /* init for next arg */
+	    cur_arg = edit_arg_postfix_new(&subcmd.cmd_line.args);
+	    idx_cur_opt = 0;
+	} else {
+	    bu_vls_printf(gedp->ged_result_str,
+			  "Unrecognized argument, \"%s\"",
+			  argv[i]);
 	    return GED_ERROR;
 	}
     }
 
-    /*
-     * testing
-     */
-
-#if 0
-    edit_arg_postfix_new(&subcmd.common.objects);
-    edit_arg_postfix_new(&subcmd.common.objects);
     edit_cmd_free(&subcmd);
-#endif
+    return GED_OK;
 
-#if 0
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
+err_no_operand:
+    bu_vls_printf(gedp->ged_result_str,
+		  "No OBJECT provided; nothing to operate on");
+    edit_cmd_free(&subcmd);
+    return GED_ERROR;
 
-    static const char *id_obj_as_arg = ". ";
-    static const char *id_tuple[] = {"-x", "-y", "-z"};
+err_option_overflow:
+    bu_vls_printf(gedp->ged_result_str, "too many options: ");
+    for (i = 0; i < EDIT_MAX_ARG_OPTIONS; ++i)
+	bu_vls_printf(gedp->ged_result_str, "-%c/", cur_arg->cl_options[i]);
+    bu_vls_printf(gedp->ged_result_str, "-%c", c);
+    edit_cmd_free(&subcmd);
+    return GED_ERROR;
 
-    const char *const cmd_name = argv[0];
-    static const char *usage = "{translate | rotate | scale} ARGS OBJECT ...";
-#endif
+err_redundant_options:
+    bu_vls_printf(gedp->ged_result_str, "redundant -%c options", c);
+    edit_cmd_free(&subcmd);
+    return GED_ERROR;
+}
 
+/* obsolete code; here temporarily for reference */
 #if 0
 
     int from_center_flag = 0;
@@ -1668,10 +1677,6 @@ no_more_args: /* for breaking out, above */
     db_free_full_path(&path);
     db_free_full_path(&obj);
 #endif
-disabled:
-    bu_vls_printf(gedp->ged_result_str, "command not yet implemented");
-    return GED_ERROR;
-}
 
 
 /*
