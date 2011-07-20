@@ -1387,66 +1387,81 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
  *		The actual intersection coordinates can be found by
  *		substituting either of these into the original ray equations.
  *
+ *              The 'pdist' and 'qdist' values returned from this function
+ *              are the actual distance to the intersect, i.e. not scaled.
+ *              Distances in the opposite of the line direction vector result
+ *              in a negative distance.
+ *
+ *              The input vectors 'pdir' and 'qdir' must NOT be unit vectors
+ *              for this function to work correctly.
+ * 
  * XXX It would be sensible to change the s, t pair to dist[2].
  */
 int
-bn_isect_line3_line3_new(fastf_t *s,
-		         fastf_t *t,
-		         const fastf_t *p0,
-		         const fastf_t *u,
-		         const fastf_t *q0,
-		         const fastf_t *v,
+bn_isect_line3_line3_new(fastf_t *pdist,        /* distance from p0 to line q intersect, can be negative (s) */
+		         fastf_t *qdist,        /* distance from q0 to line p intersect, can be negative (t) */
+		         const fastf_t *p0,     /* line p start point */
+		         const fastf_t *pdir_i, /* line p direction, must not be a unit vector (u) */
+		         const fastf_t *q0,     /* line q start point */
+		         const fastf_t *qdir_i, /* line q direction, must not be a unit vector (v) */
 		         const struct bn_tol *tol)
 {
-    fastf_t a, b, c, d, e, sc, tc, sc_numerator, tc_numerator, denominator;
+    fastf_t b, d, e, sc, tc, sc_numerator, tc_numerator, denominator;
     vect_t w0, qc_to_pc, u_scaled, v_scaled, v_scaled_to_u_scaled, tmp_vec, p0_to_q1;
-    point_t q_intersect, p0_to_q_intersect, p1, q1;
+    point_t p1, q1;
+    fastf_t pdir_mag_sq;
+    fastf_t qdir_mag_sq;
 
-    int parallel1 = 0;
-    int parallel2 = 0;
+    int parallel = 0;
     int colinear = 0;
-    vect_t u_unit, v_unit;
-    fastf_t p_dot, d1,d2,d3,d4;
+    int error_occured = 0;
+    fastf_t dot, d1, d2, d3, d4;
+    vect_t pdir, qdir;
 
-    VMOVE(u_unit,u);
-    VMOVE(v_unit,v);
-    VUNITIZE(u_unit);
-    VUNITIZE(v_unit);
+    VMOVE(pdir, pdir_i);
+    VMOVE(qdir, qdir_i);
 
-    p_dot = VDOT(u_unit,v_unit);
-    parallel1 = BN_VECT_ARE_PARALLEL(p_dot,tol);
+    pdir_mag_sq = MAGSQ(pdir);
+    qdir_mag_sq = MAGSQ(qdir);
 
-    a = MAGSQ(u);
-    c = MAGSQ(v);
-
-    if (NEAR_ZERO(a, SMALL_FASTF) || NEAR_ZERO(c, SMALL_FASTF)) {
-        bu_log("p0 = %g %g %g\n", V3ARGS(p0));
-        bu_log("u = %g %g %g\n", V3ARGS(u));
-        bu_log("q0 = %g %g %g\n", V3ARGS(q0));
-        bu_log("v = %g %g %g\n", V3ARGS(v));
-        bu_bomb("bn_isect_line3_line3_new(): input vector(s) 'u' and/or 'v' is zero magnitude.\n");
+    if (NEAR_ZERO(pdir_mag_sq, SMALL_FASTF) || NEAR_ZERO(qdir_mag_sq, SMALL_FASTF)) {
+        bu_log("  p0 = %g %g %g\n", V3ARGS(p0));
+        bu_log("pdir = %g %g %g\n", V3ARGS(pdir));
+        bu_log("  q0 = %g %g %g\n", V3ARGS(q0));
+        bu_log("qdir = %g %g %g\n", V3ARGS(qdir));
+        bu_bomb("bn_isect_line3_line3_new(): input vector(s) 'pdir' and/or 'qdir' is zero magnitude.\n");
     }
 
-    *s = 0.0;
-    *t = 0.0;
+    if (NEAR_ZERO(pdir_mag_sq - 1.0, SMALL_FASTF)) {
+        VSCALE(pdir, pdir, 304800); /* 304800mm = 1000ft */
+        pdir_mag_sq = MAGSQ(pdir);
+        error_occured++;
+    }
 
-    VADD2(p1, p0, u);
-    VADD2(q1, q0, v);
+    if (NEAR_ZERO(qdir_mag_sq - 1.0, SMALL_FASTF)) {
+        VSCALE(qdir, qdir, 304800); /* 304800mm = 1000ft */
+        qdir_mag_sq = MAGSQ(qdir);
+        error_occured++;
+    }
+
+    if (error_occured == 2) {
+        bu_log("pdir = %g %g %g qdir = %g %g %g\n", V3ARGS(pdir_i), V3ARGS(qdir_i));
+        bu_log("bn_isect_line3_line3_new(): input vector(s) 'pdir' and 'qdir' are unit vectors.\n");
+    }
+
+    *pdist = 0.0;
+    *qdist = 0.0;
+
+    /* assumes pdir & qdir are not unit vectors */
+    VADD2(p1, p0, pdir);
+    VADD2(q1, q0, qdir);
+
     VSUB2(p0_to_q1, q1, p0);
 
-#if 0
-    bu_log("p0 = %g %g %g\n", V3ARGS(p0));
-    bu_log("p1 = %g %g %g\n", V3ARGS(p1));
-    bu_log("u = %g %g %g\n", V3ARGS(u));
-    bu_log("q0 = %g %g %g\n", V3ARGS(q0));
-    bu_log("q1 = %g %g %g\n", V3ARGS(q1));
-    bu_log("v = %g %g %g\n", V3ARGS(v));
-#endif
-
-    d1 = bn_dist_line3_pt3(q0,v,p0);
-    d2 = bn_dist_line3_pt3(q0,v,p1);
-    d3 = bn_dist_line3_pt3(p0,u,q0);
-    d4 = bn_dist_line3_pt3(p0,u,q1);
+    d1 = bn_dist_line3_pt3(q0,qdir,p0);
+    d2 = bn_dist_line3_pt3(q0,qdir,p1);
+    d3 = bn_dist_line3_pt3(p0,pdir,q0);
+    d4 = bn_dist_line3_pt3(p0,pdir,q1);
 
     /* if all distances are within distance tolerance of each
      * other then they a parallel 
@@ -1457,165 +1472,74 @@ bn_isect_line3_line3_new(fastf_t *s,
         NEAR_EQUAL(d2, d3, tol->dist) &&
         NEAR_EQUAL(d2, d4, tol->dist) &&
         NEAR_EQUAL(d3, d4, tol->dist)) {
-#if 0
-        bu_log("all values within distance tolerance of each other\n");
-#endif
-        parallel2 = 1;
+        parallel = 1;
     }
 
     if (NEAR_ZERO(d1, tol->dist) &&
         NEAR_ZERO(d2, tol->dist) &&
         NEAR_ZERO(d3, tol->dist) &&
         NEAR_ZERO(d4, tol->dist)) {
-#if 0
-        bu_log("all values within distance tolerance of each other\n");
-#endif
         colinear = 1;
     }
 
-#if 0
-    if (parallel1 != parallel2) {
-    bu_log("p0 = %g %g %g\n", V3ARGS(p0));
-    bu_log("p1 = %g %g %g\n", V3ARGS(p1));
-    bu_log("u = %g %g %g\n", V3ARGS(u));
-    bu_log("q0 = %g %g %g\n", V3ARGS(q0));
-    bu_log("q1 = %g %g %g\n", V3ARGS(q1));
-    bu_log("v = %g %g %g\n", V3ARGS(v));
-    bu_log("p_dot = %.15f\n", p_dot);
-    bu_log("dist p0 to line q0-v = %g\n", d1);
-    bu_log("dist p1 to line q0-v = %g\n", d2);
-    bu_log("dist q0 to line p0-u = %g\n", d3);
-    bu_log("dist q1 to line p0-u = %g\n", d4);
-    bu_log("parallel1 = %d parallel2 = %d\n", parallel1, parallel2);
-        bu_bomb("parallel1 != parallel2\n");
-    }
-#endif
-#if 0
-    bu_log("dist p0 to line q0-v = %g\n", d1);
-    bu_log("dist p1 to line q0-v = %g\n", d2);
-    bu_log("dist q0 to line p0-u = %g\n", d3);
-    bu_log("dist q1 to line p0-u = %g\n", d4);
-#endif
-
     VSUB2(w0, p0, q0);
-    b = VDOT(u, v);
-    d = VDOT(u, w0);
-    e = VDOT(v, w0);
-    denominator = a * c - b * b;
+    b = VDOT(pdir, qdir);
+    d = VDOT(pdir, w0);
+    e = VDOT(qdir, w0);
+    denominator = pdir_mag_sq * qdir_mag_sq - b * b;
 
-#if 0
-    if (NEAR_ZERO(denominator, VUNITIZE_TOL)) {
-#endif
-
-#if 0
-    if ((denominator > SMALL_FASTF && denominator < VUNITIZE_TOL) ||
-        (denominator < -SMALL_FASTF && denominator > -VUNITIZE_TOL)) {
-        bu_log("denominator btwn SMALL_FASTF VUNITIZE_TOL == %g\n", denominator);
-        bu_log("a = %.15f c = %.15f b = %.15f\n", a, c, b);
-        bu_log("a * c = %.15f b * b = %.15f\n", a * c, b * b);
+    if (!parallel && colinear) {
+        bu_bomb("bn_isect_line3_line3_new(): logic error, lines colinear but not parallel\n");
     }
-#endif
 
-#if 0
-    if (NEAR_ZERO(denominator, SMALL_FASTF)) {
-#endif
-    if (parallel2) {
-#if 0
-        if (!parallel2) {
-    bu_log("p0 = %g %g %g\n", V3ARGS(p0));
-    bu_log("p1 = %g %g %g\n", V3ARGS(p1));
-    bu_log("u = %g %g %g\n", V3ARGS(u));
-    bu_log("q0 = %g %g %g\n", V3ARGS(q0));
-    bu_log("q1 = %g %g %g\n", V3ARGS(q1));
-    bu_log("v = %g %g %g\n", V3ARGS(v));
-            bu_log("new true, old false; denominator = %g p_dot = %g\n", denominator, p_dot);
-            bu_bomb("stop\n");
-        }
-#endif
+    if (parallel && !colinear) {
         /* lines are parallel */
-#if 0
-        tc = d/b; /* or tc = e/c */
-#endif
-        sc = d/a;
+        sc = d / pdir_mag_sq;
         tc = 0.0;
-        VSCALE(q_intersect, v, tc);
-        VADD2(q_intersect, q_intersect, q0);
-        VSUB2(p0_to_q_intersect, q_intersect, p0);
+        return -2; /* no intersection, lines are parallel */
+    }
 
-#if 0
-        if (MAGSQ(p0_to_q_intersect) <= (tol->dist_sq)) {
-#endif
-        if (colinear) {
-            if (!colinear) {
-    bu_log("dist p0 to line q0-v = %g\n", d1);
-    bu_log("dist p1 to line q0-v = %g\n", d2);
-    bu_log("dist q0 to line p0-u = %g\n", d3);
-    bu_log("dist q1 to line p0-u = %g\n", d4);
-                bu_bomb("colinear new true, old false\n");
-            }
-            *s = sc * sqrt(a);
-            *t = 0.0;
+    if (parallel && colinear) {
 
-            *t = MAGNITUDE(p0_to_q1) / sqrt(a);
-
-            p_dot = VDOT(u, p0_to_q1);
-            if (p_dot < -SMALL_FASTF) {
-                *t = *t * -1.0;
-            }
-
-#if 0
-            bu_log("colinear, distance = %.15f s = %.15f denom = %.15f\n", MAGNITUDE(p0_to_q_intersect), *s, denominator);
-            bu_log("a = %.15f c = %.15f b = %.15f\n", a, c, b);
-            bu_log("p0 = %g %g %g\n", V3ARGS(p0));
-            bu_log("u = %g %g %g\n", V3ARGS(u));
-            bu_log("q0 = %g %g %g\n", V3ARGS(q0));
-            bu_log("v = %g %g %g\n", V3ARGS(v));
-#endif
-            return 0;  /* lines are co-linear (s returned for t=0 to give distance to q0) */
-        } else {
-#if 0
-            *s = tc * sqrt(a);
-            *t = 0.0;
-            bu_log("parallel not-colinear, distance = %.15f dist p0-2-q0 = %.15f denom = %.15f\n", MAGNITUDE(p0_to_q_intersect), *s, denominator);
-            bu_log("a = %.15f c = %.15f b = %.15f\n", a, c, b);
-            bu_log("p0 = %g %g %g\n", V3ARGS(p0));
-            bu_log("u = %g %g %g\n", V3ARGS(u));
-            bu_log("q0 = %g %g %g\n", V3ARGS(q0));
-            bu_log("v = %g %g %g\n", V3ARGS(v));
-#endif
-            return -2; /* no intersection, lines are parallel */
+        /* when colinear pdist has a different meaning, it is the
+         * distance from p0 to q0 
+         */
+        *pdist = MAGNITUDE(w0); /* w0 is opposite direction of p0 to q0 */
+        dot = VDOT(pdir, w0);
+        if (dot > SMALL_FASTF) {
+            *pdist = -(*pdist);
         }
+
+        /* when colinear qdist has a different meaning, it is the
+         * distance from p0 to q1 
+         */
+        *qdist = MAGNITUDE(p0_to_q1);
+
+        /* if vectors pdir and p0_to_q1 are not the same direction
+         * then make the distance negative
+         */
+        dot = VDOT(pdir, p0_to_q1);
+        if (dot < -SMALL_FASTF) {
+            *qdist = -(*qdist);
+        }
+
+        return 0;
     }
 
-    if (parallel2) {
-        bu_log("new false, old true; denominator = %g p_dot = %g\n", denominator, p_dot);
-    }
-
-    sc_numerator = (b * e - c * d);
-    tc_numerator = (a * e - b * d);
+    sc_numerator = (b * e - qdir_mag_sq * d);
+    tc_numerator = (pdir_mag_sq * e - b * d);
     sc = sc_numerator / denominator;
     tc = tc_numerator / denominator;
 
-    VSCALE(u_scaled, u, sc_numerator);
-    VSCALE(v_scaled, v, tc_numerator);
+    VSCALE(u_scaled, pdir, sc_numerator);
+    VSCALE(v_scaled, qdir, tc_numerator);
     VSUB2(v_scaled_to_u_scaled, u_scaled, v_scaled);
     VSCALE(tmp_vec, v_scaled_to_u_scaled, 1.0/denominator);
     VADD2(qc_to_pc, w0, tmp_vec);
 
     if (MAGSQ(qc_to_pc) <= tol->dist_sq) {
-        *s = sc * sqrt(a);
-        *t = tc * sqrt(c);
-#if 0
-            bu_log("intersect, min dist btwn lines = %.15f s = %.15f t = %.15f denom = %.15f\n", MAGNITUDE(qc_to_pc), *s, *t, denominator);
-            bu_log("a = %.15f c = %.15f b = %.15f\n", a, c, b);
-            bu_log("p0_to_q1 mag = %.15f\n", MAGNITUDE(p0_to_q1));
-            bu_log("p0 = %g %g %g\n", V3ARGS(p0));
-            bu_log("p1 = %g %g %g\n", V3ARGS(p1));
-            bu_log("u = %g %g %g\n", V3ARGS(u));
-            bu_log("q0 = %g %g %g\n", V3ARGS(q0));
-            bu_log("q1 = %g %g %g\n", V3ARGS(q1));
-            bu_log("v = %g %g %g\n", V3ARGS(v));
-#endif
+        *pdist = sc * sqrt(pdir_mag_sq);
+        *qdist = tc * sqrt(qdir_mag_sq);
         return 1; /* intersection found (s and t returned) */
     } else {
         return -1; /* no intersection */
