@@ -798,7 +798,7 @@ translate(struct ged *gedp, vect_t *keypoint,
 #define EDIT_MAX_ARG_OPTIONS 3
 
 /*
- * Use one of these nodes for each argument for the edit subcommands
+ * Use one of these nodes for each argument of the edit subcommands
  * (see manuals)
  */
 struct edit_arg {
@@ -855,6 +855,9 @@ struct edit_arg {
 #define EDIT_NATURAL_ORIGIN		0x100 /* use natural origin of object instead of center */
 #define EDIT_USE_TARGETS		0x200 /* for batch ops */
 
+/*
+ * Table of available edit subcommands
+ */
 struct edit_cmd_tab {
     char *name;
     char *opt_global;
@@ -1033,8 +1036,10 @@ edit_arg_free_all(struct edit_arg *arg)
 {
     if (arg->next)
 	edit_arg_free_all(arg->next);
-    if (arg->object)
+    if (arg->object) {
 	db_free_full_path(arg->object);
+	bu_free((genptr_t)arg->object, "db_string_to_path");
+    }
     if (arg->vector)
 	bu_free(arg->vector, "vect_t");
     bu_free(arg, "edit_arg");
@@ -1108,14 +1113,14 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg) {
 
     char const *path_start;
     char const *path_end;
-    char const *first_slash;
+    char const *first_slash = NULL;
 
-    /* after leading slashes */
+    /* position start after leading slashes */
     path_start = str;
     while (path_start[0] == '/')
 	++path_start;
 
-    /* before trailing slashes */
+    /* position end before trailing slashes */
     path_end = path_start + strlen(path_start) - (size_t)1;
     while (path_end[0] == '/')
 	--path_end;
@@ -1129,7 +1134,7 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg) {
     }
 
     if (first_slash != NULL) {
-	/* an arg with a slash is interpreted as a path */
+	/* an arg with a slash is always interpreted as a path */
 	if (first_slash != strrchr(str, '/')) {
 	    bu_vls_printf(gedp->ged_result_str,
 			  "it is only meaningful to have one or two "
@@ -1141,9 +1146,10 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg) {
 	arg->object = (struct db_full_path *)bu_malloc(
 			 sizeof(struct db_full_path),
 			 "db_full_path block for ged_edit()");
-	if (!db_string_to_path(arg->object, gedp->ged_wdbp->dbip,
+	if (db_string_to_path(arg->object, gedp->ged_wdbp->dbip,
 			       str)) {
 	    db_free_full_path(arg->object);
+	    bu_free((genptr_t)arg->object, "db_string_to_path");
 	    bu_vls_printf(gedp->ged_result_str,
 			  "a directory in the path %s does not exist",
 			  str);
@@ -1151,6 +1157,7 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg) {
 	}
 	if (ged_path_validate(gedp, arg->object) == GED_ERROR) {
 	    db_free_full_path(arg->object);
+	    bu_free((genptr_t)arg->object, "db_string_to_path");
 	    bu_vls_printf(gedp->ged_result_str,
 			  "invalid path, \"%s\"", str);
 	    return GED_ERROR;
@@ -1365,6 +1372,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 
     /* no options are required if none of the optional arguments are
      * specified */
+    edit_arg_init(cur_arg);
     if (edit_str_to_arg(gedp, argv[0], cur_arg) == GED_OK) {
 	if (argc == 1)
 	    return edit(gedp, &subcmd);
@@ -1433,10 +1441,11 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* remaining arguments are interpreted as operands */
+#if 0
     for (i = bu_optind; (i + 1) <= argc; ++i) {
 	if (edit_str_to_arg(gedp, argv[i], cur_arg) == GED_OK) {
 
-	    /* init for next arg */
+	    /* prep for next arg */
 	    cur_arg = edit_arg_postfix_new(&subcmd.cmd_line.args);
 	    idx_cur_opt = 0;
 	} else {
@@ -1446,6 +1455,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
     }
+#endif
 
     edit_cmd_free(&subcmd);
     return GED_OK;
