@@ -542,44 +542,44 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
     bu_semaphore_release(BU_SEM_SYSCALL);
 
     Color3 acc_color(0.0f);
+
+    /* -----------------------------------
+     * Fill in all necessary information for the OSL renderer
+     * -----------------------------------
+     */
+    RenderInfo info;
+    /* Set hit point */
+    VMOVE(info.P, swp->sw_hit.hit_point);
+    
+    /* Set normal at the poit */
+    VMOVE(info.N, swp->sw_hit.hit_normal);
+    
+    /* Set incidence ray direction */
+    VMOVE(info.I, ap->a_ray.r_dir);
+    
+    /* U-V mapping stuff */
+    info.u = swp->sw_uv.uv_u;
+    info.v = swp->sw_uv.uv_v;
+    VSETALL(info.dPdu, 0.0f);
+    VSETALL(info.dPdv, 0.0f);
+    
+    /* x and y pixel coordinates */
+    info.screen_x = ap->a_x;
+    info.screen_y = ap->a_y;
+    
+    info.depth = ap->a_level;
+    info.surfacearea = 1.0f;
+    
+    info.shader_ref = osl_sp->shader_ref;
+
+    /* We assume that the only information that will be written is thread_info,
+       so that oslr->QueryColor is thread safe */
+    info.thread_info = thread_info;
+    
     for(int i = 0; i < nsamples; i++){
 
-	/* -----------------------------------
-	 * Fill in all necessary information for the OSL renderer
-	 * -----------------------------------
-	 */
-	RenderInfo info;
-    
-	/* Set hit point */
-	VMOVE(info.P, swp->sw_hit.hit_point);
-    
-	/* Set normal at the poit */
-	VMOVE(info.N, swp->sw_hit.hit_normal);
-    
-	/* Set incidence ray direction */
-	VMOVE(info.I, ap->a_ray.r_dir);
-    
-	/* U-V mapping stuff */
-	info.u = swp->sw_uv.uv_u;
-	info.v = swp->sw_uv.uv_v;
-	VSETALL(info.dPdu, 0.0f);
-	VSETALL(info.dPdv, 0.0f);
-    
-	/* x and y pixel coordinates */
-	info.screen_x = ap->a_x;
-	info.screen_y = ap->a_y;
-    
-	info.depth = ap->a_level;
-	info.surfacearea = 1.0f;
-
-	info.shader_ref = osl_sp->shader_ref;
-
-	/* We only perform reflection if application decides to */
+    	/* We only perform reflection if application decides to */
 	info.doreflection = 0;
-
-	/* We assume that the only information that will be written is thread_info,
-	   so that oslr->QueryColor is thread safe */
-	info.thread_info = thread_info;
 
 	Color3 weight = oslr->QueryColor(&info);
 
