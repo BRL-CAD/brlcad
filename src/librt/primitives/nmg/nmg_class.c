@@ -632,6 +632,11 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
     vect_t projection_dir;
     int try=0;
     struct xray rp;
+#ifdef TRI_PROTOTYPE
+    fastf_t model_bb_max_width;
+    struct nmgregion *r;
+    point_t m_min_pt, m_max_pt; /* nmg model min and max points */
+#endif
 
     NMG_CK_SHELL(s);
     BN_CK_TOL(tol);
@@ -704,6 +709,18 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
     VSUB2(region_diagonal, s->r_p->ra_p->max_pt, s->r_p->ra_p->min_pt);
     region_diameter = MAGNITUDE(region_diagonal);
 
+#ifdef TRI_PROTOTYPE
+    /* find the nmg model bounding box */
+    VSETALL(m_min_pt, MAX_FASTF);
+    VSETALL(m_max_pt, -MAX_FASTF);
+    for (BU_LIST_FOR(r, nmgregion, &s->r_p->m_p->r_hd)) {
+        NMG_CK_REGION(r);
+        VMIN(m_min_pt, r->ra_p->min_pt);
+        VMAX(m_max_pt, r->ra_p->max_pt);
+    }
+    model_bb_max_width = bn_dist_pt3_pt3(m_min_pt, m_max_pt);
+#endif
+
     /* Choose an unlikely direction */
     try = 0;
 retry:
@@ -720,8 +737,15 @@ retry:
 	       V3ARGS(pt), V3ARGS(projection_dir), region_diameter);
 
     VMOVE(rp.r_pt, pt);
-    VMOVE(rp.r_dir, projection_dir);
 
+#ifdef TRI_PROTOTYPE
+    /* give the ray a length which is at least the max
+     * length of the nmg model bounding box.
+     */
+    VSCALE(rp.r_dir, projection_dir, model_bb_max_width * 1.25);
+#else
+    VMOVE(rp.r_dir, projection_dir);
+#endif
 
     /* get NMG ray-tracer to tell us if start point is inside or outside */
     class = nmg_class_ray_vs_shell(&rp, s, in_or_out_only, tol);
