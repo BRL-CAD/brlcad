@@ -6113,12 +6113,24 @@ BU_EXPORT extern int bu_restore_interrupts();
  * Detect SIMD type at runtime.
  */
 
+#define BU_SIMD_SSE4_2 7
+#define BU_SIMD_SSE4_1 6
+#define BU_SIMD_SSE3 5
 #define BU_SIMD_ALTIVEC 4
 #define BU_SIMD_SSE2 3
 #define BU_SIMD_SSE 2
 #define BU_SIMD_MMX 1
 #define BU_SIMD_NONE 0
+/**
+ * Detect SIMD capabilities at runtime.
+ */
 BU_EXPORT extern int bu_simd_level();
+
+/**
+ * Detect if requested SIMD capabilities are available at runtime.
+ * Returns 1 if they are, 0 if they are not.
+ */
+BU_EXPORT extern int bu_simd_supported(int level);
 
 /** @} */
 
