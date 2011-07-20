@@ -500,6 +500,8 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
     
     void * thread_info;
 
+    int nsamples; /* Number of samples */
+
     /* check the validity of the arguments we got */
     RT_AP_CHECK(ap);
     RT_CHECK_PT(pp);
@@ -530,90 +532,102 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
     if(ap->a_level == 0){
 	default_a_hit = ap->a_hit; /* save the default hit callback (colorview @ rt) */
 	default_a_miss = ap->a_miss;
+	/* Get the number of samples from the environment */
+	char *str_nsamples = getenv("LIBRT_OSL_SAMPLES");
+	if(str_nsamples == NULL) nsamples = 10;
+	else nsamples = atoi(str_nsamples);
     }
+    else nsamples = 1;
+
     bu_semaphore_release(BU_SEM_SYSCALL);
 
-    /* -----------------------------------
-     * Fill in all necessary information for the OSL renderer
-     * -----------------------------------
-     */
-    RenderInfo info;
-    
-    /* Set hit point */
-    VMOVE(info.P, swp->sw_hit.hit_point);
-    
-    /* Set normal at the poit */
-    VMOVE(info.N, swp->sw_hit.hit_normal);
-    
-    /* Set incidence ray direction */
-    VMOVE(info.I, ap->a_ray.r_dir);
-    
-    /* U-V mapping stuff */
-    info.u = swp->sw_uv.uv_u;
-    info.v = swp->sw_uv.uv_v;
-    VSETALL(info.dPdu, 0.0f);
-    VSETALL(info.dPdv, 0.0f);
-    
-    /* x and y pixel coordinates */
-    info.screen_x = ap->a_x;
-    info.screen_y = ap->a_y;
-    
-    info.depth = ap->a_level;
-    info.surfacearea = 1.0f;
+    Color3 acc_color(0.0f);
+    for(int i = 0; i < nsamples; i++){
 
-    info.shader_ref = osl_sp->shader_ref;
+	/* -----------------------------------
+	 * Fill in all necessary information for the OSL renderer
+	 * -----------------------------------
+	 */
+	RenderInfo info;
+    
+	/* Set hit point */
+	VMOVE(info.P, swp->sw_hit.hit_point);
+    
+	/* Set normal at the poit */
+	VMOVE(info.N, swp->sw_hit.hit_normal);
+    
+	/* Set incidence ray direction */
+	VMOVE(info.I, ap->a_ray.r_dir);
+    
+	/* U-V mapping stuff */
+	info.u = swp->sw_uv.uv_u;
+	info.v = swp->sw_uv.uv_v;
+	VSETALL(info.dPdu, 0.0f);
+	VSETALL(info.dPdv, 0.0f);
+    
+	/* x and y pixel coordinates */
+	info.screen_x = ap->a_x;
+	info.screen_y = ap->a_y;
+    
+	info.depth = ap->a_level;
+	info.surfacearea = 1.0f;
 
-    /* We only perform reflection if application decides to */
-    info.doreflection = 0;
+	info.shader_ref = osl_sp->shader_ref;
 
-    /* We assume that the only information that will be written is thread_info,
-       so that oslr->QueryColor is thread safe */
-    info.thread_info = thread_info;
+	/* We only perform reflection if application decides to */
+	info.doreflection = 0;
 
-    Color3 weight = oslr->QueryColor(&info);
+	/* We assume that the only information that will be written is thread_info,
+	   so that oslr->QueryColor is thread safe */
+	info.thread_info = thread_info;
 
-    /* Fire another ray */
-    if(info.doreflection == 1){
+	Color3 weight = oslr->QueryColor(&info);
+
+	/* Fire another ray */
+	if(info.doreflection == 1){
 	
-	struct application new_ap;
-	RT_APPLICATION_INIT(&new_ap);
+	    struct application new_ap;
+	    RT_APPLICATION_INIT(&new_ap);
 	
-	new_ap = *ap;                     /* struct copy */
-	new_ap.a_onehit = 1;
-	new_ap.a_hit = default_a_hit;
-	new_ap.a_level = info.depth + 1;
-	new_ap.a_flag = 0;
-
-	VMOVE(new_ap.a_ray.r_dir, info.out_ray.dir);
-	VMOVE(new_ap.a_ray.r_pt, info.out_ray.origin);
-	
-	/* This next ray represents refraction */
-	if (VDOT(info.N, info.out_ray.dir) < 0.0f){
-	    
-	    /* Displace the hit point a little bit in the direction
-	       of the next ray */
-	    Vec3 tmp;
-	    VSCALE(tmp, info.out_ray.dir, 1e-4);
-	    VADD2(new_ap.a_ray.r_pt, new_ap.a_ray.r_pt, tmp);
-
+	    new_ap = *ap;                     /* struct copy */
 	    new_ap.a_onehit = 1;
-	    new_ap.a_refrac_index = 1.5;
-	    new_ap.a_flag = 2; /* mark as refraction */
-	    new_ap.a_hit = osl_refraction_hit;
-	}	
+	    new_ap.a_hit = default_a_hit;
+	    new_ap.a_level = info.depth + 1;
+	    new_ap.a_flag = 0;
 
-	(void)rt_shootray(&new_ap);
+	    VMOVE(new_ap.a_ray.r_dir, info.out_ray.dir);
+	    VMOVE(new_ap.a_ray.r_pt, info.out_ray.origin);
+	
+	    /* This next ray represents refraction */
+	    if (VDOT(info.N, info.out_ray.dir) < 0.0f){
+	    
+		/* Displace the hit point a little bit in the direction
+		   of the next ray */
+		Vec3 tmp;
+		VSCALE(tmp, info.out_ray.dir, 1e-4);
+		VADD2(new_ap.a_ray.r_pt, new_ap.a_ray.r_pt, tmp);
 
-	Color3 rec;
-	VMOVE(rec, new_ap.a_color);
+		new_ap.a_onehit = 1;
+		new_ap.a_refrac_index = 1.5;
+		new_ap.a_flag = 2; /* mark as refraction */
+		new_ap.a_hit = osl_refraction_hit;
+	    }	
+
+	    (void)rt_shootray(&new_ap);
+
+	    Color3 rec;
+	    VMOVE(rec, new_ap.a_color);
  
-	Color3 res = rec*weight;
-	VMOVE(swp->sw_color, res);
+	    Color3 res = rec*weight;
+	    VADD2(acc_color, acc_color, res);
+	}
+	else {
+	    /* Final color */
+	    VADD2(acc_color, acc_color, weight);
+	}
     }
-    else {
-	/* Final color */
-	VMOVE(swp->sw_color, weight);
-    }
+
+    VSCALE(swp->sw_color, acc_color, 1.0/nsamples);
 
     return 1;
 }
