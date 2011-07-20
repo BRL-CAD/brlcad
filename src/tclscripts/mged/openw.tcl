@@ -64,7 +64,11 @@ if {[info exists env(MGED_HTML_DIR)]} {
 }
 
 if {![info exists mged_default(web_browser)]} {
-    set mged_default(web_browser) /usr/bin/netscape
+    if { ($::tcl_platform(platform) == "windows") && [file exists "C:/Program Files/Internet Explorer/iexplore.exe"] } {
+	set mged_default(web_browser) "C:/Program Files/Internet Explorer/iexplore.exe"
+    } else {
+	set mged_default(web_browser) /usr/bin/netscape
+    }
 }
 
 if {![info exists mged_color_scheme]} {
@@ -203,7 +207,7 @@ if {![info exists mged_browser]} {
 	set mged_browser $mged_default(web_browser)
     } else {
 	if { ($::tcl_platform(os) == "Windows NT") && [file exists "C:/Program Files/Internet Explorer/iexplore.exe"] } {
-	    set mged_default(web_browser) "C:/Program Files/Internet Explorer/iexplore.exe"
+	    set mged_browser "C:/Program Files/Internet Explorer/iexplore.exe"
 	} elseif {[info exists env(PATH)]} {
 	    set pathlist [split $env(PATH) :]
 	    foreach path $pathlist {
