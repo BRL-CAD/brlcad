@@ -359,7 +359,7 @@
  *	    The line between the points ANGLE_ORIGIN and ANGLE_FROM
  *	    defines the y-axis of a custom AXIS. Therefore, if AXIS is
  *	    omitted, ANGLE_FROM defaults to a point y-offset +1 from
- *	    ANGLE_ORIGIN; the y-axis of the drawing. In essense,
+ *	    ANGLE_ORIGIN; the y-axis of the drawing. In essence,
  *	    ANGLE_FROM helps define the y-axis, and AXIS defines the
  *	    x-axis.
  *	   
@@ -597,7 +597,7 @@
  *
  *	It is important to note that FACTOR is interpreted as a factor
  *	of SCALE. Although it might appear so, the distance between
- *	SCALE and FACTOR points is irrelivant.
+ *	SCALE and FACTOR points is irrelevant.
  *
  *	By default, the reference scale SCALE, is from a
  *	SCALE_FROM_POS of (0,0,0) to a SCALE_TO_POS of (1,1,1). Given
@@ -802,21 +802,12 @@ translate(struct ged *gedp, vect_t *keypoint,
  * (see manuals)
  */
 struct edit_arg {
-    struct edit_arg *next; /* link to next argument */
-
-    /* command line options, e.g. "Rnk", to convert to option flags */
-    char cl_options[EDIT_MAX_ARG_OPTIONS];
-
-    /* flag which coords from the vector/object are being used */
-    unsigned int coords_used : 3;
-
-    /* flag the argument type and type modifiers */
-    unsigned int type : 10;
-
-    struct db_full_path *object;
-
-    /* if object != NULL, vector is an offset distance from object */
-    vect_t *vector;
+    struct edit_arg *next; /* nodes rel to arg in cmd args grouping */
+    char cl_options[EDIT_MAX_ARG_OPTIONS]; /* cmd line options */
+    unsigned int coords_used : 3; /* flag which coords are used */
+    unsigned int type : 10; /* flag the arg type and type modifiers */
+    struct db_full_path *object; /* 2 dir path_to/obj or just obj */
+    vect_t *vector; /* abs pos, or offset dist from obj */
 };
 
 /*
@@ -1049,7 +1040,7 @@ edit_arg_free_all(struct edit_arg *arg)
  * Free any dynamically allocated arg that may exist
  */
 HIDDEN void
-edit_cmd_free(union edit_cmd *args)
+edit_cmd_free(union edit_cmd * const args)
 {
     /* first object is automatic */
     if (args->common.objects.next)
@@ -1097,15 +1088,11 @@ edit(struct ged *gedp, union edit_cmd * const cmd)
 }
 
 /**
- * Convert a string to an edit_arg. The arg is NULL if the string
- * contains an object not in the database, or if an instance of the
- * object does not exist at the specified path. See subcommand manuals
- * for examples of acceptible argument strings.
+ * Converts a string to an edit_arg. See subcommand manuals
+ * for examples of acceptable argument strings.
  * 
- * Set GED_QUIET or GED_ERROR bits in flags to supress or enable
+ * Set GED_QUIET or GED_ERROR bits in flags to suppress or enable
  * output to ged_result_str, respectively.
- * 
- *
  *
  * Returns GED_ERROR on failure, and GED_OK on success.
  */
@@ -1113,13 +1100,8 @@ HIDDEN int
 edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 		int flags)
 {
-    /* XXX if there is a slash, interpret it as an object for sure. If
-     * there isn't a slash, then try to look it up in the db.  If that
-     * fails too, then try to interpret it as a number.  If it isn't a
-     * number either, then the argument is invalid. */
+    const struct db_i *dbip = gedp->ged_wdbp->dbip;
     int noisy;
-    char const *path_start;
-    char const *path_end;
     char const *first_slash = NULL;
 
     /* if flags conflict (GED_ERROR/GED_QUIET), side with verbosity */
@@ -1128,6 +1110,8 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
     /* an arg with a slash is always interpreted as a path */
     first_slash = strchr(str, '/');
     if (first_slash) {
+	char const *path_start;
+	char const *path_end;
 
 	/* position start after leading slashes */
 	path_start = str;
@@ -1165,46 +1149,46 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 			      "PATH/OBJECT (equivalently, /PATH/OBJECT/)", str);
 	    return GED_ERROR;
 	}
-
-	/* convert string to path/object */
-	arg->object = (struct db_full_path *)bu_malloc(
-			 sizeof(struct db_full_path),
-			 "db_full_path block for ged_edit()");
-	if (db_string_to_path(arg->object, gedp->ged_wdbp->dbip,
-			       str)) {
-	    db_free_full_path(arg->object);
-	    bu_free((genptr_t)arg->object, "db_string_to_path");
-	    if (noisy)
-		bu_vls_printf(gedp->ged_result_str, "one of the objects in"
-			      " the path \"%s\" does not exist", str);
-	    return GED_ERROR;
-	}
-	if (ged_path_validate(gedp, arg->object) == GED_ERROR) {
-	    db_free_full_path(arg->object);
-	    bu_free((genptr_t)arg->object, "db_string_to_path");
-	    if (noisy)
-		bu_vls_printf(gedp->ged_result_str, "path hierarchy \"%s\" does"
-			      "not exist in the database", str);
-	    return GED_ERROR;
-	}
-	return GED_OK;
+	goto convert_obj;
     }
-	/* there is no slash, so check db for object */
-#if 0
-	struct directory *argd = db_lookup(dbip, argv[bu_optind + 1],
-					   LOOKUP_QUIET);
-	if (argd == RT_DIR_NULL)
-	    /* not an object */
-	    /* XXX if it is a number, fall back to intepreting it
-	     * as one, otherwise, throw an error saying that
-	     * it is an invalid object */
-	    /* interpret it as an object */
-	    NULL;
-#endif
+
+    /* it may still be an obj, so quietly check db for object name */
+    if (db_lookup(dbip, str, LOOKUP_QUIET) != RT_DIR_NULL)
+	goto convert_obj;
+
+    /* XXX if it is a number, fall back to interpreting it
+     * as one, otherwise, throw an error saying that
+     * it is an invalid object */
+    /* the syntax is bad */
+    if (noisy)
+	bu_vls_printf(gedp->ged_result_str, "unrecognized argument, \"%s\"",
+		      str);
+    return GED_ERROR;
+
+convert_obj:
+    /* convert string to path/object */
+    arg->object = (struct db_full_path *)bu_malloc(sizeof(struct db_full_path),
+		  "db_full_path block for ged_edit()");
+    if (db_string_to_path(arg->object, gedp->ged_wdbp->dbip,
+			   str)) {
+	db_free_full_path(arg->object);
+	bu_free((genptr_t)arg->object, "db_string_to_path");
+	arg->object = (struct db_full_path *)NULL; 
 	if (noisy)
-	    bu_vls_printf(gedp->ged_result_str, "unrecognized argument, \"%s\"",
-			  str);
+	    bu_vls_printf(gedp->ged_result_str, "one of the objects in"
+			  " the path \"%s\" does not exist", str);
 	return GED_ERROR;
+    }
+    if (ged_path_validate(gedp, arg->object) == GED_ERROR) {
+	db_free_full_path(arg->object);
+	bu_free((genptr_t)arg->object, "db_string_to_path");
+	arg->object = (struct db_full_path *)NULL; 
+	if (noisy)
+	    bu_vls_printf(gedp->ged_result_str, "path hierarchy \"%s\" does"
+			  "not exist in the database", str);
+	return GED_ERROR;
+    }
+    return GED_OK;
 }
 
 /**
@@ -1475,8 +1459,10 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
+    int ret;
+    ret = edit(gedp, &subcmd);
     edit_cmd_free(&subcmd);
-    return GED_OK;
+    return ret;
 
 err_no_operand:
     bu_vls_printf(gedp->ged_result_str,
