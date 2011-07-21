@@ -165,6 +165,8 @@ bu_bomb(const char *str)
 	if (LIKELY(fd > 0)) {
 	    int ret;
 	    ret = write(fd, "Causing intentional core dump due to debug flag\n", 48);
+	    if (ret < 0 || (size_t)ret != 48)
+		perror("write failed");
 	    close(fd);
 	}
 	abort();	/* should dump if ulimit is non-zero */
