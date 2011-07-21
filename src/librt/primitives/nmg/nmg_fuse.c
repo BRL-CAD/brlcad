@@ -1965,8 +1965,13 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
 	if (rt_g.NMG_debug & DEBUG_MESH_EU)
 	    bu_log("\trad->eu = %x, rad->ang = %g\n", rad->eu, rad->ang);
 
+#ifdef TRI_PROTOTYPE
+        /* the radial list is not always sorted */
+        nmg_radial_sorted_list_insert(hd, rad);
+#else
 	/* Just append.  Should already be properly sorted. */
 	BU_LIST_INSERT(hd, &(rad->l));
+#endif
 
 	/* Add to list of all shells involved at this edge */
 	if (shell_tbl) bu_ptbl_ins_unique(shell_tbl, (long *)&(rad->s->l.magic));
@@ -1976,7 +1981,10 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
 	if (teu == eu) break;
     }
 
+#ifndef TRI_PROTOTYPE
+    /* the radial is increasing since we sorted it above */
     nmg_insure_radial_list_is_increasing(hd, amin, amax);
+#endif
 
     /* Increasing, with min or max value possibly repeated */
     if (!rmin) {
@@ -2043,7 +2051,12 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
 	BU_LIST_DEQUEUE(hd);
 	/* Append head after maximum, before minimum */
 	BU_LIST_APPEND(&(rmax->l), hd);
+#ifndef TRI_PROTOTYPE
+        /* the radial pointers are not always ready to be
+         * verified here
+         */
 	nmg_radial_verify_pointers(hd, tol);
+#endif
     } else {
 	bu_log("  %f %f %f --- %f %f %f\n",
 	       V3ARGS(eu->vu_p->v_p->vg_p->coord),
