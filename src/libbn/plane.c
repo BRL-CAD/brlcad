@@ -1414,7 +1414,6 @@ bn_isect_line3_line3_new(fastf_t *pdist,        /* distance from p0 to line q in
 
     int parallel = 0;
     int colinear = 0;
-    int error_occured = 0;
     fastf_t dot, d1, d2, d3, d4;
     vect_t pdir, qdir;
 
@@ -1424,29 +1423,12 @@ bn_isect_line3_line3_new(fastf_t *pdist,        /* distance from p0 to line q in
     pdir_mag_sq = MAGSQ(pdir);
     qdir_mag_sq = MAGSQ(qdir);
 
-    if (NEAR_ZERO(pdir_mag_sq, SMALL_FASTF) || NEAR_ZERO(qdir_mag_sq, SMALL_FASTF)) {
+    if ((pdir_mag_sq < tol->dist_sq) || (qdir_mag_sq < tol->dist_sq)) {
         bu_log("  p0 = %g %g %g\n", V3ARGS(p0));
         bu_log("pdir = %g %g %g\n", V3ARGS(pdir));
         bu_log("  q0 = %g %g %g\n", V3ARGS(q0));
         bu_log("qdir = %g %g %g\n", V3ARGS(qdir));
         bu_bomb("bn_isect_line3_line3_new(): input vector(s) 'pdir' and/or 'qdir' is zero magnitude.\n");
-    }
-
-    if (NEAR_ZERO(pdir_mag_sq - 1.0, SMALL_FASTF)) {
-        VSCALE(pdir, pdir, 304800); /* 304800mm = 1000ft */
-        pdir_mag_sq = MAGSQ(pdir);
-        error_occured++;
-    }
-
-    if (NEAR_ZERO(qdir_mag_sq - 1.0, SMALL_FASTF)) {
-        VSCALE(qdir, qdir, 304800); /* 304800mm = 1000ft */
-        qdir_mag_sq = MAGSQ(qdir);
-        error_occured++;
-    }
-
-    if (error_occured == 2) {
-        bu_log("pdir = %g %g %g qdir = %g %g %g\n", V3ARGS(pdir_i), V3ARGS(qdir_i));
-        bu_log("bn_isect_line3_line3_new(): input vector(s) 'pdir' and 'qdir' are unit vectors.\n");
     }
 
     *pdist = 0.0;
@@ -1458,27 +1440,27 @@ bn_isect_line3_line3_new(fastf_t *pdist,        /* distance from p0 to line q in
 
     VSUB2(p0_to_q1, q1, p0);
 
-    d1 = bn_dist_line3_pt3(q0,qdir,p0);
-    d2 = bn_dist_line3_pt3(q0,qdir,p1);
-    d3 = bn_dist_line3_pt3(p0,pdir,q0);
-    d4 = bn_dist_line3_pt3(p0,pdir,q1);
+    d1 = bn_distsq_line3_pt3(q0,qdir,p0);
+    d2 = bn_distsq_line3_pt3(q0,qdir,p1);
+    d3 = bn_distsq_line3_pt3(p0,pdir,q0);
+    d4 = bn_distsq_line3_pt3(p0,pdir,q1);
 
     /* if all distances are within distance tolerance of each
      * other then they a parallel 
      */
-    if (NEAR_EQUAL(d1, d2, tol->dist) &&
-        NEAR_EQUAL(d1, d3, tol->dist) &&
-        NEAR_EQUAL(d1, d4, tol->dist) &&
-        NEAR_EQUAL(d2, d3, tol->dist) &&
-        NEAR_EQUAL(d2, d4, tol->dist) &&
-        NEAR_EQUAL(d3, d4, tol->dist)) {
+    if (NEAR_EQUAL(d1, d2, tol->dist_sq) &&
+        NEAR_EQUAL(d1, d3, tol->dist_sq) &&
+        NEAR_EQUAL(d1, d4, tol->dist_sq) &&
+        NEAR_EQUAL(d2, d3, tol->dist_sq) &&
+        NEAR_EQUAL(d2, d4, tol->dist_sq) &&
+        NEAR_EQUAL(d3, d4, tol->dist_sq)) {
         parallel = 1;
     }
 
-    if (NEAR_ZERO(d1, tol->dist) &&
-        NEAR_ZERO(d2, tol->dist) &&
-        NEAR_ZERO(d3, tol->dist) &&
-        NEAR_ZERO(d4, tol->dist)) {
+    if (NEAR_ZERO(d1, tol->dist_sq) &&
+        NEAR_ZERO(d2, tol->dist_sq) &&
+        NEAR_ZERO(d3, tol->dist_sq) &&
+        NEAR_ZERO(d4, tol->dist_sq)) {
         colinear = 1;
     }
 
@@ -1859,18 +1841,21 @@ bn_isect_line_lseg(fastf_t *t, const fastf_t *p, const fastf_t *d, const fastf_t
 {
 #ifdef TRI_PROTOTYPE
     vect_t ab, pa, pb;		/* direction vectors a->b, p->a, p->b */
-    auto fastf_t u;		/* As in, A + u * C = X */
-    register int ret;
-
     fastf_t ab_mag;
     fastf_t pa_mag_sq;
     fastf_t pb_mag_sq;
     fastf_t d_mag_sq;
+    int code;
+    fastf_t dist1, dist2, d1, d2;
+    int colinear = 0;
+    fastf_t dot;
 
     BN_CK_TOL(tol);
 
+    *t = 0.0;
+
     d_mag_sq = MAGSQ(d);
-    if (ZERO(d_mag_sq)) {
+    if (NEAR_ZERO(d_mag_sq, tol->dist_sq)) {
         bu_bomb("bn_isect_line_lseg(): ray direction vector zero magnitude\n");
     }
 
@@ -1897,86 +1882,163 @@ bn_isect_line_lseg(fastf_t *t, const fastf_t *p, const fastf_t *d, const fastf_t
         return 2;
     }
 
-    /* Detecting colinearity is difficult, and very very important.
-     * As a first step, check to see if both points A and B lie within
-     * tolerance of the line.  If so, then the line segment AC is ON
-     * the line.
+    /* just check that the vertices of the line segement are
+     * within distance tolerance of the ray. it may cause problems
+     * to also require the ray start and end points to be within
+     * distance tolerance of the infinite line associated with
+     * the line segement.
      */
-    if (bn_distsq_line3_pt3(p, d, a) <= tol->dist_sq  &&
-	bn_distsq_line3_pt3(p, d, b) <= tol->dist_sq) {
-	if (bu_debug & BU_DEBUG_MATH) {
-	    bu_log("bn_isect_line3_lseg3() pts A and B within tol of line\n");
-	}
-	/* Find the parametric distance along the ray */
-	*t = bn_dist_pt3_along_line3(p, d, a);
+    d1 = bn_distsq_line3_pt3(p,d,a); /* distance of point a to ray */
+    d2 = bn_distsq_line3_pt3(p,d,b); /* distance of point b to ray */
 
-        if (*t < -tol->dist) {
-            /* intersection of ray and line segment but in the 
-             * negative direction of the ray
-             */
-            return -1;
-        } else {
-            if (ZERO(*t)) {
-                *t = 0.0;
-            }
-	    /* co-linear (t was computed for point A, u=0) */
-	    return 0;
+    colinear = 0;
+    if (NEAR_ZERO(d1, tol->dist_sq) && NEAR_ZERO(d2, tol->dist_sq)) {
+        colinear = 1;
+
+        dist1 = sqrt(pa_mag_sq);
+        dist2 = sqrt(pb_mag_sq);
+
+        /* if the direction of the pa vector is in the
+         * opposite direction of the ray, then make the
+         * distance negative
+         */
+        dot = VDOT(pa, d);
+        if (dot < -SMALL_FASTF) {
+            dist1 = -dist1;
+        }
+
+        /* if the direction of the pb vector is in the
+         * opposite direction of the ray, then make the
+         * distance negative
+         */
+        dot = VDOT(pb, d);
+        if (dot < -SMALL_FASTF) {
+            dist2 = -dist2;
         }
     }
 
-    if ((ret = bn_isect_line3_line3_new(t, &u, p, d, a, ab, tol)) < 0) {
-	/* No intersection found */
-	return -1;
+    if (colinear && dist1 < SMALL_FASTF && dist2 < SMALL_FASTF) {
+        /* lines are colinear but 'a' and 'b' are not on the ray */
+        return -1; /* no intersection */
     }
 
-    if (ret == 0) {
-	/* co-linear (t was computed for point A, u=0) */
-	return 0;
+    if (colinear && (dist1 > SMALL_FASTF) && (dist2 > SMALL_FASTF)) {
+        /* lines are colinear and both points 'a' and 'b' are on the ray. */
+        /* return the distance to the closest point */
+        if (dist2 > dist1) {
+            *t = dist1;
+        } else {
+            *t = dist2;
+        }
+        return 0;
     }
 
-    if (ZERO(*t)) {
-        *t = 0.0;
+    if (colinear && (dist1 > SMALL_FASTF) && (dist2 < SMALL_FASTF)) {
+        /* lines are colinear and 'a' is on the ray but 'b' is not. */
+        /* return the distance to 'a' */
+        *t = dist1;
+        return 0;
     }
 
-    if (ZERO(u)) {
-        u = 0.0;
+    if (colinear && (dist1 < SMALL_FASTF) && (dist2 > SMALL_FASTF)) {
+        /* lines are colinear and 'b' is on the ray but 'a' is not. */
+        /* return the distance to 'b' */
+        *t = dist2;
+        return 0;
     }
 
-    if (*t < -tol->dist) {
-        /* intersection of ray and line segment but in the 
-         * negative direction of the ray
-         */
-        return -1;
+    dist1 = 0.0; /* sanity */
+    dist2 = 0.0; /* sanity */
+    code = bn_isect_line3_line3_new(&dist1, &dist2, p, d, a, ab, tol);
+
+    if (code == 0) {
+        bu_bomb("bn_isect_line_lseg(): we should have already detected a colinear condition\n");
     }
 
-    if (NEAR_ZERO(u, tol->dist)) {
-        /* Intersection at vertex A */
-        /* use actual distance instead of hit point */
-        *t = sqrt(pa_mag_sq);
-        return 1;
-    }
-    if (u < -tol->dist) {
-        /* Intersection exists, < A (t is returned) */
-        return -3;
+    if (code < 0) {
+        return -1; /* no intersection */
     }
 
-    /* the computation (u - ab_mag) might cause some problems
-     * because 'u' can be negative but 'ab_mag' can not
-     */
-    if (NEAR_ZERO(u - ab_mag, tol->dist)) {
-        /* Intersection at vertex B */
-        /* use actual distance instead of hit point */
-        *t = sqrt(pb_mag_sq);
-        return 2;
+    if (code == 1) {
+        if (dist1 < -(tol->dist)) {
+            /* the ray did isect the line segment but in the 
+             * negative direction so this is not really a hit
+             */
+            return -1; /* no intersection */
+        }
     }
 
-    if (u > ab_mag + tol->dist) {
-        /* Intersection exists, > B (t is returned) */
-        return -2;
+    if (code == 1) {
+        /* determine if isect was before a, between a & b or after b */
+        vect_t d_unit;
+        vect_t  a_to_isect_pt, b_to_isect_pt;
+        point_t isect_pt;
+        fastf_t a_to_isect_pt_mag_sq, b_to_isect_pt_mag_sq;
+
+        VMOVE(d_unit, d);
+        VUNITIZE(d_unit);
+
+#if 0
+        if (NEAR_ZERO(dist1, tol->dist)) {
+            bu_log("bn_isect_line_lseg(): dist1 = %.15f\n", dist1);
+            bu_bomb("bn_isect_line_lseg(): dist1 is zero\n");
+        }
+#endif
+
+        dist1 = fabs(dist1); /* sanity */
+        VSCALE(isect_pt, d_unit, dist1);
+        VSUB2(a_to_isect_pt, isect_pt, a);
+        VSUB2(b_to_isect_pt, isect_pt, b);
+
+        a_to_isect_pt_mag_sq = MAGSQ(a_to_isect_pt);
+        b_to_isect_pt_mag_sq = MAGSQ(b_to_isect_pt);
+
+        *t = dist1;
+
+        if (a_to_isect_pt_mag_sq < tol->dist_sq) {
+            /* isect at point a of line segement */
+            return 1;
+        }
+
+        if (b_to_isect_pt_mag_sq < tol->dist_sq) {
+            /* isect at point b of line segement */
+            return 2;
+        }
+
+        if ((a_to_isect_pt_mag_sq < tol->dist_sq) && (b_to_isect_pt_mag_sq < tol->dist_sq)) {
+            bu_bomb("bn_isect_line_lseg(): this case should already been caught. i.e. zero length line segment\n");
+        }
+
+        dot = VDOT(a_to_isect_pt, ab);
+        if (dot < -SMALL_FASTF) {
+            /* isect before point a of infinite line associated
+             * with the line segment a->b
+             */
+            return -3;
+        }
+
+        dot = VDOT(b_to_isect_pt, ab);
+        if (dot > SMALL_FASTF) {
+            /* isect after point b of infinite line associated
+             * with the line segment a->b
+             */
+            return -2;
+        }
+
+#if 0
+        bu_log("p = %f %f %f a = %f %f %f b = %f %f %f  isect = %f %f %f dist1 = %f d = %f %f %f\n", 
+               V3ARGS(p), V3ARGS(a), V3ARGS(b), V3ARGS(isect_pt), dist1, V3ARGS(d));
+        bu_log("bn_isect_line_lseg(): isect on line segement\n");
+#endif
+
+        return 3; /* isect on line segement a->b but
+                   * not on the end points
+                   */
     }
 
-    /* Intersection between A and B */
-    return 3;
+    bu_bomb("bn_isect_line_lseg(): logic error, should not be here\n");
+
+    return 0;  /* quite compiler warning */
 
 #else
 
