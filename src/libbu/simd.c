@@ -25,19 +25,13 @@ int
 bu_simd_level()
 {
 #if defined(__GNUC__) && defined(__SSE__)
-    int b=0, c=0, d=0;
-    asm volatile(
-    /* since we're PIC, we need to stash EBX on ia32 */
+    int c=0, d=0;
 # ifdef __i386__
-		    "pushl %%ebx;"
+    asm volatile("pushl %%ebx;cpuid;popl %%ebx;":"=c"(c),"=d"(d):"a"(0x1));
+# else
+    int b=0; 
+    asm volatile("cpuid":"=b"(b),"=c"(c),"=d"(d):"a"(0x1));
 # endif
-		    "cpuid;"
-# ifdef __i386__
-		    "popl %%ebx;"
-# endif
-		    : "=b"(b), "=c"(c), "=d" (d)
-		    : "a" (0x1));
-
     if(c & 0x100000)
 	return BU_SIMD_SSE4_2;
     if(c & 0x080000)
