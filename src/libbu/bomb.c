@@ -108,8 +108,7 @@ bu_bomb(const char *str)
 	fd = open("/dev/tty", 1);
 	if (LIKELY(fd > 0)) {
 	    if (str && (strlen(str) > 0)) {
-		size_t len;
-		ssize_t ret;
+		ssize_t len, ret;
 
 		len = strlen(str);
 		ret = write(fd, str, len);
