@@ -297,11 +297,13 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
 
     copy = bu_strdup( str );
 
-    /* eliminate a a trailing slash */
+    /* eliminate all trailing slashes */
     len = strlen( copy );
-    if ( copy[len-1] == '/' )
-	copy[len-1] = '\0';
-
+    while (copy[len - 1] == '/') {
+	copy[len - 1] = '\0';
+	--len;
+    }
+	
     cp = copy;
     while ( *cp )  {
 	if ( (slashp = strchr( cp, '/' )) == NULL )  break;
