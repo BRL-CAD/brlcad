@@ -953,7 +953,7 @@ union edit_cmd{
 };
 
 /**
- * Initialize a node.
+ * Initialize a node. Caller needs to free it first.
  */
 HIDDEN void
 edit_arg_init(struct edit_arg *node)
@@ -1101,48 +1101,72 @@ edit(struct ged *gedp, union edit_cmd * const cmd)
  * contains an object not in the database, or if an instance of the
  * object does not exist at the specified path. See subcommand manuals
  * for examples of acceptible argument strings.
+ * 
+ * Set GED_QUIET or GED_ERROR bits in flags to supress or enable
+ * output to ged_result_str, respectively.
+ * 
+ *
  *
  * Returns GED_ERROR on failure, and GED_OK on success.
  */
 HIDDEN int
-edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg) {
+edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
+		int flags)
+{
     /* XXX if there is a slash, interpret it as an object for sure. If
      * there isn't a slash, then try to look it up in the db.  If that
      * fails too, then try to interpret it as a number.  If it isn't a
      * number either, then the argument is invalid. */
-
+    int noisy;
     char const *path_start;
     char const *path_end;
     char const *first_slash = NULL;
 
-    /* position start after leading slashes */
-    path_start = str;
-    while (path_start[0] == '/')
-	++path_start;
+    /* if flags conflict (GED_ERROR/GED_QUIET), side with verbosity */
+    noisy = (flags & GED_ERROR); 
 
-    /* position end before trailing slashes */
-    path_end = path_start + strlen(path_start) - (size_t)1;
-    while (path_end[0] == '/')
-	--path_end;
+    /* an arg with a slash is always interpreted as a path */
+    first_slash = strchr(str, '/');
+    if (first_slash) {
 
-    first_slash = strchr(path_start, '/');
-    if (first_slash >= path_end) {
-	/* path contained nothing but '/' char(s) */
-	bu_vls_printf(gedp->ged_result_str, "cannot use root path "
-		      "alone");
-	return GED_ERROR;
-    }
+	/* position start after leading slashes */
+	path_start = str;
+	while (path_start[0] == '/')
+	    ++path_start;
 
-    if (first_slash != NULL) {
-	/* an arg with a slash is always interpreted as a path */
-	if (first_slash != strrchr(str, '/')) {
-	    bu_vls_printf(gedp->ged_result_str,
-			  "it is only meaningful to have one or two "
-			  "directories in a path in this context.\n"
-			  "Ex: OBJECT (equivalently, /OBJECT/) or "
-			  "PATH/OBJECT (equivalently, /PATH/OBJECT/");
+	/* position end before trailing slashes */
+	path_end = path_start + strlen(path_start) - (size_t)1;
+	while (path_end[0] == '/')
+	    --path_end;
+
+	if (path_end < path_start) {
+	    /* path contained nothing but '/' char(s) */
+	    if (noisy)
+		bu_vls_printf(gedp->ged_result_str, "cannot use root path "
+			      "alone");
 	    return GED_ERROR;
 	}
+
+
+	/* detect >1 inner slashes */
+	first_slash = (char *)memchr((void *)path_start, '/',
+		                     (size_t)(path_end - path_start + 1));
+	if (first_slash && ((char *)memchr((void *)(first_slash + 1),
+			    		  '/', (size_t)(path_end -
+					  first_slash - 1)))) {
+	/* FIXME: this conditional should be replaced by adding inner
+	 * slash stripping to db_string_to_path (which is used below),
+	 * and using a simple check for fp_len > 2 here */
+	    if (noisy)
+		bu_vls_printf(gedp->ged_result_str, "invalid path, \"%s\"\n"
+			      "It is only meaningful to have one or two "
+			      "objects in a path in this context.\n"
+			      "Ex: OBJECT (equivalently, /OBJECT/) or "
+			      "PATH/OBJECT (equivalently, /PATH/OBJECT/)", str);
+	    return GED_ERROR;
+	}
+
+	/* convert string to path/object */
 	arg->object = (struct db_full_path *)bu_malloc(
 			 sizeof(struct db_full_path),
 			 "db_full_path block for ged_edit()");
@@ -1150,37 +1174,37 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg) {
 			       str)) {
 	    db_free_full_path(arg->object);
 	    bu_free((genptr_t)arg->object, "db_string_to_path");
-	    bu_vls_printf(gedp->ged_result_str,
-			  "a directory in the path %s does not exist",
-			  str);
+	    if (noisy)
+		bu_vls_printf(gedp->ged_result_str, "one of the objects in"
+			      " the path \"%s\" does not exist", str);
 	    return GED_ERROR;
 	}
 	if (ged_path_validate(gedp, arg->object) == GED_ERROR) {
 	    db_free_full_path(arg->object);
 	    bu_free((genptr_t)arg->object, "db_string_to_path");
-	    bu_vls_printf(gedp->ged_result_str,
-			  "invalid path, \"%s\"", str);
+	    if (noisy)
+		bu_vls_printf(gedp->ged_result_str, "path hierarchy \"%s\" does"
+			      "not exist in the database", str);
 	    return GED_ERROR;
 	}
-
-	/* FIXME: temporary */
-	db_free_full_path(arg->object);
+	return GED_OK;
     }
 	/* there is no slash, so check db for object */
 #if 0
 	struct directory *argd = db_lookup(dbip, argv[bu_optind + 1],
 					   LOOKUP_QUIET);
 	if (argd == RT_DIR_NULL)
-	    NULL;
 	    /* not an object */
 	    /* XXX if it is a number, fall back to intepreting it
 	     * as one, otherwise, throw an error saying that
 	     * it is an invalid object */
-	else
 	    /* interpret it as an object */
 	    NULL;
 #endif
-	return GED_OK;
+	if (noisy)
+	    bu_vls_printf(gedp->ged_result_str, "unrecognized argument, \"%s\"",
+			  str);
+	return GED_ERROR;
 }
 
 /**
@@ -1201,14 +1225,16 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     int i; /* iterator */
     int c; /* for bu_getopt */
 
-    subcmd.cmd = (const struct edit_cmd_tab *)NULL;
-
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* initialize the subcommand */
+    subcmd.cmd = (const struct edit_cmd_tab *)NULL;
+    edit_arg_init(cur_arg);
 
     /*
      * Validate command name
@@ -1312,10 +1338,11 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    /* Handle "subcmd help" (identical to "help subcmd"),
-	     * but only if there are no more args; wouldn't want to
-	     * match an object named "help". This syntax is needed 
-	     * to access the help system when subcmd is an actual
-	     * command */
+	     * but only if there are no more args; would rather mask
+	     * the help system with an object that happened to be
+	     * named "help" than the other way around.  This syntax is
+	     * needed to access the help system when a subcmd is the
+	     * calling command. */
 	    if (argc == 1 &&
 		BU_STR_EQUAL(edit_cmds[EDIT_CMD_HELP].name,
 		argv[0])) {
@@ -1372,8 +1399,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 
     /* no options are required if none of the optional arguments are
      * specified */
-    edit_arg_init(cur_arg);
-    if (edit_str_to_arg(gedp, argv[0], cur_arg) == GED_OK) {
+    if (edit_str_to_arg(gedp, argv[0], cur_arg, GED_QUIET) == GED_OK) {
 	if (argc == 1)
 	    return edit(gedp, &subcmd);
 	--argc;
@@ -1383,10 +1409,10 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 
     bu_optind = 1; /* re-init bu_getopt() */
     bu_opterr = 0; /* suppress errors; accept unknown options */
-    --argv; /* bu_getopt doesn't expect the first element to be an arg */
+    --argv; /* bu_getopt doesn't expect first element to be an arg */
     ++argc;
     while ((c = bu_getopt(argc, (char * const *)argv, ":k:a:r:x:y:z:")) != -1) {
-	if (bu_optind + 1 >= argc)
+	if (bu_optind >= argc)
 	    /* last element is an option */
 	    goto err_no_operand;
 
@@ -1413,6 +1439,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 		if (last_arg_opt == c)
 		    goto err_redundant_options;
 		last_arg_opt = bu_optopt;
+		break;
 	    case ':': /* missing arg */
 		bu_vls_printf(gedp->ged_result_str,
 			      "Missing argument for option -%c", bu_optopt);
@@ -1428,34 +1455,25 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	cur_arg->cl_options[idx_cur_opt] = bu_optopt;
 	++idx_cur_opt;
 
-	/* try to read in an argument */
-	if (bu_optind + 1 <= argc) {
-	    if (edit_str_to_arg(gedp, argv[bu_optind + 1], cur_arg) == GED_OK) {
-		/* init for next arg */
-		cur_arg = edit_arg_postfix_new(&subcmd.cmd_line.args);
-	    }
+	/* quietly try to read in an argument */
+	if (edit_str_to_arg(gedp, argv[bu_optind], cur_arg, GED_QUIET) ==
+	    GED_OK) {
+	    /* init for next arg */
+	    cur_arg = edit_arg_postfix_new(&subcmd.cmd_line.args);
+	    idx_cur_opt = 0;
 	}
-
-	continue;
-
     }
 
     /* remaining arguments are interpreted as operands */
-#if 0
     for (i = bu_optind; (i + 1) <= argc; ++i) {
-	if (edit_str_to_arg(gedp, argv[i], cur_arg) == GED_OK) {
-
-	    /* prep for next arg */
+	if (edit_str_to_arg(gedp, argv[i], cur_arg, GED_ERROR) == GED_OK)
 	    cur_arg = edit_arg_postfix_new(&subcmd.cmd_line.args);
-	    idx_cur_opt = 0;
-	} else {
-	    bu_vls_printf(gedp->ged_result_str,
-			  "Unrecognized argument, \"%s\"",
-			  argv[i]);
+	else {
+	    /* quit with edit_str_to_arg's ged_result_str */
+	    edit_cmd_free(&subcmd);
 	    return GED_ERROR;
 	}
     }
-#endif
 
     edit_cmd_free(&subcmd);
     return GED_OK;
