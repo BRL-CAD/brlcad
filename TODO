@@ -17,6 +17,9 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* test multiple blank lines in red, report of crash
+
+* test illuminate (e.g. oed) + Z, report of crash (on Windows)
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
