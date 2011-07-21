@@ -66,7 +66,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include "bio.h"
+#include <stdio.h>
 
 #include "vmath.h"		/* vector math macros */
 #include "raytrace.h"		/* librt interface definitions */
