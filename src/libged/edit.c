@@ -1131,7 +1131,6 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 	    return GED_ERROR;
 	}
 
-
 	/* detect >1 inner slashes */
 	first_slash = (char *)memchr((void *)path_start, '/',
 		                     (size_t)(path_end - path_start + 1));
@@ -1251,7 +1250,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     union edit_cmd subcmd;
     struct edit_arg *cur_arg = &subcmd.cmd_line.args;
     int idx_cur_opt = 0; /* pos in options array for current arg */
-    int conv_flags = 0; /* for edit_strs_to_arg */
+    int conv_flags; /* for edit_strs_to_arg */
     static const char * const usage = "[subcommand] [args]";
     int i; /* iterator */
     int c; /* for bu_getopt */
@@ -1459,6 +1458,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	    /* last element is an option */
 	    goto err_missing_operand;
 
+	conv_flags = GED_ERROR;
 	switch (c) {
 	    case 'x': /* singular coord specif. sub-opts */
 	    case 'y':
@@ -1474,14 +1474,10 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 		    edit_cmd_free(&subcmd);
 		    return GED_ERROR;
 		}
-
-
-	    	conv_flags = GED_ERROR;
 		break;
 	    case 'k': /* standard arg specification options */
 	    case 'a':
 	    case 'r':
-	    	conv_flags = GED_ERROR;
 	    	if (!bu_optarg)
 		    goto err_missing_arg;
 		if ((strlen(bu_optarg) > 1) && (bu_optarg[0] == '-')) {
