@@ -1251,7 +1251,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     union edit_cmd subcmd;
     struct edit_arg *cur_arg = &subcmd.cmd_line.args;
     int idx_cur_opt = 0; /* pos in options array for current arg */
-    int conv_flags; /* for edit_strs_to_arg */
+    int conv_flags = 0; /* for edit_strs_to_arg */
     static const char * const usage = "[subcommand] [args]";
     int i; /* iterator */
     int c; /* for bu_getopt */
