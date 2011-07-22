@@ -205,6 +205,9 @@ typedef unsigned int uid_t;
 #ifndef S_IXUSR
 #  define S_IXUSR      S_IEXEC
 #endif
+#ifndef S_IRWXU
+#  define S_IRWXU      ((S_IRUSR)|(S_IWUSR)|(S_IXUSR))
+#endif
 
 #ifndef S_IRGRP
 #  define S_IRGRP      ((S_IRUSR)>>3)
