@@ -1156,9 +1156,10 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
     if (db_lookup(dbip, str, LOOKUP_QUIET) != RT_DIR_NULL)
 	goto convert_obj;
 
-    /* XXX if it is a number, fall back to interpreting it
+    /* TODO if it is a number, fall back to interpreting it
      * as one, otherwise, throw an error saying that
      * it is an invalid object */
+
     /* the syntax is bad */
     if (noisy)
 	bu_vls_printf(gedp->ged_result_str, "unrecognized argument, \"%s\"",
@@ -1192,6 +1193,52 @@ convert_obj:
 }
 
 /**
+ * Converts as much of an array of strings as possible to a single
+ * edit_arg. Both argc and argv are modified to be past the matching
+ * arguments. See subcommand manuals for examples of acceptable
+ * argument strings.
+ * 
+ * Set GED_QUIET or GED_ERROR bits in flags to suppress or enable
+ * output to ged_result_str, respectively. Note that output is always
+ * suppressed after the first string.
+ *
+ * Returns GED_OK if at least one string is converted, otherwise
+ * GED_ERROR is returned.
+ *
+ */
+HIDDEN int
+edit_strs_to_arg(struct ged *gedp, int *argc, const char **argv[],
+		 struct edit_arg *arg, int flags)
+{
+    int ret = GED_ERROR;
+    int len;
+    int idx;
+
+    while (*argc >= 1) {
+
+	/* skip options */
+	idx = 0;
+	len = strlen((*argv)[0]);
+        if ((**argv)[0] == '-') {
+	    if (len == 2 && !isdigit((**argv)[1]))
+		break;
+	    if (len > 2 && !isdigit((**argv)[1]))
+		/* option/arg pair with no space, i.e. "-ksph.s" */
+		idx = 2;
+	}
+
+	if (edit_str_to_arg(gedp, &(**argv)[idx], arg, flags) == GED_ERROR)
+	    break;
+
+	ret = GED_OK;
+	flags = GED_QUIET; /* only first conv attempt can be noisy */
+	--(*argc);
+	++(*argv);
+    }
+    return ret;
+}
+
+/**
  * A command line interface to the edit commands. Will handle any 
  * new commands without modification.
  */
@@ -1204,10 +1251,11 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     union edit_cmd subcmd;
     struct edit_arg *cur_arg = &subcmd.cmd_line.args;
     int idx_cur_opt = 0; /* pos in options array for current arg */
-    int last_arg_opt = 0; /* the last processed option that takes an arg */
+    int conv_flags; /* for edit_strs_to_arg */
     static const char * const usage = "[subcommand] [args]";
     int i; /* iterator */
     int c; /* for bu_getopt */
+    int ret;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -1257,7 +1305,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	argv += 2;
     } else {
 	/* no subcommand was found */
-        int ret = GED_HELP;
+        ret = GED_HELP;
 
 	if (argc > 1) {
 	    /* no arguments accepted without a subcommand */
@@ -1381,90 +1429,147 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
      *     8) the last argument is a list of objects to be operated on
      */
 
-    /* no options are required if none of the optional arguments are
-     * specified */
-    if (edit_str_to_arg(gedp, argv[0], cur_arg, GED_QUIET) == GED_OK) {
-	if (argc == 1)
-	    return edit(gedp, &subcmd);
-	--argc;
-	++argv;
-	cur_arg = edit_arg_postfix_new(&subcmd.cmd_line.args);
+    /* no options are required by default*/
+    (void)edit_strs_to_arg(gedp, &argc, &argv, cur_arg, GED_QUIET);
+    
+    if (argc == 0) {
+	ret = edit(gedp, &subcmd);
+	edit_cmd_free(&subcmd);
+	return ret;
     }
 
+    /* All leading args are parsed. If we're not not at an option,
+     * then there is a bad arg. Let the conversion function cry about
+     * what it choked on */
+    if (strlen(argv[0]) > 1 && ((*argv)[0] != '-') && isdigit((*argv)[1])) {
+	ret = edit_strs_to_arg(gedp, &argc, &argv, cur_arg, GED_ERROR);
+	edit_cmd_free(&subcmd);
+	BU_ASSERT(ret == GED_ERROR);
+	return GED_ERROR;
+    }
+
+    /* FIXME: crashes/mishandles '-' and '--', and '/'. Just needs to
+     * fail gracefully. */
     bu_optind = 1; /* re-init bu_getopt() */
     bu_opterr = 0; /* suppress errors; accept unknown options */
-    --argv; /* bu_getopt doesn't expect first element to be an arg */
-    ++argc;
+    ++argc; /* bu_getopt doesn't expect first element to be an arg */
+    --argv;
     while ((c = bu_getopt(argc, (char * const *)argv, ":k:a:r:x:y:z:")) != -1) {
 	if (bu_optind >= argc)
 	    /* last element is an option */
-	    goto err_no_operand;
+	    goto err_missing_operand;
 
 	switch (c) {
-	    case 'k': /* standard arg specification options */
-	    case 'a':
-	    case 'r':
-		if (last_arg_opt == c)
-		    goto err_redundant_options;
-		last_arg_opt = c;
-	    case 'x': /* singular coordinate specification options */
+	    case 'x': /* singular coord specif. sub-opts */
 	    case 'y':
 	    case 'z':
-	        break; /* nothing needed */
-	    case '?': /* nonstandard or unknown option */
-		if (!isprint(bu_optopt)) {
-		    bu_vls_printf(gedp->ged_result_str,
-				  "Unknown option character '\\x%x'",
-				  bu_optopt);
+	    	if (!bu_optarg)
+		    goto err_missing_arg;
+		if ((strlen(bu_optarg) > 1) && (bu_optarg[0] == '-') &&
+		    (!isdigit(bu_optarg[1])))
+		    goto err_missing_arg;
+		if (idx_cur_opt == 0) {
+		    bu_vls_printf(gedp->ged_result_str, "-%c must follow an"
+				  "argument specification option", c);
 		    edit_cmd_free(&subcmd);
 		    return GED_ERROR;
 		}
 
-		if (last_arg_opt == c)
-		    goto err_redundant_options;
-		last_arg_opt = bu_optopt;
+
+	    	conv_flags = GED_ERROR;
 		break;
-	    case ':': /* missing arg */
-		bu_vls_printf(gedp->ged_result_str,
-			      "Missing argument for option -%c", bu_optopt);
-		edit_cmd_free(&subcmd);
-		return GED_ERROR;
-	    default: /* quiet compiler */
+	    case 'k': /* standard arg specification options */
+	    case 'a':
+	    case 'r':
+	    	conv_flags = GED_ERROR;
+	    	if (!bu_optarg)
+		    goto err_missing_arg;
+		if ((strlen(bu_optarg) > 1) && (bu_optarg[0] == '-')) {
+		    switch (bu_optarg[1]) {
+			case 'x': 
+			case 'y':
+			case 'z':
+			    /* the only acceptible sub-options here */
+			    conv_flags = GED_QUIET;
+			    break;
+			default:
+			    if(!isdigit(bu_optarg[1]))
+				goto err_missing_arg;
+		    }
+		}
 		break;
+	    case '?': /* nonstandard or unknown option */
+	        c = bu_optopt;
+		if (!isprint(c)) {
+		    bu_vls_printf(gedp->ged_result_str,
+				  "Unknown option character '\\x%x'", c);
+		    edit_cmd_free(&subcmd);
+		    return GED_ERROR;
+		}
+
+		/* next element may be an arg */
+		/* FIXME: bu_optarg should be a ptr to const! */
+	    	conv_flags = GED_QUIET;
+		break;
+	    case ':':
+	        goto err_missing_arg;
 	}
 
 	/* record option */
-	if ((idx_cur_opt + 1) >= EDIT_MAX_ARG_OPTIONS)
+	if (idx_cur_opt >= EDIT_MAX_ARG_OPTIONS)
 	    goto err_option_overflow;
-	cur_arg->cl_options[idx_cur_opt] = bu_optopt;
+	cur_arg->cl_options[idx_cur_opt] = c;
 	++idx_cur_opt;
 
-	/* quietly try to read in an argument */
-	if (edit_str_to_arg(gedp, argv[bu_optind], cur_arg, GED_QUIET) ==
-	    GED_OK) {
+	/* move to current arg */
+	argc -= 2;
+	argv += 2;
+	BU_ASSERT(argc > 0);
+
+	/* convert next element to an arg */
+	if (edit_strs_to_arg(gedp, &argc, &argv, cur_arg, conv_flags) ==
+	    GED_ERROR) {
+	    if (conv_flags & GED_ERROR) {
+		edit_cmd_free(&subcmd);
+		return GED_ERROR;
+	    }
+	} else {
 	    /* init for next arg */
+	    if (argc == 0)
+		break; /* no more args */
 	    cur_arg = edit_arg_postfix_new(&subcmd.cmd_line.args);
 	    idx_cur_opt = 0;
 	}
+
+	/* conversion moves argc/argv, so re-init bu_getopt() */
+	bu_optind = 1;
+
+	/* move to before next supposed option */
+	++argc;
+	--argv;
     }
 
-    /* remaining arguments are interpreted as operands */
-    for (i = bu_optind; (i + 1) <= argc; ++i) {
-	if (edit_str_to_arg(gedp, argv[i], cur_arg, GED_ERROR) == GED_OK)
-	    cur_arg = edit_arg_postfix_new(&subcmd.cmd_line.args);
-	else {
-	    /* quit with edit_str_to_arg's ged_result_str */
+    /* get final trailing args */
+    if (argc > 0) {
+	if (edit_strs_to_arg(gedp, &argc, &argv, cur_arg, GED_ERROR) ==
+	    GED_ERROR) {
 	    edit_cmd_free(&subcmd);
 	    return GED_ERROR;
 	}
+	BU_ASSERT(argc == 0);
     }
 
-    int ret;
     ret = edit(gedp, &subcmd);
     edit_cmd_free(&subcmd);
     return ret;
 
-err_no_operand:
+err_missing_arg:
+    bu_vls_printf(gedp->ged_result_str, "Missing argument for option -%c",
+	bu_optopt);
+    edit_cmd_free(&subcmd);
+    return GED_ERROR;
+
+err_missing_operand:
     bu_vls_printf(gedp->ged_result_str,
 		  "No OBJECT provided; nothing to operate on");
     edit_cmd_free(&subcmd);
@@ -1475,11 +1580,6 @@ err_option_overflow:
     for (i = 0; i < EDIT_MAX_ARG_OPTIONS; ++i)
 	bu_vls_printf(gedp->ged_result_str, "-%c/", cur_arg->cl_options[i]);
     bu_vls_printf(gedp->ged_result_str, "-%c", c);
-    edit_cmd_free(&subcmd);
-    return GED_ERROR;
-
-err_redundant_options:
-    bu_vls_printf(gedp->ged_result_str, "redundant -%c options", c);
     edit_cmd_free(&subcmd);
     return GED_ERROR;
 }
