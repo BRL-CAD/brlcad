@@ -1074,6 +1074,13 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, char **classlist, const struc
 	    NMG_INDEX_SET(classlist[NMG_CLASS_AinB], eu->e_p);
 	    status = INSIDE;
 	} else if (class == NMG_CLASS_AonBshared) {
+#ifdef TRI_PROTOTYPE
+	    NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared], eu->e_p);
+	    status = ON_SURF;
+	} else if (class == NMG_CLASS_AonBanti) {
+	    NMG_INDEX_SET(classlist[NMG_CLASS_AonBanti], eu->e_p);
+	    status = ON_SURF;
+#else
 	    FILE *fp;
 	    nmg_pr_fu_around_eu(eu, tol);
 	    VPRINT("class_eu_vs_s: midpoint of edge", pt);
@@ -1090,6 +1097,7 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, char **classlist, const struc
 		bu_log("wrote shell2.pl\n");
 	    }
 	    bu_bomb("class_eu_vs_s:  classifier found edge midpoint ON, edge topology should have been shared\n");
+#endif
 	} else {
 	    bu_log("class=%s\n", nmg_class_name(class));
 	    nmg_euprint("Why wasn't this edge in or out?", eu);
