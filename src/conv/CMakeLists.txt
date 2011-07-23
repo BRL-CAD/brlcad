@@ -21,13 +21,13 @@ ENDIF(MSVC)
 BRLCAD_ADDEXEC(3dm-g 3dm/3dm-g.cpp "libwdb ${OPENNURBS_LIBRARY}")
 set_target_properties(3dm-g PROPERTIES COMPILE_DEFINITIONS "OBJ_BREP=1")
 
-BRLCAD_ADDEXEC(asc2g asc/asc2g.c "libged libwdb librt libbu libtclcad ${WINSOCK_LIB}") 
+BRLCAD_ADDEXEC(asc2g asc/asc2g.c "libged libwdb librt libbu libtclcad ${WINSOCK_LIB} ${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(asc2pix asc/asc2pix.c libbu) 
+BRLCAD_ADDEXEC(asc2pix asc/asc2pix.c libbu)
 
-BRLCAD_ADDEXEC(pix2asc asc/pix2asc.c libbu) 
+BRLCAD_ADDEXEC(pix2asc asc/pix2asc.c libbu)
 
-BRLCAD_ADDEXEC(asc-nmg nmg/asc-nmg.c libwdb) 
+BRLCAD_ADDEXEC(asc-nmg nmg/asc-nmg.c libwdb)
 
 BRLCAD_ADDEXEC(g2asc asc/g2asc.c "librt libbu ${WINSOCK_LIB}")
 
@@ -46,7 +46,7 @@ SET(comgeom-g_SRCS
     comgeom/solid.c
     comgeom/tools.c
 )
-BRLCAD_ADDEXEC(comgeom-g "${comgeom-g_SRCS}" "libwdb libbn libbu")
+BRLCAD_ADDEXEC(comgeom-g "${comgeom-g_SRCS}" "libwdb libbn libbu ${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(conv-vg2g conv-vg2g.c "libbu libsysv")
 
@@ -110,7 +110,7 @@ BRLCAD_ADDEXEC(g-obj g-obj.c "librt libbu")
 
 BRLCAD_ADDEXEC(obj-g obj-g.c "librt libbu")
 
-BRLCAD_ADDEXEC(patch-g patch/patch-g.c "libwdb librt libbu")
+BRLCAD_ADDEXEC(patch-g patch/patch-g.c "libwdb librt libbu ${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(rpatch patch/rpatch.c "librt libbu")
 

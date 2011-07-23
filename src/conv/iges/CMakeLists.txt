@@ -19,7 +19,7 @@ ENDIF(MSVC)
 #    n_iges.cpp
 #    n_main.cpp
 #)
-#target_link_libraries(iges libwdb librt libbu ${OPENNURBS_LIBRARY} ${WIN32LIBS})
+#target_link_libraries(iges libwdb librt libbu ${OPENNURBS_LIBRARY} ${WIN32LIBS} ${M_LIBRARY})
 #INSTALL(TARGETS iges RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
 SET(iges-g_SRCS
@@ -95,9 +95,9 @@ SET(iges-g_SRCS
     usage.c
     wedge.c
 )
-BRLCAD_ADDEXEC(iges-g "${iges-g_SRCS}" "libwdb librt libbn libbu")
+BRLCAD_ADDEXEC(iges-g "${iges-g_SRCS}" "libwdb librt libbn libbu ${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(g-iges "g-iges.c iges.c" "librt libbu")
+BRLCAD_ADDEXEC(g-iges "g-iges.c iges.c" "librt libbu ${M_LIBRARY}")
 
 SET(iges_MANS
   g-iges.1
