@@ -818,12 +818,12 @@ typedef struct bu_list bu_list_t;
  * the head, e.g.  * BU_LIST_INSERT(&(head.l), &((p)->l));
  */
 #define BU_LIST_INSERT(old, new) { \
-	BU_ASSERT((old) != NULL); \
-	BU_ASSERT((new) != NULL); \
+	BU_ASSERT((void *)(old) != (void *)NULL); \
+	BU_ASSERT((void *)(new) != (void *)NULL); \
 	(new)->back = (old)->back; \
 	(old)->back = (new); \
 	(new)->forw = (old); \
-	BU_ASSERT((new)->back != NULL); \
+	BU_ASSERT((void *)((new)->back) != (void *)NULL); \
 	(new)->back->forw = (new);  }
 
 /**
@@ -832,19 +832,19 @@ typedef struct bu_list bu_list_t;
  * e.g.  * BU_LIST_APPEND(&(head.l), &((p)->l));
  */
 #define BU_LIST_APPEND(old, new) { \
-	BU_ASSERT((old) != NULL); \
-	BU_ASSERT((new) != NULL); \
+	BU_ASSERT((void *)(old) != (void *)NULL); \
+	BU_ASSERT((void *)(new) != (void *)NULL); \
 	(new)->forw = (old)->forw; \
 	(new)->back = (old); \
 	(old)->forw = (new); \
-	BU_ASSERT((old)->forw != NULL); \
+	BU_ASSERT((void *)((old)->forw) != (void *)NULL); \
 	(new)->forw->back = (new);  }
 
 /**
  * Dequeue "cur" item from anywhere in doubly-linked list
  */
 #define BU_LIST_DEQUEUE(cur) { \
-	BU_ASSERT((cur) != NULL); \
+	BU_ASSERT((void *)(cur) != (void *)NULL); \
 	if (LIKELY((cur)->forw != NULL)) (cur)->forw->back = (cur)->back; \
 	if (LIKELY((cur)->back != NULL)) (cur)->back->forw = (cur)->forw; \
 	(cur)->forw = (cur)->back = BU_LIST_NULL;  /* sanity */ }
@@ -853,7 +853,7 @@ typedef struct bu_list bu_list_t;
  * Dequeue "cur" but do not fix its links
  */
 #define BU_LIST_DQ(cur) {\
-	BU_ASSERT((cur) != NULL); \
+	BU_ASSERT((void *)(cur) != (void *)NULL); \
 	if (LIKELY((cur)->forw != NULL)) (cur)->forw->back = (cur)->back; \
 	if (LIKELY((cur)->back != NULL)) (cur)->back->forw = (cur)->forw; }
 
