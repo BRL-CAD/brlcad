@@ -58,7 +58,7 @@ BRLCAD_ADDEXEC(dem-g dem-g.c libwdb)
 
 BRLCAD_ADDEXEC(dxf-g dxf/dxf-g.c "libwdb librt libbn libbu")
 
-BRLCAD_ADDEXEC(enf-g enf-g.c libwdb)
+BRLCAD_ADDEXEC(enf-g enf-g.c "libwdb ${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(euclid_format euclid/euclid_format.c librt)
 
@@ -78,7 +78,7 @@ BRLCAD_ADDEXEC(g-nff g-nff.c "libwdb ${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(g-nmg nmg/g-nmg.c libwdb)
 
-BRLCAD_ADDEXEC(fast4-g fast4-g.c "libwdb librt libbu")
+BRLCAD_ADDEXEC(fast4-g fast4-g.c "libwdb librt libbu ${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(jack-g jack/jack-g.c "libwdb librt libbu")
 
