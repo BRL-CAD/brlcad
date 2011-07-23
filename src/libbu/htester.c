@@ -96,6 +96,8 @@ main(int argc, char **argv)
 	/* Write out */
 	htond((unsigned char *)buf, (unsigned char *)orig, NUM);
 	ret = fwrite(buf, 8, NUM, stdout);
+	if (ret != 8)
+	    perror("fwrite");
 	exit(0);
     }
 
@@ -113,6 +115,8 @@ main(int argc, char **argv)
 	    break;
     }
     ret = fread(buf, 8, NUM, stdin);
+    if (ret != 8)
+	perror("fwrite");
 
 /* ntohd((char *)after, buf, NUM);	*//* bulk conversion */
     for (i=0; i<NUM; i++) {
