@@ -50,7 +50,7 @@ BRLCAD_ADDEXEC(comgeom-g "${comgeom-g_SRCS}" "libwdb libbn libbu")
 
 BRLCAD_ADDEXEC(conv-vg2g conv-vg2g.c "libbu libsysv")
 
-BRLCAD_ADDEXEC(cy-g cy-g.c libwdb)
+BRLCAD_ADDEXEC(cy-g cy-g.c "libwdb ${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(dbupgrade dbupgrade.c "libwdb librt libbu")
 
@@ -74,7 +74,7 @@ BRLCAD_ADDEXEC(g-euclid euclid/g-euclid.c librt)
 
 BRLCAD_ADDEXEC(g-euclid1 euclid/g-euclid1.c librt)
 
-BRLCAD_ADDEXEC(g-nff g-nff.c libwdb)
+BRLCAD_ADDEXEC(g-nff g-nff.c "libwdb ${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(g-nmg nmg/g-nmg.c libwdb)
 
@@ -118,13 +118,13 @@ BRLCAD_ADDEXEC(g-tankill tankill/g-tankill.c "librt libbu")
 
 BRLCAD_ADDEXEC(tankill-g tankill/tankill-g.c "libwdb librt libbu")
 
-BRLCAD_ADDEXEC(g-var g-var.c "librt libbu")
+BRLCAD_ADDEXEC(g-var g-var.c "librt libbu ${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(g-vrml g-vrml.c "librt libbu")
 
 BRLCAD_ADDEXEC(g-x3d g-x3d.c "librt libbu")
 
-BRLCAD_ADDEXEC(nastran-g nastran-g.c "libwdb librt libbu")
+BRLCAD_ADDEXEC(nastran-g nastran-g.c "libwdb librt libbu ${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(nmg-bot nmg/nmg-bot.c libwdb)
 
@@ -148,7 +148,7 @@ IF(MSVC)
 	SET_TARGET_PROPERTIES(g-xxx_facets PROPERTIES COMPILE_FLAGS "-DBRLCAD_DLL")
 ENDIF(MSVC)
 
-BRLCAD_ADDEXEC(g-shell-rect g-shell-rect.c "libwdb librt libbu")
+BRLCAD_ADDEXEC(g-shell-rect g-shell-rect.c "libwdb librt libbu ${M_LIBRARY}")
 
 install(PROGRAMS intaval-g.py DESTINATION bin)
 
