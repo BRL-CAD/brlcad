@@ -2688,7 +2688,6 @@ sketch_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_par
 {
     struct rt_sketch_internal *sketch;
     struct bu_vls str;
-    int i;
 
     if (ip->idb_type != ID_SKETCH)
 	bu_log("sketch_to_iges called for non-sketch (type=%d)\n", ip->idb_type);
