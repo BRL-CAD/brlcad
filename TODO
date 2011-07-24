@@ -21,6 +21,9 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * test illuminate (e.g. oed) + Z, report of crash (on Windows)
 
+* fix 64b detection across platforms. Fix rhel 32/64 confusion
+
+* test for -msse3 requirement for __SSE.*__ definition
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
