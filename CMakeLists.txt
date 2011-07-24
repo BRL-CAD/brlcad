@@ -780,8 +780,6 @@ ELSE(MSVC)
 	FILE(APPEND  ${CONFIG_H_FILE} "#define SIZEOF_VOID_P ${CMAKE_SIZEOF_VOID_P}\n")
 ENDIF(MSVC)
 MARK_AS_ADVANCED(BRLCAD-ENABLE_64BIT)
-FILE(APPEND  ${CONFIG_H_FILE} "#define _FILE_OFFSET_BITS 32\n")
-FILE(APPEND  ${CONFIG_H_FILE} "#define _LARGEFILE64_SOURCE 0\n")
 
 # Take advantage of parallel processors if available - highly recommended
 OPTION(BRLCAD-ENABLE_SMP "Enable SMP architecture parallel computation support" ON)
