@@ -27,11 +27,11 @@ BRLCAD_ADDEXEC(asc2pix asc/asc2pix.c libbu)
 
 BRLCAD_ADDEXEC(pix2asc asc/pix2asc.c libbu)
 
-BRLCAD_ADDEXEC(asc-nmg nmg/asc-nmg.c libwdb)
+BRLCAD_ADDEXEC(asc-nmg nmg/asc-nmg.c "libwdb ${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(g2asc asc/g2asc.c "librt libbu ${WINSOCK_LIB}")
 
-BRLCAD_ADDEXEC(bot-bldxf dxf/bot-bldxf.c "librt libbu")
+BRLCAD_ADDEXEC(bot-bldxf dxf/bot-bldxf.c "librt libbu ${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(bot_dump bot_dump.c "libged librt")
 
@@ -54,9 +54,9 @@ BRLCAD_ADDEXEC(cy-g cy-g.c "libwdb ${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(dbupgrade dbupgrade.c "libwdb librt libbu")
 
-BRLCAD_ADDEXEC(dem-g dem-g.c libwdb)
+BRLCAD_ADDEXEC(dem-g dem-g.c "libwdb ${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(dxf-g dxf/dxf-g.c "libwdb librt libbn libbu")
+BRLCAD_ADDEXEC(dxf-g dxf/dxf-g.c "libwdb librt libbn libbu ${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(enf-g enf-g.c "libwdb ${M_LIBRARY}")
 
@@ -120,9 +120,9 @@ BRLCAD_ADDEXEC(tankill-g tankill/tankill-g.c "libwdb librt libbu")
 
 BRLCAD_ADDEXEC(g-var g-var.c "librt libbu ${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(g-vrml g-vrml.c "librt libbu")
+BRLCAD_ADDEXEC(g-vrml g-vrml.c "librt libbu ${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(g-x3d g-x3d.c "librt libbu")
+BRLCAD_ADDEXEC(g-x3d g-x3d.c "librt libbu ${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(nastran-g nastran-g.c "libwdb librt libbu ${M_LIBRARY}")
 
@@ -136,7 +136,7 @@ BRLCAD_ADDEXEC(ply-g ply-g.c "librt libbu")
 
 BRLCAD_ADDEXEC(poly-bot poly-bot.c "libwdb ${WINSOCK_LIB}") 
 
-BRLCAD_ADDEXEC(proe-g proe-g.c "libwdb librt libbu")
+BRLCAD_ADDEXEC(proe-g proe-g.c "libwdb librt libbu ${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(shp-g "shp/shp-g.c shp/shapelib/safileio.c shp/shapelib/shpopen.c" "libwdb librt libbu")
 

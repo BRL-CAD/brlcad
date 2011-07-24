@@ -12,11 +12,11 @@ IF(BRLCAD-ENABLE_X11)
   )
 ENDIF(BRLCAD-ENABLE_X11)
 
-BRLCAD_ADDEXEC(all_sf all_sf.c librt)
-BRLCAD_ADDEXEC(showtherm showtherm.c librt)
-BRLCAD_ADDEXEC(firpass "firpass.c subroutines.c" librt)
-BRLCAD_ADDEXEC(secpass "secpass.c subroutines.c" librt)
-BRLCAD_ADDEXEC(shapefact shapefact.c librt)
+BRLCAD_ADDEXEC(all_sf all_sf.c "librt ${M_LIBRARY}")
+BRLCAD_ADDEXEC(showtherm showtherm.c "librt ${M_LIBRARY}")
+BRLCAD_ADDEXEC(firpass "firpass.c subroutines.c" "librt ${M_LIBRARY}")
+BRLCAD_ADDEXEC(secpass "secpass.c subroutines.c" "librt ${M_LIBRARY}")
+BRLCAD_ADDEXEC(shapefact shapefact.c "librt ${M_LIBRARY}")
 
 SET(irprep_MANS
   ${irprep_X_MANS}

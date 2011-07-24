@@ -11,9 +11,9 @@ IF(LEX_EXECUTABLE)
 	SET_TARGET_PROPERTIES(scriptsort PROPERTIES COMPILE_FLAGS "-Wno-error")
 ENDIF(LEX_EXECUTABLE)
 
-BRLCAD_ADDEXEC(script-tab script-tab.c "librt libbn libbu")
-BRLCAD_ADDEXEC(tabinterp tabinterp.c "librt libbu")
-BRLCAD_ADDEXEC(tabsub tabsub.c "libbn libbu")
+BRLCAD_ADDEXEC(script-tab script-tab.c "librt libbn libbu ${M_LIBRARY}")
+BRLCAD_ADDEXEC(tabinterp tabinterp.c "librt libbu ${M_LIBRARY}")
+BRLCAD_ADDEXEC(tabsub tabsub.c "libbn libbu ${M_LIBRARY}")
 
 SET(tab_MANS
   tabinterp.1

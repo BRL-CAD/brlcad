@@ -138,15 +138,15 @@ target_link_libraries(rtexample librt libfb liboptical)
 
 BRLCAD_ADDEXEC(reshoot "${reshoot_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical")
 
-BRLCAD_ADDEXEC(rtwalk "${rtwalk_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical")
+BRLCAD_ADDEXEC(rtwalk "${rtwalk_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical ${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(rtshot "${rtshot_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical")
+BRLCAD_ADDEXEC(rtshot "${rtshot_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical ${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(rtmlt "${rtmlt_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical ${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(rtregis "${rtregis_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical")
 
-BRLCAD_ADDEXEC(rtscale "${rtscale_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical")
+BRLCAD_ADDEXEC(rtscale "${rtscale_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical ${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(rt "${rt_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical ${M_LIBRARY}")
 
@@ -180,6 +180,9 @@ BRLCAD_ADDEXEC(rtweight "${rtweight_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libf
 
 BRLCAD_ADDEXEC(rtxray "${rtxray_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical ${M_LIBRARY}")
 
+
+# FIXME: libremrt needs -lm
+# BRLCAD_ADDLIB(libremrt "${LIBREMRT_SOURCES}" "librt libbu ${WINSOCK_LIB} ${M_LIBRARY}")
 add_library(libremrt STATIC ${LIBREMRT_SOURCES})
 
 add_library(librttherm STATIC ${RT_COMMON_SRCS})

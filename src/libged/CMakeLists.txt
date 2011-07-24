@@ -269,7 +269,7 @@ include_directories(
     ${TCL_INCLUDE_DIRS}
 )
 
-BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb librt libfb libbu libanalyze ${REGEX_LIBRARY} ${WINSOCK_LIB}")
+BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb librt libfb libbu libanalyze ${REGEX_LIBRARY} ${WINSOCK_LIB} ${M_LIBRARY}")
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
 SET(ged_ignore_files

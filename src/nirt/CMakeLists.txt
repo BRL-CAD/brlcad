@@ -17,7 +17,7 @@ SET(NIRT_SRCS
     parse_fmt.c
 )
 
-BRLCAD_ADDEXEC(nirt "${NIRT_SRCS}" "librt libfb")
+BRLCAD_ADDEXEC(nirt "${NIRT_SRCS}" "librt libfb ${M_LIBRARY}")
 SET_TARGET_PROPERTIES(nirt PROPERTIES COMPILE_DEFINITIONS "DFLT_SHELL=\"/bin/sh\"")
 
 BRLCAD_ADDEXEC(showshot showshot.c libbn)

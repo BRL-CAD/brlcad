@@ -16,7 +16,7 @@ IF(MSVC)
 ENDIF(MSVC)
 
 BRLCAD_ADDEXEC(g_diff g_diff.c "libtclcad libged librt")
-BRLCAD_ADDEXEC(g_lint g_lint.c librt)
+BRLCAD_ADDEXEC(g_lint g_lint.c "librt ${M_LIBRARY}")
 BRLCAD_ADDEXEC(g_qa g_qa.c "libged librt")
 BRLCAD_ADDEXEC(remapid remapid.c "librt libbu")
 
