@@ -30,7 +30,7 @@ void
 bu_ptbl_init(struct bu_ptbl *b, size_t len, const char *str)
 {
     if (UNLIKELY(bu_debug & BU_DEBUG_PTBL))
-	bu_log("bu_ptbl_init(%p, len=%z, %s)\n", (void *)b, len, str);
+	bu_log("bu_ptbl_init(%p, len=%zu, %s)\n", (void *)b, len, str);
 
     BU_LIST_INIT(&b->l);
     b->l.magic = BU_PTBL_MAGIC;
