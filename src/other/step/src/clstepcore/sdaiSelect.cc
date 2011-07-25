@@ -76,25 +76,6 @@ const TypeDescriptor *
 SCLP23(Select)::CanBe (const char * n) const  
 {
   return _type -> CanBe (n);
-/*
-    const TypeDescLinkNode * tdn = 
-		(const TypeDescLinkNode *) _type -> GetElements ().GetHead ();
-    const TypeDescriptor *td = tdn -> TypeDesc ();
-
-    SCLstring tmp1;
-    SCLstring tmp2;
-  
-    while (tdn)  {
-	td = tdn -> TypeDesc ();
-	if (strcmp( (char *)StrToUpper( n, tmp1 ), 
-		    (char *)StrToUpper( td->Name(), tmp2 ) ))
-	    ;
-	else 
-	    return td;  // they are the same 
-	tdn = (TypeDescLinkNode *) (tdn -> NextNode ());
-    }
-    return 0;
-*/
 }
 
 
@@ -647,20 +628,6 @@ SCLP23(Select)::STEPwrite(ostream& out, const char *currSch)  const
 	  out << "ERROR Should not have gone here in SCLP23(Select)::STEPwrite()"
 	      << endl;
       }
-/*
-    if (IsUnique(ValueType()) || (ValueType() == ENTITY_TYPE))
-	STEPwrite_content( out ); 
-    else
-        STEPwrite_verbose(out);
-*/
-/*    
-    {
-	SCLstring tmp;
-	out << StrToUpper( CurrentUnderlyingType()->Name(), tmp ) << "(";
-	STEPwrite_content (out); 
-	out << ")";
-    }
-*/
 }
 
 void

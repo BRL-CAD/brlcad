@@ -28,7 +28,6 @@
 #include <stdio.h> // added to have the definition for BUFSIZE
 #include <stdlib.h> 
 #include <string.h>
-#include <scl_string.h>
 #include <errordesc.h>
 
 char         ToLower (const char c);

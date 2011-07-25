@@ -903,18 +903,6 @@ Inverse_attribute::AttrExprDefStr(std::string & s) const
   s.append(_inverted_attr_id);
   return const_cast<char *>(s.c_str());
 }    
-/*
-const char * 
-Inverse_attribute::GenerateExpress (SCLstring &buf) const
-{
-    char tmp[BUFSIZ];
-    SCLstring sstr;
-    buf = AttrExprDefStr(sstr);
-    buf.Append(";\n");
-
-    return buf.chars();
-}
-*/
 
 ///////////////////////////////////////////////////////////////////////////////
 // EnumDescriptor functions
@@ -1149,7 +1137,6 @@ EntityDescriptor::GenerateExpress (std::string &buf) const
 /////////
 
     InverseAItr iai(_inverseAttr);
-//	const char * AttrTypeName( SCLstring &buf, const char *schnm =NULL ) const;
 
     iai.ResetItr();
     const Inverse_attribute *ia = iai.NextInverse_attribute();
@@ -1883,30 +1870,6 @@ TypeDescriptor::TypeString(std::string & s) const
   return const_cast<char *>(s.c_str());
 
 }
-/* this works
-    if( ( (ReferentType() != 0) || (ReferentEntity() != 0) ) && Name())
-    {
-	strcat(tStr, "TYPE ");
-	strcat(tStr, Name());
-	strcat(tStr, " = ");
-    }
-    if(Description())
-	strcat(tStr, Description());
-    if(ReferentType())
-    {
-	strcat(tStr, " -- ");
-	SCLstring tmp;
-	strcat(tStr, ReferentType()->TypeString(tmp));
-    }
-    else if(ReferentEntity())
-    {
-	strcat(tStr, " -- ");
-	strcat(tStr, "Entity: ");
-	strcat(tStr, ReferentEntity()->Name());
-    }
-    return tStr;
-}
-*/
 
 const TypeDescriptor * 
 TypeDescriptor::IsA (const TypeDescriptor * other)  const {
