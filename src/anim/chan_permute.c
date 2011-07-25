@@ -66,7 +66,7 @@ int
 main(int argc, char *argv[])
 {
     int i, j, maxlength, num_done;
-    int count, icount, ocount;
+    int icount, ocount;
     struct unit *x, *y;
     Word *arrayd;
 
@@ -126,7 +126,9 @@ main(int argc, char *argv[])
 		    num_done += 1;
 		} else {
 		    for (j=0;j<x->channels;j++) {
-			count = fscanf(x->file, "%40s ", arrayd[x->list[j]]);
+			int ret = fscanf(x->file, "%40s ", arrayd[x->list[j]]);
+			if (ret != 1)
+			    perror("fscanf");
 		    }
 		}
 	    } else if (x->i_o == 0) {
