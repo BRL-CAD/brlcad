@@ -561,7 +561,7 @@ main(int argc, char *argv[])
 
     /* now write out the results */
     if ( debug ) {
-	bu_log( "Writing output (%ld vertices and %d faces)\n", verts->curr_vert, num_faces );
+	bu_log( "Writing output (%z vertices and %ld faces)\n", verts->curr_vert, num_faces );
     }
     fprintf( fd_out, "# vtk DataFile Version 1.0\n" );
     fprintf( fd_out, "%s", argv[database_index] );
