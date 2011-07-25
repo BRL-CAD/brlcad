@@ -431,7 +431,7 @@ main(int argc, char *argv[])
     int ret;
 
     if (argc > 0)
-	bu_log("Usage: %0\n", argv[0]);
+	bu_log("Usage: %s\n", argv[0]);
 
     bu_log("Breplicating...please wait...\n");
 
