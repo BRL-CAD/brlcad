@@ -921,8 +921,6 @@ STEP
 
 * add hierarchy preservation support to step-g
 
-* replace SCLstring with std::string
-
 * document step-g
 
 * implement g-step exporter (see above)
