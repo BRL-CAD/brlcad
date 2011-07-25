@@ -70,7 +70,7 @@ const char title[] = "RT X-Ray";
 void
 usage(const char *argv0)
 {
-    bu_log("Usage: rtxray [options] model.g objects... >stuff\n", argv0);
+    bu_log("Usage: %s [options] model.g objects... >stuff\n", argv0);
     bu_log("Options:\n");
     bu_log(" -s #		Grid size in pixels, default 512\n");
     bu_log(" -a Az		Azimuth in degrees	(conflicts with -M)\n");
