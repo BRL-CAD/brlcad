@@ -35,11 +35,18 @@ MACRO(THIRD_PARTY_OPTION upper lower)
 
 	# Main search logic
 	IF(NOT ${CMAKE_PROJECT_NAME}_BUILD_LOCAL_${upper} OR ${CMAKE_PROJECT_NAME}-ENABLE_SYSTEM_LIBS_ONLY)
+		# Stash the previous results (if any) so we don't repeatedly call out the tests - only report
+		# if something actually changes in subsequent runs.
+		SET(${upper}_FOUND_STATUS ${${upper}_FOUND})
 		# Initialize (or rather, uninitialize) variables in preparation for search
 		SET(${upper}_FOUND "${upper}-NOTFOUND" CACHE STRING "${upper}_FOUND" FORCE)
 		MARK_AS_ADVANCED(${upper}_FOUND)
 		SET(${upper}_LIBRARY "${upper}-NOTFOUND" CACHE STRING "${upper}_LIBRARY" FORCE)
 		SET(${upper}_INCLUDE_DIR "${upper}-NOTFOUND" CACHE STRING "${upper}_INCLUDE_DIR" FORCE)
+		# Be quiet if we're doing this over
+		IF("${${upper}_FOUND_STATUS}" MATCHES "${upper}-NOTFOUND")
+			SET(${upper}_FIND_QUIETLY TRUE)
+		ENDIF("${${upper}_FOUND_STATUS}" MATCHES "${upper}-NOTFOUND")
 		# Include the Find module for the library in question
 		IF(EXISTS ${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
 			INCLUDE(${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
@@ -67,6 +74,10 @@ MACRO(THIRD_PARTY_OPTION upper lower)
 					RETURN_VALUE rm_retval
 					)
 			ENDFOREACH(stale_file ${STALE_FILES})
+			IF("${${upper}_FOUND_STATUS}" MATCHES "${upper}-NOTFOUND")
+				MESSAGE("${upper} has been found - reconfiguring to use system version")
+			ENDIF("${${upper}_FOUND_STATUS}" MATCHES "${upper}-NOTFOUND")
+			SET(${upper}_FOUND "TRUE" CACHE STRING "${upper}_FOUND" FORCE)
 		ENDIF(NOT ${upper}_FOUND)
 	ELSE(NOT ${CMAKE_PROJECT_NAME}_BUILD_LOCAL_${upper} OR ${CMAKE_PROJECT_NAME}-ENABLE_SYSTEM_LIBS_ONLY)
 		SET(${upper}_LIBRARY "${lower}" CACHE STRING "set by THIRD_PARTY macro" FORCE)
