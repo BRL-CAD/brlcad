@@ -51,7 +51,7 @@ extern union tree *gcv_bottess_region_end(struct db_tree_state *tsp, const struc
 struct gcv_data {
     void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
     FILE *fp;
-    unsigned int tot_polygons;
+    unsigned long tot_polygons;
     struct bn_tol tol;
 };
 
@@ -133,15 +133,11 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 
 	for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
 	    struct loopuse *lu;
-	    vect_t facet_normal;
 
 	    NMG_CK_FACEUSE(fu);
 
 	    if (fu->orientation != OT_SAME)
 		continue;
-
-	    /* Grab the face normal and save it for all the vertex loops */
-	    NMG_GET_FU_NORMAL(facet_normal, fu);
 
 	    for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
 		struct edgeuse *eu;
@@ -181,7 +177,7 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 int
 main(int argc, char *argv[])
 {
-    char usage[] = "Usage: %s [-bviM] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.egg] brlcad_db.g object(s)\n";
+    char usage[] = "Usage: %s [-bvM] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.egg] brlcad_db.g object(s)\n";
 
     int verbose = 0;
     int NMG_debug;			/* saved arg of -X, for longjmp handling */
@@ -195,8 +191,6 @@ main(int argc, char *argv[])
     int regions_tried = 0;
     int regions_converted = 0;
     int regions_written = 0;
-    int inches = 0;
-
 
     double percent;
     int i, use_mc=0, use_bottess=1;
@@ -268,9 +262,6 @@ main(int argc, char *argv[])
 		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
 		NMG_debug = rt_g.NMG_debug;
 		break;
-	    case 'i':
-		inches = 1;
-		break;
 	    case '8':
 		use_mc = 1;
 		break;
@@ -339,7 +330,7 @@ main(int argc, char *argv[])
 	(void) db_walk_tree(dbip,		/* db_i */
 			    1,		/* argc */
 			    (const char **)(++argv), /* argv */
-			    1,		/* ncpu */
+			    ncpu,		/* ncpu */
 			    &tree_state,	/* state */
 			    NULL,		/* start func */
 			    use_mc?gcv_region_end_mc:use_bottess?gcv_bottess_region_end:gcv_region_end,	/* end func */
