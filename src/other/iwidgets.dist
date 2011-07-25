@@ -9,7 +9,6 @@ incoming
 iwidgets.tcl.in
 license.terms
 outgoing
-pkgIndex.tcl
 pkgIndex.tcl.in
 tclconfig
 tests
