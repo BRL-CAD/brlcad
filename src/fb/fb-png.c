@@ -38,6 +38,7 @@
 #  include <unistd.h>
 #endif
 
+#include "zlib.h"
 #include "png.h"
 #include "bu.h"
 #include "fb.h"

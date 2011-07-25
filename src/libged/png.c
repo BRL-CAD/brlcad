@@ -30,6 +30,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "zlib.h"
 #include "png.h"
 #include "bu.h"
 #include "vmath.h"

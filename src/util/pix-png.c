@@ -36,7 +36,6 @@
 #include "bio.h"
 
 #include "zlib.h"
-#include "pngconf.h"
 #include "png.h"
 
 #include "bu.h"

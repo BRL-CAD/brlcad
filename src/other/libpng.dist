@@ -8,7 +8,6 @@ autogen.sh
 configure.ac
 contrib
 example.c
-libpng-1.4.5.txt
 libpng-config.in
 libpng.3
 libpng.pc.in
