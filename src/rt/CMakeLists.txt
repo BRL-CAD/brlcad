@@ -17,12 +17,6 @@ set(rtwalk_SRCS rtwalk.c)
 
 set(rtshot_SRCS rtshot.c)
 
-set(rtmlt_SRCS
-    ${RT_COMMON_SRCS}
-    scanline.c
-    viewmlt.c
-)
-
 set(rtregis_SRCS
     read-rtlog.c
     rtregis.c
@@ -141,8 +135,6 @@ BRLCAD_ADDEXEC(reshoot "${reshoot_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb 
 BRLCAD_ADDEXEC(rtwalk "${rtwalk_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical ${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(rtshot "${rtshot_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical ${M_LIBRARY}")
-
-BRLCAD_ADDEXEC(rtmlt "${rtmlt_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical ${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(rtregis "${rtregis_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical")
 
