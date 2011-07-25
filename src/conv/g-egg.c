@@ -180,7 +180,6 @@ main(int argc, char *argv[])
     char usage[] = "Usage: %s [-bvM] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.egg] brlcad_db.g object(s)\n";
 
     int verbose = 0;
-    int NMG_debug;			/* saved arg of -X, for longjmp handling */
     int ncpu = 1;			/* Number of processors */
     char *output_file = NULL;	/* output filename */
     struct db_i *dbip;
@@ -260,7 +259,6 @@ main(int argc, char *argv[])
 		break;
 	    case 'X':
 		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
-		NMG_debug = rt_g.NMG_debug;
 		break;
 	    case '8':
 		use_mc = 1;

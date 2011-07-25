@@ -263,7 +263,7 @@ get_large_field_input(FILE *fp, int write_flag)
 
     if (next_line[0] == '*') {
 	if (!get_next_record(fp, 0, 0)) {
-	    bu_exit(1, "unexpected end of INPUT at line #%d\n", line_count);
+	    bu_exit(1, "unexpected end of INPUT at line #%ld\n", line_count);
 	}
 
 	card_len = strlen(line);
@@ -314,7 +314,7 @@ get_small_field_input(FILE *fp, int write_flag)
 
     if (next_line[0] == '+') {
 	if (!get_next_record(fp, 0, 0)) {
-	    bu_exit(1, "unexpected end of INPUT at line #%d\n", line_count);
+	    bu_exit(1, "unexpected end of INPUT at line #%ld\n", line_count);
 	}
 
 	card_len = strlen(line);
@@ -387,7 +387,7 @@ get_free_form_input(FILE *fp, int write_flag)
 	if (strchr(curr_rec[9], '+')) {
 	    /* continuation card */
 	    if (!get_next_record(fp, 0, 0)) {
-		bu_exit(1, "unexpected end of INPUT at line #%d\n", line_count);
+		bu_exit(1, "unexpected end of INPUT at line #%ld\n", line_count);
 	    }
 
 	    i = 0;

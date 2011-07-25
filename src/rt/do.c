@@ -886,9 +886,9 @@ do_frame(int framenumber)
     bu_vls_free(&times);
     memory_summary();
     if (rt_verbosity & VERBOSE_STATS) {
-	bu_log("%ld solid/ray intersections: %ld hits + %ld miss\n",
+	bu_log("%zu solid/ray intersections: %zu hits + %zu miss\n",
 	       rtip->nshots, rtip->nhits, rtip->nmiss);
-	bu_log("pruned %.1f%%:  %ld model RPP, %ld dups skipped, %ld solid RPP\n",
+	bu_log("pruned %.1f%%:  %zu model RPP, %zu dups skipped, %zu solid RPP\n",
 	       rtip->nshots>0?((double)rtip->nhits*100.0)/rtip->nshots:100.0,
 	       rtip->nmiss_model, rtip->ndup, rtip->nmiss_solid);
 	bu_log("Frame %2d: %10zu pixels in %9.2f sec = %12.2f pixels/sec\n",

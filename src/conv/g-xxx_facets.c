@@ -66,7 +66,7 @@ static struct db_tree_state	tree_state;	/* includes tol & model */
 static int		regions_tried = 0;
 static int		regions_converted = 0;
 static int		regions_written = 0;
-static unsigned int	tot_polygons = 0;
+static size_t tot_polygons = 0;
 
 /*
  *			M A I N
@@ -199,7 +199,7 @@ main(int argc, char **argv)
 		regions_written, percent );
     }
 
-    bu_log( "%ld triangles written\n", tot_polygons );
+    bu_log( "%zd triangles written\n", tot_polygons );
 
     bu_log( "Tesselation parameters used:\n");
     bu_log( "  abs  [-a]    %g\n", ttol.abs );
@@ -223,7 +223,6 @@ output_nmg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     struct shell *s;
     struct vertex *v;
     char *region_name;
-    int region_polys=0;
 
     NMG_CK_REGION( r );
     RT_CK_FULL_PATH(pathp);
@@ -251,7 +250,7 @@ output_nmg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 	{
 	    struct loopuse *lu;
-	    vect_t facet_normal;
+	    /* vect_t facet_normal; */
 
 	    NMG_CK_FACEUSE( fu );
 
@@ -259,7 +258,7 @@ output_nmg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		continue;
 
 	    /* Grab the face normal if needed */
-	    NMG_GET_FU_NORMAL( facet_normal, fu);
+	    /* NMG_GET_FU_NORMAL( facet_normal, fu); */
 
 	    for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 	    {
@@ -285,7 +284,6 @@ output_nmg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		    }
 		}
 		tot_polygons++;
-		region_polys++;
 	    }
 	}
     }

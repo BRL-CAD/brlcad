@@ -244,7 +244,7 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		if (vert_count > 3)
 		{
 		    bu_free(region_name, "region name");
-		    bu_log("lu x%x has %d vertices!\n", lu, vert_count);
+		    bu_log("lu %p has %d vertices!\n", (void *)lu, vert_count);
 		    bu_exit(1, "ERROR: LU is not a triangle");
 		}
 		else if (vert_count < 3)
@@ -499,7 +499,7 @@ main(int argc, char *argv[])
 		   regions_written, percent);
     }
 
-    bu_log("%ld triangles written\n", tot_polygons);
+    bu_log("%lu triangles written\n", tot_polygons);
 
     if (output_file) {
 	if (binary) {

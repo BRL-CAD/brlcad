@@ -1047,11 +1047,11 @@ mlt_build_path(register struct application *ap, struct partition *PartHeadp, str
             if (p_path->pt_list) {
                 struct point_list* new_point;
                 BU_GETSTRUCT(new_point, point_list);
-                            
+
                 VMOVE(new_point->pt_cell, segp->seg_in.hit_point);
                 BU_LIST_PUSH(&(p_path->pt_list->l), &(new_point->l));
             }
-            
+
             else {
                 BU_GETSTRUCT(p_path->pt_list, point_list);
                 BU_LIST_INIT(&(p_path->pt_list->l));
@@ -1073,14 +1073,14 @@ mlt_build_path(register struct application *ap, struct partition *PartHeadp, str
 	    new_app.a_level = ap->a_level+1;
         new_app.a_hit = mlt_build_path;
         new_app.a_miss = ap->a_miss;
-        
+
         /* Setting up new ray */
         VMOVE(new_app.a_ray.r_pt, segp->seg_in.hit_point);
         VMOVE(new_app.a_ray.r_dir, new_dir);
 
 	    new_app.a_purpose = "Path building";
         new_app.a_uptr = ap->a_uptr;
-            
+
         (void) rt_shootray(&new_app);
     }
 
@@ -1097,7 +1097,7 @@ mlt_build_path(register struct application *ap, struct partition *PartHeadp, str
  *  to shoot new rays in the direction of the light source. Then,
  *  this function is associated with the new ray. If this hits,
  *  we have a shadow (because something is obstructing the light's
- *  path). 
+ *  path).
  *
  *  This will be changed and will do something else when path
  *  tracing development starts. For now, it should just say when
@@ -1106,12 +1106,12 @@ mlt_build_path(register struct application *ap, struct partition *PartHeadp, str
 int
 secondary_hit(register struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp))
 {
-    struct hit *hitp;
+    /* struct hit *hitp; */
     struct partition *pp;
-  
+
     /*bu_log("hit: 0x%x\n", ap->a_resource);*/
 
-    pp = PartHeadp->pt_forw;    
+    pp = PartHeadp->pt_forw;
 
     for (; pp != PartHeadp; pp = pp->pt_forw)
         if (pp->pt_outhit->hit_dist >= 0.0)  break;
@@ -1122,16 +1122,16 @@ secondary_hit(register struct application *ap, struct partition *PartHeadp, stru
         return 0;
     }
 
-    hitp = pp->pt_inhit;
+    /* hitp = pp->pt_inhit; */
 
     /* This is used find the hit point: */
-    /*RT_HIT_NORMAL(normal, 
+    /*RT_HIT_NORMAL(normal,
         hitp,
         pp->pt_inseg->seg_stp,
         &(ap->a_ray),
         pp->pt_inflip);
     */
-    
+
     ap->a_user = 1;
 
     return 1;

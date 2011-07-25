@@ -76,7 +76,7 @@ make_shape(struct rt_wdb *fd, int verbose, int debug, size_t idx, size_t num, po
 
     skt = (struct rt_sketch_internal *)bu_calloc(1, sizeof(struct rt_sketch_internal), "sketch");
     skt->magic = RT_SKETCH_INTERNAL_MAGIC;
-    
+
     VMOVE(skt->V, V);
     VSET(skt->u_vec, 1.0, 0.0, 0.0);
     VSET(skt->v_vec, 0.0, 1.0, 0.0);
@@ -111,18 +111,18 @@ make_shape(struct rt_wdb *fd, int verbose, int debug, size_t idx, size_t num, po
 
     /* write out sketch shape */
     bu_vls_init(&str_sketch);
-    bu_vls_sprintf(&str_sketch, "shape-%lu.sketch", idx);
+    bu_vls_sprintf(&str_sketch, "shape-%zu.sketch", idx);
     mk_sketch(fd, bu_vls_addr(&str_sketch), skt);
 
     /* extrude the shape */
     bu_vls_init(&str_extrude);
-    bu_vls_sprintf(&str_extrude, "shape-%lu.extrude", idx);
+    bu_vls_sprintf(&str_extrude, "shape-%zu.extrude", idx);
     VSET(h, 0.0, 0.0, 10.0); /* FIXME: arbitrary height */
     mk_extrusion(fd, bu_vls_addr(&str_extrude), bu_vls_addr(&str_sketch), skt->V, h, skt->u_vec, skt->v_vec, 0);
 
     bu_vls_free(&str_sketch);
     bu_vls_free(&str_extrude);
-    
+
     return 0;
 }
 
@@ -205,7 +205,7 @@ main(int argc, char *argv[])
 	bu_log("Reading from [%V]\n", &vls_in);
 	bu_log("Writing to [%V]\n\n", &vls_out);
     }
-    
+
     /* initialize single threaded resource */
     rt_init_resource(&rt_uniresource, 0, NULL);
 
@@ -247,7 +247,7 @@ main(int argc, char *argv[])
 	object = SHPReadObject(shapefile, i);
 	if (!object) {
 	    if (opt_debug)
-		bu_log("Shape %lu of %lu is missing, skipping.\n", i+1, (size_t)shp_num_entities);
+		bu_log("Shape %zu of %zu is missing, skipping.\n", i+1, (size_t)shp_num_entities);
 	    continue;
 	}
 
@@ -255,7 +255,7 @@ main(int argc, char *argv[])
 	if (opt_debug) {
 	    int shp_altered = SHPRewindObject(shapefile, object);
 	    if (shp_altered > 0) {
-		bu_log("WARNING: Shape %lu of %lu has [%d] bad loop orientations.\n", i+1, (size_t)shp_num_entities, shp_altered);
+		bu_log("WARNING: Shape %zu of %zu has [%d] bad loop orientations.\n", i+1, (size_t)shp_num_entities, shp_altered);
 		shp_num_invalid++;
 	    }
 	}
@@ -280,7 +280,7 @@ main(int argc, char *argv[])
 
 	    if (object->nParts > 0 && object->panPartStart[0] != 0) {
 		if (opt_debug)
-		    bu_log("Shape %lu of %lu: panPartStart[0] = %d, not zero as expected.\n", i+1, (size_t)shp_num_entities, object->panPartStart[0]);
+		    bu_log("Shape %zu of %zu: panPartStart[0] = %d, not zero as expected.\n", i+1, (size_t)shp_num_entities, object->panPartStart[0]);
 		continue;
 	    }
 	}
@@ -292,20 +292,20 @@ main(int argc, char *argv[])
 	    if (shp_part < object->nParts
 		&& j == (size_t)object->panPartStart[shp_part]) {
 		shp_part++;
-		bu_log("Shape %lu of %lu: End of Loop\n", i+1, (size_t)shp_num_entities);
+		bu_log("Shape %zu of %zu: End of Loop\n", i+1, (size_t)shp_num_entities);
 		make_shape(fd_out, opt_verbose, opt_debug, i, num_verts, verts);
 
 		/* reset for next loop */
 		memset(verts, 0, sizeof(point2d_t) * object->nVertices);
 		num_verts = 0;
 	    }
-	    bu_log("%lu/%lu:%lu/%lu\t\t", i+1, (size_t)shp_num_entities, j+1, (size_t)object->nVertices);
+	    bu_log("%zu/%zu:%zu/%zu\t\t", i+1, (size_t)shp_num_entities, j+1, (size_t)object->nVertices);
 	    bu_log("(%12.4f, %12.4f, %12.4f, %g)\n", object->padfX[j], object->padfY[j], object->padfZ[j], object->padfM[j]);
 
 	    V2SET(verts[num_verts], object->padfX[j], object->padfY[j]);
 	    num_verts++;
 	}
-	bu_log("Shape %lu of %lu: End of Loop\n", i+1, (size_t)shp_num_entities);
+	bu_log("Shape %zu of %zu: End of Loop\n", i+1, (size_t)shp_num_entities);
 	make_shape(fd_out, opt_verbose, opt_debug, i, num_verts, verts);
 
 	bu_free(verts, "free point array");
@@ -318,7 +318,7 @@ main(int argc, char *argv[])
 
     if (opt_verbose) {
 	if (shp_num_invalid > 0) {
-	    bu_log("WARNING: %lu of %lu shape(s) had bad loop orientations.\n", shp_num_invalid, (size_t)shp_num_entities);
+	    bu_log("WARNING: %zu of %zu shape(s) had bad loop orientations.\n", shp_num_invalid, (size_t)shp_num_entities);
 	}
 	bu_log("\nDone.\n");
     }

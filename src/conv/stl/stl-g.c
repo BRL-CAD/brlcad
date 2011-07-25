@@ -432,7 +432,7 @@ Convert_part_binary()
     /* now use our network to native host format conversion tools */
     num_facets = ntohl(*(uint32_t *)buf);
 
-    bu_log("\t%d facets\n", num_facets);
+    bu_log("\t%ld facets\n", num_facets);
     while (fread(buf, 48, 1, fd_in)) {
 	int i;
 	double pt[3];

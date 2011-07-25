@@ -85,7 +85,7 @@
     if (!ptr)\
 	bu_log("ERROR: Null name_tree pointer, file=%s, line=%d\n", __FILE__, __LINE__);\
     else if (ptr->magic != NAME_TREE_MAGIC)\
-	bu_log("ERROR: bad name_tree pointer (%p), file=%s, line=%d\n", ptr, __FILE__, __LINE__);\
+	bu_log("ERROR: bad name_tree pointer (%p), file=%s, line=%d\n", (void *)ptr, __FILE__, __LINE__);\
 }
 
 

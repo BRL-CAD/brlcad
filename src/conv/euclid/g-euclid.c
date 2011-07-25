@@ -184,8 +184,8 @@ Write_euclid_face(const struct loopuse *lu, const int facet_type, const int regi
     NMG_CK_LOOPUSE(lu);
 
     if (verbose)
-	bu_log("Write_euclid_face: lu=x%x, facet_type=%d, regionid=%d, face_number=%d\n",
-	       lu, facet_type, regionid, face_number);
+	bu_log("Write_euclid_face: lu=%p, facet_type=%d, regionid=%d, face_number=%d\n",
+	       (void *)lu, facet_type, regionid, face_number);
 
     if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 	return;
@@ -233,7 +233,7 @@ Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp)
     NMG_CK_REGION(r);
 
     if (verbose)
-	bu_log("Write_euclid_region: r=x%x\n", r);
+	bu_log("Write_euclid_region: r=%p\n", (void *)r);
 
     /* if bounds haven't been calculated, do it now */
     if (r->ra_p == NULL)
