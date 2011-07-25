@@ -733,9 +733,6 @@ STEPcomplex::Replicate()
     {
 	int nameCount = 64;
 
-//      Don't use this syntax it makes the sun compiler think it is a cast. DAS
-//	SCLstring **nameList = new (SCLstring *)[nameCount];
-
   std::string **nameList = new std::string *[nameCount];
 	STEPcomplex *scomp = this->head;
 	int i = 0;

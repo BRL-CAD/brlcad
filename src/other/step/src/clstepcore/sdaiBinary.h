@@ -45,8 +45,6 @@ class SCLP23_NAME(Binary) : public std::string
       : std::string (str,max) { }
 
 //Josh L, 3/28/95
-//    SCLP23_NAME(Binary) (SCLstring& s)   : SCLstring (s) { }
-//    SCLP23_NAME(Binary) (SCLP23_NAME(Binary)& s)  : SCLstring (s) { }
     SCLP23_NAME(Binary) (const std::string& s)   : std::string (s) { }
 
 

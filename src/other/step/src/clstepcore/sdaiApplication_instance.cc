@@ -124,12 +124,7 @@ void SCLP23(Application_instance)::AddP21Comment(const char *s, int replace)
     {
       if(!p21Comment) 
       {
-#ifdef __OSTORE__
-        p21Comment = new (os_segment::of(this), SCLstring::get_os_typespec()) 
-        SCLstring;
-#else
         p21Comment = new std::string;
-#endif
       }
       else
       {
@@ -151,13 +146,7 @@ SCLP23(Application_instance)::AddP21Comment(std::string &s, int replace)
     {
 	if(!p21Comment) 
 	{
-#ifdef __OSTORE__
-	    p21Comment = new (os_segment::of(this),
-			      SCLstring::get_os_typespec()) 
-	      SCLstring;
-#else
 	    p21Comment = new std::string;
-#endif
 	}
 	else
 	    p21Comment->clear();

@@ -21,7 +21,7 @@ ostream *  ErrorDescriptor::_out = 0;
 void 
 ErrorDescriptor::PrintContents(ostream &out) const
 {
-    SCLstring s;
+    std::string s;
     out << "Severity: " << severity(s) << endl;
     if(_userMsg)
     {
@@ -36,58 +36,58 @@ ErrorDescriptor::PrintContents(ostream &out) const
 }
 
 const char *
-ErrorDescriptor::severity(SCLstring &s) const
+ErrorDescriptor::severity(std::string &s) const
 {
-    s.set_null();
+    s.clear();
     switch(severity())
     {
       case SEVERITY_NULL :
       {
-	  s = "SEVERITY_NULL";
+	  s.assign("SEVERITY_NULL");
 	  break;
       }
       case SEVERITY_USERMSG :
       {
-	  s = "SEVERITY_USERMSG";
+	  s.assign("SEVERITY_USERMSG");
 	  break;
       }
       case SEVERITY_INCOMPLETE :
       {
-	  s = "SEVERITY_INCOMPLETE";
+	  s.assign("SEVERITY_INCOMPLETE");
 	  break;
       }
       case SEVERITY_WARNING :
       {
-	  s = "SEVERITY_WARNING";
+	  s.assign("SEVERITY_WARNING");
 	  break;
       }
       case SEVERITY_INPUT_ERROR :
       {
-	  s = "SEVERITY_INPUT_ERROR";
+	  s.assign("SEVERITY_INPUT_ERROR");
 	  break;
       }
       case SEVERITY_BUG :
       {
-	  s = "SEVERITY_BUG";
+	  s.assign("SEVERITY_BUG");
 	  break;
       }
       case SEVERITY_EXIT :
       {
-	  s = "SEVERITY_EXIT";
+	  s.assign("SEVERITY_EXIT");
 	  break;
       }
       case SEVERITY_DUMP :
       {
-	  s = "SEVERITY_DUMP";
+	  s.assign("SEVERITY_DUMP");
 	  break;
       }
       case SEVERITY_MAX :
       {
-	  s = "SEVERITY_MAX";
+	  s.assign("SEVERITY_MAX");
 	  break;
       }
     }
-    return s.chars();
+    return s.c_str();
 }
 
 
@@ -177,7 +177,7 @@ const char *
 ErrorDescriptor::UserMsg () const
 {
     if(_userMsg)
-	return _userMsg->chars();
+	return _userMsg->c_str();
     else
 	return "";
 }
@@ -186,52 +186,32 @@ void
 ErrorDescriptor::UserMsg ( const char * msg)  
 {
     if(!_userMsg)
-#ifdef __OSTORE__
-	_userMsg = new (os_database::of(this), 
-			SCLstring::get_os_typespec()) SCLstring;
-#else
-	_userMsg = new SCLstring;
-#endif
-    *_userMsg = msg;
+	_userMsg = new std::string;
+    _userMsg->assign(msg);
 }
 
 void  
 ErrorDescriptor::PrependToUserMsg ( const char * msg)  
 {
     if(!_userMsg)
-#ifdef __OSTORE__
-	_userMsg = new (os_database::of(this), 
-			SCLstring::get_os_typespec()) SCLstring;
-#else
-	_userMsg = new SCLstring;
-#endif
-    _userMsg -> Prepend (msg);
+	_userMsg = new std::string;
+    _userMsg->insert(0, msg);
 }
 
 void 
 ErrorDescriptor::AppendToUserMsg ( const char c)
 {
     if(!_userMsg) 
-#ifdef __OSTORE__
-	_userMsg = new (os_database::of(this), 
-			SCLstring::get_os_typespec()) SCLstring;
-#else
-	_userMsg = new SCLstring;
-#endif
-    _userMsg -> Append(c);
+	_userMsg = new std::string;
+    _userMsg->append(&c);
 }    
 
 void  
 ErrorDescriptor::AppendToUserMsg ( const char * msg)  
 {
     if(!_userMsg)
-#ifdef __OSTORE__
-	_userMsg = new (os_database::of(this), 
-			SCLstring::get_os_typespec()) SCLstring;
-#else
-	_userMsg = new SCLstring;
-#endif
-    _userMsg -> Append (msg);
+	_userMsg = new std::string;
+    _userMsg->append(msg);
 }
 
  
@@ -239,7 +219,7 @@ const char *
 ErrorDescriptor::DetailMsg ()  const
 {
     if(_detailMsg)
-	return _detailMsg->chars();
+	return _detailMsg->c_str();
     else
 	return "";
 }
@@ -248,51 +228,30 @@ void
 ErrorDescriptor::DetailMsg ( const char * msg)  
 {
     if(!_detailMsg)
-#ifdef __OSTORE__
-	_detailMsg = new (os_database::of(this), 
-			SCLstring::get_os_typespec()) SCLstring;
-#else
-	_detailMsg = new SCLstring;
-#endif
-    *_detailMsg = msg;
-    // cerr << "D " << _detailMsg->chars() << '\n';
+	_detailMsg = new std::string;
+    _detailMsg->assign(msg);
 }
 
 void
 ErrorDescriptor::PrependToDetailMsg (const char * msg)  
 {
     if(!_detailMsg)
-#ifdef __OSTORE__
-	_detailMsg = new (os_database::of(this), 
-			SCLstring::get_os_typespec()) SCLstring;
-#else
-	_detailMsg = new SCLstring;
-#endif
-    _detailMsg -> Prepend (msg);
+	_detailMsg = new std::string;
+    _detailMsg->insert(0, msg);
 }    
 
 void 
 ErrorDescriptor::AppendToDetailMsg ( const char c)
 {
     if(!_detailMsg)
-#ifdef __OSTORE__
-	_detailMsg = new (os_database::of(this), 
-			SCLstring::get_os_typespec()) SCLstring;
-#else
-	_detailMsg = new SCLstring;
-#endif
-    _detailMsg -> Append(c);
+	_detailMsg = new std::string;
+    _detailMsg->append(&c);
 }    
 
 void
 ErrorDescriptor::AppendToDetailMsg (const char * msg)  
 {
     if(!_detailMsg)
-#ifdef __OSTORE__
-	_detailMsg = new (os_database::of(this), 
-			SCLstring::get_os_typespec()) SCLstring;
-#else
-	_detailMsg = new SCLstring;
-#endif
-    _detailMsg -> Append (msg);
+	_detailMsg = new std::string;
+    _detailMsg->append(msg);
 }    
