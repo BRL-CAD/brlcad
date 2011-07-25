@@ -379,8 +379,8 @@ print_curr_id(void *v, int UNUSED(depth))
 
     BU_CKMAG(cip, CURR_ID_MAGIC, "curr_id");
 
-    bu_log(" curr_id <x%x> %d %d...\n",
-	   cip, cip->ci_id, cip->ci_newid);
+    bu_log(" curr_id <%p> %d %d...\n",
+	   (void *)cip, cip->ci_id, cip->ci_newid);
     for (BU_LIST_FOR(rp, remap_reg, &(cip->ci_regions))) {
 	BU_CKMAG(rp, REMAP_REG_MAGIC, "remap_reg");
 
@@ -402,8 +402,8 @@ print_nonempty_curr_id(void *v, int UNUSED(depth))
     BU_CKMAG(cip, CURR_ID_MAGIC, "curr_id");
 
     if (BU_LIST_NON_EMPTY(&(cip->ci_regions))) {
-	bu_log(" curr_id <x%x> %d %d...\n",
-	       cip, cip->ci_id, cip->ci_newid);
+	bu_log(" curr_id <%p> %d %d...\n",
+	       (void *)cip, cip->ci_id, cip->ci_newid);
 	for (BU_LIST_FOR(rp, remap_reg, &(cip->ci_regions))) {
 	    BU_CKMAG(rp, REMAP_REG_MAGIC, "remap_reg");
 

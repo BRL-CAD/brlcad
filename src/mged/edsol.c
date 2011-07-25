@@ -7057,8 +7057,8 @@ sedit_mouse(const vect_t mousevec)
 
 		    bu_vls_init(&tmp_vls);
 		    bu_vls_printf(&tmp_vls,
-				  "edgeuse selected = 0x%p (%g %g %g) <-> (%g %g %g)\n",
-				  es_eu, V3ARGS(es_eu->vu_p->v_p->vg_p->coord),
+				  "edgeuse selected = %p (%g %g %g) <-> (%g %g %g)\n",
+				  (void *)es_eu, V3ARGS(es_eu->vu_p->v_p->vg_p->coord),
 				  V3ARGS(es_eu->eumate_p->vu_p->v_p->vg_p->coord));
 		    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 		    mged_print_result(TCL_ERROR);

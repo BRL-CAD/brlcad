@@ -448,8 +448,8 @@ display_Cells(long int ncells)
     buf = (unsigned char *) bu_malloc(sizeof(RGBpixel) * fb_width,
 				      "line of frame buffer");
     if (debug_flag & CFB_DBG_MEM)
-	bu_log("buf = 0x%x... %d pixels @ %d bytes/pixel\n",
-	       buf, fb_width, sizeof(RGBpixel));
+	bu_log("buf = %p... %d pixels @ %d bytes/pixel\n",
+	       (void *)buf, fb_width, sizeof(RGBpixel));
 
     for (gp = grid; gp < ep; gp++) {
 	int x0, x1;
@@ -568,7 +568,7 @@ display_Cells(long int ncells)
 
     bu_free((char *) buf, "line of frame buffer");
     if (debug_flag & CFB_DBG_MEM)
-	bu_log("freed buf, which is now 0x%x\n", buf);
+	bu_log("freed buf, which is now %p\n", (void *)buf);
     return 1;
 }
 
@@ -714,7 +714,7 @@ pars_Argv(int argc, char **argv)
 		    return 0;
 		}
 		if (cell_size <= 0) {
-		    bu_log("Cell size out of range: %d\n", cell_size);
+		    bu_log("Cell size out of range: %lf\n", cell_size);
 		    return 0;
 		}
 		break;
@@ -943,8 +943,8 @@ main(int argc, char **argv)
     }
     grid = (Cell *) bu_malloc(sizeof(Cell) * maxcells, "grid");
     if (debug_flag & CFB_DBG_MEM)
-	bu_log("grid = 0x%x... %ld cells @ %d bytes/cell\n",
-	       grid, maxcells, sizeof(Cell));
+	bu_log("grid = %p... %ld cells @ %d bytes/cell\n",
+	       (void *)grid, maxcells, sizeof(Cell));
     do {
 	struct locrec *lrp;
 

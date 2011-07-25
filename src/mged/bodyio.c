@@ -350,7 +350,7 @@ cmd_export_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
 		break;
 	}
 	if (RT_G_DEBUG & DEBUG_VOL)
-	    bu_log("going to write %ld bytes\n", nbytes);
+	    bu_log("going to write %zu bytes\n", nbytes);
 
 	written = write(fd, bufp, nbytes);
 	if (written != (ssize_t)nbytes) {
@@ -359,7 +359,7 @@ cmd_export_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
 	    bu_free_external(&ext);
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls,
-			  "Incomplete write of object %s to file %s, got %ld, s/b=%ld\n",
+			  "Incomplete write of object %s to file %s, got %zd, s/b=%zu\n",
 			  argv[2], argv[1], written, nbytes);
 	    Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
 	    bu_vls_free(&vls);

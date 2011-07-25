@@ -516,7 +516,6 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
 	/* Check for possible phantom armor before internal air,
 	   that is if it is the first thing hit. */
 	if (pp->pt_back == pt_headp && InsideAir(regp)) {
-	    fastf_t	slos;
 	    /* If adjacent partitions are the same air, extend
 	       the first on to include them. */
 #if DEBUG_GRID
@@ -535,7 +534,6 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
 
 	    }
 
-	    slos = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
 	    prntPhantom(pp->pt_inhit, (int) regp->reg_aircode);
 	} else
 	    if (! Air(regp)) {

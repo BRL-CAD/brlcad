@@ -353,7 +353,7 @@ main(int argc, char **argv)
 		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
-			bu_log("ERROR: %s can't seek on output (ofp=%p, outbute=%ld)\n", bu_getprogname(), ofp, outbyte);
+			bu_log("ERROR: %s can't seek on output (ofp=%p, outbute=%ld)\n", bu_getprogname(), (void *)ofp, outbyte);
 			goto done;
 		    }
 		    outplace = outbyte;
@@ -379,7 +379,7 @@ main(int argc, char **argv)
 		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
-			bu_log("ERROR: %s can't seek on output (ofp=%p, outbute=%ld)\n", bu_getprogname(), ofp, outbyte);
+			bu_log("ERROR: %s can't seek on output (ofp=%p, outbute=%ld)\n", bu_getprogname(), (void *)ofp, outbyte);
 			goto done;
 		    }
 		    outplace = outbyte;
@@ -397,7 +397,7 @@ main(int argc, char **argv)
 		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
-			bu_log("ERROR: %s can't seek on output (ofp=%p, outbute=%ld)\n", bu_getprogname(), ofp, outbyte);
+			bu_log("ERROR: %s can't seek on output (ofp=%p, outbute=%ld)\n", bu_getprogname(), (void *)ofp, outbyte);
 			goto done;
 		    }
 		    outplace = outbyte;

@@ -3222,10 +3222,10 @@ setup_Lgts(int frame)
 	       -lgts[0].dir[Y],
 	       -lgts[0].dir[Z]
 	    );
-	bu_log("\teye location\t<%12.6f, %12.6f, %12.6f>\n", lgts[0].loc);
-	bu_log("\tgrid location\t<%12.6f, %12.6f, %12.6f>\n", grid_loc);
-	bu_log("\tgrid horizontal\t<%12.6f, %12.6f, %12.6f>\n", grid_hor);
-	bu_log("\tgrid vertical\t<%12.6f, %12.6f, %12.6f>\n", grid_ver);
+	bu_log("\teye location\t<%12.6f, %12.6f, %12.6f>\n", V3ARGS(lgts[0].loc));
+	bu_log("\tgrid location\t<%12.6f, %12.6f, %12.6f>\n", V3ARGS(grid_loc));
+	bu_log("\tgrid horizontal\t<%12.6f, %12.6f, %12.6f>\n", V3ARGS(grid_hor));
+	bu_log("\tgrid vertical\t<%12.6f, %12.6f, %12.6f>\n", V3ARGS(grid_ver));
     }
     else
 	if (!	lgts[0].over

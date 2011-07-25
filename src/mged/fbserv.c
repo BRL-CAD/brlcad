@@ -71,7 +71,7 @@ fbserv_setup_socket(int fd)
 
 #if defined(SO_KEEPALIVE)
     if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0) {
-	bu_log("setsockopt (SO_KEEPALIVE): %m\n");
+	perror("setsockopt (SO_KEEPALIVE)");
     }
 #endif
 #if defined(SO_RCVBUF)
@@ -92,7 +92,7 @@ fbserv_setup_socket(int fd)
 	}
 
 	if (m < 0 || n < 0)
-	    bu_log("fbserv_setup_socket: setsockopt() SO_RCVBUF/SO_SNDBUF failed: %m\n");
+	    perror("setsockopt");
     }
 #endif
 }

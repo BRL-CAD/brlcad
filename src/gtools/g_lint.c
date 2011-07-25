@@ -243,7 +243,7 @@ struct g_lint_ovlp *create_overlap(struct region *r1, struct region *r2)
 	op->glo_r2 = r1;
     } else {
 	bu_log("%s:%d: Self-overlap of region '%s' (%p)\n",
-	       __FILE__, __LINE__, r1->reg_name, r1);
+	       __FILE__, __LINE__, r1->reg_name, (void *)r1);
 	bu_exit (1, "This shouldn't happen\n");
     }
 

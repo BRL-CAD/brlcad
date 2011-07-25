@@ -255,7 +255,7 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
     		    snprintf(buf, CLONE_BUFSIZE, "%s%d", prefix, num);	/* save the name for the next pass */
 		    /* clear and set the name */
 		    bu_vls_trunc(newname, 0);
-		    bu_vls_printf(newname, "%s%s", obj_list.names[j].dest[iter], suffix);
+		    bu_vls_printf(newname, "%V%s", obj_list.names[j].dest[iter], suffix);
     		} else
 		    bu_vls_printf(newname, "%zu%s", num+i*state->incr, suffix);
     	    else
@@ -420,7 +420,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	argv[2] = bu_vls_addr(name);
 	ret = wdb_copy_cmd(_dbip->dbi_wdbp, state->interp, 3, argv);
 	if (ret != TCL_OK)
-	    bu_log("WARNING: failure cloning \"%s\" to \"%s\"\n", proto->d_namep, name);
+	    bu_log("WARNING: failure cloning \"%s\" to \"%s\"\n", proto->d_namep, bu_vls_addr(name));
 
 	/* get the original objects matrix */
 	if (rt_db_get_internal(&intern, dp, _dbip, matrix, &rt_uniresource) < 0) {
@@ -757,7 +757,7 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
 
     nextname = get_name(_dbip, dp, state, 0);
     if (bu_vls_strcmp(copyname, nextname) == 0)
-	bu_log("ERROR: unable to successfully clone \"%s\" to \"%s\"\n", dp->d_namep, copyname);
+	bu_log("ERROR: unable to successfully clone \"%s\" to \"%s\"\n", dp->d_namep, bu_vls_addr(copyname));
     else
 	copy = db_lookup(_dbip, bu_vls_addr(copyname), LOOKUP_QUIET);
 

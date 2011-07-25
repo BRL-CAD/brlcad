@@ -276,7 +276,6 @@ void _set_invalid_parameter_handler(void (*callback)()) { if (callback) return; 
 static void
 attach_display_manager(Tcl_Interp *interpreter, const char *manager, const char *display)
 {
-    int ret;
     int argc = 1;
     const char *attach_cmd[5] = {NULL, NULL, NULL, NULL, NULL};
 
@@ -289,7 +288,7 @@ attach_display_manager(Tcl_Interp *interpreter, const char *manager, const char 
 	attach_cmd[argc++] = display;
     }
     attach_cmd[argc++] = manager;
-    ret = f_attach((ClientData)NULL, interpreter, argc, attach_cmd);
+    (void)f_attach((ClientData)NULL, interpreter, argc, attach_cmd);
     bu_log("%s\n", Tcl_GetStringResult(interpreter));
 }
 

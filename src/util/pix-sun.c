@@ -236,7 +236,7 @@ doit(void)
      */
     for (i=(long)ras.ras_height-1; i >= 0; i--)
 	if (fread(&pix[i*ras.ras_width*3], ras.ras_width*3, 1, stdin) != 1) {
-	    bu_exit(1, "%s: error reading %zu x %zu pix file scanline %d\n",
+	    bu_exit(1, "%s: error reading %zu x %zu pix file scanline %ld\n",
 		    progname, ras.ras_width, ras.ras_height, i);
 	}
 

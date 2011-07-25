@@ -30,6 +30,7 @@
 #include "assert.h"
 #include "brepintersect.h"
 
+
 int PolylineBBox(
     const ON_Polyline& pline,
     ON_BoundingBox* bbox
@@ -686,6 +687,7 @@ int Triangulate(
 	}
     }
 
+#if 0
     /* Now we have one continous path and we need to triangulate it
      * I'm pretty sure it's true that given a planer path there exist
      * 3 consecutive points a, b, c s.t. ac doesn't intersect any line
@@ -696,7 +698,6 @@ int Triangulate(
 	for (i = 0; i < (paths[0].Count() - 1); i++) {
 	    /* we check that the intersection is 4 because the segment shares end points with 4 different pline segments */
 	    ON_3dPoint mid = (paths[0][i] + paths[0][i + 2])/2;
-#if 0
 			/* FIXME: compiler doesn't like that the first
 			 * arguments is passing NULL as a non-pointer
 			 * parameter. commented out until someone
@@ -707,9 +708,9 @@ int Triangulate(
 		   triangles.Append(tri);
 		   paths[0].Remove(i + 1); */
 	    }
-#endif
 	}
     }
+#endif
 
     return 0;
 }
