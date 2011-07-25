@@ -1,7 +1,7 @@
 set(RT_COMMON_SRCS
-        do.c 
-        main.c 
-        opt.c 
+        do.c
+        main.c
+        opt.c
         worker.c
 )
 IF(NOT MSVC)
@@ -33,88 +33,88 @@ set(rt_SRCS
     view.c
 )
 
-set(rt_bot_faces_SRCS 
+set(rt_bot_faces_SRCS
         ${RT_COMMON_SRCS}
         view_bot_faces.c
 )
 
-set(rtarea_SRCS 
+set(rtarea_SRCS
         ${RT_COMMON_SRCS}
         viewarea.c
 )
 
-set(rtcell_SRCS 
+set(rtcell_SRCS
         ${RT_COMMON_SRCS}
         viewcell.c
 )
 
-set(rtcheck_SRCS 
+set(rtcheck_SRCS
         ${RT_COMMON_SRCS}
         viewcheck.c
 )
 
-set(rtedge_SRCS 
+set(rtedge_SRCS
         ${RT_COMMON_SRCS}
         viewedge.c
 )
 
-set(rtfrac_SRCS 
+set(rtfrac_SRCS
         ${RT_COMMON_SRCS}
         viewfrac.c
 )
 
-set(rtg3_SRCS 
+set(rtg3_SRCS
         ${RT_COMMON_SRCS}
         viewg3.c
 )
 
-set(rthide_SRCS 
+set(rthide_SRCS
         ${RT_COMMON_SRCS}
         viewhide.c
 )
 
-set(rtpp_SRCS 
+set(rtpp_SRCS
         ${RT_COMMON_SRCS}
         viewpp.c
 )
 
-set(rtrad_SRCS 
+set(rtrad_SRCS
         ${RT_COMMON_SRCS}
         viewrad.c
 )
 
-set(rtrange_SRCS 
+set(rtrange_SRCS
         ${RT_COMMON_SRCS}
         viewrange.c
 )
 
-set(rtray_SRCS 
+set(rtray_SRCS
         ${RT_COMMON_SRCS}
         viewray.c
 )
 
-set(rtsil_SRCS 
+set(rtsil_SRCS
         ${RT_COMMON_SRCS}
         viewsil.c
 )
 
-set(rtweight_SRCS 
+set(rtweight_SRCS
         ${RT_COMMON_SRCS}
         viewweight.c
 )
 
-set(rtxray_SRCS 
+set(rtxray_SRCS
         ${RT_COMMON_SRCS}
         viewxray.c
 )
 
 set(LIBREMRT_SOURCES
-        do.c 
-        opt.c 
-        scanline.c 
-        sh_tcl.c 
-        view.c 
-        worker.c
+	do.c
+	opt.c
+	scanline.c
+	sh_tcl.c
+	view.c
+	worker.c
 )
 IF(NOT MSVC)
     SET(LIBREMRT_SOURCES ${LIBREMRT_SOURCES} heatgraph.c)
@@ -181,18 +181,18 @@ add_library(librttherm STATIC ${RT_COMMON_SRCS})
 SET_TARGET_PROPERTIES(librttherm PROPERTIES LINKER_LANGUAGE C)
 
 SET(rt_MANS
-  reshoot.1 
-  rt_bot_faces.1 
-  rtg3.1 
-  rthide.1 
-  rtpp.1 
-  rtrange.1 
-  rtray.1 
-  rtregis.1 
-  rtscale.1 
-  rtshot.1 
-  rtwalk.1 
-  rtweight.1 
+  reshoot.1
+  rt_bot_faces.1
+  rtg3.1
+  rthide.1
+  rtpp.1
+  rtrange.1
+  rtray.1
+  rtregis.1
+  rtscale.1
+  rtshot.1
+  rtwalk.1
+  rtweight.1
   rtxray.1
 )
 ADD_MAN_PAGES(1 rt_MANS)
