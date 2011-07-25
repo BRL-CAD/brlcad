@@ -123,7 +123,7 @@ Orient_face_loops(fu)
     if (fu->orientation != OT_SAME)
 	fu = fu->fumate_p;
     if (fu->orientation != OT_SAME) {
-	bu_log("Orient_face_loops: fu x%x has orient %s and mate (x%x) has orient %s (no OT_SAME)\n",
+	bu_log("Orient_face_loops: fu %p has orient %s and mate (%p) has orient %s (no OT_SAME)\n",
 	       fu, nmg_orientation(fu->orientation), fu->fumate_p, nmg_orientation(fu->fumate_p->orientation));
 	bu_exit(1, "Face with no OT_SAME use\n");
     }

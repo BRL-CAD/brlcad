@@ -112,7 +112,7 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 	v = Get_vertex(&edge_uses[i]);
 	if (!(*v)) {
 	    if (!Put_vertex(verts[i], &edge_uses[i])) {
-		bu_exit(1, "Cannot put vertex x%x\n", verts[i]);
+		bu_exit(1, "Cannot put vertex %p\n", verts[i]);
 	    }
 	}
     }
@@ -140,7 +140,7 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 
 	ivert = Get_iges_vertex(verts[vert_no]);
 	if (!ivert) {
-	    bu_exit(1, "ERROR: Can't get geometry, vertex x%x not in vertex list\n", verts[vert_no]);
+	    bu_exit(1, "ERROR: Can't get geometry, vertex %p not in vertex list\n", verts[vert_no]);
 	}
 	nmg_vertex_gv(ivert->v, ivert->pt);
     }
@@ -164,14 +164,14 @@ Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno)
 	    bu_exit(1, "Cannot get vertex for edge_use!\n");
 
 	if (ivert != eu->vu_p->v_p || jvert != eu->eumate_p->vu_p->v_p) {
-	    bu_log("ivert=x%x, jvert=x%x, eu->vu_p->v_p=x%x, eu->eumate_p->vu_p->v_p=x%x\n",
+	    bu_log("ivert=%p, jvert=%p, eu->vu_p->v_p=%p, eu->eumate_p->vu_p->v_p=%p\n",
 		   ivert, jvert, eu->vu_p->v_p, eu->eumate_p->vu_p->v_p);
 	    bu_exit(1, "Add_nurb_loop_to_face: Edgeuse/vertex mixup!\n");
 	}
 
 	param = edge_uses[i].root;
 	if (!param) {
-	    bu_log("No parameter curve for eu x%x\n", eu);
+	    bu_log("No parameter curve for eu %p\n", eu);
 	    continue;
 	}
 

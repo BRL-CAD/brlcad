@@ -335,8 +335,8 @@ get_layer()
     if ( verbose && curr_layer != old_layer ) {
 	bu_log( "changed to layer #%d, (m = %p, s=%p)\n",
 		curr_layer,
-		layers[curr_layer]->m,
-		layers[curr_layer]->s );
+		(void *)layers[curr_layer]->m,
+		(void *)layers[curr_layer]->s );
     }
 }
 
@@ -1315,7 +1315,6 @@ static int
 process_lwpolyline_entities_code( int code )
 {
     point_t tmp_pt;
-    static int num_verts = 0;
     static int vert_no = 0;
     static fastf_t x, y;
 
@@ -1330,7 +1329,7 @@ process_lwpolyline_entities_code( int code )
 	    }
 	    break;
 	case 90:
-	    num_verts = code;
+	    /* oops */
 	    break;
 	case 10:
 	    x = atof( line ) * units_conv[units] * scale_factor;
@@ -1955,7 +1954,6 @@ drawMtext( char *text, int attachPoint, int UNUSED(drawingDirection), double tex
     char *cp;
     int lineCount;
     double lineSpace;
-    double totalHeight;
     vect_t xdir, ydir;
     double startx, starty;
     int maxLineLen=0;
@@ -1979,7 +1977,6 @@ drawMtext( char *text, int attachPoint, int UNUSED(drawingDirection), double tex
     }
 
     lineSpace = 1.25 * scale;
-    totalHeight = (double)lineCount * lineSpace;
 
     VSET( xdir, cos( radians ), sin( radians ), 0.0 );
     VSET( ydir, -sin( radians ), cos( radians ), 0.0 );
@@ -2072,7 +2069,7 @@ process_leader_entities_code( int code )
     point_t tmp_pt;
     int i;
     struct edgeuse *eu;
-    struct vertex *v0=NULL, *v1=NULL, *v2=NULL;
+    struct vertex *v1=NULL, *v2=NULL;
 
     switch ( code ) {
 	case 8:
@@ -2180,7 +2177,6 @@ process_leader_entities_code( int code )
 		    if ( i == 0 ) {
 			v1 = eu->vu_p->v_p;
 			nmg_vertex_gv( v1, polyline_verts );
-			v0 = v1;
 		    }
 		    v2 = eu->eumate_p->vu_p->v_p;
 		    nmg_vertex_gv( v2, &polyline_verts[(i+1)*3] );

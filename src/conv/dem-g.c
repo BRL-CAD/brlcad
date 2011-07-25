@@ -299,7 +299,6 @@ int read_element(ResultStruct *io_struct)
     double tmp_dbl = 0;
     long tmp_long = 0;
     char *endp;
-    char *tmp_ptr = '\0';
     char *buf = '\0';
     int status = BRLCAD_ERROR;
     logical_record_type record_type ;
@@ -373,7 +372,7 @@ int read_element(ResultStruct *io_struct)
      * --------------------------------------------------------------------
      */
     if (datatype == type_alpha) {
-	/* tmp_ptr = strcpy((*io_struct).out_alpha, tmp_str); */
+	/* strcpy((*io_struct).out_alpha, tmp_str); */
 	bu_strlcpy((*io_struct).out_alpha, tmp_str, strlen(tmp_str)+1); 
 	status = BRLCAD_OK;
     }
@@ -393,11 +392,11 @@ int read_element(ResultStruct *io_struct)
 	} else {
 	    /* convert to integer failed */
 	    /* copy string which failed to convert to inetger to output structure */
-	    tmp_ptr = strcpy((*io_struct).out_alpha, tmp_str); 
+	    strcpy((*io_struct).out_alpha, tmp_str); 
 	    status = BRLCAD_ERROR;
 	}
     }
-    
+
     /*
      * --------------------------------------------------------------------
      * process doubles
@@ -416,7 +415,7 @@ int read_element(ResultStruct *io_struct)
 		if ((strchr(tmp_str, 'E') == NULL) && (strchr(tmp_str, 'e') == NULL)) {
 		    /* if no uppercase 'E' and no lowercase 'e' then append 'E+00' */
 		    /* required for function 'strtod' to convert string to double */
-		    /* tmp_ptr = strcat(tmp_str, "E+00"); */
+		    /* strcat(tmp_str, "E+00"); */
 		    bu_strlcat(tmp_str, "E+00", sizeof(tmp_str)); 
 		}
 	    }
@@ -430,7 +429,7 @@ int read_element(ResultStruct *io_struct)
 	} else {
 	    /* convert to double failed */
 	    /* copy string which failed to convert to double to output structure */
-	    tmp_ptr = strcpy((*io_struct).out_alpha, tmp_str); 
+	    strcpy((*io_struct).out_alpha, tmp_str); 
 	    status = BRLCAD_ERROR;
 	}
     }
@@ -1676,7 +1675,6 @@ main(int ac, char *av[])
     double x_cell_size = 0;                            /* x scaling factor in milimeters */
     double y_cell_size = 0;                            /* y scaling factor in milimeters */
     double unit_elevation = 0;                         /* z scaling factor in milimeters */
-    char *tmp_ptr = '\0';
     int string_length = 0;
 
     char *temp_filename;           /* temp file path and file name */
@@ -2104,13 +2102,13 @@ main(int ac, char *av[])
     dsp_output_filename = bu_calloc(1, string_length, "dsp_output_filename");
     model_output_filename = bu_calloc(1, string_length, "model_output_filename");
 
-    tmp_ptr = strcpy(input_filename, av[1]);
-    tmp_ptr = strcpy(temp_filename, input_filename);
-    tmp_ptr = strcat(temp_filename, ".tmp");
-    tmp_ptr = strcpy(dsp_output_filename, input_filename);
-    tmp_ptr = strcat(dsp_output_filename, ".dsp");
-    tmp_ptr = strcpy(model_output_filename, input_filename);
-    tmp_ptr = strcat(model_output_filename, ".g");
+    strcpy(input_filename, av[1]);
+    strcpy(temp_filename, input_filename);
+    strcat(temp_filename, ".tmp");
+    strcpy(dsp_output_filename, input_filename);
+    strcat(dsp_output_filename, ".dsp");
+    strcpy(model_output_filename, input_filename);
+    strcat(model_output_filename, ".g");
 
     bu_log("input_filename '%s'\n", input_filename);
     bu_log("temp_filename '%s'\n", temp_filename);
