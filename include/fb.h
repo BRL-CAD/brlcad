@@ -195,9 +195,9 @@ FB_EXPORT extern int _wgl_open_existing(FBIO *ifp, Display *dpy, Window win, Col
 			_str, __FILE__, __LINE__); \
 		abort(); \
 	} else if ((uint32_t)(*((uintptr_t *)(_ptr))) != (uint32_t)(_magic)) { \
-		fb_log("ERROR: bad %s ptr %p, s/b 0x%x, was 0x%x, file %s, line %d\n", \
-			_str, _ptr, (uint32_t)_magic, \
-			(uint32_t)(*((uintptr_t *)(_ptr))), __FILE__, __LINE__); \
+		fb_log("ERROR: bad %s ptr %p, s/b 0x%x, was %p, file %s, line %d\n", \
+		       _str, (uint32_t)(*((uintptr_t *)(_ptr))), (uint32_t)(_magic), \
+		       (uint32_t)(*((uintptr_t *)(_ptr))), __FILE__, __LINE__); \
 		abort(); \
 	}
 
