@@ -7,7 +7,6 @@ set(LIBSTEPUTILS_SRCS
     gennodearray.cc 
     scl_hash.cc 
     errordesc.cc 
-    scl_string.cc 
     scl_char_str_list.cc
 )
 
@@ -20,7 +19,6 @@ SET(LIBSTEPUTILS_PRIVATE_HDRS
     scl_char_str_list.h 
     scldir.h 
     scl_hash.h 
-    scl_string.h 
     stat.h 
     Str.h 
     str_list.h
