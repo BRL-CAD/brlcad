@@ -17,7 +17,7 @@ class STEPcomplex : public SCLP23(Application_instance) {
 
   public:
     STEPcomplex(Registry *registry, int fileid);
-    STEPcomplex(Registry *registry, const SCLstring **names, int fileid,
+    STEPcomplex(Registry *registry, const std::string **names, int fileid,
 		const char *schnm =0);
     STEPcomplex(Registry *registry, const char **names, int fileid,
 		const char *schnm =0);
@@ -47,13 +47,13 @@ class STEPcomplex : public SCLP23(Application_instance) {
 // WRITE
     virtual void STEPwrite(ostream& out =cout, const char *currSch =NULL,
 			   int writeComment = 1);
-    virtual const char * STEPwrite(SCLstring &buf, const char *currSch =NULL);
+    virtual const char * STEPwrite(std::string &buf, const char *currSch =NULL);
 
     SCLP23(Application_instance) *Replicate();
 
     virtual void WriteExtMapEntities(ostream& out =cout,
 				     const char *currSch =NULL);
-    virtual const char * WriteExtMapEntities(SCLstring &buf,
+    virtual const char * WriteExtMapEntities(std::string &buf,
 					     const char *currSch =NULL);
     virtual void AppendEntity(STEPcomplex *stepc);
 

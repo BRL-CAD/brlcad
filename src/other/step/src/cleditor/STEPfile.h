@@ -206,7 +206,7 @@ class STEPfile
 
 	// read the instance - used by ReadData2()
     SCLP23(Application_instance) * ReadInstance(istream& in, ostream& out, 
-					SCLstring &cmtStr, int useTechCor =1);
+					std::string &cmtStr, int useTechCor =1);
 
   //  reading scopes are still incomplete
   //  these functions are stubs

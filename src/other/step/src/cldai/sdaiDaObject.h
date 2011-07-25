@@ -61,7 +61,7 @@ class SCLP23_NAME(PID) : public SCLP23_NAME(sdaiObject)
        The Datestore_type attribute shall identify the type of the underlying 
        datastore.
      */
-    char* Datastore_type() const  { return (char*) _datastore_type.chars(); }
+    char* Datastore_type() const  { return const_cast<char *>(_datastore_type.c_str()); }
     void Datastore_type(char *x) { _datastore_type = x; }
 
     /*
@@ -139,7 +139,7 @@ class SCLP23_NAME(PID_DA): public SCLP23_NAME(PID)
 #ifndef PART26
     virtual void oid (const SCLP23_NAME(DAObjectID) x) { _oid = x; }
     virtual SCLP23_NAME(DAObjectID) oid () const 
-					    { return (char*) _oid.chars(); }
+					    { return const_cast<char *>(_oid.c_str()); }
 #else
 //    virtual void oid (const SCLP26(DAObjectID) x, CORBA::Environment &IT_env=CORBA::IT_chooseDefaultEnv ()) throw (CORBA::SystemException)
     virtual void oid (const DAObjectID x, CORBA::Environment &IT_env=CORBA::IT_chooseDefaultEnv ()) throw (CORBA::SystemException)
@@ -188,7 +188,7 @@ class SCLP23_NAME(PID_SDAI) : public SCLP23_NAME(PID)
         //
 #ifndef PART26
     virtual void Modelid (const char * x) { _modelid = x; }
-    virtual char * Modelid () const	  { return (char*) _modelid.chars(); }
+    virtual char * Modelid () const	  { return const_cast<char *>(_modelid.c_str()); }
 #else
     virtual void Modelid (const char * x, CORBA::Environment &IT_env=CORBA::IT_chooseDefaultEnv ()) throw (CORBA::SystemException)
 	{ _modelid = x; }
@@ -297,7 +297,7 @@ class SCLP23_NAME(DAObject) : public SCLP23_NAME(sdaiObject)
          */
 #ifndef PART26
     SCLP23_NAME(DAObjectID) dado_oid()
-	{ return (char*) _dado_oid.chars(); }
+	{ return const_cast<char *>(_dado_oid.c_str()); }
 #else
 //    virtual SCLP26(DAObjectID) dado_oid (CORBA::Environment &IT_env=CORBA::IT_chooseDefaultEnv ()) throw (CORBA::SystemException)
     virtual DAObjectID dado_oid (CORBA::Environment &IT_env=CORBA::IT_chooseDefaultEnv ()) throw (CORBA::SystemException)

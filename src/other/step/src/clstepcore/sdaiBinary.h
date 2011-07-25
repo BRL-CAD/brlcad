@@ -36,18 +36,18 @@ class ErrorDescriptor;
 #endif
 */
 
-class SCLP23_NAME(Binary) : public SCLstring
+class SCLP23_NAME(Binary) : public std::string
 {
   public:
 
     //constructor(s) & destructor    
     SCLP23_NAME(Binary) (const char * str = 0, int max =0) 
-      : SCLstring (str,max) { }
+      : std::string (str,max) { }
 
 //Josh L, 3/28/95
 //    SCLP23_NAME(Binary) (SCLstring& s)   : SCLstring (s) { }
 //    SCLP23_NAME(Binary) (SCLP23_NAME(Binary)& s)  : SCLstring (s) { }
-    SCLP23_NAME(Binary) (const SCLstring& s)   : SCLstring (s) { }
+    SCLP23_NAME(Binary) (const std::string& s)   : std::string (s) { }
 
 
     ~SCLP23_NAME(Binary) ()  {  }
@@ -56,9 +56,9 @@ class SCLP23_NAME(Binary) : public SCLstring
     SCLP23_NAME(Binary)& operator= (const char* s);
 
     // format for STEP
-    const char * asStr () const  {  return chars ();  }
+    const char * asStr () const  {  return c_str();  }
     void STEPwrite (ostream& out =cout)  const;
-    const char * STEPwrite (SCLstring &s) const;
+    const char * STEPwrite (std::string &s) const;
 
     Severity StrToVal (const char *s, ErrorDescriptor *err);
     Severity STEPread (istream& in, ErrorDescriptor *err);

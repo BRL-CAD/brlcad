@@ -18,7 +18,7 @@
 SCLP23(String)& 
 SCLP23(String)::operator= (const char* s)
 {
-    SCLstring::operator= (s);
+  std::string::operator= (s);
     return *this;
 }
 
@@ -29,12 +29,12 @@ SCLP23(String)::STEPwrite (ostream& out) const
 // strings that exist but do not contain any chars should be written as '',
 // not $ --Josh L, 4/28/95
 //    if (is_null ())
-    if (is_undefined ())
+    if (empty())
 	out << "$";
     else
     {
 	out << "\'";
-	str = chars ();
+	str = c_str();
 	while (*str)
 	{
 	    if(*str == STRING_DELIM)
@@ -47,12 +47,12 @@ SCLP23(String)::STEPwrite (ostream& out) const
 }
 
 void 
-SCLP23(String)::STEPwrite (SCLstring &s) const
+SCLP23(String)::STEPwrite (std::string &s) const
 {
     const char *str = 0;
 // null strings should be represented by '', not $ --Josh L, 4/28/95
 //    if (is_null ())
-    if (is_undefined ())
+    if (empty())
     {
 //	s.set_null(); // this would free up space? nope
 	s = "$";
@@ -60,15 +60,15 @@ SCLP23(String)::STEPwrite (SCLstring &s) const
     else
     {
 	s = "\'";
-	str = chars ();
+	str = c_str();
 	while (*str)
 	{
 	    if(*str == STRING_DELIM)
-		s.Append(STRING_DELIM);
-	    s.Append(*str);
+		s += STRING_DELIM;
+	    s += *str;
 	    str++;
 	}
-	s.Append(STRING_DELIM);
+	s += STRING_DELIM;
     }
 }
 
@@ -76,7 +76,7 @@ Severity
 SCLP23(String)::StrToVal (const char * s)
 {
   operator= (s);
-  if (! strcmp (chars (),  s))  return SEVERITY_NULL ; 
+  if (! strcmp (c_str(),  s))  return SEVERITY_NULL ; 
   else return SEVERITY_INPUT_ERROR; 
 }
 
@@ -86,7 +86,7 @@ Severity
 SCLP23(String)::STEPread (istream& in, ErrorDescriptor *err)
 {
     int foundEndQuote = 0; // need so this string is not ok: 'hi''
-    set_null ();  // clear the old string
+    clear();  // clear the old string
     char c;
     in >> ws; // skip white space
     in >> c;
@@ -101,7 +101,7 @@ SCLP23(String)::STEPread (istream& in, ErrorDescriptor *err)
 
     if (c == STRING_DELIM)
     {
-	Append("\0"); // this will make sure that this will not be undefined.
+	append("\0"); // this will make sure that this will not be undefined.
 	   // It will handle the case where '' is read. It will be an
 	   // empty string rather than one that is undefined.
 
@@ -122,9 +122,9 @@ SCLP23(String)::STEPread (istream& in, ErrorDescriptor *err)
 		}
 		// else { ; } // do nothing it is an embedded quote
 	    } 
-	    Append (c);
+	    operator+= (c);
 	}
-	Append ('\0');
+	append ("\0");
 
 	if(foundEndQuote)
 	    return SEVERITY_NULL;
@@ -140,7 +140,7 @@ SCLP23(String)::STEPread (istream& in, ErrorDescriptor *err)
     in.putback (c);
     in.flags(flags); // set the format state back to previous settings
 
-    set_undefined();
+    clear();
 
     return err -> GreaterSeverity (SEVERITY_INCOMPLETE);  
 }

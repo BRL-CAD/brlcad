@@ -68,7 +68,7 @@ RationalBSplineSurface::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) 
 	sse = step->getEntity(sse,ENTITYNAME);
 
 	if (weights_data.empty()) {
-		SCLstring attrval;
+    std::string attrval;
 		STEPattribute *attr = step->getAttribute(sse,"weights_data");
 
 		if (attr) {

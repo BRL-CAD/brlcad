@@ -23,7 +23,7 @@ CheckRemainingInput(istream &in, ErrorDescriptor *err,
 SCLP23(Binary)& 
 SCLP23(Binary)::operator= (const char* s)
 {
-    SCLstring::operator= (s);
+    std::string::operator= (s);
     return *this;
 }
 
@@ -31,12 +31,12 @@ void
 SCLP23(Binary)::STEPwrite (ostream& out) const
 {
     const char *str = 0;
-    if (is_null ())
+    if (empty())
 	out << "$";
     else
     {
 	out << '\"';
-	str = chars ();
+	str = c_str();
 	while (*str)
 	{
 	    out << *str;
@@ -47,10 +47,10 @@ SCLP23(Binary)::STEPwrite (ostream& out) const
 }
 
 const char * 
-SCLP23(Binary)::STEPwrite (SCLstring &s) const
+SCLP23(Binary)::STEPwrite (std::string &s) const
 {
     const char *str = 0;
-    if (is_null ())
+    if (empty())
     {
 //	s.set_null(); // this would free up space? nope
 	s = "$";
@@ -58,15 +58,15 @@ SCLP23(Binary)::STEPwrite (SCLstring &s) const
     else
     {
 	s = "\"";
-	str = chars ();
+	str = c_str();
 	while (*str)
 	{
-	    s.Append(*str);
+	    s += *str;
 	    str++;
 	}
-	s.Append(BINARY_DELIM);
+	s += BINARY_DELIM;
     }
-    return s.chars();
+    return const_cast<char *>(s.c_str());
 }
 
 Severity 
@@ -74,9 +74,9 @@ SCLP23(Binary)::ReadBinary(istream& in, ErrorDescriptor *err, int AssignVal,
 			   int needDelims)
 {
     if(AssignVal)
-	set_null();
+	clear();
 
-    SCLstring str;
+    std::string str;
     char c;
     char messageBuf[512];
     messageBuf[0] = '\0';
@@ -99,13 +99,13 @@ SCLP23(Binary)::ReadBinary(istream& in, ErrorDescriptor *err, int AssignVal,
 	    }
 	    while(in.good() && isxdigit(c))
 	    {
-		str.Append(c);
+		str += c;
 		in.get(c);
 	    }
 	    if(in.good() && (c != '\"') )
 		in.putback(c);
-	    if( AssignVal && (str.Length() > 0) )
-		operator= (str.chars());
+	    if( AssignVal && (str.length() > 0) )
+		operator= (str.c_str());
 
 	    if(c == '\"') // if found ending delimiter
 	    {

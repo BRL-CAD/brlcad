@@ -34,9 +34,9 @@
 char         ToLower (const char c);
 char         ToUpper  (const char c);
 char *       StrToLower (const char *, char *);
-const char * StrToLower (const char * word, SCLstring &s);
-const char * StrToUpper (const char * word, SCLstring &s);
-const char * StrToConstant (const char * word, SCLstring &s);
+const char * StrToLower (const char * word, std::string &s);
+const char * StrToUpper (const char * word, std::string &s);
+const char * StrToConstant (const char * word, std::string &s);
 const char * PrettyTmpName (const char * oldname);
 char *       PrettyNewName (const char * oldname);
 int          StrCmpIns (const char *, const char *);

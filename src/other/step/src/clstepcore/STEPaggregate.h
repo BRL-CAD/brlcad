@@ -91,7 +91,7 @@ class STEPaggregate :  public SingleLinkList
 			       InstMgr *insts =0, int addFileId =0,
 			       const char *currSch =0);
 // OUTPUT
-    virtual const char *asStr(SCLstring & s) const;
+    virtual const char *asStr(std::string& s) const;
     virtual void STEPwrite (ostream& out =cout, const char * =0) const;
 
 //    SingleLinkNode * GetHead () const
@@ -357,8 +357,8 @@ class STEPnode :  public SingleLinkNode  {
     virtual Severity STEPread(istream &in, ErrorDescriptor *err);
 
 //	OUTPUT
-    virtual const char *asStr(SCLstring & s);
-    virtual const char *STEPwrite(SCLstring &s, const char * =0);
+    virtual const char *asStr(std::string& s);
+    virtual const char *STEPwrite(std::string& s, const char * =0);
     virtual void STEPwrite (ostream& out =cout);
 #ifdef __OSTORE__
     static os_typespec* get_os_typespec();
@@ -385,8 +385,8 @@ class GenericAggrNode  : public STEPnode {
     virtual Severity STEPread(istream &in, ErrorDescriptor *err);
 
 //	OUTPUT
-    virtual const char *asStr(SCLstring & s);
-    virtual const char *STEPwrite(SCLstring &s, const char * =0);
+    virtual const char *asStr(std::string& s);
+    virtual const char *STEPwrite(std::string& s, const char * =0);
     virtual void 	STEPwrite (ostream& out =cout);
 
 //	CONSTRUCTORS
@@ -424,8 +424,8 @@ class EntityNode  : public STEPnode {
 			      const TypeDescriptor *elem_type,
 			      InstMgr *insts, int addFileId = 0);
 //	OUTPUT
-    virtual const char *asStr(SCLstring & s);
-    virtual const char *STEPwrite (SCLstring &s, const char * =0);
+    virtual const char *asStr(std::string& s);
+    virtual const char *STEPwrite (std::string& s, const char * =0);
     virtual void 	STEPwrite (ostream& out =cout);
 
 //	CONSTRUCTORS
@@ -498,8 +498,8 @@ class SelectNode  : public STEPnode {
 			      InstMgr *insts, int addFileId = 0,
 			      const char *currSch =0);
 //	OUTPUT
-    virtual const char *asStr(SCLstring & s);
-    virtual const char *STEPwrite (SCLstring &s, const char * =0);
+    virtual const char *asStr(std::string& s);
+    virtual const char *STEPwrite (std::string& s, const char * =0);
     virtual void 	STEPwrite (ostream& out =cout);
 
 //	CONSTRUCTORS
@@ -562,8 +562,8 @@ class StringNode  : public STEPnode {
     virtual Severity STEPread(istream &in, ErrorDescriptor *err);
 
 //	OUTPUT
-    virtual const char *asStr(SCLstring & s);
-    virtual const char *STEPwrite (SCLstring &s, const char * =0);
+    virtual const char *asStr(std::string& s);
+    virtual const char *STEPwrite (std::string& s, const char * =0);
     virtual void 	STEPwrite (ostream& out =cout);
 
 //	CONSTRUCTORS
@@ -600,8 +600,8 @@ class BinaryNode  : public STEPnode {
     virtual Severity STEPread(istream &in, ErrorDescriptor *err);
 
 //	OUTPUT
-    virtual const char *asStr(SCLstring & s);
-    virtual const char *STEPwrite (SCLstring &s, const char * =0);
+    virtual const char *asStr(std::string& s);
+    virtual const char *STEPwrite (std::string& s, const char * =0);
     virtual void 	STEPwrite (ostream& out =cout);
 
 //	CONSTRUCTORS
@@ -637,8 +637,8 @@ class EnumNode  : public STEPnode {
     virtual Severity STEPread(istream &in, ErrorDescriptor *err);
 
 //	OUTPUT
-    virtual const char *asStr(SCLstring & s);
-    virtual const char *STEPwrite (SCLstring &s, const char * =0);
+    virtual const char *asStr(std::string& s);
+    virtual const char *STEPwrite (std::string& s, const char * =0);
     virtual void 	STEPwrite (ostream& out =cout);
 
 //	CONSTRUCTORS
@@ -666,8 +666,8 @@ class RealNode  : public STEPnode {
     virtual Severity STEPread(istream &in, ErrorDescriptor *err);
 
 //	OUTPUT
-    virtual const char *asStr(SCLstring & s);
-    virtual const char *STEPwrite (SCLstring &s, const char * =0);
+    virtual const char *asStr(std::string& s);
+    virtual const char *STEPwrite (std::string& s, const char * =0);
     virtual void 	STEPwrite (ostream& out =cout);
 
 //	CONSTRUCTORS
@@ -694,8 +694,8 @@ class IntNode  : public STEPnode {
     virtual Severity STEPread(istream &in, ErrorDescriptor *err);
 
 //	OUTPUT
-    virtual const char *asStr(SCLstring & s);
-    virtual const char *STEPwrite (SCLstring &s, const char * =0);
+    virtual const char *asStr(std::string& s);
+    virtual const char *STEPwrite (std::string& s, const char * =0);
     virtual void 	STEPwrite (ostream& out =cout);
 
 //	CONSTRUCTORS

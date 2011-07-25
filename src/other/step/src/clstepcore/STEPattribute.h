@@ -99,13 +99,13 @@ extern int   QuoteInString(istream& in);
 extern void  AppendChar(char c, int& index, char *&s, int& sSize);
 
 extern void 
-PushPastString (istream& in, SCLstring &s, ErrorDescriptor *err);
+PushPastString (istream& in, std::string& s, ErrorDescriptor *err);
 
 extern void 
-PushPastImbedAggr (istream& in, SCLstring &s, ErrorDescriptor *err);
+PushPastImbedAggr (istream& in, std::string& s, ErrorDescriptor *err);
 
 extern void 
-PushPastAggr1Dim(istream& in, SCLstring &s, ErrorDescriptor *err);
+PushPastAggr1Dim(istream& in, std::string& s, ErrorDescriptor *err);
 
 //extern  Severity ValidateEntityType(SCLP23(Application_instance) *se, 
 //					const AttrDescriptor *ad, 
@@ -165,7 +165,7 @@ class STEPattribute {
     Severity STEPread(istream& in = cin, InstMgr *instances =0, 
 		      int addFileId =0, const char * =NULL);
 
-    const char * asStr(SCLstring &, const char * =0) const;
+    const char * asStr(std::string&, const char * =0) const;
                       // return the attr value as a string
     void STEPwrite(ostream& out = cout, const char * =0);
 

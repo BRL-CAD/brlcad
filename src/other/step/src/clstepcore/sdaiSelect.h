@@ -94,7 +94,7 @@ class SCLP23_NAME(Select) {
 				  InstMgr *im, int clearError);
 
   // reading and writing
-        const char * STEPwrite (SCLstring& s, const char *currSch =0) const;
+        const char * STEPwrite (std::string& s, const char *currSch =0) const;
         void STEPwrite (ostream& out =cout, const char *currSch =0) const;
 
   // IMS 8/2/95: added as part of new select implementation

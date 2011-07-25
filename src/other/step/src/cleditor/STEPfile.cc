@@ -34,7 +34,7 @@ int pr_obj_errors = 0;
 #include <s_HEADER_SCHEMA.h>
 
 // STEPundefined contains
-// void PushPastString (istream& in, SCLstring &s, ErrorDescriptor *err)
+// void PushPastString (istream& in, std::string &s, ErrorDescriptor *err)
 #include <STEPundefined.h> 
 
 /***************************
@@ -93,7 +93,7 @@ side effects: The function  gobbles all characters up to and including the
 Severity 
 STEPfile::ReadHeader (istream& in) 
 {
-    SCLstring cmtStr;
+  std::string cmtStr;
 
     InstMgr *im = new InstMgr;
     SCLP23(Application_instance)* obj;
@@ -102,11 +102,11 @@ STEPfile::ReadHeader (istream& in)
     int endsec = 0;
     int userDefined = 0;
     int fileid;
-    SCLstring keywd;
+    std::string keywd;
     char c = '\0';
     char buf [BUFSIZ];
 
-    SCLstring strbuf;
+    std::string strbuf;
 
     ReadTokenSeparator(in);
 
@@ -137,7 +137,7 @@ STEPfile::ReadHeader (istream& in)
 	ReadTokenSeparator(in, &cmtStr);
 
 	//check for "ENDSEC"
-	if (!strncmp(keywd,"ENDSEC",7)) 
+	if (!strncmp(const_cast<char *>(keywd.c_str()),"ENDSEC",7)) 
 	{ 
 	    //get the token delimiter
 	    in.get(c); //should be ';'
@@ -151,9 +151,9 @@ STEPfile::ReadHeader (istream& in)
 	    buf[0]= '\0';
 	    if (_fileType == VERSION_OLD) {
 		strcpy(buf,"N279_");
-		strncat(buf,keywd, BUFSIZ-7);
+		strncat(buf,const_cast<char *>(keywd.c_str()), BUFSIZ-7);
 	    }
-	    else { strncpy (buf, keywd, BUFSIZ);  }
+	    else { strncpy (buf, const_cast<char *>(keywd.c_str()), BUFSIZ);  }
 		
 	    if (userDefined) 
 	    {
@@ -202,16 +202,16 @@ STEPfile::ReadHeader (istream& in)
 		switch (_fileType) 
 		{
 		    case VERSION_OLD:
-			fileid = HeaderIdOld(keywd);
+			fileid = HeaderIdOld(const_cast<char *>(keywd.c_str()));
 			break;
 		     default:
-			fileid = HeaderId(keywd);
+			fileid = HeaderId(const_cast<char *>(keywd.c_str()));
 			break;			    
 		}
 
 		//read the values from the istream
 		objsev = obj->STEPread(fileid,0,(InstMgr*)0,in);
-		if( !cmtStr.is_null() )
+		if( !cmtStr.empty() )
 		    obj->AddP21Comment(cmtStr);
 
 		in >> ws;
@@ -225,7 +225,7 @@ STEPfile::ReadHeader (istream& in)
 		im->Append(obj, completeSE);
 	    }
 	}
-	cmtStr.set_null();
+	cmtStr.clear();
     }
     
     if (_fileType == VERSION_OLD) {
@@ -291,15 +291,15 @@ STEPfile::HeaderConvertToNew(InstMgr& oldinst)
 	  
 	  fn = new p21DIS_File_name;
 	  
-	  fn->name(fi->file_name());     //STRING <- STRING
-	  fn->time_stamp(fi->date());    //STRING <- STRING
+	  fn->name(const_cast<char *>((fi->file_name()).c_str()));     //STRING <- STRING
+	  fn->time_stamp(const_cast<char *>((fi->date()).c_str()));    //STRING <- STRING
 	  //fn->author(fi->author());      
 		//LIST OF STRING <- LIST OF STRING
 	  (fn->author()).ShallowCopy(fi->author());
 		//LIST OF STRING <- LIST OF STRING
 	  (fn->organization()).ShallowCopy(fi->organization());
-	  fn->preprocessor_version(fi->preprocessor_version()); //STRING
-	  fn->originating_system(fi->originating_system());     //STRING
+	  fn->preprocessor_version(const_cast<char *>((fi->preprocessor_version()).c_str())); //STRING
+	  fn->originating_system(const_cast<char *>((fi->originating_system()).c_str()));     //STRING
 	  fn->authorisation("");         //STRING
 	  fn->STEPfile_id = HeaderId("File_Name");
 
@@ -317,7 +317,7 @@ STEPfile::HeaderConvertToNew(InstMgr& oldinst)
       {
 //  DAVE, is there a new way TODO this?
 	  // copy a SCLP23(String) value into a StringAggregate
-	  const char* tmpstr = ofd->description();
+	  const char* tmpstr = const_cast<char *>((ofd->description()).c_str());
 	  int l = strlen(tmpstr) + 2;	  
 	  char *str = new char[l];
 	  str[0]='\'';  str[1]='\0';
@@ -339,7 +339,7 @@ STEPfile::HeaderConvertToNew(InstMgr& oldinst)
     s_N279_imp_level * il = (s_N279_imp_level*)oldse;
     if (oldse != ENTITY_NULL) 
       {
-	  fd->implementation_level(il->implementation_level());
+	  fd->implementation_level(const_cast<char *>((il->implementation_level()).c_str()));
 	  oldinst.Delete(il);
       }
     else 
@@ -614,7 +614,7 @@ STEPfile::ReadData1(istream& in)
     int instance_count =0;
     char buf[BUFSIZ];
     buf[0] = '\0';
-    SCLstring tmpbuf;
+    std::string tmpbuf;
 
     SCLP23(Application_instance) * obj = ENTITY_NULL;
     stateEnum inst_state; // used if reading working file
@@ -654,10 +654,10 @@ STEPfile::ReadData1(istream& in)
 	    while( c != ENTITY_NAME_DELIM && in.good () &&
 		   !(endsec = FoundEndSecKywd(in, _error)) )
 	    {
-		tmpbuf.set_null();
+		tmpbuf.clear();
 		FindStartOfInstance(in,tmpbuf);
 	       cout << "ERROR: trying to recover from invalid data. skipping: "
-		    << tmpbuf.chars() << endl;
+		    << tmpbuf.c_str() << endl;
 		in >> c;
 		ReadTokenSeparator(in);
 	    }
@@ -763,7 +763,7 @@ STEPfile::ReadData1(istream& in)
     int instance_count =0;
     char buf[BUFSIZ];
     buf[0] = '\0';
-    SCLstring tmpbuf;
+    std::string tmpbuf;
 
     SCLP23(Application_instance) * obj;
     stateEnum inst_state; // used if reading working file
@@ -918,7 +918,7 @@ STEPfile::ReadWorkingData1 (istream& in)
     char c;
     int instance_count =0;
     char errbuf[BUFSIZ];
-    SCLstring tmpbuf;
+    std::string tmpbuf;
     
     //  PASS 1:  create instances
     SCLP23(Application_instance) * obj;
@@ -1075,10 +1075,10 @@ STEPfile::ReadData2 (istream& in, int useTechCor)
     char c;
     char buf[BUFSIZ];
     buf[0] = '\0';
-    SCLstring tmpbuf;
+    std::string tmpbuf;
 
     SCLP23(Application_instance) * obj = ENTITY_NULL;
-    SCLstring cmtStr;
+    std::string cmtStr;
 
 //    ReadTokenSeparator(in, &cmtStr);
 
@@ -1117,10 +1117,10 @@ STEPfile::ReadData2 (istream& in, int useTechCor)
 		   !(endsec = FoundEndSecKywd(in, _error)) )
 	    {
 		
-		tmpbuf.set_null();
+		tmpbuf.clear();
 		FindStartOfInstance(in,tmpbuf);
 	       cout << "ERROR: trying to recover from invalid data. skipping: "
-		     << tmpbuf.chars() << endl;
+		     << tmpbuf.c_str() << endl;
 		in >> c;
 		ReadTokenSeparator( in, &cmtStr );
 	    }
@@ -1135,7 +1135,7 @@ STEPfile::ReadData2 (istream& in, int useTechCor)
 	    else
 		obj =  ReadInstance(in, cout, cmtStr, useTechCor);
 
-	    cmtStr.set_null();
+	    cmtStr.clear();
 	    if(obj != ENTITY_NULL) 
 	    {
 		if( obj->Error().severity() < SEVERITY_INCOMPLETE )
@@ -1217,10 +1217,10 @@ STEPfile::ReadData2 (istream& in)
     char c;
     char buf[BUFSIZ];
     buf[0] = '\0';
-    SCLstring tmpbuf;
+    std::string tmpbuf;
 
     SCLP23(Application_instance) * obj;
-    SCLstring cmtStr;
+    std::string cmtStr;
 
     ReadTokenSeparator(in, &cmtStr);
     in >> c;
@@ -1353,7 +1353,7 @@ STEPfile::ReadData2 (istream& in)
     _warningCount = 0;  // reset error count
 
     char c;
-    SCLstring tmpbuf;
+    std::string tmpbuf;
 
     int valid_insts =0; 	// used for exchange file only
 
@@ -1402,7 +1402,7 @@ STEPfile::ReadWorkingData2 (istream& in, int useTechCor)
     _warningCount = 0;  // reset error count
     
     char c;
-    SCLstring tmpbuf;
+    std::string tmpbuf;
     int total_instances =0;
 
     SCLP23(Application_instance) * obj = ENTITY_NULL;
@@ -1481,7 +1481,7 @@ STEPfile::FindDataSection (istream& in)
 {
     ErrorDescriptor errs;
     SCLP23(String) tmp;
-    SCLstring s; // used if need to read a comment
+    std::string s; // used if need to read a comment
     char c;
 
     while( in.good() )
@@ -1588,8 +1588,8 @@ The '#' is read from the istream before CreateInstance is called.
 SCLP23(Application_instance) *
 STEPfile::CreateInstance(istream& in, ostream &out) 
 {
-    SCLstring tmpbuf;
-    SCLstring objnm;
+    std::string tmpbuf;
+    std::string objnm;
 
     char c;
     char schnm[BUFSIZ];
@@ -1678,7 +1678,7 @@ STEPfile::CreateInstance(istream& in, ostream &out)
 	    SkipInstance(in, tmpbuf);
 	    out << "WARNING: instance #" << fileid 
 		<< " User Defined Entity in DATA section ignored.\n"
-		<< "\tData lost: \'!" << objnm.chars() << "\': " << tmpbuf 
+		<< "\tData lost: \'!" << objnm.c_str() << "\': " << tmpbuf 
 		<< endl;
 	    return ENTITY_NULL;
 	}
@@ -1700,7 +1700,7 @@ STEPfile::CreateInstance(istream& in, ostream &out)
 		cout << "****" << endl;
 	    }
 #else
-	    obj = reg().ObjCreate(objnm.chars(), schnm);
+	    obj = reg().ObjCreate(objnm.c_str(), schnm);
 #endif
 	    if ( obj == ENTITY_NULL ) {
 		// This will be the case if objnm does not exist in the reg.
@@ -1728,7 +1728,7 @@ STEPfile::CreateInstance(istream& in, ostream &out)
     if (obj == ENTITY_NULL)
     {
 	SkipInstance(in, tmpbuf);
-	out << "ERROR: instance #" << fileid << " \'" << objnm.chars()
+	out << "ERROR: instance #" << fileid << " \'" << objnm.c_str()
 	    << "\': " << result.UserMsg()
 	    << ".\n\tData lost: " << tmpbuf << "\n\n";
 	return ENTITY_NULL;
@@ -1763,14 +1763,14 @@ STEPfile::CreateScopeInstances(istream& in, SCLP23(Application_instance_ptr) ** 
 {
     Severity rval = SEVERITY_NULL;
     SCLP23(Application_instance) * se;
-    SCLstring tmpbuf;
+    std::string tmpbuf;
     char c;
     int exportid;
     SCLP23(Application_instance_ptr) inscope [BUFSIZ];  int i =0;
-    SCLstring keywd;    
+    std::string keywd;    
 
     keywd = GetKeyword(in," \n\t/\\#;", _error);
-    if (strncmp(keywd,"&SCOPE",6)) 
+    if (strncmp(const_cast<char *>(keywd.c_str()),"&SCOPE",6)) 
       {
 	//ERROR: "&SCOPE" expected
 	//TODO: should attempt to recover by reading through ENDSCOPE
@@ -1817,7 +1817,7 @@ STEPfile::CreateScopeInstances(istream& in, SCLP23(Application_instance_ptr) ** 
 
     //check for "ENDSCOPE"
     keywd = GetKeyword(in," \t\n/\\#;", _error); 
-    if (strncmp(keywd,"ENDSCOPE",8)) 
+    if (strncmp(const_cast<char *>(keywd.c_str()),"ENDSCOPE",8)) 
       {
 	  //ERROR: "ENDSCOPE" expected
 	SkipInstance(in, tmpbuf);
@@ -1862,18 +1862,18 @@ STEPfile::CreateScopeInstances(istream& in, SCLP23(Application_instance_ptr) ** 
 SCLP23(Application_instance) *
 STEPfile::CreateSubSuperInstance(istream& in, int fileid, ErrorDescriptor &e)
 {
-    SCLstring tmpstr;
+    std::string tmpstr;
     SCLP23(Application_instance) * obj = ENTITY_NULL;
 
     char c;
     char schnm[BUFSIZ];
     schnm[0] = '\0';
 
-    SCLstring buf; // used to hold the simple record that is read
+    std::string buf; // used to hold the simple record that is read
     ErrorDescriptor err; // used to catch error msgs
 
     const int enaSize = 64;
-    SCLstring *entNmArr[enaSize]; // array of entity type names
+    std::string *entNmArr[enaSize]; // array of entity type names
     int enaIndex = 0;
 
     in >> ws;
@@ -1881,9 +1881,9 @@ STEPfile::CreateSubSuperInstance(istream& in, int fileid, ErrorDescriptor &e)
     c = in.peek(); // see if you have closed paren (ending the record)
     while(in.good() && (c != ')') && (enaIndex < enaSize) )
     {
-	entNmArr[enaIndex] = new SCLstring;
+	entNmArr[enaIndex] = new std::string;
 	ReadStdKeyword(in, *(entNmArr[enaIndex]), 1); // read the type name
-	if(entNmArr[enaIndex]->is_null())
+	if(entNmArr[enaIndex]->empty())
 	{
 	    delete entNmArr[enaIndex];
 	    entNmArr[enaIndex] = 0;
@@ -1891,7 +1891,7 @@ STEPfile::CreateSubSuperInstance(istream& in, int fileid, ErrorDescriptor &e)
 	else
 	{
 	    SkipSimpleRecord(in, buf, &err);
-	    buf.set_null();
+	    buf.clear();
 	    enaIndex++;
 	}
 	in >> ws;
@@ -1910,10 +1910,10 @@ STEPfile::CreateSubSuperInstance(istream& in, int fileid, ErrorDescriptor &e)
     schemaName( schnm );
 
 #ifdef __O3DB__
-	obj = new STEPcomplex(_reg, (const SCLstring **)entNmArr, fileid,
+	obj = new STEPcomplex(_reg, (const std::string **)entNmArr, fileid,
 			      schnm);
 #else
-	obj = new STEPcomplex(&_reg, (const SCLstring **)entNmArr, fileid,
+	obj = new STEPcomplex(&_reg, (const std::string **)entNmArr, fileid,
 			      schnm);
 #endif
 
@@ -1942,14 +1942,14 @@ STEPfile::ReadScopeInstances (istream& in)
 {
     Severity rval = SEVERITY_NULL;
     SCLP23(Application_instance) * se;
-    SCLstring tmpbuf;
+    std::string tmpbuf;
     char c;
     int exportid;
-    SCLstring keywd;    
-    SCLstring cmtStr;
+    std::string keywd;    
+    std::string cmtStr;
     
     keywd = GetKeyword(in," \n\t/\\#;", _error);
-    if (strncmp(keywd,"&SCOPE",6)) 
+    if (strncmp(const_cast<char *>(keywd.c_str()),"&SCOPE",6)) 
       {
 	  //ERROR: "&SCOPE" expected
 	SkipInstance(in, tmpbuf);
@@ -1982,7 +1982,7 @@ STEPfile::ReadScopeInstances (istream& in)
     
     //check for "ENDSCOPE"
     keywd = GetKeyword(in," \t\n/\\#;", _error);
-    if (strncmp(keywd,"ENDSCOPE",8)) 
+    if (strncmp(const_cast<char *>(keywd.c_str()),"ENDSCOPE",8)) 
       {
 	//ERROR: "ENDSCOPE" expected
 	SkipInstance(in, tmpbuf);
@@ -2026,7 +2026,7 @@ STEPfile::ReadScopeInstances (istream& in)
 Severity
 STEPfile::ReadSubSuperInstance (istream& in)
 {
-  SCLstring tmp;
+  std::string tmp;
   SkipInstance(in, tmp);
   return SEVERITY_NULL;
 }
@@ -2054,7 +2054,7 @@ ReadEntityError(char c, int i, istream& in)
 	_error.AppendToDetailMsg(errStr);
     }
 
-    SCLstring tmp;
+    std::string tmp;
     STEPwrite (tmp);  // STEPwrite writes to a static buffer inside function
     sprintf(errStr, 
 	    "  The invalid instance to this point looks like :\n%s\n", 
@@ -2111,17 +2111,17 @@ ReadEntityError(char c, int i, istream& in)
  the STEPfile ErrorDescriptor.
 *****************************************************/
 SCLP23(Application_instance) *
-STEPfile::ReadInstance(istream& in, ostream& out, SCLstring &cmtStr, 
+STEPfile::ReadInstance(istream& in, ostream& out, std::string &cmtStr, 
 		       int useTechCor)
 {
     Severity sev = SEVERITY_NULL;
 
-    SCLstring tmpbuf;
+    std::string tmpbuf;
     char errbuf[BUFSIZ];
     errbuf[0] = '\0';
     char currSch[BUFSIZ];
     currSch[0] = '\0';
-    SCLstring objnm;
+    std::string objnm;
 
     char c;
     int fileid;
@@ -2143,7 +2143,7 @@ STEPfile::ReadInstance(istream& in, ostream& out, SCLstring &cmtStr,
 	// Defined Entities. STEPfile still includes them in the error count 
 	// which is not valid.
 	// Check to see if an User Defined Entity has been found.
-	const char *ude = tmpbuf.chars();
+	const char *ude = tmpbuf.c_str();
 	while ( *ude && (*ude != '=') ) ude++;
 	if(*ude == '=') ude++;
 	while (*ude && isspace(*ude)) ude++;
@@ -2205,7 +2205,7 @@ STEPfile::ReadInstance(istream& in, ostream& out, SCLstring &cmtStr,
 
 	ReadTokenSeparator(in, &cmtStr);
 
-	if( !cmtStr.is_null() )
+	if( !cmtStr.empty() )
 	    obj->AddP21Comment(cmtStr);
 
 	c = in.peek(); // check for semicolon or keyword 'ENDSEC'
@@ -2239,7 +2239,7 @@ STEPfile::ReadInstance(istream& in, ostream& out, SCLstring &cmtStr,
 	    SkipInstance(in, tmpbuf);
 	    out << "WARNING: #" << fileid << 
 		". Ignoring User defined entity.\n\tdata lost: !"
-		<< objnm.chars() << tmpbuf << "\n";
+		<< objnm.c_str() << tmpbuf << "\n";
 	    ++_warningCount;
 	    return ENTITY_NULL;
 	}
@@ -2252,7 +2252,7 @@ STEPfile::ReadInstance(istream& in, ostream& out, SCLstring &cmtStr,
 
 	ReadTokenSeparator(in, &cmtStr);
 
-	if( !cmtStr.is_null() )
+	if( !cmtStr.empty() )
 	    obj->AddP21Comment(cmtStr);
 
 	c = in.peek(); // check for semicolon or keyword 'ENDSEC'
@@ -2476,7 +2476,7 @@ The header section entities must be numbered in the following manner:
 int
 STEPfile::HeaderId (const char* name)
 {
-    SCLstring tmp;
+    std::string tmp;
     if(! (strcmp( (char *)StrToUpper( name, tmp ), "FILE_DESCRIPTION") ) )
 	return 1;
     if(! (strcmp( (char *)StrToUpper( name, tmp ), "FILE_NAME") ) )
@@ -2508,7 +2508,7 @@ STEPfile::HeaderIdOld (const char* name)
     nms[3] = "CLASSIFICATION";
     nms[4] = "MAXSIG";
     
-    SCLstring tmp;
+    std::string tmp;
     for (int i=0; i<5; ++i)
       {
 	  if (!strcmp( (char *)StrToUpper( name, tmp ), nms[i] ) )
@@ -2554,7 +2554,7 @@ STEPfile::WriteHeader(ostream& out)
 void
 STEPfile::WriteHeaderInstance(SCLP23(Application_instance)* obj, ostream& out)
 {
-    SCLstring tmp;
+    std::string tmp;
     if(obj->P21CommentRep())
 	out << obj->P21Comment();
     out << StrToUpper( obj->EntityName(), tmp ) << "(";
@@ -2623,7 +2623,7 @@ STEPfile::WriteHeaderInstanceFileName (ostream& out)
       }
 
 // Write the values for the FileName instance to the ostream    
-	SCLstring tmp;
+	std::string tmp;
     out << StrToUpper (fn->EntityName()) << "(";
 
     // write name
@@ -2813,17 +2813,19 @@ STEPfile::AppendFile (istream* in, int useTechCor)
     int exchange_file = -1;
     
     ReadTokenSeparator(*in);
-    SCLstring keywd = GetKeyword(*in, "; #", _error);
+    std::string keywd = GetKeyword(*in, "; #", _error);
     // get the delimiter off the istream
     char c;
     in->get(c);
     
-    if (!strncmp(keywd, "ISO-10303-21",strlen(keywd))) 
+    if (!strncmp(const_cast<char *>(keywd.c_str()), "ISO-10303-21",
+         strlen(const_cast<char *>(keywd.c_str())))) 
     {
 	exchange_file = 1;
 	SetFileType(VERSION_CURRENT);
     }
-    else if (!strncmp(keywd, "STEP",strlen(keywd))) 
+    else if (!strncmp(const_cast<char *>(keywd.c_str()), "STEP",
+              strlen(const_cast<char *>(keywd.c_str())))) 
     {
 	_error.AppendToUserMsg("Reading Old Version of exchange file.\n");
 	_error.GreaterSeverity(SEVERITY_USERMSG);
@@ -2831,7 +2833,8 @@ STEPfile::AppendFile (istream* in, int useTechCor)
 	exchange_file = 1;
 	SetFileType(VERSION_OLD);
     }
-    else if (!strncmp(keywd, "STEP_WORKING_SESSION",strlen(keywd))) 
+    else if (!strncmp(const_cast<char *>(keywd.c_str()), "STEP_WORKING_SESSION",
+              strlen(const_cast<char *>(keywd.c_str())))) 
     {
 	exchange_file = 0;
 	if (_fileType != WORKING_SESSION) 
@@ -2972,7 +2975,9 @@ STEPfile::AppendFile (istream* in, int useTechCor)
 	  char c; in2->get(c); if (c == ';') ;
       }
     
-    if ((strncmp (keywd, END_FILE_DELIM,strlen(keywd))) || !(in2 -> good ())) 
+    if ((strncmp (const_cast<char *>(keywd.c_str()), 
+         END_FILE_DELIM,
+         strlen(const_cast<char *>(keywd.c_str()))) || !(in2 -> good ()))) 
       {  
 	  _error.AppendToUserMsg(END_FILE_DELIM);
 	  _error.AppendToUserMsg(" missing at end of file.\n");

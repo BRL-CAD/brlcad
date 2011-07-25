@@ -471,7 +471,7 @@ class Where_rule : public Dictionary_instance {
     Type_or_rule_var _type_or_rule;
 
     // non-SDAI
-    SCLstring _comment; // Comment contained in the EXPRESS.
+    std::string _comment; // Comment contained in the EXPRESS.
 			// Should be properly formatted to include (* *)
 			// Will be written to EXPRESS as-is (w/out formatting)
 
@@ -483,7 +483,7 @@ class Where_rule : public Dictionary_instance {
 
     Express_id label_() const { return _label; }
     const Type_or_rule_var parent_item() const { return _type_or_rule; }
-    SCLstring comment_() const { return _comment; }
+    std::string comment_() const { return _comment; }
 
     void label_(const Express_id& ei) { _label = ei; }
     void parent_item(const Type_or_rule_var& tor) { _type_or_rule = tor; }
@@ -522,7 +522,7 @@ class Global_rule : public Dictionary_instance {
     Entity__set_var _entities; // not implemented
     Where_rule__list_var _where_rules;
     Schema_ptr _parent_schema;
-    SCLstring _rule_text; // non-SDAI
+    std::string _rule_text; // non-SDAI
 
     Global_rule();
     Global_rule(const char *n, Schema_ptr parent_sch, const char * rt);
@@ -533,7 +533,7 @@ class Global_rule : public Dictionary_instance {
     const Entity__set_var entities_() const { return _entities; }
     const Where_rule__list_var where_rules_() const { return _where_rules; }
     const Schema_ptr parent_schema_() const { return _parent_schema; }
-    const char * rule_text_() { return _rule_text.chars(); }
+    const char * rule_text_() { return const_cast<char *>(_rule_text.c_str()); }
 
     void name_(Express_id& n) { _name = n; }
     void entities_(const Entity__set_var &e); // not implemented
@@ -575,7 +575,7 @@ class Uniqueness_rule : public Dictionary_instance {
     const EntityDescriptor * _parent_entity;
 
     // non-SDAI
-    SCLstring _comment; // Comment contained in the EXPRESS.
+    std::string _comment; // Comment contained in the EXPRESS.
 			// Should be properly formatted to include (* *)
 			// Will be written to EXPRESS as-is (w/out formatting)
 
@@ -587,7 +587,7 @@ class Uniqueness_rule : public Dictionary_instance {
 
     Express_id label_() const { return _label; }
     const EntityDescriptor * parent_() const { return _parent_entity; }
-    SCLstring &comment_() { return _comment; }
+    std::string &comment_() { return _comment; }
 
     void label_(const Express_id& ei) { _label = ei; }
     void parent_(const EntityDescriptor * pe) { _parent_entity = pe; }
@@ -821,10 +821,10 @@ class AttrDescriptor {
 		   );
 	virtual ~AttrDescriptor ();
 
-	const char * GenerateExpress (SCLstring &buf) const;
+	const char * GenerateExpress (std::string &buf) const;
 
 		// the attribute Express def
-	virtual const char *AttrExprDefStr(SCLstring & s) const;
+	virtual const char *AttrExprDefStr(std::string & s) const;
 
 		// left side of attr def
 	const char * Name()	const	   { return _name; }
@@ -868,7 +868,7 @@ class AttrDescriptor {
 	const char * TypeName() const;	// right side of attr def
 
 			// an expanded right side of attr def
-	const char *ExpandedTypeName(SCLstring & s) const;
+	const char *ExpandedTypeName(std::string & s) const;
 
 	int RefersToType() const	{ return !(_domainType == 0); }
 
@@ -938,7 +938,7 @@ class Derived_attribute  :    public AttrDescriptor  {
 		       const EntityDescriptor & owner 
 		   );
     virtual ~Derived_attribute();
-    const char * AttrExprDefStr(SCLstring & s) const;
+    const char * AttrExprDefStr(std::string & s) const;
 
     const char *initializer_() { return _initializer; }
     void initializer_(const char *i) { _initializer = i; }
@@ -972,7 +972,7 @@ class Inverse_attribute  :    public AttrDescriptor  {
 		{ }
 	virtual ~Inverse_attribute () { }
 	
-	const char * AttrExprDefStr(SCLstring & s) const;
+	const char * AttrExprDefStr(std::string & s) const;
 
 	const char * inverted_attr_id_() const
                 { return _inverted_attr_id; } 
@@ -1022,7 +1022,7 @@ class SchRename {
         { return ( strcmp( schName, schrnm.schName ) < 0 ); }
     int choice( const char *nm ) const;
             // is nm one of our possible choices?
-    char *rename( const char *schnm, char *newnm ) const;
+    char *rename(std::string schm, char *newnm ) const;
             // given a schema name, returns new object name if exists
     SchRename *next;
 
@@ -1177,12 +1177,12 @@ class TypeDescriptor {
 	TypeDescriptor ( ); 
 	virtual ~TypeDescriptor () { /* if ( altNames ) delete altNames; */ }
 
-	virtual const char * GenerateExpress (SCLstring &buf) const;
+	virtual const char * GenerateExpress (std::string &buf) const;
 
 		// The name of this type.  If schnm != NULL, the name we're
 	        // referred to by schema schnm (may be diff name in our alt-
 	        // names list (based on schnm's USE/REF list)).
-	const char * Name( const char *schnm =NULL ) const;
+	const char * Name(std::string schnm = NULL) const;
 
 		// The name that would be found on the right side of an 
 		// attribute definition. In the case of a type defined like
@@ -1192,7 +1192,7 @@ class TypeDescriptor {
 		// defined in an attribute it will be the _description
 		// member variable since _name will be null. e.g. attr. def.
 		// project_names : ARRAY [1..10] name;
-	const char * AttrTypeName( SCLstring &buf, const char *schnm =NULL ) const;
+	const char * AttrTypeName( std::string &buf, const char *schnm =NULL ) const;
 
 	        // Linked link of alternate names for the type:
 	const SchRename *AltNameList() const { return altNames; }
@@ -1202,7 +1202,7 @@ class TypeDescriptor {
 		// except it is more thorough of a description where possible
 		// e.g. if the description contains a TYPE name it will also
 		// be explained.
-	const char *TypeString(SCLstring & s) const;
+	const char *TypeString(std::string & s) const;
 
 		// This TypeDescriptor's type
 	const PrimitiveType Type() const	{ return _fundamentalType; }
@@ -1288,7 +1288,7 @@ class EnumTypeDescriptor  :    public TypeDescriptor  {
   public:
     EnumCreator CreateNewEnum;
 
-    const char * GenerateExpress (SCLstring &buf) const;
+    const char * GenerateExpress (std::string &buf) const;
 
     void AssignEnumCreator(EnumCreator f = 0)
     {
@@ -1336,7 +1336,7 @@ class EntityDescriptor  :    public TypeDescriptor  {
 //	StringAggregate		 * _derivedAttr;  // OPTIONAL
 	Inverse_attributeList _inverseAttr;  // OPTIONAL
 
-	SCLstring _supertype_stmt;
+	std::string _supertype_stmt;
   public:
 	Uniqueness_rule__set_var _uniqueness_rules; // initially a null pointer
 
@@ -1353,9 +1353,9 @@ class EntityDescriptor  :    public TypeDescriptor  {
 
 	virtual ~EntityDescriptor ();
 
-	const char * GenerateExpress (SCLstring &buf) const;
+	const char * GenerateExpress (std::string &buf) const;
 
-	const char * QualifiedName(SCLstring &s) const;
+	const char * QualifiedName(std::string &s) const;
 
 	const SCLP23(LOGICAL) & AbstractEntity() const 
 					{ return _abstractEntity;}
@@ -1400,8 +1400,8 @@ class EntityDescriptor  :    public TypeDescriptor  {
 	void AddSubtype(EntityDescriptor *ed) 
 		{ _subtypes.AddNode(ed); }
 	void AddSupertype_Stmt(const char *s) { _supertype_stmt = s; }
-	const char * Supertype_Stmt() { return _supertype_stmt.chars(); }
-	SCLstring& supertype_stmt_() { return _supertype_stmt; }
+	const char * Supertype_Stmt() { return const_cast<char *>(_supertype_stmt.c_str()); }
+	std::string& supertype_stmt_() { return _supertype_stmt; }
 
 	void AddSupertype(EntityDescriptor *ed) 
 		{ _supertypes.AddNode(ed); }

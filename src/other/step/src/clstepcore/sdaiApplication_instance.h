@@ -59,7 +59,7 @@ class SCLP23_NAME(Application_instance) : public SCLP23_NAME(DAObject_SDAI)
     STEPattributeList attributes;
     int 	      STEPfile_id;
     ErrorDescriptor   _error;
-    SCLstring	      *p21Comment;
+    std::string	      *p21Comment;
 					// registry additions
     EntityDescriptor *eDesc;
 
@@ -114,16 +114,18 @@ class SCLP23_NAME(Application_instance) : public SCLP23_NAME(DAObject_SDAI)
 
 #endif
 
-    void AddP21Comment(SCLstring &s, int replace = 1);
+    void AddP21Comment(std::string &s, int replace = 1);
     void AddP21Comment(const char *s, int replace = 1);
     void DeleteP21Comment() { delete p21Comment; p21Comment = 0; }
 
     // guaranteed a string (may be null string)
     const char *P21Comment() 
-	{ return ( p21Comment ? p21Comment->chars() : "" ); }
+	{ return ( p21Comment ? const_cast<char *>(p21Comment->c_str()) : "" ); }
     // returns null if no comment exists
+    // Note: Jul-24-2011, confirm that we want to change p21Comment->rep() to
+    // const_cast<char *>(p21Comment->c_str())
     const char *P21CommentRep() 
-	{ return ( p21Comment ? p21Comment->rep() : 0 ); }
+	{ return ( p21Comment ? const_cast<char *>(p21Comment->c_str()) : 0 ); }
 
     const char *EntityName( const char *schnm =NULL) const;
 
@@ -155,13 +157,13 @@ class SCLP23_NAME(Application_instance) : public SCLP23_NAME(DAObject_SDAI)
 // WRITE
     virtual void STEPwrite(ostream& out =cout, const char *currSch =NULL,
 			   int writeComments = 1);
-    virtual const char * STEPwrite(SCLstring &buf, const char *currSch =NULL);
+    virtual const char * STEPwrite(std::string &buf, const char *currSch =NULL);
 
     void WriteValuePairs(ostream& out, const char *currSch =NULL, 
 			 int writeComments = 1, int mixedCase = 1);
 
     void	 STEPwrite_reference (ostream& out =cout);
-    const char * STEPwrite_reference (SCLstring &buf);
+    const char * STEPwrite_reference (std::string &buf);
 
     void beginSTEPwrite(ostream& out =cout); // writes out the SCOPE section
     void endSTEPwrite(ostream& out =cout);

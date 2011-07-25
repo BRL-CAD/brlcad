@@ -24,7 +24,7 @@ IntValidLevel (const char *attrValue, ErrorDescriptor *err,
 	       int clearError, int optional, char *tokenList);
 
 extern char * 
-WriteReal(SCLP23(Real) val, SCLstring &s);
+WriteReal(SCLP23(Real) val, std::string &s);
 
 extern void
 WriteReal(SCLP23(Real) val, ostream &out);
@@ -59,29 +59,29 @@ NumberValidLevel (const char *attrValue, ErrorDescriptor *err,
 extern int   QuoteInString(istream& in);
 
 extern void 
-PushPastString (istream& in, SCLstring &s, ErrorDescriptor *err);
+PushPastString (istream& in, std::string &s, ErrorDescriptor *err);
 
 extern void 
-PushPastImbedAggr (istream& in, SCLstring &s, ErrorDescriptor *err);
+PushPastImbedAggr (istream& in, std::string &s, ErrorDescriptor *err);
 
 extern void 
-PushPastAggr1Dim(istream& in, SCLstring &s, ErrorDescriptor *err);
+PushPastAggr1Dim(istream& in, std::string &s, ErrorDescriptor *err);
 
 ////////////////////
 
 extern Severity 
-FindStartOfInstance(istream& in, SCLstring&  inst);
+FindStartOfInstance(istream& in, std::string&  inst);
 
 	//  used for instances that aren\'t valid - reads to next \';\'
 extern Severity 
-SkipInstance (istream& in, SCLstring & inst);
+SkipInstance (istream& in, std::string & inst);
 
 extern const char *
-SkipSimpleRecord(istream &in, SCLstring &buf, ErrorDescriptor *err);
+SkipSimpleRecord(istream &in, std::string &buf, ErrorDescriptor *err);
 
  // this includes entity names
 extern const char *
-ReadStdKeyword(istream& in, SCLstring &buf, int skipInitWS = 1);
+ReadStdKeyword(istream& in, std::string &buf, int skipInitWS = 1);
 
 extern const char* 
 GetKeyword(istream& in, const char* delims, ErrorDescriptor &err);
@@ -89,12 +89,12 @@ GetKeyword(istream& in, const char* delims, ErrorDescriptor &err);
 extern int 
 FoundEndSecKywd(istream& in, ErrorDescriptor &err);
 
-extern const char *ReadComment(SCLstring &ss, const char *s);
+extern const char *ReadComment(std::string &ss, const char *s);
 
-extern const char *ReadComment(istream& in, SCLstring &s);
+extern const char *ReadComment(istream& in, std::string &s);
 
 extern Severity    ReadPcd(istream& in);   //print control directive
 
-extern void        ReadTokenSeparator(istream& in, SCLstring *comments = 0);
+extern void        ReadTokenSeparator(istream& in, std::string *comments = 0);
 
 #endif

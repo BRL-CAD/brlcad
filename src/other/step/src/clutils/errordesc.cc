@@ -97,50 +97,50 @@ ErrorDescriptor::GetCorrSeverity(const char *s)
 //    cout << "s is (" << s << ") \n";
     if(s && s[0] != 0)
     {
-	SCLstring s2;
+      std::string s2;
 	StrToUpper(s,s2);
 //	cout << "s after if is (" << s << ") \n" << "s2 is (" << s2.chars() << ")\n";
-	if(!strcmp(s2.chars(),"SEVERITY_NULL"))
+	if(!strcmp(s2.c_str(),"SEVERITY_NULL"))
 	{
 //	    cout << "SEVERITY_NULL" << endl;
 	    return SEVERITY_NULL;
 	}
-	if(!strcmp(s2.chars(),"SEVERITY_USERMSG"))
+	if(!strcmp(s2.c_str(),"SEVERITY_USERMSG"))
 	{
 //	    cout << "SEVERITY_USERMSG" << endl;
 	    return SEVERITY_USERMSG;
 	}
-	if(!strcmp(s2.chars(),"SEVERITY_INCOMPLETE"))
+	if(!strcmp(s2.c_str(),"SEVERITY_INCOMPLETE"))
 	{
 //	    cout << "SEVERITY_INCOMPLETE" << endl;
 	    return SEVERITY_INCOMPLETE;
 	}
-	if(!strcmp(s2.chars(),"SEVERITY_WARNING"))
+	if(!strcmp(s2.c_str(),"SEVERITY_WARNING"))
 	{
 //	    cout << "SEVERITY_WARNING" << endl;
 	    return SEVERITY_WARNING;
 	}
-	if(!strcmp(s2.chars(),"SEVERITY_INPUT_ERROR"))
+	if(!strcmp(s2.c_str(),"SEVERITY_INPUT_ERROR"))
 	{
 //	    cout << "SEVERITY_INPUT_ERROR" << endl;
 	    return SEVERITY_INPUT_ERROR;
 	}
-	if(!strcmp(s2.chars(),"SEVERITY_BUG"))
+	if(!strcmp(s2.c_str(),"SEVERITY_BUG"))
 	{
 //	    cout << "SEVERITY_BUG" << endl;
 	    return SEVERITY_BUG;
 	}
-	if(!strcmp(s2.chars(),"SEVERITY_EXIT"))
+	if(!strcmp(s2.c_str(),"SEVERITY_EXIT"))
 	{
 //	    cout << "SEVERITY_EXIT" << endl;
 	    return SEVERITY_EXIT;
 	}
-	if(!strcmp(s2.chars(),"SEVERITY_DUMP"))
+	if(!strcmp(s2.c_str(),"SEVERITY_DUMP"))
 	{
 //	    cout << "SEVERITY_DUMP" << endl;
 	    return SEVERITY_DUMP;
 	}
-	if(!strcmp(s2.chars(),"SEVERITY_MAX"))
+	if(!strcmp(s2.c_str(),"SEVERITY_MAX"))
 	{
 //	    cout << "SEVERITY_MAX" << endl;
 	    return SEVERITY_MAX;

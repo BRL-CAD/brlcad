@@ -24,7 +24,7 @@
 
 class SCLundefined  {
   protected:
-    SCLstring val;
+    std::string val;
     
   public:
 //	INPUT
@@ -35,8 +35,8 @@ class SCLundefined  {
     virtual Severity STEPread(istream &in, ErrorDescriptor *err);
 
 //	OUTPUT
-    virtual const char *asStr(SCLstring &s) const;
-    virtual const char *STEPwrite(SCLstring &s);
+    virtual const char *asStr(std::string& s) const;
+    virtual const char *STEPwrite(std::string& s);
     virtual void 	STEPwrite (ostream& out =cout);
 
     int set_null ();

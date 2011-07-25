@@ -339,7 +339,7 @@ char *STEPfile::schemaName( char *schName )
      */
 {
     p21DIS_File_schema *fs;
-    SCLstring tmp;
+    std::string tmp;
     STEPnode *n;
 
     if ( _headerInstances == NULL ) return NULL;
@@ -350,10 +350,10 @@ char *STEPfile::schemaName( char *schName )
     // (take the first one)
     if ( n == NULL ) return NULL;
     n->STEPwrite(tmp);
-    if ( *tmp.chars() == '\0' || *tmp.chars() == '$' ) return NULL;
+    if ( *tmp.c_str() == '\0' || *tmp.c_str() == '$' ) return NULL;
     // tmp.chars() returns the string we want plus a beginning and ending
     // quote mark (').  We remove these below.
-    strncpy( schName, tmp.chars()+1, BUFSIZ-1 );
+    strncpy( schName, tmp.c_str()+1, BUFSIZ-1 );
     // "+1" to remove beginning '.
     if ( *(schName + strlen( schName ) - 1) == '\'' ) {
 	// Remove trailing '.  This condition checks that it wasn't removed

@@ -164,7 +164,7 @@ IntValidLevel (const char *attrValue, ErrorDescriptor *err,
 }
 
 char * 
-WriteReal(SCLP23(Real) val, SCLstring &s)
+WriteReal(SCLP23(Real) val, std::string &s)
 {
 
     char rbuf[64];
@@ -191,10 +191,10 @@ WriteReal(SCLP23(Real) val, SCLstring &s)
 	    }
 	    *expon = '\0';
 	    s = rbuf;
-	    s.Append('.');
-	    s.Append('E');
+	    s.append(".");
+	    s.append("E");
 	    expon++;
-	    s.Append(expon);
+	    s += expon;
 	}
 	else 
 	{
@@ -206,13 +206,13 @@ WriteReal(SCLP23(Real) val, SCLstring &s)
     }
     else
       s = rbuf;
-    return (char *)(s.chars());
+    return const_cast<char *>(s.c_str());
 }
 
 void
 WriteReal(SCLP23(Real) val, ostream &out)
 {
-    SCLstring s;
+    std::string s;
 
     out << WriteReal(val,s);
 #if 0
@@ -618,7 +618,7 @@ QuoteInString(istream& in)
 // 'in'.  
 
 void
-PushPastString (istream& in, SCLstring &s, ErrorDescriptor *err)
+PushPastString (istream& in, std::string &s, ErrorDescriptor *err)
 {
     char messageBuf[BUFSIZ];
     messageBuf[0] = '\0';
@@ -628,24 +628,24 @@ PushPastString (istream& in, SCLstring &s, ErrorDescriptor *err)
     in >> c;
     if(c == STRING_DELIM)
     {
-	s.Append(c);
+	s += c;
 	while(QuoteInString(in)) // to handle a string like '''hi'
 	{
 	    in.get(c);
-	    s.Append(c);
+	    s += c;
 	    in.get(c);
-	    s.Append(c);
+	    s += c;
 	}
 //	int sk = in.skip(0);
 	while( in.get(c) && (c != STRING_DELIM) )
 	{
-	    s.Append(c);
+	    s += c;
 	    while(QuoteInString(in))
 	    {	// to handle a string like 'hi'''
 		in.get(c);
-		s.Append(c);
+		s += c;
 		in.get(c);
-		s.Append(c);
+		s += c;
 	    }
 	}
 //	in.skip(sk);
@@ -655,10 +655,10 @@ PushPastString (istream& in, SCLstring &s, ErrorDescriptor *err)
 	    err->GreaterSeverity(SEVERITY_INPUT_ERROR);
 	    sprintf(messageBuf, "Invalid string value.\n");
 	    err->AppendToDetailMsg(messageBuf);
-	    s.Append('\'');
+	    s.append("\'");
 	}
 	else
-	    s.Append(c);
+	    s += c;
     }
 }
 
@@ -668,7 +668,7 @@ PushPastString (istream& in, SCLstring &s, ErrorDescriptor *err)
 // aggregates.
 
 void
-PushPastImbedAggr (istream& in, SCLstring &s, ErrorDescriptor *err)
+PushPastImbedAggr (istream& in, std::string &s, ErrorDescriptor *err)
 {
     char messageBuf[BUFSIZ];
     messageBuf[0] = '\0';
@@ -679,7 +679,7 @@ PushPastImbedAggr (istream& in, SCLstring &s, ErrorDescriptor *err)
 
     if(c == '(')
     {
-	s.Append(c);
+	s += c;
 	in.get(c);
 	while( in.good() && (c != ')') )
 	{
@@ -694,7 +694,7 @@ PushPastImbedAggr (istream& in, SCLstring &s, ErrorDescriptor *err)
 		PushPastString(in, s, err);
 	    }
 	    else
-		s.Append(c);
+		s += c;
 	    in.get(c);
 	}    
 	if(c != ')')
@@ -702,10 +702,10 @@ PushPastImbedAggr (istream& in, SCLstring &s, ErrorDescriptor *err)
 	    err->GreaterSeverity(SEVERITY_INPUT_ERROR);
 	    sprintf(messageBuf, "Invalid aggregate value.\n");
 	    err->AppendToDetailMsg(messageBuf);
-	    s.Append(')');
+	    s.append(")");
 	}
 	else
-	    s.Append(c);
+	    s += c;
     }
 }
 
@@ -716,7 +716,7 @@ PushPastImbedAggr (istream& in, SCLstring &s, ErrorDescriptor *err)
 // to contain an aggregate as an element.
 
 void
-PushPastAggr1Dim(istream& in, SCLstring &s, ErrorDescriptor *err)
+PushPastAggr1Dim(istream& in, std::string &s, ErrorDescriptor *err)
 {
     char messageBuf[BUFSIZ];
     messageBuf[0] = '\0';
@@ -727,7 +727,7 @@ PushPastAggr1Dim(istream& in, SCLstring &s, ErrorDescriptor *err)
 
     if(c == '(')
     {
-	s.Append(c);
+	s += c;
 	in.get(c);
 	while( in.good() && (c != ')') )
 	{
@@ -744,7 +744,7 @@ PushPastAggr1Dim(istream& in, SCLstring &s, ErrorDescriptor *err)
 		PushPastString(in, s, err);
 	    }
 	    else
-		s.Append(c);
+		s += c;
 	    in.get(c);
 	}    
 	if(c != ')')
@@ -752,26 +752,26 @@ PushPastAggr1Dim(istream& in, SCLstring &s, ErrorDescriptor *err)
 	    err->GreaterSeverity(SEVERITY_INPUT_ERROR);
 	    sprintf(messageBuf, "Invalid aggregate value.\n");
 	    err->AppendToDetailMsg(messageBuf);
-	    s.Append(')');
+	    s.append(")");
 	}
 	else
-	    s.Append(c);
+	    s += c;
     }
 }
 
 /*************************** 
 * FindStartOfInstance reads to the beginning of an instance marked by #  
-* it copies what is read to the SCLstring inst.  It leaves the # on the 
+* it copies what is read to the std::string inst.  It leaves the # on the 
 * istream.
 ***************************/
 
 Severity 
-FindStartOfInstance(istream& in, SCLstring&  inst)
+FindStartOfInstance(istream& in, std::string&  inst)
 {
     char c =0;
     ErrorDescriptor errs;
     SCLP23(String) tmp;
-//    SCLstring tmp;
+//    std::string tmp;
 
     while (in.good ())
     {
@@ -784,7 +784,7 @@ FindStartOfInstance(istream& in, SCLstring&  inst)
 	  case '\'':  // get past the string
 	    in.putback (c);
 	    tmp.STEPread (in, &errs);
-	    inst.Append (tmp);
+	    inst.append (tmp);
 
 //	    PushPastString(in, tmp, &errs);
 //	    inst.Append( tmp->chars() );
@@ -794,7 +794,7 @@ FindStartOfInstance(istream& in, SCLstring&  inst)
 	    return SEVERITY_INPUT_ERROR;
 
 	  default:
-	    inst.Append (c);
+	    inst += c;
 	}
     }
     return SEVERITY_INPUT_ERROR;
@@ -802,16 +802,16 @@ FindStartOfInstance(istream& in, SCLstring&  inst)
 
 /*************************** 
 * SkipInstance reads in an instance terminated with ;.  it copies
-* what is read to the SCLstring inst.  
+* what is read to the std::string inst.  
 ***************************/
 
 Severity
-SkipInstance (istream& in, SCLstring&  inst)
+SkipInstance (istream& in, std::string&  inst)
 {
     char c =0;
     ErrorDescriptor errs;
     SCLP23(String) tmp;
-//    SCLstring tmp;
+//    std::string tmp;
 
     while (in.good ())
     {
@@ -823,7 +823,7 @@ SkipInstance (istream& in, SCLstring&  inst)
 	  case '\'':  // get past the string
 	    in.putback (c);
 	    tmp.STEPread (in, &errs);
-	    inst.Append (tmp);
+	    inst.append (tmp);
 
 //	    PushPastString(in, tmp, &errs);
 //	    inst.Append( tmp->chars() );
@@ -833,7 +833,7 @@ SkipInstance (istream& in, SCLstring&  inst)
 	    return SEVERITY_INPUT_ERROR;
 
 	  default:
-	    inst.Append (c);
+	    inst += c;
 	}
     }
     return SEVERITY_INPUT_ERROR;
@@ -849,45 +849,45 @@ SkipInstance (istream& in, SCLstring&  inst)
 ***************************/
 
 const char *
-SkipSimpleRecord(istream &in, SCLstring &buf, ErrorDescriptor *err)
+SkipSimpleRecord(istream &in, std::string &buf, ErrorDescriptor *err)
 {
     char c;
-    SCLstring s;
+    std::string s;
 
     in >> ws;
     in.get(c);
     if(c == '(') // beginning of record
     {
-	buf.Append(c);
+	buf += c;
 	while(in.get(c) && (c != ')') && (err->severity() > SEVERITY_INPUT_ERROR) )
 	{
 	    if(c == '\'')
 	    {
 		in.putback(c);
-		s.set_null();
+		s.clear();
 		PushPastString(in, s, err);
-		buf.Append(s.chars());
+		buf.append(s.c_str());
 	    }
 	    else if(c == '(')
 	    {
 		in.putback(c);
-		s.set_null();
+		s.clear();
 		PushPastImbedAggr(in, s, err);
-		buf.Append(s.chars());
+		buf.append(s.c_str());
 	    }
 	    else
-		buf.Append(c);
+		buf += c;
 	}
 	if( !in.good() )
 	{
 	    err->GreaterSeverity(SEVERITY_INPUT_ERROR);
 	    err->DetailMsg("File problems reading simple record.\n");
 	}
-	buf.Append(')');
+	buf.append(")");
     }
     else
 	in.putback(c); // put back open paren
-    return buf.chars();
+    return const_cast<char *>(buf.c_str());
 }
 
 /***************************
@@ -897,7 +897,7 @@ SkipSimpleRecord(istream &in, SCLstring &buf, ErrorDescriptor *err)
 ***************************/
 
 const char *
-ReadStdKeyword(istream& in, SCLstring &buf, int skipInitWS)
+ReadStdKeyword(istream& in, std::string &buf, int skipInitWS)
 {
     char c;
     if(skipInitWS)
@@ -905,13 +905,13 @@ ReadStdKeyword(istream& in, SCLstring &buf, int skipInitWS)
 
     while( in.get(c) && !isspace(c) && ( isalnum(c) || (c == '_') ) )
     {
-	buf.Append(c);
+	buf += c;
     }
 
     if( in.eof() || in.good() )
 	in.putback(c);
 
-    return buf.chars();
+    return const_cast<char *>(buf.c_str());
 }
 
 /***************************
@@ -933,7 +933,7 @@ GetKeyword(istream& in, const char* delims, ErrorDescriptor &err)
 {
     char c;
     int sz = 1;
-    static SCLstring str;
+    static std::string str;
 
     str = "";
     in.get(c);
@@ -950,15 +950,15 @@ GetKeyword(istream& in, const char* delims, ErrorDescriptor &err)
 		"\' in GetKeyword.\nkeyword was: " << str << "\n";
 	    err.GreaterSeverity(SEVERITY_WARNING);
 	    in.putback(c);
-	    return str;
+	    return const_cast<char *>(str.c_str());
 	}
 	if (!in.good()) break;  //BUG: should do something on eof()
-	str.Append (c);
+	str += c;
 	++sz;
 	in.get(c);
     }
     in.putback(c);
-    return str;
+    return const_cast<char *>(str.c_str());
 }
 
 // return 1 if found the keyword 'ENDSEC' with optional space and a ';' 
@@ -1027,14 +1027,14 @@ FoundEndSecKywd(istream& in, ErrorDescriptor &err)
 
 // Skip over everything in s until the start of a comment. If it is a well
 // formatted comment append the comment (including delimiters) to 
-// SCLstring ss.  Return a pointer in s just past what was read as a comment.
+// std::string ss.  Return a pointer in s just past what was read as a comment.
 // If no well formed comment was found, a pointer to the null char in s is 
 // returned.  If one is found ss is appended with it and a pointer just
 // past the comment in s is returned. Note* a carraige return ('\n') is added
 // after the comment that is appended.
-const char * ReadComment(SCLstring &ss, const char *s)
+const char * ReadComment(std::string &ss, const char *s)
 {
-    SCLstring ssTmp;
+    std::string ssTmp;
     int endComment = 0;
 
     if(s)
@@ -1045,38 +1045,38 @@ const char * ReadComment(SCLstring &ss, const char *s)
 	    s++;
 	    if(*s == '*') // found a comment
 	    {
-		ssTmp.Append("/*");
+		ssTmp.append("/*");
 		s++;
 		while(*s && !endComment)
 		{
 		    if(*s == '*')
 		    {
-			ssTmp.Append(*s);
+			ssTmp += *s;
 			s++;
 			if(*s == '/')
 			{
 			    endComment = 1;
-			    ssTmp.Append(*s);
-			    ssTmp.Append('\n');
+			    ssTmp += *s;
+			    ssTmp.append("\n");
 			}
 			else
 			    s--;
 		    }
 		    else 
-			ssTmp.Append(*s);
+			ssTmp += *s;
 		    s++;
 		}
 	    }
 	}
 	if(endComment)
-	    ss.Append(ssTmp.chars());
+	    ss.append(ssTmp.c_str());
     }
     return s;
 }
 
 /***************************
  * Reads a comment. If there is a comment it is returned as 
- * char * in space provided in SCLstring s. 
+ * char * in space provided in std::string s. 
  * If there is not a comment returns null pointer.
  * After skipping white space it expects a slash followed by
  * an asterisk (which I didn't type to avoid messing up the 
@@ -1087,7 +1087,7 @@ const char * ReadComment(SCLstring &ss, const char *s)
 ***************************/
 
 const char * 
-ReadComment(istream& in, SCLstring &s)
+ReadComment(istream& in, std::string &s)
 {
     char c = '\0';
     int commentLength = 0;
@@ -1110,26 +1110,26 @@ ReadComment(istream& in, SCLstring &s)
 		{
 		    in.get(c);
 		    if(c == '/') // it is end of comment
-			return s.chars(); // return comment as a string
+			return const_cast<char *>(s.c_str()); // return comment as a string
 		    else	// it is not end of comment
 		    {   	// so store the * and put back the other char
-			s.Append('*');
+			s.append("*");
 			in.putback(c);
 			commentLength++;
 		    }
 		}
 		else
 		{
-		    s.Append(c);
+		    s += c;
 		    commentLength++;
 		}
 	    } // end while
 	    cout << "ERROR comment longer than maximum comment length of " 
 		 << MAX_COMMENT_LENGTH << "\n" 
 		 << "Will try to recover...\n";
-	    SCLstring tmp;
+	    std::string tmp;
 	    SkipInstance(in, tmp);
-	    return s.chars();
+	    return const_cast<char *>(s.c_str());
 	}
 	// leave slash read from stream... assume caller already knew there was
 	//  a slash, leave it off stream so they don't think this funct needs 
@@ -1176,10 +1176,10 @@ Part 21 considers the blank to be the space character,
 but this function considers blanks to be the return value of isspace(c)
 ******************************/
 void 
-ReadTokenSeparator(istream& in, SCLstring *comments)
+ReadTokenSeparator(istream& in, std::string *comments)
 {
     char c;
-    SCLstring s; // used if need to read a comment
+    std::string s; // used if need to read a comment
     const char *cstr = 0;
 
     if (in.eof()) 
@@ -1196,13 +1196,13 @@ ReadTokenSeparator(istream& in, SCLstring *comments)
 	switch (c) 
 	{
 	  case '/': // read p21 file comment
-	    s.set_null();
+	    s.clear();
 	    ReadComment(in, s);
-	    if(!s.is_null() && comments)
+	    if(!s.empty() && comments)
 	    {
-		comments->Append("/*");
-		comments->Append(s.chars());
-		comments->Append("*/\n");
+		comments->append("/*");
+		comments->append(s.c_str());
+		comments->append("*/\n");
 	    }
 	    break;
 

@@ -1536,7 +1536,7 @@ TYPEselect_lib_part21 (const Type type, FILE* f, Schema schema)
 
   /* Get name of typedescriptor, according to value of currSch: */
   fprintf (f, "  const TypeDescriptor *td = CurrentUnderlyingType();\n");
-  fprintf (f, "  SCLstring tmp;\n\n");
+  fprintf (f, "  std::string tmp;\n\n");
   fprintf (f, "  if ( td ) {\n");
   fprintf (f, "    // If we have a legal underlying type, get its name acc\n");
   fprintf (f, "    // to the current schema.\n");

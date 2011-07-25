@@ -352,7 +352,7 @@ STEPWrapper::getListOfEntities(int STEPid, const char *name)
 
 	STEPattribute *attr;
 	while ( (attr = sse->NextAttribute()) != NULL ) {
-		SCLstring attrval;
+    std::string attrval;
 	std::string attrname = attr->Name();
 
 		if (attrname.compare(name) == 0) {
@@ -384,7 +384,7 @@ STEPWrapper::getListOfListOfPoints(int STEPid, const char *attrName)
 
 	STEPattribute *attr;
 	while ( (attr = sse->NextAttribute()) != NULL ) {
-		SCLstring attrval;
+    std::string attrval;
 	std::string name = attr->Name();
 
 		if (name.compare(attrName) == 0) {
@@ -456,7 +456,7 @@ SCLP23(Application_instance) *
 STEPWrapper::getSuperType(int STEPid, const char *name)
 {
 	SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
-	SCLstring attrval;
+	std::string attrval;
 
 	if (sse->IsComplex()) {
 		STEPcomplex *sc = ((STEPcomplex *)sse)->head;
@@ -483,7 +483,7 @@ STEPWrapper::getStringAttribute(int STEPid, const char *name)
 
 	STEPattribute *attr;
 	while ( (attr = sse->NextAttribute()) != NULL ) {
-		SCLstring attrval;
+		std::string attrval;
 	std::string attrname = attr->Name();
 
 		if (attrname.compare(name) == 0) {
@@ -560,7 +560,7 @@ int
 STEPWrapper::getEnumAttribute(SCLP23(Application_instance) *sse, const char *name)
 {
 	int retValue = 0;
-	SCLstring attrval;
+	std::string attrval;
 
 	sse->ResetAttributes();
 
@@ -593,7 +593,7 @@ STEPWrapper::getEntityAttribute(SCLP23(Application_instance) *sse, const char *n
 			continue;
 		}
 		if (attrname.compare(name) == 0) {
-			SCLstring attrval;
+			std::string attrval;
 	    //std::cout << "attr:" << name << ":" << attr->TypeName() << ":" << attr->Name() << std::endl;
 	    //std::cout << "attr:" << attr->asStr(attrval) << std::endl;
 			retValue = (SCLP23(Application_instance) *)*attr->ptr.c;
@@ -695,7 +695,7 @@ STEPWrapper::getListOfEntities(SCLP23(Application_instance) *sse, const char *na
 
 	STEPattribute *attr;
 	while ( (attr = sse->NextAttribute()) != NULL ) {
-		SCLstring attrval;
+		std::string attrval;
 	std::string attrname = attr->Name();
 
 		if (attrname.compare(name) == 0) {
@@ -721,7 +721,7 @@ LIST_OF_SELECTS*
 STEPWrapper::getListOfSelects(SCLP23(Application_instance) *sse, const char *name)
 {
 	LIST_OF_SELECTS *l = new LIST_OF_SELECTS;
-	SCLstring attrval;
+	std::string attrval;
 
 	sse->ResetAttributes();
 	STEPattribute *attr;
@@ -754,7 +754,7 @@ STEPWrapper::getListOfListOfPatches(SCLP23(Application_instance) *sse, const cha
 
 	STEPattribute *attr;
 	while ( (attr = sse->NextAttribute()) != NULL ) {
-		SCLstring attrval;
+		std::string attrval;
 	std::string name = attr->Name();
 
 		if (name.compare(attrName) == 0) {
@@ -798,7 +798,7 @@ STEPWrapper::getListOfListOfPoints(SCLP23(Application_instance) *sse, const char
 
 	STEPattribute *attr;
 	while ( (attr = sse->NextAttribute()) != NULL ) {
-		SCLstring attrval;
+		std::string attrval;
 	std::string name = attr->Name();
 
 		if (name.compare(attrName) == 0) {
@@ -866,7 +866,7 @@ STEPWrapper::getSuperTypes(SCLP23(Application_instance) *sse, MAP_OF_SUPERTYPES 
 SCLP23(Application_instance) *
 STEPWrapper::getSuperType(SCLP23(Application_instance) *sse, const char *name)
 {
-	SCLstring attrval;
+	std::string attrval;
 
 	if (sse->IsComplex()) {
 		STEPcomplex *sc = ((STEPcomplex *)sse)->head;
@@ -892,7 +892,7 @@ STEPWrapper::getStringAttribute(SCLP23(Application_instance) *sse, const char *n
 
 	STEPattribute *attr;
 	while ( (attr = sse->NextAttribute()) != NULL ) {
-		SCLstring attrval;
+		std::string attrval;
 	std::string attrname = attr->Name();
 
 		if (attrname.compare(name) == 0) {
@@ -1033,7 +1033,7 @@ STEPWrapper::printEntity(SCLP23(Application_instance) *se, int level)
 	STEPattribute *attr;
 	se->ResetAttributes();
 	while ( (attr = se->NextAttribute()) != NULL ) {
-		SCLstring attrval;
+		std::string attrval;
 
 		for ( int i=0; i<= level; i++)
 	    std::cout << "    ";
@@ -1064,7 +1064,7 @@ STEPWrapper::printEntity(SCLP23(Application_instance) *se, int level)
 void
 STEPWrapper::printEntityAggregate(STEPaggregate *sa, int level)
 {
-	SCLstring strVal;
+	std::string strVal;
 
 	for ( int i=0; i< level; i++)
 	std::cout << "    ";

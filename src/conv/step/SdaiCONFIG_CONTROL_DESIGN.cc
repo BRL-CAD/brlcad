@@ -1470,7 +1470,7 @@ void
 SdaiCharacterized_product_definition::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -1479,13 +1479,13 @@ SdaiCharacterized_product_definition::STEPwrite_verbose (ostream& out, const cha
   }
   if (td == config_control_designe_product_definition)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_product_definition_relationship)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
@@ -2088,7 +2088,7 @@ void
 SdaiShape_definition::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -2097,19 +2097,19 @@ SdaiShape_definition::STEPwrite_verbose (ostream& out, const char *currSch) cons
   }
   if (td == config_control_designe_product_definition_shape)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_shape_aspect)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_shape_aspect_relationship)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
@@ -2783,7 +2783,7 @@ void
 SdaiCharacterized_definition::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -2792,13 +2792,13 @@ SdaiCharacterized_definition::STEPwrite_verbose (ostream& out, const char *currS
   }
   if (td == config_control_designt_characterized_product_definition)
   {
-    out << tmp.chars() << "(";
+    out << tmp.c_str() << "(";
     _sdaicharacterized_product_definition.STEPwrite_verbose (out, currSch);
     out << ")";
   }
   else if (td == config_control_designt_shape_definition)
   {
-    out << tmp.chars() << "(";
+    out << tmp.c_str() << "(";
     _sdaishape_definition.STEPwrite_verbose (out, currSch);
     out << ")";
   }
@@ -3163,7 +3163,7 @@ void
 SdaiChange_request_item::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -3172,7 +3172,7 @@ SdaiChange_request_item::STEPwrite_verbose (ostream& out, const char *currSch) c
   }
   if (td == config_control_designe_product_definition_formation)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
@@ -3612,7 +3612,7 @@ void
 SdaiReversible_topology_item::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -3621,37 +3621,37 @@ SdaiReversible_topology_item::STEPwrite_verbose (ostream& out, const char *currS
   }
   if (td == config_control_designe_edge)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_path)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_face)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_face_bound)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_closed_shell)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_open_shell)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
@@ -4564,7 +4564,7 @@ void
 SdaiAxis2_placement::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -4573,13 +4573,13 @@ SdaiAxis2_placement::STEPwrite_verbose (ostream& out, const char *currSch) const
   }
   if (td == config_control_designe_axis2_placement_2d)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_axis2_placement_3d)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
@@ -5096,7 +5096,7 @@ void
 SdaiSpecified_item::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -5105,13 +5105,13 @@ SdaiSpecified_item::STEPwrite_verbose (ostream& out, const char *currSch) const
   }
   if (td == config_control_designe_product_definition)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_shape_aspect)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
@@ -5724,7 +5724,7 @@ void
 SdaiMeasure_value::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -5733,73 +5733,73 @@ SdaiMeasure_value::STEPwrite_verbose (ostream& out, const char *currSch) const
   }
   if (td == config_control_designt_length_measure)
   {
-    out << tmp.chars() << "(";
+    out << tmp.c_str() << "(";
     WriteReal(_real,out);
     out << ")";
   }
   else if (td == config_control_designt_mass_measure)
   {
-    out << tmp.chars() << "(";
+    out << tmp.c_str() << "(";
     WriteReal(_real,out);
     out << ")";
   }
   else if (td == config_control_designt_plane_angle_measure)
   {
-    out << tmp.chars() << "(";
+    out << tmp.c_str() << "(";
     WriteReal(_real,out);
     out << ")";
   }
   else if (td == config_control_designt_solid_angle_measure)
   {
-    out << tmp.chars() << "(";
+    out << tmp.c_str() << "(";
     WriteReal(_real,out);
     out << ")";
   }
   else if (td == config_control_designt_area_measure)
   {
-    out << tmp.chars() << "(";
+    out << tmp.c_str() << "(";
     WriteReal(_real,out);
     out << ")";
   }
   else if (td == config_control_designt_volume_measure)
   {
-    out << tmp.chars() << "(";
+    out << tmp.c_str() << "(";
     WriteReal(_real,out);
     out << ")";
   }
   else if (td == config_control_designt_parameter_value)
   {
-    out << tmp.chars() << "(";
+    out << tmp.c_str() << "(";
     WriteReal(_real,out);
     out << ")";
   }
   else if (td == config_control_designt_context_dependent_measure)
   {
-    out << tmp.chars() << "(";
+    out << tmp.c_str() << "(";
     WriteReal(_real,out);
     out << ")";
   }
   else if (td == config_control_designt_descriptive_measure)
   {
-    out << tmp.chars() << "(";
+    out << tmp.c_str() << "(";
     _string.STEPwrite (out);
     out << ")";
   }
   else if (td == config_control_designt_positive_length_measure)
   {
-    out << tmp.chars() << "(";
+    out << tmp.c_str() << "(";
     WriteReal(_real,out);
     out << ")";
   }
   else if (td == config_control_designt_positive_plane_angle_measure)
   {
-    out << tmp.chars() << "(";
+    out << tmp.c_str() << "(";
     WriteReal(_real,out);
     out << ")";
   }
   else if (td == config_control_designt_count_measure)
   {
-    out << tmp.chars() << "(";
+    out << tmp.c_str() << "(";
     WriteReal(_real,out);
     out << ")";
   }
@@ -6374,7 +6374,7 @@ void
 SdaiPerson_organization_select::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -6383,19 +6383,19 @@ SdaiPerson_organization_select::STEPwrite_verbose (ostream& out, const char *cur
   }
   if (td == config_control_designe_person)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_organization)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_person_and_organization)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
@@ -7129,7 +7129,7 @@ void
 SdaiPcurve_or_surface::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -7138,13 +7138,13 @@ SdaiPcurve_or_surface::STEPwrite_verbose (ostream& out, const char *currSch) con
   }
   if (td == config_control_designe_pcurve)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_surface)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
@@ -7617,7 +7617,7 @@ void
 SdaiClassified_item::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -7626,13 +7626,13 @@ SdaiClassified_item::STEPwrite_verbose (ostream& out, const char *currSch) const
   }
   if (td == config_control_designe_product_definition_formation)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_assembly_component_usage)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
@@ -8225,7 +8225,7 @@ void
 SdaiFounded_item_select::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -8234,13 +8234,13 @@ SdaiFounded_item_select::STEPwrite_verbose (ostream& out, const char *currSch) c
   }
   if (td == config_control_designe_founded_item)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_representation_item)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
@@ -8649,7 +8649,7 @@ void
 SdaiVector_or_direction::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -8658,13 +8658,13 @@ SdaiVector_or_direction::STEPwrite_verbose (ostream& out, const char *currSch) c
   }
   if (td == config_control_designe_vector)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_direction)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
@@ -9165,7 +9165,7 @@ void
 SdaiWireframe_model::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -9174,13 +9174,13 @@ SdaiWireframe_model::STEPwrite_verbose (ostream& out, const char *currSch) const
   }
   if (td == config_control_designe_shell_based_wireframe_model)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_edge_based_wireframe_model)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
@@ -9663,7 +9663,7 @@ void
 SdaiGeometric_set_select::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -9672,19 +9672,19 @@ SdaiGeometric_set_select::STEPwrite_verbose (ostream& out, const char *currSch) 
   }
   if (td == config_control_designe_point)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_curve)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_surface)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
@@ -10164,7 +10164,7 @@ void
 SdaiStart_request_item::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -10173,7 +10173,7 @@ SdaiStart_request_item::STEPwrite_verbose (ostream& out, const char *currSch) co
   }
   if (td == config_control_designe_product_definition_formation)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
@@ -10653,7 +10653,7 @@ void
 SdaiPerson_organization_item::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -10662,61 +10662,61 @@ SdaiPerson_organization_item::STEPwrite_verbose (ostream& out, const char *currS
   }
   if (td == config_control_designe_change)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_start_work)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_change_request)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_start_request)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_configuration_item)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_product)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_product_definition_formation)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_product_definition)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_contract)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_security_classification)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
@@ -12172,7 +12172,7 @@ void
 SdaiDate_time_item::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -12181,55 +12181,55 @@ SdaiDate_time_item::STEPwrite_verbose (ostream& out, const char *currSch) const
   }
   if (td == config_control_designe_product_definition)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_change_request)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_start_request)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_change)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_start_work)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_approval_person_organization)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_contract)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_security_classification)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_certification)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
@@ -13537,7 +13537,7 @@ void
 SdaiShell::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -13546,25 +13546,25 @@ SdaiShell::STEPwrite_verbose (ostream& out, const char *currSch) const
   }
   if (td == config_control_designe_vertex_shell)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_wire_shell)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_open_shell)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_closed_shell)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
@@ -14219,7 +14219,7 @@ void
 SdaiTransformation::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -14228,13 +14228,13 @@ SdaiTransformation::STEPwrite_verbose (ostream& out, const char *currSch) const
   }
   if (td == config_control_designe_item_defined_transformation)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_functionally_defined_transformation)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
@@ -14733,7 +14733,7 @@ void
 SdaiBoolean_operand::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -14742,7 +14742,7 @@ SdaiBoolean_operand::STEPwrite_verbose (ostream& out, const char *currSch) const
   }
   if (td == config_control_designe_solid_model)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
@@ -15076,7 +15076,7 @@ void
 SdaiCertified_item::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -15085,7 +15085,7 @@ SdaiCertified_item::STEPwrite_verbose (ostream& out, const char *currSch) const
   }
   if (td == config_control_designe_supplied_part_relationship)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
@@ -15551,7 +15551,7 @@ void
 SdaiDate_time_select::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -15560,19 +15560,19 @@ SdaiDate_time_select::STEPwrite_verbose (ostream& out, const char *currSch) cons
   }
   if (td == config_control_designe_date)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_local_time)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_date_and_time)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
@@ -16224,7 +16224,7 @@ void
 SdaiCurve_on_surface::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -16233,19 +16233,19 @@ SdaiCurve_on_surface::STEPwrite_verbose (ostream& out, const char *currSch) cons
   }
   if (td == config_control_designe_pcurve)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_surface_curve)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_composite_curve_on_surface)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
@@ -16929,7 +16929,7 @@ void
 SdaiTrimming_select::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -16938,13 +16938,13 @@ SdaiTrimming_select::STEPwrite_verbose (ostream& out, const char *currSch) const
   }
   if (td == config_control_designe_cartesian_point)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designt_parameter_value)
   {
-    out << tmp.chars() << "(";
+    out << tmp.c_str() << "(";
     WriteReal(_real,out);
     out << ")";
   }
@@ -17365,7 +17365,7 @@ void
 SdaiContracted_item::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -17374,7 +17374,7 @@ SdaiContracted_item::STEPwrite_verbose (ostream& out, const char *currSch) const
   }
   if (td == config_control_designe_product_definition_formation)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
@@ -17764,7 +17764,7 @@ void
 SdaiUnit::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -17773,7 +17773,7 @@ SdaiUnit::STEPwrite_verbose (ostream& out, const char *currSch) const
   }
   if (td == config_control_designe_named_unit)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
@@ -18115,7 +18115,7 @@ void
 SdaiReversible_topology::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -18124,19 +18124,19 @@ SdaiReversible_topology::STEPwrite_verbose (ostream& out, const char *currSch) c
   }
   if (td == config_control_designt_reversible_topology_item)
   {
-    out << tmp.chars() << "(";
+    out << tmp.c_str() << "(";
     _sdaireversible_topology_item.STEPwrite_verbose (out, currSch);
     out << ")";
   }
   else if (td == config_control_designt_list_of_reversible_topology_item)
   {
-    out << tmp.chars() << "(";
+    out << tmp.c_str() << "(";
     _sdaireversible_topology_items.STEPwrite (out, currSch);
     out << ")";
   }
   else if (td == config_control_designt_set_of_reversible_topology_item)
   {
-    out << tmp.chars() << "(";
+    out << tmp.c_str() << "(";
     _sdaireversible_topology_items.STEPwrite (out, currSch);
     out << ")";
   }
@@ -18533,7 +18533,7 @@ void
 SdaiWork_item::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -18542,7 +18542,7 @@ SdaiWork_item::STEPwrite_verbose (ostream& out, const char *currSch) const
   }
   if (td == config_control_designe_product_definition_formation)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
@@ -18952,7 +18952,7 @@ void
 SdaiSupported_item::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -18961,19 +18961,19 @@ SdaiSupported_item::STEPwrite_verbose (ostream& out, const char *currSch) const
   }
   if (td == config_control_designe_action_directive)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_action)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_action_method)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
@@ -19765,7 +19765,7 @@ void
 SdaiApproved_item::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -19774,67 +19774,67 @@ SdaiApproved_item::STEPwrite_verbose (ostream& out, const char *currSch) const
   }
   if (td == config_control_designe_product_definition_formation)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_product_definition)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_configuration_effectivity)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_configuration_item)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_security_classification)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_change_request)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_change)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_start_request)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_start_work)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_certification)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
   else if (td == config_control_designe_contract)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }
@@ -21326,7 +21326,7 @@ void
 SdaiSurface_model::STEPwrite_verbose (ostream& out, const char *currSch) const
 {
   const TypeDescriptor *td = CurrentUnderlyingType();
-  SCLstring tmp;
+  std::string tmp;
 
   if ( td ) {
     // If we have a legal underlying type, get its name acc
@@ -21335,7 +21335,7 @@ SdaiSurface_model::STEPwrite_verbose (ostream& out, const char *currSch) const
   }
   if (td == config_control_designe_shell_based_surface_model)
   {
-    out <<  tmp.chars() << "(";
+    out <<  tmp.c_str() << "(";
     _app_inst -> STEPwrite_reference (out);
     out << ")";
   }

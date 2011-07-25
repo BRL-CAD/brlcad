@@ -3,7 +3,7 @@
 
 class Select {
   public:
-    SCLstring _underlying_typename;
+    std::string _underlying_typename;
 
     Select();
     //Select(const Select&);

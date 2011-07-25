@@ -515,7 +515,7 @@ class Global_rule : public Dictionary_instance {
     Entity__set_var _entities; // not implemented
     Where_rule__list_var _where_rules;
     Schema_ptr _parent_schema;
-    SCLstring _rule_text; // non-SDAI
+    std::string _rule_text; // non-SDAI
 
     Global_rule();
     Global_rule(const char *n, Schema_ptr parent_sch, const char * rt);
@@ -760,10 +760,10 @@ class AttrDescriptor {
 		   );
 	virtual ~AttrDescriptor ();
 
-	const char * GenerateExpress (SCLstring &buf) const;
+	const char * GenerateExpress (std::string &buf) const;
 
 		// the attribute Express def
-	virtual const char *AttrExprDefStr(SCLstring & s) const;
+	virtual const char *AttrExprDefStr(std::string & s) const;
 
 		// left side of attr def
 	const char * Name()	const	   { return _name; }
@@ -807,7 +807,7 @@ class AttrDescriptor {
 	const char * TypeName() const;	// right side of attr def
 
 			// an expanded right side of attr def
-	const char *ExpandedTypeName(SCLstring & s) const;
+	const char *ExpandedTypeName(std::string & s) const;
 
 	int RefersToType() const	{ return !(_domainType == 0); }
 
@@ -887,7 +887,7 @@ class InverseAttrDescriptor  :    public AttrDescriptor  {
 		{ }
 	virtual ~InverseAttrDescriptor () { }
 	
-	const char * AttrExprDefStr(SCLstring & s) const;
+	const char * AttrExprDefStr(std::string & s) const;
 
 	const char * inverted_attr_id_() const
                 { return _inverted_attr_id; } 
@@ -1088,7 +1088,7 @@ class TypeDescriptor {
 	TypeDescriptor ( ); 
 	virtual ~TypeDescriptor () { /* if ( altNames ) delete altNames; */ }
 
-	virtual const char * GenerateExpress (SCLstring &buf) const;
+	virtual const char * GenerateExpress (std::string &buf) const;
 
 		// The name of this type.  If schnm != NULL, the name we're
 	        // referred to by schema schnm (may be diff name in our alt-
@@ -1103,7 +1103,7 @@ class TypeDescriptor {
 		// defined in an attribute it will be the _description
 		// member variable since _name will be null. e.g. attr. def.
 		// project_names : ARRAY [1..10] name;
-	const char * AttrTypeName( SCLstring &buf, const char *schnm =NULL ) const;
+	const char * AttrTypeName( std::string &buf, const char *schnm =NULL ) const;
 
 	        // Linked link of alternate names for the type:
 	const SchRename *AltNameList() const { return altNames; }
@@ -1113,7 +1113,7 @@ class TypeDescriptor {
 		// except it is more thorough of a description where possible
 		// e.g. if the description contains a TYPE name it will also
 		// be explained.
-	const char *TypeString(SCLstring & s) const;
+	const char *TypeString(std::string & s) const;
 
 		// This TypeDescriptor's type
 	const PrimitiveType Type() const	{ return _fundamentalType; }
@@ -1199,7 +1199,7 @@ class EnumTypeDescriptor  :    public TypeDescriptor  {
   public:
     EnumCreator CreateNewEnum;
 
-    const char * GenerateExpress (SCLstring &buf) const;
+    const char * GenerateExpress (std::string &buf) const;
 
     void AssignEnumCreator(EnumCreator f = 0)
     {
@@ -1247,7 +1247,7 @@ class EntityDescriptor  :    public TypeDescriptor  {
 //	StringAggregate		 * _derivedAttr;  // OPTIONAL
 	InverseAttrDescriptorList _inverseAttr;  // OPTIONAL
 
-	SCLstring _supertype_stmt;
+	std::string _supertype_stmt;
   public:
        // pointer to a function that will create a new instance of a SCLP23(Application_instance)
         Creator NewSTEPentity;
@@ -1262,9 +1262,9 @@ class EntityDescriptor  :    public TypeDescriptor  {
 
 	virtual ~EntityDescriptor ();
 
-	const char * GenerateExpress (SCLstring &buf) const;
+	const char * GenerateExpress (std::string &buf) const;
 
-	const char * QualifiedName(SCLstring &s) const;
+	const char * QualifiedName(std::string &s) const;
 
 	const SCLP23(LOGICAL) & AbstractEntity() const 
 					{ return _abstractEntity;}
@@ -1310,7 +1310,7 @@ class EntityDescriptor  :    public TypeDescriptor  {
 		{ _subtypes.AddNode(ed); }
 	void AddSupertype_Stmt(const char *s) { _supertype_stmt = s; }
 	const char * Supertype_Stmt() { return _supertype_stmt.chars(); }
-	SCLstring& supertype_stmt_() { return _supertype_stmt; }
+	std::string& supertype_stmt_() { return _supertype_stmt; }
 
 	void AddSupertype(EntityDescriptor *ed) 
 		{ _supertypes.AddNode(ed); }

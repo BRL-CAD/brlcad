@@ -71,9 +71,9 @@ class SCLP23_NAME(Enum)  {
 
     const int asInt () const {	return v;    }
     
-    const char * asStr (SCLstring &s) const;
+    const char * asStr (std::string& s) const;
     void STEPwrite (ostream& out = cout)  const;
-    const char * STEPwrite (SCLstring &s) const;
+    const char * STEPwrite (std::string& s) const;
 
     Severity StrToVal (const char * s, ErrorDescriptor *err, int optional = 1);
     Severity STEPread(istream& in, ErrorDescriptor *err, int optional = 1);
