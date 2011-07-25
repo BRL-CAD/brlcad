@@ -173,9 +173,10 @@ BRLCAD_ADDEXEC(rtweight "${rtweight_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libf
 BRLCAD_ADDEXEC(rtxray "${rtxray_SRCS}" "${CMAKE_THREAD_LIBS_INIT} librt libfb liboptical ${M_LIBRARY}")
 
 
-# FIXME: libremrt needs -lm
-# BRLCAD_ADDLIB(libremrt "${LIBREMRT_SOURCES}" "librt libbu ${WINSOCK_LIB} ${M_LIBRARY}")
 add_library(libremrt STATIC ${LIBREMRT_SOURCES})
+IF(M_LIBRARY)
+	target_link_libraries(libremrt ${M_LIBRARY})
+ENDIF(M_LIBRARY)
 
 add_library(librttherm STATIC ${RT_COMMON_SRCS})
 SET_TARGET_PROPERTIES(librttherm PROPERTIES LINKER_LANGUAGE C)
