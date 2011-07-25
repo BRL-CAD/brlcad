@@ -155,7 +155,6 @@ cmd_ged_edit_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 int
 cmd_ged_info_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
-    int ret;
     const char **av;
     struct cmdtab *ctp = (struct cmdtab *)clientData;
 
@@ -163,7 +162,7 @@ cmd_ged_info_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 	return TCL_OK;
 
     if (argc >= 2) {
-        ret = (*ctp->ged_func)(gedp, argc, (const char **)argv);
+        (void)(*ctp->ged_func)(gedp, argc, (const char **)argv);
         Tcl_AppendResult(interpreter, bu_vls_addr(gedp->ged_result_str), NULL);
     } else {
         if ((argc == 1) && (STATE == ST_S_EDIT)) {
@@ -172,11 +171,11 @@ cmd_ged_info_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 	    av[0] = (const char *)argv[0];
 	    av[1] = (const char *)LAST_SOLID(illump)->d_namep;
 	    av[argc] = (const char *)NULL;
-	    ret = (*ctp->ged_func)(gedp, argc, (const char **)av);
+	    (void)(*ctp->ged_func)(gedp, argc, (const char **)av);
 	    Tcl_AppendResult(interpreter, bu_vls_addr(gedp->ged_result_str), NULL);
 	    bu_free(av, "cmd_ged_info_wrapper: av");
         } else {
-	    ret = (*ctp->ged_func)(gedp, argc, (const char **)argv);    
+	    (void)(*ctp->ged_func)(gedp, argc, (const char **)argv);    
 	    Tcl_AppendResult(interpreter, bu_vls_addr(gedp->ged_result_str), NULL);
         }
     }
@@ -1911,7 +1910,7 @@ cmd_lm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const c
     new_argv = (char **)bu_calloc(new_arg_count+1, sizeof(char *), "cmd_lm new_argv");
     new_argc = bu_argv_from_string(new_argv, new_arg_count, bu_vls_addr(&vls));
 
-    ret = ged_ls(gedp, argc, (const char **)argv);
+    ret = ged_ls(gedp, new_argc, (const char **)new_argv);
     bu_vls_free(&vls);
     bu_free((char *)new_argv, "cmd_lm new_argv");
 
