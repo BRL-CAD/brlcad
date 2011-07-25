@@ -1,5 +1,5 @@
 
-#include <scl_string.h>
+#include <string.h>
 
 class Select {
   public:

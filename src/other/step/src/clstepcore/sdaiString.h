@@ -13,24 +13,6 @@
 
 /* $Id: sdaiString.h,v 1.4 1997/11/05 21:59:16 sauderd DP3.1 $ */
 
-/*
-#ifdef __OSTORE__
-#include <ostore/ostore.hh>    // Required to access ObjectStore Class Library
-#endif
-
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
-
-class ErrorDescriptor;
-#include <scl_string.h>
-#include <errordesc.h>
-
-#ifndef STRING_DELIM
-#define STRING_DELIM '\''
-#endif
-*/
-
 class SCLP23_NAME(String) : public std::string {
 public:
 
@@ -52,10 +34,6 @@ public:
   Severity StrToVal (const char *s);
   Severity STEPread (istream& in, ErrorDescriptor *err);
   Severity STEPread (const char *s, ErrorDescriptor *err);
-
-#ifdef __OSTORE__
-    static os_typespec* get_os_typespec();
-#endif
 
 };
 

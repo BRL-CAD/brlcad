@@ -14,27 +14,6 @@
 
 /* $Id: sdaiSelect.h,v 1.5 1997/11/05 21:59:15 sauderd DP3.1 $ */
 
-/*
-
-#ifdef __OSTORE__
-#include <ostore/ostore.hh>    // Required to access ObjectStore Class Library
-#endif
-
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
-
-#include <baseType.h>
-#include <scl_string.h>
-#include <sdai.h>
-#include <errordesc.h>
-#include <read_func.h>
-
-class TypeDescriptor;
-class SelectTypeDescriptor;
-class InstMgr;
-*/
-
 /**********
 	class definition for the select superclass SCLP23_NAME(Select).
 **********/

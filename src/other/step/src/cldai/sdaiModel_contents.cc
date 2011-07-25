@@ -110,12 +110,12 @@ SCLP23(Model_contents)::RemoveInstance(SCLP23(DAObject_SDAI_ptr)& appInst)
 #if 0 // for now
 
 Any_var 
-SCLP23(Model_contents)::GetEntity_extent(const String_var& entityName)
+SCLP23(Model_contents)::GetEntity_extent(const std::string& entityName)
 {
 }
 
 const Any_var 
-SCLP23(Model_contents)::GetEntity_extent(const String_var& entityName) const
+SCLP23(Model_contents)::GetEntity_extent(const std::string& entityName) const
 {
 }
 

@@ -182,8 +182,8 @@ class SCLP23_NAME(Model_contents) : public SCLP23_NAME(Session_instance) {
      */
 #ifdef SDAI_CPP_LATE_BINDING
 #if 0 // for now
-    Any_var GetEntity_extent(const String_var& entityName);
-    const Any_var GetEntity_extent(const String_var& entityName) const;
+    Any_var GetEntity_extent(const std::string& entityName);
+    const Any_var GetEntity_extent(const std::string& entityName) const;
     Any_var GetEntity_extent(const Entity_ptr& ep);
     const Any_var GetEntity_extent(const Entity_ptr& ep) const;
 #endif

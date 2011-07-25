@@ -481,7 +481,7 @@ Schema::GenerateUseRefExpress(ostream& out) const
 	    if(count > 0)
 	    {
 		out << endl << "    USE FROM " 
-		   << StrToLower(is->foreign_schema_id_().chars(),tmp) << endl;
+		   << StrToLower(is->foreign_schema_id_().c_str(),tmp) << endl;
 		out << "       (";
 
 		first_time = 1;
@@ -489,18 +489,18 @@ Schema::GenerateUseRefExpress(ostream& out) const
 		{
 		    if(first_time) first_time = 0;
 		    else out << "," << endl << "\t";
-		    if( (*(is->explicit_items_()))[k]->original_id_().is_null() )
+		    if( !((*(is->explicit_items_()))[k]->original_id_().size()) )
 		    { // not renamed
-			out << (*(is->explicit_items_()))[k]->new_id_().chars();
+			out << (*(is->explicit_items_()))[k]->new_id_().c_str();
 		    } else { // renamed
-			out << (*(is->explicit_items_()))[k]->original_id_().chars();
-			out << " AS " << (*(is->explicit_items_()))[k]->new_id_().chars();
+			out << (*(is->explicit_items_()))[k]->original_id_().c_str();
+			out << " AS " << (*(is->explicit_items_()))[k]->new_id_().c_str();
 		    }
 		}
 		out << ");" << endl;
 	    } else if (is->all_objects_()) {
 		out << endl << "    USE FROM " 
-		    << StrToLower(is->foreign_schema_id_().chars(),tmp) << ";" 
+		    << StrToLower(is->foreign_schema_id_().c_str(),tmp) << ";" 
 		    << endl;
 	    }
 	}
@@ -524,7 +524,7 @@ Schema::GenerateUseRefExpress(ostream& out) const
 		
 //		out << "    REFERENCE FROM " << (*(is->explicit_items_()))[0]->foreign_schema_().chars() << endl;
 		out << endl << "    REFERENCE FROM " 
-		   << StrToLower(is->foreign_schema_id_().chars(),tmp) << endl;
+		   << StrToLower(is->foreign_schema_id_().c_str(),tmp) << endl;
 		out << "       (";
 
 		first_time = 1;
@@ -532,19 +532,19 @@ Schema::GenerateUseRefExpress(ostream& out) const
 		{
 		    if(first_time) first_time = 0;
 		    else out << "," << endl << "\t";
-		    if( (*(is->explicit_items_()))[k]->original_id_().is_null() )
+		    if( (!(*(is->explicit_items_()))[k]->original_id_().size()) )
 		    { // not renamed
-			out << (*(is->explicit_items_()))[k]->new_id_().chars();
+			out << (*(is->explicit_items_()))[k]->new_id_().c_str();
 		    } else { // renamed
-			out << (*(is->explicit_items_()))[k]->original_id_().chars();
+			out << (*(is->explicit_items_()))[k]->original_id_().c_str();
 			out << " AS " 
-			  << (*(is->explicit_items_()))[k]->new_id_().chars();
+			  << (*(is->explicit_items_()))[k]->new_id_().c_str();
 		    }
 		}
 		out << ");" << endl;
 	    } else if (is->all_objects_()) {
 		out << endl << "    REFERENCE FROM " 
-		    << StrToLower(is->foreign_schema_id_().chars(),tmp) << ";" 
+		    << StrToLower(is->foreign_schema_id_().c_str(),tmp) << ";" 
 		    << endl;
 	    }
 	}
@@ -969,7 +969,7 @@ EnumTypeDescriptor::GenerateExpress (std::string &buf) const
 	count = _where_rules->Count(); 
 	for(i = 0; i < count; i++) // print out each UNIQUE rule
 	{
-	    if( !(*(_where_rules))[i]->_label.is_undefined() )
+	    if( !(*(_where_rules))[i]->_label.size() )
 	      all_comments = 0;
 	}
 
@@ -985,7 +985,7 @@ EnumTypeDescriptor::GenerateExpress (std::string &buf) const
 		buf.append("    ");
 		buf.append( (*(_where_rules))[i]->comment_() );
 	    }
-	    if( !(*(_where_rules))[i]->_label.is_null() )
+	    if( (*(_where_rules))[i]->_label.size() )
 	    {
 		buf.append("    ");
 		buf.append( (*(_where_rules))[i]->label_() );
@@ -1156,7 +1156,7 @@ EntityDescriptor::GenerateExpress (std::string &buf) const
 	count = _uniqueness_rules->Count(); 
 	for(i = 0; i < count; i++) // print out each UNIQUE rule
 	{
-	    if( !(*(_uniqueness_rules))[i]->_label.is_undefined() )
+	    if( !(*(_uniqueness_rules))[i]->_label.size() )
 	      all_comments = 0;
 	}
 
@@ -1172,7 +1172,7 @@ EntityDescriptor::GenerateExpress (std::string &buf) const
 		buf.append( (*(_uniqueness_rules))[i]->comment_() );
 		buf.append("\n");
 	    }
-	    if( !(*(_uniqueness_rules))[i]->_label.is_null() )
+	    if( (*(_uniqueness_rules))[i]->_label.size() )
 	    {
 		buf.append("    ");
 		buf.append( (*(_uniqueness_rules))[i]->label_() );
@@ -1189,7 +1189,7 @@ EntityDescriptor::GenerateExpress (std::string &buf) const
 	count = _where_rules->Count(); 
 	for(i = 0; i < count; i++) // print out each UNIQUE rule
 	{
-	    if( !(*(_where_rules))[i]->_label.is_undefined() )
+	    if( !(*(_where_rules))[i]->_label.size() )
 	      all_comments = 0;
 	}
 
@@ -1205,7 +1205,7 @@ EntityDescriptor::GenerateExpress (std::string &buf) const
 		buf.append( (*(_where_rules))[i]->comment_() );
 		buf.append("\n");
 	    }
-	    if( !(*(_where_rules))[i]->_label.is_null() )
+	    if( (*(_where_rules))[i]->_label.size() )
 	    {
 		buf.append("    ");
 		buf.append( (*(_where_rules))[i]->label_() );
@@ -1696,7 +1696,7 @@ TypeDescriptor::GenerateExpress (std::string &buf) const
 	count = _where_rules->Count(); 
 	for(i = 0; i < count; i++) // print out each UNIQUE rule
 	{
-	    if( !(*(_where_rules))[i]->_label.is_undefined() )
+	    if( !(*(_where_rules))[i]->_label.size() )
 	      all_comments = 0;
 	}
 
@@ -1712,7 +1712,7 @@ TypeDescriptor::GenerateExpress (std::string &buf) const
 		buf.append("    ");
 		buf.append( (*(_where_rules))[i]->comment_() );
 	    }
-	    if( !(*(_where_rules))[i]->_label.is_null() )
+	    if( (*(_where_rules))[i]->_label.size() )
 	    {
 		buf.append("      ");
 		buf.append( (*(_where_rules))[i]->label_() );

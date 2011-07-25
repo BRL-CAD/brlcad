@@ -16,7 +16,7 @@
 #include <ExpDict.h>
 #include <sstream>
 //#include <STEPentity.h>
-#include <scl_string.h>
+#include <string.h>
 #include <sdai.h>
 #include <STEPattribute.h>
 

@@ -14,10 +14,6 @@
 
 /* $Id: STEPaggregate.h,v 3.0.1.6 1997/11/05 21:59:27 sauderd DP3.1 $ */
 
-#ifdef __OSTORE__
-#include <ostore/ostore.hh>    // Required to access ObjectStore Class Library
-#endif
-
 #ifdef __O3DB__
 #include <OpenOODB.h>
 #endif
@@ -35,7 +31,7 @@ class TypeDescriptor;
 #include <baseType.h>
 #include <sdai.h>
 #include <STEPundefined.h>
-#include <scl_string.h>
+#include <string.h>
 
 //class SCLP23(Application_instance);
 //#define 	S_ENTITY_NULL	&NilSTEPentity

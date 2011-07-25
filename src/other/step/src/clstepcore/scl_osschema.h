@@ -5,7 +5,7 @@
 
 /*
 */
-#include <scl_string.h>
+#include <string.h>
 #include <sdai.h>
 
 #include <errordesc.h>

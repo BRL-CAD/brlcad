@@ -23,8 +23,11 @@
 #include <OpenOODB.h>
 #endif
 
-#include <scl_string.h>
+#include <string.h>
 #include <iostream>
+using namespace std;
+
+#define _POC_  " report problem to brlcad-devel"
 
 typedef enum Severity {
     SEVERITY_MAX	= -5,

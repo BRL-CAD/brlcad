@@ -19,7 +19,7 @@
 #endif
 
 #include <errordesc.h>
-#include <scl_string.h>
+#include <string.h>
 #include <read_func.h>
 
 class SCLundefined  {

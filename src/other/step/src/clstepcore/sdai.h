@@ -53,10 +53,10 @@ void Application_instance_access_hook_in(void *object,
 
 #include <baseType.h>
 #include <Str.h>
-#include <scl_string.h>
+#include <string.h>
 #include <errordesc.h>
 
-typedef String_var Express_id;
+typedef std::string Express_id;
 
 #ifdef __O3DB__
 /*  OpenOODB.h must be the first include file.  */
