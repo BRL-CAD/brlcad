@@ -15,13 +15,8 @@ on-going issues.
 Recent Bugs
 -----------
 
-* rt command run within mged does not display any output
-
 * opening a database in archer with the same name as a command doesn't
   work.
-
-* both left and right mouse buttons in mged reportedly zoom in after a
-  recent change.
 
 * bu_log() with a width specifier does not align like printf().
   Example: bu_log("%24s", str);
@@ -63,8 +58,6 @@ Recent Bugs
 * mged/tcl "gets" command doesn't work if you run the "source" command
   to read in a script that uses gets on stdin.  it just hangs until
   muliple sigint's are received.
-
-* mged 'cd' on Windows results in the rt* commands failing.
 
 * menu invocation seems to be broken again (ArchLinux)
 
