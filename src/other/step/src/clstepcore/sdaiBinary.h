@@ -46,10 +46,6 @@ class SCLP23_NAME(Binary) : public std::string
 			       int optional, char *tokenList,
 			       int needDelims = 0, int clearError = 1);
 
-#ifdef __OSTORE__
-    static os_typespec* get_os_typespec();
-#endif
-
  protected:
   Severity ReadBinary(istream& in, ErrorDescriptor *err, int AssignVal = 1,
 		      int needDelims = 1);

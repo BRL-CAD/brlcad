@@ -41,13 +41,6 @@ const SCLP23(LOGICAL) SCLP23(UNKNOWN)( LUnknown );
 // class Logical
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifdef __OSTORE__
-SCLP23(LOGICAL) * create_LOGICAL(os_database *db) 
-{
-    return new (db, SCLP23(LOGICAL)::get_os_typespec()) SCLP23(LOGICAL);
-}
-#endif
-
 SCLP23(LOGICAL)::SCLP23_NAME(LOGICAL) (char * val)
 {
     set_value (val);
@@ -81,17 +74,6 @@ SCLP23(LOGICAL)::SCLP23_NAME(LOGICAL) (const BOOLEAN& boo)
 SCLP23(LOGICAL)::~SCLP23_NAME(LOGICAL) () 
 {
 }
-
-#ifdef __OSTORE__
-void 
-SCLP23(LOGICAL)::Access_hook_in(void *object, 
-				enum os_access_reason reason, void *user_data, 
-				void *start_range, void *end_range)
-{
-    cout << "ObjectStore called LOGICAL::Access_hook_in()" 
-      << endl;
-}
-#endif
 
 const char * 
 SCLP23(LOGICAL)::Name() const
@@ -357,14 +339,6 @@ SCLP23(LOGICAL)::ReadEnum(istream& in, ErrorDescriptor *err, int AssignVal,
 // class BOOLEAN  Jan 97
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifdef __OSTORE__
-SCLP23(BOOLEAN) * 
-create_BOOLEAN(os_database *db) 
-{
-    return new (db, SCLP23(BOOLEAN)::get_os_typespec()) SCLP23(BOOLEAN); 
-}
-#endif
-
 const char * 
 SCLP23(BOOLEAN)::Name() const
 {
@@ -411,17 +385,6 @@ SCLP23(BOOLEAN)::SCLP23_NAME(BOOLEAN) (const SCLP23(LOGICAL)& val)  {
   }
   set_value (val);
 }
-
-#ifdef __OSTORE__
-void 
-SCLP23(BOOLEAN)::Access_hook_in(void *object, 
-				enum os_access_reason reason, void *user_data, 
-				void *start_range, void *end_range)
-{
-    cout << "ObjectStore called BOOLEAN::Access_hook_in()" 
-      << endl;
-}
-#endif
 
 SCLP23(BOOLEAN)::operator  Boolean () const  {
   switch (v) {
@@ -493,17 +456,6 @@ SCLP23(Enum)::SCLP23_NAME(Enum)()
 SCLP23(Enum)::~SCLP23_NAME(Enum)()
 { 
 }
-
-#ifdef __OSTORE__
-void 
-SCLP23(Enum)::Access_hook_in(void *object, 
-				enum os_access_reason reason, void *user_data, 
-				void *start_range, void *end_range)
-{
-    cout << "ObjectStore called Enum::Access_hook_in()" 
-      << endl;
-}
-#endif
 
 int 
 SCLP23(Enum)::put(int val)

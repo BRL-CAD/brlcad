@@ -1,7 +1,3 @@
-#ifdef __OSTORE__
-extern int pr_obj_errors;
-#endif
-
 /*
 * NIST STEP Core Class Library
 * clstepcore/Registry.inline.cc
@@ -28,24 +24,11 @@ extern int pr_obj_errors;
 
 static int uniqueNames( const char *, const SchRename * );
 
-//#ifdef __OSTORE__
-//Registry::Registry (CF_init initFunct, os_database *db) 
-//#else
 Registry::Registry (CF_init initFunct) 
-//#endif
 : entity_cnt(0), all_ents_cnt(0), col(0)
 { 
-//#ifdef __OSTORE__
-    // need to make this thing persistent in a database - DAS
-/*
-    if(NilSTEPentity == 0)
-      NilSTEPentity = new (db, SCLP23(Application_instance)::get_os_typespec())
-				SCLP23(Application_instance);
-*/
-//#else
 //    if(NilSTEPentity == 0)
 //      NilSTEPentity = new SCLP23(Application_instance);
-//#endif
 
     /* Registry tables aren't always initialized */
     HASHinitialize();
@@ -319,46 +302,6 @@ Registry::RemoveClones (const EntityDescriptor& e)
     }
 }
 
-#ifdef __OSTORE__
-SCLP23(Application_instance) * 
-Registry::ObjCreate (const char *nm, os_database *db, const char *schnm,
-		     int check_case) const
-{
-    if(pr_obj_errors > 3)
-      cout << "Registry::ObjCreate() db ptr: " << db << endl;
-
-    const EntityDescriptor *  entd = FindEntity (nm, schnm, check_case);
-    if (entd)
-    {
-	SCLP23(Application_instance) *se = 
-	  ((EntityDescriptor *)entd) -> NewSTEPentity (db);
-
-	if(pr_obj_errors > 3)
-	{
-	    cout << "Created entity: " << se->EntityName() << endl;
-	    cout << "os_database::of(se) in Registry::ObjCreate(): "
-	      << os_database::of(se) << endl;
-	}
-	// If se is an abstract supertype or a complex entity which requires
-	// external mapping it shouldn't be instantiable using ObjCreate() (but
-	// rather as a part of a STEPcomplex).  In such cases we do create one
-	// here, but we check these conditions and set se's ErrorDescriptor
-	// field appropriately.
-	if ( entd->AbstractEntity().asInt() == TRUE ) {
-	    se->Error().severity( SEVERITY_WARNING );
-	    se->Error().UserMsg( "ENTITY is abstract supertype" );
-	} else if ( entd->ExtMapping().asInt() == TRUE ) {
-	    se->Error().severity( SEVERITY_WARNING );
-	    se->Error().UserMsg( "ENTITY requires external mapping" );
-	}
-	return se;
-    }
-    else {
-        return ENTITY_NULL;
-    }
-}
-
-#else
 
 SCLP23(Application_instance) *
 Registry::ObjCreate (const char *nm, const char *schnm, int check_case) const
@@ -381,7 +324,7 @@ Registry::ObjCreate (const char *nm, const char *schnm, int check_case) const
 	return ENTITY_NULL;
     }
 }
-#endif
+
 
 /* inline */ int
 Registry::GetEntityCnt ()

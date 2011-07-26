@@ -8,10 +8,6 @@
 #include <sys/time.h>
 #endif
 
-#ifdef __OSTORE__
-#include <ostore/ostore.hh>    // Required to access ObjectStore Class Library
-#endif
-
 #ifdef __O3DB__
 #include <OpenOODB.h>
 #endif
@@ -34,11 +30,6 @@ extern void SchemaInit (Registry &);
 extern void InitSchemasAndEnts (Registry &);
 #include <SdaiEXAMPLE_SCHEMA.h> 
 extern void SdaiEXAMPLE_SCHEMAInit (Registry & r);
-
-#ifdef __OSTORE__
-#include <osdb_SdaiEXAMPLE_SCHEMA.h> 
-#endif
-
 
 #include <complexSupport.h>
 ComplexCollect *gencomplex();

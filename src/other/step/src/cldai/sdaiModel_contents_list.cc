@@ -36,32 +36,19 @@ void * memmove(void *__s1, const void *__s2, size_t __n);
 /*****************************************************************************/
 
 SCLP23(Model_contents__list)::SCLP23_NAME(Model_contents__list) (int defaultSize)
-#ifdef __OSTORE__
- : _rep(os_List<SCLP23(Model_contents_ptr)>::create(os_database::of(this)) ), 
-   _cursor(_rep),
-   _first(BTrue)
-{
-//    _rep = os_List<Model_contents*>::create(os_database::of(this));
-#else
 {
     _bufsize = defaultSize;
     _buf = new SCLP23(Model_contents_ptr)[_bufsize];
     _count = 0;
-#endif
-
 }
 
 SCLP23(Model_contents__list)::~SCLP23_NAME(Model_contents__list) () 
 {
-#ifndef __OSTORE__
     delete _buf;
-#endif
 }
 
 void SCLP23(Model_contents__list)::Check (int index) {
 
-#ifdef __OSTORE__
-#else
     SCLP23(Model_contents_ptr)* newbuf;
 
     if (index >= _bufsize) {
@@ -71,15 +58,11 @@ void SCLP23(Model_contents__list)::Check (int index) {
         delete _buf;
         _buf = newbuf;
     }
-#endif
 }
 
 void 
 SCLP23(Model_contents__list)::Insert (SCLP23(Model_contents_ptr) v, int index) {
 
-#ifdef __OSTORE__
-    _rep.insert_before( (SCLP23(Model_contents_ptr)) v, index);
-#else
     SCLP23(Model_contents_ptr)* spot;
     index = (index < 0) ? _count : index;
 
@@ -94,14 +77,10 @@ SCLP23(Model_contents__list)::Insert (SCLP23(Model_contents_ptr) v, int index) {
     }
     *spot = v;
     ++_count;
-#endif
 }
 
 void SCLP23(Model_contents__list)::Append (SCLP23(Model_contents_ptr) v) {
 
-#ifdef __OSTORE__
-    _rep.insert_last( (SCLP23(Model_contents_ptr)) v);
-#else
     int index = _count;
     SCLP23(Model_contents_ptr)* spot;
 
@@ -116,23 +95,17 @@ void SCLP23(Model_contents__list)::Append (SCLP23(Model_contents_ptr) v) {
     }
     *spot = v;
     ++_count;
-#endif
 }
 
 void SCLP23(Model_contents__list)::Remove (int index) {
 
-#ifdef __OSTORE__
-    _rep.remove_at( index );
-#else
     if (0 <= index && index < _count) {
         --_count;
         SCLP23(Model_contents_ptr)* spot = &_buf[index];
         memmove(spot, spot+1, (_count - index)*sizeof(SCLP23(Model_contents_ptr)));
     }
-#endif
 }
 
-#ifndef __OSTORE__
 int SCLP23(Model_contents__list)::Index (SCLP23(Model_contents_ptr) v) {
 
     for (int i = 0; i < _count; ++i) {
@@ -142,19 +115,13 @@ int SCLP23(Model_contents__list)::Index (SCLP23(Model_contents_ptr) v) {
     }
     return -1;
 }
-#endif
 
 SCLP23(Model_contents_ptr) 
 SCLP23(Model_contents__list)::retrieve(int index)
 {
-#ifdef __OSTORE__
-    return _rep.retrieve(index);
-#else
     return operator[](index);
-#endif
 }
 
-#ifndef __OSTORE__
 SCLP23(Model_contents_ptr)& 
 SCLP23(Model_contents__list)::operator[] (int index) 
 {
@@ -164,54 +131,22 @@ SCLP23(Model_contents__list)::operator[] (int index)
     _count = ( (_count > index+1) ? _count : (index+1) );
     return _buf[index];
 }
-#endif
 
 int 
 SCLP23(Model_contents__list)::Count()
 {
-#ifdef __OSTORE__
-    return _rep.cardinality();
-#else
     return _count; 
-#endif
 }
 
 int 
 SCLP23(Model_contents__list)::is_empty()
 {
-#ifdef __OSTORE__
-    return _rep.empty();
-#else
     return _count; 
-#endif
 }
 
-#ifndef __OSTORE__
 void 
 SCLP23(Model_contents__list)::Clear()
 {
     _count = 0; 
 }
-#endif
 
-#ifdef __OSTORE__
-
-SCLP23(Model_contents_ptr) 
-SCLP23(Model_contents__list)::first()
-{
-    return _cursor.first();
-}
-
-SCLP23(Model_contents_ptr) 
-SCLP23(Model_contents__list)::next()
-{
-    return _cursor.next();
-}
-
-SCLP23(Integer) 
-SCLP23(Model_contents__list)::more()
-{
-    return _cursor.more();
-}
-
-#endif

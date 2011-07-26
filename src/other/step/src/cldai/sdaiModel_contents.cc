@@ -97,13 +97,11 @@ SCLP23(Model_contents)::AddInstance(const SCLP23(DAObject_SDAI_ptr)& appInst)
     _instances.contents_()->Append(appInst);
 }
 
-#ifndef __OSTORE__
 void 
 SCLP23(Model_contents)::RemoveInstance(SCLP23(DAObject_SDAI_ptr)& appInst)
 {
     _instances.contents_()->Remove(_instances.contents_()->Index(appInst));
 }
-#endif
 
 
 #ifdef SDAI_CPP_LATE_BINDING

@@ -527,22 +527,14 @@ STEPcomplex::BuildAttrs(const char *s )
 		  {
 		    EnumTypeDescriptor * enumD = 
 				(EnumTypeDescriptor *)ad->ReferentType();
-#ifdef __OSTORE__
-		    a = new STEPattribute (*ad,  enumD->CreateEnum(os_database::of(this)) );
-#else
 		    a = new STEPattribute (*ad,  enumD->CreateEnum() );
-#endif
 		    break;
 		  }
 		  case SELECT_TYPE:
 		  {
 		    SelectTypeDescriptor * selectD = 
 				(SelectTypeDescriptor *)ad->ReferentType();
-#ifdef __OSTORE__
-		    a = new STEPattribute (*ad,  selectD->CreateSelect(os_database::of(this)) );
-#else
 		    a = new STEPattribute (*ad,  selectD->CreateSelect() );
-#endif
 		    break;
 		  }
 		  case AGGREGATE_TYPE:
@@ -553,11 +545,7 @@ STEPcomplex::BuildAttrs(const char *s )
 		  {
 		    AggrTypeDescriptor * aggrD = 
 				(AggrTypeDescriptor *)ad->ReferentType();
-#ifdef __OSTORE__
-		    a = new STEPattribute (*ad,  aggrD->CreateAggregate(os_database::of(this)) );
-#else
 		    a = new STEPattribute (*ad,  aggrD->CreateAggregate() );
-#endif
 		    break;
 		  }
 		}

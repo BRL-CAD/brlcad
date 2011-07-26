@@ -20,10 +20,6 @@ class SCLP23_NAME(Session_instance) : public SCLP23_NAME(sdaiObject)
 //	_narrow(SCLP23_NAME(Object_ptr) o);
 //    static SCLP23_NAME(Session_instance_ptr) _nil();
 
-#ifdef __OSTORE__
-    static os_typespec* get_os_typespec();
-#endif
-
 };
 
 typedef SCLP23_NAME(Session_instance)* SCLP23_NAME(Session_instance_ptr);

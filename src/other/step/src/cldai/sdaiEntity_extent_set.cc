@@ -44,33 +44,19 @@ void * memmove(void *__s1, const void *__s2, size_t __n);
 /*****************************************************************************/
 
 SCLP23(Entity_extent__set)::SCLP23_NAME(Entity_extent__set) (int defaultSize)
-#ifdef __OSTORE__
-// : _rep(os_Collection<Entity_extent_ptr>::create(os_database::of(this)) ), 
- : _rep(os_List<SCLP23(Entity_extent_ptr)>::create(os_database::of(this)) ), 
-   _cursor(_rep),
-   _first(BTrue)
-{
-//    _rep = os_Set<Entity_extent_ptr>::create(os_database::of(this));
-}
-#else
 {
     _bufsize = defaultSize;
     _buf = new SCLP23(Entity_extent_ptr)[_bufsize];
     _count = 0;
 }
-#endif
 
 SCLP23(Entity_extent__set)::~SCLP23_NAME(Entity_extent__set) () 
 {
-#ifndef __OSTORE__
     delete _buf;
-#endif
 }
 
 void SCLP23(Entity_extent__set)::Check (int index) {
 
-#ifdef __OSTORE__
-#else
     SCLP23(Entity_extent_ptr)* newbuf;
 
     if (index >= _bufsize) {
@@ -80,15 +66,11 @@ void SCLP23(Entity_extent__set)::Check (int index) {
         delete _buf;
         _buf = newbuf;
     }
-#endif
 }
 
 void 
 SCLP23(Entity_extent__set)::Insert (SCLP23(Entity_extent_ptr) v, int index) {
 
-#ifdef __OSTORE__
-    _rep.insert_before( (SCLP23(Entity_extent_ptr)) v, index);
-#else
     SCLP23(Entity_extent_ptr)* spot;
     index = (index < 0) ? _count : index;
 
@@ -103,14 +85,10 @@ SCLP23(Entity_extent__set)::Insert (SCLP23(Entity_extent_ptr) v, int index) {
     }
     *spot = v;
     ++_count;
-#endif
 }
 
 void SCLP23(Entity_extent__set)::Append (SCLP23(Entity_extent_ptr) v) {
 
-#ifdef __OSTORE__
-    _rep.insert_last( (SCLP23(Entity_extent_ptr)) v);
-#else
     int index = _count;
     SCLP23(Entity_extent_ptr)* spot;
 
@@ -125,23 +103,17 @@ void SCLP23(Entity_extent__set)::Append (SCLP23(Entity_extent_ptr) v) {
     }
     *spot = v;
     ++_count;
-#endif
 }
 
 void SCLP23(Entity_extent__set)::Remove (int index) {
 
-#ifdef __OSTORE__
-    _rep.remove_at( index );
-#else
     if (0 <= index && index < _count) {
         --_count;
         SCLP23(Entity_extent_ptr)* spot = &_buf[index];
         memmove(spot, spot+1, (_count - index)*sizeof(SCLP23(Entity_extent_ptr)));
     }
-#endif
 }
 
-#ifndef __OSTORE__
 int SCLP23(Entity_extent__set)::Index (SCLP23(Entity_extent_ptr) v) {
 
     for (int i = 0; i < _count; ++i) {
@@ -151,76 +123,37 @@ int SCLP23(Entity_extent__set)::Index (SCLP23(Entity_extent_ptr) v) {
     }
     return -1;
 }
-#endif
 
 SCLP23(Entity_extent_ptr) 
 SCLP23(Entity_extent__set)::retrieve(int index)
 {
-#ifdef __OSTORE__
-    return _rep.retrieve(index);
-#else
     return operator[](index);
-#endif
 }
 
-#ifndef __OSTORE__
 SCLP23(Entity_extent_ptr)& SCLP23(Entity_extent__set)::operator[] (int index) {
     Check(index);
 //    _count = max(_count, index+1);
     _count = ( (_count > index+1) ? _count : (index+1) );
     return _buf[index];
 }
-#endif
 
 int 
 SCLP23(Entity_extent__set)::Count()
 {
-#ifdef __OSTORE__
-    return _rep.cardinality();
-#else
     return _count; 
-#endif
 }
 
 int 
 SCLP23(Entity_extent__set)::is_empty()
 {
-#ifdef __OSTORE__
-    return _rep.empty();
-#else
     return _count; 
-#endif
 }
 
-#ifndef __OSTORE__
 void 
 SCLP23(Entity_extent__set)::Clear()
 {
     _count = 0; 
 }
-#endif
-
-#ifdef __OSTORE__
-
-SCLP23(Entity_extent_ptr) 
-SCLP23(Entity_extent__set)::first()
-{
-    return _cursor.first();
-}
-
-SCLP23(Entity_extent_ptr) 
-SCLP23(Entity_extent__set)::next()
-{
-    return _cursor.next();
-}
-
-SCLP23(Integer) 
-SCLP23(Entity_extent__set)::more()
-{
-    return _cursor.more();
-}
-
-#endif
 
 /*****************************************************************************/
 

@@ -581,12 +581,6 @@ TYPEselect_inc_print_vars( const Type type, FILE *f, Linked_List dups)
    fprintf( f, "  /* unnamed union of select items */\n" );
 
    fprintf (f, "\n  public:\n");
-   fprintf (f, "\n#ifdef __OSTORE__\n");
-   fprintf (f, "\tfriend void %s_access_hook_in(void *, \n\t\t\t\t"
-	       "enum os_access_reason, void *, void *, void *);\n", classnm);
-   fprintf (f, "\tstatic os_typespec* get_os_typespec();\n");
-   fprintf (f, "#endif\n\n");
- 
    fprintf (f, 
 	   "\tvirtual const TypeDescriptor * AssignEntity (SCLP23(Application_instance) * se);\n"
 	   "\tvirtual SCLP23(Select) * NewSelect ();\n"
@@ -739,17 +733,7 @@ TYPEselect_inc_print (const Type type, FILE* f)
 
   fprintf( f, "};\n");
 
-        /* Print ObjectStore Access Hook function */
-  fprintf (f, "\n#ifdef __OSTORE__\n");
-  fprintf (f, "void %s_access_hook_in(void *object, \n\tenum os_access"
-	      "_reason reason, void *user_data, \n\tvoid *start_range, "
-	      "void *end_range);\n\n", n);
-
-	/* DAS creation function select class */
-  fprintf (f, "SCLP23(Select) * create_%s (os_database *db);\n", n, n);
-  fprintf (f, "#else\n");
   fprintf (f, "\ninline SCLP23(Select) * create_%s () { return new %s; }\n", n, n);
-  fprintf (f, "#endif\n\n");
 
         /* DAR - moved from SCOPEPrint() */
   fprintf( f, "typedef %s * %sH;\n", n, n);
@@ -762,22 +746,13 @@ TYPEselect_inc_print (const Type type, FILE* f)
   fprintf (f, "  public:\n");
   fprintf (f, "    %ss( SelectTypeDescriptor * =%s );\n", n, tdnm);
   fprintf (f, "    ~%ss();\n", n);
-  fprintf (f, "\n#ifdef __OSTORE__\n");
-  fprintf (f, "    static os_typespec* get_os_typespec();\n");
-  fprintf (f, "    virtual SingleLinkNode * NewNode();\n");
-  fprintf (f, "#else\n");
   fprintf (f, "    virtual SingleLinkNode * NewNode()\n");
   fprintf (f, "\t { return new SelectNode (new %s( sel_type )); }\n", n);
-  fprintf (f, "#endif\n");
   fprintf (f, "};\n");
 
 	/* DAS creation function for select aggregate class */
-  fprintf (f, "\n#ifdef __OSTORE__\n");
-  fprintf (f, "STEPaggregate * create_%ss (os_database *db);\n", n, n);
-  fprintf (f, "#else\n");
   fprintf (f, "inline STEPaggregate * create_%ss () { return new %ss; }\n",
 	   n, n);
-  fprintf (f, "#endif\n\n");
 
   fprintf( f, "typedef %ss_ptr %ss_var;\n", n, n );
 
@@ -804,46 +779,6 @@ TYPEselect_lib_print_part_one( const Type type, FILE* f, Schema schema,
 
   strncpy (tdnm, TYPEtd_name (type), BUFSIZ);
   strncpy (nm, SelectName( TYPEget_name(type) ), BUFSIZ);
-
-	/* DAS creation function select class */
-  fprintf (f, "\n#ifdef __OSTORE__\n");
-  fprintf (f, "SCLP23(Select) * \ncreate_%s (os_database *db) \n{\n    return "
-	      "new (db, %s::get_os_typespec()) \n\t\t%s ; \n}\n", nm, nm, nm);
-	/* generate access hook function to reinitialize SCLP23(Select)'s pointer 
-	   to the transient select dictionary entry. */
-  fprintf (f, "\nvoid \n%s_access_hook_in(void *object, \n\t\t\t\tenum "
-	      "os_access_reason reason, void *user_data, \n\t\t\t\tvoid *"
-	      "start_range, void *end_range)\n{\n", nm);
-  fprintf (f, "#ifdef SCL_LOGGING\n    if( *logStream )\n    {\n");
-  fprintf (f, "\t*logStream << \"%s access hook funct called.\" << std::endl;\n",
-	      nm);
-  fprintf (f, "    }\n#endif\n");
-/*
-  fprintf (f, "    std::cout << \"%s access hook funct called.\" << std::endl;\n",
-	   SelectName( TYPEget_name(type) ) );
-*/
-  fprintf (f, "    %s *s = (%s *) object;\n    s->_type = %s;\n", nm, nm, tdnm);
-  fprintf (f, "#ifdef SCL_LOGGING\n    if( *logStream )\n    {\n");
-  fprintf (f, "\t*logStream << \"underlying type set to \" << "
-	      "s->UnderlyingTypeName() << std::endl << std::endl;\n");
-  fprintf (f, "    }\n#endif\n");
-/*
-  fprintf (f, "    std::cout << \"underlying type set to \" << s->UnderlyingTypeName() << std::endl << std::endl;\n");
-*/
-  fprintf (f, "    const TypeDescriptor *td = s->CanBe(s->UnderlyingType"
-	      "Name());\n");
-  fprintf (f, "    s->SetUnderlyingType(td);\n");
-  fprintf (f, "    if(!td)\n");
-  fprintf (f, "\tstd::cerr << \"ERROR: can't reinitialize underlying select "
-	      "TypeDescriptor.\" \n\t     << std::endl;\n");
-  fprintf (f, "}\n");
-  fprintf (f, "#endif\n\n");
-
-	/* DAS creation function for select aggregate class */
-  fprintf (f, "\n#ifdef __OSTORE__\n");
-  fprintf (f, "STEPaggregate * \ncreate_%ss (os_database *db) \n{\n    return "
-	      "new (db, %ss::get_os_typespec()) \n\t\t%ss ; \n}\n", nm, nm, nm);
-  fprintf (f, "#endif\n\n");
 
     /*	constructor(s)	*/
 	/*  null constructor  */
@@ -954,13 +889,6 @@ TYPEselect_lib_print_part_one( const Type type, FILE* f, Schema schema,
    fprintf (f, "%ss::%ss( SelectTypeDescriptor *s)\n"
 	       "  : SelectAggregate(), sel_type(s)\n{\n}\n\n", n, n);
    fprintf (f, "%ss::~%ss() { }\n\n",n,n);
-   fprintf (f, "\n#ifdef __OSTORE__\n");
-   fprintf (f, "SingleLinkNode * \n%ss::NewNode() \n{\n",n);
-   fprintf (f, "    return new( os_segment::of(this), SelectNode::get_os"
-               "_typespec() )\n\tSelectNode( new( os_segment::of(this),\n"
-	       "\t\t\t %s::get_os_typespec() ) \n\t\t    %s );\n}\n", n,n);
-   fprintf (f, "#endif\n\n");
-
 #undef schema_name	
 }
 
@@ -1278,9 +1206,6 @@ TYPEselect_lib_print_part_four( const Type type, FILE* f, Schema schema,
 	 }
 
 	 fprintf (f, "   underlying_type = 0; // MUST BE SET BY USER\n");
-	 fprintf (f, "#ifdef __OSTORE__\n");
-	 fprintf (f, "  underlying_type_name.set_null(); \n");
-	 fprintf (f, "#endif\n");
 	 fprintf( f, "   //	discriminator = UNSET\n" );
 	 fprintf( f, "   return *this;\n}\n" );
     }
@@ -1327,9 +1252,6 @@ TYPEselect_lib_print_part_four( const Type type, FILE* f, Schema schema,
      }
    LISTod;
    fprintf( f, "   underlying_type = o -> CurrentUnderlyingType ();\n" );
-   fprintf (f, "#ifdef __OSTORE__\n");
-   fprintf (f, "   underlying_type_name = o -> UnderlyingTypeName(); \n");
-   fprintf (f, "#endif\n");
    fprintf( f, "   return *this;\n}\n\n" );
 
 /*   fprintf( f, "%s& %s::operator =( const %s& o )\n{\n", n,n,n );*/
@@ -1382,9 +1304,6 @@ TYPEselect_lib_print_part_four( const Type type, FILE* f, Schema schema,
      }
    LISTod;
    fprintf( f, "   underlying_type = o.CurrentUnderlyingType ();\n" );
-   fprintf (f, "#ifdef __OSTORE__\n");
-   fprintf (f, "   underlying_type_name = o.UnderlyingTypeName(); \n");
-   fprintf (f, "#endif\n");
    fprintf( f, "   return *this;\n}\n\n" );
    fprintf( f, "#endif\n" );
 
@@ -1407,9 +1326,6 @@ TYPEselect_lib_print_part_four( const Type type, FILE* f, Schema schema,
 		    SEL_ITEMget_dmname (t));
    LISTod;
    fprintf( f, "   underlying_type = o.CurrentUnderlyingType ();\n" );
-   fprintf (f, "#ifdef __OSTORE__\n");
-   fprintf (f, "   underlying_type_name = o.UnderlyingTypeName(); \n");
-   fprintf (f, "#endif\n");
    fprintf( f, "   return *this;\n}\n" );
 #endif
 }
@@ -1869,12 +1785,7 @@ SELlib_print_protected (const Type type,  FILE* f, const Schema schema)
   snm  = SelectName (TYPEget_name (type));
   fprintf (f, "\nSCLP23(Select) * \n%s::NewSelect ()\n{\n", snm);
 
-  fprintf (f, "#ifdef __OSTORE__\n");
-  fprintf (f, "    %s * tmp = \n\t\tnew( os_segment::of(this),\n\t\t     "
-	      "%s::get_os_typespec() ) \n\t\t\t%s();\n", snm, snm, snm);
-  fprintf (f, "#else\n");
   fprintf (f, "    %s * tmp = new %s();\n", snm, snm);
-  fprintf (f, "#endif\n");
   fprintf (f, "    return tmp;\n}\n");
 }
 
@@ -2070,21 +1981,10 @@ TYPEselect_print (Type t, FILES* files, Schema schema)
       // structor, passing the new sel's typedescriptor to create a hybrid
       // entity - the original select pointing to a new typedesc.   These fns
       // give the user an easy way to create the renamed type properly. */
-      fprintf (inc, "\n#ifdef __OSTORE__\n");
-      fprintf (inc, "void %s_access_hook_in(void *object, \n\tenum"
-	            " os_access_reason reason, void *user_data, \n"
-	            "\tvoid *start_range, void *end_range);\n\n", nm);
-      fprintf (inc, "SCLP23(Select) * create_%s (os_database *db);\n", nm, nm);
-      fprintf (inc, "#else\n");
       fprintf (inc, "inline SCLP23(Select) *\ncreate_%s ()", nm);
       fprintf (inc, " { return new %s( %s ); }\n\n", nm, tdnm);
-      fprintf (inc, "#endif\n");
-      fprintf (inc, "\n#ifdef __OSTORE__\n");
-      fprintf (inc, "STEPaggregate * create_%ss (os_database *db);\n", nm, nm);
-      fprintf (inc, "#else\n");
       fprintf (inc, "inline STEPaggregate *\ncreate_%ss ()", nm);
       fprintf (inc, " { return new %ss( %s ); }\n\n", nm, tdnm);
-      fprintf (inc, "#endif\n\n");
       return;
   }
 

@@ -1,7 +1,3 @@
-#ifdef __OSTORE__
-int pr_obj_errors = 0;
-#endif
-
 /*
 * NIST STEP Core Class Library
 * cleditor/STEPfile.cc
@@ -170,13 +166,6 @@ STEPfile::ReadHeader (istream& in)
 	    }
 	    else //not userDefined
 	    {
-/*
-#ifdef __OSTORE__
-		obj = _headerRegistry->ObjCreate (buf, db);
-#else
-		obj = _headerRegistry->ObjCreate (buf);
-#endif
-*/
 		obj = _headerRegistry->ObjCreate (buf);
 #ifdef __O3DB__
 		obj -> persist ();
@@ -707,25 +696,6 @@ STEPfile::ReadData1(istream& in)
 
 	}
     } // end while loop
-
-#ifdef __OSTORE__
-    if (pr_obj_errors > 4)
-    {
-	int x = 0;
-	cout << 
-	    "\nSTEPfile::ReadData1(istream& in) os_database ptrs in entities:"
-	     << endl;
-	SCLP23(Application_instance) *STEPent = 0;
-	while (x < instance_count)
-	{
-	    STEPent = instances().GetApplication_instance(x);
-	    cout << "os_database::of(STEPent): " << os_database::of(STEPent) 
-	      << endl;
-	    x++;
-	}
-	cout << endl << "***********" << endl;
-    }
-#endif
 
     if(_entsNotCreated) 
     {
@@ -1685,23 +1655,7 @@ STEPfile::CreateInstance(istream& in, ostream &out)
 	else 
 	{
 	    schemaName( schnm );
-#ifdef __OSTORE__
-	    if (pr_obj_errors > 3)
-	    {
-		cout << "STEPfile::CreateInstance() db ptr: " << db << endl;
-	    }
-
-	    obj = reg().ObjCreate(objnm.chars(), db, schnm);
-
-	    if (pr_obj_errors > 3)
-	    {
-		cout << "os_database::of(obj) in STEPfile::CreateInstance(): "
-		  << os_database::of(obj) << endl;
-		cout << "****" << endl;
-	    }
-#else
 	    obj = reg().ObjCreate(objnm.c_str(), schnm);
-#endif
 	    if ( obj == ENTITY_NULL ) {
 		// This will be the case if objnm does not exist in the reg.
 		result.UserMsg( "Unknown ENTITY type" );

@@ -14,10 +14,6 @@
 
 /* $Id: SingleLinkList.h,v 3.0.1.4 1997/11/05 21:59:22 sauderd DP3.1 $ */
 
-#ifdef __OSTORE__
-#include <ostore/ostore.hh>    // Required to access ObjectStore Class Library
-#endif
-
 #ifdef __O3DB__
 #include <OpenOODB.h>
 #endif
@@ -47,9 +43,6 @@ class SingleLinkList  {
     SingleLinkList ();
     virtual ~SingleLinkList ();
 
-#ifdef __OSTORE__
-    static os_typespec* get_os_typespec();
-#endif
 }
 ;
 
@@ -66,9 +59,6 @@ class SingleLinkNode {
     SingleLinkNode() : owner(0), next(0)  { }
     virtual ~SingleLinkNode() { }
 
-#ifdef __OSTORE__
-    static os_typespec* get_os_typespec();
-#endif
 };
 
 #endif

@@ -95,9 +95,7 @@ friend class SCLP23_NAME(Model_contents);
      */
 
     // this is no longer in Part 23
-#ifndef __OSTORE__
     void RemoveInstance(const SCLP23_NAME(DAObject_ptr)& appInst);
-#endif
 
     /*
        7.3.3.1.2  RemoveInstance
@@ -114,10 +112,6 @@ friend class SCLP23_NAME(Model_contents);
 
        Origin: Convenience function
        */
-
-#ifdef __OSTORE__
-    static os_typespec* get_os_typespec();
-#endif
 
 };
 

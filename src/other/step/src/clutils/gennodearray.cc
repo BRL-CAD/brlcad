@@ -22,12 +22,7 @@
 
 #ifndef HAVE_MEMMOVE
 extern "C" {
-//#ifdef __OSTORE__
-//#include <memory.h>
-//#else
     extern void * memmove(void *, const void *, size_t);
-/*    extern char * memset(char *, int, int); */
-//#endif
 }
 #endif
 
@@ -42,24 +37,10 @@ GenericNode::~GenericNode()
     Remove();
 }
 
-//#ifdef __OSTORE__
-//GenNodeArray::GenNodeArray (os_database *db, int defaultSize)
-//#else
 GenNodeArray::GenNodeArray (int defaultSize)
-//#endif
 {
     _bufsize = defaultSize;
-/*
-#ifdef __OSTORE__
-    {
-	os_typespec tmp_ts("GenericNode*");
-	_buf = new (os_segment::of(this), &tmp_ts, _bufsize) 
-	  GenericNode*[_bufsize];
-    }
-#else
-*/
     _buf = new GenericNode*[_bufsize];
-//#endif
     memset(_buf, 0, _bufsize*sizeof(GenericNode*));
     _count = 0;
 }
@@ -98,18 +79,7 @@ GenNodeArray::Check (int index)
     if (index >= _bufsize) {
 	int oldBufSize = _bufsize;
         _bufsize = (index+1) * 2;
-/*
-#ifdef __OSTORE__
-	{
-	    os_typespec tmp_ts("GenericNode*");
-	    newbuf = new (os_segment::of(this), &tmp_ts, _bufsize) 
-	      GenericNode*[_bufsize];
-	}
-#else
-*/
         newbuf = new GenericNode*[_bufsize];
-//#endif
-
 
 	memset(newbuf, 0, _bufsize);
 //	memset(newbuf[oldBufSize], 0, 

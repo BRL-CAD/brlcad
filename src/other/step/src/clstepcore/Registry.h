@@ -14,10 +14,6 @@
 
 /* $Id: Registry.h,v 3.0.1.7 1997/11/05 21:59:19 sauderd DP3.1 $  */ 
 
-#ifdef __OSTORE__
-#include <ostore/ostore.hh>    // Required to access ObjectStore Class Library
-#endif
-
 #include <sdai.h>
 //#include <STEPentity.h>
 #include <errordesc.h>
@@ -83,14 +79,8 @@ class Registry {
     const ComplexCollect *CompCol() { return col; }
     void        SetCompCollect( ComplexCollect *c ) { col = c; }
 
-#ifdef __OSTORE__
-    SCLP23(Application_instance)* ObjCreate (const char * nm, os_database *db =0,
-			   const char * =0, int check_case =0) const;
-#else
     SCLP23(Application_instance)* ObjCreate (const char * nm, const char * =0,
 			   int check_case =0) const;
-#endif
-    
 };
 
 #endif  /*  _REGISTRY_H  */

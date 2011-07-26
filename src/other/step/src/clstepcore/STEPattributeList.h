@@ -15,10 +15,6 @@
 
 /* $Id: STEPattributeList.h,v 3.0.1.3 1997/11/05 21:59:25 sauderd DP3.1 $ */
 
-#ifdef __OSTORE__
-#include <ostore/ostore.hh>    // Required to access ObjectStore Class Library
-#endif
-
 #ifdef __O3DB__
 #include <OpenOODB.h>
 #endif
@@ -45,9 +41,6 @@ class AttrListNode :  public SingleLinkNode
     AttrListNode(STEPattribute *a);
     virtual ~AttrListNode();
 
-#ifdef __OSTORE__
-    static os_typespec* get_os_typespec();
-#endif
 };
 
 class STEPattributeList : public SingleLinkList
@@ -59,10 +52,6 @@ class STEPattributeList : public SingleLinkList
     STEPattribute& operator [] (int n);
     int list_length();
     void push(STEPattribute *a);
-
-#ifdef __OSTORE__
-    static os_typespec* get_os_typespec();
-#endif
 };
 
 /*****************************************************************

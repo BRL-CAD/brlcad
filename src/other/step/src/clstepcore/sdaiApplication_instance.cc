@@ -103,11 +103,7 @@ SCLP23(Application_instance)::Replicate()
     }
     else
     {
-#ifdef __OSTORE__
-	SCLP23(Application_instance) *seNew = eDesc->NewSTEPentity(os_database::of(this));
-#else
 	SCLP23(Application_instance) *seNew = eDesc->NewSTEPentity();
-#endif
 	seNew -> CopyAs (this);
 	return seNew;
     }
@@ -215,32 +211,6 @@ SCLP23(Application_instance)::GetMiEntity(char *EntityName)
 }
 
 
-#ifdef __OSTORE__
-void Application_instance_access_hook_in(void *object, 
-	enum os_access_reason reason, void *user_data, 
-	void *start_range, void *end_range)
-{
-    cout << "ObjectStore called non-member function Application_instance Access_hook" 
-      << endl;
-    SCLP23(Application_instance) *ent = (SCLP23(Application_instance) *)object;
-    cout << "STEPfile_id: " << ent->STEPfile_id << endl;
-    ent->Access_hook_in(object, reason, user_data, start_range, end_range);
-
-//    SdaiEb_person *ent = (SdaiEb_person *)object;
-//    SdaiEb_person_access_hook_in(object, reason, user_data, 
-//				 start_range, end_range);
-}
-
-void 
-SCLP23(Application_instance)::Access_hook_in(void *object, 
-			   enum os_access_reason reason, void *user_data, 
-			   void *start_range, void *end_range)
-{
-    SCLP23(Application_instance) *ent = (SCLP23(Application_instance) *)object;
-    cout << "****WARNING: virtual SCLP23(Application_instance)::Access_hook_in() called" << endl;
-    ent->Access_hook_in(object, reason, user_data, start_range, end_range);
-}
-#endif
 
 STEPattribute * 
 SCLP23(Application_instance)::GetSTEPattribute (const char * nm)

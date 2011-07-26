@@ -38,15 +38,6 @@ extern const char *SCLversion;
 #include <corbaIncludes.h>
 #endif
 
-#ifdef __OSTORE__
-
-#include <ostore/ostore.hh>    // Required to access ObjectStore Class Library
-#include <ostore/coll.hh>
-void Application_instance_access_hook_in(void *object, 
-	enum os_access_reason reason, void *user_data, 
-	void *start_range, void *end_range);
-
-#endif
 
 #include <sclprefixes.h>
 #include <dictdefs.h>
@@ -397,17 +388,9 @@ AGGREGATE TYPES
 
 ******************************************************************************/
 
-#ifdef __OSTORE__
-SCLP23(BOOLEAN) *create_BOOLEAN(os_database *db);
-#else
 inline SCLP23(BOOLEAN) *create_BOOLEAN() { return new SCLP23(BOOLEAN) ; }
-#endif
 
-#ifdef __OSTORE__
-SCLP23(LOGICAL) *create_LOGICAL(os_database *db);
-#else
 inline SCLP23(LOGICAL) *create_LOGICAL() { return new SCLP23(LOGICAL) ; }
-#endif
 
 // below is outdated
 typedef SCLP23(Select) * SdaiSelectH;

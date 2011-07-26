@@ -14,10 +14,6 @@
 
 /* $Id: ExpDict.h,v 3.0.1.12 1998/02/17 19:19:15 sauderd DP3.1 $  */ 
 
-#ifdef __OSTORE__
-#include <ostore/ostore.hh>    // Required to access ObjectStore Class Library
-#endif
-
 #ifdef __O3DB__
 #include <OpenOODB.h>
 #endif
@@ -25,11 +21,7 @@
 #include <sdai.h>
 //class SCLP23(Application_instance);
 
-#ifdef __OSTORE__
-typedef  SCLP23(Application_instance) * (* Creator) (os_database *) ;
-#else
 typedef  SCLP23(Application_instance) * (* Creator) () ;
-#endif
 //class StringAggregate;
 
 enum AttrType_Enum {
@@ -1278,11 +1270,7 @@ class TypeDescriptor {
 	        // is USE/REFERENCE'ing us (added to altNames).
 };
 
-#ifdef __OSTORE__
-typedef  SCLP23(Enum) * (* EnumCreator) (os_database *db) ;
-#else
 typedef  SCLP23(Enum) * (* EnumCreator) () ;
-#endif
 
 class EnumTypeDescriptor  :    public TypeDescriptor  { 
   public:
@@ -1295,11 +1283,7 @@ class EnumTypeDescriptor  :    public TypeDescriptor  {
 	CreateNewEnum = f;
     }
 
-#ifdef __OSTORE__
-    SCLP23(Enum) *CreateEnum(os_database *db);
-#else
     SCLP23(Enum) *CreateEnum();
-#endif
 
     EnumTypeDescriptor ( ) { }
     EnumTypeDescriptor (const char * nm, PrimitiveType ft, 
@@ -1448,17 +1432,6 @@ class BinaryAggregate;
 class RealAggregate;
 class IntAggregate;
 
-#ifdef __OSTORE__
-typedef  STEPaggregate * (* AggregateCreator) (os_database *db) ;
-typedef  EnumAggregate * (* EnumAggregateCreator) (os_database *db) ;
-typedef  GenericAggregate * (* GenericAggregateCreator) (os_database *db) ;
-typedef  EntityAggregate * (* EntityAggregateCreator) (os_database *db) ;
-typedef  SelectAggregate * (* SelectAggregateCreator) (os_database *db) ;
-typedef  StringAggregate * (* StringAggregateCreator) (os_database *db) ;
-typedef  BinaryAggregate * (* BinaryAggregateCreator) (os_database *db) ;
-typedef  RealAggregate * (* RealAggregateCreator) (os_database *db) ;
-typedef  IntAggregate * (* IntAggregateCreator) (os_database *db) ;
-#else
 typedef  STEPaggregate * (* AggregateCreator) () ;
 typedef  EnumAggregate * (* EnumAggregateCreator) () ;
 typedef  GenericAggregate * (* GenericAggregateCreator) () ;
@@ -1468,25 +1441,7 @@ typedef  StringAggregate * (* StringAggregateCreator) () ;
 typedef  BinaryAggregate * (* BinaryAggregateCreator) () ;
 typedef  RealAggregate * (* RealAggregateCreator) () ;
 typedef  IntAggregate * (* IntAggregateCreator) () ;
-#endif
 
-#ifdef __OSTORE__
-EnumAggregate * create_EnumAggregate(os_database *db);
-
-GenericAggregate * create_GenericAggregate(os_database *db);
-
-EntityAggregate * create_EntityAggregate(os_database *db);
-
-SelectAggregate * create_SelectAggregate(os_database *db);
-
-StringAggregate * create_StringAggregate(os_database *db);
-
-BinaryAggregate * create_BinaryAggregate(os_database *db);
-
-RealAggregate * create_RealAggregate(os_database *db);
-
-IntAggregate * create_IntAggregate(os_database *db);
-#else
 EnumAggregate * create_EnumAggregate();
 
 GenericAggregate * create_GenericAggregate();
@@ -1502,7 +1457,7 @@ BinaryAggregate * create_BinaryAggregate();
 RealAggregate * create_RealAggregate();
 
 IntAggregate * create_IntAggregate();
-#endif
+
 ///////////////////////////////////////////////////////////////////////////////
 // AggrTypeDescriptor
 // I think we decided on a simplistic representation of aggr. types for now?
@@ -1532,11 +1487,7 @@ class AggrTypeDescriptor  :    public TypeDescriptor  {
 	CreateNewAggr = f;
     }
 
-#ifdef __OSTORE__
-    STEPaggregate *CreateAggregate(os_database *db);
-#else
     STEPaggregate *CreateAggregate();
-#endif
 
     AggrTypeDescriptor ( ); 
     AggrTypeDescriptor(SCLP23(Integer) b1, SCLP23(Integer) b2, 
@@ -1650,11 +1601,7 @@ class BagTypeDescriptor  :    public AggrTypeDescriptor  {
 
 };
 
-#ifdef __OSTORE__
-typedef  SCLP23(Select) * (* SelectCreator) (os_database *db) ;
-#else
 typedef  SCLP23(Select) * (* SelectCreator) () ;
-#endif
 
 class SelectTypeDescriptor  :    public TypeDescriptor  { 
 
@@ -1671,11 +1618,7 @@ class SelectTypeDescriptor  :    public TypeDescriptor  {
 	    CreateNewSelect = f;
 	}
 
-#ifdef __OSTORE__
-	SCLP23(Select) *CreateSelect(os_database *db);
-#else
 	SCLP23(Select) *CreateSelect();
-#endif
 
         SelectTypeDescriptor (int b, const char * nm, PrimitiveType ft, 
 			      Schema *origSchema, 

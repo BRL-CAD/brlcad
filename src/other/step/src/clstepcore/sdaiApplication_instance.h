@@ -19,13 +19,6 @@
 
 /* $Id: sdaiApplication_instance.h,v 1.5 1998/02/17 18:29:43 sauderd DP3.1 $ */
 
-//#ifdef __OSTORE__
-//#include <ostore/ostore.hh>    // Required to access ObjectStore Class Library
-//void Application_instance_access_hook_in(void *object, 
-//	enum os_access_reason reason, void *user_data, 
-//	void *start_range, void *end_range);
-//#endif
-
 //#ifdef __O3DB__
 //#include <OpenOODB.h>
 //#endif
@@ -177,13 +170,6 @@ class SCLP23_NAME(Application_instance) : public SCLP23_NAME(DAObject_SDAI)
     SCLP23_NAME(Application_instance) *GetNextMiEntity() { return nextMiEntity; }
     SCLP23_NAME(Application_instance) *GetMiEntity(char *EntityName);
     void AppendMultInstance(SCLP23_NAME(Application_instance) *se);
-
-#ifdef __OSTORE__
-    static os_typespec* get_os_typespec();
-    virtual void Access_hook_in(void *object, 
-	enum os_access_reason reason, void *user_data, 
-	void *start_range, void *end_range);
-#endif
 
  protected:
     STEPattribute * GetSTEPattribute (const char *);

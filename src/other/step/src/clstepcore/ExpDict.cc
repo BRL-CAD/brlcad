@@ -585,101 +585,45 @@ Schema::GenerateEntitiesExpress(ostream& out) const
 
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifdef __OSTORE__
-EnumAggregate * create_EnumAggregate(os_database *db)
-{
-    return new (db, EnumAggregate::get_os_typespec()) EnumAggregate; 
-}
-#else
 EnumAggregate * create_EnumAggregate()
 {
     return new EnumAggregate; 
 }
-#endif
 
-#ifdef __OSTORE__
-GenericAggregate * create_GenericAggregate(os_database *db)
-{ 
-    return new (db, GenericAggregate::get_os_typespec()) GenericAggregate; 
-}
-#else
 GenericAggregate * create_GenericAggregate()
 { 
     return new GenericAggregate; 
 }
-#endif
 
-#ifdef __OSTORE__
-EntityAggregate * create_EntityAggregate(os_database *db)
-{
-    return new (db, EntityAggregate::get_os_typespec()) EntityAggregate; 
-}
-#else
 EntityAggregate * create_EntityAggregate()
 {
     return new EntityAggregate; 
 }
-#endif
 
-#ifdef __OSTORE__
-SelectAggregate * create_SelectAggregate(os_database *db)
-{
-    return new (db, SelectAggregate::get_os_typespec()) SelectAggregate;
-}
-#else
 SelectAggregate * create_SelectAggregate()
 {
     return new SelectAggregate; 
 }
-#endif
 
-#ifdef __OSTORE__
-StringAggregate * create_StringAggregate(os_database *db)
-{
-    return new (db, StringAggregate::get_os_typespec()) StringAggregate;
-}
-#else
 StringAggregate * create_StringAggregate()
 {
     return new StringAggregate; 
 }
-#endif
 
-#ifdef __OSTORE__
-BinaryAggregate * create_BinaryAggregate(os_database *db)
-{
-    return new (db, BinaryAggregate::get_os_typespec()) BinaryAggregate;
-}
-#else
 BinaryAggregate * create_BinaryAggregate()
 {
     return new BinaryAggregate; 
 }
-#endif
 
-#ifdef __OSTORE__
-RealAggregate * create_RealAggregate(os_database *db)
-{
-    return new (db, RealAggregate::get_os_typespec()) RealAggregate;
-}
-#else
 RealAggregate * create_RealAggregate()
 {
     return new RealAggregate; 
 }
-#endif
 
-#ifdef __OSTORE__
-IntAggregate * create_IntAggregate(os_database *db)
-{
-    return new (db, IntAggregate::get_os_typespec()) IntAggregate;
-}
-#else
 IntAggregate * create_IntAggregate()
 {
     return new IntAggregate; 
 }
-#endif
 
 const EntityDescriptor * 
 EntityDescItr::NextEntityDesc()
@@ -915,16 +859,6 @@ EnumTypeDescriptor::EnumTypeDescriptor (const char * nm, PrimitiveType ft,
 {
 }
 
-#ifdef __OSTORE__
-SCLP23(Enum) *
-EnumTypeDescriptor::CreateEnum(os_database *db)
-{
-    if(CreateNewEnum)
-      return CreateNewEnum(db);
-    else
-      return 0;
-}
-#else
 SCLP23(Enum) *
 EnumTypeDescriptor::CreateEnum()
 {
@@ -933,7 +867,6 @@ EnumTypeDescriptor::CreateEnum()
     else
       return 0;
 }
-#endif
 
 const char * 
 EnumTypeDescriptor::GenerateExpress (std::string &buf) const
@@ -2006,16 +1939,6 @@ EnumerationTypeDescriptor::EnumerationTypeDescriptor( )
 // SelectTypeDescriptor functions
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifdef __OSTORE__
-SCLP23(Select) *
-SelectTypeDescriptor::CreateSelect(os_database *db)
-{
-    if(CreateNewSelect)
-      return CreateNewSelect(db);
-    else
-      return 0;
-}
-#else
 SCLP23(Select) *
 SelectTypeDescriptor::CreateSelect()
 {
@@ -2024,7 +1947,6 @@ SelectTypeDescriptor::CreateSelect()
     else
       return 0;
 }
-#endif
 
 const TypeDescriptor *
 SelectTypeDescriptor::IsA (const TypeDescriptor * other) const
@@ -2113,16 +2035,6 @@ SelectTypeDescriptor::CanBeSet (const char * other, const char *schNm) const
 // AggrTypeDescriptor functions
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifdef __OSTORE__
-STEPaggregate *
-AggrTypeDescriptor::CreateAggregate(os_database *db)
-{
-    if(CreateNewAggr)
-      return CreateNewAggr(db);
-    else
-      return 0;
-}
-#else
 STEPaggregate *
 AggrTypeDescriptor::CreateAggregate()
 {
@@ -2131,7 +2043,6 @@ AggrTypeDescriptor::CreateAggregate()
     else
       return 0;
 }
-#endif
 
 
 AggrTypeDescriptor::AggrTypeDescriptor( ) : 

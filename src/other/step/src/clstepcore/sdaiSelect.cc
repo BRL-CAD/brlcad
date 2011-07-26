@@ -32,12 +32,6 @@ SCLP23(Select)::SCLP23_NAME(Select) (const SelectTypeDescriptor *s,
 			const TypeDescriptor *td) 
 	: _type (s), underlying_type (td)
 {
-#ifdef __OSTORE__
-    if(td)
-      underlying_type_name = td->Name();
-    else
-      underlying_type_name.set_null();
-#endif
 #ifdef SCL_LOGGING
     *logStream << "Exiting SCLP23(Select) constructor." << endl;
 #endif
@@ -127,11 +121,7 @@ SCLP23(Select)::IsUnique (const BASE_TYPE bt) const
 
 SCLP23(String) SCLP23(Select)::UnderlyingTypeName () const  
 {
-#ifdef __OSTORE__
-  return underlying_type_name.chars();
-#else
   return underlying_type -> Name ();
-#endif
 }
 
 const TypeDescriptor *  SCLP23(Select)::CurrentUnderlyingType() const 
@@ -146,9 +136,6 @@ SCLP23(Select)::SetUnderlyingType (const TypeDescriptor * td)
   if (!td || !(_type -> CanBe (td))) return 0;
 
   base_type = td -> NonRefType ();
-#ifdef __OSTORE__
-  underlying_type_name = td->Name();
-#endif
 
   return underlying_type = td;
 }
@@ -163,9 +150,6 @@ bool SCLP23(Select)::exists() const
 void SCLP23(Select)::nullify() 
 {
   underlying_type = 0;
-#ifdef __OSTORE__
-  underlying_type_name.set_null();
-#endif
 }
 
 Severity 

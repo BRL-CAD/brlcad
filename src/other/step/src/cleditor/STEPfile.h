@@ -15,10 +15,6 @@
 
 /* $Id: STEPfile.h,v 3.0.1.6 1998/02/17 18:04:30 sauderd Exp $ */ 
 
-#ifdef __OSTORE__
-#include <ostore/ostore.hh>    // Required to access ObjectStore Class Library
-#endif
-
 #ifdef __O3DB__
 #include <OpenOODB.h>
 #endif
@@ -50,14 +46,6 @@ class STEPfile
 {
   protected:
     //data members
-
-#ifdef __OSTORE__
-  public:
-    os_database *db;
-    void set_database(os_database *db_ptr) { db = db_ptr; }
-    os_database *get_database() { return db; }
-  protected:
-#endif
 
 #ifdef __O3DB__
     InstMgr *  _instances;

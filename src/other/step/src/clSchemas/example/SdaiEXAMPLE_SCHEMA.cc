@@ -48,29 +48,6 @@ SdaiColor_var::SdaiColor_var (const char * n, EnumTypeDescriptor *et)
   set_value (n);
 }
 
-#ifdef __OSTORE__
-void 
-SdaiColor_var::Access_hook_in(void *object, 
-				enum os_access_reason reason, void *user_data, 
-				void *start_range, void *end_range)
-{
-    if(debug_access_hooks)
-        cout << "SdaiColor_var: virtual access function." << endl;
-    SdaiColor_var_access_hook_in(object, reason, user_data, start_range, end_range);
-}
-
-void 
-SdaiColor_var_access_hook_in(void *object, 
-	enum os_access_reason reason, void *user_data, 
-	void *start_range, void *end_range)
-{
-    SdaiColor_var *e = (SdaiColor_var *)object;
-    if(e->type == 0)
-        e->type = example_schemat_color;
-}
-
-#endif
-
 SdaiColor_var::operator Color () const {
   switch (v) {
 	case Color__green	:  return Color__green;
@@ -85,26 +62,12 @@ SdaiColor_var::operator Color () const {
   }
 }
 
-#ifdef __OSTORE__
-
-SCLP23(Enum) * 
-create_SdaiColor_var (os_database *db)
-{
-    if(db)
-        return new (db, 
-                    SdaiColor_var::get_os_typespec()) SdaiColor_var;
-    else
-        return new SdaiColor_var( "", example_schemat_color );
-}
-
-#else
 
 SCLP23(Enum) * 
 create_SdaiColor_var () 
 {
     return new SdaiColor_var( "", example_schemat_color );
 }
-#endif
 
 
 SdaiColor_vars::SdaiColor_vars( EnumTypeDescriptor *et )
@@ -116,39 +79,12 @@ SdaiColor_vars::~SdaiColor_vars()
 {
 }
 
-#ifdef __OSTORE__
-void 
-SdaiColor_vars_access_hook_in(void *object, 
-	enum os_access_reason reason, void *user_data, 
-	void *start_range, void *end_range)
-{
-    SdaiColor_vars *e = (SdaiColor_vars *)object;
-    if(e->enum_type == 0)
-        e->enum_type = example_schemat_color;
-}
-
-#endif
-
-#ifdef __OSTORE__
-
-STEPaggregate * 
-create_SdaiColor_vars (os_database *db) 
-{
-    if(db)
-        return new (db, 
-                    SdaiColor_vars::get_os_typespec()) SdaiColor_vars;
-    else
-        return new SdaiColor_vars( example_schemat_color );
-}
-
-#else
 
 STEPaggregate * 
 create_SdaiColor_vars ()
 {
     return new SdaiColor_vars( example_schemat_color );
 }
-#endif
 
 //////////  END ENUMERATION color
 
@@ -169,13 +105,8 @@ SdaiPoly_line::SdaiPoly_line( )
 
     eDesc = example_schemae_poly_line;
 
-#ifdef __OSTORE__
-    STEPattribute *a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_0points,  &_points);
-#else
     STEPattribute *a = new STEPattribute(*a_0points,  &_points);
-#endif
+
     a -> set_null ();
     attributes.push (a);
 }
@@ -183,50 +114,6 @@ SdaiPoly_line::SdaiPoly_line (SdaiPoly_line& e )
 	{  CopyAs((SCLP23(Application_instance_ptr)) &e);	}
 SdaiPoly_line::~SdaiPoly_line () {  }
 
-#ifdef __OSTORE__
-
-void 
-SdaiPoly_line::Access_hook_in(void *object, 
-				enum os_access_reason reason, void *user_data, 
-				void *start_range, void *end_range)
-{
-    if(debug_access_hooks)
-        cout << "SdaiPoly_line: virtual access function." << endl;
-    SdaiPoly_line_access_hook_in(object, reason, user_data, start_range, end_range);
-}
-
-void 
-SdaiPoly_line_access_hook_in(void *object, 
-	enum os_access_reason reason, void *user_data, 
-	void *start_range, void *end_range)
-{
-    if(debug_access_hooks)
-        cout << "SdaiPoly_line: non-virtual access function." << endl;
-    SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
-    if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
-    SdaiPoly_line *ent = (SdaiPoly_line *)sent;
-//    SdaiPoly_line *ent = (SdaiPoly_line *)object;
-    if(ent->eDesc == 0)
-        ent->eDesc = example_schemae_poly_line;
-    ent->attributes[0].aDesc = a_0points;
-}
-
-SCLP23(Application_instance_ptr) 
-create_SdaiPoly_line(os_database *db) 
-{
-    if(db)
-    {
-        SCLP23(DAObject_ptr) ap = new (db, SdaiPoly_line::get_os_typespec()) 
-                                   SdaiPoly_line;
-        return (SCLP23(Application_instance_ptr)) ap;
-//        return (SCLP23(Application_instance_ptr)) new (db, SdaiPoly_line::get_os_typespec()) 
-//                                   SdaiPoly_line;
-    }
-    else
-        return (SCLP23(Application_instance_ptr)) new SdaiPoly_line; 
-}
-#endif
 
 #ifdef __O3DB__
 void 
@@ -245,13 +132,7 @@ SdaiPoly_line::SdaiPoly_line( SCLP23(Application_instance) *se, int *addAttrs)
 
     eDesc = example_schemae_poly_line;
 
-#ifdef __OSTORE__
-    STEPattribute *a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_0points,  &_points);
-#else
     STEPattribute *a = new STEPattribute(*a_0points,  &_points);
-#endif
     a -> set_null ();
 	/* Put attribute on this class' attributes list so the */
 	/*access functions still work. */
@@ -289,33 +170,15 @@ SdaiShape::SdaiShape( )
 
     eDesc = example_schemae_shape;
 
-#ifdef __OSTORE__
-    STEPattribute *a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_1item_name,  &_item_name);
-#else
     STEPattribute *a = new STEPattribute(*a_1item_name,  &_item_name);
-#endif
     a -> set_null ();
     attributes.push (a);
 
-#ifdef __OSTORE__
-    a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_2item_color,  &_item_color);
-#else
     a = new STEPattribute(*a_2item_color,  &_item_color);
-#endif
     a -> set_null ();
     attributes.push (a);
 
-#ifdef __OSTORE__
-    a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_3number_of_sides,  &_number_of_sides);
-#else
     a = new STEPattribute(*a_3number_of_sides,  &_number_of_sides);
-#endif
     a -> set_null ();
     attributes.push (a);
 }
@@ -323,52 +186,6 @@ SdaiShape::SdaiShape (SdaiShape& e )
 	{  CopyAs((SCLP23(Application_instance_ptr)) &e);	}
 SdaiShape::~SdaiShape () {  }
 
-#ifdef __OSTORE__
-
-void 
-SdaiShape::Access_hook_in(void *object, 
-				enum os_access_reason reason, void *user_data, 
-				void *start_range, void *end_range)
-{
-    if(debug_access_hooks)
-        cout << "SdaiShape: virtual access function." << endl;
-    SdaiShape_access_hook_in(object, reason, user_data, start_range, end_range);
-}
-
-void 
-SdaiShape_access_hook_in(void *object, 
-	enum os_access_reason reason, void *user_data, 
-	void *start_range, void *end_range)
-{
-    if(debug_access_hooks)
-        cout << "SdaiShape: non-virtual access function." << endl;
-    SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
-    if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
-    SdaiShape *ent = (SdaiShape *)sent;
-//    SdaiShape *ent = (SdaiShape *)object;
-    if(ent->eDesc == 0)
-        ent->eDesc = example_schemae_shape;
-    ent->attributes[0].aDesc = a_1item_name;
-    ent->attributes[1].aDesc = a_2item_color;
-    ent->attributes[2].aDesc = a_3number_of_sides;
-}
-
-SCLP23(Application_instance_ptr) 
-create_SdaiShape(os_database *db) 
-{
-    if(db)
-    {
-        SCLP23(DAObject_ptr) ap = new (db, SdaiShape::get_os_typespec()) 
-                                   SdaiShape;
-        return (SCLP23(Application_instance_ptr)) ap;
-//        return (SCLP23(Application_instance_ptr)) new (db, SdaiShape::get_os_typespec()) 
-//                                   SdaiShape;
-    }
-    else
-        return (SCLP23(Application_instance_ptr)) new SdaiShape; 
-}
-#endif
 
 #ifdef __O3DB__
 void 
@@ -389,13 +206,7 @@ SdaiShape::SdaiShape( SCLP23(Application_instance) *se, int *addAttrs)
 
     eDesc = example_schemae_shape;
 
-#ifdef __OSTORE__
-    STEPattribute *a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_1item_name,  &_item_name);
-#else
     STEPattribute *a = new STEPattribute(*a_1item_name,  &_item_name);
-#endif
     a -> set_null ();
 	/* Put attribute on this class' attributes list so the */
 	/*access functions still work. */
@@ -405,13 +216,7 @@ SdaiShape::SdaiShape( SCLP23(Application_instance) *se, int *addAttrs)
     if(!addAttrs || addAttrs[0])
         se->attributes.push (a);
 
-#ifdef __OSTORE__
-    a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_2item_color,  &_item_color);
-#else
     a = new STEPattribute(*a_2item_color,  &_item_color);
-#endif
     a -> set_null ();
 	/* Put attribute on this class' attributes list so the */
 	/*access functions still work. */
@@ -421,13 +226,7 @@ SdaiShape::SdaiShape( SCLP23(Application_instance) *se, int *addAttrs)
     if(!addAttrs || addAttrs[0])
         se->attributes.push (a);
 
-#ifdef __OSTORE__
-    a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_3number_of_sides,  &_number_of_sides);
-#else
     a = new STEPattribute(*a_3number_of_sides,  &_number_of_sides);
-#endif
     a -> set_null ();
 	/* Put attribute on this class' attributes list so the */
 	/*access functions still work. */
@@ -494,23 +293,11 @@ SdaiRectangle::SdaiRectangle( )
 
     eDesc = example_schemae_rectangle;
 
-#ifdef __OSTORE__
-    STEPattribute *a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_4height,  &_height);
-#else
     STEPattribute *a = new STEPattribute(*a_4height,  &_height);
-#endif
     a -> set_null ();
     attributes.push (a);
 
-#ifdef __OSTORE__
-    a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_5width,  &_width);
-#else
     a = new STEPattribute(*a_5width,  &_width);
-#endif
     a -> set_null ();
     attributes.push (a);
 }
@@ -584,13 +371,7 @@ SdaiRectangle::SdaiRectangle (SCLP23(Application_instance) *se, int *addAttrs) :
 
     eDesc = example_schemae_rectangle;
 
-#ifdef __OSTORE__
-    STEPattribute *a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_4height,  &_height);
-#else
     STEPattribute *a = new STEPattribute(*a_4height,  &_height);
-#endif
     a -> set_null ();
 	/* Put attribute on this class' attributes list so the */
 	/*access functions still work. */
@@ -600,13 +381,7 @@ SdaiRectangle::SdaiRectangle (SCLP23(Application_instance) *se, int *addAttrs) :
     if(!addAttrs || addAttrs[0])
         se->attributes.push (a);
 
-#ifdef __OSTORE__
-    a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_5width,  &_width);
-#else
     a = new STEPattribute(*a_5width,  &_width);
-#endif
     a -> set_null ();
 	/* Put attribute on this class' attributes list so the */
 	/*access functions still work. */
@@ -664,50 +439,6 @@ SdaiSquare::SdaiSquare (SdaiSquare& e )
 	{  CopyAs((SCLP23(Application_instance_ptr)) &e);	}
 SdaiSquare::~SdaiSquare () {  }
 
-#ifdef __OSTORE__
-
-void 
-SdaiSquare::Access_hook_in(void *object, 
-				enum os_access_reason reason, void *user_data, 
-				void *start_range, void *end_range)
-{
-    if(debug_access_hooks)
-        cout << "SdaiSquare: virtual access function." << endl;
-    SdaiSquare_access_hook_in(object, reason, user_data, start_range, end_range);
-}
-
-void 
-SdaiSquare_access_hook_in(void *object, 
-	enum os_access_reason reason, void *user_data, 
-	void *start_range, void *end_range)
-{
-    if(debug_access_hooks)
-        cout << "SdaiSquare: non-virtual access function." << endl;
-    SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
-    if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
-    SdaiSquare *ent = (SdaiSquare *)sent;
-//    SdaiSquare *ent = (SdaiSquare *)object;
-    if(ent->eDesc == 0)
-        ent->eDesc = example_schemae_square;
-}
-
-SCLP23(Application_instance_ptr) 
-create_SdaiSquare(os_database *db) 
-{
-    if(db)
-    {
-        SCLP23(DAObject_ptr) ap = new (db, SdaiSquare::get_os_typespec()) 
-                                   SdaiSquare;
-        return (SCLP23(Application_instance_ptr)) ap;
-//        return (SCLP23(Application_instance_ptr)) new (db, SdaiSquare::get_os_typespec()) 
-//                                   SdaiSquare;
-    }
-    else
-        return (SCLP23(Application_instance_ptr)) new SdaiSquare; 
-}
-#endif
-
 #ifdef __O3DB__
 void 
 SdaiSquare::oodb_reInit ()
@@ -747,86 +478,21 @@ SdaiTriangle::SdaiTriangle( )
 
     eDesc = example_schemae_triangle;
 
-#ifdef __OSTORE__
-    STEPattribute *a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_6side1_length,  &_side1_length);
-#else
     STEPattribute *a = new STEPattribute(*a_6side1_length,  &_side1_length);
-#endif
     a -> set_null ();
     attributes.push (a);
 
-#ifdef __OSTORE__
-    a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_7side2_length,  &_side2_length);
-#else
     a = new STEPattribute(*a_7side2_length,  &_side2_length);
-#endif
     a -> set_null ();
     attributes.push (a);
 
-#ifdef __OSTORE__
-    a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_8side3_length,  &_side3_length);
-#else
     a = new STEPattribute(*a_8side3_length,  &_side3_length);
-#endif
     a -> set_null ();
     attributes.push (a);
 }
 SdaiTriangle::SdaiTriangle (SdaiTriangle& e ) 
 	{  CopyAs((SCLP23(Application_instance_ptr)) &e);	}
 SdaiTriangle::~SdaiTriangle () {  }
-
-#ifdef __OSTORE__
-
-void 
-SdaiTriangle::Access_hook_in(void *object, 
-				enum os_access_reason reason, void *user_data, 
-				void *start_range, void *end_range)
-{
-    if(debug_access_hooks)
-        cout << "SdaiTriangle: virtual access function." << endl;
-    SdaiTriangle_access_hook_in(object, reason, user_data, start_range, end_range);
-}
-
-void 
-SdaiTriangle_access_hook_in(void *object, 
-	enum os_access_reason reason, void *user_data, 
-	void *start_range, void *end_range)
-{
-    if(debug_access_hooks)
-        cout << "SdaiTriangle: non-virtual access function." << endl;
-    SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
-    if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
-    SdaiTriangle *ent = (SdaiTriangle *)sent;
-//    SdaiTriangle *ent = (SdaiTriangle *)object;
-    if(ent->eDesc == 0)
-        ent->eDesc = example_schemae_triangle;
-    ent->attributes[3].aDesc = a_6side1_length;
-    ent->attributes[4].aDesc = a_7side2_length;
-    ent->attributes[5].aDesc = a_8side3_length;
-}
-
-SCLP23(Application_instance_ptr) 
-create_SdaiTriangle(os_database *db) 
-{
-    if(db)
-    {
-        SCLP23(DAObject_ptr) ap = new (db, SdaiTriangle::get_os_typespec()) 
-                                   SdaiTriangle;
-        return (SCLP23(Application_instance_ptr)) ap;
-//        return (SCLP23(Application_instance_ptr)) new (db, SdaiTriangle::get_os_typespec()) 
-//                                   SdaiTriangle;
-    }
-    else
-        return (SCLP23(Application_instance_ptr)) new SdaiTriangle; 
-}
-#endif
 
 #ifdef __O3DB__
 void 
@@ -849,13 +515,7 @@ SdaiTriangle::SdaiTriangle (SCLP23(Application_instance) *se, int *addAttrs) : S
 
     eDesc = example_schemae_triangle;
 
-#ifdef __OSTORE__
-    STEPattribute *a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_6side1_length,  &_side1_length);
-#else
     STEPattribute *a = new STEPattribute(*a_6side1_length,  &_side1_length);
-#endif
     a -> set_null ();
 	/* Put attribute on this class' attributes list so the */
 	/*access functions still work. */
@@ -865,13 +525,7 @@ SdaiTriangle::SdaiTriangle (SCLP23(Application_instance) *se, int *addAttrs) : S
     if(!addAttrs || addAttrs[0])
         se->attributes.push (a);
 
-#ifdef __OSTORE__
-    a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_7side2_length,  &_side2_length);
-#else
     a = new STEPattribute(*a_7side2_length,  &_side2_length);
-#endif
     a -> set_null ();
 	/* Put attribute on this class' attributes list so the */
 	/*access functions still work. */
@@ -881,13 +535,7 @@ SdaiTriangle::SdaiTriangle (SCLP23(Application_instance) *se, int *addAttrs) : S
     if(!addAttrs || addAttrs[0])
         se->attributes.push (a);
 
-#ifdef __OSTORE__
-    a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_8side3_length,  &_side3_length);
-#else
     a = new STEPattribute(*a_8side3_length,  &_side3_length);
-#endif
     a -> set_null ();
 	/* Put attribute on this class' attributes list so the */
 	/*access functions still work. */
@@ -955,64 +603,13 @@ SdaiCircle::SdaiCircle( )
 
     eDesc = example_schemae_circle;
 
-#ifdef __OSTORE__
-    STEPattribute *a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_9radius,  &_radius);
-#else
     STEPattribute *a = new STEPattribute(*a_9radius,  &_radius);
-#endif
     a -> set_null ();
     attributes.push (a);
 }
 SdaiCircle::SdaiCircle (SdaiCircle& e ) 
 	{  CopyAs((SCLP23(Application_instance_ptr)) &e);	}
 SdaiCircle::~SdaiCircle () {  }
-
-#ifdef __OSTORE__
-
-void 
-SdaiCircle::Access_hook_in(void *object, 
-				enum os_access_reason reason, void *user_data, 
-				void *start_range, void *end_range)
-{
-    if(debug_access_hooks)
-        cout << "SdaiCircle: virtual access function." << endl;
-    SdaiCircle_access_hook_in(object, reason, user_data, start_range, end_range);
-}
-
-void 
-SdaiCircle_access_hook_in(void *object, 
-	enum os_access_reason reason, void *user_data, 
-	void *start_range, void *end_range)
-{
-    if(debug_access_hooks)
-        cout << "SdaiCircle: non-virtual access function." << endl;
-    SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
-    if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
-    SdaiCircle *ent = (SdaiCircle *)sent;
-//    SdaiCircle *ent = (SdaiCircle *)object;
-    if(ent->eDesc == 0)
-        ent->eDesc = example_schemae_circle;
-    ent->attributes[3].aDesc = a_9radius;
-}
-
-SCLP23(Application_instance_ptr) 
-create_SdaiCircle(os_database *db) 
-{
-    if(db)
-    {
-        SCLP23(DAObject_ptr) ap = new (db, SdaiCircle::get_os_typespec()) 
-                                   SdaiCircle;
-        return (SCLP23(Application_instance_ptr)) ap;
-//        return (SCLP23(Application_instance_ptr)) new (db, SdaiCircle::get_os_typespec()) 
-//                                   SdaiCircle;
-    }
-    else
-        return (SCLP23(Application_instance_ptr)) new SdaiCircle; 
-}
-#endif
 
 #ifdef __O3DB__
 void 
@@ -1033,13 +630,7 @@ SdaiCircle::SdaiCircle (SCLP23(Application_instance) *se, int *addAttrs) : SdaiS
 
     eDesc = example_schemae_circle;
 
-#ifdef __OSTORE__
-    STEPattribute *a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_9radius,  &_radius);
-#else
     STEPattribute *a = new STEPattribute(*a_9radius,  &_radius);
-#endif
     a -> set_null ();
 	/* Put attribute on this class' attributes list so the */
 	/*access functions still work. */
@@ -1080,23 +671,11 @@ SdaiLine::SdaiLine( )
 
     eDesc = example_schemae_line;
 
-#ifdef __OSTORE__
-    STEPattribute *a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_10end_point_one, (SCLP23(Application_instance_ptr) *) &_end_point_one);
-#else
     STEPattribute *a = new STEPattribute(*a_10end_point_one, (SCLP23(Application_instance_ptr) *) &_end_point_one);
-#endif
     a -> set_null ();
     attributes.push (a);
 
-#ifdef __OSTORE__
-    a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_11end_point_two, (SCLP23(Application_instance_ptr) *) &_end_point_two);
-#else
     a = new STEPattribute(*a_11end_point_two, (SCLP23(Application_instance_ptr) *) &_end_point_two);
-#endif
     a -> set_null ();
     attributes.push (a);
 }
@@ -1104,55 +683,6 @@ SdaiLine::SdaiLine (SdaiLine& e )
 	{  CopyAs((SCLP23(Application_instance_ptr)) &e);	}
 SdaiLine::~SdaiLine () {  }
 
-#ifdef __OSTORE__
-
-void 
-SdaiLine::Access_hook_in(void *object, 
-				enum os_access_reason reason, void *user_data, 
-				void *start_range, void *end_range)
-{
-    if(debug_access_hooks)
-        cout << "SdaiLine: virtual access function." << endl;
-    SdaiLine_access_hook_in(object, reason, user_data, start_range, end_range);
-}
-
-void 
-SdaiLine_access_hook_in(void *object, 
-	enum os_access_reason reason, void *user_data, 
-	void *start_range, void *end_range)
-{
-    if(debug_access_hooks)
-        cout << "SdaiLine: non-virtual access function." << endl;
-    SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
-    if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
-    SdaiLine *ent = (SdaiLine *)sent;
-//    SdaiLine *ent = (SdaiLine *)object;
-    if(ent->eDesc == 0)
-        ent->eDesc = example_schemae_line;
-    ent->attributes[0].aDesc = a_10end_point_one;
-    if(ent->_end_point_one == 0) 
-        ent->_end_point_one = S_ENTITY_NULL;
-    ent->attributes[1].aDesc = a_11end_point_two;
-    if(ent->_end_point_two == 0) 
-        ent->_end_point_two = S_ENTITY_NULL;
-}
-
-SCLP23(Application_instance_ptr) 
-create_SdaiLine(os_database *db) 
-{
-    if(db)
-    {
-        SCLP23(DAObject_ptr) ap = new (db, SdaiLine::get_os_typespec()) 
-                                   SdaiLine;
-        return (SCLP23(Application_instance_ptr)) ap;
-//        return (SCLP23(Application_instance_ptr)) new (db, SdaiLine::get_os_typespec()) 
-//                                   SdaiLine;
-    }
-    else
-        return (SCLP23(Application_instance_ptr)) new SdaiLine; 
-}
-#endif
 
 #ifdef __O3DB__
 void 
@@ -1172,13 +702,7 @@ SdaiLine::SdaiLine( SCLP23(Application_instance) *se, int *addAttrs)
 
     eDesc = example_schemae_line;
 
-#ifdef __OSTORE__
-    STEPattribute *a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_10end_point_one, (SCLP23(Application_instance_ptr) *) &_end_point_one);
-#else
     STEPattribute *a = new STEPattribute(*a_10end_point_one, (SCLP23(Application_instance_ptr) *) &_end_point_one);
-#endif
     a -> set_null ();
 	/* Put attribute on this class' attributes list so the */
 	/*access functions still work. */
@@ -1188,13 +712,7 @@ SdaiLine::SdaiLine( SCLP23(Application_instance) *se, int *addAttrs)
     if(!addAttrs || addAttrs[0])
         se->attributes.push (a);
 
-#ifdef __OSTORE__
-    a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_11end_point_two, (SCLP23(Application_instance_ptr) *) &_end_point_two);
-#else
     a = new STEPattribute(*a_11end_point_two, (SCLP23(Application_instance_ptr) *) &_end_point_two);
-#endif
     a -> set_null ();
 	/* Put attribute on this class' attributes list so the */
 	/*access functions still work. */
@@ -1247,86 +765,21 @@ SdaiCartesian_point::SdaiCartesian_point( )
 
     eDesc = example_schemae_cartesian_point;
 
-#ifdef __OSTORE__
-    STEPattribute *a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_12x,  &_x);
-#else
     STEPattribute *a = new STEPattribute(*a_12x,  &_x);
-#endif
     a -> set_null ();
     attributes.push (a);
 
-#ifdef __OSTORE__
-    a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_13y,  &_y);
-#else
     a = new STEPattribute(*a_13y,  &_y);
-#endif
     a -> set_null ();
     attributes.push (a);
 
-#ifdef __OSTORE__
-    a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_14z,  &_z);
-#else
     a = new STEPattribute(*a_14z,  &_z);
-#endif
     a -> set_null ();
     attributes.push (a);
 }
 SdaiCartesian_point::SdaiCartesian_point (SdaiCartesian_point& e ) 
 	{  CopyAs((SCLP23(Application_instance_ptr)) &e);	}
 SdaiCartesian_point::~SdaiCartesian_point () {  }
-
-#ifdef __OSTORE__
-
-void 
-SdaiCartesian_point::Access_hook_in(void *object, 
-				enum os_access_reason reason, void *user_data, 
-				void *start_range, void *end_range)
-{
-    if(debug_access_hooks)
-        cout << "SdaiCartesian_point: virtual access function." << endl;
-    SdaiCartesian_point_access_hook_in(object, reason, user_data, start_range, end_range);
-}
-
-void 
-SdaiCartesian_point_access_hook_in(void *object, 
-	enum os_access_reason reason, void *user_data, 
-	void *start_range, void *end_range)
-{
-    if(debug_access_hooks)
-        cout << "SdaiCartesian_point: non-virtual access function." << endl;
-    SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
-    if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
-    SdaiCartesian_point *ent = (SdaiCartesian_point *)sent;
-//    SdaiCartesian_point *ent = (SdaiCartesian_point *)object;
-    if(ent->eDesc == 0)
-        ent->eDesc = example_schemae_cartesian_point;
-    ent->attributes[0].aDesc = a_12x;
-    ent->attributes[1].aDesc = a_13y;
-    ent->attributes[2].aDesc = a_14z;
-}
-
-SCLP23(Application_instance_ptr) 
-create_SdaiCartesian_point(os_database *db) 
-{
-    if(db)
-    {
-        SCLP23(DAObject_ptr) ap = new (db, SdaiCartesian_point::get_os_typespec()) 
-                                   SdaiCartesian_point;
-        return (SCLP23(Application_instance_ptr)) ap;
-//        return (SCLP23(Application_instance_ptr)) new (db, SdaiCartesian_point::get_os_typespec()) 
-//                                   SdaiCartesian_point;
-    }
-    else
-        return (SCLP23(Application_instance_ptr)) new SdaiCartesian_point; 
-}
-#endif
 
 #ifdef __O3DB__
 void 
@@ -1347,13 +800,7 @@ SdaiCartesian_point::SdaiCartesian_point( SCLP23(Application_instance) *se, int 
 
     eDesc = example_schemae_cartesian_point;
 
-#ifdef __OSTORE__
-    STEPattribute *a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_12x,  &_x);
-#else
     STEPattribute *a = new STEPattribute(*a_12x,  &_x);
-#endif
     a -> set_null ();
 	/* Put attribute on this class' attributes list so the */
 	/*access functions still work. */
@@ -1363,13 +810,7 @@ SdaiCartesian_point::SdaiCartesian_point( SCLP23(Application_instance) *se, int 
     if(!addAttrs || addAttrs[0])
         se->attributes.push (a);
 
-#ifdef __OSTORE__
-    a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_13y,  &_y);
-#else
     a = new STEPattribute(*a_13y,  &_y);
-#endif
     a -> set_null ();
 	/* Put attribute on this class' attributes list so the */
 	/*access functions still work. */
@@ -1379,13 +820,7 @@ SdaiCartesian_point::SdaiCartesian_point( SCLP23(Application_instance) *se, int 
     if(!addAttrs || addAttrs[0])
         se->attributes.push (a);
 
-#ifdef __OSTORE__
-    a = new (os_segment::of(this), 
-			    STEPattribute::get_os_typespec()) 
-				STEPattribute(*a_14z,  &_z);
-#else
     a = new STEPattribute(*a_14z,  &_z);
-#endif
     a -> set_null ();
 	/* Put attribute on this class' attributes list so the */
 	/*access functions still work. */
@@ -1438,124 +873,42 @@ SdaiCartesian_point::z_ (const SdaiPoint x)
 /////////	 END_ENTITY cartesian_point
 
 
-#ifdef __OSTORE__
-SCLP23(Model_contents_ptr) create_SdaiModel_contents_example_schema(os_database *db)
-{
-    if(db)
-	return (SCLP23(Model_contents_ptr)) new (db, SdaiModel_contents_example_schema::get_os_typespec()) 
-			SdaiModel_contents_example_schema(db);
-    else{
-	return (SCLP23(Model_contents_ptr)) new SdaiModel_contents_example_schema(0);
-    }
-}
-#else
-
 SCLP23(Model_contents_ptr) create_SdaiModel_contents_example_schema()
 { return new SdaiModel_contents_example_schema ; }
-#endif
 
-
-#ifdef __OSTORE__
-SdaiModel_contents_example_schema::SdaiModel_contents_example_schema(os_database *db)
-#else
 SdaiModel_contents_example_schema::SdaiModel_contents_example_schema()
-#endif
 {
     SCLP23(Entity_extent_ptr) eep = (SCLP23(Entity_extent_ptr))0;
 
-#ifdef __OSTORE__
-    if(db)
-        eep = new (db, 
-              SCLP23(Entity_extent)::get_os_typespec()) SCLP23(Entity_extent);
-    else
-        eep = new SCLP23(Entity_extent);
-#else
-        eep = new SCLP23(Entity_extent);
-#endif
+    eep = new SCLP23(Entity_extent);
     eep->definition_(example_schemae_poly_line);
     _folders.Append(eep);
 
-#ifdef __OSTORE__
-    if(db)
-        eep = new (db, 
-              SCLP23(Entity_extent)::get_os_typespec()) SCLP23(Entity_extent);
-    else
         eep = new SCLP23(Entity_extent);
-#else
-        eep = new SCLP23(Entity_extent);
-#endif
     eep->definition_(example_schemae_shape);
     _folders.Append(eep);
 
-#ifdef __OSTORE__
-    if(db)
-        eep = new (db, 
-              SCLP23(Entity_extent)::get_os_typespec()) SCLP23(Entity_extent);
-    else
         eep = new SCLP23(Entity_extent);
-#else
-        eep = new SCLP23(Entity_extent);
-#endif
     eep->definition_(example_schemae_rectangle);
     _folders.Append(eep);
 
-#ifdef __OSTORE__
-    if(db)
-        eep = new (db, 
-              SCLP23(Entity_extent)::get_os_typespec()) SCLP23(Entity_extent);
-    else
         eep = new SCLP23(Entity_extent);
-#else
-        eep = new SCLP23(Entity_extent);
-#endif
     eep->definition_(example_schemae_square);
     _folders.Append(eep);
 
-#ifdef __OSTORE__
-    if(db)
-        eep = new (db, 
-              SCLP23(Entity_extent)::get_os_typespec()) SCLP23(Entity_extent);
-    else
         eep = new SCLP23(Entity_extent);
-#else
-        eep = new SCLP23(Entity_extent);
-#endif
     eep->definition_(example_schemae_triangle);
     _folders.Append(eep);
 
-#ifdef __OSTORE__
-    if(db)
-        eep = new (db, 
-              SCLP23(Entity_extent)::get_os_typespec()) SCLP23(Entity_extent);
-    else
         eep = new SCLP23(Entity_extent);
-#else
-        eep = new SCLP23(Entity_extent);
-#endif
     eep->definition_(example_schemae_circle);
     _folders.Append(eep);
 
-#ifdef __OSTORE__
-    if(db)
-        eep = new (db, 
-              SCLP23(Entity_extent)::get_os_typespec()) SCLP23(Entity_extent);
-    else
         eep = new SCLP23(Entity_extent);
-#else
-        eep = new SCLP23(Entity_extent);
-#endif
     eep->definition_(example_schemae_line);
     _folders.Append(eep);
 
-#ifdef __OSTORE__
-    if(db)
-        eep = new (db, 
-              SCLP23(Entity_extent)::get_os_typespec()) SCLP23(Entity_extent);
-    else
         eep = new SCLP23(Entity_extent);
-#else
-        eep = new SCLP23(Entity_extent);
-#endif
     eep->definition_(example_schemae_cartesian_point);
     _folders.Append(eep);
 

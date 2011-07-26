@@ -23,15 +23,6 @@ class SCLP23_NAME(Select) {
         const TypeDescriptor *      underlying_type;
 	BASE_TYPE 		    base_type; // used by the subtypes
 
-#ifdef __OSTORE__
-	// This member is used in the access_hook function generated for 
-	// SCLP23_NAME(Select) subtypes. It can be saved by ObjectStore where 
-	// underlying_type cannot be since it is pointing to a transient 
-	// TypeDescriptor. This is used to reinitialize underlying_type 
-	// in the access hook function.
-	SCLP23_NAME(String) underlying_type_name;
-#endif
-
 	// it looks like this member, val, is not used anywhere 9/27/96 - DAS
 	SCLP23_NAME(String) val;
 	ErrorDescriptor _error;
@@ -105,9 +96,6 @@ class SCLP23_NAME(Select) {
 	int set_null();
 	int is_null();
 
-#ifdef __OSTORE__
-	static os_typespec* get_os_typespec();
-#endif
 };	/** end class  **/
 
 typedef SCLP23_NAME(Select) * SCLP23_NAME(Select_ptr) ;

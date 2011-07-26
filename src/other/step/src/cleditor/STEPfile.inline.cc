@@ -42,9 +42,6 @@ STEPfile::STEPfile(Registry& r, InstMgr& i, const char *filename)
 #else
 : _reg(r), _instances(i), 
 #endif
-#ifdef __OSTORE__
-  db (0),
-#endif
   _headerId(0), _maxErrorCount(5000), 
   _fileName (0), _entsNotCreated(0), _entsInvalid(0), 
   _entsIncomplete(0), _entsWarning(0), 
