@@ -20,6 +20,7 @@ IF(MSVC)
    # FIXME: these should be proper library checks, not based on MSVC "platform"
    SET(WINSOCK_LIB ws2_32.lib)
    SET(PSAPI_LIB psapi.lib)
+   SET(RPCRT_LIB rpcrt4.lib)
 ENDIF(MSVC)
 
 # We will always need the required directories,
