@@ -87,6 +87,19 @@ ENDIF(COMMAND CMAKE_POLICY)
 # set CMake project name
 PROJECT(BRLCAD)
 
+# If it exists, load a BRL-CAD_CONFIG.GLOBAL file.  This allows advanced
+# users to specify options they want to always use by default even when
+# doing clean BRL-CAD builds without a CMakeCache.txt file - for example,
+# to always enable all local libs the following line can be added to
+# BRL-CAD_CONFIG.GLOBAL:
+#
+# SET(BRLCAD-ENABLE_ALL_LOCAL_LIBS ON CACHE BOOL "Enable all local libs")
+
+IF(EXISTS ${BRLCAD_SOURCE_DIR}/../BRL-CAD_CONFIG.GLOBAL)
+	MESSAGE("Reading ${BRLCAD_SOURCE_DIR}/../BRL-CAD_CONFIG.GLOBAL")
+	INCLUDE(${BRLCAD_SOURCE_DIR}/../BRL-CAD_CONFIG.GLOBAL)
+ENDIF(EXISTS ${BRLCAD_SOURCE_DIR}/../BRL-CAD_CONFIG.GLOBAL)
+
 # Searching the system for packages presents something of a dilemma -
 # in most situations it is Very Bad for a BRL-CAD build to be using
 # older versions of libraries in install directories as search results.
@@ -110,7 +123,8 @@ PROJECT(BRLCAD)
 # http://www.cmake.org/pipermail/cmake/2011-May/044503.html
 #
 # BRL-CAD initially operated on CMAKE_SYSTEM_PREFIX_PATH, but has
-# switched to using the *_IGNORE_PATH variables.
+# switched to using the *_IGNORE_PATH variables.  This requires
+# CMake 2.8.3 or later.
 #
 # The complication with ignoring install paths is if we are
 # installing to a "legitimate" system search path - i.e. our
