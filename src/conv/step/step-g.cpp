@@ -73,10 +73,8 @@ main(int argc, char *argv[])
     // process command line arguments
     int c;
     char *output_file=(char *)NULL;
-    while ((c=bu_getopt(argc, argv, "o:")) != -1)
-    {
-	switch (c)
-	{
+    while ((c=bu_getopt(argc, argv, "o:")) != -1) {
+	switch (c) {
 	    case 'o':
 		output_file = bu_optarg;
 		break;
@@ -95,7 +93,7 @@ main(int argc, char *argv[])
     if (bu_file_exists(output_file)) {
 	bu_exit(1, "ERROR - refusing to overwrite existing %s.", output_file);
     }
-    
+
     argc -= bu_optind;
     argv += bu_optind;
 
