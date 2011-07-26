@@ -84,7 +84,6 @@ src/clutils/gennodearray.h
 src/clutils/gennodelist.h
 src/clutils/scl_char_str_list.h
 src/clutils/scl_hash.h
-src/clutils/scl_string.h
 src/clutils/scldir.h
 src/clutils/stat.h
 src/clutils/str_list.h
