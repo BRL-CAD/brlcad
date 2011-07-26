@@ -82,6 +82,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* remove all of the MSVC sections in the CMakeLists.txt files.
+  perform proper library/function/flag tests where necessary.
+
 * implement http network transfer tool for crash reports and benchmark
   analyses (via libfetch)
 
