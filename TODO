@@ -25,6 +25,7 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * test for -msse3 requirement for __SSE.*__ definition
 
+
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
@@ -45,12 +46,17 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * fix bottie crash on 32b builds
 
-* upgrade source repository back-end to the latest SVN 1.5 so we can
-  benefit from proper merge tracking.
-
-* implement support for the other file entity types to libbu
-
 * resolve bot bin sort optimization crash, disabled during release
+
+* the 'cp' command no longer draws the object that was copied --
+  undoubtedly a libged change -- so restore previous functionality.
+  as that behavior was not intentional and is undesirable for large
+  objects, have some means to determine that something is "large and
+  complex" or at a minimum, provide an option to not draw on copy.
+
+
+THESE ARE UNSCHEDULED BACKLOG TASKS
+-----------------------------------
 
 * implement new makesegs for tie
 
@@ -72,15 +78,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * rtwizard enhancement to allow color overrides to be specified for
   selected objects.
 
-* the 'cp' command no longer draws the object that was copied --
-  undoubtedly a libged change -- so restore previous functionality.
-  as that behavior was not intentional and is undesirable for large
-  objects, have some means to determine that something is "large and
-  complex" or at a minimum, provide an option to not draw on copy.
+* upgrade source repository back-end to the latest SVN 1.5 so we can
+  benefit from proper merge tracking.
 
-
-THESE ARE UNSCHEDULED BACKLOG TASKS
------------------------------------
+* implement support for the other file entity types to libbu
 
 * remove all of the MSVC sections in the CMakeLists.txt files.
   perform proper library/function/flag tests where necessary.
