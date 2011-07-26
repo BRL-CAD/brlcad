@@ -147,8 +147,7 @@ setup(pw)
 }
 
 int
-main(argc, argv)
-	char *argv[];
+main(int argc, char *argv[])
 {
 	register int i, n1, n2, nr1, nr2;
 	int secureflg = 0, kflag = 0;
