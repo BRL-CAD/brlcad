@@ -81,16 +81,19 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 //				LocalUnits::planeangle = 1.0;
 //				LocalUnits::solidangle = 1.0;
 				ON_Brep *onBrep = aBrep->GetONBrep();
+				if (!onBrep) {
+				    std::cerr << "Error creating advanced boundary representation from " << stepfile << std::endl;
+				} else {
+				    ON_TextLog tl;
+				    onBrep->IsValid(&tl);
 
-				ON_TextLog tl;
-				onBrep->IsValid(&tl);
+				    //onBrep->SpSplitClosedFaces();
+				    //ON_Brep *tbrep = TightenBrep( onBrep );
 
-				//onBrep->SpSplitClosedFaces();
-				//ON_Brep *tbrep = TightenBrep( onBrep );
+				    dotg->WriteBrep(name,onBrep);
 
-				dotg->WriteBrep(name,onBrep);
-
-				delete onBrep;
+				    delete onBrep;
+				}
 				delete aBrep;
 			}
 		}

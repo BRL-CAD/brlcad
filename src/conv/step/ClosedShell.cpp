@@ -88,11 +88,11 @@ ClosedShell::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 bool
 ClosedShell::LoadONBrep(ON_Brep *brep)
 {
-	if (!ConnectedFaceSet::LoadONBrep(brep)) {
-		std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-		return false;
-	}
-	return true;
+    if (!brep || !ConnectedFaceSet::LoadONBrep(brep)) {
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	return false;
+    }
+    return true;
 }
 
 // Local Variables:

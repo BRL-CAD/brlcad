@@ -106,6 +106,11 @@ AdvancedBrepShapeRepresentation::GetONBrep()
 {
     ON_Brep *brep = ON_Brep::New();
 
+    if (!brep) {
+	std::cerr << "ERROR: INTERNAL MEMORY ALLOCATION FAILURE in " << __FILE__ << ":" << __LINE__ << std::endl;
+	return NULL;
+    }
+
     if (!LoadONBrep(brep)) {
 	std::cerr << "Error: " << entityname << "::GetONBrep() - Error loading openNURBS brep." << std::endl;
 	//still return brep may contain something useful to diagnose
@@ -120,6 +125,11 @@ bool
 AdvancedBrepShapeRepresentation::LoadONBrep(ON_Brep *brep)
 {
     LIST_OF_REPRESENTATION_ITEMS::iterator i;
+
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
 
     for (i = items.begin(); i != items.end(); i++) {
 	if (!(*i)->LoadONBrep(brep)) {
@@ -138,6 +148,11 @@ AdvancedBrepShapeRepresentation::LoadONBrep(ON_Brep *brep)
 bool
 BezierCurve::LoadONBrep(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << " id: " << id << std::endl;
     return false;
 }
@@ -146,6 +161,11 @@ BezierCurve::LoadONBrep(ON_Brep *brep)
 bool
 BSplineCurve::LoadONBrep(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     if (ON_id >= 0)
 	return true;
 
@@ -185,6 +205,11 @@ BSplineCurve::LoadONBrep(ON_Brep *brep)
 bool
 BSplineCurveWithKnots::LoadONBrep(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     if (ON_id >= 0)
 	return true;
 
@@ -255,6 +280,11 @@ BSplineCurveWithKnots::LoadONBrep(ON_Brep *brep)
 bool
 QuasiUniformCurve::LoadONBrep(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     if (ON_id >= 0)
 	return true;
 
@@ -269,6 +299,11 @@ QuasiUniformCurve::LoadONBrep(ON_Brep *brep)
 bool
 RationalBezierCurve::LoadONBrep(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << " id: " << id << std::endl;
     return false;
 }
@@ -277,6 +312,11 @@ RationalBezierCurve::LoadONBrep(ON_Brep *brep)
 bool
 RationalBSplineCurve::LoadONBrep(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     if (ON_id >= 0)
 	return true;
 
@@ -320,6 +360,11 @@ RationalBSplineCurve::LoadONBrep(ON_Brep *brep)
 bool
 RationalBSplineCurveWithKnots::LoadONBrep(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     if (ON_id >= 0)
 	return true;
 
@@ -391,6 +436,11 @@ RationalBSplineCurveWithKnots::LoadONBrep(ON_Brep *brep)
 bool
 RationalQuasiUniformCurve::LoadONBrep(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     if (ON_id >= 0)
 	return true;
 
@@ -405,6 +455,11 @@ RationalQuasiUniformCurve::LoadONBrep(ON_Brep *brep)
 bool
 RationalUniformCurve::LoadONBrep(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     if (ON_id >= 0)
 	return true;
 
@@ -419,6 +474,11 @@ RationalUniformCurve::LoadONBrep(ON_Brep *brep)
 bool
 UniformCurve::LoadONBrep(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     if (ON_id >= 0)
 	return true;
 
@@ -436,6 +496,11 @@ UniformCurve::LoadONBrep(ON_Brep *brep)
 bool
 BezierSurface::LoadONBrep(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     //TODO: add bezier surface
     //ON_BezierSurface* surf = ON_BezierSurface::New(3, false, u_degree+1, v_degree+1);
     std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
@@ -448,6 +513,11 @@ BSplineSurface::LoadONBrep(ON_Brep *brep)
 {
     int u_size = control_points_list->size();
     int v_size = (*control_points_list->begin())->size();
+
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
 
     ON_NurbsSurface* surf = ON_NurbsSurface::New(3, false, u_degree + 1, v_degree + 1, u_size, v_size);
 
@@ -506,6 +576,11 @@ BSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
 {
     int u_size = control_points_list->size();
     int v_size = (*control_points_list->begin())->size();
+
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
 
     ON_NurbsSurface* surf = ON_NurbsSurface::New(3, false, u_degree + 1, v_degree + 1, u_size, v_size);
 
@@ -624,6 +699,11 @@ BSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
 bool
 QuasiUniformSurface::LoadONBrep(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     if (!BSplineSurface::LoadONBrep(brep)) {
 	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	return false;
@@ -635,6 +715,11 @@ QuasiUniformSurface::LoadONBrep(ON_Brep *brep)
 bool
 RationalBezierSurface::LoadONBrep(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     //TODO: add rational bezier surface
     std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
     return false;
@@ -646,6 +731,11 @@ RationalBSplineSurface::LoadONBrep(ON_Brep *brep)
 {
     int u_size = control_points_list->size();
     int v_size = (*control_points_list->begin())->size();
+
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
 
     ON_NurbsSurface* surf = ON_NurbsSurface::New(3, false, u_degree + 1, v_degree + 1, u_size, v_size);
 
@@ -708,6 +798,11 @@ RationalBSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
 {
     int u_size = control_points_list->size();
     int v_size = (*control_points_list->begin())->size();
+
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
 
     if (self_intersect) {
     }
@@ -773,6 +868,11 @@ RationalBSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
 bool
 RationalQuasiUniformSurface::LoadONBrep(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     if (!RationalBSplineSurface::LoadONBrep(brep)) {
 	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	return false;
@@ -784,6 +884,11 @@ RationalQuasiUniformSurface::LoadONBrep(ON_Brep *brep)
 bool
 RationalUniformSurface::LoadONBrep(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     if (!RationalBSplineSurface::LoadONBrep(brep)) {
 	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	return false;
@@ -795,6 +900,11 @@ RationalUniformSurface::LoadONBrep(ON_Brep *brep)
 bool
 UniformSurface::LoadONBrep(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     if (!BSplineSurface::LoadONBrep(brep)) {
 	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	return false;
@@ -804,6 +914,11 @@ UniformSurface::LoadONBrep(ON_Brep *brep)
 void
 FaceSurface::AddFace(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return;
+    }
+
     ON_BrepFace& face = brep->NewFace(face_geometry->GetONId());
     if (same_sense == 1) {
 	face.m_bRev = false;
@@ -819,13 +934,19 @@ FaceSurface::AddFace(ON_Brep *brep)
 bool
 FaceSurface::LoadONBrep(ON_Brep *brep)
 {
-    //TODO: remove debugging code
-    if ((false) && (brep->m_F.Count() == 84)) {
-	std::cerr << "Debug:LoadONBrep for FaceSurface:" << brep->m_F.Count() << std::endl;
+    if (!brep) {
+	/* nothing to do */
+	return false;
     }
+
     // need edge bounds to determine extents for some of the infinitely
     // defined surfaces like cones/cylinders/planes
     ON_BoundingBox *bb = GetEdgeBounds(brep);
+    if (!bb) {
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error calculating openNURBS brep bounds." << std::endl;
+	return false;
+    }
+
     face_geometry->SetCurveBounds(bb);
 
     if (!face_geometry->LoadONBrep(brep)) {
@@ -858,6 +979,11 @@ Point::AddVertex(ON_Brep *UNUSED(brep))
 void
 CartesianPoint::AddVertex(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return;
+    }
+
     if (vertex_index < 0) {
 	ON_3dPoint p(coordinates[0] * LocalUnits::length, coordinates[1] * LocalUnits::length, coordinates[2] * LocalUnits::length);
 	ON_BrepVertex& v = brep->NewVertex(p);
@@ -871,6 +997,11 @@ CartesianPoint::AddVertex(ON_Brep *brep)
 void
 BSplineCurve::AddPolyLine(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return;
+    }
+
     if (ON_id < 0) {
 	int num_control_points = control_points_list.size();
 
@@ -943,6 +1074,11 @@ Face::LoadONBrep(ON_Brep *brep)
 bool
 FaceOuterBound::LoadONBrep(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     SetOuter();
 
     if (!FaceBound::LoadONBrep(brep)) {
@@ -963,6 +1099,11 @@ FaceBound::GetEdgeBounds(ON_Brep *brep)
 bool
 FaceBound::LoadONBrep(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     if (ON_id < 0) {
 	enum ON_BrepLoop::TYPE btype;
 	if (IsInner()) {
@@ -1002,7 +1143,13 @@ FaceBound::LoadONBrep(ON_Brep *brep)
 }
 
 bool
-EdgeCurve::LoadONBrep(ON_Brep *brep) {
+EdgeCurve::LoadONBrep(ON_Brep *brep)
+{
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     if (ON_id >= 0)
 	return true; // already loaded
 
@@ -1040,6 +1187,11 @@ EdgeCurve::LoadONBrep(ON_Brep *brep) {
 bool
 OrientedEdge::LoadONBrep(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     if (ON_id >= 0)
 	return true; //already loaded
 
@@ -1128,6 +1280,11 @@ Path::ShiftSurfaceSeam(ON_Brep *brep, double *t)
     double ang_min = 0.0;
     double smin, smax;
 
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     if (surface->IsCone() || surface->IsCylinder()) {
 	if (surface->IsClosed(0)) {
 	    surface->GetDomain(0, &smin, &smax);
@@ -1165,6 +1322,12 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
     ON_TextLog tl;
     LIST_OF_ORIENTED_EDGES::iterator i;
     list<PBCData *> curve_pullback_samples;
+
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     const ON_BrepLoop* loop = &brep->m_L[ON_path_index];
     const ON_BrepFace* face = loop->Face();
     const ON_Surface* surface = face->SurfaceOf();
@@ -1408,6 +1571,11 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 bool
 Plane::LoadONBrep(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     if (ON_id >= 0)
 	return true; // already loaded
 
@@ -1444,6 +1612,11 @@ Plane::LoadONBrep(ON_Brep *brep)
 bool
 CylindricalSurface::LoadONBrep(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     // new surface if reused because of bounding
     //if (ON_id >= 0)
     //	return true; // already loaded
@@ -1488,6 +1661,11 @@ CylindricalSurface::LoadONBrep(ON_Brep *brep)
 bool
 ConicalSurface::LoadONBrep(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     if (ON_id >= 0)
 	return true; // already loaded
 
@@ -1595,6 +1773,11 @@ Circle::SetParameterTrim(double start_param, double end_param)
 bool
 Circle::LoadONBrep(ON_Brep *brep) {
     ON_TextLog dump;
+
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
 
     //if (ON_id >= 0)
     //	return true; // already loaded
@@ -1827,6 +2010,11 @@ bool
 Ellipse::LoadONBrep(ON_Brep *brep) {
     ON_TextLog dump;
 
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     //if (ON_id >= 0)
     //	return true; // already loaded
     ON_3dPoint origin = GetOrigin();
@@ -1948,7 +2136,6 @@ Ellipse::LoadONBrep(ON_Brep *brep) {
 	narcs = 4;
     }
     double dtheta = theta / narcs;
-    double mw = cos(dtheta / 2.0);
     ON_3dPointArray cpts(2 * narcs + 1);
     double angle = t;
     double W[2 * 4 + 1]; // 2 * max narcs + 1
@@ -2089,6 +2276,11 @@ bool
 Hyperbola::LoadONBrep(ON_Brep *brep)
 {
     ON_TextLog dump;
+
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
 
     //if (ON_id >= 0)
     //	return true; // already loaded
@@ -2250,8 +2442,12 @@ Parabola::SetParameterTrim(double start_param, double end_param)
 bool
 Parabola::LoadONBrep(ON_Brep *brep)
 {
-
     ON_TextLog dump;
+
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
 
     //if (ON_id >= 0)
     //	return true; // already loaded
@@ -2323,6 +2519,11 @@ Parabola::LoadONBrep(ON_Brep *brep)
 bool
 Line::LoadONBrep(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     //if (ON_id >= 0)
     //	return true; // already loaded
 
@@ -2344,6 +2545,11 @@ bool
 SurfaceOfLinearExtrusion::LoadONBrep(ON_Brep *brep)
 {
     ON_TextLog tl;
+
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
 
     if (ON_id >= 0)
 	return true; // already loaded
@@ -2416,6 +2622,11 @@ SurfaceOfRevolution::LoadONBrep(ON_Brep *brep)
 {
     ON_TextLog tl;
 
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     if (ON_id >= 0)
 	return true; // already loaded
 
@@ -2449,6 +2660,11 @@ SurfaceOfRevolution::LoadONBrep(ON_Brep *brep)
 bool
 SphericalSurface::LoadONBrep(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     // get sphere center
     ON_3dPoint center = GetOrigin();
     center = center * LocalUnits::length;
@@ -2474,6 +2690,11 @@ SphericalSurface::LoadONBrep(ON_Brep *brep)
 bool
 ToroidalSurface::LoadONBrep(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     ON_3dPoint origin = GetOrigin();
     ON_3dVector norm = GetNormal();
     ON_3dVector xaxis = GetXAxis();
@@ -2509,6 +2730,11 @@ ToroidalSurface::LoadONBrep(ON_Brep *brep)
 bool
 VertexLoop::LoadONBrep(ON_Brep *brep)
 {
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
     //load vertex
     loop_vertex->LoadONBrep(brep);
 

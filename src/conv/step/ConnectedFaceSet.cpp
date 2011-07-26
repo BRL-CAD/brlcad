@@ -128,14 +128,19 @@ ConnectedFaceSet::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 bool
 ConnectedFaceSet::LoadONBrep(ON_Brep *brep)
 {
-	LIST_OF_FACES::iterator i;
-	for(i=cfs_faces.begin(); i != cfs_faces.end(); ++i) {
-		if ( !(*i)->LoadONBrep(brep) ) {
-			std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-			return false;
-		}
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
+    LIST_OF_FACES::iterator i;
+    for(i=cfs_faces.begin(); i != cfs_faces.end(); ++i) {
+	if ( !(*i)->LoadONBrep(brep) ) {
+	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	    return false;
 	}
-	return true;
+    }
+    return true;
 }
 
 // Local Variables:
