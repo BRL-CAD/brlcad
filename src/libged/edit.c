@@ -804,19 +804,28 @@ translate(struct ged *gedp, vect_t *keypoint,
 struct edit_arg {
     struct edit_arg *next; /* nodes rel to arg in cmd args grouping */
     char cl_options[EDIT_MAX_ARG_OPTIONS]; /* cmd line options */
-    unsigned int coords_used : 3; /* flag which coords are used */
+    unsigned int coords_used : 6; /* flag which coords will be used */
     unsigned int type : 10; /* flag the arg type and type modifiers */
     struct db_full_path *object; /* 2 dir path_to/obj or just obj */
     vect_t *vector; /* abs pos, or offset dist from obj */
 };
 
 /*
- * edit_arg flags of coordinates being used
+ * edit_arg flags of coordinates that will be used
  */
-#define EDIT_X_COORD 	0x1
-#define EDIT_Y_COORD 	0x2
-#define EDIT_Z_COORD 	0x4
-#define EDIT_ALL_COORDS (EDIT_X_COORD + EDIT_Y_COORD + EDIT_Z_COORD)
+#define EDIT_COORD_X 	0x01
+#define EDIT_COORD_Y 	0x02
+#define EDIT_COORD_Z 	0x04
+#define EDIT_COORDS_ALL (EDIT_COORD_X + EDIT_COORD_Y + EDIT_COORD_Z)
+
+/*
+ * edit_arg flags of coordinates that are already set
+ */
+#define EDIT_COORD_IS_SET_X 	0x08
+#define EDIT_COORD_IS_SET_Y 	0x10
+#define EDIT_COORD_IS_SET_Z 	0x20
+#define EDIT_COORDS_ALL_ARE_SET (EDIT_COORD_IS_SET_X, EDIT_COORD_IS_SET_Y, \
+				 EDIT_COORD_IS_SET_Z)
 
 /*
  * edit_arg argument type flags
@@ -951,7 +960,7 @@ edit_arg_init(struct edit_arg *node)
 {
     node->next = (struct edit_arg *)NULL;
     (void)memset((void *)&node->cl_options[0], 0, EDIT_MAX_ARG_OPTIONS);
-    node->coords_used = EDIT_ALL_COORDS;
+    node->coords_used = EDIT_COORDS_ALL;
     node->type = 0;
     node->object = (struct db_full_path *)NULL;
     node->vector = (vect_t *)NULL;
@@ -998,7 +1007,7 @@ edit_arg_postfix_new(struct edit_arg *head)
     struct edit_arg *node;
 
     node = (struct edit_arg *)bu_malloc(sizeof(struct edit_arg),
-	   "edit_arg block for edit_arg_postfix_new");
+	   "edit_arg block for edit_arg_postfix_new()");
     edit_arg_postfix(head, node);
     edit_arg_init(node);
     return node;
@@ -1088,11 +1097,11 @@ edit(struct ged *gedp, union edit_cmd * const cmd)
 }
 
 /**
- * Converts a string to an edit_arg. See subcommand manuals
+ * Converts a string to an existing edit_arg. See subcommand manuals
  * for examples of acceptable argument strings.
  * 
- * Set GED_QUIET or GED_ERROR bits in flags to suppress or enable
- * output to ged_result_str, respectively.
+ * Set GED_QUIET or GED_ERROR bits in 'flags' to suppress or enable
+ * output to ged_result_str, respectively. 
  *
  * Returns GED_ERROR on failure, and GED_OK on success.
  */
@@ -1103,67 +1112,121 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
     const struct db_i *dbip = gedp->ged_wdbp->dbip;
     int noisy;
     char const *first_slash = NULL;
+    char *endchr = NULL; /* for strtod's */
+    vect_t coord;
 
     /* if flags conflict (GED_ERROR/GED_QUIET), side with verbosity */
     noisy = (flags & GED_ERROR); 
 
-    /* an arg with a slash is always interpreted as a path */
-    first_slash = strchr(str, '/');
-    if (first_slash) {
-	char const *path_start;
-	char const *path_end;
+    /*
+     * Here is how numbers that are also objects are intepreted: if an object is
+     * not yet set in *arg, try to treat the number as an object first. If the
+     * user has an object named, say '5', they can explicitly use the number 5
+     * by adding .0 or something. If an arg->object has already been set, then
+     * the number was most likely intended to be an offset, so intepret it as as
+     * such.
+     * */
 
-	/* position start after leading slashes */
-	path_start = str;
-	while (path_start[0] == '/')
-	    ++path_start;
+    if (!arg->object) {
+	/* an arg with a slash is always interpreted as a path */
+	first_slash = strchr(str, '/');
+	if (first_slash) {
+	    char const *path_start;
+	    char const *path_end;
 
-	/* position end before trailing slashes */
-	path_end = path_start + strlen(path_start) - (size_t)1;
-	while (path_end[0] == '/')
-	    --path_end;
+	    /* position start after leading slashes */
+	    path_start = str;
+	    while (path_start[0] == '/')
+		++path_start;
 
-	if (path_end < path_start) {
-	    /* path contained nothing but '/' char(s) */
-	    if (noisy)
-		bu_vls_printf(gedp->ged_result_str, "cannot use root path "
-			      "alone");
-	    return GED_ERROR;
+	    /* position end before trailing slashes */
+	    path_end = path_start + strlen(path_start) - (size_t)1;
+	    while (path_end[0] == '/')
+		--path_end;
+
+	    if (path_end < path_start) {
+		/* path contained nothing but '/' char(s) */
+		if (noisy)
+		    bu_vls_printf(gedp->ged_result_str, "cannot use root path "
+				  "alone");
+		return GED_ERROR;
+	    }
+
+	    /* detect >1 inner slashes */
+	    first_slash = (char *)memchr((void *)path_start, '/',
+					 (size_t)(path_end - path_start + 1));
+	    if (first_slash && ((char *)memchr((void *)(first_slash + 1),
+					      '/', (size_t)(path_end -
+					      first_slash - 1)))) {
+	    /* FIXME: this conditional should be replaced by adding inner
+	     * slash stripping to db_string_to_path (which is used below),
+	     * and using a simple check for fp_len > 2 here */
+		if (noisy)
+		    bu_vls_printf(gedp->ged_result_str, "invalid path, \"%s\"\n"
+				  "It is only meaningful to have one or two "
+				  "objects in a path in this context.\n"
+				  "Ex: OBJECT (equivalently, /OBJECT/) or "
+				  "PATH/OBJECT (equivalently, /PATH/OBJECT/)", str);
+		return GED_ERROR;
+	    }
+	    goto convert_obj;
 	}
 
-	/* detect >1 inner slashes */
-	first_slash = (char *)memchr((void *)path_start, '/',
-		                     (size_t)(path_end - path_start + 1));
-	if (first_slash && ((char *)memchr((void *)(first_slash + 1),
-			    		  '/', (size_t)(path_end -
-					  first_slash - 1)))) {
-	/* FIXME: this conditional should be replaced by adding inner
-	 * slash stripping to db_string_to_path (which is used below),
-	 * and using a simple check for fp_len > 2 here */
-	    if (noisy)
-		bu_vls_printf(gedp->ged_result_str, "invalid path, \"%s\"\n"
-			      "It is only meaningful to have one or two "
-			      "objects in a path in this context.\n"
-			      "Ex: OBJECT (equivalently, /OBJECT/) or "
-			      "PATH/OBJECT (equivalently, /PATH/OBJECT/)", str);
-	    return GED_ERROR;
-	}
-	goto convert_obj;
+	/* it may still be an obj, so quietly check db for object name */
+	if (db_lookup(dbip, str, LOOKUP_QUIET) != RT_DIR_NULL)
+	    goto convert_obj;
     }
 
-    /* it may still be an obj, so quietly check db for object name */
-    if (db_lookup(dbip, str, LOOKUP_QUIET) != RT_DIR_NULL)
-	goto convert_obj;
+    /* if string is a number, fall back to interpreting it as one */
+    coord[0] = strtod(str, &endchr);
+    if (*endchr != '\0') {
+	if (noisy)
+	    bu_vls_printf(gedp->ged_result_str, "unrecognized argument, \"%s\"",
+			  str);
+	return GED_ERROR;
+    }
 
-    /* TODO if it is a number, fall back to interpreting it
-     * as one, otherwise, throw an error saying that
-     * it is an invalid object */
+    /* if either all coordinates are being set or an object has been
+     * set, then attempt to intepret/record the number as the next
+     * unset X, Y, or Z Z coordinate/position */
+    if ((arg->coords_used & EDIT_COORDS_ALL) || arg->object) {
+	if (!arg->vector) {
+	    arg->vector = (vect_t *)bu_malloc(sizeof(vect_t),
+			  "vect_t block for edit_str_to_arg");
+	}
 
-    /* the syntax is bad */
-    if (noisy)
-	bu_vls_printf(gedp->ged_result_str, "unrecognized argument, \"%s\"",
-		      str);
-    return GED_ERROR;
+	/* set the first coordinate that isn't set */
+	if (!(arg->coords_used & EDIT_COORD_IS_SET_X)) {
+	    (*arg->vector)[0] = coord[0];
+	    arg->coords_used |= EDIT_COORD_IS_SET_X;
+	} else if (!(arg->coords_used & EDIT_COORD_IS_SET_Y)) {
+	    (*arg->vector)[1] = coord[0];
+	    arg->coords_used |= EDIT_COORD_IS_SET_Y;
+	} else if (!(arg->coords_used & EDIT_COORD_IS_SET_Z)) {
+	    (*arg->vector)[2] = coord[0];
+	    arg->coords_used |= EDIT_COORD_IS_SET_Z;
+	} else {
+	    if (noisy)
+		bu_vls_printf(gedp->ged_result_str, "too many consecutive"
+			      " coordinates: %f %f %f %f ...", arg->vector[0],
+			      arg->vector[1], arg->vector[2], coord[0]);
+	    return GED_ERROR;
+	}
+    } else {
+	/* only set the specified coord; quietly overwrite if already set */
+	BU_ASSERT(arg->coords_used != 0);
+	if (arg->coords_used & EDIT_COORD_X) {
+	    (*arg->vector)[0] = coord[0];
+	    arg->coords_used |= EDIT_COORD_IS_SET_X;
+	} else if (!(arg->coords_used & EDIT_COORD_Y)) {
+	    (*arg->vector)[1] = coord[0];
+	    arg->coords_used |= EDIT_COORD_IS_SET_Y;
+	} else if (!(arg->coords_used & EDIT_COORD_Z)) {
+	    (*arg->vector)[2] = coord[0];
+	    arg->coords_used |= EDIT_COORD_IS_SET_Z;
+	}
+    }
+    return GED_OK;
 
 convert_obj:
     /* convert string to path/object */
@@ -1218,7 +1281,7 @@ edit_strs_to_arg(struct ged *gedp, int *argc, const char **argv[],
 	/* skip options */
 	idx = 0;
 	len = strlen((*argv)[0]);
-        if ((**argv)[0] == '-') {
+	if ((**argv)[0] == '-') {
 	    if (len == 2 && !isdigit((**argv)[1]))
 		break;
 	    if (len > 2 && !isdigit((**argv)[1]))
@@ -1239,7 +1302,9 @@ edit_strs_to_arg(struct ged *gedp, int *argc, const char **argv[],
 
 /**
  * A command line interface to the edit commands. Will handle any 
- * new commands without modification.
+ * new commands without modification. Validates as much as possible
+ * in a single pass, without going back over the arguments list.
+ * Further, more specific, validation is performed by edit().
  */
 int
 ged_edit(struct ged *gedp, int argc, const char *argv[])
@@ -1304,7 +1369,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	argv += 2;
     } else {
 	/* no subcommand was found */
-        ret = GED_HELP;
+	ret = GED_HELP;
 
 	if (argc > 1) {
 	    /* no arguments accepted without a subcommand */
@@ -1489,7 +1554,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 			    conv_flags = GED_QUIET;
 			    break;
 			default:
-			    if(!isdigit(bu_optarg[1]))
+			    if (!isdigit(bu_optarg[1]))
 				goto err_missing_arg;
 		    }
 		}
@@ -1545,14 +1610,16 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	--argv;
     }
 
-    /* get final trailing args */
+    /* get final/trailing args */
+    ++argv;
+    --argc;
     if (argc > 0) {
 	if (edit_strs_to_arg(gedp, &argc, &argv, cur_arg, GED_ERROR) ==
 	    GED_ERROR) {
 	    edit_cmd_free(&subcmd);
 	    return GED_ERROR;
 	}
-	BU_ASSERT(argc == 0);
+	/* BU_ASSERT(argc == 0); */
     }
 
     ret = edit(gedp, &subcmd);
