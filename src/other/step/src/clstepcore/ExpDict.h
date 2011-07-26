@@ -1182,7 +1182,7 @@ class TypeDescriptor {
 		// The name of this type.  If schnm != NULL, the name we're
 	        // referred to by schema schnm (may be diff name in our alt-
 	        // names list (based on schnm's USE/REF list)).
-	const char * Name(std::string schnm = NULL) const;
+	const char * Name(std::string schnm = "") const;
 
 		// The name that would be found on the right side of an 
 		// attribute definition. In the case of a type defined like

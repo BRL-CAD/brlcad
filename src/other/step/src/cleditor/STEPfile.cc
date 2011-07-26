@@ -1881,7 +1881,7 @@ STEPfile::CreateSubSuperInstance(istream& in, int fileid, ErrorDescriptor &e)
     c = in.peek(); // see if you have closed paren (ending the record)
     while(in.good() && (c != ')') && (enaIndex < enaSize) )
     {
-	entNmArr[enaIndex] = new std::string;
+	entNmArr[enaIndex] = new std::string("");
 	ReadStdKeyword(in, *(entNmArr[enaIndex]), 1); // read the type name
 	if(entNmArr[enaIndex]->empty())
 	{

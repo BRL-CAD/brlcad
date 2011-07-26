@@ -124,7 +124,7 @@ void SCLP23(Application_instance)::AddP21Comment(const char *s, int replace)
     {
       if(!p21Comment) 
       {
-        p21Comment = new std::string;
+        p21Comment = new std::string("");
       }
       else
       {
@@ -146,7 +146,7 @@ SCLP23(Application_instance)::AddP21Comment(std::string &s, int replace)
     {
 	if(!p21Comment) 
 	{
-	    p21Comment = new std::string;
+          p21Comment = new std::string("");
 	}
 	else
 	    p21Comment->clear();

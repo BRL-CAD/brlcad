@@ -738,7 +738,7 @@ STEPcomplex::Replicate()
 	int i = 0;
 	while( scomp && (i < 63) )
 	{
-	    nameList[i] = new std::string;
+	    nameList[i] = new std::string("");
 	    nameList[i]->append( scomp->eDesc->Name() );
 	    i++;
 	    scomp = scomp->sc;
