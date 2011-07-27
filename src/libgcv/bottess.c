@@ -118,23 +118,51 @@ soup_add_face(struct soup_s *s, point_t a, point_t b, point_t c, const struct bn
 }
 
 static int
-split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *right, unsigned long int right_face, const struct bn_tol *UNUSED(tol)) {
+split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *right, unsigned long int right_face, const struct bn_tol *tol) {
     struct face_s *lf, *rf;
-    fastf_t d, dot[3];
+    fastf_t b, c, d, dot, max;
+    vect_t dir;
+    int i;
 
     lf = left->faces+left_face;
     rf = right->faces+right_face;
 
+    /* test of triangles are parallel */
+    if( VNEAR_EQUAL(lf->plane, rf->plane, tol->para) ) {
+	/* test if coplanar, abort if not */
+	if(!NEAR_EQUAL(lf->plane[W], rf->plane[W], tol->dist))
+	    return 2;
+	/* do... stuff to join them in non-overlapping results. */
+	return -2;
+    }
+
     /* shortcut out if all points of triangle are on the same side of plane b
      * and visa versa (from Möller97) */
     d=-VDOT(lf->plane, lf->vert[0]);
-    dot[0] = VDOT(lf->plane, rf->vert[0])+d;
-    if((dot[0] * (VDOT(lf->plane, rf->vert[1])+d))>0 && (dot[0] * (VDOT(lf->plane, rf->vert[2])+d))>0)
+    dot = VDOT(lf->plane, rf->vert[0])+d;
+    if((dot * (VDOT(lf->plane, rf->vert[1])+d))>0 && (dot * (VDOT(lf->plane, rf->vert[2])+d))>0)
 	return 2;
     d=-VDOT(rf->plane, rf->vert[0]);
-    dot[0] = VDOT(rf->plane, lf->vert[0])+d;
-    if((dot[0] * VDOT(rf->plane, lf->vert[1])+d) > 0 && (dot[0] * VDOT(rf->plane, lf->vert[2])+d) > 0)
+    dot = VDOT(rf->plane, lf->vert[0])+d;
+    if((dot * VDOT(rf->plane, lf->vert[1])+d) > 0 && (dot * VDOT(rf->plane, lf->vert[2])+d) > 0)
 	return 2;
+
+    VCROSS(dir, lf->plane, rf->plane);
+
+    /* find biggest component of dir */
+    max=fabs(dir[0]);
+    i = 0;
+    b=fabs(dir[1]);
+    if(b>max) { max=b; i=1; }
+    c=fabs(dir[1]);
+    if(c>max) { max=c; i=2; }
+    /* "simplified projection */
+
+    /* compute intervals */
+    /* test for overlap */
+    /* if no overlap, return 2 */
+    /* do boolean on intervals, split up triangles, remove/rebuild faces as
+     * needed. */
 
     return -1;
 }
@@ -226,19 +254,26 @@ split_faces(union tree *left_tree, union tree *right_tree, const struct bn_tol *
 		lf->min[Z]>rf->max[Z] || lf->max[Z]>lf->max[Z])
 		continue;
 	    /* two possibly overlapping faces found */
-	    switch(split_face(l, i, r, j, tol)) {
-		case 2:
-		    putchar('.');
-		    break;
-		case -1:
-		    putchar('_');
-		    break;
-		default:
-		    putchar('?');
+#define NOISY 0
+#if NOISY
+	    switch(
+#endif
+		    split_face(l, i, r, j, tol)
+#if NOISY
+		    ) {
+		case 2: putchar('.'); break;
+		case -1: putchar('_'); break;
+		case -2: putchar('='); break;
+		default: putchar('?');
 	    } 
+#else
+	    ;
+#endif
 	}
     }
+#if NOISY
     putchar('\n');
+#endif
 }
 
 static void
@@ -276,10 +311,9 @@ compose(union tree *left_tree, union tree *right_tree, unsigned long int face_st
     for(i=l->nfaces;i<=0;i--)
 	if(l->faces[i].foo != face_status1)
 	    soup_rm_face(l,i);
-    for(i=r->nfaces;i<=0;i--) {
+    for(i=r->nfaces;i<=0;i--)
 	if(r->faces[i].foo != face_status3)
 	    soup_rm_face(l,i);
-    }
     face_status1=face_status2=face_status3;
 
     free_soup(r);
