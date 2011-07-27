@@ -101,10 +101,6 @@ SCLP23(String)::STEPread (istream& in, ErrorDescriptor *err)
 
     if (c == STRING_DELIM)
     {
-	append("\0"); // this will make sure that this will not be undefined.
-	   // It will handle the case where '' is read. It will be an
-	   // empty string rather than one that is undefined.
-
 	while( (c != '\0') && in.good() && in.get(c) )
 	{
 	    if (c == STRING_DELIM)   {
@@ -113,18 +109,19 @@ SCLP23(String)::STEPread (istream& in, ErrorDescriptor *err)
 		{	// it is the final quote and no extra char was read
 		    foundEndQuote = 1;
 		    c = '\0';
+                    continue;
 		}
 		else if( !(c == STRING_DELIM) )
 		{	// it is the final quote and extra char was read
 		    in.putback (c); // put back non-quote extra char
 		    foundEndQuote = 1;
 		    c = '\0';
+                    continue;
 		}
 		// else { ; } // do nothing it is an embedded quote
-	    } 
+	    }
 	    operator+= (c);
 	}
-	append ("\0");
 
 	if(foundEndQuote)
 	    return SEVERITY_NULL;
