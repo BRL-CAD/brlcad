@@ -1,4 +1,18 @@
-Update code generation to eliminate the need for the manually tweaked copies
-of the NIST tools' output files present in src/conv/step - ideally the step 
-convertor should be using the tools in this directory to generate those files
-at build time.
+* rewrite express parser to not require lex/yacc
+
+* verify/fix step parser generation with newer AP schemas, seems to be
+  outputting invalid syntax.
+
+* Update code generation to eliminate the need for the manually
+  tweaked copies of the NIST tools' output files present in
+  src/conv/step - ideally the step convertor should be using the tools
+  in this directory to generate those files at build time.
+
+* rename Boolean and Logical
+
+* remove trailing whitespace
+
+* standardize and clean up source formatting
+
+* remove Corba bindings
+
