@@ -1014,7 +1014,7 @@ class SchRename {
         { return ( strcmp( schName, schrnm.schName ) < 0 ); }
     int choice( const char *nm ) const;
             // is nm one of our possible choices?
-    char *rename(std::string schm, char *newnm ) const;
+    char *rename(const char *schm, char *newnm ) const;
             // given a schema name, returns new object name if exists
     SchRename *next;
 
@@ -1174,7 +1174,7 @@ class TypeDescriptor {
 		// The name of this type.  If schnm != NULL, the name we're
 	        // referred to by schema schnm (may be diff name in our alt-
 	        // names list (based on schnm's USE/REF list)).
-	const char * Name(std::string schnm = "") const;
+	const char * Name(const char *schnm = NULL) const;
 
 		// The name that would be found on the right side of an 
 		// attribute definition. In the case of a type defined like

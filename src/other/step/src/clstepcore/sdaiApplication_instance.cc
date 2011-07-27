@@ -463,13 +463,13 @@ SCLP23(Application_instance)::WriteValuePairs(ostream& out,
 	    if(mixedCase)
 	    {
 		out << "\t" 
-		 << attributes[i].aDesc->Owner().Name(s)
+		 << attributes[i].aDesc->Owner().Name(s.c_str())
 		 << "." << attributes[i].aDesc->Name() << " ";
 	    }
 	    else
 	    {
 		out << "\t" 
-		 << StrToUpper(attributes[i].aDesc->Owner().Name(s),tmp)
+		 << StrToUpper(attributes[i].aDesc->Owner().Name(s.c_str()),tmp)
 		 << "." << StrToUpper(attributes[i].aDesc->Name(),tmp2) << " ";
 	    }
 	    (attributes[i]).STEPwrite( out, currSch );
