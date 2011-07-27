@@ -2805,13 +2805,13 @@ STEPfile::AppendFile (istream* in, int useTechCor)
 	sprintf(errbuf,
 		"Faulty input at beginning of file. \"ISO-10303-21;\" or"
 		" \"STEP;\" or \"STEP_WORKING_SESSION;\" expected. File "
-		"not read: %s\n", FileName());
+		"not read: %s\n", ((strcmp(FileName(), "-")==0) ? "standard input" : FileName()));
 	_error.AppendToUserMsg(errbuf);
 	_error.GreaterSeverity(SEVERITY_INPUT_ERROR);
 	return SEVERITY_INPUT_ERROR;
     }
 
-    cout << "Reading Data from " << FileName () << "...\n";
+    cout << "Reading Data from " << ((strcmp(FileName(), "-")==0) ? "standard input" : FileName()) << "...\n";
 
     //  Read header
     rval = ReadHeader(*in);
@@ -2903,7 +2903,7 @@ STEPfile::AppendFile (istream* in, int useTechCor)
     if (total_insts != valid_insts)  
       {
 	  sprintf(errbuf,"%d invalid instances in file: %s\n",
-	     total_insts - valid_insts, FileName());
+                  total_insts - valid_insts, ((strcmp(FileName(), "-")==0) ? "standard input" : FileName()));
 	  _error.AppendToUserMsg(errbuf);
 	  CloseInputFile(in2);
 	  return _error.GreaterSeverity(SEVERITY_WARNING);

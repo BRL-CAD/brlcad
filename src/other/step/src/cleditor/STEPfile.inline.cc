@@ -209,35 +209,38 @@ istream*
 STEPfile::OpenInputFile (const char* filename)
 {
     //  if there's no filename to use, fail
-    if (! (strcmp (filename, "") || strcmp (FileName (), "")) ) 
-      {
-	  _error.AppendToUserMsg("Unable to open file for input. No current file name.\n");
-	  _error.GreaterSeverity(SEVERITY_INPUT_ERROR);
-	  return (0);
-      }		
-    else  {
-	if (!SetFileName (filename)) 
-	  {
-	      char msg[BUFSIZ];
-	      sprintf(msg,"Unable to find file for input: \'%s\'. File not read.\n",filename);
-	      _error.AppendToUserMsg(msg);
-	      _error.GreaterSeverity(SEVERITY_INPUT_ERROR);
-	      return (0);
-	  }
-    }
-    //  istream* in = new istream(FileName(), io_readonly, a_useonly);
-    // port 29-Mar-1994 kcm
-    istream* in = new ifstream(FileName());
-    // default for ostream is readonly and protections are set to 644 
-//    if ( !in || !(in -> readable ()) )
-    if ( !in || !(in -> good ()) )
-      {
-	      char msg[BUFSIZ];
-	      sprintf(msg,"Unable to open file for input: \'%s\'. File not read.\n",filename);
-	      _error.AppendToUserMsg(msg);
-	      _error.GreaterSeverity(SEVERITY_INPUT_ERROR);
-	      return (0);
+    if (! (strcmp (filename, "") || strcmp (FileName (), "")) ) {
+      _error.AppendToUserMsg("Unable to open file for input. No current file name.\n");
+      _error.GreaterSeverity(SEVERITY_INPUT_ERROR);
+      return (0);
+    } else {
+      if (!SetFileName (filename) && (strcmp(filename, "-") != 0)) {
+        char msg[BUFSIZ];
+        sprintf(msg,"Unable to find file for input: \'%s\'. File not read.\n",filename);
+        _error.AppendToUserMsg(msg);
+        _error.GreaterSeverity(SEVERITY_INPUT_ERROR);
+        return (0);
       }
+    }
+
+    std::istream* in;
+
+    if (strcmp(filename, "-") == 0) {
+      in = &std::cin;
+    } else {
+      //  istream* in = new istream(FileName(), io_readonly, a_useonly);
+      // port 29-Mar-1994 kcm
+      in = new ifstream(FileName());
+    }
+
+    if ( !in || !(in -> good ()) ) {
+      char msg[BUFSIZ];
+      sprintf(msg,"Unable to open file for input: \'%s\'. File not read.\n",filename);
+      _error.AppendToUserMsg(msg);
+      _error.GreaterSeverity(SEVERITY_INPUT_ERROR);
+      return (0);
+    }
+
     return in;
 }
 
@@ -245,10 +248,11 @@ STEPfile::OpenInputFile (const char* filename)
 void
 STEPfile::CloseInputFile(istream* in)
 {
+  if (in && *in != std::cin)
     delete in;
 }
 
-    
+
 /******************************************************/
 
 /*
@@ -279,7 +283,7 @@ STEPfile::OpenOutputFile(const char* filename)
       }
     else 
       {
-	  if (!SetFileName (filename)) 
+        if (!SetFileName (filename)) 
 	    {
 		char msg[BUFSIZ];
 		sprintf(msg,"can't find file: %s\nFile not written.\n",filename);
