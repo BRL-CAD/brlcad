@@ -131,8 +131,8 @@ ReadInteger(SCLP23(Integer) &val, const char *s, ErrorDescriptor *err,
 ///////////////////////////////////////////////////////////////////////////////
 
 Severity 
-IntValidLevel (const char *attrValue, ErrorDescriptor *err,
-	       int clearError, int optional, char *tokenList)
+IntValidLevel(const char *attrValue, ErrorDescriptor *err,
+              int clearError, int optional, char *tokenList)
 {
     if(clearError)
 	err->ClearErrorMsg();
@@ -454,8 +454,8 @@ ReadReal(SCLP23(Real) &val, const char *s, ErrorDescriptor *err,
 ///////////////////////////////////////////////////////////////////////////////
 
 Severity 
-RealValidLevel (const char *attrValue, ErrorDescriptor *err,
-		int clearError, int optional, char *tokenList)
+RealValidLevel(const char *attrValue, ErrorDescriptor *err,
+               int clearError, int optional, char *tokenList)
 {
     if(clearError)
 	err->ClearErrorMsg();
@@ -560,8 +560,8 @@ ReadNumber(SCLP23(Real) &val, const char *s, ErrorDescriptor *err,
 ///////////////////////////////////////////////////////////////////////////////
 
 Severity 
-NumberValidLevel (const char *attrValue, ErrorDescriptor *err,
-		  int clearError, int optional, char *tokenList)
+NumberValidLevel(const char *attrValue, ErrorDescriptor *err,
+                 int clearError, int optional, char *tokenList)
 {
     if(clearError)
 	err->ClearErrorMsg();
@@ -618,7 +618,7 @@ QuoteInString(istream& in)
 // 'in'.  
 
 void
-PushPastString (istream& in, std::string &s, ErrorDescriptor *err)
+PushPastString(istream& in, std::string &s, ErrorDescriptor *err)
 {
     char messageBuf[BUFSIZ];
     messageBuf[0] = '\0';
@@ -668,7 +668,7 @@ PushPastString (istream& in, std::string &s, ErrorDescriptor *err)
 // aggregates.
 
 void
-PushPastImbedAggr (istream& in, std::string &s, ErrorDescriptor *err)
+PushPastImbedAggr(istream& in, std::string &s, ErrorDescriptor *err)
 {
     char messageBuf[BUFSIZ];
     messageBuf[0] = '\0';
@@ -806,7 +806,7 @@ FindStartOfInstance(istream& in, std::string&  inst)
 ***************************/
 
 Severity
-SkipInstance (istream& in, std::string&  inst)
+SkipInstance(istream& in, std::string&  inst)
 {
     char c =0;
     ErrorDescriptor errs;
