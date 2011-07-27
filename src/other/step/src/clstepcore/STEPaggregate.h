@@ -31,7 +31,7 @@ class TypeDescriptor;
 #include <baseType.h>
 #include <sdai.h>
 #include <STEPundefined.h>
-#include <string.h>
+#include <string>
 
 //class SCLP23(Application_instance);
 //#define 	S_ENTITY_NULL	&NilSTEPentity

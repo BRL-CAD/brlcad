@@ -5,7 +5,7 @@
 
 /*
 */
-#include <string.h>
+#include <string>
 #include <sdai.h>
 
 #include <errordesc.h>

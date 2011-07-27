@@ -1,6 +1,8 @@
 #ifndef SDAIBINARY_H
 #define	SDAIBINARY_H 1
 
+#include <string>
+
 /*
 * NIST STEP Core Class Library
 * clstepcore/sdaiBinary.h
