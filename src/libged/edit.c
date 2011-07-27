@@ -856,47 +856,6 @@ struct edit_arg {
 #define EDIT_USE_TARGETS		0x200 /* for batch ops */
 
 /*
- * Table of available edit subcommands
- */
-struct edit_cmd_tab {
-    char *name;
-    char *opt_global;
-    char *usage;
-    char *help;
-    /*FIXME: add *function, and full syntax, aliases, etc */
-};
-
-static const struct edit_cmd_tab edit_cmds[] = {
-    {"help",		(char *)NULL,	"[subcmd]",	(char *)NULL},
-#define EDIT_CMD_HELP 0 /* idx of "help" in edit_cmds */
-    {"rotate",		"R",
-	"[-R] [AXIS] [CENTER] ANGLE OBJECT ...",
-  	"[-R] [[[-n] -k {AXIS_FROM_OBJECT | AXIS_FROM_POS}]\n"
-	"[[-n] [-a | -r] {AXIS_TO_OBJECT | AXIS_TO_POS}]]\n"
-	    "[[-n] -c {CENTER_OBJECT | CENTER_POS}]\n"
-	    "[[-n] -O {ANGLE_ORIGIN_OBJECT| ANGLE_ORIGIN_POS}]\n"
-	    "[[-n] -k {ANGLE_FROM_OBJECT | ANGLE_FROM_POS}]\n"
-	    "[-n | -o] [-a | -r | -d]"
-		"{ANGLE_TO_OBJECT | ANGLE_TO_POS}} OBJECT ..."
-    },
-    {"scale",		(char *)NULL,
-	"[SCALE] [CENTER] FACTOR OBJECT ...",
-	"[[[-n] -k {SCALE_FROM_OBJECT | SCALE_FROM_POS}]\n"
-	    "[-n] [-a | -r] {SCALE_TO_OBJECT | SCALE_TO_POS}]\n"
-	    "[[-n] -c {CENTER_OBJECT | CENTER_POS}]\n"
-	    "[[-n] -k {FACTOR_FROM_OBJECT | FACTOR_FROM_POS}]\n"
-	    "[-n] [-a | -r] {FACTOR_TO_OBJECT | FACTOR_TO_POS}"
-		" OBJECT ..."
-    },
-    {"translate",	(char *)NULL,
-	"[FROM] TO OBJECT ...",
-	"[[-n] -k {FROM_OBJECT | FROM_POS}]\n"
-	    "[-n] [-a | -r] {TO_OBJECT | TO_POS} OBJECT ..."
-    },
-    {(char *)NULL,	(char *)NULL,	(char *)NULL,	(char *)NULL}
-};
-
-/*
  * Arg groupings for each command. 
  */
 union edit_cmd{
@@ -912,15 +871,6 @@ union edit_cmd{
 	/* a synonym for 'objects', used when parsing cl args */
 	struct edit_arg args; 
     } cmd_line;
-
-    struct {
-	const struct edit_cmd_tab *padding_for_cmd;
-	struct edit_arg objects;
-	struct {
-	    struct edit_arg from;
-	    struct edit_arg to;
-	} ref_vector;
-    } translate;
 
     struct {
 	const struct edit_cmd_tab *padding_for_cmd;
@@ -950,7 +900,33 @@ union edit_cmd{
 	    struct edit_arg to;
 	} ref_factor;
     } scale;
+
+    struct {
+	const struct edit_cmd_tab *padding_for_cmd;
+	struct edit_arg objects;
+	struct {
+	    struct edit_arg from;
+	    struct edit_arg to;
+	} ref_vector;
+    } translate;
 };
+
+/**
+ * Table of available edit subcommands
+ */
+struct edit_cmd_tab {
+    char *name;
+    char *opt_global;
+    char *usage;
+    char *help;
+    int (*exec_concise)(struct ged *gedp, const union edit_cmd *const cmd);
+    int (*add_arg)(union edit_cmd *const cmd, struct edit_arg *const arg);
+};
+
+/* 
+ * Argument builder/helper functions
+ */
+
 
 /**
  * Initialize a node. Caller needs to free it first.
@@ -1056,42 +1032,252 @@ edit_cmd_free(union edit_cmd * const args)
 	edit_arg_free_all(args->common.objects.next);
 }
 
-#if 0
+
+/* 
+ * Command specific functions
+ */
+
+
+/**
+ * Rotate an object by specifying points.
+ */
+int
+edit_rotate(struct ged *gedp, vect_t *axis_from, vect_t *axis_to,
+	     vect_t *center, vect_t *angle_origin, vect_t *angle_from,
+	     vect_t *angle_to, struct db_full_path *path)
+{
+    (void)gedp;
+    (void)axis_from;
+    (void)axis_to;
+    (void)center;
+    (void)angle_origin;
+    (void)angle_from;
+    (void)angle_to;
+    (void)path;
+    return GED_OK;
+}
+
+/**
+ * Maps edit_arg fields to the subcommand function's arguments and
+ * calls it.  Provides an common interface, so that all subcommands
+ * can use the same function pointer type. Ignores all edit_arg fields
+ * other than vector, and the first object to operate on in the
+ * objects edit_arg. Ignores all edit_arg->next arguments.
+ */
+int
+edit_rotate_concise(struct ged *gedp, const union edit_cmd * const cmd)
+{
+    return edit_rotate(gedp,
+		       cmd->rotate.ref_axis.from.vector,
+		       cmd->rotate.ref_axis.to.vector,
+		       cmd->rotate.center.vector,
+		       cmd->rotate.ref_angle.origin.vector,
+		       cmd->rotate.ref_angle.from.vector,
+		       cmd->rotate.ref_angle.to.vector,
+		       cmd->rotate.objects.object);
+}
+
+int
+edit_rotate_add_arg(union edit_cmd * const cmd, struct edit_arg *arg)
+{
+    (void)cmd;
+    (void)arg;
+    return GED_OK;
+}
+int
+
+/**
+ * Scale an object by specifying points.
+ */
+edit_scale(struct ged *gedp, vect_t *scale_from, vect_t *scale_to,
+	    vect_t *center, vect_t *factor_from, vect_t *factor_to,
+	    struct db_full_path *path)
+{
+    (void)gedp;
+    (void)scale_from;
+    (void)scale_to;
+    (void)center;
+    (void)factor_from;
+    (void)factor_to;
+    (void)path;
+    return GED_OK;
+}
+
+int
+edit_scale_add_arg(union edit_cmd * const cmd, struct edit_arg *arg)
+{
+    (void)cmd;
+    (void)arg;
+    return GED_OK;
+}
+
+/**
+ * Maps edit_arg fields to the subcommand function's arguments and
+ * calls it.  Provides an common interface, so that all subcommands
+ * can use the same function pointer type. Ignores all edit_arg fields
+ * other than vector, and the first object to operate on in the
+ * objects edit_arg. Ignores all edit_arg->next arguments.
+ */
+int
+edit_scale_concise(struct ged *gedp, const union edit_cmd * const cmd)
+{
+    return edit_scale(gedp,
+		      cmd->scale.ref_scale.from.vector,
+		      cmd->scale.ref_scale.to.vector,
+		      cmd->scale.center.vector,
+		      cmd->scale.ref_factor.from.vector,
+		      cmd->scale.ref_factor.to.vector,
+		      cmd->scale.objects.object);
+}
+
+/**
+ * Perform a translation on an object by specifying points.
+ */
 int
 edit_translate(struct ged *gedp, point_t *from, point_t *to,
 		struct db_full_path *path)
 {
+    (void)gedp;
+    (void)from;
+    (void)to;
+    (void)path;
     return GED_OK;
 }
 
+/**
+ * Maps edit_arg fields to the subcommand function's arguments and
+ * calls it.  Provides an common interface, so that all subcommands
+ * can use the same function pointer type. Ignores all edit_arg fields
+ * other than vector, and the first object to operate on in the
+ * objects edit_arg. Ignores all edit_arg->next arguments.
+ */
 int
-edit_rotate(struct ged *gedp, point_t *axis_from, point_t *axis_to,
-	     point_t *center, point_t *angle_origin, point_t *angle_from,
-	     point_t *angle_to, struct db_full_path *path)
+edit_translate_concise(struct ged *gedp, const union edit_cmd * const cmd)
 {
-    return GED_OK;
+    return edit_translate(gedp,
+			  cmd->translate.ref_vector.from.vector,
+			  cmd->translate.ref_vector.to.vector,
+			  cmd->translate.objects.object);
 }
 
 int
-edit_scale(struct ged *gedp, point_t *scale_from, point_t *scale_to,
-	    point_t *center, point_t *factor_from, point_t *factor_to,
-	    struct db_full_path *path)
+edit_translate_add_arg(union edit_cmd * const cmd, struct edit_arg * const arg)
 {
+    (void)cmd;
+    (void)arg;
+    return GED_OK;
+}
+
+
+/* 
+ * Table of edit command data/functions
+ */
+static const struct edit_cmd_tab edit_cmds[] = {
+    {"help",		(char *)NULL, "[subcmd]", (char *)NULL, NULL,  NULL},
+#define EDIT_CMD_HELP 0 /* idx of "help" in edit_cmds */
+    {"rotate",		"R",
+	"[-R] [AXIS] [CENTER] ANGLE OBJECT ...",
+  	"[-R] [[[-n] -k {AXIS_FROM_OBJECT | AXIS_FROM_POS}]\n"
+	"[[-n] [-a | -r] {AXIS_TO_OBJECT | AXIS_TO_POS}]]\n"
+	    "[[-n] -c {CENTER_OBJECT | CENTER_POS}]\n"
+	    "[[-n] -O {ANGLE_ORIGIN_OBJECT| ANGLE_ORIGIN_POS}]\n"
+	    "[[-n] -k {ANGLE_FROM_OBJECT | ANGLE_FROM_POS}]\n"
+	    "[-n | -o] [-a | -r | -d]"
+		"{ANGLE_TO_OBJECT | ANGLE_TO_POS}} OBJECT ...",
+	&edit_rotate_concise,
+	&edit_rotate_add_arg
+    },
+    {"scale",		(char *)NULL,
+	"[SCALE] [CENTER] FACTOR OBJECT ...",
+	"[[[-n] -k {SCALE_FROM_OBJECT | SCALE_FROM_POS}]\n"
+	    "[-n] [-a | -r] {SCALE_TO_OBJECT | SCALE_TO_POS}]\n"
+	    "[[-n] -c {CENTER_OBJECT | CENTER_POS}]\n"
+	    "[[-n] -k {FACTOR_FROM_OBJECT | FACTOR_FROM_POS}]\n"
+	    "[-n] [-a | -r] {FACTOR_TO_OBJECT | FACTOR_TO_POS}"
+		" OBJECT ...",
+	&edit_scale_concise,
+	&edit_scale_add_arg
+    },
+    {"translate",	(char *)NULL,
+	"[FROM] TO OBJECT ...",
+	"[[-n] -k {FROM_OBJECT | FROM_POS}]\n"
+	    "[-n] [-a | -r] {TO_OBJECT | TO_POS} OBJECT ...",
+	&edit_translate_concise,
+	&edit_translate_add_arg
+    },
+    {(char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL, NULL, NULL}
+};
+
+
+/* 
+ * Command agnostic functions
+ */
+
+
+#if 0
+int
+edit_obj_to_coord(struct edit_arg *arg) {
+    return GED_OK;
+}
+int
+edit_obj_offset_to_coord(struct edit_arg *arg) {
+    /* edit_obj_to_coord(arg) + offsets */
     return GED_OK;
 }
 #endif
-				 
+
 /**
  * A wrapper for the edit commands. It adds the capability to perform
  * batch operations, and accepts objects and distances in addition to
- * coordinates. Normally, gedp should be set to NULL; it is only used
- * when arguments are built via command line (see ged_edit).
+ * coordinates.
+ *
+ * Set GED_QUIET or GED_ERROR bits in 'flags' to suppress or enable
+ * output to ged_result_str, respectively. 
+ *
+ * Returns GED_ERROR on failure, and GED_OK on success.
  */
 int
-edit(struct ged *gedp, union edit_cmd * const cmd)
+edit(struct ged *gedp, union edit_cmd * const cmd, const int flags)
 {
     (void)gedp;
     (void)cmd;
+    struct edit_arg *cur_arg = &cmd->cmd_line.args;
+    struct edit_arg *last_arg = NULL;
+
+    int noisy;
+
+    /* if flags conflict (GED_ERROR/GED_QUIET), side with verbosity */
+    noisy = (flags & GED_ERROR); 
+
+    if (noisy)
+	bu_vls_printf(gedp->ged_result_str, "this is a test");
+    return GED_ERROR;
+
+    /*
+     * TODO: First pass: validate the general structure of *cmd, expand
+     * all batch operators ("."), and do any other processing that is
+     * not specific to a command. 
+     */
+    do {
+
+	last_arg = cur_arg;
+	(void)last_arg;
+    } while ((cur_arg = cur_arg->next));
+    
+
+    /* 
+     * TODO: Second pass: command specific processing. Simultaneously
+     * validate that the syntax is valid for the requested command,
+     * translate object/modifiers to coordinates, and copy arguments
+     * into the appropriate *cmd elements. 
+     */
+ 
+    /* TODO: validate translate command arguments */
+
+    /* TODO: validate rotate command arguments */
+
+    /* TODO: validate scale command arguments */
+
 
     return GED_OK;
 }
@@ -1107,9 +1293,8 @@ edit(struct ged *gedp, union edit_cmd * const cmd)
  */
 HIDDEN int
 edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
-		int flags)
+		const int flags)
 {
-    const struct db_i *dbip = gedp->ged_wdbp->dbip;
     int noisy;
     char const *first_slash = NULL;
     char *endchr = NULL; /* for strtod's */
@@ -1173,7 +1358,7 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 	}
 
 	/* it may still be an obj, so quietly check db for object name */
-	if (db_lookup(dbip, str, LOOKUP_QUIET) != RT_DIR_NULL)
+	if (db_lookup(gedp->ged_wdbp->dbip, str, LOOKUP_QUIET) != RT_DIR_NULL)
 	    goto convert_obj;
     }
 
@@ -1309,7 +1494,6 @@ edit_strs_to_arg(struct ged *gedp, int *argc, const char **argv[],
 int
 ged_edit(struct ged *gedp, int argc, const char *argv[])
 {
-    /* struct db_i *dbip = gedp->ged_wdbp->dbip; */
     const char * const cmd_name = argv[0];
     const char *subcmd_name = NULL;
     union edit_cmd subcmd;
@@ -1497,7 +1681,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     (void)edit_strs_to_arg(gedp, &argc, &argv, cur_arg, GED_QUIET);
     
     if (argc == 0) {
-	ret = edit(gedp, &subcmd);
+	ret = edit(gedp, &subcmd, GED_ERROR);
 	edit_cmd_free(&subcmd);
 	return ret;
     }
@@ -1521,6 +1705,8 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     while ((c = bu_getopt(argc, (char * const *)argv, ":k:a:r:x:y:z:")) != -1) {
 	if (bu_optind >= argc)
 	    /* last element is an option */
+	    /* FIXME: this isn't enough; needs to detect all cases
+	     * where operand is missing. Ex: `edit cmd -k 5 5 5` */
 	    goto err_missing_operand;
 
 	conv_flags = GED_ERROR;
@@ -1622,7 +1808,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	/* BU_ASSERT(argc == 0); */
     }
 
-    ret = edit(gedp, &subcmd);
+    ret = edit(gedp, &subcmd, GED_ERROR);
     edit_cmd_free(&subcmd);
     return ret;
 
@@ -1639,10 +1825,10 @@ err_missing_operand:
     return GED_ERROR;
 
 err_option_overflow:
-    bu_vls_printf(gedp->ged_result_str, "too many options: ");
+    bu_vls_printf(gedp->ged_result_str, "too many options given, \"");
     for (i = 0; i < EDIT_MAX_ARG_OPTIONS; ++i)
-	bu_vls_printf(gedp->ged_result_str, "-%c/", cur_arg->cl_options[i]);
-    bu_vls_printf(gedp->ged_result_str, "-%c", c);
+	bu_vls_printf(gedp->ged_result_str, "-%c ", cur_arg->cl_options[i]);
+    bu_vls_printf(gedp->ged_result_str, "-%c\"", c);
     edit_cmd_free(&subcmd);
     return GED_ERROR;
 }
