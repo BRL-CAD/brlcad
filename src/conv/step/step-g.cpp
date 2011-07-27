@@ -99,7 +99,7 @@ main(int argc, char *argv[])
     if (bu_file_exists(output_file)) {
 	bu_exit(1, "ERROR: refusing to overwrite existing \"%s\" file", output_file);
     }
-    if (!bu_file_exists(argv[0]) || BU_STR_EQUAL(argv[0], "-")) {
+    if (!bu_file_exists(argv[0]) && !BU_STR_EQUAL(argv[0], "-")) {
 	bu_exit(2, "ERROR: unable to read input \"%s\" STEP file", argv[0]);
     }
 
@@ -115,8 +115,10 @@ main(int argc, char *argv[])
 
 	BRLCADWrapper *dotg  = new BRLCADWrapper();
 
+	std::cerr << "Writing output file [" << oflnm << "] ...";
 	if (dotg->OpenFile(oflnm.c_str())) {
 	    step->convert(dotg);
+	    std::cerr << "done!" << std::endl;
 	} else {
 	    std::cerr << "ERROR: unable to open BRL-CAD output file [" << oflnm << "]" << std::endl;
 	    ret = 3;
