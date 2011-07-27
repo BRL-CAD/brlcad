@@ -55,6 +55,9 @@ STEPWrapper::~STEPWrapper()
 
 bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 {
+    if (!dotg)
+	return false;
+
     this->dotg = dot_g;
 
     int num_ents = instance_list.InstanceCount();

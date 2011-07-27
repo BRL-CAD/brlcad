@@ -114,20 +114,25 @@ main(int argc, char *argv[])
 	step->printLoadStatistics();
 
 	BRLCADWrapper *dotg  = new BRLCADWrapper();
-
-	std::cerr << "Writing output file [" << oflnm << "] ...";
-	if (dotg->OpenFile(oflnm.c_str())) {
-	    step->convert(dotg);
-	    std::cerr << "done!" << std::endl;
-	} else {
-	    std::cerr << "ERROR: unable to open BRL-CAD output file [" << oflnm << "]" << std::endl;
+	if (!dotg) {
+	    std::cerr << "ERROR: unable to create BRL-CAD instance" << std::endl;
 	    ret = 3;
+	} else {
+
+	    std::cerr << "Writing output file [" << oflnm << "] ...";
+	    if (dotg->OpenFile(oflnm.c_str())) {
+		step->convert(dotg);
+		std::cerr << "done!" << std::endl;
+	    } else {
+		std::cerr << "ERROR: unable to open BRL-CAD output file [" << oflnm << "]" << std::endl;
+		ret = 4;
+	    }
+
+	    dotg->Close();
+
+	    Factory::DeleteObjects();
+	    delete dotg;
 	}
-
-	dotg->Close();
-
-	Factory::DeleteObjects();
-	delete dotg;
     }
     delete step;
 
