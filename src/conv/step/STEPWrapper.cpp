@@ -58,7 +58,6 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
     this->dotg = dot_g;
 
     int num_ents = instance_list.InstanceCount();
-    //std::cout << "Loaded " << num_ents << "instances from STEP file \"" << stepfile << "\"" << std::endl;
     for (int i=0; i < num_ents; i++) {
 	SCLP23(Application_instance) *sse = instance_list.GetSTEPentity(i);
 	if (sse == NULL)
@@ -1096,18 +1095,7 @@ STEPWrapper::printEntityAggregate(STEPaggregate *sa, int level)
 void
 STEPWrapper::printLoadStatistics()
 {
-
     int num_ents = instance_list.InstanceCount();
-
-    //std::cout << "Loaded " << num_ents << "instances from STEP file \"" << stepfile << "\"" << std::endl;
-    //for (int i=0; i < num_ents; i++) {
-    //	SCLP23(Application_instance) *se = instance_list.GetSTEPentity(i);
-//
-    //	std::cout << i << ":" << std::endl;
-    //	printEntity(se, 1);
-    //	std::cout << std::endl;
-    //}
-
     int num_schma_ents = registry->GetEntityCnt();
 
     // "Reset" the Schema and Entity hash tables... this sets things up
@@ -1123,8 +1111,13 @@ STEPWrapper::printLoadStatistics()
     // "Loop" through the schema, building one of each entity type.
 
     const EntityDescriptor *ent;   // needs to be declared const...
-    std::string filler = "....................................................................................";
-    std::cout << "Loaded " << num_ents << " instances from STEP file \"" << stepfile << "\"" << std::endl;
+    std::string filler = ".....................................................................";
+    std::cout << "Loaded " << num_ents << " instances from ";
+    if (strcmp(stepfile.c_str(), "-") == 0) {
+	std::cout << "standard input" << std::endl;
+    } else {
+	std::cout << "STEP file \"" << stepfile << "\"" << std::endl;
+    }
 
     int numEntitiesUsed=0;
     for (int i=0; i < num_schma_ents; i++) {
