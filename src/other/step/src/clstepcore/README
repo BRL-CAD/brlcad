@@ -1,7 +1,7 @@
 This directory contains source code defining a collection of
 application independent classes that includes a common "base" class
 for all entity class definitions as well as classes for maintaining
-meta-information about schemas in the schema class library.  These
+meta-information about schemas in the schema class library.  These 
 core classes are also used by the editor and probe-ui libraries.  The
 core classes use a common set of virtual functions for reading and
 writing to exchange files, reading and writing user interface formats,
@@ -9,18 +9,21 @@ and validating their data.
 
 Directory Contents:
 
-sdaiEnum.cc, sdaiEnum.h
-Defines SdaiEenumeration (previous STEPenumeration), an abstract base
-class, and derived classes Logical and Boolean which inherit from
-SdaiEnumeration.  Logical and Boolean model the LOGICAL and BOOLEAN
-types in EXPRESS.  Other enumerated types can be implemented by
-subclassing SdaiEnumeration.
+Enumeration.cc, Enumeration.h
+Defines STEPenumeration, an abstract base class, and derived classes 
+Logical and Boolean which inherit from STEPenumeration.  Logical and
+Boolean model the LOGICAL and BOOLEAN types in EXPRESS.  Other
+enumerated types can be implemented by subclassing STEPenumeration.
 
 ExpDict.cc, ExpDict.h, ExpDict.inline.cc
 Defines classes representing descriptors for EXPRESS schemas,
 entities, attributes, and types.  Instances of these classes comprise
 a dictionary to the contents of an application model's schema.  The
 instances populate a Registry object (see Registry below).
+
+RealAggregate.cc, RealAggregate.h
+Defines RealAggregate, an abstract subclass of STEPaggregate for
+implementing aggregations of real numbers.
 
 Registry.h, Registry.inline.cc
 Defines Registry, a class with three data members: a hash table of
@@ -33,9 +36,7 @@ STEPaggregate.cc, STEPaggregate.h
 Defines a collection of abstract classes for representing aggregations
 of simple types, enumerations, selects, and entity types.  The
 following subclasses of STEPaggregate are stubs and have yet to be
-implemented: Array, Bag, Set, List.  Defines RealAggregate, an
-abstract subclass of STEPaggregate for implementing aggregations of
-real numbers.
+implemented: Array, Bag, Set, List.
 
 STEPattribute.cc, STEPattribute.h, STEPattribute.inline.cc
 Defines STEPattribute, an element in a STEPentity's list of attributes.
@@ -45,18 +46,22 @@ Defines the class STEPattributeList -- a list of pointers to
 STEPattribute objects.  The nodes on the list point to STEPattributes.
 STEPattributeList is derived from SingleLinkList.
 
-sdaiSelect.cc, sdaiSelect.h
+STEPentity.cc, STEPentity.h
+Defines STEPentity, the abstract base class of all generated entity 
+classes.
+
+STEPselect.cc, STEPselect.h
 Defines SdaiSelect, an abstract base class implementing the EXPRESS 
 SELECT data type.  
 
-sdaiString.cc, sdaiString.h
+STEPstring.cc, STEPstring.h
 Defines SdaiString, a class implementing the EXPRESS STRING data type.
 
 STEPundefined.cc, STEPundefined.h
 Defines SCLundefined, a class for implementing any types not defined
 in other SCL classes.  
 
-sdaiBinary.cc, sdaiBinary.h
+SdaiBinary.cc, SdaiBinary.h
 Defines SdaiBinary, a class implementing the EXPRESS BINARY date type.
 
 SingleLinkList.cc, SingleLinkList.h, SingleLinkList.inline.cc
@@ -74,5 +79,4 @@ numerical data.
 sdai.h
 This file is basically a bunch of #include statements for all of the
 header files corresponding to the specifications in Annex D of Part 22
-(the proposaed SDAI/C++ language binding).  Defines STEPentity, the
-abstract base class of all generated entity classes.
+(the proposaed SDAI/C++ language binding).
