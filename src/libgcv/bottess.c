@@ -118,33 +118,25 @@ soup_add_face(struct soup_s *s, point_t a, point_t b, point_t c, const struct bn
 }
 
 static int
-split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *right, unsigned long int right_face, const struct bn_tol *tol) {
+split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *right, unsigned long int right_face, const struct bn_tol *UNUSED(tol)) {
     struct face_s *lf, *rf;
-    fastf_t dot[3];
-    vect_t dir;
+    fastf_t d, dot[3];
 
     lf = left->faces+left_face;
     rf = right->faces+right_face;
 
-    *dot = VDOT(lf->plane, rf->plane);
-
-    if(BN_VECT_ARE_PARALLEL(*dot, tol)) {
-	if(!NEAR_EQUAL(lf->plane[H],rf->plane[H],tol->dist))
-	    return 1;	/* parallel and not colocated. */
-	/* hm, colocated, need to figure out how to splice correctly? */
+    /* shortcut out if all points of triangle are on the same side of plane b
+     * and visa versa (from Möller97) */
+    d=-VDOT(lf->plane, lf->vert[0]);
+    dot[0] = VDOT(lf->plane, rf->vert[0])+d;
+    if((dot[0] * (VDOT(lf->plane, rf->vert[1])+d))>0 && (dot[0] * (VDOT(lf->plane, rf->vert[2])+d))>0)
 	return 2;
-    }
+    d=-VDOT(rf->plane, rf->vert[0]);
+    dot[0] = VDOT(rf->plane, lf->vert[0])+d;
+    if((dot[0] * VDOT(rf->plane, lf->vert[1])+d) > 0 && (dot[0] * VDOT(rf->plane, lf->vert[2])+d) > 0)
+	return 2;
 
-    VCROSS(dir, lf->plane, rf->plane);
-
-    /* test if the intersect line is on both triangles,  if so, alter the soup */
-#if 0
-    if(intersects()) {
-	point_t
-    }
-#endif
-
-    return 0;
+    return -1;
 }
 
 static struct soup_s *
@@ -234,9 +226,19 @@ split_faces(union tree *left_tree, union tree *right_tree, const struct bn_tol *
 		lf->min[Z]>rf->max[Z] || lf->max[Z]>lf->max[Z])
 		continue;
 	    /* two possibly overlapping faces found */
-	    split_face(l, i, r, j, tol);
+	    switch(split_face(l, i, r, j, tol)) {
+		case 2:
+		    putchar('.');
+		    break;
+		case -1:
+		    putchar('_');
+		    break;
+		default:
+		    putchar('?');
+	    } 
 	}
     }
+    putchar('\n');
 }
 
 static void
