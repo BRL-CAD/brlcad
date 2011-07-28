@@ -73,11 +73,17 @@ struct RenderInfo {
 
 /* Required structure to initialize an OSL shader */
 struct ShaderInfo {
+
+    typedef std::pair< TypeDesc, Vec3 > TypeVec;
+
     std::string shadername; // Name of the shader (type of shader)
     std::string layername;  // Name of the layer  (name of this partilar instance)
-    std::vector< std::pair<std::string, float> > fparam;
-    std::vector< std::pair<std::string, Color3> > cparam;
-    std::vector< std::pair<std::string, std::string> > sparam;
+    std::vector< std::pair<std::string, int> > iparam;         // int parameters
+    std::vector< std::pair<std::string, float> > fparam;       // float parameters
+    std::vector< std::pair<std::string, Color3> > cparam;      // color parameters
+    std::vector< std::pair<std::string, TypeVec > > vparam;    // normal/vector/point parameters
+    std::vector< std::pair<std::string, std::string> > sparam; // string parameters
+    std::vector< std::pair<std::string, Matrix44 > > mparam;   // matrix parameters
 };
 /* Represents a parameter a shader */
 struct ShaderParam {
@@ -157,7 +163,7 @@ public:
 /*
  * Local Variables:
  * tab-width: 8
- * mode: C
+ * mode: C++
  * c-basic-offset: 4
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"

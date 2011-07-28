@@ -182,6 +182,15 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
 		fprintf(stderr, "[Error] Missing parameter type\n");
 		return -1;
 	    }
+	    else if(strcmp(item, "int") == 0){
+		item = strtok(NULL, "#");
+		if(item == NULL){
+		    fprintf(stderr, "[Error] Missing float value\n");
+		    return -1;
+		}
+		int value = atoi(item);
+		sh_info.iparam.push_back(std::make_pair(param_name, value));
+	    }
 	    else if(strcmp(item, "float") == 0){
 		item = strtok(NULL, "#");
 		if(item == NULL){
@@ -203,6 +212,42 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
 		}
 		sh_info.cparam.push_back(std::make_pair(param_name, color_value));
 	    }
+	    else if(strcmp(item, "normal") == 0 || strcmp(item, "point") == 0 || strcmp(item, "vector") == 0){
+
+		TypeDesc type;	
+		std::string type_name(item);
+		if(strcmp(item, "normal") == 0) type = TypeDesc::TypeNormal;
+		else if(strcmp(item, "point") == 0) type = TypeDesc::TypePoint;
+		else if(strcmp(item, "vector") == 0) type = TypeDesc::TypeVector;
+
+		Vec3 vec_value;
+		for(int i=0; i<3; i++){
+		    item = strtok(NULL, "#");
+		    if(item == NULL){
+			fprintf(stderr, "[Error] Missing %d-th component of %s value\n", i, type_name.c_str());
+			return -1;
+		    }
+		    vec_value[i] = atof(item);
+		}
+		ShaderInfo::TypeVec type_vec(type, vec_value);
+		sh_info.vparam.push_back(std::make_pair(param_name, type_vec));
+	    }
+	    else if(strcmp(item, "matrix") == 0){
+		fprintf(stderr, "matrix\n");
+		Matrix44 mat_value;
+		for(int i=0; i<4; i++)
+		    for(int j=0; j<4; j++){
+			item = strtok(NULL, "#");
+			if(item == NULL){
+			    fprintf(stderr, "[Error] Missing %d-th component of matrix value\n", i*4 + j);
+			    return -1;
+			}
+			mat_value[i][j] = atof(item); 
+			fprintf(stderr, "%.2lf ", mat_value[i][j]);
+		    }
+		fprintf(stderr, "\n");
+		sh_info.mparam.push_back(std::make_pair(param_name, mat_value));
+	    }
 	    else if(strcmp(item, "string") == 0){
 		item = strtok(NULL, "#");
 		if(item == NULL){
@@ -213,7 +258,7 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
 		sh_info.sparam.push_back(std::make_pair(param_name, string_value));
 	    }
 	    else {
-		/* FIXME: add support to TypeInt, TypePoint, TypeVector, TypeNormal, TypeString parameters */
+		/* FIXME: add support to TypePoint, TypeVector, TypeNormal parameters */
 		fprintf(stderr, "[Error] Unknown parameter type\n");
 		return -1;			
 	    }
@@ -449,8 +494,6 @@ osl_refraction_hit(struct application *ap, struct partition *PartHeadp, struct s
 	sw.sw_extinction = 0;
 	sw.sw_xmitonly = 0;		/* want full data */
 	sw.sw_inputs = 0;		/* no fields filled yet */
-	//sw.sw_frame = curframe;
-	//sw.sw_pixeltime = sw.sw_frametime = curframe * frame_delta_t;
 	sw.sw_segs = finished_segs;
 	VSETALL(sw.sw_color, 1);
 	VSETALL(sw.sw_basecolor, 1);
