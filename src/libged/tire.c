@@ -439,7 +439,7 @@ static void
 CalcInputVals(fastf_t *inarray, fastf_t *outarray)
 {
     fastf_t A, B, C, D, E, Fp;
-    fastf_t App, Bpp, Cpp;
+    fastf_t App, Cpp;
     fastf_t x_0, y_0;
     fastf_t theta;
     fastf_t length1, length2;
@@ -464,7 +464,7 @@ CalcInputVals(fastf_t *inarray, fastf_t *outarray)
 
     /* Calculate A'', B'' and C'' - B'' is zero with above theta choice */
     App = A * cos(theta) * cos(theta) + B * cos(theta) * sin(theta) + C * sin(theta) * sin(theta);
-    Bpp = 2 * (C - A) * cos(theta) * sin(theta) + B * cos(theta) * cos(theta) - B * sin(theta) * sin(theta);
+    /* Bpp = 2 * (C - A) * cos(theta) * sin(theta) + B * cos(theta) * cos(theta) - B * sin(theta) * sin(theta); */
     Cpp = A * sin(theta) * sin(theta) - B * sin(theta) * cos(theta) + C * cos(theta) * cos(theta);
 
     /* Solve for semimajor and semiminor lengths*/
@@ -903,7 +903,6 @@ MakeTreadPattern2(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
     int i, j;
     int vertcounts[SKETCHNUM2];
     point2d_t *verts[SKETCHNUM2];
-    unsigned char rgb[3];
     point2d_t verts1[] = {
 	{ 0, 0 },
 	{ 0, .1 },
@@ -937,8 +936,6 @@ MakeTreadPattern2(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 	{ -.1, .87 },
 	{ .8, .8 }
     };
-
-    VSET(rgb, 40, 40, 40);
 
     bu_vls_init(&str);
     bu_vls_init(&str2);
@@ -1007,7 +1004,6 @@ MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
     int i, j;
     int vertcounts[SKETCHNUM1];
     point2d_t *verts[SKETCHNUM1];
-    unsigned char rgb[3];
     point2d_t verts1[] = {
 	{ .9, 0 },
 	{ .6, .3 },
@@ -1072,8 +1068,6 @@ MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 	{ 1.1, .9 },
 	{ 1.1, .88 }
     };
-
-    VSET(rgb, 40, 40, 40);
 
     bu_vls_init(&str);
     bu_vls_init(&str2);

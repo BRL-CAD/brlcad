@@ -210,7 +210,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
     regmatch_t *result_locations;
     struct bu_vls current_substring, attr_vls, val_vls, curr_op_vls, next_op_vls;
     struct bu_mapped_file *redtmpfile;
-    int attrstart, attrend, attrcumulative, name_start, name_end, treecumulative;
+    int attrstart, attrend, attrcumulative, name_end;
     int ret, gedret, combtagstart, combtagend;
     struct bu_attribute_value_set avs;
     matp_t matrix = {0};
@@ -366,8 +366,6 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls **final_name)
 	node_count++;
     }
     currptr = (const char *)(redtmpfile->buf) + combtagend;
-    treecumulative = 0;
-    name_start = 0;
     name_end = 0;
     bu_vls_init(&curr_op_vls);
     bu_vls_init(&next_op_vls);

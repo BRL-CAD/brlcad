@@ -110,7 +110,6 @@ ps_draw_solid(struct ged *gedp, FILE *fp, struct solid *sp, matp_t psmat)
     fastf_t dist;
     struct bn_vlist *vp = (struct bn_vlist *)&sp->s_vlist;
     fastf_t delta;
-    int useful = 0;
 
     fprintf(fp, "%f %f %f setrgbcolor\n",
 	    PS_COLOR(sp->s_color[0]),
@@ -216,7 +215,6 @@ ps_draw_solid(struct ged *gedp, FILE *fp, struct solid *sp, matp_t psmat)
 		    PS_COORD(start[1] * 2047),
 		    PS_COORD(fin[0] * 2047),
 		    PS_COORD(fin[1] * 2047));
-	    useful = 1;
 	}
     }
 }

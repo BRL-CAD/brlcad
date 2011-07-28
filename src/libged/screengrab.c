@@ -48,7 +48,6 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
     int width = 0;
     int height = 0;
     int bytes_per_pixel = 0;
-    int bits_per_channel = 0;
     int bytes_per_line = 0;
     static const char *usage = "image_name.ext";
     unsigned char **rows = NULL;
@@ -83,7 +82,6 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
     width = dmp->dm_width;
     height = dmp->dm_height;
     bytes_per_pixel = 3;
-    bits_per_channel = dmp->dm_bits_per_channel;
     bytes_per_line = dmp->dm_width * bytes_per_pixel;
 
     /* create image file */
