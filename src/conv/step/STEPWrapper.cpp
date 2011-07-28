@@ -42,6 +42,7 @@ STEPWrapper::STEPWrapper()
     instance_list = new InstMgr();
     registry = NULL;
     sfile = NULL;
+    dotg = NULL;
 }
 
 
@@ -50,7 +51,7 @@ STEPWrapper::~STEPWrapper()
     delete instance_list;
     delete sfile;
     delete registry;
-    delete dotg;
+    dotg = NULL;
 }
 
 
