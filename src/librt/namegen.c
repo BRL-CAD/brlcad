@@ -81,18 +81,20 @@ struct formatting_style {
     int pos_of_type_id_char;
 };
 
+
 static int
 count_format_blocks(char *formatstring)
 {
     size_t i;
     int components = 0;
-    for (i=0; i < strlen(formatstring); i++){
+    for (i=0; i < strlen(formatstring); i++) {
 	if (formatstring[i] == '(') {
 	    components++;
 	}
     }
     return components;
 }
+
 
 static int
 is_number(char *substring)
@@ -107,6 +109,7 @@ is_number(char *substring)
 	return -1;
     }
 }
+
 
 static int
 contains_number(char *substring)
@@ -147,41 +150,48 @@ test_regex(char *name, int style)
     standard2->pos_of_type_id_char = 5;
 
     if (style == 1) {
-	ret=regcomp(&compiled_regex, bu_vls_addr(&(standard1->regex_spec)), REG_EXTENDED);
+	ret = regcomp(&compiled_regex, bu_vls_addr(&(standard1->regex_spec)), REG_EXTENDED);
+	if (ret != 0) {
+	    perror("regcomp");
+	}
 	components = count_format_blocks(bu_vls_addr(&(standard1->regex_spec)));
     }
 
     if (style == 2) {
-	ret=regcomp(&compiled_regex, bu_vls_addr(&(standard2->regex_spec)), REG_EXTENDED);
+	ret = regcomp(&compiled_regex, bu_vls_addr(&(standard2->regex_spec)), REG_EXTENDED);
+	if (ret != 0) {
+	    perror("regcomp");
+	}
 	components = count_format_blocks(bu_vls_addr(&(standard2->regex_spec)));
     }
 
     result_locations = (regmatch_t *)bu_calloc(components + 1, sizeof(regmatch_t), "array to hold answers from regex");
 
-    bu_log("components: %d\n",components);
+    bu_log("components: %d\n", components);
 
     iterators = (int *)bu_calloc(components, sizeof(int), "array for iterator status of results");
 
-    ret=regexec(&compiled_regex, name, components+1, result_locations, 0);
-
-    bu_vls_init(&testresult);
-    for (i=1; i<=components; i++) {
-	bu_vls_trunc(&testresult,0);
-	bu_vls_strncpy(&testresult, name+result_locations[i].rm_so, result_locations[i].rm_eo - result_locations[i].rm_so);
-	if (is_number(bu_vls_addr(&testresult)) == 1) {
-	    iterators[i-1] = 1;
-	} else {
-	    if  (contains_number(bu_vls_addr(&testresult)) == 1) {
-		iterators[i-1] = 2;
+    ret = regexec(&compiled_regex, name, components+1, result_locations, 0);
+    if (ret == 0) {
+	bu_vls_init(&testresult);
+	for (i=1; i<=components; i++) {
+	    bu_vls_trunc(&testresult, 0);
+	    bu_vls_strncpy(&testresult, name+result_locations[i].rm_so, result_locations[i].rm_eo - result_locations[i].rm_so);
+	    if (is_number(bu_vls_addr(&testresult)) == 1) {
+		iterators[i-1] = 1;
+	    } else {
+		if  (contains_number(bu_vls_addr(&testresult)) == 1) {
+		    iterators[i-1] = 2;
+		}
 	    }
+	    bu_log("%s\n", bu_vls_addr(&testresult));
 	}
-	bu_log("%s\n",bu_vls_addr(&testresult));
-    }
 
-    for (i=0; i<components; i++) {
-	bu_log("%d ", iterators[i]);
+	for (i=0; i<components; i++) {
+	    bu_log("%d ", iterators[i]);
+	}
+	bu_log("\n");
     }
-    bu_log("\n");
 
     bu_free(result_locations, "free regex results");
 }
@@ -193,6 +203,7 @@ struct increment_data {
     int numerval;
 };
 
+
 struct object_name_data {
     struct bu_list name_components;
     struct bu_list separators;
@@ -200,6 +211,7 @@ struct object_name_data {
     struct bu_vls extension;
     int object_type; /* 0 = unknown, 1 = solid, 2 = comb, 3 = region, 4 = assembly*/
 };
+
 
 struct object_name_item {
     struct bu_list l;
@@ -211,32 +223,33 @@ int
 main()
 {
     /*
-    int num_of_copies = 10;
-    int j;
-    char **av;
-    struct db_i *dbip;
+      int num_of_copies = 10;
+      int j;
+      char **av;
+      struct db_i *dbip;
     */
     struct bu_vls temp;
     bu_vls_init(&temp);
-    bu_vls_trunc(&temp,0);
-    bu_vls_printf(&temp,"%s","s.bcore12.b3");
+    bu_vls_trunc(&temp, 0);
+    bu_vls_printf(&temp, "%s", "s.bcore12.b3");
 
-    test_regex("core-001a1b.s1+1",1);
-    test_regex("s.bcore12.b3",1);
-    test_regex("comb1.c",1);
-    test_regex("comb2.r",1);
-    test_regex("comb3.r",1);
-    test_regex("assem1",1);
-    test_regex("test.q",1);
-    test_regex("core-001a1b.s1+1",2);
-    test_regex("s.bcore12.b3",2);
-    test_regex("comb1.c",2);
-    test_regex("comb2.r",2);
-    test_regex("assem1",2);
-    test_regex("test.q",2);
+    test_regex("core-001a1b.s1+1", 1);
+    test_regex("s.bcore12.b3", 1);
+    test_regex("comb1.c", 1);
+    test_regex("comb2.r", 1);
+    test_regex("comb3.r", 1);
+    test_regex("assem1", 1);
+    test_regex("test.q", 1);
+    test_regex("core-001a1b.s1+1", 2);
+    test_regex("s.bcore12.b3", 2);
+    test_regex("comb1.c", 2);
+    test_regex("comb2.r", 2);
+    test_regex("assem1", 2);
+    test_regex("test.q", 2);
 
     return 1;
 }
+
 
 /** @} */
 /*

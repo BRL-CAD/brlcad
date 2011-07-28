@@ -983,9 +983,12 @@ rt_revolve_uv(struct application *ap, struct soltab *stp, struct hit *hitp, stru
     fastf_t angle;
     long *lng;
     struct line_seg *lsg;
+
+    /*
     struct carc_seg *csg;
     struct nurb_seg *nsg;
     struct bezier_seg *bsg;
+    */
 
     if (ap) RT_CK_APPLICATION(ap);
 
@@ -1032,13 +1035,13 @@ rt_revolve_uv(struct application *ap, struct soltab *stp, struct hit *hitp, stru
 		    }
 		    break;
 		case CURVE_CARC_MAGIC:
-		    csg = (struct carc_seg *)lng;
+		    /* csg = (struct carc_seg *)lng; */
 		    break;
 		case CURVE_BEZIER_MAGIC:
-		    bsg = (struct bezier_seg *)lng;
+		    /* bsg = (struct bezier_seg *)lng; */
 		    break;
 		case CURVE_NURB_MAGIC:
-		    nsg = (struct nurb_seg *)lng;
+		    /* nsg = (struct nurb_seg *)lng; */
 		    break;
 		default:
 		    bu_log("rt_revolve_prep: ERROR: unrecognized segment type!\n");

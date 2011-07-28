@@ -237,16 +237,12 @@ rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 void
 rt_nmg_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
-    struct half_specific *halfp;
-
     if (!hitp || !rp)
 	return;
 
     if (stp) RT_CK_SOLTAB(stp);
     RT_CK_RAY(rp);
     RT_CK_HIT(hitp);
-
-    halfp = (struct half_specific *)stp->st_specific;
 
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
 }

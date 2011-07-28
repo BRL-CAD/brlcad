@@ -1645,14 +1645,14 @@ nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m)
  * @return -1 on failure
  */
 int
-rt_ell_params(struct pc_pc_set *pcs, const struct rt_db_internal *ip)
+rt_ell_params(struct pc_pc_set *UNUSED(pcs), const struct rt_db_internal *UNUSED(ip))
 {
+#if 0
     struct rt_ell_internal *eip;
     eip = (struct rt_ell_internal *)ip->idb_ptr;
 
     if (!pcs) return 0;
 
-#if 0
     pcs->ps = bu_calloc(pcs->n_params, sizeof (struct pc_param), "pc_param");
     pcs->cs = bu_calloc(pcs->n_constraints, sizeof (struct pc_constrnt), "pc_constrnt");
 
@@ -1672,6 +1672,7 @@ rt_ell_params(struct pc_pc_set *pcs, const struct rt_db_internal *ip)
     pcs->ps[3].ptype = pc_value;
     pcs->ps[3].pval.vectorp = (vectp_t) &(eip->c);
 #endif
+
     return 0;			/* OK */
 }
 

@@ -3585,6 +3585,9 @@ static const struct state_transitions nmg_state_is_in[17] = {
 };
 
 
+#if 0
+/* FIXME: Dead code??? --CSM */
+
 /**
  * N M G _ I N S E R T _ V U _ I F _ O N _ E D G E
  *
@@ -3667,6 +3670,7 @@ nmg_insert_vu_if_on_edge(struct vertexuse *vu1, struct vertexuse *vu2, struct ed
     }
     return 0;
 }
+#endif
 
 
 /**

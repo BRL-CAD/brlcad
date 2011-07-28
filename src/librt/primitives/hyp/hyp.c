@@ -433,7 +433,7 @@ rt_hyp_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 	(struct hyp_specific *)stp->st_specific;
     vect_t vert, horiz;
     point_t hp;
-    fastf_t c, h, z, k1, k2, denom;
+    fastf_t c, h, k1, k2, denom;
     fastf_t x, y, ratio;
 
     switch (hitp->hit_surfno) {
@@ -451,7 +451,6 @@ rt_hyp_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 	    /* vertical curvature */
 	    c = hyp->hyp_c;
 	    h = sqrt(hp[X]*hp[X] + hp[Y]*hp[Y]);
-	    z = hp[Z];
 
 	    denom = 1 + (c*c*c*c)*(hp[Z]*hp[Z])/(h*h);
 	    denom = sqrt(denom*denom*denom);
@@ -678,7 +677,7 @@ int
 rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     fastf_t c, dtol, f, mag_a, mag_h, ntol, r1, r2, r3, cprime;
-    fastf_t **ellipses, theta_prev, theta_new;
+    fastf_t **ellipses, theta_new;
     int *pts_dbl, face, i, j, nseg;
     int jj, nell;
     mat_t invRoS;
@@ -872,7 +871,6 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* make ellipses at each z level */
     i = 0;
     nseg = 0;
-    theta_prev = bn_twopi;
     pos_a = pts_a;	/*->next; */	/* skip over apex of hyp */
     pos_b = pts_b;	/*->next; */
     while (pos_a) {
@@ -892,7 +890,6 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    /* array for each triangular face */
 	    outfaceuses = (struct faceuse **)
 		bu_malloc((face+1) * sizeof(struct faceuse *), "hyp: *outfaceuses[]");
-	    theta_prev = theta_new;
 	} else {
 	    pts_dbl[i] = 0;
 	}

@@ -367,27 +367,33 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 {
     struct rt_metaball_internal *mb = (struct rt_metaball_internal *)stp->st_specific;
     struct seg *segp = NULL;
-    int retval = 0, fhin = 1;
+    int retval = 0;
     fastf_t step, distleft;
-    point_t p, inc, inco;
+    point_t p, inc;
+
+    /* switching behavior to retain old code for performance and correctness
+     * comparisons. */
+#define SHOOTALGO 3
+
+#if SHOOTALGO == 2
+    int fhin = 1;
+#endif
 
     step = mb->initstep;
     distleft = (rp->r_max-rp->r_min) + step * 3.0;
 
     VMOVE(p, rp->r_pt);
     VSCALE(inc, rp->r_dir, step); /* assume it's normalized and we want to creep at step */
-    VMOVE(inco, inc);
 
     /* walk back out of the solid */
     while(rt_metaball_point_value((const point_t *)&p, mb) >= mb->threshold) {
+#if SHOOTALGO == 2
 	fhin = -1;
+#endif
 	distleft += step;
 	VSUB2(p, p, inc);
     }
 
-    /* switching behavior to retain old code for performance and correctness
-     * comparisons. */
-#define SHOOTALGO 3
 #if SHOOTALGO == 2
     /* we hit, but not as fine-grained as we want. So back up one step,
      * cut the step size in half and start over...
@@ -413,7 +419,6 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 		if ( !in )
 		    if (step<=mb->finalstep) {
 			STEPIN(out)
-			VMOVE(inc, inco);
 			step = mb->initstep;
 			mb_stat = 0;
 			if (ap->a_onehit != 0 || segsleft <= 0)
@@ -431,7 +436,6 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 			/* reset the ray-walk shtuff */
 			mb_stat = 1;
 			VADD2(p, p, inc);	/* set p to a point inside */
-			VMOVE(inc, inco);
 			step = mb->initstep;
 		    } else
 			STEPBACK

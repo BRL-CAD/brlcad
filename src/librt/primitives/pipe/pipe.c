@@ -350,7 +350,7 @@ rt_pipe_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     while (1) {
         vect_t n1, n2;
         vect_t norm;
-        vect_t v1, v2;
+        vect_t v1;
         vect_t diff;
         fastf_t angle;
         fastf_t dist_to_bend;
@@ -399,7 +399,6 @@ rt_pipe_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
         
         /* and bend section */
         VCROSS(v1, n1, norm);
-        VCROSS(v2, v1, norm);
         VJOIN1(bend_center, bend_start, -pp2->pp_bendradius, v1);
         rt_bend_pipe_prep(stp, head, bend_center, bend_start, bend_end, pp2->pp_bendradius, angle,
 			  pp2->pp_od, pp2->pp_id, pp1->pp_od, pp3->pp_od);
@@ -1237,12 +1236,9 @@ rt_pipe_elim_dups(struct hit *hit, int *nh, struct xray *rp, struct soltab *stp)
     hitNo = 0;
     while (hitNo < ((*nh)-1)) {
         int hitNoPlus = hitNo + 1;
-        struct hit *first;
-        struct hit *second;
-        
-        first = &hit[hitNo];
-        second = &hit[hitNoPlus];
-        
+        /* struct hit *first = &hit[hitNo]; */
+        struct hit *second = &hit[hitNoPlus];
+
         /* keep first entrance hit, eliminate all successive entrance hits */
         while (hitNoPlus < (*nh) && VDOT(second->hit_normal, rp->r_dir) < 0.0) {
             int j;

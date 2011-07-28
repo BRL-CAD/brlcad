@@ -669,7 +669,6 @@ nmg_split_linear_trim(const struct face_g_snurb *snrb, const fastf_t *uvw1, cons
 void
 nmg_eval_linear_trim_to_tol(const struct edge_g_cnurb *cnrb, const struct face_g_snurb *snrb, const fastf_t *uvw1, const fastf_t *uvw2, struct bu_list *head, const struct bn_tol *tol)
 {
-    fastf_t uvw[3];
     struct pt_list *pt0, *pt1;
 
     NMG_CK_EDGE_G_CNURB(cnrb);
@@ -694,9 +693,7 @@ nmg_eval_linear_trim_to_tol(const struct edge_g_cnurb *cnrb, const struct face_g
     nmg_eval_linear_trim_curve(snrb, uvw2, pt1->xyz);
     BU_LIST_INSERT(head, &pt1->l);
 
-
-    VBLEND2(uvw, 0.5, uvw1, 0.5, uvw2)
-	nmg_split_linear_trim(snrb, uvw1, uvw2, pt0, pt1, tol);
+    nmg_split_linear_trim(snrb, uvw1, uvw2, pt0, pt1, tol);
 
     if (rt_g.NMG_debug & DEBUG_MESH)
 	bu_log("nmg_eval_linear_trim_to_tol(cnrb=x%x, snrb=x%x) END\n",
@@ -3197,7 +3194,6 @@ void
 nmg_s_radial_check(struct shell *s, const struct bn_tol *tol)
 {
     struct bu_ptbl edges;
-    struct edgeuse *eu;
     struct edge **ep;
 
     NMG_CK_SHELL(s);
@@ -3207,11 +3203,8 @@ nmg_s_radial_check(struct shell *s, const struct bn_tol *tol)
 	bu_log("nmg_s_radial_check(s=x%x) BEGIN\n", s);
 
     nmg_edge_tabulate(&edges, &s->l.magic);
-    for (ep = (struct edge **)BU_PTBL_LASTADDR(&edges);
-	 ep >= (struct edge **)BU_PTBL_BASEADDR(&edges); ep--
-	) {
+    for (ep = (struct edge **)BU_PTBL_LASTADDR(&edges); ep >= (struct edge **)BU_PTBL_BASEADDR(&edges); ep--) {
 	NMG_CK_EDGE(*ep);
-	eu = nmg_find_ot_same_eu_of_e(*ep);
     }
 
     bu_ptbl_free(&edges);

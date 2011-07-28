@@ -791,7 +791,7 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	return 1;
     }
 
-    snprintf(buf, BUF_SZ, "Total number of points: %lu\nDefault scale: %f\n", (long unsigned)pnts->count, pnts->scale);
+    snprintf(buf, BUF_SZ, "Total number of points: %lu\nDefault scale: %f\n", numPoints, defaultSize);
     bu_vls_strcat(str, buf);
 
     loop_counter = 1;

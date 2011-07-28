@@ -136,18 +136,17 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 
     ON_SimpleArray<ON_Curve*> endoutercurves;
     ON_SimpleArray<ON_Curve*> endinnercurves;
- 
+
     ON_3dPoint plane_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
-    
-    ON_Plane *startplane;
+
     ON_Plane *endplane;
     ON_BrepLoop *bloop;
 
     RT_CK_DB_INTERNAL(ip);
     pip = (struct rt_pipe_internal *)ip->idb_ptr;
     RT_PIPE_CK_MAGIC(pip);
-    
+
     if (BU_LIST_IS_EMPTY(&pip->pipe_segs_head)) return;
     prevp = BU_LIST_FIRST(wdb_pipept, &pip->pipe_segs_head);
     curp = BU_LIST_NEXT(wdb_pipept, &prevp->l);
@@ -200,16 +199,15 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	(*b)->NewPlanarFaceLoop(bface.m_face_index, ON_BrepLoop::inner, endinnercurves, true);
     }
     (*b)->SetTrimIsoFlags(bface);
-  
+
     while (1) {
 	vect_t n1, n2;
 	vect_t norm;
 	fastf_t angle;
 	fastf_t dist_to_bend;
-	startplane = endplane;
 	endoutercurves.Empty();
 	endinnercurves.Empty();
-	
+
 	if (BU_LIST_IS_HEAD(&nextp->l, &pip->pipe_segs_head)) {
 	    // last segment, always linear
        	    VSUB2(pipe_dir, prevp->pp_coord, curp->pp_coord);
@@ -252,7 +250,7 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 		point_t bend_center;
 		point_t bend_start;
 		point_t bend_end;
-		vect_t v1, v2;
+		vect_t v1;
 
 		VUNITIZE(norm);
 
@@ -272,7 +270,6 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 		// Now do curved section
 		VJOIN1(bend_end, curp->pp_coord, dist_to_bend, n2);
 		VCROSS(v1, n1, norm);
-		VCROSS(v2, v1, norm);
 		VJOIN1(bend_center, bend_start, -curp->pp_bendradius, v1);
 		make_curved_surfaces(b, &startoutercurves, &startinnercurves, angle, bend_center, norm);
 		startinnercurves.Empty();

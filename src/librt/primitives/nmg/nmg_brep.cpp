@@ -239,8 +239,6 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 				vert2 = tmpvert;
 			    }
 			    // Create and add 3D curve
-			    ON_3dPoint tmppt1 = (*b)->m_V[vert1].Point();
-			    ON_3dPoint tmppt2 = (*b)->m_V[vert2].Point();
 			    ON_Curve* c3d = new ON_LineCurve((*b)->m_V[vert1].Point(), (*b)->m_V[vert2].Point());
 			    c3d->SetDomain(0.0, 1.0);
 			    (*b)->m_C3.Append(c3d);
