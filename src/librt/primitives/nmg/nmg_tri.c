@@ -1908,16 +1908,16 @@ cut_mapped_loop(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const i
 static void
 join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const int *color, const struct bn_tol *tol)
 {
-    struct vertexuse *vu1, *vu2;
-    struct vertexuse *vu;
-    struct edgeuse *eu;
-    struct loopuse *lu;
+    struct vertexuse *vu, *vu1, *vu2;
+    struct edgeuse *eu = (struct edgeuse *)NULL;
+    struct loopuse *lu = (struct loopuse *)NULL;
 
     NMG_CK_TBL2D(tbl2d);
     NMG_CK_PT2D(p1);
     NMG_CK_PT2D(p2);
     BN_CK_TOL(tol);
 
+    vu = (struct vertexuse *)NULL;
     vu1 = p1->vu_p;
     vu2 = p2->vu_p;
 
@@ -1927,26 +1927,51 @@ join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const
     if (rt_g.NMG_debug & DEBUG_TRI)
 	bu_log("join_mapped_loops()\n");
 
+    if (((p1->vu_p->up.eu_p->up.lu_p->orientation != OT_OPPOSITE) && 
+         (p1->vu_p->up.eu_p->up.lu_p->orientation != OT_SAME)) ||
+        ((p2->vu_p->up.eu_p->up.lu_p->orientation != OT_OPPOSITE) && 
+         (p2->vu_p->up.eu_p->up.lu_p->orientation != OT_SAME))) {
+        bu_bomb("join_mapped_loops(): loopuse orientation is not OT_SAME or OT_OPPOSITE\n");
+    }
+    if ((p1->vu_p->up.eu_p->up.lu_p->orientation == OT_OPPOSITE) && 
+        (p2->vu_p->up.eu_p->up.lu_p->orientation == OT_OPPOSITE)) {
+        bu_bomb("join_mapped_loops(): both loopuse can not have orientation OT_OPPOSITE (1)\n");
+    }
 
     if (p1 == p2) {
-	bu_log("%s %d: Attempting to join loop to itself at (%g %g %g)?\n",
+	bu_log("join_mapped_loops(): %s %d Attempting to join loop to itself at (%g %g %g)?\n",
 	       __FILE__, __LINE__,
 	       V3ARGS(p1->vu_p->v_p->vg_p->coord));
-	bu_bomb("bombing\n");
+	bu_bomb("join_mapped_loops(): bombing\n");
     } else if (p1->vu_p->up.eu_p->up.lu_p == p2->vu_p->up.eu_p->up.lu_p) {
-	bu_log("parent loops are the same %s %d\n", __FILE__, __LINE__);
-	bu_bomb("goodnight\n");
+	bu_log("join_mapped_loops(): parent loops are the same %s %d\n", __FILE__, __LINE__);
+	bu_bomb("join_mapped_loops(): bombing\n");
     }
     /* check to see if we're joining two loops that share a vertex */
     if (p1->vu_p->v_p == p2->vu_p->v_p) {
-	if (rt_g.NMG_debug & DEBUG_TRI)
-	    bu_log("Joining two loops that share a vertex at (%g %g %g)\n",
+	if (rt_g.NMG_debug & DEBUG_TRI) {
+	    bu_log("join_mapped_loops(): Joining two loops that share a vertex at (%g %g %g)\n",
 		   V3ARGS(p1->vu_p->v_p->vg_p->coord));
+	}
+#ifdef TRI_PROTOTYPE
+	vu = nmg_join_2loops(p1->vu_p,  p2->vu_p);
+        goto out;
+#else
 	(void)nmg_join_2loops(p1->vu_p,  p2->vu_p);
 	return;
+#endif
     }
 
     pick_pt2d_for_cutjoin(tbl2d, &p1, &p2, tol);
+
+#ifdef TRI_PROTOTYPE
+    if (p1->vu_p->up.eu_p->up.lu_p == p2->vu_p->up.eu_p->up.lu_p) {
+        bu_bomb("join_mapped_loops(): attempting to join a loopuse to itself\n");
+    }
+    if (p1->vu_p == p2->vu_p) {
+        bu_bomb("join_mapped_loops(): attempting to join a vertexuse to itself\n");
+    }
+#endif
 
     vu1 = p1->vu_p;
     vu2 = p2->vu_p;
@@ -1954,24 +1979,26 @@ join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const
     NMG_CK_VERTEXUSE(vu2);
 
     if (p1 == p2) {
-	bu_log("%s: %d I'm a fool...\n\ttrying to join a vertexuse (%g %g %g) to itself\n",
+	bu_log("join_mapped_loops(): %s %d trying to join a vertexuse (%g %g %g) to itself\n",
 	       __FILE__, __LINE__,
 	       V3ARGS(p1->vu_p->v_p->vg_p->coord));
     } else if (p1->vu_p->up.eu_p->up.lu_p == p2->vu_p->up.eu_p->up.lu_p) {
 	if (rt_g.NMG_debug & DEBUG_TRI) {
-	    bu_log("parent loops are the same %s %d\n",
+	    bu_log("join_mapped_loops(): parent loops are the same %s %d\n",
 		   __FILE__, __LINE__);
 	}
 	(void)cut_mapped_loop(tbl2d, p1, p2, color, tol, 1);
 	return;
     }
 
+    if ((vu1->up.eu_p->up.lu_p->orientation == OT_OPPOSITE) && 
+        (vu2->up.eu_p->up.lu_p->orientation == OT_OPPOSITE)) {
+        bu_bomb("join_mapped_loops(): both loopuse can not have orientation OT_OPPOSITE (2)\n");
+    }
 
-    /* XXX nmg_join_2loops() requires that the two loops not be BOTH
-     * OT_OPPOSITE.  We should check for this here.
-     *
-     * XXX what if vu2 is a vertex loop?
-     */
+    if (*vu2->up.magic_p != NMG_EDGEUSE_MAGIC) {
+        bu_bomb("join_mapped_loops(): vertexuse vu2 must belong to an edgeuse\n");
+    }
 
     NMG_CK_EDGEUSE(vu2->up.eu_p);
 
@@ -1988,7 +2015,7 @@ join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const
 	pr1_eu = BU_LIST_PNEXT_CIRC(edgeuse, vu1->up.eu_p);
 	pr2_eu = BU_LIST_PNEXT_CIRC(edgeuse, vu2->up.eu_p);
 
-	bu_log("joining loops between:\n\t%g %g %g -> (%g %g %g)\n\tand%g %g %g -> (%g %g %g)\n",
+	bu_log("join_mapped_loops(): joining loops between:\n\t%g %g %g -> (%g %g %g)\n\tand%g %g %g -> (%g %g %g)\n",
 	       V3ARGS(vu1->v_p->vg_p->coord),
 	       V3ARGS(pr1_eu->vu_p->v_p->vg_p->coord),
 	       V3ARGS(vu2->v_p->vg_p->coord),
@@ -2004,21 +2031,29 @@ join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const
 
     NMG_CK_VERTEXUSE(vu);
 
-    if (vu == vu2)
+    if (vu == vu2) {
+#ifdef TRI_PROTOTYPE
+        bu_bomb("join_mapped_loops(): vu == vu2\n");
+#else
 	return;
-
+#endif
+    }
     /* since we've just made some new vertexuses
      * we need to map them to the 2D plane.
      *
      * XXX This should be made more direct and efficient.  For now we
      * just go looking for vertexuses without a mapping.
      */
+#ifdef TRI_PROTOTYPE
+out:
+#endif
     NMG_CK_EDGEUSE(vu->up.eu_p);
     NMG_CK_LOOPUSE(vu->up.eu_p->up.lu_p);
     lu = vu->up.eu_p->up.lu_p;
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-	if (! find_pt2d(tbl2d, eu->vu_p))
+	if (!find_pt2d(tbl2d, eu->vu_p)) {
 	    map_new_vertexuse(tbl2d, eu->vu_p);
+	}
     }
 }
 
