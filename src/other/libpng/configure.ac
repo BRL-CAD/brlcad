@@ -32,7 +32,7 @@ dnl End of version number stuff
 
 AC_CONFIG_SRCDIR([pngget.c])
 AM_CONFIG_HEADER(config.h)
-AC_CONFIG_MACRO_DIR([../../../m4]
+AC_CONFIG_MACRO_DIR([../../../m4])
 
 # Checks for programs.
 AC_LANG([C])
