@@ -58,16 +58,15 @@ STEPfile::STEPfile(Registry& r, InstMgr& i, const char *filename)
     if (filename) ReadExchangeFile(filename);
 }
 
-STEPfile::~STEPfile() 
+STEPfile::~STEPfile()
 {
     delete _currentDir;
 
-//  remove everything from the Registry before deleting it
-    _headerRegistry -> DeleteContents ();
+    // remove everything from the Registry before deleting it
+    _headerRegistry->DeleteContents();
     delete _headerRegistry;
 
-//DAS    delete _headerRegistryOld;
-    _headerInstances -> ClearInstances ();
+    _headerInstances->DeleteInstances();
     delete _headerInstances;
 }
 
