@@ -129,12 +129,11 @@ main(int argc, char *argv[])
 	    }
 
 	    dotg->Close();
-
-	    Factory::DeleteObjects();
 	    delete dotg;
 	}
     }
     delete step;
+    Factory::DeleteObjects();
 
     return ret;
 }
