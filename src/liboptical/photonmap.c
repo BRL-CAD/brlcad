@@ -760,12 +760,8 @@ void
 EmitPhotonsRandom(struct application *ap, double ScaleIndirect)
 {
     struct light_specific *lp;
-    vect_t ldir;
     int i;
 
-    ldir[0] = 0;
-    ldir[1] = 0;
-    ldir[2] = -1;
     /*
       for (i = 0; i < 8; i++)
       bu_log("sample points: [%.3f, %.3f, %.3f]\n", lp->lt_sample_pts[i].lp_pt[0], lp->lt_sample_pts[i].lp_pt[1], lp->lt_sample_pts[i].lp_pt[2]);
@@ -791,7 +787,6 @@ EmitPhotonsRandom(struct application *ap, double ScaleIndirect)
 	    } while (ap->a_ray.r_dir[0]*ap->a_ray.r_dir[0] + ap->a_ray.r_dir[1]*ap->a_ray.r_dir[1] + ap->a_ray.r_dir[2]*ap->a_ray.r_dir[2] > 1);
 	    /* Normalize Ray Direction */
 	    VUNITIZE(ap->a_ray.r_dir);
-	    /*    } while (drand48() > VDOT(ap->a_ray.r_dir, ldir));*/ /* we want this to terminate when a rnd# is less than the angle */
 
 	    /* Set Ray Position to application ptr */
 	    ap->a_ray.r_pt[0] = lp->lt_pos[0];
