@@ -151,7 +151,7 @@ fisect2(point_t VTX0,point_t VTX1,point_t VTX2, fastf_t VV0,fastf_t VV1,fastf_t 
 
 
 static int
-compute_intervals_isectline(fastf_t VERT0[3],fastf_t VERT1[3],fastf_t VERT2[3],
+compute_intervals_isectline(struct face_s *f,
 				       fastf_t VV0,fastf_t VV1,fastf_t VV2,fastf_t D0,fastf_t D1,fastf_t D2,
 				       fastf_t D0D1,fastf_t D0D2,fastf_t *isect0,fastf_t *isect1,
 				       fastf_t isectpoint0[3],fastf_t isectpoint1[3],
@@ -160,17 +160,17 @@ compute_intervals_isectline(fastf_t VERT0[3],fastf_t VERT1[3],fastf_t VERT2[3],
     if(D0D1>0.0f)
 	/* here we know that D0D2<=0.0 */
 	/* that is D0, D1 are on the same side, D2 on the other or on the plane */
-	fisect2(VERT2,VERT0,VERT1,VV2,VV0,VV1,D2,D0,D1,isect0,isect1,isectpoint0,isectpoint1);
+	fisect2(f->vert[2],f->vert[0],f->vert[1],VV2,VV0,VV1,D2,D0,D1,isect0,isect1,isectpoint0,isectpoint1);
     else if(D0D2>0.0f)
 	/* here we know that d0d1<=0.0 */
-	fisect2(VERT1,VERT0,VERT2,VV1,VV0,VV2,D1,D0,D2,isect0,isect1,isectpoint0,isectpoint1);
+	fisect2(f->vert[1],f->vert[0],f->vert[2],VV1,VV0,VV2,D1,D0,D2,isect0,isect1,isectpoint0,isectpoint1);
     else if(D1*D2>0.0f || !NEAR_ZERO(D0,tol->dist))
 	/* here we know that d0d1<=0.0 or that D0!=0.0 */
-	fisect2(VERT0,VERT1,VERT2,VV0,VV1,VV2,D0,D1,D2,isect0,isect1,isectpoint0,isectpoint1);
+	fisect2(f->vert[0],f->vert[1],f->vert[2],VV0,VV1,VV2,D0,D1,D2,isect0,isect1,isectpoint0,isectpoint1);
     else if(!NEAR_ZERO(D1,tol->dist))
-	fisect2(VERT1,VERT0,VERT2,VV1,VV0,VV2,D1,D0,D2,isect0,isect1,isectpoint0,isectpoint1);
+	fisect2(f->vert[1],f->vert[0],f->vert[2],VV1,VV0,VV2,D1,D0,D2,isect0,isect1,isectpoint0,isectpoint1);
     else if(!NEAR_ZERO(D2,tol->dist))
-	fisect2(VERT2,VERT0,VERT1,VV2,VV0,VV1,D2,D0,D1,isect0,isect1,isectpoint0,isectpoint1);
+	fisect2(f->vert[2],f->vert[0],f->vert[1],VV2,VV0,VV1,D2,D0,D1,isect0,isect1,isectpoint0,isectpoint1);
     else
 	/* triangles are coplanar */
 	return 1;
@@ -192,7 +192,7 @@ compute_intervals_isectline(fastf_t VERT0[3],fastf_t VERT1[3],fastf_t VERT2[3],
 
 #define EDGE_AGAINST_TRI_EDGES(V0,V1,U0,U1,U2) \
 {                                              \
-    float Ax,Ay,Bx,By,Cx,Cy,e,d,f;               \
+    fastf_t Ax,Ay,Bx,By,Cx,Cy,e,d,f;               \
     Ax=V1[i0]-V0[i0];                            \
     Ay=V1[i1]-V0[i1];                            \
     /* test edge U0,U1 against V0,V1 */          \
@@ -205,7 +205,7 @@ compute_intervals_isectline(fastf_t VERT0[3],fastf_t VERT1[3],fastf_t VERT2[3],
 
 #define POINT_IN_TRI(V0,U0,U1,U2)           \
 {                                           \
-    float a,b,c,d0,d1,d2;                     \
+    fastf_t a,b,c,d0,d1,d2;                     \
     /* is T1 completly inside T2? */          \
     /* check if V0 is inside tri(U0,U1,U2) */ \
     a=U1[i1]-U0[i1];                          \
@@ -228,8 +228,8 @@ compute_intervals_isectline(fastf_t VERT0[3],fastf_t VERT1[3],fastf_t VERT2[3],
     }                                         \
 }
 
-int coplanar_tri_tri(vect_t N,vect_t V0,vect_t V1,vect_t V2,
-                     vect_t U0,vect_t U1,vect_t U2)
+int
+coplanar_tri_tri(vect_t N,vect_t V0,vect_t V1,vect_t V2, vect_t U0,vect_t U1,vect_t U2)
 {
     vect_t A;
     short i0,i1;
@@ -268,32 +268,21 @@ int coplanar_tri_tri(vect_t N,vect_t V0,vect_t V1,vect_t V2,
     return 0;
 }
 
-#define COMPUTE_INTERVALS_ISECTLINE(VERT0,VERT1,VERT2,VV0,VV1,VV2,D0,D1,D2,D0D1,D0D2,isect0,isect1,isectpoint0,isectpoint1) \
-  if(D0D1>0.0f)                                         \
-  {                                                     \
-    /* here we know that D0D2<=0.0 */                   \
-    /* that is D0, D1 are on the same side, D2 on the other or on the plane */ \
-    isect2(VERT2,VERT0,VERT1,VV2,VV0,VV1,D2,D0,D1,&isect0,&isect1,isectpoint0,isectpoint1);          \
-  }
-
 static int
-tri_tri_intersect_with_isectline(vect_t V0,vect_t V1,vect_t V2, vect_t U0,vect_t U1,vect_t U2,int *coplanar, vect_t *isectpt1,vect_t *isectpt2, const struct bn_tol *tol)
+tri_tri_intersect_with_isectline(struct soup_s *UNUSED(left), struct soup_s *UNUSED(right), struct face_s *lf, struct face_s *rf, int *coplanar, point_t *isectpt, const struct bn_tol *tol)
 {
-    vect_t E1,E2,N1,N2,D,isectpointA1,isectpointA2,isectpointB1,isectpointB2;
-    fastf_t d1,d2,du0,du1,du2,dv0,dv1,dv2,du0du1,du0du2,dv0dv1,dv0dv2,vp0,vp1,vp2,up0,up1,up2,b,c,max,isect1[2],isect2[2];
+    vect_t D, isectpointA1={0},isectpointA2={0},isectpointB1={0},isectpointB2={0};
+    fastf_t d1,d2,du0,du1,du2,dv0,dv1,dv2,du0du1,du0du2,dv0dv1,dv0dv2,vp0,vp1,vp2,up0,up1,up2,b,c,max,isect1[2]={0,0},isect2[2]={0,0};
     int i,smallest1,smallest2;
 
-    /* compute plane equation of triangle(V0,V1,V2) */
-    VSUB2(E1,V1,V0);
-    VSUB2(E2,V2,V0);
-    VCROSS(N1,E1,E2);
-    d1=-VDOT(N1,V0);
-    /* plane equation 1: N1.X+d1=0 */
+    /* compute plane equation of triangle(lf->vert[0],lf->vert[1],lf->vert[2]) */
+    d1=-VDOT(lf->plane,lf->vert[0]);
+    /* plane equation 1: lf->plane.X+d1=0 */
 
-    /* put U0,U1,U2 into plane equation 1 to compute signed distances to the plane*/
-    du0=VDOT(N1,U0)+d1;
-    du1=VDOT(N1,U1)+d1;
-    du2=VDOT(N1,U2)+d1;
+    /* put rf->vert[0],rf->vert[1],rf->vert[2] into plane equation 1 to compute signed distances to the plane*/
+    du0=VDOT(lf->plane,rf->vert[0])+d1;
+    du1=VDOT(lf->plane,rf->vert[1])+d1;
+    du2=VDOT(lf->plane,rf->vert[2])+d1;
 
     du0du1=du0*du1;
     du0du2=du0*du2;
@@ -301,17 +290,14 @@ tri_tri_intersect_with_isectline(vect_t V0,vect_t V1,vect_t V2, vect_t U0,vect_t
     if(du0du1>0.0f && du0du2>0.0f) /* same sign on all of them + not equal 0 ? */
 	return 0;                    /* no intersection occurs */
 
-    /* compute plane of triangle (U0,U1,U2) */
-    VSUB2(E1,U1,U0);
-    VSUB2(E2,U2,U0);
-    VCROSS(N2,E1,E2);
-    d2=-VDOT(N2,U0);
-    /* plane equation 2: N2.X+d2=0 */
+    /* compute plane of triangle (rf->vert[0],rf->vert[1],rf->vert[2]) */
+    d2=-VDOT(rf->plane,rf->vert[0]);
+    /* plane equation 2: rf->plane.X+d2=0 */
 
-    /* put V0,V1,V2 into plane equation 2 */
-    dv0=VDOT(N2,V0)+d2;
-    dv1=VDOT(N2,V1)+d2;
-    dv2=VDOT(N2,V2)+d2;
+    /* put lf->vert[0],lf->vert[1],lf->vert[2] into plane equation 2 */
+    dv0=VDOT(rf->plane,lf->vert[0])+d2;
+    dv1=VDOT(rf->plane,lf->vert[1])+d2;
+    dv2=VDOT(rf->plane,lf->vert[2])+d2;
 
     dv0dv1=dv0*dv1;
     dv0dv2=dv0*dv2;
@@ -320,7 +306,7 @@ tri_tri_intersect_with_isectline(vect_t V0,vect_t V1,vect_t V2, vect_t U0,vect_t
 	return 0;                    /* no intersection occurs */
 
     /* compute direction of intersection line */
-    VCROSS(D,N1,N2);
+    VCROSS(D,lf->plane,rf->plane);
 
     /* compute and i to the largest component of D */
     max=fabs(D[0]);
@@ -331,21 +317,21 @@ tri_tri_intersect_with_isectline(vect_t V0,vect_t V1,vect_t V2, vect_t U0,vect_t
     if(c>max) max=c,i=2;
 
     /* this is the simplified projection onto L*/
-    vp0=V0[i];
-    vp1=V1[i];
-    vp2=V2[i];
+    vp0=lf->vert[0][i];
+    vp1=lf->vert[1][i];
+    vp2=lf->vert[2][i];
 
-    up0=U0[i];
-    up1=U1[i];
-    up2=U2[i];
+    up0=rf->vert[0][i];
+    up1=rf->vert[1][i];
+    up2=rf->vert[2][i];
 
     /* compute interval for triangle 1 */
-    *coplanar=compute_intervals_isectline(V0,V1,V2,vp0,vp1,vp2,dv0,dv1,dv2, dv0dv1,dv0dv2,&isect1[0],&isect1[1],isectpointA1,isectpointA2, tol);
+    *coplanar=compute_intervals_isectline(lf,vp0,vp1,vp2,dv0,dv1,dv2, dv0dv1,dv0dv2,&isect1[0],&isect1[1],isectpointA1,isectpointA2, tol);
     if(*coplanar)
-	return coplanar_tri_tri(N1,V0,V1,V2,U0,U1,U2);
+	return coplanar_tri_tri(lf->plane,lf->vert[0],lf->vert[1],lf->vert[2],rf->vert[0],rf->vert[1],rf->vert[2]);
 
     /* compute interval for triangle 2 */
-    compute_intervals_isectline(U0,U1,U2,up0,up1,up2,du0,du1,du2, du0du1,du0du2,&isect2[0],&isect2[1],isectpointB1,isectpointB2, tol);
+    compute_intervals_isectline(rf,up0,up1,up2,du0,du1,du2, du0du1,du0du2,&isect2[0],&isect2[1],isectpointB1,isectpointB2, tol);
 
     SORT2(isect1[0],isect1[1],smallest1);
     SORT2(isect2[0],isect2[1],smallest2);
@@ -353,38 +339,41 @@ tri_tri_intersect_with_isectline(vect_t V0,vect_t V1,vect_t V2, vect_t U0,vect_t
     if(isect1[1]<isect2[0] || isect2[1]<isect1[0])
 	return 0;
 
+#if 0
+    printf("%f/%f/%f %f/%f/%f | %f/%f/%f %f/%f/%f\n", V3ARGS(isectpointA1), V3ARGS(isectpointA2), V3ARGS(isectpointB1), V3ARGS(isectpointB2));
+#endif
     /* at this point, we know that the triangles intersect */
 
     if (isect2[0] < isect1[0]) {
 	if (smallest1 == 0)
-	    VMOVE(*isectpt1, isectpointA1)
+	    VMOVE(isectpt[0], isectpointA1)
 	else
-	    VMOVE(*isectpt1, isectpointA2)
+	    VMOVE(isectpt[0], isectpointA2)
 
 	if (isect2[1] < isect1[1])
 	    if (smallest2 == 0)
-		VMOVE(*isectpt2, isectpointB2)
+		VMOVE(isectpt[1], isectpointB2)
 	    else
-		VMOVE(*isectpt2, isectpointB1)
+		VMOVE(isectpt[1], isectpointB1)
 	else if (smallest1 == 0)
-	    VMOVE(*isectpt2, isectpointA2)
+	    VMOVE(isectpt[1], isectpointA2)
 	else
-	    VMOVE(*isectpt2, isectpointA1)
+	    VMOVE(isectpt[1], isectpointA1)
     } else {
 	if (smallest2 == 0)
-	    VMOVE(*isectpt1, isectpointB1)
+	    VMOVE(isectpt[0], isectpointB1)
 	else
-	    VMOVE(*isectpt1, isectpointB2)
+	    VMOVE(isectpt[0], isectpointB2)
 
 	if (isect2[1] > isect1[1])
 	    if (smallest1 == 0)
-		VMOVE(*isectpt2, isectpointA2)
+		VMOVE(isectpt[1], isectpointA2)
 	    else
-		VMOVE(*isectpt2, isectpointA1)
+		VMOVE(isectpt[1], isectpointA1)
 	else if (smallest2 == 0) {
-	    VMOVE(*isectpt2, isectpointB2)
+	    VMOVE(isectpt[1], isectpointB2)
 	} else {
-	    VMOVE(*isectpt2, isectpointB1)
+	    VMOVE(isectpt[1], isectpointB1)
 	}
     }
     return 1;
@@ -394,22 +383,21 @@ tri_tri_intersect_with_isectline(vect_t V0,vect_t V1,vect_t V2, vect_t U0,vect_t
 /**********************************************************************/
 
 long int splitz = 0;
+long int splitty = 0;
 
 static int
 split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *right, unsigned long int right_face, const struct bn_tol *tol) {
     struct face_s *lf, *rf;
-    vect_t isectpt1, isectpt2;
+    vect_t isectpt[2];
     int coplanar;
 
     lf = left->faces+left_face;
     rf = right->faces+right_face;
 
     splitz++;
-    if(tri_tri_intersect_with_isectline( V3ARGS(lf->vert), V3ARGS(rf->vert), &coplanar, &isectpt1, &isectpt2, tol) == 0)
-	return 0;
-#if 0
-    bu_log("isect: %f,%f,%f %f,%f,%f\n", V3ARGS(isectpt1), V3ARGS(isectpt2));
-#endif
+    if(tri_tri_intersect_with_isectline( left, right, lf, rf, &coplanar, (point_t *)isectpt, tol) == 0)
+	return 2;
+    splitty++;
 
     return -1;
 }
@@ -497,30 +485,13 @@ split_faces(union tree *left_tree, union tree *right_tree, const struct bn_tol *
 	    rf = r->faces+j;
 	    /* quick bounding box test */
 	    if(lf->min[X]>rf->max[X] || lf->max[X]>lf->max[X] ||
-		lf->min[Y]>rf->max[Y] || lf->max[Y]>lf->max[Y] ||
-		lf->min[Z]>rf->max[Z] || lf->max[Z]>lf->max[Z])
+		    lf->min[Y]>rf->max[Y] || lf->max[Y]>lf->max[Y] ||
+		    lf->min[Z]>rf->max[Z] || lf->max[Z]>lf->max[Z])
 		continue;
 	    /* two possibly overlapping faces found */
-#define NOISY 0
-#if NOISY
-	    switch(
-#endif
-		    split_face(l, i, r, j, tol)
-#if NOISY
-		    ) {
-		case 2: putchar('.'); break;
-		case -1: putchar('_'); break;
-		case -2: putchar('='); break;
-		default: putchar('?');
-	    }
-#else
-	    ;
-#endif
+	    split_face(l, i, r, j, tol);
 	}
     }
-#if NOISY
-    putchar('\n');
-#endif
 }
 
 static void
@@ -639,6 +610,8 @@ evaluate(union tree *tr, const struct rt_tess_tol *ttol, const struct bn_tol *to
 }
 
 long int lsplitz=0;
+long int lsplitty=0;
+
 union tree *
 gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
@@ -648,7 +621,8 @@ gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     bu_bomb("No\n");
 #endif
 
-splitz=0;
+    splitz=0;
+    splitty=0;
 
     if (!tsp || !curtree || !pathp || !client_data) {
 	bu_log("INTERNAL ERROR: gcv_bottess_region_end missing parameters\n");
@@ -666,9 +640,11 @@ splitz=0;
 
     evaluate(curtree, tsp->ts_ttol, tsp->ts_tol);
     lsplitz+=splitz;
-    bu_log("%d splits evaluated (%d)\n", splitz, lsplitz);
+    bu_log("%d splits evaluated (%d) (%d %d)\n", splitz, lsplitz, splitty, lsplitty);
     lsplitz+=splitz;
+    lsplitty+=splitty;
     splitz=0;
+    splitty=0;
 
     /* convert it to a BoT or something. Since we seperated vertices, we may
      * need to cluster them and recompact it. */
