@@ -126,15 +126,16 @@ rt_nurb_grans(struct face_g_snurb *srf)
 int
 rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
-    struct nurb_specific *nurbs;
+#ifndef CONVERT_TO_BREP
+    struct nurb_specific *nurbs = NULL;
+#endif
+
     struct rt_nurb_internal *sip;
     const struct bn_tol *tol = &rtip->rti_tol;
     fastf_t los = tol->dist;
 
     if (los < SMALL_FASTF)
 	los = SMALL_FASTF;
-
-    nurbs = (struct nurb_specific *) 0;
 
     sip = (struct rt_nurb_internal *) ip->idb_ptr;
     RT_NURB_CK_MAGIC(sip);
@@ -837,7 +838,7 @@ rt_nurb_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
 		    HMOVE(f, vp);
 		}
 
-		MAT4X4PNT(m, mat, vp);
+		MAT4X4PNT(m, mat, f);
 		m += 4;
 		vp += 4;
 	    }
