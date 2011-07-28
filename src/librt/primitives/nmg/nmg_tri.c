@@ -1927,12 +1927,15 @@ join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const
     if (rt_g.NMG_debug & DEBUG_TRI)
 	bu_log("join_mapped_loops()\n");
 
+#ifdef TRI_PROTOTYPE
     if (((p1->vu_p->up.eu_p->up.lu_p->orientation != OT_OPPOSITE) && 
          (p1->vu_p->up.eu_p->up.lu_p->orientation != OT_SAME)) ||
         ((p2->vu_p->up.eu_p->up.lu_p->orientation != OT_OPPOSITE) && 
          (p2->vu_p->up.eu_p->up.lu_p->orientation != OT_SAME))) {
         bu_bomb("join_mapped_loops(): loopuse orientation is not OT_SAME or OT_OPPOSITE\n");
     }
+#endif
+
     if ((p1->vu_p->up.eu_p->up.lu_p->orientation == OT_OPPOSITE) && 
         (p2->vu_p->up.eu_p->up.lu_p->orientation == OT_OPPOSITE)) {
         bu_bomb("join_mapped_loops(): both loopuse can not have orientation OT_OPPOSITE (1)\n");
