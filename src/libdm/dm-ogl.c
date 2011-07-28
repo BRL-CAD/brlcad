@@ -2132,7 +2132,6 @@ ogl_getDisplayImage(struct dm *dmp, unsigned char **image)
     unsigned char *idata = NULL;
     int width = 0;
     int height = 0;
-    int found_valid_dm = 0;
     int bytes_per_pixel = 3; /*rgb no alpha for raw pix */
     GLuint *pixels;
     unsigned int pixel;
@@ -2141,7 +2140,10 @@ ogl_getDisplayImage(struct dm *dmp, unsigned char **image)
     unsigned int blue_mask = 0x0000ff00;
     unsigned int alpha_mask = 0x000000ff;
     int h, w;
-    int big_endian, swap_bytes;
+    int big_endian;
+#if defined(DM_WGL)
+    int swap_bytes;
+#endif
 
     if ((bu_byteorder() == BU_BIG_ENDIAN))
 	big_endian = 1;
@@ -2156,20 +2158,18 @@ ogl_getDisplayImage(struct dm *dmp, unsigned char **image)
 #endif
 
     if (dmp->dm_type == DM_TYPE_WGL || dmp->dm_type == DM_TYPE_OGL) {
-	int make_ret = 0;
-	found_valid_dm = 1;
 	width = dmp->dm_width;
 	height = dmp->dm_height;
 
 	pixels = bu_calloc(width * height, sizeof(GLuint), "pixels");
 
 #if defined(DM_WGL)
-	make_ret = wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
-				  ((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc);
+	wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
+		       ((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc);
 #else
-	make_ret = glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-				  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-				  ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc);
+        glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
+		       ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc);
 #endif
 
 	{
@@ -2195,14 +2195,18 @@ ogl_getDisplayImage(struct dm *dmp, unsigned char **image)
 		    int i_h_inv = (height - h - 1)*width + w;
 		    int j = i*bytes_per_pixel;
 		    unsigned char *value = (unsigned char *)(idata + j);
+#if defined(DM_WGL)
 		    unsigned char alpha;
+#endif
+
 		    pixel = pixels[i_h_inv];
 
 		    value[0] = (pixel & red_mask) >> 24;
 		    value[1] = (pixel & green_mask) >> 16;
 		    value[2] = (pixel & blue_mask) >> 8;
-		    alpha = pixel & alpha_mask;
+
 #if defined(DM_WGL)
+		    alpha = pixel & alpha_mask;
 		    if (swap_bytes) {
 			unsigned char tmp_byte;
 
