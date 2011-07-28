@@ -55,7 +55,7 @@ STEPWrapper::~STEPWrapper()
 
 bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 {
-    if (!dotg)
+    if (!dot_g)
 	return false;
 
     this->dotg = dot_g;
