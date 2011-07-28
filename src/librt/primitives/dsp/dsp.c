@@ -4978,8 +4978,6 @@ dsp_pos(point_t out, /* return value */
     unsigned int x, y;
     int A[3], B[3], C[3], D[3];
 
-    struct dsp_rpp dsp_rpp;
-
     /* init points */
     VSET(pt, 0, 0, 0);
     VSET(tri_pt, 0, 0, 0);
@@ -5005,9 +5003,6 @@ dsp_pos(point_t out, /* return value */
 
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("x:%d y:%d\n", x, y);
-
-    VSET(dsp_rpp.dsp_min, x, y, 0);
-    VSET(dsp_rpp.dsp_max, x+1, y+1, 0);
 
     VSET(A, x, y, DSP(&dsp->dsp_i, x, y));
     x += 1;
