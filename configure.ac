@@ -2450,7 +2450,7 @@ PNG=""
 PNG_CPPFLAGS=""
 if test "x$build_brlcad_png" = "xyes" ; then
     PNG='${top_builddir}/src/other/libpng/libpng15.la'
-    PNG_CPPFLAGS='-I${top_srcdir}/src/other/libpng'
+    PNG_CPPFLAGS='-I${top_srcdir}/src/other/libpng -I${top_builddir}/src/other/libpng'
     AC_MSG_RESULT(yes)
 else
     PNG="$LIBPNG"
