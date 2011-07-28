@@ -132,7 +132,7 @@ main(int argc, char *argv[])
 	    delete dotg;
 	}
     }
-    delete step;
+//    delete step;
     Factory::DeleteObjects();
 
     return ret;
