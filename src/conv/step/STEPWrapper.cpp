@@ -71,6 +71,10 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	if ((sse->STEPfile_id > 0) && (sse->IsA(config_control_designe_advanced_brep_shape_representation))) {
 	    AdvancedBrepShapeRepresentation *aBrep = new AdvancedBrepShapeRepresentation();
 
+	    if (!aBrep) {
+		bu_exit(1, "ERROR: unable to allocate an AdvancedBrepShapeRepresentation\n");
+	    }
+
 	    if (aBrep->Load(this, sse)) {
 		name = aBrep->Name();
 		//aBrep->Print(0);
@@ -84,7 +88,7 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 //				LocalUnits::solidangle = 1.0;
 		ON_Brep *onBrep = aBrep->GetONBrep();
 		if (!onBrep) {
-		    std::cerr << "Error creating advanced boundary representation from " << stepfile << std::endl;
+		    bu_exit(1, "ERROR: failure creating advanced boundary representation from %s\n", stepfile.c_str());
 		} else {
 		    ON_TextLog tl;
 		    onBrep->IsValid(&tl);
