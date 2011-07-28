@@ -863,50 +863,50 @@ union edit_cmd{
 
     struct {
 	const struct edit_cmd_tab *padding_for_cmd;
-	struct edit_arg objects;
+	struct edit_arg *objects;
     } common;
 
     struct {
 	const struct edit_cmd_tab *padding_for_cmd;
 	/* a synonym for 'objects', used when parsing cl args */
-	struct edit_arg args; 
+	struct edit_arg *args; 
     } cmd_line;
 
     struct {
 	const struct edit_cmd_tab *padding_for_cmd;
-	struct edit_arg objects;
+	struct edit_arg *objects;
 	struct {
-	    struct edit_arg from;
-	    struct edit_arg to;
+	    struct edit_arg *from;
+	    struct edit_arg *to;
 	} ref_axis;
-	struct edit_arg center;
+	struct edit_arg *center;
 	struct {
-	    struct edit_arg origin;
-	    struct edit_arg from;
-	    struct edit_arg to;
+	    struct edit_arg *origin;
+	    struct edit_arg *from;
+	    struct edit_arg *to;
 	} ref_angle;
     } rotate;
 
     struct {
 	const struct edit_cmd_tab *padding_for_cmd;
-	struct edit_arg objects;
+	struct edit_arg *objects;
 	struct {
-	    struct edit_arg from;
-	    struct edit_arg to;
+	    struct edit_arg *from;
+	    struct edit_arg *to;
 	} ref_scale;
-	struct edit_arg center;
+	struct edit_arg *center;
 	struct {
-	    struct edit_arg from;
-	    struct edit_arg to;
+	    struct edit_arg *from;
+	    struct edit_arg *to;
 	} ref_factor;
     } scale;
 
     struct {
 	const struct edit_cmd_tab *padding_for_cmd;
-	struct edit_arg objects;
+	struct edit_arg *objects;
 	struct {
-	    struct edit_arg from;
-	    struct edit_arg to;
+	    struct edit_arg *from;
+	    struct edit_arg *to;
 	} ref_vector;
     } translate;
 };
@@ -1032,8 +1032,8 @@ HIDDEN void
 edit_cmd_free(union edit_cmd * const args)
 {
     /* first object is automatic */
-    if (args->common.objects.next)
-	edit_arg_free_all(args->common.objects.next);
+    if (args->common.objects->next)
+	edit_arg_free_all(args->common.objects->next);
 }
 
 
@@ -1111,13 +1111,13 @@ int
 edit_rotate_wrapper(struct ged *gedp, const union edit_cmd * const cmd)
 {
     return edit_rotate(gedp,
-		       cmd->rotate.ref_axis.from.vector,
-		       cmd->rotate.ref_axis.to.vector,
-		       cmd->rotate.center.vector,
-		       cmd->rotate.ref_angle.origin.vector,
-		       cmd->rotate.ref_angle.from.vector,
-		       cmd->rotate.ref_angle.to.vector,
-		       cmd->rotate.objects.object);
+		       cmd->rotate.ref_axis.from->vector,
+		       cmd->rotate.ref_axis.to->vector,
+		       cmd->rotate.center->vector,
+		       cmd->rotate.ref_angle.origin->vector,
+		       cmd->rotate.ref_angle.from->vector,
+		       cmd->rotate.ref_angle.to->vector,
+		       cmd->rotate.objects->object);
 }
 
 int
@@ -1145,13 +1145,13 @@ edit_rotate_get_next_arg_head(union edit_cmd * const cmd, struct edit_arg *prev_
 {
     struct edit_arg *arg_heads[8];
 
-    arg_heads[0] = &cmd->rotate.objects;
-    arg_heads[1] = &cmd->rotate.ref_axis.from;
-    arg_heads[2] = &cmd->rotate.ref_axis.to;
-    arg_heads[3] = &cmd->rotate.center;
-    arg_heads[4] = &cmd->rotate.ref_angle.origin;
-    arg_heads[5] = &cmd->rotate.ref_angle.from;
-    arg_heads[6] = &cmd->rotate.ref_angle.to;
+    arg_heads[0] = cmd->rotate.objects;
+    arg_heads[1] = cmd->rotate.ref_axis.from;
+    arg_heads[2] = cmd->rotate.ref_axis.to;
+    arg_heads[3] = cmd->rotate.center;
+    arg_heads[4] = cmd->rotate.ref_angle.origin;
+    arg_heads[5] = cmd->rotate.ref_angle.from;
+    arg_heads[6] = cmd->rotate.ref_angle.to;
     arg_heads[7] = (struct edit_arg *)NULL;
 
     return edit_cmd_get_next_arg_head(arg_heads, prev_arg_head);
@@ -1186,12 +1186,12 @@ int
 edit_scale_wrapper(struct ged *gedp, const union edit_cmd * const cmd)
 {
     return edit_scale(gedp,
-		      cmd->scale.ref_scale.from.vector,
-		      cmd->scale.ref_scale.to.vector,
-		      cmd->scale.center.vector,
-		      cmd->scale.ref_factor.from.vector,
-		      cmd->scale.ref_factor.to.vector,
-		      cmd->scale.objects.object);
+		      cmd->scale.ref_scale.from->vector,
+		      cmd->scale.ref_scale.to->vector,
+		      cmd->scale.center->vector,
+		      cmd->scale.ref_factor.from->vector,
+		      cmd->scale.ref_factor.to->vector,
+		      cmd->scale.objects->object);
 }
 
 int
@@ -1207,12 +1207,12 @@ edit_scale_get_next_arg_head(union edit_cmd * const cmd, struct edit_arg *prev_a
 {
     struct edit_arg *arg_heads[7];
 
-    arg_heads[0] = &cmd->scale.objects;
-    arg_heads[1] = &cmd->scale.ref_scale.from;
-    arg_heads[2] = &cmd->scale.ref_scale.to;
-    arg_heads[3] = &cmd->scale.center;
-    arg_heads[4] = &cmd->scale.ref_factor.from;
-    arg_heads[5] = &cmd->scale.ref_factor.to;
+    arg_heads[0] = cmd->scale.objects;
+    arg_heads[1] = cmd->scale.ref_scale.from;
+    arg_heads[2] = cmd->scale.ref_scale.to;
+    arg_heads[3] = cmd->scale.center;
+    arg_heads[4] = cmd->scale.ref_factor.from;
+    arg_heads[5] = cmd->scale.ref_factor.to;
     arg_heads[6] = (struct edit_arg *)NULL;
 
     return edit_cmd_get_next_arg_head(arg_heads, prev_arg_head);
@@ -1222,7 +1222,7 @@ edit_scale_get_next_arg_head(union edit_cmd * const cmd, struct edit_arg *prev_a
  * Perform a translation on an object by specifying points.
  */
 int
-edit_translate(struct ged *gedp, point_t *from, point_t *to,
+edit_translate(struct ged *gedp, vect_t *from, vect_t *to,
 		struct db_full_path *path)
 {
     (void)gedp;
@@ -1243,9 +1243,9 @@ int
 edit_translate_wrapper(struct ged *gedp, const union edit_cmd * const cmd)
 {
     return edit_translate(gedp,
-			  cmd->translate.ref_vector.from.vector,
-			  cmd->translate.ref_vector.to.vector,
-			  cmd->translate.objects.object);
+			  cmd->translate.ref_vector.from->vector,
+			  cmd->translate.ref_vector.to->vector,
+			  cmd->translate.objects->object);
 }
 
 int
@@ -1261,9 +1261,9 @@ edit_translate_get_next_arg_head(union edit_cmd * const cmd, struct edit_arg *pr
 {
     struct edit_arg *arg_heads[4];
 
-    arg_heads[0] = &cmd->translate.objects;
-    arg_heads[1] = &cmd->translate.ref_vector.from;
-    arg_heads[2] = &cmd->translate.ref_vector.to;
+    arg_heads[0] = cmd->translate.objects;
+    arg_heads[1] = cmd->translate.ref_vector.from;
+    arg_heads[2] = cmd->translate.ref_vector.to;
     arg_heads[3] = (struct edit_arg *)NULL;
 
     return edit_cmd_get_next_arg_head(arg_heads, prev_arg_head);
@@ -1593,8 +1593,8 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 {
     const char * const cmd_name = argv[0];
     const char *subcmd_name = NULL;
+    struct edit_arg *cur_arg;
     union edit_cmd subcmd;
-    struct edit_arg *cur_arg = &subcmd.cmd_line.args;
     int idx_cur_opt = 0; /* pos in options array for current arg */
     int conv_flags = 0; /* for edit_strs_to_arg */
     static const char * const usage = "[subcommand] [args]";
@@ -1611,6 +1611,9 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize the subcommand */
     subcmd.cmd = (const struct edit_cmd_tab *)NULL;
+    cur_arg = subcmd.cmd_line.args = (struct edit_arg *)bu_malloc(
+				      sizeof(struct edit_arg),
+				      "edit_arg block for ged_edit()");
     edit_arg_init(cur_arg);
 
     /*
@@ -1881,7 +1884,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	    /* init for next arg */
 	    if (argc == 0)
 		break; /* no more args */
-	    cur_arg = edit_arg_postfix_new(&subcmd.cmd_line.args);
+	    cur_arg = edit_arg_postfix_new(subcmd.cmd_line.args);
 	    idx_cur_opt = 0;
 	}
 
@@ -1912,7 +1915,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
      * are changed into pointers
      */
 #if 0
-    cur_arg = &subcmd.cmd_line.args;
+    cur_arg = subcmd.cmd_line.args;
     subcmd.cmd_line.args = NULL;
     (*subcmd.add_args(gedp, subcmd, args, flags));
 #endif 
