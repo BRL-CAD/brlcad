@@ -51,6 +51,15 @@ endif()
 # Check for unistd.h
 #
 check_include_file(unistd.h Z_HAVE_UNISTD_H)
+IF(Z_HAVE_UNISTD_H)
+	add_definitions(-DZ_HAVE_UNISTD_H)
+ENDIF(Z_HAVE_UNISTD_H)
+
+OPTION(ENABLE_Z_PREFIX "Add z_ prefix to all library functions." OFF)
+MARK_AS_ADVANCED(ENABLE_Z_PREFIX)
+IF(ENABLE_Z_PREFIX)
+	add_definitions(-DZ_PREFIX)
+ENDIF(ENABLE_Z_PREFIX)
 
 if(MSVC)
     set(CMAKE_DEBUG_POSTFIX "d")
@@ -58,7 +67,7 @@ if(MSVC)
     add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
 endif()
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/zconf.h.cmakein
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/zconf.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/zconf.h @ONLY)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
