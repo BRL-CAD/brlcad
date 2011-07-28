@@ -21774,7 +21774,6 @@ SdaiGeometric_representation_item::SdaiGeometric_representation_item( )
 SdaiGeometric_representation_item::SdaiGeometric_representation_item (SdaiGeometric_representation_item& e )
 	{  CopyAs((SCLP23(Application_instance_ptr)) &e);	}
 SdaiGeometric_representation_item::~SdaiGeometric_representation_item () {
-	std::cout << "Bye bye - " << this << std::endl;
 }
 
 #ifdef __OSTORE__
