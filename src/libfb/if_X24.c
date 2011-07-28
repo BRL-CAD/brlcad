@@ -1221,8 +1221,6 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 		for (y = y1; y <= y2; y++) {
 		    unsigned char *line_irgb;
 		    unsigned char *p;
-		    unsigned char *holdit;
-		    int pyht;
 
 #if BLIT_DBG_PIX
 		    if (opix < xi->xi_pix) {
@@ -1231,24 +1229,6 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 			break;
 		    }
 #endif
-
-		    /* Calculate the number of lines needed */
-		    /*
-		     * If we are zoomed, then it is possable that not
-		     * all of that zoomed pixel will be shown.  y1ht
-		     * is the number of lines allocated for the bottom
-		     * most line.  y2ht is the number of lines for the
-		     * top most line.  if_yzoom is for everything
-		     * else.
-		     */
-		    if (y == y1) {
-			pyht = y1ht;
-		    } else if (y==y2) {
-			pyht = y2ht;
-		    } else {
-			pyht = ifp->if_yzoom;
-		    }
-
 		    /* Save pointer to start of line */
 
 		    line_irgb = irgb;
@@ -1347,11 +1327,6 @@ X24_blit(FBIO *ifp, int x1, int y1, int w, int h, int flags /* BLIT_xxx flags */
 			 */
 			line_irgb += sizeof (RGBpixel);
 		    }
-		    /*
-		     * Remember where we put all those bytes for line
-		     * duplication.
-		     */
-		    holdit = (unsigned char *)opix;
 
 		    /*
 		     * And again, move to the beginning of the next
