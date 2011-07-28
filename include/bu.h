@@ -1799,7 +1799,7 @@ typedef struct bu_attribute_value_set bu_avs_t;
  *
  */
 #define BU_AVS_FOR(_pp, _avp) \
-    (_pp) = ((_avp) != NULL) ? ((_avp)->count > 0 ? &(_avp)->avp[(_avp)->count-1] : NULL) : NULL; ((_pp) != NULL) && ((_avp) != NULL) && (_avp)->avp && (_pp) >= (_avp)->avp; (_pp)--
+    (_pp) = ((void *)(_avp) != (void *)NULL) ? ((_avp)->count > 0 ? &(_avp)->avp[(_avp)->count-1] : NULL) : NULL; ((void *)(_pp) != (void *)NULL) && ((void *)(_avp) != (void *)NULL) && (_avp)->avp && (_pp) >= (_avp)->avp; (_pp)--
 
 /**
  * Some (but not all) attribute name and value string pointers are
