@@ -2420,13 +2420,13 @@ process_dimension_entities_code( int code )
     static char *block_name=NULL;
     static struct state_data *new_state=NULL;
     struct block_list *blk;
-    int coord;
+    /* int coord; */
 
     switch ( code ) {
 	case 10:
 	case 20:
 	case 30:
-	    coord = (code / 10) - 1;
+	    /* coord = (code / 10) - 1; */
 	    /* def_pt[coord] = atof( line ) * units_conv[units] * scale_factor; */
 	    break;
 	case 8:		/* layer name */

@@ -87,7 +87,6 @@ void MapRegion(ONX_Model &model, std::string &region_name, int layer_index) {
 
     const ON_Layer& layer = model.m_layer_table[layer_index];
 
-    ON_UUID current_uuid = layer.m_layer_id;
     parent_uuid = ON_UuidToString( layer.m_layer_id, uuidstr );
 
     MEMBER_MAP::iterator miter = member_map.find(parent_uuid);
