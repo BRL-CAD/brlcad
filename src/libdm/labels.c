@@ -570,7 +570,6 @@ dm_draw_labels(struct dm *dmp,
     struct rt_db_internal intern;
     struct directory *dp;
     int i;
-    int id;
     struct db_tree_state ts;
     struct db_full_path path;
 
@@ -594,7 +593,7 @@ dm_draw_labels(struct dm *dmp,
 
     dp = DB_FULL_PATH_CUR_DIR(&path);
 
-    id = rt_db_get_internal(&intern, dp, wdbp->dbip, ts.ts_mat, &rt_uniresource);
+    rt_db_get_internal(&intern, dp, wdbp->dbip, ts.ts_mat, &rt_uniresource);
 
     dm_label_primitive(wdbp, pl, MAX_PL, viewmat, &intern);
 
