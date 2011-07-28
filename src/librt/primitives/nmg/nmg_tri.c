@@ -3156,9 +3156,126 @@ nmg_dump_model(struct model *m)
 
 
 /* This is the ifdef to enable the prototype version of the function
- * cut_unimonotone.
+ * cut_unimonotone and the new prototype functions
+ * nmg_tri_kill_accordions and validate_tbl2d.
  */
 #ifdef TRI_PROTOTYPE
+HIDDEN void
+nmg_tri_kill_accordions(struct loopuse *lu, struct bu_list *tbl2d)
+{
+    struct edgeuse *eu_curr, *eu_prev, *eu_next;
+    struct pt2d *tmp = (struct pt2d *)NULL;
+    int vert_cnt = 0;
+
+    NMG_CK_LOOPUSE(lu);
+
+    eu_curr = eu_prev = eu_next = (struct edgeuse *)NULL;
+
+    if (tbl2d) {
+        NMG_CK_TBL2D(tbl2d);
+    }
+
+    if (BU_LIST_IS_EMPTY(&lu->down_hd)) {
+        return;
+    }
+
+    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
+        return;
+    }
+
+    for (BU_LIST_FOR(eu_curr, edgeuse, &lu->down_hd)) {
+        vert_cnt++;
+    }
+
+    eu_curr = BU_LIST_FIRST(edgeuse, &lu->down_hd);
+    while (BU_LIST_NOT_HEAD(&eu_curr->l, &lu->down_hd) && vert_cnt > 2) {
+
+        eu_prev = BU_LIST_PPREV_CIRC(edgeuse, &eu_curr->l);
+        eu_next = BU_LIST_PNEXT_CIRC(edgeuse, &eu_curr->l);
+
+        if ((eu_prev->vu_p->v_p == eu_next->vu_p->v_p) && (eu_curr != eu_prev)) {
+            if (eu_prev != eu_next) {
+                if ((rt_g.NMG_debug & DEBUG_BASIC) || (rt_g.NMG_debug & DEBUG_CUTLOOP)) {
+                    bu_log("nmg_tri_kill_accordions(): killing jaunt in accordion eu's x%x and x%x\n",
+                           eu_curr, eu_prev);
+                }
+                if (tbl2d) {
+                    if ((tmp = find_pt2d(tbl2d, eu_curr->vu_p))) {
+                        tmp->vu_p = (struct vertexuse *)NULL;
+                    } else {
+                        bu_bomb("nmg_tri_kill_accordions(): could not find eu_curr->vu_p in tbl2d table (1)\n");
+                    }
+                    if ((tmp = find_pt2d(tbl2d, eu_prev->vu_p))) {
+                        tmp->vu_p = (struct vertexuse *)NULL;
+                    } else {
+                        bu_bomb("nmg_tri_kill_accordions(): could not find eu_prev->vu_p in tbl2d table\n");
+                    }
+                }
+                (void)nmg_keu(eu_curr);
+                (void)nmg_keu(eu_prev);
+                vert_cnt -= 2;
+            } else {
+                if ((rt_g.NMG_debug & DEBUG_BASIC) || (rt_g.NMG_debug & DEBUG_CUTLOOP)) {
+                    bu_log("nmg_tri_kill_accordions(): killing jaunt in accordion eu x%x\n", eu_curr);
+                }
+                if (tbl2d) {
+                    if ((tmp = find_pt2d(tbl2d, eu_curr->vu_p))) {
+                        tmp->vu_p = (struct vertexuse *)NULL;
+                    } else {
+                        bu_bomb("nmg_tri_kill_accordions(): could not find eu_curr->vu_p in tbl2d table (2)\n");
+                    }
+                }
+                (void)nmg_keu(eu_curr);
+                vert_cnt--;
+            }
+            eu_curr = BU_LIST_FIRST(edgeuse, &lu->down_hd);
+        } else {
+            eu_curr = BU_LIST_PNEXT(edgeuse, eu_curr);
+        }
+    }
+}
+
+
+HIDDEN void
+validate_tbl2d(const char *str, struct bu_list *tbl2d, struct faceuse *fu)
+{
+    struct loopuse *lu = (struct loopuse *)NULL;
+    struct edgeuse *eu = (struct edgeuse *)NULL;
+    struct pt2d *pt = (struct pt2d *)NULL;
+    int error_cnt = 0;
+
+    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+        NMG_CK_LOOPUSE(lu);
+
+        if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
+            continue;
+        }
+
+        for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+            NMG_CK_EDGEUSE(eu);
+            if (!(pt = find_pt2d(tbl2d, eu->vu_p))) {
+                error_cnt++;
+                bu_log("validate_tbl2d(): %d: fu = %x fu_orient = %d lu = %x lu_orient = %d missing vu = %x coord = %f %f %f \n", 
+                        error_cnt, fu, fu->orientation, lu, 
+                        lu->orientation, eu->vu_p, 
+                        V3ARGS(eu->vu_p->v_p->vg_p->coord));
+            } else {
+                NMG_CK_VERTEXUSE(pt->vu_p);
+                NMG_CK_VERTEX(pt->vu_p->v_p);
+                NMG_CK_VERTEX_G(pt->vu_p->v_p->vg_p);
+                NMG_CK_EDGEUSE(pt->vu_p->up.eu_p);
+                NMG_CK_LOOPUSE(pt->vu_p->up.eu_p->up.lu_p);
+                NMG_CK_FACEUSE(pt->vu_p->up.eu_p->up.lu_p->up.fu_p);
+            }
+        }
+    }
+    if (error_cnt != 0) {
+        bu_log("validate_tbl2d(): %s\n", str);
+        bu_bomb("validate_tbl2d(): missing entries in tbl2d table\n");
+    }
+}
+
+
 /**
  * C U T _ U N I M O N O T O N E
  *
@@ -3525,7 +3642,8 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 }
 #endif
 /* This is the endif to enable the prototype version of the function
- * cut_unimonotone.
+ * cut_unimonotone and the new prototype functions
+ * nmg_tri_kill_accordions and validate_tbl2d.
  */
 
 
