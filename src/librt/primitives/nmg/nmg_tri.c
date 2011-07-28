@@ -185,7 +185,10 @@ find_pt2d(struct bu_list *tbl2d, struct vertexuse *vu)
 {
     struct pt2d *p;
     NMG_CK_TBL2D(tbl2d);
-    NMG_CK_VERTEXUSE(vu);
+
+    if (vu) {
+	NMG_CK_VERTEXUSE(vu);
+    }
 
     for (BU_LIST_FOR(p, pt2d, tbl2d)) {
 	if (p->vu_p == vu) {
