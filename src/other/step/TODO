@@ -16,3 +16,6 @@
 
 * remove Corba bindings
 
+* plug memory leaks.  valgrind step-g on data/ap203/g_r_assembly1.p21
+  reports hundreds of possible leaks (~600) including 160 or so
+  guaranteed leaks.
