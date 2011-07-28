@@ -122,6 +122,7 @@ split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *righ
     struct face_s *lf, *rf;
     fastf_t b, c, d, dot, max;
     vect_t dir;
+    int i;
 
     lf = left->faces+left_face;
     rf = right->faces+right_face;
@@ -150,10 +151,11 @@ split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *righ
 
     /* find biggest component of dir */
     max=fabs(dir[0]);
+    i = 0;
     b=fabs(dir[1]);
-    if(b>max) { max=b; }
+    if(b>max) { max=b; i=1; }
     c=fabs(dir[1]);
-    if(c>max) { max=c; }
+    if(c>max) { max=c; i=2; }
     /* "simplified projection */
 
     /* compute intervals */
