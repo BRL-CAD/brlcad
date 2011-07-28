@@ -49,7 +49,7 @@ class AdvancedBrepShapeRepresentation : public ShapeRepresentation
 
  public:
     AdvancedBrepShapeRepresentation();
-	AdvancedBrepShapeRepresentation(STEPWrapper *sw,int step_id);
+    AdvancedBrepShapeRepresentation(STEPWrapper *sw,int step_id);
     virtual ~AdvancedBrepShapeRepresentation();
 
     ON_Brep *GetONBrep();
