@@ -580,7 +580,6 @@ out:
  */
 int rt_shootrays(struct application_bundle *bundle)
 {
-    char *status;
     struct partition_bundle *pb = NULL;
     genptr_t a_uptr_backup = NULL;
     struct xray a_ray;
@@ -635,14 +634,14 @@ int rt_shootrays(struct application_bundle *bundle)
     }
 
     if ((bundle->b_hit) && (pb->hits > 0)) {
+	/* "HIT" */
 	bundle->b_return = bundle->b_hit(bundle, pb);
-	status = "HIT";
     } else if (bundle->b_miss) {
+	/* "MISS" */
 	bundle->b_return = bundle->b_miss(bundle);
-	status = "MISS";
     } else {
+	/* "MISS (unexpected)" */
 	bundle->b_return = 0;
-	status = "MISS (unexpected)";
     }
 
     if (pb->list != NULL) {
