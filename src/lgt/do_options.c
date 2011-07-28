@@ -62,7 +62,7 @@ static char	scratchbuf[TEMPLATE_COLS+1];
 /* The strings in this array will be modified as the program runs,
  * so don't point to const strings, initialize as character arrays here.
  */
-char	template[][TEMPLATE_COLS] = {
+char	template[][TEMPLATE_COLS+1] = {
 /*         1         2         3         4         5         6         7         8
 	   012345678901234567890123456789012345678901234567890123456789012345678901234567890*/
     "TITLE [                                                                       ]",
@@ -1040,7 +1040,7 @@ f_Cursor_Module()
 			bu_log("to<%d, %d> from<%d, %d> delta<%d, %d>\n",
 			       tx, ty, fx, fy, ir_mapx, ir_mapy);
 			ir_offset = TRUE;
-			(void) snprintf(IR_AUTO_MAP_PTR, TEMPLATE_COLS, "%4s", "ON");
+			(void) snprintf(IR_AUTO_MAP_PTR, 27, "%4s", "ON");
 			update_Screen();
 			prnt_Prompt("Cursor input module (type '?' for help) : ");
 		    }
@@ -1058,7 +1058,7 @@ f_Cursor_Module()
 			bu_log("to<%d, %d> from<%d, %d> delta<%d, %d>\n",
 			       tx, ty, fx, fy, ir_mapx, ir_mapy);
 			ir_offset = TRUE;
-			(void) snprintf(IR_AUTO_MAP_PTR, TEMPLATE_COLS, "%4s", "ON");
+			(void) snprintf(IR_AUTO_MAP_PTR, 27, "%4s", "ON");
 			update_Screen();
 			prnt_Prompt("Cursor input module (type '?' for help) : ");
 		    }
