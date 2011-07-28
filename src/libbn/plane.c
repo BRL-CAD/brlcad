@@ -1584,7 +1584,6 @@ bn_isect_line3_line3(fastf_t *t,
     register fastf_t det;
     register fastf_t det1;
     register short int q, r, s;
-    int parallel = 0;
     int colinear = 0;
 
 
@@ -1614,7 +1613,6 @@ bn_isect_line3_line3(fastf_t *t,
 	/* lines are parallel, must find another way to get normal vector */
 	vect_t a_to_p;
 
-	parallel = 1;
 	VSUB2(a_to_p, p, a);
 	VCROSS(n, a_to_p, d);
 
