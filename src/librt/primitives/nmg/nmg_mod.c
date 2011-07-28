@@ -3085,62 +3085,52 @@ nmg_check_proposed_loop(struct edgeuse *start_eu, struct edgeuse **next_start_eu
 void
 nmg_kill_accordions(struct loopuse *lu)
 {
-    struct edgeuse *eu;
-    struct edgeuse *jaunt_eu1;
-    struct edgeuse *jaunt_eu2 = NULL;
-    struct edgeuse *jaunt_eu3;
+    struct edgeuse *eu_curr, *eu_prev, *eu_next;
+    int vert_cnt = 0;
 
     NMG_CK_LOOPUSE(lu);
 
-    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
-	return;
- top:
-    /* first look for a jaunt */
-    jaunt_eu1 = (struct edgeuse *)NULL;
-    jaunt_eu3 = (struct edgeuse *)NULL;
-    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-	struct edgeuse *eu2;
+    eu_curr = eu_prev = eu_next = (struct edgeuse *)NULL;
 
-	eu2 = BU_LIST_PPREV_CIRC(edgeuse, &eu->l);
-	if ((eu2->vu_p->v_p == eu->eumate_p->vu_p->v_p) && (eu != eu2)) {
-	    struct edgeuse *eu3;
-
-	    /* found a jaunt */
-	    jaunt_eu1 = eu;
-	    jaunt_eu2 = eu2;
-
-	    /* look for a third eu between the same vertices */
-	    jaunt_eu3 = (struct edgeuse *)NULL;
-	    for (BU_LIST_FOR(eu3, edgeuse, &lu->down_hd)) {
-		if (eu3 == jaunt_eu1 || eu3 == jaunt_eu2)
-		    continue;
-
-		if (NMG_ARE_EUS_ADJACENT(eu3, jaunt_eu1)) {
-		    jaunt_eu3 = eu3;
-		    break;
-		}
-	    }
-	}
-	if (jaunt_eu3)
-	    break;
+    if (BU_LIST_IS_EMPTY(&lu->down_hd)) {
+        return;
     }
 
-    if (!jaunt_eu3)
-	return;
-
-    if (jaunt_eu2 != jaunt_eu1->eumate_p) {
-	if ((rt_g.NMG_debug & DEBUG_BASIC) || (rt_g.NMG_debug & DEBUG_CUTLOOP))
-	    bu_log("Killing jaunt in accordion eu's x%x and x%x\n", jaunt_eu1, jaunt_eu2);
-	(void)nmg_keu(jaunt_eu1);
-	(void)nmg_keu(jaunt_eu2);
-    } else {
-	if ((rt_g.NMG_debug & DEBUG_BASIC) || (rt_g.NMG_debug & DEBUG_CUTLOOP))
-	    bu_log("Killing jaunt in accordion eu x%x\n", jaunt_eu1);
-	(void)nmg_keu(jaunt_eu1);
+    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
+        return;
     }
 
-    goto top;
+    for (BU_LIST_FOR(eu_curr, edgeuse, &lu->down_hd)) {
+        vert_cnt++;
+    }
 
+    eu_curr = BU_LIST_FIRST(edgeuse, &lu->down_hd);
+    while (BU_LIST_NOT_HEAD(&eu_curr->l, &lu->down_hd) && vert_cnt > 2) {
+
+        eu_prev = BU_LIST_PPREV_CIRC(edgeuse, &eu_curr->l);
+        eu_next = BU_LIST_PNEXT_CIRC(edgeuse, &eu_curr->l);
+
+        if ((eu_prev->vu_p->v_p == eu_next->vu_p->v_p) && (eu_curr != eu_prev)) {
+            if (eu_prev != eu_next) {
+                if ((rt_g.NMG_debug & DEBUG_BASIC) || (rt_g.NMG_debug & DEBUG_CUTLOOP)) {
+                    bu_log("nmg_kill_accordions(): killing jaunt in accordion eu's x%x and x%x\n",
+                           eu_curr, eu_prev);
+                }
+                (void)nmg_keu(eu_curr);
+                (void)nmg_keu(eu_prev);
+                vert_cnt -= 2;
+            } else {
+                if ((rt_g.NMG_debug & DEBUG_BASIC) || (rt_g.NMG_debug & DEBUG_CUTLOOP)) {
+                    bu_log("nmg_kill_accordions(): killing jaunt in accordion eu x%x\n", eu_curr);
+                }
+                (void)nmg_keu(eu_curr);
+                vert_cnt--;
+            }
+            eu_curr = BU_LIST_FIRST(edgeuse, &lu->down_hd);
+        } else {
+            eu_curr = BU_LIST_PNEXT(edgeuse, eu_curr);
+        }
+    }
 }
 
 
@@ -5045,3 +5035,4 @@ nmg_mv_vu_between_shells(struct shell *dest, register struct shell *src, registe
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+
