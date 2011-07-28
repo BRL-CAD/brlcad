@@ -2138,23 +2138,19 @@ ogl_getDisplayImage(struct dm *dmp, unsigned char **image)
     unsigned int red_mask = 0xff000000;
     unsigned int green_mask = 0x00ff0000;
     unsigned int blue_mask = 0x0000ff00;
-    unsigned int alpha_mask = 0x000000ff;
     int h, w;
-    int big_endian;
 #if defined(DM_WGL)
+    unsigned int alpha_mask = 0x000000ff;
+    int big_endian;
     int swap_bytes;
-#endif
 
     if ((bu_byteorder() == BU_BIG_ENDIAN))
 	big_endian = 1;
     else
 	big_endian = 0;
 
-#if defined(DM_WGL)
     /* WTF */
     swap_bytes = !big_endian;
-#else
-    swap_bytes = big_endian;
 #endif
 
     if (dmp->dm_type == DM_TYPE_WGL || dmp->dm_type == DM_TYPE_OGL) {

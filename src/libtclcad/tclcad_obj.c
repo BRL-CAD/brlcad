@@ -6478,21 +6478,19 @@ to_png(struct ged *gedp,
 	    unsigned int blue_mask = 0x0000ff00;
 #if defined(DM_WGL)
 	    unsigned int alpha_mask = 0x000000ff;
-#endif
 	    int big_endian, swap_bytes;
+#endif
 	    int bytes_per_line = gdvp->gdv_dmp->dm_width * bytes_per_pixel;
 	    GLuint *pixels = bu_calloc(width * height, bytes_per_pixel, "pixels");
 
+#if defined(DM_WGL)
 	    if ((bu_byteorder() == BU_BIG_ENDIAN))
 		big_endian = 1;
 	    else
 		big_endian = 0;
 
-#if defined(DM_WGL)
 	    /* WTF */
 	    swap_bytes = !big_endian;
-#else
-	    swap_bytes = big_endian;
 #endif
 
 	    glReadBuffer(GL_FRONT);
