@@ -132,12 +132,10 @@ AdvancedBrepShapeRepresentation::LoadONBrep(ON_Brep *brep)
     }
 
     for (i = items.begin(); i != items.end(); i++) {
-#if 0
 	if (!(*i)->LoadONBrep(brep)) {
 	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	    return false;
 	}
-#endif
     }
 
     return true;
