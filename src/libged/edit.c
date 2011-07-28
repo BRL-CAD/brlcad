@@ -1141,19 +1141,19 @@ edit_rotate_add_args(union edit_cmd * const cmd, struct edit_arg *args)
  * FIXME: Kind of dirty; haven't found a better way yet, though.
  */
 struct edit_arg *
-edit_rotate_get_next_arg_head(union edit_cmd * const cmd, 
-			      struct edit_arg *prev_arg_head)
+edit_rotate_get_next_arg_head(union edit_cmd * const cmd, struct edit_arg *prev_arg_head)
 {
-    struct edit_arg *arg_heads[] = {
-	&cmd->rotate.objects,
-	&cmd->rotate.ref_axis.from,
-	&cmd->rotate.ref_axis.to,
-	&cmd->rotate.center,
-	&cmd->rotate.ref_angle.origin,
-	&cmd->rotate.ref_angle.from,
-	&cmd->rotate.ref_angle.to,
-	(struct edit_arg *)NULL
-    };
+    struct edit_arg *arg_heads[8];
+
+    arg_heads[0] = &cmd->rotate.objects;
+    arg_heads[1] = &cmd->rotate.ref_axis.from;
+    arg_heads[2] = &cmd->rotate.ref_axis.to;
+    arg_heads[3] = &cmd->rotate.center;
+    arg_heads[4] = &cmd->rotate.ref_angle.origin;
+    arg_heads[5] = &cmd->rotate.ref_angle.from;
+    arg_heads[6] = &cmd->rotate.ref_angle.to;
+    arg_heads[7] = (struct edit_arg *)NULL;
+
     return edit_cmd_get_next_arg_head(arg_heads, prev_arg_head);
 }
 
@@ -1203,18 +1203,18 @@ edit_scale_add_args(union edit_cmd * const cmd, struct edit_arg *args)
 }
 
 struct edit_arg *
-edit_scale_get_next_arg_head(union edit_cmd * const cmd, 
-			     struct edit_arg *prev_arg_head)
+edit_scale_get_next_arg_head(union edit_cmd * const cmd, struct edit_arg *prev_arg_head)
 {
-    struct edit_arg *arg_heads[] = {
-	&cmd->scale.objects,
-	&cmd->scale.ref_scale.from,
-	&cmd->scale.ref_scale.to,
-	&cmd->scale.center,
-	&cmd->scale.ref_factor.from,
-	&cmd->scale.ref_factor.to,
-	(struct edit_arg *)NULL
-    };
+    struct edit_arg *arg_heads[7];
+
+    arg_heads[0] = &cmd->scale.objects;
+    arg_heads[1] = &cmd->scale.ref_scale.from;
+    arg_heads[2] = &cmd->scale.ref_scale.to;
+    arg_heads[3] = &cmd->scale.center;
+    arg_heads[4] = &cmd->scale.ref_factor.from;
+    arg_heads[5] = &cmd->scale.ref_factor.to;
+    arg_heads[6] = (struct edit_arg *)NULL;
+
     return edit_cmd_get_next_arg_head(arg_heads, prev_arg_head);
 }
 
@@ -1257,15 +1257,15 @@ edit_translate_add_args(union edit_cmd * const cmd, struct edit_arg * const args
 }
 
 struct edit_arg *
-edit_translate_get_next_arg_head(union edit_cmd * const cmd, 
-				 struct edit_arg *prev_arg_head)
+edit_translate_get_next_arg_head(union edit_cmd * const cmd, struct edit_arg *prev_arg_head)
 {
-    struct edit_arg *arg_heads[] = {
-	&cmd->translate.objects,
-	&cmd->translate.ref_vector.from,
-	&cmd->translate.ref_vector.to,
-	(struct edit_arg *)NULL
-    };
+    struct edit_arg *arg_heads[4];
+
+    arg_heads[0] = &cmd->translate.objects;
+    arg_heads[1] = &cmd->translate.ref_vector.from;
+    arg_heads[2] = &cmd->translate.ref_vector.to;
+    arg_heads[3] = (struct edit_arg *)NULL;
+
     return edit_cmd_get_next_arg_head(arg_heads, prev_arg_head);
 }
 
