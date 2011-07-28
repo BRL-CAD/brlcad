@@ -63,6 +63,8 @@ InstMgr::~InstMgr()
     {
 	master->DeleteEntries();
     }
+    delete master;
+    delete sortedMaster;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
