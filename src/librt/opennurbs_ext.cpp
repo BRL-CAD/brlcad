@@ -1442,11 +1442,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	const ON_Surface* surf = m_face->SurfaceOf();
 	ON_Interval usurf = surf->Domain(0);
 	ON_Interval vsurf = surf->Domain(1);
-	point_t a, b;
-	VSET(a, usurf[0], vsurf[0], 0.0);
-	VSET(b, usurf[1], vsurf[1], 0.0);
-	VSET(a, u[0], v[0], 0.0);
-	VSET(b, u[1], v[1], 0.0);
+
 	double uq = u.Length()*0.25;
 	double vq = v.Length()*0.25;
 	localsurf->FrameAt(u.Mid() - uq, v.Mid() - vq, frames[5]);
