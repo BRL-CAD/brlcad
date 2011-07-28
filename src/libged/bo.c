@@ -45,7 +45,7 @@ ged_bo(struct ged *gedp, int argc, const char *argv[])
     struct rt_binunif_internal *bip;
     struct rt_db_internal intern;
     struct directory *dp;
-    char *cname;
+    const char *argv0;
     static const char *usage = "{-i major_type minor_type | -o} dest source";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -55,9 +55,11 @@ ged_bo(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    argv0 = argv[0];
+
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv0, usage);
 	return GED_HELP;
     }
 
@@ -84,10 +86,8 @@ ged_bo(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    cname = (char *)argv[0];
-
     if (input_mode + output_mode != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv0, usage);
 	return GED_ERROR;
     }
 
@@ -95,7 +95,7 @@ ged_bo(struct ged *gedp, int argc, const char *argv[])
     argv += bu_optind;
 
     if ((input_mode && argc != 4) || (output_mode && argc != 2)) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv0, usage);
 	return GED_ERROR;
     }
 
@@ -153,7 +153,7 @@ ged_bo(struct ged *gedp, int argc, const char *argv[])
 	argv += 2;
 
 	if (minor_type == 0) {
-	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv0, usage);
 	    return GED_ERROR;
 	}
 
@@ -229,7 +229,7 @@ ged_bo(struct ged *gedp, int argc, const char *argv[])
 	rt_db_free_internal(&intern);
 
     } else {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv0, usage);
 	return GED_ERROR;
     }
 

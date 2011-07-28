@@ -171,17 +171,8 @@ write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *UNUSED(name))
     fastf_t *vertices;
     int *faces;
     int first_vertex;
-    int last_vertex;
-    int first_pt;
-    int last_pt;
     int first_coedge;
-    int last_coedge;
-    int first_edge;
-    int last_edge;
     int first_face;
-    int last_face;
-    int first_loop;
-    int last_loop;
     int num_vertices = bot->num_vertices;
     int num_faces = bot->num_faces;
 
@@ -219,15 +210,12 @@ write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *UNUSED(name))
 	fprintf(fp, "-%d vertex $-1 $%d $%d #\n", curr_line_num, curr_edge_id, curr_line_num+num_vertices);
 	++curr_line_num;
     }
-    last_vertex = curr_line_num-1;
 
     /* Dump out points */
-    first_pt = curr_line_num;
     for (i = 0; i < num_vertices; i++) {
 	fprintf(fp, "-%d point $-1 %f %f %f #\n", curr_line_num, V3ARGS_SCALE(&vertices[3*i]));
 	++curr_line_num;
     }
-    last_pt = curr_line_num-1;
 
     /* Dump out coedges */
     first_coedge = curr_line_num;
@@ -247,10 +235,8 @@ write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *UNUSED(name))
 	++curr_line_num;
 	++curr_loop_id;
     }
-    last_coedge = curr_line_num-1;
 
     /* Dump out edges */
-    first_edge = curr_line_num;
     for (i = 0; i < num_faces; i++) {
 	fprintf(fp, "-%d edge $-1 $%d $%d $%d $%d forward #\n", curr_line_num,
 		faces[3*i]+first_vertex, faces[3*i+1]+first_vertex,
@@ -265,7 +251,6 @@ write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *UNUSED(name))
 		first_coedge + i*3 + 2, curr_line_num + num_faces*5);
 	++curr_line_num;
     }
-    last_edge = curr_line_num-1;
 
     /* Dump out faces */
     first_face = curr_line_num;
@@ -279,16 +264,13 @@ write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *UNUSED(name))
 	    curr_line_num, curr_line_num+num_faces, curr_shell_id,
 	    curr_line_num + num_faces*5);
     ++curr_line_num;
-    last_face = curr_line_num-1;
 
     /* Dump out loops */
-    first_loop = curr_line_num;
     for (i = 0; i < num_faces; i++) {
 	fprintf(fp, "-%d loop $-1 $-1 $%d $%d #\n",
 		curr_line_num, first_coedge+i*3, first_face+i);
 	++curr_line_num;
     }
-    last_loop = curr_line_num-1;
 
     /* Dump out straight-curves for each edge */
     for (i = 0; i < num_faces; i++) {
@@ -365,7 +347,6 @@ write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *UNUSED(name))
 static void
 write_bot_dxf(struct rt_bot_internal *bot, FILE *fp, char *name)
 {
-    int num_vertices;
     fastf_t *vertices;
     int num_faces, *faces;
     point_t A;
@@ -373,7 +354,6 @@ write_bot_dxf(struct rt_bot_internal *bot, FILE *fp, char *name)
     point_t C;
     int i, vi;
 
-    num_vertices = bot->num_vertices;
     vertices = bot->vertices;
     num_faces = bot->num_faces;
     faces = bot->faces;
@@ -477,7 +457,6 @@ write_bot_obj(struct rt_bot_internal *bot, FILE *fp, char *name)
 static void
 write_bot_stl(struct rt_bot_internal *bot, FILE *fp, char *name)
 {
-    int num_vertices;
     fastf_t *vertices;
     int num_faces, *faces;
     point_t A;
@@ -488,7 +467,6 @@ write_bot_stl(struct rt_bot_internal *bot, FILE *fp, char *name)
     vect_t norm;
     int i, vi;
 
-    num_vertices = bot->num_vertices;
     vertices = bot->vertices;
     num_faces = bot->num_faces;
     faces = bot->faces;
@@ -526,7 +504,6 @@ write_bot_stl(struct rt_bot_internal *bot, FILE *fp, char *name)
 static void
 write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *UNUSED(name))
 {
-    unsigned long num_vertices;
     fastf_t *vertices;
     size_t num_faces;
     int *faces;
@@ -538,7 +515,6 @@ write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *UNUSED(name))
     vect_t norm;
     unsigned long i, j, vi;
 
-    num_vertices = bot->num_vertices;
     vertices = bot->vertices;
     num_faces = bot->num_faces;
     faces = bot->faces;
