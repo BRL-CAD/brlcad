@@ -75,10 +75,11 @@ class STEPWrapper {
 private:
     std::string stepfile;
     std::string dotgfile;
-    InstMgr instance_list;
+    InstMgr *instance_list;
     Registry  *registry;
     STEPfile  *sfile;
     BRLCADWrapper *dotg;
+
     void printEntity(SCLP23(Application_instance) *se, int level);
     void printEntityAggregate(STEPaggregate *sa, int level);
     const char *getBaseType(int type);

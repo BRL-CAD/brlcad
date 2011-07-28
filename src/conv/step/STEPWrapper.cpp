@@ -39,6 +39,7 @@
 
 STEPWrapper::STEPWrapper()
 {
+    instance_list = new InstMgr();
     registry = NULL;
     sfile = NULL;
 }
@@ -46,10 +47,10 @@ STEPWrapper::STEPWrapper()
 
 STEPWrapper::~STEPWrapper()
 {
-    if (sfile)
-	delete sfile;
-    if (registry)
-	delete registry;
+    delete instance_list;
+    delete sfile;
+    delete registry;
+    delete dotg;
 }
 
 
@@ -60,9 +61,9 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 
     this->dotg = dot_g;
 
-    int num_ents = instance_list.InstanceCount();
+    int num_ents = instance_list->InstanceCount();
     for (int i=0; i < num_ents; i++) {
-	SCLP23(Application_instance) *sse = instance_list.GetSTEPentity(i);
+	SCLP23(Application_instance) *sse = instance_list->GetSTEPentity(i);
 	if (sse == NULL)
 	    continue;
 	std::string name = sse->EntityName();
@@ -112,7 +113,7 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 SCLP23(Application_instance) *
 STEPWrapper::getEntity(int STEPid)
 {
-    return instance_list.FindFileId(STEPid)->GetSTEPentity();
+    return instance_list->FindFileId(STEPid)->GetSTEPentity();
 }
 
 
@@ -142,7 +143,7 @@ STEPattribute *
 STEPWrapper::getAttribute(int STEPid, const char *name)
 {
     STEPattribute *retValue = NULL;
-    SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+    SCLP23(Application_instance) *sse = instance_list->FindFileId(STEPid)->GetSTEPentity();
 
     sse->ResetAttributes();
 
@@ -163,7 +164,7 @@ LIST_OF_STRINGS *
 STEPWrapper::getAttributes(int STEPid)
 {
     LIST_OF_STRINGS *l = new LIST_OF_STRINGS;
-    SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+    SCLP23(Application_instance) *sse = instance_list->FindFileId(STEPid)->GetSTEPentity();
 
     sse->ResetAttributes();
 
@@ -182,7 +183,7 @@ Boolean
 STEPWrapper::getBooleanAttribute(int STEPid, const char *name)
 {
     Boolean retValue = BUnset;
-    SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+    SCLP23(Application_instance) *sse = instance_list->FindFileId(STEPid)->GetSTEPentity();
 
     sse->ResetAttributes();
 
@@ -205,7 +206,7 @@ int
 STEPWrapper::getEnumAttribute(int STEPid, const char *name)
 {
     int retValue = 0;
-    SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+    SCLP23(Application_instance) *sse = instance_list->FindFileId(STEPid)->GetSTEPentity();
 
     sse->ResetAttributes();
 
@@ -226,7 +227,7 @@ Logical
 STEPWrapper::getLogicalAttribute(int STEPid, const char *name)
 {
     Logical retValue = LUnknown;
-    SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+    SCLP23(Application_instance) *sse = instance_list->FindFileId(STEPid)->GetSTEPentity();
 
     sse->ResetAttributes();
 
@@ -292,7 +293,7 @@ SCLP23(Application_instance) *
 STEPWrapper::getEntityAttribute(int STEPid, const char *name)
 {
     SCLP23(Application_instance) *retValue = NULL;
-    SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+    SCLP23(Application_instance) *sse = instance_list->FindFileId(STEPid)->GetSTEPentity();
 
     sse->ResetAttributes();
 
@@ -313,7 +314,7 @@ int
 STEPWrapper::getIntegerAttribute(int STEPid, const char *name)
 {
     int retValue = 0;
-    SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+    SCLP23(Application_instance) *sse = instance_list->FindFileId(STEPid)->GetSTEPentity();
 
     sse->ResetAttributes();
 
@@ -334,7 +335,7 @@ double
 STEPWrapper::getRealAttribute(int STEPid, const char *name)
 {
     double retValue = 0.0;
-    SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+    SCLP23(Application_instance) *sse = instance_list->FindFileId(STEPid)->GetSTEPentity();
 
     sse->ResetAttributes();
 
@@ -356,7 +357,7 @@ STEPWrapper::getListOfEntities(int STEPid, const char *name)
 {
     LIST_OF_ENTITIES *l = new LIST_OF_ENTITIES;
 
-    SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+    SCLP23(Application_instance) *sse = instance_list->FindFileId(STEPid)->GetSTEPentity();
     sse->ResetAttributes();
 
     STEPattribute *attr;
@@ -388,7 +389,7 @@ STEPWrapper::getListOfListOfPoints(int STEPid, const char *attrName)
 {
     LIST_OF_LIST_OF_POINTS *l = new LIST_OF_LIST_OF_POINTS;
 
-    SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+    SCLP23(Application_instance) *sse = instance_list->FindFileId(STEPid)->GetSTEPentity();
     sse->ResetAttributes();
 
     STEPattribute *attr;
@@ -432,7 +433,7 @@ MAP_OF_SUPERTYPES *
 STEPWrapper::getMapOfSuperTypes(int STEPid)
 {
     MAP_OF_SUPERTYPES *m = new MAP_OF_SUPERTYPES;
-    SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+    SCLP23(Application_instance) *sse = instance_list->FindFileId(STEPid)->GetSTEPentity();
 
     if (sse->IsComplex()) {
 	STEPcomplex *sc = ((STEPcomplex *)sse)->head;
@@ -449,7 +450,7 @@ STEPWrapper::getMapOfSuperTypes(int STEPid)
 void
 STEPWrapper::getSuperTypes(int STEPid, MAP_OF_SUPERTYPES &m)
 {
-    SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+    SCLP23(Application_instance) *sse = instance_list->FindFileId(STEPid)->GetSTEPentity();
 
     if (sse->IsComplex()) {
 	STEPcomplex *sc = ((STEPcomplex *)sse)->head;
@@ -464,7 +465,7 @@ STEPWrapper::getSuperTypes(int STEPid, MAP_OF_SUPERTYPES &m)
 SCLP23(Application_instance) *
 STEPWrapper::getSuperType(int STEPid, const char *name)
 {
-    SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+    SCLP23(Application_instance) *sse = instance_list->FindFileId(STEPid)->GetSTEPentity();
     std::string attrval;
 
     if (sse->IsComplex()) {
@@ -486,7 +487,7 @@ std::string
 STEPWrapper::getStringAttribute(int STEPid, const char *name)
 {
     std::string retValue = "";
-    SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+    SCLP23(Application_instance) *sse = instance_list->FindFileId(STEPid)->GetSTEPentity();
 
     sse->ResetAttributes();
 
@@ -919,7 +920,7 @@ bool
 STEPWrapper::load(std::string &step_file)
 {
     registry = new Registry(SchemaInit);
-    sfile = new STEPfile(*registry, instance_list);
+    sfile = new STEPfile(*registry, *instance_list);
 
     stepfile = step_file;
     try {
@@ -942,8 +943,8 @@ STEPWrapper::parseListOfReals(const char *in)
     ErrorDescriptor errdesc;
     RealAggregate *ra = new RealAggregate();
 
-    //ra->StrToVal(in, &errdesc, SCLP23(Real), &instance_list, 0);
-    ra->StrToVal(in, &errdesc, config_control_designt_parameter_value, &instance_list, 0);
+    //ra->StrToVal(in, &errdesc, SCLP23(Real), instance_list, 0);
+    ra->StrToVal(in, &errdesc, config_control_designt_parameter_value, instance_list, 0);
     RealNode *rn = (RealNode *)ra->GetHead();
     while (rn != NULL) {
 	l->push_back(rn->value);
@@ -976,7 +977,7 @@ STEPWrapper::parseListOfPointEntities(const char *in)
     ErrorDescriptor errdesc;
     EntityAggregate *ag = new EntityAggregate();
 
-    ag->StrToVal(in, &errdesc, config_control_designe_cartesian_point, &instance_list, 0);
+    ag->StrToVal(in, &errdesc, config_control_designe_cartesian_point, instance_list, 0);
     EntityNode *sn = (EntityNode *)ag->GetHead();
 
     SCLP23(Application_instance) *sse;
@@ -1003,7 +1004,7 @@ STEPWrapper::parseListOfPatchEntities(const char *in)
     ErrorDescriptor errdesc;
     EntityAggregate *ag = new EntityAggregate();
 
-    ag->StrToVal(in, &errdesc, config_control_designe_cartesian_point, &instance_list, 0);
+    ag->StrToVal(in, &errdesc, config_control_designe_cartesian_point, instance_list, 0);
     EntityNode *sn = (EntityNode *)ag->GetHead();
 
     SCLP23(Application_instance) *sse;
@@ -1102,7 +1103,7 @@ STEPWrapper::printEntityAggregate(STEPaggregate *sa, int level)
 void
 STEPWrapper::printLoadStatistics()
 {
-    int num_ents = instance_list.InstanceCount();
+    int num_ents = instance_list->InstanceCount();
     int num_schma_ents = registry->GetEntityCnt();
 
     // "Reset" the Schema and Entity hash tables... this sets things up
@@ -1130,7 +1131,7 @@ STEPWrapper::printLoadStatistics()
     for (int i=0; i < num_schma_ents; i++) {
 	ent = registry->NextEntity();
 
-	int entCount = instance_list.EntityKeywordCount(ent->Name());
+	int entCount = instance_list->EntityKeywordCount(ent->Name());
 	// fix below with boost string formater when available
 	if (entCount > 0) {
 	    std::cout << "\t" << ent->Name() << filler.substr(0, filler.length() - ((std::string)ent->Name()).length()) << entCount << std::endl;
