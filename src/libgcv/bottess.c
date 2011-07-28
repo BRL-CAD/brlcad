@@ -121,7 +121,6 @@ static int
 split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *right, unsigned long int right_face, const struct bn_tol *tol) {
     struct face_s *lf, *rf;
     fastf_t b, c, d, dot, max;
-    vect_t dir;
     int i;
 
     lf = left->faces+left_face;
@@ -146,8 +145,6 @@ split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *righ
     dot = VDOT(rf->plane, lf->vert[0])+d;
     if((dot * VDOT(rf->plane, lf->vert[1])+d) > 0 && (dot * VDOT(rf->plane, lf->vert[2])+d) > 0)
 	return 2;
-
-    VCROSS(dir, lf->plane, rf->plane);
 
     /* find biggest component of dir */
     max=fabs(dir[0]);
