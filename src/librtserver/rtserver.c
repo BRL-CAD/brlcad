@@ -203,10 +203,9 @@ get_muves_components()
 	    struct region *rp=rtip->Regions[j];
 	    int new;
 	    const char *attrget;
-	    CLIENTDATA_INT idx=0;
 
 	    attrget = bu_avs_get(&(rp->attr_values), "MUVES_Component");
-	    
+
 	    if ( attrget == NULL ) {
 		/* not a region, or does not have a MUVES_Component attribute */
 		continue;
@@ -222,9 +221,6 @@ get_muves_components()
 	    if ( new ) {
 		comp_count++;
 		Tcl_SetHashValue( name_entry, (ClientData)comp_count );
-		idx = comp_count;
-	    } else {
-		idx = (CLIENTDATA_INT)Tcl_GetHashValue( name_entry );
 	    }
 	}
     }
@@ -620,13 +616,11 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *UNUSED
 	vect_t enterNormal;
 	vect_t exitNormal;
 	Tcl_HashEntry *entry;
-	double los;
 	double inObl, outObl;
 	double dot;
 	int regionIndex;
 
 	/* fill in the data for this hit */
-	los = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
 	RT_HIT_NORMAL( enterNormal, pp->pt_inhit,
 		       pp->pt_inseg->seg_stp, 0, pp->pt_inflip );
 	RT_HIT_NORMAL( exitNormal, pp->pt_outhit,
