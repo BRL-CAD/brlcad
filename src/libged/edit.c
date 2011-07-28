@@ -911,16 +911,20 @@ union edit_cmd{
     } translate;
 };
 
+#define EDIT_CMD_STATUS_
+
 /**
- * Table of available edit subcommands
+ * Command specific information, for a table of available commands.
  */
 struct edit_cmd_tab {
     char *name;
     char *opt_global;
     char *usage;
     char *help;
-    int (*exec_concise)(struct ged *gedp, const union edit_cmd *const cmd);
-    int (*add_arg)(union edit_cmd *const cmd, struct edit_arg *const arg);
+    int (*exec)(struct ged *gedp, const union edit_cmd *const cmd);
+    int (*add_args)(union edit_cmd *const cmd, struct edit_arg *const args);
+    struct edit_arg * (*get_next_arg_head)(union edit_cmd * const cmd, 
+    		       struct edit_arg *prev_arg_head);
 };
 
 /* 
@@ -1033,8 +1037,47 @@ edit_cmd_free(union edit_cmd * const args)
 }
 
 
+/**
+ * Provide an array of arguments and the current argument,
+ * and this function will return the next argument. Returns
+ * the same argument that you passed in if there are no more argument
+ * heads left, or NULL if there was no match.
+ */
+HIDDEN struct edit_arg *
+edit_cmd_get_next_arg_head(struct edit_arg *arg_heads[],
+			   struct edit_arg *prev_arg_head)
+{
+    int i;
+    for (i = 0; arg_heads[i]; ++i) {
+	if (arg_heads[i] == prev_arg_head)
+	    break;
+    }
+    if (!arg_heads[i])
+	return (struct edit_arg *)NULL;
+    ++i;
+    if (!arg_heads[i])
+	return prev_arg_head;
+    return arg_heads[i];
+}
+
 /* 
- * Command specific functions
+ * Command specific functions.
+ *
+ * The functions for the first command (currently, rotate) will be
+ * documented well to introduce the concepts. Documentation of
+ * functions for other commands will be minimal, since they are
+ * quite similar.
+ *
+ * To add a new command, so far, you need to:
+ *	1) add a struct to the union edit_cmd
+ *	2) add command data/function pointers to the command table
+ *	3) create 4 functions that
+ *		a) add args to build the command
+ *		b) get the next arg head in union edit_cmd
+ *		c) perform the command
+ *		d) wrap the command, to alternatively accept a union
+ *		   edit_cmd
+ *
  */
 
 
@@ -1065,7 +1108,7 @@ edit_rotate(struct ged *gedp, vect_t *axis_from, vect_t *axis_to,
  * objects edit_arg. Ignores all edit_arg->next arguments.
  */
 int
-edit_rotate_concise(struct ged *gedp, const union edit_cmd * const cmd)
+edit_rotate_wrapper(struct ged *gedp, const union edit_cmd * const cmd)
 {
     return edit_rotate(gedp,
 		       cmd->rotate.ref_axis.from.vector,
@@ -1078,17 +1121,46 @@ edit_rotate_concise(struct ged *gedp, const union edit_cmd * const cmd)
 }
 
 int
-edit_rotate_add_arg(union edit_cmd * const cmd, struct edit_arg *arg)
+edit_rotate_add_args(union edit_cmd * const cmd, struct edit_arg *args)
 {
     (void)cmd;
-    (void)arg;
+    (void)args;
     return GED_OK;
 }
-int
+
+/**
+ * Given an pointer to an argument head in the edit_cmd union, this
+ * function will return the next argument head in the union. Returns
+ * the same argument that you passed in if there are no more argument
+ * heads left, or NULL if there was no match.
+ *
+ * This function is used to traverse a commands arguments, without
+ * needing to know their structure. edit_cmd.common.objects should be
+ * used as the first argument head, to tranverse the entire struct.
+ *
+ * FIXME: Kind of dirty; haven't found a better way yet, though.
+ */
+struct edit_arg *
+edit_rotate_get_next_arg_head(union edit_cmd * const cmd, 
+			      struct edit_arg *prev_arg_head)
+{
+    struct edit_arg *arg_heads[] = {
+	&cmd->rotate.objects,
+	&cmd->rotate.ref_axis.from,
+	&cmd->rotate.ref_axis.to,
+	&cmd->rotate.center,
+	&cmd->rotate.ref_angle.origin,
+	&cmd->rotate.ref_angle.from,
+	&cmd->rotate.ref_angle.to,
+	(struct edit_arg *)NULL
+    };
+    return edit_cmd_get_next_arg_head(arg_heads, prev_arg_head);
+}
 
 /**
  * Scale an object by specifying points.
  */
+int
 edit_scale(struct ged *gedp, vect_t *scale_from, vect_t *scale_to,
 	    vect_t *center, vect_t *factor_from, vect_t *factor_to,
 	    struct db_full_path *path)
@@ -1103,14 +1175,6 @@ edit_scale(struct ged *gedp, vect_t *scale_from, vect_t *scale_to,
     return GED_OK;
 }
 
-int
-edit_scale_add_arg(union edit_cmd * const cmd, struct edit_arg *arg)
-{
-    (void)cmd;
-    (void)arg;
-    return GED_OK;
-}
-
 /**
  * Maps edit_arg fields to the subcommand function's arguments and
  * calls it.  Provides an common interface, so that all subcommands
@@ -1119,7 +1183,7 @@ edit_scale_add_arg(union edit_cmd * const cmd, struct edit_arg *arg)
  * objects edit_arg. Ignores all edit_arg->next arguments.
  */
 int
-edit_scale_concise(struct ged *gedp, const union edit_cmd * const cmd)
+edit_scale_wrapper(struct ged *gedp, const union edit_cmd * const cmd)
 {
     return edit_scale(gedp,
 		      cmd->scale.ref_scale.from.vector,
@@ -1128,6 +1192,30 @@ edit_scale_concise(struct ged *gedp, const union edit_cmd * const cmd)
 		      cmd->scale.ref_factor.from.vector,
 		      cmd->scale.ref_factor.to.vector,
 		      cmd->scale.objects.object);
+}
+
+int
+edit_scale_add_args(union edit_cmd * const cmd, struct edit_arg *args)
+{
+    (void)cmd;
+    (void)args;
+    return GED_OK;
+}
+
+struct edit_arg *
+edit_scale_get_next_arg_head(union edit_cmd * const cmd, 
+			     struct edit_arg *prev_arg_head)
+{
+    struct edit_arg *arg_heads[] = {
+	&cmd->scale.objects,
+	&cmd->scale.ref_scale.from,
+	&cmd->scale.ref_scale.to,
+	&cmd->scale.center,
+	&cmd->scale.ref_factor.from,
+	&cmd->scale.ref_factor.to,
+	(struct edit_arg *)NULL
+    };
+    return edit_cmd_get_next_arg_head(arg_heads, prev_arg_head);
 }
 
 /**
@@ -1152,7 +1240,7 @@ edit_translate(struct ged *gedp, point_t *from, point_t *to,
  * objects edit_arg. Ignores all edit_arg->next arguments.
  */
 int
-edit_translate_concise(struct ged *gedp, const union edit_cmd * const cmd)
+edit_translate_wrapper(struct ged *gedp, const union edit_cmd * const cmd)
 {
     return edit_translate(gedp,
 			  cmd->translate.ref_vector.from.vector,
@@ -1161,19 +1249,31 @@ edit_translate_concise(struct ged *gedp, const union edit_cmd * const cmd)
 }
 
 int
-edit_translate_add_arg(union edit_cmd * const cmd, struct edit_arg * const arg)
+edit_translate_add_args(union edit_cmd * const cmd, struct edit_arg * const args)
 {
     (void)cmd;
-    (void)arg;
+    (void)args;
     return GED_OK;
 }
 
+struct edit_arg *
+edit_translate_get_next_arg_head(union edit_cmd * const cmd, 
+				 struct edit_arg *prev_arg_head)
+{
+    struct edit_arg *arg_heads[] = {
+	&cmd->translate.objects,
+	&cmd->translate.ref_vector.from,
+	&cmd->translate.ref_vector.to,
+	(struct edit_arg *)NULL
+    };
+    return edit_cmd_get_next_arg_head(arg_heads, prev_arg_head);
+}
 
 /* 
  * Table of edit command data/functions
  */
 static const struct edit_cmd_tab edit_cmds[] = {
-    {"help",		(char *)NULL, "[subcmd]", (char *)NULL, NULL,  NULL},
+    {"help", (char *)NULL, "[subcmd]", (char *)NULL, NULL, NULL, NULL},
 #define EDIT_CMD_HELP 0 /* idx of "help" in edit_cmds */
     {"rotate",		"R",
 	"[-R] [AXIS] [CENTER] ANGLE OBJECT ...",
@@ -1184,8 +1284,9 @@ static const struct edit_cmd_tab edit_cmds[] = {
 	    "[[-n] -k {ANGLE_FROM_OBJECT | ANGLE_FROM_POS}]\n"
 	    "[-n | -o] [-a | -r | -d]"
 		"{ANGLE_TO_OBJECT | ANGLE_TO_POS}} OBJECT ...",
-	&edit_rotate_concise,
-	&edit_rotate_add_arg
+	&edit_rotate_wrapper,
+	&edit_rotate_add_args,
+	&edit_rotate_get_next_arg_head
     },
     {"scale",		(char *)NULL,
 	"[SCALE] [CENTER] FACTOR OBJECT ...",
@@ -1195,17 +1296,19 @@ static const struct edit_cmd_tab edit_cmds[] = {
 	    "[[-n] -k {FACTOR_FROM_OBJECT | FACTOR_FROM_POS}]\n"
 	    "[-n] [-a | -r] {FACTOR_TO_OBJECT | FACTOR_TO_POS}"
 		" OBJECT ...",
-	&edit_scale_concise,
-	&edit_scale_add_arg
+	&edit_scale_wrapper,
+	&edit_scale_add_args,
+	&edit_scale_get_next_arg_head
     },
     {"translate",	(char *)NULL,
 	"[FROM] TO OBJECT ...",
 	"[[-n] -k {FROM_OBJECT | FROM_POS}]\n"
 	    "[-n] [-a | -r] {TO_OBJECT | TO_POS} OBJECT ...",
-	&edit_translate_concise,
-	&edit_translate_add_arg
+	&edit_translate_wrapper,
+	&edit_translate_add_args,
+	&edit_translate_get_next_arg_head
     },
-    {(char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL, NULL, NULL}
+    {(char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL, NULL, NULL, NULL}
 };
 
 
@@ -1241,29 +1344,28 @@ edit(struct ged *gedp, union edit_cmd * const cmd, const int flags)
 {
     (void)gedp;
     (void)cmd;
-    struct edit_arg *cur_arg = &cmd->cmd_line.args;
-    struct edit_arg *last_arg = NULL;
-
+    (void)flags;
+#if 0
     int noisy;
+    struct edit_arg *args = &cmd->cmd_line.args;
+    struct edit_arg *cur_arg = args;
+    struct edit_arg *prev_arg = NULL;
+
 
     /* if flags conflict (GED_ERROR/GED_QUIET), side with verbosity */
     noisy = (flags & GED_ERROR); 
 
-    if (noisy)
-	bu_vls_printf(gedp->ged_result_str, "this is a test");
-    return GED_ERROR;
+#endif
+    /*
+     * TODO: write one edit_*_add_args() function, for testing
+     */
 
     /*
      * TODO: First pass: validate the general structure of *cmd, expand
      * all batch operators ("."), and do any other processing that is
      * not specific to a command. 
      */
-    do {
-
-	last_arg = cur_arg;
-	(void)last_arg;
-    } while ((cur_arg = cur_arg->next));
-    
+    /*  */
 
     /* 
      * TODO: Second pass: command specific processing. Simultaneously
@@ -1272,12 +1374,7 @@ edit(struct ged *gedp, union edit_cmd * const cmd, const int flags)
      * into the appropriate *cmd elements. 
      */
  
-    /* TODO: validate translate command arguments */
-
-    /* TODO: validate rotate command arguments */
-
-    /* TODO: validate scale command arguments */
-
+    /* TODO: validate unique subcommand arguments */
 
     return GED_OK;
 }
@@ -1808,6 +1905,19 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	/* BU_ASSERT(argc == 0); */
     }
 
+    /* remove command line arguments, and let command specific
+     * funtions reattach them in the proper locations */
+    /*
+     * FIXME: this isn't going to work unless the union edit_cmd's args
+     * are changed into pointers
+     */
+#if 0
+    cur_arg = &subcmd.cmd_line.args;
+    subcmd.cmd_line.args = NULL;
+    (*subcmd.add_args(gedp, subcmd, args, flags));
+#endif 
+
+    /* send the command off for further processing and execution  */
     ret = edit(gedp, &subcmd, GED_ERROR);
     edit_cmd_free(&subcmd);
     return ret;
