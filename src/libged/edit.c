@@ -805,7 +805,7 @@ struct edit_arg {
     struct edit_arg *next; /* nodes rel to arg in cmd args grouping */
     char cl_options[EDIT_MAX_ARG_OPTIONS]; /* cmd line options */
     unsigned int coords_used : 6; /* flag which coords will be used */
-    unsigned int type : 10; /* flag the arg type and type modifiers */
+    unsigned int type : 8; /* flag the arg type and type modifiers */
     struct db_full_path *object; /* 2 dir path_to/obj or just obj */
     vect_t *vector; /* abs pos, or offset dist from obj */
 };
@@ -838,22 +838,18 @@ struct edit_arg {
  * target object arguments and reference arguments. This is because
  * ged_edit does not use the structs inside edit_cmd, in order to
  * remain agnostic of subcommands. */
-#define EDIT_FROM			0x001 /* aka keypoint */
-#define EDIT_CENTER			0x002 /* for rotate/scale */
-#define EDIT_TO				0x004
-#define EDIT_TARGET_OBJ			0x008 /* obj to operate on */
+#define EDIT_FROM			0x01 /* aka keypoint */
+#define EDIT_CENTER			0x02 /* for rotate/scale */
+#define EDIT_TO				0x04
+#define EDIT_TARGET_OBJ			0x08 /* obj to operate on */
 
 /* argument "TO" type modifiers */
-#define EDIT_REL_DIST			0x010
-#define EDIT_ABS_POS 			0x020
-
-/* command-specific argument "FROM" and "TO" type modifiers */
-#define EDIT_ROTATE_DEGREES		0x040
-#define EDIT_ROTATE_OVRD_CONSTRAINT 	0x080 /* override axis constraint */
+#define EDIT_REL_DIST			0x10
+#define EDIT_ABS_POS 			0x20
 
 /* object argument type modifier flags */
-#define EDIT_NATURAL_ORIGIN		0x100 /* use natural origin of object instead of center */
-#define EDIT_USE_TARGETS		0x200 /* for batch ops */
+#define EDIT_NATURAL_ORIGIN		0x40 /* use natural origin of object instead of center */
+#define EDIT_USE_TARGETS		0x80 /* for batch ops */
 
 /*
  * Arg groupings for each command. 
@@ -911,20 +907,22 @@ union edit_cmd{
     } translate;
 };
 
-#define EDIT_CMD_STATUS_
-
 /**
  * Command specific information, for a table of available commands.
  */
+typedef int (*exec_handler)(struct ged *gedp, const union edit_cmd *const cmd);
+typedef int (*add_args_handler)(struct ged *gedp, union edit_cmd *const cmd,
+				struct edit_arg *args, const int flags);
+typedef struct edit_arg * (*get_next_arg_head_handler)(
+	union edit_cmd *const cmd, struct edit_arg *prev_arg_head);
 struct edit_cmd_tab {
     char *name;
     char *opt_global;
     char *usage;
     char *help;
-    int (*exec)(struct ged *gedp, const union edit_cmd *const cmd);
-    int (*add_args)(union edit_cmd *const cmd, struct edit_arg *const args);
-    struct edit_arg * (*get_next_arg_head)(union edit_cmd * const cmd, 
-    		       struct edit_arg *prev_arg_head);
+    exec_handler exec;
+    add_args_handler add_args;
+    get_next_arg_head_handler get_next_arg_head;
 };
 
 /* 
@@ -1029,7 +1027,7 @@ edit_arg_free_all(struct edit_arg *arg)
  * Free any dynamically allocated arg that may exist
  */
 HIDDEN void
-edit_cmd_free(union edit_cmd * const args)
+edit_cmd_free(union edit_cmd *const args)
 {
     /* first object is automatic */
     if (args->common.objects->next)
@@ -1108,7 +1106,7 @@ edit_rotate(struct ged *gedp, vect_t *axis_from, vect_t *axis_to,
  * objects edit_arg. Ignores all edit_arg->next arguments.
  */
 int
-edit_rotate_wrapper(struct ged *gedp, const union edit_cmd * const cmd)
+edit_rotate_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 {
     return edit_rotate(gedp,
 		       cmd->rotate.ref_axis.from->vector,
@@ -1120,11 +1118,17 @@ edit_rotate_wrapper(struct ged *gedp, const union edit_cmd * const cmd)
 		       cmd->rotate.objects->object);
 }
 
+/**
+ * 
+ */
 int
-edit_rotate_add_args(union edit_cmd * const cmd, struct edit_arg *args)
+edit_rotate_add_args(struct ged *gedp, union edit_cmd *const cmd,
+		     struct edit_arg *args, const int flags)
 {
+    (void)gedp;
     (void)cmd;
     (void)args;
+    (void)flags;
     return GED_OK;
 }
 
@@ -1141,7 +1145,7 @@ edit_rotate_add_args(union edit_cmd * const cmd, struct edit_arg *args)
  * FIXME: Kind of dirty; haven't found a better way yet, though.
  */
 struct edit_arg *
-edit_rotate_get_next_arg_head(union edit_cmd * const cmd, struct edit_arg *prev_arg_head)
+edit_rotate_get_next_arg_head(union edit_cmd *const cmd, struct edit_arg *prev_arg_head)
 {
     struct edit_arg *arg_heads[8];
 
@@ -1183,7 +1187,7 @@ edit_scale(struct ged *gedp, vect_t *scale_from, vect_t *scale_to,
  * objects edit_arg. Ignores all edit_arg->next arguments.
  */
 int
-edit_scale_wrapper(struct ged *gedp, const union edit_cmd * const cmd)
+edit_scale_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 {
     return edit_scale(gedp,
 		      cmd->scale.ref_scale.from->vector,
@@ -1195,15 +1199,18 @@ edit_scale_wrapper(struct ged *gedp, const union edit_cmd * const cmd)
 }
 
 int
-edit_scale_add_args(union edit_cmd * const cmd, struct edit_arg *args)
+edit_scale_add_args(struct ged *gedp, union edit_cmd *const cmd,
+		    struct edit_arg *args, const int flags)
 {
+    (void)gedp;
     (void)cmd;
     (void)args;
+    (void)flags;
     return GED_OK;
 }
 
 struct edit_arg *
-edit_scale_get_next_arg_head(union edit_cmd * const cmd, struct edit_arg *prev_arg_head)
+edit_scale_get_next_arg_head(union edit_cmd *const cmd, struct edit_arg *prev_arg_head)
 {
     struct edit_arg *arg_heads[7];
 
@@ -1240,7 +1247,7 @@ edit_translate(struct ged *gedp, vect_t *from, vect_t *to,
  * objects edit_arg. Ignores all edit_arg->next arguments.
  */
 int
-edit_translate_wrapper(struct ged *gedp, const union edit_cmd * const cmd)
+edit_translate_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 {
     return edit_translate(gedp,
 			  cmd->translate.ref_vector.from->vector,
@@ -1249,15 +1256,38 @@ edit_translate_wrapper(struct ged *gedp, const union edit_cmd * const cmd)
 }
 
 int
-edit_translate_add_args(union edit_cmd * const cmd, struct edit_arg * const args)
+edit_translate_add_args(struct ged *gedp,  union edit_cmd *const cmd,
+			struct edit_arg *args, const int flags)
 {
+    (void)gedp;
     (void)cmd;
     (void)args;
+    (void)flags;
+#if 0
+    struct edit_arg *cur_arg = args;
+    char *opt;
+    int i; /* iterator */
+    
+    while (cur_arg) {
+	for (i = 0; i < EDIT_MAX_ARG_OPTIONS; ++i) {
+	    switch (cur_arg->cl_options[i]) {
+		case 'n':
+		case 'k':
+		case 'a':
+		case 'r':
+	    }
+
+	}
+
+	cur_arg = cur_arg->next;
+    }
+#endif
+
     return GED_OK;
 }
 
 struct edit_arg *
-edit_translate_get_next_arg_head(union edit_cmd * const cmd, struct edit_arg *prev_arg_head)
+edit_translate_get_next_arg_head(union edit_cmd *const cmd, struct edit_arg *prev_arg_head)
 {
     struct edit_arg *arg_heads[4];
 
@@ -1340,7 +1370,7 @@ edit_obj_offset_to_coord(struct edit_arg *arg) {
  * Returns GED_ERROR on failure, and GED_OK on success.
  */
 int
-edit(struct ged *gedp, union edit_cmd * const cmd, const int flags)
+edit(struct ged *gedp, union edit_cmd *const cmd, const int flags)
 {
     (void)gedp;
     (void)cmd;
@@ -1591,13 +1621,13 @@ edit_strs_to_arg(struct ged *gedp, int *argc, const char **argv[],
 int
 ged_edit(struct ged *gedp, int argc, const char *argv[])
 {
-    const char * const cmd_name = argv[0];
+    const char *const cmd_name = argv[0];
     const char *subcmd_name = NULL;
     struct edit_arg *cur_arg;
     union edit_cmd subcmd;
     int idx_cur_opt = 0; /* pos in options array for current arg */
     int conv_flags = 0; /* for edit_strs_to_arg */
-    static const char * const usage = "[subcommand] [args]";
+    static const char *const usage = "[subcommand] [args]";
     int i; /* iterator */
     int c; /* for bu_getopt */
     int ret;
@@ -1808,6 +1838,8 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	    /* FIXME: this isn't enough; needs to detect all cases
 	     * where operand is missing. Ex: `edit cmd -k 5 5 5` */
 	    goto err_missing_operand;
+	if (idx_cur_opt >= EDIT_MAX_ARG_OPTIONS)
+	    goto err_option_overflow;
 
 	conv_flags = GED_ERROR;
 	switch (c) {
@@ -1863,8 +1895,6 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	/* record option */
-	if (idx_cur_opt >= EDIT_MAX_ARG_OPTIONS)
-	    goto err_option_overflow;
 	cur_arg->cl_options[idx_cur_opt] = c;
 	++idx_cur_opt;
 
@@ -1910,15 +1940,10 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 
     /* remove command line arguments, and let command specific
      * funtions reattach them in the proper locations */
-    /*
-     * FIXME: this isn't going to work unless the union edit_cmd's args
-     * are changed into pointers
-     */
-#if 0
     cur_arg = subcmd.cmd_line.args;
     subcmd.cmd_line.args = NULL;
-    (*subcmd.add_args(gedp, subcmd, args, flags));
-#endif 
+    if (subcmd.cmd->add_args(gedp, &subcmd, cur_arg, GED_ERROR) == GED_ERROR)
+	return GED_ERROR;
 
     /* send the command off for further processing and execution  */
     ret = edit(gedp, &subcmd, GED_ERROR);
