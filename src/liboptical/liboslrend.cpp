@@ -76,10 +76,8 @@ ShadingAttribStateRef OSLRenderer::AddShader(ShaderGroupInfo &group_info){
 	    std::pair< TypeDesc, Vec3 > &vec_type = sh_info.vparam[i].second;
 	    shadingsys->Parameter(sh_info.vparam[i].first.c_str(), vec_type.first, &(vec_type.second));
 	}
-	/*
 	for(size_t i = 0; i < sh_info.mparam.size(); i++)
 	    shadingsys->Parameter(sh_info.mparam[i].first.c_str(), TypeDesc::TypeMatrix, &(sh_info.mparam[i].second));
-	*/
 
 	if(sh_info.layername == "")
 	    shadingsys->Shader("surface", sh_info.shadername.c_str(), NULL);
@@ -132,6 +130,34 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info) const {
     // sample primitive from closure tree
     const ClosurePrimitive *prim = SamplePrimitive(weight, closure, 0.5);
 
+// Ray-tracing (local illumination)
+#if 1
+
+    if(prim){
+	if(prim->category() == OSL::ClosurePrimitive::BSDF) {
+	    // evaluate bsdf closure
+	    BSDFClosure *bsdf = (BSDFClosure*)prim;
+	    
+	    // Eval the reflection weight from each light source
+	    size_t nlights = info->light_dirs.size();
+	    float pdf;
+	    for(size_t li = 0; li < nlights; li++){
+		info->reflect_weight += bsdf->eval_reflect(globals.I, info->light_dirs[li], pdf);
+	    }
+	    info->reflect_weight *= 1.0/nlights;
+	}
+	else if(prim->category() == OSL::ClosurePrimitive::Emissive) {
+	    // evaluate emissive closure
+	    EmissiveClosure *emissive = (EmissiveClosure*)prim;
+	    Color3 l = weight*emissive->eval(globals.Ng, globals.I);
+	    return l;
+	}
+    }
+    return Color3(0.0);
+
+// Path-tracing (global illumination)
+#else
+
     if(prim) {
 	if(prim->category() == OSL::ClosurePrimitive::BSDF) {
 	    // sample BSDF closure
@@ -166,6 +192,9 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info) const {
 	}
     }
     return Color3(0.0f);
+
+#endif
+
 }
 /* Return thread specific information */
 void* OSLRenderer::CreateThreadInfo(){

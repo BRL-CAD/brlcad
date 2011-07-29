@@ -64,11 +64,19 @@ struct RenderInfo {
     int depth;              /* How many times the ray hit an object */
     fastf_t surfacearea;    /* FIXME */
     ShadingAttribStateRef shader_ref;   /* Reference for the shader we're querying */
- 
+    std::vector< Vec3 > light_dirs;     /* List of directions of lights that are visible from 
+					   this query point */
+    
     /* -- output -- */
     point_t pc;           /* Color of the point (or multiplier) */
     int doreflection;     /* 1 if there will be reflection 0, otherwise */
     Ray out_ray;          /* output ray (in case of reflection) */
+
+    /* Experimental! Don't use yet */
+    Color3 reflect_weight;            /* Color that will be multiplied by the
+					 color returned by the reflected ray */
+    Color3 transmit_weight;           /* Color that will be multiplied by the 
+					 color returned by the transmited ray */
 };
 
 /* Required structure to initialize an OSL shader */

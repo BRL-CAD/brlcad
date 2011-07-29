@@ -38,7 +38,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
-
+#include "light.h"
 
 #define OSL_MAGIC 0x1837    /* make this a unique number for each shader */
 #define CK_OSL_SP(_p) BU_CKMAG(_p, OSL_MAGIC, "osl_specific")
@@ -618,7 +618,75 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
     /* We assume that the only information that will be written is thread_info,
        so that oslr->QueryColor is thread safe */
     info.thread_info = thread_info;
+
+
+// Ray-tracing (local illumination)
+#if 1
+
+    /* -----------------------------------
+     * Get a list of all visible lights from this point
+     * -----------------------------------
+     */
+    light_obs(ap, swp, MFI_NORMAL|MFI_HIT|MFI_UV);
     
+    for (int i = ap->a_rt_i->rti_nlights-1; i >= 0; i--) {
+
+	struct light_specific *lp;
+
+	/* Light is not visible */
+	if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL)
+	    continue;
+	/* Get the direction of this light */
+	Vec3 to_light;
+	VMOVE(to_light, swp->sw_tolight+3*i);
+	info.light_dirs.push_back(to_light);
+    }
+
+    info.reflect_weight = Color3(0.0);
+    info.transmit_weight = Color3(0.0);
+    Color3 weight = oslr->QueryColor(&info);
+    
+    /* If the weight of reflection is greater than zero, we shoot another ray */
+    fastf_t reflect_W = 0;
+    for(size_t i = 0; i < 3; i++)
+	reflect_W += info.reflect_weight[i];
+
+    // Do reflection
+    if(reflect_W > 0.0f){
+
+	/* Find the direction of the reflected ray */
+	Vec3 I, N;
+	VMOVE(I, info.I); // incidence ray
+	VMOVE(N, info.N); // normal
+
+	float proj = N.dot(I);
+	Vec3 R = (2 * proj) * N - I;
+
+	struct application new_ap;
+	RT_APPLICATION_INIT(&new_ap);
+	
+	new_ap = *ap;                     /* struct copy */
+	new_ap.a_onehit = 1;
+	new_ap.a_hit = default_a_hit;
+	new_ap.a_level = info.depth + 1;
+	new_ap.a_flag = 0;
+	
+	VMOVE(new_ap.a_ray.r_dir, R);
+	VMOVE(new_ap.a_ray.r_pt, info.P);
+
+	//(void)rt_shootray(&new_ap);
+	//Color3 rec;
+	//VMOVE(rec, new_ap.a_color);
+	//Color3 res = rec*info.reflect_weight;
+	VMOVE(swp->sw_color, info.reflect_weight);
+    }
+    else {
+	VMOVE(swp->sw_color, weight);
+    }
+    
+
+// Path-tracing (global illumination)
+#else    
     for(int i = 0; i < nsamples; i++){
 
     	/* We only perform reflection if application decides to */
@@ -671,6 +739,7 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
     }
 
     VSCALE(swp->sw_color, acc_color, 1.0/nsamples);
+#endif
 
     return 1;
 }
