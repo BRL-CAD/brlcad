@@ -910,16 +910,18 @@ union edit_cmd{
 /**
  * Command specific information, for a table of available commands.
  */
+typedef void (*init_handler)(union edit_cmd *const cmd);
 typedef int (*exec_handler)(struct ged *gedp, const union edit_cmd *const cmd);
 typedef int (*add_args_handler)(struct ged *gedp, union edit_cmd *const cmd,
 				struct edit_arg *args, const int flags);
 typedef struct edit_arg * (*get_next_arg_head_handler)(
-	union edit_cmd *const cmd, struct edit_arg *prev_arg_head);
+	const union edit_cmd *const cmd);
 struct edit_cmd_tab {
     char *name;
     char *opt_global;
     char *usage;
     char *help;
+    init_handler init;
     exec_handler exec;
     add_args_handler add_args;
     get_next_arg_head_handler get_next_arg_head;
@@ -1027,35 +1029,32 @@ edit_arg_free_all(struct edit_arg *arg)
  * Free any dynamically allocated arg that may exist
  */
 HIDDEN void
-edit_cmd_free(union edit_cmd *const args)
+edit_cmd_free(union edit_cmd *const subcmd)
 {
-    /* first object is automatic */
-    if (args->common.objects->next)
-	edit_arg_free_all(args->common.objects->next);
+    struct edit_arg *cur_arg_head = subcmd->common.objects;
+    struct edit_arg *prev_arg_head = cur_arg_head;
+    while (prev_arg_head) {
+	cur_arg_head = subcmd->cmd->get_next_arg_head(subcmd);
+	edit_arg_free_all(prev_arg_head);
+	prev_arg_head = cur_arg_head;
+    }
 }
-
 
 /**
  * Provide an array of arguments and the current argument,
  * and this function will return the next argument. Returns
- * the same argument that you passed in if there are no more argument
- * heads left, or NULL if there was no match.
+ * the NULL if there are no more argument heads left.
  */
 HIDDEN struct edit_arg *
-edit_cmd_get_next_arg_head(struct edit_arg *arg_heads[],
-			   struct edit_arg *prev_arg_head)
+edit_cmd_get_next_arg_head(struct edit_arg *const arg_heads[],
+			   const int len, int *const idx)
 {
-    int i;
-    for (i = 0; arg_heads[i]; ++i) {
-	if (arg_heads[i] == prev_arg_head)
-	    break;
-    }
-    if (!arg_heads[i])
+    if ((*idx + 1) >= len) {
+	*idx = 0;
 	return (struct edit_arg *)NULL;
-    ++i;
-    if (!arg_heads[i])
-	return prev_arg_head;
-    return arg_heads[i];
+    }
+    ++(*idx);
+    return arg_heads[*idx];
 }
 
 /* 
@@ -1069,11 +1068,12 @@ edit_cmd_get_next_arg_head(struct edit_arg *arg_heads[],
  * To add a new command, so far, you need to:
  *	1) add a struct to the union edit_cmd
  *	2) add command data/function pointers to the command table
- *	3) create 4 functions that
- *		a) add args to build the command
- *		b) get the next arg head in union edit_cmd
- *		c) perform the command
- *		d) wrap the command, to alternatively accept a union
+ *	3) create 5 functions that
+ *		a) initialize the command's struct in union edit_cmd
+ *		b) add args to build the command
+ *		c) get the next arg head in union edit_cmd
+ *		d) perform the command
+ *		e) wrap the command, to alternatively accept a union
  *		   edit_cmd
  *
  */
@@ -1096,6 +1096,21 @@ edit_rotate(struct ged *gedp, vect_t *axis_from, vect_t *axis_to,
     (void)angle_to;
     (void)path;
     return GED_OK;
+}
+
+/**
+ * Initialize command argument-pointer members to NULL.
+ */
+HIDDEN void
+edit_rotate_init(union edit_cmd *const subcmd)
+{
+    subcmd->rotate.objects =
+    subcmd->rotate.center =
+    subcmd->rotate.ref_angle.from =
+    subcmd->rotate.ref_angle.to =
+    subcmd->rotate.ref_axis.from =
+    subcmd->rotate.ref_axis.to =
+    (struct edit_arg *)NULL;
 }
 
 /**
@@ -1145,9 +1160,11 @@ edit_rotate_add_args(struct ged *gedp, union edit_cmd *const cmd,
  * FIXME: Kind of dirty; haven't found a better way yet, though.
  */
 struct edit_arg *
-edit_rotate_get_next_arg_head(union edit_cmd *const cmd, struct edit_arg *prev_arg_head)
+edit_rotate_get_next_arg_head(const union edit_cmd *const cmd)
 {
-    struct edit_arg *arg_heads[8];
+    static int idx = 0;
+    const int len = 8;
+    struct edit_arg *arg_heads[len];
 
     arg_heads[0] = cmd->rotate.objects;
     arg_heads[1] = cmd->rotate.ref_axis.from;
@@ -1158,7 +1175,7 @@ edit_rotate_get_next_arg_head(union edit_cmd *const cmd, struct edit_arg *prev_a
     arg_heads[6] = cmd->rotate.ref_angle.to;
     arg_heads[7] = (struct edit_arg *)NULL;
 
-    return edit_cmd_get_next_arg_head(arg_heads, prev_arg_head);
+    return edit_cmd_get_next_arg_head(arg_heads, len, &idx);
 }
 
 /**
@@ -1177,6 +1194,18 @@ edit_scale(struct ged *gedp, vect_t *scale_from, vect_t *scale_to,
     (void)factor_to;
     (void)path;
     return GED_OK;
+}
+
+HIDDEN void
+edit_scale_init(union edit_cmd *const subcmd)
+{
+    subcmd->scale.objects =
+    subcmd->scale.center =
+    subcmd->scale.ref_factor.from =
+    subcmd->scale.ref_factor.to =
+    subcmd->scale.ref_scale.from =
+    subcmd->scale.ref_scale.to =
+    (struct edit_arg *)NULL;
 }
 
 /**
@@ -1210,9 +1239,11 @@ edit_scale_add_args(struct ged *gedp, union edit_cmd *const cmd,
 }
 
 struct edit_arg *
-edit_scale_get_next_arg_head(union edit_cmd *const cmd, struct edit_arg *prev_arg_head)
+edit_scale_get_next_arg_head(const union edit_cmd *const cmd)
 {
-    struct edit_arg *arg_heads[7];
+    static int idx = 0;
+    const int len = 7;
+    struct edit_arg *arg_heads[len];
 
     arg_heads[0] = cmd->scale.objects;
     arg_heads[1] = cmd->scale.ref_scale.from;
@@ -1222,7 +1253,7 @@ edit_scale_get_next_arg_head(union edit_cmd *const cmd, struct edit_arg *prev_ar
     arg_heads[5] = cmd->scale.ref_factor.to;
     arg_heads[6] = (struct edit_arg *)NULL;
 
-    return edit_cmd_get_next_arg_head(arg_heads, prev_arg_head);
+    return edit_cmd_get_next_arg_head(arg_heads, len, &idx);
 }
 
 /**
@@ -1237,6 +1268,15 @@ edit_translate(struct ged *gedp, vect_t *from, vect_t *to,
     (void)to;
     (void)path;
     return GED_OK;
+}
+
+HIDDEN void
+edit_translate_init(union edit_cmd *const subcmd)
+{
+    subcmd->translate.objects =
+    subcmd->translate.ref_vector.from =
+    subcmd->translate.ref_vector.to =
+    (struct edit_arg *)NULL;
 }
 
 /**
@@ -1256,7 +1296,7 @@ edit_translate_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 }
 
 int
-edit_translate_add_args(struct ged *gedp,  union edit_cmd *const cmd,
+edit_translate_add_args(struct ged *gedp, union edit_cmd *const cmd,
 			struct edit_arg *args, const int flags)
 {
     (void)gedp;
@@ -1287,23 +1327,25 @@ edit_translate_add_args(struct ged *gedp,  union edit_cmd *const cmd,
 }
 
 struct edit_arg *
-edit_translate_get_next_arg_head(union edit_cmd *const cmd, struct edit_arg *prev_arg_head)
+edit_translate_get_next_arg_head(const union edit_cmd *const cmd)
 {
-    struct edit_arg *arg_heads[4];
+    static int idx = 0;
+    const int len = 4;
+    struct edit_arg *arg_heads[len];
 
     arg_heads[0] = cmd->translate.objects;
     arg_heads[1] = cmd->translate.ref_vector.from;
     arg_heads[2] = cmd->translate.ref_vector.to;
     arg_heads[3] = (struct edit_arg *)NULL;
 
-    return edit_cmd_get_next_arg_head(arg_heads, prev_arg_head);
+    return edit_cmd_get_next_arg_head(arg_heads, len, &idx);
 }
 
 /* 
  * Table of edit command data/functions
  */
 static const struct edit_cmd_tab edit_cmds[] = {
-    {"help", (char *)NULL, "[subcmd]", (char *)NULL, NULL, NULL, NULL},
+    {"help", (char *)NULL, "[subcmd]", (char *)NULL, NULL, NULL, NULL, NULL},
 #define EDIT_CMD_HELP 0 /* idx of "help" in edit_cmds */
     {"rotate",		"R",
 	"[-R] [AXIS] [CENTER] ANGLE OBJECT ...",
@@ -1314,6 +1356,7 @@ static const struct edit_cmd_tab edit_cmds[] = {
 	    "[[-n] -k {ANGLE_FROM_OBJECT | ANGLE_FROM_POS}]\n"
 	    "[-n | -o] [-a | -r | -d]"
 		"{ANGLE_TO_OBJECT | ANGLE_TO_POS}} OBJECT ...",
+	&edit_rotate_init,
 	&edit_rotate_wrapper,
 	&edit_rotate_add_args,
 	&edit_rotate_get_next_arg_head
@@ -1326,6 +1369,7 @@ static const struct edit_cmd_tab edit_cmds[] = {
 	    "[[-n] -k {FACTOR_FROM_OBJECT | FACTOR_FROM_POS}]\n"
 	    "[-n] [-a | -r] {FACTOR_TO_OBJECT | FACTOR_TO_POS}"
 		" OBJECT ...",
+	&edit_scale_init,
 	&edit_scale_wrapper,
 	&edit_scale_add_args,
 	&edit_scale_get_next_arg_head
@@ -1334,11 +1378,13 @@ static const struct edit_cmd_tab edit_cmds[] = {
 	"[FROM] TO OBJECT ...",
 	"[[-n] -k {FROM_OBJECT | FROM_POS}]\n"
 	    "[-n] [-a | -r] {TO_OBJECT | TO_POS} OBJECT ...",
+	&edit_translate_init,
 	&edit_translate_wrapper,
 	&edit_translate_add_args,
 	&edit_translate_get_next_arg_head
     },
-    {(char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL, NULL, NULL, NULL}
+    {(char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL, NULL, NULL, NULL,
+	NULL}
 };
 
 
@@ -1370,22 +1416,22 @@ edit_obj_offset_to_coord(struct edit_arg *arg) {
  * Returns GED_ERROR on failure, and GED_OK on success.
  */
 int
-edit(struct ged *gedp, union edit_cmd *const cmd, const int flags)
+edit(struct ged *gedp, union edit_cmd *const subcmd, const int flags)
 {
     (void)gedp;
-    (void)cmd;
+    (void)subcmd;
     (void)flags;
+    struct edit_arg *arg_head = subcmd->cmd_line.args;;
+    struct edit_arg *cur_arg = arg_head;
+    /* struct edit_arg *prev_arg = NULL; */
+    int i;
 #if 0
     int noisy;
-    struct edit_arg *args = &cmd->cmd_line.args;
-    struct edit_arg *cur_arg = args;
-    struct edit_arg *prev_arg = NULL;
-
 
     /* if flags conflict (GED_ERROR/GED_QUIET), side with verbosity */
     noisy = (flags & GED_ERROR); 
-
 #endif
+
     /*
      * TODO: write one edit_*_add_args() function, for testing
      */
@@ -1395,7 +1441,18 @@ edit(struct ged *gedp, union edit_cmd *const cmd, const int flags)
      * all batch operators ("."), and do any other processing that is
      * not specific to a command. 
      */
-    /*  */
+    for (; arg_head; arg_head = subcmd->cmd->get_next_arg_head(subcmd)) {
+	for (cur_arg = arg_head; cur_arg; cur_arg = cur_arg->next) {
+	    /* turn character options into flags */
+	    /* XXX testing */
+	    bu_vls_printf(gedp->ged_result_str, "options:");
+	    for (i = 0; i < EDIT_MAX_ARG_OPTIONS; ++i) {
+		bu_vls_printf(gedp->ged_result_str, "%c",
+			      cur_arg->cl_options[i]);
+	    }
+	    return GED_ERROR;
+	}
+    }
 
     /* 
      * TODO: Second pass: command specific processing. Simultaneously
@@ -1733,16 +1790,12 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 				      edit_cmds[i].name);
 		    return GED_ERROR;
 		}
-
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n\n%s %s",
-			      edit_cmds[i].name, edit_cmds[i].usage,
-			      edit_cmds[i].name, edit_cmds[i].help);
-		return GED_HELP;
+		goto get_full_help;
 	    }
 	default:
 	    if (argc == 0) { 
 		/* no args to subcommand; must want usage */
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s",
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s [help] | %s",
 			      subcmd.cmd->name, subcmd.cmd->usage);
 		return GED_HELP;
 	    }
@@ -1756,12 +1809,9 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	    if (argc == 1 &&
 		BU_STR_EQUAL(edit_cmds[EDIT_CMD_HELP].name,
 		argv[0])) {
-		bu_vls_printf(gedp->ged_result_str,
-			      "Usage: %s %s\n\n%s %s",
-			      subcmd.cmd->name, subcmd.cmd->usage,
-			      subcmd.cmd->name, subcmd.cmd->help);
-		return GED_HELP;
+		goto get_full_help;
 	    }
+	    break;
     }
 
     /*
@@ -1769,6 +1819,8 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
      */
 
     /*
+     * FIXME: this isn't fully implemented, and it should be.
+     *
      * The object of the game is to remain agnostic of unique aspects
      * of argument structures of subcommands (i.e. inside the edit_cmd
      * union). Therefore, we will simply chain all of the arguments
@@ -1935,13 +1987,12 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	    edit_cmd_free(&subcmd);
 	    return GED_ERROR;
 	}
-	/* BU_ASSERT(argc == 0); */
     }
 
     /* remove command line arguments, and let command specific
      * funtions reattach them in the proper locations */
     cur_arg = subcmd.cmd_line.args;
-    subcmd.cmd_line.args = NULL;
+    subcmd.cmd->init(&subcmd);
     if (subcmd.cmd->add_args(gedp, &subcmd, cur_arg, GED_ERROR) == GED_ERROR)
 	return GED_ERROR;
 
@@ -1949,6 +2000,14 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     ret = edit(gedp, &subcmd, GED_ERROR);
     edit_cmd_free(&subcmd);
     return ret;
+
+get_full_help:
+    bu_vls_printf(gedp->ged_result_str,
+		  "Usage: %s [help] | %s\n\n%s [help] | %s",
+		  subcmd.cmd->name, subcmd.cmd->usage,
+		  subcmd.cmd->name, subcmd.cmd->help);
+    edit_cmd_free(&subcmd);
+    return GED_HELP;
 
 err_missing_arg:
     bu_vls_printf(gedp->ged_result_str, "Missing argument for option -%c",
