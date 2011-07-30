@@ -1710,7 +1710,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 /* FIXME: usage/help messages for subcommands should contain the name
  * of the 'parent' command when necessary: i.e.: 'edit translate'
  * rather than just 'translate'. Also, the help option of subcommands
- * is not displayed in usage; it should display when command is called
+ * is not displayed properly; it should display when command is called
  * directly, i.e. 'translate', but not 'edit translate' */
 
     for (i = 0; edit_cmds[i].name; ++i) {
@@ -1729,6 +1729,9 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	    subcmd.cmd = &edit_cmds[i];
 	}
     }
+
+    /* now that the cmd type is known, we can init the subcmd args */
+    subcmd.cmd->init(&subcmd);
 
     if (subcmd_name == cmd_name) { /* ptr cmp */
 	/* command name is serving as the subcommand */
@@ -1992,7 +1995,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     /* remove command line arguments, and let command specific
      * funtions reattach them in the proper locations */
     cur_arg = subcmd.cmd_line.args;
-    subcmd.cmd->init(&subcmd);
+    subcmd.cmd_line.args = (struct edit_arg *)NULL;
     if (subcmd.cmd->add_args(gedp, &subcmd, cur_arg, GED_ERROR) == GED_ERROR)
 	return GED_ERROR;
 
