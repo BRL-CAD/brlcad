@@ -971,13 +971,11 @@ edit_arg_postfix_new(struct edit_arg *head)
 }
 
 /**
- * Free an argument node and all nodes down its list.
+ * Free an argument
  */
 HIDDEN void
-edit_arg_free_all(struct edit_arg *arg)
+edit_arg_free(struct edit_arg *arg)
 {
-    if (arg->next)
-	edit_arg_free_all(arg->next);
     if (arg->object) {
 	db_free_full_path(arg->object);
 	bu_free((genptr_t)arg->object, "db_string_to_path");
@@ -985,6 +983,34 @@ edit_arg_free_all(struct edit_arg *arg)
     if (arg->vector)
 	bu_free(arg->vector, "vect_t");
     bu_free(arg, "edit_arg");
+}
+
+/**
+ * Free the last argument node in the list.
+ */
+HIDDEN void
+edit_arg_free_last(struct edit_arg *arg)
+{
+    struct edit_arg *last_arg = arg;
+
+    while ((arg = arg->next)) {
+	if (!(arg->next))
+	    break;
+	last_arg = arg;
+    }
+    last_arg->next = NULL;
+    edit_arg_free(arg);
+}
+
+/**
+ * Free an argument node and all nodes down its list.
+ */
+HIDDEN void
+edit_arg_free_all(struct edit_arg *arg)
+{
+    if (arg->next)
+	edit_arg_free_all(arg->next);
+    edit_arg_free(arg);
 }
 
 /**
@@ -1301,7 +1327,7 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 	cmd->translate.ref_vector.from->next = NULL;
     }
 
-    if (cur_arg->type & EDIT_TO) {
+    if ((cur_arg->type & EDIT_TO) || (cur_arg->type == 0)) {
 	/* if there isn't an EDIT_TARGET_OBJECT, this func shouldn't
 	 * be called */
 	BU_ASSERT_PTR(cur_arg->next, !=, NULL);
@@ -1471,7 +1497,7 @@ edit(struct ged *gedp, union edit_cmd *const subcmd, const int flags)
 	for (cur_arg = arg_head; cur_arg; cur_arg = cur_arg->next) {
 	    /* turn character options into flags */
 	    /* XXX testing */
-	    bu_vls_printf(gedp->ged_result_str, "options:");
+	    bu_vls_printf(gedp->ged_result_str, "(testing) options:");
 	    for (i = 0; i < EDIT_MAX_ARG_OPTIONS; ++i) {
 		bu_vls_printf(gedp->ged_result_str, "%c",
 			      cur_arg->cl_options[i]);
@@ -1731,20 +1757,17 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize the subcommand */
     subcmd.cmd = (const struct edit_cmd_tab *)NULL;
-    cur_arg = subcmd.common.objects = (struct edit_arg *)bu_malloc(
-				      sizeof(struct edit_arg),
-				      "edit_arg block for ged_edit()");
-    edit_arg_init(cur_arg);
 
     /*
      * Validate command name
      */
     
-/* FIXME: usage/help messages for subcommands should contain the name
- * of the 'parent' command when necessary: i.e.: 'edit translate'
- * rather than just 'translate'. Also, the help option of subcommands
- * is not displayed properly; it should display when command is called
- * directly, i.e. 'translate', but not 'edit translate' */
+    /* FIXME: usage/help messages for subcommands should contain the
+     * name of the 'parent' command when necessary: i.e.: 'edit
+     * translate' rather than just 'translate'. Also, the help option
+     * of subcommands is not displayed properly; it should display
+     * when command is called directly, i.e. 'translate', but not
+     * 'edit translate' */
 
     for (i = 0; edit_cmds[i].name; ++i) {
 	/* search for command name in the table */
@@ -1765,6 +1788,10 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 
     /* now that the cmd type is known, we can init the subcmd args */
     subcmd.cmd->init(&subcmd);
+    cur_arg = subcmd.cmd_line.args = (struct edit_arg *)bu_malloc(
+				     sizeof(struct edit_arg),
+				     "edit_arg block for ged_edit()");
+    edit_arg_init(cur_arg);
 
     if (subcmd_name == cmd_name) { /* ptr cmp */
 	/* command name is serving as the subcommand */
@@ -1896,12 +1923,38 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
      */
 
     /* no options are required by default*/
-    (void)edit_strs_to_arg(gedp, &argc, &argv, cur_arg, GED_QUIET);
-    
-    if (argc == 0) {
-	ret = edit(gedp, &subcmd, GED_ERROR);
-	edit_cmd_free(&subcmd);
-	return ret;
+    while (edit_strs_to_arg(gedp, &argc, &argv, cur_arg, GED_QUIET) != GED_ERROR) {
+	if (argc == 0) {
+	    /* free unused arg block */
+	    edit_arg_free_last(subcmd.cmd_line.args);
+
+	    cur_arg = subcmd.cmd_line.args;
+	    if (cur_arg->next) {
+		cur_arg->type |= EDIT_TO;
+		cur_arg = cur_arg->next;
+	    }
+
+	    /* parsing is done and there were no options, so all args
+	     * after the first arg should be a target obj */
+	    for (; cur_arg; cur_arg = cur_arg->next) {
+		if (!(cur_arg->object)) {
+		    bu_vls_printf(gedp->ged_result_str,
+				  "expected only objects after first arg");
+		    edit_cmd_free(&subcmd);
+		    return GED_ERROR;
+		}
+		cur_arg->type |= EDIT_TARGET_OBJ;
+	    }
+
+	    /* let cmd specific func validate/move args to proper locations */
+	    if (subcmd.cmd->add_cl_args(gedp, &subcmd, GED_ERROR) ==
+		GED_ERROR)
+		return GED_ERROR;
+	    ret = edit(gedp, &subcmd, GED_ERROR);
+	    edit_cmd_free(&subcmd);
+	    return ret;
+	}
+	cur_arg = edit_arg_postfix_new(subcmd.cmd_line.args);
     }
 
     /* All leading args are parsed. If we're not not at an option,
@@ -1918,7 +1971,8 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     bu_opterr = 0; /* suppress errors; accept unknown options */
     ++argc; /* bu_getopt doesn't expect first element to be an arg */
     --argv;
-    while ((c = bu_getopt(argc, (char * const *)argv, ":k:a:r:x:y:z:")) != -1) {
+    while ((c = bu_getopt(argc, (char * const *)argv, ":n:k:a:r:x:y:z:"))
+	   != -1) {
 	if (bu_optind >= argc)
 	    /* last element is an option */
 	    /* FIXME: this isn't enough; needs to detect all cases
@@ -2011,6 +2065,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    case 'n':
 	        cur_arg->type |= EDIT_NATURAL_ORIGIN;
+		break;
 	    default:
 		break;
 	}
@@ -2046,16 +2101,20 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     /* get final/trailing args */
     ++argv;
     --argc;
-    if (argc > 0) {
+    while (argc > 0) {
 	if (edit_strs_to_arg(gedp, &argc, &argv, cur_arg, GED_ERROR) ==
 	    GED_ERROR) {
 	    edit_cmd_free(&subcmd);
 	    return GED_ERROR;
 	}
+	cur_arg->type |= EDIT_TARGET_OBJ;
+	cur_arg = edit_arg_postfix_new(subcmd.cmd_line.args);
     }
 
-    /* let the cmd specific func validate/move args to the proper
-     * locations */
+    /* free unused arg block */
+    edit_arg_free_last(subcmd.cmd_line.args);
+
+    /* let cmd specific func validate/move args to proper locations */
     if (subcmd.cmd->add_cl_args(gedp, &subcmd, GED_ERROR) ==
 	GED_ERROR)
 	return GED_ERROR;
