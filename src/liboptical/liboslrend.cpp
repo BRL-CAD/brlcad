@@ -140,11 +140,11 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info) const {
 	    
 	    // Eval the reflection weight from each light source
 	    size_t nlights = info->light_dirs.size();
-	    float pdf;
+	    float pdf = 0.0;
 	    for(size_t li = 0; li < nlights; li++){
 		info->reflect_weight += bsdf->eval_reflect(globals.I, info->light_dirs[li], pdf);
 	    }
-	    info->reflect_weight *= 1.0/nlights;
+	    info->reflect_weight *= weight/nlights;
 	}
 	else if(prim->category() == OSL::ClosurePrimitive::Emissive) {
 	    // evaluate emissive closure
