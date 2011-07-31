@@ -59,13 +59,14 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   new geometry unless updating the existing is requested.  Usage might
   be something like this:
 
-     simulate [-w] [-f x y z force] <time> [steps]
+     simulate [-k] [-g|-G] [-f x y z N] <time> [steps]
 
   Examples:
      simulate 10.5  # simulate 10.5s of time (default gravity)
      simulate 3 10  # simulate 30s of time, 10s per timestep
-     simulate -f 0 0 -1.0 9807 3.0  # earth's gravity for 3s
-     simulate -w 1.0  # simulate 1s of gravity, overwriting original
+     simulate -f 0 0 -1.0 9.807 3.0  # earth's gravity for 3s
+     simulate -k 1.0  # simulate 1s of gravity, overwriting original
+     simulate -G -f 1 2 3 .4 5  # no gravity, custom force, 5s
 
 * implement new makesegs for tie
 
