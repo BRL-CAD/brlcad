@@ -54,6 +54,19 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* implement a new "simulate" command for applying physics deformations
+  to geometry.  Each timestep (default steps==1) would get recorded as
+  new geometry unless updating the existing is requested.  Usage might
+  be something like this:
+
+     simulate [-w] [-f x y z force] <time> [steps]
+
+  Examples:
+     simulate 10.5  # simulate 10.5s of time (default gravity)
+     simulate 3 10  # simulate 30s of time, 10s per timestep
+     simulate -f 0 0 -1.0 9807 3.0  # earth's gravity for 3s
+     simulate -w 1.0  # simulate 1s of gravity, overwriting original
+
 * implement new makesegs for tie
 
 * png support in rtwizard
