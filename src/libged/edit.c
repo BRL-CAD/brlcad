@@ -1150,14 +1150,9 @@ edit_rotate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 struct edit_arg *
 edit_rotate_get_next_arg_head(const union edit_cmd *const cmd)
 {
+#define EDIT_ROTATE_ARG_HEADS_LEN 8
     static int idx = 0;
-    const int len = 8;
-    struct edit_arg **arg_heads;
-#if 0
-    struct edit_arg *arg_heads[len];
-#endif
-
-    arg_heads = (struct edit_arg **)bu_calloc(len, sizeof(struct edit_arg **), "arg_heads");
+    struct edit_arg *arg_heads[EDIT_ROTATE_ARG_HEADS_LEN];
 
     arg_heads[0] = cmd->rotate.objects;
     arg_heads[1] = cmd->rotate.ref_axis.from;
@@ -1168,7 +1163,8 @@ edit_rotate_get_next_arg_head(const union edit_cmd *const cmd)
     arg_heads[6] = cmd->rotate.ref_angle.to;
     arg_heads[7] = (struct edit_arg *)NULL;
 
-    return edit_cmd_get_next_arg_head(arg_heads, len, &idx);
+    return edit_cmd_get_next_arg_head(arg_heads, EDIT_ROTATE_ARG_HEADS_LEN,
+				      &idx);
 }
 
 /**
@@ -1240,14 +1236,10 @@ edit_scale_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 struct edit_arg *
 edit_scale_get_next_arg_head(const union edit_cmd *const cmd)
 {
+#define EDIT_ROTATE_ARG_HEADS_LEN 8
     static int idx = 0;
-    const int len = 7;
-    struct edit_arg **arg_heads;
-#if 0
-    struct edit_arg *arg_heads[len];
-#endif
+    struct edit_arg *arg_heads[EDIT_ROTATE_ARG_HEADS_LEN];
 
-    arg_heads = (struct edit_arg **)bu_calloc(len, sizeof(struct edit_arg **), "arg_heads");
 
     arg_heads[0] = cmd->scale.objects;
     arg_heads[1] = cmd->scale.ref_scale.from;
@@ -1257,7 +1249,8 @@ edit_scale_get_next_arg_head(const union edit_cmd *const cmd)
     arg_heads[5] = cmd->scale.ref_factor.to;
     arg_heads[6] = (struct edit_arg *)NULL;
 
-    return edit_cmd_get_next_arg_head(arg_heads, len, &idx);
+    return edit_cmd_get_next_arg_head(arg_heads, EDIT_ROTATE_ARG_HEADS_LEN,
+				      &idx);
 }
 
 /**
@@ -1391,21 +1384,17 @@ err_option_unknown:
 struct edit_arg *
 edit_translate_get_next_arg_head(const union edit_cmd *const cmd)
 {
+#define EDIT_ROTATE_ARG_HEADS_LEN 8
+    struct edit_arg *arg_heads[EDIT_ROTATE_ARG_HEADS_LEN];
     static int idx = 0;
-    const int len = 4;
-    struct edit_arg **arg_heads;
-#if 0
-    struct edit_arg *arg_heads[len];
-#endif
-
-    arg_heads = (struct edit_arg **)bu_calloc(len, sizeof(struct edit_arg **), "arg_heads");
 
     arg_heads[0] = cmd->translate.objects;
     arg_heads[1] = cmd->translate.ref_vector.from;
     arg_heads[2] = cmd->translate.ref_vector.to;
     arg_heads[3] = (struct edit_arg *)NULL;
 
-    return edit_cmd_get_next_arg_head(arg_heads, len, &idx);
+    return edit_cmd_get_next_arg_head(arg_heads, EDIT_ROTATE_ARG_HEADS_LEN,
+				      &idx);
 }
 
 /* 
@@ -1651,8 +1640,8 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 	} else {
 	    if (noisy)
 		bu_vls_printf(gedp->ged_result_str, "too many consecutive"
-			      " coordinates: %f %f %f %f ...", arg->vector[0],
-			      arg->vector[1], arg->vector[2], coord[0]);
+			      " coordinates: %f %f %f %f ...", *arg->vector[0],
+			      *arg->vector[1], *arg->vector[2], coord[0]);
 	    return GED_ERROR;
 	}
     } else {
