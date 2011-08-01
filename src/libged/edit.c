@@ -1152,7 +1152,12 @@ edit_rotate_get_next_arg_head(const union edit_cmd *const cmd)
 {
     static int idx = 0;
     const int len = 8;
+    struct edit_arg **arg_heads;
+#if 0
     struct edit_arg *arg_heads[len];
+#endif
+
+    arg_heads = (struct edit_arg **)bu_calloc(len, sizeof(struct edit_arg **), "arg_heads");
 
     arg_heads[0] = cmd->rotate.objects;
     arg_heads[1] = cmd->rotate.ref_axis.from;
@@ -1237,7 +1242,12 @@ edit_scale_get_next_arg_head(const union edit_cmd *const cmd)
 {
     static int idx = 0;
     const int len = 7;
+    struct edit_arg **arg_heads;
+#if 0
     struct edit_arg *arg_heads[len];
+#endif
+
+    arg_heads = (struct edit_arg **)bu_calloc(len, sizeof(struct edit_arg **), "arg_heads");
 
     arg_heads[0] = cmd->scale.objects;
     arg_heads[1] = cmd->scale.ref_scale.from;
@@ -1383,7 +1393,12 @@ edit_translate_get_next_arg_head(const union edit_cmd *const cmd)
 {
     static int idx = 0;
     const int len = 4;
+    struct edit_arg **arg_heads;
+#if 0
     struct edit_arg *arg_heads[len];
+#endif
+
+    arg_heads = (struct edit_arg **)bu_calloc(len, sizeof(struct edit_arg **), "arg_heads");
 
     arg_heads[0] = cmd->translate.objects;
     arg_heads[1] = cmd->translate.ref_vector.from;
@@ -1474,13 +1489,13 @@ edit_obj_offset_to_coord(struct edit_arg *arg) {
 int
 edit(struct ged *gedp, union edit_cmd *const subcmd, const int flags)
 {
-    (void)gedp;
-    (void)subcmd;
-    (void)flags;
     struct edit_arg *arg_head = subcmd->common.objects;
     struct edit_arg *cur_arg = arg_head;
     /* struct edit_arg *prev_arg = NULL; */
     int i;
+    (void)gedp;
+    (void)subcmd;
+    (void)flags;
 #if 0
     int noisy;
 
