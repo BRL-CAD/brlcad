@@ -824,7 +824,19 @@ do_frame(int framenumber)
 
 	    do_run(0, (1<<incr_level)*(1<<incr_level)-1);
 	}
-    } else {
+    } 
+#ifdef EXPERIMENTAL_MODE
+    else if (1){
+	int i;
+	/* Multiple frame buffer mode */
+	for(i = 0; i < 10; i++){
+	    if(i > 0)
+		view_2init(&APP, framename);
+	    do_run(pix_start, pix_end);
+	}
+    }
+#endif
+    else {
 	do_run(pix_start, pix_end);
 
 	/* Reset values to full size, for next frame (if any) */
