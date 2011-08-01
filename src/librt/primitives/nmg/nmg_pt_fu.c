@@ -667,7 +667,7 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
 	     * if pt is inside/left of edge
 	     */
 	    VSUB2(v_to_pt, fpi->pt, eu_pt);
-	    if (VDOT(v_to_pt, left) >= 0.0)
+	    if (VDOT(v_to_pt, left) > -SMALL_FASTF)
 		ei->class = NMG_CLASS_AinB;
 	    else
 		ei->class = NMG_CLASS_AoutB;
