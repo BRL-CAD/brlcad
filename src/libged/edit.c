@@ -1345,7 +1345,7 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 	 * be called */
 	BU_ASSERT_PTR(cur_arg->next, !=, NULL);
 
-	/* a 'to' position is set; only flags that were possible when
+	/* a 'TO' position is set; only flags that were possible when
 	 * this function was last updated should be handled */
 	BU_ASSERT(cur_arg->type ^ ~(EDIT_TO |
 				    EDIT_NATURAL_ORIGIN |
@@ -1357,11 +1357,31 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 	if (cur_arg->cl_options[0] != '\0') 
 	    goto err_option_unknown; 
 
+	if (!(cur_arg->type & EDIT_ABS_POS)) {
+	    /* intepret 'TO' arg as a relative distance by default */
+	    cur_arg->type |= EDIT_REL_DIST;
+
+	    if (cur_arg->object) {
+		if (noisy)
+		    bu_vls_printf(gedp->ged_result_str,
+				  "cannot use a reference object's coordinates"
+				  " as an offset distance");
+		return GED_ERROR;
+	    }
+	}
+
 	cmd->translate.ref_vector.to = cur_arg;
 	cur_arg = cmd->cmd_line.args = cmd->cmd_line.args->next;
 	cmd->translate.ref_vector.to->next = NULL;
     } else {
-	bu_vls_printf(gedp->ged_result_str, "missing \"TO\" argument");
+	if (cur_arg->type & EDIT_FROM) {
+	    if (noisy)
+		bu_vls_printf(gedp->ged_result_str,
+			      "too many \"FROM\" arguments");
+	    return GED_ERROR;
+	}
+	if (noisy)
+	    bu_vls_printf(gedp->ged_result_str, "missing \"TO\" argument");
 	return GED_ERROR;
     }
 
