@@ -3446,6 +3446,11 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
                 continue;
             }
 
+            if (pt->vu_p->up.eu_p == (struct edgeuse *)NULL) {
+                /* skip tbl2d entries with a null edgeuse */
+                continue;
+            }
+
             NMG_CK_EDGEUSE(pt->vu_p->up.eu_p);
             NMG_CK_LOOPUSE(pt->vu_p->up.eu_p->up.lu_p);
 
