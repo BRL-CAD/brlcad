@@ -823,21 +823,34 @@ vertex_neighborhood(struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss 
 		/* Find points on sphere in direction of edges
 		 * (away from vertex along edge)
 		 */
+#ifdef TRI_PROTOTYPE
+		eu = vu->up.eu_p;
+		do {
+		    eu = BU_LIST_PNEXT_CIRC(edgeuse, eu);
+		} while ((eu->vu_p->v_p == vu->v_p) && (eu != vu->up.eu_p));
+#else
 		do
 		    eu = BU_LIST_PNEXT_CIRC(edgeuse, vu->up.eu_p);
 		while (eu->vu_p->v_p == vu->v_p);
+#endif
 		nmg_find_eu_leftvec(leftA, vu->up.eu_p);
-		VSUB2(edge_vect, eu->vu_p->v_p->vg_p->coord,
-		      vu->v_p->vg_p->coord);
+		VSUB2(edge_vect, eu->vu_p->v_p->vg_p->coord, vu->v_p->vg_p->coord);
 		VUNITIZE(edge_vect);
 		VJOIN1(pointA, vu->v_p->vg_p->coord, dimen, edge_vect)
 
-		    do
-			eu = BU_LIST_PPREV_CIRC(edgeuse, vu->up.eu_p);
-		    while (eu->vu_p->v_p == vu->v_p);
+#ifdef TRI_PROTOTYPE
+		eu = vu->up.eu_p;
+		do {
+		    eu = BU_LIST_PPREV_CIRC(edgeuse, eu);
+		} while ((eu->vu_p->v_p == vu->v_p) && (eu != vu->up.eu_p));
+#else
+		do
+		    eu = BU_LIST_PPREV_CIRC(edgeuse, vu->up.eu_p);
+		while (eu->vu_p->v_p == vu->v_p);
+#endif
+
 		nmg_find_eu_leftvec(leftB, eu);
-		VSUB2(edge_vect, eu->vu_p->v_p->vg_p->coord,
-		      vu->v_p->vg_p->coord);
+		VSUB2(edge_vect, eu->vu_p->v_p->vg_p->coord, vu->v_p->vg_p->coord);
 		VUNITIZE(edge_vect);
 		VJOIN1(pointB, vu->v_p->vg_p->coord, dimen, edge_vect)
 
@@ -1004,9 +1017,10 @@ ray_hit_vertex(struct ray_data *rd, struct vertexuse *vu_p, int status)
     /* v = vector from ray point to hit vertex */
     VSUB2(v, vu_p->v_p->vg_p->coord, rd->rp->r_pt);
 #ifdef TRI_PROTOTYPE
-    myhit->hit.hit_dist = VDOT(v, r_dir_unit);	/* distance along ray */
+    /* using the unit vector for ray direction */
+    myhit->hit.hit_dist = VDOT(v, r_dir_unit);	  /* distance along ray */
 #else
-    myhit->hit.hit_dist = VDOT(v, rd->rp->r_dir);	/* distance along ray */
+    myhit->hit.hit_dist = VDOT(v, rd->rp->r_dir); /* distance along ray */
 #endif
     VMOVE(myhit->hit.hit_point, vu_p->v_p->vg_p->coord);
     myhit->hit.hit_private = (genptr_t) vu_p->v_p;
@@ -2276,6 +2290,12 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
     struct hitmiss *myhit;
     struct face *fp;
     struct face_g_plane *fgp;
+#ifdef TRI_PROTOTYPE
+    vect_t r_dir_unit;
+
+    VMOVE(r_dir_unit, rd->rp->r_dir);
+    VUNITIZE(r_dir_unit);
+#endif
 
     if (fu_p->orientation == OT_OPPOSITE) return;
 
@@ -2336,8 +2356,14 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
 		bu_log("missed bounding box\n");
 	    return;
 	}
+#ifdef TRI_PROTOTYPE
+        dist *= MAGNITUDE(rd->rp->r_dir);
+	VJOIN1(hit_pt, rd->rp->r_pt, dist, r_dir_unit);
+	if (V3PT_OUT_RPP_TOL(hit_pt, fp->min_pt, fp->max_pt, rd->tol)) {
+#else
 	VJOIN1(hit_pt, rd->rp->r_pt, dist, rd->rp->r_dir);
 	if (!V3PT_IN_RPP(hit_pt, fp->min_pt, fp->max_pt)) {
+#endif
 	    NMG_GET_HITMISS(myhit, rd->ap);
 	    NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
 	    myhit->hit.hit_private = (genptr_t)fu_p->f_p;
@@ -2540,17 +2566,29 @@ guess_class_from_hitlist_max(struct ray_data *rd, int *hari_kari, int in_or_out_
 
 	if (!in_or_out_only) {
 	    /* if we've got a zero distance hit, that clinches it */
+#ifdef TRI_PROTOTYPE
+            if (NEAR_ZERO(a_hit->hit.hit_dist, rd->tol->dist)) {
+#else
 	    if (a_hit->hit.hit_dist <= rd->tol->dist &&
 		a_hit->hit.hit_dist >= -rd->tol->dist) {
+#endif
 		if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
 		    bu_log("guess_class_from_hitlist_min() returns NMG_CLASS_AonBshared for 0 dist hit\n");
 
+#ifdef TRI_PROTOTYPE
+		return NMG_CLASS_AonBanti;
+#else
 		return NMG_CLASS_AonBshared;
+#endif
 	    }
 
 	    if (a_hit->hit.hit_dist < -rd->tol->dist)
 		continue;
+#ifdef TRI_PROTOTYPE
+	} else if (a_hit->hit.hit_dist < rd->tol->dist)
+#else
 	} else if (a_hit->hit.hit_dist < -SMALL_FASTF)
+#endif
 	    continue;
 
 	if (a_hit->in_out == HMG_HIT_ANY_ANY)
@@ -2595,7 +2633,11 @@ guess_class_from_hitlist_max(struct ray_data *rd, int *hari_kari, int in_or_out_
 	    case HMG_HIT_ON_IN:
 	    case HMG_HIT_ON_ON:
 	    case HMG_HIT_ON_OUT:
+#ifdef TRI_PROTOTYPE
+		pt_class = NMG_CLASS_AonBanti;
+#else
 		pt_class = NMG_CLASS_AonBshared;
+#endif
 		break;
 	    default:
 		pt_class = NMG_CLASS_Unknown;
@@ -2633,17 +2675,29 @@ guess_class_from_hitlist_min(struct ray_data *rd, int *hari_kari, int in_or_out_
 
 	if (!in_or_out_only) {
 	    /* if we've got a zero distance hit, that clinches it */
+#ifdef TRI_PROTOTYPE
+            if (NEAR_ZERO(a_hit->hit.hit_dist, rd->tol->dist)) {
+#else
 	    if (a_hit->hit.hit_dist <= rd->tol->dist &&
 		a_hit->hit.hit_dist >= -rd->tol->dist) {
+#endif
 		if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
 		    bu_log("guess_class_from_hitlist_min() returns NMG_CLASS_AonBshared for 0 dist hit\n");
 
+#ifdef TRI_PROTOTYPE
+		return NMG_CLASS_AonBanti;
+#else
 		return NMG_CLASS_AonBshared;
+#endif
 	    }
 
 	    if (a_hit->hit.hit_dist > rd->tol->dist)
 		continue;
+#ifdef TRI_PROTOTYPE
+	} else if (a_hit->hit.hit_dist > -(rd->tol->dist))
+#else
 	} else if (a_hit->hit.hit_dist > SMALL_FASTF)
+#endif
 	    continue;
 
 	if (a_hit->in_out == HMG_HIT_ANY_ANY)
@@ -2689,7 +2743,11 @@ guess_class_from_hitlist_min(struct ray_data *rd, int *hari_kari, int in_or_out_
 	    case HMG_HIT_ON_ON:
 	    case HMG_HIT_OUT_ON:
 	    case HMG_HIT_IN_ON:
+#ifdef TRI_PROTOTYPE
+		pt_class = NMG_CLASS_AonBanti;
+#else
 		pt_class = NMG_CLASS_AonBshared;
+#endif
 		break;
 	    default:
 		pt_class = NMG_CLASS_Unknown;
@@ -2832,7 +2890,11 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
     minus_class = guess_class_from_hitlist_min(&rd, &hari_kari_minus, in_or_out_only);
     plus_class = guess_class_from_hitlist_max(&rd, &hari_kari_plus, in_or_out_only);
 
+#ifdef TRI_PROTOTYPE
+    if (minus_class != plus_class) {
+#else
     if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT)) {
+#endif
 	bu_log("minus_class = (%s)\n", nmg_class_name(minus_class));
 	bu_log("plus_class = (%s)\n", nmg_class_name(plus_class));
     }
