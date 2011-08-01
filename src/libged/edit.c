@@ -993,11 +993,11 @@ edit_arg_free_last(struct edit_arg *arg)
 {
     struct edit_arg *last_arg = arg;
 
-    while ((arg = arg->next)) {
+    do {
 	if (!(arg->next))
 	    break;
 	last_arg = arg;
-    }
+    } while ((arg = arg->next));
     last_arg->next = NULL;
     edit_arg_free(arg);
 }
