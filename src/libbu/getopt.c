@@ -78,9 +78,9 @@ bu_getopt(int nargc, char * const nargv[], const char *ostr)
 	}
     } else {
 	/* need an argument */
-	if {
+	if (*place) {
 	    /* no white space */
-	    (*place) bu_optarg = place;
+	    bu_optarg = place;
 	} else if (nargc <= ++bu_optind) {
 	    /* no arg */
 	    place = EMSG;
