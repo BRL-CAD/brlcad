@@ -131,7 +131,7 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info) const {
     const ClosurePrimitive *prim = SamplePrimitive(weight, closure, 0.5);
 
 // Ray-tracing (local illumination)
-#if 1
+#if 0
 
     if(prim){
 	if(prim->category() == OSL::ClosurePrimitive::BSDF) {

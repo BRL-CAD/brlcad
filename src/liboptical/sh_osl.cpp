@@ -621,7 +621,7 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 
 
 // Ray-tracing (local illumination)
-#if 1
+#if 0
 
     /* -----------------------------------
      * Get a list of all visible lights from this point
