@@ -363,17 +363,6 @@ ENDIF(TIME_RESULT MATCHES "^0$")
 BOX_PRINT("*** Configuring BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} ***" "*")
 
 #---------------------------------------------------------------------
-# For NFS volumes, to ensure proper file creation.  If UMASK is set
-# use it, but it's not a standard setting at the moment.
-IF(NOT WIN32)
-	IF(NOT UMASK)
-		EXEC_PROGRAM(umask ARGS 022 OUTPUT_VARIABLE exec_out)
-	ELSE(NOT UMASK)
-		EXEC_PROGRAM(umask ARGS ${UMASK} OUTPUT_VARIABLE exec_out)
-	ENDIF(NOT UMASK)
-ENDIF(NOT WIN32)
-
-#---------------------------------------------------------------------
 # We want to check /usr/local by default, so add it
 SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} /usr/local)
 SET(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} /usr/local/include)
