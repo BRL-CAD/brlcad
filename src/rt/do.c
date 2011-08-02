@@ -836,7 +836,7 @@ do_frame(int framenumber)
 	/* Multiple frame buffer mode */
 	for(full_incr_sample = 1; full_incr_sample <= full_incr_nsamples; 
 	    full_incr_sample++){
-	    fprintf(stderr, "sample: %d\n", full_incr_sample);
+	    bu_log("sample: %zu\n", full_incr_sample);
 	    if(full_incr_sample > 1) /* first sample was already initialized */
 		view_2init(&APP, framename);
 	    do_run(pix_start, pix_end);
@@ -1041,20 +1041,17 @@ res_pr(void)
     register struct resource *res;
     register int i;
 
-    fprintf(stderr, "\nResource use summary, by processor:\n");
+    bu_log("\nResource use summary, by processor:\n");
     res = &resource[0];
     for (i=0; i<npsw; i++, res++) {
-	fprintf(stderr, "---CPU %d:\n", i);
+	bu_log("---CPU %d:\n", i);
 	if (res->re_magic != RESOURCE_MAGIC) {
-	    fprintf(stderr, "Bad magic number!!\n");
+	    bu_log("Bad magic number!\n");
 	    continue;
 	}
-	fprintf(stderr, "seg       len=%10ld get=%10ld free=%10ld\n",
-		res->re_seglen, res->re_segget, res->re_segfree);
-	fprintf(stderr, "partition len=%10ld get=%10ld free=%10ld\n",
-		res->re_partlen, res->re_partget, res->re_partfree);
-	fprintf(stderr, "boolstack len=%10ld\n",
-		res->re_boolslen);
+	bu_log("seg       len=%10ld get=%10ld free=%10ld\n", res->re_seglen, res->re_segget, res->re_segfree);
+	bu_log("partition len=%10ld get=%10ld free=%10ld\n", res->re_partlen, res->re_partget, res->re_partfree);
+	bu_log("boolstack len=%10ld\n", res->re_boolslen);
     }
 }
 
