@@ -186,6 +186,15 @@ view_pixel(struct application *ap)
     int do_eol = 0;
     unsigned char dist[8];	/* pixel distance (in IEEE format) */
 
+#if 0
+    RGBpixel white = {255, 255, 255};
+
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    (void)fb_write(fbp, ap->a_x, ap->a_y, (unsigned char *)white, 1);
+    bu_semaphore_release(BU_SEM_SYSCALL);
+#endif
+
+
     if (rpt_dist)
 	htond(dist, (unsigned char *)&(ap->a_dist), 1);
 
@@ -449,7 +458,6 @@ view_pixel(struct application *ap)
     {
 	fastf_t tmp_value;
 	RGBpixel p;
-	int npix;
 
 	/* Unbuffered mode -- update the framebuffer at each pixel */
 	
@@ -1491,7 +1499,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
     /* On fully incremental mode, allocate the scanline as the total
        size of the image */
     if(full_incr_mode && !scanline){
-	int y;
+	size_t y;
         if (scanline)
             free_scanlines(height, scanline);
 	scanline = alloc_scanlines(height);
