@@ -72,6 +72,7 @@ extern int cell_newsize;		/* new grid cell size (for worker) */
 extern int fullfloat_mode;
 extern int hypersample;			/* number of extra rays to fire */
 extern int incr_mode;			/* !0 for incremental resolution */
+extern int full_incr_mode;              /* !0 for fully incremental resolution */
 extern int npsw;			/* number of worker PSWs to run */
 extern int reproj_cur;			/* number of pixels reprojected this frame */
 extern int reproj_max;			/* out of total number of pixels */
@@ -83,6 +84,8 @@ extern point_t viewbase_model;		/* model-space location of viewplane corner */
 extern size_t height;			/* # of lines in Y */
 extern size_t incr_level;		/* current incremental level */
 extern size_t incr_nlevel;		/* number of levels */
+extern size_t full_incr_sample;         /* current fully incremental sample */
+extern size_t full_incr_nsamples;       /* number of fully incremental samples */
 extern size_t width;			/* # of pixels in X */
 extern struct floatpixel *curr_float_frame;	/* buffer of full frame */
 extern struct floatpixel *prev_float_frame;

@@ -587,6 +587,13 @@ do_frame(int framenumber)
     vect_t work, temp;
     quat_t quat;
 
+    /* TODO: Read from command line */
+#ifdef EXPERIMENTAL_MODE
+    full_incr_mode = 1;
+    full_incr_nsamples = 10;
+#endif
+
+
     if (rt_verbosity & VERBOSE_FRAMENUMBER)
 	bu_log("\n...................Frame %5d...................\n",
 	       framenumber);
@@ -825,17 +832,16 @@ do_frame(int framenumber)
 	    do_run(0, (1<<incr_level)*(1<<incr_level)-1);
 	}
     } 
-#ifdef EXPERIMENTAL_MODE
-    else if (1){
-	int i;
+    else if (full_incr_mode){
 	/* Multiple frame buffer mode */
-	for(i = 0; i < 10; i++){
-	    if(i > 0)
+	for(full_incr_sample = 1; full_incr_sample <= full_incr_nsamples; 
+	    full_incr_sample++){
+	    fprintf(stderr, "sample: %d\n", full_incr_sample);
+	    if(full_incr_sample > 1) /* first sample was already initialized */
 		view_2init(&APP, framename);
 	    do_run(pix_start, pix_end);
 	}
     }
-#endif
     else {
 	do_run(pix_start, pix_end);
 

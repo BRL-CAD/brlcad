@@ -123,6 +123,9 @@ static int buf_mode=0;
 #define BUFMODE_RTSRV     4	/* output buffering into scanbuf */
 #define BUFMODE_FULLFLOAT 5	/* buffer entire frame as floats */
 #define BUFMODE_SCANLINE  6	/* Like _DYNAMIC, one scanline/cpu */
+#define BUFMODE_ACC       7     /* Cumulative buffer - The buffer
+				   always have the average of the
+				   colors sampled for each pixel */
 
 static struct scanline* scanline;
 
@@ -442,8 +445,55 @@ view_pixel(struct application *ap)
 	    }
 	    break;
 
-	default:
-	    bu_exit(EXIT_FAILURE, "bad buf_mode");
+    case BUFMODE_ACC:
+    {
+	fastf_t tmp_value;
+	RGBpixel p;
+	int npix;
+
+	/* Unbuffered mode -- update the framebuffer at each pixel */
+	
+	/* Altough it's unbuffered, we need to keep the scanline
+	 * structure to hold partial sums - 
+	 TODO: there will be a lost of precision since we are storing averages in a char buffer */
+	bu_semaphore_acquire(RT_SEM_RESULTS);
+	slp = &scanline[ap->a_y];
+	if (slp->sl_buf == (unsigned char *)0) {
+	    bu_log("Fatal error: this should not happen\n");
+	}
+	pixelp = slp->sl_buf+(ap->a_x*pwidth);
+
+	/* First run. Average equals the values */
+	if(full_incr_sample == 1){
+	    *pixelp++ = p[0] = r;
+	    *pixelp++ = p[1] = g;
+	    *pixelp++ = p[2] = b;
+	}
+	/* Update the averages */
+	else { /* full_incr_sample > 1 */
+
+	    /* TODO: move r,g,b and rpt_dist into a tmp array to
+	       perform the following operations inside a loop? (clear
+	       code, but little less efficient) */
+	    /*fprintf(stderr, "prev_pixel: %d\n", *pixelp); */
+	    tmp_value = *pixelp;
+	    *pixelp++ = p[0] = (tmp_value * (full_incr_sample-1) + r) / full_incr_sample;
+
+	    tmp_value = *pixelp;
+	    *pixelp++ = p[1] = (tmp_value * (full_incr_sample-1) + g) / full_incr_sample;
+
+	    tmp_value = *pixelp;
+	    *pixelp++ = p[2] = (tmp_value * (full_incr_sample-1) + b) / full_incr_sample;
+	}
+	bu_semaphore_release(RT_SEM_RESULTS);
+	/* TODO: add rpt_dist */
+	if (--(slp->sl_left) <= 0)
+	    do_eol = 1;
+    }		    
+    break;
+    
+    default:
+	bu_exit(EXIT_FAILURE, "bad buf_mode: %d", buf_mode);
     }
 
 
@@ -482,6 +532,7 @@ view_pixel(struct application *ap)
 	    }
 	    break;
 
+        case BUFMODE_ACC:
 	case BUFMODE_SCANLINE:
 	case BUFMODE_DYNAMIC:
 	    if (fbp != FBIO_NULL) {
@@ -520,8 +571,12 @@ view_pixel(struct application *ap)
 		if (count != width*pwidth)
 		    bu_exit(EXIT_FAILURE, "view_pixel:  fwrite failure\n");
 	    }
-	    bu_free(scanline[ap->a_y].sl_buf, "sl_buf scanline buffer");
-	    scanline[ap->a_y].sl_buf = (unsigned char *)0;
+	    /* Dont clear the buffer in the ACC BUFFER MODE */
+	    if(buf_mode != BUFMODE_ACC){ 
+		bu_log("oops--------------------\n");
+		bu_free(scanline[ap->a_y].sl_buf, "sl_buf scanline buffer");
+		scanline[ap->a_y].sl_buf = (unsigned char *)0;
+	    }
     }
 }
 
@@ -1428,10 +1483,22 @@ view_2init(struct application *ap, char *UNUSED(framename))
     /* Always allocate the scanline[] array (unless we already have
      * one in incremental mode)
      */
-    if ((!incr_mode || !scanline) && !fullfloat_mode) {
+    if ((!incr_mode || !scanline) && !fullfloat_mode && !full_incr_mode) {
         if (scanline)
             free_scanlines(height, scanline);
         scanline = alloc_scanlines(height);
+    }
+    /* On fully incremental mode, allocate the scanline as the total
+       size of the image */
+    if(full_incr_mode && !scanline){
+	int y;
+        if (scanline)
+            free_scanlines(height, scanline);
+	scanline = alloc_scanlines(height);
+	for(y = 0; y < height; y++){
+	    scanline[y].sl_buf = bu_calloc(width, pwidth, "sl_buf scanline buffer");
+	    scanline[y].sl_left = width;
+	}
     }
 
 #ifdef RTSRV
@@ -1441,7 +1508,11 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	buf_mode = BUFMODE_FULLFLOAT;
     } else if (incr_mode) {
 	buf_mode = BUFMODE_INCR;
-    } else if (width <= 96) {
+    } else if (full_incr_mode){
+	buf_mode = BUFMODE_ACC;
+	/* buf_mode = BUFMODE_SCANLINE; */
+    }
+    else if (width <= 96) {
 	buf_mode = BUFMODE_UNBUF;
     } else if ((size_t)npsw <= (size_t)height/4) {
 	/* Have each CPU do a whole scanline.  Saves lots of semaphore
@@ -1450,7 +1521,8 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	 */
 	per_processor_chunk = width;
 	buf_mode = BUFMODE_SCANLINE;
-    } else {
+    } 
+    else {
 	buf_mode = BUFMODE_DYNAMIC;
     }
 #endif
@@ -1543,8 +1615,11 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	    }
 	    
 	    break;
+        case BUFMODE_ACC:
+	    bu_log("Multiple-sample, average buffering\n");
+	    break;
 	default:
-	    bu_exit(EXIT_FAILURE, "bad buf_mode");
+	    bu_exit(EXIT_FAILURE, "bad buf_mode: %d", buf_mode);
     }
 
     /* This is where we do Preperations for each Lighting Model if it
