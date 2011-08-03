@@ -487,11 +487,6 @@ view_pixel(struct application *ap)
 	    /* round to the nearest integer */
 	    pixelp[i] = psum_p[i]*1.0/full_incr_sample + 0.5;
 	}
-	if(r + g + b > 5){
-	    bu_log("pixels: %d %d %d\n", r, g, b);
-	    bu_log("pixelp: %ld %ld %ld\n", pixelp[0], pixelp[1], pixelp[2]);
-	    bu_log("sl_buf: %ld %ld %ld\n", *(slp->sl_buf+(ap->a_x*pwidth)), *(slp->sl_buf+(ap->a_x*pwidth)+1), *(slp->sl_buf+(ap->a_x*pwidth)+2));
-	}
 	bu_free(tmp_pixel, "tmp_pixel");
 
 	bu_semaphore_release(RT_SEM_RESULTS);
