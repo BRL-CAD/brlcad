@@ -47,6 +47,11 @@ typedef struct Ray {
     point_t origin;
 } Ray;
 
+enum RayType {
+    RAY_REFLECT = 1,
+    RAY_TRANSMIT = 2
+};
+
 /* Shared struct by which the C shader and the C++ render system may
    exchange information
 */
@@ -70,6 +75,7 @@ struct RenderInfo {
     /* -- output -- */
     point_t pc;           /* Color of the point (or multiplier) */
     int doreflection;     /* 1 if there will be reflection 0, otherwise */
+    int out_ray_type;     /* bitflag describing output ray type (bit 0: reflection; 1: refraction) */
     Ray out_ray;          /* output ray (in case of reflection) */
 
     /* Experimental! Don't use yet */

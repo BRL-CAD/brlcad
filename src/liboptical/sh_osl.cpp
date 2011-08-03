@@ -691,11 +691,12 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 
     	/* We only perform reflection if application decides to */
 	info.doreflection = 0;
+	info.out_ray_type = 0;
 
 	Color3 weight = oslr->QueryColor(&info);
 
 	/* Fire another ray */
-	if(info.doreflection == 1){
+	if((info.out_ray_type & RAY_REFLECT) || (info.out_ray_type & RAY_TRANSMIT)){
 	
 	    struct application new_ap;
 	    RT_APPLICATION_INIT(&new_ap);
@@ -710,7 +711,7 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 	    VMOVE(new_ap.a_ray.r_pt, info.out_ray.origin);
 	
 	    /* This next ray represents refraction */
-	    if (VDOT(info.N, info.out_ray.dir) < 0.0f){
+	    if (info.out_ray_type & RAY_TRANSMIT){
 	    
 		/* Displace the hit point a little bit in the direction
 		   of the next ray */

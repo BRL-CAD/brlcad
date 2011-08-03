@@ -165,10 +165,15 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info) const {
 	    Vec3 omega_in, zero(0.0f);
 	    Color3 eval;
 	    float pdf = 0.0;
-
-	    bsdf->sample(globals.Ng, globals.I, zero, zero,
-			 erand48(Xi), erand48(Xi),
-			 omega_in, zero, zero, pdf, eval);
+	    
+	    ustring ulabel = bsdf->sample(globals.Ng, globals.I, zero, zero,
+					  erand48(Xi), erand48(Xi),
+					  omega_in, zero, zero, pdf, eval);
+	    
+	    if(ulabel == OSL::Labels::REFLECT)
+		info->out_ray_type |= RAY_REFLECT;
+	    else if(ulabel == OSL::Labels::TRANSMIT)
+		info->out_ray_type |= RAY_TRANSMIT;
 
 	    if(pdf != 0.0f) {
 		OSLRenderer::Vec3toPoint_t(globals.P, info->out_ray.origin);
