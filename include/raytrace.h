@@ -3742,6 +3742,10 @@ RT_EXPORT extern int nmg_kvu(struct vertexuse *vu);
 RT_EXPORT extern int nmg_kfu(struct faceuse *fu1);
 RT_EXPORT extern int nmg_klu(struct loopuse *lu1);
 RT_EXPORT extern int nmg_keu(struct edgeuse *eu);
+#ifdef TRI_PROTOTYPE
+RT_EXPORT extern int nmg_keu_zl(struct shell *s,
+				const struct bn_tol *tol);
+#endif
 RT_EXPORT extern int nmg_ks(struct shell *s);
 RT_EXPORT extern int nmg_kr(struct nmgregion *r);
 RT_EXPORT extern void nmg_km(struct model *m);
