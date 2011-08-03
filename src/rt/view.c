@@ -128,6 +128,7 @@ static int buf_mode=0;
 				   colors sampled for each pixel */
 
 static struct scanline* scanline;
+static long* psum_buffer;              /* Buffer that keeps partial sums for multi-samples modes */
 
 static size_t pwidth;		/* Width of each pixel (in bytes) */
 struct mfuncs *mfHead = MF_NULL;	/* Head of list of shaders */
@@ -456,45 +457,44 @@ view_pixel(struct application *ap)
 
     case BUFMODE_ACC:
     {
-	fastf_t tmp_value;
 	RGBpixel p;
+	int npix, i;
+	long *psum_p;
+	int *tmp_pixel;
 
-	/* Unbuffered mode -- update the framebuffer at each pixel */
-	
-	/* Altough it's unbuffered, we need to keep the scanline
-	 * structure to hold partial sums - 
-	 TODO: there will be a lost of precision since we are storing averages in a char buffer */
+	/* Scanline buffered mode */
 	bu_semaphore_acquire(RT_SEM_RESULTS);
+	
+	tmp_pixel = bu_calloc(pwidth, sizeof(int), "tmp_pixel");
+
+	tmp_pixel[0] = r;
+	tmp_pixel[1] = g;
+	tmp_pixel[2] = b;
+	if (rpt_dist) {
+	    for(i = 0; i < 8; i++)
+		tmp_pixel[i + 3] = dist[i];
+	}
+
+	psum_p = &psum_buffer[ap->a_y*width*pwidth + ap->a_x*pwidth];
 	slp = &scanline[ap->a_y];
 	if (slp->sl_buf == (unsigned char *)0) {
-	    bu_log("Fatal error: this should not happen\n");
+	    slp->sl_buf = bu_calloc(width, pwidth, "sl_buf scanline buffer");
 	}
 	pixelp = slp->sl_buf+(ap->a_x*pwidth);
-
-	/* First run. Average equals the values */
-	if(full_incr_sample == 1){
-	    *pixelp++ = p[0] = r;
-	    *pixelp++ = p[1] = g;
-	    *pixelp++ = p[2] = b;
+	/* Update the partial sums and the scanline */
+	for(i = 0; i < pwidth; i++){
+	    psum_p[i] += tmp_pixel[i];
+	    /* round to the nearest integer */
+	    pixelp[i] = psum_p[i]*1.0/full_incr_sample + 0.5;
 	}
-	/* Update the averages */
-	else { /* full_incr_sample > 1 */
-
-	    /* TODO: move r,g,b and rpt_dist into a tmp array to
-	       perform the following operations inside a loop? (clear
-	       code, but little less efficient) */
-	    /*fprintf(stderr, "prev_pixel: %d\n", *pixelp); */
-	    tmp_value = *pixelp;
-	    *pixelp++ = p[0] = (tmp_value * (full_incr_sample-1) + r) / full_incr_sample;
-
-	    tmp_value = *pixelp;
-	    *pixelp++ = p[1] = (tmp_value * (full_incr_sample-1) + g) / full_incr_sample;
-
-	    tmp_value = *pixelp;
-	    *pixelp++ = p[2] = (tmp_value * (full_incr_sample-1) + b) / full_incr_sample;
+	if(r + g + b > 5){
+	    bu_log("pixels: %d %d %d\n", r, g, b);
+	    bu_log("pixelp: %ld %ld %ld\n", pixelp[0], pixelp[1], pixelp[2]);
+	    bu_log("sl_buf: %ld %ld %ld\n", *(slp->sl_buf+(ap->a_x*pwidth)), *(slp->sl_buf+(ap->a_x*pwidth)+1), *(slp->sl_buf+(ap->a_x*pwidth)+2));
 	}
+	bu_free(tmp_pixel, "tmp_pixel");
+
 	bu_semaphore_release(RT_SEM_RESULTS);
-	/* TODO: add rpt_dist */
 	if (--(slp->sl_left) <= 0)
 	    do_eol = 1;
     }		    
@@ -579,12 +579,8 @@ view_pixel(struct application *ap)
 		if (count != width*pwidth)
 		    bu_exit(EXIT_FAILURE, "view_pixel:  fwrite failure\n");
 	    }
-	    /* Dont clear the buffer in the ACC BUFFER MODE */
-	    if(buf_mode != BUFMODE_ACC){ 
-		bu_log("oops--------------------\n");
-		bu_free(scanline[ap->a_y].sl_buf, "sl_buf scanline buffer");
-		scanline[ap->a_y].sl_buf = (unsigned char *)0;
-	    }
+	    bu_free(scanline[ap->a_y].sl_buf, "sl_buf scanline buffer");
+	    scanline[ap->a_y].sl_buf = (unsigned char *)0;
     }
 }
 
@@ -641,6 +637,11 @@ view_end(struct application *ap)
     if (scanline) {
     	free_scanlines(height, scanline);
     	scanline = NULL;
+    }
+
+    if(psum_buffer){
+	bu_free(psum_buffer, "psum_buffer");
+	psum_buffer = 0;
     }
 }
 
@@ -1491,23 +1492,15 @@ view_2init(struct application *ap, char *UNUSED(framename))
     /* Always allocate the scanline[] array (unless we already have
      * one in incremental mode)
      */
-    if ((!incr_mode || !scanline) && !fullfloat_mode && !full_incr_mode) {
+    if (((!incr_mode && !full_incr_mode) || !scanline) && !fullfloat_mode) {
         if (scanline)
             free_scanlines(height, scanline);
         scanline = alloc_scanlines(height);
     }
     /* On fully incremental mode, allocate the scanline as the total
        size of the image */
-    if(full_incr_mode && !scanline){
-	size_t y;
-        if (scanline)
-            free_scanlines(height, scanline);
-	scanline = alloc_scanlines(height);
-	for(y = 0; y < height; y++){
-	    scanline[y].sl_buf = bu_calloc(width, pwidth, "sl_buf scanline buffer");
-	    scanline[y].sl_left = width;
-	}
-    }
+    if(full_incr_mode && !psum_buffer)
+	psum_buffer = bu_calloc(height*width*pwidth, sizeof(long), "partial sums buffer");
 
 #ifdef RTSRV
     buf_mode = BUFMODE_RTSRV;		/* multi-pixel buffering */
@@ -1624,6 +1617,8 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	    
 	    break;
         case BUFMODE_ACC:
+	    for (i=0; i<height; i++)
+		scanline[i].sl_left = width;
 	    bu_log("Multiple-sample, average buffering\n");
 	    break;
 	default:
