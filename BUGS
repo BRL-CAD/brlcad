@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* torus with a near zero inner diamater results in zero-length edges
+  during tessellation.
+
 * opening a database in archer with the same name as a command doesn't
   work.
 
