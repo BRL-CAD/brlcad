@@ -299,12 +299,21 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	 && NEAR_ZERO(v[Z], tol))
 
 /**
- * @brief Test for all elements of `v' being smaller than `tol'.
+ * Test for all elements of `v' being smaller than `tol'.
  * Version for degree 2 vectors.
  */
 #define V2NEAR_ZERO(v, tol) (NEAR_ZERO(v[X], tol) && NEAR_ZERO(v[Y], tol))
 
-/* FIXME: need HNEAR_ZERO */
+/**
+ * Test for all elements of `v' being smaller than `tol'.
+ * Version for degree 2 vectors.
+ */
+#define HNEAR_ZERO(v, tol) \
+    (NEAR_ZERO(v[X], tol) \
+     && NEAR_ZERO(v[Y], tol) \
+     && NEAR_ZERO(v[Z], tol) \
+     && NEAR_ZERO(h[W], tol))
+
 
 /**
  * Return truthfully whether a value is within a minimum
@@ -313,6 +322,30 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * Use not recommended due to compilation-variant tolerance.
  */
 #define ZERO(_a) NEAR_ZERO((_a), SMALL_FASTF)
+
+/**
+ * Return truthfully whether a vector is within a minimum
+ * representation tolerance from zero.
+ *
+ * Use not recommended due to compilation-variant tolerance.
+ */
+#define VZERO(_a) VNEAR_ZERO((_a), SMALL_FASTF)
+
+/**
+ * Return truthfully whether a 2d vector is within a minimum
+ * representation tolerance from zero.
+ *
+ * Use not recommended due to compilation-variant tolerance.
+ */
+#define V2ZERO(_a) V2NEAR_ZERO((_a), SMALL_FASTF)
+
+/**
+ * Return truthfully whether a homogenized 4-element vector is within
+ * a minimum representation tolerance from zero.
+ *
+ * Use not recommended due to compilation-variant tolerance.
+ */
+#define HZERO(_a) HNEAR_ZERO((_a), SMALL_FASTF)
 
 
 /**
