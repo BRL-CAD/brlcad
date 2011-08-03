@@ -586,13 +586,15 @@ do_frame(int framenumber)
     int lim = 0;
     vect_t work, temp;
     quat_t quat;
-
+    char *env_str;
+    
     /* TODO: Read from command line */
-#ifdef EXPERIMENTAL_MODE
-    full_incr_mode = 1;
-    full_incr_nsamples = 10;
-#endif
-
+    /* Read from ENV with we're going to use the experimental mode */
+    env_str = getenv("LIBRT_EXP_MODE");
+    if(env_str != NULL){
+	full_incr_mode = 1;
+	full_incr_nsamples = 10;
+    }
 
     if (rt_verbosity & VERBOSE_FRAMENUMBER)
 	bu_log("\n...................Frame %5d...................\n",
@@ -836,7 +838,6 @@ do_frame(int framenumber)
 	/* Multiple frame buffer mode */
 	for(full_incr_sample = 1; full_incr_sample <= full_incr_nsamples; 
 	    full_incr_sample++){
-	    bu_log("sample: %zu\n", full_incr_sample);
 	    if(full_incr_sample > 1) /* first sample was already initialized */
 		view_2init(&APP, framename);
 	    do_run(pix_start, pix_end);

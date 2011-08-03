@@ -128,7 +128,7 @@ static int buf_mode=0;
 				   colors sampled for each pixel */
 
 static struct scanline* scanline;
-static long* psum_buffer;              /* Buffer that keeps partial sums for multi-samples modes */
+static fastf_t* psum_buffer;              /* Buffer that keeps partial sums for multi-samples modes */
 
 static size_t pwidth;		/* Width of each pixel (in bytes) */
 struct mfuncs *mfHead = MF_NULL;	/* Head of list of shaders */
@@ -459,17 +459,15 @@ view_pixel(struct application *ap)
     {
 	RGBpixel p;
 	int npix, i;
-	long *psum_p;
-	int *tmp_pixel;
+	fastf_t *psum_p;
+	fastf_t *tmp_pixel;
+	int tmp_color;
 
 	/* Scanline buffered mode */
 	bu_semaphore_acquire(RT_SEM_RESULTS);
 	
-	tmp_pixel = bu_calloc(pwidth, sizeof(int), "tmp_pixel");
-
-	tmp_pixel[0] = r;
-	tmp_pixel[1] = g;
-	tmp_pixel[2] = b;
+	tmp_pixel = bu_calloc(pwidth, sizeof(fastf_t), "tmp_pixel");
+	VMOVE(tmp_pixel, ap->a_color);
 	if (rpt_dist) {
 	    for(i = 0; i < 8; i++)
 		tmp_pixel[i + 3] = dist[i];
@@ -484,8 +482,11 @@ view_pixel(struct application *ap)
 	/* Update the partial sums and the scanline */
 	for(i = 0; i < pwidth; i++){
 	    psum_p[i] += tmp_pixel[i];
-	    /* round to the nearest integer */
-	    pixelp[i] = psum_p[i]*1.0/full_incr_sample + 0.5;
+	    /* change the float interval to [0,255] and round to
+	       the nearest integer */
+	    tmp_color = psum_p[i]*255.0/full_incr_sample + 0.5;
+	    /* clamp */
+	    pixelp[i] = tmp_color < 0 ? 0 : tmp_color > 255 ? 255 : tmp_color; 
 	}
 	bu_free(tmp_pixel, "tmp_pixel");
 
@@ -1495,7 +1496,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
     /* On fully incremental mode, allocate the scanline as the total
        size of the image */
     if(full_incr_mode && !psum_buffer)
-	psum_buffer = bu_calloc(height*width*pwidth, sizeof(long), "partial sums buffer");
+	psum_buffer = bu_calloc(height*width*pwidth, sizeof(fastf_t), "partial sums buffer");
 
 #ifdef RTSRV
     buf_mode = BUFMODE_RTSRV;		/* multi-pixel buffering */
