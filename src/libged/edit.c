@@ -811,21 +811,19 @@ struct edit_arg {
 };
 
 /*
- * edit_arg flags of coordinates that will be used
+ * edit_arg coordinate flags
  */
+
+/* edit_arg flags of coordinates that will be used */
 #define EDIT_COORD_X 	0x01
 #define EDIT_COORD_Y 	0x02
 #define EDIT_COORD_Z 	0x04
-#define EDIT_COORDS_ALL (EDIT_COORD_X + EDIT_COORD_Y + EDIT_COORD_Z)
+#define EDIT_COORDS_ALL (EDIT_COORD_X | EDIT_COORD_Y | EDIT_COORD_Z)
 
-/*
- * edit_arg flags of coordinates that are already set
- */
+/* edit_arg flags of coordinates that are already set */
 #define EDIT_COORD_IS_SET_X 	0x08
 #define EDIT_COORD_IS_SET_Y 	0x10
 #define EDIT_COORD_IS_SET_Z 	0x20
-#define EDIT_COORDS_ALL_ARE_SET (EDIT_COORD_IS_SET_X, EDIT_COORD_IS_SET_Y, \
-				 EDIT_COORD_IS_SET_Z)
 
 /*
  * edit_arg argument type flags
@@ -844,9 +842,10 @@ struct edit_arg {
 #define EDIT_NATURAL_ORIGIN		0x20 /* use n.o. of object */
 #define EDIT_USE_TARGETS		0x40 /* for batch ops */
 
-/*
- * when performing batch operations, these flags are not discarded
- * from the target object*/
+/* all type modifier flags that indicate the arg contains an obj */
+#define EDIT_OBJ_TYPE_MODS (EDIT_NATURAL_ORIGIN | EDIT_USE_TARGETS)
+
+/* in batch ops, these flags are not discarded from the target obj */
 #define EDIT_TARGET_OBJ_BATCH_TYPES (EDIT_NATURAL_ORIGIN)
 
 
@@ -978,6 +977,53 @@ edit_arg_postfix_new(struct edit_arg *head)
 }
 
 /**
+ * Duplicate an argument node on top of an existing node. Prior to
+ * calling, caller is responsible for freeing objects contained by
+ * destination argument node, if necessary, via edit_arg_free_inner().
+ */
+HIDDEN void
+edit_arg_duplicate_in_place(struct edit_arg *const dest,
+			    const struct edit_arg *src)
+{
+    int i;
+
+    edit_arg_init(dest);
+    dest->next = (struct edit_arg *)NULL;
+    for (i = 0; i < EDIT_MAX_ARG_OPTIONS; ++i)
+	dest->cl_options[i] = src->cl_options[i];
+    dest->coords_used = src->coords_used;
+    dest->type = src->type;
+    if (dest->object) {
+	dest->object = (struct db_full_path *)bu_malloc(
+			  sizeof(struct db_full_path),
+			  "struct db_full_path block for"
+			  "edit_arg_duplicate_in_place()");
+	db_full_path_init(dest->object);
+	db_dup_full_path(dest->object, src->object);
+    }
+    if (src->vector) {
+	dest->vector = (vect_t *)bu_malloc(sizeof(vect_t),
+			  "vect_t block for edit_arg_duplicate_in_place()");
+	*dest->vector[0] = *src->vector[0];
+	*dest->vector[1] = *src->vector[1];
+	*dest->vector[2] = *src->vector[2];
+    }
+}
+
+/**
+ * Duplicate an argument node into a new argument. Caller is
+ * responsible for freeing destination argument, if necessary,
+ * using the appropriate edit_arg_free*() function.
+ */
+HIDDEN void
+edit_arg_duplicate(struct edit_arg **dest, const struct edit_arg *src)
+{
+    *dest = (struct edit_arg *)bu_malloc(sizeof(struct edit_arg),
+	    "edit_arg block for edit_arg_duplicate()");
+    edit_arg_duplicate_in_place(*dest, src);
+}
+
+/**
  * Returns GED_OK if arg is empty, otherwise GED_ERROR is returned
  */
 HIDDEN int
@@ -994,17 +1040,29 @@ edit_arg_is_empty(struct edit_arg *arg)
 }
 
 /**
- * Free an argument node.
+ * Free all objects containd by an argument node.
  */
 HIDDEN void
-edit_arg_free(struct edit_arg *arg)
+edit_arg_free_inner(struct edit_arg *arg)
 {
     if (arg->object) {
 	db_free_full_path(arg->object);
 	bu_free((genptr_t)arg->object, "db_string_to_path");
+	arg->object = NULL;
     }
-    if (arg->vector)
+    if (arg->vector) {
 	bu_free(arg->vector, "vect_t");
+	arg->vector = NULL;
+    }
+}
+
+/**
+ * Free an argument node, including what it contains.
+ */
+HIDDEN void
+edit_arg_free(struct edit_arg *arg)
+{
+    edit_arg_free_inner(arg);
     bu_free(arg, "edit_arg");
 }
 
@@ -1110,7 +1168,7 @@ edit_rotate(struct ged *gedp, vect_t *axis_from, vect_t *axis_to,
 /**
  * Initialize command argument-pointer members to NULL.
  */
-HIDDEN void
+void
 edit_rotate_init(union edit_cmd *const subcmd)
 {
     subcmd->rotate.objects =
@@ -1173,6 +1231,12 @@ edit_rotate_get_next_arg_head(const union edit_cmd *const cmd)
     static int idx = -1;
     struct edit_arg *arg_heads[EDIT_ROTATE_ARG_HEADS_LEN];
 
+    if (!cmd) {
+	/* (re)initialize */
+	idx = -1;
+	return (struct edit_arg *) NULL;
+    }
+
     arg_heads[0] = cmd->rotate.objects;
     arg_heads[1] = cmd->rotate.ref_axis.from;
     arg_heads[2] = cmd->rotate.ref_axis.to;
@@ -1206,7 +1270,7 @@ edit_scale(struct ged *gedp, vect_t *scale_from, vect_t *scale_to,
 /**
  * Initialize command argument-pointer members to NULL.
  */
-HIDDEN void
+void
 edit_scale_init(union edit_cmd *const subcmd)
 {
     subcmd->scale.objects =
@@ -1258,6 +1322,11 @@ edit_scale_get_next_arg_head(const union edit_cmd *const cmd)
     static int idx = -1;
     struct edit_arg *arg_heads[EDIT_SCALE_ARG_HEADS_LEN];
 
+    if (!cmd) {
+	/* (re)initialize */
+	idx = -1;
+	return (struct edit_arg *) NULL;
+    }
 
     arg_heads[0] = cmd->scale.objects;
     arg_heads[1] = cmd->scale.ref_scale.from;
@@ -1333,7 +1402,8 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 	BU_ASSERT_PTR(cur_arg->next, !=, NULL); 
 
 	/* a 'from' position is set; only flags that were possible
-	 * when this function was last updated should be handled */
+	 * when this function was last updated should be handled
+	 */
 	BU_ASSERT(cur_arg->type ^ ~(EDIT_FROM |
 				    EDIT_NATURAL_ORIGIN |
 				    EDIT_USE_TARGETS));
@@ -1349,11 +1419,13 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 
     if ((cur_arg->type & EDIT_TO) || (cur_arg->type == 0)) {
 	/* if there isn't an EDIT_TARGET_OBJECT, this func shouldn't
-	 * be called */
+	 * be called
+	 */
 	BU_ASSERT_PTR(cur_arg->next, !=, NULL);
 
 	/* a 'TO' position is set; only flags that were possible when
-	 * this function was last updated should be handled */
+	 * this function was last updated should be handled
+	 */
 	BU_ASSERT(cur_arg->type ^ ~(EDIT_TO |
 				    EDIT_NATURAL_ORIGIN |
 				    EDIT_REL_DIST |
@@ -1401,7 +1473,8 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 	    return GED_ERROR;
 	} else {
 	    /* a target obj is set; only flags that were possible when
-	     * this function was last updated should be handled */
+	     * this function was last updated should be handled
+	     */
 	    BU_ASSERT(cur_arg->type ^ ~(EDIT_TARGET_OBJ |
 					EDIT_NATURAL_ORIGIN));
 	}
@@ -1410,6 +1483,14 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 	if (cur_arg->cl_options[0] != '\0')
 	    goto err_option_unknown;
     } while ((cur_arg = cur_arg->next));
+
+    /* the default 'FROM' is the first target object */
+    if (!cmd->translate.ref_vector.from) {
+	edit_arg_duplicate(&cmd->translate.ref_vector.from,
+			   cmd->translate.objects);
+	cmd->translate.ref_vector.from->next = NULL;
+	cmd->translate.ref_vector.from->type ^= EDIT_TARGET_OBJ | EDIT_FROM;
+    }
 
     return GED_OK;
 
@@ -1426,6 +1507,12 @@ edit_translate_get_next_arg_head(const union edit_cmd *const cmd)
 #define EDIT_TRANSLATE_ARG_HEADS_LEN 3
     struct edit_arg *arg_heads[EDIT_TRANSLATE_ARG_HEADS_LEN];
     static int idx = -1;
+    
+    if (!cmd) {
+	/* (re)initialize */
+	idx = -1;
+	return (struct edit_arg *) NULL;
+    }
 
     arg_heads[0] = cmd->translate.objects;
     arg_heads[1] = cmd->translate.ref_vector.from;
@@ -1487,17 +1574,132 @@ static const struct edit_cmd_tab edit_cmds[] = {
  */
 
 
-#if 0
-int
-edit_obj_to_coord(struct edit_arg *arg) {
+enum edit_obj_point_types {
+    DEFAULT = 0,
+    BB_CENTER = DEFAULT,
+    NATURAL_ORIGIN
+};
+
+/*
+ * Returns the coordinates of a particular point on an object.
+ */
+vect_t *
+edit_path_to_coord(struct db_full_path *obj_path,
+		   enum edit_obj_point_types point_type)
+{
+    struct directory *obj = NULL;
+    struct directory *path = NULL;
+
+    if (obj_path->fp_len == 1)
+	obj = obj_path->fp_names[0];
+    else {
+	BU_ASSERT(obj_path->fp_len == 2); /* "dir/object" only */
+    /* FIXME: obj/path flags need to be checked earlier!!! */
+	BU_ASSERT(path->d_flags & (RT_DIR_REGION | RT_DIR_COMB));
+	path = obj_path->fp_names[0];
+	obj = obj_path->fp_names[1];
+    }
+    /* FIXME: obj/path flags need to be checked earlier!!! */
+    BU_ASSERT(obj->d_flags & (RT_DIR_SOLID | RT_DIR_REGION | RT_DIR_COMB))
+
+    /* TODO: get matrix modified coordinates of object */
+    switch (point_type) {
+	case NATURAL_ORIGIN:
+	    break;
+	case BB_CENTER:
+	default:
+	    break;
+    }
+
     return GED_OK;
 }
-int
-edit_obj_offset_to_coord(struct edit_arg *arg) {
-    /* edit_obj_to_coord(arg) + offsets */
+
+/**
+ * Converts edit_arg objects+offsets to coordinates, and removes
+ * objects. Only respects object argument type modifier flags.
+ */
+void
+edit_arg_obj_path_to_coord(struct edit_arg *const arg)
+{
+    vect_t *obj_coord;
+
+    if (arg->type & EDIT_NATURAL_ORIGIN) {
+	obj_coord = edit_path_to_coord(arg->object, NATURAL_ORIGIN);
+	arg->type &= ~EDIT_NATURAL_ORIGIN;
+    } else
+	obj_coord = edit_path_to_coord(arg->object, DEFAULT);
+
+    if (arg->vector) {
+	VADD2(*arg->vector, *arg->vector, *obj_coord);
+	bu_free((genptr_t)obj_coord, "vect_t");
+    } else
+	arg->vector = obj_coord;
+
+    /* unhandled object argument type modifier flags */
+    BU_ASSERT(!(arg->type & EDIT_OBJ_TYPE_MODS))
+
+    db_free_full_path(arg->object);
+    bu_free((genptr_t)arg->object, "db_full_path");
+    arg->object = (struct db_full_path *)NULL;
+}
+
+/**
+ * "Expands" object arguments for a batch operation.
+ *
+ * meta_arg is replaced a list of copies of src_objects, with
+ * certain meta_arg flags applied and/or consolidated with those of
+ * the source objects. Objects + offsets are converted to coordinates.
+ *
+ * Set GED_QUIET or GED_ERROR bits in 'flags' to suppress or enable
+ * output to ged_result_str, respectively.
+ *
+ * Returns GED_ERROR on failure, and GED_OK on success.
+ */
+HIDDEN int
+edit_arg_expand(struct ged *gedp, struct edit_arg *meta_arg,
+		const struct edit_arg *src_objs, const int flags)
+{
+    struct edit_arg *prototype;
+    struct edit_arg *dest; 
+    const struct edit_arg *src;
+    const int noisy = (flags & GED_ERROR); /* side with verbosity */
+    int firstrun = 1;
+
+    BU_ASSERT(!meta_arg->next); /* should be at end of list */
+
+    /* repurpose meta_arg, so ptr-to-ptr isn't required */
+    edit_arg_duplicate(&prototype, meta_arg);
+    edit_arg_free_inner(meta_arg);
+    edit_arg_init(meta_arg);
+    dest = meta_arg;
+
+    for (src = src_objs; src; src = src->next, dest = dest->next) {
+	if (firstrun) {
+	    firstrun = 0;
+	    src = src_objs;
+	    edit_arg_duplicate_in_place(dest, src);
+	}
+	else
+	    edit_arg_duplicate(&dest, src);
+
+	/* never use coords that target obj didn't include */
+	dest->coords_used &= prototype->coords_used;
+	if (!dest->coords_used) {
+	    if (noisy)
+		bu_vls_printf(gedp->ged_result_str,
+			      "coordinate filters for batch operator and target"
+			      "objects result in no coordinates being used");
+	    return GED_ERROR;
+	}
+
+	/* respect certain type flags from the prototype/target obj */
+	dest->type &= EDIT_TARGET_OBJ_BATCH_TYPES;
+	dest->type |= prototype->type & EDIT_TARGET_OBJ_BATCH_TYPES;
+
+	edit_arg_obj_path_to_coord(dest);	
+    }
     return GED_OK;
 }
-#endif
 
 /**
  * A wrapper for the edit commands. It adds the capability to perform
@@ -1507,7 +1709,7 @@ edit_obj_offset_to_coord(struct edit_arg *arg) {
  * commands.
  *
  * Set GED_QUIET or GED_ERROR bits in 'flags' to suppress or enable
- * output to ged_result_str, respectively. 
+ * output to ged_result_str, respectively.
  *
  * Returns GED_ERROR on failure, and GED_OK on success.
  *
@@ -1523,86 +1725,39 @@ edit(struct ged *gedp, union edit_cmd *const subcmd, const int flags)
 {
     struct edit_arg *arg_head;
     struct edit_arg *cur_arg;
-    struct edit_arg *dest_arg;
-    int noisy = (flags & GED_ERROR); /* side with verbosity */
+    const int noisy = (flags & GED_ERROR); /* side with verbosity */
 
+    /* initialize */
+    (void)subcmd->cmd->get_next_arg_head((union edit_cmd *)NULL);
+
+    /* check all arg nodes in subcmd->common.objects first; they may
+     * be copied later if there are any batch modifiers to expand.
+     */
     arg_head = subcmd->cmd->get_next_arg_head(subcmd);
-    /* TODO: do all processing of subcmd->common.objects first, so
-     * that they are not done again once the batch arguments are
-     * expanded (targets copied) */
-#if 0
-    /* no target objects should have vectors only */
-    BU_ASSERT(cur_arg->object || !dest_arg->vector);
+    for (cur_arg = arg_head; cur_arg; cur_arg = cur_arg->next) {
+	/* target objects must be... objects */
+	BU_ASSERT(cur_arg->object);
 
-    /* cmd line opts should have been handled/removed */
-    BU_ASSERT(cur_arg->cl_options[0] == '\0');
-#endif
+	/* cmd line opts should have been handled/removed */
+	BU_ASSERT(cur_arg->cl_options[0] == '\0');
+    }
 
-    /* done with objects */
-    arg_head = subcmd->cmd->get_next_arg_head(subcmd);
-
-    do {
-	if (arg_head->type & EDIT_USE_TARGETS) {
-	    dest_arg = arg_head;
-
-	    /* expand batch operator */
-	    for (cur_arg = subcmd->common.objects; cur_arg;
-		 cur_arg = cur_arg->next) {
-
-		/* copy target object to batch argument; freed when cmd is */
-		dest_arg->next = (struct edit_arg *)bu_malloc(
-				  sizeof(struct edit_arg),
-				  "edit_arg block for edit()");
-		dest_arg = dest_arg->next;
-		edit_arg_init(dest_arg);
-
-		dest_arg->next = NULL;
-		dest_arg->cl_options[0] = '\0';
-
-		/* never use coords that target obj didn't include */
-		dest_arg->coords_used &= arg_head->coords_used;
-		if (!dest_arg->coords_used) {
-		    if (noisy)
-			bu_vls_printf(gedp->ged_result_str,
-				      "coordinate filters for batch"
-				      " operator and target objects result in"
-				      " no coordinates being used");
-		    return GED_ERROR;
-		}
-
-		/* respect certain flags from the target object */
-		dest_arg->type |= (arg_head->type &
-				   EDIT_TARGET_OBJ_BATCH_TYPES);
-
-		if (cur_arg->object) {
-		    dest_arg->object = (struct db_full_path *)bu_malloc(
-				       sizeof(struct db_full_path),
-				       "db_full_path block for edit()");
-		    db_full_path_init(dest_arg->object);
-		    db_dup_full_path(dest_arg->object, cur_arg->object);
-		}
-		if (cur_arg->vector) {
-		    cur_arg->vector = (vect_t *)bu_malloc(
-				      sizeof(vect_t),
-				      "vect_t block for edit()");
-		    *dest_arg->vector[0] = *cur_arg->vector[0];
-		    *dest_arg->vector[1] = *cur_arg->vector[1];
-		    *dest_arg->vector[2] = *cur_arg->vector[2];
-		}
-	    }
-	    arg_head = subcmd->cmd->get_next_arg_head(subcmd);
-	    continue;
-	}
+    /* process all other arg nodes */
+    while ((arg_head = subcmd->cmd->get_next_arg_head(subcmd)) != 
+	   subcmd->common.objects) {
 
 	for (cur_arg = arg_head; cur_arg; cur_arg = cur_arg->next) {
+
 	    /* cmd line opts should have been handled/removed */
 	    BU_ASSERT(cur_arg->cl_options[0] == '\0');
 
-	    /* TODO: convert objects + offsets to coords */
+	    if (cur_arg->type & EDIT_USE_TARGETS)
+		edit_arg_expand(gedp, cur_arg, subcmd->common.objects,
+				(noisy ? GED_ERROR : GED_OK));
+	    else if (cur_arg->object)
+		edit_arg_obj_path_to_coord(cur_arg);	
 	}
-	arg_head = subcmd->cmd->get_next_arg_head(subcmd);
-    } while (arg_head != subcmd->common.objects);
-
+    }
     return GED_OK;
 }
 
@@ -1611,7 +1766,7 @@ edit(struct ged *gedp, union edit_cmd *const subcmd, const int flags)
  * for examples of acceptable argument strings.
  * 
  * Set GED_QUIET or GED_ERROR bits in 'flags' to suppress or enable
- * output to ged_result_str, respectively. 
+ * output to ged_result_str, respectively.
  *
  * Returns GED_ERROR on failure, and GED_OK on success.
  */
@@ -1636,8 +1791,7 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 
     if (!arg->object && !(arg->type & EDIT_USE_TARGETS)) {
 
-	/* identical batch operators; objs with the same name are
-	 * masked */
+	/* same batch operators; objs with same name are masked */
 	if (BU_STR_EQUAL(str, ".") || BU_STR_EQUAL(str, "--")) {
 		arg->type |= EDIT_USE_TARGETS;
 		return GED_OK;
@@ -1676,7 +1830,8 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 	    /* FIXME: this conditional should be replaced by adding
 	     * inner slash stripping to db_string_to_path (which is
 	     * used below), and using a simple check for fp_len > 2
-	     * here */
+	     * here
+	     */
 		if (noisy)
 		    bu_vls_printf(gedp->ged_result_str, "invalid path, \"%s\"\n"
 				  "It is only meaningful to have one or two "
@@ -1705,7 +1860,8 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 
     /* if either all coordinates are being set or an object has been
      * set, then attempt to intepret/record the number as the next
-     * unset X, Y, or Z Z coordinate/position */
+     * unset X, Y, or Z Z coordinate/position
+     */
     if ((arg->coords_used & EDIT_COORDS_ALL) || arg->object) {
 	if (!arg->vector) {
 	    arg->vector = (vect_t *)bu_malloc(sizeof(vect_t),
@@ -1777,9 +1933,9 @@ convert_obj:
  * arguments. See subcommand manuals for examples of acceptable
  * argument strings.
  * 
- * Set GED_QUIET or GED_ERROR bits in flags to suppress or enable
- * output to ged_result_str, respectively. Note that output is always
- * suppressed after the first string.
+ * Set GED_QUIET or GED_ERROR bits in 'flags' to suppress or enable
+ * output to ged_result_str, respectively. Note that output is
+ * always suppressed after the first string.
  *
  * Returns GED_OK if at least one string is converted, otherwise
  * GED_ERROR is returned.
@@ -1857,7 +2013,8 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
      * translate' rather than just 'translate'. Also, the help option
      * of subcommands is not displayed properly; it should display
      * when command is called directly, i.e. 'translate', but not
-     * 'edit translate' */
+     * 'edit translate'
+     */
 
     for (i = 0; edit_cmds[i].name; ++i) {
 	/* search for command name in the table */
@@ -1958,7 +2115,8 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	     * the help system with an object that happened to be
 	     * named "help" than the other way around.  This syntax is
 	     * needed to access the help system when a subcmd is the
-	     * calling command. */
+	     * calling command.
+	     */
 	    if (argc == 1 &&
 		BU_STR_EQUAL(edit_cmds[EDIT_CMD_HELP].name,
 		argv[0])) {
@@ -2015,8 +2173,10 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     /* no options are required by default*/
     while (edit_strs_to_arg(gedp, &argc, &argv, cur_arg, GED_QUIET) != GED_ERROR) {
 	if (argc == 0) {
-	    if (edit_arg_is_empty(subcmd.cmd_line.args))
+	    if (edit_arg_is_empty(subcmd.cmd_line.args)) {
 		edit_arg_free(subcmd.cmd_line.args);
+		subcmd.cmd_line.args = NULL;
+	    }
 
 	    cur_arg = subcmd.cmd_line.args;
 	    if (cur_arg->next) {
@@ -2025,7 +2185,8 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    /* parsing is done and there were no options, so all args
-	     * after the first arg should be a target obj */
+	     * after the first arg should be a target obj
+	     */
 	    for (; cur_arg; cur_arg = cur_arg->next) {
 		if (!(cur_arg->object)) {
 		    bu_vls_printf(gedp->ged_result_str,
@@ -2049,7 +2210,8 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 
     /* All leading args are parsed. If we're not not at an option,
      * then there is a bad arg. Let the conversion function cry about
-     * what it choked on */
+     * what it choked on
+     */
     if (strlen(argv[0]) > 1 && ((*argv)[0] != '-') && isdigit((*argv)[1])) {
 	ret = edit_strs_to_arg(gedp, &argc, &argv, cur_arg, GED_ERROR);
 	edit_cmd_free(&subcmd);
@@ -2136,7 +2298,8 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 
 	/* set flags for standard options. it's more readible to just
 	 * switch on c again than the alternative: to add several
-	 * checks and/or goto's */
+	 * checks and/or goto's
+	 */
 	switch (c) {
 	    case 'x':
 		cur_arg->coords_used |= EDIT_COORD_X;
