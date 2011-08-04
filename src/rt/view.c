@@ -1507,9 +1507,8 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	buf_mode = BUFMODE_INCR;
     } else if (full_incr_mode){
 	buf_mode = BUFMODE_ACC;
-	/* buf_mode = BUFMODE_SCANLINE; */
     }
-    else if (width <= 96) {
+    else if (width <= 96 || random_mode) {
 	buf_mode = BUFMODE_UNBUF;
     } else if ((size_t)npsw <= (size_t)height/4) {
 	/* Have each CPU do a whole scanline.  Saves lots of semaphore

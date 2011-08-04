@@ -588,14 +588,6 @@ do_frame(int framenumber)
     quat_t quat;
     char *env_str;
     
-    /* TODO: Read from command line */
-    /* Read from ENV with we're going to use the experimental mode */
-    env_str = getenv("LIBRT_EXP_MODE");
-    if(env_str != NULL){
-	full_incr_mode = 1;
-	full_incr_nsamples = 10;
-    }
-
     if (rt_verbosity & VERBOSE_FRAMENUMBER)
 	bu_log("\n...................Frame %5d...................\n",
 	       framenumber);

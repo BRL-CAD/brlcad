@@ -95,6 +95,7 @@ size_t          full_incr_nsamples = 0;  /* number of samples in the fully incre
 int		npsw = 1;		/* number of worker PSWs to run */
 struct resource	resource[MAX_PSW];	/* memory resources */
 int		transpose_grid = 0;     /* reverse the order of grid traversal */
+int             random_mode = 0;        /* Mode to shoot rays at random directions */
 /***** end variables shared with worker() *****/
 
 /***** Photon Mapping Variables *****/
@@ -174,6 +175,7 @@ get_args(int argc, const char *argv[])
 {
     register int c;
     register int i;
+    char *env_str;              
 
     bu_optind = 1;		/* restart */
 
@@ -631,6 +633,21 @@ get_args(int argc, const char *argv[])
 
     if (R_DEBUG & RDEBUG_RTMEM_END)
 	bu_debug |= BU_DEBUG_MEM_CHECK;
+
+    /* TODO: add options instead of reading from ENV */
+    env_str = getenv("LIBRT_RAND_MODE");
+    if(env_str != NULL && atoi(env_str) == 1){
+	random_mode = 1;
+	bu_log("random mode\n");
+    }
+    /* TODO: Read from command line */
+    /* Read from ENV with we're going to use the experimental mode */
+    env_str = getenv("LIBRT_EXP_MODE");
+    if(env_str != NULL && atoi(env_str) == 1){
+	full_incr_mode = 1;
+	full_incr_nsamples = 10;
+	bu_log("multi-sample mode\n");
+    }
 
     return 1;			/* OK */
 }

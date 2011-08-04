@@ -47,6 +47,7 @@ extern int sub_ymax;
 extern int sub_ymin;
 extern int transpose_grid;		/* reverse the order of grid traversal */
 extern int use_air;			/* Handling of air in librt */
+extern int random_mode;                 /* Mode to shoot rays at random directions */
 
 /***** variables from main.c *****/
 extern FILE *outfp;			/* optional output file */
