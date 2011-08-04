@@ -775,7 +775,7 @@ target_link_libraries(tclstub ${CMAKE_THREAD_LIBS_INIT} ${COREFOUNDATION_FRAMEWO
 install(TARGETS tclstub DESTINATION ${LIB_DIR})
 
 add_executable(tclsh ${TCLSH_SRCS})
-target_link_libraries(tclsh tcl ${SUN_MATH_LIB} ${EXTRA_TCLSH_LIBS})
+target_link_libraries(tclsh tcl ${SUN_MATH_LIB} ${M_LIBRARY} ${EXTRA_TCLSH_LIBS})
 install(TARGETS tclsh DESTINATION bin)
 SET_TARGET_PROPERTIES(tclsh PROPERTIES VERSION ${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR})
 
