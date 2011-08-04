@@ -664,136 +664,6 @@
  *                                                         
  */
 
-/* This function is obsolete and will be removed soon */
-#if 0
-int
-translate(struct ged *gedp, vect_t *keypoint,
-	  struct db_full_path *path,
-	  struct directory *d_obj, vect_t delta,
-	  int relative_pos_flag)
-{
-    struct db_full_path full_obj_path;
-    struct directory *d_to_modify = NULL;
-
-    struct rt_db_internal intern;
-    struct _ged_trace_data gtd;
-    mat_t dmat;
-    mat_t emat;
-    mat_t tmpMat;
-    mat_t invXform;
-    point_t rpp_min;
-    point_t rpp_max;
-
-    /*
-     * Validate parameters
-     */
-
-    /* perhaps relative positioning was enabled by mistake */
-    if (relative_pos_flag && keypoint) {
-	bu_vls_printf(gedp->ged_result_str,
-		      "relative translations do not have keypoints");
-	return GED_ERROR;
-    }
-
-    /* TODO: set reasonable default keypoint */
-    if (!relative_pos_flag && !keypoint) {
-	*keypoint[0] = 0.0;
-	*keypoint[1] = 0.0;
-	*keypoint[2] = 0.0;
-    }
-
-    /* verify existence of path */
-    if (ged_path_validate(gedp, path) == GED_ERROR) {
-	char *s_path = db_path_to_string(path);
-	bu_vls_printf(gedp->ged_result_str, "path \"%s\" doesn't exist",
-		      s_path);
-	bu_free((genptr_t)s_path, "path string");
-	return GED_ERROR;
-    }
-
-    /* verify that object exists under current directory in path */
-    db_full_path_init(&full_obj_path);
-    if (path->fp_len > 0) /* if there's no path, obj is at root */
-	db_dup_path_tail(&full_obj_path, path, path->fp_len - (size_t)1);
-    db_add_node_to_full_path(&full_obj_path, d_obj);
-    if (ged_path_validate(gedp, &full_obj_path) == GED_ERROR) {
-	char *s_path = db_path_to_string(path);
-	bu_vls_printf(gedp->ged_result_str, "object \"%s\" not found under"
-		      " path \"%s\"", d_obj->d_namep, s_path);
-	bu_free((genptr_t)s_path, "path string");
-	db_free_full_path(&full_obj_path);
-	return GED_ERROR;
-    }
-    db_free_full_path(&full_obj_path);
-
-    if (!(d_obj->d_flags & (RT_DIR_SOLID | RT_DIR_REGION | RT_DIR_COMB))) {
-	bu_vls_printf(gedp->ged_result_str, "unsupported object type");
-	return GED_ERROR;
-    }
-
-    /*
-     * Perform translations
-     */
-
-    if (!relative_pos_flag)
-	    /* 'delta' is actually an absolute position; calculate
-	     * distance between it and the keypoint, so that delta
-	     * really is a delta */
-	    VSUB2(delta, delta, *keypoint);
-
-    if (path->fp_len > 0) {
-	/* path supplied; move obj instance only (obj's CWD
-	 * modified) */
-	struct rt_comb_internal *comb;
-	union tree *leaf_to_modify;
-
-	d_to_modify = DB_FULL_PATH_CUR_DIR(path);
-	GED_DB_GET_INTERNAL(gedp, &intern, d_to_modify, (fastf_t *)NULL,
-			    &rt_uniresource, GED_ERROR);
-	comb = (struct rt_comb_internal *)intern.idb_ptr;
-
-	leaf_to_modify = db_find_named_leaf(comb->tree, d_obj->d_namep);
-	if (leaf_to_modify == TREE_NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "leaf not found where it"
-			  " should be; this should not happen");
-	    rt_db_free_internal(&intern);
-	    return GED_ERROR;
-	}
-
-	MAT_DELTAS_ADD_VEC(leaf_to_modify->tr_l.tl_mat, delta);
-    } else {
-	/* no path; move all obj instances (obj's entire tree
-	 * modified) */
-	d_to_modify = d_obj;
-	if (_ged_get_obj_bounds2(gedp, 1, (const char **)&d_to_modify->d_namep,
-				 &gtd, rpp_min, rpp_max) == GED_ERROR)
-	    return GED_ERROR;
-	if (!(d_to_modify->d_flags & RT_DIR_SOLID))
-	    if (_ged_get_obj_bounds(gedp, 1,
-				    (const char **)&d_to_modify->d_namep,
-				    1, rpp_min, rpp_max) == GED_ERROR)
-		return GED_ERROR;
-
-	MAT_IDN(dmat);
-	VSCALE(delta, delta, gedp->ged_wdbp->dbip->dbi_local2base);
-	MAT_DELTAS_VEC(dmat, delta);
-
-	bn_mat_inv(invXform, gtd.gtd_xform);
-	bn_mat_mul(tmpMat, invXform, dmat);
-	bn_mat_mul(emat, tmpMat, gtd.gtd_xform);
-
-	GED_DB_GET_INTERNAL(gedp, &intern, d_to_modify, emat,
-			    &rt_uniresource, GED_ERROR);
-    }
-
-    RT_CK_DB_INTERNAL(&intern);
-    GED_DB_PUT_INTERNAL(gedp, d_to_modify, &intern, &rt_uniresource,
-			GED_ERROR);
-    rt_db_free_internal(&intern);
-    return GED_OK;
-}
-#endif
-
 /* Max # of global options + max number of options for a single arg */
 #define EDIT_MAX_ARG_OPTIONS 3
 
@@ -1346,10 +1216,71 @@ int
 edit_translate(struct ged *gedp, vect_t *from, vect_t *to,
 		struct db_full_path *path)
 {
-    (void)gedp;
-    (void)from;
-    (void)to;
-    (void)path;
+    struct directory *d_to_modify = NULL;
+    struct directory *d_obj = NULL;
+    vect_t delta;
+
+    struct rt_db_internal intern;
+    struct _ged_trace_data gtd;
+    mat_t dmat;
+    mat_t emat;
+    mat_t tmpMat;
+    mat_t invXform;
+    point_t rpp_min;
+    point_t rpp_max;
+
+    VSUB2(delta, *to, *from);
+    d_obj = DB_FULL_PATH_CUR_DIR(path);
+
+    if (path->fp_len > 0) {
+	/* path supplied; move obj instance only (obj's CWD
+	 * modified) */
+	struct rt_comb_internal *comb;
+	union tree *leaf_to_modify;
+
+	d_to_modify = DB_FULL_PATH_CUR_DIR(path);
+	GED_DB_GET_INTERNAL(gedp, &intern, d_to_modify, (fastf_t *)NULL,
+			    &rt_uniresource, GED_ERROR);
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+
+	leaf_to_modify = db_find_named_leaf(comb->tree, d_obj->d_namep);
+	if (leaf_to_modify == TREE_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "leaf not found where it"
+			  " should be; this should not happen");
+	    rt_db_free_internal(&intern);
+	    return GED_ERROR;
+	}
+
+	MAT_DELTAS_ADD_VEC(leaf_to_modify->tr_l.tl_mat, delta);
+    } else {
+	/* no path; move all obj instances (obj's entire tree
+	 * modified) */
+	d_to_modify = d_obj;
+	if (_ged_get_obj_bounds2(gedp, 1, (const char **)&d_to_modify->d_namep,
+				 &gtd, rpp_min, rpp_max) == GED_ERROR)
+	    return GED_ERROR;
+	if (!(d_to_modify->d_flags & RT_DIR_SOLID))
+	    if (_ged_get_obj_bounds(gedp, 1,
+				    (const char **)&d_to_modify->d_namep,
+				    1, rpp_min, rpp_max) == GED_ERROR)
+		return GED_ERROR;
+
+	MAT_IDN(dmat);
+	VSCALE(delta, delta, gedp->ged_wdbp->dbip->dbi_local2base);
+	MAT_DELTAS_VEC(dmat, delta);
+
+	bn_mat_inv(invXform, gtd.gtd_xform);
+	bn_mat_mul(tmpMat, invXform, dmat);
+	bn_mat_mul(emat, tmpMat, gtd.gtd_xform);
+
+	GED_DB_GET_INTERNAL(gedp, &intern, d_to_modify, emat,
+			    &rt_uniresource, GED_ERROR);
+    }
+
+    RT_CK_DB_INTERNAL(&intern);
+    GED_DB_PUT_INTERNAL(gedp, d_to_modify, &intern, &rt_uniresource,
+			GED_ERROR);
+    rt_db_free_internal(&intern);
     return GED_OK;
 }
 
@@ -1583,24 +1514,48 @@ enum edit_obj_point_types {
 /*
  * Returns the coordinates of a particular point on an object.
  */
-vect_t *
-edit_path_to_coord(struct db_full_path *obj_path,
-		   enum edit_obj_point_types point_type)
+void
+edit_path_to_coord(struct ged *gedp, struct db_full_path *obj_path,
+		   enum edit_obj_point_types point_type, vect_t *objv)
 {
-    struct directory *obj = NULL;
-    struct directory *path = NULL;
+    struct directory *comb_dir = NULL;
+    struct directory *obj_dir = NULL;
+    vect_t matv;
+
+#if 0
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb_i = NULL;
+#endif
+
+    (void)gedp;
 
     if (obj_path->fp_len == 1)
-	obj = obj_path->fp_names[0];
+	obj_dir = DB_FULL_PATH_ROOT_DIR(obj_path);
     else {
 	BU_ASSERT(obj_path->fp_len == 2); /* "dir/object" only */
-    /* FIXME: obj/path flags need to be checked earlier!!! */
-	BU_ASSERT(path->d_flags & (RT_DIR_REGION | RT_DIR_COMB));
-	path = obj_path->fp_names[0];
-	obj = obj_path->fp_names[1];
+	comb_dir = DB_FULL_PATH_ROOT_DIR(obj_path);
+	obj_dir = DB_FULL_PATH_CUR_DIR(obj_path);
+
+	/* FIXME: dir flags need to be checked earlier!!! */
+	BU_ASSERT(comb_dir->d_flags & (RT_DIR_REGION | RT_DIR_COMB));
     }
-    /* FIXME: obj/path flags need to be checked earlier!!! */
-    BU_ASSERT(obj->d_flags & (RT_DIR_SOLID | RT_DIR_REGION | RT_DIR_COMB))
+    /* FIXME: dir flags need to be checked earlier!!! */
+    BU_ASSERT(obj_dir->d_flags & (RT_DIR_SOLID | RT_DIR_REGION | RT_DIR_COMB))
+
+    if (comb_dir) {
+	/* get matrix modified coordinates of object */
+	/* XXX work in progress */
+#if 0
+	GED_DB_GET_INTERNAL(gedp, &intern, comb_dir, (fastf_t *)NULL,
+			    &rt_uniresource, GED_ERROR);
+	comb_i = (struct rt_comb_internal *)intern.idb_ptr;
+#endif
+    } else {
+	VSETALL(matv, 0);
+	/* get coordinates of object */
+
+   
+    }
 
     /* TODO: get matrix modified coordinates of object */
     switch (point_type) {
@@ -1611,7 +1566,7 @@ edit_path_to_coord(struct db_full_path *obj_path,
 	    break;
     }
 
-    return GED_OK;
+    VADD2(*objv, matv, *objv);
 }
 
 /**
@@ -1619,21 +1574,23 @@ edit_path_to_coord(struct db_full_path *obj_path,
  * objects. Only respects object argument type modifier flags.
  */
 void
-edit_arg_obj_path_to_coord(struct edit_arg *const arg)
+edit_arg_obj_path_to_coord(struct ged *gedp, struct edit_arg *const arg)
 {
-    vect_t *obj_coord;
+    vect_t obj_coord;
 
     if (arg->type & EDIT_NATURAL_ORIGIN) {
-	obj_coord = edit_path_to_coord(arg->object, NATURAL_ORIGIN);
+	edit_path_to_coord(gedp, arg->object, NATURAL_ORIGIN, &obj_coord);
 	arg->type &= ~EDIT_NATURAL_ORIGIN;
     } else
-	obj_coord = edit_path_to_coord(arg->object, DEFAULT);
+	edit_path_to_coord(gedp, arg->object, DEFAULT, &obj_coord);
 
     if (arg->vector) {
-	VADD2(*arg->vector, *arg->vector, *obj_coord);
-	bu_free((genptr_t)obj_coord, "vect_t");
-    } else
-	arg->vector = obj_coord;
+	VADD2(*arg->vector, *arg->vector, obj_coord);
+    } else {
+	arg->vector = (vect_t *)bu_malloc(sizeof(vect_t),
+		      "vect_t block for edit_arg_obj_path_to_coord()");
+	VMOVE(*arg->vector, obj_coord);
+    }
 
     /* unhandled object argument type modifier flags */
     BU_ASSERT(!(arg->type & EDIT_OBJ_TYPE_MODS))
@@ -1696,7 +1653,7 @@ edit_arg_expand(struct ged *gedp, struct edit_arg *meta_arg,
 	dest->type &= EDIT_TARGET_OBJ_BATCH_TYPES;
 	dest->type |= prototype->type & EDIT_TARGET_OBJ_BATCH_TYPES;
 
-	edit_arg_obj_path_to_coord(dest);	
+	edit_arg_obj_path_to_coord(gedp, dest);	
     }
     return GED_OK;
 }
@@ -1754,7 +1711,7 @@ edit(struct ged *gedp, union edit_cmd *const subcmd, const int flags)
 		edit_arg_expand(gedp, cur_arg, subcmd->common.objects,
 				(noisy ? GED_ERROR : GED_OK));
 	    else if (cur_arg->object)
-		edit_arg_obj_path_to_coord(cur_arg);	
+		edit_arg_obj_path_to_coord(gedp, cur_arg);	
 	}
     }
     return GED_OK;
@@ -2417,214 +2374,6 @@ err_option_overflow:
     edit_cmd_free(&subcmd);
     return GED_ERROR;
 }
-
-/* obsolete code; here temporarily for reference */
-#if 0
-
-    int from_center_flag = 0;
-    int from_origin_flag = 0;
-    const char *s_from_primitive;
-    struct db_full_path from_primitive;
-    const char *kp_arg = NULL;        	/* keypoint argument */
-    vect_t keypoint;
-
-    int to_center_flag = 0;
-    int to_origin_flag = 0;
-    const char *s_to_primitive;
-    struct db_full_path to_primitive;
-    vect_t delta;			/* dist/pos to edit to */
-
-    const char *s_obj[] = NULL;
-    struct db_full_path obj[] = NULL;
-    struct directory *d_obj[] = NULL;
-
-    size_t i;				/* iterator */
-    int c;				/* bu_getopt return value */
-    char *endchr = NULL;		/* for strtod's */
-
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    /*
-     * Get short arguments
-     */
-
-    /* must want help; argc < 3 is wrong too, but more helpful msgs
-     * are given later, by saying which args are missing */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
-	return GED_HELP;
-    }
-
-    bu_optind = 1; /* re-init bu_getopt() */
-    while ((c = bu_getopt(argc, (char * const *)argv, "o:c:k:")) != -1) {
-	switch (c) {
-	    case 'o':
-		if (from_origin_flag) {
-		    if (to_origin_flag) {
-			bu_vls_printf(gedp->ged_result_str,
-				      "too many -o options");
-			return GED_ERROR;
-		    }
-		    to_origin_flag = 1;
-		    s_to_primitive = bu_optarg;
-		} else {
-		    from_origin_flag = 1;
-		    s_from_primitive = bu_optarg;
-		}
-		break;
-	    case 'c':
-		if (from_center_flag) {
-		    if (to_center_flag) {
-			bu_vls_printf(gedp->ged_result_str,
-				      "too many -c options");
-			return GED_ERROR;
-		    }
-		    to_origin_flag = 1;
-		    s_to_primitive = bu_optarg;
-		} else {
-		    from_origin_flag = 1;
-		    s_from_primitive = bu_optarg;
-		}
-
-		if (!(s_from_center[0] == skip_arg && kp_arg[1] == ' ')) {
-		    /* that's an option, not an arg */
-		    bu_vls_printf(gedp->ged_result_str,
-				  "Missing argument for option -%c", bu_optopt);
-		    return GED_ERROR;
-		}
-		break;
-	    case 'k':
-		rel_flag = 1;
-		break;
-	    default:
-		/* options that require arguments */
-		switch (bu_optopt) {
-		    case 'k':
-			bu_vls_printf(gedp->ged_result_str,
-				      "Missing argument for option -%c", bu_optopt);
-			return GED_ERROR;
-		}
-
-		/* unknown options */
-		if (isprint(bu_optopt)) {
-		    char *c2;
-		    strtod((const char *)&c, &c2);
-		    if (*c2 != '\0') {
-			--bu_optind;
-			goto no_more_args;
-		    }
-			/* it's neither a negative # nor an option */
-			bu_vls_printf(gedp->ged_result_str,
-				      "Unknown option '-%c'", bu_optopt);
-			return GED_ERROR;
-		} else {
-		    bu_vls_printf(gedp->ged_result_str,
-				  "Unknown option character '\\x%x'",
-				  bu_optopt);
-		    return GED_ERROR;
-		}
-	}
-    }
-no_more_args: /* for breaking out, above */
-
-    /*
-     * Validate arguments
-     */
-   
-    /* need to use either absolute||relative positioning; not both */
-    if (abs_flag && rel_flag) {
-	bu_vls_printf(gedp->ged_result_str,
-		      "options '-a' and '-r' are mutually exclusive");
-	return GED_ERROR;
-    }
-
-    /* set default positioning type */
-    if (!abs_flag && !rel_flag)
-	rel_flag = 1;
-   
-    /* set delta coordinates for edit */
-    if ((bu_optind + 1) > argc) {
-	bu_vls_printf(gedp->ged_result_str, "missing x coordinate");
-	return GED_HELP;
-    }
-    delta[0] = strtod(argv[bu_optind], &endchr);
-    if (!endchr || argv[bu_optind] == endchr) {
-	bu_vls_printf(gedp->ged_result_str, "missing or invalid x coordinate");
-	return GED_ERROR;
-    }
-    ++bu_optind;
-    for (i = 1; i < 3; ++i, ++bu_optind) {
-	if ((bu_optind + 1) > argc)
-	    break;
-	delta[i] = strtod(argv[bu_optind], &endchr);
-	if (!endchr || argv[bu_optind] == endchr)
-	    /* invalid y or z coord */
-	    break;
-    }
-
-    /* no args left, but more are expected */
-    if ((bu_optind + 1) > argc) {
-	bu_vls_printf(gedp->ged_result_str,
-		      "missing object argument\n");
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
-	return GED_HELP;
-    }
-
-    if ((bu_optind + 1) != argc)
-	/* if >1 object was supplied, the first must be a path */
-	s_path = argv[bu_optind++];
-    if (db_string_to_path(&path, dbip, s_path) < 0) {
-	bu_vls_printf(gedp->ged_result_str, "invalid path \"%s\"", s_path);
-	return GED_ERROR;
-    }
-
-    /* set object (no path accepted) */
-    s_obj = argv[bu_optind++];
-    if (db_string_to_path(&obj, dbip, s_obj) < 0 || obj.fp_len != (size_t)1) {
-	bu_vls_printf(gedp->ged_result_str, "invalid object \"%s\"",
-		      s_obj);
-	db_free_full_path(&path);
-	return GED_ERROR;
-    }
-
-    if ((bu_optind + 1) <= argc) {
-	bu_vls_printf(gedp->ged_result_str, "multiple objects not yet"
-		      " supported; ");
-	db_free_full_path(&path);
-	db_free_full_path(&obj);
-	return GED_ERROR;
-    }
-
-    /*
-     * Perform edit
-     */
-
-    d_obj = DB_FULL_PATH_ROOT_DIR(&obj);
-    if (!kp_arg) {
-	if (edit_translate(gedp, (vect_t *)NULL, &path, d_obj, delta,
-		      rel_flag) == GED_ERROR) {
-	    db_free_full_path(&path);
-	    db_free_full_path(&obj);
-	    bu_vls_printf(gedp->ged_result_str, "; translation failed");
-	    return GED_ERROR;
-	}
-    } else {
-	if (edit_translate(gedp, &keypoint, &path, d_obj, delta, rel_flag) ==
-	    GED_ERROR) {
-	    db_free_full_path(&path);
-	    db_free_full_path(&obj);
-	    bu_vls_printf(gedp->ged_result_str, "; translation failed");
-	    return GED_ERROR;
-	}
-    }
-
-    db_free_full_path(&path);
-    db_free_full_path(&obj);
-#endif
 
 
 /*
