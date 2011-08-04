@@ -586,7 +586,6 @@ do_frame(int framenumber)
     int lim = 0;
     vect_t work, temp;
     quat_t quat;
-    char *env_str;
     
     if (rt_verbosity & VERBOSE_FRAMENUMBER)
 	bu_log("\n...................Frame %5d...................\n",
