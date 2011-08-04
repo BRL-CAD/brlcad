@@ -993,7 +993,7 @@ edit_arg_duplicate_in_place(struct edit_arg *const dest,
 	dest->cl_options[i] = src->cl_options[i];
     dest->coords_used = src->coords_used;
     dest->type = src->type;
-    if (dest->object) {
+    if (src->object) {
 	dest->object = (struct db_full_path *)bu_malloc(
 			  sizeof(struct db_full_path),
 			  "struct db_full_path block for"
@@ -1745,7 +1745,6 @@ edit(struct ged *gedp, union edit_cmd *const subcmd, const int flags)
     /* process all other arg nodes */
     while ((arg_head = subcmd->cmd->get_next_arg_head(subcmd)) != 
 	   subcmd->common.objects) {
-
 	for (cur_arg = arg_head; cur_arg; cur_arg = cur_arg->next) {
 
 	    /* cmd line opts should have been handled/removed */
