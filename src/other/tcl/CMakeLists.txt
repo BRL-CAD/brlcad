@@ -42,14 +42,8 @@ IF(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0003 NEW)
 ENDIF(COMMAND CMAKE_POLICY)
 
-# set CMake project name
+# Set CMake project name
 PROJECT(TCL)
-
-# set local CFLAGS name
-SET(CFLAGS_NAME TCL)
-SET(TCL_CFLAGS "")
-MARK_AS_ADVANCED(TCL_CFLAGS)
-SET(CONFIG_CFLAGS TCL_CFLAGS)
 
 # build shared libs by default
 OPTION(BUILD_SHARED_LIBS "Build shared libraries" ON)
@@ -69,28 +63,61 @@ IF(WIN32)
 	ENABLE_LANGUAGE(RC)
 ENDIF(WIN32)
 
+#----------------------------------------------------------------------------
+# The location in which to install Tcl.  Only do this if CMAKE_INSTALL_PREFIX 
+# hasn't been set already, to try and allow parent builds (if any) some control.
+IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+   IF(NOT WIN32)
+      IF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
+			SET(CMAKE_INSTALL_PREFIX "/usr/local/tcldev-${TCL_VERSION}")
+		ELSE ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
+         SET(CMAKE_INSTALL_PREFIX "/usr")
+		ENDIF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
+   ENDIF(NOT WIN32)
+   SET(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE STRING "TCL install prefix" FORCE)
+   SET(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT 0)
+ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
 #-----------------------------------------------------------------------------
 # Output directories.
-IF(NOT LIBRARY_OUTPUT_PATH)
-  SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
-ENDIF(NOT LIBRARY_OUTPUT_PATH)
-IF(NOT EXECUTABLE_OUTPUT_PATH)
-  SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all executables.")
-ENDIF(NOT EXECUTABLE_OUTPUT_PATH)
 
-#-----------------------------------------------------------------------------
-# Configure install locations. 
+IF(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+   IF(WIN32)
+      SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all libraries.")
+   ELSE(WIN32)
+      SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
+   ENDIF(WIN32)
+ENDIF(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+IF(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
+   SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all archives.")
+ENDIF(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
+IF(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+   SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all executables.")
+ENDIF(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 
-IF(NOT CMAKE_INSTALL_PREFIX)
-	IF(WIN32)
-		SET(CMAKE_INSTALL_PREFIX "/usr/local")
-	ELSE(WIN32) 
-		SET(CMAKE_INSTALL_PREFIX "C:/Tcl")
-	ENDIF(WIN32) 
-ENDIF(NOT CMAKE_INSTALL_PREFIX)
+IF(0)
+FOREACH(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+   STRING(TOUPPER "${CFG_TYPE}" CFG_TYPE)
+   IF(NOT "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}")
+      IF(WIN32)
+         SET("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}" ${CMAKE_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all libraries.")
+      ELSE(WIN32)
+         SET("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}" ${CMAKE_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
+      ENDIF(WIN32)
+   ENDIF(NOT "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}")
+   IF(NOT "CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE}")
+      SET("CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE}" ${CMAKE_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all archives.")
+   ENDIF(NOT "CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE}")
+   IF(NOT "CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE}")
+      SET("CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE}" ${CMAKE_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all executables.")
+   ENDIF(NOT "CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE}")
+ENDFOREACH()
+ENDIF(0)
 
-
+FIND_PACKAGE(ZLIB)
+IF(ZLIB_FOUND)
+	add_definitions(-DHAVE_ZLIB=1)
+ENDIF(ZLIB_FOUND)
 #-----------------------------------------------------------------------------
 # If compiling on macosx, need to do something with tclConfig.h.in - figure
 # out what
@@ -142,41 +169,42 @@ FILE(APPEND ${TCL_CFG_H_FILE} "#define CFG_RUNTIME_DOCDIR \"${CMAKE_INSTALL_PREF
 
 # First, get some standard options out of the way - things that are constant
 # between various platforms or pertain to specific OS definitions
-SET(TCL_CFLAGS "${TCL_CFLAGS} -DSTDC_HEADERS=1")
-SET(TCL_CFLAGS "${TCL_CFLAGS} -DCMAKE_HEADERS=1")
-IF(NOT ${CMAKE_GENERATOR} MATCHES "^Xcode$")
-SET(TCL_CFLAGS "${TCL_CFLAGS} -DTCL_SHLIB_EXT=\\\"${CMAKE_SHARED_LIBRARY_SUFFIX}\\\"")
-ENDIF(NOT ${CMAKE_GENERATOR} MATCHES "^Xcode$")
+ADD_TCL_CFLAG(STDC_HEADERS)
+ADD_TCL_CFLAG(CMAKE_HEADERS)
+
+add_definitions(-DTCL_SHLIB_EXT="${CMAKE_SHARED_LIBRARY_SUFFIX}")
+
 # Windows specific flags
 IF(WIN32)
-   SET(TCL_CFLAGS "${TCL_CFLAGS} -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP -Ot -Oi -fp:strict -Gs -GS -GL -MD")
-   SET(TCL_CFLAGS "${TCL_CFLAGS} -DTCL_PIPE_DLL=\\\"tclpip${TCL_VERSION_MAJOR}${TCL_VERSION_MINOR}.dll\\\"")
-   SET(TCL_CFLAGS "${TCL_CFLAGS} -Dinline=__inline -DBUILD_tcl")
+   add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP -Ot -Oi -fp:strict -Gs -GS -GL -MD)
+   add_definitions(-DTCL_PIPE_DLL="tclpip${TCL_VERSION_MAJOR}${TCL_VERSION_MINOR}.dll")
+   add_definitions(-Dinline=__inline -DBUILD_tcl)
 ENDIF(WIN32)
 
 IF(APPLE)
-	SET(TCL_CFLAGS "${TCL_CFLAGS} -DMAC_OSX_TCL=1")
+	ADD_TCL_CFLAG(MAC_OSX_TCL)
 	find_library(COREFOUNDATION_FRAMEWORK CoreFoundation)
 	IF(COREFOUNDATION_FRAMEWORK)
-		SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_COREFOUNDATION=1")
+		ADD_TCL_CFLAG(HAVE_COREFOUNDATION)
 	ENDIF(COREFOUNDATION_FRAMEWORK)
 ENDIF(APPLE)
+
 #----------------------------------------------------------------------------
 # Tom's math library - should MP_PREC be an option?
-OPTION(TCL_TOMMATH "Enable Tcl Tom's Math Library" ON)
+OPTION(TCL_TOMMATH "Enable Tom's Math Library" ON)
 IF(TCL_TOMMATH)
-	SET(TCL_CFLAGS "${TCL_CFLAGS} -DTCL_TOMMATH=1")
-   SET(TCL_CFLAGS "${TCL_CFLAGS} -DMP_PREC=4")
+	ADD_TCL_CFLAG(TCL_TOMMATH)
+   add_definitions(-DMP_PREC=4)
 ENDIF(TCL_TOMMATH)
 
 #----------------------------------------------------------------------------
 
 #This should probably be part of SC_TCL_64BIT_FLAGS()
 IF(BRLCAD-ENABLE_64BIT)
-	SET(TCL_CFLAGS "${TCL_CFLAGS} -DTCL_CFG_DO64BIT=1")
+	add_definitions(-DTCL_CFG_DO64BIT=1)
 ENDIF(BRLCAD-ENABLE_64BIT)
 IF(CMAKE_CL_64)
-	SET(TCL_CFLAGS "${TCL_CFLAGS} -D_stati64=_stat64")
+	add_definitions(-D_stati64=_stat64)
 ENDIF(CMAKE_CL_64)
 
 
@@ -184,9 +212,7 @@ SC_MISSING_POSIX_HEADERS()
 
 SC_ENABLE_THREADS()
 
-IF(NOT ${CMAKE_GENERATOR} MATCHES "^Xcode$")
 SC_TCL_CFG_ENCODING()
-ENDIF(NOT ${CMAKE_GENERATOR} MATCHES "^Xcode$")
 
 SC_TCL_LINK_LIBS()
 
@@ -200,19 +226,19 @@ IF(NOT MSVC)
 	INCLUDE(TestBigEndian)
 	TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
 	IF(WORDS_BIGENDIAN)
-		SET(TCL_CFLAGS "${TCL_CFLAGS} -DWORDS_BIGENDIAN=1")
+		ADD_TCL_CFLAG(WORDS_BIGENDIAN)
 	ENDIF(WORDS_BIGENDIAN)
 ENDIF(NOT MSVC)
 
 # POSIX substitutes
 CONFIG_CHECK_FUNCTION_EXISTS(getcwd HAVE_GETCWD)
 IF(NOT HAVE_GETCWD)
-	SET(TCL_CFLAGS "${TCL_CFLAGS} -DUSEGETWD=1") 
+	add_definitions(-DUSEGETWD=1) 
 ENDIF(NOT HAVE_GETCWD)
 IF(NOT HAVE_GETCWD)
 	CONFIG_CHECK_FUNCTION_EXISTS(getwd HAVE_GETWD)
 	IF(NOT HAVE_GETWD)
-		SET(TCL_CFLAGS "${TCL_CFLAGS} -DNO_GETWD=1") 
+		ADD_TCL_CFLAG(NO_GETWD)
 	ENDIF(NOT HAVE_GETWD)
 ENDIF(NOT HAVE_GETCWD)
 CONFIG_CHECK_FUNCTION_EXISTS(opendir HAVE_OPENDIR)
@@ -230,17 +256,17 @@ IF(NOT HAVE_WAITPID)
 ENDIF(NOT HAVE_WAITPID)
 CONFIG_CHECK_FUNCTION_EXISTS(strerror HAVE_STRERROR)
 IF(NOT HAVE_STRERROR)
-	SET(TCL_CFLAGS "${TCL_CFLAGS} -DNO_STRERROR=1") 
+	ADD_TCL_CFLAG(NO_STRERROR)
 ENDIF(NOT HAVE_STRERROR)
 CHECK_FUNCTION_EXISTS(wait3 HAVE_WAIT3)
 IF(NOT HAVE_WAIT3)
-	SET(TCL_CFLAGS "${TCL_CFLAGS} -DNO_WAIT3=1") 
+	ADD_TCL_CFLAG(NO_WAIT3)
 ENDIF(NOT HAVE_WAIT3)
 CONFIG_CHECK_FUNCTION_EXISTS(uname HAVE_UNAME)
 IF(NOT HAVE_UNAME)
-	SET(TCL_CFLAGS "${TCL_CFLAGS} -DNO_UNAME=1") 
+	ADD_TCL_CFLAG(NO_UNAME)
 ENDIF(NOT HAVE_UNAME)
-# Should be checking for early Darwin version here - realpath
+# Check for early Darwin version here - realpath
 # is not threadsafe prior to Darwin 7
 CHECK_FUNCTION_EXISTS(realpath HAVE_REALPATH)
 IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$" AND TCL_THREADS AND HAVE_REALPATH)
@@ -251,7 +277,7 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$" AND TCL_THREADS AND HAVE_REALPATH)
 	ENDIF (${CMAKE_SYSTEM_MAJOR_VERSION} LESS 7)
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$" AND TCL_THREADS AND HAVE_REALPATH)
 IF(NOT HAVE_REALPATH)
-	SET(TCL_CFLAGS "${TCL_CFLAGS} -DNO_REALPATH=1") 
+	ADD_TCL_CFLAG(NO_REALPATH)
 ENDIF(NOT HAVE_REALPATH)
 
 SC_TCL_GETADDRINFO()
@@ -279,16 +305,16 @@ IF(TCL_THREADS)
 	IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
 		STRING(REGEX REPLACE "\\..*" "" CMAKE_SYSTEM_MAJOR_VERSION ${CMAKE_SYSTEM_VERSION})
 		IF (${CMAKE_SYSTEM_MAJOR_VERSION} GREATER 5)
-			SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_MTSAFE_GETHOSTBYNAME=1")
-			SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_MTSAFE_GETHOSTBYADDR=1")
+			ADD_TCL_CFLAG(HAVE_MTSAFE_GETHOSTBYNAME)
+			ADD_TCL_CFLAG(HAVE_MTSAFE_GETHOSTBYADDR)
 		ENDIF (${CMAKE_SYSTEM_MAJOR_VERSION} GREATER 5)
 	ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
 
 	IF(${CMAKE_SYSTEM_NAME} MATCHES "^HP-UX$")
 		STRING(REGEX REPLACE "\\..*" "" CMAKE_SYSTEM_MAJOR_VERSION ${CMAKE_SYSTEM_VERSION})
 		IF (${CMAKE_SYSTEM_MAJOR_VERSION} GREATER 10)
-			SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_MTSAFE_GETHOSTBYNAME=1")
-			SET(TCL_CFLAGS "${TCL_CFLAGS} -DHAVE_MTSAFE_GETHOSTBYADDR=1")
+			ADD_TCL_CFLAG(HAVE_MTSAFE_GETHOSTBYNAME)
+			ADD_TCL_CFLAG(HAVE_MTSAFE_GETHOSTBYADDR)
 		ENDIF (${CMAKE_SYSTEM_MAJOR_VERSION} GREATER 10)
 	ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^HP-UX$")
 
@@ -307,8 +333,8 @@ SC_TIME_HANDLER()
 # on OSX
 #CHECK_FUNCTION_EXISTS(memmove, HAVE_MEMMOVE)
 #IF(NOT HAVE_MEMMOVE)
-#	SET(TCL_CFLAGS "${TCL_CFLAGS} -DNO_MEMMOVE=1") 
-#	SET(TCL_CFLAGS "${TCL_CFLAGS} -DNO_STRING_H=1") 
+#	add_definitions(-DNO_MEMMOVE=1) 
+#	add_definitions(-DNO_STRING_H=1) 
 #ENDIF(NOT HAVE_MEMMOVE)
 
 
@@ -371,9 +397,7 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
 		CONFIG_CHECK_FUNCTION_EXISTS(pthread_atfork HAVE_PTHREAD_ATFORK)
 	ENDIF(${COREFOUNDATION_FRAMEWORK})
 	ADD_TCL_CFLAG(USE_VFORK)
-IF(NOT ${CMAKE_GENERATOR} MATCHES "^Xcode$")
-	SET(TCL_CFLAGS "${TCL_CFLAGS} -DTCL_DEFAULT_ENCODING=\\\"utf-8\\\"")
-ENDIF(NOT ${CMAKE_GENERATOR} MATCHES "^Xcode$")
+	add_definitions(-DTCL_DEFAULT_ENCODING="utf-8")
 	ADD_TCL_CFLAG(TCL_LOAD_FROM_MEMORY)
 	ADD_TCL_CFLAG(TCL_WIDE_CLICKS)
 	CONFIG_CHECK_INCLUDE_FILE_USABILITY(AvailabilityMacros.h HAVE_AVAILABILITYMACROS_H)
@@ -466,7 +490,7 @@ CONFIG_CHECK_INCLUDE_FILE(sys/types.h HAVE_SYS_TYPES_H)
 CONFIG_CHECK_INCLUDE_FILE(sys/stat.h HAVE_SYS_STAT_H)
 CONFIG_CHECK_INCLUDE_FILE(sys/fstatfs.h HAVE_SYS_FSTATFS_H)
 IF(NOT HAVE_SYS_FSTATFS_H)
-   SET(TCL_CFLAGS "${TCL_CFLAGS} -DNO_FSTATFS=1")
+   add_definitions(-DNO_FSTATFS=1)
 ENDIF(NOT HAVE_SYS_FSTATFS_H)
 CONFIG_CHECK_INCLUDE_FILE(memory.h HAVE_MEMORY_H)
 CONFIG_CHECK_INCLUDE_FILE(strings.h HAVE_STRINGS_H)
@@ -528,14 +552,14 @@ SET(TCL_GENERIC_SRCS
 	generic/tclGet.c
 	generic/tclHash.c
 	generic/tclHistory.c
+	generic/tclIndexObj.c
+	generic/tclInterp.c
 	generic/tclIO.c
 	generic/tclIOCmd.c
 	generic/tclIOGT.c
-	generic/tclIORChan.c
 	generic/tclIOSock.c
 	generic/tclIOUtil.c
-	generic/tclIndexObj.c
-	generic/tclInterp.c
+	generic/tclIORChan.c
 	generic/tclLink.c
 	generic/tclListObj.c
 	generic/tclLiteral.c
@@ -557,20 +581,23 @@ SET(TCL_GENERIC_SRCS
 	generic/tclResolve.c
 	generic/tclResult.c
 	generic/tclScan.c
-	generic/tclStrToD.c
-	generic/tclStringObj.c
 	generic/tclStubInit.c
+	generic/tclStringObj.c
+	generic/tclStrToD.c
+	generic/tclTest.c
+	generic/tclTestObj.c
+	generic/tclTestProcBodyObj.c
 	generic/tclThread.c
 	generic/tclThreadAlloc.c
 	generic/tclThreadJoin.c
 	generic/tclThreadStorage.c
 	generic/tclTimer.c
-	generic/tclTomMathInterface.c
 	generic/tclTrace.c
-	generic/tclUniData.c
 	generic/tclUtf.c
 	generic/tclUtil.c
 	generic/tclVar.c
+	generic/tclTomMathInterface.c
+	generic/tclUniData.c
 )
 
 SET(TCL_STUB_SRCS
@@ -578,6 +605,8 @@ SET(TCL_STUB_SRCS
 )
 
 SET(TCL_TOMMATH_SRCS
+	libtommath/bncore.c
+	libtommath/bn_reverse.c
 	libtommath/bn_fast_s_mp_mul_digs.c
 	libtommath/bn_fast_s_mp_sqr.c
 	libtommath/bn_mp_add.c
@@ -592,10 +621,10 @@ SET(TCL_TOMMATH_SRCS
 	libtommath/bn_mp_copy.c
 	libtommath/bn_mp_count_bits.c
 	libtommath/bn_mp_div.c
+	libtommath/bn_mp_div_d.c
 	libtommath/bn_mp_div_2.c
 	libtommath/bn_mp_div_2d.c
 	libtommath/bn_mp_div_3.c
-	libtommath/bn_mp_div_d.c
 	libtommath/bn_mp_exch.c
 	libtommath/bn_mp_expt_d.c
 	libtommath/bn_mp_grow.c
@@ -633,12 +662,10 @@ SET(TCL_TOMMATH_SRCS
 	libtommath/bn_mp_unsigned_bin_size.c
 	libtommath/bn_mp_xor.c
 	libtommath/bn_mp_zero.c
-	libtommath/bn_reverse.c
 	libtommath/bn_s_mp_add.c
 	libtommath/bn_s_mp_mul_digs.c
 	libtommath/bn_s_mp_sqr.c
 	libtommath/bn_s_mp_sub.c
-	libtommath/bncore.c
 )
 
 SET(TCL_OSX_SRCS
@@ -671,16 +698,16 @@ SET(TCL_WIN_SRCS
 SET(TCL_UNIX_SRCS
 	unix/tclAppInit.c
 	unix/tclUnixChan.c
-	unix/tclUnixCompat.c
 	unix/tclUnixEvent.c
 	unix/tclUnixFCmd.c
 	unix/tclUnixFile.c
-	unix/tclUnixInit.c
 	unix/tclUnixPipe.c
 	unix/tclUnixSock.c
 	unix/tclUnixTest.c
 	unix/tclUnixThrd.c
 	unix/tclUnixTime.c
+	unix/tclUnixInit.c
+	unix/tclUnixCompat.c
 )
 
 SET(TCL_NOTIFY_SRCS
@@ -695,6 +722,7 @@ SET(TCL_DL_SRCS
   	unix/tclLoadOSF.c
 	unix/tclLoadShl.c
 )
+
 
 SET(TCL_SRCS ${TCL_GENERIC_SRCS} ${TCL_TOMMATH_SRCS} ${TCL_STUB_SRCS}) 
 IF(WIN32)
@@ -726,7 +754,6 @@ ELSE(WIN32)
 	SET(TCLSH_SRCS unix/tclAppInit.c)
 ENDIF(WIN32)
 
-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TCL_CFLAGS}")
 IF(NOT LIB_DIR)
 	SET(LIB_DIR ${CMAKE_INSTALL_PREFIX}/lib)
 ENDIF(NOT LIB_DIR)
