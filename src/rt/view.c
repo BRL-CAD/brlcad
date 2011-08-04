@@ -457,8 +457,7 @@ view_pixel(struct application *ap)
 
     case BUFMODE_ACC:
     {
-	RGBpixel p;
-	int npix, i;
+	unsigned int i;
 	fastf_t *psum_p;
 	fastf_t *tmp_pixel;
 	int tmp_color;
