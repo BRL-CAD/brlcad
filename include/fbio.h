@@ -55,10 +55,6 @@
  */
 typedef unsigned char RGBpixel[3];
 
-#define RED 0
-#define GRN 1
-#define BLU 2
-
 
 /**
  * C o l o r M a p

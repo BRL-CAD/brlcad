@@ -2184,9 +2184,15 @@ typedef struct bu_external bu_external_t;
 /** @} */
 /*----------------------------------------------------------------------*/
 /* color.c */
+
+#define RED 0
+#define GRN 1
+#define BLU 2
+
 #define HUE 0
 #define SAT 1
 #define VAL 2
+
 #define ACHROMATIC	-1.0
 
 struct bu_color
