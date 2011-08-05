@@ -20,6 +20,7 @@ bin_PROGRAMS = \
 	kurt \
 	lens \
 	masonry \
+	menger \
 	metaball \
 	mkbuilding \
 	molecule \
@@ -85,6 +86,7 @@ globe_SOURCES = globe.c
 kurt_SOURCES = kurt.c
 lens_SOURCES = lens.c
 masonry_SOURCES = masonry.c
+menger_SOURCES = menger.c
 metaball_SOURCES = metaball.c
 mkbuilding_SOURCES = mkbuilding.c \
 	makebuilding/makebuilding.c
