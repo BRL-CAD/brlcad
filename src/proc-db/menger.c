@@ -556,7 +556,7 @@ main(int ac, char *av[])
 	bu_free(menger, "free menger");
 	bu_free(ground, "free ground");
 	bu_free(light0, "free light0");
-	bu_free(light0, "free light1");
+	bu_free(light1, "free light1");
 	bu_free(sponge, "free sponge");
     }
 
