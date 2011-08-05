@@ -11,9 +11,6 @@
  */
 
 #include "tclInt.h"
-#ifdef CMAKE_HEADERS
-#  include "tcl_cfg.h"
-#endif
 #include <stddef.h>
 #include <locale.h>
 #ifdef HAVE_LANGINFO
