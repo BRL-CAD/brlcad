@@ -96,18 +96,14 @@ main(int argc, char** argv)
     struct rt_arb_internal *arb4;
     BU_GETSTRUCT(arb4, rt_arb_internal);
     arb4->magic = RT_ARB_INTERNAL_MAGIC;
-    point_t ptarb4[8];
-    VSET(ptarb4[0], 1000, -1000, -1000);
-    VSET(ptarb4[1], 1000, 1000, -1000);
-    VSET(ptarb4[2], 1000, 1000, 1000);
-    VSET(ptarb4[3], 1000, 1000, 1000);
-    VSET(ptarb4[4], -1000, 1000, -1000);
-    VSET(ptarb4[5], -1000, 1000, -1000);
-    VSET(ptarb4[6], -1000, 1000, -1000);
-    VSET(ptarb4[7], -1000, 1000, -1000);
-    for ( int i=0; i < 8; i++ )  {
-	VMOVE( arb4->pt[i], ptarb4[i] );
-    }
+    VSET(arb4->pt[0], 1000, -1000, -1000);
+    VSET(arb4->pt[1], 1000, 1000, -1000);
+    VSET(arb4->pt[2], 1000, 1000, 1000);
+    VSET(arb4->pt[3], 1000, 1000, 1000);
+    VSET(arb4->pt[4], -1000, 1000, -1000);
+    VSET(arb4->pt[5], -1000, 1000, -1000);
+    VSET(arb4->pt[6], -1000, 1000, -1000);
+    VSET(arb4->pt[7], -1000, 1000, -1000);
     tmp_internal.idb_ptr = (genptr_t)arb4;
     tmp_internal.idb_meth = &rt_functab[ID_ARB8];
     write_out(outfp, &tmp_internal, "arb4", &tol);
@@ -116,18 +112,14 @@ main(int argc, char** argv)
     struct rt_arb_internal *arb5;
     BU_GETSTRUCT(arb5, rt_arb_internal);
     arb5->magic = RT_ARB_INTERNAL_MAGIC;
-    point_t ptarb5[8];
-    VSET(ptarb5[0], 1000, -1000, -1000);
-    VSET(ptarb5[1], 1000, 1000, -1000);
-    VSET(ptarb5[2], 1000, 1000, 1000);
-    VSET(ptarb5[3], 1000, -1000, 1000);
-    VSET(ptarb5[4], -1000, 0, 0);
-    VSET(ptarb5[5], -1000, 0, 0);
-    VSET(ptarb5[6], -1000, 0, 0);
-    VSET(ptarb5[7], -1000, 0, 0);
-    for ( int i=0; i < 8; i++ )  {
-	VMOVE( arb5->pt[i], ptarb5[i] );
-    }
+    VSET(arb5->pt[0], 1000, -1000, -1000);
+    VSET(arb5->pt[1], 1000, 1000, -1000);
+    VSET(arb5->pt[2], 1000, 1000, 1000);
+    VSET(arb5->pt[3], 1000, -1000, 1000);
+    VSET(arb5->pt[4], -1000, 0, 0);
+    VSET(arb5->pt[5], -1000, 0, 0);
+    VSET(arb5->pt[6], -1000, 0, 0);
+    VSET(arb5->pt[7], -1000, 0, 0);
     tmp_internal.idb_ptr = (genptr_t)arb5;
     tmp_internal.idb_meth = &rt_functab[ID_ARB8];
     write_out(outfp, &tmp_internal, "arb5", &tol);
@@ -136,18 +128,14 @@ main(int argc, char** argv)
     struct rt_arb_internal *arb6;
     BU_GETSTRUCT(arb6, rt_arb_internal);
     arb6->magic = RT_ARB_INTERNAL_MAGIC;
-    point_t ptarb6[8];
-    VSET(ptarb6[0], 1000, -1000, -1000);
-    VSET(ptarb6[1], 1000, 1000, -1000);
-    VSET(ptarb6[2], 1000, 1000, 1000);
-    VSET(ptarb6[3], 1000, -1000, 1000);
-    VSET(ptarb6[4], -1000, 0, -1000);
-    VSET(ptarb6[5], -1000, 0, -1000);
-    VSET(ptarb6[6], -1000, 0, 1000);
-    VSET(ptarb6[7], -1000, 0, 1000);
-    for ( int i=0; i < 8; i++ )  {
-	VMOVE( arb6->pt[i], ptarb6[i] );
-    }
+    VSET(arb6->pt[0], 1000, -1000, -1000);
+    VSET(arb6->pt[1], 1000, 1000, -1000);
+    VSET(arb6->pt[2], 1000, 1000, 1000);
+    VSET(arb6->pt[3], 1000, -1000, 1000);
+    VSET(arb6->pt[4], -1000, 0, -1000);
+    VSET(arb6->pt[5], -1000, 0, -1000);
+    VSET(arb6->pt[6], -1000, 0, 1000);
+    VSET(arb6->pt[7], -1000, 0, 1000);
     tmp_internal.idb_ptr = (genptr_t)arb6;
     tmp_internal.idb_meth = &rt_functab[ID_ARB8];
     write_out(outfp, &tmp_internal, "arb6", &tol);
@@ -156,18 +144,14 @@ main(int argc, char** argv)
     struct rt_arb_internal *arb7;
     BU_GETSTRUCT(arb7, rt_arb_internal);
     arb7->magic = RT_ARB_INTERNAL_MAGIC;
-    point_t ptarb7[8];
-    VSET(ptarb7[0], 1000, -1000, -500);
-    VSET(ptarb7[1], 1000, 1000, -500);
-    VSET(ptarb7[2], 1000, 1000, 1500);
-    VSET(ptarb7[3], 1000, -1000, 500);
-    VSET(ptarb7[4], -1000, -1000, -500);
-    VSET(ptarb7[5], -1000, 1000, -500);
-    VSET(ptarb7[6], -1000, 1000, 500);
-    VSET(ptarb7[7], -1000, -1000, -500);
-    for ( int i=0; i < 8; i++ )  {
-	VMOVE( arb7->pt[i], ptarb7[i] );
-    }
+    VSET(arb7->pt[0], 1000, -1000, -500);
+    VSET(arb7->pt[1], 1000, 1000, -500);
+    VSET(arb7->pt[2], 1000, 1000, 1500);
+    VSET(arb7->pt[3], 1000, -1000, 500);
+    VSET(arb7->pt[4], -1000, -1000, -500);
+    VSET(arb7->pt[5], -1000, 1000, -500);
+    VSET(arb7->pt[6], -1000, 1000, 500);
+    VSET(arb7->pt[7], -1000, -1000, -500);
     tmp_internal.idb_ptr = (genptr_t)arb7;
     tmp_internal.idb_meth = &rt_functab[ID_ARB8];
     write_out(outfp, &tmp_internal, "arb7", &tol);
@@ -176,18 +160,14 @@ main(int argc, char** argv)
     struct rt_arb_internal *arb8;
     BU_GETSTRUCT(arb8, rt_arb_internal);
     arb8->magic = RT_ARB_INTERNAL_MAGIC;
-    point_t pt8[8];
-    VSET(pt8[0], 1015, -1000, -995);
-    VSET(pt8[1], 1015, 1000, -995);
-    VSET(pt8[2], 1015, 1000, 1005);
-    VSET(pt8[3], 1015, -1000, 1005);
-    VSET(pt8[4], -985, -1000, -995);
-    VSET(pt8[5], -985, 1000, -995);
-    VSET(pt8[6], -985, 1000, 1005);
-    VSET(pt8[7], -985, -1000, 1005);
-    for ( int i=0; i < 8; i++ )  {
-	VMOVE( arb8->pt[i], pt8[i] );
-    }
+    VSET(arb8->pt[0], 1015, -1000, -995);
+    VSET(arb8->pt[1], 1015, 1000, -995);
+    VSET(arb8->pt[2], 1015, 1000, 1005);
+    VSET(arb8->pt[3], 1015, -1000, 1005);
+    VSET(arb8->pt[4], -985, -1000, -995);
+    VSET(arb8->pt[5], -985, 1000, -995);
+    VSET(arb8->pt[6], -985, 1000, 1005);
+    VSET(arb8->pt[7], -985, -1000, 1005);
     tmp_internal.idb_ptr = (genptr_t)arb8;
     tmp_internal.idb_meth = &rt_functab[ID_ARB8];
     write_out(outfp, &tmp_internal, "arb8", &tol);
@@ -235,18 +215,14 @@ main(int argc, char** argv)
     struct rt_arb_internal *arbnmg8;
     BU_GETSTRUCT(arbnmg8, rt_arb_internal);
     arbnmg8->magic = RT_ARB_INTERNAL_MAGIC;
-    point_t ptnmg8[8];
-    VSET(ptnmg8[0], 0,0,0);
-    VSET(ptnmg8[1], 0,2000,0);
-    VSET(ptnmg8[2], 0,2000,2000);
-    VSET(ptnmg8[3], 0,0,2000);
-    VSET(ptnmg8[4], -2000,0, 0);
-    VSET(ptnmg8[5], -2000,2000,0);
-    VSET(ptnmg8[6], -2000,2000,2000);
-    VSET(ptnmg8[7], -2000,0,2000);
-    for ( int i=0; i < 8; i++ )  {
-	VMOVE( arbnmg8->pt[i], ptnmg8[i] );
-    }
+    VSET(arbnmg8->pt[0], 0,0,0);
+    VSET(arbnmg8->pt[1], 0,2000,0);
+    VSET(arbnmg8->pt[2], 0,2000,2000);
+    VSET(arbnmg8->pt[3], 0,0,2000);
+    VSET(arbnmg8->pt[4], -2000,0, 0);
+    VSET(arbnmg8->pt[5], -2000,2000,0);
+    VSET(arbnmg8->pt[6], -2000,2000,2000);
+    VSET(arbnmg8->pt[7], -2000,0,2000);
     tmp_internal.idb_ptr = (genptr_t)arbnmg8;
     // Now, need nmg form of the arb
     struct model *m = nmg_mm();
@@ -263,7 +239,6 @@ main(int argc, char** argv)
     write_out(outfp, &tmp_internal, "nmg", &tol);
 
     FREE_MODEL(m);
-   
     
     bu_log("SPH\n");
     struct rt_ell_internal *sph;
@@ -529,7 +504,6 @@ main(int argc, char** argv)
     
     skt->skt_curve.segments[5] = (genptr_t)csg;
     
-       
     tmp_internal.idb_ptr = (genptr_t)skt;
     tmp_internal.idb_meth = &rt_functab[ID_SKETCH];
     write_out(outfp, &tmp_internal, "sketch", &tol);
@@ -637,7 +611,6 @@ main(int argc, char** argv)
     tmp_internal.idb_meth = &rt_functab[ID_EXTRUDE];
     write_out(outfp, &tmp_internal, "extrude", &tol);
  
-
     bu_log("REVOLVE\n");
     // revolve will need its own sketch
     struct rt_sketch_internal *rskt;
