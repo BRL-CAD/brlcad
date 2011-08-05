@@ -63,6 +63,29 @@ IF(WIN32)
 	ENABLE_LANGUAGE(RC)
 ENDIF(WIN32)
 
+#---------------------------------------------------------------------
+# The following logic is what allows binaries to run successfully in
+# the build directory AND install directory.  Thanks to plplot for
+# identifying the necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.
+
+# use, i.e. don't skip the full RPATH for the build tree
+SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
+
+# when building, don't use the install RPATH already
+# (but later on when installing)
+SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+
+# the RPATH/INSTALL_NAME_DIR to be used when installing
+if (NOT APPLE)
+   SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib:\$ORIGIN/../lib")
+endif(NOT APPLE)
+SET(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+
+# add the automatically determined parts of the RPATH which point to
+# directories outside the build tree to the install RPATH
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+
 #----------------------------------------------------------------------------
 # The location in which to install Tcl.  Only do this if CMAKE_INSTALL_PREFIX 
 # hasn't been set already, to try and allow parent builds (if any) some control.
@@ -180,6 +203,15 @@ IF(WIN32)
    add_definitions(-DTCL_PIPE_DLL="tclpip${TCL_VERSION_MAJOR}${TCL_VERSION_MINOR}.dll")
    add_definitions(-Dinline=__inline -DBUILD_tcl)
 ENDIF(WIN32)
+
+INCLUDE(CheckLibraryExists)
+INCLUDE(ResolveCompilerPaths)
+IF(NOT WIN32)
+   CHECK_LIBRARY_EXISTS(m cos "" HAVE_M_LIBRARY)
+   IF(HAVE_M_LIBRARY)
+      RESOLVE_LIBRARIES(M_LIBRARY "-lm")
+   ENDIF(HAVE_M_LIBRARY)
+ENDIF(NOT WIN32)
 
 IF(APPLE)
 	ADD_TCL_CFLAG(MAC_OSX_TCL)
@@ -755,7 +787,7 @@ ELSE(WIN32)
 ENDIF(WIN32)
 
 IF(NOT LIB_DIR)
-	SET(LIB_DIR ${CMAKE_INSTALL_PREFIX}/lib)
+	SET(LIB_DIR lib)
 ENDIF(NOT LIB_DIR)
 add_library(tcl ${TCL_SRCS})
 install(TARGETS tcl DESTINATION ${LIB_DIR})
@@ -772,6 +804,7 @@ ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
 
 add_library(tclstub STATIC ${TCL_STUB_SRCS})
 target_link_libraries(tclstub ${CMAKE_THREAD_LIBS_INIT} ${COREFOUNDATION_FRAMEWORK} ${M_LIBRARY} ${DL_LIBRARY})
+set_target_properties(tclstub PROPERTIES COMPILE_FLAGS "-fPIC")
 install(TARGETS tclstub DESTINATION ${LIB_DIR})
 
 add_executable(tclsh ${TCLSH_SRCS})
