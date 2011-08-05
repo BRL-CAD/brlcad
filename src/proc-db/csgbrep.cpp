@@ -43,26 +43,47 @@ extern "C" {
 }
 #endif
 
+
+void
+write_out(struct rt_wdb* fp, struct rt_db_internal *ip, const char *name, struct bn_tol *tol)
+{
+    ON_Brep* brep = NULL;
+
+    std::string bname = name;
+    bname += ".brep";
+
+    if (!fp || !ip || !name)
+	return;
+
+    if (fp->dbip->dbi_fp) {
+	rt_fwrite_internal(fp->dbip->dbi_fp, name, ip, 1.0);
+    }
+    brep = ON_Brep::New();
+    ip->idb_meth->ft_brep(&brep, ip, tol);
+    mk_brep(fp, bname.c_str(), brep);
+    delete brep; 
+}
+
+
 int
 main(int argc, char** argv)
 {
     struct rt_wdb* outfp;
-    struct rt_db_internal *tmp_internal = (struct rt_db_internal *) bu_malloc(sizeof(struct rt_db_internal), "allocate structure");
-    RT_DB_INTERNAL_INIT(tmp_internal);
-    struct bn_tol tmptol;
-    tmptol.magic = BN_TOL_MAGIC;
-    tmptol.dist = 0.005;
-    const struct bn_tol *tol = &tmptol;
-    struct rt_tess_tol ttmptol;
-    ttmptol.abs = 0;
-    ttmptol.rel = 0.01;
-    ttmptol.norm = 0;
-    const struct rt_tess_tol *ttol = &ttmptol;
+    struct rt_db_internal tmp_internal; /* = (struct rt_db_internal *) bu_calloc(1, sizeof(struct rt_db_internal), "allocate structure"); !!! */
     point_t center;
     vect_t a, b, c, h, N;
     ON_TextLog error_log;
 
-    if (argc > 0)
+    RT_DB_INTERNAL_INIT(&tmp_internal);
+
+    bn_tol tol;
+    tol.magic = BN_TOL_MAGIC;
+    tol.dist = 0.0005;
+    tol.dist_sq = tol.dist * tol.dist;
+    tol.perp = SMALL_FASTF;
+    tol.para = 1.0 - tol.perp;
+
+    if (argc > 1)
 	bu_log("Usage: %s\n", argv[0]);
 
     ON::Begin();
@@ -71,8 +92,7 @@ main(int argc, char** argv)
     const char* id_name = "CSG B-Rep Examples";
     mk_id(outfp, id_name);
 
-    bu_log("Writing an ARB4 (via NMG) brep...\n");
-    ON_Brep* arb4brep = ON_Brep::New();
+    bu_log("ARB4\n");
     struct rt_arb_internal *arb4;
     BU_GETSTRUCT(arb4, rt_arb_internal);
     arb4->magic = RT_ARB_INTERNAL_MAGIC;
@@ -88,15 +108,11 @@ main(int argc, char** argv)
     for ( int i=0; i < 8; i++ )  {
 	VMOVE( arb4->pt[i], ptarb4[i] );
     }
-    tmp_internal->idb_ptr = (genptr_t)arb4;
-    tmp_internal->idb_meth = &rt_functab[ID_ARB8];
-    tmp_internal->idb_meth->ft_brep(&arb4brep, tmp_internal, tol);
-    const char* arb4_name = "arb4_nurb.s";
-    mk_brep(outfp, arb4_name, arb4brep);
-    delete arb4brep;
+    tmp_internal.idb_ptr = (genptr_t)arb4;
+    tmp_internal.idb_meth = &rt_functab[ID_ARB8];
+    write_out(outfp, &tmp_internal, "arb4", &tol);
  
-    bu_log("Writing an ARB5 (via NMG) brep...\n");
-    ON_Brep* arb5brep = ON_Brep::New();
+    bu_log("ARB5\n");
     struct rt_arb_internal *arb5;
     BU_GETSTRUCT(arb5, rt_arb_internal);
     arb5->magic = RT_ARB_INTERNAL_MAGIC;
@@ -112,15 +128,11 @@ main(int argc, char** argv)
     for ( int i=0; i < 8; i++ )  {
 	VMOVE( arb5->pt[i], ptarb5[i] );
     }
-    tmp_internal->idb_ptr = (genptr_t)arb5;
-    tmp_internal->idb_meth = &rt_functab[ID_ARB8];
-    tmp_internal->idb_meth->ft_brep(&arb5brep, tmp_internal, tol);
-    const char* arb5_name = "arb5_nurb.s";
-    mk_brep(outfp, arb5_name, arb5brep);
-    delete arb5brep;
+    tmp_internal.idb_ptr = (genptr_t)arb5;
+    tmp_internal.idb_meth = &rt_functab[ID_ARB8];
+    write_out(outfp, &tmp_internal, "arb5", &tol);
  
-    bu_log("Writing an ARB6 (via NMG) brep...\n");
-    ON_Brep* arb6brep = ON_Brep::New();
+    bu_log("ARB6\n");
     struct rt_arb_internal *arb6;
     BU_GETSTRUCT(arb6, rt_arb_internal);
     arb6->magic = RT_ARB_INTERNAL_MAGIC;
@@ -136,15 +148,11 @@ main(int argc, char** argv)
     for ( int i=0; i < 8; i++ )  {
 	VMOVE( arb6->pt[i], ptarb6[i] );
     }
-    tmp_internal->idb_ptr = (genptr_t)arb6;
-    tmp_internal->idb_meth = &rt_functab[ID_ARB8];
-    tmp_internal->idb_meth->ft_brep(&arb6brep, tmp_internal, tol);
-    const char* arb6_name = "arb6_nurb.s";
-    mk_brep(outfp, arb6_name, arb6brep);
-    delete arb6brep;
+    tmp_internal.idb_ptr = (genptr_t)arb6;
+    tmp_internal.idb_meth = &rt_functab[ID_ARB8];
+    write_out(outfp, &tmp_internal, "arb6", &tol);
  
-    bu_log("Writing an ARB7 (via NMG) brep...\n");
-    ON_Brep* arb7brep = ON_Brep::New();
+    bu_log("ARB7\n");
     struct rt_arb_internal *arb7;
     BU_GETSTRUCT(arb7, rt_arb_internal);
     arb7->magic = RT_ARB_INTERNAL_MAGIC;
@@ -160,15 +168,11 @@ main(int argc, char** argv)
     for ( int i=0; i < 8; i++ )  {
 	VMOVE( arb7->pt[i], ptarb7[i] );
     }
-    tmp_internal->idb_ptr = (genptr_t)arb7;
-    tmp_internal->idb_meth = &rt_functab[ID_ARB8];
-    tmp_internal->idb_meth->ft_brep(&arb7brep, tmp_internal, tol);
-    const char* arb7_name = "arb7_nurb.s";
-    mk_brep(outfp, arb7_name, arb7brep);
-    delete arb7brep;
+    tmp_internal.idb_ptr = (genptr_t)arb7;
+    tmp_internal.idb_meth = &rt_functab[ID_ARB8];
+    write_out(outfp, &tmp_internal, "arb7", &tol);
  
-    bu_log("Writing an ARB8 (via NMG) b-rep...\n");
-    ON_Brep* arb8brep = ON_Brep::New();
+    bu_log("ARB8\n");
     struct rt_arb_internal *arb8;
     BU_GETSTRUCT(arb8, rt_arb_internal);
     arb8->magic = RT_ARB_INTERNAL_MAGIC;
@@ -184,15 +188,11 @@ main(int argc, char** argv)
     for ( int i=0; i < 8; i++ )  {
 	VMOVE( arb8->pt[i], pt8[i] );
     }
-    tmp_internal->idb_ptr = (genptr_t)arb8;
-    tmp_internal->idb_meth = &rt_functab[ID_ARB8];
-    tmp_internal->idb_meth->ft_brep(&arb8brep, tmp_internal, tol);
-    const char* arb8_name = "arb8_nurb.s";
-    mk_brep(outfp, arb8_name, arb8brep);
-    delete arb8brep;
+    tmp_internal.idb_ptr = (genptr_t)arb8;
+    tmp_internal.idb_meth = &rt_functab[ID_ARB8];
+    write_out(outfp, &tmp_internal, "arb8", &tol);
     
-    bu_log("Writing an ARBN (via NMG) b-rep...\n");
-    ON_Brep* arbnbrep = ON_Brep::New();
+    bu_log("ARBN\n");
     struct rt_db_internal arbninternal;
     RT_DB_INTERNAL_INIT(&arbninternal);
     arbninternal.idb_type = ID_ARBN;
@@ -219,23 +219,19 @@ main(int argc, char** argv)
     arbn->eqn[6][3] = 1000;
     VSET(arbn->eqn[7], -0.57735, -0.57735, -0.57735);
     arbn->eqn[7][3] = 1000;
-    tmp_internal->idb_ptr = (genptr_t)arbn;
-    tmp_internal->idb_meth = &rt_functab[ID_ARBN];
-    tmp_internal->idb_meth->ft_brep(&arbnbrep, &arbninternal, tol);
-    const char* arbn_name = "arbn_nurb.s";
-    mk_brep(outfp, arbn_name, arbnbrep);
+    tmp_internal.idb_ptr = (genptr_t)arbn;
+    tmp_internal.idb_meth = &rt_functab[ID_ARBN];
+    write_out(outfp, &tmp_internal, "arbn", &tol);
+
     bu_free(arbn->eqn, "free arbn eqn");
     bu_free(arbninternal.idb_ptr, "free arbn");
-    delete arbnbrep;
   
-
     // This routine does explicitly what is done
     // by the previous ARB8 brep call internally.
     // Ideally a more general NMG will be created
     // and fed to rt_nmg_brep rather than using an
-    // ARB as the starting point.
-    bu_log("Writing an NMG brep...\n");
-    ON_Brep* nmgbrep = ON_Brep::New();
+    // ARB8 as a starting point.
+    bu_log("NMG\n");
     struct rt_arb_internal *arbnmg8;
     BU_GETSTRUCT(arbnmg8, rt_arb_internal);
     arbnmg8->magic = RT_ARB_INTERNAL_MAGIC;
@@ -251,24 +247,25 @@ main(int argc, char** argv)
     for ( int i=0; i < 8; i++ )  {
 	VMOVE( arbnmg8->pt[i], ptnmg8[i] );
     }
-    tmp_internal->idb_ptr = (genptr_t)arbnmg8;
+    tmp_internal.idb_ptr = (genptr_t)arbnmg8;
     // Now, need nmg form of the arb
     struct model *m = nmg_mm();
     struct nmgregion *r;
-    tmp_internal->idb_ptr = (genptr_t)arbnmg8;
-    tmp_internal->idb_meth = &rt_functab[ID_ARB8];
-    tmp_internal->idb_meth->ft_tessellate(&r, m, tmp_internal, ttol, tol);
-    tmp_internal->idb_ptr = (genptr_t)m;
-    tmp_internal->idb_meth = &rt_functab[ID_NMG];
-    tmp_internal->idb_meth->ft_brep(&nmgbrep, tmp_internal, tol);
-    const char* nmg_name = "nmg_nurb.s";
-    mk_brep(outfp, nmg_name, nmgbrep);
+    struct rt_tess_tol ttol;
+    ttol.abs = 0;
+    ttol.rel = 0.01;
+    ttol.norm = 0;
+    tmp_internal.idb_ptr = (genptr_t)arbnmg8;
+    tmp_internal.idb_meth = &rt_functab[ID_ARB8];
+    tmp_internal.idb_meth->ft_tessellate(&r, m, &tmp_internal, &ttol, &tol);
+    tmp_internal.idb_ptr = (genptr_t)m;
+    tmp_internal.idb_meth = &rt_functab[ID_NMG];
+    write_out(outfp, &tmp_internal, "nmg", &tol);
+
     FREE_MODEL(m);
-    delete nmgbrep;
    
     
-    bu_log("Writing a Spherical b-rep...\n");
-    ON_Brep* sphbrep = ON_Brep::New();
+    bu_log("SPH\n");
     struct rt_ell_internal *sph;
     BU_GETSTRUCT(sph, rt_ell_internal);
     sph->magic = RT_ELL_INTERNAL_MAGIC;
@@ -280,15 +277,11 @@ main(int argc, char** argv)
     VMOVE(sph->a, a);
     VMOVE(sph->b, b);
     VMOVE(sph->c, c);
-    tmp_internal->idb_ptr = (genptr_t)sph;
-    tmp_internal->idb_meth = &rt_functab[ID_SPH];
-    tmp_internal->idb_meth->ft_brep(&sphbrep, tmp_internal, tol);
-    const char* sph_name = "sph_nurb.s";
-    mk_brep(outfp, sph_name, sphbrep);
-    delete sphbrep;
+    tmp_internal.idb_ptr = (genptr_t)sph;
+    tmp_internal.idb_meth = &rt_functab[ID_SPH];
+    write_out(outfp, &tmp_internal, "sph", &tol);
 
-    bu_log("Writing an Ellipsoidal b-rep...\n");
-    ON_Brep* ellbrep = ON_Brep::New();
+    bu_log("ELL\n");
     struct rt_ell_internal *ell;
     BU_GETSTRUCT(ell, rt_ell_internal);
     ell->magic = RT_ELL_INTERNAL_MAGIC;
@@ -300,15 +293,11 @@ main(int argc, char** argv)
     VMOVE(ell->a, a);
     VMOVE(ell->b, b);
     VMOVE(ell->c, c);
-    tmp_internal->idb_ptr = (genptr_t)ell;
-    tmp_internal->idb_meth = &rt_functab[ID_ELL];
-    tmp_internal->idb_meth->ft_brep(&ellbrep, tmp_internal, tol);
-    const char* ell_name = "ell_nurb.s";
-    mk_brep(outfp, ell_name, ellbrep);
-    delete ellbrep;
+    tmp_internal.idb_ptr = (genptr_t)ell;
+    tmp_internal.idb_meth = &rt_functab[ID_ELL];
+    write_out(outfp, &tmp_internal, "ell", &tol);
     
-    bu_log("Writing a RHC b-rep...\n");
-    ON_Brep* rhcbrep = ON_Brep::New();
+    bu_log("RHC\n");
     struct rt_rhc_internal *rhc;
     BU_GETSTRUCT(rhc, rt_rhc_internal);
     rhc->rhc_magic = RT_RHC_INTERNAL_MAGIC;
@@ -317,15 +306,11 @@ main(int argc, char** argv)
     VSET(rhc->rhc_B, 0, 0, 2000);
     rhc->rhc_r = 1000;
     rhc->rhc_c = 400;
-    tmp_internal->idb_ptr = (genptr_t)rhc;
-    tmp_internal->idb_meth = &rt_functab[ID_RHC];
-    tmp_internal->idb_meth->ft_brep(&rhcbrep, tmp_internal, tol);
-    const char* rhc_name = "rhc_nurb.s";
-    mk_brep(outfp, rhc_name, rhcbrep);
-    delete rhcbrep;
+    tmp_internal.idb_ptr = (genptr_t)rhc;
+    tmp_internal.idb_meth = &rt_functab[ID_RHC];
+    write_out(outfp, &tmp_internal, "rhc", &tol);
 
-    bu_log("Writing a RPC b-rep...\n");
-    ON_Brep* rpcbrep = ON_Brep::New();
+    bu_log("RPC\n");
     struct rt_rpc_internal *rpc;
     BU_GETSTRUCT(rpc, rt_rpc_internal);
     rpc->rpc_magic = RT_RPC_INTERNAL_MAGIC;
@@ -335,15 +320,11 @@ main(int argc, char** argv)
     VUNITIZE(rpc->rpc_B);
     VSCALE(rpc->rpc_B, rpc->rpc_B, 2000);
     rpc->rpc_r = 1000;
-    tmp_internal->idb_ptr = (genptr_t)rpc;
-    tmp_internal->idb_meth = &rt_functab[ID_RPC];
-    tmp_internal->idb_meth->ft_brep(&rpcbrep, tmp_internal, tol);
-    const char* rpc_name = "rpc_nurb.s";
-    mk_brep(outfp, rpc_name, rpcbrep);
-    delete rpcbrep;
+    tmp_internal.idb_ptr = (genptr_t)rpc;
+    tmp_internal.idb_meth = &rt_functab[ID_RPC];
+    write_out(outfp, &tmp_internal, "rpc", &tol);
 
-    bu_log("Writing an EPA b-rep...\n");
-    ON_Brep* epabrep = ON_Brep::New();
+    bu_log("EPA\n");
     struct rt_epa_internal *epa;
     BU_GETSTRUCT(epa, rt_epa_internal);
     epa->epa_magic = RT_EPA_INTERNAL_MAGIC;
@@ -352,15 +333,11 @@ main(int argc, char** argv)
     VSET(epa->epa_Au, 1, 0, 0);
     epa->epa_r1 = 1000;
     epa->epa_r2 = 500;
-    tmp_internal->idb_ptr = (genptr_t)epa;
-    tmp_internal->idb_meth = &rt_functab[ID_EPA];
-    tmp_internal->idb_meth->ft_brep(&epabrep, tmp_internal, tol);
-    const char* epa_name = "epa_nurb.s";
-    mk_brep(outfp, epa_name, epabrep);
-    delete epabrep;
+    tmp_internal.idb_ptr = (genptr_t)epa;
+    tmp_internal.idb_meth = &rt_functab[ID_EPA];
+    write_out(outfp, &tmp_internal, "epa", &tol);
 
-    bu_log("Writing an EHY b-rep...\n");
-    ON_Brep* ehybrep = ON_Brep::New();
+    bu_log("EHY\n");
     struct rt_ehy_internal *ehy;
     BU_GETSTRUCT(ehy, rt_ehy_internal);
     ehy->ehy_magic = RT_EHY_INTERNAL_MAGIC;
@@ -370,15 +347,11 @@ main(int argc, char** argv)
     ehy->ehy_r1 = 1000;
     ehy->ehy_r2 = 500;
     ehy->ehy_c = 400;
-    tmp_internal->idb_ptr = (genptr_t)ehy;
-    tmp_internal->idb_meth = &rt_functab[ID_EHY];
-    tmp_internal->idb_meth->ft_brep(&ehybrep, tmp_internal, tol);
-    const char* ehy_name = "ehy_nurb.s";
-    mk_brep(outfp, ehy_name, ehybrep);
-    delete ehybrep;
+    tmp_internal.idb_ptr = (genptr_t)ehy;
+    tmp_internal.idb_meth = &rt_functab[ID_EHY];
+    write_out(outfp, &tmp_internal, "ehy", &tol);
 
-    bu_log("Writing a HYP b-rep...\n");
-    ON_Brep* hypbrep = ON_Brep::New();
+    bu_log("HYP\n");
     struct rt_hyp_internal *hyp;
     BU_GETSTRUCT(hyp, rt_hyp_internal);
     hyp->hyp_magic = RT_HYP_INTERNAL_MAGIC;
@@ -387,15 +360,11 @@ main(int argc, char** argv)
     VSET(hyp->hyp_A, 100, 0, 0);
     hyp->hyp_b = 50;
     hyp->hyp_bnr = 0.5;
-    tmp_internal->idb_ptr = (genptr_t)hyp;
-    tmp_internal->idb_meth = &rt_functab[ID_HYP];
-    tmp_internal->idb_meth->ft_brep(&hypbrep, tmp_internal, tol);
-    const char* hyp_name = "hyp_nurb.s";
-    mk_brep(outfp, hyp_name, hypbrep);
-    delete hypbrep;
+    tmp_internal.idb_ptr = (genptr_t)hyp;
+    tmp_internal.idb_meth = &rt_functab[ID_HYP];
+    write_out(outfp, &tmp_internal, "hyp", &tol);
 
-    bu_log("Writing a TGC b-rep...\n");
-    ON_Brep* tgcbrep = ON_Brep::New();
+    bu_log("TGC\n");
     struct rt_tgc_internal *tgc;
     BU_GETSTRUCT(tgc, rt_tgc_internal);
     tgc->magic = RT_TGC_INTERNAL_MAGIC;
@@ -405,15 +374,11 @@ main(int argc, char** argv)
     VSET(tgc->b, 0, 250, 0);
     VSET(tgc->c, 250, 0, 0);
     VSET(tgc->d, 0, 500, 0);
-    tmp_internal->idb_ptr = (genptr_t)tgc;
-    tmp_internal->idb_meth = &rt_functab[ID_TGC];
-    tmp_internal->idb_meth->ft_brep(&tgcbrep, tmp_internal, tol);
-    const char* tgc_name = "tgc_nurb.s";
-    mk_brep(outfp, tgc_name, tgcbrep);
-    delete tgcbrep;
+    tmp_internal.idb_ptr = (genptr_t)tgc;
+    tmp_internal.idb_meth = &rt_functab[ID_TGC];
+    write_out(outfp, &tmp_internal, "tgc", &tol);
    
-    bu_log("Writing a Torus b-rep...\n");
-    ON_Brep* torbrep = ON_Brep::New();
+    bu_log("TOR\n");
     struct rt_tor_internal *tor;
     BU_GETSTRUCT(tor, rt_tor_internal);
     tor->magic = RT_TOR_INTERNAL_MAGIC;
@@ -423,15 +388,11 @@ main(int argc, char** argv)
     VMOVE(tor->h, a);
     tor->r_a = 5.0;
     tor->r_h = 2.0;
-    tmp_internal->idb_ptr = (genptr_t)tor;
-    tmp_internal->idb_meth = &rt_functab[ID_TOR];
-    tmp_internal->idb_meth->ft_brep(&torbrep, tmp_internal, tol);
-    const char* tor_name = "tor_nurb.s";
-    mk_brep(outfp, tor_name, torbrep);
-    delete torbrep;
+    tmp_internal.idb_ptr = (genptr_t)tor;
+    tmp_internal.idb_meth = &rt_functab[ID_TOR];
+    write_out(outfp, &tmp_internal, "tor", &tol);
     
-    bu_log("Writing an Elliptical Torus b-rep...\n");
-    ON_Brep* etobrep = ON_Brep::New();
+    bu_log("ETO\n");
     struct rt_eto_internal *eto;
     BU_GETSTRUCT(eto, rt_eto_internal);
     eto->eto_magic = RT_ETO_INTERNAL_MAGIC;
@@ -443,15 +404,11 @@ main(int argc, char** argv)
     VMOVE(eto->eto_C, a);
     eto->eto_r = 800;
     eto->eto_rd = 100;
-    tmp_internal->idb_ptr = (genptr_t)eto;
-    tmp_internal->idb_meth = &rt_functab[ID_ETO];
-    tmp_internal->idb_meth->ft_brep(&etobrep, tmp_internal, tol);
-    const char* eto_name = "eto_nurb.s";
-    mk_brep(outfp, eto_name, etobrep);
-    delete etobrep;
+    tmp_internal.idb_ptr = (genptr_t)eto;
+    tmp_internal.idb_meth = &rt_functab[ID_ETO];
+    write_out(outfp, &tmp_internal, "eto", &tol);
 
-    bu_log("Writing a Pipe b-rep...\n");
-    ON_Brep* pipebrep = ON_Brep::New();
+    bu_log("PIPE\n");
     struct wdb_pipept pipe1[] = {
      {
          {(long)WDB_PIPESEG_MAGIC, 0, 0},
@@ -484,15 +441,11 @@ main(int argc, char** argv)
     for (int i=0; i<pipe1_npts; i++) {
 	BU_LIST_INSERT(&pipe->pipe_segs_head, &pipe1[i].l);
     }
-    tmp_internal->idb_ptr = (genptr_t)pipe;
-    tmp_internal->idb_meth = &rt_functab[ID_PIPE];
-    tmp_internal->idb_meth->ft_brep(&pipebrep, tmp_internal, tol);
-    const char* pipe_name = "pipe_nurb.s";
-    mk_brep(outfp, pipe_name, pipebrep);
-//    delete pipebrep;
+    tmp_internal.idb_ptr = (genptr_t)pipe;
+    tmp_internal.idb_meth = &rt_functab[ID_PIPE];
+    write_out(outfp, &tmp_internal, "pipe", &tol);
     
-    bu_log("Writing a Sketch (non-solid) b-rep...\n");
-    ON_Brep* sketchbrep = ON_Brep::New();
+    bu_log("SKETCH\n");
     struct rt_sketch_internal *skt;
     struct bezier_seg *bsg;
     struct line_seg *lsg;
@@ -577,18 +530,16 @@ main(int argc, char** argv)
     skt->skt_curve.segments[5] = (genptr_t)csg;
     
        
-    tmp_internal->idb_ptr = (genptr_t)skt;
-    tmp_internal->idb_meth = &rt_functab[ID_SKETCH];
-    tmp_internal->idb_meth->ft_brep(&sketchbrep, tmp_internal, tol);
-    const char* sketch_name = "sketch_nurb.s";
-    mk_brep(outfp, sketch_name, sketchbrep);
-    //delete sketchbrep;
+    tmp_internal.idb_ptr = (genptr_t)skt;
+    tmp_internal.idb_meth = &rt_functab[ID_SKETCH];
+    write_out(outfp, &tmp_internal, "sketch", &tol);
 
-    const char* sketch_name_csg = "sketch.s";
-    mk_sketch(outfp, sketch_name_csg, skt);
+    /* !!! clean up calloc memory  */
 
-    bu_log("Writing an Extrude b-rep...\n");
-    ON_Brep* extrudebrep = ON_Brep::New();
+    /* !!! wot? */
+    mk_sketch(outfp, "sketch", skt);
+
+    bu_log("EXTRUDE\n");
     // extrude will need its own sketch
     struct rt_sketch_internal *eskt;
     struct bezier_seg *ebsg;
@@ -669,7 +620,7 @@ main(int argc, char** argv)
     ecsg->end = 5;
     
     eskt->skt_curve.segments[5] = (genptr_t)ecsg;
-   // now to the actual extrusion 
+    // now to the actual extrusion 
     struct rt_extrude_internal *extrude;
     BU_GETSTRUCT(extrude, rt_extrude_internal);
     extrude->magic = RT_EXTRUDE_INTERNAL_MAGIC;
@@ -682,16 +633,12 @@ main(int argc, char** argv)
     const char* esketch_name = "esketch_nurb.s";
     extrude->sketch_name = bu_strdup(esketch_name);
     extrude->skt = eskt;
-    tmp_internal->idb_ptr = (genptr_t)extrude;
-    tmp_internal->idb_meth = &rt_functab[ID_EXTRUDE];
-    tmp_internal->idb_meth->ft_brep(&extrudebrep, tmp_internal, tol);
-    const char* extrude_name = "extrude_nurb.s";
-    mk_brep(outfp, extrude_name, extrudebrep);
-//    delete extrudebrep;
+    tmp_internal.idb_ptr = (genptr_t)extrude;
+    tmp_internal.idb_meth = &rt_functab[ID_EXTRUDE];
+    write_out(outfp, &tmp_internal, "extrude", &tol);
  
 
-    bu_log("Writing a Revolve b-rep...\n");
-    ON_Brep* revolvebrep = ON_Brep::New();
+    bu_log("REVOLVE\n");
     // revolve will need its own sketch
     struct rt_sketch_internal *rskt;
     struct bezier_seg *rbsg;
@@ -772,7 +719,7 @@ main(int argc, char** argv)
     rcsg->end = 5;
     
     rskt->skt_curve.segments[5] = (genptr_t)rcsg;
-   // now to the actual revolve 
+    // now to the actual revolve 
     struct rt_revolve_internal *revolve;
     BU_GETSTRUCT(revolve, rt_revolve_internal);
     revolve->magic = RT_REVOLVE_INTERNAL_MAGIC;
@@ -781,21 +728,16 @@ main(int argc, char** argv)
     VMOVE(revolve->v3d, V);
     VMOVE(revolve->axis3d, h);
     revolve->sk = rskt;
-    tmp_internal->idb_ptr = (genptr_t)revolve;
-    tmp_internal->idb_meth = &rt_functab[ID_REVOLVE];
-    tmp_internal->idb_meth->ft_brep(&revolvebrep, tmp_internal, tol);
-    const char* revolve_name = "revolve_nurb.s";
-    mk_brep(outfp, revolve_name, revolvebrep);
-//    delete revolvebrep;
+    tmp_internal.idb_ptr = (genptr_t)revolve;
+    tmp_internal.idb_meth = &rt_functab[ID_REVOLVE];
+    write_out(outfp, &tmp_internal, "revolve", &tol);
  
-/*
-    bu_log("Writing a DSP b-rep...\n");
-    ON_Brep* dspbrep = ON_Brep::New();
+    bu_log("DSP\n");
     struct rt_dsp_internal *dsp;
     BU_GETSTRUCT(dsp, rt_dsp_internal);
     dsp->magic = RT_DSP_INTERNAL_MAGIC;
     bu_vls_init(&(dsp->dsp_name));
-    bu_vls_printf(&(dsp->dsp_name), "./terra.dsp");
+    bu_vls_printf(&(dsp->dsp_name), "data.dsp");
     dsp->dsp_xcnt = 256;
     dsp->dsp_ycnt = 256;
     dsp->dsp_smooth = 1;
@@ -803,14 +745,11 @@ main(int argc, char** argv)
     dsp->dsp_datasrc = RT_DSP_SRC_FILE;
     MAT_IDN(dsp->dsp_mtos);
     MAT_IDN(dsp->dsp_stom);
-    tmp_internal->idb_ptr = (genptr_t)dsp;
-    tmp_internal->idb_meth = &rt_functab[ID_DSP];
-    tmp_internal->idb_meth->ft_brep(&dspbrep, tmp_internal, tol);
-    const char* dsp_name = "dsp_nurb.s";
-    mk_brep(outfp, dsp_name, dspbrep);
-    delete dspbrep;
-*/
-    bu_free(tmp_internal, "free tmp_internal");
+    tmp_internal.idb_ptr = (genptr_t)dsp;
+    tmp_internal.idb_meth = &rt_functab[ID_DSP];
+    write_out(outfp, &tmp_internal, "dsp", &tol);
+
+    /* clean up */
     wdb_close(outfp);
 
     ON::End();
