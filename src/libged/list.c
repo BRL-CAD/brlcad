@@ -81,6 +81,7 @@ _ged_do_list(struct ged *gedp, struct directory *dp, int verbose)
 	if ((id = rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip,
 				     (fastf_t *)NULL, &rt_uniresource)) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal(%s) failure\n", dp->d_namep);
+	    rt_db_free_internal(&intern);
 	    return;
 	}
 
