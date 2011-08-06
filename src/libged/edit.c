@@ -1232,9 +1232,16 @@ edit_translate(struct ged *gedp, vect_t *from, vect_t *to,
     VSUB2(delta, *to, *from);
     d_obj = DB_FULL_PATH_CUR_DIR(path);
 
+    if (ged_path_validate(gedp, path) == GED_ERROR) {
+	bu_vls_printf(gedp->ged_result_str, "path \"%s\" does not exist in"
+		      "the database", db_path_to_string(path));
+	return GED_ERROR;
+    }
+
     if (path->fp_len > 0) {
 	/* path supplied; move obj instance only (obj's CWD
-	 * modified) */
+	 * modified)
+	 */
 	struct rt_comb_internal *comb;
 	union tree *leaf_to_modify;
 
@@ -1244,26 +1251,21 @@ edit_translate(struct ged *gedp, vect_t *from, vect_t *to,
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
 	leaf_to_modify = db_find_named_leaf(comb->tree, d_obj->d_namep);
-	if (leaf_to_modify == TREE_NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "leaf not found where it"
-			  " should be; this should not happen");
-	    rt_db_free_internal(&intern);
-	    return GED_ERROR;
-	}
+	BU_ASSERT_PTR(leaf_to_modify, !=, TREE_NULL); /* path is validated */
 
 	MAT_DELTAS_ADD_VEC(leaf_to_modify->tr_l.tl_mat, delta);
     } else {
 	/* no path; move all obj instances (obj's entire tree
-	 * modified) */
+	 * modified)
+	 */
 	d_to_modify = d_obj;
 	if (_ged_get_obj_bounds2(gedp, 1, (const char **)&d_to_modify->d_namep,
 				 &gtd, rpp_min, rpp_max) == GED_ERROR)
 	    return GED_ERROR;
-	if (!(d_to_modify->d_flags & RT_DIR_SOLID))
-	    if (_ged_get_obj_bounds(gedp, 1,
-				    (const char **)&d_to_modify->d_namep,
-				    1, rpp_min, rpp_max) == GED_ERROR)
-		return GED_ERROR;
+	if (!(d_to_modify->d_flags & RT_DIR_SOLID) &&
+	    (_ged_get_obj_bounds(gedp, 1, (const char **)&d_to_modify->d_namep,
+				 1, rpp_min, rpp_max) == GED_ERROR))
+	    return GED_ERROR;
 
 	MAT_IDN(dmat);
 	VSCALE(delta, delta, gedp->ged_wdbp->dbip->dbi_local2base);
@@ -1505,90 +1507,110 @@ static const struct edit_cmd_tab edit_cmds[] = {
  */
 
 
-enum edit_obj_point_types {
-    DEFAULT = 0,
-    BB_CENTER = DEFAULT,
-    NATURAL_ORIGIN
-};
-
-/*
- * Returns the coordinates of a particular point on an object.
+/**
+ * Gets the apparent coordinates of an object.
+ *
+ * Combines the effects of all the transformation matrices in the
+ * combinations in the given path that affect the the position of
+ * the combination or shape at the end of the path. The result is
+ * the apparent coordinates of the object at the end of the path,
+ * if the first combination in the path were drawn. The only flags
+ * repected are object argument type modifier flags.
+ *
+ * If the path only contains a primitive, the coordinates of the
+ * primitive will be the result of the conversion.
+ *
+ *
+ * Returns GED_ERROR on failure, and GED_OK on success.
  */
-void
-edit_path_to_coord(struct ged *gedp, struct db_full_path *obj_path,
-		   enum edit_obj_point_types point_type, vect_t *objv)
+int
+edit_arg_to_apparent_coord(struct ged *gedp, struct edit_arg *arg,
+			   vect_t *coord)
 {
-    struct directory *comb_dir = NULL;
-    struct directory *obj_dir = NULL;
-    vect_t matv;
-
-#if 0
+    struct db_full_path *path = arg->object;
     struct rt_db_internal intern;
-    struct rt_comb_internal *comb_i = NULL;
-#endif
+    struct directory *d;
+    struct directory *d_next;
+    struct rt_comb_internal *comb_i;
+    union tree *leaf;
+    vect_t leaf_deltas = VINIT_ZERO;
+    struct _ged_trace_data gtd;
+    point_t rpp_min;
+    point_t rpp_max;
+    size_t i;
 
-    (void)gedp;
-
-    if (obj_path->fp_len == 1)
-	obj_dir = DB_FULL_PATH_ROOT_DIR(obj_path);
-    else {
-	BU_ASSERT(obj_path->fp_len == 2); /* "dir/object" only */
-	comb_dir = DB_FULL_PATH_ROOT_DIR(obj_path);
-	obj_dir = DB_FULL_PATH_CUR_DIR(obj_path);
-
-	/* FIXME: dir flags need to be checked earlier!!! */
-	BU_ASSERT(comb_dir->d_flags & (RT_DIR_REGION | RT_DIR_COMB));
+    if (ged_path_validate(gedp, path) == GED_ERROR) {
+	bu_vls_printf(gedp->ged_result_str, "path \"%s\" does not exist in"
+		      "the database", db_path_to_string(path));
+	return GED_ERROR;
     }
-    /* FIXME: dir flags need to be checked earlier!!! */
-    BU_ASSERT(obj_dir->d_flags & (RT_DIR_SOLID | RT_DIR_REGION | RT_DIR_COMB))
 
-    if (comb_dir) {
-	/* get matrix modified coordinates of object */
-	/* XXX work in progress */
-#if 0
-	GED_DB_GET_INTERNAL(gedp, &intern, comb_dir, (fastf_t *)NULL,
+    /* sum the transformation matrices of each object in path */
+    d = DB_FULL_PATH_ROOT_DIR(path);
+    for (i = (size_t)0; i < path->fp_len - (size_t)1; ++i) {
+	d_next = DB_FULL_PATH_GET(path, i + (size_t)1);
+
+	/* path was validated, and this loop doesn't process the
+	 * last item, so it must be a combination
+	 */
+	BU_ASSERT(d->d_flags & (RT_DIR_COMB | RT_DIR_REGION));
+
+	/* sum transformation matrices */
+	GED_DB_GET_INTERNAL(gedp, &intern, d, (fastf_t *)NULL,
 			    &rt_uniresource, GED_ERROR);
 	comb_i = (struct rt_comb_internal *)intern.idb_ptr;
-#endif
+	leaf = db_find_named_leaf(comb_i->tree, d_next->d_namep);
+	BU_ASSERT_PTR(leaf, !=, TREE_NULL); /* path is validated */
+	MAT_DELTAS_GET(leaf_deltas, leaf->tr_l.tl_mat);
+	VADD2(*coord, *coord, leaf_deltas);
+	rt_db_free_internal(&intern);
+
+	d = d_next; /* prime for next iteration */
+    }
+    d_next = RT_DIR_NULL; /* none left */
+
+    if (arg->type & EDIT_NATURAL_ORIGIN) {
+	arg->type &= ~EDIT_NATURAL_ORIGIN;
     } else {
-	VSETALL(matv, 0);
-	/* get coordinates of object */
-
-   
+	/* TODO: calculate the BB_CENTER, and set to default */
+	bu_vls_printf(gedp->ged_result_str,
+		      "unsupported primitive point type");
+	return GED_ERROR;
     }
 
-    /* TODO: get matrix modified coordinates of object */
-    switch (point_type) {
-	case NATURAL_ORIGIN:
-	    break;
-	case BB_CENTER:
-	default:
-	    break;
-    }
-
-    VADD2(*objv, matv, *objv);
+    /* add final combination/primitive natural origin to sum */
+    BU_ASSERT(d->d_flags & (RT_DIR_SOLID | RT_DIR_REGION | RT_DIR_COMB));
+    if (_ged_get_obj_bounds2(gedp, 1, (const char **)&d->d_namep, &gtd, rpp_min,
+	rpp_max) == GED_ERROR)
+	return GED_ERROR;
+    if (!(d->d_flags & RT_DIR_SOLID) && (_ged_get_obj_bounds(gedp, 1,
+	(const char **)&d->d_namep, 1, rpp_min, rpp_max) == GED_ERROR))
+	return GED_ERROR;
+    MAT_DELTAS_GET(leaf_deltas, gtd.gtd_xform);
+    VADD2(*coord, *coord, leaf_deltas);
+    return GED_OK;
 }
 
 /**
- * Converts edit_arg objects+offsets to coordinates, and removes
- * objects. Only respects object argument type modifier flags.
+ * Converts an edit_arg object+offset to coordinates, removes the
+ * object and overwrites the offset with the coordinates.  The only
+ * flags repected are object argument type modifier flags.
+ *
+ * Returns GED_ERROR on failure, and GED_OK on success.
  */
-void
-edit_arg_obj_path_to_coord(struct ged *gedp, struct edit_arg *const arg)
+int
+edit_arg_to_coord(struct ged *gedp, struct edit_arg *const arg)
 {
     vect_t obj_coord;
 
-    if (arg->type & EDIT_NATURAL_ORIGIN) {
-	edit_path_to_coord(gedp, arg->object, NATURAL_ORIGIN, &obj_coord);
-	arg->type &= ~EDIT_NATURAL_ORIGIN;
-    } else
-	edit_path_to_coord(gedp, arg->object, DEFAULT, &obj_coord);
+    if (edit_arg_to_apparent_coord(gedp, arg, &obj_coord) == GED_ERROR)
+	return GED_ERROR;
 
     if (arg->vector) {
 	VADD2(*arg->vector, *arg->vector, obj_coord);
     } else {
 	arg->vector = (vect_t *)bu_malloc(sizeof(vect_t),
-		      "vect_t block for edit_arg_obj_path_to_coord()");
+		      "vect_t block for edit_arg_to_coord()");
 	VMOVE(*arg->vector, obj_coord);
     }
 
@@ -1598,6 +1620,7 @@ edit_arg_obj_path_to_coord(struct ged *gedp, struct edit_arg *const arg)
     db_free_full_path(arg->object);
     bu_free((genptr_t)arg->object, "db_full_path");
     arg->object = (struct db_full_path *)NULL;
+    return GED_OK;
 }
 
 /**
@@ -1605,7 +1628,8 @@ edit_arg_obj_path_to_coord(struct ged *gedp, struct edit_arg *const arg)
  *
  * meta_arg is replaced a list of copies of src_objects, with
  * certain meta_arg flags applied and/or consolidated with those of
- * the source objects. Objects + offsets are converted to coordinates.
+ * the source objects. Objects + offsets are converted to
+ * coordinates.
  *
  * Set GED_QUIET or GED_ERROR bits in 'flags' to suppress or enable
  * output to ged_result_str, respectively.
@@ -1653,17 +1677,17 @@ edit_arg_expand(struct ged *gedp, struct edit_arg *meta_arg,
 	dest->type &= EDIT_TARGET_OBJ_BATCH_TYPES;
 	dest->type |= prototype->type & EDIT_TARGET_OBJ_BATCH_TYPES;
 
-	edit_arg_obj_path_to_coord(gedp, dest);	
+	edit_arg_to_coord(gedp, dest);	
     }
     return GED_OK;
 }
 
 /**
- * A wrapper for the edit commands. It adds the capability to perform
- * batch operations, and accepts objects and distances in addition to
- * coordinates. As a side effect, arguments flagged with
- * EDIT_USE_TARGETS will be replaced (expanded) in performing batch
- * commands.
+ * A wrapper for the edit commands. It adds the capability to
+ * perform batch operations, and accepts objects and distances in
+ * addition to coordinates. As a side effect, arguments flagged
+ * with EDIT_USE_TARGETS will be replaced (expanded) in performing
+ * batch commands.
  *
  * Set GED_QUIET or GED_ERROR bits in 'flags' to suppress or enable
  * output to ged_result_str, respectively.
@@ -1711,7 +1735,7 @@ edit(struct ged *gedp, union edit_cmd *const subcmd, const int flags)
 		edit_arg_expand(gedp, cur_arg, subcmd->common.objects,
 				(noisy ? GED_ERROR : GED_OK));
 	    else if (cur_arg->object)
-		edit_arg_obj_path_to_coord(gedp, cur_arg);	
+		edit_arg_to_coord(gedp, cur_arg);	
 	}
     }
     return GED_OK;
@@ -1876,8 +1900,8 @@ convert_obj:
 	bu_free((genptr_t)arg->object, "db_string_to_path");
 	arg->object = (struct db_full_path *)NULL; 
 	if (noisy)
-	    bu_vls_printf(gedp->ged_result_str, "path hierarchy \"%s\" does"
-			  "not exist in the database", str);
+	    bu_vls_printf(gedp->ged_result_str, "path \"%s\" does not exist in"
+						"the database", str);
 	return GED_ERROR;
     }
     return GED_OK;
