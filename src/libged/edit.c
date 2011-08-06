@@ -979,9 +979,9 @@ edit_cmd_free(union edit_cmd *const subcmd)
 }
 
 /**
- * Provide an array of arguments and the current argument,
- * and this function will return the next argument. It loops around,
- * so the caller is responsible for keeping track of whether they have
+ * Provide an array of arguments and the current argument, and this
+ * function will return the next argument. It loops around, so the
+ * caller is responsible for keeping track of whether they have
  * already handled an argument or not.
  */
 HIDDEN struct edit_arg *
@@ -1002,16 +1002,16 @@ edit_cmd_get_next_arg_head(struct edit_arg *const arg_heads[],
  * functions for other commands will be minimal, since they are
  * quite similar.
  *
- * To add a new command, so far, you need to:
+ * To add a new command, you need to:
  *	1) add a struct to the union edit_cmd
- *	2) add command data/function pointers to the command table
- *	3) create 5 functions that
+ *	2) create 5 functions that
  *		a) initialize the command's struct in union edit_cmd
  *		b) add args to build the command
  *		c) get the next arg head in union edit_cmd
  *		d) perform the command
  *		e) wrap the command, to alternatively accept a union
  *		   edit_cmd
+ *	3) add command data/function pointers to the command table
  *
  */
 
@@ -1071,8 +1071,8 @@ edit_rotate_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 }
 
 /*
- * Add arguments to the command that were built from the cmd line.
- * All arguments should be initialized to NULL before using.
+ * Add arguments to the command that were built from the cmd line. All
+ * arguments should be initialized to NULL before using.
  */
 int
 edit_rotate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
@@ -1249,9 +1249,10 @@ edit_translate(struct ged *gedp, vect_t *from, vect_t *to,
 	GED_DB_GET_INTERNAL(gedp, &intern, d_to_modify, (fastf_t *)NULL,
 			    &rt_uniresource, GED_ERROR);
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
-
 	leaf_to_modify = db_find_named_leaf(comb->tree, d_obj->d_namep);
-	BU_ASSERT_PTR(leaf_to_modify, !=, TREE_NULL); /* path is validated */
+
+	/* path is already validated */
+	BU_ASSERT_PTR(leaf_to_modify, !=, TREE_NULL); 
 
 	MAT_DELTAS_ADD_VEC(leaf_to_modify->tr_l.tl_mat, delta);
     } else {
@@ -1314,12 +1315,13 @@ edit_translate_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 			  cmd->translate.objects->object);
 }
 
-/*
+/**
  * Add arguments to the command that were built from the cmd line.
  * All unique argument pointers in the command should be initialized
  * to NULL before using.
  *
- * This command happens to only accept the standard options.
+ * Note: This command happens to only accept the standard command line
+ * options, so others are ignored.
  */
 int
 edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
@@ -1511,15 +1513,14 @@ static const struct edit_cmd_tab edit_cmds[] = {
  * Gets the apparent coordinates of an object.
  *
  * Combines the effects of all the transformation matrices in the
- * combinations in the given path that affect the the position of
- * the combination or shape at the end of the path. The result is
- * the apparent coordinates of the object at the end of the path,
- * if the first combination in the path were drawn. The only flags
- * repected are object argument type modifier flags.
+ * combinations in the given path that affect the the position of the
+ * combination or shape at the end of the path. The result is the
+ * apparent coordinates of the object at the end of the path, if the
+ * first combination in the path were drawn. The only flags repected
+ * are object argument type modifier flags.
  *
  * If the path only contains a primitive, the coordinates of the
  * primitive will be the result of the conversion.
- *
  *
  * Returns GED_ERROR on failure, and GED_OK on success.
  */
@@ -1550,8 +1551,8 @@ edit_arg_to_apparent_coord(struct ged *gedp, struct edit_arg *arg,
     for (i = (size_t)0; i < path->fp_len - (size_t)1; ++i) {
 	d_next = DB_FULL_PATH_GET(path, i + (size_t)1);
 
-	/* path was validated, and this loop doesn't process the
-	 * last item, so it must be a combination
+	/* path was validated, and this loop doesn't process the last
+	 * item, so it must be a combination
 	 */
 	BU_ASSERT(d->d_flags & (RT_DIR_COMB | RT_DIR_REGION));
 
@@ -1628,8 +1629,7 @@ edit_arg_to_coord(struct ged *gedp, struct edit_arg *const arg)
  *
  * meta_arg is replaced a list of copies of src_objects, with
  * certain meta_arg flags applied and/or consolidated with those of
- * the source objects. Objects + offsets are converted to
- * coordinates.
+ * the source objects. Objects + offsets are converted to coordinates.
  *
  * Set GED_QUIET or GED_ERROR bits in 'flags' to suppress or enable
  * output to ged_result_str, respectively.
@@ -1695,11 +1695,11 @@ edit_arg_expand(struct ged *gedp, struct edit_arg *meta_arg,
  * Returns GED_ERROR on failure, and GED_OK on success.
  *
  * Note that this function ignores most argument type flags, since
- * it's expected that all args will be in the proper locations in
- * the given command struct. An exception is made for
- * EDIT_TARGET_OBJ_BATCH_TYPES, which is respected since certain
- * flags may propogate in batch operations. Coordinate flags are
- * always respected.
+ * it's expected that all args will be in the proper locations in the
+ * given command struct. An exception is made for
+ * EDIT_TARGET_OBJ_BATCH_TYPES, which is respected since certain flags
+ * may propogate in batch operations. Coordinate flags are always
+ * respected.
  */
 int
 edit(struct ged *gedp, union edit_cmd *const subcmd, const int flags)
@@ -1738,7 +1738,8 @@ edit(struct ged *gedp, union edit_cmd *const subcmd, const int flags)
 		edit_arg_to_coord(gedp, cur_arg);	
 	}
     }
-    return GED_OK;
+
+    return subcmd->cmd->exec(gedp, subcmd); /* GED_ERROR or GED_OK */
 }
 
 /**
@@ -1760,13 +1761,12 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
     vect_t coord;
 
     /*
-     * Here is how numbers that are also objects are intepreted: if
-     * an object is not yet set in *arg, try to treat the number as
-     * an object first. If the user has an object named, say '5',
-     * they can explicitly use the number 5 by adding .0 or
-     * something. If an arg->object has already been set, then the
-     * number was most likely intended to be an offset, so intepret
-     * it as as such.
+     * Here is how numbers that are also objects are intepreted: if an
+     * object is not yet set in *arg, try to treat the number as an
+     * object first. If the user has an object named, say '5', they
+     * can explicitly use the number 5 by adding .0 or something. If
+     * an arg->object has already been set, then the number was most
+     * likely intended to be an offset, so intepret it as as such.
      */
 
     if (!arg->object && !(arg->type & EDIT_USE_TARGETS)) {
@@ -1914,8 +1914,8 @@ convert_obj:
  * argument strings.
  * 
  * Set GED_QUIET or GED_ERROR bits in 'flags' to suppress or enable
- * output to ged_result_str, respectively. Note that output is
- * always suppressed after the first string.
+ * output to ged_result_str, respectively. Note that output is always
+ * suppressed after the first string.
  *
  * Returns GED_OK if at least one string is converted, otherwise
  * GED_ERROR is returned.
@@ -1954,10 +1954,10 @@ edit_strs_to_arg(struct ged *gedp, int *argc, const char **argv[],
 }
 
 /**
- * A command line interface to the edit commands. Will handle any 
- * new commands without modification. Validates as much as possible
- * in a single pass, without going back over the arguments list.
- * Further, more specific, validation is performed by edit().
+ * A command line interface to the edit commands. Will handle any new
+ * commands without modification. Validates as much as possible in a
+ * single pass, without going back over the arguments list. Further,
+ * more specific, validation is performed by edit().
  */
 int
 ged_edit(struct ged *gedp, int argc, const char *argv[])
@@ -2002,7 +2002,8 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	    subcmd_name = cmd_name; /* saves a strcmp later */
 	    subcmd.cmd = &edit_cmds[i];
 	    /* match of cmd name takes precedence over match of subcmd
-	     * name */
+	     * name
+	     */
 	    break; 
 	}
 	/* interpret first arg as a cmd, and search for it in table */
@@ -2177,7 +2178,9 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 		cur_arg->type |= EDIT_TARGET_OBJ;
 	    }
 
-	    /* let cmd specific func validate/move args to proper locations */
+	    /* let cmd specific func validate/move args to proper
+	     * locations
+	     */
 	    if (subcmd.cmd->add_cl_args(gedp, &subcmd, GED_ERROR) ==
 		GED_ERROR)
 		return GED_ERROR;
