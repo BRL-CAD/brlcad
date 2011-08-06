@@ -34,9 +34,16 @@
 int
 mk_sketch(struct rt_wdb *fp, const char *name, struct rt_sketch_internal *skt)
 {
+    struct rt_sketch_internal *sketch;
+
     RT_SKETCH_CK_MAGIC(skt);
 
-    return wdb_export(fp, name, (genptr_t)skt, ID_SKETCH, mk_conv2mm);
+    /* copy the caller's struct */
+    BU_GETSTRUCT(sketch, rt_sketch_internal);
+    *sketch = *skt; /* struct copy */
+    /* FIXME: need to perform a deep copy */
+
+    return wdb_export(fp, name, (genptr_t)sketch, ID_SKETCH, mk_conv2mm);
 }
 
 
