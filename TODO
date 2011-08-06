@@ -52,6 +52,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* implement deep copy of sketch objects (fix mk_sketch())
+
 * implement a new "simulate" command for applying physics deformations
   to geometry.  Each timestep (default steps==1) would get recorded as
   new geometry unless updating the existing is requested.  Usage might
