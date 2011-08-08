@@ -3647,7 +3647,7 @@ RT_EXPORT extern int rt_check_curve(const struct rt_curve *crv,
 				    const struct rt_sketch_internal *skt,
 				    int noisy);
 
-RT_EXPORT extern void rt_curve_reverse_segment(long *lng);
+RT_EXPORT extern void rt_curve_reverse_segment(unsigned long *lng);
 RT_EXPORT extern void rt_curve_order_segments(struct rt_curve *crv);
 
 RT_EXPORT extern void rt_copy_curve(struct rt_curve *crv_out,
