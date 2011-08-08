@@ -1,25 +1,25 @@
 set(LIBWDB_SOURCES
-    arbn.c 
-    ars.c 
-    bot.c 
-    brep.cpp 
-    cline.c 
-    constraint.c 
-    dsp.c 
-    dynamic_geometry.c 
-    ebm.c 
-    export.c 
-    extr.c 
-    id.c 
-    mater.c 
-    nmg.c 
-    nurb.c 
-    pipe.c 
-    reg.c 
-    sketch.c 
-    submodel.c 
-    units.c 
-    vol.c 
+    arbn.c
+    ars.c
+    bot.c
+    brep.cpp
+    cline.c
+    constraint.c
+    dsp.c
+    dynamic_geometry.c
+    ebm.c
+    export.c
+    extrude.c
+    id.c
+    mater.c
+    nmg.c
+    nurb.c
+    pipe.c
+    reg.c
+    sketch.c
+    submodel.c
+    units.c
+    vol.c
     wdb.c
 )
 
