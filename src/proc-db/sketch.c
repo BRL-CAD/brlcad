@@ -41,10 +41,10 @@ struct rt_wdb *outfp;
 int
 main(int argc, char **argv)
 {
-    struct rt_sketch_internal *skt;
-    struct bezier_seg *bsg;
-    struct line_seg *lsg;
-    struct carc_seg *csg;
+    struct rt_sketch_internal skt;
+    struct bezier_seg bsg;
+    struct line_seg lsg[4];
+    struct carc_seg csg;
     size_t i;
     point_t V;
     vect_t u_vec, v_vec;
@@ -68,71 +68,69 @@ main(int argc, char **argv)
     VSET(u_vec, 1, 0, 0);
     VSET(v_vec, 0, 1, 0);
 
-    skt = (struct rt_sketch_internal *)bu_calloc(1, sizeof(struct rt_sketch_internal), "sketch");
-    skt->magic = RT_SKETCH_INTERNAL_MAGIC;
-    VMOVE(skt->V, V);
-    VMOVE(skt->u_vec, u_vec);
-    VMOVE(skt->v_vec, v_vec);
-    skt->vert_count = 10;
-    skt->verts = (point2d_t *)bu_calloc(skt->vert_count, sizeof(point2d_t), "verts");
-    for (i=0; i<skt->vert_count; i++) {
-	V2MOVE(skt->verts[i], verts[i]);
+    skt.magic = RT_SKETCH_INTERNAL_MAGIC;
+    VMOVE(skt.V, V);
+    VMOVE(skt.u_vec, u_vec);
+    VMOVE(skt.v_vec, v_vec);
+    skt.vert_count = 10;
+    skt.verts = (point2d_t *)bu_calloc(skt.vert_count, sizeof(point2d_t), "verts");
+    for (i=0; i<skt.vert_count; i++) {
+	V2MOVE(skt.verts[i], verts[i]);
     }
 
-    skt->curve.count = 6;
-    skt->curve.reverse = (int *)bu_calloc(skt->curve.count, sizeof(int), "sketch: reverse");
+    skt.curve.count = 6;
+    skt.curve.reverse = (int *)bu_calloc(skt.curve.count, sizeof(int), "reverse");
 
-    skt->curve.segment = (genptr_t *)bu_calloc(skt->curve.count, sizeof(genptr_t), "segs");
-    bsg = (struct bezier_seg *)bu_malloc(sizeof(struct bezier_seg), "sketch: bsg");
-    bsg->magic = CURVE_BEZIER_MAGIC;
-    bsg->degree = 4;
-    bsg->ctl_points = (int *)bu_calloc(bsg->degree+1, sizeof(int), "sketch: bsg->ctl_points");
-    bsg->ctl_points[0] = 4;
-    bsg->ctl_points[1] = 7;
-    bsg->ctl_points[2] = 9;
-    bsg->ctl_points[3] = 8;
-    bsg->ctl_points[4] = 0;
-    skt->curve.segment[0] = (genptr_t)bsg;
+    skt.curve.segment = (genptr_t *)bu_calloc(skt.curve.count, sizeof(genptr_t), "segs");
 
-    lsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "sketch: lsg");
-    lsg->magic = CURVE_LSEG_MAGIC;
-    lsg->start = 0;
-    lsg->end = 1;
+    bsg.magic = CURVE_BEZIER_MAGIC;
+    bsg.degree = 4;
+    bsg.ctl_points = (int *)bu_calloc(bsg.degree+1, sizeof(int), "bsg.ctl_points");
+    bsg.ctl_points[0] = 4;
+    bsg.ctl_points[1] = 7;
+    bsg.ctl_points[2] = 9;
+    bsg.ctl_points[3] = 8;
+    bsg.ctl_points[4] = 0;
+    skt.curve.segment[0] = (genptr_t)&bsg;
 
-    skt->curve.segment[1] = (genptr_t)lsg;
+    lsg[0].magic = CURVE_LSEG_MAGIC;
+    lsg[0].start = 0;
+    lsg[0].end = 1;
+    skt.curve.segment[1] = (genptr_t)&lsg[0];
 
-    lsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "sketch: lsg");
-    lsg->magic = CURVE_LSEG_MAGIC;
-    lsg->start = 1;
-    lsg->end = 2;
+    lsg[1].magic = CURVE_LSEG_MAGIC;
+    lsg[1].start = 1;
+    lsg[1].end = 2;
+    skt.curve.segment[2] = (genptr_t)&lsg[1];
 
-    skt->curve.segment[2] = (genptr_t)lsg;
+    lsg[2].magic = CURVE_LSEG_MAGIC;
+    lsg[2].start = 2;
+    lsg[2].end = 3;
+    skt.curve.segment[3] = (genptr_t)&lsg[2];
 
-    lsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "sketch: lsg");
-    lsg->magic = CURVE_LSEG_MAGIC;
-    lsg->start = 2;
-    lsg->end = 3;
+    lsg[3].magic = CURVE_LSEG_MAGIC;
+    lsg[3].start = 3;
+    lsg[3].end = 4;
+    skt.curve.segment[4] = (genptr_t)&lsg[3];
 
-    skt->curve.segment[3] = (genptr_t)lsg;
+    csg.magic = CURVE_CARC_MAGIC;
+    csg.radius = -1.0;
+    csg.start = 6;
+    csg.end = 5;
+    skt.curve.segment[5] = (genptr_t)&csg;
 
-    lsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "sketch: lsg");
-    lsg->magic = CURVE_LSEG_MAGIC;
-    lsg->start = 3;
-    lsg->end = 4;
-
-    skt->curve.segment[4] = (genptr_t)lsg;
-
-    csg = (struct carc_seg *)bu_malloc(sizeof(struct carc_seg), "sketch: csg");
-    csg->magic = CURVE_CARC_MAGIC;
-    csg->radius = -1.0;
-    csg->start = 6;
-    csg->end = 5;
-
-    skt->curve.segment[5] = (genptr_t)csg;
-
+    /* write the sketch out */
     outfp = wdb_fopen("sketch.g");
     mk_id(outfp, "sketch test");
-    mk_sketch(outfp, "test_sketch", skt);
+    mk_sketch(outfp, "test_sketch", &skt);
+
+    /* cleanup and release */
+    wdb_close(outfp);
+    bu_free(bsg.ctl_points, "bsg.ctl_points");
+    bu_free(skt.curve.segment, "segs");
+    bu_free(skt.curve.reverse, "reverse");
+    bu_free(skt.verts, "verts");
+
     return 0;
 }
 
