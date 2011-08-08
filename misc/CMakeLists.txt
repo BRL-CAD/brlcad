@@ -35,12 +35,11 @@ BRLCAD_ADDFILE(nsis/archer.ico icons)
 
 find_package(Doxygen)
 IF(DOXYGEN_FOUND)
-	configure_file(Doxyfile.in ${CMAKE_BINARY_DIR}/misc/Doxyfile)
 	IF(BRLCAD-BUILD_DOXYGEN_DOCS)
 		ADD_CUSTOM_COMMAND(
-			OUTPUT ${CMAKE_BINARY_DIR}/misc/doxygen_output/html/index.html
-			COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/misc/Doxyfile
-			WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+			OUTPUT ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html
+			COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_SOURCE_DIR}/misc/Doxyfile
+			WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
 			)
 		ADD_CUSTOM_TARGET(dox DEPENDS ${CMAKE_BINARY_DIR}/misc/doxygen_output/html/index.html)
 	ENDIF(BRLCAD-BUILD_DOXYGEN_DOCS)
@@ -54,7 +53,6 @@ SET(misc_ignore_files
 	CMake
 	Description.txt
 	Doxyfile
-	Doxyfile.in
 	Makefile.defs
 	archlinux
 	batch-indent-region.el
