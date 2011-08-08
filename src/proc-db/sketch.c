@@ -45,7 +45,6 @@ main(int argc, char **argv)
     struct bezier_seg bsg;
     struct line_seg lsg[4];
     struct carc_seg csg;
-    size_t i;
     point_t V;
     vect_t u_vec, v_vec;
     point2d_t verts[] = {
@@ -60,6 +59,9 @@ main(int argc, char **argv)
 	{ 125, 0 },	/* 8 */
 	{ 200, 200 }	/* 9 */
     };
+    int reverse[] = {0, 0, 0, 0, 0, 0};
+    genptr_t segments[] = {NULL, NULL, NULL, NULL, NULL, NULL};
+    int ctrl_points[] = {0, 0, 0, 0, 0};
 
     if (argc > 1)
 	bu_log("Usage: %s\nWarning - ignored unsupported argument \"%s\"\n", argv[0], argv[1]);
@@ -73,19 +75,15 @@ main(int argc, char **argv)
     VMOVE(skt.u_vec, u_vec);
     VMOVE(skt.v_vec, v_vec);
     skt.vert_count = 10;
-    skt.verts = (point2d_t *)bu_calloc(skt.vert_count, sizeof(point2d_t), "verts");
-    for (i=0; i<skt.vert_count; i++) {
-	V2MOVE(skt.verts[i], verts[i]);
-    }
+    skt.verts = verts;
 
     skt.curve.count = 6;
-    skt.curve.reverse = (int *)bu_calloc(skt.curve.count, sizeof(int), "reverse");
-
-    skt.curve.segment = (genptr_t *)bu_calloc(skt.curve.count, sizeof(genptr_t), "segs");
+    skt.curve.reverse = reverse;
+    skt.curve.segment = segments;
 
     bsg.magic = CURVE_BEZIER_MAGIC;
     bsg.degree = 4;
-    bsg.ctl_points = (int *)bu_calloc(bsg.degree+1, sizeof(int), "bsg.ctl_points");
+    bsg.ctl_points = ctrl_points;
     bsg.ctl_points[0] = 4;
     bsg.ctl_points[1] = 7;
     bsg.ctl_points[2] = 9;
@@ -126,10 +124,6 @@ main(int argc, char **argv)
 
     /* cleanup and release */
     wdb_close(outfp);
-    bu_free(bsg.ctl_points, "bsg.ctl_points");
-    bu_free(skt.curve.segment, "segs");
-    bu_free(skt.curve.reverse, "reverse");
-    bu_free(skt.verts, "verts");
 
     return 0;
 }
