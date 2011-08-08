@@ -42,11 +42,19 @@ int
 main(int argc, char **argv)
 {
     struct rt_sketch_internal skt;
+
+    /* examples of the different segment types */
     struct bezier_seg bsg;
     struct line_seg lsg[4];
     struct carc_seg csg;
-    point_t V;
-    vect_t u_vec, v_vec;
+
+    /* position of the sketch */
+    point_t V = {10.0, 20.0, 30.0};
+
+    /* define the parameter space */
+    vect_t u_vec = {1.0, 0.0, 0.0}, v_vec = {0.0, 1.0, 0.0};
+
+    /* vertices used by this sketch */
     point2d_t verts[] = {
 	{ 250, 0 },	/* 0 */
 	{ 500, 0 },	/* 1 */
@@ -59,9 +67,13 @@ main(int argc, char **argv)
 	{ 125, 0 },	/* 8 */
 	{ 200, 200 }	/* 9 */
     };
-    int reverse[] = {0, 0, 0, 0, 0, 0};
-    genptr_t segments[] = {NULL, NULL, NULL, NULL, NULL, NULL};
-    int ctrl_points[] = {0, 0, 0, 0, 0};
+
+    /* overall segments */
+    int reverse[6] = {0, 0, 0, 0, 0, 0};
+    genptr_t segments[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
+
+    /* bezier */
+    int ctrl_points[5] = {0, 0, 0, 0, 0};
 
     if (argc > 1)
 	bu_log("Usage: %s\nWarning - ignored unsupported argument \"%s\"\n", argv[0], argv[1]);
