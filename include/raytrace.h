@@ -1969,6 +1969,18 @@ struct rt_pt_node {
 
 
 /**
+ * container for a set of sketch segments
+ */
+struct rt_curve {
+    size_t count;	/**< number of segments in this curve */
+    int *reverse;	/**< array of boolean flags indicating if
+			 * segment should be reversed
+			 */
+    genptr_t *segment;	/**< array of curve segment pointers */
+};
+
+
+/**
  * L I N E _ S E G,  C A R C _ S E G,  N U R B _ S E G
  *
  * used by the sketch and solid of extrusion
