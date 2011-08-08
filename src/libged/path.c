@@ -87,6 +87,7 @@ ged_path_validate(struct ged *gedp, const struct db_full_path *const path)
     struct db_full_path path_tmp;
     int ret;
 
+    db_full_path_init(&path_tmp);
     db_dup_full_path(&path_tmp, path);
 
     if (path_tmp.fp_len <= 1)
