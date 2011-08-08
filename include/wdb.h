@@ -333,7 +333,7 @@ WDB_EXPORT int mk_bot_from_nmg( struct rt_wdb *ofp, const char *name, struct she
 WDB_EXPORT int mk_sketch(
     struct rt_wdb *fp,
     const char *name,
-    struct rt_sketch_internal *skt );
+    const struct rt_sketch_internal *skt );
 
 /* extr.c */
 WDB_EXPORT int mk_extrusion(
