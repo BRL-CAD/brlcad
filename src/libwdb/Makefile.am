@@ -26,7 +26,7 @@ libwdb_nil_la_SOURCES = \
 	nurb.c \
 	pipe.c \
 	reg.c \
-	skt.c \
+	sketch.c \
 	submodel.c \
 	units.c \
 	vol.c \
