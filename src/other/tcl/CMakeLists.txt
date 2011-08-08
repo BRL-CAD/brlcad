@@ -721,6 +721,7 @@ SET(TCL_WIN_SRCS
 	win/tclWinSerial.c
 	win/tclWinSock.c
 	win/tclWinThrd.c
+	win/tclWinTest.c
 	win/tclWinTime.c
 )
 
