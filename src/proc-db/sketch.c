@@ -79,10 +79,10 @@ main(int argc, char **argv)
 	V2MOVE(skt->verts[i], verts[i]);
     }
 
-    skt->skt_curve.seg_count = 6;
-    skt->skt_curve.reverse = (int *)bu_calloc(skt->skt_curve.seg_count, sizeof(int), "sketch: reverse");
+    skt->curve.count = 6;
+    skt->curve.reverse = (int *)bu_calloc(skt->curve.count, sizeof(int), "sketch: reverse");
 
-    skt->skt_curve.segments = (genptr_t *)bu_calloc(skt->skt_curve.seg_count, sizeof(genptr_t), "segs");
+    skt->curve.segment = (genptr_t *)bu_calloc(skt->curve.count, sizeof(genptr_t), "segs");
     bsg = (struct bezier_seg *)bu_malloc(sizeof(struct bezier_seg), "sketch: bsg");
     bsg->magic = CURVE_BEZIER_MAGIC;
     bsg->degree = 4;
@@ -92,35 +92,35 @@ main(int argc, char **argv)
     bsg->ctl_points[2] = 9;
     bsg->ctl_points[3] = 8;
     bsg->ctl_points[4] = 0;
-    skt->skt_curve.segments[0] = (genptr_t)bsg;
+    skt->curve.segment[0] = (genptr_t)bsg;
 
     lsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "sketch: lsg");
     lsg->magic = CURVE_LSEG_MAGIC;
     lsg->start = 0;
     lsg->end = 1;
 
-    skt->skt_curve.segments[1] = (genptr_t)lsg;
+    skt->curve.segment[1] = (genptr_t)lsg;
 
     lsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "sketch: lsg");
     lsg->magic = CURVE_LSEG_MAGIC;
     lsg->start = 1;
     lsg->end = 2;
 
-    skt->skt_curve.segments[2] = (genptr_t)lsg;
+    skt->curve.segment[2] = (genptr_t)lsg;
 
     lsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "sketch: lsg");
     lsg->magic = CURVE_LSEG_MAGIC;
     lsg->start = 2;
     lsg->end = 3;
 
-    skt->skt_curve.segments[3] = (genptr_t)lsg;
+    skt->curve.segment[3] = (genptr_t)lsg;
 
     lsg = (struct line_seg *)bu_malloc(sizeof(struct line_seg), "sketch: lsg");
     lsg->magic = CURVE_LSEG_MAGIC;
     lsg->start = 3;
     lsg->end = 4;
 
-    skt->skt_curve.segments[4] = (genptr_t)lsg;
+    skt->curve.segment[4] = (genptr_t)lsg;
 
     csg = (struct carc_seg *)bu_malloc(sizeof(struct carc_seg), "sketch: csg");
     csg->magic = CURVE_CARC_MAGIC;
@@ -128,7 +128,7 @@ main(int argc, char **argv)
     csg->start = 6;
     csg->end = 5;
 
-    skt->skt_curve.segments[5] = (genptr_t)csg;
+    skt->curve.segment[5] = (genptr_t)csg;
 
     outfp = wdb_fopen("sketch.g");
     mk_id(outfp, "sketch test");

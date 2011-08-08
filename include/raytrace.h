@@ -1969,64 +1969,6 @@ struct rt_pt_node {
 
 
 /**
- * container for a set of sketch segments
- */
-struct rt_curve {
-    size_t count;	/**< number of segments in this curve */
-    int *reverse;	/**< array of boolean flags indicating if
-			 * segment should be reversed
-			 */
-    genptr_t *segment;	/**< array of curve segment pointers */
-};
-
-
-/**
- * L I N E _ S E G,  C A R C _ S E G,  N U R B _ S E G
- *
- * used by the sketch and solid of extrusion
- */
-struct line_seg		/**< @brief  line segment */
-{
-    unsigned long	magic;
-    int			start, end;	/**< @brief  indices into sketch's array of vertices */
-};
-
-
-struct carc_seg		/**< @brief  circular arc segment */
-{
-    unsigned long	magic;
-    int			start, end;	/**< @brief  indices */
-    fastf_t		radius;		/**< @brief  radius < 0.0 -> full circle with start point on
-					 * circle and "end" at center */
-    int			center_is_left;	/**< @brief  flag indicating where center of curvature is.
-					 * If non-zero, then center is to left of vector
-					 * from start to end */
-    int			orientation;	/**< @brief  0 -> ccw, !0 -> cw */
-    int			center;		/**< @brief  index of vertex at center of arc (only used by rt_extrude_prep and rt_extrude_shot) */
-};
-
-
-struct nurb_seg		/**< @brief  NURB curve segment */
-{
-    unsigned long	magic;
-    int			order;		/**< @brief  order of NURB curve (degree - 1) */
-    int			pt_type;	/**< @brief  type of NURB curve */
-    struct knot_vector	k;		/**< @brief  knot vector for NURB curve */
-    int			c_size;		/**< @brief  number of control points */
-    int			*ctl_points;	/**< @brief  array of indicies for control points */
-    fastf_t		*weights;	/**< @brief  array of weights for control points (NULL if non_rational) */
-};
-
-
-struct bezier_seg	/**< @brief  Bezier curve segment */
-{
-    unsigned long	magic;
-    int			degree;		/**< @brief  degree of curve (number of control points - 1) */
-    int			*ctl_points;	/**< @brief  array of indices for control points */
-};
-
-
-/**
  * R T _ F U N C T A B
  *
  * Object-oriented interface to BRL-CAD geometry.
@@ -3699,24 +3641,24 @@ RT_EXPORT extern int curve_to_vlist(struct bu_list		*vhead,
 				    vect_t			u_vec,
 				    vect_t			v_vec,
 				    struct rt_sketch_internal *sketch_ip,
-				    struct curve		*crv);
+				    struct rt_curve		*crv);
 
-RT_EXPORT extern int rt_check_curve(const struct curve *crv,
+RT_EXPORT extern int rt_check_curve(const struct rt_curve *crv,
 				    const struct rt_sketch_internal *skt,
 				    int noisy);
 
 RT_EXPORT extern void rt_curve_reverse_segment(long *lng);
-RT_EXPORT extern void rt_curve_order_segments(struct curve *crv);
+RT_EXPORT extern void rt_curve_order_segments(struct rt_curve *crv);
 
-RT_EXPORT extern void rt_copy_curve(struct curve *crv_out,
-				    const struct curve *crv_in);
+RT_EXPORT extern void rt_copy_curve(struct rt_curve *crv_out,
+				    const struct rt_curve *crv_in);
 
-RT_EXPORT extern void rt_curve_free(struct curve *crv);
-RT_EXPORT extern void rt_copy_curve(struct curve *crv_out,
-				    const struct curve *crv_in);
+RT_EXPORT extern void rt_curve_free(struct rt_curve *crv);
+RT_EXPORT extern void rt_copy_curve(struct rt_curve *crv_out,
+				    const struct rt_curve *crv_in);
 RT_EXPORT extern struct rt_sketch_internal *rt_copy_sketch(const struct rt_sketch_internal *sketch_ip);
 RT_EXPORT extern int curve_to_tcl_list(struct bu_vls *vls,
-				       struct curve *crv);
+				       struct rt_curve *crv);
 
 /* htbl.c */
 RT_EXPORT extern void rt_htbl_init(struct rt_htbl *b,

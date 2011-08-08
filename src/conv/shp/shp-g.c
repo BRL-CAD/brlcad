@@ -88,10 +88,10 @@ make_shape(struct rt_wdb *fd, int verbose, int debug, size_t idx, size_t num, po
     }
 
     /* Specify number of segments */
-    skt->skt_curve.seg_count = num;
+    skt->curve.count = num;
     /* FIXME: investigate allocation */
-    skt->skt_curve.reverse = (int *)bu_calloc(skt->skt_curve.seg_count, sizeof(int), "sketch: reverse");
-    skt->skt_curve.segments = (genptr_t *)bu_calloc(skt->skt_curve.seg_count, sizeof(genptr_t), "segs");
+    skt->curve.reverse = (int *)bu_calloc(skt->curve.count, sizeof(int), "sketch: reverse");
+    skt->curve.segment = (genptr_t *)bu_calloc(skt->curve.count, sizeof(genptr_t), "segs");
 
     /* Insert all line segments except the last one */
     for (i = 0; i < num-1; i++) {
@@ -99,7 +99,7 @@ make_shape(struct rt_wdb *fd, int verbose, int debug, size_t idx, size_t num, po
 	lsg->magic = CURVE_LSEG_MAGIC;
 	lsg->start = i;
 	lsg->end = i + 1;
-	skt->skt_curve.segments[i] = (genptr_t)lsg;
+	skt->curve.segment[i] = (genptr_t)lsg;
     }
 
     /* Connect the last connected vertex to the first vertex */
@@ -107,7 +107,7 @@ make_shape(struct rt_wdb *fd, int verbose, int debug, size_t idx, size_t num, po
     lsg->magic = CURVE_LSEG_MAGIC;
     lsg->start = num - 1;
     lsg->end = 0;
-    skt->skt_curve.segments[num - 1] = (genptr_t)lsg;
+    skt->curve.segment[num - 1] = (genptr_t)lsg;
 
     /* write out sketch shape */
     bu_vls_init(&str_sketch);

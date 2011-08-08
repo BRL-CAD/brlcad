@@ -1385,9 +1385,9 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 
     skt = (struct rt_sketch_internal *)bu_calloc( 1, sizeof( struct rt_sketch_internal ), "sketch" );
     skt->magic = RT_SKETCH_INTERNAL_MAGIC;
-    skt->skt_curve.seg_count = seg_count;
-    skt->skt_curve.reverse = (int *)bu_calloc( seg_count, sizeof( int ), "sketch reverse flags" );
-    skt->skt_curve.segments = (genptr_t *)bu_calloc( seg_count, sizeof( genptr_t ), "sketch segment pointers" );
+    skt->curve.seg_count = seg_count;
+    skt->curve.reverse = (int *)bu_calloc( seg_count, sizeof( int ), "sketch reverse flags" );
+    skt->curve.segment = (genptr_t *)bu_calloc( seg_count, sizeof( genptr_t ), "sketch segment pointers" );
     skt->vert_count = 0;
     skt->verts = (point2d_t *)bu_calloc( VERT_ALLOC_BLOCK, sizeof( point2d_t ), "skt->verts" );
     verts_alloced = VERT_ALLOC_BLOCK;
@@ -1427,7 +1427,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 	    for ( i=j+1; i<num_curves; i++ ) {
 		lsg = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "fake line seg" );
 		lsg->magic = CURVE_LSEG_MAGIC;
-		skt->skt_curve.segments[i] = (genptr_t)lsg;
+		skt->curve.segment[i] = (genptr_t)lsg;
 	    }
 	    intern.idb_magic = RT_DB_INTERNAL_MAGIC;
 	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1448,7 +1448,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		bu_log( "Line from (%g %g %g) to (%g %g %g)\n",
 			V3ARGS( line_data.start_point ), V3ARGS( line_data.end_point ) );
 		lsg = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "line seg" );
-		skt->skt_curve.segments[j] = (genptr_t)lsg;
+		skt->curve.segment[j] = (genptr_t)lsg;
 		lsg->magic = CURVE_LSEG_MAGIC;
 		UF_MTX3_vec_multiply( line_data.start_point, csys, pt );
 		VSCALE( pt, pt, units_conv );
@@ -1466,7 +1466,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		    for ( i=j+1; i<num_curves; i++ ) {
 			lsg = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "fake line seg" );
 			lsg->magic = CURVE_LSEG_MAGIC;
-			skt->skt_curve.segments[i] = (genptr_t)lsg;
+			skt->curve.segment[i] = (genptr_t)lsg;
 		    }
 		    intern.idb_magic = RT_DB_INTERNAL_MAGIC;
 		    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1530,7 +1530,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		    z2 = end[Z];
 		    csg->end = add_sketch_vert( end, skt, &verts_alloced, tol_sq );
 		}
-		skt->skt_curve.segments[j] = (genptr_t)csg;
+		skt->curve.segment[j] = (genptr_t)csg;
 		if ( !NEAR_ZERO( fabs( z1 - z2 ), tol_dist ) ) {
 		    bu_log( "Sketch (%s) for part %s is not planar, cannot handle this",
 			    skt_name, part_name );
@@ -1539,7 +1539,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		    for ( i=j+1; i<num_curves; i++ ) {
 			lsg = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "fake line seg" );
 			lsg->magic = CURVE_LSEG_MAGIC;
-			skt->skt_curve.segments[i] = (genptr_t)lsg;
+			skt->curve.segment[i] = (genptr_t)lsg;
 		    }
 		    intern.idb_magic = RT_DB_INTERNAL_MAGIC;
 		    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1561,7 +1561,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 		for ( i=j; i<num_curves; i++ ) {
 		    lsg = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "fake line seg" );
 		    lsg->magic = CURVE_LSEG_MAGIC;
-		    skt->skt_curve.segments[i] = (genptr_t)lsg;
+		    skt->curve.segment[i] = (genptr_t)lsg;
 		}
 		intern.idb_magic = RT_DB_INTERNAL_MAGIC;
 		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1593,7 +1593,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 	    for ( i=j+1; i<num_curves; i++ ) {
 		lsg = (struct line_seg *)bu_malloc( sizeof( struct line_seg ), "fake line seg" );
 		lsg->magic = CURVE_LSEG_MAGIC;
-		skt->skt_curve.segments[i] = (genptr_t)lsg;
+		skt->curve.segment[i] = (genptr_t)lsg;
 	    }
 	    intern.idb_magic = RT_DB_INTERNAL_MAGIC;
 	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1617,7 +1617,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 	MAT4X3PNT( skt->V, curr_xform, pt );
     }
 
-    rt_curve_order_segments( &skt->skt_curve );
+    rt_curve_order_segment( &skt->curve );
 
     bu_vls_init( &sketch_vls );
     bu_vls_strcat( &sketch_vls, skt_name );
@@ -1633,7 +1633,6 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
     VMOVE( extrude_uvec, skt->u_vec );
     VMOVE( extrude_vvec, skt->v_vec );
 
-    /* mk_sketch() frees the "skt" */
     if ( mk_sketch( wdb_fd, sketch_name, skt ) ) {
 	bu_log( "Failed to create sketch for extrusion (%s)\n", part_name );
 	bu_free( (char *)z_coords, "z_coords" );
@@ -1659,6 +1658,15 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 	bu_free( solid_name, "solid name" );
 	return (char *)NULL;
     }
+
+    /* release memory */
+    for (i=0; i < num_curves; i++) {
+	bu_free(skt->curve.segment[i], "segment");
+    }
+    bu_free(skt->curve.segment, "sketch segment pointers");
+    bu_free(skt->curve.reverse, "sketch reverse flags");
+    bu_free(skt->verts, "skt->verts");
+    bu_free(skt, "sketch");
 
     bu_free( (char *)z_coords, "z_coords" );
     return solid_name;

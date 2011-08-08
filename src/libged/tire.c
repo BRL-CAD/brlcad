@@ -844,9 +844,9 @@ MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts,
     /* Specify number of segments and allocate memory for reverse??
      * and segments.
      */
-    skt->skt_curve.seg_count = vertcount;
-    skt->skt_curve.reverse = (int *)bu_calloc(skt->skt_curve.seg_count, sizeof(int), "sketch: reverse");
-    skt->skt_curve.segments = (genptr_t *)bu_calloc(skt->skt_curve.seg_count, sizeof(genptr_t), "segs");
+    skt->curve.count = vertcount;
+    skt->curve.reverse = (int *)bu_calloc(skt->curve.count, sizeof(int), "sketch: reverse");
+    skt->curve.segment = (genptr_t *)bu_calloc(skt->curve.count, sizeof(genptr_t), "segs");
 
 
     /* Insert all line segments except the last one */
@@ -855,7 +855,7 @@ MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts,
 	lsg->magic = CURVE_LSEG_MAGIC;
 	lsg->start = i;
 	lsg->end = i + 1;
-	skt->skt_curve.segments[i] = (genptr_t)lsg;
+	skt->curve.segment[i] = (genptr_t)lsg;
     }
 
     /* Connect the last connected vertex to the first vertex */
@@ -863,7 +863,7 @@ MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts,
     lsg->magic = CURVE_LSEG_MAGIC;
     lsg->start = vertcount - 1;
     lsg->end = 0;
-    skt->skt_curve.segments[vertcount - 1] = (genptr_t)lsg;
+    skt->curve.segment[vertcount - 1] = (genptr_t)lsg;
 
     /* Make the sketch */
     bu_vls_sprintf(&str, "sketch%s", suffix);

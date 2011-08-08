@@ -3033,13 +3033,13 @@ nmg_wire_edges_to_sketch( struct model *m )
         skt->verts[idx][0] = vr->the_array[idx*3];
         skt->verts[idx][1] = vr->the_array[idx*3 + 1];
     }
-    skt->skt_curve.seg_count = BU_PTBL_LEN(&segs);
-    skt->skt_curve.reverse = bu_realloc(skt->skt_curve.reverse, skt->skt_curve.seg_count * sizeof (int), "curve segment reverse");
-    memset(skt->skt_curve.reverse, 0, skt->skt_curve.seg_count * sizeof (int));
-    skt->skt_curve.segments = bu_realloc(skt->skt_curve.segments, skt->skt_curve.seg_count * sizeof ( genptr_t), "curve segments");
+    skt->curve.count = BU_PTBL_LEN(&segs);
+    skt->curve.reverse = bu_realloc(skt->curve.reverse, skt->curve.count * sizeof (int), "curve segment reverse");
+    memset(skt->curve.reverse, 0, skt->curve.count * sizeof (int));
+    skt->curve.segment = bu_realloc(skt->curve.segment, skt->curve.count * sizeof ( genptr_t), "curve segments");
     for (idx = 0; idx < BU_PTBL_LEN(&segs); idx++) {
         genptr_t ptr = BU_PTBL_GET(&segs, idx);
-        skt->skt_curve.segments[idx] = ptr;
+        skt->curve.segment[idx] = ptr;
     }
 
     free_vert_tree(vr);

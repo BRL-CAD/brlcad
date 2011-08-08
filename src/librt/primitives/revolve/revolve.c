@@ -122,7 +122,7 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     endcount = (int *)bu_calloc(rev->sk->vert_count, sizeof(int), "endcount");
     for (i=0; i<rev->sk->vert_count; i++)
 	endcount[i] = 0;
-    nseg = rev->sk->skt_curve.seg_count;
+    nseg = rev->sk->curve.count;
 
     for (i=0; i<nseg; i++) {
 	long *lng;
@@ -131,7 +131,7 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 	struct nurb_seg *nsg;
 	struct bezier_seg *bsg;
 
-	lng = (long *)rev->sk->skt_curve.segments[i];
+	lng = (long *)rev->sk->curve.segment[i];
 
 	switch (*lng) {
 	    case CURVE_LSEG_MAGIC:
@@ -423,9 +423,9 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     }
 
     /* find hyperbola intersection with each sketch segment */
-    nseg = rev->sk->skt_curve.seg_count;
+    nseg = rev->sk->curve.count;
     for (i=0; i<nseg; i++) {
-	lng = (long *)rev->sk->skt_curve.segments[i];
+	lng = (long *)rev->sk->curve.segment[i];
 
 	switch (*lng) {
 	    case CURVE_LSEG_MAGIC:
@@ -1018,7 +1018,7 @@ rt_revolve_uv(struct application *ap, struct soltab *stp, struct hit *hitp, stru
 	    if (angle < 0) angle += 2*M_PI;
 	    uvp->uv_u = angle / rev->ang;
 
-	    lng = (long *)rev->sk->skt_curve.segments[hitp->hit_surfno];
+	    lng = (long *)rev->sk->curve.segment[hitp->hit_surfno];
 
 	    switch (*lng) {
 		case CURVE_LSEG_MAGIC:
@@ -1099,7 +1099,7 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 
     size_t nvert, narc, nadd, nseg, i, j, k;
     point2d_t *verts;
-    struct curve *crv;
+    struct rt_curve *crv;
 
     vect_t ell[16], cir[16], ucir[16], height, xdir, ydir, ux, uy, uz, rEnd, xEnd, yEnd;
     fastf_t cos22_5 = 0.9238795325112867385;
@@ -1114,7 +1114,7 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 
     nvert = rip->sk->vert_count;
     verts = rip->sk->verts;
-    crv = &rip->sk->skt_curve;
+    crv = &rip->sk->curve;
 
     if (rip->ang < 2*M_PI) {
 	narc = ceil(rip->ang * 8 * M_1_PI);
@@ -1171,7 +1171,7 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     for (i=0; i<rip->sk->vert_count; i++) {
 	endcount[i] = 0;
     }
-    nseg = rip->sk->skt_curve.seg_count;
+    nseg = rip->sk->curve.count;
 
     for (i=0; i<nseg; i++) {
 	long *lng;
@@ -1180,7 +1180,7 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 	struct nurb_seg *nsg;
 	struct bezier_seg *bsg;
 
-	lng = (long *)rip->sk->skt_curve.segments[i];
+	lng = (long *)rip->sk->curve.segment[i];
 
 	switch (*lng) {
 	    case CURVE_LSEG_MAGIC:

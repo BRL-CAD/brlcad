@@ -1233,7 +1233,7 @@ sketchdump(void)
     struct bu_external ext;
     struct rt_db_internal intern;
     size_t i, j;
-    struct curve *crv;
+    struct rt_curve *crv;
 
     myname = record.skt.skt_name;
     ngranules = ntohl(*(uint32_t *)record.skt.skt_count) + 1;
@@ -1248,18 +1248,18 @@ sketchdump(void)
 
     skt = (struct rt_sketch_internal *)intern.idb_ptr;
     RT_SKETCH_CK_MAGIC( skt );
-    crv = &skt->skt_curve;
+    crv = &skt->curve;
     (void)fprintf(ofp, "%c ", DBID_SKETCH ); /* d */
     (void)fprintf(ofp, "%.16s ", encode_name( myname ) );  /* unique name */
     (void)fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS( skt->V ) );
     (void)fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS( skt->u_vec ) );
     (void)fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS( skt->v_vec ) );
-    (void)fprintf(ofp, "%lu %lu\n", (unsigned long)skt->vert_count, (unsigned long)crv->seg_count );
+    (void)fprintf(ofp, "%lu %lu\n", (unsigned long)skt->vert_count, (unsigned long)crv->count );
     for ( i=0; i<skt->vert_count; i++ )
 	(void)fprintf(ofp, " %.12e %.12e", V2ARGS( skt->verts[i] ) );
     (void)fprintf(ofp, "\n" );
 
-    for ( j=0; j<crv->seg_count; j++ )
+    for ( j=0; j<crv->count; j++ )
     {
 	long *lng;
 	struct line_seg *lsg;
@@ -1267,7 +1267,7 @@ sketchdump(void)
 	struct nurb_seg *nsg;
 	int k;
 
-	lng = (long *)crv->segments[j];
+	lng = (long *)crv->segment[j];
 	switch ( *lng )
 	{
 	    case CURVE_LSEG_MAGIC:

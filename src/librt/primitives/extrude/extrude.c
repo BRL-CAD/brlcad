@@ -56,7 +56,7 @@ struct extrude_specific {
     plane_t pl1, pl2;	/* plane equations of the top and bottom planes (not rotated) */
     plane_t pl1_rot;	/* pl1 rotated by rot */
     point_t *verts;	/* sketch vertices projected onto a plane normal to extrusion vector */
-    struct curve crv;	/* copy of the referenced curve */
+    struct rt_curve crv;	/* copy of the referenced curve */
 };
 
 
@@ -125,7 +125,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     RT_SKETCH_CK_MAGIC(skt);
 
     /* make sure the sketch is valid */
-    if (rt_check_curve(&skt->skt_curve, skt, 1)) {
+    if (rt_check_curve(&skt->curve, skt, 1)) {
 	bu_log("ERROR: referenced sketch (%s) is bad!\n",
 	       eip->sketch_name);
 	return -1;
@@ -166,8 +166,8 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 
     vert_count = skt->vert_count;
     /* count how many additional vertices we will need for arc centers */
-    for (i=0; i<skt->skt_curve.seg_count; i++) {
-	struct carc_seg *csg=(struct carc_seg *)skt->skt_curve.segments[i];
+    for (i=0; i<skt->curve.count; i++) {
+	struct carc_seg *csg=(struct carc_seg *)skt->curve.segment[i];
 
 	if (csg->magic != CURVE_CARC_MAGIC)
 	    continue;
@@ -224,7 +224,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     }
 
     /* copy the curve */
-    rt_copy_curve(&extr->crv, &skt->skt_curve);
+    rt_copy_curve(&extr->crv, &skt->curve);
 
     VSET(xyz[X], 1, 0, 0);
     VSET(xyz[Y], 0, 1, 0);
@@ -238,9 +238,9 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     /* if any part of the curve is a circular arc, the arc may extend
      * beyond the listed vertices
      */
-    for (i=0; i<skt->skt_curve.seg_count; i++) {
-	struct carc_seg *csg=(struct carc_seg *)skt->skt_curve.segments[i];
-	struct carc_seg *csg_extr=(struct carc_seg *)extr->crv.segments[i];
+    for (i=0; i<skt->curve.count; i++) {
+	struct carc_seg *csg=(struct carc_seg *)skt->curve.segment[i];
+	struct carc_seg *csg_extr=(struct carc_seg *)extr->crv.segment[i];
 	point_t center;
 
 	if (csg->magic != CURVE_CARC_MAGIC)
@@ -577,7 +577,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     fastf_t dot_pl1, dir_dot_z;
     point_t tmp, tmp2;
     point_t ray_start, ray_dir, ray_dir_unit;	/* 2D */
-    struct curve *crv;
+    struct rt_curve *crv;
     struct hit hits[MAX_HITS];
     fastf_t dists_before[MAX_HITS];
     fastf_t dists_after[MAX_HITS];
@@ -651,8 +651,8 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     }
 
     /* intersect with projected curve */
-    for (i=0; i<crv->seg_count; i++) {
-	long *lng=(long *)crv->segments[i];
+    for (i=0; i<crv->count; i++) {
+	long *lng=(long *)crv->segment[i];
 	struct line_seg *lsg;
 	struct carc_seg *csg=NULL;
 	struct bezier_seg *bsg=NULL;
@@ -1114,7 +1114,7 @@ int
 rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol))
 {
     struct rt_extrude_internal *extrude_ip;
-    struct curve *crv=(struct curve *)NULL;
+    struct rt_curve *crv = NULL;
     struct rt_sketch_internal *sketch_ip;
     point_t end_of_h;
     size_t i1, i2, nused1, nused2;
@@ -1135,10 +1135,10 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     sketch_ip = extrude_ip->skt;
     RT_SKETCH_CK_MAGIC(sketch_ip);
 
-    crv = &sketch_ip->skt_curve;
+    crv = &sketch_ip->curve;
 
     /* empty sketch, nothing to do */
-    if (crv->seg_count == 0) {
+    if (crv->count == 0) {
 	if (extrude_ip->sketch_name) {
 	    bu_log("Sketch [%s] is empty, nothing to draw\n", extrude_ip->sketch_name);
 	} else {
@@ -1756,7 +1756,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     struct vertex **vertsa;
     struct rt_extrude_internal *extrude_ip;
     struct rt_sketch_internal *sketch_ip;
-    struct curve *crv=(struct curve *)NULL;
+    struct rt_curve *crv = NULL;
     struct bu_ptbl *aloop=NULL, loops, **containing_loops, *outer_loop;
     plane_t pl;
     int *used_seg;
@@ -1776,15 +1776,15 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     sketch_ip = extrude_ip->skt;
     RT_SKETCH_CK_MAGIC(sketch_ip);
 
-    crv = &sketch_ip->skt_curve;
+    crv = &sketch_ip->curve;
 
-    if (crv->seg_count < 1)
+    if (crv->count < 1)
 	return 0;
 
     /* find all the loops */
-    used_seg = (int *)bu_calloc(crv->seg_count, sizeof(int), "used_seg");
+    used_seg = (int *)bu_calloc(crv->count, sizeof(int), "used_seg");
     bu_ptbl_init(&loops, 5, "loops");
-    for (i=0; i<crv->seg_count; i++) {
+    for (i=0; i<crv->count; i++) {
 	genptr_t cur_seg;
 	int loop_start = 0, loop_end = 0;
 	int seg_start = 0, seg_end = 0;
@@ -1795,23 +1795,23 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 	aloop = (struct bu_ptbl *)bu_calloc(1, sizeof(struct bu_ptbl), "aloop");
 	bu_ptbl_init(aloop, 5, "aloop");
 
-	bu_ptbl_ins(aloop, (long *)crv->segments[i]);
+	bu_ptbl_ins(aloop, (long *)crv->segment[i]);
 	used_seg[i] = 1;
-	cur_seg = crv->segments[i];
+	cur_seg = crv->segment[i];
 	get_indices(cur_seg, &loop_start, &loop_end);
 
 	while (loop_end != loop_start) {
 	    int added_seg;
 
 	    added_seg = 0;
-	    for (j=0; j<crv->seg_count; j++) {
+	    for (j=0; j<crv->count; j++) {
 		if (used_seg[j])
 		    continue;
 
-		get_indices(crv->segments[j], &seg_start, &seg_end);
+		get_indices(crv->segment[j], &seg_start, &seg_end);
 		if (seg_start != seg_end && seg_start == loop_end) {
 		    added_seg++;
-		    bu_ptbl_ins(aloop, (long *)crv->segments[j]);
+		    bu_ptbl_ins(aloop, (long *)crv->segment[j]);
 		    used_seg[j] = 1;
 		    loop_end = seg_end;
 		    if (loop_start == loop_end)

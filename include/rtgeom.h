@@ -38,6 +38,7 @@
 #include "vmath.h"
 #include "bu.h"
 
+#include "nmg.h" /* (temporarily?) needed for knot_vector */
 #include "brep.h"
 
 
@@ -454,24 +455,78 @@ struct rt_dsp_internal{
  *	ID_SKETCH
  */
 
+/**
+ * container for a set of sketch segments
+ */
+struct rt_curve {
+    size_t count;	/**< number of segments in this curve */
+    int *reverse;	/**< array of boolean flags indicating if
+			 * segment should be reversed
+			 */
+    genptr_t *segment;	/**< array of curve segment pointers */
+};
+
+
+/**
+ * L I N E _ S E G,  C A R C _ S E G,  N U R B _ S E G
+ *
+ * used by the sketch and solid of extrusion
+ */
+struct line_seg		/**< @brief  line segment */
+{
+    unsigned long	magic;
+    int			start, end;	/**< @brief  indices into sketch's array of vertices */
+};
+
+struct carc_seg		/**< @brief  circular arc segment */
+{
+    unsigned long	magic;
+    int			start, end;	/**< @brief  indices */
+    fastf_t		radius;		/**< @brief  radius < 0.0 -> full circle with start point on
+					 * circle and "end" at center */
+    int			center_is_left;	/**< @brief  flag indicating where center of curvature is.
+					 * If non-zero, then center is to left of vector
+					 * from start to end */
+    int			orientation;	/**< @brief  0 -> ccw, !0 -> cw */
+    int			center;		/**< @brief  index of vertex at center of arc (only used by rt_extrude_prep and rt_extrude_shot) */
+};
+
+struct nurb_seg		/**< @brief  NURB curve segment */
+{
+    unsigned long	magic;
+    int			order;		/**< @brief  order of NURB curve (degree - 1) */
+    int			pt_type;	/**< @brief  type of NURB curve */
+    struct knot_vector	k;		/**< @brief  knot vector for NURB curve */
+    int			c_size;		/**< @brief  number of control points */
+    int			*ctl_points;	/**< @brief  array of indicies for control points */
+    fastf_t		*weights;	/**< @brief  array of weights for control points (NULL if non_rational) */
+};
+
+struct bezier_seg	/**< @brief  Bezier curve segment */
+{
+    unsigned long	magic;
+    int			degree;		/**< @brief  degree of curve (number of control points - 1) */
+    int			*ctl_points;	/**< @brief  array of indices for control points */
+};
+
+
 #define SKETCH_NAME_LEN	16
 struct rt_sketch_internal
 {
     unsigned long magic;
-    point_t V;		/**< @brief  default embedding of sketch */
-    vect_t u_vec;	/**< @brief  u_vec and v_vec are unit vectors defining the plane of */
-    vect_t v_vec;	/**< @brief  the sketch */
-    size_t vert_count;	/**< @brief  number of vertices in this sketch */
-    point2d_t *verts;	/**< @brief array of 2D vertices that may be
-			 * used as endpoints, centers, or spline
-			 * control points.
-			 */
-/* FIXME: this should have a distinctive name, like rt_curve */
-    struct curve {
-	size_t seg_count;	/**< @brief  number of segments in this curve */
-	int *reverse;		/**< @brief  array of ints indicating if segment should be reversed */
-	genptr_t *segments;	/**< @brief  array of pointers to segments in this curve */
-    } skt_curve;			/**< @brief  the curve in this sketch */
+    point_t V;			/**< default embedding of sketch */
+    vect_t u_vec;		/**< unit vector 'u' component
+				 * defining the sketch plane
+				 */
+    vect_t v_vec;		/**< unit vector 'v' component
+				 * defining the sketch plane
+				 */
+    size_t vert_count;		/**< number of sketch vertices */
+    point2d_t *verts;		/**< array of 2D vertices that may be
+				 * used as endpoints, centers, or
+				 * spline control points
+				 */
+    struct rt_curve curve;	/**< the curves of this sketch */
 };
 #define RT_SKETCH_CK_MAGIC(_p)	BU_CKMAG(_p, RT_SKETCH_INTERNAL_MAGIC, "rt_sketch_internal")
 
