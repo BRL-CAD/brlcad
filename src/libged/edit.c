@@ -40,226 +40,14 @@
  *	edit
  *
  * SYNOPSIS
- *	edit COMMAND_NAME ARGS OBJECT ...
- *	edit {translate | rotate | scale} ARGS OBJECT ...
+ *	edit COMMAND_NAME [ARGS OBJECT ...]
+ *	edit help | rotate | scale | translate [ARGS OBJECT ...]
  *
  *	ARGS:
  *	    see manual for given COMMAND_NAME
  *
  * DESCRIPTION
  *	Used to change objects through the use of subcommands.
- *
- */
-
-/*
- * translate: Proposed operations, and manual page
- *
- * NAME
- *	translate (alias for "edit translate")
- *
- * SYNOPSIS
- *	translate [FROM] TO OBJECT ...
- * 	translate [[-n] -k {FROM_OBJECT | FROM_POS}]
- * 	    [-n] [-a | -r] {TO_OBJECT | TO_POS} OBJECT ...
- *
- *	*OBJECT:
- *	    [PATH/]OBJECT [OFFSET_DIST]
- *	    [PATH/]OBJECT [x [y [z]]]
- *
- *	*POS:
- *	    {x [y [z]]} | {[-x {x | X_OBJ}] [-y {y | Y_OBJ}]
- *	        [-z {z | Z_OBJ}]}
- *
- * DESCRIPTION
- *	Used to move one or more instances of primitive or combination
- *	objects. The positions of OBJECTs are translated from FROM to
- *	TO.
- *
- *	If FROM is omitted, the bounding box center of the first
- *	[PATH/]OBJECT is used instead. To use the natural origin of
- *	the first [PATH/]OBJECT as FROM, FROM_OBJECT must be manually
- *	set to [PATH/]OBJECT.
- *
- *	If FROM is "-k .", then each individual [PATH/]OBJECT argument
- *	uses its own bounding box center (or natural origin if
- *	"-n -k ." is used). Likewise, if TO is "-a ." or "-n -a ."
- *
- *	FROM_POS and TO_POS represent 3d points in "x y z"
- *	coordinates. To specify one or more specific axis while
- *	ignoring the others, the options "-x x", "-y y", "-z z" may be
- *	used as FROM_POS or TO_POS.
- *
- * OPTIONS
- * 	-n FROM_OBJECT | TO_OBJECT
- *	    Use the natural origin of FROM_OBJECT and/or TO_OBJECT,
- *	    rather than the default of its bounding box center.
- *
- * 	-k FROM_OBJECT | FROM_POS
- *	    Sets the keypoint to FROM_OBJECT's bounding box
- *	    center (or natural origin if -n is used). If this option
- *	    is omitted, the keypoint defaults to OBJECT's bounding
- *	    box center.
- *
- * 	-a TO_POS | TO_OBJECT
- *	    Interpret TO_POS/TO_OBJECT as an absolute position. The
- *	    vector implied by FROM and TO is used to move OBJECT. This
- *	    option is required if TO_OBJECT is specified.
- *
- * 	-r TO_POS
- *	    Interpret TO_POS as the relative distance to move OBJECT
- *          from FROM keypoint. This is the default if TO_POS is set.
- *	    Must be omitted if TO_OBJECT is specified.
- *
- *
- * VISUAL EXAMPLE:
- *	translate -n -k rcc.s -a sph.s table.c/box.c
- *     
- *      Move the instance of box.c in table.c from the natural origin
- *	of rcc.s to the bounding box center of sph.s:
- *
- *	   |.| <=keypoint: natural origin of rcc.s         
- *	                                                   
- *	       o <= center of sph.2                        
- *                                   [] <=box.c start      
- *	                                                   
- *	                                [] <=box.c moved   
- *                                                         
- * EXAMPLES
- *
- *	# move all instances of sph.s to x=1, y=2, z=3
- *	translate -a 1 2 3 /sph.s
- *
- *	    # these all have the same effect as above
- *	    translate -a 1 2 3 sph.s
- *	    translate -k sph.s -a 1 2 3 sph.s
- *	    translate -k . -a 1 2 3 sph.s
- *
- *      # A very practical use of
- *	translate -k . -a . -x sph2.s sph1.s
- *
- *	# move all instances of sph.s from a point 5 units above
- *	# sph.s's center to x=1, y=2, z=3, by using OFFSET_DIST of
- *	# "-z 5".
- *	translate -a 1 2 3 sph.s -z 5
- *
- *	    # these all have the same effect as above
- *	    translate -k . -z 5 -a 1 2 3 sph.s
- *	    translate -k sph.s -z 5 -a 1 2 3 sph.s
- *
- *	# OFFSET_DIST of "-z 5" is meaningless here, since OBJECT is
- *	# not implicitly used to calculate the translation. This
- *	# produces an error.
- *	#translate -k sph.s -a 1 2 3 sph.s -z 5
- *
- *      # Place sph1.s and sph2.s at the same height as cube.s using
- *      # OFFSET_DIST of Z_OBJ, and leaving x/y positions alone.
- *      translate -a . -z sph.s sph2.s sph3.s
- *
- *      # Move sph1.s and sph2.s to a height offset 20 units above
- *      # cube.s, while leaving x/y positions alone
- *      translate -k . -z -20 -a -z cube.s sph1.s sph2.s
- *
- *          # these all have the same effect as above
- *          translate -k . -z -20 -a . -z cube.s sph1.s sph2.s
- *          translate -k . -a -z cube.s sph1.s -z -20 sph2.s -z -20
- *          translate -k -x . -y . -z -20 -a -z cube.s sph1.s sph2.s
- *          translate -k 6 7 -20 -a -x 6 -y 7 -z cube.s sph1.s sph2.s
- *
- *	# move sph2.s twice as far away from sph.s as it is now
- *	translate -k sph.s -a . sph2.s
- *
- *	# move all instances of sph.s x+1,y+2,z+3
- *	translate 1 2 3 sph.s
- *
- *	    # these all have the same effect as above
- *	    translate -r 1 2 3 sph.s
- *	    translate -k sph.s -r 1 2 3 sph.s
- *	    translate -k . -r 1 2 3 sph.s
- *
- *	# move instance of sph.s in bowl.c x+1,y+2
- *	translate 1 2 bowl.c/sph.s
- *
- *	# move instance of sph.s in bowl.c z+7
- *	translate -z 7 bowl.c/sph.s
- *
- *	    # exactly the same as above (moving x+0 y+0 z+7)
- *	    translate 0 0 7 bowl.c/sph.s
- *
- *      # move all sph.s from the bounding box center of sph.s to
- *	# the natural origin of sph.s
- *	translate -k sph.s -n -a sph.s sph.s
- *
- *	    # these all have the same effect as above
- *	    translate -n -a . sph.s
- *	    translate -k . -n -a . sph.s
- *
- *	# move all instances of bowl.c, from sph.s's bounding
- *	# box center to y=5, without changing the x and z coordinates.
- *	translate -k sph.s -a -y 5 bowl.c
- *
- *      # move instance of two.c, from instance of sph.s's
- *      # matrix-modified natural origin to x=5
- *      translate -n -k bowl.c/sph.s -a 5 one.c/two.c
- *
- *	# move all bowl.c instances and one instance of two.c from
- *	# x=-23,y=4,z=17 to x=9,y=2,z=1
- *	translate -k -23 4 17 -a 9 2 1 bowl.c one.c/two.c
- *
- *	    # exactly the same as above, using relative positioning
- *	    translate -k . -r 32 -2 16 bowl.c one.c/two.c
- *
- *	# these all do nothing
- *	translate -a . sph.s
- *	translate 0 sph.s
- *	translate -k 1 2 3 -a 1 2 3 sph.s
- *	translate -k 1 2 3 -r 0 sph.s
- *	translate -k . -a . sph.s
- *	translate -k sph.s -a sph.s sph.s
- *	translate -n -k . -n -a . sph.s
- *	translate -n -k sph.s -n -a sph.s sph.s
- *    
- *	# center sph1.s and sph2.s on natural origin of rcc.s
- *	translate -k . -n -a rcc.s sph1.s sph2.s
- *
- *      # center sph1.s on natural origin of rcc.s, and move sph.2
- *	# from center of sph1.s to natural origin of rcc.s (keypoint
- *	# is sph1.s's center, so sph2.s comes along for the ride)
- *      translate -n -a rcc.s sph1.s sph2.s
- *
- *	# move each of sph.s, sph2.s and sph3.s a relative x+5
- *	translate -k . -r 5 sph.s sph2.s sph3.s
- *	   
- *	    # same as above
- *	    translate -n -k . -r 5 sph.s sph2.s sph3.s
- *
- *	# move sph.s to a point z+10 above bounding box center of
- *	# /sph2.s
- *	translate -k sph2.s -r -z 10 sph.s
- *	   
- *	# move the bounding box center of all instances of sph.s
- *	# to the natural origin of rcc.s, and move sph2.s from
- *	# the bounding box center of sph.s to the natural origin of
- *	# rcc.s (both sph.s and sph2.s stay the same relative distance
- *	# from each other; they have shifted together)
- *	translate -n -a rcc.s sph.s sph2.s
- *
- *	# move the natural origins of all instances of sph.s
- *	# and sph2.s to the natural origin of rcc.s
- *	translate -n -k . -n -a rcc.s sph.s sph2.s
- *
- *	# move instance of two.c from x=93.2 to x=-41.7
- *	translate -k 93.2 -a -41.7 one.c/two.c
- *
- *	    # all of these have the same end result as above
- *	    translate -k -x 93.2 -a -41.7 one.c/two.c
- *	    translate -k -x 93.2 -a -x -41.7 one.c/two.c
- *	    translate -k 93.2 0 0 -a -41.7 0 0 one.c/two.c
- *	    translate -k 93.2 21 32 -a -41.7 21 32 one.c/two.c
- *
- *	    # same result as above, using a relative distance
- *	    translate -134.9 one.c/two.c
- *	    translate -r -134.9 one.c/two.c
- *	    translate -k . -r -134.9 one.c/two.c
  *
  */
 
@@ -664,6 +452,218 @@
  *                                                         
  */
 
+/*
+ * translate: Proposed operations, and manual page
+ *
+ * NAME
+ *	translate (alias for "edit translate")
+ *
+ * SYNOPSIS
+ *	translate [FROM] TO OBJECT ...
+ * 	translate [[-n] -k {FROM_OBJECT | FROM_POS}]
+ * 	    [-n] [-a | -r] {TO_OBJECT | TO_POS} OBJECT ...
+ *
+ *	*OBJECT:
+ *	    [PATH/]OBJECT [OFFSET_DIST]
+ *	    [PATH/]OBJECT [x [y [z]]]
+ *
+ *	*POS:
+ *	    {x [y [z]]} | {[-x {x | X_OBJ}] [-y {y | Y_OBJ}]
+ *	        [-z {z | Z_OBJ}]}
+ *
+ * DESCRIPTION
+ *	Used to move one or more instances of primitive or combination
+ *	objects. The positions of OBJECTs are translated from FROM to
+ *	TO.
+ *
+ *	If FROM is omitted, the bounding box center of the first
+ *	[PATH/]OBJECT is used instead. To use the natural origin of
+ *	the first [PATH/]OBJECT as FROM, FROM_OBJECT must be manually
+ *	set to [PATH/]OBJECT.
+ *
+ *	If FROM is "-k .", then each individual [PATH/]OBJECT argument
+ *	uses its own bounding box center (or natural origin if
+ *	"-n -k ." is used). Likewise, if TO is "-a ." or "-n -a ."
+ *
+ *	FROM_POS and TO_POS represent 3d points in "x y z"
+ *	coordinates. To specify one or more specific axis while
+ *	ignoring the others, the options "-x x", "-y y", "-z z" may be
+ *	used as FROM_POS or TO_POS.
+ *
+ * OPTIONS
+ * 	-n FROM_OBJECT | TO_OBJECT
+ *	    Use the natural origin of FROM_OBJECT and/or TO_OBJECT,
+ *	    rather than the default of its bounding box center.
+ *
+ * 	-k FROM_OBJECT | FROM_POS
+ *	    Sets the keypoint to FROM_OBJECT's bounding box
+ *	    center (or natural origin if -n is used). If this option
+ *	    is omitted, the keypoint defaults to OBJECT's bounding
+ *	    box center.
+ *
+ * 	-a TO_POS | TO_OBJECT
+ *	    Interpret TO_POS/TO_OBJECT as an absolute position. The
+ *	    vector implied by FROM and TO is used to move OBJECT. This
+ *	    option is required if TO_OBJECT is specified.
+ *
+ * 	-r TO_POS
+ *	    Interpret TO_POS as the relative distance to move OBJECT
+ *          from FROM keypoint. This is the default if TO_POS is set.
+ *	    Must be omitted if TO_OBJECT is specified.
+ *
+ *
+ * VISUAL EXAMPLE:
+ *	translate -n -k rcc.s -a sph.s table.c/box.c
+ *     
+ *      Move the instance of box.c in table.c from the natural origin
+ *	of rcc.s to the bounding box center of sph.s:
+ *
+ *	   |.| <=keypoint: natural origin of rcc.s         
+ *	                                                   
+ *	       o <= center of sph.2                        
+ *                                   [] <=box.c start      
+ *	                                                   
+ *	                                [] <=box.c moved   
+ *                                                         
+ * EXAMPLES
+ *
+ *	# move all instances of sph.s to x=1, y=2, z=3
+ *	translate -a 1 2 3 /sph.s
+ *
+ *	    # these all have the same effect as above
+ *	    translate -a 1 2 3 sph.s
+ *	    translate -k sph.s -a 1 2 3 sph.s
+ *	    translate -k . -a 1 2 3 sph.s
+ *
+ *      # A very practical use of
+ *	translate -k . -a . -x sph2.s sph1.s
+ *
+ *	# move all instances of sph.s from a point 5 units above
+ *	# sph.s's center to x=1, y=2, z=3, by using OFFSET_DIST of
+ *	# "-z 5".
+ *	translate -a 1 2 3 sph.s -z 5
+ *
+ *	    # these all have the same effect as above
+ *	    translate -k . -z 5 -a 1 2 3 sph.s
+ *	    translate -k sph.s -z 5 -a 1 2 3 sph.s
+ *
+ *	# OFFSET_DIST of "-z 5" is meaningless here, since OBJECT is
+ *	# not implicitly used to calculate the translation. This
+ *	# produces an error.
+ *	#translate -k sph.s -a 1 2 3 sph.s -z 5
+ *
+ *      # Place sph1.s and sph2.s at the same height as cube.s using
+ *      # OFFSET_DIST of Z_OBJ, and leaving x/y positions alone.
+ *      translate -a . -z sph.s sph2.s sph3.s
+ *
+ *      # Move sph1.s and sph2.s to a height offset 20 units above
+ *      # cube.s, while leaving x/y positions alone
+ *      translate -k . -z -20 -a -z cube.s sph1.s sph2.s
+ *
+ *          # these all have the same effect as above
+ *          translate -k . -z -20 -a . -z cube.s sph1.s sph2.s
+ *          translate -k . -a -z cube.s sph1.s -z -20 sph2.s -z -20
+ *          translate -k -x . -y . -z -20 -a -z cube.s sph1.s sph2.s
+ *          translate -k 6 7 -20 -a -x 6 -y 7 -z cube.s sph1.s sph2.s
+ *
+ *	# move sph2.s twice as far away from sph.s as it is now
+ *	translate -k sph.s -a . sph2.s
+ *
+ *	# move all instances of sph.s x+1,y+2,z+3
+ *	translate 1 2 3 sph.s
+ *
+ *	    # these all have the same effect as above
+ *	    translate -r 1 2 3 sph.s
+ *	    translate -k sph.s -r 1 2 3 sph.s
+ *	    translate -k . -r 1 2 3 sph.s
+ *
+ *	# move instance of sph.s in bowl.c x+1,y+2
+ *	translate 1 2 bowl.c/sph.s
+ *
+ *	# move instance of sph.s in bowl.c z+7
+ *	translate -z 7 bowl.c/sph.s
+ *
+ *	    # exactly the same as above (moving x+0 y+0 z+7)
+ *	    translate 0 0 7 bowl.c/sph.s
+ *
+ *      # move all sph.s from the bounding box center of sph.s to
+ *	# the natural origin of sph.s
+ *	translate -k sph.s -n -a sph.s sph.s
+ *
+ *	    # these all have the same effect as above
+ *	    translate -n -a . sph.s
+ *	    translate -k . -n -a . sph.s
+ *
+ *	# move all instances of bowl.c, from sph.s's bounding
+ *	# box center to y=5, without changing the x and z coordinates.
+ *	translate -k sph.s -a -y 5 bowl.c
+ *
+ *      # move instance of two.c, from instance of sph.s's
+ *      # matrix-modified natural origin to x=5
+ *      translate -n -k bowl.c/sph.s -a 5 one.c/two.c
+ *
+ *	# move all bowl.c instances and one instance of two.c from
+ *	# x=-23,y=4,z=17 to x=9,y=2,z=1
+ *	translate -k -23 4 17 -a 9 2 1 bowl.c one.c/two.c
+ *
+ *	    # exactly the same as above, using relative positioning
+ *	    translate -k . -r 32 -2 16 bowl.c one.c/two.c
+ *
+ *	# these all do nothing
+ *	translate -a . sph.s
+ *	translate 0 sph.s
+ *	translate -k 1 2 3 -a 1 2 3 sph.s
+ *	translate -k 1 2 3 -r 0 sph.s
+ *	translate -k . -a . sph.s
+ *	translate -k sph.s -a sph.s sph.s
+ *	translate -n -k . -n -a . sph.s
+ *	translate -n -k sph.s -n -a sph.s sph.s
+ *    
+ *	# center sph1.s and sph2.s on natural origin of rcc.s
+ *	translate -k . -n -a rcc.s sph1.s sph2.s
+ *
+ *      # center sph1.s on natural origin of rcc.s, and move sph.2
+ *	# from center of sph1.s to natural origin of rcc.s (keypoint
+ *	# is sph1.s's center, so sph2.s comes along for the ride)
+ *      translate -n -a rcc.s sph1.s sph2.s
+ *
+ *	# move each of sph.s, sph2.s and sph3.s a relative x+5
+ *	translate -k . -r 5 sph.s sph2.s sph3.s
+ *	   
+ *	    # same as above
+ *	    translate -n -k . -r 5 sph.s sph2.s sph3.s
+ *
+ *	# move sph.s to a point z+10 above bounding box center of
+ *	# /sph2.s
+ *	translate -k sph2.s -r -z 10 sph.s
+ *	   
+ *	# move the bounding box center of all instances of sph.s
+ *	# to the natural origin of rcc.s, and move sph2.s from
+ *	# the bounding box center of sph.s to the natural origin of
+ *	# rcc.s (both sph.s and sph2.s stay the same relative distance
+ *	# from each other; they have shifted together)
+ *	translate -n -a rcc.s sph.s sph2.s
+ *
+ *	# move the natural origins of all instances of sph.s
+ *	# and sph2.s to the natural origin of rcc.s
+ *	translate -n -k . -n -a rcc.s sph.s sph2.s
+ *
+ *	# move instance of two.c from x=93.2 to x=-41.7
+ *	translate -k 93.2 -a -41.7 one.c/two.c
+ *
+ *	    # all of these have the same end result as above
+ *	    translate -k -x 93.2 -a -41.7 one.c/two.c
+ *	    translate -k -x 93.2 -a -x -41.7 one.c/two.c
+ *	    translate -k 93.2 0 0 -a -41.7 0 0 one.c/two.c
+ *	    translate -k 93.2 21 32 -a -41.7 21 32 one.c/two.c
+ *
+ *	    # same result as above, using a relative distance
+ *	    translate -134.9 one.c/two.c
+ *	    translate -r -134.9 one.c/two.c
+ *	    translate -k . -r -134.9 one.c/two.c
+ *
+ */
+
 /* Max # of global options + max number of options for a single arg */
 #define EDIT_MAX_ARG_OPTIONS 3
 
@@ -778,8 +778,10 @@ union edit_cmd{
  * Command specific information, for a table of available commands.
  */
 typedef void (*init_handler)(union edit_cmd *const cmd);
-typedef int (*exec_handler)(struct ged *gedp, const union edit_cmd *const cmd);
-typedef int (*add_cl_args_handler)(struct ged *gedp, union edit_cmd *const cmd,
+typedef int (*exec_handler)(struct ged *gedp,
+			    const union edit_cmd *const cmd);
+typedef int (*add_cl_args_handler)(struct ged *gedp,
+				   union edit_cmd *const cmd,
 				   const int flags);
 typedef struct edit_arg * (*get_next_arg_head_handler)(
 	const union edit_cmd *const cmd);
@@ -968,14 +970,14 @@ edit_arg_free_all(struct edit_arg *arg)
  * Free any dynamically allocated argument nodes that may exist
  */
 HIDDEN void
-edit_cmd_free(union edit_cmd *const subcmd)
+edit_cmd_free(union edit_cmd *const cmd)
 {
-    struct edit_arg *arg_head = subcmd->common.objects;
+    struct edit_arg *arg_head = cmd->common.objects;
     do {
 	if (arg_head)
 	    edit_arg_free_all(arg_head);
-	arg_head = subcmd->cmd->get_next_arg_head(subcmd);
-    } while (arg_head != subcmd->common.objects);
+	arg_head = cmd->cmd->get_next_arg_head(cmd);
+    } while (arg_head != cmd->common.objects);
 }
 
 /**
@@ -995,7 +997,7 @@ edit_cmd_get_next_arg_head(struct edit_arg *const arg_heads[],
 }
 
 /* 
- * Command specific functions.
+ * Command-specific functions.
  *
  * The functions for the first command (currently, rotate) will be
  * documented well to introduce the concepts. Documentation of
@@ -1020,9 +1022,10 @@ edit_cmd_get_next_arg_head(struct edit_arg *const arg_heads[],
  * Rotate an object by specifying points.
  */
 int
-edit_rotate(struct ged *gedp, vect_t *axis_from, vect_t *axis_to,
-	     vect_t *center, vect_t *angle_origin, vect_t *angle_from,
-	     vect_t *angle_to, struct db_full_path *path)
+edit_rotate(struct ged *gedp, const vect_t *const axis_from,
+	    const vect_t *const axis_to, const vect_t *const center,
+	    const vect_t *const angle_origin, const vect_t *const angle_from,
+	    const vect_t *const angle_to, const struct db_full_path *const path)
 {
     (void)gedp;
     (void)axis_from;
@@ -1039,14 +1042,14 @@ edit_rotate(struct ged *gedp, vect_t *axis_from, vect_t *axis_to,
  * Initialize command argument-pointer members to NULL.
  */
 void
-edit_rotate_init(union edit_cmd *const subcmd)
+edit_rotate_init(union edit_cmd *const cmd)
 {
-    subcmd->rotate.objects =
-    subcmd->rotate.center =
-    subcmd->rotate.ref_angle.from =
-    subcmd->rotate.ref_angle.to =
-    subcmd->rotate.ref_axis.from =
-    subcmd->rotate.ref_axis.to =
+    cmd->rotate.objects =
+    cmd->rotate.center =
+    cmd->rotate.ref_angle.from =
+    cmd->rotate.ref_angle.to =
+    cmd->rotate.ref_axis.from =
+    cmd->rotate.ref_axis.to =
     (struct edit_arg *)NULL;
 }
 
@@ -1061,13 +1064,13 @@ int
 edit_rotate_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 {
     return edit_rotate(gedp,
-		       cmd->rotate.ref_axis.from->vector,
-		       cmd->rotate.ref_axis.to->vector,
-		       cmd->rotate.center->vector,
-		       cmd->rotate.ref_angle.origin->vector,
-		       cmd->rotate.ref_angle.from->vector,
-		       cmd->rotate.ref_angle.to->vector,
-		       cmd->rotate.objects->object);
+	(const vect_t *const)cmd->rotate.ref_axis.from->vector,
+	(const vect_t *const)cmd->rotate.ref_axis.to->vector,
+	(const vect_t *const)cmd->rotate.center->vector,
+	(const vect_t *const)cmd->rotate.ref_angle.origin->vector,
+	(const vect_t *const)cmd->rotate.ref_angle.from->vector,
+	(const vect_t *const)cmd->rotate.ref_angle.to->vector,
+	(const struct db_full_path *const)cmd->rotate.objects->object);
 }
 
 /*
@@ -1123,9 +1126,10 @@ edit_rotate_get_next_arg_head(const union edit_cmd *const cmd)
  * Scale an object by specifying points.
  */
 int
-edit_scale(struct ged *gedp, vect_t *scale_from, vect_t *scale_to,
-	    vect_t *center, vect_t *factor_from, vect_t *factor_to,
-	    struct db_full_path *path)
+edit_scale(struct ged *gedp, const vect_t *const scale_from,
+	   const vect_t *const scale_to, const vect_t *const center,
+	   const vect_t *const factor_from, const vect_t *const factor_to,
+	   const struct db_full_path *const path)
 {
     (void)gedp;
     (void)scale_from;
@@ -1141,14 +1145,14 @@ edit_scale(struct ged *gedp, vect_t *scale_from, vect_t *scale_to,
  * Initialize command argument-pointer members to NULL.
  */
 void
-edit_scale_init(union edit_cmd *const subcmd)
+edit_scale_init(union edit_cmd *const cmd)
 {
-    subcmd->scale.objects =
-    subcmd->scale.center =
-    subcmd->scale.ref_factor.from =
-    subcmd->scale.ref_factor.to =
-    subcmd->scale.ref_scale.from =
-    subcmd->scale.ref_scale.to =
+    cmd->scale.objects =
+    cmd->scale.center =
+    cmd->scale.ref_factor.from =
+    cmd->scale.ref_factor.to =
+    cmd->scale.ref_scale.from =
+    cmd->scale.ref_scale.to =
     (struct edit_arg *)NULL;
 }
 
@@ -1163,12 +1167,12 @@ int
 edit_scale_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 {
     return edit_scale(gedp,
-		      cmd->scale.ref_scale.from->vector,
-		      cmd->scale.ref_scale.to->vector,
-		      cmd->scale.center->vector,
-		      cmd->scale.ref_factor.from->vector,
-		      cmd->scale.ref_factor.to->vector,
-		      cmd->scale.objects->object);
+	(const vect_t *const)cmd->scale.ref_scale.from->vector,
+	(const vect_t *const)cmd->scale.ref_scale.to->vector,
+	(const vect_t *const)cmd->scale.center->vector,
+	(const vect_t *const)cmd->scale.ref_factor.from->vector,
+	(const vect_t *const)cmd->scale.ref_factor.to->vector,
+	(const struct db_full_path *const)cmd->scale.objects->object);
 }
 
 /*
@@ -1209,12 +1213,12 @@ edit_scale_get_next_arg_head(const union edit_cmd *const cmd)
 				      &idx);
 }
 
-/**
- * Perform a translation on an object by specifying points.
+/** * Perform a translation on an object by specifying points.
  */
 int
-edit_translate(struct ged *gedp, vect_t *from, vect_t *to,
-		struct db_full_path *path)
+edit_translate(struct ged *gedp, const vect_t *const from,
+	       const vect_t *const to,
+	       const struct db_full_path *const path)
 {
     struct directory *d_to_modify = NULL;
     struct directory *d_obj = NULL;
@@ -1291,11 +1295,11 @@ edit_translate(struct ged *gedp, vect_t *from, vect_t *to,
  * Initialize command argument-pointer members to NULL.
  */
 void
-edit_translate_init(union edit_cmd *const subcmd)
+edit_translate_init(union edit_cmd *const cmd)
 {
-    subcmd->translate.objects =
-    subcmd->translate.ref_vector.from =
-    subcmd->translate.ref_vector.to =
+    cmd->translate.objects =
+    cmd->translate.ref_vector.from =
+    cmd->translate.ref_vector.to =
     (struct edit_arg *)NULL;
 }
 
@@ -1310,9 +1314,9 @@ int
 edit_translate_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 {
     return edit_translate(gedp,
-			  cmd->translate.ref_vector.from->vector,
-			  cmd->translate.ref_vector.to->vector,
-			  cmd->translate.objects->object);
+	(const vect_t *const)cmd->translate.ref_vector.from->vector,
+	(const vect_t *const)cmd->translate.ref_vector.to->vector,
+	(const struct db_full_path *const)cmd->translate.objects->object);
 }
 
 /**
@@ -1735,7 +1739,8 @@ edit(struct ged *gedp, union edit_cmd *const subcmd, const int flags)
 		edit_arg_expand(gedp, cur_arg, subcmd->common.objects,
 				(noisy ? GED_ERROR : GED_OK));
 	    else if (cur_arg->object)
-		edit_arg_to_coord(gedp, cur_arg);	
+		if (edit_arg_to_coord(gedp, cur_arg) == GED_ERROR)
+		    return GED_ERROR;
 	}
     }
 
