@@ -719,8 +719,7 @@ struct edit_arg {
 #define EDIT_TARGET_OBJ_BATCH_TYPES (EDIT_NATURAL_ORIGIN)
 
 
-/*
- * Arg groupings for each command.
+/* * Arg groupings for each command.
  */
 union edit_cmd{
     const struct edit_cmd_tab *cmd;
@@ -778,13 +777,11 @@ union edit_cmd{
  * Command specific information, for a table of available commands.
  */
 typedef void (*init_handler)(union edit_cmd *const cmd);
-typedef int (*exec_handler)(struct ged *gedp,
-			    const union edit_cmd *const cmd);
-typedef int (*add_cl_args_handler)(struct ged *gedp,
-				   union edit_cmd *const cmd,
+typedef int (*exec_handler)(struct ged *gedp, const union edit_cmd *const cmd);
+typedef int (*add_cl_args_handler)(struct ged *gedp, union edit_cmd *const cmd,
 				   const int flags);
-typedef struct edit_arg * (*get_next_arg_head_handler)(
-	const union edit_cmd *const cmd);
+typedef struct edit_arg ** (*get_next_arg_head_handler)(
+	const union edit_cmd *const cmd, int idx);
 
 struct edit_cmd_tab {
     char *name;
@@ -884,8 +881,8 @@ edit_arg_duplicate_in_place(struct edit_arg *const dest,
 
 /**
  * Duplicate an argument node into a new argument. Caller is
- * responsible for freeing destination argument, if necessary,
- * using the appropriate edit_arg_free*() function.
+ * responsible for freeing destination argument, using the
+ * appropriate edit_arg_free*() function.
  */
 HIDDEN void
 edit_arg_duplicate(struct edit_arg **dest, const struct edit_arg *src)
@@ -972,28 +969,39 @@ edit_arg_free_all(struct edit_arg *arg)
 HIDDEN void
 edit_cmd_free(union edit_cmd *const cmd)
 {
-    struct edit_arg *arg_head = cmd->common.objects;
+    struct edit_arg **arg_head;
+    int i = 0;
+
+    arg_head = cmd->cmd->get_next_arg_head(cmd, i);
     do {
-	if (arg_head)
-	    edit_arg_free_all(arg_head);
-	arg_head = cmd->cmd->get_next_arg_head(cmd);
-    } while (arg_head != cmd->common.objects);
+	if (*arg_head) {
+	    edit_arg_free_all(*arg_head);
+	    *arg_head = NULL;
+	}
+    } while (*(arg_head = cmd->cmd->get_next_arg_head(cmd, ++i)) !=
+	     cmd->common.objects);
 }
 
 /**
- * Provide an array of arguments and the current argument, and this
- * function will return the next argument. It loops around, so the
- * caller is responsible for keeping track of whether they have
- * already handled an argument or not.
+ * Perform a shallow copy of a subcommand's argument grouping.
  */
-HIDDEN struct edit_arg *
-edit_cmd_get_next_arg_head(struct edit_arg *const arg_heads[],
-			   const int len, int *const idx)
+HIDDEN void
+edit_cmd_sduplicate(union edit_cmd *const dest,
+		    const union edit_cmd *const src)
 {
-    ++(*idx);
-    if (*idx >= len)
-	*idx = 0;
-    return arg_heads[*idx];
+    struct edit_arg **src_head = NULL;
+    struct edit_arg **dest_head;
+    int i = 0;
+
+    /* never try to duplicate dissimilar command types */
+    BU_ASSERT_PTR(dest->cmd, ==, src->cmd);
+
+    src_head = src->cmd->get_next_arg_head(src, i);
+    do {
+	dest_head = dest->cmd->get_next_arg_head(dest, i);
+	*dest_head = *src_head;
+    } while (*(src_head = src->cmd->get_next_arg_head(src, ++i)) !=
+	     src->common.objects);
 }
 
 /* 
@@ -1014,7 +1022,6 @@ edit_cmd_get_next_arg_head(struct edit_arg *const arg_heads[],
  *		e) wrap the command, to alternatively accept a union
  *		   edit_cmd
  *	3) add command data/function pointers to the command table
- *
  */
 
 
@@ -1097,29 +1104,23 @@ edit_rotate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
  *
  * FIXME: Kind of dirty; haven't found a better way yet, though.
  */
-struct edit_arg *
-edit_rotate_get_next_arg_head(const union edit_cmd *const cmd)
+struct edit_arg **
+edit_rotate_get_next_arg_head(const union edit_cmd *const cmd, int idx)
 {
 #define EDIT_ROTATE_ARG_HEADS_LEN 7
-    static int idx = -1;
-    struct edit_arg *arg_heads[EDIT_ROTATE_ARG_HEADS_LEN];
+    const struct edit_arg **arg_heads[EDIT_ROTATE_ARG_HEADS_LEN];
 
-    if (!cmd) {
-	/* (re)initialize */
-	idx = -1;
-	return (struct edit_arg *) NULL;
-    }
+    idx %= EDIT_ROTATE_ARG_HEADS_LEN - 1;
 
-    arg_heads[0] = cmd->rotate.objects;
-    arg_heads[1] = cmd->rotate.ref_axis.from;
-    arg_heads[2] = cmd->rotate.ref_axis.to;
-    arg_heads[3] = cmd->rotate.center;
-    arg_heads[4] = cmd->rotate.ref_angle.origin;
-    arg_heads[5] = cmd->rotate.ref_angle.from;
-    arg_heads[6] = cmd->rotate.ref_angle.to;
+    arg_heads[0] = (const struct edit_arg **)&cmd->rotate.objects;
+    arg_heads[1] = (const struct edit_arg **)&cmd->rotate.ref_axis.from;
+    arg_heads[2] = (const struct edit_arg **)&cmd->rotate.ref_axis.to;
+    arg_heads[3] = (const struct edit_arg **)&cmd->rotate.center;
+    arg_heads[4] = (const struct edit_arg **)&cmd->rotate.ref_angle.origin;
+    arg_heads[5] = (const struct edit_arg **)&cmd->rotate.ref_angle.from;
+    arg_heads[6] = (const struct edit_arg **)&cmd->rotate.ref_angle.to;
 
-    return edit_cmd_get_next_arg_head(arg_heads, EDIT_ROTATE_ARG_HEADS_LEN,
-				      &idx);
+    return (struct edit_arg **)arg_heads[idx];
 }
 
 /**
@@ -1189,28 +1190,22 @@ edit_scale_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
     return GED_OK;
 }
 
-struct edit_arg *
-edit_scale_get_next_arg_head(const union edit_cmd *const cmd)
+struct edit_arg **
+edit_scale_get_next_arg_head(const union edit_cmd *const cmd, int idx)
 {
 #define EDIT_SCALE_ARG_HEADS_LEN 6
-    static int idx = -1;
-    struct edit_arg *arg_heads[EDIT_SCALE_ARG_HEADS_LEN];
+    const struct edit_arg **arg_heads[EDIT_SCALE_ARG_HEADS_LEN];
 
-    if (!cmd) {
-	/* (re)initialize */
-	idx = -1;
-	return (struct edit_arg *) NULL;
-    }
+    idx %= EDIT_SCALE_ARG_HEADS_LEN  - 1;
 
-    arg_heads[0] = cmd->scale.objects;
-    arg_heads[1] = cmd->scale.ref_scale.from;
-    arg_heads[2] = cmd->scale.ref_scale.to;
-    arg_heads[3] = cmd->scale.center;
-    arg_heads[4] = cmd->scale.ref_factor.from;
-    arg_heads[5] = cmd->scale.ref_factor.to;
+    arg_heads[0] = (const struct edit_arg **)&cmd->scale.objects;
+    arg_heads[1] = (const struct edit_arg **)&cmd->scale.ref_scale.from;
+    arg_heads[2] = (const struct edit_arg **)&cmd->scale.ref_scale.to;
+    arg_heads[3] = (const struct edit_arg **)&cmd->scale.center;
+    arg_heads[4] = (const struct edit_arg **)&cmd->scale.ref_factor.from;
+    arg_heads[5] = (const struct edit_arg **)&cmd->scale.ref_factor.to;
 
-    return edit_cmd_get_next_arg_head(arg_heads, EDIT_SCALE_ARG_HEADS_LEN,
-				      &idx);
+    return (struct edit_arg **)arg_heads[idx];
 }
 
 /** * Perform a translation on an object by specifying points.
@@ -1223,15 +1218,7 @@ edit_translate(struct ged *gedp, const vect_t *const from,
     struct directory *d_to_modify = NULL;
     struct directory *d_obj = NULL;
     vect_t delta;
-
     struct rt_db_internal intern;
-    struct _ged_trace_data gtd;
-    mat_t dmat;
-    mat_t emat;
-    mat_t tmpMat;
-    mat_t invXform;
-    point_t rpp_min;
-    point_t rpp_max;
 
     VSUB2(delta, *to, *from);
     d_obj = DB_FULL_PATH_CUR_DIR(path);
@@ -1263,6 +1250,14 @@ edit_translate(struct ged *gedp, const vect_t *const from,
 	/* no path; move all obj instances (obj's entire tree
 	 * modified)
 	 */
+	struct _ged_trace_data gtd;
+	mat_t dmat;
+	mat_t emat;
+	mat_t tmpMat;
+	mat_t invXform;
+	point_t rpp_min;
+	point_t rpp_max;
+
 	d_to_modify = d_obj;
 	if (_ged_get_obj_bounds2(gedp, 1, (const char **)&d_to_modify->d_namep,
 				 &gtd, rpp_min, rpp_max) == GED_ERROR)
@@ -1440,25 +1435,19 @@ err_option_unknown:
     return GED_ERROR;
 }
 
-struct edit_arg *
-edit_translate_get_next_arg_head(const union edit_cmd *const cmd)
+struct edit_arg **
+edit_translate_get_next_arg_head(const union edit_cmd *const cmd, int idx)
 {
 #define EDIT_TRANSLATE_ARG_HEADS_LEN 3
-    struct edit_arg *arg_heads[EDIT_TRANSLATE_ARG_HEADS_LEN];
-    static int idx = -1;
+    const struct edit_arg **arg_heads[EDIT_TRANSLATE_ARG_HEADS_LEN];
+
+    idx %= EDIT_TRANSLATE_ARG_HEADS_LEN - 1;
     
-    if (!cmd) {
-	/* (re)initialize */
-	idx = -1;
-	return (struct edit_arg *) NULL;
-    }
+    arg_heads[0] = (const struct edit_arg **)&cmd->translate.objects;
+    arg_heads[1] = (const struct edit_arg **)&cmd->translate.ref_vector.from;
+    arg_heads[2] = (const struct edit_arg **)&cmd->translate.ref_vector.to;
 
-    arg_heads[0] = cmd->translate.objects;
-    arg_heads[1] = cmd->translate.ref_vector.from;
-    arg_heads[2] = cmd->translate.ref_vector.to;
-
-    return edit_cmd_get_next_arg_head(arg_heads, EDIT_TRANSLATE_ARG_HEADS_LEN,
-				      &idx);
+    return (struct edit_arg **)arg_heads[idx];
 }
 
 /* 
@@ -1606,7 +1595,7 @@ edit_arg_to_apparent_coord(struct ged *gedp, struct edit_arg *arg,
 int
 edit_arg_to_coord(struct ged *gedp, struct edit_arg *const arg)
 {
-    vect_t obj_coord;
+    vect_t obj_coord = VINIT_ZERO;
 
     if (edit_arg_to_apparent_coord(gedp, arg, &obj_coord) == GED_ERROR)
 	return GED_ERROR;
@@ -1708,18 +1697,25 @@ edit_arg_expand(struct ged *gedp, struct edit_arg *meta_arg,
 int
 edit(struct ged *gedp, union edit_cmd *const subcmd, const int flags)
 {
+    struct edit_arg **arg_head_ptr;
     struct edit_arg *arg_head;
     struct edit_arg *cur_arg;
     const int noisy = (flags & GED_ERROR); /* side with verbosity */
+    union edit_cmd subcmd_iter; /* to iterate through subcmd args */
+    int i = 0;
+    int ret = 0;
+    int batch_ops_done = 0;
 
-    /* initialize */
-    (void)subcmd->cmd->get_next_arg_head((union edit_cmd *)NULL);
+    /* count args at each level in lists, to detect (erroneous)
+     * decreases in the amount of args */
+    int num_arg_heads_set = 0;
+    int num_args_set = 0;
 
     /* check all arg nodes in subcmd->common.objects first; they may
      * be copied later if there are any batch modifiers to expand.
      */
-    arg_head = subcmd->cmd->get_next_arg_head(subcmd);
-    for (cur_arg = arg_head; cur_arg; cur_arg = cur_arg->next) {
+    arg_head_ptr = subcmd->cmd->get_next_arg_head(subcmd, i++);
+    for (cur_arg = *arg_head_ptr; cur_arg; cur_arg = cur_arg->next) {
 	/* target objects must be... objects */
 	BU_ASSERT(cur_arg->object);
 
@@ -1728,8 +1724,11 @@ edit(struct ged *gedp, union edit_cmd *const subcmd, const int flags)
     }
 
     /* process all other arg nodes */
-    while ((arg_head = subcmd->cmd->get_next_arg_head(subcmd)) != 
+    while (*(arg_head_ptr = subcmd->cmd->get_next_arg_head(subcmd, i++)) != 
 	   subcmd->common.objects) {
+	arg_head = *arg_head_ptr;
+	if (arg_head != NULL)
+	    ++num_arg_heads_set;
 	for (cur_arg = arg_head; cur_arg; cur_arg = cur_arg->next) {
 
 	    /* cmd line opts should have been handled/removed */
@@ -1744,7 +1743,34 @@ edit(struct ged *gedp, union edit_cmd *const subcmd, const int flags)
 	}
     }
 
-    return subcmd->cmd->exec(gedp, subcmd); /* GED_ERROR or GED_OK */
+    /* execute cmd on first, and possibly the only, set of args */
+    if((ret = subcmd->cmd->exec(gedp, subcmd)) == GED_ERROR)
+	return GED_ERROR;
+	
+    /* iterate over each set of batch args and execute subcmd */
+    subcmd_iter.cmd = subcmd->cmd;
+    subcmd_iter.cmd->init(&subcmd_iter);
+    edit_cmd_sduplicate(&subcmd_iter, subcmd);
+    i = 0; /* reinit for get_next_arg_head() */
+    arg_head_ptr = subcmd_iter.cmd->get_next_arg_head(&subcmd_iter, i);
+    do {
+	batch_ops_done = 1;
+	/* set all heads to the next arguments in their lists */
+	do {
+	    if (*arg_head_ptr && (*arg_head_ptr = (*arg_head_ptr)->next)) {
+		batch_ops_done = 0;
+		++num_args_set;
+	    }
+	} while (*(arg_head_ptr =
+		 subcmd_iter.cmd->get_next_arg_head(&subcmd_iter, i)) !=
+		 subcmd_iter.common.objects);
+	BU_ASSERT(num_arg_heads_set == num_args_set);
+	num_args_set = 0;
+	ret = subcmd_iter.cmd->exec(gedp, &subcmd_iter);
+    } while (!batch_ops_done && (ret != GED_ERROR));
+    edit_cmd_free(&subcmd_iter);
+
+    return ret;
 }
 
 /**
