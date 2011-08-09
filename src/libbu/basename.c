@@ -38,13 +38,13 @@ bu_basename(const char *str)
 
     /* Skip leading '/'s */
     while (*p != '\0')
-	if (*p++ == '/' && *p != '/' && *p != '\0')
+	if (*p++ == BU_DIR_SEPARATOR && *p != BU_DIR_SEPARATOR && *p != '\0')
 	    str = p;
 
     len = strlen(str);
     
     /* Remove trailing '/'s */
-    while (len > 1 && str[len - 1] == '/')
+    while (len > 1 && str[len - 1] == BU_DIR_SEPARATOR)
 	len--;
     
     /* Create a new string */
