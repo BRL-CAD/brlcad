@@ -58,7 +58,7 @@ make_shape(struct rt_wdb *fd, int verbose, int debug, size_t idx, size_t num, po
     struct bu_vls str_sketch;
     struct bu_vls str_extrude;
 
-    struct rt_sketch_internal *skt = NULL;
+    struct rt_sketch_internal skt;
     struct line_seg *lsg = NULL;
 
     /* nothing to do? */
@@ -74,24 +74,20 @@ make_shape(struct rt_wdb *fd, int verbose, int debug, size_t idx, size_t num, po
     if (verbose || debug)
 	bu_log("%zu vertices\n", num);
 
-    skt = (struct rt_sketch_internal *)bu_calloc(1, sizeof(struct rt_sketch_internal), "sketch");
-    skt->magic = RT_SKETCH_INTERNAL_MAGIC;
+    skt.magic = RT_SKETCH_INTERNAL_MAGIC;
 
-    VMOVE(skt->V, V);
-    VSET(skt->u_vec, 1.0, 0.0, 0.0);
-    VSET(skt->v_vec, 0.0, 1.0, 0.0);
+    VMOVE(skt.V, V);
+    VSET(skt.u_vec, 1.0, 0.0, 0.0);
+    VSET(skt.v_vec, 0.0, 1.0, 0.0);
 
-    skt->vert_count = num;
-    skt->verts = (point2d_t *)bu_calloc(skt->vert_count, sizeof( point2d_t ), "verts");
-    for (i = 0; i < skt->vert_count; i++ ) {
-	V2MOVE(skt->verts[i], v[i]);
-    }
+    skt.vert_count = num;
+    skt.verts = v;
 
     /* Specify number of segments */
-    skt->curve.count = num;
+    skt.curve.count = num;
     /* FIXME: investigate allocation */
-    skt->curve.reverse = (int *)bu_calloc(skt->curve.count, sizeof(int), "sketch: reverse");
-    skt->curve.segment = (genptr_t *)bu_calloc(skt->curve.count, sizeof(genptr_t), "segs");
+    skt.curve.reverse = (int *)bu_calloc(skt.curve.count, sizeof(int), "sketch: reverse");
+    skt.curve.segment = (genptr_t *)bu_calloc(skt.curve.count, sizeof(genptr_t), "segs");
 
     /* Insert all line segments except the last one */
     for (i = 0; i < num-1; i++) {
@@ -99,7 +95,7 @@ make_shape(struct rt_wdb *fd, int verbose, int debug, size_t idx, size_t num, po
 	lsg->magic = CURVE_LSEG_MAGIC;
 	lsg->start = i;
 	lsg->end = i + 1;
-	skt->curve.segment[i] = (genptr_t)lsg;
+	skt.curve.segment[i] = (genptr_t)lsg;
     }
 
     /* Connect the last connected vertex to the first vertex */
@@ -107,21 +103,23 @@ make_shape(struct rt_wdb *fd, int verbose, int debug, size_t idx, size_t num, po
     lsg->magic = CURVE_LSEG_MAGIC;
     lsg->start = num - 1;
     lsg->end = 0;
-    skt->curve.segment[num - 1] = (genptr_t)lsg;
+    skt.curve.segment[num - 1] = (genptr_t)lsg;
 
     /* write out sketch shape */
     bu_vls_init(&str_sketch);
     bu_vls_sprintf(&str_sketch, "shape-%zu.sketch", idx);
-    mk_sketch(fd, bu_vls_addr(&str_sketch), skt);
+    mk_sketch(fd, bu_vls_addr(&str_sketch), &skt);
 
     /* extrude the shape */
     bu_vls_init(&str_extrude);
     bu_vls_sprintf(&str_extrude, "shape-%zu.extrude", idx);
     VSET(h, 0.0, 0.0, 10.0); /* FIXME: arbitrary height */
-    mk_extrusion(fd, bu_vls_addr(&str_extrude), bu_vls_addr(&str_sketch), skt->V, h, skt->u_vec, skt->v_vec, 0);
+    mk_extrusion(fd, bu_vls_addr(&str_extrude), bu_vls_addr(&str_sketch), skt.V, h, skt.u_vec, skt.v_vec, 0);
 
+    /* clean up  */
     bu_vls_free(&str_sketch);
     bu_vls_free(&str_extrude);
+    rt_curve_free(&skt.curve);
 
     return 0;
 }
