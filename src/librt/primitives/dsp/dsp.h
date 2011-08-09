@@ -23,12 +23,11 @@
  */
 
 /* access to the DSP data array */
-# define DSP(_p, _x, _y) (			\
-	(					\
-	    (unsigned short *)			\
-	    ((_p)->dsp_buf)			\
-	    )[					\
-		(_y) * ((struct rt_dsp_internal *)_p)->dsp_xcnt + (_x) ] )
+# define DSP(_p, _x, _y) (						\
+	((_p) && (_p)->dsp_buf) ?					\
+	((unsigned short *)((_p)->dsp_buf))[				\
+	    (_y) * ((struct rt_dsp_internal *)_p)->dsp_xcnt + (_x)	\
+	    ] : 0)
 
 
 /*
