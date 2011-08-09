@@ -134,7 +134,7 @@ main(int argc, char **argv)
     mk_id(outfp, "sketch test");
     mk_sketch(outfp, "test_sketch", &skt);
 
-    /* cleanup and release */
+    /* cleanup */
     wdb_close(outfp);
 
     return 0;
