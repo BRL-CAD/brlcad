@@ -41,7 +41,7 @@
 
 /* For communication between interface routine and each of the threads */
 struct rt_many_internal {
-    long			magic;
+    uint32_t			magic;
     long			cur_index;		/* semaphored */
     long			max_index;
     const struct application *proto_ap;

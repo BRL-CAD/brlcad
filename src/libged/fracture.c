@@ -98,7 +98,7 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
     struct shell *s, *new_s;
     struct faceuse *fu;
     struct vertex *v_new, *v;
-    unsigned long tw, tf, tp;
+    size_t tw, tf, tp;
     static const char *usage = "nmg_solid [prefix]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -146,7 +146,7 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
 
     maxdigits = (int)(log10((double)(tf+tw+tp)) + 1.0);
 
-    bu_vls_printf(gedp->ged_result_str, "%ld = %d digits\n", (long)(tf+tw+tp), maxdigits);
+    bu_vls_printf(gedp->ged_result_str, "%zu = %d digits\n", tf+tw+tp, maxdigits);
 
     /* for (maxdigits=1, i=tf+tw+tp; i > 0; i /= 10)
      * maxdigits++;

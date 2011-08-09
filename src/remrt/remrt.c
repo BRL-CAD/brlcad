@@ -86,7 +86,7 @@ struct command_tab rt_cmdtab[] = {
 struct frame {
     struct frame	*fr_forw;
     struct frame	*fr_back;
-    unsigned long	fr_magic;	/* magic number */
+    uint32_t		fr_magic;	/* magic number */
     long		fr_number;	/* frame number */
     long		fr_server;	/* server number assigned. */
     char		*fr_filename;	/* name of output file */
@@ -300,8 +300,8 @@ struct frame *FreeFrame;
 		bu_log("NULL %s in %s line %d\n", _str, __FILE__, __LINE__ ); \
 		abort(); \
 	} else if ( (_q)->_el != _magic )  { \
-		bu_log("ERROR %s=%p magic was=%p s/b=%p in %s line %d\n", \
-		       _str, (void *)(_q), (void *)((_q)->_el), (void *)(_magic), __FILE__, __LINE__ ); \
+		bu_log("ERROR %s=%p magic was=%lx s/b=%lx in %s line %d\n", \
+		       _str, (void *)(_q), (unsigned long)((_q)->_el), (unsigned long)(_magic), __FILE__, __LINE__ ); \
 		abort(); \
 	}
 

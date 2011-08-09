@@ -50,7 +50,7 @@
 
 
 struct grip_specific {
-    long grip_magic;
+    uint32_t grip_magic;
     vect_t grip_center;
     vect_t grip_normal;
     fastf_t grip_mag;

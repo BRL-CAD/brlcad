@@ -229,14 +229,14 @@
 #else
 #  define BU_CKMAG(_ptr, _magic, _str) { \
 	uintptr_t _ptrval = (uintptr_t)(_ptr); \
-	if (UNLIKELY((_ptrval == 0) || (_ptrval & (sizeof(_ptrval)-1)) || *((unsigned long *)(_ptr)) != (unsigned long)(_magic))) { \
-	    bu_badmagic((unsigned long *)(_ptr), (unsigned long)_magic, _str, __FILE__, __LINE__); \
+	if (UNLIKELY((_ptrval == 0) || (_ptrval & (sizeof(_ptrval)-1)) || *((uint32_t *)(_ptr)) != (uint32_t)(_magic))) { \
+	    bu_badmagic((uint32_t *)(_ptr), (uint32_t)_magic, _str, __FILE__, __LINE__); \
 	} \
     }
 #  define BU_CKMAG_TCL(_interp, _ptr, _magic, _str) { \
 	uintptr_t _ptrval = (uintptr_t)(_ptr); \
-	if (UNLIKELY((_ptrval == 0) || (_ptrval & (sizeof(_ptrval)-1)) || *((unsigned long *)(_ptr)) != (_magic))) { \
-	    bu_badmagic_tcl((_interp), (unsigned long *)(_ptr), (unsigned long)_magic, _str, __FILE__, __LINE__); \
+	if (UNLIKELY((_ptrval == 0) || (_ptrval & (sizeof(_ptrval)-1)) || *((uint32_t *)(_ptr)) != (_magic))) { \
+	    bu_badmagic_tcl((_interp), (uint32_t *)(_ptr), (uint32_t)_magic, _str, __FILE__, __LINE__); \
 	    return TCL_ERROR; \
 	} \
     }
@@ -248,7 +248,7 @@
  *
  *  Support routine for BU_CKMAG macro.
  */
-BU_EXPORT extern void bu_badmagic(const unsigned long *ptr, unsigned long magic, const char *str, const char *file, int line);
+BU_EXPORT extern void bu_badmagic(const uint32_t *ptr, uint32_t magic, const char *str, const char *file, int line);
 
 /**
  * b u _ b a d m a g i c _ t c l
@@ -271,7 +271,7 @@ BU_EXPORT extern void bu_badmagic(const unsigned long *ptr, unsigned long magic,
  * @return
  * void
  */
-BU_EXPORT extern void bu_badmagic_tcl(Tcl_Interp *interp, const unsigned long *ptr, unsigned long magic, const char *str, const char *file, int line);
+BU_EXPORT extern void bu_badmagic_tcl(Tcl_Interp *interp, const uint32_t *ptr, uint32_t magic, const char *str, const char *file, int line);
 
 
 /**
@@ -283,7 +283,7 @@ BU_EXPORT extern void bu_badmagic_tcl(Tcl_Interp *interp, const unsigned long *p
  * macro BU_CK_MAGIC() to provide a "hint" as to what sort of pointer
  * error might have been made.
  */
-BU_EXPORT extern const char *bu_identify_magic(unsigned long magic);
+BU_EXPORT extern const char *bu_identify_magic(uint32_t magic);
 
 
 #endif /* __MAGIC_H__ */

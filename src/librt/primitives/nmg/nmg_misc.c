@@ -873,7 +873,7 @@ nmg_find_outer_and_void_shells(struct nmgregion *r, struct bu_ptbl ***shells, co
  * passed. Returns the number of flags set.
  */
 int
-nmg_mark_edges_real(const unsigned long *magic_p)
+nmg_mark_edges_real(const uint32_t *magic_p)
 {
     struct bu_ptbl edges;
     int i, count;
@@ -2121,11 +2121,11 @@ nmg_in_or_ref(struct vertexuse *vu, struct bu_ptbl *b)
 {
     union {
 	struct vertexuse **vu;
-	long **magic_p;
+	uint32_t **magic_p;
     } p;
     int i;
 
-    p.magic_p = b->buffer;
+    p.magic_p = (uint32_t **)b->buffer;
     for (i=0; i < b->end; ++i) {
 	if (p.vu[i] && *p.magic_p[i] == NMG_VERTEXUSE_MAGIC &&
 	    (p.vu[i] == vu || p.vu[i]->v_p == vu->v_p))
@@ -2220,7 +2220,7 @@ nmg_rebound(struct model *m, const struct bn_tol *tol)
  * N M G _ C O U N T _ S H E L L _ K I D S
  */
 void
-nmg_count_shell_kids(const struct model *m, long unsigned int *total_faces, long unsigned int *total_wires, long unsigned int *total_points)
+nmg_count_shell_kids(const struct model *m, size_t *total_faces, size_t *total_wires, size_t *total_points)
 {
     short *tbl;
 
@@ -2780,7 +2780,7 @@ nmg_dup_shell(struct shell *s, long int ***trans_tbl, const struct bn_tol *tol)
     NMG_CK_SHELL(s);
     BN_CK_TOL(tol);
 
-    m = nmg_find_model((unsigned long *)s);
+    m = nmg_find_model((uint32_t *)s);
 
     /* create translation table double size to accomodate both copies */
     tbl_size = m->maxindex * 3;
@@ -3956,7 +3956,7 @@ struct nmg_split_loops_state
 
 
 void
-nmg_split_loops_handler(long int *fu_p, genptr_t sl_state, int UNUSED(unused))
+nmg_split_loops_handler(uint32_t *fu_p, genptr_t sl_state, int UNUSED(unused))
 {
     struct faceuse *fu;
     struct nmg_split_loops_state *state;
@@ -4130,7 +4130,7 @@ nmg_split_loops_handler(long int *fu_p, genptr_t sl_state, int UNUSED(unused))
  * Returns the number of faces modified.
  */
 int
-nmg_split_loops_into_faces(unsigned long int *magic_p, const struct bn_tol *tol)
+nmg_split_loops_into_faces(uint32_t *magic_p, const struct bn_tol *tol)
 {
     struct model *m;
     struct nmg_split_loops_state sl_state;
@@ -4675,7 +4675,7 @@ struct nmg_unbreak_state
  * first edgeuse mate to the vu of the killed edgeuse mate.
  */
 void
-nmg_unbreak_handler(long int *eup, genptr_t state, int UNUSED(unused))
+nmg_unbreak_handler(uint32_t *eup, genptr_t state, int UNUSED(unused))
 {
     struct edgeuse *eu1, *eu2;
     struct edge *e;
@@ -4753,7 +4753,7 @@ nmg_unbreak_handler(long int *eup, genptr_t state, int UNUSED(unused))
  * returns the number of edges mended
  */
 int
-nmg_unbreak_region_edges(unsigned long *magic_p)
+nmg_unbreak_region_edges(uint32_t *magic_p)
 {
     struct model *m;
     struct nmg_unbreak_state ub_state;
@@ -9338,7 +9338,7 @@ nmg_break_edge_at_verts(struct edge *e, struct bu_ptbl *verts, const struct bn_t
 
 
 int
-nmg_break_edges(unsigned long *magic_p, const struct bn_tol *tol)
+nmg_break_edges(uint32_t *magic_p, const struct bn_tol *tol)
 {
     struct bu_ptbl edges;
     struct bu_ptbl verts;

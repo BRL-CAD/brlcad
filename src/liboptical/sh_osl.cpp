@@ -64,7 +64,7 @@ int (*default_a_miss)(struct application *);
  * to any particular use of the shader.
  */
 struct osl_specific {
-    long magic;           /* magic # for memory validity check */
+    uint32_t magic;           /* magic # for memory validity check */
     ShadingAttribStateRef shader_ref;  /* Reference to this shader in OSLRender system */
 };
 

@@ -75,11 +75,11 @@ struct half_specific {
  * drawn uses the same "op" values as "union tree"
  */
 union E_tree {
-    long magic;
+    uint32_t magic;
 
     struct E_node {
 	/* the operator nodes */
-	long magic;
+	uint32_t magic;
 	int op;
 	union E_tree *left;
 	union E_tree *right;
@@ -87,7 +87,7 @@ union E_tree {
 
     struct E_leaf {
 	/* the leaf nodes */
-	long magic;
+	uint32_t magic;
 	int op;
 	struct model *m;		 /* NMG version of this leaf solid */
 	struct bu_list seghead;		 /* head of list of segments for this leaf solid */

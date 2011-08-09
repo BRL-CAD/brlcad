@@ -103,7 +103,7 @@ __BEGIN_DECLS
  *@n tol->para = 1 - tol->perp;
  */
 struct bn_tol {
-    unsigned long magic;
+    uint32_t magic;
     double dist;		/**< @brief >= 0 */
     double dist_sq;		/**< @brief dist * dist */
     double perp;		/**< @brief nearly 0 */
@@ -643,7 +643,7 @@ BN_EXPORT extern void bn_wrt_point_direc(mat_t out,
  */
 
 struct bn_unif {
-    unsigned long magic;
+    uint32_t magic;
     long msr_seed;
     int msr_double_ptr;
     double *msr_doubles;
@@ -661,7 +661,7 @@ struct bn_unif {
  * msr_gauss_fill.
  */
 struct bn_gauss {
-    unsigned long magic;
+    uint32_t magic;
     long msr_gauss_seed;
     int msr_gauss_dbl_ptr;
     double *msr_gauss_doubles;
@@ -952,7 +952,7 @@ BN_EXPORT extern int bn_isect_planes(point_t pt,
  * bn_poly->cf[n] corresponds to X^n
  */
 typedef struct bn_poly {
-    unsigned long magic;
+    uint32_t magic;
     size_t dgr;
     double cf[BN_MAX_POLY_DEGREE+1];
 }  bn_poly_t;
@@ -1012,7 +1012,7 @@ BN_EXPORT extern void bn_pr_roots(const char *title,
  * Polynomial data type
  */
 typedef struct bn_multipoly {
-    unsigned long magic;
+    uint32_t magic;
     int dgrs;
     int dgrt;
     double **cf;
@@ -1453,7 +1453,7 @@ BN_EXPORT extern const double bn_radtodeg;
  *
  */
 struct bn_table {
-    unsigned long magic;
+    uint32_t magic;
     size_t nx;
     fastf_t x[1];	/**< @brief array of nx+1 wavelengths, dynamically sized */
 };
@@ -1479,7 +1479,7 @@ struct bn_table {
 #endif
 
 struct bn_tabdata {
-    unsigned long magic;
+    uint32_t magic;
     size_t ny;
     const struct bn_table *table;	/**< @brief Up pointer to definition of X axis */
     fastf_t y[1];			/**< @brief array of ny samples, dynamically sized */
@@ -1701,7 +1701,7 @@ struct bn_vlist  {
  * blocks of vlists, each with an associated color.
  */
 struct bn_vlblock {
-    unsigned long magic;
+    uint32_t magic;
     size_t nused;
     size_t max;
     long *rgb;		/**< @brief rgb[max] variable size array */
@@ -1735,7 +1735,7 @@ BN_EXPORT extern void bn_vlist_2string(struct bu_list *vhead,
  * holds all the required info for a single vertex tree
  */
 struct vert_root {
-    unsigned long magic;
+    uint32_t magic;
     int tree_type;		/**< @brief vertices or vertices with normals */
     union vert_tree *the_tree;	/**< @brief the actual vertex tree */
     fastf_t *the_array;		/**< @brief the array of vertices */

@@ -390,7 +390,7 @@ nmg_enlist_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, struct ve
  * 'assoc_use' is either a pointer to a faceuse, or an edgeuse.
  */
 static void
-nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, const unsigned long *assoc_use)
+nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, const uint32_t *assoc_use)
 /* a 3-tuple */
 
 
@@ -399,7 +399,7 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
     register fastf_t *pt2d;
     point_t pt;
     struct vertex_g *vg;
-    unsigned long *this;
+    uint32_t *this;
 
     NMG_CK_INTER_STRUCT(is);
     NMG_CK_VERTEX(v);
@@ -411,19 +411,19 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
 
     if (*assoc_use == NMG_FACEUSE_MAGIC) {
 	this = &((struct faceuse *)assoc_use)->f_p->l.magic;
-	if (this != (unsigned long *)is->twod)
+	if (this != is->twod)
 	    goto bad;
     } else if (*assoc_use == NMG_EDGEUSE_MAGIC) {
 	this = &((struct edgeuse *)assoc_use)->e_p->magic;
-	if (this != (unsigned long *)is->twod)
+	if (this != is->twod)
 	    goto bad;
     } else {
-	this = (unsigned long *)NULL;
+	this = NULL;
     bad:
 	bu_log("nmg_get_2d_vertex(, assoc_use=%x %s) this=x%x %s, is->twod=%x %s\n",
 	       assoc_use, bu_identify_magic(*assoc_use),
 	       this, bu_identify_magic(*this),
-	       is->twod, bu_identify_magic(*(is->twod)));
+	       (unsigned long *)is->twod, bu_identify_magic(*(is->twod)));
 	bu_bomb("nmg_get_2d_vertex:  2d association mis-match\n");
     }
 
@@ -489,7 +489,7 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
 	if (!NEAR_ZERO(dist, is->tol.dist) &&
 	    !NEAR_ZERO(pt[2], 10*is->tol.dist)) {
 	    bu_log("nmg_get_2d_vertex(, assoc_use=%x) f=x%x, is->twod=%x\n",
-		   assoc_use, fu->f_p, is->twod);
+		   assoc_use, fu->f_p, (unsigned long *)is->twod);
 	    PLPRINT("fu->f_p N", n);
 	    bu_bomb("3D->2D point projection error\n");
 	}
@@ -523,7 +523,7 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
  * This will allow the 2D routines to operate on wires.
  */
 void
-nmg_isect2d_prep(struct nmg_inter_struct *is, const unsigned long *assoc_use)
+nmg_isect2d_prep(struct nmg_inter_struct *is, const uint32_t *assoc_use)
 {
     struct model *m;
     struct face_g_plane *fg;
@@ -536,10 +536,10 @@ nmg_isect2d_prep(struct nmg_inter_struct *is, const unsigned long *assoc_use)
     NMG_CK_INTER_STRUCT(is);
 
     if (*assoc_use == NMG_FACEUSE_MAGIC) {
-	if (&((struct faceuse *)assoc_use)->f_p->l.magic == (unsigned long *)is->twod)
+	if (&((struct faceuse *)assoc_use)->f_p->l.magic == is->twod)
 	    return;		/* Already prepped */
     } else if (*assoc_use == NMG_EDGEUSE_MAGIC) {
-	if (&((struct edgeuse *)assoc_use)->e_p->magic == (unsigned long *)is->twod)
+	if (&((struct edgeuse *)assoc_use)->e_p->magic == is->twod)
 	    return;		/* Already prepped */
     } else {
 	bu_bomb("nmg_isect2d_prep() bad assoc_use magic\n");
@@ -560,7 +560,7 @@ nmg_isect2d_prep(struct nmg_inter_struct *is, const unsigned long *assoc_use)
 	f1 = fu1->f_p;
 	fg = f1->g.plane_p;
 	NMG_CK_FACE_G_PLANE(fg);
-	is->twod = (long *)&f1->l.magic;
+	is->twod = &f1->l.magic;
 	if (f1->flip) {
 	    VREVERSE(n, fg->N);
 	    n[W] = -fg->N[W];
@@ -597,7 +597,7 @@ nmg_isect2d_prep(struct nmg_inter_struct *is, const unsigned long *assoc_use)
 	NMG_CK_EDGE(e1);
 	eg = eu1->g.lseg_p;
 	NMG_CK_EDGE_G_LSEG(eg);
-	is->twod = (long *)&e1->magic;
+	is->twod = &e1->magic;
 
 	/*
 	 * Rotate so that eg's eg_dir vector points up +X.
@@ -633,8 +633,8 @@ nmg_isect2d_cleanup(struct nmg_inter_struct *is)
 
     if (!is->vert2d) return;
     bu_free((char *)is->vert2d, "vert2d");
-    is->vert2d = (fastf_t *)NULL;
-    is->twod = (long *)NULL;
+    is->vert2d = NULL;
+    is->twod = NULL;
 }
 
 
@@ -1959,7 +1959,7 @@ static int
 nmg_isect_wireloop3p_face3p(struct nmg_inter_struct *bs, struct loopuse *lu, struct faceuse *fu)
 {
     struct edgeuse *eu;
-    unsigned long magic1;
+    uint32_t magic1;
     int discards = 0;
 
     if (rt_g.NMG_debug & DEBUG_POLYSECT) {
@@ -3200,7 +3200,7 @@ enlist:
  * If the fuser did its job, there should be only one.
  */
 struct edge_g_lseg *
-nmg_find_eg_on_line(const unsigned long *magic_p, const fastf_t *pt, const fastf_t *dir, const struct bn_tol *tol)
+nmg_find_eg_on_line(const uint32_t *magic_p, const fastf_t *pt, const fastf_t *dir, const struct bn_tol *tol)
 {
     struct bu_ptbl eutab;
     struct edgeuse **eup;
@@ -4930,7 +4930,7 @@ nmg_find_eg_between_2fg(const struct faceuse *ofu1, const struct faceuse *fu2, c
  * eu Yes, here is one edgeuse that does.  There may be more.
  */
 struct edgeuse *
-nmg_does_fu_use_eg(const struct faceuse *fu1, const unsigned long *eg)
+nmg_does_fu_use_eg(const struct faceuse *fu1, const uint32_t *eg)
 {
     const struct loopuse *lu1;
     register struct edgeuse *eu1;

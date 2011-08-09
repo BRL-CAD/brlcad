@@ -62,7 +62,7 @@ struct bbd_img {
  * to any particular use of the shader.
  */
 struct bbd_specific {
-    long magic;	/* magic # for memory validity check, must come 1st */
+    uint32_t magic;	/* magic # for memory validity check, must come 1st */
     int img_threshold;
     size_t img_width;
     size_t img_height;

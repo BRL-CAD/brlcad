@@ -220,7 +220,7 @@ nmg_rt_print_hitmiss(struct hitmiss *a_hit)
 	   a_hit->hit.hit_point[0],
 	   a_hit->hit.hit_point[1],
 	   a_hit->hit.hit_point[2],
-	   bu_identify_magic(*(long *)a_hit->hit.hit_private),
+	   bu_identify_magic(*(uint32_t *)a_hit->hit.hit_private),
 	   a_hit->hit.hit_private
 	);
     bu_log("\tstate:%s", nmg_rt_inout_str(a_hit->in_out));

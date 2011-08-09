@@ -86,7 +86,7 @@ struct tree_bark {
  * to any particular use of the shader.
  */
 struct gauss_specific {
-    long magic;	/* magic # for memory validity check, must come 1st */
+    uint32_t magic;	/* magic # for memory validity check, must come 1st */
     double gauss_sigma;	/* # std dev represented by ell bounds */
     point_t gauss_min;
     point_t gauss_max;

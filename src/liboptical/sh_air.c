@@ -35,7 +35,7 @@
 
 #define AIR_MAGIC 0x41697200	/* "Air" */
 struct air_specific {
-    long magic;
+    uint32_t magic;
     double d_p_mm;	/* density per unit millimeter (specified in m)*/
     double scale;	/* only used in emist */
     double delta;	/* only used in emist */

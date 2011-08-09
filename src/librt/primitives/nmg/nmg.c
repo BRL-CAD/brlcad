@@ -48,11 +48,11 @@
 
 /* This is the solid information specific to an nmg solid */
 struct nmg_specific {
-    int nmg_smagic;	/* STRUCT START magic number */
+    uint32_t nmg_smagic;	/* STRUCT START magic number */
     struct model *nmg_model;
-    char *manifolds; /* structure 1-3manifold table */
+    char *manifolds;		/* structure 1-3manifold table */
     vect_t nmg_invdir;
-    int nmg_emagic;	/* STRUCT END magic number */
+    uint32_t nmg_emagic;	/* STRUCT END magic number */
 };
 
 
@@ -740,7 +740,7 @@ const char rt_nmg_kind_names[NMG_N_KINDS+2][18] = {
  * manifest constant which identifies that structure kind.
  */
 int
-rt_nmg_magic_to_kind(long int magic)
+rt_nmg_magic_to_kind(uint32_t magic)
 {
     switch (magic) {
 	case NMG_MODEL_MAGIC:
@@ -966,15 +966,15 @@ rt_nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, lon
 HIDDEN int
 reindex(genptr_t p, struct nmg_exp_counts *ecnt)
 {
-    int idx;
-    int ret=0;	/* zero is NOT the default value, this is just to satisfy cray compilers */
+    long idx;
+    long ret=0;	/* zero is NOT the default value, this is just to satisfy cray compilers */
 
     /* If null pointer, return new subscript of zero */
     if (p == 0) {
 	ret = 0;
 	idx = 0;	/* sanity */
     } else {
-	idx = nmg_index_of_struct((unsigned long *)(p));
+	idx = nmg_index_of_struct((uint32_t *)(p));
 	if (idx == -1) {
 	    ret = DISK_INDEX_LISTHEAD; /* FLAG:  special list head */
 	} else if (idx < -1) {
@@ -989,7 +989,7 @@ reindex(genptr_t p, struct nmg_exp_counts *ecnt)
 	    if (ret < 0 || ret > ecnt[0].byte_offset) {
 		bu_log("reindex(p=x%x) %s, p->index=%d, ret=%d, maxindex=%d\n",
 		       p,
-		       bu_identify_magic(*(long *)p),
+		       bu_identify_magic(*(uint32_t *)p),
 		       idx, ret, ecnt[0].byte_offset);
 		bu_bomb("reindex() subscript out of range\n");
 	    }
@@ -1003,7 +1003,7 @@ reindex(genptr_t p, struct nmg_exp_counts *ecnt)
 /* forw may never be null;  back may be null for loopuse (sigh) */
 #define INDEX(o, i, elem) *(uint32_t *)(o)->elem = htonl(reindex((genptr_t)((i)->elem), ecnt))
 #define INDEXL(oo, ii, elem) {						\
-	long _f = reindex((genptr_t)((ii)->elem.forw), ecnt);	\
+	uint32_t _f = reindex((genptr_t)((ii)->elem.forw), ecnt);	\
 	if (_f == DISK_INDEX_NULL) bu_log("Warning rt_nmg_edisk: reindex forw to null?\n"); \
 	*(uint32_t *)((oo)->elem.forw) = htonl(_f);			\
 	*(uint32_t *)((oo)->elem.back) = htonl(reindex((genptr_t)((ii)->elem.back), ecnt)); }
@@ -1381,7 +1381,7 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, dou
  * Transform geometry by given matrix.
  */
 int
-rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, unsigned long **ptrs, const fastf_t *mat, const unsigned char *basep)
+rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uint32_t **ptrs, const fastf_t *mat, const unsigned char *basep)
     /* ptr to in-memory structure */
     /* base of disk array */
 
@@ -1480,7 +1480,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uns
 	    NMG_CK_DISKMAGIC(d->magic, DISK_FACE_MAGIC);
 	    INDEX(d, f, faceuse, fu_p);
 	    g_index = ntohl(*(uint32_t*)(d->g));
-	    f->g.magic_p = ptrs[g_index];
+	    f->g.magic_p = (uint32_t *)ptrs[g_index];
 	    f->flip = ntohl(*(uint32_t*)(d->flip));
 	    /* Enrole this face on fg's list of users */
 	    NMG_CK_FACE_G_EITHER(f->g.magic_p);
@@ -1750,7 +1750,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uns
  * macros, so that m->maxindex, etc, are all appropriately handled.
  */
 HIDDEN struct model *
-rt_nmg_ialloc(unsigned long **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
+rt_nmg_ialloc(uint32_t **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 {
     struct model *m = (struct model *)0;
     int subscript;
@@ -1769,21 +1769,21 @@ rt_nmg_ialloc(unsigned long **ptrs, struct nmg_exp_counts *ecnt, int *kind_count
 		    m = nmg_mm();
 		    /* Keep disk indices & new indices equal... */
 		    m->maxindex++;
-		    ptrs[subscript] = (unsigned long *)m;
+		    ptrs[subscript] = (uint32_t *)m;
 		    break;
 		case NMG_KIND_NMGREGION: {
 		    struct nmgregion *r;
 		    GET_REGION(r, m);
 		    r->l.magic = NMG_REGION_MAGIC;
 		    BU_LIST_INIT(&r->s_hd);
-		    ptrs[subscript] = (unsigned long *)r;
+		    ptrs[subscript] = (uint32_t *)r;
 		}
 		    break;
 		case NMG_KIND_NMGREGION_A: {
 		    struct nmgregion_a *ra;
 		    GET_REGION_A(ra, m);
 		    ra->magic = NMG_REGION_A_MAGIC;
-		    ptrs[subscript] = (unsigned long *)ra;
+		    ptrs[subscript] = (uint32_t *)ra;
 		}
 		    break;
 		case NMG_KIND_SHELL: {
@@ -1793,14 +1793,14 @@ rt_nmg_ialloc(unsigned long **ptrs, struct nmg_exp_counts *ecnt, int *kind_count
 		    BU_LIST_INIT(&s->fu_hd);
 		    BU_LIST_INIT(&s->lu_hd);
 		    BU_LIST_INIT(&s->eu_hd);
-		    ptrs[subscript] = (unsigned long *)s;
+		    ptrs[subscript] = (uint32_t *)s;
 		}
 		    break;
 		case NMG_KIND_SHELL_A: {
 		    struct shell_a *sa;
 		    GET_SHELL_A(sa, m);
 		    sa->magic = NMG_SHELL_A_MAGIC;
-		    ptrs[subscript] = (unsigned long *)sa;
+		    ptrs[subscript] = (uint32_t *)sa;
 		}
 		    break;
 		case NMG_KIND_FACEUSE: {
@@ -1808,14 +1808,14 @@ rt_nmg_ialloc(unsigned long **ptrs, struct nmg_exp_counts *ecnt, int *kind_count
 		    GET_FACEUSE(fu, m);
 		    fu->l.magic = NMG_FACEUSE_MAGIC;
 		    BU_LIST_INIT(&fu->lu_hd);
-		    ptrs[subscript] = (unsigned long *)fu;
+		    ptrs[subscript] = (uint32_t *)fu;
 		}
 		    break;
 		case NMG_KIND_FACE: {
 		    struct face *f;
 		    GET_FACE(f, m);
 		    f->l.magic = NMG_FACE_MAGIC;
-		    ptrs[subscript] = (unsigned long *)f;
+		    ptrs[subscript] = (uint32_t *)f;
 		}
 		    break;
 		case NMG_KIND_FACE_G_PLANE: {
@@ -1823,7 +1823,7 @@ rt_nmg_ialloc(unsigned long **ptrs, struct nmg_exp_counts *ecnt, int *kind_count
 		    GET_FACE_G_PLANE(fg, m);
 		    fg->magic = NMG_FACE_G_PLANE_MAGIC;
 		    BU_LIST_INIT(&fg->f_hd);
-		    ptrs[subscript] = (unsigned long *)fg;
+		    ptrs[subscript] = (uint32_t *)fg;
 		}
 		    break;
 		case NMG_KIND_FACE_G_SNURB: {
@@ -1831,7 +1831,7 @@ rt_nmg_ialloc(unsigned long **ptrs, struct nmg_exp_counts *ecnt, int *kind_count
 		    GET_FACE_G_SNURB(fg, m);
 		    fg->l.magic = NMG_FACE_G_SNURB_MAGIC;
 		    BU_LIST_INIT(&fg->f_hd);
-		    ptrs[subscript] = (unsigned long *)fg;
+		    ptrs[subscript] = (uint32_t *)fg;
 		}
 		    break;
 		case NMG_KIND_LOOPUSE: {
@@ -1839,21 +1839,21 @@ rt_nmg_ialloc(unsigned long **ptrs, struct nmg_exp_counts *ecnt, int *kind_count
 		    GET_LOOPUSE(lu, m);
 		    lu->l.magic = NMG_LOOPUSE_MAGIC;
 		    BU_LIST_INIT(&lu->down_hd);
-		    ptrs[subscript] = (unsigned long *)lu;
+		    ptrs[subscript] = (uint32_t *)lu;
 		}
 		    break;
 		case NMG_KIND_LOOP: {
 		    struct loop *l;
 		    GET_LOOP(l, m);
 		    l->magic = NMG_LOOP_MAGIC;
-		    ptrs[subscript] = (unsigned long *)l;
+		    ptrs[subscript] = (uint32_t *)l;
 		}
 		    break;
 		case NMG_KIND_LOOP_G: {
 		    struct loop_g *lg;
 		    GET_LOOP_G(lg, m);
 		    lg->magic = NMG_LOOP_G_MAGIC;
-		    ptrs[subscript] = (unsigned long *)lg;
+		    ptrs[subscript] = (uint32_t *)lg;
 		}
 		    break;
 		case NMG_KIND_EDGEUSE: {
@@ -1861,14 +1861,14 @@ rt_nmg_ialloc(unsigned long **ptrs, struct nmg_exp_counts *ecnt, int *kind_count
 		    GET_EDGEUSE(eu, m);
 		    eu->l.magic = NMG_EDGEUSE_MAGIC;
 		    eu->l2.magic = NMG_EDGEUSE2_MAGIC;
-		    ptrs[subscript] = (unsigned long *)eu;
+		    ptrs[subscript] = (uint32_t *)eu;
 		}
 		    break;
 		case NMG_KIND_EDGE: {
 		    struct edge *e;
 		    GET_EDGE(e, m);
 		    e->magic = NMG_EDGE_MAGIC;
-		    ptrs[subscript] = (unsigned long *)e;
+		    ptrs[subscript] = (uint32_t *)e;
 		}
 		    break;
 		case NMG_KIND_EDGE_G_LSEG: {
@@ -1876,7 +1876,7 @@ rt_nmg_ialloc(unsigned long **ptrs, struct nmg_exp_counts *ecnt, int *kind_count
 		    GET_EDGE_G_LSEG(eg, m);
 		    eg->l.magic = NMG_EDGE_G_LSEG_MAGIC;
 		    BU_LIST_INIT(&eg->eu_hd2);
-		    ptrs[subscript] = (unsigned long *)eg;
+		    ptrs[subscript] = (uint32_t *)eg;
 		}
 		    break;
 		case NMG_KIND_EDGE_G_CNURB: {
@@ -1884,28 +1884,28 @@ rt_nmg_ialloc(unsigned long **ptrs, struct nmg_exp_counts *ecnt, int *kind_count
 		    GET_EDGE_G_CNURB(eg, m);
 		    eg->l.magic = NMG_EDGE_G_CNURB_MAGIC;
 		    BU_LIST_INIT(&eg->eu_hd2);
-		    ptrs[subscript] = (unsigned long *)eg;
+		    ptrs[subscript] = (uint32_t *)eg;
 		}
 		    break;
 		case NMG_KIND_VERTEXUSE: {
 		    struct vertexuse *vu;
 		    GET_VERTEXUSE(vu, m);
 		    vu->l.magic = NMG_VERTEXUSE_MAGIC;
-		    ptrs[subscript] = (unsigned long *)vu;
+		    ptrs[subscript] = (uint32_t *)vu;
 		}
 		    break;
 		case NMG_KIND_VERTEXUSE_A_PLANE: {
 		    struct vertexuse_a_plane *vua;
 		    GET_VERTEXUSE_A_PLANE(vua, m);
 		    vua->magic = NMG_VERTEXUSE_A_PLANE_MAGIC;
-		    ptrs[subscript] = (unsigned long *)vua;
+		    ptrs[subscript] = (uint32_t *)vua;
 		}
 		    break;
 		case NMG_KIND_VERTEXUSE_A_CNURB: {
 		    struct vertexuse_a_cnurb *vua;
 		    GET_VERTEXUSE_A_CNURB(vua, m);
 		    vua->magic = NMG_VERTEXUSE_A_CNURB_MAGIC;
-		    ptrs[subscript] = (unsigned long *)vua;
+		    ptrs[subscript] = (uint32_t *)vua;
 		}
 		    break;
 		case NMG_KIND_VERTEX: {
@@ -1913,19 +1913,19 @@ rt_nmg_ialloc(unsigned long **ptrs, struct nmg_exp_counts *ecnt, int *kind_count
 		    GET_VERTEX(v, m);
 		    v->magic = NMG_VERTEX_MAGIC;
 		    BU_LIST_INIT(&v->vu_hd);
-		    ptrs[subscript] = (unsigned long *)v;
+		    ptrs[subscript] = (uint32_t *)v;
 		}
 		    break;
 		case NMG_KIND_VERTEX_G: {
 		    struct vertex_g *vg;
 		    GET_VERTEX_G(vg, m);
 		    vg->magic = NMG_VERTEX_G_MAGIC;
-		    ptrs[subscript] = (unsigned long *)vg;
+		    ptrs[subscript] = (uint32_t *)vg;
 		}
 		    break;
 		default:
 		    bu_log("bad kind = %d\n", kind);
-		    ptrs[subscript] = (unsigned long *)0;
+		    ptrs[subscript] = (uint32_t *)0;
 		    break;
 	    }
 
@@ -2004,13 +2004,13 @@ rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep,
     union record *rp;
     int kind_counts[NMG_N_KINDS];
     unsigned char *cp;
-    unsigned long **real_ptrs;
-    unsigned long **ptrs;
+    uint32_t **real_ptrs;
+    uint32_t **ptrs;
     struct nmg_exp_counts *ecnt;
     int i;
     int maxindex;
     int kind;
-    static unsigned long bad_magic = 0x999;
+    static uint32_t bad_magic = 0x999;
 
     BU_CK_EXTERNAL(ep);
     BN_CK_TOL(tol);
@@ -2042,12 +2042,12 @@ rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep,
     /* Collect overall new subscripts, and structure-specific indices */
     ecnt = (struct nmg_exp_counts *)bu_calloc(maxindex+3,
 					      sizeof(struct nmg_exp_counts), "ecnt[]");
-    real_ptrs = (unsigned long **)bu_calloc(maxindex+3,
-					    sizeof(unsigned long *), "ptrs[]");
+    real_ptrs = (uint32_t **)bu_calloc(maxindex+3,
+					    sizeof(uint32_t *), "ptrs[]");
     /* So that indexing [-1] gives an appropriately bogus magic # */
     ptrs = real_ptrs+1;
     ptrs[-1] = &bad_magic;		/* [-1] gives bad magic */
-    ptrs[0] = (unsigned long *)NULL;	/* [0] gives NULL */
+    ptrs[0] = NULL;	/* [0] gives NULL */
     ptrs[maxindex] = &bad_magic;	/* [maxindex] gives bad magic */
     ptrs[maxindex+1] = &bad_magic;	/* [maxindex+1] gives bad magic */
 
@@ -2144,7 +2144,7 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
     struct model *m;
     union record *rp;
     struct nmg_struct_counts cntbuf;
-    unsigned long **ptrs;
+    uint32_t **ptrs;
     struct nmg_exp_counts *ecnt;
     int i;
     int subscript;
@@ -2175,7 +2175,7 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
     double_count = 0;
     fastf_byte_count = 0;
     for (i=0; i < m->maxindex; i++) {
-	if (ptrs[i] == (unsigned long *)NULL) {
+	if (ptrs[i] == NULL) {
 	    ecnt[i].kind = -1;
 	    continue;
 	}
@@ -2232,14 +2232,14 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
 	     * Instead, use DISK_INDEX_NULL, yielding null ptrs.
 	     */
 	    for (i=0; i < m->maxindex; i++) {
-		if (ptrs[i] == (unsigned long *)NULL) continue;
+		if (ptrs[i] == NULL) continue;
 		if (ecnt[i].kind != kind) continue;
 		ecnt[i].new_subscript = DISK_INDEX_NULL;
 	    }
 	    continue;
 	}
 	for (i=0; i < m->maxindex; i++) {
-	    if (ptrs[i] == (unsigned long *)NULL) continue;
+	    if (ptrs[i] == NULL) continue;
 	    if (ecnt[i].kind != kind) continue;
 	    ecnt[i].new_subscript = subscript++;
 	}
@@ -2250,10 +2250,10 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
 
     /* Sanity checking */
     for (i=0; i < m->maxindex; i++) {
-	if (ptrs[i] == (unsigned long *)NULL) continue;
+	if (ptrs[i] == NULL) continue;
 	if (nmg_index_of_struct(ptrs[i]) != i) {
 	    bu_log("***ERROR, ptrs[%d]->index = %d\n",
-		   i, nmg_index_of_struct((unsigned long *)ptrs[i]));
+		   i, nmg_index_of_struct((uint32_t *)ptrs[i]));
 	}
 	if (rt_nmg_magic_to_kind(*ptrs[i]) != ecnt[i].kind) {
 	    bu_log("@@@ERROR, ptrs[%d] kind(%d) != %d\n",
@@ -2300,7 +2300,7 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
 
     /* Convert all the structures to their disk versions */
     for (i = m->maxindex-1; i >= 0; i--) {
-	if (ptrs[i] == (unsigned long *)NULL) continue;
+	if (ptrs[i] == NULL) continue;
 	kind = ecnt[i].kind;
 	if (kind_counts[kind] <= 0) continue;
 	rt_nmg_edisk((genptr_t)(disk_arrays[kind]),
@@ -2377,11 +2377,11 @@ rt_nmg_import5(struct rt_db_internal *ip,
     int kind_counts[NMG_N_KINDS];
     unsigned char *dp;		/* data pointer */
     genptr_t startdata;	/* data pointer */
-    unsigned long **real_ptrs;
-    unsigned long **ptrs;
+    uint32_t **real_ptrs;
+    uint32_t **ptrs;
     struct nmg_exp_counts *ecnt;
     int i;
-    static unsigned long bad_magic = 0x999;
+    static uint32_t bad_magic = 0x999;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -2416,11 +2416,11 @@ rt_nmg_import5(struct rt_db_internal *ip,
     /* Collect overall new subscripts, and structure-specific indices */
     ecnt = (struct nmg_exp_counts *) bu_calloc(maxindex+3,
 					       sizeof(struct nmg_exp_counts), "ecnt[]");
-    real_ptrs = (unsigned long **)bu_calloc(maxindex+3, sizeof(unsigned long *), "ptrs[]");
+    real_ptrs = (uint32_t **)bu_calloc(maxindex+3, sizeof(uint32_t *), "ptrs[]");
     /* some safety checking.  Indexing by, -1, 0, n+1, N+2 give interesting results */
     ptrs = real_ptrs+1;
     ptrs[-1] = &bad_magic;
-    ptrs[0] = (unsigned long *)NULL;
+    ptrs[0] = NULL;
     ptrs[maxindex] = &bad_magic;
     ptrs[maxindex+1] = &bad_magic;
 
@@ -2495,7 +2495,7 @@ rt_nmg_export5(
 {
     struct model *m;
     unsigned char *dp;
-    unsigned long **ptrs;
+    uint32_t **ptrs;
     struct nmg_struct_counts cntbuf;
     struct nmg_exp_counts *ecnt;
     int kind_counts[NMG_N_KINDS];
@@ -2525,7 +2525,7 @@ rt_nmg_export5(
     double_count = 0;
     fastf_byte_count = 0;
     for (i=0; i< m->maxindex; i++) {
-	if (ptrs[i] == (unsigned long *)NULL) {
+	if (ptrs[i] == NULL) {
 	    ecnt[i].kind = -1;
 	    continue;
 	}
@@ -2579,7 +2579,7 @@ rt_nmg_export5(
 	    kind == NMG_KIND_SHELL_A ||
 	    kind == NMG_KIND_LOOP_G) {
 	    for (i=0; i<m->maxindex; i++) {
-		if (ptrs[i] == (unsigned long *)NULL) continue;
+		if (ptrs[i] == NULL) continue;
 		if (ecnt[i].kind != kind) continue;
 		ecnt[i].new_subscript = DISK_INDEX_NULL;
 	    }
@@ -2587,7 +2587,7 @@ rt_nmg_export5(
 	}
 
 	for (i=0; i< m->maxindex;i++) {
-	    if (ptrs[i] == (unsigned long *)NULL) continue;
+	    if (ptrs[i] == NULL) continue;
 	    if (ecnt[i].kind != kind) continue;
 	    ecnt[i].new_subscript = subscript++;
 	}
@@ -2598,7 +2598,7 @@ rt_nmg_export5(
 
     /* Now do some checking to make sure the world is not totally mad */
     for (i=0; i<m->maxindex; i++) {
-	if (ptrs[i] == (unsigned long *)NULL) continue;
+	if (ptrs[i] == NULL) continue;
 
 	if (nmg_index_of_struct(ptrs[i]) != i) {
 	    bu_log("***ERROR, ptrs[%d]->index = %d\n",
@@ -2645,7 +2645,7 @@ rt_nmg_export5(
     rt_nmg_fastf_p = (unsigned char*)disk_arrays[NMG_KIND_DOUBLE_ARRAY];
 
     for (i = m->maxindex-1;i >=0; i--) {
-	if (ptrs[i] == (unsigned long *)NULL) continue;
+	if (ptrs[i] == NULL) continue;
 	kind = ecnt[i].kind;
 	if (kind_counts[kind] <= 0) continue;
 	rt_nmg_edisk((genptr_t)(disk_arrays[kind]),

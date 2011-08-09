@@ -82,7 +82,7 @@ struct img_specific {
  * to any particular use of the shader.
  */
 struct prj_specific {
-    unsigned long magic;
+    uint32_t magic;
     struct img_specific prj_images;
     mat_t prj_m_to_sh;
     FILE *prj_plfd;

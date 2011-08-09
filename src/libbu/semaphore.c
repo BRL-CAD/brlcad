@@ -34,7 +34,7 @@
 #  include <sys/machd.h>	/* For HZ */
 # endif
 struct bu_semaphores {
-    long magic;
+    uint32_t magic;
     long p;
 };
 # define DEFINED_BU_SEMAPHORES 1
@@ -49,7 +49,7 @@ struct bu_semaphores {
 /* Alliant FX/8 */
 # include <cncall.h>
 struct bu_semaphores {
-    long magic;
+    uint32_t magic;
     char c;
 };
 # define DEFINED_BU_SEMAPHORES 1
@@ -77,7 +77,7 @@ static usptr_t *bu_lockstuff = 0;
 extern int _utrace;
 
 struct bu_semaphores {
-    long magic;
+    uint32_t magic;
     ulock_t ltp;
 };
 # define DEFINED_BU_SEMAPHORES 1
@@ -88,7 +88,7 @@ struct bu_semaphores {
 #ifdef ardent
 #	include <thread.h>
 struct bu_semaphores {
-    long magic;
+    uint32_t magic;
     char sem;
 };
 # define DEFINED_BU_SEMAPHORES 1
@@ -96,7 +96,7 @@ struct bu_semaphores {
 
 #if defined(convex) || defined(__convex__)
 struct bu_semaphores {
-    long magic;
+    uint32_t magic;
     long sem;
 };
 # define DEFINED_BU_SEMAPHORES 1
@@ -106,7 +106,7 @@ struct bu_semaphores {
 #	include <parallel.h>
 #	include <sys/sysadmin.h>
 struct bu_semaphores {
-    long magic;
+    uint32_t magic;
     char sem;
 };
 # define DEFINED_BU_SEMAPHORES 1
@@ -122,7 +122,7 @@ struct bu_semaphores {
 #	include <thread.h>
 #	include <synch.h>
 struct bu_semaphores {
-    long magic;
+    uint32_t magic;
     mutex_t mu;
 };
 # define DEFINED_BU_SEMAPHORES 1
@@ -135,7 +135,7 @@ struct bu_semaphores {
 #	include <pthread.h>
 #  if !defined(sgi)
 struct bu_semaphores {
-    long magic;
+    uint32_t magic;
     pthread_mutex_t mu;
 };
 #	define DEFINED_BU_SEMAPHORES 1

@@ -43,7 +43,7 @@
 
 
 typedef struct {
-    unsigned long magic;
+    uint32_t magic;
     int ny;		/**< @brief Number of "y" bins */
     int *nx;		/**< @brief Number of "x" bins per "y" bin */
     int elsize;		/**< @brief Size of each bin element */

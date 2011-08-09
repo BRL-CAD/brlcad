@@ -1224,7 +1224,7 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, char **classlist, const struc
 
 out:
     if (rt_g.NMG_debug & DEBUG_GRAPHCL)
-	nmg_show_broken_classifier_stuff((unsigned long *)eu, classlist, nmg_class_nothing_broken, 0, (char *)NULL);
+	nmg_show_broken_classifier_stuff((uint32_t *)eu, classlist, nmg_class_nothing_broken, 0, (char *)NULL);
     if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 	bu_log("class_eu_vs_s(eu=x%x) return %s because %s\n",
 	       eu, nmg_class_status(status), reason);
@@ -1606,7 +1606,7 @@ class_lu_vs_s(struct loopuse *lu, struct shell *s, char **classlist, const struc
     struct edgeuse *eu, *p;
     struct loopuse *q_lu;
     struct vertexuse *vu;
-    unsigned long magic1;
+    uint32_t magic1;
     char *reason = "Unknown";
     int seen_error = 0;
     int status = 0;
@@ -1731,7 +1731,7 @@ retry:
 		bu_log("wrote %s\n", buf);
 	    }
 	    nmg_pr_lu(lu, "");
-	    nmg_stash_model_to_file("class.g", nmg_find_model((unsigned long *)lu), "class_ls_vs_s: loop transits plane of shell/face?");
+	    nmg_stash_model_to_file("class.g", nmg_find_model((uint32_t *)lu), "class_ls_vs_s: loop transits plane of shell/face?");
 	    bu_free((char *)b, "nmg_pl_lu flag[]");
 	}
 

@@ -87,7 +87,7 @@ noise_deg_to_rad(register const struct bu_structparse *sdp, const char *UNUSED(n
  * to any particular use of the shader.
  */
 struct noise_specific {
-    long magic;	/* magic # for memory validity check, must come 1st */
+    uint32_t magic;	/* magic # for memory validity check, must come 1st */
     double lacunarity;
     double h_val;
     double octaves;

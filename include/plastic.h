@@ -30,7 +30,7 @@
 
 /* Local information */
 struct phong_specific {
-    unsigned long magic;
+    uint32_t magic;
     int	shine;
     double	wgt_specular;
     double	wgt_diffuse;

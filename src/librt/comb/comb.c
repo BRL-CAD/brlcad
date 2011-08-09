@@ -55,7 +55,7 @@
 
 
 struct db_tree_counter_state {
-    long magic;
+    uint32_t magic;
     long n_mat;			/* # leaves with non-identity matricies */
     long n_leaf;			/* # leaf nodes */
     long n_oper;			/* # operator nodes */
@@ -140,7 +140,7 @@ db_tree_counter(const union tree *tp, struct db_tree_counter_state *tcsp)
 #define DB5COMB_TOKEN_NOT		6
 
 struct rt_comb_v5_serialize_state {
-    long magic;
+    uint32_t magic;
     long mat_num;	/* current matrix number */
     long nmat;		/* # matricies, total */
     unsigned char *matp;

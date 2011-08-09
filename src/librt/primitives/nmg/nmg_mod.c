@@ -276,7 +276,7 @@ nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
     struct loopuse *lu;
     struct edgeuse *eu;
     struct vertexuse *vu;
-    long magic1;
+    uint32_t magic1;
 
     NMG_CK_SHELL(s);
     BN_CK_TOL(tol);
@@ -1926,10 +1926,10 @@ nmg_dup_face(struct faceuse *fu, struct shell *s)
     /* allocate the table that holds the translations between existing
      * elements and the duplicates we will create.
      */
-    m = nmg_find_model((unsigned long *)s);
+    m = nmg_find_model((uint32_t *)s);
     tbl_size = m->maxindex;
 
-    m_f = nmg_find_model((unsigned long *)fu);
+    m_f = nmg_find_model((uint32_t *)fu);
     if (m != m_f)
 	tbl_size += m_f->maxindex;
 
@@ -3618,7 +3618,7 @@ void nmg_moveltof(struct faceuse *fu, struct shell *s)
  * trans_tbl may be NULL.
  */
 struct loopuse *
-nmg_dup_loop(struct loopuse *lu, unsigned long *parent, long int **trans_tbl)
+nmg_dup_loop(struct loopuse *lu, uint32_t *parent, long int **trans_tbl)
 
     /* fu or shell ptr */
 

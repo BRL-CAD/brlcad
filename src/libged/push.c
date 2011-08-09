@@ -41,7 +41,7 @@
 
 /** structure to hold all solids that have been pushed. */
 struct push_id {
-    long magic;
+    uint32_t magic;
     struct push_id *forw, *back;
     struct directory *pi_dir;
     mat_t pi_mat;

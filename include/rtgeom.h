@@ -52,7 +52,7 @@ __BEGIN_DECLS
  *	ID_TOR
  */
 struct rt_tor_internal {
-    unsigned long magic;
+    uint32_t magic;
     point_t	v;		/**< @brief  center point */
     vect_t	h;		/**< @brief  normal, unit length */
     fastf_t	r_h;		/**< @brief  radius in H direction (r2) */
@@ -68,7 +68,7 @@ struct rt_tor_internal {
  *	ID_TGC and ID_REC
  */
 struct rt_tgc_internal {
-    unsigned long magic;
+    uint32_t magic;
     vect_t	v;
     vect_t	h;
     vect_t	a;
@@ -82,7 +82,7 @@ struct rt_tgc_internal {
  *	ID_ELL, and ID_SPH
  */
 struct rt_ell_internal  {
-    unsigned long magic;
+    uint32_t magic;
     point_t	v;
     vect_t	a;
     vect_t	b;
@@ -94,7 +94,7 @@ struct rt_ell_internal  {
  *      ID_SUPERELL
  */
 struct rt_superell_internal {
-    unsigned long magic;
+    uint32_t magic;
     point_t v;
     vect_t  a;
     vect_t  b;
@@ -136,7 +136,7 @@ struct rt_superell_internal {
  *
  */
 struct rt_metaball_internal {
-    unsigned long magic;
+    uint32_t magic;
     /* these three defines are used with the method field */
 #define METABALL_METABALL     0
 #define METABALL_ISOPOTENTIAL 1
@@ -156,7 +156,7 @@ struct rt_metaball_internal {
  *  The first 4 form the "bottom" face, the second 4 form the "top" face.
  */
 struct rt_arb_internal {
-    unsigned long magic;
+    uint32_t magic;
     point_t	pt[8];
 };
 #define RT_ARB_CK_MAGIC(_p)	BU_CKMAG(_p, RT_ARB_INTERNAL_MAGIC, "rt_arb_internal")
@@ -165,7 +165,7 @@ struct rt_arb_internal {
  *	ID_ARS
  */
 struct rt_ars_internal {
-    unsigned long magic;
+    uint32_t magic;
     size_t ncurves;
     size_t pts_per_curve;
     fastf_t	**curves;
@@ -176,7 +176,7 @@ struct rt_ars_internal {
  *	ID_HALF
  */
 struct rt_half_internal  {
-    unsigned long magic;
+    uint32_t magic;
     plane_t	eqn;
 };
 #define RT_HALF_CK_MAGIC(_p)	BU_CKMAG(_p, RT_HALF_INTERNAL_MAGIC, "rt_half_internal")
@@ -185,7 +185,7 @@ struct rt_half_internal  {
  *	ID_GRIP
  */
 struct rt_grip_internal {
-    unsigned long magic;
+    uint32_t magic;
     point_t	center;
     /* Remaining elemnts are used for display purposes only */
     vect_t	normal;
@@ -197,7 +197,7 @@ struct rt_grip_internal {
  *	ID_POLY
  */
 struct rt_pg_internal {
-    unsigned long magic;
+    uint32_t magic;
     size_t npoly;
     struct rt_pg_face_internal {
 	size_t npts;		/**< @brief  number of points for this polygon */
@@ -211,7 +211,7 @@ struct rt_pg_internal {
 
 /* ID_BSPLINE */
 struct rt_nurb_internal {
-    unsigned long magic;
+    uint32_t magic;
     int nsrf;			/**< @brief  number of surfaces */
     struct face_g_snurb **srfs;	/**< @brief  The surfaces themselves */
 #ifdef CONVERT_TO_BREP
@@ -225,7 +225,7 @@ struct rt_nurb_internal {
 
 /* ID_BREP */
 struct rt_brep_internal {
-    unsigned long magic;
+    uint32_t magic;
     ON_Brep* brep; /**< @brief  An openNURBS brep object containing the solid */
 };
 
@@ -248,7 +248,7 @@ struct rt_brep_internal {
  */
 #define RT_EBM_NAME_LEN 256
 struct rt_ebm_internal  {
-    unsigned long	magic;
+    uint32_t magic;
     char		file[RT_EBM_NAME_LEN];
     size_t		xdim;		/**< @brief  X dimension (w cells) */
     size_t		ydim;		/**< @brief  Y dimension (n cells) */
@@ -264,7 +264,7 @@ struct rt_ebm_internal  {
  */
 #define RT_VOL_NAME_LEN 128
 struct rt_vol_internal  {
-    unsigned long	magic;
+    uint32_t magic;
     char		file[RT_VOL_NAME_LEN];
     size_t		xdim;			/**< @brief  X dimension */
     size_t		ydim;			/**< @brief  Y dimension */
@@ -282,7 +282,7 @@ struct rt_vol_internal  {
  *	ID_HF
  */
 struct rt_hf_internal {
-    unsigned long	magic;
+    uint32_t magic;
     /* BEGIN USER SETABLE VARIABLES */
     char		cfile[128];	/**< @brief  name of control file (optional) */
     char		dfile[128];	/**< @brief  name of data file */
@@ -306,7 +306,7 @@ struct rt_hf_internal {
  *	ID_ARBN
  */
 struct rt_arbn_internal  {
-    unsigned long magic;
+    uint32_t magic;
     size_t	neqn;
     plane_t	*eqn;
 };
@@ -316,10 +316,10 @@ struct rt_arbn_internal  {
  *	ID_PIPE
  */
 struct rt_pipe_internal {
-    unsigned long	pipe_magic;
-    struct bu_list	pipe_segs_head;
+    uint32_t pipe_magic;
+    struct bu_list pipe_segs_head;
     /* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
-    int		pipe_count;
+    int pipe_count;
 };
 #define RT_PIPE_CK_MAGIC(_p)	BU_CKMAG(_p, RT_PIPE_INTERNAL_MAGIC, "rt_pipe_internal")
 
@@ -327,7 +327,7 @@ struct rt_pipe_internal {
  *	ID_PARTICLE
  */
 struct rt_part_internal {
-    unsigned long part_magic;
+    uint32_t part_magic;
     point_t	part_V;
     vect_t	part_H;
     fastf_t	part_vrad;
@@ -345,7 +345,7 @@ struct rt_part_internal {
  *	ID_RPC
  */
 struct rt_rpc_internal {
-    unsigned long rpc_magic;
+    uint32_t rpc_magic;
     point_t	rpc_V;	/**< @brief  rpc vertex */
     vect_t	rpc_H;	/**< @brief  height vector */
     vect_t	rpc_B;	/**< @brief  breadth vector */
@@ -357,7 +357,7 @@ struct rt_rpc_internal {
  *	ID_RHC
  */
 struct rt_rhc_internal {
-    unsigned long rhc_magic;
+    uint32_t rhc_magic;
     point_t	rhc_V;	/**< @brief  rhc vertex */
     vect_t	rhc_H;	/**< @brief  height vector */
     vect_t	rhc_B;	/**< @brief  breadth vector */
@@ -370,7 +370,7 @@ struct rt_rhc_internal {
  *	ID_EPA
  */
 struct rt_epa_internal {
-    unsigned long epa_magic;
+    uint32_t epa_magic;
     point_t	epa_V;	/**< @brief  epa vertex */
     vect_t	epa_H;	/**< @brief  height vector */
     vect_t	epa_Au;	/**< @brief  unit vector along semi-major axis */
@@ -383,7 +383,7 @@ struct rt_epa_internal {
  *	ID_EHY
  */
 struct rt_ehy_internal {
-    unsigned long ehy_magic;
+    uint32_t ehy_magic;
     point_t	ehy_V;	/**< @brief  ehy vertex */
     vect_t	ehy_H;	/**< @brief  height vector */
     vect_t	ehy_Au;	/**< @brief  unit vector along semi-major axis */
@@ -397,7 +397,7 @@ struct rt_ehy_internal {
  *	ID_HYP
  */
 struct rt_hyp_internal {
-    unsigned long hyp_magic;
+    uint32_t hyp_magic;
     point_t	hyp_Vi;	/**< @brief  hyp vertex */
     vect_t	hyp_Hi;	/**< @brief  full height vector */
     vect_t	hyp_A;	/**< @brief  semi-major axis */
@@ -411,7 +411,7 @@ struct rt_hyp_internal {
  *	ID_ETO
  */
 struct rt_eto_internal {
-    unsigned long eto_magic;
+    uint32_t eto_magic;
     point_t	eto_V;	/**< @brief  eto vertex */
     vect_t	eto_N;	/**< @brief  vector normal to plane of torus */
     vect_t	eto_C;	/**< @brief  vector along semi-major axis of ellipse */
@@ -425,7 +425,7 @@ struct rt_eto_internal {
  */
 #define DSP_NAME_LEN 128
 struct rt_dsp_internal{
-    unsigned long magic;
+    uint32_t magic;
 #define dsp_file dsp_name 		/**< @brief for backwards compatibility */
     struct bu_vls dsp_name;	/**< @brief  name of data file */
     size_t dsp_xcnt;	/**< @brief  # samples in row of data */
@@ -474,13 +474,13 @@ struct rt_curve {
  */
 struct line_seg		/**< @brief  line segment */
 {
-    unsigned long	magic;
+    uint32_t magic;
     int			start, end;	/**< @brief  indices into sketch's array of vertices */
 };
 
 struct carc_seg		/**< @brief  circular arc segment */
 {
-    unsigned long	magic;
+    uint32_t magic;
     int			start, end;	/**< @brief  indices */
     fastf_t		radius;		/**< @brief  radius < 0.0 -> full circle with start point on
 					 * circle and "end" at center */
@@ -493,7 +493,7 @@ struct carc_seg		/**< @brief  circular arc segment */
 
 struct nurb_seg		/**< @brief  NURB curve segment */
 {
-    unsigned long	magic;
+    uint32_t magic;
     int			order;		/**< @brief  order of NURB curve (degree - 1) */
     int			pt_type;	/**< @brief  type of NURB curve */
     struct knot_vector	k;		/**< @brief  knot vector for NURB curve */
@@ -504,7 +504,7 @@ struct nurb_seg		/**< @brief  NURB curve segment */
 
 struct bezier_seg	/**< @brief  Bezier curve segment */
 {
-    unsigned long	magic;
+    uint32_t magic;
     int			degree;		/**< @brief  degree of curve (number of control points - 1) */
     int			*ctl_points;	/**< @brief  array of indices for control points */
 };
@@ -513,7 +513,7 @@ struct bezier_seg	/**< @brief  Bezier curve segment */
 #define SKETCH_NAME_LEN	16
 struct rt_sketch_internal
 {
-    unsigned long magic;
+    uint32_t magic;
     point_t V;			/**< default embedding of sketch */
     vect_t u_vec;		/**< unit vector 'u' component
 				 * defining the sketch plane
@@ -534,7 +534,7 @@ struct rt_sketch_internal
  *	ID_SUBMODEL
  */
 struct rt_submodel_internal {
-    unsigned long magic;
+    uint32_t magic;
     struct bu_vls file;		/**< @brief  .g filename, 0-len --> this database. */
     struct bu_vls treetop;	/**< @brief  one treetop only */
     int meth;			/**< @brief  space partitioning method */
@@ -551,7 +551,7 @@ struct rt_submodel_internal {
 
 struct rt_extrude_internal
 {
-    unsigned long	magic;
+    uint32_t magic;
     point_t		V;		/**< @brief  vertex, start and end point of loop to be extruded */
     vect_t		h;		/**< @brief  extrusion vector, may not be in (u_vec X v_vec) plane */
     vect_t		u_vec;		/**< @brief  vector in U parameter direction */
@@ -571,7 +571,7 @@ struct rt_extrude_internal
  *	ID_REVOLVE
  */
 struct rt_revolve_internal {
-    unsigned long	magic;
+    uint32_t magic;
     point_t		v3d;		/**< @brief vertex in 3d space  */
     vect_t		axis3d;		/**< @brief revolve axis in 3d space, y axis */
 
@@ -593,7 +593,7 @@ struct rt_revolve_internal {
 
 struct rt_cline_internal
 {
-    unsigned long	magic;
+    uint32_t magic;
     point_t		v;
     vect_t		h;
     fastf_t		radius;
@@ -607,7 +607,7 @@ struct rt_cline_internal
 
 struct rt_bot_internal
 {
-    unsigned long magic;
+    uint32_t magic;
     unsigned char mode;
     unsigned char orientation;
     unsigned char bot_flags;	/**< @brief flags, (indicates surface
@@ -759,7 +759,7 @@ struct pnt_color_scale_normal {
 
 
 struct rt_pnts_internal {
-    unsigned long magic;
+    uint32_t magic;
     double scale;
     rt_pnt_type type;
     unsigned long count;

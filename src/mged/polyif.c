@@ -35,7 +35,7 @@
 
 /* When finalized, this stuff belongs in a header file of its own */
 struct polygon_header {
-    int magic;			/* magic number */
+    uint32_t magic;		/* magic number */
     int ident;			/* identification number */
     int interior;		/* >0 => interior loop, gives ident # of exterior loop */
     vect_t normal;			/* surface normal */

@@ -54,7 +54,7 @@
  */
 struct sol_name_dist
 {
-    long magic;
+    uint32_t magic;
     char *name;
     fastf_t dist;
 };

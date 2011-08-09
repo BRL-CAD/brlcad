@@ -1294,9 +1294,9 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    (void)nmg_kill_snakes(lu);
     }
 
-    (void)nmg_unbreak_region_edges((unsigned long *)(&s->l));
+    (void)nmg_unbreak_region_edges((uint32_t *)(&s->l));
 
-    (void)nmg_mark_edges_real((unsigned long *)&s->l);
+    (void)nmg_mark_edges_real((uint32_t *)&s->l);
 
     nmg_merge_models(m, m_tmp);
     *r = r_tmp;

@@ -54,7 +54,7 @@ __BEGIN_DECLS
 
 /* the entries in the density table */
 struct density_entry {
-    long magic;
+    uint32_t magic;
     double grams_per_cu_mm;
     char *name;
 };

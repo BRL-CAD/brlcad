@@ -54,7 +54,7 @@
  */
 struct g_lint_ctrl
 {
-    long glc_magic;			/* Magic no. for integrity check */
+    uint32_t glc_magic;			/* Magic no. for integrity check */
     long glc_debug;			/* Bits to tailor diagnostics */
     fastf_t glc_tol;			/* Overlap/void tolerance */
     unsigned long glc_what_to_report;	/* Bits to tailor the output */
@@ -95,7 +95,7 @@ struct g_lint_ctrl
  */
 struct g_lint_seg
 {
-    long gls_magic;	/* Magic no. for integrity check */
+    uint32_t gls_magic;	/* Magic no. for integrity check */
     double gls_length;
     point_t gls_origin;
     point_t gls_entry;
@@ -114,7 +114,7 @@ struct g_lint_seg
  */
 struct g_lint_ovlp
 {
-    long glo_magic; /* Magic no. for integrity check */
+    uint32_t glo_magic; /* Magic no. for integrity check */
     struct region *glo_r1;
     struct region *glo_r2;
     struct g_lint_seg *glo_segs;

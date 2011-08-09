@@ -84,7 +84,7 @@ nmg_vvertex(const struct vertex *v, const struct vertexuse *vup)
 
 /* Verify vertex attributes */
 void
-nmg_vvua(const unsigned long *vua)
+nmg_vvua(const uint32_t *vua)
 {
     NMG_CK_VERTEXUSE_A_EITHER(vua);
 }
@@ -96,9 +96,9 @@ nmg_vvua(const unsigned long *vua)
  * Verify vertexuse
  */
 void
-nmg_vvu(const struct vertexuse *vu, const unsigned long *up_magic_p)
+nmg_vvu(const struct vertexuse *vu, const uint32_t *up_magic_p)
 {
-    unsigned long magic;
+    uint32_t magic;
 
     NMG_CK_VERTEXUSE(vu);
     if (vu->up.magic_p != up_magic_p) {
@@ -126,7 +126,7 @@ nmg_vvu(const struct vertexuse *vu, const unsigned long *up_magic_p)
 
 /* Verify edge geometry */
 void
-nmg_veg(const unsigned long *eg)
+nmg_veg(const uint32_t *eg)
 {
     struct bu_list *eu2;
 
@@ -233,12 +233,12 @@ nmg_vedge(const struct edge *e, const struct edgeuse *eup)
  * Verify edgeuse list.
  */
 void
-nmg_veu(const struct bu_list *hp, const unsigned long *up_magic_p)
+nmg_veu(const struct bu_list *hp, const uint32_t *up_magic_p)
 {
     struct edgeuse *eu;
     struct edgeuse *eunext;
     struct edgeuse *eulast;
-    unsigned long up_magic;
+    uint32_t up_magic;
 
     bu_ck_list_magic(hp, "nmg_veu() edegeuse list head", NMG_EDGEUSE_MAGIC);
 
@@ -399,7 +399,7 @@ nmg_vloop(const struct loop *l, const struct loopuse *lup)
  * Verify loopuse
  */
 void
-nmg_vlu(const struct bu_list *hp, const unsigned long *up)
+nmg_vlu(const struct bu_list *hp, const uint32_t *up)
 {
     struct loopuse *lu;
 
@@ -718,7 +718,7 @@ nmg_ck_e(const struct edgeuse *eu, const struct edge *e, const char *str)
  * N M G _ C K _ V U
  */
 void
-nmg_ck_vu(const unsigned long *parent, const struct vertexuse *vu, const char *str)
+nmg_ck_vu(const uint32_t *parent, const struct vertexuse *vu, const char *str)
 {
     char *errstr;
     int len = (int)strlen(str)+128;
@@ -739,7 +739,7 @@ nmg_ck_vu(const unsigned long *parent, const struct vertexuse *vu, const char *s
  * N M G _ C K _ E U
  */
 void
-nmg_ck_eu(const unsigned long *parent, const struct edgeuse *eu, const char *str)
+nmg_ck_eu(const uint32_t *parent, const struct edgeuse *eu, const char *str)
 {
     char *errstr;
     struct edgeuse *eur, *eu_next, *eu_last;
@@ -865,14 +865,14 @@ nmg_ck_l(const struct loopuse *lu, const struct loop *l, const char *str)
  * N M G _ C K _ L U
  */
 void
-nmg_ck_lu(const unsigned long *parent, const struct loopuse *lu, const char *str)
+nmg_ck_lu(const uint32_t *parent, const struct loopuse *lu, const char *str)
 {
     struct edgeuse *eu;
     struct vertexuse *vu;
     char *errstr;
     int l;
     int edgeuse_num=0;
-    unsigned long magic1;
+    uint32_t magic1;
     int len = (int)strlen(str)+128;
 
     errstr = bu_calloc(len, 1, "nmg_ck_lu error str");
@@ -1119,10 +1119,10 @@ nmg_ck_geometry(const struct model *m, const struct bn_tol *tol)
     nmg_edge_g_tabulate(&g_tbl, &m->magic);
 
     for (i=0; i<BU_PTBL_END(&g_tbl); i++) {
-	unsigned long *ep;
+	uint32_t *ep;
 	struct edge_g_lseg *eg;
 
-	ep = (unsigned long *)BU_PTBL_GET(&g_tbl, i);
+	ep = (uint32_t *)BU_PTBL_GET(&g_tbl, i);
 	switch (*ep) {
 	    case NMG_EDGE_G_LSEG_MAGIC:
 		eg = (struct edge_g_lseg *)ep;
@@ -1519,7 +1519,7 @@ nmg_ck_closed_surf(const struct shell *s, const struct bn_tol *tol)
     struct loopuse *lu;
     struct edgeuse *eu;
     int status = 0;
-    unsigned long magic1;
+    uint32_t magic1;
 
     NMG_CK_SHELL(s);
     BN_CK_TOL(tol);
@@ -1656,7 +1656,7 @@ struct v_ck_state {
 
 
 HIDDEN void
-nmg_ck_v_in_fus(long *vp, genptr_t state, int UNUSED(unused))
+nmg_ck_v_in_fus(uint32_t *vp, genptr_t state, int UNUSED(unused))
 {
     register struct v_ck_state *sp = (struct v_ck_state *)state;
     register struct vertex *v = (struct vertex *)vp;

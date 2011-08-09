@@ -753,7 +753,7 @@ BU_EXPORT extern bu_endian_t bu_byteorder(void);
  */
 
 struct bu_list {
-    unsigned long magic;		/**< @brief Magic # for mem id/check */
+    uint32_t magic;		/**< @brief Magic # for mem id/check */
     struct bu_list *forw;		/**< @brief "forward", "next" */
     struct bu_list *back;		/**< @brief "back", "last" */
 };
@@ -1420,7 +1420,7 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
  * histogram support
  */
 struct bu_hist  {
-    unsigned long magic;	/**< magic # for id/check */
+    uint32_t magic;		/**< magic # for id/check */
     fastf_t hg_min;		/**< minimum value */
     fastf_t hg_max;		/**< maximum value */
     fastf_t hg_clumpsize;	/**< (max-min+1)/nbins+1 */
@@ -1741,7 +1741,7 @@ struct bu_attribute_value_pair {
  * freed by the caller, and should not be individually freed.
  */
 struct bu_attribute_value_set {
-    unsigned long magic;
+    uint32_t magic;
     unsigned int count;	/**< # valid entries in avp */
     unsigned int max;	/**< # allocated slots in avp */
     genptr_t readonly_min;
@@ -1830,7 +1830,7 @@ typedef struct bu_attribute_value_set bu_avs_t;
  *
  */
 struct bu_vls  {
-    unsigned long vls_magic;
+    uint32_t vls_magic;
     char *vls_str;	/**< Dynamic memory for buffer */
     size_t vls_offset;	/**< Offset into vls_str where data is good */
     size_t vls_len;	/**< Length, not counting the null */
@@ -1886,7 +1886,7 @@ typedef struct bu_vls bu_vls_t;
  * Variable Length Buffer: bu_vlb support
  */
 struct bu_vlb {
-    unsigned long magic;
+    uint32_t magic;
     unsigned char *buf;     /**< Dynamic memory for the buffer */
     size_t bufCapacity;     /**< Current capacity of the buffer */
     size_t nextByte;        /**< Number of bytes currently used in the buffer */
@@ -2146,7 +2146,7 @@ typedef struct bu_structparse bu_structparse_t;
  * of a structure or other block of arbitrary data.
  */
 struct bu_external  {
-    unsigned long ext_magic;
+    uint32_t ext_magic;
     size_t ext_nbytes;
     uint8_t *ext_buf;
 };
@@ -2197,7 +2197,7 @@ typedef struct bu_external bu_external_t;
 
 struct bu_color
 {
-    unsigned long buc_magic;
+    uint32_t buc_magic;
     fastf_t buc_rgb[3];
 };
 typedef struct bu_color bu_color_t;
@@ -2283,7 +2283,7 @@ struct bu_rb_list
  */
 struct bu_rb_tree {
     /***** CLASS I - Applications may read directly. ****************/
-    unsigned long rbt_magic;           /**< Magic no. for integrity check */
+    uint32_t rbt_magic;           /**< Magic no. for integrity check */
     int rbt_nm_nodes;                  /**< Number of nodes */
 
     /**** CLASS II - Applications may read/write directly. **********/
@@ -2362,7 +2362,7 @@ typedef struct bu_rb_tree bu_rb_tree_t;
  */
 struct bu_rb_package
 {
-    unsigned long rbp_magic;	/**< Magic no. for integrity check */
+    uint32_t rbp_magic;	/**< Magic no. for integrity check */
     struct bu_rb_node **rbp_node;	/**< Containing nodes */
     struct bu_rb_list *rbp_list_pos;	/**< Place in the list of all pkgs.  */
     void *rbp_data;	/**< Application data */
@@ -2378,7 +2378,7 @@ struct bu_rb_package
  */
 struct bu_rb_node
 {
-    unsigned long rbn_magic;		/**< Magic no. for integrity check */
+    uint32_t rbn_magic;		/**< Magic no. for integrity check */
     struct bu_rb_tree *rbn_tree;	/**< Tree containing this node */
     struct bu_rb_node **rbn_parent;	/**< Parents */
     struct bu_rb_node **rbn_left;	/**< Left subtrees */
@@ -3331,7 +3331,7 @@ BU_EXPORT extern void bu_ck_list(const struct bu_list *hd,
  */
 BU_EXPORT extern void bu_ck_list_magic(const struct bu_list *hd,
 				       const char *str,
-				       const unsigned long magic);
+				       const uint32_t magic);
 
 /** @} */
 
@@ -5677,7 +5677,7 @@ BU_EXPORT extern long int bu_mread(int fd, void *bufp, long int n);
  * A hash entry
  */
 struct bu_hash_entry {
-    unsigned long magic;
+    uint32_t magic;
     unsigned char *key;
     unsigned char *value;
     int key_len;
@@ -5717,7 +5717,7 @@ typedef struct bu_hash_entry bu_hash_entry_t;
  * A table of hash entries
  */
 struct bu_hash_tbl {
-    unsigned long magic;
+    uint32_t magic;
     unsigned long mask;
     unsigned long num_lists;
     unsigned long num_entries;
@@ -5756,7 +5756,7 @@ typedef struct bu_hash_tbl bu_hash_tbl_t;
  * A hash table entry record
  */
 struct bu_hash_record {
-    unsigned long magic;
+    uint32_t magic;
     struct bu_hash_tbl *tbl;
     unsigned long index;
     struct bu_hash_entry *hsh_entry;
@@ -5942,7 +5942,7 @@ enum {
 
 
 struct bu_image_file {
-    unsigned long magic;
+    uint32_t magic;
     char *filename;
     int fd;
     int format;			/* BU_IMAGE_* */

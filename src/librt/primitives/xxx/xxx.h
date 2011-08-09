@@ -46,7 +46,7 @@
 
 /* parameters for solid, internal representation */
 struct rt_xxx_internal {
-    long magic;
+    uint32_t magic;
     vect_t v;
 };
 

@@ -48,7 +48,7 @@ extern double AmbientIntensity;
 
 /* Local information */
 struct brdf_specific {
-    int magic;
+    uint32_t magic;
     double specular_refl;	/* specular reflectance */
     double diffuse_refl;	/* diffuse reflectnace */
     double rms_slope;	/* Standard deviation (RMS) of surface slope (roughness) */

@@ -3186,7 +3186,7 @@ nmg_dump_model(struct model *m)
                               (unsigned long)s_cnt, 
                               (unsigned long)fu_cnt, 
                               (unsigned long)lu_cnt,
-                              (unsigned long) eu_cnt,
+                              (unsigned long)eu_cnt,
                               V3ARGS(vg->coord));
                     }
                 }

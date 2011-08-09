@@ -152,7 +152,7 @@ bu_ck_list(const struct bu_list *hd, const char *str)
 }
 
 void
-bu_ck_list_magic(const struct bu_list *hd, const char *str, const unsigned long magic)
+bu_ck_list_magic(const struct bu_list *hd, const char *str, const uint32_t magic)
 {
     register const struct bu_list *cur;
     int head_count = 0;

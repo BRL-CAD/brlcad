@@ -47,7 +47,7 @@
  * to any particular use of the shader.
  */
 struct toon_specific {
-    long magic;	/* magic # for memory validity check, must come 1st */
+    uint32_t magic;	/* magic # for memory validity check, must come 1st */
 };
 
 

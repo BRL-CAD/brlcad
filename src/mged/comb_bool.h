@@ -23,7 +23,7 @@
 
 struct bool_tree_node
 {
-    long btn_magic;
+    uint32_t btn_magic;
     int btn_opn;
     union {
 	char *leaf_name;
@@ -48,7 +48,7 @@ struct bool_tree_node
 
 struct tree_tail
 {
-    long tt_magic;
+    uint32_t tt_magic;
     int tt_opn;
     struct tree_tail *tt_next;
 };

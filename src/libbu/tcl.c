@@ -62,8 +62,8 @@ static struct bu_cmdtab bu_cmds[] = {
 
 void
 bu_badmagic_tcl(Tcl_Interp *interp,
-		const unsigned long *ptr,
-		unsigned long magic,
+		const uint32_t *ptr,
+		uint32_t magic,
 		const char *str,
 		const char *file,
 		int line)
@@ -76,11 +76,11 @@ bu_badmagic_tcl(Tcl_Interp *interp,
 	Tcl_AppendResult(interp, buf, NULL);
 	return;
     }
-    if (UNLIKELY(*((unsigned long *)(ptr)) != (magic))) {
+    if (UNLIKELY(*((uint32_t *)(ptr)) != (magic))) {
 	snprintf(buf, SMALLBUFSIZ, "ERROR: bad pointer in TCL interface %p: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n",
 		 (void *)ptr,
-		 str, magic,
-		 bu_identify_magic((unsigned long)*(ptr)), *(ptr),
+		 str, (unsigned long)magic,
+		 bu_identify_magic(*(ptr)), (unsigned long)*(ptr),
 		 file, line);
 	Tcl_AppendResult(interp, buf, NULL);
 	return;

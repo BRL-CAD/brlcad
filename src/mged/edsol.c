@@ -8967,7 +8967,7 @@ int
 f_put_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     const struct rt_functab *ftp;
-    long save_magic;
+    uint32_t save_magic;
     int context;
 
     /*XXX needs better argument checking */
@@ -9010,13 +9010,13 @@ f_put_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 			 (char *)0);
     }
 
-    save_magic = *((long *)es_int.idb_ptr);
-    *((long *)es_int.idb_ptr) = ftp->ft_internal_magic;
+    save_magic = *((uint32_t *)es_int.idb_ptr);
+    *((uint32_t *)es_int.idb_ptr) = ftp->ft_internal_magic;
     if (bu_tcl_structparse_argv(interp, argc-2, argv+2, ftp->ft_parsetab,
 				(char *)es_int.idb_ptr)==TCL_ERROR) {
 	return TCL_ERROR;
     }
-    *((long *)es_int.idb_ptr) = save_magic;
+    *((uint32_t *)es_int.idb_ptr) = save_magic;
 
     if (context)
 	transform_editing_solid(&es_int, es_invmat, &es_int, 1);

@@ -74,8 +74,8 @@ nmg_is_common_bigloop(const struct face *f1, const struct face *f2)
     const struct faceuse *fu1;
     const struct loopuse *lu1;
     const struct edgeuse *eu1;
-    const unsigned long *magic1 = (unsigned long *)NULL;
-    const unsigned long *magic2 = (unsigned long *)NULL;
+    const uint32_t *magic1 = NULL;
+    const uint32_t *magic2 = NULL;
     int nverts;
     int nbadv;
     int got_three;
@@ -92,8 +92,8 @@ nmg_is_common_bigloop(const struct face *f1, const struct face *f2)
 	    continue;
 	nverts = 0;
 	nbadv = 0;
-	magic1 = (unsigned long *)NULL;
-	magic2 = (unsigned long *)NULL;
+	magic1 = NULL;
+	magic2 = NULL;
 	got_three = 0;
 	for (BU_LIST_FOR(eu1, edgeuse, &lu1->down_hd)) {
 	    nverts++;
@@ -1033,7 +1033,7 @@ nmg_model_edge_fuse(struct model *m, const struct bn_tol *tol)
  * edge_g structs in the model, and comparing *them* pairwise.
  */
 int
-nmg_edge_g_fuse(const unsigned long *magic_p, const struct bn_tol *tol)
+nmg_edge_g_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 {
     struct model *m;
     struct bu_ptbl etab;
@@ -1424,7 +1424,7 @@ nmg_model_face_fuse(struct model *m, const struct bn_tol *tol)
 
 
 int
-nmg_break_all_es_on_v(unsigned long *magic_p, struct vertex *v, const struct bn_tol *tol)
+nmg_break_all_es_on_v(uint32_t *magic_p, struct vertex *v, const struct bn_tol *tol)
 {
     struct bu_ptbl eus;
     int i;

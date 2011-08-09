@@ -5833,7 +5833,7 @@ wdb_tol_tcl(ClientData clientData,
 
 /** structure to hold all solids that have been pushed. */
 struct wdb_push_id {
-    long magic;
+    uint32_t magic;
     struct wdb_push_id *forw, *back;
     struct directory *pi_dir;
     mat_t pi_mat;

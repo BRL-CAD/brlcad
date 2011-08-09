@@ -1014,7 +1014,7 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
     else
 	sketch_ip->curve.segment = (genptr_t *)NULL;
     for (seg_no=0; seg_no < sketch_ip->curve.count; seg_no++) {
-	unsigned long magic;
+	uint32_t magic;
 	struct line_seg *lsg;
 	struct carc_seg *csg;
 	struct nurb_seg *nsg;
@@ -1351,7 +1351,7 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
     else
 	sketch_ip->curve.segment = (genptr_t *)NULL;
     for (seg_no=0; seg_no < sketch_ip->curve.count; seg_no++) {
-	unsigned long magic;
+	uint32_t magic;
 	struct line_seg *lsg;
 	struct carc_seg *csg;
 	struct nurb_seg *nsg;

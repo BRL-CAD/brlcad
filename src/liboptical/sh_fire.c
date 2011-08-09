@@ -75,7 +75,7 @@
  * to any particular use of the shader.
  */
 struct fire_specific {
-    long magic;	/* magic # for memory validity check, must come 1st */
+    uint32_t magic;	/* magic # for memory validity check, must come 1st */
     int fire_debug;
     double fire_flicker;		/* flicker rate */
     double fire_stretch;

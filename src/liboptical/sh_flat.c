@@ -65,7 +65,7 @@ void singleNormalizedInput_hook(register const struct bu_structparse *sdp, regis
  * to any particular use of the shader.
  */
 struct flat_specific {
-    long magic;	/* magic # for memory validity check, must come 1st */
+    uint32_t magic;	/* magic # for memory validity check, must come 1st */
     point_t color;  /* overriding flat color */
     point_t transparency; /* how transparent the object is per rgb channel*/
 };

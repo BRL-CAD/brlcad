@@ -47,7 +47,7 @@
  * General I/O for ASCII files: remapid_file support
  */
 struct remapid_file {
-    long file_magic;
+    uint32_t file_magic;
     FILE *file_ptr;	/* the actual file */
     char *file_name;
     struct bu_vls file_buf;	/* contents of current line */

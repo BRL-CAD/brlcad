@@ -1150,7 +1150,7 @@ void
 nmg_vlblock_lu(struct bn_vlblock *vbp, const struct loopuse *lu, long *tab, int red, int green, int blue, int fancy)
 {
     struct edgeuse *eu;
-    unsigned long magic1;
+    uint32_t magic1;
     struct vertexuse *vu;
 
     BN_CK_VLBLOCK(vbp);
@@ -1336,7 +1336,7 @@ nmg_pl_isect(const char *filename, const struct shell *s, const struct bn_tol *t
     struct edgeuse *eu;
     long *b;
     FILE *fp;
-    unsigned long magic1;
+    uint32_t magic1;
     struct bn_vlblock *vbp;
 
     NMG_CK_SHELL(s);
@@ -1808,7 +1808,7 @@ nmg_plot_sigstepalong(int UNUSED(i))
  * that this is a graphical display of classifier operation.
  */
 void
-nmg_show_broken_classifier_stuff(unsigned long *p, char **classlist, int all_new, int fancy, const char *a_string)
+nmg_show_broken_classifier_stuff(uint32_t *p, char **classlist, int all_new, int fancy, const char *a_string)
 {
     static struct bn_vlblock *vbp = (struct bn_vlblock *)NULL;
     struct model *m;
@@ -1947,7 +1947,7 @@ nmg_face_plot(const struct faceuse *fu)
 
     NMG_CK_FACEUSE(fu);
 
-    m = nmg_find_model((unsigned long *)fu);
+    m = nmg_find_model((uint32_t *)fu);
     NMG_CK_MODEL(m);
 
     /* get space for list of items processed */
@@ -2006,7 +2006,7 @@ nmg_2face_plot(const struct faceuse *fu1, const struct faceuse *fu2)
     NMG_CK_FACEUSE(fu1);
     NMG_CK_FACEUSE(fu2);
 
-    m = nmg_find_model((unsigned long *)fu1);
+    m = nmg_find_model((uint32_t *)fu1);
     NMG_CK_MODEL(m);
 
     /* get space for list of items processed */
@@ -2056,7 +2056,7 @@ nmg_face_lu_plot(const struct loopuse *lu, const struct vertexuse *vu1, const st
     NMG_CK_VERTEXUSE(vu1);
     NMG_CK_VERTEXUSE(vu2);
 
-    m = nmg_find_model((unsigned long *)lu);
+    m = nmg_find_model((uint32_t *)lu);
     sprintf(buf, "loop%d.pl", num++);
 
     fp = fopen(buf, "wb");
@@ -2108,7 +2108,7 @@ nmg_plot_lu_ray(const struct loopuse *lu, const struct vertexuse *vu1, const str
     NMG_CK_VERTEXUSE(vu1);
     NMG_CK_VERTEXUSE(vu2);
 
-    m = nmg_find_model((unsigned long *)lu);
+    m = nmg_find_model((uint32_t *)lu);
     sprintf(buf, "loop%d.pl", num++);
 
     fp = fopen(buf, "wb");
@@ -2208,7 +2208,7 @@ nmg_plot_lu_around_eu(const char *prefix, const struct edgeuse *eu, const struct
 	return;
     }
 
-    m = nmg_find_model((unsigned long *)eu);
+    m = nmg_find_model((uint32_t *)eu);
     NMG_CK_MODEL(m);
     tab = (long *)bu_calloc(m->maxindex, sizeof(long), "bit vec");
 

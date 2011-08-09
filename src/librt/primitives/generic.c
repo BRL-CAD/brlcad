@@ -213,7 +213,7 @@ rt_generic_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 
     intern->idb_meth = ftp;
     intern->idb_ptr = bu_calloc((unsigned int)ftp->ft_internal_size, 1, "rt_generic_make");
-    *((long *)(intern->idb_ptr)) = ftp->ft_internal_magic;
+    *((uint32_t *)(intern->idb_ptr)) = ftp->ft_internal_magic;
 }
 
 

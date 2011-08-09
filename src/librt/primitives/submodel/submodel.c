@@ -57,7 +57,7 @@ const struct bu_structparse rt_submodel_parse[] = {
 
 /* ray tracing form of solid, including precomputed terms */
 struct submodel_specific {
-    long magic;
+    uint32_t magic;
     mat_t subm2m;		/* To transform normals back out to model coords */
     mat_t m2subm;		/* To transform rays into local coord sys */
     struct rt_i *rtip;		/* sub model */

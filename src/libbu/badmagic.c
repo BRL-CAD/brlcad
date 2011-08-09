@@ -29,7 +29,7 @@
 
 
 void
-bu_badmagic(const unsigned long *ptr, unsigned long magic, const char *str, const char *file, int line)
+bu_badmagic(const uint32_t *ptr, uint32_t magic, const char *str, const char *file, int line)
 {
     char buf[MAGICBUFSIZ];
 
@@ -43,11 +43,11 @@ bu_badmagic(const unsigned long *ptr, unsigned long magic, const char *str, cons
 		 (void *)ptr, str, file, line);
 	bu_bomb(buf);
     }
-    if (UNLIKELY(*(ptr) != (unsigned long)(magic))) {
+    if (UNLIKELY(*(ptr) != (uint32_t)(magic))) {
 	snprintf(buf, MAGICBUFSIZ, "ERROR: bad pointer %p: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n",
 		 (void *)ptr,
-		 str, magic,
-		 bu_identify_magic((unsigned long)*(ptr)), *(ptr),
+		 str, (unsigned long)magic,
+		 bu_identify_magic(*(ptr)), (unsigned long)*(ptr),
 		 file, line);
 	bu_bomb(buf);
     }

@@ -82,7 +82,7 @@ struct dsp_rpp {
  * (resolution) of the DSP this box bounds
  */
 struct dsp_bb {
-    long magic;
+    uint32_t magic;
     struct dsp_rpp dspb_rpp;	/* our bounding box */
     /*
      * the next two elements indicate the number and locations of

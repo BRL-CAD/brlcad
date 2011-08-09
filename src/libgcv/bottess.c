@@ -55,7 +55,7 @@ struct face_s {
 };
 
 struct soup_s {
-    unsigned long magic;
+    uint32_t magic;
     struct face_s *faces;
     unsigned long int nfaces, maxfaces;
 };

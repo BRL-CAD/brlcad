@@ -177,7 +177,7 @@ static const char *action_names[] = {
 
 /* The "ray" here is the intersection line between two faces */
 struct nmg_ray_state {
-    long magic;
+    uint32_t magic;
     struct vertexuse **vu;		/* ptr to vu array */
     int nvu;		/* len of vu[] */
     point_t pt;		/* The ray */
@@ -1547,7 +1547,7 @@ nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double
 	VPRINT("\tvertex", vs[start].vu->v_p->vg_p->coord);
 
 	/* Plot all the loops that touch here. */
-	m = nmg_find_model((unsigned long *)vs[start].vu);
+	m = nmg_find_model((uint32_t *)vs[start].vu);
 	b = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_special_wedge_processing flag[]");
 	vbp = rt_vlblock_init();
 	for (i=start; i < end; i++) {
@@ -2145,7 +2145,7 @@ nmg_edge_geom_isect_line(struct edgeuse *eu, struct nmg_ray_state *rs, const cha
 	    rs->eg_p = eg;
 	} else {
 	    NMG_CK_EDGE_G_LSEG(rs->eg_p);
-	    nmg_use_edge_g(eu, (unsigned long *)rs->eg_p);
+	    nmg_use_edge_g(eu, (uint32_t *)rs->eg_p);
 	}
 	goto out;
     }

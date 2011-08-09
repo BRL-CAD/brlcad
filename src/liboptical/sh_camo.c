@@ -51,7 +51,7 @@
 
 #define camo_MAGIC 0x18364	/* XXX change this number for each shader */
 struct camo_specific {
-    long magic;
+    uint32_t magic;
     double noise_lacunarity;
     double noise_h_val;
     double noise_octaves;

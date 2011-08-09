@@ -116,7 +116,7 @@ extern Size curbrk;
 struct overhead {
     struct rt_qelem ov_adj;		/* adjacency chain pointers */
     struct rt_qelem ov_buk;		/* bucket chain pointers */
-    long ov_magic;
+    uint32_t ov_magic;
     Size ov_length;
 };
 

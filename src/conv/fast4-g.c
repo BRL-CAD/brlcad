@@ -137,7 +137,7 @@ struct cline {
 } *cline_root;
 
 struct name_tree {
-    long magic;
+    uint32_t magic;
     int region_id;
     int mode;		/* PLATE_MODE or VOLUME_MODE */
     int inner;		/* 0 => this is a base/group name for a FASTGEN element */
