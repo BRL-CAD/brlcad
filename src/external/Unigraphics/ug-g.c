@@ -1660,11 +1660,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
     }
 
     /* release memory */
-    for (i=0; i < num_curves; i++) {
-	bu_free(skt->curve.segment[i], "segment");
-    }
-    bu_free(skt->curve.segment, "sketch segment pointers");
-    bu_free(skt->curve.reverse, "sketch reverse flags");
+    rt_curve_free(&skt->curve);
     bu_free(skt->verts, "skt->verts");
     bu_free(skt, "sketch");
 
