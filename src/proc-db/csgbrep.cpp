@@ -605,9 +605,12 @@ main(int argc, char** argv)
     dsp.dsp_ycnt = 256;
     dsp.dsp_smooth = 1;
     dsp.dsp_cuttype = 'a';
-    dsp.dsp_datasrc = RT_DSP_SRC_FILE;
     MAT_IDN(dsp.dsp_mtos);
     MAT_IDN(dsp.dsp_stom);
+    dsp.dsp_buf = NULL;
+    dsp.dsp_mp = NULL;
+    dsp.dsp_bip = NULL;
+    dsp.dsp_datasrc = RT_DSP_SRC_FILE;
     tmp_internal.idb_ptr = (genptr_t)&dsp;
     tmp_internal.idb_meth = &rt_functab[ID_DSP];
     write_out(outfp, &tmp_internal, "dsp", &tol);
