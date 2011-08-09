@@ -1402,8 +1402,8 @@ struct animate {
  */
 struct rt_htbl {
     struct bu_list	l;	/**< @brief  linked list for caller's use */
-    int			end;	/**< @brief  index of first available location */
-    int			blen;	/**< @brief  # of struct's of storage at *hits */
+    size_t		end;	/**< @brief  index of first available location */
+    size_t		blen;	/**< @brief  # of struct's of storage at *hits */
     struct hit *	hits;	/**< @brief  hits[blen] data storage area */
 };
 #define RT_CK_HTBL(_p) BU_CKMAG(_p, RT_HTBL_MAGIC, "rt_htbl")
@@ -3661,9 +3661,7 @@ RT_EXPORT extern int curve_to_tcl_list(struct bu_vls *vls,
 				       struct rt_curve *crv);
 
 /* htbl.c */
-RT_EXPORT extern void rt_htbl_init(struct rt_htbl *b,
-				   int len,
-				   const char *str);
+RT_EXPORT extern void rt_htbl_init(struct rt_htbl *b, size_t len, const char *str);
 RT_EXPORT extern void rt_htbl_reset(struct rt_htbl *b);
 RT_EXPORT extern void rt_htbl_free(struct rt_htbl *b);
 RT_EXPORT extern struct hit *rt_htbl_get(struct rt_htbl *b);

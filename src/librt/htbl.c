@@ -41,7 +41,7 @@
  *			R T _ H T B L _ I N I T
  */
 void
-rt_htbl_init(struct rt_htbl *b, int len, const char *str)
+rt_htbl_init(struct rt_htbl *b, size_t len, const char *str)
 
     /* initial len. */
 
@@ -50,7 +50,7 @@ rt_htbl_init(struct rt_htbl *b, int len, const char *str)
 	bu_log("rt_htbl_init(%8x, len=%d, %s)\n", b, len, str);
     BU_LIST_INIT(&b->l);
     b->l.magic = RT_HTBL_MAGIC;
-    if ( len <= 0 )  len = 64;
+    if ( len == 0 )  len = 64;
     b->blen = len;
     b->hits = (struct hit *)bu_calloc(b->blen, sizeof(struct hit), str);
     b->end = 0;
