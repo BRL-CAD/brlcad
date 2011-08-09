@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2011-07-XX  Release 7.20.4                                     ---
 ----------------------------------------------------------------------
 
+* fix basename functionality on Windows - Cliff Yapp, Bob Parker
 * upgraded libpng to version 1.5.4 - Cliff Yapp
 * improved performance of step-g importer - Zach Easterbrook
 * fixed browsing mged html help pages on Windows - Bob Parker
