@@ -1563,24 +1563,29 @@ edit_arg_to_apparent_coord(struct ged *gedp, struct edit_arg *arg,
     }
     d_next = RT_DIR_NULL; /* none left */
 
-    if (arg->type & EDIT_NATURAL_ORIGIN) {
-	arg->type &= ~EDIT_NATURAL_ORIGIN;
+    /* add final combination/primitive natural origin to sum */
+    if (d->d_flags & RT_DIR_SOLID) {
+	if (_ged_get_obj_bounds2(gedp, 1, (const char **)&d->d_namep, &gtd,
+	    rpp_min, rpp_max) == GED_ERROR)
+	    return GED_ERROR;
     } else {
-	/* TODO: calculate the BB_CENTER, and set to default */
-	bu_vls_printf(gedp->ged_result_str,
-		      "unsupported primitive point type");
-	return GED_ERROR;
+	BU_ASSERT(d->d_flags & (RT_DIR_REGION | RT_DIR_COMB));
+	if (_ged_get_obj_bounds(gedp, 1, (const char **)&d->d_namep, 1,
+	    rpp_min, rpp_max) == GED_ERROR)
+	    return GED_ERROR;
     }
 
-    /* add final combination/primitive natural origin to sum */
-    BU_ASSERT(d->d_flags & (RT_DIR_SOLID | RT_DIR_REGION | RT_DIR_COMB));
-    if (_ged_get_obj_bounds2(gedp, 1, (const char **)&d->d_namep, &gtd, rpp_min,
-	rpp_max) == GED_ERROR)
+    if (arg->type & EDIT_NATURAL_ORIGIN) {
+	arg->type &= ~EDIT_NATURAL_ORIGIN;
+	MAT_DELTAS_GET(leaf_deltas, gtd.gtd_xform);
+	bu_vls_printf(gedp->ged_result_str, "natural origin option is not"
+		      " yet working");
 	return GED_ERROR;
-    if (!(d->d_flags & RT_DIR_SOLID) && (_ged_get_obj_bounds(gedp, 1,
-	(const char **)&d->d_namep, 1, rpp_min, rpp_max) == GED_ERROR))
-	return GED_ERROR;
-    MAT_DELTAS_GET(leaf_deltas, gtd.gtd_xform);
+    } else {
+	/* bounding box center is the default */
+	VADD2SCALE(leaf_deltas, rpp_min, rpp_max, 0.5);
+    }
+
     VADD2(*coord, *coord, leaf_deltas);
     return GED_OK;
 }
