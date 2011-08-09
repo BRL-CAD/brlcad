@@ -3283,8 +3283,7 @@ main( int argc, char *argv[] )
             if( skt != NULL ) {
                 mk_sketch(out_fp, name, skt);
                 (void) mk_addmember(name, &head, NULL, WMOP_UNION);
-		if (skt->curve)
-		    rt_curve_free(skt->curve);
+		rt_curve_free(&skt->curve);
 		if (skt->verts)
 		    bu_free(skt->verts, "free verts");
 		bu_free(skt, "free sketch");
