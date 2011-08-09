@@ -61,11 +61,13 @@
 #include "db.h"
 #include "plot3.h"
 
+/* private header */
+#include "./dsp.h"
+
 
 #define FULL_DSP_DEBUGGING 1
 
 #define ORDERED_ISECT 1
-/* #define FULL_DSP_DEBUGGING 1 */
 
 #define DIM_BB_CHILDREN 4
 #define NUM_BB_CHILDREN (DIM_BB_CHILDREN*DIM_BB_CHILDREN)
@@ -109,10 +111,17 @@ struct dsp_bb_layer {
     struct dsp_bb *p; /* array of dsp_bb's for this level */
 };
 
+# define XCNT(_p) (((struct rt_dsp_internal *)_p)->dsp_xcnt)
+# define YCNT(_p) (((struct rt_dsp_internal *)_p)->dsp_ycnt)
+# define XSIZ(_p) (_p->dsp_i.dsp_xcnt - 1)
+# define YSIZ(_p) (_p->dsp_i.dsp_ycnt - 1)
 
-extern int rt_retrieve_binunif (struct rt_db_internal *intern,
-				const struct db_i *dbip,
-				const char *name);
+
+
+/* FIXME: rename? */
+extern int rt_retrieve_binunif(struct rt_db_internal *intern,
+			       const struct db_i *dbip,
+			       const char *name);
 
 
 #define dlog if (RT_G_DEBUG & DEBUG_HF) bu_log
@@ -144,39 +153,6 @@ struct dsp_specific {
     struct dsp_bb_layer *layer;
     struct dsp_bb *bb_array;
 };
-
-
-/* access to the array */
-#ifdef FULL_DSP_DEBUGGING
-#define DSP(_p, _x, _y) dsp_val(_p, _x, _y, __FILE__, __LINE__)
-unsigned short
-dsp_val(struct rt_dsp_internal *dsp_i, unsigned x, unsigned y, char *file, int line)
-{
-    RT_DSP_CK_MAGIC(dsp_i);
-
-    if (x >= dsp_i->dsp_xcnt || y >= dsp_i->dsp_ycnt) {
-	bu_log("%s:%d xy: %u, %u cnt: %zu, %zu\n",
-	       file, line, x, y, dsp_i->dsp_xcnt, dsp_i->dsp_ycnt);
-	bu_bomb("");
-    }
-
-    return dsp_i->dsp_buf[ y * dsp_i->dsp_xcnt + x ];
-}
-
-
-#else
-# define DSP(_p, _x, _y) (\
-	(\
-	 (unsigned short *) \
-	  ((_p)->dsp_buf) \
-)[ \
-	     (_y) * ((struct rt_dsp_internal *)_p)->dsp_xcnt + (_x) ])
-#endif
-
-# define XCNT(_p) (((struct rt_dsp_internal *)_p)->dsp_xcnt)
-# define YCNT(_p) (((struct rt_dsp_internal *)_p)->dsp_ycnt)
-# define XSIZ(_p) (_p->dsp_i.dsp_xcnt - 1)
-# define YSIZ(_p) (_p->dsp_i.dsp_ycnt - 1)
 
 
 struct bbox_isect {

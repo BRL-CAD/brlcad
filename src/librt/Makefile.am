@@ -287,6 +287,7 @@ noinst_HEADERS = \
 	primitives/bot/btg.h \
 	primitives/bot/tieprivate.h \
 	primitives/brep/brep_debug.h \
+	primitives/dsp/dsp.h \
 	primitives/fixpt.h \
 	primitives/metaball/metaball.h \
 	primitives/revolve/revolve.h \
