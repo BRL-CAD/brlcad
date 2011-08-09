@@ -382,9 +382,9 @@ main(int argc, char** argv)
     
     bu_log("SKETCH\n");
     struct rt_sketch_internal skt;
-    struct bezier_seg *bsg;
-    struct line_seg *lsg;
-    struct carc_seg *csg;
+    struct bezier_seg bsg;
+    struct line_seg lsg[4];
+    struct carc_seg csg;
     point2d_t verts[] = {
         { 250, 0 },     // 0 
 	{ 500, 0 },     // 1 
@@ -397,67 +397,54 @@ main(int argc, char** argv)
 	{ 125, 0 },     // 8 
 	{ 200, 200 }    // 9 
     };
-    size_t cnti;
+    int skt_reverse[6] = {0, 0, 0, 0, 0, 0};
+    genptr_t skt_segment[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
+
     skt.magic = RT_SKETCH_INTERNAL_MAGIC;
     VSET(skt.V, 10.0, 20.0, 30.0);
     VSET(skt.u_vec, 1.0, 0.0, 0.0);
     VSET(skt.v_vec, 0.0, 1.0, 0.0);
     skt.vert_count = 10;
-    skt.verts = (point2d_t *)bu_calloc(skt.vert_count, sizeof(point2d_t), "verts");
-    for (cnti=0; cnti < skt.vert_count; cnti++) {
-	V2MOVE(skt.verts[cnti], verts[cnti]);
-    }
+    skt.verts = verts;
     skt.curve.count = 6;
-    skt.curve.reverse = (int *)bu_calloc(skt.curve.count, sizeof(int), "sketch: reverse");
-    skt.curve.segment = (genptr_t *)bu_calloc(skt.curve.count, sizeof(genptr_t), "segs");
+    skt.curve.reverse = skt_reverse;
+    skt.curve.segment = skt_segment;
 
-    BU_GETSTRUCT(bsg, bezier_seg);
-    bsg->magic = CURVE_BEZIER_MAGIC;
-    bsg->degree = 4;
-    bsg->ctl_points = (int *)bu_calloc(bsg->degree+1, sizeof(int), "sketch: bsg->ctl_points");
-    bsg->ctl_points[0] = 4;
-    bsg->ctl_points[1] = 7;
-    bsg->ctl_points[2] = 9;
-    bsg->ctl_points[3] = 8;
-    bsg->ctl_points[4] = 0;
-    skt.curve.segment[0] = (genptr_t)bsg;
+    bsg.magic = CURVE_BEZIER_MAGIC;
+    bsg.degree = 4;
+    int bsg_ctl_points[] = {4, 7, 9, 8, 0};
+    bsg.ctl_points = bsg_ctl_points;
+    skt.curve.segment[0] = (genptr_t)&bsg;
 
-    BU_GETSTRUCT(lsg, line_seg);
-    lsg->magic = CURVE_LSEG_MAGIC;
-    lsg->start = 0;
-    lsg->end = 1;
-    skt.curve.segment[1] = (genptr_t)lsg;
+    lsg[0].magic = CURVE_LSEG_MAGIC;
+    lsg[0].start = 0;
+    lsg[0].end = 1;
+    skt.curve.segment[1] = (genptr_t)&lsg[0];
     
-    BU_GETSTRUCT(lsg, line_seg);
-    lsg->magic = CURVE_LSEG_MAGIC;
-    lsg->start = 1;
-    lsg->end = 2;
-    skt.curve.segment[2] = (genptr_t)lsg;
+    lsg[1].magic = CURVE_LSEG_MAGIC;
+    lsg[1].start = 1;
+    lsg[1].end = 2;
+    skt.curve.segment[2] = (genptr_t)&lsg[1];
     
-    BU_GETSTRUCT(lsg, line_seg);
-    lsg->magic = CURVE_LSEG_MAGIC;
-    lsg->start = 2;
-    lsg->end = 3;
-    skt.curve.segment[3] = (genptr_t)lsg;
+    lsg[2].magic = CURVE_LSEG_MAGIC;
+    lsg[2].start = 2;
+    lsg[2].end = 3;
+    skt.curve.segment[3] = (genptr_t)&lsg[2];
     
-    BU_GETSTRUCT(lsg, line_seg);
-    lsg->magic = CURVE_LSEG_MAGIC;
-    lsg->start = 3;
-    lsg->end = 4;
-    skt.curve.segment[4] = (genptr_t)lsg;
+    lsg[3].magic = CURVE_LSEG_MAGIC;
+    lsg[3].start = 3;
+    lsg[3].end = 4;
+    skt.curve.segment[4] = (genptr_t)&lsg[3];
     
-    BU_GETSTRUCT(csg, carc_seg);
-    csg->magic = CURVE_CARC_MAGIC;
-    csg->radius = -1.0;
-    csg->start = 6;
-    csg->end = 5;
-    skt.curve.segment[5] = (genptr_t)csg;
+    csg.magic = CURVE_CARC_MAGIC;
+    csg.radius = -1.0;
+    csg.start = 6;
+    csg.end = 5;
+    skt.curve.segment[5] = (genptr_t)&csg;
     
     tmp_internal.idb_ptr = (genptr_t)&skt;
     tmp_internal.idb_meth = &rt_functab[ID_SKETCH];
     write_out(outfp, &tmp_internal, "sketch", &tol);
-
-    /* !!! clean up calloc memory  */
 
     /* !!! wot? */
     mk_sketch(outfp, "sketch", &skt);
@@ -465,9 +452,9 @@ main(int argc, char** argv)
     bu_log("EXTRUDE\n");
     // extrude will need its own sketch
     struct rt_sketch_internal eskt;
-    struct bezier_seg *ebsg;
-    struct line_seg *elsg;
-    struct carc_seg *ecsg;
+    struct bezier_seg ebsg;
+    struct line_seg elsg[4];
+    struct carc_seg ecsg;
     point2d_t everts[] = {
         { 250, 0 },     // 0 
 	{ 500, 0 },     // 1 
@@ -480,60 +467,50 @@ main(int argc, char** argv)
 	{ 125, 0 },     // 8 
 	{ 200, 200 }    // 9 
     };
+    int eskt_reverse[6] = {0, 0, 0, 0, 0, 0};
+    genptr_t eskt_segment[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
+
     eskt.magic = RT_SKETCH_INTERNAL_MAGIC;
     VSET(eskt.V, 10.0, 20.0, 30.0);
     VSET(eskt.u_vec, 1.0, 0.0, 0.0);
     VSET(eskt.v_vec, 0.0, 1.0, 0.0);
     eskt.vert_count = 10;
-    eskt.verts = (point2d_t *)bu_calloc(eskt.vert_count, sizeof(point2d_t), "verts");
-    for (cnti=0; cnti < eskt.vert_count; cnti++) {
-	V2MOVE(eskt.verts[cnti], everts[cnti]);
-    }
+    eskt.verts = everts;
     eskt.curve.count = 6;
-    eskt.curve.reverse = (int *)bu_calloc(eskt.curve.count, sizeof(int), "sketch: reverse");
-    eskt.curve.segment = (genptr_t *)bu_calloc(eskt.curve.count, sizeof(genptr_t), "segs");
+    eskt.curve.reverse = eskt_reverse;
+    eskt.curve.segment = eskt_segment;
 
-    BU_GETSTRUCT(ebsg, bezier_seg);
-    ebsg->magic = CURVE_BEZIER_MAGIC;
-    ebsg->degree = 4;
-    ebsg->ctl_points = (int *)bu_calloc(bsg->degree+1, sizeof(int), "sketch: bsg->ctl_points");
-    ebsg->ctl_points[0] = 4;
-    ebsg->ctl_points[1] = 7;
-    ebsg->ctl_points[2] = 9;
-    ebsg->ctl_points[3] = 8;
-    ebsg->ctl_points[4] = 0;
-    eskt.curve.segment[0] = (genptr_t)ebsg;
+    ebsg.magic = CURVE_BEZIER_MAGIC;
+    ebsg.degree = 4;
+    int ebsg_ctl_points[] = {4, 7, 9, 8, 0};
+    ebsg.ctl_points = ebsg_ctl_points;
+    eskt.curve.segment[0] = (genptr_t)&ebsg;
     
-    BU_GETSTRUCT(elsg, line_seg);
-    elsg->magic = CURVE_LSEG_MAGIC;
-    elsg->start = 0;
-    elsg->end = 1;
-    eskt.curve.segment[1] = (genptr_t)elsg;
+    elsg[0].magic = CURVE_LSEG_MAGIC;
+    elsg[0].start = 0;
+    elsg[0].end = 1;
+    eskt.curve.segment[1] = (genptr_t)&elsg[0];
     
-    BU_GETSTRUCT(elsg, line_seg);
-    elsg->magic = CURVE_LSEG_MAGIC;
-    elsg->start = 1;
-    elsg->end = 2;
-    eskt.curve.segment[2] = (genptr_t)elsg;
+    elsg[1].magic = CURVE_LSEG_MAGIC;
+    elsg[1].start = 1;
+    elsg[1].end = 2;
+    eskt.curve.segment[2] = (genptr_t)&elsg[1];
     
-    BU_GETSTRUCT(elsg, line_seg);
-    elsg->magic = CURVE_LSEG_MAGIC;
-    elsg->start = 2;
-    elsg->end = 3;
-    eskt.curve.segment[3] = (genptr_t)elsg;
+    elsg[2].magic = CURVE_LSEG_MAGIC;
+    elsg[2].start = 2;
+    elsg[2].end = 3;
+    eskt.curve.segment[3] = (genptr_t)&elsg[2];
+
+    elsg[3].magic = CURVE_LSEG_MAGIC;
+    elsg[3].start = 3;
+    elsg[3].end = 4;
+    eskt.curve.segment[4] = (genptr_t)&elsg[3];
     
-    BU_GETSTRUCT(elsg, line_seg);
-    elsg->magic = CURVE_LSEG_MAGIC;
-    elsg->start = 3;
-    elsg->end = 4;
-    eskt.curve.segment[4] = (genptr_t)elsg;
-    
-    BU_GETSTRUCT(ecsg, carc_seg);
-    ecsg->magic = CURVE_CARC_MAGIC;
-    ecsg->radius = -1.0;
-    ecsg->start = 6;
-    ecsg->end = 5;
-    eskt.curve.segment[5] = (genptr_t)ecsg;
+    ecsg.magic = CURVE_CARC_MAGIC;
+    ecsg.radius = -1.0;
+    ecsg.start = 6;
+    ecsg.end = 5;
+    eskt.curve.segment[5] = (genptr_t)&ecsg;
 
     // now to the actual extrusion 
     struct rt_extrude_internal extrude;
@@ -552,76 +529,65 @@ main(int argc, char** argv)
     bu_log("REVOLVE\n");
     // revolve will need its own sketch
     struct rt_sketch_internal rskt;
-    struct bezier_seg *rbsg;
-    struct line_seg *rlsg;
-    struct carc_seg *rcsg;
+    struct bezier_seg rbsg;
+    struct line_seg rlsg[4];
+    struct carc_seg rcsg;
     point2d_t rverts[] = {
-        { 250, 0 },     // 0 
-	{ 500, 0 },     // 1 
-	{ 500, 500 },   // 2 
-	{ 0, 500 },     // 3 
-	{ 0, 250 },     // 4 
-	{ 250, 250 },   // 5 
-	{ 125, 125 },   // 6 
-	{ 0, 125 },     // 7 
-	{ 125, 0 },     // 8 
-	{ 200, 200 }    // 9 
+        { 250, 0 },     // 0
+	{ 500, 0 },     // 1
+	{ 500, 500 },   // 2
+	{ 0, 500 },     // 3
+	{ 0, 250 },     // 4
+	{ 250, 250 },   // 5
+	{ 125, 125 },   // 6
+	{ 0, 125 },     // 7
+	{ 125, 0 },     // 8
+	{ 200, 200 }    // 9
     };
+    int rskt_reverse[6] = {0, 0, 0, 0, 0, 0};
+    genptr_t rskt_segment[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
 
     rskt.magic = RT_SKETCH_INTERNAL_MAGIC;
     VSET(rskt.V, 10.0, 20.0, 30.0);
     VSET(rskt.u_vec, 1.0, 0.0, 0.0);
     VSET(rskt.v_vec, 0.0, 1.0, 0.0);
     rskt.vert_count = 10;
-    rskt.verts = (point2d_t *)bu_calloc(rskt.vert_count, sizeof(point2d_t), "verts");
-    for (cnti=0; cnti < rskt.vert_count; cnti++) {
-	V2MOVE(rskt.verts[cnti], rverts[cnti]);
-    }
+    rskt.verts = rverts;
     rskt.curve.count = 6;
-    rskt.curve.reverse = (int *)bu_calloc(rskt.curve.count, sizeof(int), "sketch: reverse");
-    rskt.curve.segment = (genptr_t *)bu_calloc(rskt.curve.count, sizeof(genptr_t), "segs");
+    rskt.curve.reverse = rskt_reverse;
+    rskt.curve.segment = rskt_segment;
 
-    BU_GETSTRUCT(rbsg, bezier_seg);
-    rbsg->magic = CURVE_BEZIER_MAGIC;
-    rbsg->degree = 4;
-    rbsg->ctl_points = (int *)bu_calloc(rbsg->degree+1, sizeof(int), "sketch: bsg->ctl_points");
-    rbsg->ctl_points[0] = 4;
-    rbsg->ctl_points[1] = 7;
-    rbsg->ctl_points[2] = 9;
-    rbsg->ctl_points[3] = 8;
-    rbsg->ctl_points[4] = 0;
-    rskt.curve.segment[0] = (genptr_t)rbsg;
+    rbsg.magic = CURVE_BEZIER_MAGIC;
+    rbsg.degree = 4;
+    int rbsg_ctl_points[] = {4, 7, 9, 8, 0};
+    rbsg.ctl_points = rbsg_ctl_points;
+    rskt.curve.segment[0] = (genptr_t)&rbsg;
     
-    BU_GETSTRUCT(rlsg, line_seg);
-    rlsg->magic = CURVE_LSEG_MAGIC;
-    rlsg->start = 0;
-    rlsg->end = 1;
-    rskt.curve.segment[1] = (genptr_t)rlsg;
+    rlsg[0].magic = CURVE_LSEG_MAGIC;
+    rlsg[0].start = 0;
+    rlsg[0].end = 1;
+    rskt.curve.segment[1] = (genptr_t)&rlsg[0];
     
-    BU_GETSTRUCT(rlsg, line_seg);
-    rlsg->magic = CURVE_LSEG_MAGIC;
-    rlsg->start = 1;
-    rlsg->end = 2;
-    rskt.curve.segment[2] = (genptr_t)rlsg;
+    rlsg[1].magic = CURVE_LSEG_MAGIC;
+    rlsg[1].start = 1;
+    rlsg[1].end = 2;
+    rskt.curve.segment[2] = (genptr_t)&rlsg[1];
     
-    BU_GETSTRUCT(rlsg, line_seg);
-    rlsg->magic = CURVE_LSEG_MAGIC;
-    rlsg->start = 2;
-    rlsg->end = 3;
-    rskt.curve.segment[3] = (genptr_t)rlsg;
+    rlsg[2].magic = CURVE_LSEG_MAGIC;
+    rlsg[2].start = 2;
+    rlsg[2].end = 3;
+    rskt.curve.segment[3] = (genptr_t)&rlsg[2];
     
-    BU_GETSTRUCT(rlsg, line_seg);
-    rlsg->magic = CURVE_LSEG_MAGIC;
-    rlsg->start = 3;
-    rlsg->end = 4;
-    rskt.curve.segment[4] = (genptr_t)rlsg;
+    rlsg[3].magic = CURVE_LSEG_MAGIC;
+    rlsg[3].start = 3;
+    rlsg[3].end = 4;
+    rskt.curve.segment[4] = (genptr_t)&rlsg[3];
     
-    BU_GETSTRUCT(rcsg, carc_seg);
-    rcsg->magic = CURVE_CARC_MAGIC;
-    rcsg->radius = -1.0;
-    rcsg->start = 6;
-    rcsg->end = 5;
-    rskt.curve.segment[5] = (genptr_t)rcsg;
+    rcsg.magic = CURVE_CARC_MAGIC;
+    rcsg.radius = -1.0;
+    rcsg.start = 6;
+    rcsg.end = 5;
+    rskt.curve.segment[5] = (genptr_t)&rcsg;
 
     // now to the actual revolve 
     struct rt_revolve_internal revolve;
