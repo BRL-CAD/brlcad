@@ -36,14 +36,14 @@ bu_basename(const char *str)
 	return base_str;
     }
 
-    /* Skip leading '/'s */
+    /* Skip leading separators */
     while (*p != '\0')
 	if (*p++ == BU_DIR_SEPARATOR && *p != BU_DIR_SEPARATOR && *p != '\0')
 	    str = p;
 
     len = strlen(str);
     
-    /* Remove trailing '/'s */
+    /* Remove trailing separators */
     while (len > 1 && str[len - 1] == BU_DIR_SEPARATOR)
 	len--;
     
