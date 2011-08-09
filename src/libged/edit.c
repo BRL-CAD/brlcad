@@ -1110,7 +1110,7 @@ edit_rotate_get_next_arg_head(const union edit_cmd *const cmd, int idx)
 #define EDIT_ROTATE_ARG_HEADS_LEN 7
     const struct edit_arg **arg_heads[EDIT_ROTATE_ARG_HEADS_LEN];
 
-    idx %= EDIT_ROTATE_ARG_HEADS_LEN - 1;
+    idx %= EDIT_ROTATE_ARG_HEADS_LEN;
 
     arg_heads[0] = (const struct edit_arg **)&cmd->rotate.objects;
     arg_heads[1] = (const struct edit_arg **)&cmd->rotate.ref_axis.from;
@@ -1196,7 +1196,7 @@ edit_scale_get_next_arg_head(const union edit_cmd *const cmd, int idx)
 #define EDIT_SCALE_ARG_HEADS_LEN 6
     const struct edit_arg **arg_heads[EDIT_SCALE_ARG_HEADS_LEN];
 
-    idx %= EDIT_SCALE_ARG_HEADS_LEN  - 1;
+    idx %= EDIT_SCALE_ARG_HEADS_LEN;
 
     arg_heads[0] = (const struct edit_arg **)&cmd->scale.objects;
     arg_heads[1] = (const struct edit_arg **)&cmd->scale.ref_scale.from;
@@ -1441,7 +1441,7 @@ edit_translate_get_next_arg_head(const union edit_cmd *const cmd, int idx)
 #define EDIT_TRANSLATE_ARG_HEADS_LEN 3
     const struct edit_arg **arg_heads[EDIT_TRANSLATE_ARG_HEADS_LEN];
 
-    idx %= EDIT_TRANSLATE_ARG_HEADS_LEN - 1;
+    idx %= EDIT_TRANSLATE_ARG_HEADS_LEN;
     
     arg_heads[0] = (const struct edit_arg **)&cmd->translate.objects;
     arg_heads[1] = (const struct edit_arg **)&cmd->translate.ref_vector.from;
