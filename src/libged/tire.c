@@ -809,7 +809,7 @@ MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts,
 	    size_t vertcount, fastf_t patternwidth1, fastf_t patternwidth2,
 	    fastf_t tirewidth, fastf_t zbase, fastf_t ztire)
 {
-    struct rt_sketch_internal *skt;
+    struct rt_sketch_internal skt;
     struct line_seg *lsg;
     point_t V;
     vect_t u_vec, v_vec, h;
@@ -821,22 +821,21 @@ MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts,
     bu_vls_init(&str2);
 
     /* Basic allocation of structure */
-    skt = (struct rt_sketch_internal *)bu_calloc(1, sizeof(struct rt_sketch_internal), "sketch");
-    skt->magic = RT_SKETCH_INTERNAL_MAGIC;
+    skt.magic = RT_SKETCH_INTERNAL_MAGIC;
 
     /* Set vertex and orientation vectors?? */
     VSET(V, 0, -tirewidth/2, zbase-.1*zbase);
     VSET(u_vec, 1, 0, 0);
     VSET(v_vec, 0, 1, 0);
-    VMOVE(skt->V, V);
-    VMOVE(skt->u_vec, u_vec);
-    VMOVE(skt->v_vec, v_vec);
+    VMOVE(skt.V, V);
+    VMOVE(skt.u_vec, u_vec);
+    VMOVE(skt.v_vec, v_vec);
 
     /* Define links between/order of vertices */
-    skt->vert_count = vertcount;
-    skt->verts = (point2d_t *)bu_calloc(skt->vert_count, sizeof(point2d_t), "verts");
-    for (i = 0; i < skt->vert_count; i++) {
-	V2SET(skt->verts[i],
+    skt.vert_count = vertcount;
+    skt.verts = (point2d_t *)bu_calloc(skt.vert_count, sizeof(point2d_t), "verts");
+    for (i = 0; i < skt.vert_count; i++) {
+	V2SET(skt.verts[i],
 	      verts[i][0] * patternwidth2 - patternwidth2 / 2,
 	      verts[i][1] * tirewidth);
     }
@@ -844,9 +843,9 @@ MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts,
     /* Specify number of segments and allocate memory for reverse??
      * and segments.
      */
-    skt->curve.count = vertcount;
-    skt->curve.reverse = (int *)bu_calloc(skt->curve.count, sizeof(int), "sketch: reverse");
-    skt->curve.segment = (genptr_t *)bu_calloc(skt->curve.count, sizeof(genptr_t), "segs");
+    skt.curve.count = vertcount;
+    skt.curve.reverse = (int *)bu_calloc(skt.curve.count, sizeof(int), "sketch: reverse");
+    skt.curve.segment = (genptr_t *)bu_calloc(skt.curve.count, sizeof(genptr_t), "segs");
 
 
     /* Insert all line segments except the last one */
@@ -855,7 +854,7 @@ MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts,
 	lsg->magic = CURVE_LSEG_MAGIC;
 	lsg->start = i;
 	lsg->end = i + 1;
-	skt->curve.segment[i] = (genptr_t)lsg;
+	skt.curve.segment[i] = (genptr_t)lsg;
     }
 
     /* Connect the last connected vertex to the first vertex */
@@ -863,12 +862,15 @@ MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts,
     lsg->magic = CURVE_LSEG_MAGIC;
     lsg->start = vertcount - 1;
     lsg->end = 0;
-    skt->curve.segment[vertcount - 1] = (genptr_t)lsg;
+    skt.curve.segment[vertcount - 1] = (genptr_t)lsg;
 
     /* Make the sketch */
     bu_vls_sprintf(&str, "sketch%s", suffix);
-    mk_sketch(file, bu_vls_addr(&str), skt);
+    mk_sketch(file, bu_vls_addr(&str), &skt);
 
+    /* release dynamic sketch memory */
+    bu_free(skt.verts, "verts");
+    rt_curve_free(&skt.curve);
 
     /* Make first slanted extrusion for depth vs. width of tread effect */
     VSET(h, patternwidth1 / 2 - patternwidth2 / 2, 0, ztire - (zbase - .11 * zbase));
