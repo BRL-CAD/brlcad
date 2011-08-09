@@ -42,7 +42,6 @@ rt_nurb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     RT_NURB_CK_MAGIC(nip);
 
     ON_TextLog log(stderr);
-    *b = ON_Brep::New();
 
     for (i = 0; i < nip->nsrf; i++) {
 	struct face_g_snurb *surface = nip->srfs[i];

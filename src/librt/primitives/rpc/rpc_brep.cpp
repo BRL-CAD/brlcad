@@ -42,8 +42,6 @@ rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     eip = (struct rt_rpc_internal *)ip->idb_ptr;
     RT_RPC_CK_MAGIC(eip);
 
-    *b = ON_Brep::New();
-
     ON_TextLog dump_to_stdout;
     ON_TextLog* dump = &dump_to_stdout;
 

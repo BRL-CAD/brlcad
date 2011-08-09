@@ -154,8 +154,6 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     if (BU_LIST_IS_HEAD(&curp->l, &pip->pipe_segs_head)) return;
   
     VMOVE(current_point, prevp->pp_coord);
-     
-    *b = ON_Brep::New();
    
     VSUB2(pipe_dir, prevp->pp_coord, curp->pp_coord);
     bn_vec_ortho(x_dir, pipe_dir);

@@ -163,8 +163,6 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
     eip = rip->sk;
     RT_SKETCH_CK_MAGIC(eip);
 
-    *b = ON_Brep::New();
-
     ON_3dPoint plane_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
 

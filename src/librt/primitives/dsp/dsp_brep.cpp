@@ -48,8 +48,6 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
     RT_DSP_CK_MAGIC(dsp_ip);
 
-    *b = ON_Brep::New();
-
     /* A DSP brep is broken down into faces as follows:
      *
      * 1.  The bottom face, a simple planar surface

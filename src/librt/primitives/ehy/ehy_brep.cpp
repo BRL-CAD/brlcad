@@ -42,8 +42,6 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     eip = (struct rt_ehy_internal *)ip->idb_ptr;
     RT_EHY_CK_MAGIC(eip);
 
-    *b = ON_Brep::New();
-
     ON_TextLog dump_to_stdout;
     ON_TextLog* dump = &dump_to_stdout;
 

@@ -42,8 +42,6 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     eip = (struct rt_hyp_internal *)ip->idb_ptr;
     RT_HYP_CK_MAGIC(eip);
 
-    *b = ON_Brep::New();
-
     point_t p1_origin, p2_origin;
     ON_3dPoint plane1_origin, plane2_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
