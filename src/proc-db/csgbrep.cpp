@@ -446,9 +446,6 @@ main(int argc, char** argv)
     tmp_internal.idb_meth = &rt_functab[ID_SKETCH];
     write_out(outfp, &tmp_internal, "sketch", &tol);
 
-    /* !!! wot? */
-    mk_sketch(outfp, "sketch", &skt);
-
     bu_log("EXTRUDE\n");
     // extrude will need its own sketch
     struct rt_sketch_internal eskt;
