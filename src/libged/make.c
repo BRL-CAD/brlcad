@@ -673,6 +673,8 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	av[7] = (char *)0;
 	ged_make(gedp, 7, (const char **)av);
     } else if (BU_STR_EQUAL(argv[bu_optind+1], "sketch")) {
+	const char *make_default = NULL;
+
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_SKETCH;
 	internal.idb_meth = &rt_functab[ID_SKETCH];
@@ -682,78 +684,86 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	VSET(sketch_ip->u_vec, 1.0, 0.0, 0.0);
 	VSET(sketch_ip->v_vec, 0.0, 1.0, 0.0);
 	VSET(sketch_ip->V, origin[X], origin[Y], origin[Z]);
-#if 0
-	/* XXX this creates a "default" sketch object -- this
-	   code should probably be made optional somewhere
-	   else now? */
-	sketch_ip->vert_count = 7;
-	sketch_ip->verts = (point2d_t *)bu_calloc(sketch_ip->vert_count, sizeof(point2d_t), "sketch_ip->verts");
-	sketch_ip->verts[0][0] = 0.25*scale;
-	sketch_ip->verts[0][1] = 0.0;
-	sketch_ip->verts[1][0] = 0.5*scale;
-	sketch_ip->verts[1][1] = 0.0;
-	sketch_ip->verts[2][0] = 0.5*scale;
-	sketch_ip->verts[2][1] = 0.5*scale;
-	sketch_ip->verts[3][0] = 0.0;
-	sketch_ip->verts[3][1] = 0.5*scale;
-	sketch_ip->verts[4][0] = 0.0;
-	sketch_ip->verts[4][1] = 0.25*scale;
-	sketch_ip->verts[5][0] = 0.25*scale;
-	sketch_ip->verts[5][1] = 0.25*scale;
-	sketch_ip->verts[6][0] = 0.125*scale;
-	sketch_ip->verts[6][1] = 0.125*scale;
-	sketch_ip->curve.count = 6;
-	sketch_ip->curve.reverse = (int *)bu_calloc(sketch_ip->curve.count, sizeof(int), "sketch_ip->curve.reverse");
-	sketch_ip->curve.segment = (genptr_t *)bu_calloc(sketch_ip->curve.count, sizeof(genptr_t), "sketch_ip->curve.segment");
 
-	csg = (struct carc_seg *)bu_calloc(1, sizeof(struct carc_seg), "segment");
-	sketch_ip->curve.segment[0] = (genptr_t)csg;
-	csg->magic = CURVE_CARC_MAGIC;
-	csg->start = 4;
-	csg->end = 0;
-	csg->radius = 0.25*scale;
-	csg->center_is_left = 1;
-	csg->orientation = 0;
+	make_default = getenv("LIBGED_MAKE_SKETCH");
+	if (make_default && bu_str_true(make_default)) {
+	    struct carc_seg *csg;
+	    struct line_seg *lsg;
 
-	lsg = (struct line_seg *)bu_calloc(1, sizeof(struct line_seg), "segment");
-	sketch_ip->curve.segment[1] = (genptr_t)lsg;
-	lsg->magic = CURVE_LSEG_MAGIC;
-	lsg->start = 0;
-	lsg->end = 1;
+	    /* this creates a "default" sketch object -- useful for debugging purposes. */
 
-	lsg = (struct line_seg *)bu_calloc(1, sizeof(struct line_seg), "segment");
-	sketch_ip->curve.segment[2] = (genptr_t)lsg;
-	lsg->magic = CURVE_LSEG_MAGIC;
-	lsg->start = 1;
-	lsg->end = 2;
+	    sketch_ip->vert_count = 7;
+	    sketch_ip->verts = (point2d_t *)bu_calloc(sketch_ip->vert_count, sizeof(point2d_t), "sketch_ip->verts");
+	    sketch_ip->verts[0][0] = 0.25*scale;
+	    sketch_ip->verts[0][1] = 0.0;
+	    sketch_ip->verts[1][0] = 0.5*scale;
+	    sketch_ip->verts[1][1] = 0.0;
+	    sketch_ip->verts[2][0] = 0.5*scale;
+	    sketch_ip->verts[2][1] = 0.5*scale;
+	    sketch_ip->verts[3][0] = 0.0;
+	    sketch_ip->verts[3][1] = 0.5*scale;
+	    sketch_ip->verts[4][0] = 0.0;
+	    sketch_ip->verts[4][1] = 0.25*scale;
+	    sketch_ip->verts[5][0] = 0.25*scale;
+	    sketch_ip->verts[5][1] = 0.25*scale;
+	    sketch_ip->verts[6][0] = 0.125*scale;
+	    sketch_ip->verts[6][1] = 0.125*scale;
+	    sketch_ip->curve.count = 6;
+	    sketch_ip->curve.reverse = (int *)bu_calloc(sketch_ip->curve.count, sizeof(int), "sketch_ip->curve.reverse");
+	    sketch_ip->curve.segment = (genptr_t *)bu_calloc(sketch_ip->curve.count, sizeof(genptr_t), "sketch_ip->curve.segment");
 
-	lsg = (struct line_seg *)bu_calloc(1, sizeof(struct line_seg), "segment");
-	sketch_ip->curve.segment[3] = (genptr_t)lsg;
-	lsg->magic = CURVE_LSEG_MAGIC;
-	lsg->start = 2;
-	lsg->end = 3;
+	    csg = (struct carc_seg *)bu_calloc(1, sizeof(struct carc_seg), "segment");
+	    sketch_ip->curve.segment[0] = (genptr_t)csg;
+	    csg->magic = CURVE_CARC_MAGIC;
+	    csg->start = 4;
+	    csg->end = 0;
+	    csg->radius = 0.25*scale;
+	    csg->center_is_left = 1;
+	    csg->orientation = 0;
 
-	lsg = (struct line_seg *)bu_calloc(1, sizeof(struct line_seg), "segment");
-	sketch_ip->curve.segment[4] = (genptr_t)lsg;
-	lsg->magic = CURVE_LSEG_MAGIC;
-	lsg->start = 3;
-	lsg->end = 4;
+	    lsg = (struct line_seg *)bu_calloc(1, sizeof(struct line_seg), "segment");
+	    sketch_ip->curve.segment[1] = (genptr_t)lsg;
+	    lsg->magic = CURVE_LSEG_MAGIC;
+	    lsg->start = 0;
+	    lsg->end = 1;
 
-	csg = (struct carc_seg *)bu_calloc(1, sizeof(struct carc_seg), "segment");
-	sketch_ip->curve.segment[5] = (genptr_t)csg;
-	csg->magic = CURVE_CARC_MAGIC;
-	csg->start = 6;
-	csg->end = 5;
-	csg->radius = -1.0;
-	csg->center_is_left = 1;
-	csg->orientation = 0;
-#else
-	sketch_ip->vert_count = 0;
-	sketch_ip->verts = (point2d_t *)NULL;
-	sketch_ip->curve.count = 0;
-	sketch_ip->curve.reverse = (int *)NULL;
-	sketch_ip->curve.segment = (genptr_t *)NULL;
-#endif
+	    lsg = (struct line_seg *)bu_calloc(1, sizeof(struct line_seg), "segment");
+	    sketch_ip->curve.segment[2] = (genptr_t)lsg;
+	    lsg->magic = CURVE_LSEG_MAGIC;
+	    lsg->start = 1;
+	    lsg->end = 2;
+
+	    lsg = (struct line_seg *)bu_calloc(1, sizeof(struct line_seg), "segment");
+	    sketch_ip->curve.segment[3] = (genptr_t)lsg;
+	    lsg->magic = CURVE_LSEG_MAGIC;
+	    lsg->start = 2;
+	    lsg->end = 3;
+
+	    lsg = (struct line_seg *)bu_calloc(1, sizeof(struct line_seg), "segment");
+	    sketch_ip->curve.segment[4] = (genptr_t)lsg;
+	    lsg->magic = CURVE_LSEG_MAGIC;
+	    lsg->start = 3;
+	    lsg->end = 4;
+
+	    csg = (struct carc_seg *)bu_calloc(1, sizeof(struct carc_seg), "segment");
+	    sketch_ip->curve.segment[5] = (genptr_t)csg;
+	    csg->magic = CURVE_CARC_MAGIC;
+	    csg->start = 6;
+	    csg->end = 5;
+	    csg->radius = -1.0;
+	    csg->center_is_left = 1;
+	    csg->orientation = 0;
+
+	} else {
+
+	    /* create an empty sketch */
+
+	    sketch_ip->vert_count = 0;
+	    sketch_ip->verts = (point2d_t *)NULL;
+	    sketch_ip->curve.count = 0;
+	    sketch_ip->curve.reverse = (int *)NULL;
+	    sketch_ip->curve.segment = (genptr_t *)NULL;
+	}
     } else if (BU_STR_EQUAL(argv[bu_optind+1], "superell")) {
 
 
