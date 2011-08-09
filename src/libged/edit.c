@@ -1229,14 +1229,14 @@ edit_translate(struct ged *gedp, const vect_t *const from,
 	return GED_ERROR;
     }
 
-    if (path->fp_len > 0) {
+    if (path->fp_len > 1) {
 	/* path supplied; move obj instance only (obj's CWD
 	 * modified)
 	 */
 	struct rt_comb_internal *comb;
 	union tree *leaf_to_modify;
 
-	d_to_modify = DB_FULL_PATH_CUR_DIR(path);
+	d_to_modify = DB_FULL_PATH_ROOT_DIR(path);
 	GED_DB_GET_INTERNAL(gedp, &intern, d_to_modify, (fastf_t *)NULL,
 			    &rt_uniresource, GED_ERROR);
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -1698,13 +1698,11 @@ int
 edit(struct ged *gedp, union edit_cmd *const subcmd, const int flags)
 {
     struct edit_arg **arg_head_ptr;
-    struct edit_arg *arg_head;
     struct edit_arg *cur_arg;
     const int noisy = (flags & GED_ERROR); /* side with verbosity */
     union edit_cmd subcmd_iter; /* to iterate through subcmd args */
     int i = 0;
     int ret = 0;
-    int batch_ops_done = 0;
 
     /* count args at each level in lists, to detect (erroneous)
      * decreases in the amount of args */
@@ -1715,6 +1713,7 @@ edit(struct ged *gedp, union edit_cmd *const subcmd, const int flags)
      * be copied later if there are any batch modifiers to expand.
      */
     arg_head_ptr = subcmd->cmd->get_next_arg_head(subcmd, i++);
+    ++num_arg_heads_set; /* an object is always set */
     for (cur_arg = *arg_head_ptr; cur_arg; cur_arg = cur_arg->next) {
 	/* target objects must be... objects */
 	BU_ASSERT(cur_arg->object);
@@ -1726,10 +1725,9 @@ edit(struct ged *gedp, union edit_cmd *const subcmd, const int flags)
     /* process all other arg nodes */
     while (*(arg_head_ptr = subcmd->cmd->get_next_arg_head(subcmd, i++)) != 
 	   subcmd->common.objects) {
-	arg_head = *arg_head_ptr;
-	if (arg_head != NULL)
+	if (*arg_head_ptr)
 	    ++num_arg_heads_set;
-	for (cur_arg = arg_head; cur_arg; cur_arg = cur_arg->next) {
+	for (cur_arg = *arg_head_ptr; cur_arg; cur_arg = cur_arg->next) {
 
 	    /* cmd line opts should have been handled/removed */
 	    BU_ASSERT(cur_arg->cl_options[0] == '\0');
@@ -1744,7 +1742,7 @@ edit(struct ged *gedp, union edit_cmd *const subcmd, const int flags)
     }
 
     /* execute cmd on first, and possibly the only, set of args */
-    if((ret = subcmd->cmd->exec(gedp, subcmd)) == GED_ERROR)
+    if(subcmd->cmd->exec(gedp, subcmd) == GED_ERROR)
 	return GED_ERROR;
 	
     /* iterate over each set of batch args and execute subcmd */
@@ -1752,22 +1750,22 @@ edit(struct ged *gedp, union edit_cmd *const subcmd, const int flags)
     subcmd_iter.cmd->init(&subcmd_iter);
     edit_cmd_sduplicate(&subcmd_iter, subcmd);
     i = 0; /* reinit for get_next_arg_head() */
-    arg_head_ptr = subcmd_iter.cmd->get_next_arg_head(&subcmd_iter, i);
+    arg_head_ptr = subcmd_iter.cmd->get_next_arg_head(&subcmd_iter, i++);
     do {
-	batch_ops_done = 1;
+	num_args_set = 0;
+
 	/* set all heads to the next arguments in their lists */
 	do {
-	    if (*arg_head_ptr && (*arg_head_ptr = (*arg_head_ptr)->next)) {
-		batch_ops_done = 0;
+	    if (*arg_head_ptr && (*arg_head_ptr = (*arg_head_ptr)->next))
 		++num_args_set;
-	    }
 	} while (*(arg_head_ptr =
-		 subcmd_iter.cmd->get_next_arg_head(&subcmd_iter, i)) !=
+		 subcmd_iter.cmd->get_next_arg_head(&subcmd_iter, i++)) !=
 		 subcmd_iter.common.objects);
-	BU_ASSERT(num_arg_heads_set == num_args_set);
-	num_args_set = 0;
+	if (num_args_set == 0)
+	    break;
+	BU_ASSERT(num_args_set == num_arg_heads_set);
 	ret = subcmd_iter.cmd->exec(gedp, &subcmd_iter);
-    } while (!batch_ops_done && (ret != GED_ERROR));
+    } while ((ret != GED_ERROR));
     edit_cmd_free(&subcmd_iter);
 
     return ret;
