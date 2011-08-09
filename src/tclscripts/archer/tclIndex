@@ -308,7 +308,6 @@ set auto_index(::Archer::p_rotate_arb_face) [list source [file join $dir Archer.
 set auto_index(::Archer::pluginDialog) [list source [file join $dir Archer.tcl]]
 set auto_index(::Archer::pluginGed) [list source [file join $dir Archer.tcl]]
 set auto_index(::Archer::pluginGetMinAllowableRid) [list source [file join $dir Archer.tcl]]
-set auto_index(::Archer::pluginLoadCWDFiles) [list source [file join $dir Archer.tcl]]
 set auto_index(::Archer::pluginLoader) [list source [file join $dir Archer.tcl]]
 set auto_index(::Archer::pluginQuery) [list source [file join $dir Archer.tcl]]
 set auto_index(::Archer::pluginRegister) [list source [file join $dir Archer.tcl]]

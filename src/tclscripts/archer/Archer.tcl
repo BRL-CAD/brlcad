@@ -141,7 +141,6 @@ package provide Archer 1.0
 	# Plugins Section
 	proc initArcher {}
 	proc pluginDialog {_w}
-	proc pluginLoadCWDFiles {}
 	proc pluginLoader {}
 	proc pluginGed {_archer}
 	proc pluginQuery {_name}
@@ -718,33 +717,6 @@ package provide Archer 1.0
     $dialog activate
 }
 
-
-## - pluginLoadCWDFiles
-#
-# Load the current working directory's (CWD) files.
-#
-::itcl::body Archer::pluginLoadCWDFiles {} {
-    foreach filename [lsort [glob -nocomplain *]] {
-	if [file isfile $filename] {
-	    set ext [file extension $filename]
-	    switch -exact -- $ext {
-		".tcl" -
-		".itk" -
-		".itcl" {
-		    uplevel \#0 source $filename
-		}
-		".sh" {
-		    # silently ignore
-		}
-		default {
-		    # silently ignore
-		}
-	    }
-	}
-    }
-}
-
-
 ::itcl::body Archer::pluginLoader {} {
     global env
 
@@ -765,8 +737,24 @@ package provide Archer 1.0
     }
 
     foreach plugindir [list $pluginPath] {
-	::cd $plugindir
-	pluginLoadCWDFiles
+	set utilities_list [concat [lsort [glob -nocomplain $plugindir/Utility/*]]] 
+	set wizards_list [concat [lsort [glob -nocomplain $plugindir/Wizards/*]]]
+	set plugins_list [concat $utilities_list $wizards_list]
+	foreach filename $plugins_list {
+	    if [file isfile $filename] {
+		set ext [file extension $filename]
+		switch -exact -- $ext {
+		    ".tcl" -
+		    ".itk" -
+		    ".itcl" {
+			uplevel \#0 source $filename
+	    	    }
+	            default {
+		        # silently ignore
+	            }
+		}
+	    }
+	}
     }
 
     ::cd $pwd

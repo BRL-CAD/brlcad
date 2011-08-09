@@ -5,12 +5,6 @@ ENDIF(WIN32)
 configure_file(archer ${CMAKE_BINARY_DIR}/bin/archer COPYONLY)
 INSTALL(PROGRAMS archer DESTINATION bin)
 
-set(archer_plugins
-  plugins/utility.tcl
-  plugins/wizards.tcl
-)
-BRLCAD_ADDDATA(archer_plugins plugins/archer)
-
 BRLCAD_ADDFILE(plugins/Core/README plugins/archer/Core)
 BRLCAD_ADDFILE(plugins/Commands/README plugins/archer/Command)
 
