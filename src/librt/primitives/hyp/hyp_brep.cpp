@@ -133,10 +133,6 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     VSET(ep2, -MX, 0, 0);
     VSET(ep3, -eip->hyp_b, 0, -0.5*MAGNITUDE(eip->hyp_Hi));
 
-    bu_log("pt1: %f, %f, %f\n", ep1[0], ep1[1], ep1[2]);
-    bu_log("pt2: %f, %f, %f\n", ep2[0], ep2[1], ep2[2]);
-    bu_log("pt3: %f, %f, %f\n", ep3[0], ep3[1], ep3[2]);
-
     ON_3dPoint onp1 = ON_3dPoint(ep1);
     ON_3dPoint onp2 = ON_3dPoint(ep2);
     ON_3dPoint onp3 = ON_3dPoint(ep3);

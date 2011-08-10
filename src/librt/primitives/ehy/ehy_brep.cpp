@@ -42,9 +42,6 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     eip = (struct rt_ehy_internal *)ip->idb_ptr;
     RT_EHY_CK_MAGIC(eip);
 
-    ON_TextLog dump_to_stdout;
-    ON_TextLog* dump = &dump_to_stdout;
-
     point_t p1_origin;
     ON_3dPoint plane1_origin, plane2_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
@@ -122,8 +119,6 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     const ON_Interval subinterval = ON_Interval(0, 0.5);
     tnurbscurve->GetNurbForm(*hypbnurbscurve, 0.0, &subinterval);
 
-    hypbnurbscurve->Dump(*dump);
-
     // Next, rotate that curve around the height vector.
 
     point_t revpoint1, revpoint2;
@@ -141,7 +136,6 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     // Get the NURBS form of the surface
     ON_NurbsSurface *ehycurvedsurf = ON_NurbsSurface::New();
     hyp_surf->GetNurbForm(*ehycurvedsurf, 0.0);
-    ehycurvedsurf->Dump(*dump);
 
     // Last but not least, scale the control points of the
     // resulting surface to map to the shorter axis.
@@ -157,16 +151,11 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 	}
     }
 
-
-    bu_log("Valid nurbs surface: %d\n", ehycurvedsurf->IsValid(dump));
-    ehycurvedsurf->Dump(*dump);
-
     (*b)->m_S.Append(ehycurvedsurf);
     int surfindex = (*b)->m_S.Count();
     ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
     int faceindex = (*b)->m_F.Count();
     (*b)->NewOuterLoop(faceindex-1);
-    bu_log("Valid brep face: %d\n", face.IsValid(dump));
 }
 
 

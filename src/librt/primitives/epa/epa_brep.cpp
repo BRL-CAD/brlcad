@@ -42,9 +42,6 @@ rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     eip = (struct rt_epa_internal *)ip->idb_ptr;
     RT_EPA_CK_MAGIC(eip);
 
-    ON_TextLog dump_to_stdout;
-    ON_TextLog* dump = &dump_to_stdout;
-
     point_t p1_origin;
     ON_3dPoint plane1_origin, plane2_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
@@ -174,9 +171,6 @@ rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     epacurvedsurf->SetCV(8, 1, pt26);
     ON_4dPoint pt27 = ON_4dPoint(0, r2, 0, 1);
     epacurvedsurf->SetCV(8, 2, pt27);
-
-    bu_log("Valid nurbs surface: %d\n", epacurvedsurf->IsValid(dump));
-    epacurvedsurf->Dump(*dump);
 
     (*b)->m_S.Append(epacurvedsurf);
     int surfindex = (*b)->m_S.Count();
