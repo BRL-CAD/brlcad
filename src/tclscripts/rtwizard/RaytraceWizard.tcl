@@ -249,7 +249,9 @@ namespace eval RaytraceWizard {
 #
 # Start main
 #
-RaytraceWizard::main $argv
+if {[info exists argv]} {
+    RaytraceWizard::main $argv
+}
 
 
 # Local Variables:
