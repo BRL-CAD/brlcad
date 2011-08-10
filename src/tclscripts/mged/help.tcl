@@ -25,6 +25,7 @@
 #==============================================================================
 
 # This command causes helplib.tcl to get read in.
+source [file join ".." "helplib.tcl"]
 helplib
 
 set mged_help_data(?)		{{}	{summary of available mged commands}}
