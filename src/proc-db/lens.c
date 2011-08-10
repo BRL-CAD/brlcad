@@ -34,7 +34,7 @@
  *
  * This program takes the lensmaker's equation:
  *
- *  
+ *
  *               1            d (n - 1)   1    1
  *               - = (n - 1) (--------- - -- + --)
  *               f             n R1 R2    R2   R1
@@ -44,7 +44,7 @@
  *
  * Type (P or D), Diameter of lens,
  * focal length (+ for convex, - for concave),
- * n - the refractive index of the lens material, 
+ * n - the refractive index of the lens material,
  * and d - the thickness of the lens
  * at the center the lens along the optical axis).
  * The latter two are set to the refractive index of
@@ -81,7 +81,7 @@ void MakeP(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_
     vect_t breadth;
 
     if (focal_length > 0) {
-    	lens_type = 1;
+	lens_type = 1;
     } else {
 	lens_type = -1;
     }
@@ -118,8 +118,8 @@ void MakeP(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_
 	VSET(breadth, 0, 0, 1);
 	bu_vls_trunc(&str, 0);
 	bu_vls_printf(&str, "%s-epa.s", prefix);
-	mk_epa(file, bu_vls_addr(&str), origin, height, breadth, epa_R, epa_R); 
-	if (lens_type == 1) {       
+	mk_epa(file, bu_vls_addr(&str), origin, height, breadth, epa_R, epa_R);
+	if (lens_type == 1) {
 	    (void)mk_addmember(bu_vls_addr(&str), &lensglass.l, NULL, WMOP_UNION);
 	} else {
 	    (void)mk_addmember(bu_vls_addr(&str), &lensglass.l, NULL, WMOP_SUBTRACT);
@@ -128,7 +128,7 @@ void MakeP(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_
 	bu_vls_trunc(&str, 0);
 	bu_vls_printf(&str, "%s.c", prefix);
 	mk_lcomb(file, bu_vls_addr(&str), &lensglass, 0,  NULL, NULL, NULL, 0);
-       
+
 	(void)mk_addmember(bu_vls_addr(&str), &lens.l, NULL, WMOP_UNION);
 	bu_vls_trunc(&str, 0);
 	bu_vls_printf(&str, "%s.r", prefix);
@@ -151,7 +151,7 @@ void MakeD(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_
     bu_vls_init(&str);
 
     if (focal_length > 0) {
-    	lens_type = 1;
+	lens_type = 1;
     } else {
 	lens_type = -1;
     }
@@ -186,7 +186,7 @@ void MakeD(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_
 	VSET(breadth, 0, 0, 1);
 	bu_vls_trunc(&str, 0);
 	bu_vls_printf(&str, "%s-epa1.s", prefix);
-	mk_epa(file, bu_vls_addr(&str), origin, height, breadth, epa_R, epa_R); 
+	mk_epa(file, bu_vls_addr(&str), origin, height, breadth, epa_R, epa_R);
 	if (lens_type == 1) {
 	    (void)mk_addmember(bu_vls_addr(&str), &lensglass.l, NULL, WMOP_UNION);
 	} else {
@@ -197,17 +197,17 @@ void MakeD(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_
 	VSET(breadth, 0, 0, 1);
 	bu_vls_trunc(&str, 0);
 	bu_vls_printf(&str, "%s-epa2.s", prefix);
-	mk_epa(file, bu_vls_addr(&str), origin, height, breadth, epa_R, epa_R); 
+	mk_epa(file, bu_vls_addr(&str), origin, height, breadth, epa_R, epa_R);
 	if (lens_type == 1) {
 	    (void)mk_addmember(bu_vls_addr(&str), &lensglass.l, NULL, WMOP_UNION);
 	} else {
 	    (void)mk_addmember(bu_vls_addr(&str), &lensglass.l, NULL, WMOP_SUBTRACT);
 	}
-       
+
 	bu_vls_trunc(&str, 0);
 	bu_vls_printf(&str, "%s.c", prefix);
 	mk_lcomb(file, bu_vls_addr(&str), &lensglass, 0,  NULL, NULL, NULL, 0);
-       
+
 	(void)mk_addmember(bu_vls_addr(&str), &lens.l, NULL, WMOP_UNION);
 	bu_vls_trunc(&str, 0);
 	bu_vls_printf(&str, "%s.r", prefix);
@@ -259,7 +259,6 @@ int ReadArgs(int argc, char **argv, int *lens_1side_2side, fastf_t *ref_ind, fas
 }
 
 
-
 int main(int ac, char *av[])
 {
     struct rt_wdb *db_fp = NULL;
@@ -282,8 +281,8 @@ int main(int ac, char *av[])
     lens_1side_2side = 2;
     bu_vls_printf(&lens_type, "DCX");
     bu_vls_printf(&name, "lens_%s_f%.1f_d%.1f", bu_vls_addr(&lens_type), focal_length, diameter);
-    
-    /* Process arguments */ 
+
+    /* Process arguments */
     ReadArgs(ac, av, &lens_1side_2side, &ref_ind, &diameter, &thickness, &focal_length);
 
     /* Create file name if supplied, else use "lens.g" */
@@ -310,7 +309,7 @@ int main(int ac, char *av[])
 	bu_vls_printf(&name, "lens_%s_f%.1f_d%.1f", bu_vls_addr(&lens_type), focal_length, diameter);
 	MakeP(db_fp, bu_vls_addr(&name), diameter, focal_length, ref_ind, thickness);
     }
-    if (lens_1side_2side == 1 && focal_length < 0) { 
+    if (lens_1side_2side == 1 && focal_length < 0) {
 	bu_log("Making Plano-Concave lens...\n");
 	bu_vls_trunc(&lens_type, 0);
 	bu_vls_trunc(&name, 0);

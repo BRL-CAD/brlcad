@@ -293,7 +293,7 @@ int parse_args(int ac, char **av)
 		    op->sz = dy * unit_conv;
 		    op->ex = width * unit_conv;
 		    op->ez = height * unit_conv;
-		    
+
 		    /* do bounds checking */
 		    if (op->sx < 0.0) op->sx = 0.0;
 		    if (op->sz < 0.0) op->sz = 0.0;
@@ -301,7 +301,7 @@ int parse_args(int ac, char **av)
 			op->ex = WALL_WIDTH;
 		    if (op->ez > WALL_HEIGHT)
 			op->ez = WALL_HEIGHT;
-		    
+
 		    units_lock = 1;
 		} else {
 		    usage("error parsing -o option\n");

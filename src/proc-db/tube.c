@@ -400,7 +400,7 @@ read_frame(FILE *fp)
 	size_t nmass;
 	float kx, ky, kz;
 	int nmassval;
-	
+
 	buf[0] = '\0';
 	if (bu_fgets(buf, sizeof(buf), fp) == NULL)  return -1;
 	/* center of mass #, +X, +Z, -Y (chg of coordinates) */
@@ -507,7 +507,7 @@ xfinddir(fastf_t *dir, double x, fastf_t *loc)
     }
     fprintf(stderr, "xfinddir: x=%g is past last segment, using final direction\n", x);
     i = nsamples-2;
- out:
+out:
     VSUB2(dir, sample[i+1], sample[i]);
     ratio = (x-sample[i][X]) / (sample[i+1][X]-sample[i][X]);
     VJOIN1(loc, sample[i], ratio, dir);

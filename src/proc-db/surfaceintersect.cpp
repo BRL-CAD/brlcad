@@ -791,7 +791,7 @@ GetStartPointsEdges(
 			    out[curve].Append(ON_2dPoint(x[i].m_a[0], intervals[(1 - dir) + (2 * curve)].Min()));
 			}
 		    }
-		    out[1 - curve].Append(ON_2dPoint(x[i].m_b[0], x[i].m_b[1])); 
+		    out[1 - curve].Append(ON_2dPoint(x[i].m_b[0], x[i].m_b[1]));
 		}
 	    }
 	}
@@ -1021,7 +1021,7 @@ MakeTwistedCubeEdges1(ON_Brep& brep)
 }
 
 void
-MakeTwistedCubeEdges2(ON_Brep& brep) 
+MakeTwistedCubeEdges2(ON_Brep& brep)
 {
     MakeTwistedCubeEdge(brep, E, F, EF);
     MakeTwistedCubeEdge(brep, F, G, FG);

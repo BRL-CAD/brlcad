@@ -94,14 +94,14 @@ int parse_args(int ac, char **av)
 	    case 'c':
 		if ((c=sscanf(bu_optarg, "%d/%d/%d",
 			      &red, &grn, &blu)) == 3)
-		(void)sprintf(color, "%d %d %d", red&0x0ff,
-			      grn&0x0ff, blu&0x0ff);
+		    (void)sprintf(color, "%d %d %d", red&0x0ff,
+				  grn&0x0ff, blu&0x0ff);
 		break;
 	    case 'C':
 		if ((c=sscanf(bu_optarg, "%d/%d/%d",
 			      &red, &grn, &blu)) == 3)
-		(void)sprintf(mortar_color, "%d %d %d",
-			      red&0x0ff, grn&0x0ff, blu&0x0ff);
+		    (void)sprintf(mortar_color, "%d %d %d",
+				  red&0x0ff, grn&0x0ff, blu&0x0ff);
 
 		break;
 	    case 'm':
@@ -334,11 +334,11 @@ int main(int ac, char **av)
 
     /* build the wall
 
-    if (debug)
-    (void)fprintf(stderr,
-    "bw %g bh %g bd %g ww %g wh %g bn\"%s\"\n",
-    brick_width, brick_height, brick_depth,
-    wall_width, wall_height, brick_name);
+       if (debug)
+       (void)fprintf(stderr,
+       "bw %g bh %g bd %g ww %g wh %g bn\"%s\"\n",
+       brick_width, brick_height, brick_depth,
+       wall_width, wall_height, brick_name);
     */
 
     horiz_bricks = (int)(wall_width / brick_width);

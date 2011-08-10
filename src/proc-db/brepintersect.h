@@ -55,7 +55,7 @@ int SegmentTriangleIntersect(
     const ON_3dPoint& c,
     const ON_3dPoint& p,
     const ON_3dPoint& q,
-    ON_3dPoint out[2], 
+    ON_3dPoint out[2],
     double tol
     );
 

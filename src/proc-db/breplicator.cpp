@@ -38,7 +38,7 @@ ON_Brep *
 generate_brep(int count, ON_3dPoint *points)
 {
     ON_Brep *brep = new ON_Brep();
-    
+
     /* make an arb8 */
 
     // VERTICES
@@ -51,7 +51,7 @@ generate_brep(int count, ON_3dPoint *points)
     ON_3dPoint p9 = ON_3dPoint(2.0, 0.0, -1.0);
     ON_3dPoint p10 = ON_3dPoint(2.0, 0.0, 3.5);
     ON_3dPoint p11 = ON_3dPoint(-1.0, 0.0, 3.5);
-    
+
     brep->NewVertex(p8, SMALL_FASTF); // 8
     brep->NewVertex(p9, SMALL_FASTF); // 9
     brep->NewVertex(p10, SMALL_FASTF); // 10
@@ -172,7 +172,7 @@ generate_brep(int count, ON_3dPoint *points)
     surf4765->SetCV(1, 1, points[6]);
     surf4765->SetCV(0, 1, points[5]);
     brep->m_S.Append(surf4765); /* 1 */
-    
+
     ON_NurbsSurface* surf0451 = new ON_NurbsSurface(3 /*dimension*/, 0 /*nonrational*/, 2 /*u*/, 2 /*v*/, 2 /*#u*/, 2 /*#v*/);
     surf0451->SetKnot(0, 0, 0.0); surf0451->SetKnot(0, 1, 1.0); surf0451->SetKnot(1, 0, 0.0); surf0451->SetKnot(1, 1, 1.0);
     surf0451->SetCV(0, 0, points[0]);
@@ -180,7 +180,7 @@ generate_brep(int count, ON_3dPoint *points)
     surf0451->SetCV(1, 1, points[5]);
     surf0451->SetCV(0, 1, points[1]);
     brep->m_S.Append(surf0451); /* 2 */
-    
+
     ON_NurbsSurface* surf2673 = new ON_NurbsSurface(3 /*dimension*/, 0 /*nonrational*/, 2 /*u*/, 2 /*v*/, 2 /*#u*/, 2 /*#v*/);
     surf2673->SetKnot(0, 0, 0.0); surf2673->SetKnot(0, 1, 1.0); surf2673->SetKnot(1, 0, 0.0); surf2673->SetKnot(1, 1, 1.0);
     surf2673->SetCV(0, 0, points[2]);
@@ -188,7 +188,7 @@ generate_brep(int count, ON_3dPoint *points)
     surf2673->SetCV(1, 1, points[7]);
     surf2673->SetCV(0, 1, points[3]);
     brep->m_S.Append(surf2673); /* 3 */
-    
+
     ON_NurbsSurface* surf1562 = new ON_NurbsSurface(3 /*dimension*/, 0 /*nonrational*/, 2 /*u*/, 2 /*v*/, 2 /*#u*/, 2 /*#v*/);
     surf1562->SetKnot(0, 0, 0.0); surf1562->SetKnot(0, 1, 1.0); surf1562->SetKnot(1, 0, 0.0); surf1562->SetKnot(1, 1, 1.0);
     surf1562->SetCV(0, 0, points[1]);
@@ -196,7 +196,7 @@ generate_brep(int count, ON_3dPoint *points)
     surf1562->SetCV(1, 1, points[6]);
     surf1562->SetCV(0, 1, points[2]);
     brep->m_S.Append(surf1562); /* 4 */
-    
+
     ON_NurbsSurface* surf0374 = new ON_NurbsSurface(3 /*dimension*/, 0 /*nonrational*/, 2 /*u*/, 2 /*v*/, 2 /*#u*/, 2 /*#v*/);
     surf0374->SetKnot(0, 0, 0.0); surf0374->SetKnot(0, 1, 1.0); surf0374->SetKnot(1, 0, 0.0); surf0374->SetKnot(1, 1, 1.0);
     surf0374->SetCV(0, 0, points[0]);
@@ -205,7 +205,7 @@ generate_brep(int count, ON_3dPoint *points)
     surf0374->SetCV(0, 1, points[4]);
     brep->m_S.Append(surf0374); /* 5 */
 
-    
+
     // TRIM CURVES
 
     ON_Curve* trimcurve01 = new ON_LineCurve(ON_2dPoint(0, 0), ON_2dPoint(1, 0));

@@ -48,7 +48,7 @@
 
 /**
  * Creates one metaball object with 'count' random points using
- * LIBWDB's mk_metaball() interface.  
+ * LIBWDB's mk_metaball() interface.
  */
 static void
 make_meatballs(struct rt_wdb *fp, const char *name, long count)

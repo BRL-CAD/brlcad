@@ -55,7 +55,7 @@ static void
 slice(struct rt_wdb *fp, point_t origin, fastf_t depth, fastf_t width, fastf_t height, axes xyz, int exterior, size_t level, const char *prefix, struct bu_list *comb)
 {
     /* 3x3x3 => 27 cubes
-     * 
+     *
      * first quadrant coordinate system
      */
     vect_t cell[27];
@@ -169,7 +169,7 @@ slice(struct rt_wdb *fp, point_t origin, fastf_t depth, fastf_t width, fastf_t h
 	bu_vls_printf(&celfix, "%s_021_", prefix);
 	/* 021 */ slice(fp, cell[15], depth, width, height, xyz, exterior, level, bu_vls_addr(&celfix), comb);
 	if (!(xyz & YDIR)) {
-	bu_vls_printf(&celfix, "%s_121_", prefix);
+	    bu_vls_printf(&celfix, "%s_121_", prefix);
 	    /* 121 */ slice(fp, cell[16], depth, width, height, xyz, exterior, level, bu_vls_addr(&celfix), comb);
 	}
 	bu_vls_printf(&celfix, "%s_221_", prefix);
@@ -460,7 +460,7 @@ main(int ac, char *av[])
     }
 
     /* make the top-level scene:
-     * 
+     *
      * menger
      *  \____ u ground.r
      *   \___ u light0.r
@@ -531,7 +531,7 @@ main(int ac, char *av[])
 	    VSET(pos, EXTENT / 2.0, EXTENT / 2.0, EXTENT / 2.0);
 	} else {
 	    VSET(pos, EXTENT * 3.0, EXTENT * 3.0, EXTENT * 3.0);
-	}	    
+	}
 	mk_sph(fp, "light1.sph", pos, EXTENT * 0.01);
 	mk_addmember("light1.sph", &(light1->l), NULL, WMOP_UNION);
 	mk_comb(fp, "light1.r", &(light1->l), 1, "light", NULL, rgb, 1000, 0, 0, 100, 0, 0, 0);

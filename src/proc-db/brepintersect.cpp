@@ -47,7 +47,7 @@ int PolylineBBox(
 }
 
 /**
- * tests whether a point is inside of the triangle using vector math 
+ * tests whether a point is inside of the triangle using vector math
  * the point has to be in the same plane as the triangle, otherwise
  * it returns false.
  */
@@ -546,7 +546,7 @@ int TriangleTriangleIntersect(
 	    }
 	    if (!dup) {
 		out[number_found] = P;
-		edge[number_found] = i; 
+		edge[number_found] = i;
 		number_found++;
 	    }
 	}
@@ -698,11 +698,11 @@ int Triangulate(
 	for (i = 0; i < (paths[0].Count() - 1); i++) {
 	    /* we check that the intersection is 4 because the segment shares end points with 4 different pline segments */
 	    ON_3dPoint mid = (paths[0][i] + paths[0][i + 2])/2;
-			/* FIXME: compiler doesn't like that the first
-			 * arguments is passing NULL as a non-pointer
-			 * parameter. commented out until someone
-			 * fixes it.
-			 */
+	    /* FIXME: compiler doesn't like that the first
+	     * arguments is passing NULL as a non-pointer
+	     * parameter. commented out until someone
+	     * fixes it.
+	     */
 	    if (SegmentPolylineIntersect(paths[0][i], paths[0][(i + 2) % paths[0].Count()], paths[0], NULL, 1E-9) == 4 && PointInPolyline(mid, paths[0], 1E-9)) {
 		/* ON_3dPoint tri[3] = {paths[0][i], paths[i + 1], paths[(i + 2) % paths[0].Count()]};
 		   triangles.Append(tri);
@@ -752,14 +752,14 @@ int Triangulate(
  *
  * -1 indicates an original point (about which we have no information)
  * 0 indicates an outgoing line
- * 1 indicates an incoming line 
+ * 1 indicates an incoming line
  */
 class TriIntersections {
     ON_Polyline edges[3];
     ON_SimpleArray<char> dir[3];
     ON_SimpleArray<ON_Line> intersections;
     double tol;
- public:
+public:
     TriIntersections(ON_3dPoint, ON_3dPoint, ON_3dPoint, double);
     int InsertPoint(ON_3dPoint, uint8_t, EdgeIndex);
     int AddLine(ON_Line);
@@ -768,8 +768,8 @@ class TriIntersections {
 
 
 TriIntersections::TriIntersections(
-    ON_3dPoint A, 
-    ON_3dPoint B, 
+    ON_3dPoint A,
+    ON_3dPoint B,
     ON_3dPoint C,
     double tolerance
     )
@@ -840,7 +840,7 @@ int TriIntersections::Faces(
     }
 
     for (int i = 0; i < 3; i++) {
-	if (edges[i].Count() == 2) { /* the edge was never intersected */ 
+	if (edges[i].Count() == 2) { /* the edge was never intersected */
 	    segments.Append(ON_Line(edges[i][0], edges[i][0]));
 	    flippable.Append(true);
 	    segexternal.Append(true);
@@ -915,7 +915,7 @@ int TriIntersections::Faces(
 class PointIndex{
     ON_Mesh *mesh;
     double tol;
- public:
+public:
     PointIndex(ON_Mesh*);
     int InsertPoint(ON_3dPoint);
 };
@@ -957,9 +957,9 @@ int GenerateFaceConnectivityList(
 	ON_MeshFace face = mesh->m_F[i];
 	if (face.IsTriangle()) {
 	    n_vertices = 3;
-        } else {
+	} else {
 	    n_vertices = 4;
-        }
+	}
 	for (int j = 0; j < n_vertices; j++) {
 	    faces[face.vi[j]].Append(i);
 	}
