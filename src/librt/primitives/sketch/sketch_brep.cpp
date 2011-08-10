@@ -169,9 +169,9 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     struct line_seg *lsg;
     struct carc_seg *csg;
     struct bezier_seg *bsg;
-    long *lng;
+    uint32_t *lng;
     for (size_t i = 0; i < (&eip->curve)->count; i++) {
-	lng = (long *)(&eip->curve)->segment[i];
+	lng = (uint32_t *)(&eip->curve)->segment[i];
 	switch (*lng) {
 	    case CURVE_LSEG_MAGIC:
 		{

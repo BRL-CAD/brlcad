@@ -652,7 +652,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 
     /* intersect with projected curve */
     for (i=0; i<crv->count; i++) {
-	long *lng=(long *)crv->segment[i];
+	uint32_t *lng=(uint32_t *)crv->segment[i];
 	struct line_seg *lsg;
 	struct carc_seg *csg=NULL;
 	struct bezier_seg *bsg=NULL;
@@ -1243,13 +1243,13 @@ get_seg_midpoint(genptr_t seg, struct rt_sketch_internal *skt, point2d_t pt)
     struct carc_seg *csg;
     struct nurb_seg *nsg;
     struct bezier_seg *bsg;
-    long *lng;
+    uint32_t *lng;
     point2d_t *V;
     point2d_t pta;
     int i;
     int coords;
 
-    lng = (long *)seg;
+    lng = (uint32_t *)seg;
 
     switch (*lng) {
 	case CURVE_LSEG_MAGIC:
@@ -1401,7 +1401,7 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
     norm[1] = dir[0];
 
     for (i=0; i<BU_PTBL_END(loop); i++) {
-	long *lng;
+	uint32_t *lng;
 	struct loop_inter *inter;
 	struct line_seg *lsg=NULL;
 	struct carc_seg *csg=NULL;
@@ -1413,7 +1413,7 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 	point2d_t *intercept;
 	point2d_t *normal = NULL;
 
-	lng = BU_PTBL_GET(loop, i);
+	lng = (uint32_t *)BU_PTBL_GET(loop, i);
 	switch (*lng) {
 	    case CURVE_LSEG_MAGIC:
 		lsg = (struct line_seg *)lng;

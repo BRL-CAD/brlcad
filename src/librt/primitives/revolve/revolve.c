@@ -125,13 +125,13 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     nseg = rev->sk->curve.count;
 
     for (i=0; i<nseg; i++) {
-	long *lng;
+	uint32_t *lng;
 	struct line_seg *lsg;
 	struct carc_seg *csg;
 	struct nurb_seg *nsg;
 	struct bezier_seg *bsg;
 
-	lng = (long *)rev->sk->curve.segment[i];
+	lng = (uint32_t *)rev->sk->curve.segment[i];
 
 	switch (*lng) {
 	    case CURVE_LSEG_MAGIC:
@@ -253,7 +253,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     point_t hit1, hit2;
     point2d_t hit2d, pt1, pt2;
     fastf_t a, b, c, disc, k1, k2, t1, t2;
-    long *lng;
+    uint32_t *lng;
     struct line_seg *lsg;
     struct carc_seg *csg;
 
@@ -425,7 +425,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     /* find hyperbola intersection with each sketch segment */
     nseg = rev->sk->curve.count;
     for (i=0; i<nseg; i++) {
-	lng = (long *)rev->sk->curve.segment[i];
+	lng = (uint32_t *)rev->sk->curve.segment[i];
 
 	switch (*lng) {
 	    case CURVE_LSEG_MAGIC:
@@ -981,7 +981,7 @@ rt_revolve_uv(struct application *ap, struct soltab *stp, struct hit *hitp, stru
 
     point_t hitpoint;
     fastf_t angle;
-    long *lng;
+    uint32_t *lng;
     struct line_seg *lsg;
 
     /*
@@ -1018,7 +1018,7 @@ rt_revolve_uv(struct application *ap, struct soltab *stp, struct hit *hitp, stru
 	    if (angle < 0) angle += 2*M_PI;
 	    uvp->uv_u = angle / rev->ang;
 
-	    lng = (long *)rev->sk->curve.segment[hitp->hit_surfno];
+	    lng = (uint32_t *)rev->sk->curve.segment[hitp->hit_surfno];
 
 	    switch (*lng) {
 		case CURVE_LSEG_MAGIC:
@@ -1174,13 +1174,13 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     nseg = rip->sk->curve.count;
 
     for (i=0; i<nseg; i++) {
-	long *lng;
+	uint32_t *lng;
 	struct line_seg *lsg;
 	struct carc_seg *csg;
 	struct nurb_seg *nsg;
 	struct bezier_seg *bsg;
 
-	lng = (long *)rip->sk->curve.segment[i];
+	lng = (uint32_t *)rip->sk->curve.segment[i];
 
 	switch (*lng) {
 	    case CURVE_LSEG_MAGIC:
