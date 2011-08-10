@@ -348,23 +348,31 @@ namespace detail {
 
 bool split_reference(const char *s, int val[3])
 {
-    memset(val, sizeof(int)*3, 0);
+    memset(val, sizeof(int) * 3, 0);
 
     char *endptr;
     val[0] = strtol(s, &endptr, 0);
-    if (*endptr == 0)
-	return true;
 
-    if (*endptr != '/')
+    if (*endptr == 0) {
+	return true;
+    }
+
+    if (*endptr != '/') {
 	return false;
+    }
+
     ++endptr;
 
     val[1] = strtol(endptr, &endptr, 0);
-    if (*endptr == 0)
-	return true;
 
-    if (*endptr != '/')
+    if (*endptr == 0) {
+	return true;
+    }
+
+    if (*endptr != '/') {
 	return false;
+    }
+
     ++endptr;
 
     val[2] = strtol(endptr, &endptr, 0);
