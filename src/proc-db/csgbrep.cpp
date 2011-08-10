@@ -63,7 +63,7 @@ write_out(struct rt_wdb* fp, struct rt_db_internal *ip, const char *name, struct
     brep = ON_Brep::New();
     ip->idb_meth->ft_brep(&brep, ip, tol);
     mk_brep(fp, bname.c_str(), brep);
-    // delete brep; 
+    // delete brep;
 }
 
 
@@ -106,7 +106,7 @@ main(int argc, char** argv)
     tmp_internal.idb_ptr = (genptr_t)&arb4;
     tmp_internal.idb_meth = &rt_functab[ID_ARB8];
     write_out(outfp, &tmp_internal, "arb4", &tol);
- 
+
     bu_log("ARB5\n");
     struct rt_arb_internal arb5;
     arb5.magic = RT_ARB_INTERNAL_MAGIC;
@@ -121,7 +121,7 @@ main(int argc, char** argv)
     tmp_internal.idb_ptr = (genptr_t)&arb5;
     tmp_internal.idb_meth = &rt_functab[ID_ARB8];
     write_out(outfp, &tmp_internal, "arb5", &tol);
- 
+
     bu_log("ARB6\n");
     struct rt_arb_internal arb6;
     arb6.magic = RT_ARB_INTERNAL_MAGIC;
@@ -136,7 +136,7 @@ main(int argc, char** argv)
     tmp_internal.idb_ptr = (genptr_t)&arb6;
     tmp_internal.idb_meth = &rt_functab[ID_ARB8];
     write_out(outfp, &tmp_internal, "arb6", &tol);
- 
+
     bu_log("ARB7\n");
     struct rt_arb_internal arb7;
     arb7.magic = RT_ARB_INTERNAL_MAGIC;
@@ -151,7 +151,7 @@ main(int argc, char** argv)
     tmp_internal.idb_ptr = (genptr_t)&arb7;
     tmp_internal.idb_meth = &rt_functab[ID_ARB8];
     write_out(outfp, &tmp_internal, "arb7", &tol);
- 
+
     bu_log("ARB8\n");
     struct rt_arb_internal arb8;
     arb8.magic = RT_ARB_INTERNAL_MAGIC;
@@ -166,7 +166,7 @@ main(int argc, char** argv)
     tmp_internal.idb_ptr = (genptr_t)&arb8;
     tmp_internal.idb_meth = &rt_functab[ID_ARB8];
     write_out(outfp, &tmp_internal, "arb8", &tol);
-    
+
     bu_log("ARBN\n");
     struct rt_arbn_internal arbn;
     arbn.magic = RT_ARBN_INTERNAL_MAGIC;
@@ -192,7 +192,7 @@ main(int argc, char** argv)
     tmp_internal.idb_meth = &rt_functab[ID_ARBN];
     write_out(outfp, &tmp_internal, "arbn", &tol);
     bu_free(arbn.eqn, "free arbn eqn");
-  
+
     // This routine does explicitly what is done
     // by the previous ARB8 brep call internally.
     // Ideally a more general NMG will be created
@@ -226,7 +226,7 @@ main(int argc, char** argv)
     tmp_internal.idb_meth = &rt_functab[ID_NMG];
     write_out(outfp, &tmp_internal, "nmg", &tol);
     FREE_MODEL(m);
-    
+
     bu_log("SPH\n");
     struct rt_ell_internal sph;
     sph.magic = RT_ELL_INTERNAL_MAGIC;
@@ -248,7 +248,7 @@ main(int argc, char** argv)
     tmp_internal.idb_ptr = (genptr_t)&ell;
     tmp_internal.idb_meth = &rt_functab[ID_ELL];
     write_out(outfp, &tmp_internal, "ell", &tol);
-    
+
     bu_log("RHC\n");
     struct rt_rhc_internal rhc;
     rhc.rhc_magic = RT_RHC_INTERNAL_MAGIC;
@@ -323,7 +323,7 @@ main(int argc, char** argv)
     tmp_internal.idb_ptr = (genptr_t)&tgc;
     tmp_internal.idb_meth = &rt_functab[ID_TGC];
     write_out(outfp, &tmp_internal, "tgc", &tol);
-   
+
     bu_log("TOR\n");
     struct rt_tor_internal tor;
     tor.magic = RT_TOR_INTERNAL_MAGIC;
@@ -334,7 +334,7 @@ main(int argc, char** argv)
     tmp_internal.idb_ptr = (genptr_t)&tor;
     tmp_internal.idb_meth = &rt_functab[ID_TOR];
     write_out(outfp, &tmp_internal, "tor", &tol);
-    
+
     bu_log("ETO\n");
     struct rt_eto_internal eto;
     eto.eto_magic = RT_ETO_INTERNAL_MAGIC;
@@ -350,7 +350,7 @@ main(int argc, char** argv)
     bu_log("PIPE\n");
     struct wdb_pipept pipe1[] = {
      {
-         {(long)WDB_PIPESEG_MAGIC, 0, 0},
+	 {(long)WDB_PIPESEG_MAGIC, 0, 0},
 	 {0, 1000, 0},
 	 50, 100, 100
      },
@@ -371,34 +371,34 @@ main(int argc, char** argv)
      }
     };
     int pipe1_npts = sizeof(pipe1)/sizeof(struct wdb_pipept);
-    
+
     struct rt_pipe_internal pipe;
     BU_LIST_INIT(&pipe.pipe_segs_head);
     pipe.pipe_magic = RT_PIPE_INTERNAL_MAGIC;
-    
+
     for (int i=0; i<pipe1_npts; i++) {
 	BU_LIST_INSERT(&pipe.pipe_segs_head, &pipe1[i].l);
     }
     tmp_internal.idb_ptr = (genptr_t)&pipe;
     tmp_internal.idb_meth = &rt_functab[ID_PIPE];
     write_out(outfp, &tmp_internal, "pipe", &tol);
-    
+
     bu_log("SKETCH\n");
     struct rt_sketch_internal skt;
     struct bezier_seg bsg;
     struct line_seg lsg[4];
     struct carc_seg csg;
     point2d_t verts[] = {
-        { 250, 0 },     // 0 
-	{ 500, 0 },     // 1 
-	{ 500, 500 },   // 2 
-	{ 0, 500 },     // 3 
-	{ 0, 250 },     // 4 
-	{ 250, 250 },   // 5 
-	{ 125, 125 },   // 6 
-	{ 0, 125 },     // 7 
-	{ 125, 0 },     // 8 
-	{ 200, 200 }    // 9 
+	{ 250, 0 },     // 0
+	{ 500, 0 },     // 1
+	{ 500, 500 },   // 2
+	{ 0, 500 },     // 3
+	{ 0, 250 },     // 4
+	{ 250, 250 },   // 5
+	{ 125, 125 },   // 6
+	{ 0, 125 },     // 7
+	{ 125, 0 },     // 8
+	{ 200, 200 }    // 9
     };
     int skt_reverse[6] = {0, 0, 0, 0, 0, 0};
     genptr_t skt_segment[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
@@ -423,28 +423,28 @@ main(int argc, char** argv)
     lsg[0].start = 0;
     lsg[0].end = 1;
     skt.curve.segment[1] = (genptr_t)&lsg[0];
-    
+
     lsg[1].magic = CURVE_LSEG_MAGIC;
     lsg[1].start = 1;
     lsg[1].end = 2;
     skt.curve.segment[2] = (genptr_t)&lsg[1];
-    
+
     lsg[2].magic = CURVE_LSEG_MAGIC;
     lsg[2].start = 2;
     lsg[2].end = 3;
     skt.curve.segment[3] = (genptr_t)&lsg[2];
-    
+
     lsg[3].magic = CURVE_LSEG_MAGIC;
     lsg[3].start = 3;
     lsg[3].end = 4;
     skt.curve.segment[4] = (genptr_t)&lsg[3];
-    
+
     csg.magic = CURVE_CARC_MAGIC;
     csg.radius = -1.0;
     csg.start = 6;
     csg.end = 5;
     skt.curve.segment[5] = (genptr_t)&csg;
-    
+
     tmp_internal.idb_ptr = (genptr_t)&skt;
     tmp_internal.idb_meth = &rt_functab[ID_SKETCH];
     write_out(outfp, &tmp_internal, "sketch", &tol);
@@ -456,16 +456,16 @@ main(int argc, char** argv)
     struct line_seg elsg[4];
     struct carc_seg ecsg;
     point2d_t everts[] = {
-        { 250, 0 },     // 0 
-	{ 500, 0 },     // 1 
-	{ 500, 500 },   // 2 
-	{ 0, 500 },     // 3 
-	{ 0, 250 },     // 4 
-	{ 250, 250 },   // 5 
-	{ 125, 125 },   // 6 
-	{ 0, 125 },     // 7 
-	{ 125, 0 },     // 8 
-	{ 200, 200 }    // 9 
+	{ 250, 0 },     // 0
+	{ 500, 0 },     // 1
+	{ 500, 500 },   // 2
+	{ 0, 500 },     // 3
+	{ 0, 250 },     // 4
+	{ 250, 250 },   // 5
+	{ 125, 125 },   // 6
+	{ 0, 125 },     // 7
+	{ 125, 0 },     // 8
+	{ 200, 200 }    // 9
     };
     int eskt_reverse[6] = {0, 0, 0, 0, 0, 0};
     genptr_t eskt_segment[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
@@ -485,17 +485,17 @@ main(int argc, char** argv)
     int ebsg_ctl_points[] = {4, 7, 9, 8, 0};
     ebsg.ctl_points = ebsg_ctl_points;
     eskt.curve.segment[0] = (genptr_t)&ebsg;
-    
+
     elsg[0].magic = CURVE_LSEG_MAGIC;
     elsg[0].start = 0;
     elsg[0].end = 1;
     eskt.curve.segment[1] = (genptr_t)&elsg[0];
-    
+
     elsg[1].magic = CURVE_LSEG_MAGIC;
     elsg[1].start = 1;
     elsg[1].end = 2;
     eskt.curve.segment[2] = (genptr_t)&elsg[1];
-    
+
     elsg[2].magic = CURVE_LSEG_MAGIC;
     elsg[2].start = 2;
     elsg[2].end = 3;
@@ -505,14 +505,14 @@ main(int argc, char** argv)
     elsg[3].start = 3;
     elsg[3].end = 4;
     eskt.curve.segment[4] = (genptr_t)&elsg[3];
-    
+
     ecsg.magic = CURVE_CARC_MAGIC;
     ecsg.radius = -1.0;
     ecsg.start = 6;
     ecsg.end = 5;
     eskt.curve.segment[5] = (genptr_t)&ecsg;
 
-    // now to the actual extrusion 
+    // now to the actual extrusion
     struct rt_extrude_internal extrude;
     extrude.magic = RT_EXTRUDE_INTERNAL_MAGIC;
     VSET(extrude.V, 0.0, 0.0, 0.0);
@@ -525,7 +525,7 @@ main(int argc, char** argv)
     tmp_internal.idb_ptr = (genptr_t)&extrude;
     tmp_internal.idb_meth = &rt_functab[ID_EXTRUDE];
     write_out(outfp, &tmp_internal, "extrude", &tol);
- 
+
     bu_log("REVOLVE\n");
     // revolve will need its own sketch
     struct rt_sketch_internal rskt;
@@ -533,7 +533,7 @@ main(int argc, char** argv)
     struct line_seg rlsg[4];
     struct carc_seg rcsg;
     point2d_t rverts[] = {
-        { 250, 0 },     // 0
+	{ 250, 0 },     // 0
 	{ 500, 0 },     // 1
 	{ 500, 500 },   // 2
 	{ 0, 500 },     // 3
@@ -562,34 +562,34 @@ main(int argc, char** argv)
     int rbsg_ctl_points[] = {4, 7, 9, 8, 0};
     rbsg.ctl_points = rbsg_ctl_points;
     rskt.curve.segment[0] = (genptr_t)&rbsg;
-    
+
     rlsg[0].magic = CURVE_LSEG_MAGIC;
     rlsg[0].start = 0;
     rlsg[0].end = 1;
     rskt.curve.segment[1] = (genptr_t)&rlsg[0];
-    
+
     rlsg[1].magic = CURVE_LSEG_MAGIC;
     rlsg[1].start = 1;
     rlsg[1].end = 2;
     rskt.curve.segment[2] = (genptr_t)&rlsg[1];
-    
+
     rlsg[2].magic = CURVE_LSEG_MAGIC;
     rlsg[2].start = 2;
     rlsg[2].end = 3;
     rskt.curve.segment[3] = (genptr_t)&rlsg[2];
-    
+
     rlsg[3].magic = CURVE_LSEG_MAGIC;
     rlsg[3].start = 3;
     rlsg[3].end = 4;
     rskt.curve.segment[4] = (genptr_t)&rlsg[3];
-    
+
     rcsg.magic = CURVE_CARC_MAGIC;
     rcsg.radius = -1.0;
     rcsg.start = 6;
     rcsg.end = 5;
     rskt.curve.segment[5] = (genptr_t)&rcsg;
 
-    // now to the actual revolve 
+    // now to the actual revolve
     struct rt_revolve_internal revolve;
     revolve.magic = RT_REVOLVE_INTERNAL_MAGIC;
     VSET(revolve.v3d, -2000.0, 0.0, 0.0);
@@ -598,7 +598,7 @@ main(int argc, char** argv)
     tmp_internal.idb_ptr = (genptr_t)&revolve;
     tmp_internal.idb_meth = &rt_functab[ID_REVOLVE];
     write_out(outfp, &tmp_internal, "revolve", &tol);
- 
+
     bu_log("DSP\n");
     struct rt_dsp_internal dsp;
     dsp.magic = RT_DSP_INTERNAL_MAGIC;
