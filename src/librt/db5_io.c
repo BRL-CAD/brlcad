@@ -735,7 +735,7 @@ rt_db_cvt_to_external5(
 
     /* Scale change on export is 1.0 -- no change */
     ret = -1;
-    if (ip->idb_meth->ft_export5) {
+    if (ip->idb_meth && ip->idb_meth->ft_export5) {
 	ret = ip->idb_meth->ft_export5(&body, ip, conv2mm, dbip, resp);
     }
     if (ret < 0) {

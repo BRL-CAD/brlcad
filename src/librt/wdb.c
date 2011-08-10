@@ -292,7 +292,7 @@ wdb_put_internal(
 	BU_EXTERNAL_INIT(&ext);
 
 	ret = -1;
-	if (ip->idb_meth->ft_export4) {
+	if (ip->idb_meth && ip->idb_meth->ft_export4) {
 	    ret = ip->idb_meth->ft_export4(&ext, ip, local2mm, wdbp->dbip, &rt_uniresource);
 	}
 	if (ret < 0) {
