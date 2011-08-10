@@ -376,14 +376,14 @@ class Sketch_editor {
 
 	set diff(0) [expr {[lindex $v1 0] - [lindex $v2 0] } ]
 	set diff(1) [expr {[lindex $v1 1] - [lindex $v2 1] } ]
-	set dot [dot diff dir]
-	if { [expr { abs( $dot ) } ] < 1.0e-10 } {
+	set dotval [dot diff dir]
+	if { [expr { abs( $dotval ) } ] < 1.0e-10 } {
 	    tk_messageBox -type ok -icon error -title "Impossible Tangency" \
 		-message "Cannot create such an arc (you are asking for a straight line)"
 	    return
 
 	}
-	set new_radius [expr { [dot diff diff] / (-2.0 * $dot) } ]
+	set new_radius [expr { [dot diff diff] / (-2.0 * $dotval) } ]
 	if { $new_radius < 0.0 } {
 	    set new_radius [expr { -$new_radius } ]
 	    set dir(0) [expr { -$dir(0) } ]
