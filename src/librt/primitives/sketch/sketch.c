@@ -1518,8 +1518,8 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 		ep->ext_nbytes += (bseg->degree + 1) * SIZEOF_NETWORK_LONG;
 		break;
 	    default:
-		bu_log("rt_sketch_export4: unsupported segement type (x%x)\n", *lng);
-		bu_bomb("rt_sketch_export4: unsupported segement type\n");
+		bu_log("rt_sketch_export5: unsupported segement type (x%x)\n", *lng);
+		bu_bomb("rt_sketch_export5: unsupported segement type\n");
 	}
     }
     ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "sketch external");
@@ -1622,7 +1622,7 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 		}
 		break;
 	    default:
-		bu_bomb("rt_sketch_export4: ERROR: unrecognized curve type!\n");
+		bu_bomb("rt_sketch_export5: ERROR: unrecognized curve type!\n");
 		break;
 
 	}
