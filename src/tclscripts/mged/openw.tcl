@@ -253,12 +253,14 @@ bind Frame <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
 bind Listbox <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
 bind Scale <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
 
-# This causes cad_dialog to use mged_wait instead of tkwait
-set ::tk::Priv(wait_cmd) mged_wait
+if {[namespace exists ::tk]} {
+    # This causes cad_dialog to use mged_wait instead of tkwait
+    set ::tk::Priv(wait_cmd) mged_wait
 
-# Used throughout the GUI as the dialog window name.
-# This helps prevent window clutter.
-set ::tk::Priv(cad_dialog) .mged_dialog
+    # Used throughout the GUI as the dialog window name.
+    # This helps prevent window clutter.
+    set ::tk::Priv(cad_dialog) .mged_dialog
+}
 
 proc gui { args } {
     global tmp_hoc
