@@ -429,6 +429,8 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
  * The 'name' field of the external representation is modified to
  * contain the desired name.  The 'ep' parameter cannot be const.
  *
+ * THIS ROUTINE ONLY SUPPORTS WRITING V4 GEOMETRY.
+ *
  * Returns -
  * <0 error
  * 0 OK

@@ -202,6 +202,8 @@ rt_db_put_internal(
  *
  * Can't really require a dbip parameter, as many callers won't have one.
  *
+ * THIS ROUTINE ONLY SUPPORTS WRITING V4 GEOMETRY.
+ *
  * Returns -
  * 0 OK
  * <0 error
@@ -217,8 +219,9 @@ rt_fwrite_internal(
     int ret;
 
     RT_CK_DB_INTERNAL(ip);
-    BU_EXTERNAL_INIT(&ext);
     RT_CK_FUNCTAB(ip->idb_meth);
+
+    BU_EXTERNAL_INIT(&ext);
 
     ret = -1;
     if (ip->idb_meth->ft_export4) {
