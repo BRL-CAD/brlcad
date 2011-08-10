@@ -47,7 +47,6 @@ void
 write_out(struct rt_wdb* fp, struct rt_db_internal *ip, const char *name, struct bn_tol *tol)
 {
     ON_Brep* brep = NULL;
-    struct directory *dp = NULL;
 
     std::string bname = name;
     bname += ".brep";
