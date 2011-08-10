@@ -56,8 +56,7 @@ write_out(struct rt_wdb* fp, struct rt_db_internal *ip, const char *name, struct
 	return;
 
     /* write the object in implicit form */
-/*     dp = db_diradd(fp->dbip, name, ladd, len, flags, ptr); */
-    rt_db_put_internal(dp, fp->dbip, ip, &rt_uniresource);
+    wdb_put_internal(fp, name, ip, 1.0);
 
     /* write the object in brep/nurbs form */
     brep = ON_Brep::New();
