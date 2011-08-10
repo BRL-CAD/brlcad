@@ -54,14 +54,15 @@ write_out(struct rt_wdb* fp, struct rt_db_internal *ip, const char *name, struct
     if (!fp || !ip || !name)
 	return;
 
-    /* write the object in implicit form */
-    wdb_put_internal(fp, name, ip, 1.0);
-
     /* write the object in brep/nurbs form */
     brep = ON_Brep::New();
     ip->idb_meth->ft_brep(&brep, ip, tol);
     mk_brep(fp, bname.c_str(), brep);
     // delete brep;
+
+    /* write the object in implicit form */
+    ip->idb_meth = NULL; /* so we don't call ifree */
+    wdb_put_internal(fp, name, ip, 1.0);
 }
 
 
