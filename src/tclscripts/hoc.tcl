@@ -28,8 +28,10 @@
 #		Paul Tanenbaum
 #
 
-if {![info exists ::tk::Priv(cad_dialog)]} {
-    set ::tk::Priv(cad_dialog) .cad_dialog
+if {[namespace exists ::tk]} {
+    if {![info exists ::tk::Priv(cad_dialog)]} {
+	set ::tk::Priv(cad_dialog) .cad_dialog
+    }
 }
 
 # hoc_build_string --

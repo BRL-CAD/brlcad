@@ -25,8 +25,10 @@
 #
 ###############################################################################
 
-if {![info exists ::tk::Priv(wait_cmd)]} {
-    set ::tk::Priv(wait_cmd) tkwait
+if {[namespace exists ::tk]} {
+    if {![info exists ::tk::Priv(wait_cmd)]} {
+	set ::tk::Priv(wait_cmd) tkwait
+    }
 }
 
 # cad_dialog --
