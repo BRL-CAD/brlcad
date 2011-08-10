@@ -25,15 +25,6 @@
 # introspect primitive data parameters (form elements)
 #
 
-set extern_commands [list db tops]
-foreach cmd $extern_commands {
-    catch {auto_load $cmd} val
-    if {[expr [string compare [info command $cmd] $cmd] != 0]} {
-	puts stderr "[info script]: Application fails to provide command '$cmd'"
-	return
-    }
-}
-
 proc per_line { args } {
     puts stderr "DEPRECATION WARNING: 'bots' and 'per_line' are temporary until 'search' is enhanced."
     foreach list $args {
@@ -44,6 +35,16 @@ proc per_line { args } {
 }
 
 proc bots { args } {
+
+    set extern_commands [list db tops]
+    foreach cmd $extern_commands {
+	catch {auto_load $cmd} val
+	if {[expr [string compare [info command $cmd] $cmd] != 0]} {
+	    puts stderr "[info script]: Application fails to provide command '$cmd'"
+	    return
+	}
+    }
+
     set argc [llength $args]
     set results [list]
 

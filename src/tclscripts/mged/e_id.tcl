@@ -31,24 +31,25 @@
 #	the specified ident.
 
 #
-#    Preliminary...
-#    Ensure that all commands used here but not defined herein
-#    are provided by the application
-#
-
-set extern_commands "whichid e"
-foreach cmd $extern_commands {
-    catch {auto_load $cmd} val
-    if {[expr [string compare [info command $cmd] $cmd] != 0]} {
-	puts stderr "[info script]: Application fails to provide command '$cmd'"
-	return
-    }
-}
-
-#
 #    The actual macro
 #
 proc e_id {args} {
+
+    #
+    #    Preliminary...
+    #    Ensure that all commands used here but not defined herein
+    #    are provided by the application
+    #
+
+    set extern_commands "whichid e"
+    foreach cmd $extern_commands {
+	catch {auto_load $cmd} val
+	if {[expr [string compare [info command $cmd] $cmd] != 0]} {
+	    puts stderr "[info script]: Application fails to provide command '$cmd'"
+	    return
+	}
+    }
+
     #
     #	Ensure that at least one argument was given
     #
