@@ -45,7 +45,7 @@ void rt_bot_ifree2(struct rt_bot_internal *);
 #define OPPOSITE	0x08
 #define INVERTED	0x10
 
-#define SOUP_MAGIC	0x534F5550	/* SOUP */
+#define SOUP_MAGIC	0x534F5550	/* SOUP, 32b */
 #define SOUP_CKMAG(_ptr) BU_CKMAG(_ptr, SOUP_MAGIC, "soup")
 
 struct face_s {
@@ -119,18 +119,6 @@ soup_add_face(struct soup_s *s, point_t a, point_t b, point_t c, const struct bn
 
 /**********************************************************************/
 /* stuff from the moller97 paper */
-
-/* sort so that a<=b */
-#define SORT2(a,b,smallest)       \
-             if(a>b)       \
-             {             \
-               fastf_t _c;    \
-               _c=a;        \
-               a=b;        \
-               b=_c;        \
-               smallest=1; \
-             }             \
-             else smallest=0;
 
 
 static inline void
@@ -273,7 +261,7 @@ tri_tri_intersect_with_isectline(struct soup_s *UNUSED(left), struct soup_s *UNU
 {
     vect_t D, isectpointA1={0},isectpointA2={0},isectpointB1={0},isectpointB2={0};
     fastf_t d1,d2,du0,du1,du2,dv0,dv1,dv2,du0du1,du0du2,dv0dv1,dv0dv2,vp0,vp1,vp2,up0,up1,up2,b,c,max,isect1[2]={0,0},isect2[2]={0,0};
-    int i,smallest1,smallest2;
+    int i,smallest1=0,smallest2=0;
 
     /* compute plane equation of triangle(lf->vert[0],lf->vert[1],lf->vert[2]) */
     d1=-VDOT(lf->plane,lf->vert[0]);
@@ -333,14 +321,20 @@ tri_tri_intersect_with_isectline(struct soup_s *UNUSED(left), struct soup_s *UNU
     /* compute interval for triangle 2 */
     compute_intervals_isectline(rf,up0,up1,up2,du0,du1,du2, du0du1,du0du2,&isect2[0],&isect2[1],isectpointB1,isectpointB2, tol);
 
+/* sort so that a<=b */
+    smallest1 = smallest2 = 0;
+#define SORT2(a,b,smallest) if(a>b) { fastf_t _c; _c=a; a=b; b=_c; smallest=1; }
     SORT2(isect1[0],isect1[1],smallest1);
     SORT2(isect2[0],isect2[1],smallest2);
+#undef SORT2
 
     if(isect1[1]<isect2[0] || isect2[1]<isect1[0])
 	return 0;
 
-#if 0
-    printf("%f/%f/%f %f/%f/%f | %f/%f/%f %f/%f/%f\n", V3ARGS(isectpointA1), V3ARGS(isectpointA2), V3ARGS(isectpointB1), V3ARGS(isectpointB2));
+#if 1
+    printf("%d:%d + % 4.2f % 4.2f % 4.2f % 4.2f\t+ % 4.2f/% 4.2f/% 4.2f % 4.2f/% 4.2f/% 4.2f | % 4.2f/% 4.2f/% 4.2f % 4.2f/% 4.2f/% 4.2f\n", 
+		    smallest1, smallest2, isect1[0], isect1[1], isect2[0], isect2[1],
+		    V3ARGS(isectpointA1), V3ARGS(isectpointA2), V3ARGS(isectpointB1), V3ARGS(isectpointB2));
 #endif
     /* at this point, we know that the triangles intersect */
 
