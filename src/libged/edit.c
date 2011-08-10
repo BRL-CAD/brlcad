@@ -1926,11 +1926,13 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 	return GED_ERROR;
     }
 
-    /* if either all coordinates are being set or an object has been
+    /* if either all coordinates are to be set or an object has been
      * set, then attempt to intepret/record the number as the next
-     * unset X, Y, or Z Z coordinate/position
+     * unset X, Y, or Z coordinate/position
      */
-    if ((arg->coords_used & EDIT_COORDS_ALL) || arg->object) {
+    if (((arg->coords_used & EDIT_COORD_X) && 
+	(arg->coords_used & EDIT_COORD_Y) &&
+	(arg->coords_used & EDIT_COORD_Z)) || arg->object) {
 	if (!arg->vector) {
 	    arg->vector = (vect_t *)bu_malloc(sizeof(vect_t),
 			  "vect_t block for edit_str_to_arg");
@@ -2038,7 +2040,19 @@ edit_strs_to_arg(struct ged *gedp, int *argc, const char **argv[],
 	--(*argc);
 	++(*argv);
     }
+
+    /* disable unsupplied optional coords (from "[x [y [z]]]" fmt) */
+    if ((arg->coords_used & EDIT_COORDS_ALL) == EDIT_COORDS_ALL)
+	if (arg->coords_used & EDIT_COORD_IS_SET_X)
+	    arg->coords_used |= EDIT_COORD_X;
+	if (arg->coords_used & EDIT_COORD_IS_SET_Y)
+	    arg->coords_used |= EDIT_COORD_Y;
+	if (arg->coords_used & EDIT_COORD_IS_SET_Z)
+	    arg->coords_used |= EDIT_COORD_Z;
+
     /* these flags are only for internal use */
+    /* FIXME: exactly why they should be internalized, and not
+     * edit_arg flags */
     arg->coords_used &= ~(EDIT_COORD_IS_SET_X | EDIT_COORD_IS_SET_Y |
 			  EDIT_COORD_IS_SET_Z);
     return ret;
