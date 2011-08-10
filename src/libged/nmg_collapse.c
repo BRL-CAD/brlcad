@@ -43,7 +43,7 @@ ged_nmg_collapse(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     struct bu_ptbl faces;
     struct face *fp;
-    long count;
+    size_t count;
     fastf_t tol_coll;
     fastf_t min_angle;
     static const char *usage = "nmg_prim new_prim max_err_dist [min_angle]";
@@ -131,7 +131,7 @@ ged_nmg_collapse(struct ged *gedp, int argc, const char *argv[])
     /* triangulate model */
     nmg_triangulate_model(m, &gedp->ged_wdbp->wdb_tol);
 
-    count = nmg_edge_collapse(m, &gedp->ged_wdbp->wdb_tol, tol_coll, min_angle);
+    count = (size_t)nmg_edge_collapse(m, &gedp->ged_wdbp->wdb_tol, tol_coll, min_angle);
 
     dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
@@ -148,7 +148,7 @@ ged_nmg_collapse(struct ged *gedp, int argc, const char *argv[])
 
     rt_db_free_internal(&intern);
 
-    bu_vls_printf(gedp->ged_result_str, "%d edges collapsed\n", count);
+    bu_vls_printf(gedp->ged_result_str, "%zu edges collapsed\n", count);
 
     return GED_OK;
 }
