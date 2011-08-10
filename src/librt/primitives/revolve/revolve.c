@@ -1313,15 +1313,32 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_revolve_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_revolve_tess(struct nmgregion **UNUSED(r), struct model *UNUSED(m), struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
-    struct rt_revolve_internal *rip;
+    struct rt_revolve_internal *rip = NULL;
+    struct rt_sketch_internal *sketch_ip = NULL;
+    struct rt_curve *crv = NULL;
 
-    if (r) NMG_CK_REGION(*r);
-    if (m) NMG_CK_MODEL(m);
-
+    RT_CK_DB_INTERNAL(ip);
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
+
+    if (!rip->skt) {
+	bu_log("rt_revolve_tess: ERROR: no sketch for revolve!\n");
+	return -1;
+    }
+
+    sketch_ip = rip->skt;
+
+    RT_SKETCH_CK_MAGIC(sketch_ip);
+
+    crv = &sketch_ip->curve;
+
+    if (crv->count < 1)
+	return 0;
+
+    /* FIXME: unimplemented */
+    bu_log("Sorry, tessellation of revolve primitives is not yet implemented.\n");
 
     return -1;
 }
