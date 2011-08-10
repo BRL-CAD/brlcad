@@ -609,6 +609,7 @@ SET(TCL_GENERIC_SRCS
 	generic/tclThreadAlloc.c
 	generic/tclThreadJoin.c
 	generic/tclThreadStorage.c
+        generic/tclThreadTest.c
 	generic/tclTimer.c
 	generic/tclTrace.c
 	generic/tclUtf.c
