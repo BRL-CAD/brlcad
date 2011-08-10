@@ -502,7 +502,7 @@ main(int argc, char** argv)
     VSET(revolve.axis3d, 0.0, 1.0, 0.0);
     BU_VLS_INIT(&revolve.sketch_name);
     bu_vls_strcat(&revolve.sketch_name, "sketch");
-    revolve.sk = &skt;
+    revolve.skt = &skt;
     tmp_internal.idb_ptr = (genptr_t)&revolve;
     tmp_internal.idb_minor_type = ID_REVOLVE;
     tmp_internal.idb_meth = &rt_functab[ID_REVOLVE];

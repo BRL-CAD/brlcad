@@ -105,7 +105,7 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 
     rev->ang = rip->ang;
     rev->sketch_name = bu_vls_addr(&rip->sketch_name);
-    rev->sk = rip->sk;
+    rev->skt = rip->skt;
 
     /* calculate end plane */
     VSCALE(xEnd, rev->xUnit, cos(rev->ang));
@@ -119,10 +119,10 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
      * if even, the point is ok
      * if odd, the point is at the end of a path
      */
-    endcount = (int *)bu_calloc(rev->sk->vert_count, sizeof(int), "endcount");
-    for (i=0; i<rev->sk->vert_count; i++)
+    endcount = (int *)bu_calloc(rev->skt->vert_count, sizeof(int), "endcount");
+    for (i=0; i<rev->skt->vert_count; i++)
 	endcount[i] = 0;
-    nseg = rev->sk->curve.count;
+    nseg = rev->skt->curve.count;
 
     for (i=0; i<nseg; i++) {
 	uint32_t *lng;
@@ -131,7 +131,7 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 	struct nurb_seg *nsg;
 	struct bezier_seg *bsg;
 
-	lng = (uint32_t *)rev->sk->curve.segment[i];
+	lng = (uint32_t *)rev->skt->curve.segment[i];
 
 	switch (*lng) {
 	    case CURVE_LSEG_MAGIC:
@@ -162,14 +162,14 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     }
 
     /* convert endcounts to store which endpoints are odd */
-    for (i=0, j=0; i<rip->sk->vert_count; i++) {
+    for (i=0, j=0; i<rip->skt->vert_count; i++) {
 	if (endcount[i] % 2 != 0) {
 	    /* add 'i' to list, insertion sort by vert[i][Y] */
 	    for (k=j; k>0; k--) {
-		if ((ZERO(rip->sk->verts[i][Y] - rip->sk->verts[endcount[k-1]][Y])
-		     && rip->sk->verts[i][X] > rip->sk->verts[endcount[k-1]][X])
-		    || (!ZERO(rip->sk->verts[i][Y] - rip->sk->verts[endcount[k-1]][Y])
-			&& rip->sk->verts[i][Y] < rip->sk->verts[endcount[k-1]][Y])) {
+		if ((ZERO(rip->skt->verts[i][Y] - rip->skt->verts[endcount[k-1]][Y])
+		     && rip->skt->verts[i][X] > rip->skt->verts[endcount[k-1]][X])
+		    || (!ZERO(rip->skt->verts[i][Y] - rip->skt->verts[endcount[k-1]][Y])
+			&& rip->skt->verts[i][Y] < rip->skt->verts[endcount[k-1]][Y])) {
 		    endcount[k] = endcount[k-1];
 		} else {
 		    break;
@@ -179,12 +179,12 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 	    j++;
 	}
     }
-    while (j < rev->sk->vert_count) endcount[j++] = -1;
+    while (j < rev->skt->vert_count) endcount[j++] = -1;
 
     rev->ends = endcount;
 
     /* bounding volume */
-    rt_sketch_bounds(rev->sk, rev->bounds);
+    rt_sketch_bounds(rev->skt, rev->bounds);
     if (endcount[0] != -1 && rev->bounds[0] > 0) rev->bounds[0] = 0;
     VJOIN1(stp->st_center, rev->v3d, 0.5*(rev->bounds[2]+rev->bounds[3]), rev->zUnit);
     stp->st_aradius = sqrt(0.25*(rev->bounds[3]-rev->bounds[2])*(rev->bounds[3]-rev->bounds[2]) + FMAX(rev->bounds[0]*rev->bounds[0], rev->bounds[1]*rev->bounds[1]));
@@ -290,9 +290,9 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	    hit2d[X] = -hit2d[X];
 	}
 
-	if (rt_sketch_contains(rev->sk, hit2d)) {
+	if (rt_sketch_contains(rev->skt, hit2d)) {
 	    hit2d[X] = -hit2d[X];
-	    if (rev->ang > M_PI && rt_sketch_contains(rev->sk, hit2d)) {
+	    if (rev->ang > M_PI && rt_sketch_contains(rev->skt, hit2d)) {
 		/* skip it */
 	    } else {
 		if (nhits >= MAX_HITS) return -1; /* too many hits */
@@ -314,9 +314,9 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	    hit2d[X] = -hit2d[X];
 	}
 
-	if (rt_sketch_contains(rev->sk, hit2d)) {
+	if (rt_sketch_contains(rev->skt, hit2d)) {
 	    hit2d[X] = -hit2d[X];
-	    if (rev->ang > M_PI && rt_sketch_contains(rev->sk, hit2d)) {
+	    if (rev->ang > M_PI && rt_sketch_contains(rev->skt, hit2d)) {
 		/* skip it */
 	    } else {
 		if (nhits >= MAX_HITS) return -1; /* too many hits */
@@ -366,8 +366,8 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 
     /* handle open sketches */
     if (!NEAR_ZERO(ur[Z], RT_DOT_TOL)) {
-	for (i=0; i<rev->sk->vert_count && rev->ends[i] != -1; i++) {
-	    V2MOVE(pt1, rev->sk->verts[rev->ends[i]]);
+	for (i=0; i<rev->skt->vert_count && rev->ends[i] != -1; i++) {
+	    V2MOVE(pt1, rev->skt->verts[rev->ends[i]]);
 	    hit2d[Y] = pt1[Y];
 	    if (NEAR_EQUAL(fabs(ur[Z]), 1.0, RT_DOT_TOL)) {
 		/* ur[Z] == 1 */
@@ -399,7 +399,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 		    nhits--;
 		    continue;
 		} else if ((angle + M_PI < rev->ang || angle - M_PI > 0)
-			   && rt_sketch_contains(rev->sk, hit2d)
+			   && rt_sketch_contains(rev->skt, hit2d)
 			   && hit2d[X] > 0) {
 		    nhits--;
 		    continue;
@@ -407,10 +407,10 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 		/* X and Y are used for uv(), Z is used for norm() */
 		hitp->hit_vpriv[X] = pt1[X];
 		hitp->hit_vpriv[Y] = angle;
-		if (i+1 < rev->sk->vert_count && rev->ends[i+1] != -1 &&
-		    NEAR_EQUAL(rev->sk->verts[rev->ends[i]][Y],
-			       rev->sk->verts[rev->ends[i+1]][Y], SMALL)) {
-		    hitp->hit_vpriv[Z] = rev->sk->verts[rev->ends[i+1]][X];
+		if (i+1 < rev->skt->vert_count && rev->ends[i+1] != -1 &&
+		    NEAR_EQUAL(rev->skt->verts[rev->ends[i]][Y],
+			       rev->skt->verts[rev->ends[i+1]][Y], SMALL)) {
+		    hitp->hit_vpriv[Z] = rev->skt->verts[rev->ends[i+1]][X];
 		    i++;
 		    if (fabs(hit2d[X]) < fabs(hitp->hit_vpriv[Z])) {
 			nhits--;
@@ -423,15 +423,15 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     }
 
     /* find hyperbola intersection with each sketch segment */
-    nseg = rev->sk->curve.count;
+    nseg = rev->skt->curve.count;
     for (i=0; i<nseg; i++) {
-	lng = (uint32_t *)rev->sk->curve.segment[i];
+	lng = (uint32_t *)rev->skt->curve.segment[i];
 
 	switch (*lng) {
 	    case CURVE_LSEG_MAGIC:
 		lsg = (struct line_seg *)lng;
-		V2MOVE(pt1, rev->sk->verts[lsg->start]);
-		V2MOVE(pt2, rev->sk->verts[lsg->end]);
+		V2MOVE(pt1, rev->skt->verts[lsg->start]);
+		V2MOVE(pt2, rev->skt->verts[lsg->end]);
 		V2SUB2(dir, pt2, pt1);
 		if (ZERO(dir[X])) {
 		    m = 1.0;
@@ -453,7 +453,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 			}
 			if (angle < rev->ang &&
 			    !((angle + M_PI < rev->ang || angle - M_PI > 0)
-			      && rt_sketch_contains(rev->sk, hit2d))) {
+			      && rt_sketch_contains(rev->skt, hit2d))) {
 			    if (nhits >= MAX_HITS) return -1; /* too many hits */
 			    hitp = hits[nhits++];
 			    hitp->hit_point[X] = -hit2d[X];
@@ -482,7 +482,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 			}
 			if (angle < rev->ang &&
 			    !((angle + M_PI < rev->ang || angle - M_PI > 0)
-			      && rt_sketch_contains(rev->sk, hit2d))) {
+			      && rt_sketch_contains(rev->skt, hit2d))) {
 			    if (nhits >= MAX_HITS) return -1; /* too many hits */
 			    hitp = hits[nhits++];
 			    hitp->hit_point[X] = -hit2d[X];
@@ -522,7 +522,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 			    hit2d[X] = -hit2d[X];
 			    if (angle < rev->ang &&
 				!((angle + M_PI < rev->ang || angle - M_PI > 0)
-				  && rt_sketch_contains(rev->sk, hit2d))) {
+				  && rt_sketch_contains(rev->skt, hit2d))) {
 				if (nhits >= MAX_HITS) return -1; /* too many hits */
 				hitp = hits[nhits++];
 				hitp->hit_point[X] = -hit2d[X];
@@ -548,7 +548,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 			    }
 			    if (angle < rev->ang &&
 				!((angle + M_PI < rev->ang || angle - M_PI > 0)
-				  && rt_sketch_contains(rev->sk, hit2d))) {
+				  && rt_sketch_contains(rev->skt, hit2d))) {
 				if (nhits >= MAX_HITS) return -1; /* too many hits */
 				hitp = hits[nhits++];
 				hitp->hit_point[X] = -hit2d[X];
@@ -593,7 +593,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 				hit2d[X] = -hit2d[X];
 				if (angle < rev->ang) {
 				    if ((angle + M_PI < rev->ang || angle - M_PI > 0)
-					&& rt_sketch_contains(rev->sk, hit2d)) {
+					&& rt_sketch_contains(rev->skt, hit2d)) {
 					/* overlap, so ignore it */
 				    } else {
 					hitp = hits[nhits++];
@@ -625,7 +625,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 				hit2d[X] = -hit2d[X];
 				if (angle < rev->ang) {
 				    if ((angle + M_PI < rev->ang || angle - M_PI > 0)
-					&& rt_sketch_contains(rev->sk, hit2d)) {
+					&& rt_sketch_contains(rev->skt, hit2d)) {
 					/* overlap, so ignore it */
 				    } else {
 					hitp = hits[nhits++];
@@ -662,7 +662,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 			    hit2d[X] = -hit2d[X];
 			    if (angle < rev->ang) {
 				if ((angle + M_PI < rev->ang || angle - M_PI > 0)
-				    && rt_sketch_contains(rev->sk, hit2d)) {
+				    && rt_sketch_contains(rev->skt, hit2d)) {
 				    /* overlap, so ignore it */
 				} else {
 				    hitp = hits[nhits++];
@@ -721,8 +721,8 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 
 		    if (csg->radius <= 0.0) {
 			/* full circle, "end" is center and "start" is on the circle */
-			V2MOVE(center, rev->sk->verts[csg->end]);
-			V2SUB2(radius, rev->sk->verts[csg->start], center);
+			V2MOVE(center, rev->skt->verts[csg->end]);
+			V2SUB2(radius, rev->skt->verts[csg->start], center);
 			crsq = MAG2SQ(radius);
 		    } else {
 			point_t startpt, endpt, midpt;
@@ -733,9 +733,9 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 			fastf_t magsq_s2m;
 
 			VSET(vertical, 0, 0, 1);
-			VMOVE(startpt, rev->sk->verts[csg->start]);
+			VMOVE(startpt, rev->skt->verts[csg->start]);
 			startpt[Z] = 0.0;
-			VMOVE(endpt, rev->sk->verts[csg->end]);
+			VMOVE(endpt, rev->skt->verts[csg->end]);
 			endpt[Z] = 0.0;
 
 			VBLEND2(midpt, 0.5, startpt, 0.5, endpt);
@@ -1018,7 +1018,7 @@ rt_revolve_uv(struct application *ap, struct soltab *stp, struct hit *hitp, stru
 	    if (angle < 0) angle += 2*M_PI;
 	    uvp->uv_u = angle / rev->ang;
 
-	    lng = (uint32_t *)rev->sk->curve.segment[hitp->hit_surfno];
+	    lng = (uint32_t *)rev->skt->curve.segment[hitp->hit_surfno];
 
 	    switch (*lng) {
 		case CURVE_LSEG_MAGIC:
@@ -1026,12 +1026,12 @@ rt_revolve_uv(struct application *ap, struct soltab *stp, struct hit *hitp, stru
 		    if (ZERO(1.0/hitp->hit_vpriv[Z])) {
 			/* use hitpoint radius and sketch's X values */
 			hitpoint[Z] = 0;
-			uvp->uv_v = (MAGNITUDE(hitpoint) - rev->sk->verts[lsg->end][X]) /
-			    (rev->sk->verts[lsg->start][X] - rev->sk->verts[lsg->end][X]);
+			uvp->uv_v = (MAGNITUDE(hitpoint) - rev->skt->verts[lsg->end][X]) /
+			    (rev->skt->verts[lsg->start][X] - rev->skt->verts[lsg->end][X]);
 		    } else {
 			/* use hitpoint Z and sketch's Y values */
-			uvp->uv_v = (hitpoint[Z] - rev->sk->verts[lsg->end][Y]) /
-			    (rev->sk->verts[lsg->start][Y] - rev->sk->verts[lsg->end][Y]);
+			uvp->uv_v = (hitpoint[Z] - rev->skt->verts[lsg->end][Y]) /
+			    (rev->skt->verts[lsg->start][Y] - rev->skt->verts[lsg->end][Y]);
 		    }
 		    break;
 		case CURVE_CARC_MAGIC:
@@ -1112,9 +1112,9 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
 
-    nvert = rip->sk->vert_count;
-    verts = rip->sk->verts;
-    crv = &rip->sk->curve;
+    nvert = rip->skt->vert_count;
+    verts = rip->skt->verts;
+    crv = &rip->skt->curve;
 
     if (rip->ang < 2*M_PI) {
 	narc = ceil(rip->ang * 8 * M_1_PI);
@@ -1167,11 +1167,11 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     VREVERSE(ucir[12], ucir[4]);
 
     /* find open endpoints, and determine which points are used */
-    endcount = (int *)bu_calloc(rip->sk->vert_count, sizeof(int), "endcount");
-    for (i=0; i<rip->sk->vert_count; i++) {
+    endcount = (int *)bu_calloc(rip->skt->vert_count, sizeof(int), "endcount");
+    for (i=0; i<rip->skt->vert_count; i++) {
 	endcount[i] = 0;
     }
-    nseg = rip->sk->curve.count;
+    nseg = rip->skt->curve.count;
 
     for (i=0; i<nseg; i++) {
 	uint32_t *lng;
@@ -1180,7 +1180,7 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 	struct nurb_seg *nsg;
 	struct bezier_seg *bsg;
 
-	lng = (uint32_t *)rip->sk->curve.segment[i];
+	lng = (uint32_t *)rip->skt->curve.segment[i];
 
 	switch (*lng) {
 	    case CURVE_LSEG_MAGIC:
@@ -1232,7 +1232,7 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     }
 
     /* convert endcounts to store which endpoints are odd */
-    for (i=0, j=0; i<rip->sk->vert_count; i++) {
+    for (i=0, j=0; i<rip->skt->vert_count; i++) {
 	if (endcount[i] % 2 != 0) {
 	    /* add 'i' to list, insertion sort by vert[i][Y] */
 	    for (k=j; k>0; k--) {
@@ -1250,11 +1250,11 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 	}
     }
     nadd = j;
-    while (j < rip->sk->vert_count) endcount[j++] = -1;
+    while (j < rip->skt->vert_count) endcount[j++] = -1;
 
     /* draw sketch outlines */
     for (i=0; i<narc; i++) {
-	curve_to_vlist(vhead, ttol, rip->v3d, ucir[i], uz, rip->sk, crv);
+	curve_to_vlist(vhead, ttol, rip->v3d, ucir[i], uz, rip->skt, crv);
 	for (j=0; j<nadd; j++) {
 	    if (j+1 < nadd &&
 		ZERO(verts[endcount[j]][Y] - verts[endcount[j+1]][Y])) {
@@ -1273,7 +1273,7 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 	}
     }
     if (narc < 16) {
-	curve_to_vlist(vhead, ttol, rip->v3d, rEnd, uz, rip->sk, crv);
+	curve_to_vlist(vhead, ttol, rip->v3d, rEnd, uz, rip->skt, crv);
 	for (j=0; j<nadd; j++) {
 	    if (j+1 < nadd &&
 		ZERO(verts[endcount[j]][Y] - verts[endcount[j+1]][Y])) {
@@ -1385,11 +1385,11 @@ rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
     ptr = (unsigned char *)ep->ext_buf;
     sketch_name = (char *)ptr + (ELEMENTS_PER_VECT*3 + 1)*SIZEOF_NETWORK_DOUBLE;
     if (!dbip)
-	rip->sk = (struct rt_sketch_internal *)NULL;
+	rip->skt = (struct rt_sketch_internal *)NULL;
     else if ((dp=db_lookup(dbip, sketch_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_log("ERROR: Cannot find sketch (%s) for extrusion\n",
 	       sketch_name);
-	rip->sk = (struct rt_sketch_internal *)NULL;
+	rip->skt = (struct rt_sketch_internal *)NULL;
     } else {
 	if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, resp) != ID_SKETCH) {
 	    bu_log("ERROR: Cannot import sketch (%s) for extrusion\n",
@@ -1397,7 +1397,7 @@ rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
 	    bu_free(ip->idb_ptr, "extrusion");
 	    return -1;
 	} else
-	    rip->sk = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
+	    rip->skt = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
     }
 
     ntohd((unsigned char *)&vv, (unsigned char *)ep->ext_buf, ELEMENTS_PER_VECT*3 + 1);
@@ -1472,13 +1472,13 @@ rt_revolve_xform(
     V2MOVE(rop->axis2d, rip->axis2d);
 
     if (release && ip != op) {
-	rop->sk = rip->sk;
-	rip->sk = (struct rt_sketch_internal *)NULL;
+	rop->skt = rip->skt;
+	rip->skt = (struct rt_sketch_internal *)NULL;
 	rt_db_free_internal(ip);
-    } else if (rip->sk) {
-	rop->sk = rt_copy_sketch(rip->sk);
+    } else if (rip->skt) {
+	rop->skt = rt_copy_sketch(rip->skt);
     } else {
-	rop->sk = (struct rt_sketch_internal *)NULL;
+	rop->skt = (struct rt_sketch_internal *)NULL;
     }
 
     if (bu_debug&BU_DEBUG_MEM_CHECK) {

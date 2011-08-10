@@ -581,7 +581,7 @@ struct rt_revolve_internal {
     vect_t		r;		/**< @brief vector in start plane, x axis */
     fastf_t		ang;		/**< @brief angle to revolve*/
     struct bu_vls	sketch_name;	/**< @brief name of sketch */
-    struct rt_sketch_internal *sk;	/**< @brief pointer to sketch */
+    struct rt_sketch_internal *skt;	/**< @brief pointer to sketch */
 };
 #define RT_REVOLVE_CK_MAGIC(_p)	BU_CKMAG(_p, RT_REVOLVE_INTERNAL_MAGIC, "rt_revolve_internal")
 

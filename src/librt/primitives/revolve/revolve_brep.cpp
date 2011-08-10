@@ -154,7 +154,7 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
 
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
-    eip = rip->sk;
+    eip = rip->skt;
     RT_SKETCH_CK_MAGIC(eip);
 
     ON_3dPoint plane_origin;
