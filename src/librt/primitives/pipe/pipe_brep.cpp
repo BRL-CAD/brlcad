@@ -53,7 +53,6 @@ generate_curves(double id, double od, ON_Plane *plane, ON_SimpleArray<ON_Curve*>
 void
 make_linear_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, ON_SimpleArray<ON_Curve*> *endoutercurves, ON_SimpleArray<ON_Curve*> *startinnercurves, ON_SimpleArray<ON_Curve*> *endinnercurves)
 {
-    bu_log("make_linear_surfaces\n");
     int c1ind = (*b)->AddEdgeCurve(*(startoutercurves[0]));
     int c2ind = (*b)->AddEdgeCurve(*(endoutercurves[0]));
     ON_BrepVertex& vert1 = (*b)->NewVertex((*b)->m_C3[c1ind]->PointAt(0), SMALL_FASTF);
