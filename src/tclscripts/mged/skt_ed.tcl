@@ -18,6 +18,93 @@
 # information.
 #
 ###
+
+
+proc dot { v1_in v2_in } {
+    # args are names of arrays
+    upvar $v1_in v1
+    upvar $v2_in v2
+
+    return [expr { $v1(0) * $v2(0) + $v1(1) * $v2(1) } ]
+}
+
+proc dist { x1 y1 x2 y2 } {
+    return [expr { sqrt( ($x1 - $x2) * ($x1 - $x2) + ($y1 - $y2) * ($y1 - $y2))}]
+}
+
+proc cross2d { v1_in v2_in } {
+    # args are names of arrays
+    # only the value of the 'z' component is returned
+    upvar $v1_in v1
+    upvar $v2_in v2
+    return [expr {$v1(0) * $v2(1) - $v1(1) * $v2(0)}]
+}
+
+proc diff { v_out v1_in v2_in } {
+    # args are the names of arrays
+    # returns difference array in v_out
+    upvar $v1_in v1
+    upvar $v2_in v2
+    upvar $v_out v
+    set v(0) [expr {$v1(0) - $v2(0)}]
+    set v(1) [expr {$v1(1) - $v2(1)}]
+}
+
+proc find_arc_center { sx sy ex ey radius center_is_left } {
+    # The center must lie on the perpendicular bisector of the line connecting the two points
+
+    # vector from start point to end point
+    set s2e(0) [expr {$ex - $sx}]
+    set s2e(1) [expr {$ey - $sy}]
+
+    # mid point
+    set midx [expr {($sx + $ex) / 2.0}]
+    set midy [expr {($sy + $ey) / 2.0}]
+
+    # perpendicular direction
+    set dirx [expr {-($midy - $sy)}]
+    set diry [expr {$midx - $sx}]
+
+    # unitize direction vector
+    set len1sq [expr {$dirx * $dirx + $diry * $diry}]
+    set dir_len [expr {sqrt( $len1sq ) }]
+    set dirx [expr {$dirx / $dir_len}]
+    set diry [expr {$diry / $dir_len}]
+
+    # calculate distance from mid point to center
+    set lensq [expr {$radius * $radius - $len1sq}]
+    if { $lensq <= 0. } {
+	set tmp_len 0.0
+    } else {
+	set tmp_len [expr {sqrt( $lensq )}]
+    }
+
+    # calculate center as distance from mid point along the bisector direction
+    set cx [expr { $midx + $dirx * $tmp_len } ]
+    set cy [expr { $midy + $diry * $tmp_len } ]
+
+    # There are two possible centers, make sure we have the right one
+    set s2c(0) [expr {$cx - $sx}]
+    set s2c(1) [expr {$cy - $sy}]
+
+    if { $center_is_left == 0 } {
+	if { [cross2d s2e s2c] < 0.0 } {
+	    # wrong center
+	    set cx [expr { $midx - $dirx * $tmp_len } ]
+	    set cy [expr { $midy - $diry * $tmp_len } ]
+	}
+    } else {
+	if { [cross2d s2e s2c] > 0.0 } {
+	    # wrong center
+	    set cx [expr { $midx - $dirx * $tmp_len } ]
+	    set cy [expr { $midy - $diry * $tmp_len } ]
+	}
+    }
+
+    return "$cx $cy"
+}
+
+
 class Sketch_editor {
     inherit itk::Toplevel
 
@@ -1597,89 +1684,6 @@ class Sketch_editor {
     }
 }
 
-proc Sketch_editor::dot { v1_in v2_in } {
-    # args are names of arrays
-    upvar $v1_in v1
-    upvar $v2_in v2
-
-    return [expr { $v1(0) * $v2(0) + $v1(1) * $v2(1) } ]
-}
-
-proc Sketch_editor::dist { x1 y1 x2 y2 } {
-    return [expr { sqrt( ($x1 - $x2) * ($x1 - $x2) + ($y1 - $y2) * ($y1 - $y2))}]
-}
-
-proc Sketch_editor::cross2d { v1_in v2_in } {
-    # args are names of arrays
-    # only the value of the 'z' component is returned
-    upvar $v1_in v1
-    upvar $v2_in v2
-    return [expr {$v1(0) * $v2(1) - $v1(1) * $v2(0)}]
-}
-
-proc Sketch_editor::diff { v_out v1_in v2_in } {
-    # args are the names of arrays
-    # returns difference array in v_out
-    upvar $v1_in v1
-    upvar $v2_in v2
-    upvar $v_out v
-    set v(0) [expr {$v1(0) - $v2(0)}]
-    set v(1) [expr {$v1(1) - $v2(1)}]
-}
-
-proc Sketch_editor::find_arc_center { sx sy ex ey radius center_is_left } {
-    # The center must lie on the perpendicular bisector of the line connecting the two points
-
-    # vector from start point to end point
-    set s2e(0) [expr {$ex - $sx}]
-    set s2e(1) [expr {$ey - $sy}]
-
-    # mid point
-    set midx [expr {($sx + $ex) / 2.0}]
-    set midy [expr {($sy + $ey) / 2.0}]
-
-    # perpendicular direction
-    set dirx [expr {-($midy - $sy)}]
-    set diry [expr {$midx - $sx}]
-
-    # unitize direction vector
-    set len1sq [expr {$dirx * $dirx + $diry * $diry}]
-    set dir_len [expr {sqrt( $len1sq ) }]
-    set dirx [expr {$dirx / $dir_len}]
-    set diry [expr {$diry / $dir_len}]
-
-    # calculate distance from mid point to center
-    set lensq [expr {$radius * $radius - $len1sq}]
-    if { $lensq <= 0. } {
-	set tmp_len 0.0
-    } else {
-	set tmp_len [expr {sqrt( $lensq )}]
-    }
-
-    # calculate center as distance from mid point along the bisector direction
-    set cx [expr { $midx + $dirx * $tmp_len } ]
-    set cy [expr { $midy + $diry * $tmp_len } ]
-
-    # There are two possible centers, make sure we have the right one
-    set s2c(0) [expr {$cx - $sx}]
-    set s2c(1) [expr {$cy - $sy}]
-
-    if { $center_is_left == 0 } {
-	if { [cross2d s2e s2c] < 0.0 } {
-	    # wrong center
-	    set cx [expr { $midx - $dirx * $tmp_len } ]
-	    set cy [expr { $midy - $diry * $tmp_len } ]
-	}
-    } else {
-	if { [cross2d s2e s2c] > 0.0 } {
-	    # wrong center
-	    set cx [expr { $midx - $dirx * $tmp_len } ]
-	    set cy [expr { $midy - $diry * $tmp_len } ]
-	}
-    }
-
-    return "$cx $cy"
-}
 
 class Sketch_carc {
     private variable canv
