@@ -152,10 +152,6 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     }
 
     (*b)->m_S.Append(ehycurvedsurf);
-    int surfindex = (*b)->m_S.Count();
-    ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
-    int faceindex = (*b)->m_F.Count();
-    (*b)->NewOuterLoop(faceindex-1);
 }
 
 
