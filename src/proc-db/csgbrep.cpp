@@ -47,6 +47,7 @@ void
 write_out(struct rt_wdb* fp, struct rt_db_internal *ip, const char *name, struct bn_tol *tol)
 {
     ON_Brep* brep = NULL;
+    struct directory *dp = NULL;
 
     std::string bname = name;
     bname += ".brep";
@@ -54,9 +55,11 @@ write_out(struct rt_wdb* fp, struct rt_db_internal *ip, const char *name, struct
     if (!fp || !ip || !name)
 	return;
 
-    if (fp->dbip->dbi_fp) {
-	rt_fwrite_internal(fp->dbip->dbi_fp, name, ip, 1.0);
-    }
+    /* write the object in implicit form */
+/*     dp = db_diradd(fp->dbip, name, ladd, len, flags, ptr); */
+    rt_db_put_internal(dp, fp->dbip, ip, &rt_uniresource);
+
+    /* write the object in brep/nurbs form */
     brep = ON_Brep::New();
     ip->idb_meth->ft_brep(&brep, ip, tol);
     mk_brep(fp, bname.c_str(), brep);
