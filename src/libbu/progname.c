@@ -31,6 +31,7 @@
 #include "bu.h"
 
 /* internal storage for bu_getprogname/bu_setprogname */
+static char bu_argv0_buffer[MAXPATHLEN] = {0};
 static char bu_progname[MAXPATHLEN] = {0};
 
 
@@ -112,8 +113,8 @@ _bu_argv0(void)
     /* FIXME: this is temporary until bu_getcwd() is working. */
     (void)_bu_ipwd();
 
-    if (bu_progname[0] != '\0') {
-	argv0 = bu_progname;
+    if (bu_argv0_buffer[0] != '\0') {
+	argv0 = bu_argv0_buffer;
     }
 
 #ifdef HAVE_GETPROGNAME
@@ -206,6 +207,8 @@ bu_setprogname(const char *argv0)
 
     if (argv0) {
 	snprintf(bu_progname, MAXPATHLEN, "%s", argv0);
+	if (strlen(bu_argv0_buffer) == 0)
+	    snprintf(bu_argv0_buffer, MAXPATHLEN, "%s", argv0);
     } else {
 	bu_progname[0] = '\0';
     }
