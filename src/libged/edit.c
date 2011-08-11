@@ -965,6 +965,199 @@ edit_arg_free_all(struct edit_arg *arg)
 }
 
 /**
+ * Gets the apparent coordinates of an object.
+ *
+ * Combines the effects of all the transformation matrices in the
+ * combinations in the given path that affect the the position of the
+ * combination or shape at the end of the path. The result is the
+ * apparent coordinates of the object at the end of the path, if the
+ * first combination in the path were drawn. The only flags repected
+ * are object argument type modifier flags.
+ *
+ * If the path only contains a primitive, the coordinates of the
+ * primitive will be the result of the conversion.
+ *
+ * Returns GED_ERROR on failure, and GED_OK on success.
+ */
+int
+edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
+			   vect_t *const coord)
+{
+    const struct db_full_path *path = arg->object;
+    struct rt_db_internal intern;
+    struct directory *d;
+    struct directory *d_next;
+    struct rt_comb_internal *comb_i;
+    union tree *leaf;
+    vect_t leaf_deltas = VINIT_ZERO;
+    struct _ged_trace_data gtd;
+    point_t rpp_min;
+    point_t rpp_max;
+    size_t i;
+
+    if (ged_path_validate(gedp, path) == GED_ERROR) {
+	bu_vls_printf(gedp->ged_result_str, "path \"%s\" does not exist in"
+		      "the database", db_path_to_string(path));
+	return GED_ERROR;
+    }
+
+    /* sum the transformation matrices of each object in path */
+    d = DB_FULL_PATH_ROOT_DIR(path);
+    for (i = (size_t)0; i < path->fp_len - (size_t)1; ++i) {
+	d_next = DB_FULL_PATH_GET(path, i + (size_t)1);
+
+	/* path was validated, and this loop doesn't process the last
+	 * item, so it must be a combination
+	 */
+	BU_ASSERT(d->d_flags & (RT_DIR_COMB | RT_DIR_REGION));
+
+	/* sum transformation matrices */
+	GED_DB_GET_INTERNAL(gedp, &intern, d, (fastf_t *)NULL,
+			    &rt_uniresource, GED_ERROR);
+	comb_i = (struct rt_comb_internal *)intern.idb_ptr;
+	leaf = db_find_named_leaf(comb_i->tree, d_next->d_namep);
+	BU_ASSERT_PTR(leaf, !=, TREE_NULL); /* path is validated */
+	MAT_DELTAS_GET(leaf_deltas, leaf->tr_l.tl_mat);
+	VADD2(*coord, *coord, leaf_deltas);
+	rt_db_free_internal(&intern);
+
+	d = d_next; /* prime for next iteration */
+    }
+    d_next = RT_DIR_NULL; /* none left */
+
+    /* add final combination/primitive natural origin to sum */
+    if (d->d_flags & RT_DIR_SOLID) {
+	if (_ged_get_obj_bounds2(gedp, 1, (const char **)&d->d_namep, &gtd,
+	    rpp_min, rpp_max) == GED_ERROR)
+	    return GED_ERROR;
+    } else {
+	BU_ASSERT(d->d_flags & (RT_DIR_REGION | RT_DIR_COMB));
+	if (_ged_get_obj_bounds(gedp, 1, (const char **)&d->d_namep, 1,
+	    rpp_min, rpp_max) == GED_ERROR)
+	    return GED_ERROR;
+    }
+
+    if (arg->type & EDIT_NATURAL_ORIGIN) {
+	MAT_DELTAS_GET(leaf_deltas, gtd.gtd_xform);
+	bu_vls_printf(gedp->ged_result_str, "natural origin option is not"
+		      " yet working");
+	return GED_ERROR;
+    } else {
+	/* bounding box center is the default */
+	VADD2SCALE(leaf_deltas, rpp_min, rpp_max, 0.5);
+    }
+
+    VADD2(*coord, *coord, leaf_deltas);
+    return GED_OK;
+}
+
+/**
+ * Converts an edit_arg object+offset to coordinates. If *coord is
+ * NULL, *arg->vector is overwritten with the coordinates and
+ * *arg->object is freed, otherwise coordinates are written to *coord
+ * and *arg is in no way modified.
+ *
+ * The only flags repected are object argument type modifier flags.
+ *
+ * Returns GED_ERROR on failure, and GED_OK on success.
+ */
+int
+edit_arg_to_coord(struct ged *gedp, struct edit_arg *const arg, vect_t *coord)
+{
+    vect_t obj_coord = VINIT_ZERO;
+    vect_t *dest;
+
+    if (coord)
+	dest = coord;
+    else
+	dest = arg->vector;
+
+    if (edit_arg_to_apparent_coord(gedp, arg, &obj_coord) == GED_ERROR)
+	return GED_ERROR;
+
+    if (arg->vector) {
+	VADD2(*dest, *arg->vector, obj_coord);
+    } else {
+	dest = (vect_t *)bu_malloc(sizeof(vect_t),
+					"vect_t block for edit_arg_to_coord()");
+	VMOVE(*dest, obj_coord);
+    }
+
+    if (!coord) {
+	db_free_full_path(arg->object);
+	bu_free((genptr_t)arg->object, "db_full_path");
+	arg->object = (struct db_full_path *)NULL;
+    }
+
+    return GED_OK;
+}
+
+/**
+ * "Expands" object arguments for a batch operation.
+ *
+ * meta_arg is replaced a list of copies of src_objects, with
+ * certain meta_arg flags applied and/or consolidated with those of
+ * the source objects. Objects + offsets are converted to coordinates.
+ *
+ * Set GED_QUIET or GED_ERROR bits in 'flags' to suppress or enable
+ * output to ged_result_str, respectively.
+ *
+ * Returns GED_ERROR on failure, and GED_OK on success.
+ */
+HIDDEN int
+edit_arg_expand_meta(struct ged *gedp, struct edit_arg *meta_arg,
+		const struct edit_arg *src_objs, const int flags)
+{
+    struct edit_arg *prototype;
+    struct edit_arg *dest; 
+    const struct edit_arg *src;
+    const int noisy = (flags & GED_ERROR); /* side with verbosity */
+    int firstrun = 1;
+
+    BU_ASSERT(!meta_arg->next); /* should be at end of list */
+
+    /* repurpose meta_arg, so ptr-to-ptr isn't required */
+    edit_arg_duplicate(&prototype, meta_arg);
+    edit_arg_free_inner(meta_arg);
+    edit_arg_init(meta_arg);
+    dest = meta_arg;
+
+    for (src = src_objs; src; src = src->next, dest = dest->next) {
+	if (firstrun) {
+	    firstrun = 0;
+	    src = src_objs;
+	    edit_arg_duplicate_in_place(dest, src);
+	}
+	else
+	    edit_arg_duplicate(&dest, src);
+
+	/* never use coords that target obj didn't include */
+	dest->coords_used &= prototype->coords_used;
+	if (!dest->coords_used) {
+	    if (noisy)
+		bu_vls_printf(gedp->ged_result_str,
+			      "coordinate filters for batch operator and target"
+			      "objects result in no coordinates being used");
+	    return GED_ERROR;
+	}
+
+	/* respect certain type flags from the prototype/target obj */
+	dest->type &= EDIT_TARGET_OBJ_BATCH_TYPES;
+	dest->type |= prototype->type & EDIT_TARGET_OBJ_BATCH_TYPES;
+
+	if (edit_arg_to_coord(gedp, dest, (vect_t *)NULL) == GED_ERROR)
+	    return GED_ERROR;
+    }
+    return GED_OK;
+}
+
+
+/* 
+ * Command helper functions
+ */
+
+
+/**
  * Initialize command argument-pointer members to NULL.
  */
 HIDDEN void
@@ -1019,6 +1212,43 @@ edit_cmd_sduplicate(union edit_cmd *const dest,
     } while (*(src_head = src->cmd->get_arg_head(src, ++i)) !=
 	     src->common.objects);
 }
+
+/**
+ * Sets any skipped vector elements in to those of the target object,
+ * and sets EDIT_COORDS_ALL on vector arguments. Expects all
+ * arguments except target objects to have vector set. Only looks
+ * at the first set of args.
+ *
+ * XXX: This intentionally only looks at the first set of args. At
+ * some point, it may be desirable to have the subcommand functions
+ * (i.e. edit_<subcmd>_wrapper()) call this prior to execution, so
+ * that some commands can expand their own vectors in an unusual ways.
+ */
+HIDDEN int
+edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
+{
+    struct edit_arg *arg_head;
+    vect_t src_v;
+    int i = 0;
+
+    /* draw source vector from of target object */
+    arg_head = *(subcmd->cmd->get_arg_head(subcmd, i++));
+    if (edit_arg_to_apparent_coord(gedp, arg_head, &src_v) == GED_ERROR)
+	return GED_ERROR;
+
+    while ((arg_head = *(subcmd->cmd->get_arg_head(subcmd, i++))) != 
+	   subcmd->common.objects) {
+	if (!(arg_head->coords_used & EDIT_COORD_X))
+	    *arg_head->vector[0] = src_v[0];
+	if (!(arg_head->coords_used & EDIT_COORD_Y))
+	    *arg_head->vector[1] = src_v[1];
+	if (!(arg_head->coords_used & EDIT_COORD_Z))
+	    *arg_head->vector[2] = src_v[2];
+	arg_head->coords_used |= EDIT_COORDS_ALL;
+    }
+    return GED_OK;
+}
+
 
 /* 
  * Command-specific functions.
@@ -1474,229 +1704,6 @@ static const struct edit_cmd_tab edit_cmds[] = {
 
 
 /**
- * Gets the apparent coordinates of an object.
- *
- * Combines the effects of all the transformation matrices in the
- * combinations in the given path that affect the the position of the
- * combination or shape at the end of the path. The result is the
- * apparent coordinates of the object at the end of the path, if the
- * first combination in the path were drawn. The only flags repected
- * are object argument type modifier flags.
- *
- * If the path only contains a primitive, the coordinates of the
- * primitive will be the result of the conversion.
- *
- * Returns GED_ERROR on failure, and GED_OK on success.
- */
-int
-edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
-			   vect_t *const coord)
-{
-    const struct db_full_path *path = arg->object;
-    struct rt_db_internal intern;
-    struct directory *d;
-    struct directory *d_next;
-    struct rt_comb_internal *comb_i;
-    union tree *leaf;
-    vect_t leaf_deltas = VINIT_ZERO;
-    struct _ged_trace_data gtd;
-    point_t rpp_min;
-    point_t rpp_max;
-    size_t i;
-
-    if (ged_path_validate(gedp, path) == GED_ERROR) {
-	bu_vls_printf(gedp->ged_result_str, "path \"%s\" does not exist in"
-		      "the database", db_path_to_string(path));
-	return GED_ERROR;
-    }
-
-    /* sum the transformation matrices of each object in path */
-    d = DB_FULL_PATH_ROOT_DIR(path);
-    for (i = (size_t)0; i < path->fp_len - (size_t)1; ++i) {
-	d_next = DB_FULL_PATH_GET(path, i + (size_t)1);
-
-	/* path was validated, and this loop doesn't process the last
-	 * item, so it must be a combination
-	 */
-	BU_ASSERT(d->d_flags & (RT_DIR_COMB | RT_DIR_REGION));
-
-	/* sum transformation matrices */
-	GED_DB_GET_INTERNAL(gedp, &intern, d, (fastf_t *)NULL,
-			    &rt_uniresource, GED_ERROR);
-	comb_i = (struct rt_comb_internal *)intern.idb_ptr;
-	leaf = db_find_named_leaf(comb_i->tree, d_next->d_namep);
-	BU_ASSERT_PTR(leaf, !=, TREE_NULL); /* path is validated */
-	MAT_DELTAS_GET(leaf_deltas, leaf->tr_l.tl_mat);
-	VADD2(*coord, *coord, leaf_deltas);
-	rt_db_free_internal(&intern);
-
-	d = d_next; /* prime for next iteration */
-    }
-    d_next = RT_DIR_NULL; /* none left */
-
-    /* add final combination/primitive natural origin to sum */
-    if (d->d_flags & RT_DIR_SOLID) {
-	if (_ged_get_obj_bounds2(gedp, 1, (const char **)&d->d_namep, &gtd,
-	    rpp_min, rpp_max) == GED_ERROR)
-	    return GED_ERROR;
-    } else {
-	BU_ASSERT(d->d_flags & (RT_DIR_REGION | RT_DIR_COMB));
-	if (_ged_get_obj_bounds(gedp, 1, (const char **)&d->d_namep, 1,
-	    rpp_min, rpp_max) == GED_ERROR)
-	    return GED_ERROR;
-    }
-
-    if (arg->type & EDIT_NATURAL_ORIGIN) {
-	MAT_DELTAS_GET(leaf_deltas, gtd.gtd_xform);
-	bu_vls_printf(gedp->ged_result_str, "natural origin option is not"
-		      " yet working");
-	return GED_ERROR;
-    } else {
-	/* bounding box center is the default */
-	VADD2SCALE(leaf_deltas, rpp_min, rpp_max, 0.5);
-    }
-
-    VADD2(*coord, *coord, leaf_deltas);
-    return GED_OK;
-}
-
-/**
- * Converts an edit_arg object+offset to coordinates. If *coord is
- * NULL, *arg->vector is overwritten with the coordinates and
- * *arg->object is freed, otherwise coordinates are written to *coord
- * and *arg is in no way modified.
- *
- * The only flags repected are object argument type modifier flags.
- *
- * Returns GED_ERROR on failure, and GED_OK on success.
- */
-int
-edit_arg_to_coord(struct ged *gedp, struct edit_arg *const arg, vect_t *coord)
-{
-    vect_t obj_coord = VINIT_ZERO;
-    vect_t *dest;
-
-    if (coord)
-	dest = coord;
-    else
-	dest = arg->vector;
-
-    if (edit_arg_to_apparent_coord(gedp, arg, &obj_coord) == GED_ERROR)
-	return GED_ERROR;
-
-    if (arg->vector) {
-	VADD2(*dest, *arg->vector, obj_coord);
-    } else {
-	dest = (vect_t *)bu_malloc(sizeof(vect_t),
-					"vect_t block for edit_arg_to_coord()");
-	VMOVE(*dest, obj_coord);
-    }
-
-    if (!coord) {
-	db_free_full_path(arg->object);
-	bu_free((genptr_t)arg->object, "db_full_path");
-	arg->object = (struct db_full_path *)NULL;
-    }
-
-    return GED_OK;
-}
-
-/**
- * Sets any skipped vector elements in to those of the target object,
- * and sets EDIT_COORDS_ALL on vector arguments. Expects all
- * arguments except target objects to have vector set. Only looks
- * at the first set of args.
- *
- * XXX: This intentionally only looks at the first set of args. At
- * some point, it may be desirable to have the subcommand functions
- * (i.e. edit_<subcmd>_wrapper()) call this prior to execution, so
- * that some commands can expand their own vectors in an unusual ways.
- */
-HIDDEN int
-edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
-{
-    struct edit_arg *arg_head;
-    vect_t src_v;
-    int i = 0;
-
-    /* draw source vector from of target object */
-    arg_head = *(subcmd->cmd->get_arg_head(subcmd, i++));
-    if (edit_arg_to_apparent_coord(gedp, arg_head, &src_v) == GED_ERROR)
-	return GED_ERROR;
-
-    while ((arg_head = *(subcmd->cmd->get_arg_head(subcmd, i++))) != 
-	   subcmd->common.objects) {
-	if (!(arg_head->coords_used & EDIT_COORD_X))
-	    *arg_head->vector[0] = src_v[0];
-	if (!(arg_head->coords_used & EDIT_COORD_Y))
-	    *arg_head->vector[1] = src_v[1];
-	if (!(arg_head->coords_used & EDIT_COORD_Z))
-	    *arg_head->vector[2] = src_v[2];
-	arg_head->coords_used |= EDIT_COORDS_ALL;
-    }
-    return GED_OK;
-}
-
-/**
- * "Expands" object arguments for a batch operation.
- *
- * meta_arg is replaced a list of copies of src_objects, with
- * certain meta_arg flags applied and/or consolidated with those of
- * the source objects. Objects + offsets are converted to coordinates.
- *
- * Set GED_QUIET or GED_ERROR bits in 'flags' to suppress or enable
- * output to ged_result_str, respectively.
- *
- * Returns GED_ERROR on failure, and GED_OK on success.
- */
-HIDDEN int
-edit_arg_expand_meta(struct ged *gedp, struct edit_arg *meta_arg,
-		const struct edit_arg *src_objs, const int flags)
-{
-    struct edit_arg *prototype;
-    struct edit_arg *dest; 
-    const struct edit_arg *src;
-    const int noisy = (flags & GED_ERROR); /* side with verbosity */
-    int firstrun = 1;
-
-    BU_ASSERT(!meta_arg->next); /* should be at end of list */
-
-    /* repurpose meta_arg, so ptr-to-ptr isn't required */
-    edit_arg_duplicate(&prototype, meta_arg);
-    edit_arg_free_inner(meta_arg);
-    edit_arg_init(meta_arg);
-    dest = meta_arg;
-
-    for (src = src_objs; src; src = src->next, dest = dest->next) {
-	if (firstrun) {
-	    firstrun = 0;
-	    src = src_objs;
-	    edit_arg_duplicate_in_place(dest, src);
-	}
-	else
-	    edit_arg_duplicate(&dest, src);
-
-	/* never use coords that target obj didn't include */
-	dest->coords_used &= prototype->coords_used;
-	if (!dest->coords_used) {
-	    if (noisy)
-		bu_vls_printf(gedp->ged_result_str,
-			      "coordinate filters for batch operator and target"
-			      "objects result in no coordinates being used");
-	    return GED_ERROR;
-	}
-
-	/* respect certain type flags from the prototype/target obj */
-	dest->type &= EDIT_TARGET_OBJ_BATCH_TYPES;
-	dest->type |= prototype->type & EDIT_TARGET_OBJ_BATCH_TYPES;
-
-	if (edit_arg_to_coord(gedp, dest, (vect_t *)NULL) == GED_ERROR)
-	    return GED_ERROR;
-    }
-    return GED_OK;
-}
-
-/**
  * A wrapper for the edit commands. It adds the capability to
  * perform batch operations, and accepts objects and distances in
  * addition to coordinates. As a side effect, arguments flagged
@@ -1711,6 +1718,16 @@ edit_arg_expand_meta(struct ged *gedp, struct edit_arg *meta_arg,
  * EDIT_TARGET_OBJ_BATCH_TYPES, which is respected since certain flags
  * may propogate in batch operations. Coordinate flags are always
  * respected.
+ *
+ * If batch arguments are to be used, they should be either:
+ *     a) the first and only argument in the given argument head
+ *       or
+ *     b) expanded prior to being passed to this function
+ * This is because an expansion of a batch character leads to an
+ * argument head having any prior nodes, *plus* the expanded nodes.
+ * If there were any prior nodes, the expansion would cause a
+ * lopsided set of arguments, which should result in a BU_ASSERT
+ * failure.
  */
 int
 edit(struct ged *gedp, union edit_cmd *const subcmd)
@@ -1780,10 +1797,10 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
 	num_args_set = 0;
 
 	/* set all heads to the next arguments in their lists */
-	do {
+	do
 	    if (*arg_head && (*arg_head = (*arg_head)->next))
 		++num_args_set;
-	} while (*(arg_head =
+	while (*(arg_head =
 		 subcmd_iter.cmd->get_arg_head(&subcmd_iter, i++)) !=
 		 subcmd_iter.common.objects);
 	if (num_args_set == 0)
@@ -2184,8 +2201,6 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
      */
 
     /*
-     * FIXME: this isn't fully implemented, and it should be.
-     *
      * The object of the game is to remain agnostic of unique aspects
      * of argument structures of subcommands (i.e. inside the edit_cmd
      * union). Therefore, we will simply chain all of the arguments
