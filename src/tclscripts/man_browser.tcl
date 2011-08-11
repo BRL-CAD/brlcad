@@ -122,7 +122,7 @@ package provide ManBrowser 1.0
 # 'path' with those listed in 'disabledPages' and 'enabledPages'.
 ::itcl::body ManBrowser::setPageNames {} {
    if {[file exists $path]} {
-    set manFiles [glob -directory $path *.html ]
+    set manFiles [glob -nocomplain -directory $path *.html ]
 
     set pages($this) [list]
     foreach manFile $manFiles {
