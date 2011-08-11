@@ -1164,8 +1164,9 @@ HIDDEN void
 edit_cmd_init(union edit_cmd *const subcmd)
 {
     struct edit_arg **arg_head;
-    int i = 0;
+    int i = 1;
 
+    arg_head = &subcmd->common.objects;
     do
 	*arg_head = (struct edit_arg *)NULL;
     while (*(arg_head = subcmd->cmd->get_arg_head(subcmd, i++)) !=
