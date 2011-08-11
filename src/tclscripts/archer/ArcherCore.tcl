@@ -351,7 +351,7 @@ namespace eval ArcherCore {
 	variable mBindingMode Default
 	variable mBindingModePref ""
 	variable mBackground "0 0 0"
-	variable mBackgroundColor Black
+	variable mBackgroundColor Navy
 	variable mBackgroundColorPref ""
 	variable mFBBackgroundColor Black
 	variable mFBBackgroundColorPref ""
