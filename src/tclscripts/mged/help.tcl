@@ -25,7 +25,7 @@
 #==============================================================================
 
 # This command causes helplib.tcl to get read in.
-source [file join ".." "helplib.tcl"]
+source [file join [bu_brlcad_data "tclscripts"] "helplib.tcl"]
 helplib
 
 set mged_help_data(?)		{{}	{summary of available mged commands}}
