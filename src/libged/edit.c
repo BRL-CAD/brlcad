@@ -779,7 +779,6 @@ union edit_cmd{
 /**
  * Command specific information, for a table of available commands.
  */
-typedef void (*init_handler)(union edit_cmd *const cmd);
 typedef int (*exec_handler)(struct ged *gedp, const union edit_cmd *const cmd);
 typedef int (*add_cl_args_handler)(struct ged *gedp, union edit_cmd *const cmd,
 				   const int flags);
@@ -791,7 +790,6 @@ struct edit_cmd_tab {
     char *opt_global;
     char *usage;
     char *help;
-    init_handler init;
     exec_handler exec;
     add_cl_args_handler add_cl_args;
     get_arg_head_handler get_arg_head;
@@ -967,6 +965,21 @@ edit_arg_free_all(struct edit_arg *arg)
 }
 
 /**
+ * Initialize command argument-pointer members to NULL.
+ */
+HIDDEN void
+edit_cmd_init(union edit_cmd *const subcmd)
+{
+    struct edit_arg **arg_head;
+    int i = 0;
+
+    do
+	*arg_head = (struct edit_arg *)NULL;
+    while (*(arg_head = subcmd->cmd->get_arg_head(subcmd, i++)) !=
+	   subcmd->common.objects);
+}
+
+/**
  * Free any dynamically allocated argument nodes that may exist
  */
 HIDDEN void
@@ -1017,13 +1030,13 @@ edit_cmd_sduplicate(union edit_cmd *const dest,
  *
  * To add a new command, you need to:
  *	1) add a struct to the union edit_cmd
- *	2) create 5 functions that
- *		a) initialize the command's struct in union edit_cmd
- *		b) add args to build the command
- *		c) get the next arg head in union edit_cmd
- *		d) perform the command
- *		e) wrap the command, to alternatively accept a union
- *		   edit_cmd
+ *	2) create 4 functions that
+ *		a) add args to build the command
+ *		b) get the next arg head in union edit_cmd (trivial)
+ *		c) perform the command
+ *		d) wrap the command, to alternatively accept a union
+ *		   edit_cmd; perform any unusual pre-execution
+ *		   changes (trivial)
  *	3) add command data/function pointers to the command table
  */
 
@@ -1046,21 +1059,6 @@ edit_rotate(struct ged *gedp, const vect_t *const axis_from,
     (void)angle_to;
     (void)path;
     return GED_OK;
-}
-
-/**
- * Initialize command argument-pointer members to NULL.
- */
-void
-edit_rotate_init(union edit_cmd *const cmd)
-{
-    cmd->rotate.objects =
-    cmd->rotate.center =
-    cmd->rotate.ref_angle.from =
-    cmd->rotate.ref_angle.to =
-    cmd->rotate.ref_axis.from =
-    cmd->rotate.ref_axis.to =
-    (struct edit_arg *)NULL;
 }
 
 /**
@@ -1143,21 +1141,6 @@ edit_scale(struct ged *gedp, const vect_t *const scale_from,
     (void)factor_to;
     (void)path;
     return GED_OK;
-}
-
-/**
- * Initialize command argument-pointer members to NULL.
- */
-void
-edit_scale_init(union edit_cmd *const cmd)
-{
-    cmd->scale.objects =
-    cmd->scale.center =
-    cmd->scale.ref_factor.from =
-    cmd->scale.ref_factor.to =
-    cmd->scale.ref_scale.from =
-    cmd->scale.ref_scale.to =
-    (struct edit_arg *)NULL;
 }
 
 /**
@@ -1287,18 +1270,6 @@ edit_translate(struct ged *gedp, const vect_t *const from,
 			GED_ERROR);
     rt_db_free_internal(&intern);
     return GED_OK;
-}
-
-/**
- * Initialize command argument-pointer members to NULL.
- */
-void
-edit_translate_init(union edit_cmd *const cmd)
-{
-    cmd->translate.objects =
-    cmd->translate.ref_vector.from =
-    cmd->translate.ref_vector.to =
-    (struct edit_arg *)NULL;
 }
 
 /**
@@ -1457,7 +1428,7 @@ edit_translate_get_arg_head(const union edit_cmd *const cmd, int idx)
  * Table of edit command data/functions
  */
 static const struct edit_cmd_tab edit_cmds[] = {
-    {"help", (char *)NULL, "[subcmd]", (char *)NULL, NULL, NULL, NULL, NULL},
+    {"help", (char *)NULL, "[subcmd]", (char *)NULL, NULL, NULL, NULL},
 #define EDIT_CMD_HELP 0 /* idx of "help" in edit_cmds */
     {"rotate",		"R",
 	"[-R] [AXIS] [CENTER] ANGLE OBJECT ...",
@@ -1468,7 +1439,6 @@ static const struct edit_cmd_tab edit_cmds[] = {
 	    "[[-n] -k {ANGLE_FROM_OBJECT | ANGLE_FROM_POS}]\n"
 	    "[-n | -o] [-a | -r | -d]"
 		"{ANGLE_TO_OBJECT | ANGLE_TO_POS}} OBJECT ...",
-	&edit_rotate_init,
 	&edit_rotate_wrapper,
 	&edit_rotate_add_cl_args,
 	&edit_rotate_get_arg_head
@@ -1481,7 +1451,6 @@ static const struct edit_cmd_tab edit_cmds[] = {
 	    "[[-n] -k {FACTOR_FROM_OBJECT | FACTOR_FROM_POS}]\n"
 	    "[-n] [-a | -r] {FACTOR_TO_OBJECT | FACTOR_TO_POS}"
 		" OBJECT ...",
-	&edit_scale_init,
 	&edit_scale_wrapper,
 	&edit_scale_add_cl_args,
 	&edit_scale_get_arg_head
@@ -1490,12 +1459,11 @@ static const struct edit_cmd_tab edit_cmds[] = {
 	"[FROM] TO OBJECT ...",
 	"[[-n] -k {FROM_OBJECT | FROM_POS}]\n"
 	    "[-n] [-a | -r] {TO_OBJECT | TO_POS} OBJECT ...",
-	&edit_translate_init,
 	&edit_translate_wrapper,
 	&edit_translate_add_cl_args,
 	&edit_translate_get_arg_head
     },
-    {(char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL, NULL, NULL, NULL,
+    {(char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL, NULL, NULL,
 	NULL}
 };
 
@@ -1639,10 +1607,10 @@ edit_arg_to_coord(struct ged *gedp, struct edit_arg *const arg, vect_t *coord)
  * arguments except target objects to have vector set. Only looks
  * at the first set of args.
  *
- * XXX: this intentionally only looks at the first set of args. at
+ * XXX: This intentionally only looks at the first set of args. At
  * some point, it may be desirable to have the subcommand functions
  * (i.e. edit_<subcmd>_wrapper()) call this prior to execution, so
- * that some commands can expand their own vectors in an unusual way.
+ * that some commands can expand their own vectors in an unusual ways.
  */
 HIDDEN int
 edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
@@ -1751,7 +1719,7 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
     struct edit_arg *cur_arg;
     union edit_cmd subcmd_iter; /* to iterate through subcmd args */
     int i = 0;
-    int ret = 0;
+    int ret = GED_OK;
 
     /* count args at each level in lists, to detect (erroneous)
      * decreases in the amount of args */
@@ -1804,7 +1772,7 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
 	
     /* iterate over each set of batch args and execute subcmd */
     subcmd_iter.cmd = subcmd->cmd;
-    subcmd_iter.cmd->init(&subcmd_iter);
+    edit_cmd_init(&subcmd_iter);
     edit_cmd_sduplicate(&subcmd_iter, subcmd);
     i = 0; /* reinit for get_arg_head() */
     arg_head = subcmd_iter.cmd->get_arg_head(&subcmd_iter, i++);
@@ -2120,7 +2088,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* now that the cmd type is known, we can init the subcmd args */
-    subcmd.cmd->init(&subcmd);
+    edit_cmd_init(&subcmd);
     cur_arg = subcmd.cmd_line.args = (struct edit_arg *)bu_malloc(
 				     sizeof(struct edit_arg),
 				     "edit_arg block for ged_edit()");
