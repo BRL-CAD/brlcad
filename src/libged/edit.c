@@ -1249,6 +1249,70 @@ edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
     return GED_OK;
 }
 
+/**
+ * Consolidates compatible arguments. If any of the arguments that are
+ * being consolidated have objects, they are converted to coordinates.
+ *
+ * Returns GED_ERROR on failure, and GED_OK on success.
+ */
+HIDDEN int
+edit_cmd_consolidate (struct ged *gedp, union edit_cmd *const subcmd)
+{
+    struct edit_arg **arg_head;
+    struct edit_arg *prev_arg;
+    struct edit_arg *cur_arg;
+    struct edit_arg *next_arg;
+    int i = 1; /* no consolidation of common objects is needed */
+
+    while (*(arg_head = subcmd->cmd->get_arg_head(subcmd, i++)) != 
+	   subcmd->common.objects) {
+	prev_arg = *arg_head;
+	if (!prev_arg)
+	    continue; /* only one element in list */
+	for (cur_arg = prev_arg->next; cur_arg; cur_arg = cur_arg->next) {
+	    if ((prev_arg->coords_used & EDIT_COORDS_ALL) ^
+		(cur_arg->coords_used & EDIT_COORDS_ALL)) {
+
+		/* It should be impossible to have no coords set. If
+		 * one arg has all coords set, it implies that the
+		 * other has none set.
+		 */
+		BU_ASSERT((cur_arg->coords_used & EDIT_COORDS_ALL) ==
+			  EDIT_COORDS_ALL);
+		BU_ASSERT((prev_arg->coords_used & EDIT_COORDS_ALL) ==
+			  EDIT_COORDS_ALL);
+
+		/* convert objects to coords */
+		if (cur_arg->object && edit_arg_to_coord(gedp, cur_arg,
+		    (vect_t *)NULL) == GED_ERROR)
+		    return GED_ERROR;
+		if (prev_arg->object && edit_arg_to_coord(gedp, prev_arg,
+		    (vect_t *)NULL) == GED_ERROR)
+		    return GED_ERROR;
+
+		/* consolidate */
+		if (cur_arg->coords_used & EDIT_COORD_X)
+		    prev_arg->coords_used |= EDIT_COORD_X;
+		    *prev_arg->vector[0] = *cur_arg->vector[0];
+		if (cur_arg->coords_used & EDIT_COORD_Y)
+		    prev_arg->coords_used |= EDIT_COORD_Y;
+		    *prev_arg->vector[1] = *cur_arg->vector[1];
+		if (cur_arg->coords_used & EDIT_COORD_Z)
+		    prev_arg->coords_used |= EDIT_COORD_Z;
+		    *prev_arg->vector[2] = *cur_arg->vector[2];
+
+		/* remove consolidated argument */
+		next_arg = cur_arg->next;
+		edit_arg_free(cur_arg);
+		prev_arg->next = cur_arg = next_arg;
+	    } else {
+		prev_arg = cur_arg; /* the args are incompatible */
+	    }
+	}
+    }
+    return GED_OK;
+}
+
 
 /* 
  * Command-specific functions.
@@ -2453,11 +2517,12 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     edit_arg_free_last(subcmd.cmd_line.args);
 
     /* let cmd specific func validate/move args to proper locations */
-    if (subcmd.cmd->add_cl_args(gedp, &subcmd, GED_ERROR) ==
-	GED_ERROR)
+    if (subcmd.cmd->add_cl_args(gedp, &subcmd, GED_ERROR) == GED_ERROR)
 	return GED_ERROR;
 
     /* send the command off for further processing and execution  */
+    if (edit_cmd_consolidate(gedp, &subcmd) == GED_ERROR)
+	return GED_ERROR;
     ret = edit(gedp, &subcmd);
     edit_cmd_free(&subcmd);
     return ret;
