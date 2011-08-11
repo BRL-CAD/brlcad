@@ -78,9 +78,9 @@ namespace detail {
  *  convenience routines
  */
 template<typename T>
-inline static parser_extra::parser_state_type &get_state(T scanner)
+inline static objCombinedState::parser_state_type &get_state(T scanner)
 {
-    return static_cast<parser_extra*>(scanner)->parser_state;
+    return static_cast<objCombinedState*>(scanner)->parser_state;
 }
 
 /**

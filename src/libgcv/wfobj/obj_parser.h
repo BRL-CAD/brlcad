@@ -27,14 +27,16 @@ extern "C" {
 #endif
 
 /**
- *  A structure containing a wavefront obj parser
+ *  A structure containing a wavefront obj parser.
+ *  This is a C wrapper for objParser.
  */
 typedef struct {
     void *p;
 } obj_parser_t;
 
 /**
- *  A structure containing the contents of a parsed wavefront obj file
+ *  A structure containing the contents of a parsed wavefront obj file.
+ *  This is a C wrapper for objFileContents.
  */
 typedef struct {
     void *p;

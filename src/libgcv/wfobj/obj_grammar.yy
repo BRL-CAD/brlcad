@@ -75,26 +75,26 @@ static const char face_length_err[] = "Faces must contain at least 3 "
 static const char line_length_err[] = "Lines must contain at least 2 "
 				      "references";
 
-typedef parser_extra::contents_type contents_type;
-typedef parser_extra::parser_state_type parser_state_type;
+typedef objCombinedState::contents_type contents_type;
+typedef objCombinedState::parser_state_type parser_state_type;
 
 /**
  *  convenience routines
  */
 inline static parser_state_type & get_state(yyscan_t scanner) {
-    return static_cast<parser_extra*>(obj_parser_get_extra(scanner))->parser_state;
+    return static_cast<objCombinedState*>(obj_parser_get_extra(scanner))->parser_state;
 }
 
-inline static parser_extra::parser_type & get_parser(yyscan_t scanner) {
-    return *(static_cast<parser_extra*>(obj_parser_get_extra(scanner))->parser);
+inline static objCombinedState::parser_type & get_parser(yyscan_t scanner) {
+    return *(static_cast<objCombinedState*>(obj_parser_get_extra(scanner))->parser);
 }
 
 inline static contents_type & get_contents(yyscan_t scanner) {
-    return *(static_cast<parser_extra*>(obj_parser_get_extra(scanner))->contents);
+    return *(static_cast<objCombinedState*>(obj_parser_get_extra(scanner))->contents);
 }
 
-inline static parser_extra & get_extra(yyscan_t scanner) {
-    return *static_cast<parser_extra*>(obj_parser_get_extra(scanner));
+inline static objCombinedState & get_extra(yyscan_t scanner) {
+    return *static_cast<objCombinedState*>(obj_parser_get_extra(scanner));
 }
 
 inline static size_t real_index(int val, std::size_t nvert) {
@@ -220,12 +220,12 @@ coord: FLOAT { $$ = float($1); }
 vertex
 : VERTEX coord coord coord
 {
-    detail::obj_contents::gvertex_t vertex = {{$2, $3, $4, 1}};
+    detail::objFileContents::gvertex_t vertex = {{$2, $3, $4, 1}};
     detail::get_contents(scanner).gvertices_list.push_back(vertex);
 }
 | VERTEX coord coord coord coord
 {
-    detail::obj_contents::gvertex_t vertex = {{$2, $3, $4, $5}};
+    detail::objFileContents::gvertex_t vertex = {{$2, $3, $4, $5}};
     detail::get_contents(scanner).gvertices_list.push_back(vertex);
 }
 ;
@@ -233,17 +233,17 @@ vertex
 t_vertex
 : T_VERTEX coord
 {
-    detail::obj_contents::tvertex_t vertex = {{$2, 0, 0}};
+    detail::objFileContents::tvertex_t vertex = {{$2, 0, 0}};
     detail::get_contents(scanner).tvertices_list.push_back(vertex);
 }
 | T_VERTEX coord coord
 {
-    detail::obj_contents::tvertex_t vertex = {{$2, $3, 0}};
+    detail::objFileContents::tvertex_t vertex = {{$2, $3, 0}};
     detail::get_contents(scanner).tvertices_list.push_back(vertex);
 }
 | T_VERTEX coord coord coord
 {
-    detail::obj_contents::tvertex_t vertex = {{$2, $3, $4}};
+    detail::objFileContents::tvertex_t vertex = {{$2, $3, $4}};
     detail::get_contents(scanner).tvertices_list.push_back(vertex);
 }
 ;
@@ -251,7 +251,7 @@ t_vertex
 n_vertex
 : N_VERTEX coord coord coord
 {
-    detail::obj_contents::nvertex_t vertex = {{$2, $3, $4}};
+    detail::objFileContents::nvertex_t vertex = {{$2, $3, $4}};
     detail::get_contents(scanner).nvertices_list.push_back(vertex);
 }
 ;

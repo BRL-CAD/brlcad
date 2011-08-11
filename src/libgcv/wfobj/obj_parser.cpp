@@ -17,6 +17,15 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+/* This file implements the obj parser interface defined in obj_parser.h.
+ *
+ * Code that wants to use the interface should create a handle of type
+ * obj_parser_t and pass it to obj_parser_create() to initialize it.
+ *
+ * Parsing is done using the obj_parse() or obj_fparse() functions, which take
+ * an input, a parser handle, and an obj_contents_t to return the parsed file
+ * contents in.
+ */
 
 #include "obj_parser.h"
 #include "obj_parser_state.h"
@@ -36,7 +45,6 @@ namespace detail {
 struct no_close {
     void operator()(FILE*) {}
 };
-
 
 template<typename ObjContentsT>
 static int set_stream(FILE *stream, basic_parser_state<ObjContentsT> &state)
@@ -107,12 +115,27 @@ struct lex_sentry {
 extern "C" {
 #endif
 
+static void createScanner(yyscan_t *scanner)
+{
+    obj_parser_lex_init(scanner);
+}
+
+static void setScannerIn(yyscan_t scanner, FILE *in)
+{
+    obj_parser_set_in(in, scanner);
+}
+
+static void setScannerExtra(yyscan_t scanner, detail::objCombinedState *extra)
+{
+    obj_parser_set_extra(extra, scanner);
+}
+
 int obj_parser_create(obj_parser_t *parser)
 {
     int err = 0;
 
     try {
-	parser->p = new detail::obj_parser;
+	parser->p = new detail::objParser;
     } catch (std::bad_alloc &) {
 	err = ENOMEM;
     } catch (...) {
@@ -126,7 +149,7 @@ int obj_parser_create(obj_parser_t *parser)
 void obj_parser_destroy(obj_parser_t parser)
 {
     try {
-	delete static_cast<detail::obj_parser*>(parser.p);
+	delete static_cast<detail::objParser*>(parser.p);
 	parser.p = 0;
     } catch(...) {
 	abort();
@@ -137,14 +160,14 @@ void obj_parser_destroy(obj_parser_t parser)
 int obj_parse(const char *filename, obj_parser_t parser,
 	      obj_contents_t *contents)
 {
-    detail::obj_parser *p = static_cast<detail::obj_parser*>(parser.p);
+    detail::objParser *p = static_cast<detail::objParser*>(parser.p);
 
     int err = 0;
 
     try {
-	std::auto_ptr<detail::obj_contents> sentry(new detail::obj_contents);
+	std::auto_ptr<detail::objFileContents> sentry(new detail::objFileContents);
 
-	detail::parser_extra extra(p, sentry.get());
+	detail::objCombinedState extra(p, sentry.get());
 
 	if ((err =
 	     detail::open_file(std::string(filename), extra.parser_state))) {
@@ -152,13 +175,12 @@ int obj_parse(const char *filename, obj_parser_t parser,
 	}
 
 	yyscan_t scanner;
-	obj_parser_lex_init(&scanner);
+	createScanner(&scanner);
+
 	detail::lex_sentry lsentry(scanner);
 
-	obj_parser_set_in(extra.parser_state.file_stack.back().file.get(),
-			  scanner);
-
-	obj_parser_set_extra(&extra, scanner);
+	setScannerIn(scanner, extra.parser_state.file_stack.back().file.get());
+	setScannerExtra(scanner, &extra);
 
 	err = obj_parser_parse(scanner);
 
@@ -188,27 +210,26 @@ int obj_parse(const char *filename, obj_parser_t parser,
 
 int obj_fparse(FILE *stream, obj_parser_t parser, obj_contents_t *contents)
 {
-    detail::obj_parser *p = static_cast<detail::obj_parser*>(parser.p);
+    detail::objParser *p = static_cast<detail::objParser*>(parser.p);
 
     int err = 0;
 
     try {
-	std::auto_ptr<detail::obj_contents> sentry(new detail::obj_contents);
+	std::auto_ptr<detail::objFileContents> sentry(new detail::objFileContents);
 
-	detail::parser_extra extra(p, sentry.get());
+	detail::objCombinedState extra(p, sentry.get());
 
 	if ((err = detail::set_stream(stream, extra.parser_state))) {
 	    return err;
 	}
 
 	yyscan_t scanner;
-	obj_parser_lex_init(&scanner);
+	createScanner(&scanner);
+
 	detail::lex_sentry lsentry(scanner);
 
-	obj_parser_set_in(extra.parser_state.file_stack.back().file.get(),
-			  scanner);
-
-	obj_parser_set_extra(&extra, scanner);
+	setScannerIn(scanner, extra.parser_state.file_stack.back().file.get());
+	setScannerExtra(scanner, &extra);
 
 	err = obj_parser_parse(scanner);
 
@@ -241,7 +262,7 @@ const char * obj_parse_error(obj_parser_t parser)
     const char *err = 0;
 
     try {
-	detail::obj_parser *p = static_cast<detail::obj_parser*>(parser.p);
+	detail::objParser *p = static_cast<detail::objParser*>(parser.p);
 
 	if (!(p->last_error.empty())) {
 	    err = p->last_error.c_str();
@@ -257,7 +278,7 @@ const char * obj_parse_error(obj_parser_t parser)
 int obj_contents_destroy(obj_contents_t contents)
 {
     try {
-	delete static_cast<detail::obj_contents*>(contents.p);
+	delete static_cast<detail::objFileContents*>(contents.p);
 	contents.p = 0;
     } catch(...) {
 	abort();
@@ -270,13 +291,10 @@ int obj_contents_destroy(obj_contents_t contents)
 size_t obj_vertices(obj_contents_t contents, const float (*val_arr[])[4])
 {
     try {
-	detail::size_check<sizeof(float[4]),
-	    sizeof(detail::obj_contents::gvertex_t)>::ok();
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
-
-	// coerce vector<chunk<float, 4> > to size_t arr[][4]
+	// coerce vector<tuple<float, 4> > to size_t arr[][4]
 	if (val_arr && c->gvertices_list.size()) {
 	    *val_arr = &(c->gvertices_list.front().v);
 	}
@@ -293,13 +311,10 @@ size_t obj_vertices(obj_contents_t contents, const float (*val_arr[])[4])
 size_t obj_texture_coord(obj_contents_t contents, const float (*val_arr[])[3])
 {
     try {
-	detail::size_check<sizeof(float[3]),
-	    sizeof(detail::obj_contents::tvertex_t)>::ok();
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
-
-	// coerce vector<chunk<float, 3> > to size_t arr[][3]
+	// coerce vector<tuple<float, 3> > to size_t arr[][3]
 	if (val_arr && c->tvertices_list.size()) {
 	    *val_arr = &(c->tvertices_list.front().v);
 	}
@@ -316,13 +331,10 @@ size_t obj_texture_coord(obj_contents_t contents, const float (*val_arr[])[3])
 size_t obj_normals(obj_contents_t contents, const float (*val_arr[])[3])
 {
     try {
-	detail::size_check<sizeof(float[3]),
-	    sizeof(detail::obj_contents::nvertex_t)>::ok();
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
-
-	// coerce vector<chunk<float, 3> > to size_t arr[][3]
+	// coerce vector<tuple<float, 3> > to size_t arr[][3]
 	if (val_arr && c->nvertices_list.size()) {
 	    *val_arr = &(c->nvertices_list.front().v);
 	}
@@ -339,7 +351,7 @@ size_t obj_normals(obj_contents_t contents, const float (*val_arr[])[3])
 size_t obj_groups(obj_contents_t contents, const char * const (*val_arr[]))
 {
     try {
-	detail::obj_contents *c = static_cast<detail::obj_contents*>(contents.p);
+	detail::objFileContents *c = static_cast<detail::objFileContents*>(contents.p);
 
 	if (val_arr && c->groupchar_set.size()) {
 	    *val_arr = &(c->groupchar_set.front());
@@ -357,8 +369,8 @@ size_t obj_groups(obj_contents_t contents, const char * const (*val_arr[]))
 size_t obj_num_groupsets(obj_contents_t contents)
 {
     try {
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
 	return c->groupindex_set.size();
     } catch(...) {
@@ -373,8 +385,8 @@ size_t obj_groupset(obj_contents_t contents, size_t n,
 		    const size_t (*index_arr[]))
 {
     try {
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
 	if (index_arr && c->groupindex_set[n].size()) {
 	    *index_arr = &(c->groupindex_set[n].front());
@@ -392,8 +404,8 @@ size_t obj_groupset(obj_contents_t contents, size_t n,
 size_t obj_objects(obj_contents_t contents, const char * const (*val_arr[]))
 {
     try {
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
 	if (val_arr && c->objectchar_set.size()) {
 	    *val_arr = &(c->objectchar_set.front());
@@ -411,8 +423,8 @@ size_t obj_objects(obj_contents_t contents, const char * const (*val_arr[]))
 size_t obj_materials(obj_contents_t contents, const char * const (*val_arr[]))
 {
     try {
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
 	if (val_arr && c->materialchar_set.size()) {
 	    *val_arr = &(c->materialchar_set.front());
@@ -431,8 +443,8 @@ size_t obj_materiallibs(obj_contents_t contents,
 			const char * const (*val_arr[]))
 {
     try {
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
 	if (val_arr && c->materiallibchar_set.size()) {
 	    *val_arr = &(c->materiallibchar_set.front());
@@ -450,8 +462,8 @@ size_t obj_materiallibs(obj_contents_t contents,
 size_t obj_num_materiallibsets(obj_contents_t contents)
 {
     try {
-	detail::obj_contents *c =
-	static_cast<detail::obj_contents*>(contents.p);
+	detail::objFileContents *c =
+	static_cast<detail::objFileContents*>(contents.p);
 
 	return c->materiallibindex_set.size();
     } catch(...) {
@@ -465,8 +477,8 @@ size_t obj_num_materiallibsets(obj_contents_t contents)
 size_t obj_materiallibset(obj_contents_t contents, size_t n, const size_t (*index_arr[]))
 {
     try {
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
 	if (index_arr && c->materiallibindex_set[n].size()) {
 	    *index_arr = &(c->materiallibindex_set[n].front());
@@ -484,8 +496,8 @@ size_t obj_materiallibset(obj_contents_t contents, size_t n, const size_t (*inde
 size_t obj_texmaps(obj_contents_t contents, const char * const (*val_arr[]))
 {
     try {
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
 	if (val_arr && c->texmapchar_set.size()) {
 	    *val_arr = &(c->texmapchar_set.front());
@@ -503,8 +515,8 @@ size_t obj_texmaps(obj_contents_t contents, const char * const (*val_arr[]))
 size_t obj_texmaplibs(obj_contents_t contents, const char * const (*val_arr[]))
 {
     try {
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
 	if (val_arr && c->texmaplibchar_set.size()) {
 	    *val_arr = &(c->texmaplibchar_set.front());
@@ -522,8 +534,8 @@ size_t obj_texmaplibs(obj_contents_t contents, const char * const (*val_arr[]))
 size_t obj_num_texmaplibsets(obj_contents_t contents)
 {
     try {
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
 	return c->texmaplibindex_set.size();
     } catch(...) {
@@ -538,8 +550,8 @@ size_t obj_texmaplibset(obj_contents_t contents, size_t n,
 			const size_t (*index_arr[]))
 {
     try {
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
 	if (index_arr && c->texmaplibindex_set[n].size()) {
 	    *index_arr = &(c->texmaplibindex_set[n].front());
@@ -557,8 +569,8 @@ size_t obj_texmaplibset(obj_contents_t contents, size_t n,
 size_t obj_shadow_objs(obj_contents_t contents, const char * const (*val_arr[]))
 {
     try {
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
 	if (val_arr && c->shadow_objchar_set.size()) {
 	    *val_arr = &(c->shadow_objchar_set.front());
@@ -576,8 +588,8 @@ size_t obj_shadow_objs(obj_contents_t contents, const char * const (*val_arr[]))
 size_t obj_trace_objs(obj_contents_t contents, const char * const (*val_arr[]))
 {
     try {
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
 	if (val_arr && c->trace_objchar_set.size()) {
 	    *val_arr = &(c->trace_objchar_set.front());
@@ -596,8 +608,8 @@ size_t obj_polygonal_attributes(obj_contents_t contents,
 				const obj_polygonal_attributes_t (*attr_list[]))
 {
     try {
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
 	if (attr_list && c->polyattributes_set.size()) {
 	    *attr_list = &(c->polyattributes_set.front());
@@ -616,8 +628,8 @@ size_t obj_polygonal_v_points(obj_contents_t contents,
 			      const size_t (*attindex_arr[]))
 {
     try {
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
 	if (attindex_arr && c->point_v_attr_list.size()) {
 	    *attindex_arr = &(c->point_v_attr_list.front());
@@ -636,8 +648,8 @@ size_t obj_polygonal_v_point_vertices(obj_contents_t contents, size_t face,
 				      const size_t (*index_arr[]))
 {
     try {
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
 	if (index_arr && c->point_v_loclist[face].second) {
 	    *index_arr = &(c->point_v_indexlist[c->point_v_loclist[face].first]);
@@ -656,8 +668,8 @@ size_t obj_polygonal_v_lines(obj_contents_t contents,
 			     const size_t (*attindex_arr[]))
 {
     try {
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
 	if (attindex_arr && c->line_v_attr_list.size()) {
 	    *attindex_arr = &(c->line_v_attr_list.front());
@@ -676,8 +688,8 @@ size_t obj_polygonal_v_line_vertices(obj_contents_t contents, size_t face,
 				     const size_t (*index_arr[]))
 {
     try {
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
 	if (index_arr && c->line_v_loclist[face].second) {
 	    *index_arr = &(c->line_v_indexlist[c->line_v_loclist[face].first]);
@@ -696,8 +708,8 @@ size_t obj_polygonal_tv_lines(obj_contents_t contents,
 			      const size_t (*attindex_arr[]))
 {
     try {
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
 	if (attindex_arr && c->line_tv_attr_list.size()) {
 	    *attindex_arr = &(c->line_tv_attr_list.front());
@@ -716,13 +728,10 @@ size_t obj_polygonal_tv_line_vertices(obj_contents_t contents, size_t face,
 				      const size_t (*index_arr[])[2])
 {
     try {
-	detail::size_check<sizeof(size_t[2]),
-	    sizeof(detail::obj_contents::polygonal_tv_index_type)>::ok();
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
-
-	// coerce vector<chunk<size_t, 2> > to size_t arr[][2]
+	// coerce vector<tuple<size_t, 2> > to size_t arr[][2]
 	if (index_arr && c->line_tv_loclist[face].second) {
 	    *index_arr = &(c->line_tv_indexlist[c->line_tv_loclist[face].first].v);
 	}
@@ -740,8 +749,8 @@ size_t obj_polygonal_v_faces(obj_contents_t contents,
 			     const size_t (*attindex_arr[]))
 {
     try {
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
 	if (attindex_arr && c->polygonal_v_attr_list.size()) {
 	    *attindex_arr = &(c->polygonal_v_attr_list.front());
@@ -760,8 +769,8 @@ size_t obj_polygonal_v_face_vertices(obj_contents_t contents, size_t face,
 				     const size_t (*index_arr[]))
 {
     try {
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
 	if (index_arr && c->polygonal_v_loclist[face].second) {
 	    *index_arr =
@@ -781,8 +790,8 @@ size_t obj_polygonal_tv_faces(obj_contents_t contents,
 			      const size_t (*attindex_arr[]))
 {
     try {
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
 	if (attindex_arr && c->polygonal_tv_attr_list.size()) {
 	    *attindex_arr = &(c->polygonal_tv_attr_list.front());
@@ -801,13 +810,10 @@ size_t obj_polygonal_tv_face_vertices(obj_contents_t contents, size_t face,
 				      const size_t (*index_arr[])[2])
 {
     try {
-	detail::size_check<sizeof(size_t[2]),
-	    sizeof(detail::obj_contents::polygonal_tv_index_type)>::ok();
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
-
-	// coerce vector<chunk<size_t, 2> > to size_t arr[][2]
+	// coerce vector<tuple<size_t, 2> > to size_t arr[][2]
 	if (index_arr && c->polygonal_tv_loclist[face].second) {
 	    *index_arr = &(c->pologonal_tv_indexlist[c->polygonal_tv_loclist[face].first].v);
 	}
@@ -826,8 +832,8 @@ size_t obj_polygonal_nv_faces(obj_contents_t contents,
 			      const size_t (*attindex_arr[]))
 {
     try {
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
 	if (attindex_arr && c->polygonal_nv_attr_list.size()) {
 	    *attindex_arr = &(c->polygonal_nv_attr_list.front());
@@ -846,13 +852,10 @@ size_t obj_polygonal_nv_face_vertices(obj_contents_t contents, size_t face,
 				      const size_t (*index_arr[])[2])
 {
     try {
-	detail::size_check<sizeof(size_t[2]),
-	    sizeof(detail::obj_contents::polygonal_nv_index_type)>::ok();
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
-
-	// coerce vector<chunk<size_t, 2> > to size_t arr[][2]
+	// coerce vector<tuple<size_t, 2> > to size_t arr[][2]
 	if (index_arr && c->polygonal_nv_loclist[face].second) {
 	    *index_arr = &(c->pologonal_nv_indexlist[c->polygonal_nv_loclist[face].first].v);
 	}
@@ -870,8 +873,8 @@ size_t obj_polygonal_tnv_faces(obj_contents_t contents,
 			       const size_t (*attindex_arr[]))
 {
     try {
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
 	if (attindex_arr && c->polygonal_tnv_attr_list.size()) {
 	    *attindex_arr = &(c->polygonal_tnv_attr_list.front());
@@ -890,13 +893,10 @@ size_t obj_polygonal_tnv_face_vertices(obj_contents_t contents, size_t face,
 				       const size_t (*index_arr[])[3])
 {
     try {
-	detail::size_check<sizeof(size_t[3]),
-	    sizeof(detail::obj_contents::polygonal_tnv_index_type)>::ok();
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
-	detail::obj_contents *c =
-	    static_cast<detail::obj_contents*>(contents.p);
-
-	// coerce vector<chunk<size_t, 3> > to size_t arr[][3]
+	// coerce vector<tuple<size_t, 3> > to size_t arr[][3]
 	if (index_arr && c->polygonal_tnv_loclist[face].second) {
 	    *index_arr = &(c->pologonal_tnv_indexlist[c->polygonal_tnv_loclist[face].first].v);
 	}

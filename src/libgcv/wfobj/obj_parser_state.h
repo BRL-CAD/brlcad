@@ -61,56 +61,43 @@ namespace arl {
 namespace obj_parser {
 namespace detail {
 
-/**
- *  chunk is a generic compile-time tiple of three
- */
 template<typename T, std::size_t N>
-struct chunk {
-    typedef T value_type;
-  
+struct tuple {
     T v[N];
 };
 
 
-template<typename T, std::size_t N, std::size_t L>
-struct chunk_compare {
-    bool compare(chunk<T, N> &lhs, const chunk<T, N> &rhs) {
-	return lhs[L] == rhs[L] && chunk_compare<T, N, L - 1>(lhs, rhs);
+/* recursive tuple comparison */
+template<typename T, std::size_t N, std::size_t i>
+struct tuple_compare {
+    bool compare(tuple<T, N> &lhs, const tuple<T, N> &rhs) {
+	return lhs[i] == rhs[i] && tuple_compare<T, N, i - 1>(lhs, rhs);
     }
 };
 
-
+/* tuple comparison base case */
 template<typename T, std::size_t N>
-struct chunk_compare<T, N, 0> {
-    void compare(chunk<T, N> &lhs, const chunk<T, N> &rhs) {
+struct tuple_compare<T, N, 0> {
+    void compare(tuple<T, N> &lhs, const tuple<T, N> &rhs) {
 	return lhs[0] == rhs[0];
     }
 };
 
 
 template<typename T, std::size_t N>
-inline bool operator==(const chunk<T, N> &lhs, const chunk<T, N> &rhs)
+inline bool operator==(const tuple<T, N> &lhs, const tuple<T, N> &rhs)
 {
-    return chunk_compare<T, N, N>::compare(lhs, rhs);
+    return tuple_compare<T, N, N>::compare(lhs, rhs);
 }
-
-
-template<int A, int B>
-struct size_check {};
-
-template<int Size>
-struct size_check<Size, Size> {
-    static void ok(void) {}
-};
-
 
 /**
  *  Basic parser object, persistant across multiple file parsings
  *
- *  Lifetime is controlled by the used via obj_parser_create
+ *  Lifetime is controlled by the user via obj_parser_create
  *  and obj_parser_destroy.
  */
-template<typename charT=char, typename traits=std::char_traits<char>,
+template<typename charT=char,
+	 typename traits=std::char_traits<char>,
 	 typename Allocator=std::allocator<char> >
 struct basic_obj_parser {
     typedef std::basic_string<charT, traits, Allocator> string_type;
@@ -119,20 +106,21 @@ struct basic_obj_parser {
     string_type last_error;
 };
 
-
-template<typename PrecisionT, typename charT=char,
+/* contents of an obj file */
+template<typename PrecisionT,
+	 typename charT=char,
 	 typename traits=std::char_traits<char>,
 	 typename Allocator=std::allocator<char> >
 struct basic_obj_contents {
     typedef PrecisionT precision_type;
-    typedef chunk<precision_type, 4> gvertex_t;
-    typedef chunk<precision_type, 3> tvertex_t;
-    typedef chunk<precision_type, 3> nvertex_t;
+    typedef tuple<precision_type, 4> gvertex_t;
+    typedef tuple<precision_type, 3> tvertex_t;
+    typedef tuple<precision_type, 3> nvertex_t;
 
     typedef size_t polygonal_v_index_type;
-    typedef chunk<size_t, 2> polygonal_tv_index_type;
-    typedef chunk<size_t, 2> polygonal_nv_index_type;
-    typedef chunk<size_t, 3> polygonal_tnv_index_type;
+    typedef tuple<size_t, 2> polygonal_tv_index_type;
+    typedef tuple<size_t, 2> polygonal_nv_index_type;
+    typedef tuple<size_t, 3> polygonal_tnv_index_type;
 
     // indexloc_t := {start, length}
     typedef std::pair<size_t, size_t> indexloc_t;
@@ -227,7 +215,7 @@ struct basic_obj_contents {
     indexvec_type polygonal_tnv_attr_list;
     indexloc_vec_type polygonal_tnv_loclist;
     polygonal_tnv_indexvec_type pologonal_tnv_indexlist;
-};
+}; /* basic_obj_contents */
 
 
 template<typename ObjContentsT>
@@ -242,9 +230,9 @@ struct basic_parser_state {
   
     typedef std::size_t index_type;
   
-    typedef chunk<index_type, 1> index1_type;
-    typedef chunk<index_type, 2> index2_type;
-    typedef chunk<index_type, 3> index3_type;
+    typedef tuple<index_type, 1> index1_type;
+    typedef tuple<index_type, 2> index2_type;
+    typedef tuple<index_type, 3> index3_type;
 
     typedef typename contents_type::polygonal_v_indexvec_type
 	polygonal_v_indexvec_type;
@@ -358,17 +346,17 @@ struct basic_parser_state {
     bool polyattributes_dirty;
     polyattributes_vec_index_type current_polyattributes;
     polyattributes_index_map_type polyattributes_index_map;
-};
+}; /* basic_parser_state */
 
 
 /**
  *  Composition object for dealing with lex/lacc reentrant interface.
- *  ie all extra info gets attached via a void * in lex/yacc
  *
  *  Lifetime is only until the parse completion of a single file and 
  *  it's includes.
  */
-template<typename PrecisionT, typename charT=char,
+template<typename PrecisionT,
+	 typename charT=char,
 	 typename traits=std::char_traits<char>,
 	 typename Allocator=std::allocator<char> >
 struct basic_parser_extra {
@@ -392,7 +380,9 @@ struct basic_parser_extra {
 };
 
 
-template<typename PrecisionT, typename charT, typename traits,
+template<typename PrecisionT,
+	 typename charT,
+	 typename traits,
 	 typename Allocator>
 void set_working_groupset(basic_parser_extra<PrecisionT, charT, traits,
 					     Allocator> &extra)
@@ -464,10 +454,12 @@ void set_working_groupset(basic_parser_extra<PrecisionT, charT, traits,
 	extra.parser_state.current_groupset;
 
     extra.parser_state.polyattributes_dirty = true;
-}
+} /* set working groupset */
 
 
-template<typename PrecisionT, typename charT, typename traits,
+template<typename PrecisionT,
+	 typename charT,
+	 typename traits,
 	 typename Allocator>
 void set_working_object(basic_parser_extra<PrecisionT, charT, traits,
 					   Allocator> &extra)
@@ -500,10 +492,12 @@ void set_working_object(basic_parser_extra<PrecisionT, charT, traits,
 	extra.parser_state.current_object;
 
     extra.parser_state.polyattributes_dirty = true;
-}
+} /* set_working_object */
 
 
-template<typename PrecisionT, typename charT, typename traits,
+template<typename PrecisionT,
+	 typename charT,
+	 typename traits,
 	 typename Allocator>
 void set_working_material(basic_parser_extra<PrecisionT, charT, traits,
 					     Allocator> &extra)
@@ -537,10 +531,11 @@ void set_working_material(basic_parser_extra<PrecisionT, charT, traits,
 	extra.parser_state.current_material;
 
     extra.parser_state.polyattributes_dirty = true;
-}
+} /* set_working_material */
 
-
-template<typename PrecisionT, typename charT, typename traits,
+template<typename PrecisionT,
+	 typename charT,
+	 typename traits,
 	 typename Allocator>
 void set_working_materiallib(basic_parser_extra<PrecisionT, charT, traits,
 						Allocator> &extra)
@@ -613,10 +608,12 @@ void set_working_materiallib(basic_parser_extra<PrecisionT, charT, traits,
 	extra.parser_state.current_materiallib;
 
     extra.parser_state.polyattributes_dirty = true;
-}
+} /* set_working_materiallib */
 
 
-template<typename PrecisionT, typename charT, typename traits,
+template<typename PrecisionT,
+	 typename charT,
+	 typename traits,
 	 typename Allocator>
 void set_working_texmap(basic_parser_extra<PrecisionT, charT, traits,
 					   Allocator> &extra)
@@ -649,10 +646,12 @@ void set_working_texmap(basic_parser_extra<PrecisionT, charT, traits,
 	extra.parser_state.current_texmap;
 
     extra.parser_state.polyattributes_dirty = true;
-}
+} /* set_working_texmap */
 
 
-template<typename PrecisionT, typename charT, typename traits,
+template<typename PrecisionT,
+	 typename charT,
+	 typename traits,
 	 typename Allocator>
 void set_working_texmaplib(basic_parser_extra<PrecisionT, charT, traits,
 					      Allocator> &extra)
@@ -725,10 +724,12 @@ void set_working_texmaplib(basic_parser_extra<PrecisionT, charT, traits,
 	extra.parser_state.current_texmaplib;
 
     extra.parser_state.polyattributes_dirty = true;
-}
+} /* set_working_texmaplib */
 
 
-template<typename PrecisionT, typename charT, typename traits,
+template<typename PrecisionT,
+	 typename charT,
+	 typename traits,
 	 typename Allocator>
 void set_working_shadow_obj(basic_parser_extra<PrecisionT, charT, traits,
 					       Allocator> &extra)
@@ -762,10 +763,12 @@ void set_working_shadow_obj(basic_parser_extra<PrecisionT, charT, traits,
 	extra.parser_state.current_shadow_obj;
 
     extra.parser_state.polyattributes_dirty = true;
-}
+} /* set_working_shadow_obj */
 
 
-template<typename PrecisionT, typename charT, typename traits,
+template<typename PrecisionT,
+	 typename charT,
+	 typename traits,
 	 typename Allocator>
 void set_working_trace_obj(basic_parser_extra<PrecisionT, charT, traits,
 					      Allocator> &extra)
@@ -799,10 +802,12 @@ void set_working_trace_obj(basic_parser_extra<PrecisionT, charT, traits,
 	extra.parser_state.current_trace_obj;
 
     extra.parser_state.polyattributes_dirty = true;
-}
+} /* set_working_trace_obj */
 
 
-template<typename PrecisionT, typename charT, typename traits,
+template<typename PrecisionT,
+	 typename charT,
+	 typename traits,
 	 typename Allocator>
 void set_working_polygattributes(basic_parser_extra<PrecisionT, charT, traits,
 						    Allocator> &extra)
@@ -832,7 +837,9 @@ void set_working_polygattributes(basic_parser_extra<PrecisionT, charT, traits,
  *  Set the inital values of the lookup tables to the first element in the
  *  contents
  */
-template<typename PrecisionT, typename charT, typename traits,
+template<typename PrecisionT,
+	 typename charT,
+	 typename traits,
 	 typename Allocator>
 basic_parser_extra<PrecisionT, charT, traits, Allocator>::
 basic_parser_extra(parser_type *p, contents_type *c) :parser(p), contents(c)
@@ -900,29 +907,9 @@ inline void output_formatter(ParserStateT &state, const char *s)
 	      << state.file_stack.back().lineno << ": " << s;
 }
 
-
-/**
- *  Typedefs for common uses:
- *  
- *  lack of a precision prefix denotes single precision
- *  'd' prefix denotes double precision
- *  lack of a character prefix denotes 'char'
- *  'w' character prefix denotes 'w_char_t'
- */
-typedef basic_obj_contents<float, char> obj_contents;
-typedef basic_obj_contents<float, wchar_t> wobj_contents;
-typedef basic_obj_contents<double, char> dobj_contents;
-typedef basic_obj_contents<double, wchar_t> dwobj_dcontents;
-
-typedef basic_obj_parser<char> obj_parser;
-typedef basic_obj_parser<wchar_t> wobj_parser;
-
-typedef basic_parser_extra<float, char> parser_extra;
-typedef basic_parser_extra<float, wchar_t> wparser_extra;
-
-typedef basic_parser_extra<double, char> dparser_extra;
-typedef basic_parser_extra<double, wchar_t> dwparser_extra;
-
+typedef basic_obj_contents<float, char> objFileContents;
+typedef basic_obj_parser<char> objParser;
+typedef basic_parser_extra<float, char> objCombinedState;
 
 } /* namespace detail */
 } /* namespace obj_parser */
