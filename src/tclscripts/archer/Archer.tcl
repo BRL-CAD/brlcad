@@ -3196,7 +3196,8 @@ proc title_node_handler {node} {
     set tlparent [$itk_component(archerHelp) childsite]
 
 
-    if {[file exists [file join [bu_brlcad_data "html"] books en BRL-CAD_Tutorial_Series-VolumeI.html]]} {
+    if {[file exists [file join [bu_brlcad_data "html"] books en BRL-CAD_Tutorial_Series-VolumeI.html]] &&
+        [file exists [file join [bu_brlcad_data "html"] toc.html]] } {
 
 	# Table of Contents
 	itk_component add archerHelpToC {
