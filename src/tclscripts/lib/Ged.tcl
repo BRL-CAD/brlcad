@@ -656,6 +656,8 @@ package provide cadwidgets::Ged 1.0
 	variable mViewMeasureCallbacks ""
 	variable mViewRectCallbacks ""
 
+	variable mRay "ray"
+
 	method init_button_no_op_prot {{_button 1}}
 	method measure_line_erase {}
 	method multi_pane {args}
@@ -754,6 +756,7 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::destructor {} {
     if {!$mSharedGed} {
+	catch {rename $mRay ""}
 	rename $mGed ""
     }
 }
@@ -1600,11 +1603,12 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::open {args} {
+    catch {rename $mRay ""}
     set $mGedFile [eval $mGed open $args]
 }
 
 ::itcl::body cadwidgets::Ged::opendb {args} {
-    set $mGedFile [eval $mGed open $args]
+    eval open $args
 }
 
 ::itcl::body cadwidgets::Ged::orient {args} {
@@ -3546,12 +3550,12 @@ package provide cadwidgets::Ged 1.0
 
     set result ""
     catch {
-	eval $mGed rt_gettrees ray -i -u [$mGed who]
-	ray prep $_prep
-	ray no_bool $_no_bool
-	ray onehit $_onehit
+	eval $mGed rt_gettrees $mRay -i -u [$mGed who]
+	$mRay prep $_prep
+	$mRay no_bool $_no_bool
+	$mRay onehit $_onehit
 
-	set result [ray shootray $_start $_op $_target]
+	set result [$mRay shootray $_start $_op $_target]
     }
 
     SetNormalCursor $this
