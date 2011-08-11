@@ -2786,11 +2786,7 @@ namespace eval ArcherCore {
 ::itcl::body ArcherCore::backgroundColor {_color} {
     set mCurrentPaneName ""
     set mBackgroundColor $_color
-
-    if {[catch {getRgbColor $mBackgroundColor} mBackground]} {
-	set mBackgroundColor black
-	set mBackground {0 0 0}
-    }
+    set mBackground [::cadwidgets::Ged::get_rgb_color $mBackgroundColor]
 
     if {[info exists itk_component(ged)]} {
 	eval $itk_component(ged) bg_all $mBackground
