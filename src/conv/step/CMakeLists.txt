@@ -374,7 +374,7 @@ CMAKEFILES(${stepg_HDRS})
 
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
-	${BRLCAD_SCL_INCLUDE_DIR}
+	${BRLCAD_SOURCE_DIR}/src/other/step/include
 	${BRLCAD_SOURCE_DIR}/src/other/step/src/clstepcore
 	${BRLCAD_SOURCE_DIR}/src/other/step/src/cleditor
 	${BRLCAD_SOURCE_DIR}/src/other/step/src/clutils
