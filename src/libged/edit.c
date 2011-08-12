@@ -2138,12 +2138,12 @@ edit_strs_to_arg(struct ged *gedp, int *argc, const char **argv[],
 	++(*argv);
     }
 
-    /* disable unsupplied optional coords and */
+    /* If all EDIT_COORDS_ALL are set, and at least one other flag, it
+     * implies that the coords were in the '[x [y [z]]]" format. Set
+     * coords used to whatever coords are actually set.
+     */
     if (((arg->coords_used & EDIT_COORDS_ALL) == EDIT_COORDS_ALL) &&
 	(arg->coords_used & ~EDIT_COORDS_ALL))
-	/* All EDIT_COORDS_ALL are set, and at least one other flag,
-	 * implying that the coords were in the '[x [y [z]]]" format.
-	 */
 	arg->coords_used = arg->coords_used >> 3;
 
     /* these flags are only for internal use */
@@ -2173,6 +2173,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     int conv_flags = 0; /* for edit_strs_to_arg */
     int i; /* iterator */
     int c; /* for bu_getopt */
+    int allow_subopts = 0; /* false(=0) when a subopt is bad syntax */
     int ret;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -2409,13 +2410,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     while ((c = bu_getopt(argc, (char * const *)argv, ":n:k:a:r:x:y:z:"))
 	   != -1) {
 	if (bu_optind >= argc)
-	    /* last element is an option */
-	    /*
-	     * FIXME: this isn't enough; needs to detect all cases
-	     * where operand is missing. Ex: `edit cmd -k 5 5 5`
-	     * Should also detect use of '-k' without '-a'|'-r'.
-	     */
-	    goto err_missing_operand;
+	    goto err_missing_operand; /* last element is an option */
 	if (idx_cur_opt >= EDIT_MAX_ARG_OPTIONS)
 	    goto err_option_overflow;
 
@@ -2423,26 +2418,29 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	switch (c) {
 	    case 'n': /* use natural coordinates of object */
 	    	conv_flags = GED_QUIET;
+		allow_subopts = 0;
 		break;
 	    case 'x': /* singular coord specif. sub-opts */
 	    case 'y':
 	    case 'z':
+		idx_cur_opt = 0;
 	    	if (!bu_optarg)
 		    goto err_missing_arg;
 		if ((strlen(bu_optarg) > 1) && (bu_optarg[0] == '-') &&
 		    (!isdigit(bu_optarg[1])))
 		    goto err_missing_arg;
-		if (idx_cur_opt != 0) {
+		if (!allow_subopts) {
 		    bu_vls_printf(gedp->ged_result_str, "-%c must follow an"
 				  " argument specification option", c);
 		    edit_cmd_free(&subcmd);
 		    return GED_ERROR;
 		}
-		++idx_cur_opt;
 		break;
 	    case 'k': /* standard arg specification options */
 	    case 'a':
 	    case 'r':
+		idx_cur_opt = 0;
+		allow_subopts = 1;
 	    	if (!bu_optarg)
 		    goto err_missing_arg;
 		if ((strlen(bu_optarg) > 1) && (bu_optarg[0] == '-')) {
@@ -2460,7 +2458,9 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 		}
 		break;
 	    case '?': /* nonstandard or unknown option */
+		allow_subopts = 1;
 	        c = bu_optopt;
+	    	if (!bu_optarg)
 		if (!isprint(c)) {
 		    bu_vls_printf(gedp->ged_result_str,
 				  "Unknown option character '\\x%x'", c);
@@ -2469,7 +2469,6 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 		}
 
 		/* next element may be an arg */
-		/* FIXME: bu_optarg should be a ptr to const! */
 	    	conv_flags = GED_QUIET;
 
 		/* record opt for validation/processing by subcmd */
@@ -2480,19 +2479,16 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	        goto err_missing_arg;
 	}
 
-	/* set flags for standard options. it's more readible to just
-	 * switch on c again than the alternative: to add several
-	 * checks and/or goto's
-	 */
+	/* set flags for standard options */
 	switch (c) {
 	    case 'x':
-		cur_arg->coords_used |= EDIT_COORD_X;
+		cur_arg->coords_used &= EDIT_COORD_X;
 		break;
 	    case 'y':
-		cur_arg->coords_used |= EDIT_COORD_Y;
+		cur_arg->coords_used &= EDIT_COORD_Y;
 		break;
 	    case 'z':
-		cur_arg->coords_used |= EDIT_COORD_Z;
+		cur_arg->coords_used &= EDIT_COORD_Z;
 		break;
 	    case 'k':
 	        cur_arg->type |= EDIT_FROM;
