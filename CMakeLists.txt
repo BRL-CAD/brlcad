@@ -592,19 +592,12 @@ IF(NOT BRLCAD_BUNDLED_LIBS)
 	SET(BRLCAD_BUNDLED_LIBS "Auto" CACHE STRING "Build bundled libraries.")
 ENDIF(NOT BRLCAD_BUNDLED_LIBS)
 set_property(CACHE ${optname} PROPERTY STRINGS Bundled System Auto)
-IF(NOT BRLCAD_BUNDLED_LIBS MATCHES "Auto" AND NOT BRLCAD_BUNDLED_LIBS
-		MATCHES "Bundled" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "System")
+IF(NOT BRLCAD_BUNDLED_LIBS STREQUAL "Auto" AND NOT BRLCAD_BUNDLED_LIBS STREQUAL "Bundled" AND NOT BRLCAD_BUNDLED_LIBS STREQUAL "System")
 	MESSAGE(WARNING "Unknown value BRLCAD_BUNDLED_LIBS supplied for
 	${optname} - defaulting to Auto")
-	MESSAGE(WARNING "Valid options are Auto, Bundled
-	and System")
-	SET(${optname} "Auto" CACHE STRING "Build
-	bundled libraries.")
-ENDIF(NOT BRLCAD_BUNDLED_LIBS MATCHES "Auto" AND
-	NOT BRLCAD_BUNDLED_LIBS
-	MATCHES "Bundled" AND NOT
-	BRLCAD_BUNDLED_LIBS MATCHES "System")
-BUNDLE_OPTION(BRLCAD_BUNDLED_LIBS "Auto")
+	MESSAGE(WARNING "Valid options are Auto, Bundled and System")
+	SET(${optname} "Auto" CACHE STRING "Build	bundled libraries." FORCE)
+ENDIF(NOT BRLCAD_BUNDLED_LIBS STREQUAL "Auto" AND	NOT BRLCAD_BUNDLED_LIBS	STREQUAL "Bundled" AND NOT	BRLCAD_BUNDLED_LIBS STREQUAL "System")
 
 # Enable Aqua widgets on Mac OSX.  This impacts Tcl/Tk building and OpenGL
 # building. Not currently working - needs work in at least Tk and togl
