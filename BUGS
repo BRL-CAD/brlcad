@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* revolve raytracing seems to be busted.. at least with the example
+  csgbrep revolve shape
+
 * torus with a near zero inner diamater results in zero-length edges
   during tessellation.
 
