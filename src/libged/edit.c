@@ -1016,7 +1016,8 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
 	comb_i = (struct rt_comb_internal *)intern.idb_ptr;
 	leaf = db_find_named_leaf(comb_i->tree, d_next->d_namep);
 	BU_ASSERT_PTR(leaf, !=, TREE_NULL); /* path is validated */
-	MAT_DELTAS_GET(leaf_deltas, leaf->tr_l.tl_mat);
+	if (leaf->tr_l.tl_mat)
+	    MAT_DELTAS_GET(leaf_deltas, leaf->tr_l.tl_mat);
 	VADD2(*coord, *coord, leaf_deltas);
 	rt_db_free_internal(&intern);
 
@@ -1528,6 +1529,7 @@ edit_translate(struct ged *gedp, const vect_t *const from,
     struct rt_db_internal intern;
 
     VSUB2(delta, *to, *from);
+    VSCALE(delta, delta, gedp->ged_wdbp->dbip->dbi_local2base);
     d_obj = DB_FULL_PATH_CUR_DIR(path);
 
     if (ged_path_validate(gedp, path) == GED_ERROR) {
@@ -1551,8 +1553,13 @@ edit_translate(struct ged *gedp, const vect_t *const from,
 
 	/* path is already validated */
 	BU_ASSERT_PTR(leaf_to_modify, !=, TREE_NULL); 
-
-	MAT_DELTAS_ADD_VEC(leaf_to_modify->tr_l.tl_mat, delta);
+	if (!leaf_to_modify->tr_l.tl_mat) {
+	    leaf_to_modify->tr_l.tl_mat = (matp_t)bu_malloc(sizeof(mat_t),
+	    				  "mat_t block for edit_translate()");
+	    MAT_IDN(leaf_to_modify->tr_l.tl_mat);
+	    MAT_DELTAS_VEC(leaf_to_modify->tr_l.tl_mat, delta);
+	} else
+	    MAT_DELTAS_ADD_VEC(leaf_to_modify->tr_l.tl_mat, delta);
     } else {
 	/* no path; move all obj instances (obj's entire tree
 	 * modified)
@@ -1575,7 +1582,6 @@ edit_translate(struct ged *gedp, const vect_t *const from,
 	    return GED_ERROR;
 
 	MAT_IDN(dmat);
-	VSCALE(delta, delta, gedp->ged_wdbp->dbip->dbi_local2base);
 	MAT_DELTAS_VEC(dmat, delta);
 
 	bn_mat_inv(invXform, gtd.gtd_xform);
