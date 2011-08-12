@@ -2164,13 +2164,13 @@ int
 ged_edit(struct ged *gedp, int argc, const char *argv[])
 {
     const char *const cmd_name = argv[0];
+    union edit_cmd subcmd;
     const char *subcmd_name = NULL;
     struct edit_arg *cur_arg;
     struct edit_arg *keypoint;
-    union edit_cmd subcmd;
+    static const char *const usage = "[subcommand] [args]";
     int idx_cur_opt = 0; /* pos in options array for current arg */
     int conv_flags = 0; /* for edit_strs_to_arg */
-    static const char *const usage = "[subcommand] [args]";
     int i; /* iterator */
     int c; /* for bu_getopt */
     int ret;
@@ -2432,12 +2432,13 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 		if ((strlen(bu_optarg) > 1) && (bu_optarg[0] == '-') &&
 		    (!isdigit(bu_optarg[1])))
 		    goto err_missing_arg;
-		if (idx_cur_opt == 0) {
+		if (idx_cur_opt != 0) {
 		    bu_vls_printf(gedp->ged_result_str, "-%c must follow an"
-				  "argument specification option", c);
+				  " argument specification option", c);
 		    edit_cmd_free(&subcmd);
 		    return GED_ERROR;
 		}
+		++idx_cur_opt;
 		break;
 	    case 'k': /* standard arg specification options */
 	    case 'a':
@@ -2529,7 +2530,6 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	    if (argc == 0)
 		break; /* no more args */
 	    cur_arg = edit_arg_postfix_new(subcmd.cmd_line.args);
-	    idx_cur_opt = 0;
 	}
 
 	/* conversion moves argc/argv, so re-init bu_getopt() */
