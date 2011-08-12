@@ -527,6 +527,8 @@
  *                                                         
  * EXAMPLES
  *
+ * FIXME: These are outdated, and some are just plain wrong.
+ *
  *	# move all instances of sph.s to x=1, y=2, z=3
  *	translate -a 1 2 3 /sph.s
  *
@@ -534,9 +536,6 @@
  *	    translate -a 1 2 3 sph.s
  *	    translate -k sph.s -a 1 2 3 sph.s
  *	    translate -k . -a 1 2 3 sph.s
- *
- *      # A very practical use of
- *	translate -k . -a . -x sph2.s sph1.s
  *
  *	# move all instances of sph.s from a point 5 units above
  *	# sph.s's center to x=1, y=2, z=3, by using OFFSET_DIST of
@@ -1229,7 +1228,9 @@ HIDDEN int
 edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
 {
     struct edit_arg *arg_head;
-    vect_t src_v = VINIT_ZERO;
+    vect_t src_v = VINIT_ZERO; /* where ommited points draw from */
+    vect_t *kp_v = (vect_t *)NULL; /* 'from' point, aka keypoint */
+    vect_t *to_v = (vect_t *)NULL; /* 'to' point */
     int i = 0;
 
     /* draw source vector from target object */
@@ -1239,28 +1240,36 @@ edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
 
     while ((arg_head = *(subcmd->cmd->get_arg_head(subcmd, i++))) != 
 	   subcmd->common.objects) {
+	if (arg_head->type & EDIT_FROM)
+	    kp_v = arg_head->vector;
+	to_v = arg_head->vector;
+
 	if (arg_head->type & EDIT_REL_DIST) {
 	    /* convert to absolute position */
 	    arg_head->type &= ~EDIT_REL_DIST;
-	    if (arg_head->coords_used & EDIT_COORD_X)
-		(*arg_head->vector)[0] += src_v[0];
-	    else 
-		(*arg_head->vector)[0] = src_v[0];
-	    if (arg_head->coords_used & EDIT_COORD_Y)
-		(*arg_head->vector)[1] += src_v[1];
-	    else
-		(*arg_head->vector)[1] = src_v[1];
-	    if (arg_head->coords_used & EDIT_COORD_Z)
-		(*arg_head->vector)[2] += src_v[2];
-	    else
-		(*arg_head->vector)[2] = src_v[2];
+	    if (arg_head->coords_used & EDIT_COORD_X) {
+		(*to_v)[0] += (*kp_v)[0];
+		(*kp_v)[0] = src_v[0];
+	    } else /* no movement */
+		(*to_v)[0] = (*kp_v)[0];
+	    if (arg_head->coords_used & EDIT_COORD_Y) {
+		(*to_v)[1] += (*kp_v)[1];
+		(*kp_v)[1] = src_v[1];
+	    } else
+		(*to_v)[1] = (*kp_v)[1];
+	    if (arg_head->coords_used & EDIT_COORD_Z) {
+		(*to_v)[2] += (*kp_v)[2];
+		(*kp_v)[2] = src_v[2];
+	    } else
+		(*to_v)[2] = (*kp_v)[2];
+	    kp_v = (vect_t *)NULL;
 	} else {
 	    if (!(arg_head->coords_used & EDIT_COORD_X))
-		(*arg_head->vector)[0] = src_v[0];
+		(*to_v)[0] = src_v[0];
 	    if (!(arg_head->coords_used & EDIT_COORD_Y))
-		(*arg_head->vector)[1] = src_v[1];
+		(*to_v)[1] = src_v[1];
 	    if (!(arg_head->coords_used & EDIT_COORD_Z))
-		(*arg_head->vector)[2] = src_v[2];
+		(*to_v)[2] = src_v[2];
 	}
 	arg_head->coords_used |= EDIT_COORDS_ALL;
     }
