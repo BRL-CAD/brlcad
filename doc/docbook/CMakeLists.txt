@@ -43,25 +43,27 @@ MACRO(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir)
 ENDMACRO(DOCBOOK_TO_MAN targetname_suffix srcfile outfile targetdir)
 
 MACRO(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir)
-	FOREACH(filename ${${xml_files}})
-		STRING(REGEX REPLACE "([0-9a-z_-]*).xml" "\\1" filename_root "${filename}")
-		SET(tmp_fo_file ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.fo)
-		SET(outfile ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename_root}.pdf)
-		SET(targetname ${filename_root}_${targetname_suffix}_pdf)
-		FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
-		ADD_CUSTOM_COMMAND(
-		   OUTPUT ${tmp_fo_file}
-			COMMAND ${XSLTPROC_EXEC} ${XSLTPROC_FLAGS} -o ${tmp_fo_file} ${XSL_FO_STYLESHEET} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
-			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
-			)
-		ADD_CUSTOM_COMMAND(
-			OUTPUT ${outfile}
-			COMMAND ${APACHE_FOP} -c ${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf ${tmp_fo_file} -pdf ${outfile}
-			DEPENDS ${tmp_fo_file}
-			)
-		ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
-		INSTALL(FILES ${outfile} DESTINATION ${DATA_DIR}/${targetdir})
-	ENDFOREACH(filename ${${xml_files}})
+	IF(BRLCAD_EXTRADOCS_PDF)
+		FOREACH(filename ${${xml_files}})
+			STRING(REGEX REPLACE "([0-9a-z_-]*).xml" "\\1" filename_root "${filename}")
+			SET(tmp_fo_file ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.fo)
+			SET(outfile ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/${filename_root}.pdf)
+			SET(targetname ${filename_root}_${targetname_suffix}_pdf)
+			FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
+			ADD_CUSTOM_COMMAND(
+				OUTPUT ${tmp_fo_file}
+				COMMAND ${XSLTPROC_EXEC} ${XSLTPROC_FLAGS} -o ${tmp_fo_file} ${XSL_FO_STYLESHEET} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
+				DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
+				)
+			ADD_CUSTOM_COMMAND(
+				OUTPUT ${outfile}
+				COMMAND ${APACHE_FOP} -c ${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf ${tmp_fo_file} -pdf ${outfile}
+				DEPENDS ${tmp_fo_file}
+				)
+			ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
+			INSTALL(FILES ${outfile} DESTINATION ${DATA_DIR}/${targetdir})
+		ENDFOREACH(filename ${${xml_files}})
+	ENDIF(BRLCAD_EXTRADOCS_PDF)
 ENDMACRO(DOCBOOK_TO_PDF targetname_suffix srcfile outfile targetdir)
 
 

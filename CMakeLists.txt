@@ -671,10 +671,17 @@ MARK_AS_ADVANCED(BRLCAD_ENABLE_JOVE)
 # There are extra documentation files available requiring Docbook
 # They are quite useful in graphical interfaces, but also add considerably
 # to the overall build time.  By default, PDF generation is off, and html/man
-# generation (which produces files used in the GUIs) is on.
-OPTION(BRLCAD-BUILD_EXTRADOCS "Build Docbook documentation" ON)
-OPTION(BRLCAD-BUILD_EXTRADOCS_PDF "Build PDF output from Docbook documentation" OFF)
-OPTION(BRLCAD-BUILD_EXTRADOCS_PDF_MAN "Build PDF output from Docbook documentation for man pages" ${BRLCAD-BUILD_EXTRADOCS_PDF})
+# generation (which produces files used in the GUIs) is on.  The options also
+# key off of whether required programs are available
+
+find_program(APACHE_FOP fop DOC "path to the exec script for Apache FOP")
+MARK_AS_ADVANCED(APACHE_FOP)
+find_program(XSLTPROC_EXEC xsltproc DOC "path to the xsltproc executable")
+MARK_AS_ADVANCED(XSLTPROC_EXEC)
+include(CMakeDependentOption)
+CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS "Build Docbook documentation" ON "XSLTPROC_EXEC" OFF)
+CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF "Build PDF output from Docbook documentation" OFF "BRLCAD_EXTRADOCS;APACHE_FOP" OFF)
+CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF_MAN "Build PDF output from Docbook documentation for man pages" OFF "BRLCAD_EXTRADOCS_PDF" OFF)
 
 #----------------------------------------------------------------------
 # The following are fine-grained options for enabling/disabling compiler
@@ -746,6 +753,7 @@ MARK_AS_ADVANCED(BRLCAD-DISABLE_SRC_OTHER_WARN)
 # Build with full compiler lines visible by default (won't need make
 # VERBOSE=1) on command line
 OPTION(BRLCAD-ENABLE_VERBOSE_PROGRESS "verbose output" OFF)
+MARK_AS_ADVANCED(BRLCAD-ENABLE_VERBOSE_PROGRESS)
 IF(BRLCAD-ENABLE_VERBOSE_PROGRESS)
 	SET(CMAKE_VERBOSE_MAKEFILE ON)
 ENDIF(BRLCAD-ENABLE_VERBOSE_PROGRESS)
@@ -823,23 +831,6 @@ INCLUDE(${BRLCAD_CMAKE_DIR}/FindShellDeps.cmake)
 INCLUDE(${BRLCAD_CMAKE_DIR}/FindLEX.cmake)
 INCLUDE(${BRLCAD_CMAKE_DIR}/FindYACC.cmake)
 
-# If building extra docs, need to look for XSLTPROC and possibly
-# Apache FOP.  Based on what is found, turn on/off Docbook settings
-IF(BRLCAD-BUILD_EXTRADOCS)
-	INCLUDE(${BRLCAD_CMAKE_DIR}/FindXSLT.cmake)
-	IF(NOT XSLTPROC_EXEC)
-		MESSAGE("Extra doc build requested, but xsltproc not found - disabling.")
-		SET(BRLCAD-BUILD_EXTRADOCS OFF)
-	ENDIF(NOT XSLTPROC_EXEC)
-	IF(BRLCAD-BUILD_EXTRADOCS_PDF)
-		INCLUDE(${BRLCAD_CMAKE_DIR}/FindFOP.cmake)
-		IF(NOT APACHE_FOP)
-			MESSAGE("Extra doc PDF build requested, but Apache FOP not found - disabling.")
-			SET(BRLCAD-BUILD_EXTRADOCS_PDF OFF)
-			SET(BRLCAD-BUILD_EXTRADOCS_PDF_MAN OFF)
-		ENDIF(NOT APACHE_FOP)
-	ENDIF(BRLCAD-BUILD_EXTRADOCS_PDF)
-ENDIF(BRLCAD-BUILD_EXTRADOCS)
 
 # If using dtrace, we will need to find it
 IF(BRLCAD-ENABLE_DTRACE)
@@ -931,6 +922,7 @@ ENDIF(HAVE_SUNMATH_LIBRARY)
 # m library is not needed on Windows
 IF(NOT WIN32)
 	BRLCAD_CHECK_LIBRARY(M m cos)
+	MARK_AS_ADVANCED(M_LIBRARY)
 ENDIF(NOT WIN32)
 
 # socket library
@@ -1340,15 +1332,15 @@ if(BRLCAD_PRINT_VERBOSE_SUMMARY)
 	SET(BRLCAD-ENABLE_COMPILER_WARNINGS_LABEL "Print verbose compilation warnings ")
 	SET(BRLCAD-ENABLE_VERBOSE_PROGRESS_LABEL "Print verbose compilation progress ")
 	SET(BRLCAD-INSTALL_EXAMPLE_GEOMETRY_LABEL "Install example geometry models ")
-	if (BRLCAD-BUILD_EXTRADOCS)
-		if (BRLCAD-BUILD_EXTRADOCS_PDF)
+	if (BRLCAD_EXTRADOCS)
+		if (BRLCAD_EXTRADOCS_PDF)
 			set(BRLCAD-BUILD_DOCBUILD_MSG "ON (man/html/pdf)")
-		else(BRLCAD-BUILD_EXTRADOCS_PDF)
+		else(BRLCAD_EXTRADOCS_PDF)
 			set(BRLCAD-BUILD_DOCBUILD_MSG "ON (man/html only)")
-		endif(BRLCAD-BUILD_EXTRADOCS_PDF)
+		endif(BRLCAD_EXTRADOCS_PDF)
 	else (BRLCAD-BUILD_EXTRADOCS)
 		set(BRLCAD-BUILD_DOCBUILD_MSG "OFF")
-	endif (BRLCAD-BUILD_EXTRADOCS)
+	endif (BRLCAD_EXTRADOCS)
 	SET(BRLCAD-BUILD_DOCBUILD_MSG_LABEL "Build extra docs ")
 
 	SET(SETTINGLIST1 BRLCAD_BUILD_TCL BRLCAD_BUILD_TK BRLCAD_BUILD_INCRTCL BRLCAD_BUILD_IWIDGETS BRLCAD_BUILD_TKHTML BRLCAD_BUILD_TKPNG BRLCAD_BUILD_TKTABLE BRLCAD_BUILD_PNG BRLCAD_BUILD_REGEX BRLCAD_BUILD_ZLIB BRLCAD_BUILD_TERMLIB BRLCAD_BUILD_UTAHRLE BRLCAD_BUILD_OPENNURBS BRLCAD_BUILD_SCL)
@@ -1686,6 +1678,7 @@ MARK_AS_ADVANCED(BRLCAD_PREFIX)
 MARK_AS_ADVANCED(ENABLE_64_BIT)
 MARK_AS_ADVANCED(IEEE_QUIET)
 MARK_AS_ADVANCED(INET_QUIET)
+MARK_AS_ADVANCED(64BIT_FLAG)
 MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 
 #Done with everything else - do the configure time delta

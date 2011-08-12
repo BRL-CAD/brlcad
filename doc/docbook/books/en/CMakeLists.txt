@@ -49,8 +49,6 @@ SET(docbook_books_EN_IMAGES
 DOCBOOK_TO_HTML(book docbook_books_EN html/books/en)
 BRLCAD_ADDDATA(docbook_books_EN_IMAGES html/books/en/images)
 
-IF(BRLCAD-BUILD_EXTRADOCS_PDF)
-  DOCBOOK_TO_PDF(book docbook_books_EN pdf/books/en)
-ENDIF(BRLCAD-BUILD_EXTRADOCS_PDF)
+DOCBOOK_TO_PDF(book docbook_books_EN pdf/books/en)
 
 CMAKEFILES(tutorial_series_authors.xml)

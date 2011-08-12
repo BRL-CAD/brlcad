@@ -240,7 +240,7 @@ DOCBOOK_TO_HTML(mann docbook_mann_EN html/mann/en)
 DOCBOOK_TO_HTML(mann docbook_mann_INTRO html/mann/en)
 DOCBOOK_TO_MAN(mann docbook_mann_EN n nged man/mann)
 
-IF(BRLCAD-BUILD_EXTRADOCS_PDF_MAN)
+IF(BRLCAD_EXTRADOCS_PDF_MAN)
 	DOCBOOK_TO_PDF(mann docbook_mann_EN pdf/mann/en)
-ENDIF(BRLCAD-BUILD_EXTRADOCS_PDF_MAN)
+ENDIF(BRLCAD_EXTRADOCS_PDF_MAN)
 

@@ -134,6 +134,4 @@ SET(docbook_lessons_EN_IMAGES
 DOCBOOK_TO_HTML(lesson docbook_lessons_EN html/lessons/en)
 BRLCAD_ADDDATA(docbook_lessons_EN_IMAGES html/lessons/en/images)
 
-IF(BRLCAD-BUILD_EXTRADOCS_PDF)
-  DOCBOOK_TO_PDF(lesson docbook_lessons_EN pdf/lessons/en)
-ENDIF(BRLCAD-BUILD_EXTRADOCS_PDF)
+DOCBOOK_TO_PDF(lesson docbook_lessons_EN pdf/lessons/en)

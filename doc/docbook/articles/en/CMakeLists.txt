@@ -104,8 +104,8 @@ SET(docbook_articles_EN_IMAGES
 DOCBOOK_TO_HTML(article docbook_articles_EN html/articles/en)
 BRLCAD_ADDDATA(docbook_articles_EN_IMAGES html/articles/en/images)
 
-IF(BRLCAD-BUILD_EXTRADOCS_PDF)
+IF(BRLCAD_BUILD_EXTRADOCS_PDF)
   DOCBOOK_TO_PDF(article docbook_articles_EN pdf/articles/en)
-ENDIF(BRLCAD-BUILD_EXTRADOCS_PDF)
+ENDIF(BRLCAD_BUILD_EXTRADOCS_PDF)
 
 CMAKEFILES(images/tire_fig12.svg images/tire_fig13.svg)
