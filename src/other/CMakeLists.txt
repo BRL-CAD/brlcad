@@ -308,7 +308,7 @@ ENDIF(BRLCAD_TK_BUILD)
 # building local Tcl/Tk, go ahead and enable all the packages as well - otherwise,
 # check the found Tcl/Tk and enable what it doesn't supply.  If doing a non-graphical
 # build, only compile extensions that don't use Tk.
-INCLUDE(${BRLCAD_CMAKE_DIR}/FindTclPackage.cmake)
+INCLUDE(${BRLCAD_CMAKE_DIR}/ThirdParty_TCL.cmake)
 
 THIRD_PARTY_TCL_PACKAGE(itcl incrTcl/itcl "${TCL_TCLSH_EXECUTABLE}" "tcl")
 IF(BRLCAD_ITCL_BUILD)
