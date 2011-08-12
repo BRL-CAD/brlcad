@@ -52,6 +52,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* investigate why epa primitive is so sensitive to coarse absolute
+  value changes (run csgbrep, tol abs=1, facetize and get 321k poly)
+
 * implement a new "simulate" command for applying physics deformations
   to geometry.  Each timestep (default steps==1) would get recorded as
   new geometry unless updating the existing is requested.  Usage might

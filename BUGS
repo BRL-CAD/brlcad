@@ -15,6 +15,11 @@ on-going issues.
 Recent Bugs
 -----------
 
+* raytracing rhc crashes (inside malloc, so previous memory badness)
+  with normal tolerance set to non-default value (e.g. tol norm 0.1);
+  also fails (non-crash) if absolute tolerance is changed (e.g., tol
+  abs 0.1)
+
 * revolve raytracing seems to be busted.. at least with the example
   csgbrep revolve shape
 
