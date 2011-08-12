@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2011-07-XX  Release 7.20.4                                     ---
 ----------------------------------------------------------------------
 
+* 'keep' command includes sketch when keeping revolve - Sean Morrison
 * modified archer startup to not require html documentation files
         - Cliff Yapp, Brandon Hinesley
 * improved mged/archer/bwish run-time path behavior on Windows

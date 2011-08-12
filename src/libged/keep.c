@@ -60,8 +60,8 @@ node_write(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 	return;
     }
 
-    /* if this is an extrusion, keep the referenced sketch */
     if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD && dp->d_minor_type == DB5_MINORTYPE_BRLCAD_EXTRUDE) {
+	/* if this is an extrusion, keep the referenced sketch */
 	struct rt_extrude_internal *extr;
 	struct directory *dp2;
 
@@ -71,11 +71,22 @@ node_write(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 	if ((dp2 = db_lookup(dbip, extr->sketch_name, LOOKUP_QUIET)) != RT_DIR_NULL) {
 	    node_write(dbip, dp2, ptr);
 	}
+    } else if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD && dp->d_minor_type == DB5_MINORTYPE_BRLCAD_REVOLVE) {
+	/* if this is a revolve, keep the referenced sketch */
+	struct rt_revolve_internal *rev;
+	struct directory *dp2;
+
+	rev = (struct rt_revolve_internal *)intern.idb_ptr;
+	RT_REVOLVE_CK_MAGIC(rev);
+
+	if ((dp2 = db_lookup(dbip, bu_vls_addr(&rev->sketch_name), LOOKUP_QUIET)) != RT_DIR_NULL) {
+	    node_write(dbip, dp2, ptr);
+	}
     } else if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD && dp->d_minor_type == DB5_MINORTYPE_BRLCAD_DSP) {
+	/* if this is a DSP, keep the referenced binary object too */
 	struct rt_dsp_internal *dsp;
 	struct directory *dp2;
 
-	/* this is a DSP, if it uses a binary object, keep it also */
 	dsp = (struct rt_dsp_internal *)intern.idb_ptr;
 	RT_DSP_CK_MAGIC(dsp);
 
