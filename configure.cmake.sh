@@ -14,7 +14,7 @@ do
                    	          shift;;
      --enable-debug) 	          options="$options -DBRLCAD-ENABLE_DEBUG_FLAGS=ON";
                    	          shift;;
-     --disable-docs)              options="$options -DBRLCAD-BUILD_EXTRADOCS=OFF";
+     --disable-docs)              options="$options -DBRLCAD_EXTRADOCS=OFF";
      			          shift;;
      --disable-opengl)            options="$options -DBRLCAD-ENABLE_OPENGL=OFF";
      			          shift;;
