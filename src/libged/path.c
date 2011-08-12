@@ -63,6 +63,8 @@ path_validate_recurse(struct ged *gedp, struct db_full_path *path,
 	    ++(path->fp_names);
 	    --(path->fp_len);
 	    path_validate_recurse(gedp, path, DB_FULL_PATH_GET(path, 1));
+	    --(path->fp_names);
+	    ++(path->fp_len);
 	} else
 	    return GED_ERROR; /* non-combinations shouldn't have children */
     } else {
