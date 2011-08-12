@@ -681,7 +681,7 @@ struct edit_arg {
 };
 
 /*
- * edit_arg coordinate flags
+ * edit_arg coordinate flags (careful: used in bitshift)
  */
 
 /* edit_arg flags of coordinates that will be used */
@@ -918,11 +918,11 @@ edit_arg_free_inner(struct edit_arg *arg)
     if (arg->object) {
 	db_free_full_path(arg->object);
 	bu_free((genptr_t)arg->object, "db_string_to_path");
-	arg->object = NULL;
+	arg->object = (struct db_full_path*)NULL;
     }
     if (arg->vector) {
 	bu_free(arg->vector, "vect_t");
-	arg->vector = NULL;
+	arg->vector = (vect_t *)NULL;
     }
 }
 
@@ -949,7 +949,7 @@ edit_arg_free_last(struct edit_arg *arg)
 	    break;
 	last_arg = arg;
     } while ((arg = arg->next));
-    last_arg->next = NULL;
+    last_arg->next = (struct edit_arg *)NULL;
     edit_arg_free(arg);
 }
 
@@ -983,7 +983,7 @@ int
 edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
 			   vect_t *const coord)
 {
-    const struct db_full_path *path = arg->object;
+    const struct db_full_path *const path = arg->object;
     struct rt_db_internal intern;
     struct directory *d;
     struct directory *d_next;
@@ -1215,10 +1215,10 @@ edit_cmd_sduplicate(union edit_cmd *const dest,
 }
 
 /**
- * Sets any skipped vector elements in to those of the target object,
- * and sets EDIT_COORDS_ALL on vector arguments. Expects all
- * arguments except target objects to have vector set. Only looks
- * at the first set of args.
+ * Sets any skipped vector elements to those of the target object,
+ * sets EDIT_COORDS_ALL on vector arguments, and converts relative
+ * offsets to absolute positions. Expects all arguments except target
+ * objects to have vector set. Only looks at the first set of args.
  *
  * XXX: This intentionally only looks at the first set of args. At
  * some point, it may be desirable to have the subcommand functions
@@ -1232,19 +1232,36 @@ edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
     vect_t src_v = VINIT_ZERO;
     int i = 0;
 
-    /* draw source vector from of target object */
+    /* draw source vector from target object */
     arg_head = *(subcmd->cmd->get_arg_head(subcmd, i++));
     if (edit_arg_to_apparent_coord(gedp, arg_head, &src_v) == GED_ERROR)
 	return GED_ERROR;
 
     while ((arg_head = *(subcmd->cmd->get_arg_head(subcmd, i++))) != 
 	   subcmd->common.objects) {
-	if (!(arg_head->coords_used & EDIT_COORD_X))
-	    *arg_head->vector[0] = src_v[0];
-	if (!(arg_head->coords_used & EDIT_COORD_Y))
-	    *arg_head->vector[1] = src_v[1];
-	if (!(arg_head->coords_used & EDIT_COORD_Z))
-	    *arg_head->vector[2] = src_v[2];
+	if (arg_head->type & EDIT_REL_DIST) {
+	    /* convert to absolute position */
+	    arg_head->type &= ~EDIT_REL_DIST;
+	    if (arg_head->coords_used & EDIT_COORD_X)
+		(*arg_head->vector)[0] += src_v[0];
+	    else 
+		(*arg_head->vector)[0] = src_v[0];
+	    if (arg_head->coords_used & EDIT_COORD_Y)
+		(*arg_head->vector)[1] += src_v[1];
+	    else
+		(*arg_head->vector)[1] = src_v[1];
+	    if (arg_head->coords_used & EDIT_COORD_Z)
+		(*arg_head->vector)[2] += src_v[2];
+	    else
+		(*arg_head->vector)[2] = src_v[2];
+	} else {
+	    if (!(arg_head->coords_used & EDIT_COORD_X))
+		(*arg_head->vector)[0] = src_v[0];
+	    if (!(arg_head->coords_used & EDIT_COORD_Y))
+		(*arg_head->vector)[1] = src_v[1];
+	    if (!(arg_head->coords_used & EDIT_COORD_Z))
+		(*arg_head->vector)[2] = src_v[2];
+	}
 	arg_head->coords_used |= EDIT_COORDS_ALL;
     }
     return GED_OK;
@@ -1598,11 +1615,11 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
     const int noisy = (flags & GED_ERROR); /* side with verbosity */
     struct edit_arg *cur_arg = cmd->cmd_line.args;
 
-    BU_ASSERT_PTR(cur_arg, !=, NULL);
+    BU_ASSERT_PTR(cur_arg, !=, (struct edit_arg *)NULL);
 
     if (cur_arg->type & EDIT_FROM) {
 	/* if there isn't an EDIT_TO, this func shouldn't be called */
-	BU_ASSERT_PTR(cur_arg->next, !=, NULL); 
+	BU_ASSERT_PTR(cur_arg->next, !=, (struct edit_arg *)NULL); 
 
 	/* a 'from' position is set; only flags that were possible
 	 * when this function was last updated should be handled
@@ -1624,7 +1641,7 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 	/* if there isn't an EDIT_TARGET_OBJECT, this func shouldn't
 	 * be called
 	 */
-	BU_ASSERT_PTR(cur_arg->next, !=, NULL);
+	BU_ASSERT_PTR(cur_arg->next, !=, (struct edit_arg *)NULL);
 
 	/* a 'TO' position is set; only flags that were possible when
 	 * this function was last updated should be handled
@@ -2091,20 +2108,13 @@ edit_strs_to_arg(struct ged *gedp, int *argc, const char **argv[],
 	++(*argv);
     }
 
-    /* disable unsupplied optional coords */
+    /* disable unsupplied optional coords and */
     if (((arg->coords_used & EDIT_COORDS_ALL) == EDIT_COORDS_ALL) &&
-	(arg->coords_used & ~EDIT_COORDS_ALL)) {
-
+	(arg->coords_used & ~EDIT_COORDS_ALL))
 	/* All EDIT_COORDS_ALL are set, and at least one other flag,
 	 * implying that the coords were in the '[x [y [z]]]" format.
 	 */
-	if (!(arg->coords_used & EDIT_COORD_IS_SET_X))
-	    arg->coords_used ^= EDIT_COORD_X;
-	if (!(arg->coords_used ^ EDIT_COORD_IS_SET_Y))
-	    arg->coords_used ^= EDIT_COORD_Y;
-	if (!(arg->coords_used ^ EDIT_COORD_IS_SET_Z))
-	    arg->coords_used ^= EDIT_COORD_Z;
-    }
+	arg->coords_used = arg->coords_used >> 3;
 
     /* these flags are only for internal use */
     /* FIXME: exactly why they should be internalized, and not
