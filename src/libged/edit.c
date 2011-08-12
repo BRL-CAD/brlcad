@@ -1065,22 +1065,22 @@ int
 edit_arg_to_coord(struct ged *gedp, struct edit_arg *const arg, vect_t *coord)
 {
     vect_t obj_coord = VINIT_ZERO;
-    vect_t *dest;
+    vect_t **dest;
 
     if (coord)
-	dest = coord;
+	dest = &coord;
     else
-	dest = arg->vector;
+	dest = &arg->vector;
 
     if (edit_arg_to_apparent_coord(gedp, arg, &obj_coord) == GED_ERROR)
 	return GED_ERROR;
 
     if (arg->vector) {
-	VADD2(*dest, *arg->vector, obj_coord);
+	VADD2(**dest, *arg->vector, obj_coord);
     } else {
-	dest = (vect_t *)bu_malloc(sizeof(vect_t),
+	*dest = (vect_t *)bu_malloc(sizeof(vect_t),
 					"vect_t block for edit_arg_to_coord()");
-	VMOVE(*dest, obj_coord);
+	VMOVE(**dest, obj_coord);
     }
 
     if (!coord) {
@@ -1229,7 +1229,7 @@ HIDDEN int
 edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
 {
     struct edit_arg *arg_head;
-    vect_t src_v;
+    vect_t src_v = VINIT_ZERO;
     int i = 0;
 
     /* draw source vector from of target object */
@@ -1691,8 +1691,8 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
     if (!cmd->translate.ref_vector.from) {
 	edit_arg_duplicate(&cmd->translate.ref_vector.from,
 			   cmd->translate.objects);
-	cmd->translate.ref_vector.from->next = NULL;
-	cmd->translate.ref_vector.from->type ^= EDIT_TARGET_OBJ | EDIT_FROM;
+	cmd->translate.ref_vector.from->type &= ~EDIT_TARGET_OBJ;
+	cmd->translate.ref_vector.from->type |= EDIT_FROM;
     }
 
     return GED_OK;
@@ -2091,14 +2091,20 @@ edit_strs_to_arg(struct ged *gedp, int *argc, const char **argv[],
 	++(*argv);
     }
 
-    /* disable unsupplied optional coords (from "[x [y [z]]]" fmt) */
-    if ((arg->coords_used & EDIT_COORDS_ALL) == EDIT_COORDS_ALL)
-	if (arg->coords_used & EDIT_COORD_IS_SET_X)
-	    arg->coords_used |= EDIT_COORD_X;
-	if (arg->coords_used & EDIT_COORD_IS_SET_Y)
-	    arg->coords_used |= EDIT_COORD_Y;
-	if (arg->coords_used & EDIT_COORD_IS_SET_Z)
-	    arg->coords_used |= EDIT_COORD_Z;
+    /* disable unsupplied optional coords */
+    if (((arg->coords_used & EDIT_COORDS_ALL) == EDIT_COORDS_ALL) &&
+	(arg->coords_used & ~EDIT_COORDS_ALL)) {
+
+	/* All EDIT_COORDS_ALL are set, and at least one other flag,
+	 * implying that the coords were in the '[x [y [z]]]" format.
+	 */
+	if (!(arg->coords_used & EDIT_COORD_IS_SET_X))
+	    arg->coords_used ^= EDIT_COORD_X;
+	if (!(arg->coords_used ^ EDIT_COORD_IS_SET_Y))
+	    arg->coords_used ^= EDIT_COORD_Y;
+	if (!(arg->coords_used ^ EDIT_COORD_IS_SET_Z))
+	    arg->coords_used ^= EDIT_COORD_Z;
+    }
 
     /* these flags are only for internal use */
     /* FIXME: exactly why they should be internalized, and not
@@ -2308,7 +2314,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     while (edit_strs_to_arg(gedp, &argc, &argv, cur_arg, GED_QUIET) !=
 	   GED_ERROR) {
 	if (argc == 0) {
-	    if (edit_arg_is_empty(subcmd.cmd_line.args)) {
+	    if (edit_arg_is_empty(subcmd.cmd_line.args) == GED_OK) {
 		edit_arg_free(subcmd.cmd_line.args);
 		subcmd.cmd_line.args = NULL;
 	    }
