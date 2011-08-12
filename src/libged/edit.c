@@ -1974,6 +1974,20 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 	    /* detect >1 inner slashes */
 	    first_slash = (char *)memchr((void *)path_start, '/',
 					 (size_t)(path_end - path_start + 1));
+
+/* FIXME: This is an error for paths with > 2 directories, intended
+ * for target objects only; but the check for that was mistakenly
+ * never added. The point was to make it clear that supplying long
+ * paths would not make a matrix translation any more specific than
+ * PATH/OBJECT. However, this should be reconsidered, as accepting
+ * more paths could allow for the use of more specific default
+ * keypoints. Then again, using a short target object path and then
+ * a long keypoint would achieved the same end. In any case, this
+ * function has no way of knowing which objects are target objects,
+ * so this functionality belongs either in edit() or in certain
+ * subcommand functions.
+ */
+#if 0
 	    if (first_slash && ((char *)memchr((void *)(first_slash + 1),
 					      '/', (size_t)(path_end -
 					      first_slash - 1)))) {
@@ -1986,11 +2000,12 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 		    bu_vls_printf(gedp->ged_result_str, "invalid path, \"%s\"\n"
 				  "It is only meaningful to have one or two "
 				  "objects in a path in this context.\n"
-				  "Ex: OBJECT (equivalently, /OBJECT/) or "
-				  "PATH/OBJECT (equivalently, /PATH/OBJECT/)",
+				  "Ex: OBJECT  or PATH/OBJECT"
+				  "(equivalently, /OBJECT/ or /PATH/OBJECT/)",
 				  str);
 		return GED_ERROR;
 	    }
+#endif
 	    goto convert_obj;
 	}
 
