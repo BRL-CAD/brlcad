@@ -49,6 +49,33 @@ MACRO(BUNDLE_OPTION optname default)
 	ENDIF(NOT ${${optname}} STREQUAL "Auto" AND NOT ${${optname}} STREQUAL "Bundled" AND NOT ${${optname}} STREQUAL "System" AND NOT ${${optname}} STREQUAL "Auto (B)" AND NOT ${${optname}} STREQUAL "Auto (S)")
 ENDMACRO()
 
+# Build Type aware option
+MACRO(AUTO_OPTION username varname debug_state release_state)
+	STRING(LENGTH "${${CMAKE_PROJECT_NAME}_${username}}" ${CMAKE_PROJECT_NAME}_${username}_SET)
+	IF(NOT ${CMAKE_PROJECT_NAME}_${username}_SET)
+		SET(${CMAKE_PROJECT_NAME}_${username} "Auto" CACHE STRING "Use optimized compiler settings" FORCE)
+	ENDIF(NOT ${CMAKE_PROJECT_NAME}_${username}_SET)
+	set_property(CACHE ${CMAKE_PROJECT_NAME}_${username} PROPERTY STRINGS Auto "ON" "OFF")
+	# If the "parent" setting isn't Auto, do what it says
+	IF(NOT ${${CMAKE_PROJECT_NAME}_${username}} STREQUAL "Auto")
+		SET(${CMAKE_PROJECT_NAME}_${varname} ${${CMAKE_PROJECT_NAME}_${username}})
+	ENDIF(NOT ${${CMAKE_PROJECT_NAME}_${username}} STREQUAL "Auto")
+	# If we we don't understand the build type and have an Auto setting for the
+	# optimization flags, leave them off
+	IF(NOT "${CMAKE_BUILD_TYPE}" MATCHES "Release" AND NOT "${CMAKE_BUILD_TYPE}" MATCHES "Debug")
+		IF(NOT ${${CMAKE_PROJECT_NAME}_${username}} STREQUAL "Auto")
+			SET(${CMAKE_PROJECT_NAME}_${varname} OFF)
+		ENDIF(NOT ${${CMAKE_PROJECT_NAME}_${username}} STREQUAL "Auto")
+	ENDIF(NOT "${CMAKE_BUILD_TYPE}" MATCHES "Release" AND NOT "${CMAKE_BUILD_TYPE}" MATCHES "Debug")
+	# If we DO understand the build type and have Auto, be smart
+	IF("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND ${${CMAKE_PROJECT_NAME}_${username}} STREQUAL "Auto")
+		SET(${CMAKE_PROJECT_NAME}_${varname} ${release_state})
+	ENDIF("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND ${${CMAKE_PROJECT_NAME}_${username}} STREQUAL "Auto")
+	IF("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND ${${CMAKE_PROJECT_NAME}_${username}} STREQUAL "Auto")
+		SET(${CMAKE_PROJECT_NAME}_${varname} ${debug_state})
+	ENDIF("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND ${${CMAKE_PROJECT_NAME}_${username}} STREQUAL "Auto")
+ENDMACRO(AUTO_OPTION varname release_state debug_state)
+
 # Windows builds need a DLL variable defined per-library, and BRL-CAD
 # uses a fairly standard convention - try and automate the addition of
 # the definition.
