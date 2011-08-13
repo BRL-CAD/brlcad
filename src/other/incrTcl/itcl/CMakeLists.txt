@@ -70,10 +70,10 @@ ELSE(TCL_SRC_PREFIX and TCL_BIN_PREFIX)
 ENDIF(TCL_SRC_PREFIX AND TCL_BIN_PREFIX)
 
 # build shared libs by default
-OPTION(BUILD_SHARED_LIBS "Build shared libraries" ON)
+SET(BUILD_SHARED_LIBS ON)
 
 # build static libs by default
-OPTION(BUILD_STATIC_LIBS "Build static libraries" ON)
+SET(BUILD_STATIC_LIBS ON)
 
 # version numbers
 SET(ITCL_MAJOR_VERSION 3)

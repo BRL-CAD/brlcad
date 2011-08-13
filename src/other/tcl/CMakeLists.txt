@@ -46,10 +46,10 @@ ENDIF(COMMAND CMAKE_POLICY)
 PROJECT(TCL)
 
 # build shared libs by default
-OPTION(BUILD_SHARED_LIBS "Build shared libraries" ON)
+set(BUILD_SHARED_LIBS ON)
 
 # build static libs by default
-OPTION(BUILD_STATIC_LIBS "Build static libraries" ON)
+set(BUILD_STATIC_LIBS ON)
 
 # version numbers
 SET(TCL_VERSION_MAJOR 8)

@@ -570,21 +570,10 @@ ENDIF("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
 OPTION(BUILD_SHARED_LIBS "Build shared libraries" ON)
 MARK_AS_ADVANCED(BUILD_SHARED_LIBS)
 
-# Build static libs by default.  Standard practice is to build and
-# install both dynamic and static versions of libraries.  This option
-# is off by default in Debug configuration.  Note that turning this
-# option off will not disable libraries specifically added as STATIC
-IF(CMAKE_BUILD_TYPE)
-	# If we're doing a debug build, don't build the static libs unless
-	# they're specifically asked for (i.e. there is a situation where
-	# the developer wants to look into the static libs specifically.
-	# Note that this won't turn off libs that are built ONLY as static
-	IF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-		OPTION(BUILD_STATIC_LIBS "Build static libraries" OFF)
-	ENDIF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-ELSE(CMAKE_BUILD_TYPE)
-	OPTION(BUILD_STATIC_LIBS "Build static libraries" ON)
-ENDIF(CMAKE_BUILD_TYPE)
+# Build static libs by default unless we're debugging. Note: this 
+# option will not disable libraries specifically added as STATIC even 
+# when OFF.
+AUTO_OPTION(BRLCAD_BUILD_STATIC BUILD_STATIC_LIBS "OFF" "ON")
 
 # Turn on librtserver build.
 OPTION(BRLCAD-ENABLE_RTSERVER "Enable the librtserver target." ON)
