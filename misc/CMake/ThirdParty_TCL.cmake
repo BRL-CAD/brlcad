@@ -61,7 +61,7 @@ MACRO(THIRD_PARTY_TCL_PACKAGE packagename dir wishcmd depends)
 			SET(packagefind_script "
 catch {package require ${packagename}}
 set packageversion NOTFOUND
-set packageversion [package versions ${packagename}]
+set packageversion [lindex [lsort -decreasing [package versions ${packagename}]] 0]
 set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/${PKGNAME_UPPER}_PKG_VERSION\"
 set fileId [open $filename \"w\"]
 puts $fileId $packageversion
@@ -72,8 +72,6 @@ exit
 			FILE(WRITE ${packagefind_scriptfile} ${packagefind_script})
 			EXEC_PROGRAM(${wishcmd} ARGS ${packagefind_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
 			FILE(READ ${CMAKE_BINARY_DIR}/CMakeTmp/${PKGNAME_UPPER}_PKG_VERSION pkgversion)
-			#Need to handle multiple returned versions - this regex is wrong, fix
-			#STRING(REGEX REPLACE "([0-9]+\.?[0-9]*)" "\\1" ${pkgversion} ${pkgversion})
 			STRING(REGEX REPLACE "\n" "" ${PKGNAME_UPPER}_PACKAGE_VERSION ${pkgversion})
 			IF(${PKGNAME_UPPER}_PACKAGE_VERSION)
 				SET(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD OFF)
