@@ -726,7 +726,7 @@ IF(NOT BRLCAD-ENABLE_RUNTIME_DEBUG)
 ENDIF(NOT BRLCAD-ENABLE_RUNTIME_DEBUG)
 
 # Enable debug flags during compilation
-AUTO_OPTION(FLAGS_DEBUG DEBUG_BUILD "ON" "OFF")
+AUTO_OPTION(BRLCAD_FLAGS_DEBUG BRLCAD_DEBUG_BUILD "ON" "OFF")
 
 # Build with compiler warning flags
 OPTION(BRLCAD-ENABLE_COMPILER_WARNINGS "Use compiler warning flags" ON)
@@ -743,7 +743,7 @@ IF(BRLCAD-ENABLE_STRICT)
 ENDIF(BRLCAD-ENABLE_STRICT)
 
 # Build with compiler optimization flags.  This should normally be on for release builds
-AUTO_OPTION(FLAGS_OPTIMIZATION OPTIMIZED_BUILD "OFF" "ON")
+AUTO_OPTION(BRLCAD_FLAGS_OPTIMIZATION BRLCAD_OPTIMIZED_BUILD "OFF" "ON")
 
 # By default, we don't want any error reports at all from src/other
 OPTION(BRLCAD-DISABLE_SRC_OTHER_WARN "Disable warnings for src/other" ON)
