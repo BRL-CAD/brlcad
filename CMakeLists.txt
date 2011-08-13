@@ -405,14 +405,13 @@ IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
 ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
 SET(BRLCAD_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE STRING "BRL-CAD install prefix")
 
-# One thing we will warn about is a Release build with the Debug install path
-# or a Debug build with the Release install path - generally speaking a BAD
-# idea.
+# If we've got a Release build with a Debug path or vice versa, change it - that
+# is probably the most "expected" behavior.
 IF("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/brlcad/dev-${BRLCAD_VERSION}")
-	MESSAGE(WARNING "Build Type is Release but CMAKE_INSTALL_PREFIX is set to the Debug install path! To correct this, clear CMAKE_INSTALL_PREFIX and re-configure.")
+	SET(CMAKE_INSTALL_PREFIX "/usr/brlcad/rel-${BRLCAD_VERSION}" CACHE STRING "BRL-CAD install prefix" FORCE)
 ENDIF("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/brlcad/dev-${BRLCAD_VERSION}")
 IF("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/brlcad/rel-${BRLCAD_VERSION}")
-	MESSAGE(WARNING "Build Type is Debug but CMAKE_INSTALL_PREFIX is set to the Release install path! To correct this, clear CMAKE_INSTALL_PREFIX and re-configure.")
+	SET(CMAKE_INSTALL_PREFIX "/usr/brlcad/dev-${BRLCAD_VERSION}" CACHE STRING "BRL-CAD install prefix" FORCE)
 ENDIF("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND ${CMAKE_INSTALL_PREFIX}	STREQUAL "/usr/brlcad/rel-${BRLCAD_VERSION}")
 
 
