@@ -47,7 +47,7 @@ MACRO(THIRD_PARTY_TCL_PACKAGE packagename dir wishcmd depends)
 		# Stash the previous results (if any) so we don't repeatedly call out the tests - only report
 		# if something actually changes in subsequent runs.
 		SET(${PKGNAME_UPPER}_FOUND_STATUS ${${PKGNAME_UPPER}_FOUND})
-		IF(NOT ${wishcmd})
+		IF(${wishcmd} STREQUAL "")
 			SET(${PKGNAME_UPPER}_FOUND "${PKGNAME_UPPER}-NOTFOUND" CACHE STRING "${PKGNAME_UPPER}_FOUND" FORCE)
 			IF(NOT ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} STREQUAL "System" AND NOT ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} STREQUAL "Auto (S)")
 				# Can't test and we're not forced to system by either local settings or the toplevel - turn it on 
@@ -57,7 +57,7 @@ MACRO(THIRD_PARTY_TCL_PACKAGE packagename dir wishcmd depends)
 					MESSAGE(WARNING "No tclsh/wish command available for testing, but system version of ${packagename} is requested - assuming availability of package.")
 				ENDIF("${${PKGNAME_UPPER}_FOUND_STATUS}" MATCHES "${PKGNAME_UPPER}-NOTFOUND" AND NOT ${PKGNAME_UPPER}_FOUND)
 			ENDIF(NOT ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} STREQUAL "System" AND NOT ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} STREQUAL "Auto (S)")
-		ELSE(NOT ${wishcmd})
+		ELSE(${wishcmd} STREQUAL "")
 			SET(packagefind_script "
 catch {package require ${packagename}}
 set packageversion NOTFOUND
@@ -87,9 +87,10 @@ exit
 				SET(${PKGNAME_UPPER}_FIND_QUIETLY TRUE)
 			ENDIF("${${PKGNAME_UPPER}_FOUND_STATUS}" MATCHES "${PKGNAME_UPPER}-NOTFOUND" AND NOT ${PKGNAME_UPPER}_FOUND)
 			FIND_PACKAGE_HANDLE_STANDARD_ARGS(${PKGNAME_UPPER} DEFAULT_MSG ${PKGNAME_UPPER}_PACKAGE_VERSION)
-		ENDIF(NOT ${wishcmd})
+		ENDIF(${wishcmd} STREQUAL "")
 	ENDIF(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} STREQUAL "Bundled" OR ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} STREQUAL "Auto (B)")
 	IF(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
+		STRING(TOLOWER ${packagename} PKGNAME_LOWER)
 		add_subdirectory(${dir})
 		FOREACH(dep ${depends})
 			string(TOUPPER ${dep} DEP_UPPER)
@@ -97,7 +98,7 @@ exit
 				add_dependencies(${packagename} ${dep})
 			endif(BRLCAD_BUILD_${DEP_UPPER})
 		ENDFOREACH(dep ${depends})
-		file(STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/${packagename}.dist ${packagename}_ignore_files)
+		file(STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/${PKGNAME_LOWER}.dist ${packagename}_ignore_files)
 		DISTCHECK_IGNORE(${dir} ${packagename}_ignore_files)
 	ELSE(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
 		DISTCHECK_IGNORE_ITEM(${dir})
