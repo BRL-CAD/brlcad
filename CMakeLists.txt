@@ -652,6 +652,7 @@ OPTION(BRLCAD-ENABLE_OPENGL "Use OpenGL." ON)
 
 # Enable RTGL.  Requires an enabled OpenGL.
 OPTION(BRLCAD-ENABLE_RTGL "Enable experimental RTGL code." OFF)
+MARK_AS_ADVANCED(BRLCAD-ENABLE_RTGL)
 IF(NOT BRLCAD-ENABLE_OPENGL AND BRLCAD-ENABLE_RTGL)
 	MESSAGE("RTGL requested, but OpenGL is not enabled - disabling")
 	SET(BRLCAD-ENABLE_RTGL OFF CACHE BOOL "Enable experimental RTGL code." FORCE)
