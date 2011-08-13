@@ -103,6 +103,13 @@ MACRO(CHECK_C_FLAG_GATHER flag FLAGS)
 	ENDIF(${UPPER_FLAG}_COMPILER_FLAG)
 ENDMACRO()
 
+# Clear out any CMake-assigned defaults - We're managing
+# our own compile flags, and don't (for example) want NDEBUG
+# if we have debugging flags enabled for a Release build.
+STRING(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
+SET(CMAKE_C_FLAGS_${BUILD_TYPE} "")
+SET(CMAKE_CXX_FLAGS_${BUILD_TYPE} "")
+
 # try to use -pipe to speed up the compiles
 CHECK_C_FLAG(pipe)
 CHECK_CXX_FLAG(pipe)
@@ -216,7 +223,7 @@ ENDIF(BRLCAD-ENABLE_DEBUG_FLAGS)
 # -fast provokes a stack corruption in the shadow computations because
 # of strict aliasing getting enabled.  we _require_
 # -fno-strict-aliasing until someone changes how lists are managed.
-IF(BRLCAD-ENABLE_OPTIMIZED_BUILD)
+IF(${BRLCAD_OPTIMIZED_BUILD} STREQUAL "ON")
 	CHECK_C_FLAG_GATHER(O3 OPTIMIZE_FLAGS)
 	#CHECK_C_FLAG_GATHER(ffast-math OPTIMIZE_FLAGS)
 	CHECK_C_FLAG_GATHER(fstrength-reduce OPTIMIZE_FLAGS)
@@ -228,9 +235,9 @@ IF(BRLCAD-ENABLE_OPTIMIZED_BUILD)
 	ELSE(NOT ${CMAKE_BUILD_TYPE} MATCHES "^Debug$" AND NOT BRLCAD-ENABLE_DEBUG AND NOT BRLCAD-ENABLE_PROFILING)
 		CHECK_C_FLAG_GATHER(fno-omit-frame-pointer OPTIMIZE_FLAGS)
 	ENDIF(NOT ${CMAKE_BUILD_TYPE} MATCHES "^Debug$" AND NOT BRLCAD-ENABLE_DEBUG AND NOT BRLCAD-ENABLE_PROFILING)
-	ADD_NEW_FLAG(C OPTIMIZE_FLAG)
-	ADD_NEW_FLAG(CXX OPTIMIZE_FLAG)
-ENDIF(BRLCAD-ENABLE_OPTIMIZED_BUILD)
+	ADD_NEW_FLAG(C OPTIMIZE_FLAGS)
+	ADD_NEW_FLAG(CXX OPTIMIZE_FLAGS)
+ENDIF(${BRLCAD_OPTIMIZED_BUILD} STREQUAL "ON")
 MARK_AS_ADVANCED(OPTIMIZE_FLAGS)
 #need to strip out non-debug-compat flags after the fact based on build type, or do something else
 #that will restore them if build type changes
