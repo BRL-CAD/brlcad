@@ -1311,7 +1311,8 @@ edit_cmd_consolidate (struct ged *gedp, union edit_cmd *const subcmd,
 	for (cur_arg = prev_arg->next; cur_arg; cur_arg = cur_arg->next) {
 	    if (((prev_arg->coords_used & EDIT_COORDS_ALL) ^
 		(cur_arg->coords_used & EDIT_COORDS_ALL)) &&
-		(cur_arg->type == 0 || prev_arg->type == cur_arg->type))  {
+		(cur_arg->type == 0 || prev_arg->type == cur_arg->type) &&
+		!(cur_arg->type & EDIT_TARGET_OBJ) )  {
 
 		/* It should be impossible to have no coords set. If
 		 * one arg has all coords set, it implies that the
@@ -1333,15 +1334,15 @@ edit_cmd_consolidate (struct ged *gedp, union edit_cmd *const subcmd,
 		/* consolidate */
 		if (cur_arg->coords_used & EDIT_COORD_X) {
 		    prev_arg->coords_used |= EDIT_COORD_X;
-		    *prev_arg->vector[0] = *cur_arg->vector[0];
+		    (*prev_arg->vector)[0] = (*cur_arg->vector)[0];
 		}
 		if (cur_arg->coords_used & EDIT_COORD_Y) {
 		    prev_arg->coords_used |= EDIT_COORD_Y;
-		    *prev_arg->vector[1] = *cur_arg->vector[1];
+		    (*prev_arg->vector)[1] = (*cur_arg->vector)[1];
 		}
 		if (cur_arg->coords_used & EDIT_COORD_Z) {
 		    prev_arg->coords_used |= EDIT_COORD_Z;
-		    *prev_arg->vector[2] = *cur_arg->vector[2];
+		    (*prev_arg->vector)[2] = (*cur_arg->vector)[2];
 		}
 
 		/* remove consolidated argument */
@@ -2009,18 +2010,15 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 			  str);
 	return GED_ERROR;
     }
+    if (!arg->vector)
+	arg->vector = (vect_t *)bu_malloc(sizeof(vect_t),
+					  "vect_t block for edit_str_to_arg");
 
-    /* if either all coordinates are to be set or an object has been
-     * set, then attempt to intepret/record the number as the next
-     * unset X, Y, or Z coordinate/position
+    /* Attempt to intepret/record the number as the next unset X, Y,
+     * or Z coordinate/position.
      */
-    if (((arg->coords_used & EDIT_COORD_X) && 
-	(arg->coords_used & EDIT_COORD_Y) &&
-	(arg->coords_used & EDIT_COORD_Z)) || arg->object) {
-	if (!arg->vector) {
-	    arg->vector = (vect_t *)bu_malloc(sizeof(vect_t),
-			  "vect_t block for edit_str_to_arg");
-	}
+    if (((arg->coords_used & EDIT_COORDS_ALL) == EDIT_COORDS_ALL) ||
+	arg->object || (arg->type & EDIT_USE_TARGETS)) {
 
 	/* set the first coordinate that isn't set */
 	if (!(arg->coords_used & EDIT_COORD_IS_SET_X)) {
@@ -2035,20 +2033,21 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 	} else {
 	    if (noisy)
 		bu_vls_printf(gedp->ged_result_str, "too many consecutive"
-			      " coordinates: %f %f %f %f ...", *arg->vector[0],
-			      *arg->vector[1], *arg->vector[2], coord[0]);
+			      " coordinates: %f %f %f %f ...",
+			      (*arg->vector)[0], (*arg->vector)[1],
+			      (*arg->vector)[2], coord[0]);
 	    return GED_ERROR;
 	}
     } else {
-	/* only set specified coord; quietly overwrite if set */
-	BU_ASSERT(arg->coords_used != 0);
+	/* only set specified coord */
+	BU_ASSERT((arg->coords_used & EDIT_COORDS_ALL) != 0);
 	if (arg->coords_used & EDIT_COORD_X) {
 	    (*arg->vector)[0] = coord[0];
 	    arg->coords_used |= EDIT_COORD_IS_SET_X;
-	} else if (!(arg->coords_used & EDIT_COORD_Y)) {
+	} else if (arg->coords_used & EDIT_COORD_Y) {
 	    (*arg->vector)[1] = coord[0];
 	    arg->coords_used |= EDIT_COORD_IS_SET_Y;
-	} else if (!(arg->coords_used & EDIT_COORD_Z)) {
+	} else if (arg->coords_used & EDIT_COORD_Z) {
 	    (*arg->vector)[2] = coord[0];
 	    arg->coords_used |= EDIT_COORD_IS_SET_Z;
 	}
