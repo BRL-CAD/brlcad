@@ -5483,9 +5483,6 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::rotate {args} {
-    # FIXME: once the edit command is fully functional, remove 
-    # Archer translate/rotate/scale command aliases in favor of
-    # mapping command names directly to ged_edit
     set args [linsert $args 0 "rotate"]
     eval gedWrapper edit 0 0 1 0 $args
 }
@@ -5495,9 +5492,6 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::scale {args} {
-    # FIXME: once the edit command is fully functional, remove 
-    # Archer translate/rotate/scale command aliases in favor of
-    # mapping command names directly to ged_edit
     set args [linsert $args 0 "scale"]
     eval gedWrapper edit 0 0 1 0 $args
 }
@@ -5546,9 +5540,6 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::translate {args} {
-    # FIXME: once the edit command is fully functional, remove 
-    # Archer translate/rotate/scale command aliases in favor of
-    # mapping command names directly to ged_edit
     set args [linsert $args 0 "translate"]
     eval gedWrapper edit 0 0 1 0 $args
 }
