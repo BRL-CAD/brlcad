@@ -1170,8 +1170,8 @@ edit_cmd_init(union edit_cmd *const subcmd)
     arg_head = &subcmd->common.objects;
     do
 	*arg_head = (struct edit_arg *)NULL;
-    while (*(arg_head = subcmd->cmd->get_arg_head(subcmd, i++)) !=
-	   subcmd->common.objects);
+    while ((arg_head = subcmd->cmd->get_arg_head(subcmd, i++)) !=
+	   &subcmd->common.objects);
 }
 
 /**
@@ -1189,8 +1189,8 @@ edit_cmd_free(union edit_cmd *const cmd)
 	    edit_arg_free_all(*arg_head);
 	    *arg_head = NULL;
 	}
-    } while (*(arg_head = cmd->cmd->get_arg_head(cmd, ++i)) !=
-	     cmd->common.objects);
+    } while ((arg_head = cmd->cmd->get_arg_head(cmd, ++i)) !=
+	     &cmd->common.objects);
 }
 
 /**
@@ -1211,8 +1211,8 @@ edit_cmd_sduplicate(union edit_cmd *const dest,
     do {
 	dest_head = dest->cmd->get_arg_head(dest, i);
 	*dest_head = *src_head;
-    } while (*(src_head = src->cmd->get_arg_head(src, ++i)) !=
-	     src->common.objects);
+    } while ((src_head = src->cmd->get_arg_head(src, ++i)) !=
+	     &src->common.objects);
 }
 
 /**
@@ -1229,51 +1229,51 @@ edit_cmd_sduplicate(union edit_cmd *const dest,
 HIDDEN int
 edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
 {
-    struct edit_arg *arg_head;
+    struct edit_arg **arg_head;
     vect_t src_v = VINIT_ZERO; /* where ommited points draw from */
     vect_t *kp_v = (vect_t *)NULL; /* 'from' point, aka keypoint */
     vect_t *to_v = (vect_t *)NULL; /* 'to' point */
     int i = 0;
 
     /* draw source vector from target object */
-    arg_head = *(subcmd->cmd->get_arg_head(subcmd, i++));
-    if (edit_arg_to_apparent_coord(gedp, arg_head, &src_v) == GED_ERROR)
+    arg_head = subcmd->cmd->get_arg_head(subcmd, i++);
+    if (edit_arg_to_apparent_coord(gedp, *arg_head, &src_v) == GED_ERROR)
 	return GED_ERROR;
 
-    while ((arg_head = *(subcmd->cmd->get_arg_head(subcmd, i++))) != 
-	   subcmd->common.objects) {
-	if (arg_head->type & EDIT_FROM)
-	    kp_v = arg_head->vector;
-	to_v = arg_head->vector;
+    while ((arg_head = subcmd->cmd->get_arg_head(subcmd, i++)) != 
+	   &subcmd->common.objects) {
+	if ((*arg_head)->type & EDIT_FROM)
+	    kp_v = (*arg_head)->vector;
+	to_v = (*arg_head)->vector;
 
-	if (arg_head->type & EDIT_REL_DIST) {
+	if ((*arg_head)->type & EDIT_REL_DIST) {
 	    /* convert to absolute position */
-	    arg_head->type &= ~EDIT_REL_DIST;
-	    if (arg_head->coords_used & EDIT_COORD_X) {
+	    (*arg_head)->type &= ~EDIT_REL_DIST;
+	    if ((*arg_head)->coords_used & EDIT_COORD_X) {
 		(*to_v)[0] += (*kp_v)[0];
 		(*kp_v)[0] = src_v[0];
 	    } else /* no movement */
 		(*to_v)[0] = (*kp_v)[0];
-	    if (arg_head->coords_used & EDIT_COORD_Y) {
+	    if ((*arg_head)->coords_used & EDIT_COORD_Y) {
 		(*to_v)[1] += (*kp_v)[1];
 		(*kp_v)[1] = src_v[1];
 	    } else
 		(*to_v)[1] = (*kp_v)[1];
-	    if (arg_head->coords_used & EDIT_COORD_Z) {
+	    if ((*arg_head)->coords_used & EDIT_COORD_Z) {
 		(*to_v)[2] += (*kp_v)[2];
 		(*kp_v)[2] = src_v[2];
 	    } else
 		(*to_v)[2] = (*kp_v)[2];
 	    kp_v = (vect_t *)NULL;
 	} else {
-	    if (!(arg_head->coords_used & EDIT_COORD_X))
+	    if (!((*arg_head)->coords_used & EDIT_COORD_X))
 		(*to_v)[0] = src_v[0];
-	    if (!(arg_head->coords_used & EDIT_COORD_Y))
+	    if (!((*arg_head)->coords_used & EDIT_COORD_Y))
 		(*to_v)[1] = src_v[1];
-	    if (!(arg_head->coords_used & EDIT_COORD_Z))
+	    if (!((*arg_head)->coords_used & EDIT_COORD_Z))
 		(*to_v)[2] = src_v[2];
 	}
-	arg_head->coords_used |= EDIT_COORDS_ALL;
+	(*arg_head)->coords_used |= EDIT_COORDS_ALL;
     }
     return GED_OK;
 }
@@ -1302,8 +1302,8 @@ edit_cmd_consolidate (struct ged *gedp, union edit_cmd *const subcmd,
     if (skip_common_objects)
 	i = 1;
 
-    while ((*(arg_head = subcmd->cmd->get_arg_head(subcmd, i++)) != 
-	   subcmd->common.objects) || !skip_common_objects) {
+    while (((arg_head = subcmd->cmd->get_arg_head(subcmd, i++)) != 
+	   &subcmd->common.objects) || !skip_common_objects) {
 	skip_common_objects = 1;
 	prev_arg = *arg_head;
 	if (!prev_arg)
@@ -1870,8 +1870,8 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
     }
 
     /* process all other arg nodes */
-    while (*(arg_head = subcmd->cmd->get_arg_head(subcmd, i++)) != 
-	   subcmd->common.objects) {
+    while ((arg_head = subcmd->cmd->get_arg_head(subcmd, i++)) != 
+	   &subcmd->common.objects) {
 	if (*arg_head)
 	    ++num_arg_heads_set;
 	for (cur_arg = *arg_head; cur_arg; cur_arg = cur_arg->next) {
@@ -1917,9 +1917,9 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
 	do
 	    if (*arg_head && (*arg_head = (*arg_head)->next))
 		++num_args_set;
-	while (*(arg_head =
+	while ((arg_head =
 		 subcmd_iter.cmd->get_arg_head(&subcmd_iter, i++)) !=
-		 subcmd_iter.common.objects);
+		 &subcmd_iter.common.objects);
 	if (num_args_set == 0)
 	    break;
 	BU_ASSERT(num_args_set == num_arg_heads_set);
