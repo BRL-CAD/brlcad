@@ -1016,11 +1016,12 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
 	comb_i = (struct rt_comb_internal *)intern.idb_ptr;
 	leaf = db_find_named_leaf(comb_i->tree, d_next->d_namep);
 	BU_ASSERT_PTR(leaf, !=, TREE_NULL); /* path is validated */
-	if (leaf->tr_l.tl_mat)
+	if (leaf->tr_l.tl_mat) {
 	    MAT_DELTAS_GET(leaf_deltas, leaf->tr_l.tl_mat);
-	VADD2(*coord, *coord, leaf_deltas);
-	rt_db_free_internal(&intern);
+	    VADD2(*coord, *coord, leaf_deltas);
+	}
 
+	rt_db_free_internal(&intern);
 	d = d_next; /* prime for next iteration */
     }
     d_next = RT_DIR_NULL; /* none left */
@@ -1215,10 +1216,10 @@ edit_cmd_sduplicate(union edit_cmd *const dest,
 }
 
 /**
- * Sets any skipped vector elements to those of the target object,
- * sets EDIT_COORDS_ALL on vector arguments, and converts relative
- * offsets to absolute positions. Expects all arguments except target
- * objects to have vector set. Only looks at the first set of args.
+ * Sets any skipped vector elements to a reasonable default, sets
+ * EDIT_COORDS_ALL on vector arguments, and converts relative offsets
+ * to absolute positions. Expects all arguments except target objects
+ * to have vector set. Only looks at the first set of args.
  *
  * XXX: This intentionally only looks at the first set of args. At
  * some point, it may be desirable to have the subcommand functions
@@ -1279,35 +1280,46 @@ edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
 
 /**
  * Consolidates compatible arguments. If any of the arguments that are
- * being consolidated have objects, they are converted to coordinates.
+ * being consolidated link to objects, they are converted to
+ * coordinates. Only consolidatable arguments flagged with the same
+ * argument type (or if the second arg has no type) that are under
+ * the same argument head are consolidated.
+ *
+ * Common objects are left alone if skip_common_objects != 0.
  *
  * Returns GED_ERROR on failure, and GED_OK on success.
  */
 HIDDEN int
-edit_cmd_consolidate (struct ged *gedp, union edit_cmd *const subcmd)
+edit_cmd_consolidate (struct ged *gedp, union edit_cmd *const subcmd, 
+		      int skip_common_objects)
 {
     struct edit_arg **arg_head;
     struct edit_arg *prev_arg;
     struct edit_arg *cur_arg;
     struct edit_arg *next_arg;
-    int i = 1; /* no consolidation of common objects is needed */
+    int i = 0;
 
-    while (*(arg_head = subcmd->cmd->get_arg_head(subcmd, i++)) != 
-	   subcmd->common.objects) {
+    if (skip_common_objects)
+	i = 1;
+
+    while ((*(arg_head = subcmd->cmd->get_arg_head(subcmd, i++)) != 
+	   subcmd->common.objects) || !skip_common_objects) {
+	skip_common_objects = 1;
 	prev_arg = *arg_head;
 	if (!prev_arg)
 	    continue; /* only one element in list */
 	for (cur_arg = prev_arg->next; cur_arg; cur_arg = cur_arg->next) {
-	    if ((prev_arg->coords_used & EDIT_COORDS_ALL) ^
-		(cur_arg->coords_used & EDIT_COORDS_ALL)) {
+	    if (((prev_arg->coords_used & EDIT_COORDS_ALL) ^
+		(cur_arg->coords_used & EDIT_COORDS_ALL)) &&
+		(cur_arg->type == 0 || prev_arg->type == cur_arg->type))  {
 
 		/* It should be impossible to have no coords set. If
 		 * one arg has all coords set, it implies that the
 		 * other has none set.
 		 */
-		BU_ASSERT((cur_arg->coords_used & EDIT_COORDS_ALL) ==
+		BU_ASSERT((cur_arg->coords_used & EDIT_COORDS_ALL) !=
 			  EDIT_COORDS_ALL);
-		BU_ASSERT((prev_arg->coords_used & EDIT_COORDS_ALL) ==
+		BU_ASSERT((prev_arg->coords_used & EDIT_COORDS_ALL) !=
 			  EDIT_COORDS_ALL);
 
 		/* convert objects to coords */
@@ -2559,12 +2571,9 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     /* free unused arg block */
     edit_arg_free_last(subcmd.cmd_line.args);
 
-    /* let cmd specific func validate/move args to proper locations */
-    if (subcmd.cmd->add_cl_args(gedp, &subcmd, GED_ERROR) == GED_ERROR)
+    if (edit_cmd_consolidate(gedp, &subcmd, 0) == GED_ERROR)
 	return GED_ERROR;
-
-    /* send the command off for further processing and execution  */
-    if (edit_cmd_consolidate(gedp, &subcmd) == GED_ERROR)
+    if (subcmd.cmd->add_cl_args(gedp, &subcmd, GED_ERROR) == GED_ERROR)
 	return GED_ERROR;
     ret = edit(gedp, &subcmd);
     edit_cmd_free(&subcmd);
