@@ -1331,20 +1331,24 @@ edit_cmd_consolidate (struct ged *gedp, union edit_cmd *const subcmd,
 		    return GED_ERROR;
 
 		/* consolidate */
-		if (cur_arg->coords_used & EDIT_COORD_X)
+		if (cur_arg->coords_used & EDIT_COORD_X) {
 		    prev_arg->coords_used |= EDIT_COORD_X;
 		    *prev_arg->vector[0] = *cur_arg->vector[0];
-		if (cur_arg->coords_used & EDIT_COORD_Y)
+		}
+		if (cur_arg->coords_used & EDIT_COORD_Y) {
 		    prev_arg->coords_used |= EDIT_COORD_Y;
 		    *prev_arg->vector[1] = *cur_arg->vector[1];
-		if (cur_arg->coords_used & EDIT_COORD_Z)
+		}
+		if (cur_arg->coords_used & EDIT_COORD_Z) {
 		    prev_arg->coords_used |= EDIT_COORD_Z;
 		    *prev_arg->vector[2] = *cur_arg->vector[2];
+		}
 
 		/* remove consolidated argument */
 		next_arg = cur_arg->next;
 		edit_arg_free(cur_arg);
-		prev_arg->next = cur_arg = next_arg;
+		cur_arg = prev_arg;
+		prev_arg->next = next_arg;
 	    } else {
 		prev_arg = cur_arg; /* the args are incompatible */
 	    }
@@ -1856,7 +1860,7 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
      * be copied later if there are any batch modifiers to expand.
      */
     arg_head = subcmd->cmd->get_arg_head(subcmd, i++);
-    ++num_arg_heads_set; /* an object is always set */
+    ++num_arg_heads_set; /* a target object is always set */
     for (cur_arg = *arg_head; cur_arg; cur_arg = cur_arg->next) {
 	/* target objects must be... objects */
 	BU_ASSERT(cur_arg->object);
@@ -1896,12 +1900,16 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
     if (subcmd->cmd->exec(gedp, subcmd) == GED_ERROR)
 	return GED_ERROR;
 	
-    /* iterate over each set of batch args and execute subcmd */
+    /* create a copy to iterate over groups of batch args; note that
+     * the copy is shallow and *must not be freed*
+     */
     subcmd_iter.cmd = subcmd->cmd;
     edit_cmd_init(&subcmd_iter);
     edit_cmd_sduplicate(&subcmd_iter, subcmd);
-    i = 0; /* reinit for get_arg_head() */
-    arg_head = subcmd_iter.cmd->get_arg_head(&subcmd_iter, i++);
+    arg_head = subcmd_iter.cmd->get_arg_head(&subcmd_iter, 0);
+
+    /* iterate over each set of batch args and execute subcmd */
+    i = 1; /* reinit for get_arg_head() */
     do {
 	num_args_set = 0;
 
@@ -1919,7 +1927,6 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
 	    return GED_ERROR;
 	ret = subcmd_iter.cmd->exec(gedp, &subcmd_iter);
     } while ((ret != GED_ERROR));
-    edit_cmd_free(&subcmd_iter);
 
     return ret;
 }
@@ -2156,7 +2163,7 @@ edit_strs_to_arg(struct ged *gedp, int *argc, const char **argv[],
      */
     if (((arg->coords_used & EDIT_COORDS_ALL) == EDIT_COORDS_ALL) &&
 	(arg->coords_used & ~EDIT_COORDS_ALL))
-	arg->coords_used = arg->coords_used >> 3;
+	arg->coords_used >>= 3;
 
     /* these flags are only for internal use */
     /* FIXME: exactly why they should be internalized, and not
