@@ -909,7 +909,7 @@ edit_arg_is_empty(struct edit_arg *arg)
 }
 
 /**
- * Free all objects containd by an argument node.
+ * Free all objects contained by an argument node.
  */
 HIDDEN void
 edit_arg_free_inner(struct edit_arg *arg)
@@ -970,7 +970,7 @@ edit_arg_free_all(struct edit_arg *arg)
  * combinations in the given path that affect the the position of the
  * combination or shape at the end of the path. The result is the
  * apparent coordinates of the object at the end of the path, if the
- * first combination in the path were drawn. The only flags repected
+ * first combination in the path were drawn. The only flags respected
  * are object argument type modifier flags.
  *
  * If the path only contains a primitive, the coordinates of the
@@ -1110,7 +1110,7 @@ edit_arg_expand_meta(struct ged *gedp, struct edit_arg *meta_arg,
 		const struct edit_arg *src_objs, const int flags)
 {
     struct edit_arg *prototype;
-    struct edit_arg *dest; 
+    struct edit_arg **dest; 
     const struct edit_arg *src;
     const int noisy = (flags & GED_ERROR); /* side with verbosity */
     int firstrun = 1;
@@ -1121,20 +1121,19 @@ edit_arg_expand_meta(struct ged *gedp, struct edit_arg *meta_arg,
     edit_arg_duplicate(&prototype, meta_arg);
     edit_arg_free_inner(meta_arg);
     edit_arg_init(meta_arg);
-    dest = meta_arg;
+    dest = &meta_arg;
 
-    for (src = src_objs; src; src = src->next, dest = dest->next) {
+    for (src = src_objs; src; src = src->next, dest = &(*dest)->next) {
 	if (firstrun) {
 	    firstrun = 0;
-	    src = src_objs;
-	    edit_arg_duplicate_in_place(dest, src);
+	    edit_arg_duplicate_in_place(*dest, src);
 	}
 	else
-	    edit_arg_duplicate(&dest, src);
+	    edit_arg_duplicate(dest, src);
 
 	/* never use coords that target obj didn't include */
-	dest->coords_used &= prototype->coords_used;
-	if (!dest->coords_used) {
+	(*dest)->coords_used &= prototype->coords_used;
+	if (!((*dest)->coords_used & EDIT_COORDS_ALL)) {
 	    if (noisy)
 		bu_vls_printf(gedp->ged_result_str,
 			      "coordinate filters for batch operator and target"
@@ -1143,10 +1142,10 @@ edit_arg_expand_meta(struct ged *gedp, struct edit_arg *meta_arg,
 	}
 
 	/* respect certain type flags from the prototype/target obj */
-	dest->type &= EDIT_TARGET_OBJ_BATCH_TYPES;
-	dest->type |= prototype->type & EDIT_TARGET_OBJ_BATCH_TYPES;
+	(*dest)->type &= EDIT_TARGET_OBJ_BATCH_TYPES;
+	(*dest)->type |= prototype->type & EDIT_TARGET_OBJ_BATCH_TYPES;
 
-	if (edit_arg_to_coord(gedp, dest, (vect_t *)NULL) == GED_ERROR)
+	if (edit_arg_to_coord(gedp, *dest, (vect_t *)NULL) == GED_ERROR)
 	    return GED_ERROR;
     }
     return GED_OK;
@@ -1230,7 +1229,7 @@ HIDDEN int
 edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
 {
     struct edit_arg **arg_head;
-    vect_t src_v = VINIT_ZERO; /* where ommited points draw from */
+    vect_t src_v = VINIT_ZERO; /* where omitted points draw from */
     vect_t *kp_v = (vect_t *)NULL; /* 'from' point, aka keypoint */
     vect_t *to_v = (vect_t *)NULL; /* 'to' point */
     int i = 0;
@@ -1440,7 +1439,7 @@ edit_rotate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
  *
  * This function is used to traverse a commands arguments, without
  * needing to know their structure. edit_cmd.common.objects should be
- * used as the first argument head, to tranverse the entire struct.
+ * used as the first argument head, to traverse the entire struct.
  *
  * FIXME: Kind of dirty; haven't found a better way yet, though.
  */
@@ -1689,7 +1688,7 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 	    goto err_option_unknown; 
 
 	if (!(cur_arg->type & EDIT_ABS_POS)) {
-	    /* intepret 'TO' arg as a relative distance by default */
+	    /* interpret 'TO' arg as a relative distance by default */
 	    cur_arg->type |= EDIT_REL_DIST;
 
 	    if (cur_arg->object) {
@@ -1830,7 +1829,7 @@ static const struct edit_cmd_tab edit_cmds[] = {
  * it's expected that all args will be in the proper locations in the
  * given command struct. An exception is made for
  * EDIT_TARGET_OBJ_BATCH_TYPES, which is respected since certain flags
- * may propogate in batch operations. Coordinate flags are always
+ * may propagate in batch operations. Coordinate flags are always
  * respected.
  *
  * If batch arguments are to be used, they should be either:
@@ -1851,17 +1850,12 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
     union edit_cmd subcmd_iter; /* to iterate through subcmd args */
     int i = 0;
     int ret = GED_OK;
-
-    /* count args at each level in lists, to detect (erroneous)
-     * decreases in the amount of args */
-    int num_arg_heads_set = 0;
     int num_args_set = 0;
 
     /* check all arg nodes in subcmd->common.objects first; they may
      * be copied later if there are any batch modifiers to expand.
      */
     arg_head = subcmd->cmd->get_arg_head(subcmd, i++);
-    ++num_arg_heads_set; /* a target object is always set */
     for (cur_arg = *arg_head; cur_arg; cur_arg = cur_arg->next) {
 	/* target objects must be... objects */
 	BU_ASSERT(cur_arg->object);
@@ -1873,8 +1867,6 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
     /* process all other arg nodes */
     while ((arg_head = subcmd->cmd->get_arg_head(subcmd, i++)) != 
 	   &subcmd->common.objects) {
-	if (*arg_head)
-	    ++num_arg_heads_set;
 	for (cur_arg = *arg_head; cur_arg; cur_arg = cur_arg->next) {
 
 	    /* cmd line opts should have been handled/removed */
@@ -1890,10 +1882,6 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
 	    }
 	}
     }
-    /* FIXME: if there are multiple target objects but only one of
-     * each other argument type, we end up with only a single run
-     * (which never actually runs due to a failed assert)
-     */
 
     /* execute cmd on first, and possibly the only, set of args */
     if (edit_cmd_expand_vectors(gedp, subcmd) == GED_ERROR)
@@ -1907,23 +1895,29 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
     subcmd_iter.cmd = subcmd->cmd;
     edit_cmd_init(&subcmd_iter);
     edit_cmd_sduplicate(&subcmd_iter, subcmd);
-    arg_head = subcmd_iter.cmd->get_arg_head(&subcmd_iter, 0);
 
-    /* iterate over each set of batch args and execute subcmd */
-    i = 1; /* reinit for get_arg_head() */
+    /* Iterate over each set of batch args, executing the subcmd once
+     * for each level of edit_arg nodes. The edit_arg linked list with
+     * the most nodes determines how many times the command is run.
+     * Any other argument lists having less nodes than that will make
+     * up for the difference by repeating their last node in
+     * subsequent runs.
+     */
     do {
-	num_args_set = 0;
-
 	/* set all heads to the next arguments in their lists */
-	do
-	    if (*arg_head && (*arg_head = (*arg_head)->next))
-		++num_args_set;
-	while ((arg_head =
-		 subcmd_iter.cmd->get_arg_head(&subcmd_iter, i++)) !=
-		 &subcmd_iter.common.objects);
+	num_args_set = 0;
+	i = 0; /* reinit for get_arg_head() */
+	while (((arg_head =
+		subcmd_iter.cmd->get_arg_head(&subcmd_iter, i)) !=
+		&subcmd_iter.common.objects) || (i == 0)) {
+	    ++i;
+	    if (*arg_head && (*arg_head)->next) {
+		    *arg_head = (*arg_head)->next;
+		    ++num_args_set;
+	    }
+	}
 	if (num_args_set == 0)
-	    break;
-	BU_ASSERT(num_args_set == num_arg_heads_set);
+	    break; /* exit loop on successful completion */
 	if (edit_cmd_expand_vectors(gedp, subcmd) == GED_ERROR)
 	    return GED_ERROR;
 	ret = subcmd_iter.cmd->exec(gedp, &subcmd_iter);
@@ -1951,18 +1945,19 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
     vect_t coord;
 
     /*
-     * Here is how numbers that are also objects are intepreted: if an
-     * object is not yet set in *arg, try to treat the number as an
-     * object first. If the user has an object named, say '5', they
-     * can explicitly use the number 5 by adding .0 or something. If
-     * an arg->object has already been set, then the number was most
-     * likely intended to be an offset, so intepret it as as such.
+     * Here is how numbers that are also object names are interpreted:
+     * if an object is not yet set in *arg, try to treat the number as
+     * an object first. If the user has an object named, say '5', they
+     * can avoid using the object named 5 by specifying 5.0 or
+     * something. If an arg->object has already been set, then the
+     * number was most likely intended to be an offset, so interpret
+     * it as as such.
      */
 
     if (!arg->object && !(arg->type & EDIT_USE_TARGETS) && !arg->vector) {
 
 	/* same batch operators; objs with same name are masked */
-	if (BU_STR_EQUAL(str, ".") || BU_STR_EQUAL(str, "--")) {
+	if (BU_STR_EQUAL(str, ".")) {
 		arg->type |= EDIT_USE_TARGETS;
 		return GED_OK;
 	}
@@ -2014,7 +2009,7 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 	arg->vector = (vect_t *)bu_malloc(sizeof(vect_t),
 					  "vect_t block for edit_str_to_arg");
 
-    /* Attempt to intepret/record the number as the next unset X, Y,
+    /* Attempt to interpret/record the number as the next unset X, Y,
      * or Z coordinate/position.
      */
     if (((arg->coords_used & EDIT_COORDS_ALL) == EDIT_COORDS_ALL) ||
@@ -2434,7 +2429,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 			case 'x': 
 			case 'y':
 			case 'z':
-			    /* the only acceptible sub-options here */
+			    /* the only acceptable sub-options here */
 			    conv_flags = GED_QUIET;
 			    break;
 			default:
