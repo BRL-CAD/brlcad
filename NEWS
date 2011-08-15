@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2011-07-XX  Release 7.20.4                                     ---
 ----------------------------------------------------------------------
 
+* improved rtwizard's invocation of rt - Cliff Yapp
 * added a SAVE option to sh/conversion.sh - Tom Browder
 * 'keep' command includes sketch when keeping revolve - Sean Morrison
 * modified archer startup to not require html documentation files
