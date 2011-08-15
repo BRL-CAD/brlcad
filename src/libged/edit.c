@@ -1846,10 +1846,12 @@ int
 edit(struct ged *gedp, union edit_cmd *const subcmd)
 {
     struct edit_arg **arg_head;
+    struct edit_arg *prev_arg; 
     struct edit_arg *cur_arg;
     union edit_cmd subcmd_iter; /* to iterate through subcmd args */
     int i = 0;
     int ret = GED_OK;
+    int num_target_objs = 0;
     int num_args_set = 0;
 
     /* check all arg nodes in subcmd->common.objects first; they may
@@ -1862,11 +1864,15 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
 
 	/* cmd line opts should have been handled/removed */
 	BU_ASSERT(cur_arg->cl_options[0] == '\0');
+
+	++num_target_objs;
     }
 
     /* process all other arg nodes */
     while ((arg_head = subcmd->cmd->get_arg_head(subcmd, i++)) != 
 	   &subcmd->common.objects) {
+	num_args_set = 0;
+	prev_arg = NULL;
 	for (cur_arg = *arg_head; cur_arg; cur_arg = cur_arg->next) {
 
 	    /* cmd line opts should have been handled/removed */
@@ -1880,6 +1886,20 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
 		    GED_ERROR)
 		    return GED_ERROR;
 	    }
+	    prev_arg = cur_arg;
+	    ++num_args_set;
+	}
+
+	/* All argument lists should be the same length as the common
+	 * objects list. Duplicate the last argument until this is so.
+	 */
+	if (prev_arg) {
+	    while (num_args_set < num_target_objs) {
+		edit_arg_duplicate(&prev_arg->next, prev_arg);
+		prev_arg = prev_arg->next;
+		++num_args_set;
+	    }
+	    BU_ASSERT(num_args_set == num_target_objs);
 	}
     }
 
@@ -1918,7 +1938,7 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
 	}
 	if (num_args_set == 0)
 	    break; /* exit loop on successful completion */
-	if (edit_cmd_expand_vectors(gedp, subcmd) == GED_ERROR)
+	if (edit_cmd_expand_vectors(gedp, &subcmd_iter) == GED_ERROR)
 	    return GED_ERROR;
 	ret = subcmd_iter.cmd->exec(gedp, &subcmd_iter);
     } while ((ret != GED_ERROR));
