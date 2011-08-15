@@ -58,6 +58,26 @@ done
 #\
 exec $WISH $0 $@
 
+# If we're running from a build directory but an installed BRL-CAD
+# already exists in the configured install path, all tcl scripts 
+# will be pulled from the installed location and not the local 
+# build location.  This is an inevitable consequence of how 
+# bu_brlcad_root has to work (there are security implication to 
+# NOT using the installed files if they are present) but it also 
+# makes for a subtle and vexing problem if a developer is trying 
+# to tweak tcl scripts in the source tree and forgets that
+# there is alread an installed copy of that script.  It will look like
+# changes being made to the script are having no effect, because the
+# installed file will be loaded instead of the edited version.  
+# Warn if it looks like this situation is occurring by checking 
+# the root path against the argv0 path.
+set check_root_dir [bu_brlcad_root bin]
+set check_bin_dir [file normalize [file dirname $argv0]]
+set dir_same [string compare $check_root_dir $check_bin_dir]
+if {!$dir_same == 0} {
+    puts "WARNING - bu_brlcad_root is set to [file dirname $check_root_dir], but binary being run is located in [file dirname $check_bin_dir].  This probably means you are running [file tail $argv0] from a non-install directory with BRL-CAD already present in [file dirname $check_root_dir] - be aware that .tcl files from [file dirname $check_root_dir] will be loaded INSTEAD OF local files. Tcl script changes made to source files for testing purposes will not be loaded, even though [file tail $argv0] will most likely 'work'.  To test local changes, either clear [file dirname $check_root_dir], specify a different (empty) install prefix while building, or manually set the BRLCAD_ROOT environment variable."
+}
+
 # Itk's default class doesn't keep the menu, but Archer needs it - redefine itk:Toplevel
 set itk_file [file join [bu_brlcad_data "tclscripts"] archer itk_redefines.tcl]
 if { ![file exists $itk_file] } {
@@ -230,7 +250,7 @@ proc exitArcher {archer} {
 proc main {} {
     global env
     global tcl_platform
-    global argv
+    global argv 
 
     if {$::ArcherCore::inheritFromToplevel} {
 	set ::ArcherCore::application [Archer .\#auto]
