@@ -266,7 +266,7 @@ namespace eval RtWizard {
 	    # Assemble the rt command - note that it is a
 	    # full-blown script.
 	    #
-	    set cmd [list rt -M -R -F $fb -w $width \
+	    set cmd [list [file join [bu_brlcad_root bin] rt] -M -R -F $fb -w $width \
 			 -n $height -V $ar -A 0.9 -p $perspective \
 			 -C [lindex $bg 0]/[lindex $bg 1]/[lindex $bg 2] \
 			 $::RtWizard::dbFile]
