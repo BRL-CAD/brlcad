@@ -168,6 +168,9 @@ while test $# -gt 0 ; do
 	x*[vV][eE][rR][bB][oO][sS][eE])
 	    VERBOSE=1
 	    ;;
+	x*[sS][aA][vV][eE])
+	    SAVE=1
+	    ;;
 	x*=*)
 	    VAR=`echo $arg | sed 's/=.*//g' | sed 's/^[-]*//g'`
 	    if test ! "x$VAR" = "x" ; then
@@ -186,7 +189,7 @@ while test $# -gt 0 ; do
 done
 
 # validate and clean up options (all default to 0)
-booleanize HELP INSTRUCTIONS VERBOSE
+booleanize HELP INSTRUCTIONS VERBOSE SAVE
 
 
 ###
@@ -210,13 +213,16 @@ will convert, what percentage, and how long the conversion will take.
 There are several environment variables that will modify how this
 script behaves:
 
-  GED - path to BRL-CAD geometry editor (i.e., mged) for converting
-  SEARCH - path to BRL-CAD geometry editor to use for searching
-  OBJECTS - parameters for selecting objects to convert
-  MAXTIME - maximum number of seconds allowed for each conversion
-  QUIET - turn off all printing output (writes results to log file)
-  VERBOSE - turn on extra debug output for testing/development
+  SAVE         - save the converted tgm
+  GED          - path to BRL-CAD geometry editor (i.e., mged) for converting
+  SEARCH       - path to BRL-CAD geometry editor to use for searching
+  OBJECTS      - parameters for selecting objects to convert
+  MAXTIME      - maximum number of seconds allowed for each conversion
+  QUIET        - turn off all printing output (writes results to log file)
+  VERBOSE      - turn on extra debug output for testing/development
   INSTRUCTIONS - display these more detailed instructions
+
+The SAVE option keeps the tgm conversion copy after the process ends.
 
 The GED option allows you to specify a specific pathname for MGED.
 The default is to search the system path for 'mged'.
@@ -264,6 +270,7 @@ if test "x$HELP" = "x1" ; then
     echo "  verbose"
     echo ""
     echo "Available options:"
+    echo "  SAVE"
     if test "x$GED" = "x" ; then
 	echo "  GED=/path/to/mged (default mged)"
     else
@@ -318,6 +325,10 @@ else
 	VERBOSE_ECHO=echo
 	echo "Verbose output enabled"
     fi
+fi
+
+if test "x$SAVE" = "x1" ; then
+    echo "Converted tgm will be saved"
 fi
 
 ###
@@ -507,7 +518,12 @@ EOF
     exec 0<&3
 
     files=`expr $files + 1`
-    rm -f "$work"
+
+    # remove the file if so directed
+    if test "x$SAVE" = "x0" ; then
+      rm -f "$work"
+    fi
+
     shift
 done
 end=`elapsed` # stop elapsed runtime timer
