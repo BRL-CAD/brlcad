@@ -56,10 +56,10 @@
 
 struct db_tree_counter_state {
     uint32_t magic;
-    long n_mat;			/* # leaves with non-identity matricies */
-    long n_leaf;			/* # leaf nodes */
-    long n_oper;			/* # operator nodes */
-    long leafbytes;		/* # bytes for name section */
+    size_t n_mat;		/* # leaves with non-identity matricies */
+    size_t n_leaf;		/* # leaf nodes */
+    size_t n_oper;		/* # operator nodes */
+    size_t leafbytes;		/* # bytes for name section */
     int non_union_seen;		/* boolean, 1 = non-unions seen */
 };
 #define DB_TREE_COUNTER_STATE_MAGIC 0x64546373	/* dTcs */
@@ -81,10 +81,10 @@ struct db_tree_counter_state {
  *
  * tcsp->leafbytes -= tcsp->n_leaf * (8 - db5_enc_len[wid]);
  */
-long
+size_t
 db_tree_counter(const union tree *tp, struct db_tree_counter_state *tcsp)
 {
-    long ldepth, rdepth;
+    size_t ldepth, rdepth;
 
     RT_CK_TREE(tp);
     DB_CK_TREE_COUNTER_STATE(tcsp);
@@ -94,7 +94,7 @@ db_tree_counter(const union tree *tp, struct db_tree_counter_state *tcsp)
 	    tcsp->n_leaf++;
 	    if (tp->tr_l.tl_mat && !bn_mat_is_identity(tp->tr_l.tl_mat)) tcsp->n_mat++;
 	    /* Over-estimate storage requirement for matrix # */
-	    tcsp->leafbytes += (long)strlen(tp->tr_l.tl_name) + 1 + 8;
+	    tcsp->leafbytes += strlen(tp->tr_l.tl_name) + 1 + 8;
 	    return 1;
 
 	case OP_NOT:
@@ -141,8 +141,8 @@ db_tree_counter(const union tree *tp, struct db_tree_counter_state *tcsp)
 
 struct rt_comb_v5_serialize_state {
     uint32_t magic;
-    long mat_num;	/* current matrix number */
-    long nmat;		/* # matricies, total */
+    size_t mat_num;	/* current matrix number */
+    size_t nmat;	/* # matricies, total */
     unsigned char *matp;
     unsigned char *leafp;
     unsigned char *exprp;
@@ -164,7 +164,7 @@ rt_comb_v5_serialize(
     struct rt_comb_v5_serialize_state *ssp)
 {
     size_t n;
-    int mi;
+    size_t mi;
 
     RT_CK_TREE(tp);
     RT_CK_COMB_V5_SERIALIZE_STATE(ssp);
@@ -182,12 +182,12 @@ rt_comb_v5_serialize(
 	    if (tp->tr_l.tl_mat && !bn_mat_is_identity(tp->tr_l.tl_mat))
 		mi = ssp->mat_num++;
 	    else
-		mi = -1;
-	    BU_ASSERT_LONG(mi, <, ssp->nmat);
+		mi = (size_t)-1;
+	    BU_ASSERT_SIZE_T(mi, <, ssp->nmat);
 	    ssp->leafp = db5_encode_length(ssp->leafp, mi, ssp->wid);
 
 	    /* Encoding of the matrix */
-	    if (mi > -1) {
+	    if (mi != (size_t)-1) {
 		htond(ssp->matp,
 		      (const unsigned char *)tp->tr_l.tl_mat,
 		      ELEMENTS_PER_MAT);
@@ -257,9 +257,9 @@ rt_comb_export5(
     struct db_tree_counter_state tcs;
     struct rt_comb_v5_serialize_state ss;
     long max_stack_depth;
-    long need;
-    int rpn_len = 0;	/* # items in RPN expression */
-    int wid;
+    size_t need;
+    size_t rpn_len = 0;	/* # items in RPN expression */
+    int wid; /* encode format */
     unsigned char *cp;
     unsigned char *leafp_end;
     struct bu_attribute_value_set *avsp;
@@ -351,7 +351,7 @@ rt_comb_export5(
     if (comb->tree)
 	rt_comb_v5_serialize(comb->tree, &ss);
 
-    BU_ASSERT_LONG(ss.mat_num, ==, tcs.n_mat);
+    BU_ASSERT_SIZE_T(ss.mat_num, ==, tcs.n_mat);
     BU_ASSERT_PTR(ss.matp, ==, cp + tcs.n_mat * (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE));
     BU_ASSERT_PTR(ss.leafp, ==, leafp_end);
     if (rpn_len)
@@ -519,7 +519,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
 	    mi = 4095;			/* sanity */
 	    leafp += db5_decode_signed(&mi, leafp, wid);
 
-	    if ((ssize_t)mi < 0) {
+	    if (mi == (size_t)-1) {
 		/* Signal identity matrix */
 		if (!mat || bn_mat_is_identity(mat)) {
 		    tp->tr_l.tl_mat = (matp_t)NULL;
@@ -529,7 +529,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
 		mat_t diskmat;
 
 		/* Unpack indicated matrix mi */
-		BU_ASSERT_LONG(mi, <, nmat);
+		BU_ASSERT_SIZE_T(mi, <, nmat);
 		ntohd((unsigned char *)diskmat,
 		      &matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE],
 		      ELEMENTS_PER_MAT);
@@ -647,7 +647,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
 		    mat_t diskmat;
 
 		    /* Unpack indicated matrix mi */
-		    BU_ASSERT_LONG(mi, <, nmat);
+		    BU_ASSERT_SIZE_T(mi, <, nmat);
 		    ntohd((unsigned char *)diskmat,
 			  &matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE],
 			  ELEMENTS_PER_MAT);
@@ -720,7 +720,7 @@ finish:
 
     /* Unpack the attributes */
     comb->rgb_valid = 0;
-    
+
     if ((ap = bu_avs_get(&ip->idb_avs, db5_standard_attribute(ATTR_COLOR))) != NULL) {
 	int ibuf[3];
 	if (sscanf(ap, "%d/%d/%d", ibuf, ibuf+1, ibuf+2) == 3) {
