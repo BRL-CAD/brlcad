@@ -67,6 +67,8 @@ MACRO(AUTO_OPTION username varname debug_state release_state)
 	# optimization flags, leave them off
 	IF(NOT "${CMAKE_BUILD_TYPE}" MATCHES "Release" AND NOT "${CMAKE_BUILD_TYPE}" MATCHES "Debug")
 		IF(NOT ${${username}} STREQUAL "Auto")
+			SET(${varname} ${${username}})
+		ELSE(NOT ${${username}} STREQUAL "Auto")
 			SET(${varname} OFF)
 		ENDIF(NOT ${${username}} STREQUAL "Auto")
 	ENDIF(NOT "${CMAKE_BUILD_TYPE}" MATCHES "Release" AND NOT "${CMAKE_BUILD_TYPE}" MATCHES "Debug")
