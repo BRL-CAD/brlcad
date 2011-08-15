@@ -590,15 +590,16 @@ MARK_AS_ADVANCED(BRLCAD-ENABLE_BRLCAD_LIBRARY)
 # on the enabling of local packages is the "senior" option and will
 # force the system libs option to off.
 IF(NOT BRLCAD_BUNDLED_LIBS)
-	SET(BRLCAD_BUNDLED_LIBS "Auto" CACHE STRING "Build bundled libraries.")
+	SET(BRLCAD_BUNDLED_LIBS "AUTO" CACHE STRING "Build bundled libraries.")
 ENDIF(NOT BRLCAD_BUNDLED_LIBS)
-set_property(CACHE BRLCAD_BUNDLED_LIBS PROPERTY STRINGS Auto Bundled System)
-SET(BRLCAD_BUNDLED_LIBS "${BRLCAD_BUNDLED_LIBS}" CACHE STRING "Build bundled libraries." FORCE)
-IF(NOT BRLCAD_BUNDLED_LIBS STREQUAL "Auto" AND NOT BRLCAD_BUNDLED_LIBS STREQUAL "Bundled" AND NOT BRLCAD_BUNDLED_LIBS STREQUAL "System")
-	MESSAGE(WARNING "Unknown value BRLCAD_BUNDLED_LIBS supplied for BRLCAD_BUNDLED_LIBS - defaulting to Auto")
-	MESSAGE(WARNING "Valid options are Auto, Bundled and System")
-	SET(BRLCAD_BUNDLED_LIBS "Auto" CACHE STRING "Build	bundled libraries." FORCE)
-ENDIF(NOT BRLCAD_BUNDLED_LIBS STREQUAL "Auto" AND	NOT BRLCAD_BUNDLED_LIBS	STREQUAL "Bundled" AND NOT	BRLCAD_BUNDLED_LIBS STREQUAL "System")
+set_property(CACHE BRLCAD_BUNDLED_LIBS PROPERTY STRINGS AUTO BUNDLED SYSTEM)
+STRING(TOUPPER "${BRLCAD_BUNDLED_LIBS}" BRLCAD_BUNDLED_LIBS_UPPER)
+SET(BRLCAD_BUNDLED_LIBS "${BRLCAD_BUNDLED_LIBS_UPPER}" CACHE STRING "Build bundled libraries." FORCE)
+IF(NOT BRLCAD_BUNDLED_LIBS STREQUAL "AUTO" AND NOT BRLCAD_BUNDLED_LIBS STREQUAL "BUNDLED" AND NOT BRLCAD_BUNDLED_LIBS STREQUAL "SYSTEM")
+	MESSAGE(WARNING "Unknown value BRLCAD_BUNDLED_LIBS supplied for BRLCAD_BUNDLED_LIBS - defaulting to AUTO")
+	MESSAGE(WARNING "Valid options are AUTO, BUNDLED and SYSTEM")
+	SET(BRLCAD_BUNDLED_LIBS "AUTO" CACHE STRING "Build	bundled libraries." FORCE)
+ENDIF(NOT BRLCAD_BUNDLED_LIBS STREQUAL "AUTO" AND NOT BRLCAD_BUNDLED_LIBS STREQUAL "BUNDLED" AND NOT BRLCAD_BUNDLED_LIBS STREQUAL "SYSTEM")
 
 # Enable Aqua widgets on Mac OSX.  This impacts Tcl/Tk building and OpenGL
 # building. Not currently working - needs work in at least Tk and togl
@@ -1257,7 +1258,7 @@ if(BRLCAD_PRINT_VERBOSE_SUMMARY)
 	ENDFOREACH()
 	MESSAGE("")
 
-	# The actual build state (as opposed to the Auto/Bundle/System setting) is
+	# The actual build state (as opposed to the AUTO/BUNDLED/SYSTEM setting) is
 	# not present in the global cache and must be explicitly pulled from
 	# src/other
 	get_directory_property(BRLCAD_BUILD_TCL DIRECTORY src/other DEFINITION BRLCAD_TCL_BUILD)
