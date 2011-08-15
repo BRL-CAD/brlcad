@@ -623,9 +623,7 @@ IF(BRLCAD-ENABLE_X11)
 	SET(BRLCAD-ENABLE_AQUA OFF CACHE STRING "Don't use Aqua if we're doing X11" FORCE)
 	SET(OPENGL_USE_AQUA OFF CACHE STRING "Don't use Aqua if we're doing X11" FORCE)
 ENDIF(BRLCAD-ENABLE_X11)
-IF(NOT APPLE)
-	MARK_AS_ADVANCED(OPENGL_USE_AQUA)
-ENDIF(NOT APPLE)
+MARK_AS_ADVANCED(OPENGL_USE_AQUA)
 
 # Enable/disable features requiring the Tk toolkit - usually this should
 # be on, as a lot of functionality in BRL-CAD depends on Tk
@@ -876,6 +874,8 @@ IF(APPLE)
 	IF(Cocoa_FRAMEWORKS)
 		SET(Cocoa_LIBRARIES "-framework Cocoa" CACHE FILEPATH "Cocoa framework" FORCE)
 	ENDIF(Cocoa_FRAMEWORKS)
+	MARK_AS_ADVANCED(CMAKE_OSX_ARCHITECTURES CMAKE_OSX_DEPLOYMENT_TARGET CMAKE_OSX_SYSROOT)
+   MARK_AS_ADVANCED(COREFOUNDATION_FRAMEWORK Carbon_LIBRARIES Cocoa_LIBRARIES)
 ENDIF(APPLE)
 
 # crypt library (needed on some platforms for enigma)
