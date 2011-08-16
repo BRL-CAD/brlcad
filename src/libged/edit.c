@@ -1034,25 +1034,22 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
     }
 
     if (arg->type & EDIT_NATURAL_ORIGIN) {
-	char *str;
-	char *str2;
-
 	if (d->d_flags & (RT_DIR_COMB | RT_DIR_REGION)) {
 	    bu_vls_printf(gedp->ged_result_str, "combinations do not have a"
 		      " natural origin (%s)", d->d_namep );
 	    return GED_ERROR;
 	}
 
-	str = str2 = (char *)bu_calloc(BUFSIZ, sizeof(char),
-				"char block for edit_arg_to_apparent_coord");
-	str[0] = 'V';
-	str[1] = '\0';
 	GED_DB_GET_INTERNAL(gedp, &intern, d, (fastf_t *)NULL,
 			    &rt_uniresource, GED_ERROR);
-	_ged_get_solid_keypoint(gedp, leaf_deltas, &str, &intern,
-				(const fastf_t *const)gtd.gtd_xform);
+	if (_ged_get_solid_keypoint(gedp, leaf_deltas, &intern,
+	                            (const fastf_t *const)gtd.gtd_xform) ==
+				    GED_ERROR) {
+	    bu_vls_printf(gedp->ged_result_str, "\nunable to get natural origin"
+		      " of \"%s\"", d->d_namep );
+	    return GED_ERROR;
+	}
 	rt_db_free_internal(&intern);
-	bu_free((genptr_t)str2, "char");
     } else {
 	/* bounding box center is the default */
 	VADD2SCALE(leaf_deltas, rpp_min, rpp_max, 0.5);

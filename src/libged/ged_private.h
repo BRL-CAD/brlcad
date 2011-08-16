@@ -212,7 +212,6 @@ extern int _ged_get_obj_bounds2(struct ged *gedp,
 /*  defined in get_solid_kp.c */
 extern int _ged_get_solid_keypoint(struct ged *const gedp,
 				   fastf_t *const pt,
-				   char **strp,
 				   const struct rt_db_internal *const ip,
 				   const fastf_t *const mat);
 

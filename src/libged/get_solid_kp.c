@@ -33,45 +33,30 @@
 
 
 /*
- * Keypoint in model space is established in "pt".
- * If "str" is set, then that point is used, else default
- * for this solid is selected and set.
- * "str" may be a constant string, in either upper or lower case,
- * or it may be something complex like "(3, 4)" for an ARS or spline
- * to select a particular vertex or control point.
- *
- * XXX Perhaps this should be done via solid-specific parse tables,
- * so that solids could be pretty-printed & structprint/structparse
- * processed as well?
- *
- * XXX This was shamelessly copied from mged/edsol.c
+ * Default keypoint in model space is established in "pt". Returns 
+ * GED_ERROR if unable to determine a keypoint, otherwise returns
+ * GED_OK.
  */
 int
 _ged_get_solid_keypoint(struct ged *const gedp,
 			fastf_t *const pt,
-			char **strp,
 			const struct rt_db_internal *const ip,
 			const fastf_t *const mat)
 {
-    char *cp = *strp;
     point_t mpt;
-    char buf[BUFSIZ];
 
-    /* data for solid editing */
+    /* FIXME: data for solid editing; either all of these need to be
+     * set, or the cases that use them modified or removed. */
+#if 0
     struct rt_db_internal es_int;
     int bot_verts[3];		/* vertices for the BOT solid */
-#if 0
-    int es_ars_crv;	/* curve and column identifying selected ARS point */
-    int es_ars_col;
-    point_t es_pt;		/* coordinates of selected ARS point */
-#endif
     struct edgeuse *es_eu=(struct edgeuse *)NULL;	/* Currently selected NMG edgeuse */
     struct wdb_pipept *es_pipept=(struct wdb_pipept *)NULL; /* Currently selected PIPE segment */
     struct wdb_metaballpt *es_metaballpt=(struct wdb_metaballpt *)NULL; /* Currently selected METABALL Point */
     struct bn_tol mged_tol;	/* calculation tolerance */
+#endif
 
     RT_CK_DB_INTERNAL(ip);
-    memset(buf, 0, BUFSIZ);
 
     switch (ip->idb_type) {
 	case ID_CLINE:
@@ -81,16 +66,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 
 		RT_CLINE_CK_MAGIC(cli);
 
-		if (BU_STR_EQUAL(cp, "V")) {
-		    VMOVE(mpt, cli->v);
-		    *strp = "V";
-		} else if (BU_STR_EQUAL(cp, "H")) {
-		    VADD2(mpt, cli->v, cli->h);
-		    *strp = "H";
-		} else {
-		    VMOVE(mpt, cli->v);
-		    *strp = "V";
-		}
+		VMOVE(mpt, cli->v);
 		break;
 	    }
 	case ID_PARTICLE:
@@ -100,21 +76,15 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 
 		RT_PART_CK_MAGIC(part);
 
-		if (BU_STR_EQUAL(cp, "V")) {
-		    VMOVE(mpt, part->part_V);
-		    *strp = "V";
-		} else if (BU_STR_EQUAL(cp, "H")) {
-		    VADD2(mpt, part->part_V, part->part_H);
-		    *strp = "H";
-		} else {
-		    /* default */
-		    VMOVE(mpt, part->part_V);
-		    *strp = "V";
-		}
+		VMOVE(mpt, part->part_V);
 		break;
 	    }
 	case ID_PIPE:
 	    {
+		bu_vls_printf(gedp->ged_result_str,
+			      "getting origin of PIPE temporarily disabled");
+		return GED_ERROR;
+#if 0
 		struct rt_pipe_internal *pipeip =
 		    (struct rt_pipe_internal *)ip->idb_ptr;
 		struct wdb_pipept *pipe_seg;
@@ -127,27 +97,30 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		} else {
 		    VMOVE(mpt, es_pipept->pp_coord);
 		}
-		*strp = "V";
 		break;
+#endif
 	    }
 	case ID_METABALL:
 	    {
+		bu_vls_printf(gedp->ged_result_str,
+			      "getting origin of METABALL temporarily disabled");
+		return GED_ERROR;
+#if 0
 		struct rt_metaball_internal *metaball = (struct rt_metaball_internal *)ip->idb_ptr;
 
 		RT_METABALL_CK_MAGIC(metaball);
 
 		VSETALL(mpt, 0.0);
-		if (es_metaballpt==NULL) {
-		    snprintf(buf, BUFSIZ, "no point selected");
-		} else {
-		    VMOVE(mpt, es_metaballpt->coord);
-		    snprintf(buf, BUFSIZ, "V %f", es_metaballpt->fldstr);
-		}
-		*strp = buf;
+		VMOVE(mpt, es_metaballpt->coord);
 		break;
+#endif	
 	    }
 	case ID_ARBN:
 	    {
+		bu_vls_printf(gedp->ged_result_str,
+			      "getting origin of ARBN temporarily disabled");
+		return GED_ERROR;
+#if 0
 		struct rt_arbn_internal *arbn =
 		    (struct rt_arbn_internal *)ip->idb_ptr;
 		size_t i, j, k;
@@ -184,8 +157,8 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 			break;
 		}
 
-		*strp = "V";
 		break;
+#endif
 	    }
 	case ID_EBM:
 	    {
@@ -197,11 +170,14 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 
 		VSETALL(pnt, 0.0);
 		MAT4X3PNT(mpt, ebm->mat, pnt);
-		*strp = "V";
 		break;
 	    }
 	case ID_BOT:
 	    {
+		bu_vls_printf(gedp->ged_result_str,
+			      "getting origin of BOT temporarily disabled");
+		return GED_ERROR;
+#if 0
 		struct rt_bot_internal *bot =
 		    (struct rt_bot_internal *)ip->idb_ptr;
 
@@ -212,6 +188,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		}
 
 		break;
+#endif
 	    }
 	case ID_DSP:
 	    {
@@ -223,7 +200,6 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 
 		VSETALL(pnt, 0.0);
 		MAT4X3PNT(mpt, dsp->dsp_stom, pnt);
-		*strp = "V";
 		break;
 	    }
 	case ID_HF:
@@ -234,7 +210,6 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		RT_HF_CK_MAGIC(hf);
 
 		VMOVE(mpt, hf->v);
-		*strp = "V";
 		break;
 	    }
 	case ID_VOL:
@@ -247,7 +222,6 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 
 		VSETALL(pnt, 0.0);
 		MAT4X3PNT(mpt, vol->mat, pnt);
-		*strp = "V";
 		break;
 	    }
 	case ID_HALF:
@@ -257,7 +231,6 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		RT_HALF_CK_MAGIC(haf);
 
 		VSCALE(mpt, haf->eqn, haf->eqn[H]);
-		*strp = "V";
 		break;
 	    }
 	case ID_ARB8:
@@ -266,24 +239,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		    (struct rt_arb_internal *)ip->idb_ptr;
 		RT_ARB_CK_MAGIC(arb);
 
-		if (*cp == 'V') {
-		    int vertex_number;
-		    char *ptr;
-
-		    ptr = cp + 1;
-		    vertex_number = (*ptr) - '0';
-		    if (vertex_number < 1 || vertex_number > 8)
-			vertex_number = 1;
-		    VMOVE(mpt, arb->pt[vertex_number-1]);
-		    sprintf(buf, "V%d", vertex_number);
-		    *strp = buf;
-		    break;
-		}
-
-		/* Default */
 		VMOVE(mpt, arb->pt[0]);
-		*strp = "V1";
-
 		break;
 	    }
 	case ID_ELL:
@@ -293,29 +249,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		    (struct rt_ell_internal *)ip->idb_ptr;
 		RT_ELL_CK_MAGIC(ell);
 
-		if (BU_STR_EQUAL(cp, "V")) {
-		    VMOVE(mpt, ell->v);
-		    *strp = "V";
-		    break;
-		}
-		if (BU_STR_EQUAL(cp, "A")) {
-		    VADD2(mpt, ell->v, ell->a);
-		    *strp = "A";
-		    break;
-		}
-		if (BU_STR_EQUAL(cp, "B")) {
-		    VADD2(mpt, ell->v, ell->b);
-		    *strp = "B";
-		    break;
-		}
-		if (BU_STR_EQUAL(cp, "C")) {
-		    VADD2(mpt, ell->v, ell->c);
-		    *strp = "C";
-		    break;
-		}
-		/* Default */
 		VMOVE(mpt, ell->v);
-		*strp = "V";
 		break;
 	    }
 	case ID_SUPERELL:
@@ -324,29 +258,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		    (struct rt_superell_internal *)ip->idb_ptr;
 		RT_SUPERELL_CK_MAGIC(superell);
 
-		if (BU_STR_EQUAL(cp, "V")) {
-		    VMOVE(mpt, superell->v);
-		    *strp = "V";
-		    break;
-		}
-		if (BU_STR_EQUAL(cp, "A")) {
-		    VADD2(mpt, superell->v, superell->a);
-		    *strp = "A";
-		    break;
-		}
-		if (BU_STR_EQUAL(cp, "B")) {
-		    VADD2(mpt, superell->v, superell->b);
-		    *strp = "B";
-		    break;
-		}
-		if (BU_STR_EQUAL(cp, "C")) {
-		    VADD2(mpt, superell->v, superell->c);
-		    *strp = "C";
-		    break;
-		}
-		/* Default */
 		VMOVE(mpt, superell->v);
-		*strp = "V";
 		break;
 	    }
 	case ID_TOR:
@@ -355,14 +267,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		    (struct rt_tor_internal *)ip->idb_ptr;
 		RT_TOR_CK_MAGIC(tor);
 
-		if (BU_STR_EQUAL(cp, "V")) {
-		    VMOVE(mpt, tor->v);
-		    *strp = "V";
-		    break;
-		}
-		/* Default */
 		VMOVE(mpt, tor->v);
-		*strp = "V";
 		break;
 	    }
 	case ID_TGC:
@@ -372,69 +277,8 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		    (struct rt_tgc_internal *)ip->idb_ptr;
 		RT_TGC_CK_MAGIC(tgc);
 
-		if (BU_STR_EQUAL(cp, "V")) {
-		    VMOVE(mpt, tgc->v);
-		    *strp = "V";
-		    break;
-		}
-		if (BU_STR_EQUAL(cp, "H")) {
-		    VMOVE(mpt, tgc->h);
-		    *strp = "H";
-		    break;
-		}
-		if (BU_STR_EQUAL(cp, "A")) {
-		    VMOVE(mpt, tgc->a);
-		    *strp = "A";
-		    break;
-		}
-		if (BU_STR_EQUAL(cp, "B")) {
-		    VMOVE(mpt, tgc->b);
-		    *strp = "B";
-		    break;
-		}
-		if (BU_STR_EQUAL(cp, "C")) {
-		    VMOVE(mpt, tgc->c);
-		    *strp = "C";
-		    break;
-		}
-		if (BU_STR_EQUAL(cp, "D")) {
-		    VMOVE(mpt, tgc->d);
-		    *strp = "D";
-		    break;
-		}
-		/* Default */
 		VMOVE(mpt, tgc->v);
-		*strp = "V";
 		break;
-	    }
-	case ID_BSPLINE:
-	    {
-		bu_vls_printf(gedp->ged_result_str,
-			      "getting origin of BSPLINE temporarily disabled");
-		return GED_ERROR;
-#if 0
-		struct rt_nurb_internal *sip =
-		    (struct rt_nurb_internal *) es_int.idb_ptr;
-		struct face_g_snurb *surf;
-		fastf_t *fp;
-		int spl_surfno;	/* What surf & ctl pt to edit on spline */
-		int spl_ui;
-		int spl_vi;
-
-		RT_NURB_CK_MAGIC(sip);
-		spl_surfno = sip->nsrf/2;
-		surf = sip->srfs[spl_surfno];
-		NMG_CK_SNURB(surf);
-		spl_ui = surf->s_size[1]/2;
-		spl_vi = surf->s_size[0]/2;
-
-		fp = &RT_NURB_GET_CONTROL_POINT(surf, spl_ui, spl_vi);
-		VMOVE(mpt, fp);
-		sprintf(buf, "Surf %d, index %d,%d",
-			spl_surfno, spl_ui, spl_vi);
-		*strp = buf;
-		break;
-#endif
 	    }
 	case ID_GRIP:
 	    {
@@ -442,7 +286,6 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		    (struct rt_grip_internal *)ip->idb_ptr;
 		RT_GRIP_CK_MAGIC(gip);
 		VMOVE(mpt, gip->center);
-		*strp = "C";
 		break;
 	    }
 	case ID_ARS:
@@ -451,6 +294,9 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 			      "getting origin of ARS temporarily disabled");
 		return GED_ERROR;
 #if 0
+		int es_ars_crv;	/* curve and column identifying selected ARS point */
+		int es_ars_col;
+		point_t es_pt;		/* coordinates of selected ARS point */
 		struct rt_ars_internal *ars =
 		    (struct rt_ars_internal *)es_int.idb_ptr;
 		RT_ARS_CK_MAGIC(ars);
@@ -461,7 +307,6 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		    VMOVE(mpt, &ars->curves[es_ars_crv][es_ars_col*3]);
 		}
 
-		*strp = "V";
 		break;
 #endif
 	    }
@@ -472,7 +317,6 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		RT_RPC_CK_MAGIC(rpc);
 
 		VMOVE(mpt, rpc->rpc_V);
-		*strp = "V";
 		break;
 	    }
 	case ID_RHC:
@@ -482,7 +326,6 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		RT_RHC_CK_MAGIC(rhc);
 
 		VMOVE(mpt, rhc->rhc_V);
-		*strp = "V";
 		break;
 	    }
 	case ID_EPA:
@@ -492,7 +335,6 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		RT_EPA_CK_MAGIC(epa);
 
 		VMOVE(mpt, epa->epa_V);
-		*strp = "V";
 		break;
 	    }
 	case ID_EHY:
@@ -502,7 +344,6 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		RT_EHY_CK_MAGIC(ehy);
 
 		VMOVE(mpt, ehy->ehy_V);
-		*strp = "V";
 		break;
 	    }
 	case ID_HYP:
@@ -512,7 +353,6 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		RT_HYP_CK_MAGIC(hyp);
 
 		VMOVE(mpt, hyp->hyp_Vi);
-		*strp = "V";
 		break;
 	    }
 	case ID_ETO:
@@ -522,7 +362,6 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		RT_ETO_CK_MAGIC(eto);
 
 		VMOVE(mpt, eto->eto_V);
-		*strp = "V";
 		break;
 	    }
 	case ID_POLY:
@@ -534,7 +373,6 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 
 		_poly = pg->poly;
 		VMOVE(mpt, _poly->verts);
-		*strp = "V";
 		break;
 	    }
 	case ID_SKETCH:
@@ -544,7 +382,6 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		RT_SKETCH_CK_MAGIC(skt);
 
 		VMOVE(mpt, skt->V);
-		*strp = "V";
 		break;
 	    }
 	case ID_EXTRUDE:
@@ -555,15 +392,17 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 
 		if (extr->skt && extr->skt->verts) {
 		    VJOIN2(mpt, extr->V, extr->skt->verts[0][0], extr->u_vec, extr->skt->verts[0][2], extr->v_vec);
-		    *strp = "V1";
 		} else {
 		    VMOVE(mpt, extr->V);
-		    *strp = "V";
 		}
 		break;
 	    }
 	case ID_NMG:
 	    {
+		bu_vls_printf(gedp->ged_result_str,
+			      "getting origin of NMG temporarily disabled");
+		return GED_ERROR;
+#if 0
 		struct vertex *v;
 		struct vertexuse *vu;
 		struct edgeuse *eu;
@@ -578,7 +417,6 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 
 		/* set default first */
 		VSETALL(mpt, 0.0);
-		*strp = "(origin)";
 
 		/* XXX Try to use the first point of the selected edge */
 		if (es_eu != (struct edgeuse *)NULL &&
@@ -627,7 +465,6 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		    if (!v->vg_p)
 			break;
 		    VMOVE(mpt, v->vg_p->coord);
-		    *strp = "V";
 		    break;
 		}
 		if (BU_LIST_IS_EMPTY(&s->lu_hd))
@@ -650,7 +487,6 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		    if (!v->vg_p)
 			break;
 		    VMOVE(mpt, v->vg_p->coord);
-		    *strp = "V";
 		    break;
 		}
 		if (BU_LIST_IS_EMPTY(&s->eu_hd))
@@ -665,7 +501,6 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		    if (!v->vg_p)
 			break;
 		    VMOVE(mpt, v->vg_p->coord);
-		    *strp = "V";
 		    break;
 		}
 		vu = s->vu_p;
@@ -676,15 +511,14 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		    if (!v->vg_p)
 			break;
 		    VMOVE(mpt, v->vg_p->coord);
-		    *strp = "V";
 		    break;
 		}
+#endif
 	    }
 	default:
 	    VSETALL(mpt, 0.0);
 	    bu_vls_printf(gedp->ged_result_str,
 			  "get_solid_keypoint: unrecognized solid type (setting keypoint to origin)");
-	    *strp = "(origin)";
 	    return GED_ERROR;
     }
     MAT4X3PNT(pt, mat, mpt);
