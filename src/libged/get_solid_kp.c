@@ -33,7 +33,7 @@
 
 
 /*
- * Default keypoint in model space is established in "pt". Returns 
+ * Default keypoint in model space is established in "pt". Returns
  * GED_ERROR if unable to determine a keypoint, otherwise returns
  * GED_OK.
  */
@@ -45,17 +45,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 {
     point_t mpt;
 
-    /* FIXME: data for solid editing; either all of these need to be
-     * set, or the cases that use them modified or removed. */
-#if 0
-    int bot_verts[3];		/* vertices for the BOT solid */
-    struct edgeuse *es_eu=(struct edgeuse *)NULL;	/* Currently selected NMG edgeuse */
-    struct wdb_pipept *es_pipept=(struct wdb_pipept *)NULL; /* Currently selected PIPE segment */
-    struct wdb_metaballpt *es_metaballpt=(struct wdb_metaballpt *)NULL; /* Currently selected METABALL Point */
-#endif
-
     RT_CK_DB_INTERNAL(ip);
-
 
     switch (ip->idb_type) {
 	case ID_CLINE:
@@ -95,18 +85,17 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 	    }
 	case ID_METABALL:
 	    {
-		bu_vls_printf(gedp->ged_result_str,
-			      "getting origin of METABALL temporarily disabled");
-		return GED_ERROR;
-#if 0
-		struct rt_metaball_internal *metaball = (struct rt_metaball_internal *)ip->idb_ptr;
+		struct rt_metaball_internal *metaball =
+		    (struct rt_metaball_internal *)ip->idb_ptr;
+		struct wdb_metaballpt *metaballpt;
 
 		RT_METABALL_CK_MAGIC(metaball);
 
 		VSETALL(mpt, 0.0);
-		VMOVE(mpt, es_metaballpt->coord);
+		metaballpt = BU_LIST_FIRST(wdb_metaballpt,
+					   &metaball->metaball_ctrl_head);
+		VMOVE(mpt, metaballpt->coord);
 		break;
-#endif	
 	    }
 	case ID_ARBN:
 	    {
@@ -119,7 +108,9 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		for (i=0; i<arbn->neqn; i++) {
 		    for (j=i+1; j<arbn->neqn; j++) {
 			for (k=j+1; k<arbn->neqn; k++) {
-			    if (!bn_mkpoint_3planes(mpt, arbn->eqn[i], arbn->eqn[j], arbn->eqn[k])) {
+			    if (!bn_mkpoint_3planes(mpt, arbn->eqn[i],
+						    arbn->eqn[j],
+						    arbn->eqn[k])) {
 				size_t l;
 
 				good_vert = 1;
@@ -127,7 +118,9 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 				    if (l == i || l == j || l == k)
 					continue;
 
-				    if (DIST_PT_PLANE(mpt, arbn->eqn[l]) > gedp->ged_wdbp->wdb_tol.dist) {
+				    if (DIST_PT_PLANE(mpt,
+					arbn->eqn[l]) >
+					gedp->ged_wdbp->wdb_tol.dist) {
 					good_vert = 0;
 					break;
 				    }
@@ -162,21 +155,11 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 	    }
 	case ID_BOT:
 	    {
-		bu_vls_printf(gedp->ged_result_str,
-			      "getting origin of BOT temporarily disabled");
-		return GED_ERROR;
-#if 0
 		struct rt_bot_internal *bot =
 		    (struct rt_bot_internal *)ip->idb_ptr;
 
-		if (bot_verts[0] > -1) {
-		    VMOVE(mpt, &bot->vertices[bot_verts[0]*3]);
-		} else {
 		    VMOVE(mpt, bot->vertices);
-		}
-
 		break;
-#endif
 	    }
 	case ID_DSP:
 	    {
@@ -278,25 +261,12 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 	    }
 	case ID_ARS:
 	    {
-		bu_vls_printf(gedp->ged_result_str,
-			      "getting origin of ARS temporarily disabled");
-		return GED_ERROR;
-#if 0
-		int es_ars_crv;	/* curve and column identifying selected ARS point */
-		int es_ars_col;
-		point_t es_pt;		/* coordinates of selected ARS point */
 		struct rt_ars_internal *ars =
-		    (struct rt_ars_internal *)ip.idb_ptr;
+		    (struct rt_ars_internal *)ip->idb_ptr;
 		RT_ARS_CK_MAGIC(ars);
 
-		if (es_ars_crv < 0 || es_ars_col < 0) {
-		    VMOVE(mpt, es_pt);
-		} else {
-		    VMOVE(mpt, &ars->curves[es_ars_crv][es_ars_col*3]);
-		}
-
+		VMOVE(mpt, &ars->curves[0][0]);
 		break;
-#endif
 	    }
 	case ID_RPC:
 	    {
@@ -379,7 +349,8 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		RT_EXTRUDE_CK_MAGIC(extr);
 
 		if (extr->skt && extr->skt->verts) {
-		    VJOIN2(mpt, extr->V, extr->skt->verts[0][0], extr->u_vec, extr->skt->verts[0][2], extr->v_vec);
+		    VJOIN2(mpt, extr->V, extr->skt->verts[0][0], extr->u_vec,
+			   extr->skt->verts[0][2], extr->v_vec);
 		} else {
 		    VMOVE(mpt, extr->V);
 		}
@@ -387,10 +358,6 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 	    }
 	case ID_NMG:
 	    {
-		bu_vls_printf(gedp->ged_result_str,
-			      "getting origin of NMG temporarily disabled");
-		return GED_ERROR;
-#if 0
 		struct vertex *v;
 		struct vertexuse *vu;
 		struct edgeuse *eu;
@@ -399,21 +366,11 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		struct shell *s;
 		struct nmgregion *r;
 		struct model *m =
-		    (struct model *) ip.idb_ptr;
+		    (struct model *) ip->idb_ptr;
 		NMG_CK_MODEL(m);
-		/* XXX Fall through, for now (How about first vertex?? - JRA) */
 
 		/* set default first */
 		VSETALL(mpt, 0.0);
-
-		/* XXX Try to use the first point of the selected edge */
-		if (es_eu != (struct edgeuse *)NULL &&
-		    es_eu->vu_p != (struct vertexuse *)NULL &&
-		    es_eu->vu_p->v_p != (struct vertex *)NULL &&
-		    es_eu->vu_p->v_p->vg_p != (struct vertex_g *)NULL) {
-		    VMOVE(mpt, es_eu->vu_p->v_p->vg_p->coord);
-		    break;
-		}
 
 		if (BU_LIST_IS_EMPTY(&m->r_hd))
 		    break;
@@ -501,12 +458,11 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		    VMOVE(mpt, v->vg_p->coord);
 		    break;
 		}
-#endif
 	    }
 	default:
 	    VSETALL(mpt, 0.0);
 	    bu_vls_printf(gedp->ged_result_str,
-			  "get_solid_keypoint: unrecognized solid type (setting keypoint to origin)");
+			  "get_solid_keypoint: unrecognized solid type");
 	    return GED_ERROR;
     }
     MAT4X3PNT(pt, mat, mpt);
