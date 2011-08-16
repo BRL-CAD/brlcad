@@ -1034,15 +1034,19 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
     }
 
     if (arg->type & EDIT_NATURAL_ORIGIN) {
+	char *str;
+	char *str2;
+
 	if (d->d_flags & (RT_DIR_COMB | RT_DIR_REGION)) {
 	    bu_vls_printf(gedp->ged_result_str, "combinations do not have a"
 		      " natural origin (%s)", d->d_namep );
 	    return GED_ERROR;
 	}
-	char *str = (char *)bu_calloc(BUFSIZ, sizeof(char),
+
+	str = str2 = (char *)bu_calloc(BUFSIZ, sizeof(char),
 				"char block for edit_arg_to_apparent_coord");
-	char *str2 = str;
-	*str = 'V';
+	str[0] = 'V';
+	str[1] = '\0';
 	GED_DB_GET_INTERNAL(gedp, &intern, d, (fastf_t *)NULL,
 			    &rt_uniresource, GED_ERROR);
 	_ged_get_solid_keypoint(gedp, leaf_deltas, &str, &intern,
