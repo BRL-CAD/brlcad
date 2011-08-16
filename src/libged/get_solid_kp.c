@@ -127,7 +127,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 				    if (l == i || l == j || l == k)
 					continue;
 
-				    if (DIST_PT_PLANE(mpt, arbn->eqn[l]) > 0.005) {
+				    if (DIST_PT_PLANE(mpt, arbn->eqn[l]) > gedp->ged_wdbp->wdb_tol.dist) {
 					good_vert = 0;
 					break;
 				    }
