@@ -1040,7 +1040,7 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
 	    return GED_ERROR;
 	}
 	char *str;
-	str = (char *)bu_malloc(BUFSIZ,
+	str = (char *)bu_calloc(BUFSIZ, sizeof(char),
 				"char block for edit_arg_to_apparent_coord");
 	str = "V";
 	GED_DB_GET_INTERNAL(gedp, &intern, d, (fastf_t *)NULL,
