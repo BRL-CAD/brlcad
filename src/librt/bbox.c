@@ -282,6 +282,75 @@ rt_in_rpp(struct xray *rp,
 }
 
 
+/**
+ * R T _ B O U N D _ I N T E R N A L
+ *
+ * Calculate the bounding RPP of the internal format passed in 'ip'.  
+ * The bounding RPP is returned in rpp_min and rpp_max in mm
+ *
+ * Returns -
+ *  0 success
+ * -1 failure
+ * -2 a region/comb was passed so model bounds are 0(will be fixed soon)
+ */
+int
+rt_bound_internal(struct rt_db_internal *ip, point_t *rpp_min, point_t *rpp_max)
+{
+    struct db_i *dbip;    
+    struct rt_i *rtip;
+    
+    RT_CK_DB_INTERNAL(ip);
+    
+    /* Check if a region or comb was passed, in which case the model bounds will be 0
+       This is because the leaf primitives for the region are missing in the dbi and 
+       need to be found and inserted there before rt_gettree(rtip, "dummy") is called
+    */    
+    if(ip->idb_minor_type == ID_COMBINATION){
+        bu_log("rt_bound_internal: A region/comb was passed, the bounding box was not calculated.\n");
+        return -2;    
+    }        
+    
+    /* Create an empty db_i */
+    dbip = db_open_inmem();   
+    
+    RT_CK_DBI(dbip);
+    RT_CK_WDB(dbip->dbi_wdbp);
+    
+    /* Insert the passed struct rt_db_internal into the db_i, use a dummy name */
+    if (wdb_put_internal(dbip->dbi_wdbp, "dummy", ip, 1.0) < 0) {
+        bu_log("rt_bound_internal: wdb_put_internal() failed");
+        return -1;
+    }
+    
+    /* Get a new rtip for the dbip */
+    rtip = rt_new_rti(dbip);  
+    
+    /* Walk the geometry tree for the single object 'dummy' for which we want the BB */
+    if (rt_gettree(rtip, "dummy") < 0){
+        bu_log("rt_bound_internal: rt_gettree('dummy') failed\n");
+        return -1;
+    }
+    
+    /* Check if the model bounds look correct e.g. if they are all 0, then its not correct */
+    if((abs(rtip->mdl_min[0]) == 0  || rtip->mdl_min[0] < -INFINITY || rtip->mdl_min[0] > INFINITY) &&
+       (abs(rtip->mdl_min[1]) == 0  || rtip->mdl_min[1] < -INFINITY || rtip->mdl_min[1] > INFINITY) &&
+       (abs(rtip->mdl_min[2]) == 0  || rtip->mdl_min[2] < -INFINITY || rtip->mdl_min[2] > INFINITY) &&
+       (abs(rtip->mdl_max[0]) == 0  || rtip->mdl_max[0] < -INFINITY || rtip->mdl_max[0] > INFINITY) &&
+       (abs(rtip->mdl_max[1]) == 0  || rtip->mdl_max[1] < -INFINITY || rtip->mdl_max[1] > INFINITY) &&
+       (abs(rtip->mdl_max[2]) == 0  || rtip->mdl_max[2] < -INFINITY || rtip->mdl_max[2] > INFINITY)){        
+       bu_log("rt_bound_internal: Warning : The bounds of the model may not be correct\n");         
+    }
+    
+       
+    VMOVE(*rpp_min, rtip->mdl_min);
+    VMOVE(*rpp_max, rtip->mdl_max);
+      
+    rt_free_rti(rtip);
+    db_close(dbip);    
+    
+    return 0;
+}
+
 /*
  * Local Variables:
  * mode: C

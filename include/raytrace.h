@@ -2584,6 +2584,11 @@ RT_EXPORT extern const union cutter *rt_cell_n_on_ray(struct application *ap,
 						      int n);
 RT_EXPORT extern void rt_cut_clean(struct rt_i *rtip);
 
+/* Find the bounding box given a struct rt_db_internal : bbox.c */
+RT_EXPORT extern int rt_bound_internal(struct rt_db_internal *ip, 
+                                         point_t *rpp_min, 
+                                         point_t *rpp_max);
+
 /* cmd.c */
 /* Read semi-colon terminated line */
 RT_EXPORT extern char *rt_read_cmd(FILE *fp);
