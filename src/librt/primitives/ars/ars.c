@@ -680,7 +680,6 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 int
 rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
-#if 1
     struct rt_db_internal intern;
     struct rt_bot_internal *bot;
     struct model *m;
@@ -721,118 +720,6 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     rt_bot_ifree(&intern);
 
     return ret;
-#else
-    fastf_t dx, dy, dz;	/* For finding the bounding spheres */
-    int i, j, ntri;
-    fastf_t f;
-    struct rt_ars_internal *arip;
-    struct bot_specific *bot;
-    const struct bn_tol *tol = &rtip->rti_tol;
-    int ncv;
-
-    arip = (struct rt_ars_internal *)ip->idb_ptr;
-    RT_ARS_CK_MAGIC(arip);
-
-    /* initialize the Bag-'o-triangles structure we need */
-    BU_GETSTRUCT(bot, bot_specific);
-    stp->st_specific = (genptr_t)bot;
-    bot->bot_mode = RT_BOT_SOLID;
-    bot->bot_orientation = RT_BOT_UNORIENTED;
-    bot->bot_errmode = (unsigned char)NULL;
-    bot->bot_thickness = (fastf_t *)NULL;
-    bot->bot_facemode = (struct bu_bitv *)NULL;
-    bot->bot_facelist = (struct tri_specific *)NULL;
-
-    /*
-     * Compute bounding sphere.  Find min and max of the point
-     * co-ordinates.
-     */
-    VSETALL(stp->st_max, -INFINITY);
-    VSETALL(stp->st_min,  INFINITY);
-
-    for (i = 0; i < arip->ncurves; i++) {
-	register fastf_t *v;
-
-	v = arip->curves[i];
-	for (j = 0; j < arip->pts_per_curve; j++) {
-	    VMINMAX(stp->st_min, stp->st_max, v);
-	    v += ELEMENTS_PER_VECT;
-	}
-    }
-    VSET(stp->st_center,
-	 (stp->st_max[X] + stp->st_min[X])/2,
-	 (stp->st_max[Y] + stp->st_min[Y])/2,
-	 (stp->st_max[Z] + stp->st_min[Z])/2);
-
-    dx = (stp->st_max[X] - stp->st_min[X])/2;
-    f = dx;
-    dy = (stp->st_max[Y] - stp->st_min[Y])/2;
-    if (dy > f) f = dy;
-    dz = (stp->st_max[Z] - stp->st_min[Z])/2;
-    if (dz > f) f = dz;
-    stp->st_aradius = f;
-    stp->st_bradius = sqrt(dx*dx + dy*dy + dz*dz);
-
-
-    /*
-     * Compute planar faces. Will examine curves[i][pts_per_curve],
-     * provided by ars_rd_curve.
-     */
-    ncv = arip->ncurves-2;
-    ntri = 0;
-    for (i=0; i <= ncv; i++) {
-	register fastf_t *v1, *v2;
-
-	v1 = arip->curves[i];
-	v2 = arip->curves[i+1];
-	for (j = 0; j < arip->pts_per_curve;
-	     j++, v1 += ELEMENTS_PER_VECT, v2 += ELEMENTS_PER_VECT) {
-
-	    /* XXX make sure the faces are actual triangles */
-
-	    /* carefully make faces, w/inward pointing normals */
-	    /* [0][0] [1][1], [0][1] */
-	    if (i != 0 &&
-		rt_botface(stp, bot, &v1[0], &v2[ELEMENTS_PER_VECT],
-			   &v1[ELEMENTS_PER_VECT], ntri, tol) > 0) ntri++;
-
-	    /* [1][0] [1][1] [0][0] */
-	    if (i < ncv &&
-		rt_botface(stp, bot, &v2[0], &v2[ELEMENTS_PER_VECT],
-			   &v1[0], ntri, tol) > 0) ntri++;
-	}
-    }
-
-    if (bot->bot_facelist == (struct tri_specific *)0) {
-	bu_log("ars(%s):  no faces\n", stp->st_name);
-	return -1;             /* BAD */
-    }
-
-    bot->bot_ntri = ntri;
-
-    /*
-     * Support for solid 'pieces'
-     *
-     * For now, each triangle is considered a separate piece.  These
-     * array allocations can't be made until the number of triangles
-     * are known.
-     *
-     * If the number of triangles is too small, don't bother making
-     * pieces, the overhead isn't worth it.
-     *
-     * To disable BoT pieces, on the RT command line specify:
-     * -c "set rt_bot_minpieces=0"
-     */
-    if (rt_bot_minpieces <= 0) return 0;
-    if (ntri < rt_bot_minpieces) return 0;
-
-
-    rt_bot_prep_pieces(bot, stp, ntri, tol);
-
-    rt_ars_ifree(ip);
-
-    return 0;		/* OK */
-#endif
 }
 
 
