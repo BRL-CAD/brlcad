@@ -71,8 +71,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * implement new makesegs for tie
 
-* png support in rtwizard
-
 * annotation primitive.  specifically a means to create an object in
   the database that can optionally be associated with an object and/or
   location that a label refers to.  there are various styles such as
