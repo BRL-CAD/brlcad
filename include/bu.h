@@ -323,6 +323,19 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 
 
 #ifdef NO_BOMBING_MACROS
+#  define BU_ASSERT_SSIZE_T(_lhs, _relation, _rhs)
+#else
+#  define BU_ASSERT_SSIZE_T(_lhs, _relation, _rhs)	\
+    if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
+	bu_log("BU_ASSERT_SSIZE_T(" #_lhs #_relation #_rhs ") failed, lhs=%zd, rhs=%zd, file %s, line %d\n", \
+	       (ssize_t)(_lhs), (ssize_t)(_rhs), \
+	       __FILE__, __LINE__); \
+	bu_bomb("BU_ASSERT_SSIZE_T failure\n"); \
+    }
+#endif
+
+
+#ifdef NO_BOMBING_MACROS
 #  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs)
 #else
 #  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs)	\
