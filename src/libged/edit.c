@@ -1048,6 +1048,7 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
 	_ged_get_solid_keypoint(gedp, leaf_deltas, &str, &intern,
 				(const fastf_t *const)gtd.gtd_xform);
 	rt_db_free_internal(&intern);
+	bu_free((char *)str, "char");
     } else {
 	/* bounding box center is the default */
 	VADD2SCALE(leaf_deltas, rpp_min, rpp_max, 0.5);
