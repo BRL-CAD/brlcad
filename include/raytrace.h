@@ -2062,6 +2062,10 @@ struct rt_functab {
 		      const struct db_i * /*dbip*/,
 		      struct resource * /*resp*/);
     void (*ft_ifree)(struct rt_db_internal * /*ip*/);
+    /* Axis aligned bounding box */
+    int (*ft_bbox)(struct rt_db_internal * /*ip*/,
+		   point_t * /*min X, Y, Z of bounding RPP*/,
+		   point_t * /*max X, Y, Z of bounding RPP*/);
     int	(*ft_describe)(struct bu_vls * /*str*/,
 		       const struct rt_db_internal * /*ip*/,
 		       int /*verbose*/,

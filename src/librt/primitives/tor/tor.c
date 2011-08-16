@@ -154,6 +154,56 @@ struct tor_specific {
     mat_t tor_invR;	/* invRot(vect') */
 };
 
+/**
+ * R T _ T O R _ B B O X
+ *
+ * Compute the bounding RPP for a circular torus.
+ */
+int
+rt_tor_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+    vect_t P, w1;	/* for RPP calculation */
+    fastf_t f;
+    struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tip);
+
+   /* Compute the bounding RPP planes for a circular torus.
+    *
+    * Given a circular torus with vertex V, vector N, and radii r1
+    * and r2.  A bounding plane with direction vector P will touch
+    * the surface of the torus at the points:
+    *
+    * V +/- [r2 + r1 * |N x P|] P
+    */
+   /* X */
+   VSET(P, 1.0, 0, 0);		/* bounding plane normal */
+   VCROSS(w1, tip->h, P);	/* for sin(angle N P) */
+   f = tip->r_h + tip->r_a * MAGNITUDE(w1);
+   VSCALE(w1, P, f);
+   f = fabs(w1[X]);
+   (*min)[X] = tip->v[X] - f;
+   (*max)[X] = tip->v[X] + f;
+
+   /* Y */
+   VSET(P, 0, 1.0, 0);		/* bounding plane normal */
+   VCROSS(w1, tip->h, P);	/* for sin(angle N P) */
+   f = tip->r_h + tip->r_a * MAGNITUDE(w1);
+   VSCALE(w1, P, f);
+   f = fabs(w1[Y]);
+   (*min)[Y] = tip->v[Y] - f;
+   (*max)[Y] = tip->v[Y] + f;
+
+   /* Z */
+   VSET(P, 0, 0, 1.0);		/* bounding plane normal */
+   VCROSS(w1, tip->h, P);	/* for sin(angle N P) */
+   f = tip->r_h + tip->r_a * MAGNITUDE(w1);
+   VSCALE(w1, P, f);
+   f = fabs(w1[Z]);
+   (*min)[Z] = tip->v[Z] - f;
+   (*max)[Z] = tip->v[Z] + f;
+
+   return 0;
+}
+
 
 /**
  * R T _ T O R _ P R E P
@@ -177,7 +227,6 @@ rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     struct rt_tor_internal *tip;
 
     mat_t R;
-    vect_t P, w1;	/* for RPP calculation */
     fastf_t f;
 
     tip = (struct rt_tor_internal *)ip->idb_ptr;
@@ -244,42 +293,10 @@ rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     VMOVE(stp->st_center, tor->tor_V);
     stp->st_aradius = stp->st_bradius = tor->tor_r1 + tip->r_h;
 
-    /*
-     * Compute the bounding RPP planes for a circular torus.
-     *
-     * Given a circular torus with vertex V, vector N, and radii r1
-     * and r2.  A bounding plane with direction vector P will touch
-     * the surface of the torus at the points:
-     *
-     * V +/- [r2 + r1 * |N x P|] P
-     */
-    /* X */
-    VSET(P, 1.0, 0, 0);		/* bounding plane normal */
-    VCROSS(w1, tor->tor_N, P);	/* for sin(angle N P) */
-    f = tor->tor_r2 + tor->tor_r1 * MAGNITUDE(w1);
-    VSCALE(w1, P, f);
-    f = fabs(w1[X]);
-    stp->st_min[X] = tor->tor_V[X] - f;
-    stp->st_max[X] = tor->tor_V[X] + f;
-
-    /* Y */
-    VSET(P, 0, 1.0, 0);		/* bounding plane normal */
-    VCROSS(w1, tor->tor_N, P);	/* for sin(angle N P) */
-    f = tor->tor_r2 + tor->tor_r1 * MAGNITUDE(w1);
-    VSCALE(w1, P, f);
-    f = fabs(w1[Y]);
-    stp->st_min[Y] = tor->tor_V[Y] - f;
-    stp->st_max[Y] = tor->tor_V[Y] + f;
-
-    /* Z */
-    VSET(P, 0, 0, 1.0);		/* bounding plane normal */
-    VCROSS(w1, tor->tor_N, P);	/* for sin(angle N P) */
-    f = tor->tor_r2 + tor->tor_r1 * MAGNITUDE(w1);
-    VSCALE(w1, P, f);
-    f = fabs(w1[Z]);
-    stp->st_min[Z] = tor->tor_V[Z] - f;
-    stp->st_max[Z] = tor->tor_V[Z] + f;
-
+    if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max))) {
+	return 1;
+    }
+    
     return 0;			/* OK */
 }
 

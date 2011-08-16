@@ -67,7 +67,6 @@ struct sph_specific {
     mat_t sph_SoR;	/* Rotate and scale for UV mapping */
 };
 
-
 /**
  * R T _ S P H _ P R E P
  *
@@ -169,13 +168,7 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_aradius = stp->st_bradius = sph->sph_rad;
 
     /* Compute bounding RPP */
-    stp->st_min[X] = sph->sph_V[X] - sph->sph_rad;
-    stp->st_max[X] = sph->sph_V[X] + sph->sph_rad;
-    stp->st_min[Y] = sph->sph_V[Y] - sph->sph_rad;
-    stp->st_max[Y] = sph->sph_V[Y] + sph->sph_rad;
-    stp->st_min[Z] = sph->sph_V[Z] - sph->sph_rad;
-    stp->st_max[Z] = sph->sph_V[Z] + sph->sph_rad;
-
+    if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
     return 0;			/* OK */
 }
 

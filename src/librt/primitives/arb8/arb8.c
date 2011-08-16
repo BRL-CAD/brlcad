@@ -619,6 +619,22 @@ rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, con
     return 0;			/* OK */
 }
 
+/**
+ * R T _ A R B _ B B O X
+ *
+ * Find the bounding RPP of an arb
+ */
+int
+rt_arb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+    int i;
+    struct rt_arb_internal *aip;
+    aip = (struct rt_arb_internal *)ip->idb_ptr;
+    RT_ARB_CK_MAGIC(aip);
+    for (i = 0; i < 8; i++) {
+	VMINMAX((*min), (*max), aip->pt[i]);
+    }
+    return 0;
+}
 
 /**
  * R T _ A R B _ S E T U P
@@ -692,7 +708,7 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 	vect_t work;
 	register fastf_t f;
 
-	for (i=0; i< 8; i++) {
+	for (i = 0; i < 8; i++) {
 	    VMINMAX(stp->st_min, stp->st_max, aip->pt[i]);
 	}
 	VADD2SCALE(stp->st_center, stp->st_min, stp->st_max, 0.5);

@@ -87,6 +87,49 @@ const struct bu_structparse rt_tgc_parse[] = {
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+/**
+ * R T _ T G C _ B B O X
+ *
+ * Compute the bounding RPP for a truncated general cone
+ */
+int
+rt_tgc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+    vect_t work, temp;
+
+    struct rt_tgc_internal *tip = (struct rt_tgc_internal *)ip->idb_ptr;
+    RT_TGC_CK_MAGIC(tip);
+
+    VCROSS(work, tip->a, tip->b);
+
+    /* There are 8 corners to the bounding RPP */
+    /* This may not be minimal, but does fully contain the TGC */
+    VADD2(temp, tip->v, tip->a);
+    VADD2(work, temp, tip->b);
+    VMINMAX((*min), (*max), work);	/* V + A + B */
+    VSUB2(work, temp, tip->b);
+    VMINMAX((*min), (*max), work);	/* V + A - B */
+
+    VSUB2(temp, tip->v, tip->a);
+    VADD2(work, temp, tip->b);
+    VMINMAX((*min), (*max), work);	/* V - A + B */
+    VSUB2(work, temp, tip->b);
+    VMINMAX((*min), (*max), work);	/* V - A - B */
+
+    VADD3(temp, tip->v, tip->h, tip->c);
+    VADD2(work, temp, tip->d);
+    VMINMAX((*min), (*max), work);	/* V + H + C + D */
+    VSUB2(work, temp, tip->d);
+    VMINMAX((*min), (*max), work);	/* V + H + C - D */
+
+    VADD2(temp, tip->v, tip->h);
+    VSUB2(temp, temp, tip->c);
+    VADD2(work, temp, tip->d);
+    VMINMAX((*min), (*max), work);	/* V + H - C + D */
+    VSUB2(work, temp, tip->d);
+    VMINMAX((*min), (*max), work);	/* V + H - C - D */
+    return 0;
+}
+
 
 /**
  * R T _ T G C _ P R E P
@@ -281,37 +324,8 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     /* Compute bounding sphere and RPP */
     {
+	if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
 	fastf_t dx, dy, dz;	/* For bounding sphere */
-	vect_t temp;
-
-	/* There are 8 corners to the bounding RPP */
-	/* This may not be minimal, but does fully contain the TGC */
-	VADD2(temp, tgc->tgc_V, tip->a);
-	VADD2(work, temp, tip->b);
-#define TGC_MM(v) VMINMAX(stp->st_min, stp->st_max, v);
-	TGC_MM(work);	/* V + A + B */
-	VSUB2(work, temp, tip->b);
-	TGC_MM(work);	/* V + A - B */
-
-	VSUB2(temp, tgc->tgc_V, tip->a);
-	VADD2(work, temp, tip->b);
-	TGC_MM(work);	/* V - A + B */
-	VSUB2(work, temp, tip->b);
-	TGC_MM(work);	/* V - A - B */
-
-	VADD3(temp, tgc->tgc_V, tip->h, tip->c);
-	VADD2(work, temp, tip->d);
-	TGC_MM(work);	/* V + H + C + D */
-	VSUB2(work, temp, tip->d);
-	TGC_MM(work);	/* V + H + C - D */
-
-	VADD2(temp, tgc->tgc_V, tip->h);
-	VSUB2(temp, temp, tip->c);
-	VADD2(work, temp, tip->d);
-	TGC_MM(work);	/* V + H - C + D */
-	VSUB2(work, temp, tip->d);
-	TGC_MM(work);	/* V + H - C - D */
-
 	VSET(stp->st_center,
 	     (stp->st_max[X] + stp->st_min[X])/2,
 	     (stp->st_max[Y] + stp->st_min[Y])/2,
