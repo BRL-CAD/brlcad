@@ -209,6 +209,13 @@ extern int _ged_get_obj_bounds2(struct ged *gedp,
 				point_t rpp_min,
 				point_t rpp_max);
 
+/*  defined in get_solid_kp.c */
+extern int _ged_get_solid_keypoint(struct ged *const gedp,
+				   fastf_t *const pt,
+				   char **strp,
+				   const struct rt_db_internal *const ip,
+				   const fastf_t *const mat);
+
 /* defined in how.c */
 extern struct directory **_ged_build_dpp(struct ged *gedp,
 					 const char *path);

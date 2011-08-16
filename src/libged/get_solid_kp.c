@@ -29,47 +29,8 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "nurb.h"
+#include "./ged_private.h"
 
-/* data for solid editing */
-int sedraw;	/* apply solid editing changes */
-
-struct rt_db_internal es_int;
-struct rt_db_internal es_int_orig;
-
-int es_type;		/* COMGEOM solid type */
-int es_edflag;		/* type of editing for this solid */
-int es_edclass;		/* type of editing class for this solid */
-fastf_t es_scale;		/* scale factor */
-fastf_t es_peqn[7][4];		/* ARBs defining plane equations */
-fastf_t es_m[3];		/* edge(line) slope */
-mat_t es_mat;			/* accumulated matrix of path */
-mat_t es_invmat;		/* inverse of es_mat KAA */
-
-int bot_verts[3];		/* vertices for the BOT solid */
-
-point_t es_keypoint;		/* center of editing xforms */
-char *es_keytag;		/* string identifying the keypoint */
-int es_keyfixed;		/* keypoint specified by user? */
-
-vect_t es_para;	/* keyboard input param. Only when inpara set.  */
-int inpara;		/* es_para valid.  es_mvalid must = 0 */
-
-
-static int spl_surfno;	/* What surf & ctl pt to edit on spline */
-static int spl_ui;
-static int spl_vi;
-
-static int es_ars_crv;	/* curve and column identifying selected ARS point */
-static int es_ars_col;
-static point_t es_pt;		/* coordinates of selected ARS point */
-
-static struct edgeuse *es_eu=(struct edgeuse *)NULL;	/* Currently selected NMG edgeuse */
-
-static struct wdb_pipept *es_pipept=(struct wdb_pipept *)NULL; /* Currently selected PIPE segment */
-static struct wdb_metaballpt *es_metaballpt=(struct wdb_metaballpt *)NULL; /* Currently selected METABALL Point */
-
-/* XXX ported from mged */
-struct bn_tol mged_tol;	/* calculation tolerance */
 
 /*
  * Keypoint in model space is established in "pt".
@@ -85,15 +46,33 @@ struct bn_tol mged_tol;	/* calculation tolerance */
  *
  * XXX This was shamelessly copied from mged/edsol.c
  */
-void
-get_solid_kp(fastf_t *pt, struct rt_db_internal *ip, fastf_t *mat)
+int
+_ged_get_solid_keypoint(struct ged *const gedp,
+			fastf_t *const pt,
+			char **strp,
+			const struct rt_db_internal *const ip,
+			const fastf_t *const mat)
 {
-    char *str = "V";
-    char **strp = &str;
-    char *cp = *strp; /* FIXME: testing */
+    (void)gedp;
+    char *cp = *strp;
     point_t mpt;
-    static char buf[BUFSIZ];
+    char buf[BUFSIZ];
 
+    /* data for solid editing */
+    struct rt_db_internal es_int;
+    int bot_verts[3];		/* vertices for the BOT solid */
+#if 0
+    int spl_surfno;	/* What surf & ctl pt to edit on spline */
+    int spl_ui;
+    int spl_vi;
+    int es_ars_crv;	/* curve and column identifying selected ARS point */
+    int es_ars_col;
+    point_t es_pt;		/* coordinates of selected ARS point */
+#endif
+    struct edgeuse *es_eu=(struct edgeuse *)NULL;	/* Currently selected NMG edgeuse */
+    struct wdb_pipept *es_pipept=(struct wdb_pipept *)NULL; /* Currently selected PIPE segment */
+    struct wdb_metaballpt *es_metaballpt=(struct wdb_metaballpt *)NULL; /* Currently selected METABALL Point */
+    struct bn_tol mged_tol;	/* calculation tolerance */
 
     RT_CK_DB_INTERNAL(ip);
     memset(buf, 0, BUFSIZ);
@@ -434,6 +413,11 @@ get_solid_kp(fastf_t *pt, struct rt_db_internal *ip, fastf_t *mat)
 	    }
 	case ID_BSPLINE:
 	    {
+		bu_vls_printf(gedp->ged_result_str,
+			      "getting origin of BSPLINE is temporarily"
+			      " disabled");
+		return GED_ERROR;
+#if 0
 		struct rt_nurb_internal *sip =
 		    (struct rt_nurb_internal *) es_int.idb_ptr;
 		struct face_g_snurb *surf;
@@ -448,6 +432,7 @@ get_solid_kp(fastf_t *pt, struct rt_db_internal *ip, fastf_t *mat)
 			spl_surfno, spl_ui, spl_vi);
 		*strp = buf;
 		break;
+#endif
 	    }
 	case ID_GRIP:
 	    {
@@ -460,6 +445,10 @@ get_solid_kp(fastf_t *pt, struct rt_db_internal *ip, fastf_t *mat)
 	    }
 	case ID_ARS:
 	    {
+		bu_vls_printf(gedp->ged_result_str,
+			      "getting origin of ARS temporarily disabled");
+		return GED_ERROR;
+#if 0
 		struct rt_ars_internal *ars =
 		    (struct rt_ars_internal *)es_int.idb_ptr;
 		RT_ARS_CK_MAGIC(ars);
@@ -472,6 +461,7 @@ get_solid_kp(fastf_t *pt, struct rt_db_internal *ip, fastf_t *mat)
 
 		*strp = "V";
 		break;
+#endif
 	    }
 	case ID_RPC:
 	    {
@@ -697,6 +687,7 @@ get_solid_kp(fastf_t *pt, struct rt_db_internal *ip, fastf_t *mat)
 	    break;
     }
     MAT4X3PNT(pt, mat, mpt);
+    return GED_OK;
 }
 
 
