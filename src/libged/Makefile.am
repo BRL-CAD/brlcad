@@ -84,6 +84,7 @@ libged_nil_la_SOURCES = \
 	get_comb.c \
 	get_eyemodel.c \
 	get_obj_bounds.c \
+	get_solid_kp.c \
 	get_type.c \
 	glob.c \
 	globals.c \
