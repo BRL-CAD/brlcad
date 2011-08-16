@@ -1282,7 +1282,7 @@ const struct rt_functab rt_functab[] = {
 	rt_bot_import4,
 	rt_bot_export4,
 	rt_bot_ifree,
-	NULL,
+	rt_bot_bbox,
 	rt_bot_describe,
 	rt_bot_xform,
 	NULL,

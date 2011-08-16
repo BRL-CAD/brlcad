@@ -180,6 +180,42 @@ rt_bot_prep_pieces(struct bot_specific *bot,
     }
 }
 
+/**
+ * R T _ B O T _ B B O X
+ *
+ * Calculate an RPP for a BoT
+ */
+int
+rt_bot_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+    struct rt_bot_internal *bot_ip;
+    size_t vert_index;
+
+    RT_CK_DB_INTERNAL(ip);
+    bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
+    RT_BOT_CK_MAGIC(bot_ip);
+
+    VSETALL((*min), MAX_FASTF);
+    VSETALL((*max), -MAX_FASTF);
+    for (vert_index=0; vert_index < bot_ip->num_vertices; vert_index++) {
+	VMINMAX((*min), (*max), &bot_ip->vertices[vert_index]);
+    }
+    
+    /* Prevent the RPP from being 0 thickness */
+    if (NEAR_EQUAL((*min)[X], (*max)[X], SMALL_FASTF)) {
+	(*min)[X] -= SMALL_FASTF;
+	(*max)[X] += SMALL_FASTF;
+    }
+    if (NEAR_EQUAL((*min)[Y], (*max)[Y], SMALL_FASTF)) {
+	(*min)[Y] -= SMALL_FASTF;
+	(*max)[Y] += SMALL_FASTF;
+    }
+    if (NEAR_EQUAL((*min)[Z], (*max)[Z], SMALL_FASTF)) {
+	(*min)[Z] -= SMALL_FASTF;
+	(*max)[Z] += SMALL_FASTF;
+    }
+    return 0;
+}
+
 
 /**
  * R T _ B O T _ P R E P
@@ -204,6 +240,8 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     RT_CK_DB_INTERNAL(ip);
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
+
+    if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
 
     if ( rt_bot_mintie > 0 && bot_ip->num_faces >= rt_bot_mintie /* FIXME: (necessary?) && (bot_ip->face_normals != NULL || bot_ip->orientation != RT_BOT_UNORIENTED) */ )
 	return bottie_prep_double(stp, bot_ip, rtip);
