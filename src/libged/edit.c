@@ -838,8 +838,7 @@ edit_arg_postfix_new(struct edit_arg *head)
 {
     struct edit_arg *arg;
 
-    arg = (struct edit_arg *)bu_malloc(sizeof(struct edit_arg),
-	   "edit_arg block for edit_arg_postfix_new()");
+    BU_GETSTRUCT(arg, edit_arg);
     edit_arg_postfix(head, arg);
     edit_arg_init(arg);
     return arg;
@@ -863,10 +862,7 @@ edit_arg_duplicate_in_place(struct edit_arg *const dest,
     dest->coords_used = src->coords_used;
     dest->type = src->type;
     if (src->object) {
-	dest->object = (struct db_full_path *)bu_malloc(
-			  sizeof(struct db_full_path),
-			  "struct db_full_path block for"
-			  "edit_arg_duplicate_in_place()");
+	BU_GETSTRUCT(dest->object, db_full_path);
 	db_full_path_init(dest->object);
 	db_dup_full_path(dest->object, src->object);
     }
@@ -887,8 +883,7 @@ edit_arg_duplicate_in_place(struct edit_arg *const dest,
 HIDDEN void
 edit_arg_duplicate(struct edit_arg **dest, const struct edit_arg *src)
 {
-    *dest = (struct edit_arg *)bu_malloc(sizeof(struct edit_arg),
-	    "edit_arg block for edit_arg_duplicate()");
+    BU_GETSTRUCT(*dest, edit_arg);
     edit_arg_duplicate_in_place(*dest, src);
 }
 
@@ -1043,6 +1038,7 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
 	bu_vls_printf(gedp->ged_result_str, "natural origin option is not"
 		      " yet working");
 	return GED_ERROR;
+	/* FIXME: get soltab of 'd', and use soltab->st_matp */
     } else {
 	/* bounding box center is the default */
 	VADD2SCALE(leaf_deltas, rpp_min, rpp_max, 0.5);
@@ -1080,7 +1076,7 @@ edit_arg_to_coord(struct ged *gedp, struct edit_arg *const arg, vect_t *coord)
 	VADD2(**dest, *arg->vector, obj_coord);
     } else {
 	*dest = (vect_t *)bu_malloc(sizeof(vect_t),
-					"vect_t block for edit_arg_to_coord()");
+				    "vect_t block for edit_arg_to_coord()");
 	VMOVE(**dest, obj_coord);
     }
 
@@ -1247,6 +1243,7 @@ edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
 
 	if ((*arg_head)->type & EDIT_REL_DIST) {
 	    /* convert to absolute position */
+	    BU_ASSERT(kp_v); /* edit_*_add_cl_args should set this */
 	    (*arg_head)->type &= ~EDIT_REL_DIST;
 	    if ((*arg_head)->coords_used & EDIT_COORD_X) {
 		(*to_v)[0] += (*kp_v)[0];
@@ -1573,9 +1570,8 @@ edit_translate(struct ged *gedp, const vect_t *const from,
 	    leaf_to_modify->tr_l.tl_mat = (matp_t)bu_malloc(sizeof(mat_t),
 	    				  "mat_t block for edit_translate()");
 	    MAT_IDN(leaf_to_modify->tr_l.tl_mat);
-	    MAT_DELTAS_VEC(leaf_to_modify->tr_l.tl_mat, delta);
-	} else
-	    MAT_DELTAS_ADD_VEC(leaf_to_modify->tr_l.tl_mat, delta);
+	}
+	MAT_DELTAS_ADD_VEC(leaf_to_modify->tr_l.tl_mat, delta);
     } else {
 	/* no path; move all obj instances (obj's entire tree
 	 * modified)
@@ -1878,10 +1874,13 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
 	    /* cmd line opts should have been handled/removed */
 	    BU_ASSERT(cur_arg->cl_options[0] == '\0');
 
-	    if (cur_arg->type & EDIT_USE_TARGETS)
-		edit_arg_expand_meta(gedp, cur_arg, subcmd->common.objects,
-				     GED_ERROR);
-	    else if (cur_arg->object) {
+	    if (cur_arg->type & EDIT_USE_TARGETS) {
+		if (edit_arg_expand_meta(gedp, cur_arg, subcmd->common.objects,
+					 GED_ERROR) == GED_ERROR)
+		    return GED_ERROR;
+		else
+		    break; /* batch opertor should be last arg */
+	    } else if (cur_arg->object) {
 		if (edit_arg_to_coord(gedp, cur_arg, (vect_t *)NULL) ==
 		    GED_ERROR)
 		    return GED_ERROR;
@@ -2071,8 +2070,7 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 
 convert_obj:
     /* convert string to path/object */
-    arg->object = (struct db_full_path *)bu_malloc(sizeof(struct db_full_path),
-		  "db_full_path block for edit_str_to_arg()");
+    BU_GETSTRUCT(arg->object, db_full_path);
     if (db_string_to_path(arg->object, gedp->ged_wdbp->dbip,
 			   str)) {
 	db_free_full_path(arg->object);
@@ -2219,10 +2217,10 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 
     /* now that the cmd type is known, we can init the subcmd args */
     edit_cmd_init(&subcmd);
-    cur_arg = subcmd.cmd_line.args = (struct edit_arg *)bu_malloc(
-				     sizeof(struct edit_arg),
-				     "edit_arg block for ged_edit()");
-    edit_arg_init(cur_arg);
+
+    BU_GETSTRUCT(subcmd.cmd_line.args, edit_arg);
+    edit_arg_init(subcmd.cmd_line.args);
+    cur_arg = subcmd.cmd_line.args;
 
     if (subcmd_name == cmd_name) { /* ptr cmp */
 	/* command name is serving as the subcommand */
