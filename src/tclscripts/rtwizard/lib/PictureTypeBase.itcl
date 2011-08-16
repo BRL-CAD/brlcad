@@ -272,7 +272,6 @@ namespace eval RtWizard {
 			 -n $height -V $ar -A 0.9 -p $perspective \
 			 -C [lindex $bg 0]/[lindex $bg 1]/[lindex $bg 2] \
 			 $::RtWizard::dbFile]
-	    puts "$cmd"
 	    foreach obj $objects {
 		lappend cmd $obj
 	    }
