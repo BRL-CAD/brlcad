@@ -164,7 +164,7 @@ rt_comb_v5_serialize(
     struct rt_comb_v5_serialize_state *ssp)
 {
     size_t n;
-    size_t mi;
+    ssize_t mi;
 
     RT_CK_TREE(tp);
     RT_CK_COMB_V5_SERIALIZE_STATE(ssp);
@@ -182,12 +182,12 @@ rt_comb_v5_serialize(
 	    if (tp->tr_l.tl_mat && !bn_mat_is_identity(tp->tr_l.tl_mat))
 		mi = ssp->mat_num++;
 	    else
-		mi = (size_t)-1;
-	    BU_ASSERT_SIZE_T(mi, <, ssp->nmat);
+		mi = (ssize_t)-1;
+	    BU_ASSERT_SSIZE_T(mi, <, (ssize_t)ssp->nmat);
 	    ssp->leafp = db5_encode_length(ssp->leafp, mi, ssp->wid);
 
 	    /* Encoding of the matrix */
-	    if (mi != (size_t)-1) {
+	    if (mi != (ssize_t)-1) {
 		htond(ssp->matp,
 		      (const unsigned char *)tp->tr_l.tl_mat,
 		      ELEMENTS_PER_MAT);
