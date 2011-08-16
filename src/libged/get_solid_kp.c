@@ -61,9 +61,6 @@ _ged_get_solid_keypoint(struct ged *const gedp,
     struct rt_db_internal es_int;
     int bot_verts[3];		/* vertices for the BOT solid */
 #if 0
-    int spl_surfno;	/* What surf & ctl pt to edit on spline */
-    int spl_ui;
-    int spl_vi;
     int es_ars_crv;	/* curve and column identifying selected ARS point */
     int es_ars_col;
     point_t es_pt;		/* coordinates of selected ARS point */
@@ -412,26 +409,27 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 	    }
 	case ID_BSPLINE:
 	    {
-		bu_vls_printf(gedp->ged_result_str,
-			      "getting origin of BSPLINE is temporarily"
-			      " disabled");
-		return GED_ERROR;
-#if 0
 		struct rt_nurb_internal *sip =
 		    (struct rt_nurb_internal *) es_int.idb_ptr;
 		struct face_g_snurb *surf;
 		fastf_t *fp;
+		int spl_surfno;	/* What surf & ctl pt to edit on spline */
+		int spl_ui;
+		int spl_vi;
 
 		RT_NURB_CK_MAGIC(sip);
+		spl_surfno = sip->nsrf/2;
 		surf = sip->srfs[spl_surfno];
 		NMG_CK_SNURB(surf);
+		spl_ui = surf->s_size[1]/2;
+		spl_vi = surf->s_size[0]/2;
+
 		fp = &RT_NURB_GET_CONTROL_POINT(surf, spl_ui, spl_vi);
 		VMOVE(mpt, fp);
 		sprintf(buf, "Surf %d, index %d,%d",
 			spl_surfno, spl_ui, spl_vi);
 		*strp = buf;
 		break;
-#endif
 	    }
 	case ID_GRIP:
 	    {
@@ -678,12 +676,11 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		}
 	    }
 	default:
-#if 0
-	    Tcl_AppendResult(INTERP, "get_solid_keypoint: unrecognized solid type (setting keypoint to origin)\n", (char *)NULL);
-#endif
 	    VSETALL(mpt, 0.0);
+	    bu_vls_printf(gedp->ged_result_str,
+			  "get_solid_keypoint: unrecognized solid type (setting keypoint to origin)");
 	    *strp = "(origin)";
-	    break;
+	    return GED_ERROR;
     }
     MAT4X3PNT(pt, mat, mpt);
     return GED_OK;
