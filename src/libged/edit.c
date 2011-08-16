@@ -1034,11 +1034,17 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
     }
 
     if (arg->type & EDIT_NATURAL_ORIGIN) {
-	MAT_DELTAS_GET(leaf_deltas, gtd.gtd_xform);
-	bu_vls_printf(gedp->ged_result_str, "natural origin option is not"
-		      " yet working");
-	return GED_ERROR;
-	/* FIXME: get soltab of 'd', and use soltab->st_matp */
+	if (d->d_flags & (RT_DIR_COMB | RT_DIR_REGION)) {
+	    bu_vls_printf(gedp->ged_result_str, "combinations do not have a"
+		      " natural origin (%s)", d->d_namep );
+	    return GED_ERROR;
+	}
+	char *str = "V";
+	GED_DB_GET_INTERNAL(gedp, &intern, d, (fastf_t *)NULL,
+			    &rt_uniresource, GED_ERROR);
+	_ged_get_solid_keypoint(gedp, leaf_deltas, &str, &intern,
+				(const fastf_t *const)gtd.gtd_xform);
+	rt_db_free_internal(&intern);
     } else {
 	/* bounding box center is the default */
 	VADD2SCALE(leaf_deltas, rpp_min, rpp_max, 0.5);
