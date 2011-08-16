@@ -1039,7 +1039,10 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
 		      " natural origin (%s)", d->d_namep );
 	    return GED_ERROR;
 	}
-	char *str = "V";
+	char *str;
+	str = (char *)bu_malloc(BUFSIZ,
+				"char block for edit_arg_to_apparent_coord");
+	str = "V";
 	GED_DB_GET_INTERNAL(gedp, &intern, d, (fastf_t *)NULL,
 			    &rt_uniresource, GED_ERROR);
 	_ged_get_solid_keypoint(gedp, leaf_deltas, &str, &intern,
