@@ -579,7 +579,7 @@ const struct rt_functab rt_functab[] = {
 	rt_nmg_import4,
 	rt_nmg_export4,
 	rt_nmg_ifree,
-	NULL,
+	rt_nmg_bbox,
 	rt_nmg_describe,
 	rt_generic_xform,
 	NULL,

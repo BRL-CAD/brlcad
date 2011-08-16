@@ -61,6 +61,44 @@ struct tmp_v {
     struct vertex *v;
 };
 
+/**
+ * R T _ N M G _ B B O X
+ *
+ * Calculate the bounding box for an N-Manifold Geometry
+ */
+int
+rt_nmg_bbox(struct rt_db_internal *ip, point_t *min, point_t * max) {
+    struct model *m;
+    struct nmgregion *r;
+    struct shell *s;
+    struct faceuse *fu;
+    struct vertex **pt;
+    struct bu_ptbl vert_table;
+
+    RT_CK_DB_INTERNAL(ip);
+    m = (struct model *)ip->idb_ptr;
+    NMG_CK_MODEL(m);
+
+    VSETALL((*min), MAX_FASTF);
+    VSETALL((*max), -MAX_FASTF);
+    
+    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
+	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
+	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+		NMG_CK_FACEUSE(fu);
+		const struct face_g_plane *fg = fu->f_p->g.plane_p;
+		nmg_tabulate_face_g_verts(&vert_table, fg);
+		for (BU_PTBL_FOR(pt, (struct vertex **), &vert_table)) {
+		    VMINMAX((*min), (*max), (*pt)->vg_p->coord);
+		}
+		bu_ptbl_reset(&vert_table);
+	    }
+	}
+    }
+    bu_ptbl_free(&vert_table);
+    return 0;
+}
+
 
 /**
  * R T _ N M G _ P R E P
@@ -75,16 +113,21 @@ struct tmp_v {
  * address is stored in stp->st_specific for use by nmg_shot().
  */
 int
-rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
+rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *UNUSED(rtip))
 {
     struct model *m;
     struct nmg_specific *nmg_s;
-    struct nmgregion *rp;
     vect_t work;
 
     RT_CK_DB_INTERNAL(ip);
     m = (struct model *)ip->idb_ptr;
     NMG_CK_MODEL(m);
+
+    if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
+
+    VADD2SCALE(stp->st_center, stp->st_min, stp->st_max, 0.5);
+    VSUB2SCALE(work, stp->st_max, stp->st_min, 0.5);
+    stp->st_aradius = stp->st_bradius = MAGNITUDE(work);
 
     BU_GETSTRUCT(nmg_s, nmg_specific);
     stp->st_specific = (genptr_t)nmg_s;
@@ -92,28 +135,6 @@ rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     ip->idb_ptr = (genptr_t)NULL;
     nmg_s->nmg_smagic = NMG_SPEC_START_MAGIC;
     nmg_s->nmg_emagic = NMG_SPEC_END_MAGIC;
-
-    /* get bounding box of NMG solid */
-    VSETALL(stp->st_min, MAX_FASTF);
-    VSETALL(stp->st_max, -MAX_FASTF);
-
-    /* the model bounding box is an amalgam of the nmgregion bounding
-     * boxes.
-     */
-    for (BU_LIST_FOR (rp, nmgregion, &m->r_hd)) {
-	NMG_CK_REGION(rp);
-	NMG_CK_REGION_A(rp->ra_p);
-
-	VMINMAX(stp->st_min, stp->st_max, rp->ra_p->min_pt);
-	VMINMAX(stp->st_min, stp->st_max, rp->ra_p->max_pt);
-
-	nmg_ck_vs_in_region(rp, &rtip->rti_tol);
-
-    }
-
-    VADD2SCALE(stp->st_center, stp->st_min, stp->st_max, 0.5);
-    VSUB2SCALE(work, stp->st_max, stp->st_min, 0.5);
-    stp->st_aradius = stp->st_bradius = MAGNITUDE(work);
 
     /* build table indicating the manifold level of each sub-element
      * of NMG solid
