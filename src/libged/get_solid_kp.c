@@ -53,7 +53,6 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 			const struct rt_db_internal *const ip,
 			const fastf_t *const mat)
 {
-    (void)gedp;
     char *cp = *strp;
     point_t mpt;
     char buf[BUFSIZ];
