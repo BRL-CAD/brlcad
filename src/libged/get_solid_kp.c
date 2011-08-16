@@ -48,15 +48,14 @@ _ged_get_solid_keypoint(struct ged *const gedp,
     /* FIXME: data for solid editing; either all of these need to be
      * set, or the cases that use them modified or removed. */
 #if 0
-    struct rt_db_internal es_int;
     int bot_verts[3];		/* vertices for the BOT solid */
     struct edgeuse *es_eu=(struct edgeuse *)NULL;	/* Currently selected NMG edgeuse */
     struct wdb_pipept *es_pipept=(struct wdb_pipept *)NULL; /* Currently selected PIPE segment */
     struct wdb_metaballpt *es_metaballpt=(struct wdb_metaballpt *)NULL; /* Currently selected METABALL Point */
-    struct bn_tol mged_tol;	/* calculation tolerance */
 #endif
 
     RT_CK_DB_INTERNAL(ip);
+
 
     switch (ip->idb_type) {
 	case ID_CLINE:
@@ -84,21 +83,15 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		bu_vls_printf(gedp->ged_result_str,
 			      "getting origin of PIPE temporarily disabled");
 		return GED_ERROR;
-#if 0
 		struct rt_pipe_internal *pipeip =
 		    (struct rt_pipe_internal *)ip->idb_ptr;
 		struct wdb_pipept *pipe_seg;
 
 		RT_PIPE_CK_MAGIC(pipeip);
 
-		if (es_pipept == (struct wdb_pipept *)NULL) {
-		    pipe_seg = BU_LIST_FIRST(wdb_pipept, &pipeip->pipe_segs_head);
-		    VMOVE(mpt, pipe_seg->pp_coord);
-		} else {
-		    VMOVE(mpt, es_pipept->pp_coord);
-		}
+		pipe_seg = BU_LIST_FIRST(wdb_pipept, &pipeip->pipe_segs_head);
+		VMOVE(mpt, pipe_seg->pp_coord);
 		break;
-#endif
 	    }
 	case ID_METABALL:
 	    {
@@ -117,10 +110,6 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 	    }
 	case ID_ARBN:
 	    {
-		bu_vls_printf(gedp->ged_result_str,
-			      "getting origin of ARBN temporarily disabled");
-		return GED_ERROR;
-#if 0
 		struct rt_arbn_internal *arbn =
 		    (struct rt_arbn_internal *)ip->idb_ptr;
 		size_t i, j, k;
@@ -138,7 +127,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 				    if (l == i || l == j || l == k)
 					continue;
 
-				    if (DIST_PT_PLANE(mpt, arbn->eqn[l]) > mged_tol.dist) {
+				    if (DIST_PT_PLANE(mpt, arbn->eqn[l]) > 0.005) {
 					good_vert = 0;
 					break;
 				    }
@@ -158,7 +147,6 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		}
 
 		break;
-#endif
 	    }
 	case ID_EBM:
 	    {
@@ -298,7 +286,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		int es_ars_col;
 		point_t es_pt;		/* coordinates of selected ARS point */
 		struct rt_ars_internal *ars =
-		    (struct rt_ars_internal *)es_int.idb_ptr;
+		    (struct rt_ars_internal *)ip.idb_ptr;
 		RT_ARS_CK_MAGIC(ars);
 
 		if (es_ars_crv < 0 || es_ars_col < 0) {
@@ -411,7 +399,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		struct shell *s;
 		struct nmgregion *r;
 		struct model *m =
-		    (struct model *) es_int.idb_ptr;
+		    (struct model *) ip.idb_ptr;
 		NMG_CK_MODEL(m);
 		/* XXX Fall through, for now (How about first vertex?? - JRA) */
 
