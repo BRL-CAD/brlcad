@@ -409,6 +409,10 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 	    }
 	case ID_BSPLINE:
 	    {
+		bu_vls_printf(gedp->ged_result_str,
+			      "getting origin of BSPLINE temporarily disabled");
+		return GED_ERROR;
+#if 0
 		struct rt_nurb_internal *sip =
 		    (struct rt_nurb_internal *) es_int.idb_ptr;
 		struct face_g_snurb *surf;
@@ -430,6 +434,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 			spl_surfno, spl_ui, spl_vi);
 		*strp = buf;
 		break;
+#endif
 	    }
 	case ID_GRIP:
 	    {
