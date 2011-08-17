@@ -74,6 +74,7 @@ rt_nmg_bbox(struct rt_db_internal *ip, point_t *min, point_t * max) {
     struct faceuse *fu;
     struct vertex **pt;
     struct bu_ptbl vert_table;
+    bu_ptbl_init(&vert_table, 64, "verts");
 
     RT_CK_DB_INTERNAL(ip);
     m = (struct model *)ip->idb_ptr;
