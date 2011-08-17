@@ -194,6 +194,59 @@ const struct bu_structparse rt_rpc_parse[] = {
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+/**
+ * R T _ R P C _ B B O X
+ *
+ * Calculate the RPP for an RPC
+ */
+int
+rt_rpc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+    struct rt_rpc_internal *xip;
+    RT_CK_DB_INTERNAL(ip);
+    xip = (struct rt_rpc_internal *)ip->idb_ptr;
+    RT_RPC_CK_MAGIC(xip);
+    vect_t rinv, rvect, rv2, working;
+    
+    VSETALL((*min), MAX_FASTF);
+    VSETALL((*max), -MAX_FASTF);
+
+    /* make unit vectors in B, H, and BxH directions */
+    VCROSS(rvect, xip->rpc_H, xip->rpc_B);
+    VREVERSE(rinv, rvect);
+    VUNITIZE(rvect);
+    VUNITIZE(rinv);
+    VSCALE(rvect, rvect, xip->rpc_r);
+    VSCALE(rinv, rinv, xip->rpc_r);
+
+    VADD2(working, xip->rpc_V, rvect);
+    VMINMAX((*min), (*max), working);
+
+    VADD2(working, xip->rpc_V, rinv);
+    VMINMAX((*min), (*max), working);
+
+    VADD3(working, xip->rpc_V, rvect, xip->rpc_H);
+    VMINMAX((*min), (*max), working);
+
+    VADD3(working, xip->rpc_V, rinv, xip->rpc_H);
+    VMINMAX((*min), (*max), working);
+
+    VADD2(rv2, xip->rpc_V, xip->rpc_B);
+
+    VADD2(working, rv2, rvect);
+    VMINMAX((*min), (*max), working);
+
+    VADD2(working, rv2, rinv);
+    VMINMAX((*min), (*max), working);
+
+    VADD3(working, rv2, rvect, xip->rpc_H);
+    VMINMAX((*min), (*max), working);
+
+    VADD3(working, rv2, rinv, xip->rpc_H);
+    VMINMAX((*min), (*max), working);
+
+    return 0;
+}
+
 
 /**
  * R T _ R P C _ P R E P
@@ -296,15 +349,8 @@ rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_bradius = 0.5 * sqrt(magsq_h + 4.0*magsq_r + magsq_b);
     /* approximate bounding radius */
     stp->st_aradius = stp->st_bradius;
-
-    /* cheat, make bounding RPP by enclosing bounding sphere */
-    stp->st_min[X] = stp->st_center[X] - stp->st_bradius;
-    stp->st_max[X] = stp->st_center[X] + stp->st_bradius;
-    stp->st_min[Y] = stp->st_center[Y] - stp->st_bradius;
-    stp->st_max[Y] = stp->st_center[Y] + stp->st_bradius;
-    stp->st_min[Z] = stp->st_center[Z] - stp->st_bradius;
-    stp->st_max[Z] = stp->st_center[Z] + stp->st_bradius;
-
+    /* bounding RPP */
+    if (rt_rpc_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
     return 0;			/* OK */
 }
 
