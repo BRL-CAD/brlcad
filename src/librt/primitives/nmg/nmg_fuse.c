@@ -1114,40 +1114,48 @@ nmg_edge_g_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 int
 nmg_ck_fu_verts(struct faceuse *fu1, struct face *f2, const struct bn_tol *tol)
 {
-    const struct face_g_plane *fg2;
-    fastf_t dist;
-    fastf_t worst = 0;
+    fastf_t dist = 0.0;
+    fastf_t worst = 0.0;
     int count = 0;
     struct loopuse *lu;
+    struct edgeuse *eu;
+    struct vertexuse *vu;
+    struct vertex *v;
+    struct vertex_g *vg;
+    plane_t pl2;
 
     NMG_CK_FACEUSE(fu1);
     NMG_CK_FACE(f2);
     BN_CK_TOL(tol);
 
-    fg2 = f2->g.plane_p;
-    NMG_CK_FACE_G_PLANE(fg2);
+    NMG_CK_FACE_G_PLANE(f2->g.plane_p);
+
+    HMOVE(pl2, f2->g.plane_p->N);
 
     for (BU_LIST_FOR(lu, loopuse, &fu1->lu_hd)) {
-	struct edgeuse *eu;
+	NMG_CK_LOOPUSE(lu);
 
 	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
-	    register struct vertexuse *vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
-	    register struct vertex *v = vu->v_p;
-	    register struct vertex_g *vg;
+	    vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
+	    NMG_CK_VERTEXUSE(vu);
+	    NMG_CK_VERTEX(vu->v_p);
 
-	    NMG_CK_VERTEX(v);
+	    v = vu->v_p;
 	    vg = v->vg_p;
-	    if (!vg) bu_bomb("nmg_ck_fu_verts(): vertex with no geometry?\n");
+
+	    if (!vg) {
+		bu_bomb("nmg_ck_fu_verts(): vertex with no geometry?\n");
+	    }
 	    NMG_CK_VERTEX_G(vg);
 
 	    /* Geometry check */
-	    dist = DIST_PT_PLANE(vg->coord, fg2->N);
-	    if (dist > tol->dist || dist < (-tol->dist)) {
+	    dist = DIST_PT_PLANE(vg->coord, pl2);
+	    if (!NEAR_ZERO(dist, tol->dist)) {
 		if (rt_g.NMG_debug & DEBUG_MESH) {
 		    bu_log("nmg_ck_fu_verts(x%x, x%x) v x%x off face by %e\n",
 			   fu1, f2, v, dist);
 		    VPRINT(" pt", vg->coord);
-		    PLPRINT(" fg2", fg2->N);
+		    PLPRINT(" fg2", pl2);
 		}
 		count++;
 
@@ -1156,33 +1164,39 @@ nmg_ck_fu_verts(struct faceuse *fu1, struct face *f2, const struct bn_tol *tol)
 		    worst = dist;
 		}
 	    }
-	}
+	} else if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
+	    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+		NMG_CK_EDGEUSE(eu);
+		NMG_CK_VERTEXUSE(eu->vu_p);
+		NMG_CK_VERTEX(eu->vu_p->v_p);
 
-	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-	    struct vertex *v = eu->vu_p->v_p;
-	    struct vertex_g *vg;
+		v = eu->vu_p->v_p;
+		vg = v->vg_p;
 
-	    NMG_CK_VERTEX(v);
-	    vg = v->vg_p;
-	    if (!vg) bu_bomb("nmg_ck_fu_verts(): vertex with no geometry?\n");
-	    NMG_CK_VERTEX_G(vg);
-
-	    /* Geometry check */
-	    dist = DIST_PT_PLANE(vg->coord, fg2->N);
-	    if (dist > tol->dist || dist < (-tol->dist)) {
-		if (rt_g.NMG_debug & DEBUG_MESH) {
-		    bu_log("nmg_ck_fu_verts(x%x, x%x) v x%x off face by %e\n",
-			   fu1, f2, v, dist);
-		    VPRINT(" pt", vg->coord);
-		    PLPRINT(" fg2", fg2->N);
+		if (!vg)  {
+		    bu_bomb("nmg_ck_fu_verts(): vertex with no geometry?\n");
 		}
-		count++;
+		NMG_CK_VERTEX_G(vg);
 
-                dist = fabs(dist);
-		if (dist > worst) {
-		    worst = dist;
+		/* Geometry check */
+		dist = DIST_PT_PLANE(vg->coord, pl2);
+		if (!NEAR_ZERO(dist, tol->dist)) {
+		    if (rt_g.NMG_debug & DEBUG_MESH) {
+			bu_log("nmg_ck_fu_verts(x%x, x%x) v x%x off face by %e\n",
+				fu1, f2, v, dist);
+			VPRINT(" pt", vg->coord);
+			PLPRINT(" fg2", pl2);
+		    }
+		    count++;
+
+		    dist = fabs(dist);
+		    if (dist > worst) {
+			worst = dist;
+		    }
 		}
 	    }
+	} else {
+	    bu_bomb("nmg_ck_fu_verts(): unknown loopuse child\n");
 	}
     }
 
