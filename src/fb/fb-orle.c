@@ -27,6 +27,7 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <string.h>
 #include "bio.h"
 
 #ifdef HAVE_UNISTD_H
@@ -112,9 +113,16 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    /* Follow RLE header with colormap */
+    /* Follow RLE header with RLE colormap */
     if ( cmflag )  {
-	if ( rle_wmap( fp, (struct RLEColorMap *)&cmap ) == -1 ) {
+	RLEColorMap rmap;
+
+	/* coincidentally the same sized structure */
+	memcpy(rmap.cm_red, cmap.cm_red, 256 * sizeof(unsigned short));
+	memcpy(rmap.cm_green, cmap.cm_green, 256 * sizeof(unsigned short));
+	memcpy(rmap.cm_blue, cmap.cm_blue, 256 * sizeof(unsigned short));
+
+	if ( rle_wmap( fp, &rmap ) == -1 ) {
 	    return 1;
 	}
 	if ( rle_debug ) {
