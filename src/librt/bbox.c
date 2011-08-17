@@ -285,7 +285,7 @@ rt_in_rpp(struct xray *rp,
 /**
  * R T _ B O U N D _ I N T E R N A L
  *
- * Calculate the bounding RPP of the internal format passed in 'ip'.  
+ * Calculate the bounding RPP of the internal format passed in 'ip'. 
  * The bounding RPP is returned in rpp_min and rpp_max in mm
  *
  * Returns -
@@ -294,60 +294,110 @@ rt_in_rpp(struct xray *rp,
  * -2 a region/comb was passed so model bounds are 0(will be fixed soon)
  */
 int
-rt_bound_internal(struct rt_db_internal *ip, point_t *rpp_min, point_t *rpp_max)
+rt_bound_internal(struct rt_db_internal *ip, point_t rpp_min, point_t rpp_max)
 {
-    struct db_i *dbip;    
+    struct db_i *dbip; 
+    struct directory *dp = (struct directory *)NULL; 
     struct rt_i *rtip;
-    
+    struct rt_comb_internal *combp;
+   
     RT_CK_DB_INTERNAL(ip);
-    
-    /* Check if a region or comb was passed, in which case the model bounds will be 0
-       This is because the leaf primitives for the region are missing in the dbi and 
-       need to be found and inserted there before rt_gettree(rtip, "dummy") is called
-    */    
-    if(ip->idb_minor_type == ID_COMBINATION){
-        bu_log("rt_bound_internal: A region/comb was passed, the bounding box was not calculated.\n");
-        return -2;    
-    }        
-    
+   
     /* Create an empty db_i */
     dbip = db_open_inmem();   
-    
+   
     RT_CK_DBI(dbip);
     RT_CK_WDB(dbip->dbi_wdbp);
-    
+   
     /* Insert the passed struct rt_db_internal into the db_i, use a dummy name */
     if (wdb_put_internal(dbip->dbi_wdbp, "dummy", ip, 1.0) < 0) {
-        bu_log("rt_bound_internal: wdb_put_internal() failed");
+        bu_log("rt_bound_internal: wdb_put_internal() failed\n");
+        db_close(dbip);
         return -1;
     }
-    
+   
+    /* The rt_db_internal pointed to by ip is(annoyingly!) freed by wdb_put_internal(), so look it up */
+    dp = db_lookup(dbip, "dummy", LOOKUP_NOISY);
+    if (!dp) {
+        bu_log("rt_bound_internal: db_lookup('dummy') failed\n");
+        db_close(dbip);
+        return -1;
+    }
+   
+    /* Now get back the rt_db_internal representation of the user passed object */
+    if (rt_db_get_internal(ip, dp, dbip, bn_mat_identity, &rt_uniresource) < 0) {
+        bu_log("rt_bound_internal:  rt_db_get_internal('dummy') failed\n");
+        db_close(dbip);
+        return -1;
+    }
+   
     /* Get a new rtip for the dbip */
-    rtip = rt_new_rti(dbip);  
-    
-    /* Walk the geometry tree for the single object 'dummy' for which we want the BB */
+    rtip = rt_new_rti(dbip);
+   
+    /* Initialize RPP bounds */
+    VSETALL(rpp_min, MAX_FASTF);
+    VREVERSE(rpp_max, rpp_min);
+   
+    /* Call rt_gettree() to get the bounds, this is sufficient for primitives */
     if (rt_gettree(rtip, "dummy") < 0){
         bu_log("rt_bound_internal: rt_gettree('dummy') failed\n");
+        rt_free_rti(rtip);
+        db_close(dbip);
         return -1;
     }
-    
-    /* Check if the model bounds look correct e.g. if they are all 0, then its not correct */
-    if((abs(rtip->mdl_min[0]) == 0  || rtip->mdl_min[0] < -INFINITY || rtip->mdl_min[0] > INFINITY) &&
-       (abs(rtip->mdl_min[1]) == 0  || rtip->mdl_min[1] < -INFINITY || rtip->mdl_min[1] > INFINITY) &&
-       (abs(rtip->mdl_min[2]) == 0  || rtip->mdl_min[2] < -INFINITY || rtip->mdl_min[2] > INFINITY) &&
-       (abs(rtip->mdl_max[0]) == 0  || rtip->mdl_max[0] < -INFINITY || rtip->mdl_max[0] > INFINITY) &&
-       (abs(rtip->mdl_max[1]) == 0  || rtip->mdl_max[1] < -INFINITY || rtip->mdl_max[1] > INFINITY) &&
-       (abs(rtip->mdl_max[2]) == 0  || rtip->mdl_max[2] < -INFINITY || rtip->mdl_max[2] > INFINITY)){        
-       bu_log("rt_bound_internal: Warning : The bounds of the model may not be correct\n");         
-    }
-    
+   
+     
+    /* If passed rt_db_internal is a combination(a group or a region) then further calls needed */
+    if(ip->idb_minor_type == ID_COMBINATION){
+        combp = (struct rt_comb_internal *)ip->idb_ptr;
        
-    VMOVE(*rpp_min, rtip->mdl_min);
-    VMOVE(*rpp_max, rtip->mdl_max);
-      
+        RT_CK_COMB(combp);
+        vect_t tree_min, tree_max;
+       
+        /* Is this combination a region ? */
+        if (combp->region_flag){
+            bu_log("rt_bound_internal: A region was passed. Bounding boxes for regions is currently a work in progress.\n");
+            if (rt_bound_tree(combp->tree, tree_min, tree_max)) {
+                bu_log("rt_bound_internal: rt_bound_tree('region') failed\n");
+                rt_free_rti(rtip);
+                db_close(dbip);
+                return -1;
+            }
+        }
+        else{
+        /* We must be dealing with a group consisting of one or more regions */
+             bu_log("rt_bound_internal: A group was passed. Bounding boxes for groups is currently a work in progress.\n");
+             if (rt_bound_tree(combp->tree, tree_min, tree_max)) {
+                bu_log("rt_bound_internal: rt_bound_tree('group') failed\n");
+                rt_free_rti(rtip);
+                db_close(dbip);
+                return -1;
+            }
+        }
+       
+        VMOVE(rpp_min, tree_min);
+        VMOVE(rpp_max, tree_max);
+    }
+    else{
+        /* A primitive was passed, its tree and bounds was already got by rt_gettree() */
+        VMOVE(rpp_min, rtip->mdl_min);
+        VMOVE(rpp_max, rtip->mdl_max);
+    }
+   
+    /* Check if the model bounds look correct e.g. if they are all 0, then its not correct */
+    if(  (abs(rpp_min[0]) == 0  || rpp_min[0] <= -INFINITY || rpp_min[0] >= INFINITY) &&
+         (abs(rpp_min[1]) == 0  || rpp_min[1] <= -INFINITY || rpp_min[1] >= INFINITY) &&
+         (abs(rpp_min[2]) == 0  || rpp_min[2] <= -INFINITY || rpp_min[2] >= INFINITY) &&
+         (abs(rpp_max[0]) == 0  || rpp_max[0] <= -INFINITY || rpp_max[0] >= INFINITY) &&
+         (abs(rpp_max[1]) == 0  || rpp_max[1] <= -INFINITY || rpp_max[1] >= INFINITY) &&
+         (abs(rpp_max[2]) == 0  || rpp_max[2] <= -INFINITY || rpp_max[2] >= INFINITY)){       
+       bu_log("rt_bound_internal: Warning : The returned bounds of the model may not be correct\n");         
+    }     
+   
+   
     rt_free_rti(rtip);
-    db_close(dbip);    
-    
+    db_close(dbip);   
+   
     return 0;
 }
 
