@@ -261,7 +261,7 @@ comment     "#"[^"\r\n""\n"]*{newline}
 
 {comment}|{newline} {
     ++(detail::get_state(yyextra).file_stack.back().lineno);
-    return '\n';
+    return EOL;
 }
 
 .                   { return yytext[0]; }
@@ -273,6 +273,8 @@ comment     "#"[^"\r\n""\n"]*{newline}
     // Keywords are valid identifiers here
     // Goto initial state after single token
     detail::get_state(yyextra).working_string = yytext;
+    strncpy(yylval->string, yytext, TOKEN_STRING_LEN);
+
     BEGIN(INITIAL);
     return ID;
 }
@@ -283,7 +285,7 @@ comment     "#"[^"\r\n""\n"]*{newline}
     // Goto initial state when we hit newline
     ++(detail::get_state(yyextra).file_stack.back().lineno);
     BEGIN(INITIAL);
-    return '\n';
+    return EOL;
 }
 
 .                   { return yytext[0]; }
@@ -302,6 +304,8 @@ comment     "#"[^"\r\n""\n"]*{newline}
     // Keywords are valid identifiers here
     // Goto initial state after single token
     detail::get_state(yyextra).working_string = yytext;
+    strncpy(yylval->string, yytext, TOKEN_STRING_LEN);
+
     BEGIN(INITIAL);
     return ID;
 }
@@ -312,7 +316,7 @@ comment     "#"[^"\r\n""\n"]*{newline}
     // Goto initial state when we hit newline
     ++(detail::get_state(yyextra).file_stack.back().lineno);
     BEGIN(INITIAL);
-    return '\n';
+    return EOL;
 }
 
 .                   { return yytext[0]; }
@@ -324,6 +328,8 @@ comment     "#"[^"\r\n""\n"]*{newline}
 {id}                {
     // Keywords are valid identifiers here
     detail::get_state(yyextra).working_string = yytext;
+    strncpy(yylval->string, yytext, TOKEN_STRING_LEN);
+
     return ID;
 }
 
@@ -333,7 +339,7 @@ comment     "#"[^"\r\n""\n"]*{newline}
     // Goto initial state when we hit newline
     ++(detail::get_state(yyextra).file_stack.back().lineno);
     BEGIN(INITIAL);
-    return '\n';
+    return EOL;
 }
 
 .                   { return yytext[0]; }
