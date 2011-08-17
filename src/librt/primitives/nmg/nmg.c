@@ -69,36 +69,12 @@ struct tmp_v {
 int
 rt_nmg_bbox(struct rt_db_internal *ip, point_t *min, point_t * max) {
     struct model *m;
-    struct nmgregion *r;
-    struct shell *s;
-    struct faceuse *fu;
-    struct vertex **pt;
-    struct bu_ptbl vert_table;
-    struct face_g_plane *fg;
-
-    bu_ptbl_init(&vert_table, 64, "verts");
 
     RT_CK_DB_INTERNAL(ip);
     m = (struct model *)ip->idb_ptr;
     NMG_CK_MODEL(m);
 
-    VSETALL((*min), MAX_FASTF);
-    VSETALL((*max), -MAX_FASTF);
-    
-    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
-	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-		NMG_CK_FACEUSE(fu);
-		fg = fu->f_p->g.plane_p;
-		nmg_tabulate_face_g_verts(&vert_table, fg);
-		for (BU_PTBL_FOR(pt, (struct vertex **), &vert_table)) {
-		    VMINMAX((*min), (*max), (*pt)->vg_p->coord);
-		}
-		bu_ptbl_reset(&vert_table);
-	    }
-	}
-    }
-    bu_ptbl_free(&vert_table);
+    nmg_model_bb(*min, *max, m);
     return 0;
 }
 
