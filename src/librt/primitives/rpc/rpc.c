@@ -210,7 +210,6 @@ rt_rpc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
     VSETALL((*min), MAX_FASTF);
     VSETALL((*max), -MAX_FASTF);
 
-    /* make unit vectors in B, H, and BxH directions */
     VCROSS(rvect, xip->rpc_H, xip->rpc_B);
     VREVERSE(rinv, rvect);
     VUNITIZE(rvect);
