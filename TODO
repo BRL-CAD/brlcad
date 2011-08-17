@@ -1122,7 +1122,11 @@ ODDITIES
 THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 --------------------------------------------------
 
-* remove the hf primitive (fully)
+* remove the bspline primitive
+
+* remove the poly primitive
+
+* remove the hf primitive
 
 * support for features either as primitives or operations or both
   e.g. chamfer, fillet, round, cut, etc
