@@ -215,7 +215,8 @@ int obj_fparse(FILE *stream, obj_parser_t parser, obj_contents_t *contents)
     int err = 0;
 
     try {
-	std::auto_ptr<detail::objFileContents> sentry(new detail::objFileContents);
+	std::auto_ptr<detail::objFileContents>
+	    sentry(new detail::objFileContents);
 
 	detail::objCombinedState extra(p, sentry.get());
 
@@ -351,7 +352,8 @@ size_t obj_normals(obj_contents_t contents, const float (*val_arr[])[3])
 size_t obj_groups(obj_contents_t contents, const char * const (*val_arr[]))
 {
     try {
-	detail::objFileContents *c = static_cast<detail::objFileContents*>(contents.p);
+	detail::objFileContents *c =
+	    static_cast<detail::objFileContents*>(contents.p);
 
 	if (val_arr && c->groupchar_set.size()) {
 	    *val_arr = &(c->groupchar_set.front());
@@ -768,16 +770,19 @@ size_t obj_polygonal_v_faces(obj_contents_t contents,
 size_t obj_polygonal_v_face_vertices(obj_contents_t contents, size_t face,
 				     const size_t (*index_arr[]))
 {
-    try {
-	detail::objFileContents *c =
-	    static_cast<detail::objFileContents*>(contents.p);
+    using detail::objFileContents;
 
-	if (index_arr && c->polygonal_v_loclist[face].second) {
-	    *index_arr =
-		&(c->pologonal_v_indexlist[c->polygonal_v_loclist[face].first]);
+    try {
+	objFileContents *c = static_cast<objFileContents*>(contents.p);
+
+	size_t start = c->polygonal_v_loclist[face].first;
+	size_t length = c->polygonal_v_loclist[face].second;
+
+	if (index_arr != NULL && length > 0) {
+	    *index_arr = &(c->pologonal_v_indexlist[start]);
 	}
 
-	return c->polygonal_v_loclist[face].second;
+	return length;
     } catch(...) {
 	abort();
     }
