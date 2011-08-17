@@ -690,7 +690,12 @@
  * -a -z 11 comb
  * -a comb/combA combB/combC combD/combE
  * -k shp -a . comb/comb comb/comb comb/comb
+ * -k comb/combA -a -z comb/combA -x comb/combB -y comb/combB shp
  * -k -x 3 -a -y 7 shp
+ * -k . -a . comb shp1 shp2 (do nothing)
+ * -n -k sph -n -a shp shp (do nothing)
+ * -k . -r 3 comb/combA comb/combB comb/combC
+ * -k -x comb/combA -r 2 comb/combB
  *
  * XXX Left to test: specifying multiple objects
      *               batch operator in several places
@@ -1826,7 +1831,7 @@ edit_translate_get_arg_head(const union edit_cmd *const cmd, int idx)
  * Table of edit command data/functions
  */
 static const struct edit_cmd_tab edit_cmds[] = {
-    {"help", (char *)NULL, "[subcmd]", (char *)NULL, NULL, NULL, NULL},
+    {"help", (char *)NULL, "[subcmd]", "[subcmd]", NULL, NULL, NULL},
 #define EDIT_CMD_HELP 0 /* idx of "help" in edit_cmds */
     {"rotate",		"R",
 	"[-R] [AXIS] [CENTER] ANGLE OBJECT ...",
@@ -2267,13 +2272,6 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    /* now that the cmd type is known, we can init the subcmd args */
-    edit_cmd_init(&subcmd);
-
-    BU_GETSTRUCT(subcmd.cmd_line.args, edit_arg);
-    edit_arg_init(subcmd.cmd_line.args);
-    cur_arg = subcmd.cmd_line.args;
-
     if (subcmd_name == cmd_name) { /* ptr cmp */
 	/* command name is serving as the subcommand */
 	--argc;
@@ -2317,7 +2315,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 				  edit_cmds[i].name);
 		return GED_HELP;
 	    } else {
-		/* get (long) help on a specific command */
+		/* get long usage string for a specific command */
 		for (i = 0; edit_cmds[i].name; ++i)
 		    /* search for command name in the table */
 		    if (BU_STR_EQUAL(edit_cmds[i].name, argv[0]))
@@ -2333,7 +2331,8 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 			bu_vls_printf(gedp->ged_result_str, "%s ",
 				      edit_cmds[i].name);
 		    return GED_ERROR;
-		}
+		} else /* point to the cmd we want help for */
+		    subcmd.cmd = &edit_cmds[i];
 		goto get_full_help;
 	    }
 	default:
@@ -2357,7 +2356,24 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 		goto get_full_help;
 	    }
 	    break;
+
+get_full_help:
+    bu_vls_printf(gedp->ged_result_str,
+		  "Usage: %s [help] | %s\n\n%s [help] | %s",
+		  subcmd.cmd->name, subcmd.cmd->usage,
+		  subcmd.cmd->name, subcmd.cmd->help);
+    return GED_HELP;
     }
+
+    /* Now that the cmd type is known (and wasn't "help"), we can
+     * initialize the subcmd's arguments. From here on out,
+     * edit_cmd_free() must be called before exiting.
+     */
+    edit_cmd_init(&subcmd);
+
+    BU_GETSTRUCT(subcmd.cmd_line.args, edit_arg);
+    edit_arg_init(subcmd.cmd_line.args);
+    cur_arg = subcmd.cmd_line.args;
 
     /*
      * Parse all subcmd args and pass to edit()
@@ -2460,10 +2476,22 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     --argv;
     while ((c = bu_getopt(argc, (char * const *)argv, ":n:k:a:r:x:y:z:"))
 	   != -1) {
-	if (bu_optind >= argc)
-	    goto err_missing_operand; /* last element is an option */
-	if (idx_cur_opt >= EDIT_MAX_ARG_OPTIONS)
-	    goto err_option_overflow;
+	if (bu_optind >= argc) {
+	    /* last element is an option */
+	    bu_vls_printf(gedp->ged_result_str,
+			  "No OBJECT provided; nothing to operate on");
+	    edit_cmd_free(&subcmd);
+	    return GED_ERROR;
+	}
+	if (idx_cur_opt >= EDIT_MAX_ARG_OPTIONS) {
+	    bu_vls_printf(gedp->ged_result_str, "too many options given, \"");
+	    for (i = 0; i < EDIT_MAX_ARG_OPTIONS; ++i)
+		bu_vls_printf(gedp->ged_result_str, "-%c ",
+			      cur_arg->cl_options[i]);
+	    bu_vls_printf(gedp->ged_result_str, "-%c\"", c);
+	    edit_cmd_free(&subcmd);
+	    return GED_ERROR;
+	}
 
 	conv_flags = GED_ERROR;
 	switch (c) {
@@ -2628,31 +2656,9 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     edit_cmd_free(&subcmd);
     return ret;
 
-get_full_help:
-    bu_vls_printf(gedp->ged_result_str,
-		  "Usage: %s [help] | %s\n\n%s [help] | %s",
-		  subcmd.cmd->name, subcmd.cmd->usage,
-		  subcmd.cmd->name, subcmd.cmd->help);
-    edit_cmd_free(&subcmd);
-    return GED_HELP;
-
 err_missing_arg:
     bu_vls_printf(gedp->ged_result_str, "Missing argument for option -%c",
 	bu_optopt);
-    edit_cmd_free(&subcmd);
-    return GED_ERROR;
-
-err_missing_operand:
-    bu_vls_printf(gedp->ged_result_str,
-		  "No OBJECT provided; nothing to operate on");
-    edit_cmd_free(&subcmd);
-    return GED_ERROR;
-
-err_option_overflow:
-    bu_vls_printf(gedp->ged_result_str, "too many options given, \"");
-    for (i = 0; i < EDIT_MAX_ARG_OPTIONS; ++i)
-	bu_vls_printf(gedp->ged_result_str, "-%c ", cur_arg->cl_options[i]);
-    bu_vls_printf(gedp->ged_result_str, "-%c\"", c);
     edit_cmd_free(&subcmd);
     return GED_ERROR;
 }
