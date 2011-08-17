@@ -1893,7 +1893,6 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
     struct edit_arg *cur_arg;
     union edit_cmd subcmd_iter; /* to iterate through subcmd args */
     int i = 0;
-    int ret = GED_OK;
     int num_target_objs = 0;
     int num_args_set = 0;
 
@@ -1949,12 +1948,6 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
 	}
     }
 
-    /* execute cmd on first, and possibly the only, set of args */
-    if (edit_cmd_expand_vectors(gedp, subcmd) == GED_ERROR)
-	return GED_ERROR;
-    if (subcmd->cmd->exec(gedp, subcmd) == GED_ERROR)
-	return GED_ERROR;
-	
     /* create a copy to iterate over groups of batch args; note that
      * the copy is shallow and *must not be freed*
      */
@@ -1963,13 +1956,17 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
     edit_cmd_sduplicate(&subcmd_iter, subcmd);
 
     /* Iterate over each set of batch args, executing the subcmd once
-     * for each level of edit_arg nodes. The edit_arg linked list with
-     * the most nodes determines how many times the command is run.
-     * Any other argument lists having less nodes than that will make
-     * up for the difference by repeating their last node in
-     * subsequent runs.
+     * for each level of edit_arg nodes. The number of common objects
+     * determines how many times the command is run. Any other
+     * argument lists having less nodes than that will make up for the
+     * difference by repeating their last node in subsequent runs.
      */
     do {
+	if (edit_cmd_expand_vectors(gedp, &subcmd_iter) == GED_ERROR)
+	    return GED_ERROR;
+	if (subcmd_iter.cmd->exec(gedp, &subcmd_iter) == GED_ERROR)
+	    return GED_ERROR;
+
 	/* set all heads to the next arguments in their lists */
 	num_args_set = 0;
 	i = 0; /* reinit for get_arg_head() */
@@ -1982,14 +1979,9 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
 		    ++num_args_set;
 	    }
 	}
-	if (num_args_set == 0)
-	    break; /* exit loop on successful completion */
-	if (edit_cmd_expand_vectors(gedp, &subcmd_iter) == GED_ERROR)
-	    return GED_ERROR;
-	ret = subcmd_iter.cmd->exec(gedp, &subcmd_iter);
-    } while ((ret != GED_ERROR));
+    } while (num_args_set != 0);
 
-    return ret;
+    return GED_OK;
 }
 
 /**
