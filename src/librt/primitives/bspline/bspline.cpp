@@ -115,6 +115,78 @@ rt_nurb_grans(struct face_g_snurb *srf)
     return 1 + k_gran + p_gran;
 }
 
+/**
+ * R T _ N U R B _ B B O X
+ *
+ * Calculate the bounding RPP of a bspline
+ */
+int
+rt_nurb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+    struct nurb_specific *nurbs = NULL;
+    struct nurb_specific *next;
+    struct rt_nurb_internal *sip;
+    sip = (struct rt_nurb_internal *) ip->idb_ptr;
+    int i;
+    for (i = 0; i < sip->nsrf; i++) {
+	struct face_g_snurb * s;
+	struct nurb_specific * n;
+
+	BU_GETSTRUCT(n, nurb_specific);
+
+	/* Store off the original face_g_snurb */
+	s = rt_nurb_scopy(sip->srfs[i], (struct resource *)NULL);
+	NMG_CK_SNURB(s);
+	rt_nurb_s_bound(s, s->min_pt, s->max_pt);
+
+	n->srf = s;
+	BU_LIST_INIT(&n->bez_hd);
+
+	/* Grind up the original surf into a list of Bezier face_g_snurbs */
+	(void)rt_nurb_bezier(&n->bez_hd, sip->srfs[i], (struct resource *)NULL);
+
+	/* Compute bounds of each Bezier face_g_snurb */
+	for (BU_LIST_FOR(s, face_g_snurb, &n->bez_hd)) {
+	    NMG_CK_SNURB(s);
+	    rt_nurb_s_bound(s, s->min_pt, s->max_pt);
+	    VMINMAX((*min), (*max), s->min_pt);
+	    VMINMAX((*min), (*max), s->max_pt);
+	}
+
+	n->next = nurbs;
+	nurbs = n;
+    }
+    /* zero thickness will get missed by the raytracer */
+    if (NEAR_EQUAL((*min)[X], (*max)[X], SMALL_FASTF)) {
+	(*min)[X] -= SMALL_FASTF;
+	(*max)[X] += SMALL_FASTF;
+    }
+    if (NEAR_EQUAL((*min)[Y], (*max)[Y], SMALL_FASTF)) {
+	(*min)[Y] -= SMALL_FASTF;
+	(*max)[Y] += SMALL_FASTF;
+    }
+    if (NEAR_EQUAL((*min)[Z], (*max)[Z], SMALL_FASTF)) {
+	(*min)[Z] -= SMALL_FASTF;
+	(*max)[Z] += SMALL_FASTF;
+    }
+
+    for (; nurbs != (struct nurb_specific *)0; nurbs = next) {
+	register struct face_g_snurb *s;
+
+	next = nurbs->next;
+
+	/* There is a linked list of surfaces to free for each nurb */
+	while (BU_LIST_WHILE (s, face_g_snurb, &nurbs->bez_hd)) {
+	    NMG_CK_SNURB(s);
+	    BU_LIST_DEQUEUE(&(s->l));
+	    rt_nurb_free_snurb(s, (struct resource *)NULL);
+	}
+	rt_nurb_free_snurb(nurbs->srf, (struct resource *)NULL);	/* original surf */
+	bu_free((char *)nurbs, "nurb_specific");
+    }
+
+    return 0;
+}
+
 
 /**
  * R T _ N U R B _ P R E P
