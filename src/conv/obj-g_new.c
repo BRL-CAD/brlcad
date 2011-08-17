@@ -61,7 +61,10 @@
 #include "wdb.h"
 #include "obj_parser.h"
 
-static char *usage = "%s -u units_str -o open_bot_type -h plate_thickness [-cipdv] [-g grouping_option] [-m mode_option] [-t distance_tolerance] [-x rt_debug_flag] [-X NMG_debug_flag] input.obj output.g\n\
+static char *usage = "%s -u units_str -o open_bot_type -h plate_thickness "
+		     "[-cipdv] [-g grouping_option] [-m mode_option] "
+		     "[-t distance_tolerance] [-x rt_debug_flag] "
+		     "[-X NMG_debug_flag] input.obj output.g\n\
 \n\
         -u units_str           Units of obj file where units_str can\n\
                                be any valid BRL-CAD unit such as one\n\
@@ -2080,7 +2083,13 @@ fuse_vertex(struct ga_t *ga,
 
     size_t fuse_count = 0;
 
-    if ((gfi->face_type == FACE_V || gfi->face_type == FACE_NV) && (vertex_type == FUSE_TEX_VERT)) {
+#if DEBUG
+    printf("Entering fuse_vertex.\n");
+#endif
+
+    if ((gfi->face_type == FACE_V || gfi->face_type == FACE_NV) &&
+	    (vertex_type == FUSE_TEX_VERT))
+    {
         return; /* nothing to process */
     }
 
@@ -2094,8 +2103,10 @@ fuse_vertex(struct ga_t *ga,
     /* test if fuse texture vertices has already been run, if so free
      * old arrays.
      */
-    if (((gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV) && (vertex_type == FUSE_TEX_VERT)) &&
-	(gfi->texture_vertex_fuse_map != NULL)) {
+    if (((gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV) &&
+	(vertex_type == FUSE_TEX_VERT)) &&
+	(gfi->texture_vertex_fuse_map != NULL))
+    {
 	bu_free(gfi->texture_vertex_fuse_map, "gfi->texture_vertex_fuse_map");
 	gfi->num_texture_vertex_fuse = 0;
 	gfi->texture_vertex_fuse_offset = 0;
@@ -2107,20 +2118,32 @@ fuse_vertex(struct ga_t *ga,
      */
 
     if (vertex_type == FUSE_VERT) {
-        vertex_index_list = (size_t *)bu_calloc(max_index_list, sizeof(size_t), "vertex_index_list");
+        vertex_index_list = (size_t *)bu_calloc(max_index_list, sizeof(size_t),
+	    "vertex_index_list");
     }
 
-    if ((gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV) && (vertex_type == FUSE_TEX_VERT)) {
-        texture_vertex_index_list = (size_t *)bu_calloc(max_index_list, sizeof(size_t), "texture_vertex_index_list");
+    if ((gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV) &&
+	(vertex_type == FUSE_TEX_VERT))
+    {
+        texture_vertex_index_list = (size_t *)bu_calloc(max_index_list,
+	    sizeof(size_t), "texture_vertex_index_list");
     }
 
     /* loop thru all polygons and collect max and min index values and
      * fill the vertex_index_list and as applicable, the
      * texture_vertex_index_list
      */
-    for (face_idx = 0 ; face_idx < gfi->num_faces ; face_idx++) {
-        for (vert_idx = 0 ; vert_idx < gfi->num_vertices_arr[face_idx] ; vert_idx++) {
-            retrieve_coord_index(ga, gfi, face_idx, vert_idx, tmp_v, tmp_n, tmp_t, &tmp_w, &vofi, &nofi, &tofi);
+    for (face_idx = 0; face_idx < gfi->num_faces; face_idx++) {
+#if DEBUG
+	printf("\tface %d / %d, %d vertices\n", face_idx, gfi->num_faces,
+		gfi->num_vertices_arr[face_idx]);
+#endif
+        for (vert_idx = 0; vert_idx < gfi->num_vertices_arr[face_idx];
+	     vert_idx++)
+	{
+            retrieve_coord_index(ga, gfi, face_idx, vert_idx, tmp_v, tmp_n,
+		tmp_t, &tmp_w, &vofi, &nofi, &tofi);
+
             if (face_idx == 0 && vert_idx == 0) {
 		/* set initial max and min */
                 if (vertex_type == FUSE_VERT) {
@@ -2128,7 +2151,9 @@ fuse_vertex(struct ga_t *ga,
                     min_vert_idx = vofi;
                     max_vert_idx = vofi;
                 }
-                if ((gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV) && (vertex_type == FUSE_TEX_VERT)) {
+                if ((gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV) &&
+		    (vertex_type == FUSE_TEX_VERT))
+		{
                     texture_vertex_index_list[num_index_list] = tofi;
                     min_tex_vert_idx = tofi;
                     max_tex_vert_idx = tofi;
@@ -2144,7 +2169,9 @@ fuse_vertex(struct ga_t *ga,
                         min_vert_idx = vofi;
                     }
                 }
-                if ((gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV) && (vertex_type == FUSE_TEX_VERT)) {
+                if ((gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV) &&
+		    (vertex_type == FUSE_TEX_VERT))
+		{
                     texture_vertex_index_list[num_index_list] = tofi;
                     if (tofi > max_tex_vert_idx) {
                         max_tex_vert_idx = tofi;
@@ -2158,13 +2185,19 @@ fuse_vertex(struct ga_t *ga,
             if (num_index_list >= max_index_list) {
                 max_index_list += max_index_list_increment;
                 if (vertex_type == FUSE_VERT) {
-                    index_list_tmp = (size_t *)bu_realloc(vertex_index_list, sizeof(size_t) * max_index_list,
-							  "index_list_tmp");
+                    index_list_tmp = (size_t *)bu_realloc(vertex_index_list,
+			    sizeof(size_t) * max_index_list, "index_list_tmp");
+
                     vertex_index_list = index_list_tmp;
                 }
-                if ((gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV) && (vertex_type == FUSE_TEX_VERT)) {
-                    index_list_tmp = (size_t *)bu_realloc(texture_vertex_index_list, sizeof(size_t) * max_index_list,
-							  "index_list_tmp");
+                if ((gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV) &&
+		    (vertex_type == FUSE_TEX_VERT))
+		{
+                    index_list_tmp =
+			(size_t *) bu_realloc(texture_vertex_index_list,
+				sizeof(size_t) * max_index_list,
+				"index_list_tmp");
+
                     texture_vertex_index_list = index_list_tmp;
                 }
             }
@@ -2177,10 +2210,12 @@ fuse_vertex(struct ga_t *ga,
     if (vertex_type == FUSE_VERT) {
         gfi->num_vertex_fuse = max_vert_idx - min_vert_idx + 1;
         gfi->vertex_fuse_offset = min_vert_idx;
-        gfi->vertex_fuse_map = (size_t *)bu_calloc(gfi->num_vertex_fuse, sizeof(size_t),
-						   "gfi->vertex_fuse_map");
-        gfi->vertex_fuse_flag = (short int *)bu_calloc(gfi->num_vertex_fuse, sizeof(short int),
-						       "gfi->vertex_fuse_flag");
+        gfi->vertex_fuse_map = (size_t *)bu_calloc(gfi->num_vertex_fuse,
+		sizeof(size_t), "gfi->vertex_fuse_map");
+
+        gfi->vertex_fuse_flag = (short int *)bu_calloc(gfi->num_vertex_fuse,
+		sizeof(short int), "gfi->vertex_fuse_flag");
+
         /* initialize arrays */
         for (idx1 = 0 ; idx1 < gfi->num_vertex_fuse ; idx1++) {
             gfi->vertex_fuse_map[idx1] = 0;
@@ -2188,13 +2223,19 @@ fuse_vertex(struct ga_t *ga,
         }
     }
 
-    if ((gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV) && (vertex_type == FUSE_TEX_VERT)) {
+    if ((gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV) &&
+	    (vertex_type == FUSE_TEX_VERT))
+    {
         gfi->num_texture_vertex_fuse = max_tex_vert_idx - min_tex_vert_idx + 1;
         gfi->texture_vertex_fuse_offset = min_tex_vert_idx;
-        gfi->texture_vertex_fuse_map = (size_t *)bu_calloc(gfi->num_texture_vertex_fuse,
-							   sizeof(size_t), "gfi->texture_vertex_fuse_map");
-        gfi->texture_vertex_fuse_flag = (short int *)bu_calloc(gfi->num_texture_vertex_fuse,
-							       sizeof(short int), "gfi->texture_vertex_fuse_flag");
+        gfi->texture_vertex_fuse_map =
+	    (size_t *)bu_calloc(gfi->num_texture_vertex_fuse, sizeof(size_t),
+		    "gfi->texture_vertex_fuse_map");
+
+        gfi->texture_vertex_fuse_flag =
+	    (short int *)bu_calloc(gfi->num_texture_vertex_fuse,
+		    sizeof(short int), "gfi->texture_vertex_fuse_flag");
+
         /* initialize arrays */
         for (idx1 = 0 ; idx1 < gfi->num_texture_vertex_fuse ; idx1++) {
             gfi->texture_vertex_fuse_map[idx1] = 0;
@@ -2210,9 +2251,11 @@ fuse_vertex(struct ga_t *ga,
 
     if (debug) {
         for (idx1 = 0 ; idx1 < num_index_list ; idx1++) {
-            bu_log("non-unique sorted vertex_index_list[idx1] = (%zu)\n", vertex_index_list[idx1]);
+            bu_log("non-unique sorted vertex_index_list[idx1] = (%zu)\n",
+		    vertex_index_list[idx1]);
         }
-        bu_log("num non-unique sorted vertex_index_list[idx1] = (%zu)\n", num_index_list);
+        bu_log("num non-unique sorted vertex_index_list[idx1] = (%zu)\n",
+		num_index_list);
     }
 
     /* remove duplicates from lists and return a sorted list, pass in
@@ -2222,38 +2265,56 @@ fuse_vertex(struct ga_t *ga,
      * sorted
      */
     if (vertex_type == FUSE_VERT) {
-        remove_duplicates_and_sort(&vertex_index_list, &num_unique_vertex_index_list);
+        remove_duplicates_and_sort(&vertex_index_list,
+		&num_unique_vertex_index_list);
     }
 
-    if ((gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV) && (vertex_type == FUSE_TEX_VERT)) {
-        remove_duplicates_and_sort(&texture_vertex_index_list, &num_unique_texture_vertex_index_list);
+    if ((gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV) &&
+	    (vertex_type == FUSE_TEX_VERT))
+    {
+        remove_duplicates_and_sort(&texture_vertex_index_list,
+		&num_unique_texture_vertex_index_list);
     }
 
     if (debug) {
         for (idx1 = 0 ; idx1 < num_unique_vertex_index_list ; idx1++) {
-            bu_log("unique sorted vertex_index_list[idx1] = (%zu)\n", vertex_index_list[idx1]);
+            bu_log("unique sorted vertex_index_list[idx1] = (%zu)\n",
+		    vertex_index_list[idx1]);
         }
-        bu_log("num unique sorted vertex_index_list[idx1] = (%zu)\n", num_unique_vertex_index_list);
+        bu_log("num unique sorted vertex_index_list[idx1] = (%zu)\n",
+		num_unique_vertex_index_list);
     }
 
     if (vertex_type == FUSE_VERT) {
-        fuse_count = populate_fuse_map(ga, gfi, conv_factor, tol, vertex_index_list,
-                                       num_unique_vertex_index_list, compare_type, vertex_type);
+        fuse_count = populate_fuse_map(ga, gfi, conv_factor, tol,
+		vertex_index_list, num_unique_vertex_index_list, compare_type,
+		vertex_type);
+
         bu_free(vertex_index_list, "vertex_index_list");
         bu_free(gfi->vertex_fuse_flag, "gfi->vertex_fuse_flag");
     }
 
-    if ((gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV) && (vertex_type == FUSE_TEX_VERT)) {
-        fuse_count = populate_fuse_map(ga, gfi, conv_factor, tol, texture_vertex_index_list, 
-                                       num_unique_texture_vertex_index_list, compare_type, vertex_type);
+    if ((gfi->face_type == FACE_TV || gfi->face_type == FACE_TNV) &&
+	    (vertex_type == FUSE_TEX_VERT))
+    {
+        fuse_count = populate_fuse_map(ga, gfi, conv_factor, tol,
+		texture_vertex_index_list, num_unique_texture_vertex_index_list,
+	       	compare_type, vertex_type);
+
         bu_free(texture_vertex_index_list, "texture_vertex_index_list");
         bu_free(gfi->texture_vertex_fuse_flag, "gfi->texture_vertex_fuse_flag");
     }
 
     if (verbose || debug) {
-        bu_log("Fused (%zu) vertex for obj file face grouping name (%s), obj file face grouping index (%zu)\n",
-	       fuse_count, bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
+        bu_log("Fused (%zu) vertex for obj file face grouping name (%s),"
+		"obj file face grouping index (%zu)\n",
+	       fuse_count, bu_vls_addr(gfi->raw_grouping_name),
+	       gfi->grouping_index + 1);
     }
+
+#if DEBUG
+    printf("Leaving fuse_vertex.\n");
+#endif
 
     return fuse_count;
 }
@@ -3023,22 +3084,22 @@ process_b_mode_option(struct ga_t *ga,
                       struct rt_wdb *outfp, 
                       fastf_t conv_factor, 
                       struct bn_tol *tol,
-                      fastf_t bot_thickness,              /* bot plate thickness (mm) */
-                      int normal_mode,                    /* PROC_NORM, IGNR_NORM */
-                      int plot_mode,                      /* PLOT_OFF, PLOT_ON */
-                      unsigned char open_bot_output_mode, /* RT_BOT_SURFACE, RT_BOT_PLATE, RT_BOT_PLATE_NOCOS */
-                      int face_test_type)                 /* TEST_ALL, TEST_NUM_VERT */
+                      fastf_t bot_thickness, /* bot plate thickness (mm) */
+                      int normal_mode,       /* PROC_NORM, IGNR_NORM */
+                      int plot_mode,         /* PLOT_OFF, PLOT_ON */
+		      /* RT_BOT_SURFACE, RT_BOT_PLATE, RT_BOT_PLATE_NOCOS */
+                      unsigned char open_bot_output_mode,
+                      int face_test_type)    /* TEST_ALL, TEST_NUM_VERT */
 {
     (void)fuse_vertex(ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_EQUAL);
     (void)retest_grouping_faces(ga, gfi, conv_factor, face_test_type, tol);
     if (!test_closure(ga, gfi, conv_factor, plot_mode, face_test_type, tol)) {
-        (void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness, IGNR_TEX, normal_mode,
-			    RT_BOT_SOLID, face_test_type);
+        (void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness,
+		IGNR_TEX, normal_mode, RT_BOT_SOLID, face_test_type);
     } else {
-        (void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness, IGNR_TEX, normal_mode, 
-			    open_bot_output_mode, face_test_type);
+        (void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness,
+		IGNR_TEX, normal_mode, open_bot_output_mode, face_test_type);
     }
-    return;
 }
 
 /*
@@ -3062,30 +3123,38 @@ process_nv_mode_option(struct ga_t *ga,
                        struct rt_wdb *outfp, 
                        fastf_t conv_factor, 
                        struct bn_tol *tol,
-                       fastf_t bot_thickness,              /* bot plate thickness (mm) */
-                       int nmg_output_mode,                /* OUT_NMG, OUT_VBOT */
-                       int plot_mode,                      /* PLOT_OFF, PLOT_ON */
-                       unsigned char open_bot_output_mode, /* RT_BOT_SURFACE, RT_BOT_PLATE, RT_BOT_PLATE_NOCOS */
-                       int nmg_face_test_type,             /* output_to_nmg (nmg or bot-via-nmg) face_test_type
-                                                            * TEST_ALL, TEST_NUM_VERT
-                                                            */
-                       int native_face_test_type,          /* output_to_bot (i.e. native) face_test_type 
-                                                            * TEST_ALL, TEST_NUM_VERT
-                                                            */
+                       fastf_t bot_thickness, /* bot plate thickness (mm) */
+                       int nmg_output_mode,   /* OUT_NMG, OUT_VBOT */
+                       int plot_mode,         /* PLOT_OFF, PLOT_ON */
+		       /* RT_BOT_SURFACE, RT_BOT_PLATE, RT_BOT_PLATE_NOCOS */
+                       unsigned char open_bot_output_mode,
+		       /* output_to_nmg (nmg or bot-via-nmg) face_test_type
+			* TEST_ALL, TEST_NUM_VERT
+			*/
+                       int nmg_face_test_type, 
+		       /* output_to_bot (i.e. native) face_test_type
+			* TEST_ALL, TEST_NUM_VERT
+			*/
+                       int native_face_test_type,
                        int cont_on_nmg_bomb_flag)
 {
     int ret = 0;
-    ret = output_to_nmg(ga, gfi, outfp, conv_factor, tol, IGNR_NORM, nmg_output_mode, nmg_face_test_type);
+    ret = output_to_nmg(ga, gfi, outfp, conv_factor, tol, IGNR_NORM,
+	nmg_output_mode, nmg_face_test_type);
 
     if ((ret == 1) || ((ret == 2) && cont_on_nmg_bomb_flag)) {
         (void)fuse_vertex(ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_WI_TOL);
-        (void)retest_grouping_faces(ga, gfi, conv_factor, native_face_test_type, tol);
-        if (!test_closure(ga, gfi, conv_factor, plot_mode, native_face_test_type, tol)) {
-            (void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness, IGNR_TEX, IGNR_NORM,
-				RT_BOT_SOLID, native_face_test_type);
+        (void)retest_grouping_faces(ga, gfi, conv_factor, native_face_test_type,
+		tol);
+        if (!test_closure(ga, gfi, conv_factor, plot_mode,
+		    native_face_test_type, tol))
+	{
+            (void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness,
+		    IGNR_TEX, IGNR_NORM, RT_BOT_SOLID, native_face_test_type);
         } else {
-            (void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness, IGNR_TEX, IGNR_NORM,
-				open_bot_output_mode, native_face_test_type);
+            (void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness,
+		    IGNR_TEX, IGNR_NORM, open_bot_output_mode,
+		    native_face_test_type);
         }
     }
 
@@ -3123,21 +3192,23 @@ main(int argc, char **argv)
     double dist_tmp = 0.0;
     struct bn_tol tol_struct;
     struct bn_tol *tol;
-    int cont_on_nmg_bomb_flag = 0;           /* default: if true, continue processing on nmg-bomb */
+    int cont_on_nmg_bomb_flag = 0;
     int stop_processing_flag = 0;
-    int nmg_face_test_type = TEST_NUM_VERT;  /* default */
-    int native_face_test_type = TEST_ALL;    /* default */
+    int nmg_face_test_type = TEST_NUM_VERT;
+    int native_face_test_type = TEST_ALL;
     int nmg_output_mode = OUT_VBOT;
-    int open_bot_output_mode = RT_BOT_PLATE; /* default */
-    int plot_mode = PLOT_OFF;    /* default: do not create plot files of open edges for groupings */
-    int normal_mode = PROC_NORM; /* default: import face normals if included in obj file */
+    int open_bot_output_mode = RT_BOT_PLATE;
+    /* default: do not create plot files of open edges for groupings */
+    int plot_mode = PLOT_OFF;
+    /* default: import face normals if included in obj file */
+    int normal_mode = PROC_NORM;
     char grouping_option = 'g';  /* default: group by obj file groups */
     char mode_option = 'v';      /* default: import as bot-via-nmg */
-    fastf_t conv_factor = 0.0;   /* user must specify units, there is no default */
-    fastf_t bot_thickness = 0.0; /* user must specify plate bot thickness, there is not default */
-    int user_defined_units_flag = 0;  /* flag indicating if user specified units on command line */
-    int user_bot_thickness_flag = 0;  /* flag indicating if user specified plate bot thickness */
-    int user_open_bot_output_mode_flag = 0; /* flag indicating if user specified open bot output mode */
+    fastf_t conv_factor = 0.0;
+    fastf_t bot_thickness = 0.0;
+    int user_defined_units_flag = 0;
+    int user_bot_thickness_flag = 0;
+    int user_open_bot_output_mode_flag = 0;
     time_t start_time;
     time_t end_time;
     time_t elapsed_time;
@@ -3154,9 +3225,11 @@ main(int argc, char **argv)
      */
     tol = &tol_struct;
     tol->magic = BN_TOL_MAGIC;
-    tol->dist = 0.0005;    /* default which should be equal to the raytracer default tolerance */
+    /* default which should be equal to the raytracer default tolerance */
+    tol->dist = 0.0005;
     tol->dist_sq = tol->dist * tol->dist;
-    tol->perp = 1e-6;      /* default which should be equal to the raytracer default tolerance */
+    /* default which should be equal to the raytracer default tolerance */
+    tol->perp = 1e-6;
     tol->para = 1 - tol->perp;
 
     if (argc < 2) {
@@ -3174,8 +3247,10 @@ main(int argc, char **argv)
             case 'i': /* ignore normals if provided in obj file */
                 normal_mode = IGNR_NORM;
                 break;
-            case 'd': /* turn on local debugging, displays additional information of developer interest */
-                      /* output from std-err should be piped to a file when using this option */
+            case 'd':
+		/* turn on local debugging, displays additional information of
+		 * developer interest on stderr
+		 */
                 debug = 1;
                 break;
             case 'x': /* set librt debug level */
@@ -3186,7 +3261,8 @@ main(int argc, char **argv)
             case 'X': /* set nmg debug level */
                 sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
                 NMG_debug = rt_g.NMG_debug;
-                bu_printb("librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT);
+                bu_printb("librt rt_g.NMG_debug", rt_g.NMG_debug,
+			NMG_DEBUG_FORMAT);
                 bu_log("\n");
                 break;
             case 'v': /* displays additional information of user interest */
@@ -3220,7 +3296,8 @@ main(int argc, char **argv)
                         break;
                     default:
                         bu_log("Invalid mode option '%c'.\n", bu_optarg[0]);
-                        bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
+                        bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
+				argv[0]);
                         break;
                 }
                 break;
@@ -3241,7 +3318,8 @@ main(int argc, char **argv)
                         break;
                     default:
                         bu_log("Invalid grouping option '%c'.\n", bu_optarg[0]);
-                        bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
+                        bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
+				argv[0]);
                         break;
                 }
                 break;
@@ -3260,8 +3338,10 @@ main(int argc, char **argv)
                         user_open_bot_output_mode_flag = 1;
                         break;
                     default:
-                        bu_log("Invalid open surface 'native-bot' output bot type '%c'.\n", bu_optarg[0]);
-                        bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
+                        bu_log("Invalid open surface 'native-bot' output bot "
+			       "type '%c'.\n", bu_optarg[0]);
+                        bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
+				argv[0]);
                         break;
                 }
                 break;
@@ -3282,7 +3362,9 @@ main(int argc, char **argv)
         bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
     }
 
-    /* if user did not specify bot type of open bots, abort since this is required */
+    /* if user did not specify bot type of open bots, abort since this is
+     * required
+     */
     if (!user_open_bot_output_mode_flag) {
         bu_log("'open_bot_type' was not specified but is required\n");
         bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
@@ -3293,7 +3375,8 @@ main(int argc, char **argv)
      * is required
      */
     if ((!user_bot_thickness_flag) && ((open_bot_output_mode == RT_BOT_PLATE)
-				       || (open_bot_output_mode == RT_BOT_PLATE_NOCOS))) {
+        || (open_bot_output_mode == RT_BOT_PLATE_NOCOS)))
+    {
 	bu_log("'plate_thickness' was not specified but is required\n");
 	bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
     }
@@ -3356,7 +3439,8 @@ main(int argc, char **argv)
     }
 
     if ((user_bot_thickness_flag) && ((open_bot_output_mode == RT_BOT_PLATE)
-				      || (open_bot_output_mode == RT_BOT_PLATE_NOCOS))) {
+        || (open_bot_output_mode == RT_BOT_PLATE_NOCOS)))
+    {
 	bu_log("\tUsing bot_thickness of (%lfmm)\n", bot_thickness);
     }
     
@@ -3411,10 +3495,13 @@ main(int argc, char **argv)
         if (ret_val == ENOMEM) {
             bu_log("Can not allocate an obj_parser_t object, Out of Memory.\n");
         } else {
-            bu_log("Can not allocate an obj_parser_t object, Undefined Error (%d)\n", ret_val);
+            bu_log("Can not allocate an obj_parser_t object, "
+		   "Undefined Error (%d)\n", ret_val);
         }
 
-        /* it is unclear if obj_parser_destroy must be run if obj_parser_create failed */
+        /* it is unclear if obj_parser_destroy must be run if
+	 * obj_parser_create failed
+	 */
         obj_parser_destroy(ga.parser);
 
         if (fclose(my_stream) != 0) {
@@ -3440,7 +3527,8 @@ main(int argc, char **argv)
             }
         }
 
-        /* it is unclear if obj_contents_destroy must be run if obj_fparse failed */
+        /* it is unclear if obj_contents_destroy must be run if obj_fparse
+	 * failed */
         obj_contents_destroy(ga.contents);
 
         obj_parser_destroy(ga.parser);
@@ -3461,22 +3549,31 @@ main(int argc, char **argv)
             while ((face_type_idx <= FACE_TNV) && !stop_processing_flag) {
                 (void)time(&start_time);
                 timep = localtime(&start_time);
-                collect_grouping_faces_indexes(&ga, &gfi, face_type_idx, GRP_NONE, 0);
+                collect_grouping_faces_indexes(&ga, &gfi, face_type_idx,
+			GRP_NONE, 0);
+
                 if (gfi != NULL) {
-                    bu_log("Grouping start time: %02d:%02d:%02d Grouping index: (1 of 1) Facetype: (%d) Grouping name: (%s)\n",
+                    bu_log("Grouping start time: %02d:%02d:%02d "
+			    "Grouping index: (1 of 1) "
+			    "Facetype: (%d) Grouping name: (%s)\n",
 			   timep->tm_hour, timep->tm_min, timep->tm_sec,
 			   face_type_idx, bu_vls_addr(gfi->raw_grouping_name));
 
                     switch (mode_option) {
                         case 'b':
-                            process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness, 
-						  normal_mode, plot_mode, open_bot_output_mode, native_face_test_type);
+                            process_b_mode_option(&ga, gfi, fd_out, conv_factor,
+				    tol, bot_thickness, normal_mode, plot_mode,
+				    open_bot_output_mode,
+				    native_face_test_type);
                             break;
                         case 'n':
                         case 'v':
-                            stop_processing_flag = process_nv_mode_option(&ga, gfi, fd_out, conv_factor,
-									  tol, bot_thickness, nmg_output_mode, plot_mode, open_bot_output_mode,
-									  nmg_face_test_type, native_face_test_type, cont_on_nmg_bomb_flag);
+                            stop_processing_flag = process_nv_mode_option(&ga,
+				    gfi, fd_out, conv_factor, tol,
+				    bot_thickness, nmg_output_mode, plot_mode,
+				    open_bot_output_mode, nmg_face_test_type,
+				    native_face_test_type,
+				    cont_on_nmg_bomb_flag);
                             break;
                     }
 
@@ -3484,10 +3581,16 @@ main(int argc, char **argv)
                         (void)time(&end_time);
                         timep = localtime(&end_time);
                         elapsed_time = end_time - start_time;
-                        bu_log("Grouping end time: %02d:%02d:%02d Duration: %02dh %02dm %02ds Grouping index: (1 of 1) Facetype: (%d) Grouping name: (%s) Primitive name: (%s)\n",
+                        bu_log("Grouping end time: %02d:%02d:%02d "
+				"Duration: %02dh %02dm %02ds "
+				"Grouping index: (1 of 1) "
+				"Facetype: (%d) "
+				"Grouping name: (%s) Primitive name: (%s)\n",
 			       timep->tm_hour, timep->tm_min, timep->tm_sec,
-			       elapsed_time/3600, (elapsed_time%3600)/60, (elapsed_time%60), face_type_idx,
-			       bu_vls_addr(gfi->raw_grouping_name), bu_vls_addr(gfi->primitive_name));
+			       elapsed_time/3600, (elapsed_time%3600)/60,
+			       (elapsed_time%60), face_type_idx,
+			       bu_vls_addr(gfi->raw_grouping_name),
+			       bu_vls_addr(gfi->primitive_name));
                     }
 
                     free_gfi(&gfi);
@@ -3502,11 +3605,15 @@ main(int argc, char **argv)
                 while ((face_type_idx <= FACE_TNV) && !stop_processing_flag) {
                     (void)time(&start_time);
                     timep = localtime(&start_time);
-                    collect_grouping_faces_indexes(&ga, &gfi, face_type_idx, GRP_GROUP, i);
+                    collect_grouping_faces_indexes(&ga, &gfi, face_type_idx,
+			    GRP_GROUP, i);
                     if (gfi != NULL) {
-                        bu_log("Grouping start time: %02d:%02d:%02d Grouping index: (%zu of %zu) Facetype: (%d) Grouping name: (%s)\n",
+                        bu_log("Grouping start time: %02d:%02d:%02d "
+				"Grouping index: (%zu of %zu) "
+				"Facetype: (%d) Grouping name: (%s)\n",
 			       timep->tm_hour, timep->tm_min, timep->tm_sec,
-			       gfi->grouping_index + 1, ga.numGroups, face_type_idx,
+			       gfi->grouping_index + 1, ga.numGroups,
+			       face_type_idx,
 			       bu_vls_addr(gfi->raw_grouping_name));
 
                         switch (mode_option) {
