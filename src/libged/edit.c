@@ -688,14 +688,15 @@
  * -a -x comb/combA 3 -z combB/combC 0 0 11 -y combD/combE 0 7 combF/combG
  * -{a|r} -x 3 -y 7 -z 11 comb
  * -a -z 11 comb
+ * -a comb/combA combB/combC combD/combE
+ * -k shp -a . comb/comb comb/comb comb/comb
  *
  * XXX Left to test: specifying multiple objects
      *               batch operator in several places
+     *               ?
  *
  * XXX(tmp): Broken translate arguments
  *
- * -a comb/combA combB/combC combD/combE
- * -k shp -a . comb/comb comb/comb comb/comb
  * "-x ." or "-y ." or "-z ." (disabled; may be tricky to implement)
  */
 
