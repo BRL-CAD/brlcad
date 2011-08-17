@@ -4862,6 +4862,11 @@ RT_EXPORT extern void nmg_isect2d_prep(struct nmg_inter_struct *is,
 				       const uint32_t *assoc_use);
 RT_EXPORT extern void nmg_isect2d_cleanup(struct nmg_inter_struct *is);
 RT_EXPORT extern void nmg_isect2d_final_cleanup();
+RT_EXPORT extern int nmg_isect_2faceuse(point_t pt,
+					vect_t dir,
+					struct faceuse *fu1,
+					struct faceuse *fu2,
+					const struct bn_tol *tol);
 RT_EXPORT extern void nmg_isect_vert2p_face2p(struct nmg_inter_struct *is,
 					      struct vertexuse *vu1,
 					      struct faceuse *fu2);
