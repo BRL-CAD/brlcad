@@ -1185,8 +1185,9 @@ edit_arg_expand_meta(struct ged *gedp, struct edit_arg *meta_arg,
 	}
 
 	/* respect certain type flags from the prototype/target obj */
-	(*dest)->type &= EDIT_TARGET_OBJ_BATCH_TYPES;
-	(*dest)->type |= prototype->type & EDIT_TARGET_OBJ_BATCH_TYPES;
+	(*dest)->type |= EDIT_TARGET_OBJ_BATCH_TYPES & prototype->type &
+			 src->type;
+	(*dest)->type |= (EDIT_FROM | EDIT_TO) & prototype->type;
 
 	if (edit_arg_to_coord(gedp, *dest, (vect_t *)NULL) == GED_ERROR)
 	    return GED_ERROR;
@@ -1919,19 +1920,20 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
 
 	    /* cmd line opts should have been handled/removed */
 	    BU_ASSERT(cur_arg->cl_options[0] == '\0');
+	    prev_arg = cur_arg;
 
 	    if (cur_arg->type & EDIT_USE_TARGETS) {
 		if (edit_arg_expand_meta(gedp, cur_arg, subcmd->common.objects,
 					 GED_ERROR) == GED_ERROR)
 		    return GED_ERROR;
-		else
-		    break; /* batch opertor should be last arg */
-	    } else if (cur_arg->object) {
+		num_args_set += num_target_objs;
+		break; /* batch opertor should be last arg */
+	    }
+	    if (cur_arg->object) {
 		if (edit_arg_to_coord(gedp, cur_arg, (vect_t *)NULL) ==
 		    GED_ERROR)
 		    return GED_ERROR;
 	    }
-	    prev_arg = cur_arg;
 	    ++num_args_set;
 	}
 
