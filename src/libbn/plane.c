@@ -476,15 +476,15 @@ bn_isect_line3_plane(fastf_t *dist,
  * RPP.  If this convention is unnecessary, just pass (0, 0, 0) as
  * rpp_min.
  *
- * @return 0	OK, line of intersection stored in `pt' and `dir'.
- * @return -1	FAIL, planes are identical (co-planar)
- * @return -2	FAIL, planes are parallel and distinct
- * @return -3	FAIL, unable to find line of intersection
+ * @return 0	success, line of intersection stored in 'pt' and 'dir'
+ * @return -1	planes are coplanar
+ * @return -2	planes are parallel but not coplanar
+ * @return -3	error, should be intersection but unable to find
  *
  * @param[out]	pt	Starting point of line of intersection
  * @param[out]	dir	Direction vector of line of intersection (unit length)
- * @param[in]	a	plane 1
- * @param[in]	b	plane 2
+ * @param[in]	a	plane 1 (normal must be unit length)
+ * @param[in]	b	plane 2 (normal must be unit length)
  * @param[in]	rpp_min	minimum poit of model RPP
  * @param[in]	tol	tolerance values
  */
@@ -500,17 +500,20 @@ bn_isect_2planes(fastf_t *pt,
     plane_t pl;
     int i;
 
+    VSETALL(pt, 0.0);  /* sanity */
+    VSETALL(dir, 0.0); /* sanity */
+
     if ((i = bn_coplanar(a, b, tol)) != 0) {
-	if (i > 0)
-	    return -1;	/* FAIL -- coplanar */
-	return -2;		/* FAIL -- parallel & distinct */
+	if (i > 0) {
+	    return -1; /* planes are coplanar */
+	}
+	return -2;     /* planes are parallel but not coplanar */
     }
 
     /* Direction vector for ray is perpendicular to both plane
      * normals.
      */
     VCROSS(dir, a, b);
-    VUNITIZE(dir);		/* safety */
 
     /* Select an axis-aligned plane which has its normal pointing
      * along the same axis as the largest magnitude component of the
@@ -518,21 +521,31 @@ bn_isect_2planes(fastf_t *pt,
      * negative, reverse the direction vector, so that model is "in
      * front" of start point.
      */
-    abs_dir[X] = (dir[X] >= 0) ? dir[X] : (-dir[X]);
-    abs_dir[Y] = (dir[Y] >= 0) ? dir[Y] : (-dir[Y]);
-    abs_dir[Z] = (dir[Z] >= 0) ? dir[Z] : (-dir[Z]);
+    abs_dir[X] = fabs(dir[X]);
+    abs_dir[Y] = fabs(dir[Y]);
+    abs_dir[Z] = fabs(dir[Z]);
+
+    if (ZERO(abs_dir[X])) {
+        abs_dir[X] = 0.0;
+    }
+    if (ZERO(abs_dir[Y])) {
+        abs_dir[Y] = 0.0;
+    }
+    if (ZERO(abs_dir[Z])) {
+        abs_dir[Z] = 0.0;
+    }
 
     if (abs_dir[X] >= abs_dir[Y]) {
 	if (abs_dir[X] >= abs_dir[Z]) {
 	    VSET(pl, 1, 0, 0);	/* X */
 	    pl[W] = rpp_min[X];
-	    if (dir[X] < 0) {
+	    if (dir[X] < -SMALL_FASTF) {
 		VREVERSE(dir, dir);
 	    }
 	} else {
 	    VSET(pl, 0, 0, 1);	/* Z */
 	    pl[W] = rpp_min[Z];
-	    if (dir[Z] < 0) {
+	    if (dir[Z] < -SMALL_FASTF) {
 		VREVERSE(dir, dir);
 	    }
 	}
@@ -540,23 +553,25 @@ bn_isect_2planes(fastf_t *pt,
 	if (abs_dir[Y] >= abs_dir[Z]) {
 	    VSET(pl, 0, 1, 0);	/* Y */
 	    pl[W] = rpp_min[Y];
-	    if (dir[Y] < 0) {
+	    if (dir[Y] < -SMALL_FASTF) {
 		VREVERSE(dir, dir);
 	    }
 	} else {
 	    VSET(pl, 0, 0, 1);	/* Z */
 	    pl[W] = rpp_min[Z];
-	    if (dir[Z] < 0) {
+	    if (dir[Z] < -SMALL_FASTF) {
 		VREVERSE(dir, dir);
 	    }
 	}
     }
 
     /* Intersection of the 3 planes defines ray start point */
-    if (bn_mkpoint_3planes(pt, pl, a, b) < 0)
-	return -3;	/* FAIL -- no intersection */
+    if (bn_mkpoint_3planes(pt, pl, a, b) < 0) {
+	return -3;  /* error, should be intersection but unable to find */
+    }
 
-    return 0;		/* OK */
+    /* success, line of intersection stored in 'pt' and 'dir' */
+    return 0;
 }
 
 
@@ -1192,11 +1207,24 @@ bn_isect_lseg3_lseg3_new(fastf_t *dist,
         dist[0] = 1.0;
     }
 
-    /* If 'q' within tol of either endpoint (0.0, 1.0), make exact. */
-    if (dist[1] > -qtol && dist[1] < qtol) {
-        dist[1] = 0.0;
-    } else if (dist[1] > 1.0-qtol && dist[1] < 1.0+qtol) {
-        dist[1] = 1.0;
+    if (status == 0) {  /* infinite lines are colinear */
+        /* When line segments are colinear, dist[1] has an alternate
+         * interpretation: it's the parameter along p (not q)
+         * therefore dist[1] must use tolerance ptol not qtol.
+         * If 'q' within tol of either endpoint (0.0, 1.0), make exact.
+	 */
+	if (dist[1] > -ptol && dist[1] < ptol) {
+	    dist[1] = 0.0;
+	} else if (dist[1] > 1.0-ptol && dist[1] < 1.0+ptol) {
+	    dist[1] = 1.0;
+	}
+    } else {
+	/* If 'q' within tol of either endpoint (0.0, 1.0), make exact. */
+	if (dist[1] > -qtol && dist[1] < qtol) {
+	    dist[1] = 0.0;
+	} else if (dist[1] > 1.0-qtol && dist[1] < 1.0+qtol) {
+	    dist[1] = 1.0;
+	}
     }
 
     if (status == 0) {  /* infinite lines are colinear */
@@ -2798,9 +2826,9 @@ bn_coplanar(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 	bu_bomb("bn_coplanar(): input vector(s) 'a' and/or 'b' is not a unit vector.\n");
     }
 
+    VSCALE(pt_a, a, fabs(a[W]));
+    VSCALE(pt_b, b, fabs(b[W]));
     dot = VDOT(a, b);
-    VSCALE(pt_a, a, a[3]);
-    VSCALE(pt_b, b, b[3]);
 
     if (NEAR_ZERO(dot, tol->perp)) {
 	return 0; /* planes are perpendicular */
@@ -2809,11 +2837,12 @@ bn_coplanar(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
     /* parallel is when dot is within tol->perp of either -1 or 1 */
     if ((dot <= -SMALL_FASTF) ? (NEAR_EQUAL(dot, -1.0, tol->perp)) : (NEAR_EQUAL(dot, 1.0, tol->perp))) {
 	if (bn_pt3_pt3_equal(pt_a, pt_b, tol)) {
-	    /* test for coplanar */
+	    /* true when planes are coplanar */
 	    if (dot >= SMALL_FASTF) {
-		/* test normals in same direction */
+		/* true when plane normals in same direction */
 		return 1;
             } else {
+		/* true when plane normals in opposite direction */
 		return 2;
 	    }
 	} else {
