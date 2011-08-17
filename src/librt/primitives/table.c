@@ -626,7 +626,7 @@ const struct rt_functab rt_functab[] = {
 	rt_ebm_form,
 	rt_ebm_make,
 	rt_ebm_params,
-	NULL
+	rt_ebm_bbox
     },
 
     {
