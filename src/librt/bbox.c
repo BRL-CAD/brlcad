@@ -349,10 +349,10 @@ rt_bound_internal(struct rt_db_internal *ip, point_t rpp_min, point_t rpp_max)
      
     /* If passed rt_db_internal is a combination(a group or a region) then further calls needed */
     if(ip->idb_minor_type == ID_COMBINATION){
-        combp = (struct rt_comb_internal *)ip->idb_ptr;
-       
-        RT_CK_COMB(combp);
         vect_t tree_min, tree_max;
+        combp = (struct rt_comb_internal *)ip->idb_ptr;
+
+        RT_CK_COMB(combp);
        
         /* Is this combination a region ? */
         if (combp->region_flag){
