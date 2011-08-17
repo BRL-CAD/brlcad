@@ -74,6 +74,8 @@ rt_nmg_bbox(struct rt_db_internal *ip, point_t *min, point_t * max) {
     struct faceuse *fu;
     struct vertex **pt;
     struct bu_ptbl vert_table;
+    struct face_g_plane *fg;
+
     bu_ptbl_init(&vert_table, 64, "verts");
 
     RT_CK_DB_INTERNAL(ip);
@@ -87,7 +89,7 @@ rt_nmg_bbox(struct rt_db_internal *ip, point_t *min, point_t * max) {
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 		NMG_CK_FACEUSE(fu);
-		const struct face_g_plane *fg = fu->f_p->g.plane_p;
+		fg = fu->f_p->g.plane_p;
 		nmg_tabulate_face_g_verts(&vert_table, fg);
 		for (BU_PTBL_FOR(pt, (struct vertex **), &vert_table)) {
 		    VMINMAX((*min), (*max), (*pt)->vg_p->coord);

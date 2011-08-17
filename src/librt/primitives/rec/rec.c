@@ -168,9 +168,11 @@ rt_rec_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
     fastf_t f, tmp, z;
     double magsq_h, magsq_a, magsq_b, magsq_c, magsq_d;
     double mag_h, mag_a, mag_b;
+    struct rt_tgc_internal *tip;
 
     RT_CK_DB_INTERNAL(ip);
-    struct rt_tgc_internal *tip = (struct rt_tgc_internal *)ip->idb_ptr;
+
+    tip = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tip);
 
     mag_h = sqrt(magsq_h = MAGSQ(tip->h));
