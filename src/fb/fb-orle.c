@@ -22,9 +22,6 @@
  *
  *  Encode a frame buffer image using the old RLE library
  *
- *  Author -
- *	Gary S. Moss
- *
  */
 
 #include "common.h"

@@ -22,10 +22,6 @@
  *
  *  Save a colormap from a framebuffer.
  *
- *  Author -
- *	Robert Reschly
- *	Phillip Dykstra
- *
  */
 
 #include "common.h"

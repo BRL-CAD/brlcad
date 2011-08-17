@@ -22,9 +22,6 @@
  *
  *  Utility subroutine to apply a colormap to a buffer of pixels
  *
- *  Author -
- *	Gary S. Moss
- *
  */
 
 #include "common.h"
