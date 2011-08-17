@@ -48,6 +48,10 @@ new names should be listed for reference.
 7.20
 ----
 
+librt
+        bspline primitive [deprecated 7.20]
+        poly primitive [deprecated 7.20]
+        hf primitive [deprecated 7.20]
 bu.h
         bu_vls_init_if_uninit() -> bu_vls_init() [deprecated 7.20]
 autogen.sh && configure
