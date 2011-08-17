@@ -235,10 +235,10 @@ main(int argc, char **argv)
 
     /* Convert to Utah format */
     if (cm_save_needed) for (y=0; y<256; y++) {
-	rlemap[y+0*256] = cmap.cm_red[y];
-	rlemap[y+1*256] = cmap.cm_green[y];
-	rlemap[y+2*256] = cmap.cm_blue[y];
-    }
+	    rlemap[y+0*256] = cmap.cm_red[y];
+	    rlemap[y+1*256] = cmap.cm_green[y];
+	    rlemap[y+2*256] = cmap.cm_blue[y];
+	}
 
     scan_buf = (unsigned char *)malloc(sizeof(RGBpixel) * screen_width);
 
