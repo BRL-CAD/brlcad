@@ -2549,15 +2549,6 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 		break;
 	}
 
-	/* FIXME: It might take some time to make this work. */
-	if ((cur_arg->coords_used & EDIT_COORDS_ALL) != EDIT_COORDS_ALL) {
-	    bu_vls_printf(gedp->ged_result_str,
-			  "using the batch operator to specify individual"
-			  " coordinates does not work yet");
-	    edit_cmd_free(&subcmd);
-	    return GED_ERROR;
-	}
-
 	/* move to current arg */
 	argc -= 2;
 	argv += 2;
@@ -2575,6 +2566,16 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	    if (argc == 0)
 		break; /* no more args */
 	    cur_arg = edit_arg_postfix_new(subcmd.cmd_line.args);
+	}
+
+	/* FIXME: It might take some time to make this work. */
+	if ((cur_arg->type & EDIT_TARGET_OBJ) &&
+	    ((cur_arg->coords_used & EDIT_COORDS_ALL) != EDIT_COORDS_ALL)) {
+	    bu_vls_printf(gedp->ged_result_str,
+			  "using the batch operator to specify individual"
+			  " coordinates is not yet supported");
+	    edit_cmd_free(&subcmd);
+	    return GED_ERROR;
 	}
 
 	/* conversion moves argc/argv, so re-init bu_getopt() */
