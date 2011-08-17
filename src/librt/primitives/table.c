@@ -700,7 +700,7 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_arbn_params,
-	NULL
+	rt_arbn_bbox
     },
 
     {
