@@ -69,6 +69,7 @@ SET(docbook_mann_EN
 	edcolor.xml 
 	edcomb.xml 
 	edgedir.xml 
+	edit.xml
 	edmater.xml 
 	em.xml 
 	eqn.xml 
