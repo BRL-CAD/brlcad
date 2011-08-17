@@ -7615,6 +7615,260 @@ nmg_fu_touchingloops(const struct faceuse *fu)
 }
 
 
+/**
+ * B N _ I S E C T _ 2 F A C E U S E
+ *@brief
+ * Given two faceuse, find the line of intersection between them, if
+ * one exists.  The line of intersection is returned in parametric
+ * line (point & direction vector) form.
+ *
+ * @return 0	OK, line of intersection stored in `pt' and `dir'.
+ * @return -1	FAIL, faceuse are coplanar
+ * @return -2	FAIL, faceuse are parallel but not coplanar
+ * @return -3	FAIL, unable to find line of intersection
+ *
+ * @param[out]	pt	Starting point of line of intersection
+ * @param[out]	dir	Direction vector of line of intersection (unit length)
+ * @param[in]	fu1	faceuse 1
+ * @param[in]	fu2	faceuse 2
+ * @param[in]	tol	tolerance values
+ */
+int
+nmg_isect_2faceuse(point_t pt,
+		   vect_t dir,
+		   struct faceuse *fu1,
+		   struct faceuse *fu2,
+		   const struct bn_tol *tol)
+{
+    vect_t abs_dir;
+    plane_t pl;
+    point_t rpp_min;
+    struct loopuse *lu;
+    struct edgeuse *eu;
+    struct face *f1, *f2;
+    plane_t f1_pl, f2_pl;
+    int parallel = 0;
+    int coplanar = 0;
+    int cnt = 0;
+    fastf_t avg_dist = 0.0;
+    fastf_t tot_dist = 0.0;
+    fastf_t dist = 0.0;
+
+    VSETALL(pt, 0.0);  /* sanity */
+    VSETALL(dir, 0.0); /* sanity */
+
+    if (fu1->orientation != OT_SAME && fu1->orientation != OT_OPPOSITE) {
+        bu_bomb("nmg_isect_2faceuse(): invalid fu1 orientation\n");
+    }
+    if (fu2->orientation != OT_SAME && fu2->orientation != OT_OPPOSITE) {
+        bu_bomb("nmg_isect_2faceuse(): invalid fu2 orientation\n");
+    }
+
+    NMG_CK_FACEUSE(fu1);
+    f1 = fu1->f_p;
+    NMG_CK_FACE(f1);
+    NMG_CK_FACE_G_PLANE(f1->g.plane_p);
+
+    NMG_CK_FACEUSE(fu2);
+    f2 = fu2->f_p;
+    NMG_CK_FACE(f2);
+    NMG_CK_FACE_G_PLANE(f2->g.plane_p);
+
+    if (f1->g.plane_p == f2->g.plane_p) {
+	/* intersection is not possible */
+	return -1; /* FAIL, faceuse are coplanar */
+    }
+
+    /* need to use this macro to retrieve the planes
+     * since this macro takes into account the flip
+     * normal flag
+     */
+    NMG_GET_FU_PLANE(f1_pl, fu1);
+    NMG_GET_FU_PLANE(f2_pl, fu2);
+
+    /* test for parallel using distance from the plane of
+     * the other faceuse
+     */
+
+    /* test fu1 against f2 */
+    parallel = 1;
+    cnt = 0;
+    avg_dist = 0.0;
+    tot_dist = 0.0;
+    dist = 0.0;
+    for (BU_LIST_FOR(lu, loopuse, &fu1->lu_hd)) {
+
+	if (parallel == 0) {
+	    break;
+	}
+
+	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
+	    continue;
+	}
+	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+	    NMG_CK_EDGEUSE(eu);
+	    cnt++;
+	    dist = DIST_PT_PLANE(eu->vu_p->v_p->vg_p->coord, f2_pl);
+	    tot_dist += dist;
+	    /* the current distance is included in the average
+             * that the current distance is compared against
+             */
+	    avg_dist = tot_dist / cnt;
+	    if (NEAR_ZERO(dist - avg_dist, tol->dist)) {
+	    } else {
+		/* not parallel */
+		parallel = 0;
+		break;
+	    }
+	}
+    }
+
+    /* test fu2 against f1 */
+    if (parallel == 1) {
+	cnt = 0;
+	avg_dist = 0.0;
+	tot_dist = 0.0;
+	dist = 0.0;
+	for (BU_LIST_FOR(lu, loopuse, &fu2->lu_hd)) {
+	    if (parallel == 0) {
+		break;
+	    }
+	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
+		continue;
+	    }
+	    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+		NMG_CK_EDGEUSE(eu);
+		cnt++;
+		dist = DIST_PT_PLANE(eu->vu_p->v_p->vg_p->coord, f1_pl);
+		tot_dist += dist;
+	        /* the current distance is included in the average
+                 * that the current distance is compared against
+                 */
+		avg_dist = tot_dist / cnt;
+		if (!NEAR_ZERO(dist - avg_dist, tol->dist)) {
+		    /* not parallel */
+		    parallel = 0;
+		    break;
+		}
+	    }
+	}
+    }
+
+    coplanar = 0;
+    if (!nmg_ck_fu_verts(fu2, f1, tol) && !nmg_ck_fu_verts(fu1, f2, tol) &&
+	NEAR_ZERO(fabs(f1_pl[W] - f2_pl[W]), tol->dist)) {
+	/* true when fu1 and fu2 are coplanar, i.e. all vertices 
+	 * of faceuse (fu1) are within distance tolarance of 
+	 * face (f2) and vice-versa. 
+	 */
+	coplanar = 1;
+    } 
+ 
+    if (coplanar && !parallel) {
+	bu_bomb("nmg_isect_2faceuse(): logic error, coplanar but not parallel\n");
+    }
+
+    if (!coplanar && parallel) {
+	/* intersection is not possible */
+	return -2; /* FAIL, faceuse are parallel and distinct */
+    }
+
+    if (coplanar) {
+	/* intersection is not possible */
+	return -1; /* FAIL, planes are identical (co-planar) */
+    }
+
+    /* at this point it should be possible to find an intersection */
+
+    /* loopuse have their bounding boxes padded, we need to
+     * have a more precise minimum point.
+     */
+    VSETALL(rpp_min, MAX_FASTF);
+
+    for (BU_LIST_FOR(lu, loopuse, &fu1->lu_hd)) {
+        NMG_CK_LOOPUSE(lu);
+        if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
+            continue;
+        }
+        for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+            NMG_CK_EDGEUSE(eu);
+            VMIN(rpp_min, eu->vu_p->v_p->vg_p->coord);
+        }
+    }
+    for (BU_LIST_FOR(lu, loopuse, &fu2->lu_hd)) {
+        NMG_CK_LOOPUSE(lu);
+        if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
+            continue;
+        }
+        for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+            NMG_CK_EDGEUSE(eu);
+            VMIN(rpp_min, eu->vu_p->v_p->vg_p->coord);
+        }
+    }
+
+    /* Direction vector for ray is perpendicular to both plane
+     * normals.
+     */
+    VCROSS(dir, f1_pl, f2_pl);
+
+    /* Select an axis-aligned plane which has its normal pointing
+     * along the same axis as the largest magnitude component of the
+     * direction vector.  If the largest magnitude component is
+     * negative, reverse the direction vector, so that model is "in
+     * front" of start point.
+     */
+    abs_dir[X] = fabs(dir[X]);
+    abs_dir[Y] = fabs(dir[Y]);
+    abs_dir[Z] = fabs(dir[Z]);
+
+    if (ZERO(abs_dir[X])) {
+        abs_dir[X] = 0.0;
+    }
+    if (ZERO(abs_dir[Y])) {
+        abs_dir[Y] = 0.0;
+    }
+    if (ZERO(abs_dir[Z])) {
+        abs_dir[Z] = 0.0;
+    }
+
+    if (abs_dir[X] >= abs_dir[Y]) {
+	if (abs_dir[X] >= abs_dir[Z]) {
+	    VSET(pl, 1, 0, 0);	/* X */
+	    pl[W] = rpp_min[X];
+	    if (dir[X] < -SMALL_FASTF) {
+		VREVERSE(dir, dir);
+	    }
+	} else {
+	    VSET(pl, 0, 0, 1);	/* Z */
+	    pl[W] = rpp_min[Z];
+	    if (dir[Z] < -SMALL_FASTF) {
+		VREVERSE(dir, dir);
+	    }
+	}
+    } else {
+	if (abs_dir[Y] >= abs_dir[Z]) {
+	    VSET(pl, 0, 1, 0);	/* Y */
+	    pl[W] = rpp_min[Y];
+	    if (dir[Y] < -SMALL_FASTF) {
+		VREVERSE(dir, dir);
+	    }
+	} else {
+	    VSET(pl, 0, 0, 1);	/* Z */
+	    pl[W] = rpp_min[Z];
+	    if (dir[Z] < -SMALL_FASTF) {
+		VREVERSE(dir, dir);
+	    }
+	}
+    }
+
+    /* Intersection of the 3 planes defines ray start point */
+    if (bn_mkpoint_3planes(pt, pl, f1_pl, f2_pl) < 0) {
+	return -3;	/* FAIL -- no intersection */
+    }
+
+    return 0;		/* OK */
+}
+
 /*
  * Local Variables:
  * mode: C
@@ -7624,3 +7878,4 @@ nmg_fu_touchingloops(const struct faceuse *fu)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+
