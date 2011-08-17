@@ -117,7 +117,7 @@ main(int argc, char **argv)
 
     /* Follow RLE header with colormap */
     if ( cmflag )  {
-	if ( rle_wmap( fp, &cmap ) == -1 ) {
+	if ( rle_wmap( fp, (struct RLEColorMap *)&cmap ) == -1 ) {
 	    return 1;
 	}
 	if ( rle_debug ) {
