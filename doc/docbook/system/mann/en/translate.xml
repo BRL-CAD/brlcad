@@ -6,40 +6,48 @@
   <refentrytitle>TRANSLATE</refentrytitle>
   <manvolnum>nged</manvolnum>
   <refmiscinfo class="source">BRL-CAD</refmiscinfo>
-  <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
+  <refmiscinfo class="manual">BRL-CAD MGED Commands</refmiscinfo>
 </refmeta>
 
 <refnamediv xml:id="name">
   <refname>translate</refname>
-  <refpurpose>
-    Translate the positions of <emphasis>object</emphasis>s, using
-    coordinates, offsets, and objects as reference points.
-  </refpurpose>
+  <refpurpose>Used to precisely control the translation of an object in
+both primitive edit and matrix edit modes.
+   </refpurpose>
 </refnamediv>
 
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
     <command>translate</command>    
+     <arg choice="req" rep="norepeat"><replaceable>x y z</replaceable></arg>
+    
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
   
-  <para>
-    This command is a synonym for an
-    <command linkend="edit">EDIT</command> subcommand of the same name
-    (i.e. edit translate).
-
-    Coming soon...
+  <para>Used to precisely control the translation of an object in
+both primitive edit and matrix edit modes. The keypoint of the edited object or shape
+is translated to the specified coordinates.
   </para>
-
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  <para>
-    Coming soon...
+  
+  <para>The example shows the use of the <command>translate</command> command to move a currently edited object to specified model coordinates.
+    
   </para>
+ 
+  <example><info><title>Move a currently edited object to specified coordinates.</title></info>
+    
+    <para>
+      <prompt>mged&gt;</prompt><userinput>translate 10 20 30</userinput>
+    </para>
+    <para>Moves a currently edited object to the model coordinates (10 20 30).
+    </para>
+  </example>
+ 
 </refsection>
 
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
