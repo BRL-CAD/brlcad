@@ -357,7 +357,7 @@ const struct rt_functab rt_functab[] = {
 	rt_ars_import4,
 	rt_ars_export4,
 	rt_ars_ifree,
-	NULL,
+	rt_ars_bbox,
 	rt_ars_describe,
 	rt_generic_xform,
 	NULL,

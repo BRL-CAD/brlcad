@@ -665,6 +665,40 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 
 /**
+ * R T _ A R S _ B B O X
+ */
+int
+rt_ars_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
+{
+    register size_t i;
+    register size_t j;
+    struct rt_ars_internal *arip;
+
+    RT_CK_DB_INTERNAL(ip);
+    arip = (struct rt_ars_internal *)ip->idb_ptr;
+    RT_ARS_CK_MAGIC(arip);
+
+    VSETALL((*min), MAX_FASTF);
+    VSETALL((*max), -MAX_FASTF);
+
+    /*
+     * Iterate over the curves. 
+     */
+    for (i = 0; i < arip->ncurves; i++) {
+	register fastf_t *v1;
+
+	v1 = arip->curves[i];
+	VMINMAX((*min), (*max), v1);
+	v1 += ELEMENTS_PER_VECT;
+	for (j = 1; j <= arip->pts_per_curve; j++, v1 += ELEMENTS_PER_VECT)
+	    VMINMAX((*min), (*max), v1);
+    }
+
+    return 0;
+}
+
+
+/**
  * R T _ A R S _ P R E P
  *
  * This routine is used to prepare a list of planar faces for being
@@ -687,6 +721,9 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     struct shell *s;
     int ret;
 
+    point_t min, max;
+    if (rt_ars_bbox(ip, &min, &max)) return -1;
+    
     m = nmg_mm();
     r = BU_LIST_FIRST(nmgregion, &m->r_hd);
 
@@ -719,6 +756,10 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     rt_bot_ifree(&intern);
 
+    /* Use the ars bbox results, rather than the BoT results */
+    VMOVE(stp->st_min, min);
+    VMOVE(stp->st_max, max);
+    
     return ret;
 }
 
