@@ -48,6 +48,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * resolve bot bin sort optimization crash, disabled during release
 
+* include deprecation output when creating bspline/poly/hf primitives
+
+* include deprecation statements in the autotools build system output
+
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
