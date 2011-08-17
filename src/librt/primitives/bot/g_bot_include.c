@@ -264,8 +264,6 @@ XGLUE(rt_bot_prep_, TRI_TYPE)(struct soltab *stp, struct rt_bot_internal *bot_ip
 	bot->bot_facemode = bu_bitv_dup(bot_ip->face_mode);
     bot->bot_facelist = (XGLUE(tri_specific_, TRI_TYPE) *)NULL;
 
-    VSETALL(stp->st_min, MAX_FASTF);
-    VREVERSE(stp->st_max, stp->st_min);
     for (tri_index=0; tri_index < bot_ip->num_faces; tri_index++) {
 	point_t p1, p2, p3;
 	long default_normal=-1;
