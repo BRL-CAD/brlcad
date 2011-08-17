@@ -5560,6 +5560,11 @@ nmg_cut_lu_into_coplanar_and_non(struct loopuse *lu, fastf_t *pl, struct nmg_int
 }
 
 
+/* nmg_isect_coplanar_edges is disabled because it is unused since
+ * it was only called by nmg_isect_nearly_coplanar_faces which has
+ * been disabled due to it no longer being used.
+ */
+#if 0
 static void
 nmg_isect_coplanar_edges(struct nmg_inter_struct *is, struct bu_ptbl *eu1_list, struct bu_ptbl *eu2_list)
 {
@@ -5956,6 +5961,7 @@ nmg_isect_coplanar_edges(struct nmg_inter_struct *is, struct bu_ptbl *eu1_list, 
 	}
     }
 }
+#endif
 
 
 #define MAX_FACES 200
@@ -6061,6 +6067,8 @@ nmg_check_radial_angles(char *str, struct shell *s, const struct bn_tol *tol)
 }
 
 
+#if 0
+/* unused due to change to function 'nmg_isect_two_generic_faces' */
 /** N M G _ I S E C T _ N E A R L Y _ C O P L A N A R _ F A C E S
  *
  * The two faceuses passed are expected to be parallel and distinct or coplanar
@@ -6582,6 +6590,7 @@ nmg_isect_nearly_coplanar_faces(struct nmg_inter_struct *is, struct faceuse *fu1
     }
 
 }
+#endif
 
 
 /** N M G _ F A C E S _ C A N _ B E _ I N T E R S E C T E D
@@ -6766,11 +6775,11 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const stru
 {
     struct nmg_inter_struct bs;
     plane_t pl1, pl2;
-    struct face *f1;
-    struct face *f2;
-    point_t min_pt;
+    struct face *f1, *f2;
     int status;
-    int i;
+
+    /* sanity */
+    memset(&bs, 0, sizeof(struct nmg_inter_struct));
 
     BN_CK_TOL(tol);
     bs.magic = NMG_INTER_STRUCT_MAGIC;
@@ -6792,7 +6801,6 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const stru
 
     if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 	bu_log("\nnmg_isect_two_generic_faces(fu1=x%x, fu2=x%x)\n", fu1, fu2);
-
 	bu_log("Planes\t%gx + %gy + %gz = %g\n\t%gx + %gy + %gz = %g\n",
 	       pl1[X], pl1[Y], pl1[Z], pl1[W],
 	       pl2[X], pl2[Y], pl2[Z], pl2[W]);
@@ -6813,8 +6821,10 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const stru
 	status = (-1);
     }
 
-    if (!V3RPP_OVERLAP_TOL(f2->min_pt, f2->max_pt,
-			   f1->min_pt, f1->max_pt, &bs.tol)) return;
+    if (!V3RPP_OVERLAP_TOL(f2->min_pt, f2->max_pt, 
+			   f1->min_pt, f1->max_pt, &bs.tol)) {
+	return;
+    }
 
     /*
      * The extents of face1 overlap the extents of face2.
@@ -6835,155 +6845,33 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const stru
      *
      * NOTE:  These conditions must be enforced in the 2D code, also.
      */
-    VMOVE(min_pt, f1->min_pt);
-    VMIN(min_pt, f2->min_pt);
     if (status == 10) {
-	status = bn_isect_2planes(bs.pt, bs.dir, pl1, pl2,
-				  min_pt, tol);
+	status = nmg_isect_2faceuse(bs.pt, bs.dir, fu1, fu2, tol);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 	    bu_log("\tnmg_isect_two_generic_faces: intersect ray start (%f, %f, %f)\n\t\tin direction (%f, %f, %f)\n",
-		   bs.pt[X],
-		   bs.pt[Y],
-		   bs.pt[Z],
-		   bs.dir[X],
-		   bs.dir[Y],
-		   bs.dir[Z]);
+		   bs.pt[X], bs.pt[Y], bs.pt[Z], bs.dir[X], bs.dir[Y], bs.dir[Z]);
 	}
     }
 
     switch (status) {
 	case 0:
-	    if (fu1->f_p->g.plane_p == fu2->f_p->g.plane_p) {
-		bu_bomb("nmg_isect_two_generic_faces: co-planar faces not detected\n");
-	    }
-	    /* All is well */
 	    bs.coplanar = 0;
 	    nmg_isect_two_face3p(&bs, fu1, fu2);
 	    break;
 	case -1:
-	case -2:
 	    /* co-planar faces */
-	    {
-		int coplanar1=0;
-		int coplanar2=0;
-		int coplanar=0;
-		int parallel=0;
-		fastf_t max_dist1;
-		fastf_t min_dist1;
-		fastf_t max_dist2;
-		fastf_t min_dist2;
-		fastf_t dist;
-		struct bu_ptbl verts;
-
-		if (f1->g.plane_p == f2->g.plane_p)
-		    goto cplanar;
-
-		/* are these face really coplanar??? */
-
-		min_dist1 = MAX_FASTF;
-		max_dist1 = (-MAX_FASTF);
-		min_dist2 = MAX_FASTF;
-		max_dist2 = (-MAX_FASTF);
-		nmg_vertex_tabulate(&verts, &fu1->l.magic);
-		for (i=0; i<BU_PTBL_END(&verts); i++) {
-		    struct vertex *v;
-
-		    v = (struct vertex *)BU_PTBL_GET(&verts, i);
-		    dist = DIST_PT_PLANE(v->vg_p->coord, pl2);
-		    if (dist > max_dist1)
-			max_dist1 = dist;
-		    if (dist < min_dist1)
-			min_dist1 = dist;
-		}
-		bu_ptbl_free(&verts);
-
-		if (min_dist1 > tol->dist) {
-		    if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-			bu_log("nmg_isect_two_generic_faces: bn_isect_2planes() says faces are coplanar.\n");
-			bu_log("\tbut all vertices of fu1 (x%x) are at least %gmm above plane of fu2 (x%x)\n",
-			       fu1, min_dist1, fu2);
-		    }
-		    parallel = 1;
-		} else if (max_dist1 < (-tol->dist)) {
-		    if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-			bu_log("nmg_isect_two_generic_faces: bn_isect_2planes() says faces are coplanar.\n");
-			bu_log("\tbut all vertices of fu1 (x%x) are at least %gmm below plane of fu2 (x%x)\n",
-			       fu1, -max_dist1, fu2);
-		    }
-		    parallel =  1;
-		} else if (max_dist1 <= tol->dist && min_dist1 >= (-tol->dist)) {
-		    if (rt_g.NMG_debug & DEBUG_POLYSECT)
-			bu_log("nmg_isect_two_generic_faces: coplanar faces don't share face geometry, intersecting anyway\n");
-		    coplanar1 = 1;
-		}
-
-		if (!parallel) {
-		    /* Nothing determined so far, try looking at vertices in the other face */
-		    nmg_vertex_tabulate(&verts, &fu2->l.magic);
-		    for (i=0; i<BU_PTBL_END(&verts); i++) {
-			struct vertex *v;
-
-			v = (struct vertex *)BU_PTBL_GET(&verts, i);
-			dist = DIST_PT_PLANE(v->vg_p->coord, pl1);
-			if (dist > max_dist2)
-			    max_dist2 = dist;
-			if (dist < min_dist2)
-			    min_dist2 = dist;
-		    }
-		    bu_ptbl_free(&verts);
-
-		    if (min_dist2 > tol->dist) {
-			if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-			    bu_log("nmg_isect_two_generic_faces: bn_isect_2planes() says faces are coplanar.\n");
-			    bu_log("\tbut all vertices of fu2 (x%x) are at least %gmm above plane of fu1 (x%x)\n",
-				   fu2, min_dist2, fu1);
-			}
-			parallel = 1;
-		    } else if (max_dist2 < (-tol->dist)) {
-			if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-			    bu_log("nmg_isect_two_generic_faces: bn_isect_2planes() says faces are coplanar.\n");
-			    bu_log("\tbut all vertices of fu2 (x%x) are at least %gmm below plane of fu1 (x%x)\n",
-				   fu2, -max_dist2, fu1);
-			}
-			parallel = 1;
-		    } else if (max_dist2 <= tol->dist && min_dist2 >= (-tol->dist)) {
-			if (rt_g.NMG_debug & DEBUG_POLYSECT)
-			    bu_log("nmg_isect_two_generic_faces: coplanar faces don't share face geometry, intersecting anyway\n");
-			coplanar2 = 1;
-		    }
-		}
-
-		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-		    bu_log("nmg_isect_two_generic_faces: FUs x%x and x%x do not share face geometry\n", fu1, fu2);
-		    bu_log("\tbut bn_isect_2planes() says they are coplanar or parallel\n");
-		    bu_log("max_dist1 = %g, min_dist1 = %g\n", max_dist1, min_dist1);
-		    bu_log("max_dist2 = %g, min_dist2 = %g\n", max_dist2, min_dist2);
-		}
-
-		if (coplanar1 && coplanar2)
-		    coplanar = 1;
-
-		if (coplanar) {
-		cplanar:
-		    bs.coplanar = 1;
-		    nmg_isect_two_face2p_jra(&bs, fu1, fu2);
-		    break;
-		} else if (parallel)
-		    break;
-		else {
-		    if (nmg_faces_can_be_intersected(&bs, fu1, fu2, tol)) {
-			bs.coplanar = 0;
-			nmg_isect_two_face3p(&bs, fu1, fu2);
-		    } else
-			nmg_isect_nearly_coplanar_faces(&bs, fu1, fu2);
-		}
-	    }
+	    bs.coplanar = 1;
+	    nmg_isect_two_face2p_jra(&bs, fu1, fu2);
 	    break;
+	case -2:
+	    /* no intersection, faceuse are parallel but not coplanar */
+	    return;
+	case -3:
+	    bu_bomb("nmg_isect_two_generic_faces(): faceuse should have intersection but could not find it\n");
 	default:
 	    /* internal error */
-	    bu_log("ERROR nmg_isect_two_generic_faces() unable to find plane intersection\n");
-	    break;
+	    bu_bomb("nmg_isect_two_generic_faces(): invalid return code from function nmg_isect_2faceuse\n");
     }
 
     nmg_isect2d_cleanup(&bs);
@@ -6997,7 +6885,6 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const stru
 	static int nshell = 1;
 	char name[32];
 	FILE *fp;
-
 
 	/* Both at once */
 	nmg_pl_2fu("Iface%d.pl", fu2, fu1, 0);
