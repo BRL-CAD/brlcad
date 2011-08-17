@@ -745,6 +745,28 @@ rt_vol_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
 
+/**
+ * R T _ V O L _ B B O X
+ *
+ * Calculate bounding RPP for vol
+ */
+int
+rt_vol_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
+{
+    register struct rt_vol_internal *vip;
+    vect_t v1, localspace;
+
+    RT_CK_DB_INTERNAL(ip);
+    vip = (struct rt_vol_internal *)ip->idb_ptr;
+    RT_EBM_CK_MAGIC(vip);
+
+    /* Find bounding RPP of rotated local RPP */
+    VSETALL(v1, 0);
+    VSET(localspace, vip->xdim*vip->cellsize[0], vip->ydim*vip->cellsize[1], vip->zdim*vip->cellsize[2]);/* type conversion */
+    bn_rotate_bbox((*min), (*max), vip->mat, v1, localspace);
+    return 0;
+}
+
 
 /**
  * R T _ V O L _ P R E P
@@ -765,7 +787,6 @@ rt_vol_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     vect_t norm;
     vect_t radvec;
     vect_t diam;
-    vect_t small1;
 
     RT_CK_SOLTAB(stp);
     RT_CK_DB_INTERNAL(ip);
@@ -792,11 +813,9 @@ rt_vol_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_specific = (genptr_t)volp;
 
     /* Find bounding RPP of rotated local RPP */
-    VSETALL(small1, 0);
+    if (rt_vol_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
     VSET(volp->vol_large,
 	 volp->vol_i.xdim*vip->cellsize[0], volp->vol_i.ydim*vip->cellsize[1], volp->vol_i.zdim*vip->cellsize[2]);/* type conversion */
-    bn_rotate_bbox(stp->st_min, stp->st_max, vip->mat,
-		   small1, volp->vol_large);
 
     /* for now, VOL origin in ideal coordinates is at origin */
     VSETALL(volp->vol_origin, 0);
