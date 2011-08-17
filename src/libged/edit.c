@@ -690,6 +690,7 @@
  * -a -z 11 comb
  * -a comb/combA combB/combC combD/combE
  * -k shp -a . comb/comb comb/comb comb/comb
+ * -k -x 3 -a -y 7 shp
  *
  * XXX Left to test: specifying multiple objects
      *               batch operator in several places
@@ -1286,11 +1287,19 @@ edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
 
     while ((arg_head = subcmd->cmd->get_arg_head(subcmd, i++)) != 
 	   &subcmd->common.objects) {
-	if ((*arg_head)->type & EDIT_FROM)
-	    kp_v = (*arg_head)->vector;
-	to_v = (*arg_head)->vector;
+	if (!(*arg_head))
+	    continue;
 
-	if ((*arg_head)->type & EDIT_REL_DIST) {
+	to_v = (*arg_head)->vector;
+	if ((*arg_head)->type & EDIT_FROM) {
+	    kp_v = (*arg_head)->vector;
+	    if (!((*arg_head)->coords_used & EDIT_COORD_X))
+		(*to_v)[0] = src_v[0];
+	    if (!((*arg_head)->coords_used & EDIT_COORD_Y))
+		(*to_v)[1] = src_v[1];
+	    if (!((*arg_head)->coords_used & EDIT_COORD_Z))
+		(*to_v)[2] = src_v[2];
+	} else if ((*arg_head)->type & EDIT_REL_DIST) {
 	    /* convert to absolute position */
 	    BU_ASSERT(kp_v); /* edit_*_add_cl_args should set this */
 	    (*arg_head)->type &= ~EDIT_REL_DIST;
@@ -1311,12 +1320,13 @@ edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
 		(*to_v)[2] = (*kp_v)[2];
 	    kp_v = (vect_t *)NULL;
 	} else {
+	    BU_ASSERT((*arg_head)->type &= ~EDIT_ABS_POS);
 	    if (!((*arg_head)->coords_used & EDIT_COORD_X))
-		(*to_v)[0] = src_v[0];
+		(*to_v)[0] = (*kp_v)[0];
 	    if (!((*arg_head)->coords_used & EDIT_COORD_Y))
-		(*to_v)[1] = src_v[1];
+		(*to_v)[1] = (*kp_v)[1];
 	    if (!((*arg_head)->coords_used & EDIT_COORD_Z))
-		(*to_v)[2] = src_v[2];
+		(*to_v)[2] = (*kp_v)[2];
 	}
 	(*arg_head)->coords_used |= EDIT_COORDS_ALL;
     }
