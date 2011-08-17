@@ -746,11 +746,6 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
-    /* FIXME: temporary blather until fixed (see regress/red.sh) */
-    bu_log("WARNING: The 'red' command is incomplete and may inadvertently change model data.\n");
-    bu_log("         Make backups of your data.  Consider alternative edit methods.\n");
-    sleep(1);
-
     bu_optind = 1;
     /* First, grab the editstring off of the argv list */
     while ((c = bu_getopt(argc, (char * const *)argv, "E:")) != -1) {
