@@ -11,7 +11,7 @@
  */
 
 #include "common.h"
-#include "fb.h"
+
 
 #ifndef ORLE_EXPORT
 #  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
