@@ -5113,40 +5113,44 @@ nmg_simple_vertex_solve(struct vertex *new_v, const struct bu_ptbl *faces, const
 int
 nmg_ck_vert_on_fus(const struct vertex *v, const struct bn_tol *tol)
 {
+    struct faceuse *fu;
     struct vertexuse *vu;
-    fastf_t max_dist=0.0;
-    int ret_val=0;
+    fastf_t max_dist = 0.0;
+    fastf_t dist = 0.0;
+    int ret_val = 0;
+    plane_t pl;
 
     NMG_CK_VERTEX(v);
     BN_CK_TOL(tol);
-
     NMG_CK_VERTEX_G(v->vg_p);
 
     for (BU_LIST_FOR (vu, vertexuse, &v->vu_hd)) {
-	struct faceuse *fu;
-	fastf_t dist;
-
+        /* nmg_ck_vertexuse called within nmg_find_fu_of_vu,
+         * so do not need to call here
+         */
 	fu = nmg_find_fu_of_vu(vu);
-	if (!fu)
+	if (!fu) {
 	    continue;
-
-	NMG_CK_FACEUSE(fu);
-	NMG_CK_FACE(fu->f_p);
-	NMG_CK_FACE_G_PLANE(fu->f_p->g.plane_p);
-	dist = DIST_PT_PLANE(v->vg_p->coord, fu->f_p->g.plane_p->N);
-	dist = (dist < 0.0 ? (-dist) : dist);
+	}
+	/* nmg_ck_faceuse, nmg_ck_face and nmg_ck_face_g_plane
+	 * are called within the nmg_get_fu_plane macro so
+	 * do not need to call them here
+	 */
+	NMG_GET_FU_PLANE(pl, fu);
+	dist = fabs(DIST_PT_PLANE(v->vg_p->coord, pl));
 	if (dist > tol->dist) {
 	    ret_val = 1;
-
-	    if (dist > max_dist)
+	    if (dist > max_dist) {
 		max_dist = dist;
-
-	    bu_log("nmg_ck_vert_on_fus: v=x%x vu=x%x (%f %f %f) is %g from\n\tfaceuse x%x f x%x\n", v, vu, V3ARGS(v->vg_p->coord), dist, fu, fu->f_p);
+	    }
+	    bu_log("nmg_ck_vert_on_fus: v=x%x vu=x%x (%f %f %f) is %g from\n\tfaceuse x%x f x%x\n", 
+		    v, vu, V3ARGS(v->vg_p->coord), dist, fu, fu->f_p);
 	}
     }
 
     if (ret_val)
-	bu_log("nmg_ck_vert_on_fus: v=x%x (%f %f %f) max distance of %g from faceuses\n", v, V3ARGS(v->vg_p->coord), max_dist);
+	bu_log("nmg_ck_vert_on_fus: v=x%x (%f %f %f) max distance of %g from faceuses\n", 
+		v, V3ARGS(v->vg_p->coord), max_dist);
 
     return ret_val;
 }
