@@ -663,6 +663,42 @@
  *
  */
 
+/*
+ * XXX(tmp): Properly functioning translate arguments
+ *
+ * -{a|r} 3 shp
+ * -{a|r} 3 comb
+ * -{a|r} 3 7 shp
+ * -{a|r} 3 7 comb
+ * -{a|r} 3 7 11 shp
+ * -{a|r} 3 7 11 comb
+ * -{a|r} 3 7 11 comb/shp
+ * -{a|r} 3 7 11 comb/combA
+ * -{a|r} 3 7 11 comb/combA/shp (same effect as above)
+ * -a comb shp
+ * -a comb 3 shp
+ * -a comb 3 7 shp
+ * -a comb 3 7 11 shp
+ * -a comb/combA 3 7 11 combB/combC
+ * -a -z combD/combE combF/combG
+ * -a -z combD/combE 0 0 3 combF/combG
+ * -a -x comb/combA -y combB/combC combF/combG
+ * -a -z comb/combA -y combB/combC combF/combG
+ * -a -x comb/combA -y combB/combC -z combD/combE combF/combG
+ * -a -x comb/combA 3 -z combB/combC 0 0 11 -y combD/combE 0 7 combF/combG
+ * -{a|r} -x 3 -y 7 -z 11 comb
+ * -a -z 11 comb
+ *
+ * XXX Left to test: specifying multiple objects
+     *               batch operator in several places
+ *
+ * XXX(tmp): Broken translate arguments
+ *
+ * -a comb/combA combB/combC combD/combE
+ * -k shp -a . comb/comb comb/comb comb/comb
+ * "-x ." or "-y ." or "-z ." (disabled; may be tricky to implement)
+ */
+
 /* Max # of global options + max number of options for a single arg */
 #define EDIT_MAX_ARG_OPTIONS 3
 
@@ -869,9 +905,9 @@ edit_arg_duplicate_in_place(struct edit_arg *const dest,
     if (src->vector) {
 	dest->vector = (vect_t *)bu_malloc(sizeof(vect_t),
 			  "vect_t block for edit_arg_duplicate_in_place()");
-	*dest->vector[0] = *src->vector[0];
-	*dest->vector[1] = *src->vector[1];
-	*dest->vector[2] = *src->vector[2];
+	(*dest->vector)[0] = (*src->vector)[0];
+	(*dest->vector)[1] = (*src->vector)[1];
+	(*dest->vector)[2] = (*src->vector)[2];
     }
 }
 
@@ -1988,8 +2024,8 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 
 	/* same batch operators; objs with same name are masked */
 	if (BU_STR_EQUAL(str, ".")) {
-		arg->type |= EDIT_USE_TARGETS;
-		return GED_OK;
+	    arg->type |= EDIT_USE_TARGETS;
+	    return GED_OK;
 	}
 
 	/* an arg with a slash is always interpreted as a path */
@@ -2517,6 +2553,15 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    default:
 		break;
+	}
+
+	/* FIXME: It might take some time to make this work. */
+	if ((cur_arg->coords_used & EDIT_COORDS_ALL) != EDIT_COORDS_ALL) {
+	    bu_vls_printf(gedp->ged_result_str,
+			  "using the batch operator to specify individual"
+			  " coordinates does not work yet");
+	    edit_cmd_free(&subcmd);
+	    return GED_ERROR;
 	}
 
 	/* move to current arg */
