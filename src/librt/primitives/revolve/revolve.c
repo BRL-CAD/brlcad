@@ -55,6 +55,113 @@
 extern int rt_sketch_contains(struct rt_sketch_internal *, point2d_t);
 extern void rt_sketch_bounds(struct rt_sketch_internal *, fastf_t *);
 
+/**
+ * R T _ R E V O L V E _ B B O X
+ *
+ * Calculate a bounding RPP around a sketch
+ */
+int
+rt_revolve_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+    struct rt_revolve_internal *rip;
+    vect_t zUnit;
+    fastf_t bounds[4]; /* 2D sketch bounds */
+    fastf_t radius;
+    point_t center;
+
+    int *endcount;
+    size_t nseg, i, j, k;
+
+    RT_CK_DB_INTERNAL(ip);
+    rip = (struct rt_revolve_internal *)ip->idb_ptr;
+    RT_REVOLVE_CK_MAGIC(rip);
+
+    /* count the number of times an endpoint is used:
+     * if even, the point is ok
+     * if odd, the point is at the end of a path
+     */
+    endcount = (int *)bu_calloc(rip->skt->vert_count, sizeof(int), "endcount");
+    for (i=0; i<rip->skt->vert_count; i++)
+	endcount[i] = 0;
+    nseg = rip->skt->curve.count;
+
+    for (i=0; i<nseg; i++) {
+	uint32_t *lng;
+	struct line_seg *lsg;
+	struct carc_seg *csg;
+	struct nurb_seg *nsg;
+	struct bezier_seg *bsg;
+
+	lng = (uint32_t *)rip->skt->curve.segment[i];
+
+	switch (*lng) {
+	    case CURVE_LSEG_MAGIC:
+		lsg = (struct line_seg *)lng;
+		endcount[lsg->start]++;
+		endcount[lsg->end]++;
+		break;
+	    case CURVE_CARC_MAGIC:
+		csg = (struct carc_seg *)lng;
+		if (csg->radius <= 0.0) break;
+		endcount[csg->start]++;
+		endcount[csg->end]++;
+		break;
+	    case CURVE_BEZIER_MAGIC:
+		bsg = (struct bezier_seg *)lng;
+		endcount[bsg->ctl_points[0]]++;
+		endcount[bsg->ctl_points[bsg->degree]]++;
+		break;
+	    case CURVE_NURB_MAGIC:
+		nsg = (struct nurb_seg *)lng;
+		endcount[nsg->ctl_points[0]]++;
+		endcount[nsg->ctl_points[nsg->c_size-1]]++;
+		break;
+	    default:
+		bu_log("rt_revolve_prep: ERROR: unrecognized segment type!\n");
+		break;
+	}
+    }
+
+    /* convert endcounts to store which endpoints are odd */
+    for (i=0, j=0; i<rip->skt->vert_count; i++) {
+	if (endcount[i] % 2 != 0) {
+	    /* add 'i' to list, insertion sort by vert[i][Y] */
+	    for (k=j; k>0; k--) {
+		if ((ZERO(rip->skt->verts[i][Y] - rip->skt->verts[endcount[k-1]][Y])
+		     && rip->skt->verts[i][X] > rip->skt->verts[endcount[k-1]][X])
+		    || (!ZERO(rip->skt->verts[i][Y] - rip->skt->verts[endcount[k-1]][Y])
+			&& rip->skt->verts[i][Y] < rip->skt->verts[endcount[k-1]][Y])) {
+		    endcount[k] = endcount[k-1];
+		} else {
+		    break;
+		}
+	    }
+	    endcount[k] = i;
+	    j++;
+	}
+    }
+    while (j < rip->skt->vert_count) endcount[j++] = -1;
+
+    VMOVE(zUnit, rip->axis3d);
+    VUNITIZE(zUnit);
+
+    /* bounding volume */
+    rt_sketch_bounds(rip->skt, bounds);
+    if (endcount[0] != -1 && bounds[0] > 0) bounds[0] = 0;
+    VJOIN1(center, rip->v3d, 0.5*(bounds[2]+bounds[3]), zUnit);
+    radius = sqrt(0.25*(bounds[3]-bounds[2])*(bounds[3]-bounds[2]) + FMAX(bounds[0]*bounds[0], bounds[1]*bounds[1]));
+
+    /* cheat, make bounding RPP by enclosing bounding sphere (copied from g_ehy.c) */
+    (*min)[X] = center[X] - radius;
+    (*max)[X] = center[X] + radius;
+    (*min)[Y] = center[Y] - radius;
+    (*max)[Y] = center[Y] + radius;
+    (*min)[Z] = center[Z] - radius;
+    (*max)[Z] = center[Z] + radius;
+
+    bu_free(endcount, "endcount");
+
+    return 0;			/* OK */
+}
 
 /**
  * R T _ R E V O L V E _ P R E P
