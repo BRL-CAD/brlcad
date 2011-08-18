@@ -126,7 +126,6 @@ CMAKEFILES(
 	sh_osl.cpp
 	liboslrend.h 
 	constantpool.h 
-	osl_rt.cpp 
 	render_svc.cpp
 	)
 
