@@ -1,6 +1,4 @@
-<!-- Converted by db4-upgrade version 1.0 -->
-
-<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="edit translate">
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="edit-translate">
 
 <refmeta>
   <refentrytitle>EDIT TRANSLATE</refentrytitle>
@@ -12,15 +10,109 @@
 <refnamediv xml:id="name">
   <refname>edit translate</refname>
   <refpurpose>
-    Translate the positions of <emphasis>object</emphasis>s, using
+    Translates the positions of <emphasis>object</emphasis>s, using
     coordinates, offsets, and objects as reference points.
   </refpurpose>
 </refnamediv>
 
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
-  <cmdsynopsis sepchar=" ">
+  <cmdsynopsis>
+
     <command>edit translate</command>    
+    <group>
+      <synopfragmentref linkend="from">from</synopfragmentref>
+    </group>
+    <group choice="req">
+      <synopfragmentref linkend="to">to</synopfragmentref>
+    </group>
+    <arg choice="plain" rep="repeat">object</arg>
+
+    <synopfragment xml:id="from">
+      <arg><option>-n</option></arg>
+      <arg choice="plain"><option>-k</option></arg>
+      <group choice="req">
+	<arg choice="plain">
+	  <synopfragmentref linkend="obj">from_object</synopfragmentref>
+	</arg>
+	<arg choice="plain">
+	  <synopfragmentref linkend="pos">from_position</synopfragmentref>
+	</arg>
+      </group>
+    </synopfragment>
+
+    <synopfragment xml:id="to">
+      <arg><option>-n</option></arg>
+      <group>
+        <arg choice="plain"><option choice="plain">-a</option></arg>
+        <arg choice="plain"><option choice="plain">-r</option></arg>
+      </group>
+      <group choice="req">
+	<arg choice="plain">
+	  <synopfragmentref linkend="obj">to_object</synopfragmentref>
+	</arg>
+	<arg choice="plain">
+	  <synopfragmentref linkend="pos">to_position</synopfragmentref>
+	</arg>
+      </group>
+    </synopfragment>
+
+    <synopfragment xml:id="pos">
+      <group choice="plain">
+	<arg choice="req">
+	  <synopfragmentref linkend="coord">coords</synopfragmentref>
+	</arg>
+	<arg choice="req">
+	  <arg>
+	    <arg choice="plain"><option>-x</option></arg>
+	    <group choice="req">
+	      <arg choice="plain">x</arg>
+	      <arg choice="plain">
+		<synopfragmentref linkend="obj">x-obj</synopfragmentref>
+	      </arg>
+	    </group>
+	  </arg>
+	  <arg>
+	    <arg choice="plain"><option>-y</option></arg>
+	    <group choice="req">
+	      <arg choice="plain">y</arg>
+	      <arg choice="plain">
+		<synopfragmentref linkend="obj">y-obj</synopfragmentref>
+	      </arg>
+	    </group>
+	  </arg>
+	  <arg>
+	    <arg choice="plain"><option>-z</option></arg>
+	    <group choice="req">
+	      <arg choice="plain">z</arg>
+	      <arg choice="plain">
+		<synopfragmentref linkend="obj">z-obj</synopfragmentref>
+	      </arg>
+	    </group>
+	  </arg>
+	</arg>
+      </group>
+    </synopfragment>
+
+    <synopfragment xml:id="obj">
+      <arg choice="plain">
+        <arg><replaceable>path/</replaceable></arg>
+        <arg choice="plain"><replaceable>object</replaceable></arg>
+      </arg>
+      <arg>
+	<synopfragmentref linkend="coord">offset_distance</synopfragmentref>
+      </arg>
+    </synopfragment>
+
+    <synopfragment xml:id="coord">
+      <arg choice="plain"><replaceable>x</replaceable></arg>
+      <arg>
+	<arg choice="plain"><replaceable>y</replaceable></arg>
+	<arg><replaceable>z</replaceable></arg>
+      </arg>
+    </synopfragment>
+
+
   </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -28,6 +120,9 @@
   
   <para>
     Coming soon...
+  </para>
+  <para>
+    See the <command>edit</command> command for more information.
   </para>
 
 </refsection>

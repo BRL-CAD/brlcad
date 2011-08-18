@@ -41,7 +41,7 @@
  *
  * SYNOPSIS
  *	edit COMMAND_NAME [ARGS OBJECT ...]
- *	edit help | rotate | scale | translate [ARGS OBJECT ...]
+ *	EDIT HELP | ROTATE | SCAle | translate [ARGS OBJECT ...]
  *
  *	ARGS:
  *	    see manual for given COMMAND_NAME
@@ -1831,7 +1831,7 @@ edit_translate_get_arg_head(const union edit_cmd *const cmd, int idx)
  * Table of edit command data/functions
  */
 static const struct edit_cmd_tab edit_cmds[] = {
-    {"help", (char *)NULL, "[subcmd]", "[subcmd]", NULL, NULL, NULL},
+    {"help", (char *)NULL, "[subcommand]", "[subcommand]", NULL, NULL, NULL},
 #define EDIT_CMD_HELP 0 /* idx of "help" in edit_cmds */
     {"rotate",		"R",
 	"[-R] [AXIS] [CENTER] ANGLE OBJECT ...",

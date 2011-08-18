@@ -9,7 +9,8 @@
 
 <refnamediv xml:id="name">
   <refname>edit</refname>
-  <refpurpose>Edit <emphasis>object</emphasis>s using
+  <refpurpose>
+    Edits <emphasis>object</emphasis>s, using
     <emphasis>subcommand</emphasis>s.
   </refpurpose>
 </refnamediv>
@@ -18,25 +19,31 @@
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
     <command>edit</command>
+    <arg choice="opt" rep="norepeat">
+      <replaceable>subcommand</replaceable>
+    </arg>
+    <arg choice="opt" rep="norepeat">
+      <replaceable>args</replaceable>
+    </arg>
   </cmdsynopsis>
+
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  
+<refsection xml:id="description">
+  <info><title>DESCRIPTION</title></info>
   <para>
-    This command operates on objects in the database, solely through
-    the use of subcommands. The flexibility of the
-    <command>edit</command> subcommands lies in their utilization of a
-    common style of syntax. Coordinates in model space, offsets, and
-    objects are all accepted interchangably as reference points. A
-    single reference point is roughly equivalent to an absolute point
-    in model space. A pair of refence points specifies a distance or
-    an angle, and is supplied as a set of <emphasis>FROM</emphasis> -
-    <emphasis>TO</emphasis> arguments (a <emphasis>FROM</emphasis>
-    argument is similar to a <command>keypoint</command>). Reference
-    points may be incomplete, and specify only one or two coordinates.
+    Operates on objects in the database, solely through the use of
+    subcommands. The flexibility of the <command>edit</command>
+    subcommands lies in their utilization of a common style of syntax.
+    Coordinates in model space, offsets, and objects are all accepted
+    interchangably as reference points. A single reference point is
+    roughly equivalent to an absolute point in model space. A pair of
+    refence points specifies a distance or an angle, and is supplied
+    as a set of <emphasis>FROM</emphasis> - <emphasis>TO</emphasis>
+    arguments (a <emphasis>FROM</emphasis> argument is similar to the
+    concept of a keypoint). Reference points may
+    be incomplete, and specify only one or two coordinates.
   </para>
-
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
@@ -44,66 +51,77 @@
     The <command>edit</command> command 
   </para>
 
-  <example><info><title>Get a list of available subcommands.</title></info>
+  <example>
+    <info><title>
+      Get a list of available subcommands.
+    </title></info>
     <variablelist>
       <varlistentry>
-	   <term><prompt>&gt; </prompt><userinput>edit</userinput></term>
+	<term>
+	  <prompt>&gt; </prompt>
+	  <userinput>edit</userinput>
+	</term>
       </varlistentry>
       <varlistentry>
-	   <term><prompt>&gt; </prompt><userinput>edit help</userinput></term>
-	   <listitem>
-	     <para>Prints usage and a list of available subcommands.</para>
-	   </listitem>
+	<term>
+	  <prompt>&gt; </prompt>
+	  <userinput>edit help</userinput>
+	</term>
+	<listitem>
+	  <para>
+	    Prints usage and a list of available subcommands.
+	  </para>
+	</listitem>
       </varlistentry>
     </variablelist>
   </example>
 
-  <example><info><title>Use the help  </title></info>
+  <example><info><title>Get the usage of a subcommand.</title></info>
     <variablelist>
       <varlistentry>
-	   <term><prompt>&gt; </prompt>
-	     <userinput>edit translate</userinput>
-	   </term>
-	   <listitem>
-	     <para>
-	       Print usage of the translate subcommand
-	     </para>
-	   </listitem>
+        <term>
+          <prompt>&gt; </prompt>
+          <userinput>edit translate</userinput>
+        </term>
+        <listitem>
+          <para>
+	    Print usage of the translate subcommand
+          </para>
+	</listitem>
       </varlistentry>
     </variablelist>
   </example>
 
-  <example><info><title>Use the help subcommand to print extended usage of subcommands.</title></info>
+  <example>
+    <info><title>
+      Use the help subcommand to print extended usage of subcommands.
+    </title></info>
     <variablelist>
       <varlistentry>
-	   <term><prompt>&gt; </prompt><userinput>edit translate help</userinput></term>
+	<term>
+	  <prompt>&gt; </prompt>
+	  <userinput>edit translate help</userinput>
+	</term>
       </varlistentry>
+
       <varlistentry>
-	   <term><prompt>&gt; </prompt><userinput>edit help translate</userinput></term>
-	   <listitem>
-	     <para>
-	       Print extended usage of the translate subcommand. Each
-	       subcommand also accepts help as an argument, so that
-	       the help is still available if
-	       <emphasis>edit subcmd</emphasis>
-	       is aliased to
-	       <emphasis>subcmd</emphasis>
-	     </para>
-	   </listitem>
+	<term>
+	  <prompt>&gt; </prompt>
+	  <userinput>edit help translate</userinput>
+	</term>
+	<listitem>
+	  <para>
+	    Print extended usage of the translate subcommand. Each
+	    subcommand also accepts <emphasis>help</emphasis> as an
+	    argument, so that the extended usage is still available if
+	    <command>edit translate</command> is aliased to something
+	    else.
+	  </para>
+	</listitem>
       </varlistentry>
     </variablelist>
   </example>
        
-  <example><info><title/></info>
-    
-    <para>
-      <prompt/><userinput/>
-    </para>
-    <para>
-       
-    </para>
-  </example>
- 
 </refsection>
 
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
