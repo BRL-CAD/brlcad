@@ -56,6 +56,49 @@ pnts_unpack_double(unsigned char *buf, unsigned char *data, unsigned int count)
     return buf;
 }
 
+/**
+ * R T _ P N T S _ B B O X
+ *
+ * Calculate a bounding box for a set of points
+ */
+int
+rt_pnts_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+    struct rt_pnts_internal *pnts;
+    struct bu_list *head;
+    struct pnt *point;
+    point_t sph_min, sph_max;
+
+    RT_CK_DB_INTERNAL(ip);
+    pnts = (struct rt_pnts_internal *)ip->idb_ptr;
+    RT_PNTS_CK_MAGIC(pnts);
+
+    if (pnts->count > 0) {
+	point = (struct pnt *)pnts->point;
+	head = &point->l;
+    } else {
+	return 0;
+    }
+
+    if (pnts->scale > 0) {
+	/* we're making spheres out of these, so the bbox
+	 * has to take that into account */
+	for (BU_LIST_FOR(point, pnt, head)) {
+	    sph_min[X] = point->v[X] - pnts->scale;
+	    sph_max[X] = point->v[X] + pnts->scale;
+	    sph_min[Y] = point->v[Y] - pnts->scale;
+	    sph_max[Y] = point->v[Y] + pnts->scale;
+	    sph_min[Z] = point->v[Z] - pnts->scale;
+	    sph_max[Z] = point->v[Z] + pnts->scale;
+	    VMINMAX((*min), (*max), sph_min);
+	    VMINMAX((*min), (*max), sph_max);
+	}
+    } else {
+	for (BU_LIST_FOR(point, pnt, head)) {
+	    VMINMAX((*min), (*max), point->v);
+	}
+    }
+    return 0;
+}
 
 /**
  * R T _ P N T S _ E X P O R T 5

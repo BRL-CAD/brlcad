@@ -1741,7 +1741,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
-	NULL
+	rt_pnts_bbox
     },
 
     {
