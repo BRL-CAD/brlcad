@@ -1518,7 +1518,7 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_metaball_params,
-	NULL
+	rt_metaball_bbox
     },
 
 #if OBJ_BREP
