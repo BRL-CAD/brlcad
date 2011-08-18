@@ -213,6 +213,7 @@ will convert, what percentage, and how long the conversion will take.
 There are several environment variables that will modify how this
 script behaves:
 
+  OPATH        - tgm path to use for object search (default .)
   SAVE         - save the converted tgm
   GED          - path to BRL-CAD geometry editor (i.e., mged) for converting
   SEARCH       - path to BRL-CAD geometry editor to use for searching
@@ -271,6 +272,11 @@ if test "x$HELP" = "x1" ; then
     echo ""
     echo "Available options:"
     echo "  SAVE"
+    if test "x$OPATH" = "x" ; then
+	echo "  OPATH=/path/to/objects (default .)"
+    else
+	echo "  OPATH=/path/to/objects (using $OPATH)"
+    fi
     if test "x$GED" = "x" ; then
 	echo "  GED=/path/to/mged (default mged)"
     else
@@ -403,7 +409,7 @@ while test $# -gt 0 ; do
 
     # execute in a coprocess
     if test "x$OBJECTS" = "x" ; then OBJECTS='-print' ; fi
-    cmd="$SEARCH -c \"$work\" search . $OBJECTS"
+    cmd="$SEARCH -c \"$work\" search $OPATH $OBJECTS"
     objects=`eval "$cmd" 2>&1 | grep -v Using`
     $VERBOSE_ECHO "\$ $cmd"
     $VERBOSE_ECHO "$objects"
@@ -511,7 +517,11 @@ EOF
 	fi
 
 	count=`expr $count + 1`
-	$ECHO "%-4s\tnmg: %s %s\tbot: %s %s %6.0fs %*s%.0f %s:%s" \"$status\" \"$nmg\" \"$real_nmg\" \"$bot\" \"$real_bot\" \"$SECONDS\" \"`expr 7 - $count : '.*'`\" \"#\" $count \"$file\" \"$object\"
+
+	$ECHO "%-4s\tnmg: %s %ss\tbot: %s %ss %6.0fs %*s%.0f %s:%s" \
+               \"$status\" \"$nmg\" \"$real_nmg\" \"$bot\" \"$real_bot\" \"$SECONDS\" \
+               \"`expr 7 - $count : '.*'`\" \"#\" $count \"$file\" \"$object\"
+
     done
 
     # restore stdin
