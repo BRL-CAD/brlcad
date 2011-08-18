@@ -113,6 +113,59 @@ const struct bu_structparse rt_hyp_parse[] = {
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+/**
+ * R T _ H Y P _ B B O X
+ *
+ * Create a bounding RPP for an hyp
+ */
+int
+rt_hyp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+    struct rt_hyp_internal *xip;
+    vect_t hyp_Au, hyp_B, hyp_An, hyp_Bn, hyp_H;
+    vect_t pt1, pt2, pt3, pt4, pt5, pt6, pt7, pt8;
+    RT_CK_DB_INTERNAL(ip);
+    xip = (struct rt_hyp_internal *)ip->idb_ptr;
+    RT_HYP_CK_MAGIC(xip);
+
+    VMOVE(hyp_H, xip->hyp_Hi);
+    VUNITIZE(hyp_H);
+    VMOVE(hyp_Au, xip->hyp_A);
+    VUNITIZE(hyp_Au);
+    VCROSS(hyp_B, hyp_Au, hyp_H);
+
+    VSETALL((*min), MAX_FASTF);
+    VSETALL((*max), -MAX_FASTF);
+
+    VSCALE(hyp_B, hyp_B, xip->hyp_b);
+    VREVERSE(hyp_An, xip->hyp_A);
+    VREVERSE(hyp_Bn, hyp_B);
+
+    VADD3(pt1, xip->hyp_Vi, xip->hyp_A, hyp_B);
+    VADD3(pt2, xip->hyp_Vi, xip->hyp_A, hyp_Bn);
+    VADD3(pt3, xip->hyp_Vi, hyp_An, hyp_B);
+    VADD3(pt4, xip->hyp_Vi, hyp_An, hyp_Bn);
+    VADD4(pt5, xip->hyp_Vi, xip->hyp_A, hyp_B, xip->hyp_Hi);
+    VADD4(pt6, xip->hyp_Vi, xip->hyp_A, hyp_Bn, xip->hyp_Hi);
+    VADD4(pt7, xip->hyp_Vi, hyp_An, hyp_B, xip->hyp_Hi);
+    VADD4(pt8, xip->hyp_Vi, hyp_An, hyp_Bn, xip->hyp_Hi);
+
+    /* Find the RPP of the rotated axis-aligned hyp bbox - that is,
+     * the bounding box the given hyp would have if its height
+     * vector were in the positive Z direction. This does not give 
+     * us an optimal bbox except in the case where the hyp is 
+     * actually axis aligned to start with, but it's usually 
+     * at least a bit better than the bounding sphere RPP. */
+    VMINMAX((*min), (*max), pt1);
+    VMINMAX((*min), (*max), pt2);
+    VMINMAX((*min), (*max), pt3);
+    VMINMAX((*min), (*max), pt4);
+    VMINMAX((*min), (*max), pt5);
+    VMINMAX((*min), (*max), pt6);
+    VMINMAX((*min), (*max), pt7);
+    VMINMAX((*min), (*max), pt8);
+
+    return 0;
+}
 
 /**
  * R T _ H Y P _ P R E P
@@ -159,17 +212,10 @@ rt_hyp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_aradius = sqrt((hyp->hyp_c*hyp->hyp_c + 1)*MAGSQ(hyp->hyp_H)
 			   + (hyp->hyp_r1*hyp->hyp_r1));
     stp->st_bradius = stp->st_aradius;
-
-    /* cheat, make bounding RPP by enclosing bounding sphere (copied from g_ehy.c) */
-    stp->st_min[X] = stp->st_center[X] - stp->st_bradius;
-    stp->st_max[X] = stp->st_center[X] + stp->st_bradius;
-    stp->st_min[Y] = stp->st_center[Y] - stp->st_bradius;
-    stp->st_max[Y] = stp->st_center[Y] + stp->st_bradius;
-    stp->st_min[Z] = stp->st_center[Z] - stp->st_bradius;
-    stp->st_max[Z] = stp->st_center[Z] + stp->st_bradius;
-
+  
+    /* calculate bounding RPP */
+    if (rt_hyp_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
     return 0;			/* OK */
-
 }
 
 
