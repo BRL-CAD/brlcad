@@ -1181,7 +1181,7 @@ const struct rt_functab rt_functab[] = {
 	rt_extrude_form,
 	NULL,
 	rt_extrude_params,
-	NULL
+	rt_extrude_bbox
     },
 
     {
