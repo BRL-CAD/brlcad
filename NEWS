@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2011-07-XX  Release 7.20.4                                     ---
 ----------------------------------------------------------------------
 
+* improved bounding boxes for epa - faster raytracing - Cliff Yapp
 * improved bounding boxes for rpc - faster raytracing - Cliff Yapp
 * added an OPATH (object path) option to sh/conversion.sh
         - Tom Browder
