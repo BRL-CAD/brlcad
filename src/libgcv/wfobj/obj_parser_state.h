@@ -61,6 +61,8 @@ namespace arl {
 namespace obj_parser {
 namespace detail {
 
+typedef void *parser_type;
+
 template<typename T, std::size_t N>
 struct tuple {
     T v[N];
@@ -300,6 +302,7 @@ struct basic_parser_state {
   
     std::vector<file_node> file_stack;
     stringstream_type err;
+    bool syntaxError;
   
     /**
      *  Working contents for content construction during parse
@@ -364,8 +367,7 @@ struct basic_parser_extra {
     typedef traits traits_type;
     typedef Allocator allocator;
   
-    typedef basic_obj_parser<charT, traits, Allocator> parser_type;
-
+    typedef basic_obj_parser<charT, traits, Allocator> basic_parser_type;
     typedef basic_obj_contents<PrecisionT, charT, traits, Allocator>
 	contents_type;
 
@@ -373,10 +375,11 @@ struct basic_parser_extra {
   
     parser_state_type parser_state;
 
-    parser_type *parser;
+    parser_type parser;
+    basic_parser_type *basic_parser;
     contents_type *contents;
   
-    basic_parser_extra(parser_type *p, contents_type *c);
+    basic_parser_extra(basic_parser_type *p, contents_type *c);
 };
 
 
@@ -842,7 +845,9 @@ template<typename PrecisionT,
 	 typename traits,
 	 typename Allocator>
 basic_parser_extra<PrecisionT, charT, traits, Allocator>::
-basic_parser_extra(parser_type *p, contents_type *c) :parser(p), contents(c)
+basic_parser_extra(basic_parser_type *p, contents_type *c)
+: basic_parser(p)
+, contents(c)
 {
     parser_state.working_stringset.insert("default");
     // since the working string is empty, these will set to the default ""

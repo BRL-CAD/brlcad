@@ -115,6 +115,11 @@ struct lex_sentry {
 extern "C" {
 #endif
 
+static void createParser(detail::parser_type *parser)
+{
+    *parser = ParseAlloc(malloc);
+}
+
 static void createScanner(yyscan_t *scanner)
 {
     obj_parser_lex_init(scanner);
@@ -165,7 +170,8 @@ int obj_parse(const char *filename, obj_parser_t parser,
     int err = 0;
 
     try {
-	std::auto_ptr<detail::objFileContents> sentry(new detail::objFileContents);
+	std::auto_ptr<detail::objFileContents>
+	    sentry(new detail::objFileContents);
 
 	detail::objCombinedState extra(p, sentry.get());
 
@@ -181,6 +187,8 @@ int obj_parse(const char *filename, obj_parser_t parser,
 
 	setScannerIn(scanner, extra.parser_state.file_stack.back().file.get());
 	setScannerExtra(scanner, &extra);
+
+	createParser(&((detail::objCombinedState*)scanner)->parser);
 
 	err = obj_parser_parse(scanner);
 
@@ -231,6 +239,8 @@ int obj_fparse(FILE *stream, obj_parser_t parser, obj_contents_t *contents)
 
 	setScannerIn(scanner, extra.parser_state.file_stack.back().file.get());
 	setScannerExtra(scanner, &extra);
+
+	createParser(&((detail::objCombinedState*)scanner)->parser);
 
 	err = obj_parser_parse(scanner);
 
