@@ -193,10 +193,12 @@ ged_splitGDL(struct ged *gedp,
     struct ged_display_list *new_gdlp;
     char *pathname;
     int savelen;
+    int newlen = path->fp_len + 1;
 
-    if (path->fp_len < 3) {
+    if (newlen < 3) {
 	while (BU_LIST_WHILE(sp, solid, &gdlp->gdl_headSolid)) {
 	    savelen = sp->s_fullpath.fp_len;
+	    sp->s_fullpath.fp_len = newlen;
 	    pathname = db_path_to_string(&sp->s_fullpath);
 	    sp->s_fullpath.fp_len = savelen;
 
@@ -213,6 +215,7 @@ ged_splitGDL(struct ged *gedp,
 
 	    if (db_full_path_match_top(path, &sp->s_fullpath)) {
 		savelen = sp->s_fullpath.fp_len;
+		sp->s_fullpath.fp_len = newlen;
 		pathname = db_path_to_string(&sp->s_fullpath);
 		sp->s_fullpath.fp_len = savelen;
 
@@ -424,8 +427,11 @@ _ged_eraseFirstSubpath(struct ged *gedp,
 	nsp = BU_LIST_PNEXT(solid, sp);
 	if (db_full_path_subset(&sp->s_fullpath, subpath, skip_first)) {
 	    int ret;
+	    int full_len = sp->s_fullpath.fp_len;
 
+	    sp->s_fullpath.fp_len = full_len - 1;
 	    db_dup_full_path(&dup_path, &sp->s_fullpath);
+	    sp->s_fullpath.fp_len = full_len;
 	    BU_LIST_DEQUEUE(&sp->l);
 	    FREE_SOLID(sp, &_FreeSolid.l);
 
