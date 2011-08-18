@@ -1255,7 +1255,7 @@ const struct rt_functab rt_functab[] = {
 	rt_cline_form,
 	NULL,
 	rt_cline_params,
-	NULL
+	rt_cline_bbox
     },
 
     {
