@@ -29,6 +29,9 @@ public:
                              float time);
     virtual bool get_matrix (Matrix44 &result, ustring from, float time);
 
+    virtual bool get_matrix (Matrix44 &result, TransformationPtr xform);
+    virtual bool get_matrix (Matrix44 &result, ustring from);
+
     void name_transform (const char *name, const Transformation &xform);
 
     virtual bool get_array_attribute (void *renderstate, bool derivatives, 
@@ -44,6 +47,13 @@ public:
     virtual int  pointcloud (ustring filename, const OSL::Vec3 &center, float radius,
                              int max_points, void *attr_query, void **attr_outdata);
 
+    virtual int pointcloud_search (ustring filename, const OSL::Vec3 &center,
+                                   float radius, int max_points, size_t *out_indices,
+                                   float *out_distances, int derivs_offset);
+
+    virtual int pointcloud_get (ustring filename, size_t *indices, int count,
+                                ustring attr_name, TypeDesc attr_type,
+                                void *out_data);
 private:
     typedef std::map <ustring, shared_ptr<Transformation> > TransformMap;
     TransformMap m_named_xforms;

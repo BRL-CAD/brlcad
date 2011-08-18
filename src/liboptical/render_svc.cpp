@@ -33,6 +33,32 @@ SimpleRenderer::get_matrix (Matrix44 &result, ustring from, float time)
     }
 }
 
+bool
+SimpleRenderer::get_matrix (Matrix44 &result, TransformationPtr xform)
+{
+    // SimpleRenderer doesn't understand motion blur and transformations
+    // are just simple 4x4 matrices.
+    result = *(OSL::Matrix44 *)xform;
+    return true;
+}
+
+
+
+bool
+SimpleRenderer::get_matrix (Matrix44 &result, ustring from)
+{
+    // SimpleRenderer doesn't understand motion blur, so we never fail
+    // on account of time-varying transformations.
+    TransformMap::const_iterator found = m_named_xforms.find (from);
+    if (found != m_named_xforms.end()) {
+        result = *(found->second);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+
 
 void
 SimpleRenderer::name_transform (const char *name, const OSL::Matrix44 &xform)
@@ -78,6 +104,22 @@ SimpleRenderer::get_pointcloud_attr_query (ustring *attr_names,
 int
 SimpleRenderer::pointcloud (ustring filename, const OSL::Vec3 &center, float radius,
                             int max_points, void *_attr_query, void **attr_outdata)
+{
+    return 0;
+}
+
+int
+SimpleRenderer::pointcloud_search (ustring filename, const OSL::Vec3 &center,
+                                   float radius, int max_points, size_t *out_indices,
+                                   float *out_distances, int derivs_offset)
+{
+    return 0;
+}
+
+int
+SimpleRenderer::pointcloud_get (ustring filename, size_t *indices, int count,
+                                ustring attr_name, TypeDesc attr_type,
+                                void *out_data)
 {
     return 0;
 }
