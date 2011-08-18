@@ -1556,7 +1556,7 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_brep_params,
-	NULL
+	rt_brep_bbox
     },
 #else
     {

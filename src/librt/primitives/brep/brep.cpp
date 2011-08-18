@@ -58,6 +58,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+    int rt_brep_bbox(struct rt_db_internal* ip, point_t *min, point_t *max);
     int rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip);
     void rt_brep_print(register const struct soltab *stp);
     int rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead);
@@ -333,6 +334,26 @@ brep_build_bvh(struct brep_specific* bs)
 /********************************************************************************
  * BRL-CAD Primitive interface
  ********************************************************************************/
+
+/**
+ * R T _ B R E P _ B B O X
+ *
+ * Calculate a bounding RPP around a BREP.  Unlike the prep
+ * routine, which makes use of the full bounding volume hierarchy,
+ * this routine just calls the openNURBS function.
+ */
+int
+rt_brep_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+    struct rt_brep_internal* bi;
+
+    RT_CK_DB_INTERNAL(ip);
+    bi = (struct rt_brep_internal*)ip->idb_ptr;
+    RT_BREP_CK_MAGIC(bi);
+
+    bi->brep->GetBBox(*min, *max);
+    return 0;
+}
+
 
 /**
  * R T _ B R E P _ P R E P
