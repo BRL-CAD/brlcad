@@ -191,6 +191,86 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern)
 
 }
 
+/**
+ * R T _ H F _ B B O X
+ *
+ * Calculate the bounding RPP for an hf
+ */
+int
+rt_hf_bbox(struct rt_db_internal *ip, point_t *min_pt, point_t *max_pt) {
+    struct rt_hf_internal *hip;
+    vect_t height, work;
+    vect_t hf_N, hf_X, hf_Y;
+    fastf_t hf_max, hf_min;
+
+    RT_CK_DB_INTERNAL(ip);
+    hip = (struct rt_hf_internal *)ip->idb_ptr;
+    RT_HF_CK_MAGIC(hip);
+
+    VMOVE(hf_X, hip->x);
+    VUNITIZE(hf_X);
+    VMOVE(hf_Y, hip->y);
+    VUNITIZE(hf_Y);
+
+    VCROSS(hf_N, hf_X, hf_Y);
+
+    /*
+     * Locate the min-max of the HF.
+     */
+    if (hip->shorts) {
+        int max, min;
+        int len;
+        unsigned short *sp;
+        int i;
+
+        sp = (unsigned short *)hip->mp->apbuf;
+        min = max = *sp++;
+        len = hip->w * hip->n;
+        for (i=1; i< len; i++, sp++) {
+            if ((int)*sp > max) max=*sp;
+            if ((int)*sp < min) min=*sp;
+        }
+        hf_min = min * hip->file2mm;
+        hf_max = max * hip->file2mm;
+    } else {
+        fastf_t max, min;
+        int len;
+        int i;
+        fastf_t *fp;
+
+        fp = (fastf_t *) hip->mp->apbuf;
+        min = max = *fp++;
+        len = hip->w * hip->n;
+        for (i=1; i < len; i++, fp++) {
+            if (*fp > max) max = *fp;
+            if (*fp < min) min = *fp;
+        }
+        hf_min = min * hip->file2mm;
+        hf_max = max * hip->file2mm;
+    }
+
+    VSCALE(height, hf_N, hf_max);
+
+    VMOVE((*min_pt), hip->v);
+    VMOVE((*max_pt), hip->v);
+    VADD2(work, hip->v, height);
+    VMINMAX((*min_pt), (*max_pt), work);
+    VJOIN1(work, hip->v, hip->xlen, hf_X);
+    VMINMAX((*min_pt), (*max_pt), work);
+    VADD2(work, work, height);
+    VMINMAX((*min_pt), (*max_pt), work);
+    VJOIN1(work, hip->v, hip->ylen, hf_Y);
+    VMINMAX((*min_pt), (*max_pt), work);
+    VADD2(work, work, height);
+    VMINMAX((*min_pt), (*max_pt), work);
+    VJOIN2(work, hip->v, hip->xlen, hf_X, hip->ylen, hf_Y);
+    VMINMAX((*min_pt), (*max_pt), work);
+    VADD2(work, work, height);
+    VMINMAX((*min_pt), (*max_pt), work);
+
+    return 0;
+}
+
 
 /**
  * R T _ H F _ P R E P
