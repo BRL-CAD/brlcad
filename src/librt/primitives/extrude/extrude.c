@@ -89,6 +89,236 @@ static struct bn_tol extr_tol={
 #define LOOPA		1
 #define LOOPB		2
 
+/**
+ * R T _ E X T R U D E _ B B O X
+ *
+ * Calculate a bounding RPP for an extruded sketch
+ */
+int
+rt_extrude_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
+{
+    struct rt_extrude_internal *eip;
+    struct extrude_specific *extr;
+    struct rt_sketch_internal *skt;
+    vect_t tmp, xyz[3];
+    fastf_t tmp_f, ldir[3];
+    size_t i, j;
+    size_t vert_count;
+    size_t curr_vert;
+
+    eip = (struct rt_extrude_internal *)ip->idb_ptr;
+    RT_EXTRUDE_CK_MAGIC(eip);
+    skt = eip->skt;
+    RT_SKETCH_CK_MAGIC(skt);
+
+    /* make sure the sketch is valid */
+    if (rt_check_curve(&skt->curve, skt, 1)) {
+	bu_log("ERROR: referenced sketch (%s) is bad!\n",
+	       eip->sketch_name);
+	return -1;
+    }
+    
+    BU_GETSTRUCT(extr, extrude_specific);
+   
+    VMOVE(extr->unit_h, eip->h);
+    VUNITIZE(extr->unit_h);
+
+    /* the length of the u_vec is used for scaling radii of circular
+     * arcs the u_vec and the v_vec must have the same length
+     */
+    extr->uv_scale = MAGNITUDE(eip->u_vec);
+
+    /* build a transformation matrix to rotate extrusion vector to
+     * z-axis
+     */
+    VSET(tmp, 0, 0, 1);
+    bn_mat_fromto(extr->rot, eip->h, tmp);
+
+    /* and translate to origin */
+    extr->rot[MDX] = -VDOT(eip->V, &extr->rot[0]);
+    extr->rot[MDY] = -VDOT(eip->V, &extr->rot[4]);
+    extr->rot[MDZ] = -VDOT(eip->V, &extr->rot[8]);
+
+    /* and save the inverse */
+    bn_mat_inv(extr->irot, extr->rot);
+
+    /* calculate plane equations of top and bottom planes */
+    VCROSS(extr->pl1, eip->u_vec, eip->v_vec);
+    VUNITIZE(extr->pl1);
+    extr->pl1[W] = VDOT(extr->pl1, eip->V);
+    VMOVE(extr->pl2, extr->pl1);
+    VADD2(tmp, eip->V, eip->h);
+    extr->pl2[W] = VDOT(extr->pl2, tmp);
+
+    vert_count = skt->vert_count;
+    /* count how many additional vertices we will need for arc centers */
+    for (i=0; i<skt->curve.count; i++) {
+	struct carc_seg *csg=(struct carc_seg *)skt->curve.segment[i];
+
+	if (csg->magic != CURVE_CARC_MAGIC)
+	    continue;
+
+	if (csg->radius <= 0.0)
+	    continue;
+
+	vert_count++;
+    }
+
+    /* apply the rotation matrix to all the vertices, and start
+     * bounding box calculation
+     */
+    if (vert_count)
+	extr->verts = (point_t *)bu_calloc(vert_count, sizeof(point_t), "extr->verts");
+    VSETALL((*min), MAX_FASTF);
+    VSETALL((*max), -MAX_FASTF);
+    for (i=0; i<skt->vert_count; i++) {
+	VJOIN2(tmp, eip->V, skt->verts[i][0], eip->u_vec, skt->verts[i][1], eip->v_vec);
+	VMINMAX((*min), (*max), tmp);
+	MAT4X3PNT(extr->verts[i], extr->rot, tmp);
+	VADD2(tmp, tmp, eip->h);
+	VMINMAX((*min), (*max), tmp);
+    }
+    curr_vert = skt->vert_count;
+
+    /* and the u, v vectors */
+    MAT4X3VEC(extr->u_vec, extr->rot, eip->u_vec);
+    MAT4X3VEC(extr->v_vec, extr->rot, eip->v_vec);
+
+    /* calculate the rotated pl1 */
+    VCROSS(extr->pl1_rot, extr->u_vec, extr->v_vec);
+    VUNITIZE(extr->pl1_rot);
+    extr->pl1_rot[W] = VDOT(extr->pl1_rot, extr->verts[0]);
+
+    VSET(tmp, 0, 0, 1)
+	tmp_f = VDOT(tmp, extr->unit_h);
+    if (tmp_f < 0.0)
+	tmp_f = -tmp_f;
+    tmp_f -= 1.0;
+    if (NEAR_ZERO(tmp_f, SQRT_SMALL_FASTF)) {
+	VSET(extr->rot_axis, 1.0, 0.0, 0.0);
+	VSET(extr->perp, 0.0, 1.0, 0.0);
+    } else {
+	VCROSS(extr->rot_axis, tmp, extr->unit_h);
+	VUNITIZE(extr->rot_axis);
+	if (MAGNITUDE(extr->rot_axis) < SQRT_SMALL_FASTF) {
+	    VSET(extr->rot_axis, 1.0, 0.0, 0.0);
+	    VSET(extr->perp, 0.0, 1.0, 0.0);
+	} else {
+	    VCROSS(extr->perp, extr->rot_axis, extr->pl1_rot);
+	    VUNITIZE(extr->perp);
+	}
+    }
+
+    /* copy the curve */
+    rt_copy_curve(&extr->crv, &skt->curve);
+
+    VSET(xyz[X], 1, 0, 0);
+    VSET(xyz[Y], 0, 1, 0);
+    VSET(xyz[Z], 0, 0, 1);
+
+    for (i=X; i<=Z; i++) {
+	VCROSS(tmp, extr->unit_h, xyz[i]);
+	ldir[i] = MAGNITUDE(tmp);
+    }
+
+    /* if any part of the curve is a circular arc, the arc may extend
+     * beyond the listed vertices
+     */
+    for (i=0; i<skt->curve.count; i++) {
+	struct carc_seg *csg=(struct carc_seg *)skt->curve.segment[i];
+	struct carc_seg *csg_extr=(struct carc_seg *)extr->crv.segment[i];
+	point_t center;
+
+	if (csg->magic != CURVE_CARC_MAGIC)
+	    continue;
+
+	if (csg->radius <= 0.0) {
+	    /* full circle */
+	    point_t start;
+	    fastf_t radius;
+
+	    csg_extr->center = csg->end;
+	    VJOIN2(start, eip->V, skt->verts[csg->start][0], eip->u_vec, skt->verts[csg->start][1], eip->v_vec);
+	    VJOIN2(center, eip->V, skt->verts[csg->end][0], eip->u_vec, skt->verts[csg->end][1], eip->v_vec);
+	    VSUB2(tmp, start, center);
+	    radius = MAGNITUDE(tmp);
+	    csg_extr->radius = -radius;	/* need the correct magnitude for normal calculation */
+
+	    for (j=X; j<=Z; j++) {
+		tmp_f = radius * ldir[j];
+		VJOIN1(tmp, center, tmp_f, xyz[j]);
+		VMINMAX((*min), (*max), tmp);
+		VADD2(tmp, tmp, eip->h);
+		VMINMAX((*min), (*max), tmp);
+
+		VJOIN1(tmp, center, -tmp_f, xyz[j]);
+		VMINMAX((*min), (*max), tmp);
+		VADD2(tmp, tmp, eip->h);
+		VMINMAX((*min), (*max), tmp);
+	    }
+	} else {
+	    /* circular arc */
+	    point_t start, end, mid;
+	    vect_t s_to_m;
+	    vect_t bisector;
+	    fastf_t dist;
+	    fastf_t magsq_s2m;
+
+	    VJOIN2(start, eip->V, skt->verts[csg->start][0], eip->u_vec, skt->verts[csg->start][1], eip->v_vec);
+	    VJOIN2(end, eip->V, skt->verts[csg->end][0], eip->u_vec, skt->verts[csg->end][1], eip->v_vec);
+	    VBLEND2(mid, 0.5, start, 0.5, end);
+	    VSUB2(s_to_m, mid, start);
+	    VCROSS(bisector, extr->pl1, s_to_m);
+	    VUNITIZE(bisector);
+	    magsq_s2m = MAGSQ(s_to_m);
+	    csg_extr->radius = csg->radius * extr->uv_scale;
+	    if (magsq_s2m > csg_extr->radius*csg_extr->radius) {
+		fastf_t max_radius;
+
+		max_radius = sqrt(magsq_s2m);
+		if (NEAR_EQUAL(max_radius, csg_extr->radius, RT_LEN_TOL)) {
+		    csg_extr->radius = max_radius;
+		} else {
+		    bu_log("Impossible radius for circular arc in extrusion - is %g, cannot be more than %g!\n",
+			   csg_extr->radius, sqrt(magsq_s2m));
+		    bu_log("Difference is %g\n", max_radius - csg->radius);
+		    return -1;
+		}
+	    }
+	    dist = sqrt(csg_extr->radius*csg_extr->radius - magsq_s2m);
+
+	    /* save arc center */
+	    if (csg->center_is_left) {
+		VJOIN1(center, mid, dist, bisector);
+	    } else {
+		VJOIN1(center, mid, -dist, bisector);
+	    }
+	    MAT4X3PNT(extr->verts[curr_vert], extr->rot, center);
+	    csg_extr->center = curr_vert;
+	    curr_vert++;
+
+	    for (j=X; j<=Z; j++) {
+		tmp_f = csg_extr->radius * ldir[j];
+		VJOIN1(tmp, center, tmp_f, xyz[j]);
+		VMINMAX((*min), (*max), tmp);
+		VADD2(tmp, tmp, eip->h);
+		VMINMAX((*min), (*max), tmp);
+
+		VJOIN1(tmp, center, -tmp_f, xyz[j]);
+		VMINMAX((*min), (*max), tmp);
+		VADD2(tmp, tmp, eip->h);
+		VMINMAX((*min), (*max), tmp);
+	    }
+	}
+    }
+
+    if (extr->verts)
+	 bu_free((char *)extr->verts, "extrude->verts");
+    rt_curve_free(&(extr->crv));
+    bu_free((char *)extr, "extrude_specific");
+
+    return 0;              /* OK */
+}
 
 /**
  * R T _ E X T R U D E _ P R E P
