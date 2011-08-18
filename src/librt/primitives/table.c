@@ -959,7 +959,7 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_eto_params,
-	NULL
+	rt_eto_bbox
     },
 
     {
