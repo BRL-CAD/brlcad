@@ -1,5 +1,3 @@
-<!-- Converted by db4-upgrade version 1.0 -->
-
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="edit">
 
 <refmeta>
@@ -19,22 +17,93 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>edit</command>    
+    <command>edit</command>
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
   
   <para>
-    Coming soon...
+    This command operates on objects in the database, solely through
+    the use of subcommands. The flexibility of the
+    <command>edit</command> subcommands lies in their utilization of a
+    common style of syntax. Coordinates in model space, offsets, and
+    objects are all accepted interchangably as reference points. A
+    single reference point is roughly equivalent to an absolute point
+    in model space. A pair of refence points specifies a distance or
+    an angle, and is supplied as a set of <emphasis>FROM</emphasis> -
+    <emphasis>TO</emphasis> arguments (a <emphasis>FROM</emphasis>
+    argument is similar to a <command>keypoint</command>). Reference
+    points may be incomplete, and specify only one or two coordinates.
   </para>
 
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
   <para>
-    Coming soon...
+    The <command>edit</command> command 
   </para>
+
+  <example><info><title>Get a list of available subcommands.</title></info>
+    <variablelist>
+      <varlistentry>
+	   <term><prompt>&gt; </prompt><userinput>edit</userinput></term>
+      </varlistentry>
+      <varlistentry>
+	   <term><prompt>&gt; </prompt><userinput>edit help</userinput></term>
+	   <listitem>
+	     <para>Prints usage and a list of available subcommands.</para>
+	   </listitem>
+      </varlistentry>
+    </variablelist>
+  </example>
+
+  <example><info><title>Use the help  </title></info>
+    <variablelist>
+      <varlistentry>
+	   <term><prompt>&gt; </prompt>
+	     <userinput>edit translate</userinput>
+	   </term>
+	   <listitem>
+	     <para>
+	       Print usage of the translate subcommand
+	     </para>
+	   </listitem>
+      </varlistentry>
+    </variablelist>
+  </example>
+
+  <example><info><title>Use the help subcommand to print extended usage of subcommands.</title></info>
+    <variablelist>
+      <varlistentry>
+	   <term><prompt>&gt; </prompt><userinput>edit translate help</userinput></term>
+      </varlistentry>
+      <varlistentry>
+	   <term><prompt>&gt; </prompt><userinput>edit help translate</userinput></term>
+	   <listitem>
+	     <para>
+	       Print extended usage of the translate subcommand. Each
+	       subcommand also accepts help as an argument, so that
+	       the help is still available if
+	       <emphasis>edit subcmd</emphasis>
+	       is aliased to
+	       <emphasis>subcmd</emphasis>
+	     </para>
+	   </listitem>
+      </varlistentry>
+    </variablelist>
+  </example>
+       
+  <example><info><title/></info>
+    
+    <para>
+      <prompt/><userinput/>
+    </para>
+    <para>
+       
+    </para>
+  </example>
+ 
 </refsection>
 
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
