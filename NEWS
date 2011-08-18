@@ -13,7 +13,7 @@ changes made.  See document footer for additional details.
 --- 2011-07-XX  Release 7.20.4                                     ---
 ----------------------------------------------------------------------
 
-* added an OPATH (object path) to sh/conversion.sh - Tom Browder
+* added an OPATH (object path) option to sh/conversion.sh - Tom Browder
 * add support for .png file output in rtwizard - Cliff Yapp
 * improved rtwizard's invocation of rt - Cliff Yapp
 * added a SAVE option to sh/conversion.sh - Tom Browder
