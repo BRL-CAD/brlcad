@@ -1107,7 +1107,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_dsp_make,
 	rt_dsp_params,
-	NULL
+	rt_dsp_bbox
     },
 
     {

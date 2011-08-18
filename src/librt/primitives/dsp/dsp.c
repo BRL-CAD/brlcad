@@ -863,6 +863,115 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 #endif
 }
 
+/**
+ * R T _ D S P _ B B O X
+ *
+ * Calculate the bounding box for a dsp.
+ */
+int
+rt_dsp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+    struct rt_dsp_internal *dsp_ip;
+    register struct dsp_specific *dsp;
+    unsigned short dsp_min, dsp_max;
+    point_t pt, bbpt;
+
+    RT_CK_DB_INTERNAL(ip);
+    dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
+    RT_DSP_CK_MAGIC(dsp_ip);
+    BU_CK_VLS(&dsp_ip->dsp_name);
+
+    switch (dsp_ip->dsp_datasrc) {
+	case RT_DSP_SRC_V4_FILE:
+	case RT_DSP_SRC_FILE:
+	    if (!dsp_ip->dsp_mp) {
+		bu_log("dsp(%s): no data file or data file empty\n", bu_vls_addr(&dsp_ip->dsp_name));
+		return 1; /* BAD */
+	    }
+	    BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
+
+	    /* we do this here and now because we will need it for the
+	     * dsp_specific structure in a few lines
+	     */
+	    bu_semaphore_acquire(RT_SEM_MODEL);
+	    ++dsp_ip->dsp_mp->uses;
+	    bu_semaphore_release(RT_SEM_MODEL);
+	    break;
+	case RT_DSP_SRC_OBJ:
+	    if (!dsp_ip->dsp_bip) {
+		bu_log("dsp(%s): no data\n", bu_vls_addr(&dsp_ip->dsp_name));
+		return 1; /* BAD */
+	    }
+	    RT_CK_DB_INTERNAL(dsp_ip->dsp_bip);
+	    RT_CK_BINUNIF(dsp_ip->dsp_bip->idb_ptr);
+	    break;
+    }
+
+
+    BU_GETSTRUCT(dsp, dsp_specific);
+
+    /* this works ok, because the mapped file keeps track of the
+     * number of uses.  However, the binunif interface does not.
+     * We'll have to copy the data for that one.
+     */
+    dsp->dsp_i = *dsp_ip;		/* struct copy */
+
+    /* this keeps the binary internal object from being freed */
+    dsp_ip->dsp_bip = (struct rt_db_internal *)NULL;
+
+
+    dsp->xsiz = dsp_ip->dsp_xcnt-1;	/* size is # cells or values-1 */
+    dsp->ysiz = dsp_ip->dsp_ycnt-1;	/* size is # cells or values-1 */
+
+
+    /* compute the multi-resolution bounding boxes */
+    dsp_layers(dsp, &dsp_min, &dsp_max);
+
+
+    /* record the distance to each of the bounding planes */
+    dsp->dsp_pl_dist[XMIN] = 0.0;
+    dsp->dsp_pl_dist[XMAX] = (fastf_t)dsp->xsiz;
+    dsp->dsp_pl_dist[YMIN] = 0.0;
+    dsp->dsp_pl_dist[YMAX] = (fastf_t)dsp->ysiz;
+    dsp->dsp_pl_dist[ZMIN] = 0.0;
+    dsp->dsp_pl_dist[ZMAX] = (fastf_t)dsp_max;
+    dsp->dsp_pl_dist[ZMID] = (fastf_t)dsp_min;
+
+    /* compute enlarged bounding box and spere */
+
+#define BBOX_PT(_x, _y, _z) \
+	VSET(pt, (fastf_t)_x, (fastf_t)_y, (fastf_t)_z); \
+	MAT4X3PNT(bbpt, dsp_ip->dsp_stom, pt); \
+	VMINMAX((*min), (*max), bbpt)
+
+    BBOX_PT(-.1,		 -.1,		      -.1);
+    BBOX_PT(dsp_ip->dsp_xcnt+.1, -.1,		      -.1);
+    BBOX_PT(dsp_ip->dsp_xcnt+.1, dsp_ip->dsp_ycnt+.1, -1);
+    BBOX_PT(-.1,		 dsp_ip->dsp_ycnt+.1, -1);
+    BBOX_PT(-.1,		 -.1,		      dsp_max+.1);
+    BBOX_PT(dsp_ip->dsp_xcnt+.1, -.1,		      dsp_max+.1);
+    BBOX_PT(dsp_ip->dsp_xcnt+.1, dsp_ip->dsp_ycnt+.1, dsp_max+.1);
+    BBOX_PT(-.1,		 dsp_ip->dsp_ycnt+.1, dsp_max+.1);
+
+#undef BBOX_PT
+
+    switch (dsp->dsp_i.dsp_datasrc) {
+	case RT_DSP_SRC_V4_FILE:
+	case RT_DSP_SRC_FILE:
+	    if (dsp->dsp_i.dsp_mp) {
+		BU_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
+		bu_close_mapped_file(dsp->dsp_i.dsp_mp);
+	    } else if (dsp->dsp_i.dsp_buf) {
+		bu_free(dsp->dsp_i.dsp_buf, "dsp fake data");
+	    }
+	    break;
+	case RT_DSP_SRC_OBJ:
+	    break;
+    }
+
+    bu_free((char *)dsp, "bbox dsp");
+
+    return 0;
+}
 
 /**
  * R T _ D S P _ P R E P
@@ -878,6 +987,10 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
  * Implicit return -
  * A struct dsp_specific is created, and its address is stored in
  * stp->st_specific for use by dsp_shot().
+ *
+ * Note:  because the stand-along bbox calculation requires much
+ * of the prep logic, the in-prep bbox calculations are left
+ * in to avoid dupliation rather than calling rt_dsp_bbox.
  */
 int
 rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
