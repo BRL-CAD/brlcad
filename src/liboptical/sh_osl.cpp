@@ -505,13 +505,6 @@ osl_refraction_hit(struct application *ap, struct partition *PartHeadp, struct s
 	sw.sw_hit = *(pp->pt_outhit);		/* struct copy */
     	VJOIN1(sw.sw_hit.hit_point, ap->a_ray.r_pt, sw.sw_hit.hit_dist, ap->a_ray.r_dir);
 
-#if 0
-	point_t pt;
-    	VJOIN1(pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
-	VPRINT("output point: ", sw.sw_hit.hit_point);
-	VPRINT(" input point: ", pt);
-#endif
-
 	/* Determine the normal point */
 	stp = pp->pt_outseg->seg_stp;
 	RT_HIT_NORMAL(sw.sw_hit.hit_normal, &(sw.sw_hit), stp, &(ap->a_ray), pp->pt_outflip);
@@ -667,11 +660,6 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 	
 	VMOVE(new_ap.a_ray.r_dir, R);
 	VMOVE(new_ap.a_ray.r_pt, info.P);
-
-	//(void)rt_shootray(&new_ap);
-	//Color3 rec;
-	//VMOVE(rec, new_ap.a_color);
-	//Color3 res = rec*info.reflect_weight;
 	VMOVE(swp->sw_color, info.reflect_weight);
     }
     else {
@@ -731,7 +719,6 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 	/* Final color */
 	VMOVE(swp->sw_color, weight);
     }
-    //VSCALE(swp->sw_color, acc_color, 1.0/nsamples);
 #endif
 
     return 1;

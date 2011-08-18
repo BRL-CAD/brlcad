@@ -444,7 +444,7 @@ int main (int argc, char **argv){
     
     /* Initialize the shading system*/
     oslr = new OSLRenderer();
-    oslr->AddShader("glass2");
+    //oslr->AddShader("glass2");
     
     VMOVE(ap.a_ray.r_dir, cam_d);
     VMOVE(ap.a_ray.r_pt, cam_o);
@@ -467,13 +467,13 @@ int main (int argc, char **argv){
     oslr = new OSLRenderer();
     
     /* Initialize each shader that may be used */
-    oslr->AddShader("cornell_wall");
-    oslr->AddShader("yellow");
-    oslr->AddShader("emitter");
-    oslr->AddShader("mirror");
-    oslr->AddShader("blue");
-    oslr->AddShader("red");
-    oslr->AddShader("glass");
+    //oslr->AddShader("cornell_wall");
+    //oslr->AddShader("yellow");
+    //oslr->AddShader("emitter");
+    //oslr->AddShader("mirror");
+    //oslr->AddShader("blue");
+    //oslr->AddShader("red");
+    //oslr->AddShader("glass");
 
     /* Ray trace */
     for(int y=0; y<h; y++) {

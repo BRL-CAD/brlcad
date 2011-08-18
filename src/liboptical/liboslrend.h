@@ -153,9 +153,6 @@ public:
     OSLRenderer();
     ~OSLRenderer();
 
-    /* Add an OSL shader to the system */
-    void AddShader(const char *shadername);
-
     ShadingAttribStateRef AddShader(ShaderGroupInfo &group_info);
 
     /* Query a color */

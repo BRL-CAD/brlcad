@@ -39,22 +39,6 @@ OSLRenderer::~OSLRenderer(){
     ShadingSystem::destroy(shadingsys);
 }
 
-void OSLRenderer::AddShader(const char *shadername){
-
-    /*
-    OSLShader osl_sh;
-    osl_sh.name = std::string(shadername);
-
-    shadingsys->ShaderGroupBegin();
-    shadingsys->Shader("surface", osl_sh.name.c_str(), NULL);
-    shadingsys->ShaderGroupEnd();
-
-    osl_sh.state = shadingsys->state();
-    shadingsys->clear_state();
-
-    shaders.push_back(osl_sh);
-    */
-}
 ShadingAttribStateRef OSLRenderer::AddShader(ShaderGroupInfo &group_info){
 
     shadingsys->ShaderGroupBegin();
@@ -83,9 +67,6 @@ ShadingAttribStateRef OSLRenderer::AddShader(ShaderGroupInfo &group_info){
 	    shadingsys->Shader("surface", sh_info.shadername.c_str(), NULL);
 	else
 	    shadingsys->Shader("surface", sh_info.shadername.c_str(), sh_info.layername.c_str());
-#if 1
-	printf("Adding a shader: %s, with name: %s\n", sh_info.shadername.c_str(), sh_info.layername.c_str());
-#endif
     }	
 
     /* Set the edges between shader layers */
@@ -95,10 +76,6 @@ ShadingAttribStateRef OSLRenderer::AddShader(ShaderGroupInfo &group_info){
 	shadingsys->ConnectShaders(sh_param1.layername.c_str(), sh_param1.paramname.c_str(),
 				  sh_param2.layername.c_str(), sh_param2.paramname.c_str());
 
-#if 0
-	printf("Adding an edge between %s,%s and %s,%s\n", sh_param1.layername.c_str(), sh_param1.paramname.c_str(),
-	       sh_param2.layername.c_str(), sh_param2.paramname.c_str());
-#endif
     }
     
     shadingsys->ShaderGroupEnd();
@@ -185,14 +162,12 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info) const {
 	}
 	else if(prim->category() == OSL::ClosurePrimitive::Emissive) {
 	    // evaluate emissive closure
-
 	    EmissiveClosure *emissive = (EmissiveClosure*)prim;
 	    Color3 l = weight*emissive->eval(globals.Ng, globals.I);
 	    return l;
 	}
 	else if(prim->category() == OSL::ClosurePrimitive::Background) {
 	    // background closure just returns weight
-	    printf("[Background]\n");
 	    return weight;
 	}
     }
