@@ -21,15 +21,9 @@
     <!-- hv3 hack to prevent line insertion -->
     <link linkend="dummy_id">&#09;</link>
     <command xml:id="dummy_id">edit translate</command>
-    <group>
-      <synopfragmentref linkend="from">
-        <replaceable>from</replaceable>
-      </synopfragmentref>
-    </group>
+    <group><synopfragmentref linkend="from">from</synopfragmentref></group>
     <group choice="req">
-      <synopfragmentref linkend="to">
-        <replaceable>to</replaceable>
-      </synopfragmentref>
+      <synopfragmentref linkend="to">to</synopfragmentref>
     </group>
     <arg choice="plain" rep="repeat"><replaceable>object</replaceable></arg>
 
@@ -39,14 +33,10 @@
       <arg choice="plain"><option>-k</option></arg>
       <group choice="req">
 	<arg choice="plain">
-	  <synopfragmentref linkend="obj">
-	    <replaceable>from_object</replaceable>
-	  </synopfragmentref>
+	  <synopfragmentref linkend="obj">from_object</synopfragmentref>
 	</arg>
 	<arg choice="plain">
-	  <synopfragmentref linkend="pos">
-	    <replaceable>from_position</replaceable>
-	  </synopfragmentref>
+	  <synopfragmentref linkend="pos">from_position</synopfragmentref>
 	</arg>
       </group>
     </synopfragment>
@@ -60,14 +50,10 @@
       </group>
       <group choice="req">
 	<arg choice="plain">
-	  <synopfragmentref linkend="obj">
-	    <replaceable>to_object</replaceable>
-	  </synopfragmentref>
+	  <synopfragmentref linkend="obj">to_object</synopfragmentref>
 	</arg>
 	<arg choice="plain">
-	  <synopfragmentref linkend="pos">
-	    <replaceable>to_position</replaceable>
-	  </synopfragmentref>
+	  <synopfragmentref linkend="pos">to_position</synopfragmentref>
 	</arg>
       </group>
     </synopfragment>
@@ -76,9 +62,7 @@
     <synopfragment xml:id="pos">
       <group choice="plain">
 	<arg choice="req">
-	  <synopfragmentref linkend="coord">
-	    <replaceable>coords</replaceable>
-	  </synopfragmentref>
+	  <synopfragmentref linkend="coord">coords</synopfragmentref>
 	</arg>
 	<arg choice="req">
 	  <arg>
@@ -86,9 +70,7 @@
 	    <group choice="req">
 	      <arg choice="plain"><replaceable>x</replaceable></arg>
 	      <arg choice="plain">
-		<synopfragmentref linkend="obj">
-		  <replaceable>x-obj</replaceable>
-		</synopfragmentref>
+		<synopfragmentref linkend="obj">x-obj</synopfragmentref>
 	      </arg>
 	    </group>
 	  </arg>
@@ -97,9 +79,7 @@
 	    <group choice="req">
 	      <arg choice="plain"><replaceable>y</replaceable></arg>
 	      <arg choice="plain">
-		<synopfragmentref linkend="obj">
-		  <replaceable>y-obj</replaceable>
-		</synopfragmentref>
+		<synopfragmentref linkend="obj">y-obj</synopfragmentref>
 	      </arg>
 	    </group>
 	  </arg>
@@ -108,9 +88,7 @@
 	    <group choice="req">
 	      <arg choice="plain"><replaceable>z</replaceable></arg>
 	      <arg choice="plain">
-		<synopfragmentref linkend="obj">
-		  <replaceable>z-obj</replaceable>
-		</synopfragmentref>
+		<synopfragmentref linkend="obj">z-obj</synopfragmentref>
 	      </arg>
 	    </group>
 	  </arg>
@@ -125,9 +103,7 @@
         <arg choice="plain"><replaceable>object</replaceable></arg>
       </arg>
       <arg>
-	<synopfragmentref linkend="coord">
-	  <replaceable>offset_distance</replaceable>
-	</synopfragmentref>
+	<synopfragmentref linkend="coord">offset_distance</synopfragmentref>
       </arg>
     </synopfragment>
 
