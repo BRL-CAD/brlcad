@@ -283,6 +283,54 @@ rt_in_rpp(struct xray *rp,
 
 
 /**
+ * Supporting function for R T _ B O U N D _ I N T E R N A L
+ *
+ * Called when a combination is detected during db_functree() tree walk 
+ *
+ * Returns -
+ *  0 success
+ * -1 failure
+ * 
+ */
+void
+comb_func(struct db_i *dbip,
+	  struct directory *dp,
+	  genptr_t ptr)
+{
+    bu_log("rt_bound_internal: comb_func called\n");
+    
+    struct rt_db_internal *intern = NULL;
+    if (rt_db_get_internal(intern, dp, dbip, ptr, &rt_uniresource) < 0){
+        bu_log("rt_bound_internal: comb_func : rt_db_get_internal('%s') failed\n", dp->d_namep);       
+    }    
+  
+}
+
+
+/**
+ * Supporting function for R T _ B O U N D _ I N T E R N A L
+ *
+ * Called when a leaf is detected during db_functree() tree walk 
+ *
+ * Returns -
+ *  0 success
+ * -1 failure
+ *
+ */
+void
+leaf_func(struct db_i *dbip,
+	  struct directory *dp,
+	  genptr_t ptr)
+{
+    bu_log("rt_bound_internal: leaf_func called\n");
+    
+    struct rt_db_internal *intern = NULL;
+    if (rt_db_get_internal(intern, dp, dbip, ptr, &rt_uniresource) < 0){
+        bu_log("rt_bound_internal: leaf_func : rt_db_get_internal('%s') failed\n", dp->d_namep);        
+    }   
+}
+ 
+/**
  * R T _ B O U N D _ I N T E R N A L
  *
  * Calculate the bounding RPP of the internal format passed in 'ip'. 
@@ -299,7 +347,9 @@ rt_bound_internal(struct rt_db_internal *ip, point_t rpp_min, point_t rpp_max)
     struct db_i *dbip; 
     struct directory *dp = (struct directory *)NULL; 
     struct rt_i *rtip;
-    struct rt_comb_internal *combp;
+    struct rt_comb_internal comb;
+    struct rt_comb_internal *combp = &comb;
+    vect_t tree_min, tree_max;
    
     RT_CK_DB_INTERNAL(ip);
    
@@ -338,51 +388,45 @@ rt_bound_internal(struct rt_db_internal *ip, point_t rpp_min, point_t rpp_max)
     VSETALL(rpp_min, MAX_FASTF);
     VREVERSE(rpp_max, rpp_min);
    
-    /* Call rt_gettree() to get the bounds, this is sufficient for primitives */
+    /* Call rt_gettree() to get the bounds, this is sufficient for primitives : may not be required soon */
     if (rt_gettree(rtip, "dummy") < 0){
         bu_log("rt_bound_internal: rt_gettree('dummy') failed\n");
-        rt_free_rti(rtip);
-        db_close(dbip);
+        goto cleanup;
         return -1;
     }
-   
-     
+    
+    /* For combinations, walk the tree once adding leaves and combinations to the dbip as detected */
+    db_functree(dbip, dp, comb_func, leaf_func, &rt_uniresource, NULL);
+
+         
     /* If passed rt_db_internal is a combination(a group or a region) then further calls needed */
     if(ip->idb_minor_type == ID_COMBINATION){
-        vect_t tree_min, tree_max;
-        combp = (struct rt_comb_internal *)ip->idb_ptr;
-
-        RT_CK_COMB(combp);
-       
-        /* Is this combination a region ? */
-        if (combp->region_flag){
-            bu_log("rt_bound_internal: A region was passed. Bounding boxes for regions is currently a work in progress.\n");
-            if (rt_bound_tree(combp->tree, tree_min, tree_max)) {
-                bu_log("rt_bound_internal: rt_bound_tree('region') failed\n");
-                rt_free_rti(rtip);
-                db_close(dbip);
-                return -1;
-            }
-        }
-        else{
-        /* We must be dealing with a group consisting of one or more regions */
-             bu_log("rt_bound_internal: A group was passed. Bounding boxes for groups is currently a work in progress.\n");
-             if (rt_bound_tree(combp->tree, tree_min, tree_max)) {
-                bu_log("rt_bound_internal: rt_bound_tree('group') failed\n");
-                rt_free_rti(rtip);
-                db_close(dbip);
-                return -1;
-            }
-        }
-       
-        VMOVE(rpp_min, tree_min);
-        VMOVE(rpp_max, tree_max);
+        combp = (struct rt_comb_internal *)ip->idb_ptr;       
     }
     else{
-        /* A primitive was passed, its tree and bounds was already got by rt_gettree() */
-        VMOVE(rpp_min, rtip->mdl_min);
-        VMOVE(rpp_max, rtip->mdl_max);
+        VMOVE(rpp_min, rtip->mdl_min); /* temporary, till db_functree() works */
+        VMOVE(rpp_max, rtip->mdl_max);        
+        goto cleanup;
+        return 0;        
+        
+        /* A primitive was passed, construct a struct rt_comb_internal with a single leaf node */
+        /*RT_COMB_INTERNAL_INIT(combp);   
+        union tree *tp;
+        RT_GET_TREE(tp, &rt_uniresource);
+        tp->tr_op = OP_DB_LEAF;
+        tp->tr_l.tl_name = bu_strdup(dp->d_namep);
+        combp->tree = tp;*/              
     }
+   
+    RT_CK_COMB(combp);
+    if (rt_bound_tree(combp->tree, tree_min, tree_max)) {
+        bu_log("rt_bound_internal: rt_bound_tree('region') failed\n");
+        goto cleanup;
+        return -1;
+    }
+          
+    VMOVE(rpp_min, tree_min);
+    VMOVE(rpp_max, tree_max);
    
     /* Check if the model bounds look correct e.g. if they are all 0, then its not correct */
     if(  (abs(rpp_min[0]) == 0  || rpp_min[0] <= -INFINITY || rpp_min[0] >= INFINITY) &&
@@ -394,7 +438,7 @@ rt_bound_internal(struct rt_db_internal *ip, point_t rpp_min, point_t rpp_max)
        bu_log("rt_bound_internal: Warning : The returned bounds of the model may not be correct\n");         
     }     
    
-   
+    cleanup:
     rt_free_rti(rtip);
     db_close(dbip);   
    
