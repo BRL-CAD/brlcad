@@ -10,40 +10,226 @@
 <refnamediv xml:id="name">
   <refname>edit</refname>
   <refpurpose>
-    Edits <emphasis>object</emphasis>s, using
-    <emphasis>subcommand</emphasis>s.
+    Edits objects, using <emphasis>subcommand</emphasis>s.
   </refpurpose>
 </refnamediv>
 
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>edit</command>
-    <arg choice="opt" rep="norepeat">
-      <replaceable>subcommand</replaceable>
+    <!-- hv3 hack to prevent line insertion -->
+    <link linkend="dummy_id">&#09;</link>
+    <command xml:id="dummy_id">edit</command>
+    <arg>
+      <synopfragmentref linkend="subcommands">subcommand</synopfragmentref>
+      <arg><synopfragmentref linkend="args">args</synopfragmentref></arg>
+      <arg choice="plain" rep="repeat"><replaceable>object</replaceable></arg>
     </arg>
-    <arg choice="opt" rep="norepeat">
-      <replaceable>args</replaceable>
-    </arg>
-  </cmdsynopsis>
+    <sbr/>
 
+    <sbr/>
+    <synopfragment xml:id="subcommands">
+      <group choice="plain" rep="repeat">
+	<arg choice="plain">help</arg>
+	<arg choice="plain">translate</arg>
+	<arg choice="plain">rotate</arg>
+	<arg choice="plain">scale</arg>
+	<arg choice="plain"> </arg>
+      </group>
+    </synopfragment>
+
+    <sbr/>
+    <synopfragment xml:id="args">
+      <group><synopfragmentref linkend="from">from</synopfragmentref></group>
+      <arg choice="plain">
+	<synopfragmentref linkend="to">to</synopfragmentref>
+      </arg>
+      <arg rep="repeat">
+	<synopfragmentref linkend="args">more_args</synopfragmentref>
+      </arg>
+    </synopfragment>
+
+    <sbr/>
+    <synopfragment xml:id="from">
+      <arg><option>-n</option></arg>
+      <arg choice="plain"><option>-k</option></arg>
+      <group choice="req">
+	<arg choice="plain">
+	  <synopfragmentref linkend="obj">from_object</synopfragmentref>
+	</arg>
+	<arg choice="plain">
+	  <synopfragmentref linkend="pos">from_position</synopfragmentref>
+	</arg>
+      </group>
+    </synopfragment>
+
+    <sbr/>
+    <synopfragment xml:id="to">
+      <arg><option>-n</option></arg>
+      <group>
+	<arg choice="plain"><option choice="plain">-a</option></arg>
+	<arg choice="plain"><option choice="plain">-r</option></arg>
+      </group>
+      <group choice="req">
+	<arg choice="plain">
+	  <synopfragmentref linkend="obj">to_object</synopfragmentref>
+	</arg>
+	<arg choice="plain">
+	  <synopfragmentref linkend="pos">to_position</synopfragmentref>
+	</arg>
+      </group>
+    </synopfragment>
+
+    <sbr/>
+    <synopfragment xml:id="pos">
+      <group choice="plain">
+	<arg choice="req">
+	  <synopfragmentref linkend="coord">coords</synopfragmentref>
+	</arg>
+	<arg choice="req">
+	  <arg>
+	    <arg choice="plain"><option>-x</option></arg>
+	    <group choice="req">
+	      <arg choice="plain"><replaceable>x</replaceable></arg>
+	      <arg choice="plain">
+		<synopfragmentref linkend="obj">x-obj</synopfragmentref>
+	      </arg>
+	    </group>
+	  </arg>
+	  <arg>
+	    <arg choice="plain"><option>-y</option></arg>
+	    <group choice="req">
+	      <arg choice="plain"><replaceable>y</replaceable></arg>
+	      <arg choice="plain">
+		<synopfragmentref linkend="obj">y-obj</synopfragmentref>
+	      </arg>
+	    </group>
+	  </arg>
+	  <arg>
+	    <arg choice="plain"><option>-z</option></arg>
+	    <group choice="req">
+	      <arg choice="plain"><replaceable>z</replaceable></arg>
+	      <arg choice="plain">
+		<synopfragmentref linkend="obj">z-obj</synopfragmentref>
+	      </arg>
+	    </group>
+	  </arg>
+	</arg>
+      </group>
+    </synopfragment>
+
+    <sbr/>
+    <synopfragment xml:id="obj">
+      <arg choice="plain">
+	<arg><replaceable>path/</replaceable></arg>
+	<arg choice="plain"><replaceable>object</replaceable></arg>
+      </arg>
+      <arg>
+	<synopfragmentref linkend="coord">offset_distance</synopfragmentref>
+      </arg>
+    </synopfragment>
+
+    <sbr/>
+    <synopfragment xml:id="coord">
+      <arg choice="plain"><replaceable>x</replaceable></arg>
+      <arg>
+	<arg choice="plain"><replaceable>y</replaceable></arg>
+	<arg><replaceable>z</replaceable></arg>
+      </arg>
+    </synopfragment>
+  </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description">
   <info><title>DESCRIPTION</title></info>
   <para>
-    Operates on objects in the database, solely through the use of
-    subcommands. The flexibility of the <command>edit</command>
-    subcommands lies in their utilization of a common style of syntax.
-    Coordinates in model space, offsets, and objects are all accepted
-    interchangably as reference points. A single reference point is
-    roughly equivalent to an absolute point in model space. A pair of
-    refence points specifies a distance or an angle, and is supplied
-    as a set of <emphasis>FROM</emphasis> - <emphasis>TO</emphasis>
-    arguments (a <emphasis>FROM</emphasis> argument is similar to the
-    concept of a keypoint). Reference points may
-    be incomplete, and specify only one or two coordinates.
+    Operates on objects in the database, solely through the use
+    of <emphasis>subcommand</emphasis>s. The flexibility of the
+    <command>edit</command> <emphasis>subcommand</emphasis>s lies
+    in their utilization of a common style of syntax.
+    Coordinates in model space, offsets, and objects are all
+    accepted interchangably as reference points. A single
+    reference point is equivalent to an absolute point in model
+    space. A pair of refence points specifies a distance or an
+    angle, and is supplied as a set of
+    <emphasis>from</emphasis> - <emphasis>to</emphasis> arguments (a
+    <emphasis>from</emphasis> argument is similar to the concept
+    of a keypoint). Reference points may be incomplete, and
+    specify only one or two coordinates.
+  </para> 
+  <para>
+    The format of the standard options accepted by subcommands, 
+    <option>-n</option>,
+    <option>-k</option>,
+    <option>-a</option>/<option>-r</option>, and
+    <option>-x</option>/
+    <option>-y</option>/<option>-z</option>, is defined
+    here. The interpretation of these options, however, is left up
+    to the implementation of a given subcommand.
   </para>
+  <para>
+    All edit commands interpret a lone point
+    (<arg choice="plain"> . </arg>) as a special
+    operator, called the batch operator. The batch operator is
+    accepted as an argument to the options 
+    <option>-k</option>, <option>-a</option>, and <option>-r</option>.
+    In a batch operation, each individual
+    <emphasis>object</emphasis> is operated on using the bounding
+    box center of itself in place of the batch
+    operator. While all <emphasis>object</emphasis>'s move
+    together in a non-batch operation, in batch operations, each
+    <emphasis>object</emphasis> may move independently of all
+    other <emphasis>object</emphasis>'s.
+  </para>
+</refsection>
+
+<refsection xml:id="options"><info><title>OPTIONS</title></info>
+  <variablelist remap="TP">
+    <varlistentry>
+      <term><option>-n</option></term>
+      <listitem>
+	<para>
+	  Use the natural origin of the object specified as an
+	  argument to <option>-k</option>, <option>-a</option>, or
+	  <option>-r</option> rather than it's bounding box center.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-k</option></term>
+      <listitem>
+	<para>
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-a</option></term>
+      <listitem>
+	<para>
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-r</option></term>
+      <listitem>
+	<para>
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term>
+	<group choice="plain">
+	  <arg choice="plain"><option>-x</option></arg>
+	  <arg choice="plain"><option>-y</option></arg>
+	  <arg choice="plain"><option>-z</option></arg>
+	  </group>
+      </term>
+      <listitem>
+	<para>
+	</para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
@@ -53,7 +239,7 @@
 
   <example>
     <info><title>
-      Get a list of available subcommands.
+      Get the authorative list of available subcommands.
     </title></info>
     <variablelist>
       <varlistentry>
