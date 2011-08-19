@@ -22,9 +22,9 @@
     <link linkend="dummy_id">&#09;</link>
     <command xml:id="dummy_id">edit translate</command>
     <group><synopfragmentref linkend="from">from</synopfragmentref></group>
-    <group choice="req">
+    <arg choice="plain">
       <synopfragmentref linkend="to">to</synopfragmentref>
-    </group>
+    </arg>
     <arg choice="plain" rep="repeat"><replaceable>object</replaceable></arg>
 
     <sbr/><sbr/>
@@ -115,18 +115,20 @@
 	<arg><replaceable>z</replaceable></arg>
       </arg>
     </synopfragment>
-
-
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
   
   <para>
-    Coming soon...
+    Used to move one or more instances of primitive or combination
+    objects. The positions of <emphasis>object</emphasis>'s are
+    translated from <emphasis>from</emphasis> to 
+    <emphasis>to</emphasis>.
   </para>
   <para>
-    See the <command>edit</command> command for more information.
+    See the <command>edit</command> command's manual for more
+    information.
   </para>
 
 </refsection>
