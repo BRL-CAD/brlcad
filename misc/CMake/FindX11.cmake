@@ -69,16 +69,19 @@ IF (UNIX)
 	 /usr/include
   )
 
+  GET_PROPERTY(SEARCH_64BIT GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS)
+  IF(SEARCH_64BIT)
+	  SET(64BIT_DIRS "/usr/lib64/X11;/usr/lib64")
+  ELSE(SEARCH_64BIT)
+	  SET(32BIT_DIRS "/usr/lib/X11;/usr/lib")
+  ENDIF(SEARCH_64BIT)
+
   SET(X11_LIB_SEARCH_PATH
     /usr/X11/lib
     /usr/X11R6/lib
     /usr/X11R7/lib
-    /usr/lib/X11
-    /usr/lib64/X11
-    /usr/lib32/X11
-    /usr/lib64
-    /usr/lib32
-    /usr/lib
+	 ${64BIT_DIRS}
+	 ${32BIT_DIRS}
     /usr/pkg/xorg/lib
     /usr/openwin/lib 
   )

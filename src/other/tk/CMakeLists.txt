@@ -171,11 +171,11 @@ ENDIF(APPLE)
 #----------------------------------------------------------------------------
 
 # Probably should be part of SC_TCL_64BIT_FLAGS
-IF(BRLCAD-ENABLE_64BIT)
-       add_definitions(-DTCL_CFG_DO64BIT=1)
-ENDIF(BRLCAD-ENABLE_64BIT)
+IF(${CMAKE_CPU_TYPE} STREQUAL "64BIT")
+	add_definitions(-DTCL_CFG_DO64BIT=1)
+ENDIF(${CMAKE_CPU_TYPE} STREQUAL "64BIT")
 IF(CMAKE_CL_64)
-       add_definitions(-D_stati64=_stat64)
+	add_definitions(-D_stati64=_stat64)
 ENDIF(CMAKE_CL_64)
 
 

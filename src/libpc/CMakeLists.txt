@@ -8,9 +8,9 @@
 # it until the boost issue is handled
 STRING(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
 IF(BUILD_TYPE)
-	SET(CMAKE_CXX_FLAGS_${BUILD_TYPE} "-w")
+	SET(CMAKE_CXX_FLAGS_${BUILD_TYPE} "${CMAKE_CXX_FLAGS_${BUILD_TYPE}} -w")
 ELSE(BUILD_TYPE)
-	SET(CMAKE_CXX_FLAGS "-w")
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
 ENDIF(BUILD_TYPE)
 
 include_directories(
@@ -56,11 +56,11 @@ add_definitions(
 BRLCAD_ADDLIB(libpc "${LIBPC_SOURCES}" libbu ${OPENNURBS_LIBRARY})
 SET_TARGET_PROPERTIES(libpc PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
-add_executable(solver_test solver_test.cpp)
-target_link_libraries(solver_test libpc)
+#add_executable(solver_test solver_test.cpp)
+#target_link_libraries(solver_test libpc)
 
-add_executable(vm_test vm_test.cpp)
-target_link_libraries(vm_test libpc)
+#add_executable(vm_test vm_test.cpp)
+#target_link_libraries(vm_test libpc)
 
 SET(pc_ignore_files
 	NOTES

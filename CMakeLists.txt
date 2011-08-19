@@ -760,38 +760,6 @@ IF(BRLCAD-ENABLE_DTRACE)
 	ENDIF(NOT HAVE_SYS_SDT_H)
 ENDIF(BRLCAD-ENABLE_DTRACE)
 
-# Enable/disable 64-bit build settings. This is autodetcted based on
-# the size of the void pointer - don't override this setting unless
-# you know what you are doing.
-IF(MSVC)
-	IF(CMAKE_CL_64)
-		OPTION(BRLCAD-ENABLE_64BIT "MSVC 64 bit compiler" ON)
-		IF(NOT BRLCAD-ENABLE_64BIT)
-			MESSAGE(WARNING "64 bit build disabled, but MSVC compiler is 64 bit - enabling.  To perform a 32 bit build, select the 32 bit CMake	generator.")
-			SET(BRLCAD-ENABLE_64BIT ON)
-		ENDIF(NOT BRLCAD-ENABLE_64BIT)
-	ELSE(CMAKE_CL_64)
-		OPTION(BRLCAD-ENABLE_64BIT "MSVC 32 bit compiler" OFF)
-		IF(BRLCAD-ENABLE_64BIT)
-			MESSAGE(WARNING "64 bit build enabled, but MSVC compiler is 32 bit - disabling.  To perform a 64 bit build, select the 64 bit CMake	generator.")
-		ENDIF(BRLCAD-ENABLE_64BIT)
-		SET(BRLCAD-ENABLE_64BIT OFF)
-	ENDIF(CMAKE_CL_64)
-ELSE(MSVC)
-	IF(NOT CMAKE_SIZEOF_VOID_P)
-		MESSAGE(WARNING "CMAKE_SIZEOF_VOID_P is not defined - assuming 32 bit platform")
-		SET(CMAKE_SIZEOF_VOID_P 4)
-	ENDIF(NOT CMAKE_SIZEOF_VOID_P)
-	IF(${CMAKE_SIZEOF_VOID_P} MATCHES "^8$")
-		OPTION(BRLCAD-ENABLE_64BIT "64 bit void pointer" ON)
-	ELSE(${CMAKE_SIZEOF_VOID_P} MATCHES "^8$")
-		math(EXPR platform_bit_type "${CMAKE_SIZEOF_VOID_P} * 8")
-		OPTION(BRLCAD-ENABLE_64BIT "${platform_bit_type} bit void pointer" OFF)
-	ENDIF(${CMAKE_SIZEOF_VOID_P} MATCHES "^8$")
-	FILE(APPEND  ${CONFIG_H_FILE} "#define SIZEOF_VOID_P ${CMAKE_SIZEOF_VOID_P}\n")
-ENDIF(MSVC)
-MARK_AS_ADVANCED(BRLCAD-ENABLE_64BIT)
-
 # Take advantage of parallel processors if available - highly recommended
 OPTION(BRLCAD-ENABLE_SMP "Enable SMP architecture parallel computation support" ON)
 IF(WIN32 AND BRLCAD-ENABLE_SMP)
@@ -802,6 +770,65 @@ MARK_AS_ADVANCED(BRLCAD-ENABLE_SMP)
 IF(BRLCAD-ENABLE_SMP)
 	FILE(APPEND  ${CONFIG_H_FILE} "#define PARALLEL 1\n")
 ENDIF(BRLCAD-ENABLE_SMP)
+
+#----------------------------------------------------------------------
+# Decide whether to do a 32 or a 64 bit build.
+
+IF(NOT BRLCAD-CPU_TYPE)
+	SET(BRLCAD-CPU_TYPE "AUTO" CACHE STRING "Detect system CPU type.")
+ENDIF(NOT BRLCAD-CPU_TYPE)
+set_property(CACHE BRLCAD-CPU_TYPE PROPERTY STRINGS AUTO 32BIT 64BIT)
+STRING(TOUPPER "${BRLCAD-CPU_TYPE}" BRLCAD-CPU_TYPE_UPPER)
+SET(BRLCAD-CPU_TYPE "${BRLCAD-CPU_TYPE_UPPER}" CACHE STRING "Detect system CPU type." FORCE)
+IF(NOT BRLCAD-CPU_TYPE STREQUAL "AUTO" AND NOT BRLCAD-CPU_TYPE STREQUAL "64BIT" AND NOT BRLCAD-CPU_TYPE STREQUAL "32BIT")
+	MESSAGE(WARNING "Unknown value ${BRLCAD-CPU_TYPE} supplied for BRLCAD-CPU_TYPE - defaulting to AUTO")
+	MESSAGE(WARNING "Valid options are AUTO, 32BIT and 64BIT")
+	SET(BRLCAD-CPU_TYPE "AUTO" CACHE STRING "Build	bundled libraries." FORCE)
+ENDIF(NOT BRLCAD-CPU_TYPE STREQUAL "AUTO" AND NOT BRLCAD-CPU_TYPE STREQUAL "64BIT" AND NOT BRLCAD-CPU_TYPE STREQUAL "32BIT")
+
+IF(NOT CMAKE_SIZEOF_VOID_P)
+	MESSAGE(WARNING "CMAKE_SIZEOF_VOID_P is not defined - assuming 32 bit platform")
+	SET(CMAKE_SIZEOF_VOID_P 4)
+ENDIF(NOT CMAKE_SIZEOF_VOID_P)
+math(EXPR platform_bit_type "${CMAKE_SIZEOF_VOID_P} * 8")
+
+IF(${BRLCAD-CPU_TYPE} STREQUAL "AUTO")
+	IF(${CMAKE_SIZEOF_VOID_P} MATCHES "^8$")
+		SET(CMAKE_CPU_TYPE "64BIT")
+	ELSE(${CMAKE_SIZEOF_VOID_P} MATCHES "^8$")
+		SET(CMAKE_CPU_TYPE "32BIT")
+	ENDIF(${CMAKE_SIZEOF_VOID_P} MATCHES "^8$")
+ELSE(${BRLCAD-CPU_TYPE} STREQUAL "AUTO")
+	SET(CMAKE_CPU_TYPE "${BRLCAD-CPU_TYPE}")
+ENDIF(${BRLCAD-CPU_TYPE} STREQUAL "AUTO")
+FILE(APPEND  ${CONFIG_H_FILE} "#define SIZEOF_VOID_P ${CMAKE_SIZEOF_VOID_P}\n")
+
+# Enable/disable 64-bit build settings for MSVC, which is apparently
+# determined at the CMake generator level - need to override other
+# settings if the compiler disagrees with them.
+IF(MSVC)
+	IF(CMAKE_CL_64)
+		IF(NOT ${CMAKE_CPU_TYPE} STREQUAL "64BIT")
+			SET(CMAKE_CPU_TYPE "64BIT")
+			IF(NOT "${BRLCAD-CPU_TYPE}" STREQUAL "AUTO")
+				MESSAGE(WARNING "Selected MSVC compiler is 64 bit - setting cpu type to 64 bit. To perform a 32 bit MSVC build, select the 32 bit MSVC CMake generator.")
+				SET(BRLCAD-CPU_TYPE "64BIT" CACHE STRING "Detect system CPU type." FORCE)
+			ENDIF(NOT "${BRLCAD-CPU_TYPE}" STREQUAL "AUTO")
+		ENDIF(NOT ${BRLCAD-CPU_TYPE} STREQUAL "64BIT")
+	ELSE(CMAKE_CL_64)
+		IF(NOT ${CMAKE_CPU_TYPE} STREQUAL "32BIT")
+			SET(CMAKE_CPU_TYPE "32BIT")
+			IF(NOT "${BRLCAD-CPU_TYPE}" STREQUAL "AUTO")
+				MESSAGE(WARNING "Selected MSVC compiler is 32 bit - setting cpu type to 32 bit. To perform a 64 bit MSVC build, select the 64 bit MSVC CMake generator.")
+				SET(BRLCAD-CPU_TYPE "32BIT" CACHE STRING "Detect system CPU type." FORCE)
+			ENDIF(NOT "${BRLCAD-CPU_TYPE}" STREQUAL "AUTO")
+		ENDIF(NOT ${BRLCAD-CPU_TYPE} STREQUAL "32BIT")
+	ENDIF(CMAKE_CL_64)
+ENDIF(MSVC)
+
+IF(${CMAKE_CPU_TYPE} STREQUAL "32BIT")
+	set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS OFF)
+ENDIF(${CMAKE_CPU_TYPE} STREQUAL "32BIT")
 
 # *******************************************************************
 # ***            Check for Programs - Stage 2 of 9                ***
@@ -830,6 +857,13 @@ ENDIF(BRLCAD-ENABLE_DTRACE)
 # functions
 INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_CheckFunctions.cmake)
 
+
+# *******************************************************************
+# ***       Check for Compile Characteristics - Stage 3 of 9      ***
+# *******************************************************************
+
+INCLUDE(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
+
 # The src/other subdirectory does not share (at least, not universally)
 # certain definitions common to all other directories in BRL-CAD.  Also,
 # we don't want flags that are otherwise global to BRL-CAD to be passed
@@ -837,9 +871,15 @@ INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_CheckFunctions.cmake)
 # flags) so add src/other before any of that setup occurs.
 ADD_SUBDIRECTORY(src/other)
 
+# Requires that CompilerFlags.cmake already be loaded
+INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_CompilerFlags.cmake)
+
+#CHECK_C_COMPILER_FLAG("Wl,--no-undefined" NO_UNDEFINED_LINKER_FLAG)
+
+
 
 # *******************************************************************
-# ***            Check for Libraries - Stage 3 of 9               ***
+# ***            Check for Libraries - Stage 4 of 9               ***
 # *******************************************************************
 
 # While the primary purpose of this section is to identify libraries,
@@ -958,7 +998,7 @@ BRLCAD_CHECK_LIBRARY(SOLARIS_LEXER l yyless)
 BRLCAD_CHECK_LIBRARY(GEN gen basename)
 
 # *******************************************************************
-# ***             Check for Headers - Stage 4 of 9                ***
+# ***             Check for Headers - Stage 5 of 9                ***
 # *******************************************************************
 
 # C89 headers: assert.h, ctype.h, errno.h, float.h, limits.h, locale.h,
@@ -1059,7 +1099,7 @@ BRLCAD_CHECK_BASENAME()
 BRLCAD_CHECK_DIRNAME()
 
 # *******************************************************************
-# ***         Check for Types/Structures - Stage 5 of 9           ***
+# ***         Check for Types/Structures - Stage 6 of 9           ***
 # *******************************************************************
 
 BRLCAD_STRUCT_MEMBER("struct stat" st_blksize sys/stat.h STRUCT_STAT_ST_BLKSIZE)
@@ -1082,7 +1122,7 @@ BRLCAD_TYPE_SIZE("uintptr_t" UINTPTR "")
 BRLCAD_TYPE_SIZE("sig_t" SIG "signal.h")
 
 # *******************************************************************
-# ***             Check for Functions - Stage 6 of 9              ***
+# ***             Check for Functions - Stage 7 of 9              ***
 # *******************************************************************
 
 # ALLOCA test - based on AC_FUNC_ALLOCA
@@ -1126,18 +1166,6 @@ BRLCAD_FUNCTION_EXISTS(sysctl HAVE_SYSCTL)
 BRLCAD_FUNCTION_EXISTS(sysmp HAVE_SYSMP)
 BRLCAD_FUNCTION_EXISTS(vfork HAVE_VFORK)
 BRLCAD_FUNCTION_EXISTS(writev HAVE_WRITEV)
-
-# *******************************************************************
-# ***       Check for Compile Characteristics - Stage 7 of 9      ***
-# *******************************************************************
-
-INCLUDE(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
-
-# Spot undefined symbols in objects
-#CHECK_C_COMPILER_FLAG("Wl,--no-undefined" NO_UNDEFINED_LINKER_FLAG)
-IF(NOT MSVC)
-	#SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
-ENDIF(NOT MSVC)
 
 # *******************************************************************
 # ***          Check for System Services - Stage 8 of 9           ***
@@ -1304,15 +1332,12 @@ if(BRLCAD_PRINT_VERBOSE_SUMMARY)
 	SET(BRLCAD-ENABLE_OPENGL_LABEL "OpenGL support (optional) ")
 	SET(BRLCAD-ENABLE_RTSERVER_LABEL "librtserver JDK support (optional) ")
 	SET(BRLCAD-ENABLE_RUNTIME_DEBUG_LABEL "Enable run-time debugging (optional) ")
-	if (BRLCAD-ENABLE_64BIT)
-		set(BRLCAD_ARCH_BITSETTING "ON")
-	else (BRLCAD-ENABLE_64BIT)
-                IF(CMAKE_SIZEOF_VOID_P)
-			math(EXPR platform_bit_type "${CMAKE_SIZEOF_VOID_P} * 8")
-                ENDIF(CMAKE_SIZEOF_VOID_P)
-		set(BRLCAD_ARCH_BITSETTING "OFF (${platform_bit_type} bit)")
-	endif (BRLCAD-ENABLE_64BIT)
-	SET(BRLCAD_ARCH_BITSETTING_LABEL "Build 64-bit release ")
+	if(${BRLCAD-CPU_TYPE} STREQUAL "AUTO")
+		set(BRLCAD_ARCH_BITSETTING "${CMAKE_CPU_TYPE} (Auto)")
+	else(${BRLCAD-CPU_TYPE} STREQUAL "AUTO")
+		set(BRLCAD_ARCH_BITSETTING "${CMAKE_CPU_TYPE}")
+	endif(${BRLCAD-CPU_TYPE} STREQUAL "AUTO")
+	SET(BRLCAD_ARCH_BITSETTING_LABEL "Build 32/64-bit release ")
 	SET(BRLCAD_OPTIMIZED_BUILD_LABEL "Build optimized release ")
 	SET(BRLCAD_DEBUG_BUILD_LABEL "Build debuggable release")
 	SET(BRLCAD-ENABLE_PROFILING_LABEL "Build profile release ")
@@ -1556,8 +1581,11 @@ IF(NOT BRLCAD-IS_SUBBUILD)
 			SET(CPACK_RPM_PACKAGE_LICENSE "LGPL 2.1")
 			SET(CPACK_RPM_PACKAGE_GROUP "Applications/Engineering")
 		ENDIF(RPMBUILD_EXEC)
-
-		SET(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_${CMAKE_SYSTEM_NAME}_${CMAKE_SYSTEM_PROCESSOR}")
+		IF(${CMAKE_CPU_TYPE} STREQUAL "32BIT" AND ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
+			SET(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_${CMAKE_SYSTEM_NAME}_x86")
+		ELSE(${CMAKE_CPU_TYPE} STREQUAL "32BIT" AND ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
+			SET(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_${CMAKE_SYSTEM_NAME}_${CMAKE_SYSTEM_PROCESSOR}")
+		ENDIF(${CMAKE_CPU_TYPE} STREQUAL "32BIT" AND ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
 	ELSE(UNIX AND NOT APPLE)
 		SET(CPACK_PACKAGE_FILE_NAME "BRL-CAD_${BRLCAD_VERSION}_${CMAKE_SYSTEM_PROCESSOR}")
 	ENDIF(UNIX AND NOT APPLE)
@@ -1665,7 +1693,6 @@ ENDIF(NOT BRLCAD-IS_SUBBUILD)
 # Mark various miscellaneous things as advanced that we don't want in our
 # default view
 MARK_AS_ADVANCED(BRLCAD_PREFIX)
-MARK_AS_ADVANCED(ENABLE_64_BIT)
 MARK_AS_ADVANCED(IEEE_QUIET)
 MARK_AS_ADVANCED(INET_QUIET)
 MARK_AS_ADVANCED(64BIT_FLAG)
