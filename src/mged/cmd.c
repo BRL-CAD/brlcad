@@ -152,6 +152,40 @@ cmd_ged_edit_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 }
 
 
+/**
+ * Wrapper for the Mged simulate command : draws argv[argc-1] after execution
+ *
+ */
+int
+cmd_ged_simulate_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
+{
+    int i, ret;
+    const char *av[3];
+    struct cmdtab *ctp = (struct cmdtab *)clientData;
+
+    if (gedp == GED_NULL)
+	return TCL_OK;
+
+
+    ret = (*ctp->ged_func)(gedp, argc, (const char **)argv);
+    Tcl_AppendResult(interpreter, bu_vls_addr(gedp->ged_result_str), NULL);
+
+    if (ret & GED_HELP)
+    return TCL_OK;
+
+    if (ret)
+    return TCL_ERROR;
+
+    av[0] = "draw";
+    av[1] = argv[argc-1];
+    av[2] = NULL;
+    cmd_draw(clientData, interpreter, 2, av);
+       
+
+    return TCL_OK;
+}
+
+
 int
 cmd_ged_info_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
