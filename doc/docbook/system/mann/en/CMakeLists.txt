@@ -70,7 +70,7 @@ SET(docbook_mann_EN
 	edcomb.xml 
 	edgedir.xml 
 	edit.xml
-	edit-translate.xml
+	edit_translate.xml
 	edmater.xml 
 	em.xml 
 	eqn.xml 
