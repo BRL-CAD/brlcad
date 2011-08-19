@@ -974,7 +974,7 @@ edit_arg_free_all(struct edit_arg *arg)
  *
  * Returns GED_ERROR on failure, and GED_OK on success.
  */
-int
+HIDDEN int
 edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
 			   vect_t *const coord)
 {
@@ -1070,7 +1070,7 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
  *
  * Returns GED_ERROR on failure, and GED_OK on success.
  */
-int
+HIDDEN int
 edit_arg_to_coord(struct ged *gedp, struct edit_arg *const arg, vect_t *coord)
 {
     vect_t obj_coord = VINIT_ZERO;
@@ -1400,7 +1400,7 @@ edit_cmd_consolidate (struct ged *gedp, union edit_cmd *const subcmd,
 /**
  * Rotate an object by specifying points.
  */
-int
+HIDDEN int
 edit_rotate(struct ged *gedp, const vect_t *const axis_from,
 	    const vect_t *const axis_to, const vect_t *const center,
 	    const vect_t *const angle_origin, const vect_t *const angle_from,
@@ -1421,7 +1421,7 @@ edit_rotate(struct ged *gedp, const vect_t *const axis_from,
  * Maps edit_arg fields to the subcommand function's arguments and
  * calls it.
  */
-int
+HIDDEN int
 edit_rotate_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 {
     return edit_rotate(gedp,
@@ -1437,7 +1437,7 @@ edit_rotate_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 /*
  * Add arguments to the command that were built from the cmd line.
  */
-int
+HIDDEN int
 edit_rotate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 			const int flags)
 {
@@ -1451,7 +1451,7 @@ edit_rotate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
  * Given an pointer to an argument head in the edit_cmd union, this
  * function will return the next argument head in the union.
  */
-struct edit_arg **
+HIDDEN struct edit_arg **
 edit_rotate_get_arg_head(const union edit_cmd *const cmd, int idx)
 {
 #define EDIT_ROTATE_ARG_HEADS_LEN 7
@@ -1493,6 +1493,7 @@ edit_scale(struct ged *gedp, const vect_t *const scale_from,
  * Maps edit_arg fields to the subcommand function's arguments and
  * calls it.
  */
+HIDDEN int
 edit_scale_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 {
     return edit_scale(gedp,
@@ -1507,7 +1508,7 @@ edit_scale_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 /*
  * Add arguments to the command that were built from the cmd line.
  */
-int
+HIDDEN int
 edit_scale_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 		       const int flags)
 {
@@ -1521,7 +1522,7 @@ edit_scale_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
  * Given an pointer to an argument head in the edit_cmd union, this
  * function will return the next argument head in the union.
  */
-struct edit_arg **
+HIDDEN struct edit_arg **
 edit_scale_get_arg_head(const union edit_cmd *const cmd, int idx)
 {
 #define EDIT_SCALE_ARG_HEADS_LEN 6
@@ -1542,7 +1543,7 @@ edit_scale_get_arg_head(const union edit_cmd *const cmd, int idx)
 /**
  * Perform a translation on an object by specifying points.
  */
-int
+HIDDEN int
 edit_translate(struct ged *gedp, const vect_t *const from,
 	       const vect_t *const to,
 	       const struct db_full_path *const path)
@@ -1629,7 +1630,7 @@ edit_translate(struct ged *gedp, const vect_t *const from,
  * other than vector, and the first object to operate on in the
  * objects edit_arg. Ignores all edit_arg->next arguments.
  */
-int
+HIDDEN int
 edit_translate_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 {
     return edit_translate(gedp,
@@ -1646,7 +1647,7 @@ edit_translate_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
  * Note: This command happens to only accept the standard command line
  * options, so others are ignored.
  */
-int
+HIDDEN int
 edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 			   const int flags)
 {
@@ -1769,7 +1770,7 @@ err_option_unknown:
  *
  * XXX: Kind of dirty; haven't found a better way yet, though.
  */
-struct edit_arg **
+HIDDEN struct edit_arg **
 edit_translate_get_arg_head(const union edit_cmd *const cmd, int idx)
 {
 #define EDIT_TRANSLATE_ARG_HEADS_LEN 3
@@ -1859,7 +1860,7 @@ static const struct edit_cmd_tab edit_cmds[] = {
  * lopsided set of arguments, which should result in a BU_ASSERT
  * failure.
  */
-int
+HIDDEN int
 edit(struct ged *gedp, union edit_cmd *const subcmd)
 {
     struct edit_arg **arg_head;
