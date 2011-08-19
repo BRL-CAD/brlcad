@@ -2167,6 +2167,11 @@ GED_EXPORT extern int ged_showmats(struct ged *gedp, int argc, const char *argv[
 GED_EXPORT extern int ged_size(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Performs simulations.
+ */
+GED_EXPORT extern int ged_simulate(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  *
  */
 GED_EXPORT extern int ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[]);
