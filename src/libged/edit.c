@@ -790,6 +790,9 @@ struct edit_cmd_tab {
     char *opt_global;
     char *usage;
     char *help;
+    int enabled;
+#define EDIT_CMD_DISABLE 0x0
+#define EDIT_CMD_ENABLE 0x1
     exec_handler exec;
     add_cl_args_handler add_cl_args;
     get_arg_head_handler get_arg_head;
@@ -1789,8 +1792,10 @@ edit_translate_get_arg_head(const union edit_cmd *const cmd, int idx)
  * Table of edit command data/functions
  */
 static const struct edit_cmd_tab edit_cmds[] = {
-    {"help", (char *)NULL, "[subcommand]", "[subcommand]", NULL, NULL, NULL},
+    {"help", (char *)NULL, "[subcommand]", "[subcommand]",
+	EDIT_CMD_ENABLE, NULL, NULL, NULL
 #define EDIT_CMD_HELP 0 /* idx of "help" in edit_cmds */
+    },
     {"rotate",		"R",
 	"[-R] [AXIS] [CENTER] ANGLE OBJECT ...",
   	"[-R] [[[-n] -k {AXIS_FROM_OBJECT | AXIS_FROM_POS}]\n"
@@ -1800,6 +1805,7 @@ static const struct edit_cmd_tab edit_cmds[] = {
 	    "[[-n] -k {ANGLE_FROM_OBJECT | ANGLE_FROM_POS}]\n"
 	    "[-n | -o] [-a | -r | -d]"
 		"{ANGLE_TO_OBJECT | ANGLE_TO_POS}} OBJECT ...",
+	EDIT_CMD_DISABLE,
 	&edit_rotate_wrapper,
 	&edit_rotate_add_cl_args,
 	&edit_rotate_get_arg_head
@@ -1812,6 +1818,7 @@ static const struct edit_cmd_tab edit_cmds[] = {
 	    "[[-n] -k {FACTOR_FROM_OBJECT | FACTOR_FROM_POS}]\n"
 	    "[-n] [-a | -r] {FACTOR_TO_OBJECT | FACTOR_TO_POS}"
 		" OBJECT ...",
+	EDIT_CMD_DISABLE,
 	&edit_scale_wrapper,
 	&edit_scale_add_cl_args,
 	&edit_scale_get_arg_head
@@ -1820,12 +1827,14 @@ static const struct edit_cmd_tab edit_cmds[] = {
 	"[FROM] TO OBJECT ...",
 	"[[-n] -k {FROM_OBJECT | FROM_POS}]\n"
 	    "[-n] [-a | -r] {TO_OBJECT | TO_POS} OBJECT ...",
+	EDIT_CMD_ENABLE,
 	&edit_translate_wrapper,
 	&edit_translate_add_cl_args,
 	&edit_translate_get_arg_head
     },
-    {(char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL, NULL, NULL,
-	NULL}
+    {(char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL, EDIT_CMD_DISABLE,
+	NULL, NULL, NULL
+    }
 };
 
 
@@ -2250,8 +2259,15 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s"
 		      "\nAvailable subcommands: ", cmd_name, usage);
 	for (i = 0; edit_cmds[i].name; ++i)
-	    bu_vls_printf(gedp->ged_result_str, "%s ", edit_cmds[i].name);
+	    if (edit_cmds[i].enabled)
+		bu_vls_printf(gedp->ged_result_str, "%s ", edit_cmds[i].name);
 	return ret;
+    }
+
+    if (!subcmd.cmd->enabled) {
+	bu_vls_printf(gedp->ged_result_str, "subcommand \"%s\""
+		      " is disabled", subcmd_name);
+	return GED_ERROR;
     }
 
     /*
@@ -2267,8 +2283,9 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 			      subcmd.cmd->name, subcmd.cmd->usage);
 		bu_vls_printf(gedp->ged_result_str, "Available subcommands: ");
 		for (i = 0; edit_cmds[i].name; ++i)
-		    bu_vls_printf(gedp->ged_result_str, "%s ",
-				  edit_cmds[i].name);
+		    if (edit_cmds[i].enabled)
+			bu_vls_printf(gedp->ged_result_str, "%s ",
+				      edit_cmds[i].name);
 		return GED_HELP;
 	    } else {
 		/* get long usage string for a specific command */
@@ -2284,8 +2301,9 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_printf(gedp->ged_result_str,
 				  "Available subcommands: ");
 		    for (i = 0; edit_cmds[i].name; ++i)
-			bu_vls_printf(gedp->ged_result_str, "%s ",
-				      edit_cmds[i].name);
+			if (edit_cmds[i].enabled)
+			    bu_vls_printf(gedp->ged_result_str, "%s ",
+					  edit_cmds[i].name);
 		    return GED_ERROR;
 		} else /* point to the cmd we want help for */
 		    subcmd.cmd = &edit_cmds[i];
