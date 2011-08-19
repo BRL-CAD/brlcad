@@ -88,6 +88,7 @@ extern int cmd_set_more_default(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_setview(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_shaded_mode(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_size(ClientData, Tcl_Interp *, int, const char *[]);
+extern int cmd_ged_simulate_wrapper(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_stub(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_stuff_str(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_tk(ClientData, Tcl_Interp *, int, const char *[]);
