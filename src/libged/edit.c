@@ -663,49 +663,6 @@
  *
  */
 
-/*
- * XXX(tmp): Properly functioning translate arguments
- *
- * -{a|r} 3 shp
- * -{a|r} 3 comb
- * -{a|r} 3 7 shp
- * -{a|r} 3 7 comb
- * -{a|r} 3 7 11 shp
- * -{a|r} 3 7 11 comb
- * -{a|r} 3 7 11 comb/shp
- * -{a|r} 3 7 11 comb/combA
- * -{a|r} 3 7 11 comb/combA/shp (same effect as above)
- * -a comb shp
- * -a comb 3 shp
- * -a comb 3 7 shp
- * -a comb 3 7 11 shp
- * -a comb/combA 3 7 11 combB/combC
- * -a -z combD/combE combF/combG
- * -a -z combD/combE 0 0 3 combF/combG
- * -a -x comb/combA -y combB/combC combF/combG
- * -a -z comb/combA -y combB/combC combF/combG
- * -a -x comb/combA -y combB/combC -z combD/combE combF/combG
- * -a -x comb/combA 3 -z combB/combC 0 0 11 -y combD/combE 0 7 combF/combG
- * -{a|r} -x 3 -y 7 -z 11 comb
- * -a -z 11 comb
- * -a comb/combA combB/combC combD/combE
- * -k shp -a . comb/comb comb/comb comb/comb
- * -k comb/combA -a -z comb/combA -x comb/combB -y comb/combB shp
- * -k -x 3 -a -y 7 shp
- * -k . -a . comb shp1 shp2 (do nothing)
- * -n -k sph -n -a shp shp (do nothing)
- * -k . -r 3 comb/combA comb/combB comb/combC
- * -k -x comb/combA -r 2 comb/combB
- *
- * XXX Left to test: specifying multiple objects
-     *               batch operator in several places
-     *               ?
- *
- * XXX(tmp): Broken translate arguments
- *
- * "-x ." or "-y ." or "-z ." (disabled; may be tricky to implement)
- */
-
 /* Max # of global options + max number of options for a single arg */
 #define EDIT_MAX_ARG_OPTIONS 3
 
