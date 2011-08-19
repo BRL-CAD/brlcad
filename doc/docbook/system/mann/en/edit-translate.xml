@@ -18,14 +18,20 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis>
-    <command>edit translate</command>
+    <!-- hv3 hack to prevent line insertion -->
+    <link linkend="dummy_id">&#09;</link>
+    <command xml:id="dummy_id">edit translate</command>
     <group>
-      <synopfragmentref linkend="from">from</synopfragmentref>
+      <synopfragmentref linkend="from">
+        <replaceable>from</replaceable>
+      </synopfragmentref>
     </group>
     <group choice="req">
-      <synopfragmentref linkend="to">to</synopfragmentref>
+      <synopfragmentref linkend="to">
+        <replaceable>to</replaceable>
+      </synopfragmentref>
     </group>
-    <arg choice="plain" rep="repeat">object</arg>
+    <arg choice="plain" rep="repeat"><replaceable>object</replaceable></arg>
 
     <sbr/><sbr/>
     <synopfragment xml:id="from">
@@ -33,10 +39,14 @@
       <arg choice="plain"><option>-k</option></arg>
       <group choice="req">
 	<arg choice="plain">
-	  <synopfragmentref linkend="obj">from_object</synopfragmentref>
+	  <synopfragmentref linkend="obj">
+	    <replaceable>from_object</replaceable>
+	  </synopfragmentref>
 	</arg>
 	<arg choice="plain">
-	  <synopfragmentref linkend="pos">from_position</synopfragmentref>
+	  <synopfragmentref linkend="pos">
+	    <replaceable>from_position</replaceable>
+	  </synopfragmentref>
 	</arg>
       </group>
     </synopfragment>
@@ -50,10 +60,14 @@
       </group>
       <group choice="req">
 	<arg choice="plain">
-	  <synopfragmentref linkend="obj">to_object</synopfragmentref>
+	  <synopfragmentref linkend="obj">
+	    <replaceable>to_object</replaceable>
+	  </synopfragmentref>
 	</arg>
 	<arg choice="plain">
-	  <synopfragmentref linkend="pos">to_position</synopfragmentref>
+	  <synopfragmentref linkend="pos">
+	    <replaceable>to_position</replaceable>
+	  </synopfragmentref>
 	</arg>
       </group>
     </synopfragment>
@@ -62,33 +76,41 @@
     <synopfragment xml:id="pos">
       <group choice="plain">
 	<arg choice="req">
-	  <synopfragmentref linkend="coord">coords</synopfragmentref>
+	  <synopfragmentref linkend="coord">
+	    <replaceable>coords</replaceable>
+	  </synopfragmentref>
 	</arg>
 	<arg choice="req">
 	  <arg>
 	    <arg choice="plain"><option>-x</option></arg>
 	    <group choice="req">
-	      <arg choice="plain">x</arg>
+	      <arg choice="plain"><replaceable>x</replaceable></arg>
 	      <arg choice="plain">
-		<synopfragmentref linkend="obj">x-obj</synopfragmentref>
+		<synopfragmentref linkend="obj">
+		  <replaceable>x-obj</replaceable>
+		</synopfragmentref>
 	      </arg>
 	    </group>
 	  </arg>
 	  <arg>
 	    <arg choice="plain"><option>-y</option></arg>
 	    <group choice="req">
-	      <arg choice="plain">y</arg>
+	      <arg choice="plain"><replaceable>y</replaceable></arg>
 	      <arg choice="plain">
-		<synopfragmentref linkend="obj">y-obj</synopfragmentref>
+		<synopfragmentref linkend="obj">
+		  <replaceable>y-obj</replaceable>
+		</synopfragmentref>
 	      </arg>
 	    </group>
 	  </arg>
 	  <arg>
 	    <arg choice="plain"><option>-z</option></arg>
 	    <group choice="req">
-	      <arg choice="plain">z</arg>
+	      <arg choice="plain"><replaceable>z</replaceable></arg>
 	      <arg choice="plain">
-		<synopfragmentref linkend="obj">z-obj</synopfragmentref>
+		<synopfragmentref linkend="obj">
+		  <replaceable>z-obj</replaceable>
+		</synopfragmentref>
 	      </arg>
 	    </group>
 	  </arg>
@@ -103,7 +125,9 @@
         <arg choice="plain"><replaceable>object</replaceable></arg>
       </arg>
       <arg>
-	<synopfragmentref linkend="coord">offset_distance</synopfragmentref>
+	<synopfragmentref linkend="coord">
+	  <replaceable>offset_distance</replaceable>
+	</synopfragmentref>
       </arg>
     </synopfragment>
 
