@@ -18,8 +18,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis>
-
-    <command>edit translate</command>    
+    <command>edit translate</command>
     <group>
       <synopfragmentref linkend="from">from</synopfragmentref>
     </group>
@@ -28,6 +27,7 @@
     </group>
     <arg choice="plain" rep="repeat">object</arg>
 
+    <sbr/><sbr/>
     <synopfragment xml:id="from">
       <arg><option>-n</option></arg>
       <arg choice="plain"><option>-k</option></arg>
@@ -41,6 +41,7 @@
       </group>
     </synopfragment>
 
+    <sbr/>
     <synopfragment xml:id="to">
       <arg><option>-n</option></arg>
       <group>
@@ -57,6 +58,7 @@
       </group>
     </synopfragment>
 
+    <sbr/>
     <synopfragment xml:id="pos">
       <group choice="plain">
 	<arg choice="req">
@@ -94,6 +96,7 @@
       </group>
     </synopfragment>
 
+    <sbr/>
     <synopfragment xml:id="obj">
       <arg choice="plain">
         <arg><replaceable>path/</replaceable></arg>
@@ -104,6 +107,7 @@
       </arg>
     </synopfragment>
 
+    <sbr/>
     <synopfragment xml:id="coord">
       <arg choice="plain"><replaceable>x</replaceable></arg>
       <arg>
