@@ -201,7 +201,7 @@ rt_hf_bbox(struct rt_db_internal *ip, point_t *min_pt, point_t *max_pt) {
     struct rt_hf_internal *hip;
     vect_t height, work;
     vect_t hf_N, hf_X, hf_Y;
-    fastf_t hf_max, hf_min;
+    fastf_t hf_max;
 
     RT_CK_DB_INTERNAL(ip);
     hip = (struct rt_hf_internal *)ip->idb_ptr;
@@ -230,7 +230,6 @@ rt_hf_bbox(struct rt_db_internal *ip, point_t *min_pt, point_t *max_pt) {
             if ((int)*sp > max) max=*sp;
             if ((int)*sp < min) min=*sp;
         }
-        hf_min = min * hip->file2mm;
         hf_max = max * hip->file2mm;
     } else {
         fastf_t max, min;
@@ -245,7 +244,6 @@ rt_hf_bbox(struct rt_db_internal *ip, point_t *min_pt, point_t *max_pt) {
             if (*fp > max) max = *fp;
             if (*fp < min) min = *fp;
         }
-        hf_min = min * hip->file2mm;
         hf_max = max * hip->file2mm;
     }
 
