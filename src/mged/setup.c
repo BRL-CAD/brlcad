@@ -325,6 +325,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"showmats", cmd_ged_plain_wrapper, ged_showmats},
     {"sill", f_be_s_illuminate, GED_FUNC_PTR_NULL},
     {"size", cmd_size, GED_FUNC_PTR_NULL},
+    {"simulate", cmd_ged_simulate_wrapper, ged_simulate},
     {"solid_report", cmd_ged_plain_wrapper, ged_report},
     {"solids", cmd_ged_plain_wrapper, ged_tables},
     {"solids_on_ray", cmd_ged_plain_wrapper, ged_solids_on_ray},
