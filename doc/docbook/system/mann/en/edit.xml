@@ -181,6 +181,15 @@
     <emphasis>object</emphasis> may move independently of all
     other <emphasis>object</emphasis>'s.
   </para>
+  <para>
+    <!--FIXME: pasted from translate command; needs rewording -->
+    If <emphasis>from</emphasis> is omitted, the bounding box center
+    of the first <emphasis>object</emphasis> is used as
+    <emphasis>from</emphasis>.  To use the natural origin of the
+    first <emphasis>object</emphasis> as <emphasis>from</emphasis>,
+    <emphasis>from_object</emphasis> must be manually set to
+    <emphasis>object</emphasis>.
+  </para>
 </refsection>
 
 <refsection xml:id="options"><info><title>OPTIONS</title></info>
