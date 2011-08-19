@@ -41,7 +41,7 @@
  *
  * SYNOPSIS
  *	edit COMMAND_NAME [ARGS OBJECT ...]
- *	EDIT HELP | ROTATE | SCAle | translate [ARGS OBJECT ...]
+ *	edit help | rotate | scale | translate [ARGS OBJECT ...]
  *
  *	ARGS:
  *	    see manual for given COMMAND_NAME
@@ -715,11 +715,11 @@
  */
 struct edit_arg {
     struct edit_arg *next; /* nodes rel to arg in cmd args grouping */
-    char cl_options[EDIT_MAX_ARG_OPTIONS]; /* cmd line options */
+    char cl_options[EDIT_MAX_ARG_OPTIONS]; /* unique cmd line opts */
     unsigned int coords_used : 6; /* flag which coords will be used */
     unsigned int type : 7; /* flag the arg type and type modifiers */
-    struct db_full_path *object; /* 2 dir path_to/obj, or just obj */
-    vect_t *vector; /* abs pos, or offset dist from obj */
+    struct db_full_path *object; /* path and obj */
+    vect_t *vector; /* abs pos, or offset dist from an obj */
 };
 
 /*
@@ -749,22 +749,23 @@ struct edit_arg {
 #define EDIT_TO				0x02
 #define EDIT_TARGET_OBJ			0x04 /* obj to operate on */
 
-/* argument "TO" type modifiers */
+/* "TO" argument type modifiers */
 #define EDIT_REL_DIST			0x08
 #define EDIT_ABS_POS 			0x10
 
-/* object argument type modifier flags */
+/* object argument type modifiers */
 #define EDIT_NATURAL_ORIGIN		0x20 /* use n.o. of object */
 #define EDIT_USE_TARGETS		0x40 /* for batch ops */
 
-/* all type modifier flags that indicate the arg contains an obj */
+/* all type modifiers that indicate the arg contains an obj */
 #define EDIT_OBJ_TYPE_MODS (EDIT_NATURAL_ORIGIN | EDIT_USE_TARGETS)
 
 /* in batch ops, these flags are not discarded from the target obj */
 #define EDIT_TARGET_OBJ_BATCH_TYPES (EDIT_NATURAL_ORIGIN)
 
 
-/* * Arg groupings for each command.
+/*
+ * Arg groupings for each command.
  */
 union edit_cmd{
     const struct edit_cmd_tab *cmd;
@@ -1043,8 +1044,8 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
     for (i = (size_t)0; i < path->fp_len - (size_t)1; ++i) {
 	d_next = DB_FULL_PATH_GET(path, i + (size_t)1);
 
-	/* path was validated, and this loop doesn't process the last
-	 * item, so it must be a combination
+	/* The path was validated, and this loop doesn't process the
+	 * last item, so it must be a combination.
 	 */
 	BU_ASSERT(d->d_flags & (RT_DIR_COMB | RT_DIR_REGION));
 
@@ -1108,7 +1109,7 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
  * *arg->object is freed, otherwise coordinates are written to *coord
  * and *arg is in no way modified.
  *
- * The only flags repected are object argument type modifier flags.
+ * The only flags respected are object argument type modifier flags.
  *
  * Returns GED_ERROR on failure, and GED_OK on success.
  */
@@ -1146,7 +1147,7 @@ edit_arg_to_coord(struct ged *gedp, struct edit_arg *const arg, vect_t *coord)
 /**
  * "Expands" object arguments for a batch operation.
  *
- * meta_arg is replaced a list of copies of src_objects, with
+ * meta_arg is replaced with a list of copies of src_objects, with
  * certain meta_arg flags applied and/or consolidated with those of
  * the source objects. Objects + offsets are converted to coordinates.
  *
@@ -1209,7 +1210,7 @@ edit_arg_expand_meta(struct ged *gedp, struct edit_arg *meta_arg,
 
 
 /**
- * Initialize command argument-pointer members to NULL.
+ * Initialize all command argument-pointer members to NULL.
  */
 HIDDEN void
 edit_cmd_init(union edit_cmd *const subcmd)
@@ -1225,7 +1226,7 @@ edit_cmd_init(union edit_cmd *const subcmd)
 }
 
 /**
- * Free any dynamically allocated argument nodes that may exist
+ * Free any dynamically allocated argument nodes that may exist.
  */
 HIDDEN void
 edit_cmd_free(union edit_cmd *const cmd)
@@ -1422,10 +1423,9 @@ edit_cmd_consolidate (struct ged *gedp, union edit_cmd *const subcmd,
 /* 
  * Command-specific functions.
  *
- * The functions for the first command (currently, rotate) will be
- * documented well to introduce the concepts. Documentation of
- * functions for other commands will be minimal, since they are
- * quite similar.
+ * The translate command will be documented well to introduce the
+ * concepts. Documentation of functions for other commands will be
+ * minimal, since they are quite similar.
  *
  * To add a new command, you need to:
  *	1) add a struct to the union edit_cmd
@@ -1462,10 +1462,7 @@ edit_rotate(struct ged *gedp, const vect_t *const axis_from,
 
 /**
  * Maps edit_arg fields to the subcommand function's arguments and
- * calls it.  Provides an common interface, so that all subcommands
- * can use the same function pointer type. Ignores all edit_arg fields
- * other than vector, and the first object to operate on in the
- * objects edit_arg. Ignores all edit_arg->next arguments.
+ * calls it.
  */
 int
 edit_rotate_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
@@ -1481,8 +1478,7 @@ edit_rotate_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 }
 
 /*
- * Add arguments to the command that were built from the cmd line. All
- * arguments should be initialized to NULL before using.
+ * Add arguments to the command that were built from the cmd line.
  */
 int
 edit_rotate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
@@ -1497,12 +1493,6 @@ edit_rotate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 /**
  * Given an pointer to an argument head in the edit_cmd union, this
  * function will return the next argument head in the union.
- *
- * This function is used to traverse a commands arguments, without
- * needing to know their structure. edit_cmd.common.objects should be
- * used as the first argument head, to traverse the entire struct.
- *
- * FIXME: Kind of dirty; haven't found a better way yet, though.
  */
 struct edit_arg **
 edit_rotate_get_arg_head(const union edit_cmd *const cmd, int idx)
@@ -1544,12 +1534,8 @@ edit_scale(struct ged *gedp, const vect_t *const scale_from,
 
 /**
  * Maps edit_arg fields to the subcommand function's arguments and
- * calls it.  Provides an common interface, so that all subcommands
- * can use the same function pointer type. Ignores all edit_arg fields
- * other than vector, and the first object to operate on in the
- * objects edit_arg. Ignores all edit_arg->next arguments.
+ * calls it.
  */
-int
 edit_scale_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 {
     return edit_scale(gedp,
@@ -1563,7 +1549,6 @@ edit_scale_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 
 /*
  * Add arguments to the command that were built from the cmd line.
- * All arguments should be initialized to NULL before using.
  */
 int
 edit_scale_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
@@ -1575,6 +1560,10 @@ edit_scale_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
     return GED_OK;
 }
 
+/**
+ * Given an pointer to an argument head in the edit_cmd union, this
+ * function will return the next argument head in the union.
+ */
 struct edit_arg **
 edit_scale_get_arg_head(const union edit_cmd *const cmd, int idx)
 {
@@ -1593,7 +1582,8 @@ edit_scale_get_arg_head(const union edit_cmd *const cmd, int idx)
     return (struct edit_arg **)arg_heads[idx];
 }
 
-/** * Perform a translation on an object by specifying points.
+/**
+ * Perform a translation on an object by specifying points.
  */
 int
 edit_translate(struct ged *gedp, const vect_t *const from,
@@ -1616,8 +1606,8 @@ edit_translate(struct ged *gedp, const vect_t *const from,
     }
 
     if (path->fp_len > 1) {
-	/* path supplied; move obj instance only (obj's CWD
-	 * modified)
+	/* A path was supplied; move obj instance only (obj's CWD
+	 * modified).
 	 */
 	struct rt_comb_internal *comb;
 	union tree *leaf_to_modify;
@@ -1637,8 +1627,8 @@ edit_translate(struct ged *gedp, const vect_t *const from,
 	}
 	MAT_DELTAS_ADD_VEC(leaf_to_modify->tr_l.tl_mat, delta);
     } else {
-	/* no path; move all obj instances (obj's entire tree
-	 * modified)
+	/* No path given; move all obj instances (obj's entire tree
+	 * modified).
 	 */
 	struct _ged_trace_data gtd;
 	mat_t dmat;
@@ -1712,8 +1702,8 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 	/* if there isn't an EDIT_TO, this func shouldn't be called */
 	BU_ASSERT_PTR(cur_arg->next, !=, (struct edit_arg *)NULL); 
 
-	/* a 'from' position is set; only flags that were possible
-	 * when this function was last updated should be handled
+	/* A 'from' position is set; only flags that were possible
+	 * when this function was last updated should be handled.
 	 */
 	BU_ASSERT(cur_arg->type ^ ~(EDIT_FROM |
 				    EDIT_NATURAL_ORIGIN |
@@ -1729,13 +1719,13 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
     }
 
     if ((cur_arg->type & EDIT_TO) || (cur_arg->type == 0)) {
-	/* if there isn't an EDIT_TARGET_OBJECT, this func shouldn't
-	 * be called
+	/* If there isn't an EDIT_TARGET_OBJECT, this func shouldn't
+	 * be called.
 	 */
 	BU_ASSERT_PTR(cur_arg->next, !=, (struct edit_arg *)NULL);
 
-	/* a 'TO' position is set; only flags that were possible when
-	 * this function was last updated should be handled
+	/* A 'TO' position is set; only flags that were possible when
+	 * this function was last updated should be handled.
 	 */
 	BU_ASSERT(cur_arg->type ^ ~(EDIT_TO |
 				    EDIT_NATURAL_ORIGIN |
@@ -1812,6 +1802,16 @@ err_option_unknown:
     return GED_ERROR;
 }
 
+/**
+ * Given an pointer to an argument head in the edit_cmd union, this
+ * function will return the next argument head in the union.
+ *
+ * This function is used to traverse a commands arguments, without
+ * needing to know their structure. edit_cmd.common.objects should be
+ * used as the first argument head, to traverse the entire struct.
+ *
+ * XXX: Kind of dirty; haven't found a better way yet, though.
+ */
 struct edit_arg **
 edit_translate_get_arg_head(const union edit_cmd *const cmd, int idx)
 {
@@ -1913,8 +1913,8 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
     int num_target_objs = 0;
     int num_args_set = 0;
 
-    /* check all arg nodes in subcmd->common.objects first; they may
-     * be copied later if there are any batch modifiers to expand.
+    /* Check all arg nodes in subcmd->common.objects first. They may
+     * be copied later, if there are any batch modifiers to expand.
      */
     arg_head = subcmd->cmd->get_arg_head(subcmd, i++);
     for (cur_arg = *arg_head; cur_arg; cur_arg = cur_arg->next) {
@@ -1966,8 +1966,8 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
 	}
     }
 
-    /* create a copy to iterate over groups of batch args; note that
-     * the copy is shallow and *must not be freed*
+    /* Create a copy to iterate over groups of batch args; note that
+     * the copy is shallow and *must not be freed*.
      */
     subcmd_iter.cmd = subcmd->cmd;
     edit_cmd_init(&subcmd_iter);
@@ -1975,9 +1975,7 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
 
     /* Iterate over each set of batch args, executing the subcmd once
      * for each level of edit_arg nodes. The number of common objects
-     * determines how many times the command is run. Any other
-     * argument lists having less nodes than that will make up for the
-     * difference by repeating their last node in subsequent runs.
+     * determines how many times the command is run.
      */
     do {
 	if (edit_cmd_expand_vectors(gedp, &subcmd_iter) == GED_ERROR)
@@ -2032,7 +2030,7 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 
     if (!arg->object && !(arg->type & EDIT_USE_TARGETS) && !arg->vector) {
 
-	/* same batch operators; objs with same name are masked */
+	/* batch operators; objects with same name will be masked */
 	if (BU_STR_EQUAL(str, ".")) {
 	    arg->type |= EDIT_USE_TARGETS;
 	    return GED_OK;
@@ -2158,7 +2156,7 @@ convert_obj:
  * 
  * Set GED_QUIET or GED_ERROR bits in 'flags' to suppress or enable
  * output to ged_result_str, respectively. Note that output is always
- * suppressed after the first string.
+ * suppressed after the first string is successfully converted.
  *
  * Returns GED_OK if at least one string is converted, otherwise
  * GED_ERROR is returned.
@@ -2382,7 +2380,7 @@ get_full_help:
     /*
      * The object of the game is to remain agnostic of unique aspects
      * of argument structures of subcommands (i.e. inside the edit_cmd
-     * union). Therefore, we will simply chain all of the arguments
+     * union). Therefore, we will simply link all of the arguments
      * together with edit_arg structs for fuller parsing elsewhere.
      *
      * There are, however, a several things that are standardized for
@@ -2394,10 +2392,11 @@ get_full_help:
      *            specifier's interpretation
      *        b) all other nonstandard options are considered argument
      *           specifiers themselves
-     *        c) unique global options not recognized at this point;
-     *           therefore, they will be recorded in the same way as
-     *           nonstandard options that modify argument specifiers
-     *           (a, above), and parsed elsewhere
+     *        c) unique global options are not recognized at this
+     *           point; therefore, they will be recorded in the same
+     *           way as nonstandard options that modify argument
+     *           specifiers (a, above), and parsed by the subcommand's
+     *           routines.
      *     2) keypoints ('FROM' arg options) are always preceded by
      *        '-k'
      *     3) keypoints are all considered optional as far as this
@@ -2410,15 +2409,15 @@ get_full_help:
      *           in this context)
      *        c) be used for a specific coordinate: -x/-y/-z OBJECT
      *        d) be used for a specific coordinate and use an offset
-     *           simultaneously; ex: -x OBJECT 5 0 2
-     *     6) any objects not being operated on may use the batch
-     *        object substitution character ("." at the time of
-     *        writing)
+     *           simultaneously; ex: -z OBJECT 5 0 2 (note that 5 and
+     *           0 are merely placeholders in this context)
+     *     6) the batch object substitution character may be used as
+     *        an argument to -k/-a/-r ("." at the time of writing)
      *     7) at least one object must be operated on
      *     8) the last argument is a list of objects to be operated on
      */
 
-    /* no options are required by default*/
+    /* no options are required by default, so quietly look for args */
     while (edit_strs_to_arg(gedp, &argc, &argv, cur_arg, GED_QUIET) !=
 	   GED_ERROR) {
 	if (argc == 0) {
@@ -2461,7 +2460,7 @@ get_full_help:
 
     /* All leading args are parsed. If we're not not at an option,
      * then there is a bad arg. Let the conversion function cry about
-     * what it choked on
+     * what it choked on.
      */
     if (strlen(argv[0]) > 1 && ((*argv)[0] != '-') && isdigit((*argv)[1])) {
 	ret = edit_strs_to_arg(gedp, &argc, &argv, cur_arg, GED_ERROR);
