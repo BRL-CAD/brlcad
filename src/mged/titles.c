@@ -76,8 +76,11 @@ create_text_overlay(struct bu_vls *vp)
      * so each line is written with a separate call to DM_DRAW_STRING_2D().
      */
 
-    /* print solid info at top of screen */
-    if (es_edflag >= 0) {
+    /* print solid info at top of screen
+     * Check if the illuminated solid still exists or it has been killed
+     * before Accept was clicked.
+     */
+    if (es_edflag >= 0 && illump != SOLID_NULL) {
 	dp = LAST_SOLID(illump);
 
 	bu_vls_strcat(vp, "** SOLID -- ");
