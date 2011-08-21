@@ -148,7 +148,7 @@
     <command>edit</command> <emphasis>subcommand</emphasis>s lies
     in their utilization of a common style of syntax.
     Coordinates in model space, offsets, and objects are all
-    accepted interchangably as reference points. A single
+    accepted interchangeably as reference points. A single
     reference point is equivalent to an absolute point in model
     space. A pair of refence points specifies a distance or an
     angle, and is supplied as a set of
@@ -182,13 +182,24 @@
     other <emphasis>object</emphasis>'s.
   </para>
   <para>
-    <!--FIXME: pasted from translate command; needs rewording -->
-    If <emphasis>from</emphasis> is omitted, the bounding box center
-    of the first <emphasis>object</emphasis> is used as
-    <emphasis>from</emphasis>.  To use the natural origin of the
-    first <emphasis>object</emphasis> as <emphasis>from</emphasis>,
-    <emphasis>from_object</emphasis> must be manually set to
-    <emphasis>object</emphasis>.
+    If any <emphasis>from</emphasis> coordinates are omitted, they
+    default to the bounding box center of the first
+    <emphasis>object</emphasis> is used as <emphasis>from</emphasis>.
+    To use the natural origin of the first
+    <emphasis>object</emphasis> as <emphasis>from</emphasis>,
+    <emphasis>from_object</emphasis> must be manually set to whatever
+    <emphasis>object</emphasis> is set to. If any
+    <emphasis>to</emphasis> coordinates are omitted, they default to
+    the values set in <emphasis>from</emphasis>.
+  </para>
+
+  <para>
+    The quantity and arrangement of standard <command>edit</command>
+    arguments as well as their intepretation depends upon the
+    subcommand. See the manual page for a given subcommand for more
+    information on its usage:<sbr/>
+    <prompt>&gt; </prompt>
+    <userinput>man edit_<replaceable>subcommandName</replaceable></userinput>
   </para>
 </refsection>
 
@@ -208,6 +219,9 @@
       <term><option>-k</option></term>
       <listitem>
 	<para>
+	  Sets the keypoint <emphasis>from</emphasis> to either
+	  <emphasis>from_object</emphasis>'s bounding box center or
+	  <emphasis>from_position</emphasis>. 
 	</para>
       </listitem>
     </varlistentry>
@@ -215,6 +229,9 @@
       <term><option>-a</option></term>
       <listitem>
 	<para>
+	  Sets the destination point <emphasis>to</emphasis> to
+	  either <emphasis>to_object</emphasis>'s bounding box center
+	  or <emphasis>to_position</emphasis>. 
 	</para>
       </listitem>
     </varlistentry>
@@ -222,6 +239,9 @@
       <term><option>-r</option></term>
       <listitem>
 	<para>
+	  Sets the destination point <emphasis>to</emphasis> to 
+	  a point offset by <emphasis>to_position</emphasis> from
+	  the <emphasis>from</emphasis> point.
 	</para>
       </listitem>
     </varlistentry>
@@ -235,6 +255,7 @@
       </term>
       <listitem>
 	<para>
+	  Sets the coordinate of a particular axis.
 	</para>
       </listitem>
     </varlistentry>
@@ -248,7 +269,7 @@
 
   <example>
     <info><title>
-      Get the authorative list of available subcommands.
+      Get the authoritative list of available subcommands.
     </title></info>
     <variablelist>
       <varlistentry>
@@ -312,6 +333,37 @@
 	    <command>edit translate</command> is aliased to something
 	    else.
 	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </example>
+
+  <example>
+    <info><title>
+	A fake subcommand is used to show how standard
+	<command>edit</command> arguments and nonstandard
+	<command>edit</command> arguments are used.
+    </title></info>
+    <variablelist>
+      <varlistentry>
+        <term>
+          <prompt>&gt; </prompt>
+          <userinput>edit fake_subcmd -B 12 -k sph.s 1.5 7 -a 0 0 0 cube.s</userinput>
+        </term>
+        <listitem>
+          <para>
+	    The nonstandard <option>-B</option> option is unique to
+	    <command>fake_subcmd</command>. An explanation of how it
+	    is used would be found in the manual for fake_subcmd, if
+	    there were one. The remaining options and arguments are
+	    standardized. The <option>-k</option> and
+	    <option>-a</option> options are used to specify a
+	    <emphasis>from</emphasis> - <emphasis>to</emphasis> pair,
+	    as defined in this manual for <command>edit</command>.
+	    The interpretation of the vector created by these points
+	    would be defined in the <command>fake_subcmd</command>
+	    manual.
+          </para>
 	</listitem>
       </varlistentry>
     </variablelist>
