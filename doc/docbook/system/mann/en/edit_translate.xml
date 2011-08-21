@@ -180,10 +180,10 @@
 	    bounding box center of the first target
 	    <emphasis>object</emphasis>, which is obj2. Every instance
 	    of objects obj2 - obj5 is moved <emphasis>from</emphasis>
-	    obj2 <emphasis>to</emphasis> obj1. If the z-coordinate of
-	    <emphasis>from</emphasis> was 7, and the z-coordinate of
-	    <emphasis>to</emphasis> was 5, then each object would move
-	    -2 units in the z-axis.
+	    obj2 <emphasis>to</emphasis> the z-axis of obj1. If the
+	    z-coordinate of <emphasis>from</emphasis> was 7, and the
+	    z-coordinate of <emphasis>to</emphasis> was 5, then each
+	    object would move -2 units in the z-axis.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -282,7 +282,8 @@
   <example>
     <info>
       <title>
-	Set the z-axis of one object to that of another.
+	Set the z-axis of the center of one object to the z-axis of
+	the natural origin of another object.
       </title>
     </info>
     <variablelist>
@@ -300,22 +301,31 @@
 	  </para>
 	</listitem>
       </varlistentry>
+    </variablelist>
+  </example>
+
+  <example>
+    <info>
+      <title>
+	    Same result as above, but moving <emphasis>from</emphasis> the
+	    natural origin of obj1 rather than its bounding box
+	    center.
+      </title>
+    </info>
+    <variablelist>
       <varlistentry>
         <term>
           <prompt>&gt; </prompt>
 	  <userinput>
 	    edit translate -n -k obj1 -n -a -z obj2/obj3 obj1
 	  </userinput>
+        </term>
+      </varlistentry>
+      <varlistentry>
+        <term>
           <prompt>&gt; </prompt>
 	  <userinput>edit translate -n -k . -n -a -z obj2/obj3 obj1</userinput>
         </term>
-        <listitem>
-          <para>
-	    Same as above, but moving <emphasis>from</emphasis> the
-	    natural origin of obj1 rather than its bounding box
-	    center.
-	  </para>
-	</listitem>
       </varlistentry>
     </variablelist>
   </example>
