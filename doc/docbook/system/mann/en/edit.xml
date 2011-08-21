@@ -263,10 +263,6 @@
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  <para>
-    The <command>edit</command> command 
-  </para>
-
   <example>
     <info><title>
       Get the authoritative list of available subcommands.
