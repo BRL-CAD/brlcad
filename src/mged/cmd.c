@@ -159,7 +159,7 @@ cmd_ged_edit_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 int
 cmd_ged_simulate_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
-    int i, ret;
+    int ret;
     const char *av[3];
     struct cmdtab *ctp = (struct cmdtab *)clientData;
 
