@@ -297,9 +297,10 @@ comb_func(struct db_i *dbip,
 	  struct directory *dp,
 	  genptr_t ptr)
 {
-    bu_log("rt_bound_internal: comb_func called\n");
-    
     struct rt_db_internal *intern = NULL;
+
+    bu_log("rt_bound_internal: comb_func called\n");
+
     if (rt_db_get_internal(intern, dp, dbip, ptr, &rt_uniresource) < 0){
         bu_log("rt_bound_internal: comb_func : rt_db_get_internal('%s') failed\n", dp->d_namep);       
     }    
@@ -322,9 +323,10 @@ leaf_func(struct db_i *dbip,
 	  struct directory *dp,
 	  genptr_t ptr)
 {
-    bu_log("rt_bound_internal: leaf_func called\n");
-    
     struct rt_db_internal *intern = NULL;
+
+    bu_log("rt_bound_internal: leaf_func called\n");
+
     if (rt_db_get_internal(intern, dp, dbip, ptr, &rt_uniresource) < 0){
         bu_log("rt_bound_internal: leaf_func : rt_db_get_internal('%s') failed\n", dp->d_namep);        
     }   

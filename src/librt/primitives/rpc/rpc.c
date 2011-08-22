@@ -202,10 +202,10 @@ const struct bu_structparse rt_rpc_parse[] = {
 int
 rt_rpc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
     struct rt_rpc_internal *xip;
+    vect_t rinv, rvect, rv2, working;
     RT_CK_DB_INTERNAL(ip);
     xip = (struct rt_rpc_internal *)ip->idb_ptr;
     RT_RPC_CK_MAGIC(xip);
-    vect_t rinv, rvect, rv2, working;
     
     VSETALL((*min), MAX_FASTF);
     VSETALL((*max), -MAX_FASTF);
