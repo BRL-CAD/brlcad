@@ -6305,6 +6305,8 @@ proc title_node_handler {node} {
 
 	bind $win <ButtonRelease-1> "[::itcl::code $this endObjRotate $dname $obj]; break"
     }
+
+    $itk_component(ged) rect lwidth 0
 }
 
 
@@ -6334,6 +6336,8 @@ proc title_node_handler {node} {
 
 	bind $win <ButtonRelease-1> "[::itcl::code $this endObjScale $dname $obj]; break"
     }
+
+    $itk_component(ged) rect lwidth 0
 }
 
 
@@ -6364,6 +6368,8 @@ proc title_node_handler {node} {
 
 	bind $win <ButtonRelease-1> "[::itcl::code $this endObjTranslate $dname $obj %x %y]; break"
     }
+
+    $itk_component(ged) rect lwidth 0
 }
 
 
@@ -6388,6 +6394,8 @@ proc title_node_handler {node} {
 	bind $win <1> "[::itcl::code $this handleObjCenter $dname $obj %x %y]; break"
 	bind $win <ButtonRelease-1> "[::itcl::code $this endObjCenter $obj]; break"
     }
+
+    $itk_component(ged) rect lwidth 0
 }
 
 

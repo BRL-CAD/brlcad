@@ -2554,6 +2554,8 @@ namespace eval ArcherCore {
 ::itcl::body ArcherCore::beginViewRotate {} {
     $itk_component(ged) init_view_rotate 1
     $itk_component(ged) init_button_no_op 2
+
+    $itk_component(ged) rect lwidth 0
 }
 
 ::itcl::body ArcherCore::endViewRotate {_pane} {
@@ -2566,6 +2568,8 @@ namespace eval ArcherCore {
 ::itcl::body ArcherCore::beginViewScale {} {
     $itk_component(ged) init_view_scale 1
     $itk_component(ged) init_button_no_op 2
+
+    $itk_component(ged) rect lwidth 0
 }
 
 ::itcl::body ArcherCore::endViewScale {_pane} {
@@ -2578,6 +2582,8 @@ namespace eval ArcherCore {
 ::itcl::body ArcherCore::beginViewTranslate {} {
     $itk_component(ged) init_view_translate 1
     $itk_component(ged) init_button_no_op 2
+
+    $itk_component(ged) rect lwidth 0
 }
 
 ::itcl::body ArcherCore::endViewTranslate {_pane} {
@@ -2594,6 +2600,8 @@ namespace eval ArcherCore {
     $itk_component(ged) clear_mouse_ray_callback_list
     $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_cvo]
     $itk_component(ged) init_comp_pick 2
+
+    $itk_component(ged) rect lwidth 0
 }
 
 ::itcl::body ArcherCore::initCompErase {} {
@@ -2601,6 +2609,8 @@ namespace eval ArcherCore {
     $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_erase]
     $itk_component(ged) init_comp_pick 1
     $itk_component(ged) init_button_no_op 2
+
+    $itk_component(ged) rect lwidth 0
 }
 
 ::itcl::body ArcherCore::initCompPick {} {
@@ -2608,6 +2618,8 @@ namespace eval ArcherCore {
     $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_pick]
     $itk_component(ged) init_comp_pick 1
     $itk_component(ged) init_button_no_op 2
+
+    $itk_component(ged) rect lwidth 0
 }
 
 ::itcl::body ArcherCore::initCompSelect {} {
@@ -2615,6 +2627,9 @@ namespace eval ArcherCore {
     $itk_component(ged) add_view_rect_callback [::itcl::code $this compSelectCallback]
     $itk_component(ged) init_view_rect 1
     $itk_component(ged) init_button_no_op 2
+
+    # The rect lwidth should be a preference
+    $itk_component(ged) rect lwidth 1
 }
 
 ::itcl::body ArcherCore::compSelectCallback {_mstring} {
@@ -2692,6 +2707,8 @@ namespace eval ArcherCore {
     $itk_component(ged) add_view_measure_callback [::itcl::code $this endViewMeasure]
     $itk_component(ged) init_view_measure
     $itk_component(ged) init_button_no_op 2
+
+    $itk_component(ged) rect lwidth 0
 }
 
 ::itcl::body ArcherCore::endViewMeasure {_mstring} {
