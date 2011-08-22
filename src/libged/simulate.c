@@ -49,6 +49,7 @@ extern int single_step_sim(struct bu_vls *result_str, int argc, const char *argv
 /**
  * Duplicate existing objects : Unused for now as shape duplicated using copy command
  */
+#if 0
 static int
 duplicate_objects(struct ged *gedp, int argc, const char *argv[])
 {
@@ -82,7 +83,7 @@ duplicate_objects(struct ged *gedp, int argc, const char *argv[])
   
     return GED_OK;
 }
-
+#endif
 
 /**
  * How to use simulate.Blissfully simple interface, more options will be added soon
