@@ -4081,6 +4081,7 @@ namespace eval ArcherCore {
 	set mSelectedObj $obj
 	set mSelectObjPath $obj
 	$itk_component(newtree) selection set [lindex [lindex $mText2Node($obj) 0] 0]
+	$itk_component(newtree) see [lindex [lindex $mText2Node($obj) 0] 0]
     } else {
 	getTreeNode $_path 1
 	set snode [$itk_component(newtree) focus]
@@ -4092,6 +4093,7 @@ namespace eval ArcherCore {
 	} else {
 	    set mSelectedObj $obj
 	    $itk_component(newtree) selection set $snode
+	    $itk_component(newtree) see $snode
 	    foreach pnode [lreverse [findTreeParentNodes $snode]] {
 		append mSelectedObjPath $mNode2Text($pnode) "/"
 	    }
