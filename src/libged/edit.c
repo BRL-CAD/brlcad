@@ -1959,8 +1959,8 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     const char *const cmd_name = argv[0];
     union edit_cmd subcmd;
     const char *subcmd_name = NULL;
-    struct edit_arg *cur_arg;
-    struct edit_arg *keypoint;
+    struct edit_arg *cur_arg = NULL;
+    struct edit_arg *keypoint = NULL;
     static const char *const usage = "[subcommand] [args]";
     int idx_cur_opt = 0; /* pos in options array for current arg */
     int conv_flags = 0; /* for edit_strs_to_arg */
