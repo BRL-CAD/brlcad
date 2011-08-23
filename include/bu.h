@@ -273,7 +273,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
  * Example: BU_ASSERT_LONG(j+7, <, 42);
  */
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT(_equation)
+#  define BU_ASSERT(_equation) ((void)0)
 #else
 #  define BU_ASSERT(_equation)	\
     if (UNLIKELY(!(_equation))) { \
@@ -284,7 +284,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 #endif
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_PTR(_lhs, _relation, _rhs)
+#  define BU_ASSERT_PTR(_lhs, _relation, _rhs) ((void)0)
 #else
 #  define BU_ASSERT_PTR(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
@@ -297,7 +297,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_LONG(_lhs, _relation, _rhs)
+#  define BU_ASSERT_LONG(_lhs, _relation, _rhs) ((void)0)
 #else
 #  define BU_ASSERT_LONG(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
@@ -310,7 +310,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs)
+#  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs) ((void)0)
 #else
 #  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
@@ -323,7 +323,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_SSIZE_T(_lhs, _relation, _rhs)
+#  define BU_ASSERT_SSIZE_T(_lhs, _relation, _rhs) ((void)0)
 #else
 #  define BU_ASSERT_SSIZE_T(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
@@ -336,7 +336,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs)
+#  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs) ((void)0)
 #else
 #  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
@@ -1351,7 +1351,7 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 
 /* This is not done by default for performance reasons */
 #ifdef NO_BOMBING_MACROS
-#  define BU_BITV_BITNUM_CHECK(_bv, _bit)
+#  define BU_BITV_BITNUM_CHECK(_bv, _bit) ((void)0)
 #else
 #  define BU_BITV_BITNUM_CHECK(_bv, _bit)	/* Validate bit number */ \
     if (UNLIKELY(((unsigned)(_bit)) >= (_bv)->nbits)) {\
@@ -1362,7 +1362,7 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 #endif
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_BITV_NBITS_CHECK(_bv, _nbits)
+#  define BU_BITV_NBITS_CHECK(_bv, _nbits) ((void)0)
 #else
 #  define BU_BITV_NBITS_CHECK(_bv, _nbits)	/* Validate number of bits */ \
     if (UNLIKELY(((unsigned)(_nbits)) > (_bv)->nbits)) {\

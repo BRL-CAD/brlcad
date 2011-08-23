@@ -224,8 +224,8 @@
  * first entry in the structure is a magic number.
  */
 #ifdef NO_BOMBING_MACROS
-#  define BU_CKMAG(_ptr, _magic, _str)
-#  define BU_CKMAG_TCL(_interp, _ptr, _magic, _str)
+#  define BU_CKMAG(_ptr, _magic, _str) ((void)0)
+#  define BU_CKMAG_TCL(_interp, _ptr, _magic, _str) ((void)0)
 #else
 #  define BU_CKMAG(_ptr, _magic, _str) { \
 	uintptr_t _ptrval = (uintptr_t)(_ptr); \
