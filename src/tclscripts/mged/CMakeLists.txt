@@ -81,7 +81,8 @@ SET(mged_TCLSCRIPTS
 	xclone.tcl
 )
 BRLCAD_ADDDATA(mged_TCLSCRIPTS tclscripts/mged)
-pkgIndex_BUILD(mged tclscripts/mged)
+# no packages in here (so far)
+# pkgIndex_BUILD(mged tclscripts/mged)
 tclIndex_BUILD(mged tclscripts/mged)
 
 SET(mged_tcl_DATA
