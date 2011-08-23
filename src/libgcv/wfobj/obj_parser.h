@@ -19,12 +19,11 @@
 #ifndef ARL_OBJ_PARSER_H
 #define ARL_OBJ_PARSER_H
 
+#include "common.h"
 #include <sys/types.h>
 #include <stdio.h>
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
+__BEGIN_DECLS
 
 /**
  *  A structure containing a wavefront obj parser.
@@ -773,8 +772,6 @@ size_t obj_polygonal_tnv_faces(obj_contents_t contents,
 size_t obj_polygonal_tnv_face_vertices(obj_contents_t contents, size_t face,
 				       const size_t (*index_arr[])[3]);
 
-#if defined(__cplusplus)
-}
-#endif
+__END_DECLS
 
 #endif

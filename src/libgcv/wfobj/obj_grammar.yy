@@ -57,15 +57,13 @@
 #include <string>
 #include <cstddef>
 #include <sys/types.h>
+#include <iostream>
 
 #define SET_SYNTAX_ERROR \
     static_cast<detail::objCombinedState*> \
-	(scanner)->parser_state.syntaxError = true;
+	(scanner->extra)->parser_state.syntaxError = true;
 
 #define YYERROR SET_SYNTAX_ERROR
-
-/* EOF symbol returned by flex */
-#define YYEOF 0
 
 #if 0
 #define DEBUG_STRINGS \
@@ -173,7 +171,8 @@ void obj_parser_error(yyscan_t scanner, const char *s)
  * and no calls to non-reentrant functions
  *
  * returns 1 on syntax error, 0 otherwise
- * error message in ((objCombinedState*)scanner)->parser_state.err.str()
+ * returns error message in
+ *     ((objCombinedState*)scanner->extra)->parser_state.err.str()
  */
 int obj_parser_parse(yyscan_t scanner)
 {
@@ -182,13 +181,11 @@ int obj_parser_parse(yyscan_t scanner)
 
     int yychar;
     YYSTYPE yyval;
-    objCombinedState *state = static_cast<objCombinedState*>(scanner);
+    objCombinedState *state = static_cast<objCombinedState*>(scanner->extra);
     parser_type parser = state->parser;
     bool &error = state->parser_state.syntaxError;
 
     error = false;
-
-    // ParseTrace(stdout, ">");
 
     while ((yychar = obj_parser_lex(&yyval, scanner)) != YYEOF) {
 #if 0
@@ -285,8 +282,6 @@ int obj_parser_parse(yyscan_t scanner)
 
 	Parse(parser, yychar, yyval, scanner);
     }
-
-    ParseFree(parser,free);
 
     return error;
 }

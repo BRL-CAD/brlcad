@@ -1,24 +1,4 @@
-/*                   O B J _ R U L E S . L L
- * BRL-CAD
- *
- * Copyright (c) 2010-2011 United States Government as represented by
- * the U.S. Army Research Laboratory.
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
- * version 2.1 as published by the Free Software Foundation.
- *
- * This library is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this file; see the file named COPYING for more
- * information.
- */
-%{
-/*                   O B J _ R U L E S . L L
+/*                   O B J _ R U L E S . R E
  * Copyright (c) 2010-2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
@@ -37,17 +17,18 @@
  */
 
 #include "common.h"
-
-#include "bio.h"
-
-#include "obj_parser_state.h"
-
+#include <errno.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 
+#include "bu.h"
+#include "bio.h"
 #include "obj_grammar.h"
-
-#include <stdlib.h>
-#include <limits.h>
+#include "obj_parser_state.h"
+#include "obj_rules.h"
+#include "re2c_utils.h"
 
 /* increase token limits of at&t and mk2 lex */
 #undef YYLMAX
@@ -93,15 +74,36 @@ static bool split_reference(const char *s, int val[3]);
 } /* namespace arl */
 
 using namespace arl::obj_parser;
-%}
 
-%option full never-interactive
-%option warn nodefault noyywrap nounput
-%option reentrant bison-bridge
+void *obj_parser_get_extra(yyscan_t scanner)
+{
+    return scanner->extra;
+}
 
-%x id_state
-%x toggle_id_state
-%x id_list_state
+void *obj_parser_set_extra(yyscan_t scanner, void *extra)
+{
+    scanner->extra = extra;
+}
+
+void obj_parser_lex_destroy(yyscan_t scanner)
+{
+    freeScanner(scanner);
+}
+
+int obj_parser_lex(YYSTYPE *yylval, yyscan_t scanner)
+{
+    using arl::obj_parser::detail::objCombinedState;
+
+    void *yyextra = static_cast<objCombinedState*>(scanner->extra);
+
+BEGIN_RE2C(scanner, cursor)
+
+/*!re2c
+re2c:define:YYCTYPE = char;
+re2c:define:YYCURSOR = cursor;
+re2c:yyfill:enable = 0;
+re2c:condenumprefix = "";
+re2c:define:YYSETCONDITION = BEGIN;
 
 vertex      v
 t_vertex    vt
@@ -112,17 +114,17 @@ face        f
 group       g
 object      o
 smooth      s
-integer     [+-]?([[:digit:]]+)
-dseq        ([[:digit:]]+)
-dseq_opt    ([[:digit:]]*)
+integer     [+-]?([0-9]+)
+dseq        ([0-9]+)
+dseq_opt    ([0-9]*)
 frac        (({dseq_opt}"."{dseq})|{dseq}".")
 exp         ([eE][+-]?{dseq})
 exp_opt     ({exp}?)
 fsuff       [flFL]
 fsuff_opt   ({fsuff}?)
-hpref       (0[xX])
-hdseq       ([[:xdigit:]]+)
-hdseq_opt   ([[:xdigit:]]*)
+hpref       ('0'[xX])
+hdseq       ([0-9]+)
+hdseq_opt   ([0-9]*)
 hfrac       (({hdseq_opt}"."{hdseq})|({hdseq}"."))
 bexp        ([pP][+-]?{dseq})
 dfc         (({frac}{exp_opt}{fsuff_opt})|({dseq}{exp}{fsuff_opt}))
@@ -150,203 +152,201 @@ id          [!-~]+
 newline     ["\r\n""\n"]
 comment     "#"[^"\r\n""\n"]*{newline}
 
-%%
-
-{vertex}            { return VERTEX; }
-{t_vertex}          { return T_VERTEX; }
-{n_vertex}          { return N_VERTEX; }
-{point}             { return POINT; }
-{line}              { return LINE; }
-{face}              { return FACE; }
-{group}             {
+<INITIAL>{vertex}            { RETURN(VERTEX); }
+<INITIAL>{t_vertex}          { RETURN(T_VERTEX); }
+<INITIAL>{n_vertex}          { RETURN(N_VERTEX); }
+<INITIAL>{point}             { RETURN(POINT); }
+<INITIAL>{line}              { RETURN(LINE); }
+<INITIAL>{face}              { RETURN(FACE); }
+<INITIAL>{group}             {
     BEGIN(id_list_state);
-    return GROUP;
+    RETURN(GROUP);
 }
 
-{object}            {
+<INITIAL>{object}            {
     BEGIN(id_state);
-    return OBJECT;
+    RETURN(OBJECT);
 }
 
-{smooth}            {
-    return SMOOTH;
+<INITIAL>{smooth}            {
+    RETURN(SMOOTH);
 }
 
-{integer}           {
+<INITIAL>{integer}           {
     yylval->integer = atoi(yytext);
-    return INTEGER;
+    RETURN(INTEGER);
 }
 
-{real}              {
+<INITIAL>{real}              {
     yylval->real = atof(yytext);
-    return FLOAT;
+    RETURN(FLOAT);
 }
 
-{usemtl}            {
+<INITIAL>{usemtl}            {
     BEGIN(id_state);
-    return USEMTL;
+    RETURN(USEMTL);
 }
 
-{mtllib}            {
+<INITIAL>{mtllib}            {
     BEGIN(id_list_state);
-    return MTLLIB;
+    RETURN(MTLLIB);
 }
 
-{usemap}            {
+<INITIAL>{usemap}            {
     BEGIN(toggle_id_state);
-    return USEMAP;
+    RETURN(USEMAP);
 }
 
-{maplib}            {
+<INITIAL>{maplib}            {
     BEGIN(id_list_state);
-    return MAPLIB;
+    RETURN(MAPLIB);
 }
 
-{bevel}             {
-    return BEVEL;
+<INITIAL>{bevel}             {
+    RETURN(BEVEL);
 }
 
-{c_interp}          {
-    return C_INTERP;
+<INITIAL>{c_interp}          {
+    RETURN(C_INTERP);
 }
 
-{d_interp}          {
-    return D_INTERP;
+<INITIAL>{d_interp}          {
+    RETURN(D_INTERP);
 }
 
-{lod}               {
-    return LOD;
+<INITIAL>{lod}               {
+    RETURN(LOD);
 }
 
-{shadow_obj}        {
+<INITIAL>{shadow_obj}        {
     BEGIN(id_state);
-    return SHADOW_OBJ;
+    RETURN(SHADOW_OBJ);
 }
 
-{trace_obj}         {
+<INITIAL>{trace_obj}         {
     BEGIN(id_state);
-    return TRACE_OBJ;
+    RETURN(TRACE_OBJ);
 }
 
-{on}                {
-    return ON;
+<INITIAL>{on}                {
+    RETURN(ON);
 }
 
-{off}               {
-    return OFF;
+<INITIAL>{off}               {
+    RETURN(OFF);
 }
 
-{v_reference}       {
+<INITIAL>{v_reference}       {
     if (detail::split_reference(yytext, yylval->reference))
-	return V_REFERENCE;
-    return 0;
+	RETURN(V_REFERENCE);
+    RETURN(YYEOF);
 }
-{v_tv_reference}    {
+<INITIAL>{v_tv_reference}    {
     if (detail::split_reference(yytext, yylval->reference))
-	return TV_REFERENCE;
-    return 0;
+	RETURN(TV_REFERENCE);
+    RETURN(YYEOF);
 }
-{v_nt_reference}    {
+<INITIAL>{v_nt_reference}    {
     if (detail::split_reference(yytext, yylval->reference))
-	return NV_REFERENCE;
-    return 0;
+	RETURN(NV_REFERENCE);
+    RETURN(YYEOF);
 }
-{v_tnv_reference_list} {
+<INITIAL>{v_tnv_reference_list} {
     if (detail::split_reference(yytext, yylval->reference))
-	return TNV_REFERENCE;
-    return 0;
+	RETURN(TNV_REFERENCE);
+    RETURN(YYEOF);
 }
 
-{wspace}            { }
+<INITIAL>{wspace}            { IGNORE_TOKEN; }
 
-{comment}|{newline} {
+<INITIAL>{comment}|{newline} {
     ++(detail::get_state(yyextra).file_stack.back().lineno);
-    return EOL;
+    RETURN(EOL);
 }
 
-.                   { return yytext[0]; }
+<INITIAL>. { IGNORE_TOKEN; }
 
-
-<id_state>{
-
-{id}                {
+<id_state>{id}                {
     // Keywords are valid identifiers here
     // Goto initial state after single token
     detail::get_state(yyextra).working_string = yytext;
-    strncpy(yylval->string, yytext, TOKEN_STRING_LEN);
+    bu_strlcpy(yylval->string, yytext, TOKEN_STRING_LEN);
+
+#if DEBUG
+    std::cout << yylval->string;
+#endif
 
     BEGIN(INITIAL);
-    return ID;
+    RETURN(ID);
 }
 
-{wspace}            { }
+<id_state>{wspace}            { IGNORE_TOKEN; }
 
-{comment}|{newline} {
+<id_state>{comment}|{newline} {
     // Goto initial state when we hit newline
     ++(detail::get_state(yyextra).file_stack.back().lineno);
     BEGIN(INITIAL);
-    return EOL;
+    RETURN(EOL);
 }
 
-.                   { return yytext[0]; }
-}
+<id_state>. { IGNORE_TOKEN; }
 
-
-<toggle_id_state>{
-
-{off}               {
+<toggle_id_state>{off}               {
     // off is a valid token, not an id
     BEGIN(INITIAL);
-    return OFF;
+    RETURN(OFF);
 }
 
-{id}                {
+<toggle_id_state>{id}                {
     // Keywords are valid identifiers here
     // Goto initial state after single token
     detail::get_state(yyextra).working_string = yytext;
-    strncpy(yylval->string, yytext, TOKEN_STRING_LEN);
+    bu_strlcpy(yylval->string, yytext, TOKEN_STRING_LEN);
+#if DEBUG
+    std::cout << yylval->string;
+#endif
 
     BEGIN(INITIAL);
-    return ID;
+    RETURN(ID);
 }
 
-{wspace}            { }
+<toggle_id_state>{wspace}            { IGNORE_TOKEN; }
 
-{comment}|{newline} {
+<toggle_id_state>{comment}|{newline} {
     // Goto initial state when we hit newline
     ++(detail::get_state(yyextra).file_stack.back().lineno);
     BEGIN(INITIAL);
-    return EOL;
+    RETURN(EOL);
 }
 
-.                   { return yytext[0]; }
-}
+<toggle_id_state>. { IGNORE_TOKEN; }
 
-
-<id_list_state>{
-
-{id}                {
+<id_list_state>{id}                {
     // Keywords are valid identifiers here
     detail::get_state(yyextra).working_string = yytext;
-    strncpy(yylval->string, yytext, TOKEN_STRING_LEN);
+    bu_strlcpy(yylval->string, yytext, TOKEN_STRING_LEN);
+#if DEBUG
+    std::cout << yylval->string;
+#endif
 
-    return ID;
+    RETURN(ID);
 }
 
-{wspace}            { }
+<id_list_state>{wspace}            { IGNORE_TOKEN }
 
-{comment}|{newline} {
+<id_list_state>{comment}|{newline} {
     // Goto initial state when we hit newline
     ++(detail::get_state(yyextra).file_stack.back().lineno);
     BEGIN(INITIAL);
-    return EOL;
+    RETURN(EOL);
 }
 
-.                   { return yytext[0]; }
-}
+<id_list_state>. { IGNORE_TOKEN; }
 
+*/
+END_RE2C
 
-%%
+} /* scan */
 
 namespace arl {
 namespace obj_parser {
@@ -354,31 +354,23 @@ namespace detail {
 
 bool split_reference(const char *s, int val[3])
 {
-    memset(val, sizeof(int) * 3, 0);
+    memset(val, sizeof(int)*3, 0);
 
     char *endptr;
     val[0] = strtol(s, &endptr, 0);
-
-    if (*endptr == 0) {
+    if (*endptr == 0)
 	return true;
-    }
 
-    if (*endptr != '/') {
+    if (*endptr != '/')
 	return false;
-    }
-
     ++endptr;
 
     val[1] = strtol(endptr, &endptr, 0);
-
-    if (*endptr == 0) {
+    if (*endptr == 0)
 	return true;
-    }
 
-    if (*endptr != '/') {
+    if (*endptr != '/')
 	return false;
-    }
-
     ++endptr;
 
     val[2] = strtol(endptr, &endptr, 0);
@@ -386,11 +378,9 @@ bool split_reference(const char *s, int val[3])
     return (*endptr == 0);
 }
 
-
 } /* namespace detail */
 } /* namespace obj_parser */
 } /* namespace arl */
-
 /*
  * Local Variables:
  * mode: C++

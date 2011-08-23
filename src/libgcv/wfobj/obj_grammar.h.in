@@ -1,23 +1,18 @@
 #ifndef OBJ_GRAMMAR_H
 #define OBJ_GRAMMAR_H
 
+#include "common.h"
 #include "obj_tokens.h"
+#include "obj_rules.h"
+#include "obj_token_type.h"
 
-const int TOKEN_STRING_LEN = 80;
-
-typedef union YYSTYPE
-{
-    float real;
-    int integer;
-    int reference[3];
-    bool toggle;
-    size_t index;
-    char string[TOKEN_STRING_LEN];
-} YYSTYPE;
+__BEGIN_DECLS
 
 void *ParseAlloc(void *(*mallocProc)(size_t));
-void Parse(void *parser, int tokenType, YYSTYPE tokenValue, void *scanner);
+void Parse(void *parser, int tokenType, YYSTYPE tokenValue, yyscan_t scanner);
 void ParseFree(void *p, void (*freeProc)(void*));
 void ParseTrace(FILE *stream, char *prefix);
+
+__END_DECLS
 
 #endif

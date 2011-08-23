@@ -27,14 +27,17 @@
  * contents in.
  */
 
+#include "common.h"
 #include "obj_parser.h"
 #include "obj_parser_state.h"
 
 #include "obj_grammar.h"
 #include "obj_rules.h"
 
+#include <cerrno>
 #include <cstdio>
 #include <sstream>
+#include <iostream>
 
 extern int obj_parser_parse(yyscan_t);
 
@@ -110,29 +113,31 @@ struct lex_sentry {
 
 } /* namespace detail */
 
-
-#if defined(__cplusplus)
-extern "C" {
-#endif
+__BEGIN_DECLS
 
 static void createParser(detail::parser_type *parser)
 {
     *parser = ParseAlloc(malloc);
 }
 
+static void destroyParser(detail::parser_type *parser)
+{
+    ParseFree(*parser, free);
+}
+
 static void createScanner(yyscan_t *scanner)
 {
-    obj_parser_lex_init(scanner);
+    BU_GETTYPE(*scanner, scanner_t);
 }
 
 static void setScannerIn(yyscan_t scanner, FILE *in)
 {
-    obj_parser_set_in(in, scanner);
+    initScanner(scanner, in);
 }
 
 static void setScannerExtra(yyscan_t scanner, detail::objCombinedState *extra)
 {
-    obj_parser_set_extra(extra, scanner);
+    obj_parser_set_extra(scanner, extra);
 }
 
 int obj_parser_create(obj_parser_t *parser)
@@ -183,8 +188,6 @@ int obj_parse(const char *filename, obj_parser_t parser,
 	yyscan_t scanner;
 	createScanner(&scanner);
 
-	detail::lex_sentry lsentry(scanner);
-
 	setScannerIn(scanner, extra.parser_state.file_stack.back().file.get());
 	setScannerExtra(scanner, &extra);
 
@@ -193,6 +196,8 @@ int obj_parse(const char *filename, obj_parser_t parser,
 	err = obj_parser_parse(scanner);
 
 	p->last_error = extra.parser_state.err.str();
+
+	destroyParser(&((detail::objCombinedState*)scanner)->parser);
 
 	if (err == 2) {
 	    return ENOMEM;
@@ -218,15 +223,18 @@ int obj_parse(const char *filename, obj_parser_t parser,
 
 int obj_fparse(FILE *stream, obj_parser_t parser, obj_contents_t *contents)
 {
-    detail::objParser *p = static_cast<detail::objParser*>(parser.p);
+    using detail::objParser;
+    using detail::objFileContents;
+    using detail::objCombinedState;
+
+    objParser *p = static_cast<objParser*>(parser.p);
 
     int err = 0;
 
     try {
-	std::auto_ptr<detail::objFileContents>
-	    sentry(new detail::objFileContents);
+	std::auto_ptr<objFileContents> sentry(new objFileContents);
 
-	detail::objCombinedState extra(p, sentry.get());
+	objCombinedState extra(p, sentry.get());
 
 	if ((err = detail::set_stream(stream, extra.parser_state))) {
 	    return err;
@@ -235,12 +243,13 @@ int obj_fparse(FILE *stream, obj_parser_t parser, obj_contents_t *contents)
 	yyscan_t scanner;
 	createScanner(&scanner);
 
-	detail::lex_sentry lsentry(scanner);
-
 	setScannerIn(scanner, extra.parser_state.file_stack.back().file.get());
 	setScannerExtra(scanner, &extra);
 
-	createParser(&((detail::objCombinedState*)scanner)->parser);
+	objCombinedState *state =
+	    static_cast<objCombinedState*>(scanner->extra);
+
+	createParser(&(state->parser));
 
 	err = obj_parser_parse(scanner);
 
@@ -924,9 +933,7 @@ size_t obj_polygonal_tnv_face_vertices(obj_contents_t contents, size_t face,
     return 0;
 }
 
-#if defined(__cplusplus)
-} /* extern "C" */
-#endif
+__END_DECLS
 
 } /* namespace obj_parser */
 } /* namespace arl */
