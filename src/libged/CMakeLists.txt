@@ -212,8 +212,6 @@ set(LIBGED_SOURCES
     shells.c
     showmats.c
     size.c
-    simulate/simulate.c
-    simulate/simphysics.cpp
     slew.c
     solids_on_ray.c
     sphgroup.c
@@ -265,6 +263,8 @@ set(LIBGED_SOURCES
     zoom/zoom.c
 )
 
+ADD_SUBDIRECTORY(simulate)
+
 include_directories(
     ${PNG_INCLUDE_DIR}
     ${ZLIB_INCLUDE_DIR}
@@ -272,7 +272,7 @@ include_directories(
     ${TCL_INCLUDE_DIRS}
 )
 
-BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb librt libfb libbu libanalyze ${REGEX_LIBRARY} ${WINSOCK_LIB} ${M_LIBRARY}")
+BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb librt libfb libbu libanalyze libgedsim ${REGEX_LIBRARY} ${WINSOCK_LIB} ${M_LIBRARY}")
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
 SET(ged_ignore_files
