@@ -41,37 +41,10 @@ BRLCAD_INCLUDE_FILE(regex.h HAVE_REGEX_H)
 #---------------------------------------------------------------------------------
 # Local Copies of Tools
 #---------------------------------------------------------------------------------
-OPTION(BUILD_LOCAL_TOOLS "Build local copies of m4, byacc and flex" OFF)
+OPTION(BUILD_LOCAL_TOOLS "Build local copies of re2c and lemon" OFF)
 MARK_AS_ADVANCED(BUILD_LOCAL_TOOLS)
 IF(BUILD_LOCAL_TOOLS)
-# Build Berkeley Yacc - guarantees certain extensions added originally by GNU
-# Bison are supported, as well as yacc itself (problematic on, say, Windows.)
-# Need to upgrade FindYacc.cmake to test for advanced Bison options
-# options and be smarter - in the meantime just turn this on.  Not used yet,
-# for now just testing the build - the CMake script is basic and doesn't
-# implement any of the checks in byacc's aclocal.m4 or use a config.h file.
-ADD_SUBDIRECTORY(byacc)
-
-# Preparing to build flex as well - modern implementations apparently are
-# heavily dependent on m4, so the simplest path is to get the simplest
-# m4 that can compile flex into a working state.  Using NetBSD's port of the OpenBSD
-# m4 implementation - very small, about 280K for m4 plus portability files,
-# and that will be smaller once we hook into byacc to generate a couple
-# of the files.
-ADD_SUBDIRECTORY(m4)
-
-# This is a very minimal flex build.  Need to improve this by getting the
-# LOCATION of the m4 target from the above build and pass that in to flex
-# for it's M4 location definition.  Also should probably remove the
-# environment variable check for M4 from flex to avoid unexpected behavior - 
-# using our m4 will give consistent behavior (once we test it out and make
-# sure it IS correct...) and a system m4 might do unexpected things.
-ADD_SUBDIRECTORY(flex)
 ENDIF(BUILD_LOCAL_TOOLS)
-
-DISTCHECK_IGNORE_ITEM(byacc)
-DISTCHECK_IGNORE_ITEM(m4)
-DISTCHECK_IGNORE_ITEM(flex)
 
 # Ignore the boost subdir - it's only used for the boost headers and is not
 # compiled
