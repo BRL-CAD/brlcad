@@ -58,9 +58,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
-* investigate off-by-one errors from identical rt invocations.
-  running with -P1 results in no errors, parallel (on 64-bit Linux
-  RHEL) is giving many floating-point related errors.
+* investigate off-by-one AND off-by-many errors from identical rt
+  invocations.  running with -P1 results in no errors, parallel (on
+  64-bit Linux RHEL) is giving many floating-point related errors.
+  running with -B also results in no errors indicating maybe something
+  related to libbn random numbers.
 
 * investigate why epa primitive is so sensitive to coarse absolute
   value changes (run csgbrep, tol abs=1, facetize and get 321k poly)
