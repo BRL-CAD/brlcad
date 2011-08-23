@@ -273,10 +273,6 @@ comment     "#"[^"\r\n""\n"]*{newline}
     detail::get_state(yyextra).working_string = yytext;
     bu_strlcpy(yylval->string, yytext, TOKEN_STRING_LEN);
 
-#if DEBUG
-    std::cout << yylval->string;
-#endif
-
     BEGIN(INITIAL);
     RETURN(ID);
 }
@@ -303,9 +299,6 @@ comment     "#"[^"\r\n""\n"]*{newline}
     // Goto initial state after single token
     detail::get_state(yyextra).working_string = yytext;
     bu_strlcpy(yylval->string, yytext, TOKEN_STRING_LEN);
-#if DEBUG
-    std::cout << yylval->string;
-#endif
 
     BEGIN(INITIAL);
     RETURN(ID);
@@ -326,9 +319,6 @@ comment     "#"[^"\r\n""\n"]*{newline}
     // Keywords are valid identifiers here
     detail::get_state(yyextra).working_string = yytext;
     bu_strlcpy(yylval->string, yytext, TOKEN_STRING_LEN);
-#if DEBUG
-    std::cout << yylval->string;
-#endif
 
     RETURN(ID);
 }
