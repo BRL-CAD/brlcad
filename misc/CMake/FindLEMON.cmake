@@ -68,46 +68,51 @@
 FIND_PROGRAM(LEMON_EXECUTABLE lemon DOC "path to the lemon executable")
 MARK_AS_ADVANCED(LEMON_EXECUTABLE)
 
-IF(LEMON_EXECUTABLE)
-	#============================================================
-	# LEMON_TARGET (public macro)
-	#============================================================
-	#
-	MACRO(LEMON_TARGET Name LemonInput LemonOutput)
-		SET(LEMON_TARGET_outputs "${LemonOutput}")
-		IF(NOT ${ARGC} EQUAL 3 AND NOT ${ARGC} EQUAL 4)
-			MESSAGE(SEND_ERROR "Usage")
-		ELSE()
-			# lemon generates files in source dir, so we need to move them
+#============================================================
+# LEMON_TARGET (public macro)
+#============================================================
+#
+MACRO(LEMON_TARGET Name LemonInput LemonOutput)
+	SET(LEMON_TARGET_outputs "${LemonOutput}")
+	IF(NOT ${ARGC} EQUAL 3 AND NOT ${ARGC} EQUAL 4)
+		MESSAGE(SEND_ERROR "Usage")
+	ELSE()
+		# lemon generates files in source dir, so we need to move them
+		IF("${ARGV1}" MATCHES "yy$")
+			STRING(REGEX REPLACE "yy$" "c" SRC_FILE "${ARGV1}")
+			STRING(REGEX REPLACE "yy$" "h" HEADER_FILE "${ARGV1}")
+			STRING(REGEX REPLACE "yy$" "out" OUT_FILE "${ARGV1}")
+			STRING(REGEX REPLACE "^(.*)(\\.[^.]*)$" "\\2" _fileext "${ARGV2}")
+			STRING(REPLACE "cpp" "hpp" _fileext ${_fileext})
+		ELSE("${ARGV1}" MATCHES "yy$")
 			STRING(REGEX REPLACE "y$" "c" SRC_FILE "${ARGV1}")
 			STRING(REGEX REPLACE "y$" "h" HEADER_FILE "${ARGV1}")
 			STRING(REGEX REPLACE "y$" "out" OUT_FILE "${ARGV1}")
 			STRING(REGEX REPLACE "^(.*)(\\.[^.]*)$" "\\2" _fileext "${ARGV2}")
 			STRING(REPLACE "c" "h" _fileext ${_fileext})
-			STRING(REGEX REPLACE "^(.*)(\\.[^.]*)$" "\\1${_fileext}" LEMON_${Name}_OUTPUT_HEADER "${ARGV2}")
-			LIST(APPEND LEMON_TARGET_outputs "${LEMON_${Name}_OUTPUT_HEADER}")
+		ENDIF("${ARGV1}" MATCHES "yy$")
+		STRING(REGEX REPLACE "^(.*)(\\.[^.]*)$" "\\1${_fileext}" LEMON_${Name}_OUTPUT_HEADER "${ARGV2}")
+		LIST(APPEND LEMON_TARGET_outputs "${LEMON_${Name}_OUTPUT_HEADER}")
 
-			ADD_CUSTOM_COMMAND(OUTPUT ${LEMON_TARGET_outputs}
-				COMMAND ${LEMON_EXECUTABLE} ${ARGV1} ${ARGV3}
-				COMMAND ${CMAKE_COMMAND} -E rename ${HEADER_FILE} ${LEMON_${Name}_OUTPUT_HEADER}
-				COMMAND ${CMAKE_COMMAND} -E rename ${SRC_FILE} ${ARGV2}
-				COMMAND ${CMAKE_COMMAND} -E remove ${OUT_FILE}
-				DEPENDS ${ARGV1}
-				COMMENT "[LEMON][${Name}] Building parser with ${LEMON_EXECUTABLE}"
-				WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+		ADD_CUSTOM_COMMAND(OUTPUT ${LEMON_TARGET_outputs}
+			COMMAND ${LEMON_EXECUTABLE} ${ARGV1} ${ARGV3}
+			COMMAND ${CMAKE_COMMAND} -E rename ${HEADER_FILE} ${LEMON_${Name}_OUTPUT_HEADER}
+			COMMAND ${CMAKE_COMMAND} -E rename ${SRC_FILE} ${ARGV2}
+			COMMAND ${CMAKE_COMMAND} -E remove ${OUT_FILE}
+			DEPENDS ${ARGV1}
+			COMMENT "[LEMON][${Name}] Building parser with ${LEMON_EXECUTABLE}"
+			WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
-			# define target variables
-			SET(LEMON_${Name}_DEFINED TRUE)
-			SET(LEMON_${Name}_INPUT ${ARGV1})
-			SET(LEMON_${Name}_OUTPUTS ${LEMON_TARGET_outputs})
-			SET(LEMON_${Name}_COMPILE_FLAGS ${LEMON_TARGET_cmdopt})
-			SET(LEMON_${Name}_OUTPUT_SOURCE "${LemonOutput}")
-		ENDIF(NOT ${ARGC} EQUAL 3 AND NOT ${ARGC} EQUAL 4)
-	ENDMACRO(LEMON_TARGET)
-	#
-	#============================================================
-
-ENDIF(LEMON_EXECUTABLE)
+		# define target variables
+		SET(LEMON_${Name}_DEFINED TRUE)
+		SET(LEMON_${Name}_INPUT ${ARGV1})
+		SET(LEMON_${Name}_OUTPUTS ${LEMON_TARGET_outputs})
+		SET(LEMON_${Name}_COMPILE_FLAGS ${LEMON_TARGET_cmdopt})
+		SET(LEMON_${Name}_OUTPUT_SOURCE "${LemonOutput}")
+	ENDIF(NOT ${ARGC} EQUAL 3 AND NOT ${ARGC} EQUAL 4)
+ENDMACRO(LEMON_TARGET)
+#
+#============================================================
 
 INCLUDE(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(LEMON DEFAULT_MSG LEMON_EXECUTABLE)

@@ -21,6 +21,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
 #include <sys/types.h>
 
 #include "bu.h"

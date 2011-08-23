@@ -2,7 +2,7 @@
 #define OBJ_GRAMMAR_H
 
 #include "common.h"
-#include "obj_tokens.h"
+#include "obj_grammar.hpp"
 #include "obj_rules.h"
 #include "obj_token_type.h"
 

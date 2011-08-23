@@ -151,10 +151,7 @@ static char *usage = "%s -u units_str -o open_bot_type -h plate_thickness "
                                already exists, it will be\n\
                                overwritten.\n";
 
-int test_face(struct ga_t *ga, struct gfi_t *gfi, size_t face_idx,
-    fastf_t conv_factor, struct bn_tol *tol, int face_test_type,
-    int force_retest);
-
+ 
 /* global definition */
 size_t *tmp_ptr = NULL;
 static int NMG_debug; /* saved arg of -X, for longjmp handling */

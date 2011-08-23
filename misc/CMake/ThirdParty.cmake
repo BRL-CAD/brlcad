@@ -91,6 +91,12 @@ MACRO(THIRD_PARTY_EXECUTABLE lower dir)
 	IF(${CMAKE_PROJECT_NAME}_${upper} STREQUAL "BUNDLED" OR ${CMAKE_PROJECT_NAME}_${upper} STREQUAL "AUTO (B)")
 		SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD ON)
 		SET(${upper}_EXECUTABLE "${lower}" CACHE STRING "set by THIRD_PARTY macro" FORCE)
+		# Include the Find module for the exec in question - need macro routines
+		IF(EXISTS ${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
+			INCLUDE(${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
+		ELSE(EXISTS ${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
+			INCLUDE(${CMAKE_ROOT}/Modules/Find${upper}.cmake)
+		ENDIF(EXISTS ${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
 	ELSE(${CMAKE_PROJECT_NAME}_${upper} STREQUAL "BUNDLED" OR ${CMAKE_PROJECT_NAME}_${upper} STREQUAL "AUTO (B)")
 		SET(${CMAKE_PROJECT_NAME}_${upper}_BUILD OFF)
 		# Stash the previous results (if any) so we don't repeatedly call out the tests - only report
@@ -104,7 +110,7 @@ MACRO(THIRD_PARTY_EXECUTABLE lower dir)
 		IF("${${upper}_FOUND_STATUS}" MATCHES "${upper}-NOTFOUND")
 			SET(${upper}_FIND_QUIETLY TRUE)
 		ENDIF("${${upper}_FOUND_STATUS}" MATCHES "${upper}-NOTFOUND")
-		# Include the Find module for the library in question
+		# Include the Find module for the exec in question
 		IF(EXISTS ${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
 			INCLUDE(${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)
 		ELSE(EXISTS ${${CMAKE_PROJECT_NAME}_CMAKE_DIR}/Find${upper}.cmake)

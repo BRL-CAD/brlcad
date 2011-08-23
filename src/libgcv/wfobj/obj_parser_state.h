@@ -34,21 +34,8 @@
 #include <algorithm>
 #include <cstring>
 
-#ifdef SHARED_PTR_STD
-#  include <memory>
-using std::tr1::shared_ptr;
-
-#elif SHARED_PTR_TR1_MEMORY
-#  include <tr1/memory>
-using std::tr1::shared_ptr;
-
-#elif SHARED_PTR_BOOST
-#  include <boost/shared_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 using boost::shared_ptr;
-
-#else
-#  error "Need shared_ptr"
-#endif
 
 inline bool operator<(const obj_polygonal_attributes_t &lhs,
 		      const obj_polygonal_attributes_t &rhs)

@@ -108,7 +108,7 @@ BRLCAD_ADDEXEC(g-acad g-acad.c "librt libbu")
 
 BRLCAD_ADDEXEC(g-obj g-obj.c "librt libbu")
 
-BRLCAD_ADDEXEC(obj-g obj-g.c "librt libbu")
+BRLCAD_ADDEXEC(obj-g_old obj-g.c "librt libbu")
 
 BRLCAD_ADDEXEC(patch-g patch/patch-g.c "libwdb librt libbu ${M_LIBRARY}")
 
