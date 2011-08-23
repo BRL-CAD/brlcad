@@ -47,7 +47,7 @@ single_step_sim(struct bu_vls *result_str, int argc, const char *argv[])
 /*
  * Local Variables:
  * tab-width: 8
- * mode: C
+ * mode: C++
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:
