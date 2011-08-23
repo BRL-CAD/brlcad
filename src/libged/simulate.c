@@ -46,44 +46,6 @@
 
 extern int single_step_sim(struct bu_vls *result_str, int argc, const char *argv[]);
 
-/**
- * Duplicate existing objects : Unused for now as shape duplicated using copy command
- */
-#if 0
-static int
-duplicate_objects(struct ged *gedp, int argc, const char *argv[])
-{
-    struct directory *from_dp;
-    struct bu_external external;
-    int i;
-    
-    for (i = 1; i < argc; i++) {
-        
-        GED_DB_LOOKUP(gedp, from_dp, argv[i], LOOKUP_NOISY, GED_ERROR & GED_QUIET);
-//        GED_CHECK_EXISTS(gedp, argv[i], LOOKUP_QUIET, GED_ERROR);
-
-        if (db_get_external(&external, from_dp, gedp->ged_wdbp->dbip)) {
-	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting\n");
-	    return GED_ERROR;
-        }
-
-        if (wdb_export_external(gedp->ged_wdbp, &external, "TransformedResult",
-			        from_dp->d_flags,  from_dp->d_minor_type) < 0) {
-	    bu_free_external(&external);
-	    bu_vls_printf(gedp->ged_result_str,
-		          "Failed to write new object (%s) to database - aborting!!\n",
-		          argv[i]);
-	    return GED_ERROR;
-        }
-
-        bu_free_external(&external);    
-    }
-    
-    bu_vls_printf(gedp->ged_result_str, "Objects duplicated !\n");
-  
-    return GED_OK;
-}
-#endif
 
 /**
  * How to use simulate.Blissfully simple interface, more options will be added soon
@@ -108,7 +70,7 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *ndp;
     int i, rv;
-    struct rt_db_internal intern;   //input and output solid
+    struct rt_db_internal intern;
     static const char *transf_shape_name = "Transformed_Shape";
     static const char *usage = "object(s)";
     char *cmd_args[5], result_str[100];
@@ -132,8 +94,7 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
     }
     
     /* First duplicate the passed shape, so the original is untouched */
-    //duplicate_objects(gedp, argc, argv);  //does not do deep object copy, so original primitives are attached:BAD
-    //Check if the duplicate exists, and kill it if so
+    /* Check if the duplicate exists, and kill it if so */
     if (db_lookup(gedp->ged_wdbp->dbip, transf_shape_name, LOOKUP_QUIET) != RT_DIR_NULL) {
 	cmd_args[0] = "sim_kill";
         cmd_args[1] = (char *)transf_shape_name;
@@ -147,8 +108,8 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
    
     /* Copy the shape, clone is required for combinations(full tree copy) : TODO */
     cmd_args[0] = "sim_copy";
-    cmd_args[1] = (char *)argv[1];              //same as passed argv[1]/primitive
-    cmd_args[2] = (char *)transf_shape_name;    //new primitive name
+    cmd_args[1] = (char *)argv[1];             
+    cmd_args[2] = (char *)transf_shape_name;
     cmd_args[3] = (char *)0;
     rv = ged_copy(gedp, 3, (const char **)cmd_args);
     if (rv != GED_OK)
