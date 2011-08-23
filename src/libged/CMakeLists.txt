@@ -212,8 +212,8 @@ set(LIBGED_SOURCES
     shells.c
     showmats.c
     size.c
-    simulate.c
-    simphysics.cpp
+    simulate/simulate.c
+    simulate/simphysics.cpp
     slew.c
     solids_on_ray.c
     sphgroup.c
