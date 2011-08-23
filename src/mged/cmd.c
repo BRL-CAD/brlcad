@@ -177,7 +177,7 @@ cmd_ged_simulate_wrapper(ClientData clientData, Tcl_Interp *interpreter, int arg
     return TCL_ERROR;
 
     av[0] = "draw";
-    av[1] = argv[argc-1];
+    av[1] = argv[1];
     av[2] = NULL;
     cmd_draw(clientData, interpreter, 2, av);
        
