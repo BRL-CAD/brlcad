@@ -14,7 +14,7 @@ ELSE(BUILD_TYPE)
 ENDIF(BUILD_TYPE)
 
 include_directories(
-	${CMAKE_SOURCE_DIR}/src/other
+	${CMAKE_SOURCE_DIR}/src/other/boost
 	${OPENNURBS_INCLUDE_DIR}
 	${TCL_INCLUDE_DIRS}
 	${ZLIB_INCLUDE_DIR}
