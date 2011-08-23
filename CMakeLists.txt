@@ -569,8 +569,8 @@ ENDIF("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
 OPTION(BUILD_SHARED_LIBS "Build shared libraries" ON)
 MARK_AS_ADVANCED(BUILD_SHARED_LIBS)
 
-# Build static libs by default unless we're debugging. Note: this 
-# option will not disable libraries specifically added as STATIC even 
+# Build static libs by default unless we're debugging. Note: this
+# option will not disable libraries specifically added as STATIC even
 # when OFF.
 AUTO_OPTION(BRLCAD_BUILD_STATIC BUILD_STATIC_LIBS "OFF" "ON")
 
@@ -821,17 +821,17 @@ IF(MSVC)
 				MESSAGE(WARNING "Selected MSVC compiler is 32 bit - setting cpu type to 32 bit. To perform a 64 bit MSVC build, select the 64 bit MSVC CMake generator.")
 				SET(BRLCAD-CPU_TYPE "32BIT" CACHE STRING "Detect system CPU type." FORCE)
 			ENDIF(NOT "${BRLCAD-CPU_TYPE}" STREQUAL "AUTO")
-		ENDIF(NOT ${BRLCAD-CPU_TYPE} STREQUAL "32BIT")
+		ENDIF(NOT ${CMAKE_CPU_TYPE} STREQUAL "32BIT")
 	ENDIF(CMAKE_CL_64)
 ENDIF(MSVC)
 
 # One of the problems with 32/64 building is we need to search anew
 # for 64 bit libs after a 32 bit configure, or vice versa.
-IF(PREVIOUS_CONFIGURE_TYPE) 
+IF(PREVIOUS_CONFIGURE_TYPE)
 	IF(NOT ${PREVIOUS_CONFIGURE_TYPE} STREQUAL ${CMAKE_CPU_TYPE})
 		MESSAGE(FATAL_ERROR "Configuring for ${CMAKE_CPU_TYPE} build, but previous configuration for ${PREVIOUS_CONFIGURE_TYPE} is already present.  To proceed, either clear CMakeCache.txt file or specify ${PREVIOUS_CONFIGURE_TYPE} as the build type.")
 	ENDIF(NOT ${PREVIOUS_CONFIGURE_TYPE} STREQUAL ${CMAKE_CPU_TYPE})
-ENDIF(PREVIOUS_CONFIGURE_TYPE) 
+ENDIF(PREVIOUS_CONFIGURE_TYPE)
 
 SET(PREVIOUS_CONFIGURE_TYPE ${CMAKE_CPU_TYPE} CACHE STRING "Previous configuration CPU type" FORCE)
 MARK_AS_ADVANCED(PREVIOUS_CONFIGURE_TYPE)
