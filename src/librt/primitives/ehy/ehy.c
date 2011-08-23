@@ -680,7 +680,7 @@ rt_ehy_class(void)
  * R T _ E H Y _ P L O T
  */
 int
-rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol))
+rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     fastf_t c, dtol, f, mag_a, mag_h, ntol, r1, r2;
     fastf_t **ellipses, theta_prev, theta_new;

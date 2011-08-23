@@ -36,7 +36,7 @@
 #include "vmath.h"
 
 
-extern int rt_ell_plot(struct bu_list *, struct rt_db_internal *, const struct rt_tess_tol *, const struct bn_tol *);
+extern int rt_ell_plot(struct bu_list *, struct rt_db_internal *, const struct rt_tess_tol *, const struct bn_tol *, const struct rt_view_info *);
 
 
 HIDDEN unsigned char *
@@ -732,7 +732,7 @@ rt_pnts_print(register const struct soltab *stp)
  * Plot pnts collection as axes or spheres.
  */
 int
-rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info))
 {
     struct rt_pnts_internal *pnts;
     struct bu_list *head;
@@ -772,7 +772,7 @@ rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal, const struc
 	/* give rt_ell_plot a sphere representation of each point */
 	for (BU_LIST_FOR(point, pnt, head)) {
 	    VMOVE(ell.v, point->v);
-	    rt_ell_plot(vhead, &db, ttol, tol);
+	    rt_ell_plot(vhead, &db, ttol, tol, NULL);
 	}
     } else {
 	double vCoord, hCoord;

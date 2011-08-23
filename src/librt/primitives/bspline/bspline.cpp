@@ -91,7 +91,7 @@ struct nurb_hit {
     extern void rt_brep_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp);
     extern void rt_brep_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp);
     extern void rt_brep_free(register struct soltab *stp);
-    extern int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
+    extern int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info));
 
 #endif /* CONVERT_TO_BREP */
 
@@ -611,7 +611,7 @@ rt_nurb_class(void)
  * R T _ N U R B _ P L O T
  */
 int
-rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info))
 {
     struct rt_nurb_internal *sip;
 
@@ -751,7 +751,7 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     RT_DB_INTERNAL_INIT(&di);
     di.idb_ptr = (genptr_t)&bi;
 
-    return rt_brep_plot(vhead, &di, ttol, tol);
+    return rt_brep_plot(vhead, &di, ttol, tol, NULL);
 #else
     return 0;
 #endif /* CONVERT_TO_BREP */

@@ -701,7 +701,7 @@ rt_superell_16pts(fastf_t *ov,
  * R T _ S U P E R E L L _ P L O T
  */
 int
-rt_superell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_superell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     int i;
     struct rt_superell_internal *eip;

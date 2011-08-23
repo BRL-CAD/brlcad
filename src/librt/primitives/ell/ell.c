@@ -675,7 +675,7 @@ rt_ell_16pts(fastf_t *ov,
  * R T _ E L L _ P L O T
  */
 int
-rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     register int i;
     struct rt_ell_internal *eip;

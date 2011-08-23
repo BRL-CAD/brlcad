@@ -1967,6 +1967,21 @@ struct rt_pt_node {
     struct rt_pt_node *next;	/**< @brief  ptr to next pt */
 };
 
+/**
+ * R T _ V I E W _ I N F O
+ *
+ * Normally, librt doesn't have a concept of a "display"
+ * of the geometry.  However for at least the plotting routines,
+ * view information is sometimes needed to produce more intelligent
+ * output.  In those situations, the application should
+ * populate and pass an rt_view_info struct.
+ *
+ * **TODO** this structure is NOT in final form and should not
+ * be relied upon.
+ */
+struct rt_view_info {
+    fastf_t scale;		/**< *brief view scale */
+};
 
 /**
  * R T _ F U N C T A B
@@ -2023,7 +2038,8 @@ struct rt_functab {
     int (*ft_plot)(struct bu_list * /*vhead*/,
 		   struct rt_db_internal * /*ip*/,
 		   const struct rt_tess_tol * /*ttol*/,
-		   const struct bn_tol * /*tol*/);
+		   const struct bn_tol * /*tol*/,
+		   const struct rt_view_info * /*view info*/);
     void (*ft_vshot)(struct soltab * /*stp*/[],
 		     struct xray *[] /*rp*/,
 		     struct seg * /*segp*/,
@@ -3476,7 +3492,8 @@ RT_EXPORT extern int rt_pg_to_bot(struct rt_db_internal *ip,
 RT_EXPORT extern int rt_pg_plot(struct bu_list		*vhead,
 				struct rt_db_internal	*ip,
 				const struct rt_tess_tol *ttol,
-				const struct bn_tol	*tol);
+				const struct bn_tol	*tol,
+				const struct rt_view_info *info);
 RT_EXPORT extern int rt_pg_plot_poly(struct bu_list		*vhead,
 				     struct rt_db_internal	*ip,
 				     const struct rt_tess_tol	*ttol,
@@ -4316,7 +4333,8 @@ RT_EXPORT extern int rt_bot_edge_in_list(const int v1,
 RT_EXPORT extern int rt_bot_plot(struct bu_list		*vhead,
 				 struct rt_db_internal	*ip,
 				 const struct rt_tess_tol *ttol,
-				 const struct bn_tol	*tol);
+				 const struct bn_tol	*tol,
+				 const struct rt_view_info *info);
 RT_EXPORT extern int rt_bot_plot_poly(struct bu_list		*vhead,
 				      struct rt_db_internal	*ip,
 				      const struct rt_tess_tol *ttol,

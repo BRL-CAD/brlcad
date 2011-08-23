@@ -1806,7 +1806,7 @@ rt_tgc_ifree(struct rt_db_internal *ip)
  * R T _ T G C _ P L O T
  */
 int
-rt_tgc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_tgc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_tgc_internal *tip;
     register int i;

@@ -678,7 +678,7 @@ rt_rpc_class(void)
  * R T _ R P C _ P L O T
  */
 int
-rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol))
+rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_rpc_internal *xip;
     fastf_t *front;

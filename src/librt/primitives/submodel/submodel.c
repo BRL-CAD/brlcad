@@ -686,7 +686,7 @@ rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path 
 
     ret = -1;
     if (ip->idb_meth->ft_plot) {
-	ret = ip->idb_meth->ft_plot(gp->vheadp, ip, tsp->ts_ttol, tsp->ts_tol);
+	ret = ip->idb_meth->ft_plot(gp->vheadp, ip, tsp->ts_ttol, tsp->ts_tol, NULL);
     }
     if (ret < 0) {
 	bu_log("rt_submodel_wireframe_leaf(%s): %s plot failure\n",
@@ -714,7 +714,7 @@ rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path 
  * which by definition, is all one color.
  */
 int
-rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info))
 {
     struct rt_submodel_internal *sip;
     struct db_tree_state state;

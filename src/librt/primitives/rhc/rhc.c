@@ -717,7 +717,7 @@ rt_rhc_class(void)
  * R T _ R H C _ P L O T
  */
 int
-rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol))
+rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     int i, n;
     fastf_t b, c, *back, f, *front, h, rh;

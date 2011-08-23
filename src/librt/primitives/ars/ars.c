@@ -1088,7 +1088,7 @@ rt_ars_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
  * R T _ A R S _ P L O T
  */
 int
-rt_ars_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_ars_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     register size_t i;
     register size_t j;
