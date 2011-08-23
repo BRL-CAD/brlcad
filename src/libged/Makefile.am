@@ -215,6 +215,8 @@ libged_nil_la_SOURCES = \
 	shader.c \
 	shells.c \
 	showmats.c \
+	simulate.c \
+	simphysics.cpp \
 	size.c \
 	slew.c \
 	solids_on_ray.c \
