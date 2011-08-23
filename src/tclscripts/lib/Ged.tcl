@@ -3387,8 +3387,21 @@ package provide cadwidgets::Ged 1.0
     set view [$mGed screen2view $itk_component($_pane) $_x $_y]
     set view [$mGed snap_view $itk_component($_pane) [lindex $view 0] [lindex $view 1]]
 
-    set bounds [$mGed bounds $itk_component($_pane)]
-    set vZ [expr {[lindex $bounds 4] / -2048.0}]
+    if {[catch {eval $mGed bb -q -e [$mGed who]} bblist]} {
+	set bounds [$mGed bounds $itk_component($_pane)]
+	set vZ [expr {[lindex $bounds 4] / -2048.0}]
+    } else {
+	set base2local [$mGed base2local]
+	set vcenter [center]
+	set vsize [size]
+
+	set bbmin [vscale [lindex $bblist 1] $base2local]
+	set bbmax [vscale [lindex $bblist 3] $base2local]
+	set bbdiag [vmagnitude [vsub2 $bbmax $bbmin]]
+	set bbcenter [vscale [vadd2 $bbmin $bbmax] 0.5]
+	set dist [expr [vmagnitude [vsub2 $vcenter $bbcenter]] + $bbdiag]
+	set vZ [expr $dist / $vsize]
+    }
     set mLastMouseRayStart [$mGed v2m_point $itk_component($_pane) [lindex $view 0] [lindex $view 1] $vZ]
     set mLastMouseRayTarget [$mGed v2m_point $itk_component($_pane) [lindex $view 0] [lindex $view 1] 0]
 
