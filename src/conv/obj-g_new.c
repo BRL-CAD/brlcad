@@ -56,6 +56,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "nmg.h"
+#include "plot3.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
@@ -149,6 +150,10 @@ static char *usage = "%s -u units_str -o open_bot_type -h plate_thickness "
                                BRL-CAD database file. If this file\n\
                                already exists, it will be\n\
                                overwritten.\n";
+
+int test_face(struct ga_t *ga, struct gfi_t *gfi, size_t face_idx,
+    fastf_t conv_factor, struct bn_tol *tol, int face_test_type,
+    int force_retest);
 
 /* global definition */
 size_t *tmp_ptr = NULL;
@@ -1797,9 +1802,13 @@ create_bot_int_arrays(struct ti_t *ti)
         index_arr_tri_1D = (tri_arr_1D_t)ti->index_arr_tri;
         for (i = 0 ; i < ti->bot_num_faces ; i++) {
             for (j = 0 ; j < 3 ; j++) {
-                if ((res_v = bsearch(&(index_arr_tri_1D[i][j]), ti->uvi, ti->num_uvi, sizeof(size_t),
-				     (int (*)(const void *a, const void *b))comp_b)) == (size_t)NULL) {
-		    bu_log("ERROR: FACE_V bsearch returned null, face=(%zu)idx=(%zu)\n", i, j);
+                if ((res_v = (size_t *)bsearch(&(index_arr_tri_1D[i][j]),
+		    ti->uvi, ti->num_uvi, sizeof(size_t),
+		    (int (*)(const void *a, const void *b))comp_b)) ==
+			(size_t)NULL)
+		{
+		    bu_log("ERROR: FACE_V bsearch returned null, "
+			    "face=(%zu)idx=(%zu)\n", i, j);
 		    return 1;
                 } else {
                     ti->bot_faces[(i*3)+j] = (int)(res_v - ti->uvi);
@@ -1813,14 +1822,18 @@ create_bot_int_arrays(struct ti_t *ti)
         index_arr_tri_2D = (tri_arr_2D_t)ti->index_arr_tri;
         for (i = 0 ; i < ti->bot_num_faces ; i++) {
             for (j = 0 ; j < 3 ; j++) {
-                if ((res_v = bsearch(&(index_arr_tri_2D[i][j][0]), ti->uvi, ti->num_uvi, sizeof(size_t),
-				     (int (*)(const void *a, const void *b))comp_b)) == (size_t)NULL) {
-		    bu_log("ERROR: FACE_TV bsearch returned vertex null, face=(%zu)idx=(%zu)\n", i, j);
+                if ((res_v = (size_t *)bsearch(&(index_arr_tri_2D[i][j][0]),
+			ti->uvi, ti->num_uvi, sizeof(size_t),
+			(int (*)(const void *a, const void *b))comp_b)) ==
+			(size_t)NULL)
+		{
+		    bu_log("ERROR: FACE_TV bsearch returned vertex null, "
+			    "face=(%zu)idx=(%zu)\n", i, j);
 		    return 1;
                 } else {
                     ti->bot_faces[(i*3)+j] = (int)(res_v - ti->uvi);
                 }
-                if ((res_t = bsearch(&(index_arr_tri_2D[i][j][1]), ti->utvi, ti->num_utvi, sizeof(size_t),
+                if ((res_t = (size_t*)bsearch(&(index_arr_tri_2D[i][j][1]), ti->utvi, ti->num_utvi, sizeof(size_t),
 				     (int (*)(const void *a, const void *b))comp_b)) == (size_t)NULL) {
 		    bu_log("ERROR: FACE_TV bsearch returned texture null, face=(%zu)idx=(%zu)\n", i, j);
 		    return 1;
@@ -1837,14 +1850,14 @@ create_bot_int_arrays(struct ti_t *ti)
         index_arr_tri_2D = (tri_arr_2D_t)ti->index_arr_tri;
         for (i = 0 ; i < ti->bot_num_faces ; i++) {
             for (j = 0 ; j < 3 ; j++) {
-                if ((res_v = bsearch(&(index_arr_tri_2D[i][j][0]), ti->uvi, ti->num_uvi, sizeof(size_t),
+                if ((res_v = (size_t*)bsearch(&(index_arr_tri_2D[i][j][0]), ti->uvi, ti->num_uvi, sizeof(size_t),
 				     (int (*)(const void *a, const void *b))comp_b)) == (size_t)NULL) {
 		    bu_log("ERROR: FACE_NV bsearch returned vertex null, face=(%zu)idx=(%zu)\n", i, j);
 		    return 1;
                 } else {
                     ti->bot_faces[(i*3)+j] = (int)(res_v - ti->uvi);
                 }
-                if ((res_n = bsearch(&(index_arr_tri_2D[i][j][1]), ti->uvni, ti->num_uvni, sizeof(size_t),
+                if ((res_n = (size_t*)bsearch(&(index_arr_tri_2D[i][j][1]), ti->uvni, ti->num_uvni, sizeof(size_t),
 				     (int (*)(const void *a, const void *b))comp_b)) == (size_t)NULL) {
 		    bu_log("ERROR: FACE_NV bsearch returned normal null, face=(%zu)idx=(%zu)\n", i, j);
 		    return 1;
@@ -1861,21 +1874,21 @@ create_bot_int_arrays(struct ti_t *ti)
         index_arr_tri_3D = (tri_arr_3D_t)ti->index_arr_tri;
         for (i = 0 ; i < ti->bot_num_faces ; i++) {
             for (j = 0 ; j < 3 ; j++) {
-                if ((res_v = bsearch(&(index_arr_tri_3D[i][j][0]), ti->uvi, ti->num_uvi, sizeof(size_t),
+                if ((res_v = (size_t*)bsearch(&(index_arr_tri_3D[i][j][0]), ti->uvi, ti->num_uvi, sizeof(size_t),
 				     (int (*)(const void *a, const void *b))comp_b)) == (size_t)NULL) {
 		    bu_log("ERROR: FACE_TNV bsearch returned vertex null, face=(%zu)idx=(%zu)\n", i, j);
 		    return 1;
                 } else {
                     ti->bot_faces[(i*3)+j] = (int)(res_v - ti->uvi);
                 }
-                if ((res_t = bsearch(&(index_arr_tri_3D[i][j][1]), ti->utvi, ti->num_utvi, sizeof(size_t),
+                if ((res_t = (size_t*)bsearch(&(index_arr_tri_3D[i][j][1]), ti->utvi, ti->num_utvi, sizeof(size_t),
 				     (int (*)(const void *a, const void *b))comp_b)) == (size_t)NULL) {
 		    bu_log("ERROR: FACE_TNV bsearch returned texture null, face=(%zu)idx=(%zu)\n", i, j);
 		    return 1;
                 } else {
                     ti->bot_textures[(i*3)+j] = (int)(res_t - ti->utvi);
                 }
-                if ((res_n = bsearch(&(index_arr_tri_3D[i][j][2]), ti->uvni, ti->num_uvni, sizeof(size_t),
+                if ((res_n = (size_t*)bsearch(&(index_arr_tri_3D[i][j][2]), ti->uvni, ti->num_uvni, sizeof(size_t),
 				     (int (*)(const void *a, const void *b))comp_b)) == (size_t)NULL) {
 		    bu_log("ERROR: FACE_TNV bsearch returned normal null, face=(%zu)idx=(%zu)\n", i, j);
 		    return 1;
@@ -2083,14 +2096,10 @@ fuse_vertex(struct ga_t *ga,
 
     size_t fuse_count = 0;
 
-#if DEBUG
-    printf("Entering fuse_vertex.\n");
-#endif
-
     if ((gfi->face_type == FACE_V || gfi->face_type == FACE_NV) &&
 	    (vertex_type == FUSE_TEX_VERT))
     {
-        return; /* nothing to process */
+        return 0; /* nothing to process */
     }
 
     /* test if fuse vertices has already been run, if so free old arrays */
@@ -2311,10 +2320,6 @@ fuse_vertex(struct ga_t *ga,
 	       fuse_count, bu_vls_addr(gfi->raw_grouping_name),
 	       gfi->grouping_index + 1);
     }
-
-#if DEBUG
-    printf("Leaving fuse_vertex.\n");
-#endif
 
     return fuse_count;
 }
