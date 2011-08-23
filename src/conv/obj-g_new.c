@@ -2140,10 +2140,6 @@ fuse_vertex(struct ga_t *ga,
      * texture_vertex_index_list
      */
     for (face_idx = 0; face_idx < gfi->num_faces; face_idx++) {
-#if DEBUG
-	printf("\tface %d / %d, %d vertices\n", face_idx, gfi->num_faces,
-		gfi->num_vertices_arr[face_idx]);
-#endif
         for (vert_idx = 0; vert_idx < gfi->num_vertices_arr[face_idx];
 	     vert_idx++)
 	{
