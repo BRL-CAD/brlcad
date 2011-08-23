@@ -179,12 +179,14 @@ EXTRA_DIST = \
 	itk.dist \
 	iwidgets.dist \
 	jove.dist \
+	lemon \
 	libpng.dist \
 	libregex.dist \
 	libtermlib.dist \
 	libutahrle.dist \
 	libz.dist \
 	openNURBS.dist \
+	re2c \
 	step.dist \
 	tcl.dist \
 	tk.dist \
