@@ -70,7 +70,7 @@ mannDOCBOOK_EN = \
 	system/mann/en/edcomb.xml \
 	system/mann/en/edgedir.xml \
 	system/mann/en/edit.xml \
-	system/mann/en/edit-translate.xml \
+	system/mann/en/edit_translate.xml \
 	system/mann/en/edmater.xml \
 	system/mann/en/em.xml \
 	system/mann/en/eqn.xml \
