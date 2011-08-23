@@ -55,7 +55,7 @@ SET(benchmark_dirs
 # The interaction of MSVC and Boost looks problematic - 
 # since we're not using libpc at the moment, conditionalize
 IF(NOT MSVC)
-	SET(LIBPC libpc)
+	#SET(LIBPC libpc)
 ENDIF(NOT MSVC)
 # anything not included from above
 SET(remaining_dirs 
