@@ -45,6 +45,8 @@ OPTION(BUILD_LOCAL_TOOLS "Build local copies of re2c and lemon" OFF)
 MARK_AS_ADVANCED(BUILD_LOCAL_TOOLS)
 IF(BUILD_LOCAL_TOOLS)
 ENDIF(BUILD_LOCAL_TOOLS)
+DISTCHECK_IGNORE_ITEM(re2c)
+DISTCHECK_IGNORE_ITEM(lemon)
 
 # Ignore the boost subdir - it's only used for the boost headers and is not
 # compiled
