@@ -15,6 +15,14 @@ on-going issues.
 Recent Bugs
 -----------
 
+* raytracing a revolved sketch seems to work fine, but rtarea and gqa
+  seem to be crashing on that same revolve.  curiously, the brep
+  revolve from the csgbrep proc-db has the same failure as well as the
+  brep ehy.
+
+* encountered a crash during rtarea on a (default) facetized version
+  of the hyp from the proc-db csgbrep tool.
+
 * raytracing rhc crashes (inside malloc, so previous memory badness)
   with normal tolerance set to non-default value (e.g. tol norm 0.1);
   also fails (non-crash) if absolute tolerance is changed (e.g., tol
