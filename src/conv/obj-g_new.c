@@ -67,89 +67,102 @@ static char *usage = "%s -u units_str -o open_bot_type -h plate_thickness "
 		     "[-t distance_tolerance] [-x rt_debug_flag] "
 		     "[-X NMG_debug_flag] input.obj output.g\n\
 \n\
-        -u units_str           Units of obj file where units_str can\n\
-                               be any valid BRL-CAD unit such as one\n\
-                               of the following {m|cm|mm|ft|in} or\n\
-                               specify a conversion factor from obj\n\
-                               file units to mm.\n\
+-u units_str\
+\tUnits of obj file where units_str can\n\
+\tbe any valid BRL-CAD unit such as one\n\
+\tof the following {m|cm|mm|ft|in} or\n\
+\tspecify a conversion factor from obj\n\
+\tfile units to mm.\n\
 \n\
-        -o open_bot_type       Type of bot to create when the\n\
-                               primitive is not a closed volume.\n\
-                               open_bot_type can be {s|p|n} where ...\n\
-                                 s = surface bot\n\
-                                 p = plate bot\n\
-                                 n = plate-nocos bot\n\
+-o open_bot_type	Type of bot to create when the\n\
+\tprimitive is not a closed volume.\n\
+\topen_bot_type can be {s|p|n} where ...\n\
+\ts = surface bot\n\
+\tp = plate bot\n\
+\t n = plate-nocos bot\n\
 \n\
-        -h plate_thickness     Plate thickness in mm units of plate\n\
-                               or plate-nocos bots created when the\n\
-                               bot is not a closed volume.\n\
+-h plate_thickness\
+\tPlate thickness in mm units of plate\n\
+or plate-nocos bots created when the\n\
+\tbot is not a closed volume.\n\
 \n\
-        -c    Continue processing on nmg-bomb. If this option is set\n\
-              and an nmg-bomb occurs (i.e. fatal error during\n\
-              processing nmg or bot-via-nmg) conversion will fall-back\n\
-              to outputing the grouping to 'native-bot' and then\n\
-              continue processing the next grouping. If this option is\n\
-              not set and an nmg-bomb occurs then all processing will\n\
-              stop and the converter will exit.\n\
+\t-c\
+\tContinue processing on nmg-bomb. If this option is set\n\
+\tand an nmg-bomb occurs (i.e. fatal error during\n\
+\tprocessing nmg or bot-via-nmg) conversion will fall-back\n\
+\tto outputing the grouping to 'native-bot' and then\n\
+\tcontinue processing the next grouping. If this option is\n\
+\tnot set and an nmg-bomb occurs then all processing will\n\
+\tstop and the converter will exit.\n\
 \n\
-        -i    Ignore normals defined in the obj file when the\n\
-              conversion mode is 'native-bots'.\n\
+-i\
+\tIgnore normals defined in the obj file when the\n\
+\tconversion mode is 'native-bots'.\n\
 \n\
-        -p    Plot open edges when creating bots which are not a\n\
-              closed volume. A plot/overlay (.pl) file will be\n\
-              created with the same name as the bot primitive and be\n\
-              placed in the current directory. If a plot file already\n\
-              exists, it will be overwritten.\n\
+-p\
+\tPlot open edges when creating bots which are not a\n\
+\tclosed volume. A plot/overlay (.pl) file will be\n\
+\tcreated with the same name as the bot primitive and be\n\
+\tplaced in the current directory. If a plot file already\n\
+\texists, it will be overwritten.\n\
 \n\
-        -d    Output debug information to stderr stream. An extremely\n\
-              large amount of information will be output. It is\n\
-              strongly suggested strerr be piped to a file.\n\
+-d\
+\tOutput debug information to stderr stream. An extremely\n\
+\tlarge amount of information will be output. It is\n\
+\tstrongly suggested strerr be piped to a file.\n\
 \n\
-        -v    Output verbose user information to stderr stream. There\n\
-              are different levels of verbose output where higher\n\
-              levels increase the amount of output information. Each\n\
-              occurrence of this option in the parameter list\n\
-              increases the level. A large amount of information will\n\
-              be output so piping stderr to a file is highly\n\
-              recommended.\n\
+-v\
+\tOutput verbose user information to stderr stream. There\n\
+\tare different levels of verbose output where higher\n\
+\tlevels increase the amount of output information. Each\n\
+\toccurrence of this option in the parameter list\n\
+\tincreases the level. A large amount of information will\n\
+\tbe output so piping stderr to a file is highly\n\
+\trecommended.\n\
 \n\
-        -g grouping_option     Choose which face grouping, as defined\n\
-                               in the obj file, to use to create the\n\
-                               BRL-CAD primitives. The grouping_option\n\
-                               may be one of {g|o|m|t|n} where ...\n\
-                                g = group (default)\n\
-                                o = object\n\
-                                m = material\n\
-                                t = texture\n\
-                                n = none\n\
+-g grouping_option\
+\tChoose which face grouping, as defined\n\
+\tin the obj file, to use to create the\n\
+\tBRL-CAD primitives. The grouping_option\n\
+\tmay be one of {g|o|m|t|n} where ...\n\
+\tg = group (default)\n\
+\to = object\n\
+\tm = material\n\
+\tt = texture\n\
+\tn = none\n\
 \n\
-        -m mode_option         Choose the conversion mode. The\n\
-                               mode_option may be one of {b|n|v}\n\
-                               where ...\n\
-                                b = bot 'native-bot'\n\
-                                n = nmg\n\
-                                v = bot-via-nmg (default)\n\
+-m mode_option\
+\tChoose the conversion mode. The\n\
+\tmode_option may be one of {b|n|v}\n\
+\twhere ...\n\
+\tb = bot 'native-bot'\n\
+\tn = nmg\n\
+\tv = bot-via-nmg (default)\n\
 \n\
-        -t distance_tolerance  Maximum distance, in mm units, where\n\
-                               two vertices are considered the same.\n\
-                               The default is 0.0005mm which matches\n\
-                               the raytracer default distance\n\
-                               tolerance. Do not change this value\n\
-                               unless you also change the raytracer\n\
-                               distance tolerance.\n\
+-t distance_tolerance\
+\tMaximum distance, in mm units, where\n\
+\ttwo vertices are considered the same.\n\
+\tThe default is 0.0005mm which matches\n\
+\tthe raytracer default distance\n\
+\ttolerance. Do not change this value\n\
+\tunless you also change the raytracer\n\
+\tdistance tolerance.\n\
 \n\
-        -x rt_debug_flag       Specifies debug bits (see raytrace.h)\n\
+-x rt_debug_flag\
+\tSpecifies debug bits (see raytrace.h)\n\
 \n\
-        -X NMG_debug_flag      Specifies debug bits for NMG's\n\
-                               (see nmg.h)\n\
+-X NMG_debug_flag\
+\tSpecifies debug bits for NMG's\n\
+\t(see nmg.h)\n\
 \n\
-        input.obj              The path and file name of the input\n\
-                               WaveFront Object file.\n\
+ input.obj The path and file name of the input\n\
+   WaveFront Object file.\n\
 \n\
-        output.g               The path and file name of the output\n\
-                               BRL-CAD database file. If this file\n\
-                               already exists, it will be\n\
-                               overwritten.\n";
+output.g\
+\tThe path and file name of the output\n\
+\tBRL-CAD database file. If this file\n\
+\talready exists, it will be\n\
+\toverwritten.\n";
 
  
 /* global definition */
@@ -320,6 +333,9 @@ struct ga_t {
     const size_t *attindex_arr_tnv_faces; /* obj_polygonal_tnv_faces */
 };
 
+int test_face(struct ga_t *ga, struct gfi_t *gfi, size_t face_idx,
+    fastf_t conv_factor, struct bn_tol *tol, int face_test_type,
+    int force_retest);
 
 /*
  * C O L L E C T _ G L O B A L _ O B J _ F I L E _ A T T R I B U T E S
@@ -510,11 +526,6 @@ retrieve_coord_index(struct ga_t *ga,   /* obj file global attributes */
                      size_t *nofi,      /* normal obj file index */
                      size_t *tofi)      /* texture vertex obj file index */
 {
-    const size_t (*index_arr_v_faces) = NULL;      /* used by v_faces */
-    const size_t (*index_arr_tv_faces)[2] = NULL;  /* used by tv_faces */
-    const size_t (*index_arr_nv_faces)[2] = NULL;  /* used by nv_faces */
-    const size_t (*index_arr_tnv_faces)[3] = NULL; /* used by tnv_faces */
-
     arr_1D_t index_arr_faces_1D = NULL; 
     arr_2D_t index_arr_faces_2D = NULL; 
     arr_3D_t index_arr_faces_3D = NULL; 
@@ -943,7 +954,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
      * group
      */
     size_t numFacesFound = 0;
-    int faceIndex = 0;
+    size_t faceIndex = 0;
 
     /* number of additional elements to allocate memory for when the
      * currently allocated memory is exhausted
@@ -1313,7 +1324,6 @@ populate_triangle_indexes(struct ga_t *ga,
     size_t num_new_tri = 0;              /* number of new triangles to create */
     fastf_t tmp_v[3] = {0.0, 0.0, 0.0};  /* temporary vertex */
     fastf_t tmp_n[3] = {0.0, 0.0, 0.0};  /* temporary normal */
-    fastf_t tmp_rn[3] = {0.0, 0.0, 0.0}; /* temporary reverse normal */
     fastf_t tmp_t[3] = {0.0, 0.0, 0.0};  /* temporary texture vertex */
     fastf_t tmp_w = 0.0; /* temporary weight */
     size_t vofi = 0;     /* vertex obj file index */
@@ -2148,8 +2158,6 @@ fuse_vertex(struct ga_t *ga,
     size_t num_unique_texture_vertex_index_list = 0;
 
     size_t idx1 = 0;
-    size_t idx2 = 0;
-    size_t idx3 = 0;
 
     size_t fuse_count = 0;
 
@@ -2718,15 +2726,17 @@ output_to_bot(struct ga_t *ga,
 
     /* write bot to ".g" file */
     if (ti.tri_type == FACE_NV || ti.tri_type == FACE_TNV) {
-        ret = mk_bot_w_normals(outfp, bu_vls_addr(gfi->primitive_name), ti.bot_mode,
-			       RT_BOT_UNORIENTED, RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS, 
-			       ti.bot_num_vertices, ti.bot_num_faces, ti.bot_vertices,
-			       ti.bot_faces, ti.bot_thickness, ti.bot_face_mode,
-			       ti.bot_num_normals, ti.bot_normals, ti.bot_face_normals);
+        ret = mk_bot_w_normals(outfp, bu_vls_addr(gfi->primitive_name),
+		ti.bot_mode, RT_BOT_UNORIENTED,
+		RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS, 
+		ti.bot_num_vertices, ti.bot_num_faces, ti.bot_vertices,
+		ti.bot_faces, ti.bot_thickness, ti.bot_face_mode,
+		ti.bot_num_normals, ti.bot_normals, ti.bot_face_normals);
     } else {
-        ret = mk_bot(outfp, bu_vls_addr(gfi->primitive_name), ti.bot_mode, RT_BOT_UNORIENTED, 0, 
-		     ti.bot_num_vertices, ti.bot_num_faces, ti.bot_vertices,
-		     ti.bot_faces, ti.bot_thickness, ti.bot_face_mode);
+        ret = mk_bot(outfp, bu_vls_addr(gfi->primitive_name), ti.bot_mode,
+		RT_BOT_UNORIENTED, 0, ti.bot_num_vertices, ti.bot_num_faces,
+		ti.bot_vertices, ti.bot_faces, ti.bot_thickness,
+		ti.bot_face_mode);
     }
 
     if (ret) {
@@ -3232,12 +3242,10 @@ process_nv_mode_option(struct ga_t *ga,
 int
 main(int argc, char **argv)
 {
-    char *prog = *argv, buf[BUFSIZ];
+    char *prog = *argv;
     static char *input_file_name;    /* input file name */
     static char *brlcad_file_name;   /* output file name */
-    FILE *fd_in;	             /* input file */
     struct rt_wdb *fd_out;	     /* Resulting BRL-CAD file */
-    struct region_s *region = NULL;
     int ret_val = 0;
     FILE *my_stream;
     struct ga_t ga;
@@ -3570,33 +3578,30 @@ main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    if (parse_err = obj_fparse(my_stream, ga.parser, &ga.contents)) {
-        if (parse_err < 0) {
-            /* syntax error */
-            parse_messages = obj_parse_error(ga.parser); 
-            bu_log("obj_fparse, Syntax Error.\n");
-            bu_log("%s\n", parse_messages); 
-        } else {
-            /* parser error */
-            if (parse_err == ENOMEM) {
-                bu_log("obj_fparse, Out of Memory.\n");
-            } else {
-                bu_log("obj_fparse, Other Error.\n");
-            }
-        }
+    if ((parse_err = obj_fparse(my_stream, ga.parser, &ga.contents)) != 0) {
+	if (parse_err < 0) {
+	    /* syntax error */
+	    parse_messages = obj_parse_error(ga.parser); 
+	    bu_log("obj_fparse, Syntax Error.\n");
+	    bu_log("%s\n", parse_messages); 
+	} else if (parse_err == ENOMEM) {
+	    bu_log("obj_fparse, Out of Memory.\n");
+	} else {
+	    bu_log("obj_fparse, Other Error.\n");
+	}
 
-        /* it is unclear if obj_contents_destroy must be run if obj_fparse
+	/* it is unclear if obj_contents_destroy must be run if obj_fparse
 	 * failed */
-        obj_contents_destroy(ga.contents);
+	obj_contents_destroy(ga.contents);
 
-        obj_parser_destroy(ga.parser);
+	obj_parser_destroy(ga.parser);
 
-        if (fclose(my_stream) != 0) {
-            bu_log("Unable to close file.\n");
-        }
+	if (fclose(my_stream) != 0) {
+	    bu_log("Unable to close file.\n");
+	}
 
-        perror(prog);
-        return EXIT_FAILURE;
+	perror(prog);
+	return EXIT_FAILURE;
     }
 
     collect_global_obj_file_attributes(&ga);
