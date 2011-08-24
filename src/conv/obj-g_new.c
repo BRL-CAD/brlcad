@@ -899,28 +899,26 @@ free_gfi(struct gfi_t **gfi)
  *
  * Collects the face indexes into the libobj structures for a specific
  * grouping of faces. The grouping_index identifies the grouping to be
- * collected and corresponds to the index of the grouping defined in
- * the obj file. This function allocates all memory needed for the gfi
- * structure and its contents. Gfi is expected to be a null pointer
- * when passed to this function. The gfi structure and its contents is
- * expected to be freed outside this function. It is not possible to
- * directly retrieve a list of faces for a specific grouping from the
- * libobj structures, therefore all faces in the obj file must be
- * traversed and tested if they are a member of a grouping, if a face
- * is a member, the index of the found face is stored in a list to be
- * processed later. This function creates this list of indexes to the
- * face indexes in the libobj structures.
+ * collected and corresponds to the index of the grouping defined in the obj
+ * file. It is ignored if grouping_type is GROUP_NONE. This function allocates
+ * all memory needed for the gfi structure and its contents. Gfi is expected to
+ * be a null pointer when passed to this function. The gfi structure and its
+ * contents is expected to be freed outside this function. It is not possible
+ * to directly retrieve a list of faces for a specific grouping from the libobj
+ * structures, therefore all faces in the obj file must be traversed and tested
+ * if they are a member of a grouping, if a face is a member, the index of the
+ * found face is stored in a list to be processed later. This function creates
+ * this list of indexes to the face indexes in the libobj structures.
  */
 void
 collect_grouping_faces_indexes(struct ga_t *ga,
                                struct gfi_t **gfi,
                                int face_type,
                                int grouping_type,
-                               size_t grouping_index) /* grouping_index is ignored if grouping_type
-                                                       * is set to GRP_NONE
-                                                       */
+                               size_t grouping_index)
 {
-    size_t numFaces = 0; /* number of faces of the current face_type in the entire obj file */
+    /* number of faces of the current face_type in the entire obj file */
+    size_t numFaces = 0;
     size_t i = 0;
     const size_t *attindex_arr_faces = (const size_t *)NULL;
     int found = 0;
@@ -945,6 +943,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
      * group
      */
     size_t numFacesFound = 0;
+    int faceIndex = 0;
 
     /* number of additional elements to allocate memory for when the
      * currently allocated memory is exhausted
@@ -952,7 +951,9 @@ collect_grouping_faces_indexes(struct ga_t *ga,
     const size_t max_faces_increment = 128;
 
     if (*gfi != NULL) {
-        bu_log("ERROR: function collect_grouping_faces_indexes passed non-null for gfi\n");
+	bu_exit(1, "ERROR: function collect_grouping_faces_indexes passed "
+		"non-null for gfi\n");
+
         return;
     }
 
@@ -976,7 +977,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
     }
 
     /* traverse list of all faces in OBJ file of current face_type */
-    for (i = 0 ; i < numFaces ; i++) {
+    for (i = 0; i < numFaces; i++) {
 
         const obj_polygonal_attributes_t *face_attr;
         face_attr = ga->polyattr_list + attindex_arr_faces[i];
@@ -1014,14 +1015,17 @@ collect_grouping_faces_indexes(struct ga_t *ga,
                 /* setsize is the number of groups the current nv_face
 		 * belongs to.
 		 */
-                setsize = obj_groupset(ga->contents, face_attr->groupset_index, &indexset_arr);
+		setsize =
+		    obj_groupset(ga->contents, face_attr->groupset_index,
+		    &indexset_arr);
 
                 /* loop through each group this face is in */
                 for (groupid = 0 ; groupid < setsize ; groupid++) {
                     /* if true, current face is in current group grouping */
                     if (grouping_index == indexset_arr[groupid]) {
                         found = 1;
-                        name_str = ga->str_arr_obj_groups[indexset_arr[groupid]];
+                        name_str =
+			    ga->str_arr_obj_groups[indexset_arr[groupid]];
                     }
                 }
                 break;
@@ -1029,14 +1033,16 @@ collect_grouping_faces_indexes(struct ga_t *ga,
                 /* if true, current face is in current object grouping */
                 if (grouping_index == face_attr->object_index) {
                     found = 1;
-                    name_str = ga->str_arr_obj_objects[face_attr->object_index];
+                    name_str =
+			ga->str_arr_obj_objects[face_attr->object_index];
                 }
                 break;
             case GRP_MATERIAL:
                 /* if true, current face is in current material grouping */
                 if (grouping_index == face_attr->material_index) {
                     found = 1;
-                    name_str = ga->str_arr_obj_materials[face_attr->material_index];
+                    name_str =
+			ga->str_arr_obj_materials[face_attr->material_index];
                 }
                 break;
             case GRP_TEXTURE:
@@ -1046,7 +1052,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
                     name_str = ga->str_arr_obj_texmaps[face_attr->texmap_index];
                 }
                 break;
-        }
+        } /* switch (grouping_type) */
 
         /* if found the first face allocate the output structure and
          * initial allocation of the index_arr_faces, num_vertices_arr
@@ -1095,12 +1101,22 @@ collect_grouping_faces_indexes(struct ga_t *ga,
                 (*gfi)->grouping_index = (size_t)abs(face_type);
 
             }
-            /* allocate and initialize variable length string (vls) for raw_grouping_name */
-            (*gfi)->raw_grouping_name = (struct bu_vls *)bu_calloc(1, sizeof(struct bu_vls), "raw_grouping_name");
+            /* allocate and initialize variable length string (vls) for
+	     * raw_grouping_name
+	     */
+            (*gfi)->raw_grouping_name =
+		(struct bu_vls *)bu_calloc(1, sizeof(struct bu_vls),
+		"raw_grouping_name");
+
             bu_vls_init((*gfi)->raw_grouping_name);
 
-            /* allocate and initialize variable length string (vls) for primitive_name */
-            (*gfi)->primitive_name = (struct bu_vls *)bu_calloc(1, sizeof(struct bu_vls), "primitive_name");
+            /* allocate and initialize variable length string (vls) for
+	     * primitive_name
+	     */
+            (*gfi)->primitive_name =
+		(struct bu_vls *)bu_calloc(1, sizeof(struct bu_vls),
+		"primitive_name");
+
             bu_vls_init((*gfi)->primitive_name);
 
             /* only need to copy in the grouping name for the first
@@ -1112,107 +1128,151 @@ collect_grouping_faces_indexes(struct ga_t *ga,
             /* sets initial number of elements to allocate memory for */
             (*gfi)->max_faces = max_faces_increment;
 
-            (*gfi)->num_vertices_arr = (size_t *)bu_calloc((*gfi)->max_faces, 
-                                                           sizeof(size_t), "num_vertices_arr");
+            (*gfi)->num_vertices_arr =
+		(size_t *)bu_calloc((*gfi)->max_faces, sizeof(size_t),
+		"num_vertices_arr");
 
-            (*gfi)->obj_file_face_idx_arr = (size_t *)bu_calloc((*gfi)->max_faces, 
-								sizeof(size_t), "obj_file_face_idx_arr");
+            (*gfi)->obj_file_face_idx_arr =
+		(size_t *)bu_calloc((*gfi)->max_faces, sizeof(size_t),
+		"obj_file_face_idx_arr");
 
-            /* allocate initial memory for (*gfi)->index_arr_faces based on face_type */
+            /* allocate initial memory for (*gfi)->index_arr_faces based on
+	     * face_type
+	     */
             switch (face_type) {
                 case FACE_V:
-                    (*gfi)->index_arr_faces = (void *)bu_calloc((*gfi)->max_faces, 
-                                                                sizeof(arr_1D_t), "index_arr_faces");
+                    (*gfi)->index_arr_faces =
+			(void *)bu_calloc((*gfi)->max_faces, sizeof(arr_1D_t),
+			"index_arr_faces");
+
                     index_arr_faces_1D = (arr_1D_t)((*gfi)->index_arr_faces);
                     break;
                 case FACE_TV:
                 case FACE_NV:
-                    (*gfi)->index_arr_faces = (void *)bu_calloc((*gfi)->max_faces, 
-                                                                sizeof(arr_2D_t), "index_arr_faces");
+                    (*gfi)->index_arr_faces =
+			(void *)bu_calloc((*gfi)->max_faces, sizeof(arr_2D_t),
+			"index_arr_faces");
+
                     index_arr_faces_2D = (arr_2D_t)((*gfi)->index_arr_faces);
                     break;
                 case FACE_TNV:
-                    (*gfi)->index_arr_faces = (void *)bu_calloc((*gfi)->max_faces, 
-                                                                sizeof(arr_3D_t), "index_arr_faces");
+                    (*gfi)->index_arr_faces =
+			(void *)bu_calloc((*gfi)->max_faces, sizeof(arr_3D_t),
+				"index_arr_faces");
+
                     index_arr_faces_3D = (arr_3D_t)((*gfi)->index_arr_faces);
                     break;
-            }
-        }
+            } /* switch (face_type) */
+        } /* if (found && (numFacesFound == 0)) */
 
         if (found) {
-            /* assign obj file face index into array for tracking
-             * errors back to the face within the obj file
-             */
-            (*gfi)->obj_file_face_idx_arr[numFacesFound] = attindex_arr_faces[i];
+	    numFacesFound++;
+	    faceIndex = numFacesFound - 1;
 
-            switch (face_type) {
-                case FACE_V:
-                    (*gfi)->num_vertices_arr[numFacesFound] = \
-			obj_polygonal_v_face_vertices(ga->contents, i, &index_arr_v_faces);
-                    index_arr_faces_1D[numFacesFound] = index_arr_v_faces;
-                    break;
-                case FACE_TV:
-                    (*gfi)->num_vertices_arr[numFacesFound] = \
-			obj_polygonal_tv_face_vertices(ga->contents, i, &index_arr_tv_faces);
-                    index_arr_faces_2D[numFacesFound] = index_arr_tv_faces;
-                    break;
-                case FACE_NV:
-                    (*gfi)->num_vertices_arr[numFacesFound] = \
-			obj_polygonal_nv_face_vertices(ga->contents, i, &index_arr_nv_faces);
-                    index_arr_faces_2D[numFacesFound] = index_arr_nv_faces;
-                    break;
-                case FACE_TNV:
-                    (*gfi)->num_vertices_arr[numFacesFound] = \
-			obj_polygonal_tnv_face_vertices(ga->contents, i, &index_arr_tnv_faces);
-                    index_arr_faces_3D[numFacesFound] = index_arr_tnv_faces;
-                    break;
-            }
-            (*gfi)->tot_vertices += (*gfi)->num_vertices_arr[numFacesFound];
-
-            /* if needed, increase size of (*gfi)->num_vertices_arr and (*gfi)->index_arr_faces */
-            if (numFacesFound >= (*gfi)->max_faces) {
+            /* if needed, increase size of (*gfi)->num_vertices_arr and
+	     * (*gfi)->index_arr_faces
+	     */
+            if (faceIndex >= (*gfi)->max_faces) {
                 (*gfi)->max_faces += max_faces_increment;
 
-                num_vertices_arr_tmp = (size_t *)bu_realloc((*gfi)->num_vertices_arr,
-							    sizeof(size_t) * (*gfi)->max_faces, "num_vertices_arr_tmp");
+                num_vertices_arr_tmp =
+		    (size_t *)bu_realloc((*gfi)->num_vertices_arr,
+		    sizeof(size_t) * (*gfi)->max_faces,
+		    "num_vertices_arr_tmp");
+
                 (*gfi)->num_vertices_arr = num_vertices_arr_tmp;
 
-                obj_file_face_idx_arr_tmp = (size_t *)bu_realloc((*gfi)->obj_file_face_idx_arr,
-								 sizeof(size_t) * (*gfi)->max_faces, "obj_file_face_idx_arr_tmp");
+                obj_file_face_idx_arr_tmp =
+		    (size_t *)bu_realloc((*gfi)->obj_file_face_idx_arr,
+		    sizeof(size_t) * (*gfi)->max_faces,
+		    "obj_file_face_idx_arr_tmp");
+
                 (*gfi)->obj_file_face_idx_arr = obj_file_face_idx_arr_tmp;
 
                 switch (face_type) {
                     case FACE_V:
-                        (*gfi)->index_arr_faces = (void *)bu_realloc(index_arr_faces_1D,
-								     sizeof(arr_1D_t) * (*gfi)->max_faces, "index_arr_faces");
-                        index_arr_faces_1D = (arr_1D_t)((*gfi)->index_arr_faces);
+                        (*gfi)->index_arr_faces =
+			    (void *)bu_realloc(index_arr_faces_1D,
+			    sizeof(arr_1D_t) * (*gfi)->max_faces,
+			    "index_arr_faces");
+
+                        index_arr_faces_1D =
+			    (arr_1D_t)((*gfi)->index_arr_faces);
+
                         break;
                     case FACE_TV:
                     case FACE_NV:
-                        (*gfi)->index_arr_faces = (void *)bu_realloc(index_arr_faces_2D,
-								     sizeof(arr_2D_t) * (*gfi)->max_faces, "index_arr_faces");
-                        index_arr_faces_2D = (arr_2D_t)((*gfi)->index_arr_faces);
+                        (*gfi)->index_arr_faces =
+			    (void *)bu_realloc(index_arr_faces_2D,
+			    sizeof(arr_2D_t) * (*gfi)->max_faces,
+			    "index_arr_faces");
+
+                        index_arr_faces_2D =
+			    (arr_2D_t)((*gfi)->index_arr_faces);
+
                         break;
                     case FACE_TNV:
-                        (*gfi)->index_arr_faces = (void *)bu_realloc(index_arr_faces_3D,
-								     sizeof(arr_3D_t) * (*gfi)->max_faces, "index_arr_faces");
-                        index_arr_faces_3D = (arr_3D_t)((*gfi)->index_arr_faces);
+                        (*gfi)->index_arr_faces =
+			    (void *)bu_realloc(index_arr_faces_3D,
+			    sizeof(arr_3D_t) * (*gfi)->max_faces,
+			    "index_arr_faces");
+
+                        index_arr_faces_3D =
+			    (arr_3D_t)((*gfi)->index_arr_faces);
+
                         break;
                 }
             }
 
-            numFacesFound++; /* increment this at the end since arrays start at zero */
-        }
+            /* assign obj file face index into array for tracking
+             * errors back to the face within the obj file
+             */
+            (*gfi)->obj_file_face_idx_arr[faceIndex] =
+		attindex_arr_faces[i];
 
-    }  /* numFaces loop, when loop exits, all faces have been reviewed */
+            switch (face_type) {
+                case FACE_V:
+                    (*gfi)->num_vertices_arr[faceIndex] =
+			obj_polygonal_v_face_vertices(ga->contents, i,
+				&index_arr_v_faces);
+
+                    index_arr_faces_1D[faceIndex] = index_arr_v_faces;
+                    break;
+                case FACE_TV:
+                    (*gfi)->num_vertices_arr[faceIndex] =
+			obj_polygonal_tv_face_vertices(ga->contents, i,
+				&index_arr_tv_faces);
+
+                    index_arr_faces_2D[faceIndex] = index_arr_tv_faces;
+                    break;
+                case FACE_NV:
+                    (*gfi)->num_vertices_arr[faceIndex] =
+			obj_polygonal_nv_face_vertices(ga->contents, i,
+				&index_arr_nv_faces);
+
+                    index_arr_faces_2D[faceIndex] = index_arr_nv_faces;
+                    break;
+                case FACE_TNV:
+                    (*gfi)->num_vertices_arr[faceIndex] =
+			obj_polygonal_tnv_face_vertices(ga->contents, i,
+				&index_arr_tnv_faces);
+
+                    index_arr_faces_3D[faceIndex] = index_arr_tnv_faces;
+                    break;
+            }
+            (*gfi)->tot_vertices += (*gfi)->num_vertices_arr[faceIndex];
+        } /* if (found) */
+    } /* for (i = 0; i < numFaces; i++) */
 
     if (numFacesFound) { 
         (*gfi)->num_faces = numFacesFound;
 
-        (*gfi)->face_status = (short int *)bu_calloc((*gfi)->num_faces, sizeof(short int), "face_status");
+        (*gfi)->face_status =
+	    (short int *)bu_calloc((*gfi)->num_faces, sizeof(short int),
+	    "face_status");
 
         /* initialize array */
-        for (i = 0 ; i < (*gfi)->num_faces ; i++) {
+        for (i = 0; i < (*gfi)->num_faces; i++) {
             (*gfi)->face_status[i] = 0;
         }
     } else {
@@ -1220,7 +1280,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
     }
 
     return;
-}
+} /* collect_grouping_faces_indexes */
 
 
 /*
