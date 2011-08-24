@@ -6,7 +6,6 @@
 #  TERMLIB_FOUND         - library found.
 #
 #=============================================================================
-
 INCLUDE(ResolveCompilerPaths)
 MACRO(TERMLIB_CHECK_LIBRARY targetname lname func)
 	IF(NOT ${targetname}_LIBRARY)
@@ -20,7 +19,6 @@ MACRO(TERMLIB_CHECK_LIBRARY targetname lname func)
 	ENDIF(NOT ${targetname}_LIBRARY)
 ENDMACRO(TERMLIB_CHECK_LIBRARY lname func)
 
-
 TERMLIB_CHECK_LIBRARY(TERMLIB termlib tputs)
 TERMLIB_CHECK_LIBRARY(TERMLIB ncurses tputs)
 TERMLIB_CHECK_LIBRARY(TERMLIB curses tputs)
@@ -30,6 +28,7 @@ TERMLIB_CHECK_LIBRARY(TERMLIB tinfo tputs)
 TERMLIB_CHECK_LIBRARY(TERMLIB ccurses tputs)
 include(CheckCFileRuns)
 configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/termlib.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/termlib.c)
+SET(CMAKE_REQUIRED_LIBRARIES_BAK ${CMAKE_REQUIRED_LIBRARIES})
 SET(CMAKE_REQUIRED_LIBRARIES ${TERMLIB_LIBRARY})
 CHECK_C_FILE_RUNS(${CMAKE_BINARY_DIR}/CMakeTmp/termlib.c LIBTERM_RESULT)
 IF(NOT LIBTERM_RESULT)
@@ -38,7 +37,7 @@ ELSE(NOT LIBTERM_RESULT)
 	SET(TERMLIB_LIBRARY ${TERMLIB_LIBRARY} CACHE STRING "TERMLIB" FORCE)
 ENDIF(NOT LIBTERM_RESULT)
 MARK_AS_ADVANCED(TERMLIB_LIBRARY)
-
+SET(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_BAK})
 # handle the QUIETLY and REQUIRED arguments and set TERMLIB_FOUND to TRUE if 
 # all listed variables are TRUE
 INCLUDE(FindPackageHandleStandardArgs)
