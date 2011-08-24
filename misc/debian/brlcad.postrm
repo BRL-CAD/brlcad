@@ -5,7 +5,7 @@ set -e
 F='/usr/share/applications/defaults.list'
 
 if [ -f $F ]; then
-	sed -i '/application\/x-brlcad-/d' $F
+	sed -i '/application\/brlcad-/d' $F
 fi
 
 update-desktop-database &> /dev/null || :

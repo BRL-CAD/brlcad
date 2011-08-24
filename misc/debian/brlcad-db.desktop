@@ -4,6 +4,6 @@ Encoding=UTF-8
 Type=Application
 Name=BRL-CAD Examples
 Comment=BRL-CAD Database examples
-Exec=xdg-open /usr/brlcad/share/brlcad/7.18.4/db
+Exec=xdg-open /usr/brlcad/share/db
 Icon=brlcad-db
 Categories=BRL-CAD-doc;
