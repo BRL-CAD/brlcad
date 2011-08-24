@@ -67,8 +67,9 @@ static int set_stream(FILE *stream, basic_parser_state<ObjContentsT> &state)
 
 
 template<typename ObjContentsT>
-static int open_file(const typename basic_parser_state<ObjContentsT>::string_type &filename,
-		     basic_parser_state<ObjContentsT> &state)
+static int open_file(
+	const typename basic_parser_state<ObjContentsT>::string_type &filename,
+	basic_parser_state<ObjContentsT> &state)
 {
     typedef basic_parser_state<ObjContentsT> state_type;
     typedef typename state_type::file_node file_node_type;
@@ -130,6 +131,11 @@ static void createScanner(yyscan_t *scanner)
     BU_GETTYPE(*scanner, scanner_t);
 }
 
+static void destroyScanner(yyscan_t *scanner)
+{
+    freeScanner(*scanner);
+}
+
 static void setScannerIn(yyscan_t scanner, FILE *in)
 {
     initScanner(scanner, in);
@@ -170,15 +176,18 @@ void obj_parser_destroy(obj_parser_t parser)
 int obj_parse(const char *filename, obj_parser_t parser,
 	      obj_contents_t *contents)
 {
-    detail::objParser *p = static_cast<detail::objParser*>(parser.p);
+    using detail::objParser;
+    using detail::objFileContents;
+    using detail::objCombinedState;
+
+    objParser *p = static_cast<objParser*>(parser.p);
 
     int err = 0;
 
     try {
-	std::auto_ptr<detail::objFileContents>
-	    sentry(new detail::objFileContents);
+	std::auto_ptr<objFileContents> sentry(new objFileContents);
 
-	detail::objCombinedState extra(p, sentry.get());
+	objCombinedState extra(p, sentry.get());
 
 	if ((err =
 	     detail::open_file(std::string(filename), extra.parser_state))) {
@@ -191,13 +200,18 @@ int obj_parse(const char *filename, obj_parser_t parser,
 	setScannerIn(scanner, extra.parser_state.file_stack.back().file.get());
 	setScannerExtra(scanner, &extra);
 
-	createParser(&((detail::objCombinedState*)scanner)->parser);
+	objCombinedState *state =
+	    static_cast<objCombinedState*>(scanner->extra);
+
+	state->parser = NULL;
+	createParser(&(state->parser));
 
 	err = obj_parser_parse(scanner);
 
 	p->last_error = extra.parser_state.err.str();
 
-	destroyParser(&((detail::objCombinedState*)scanner)->parser);
+	destroyParser(&(state->parser));
+	destroyScanner(&scanner);
 
 	if (err == 2) {
 	    return ENOMEM;
@@ -249,11 +263,15 @@ int obj_fparse(FILE *stream, obj_parser_t parser, obj_contents_t *contents)
 	objCombinedState *state =
 	    static_cast<objCombinedState*>(scanner->extra);
 
+	state->parser = NULL;
 	createParser(&(state->parser));
 
 	err = obj_parser_parse(scanner);
 
 	p->last_error = extra.parser_state.err.str();
+
+	destroyParser(&(state->parser));
+	destroyScanner(&scanner);
 
 	if (err == 2) {
 	    return ENOMEM;

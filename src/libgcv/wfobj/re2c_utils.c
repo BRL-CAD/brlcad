@@ -78,13 +78,14 @@ void initScanner(scanner_t *scanner, FILE *in)
 
 void freeScanner(scanner_t *scanner)
 {
-    fclose(scanner->in);
     bu_vls_vlsfree(scanner->currLine);
     bu_vls_vlsfree(scanner->tokenText);
+    scanner->currLine = NULL;
+    scanner->tokenText = NULL;
 
-    scanner->extra = NULL;
     scanner->tokenStart = NULL;
+    scanner->marker = NULL;
     scanner->cursor_p = NULL;
 
-    bu_free(scanner, "freeScanner");
+    bu_free(scanner, "freeScanner scanner_t");
 }

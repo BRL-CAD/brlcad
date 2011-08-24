@@ -65,8 +65,8 @@ enum YYCONDTYPE { INITIAL };
 typedef struct bu_vls bu_string;
 
 typedef struct {
-    void *extra; /* user data */
-    FILE *in;
+    void *extra; /* user data - user must free */
+    FILE *in;    /* user must close */
     bu_string *currLine;
     bu_string *tokenText;
     char *tokenStart;
