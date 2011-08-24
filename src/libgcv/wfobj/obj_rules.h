@@ -21,7 +21,7 @@ typedef scanner_t *yyscan_t;
 void obj_parser_lex_destroy(yyscan_t scanner);
 int obj_parser_lex(YYSTYPE *tokenValue, yyscan_t scanner);
 void *obj_parser_get_extra(yyscan_t scanner);
-void *obj_parser_set_extra(yyscan_t scanner, void *extra);
+void obj_parser_set_extra(yyscan_t scanner, void *extra);
 
 __END_DECLS
 

@@ -39,19 +39,6 @@
 #undef F_BUFSIZE
 #define F_BUFSIZE 2048
 
-#if NO_POSIX_READ
-#define YY_INPUT(buf, result, max_size) \
-errno=0; \
-while ((result = fread(buf, 1, max_size, yyin))==0 && ferror(yyin)) { \
-    if (errno != EINTR) { \
-	YY_FATAL_ERROR("input in flex scanner failed"); \
-	break; \
-    } \
-    errno=0; \
-    clearerr(yyin); \
-}
-#endif
-
 namespace arl {
 namespace obj_parser {
 namespace detail {
@@ -81,7 +68,7 @@ void *obj_parser_get_extra(yyscan_t scanner)
     return scanner->extra;
 }
 
-void *obj_parser_set_extra(yyscan_t scanner, void *extra)
+void obj_parser_set_extra(yyscan_t scanner, void *extra)
 {
     scanner->extra = extra;
 }
