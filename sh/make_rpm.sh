@@ -81,7 +81,7 @@ if test "$DNAME" = "fedora" ;then
     fcheck rpm-build
     fcheck fakeroot
     fcheck gcc-c++
-    fcheck make
+    fcheck cmake
     fcheck libtool
     fcheck bc
     fcheck sed
@@ -97,7 +97,7 @@ if test "$DNAME" = "openSUSE" ;then
     fcheck rpm
     fcheck fakeroot
     fcheck gcc-c++
-    fcheck make
+    fcheck cmake
     fcheck libtool
     fcheck bc
     fcheck sed
@@ -222,8 +222,8 @@ else
 	sed -i "/application\/x-brlcad-/d" $F
 fi
 
-echo "application/x-brlcad-v4=brlcad-mged.desktop" >> $F
-echo "application/x-brlcad-v5=brlcad-mged.desktop" >> $F
+echo "application/brlcad-v4=brlcad-mged.desktop" >> $F
+echo "application/brlcad-v5=brlcad-mged.desktop" >> $F
 
 source /etc/profile.d/brlcad.sh
 
