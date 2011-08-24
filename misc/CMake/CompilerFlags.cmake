@@ -133,7 +133,7 @@ CHECK_CXX_FLAG(fexceptions)
 # check for -ftemplate-depth-NN this is needed in libpc and
 # other code using boost where the template instantiation depth
 # needs to be increased from the default ANSI minimum of 17.
-CHECK_CXX_FLAG(ftemplate-depth-50)
+CHECK_CXX_FLAG(ftemplate-depth-300)
 
 # dynamic SSE optimizations for NURBS processing
 #
