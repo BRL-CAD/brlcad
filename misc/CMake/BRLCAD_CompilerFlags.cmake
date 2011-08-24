@@ -44,6 +44,11 @@ IF(BRLCAD-ENABLE_COMPILER_WARNINGS OR BRLCAD-ENABLE_STRICT)
 ENDIF(BRLCAD-ENABLE_COMPILER_WARNINGS OR BRLCAD-ENABLE_STRICT)
 MARK_AS_ADVANCED(WARNING_FLAGS)
 
+# There are some specific situations, such as auto-generated sources,
+# where we have no real control over the code generating the warnings
+# and need to disable them individually.  Test for those flags.
+CHECK_C_FLAG(Wno-unused)
+
 IF(BRLCAD-ENABLE_STRICT)
 	CHECK_C_FLAG_GATHER(Werror STRICT_FLAGS)
 	ADD_NEW_FLAG(C STRICT_FLAGS)
