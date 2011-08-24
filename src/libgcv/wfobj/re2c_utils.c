@@ -3,7 +3,13 @@
 
 bu_string *newString()
 {
-    return bu_vls_vlsinit();
+    struct bu_vls *string = NULL;
+
+    BU_GETSTRUCT(string, bu_vls);
+
+    bu_vls_init(string);
+
+    return string;
 }
 
 int getNextLine(bu_string *buf, FILE *in)
