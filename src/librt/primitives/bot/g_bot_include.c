@@ -284,6 +284,12 @@ XGLUE(rt_bot_prep_, TRI_TYPE)(struct soltab *stp, struct rt_bot_internal *bot_ip
 	VMOVE(p1, &bot_ip->vertices[pt1*3]);
 	VMOVE(p2, &bot_ip->vertices[pt2*3]);
 	VMOVE(p3, &bot_ip->vertices[pt3*3]);
+	
+	if (rt_bot_minpieces <= 0 || bot_ip->num_faces <= rt_bot_minpieces) { 	 
+	    VMINMAX(stp->st_min, stp->st_max, p1); 	 
+	    VMINMAX(stp->st_min, stp->st_max, p2); 	 
+	    VMINMAX(stp->st_min, stp->st_max, p3); 	 
+	}
 
 	if ((bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) && (bot_ip->bot_flags & RT_BOT_USE_NORMALS)
 	    && (bot_ip->num_normals > 0) && (bot_ip->num_face_normals > tri_index)) {
