@@ -286,13 +286,45 @@ int obj_parser_parse(yyscan_t scanner)
     return error;
 }
 
+void printToken(YYSTYPE token)
+{
+    std::cerr << "{";
+    std::cerr << "\n    real: " << token.real;
+    std::cerr << "\n    integer: " << token.integer;
+    std::cerr << "\n    reference: {";
+    std::cerr << token.reference[0] << ", ";
+    std::cerr << token.reference[1] << ", ";
+    std::cerr << token.reference[2] << "}";
+    std::cerr << "\n    toggle: " << token.toggle;
+    std::cerr << "\n    index: " << token.index;
+    std::cerr << "\n    string: " << token.string;
+    std::cerr << "}" << std::endl;
+}
+
 } /* include */
 
 %extra_argument { yyscan_t scanner }
 
+%destructor statement_list {
+    if (UNLIKELY(scanner == NULL)) {
+	$$.integer = 0;
+    }
+}
+
+%stack_overflow {
+    std::cerr << "Error: Parser experienced stack overflow. Last token was:\n";
+    printToken(yypMinor->yy0);
+}
+
 %token_type {YYSTYPE}
 
-%syntax_error { SET_SYNTAX_ERROR; }
+%syntax_error {
+    SET_SYNTAX_ERROR;
+
+    std::cerr << "Error: Parser experienced a syntax error.\n";
+    std::cerr << "Last token (type " << yymajor << ") was:\n";
+    printToken(yyminor.yy0);
+}
 
 start ::= statement_list.
 
