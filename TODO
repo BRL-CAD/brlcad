@@ -951,6 +951,12 @@ STEP
 BREP/NURBS
 ----------
 
+* profile and optimize prep.  crazy slow.
+
+* tighten up the bounding boxes around nurbs geometry.  seems to be
+  bounding the untrimmed surfaces instead of the trimmed edges
+  resulting in boxes (hopefully) larger than they need to be.
+
 * update to openNURBS 5.0 (2011-02-02)
 
 * implement conversion of implicit CSG to NURBS CSG.  partially
