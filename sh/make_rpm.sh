@@ -219,7 +219,7 @@ F="/usr/share/applications/defaults.list"
 if [ ! -f $F ]; then
 	echo "[Default Applications]" > $F
 else
-	sed -i "/application\/x-brlcad-/d" $F
+	sed -i "/application\/brlcad-/d" $F
 fi
 
 echo "application/brlcad-v4=brlcad-mged.desktop" >> $F
