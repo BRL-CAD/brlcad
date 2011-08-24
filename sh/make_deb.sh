@@ -80,11 +80,6 @@ if test ! -e /etc/debian_version ; then
     ferror "Refusing to build on a non-debian system." "Exiting..."
 fi
 
-# test if configure script exist
-if test ! -f configure ;then
-    ferror "Missing \"configure\" script. Execute \"./autogen.sh\" first." "Exiting..."
-fi
-
 # check needed packages
 E=0
 fcheck(){
@@ -137,28 +132,6 @@ fi
 
 # #
 cp -Rf misc/debian/ .
-
-# modify doc menu desktop files
-fdoc(){
-    L=`sed -n '/Exec=/=' $2`
-    A=`sed -n $L'p' $2`
-    if test ! "Exec=$1" = "$A" ;then
-	sed -i "s:$A:Exec=$1:" $2
-	echo "\"$2\" has been modified!"
-    fi
-}
-
-fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/toc.html" \
- "debian/brlcad-doc.desktop"
-
-fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/db" \
- "debian/brlcad-db.desktop"
-
-fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/manuals/mged/index.html" \
- "debian/brlcad-doc-mged.desktop"
-
-fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/manuals/Anim_Tutorial/index.html" \
- "debian/brlcad-doc-animation.desktop"
 
 # update debian/chagelog if needed
 if test -s $CFILE && test `sed -n '1p' $CFILE | grep "brlcad ($BVERSION-$RELEASE" | wc -l` -eq 0 ; then

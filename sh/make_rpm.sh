@@ -140,30 +140,14 @@ rm -Rf $TMPDIR
 mkdir -p $TMPDIR/tmp
 cp -Rf misc/debian/* $TMPDIR
 
-# modify doc menu desktop files
-fdoc(){
-    L=`sed -n '/Exec=/=' $2`
-    A=`sed -n $L'p' $2`
-    if test ! "Exec=$1" = "$A" ;then
-	sed -i "s:$A:Exec=$1:" $2
-	echo "\"$2\" has been modified!"
-    fi
-}
-
-fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/toc.html" \
- "$TMPDIR/brlcad-doc.desktop"
-
-fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/db" \
- "$TMPDIR/brlcad-db.desktop"
-
-fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/manuals/mged/index.html" \
- "$TMPDIR/brlcad-doc-mged.desktop"
-
-fdoc "xdg-open /usr/brlcad/share/brlcad/$BVERSION/html/manuals/Anim_Tutorial/index.html" \
- "$TMPDIR/brlcad-doc-animation.desktop"
-
 # compile and install in tmp dir
-./configure --enable-optimized --enable-almost-everything --with-ogl --disable-debug
+cmake -DBRLCAD-ENABLE_OPTIMIZED_BUILD=ON \
+      -DBRLCAD-ENABLE_ALL_LOCAL_LIBS=ON \
+      -DBRLCAD-ENABLE_STRICT=OFF \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_INSTALL_PREFIX=/usr/brlcad \
+      -DDATA_DIR=share \
+      -DMAN_DIR=share/man
 make -j$NJOBS
 fakeroot make install DESTDIR=`pwd`"/$TMPDIR/tmp"
 
@@ -194,11 +178,11 @@ cp -f $TMPDIR/brlcad-db.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
 cp -f $TMPDIR/brlcad-doc.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
 
 mkdir -p $TMPDIR/tmp/usr/share/icons/hicolor/48x48/mimetypes
-cp -f $TMPDIR/application-x-brlcad-v4.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/mimetypes
-cp -f $TMPDIR/application-x-brlcad-v5.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/mimetypes
+cp -f $TMPDIR/brlcad-v4.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/mimetypes
+cp -f $TMPDIR/brlcad-v5.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/mimetypes
 
 mkdir -p $TMPDIR/tmp/usr/share/mime/packages
-cp -f $TMPDIR/application-x-brlcad.xml $TMPDIR/tmp/usr/share/mime/packages
+cp -f $TMPDIR/brlcad.xml $TMPDIR/tmp/usr/share/mime/packages
 
 #Create brlcad.spec file
 echo -e 'Name: brlcad
