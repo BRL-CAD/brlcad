@@ -41,7 +41,7 @@
 # Replaces facetall.sh conversions assuming file didn't already
 # contain bot objects:
 #
-# file=file.g ; for i in `mged -c $file search . -type bot 2>&1` ; do base=`echo $i|sed 's/.bot//g'` ; mged -c $file kill $base \; mv $i $base ; done
+# file=file.g ; for i in `mged -c $file search . -type bot 2>&1` ; do base=`echo $i|sed 's/.bot//g'` ; mged -c $file killtree $base \; mv $i $base ; done
 #
 # Great for calculating number of polygons in file:
 #
