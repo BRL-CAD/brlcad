@@ -94,22 +94,24 @@ MACRO(LEMON_TARGET Name LemonInput LemonOutput)
 			STRING(REGEX REPLACE "yy$" "h" HEADER_FILE "${ARGV1}")
 			STRING(REGEX REPLACE "yy$" "out" OUT_FILE "${ARGV1}")
 			STRING(REGEX REPLACE "^(.*)(\\.[^.]*)$" "\\2" _fileext "${ARGV2}")
-			STRING(REPLACE "cpp" "hpp" _fileext ${_fileext})
+			STRING(REPLACE "cpp" "hpp" _hfileext ${_fileext})
 		ELSE("${ARGV1}" MATCHES "yy$")
 			STRING(REGEX REPLACE "y$" "c" SRC_FILE "${ARGV1}")
 			STRING(REGEX REPLACE "y$" "h" HEADER_FILE "${ARGV1}")
 			STRING(REGEX REPLACE "y$" "out" OUT_FILE "${ARGV1}")
 			STRING(REGEX REPLACE "^(.*)(\\.[^.]*)$" "\\2" _fileext "${ARGV2}")
-			STRING(REPLACE "c" "h" _fileext ${_fileext})
+			STRING(REPLACE "c" "h" _hfileext ${_fileext})
 		ENDIF("${ARGV1}" MATCHES "yy$")
-		STRING(REGEX REPLACE "^(.*)(\\.[^.]*)$" "\\1${_fileext}" LEMON_${Name}_OUTPUT_HEADER "${ARGV2}")
+		STRING(REGEX REPLACE "^(.*)(\\.[^.]*)$" "\\1${_hfileext}" LEMON_${Name}_OUTPUT_HEADER "${ARGV2}")
+		STRING(REGEX REPLACE "^(.*)(\\.[^.]*)$" "\\1.out" LEMON_${Name}_LOG "${ARGV2}")
 		LIST(APPEND LEMON_TARGET_outputs "${LEMON_${Name}_OUTPUT_HEADER}")
+		LIST(APPEND LEMON_TARGET_outputs "${LEMON_${Name}_LOG}")
 
 		ADD_CUSTOM_COMMAND(OUTPUT ${LEMON_TARGET_outputs}
 			COMMAND ${LEMON_EXECUTABLE} ${ARGV1} ${ARGV3}
 			COMMAND ${CMAKE_COMMAND} -E rename ${HEADER_FILE} ${LEMON_${Name}_OUTPUT_HEADER}
 			COMMAND ${CMAKE_COMMAND} -E rename ${SRC_FILE} ${ARGV2}
-			COMMAND ${CMAKE_COMMAND} -E remove ${OUT_FILE}
+			COMMAND ${CMAKE_COMMAND} -E rename ${OUT_FILE} ${LEMON_${Name}_LOG}
 			DEPENDS ${ARGV1}
 			COMMENT "[LEMON][${Name}] Building parser with ${LEMON_EXECUTABLE}"
 			WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
