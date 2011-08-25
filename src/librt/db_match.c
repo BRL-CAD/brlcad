@@ -37,6 +37,8 @@
 
 
 /**
+ * DEPRECATED: Use bu_fnmatch() instead of this function.
+ *
  *			D B _ R E G E X P _ M A T C H
  *
  *	If string matches pattern, return 1, else return 0
@@ -52,56 +54,10 @@
 int
 db_regexp_match(register const char *pattern, register const char *string)
 {
-    do {
-	switch ( *pattern ) {
-	    case '*':
-		/* match any string including null string */
-		++pattern;
-		do {
-		    if ( db_regexp_match( pattern, string ) )
-			return 1;
-		} while ( *string++ != '\0' );
-		return 0;
-	    case '?':
-		/* match any character  */
-		if ( *string == '\0' )
-		    return 0;
-		break;
-	    case '[':
-		/* try to match one of the characters in brackets */
-		++pattern;
-		if ( *pattern == '\0' )
-		    return 0;
-		while ( *pattern != *string ) {
-		    if ( pattern[0] == '-' && pattern[-1] != '\\')
-			if (	pattern[-1] <= *string &&
-				pattern[-1] != '[' &&
-				pattern[ 1] >= *string &&
-				pattern[ 1] != ']' )
-			    break;
-		    ++pattern;
-		    if ( *pattern == '\0' || *pattern == ']' )
-			return 0;
-		}
-		/* skip to next character after closing bracket */
-		while ( *pattern != '\0' && *pattern != ']' )
-		    ++pattern;
-		break;
-	    case '\\':
-		/* escape special character */
-		++pattern;
-		/* compare characters */
-		if ( *pattern != *string )
-		    return 0;
-		break;
-	    default:
-		/* compare characters */
-		if ( *pattern != *string )
-		    return 0;
-	}
-	++string;
-    } while ( *pattern++ != '\0' );
-    return 1;
+    if (bu_fnmatch(pattern, string, 0) == 0)
+	return 1;
+
+    return 0;
 }
 
 
@@ -121,7 +77,7 @@ db_regexp_match_all(struct bu_vls *dest, struct db_i *dbip, const char *pattern)
 
     for ( i = num = 0; i < RT_DBNHASH; i++ )  {
 	for ( dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw ) {
-	    if ( !db_regexp_match( pattern, dp->d_namep ) )
+	    if (bu_fnmatch(pattern, dp->d_namep, 0) != 0)
 		continue;
 	    if ( num == 0 )
 		bu_vls_strcat( dest, dp->d_namep );

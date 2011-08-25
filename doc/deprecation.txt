@@ -59,6 +59,7 @@ autogen.sh && configure
         ./configure -> cmake . [deprecated 7.20]
 raytrace.h
 	rt_load_attrs() -> rt_gettrees_and_attrs() or db5_import_attributs() [deprecated 7.20]
+        db_regexp_match() -> !bu_fnmatch() [deprecated 7.20]
 
 7.18
 ----

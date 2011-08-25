@@ -3152,8 +3152,8 @@ RT_EXPORT extern int db_rename(struct db_i *,
 RT_EXPORT extern void db_update_nref(struct db_i *dbip,
 				     struct resource *resp);
 
-RT_EXPORT extern int db_regexp_match(const char *pattern,
-				     const char *string);
+DEPRECATED RT_EXPORT extern int db_regexp_match(const char *pattern,
+						const char *string);
 RT_EXPORT extern int db_regexp_match_all(struct bu_vls *dest,
 					 struct db_i *dbip,
 					 const char *pattern);

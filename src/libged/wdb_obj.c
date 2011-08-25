@@ -2537,7 +2537,7 @@ wdb_expand_cmd(struct rt_wdb *wdbp,
 	thismatch = 0;
 	for (i = 0; i < RT_DBNHASH; i++) {
 	    for (dp = wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		if (!db_regexp_match(pattern, dp->d_namep))
+		if (bu_fnmatch(pattern, dp->d_namep, 0) != 0)
 		    continue;
 		/* Successful match */
 		if (nummatch == 0)
