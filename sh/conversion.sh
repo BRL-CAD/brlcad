@@ -377,6 +377,16 @@ if test ! -f "$MGED" ; then
     echo "Aborting."
     exit 1
 fi
+SGED="`which $SEARCH`"
+if test ! -f "$SGED" ; then
+    echo "ERROR: Unable to find $SEARCH"
+    echo ""
+    echo "Configure the SEARCH variable or check your PATH."
+    echo "Run '$0 instructions' for additional information."
+    echo ""
+    echo "Aborting."
+    exit 1
+fi
 
 
 ################
@@ -414,7 +424,7 @@ while test $# -gt 0 ; do
 
     # execute in a coprocess
     if test "x$OBJECTS" = "x" ; then OBJECTS='-print' ; fi
-    cmd="$SEARCH -c \"$work\" search $OPATH $OBJECTS"
+    cmd="$SGED -c \"$work\" search $OPATH $OBJECTS"
     objects=`eval "$cmd" 2>&1 | grep -v Using`
     $VERBOSE_ECHO "\$ $cmd"
     $VERBOSE_ECHO "$objects"
@@ -431,7 +441,7 @@ EOF
     while read object ; do
 
 	obj="`basename \"$object\"`"
-	found=`$SEARCH -c "$work" search . -name \"${obj}\" 2>&1 | grep -v Using`
+	found=`$SGED -c "$work" search . -name \"${obj}\" 2>&1 | grep -v Using`
 	if test "x$found" != "x$object" ; then
 	    $ECHO "INTERNAL ERROR: Failed to find [$object] with [$obj] (got [$found])"
 	    continue
@@ -471,7 +481,7 @@ EOF
 	real_nmg="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
 
 	# verify NMG
-	found=`$SEARCH -c "$work" search . -name \"${obj}.nmg\" 2>&1 | grep -v Using`
+	found=`$SGED -c "$work" search . -name \"${obj}.nmg\" 2>&1 | grep -v Using`
 	if test "x$found" = "x${object}.nmg" ; then
 	    nmg=pass
 	    nmg_count=`expr $nmg_count + 1`
@@ -505,7 +515,7 @@ EOF
 	real_bot="`echo \"$output\" | tail -n 4 | grep real | awk '{print $2}'`"
 
 	# verify BoT
-	found=`$SEARCH -c "$work" search . -name \"${obj}.bot\" 2>&1 | grep -v Using`
+	found=`$SGED -c "$work" search . -name \"${obj}.bot\" 2>&1 | grep -v Using`
 	if test "x$found" = "x${object}.bot" ; then
 	    bot=pass
 	    bot_count=`expr $bot_count + 1`
