@@ -1015,6 +1015,7 @@ FIND_PACKAGE(Bullet)
 IF(BULLET_FOUND)   
     FILE(APPEND ${CONFIG_H_FILE} "#define HAVE_BULLET 1\n")   
 ENDIF(BULLET_FOUND)
+MARK_AS_ADVANCED(BULLET_INCLUDE_DIR)
 
 # *******************************************************************
 # ***             Check for Headers - Stage 5 of 9                ***
