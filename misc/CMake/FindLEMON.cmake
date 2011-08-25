@@ -67,6 +67,17 @@
 
 FIND_PROGRAM(LEMON_EXECUTABLE lemon DOC "path to the lemon executable")
 MARK_AS_ADVANCED(LEMON_EXECUTABLE)
+IF(LEMON_EXECUTABLE)
+	get_filename_component(lemon_path ${LEMON_EXECUTABLE} PATH)
+	IF(lemon_path)
+		IF(EXISTS ${lemon_path}/lempar.c)
+			SET(LEMON_TEMPLATE "${lemon_path}/lempar.c")
+		ENDIF(EXISTS ${lemon_path}/lempar.c)
+	ELSE(lemon_path)
+		SET(LEMON_TEMPLATE "")
+	ENDIF(lemon_path)
+ENDIF(LEMON_EXECUTABLE)
+MARK_AS_ADVANCED(LEMON_TEMPLATE)
 
 #============================================================
 # LEMON_TARGET (public macro)
@@ -115,6 +126,6 @@ ENDMACRO(LEMON_TARGET)
 #============================================================
 
 INCLUDE(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(LEMON DEFAULT_MSG LEMON_EXECUTABLE)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(LEMON DEFAULT_MSG LEMON_EXECUTABLE LEMON_TEMPLATE)
 
 # FindLEMON.cmake ends here
