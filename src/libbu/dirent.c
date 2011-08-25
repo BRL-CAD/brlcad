@@ -26,7 +26,7 @@
 #include <sys/types.h>
 
 #include "bu.h"
-#include "./uce-dirent.h"
+#include "uce-dirent.h"
 
 
 int

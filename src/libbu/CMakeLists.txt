@@ -1,7 +1,8 @@
 include_directories(
-    ${PNG_INCLUDE_DIR}
-    ${ZLIB_INCLUDE_DIR}
-    ${TCL_INCLUDE_DIRS}
+	${CMAKE_SOURCE_DIR}/src/other/uce-dirent
+	${PNG_INCLUDE_DIR}
+	${ZLIB_INCLUDE_DIR}
+	${TCL_INCLUDE_DIRS}
 )
 
 set(LIBBU_SOURCES
@@ -113,6 +114,5 @@ ADD_MAN_PAGES(3 bu_MAN3)
 
 set(bu_ignore_files
 	rb_internals.h
-	uce-dirent.h
 	)
 CMAKEFILES(${bu_ignore_files})

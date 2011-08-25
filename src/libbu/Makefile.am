@@ -109,8 +109,7 @@ prognametester_LDADD = \
 	${BU_LIBS}
 
 noinst_HEADERS = \
-	rb_internals.h \
-	uce-dirent.h
+	rb_internals.h
 
 man_MANS = \
 	htond.3 \
@@ -124,6 +123,7 @@ EXTRA_DIST = \
 
 AM_CPPFLAGS = \
 	-DPREFIX=\"$(prefix)\" \
+	-I${top_srcdir}/src/other/uce-dirent \
 	${PNG_CPPFLAGS} \
 	${TCL_CPPFLAGS} \
 	${LIBZ_CPPFLAGS}
