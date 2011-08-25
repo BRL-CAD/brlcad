@@ -14,7 +14,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * improved mged object name globbing support - Sean Morrison
-* improved bounding boxes for multiple primitives - Cliff Yapp
+* improved bounding box for rpc, epa, ehy, hyp primitives - Cliff Yapp
 * added an OPATH (object path) option to sh/conversion.sh
         - Tom Browder
 * add support for .png file output in rtwizard - Cliff Yapp
