@@ -1,7 +1,11 @@
 IF(LEX_EXECUTABLE AND YACC_EXECUTABLE)
 	ADD_SUBDIRECTORY(points)
-	SET(pointstarget libpoints)
+	SET(MGED_EXTRA_LIBS libpoints)
 ENDIF(LEX_EXECUTABLE AND YACC_EXECUTABLE)
+
+IF(BULLET_FOUND)
+	SET(MGED_EXTRA_LIBS "${MGED_EXTRA_LIBS} libgedsim")
+ENDIF(BULLET_FOUND)
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
@@ -117,7 +121,7 @@ IF(NOT WIN32)
 ENDIF(NOT WIN32)
 
 IF(NOT WIN32)
-	BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad libged libwdb libdm libtermio ${pointstarget} ${ITCL_LIBRARY} ${ITK_LIBRARY}")
+	BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad libged libwdb libdm libtermio ${MGED_EXTRA_LIBS} ${ITCL_LIBRARY} ${ITK_LIBRARY}")
 ELSE(NOT WIN32)
 	BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad libged libwdb libdm	${ITCL_LIBRARY} ${ITK_LIBRARY} ws2_32.lib opengl32.lib")
 ENDIF(NOT WIN32)
