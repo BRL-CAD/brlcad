@@ -1307,29 +1307,38 @@ rt_bot_ifree2(struct rt_bot_internal *bot_ip)
     RT_BOT_CK_MAGIC(bot_ip);
     bot_ip->magic = 0;			/* sanity */
 
-    if (bot_ip->tie)
+    if (bot_ip->tie != NULL) {
 	bot_ip->tie = NULL;
+    }
 
-    if (bot_ip->vertices) {
+    if (bot_ip->vertices != NULL) {
 	bu_free(bot_ip->vertices, "BOT vertices");
 	bot_ip->vertices = NULL;
 	bot_ip->num_vertices = 0;
     }
-    if (bot_ip->faces) {
+    if (bot_ip->faces != NULL) {
 	bu_free(bot_ip->faces, "BOT faces");
 	bot_ip->faces = NULL;
 	bot_ip->num_faces = 0;
     }
 
     if (bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS) {
-	if (bot_ip->thickness) {
+	if (bot_ip->thickness != NULL) {
 	    bu_free(bot_ip->thickness, "BOT thickness");
 	    bot_ip->thickness = NULL;
 	}
-	if (bot_ip->face_mode) {
+	if (bot_ip->face_mode != NULL) {
 	    bu_free(bot_ip->face_mode, "BOT face_mode");
 	    bot_ip->face_mode = NULL;
 	}
+    }
+
+    if (bot_ip->normals != NULL) {
+	bu_free(bot_ip->normals, "BOT normals");
+    }
+
+    if (bot_ip->face_normals != NULL) {
+	bu_free(bot_ip->face_normals, "BOT normals");
     }
 
     bu_free(bot_ip, "bot ifree");
