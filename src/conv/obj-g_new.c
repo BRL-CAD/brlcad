@@ -2641,7 +2641,7 @@ output_to_bot(struct ga_t *ga,
     ti.num_uvi = 0;                  /* number of unique triangle vertex indexes in uvi array */
     ti.num_uvni = 0;                 /* number of unique triangle vertex normal index in uvni array */
     ti.num_utvi = 0;                 /* number of unique triangle texture vertex index in utvi array */
-    ti.bot_mode = (unsigned char)NULL;         /* bot mode RT_BOT_PLATE, RT_BOT_PLATE_NOCOS, RT_BOT_SOLID,
+    ti.bot_mode = 0;                 /* bot mode RT_BOT_PLATE, RT_BOT_PLATE_NOCOS, RT_BOT_SOLID,
                                                 * RT_BOT_SURFACE
                                                 */
     ti.bot_vertices = (fastf_t *)NULL;         /* array of float for bot vertices [bot_num_vertices*3] */
