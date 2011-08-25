@@ -541,14 +541,22 @@ BANode<BA>::getCurveEstimateOfV(fastf_t u, fastf_t tol) const
     while (du > 0.05) {
     	guess = Ta + dT/2;
     	p = m_trim->PointAt(guess);
-    	if (p[X] < u) {
-    	    Ta = guess;
-    	    VMOVE(A, p);
-    	    Tan_start = m_trim->TangentAt(Ta);
-    	} else {
+
+	if (UNLIKELY(NEAR_EQUAL(p[X], u, SMALL_FASTF))) {
+	    /* hit 'u' exactly, done deal */
+	    return p[Y];
+	}
+
+    	if (p[X] > u) {
+	    /* v is behind us, back up the end */
     	    Tb = guess;
     	    VMOVE(B, p);
     	    Tan_end = m_trim->TangentAt(Tb);
+    	} else {
+	    /* v is in front, move start forward */
+    	    Ta = guess;
+    	    VMOVE(A, p);
+    	    Tan_start = m_trim->TangentAt(Ta);
     	}
     	dT = Tb - Ta;
     	du = fabs(Tan_end.x - Tan_start.x);
