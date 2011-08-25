@@ -64,6 +64,7 @@ unix/tkConfig.h.in
 unix/tkConfig.sh.in
 unix/tkUnixDefault.h
 unix/tkUnixDialog.c
+unix/tkUnixFont.c
 unix/tkUnixInt.h
 unix/tkUnixPort.h
 unix/tkUnixRFont.c

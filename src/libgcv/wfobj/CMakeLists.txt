@@ -19,3 +19,16 @@ SET(OBJ_G_SRCS
 configure_file(obj_grammar.h.in ${CMAKE_CURRENT_BINARY_DIR}/obj_grammar.h COPY_ONLY)
 
 BRLCAD_ADDEXEC(obj-g "${OBJ_G_SRCS}" "libbu libbn libwdb")
+
+set(wfobj_ignore_files
+	Makefile.sample
+	obj_grammar.h.in
+	obj_grammar.yy
+	obj_parser.h
+	obj_parser_state.h
+	obj_rules.h
+	obj_rules.re
+	obj_token_type.h
+	re2c_utils.h
+	)
+CMAKEFILES(${wfobj_ignore_files})

@@ -52,6 +52,12 @@ DISTCHECK_IGNORE_ITEM(boost)
 # are used - mark incrTcl as ignored
 DISTCHECK_IGNORE_ITEM(incrTcl)
 
+# Ignore the osl subdir
+DISTCHECK_IGNORE_ITEM(osl)
+
+# Ignore the uce-dirent subdir
+DISTCHECK_IGNORE_ITEM(uce-dirent)
+
 # zlib Library
 # The autotools build needs this file, but the CMake zlib build doesn't tolerate 
 # it - remove it if it's there. 

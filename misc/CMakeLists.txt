@@ -53,6 +53,7 @@ SET(misc_ignore_files
 	CMake
 	Description.txt
 	Doxyfile
+	Doxyfile.in
 	Makefile.defs
 	archlinux
 	batch-indent-region.el
