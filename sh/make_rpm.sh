@@ -89,7 +89,7 @@ if test "$DNAME" = "fedora" ;then
     fcheck flex
     fcheck libXi-devel
     fcheck libxslt
-    fcheck mesa-libGL-devel
+    fcheck mesa-libGLU-devel
     fcheck pango-devel
 fi
 

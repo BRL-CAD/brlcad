@@ -103,7 +103,7 @@ if test "$1" = "-b" ;then
     fcheck flex
     fcheck libxi-dev
     fcheck xsltproc
-    fcheck libgl1-mesa-dev
+    fcheck libglu1-mesa-dev
     fcheck libpango1.0-dev
     #fcheck fop # allows pdf creation
 fi
