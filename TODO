@@ -58,6 +58,12 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* rewrite nmg->brep conversion routine
+  (src/librt/primitives/brep/brep_brep.cpp) to use a simple 2d
+  bounding box in the plane of each nmg face.  even better would be to
+  calculate the convex hull and align the maximal edge to one of the
+  UV edges.  the csgbrep routine provides a simple box test case.
+
 * investigate off-by-one AND off-by-many errors from identical rt
   invocations.  running with -P1 results in no errors, parallel (on
   64-bit Linux RHEL) is giving many floating-point related errors.
