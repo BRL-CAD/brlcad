@@ -417,7 +417,7 @@ while test $# -gt 0 ; do
 	continue
     fi
 
-    work="${file}.conversion"
+    work="${file}.conversion.g"
     cmd="cp \"$file\" \"$work\""
     $VERBOSE_ECHO "\$ $cmd"
     eval "$cmd"
@@ -546,7 +546,7 @@ EOF
 
     # remove the file if so directed
     if test "x$KEEP" = "x0" ; then
-      rm -f "$work"
+	rm -f "$work"
     fi
 
     shift
