@@ -62,108 +62,48 @@
 #include "wdb.h"
 #include "obj_parser.h"
 
-static char *usage = "%s -u units_str -o open_bot_type -h plate_thickness "
-		     "[-cipdv] [-g grouping_option] [-m mode_option] "
-		     "[-t distance_tolerance] [-x rt_debug_flag] "
-		     "[-X NMG_debug_flag] input.obj output.g\n\
-\n\
--u units_str\
-\tUnits of obj file where units_str can\n\
-\tbe any valid BRL-CAD unit such as one\n\
-\tof the following {m|cm|mm|ft|in} or\n\
-\tspecify a conversion factor from obj\n\
-\tfile units to mm.\n\
-\n\
--o open_bot_type	Type of bot to create when the\n\
-\tprimitive is not a closed volume.\n\
-\topen_bot_type can be {s|p|n} where ...\n\
-\ts = surface bot\n\
-\tp = plate bot\n\
-\t n = plate-nocos bot\n\
-\n\
--h plate_thickness\
-\tPlate thickness in mm units of plate\n\
-or plate-nocos bots created when the\n\
-\tbot is not a closed volume.\n\
-\n\
-\t-c\
-\tContinue processing on nmg-bomb. If this option is set\n\
-\tand an nmg-bomb occurs (i.e. fatal error during\n\
-\tprocessing nmg or bot-via-nmg) conversion will fall-back\n\
-\tto outputing the grouping to 'native-bot' and then\n\
-\tcontinue processing the next grouping. If this option is\n\
-\tnot set and an nmg-bomb occurs then all processing will\n\
-\tstop and the converter will exit.\n\
-\n\
--i\
-\tIgnore normals defined in the obj file when the\n\
-\tconversion mode is 'native-bots'.\n\
-\n\
--p\
-\tPlot open edges when creating bots which are not a\n\
-\tclosed volume. A plot/overlay (.pl) file will be\n\
-\tcreated with the same name as the bot primitive and be\n\
-\tplaced in the current directory. If a plot file already\n\
-\texists, it will be overwritten.\n\
-\n\
--d\
-\tOutput debug information to stderr stream. An extremely\n\
-\tlarge amount of information will be output. It is\n\
-\tstrongly suggested strerr be piped to a file.\n\
-\n\
--v\
-\tOutput verbose user information to stderr stream. There\n\
-\tare different levels of verbose output where higher\n\
-\tlevels increase the amount of output information. Each\n\
-\toccurrence of this option in the parameter list\n\
-\tincreases the level. A large amount of information will\n\
-\tbe output so piping stderr to a file is highly\n\
-\trecommended.\n\
-\n\
--g grouping_option\
-\tChoose which face grouping, as defined\n\
-\tin the obj file, to use to create the\n\
-\tBRL-CAD primitives. The grouping_option\n\
-\tmay be one of {g|o|m|t|n} where ...\n\
-\tg = group (default)\n\
-\to = object\n\
-\tm = material\n\
-\tt = texture\n\
-\tn = none\n\
-\n\
--m mode_option\
-\tChoose the conversion mode. The\n\
-\tmode_option may be one of {b|n|v}\n\
-\twhere ...\n\
-\tb = bot 'native-bot'\n\
-\tn = nmg\n\
-\tv = bot-via-nmg (default)\n\
-\n\
--t distance_tolerance\
-\tMaximum distance, in mm units, where\n\
-\ttwo vertices are considered the same.\n\
-\tThe default is 0.0005mm which matches\n\
-\tthe raytracer default distance\n\
-\ttolerance. Do not change this value\n\
-\tunless you also change the raytracer\n\
-\tdistance tolerance.\n\
-\n\
--x rt_debug_flag\
-\tSpecifies debug bits (see raytrace.h)\n\
-\n\
--X NMG_debug_flag\
-\tSpecifies debug bits for NMG's\n\
-\t(see nmg.h)\n\
-\n\
- input.obj The path and file name of the input\n\
-   WaveFront Object file.\n\
-\n\
-output.g\
-\tThe path and file name of the output\n\
-\tBRL-CAD database file. If this file\n\
-\talready exists, it will be\n\
-\toverwritten.\n";
+static char *usage =
+"%s [options] -u units -o type input.obj output.g\n\n"
 
+"Required options:\n"
+"  -u units\tSelect units for the obj file: (m|cm|mm|ft|in).\n"
+"  -o type\tSelect the type used for bots that aren't closed volumes:\n"
+         "\t\t\tn = plate nocos\n"
+         "\t\t\tp = plate\n"
+         "\t\t\ts = surface\n\n"
+
+"Other options:\n"
+"  -c\t\tContinue processing on nmg-bomb. Conversion will fall-back to\n"
+    "\t\tnative bot mode if a fatal error occurs when using the nmg or\n"
+    "\t\tbot via nmg modes.\n"
+"  -d\t\tOutput debug info to stderr.\n"
+"  -g grouping\tSelect which OBJ face grouping is used to create BRL-CAD\n"
+	   "\t\tprimitives:\n"
+	   "\t\t\tg = group (default)\n"
+	   "\t\t\tm = material\n"
+	   "\t\t\tn = none\n"
+	   "\t\t\to = object\n"
+	   "\t\t\tt = texture\n"
+"  -h mm\t\tThickness used when a bot is not a closed volume and it's\n"
+       "\t\tconverted as a plate or plate-nocos bot.\n"
+"  -i\t\tIgnore the normals defined in the input file when using native\n"
+    "\t\tbot conversion mode.\n"
+"  -m mode\tSelect the conversion mode:\n"
+         "\t\t\tb = native bot\n"
+         "\t\t\tn = nmg\n"
+         "\t\t\tv = bot via nmg (default)\n"
+"  -p\t\tCreates a plot/overlay (.pl) file of open edges for bots that\n"
+    "\t\taren't closed volumes. <bot_name>.pl will be created in the\n"
+    "\t\tcurrent directory and will overwrite any exisiting file with the\n"
+    "\t\tsame name.\n"
+"  -t mm\t\tDistance tolerance. Two vertices are considered to be the same\n"
+       "\t\tif they are within this distance of one another. Default is\n"
+       "\t\t.0005mm. You should not change this value without setting the\n"
+       "\t\traytracer tolerance to match it.\n"
+"  -v\t\tOut verbose user info to stderr. Each occurrance of this option\n"
+    "\t\tin the option list increases the verbosity level.\n"
+"  -x flag\tSpecify rt debug flag bits (see raytrace.h).\n"
+"  -X flag\tSpecify nmg debug flag bits (see nmg.h).\n";
  
 /* global definition */
 size_t *tmp_ptr = NULL;
