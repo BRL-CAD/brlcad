@@ -825,12 +825,19 @@ IF(MSVC)
 	ENDIF(CMAKE_CL_64)
 ENDIF(MSVC)
 
+
 # One of the problems with 32/64 building is we need to search anew
 # for 64 bit libs after a 32 bit configure, or vice versa.
 IF(PREVIOUS_CONFIGURE_TYPE)
 	IF(NOT ${PREVIOUS_CONFIGURE_TYPE} STREQUAL ${CMAKE_CPU_TYPE})
-		MESSAGE(FATAL_ERROR "Configuring for ${CMAKE_CPU_TYPE} build, but previous configuration for ${PREVIOUS_CONFIGURE_TYPE} is already present.  To proceed, either clear CMakeCache.txt file or specify ${PREVIOUS_CONFIGURE_TYPE} as the build type.")
+		include(${CMAKE_SOURCE_DIR}/misc/CMake/ResetCache.cmake)
+		RESET_CACHE_FILE()
 	ENDIF(NOT ${PREVIOUS_CONFIGURE_TYPE} STREQUAL ${CMAKE_CPU_TYPE})
+	IF(${CMAKE_CPU_TYPE} STREQUAL "32BIT")
+		set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS OFF)
+	ELSE(${CMAKE_CPU_TYPE} STREQUAL "32BIT")
+		set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS ON)
+	ENDIF(${CMAKE_CPU_TYPE} STREQUAL "32BIT")
 ENDIF(PREVIOUS_CONFIGURE_TYPE)
 
 SET(PREVIOUS_CONFIGURE_TYPE ${CMAKE_CPU_TYPE} CACHE STRING "Previous configuration CPU type" FORCE)
