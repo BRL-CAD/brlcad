@@ -1649,6 +1649,8 @@ free_ti(struct ti_t *ti)
         return;
     }
 
+    bu_free(ti->bot_faces,"ti->bot_faces");
+
     /* free 'triangle indices into vertex, normal, texture vertex lists' */
     bu_free(ti->index_arr_tri, "ti->index_arr_tri");
 
@@ -1657,7 +1659,8 @@ free_ti(struct ti_t *ti)
 
     /* free 'array of floats for bot normals' */
     if (ti->tri_type == FACE_NV || ti->tri_type == FACE_TNV) {
-        bu_free(ti->bot_normals, "ti->bot_normals");
+	bu_free(ti->bot_normals, "ti->bot_normals");
+	bu_free(ti->bot_face_normals, "ti->bot_face_normals");
     }
 
     /* free 'array of floats for texture vertices' */
@@ -1672,6 +1675,7 @@ free_ti(struct ti_t *ti)
         /* free 'array of floats for face thickness' */
         bu_free(ti->bot_thickness, "ti->bot_thickness");
     }
+
     return;
 }
 
