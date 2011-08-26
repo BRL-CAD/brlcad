@@ -431,7 +431,7 @@ void set_working_groupset(basic_parser_extra<PrecisionT, charT, traits,
 	    extra.contents->groupindex_set.size();
 
 	// new_grpset now contains a unique set of indices into
-\t// contents->group_set;
+	// contents->group_set;
 	extra.contents->groupindex_set.
 	    resize(extra.contents->groupindex_set.size() + 1);
 
