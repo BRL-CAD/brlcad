@@ -3812,6 +3812,7 @@ main(int argc, char **argv)
     }
 
     wdb_close(fd_out);
+    rt_clean_resource_complete(NULL, &rt_uniresource);
 
     (void)time(&overall_end_time);
     overall_elapsed_time = overall_end_time - overall_start_time;
