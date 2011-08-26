@@ -899,11 +899,11 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 		NMG_CK_EDGEUSE(eu);
 		vu = eu->vu_p;
 		NMG_CK_VERTEXUSE(vu);
-		NMG_CK_VERTEX(vu->v_p)
-		    if (NMG_INDEX_TEST_AND_SET(flags, vu->v_p)) {
-			/* move this vertex */
-			bu_ptbl_ins(&verts_to_move, (long *)vu->v_p);
-		    }
+		NMG_CK_VERTEX(vu->v_p);
+		if (NMG_INDEX_TEST_AND_SET(flags, vu->v_p)) {
+		    /* move this vertex */
+		    bu_ptbl_ins(&verts_to_move, (long *)vu->v_p);
+		}
 	    }
 	}
     }
