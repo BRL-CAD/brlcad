@@ -1,4 +1,4 @@
-/*                  O B J _ P A R S E R . C C
+/*                  O B J _ P A R S E R . C P P
  * BRL-CAD
  *
  * Copyright (c) 2010-2011 United States Government as represented by

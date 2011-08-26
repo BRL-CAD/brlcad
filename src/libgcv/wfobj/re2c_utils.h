@@ -1,4 +1,29 @@
-/* Interface to simplify usage of re2c by providing support for:
+/*                    R E 2 C _ U T I L S . H
+ * BRL-CAD
+ *
+ * Copyright (c) 2011 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file re2c_utils.h
+ *
+ * Utilities to simplify usage of re2c.
+ *
+ */
+
+/* Utilities to simplify usage of re2c by providing support for:
  *  - automatic input buffer management
  *        - Just specify a FILE* and the scanner will read from the input file
  *          as needed and save its place in the input between calls to the
@@ -23,6 +48,9 @@
  *  - You need to include this header in the re2c input file and link to the
  *    corresponding object file.
  *
+ *  - Disable the re2c buffering interface in the re2c comment block:
+ *        re2c:yyfill:enable = 0;
+ *
  *  - Your scanning function needs to return int (the token id). To return the
  *    token id, you must use RETURN(id) rather than simply return id.
  *
@@ -42,6 +70,10 @@
  *            ...other states...
  *        };
  *        #define CONDTYPE enum YYCONDTYPE
+ *
+ *    In the re2c comment block set:
+ *        re2c:define:condenumprefix = "";
+ *        re2c:define:YYSETCONDITION = BEGIN;
  */
 
 #ifndef RE2C_UTILS_H
@@ -141,3 +173,13 @@ char *copyCurrTokenText(bu_string *tokenString, scanner_t *scanner);
 __END_DECLS
 
 #endif /* RE2C_UTILS_H */
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
