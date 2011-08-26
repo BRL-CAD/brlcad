@@ -196,8 +196,13 @@ URL: http://brlcad.org
 Packager: Jordi Sayol <g.sayol@yahoo.es>
 
 ExclusiveArch: '$ARCH'
-Provides: brlcad = '$BVERSION'-'$RELEASE', brlcad('$FARCH') = '$BVERSION'-'$RELEASE'
+Provides: brlcad = '$BVERSION'-'$RELEASE', brlcad('$FARCH') = '$BVERSION'-'$RELEASE > $TMPDIR/brlcad.spec
 
+if test "$DNAME" = "fedora" ;then
+    echo -e 'Requires: xorg-x11-fonts-ISO8859-1-75dpi' >> $TMPDIR/brlcad.spec
+fi
+
+echo -e '
 %description
 BRL-CAD is a powerful cross-platform Open Source combinatorial
 Constructive Solid Geometry (CSG) solid modeling system that
@@ -250,7 +255,7 @@ gtk-update-icon-cache /usr/share/icons/hicolor &>/dev/null || :
 
 SuSEconfig &>/dev/null || :
 
-%files' > $TMPDIR/brlcad.spec
+%files' >> $TMPDIR/brlcad.spec
 
 find $TMPDIR/tmp/ -type d | sed 's:'$TMPDIR'/tmp:%dir ":' | sed 's:$:":' >> $TMPDIR/brlcad.spec
 find $TMPDIR/tmp/ -type f | sed 's:'$TMPDIR'/tmp:":' | sed 's:$:":' >> $TMPDIR/brlcad.spec
