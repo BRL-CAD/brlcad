@@ -283,7 +283,11 @@ int obj_parser_parse(yyscan_t scanner)
 	Parse(parser, yychar, yyval, scanner);
     }
 
-    return error;
+    if (error) {
+	return -1;
+    }
+
+    return 0;
 }
 
 void printToken(YYSTYPE token)
