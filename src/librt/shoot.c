@@ -145,11 +145,11 @@ rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
 	    psp->shot = NULL;	/* sanity */
 	    psp->magic = 0;
 	}
+
+	rtip->rti_nsolids_with_pieces = 0;
     }
     bu_free((char *)resp->re_pieces, "re_pieces[]");
     resp->re_pieces = NULL;
-
-    rtip->rti_nsolids_with_pieces = 0;
 }
 
 
