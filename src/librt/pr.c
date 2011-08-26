@@ -180,8 +180,8 @@ rt_pr_pt_vls(struct bu_vls *v, const struct rt_i *rtip, register const struct pa
     bu_vls_strcat( v, "  Untrimmed Segments spanning this interval:\n" );
     bu_log_indent_delta( 4 );
     for ( BU_PTBL_FOR( segpp, (struct seg **), &pp->pt_seglist ) )  {
-	RT_CK_SEG(*segpp)
-	    rt_pr_seg_vls( v, *segpp );
+	RT_CK_SEG(*segpp);
+	rt_pr_seg_vls( v, *segpp );
     }
     bu_log_indent_delta( -4 );
 
