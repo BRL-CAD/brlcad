@@ -649,7 +649,9 @@ SurfaceTree::SurfaceTree(ON_BrepFace* face, bool removeTrimmed, int depthLimit)
     normals[8] = frames[8].zaxis;
 
     m_root = subdivideSurfaceByKnots(surf, u, v, frames, corners, normals, 0, depthLimit);
-    m_root->BuildBBox();
+    if (m_root) {
+	m_root->BuildBBox();
+    }
     TRACE("u: [" << u[0] << ", " << u[1] << "]");
     TRACE("v: [" << v[0] << ", " << v[1] << "]");
     TRACE("m_root: " << m_root);
@@ -878,17 +880,45 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
 		ON_BoundingBox box = localsurf->BoundingBox();
 
 		int dir = 1;
-		localsurf->Split(dir, localsurf->Domain(dir).Mid(), south, north);
-		localsurf->Split(dir, vsplit, south, north);
+		bool split = localsurf->Split(dir, localsurf->Domain(dir).Mid(), south, north);
+
+		/* FIXME: this needs to be handled more gracefully */
+		if (!split || !south || !north) {
+		    bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)south, (void *)north);
+		    return NULL;
+		}
+
+		split = localsurf->Split(dir, vsplit, south, north);
+
+		/* FIXME: this needs to be handled more gracefully */
+		if (!split || !south || !north) {
+		    bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)south, (void *)north);
+		    return NULL;
+		}
+
 		south->ClearBoundingBox();
 		north->ClearBoundingBox();
 
 		dir = 0;
-		south->Split(dir, usplit, q0surf, q1surf);
+		split = south->Split(dir, usplit, q0surf, q1surf);
+
+		/* FIXME: this needs to be handled more gracefully */
+		if (!split || !q0surf || !q1surf) {
+		    bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)q0surf, (void *)q1surf);
+		    return NULL;
+		}
+
 		delete south;
 		q0surf->ClearBoundingBox();
 		q1surf->ClearBoundingBox();
-		north->Split(dir, usplit, q3surf, q2surf);
+		split = north->Split(dir, usplit, q3surf, q2surf);
+
+		/* FIXME: this needs to be handled more gracefully */
+		if (!split || !q3surf || !q2surf) {
+		    bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)q3surf, (void *)q2surf);
+		    return NULL;
+		}
+
 		delete north;
 		q3surf->ClearBoundingBox();
 		q2surf->ClearBoundingBox();
@@ -1054,22 +1084,29 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
 		parent->m_checkTrim = false;
 
 		for (int i = 0; i < 4; i++) {
-			if (!(quads[i]->m_trimmed)) {
-				parent->m_trimmed = false;
-			}
-			if (quads[i]->m_checkTrim) {
-				parent->m_checkTrim = true;
-			}
+		    if (!quads[i]) {
+			continue;
+		    }
+		    if (!(quads[i]->m_trimmed)) {
+			parent->m_trimmed = false;
+		    }
+		    if (quads[i]->m_checkTrim) {
+			parent->m_checkTrim = true;
+		    }
 		}
 		if (m_removeTrimmed) {
-			for (int i = 0; i < 4; i++) {
-				if (!(quads[i]->m_trimmed))
-				parent->addChild(quads[i]);
+		    for (int i = 0; i < 4; i++) {
+			if (!quads[i]) {
+			    continue;
 			}
+			if (!(quads[i]->m_trimmed)) {
+			    parent->addChild(quads[i]);
+			}
+		    }
 		} else {
-			for (int i = 0; i < 4; i++) {
-				parent->addChild(quads[i]);
-			}
+		    for (int i = 0; i < 4; i++) {
+			parent->addChild(quads[i]);
+		    }
 		}
 	} else if (spanu_cnt > 1) {
 		double usplit = spanu[(spanu_cnt+1)/2];
@@ -1082,7 +1119,14 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
 		ON_BoundingBox box = localsurf->BoundingBox();
 
 		int dir = 0;
-		localsurf->Split(dir, usplit, east, west);
+		bool split = localsurf->Split(dir, usplit, east, west);
+
+		/* FIXME: this needs to be handled more gracefully */
+		if (!split || !east || !west) {
+		    bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)east, (void *)west);
+		    return NULL;
+		}
+
 		east->ClearBoundingBox();
 		west->ClearBoundingBox();
 
@@ -1235,22 +1279,29 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
 		parent->m_checkTrim = false;
 
 		for (int i = 0; i < 2; i++) {
-			if (!(quads[i]->m_trimmed)) {
-				parent->m_trimmed = false;
-			}
-			if (quads[i]->m_checkTrim) {
-				parent->m_checkTrim = true;
-			}
+		    if (!quads[i]) {
+			continue;
+		    }
+		    if (!(quads[i]->m_trimmed)) {
+			parent->m_trimmed = false;
+		    }
+		    if (quads[i]->m_checkTrim) {
+			parent->m_checkTrim = true;
+		    }
 		}
 		if (m_removeTrimmed) {
-			for (int i = 0; i < 2; i++) {
-				if (!(quads[i]->m_trimmed))
-				parent->addChild(quads[i]);
+		    for (int i = 0; i < 2; i++) {
+			if (!quads[i]) {
+			    continue;
 			}
+			if (!(quads[i]->m_trimmed)) {
+			    parent->addChild(quads[i]);
+			}
+		    }
 		} else {
-			for (int i = 0; i < 2; i++) {
-				parent->addChild(quads[i]);
-			}
+		    for (int i = 0; i < 2; i++) {
+			parent->addChild(quads[i]);
+		    }
 		}
 	} else if (spanv_cnt > 1) {
 		double vsplit = spanv[(spanv_cnt+1)/2];
@@ -1264,7 +1315,14 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
 		ON_BoundingBox box = localsurf->BoundingBox();
 
 		int dir = 1;
-		localsurf->Split(dir, vsplit, south, north);
+		bool split = localsurf->Split(dir, vsplit, south, north);
+
+		/* FIXME: this needs to be handled more gracefully */
+		if (!split || !south || !north) {
+		    bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)south, (void *)north);
+		    return NULL;
+		}
+
 		south->ClearBoundingBox();
 		north->ClearBoundingBox();
 
@@ -1398,22 +1456,29 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
 		parent->m_checkTrim = false;
 
 		for (int i = 0; i < 2; i++) {
-			if (!(quads[i]->m_trimmed)) {
-				parent->m_trimmed = false;
-			}
-			if (quads[i]->m_checkTrim) {
-				parent->m_checkTrim = true;
-			}
+		    if (!quads[i]) {
+			continue;
+		    }
+		    if (!(quads[i]->m_trimmed)) {
+			parent->m_trimmed = false;
+		    }
+		    if (quads[i]->m_checkTrim) {
+			parent->m_checkTrim = true;
+		    }
 		}
 		if (m_removeTrimmed) {
-			for (int i = 0; i < 2; i++) {
-				if (!(quads[i]->m_trimmed))
-				parent->addChild(quads[i]);
+		    for (int i = 0; i < 2; i++) {
+			if (!quads[i]) {
+			    continue;
 			}
+			if (!(quads[i]->m_trimmed)) {
+			    parent->addChild(quads[i]);
+			}
+		    }
 		} else {
-			for (int i = 0; i < 2; i++) {
-				parent->addChild(quads[i]);
-			}
+		    for (int i = 0; i < 2; i++) {
+			parent->addChild(quads[i]);
+		    }
 		}
 	} else {
 		//return surfaceBBox(localsurf, true, corners, normals, u, v);
@@ -1488,16 +1553,37 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 			ON_BoundingBox box = localsurf->BoundingBox();
 
 			int dir = 1;
-			localsurf->Split(dir, localsurf->Domain(dir).Mid(), south, north);
+			bool split = localsurf->Split(dir, localsurf->Domain(dir).Mid(), south, north);
+
+			/* FIXME: this needs to be handled more gracefully */
+			if (!split || !south || !north) {
+			    bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)south, (void *)north);
+			    return NULL;
+			}
+
 			south->ClearBoundingBox();
 			north->ClearBoundingBox();
 
 			dir = 0;
-			south->Split(dir, south->Domain(dir).Mid(), q0surf, q1surf);
+			split = south->Split(dir, south->Domain(dir).Mid(), q0surf, q1surf);
+
+			/* FIXME: this needs to be handled more gracefully */
+			if (!split || !q0surf || !q1surf) {
+			    bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)q0surf, (void *)q1surf);
+			    return NULL;
+			}
+
 			delete south;
 			q0surf->ClearBoundingBox();
 			q1surf->ClearBoundingBox();
-			north->Split(dir, north->Domain(dir).Mid(), q3surf, q2surf);
+			split = north->Split(dir, north->Domain(dir).Mid(), q3surf, q2surf);
+
+			/* FIXME: this needs to be handled more gracefully */
+			if (!split || !q3surf || !q2surf) {
+			    bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)q3surf, (void *)q2surf);
+			    return NULL;
+			}
+
 			delete north;
 			q3surf->ClearBoundingBox();
 			q2surf->ClearBoundingBox();
@@ -1659,22 +1745,29 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 			parent->m_checkTrim = false;
 
 			for (int i = 0; i < 4; i++) {
-				if (!(quads[i]->m_trimmed)) {
-					parent->m_trimmed = false;
-				}
-				if (quads[i]->m_checkTrim) {
-					parent->m_checkTrim = true;
-				}
+			    if (!quads[i]) {
+				continue;
+			    }
+			    if (!(quads[i]->m_trimmed)) {
+				parent->m_trimmed = false;
+			    }
+			    if (quads[i]->m_checkTrim) {
+				parent->m_checkTrim = true;
+			    }
 			}
 			if (m_removeTrimmed) {
-				for (int i = 0; i < 4; i++) {
-					if (!(quads[i]->m_trimmed))
-					parent->addChild(quads[i]);
+			    for (int i = 0; i < 4; i++) {
+				if (!quads[i]) {
+				    continue;
 				}
+				if (!(quads[i]->m_trimmed)) {
+				    parent->addChild(quads[i]);
+				}
+			    }
 			} else {
-				for (int i = 0; i < 4; i++) {
-					parent->addChild(quads[i]);
-				}
+			    for (int i = 0; i < 4; i++) {
+				parent->addChild(quads[i]);
+			    }
 			}
 		} else if (!isUFlat || (width/height > ratio)) {
 			//////////////////////////////////////
@@ -1684,7 +1777,14 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 			ON_BoundingBox box = localsurf->BoundingBox();
 
 			int dir = 0;
-			localsurf->Split(dir, localsurf->Domain(dir).Mid(), east, west);
+			bool split = localsurf->Split(dir, localsurf->Domain(dir).Mid(), east, west);
+
+			/* FIXME: this needs to be handled more gracefully */
+			if (!split || !east || !west) {
+			    bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)east, (void *)west);
+			    return NULL;
+			}
+
 			east->ClearBoundingBox();
 			west->ClearBoundingBox();
 
@@ -1835,22 +1935,29 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 			parent->m_checkTrim = false;
 
 			for (int i = 0; i < 2; i++) {
-				if (!(quads[i]->m_trimmed)) {
-					parent->m_trimmed = false;
-				}
-				if (quads[i]->m_checkTrim) {
-					parent->m_checkTrim = true;
-				}
+			    if (!quads[i]) {
+				continue;
+			    }
+			    if (!(quads[i]->m_trimmed)) {
+				parent->m_trimmed = false;
+			    }
+			    if (quads[i]->m_checkTrim) {
+				parent->m_checkTrim = true;
+			    }
 			}
 			if (m_removeTrimmed) {
-				for (int i = 0; i < 2; i++) {
-					if (!(quads[i]->m_trimmed))
-					parent->addChild(quads[i]);
+			    for (int i = 0; i < 2; i++) {
+				if (!quads[i]) {
+				    continue;
 				}
+				if (!(quads[i]->m_trimmed)) {
+				    parent->addChild(quads[i]);
+				}
+			    }
 			} else {
-				for (int i = 0; i < 2; i++) {
-					parent->addChild(quads[i]);
-				}
+			    for (int i = 0; i < 2; i++) {
+				parent->addChild(quads[i]);
+			    }
 			}
 		} else { /* assume uflat */ //if (!isVFlat || (height/width > 2.0)) {
 			//////////////////////////////////////
@@ -1860,7 +1967,14 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 			ON_BoundingBox box = localsurf->BoundingBox();
 
 			int dir = 1;
-			localsurf->Split(dir, localsurf->Domain(dir).Mid(), south, north);
+			bool split = localsurf->Split(dir, localsurf->Domain(dir).Mid(), south, north);
+
+			/* FIXME: this needs to be handled more gracefully */
+			if (!split || !south || !north) {
+			    bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)south, (void *)north);
+			    return NULL;
+			}
+
 			south->ClearBoundingBox();
 			north->ClearBoundingBox();
 
@@ -1994,22 +2108,29 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 			parent->m_checkTrim = false;
 
 			for (int i = 0; i < 2; i++) {
-				if (!(quads[i]->m_trimmed)) {
-					parent->m_trimmed = false;
-				}
-				if (quads[i]->m_checkTrim) {
-					parent->m_checkTrim = true;
-				}
+			    if (!quads[i]) {
+				continue;
+			    }
+			    if (!(quads[i]->m_trimmed)) {
+				parent->m_trimmed = false;
+			    }
+			    if (quads[i]->m_checkTrim) {
+				parent->m_checkTrim = true;
+			    }
 			}
 			if (m_removeTrimmed) {
-				for (int i = 0; i < 2; i++) {
-					if (!(quads[i]->m_trimmed))
+			    for (int i = 0; i < 2; i++) {
+				if (!quads[i]) {
+				    continue;
+				}
+				if (!(quads[i]->m_trimmed)) {
 					parent->addChild(quads[i]);
 				}
+			    }
 			} else {
-				for (int i = 0; i < 2; i++) {
-					parent->addChild(quads[i]);
-				}
+			    for (int i = 0; i < 2; i++) {
+				parent->addChild(quads[i]);
+			    }
 			}
 		}
 		parent->BuildBBox();
