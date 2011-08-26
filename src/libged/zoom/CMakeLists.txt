@@ -1,0 +1,5 @@
+SET(GED_ZOOM_SRCS
+	zoom.c
+	)
+
+GED_ADD_CMD(GED_ZOOM_SRCS)

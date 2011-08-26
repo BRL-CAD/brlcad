@@ -260,19 +260,57 @@ set(LIBGED_SOURCES
     xpush.c
     ypr.c
     zap.c
-    zoom/zoom.c
 )
 
-ADD_SUBDIRECTORY(simulate)
+# Macro for adding commands to libged.  Use in the command subdirectory as follows:
+#
+# GED_ADD_CMD(CMD_SRCS CMD_INCLUDES CMD_LIBS)
+#
+# with the last two arguments being optional.
+MACRO(GED_ADD_CMD sources)
+	get_filename_component(currentdir ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+	FOREACH(srcfile ${${sources}})
+		LIST(APPEND cmd_srcs "${currentdir}/${srcfile}")
+	ENDFOREACH(srcfile ${${sources}})
+	SET(LIBGED_CMD_SRCS ${LIBGED_CMD_SRCS} ${cmd_srcs} CACHE INTERNAL "libged cmd srcs" FORCE)
+	IF(${ARGV1})
+		SET(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${${ARGV1}} CACHE INTERNAL "libged cmd includes" FORCE)
+	ENDIF(${ARGV1})
+	IF(${ARGV2})
+		SET(LIBGED_CMD_LIBS ${LIBGED_CMD_LIBS} ${${ARGV2}} CACHE INTERNAL	"libged cmd libs" FORCE)
+	ENDIF(${ARGV2})
+ENDMACRO(GED_ADD_CMD)
+
+# Core logic for adding commands to the libged source/lib/include lists.
+FILE(GLOB GED_DIR_CONTENTS ${CMAKE_CURRENT_SOURCE_DIR} *)
+FOREACH(item ${GED_DIR_CONTENTS})
+	get_filename_component(item_name ${item} NAME)
+	IF(IS_DIRECTORY ${item} AND NOT ${item_name} STREQUAL "libged" AND NOT ${item_name} STREQUAL ".svn")
+		LIST(APPEND ged_subdirs ${item_name})
+	ENDIF(IS_DIRECTORY ${item} AND NOT ${item_name} STREQUAL "libged" AND NOT ${item_name} STREQUAL ".svn")
+ENDFOREACH(item ${GED_DIR_CONTENTS})
+FOREACH(item ${ged_subdirs})
+	IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${item}/CMakeLists.txt)
+		ADD_SUBDIRECTORY(${item})
+	ENDIF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${item}/CMakeLists.txt)
+ENDFOREACH(item ${ged_subdirs})
+SET(LIBGED_SOURCES ${LIBGED_SOURCES} ${LIBGED_CMD_SRCS})
+IF(LIBGED_CMD_LIBS)
+	LIST(REMOVE_DUPLICATES LIBGED_CMD_LIBS)
+ENDIF(LIBGED_CMD_LIBS)
+IF(LIBGED_CMD_INCLUDE_DIRS)
+	LIST(REMOVE_DUPLICATES LIBGED_CMD_INCLUDE_DIRS)
+ENDIF(LIBGED_CMD_INCLUDE_DIRS)
 
 include_directories(
     ${PNG_INCLUDE_DIR}
     ${ZLIB_INCLUDE_DIR}
     ${REGEX_INCLUDE_DIR}
     ${TCL_INCLUDE_DIRS}
+	 ${LIBGED_CMD_INCLUDE_DIRS}
 )
 
-BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb librt libfb libbu libanalyze simulate ${REGEX_LIBRARY} ${WINSOCK_LIB} ${M_LIBRARY}")
+BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb librt libfb libbu libanalyze ${LIBGED_CMD_LIBS} ${REGEX_LIBRARY} ${WINSOCK_LIB} ${M_LIBRARY}")
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
 SET(ged_ignore_files
