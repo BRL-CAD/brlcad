@@ -1103,12 +1103,12 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, co
 			vu = eu->vu_p;
 			NMG_CK_VERTEXUSE(vu);
 			new_v = NMG_INDEX_GETP(vertex, copy_tbl, vu->v_p);
-			NMG_CK_VERTEX(new_v)
-			    if (NMG_INDEX_TEST_AND_SET(flags, new_v)) {
-				/* move this vertex */
-				if (nmg_in_vert(new_v, approximate, tol))
-				    bu_bomb("Failed to get a new point from nmg_inside_vert\n");
-			    }
+			NMG_CK_VERTEX(new_v);
+			if (NMG_INDEX_TEST_AND_SET(flags, new_v)) {
+			    /* move this vertex */
+			    if (nmg_in_vert(new_v, approximate, tol))
+				bu_bomb("Failed to get a new point from nmg_inside_vert\n");
+			}
 		    }
 		}
 	    }

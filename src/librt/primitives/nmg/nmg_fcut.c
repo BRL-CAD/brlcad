@@ -3794,18 +3794,20 @@ nmg_face_state_transition(struct nmg_ray_state *rs, int pos, int multi, int othe
 	eu = BU_LIST_PPREV_CIRC(edgeuse, eu);
 	NMG_CK_EDGEUSE(eu);
 	if (!rs->eg_p || eu->g.lseg_p != rs->eg_p) {
-	    if (rs->eg_p)
-		NMG_CK_EDGE_G_LSEG(rs->eg_p)
-		    nmg_edge_geom_isect_line(eu, rs, "force ON_REV to line");
+	    if (rs->eg_p) {
+		NMG_CK_EDGE_G_LSEG(rs->eg_p);
+	    }
+	    nmg_edge_geom_isect_line(eu, rs, "force ON_REV to line");
 	}
     }
     if (NMG_V_ASSESSMENT_NEXT(assessment) == NMG_E_ASSESSMENT_ON_FORW) {
 	eu = nmg_find_eu_of_vu(vu);
 	NMG_CK_EDGEUSE(eu);
 	if (!rs->eg_p || eu->g.lseg_p != rs->eg_p) {
-	    if (rs->eg_p)
-		NMG_CK_EDGE_G_LSEG(rs->eg_p)
-		    nmg_edge_geom_isect_line(eu, rs, "force ON_FORW to line");
+	    if (rs->eg_p) {
+		NMG_CK_EDGE_G_LSEG(rs->eg_p);
+	    }
+	    nmg_edge_geom_isect_line(eu, rs, "force ON_FORW to line");
 	}
     }
 

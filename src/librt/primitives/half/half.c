@@ -497,7 +497,7 @@ rt_hlf_xform(
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
-    RT_CK_RESOURCE(resp)
+    RT_CK_RESOURCE(resp);
     hip = (struct rt_half_internal *)ip->idb_ptr;
     RT_HALF_CK_MAGIC(hip);
     RT_CK_DB_INTERNAL(op);

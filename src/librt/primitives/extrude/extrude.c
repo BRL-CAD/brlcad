@@ -2588,8 +2588,8 @@ rt_extrude_xform(
 
     if (dbip) RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
-    RT_CK_RESOURCE(resp)
-	eip = (struct rt_extrude_internal *)ip->idb_ptr;
+    RT_CK_RESOURCE(resp);
+    eip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(eip);
 
     if (bu_debug&BU_DEBUG_MEM_CHECK) {
