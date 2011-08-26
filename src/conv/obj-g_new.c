@@ -3519,7 +3519,7 @@ main(int argc, char **argv)
         }
 
         perror(prog);
-        return EXIT_FAILURE;
+	return EXIT_FAILURE;
     }
 
     if ((parse_err = obj_fparse(my_stream, ga.parser, &ga.contents)) != 0) {
@@ -3544,7 +3544,6 @@ main(int argc, char **argv)
 	    bu_log("Unable to close file.\n");
 	}
 
-	perror(prog);
 	return EXIT_FAILURE;
     }
 
