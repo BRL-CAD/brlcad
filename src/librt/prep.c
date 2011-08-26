@@ -712,26 +712,6 @@ rt_clean_resource_basic(struct rt_i *rtip, struct resource *resp)
 	resp->re_seg_blocks.l.forw = BU_LIST_NULL;
     }
 
-    /*
-     * The 'struct directory' guys are malloc()ed in big blocks, but
-     * CAN'T BE FREED HERE unless there is no rt instance!  We are not
-     * done with the db_i yet if there is an rtip.
-     */
-#if 0
-    if (!rtip) {
-	if (BU_LIST_IS_INITIALIZED(&resp->re_directory_blocks.l)) {
-	    struct directory **dpp;
-	    BU_CK_PTBL(&resp->re_directory_blocks);
-	    for (BU_PTBL_FOR(dpp, (struct directory **), &resp->re_directory_blocks)) {
-		RT_CK_DIR(*dpp);	/* Head of block will be a valid seg */
-		bu_free((genptr_t)(*dpp), "struct directory block");
-	    }
-	    bu_ptbl_free(&resp->re_directory_blocks);
-	    resp->re_directory_blocks.l.forw = BU_LIST_NULL;
-	}
-    }
-#endif
-
     /* The "struct hitmiss' guys are individually malloc()ed */
     if (BU_LIST_IS_INITIALIZED(&resp->re_nmgfree)) {
 	struct hitmiss *hitp;
