@@ -658,8 +658,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * extend analyze output formatting to user-specified formats ala nirt
 
-* implement tessellation support for the new BREP primitive.
-
 * implement make, ted, edsol, mirror, and analyze for revolve
   primitive.  implement tess() too.
 
@@ -956,6 +954,12 @@ STEP
 
 BREP/NURBS
 ----------
+
+* create a BC_Brep class that inherits from ON_Brep so we can cleanly
+  extend and implement functions that were intentionally removed from
+  openNURBS.
+
+* implement tessellation support.
 
 * profile and optimize prep.  crazy slow.
 
