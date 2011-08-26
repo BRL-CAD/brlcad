@@ -388,9 +388,9 @@ IF(CMAKE_BUILD_TYPE MATCHES "NONE")
 ENDIF(CMAKE_BUILD_TYPE MATCHES "NONE")
 
 #---------------------------------------------------------------------
-# The location in which to install BRLCAD. Need a good Debug location
-# for Windows.  Only do this if CMAKE_INSTALL_PREFIX hasn't been set
-# already, to try and allow parent builds (if any) some control.
+# The location in which to install BRLCAD.  Only do this if 
+# CMAKE_INSTALL_PREFIX hasn't been set already, to try and allow 
+# parent builds (if any) some control.
 IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
 	IF(NOT WIN32)
 		IF ("${CMAKE_BUILD_TYPE}" MATCHES "Release")
