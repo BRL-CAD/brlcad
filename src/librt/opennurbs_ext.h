@@ -296,7 +296,9 @@ template<class BA>
 inline void
 BANode<BA>::addChild(BANode<BA>* child)
 {
-    m_children.push_back(child);
+    if (child) {
+	m_children.push_back(child);
+    }
 }
 
 
@@ -924,7 +926,9 @@ template<class BV>
 inline void
 BVNode<BV>::addChild(BVNode<BV>* child)
 {
-    m_children.push_back(child);
+    if (child) {
+	m_children.push_back(child);
+    }
 }
 
 
