@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2011-07-XX  Release 7.20.4                                     ---
 ----------------------------------------------------------------------
 
+* fixed NURBS raytracing crash due to invalid geometry - Sean Morrison
 * fixed memory leak when saving BoT geometry - Nicholas Reed
 * improved mged object name globbing support - Sean Morrison
 * improved bounding box for rpc, epa, ehy, hyp primitives - Cliff Yapp
