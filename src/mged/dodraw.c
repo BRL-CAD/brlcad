@@ -177,7 +177,7 @@ hack_for_lee(void)
  * Also finds s_vlen;
  * XXX Should split out a separate bn_vlist_rpp() routine, for librt/vlist.c
  */
-void
+static void
 mged_bound_solid(struct solid *sp)
 {
     struct bn_vlist *vp;
@@ -192,7 +192,7 @@ mged_bound_solid(struct solid *sp)
 	int nused = vp->nused;
 	int *cmd = vp->cmd;
 	point_t *pt = vp->pt;
-	for (j = 0; j < nused; j++, cmd++, pt++) {
+	for (j = 0; cmd && j < nused; j++, cmd++, pt++) {
 	    switch (*cmd) {
 		case BN_VLIST_POLY_START:
 		case BN_VLIST_POLY_VERTNORM:
@@ -262,7 +262,6 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 	 */
 	sp = existing_sp;
     }
-
 
     /*
      * Compute the min, max, and center points.
