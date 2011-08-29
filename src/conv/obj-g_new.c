@@ -63,7 +63,7 @@
 #include "obj_parser.h"
 
 static char *usage =
-"%s [options] -u units -o type input.obj output.g\n\n"
+"Usage: %s [options] -u units -o type input.obj output.g\n\n"
 
 "Required options:\n"
 "  -u units\tSelect units for the obj file: (m|cm|mm|ft|in).\n"
@@ -3360,6 +3360,11 @@ main(int argc, char **argv)
                 bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
                 break;
         }
+    }
+
+    if (argc - bu_optind != 2) {
+	bu_exit(EXIT_FAILURE, "Invalid number of arguments.\nType '%s' for "
+	   "usage.\n", argv[0]); 
     }
 
     input_file_name = argv[bu_optind];
