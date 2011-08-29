@@ -164,7 +164,9 @@ using namespace arl::obj_parser;
  */
 void obj_parser_error(yyscan_t scanner, const char *s)
 {
-    detail::verbose_output_formatter(detail::get_state(scanner), s);
+    if (!detail::get_state(scanner).syntaxError) {
+	detail::verbose_output_formatter(detail::get_state(scanner), s);
+    }
 }
 
 /* trying to be reentrant, so no static/global non-constant data
@@ -323,11 +325,14 @@ void printToken(YYSTYPE token)
 %token_type {YYSTYPE}
 
 %syntax_error {
-    SET_SYNTAX_ERROR;
+    /* only report first error */
+    if (!detail::get_state(scanner).syntaxError) {
+	SET_SYNTAX_ERROR;
 
-    std::cerr << "Error: Parser experienced a syntax error.\n";
-    std::cerr << "Last token (type " << yymajor << ") was:\n";
-    printToken(yyminor.yy0);
+	std::cerr << "Error: Parser experienced a syntax error.\n";
+	std::cerr << "Last token (type " << yymajor << ") was:\n";
+	printToken(yyminor.yy0);
+    }
 }
 
 start ::= statement_list.
