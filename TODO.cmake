@@ -1,15 +1,12 @@
 Remaining items:
 
-17. fix wish build on windows - current output exe doesn't run
-
-18. 64 bit Windows build - will need a few flags, at least in tcl/tk
+18. 64 bit Windows build - tkhtml3 isn't happy at the moment
 
 19. See if you can auto-generate documentation for configure options by pulling
     doc properties from options not marked as advanced and generating a formatted
 	 text file
 
 20. Update README, INSTALL, doc/*, etc.
-21. Unbreak Xcode generation (at least Tcl and almost certainly Tk, possibly others)
 
 Done (to first order, all this needs testing)
 
@@ -74,4 +71,6 @@ Done (to first order, all this needs testing)
     where the autotools logic is. - ** Work on this later - fair amount of work here and the Aqua situation
 	 is in flux generally to begin with. Not a priority **
 
+17. fix wish build on windows - current output exe doesn't run
 
+21. Unbreak Xcode generation - XCode logic is now generated and loads, but it looks like BRL-CAD's multitude of targets may be a bit much for XCode.
