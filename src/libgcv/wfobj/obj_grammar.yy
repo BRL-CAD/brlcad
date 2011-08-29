@@ -304,7 +304,7 @@ void printToken(YYSTYPE token)
     std::cerr << "\n    toggle: " << token.toggle;
     std::cerr << "\n    index: " << token.index;
     std::cerr << "\n    string: " << token.string;
-    std::cerr << "}" << std::endl;
+    std::cerr << "\n}" << std::endl;
 }
 
 } /* include */
@@ -1011,7 +1011,12 @@ smooth ::= SMOOTH OFF.
 	detail::get_state(scanner).polyattributes_dirty = true;
     }
 }
-  
+
+object ::= OBJECT.
+{
+    detail::get_state(scanner).working_string.clear();
+    detail::set_working_object(detail::get_extra(scanner));
+}
 object ::= OBJECT ID.
 {
     detail::set_working_object(detail::get_extra(scanner));
