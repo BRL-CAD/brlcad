@@ -10,7 +10,7 @@ include_directories(
 )
 
 IF(WIN32)
-	BRLCAD_ADDEXEC(btclsh "cadAppInit.c consoleMain.c" "libtclcad libged	${ITCL_LIBRARY}")
+	BRLCAD_ADDEXEC(btclsh "cadAppInit.c consoleMain.c" "libtclcad libged ${ITCL_LIBRARY}")
 	CMAKEFILES(cmd.c input.c main.c tcl.c)
 ELSE(WIN32)
 	BRLCAD_ADDEXEC(btclsh "cmd.c input.c main.c tcl.c" "libbu libtclcad libtermio ${ITCL_LIBRARY}")

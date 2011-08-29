@@ -889,6 +889,14 @@ ADD_SUBDIRECTORY(src/other)
 # Requires that CompilerFlags.cmake already be loaded
 INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_CompilerFlags.cmake)
 
+# If doing a debug build, set _FORTIFY_SOURCE to 2. Provides 
+# compile-time best-practice error checking on certain libc 
+# functions (e.g., memcpy), and provides run-time checks on buffer
+# lengths and memory regions.
+IF(${BRLCAD_DEBUG_BUILD} STREQUAL "ON")
+	FILE(APPEND  ${CONFIG_H_FILE} "#define _FORTIFY_SOURCE 2\n")
+ENDIF(${BRLCAD_DEBUG_BUILD} STREQUAL "ON")
+
 #CHECK_C_COMPILER_FLAG("Wl,--no-undefined" NO_UNDEFINED_LINKER_FLAG)
 
 
