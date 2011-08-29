@@ -216,8 +216,12 @@ IF(${BRLCAD_DEBUG_BUILD} STREQUAL "ON")
 	# add -D_FORTIFY_SOURCE=2 to flags. provides compile-time
 	# best-practice error checking on certain libc functions
 	# (e.g., memcpy), and provides run-time checks on buffer
-	# lengths and memory regions.
-	CHECK_C_FLAG_GATHER("D_FORTIFY_SOURCE=2" DEBUG_FLAG)
+	# lengths and memory regions.  Don't do this test for MSVC
+	# however - it "passes" and then doesn't know what to do
+	# with it.
+	IF(NOT MSVC)
+		CHECK_C_FLAG_GATHER("D_FORTIFY_SOURCE=2" DEBUG_FLAG)
+	ENDIF(NOT MSVC)
 	ADD_NEW_FLAG(C DEBUG_FLAG)
 	ADD_NEW_FLAG(CXX DEBUG_FLAG)
 	ADD_NEW_FLAG(SHARED_LINKER DEBUG_FLAG)
