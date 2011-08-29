@@ -86,7 +86,7 @@ typedef union YYSTYPE
 	re2c::CondList	*clist;
 }
 /* Line 1529 of yacc.c.  */
-#line 90 "src/other/re2c/parser.hh"
+#line 90 "bootstrap/parser.hh"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
