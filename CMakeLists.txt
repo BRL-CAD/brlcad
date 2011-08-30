@@ -1052,10 +1052,6 @@ MARK_AS_ADVANCED(BULLET_INCLUDE_DIR)
 # syslog.h, tar.h, termios.h, trace.h, ucontext.h, ulimit.h, unistd.h,
 # utime.h, utmpx.h, wordexp.h
 
-# Tests for standard functionality based on AC_HEADER_* macros  (see
-# http://www.gnu.org/software/hello/manual/autoconf/Particular-Headers.html)
-# AC_HEADER_STDC
-BRLCAD_HEADER_STDC()
 # AC_HEADER_SYS_WAIT
 BRLCAD_HEADER_SYS_WAIT()
 # dirent.h is POSIX.1, but not present on Windows (grr)
