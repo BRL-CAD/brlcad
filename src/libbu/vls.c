@@ -837,6 +837,50 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	    len = sizeof(fbuf)-1;
 	bu_strlcpy(fbuf, sp, (size_t)len);
 
+#ifndef HAVE_C99_FORMAT_SPECIFIERS
+	/* if the format string uses the %z width specifier, we need
+	 * to replace it with something more palatable to this busted
+	 * compiler.
+	 */
+
+	if (flags & SIZETINT) {
+	    char *fp = fbuf;
+	    while (*fp) {
+		if (*fp == '%') {
+		    /* found the next format specifier */
+		    while (*fp) {
+			fp++;
+			/* possible characters that can preceed the
+			 * field length character (before the type).
+			 */
+			if (isdigit(*fp)
+			    || *fp == '$'
+			    || *fp == '#'
+			    || *fp == '+'
+			    || *fp == '.'
+			    || *fp == '-'
+			    || *fp == '*') {
+			    continue;
+			}
+			if (*fp == 'z') {
+			    /* assume MSVC replacing instances of %z
+			     * with %I (capital i) until we encounter
+			     * anything different.
+			     */
+			    *fp == 'I';
+			}
+
+			break;
+		    }
+		    if (*fp == '\0') {
+			break;
+		    }
+		}
+		fp++;
+	    }
+	}
+#endif
+
 	/* Grab parameter from arg list, and print it */
 	switch (*ep) {
 	    case 's':
