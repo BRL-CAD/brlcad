@@ -9,3 +9,7 @@ PROJECT(LEMON)
 
 add_executable(lemon lemon.c)
 configure_file(lempar.c ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/lempar.c COPY_ONLY)
+FOREACH(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+    STRING(TOUPPER "${CFG_TYPE}" CFG_TYPE)
+    configure_file(lempar.c ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE}}/lempar.c COPY_ONLY)
+ENDFOREACH()
