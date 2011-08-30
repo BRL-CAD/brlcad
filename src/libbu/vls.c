@@ -835,7 +835,11 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	len = ep-sp+1;
 	if ((size_t)len > sizeof(fbuf))
 	    len = sizeof(fbuf);
-	bu_strlcpy(fbuf, sp, (size_t)len);
+	/* intentionally avoid bu_strlcpy here since the source field
+	 * may be legitimately truncated.  FIXME: verify that claim.
+	 */
+	strncpy(fbuf, sp, (size_t)len-1);
+	fbuf[len] = '\0'; /* sanity */
 
 #ifndef HAVE_C99_FORMAT_SPECIFIERS
 	/* if the format string uses the %z width specifier, we need
