@@ -2404,7 +2404,7 @@ test_closure(struct ga_t *ga,
     size_t match = 0;
     size_t open_edges = 0;
 
-    FILE *plotfp;
+    FILE *plotfp = NULL;
     vect_t pnt1;
     vect_t pnt2;
 

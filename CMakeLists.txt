@@ -1051,6 +1051,11 @@ MARK_AS_ADVANCED(BULLET_INCLUDE_DIR)
 # syslog.h, tar.h, termios.h, trace.h, ucontext.h, ulimit.h, unistd.h,
 # utime.h, utmpx.h, wordexp.h
 
+# Because libtclcad, bwish and mged include Tcl headers, we need to define
+# STDC_HEADERS here - the Tcl headers do need the definition.  Just 
+# define it - we require C89, so the test itself is not needed.
+FILE(APPEND ${CONFIG_H_FILE} "#define STDC_HEADERS 1\n")   
+
 # AC_HEADER_SYS_WAIT
 BRLCAD_HEADER_SYS_WAIT()
 # dirent.h is POSIX.1, but not present on Windows (grr)
