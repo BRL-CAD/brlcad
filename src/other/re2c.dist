@@ -28,4 +28,5 @@ substr.h
 test
 token.h
 bootstrap/parser.cc
+bootstrap/parser.hh
 bootstrap/y.tab.h
