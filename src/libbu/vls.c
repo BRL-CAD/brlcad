@@ -838,7 +838,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	/* intentionally avoid bu_strlcpy here since the source field
 	 * may be legitimately truncated.  FIXME: verify that claim.
 	 */
-	strncpy(fbuf, sp, (size_t)len-1);
+	strncpy(fbuf, sp, (size_t)len);
 	fbuf[len] = '\0'; /* sanity */
 
 #ifndef HAVE_C99_FORMAT_SPECIFIERS
