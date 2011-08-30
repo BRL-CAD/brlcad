@@ -357,7 +357,7 @@ IF(TIME_RESULT MATCHES "^0$")
 	FILE(READ ${CONFIG_TIMESTAMP_FILE} CONFIG_TS)
 	STRING(STRIP ${CONFIG_TS} CONFIG_TS)
 ELSE(TIME_RESULT MATCHES "^0$")
-	MESSAGE(ERROR "Code to determine current date and time failed!\n")
+	MESSAGE(FATAL_ERROR "Code to determine current date and time failed!\n")
 ENDIF(TIME_RESULT MATCHES "^0$")
 
 #---------------------------------------------------------------------
