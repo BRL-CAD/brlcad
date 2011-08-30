@@ -137,16 +137,28 @@ ENDMACRO(BRLCAD_ALLOCA)
 # See if the compiler supports the C99 %z print specifier for size_t
 ###
 MACRO(BRLCAD_CHECK_C99_FORMAT_SPECIFIERS)
+	SET(CMAKE_REQUIRED_DEFINITIONS_BAK ${CMAKE_REQUIRED_DEFINITIONS})
+	CHECK_INCLUDE_FILE(stdint.h HAVE_STDINT_H)
+	IF(HAVE_STDINT_H)
+		SET(CMAKE_REQUIRED_DEFINITIONS "-DHAVE_STDINT_H=1")
+	ENDIF(HAVE_STDINT_H)
+	CHECK_INCLUDE_FILE(stdio.h HAVE_STDIO_H)
+	IF(HAVE_STDIO_H)
+		SET(CMAKE_REQUIRED_DEFINITIONS "${CMAKE_REQUIRED_DEFINITIONS} -DHAVE_STDIO_H=1")
+	ENDIF(HAVE_STDIO_H)
   SET(CHECK_C99_FORMAT_SPECIFIERS_SRC "
 #ifdef HAVE_STDINT_H
 #  include <stdint.h>
 #endif
+#ifdef HAVE_STDIO_H
+#  include <stdio.h>
+#endif
 int main(int ac, char *av[])
 {
   char buf[64] = {0};
-  if (sprintf(buf, "%zu", (size_t)123) != 1)
+  if (sprintf(buf, \"%zu\", (size_t)123) != 3)
     return 1;
-  else if (strcmp(buf, "123"))
+  else if (strcmp(buf, \"123\"))
     return 2;
   return 0;
 }
@@ -155,4 +167,5 @@ int main(int ac, char *av[])
   IF(HAVE_C99_FORMAT_SPECIFIERS)
     FILE(APPEND ${CONFIG_H_FILE} "#define HAVE_C99_FORMAT_SPECIFIERS 1\n")
   ENDIF(HAVE_C99_FORMAT_SPECIFIERS)
+  SET(CMAKE_REQUIRED_DEFINITIONS ${CMAKE_REQUIRED_DEFINITIONS_BAK})
 ENDMACRO(BRLCAD_CHECK_C99_FORMAT_SPECIFIERS)
