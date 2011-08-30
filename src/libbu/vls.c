@@ -833,8 +833,8 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
 	/* Copy off the format string */
 	len = ep-sp+1;
-	if ((size_t)len > sizeof(fbuf)-1)
-	    len = sizeof(fbuf)-1;
+	if ((size_t)len > sizeof(fbuf))
+	    len = sizeof(fbuf);
 	bu_strlcpy(fbuf, sp, (size_t)len);
 
 #ifndef HAVE_C99_FORMAT_SPECIFIERS
