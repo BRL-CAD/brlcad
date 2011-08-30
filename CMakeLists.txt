@@ -900,7 +900,6 @@ ENDIF(${BRLCAD_DEBUG_BUILD} STREQUAL "ON")
 #CHECK_C_COMPILER_FLAG("Wl,--no-undefined" NO_UNDEFINED_LINKER_FLAG)
 
 
-
 # *******************************************************************
 # ***            Check for Libraries - Stage 4 of 9               ***
 # *******************************************************************
@@ -1027,6 +1026,7 @@ IF(BULLET_FOUND)
 ENDIF(BULLET_FOUND)
 MARK_AS_ADVANCED(BULLET_INCLUDE_DIR)
 
+
 # *******************************************************************
 # ***             Check for Headers - Stage 5 of 9                ***
 # *******************************************************************
@@ -1128,6 +1128,7 @@ BRLCAD_INCLUDE_FILE_CXX(limits HAVE_LIMITS)
 BRLCAD_CHECK_BASENAME()
 BRLCAD_CHECK_DIRNAME()
 
+
 # *******************************************************************
 # ***         Check for Types/Structures - Stage 6 of 9           ***
 # *******************************************************************
@@ -1150,6 +1151,10 @@ BRLCAD_TYPE_SIZE("ssize_t" SSIZE "")
 BRLCAD_TYPE_SIZE("uint64_t" UINT64 "")
 BRLCAD_TYPE_SIZE("uintptr_t" UINTPTR "")
 BRLCAD_TYPE_SIZE("sig_t" SIG "signal.h")
+
+# see if the compiler supports %z as a size_t print width specifier
+BRLCAD_CHECK_C99_FORMAT_SPECIFIERS()
+
 
 # *******************************************************************
 # ***             Check for Functions - Stage 7 of 9              ***
@@ -1196,6 +1201,7 @@ BRLCAD_FUNCTION_EXISTS(sysctl HAVE_SYSCTL)
 BRLCAD_FUNCTION_EXISTS(sysmp HAVE_SYSMP)
 BRLCAD_FUNCTION_EXISTS(vfork HAVE_VFORK)
 BRLCAD_FUNCTION_EXISTS(writev HAVE_WRITEV)
+
 
 # *******************************************************************
 # ***          Check for System Services - Stage 8 of 9           ***
