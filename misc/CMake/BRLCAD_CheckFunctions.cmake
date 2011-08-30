@@ -132,3 +132,27 @@ MACRO(BRLCAD_ALLOCA)
 		FILE(APPEND ${CONFIG_H_FILE} "#define HAVE_ALLOCA 1\n")
 	ENDIF(WORKING_ALLOCA)
 ENDMACRO(BRLCAD_ALLOCA)
+
+###
+# See if the compiler supports the C99 %z print specifier for size_t
+###
+MACRO(BRLCAD_CHECK_C99_FORMAT_SPECIFIERS)
+  SET(CHECK_C99_FORMAT_SPECIFIERS_SRC "
+#ifdef HAVE_STDINT_H
+#  include <stdint.h>
+#endif
+int main(int ac, char *av[])
+{
+  char buf[64] = {0};
+  if (sprintf(buf, "%zu", (size_t)123) != 1)
+    return 1;
+  else if (strcmp(buf, "123"))
+    return 2;
+  return 0;
+}
+")
+  CHECK_C_SOURCE_RUNS("${CHECK_C99_FORMAT_SPECIFIERS_SRC}" HAVE_C99_FORMAT_SPECIFIERS)
+  IF(HAVE_C99_FORMAT_SPECIFIERS)
+    FILE(APPEND ${CONFIG_H_FILE} "#define HAVE_C99_FORMAT_SPECIFIERS 1\n")
+  ENDIF(HAVE_C99_FORMAT_SPECIFIERS)
+ENDMACRO(BRLCAD_CHECK_C99_FORMAT_SPECIFIERS)
