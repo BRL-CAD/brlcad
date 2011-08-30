@@ -45,12 +45,11 @@
 # ***                 BRL-CAD's CMakeLists.txt                    ***
 # *******************************************************************
 #
-# This file define the toplevel CMake build logic for BRL-CAD.
+# This file defines the toplevel CMake build logic for BRL-CAD.
 # As best as is reasonably possible, proper ordering and
 # separation of tests and settings should be maintained per the
 # recommended standard layout.  The tests should be added to the
-# rather clearly labeled sections below so that they are as
-# follows:
+# labeled sections below so that they are organized as follows:
 #
 #     0) information on the package and toplevel CMake settings
 #     1) define top level options
