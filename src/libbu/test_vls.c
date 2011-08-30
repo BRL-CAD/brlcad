@@ -54,7 +54,7 @@ test_vls(const char *fmt, ...)
 
 
 int
-main(int ac, char *av[])
+main(int UNUSED(ac), char *av[])
 {
     const char *label = "Testing vls\n";
     printf("%s", label);
