@@ -151,9 +151,9 @@ MACRO(BRLCAD_CHECK_C99_FORMAT_SPECIFIERS)
 int main(int ac, char *av[])
 {
   char buf[64] = {0};
-  if (sprintf(buf, \"%zu\", (size_t)123) != 3)
+  if (sprintf(buf, \"%zu\", (size_t)1234) != 4)
     return 1;
-  else if (strcmp(buf, \"123\"))
+  else if (strcmp(buf, \"1234\"))
     return 2;
   return 0;
 }
