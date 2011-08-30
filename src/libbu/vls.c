@@ -835,8 +835,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	len = ep-sp+1;
 	if ((size_t)len > sizeof(fbuf)-1)
 	    len = sizeof(fbuf)-1;
-	strncpy(fbuf, sp, (size_t)len);
-	fbuf[len] = '\0'; /* ensure null termination */
+	bu_strlcpy(fbuf, sp, (size_t)len);
 
 	/* Grab parameter from arg list, and print it */
 	switch (*ep) {
