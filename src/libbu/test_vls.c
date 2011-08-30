@@ -54,10 +54,9 @@ test_vls(const char *fmt, ...)
 
 
 int
-main(int UNUSED(ac), char *av[])
+main(int ac, char *av[])
 {
-    const char *label = "Testing vls\n";
-    printf("%s", label);
+    printf("Testing vls\n");
 
     /* various types */
     test_vls("");
@@ -71,8 +70,8 @@ main(int UNUSED(ac), char *av[])
     test_vls("%x %X", 1.23, -3.21);
     test_vls("%o", 1.23);
     test_vls("%c%c%c", '1', '2', '3');
-    test_vls("%p", (void *)label);
-    test_vls("%%%d%%", 123);
+    test_vls("%p", (void *)av);
+    test_vls("%%%d%%", ac);
 
     /* various lengths */
     test_vls("%hd %hhd", 123, -123);
