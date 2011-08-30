@@ -147,6 +147,7 @@ MACRO(BRLCAD_CHECK_C99_FORMAT_SPECIFIERS)
 #  include <stdint.h>
 #endif
 #include <stdio.h>
+#include <string.h>
 int main(int ac, char *av[])
 {
   char buf[64] = {0};
