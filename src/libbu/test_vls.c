@@ -44,9 +44,9 @@ test_vls(const char *fmt, ...)
     va_end(ap);
 
     if (BU_STR_EQUAL(buffer, bu_vls_addr(&vls))) {
-        printf("%24s -> %24s [PASS]\n", fmt, bu_vls_addr(&vls));
+        printf("%24s -> %28s [PASS]\n", fmt, bu_vls_addr(&vls));
     } else {
-        printf("%24s -> %24s [FAIL]  (should be: %s)\n", fmt, bu_vls_addr(&vls), buffer);
+        printf("%24s -> %28s [FAIL]  (should be: %s)\n", fmt, bu_vls_addr(&vls), buffer);
     }
 
     bu_vls_free(&vls);
@@ -79,10 +79,20 @@ main(int ac, char *av[])
     test_vls("%zu %zd", (size_t)123, (ssize_t)-123);
     test_vls("%jd %td", (intmax_t)123, (ptrdiff_t)-123);
 
-    /* various precisions */
+    /* various widths */
     test_vls("he%10dllo", 123);
-    test_vls("he%-10dllo", 123);
+    test_vls("he%-10ullo", 123);
+    test_vls("he%*so", 2, "ll");
+
+    /* various precisions */
+    test_vls("he%.10dllo", 123);
+    test_vls("he%.-10ullo", 123);
     test_vls("he%.*so", 2, "ll");
+
+    /* various flags */
+    test_vls("%010d", 123);
+    test_vls("%#-.10lx", 123);
+    test_vls("he%+-6.3ld%-+3.6dllo", 123, 321);
 
     printf("%s: testing complete\n", av[0]);
     return 0;
