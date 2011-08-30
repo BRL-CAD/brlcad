@@ -1,4 +1,4 @@
-/*                B A S E N A M E T E S T E R . C
+/*                 T E S T _ B A S E N A M E . C
  * BRL-CAD
  *
  * Copyright (c) 2011 United States Government as represented by
@@ -28,7 +28,6 @@
 #endif
 
 #include "bu.h"
-
 
 
 /* Test against basename UNIX tool */

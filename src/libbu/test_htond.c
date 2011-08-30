@@ -1,4 +1,4 @@
-/*                       H T E S T E R . C
+/*                    T E S T _ H T O N D . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2011 United States Government as represented by
@@ -42,6 +42,7 @@ flpr(unsigned char *cp)
     return;
 }
 
+
 int
 ckbytes(unsigned char *a, unsigned char *b, unsigned int n)
 {
@@ -62,6 +63,7 @@ ckbytes(unsigned char *a, unsigned char *b, unsigned int n)
 #endif
 }
 
+
 int
 main(int argc, char **argv)
 {
@@ -72,7 +74,7 @@ main(int argc, char **argv)
 
 #define A argv[1][1]
     if (argc != 2 || argv[1][0] != '-' || (A != 'o' && A != 'i' && A != 'v')) {
-	bu_exit(1, "Usage:  htester [-i|-o|-v] < input\n");
+	bu_exit(1, "Usage: %s [-i|-o|-v] < input\n", argv[0]);
     }
 
     /* First stage, generate the reference pattern */
@@ -144,7 +146,7 @@ main(int argc, char **argv)
     exit(0);
 }
 
-/** @} */
+
 /*
  * Local Variables:
  * mode: C

@@ -1,4 +1,4 @@
-/*                P R O G N A M E T E S T E R . C
+/*                 T E S T _ P R O G N A M E . C
  * BRL-CAD
  *
  * Copyright (c) 2011 United States Government as represented by

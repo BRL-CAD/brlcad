@@ -1,4 +1,4 @@
-/*                       T I M E T E S T E R . C
+/*                    T E S T _ T I M E R . C
  * BRL-CAD
  *
  * Copyright (c) 2011 United States Government as represented by
@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include "bu.h"
+
 
 int
 main(int argc, char **argv)
