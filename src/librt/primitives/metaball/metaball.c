@@ -170,6 +170,7 @@ rt_metaball_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
     fastf_t radius;
     mb = (struct rt_metaball_internal *)ip->idb_ptr;
     RT_METABALL_CK_MAGIC(mb);
+    VSETALL(center, 0);
 
     radius = rt_metaball_get_bounding_sphere(&center, mb->threshold, mb);
 
