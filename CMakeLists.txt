@@ -55,10 +55,10 @@
 #     0) information on the package and toplevel CMake settings
 #     1) define top level options
 #     2) check programs
-#     3) check libraries
-#     4) check headers
-#     5) check types/structures
-#     6) check compiler characteristics
+#     3) check compiler characteristics
+#     4) check libraries
+#     5) check headers
+#     6) check types/structures
 #     7) check functions
 #     8) check system services
 #     9) output a summary
@@ -874,7 +874,7 @@ INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_CheckFunctions.cmake)
 
 
 # *******************************************************************
-# ***       Check for Compile Characteristics - Stage 3 of 9      ***
+# ***      Check for Compiler Characteristics - Stage 3 of 9      ***
 # *******************************************************************
 
 INCLUDE(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
