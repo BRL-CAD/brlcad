@@ -58,7 +58,7 @@ bu_strlcatm(char *dst, const char *src, size_t size, const char *label)
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	fprintf(stderr, "WARNING: [%s] concatenation string is already full, exceeds size (%lu > %lu)\n", label, (unsigned long)dstsize, (unsigned long)size-1);
 	bu_semaphore_release(BU_SEM_SYSCALL);
-    } else if (srcsize >= size - dstsize) {
+    } else if (srcsize > size - dstsize - 1) {
 	if (UNLIKELY(bu_debug)) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    fprintf(stderr, "WARNING: [%s] string truncation, exceeding %lu char max concatenating %lu chars (started with %lu)\n", label, (unsigned long)size-1, (unsigned long)srcsize, (unsigned long)dstsize);
@@ -70,11 +70,11 @@ bu_strlcatm(char *dst, const char *src, size_t size, const char *label)
     /* don't return to ensure consistent null-termination behavior in following */
     (void)strlcat(dst, src, size);
 #else
-    (void)strncat(dst, src, size-strlen(dst)-1);
+    (void)strncat(dst, src, size - dstsize - 1);
 #endif
 
     /* be sure to null-terminate, contrary to strncat behavior */
-    if (dstsize + srcsize < size-1) {
+    if (dstsize + srcsize < size - 1) {
 	dst[dstsize + srcsize] = '\0';
     } else {
 	dst[size-1] = '\0'; /* sanity */
@@ -105,7 +105,7 @@ bu_strlcpym(char *dst, const char *src, size_t size, const char *label)
     srcsize = strlen(src);
 
     if (UNLIKELY(bu_debug)) {
-	if (srcsize >= size) {
+	if (srcsize > size - 1) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    fprintf(stderr, "WARNING: [%s] string truncation, exceeding %lu char max copying %lu chars\n", label, (unsigned long)size-1, (unsigned long)srcsize);
 	    bu_semaphore_release(BU_SEM_SYSCALL);
@@ -116,11 +116,11 @@ bu_strlcpym(char *dst, const char *src, size_t size, const char *label)
     /* don't return to ensure consistent null-termination behavior in following */
     (void)strlcpy(dst, src, size);
 #else
-    (void)strncpy(dst, src, size-1);
+    (void)strncpy(dst, src, size - 1);
 #endif
 
     /* be sure to always null-terminate, contrary to strncpy behavior */
-    if (srcsize < size-1) {
+    if (srcsize < size - 1) {
 	dst[srcsize] = '\0';
     } else {
 	dst[size-1] = '\0'; /* sanity */
