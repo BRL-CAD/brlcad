@@ -92,6 +92,8 @@ main(int ac, char *av[])
     /* various flags */
     test_vls("%010d", 123);
     test_vls("%#-.10lx", 123);
+    test_vls("%#lf", 123.0);
+    test_vls("he%#-12.10tullo", (ptrdiff_t)0x1234);
     test_vls("he%+-6.3ld%-+3.6dllo", 123, 321);
 
     printf("%s: testing complete\n", av[0]);
