@@ -90,20 +90,20 @@ IF(BRLCAD_BUILD_LOCAL_TCL)
 	ADD_DEPENDENCIES(libbu tcl)
 ENDIF(BRLCAD_BUILD_LOCAL_TCL)
 
-add_executable(htester htester.c)
-target_link_libraries(htester ${CMAKE_THREAD_LIBS_INIT} ${PNG_LIBRARY} libbu)
+add_executable(test_htond test_htond.c)
+target_link_libraries(test_htond ${CMAKE_THREAD_LIBS_INIT} ${PNG_LIBRARY} libbu)
 
-add_executable(timetester timetester.c)
-target_link_libraries(timetester libbu)
+add_executable(test_timer test_timer.c)
+target_link_libraries(test_timer libbu)
 
-add_executable(basenametester  basenametester.c)
-target_link_libraries(basenametester libbu)
+add_executable(test_basename  test_basename.c)
+target_link_libraries(test_basename libbu)
 IF(MSVC)
-	SET_TARGET_PROPERTIES(basenametester PROPERTIES COMPILE_FLAGS "-DBRLCAD_DLL")
+	SET_TARGET_PROPERTIES(test_basename PROPERTIES COMPILE_FLAGS "-DBRLCAD_DLL")
 ENDIF(MSVC)
 
-add_executable(prognametester  prognametester.c)
-target_link_libraries(prognametester libbu)
+add_executable(test_progname  test_progname.c)
+target_link_libraries(test_progname libbu)
 
 set(bu_MAN3
   htond.3

@@ -2,7 +2,7 @@
 lib_LTLIBRARIES = libbu.la
 noinst_LTLIBRARIES = libbu_nil.la
 
-noinst_PROGRAMS = htester timetester basenametester prognametester
+noinst_PROGRAMS = test_htond test_timer test_basename test_progname
 
 libbu_nil_la_SOURCES = \
 	argv.c \
@@ -88,23 +88,23 @@ libbu_la_LIBADD = \
 	libbu_nil.la \
 	${BU_LIBS}
 
-htester_SOURCES = htester.c
-htester_LDADD = \
+test_htond_SOURCES = test_htond.c
+test_htond_LDADD = \
 	libbu.la \
 	${BU_LIBS}
 
-timetester_SOURCES = timetester.c
-timetester_LDADD = \
+test_timer_SOURCES = test_timer.c
+test_timer_LDADD = \
 	libbu.la \
 	${BU_LIBS}
 
-basenametester_SOURCES = basenametester.c
-basenametester_LDADD = \
+test_basename_SOURCES = test_basename.c
+test_basename_LDADD = \
 	libbu.la \
 	${BU_LIBS}
 
-prognametester_SOURCES = prognametester.c
-prognametester_LDADD = \
+test_progname_SOURCES = test_progname.c
+test_progname_LDADD = \
 	libbu.la \
 	${BU_LIBS}
 
@@ -118,7 +118,6 @@ man_MANS = \
 
 EXTRA_DIST = \
 	$(man_MANS) \
-	timetester.c \
 	CMakeLists.txt
 
 AM_CPPFLAGS = \
@@ -151,5 +150,4 @@ FAST_OBJECTS = \
 	$(libbu_la_OBJECTS) \
 	$(lib_LTLIBRARIES) \
 	$(noinst_LTLIBRARIES) \
-	$(htester_OBJECTS) \
 	$(noinst_PROGRAMS)
