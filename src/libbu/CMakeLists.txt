@@ -96,14 +96,17 @@ target_link_libraries(test_htond ${CMAKE_THREAD_LIBS_INIT} ${PNG_LIBRARY} libbu)
 add_executable(test_timer test_timer.c)
 target_link_libraries(test_timer libbu)
 
-add_executable(test_basename  test_basename.c)
+add_executable(test_basename test_basename.c)
 target_link_libraries(test_basename libbu)
 IF(MSVC)
 	SET_TARGET_PROPERTIES(test_basename PROPERTIES COMPILE_FLAGS "-DBRLCAD_DLL")
 ENDIF(MSVC)
 
-add_executable(test_progname  test_progname.c)
+add_executable(test_progname test_progname.c)
 target_link_libraries(test_progname libbu)
+
+add_executable(test_vls test_vls.c)
+target_link_libraries(test_vls libbu)
 
 set(bu_MAN3
   htond.3

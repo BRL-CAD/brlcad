@@ -2,7 +2,12 @@
 lib_LTLIBRARIES = libbu.la
 noinst_LTLIBRARIES = libbu_nil.la
 
-noinst_PROGRAMS = test_htond test_timer test_basename test_progname
+noinst_PROGRAMS = \
+	test_basename \
+	test_htond \
+	test_progname \
+	test_timer \
+	test_vls
 
 libbu_nil_la_SOURCES = \
 	argv.c \
@@ -105,6 +110,11 @@ test_basename_LDADD = \
 
 test_progname_SOURCES = test_progname.c
 test_progname_LDADD = \
+	libbu.la \
+	${BU_LIBS}
+
+test_vls_SOURCES = test_vls.c
+test_vls_LDADD = \
 	libbu.la \
 	${BU_LIBS}
 
