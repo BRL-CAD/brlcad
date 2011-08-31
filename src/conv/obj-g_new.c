@@ -974,9 +974,9 @@ collect_grouping_faces_indexes(struct ga_t *ga,
                 for (groupid = 0 ; groupid < setsize ; groupid++) {
                     /* if true, current face is in current group grouping */
                     if (grouping_index == indexset_arr[groupid]) {
+			int index = indexset_arr[groupid];
+                        name_str = ga->str_arr_obj_groups[index];
                         found = 1;
-                        name_str =
-			    ga->str_arr_obj_groups[indexset_arr[groupid]];
                     }
                 }
                 break;
@@ -1055,26 +1055,19 @@ collect_grouping_faces_indexes(struct ga_t *ga,
             /* allocate and initialize variable length string (vls) for
 	     * raw_grouping_name
 	     */
-            (*gfi)->raw_grouping_name =
-		(struct bu_vls *)bu_calloc(1, sizeof(struct bu_vls),
-		"raw_grouping_name");
-
-            bu_vls_init((*gfi)->raw_grouping_name);
+            (*gfi)->raw_grouping_name = bu_vls_vlsinit();
 
             /* allocate and initialize variable length string (vls) for
 	     * primitive_name
 	     */
-            (*gfi)->primitive_name =
-		(struct bu_vls *)bu_calloc(1, sizeof(struct bu_vls),
-		"primitive_name");
-
-            bu_vls_init((*gfi)->primitive_name);
+            (*gfi)->primitive_name = bu_vls_vlsinit();
 
             /* only need to copy in the grouping name for the first
              * face found within the grouping since all the faces in
              * the grouping will have the same grouping name
              */
             bu_vls_strcpy((*gfi)->raw_grouping_name, name_str);
+	    bu_free(name_str, "name_str");
 
             /* sets initial number of elements to allocate memory for */
             (*gfi)->max_faces = max_faces_increment;
@@ -3625,7 +3618,7 @@ main(int argc, char **argv)
 			       timep->tm_hour, timep->tm_min, timep->tm_sec,
 			       gfi->grouping_index + 1, ga.numGroups,
 			       face_type_idx,
-			       bu_vls_addr(gfi->raw_grouping_name));
+			       gfi->raw_grouping_name->vls_str);
 
                         switch (mode_option) {
                             case 'b':

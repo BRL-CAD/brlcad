@@ -24,6 +24,7 @@
 #include "common.h"
 
 #include "obj_parser.h"
+#include "bu.h"
 
 #include <memory>
 #include <string>
@@ -409,8 +410,14 @@ void set_working_groupset(basic_parser_extra<PrecisionT, charT, traits,
 
 		extra.contents->group_set.push_back(*key);
 
-		extra.contents->groupchar_set.
-		    push_back(extra.contents->group_set.back().c_str());
+		int strSize = key->size() + 1;
+
+		char *nameString = (char*)bu_malloc(sizeof(char) * strSize,
+		    "nameString");
+
+		bu_strlcpy(nameString, key->c_str(), strSize);
+
+		extra.contents->groupchar_set.push_back(nameString);
 
 		extra.parser_state.group_index_map[*key] = new_grpset.back();
 	    }
