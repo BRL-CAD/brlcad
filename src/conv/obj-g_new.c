@@ -974,8 +974,8 @@ collect_grouping_faces_indexes(struct ga_t *ga,
                 for (groupid = 0 ; groupid < setsize ; groupid++) {
                     /* if true, current face is in current group grouping */
                     if (grouping_index == indexset_arr[groupid]) {
-			int index = indexset_arr[groupid];
-                        name_str = ga->str_arr_obj_groups[index];
+			int groups_index = indexset_arr[groupid];
+                        name_str = ga->str_arr_obj_groups[groups_index];
                         found = 1;
                     }
                 }
@@ -1067,7 +1067,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
              * the grouping will have the same grouping name
              */
             bu_vls_strcpy((*gfi)->raw_grouping_name, name_str);
-	    bu_free(name_str, "name_str");
+	    bu_free((void*)name_str, "name_str");
 
             /* sets initial number of elements to allocate memory for */
             (*gfi)->max_faces = max_faces_increment;
