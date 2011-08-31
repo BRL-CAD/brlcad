@@ -551,6 +551,10 @@ FILE(APPEND ${CONFIG_H_FILE} "#define BRLCAD_ROOT \"${CMAKE_INSTALL_PREFIX}\"\n"
 FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_VERSION \"${BRLCAD_VERSION}\"\n")
 FILE(APPEND ${CONFIG_H_FILE} "#define VERSION \"${BRLCAD_VERSION}\"\n")
 
+# A variety of debugging messages in the code key off of the DEBUG 
+# definition - unlike the build flags, this is turned on and off based
+# on the build type.  A "Release" build with debugging compiler flags
+# will still not print debugging messages conditionalized on DEBUG.
 IF("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
 	FILE(APPEND ${CONFIG_H_FILE} "#define DEBUG 1\n")
 ENDIF("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
