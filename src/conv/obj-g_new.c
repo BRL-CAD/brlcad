@@ -273,6 +273,14 @@ struct ga_t {
     const size_t *attindex_arr_tnv_faces; /* obj_polygonal_tnv_faces */
 };
 
+void free_lib_array(const char * const *array[], size_t size)
+{
+    size_t i;
+    for (i = 0; i < size; i++) {
+	bu_free((void*)(*array)[i], "free_lib_array");
+    }
+}
+
 int test_face(struct ga_t *ga, struct gfi_t *gfi, size_t face_idx,
     fastf_t conv_factor, struct bn_tol *tol, int face_test_type,
     int force_retest);
@@ -289,6 +297,8 @@ void
 collect_global_obj_file_attributes(struct ga_t *ga)
 {
     size_t i = 0;
+    size_t count = 0;
+    const char * const *lib_arr = NULL;
 
     ga->numPolyAttr = obj_polygonal_attributes(ga->contents, &ga->polyattr_list);
 
@@ -297,6 +307,21 @@ collect_global_obj_file_attributes(struct ga_t *ga)
     } else {
         bu_log("OBJ FILE CONTENT SUMMARY:\n");
     }
+
+    /* release unused */
+    count = obj_num_materiallibsets(ga->contents);
+    obj_materiallibs(ga->contents, &lib_arr);
+    free_lib_array(&lib_arr, count);
+
+    count = obj_num_texmaplibsets(ga->contents);
+    obj_texmaplibs(ga->contents, &lib_arr);
+    free_lib_array(&lib_arr, count);
+
+    count = obj_shadow_objs(ga->contents, &lib_arr);
+    free_lib_array(&lib_arr, count);
+
+    count = obj_trace_objs(ga->contents, &lib_arr);
+    free_lib_array(&lib_arr, count);
 
     ga->numGroups = obj_groups(ga->contents, &ga->str_arr_obj_groups);
     bu_log("\tTotal number of groups in OBJ file; numGroups = (%zu)\n", ga->numGroups);
@@ -3793,6 +3818,18 @@ main(int argc, char **argv)
 	bu_free((void*)ga.str_arr_obj_groups[i], "str_arr_obj_groups[i]");
     }
     bu_free((void*)ga.str_arr_obj_groups, "str_arr_obj_groups");
+
+    for (i = 0; i < ga.numObjects; i++) {
+	bu_free((void*)ga.str_arr_obj_objects[i], "str_arr_obj_objects[i]");
+    }
+
+    for (i = 0; i < ga.numMaterials; i++) {
+	bu_free((void*)ga.str_arr_obj_materials[i], "str_arr_obj_materials[i]");
+    }
+
+    for (i = 0; i < ga.numTexmaps; i++) {
+	bu_free((void*)ga.str_arr_obj_texmaps[i], "str_arr_obj_texmaps[i]");
+    }
 
     /* running cleanup functions */
     if (debug) {

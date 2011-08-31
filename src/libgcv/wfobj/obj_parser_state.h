@@ -49,6 +49,14 @@ namespace arl {
 namespace obj_parser {
 namespace detail {
 
+inline char *createCopyOfString(const char *source, const size_t strSize)
+{
+    char *copy = (char*)bu_malloc(sizeof(char) * strSize, "createCopyOfString");
+    bu_strlcpy(copy, source, strSize);
+
+    return copy;
+}
+
 typedef void *parser_type;
 
 template<typename T, std::size_t N>
@@ -410,14 +418,9 @@ void set_working_groupset(basic_parser_extra<PrecisionT, charT, traits,
 
 		extra.contents->group_set.push_back(*key);
 
-		int strSize = key->size() + 1;
-
-		char *nameString = (char*)bu_malloc(sizeof(char) * strSize,
-		    "nameString");
-
-		bu_strlcpy(nameString, key->c_str(), strSize);
-
-		extra.contents->groupchar_set.push_back(nameString);
+		char *groupString;
+		groupString = createCopyOfString(key->c_str(), key->size() + 1); 
+		extra.contents->groupchar_set.push_back(groupString);
 
 		extra.parser_state.group_index_map[*key] = new_grpset.back();
 	    }
@@ -439,10 +442,7 @@ void set_working_groupset(basic_parser_extra<PrecisionT, charT, traits,
 
 	// new_grpset now contains a unique set of indices into
 	// contents->group_set;
-	extra.contents->groupindex_set.
-	    resize(extra.contents->groupindex_set.size() + 1);
-
-	swap(extra.contents->groupindex_set.back(), new_grpset);
+	extra.contents->groupindex_set.push_back(new_grpset);
     }
 
     extra.parser_state.working_stringset.clear();
@@ -464,6 +464,7 @@ void set_working_object(basic_parser_extra<PrecisionT, charT, traits,
     typedef basic_parser_extra<PrecisionT, charT, traits, Allocator> extra_type;
     typedef typename extra_type::contents_type contents_type;
     typedef typename extra_type::parser_state_type parser_state_type;
+    typedef typename contents_type::string_type string_type;
 
     typename parser_state_type::object_index_map_type::iterator res =
 	extra.parser_state.object_index_map.
@@ -475,14 +476,14 @@ void set_working_object(basic_parser_extra<PrecisionT, charT, traits,
     } else {
 	extra.parser_state.current_object = extra.contents->object_set.size();
 
-	extra.contents->object_set.
-	    resize(extra.contents->object_set.size() + 1);
+	string_type &working_string = extra.parser_state.working_string;
 
-	swap(extra.contents->object_set.back(),
-	     extra.parser_state.working_string);
+	extra.contents->object_set.push_back(working_string);
 
-	extra.contents->objectchar_set.push_back(extra.contents->object_set.
-						 back().c_str());
+	char *objectString = createCopyOfString(working_string.c_str(),
+	    working_string.size() + 1);
+
+	extra.contents->objectchar_set.push_back(objectString);
     }
 
     extra.parser_state.working_polyattributes.object_index =
@@ -502,6 +503,7 @@ void set_working_material(basic_parser_extra<PrecisionT, charT, traits,
     typedef basic_parser_extra<PrecisionT, charT, traits, Allocator> extra_type;
     typedef typename extra_type::contents_type contents_type;
     typedef typename extra_type::parser_state_type parser_state_type;
+    typedef typename contents_type::string_type string_type;
 
     typename parser_state_type::material_index_map_type::iterator res =
 	extra.parser_state.material_index_map.
@@ -514,14 +516,14 @@ void set_working_material(basic_parser_extra<PrecisionT, charT, traits,
 	extra.parser_state.current_material =
 	    extra.contents->material_set.size();
 
-	extra.contents->material_set.
-	    resize(extra.contents->material_set.size() + 1);
+	string_type &working_string = extra.parser_state.working_string;
 
-	swap(extra.contents->material_set.back(),
-	     extra.parser_state.working_string);
+	extra.contents->material_set.push_back(working_string);
 
-	extra.contents->materialchar_set.
-	    push_back(extra.contents->material_set.back().c_str());
+	char *materialString = createCopyOfString(working_string.c_str(),
+	    working_string.size() + 1);
+
+	extra.contents->materialchar_set.push_back(materialString);
     }
 
     extra.parser_state.working_polyattributes.material_index =
@@ -540,6 +542,8 @@ void set_working_materiallib(basic_parser_extra<PrecisionT, charT, traits,
     typedef basic_parser_extra<PrecisionT, charT, traits, Allocator> extra_type;
     typedef typename extra_type::contents_type contents_type;
     typedef typename extra_type::parser_state_type parser_state_type;
+    typedef typename contents_type::string_type string_type;
+    typedef typename contents_type::stringvec_type stringvec_type;
 
     typename parser_state_type::materiallibset_index_map_type::const_iterator
 	res = extra.parser_state.materiallibset_index_map.
@@ -565,12 +569,18 @@ void set_working_materiallib(basic_parser_extra<PrecisionT, charT, traits,
 	    } else {
 		// never seen this materiallib name before, add to contents and
 		// maps
-		new_mtllibset.push_back(extra.contents->materiallib_set.size());
+		stringvec_type &matlib_set = extra.contents->materiallib_set;
 
-		extra.contents->materiallib_set.push_back(*key);
+		new_mtllibset.push_back(matlib_set.size());
 
-		extra.contents->materiallibchar_set.
-		    push_back(extra.contents->materiallib_set.back().c_str());
+		matlib_set.push_back(*key);
+
+		string_type &matlib_name = matlib_set.back();
+
+		char *matlibString = createCopyOfString(matlib_name.c_str(),
+		    matlib_name.size() + 1);
+
+		extra.contents->materiallibchar_set.push_back(matlibString);
 
 		extra.parser_state.materiallib_index_map[*key] =
 		    new_mtllibset.back();
@@ -618,6 +628,7 @@ void set_working_texmap(basic_parser_extra<PrecisionT, charT, traits,
     typedef basic_parser_extra<PrecisionT, charT, traits, Allocator> extra_type;
     typedef typename extra_type::contents_type contents_type;
     typedef typename extra_type::parser_state_type parser_state_type;
+    typedef typename contents_type::string_type string_type;
 
     typename parser_state_type::texmap_index_map_type::iterator res =
 	extra.parser_state.texmap_index_map.
@@ -629,14 +640,14 @@ void set_working_texmap(basic_parser_extra<PrecisionT, charT, traits,
     } else {
 	extra.parser_state.current_texmap = extra.contents->texmap_set.size();
 
-	extra.contents->texmap_set.
-	    resize(extra.contents->texmap_set.size() + 1);
+	string_type &working_string = extra.parser_state.working_string;
 
-	swap(extra.contents->texmap_set.back(),
-	     extra.parser_state.working_string);
+	extra.contents->texmap_set.push_back(working_string);
 
-	extra.contents->texmapchar_set.
-	    push_back(extra.contents->texmap_set.back().c_str());
+	char *texmapString = createCopyOfString(working_string.c_str(),
+	    working_string.size() + 1);
+
+	extra.contents->texmapchar_set.push_back(texmapString);
     }
 
     extra.parser_state.working_polyattributes.texmap_index =
@@ -656,6 +667,7 @@ void set_working_texmaplib(basic_parser_extra<PrecisionT, charT, traits,
     typedef basic_parser_extra<PrecisionT, charT, traits, Allocator> extra_type;
     typedef typename extra_type::contents_type contents_type;
     typedef typename extra_type::parser_state_type parser_state_type;
+    typedef typename contents_type::stringvec_type stringvec_type;
 
     typename parser_state_type::texmaplibset_index_map_type::const_iterator res
 	= extra.parser_state.texmaplibset_index_map.
@@ -679,14 +691,18 @@ void set_working_texmaplib(basic_parser_extra<PrecisionT, charT, traits,
 	    if (prev != extra.parser_state.texmaplib_index_map.end()) {
 		new_texlibset.push_back(prev->second);
 	    } else {
+		stringvec_type &texmaplib_set = extra.contents->texmaplib_set;
+
 		// never seen this texmaplib name before, add to contents and
 		// maps
-		new_texlibset.push_back(extra.contents->texmaplib_set.size());
+		new_texlibset.push_back(texmaplib_set.size());
 
-		extra.contents->texmaplib_set.push_back(*key);
+		texmaplib_set.push_back(*key);
 
-		extra.contents->texmaplibchar_set.
-		    push_back(extra.contents->texmaplib_set.back().c_str());
+		char *texmapString = createCopyOfString(key->c_str(),
+		    key->size() + 1);
+
+		extra.contents->texmaplibchar_set.push_back(texmapString);
 
 		extra.parser_state.texmaplib_index_map[*key] =
 		    new_texlibset.back();
@@ -734,6 +750,7 @@ void set_working_shadow_obj(basic_parser_extra<PrecisionT, charT, traits,
     typedef basic_parser_extra<PrecisionT, charT, traits, Allocator> extra_type;
     typedef typename extra_type::contents_type contents_type;
     typedef typename extra_type::parser_state_type parser_state_type;
+    typedef typename contents_type::string_type string_type;
 
     typename parser_state_type::shadow_obj_index_map_type::iterator res =
 	extra.parser_state.shadow_obj_index_map.
@@ -746,14 +763,14 @@ void set_working_shadow_obj(basic_parser_extra<PrecisionT, charT, traits,
 	extra.parser_state.current_shadow_obj =
 	    extra.contents->shadow_obj_set.size();
 
-	extra.contents->shadow_obj_set.
-	    resize(extra.contents->shadow_obj_set.size() + 1);
+	string_type &working_string = extra.parser_state.working_string;
 
-	swap(extra.contents->shadow_obj_set.back(),
-	     extra.parser_state.working_string);
+	extra.contents->shadow_obj_set.push_back(working_string);
 
-	extra.contents->shadow_objchar_set.
-	    push_back(extra.contents->shadow_obj_set.back().c_str());
+	char *shadowObjString = createCopyOfString(working_string.c_str(),
+	    working_string.size() + 1);
+
+	extra.contents->shadow_objchar_set.push_back(shadowObjString);
     }
 
     extra.parser_state.working_polyattributes.shadow_obj_index =
@@ -773,6 +790,7 @@ void set_working_trace_obj(basic_parser_extra<PrecisionT, charT, traits,
     typedef basic_parser_extra<PrecisionT, charT, traits, Allocator> extra_type;
     typedef typename extra_type::contents_type contents_type;
     typedef typename extra_type::parser_state_type parser_state_type;
+    typedef typename contents_type::string_type string_type;
 
     typename parser_state_type::trace_obj_index_map_type::iterator res =
 	extra.parser_state.trace_obj_index_map.
@@ -785,14 +803,14 @@ void set_working_trace_obj(basic_parser_extra<PrecisionT, charT, traits,
 	extra.parser_state.current_trace_obj =
 	    extra.contents->trace_obj_set.size();
 
-	extra.contents->trace_obj_set.
-	    resize(extra.contents->trace_obj_set.size() + 1);
+	string_type &working_string = extra.parser_state.working_string;
 
-	swap(extra.contents->trace_obj_set.back(),
-	     extra.parser_state.working_string);
+	extra.contents->trace_obj_set.push_back(working_string);
 
-	extra.contents->trace_objchar_set.
-	    push_back(extra.contents->trace_obj_set.back().c_str());
+	char *traceObjString = createCopyOfString(working_string.c_str(),
+	    working_string.size() + 1);
+
+	extra.contents->trace_objchar_set.push_back(traceObjString);
     }
 
     extra.parser_state.working_polyattributes.trace_obj_index =
