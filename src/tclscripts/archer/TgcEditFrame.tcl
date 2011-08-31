@@ -155,9 +155,7 @@
 	C [list $mCx $mCy $mCz] \
 	D [list $mDx $mDy $mDz]
 
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
-    }
+    GeometryEditFrame::updateGeometry
 }
 
 ::itcl::body TgcEditFrame::createGeometry {obj} {

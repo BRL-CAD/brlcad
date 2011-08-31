@@ -791,9 +791,7 @@
 	V7 [list $mV7x $mV7y $mV7z] \
 	V8 [list $mV8x $mV8y $mV8z]
 
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
-    }
+    GeometryEditFrame::updateGeometry
 }
 
 ::itcl::body Arb8EditFrame::createGeometry {obj} {

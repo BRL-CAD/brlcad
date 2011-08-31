@@ -126,9 +126,7 @@
 	r_1 $mR_1 \
 	r_2 $mR_2
 
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
-    }
+    GeometryEditFrame::updateGeometry
 }
 
 ::itcl::body EpaEditFrame::createGeometry {obj} {

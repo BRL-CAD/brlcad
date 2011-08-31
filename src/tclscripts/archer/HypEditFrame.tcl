@@ -128,9 +128,7 @@
 	b $mB \
 	bnr $mC
 
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
-    }
+    GeometryEditFrame::updateGeometry
 }
 
 ::itcl::body HypEditFrame::createGeometry {obj} {

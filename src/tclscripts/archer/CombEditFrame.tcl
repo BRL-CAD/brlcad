@@ -277,9 +277,7 @@
 	return
     }
 
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
-    }
+    GeometryEditFrame::updateGeometry
 }
 
 ::itcl::body CombEditFrame::createGeometry {obj} {

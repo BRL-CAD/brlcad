@@ -126,9 +126,7 @@
 	r $mR \
 	r_d $mR_d
 
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
-    }
+    GeometryEditFrame::updateGeometry
 }
 
 ::itcl::body EtoEditFrame::createGeometry {obj} {

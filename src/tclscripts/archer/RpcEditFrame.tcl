@@ -123,9 +123,7 @@
 	B [list $mBx $mBy $mBz] \
 	r $mR
 
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
-    }
+    GeometryEditFrame::updateGeometry
 }
 
 ::itcl::body RpcEditFrame::createGeometry {obj} {

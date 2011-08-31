@@ -117,9 +117,7 @@
 	r_v $mR_v \
 	r_h $mR_h
 
-    if {$itk_option(-geometryChangedCallback) != ""} {
-	$itk_option(-geometryChangedCallback)
-    }
+    GeometryEditFrame::updateGeometry
 }
 
 ::itcl::body PartEditFrame::createGeometry {obj} {
