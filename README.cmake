@@ -82,13 +82,14 @@ default install (starting with a source tarball):
   make
   make install
 
-where "X.Y.Z" is the version number of BRL-CAD.  If the graphical
+where "X.Y.Z" is the version number of BRL-CAD.  For those who prefer
+a curses interface, substitute ccmake for cmake above. If the graphical
 interface available from CMake is installed cmake-gui may be
-substituted for cmake above.  This will bring up an interface
-displaying various configuration options available with CMake.
-These options may also be set directly via the command line, or
-a configure wrapper script may be substituted for cmake above to
-provide more autotools-line configuration options.
+substituted for cmake.  These interfaces will display the various 
+configuration options available when building BRL-CAD, or the options 
+may be set directly via command line -D options.
+The configure wrapper script may be substituted for cmake in the above
+steps for a more autotools-like configuration experience.
 
 Users on multiprocessor systems will be able to speed up their builds
 by passing the -j option to make (e.g. make -j4, assuming GNU make).
