@@ -6754,14 +6754,11 @@ proc title_node_handler {node} {
 
 
 ::itcl::body Archer::buildPipeEditView {} {
-    #XXX Not ready yet
-    return
-
-    #     set parent $itk_component(objEditView)
-    #     itk_component add pipeView {
-    # 	PipeEditFrame $parent.pipeview \
-	# 	    -units "mm"
-    #     } {}
+    set parent $itk_component(objEditView)
+    itk_component add pipeView {
+     	PipeEditFrame $parent.pipeview \
+	    -units "mm"
+    } {}
 }
 
 
@@ -7327,9 +7324,6 @@ proc title_node_handler {node} {
 
 
 ::itcl::body Archer::initPipeEditView {odata} {
-    #XXX Not ready yet
-    return
-
     $itk_component(pipeView) configure \
 	-geometryObject $mSelectedObj \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
@@ -8797,13 +8791,8 @@ proc title_node_handler {node} {
 	}
 	"pipe" {
 	    set name [gedCmd make_name "pipe."]
-	    vmake $name pipe
-
-	    #XXX Not ready yet
-	    #	    return
-
-	    #	    set name [gedCmd make_name "pipe."]
-	    #	    createPipe $name
+	    createPipe $name
+	    #vmake $name pipe
 	}
 	"rcc" {
 	    set name [gedCmd make_name "rcc."]
@@ -9040,9 +9029,6 @@ proc title_node_handler {node} {
 
 
 ::itcl::body Archer::createPipe {name} {
-    #XXX Not ready yet
-    return
-
     if {![info exists itk_component(pipeView)]} {
 	buildPipeEditView
 	$itk_component(pipeView) configure \
