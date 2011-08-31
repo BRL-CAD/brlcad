@@ -1531,6 +1531,11 @@ GED_EXPORT extern int ged_eye(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_eye_pos(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Checks to see if the specified database object exists.
+ */
+GED_EXPORT extern int ged_exists(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Globs expression against database objects
  */
 GED_EXPORT extern int ged_expand(struct ged *gedp, int argc, const char *argv[]);

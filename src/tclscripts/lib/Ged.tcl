@@ -181,6 +181,7 @@ package provide cadwidgets::Ged 1.0
 	method expand {args}
 	method eye {args}
 	method eye_pos {args}
+	method exists {args}
 	method faceplate {args}
 	method facetize {args}
 	method fb2pix {args}
@@ -1256,6 +1257,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::eye_pos {args} {
     eval $mGed eye_pos $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::exists {args} {
+    eval $mGed exists $args
 }
 
 ::itcl::body cadwidgets::Ged::faceplate {args} {

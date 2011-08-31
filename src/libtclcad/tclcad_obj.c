@@ -750,6 +750,7 @@ static struct to_cmdtab to_cmds[] = {
     {"expand",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_expand},
     {"eye",	"[x y z]", 5, to_view_func_plus, ged_eye},
     {"eye_pos",	"[x y z]", 5, to_view_func_plus, ged_eye_pos},
+    {"exists",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exists},
     {"faceplate",	"center_dot|prim_labels|view_params|view_scale color|draw [val(s)]", TO_UNLIMITED, to_faceplate, GED_FUNC_PTR_NULL},
     {"facetize",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_facetize},
     {"fb2pix",  	"[-h -i -c] [-s squaresize] [-w width] [-n height] [file.pix]", TO_UNLIMITED, to_view_func, ged_fb2pix},

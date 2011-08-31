@@ -154,6 +154,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"expand", cmd_ged_plain_wrapper, ged_expand},
     {"extrude", f_extrude, GED_FUNC_PTR_NULL},
     {"eye_pt", cmd_ged_view_wrapper, ged_eye},
+    {"exists", cmd_ged_plain_wrapper, ged_exists},
     {"facedef", f_facedef, GED_FUNC_PTR_NULL},
     {"facetize", cmd_ged_plain_wrapper, ged_facetize},
     {"form", cmd_ged_plain_wrapper, ged_form},
