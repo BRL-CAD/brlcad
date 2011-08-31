@@ -1067,7 +1067,6 @@ collect_grouping_faces_indexes(struct ga_t *ga,
              * the grouping will have the same grouping name
              */
             bu_vls_strcpy((*gfi)->raw_grouping_name, name_str);
-	    bu_free((void*)name_str, "name_str");
 
             /* sets initial number of elements to allocate memory for */
             (*gfi)->max_faces = max_faces_increment;
@@ -1207,6 +1206,8 @@ collect_grouping_faces_indexes(struct ga_t *ga,
             (*gfi)->tot_vertices += (*gfi)->num_vertices_arr[faceIndex];
         } /* if (found) */
     } /* for (i = 0; i < numFaces; i++) */
+
+    name_str = NULL;
 
     if (numFacesFound) { 
         (*gfi)->num_faces = numFacesFound;
@@ -3787,6 +3788,11 @@ main(int argc, char **argv)
             }
             break;
     }
+
+    for (i = 0; i < ga.numGroups; i++) {
+	bu_free((void*)ga.str_arr_obj_groups[i], "str_arr_obj_groups[i]");
+    }
+    bu_free((void*)ga.str_arr_obj_groups, "str_arr_obj_groups");
 
     /* running cleanup functions */
     if (debug) {
