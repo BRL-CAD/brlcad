@@ -1207,6 +1207,18 @@ BRLCAD_FUNCTION_EXISTS(sysmp HAVE_SYSMP)
 BRLCAD_FUNCTION_EXISTS(vfork HAVE_VFORK)
 BRLCAD_FUNCTION_EXISTS(writev HAVE_WRITEV)
 
+# On Windows, we need to check for hypot.  This test pertains
+# to the windows specific config file, not CONFIG_H_FILE - hence,
+# just run the test and it will be handled by configure_file later.
+include(CheckSymbolExists)
+IF(WIN32)
+	CHECK_SYMBOL_EXISTS(hypot "math.h" HAVE_HYPOT)
+	#If we don't have it, need to define it as _hypot in config_win
+	IF(NOT HAVE_HYPOT)
+		SET(hypot 1)
+	ENDIF(NOT HAVE_HYPOT)
+ENDIF(WIN32)
+
 
 # *******************************************************************
 # ***          Check for System Services - Stage 8 of 9           ***
@@ -1240,6 +1252,10 @@ ADD_SUBDIRECTORY(regress)
 FILE(APPEND ${CONFIG_H_FILE} "#endif /* __CONFIG_H__ */\n")
 configure_file(${CONFIG_H_FILE} ${BRLCAD_BINARY_DIR}/include/brlcad_config.h)
 
+# Generate the windows specific file, if needed
+IF(WIN32)
+	configure_file(${BRLCAD_SOURCE_DIR}/include/config_win_cmake.h.in	${BRLCAD_BINARY_DIR}/include/config_win_cmake.h)
+ENDIF(WIN32)
 
 # *******************************************************************
 # ***              Summarize Results - Stage 9 of 9               ***
