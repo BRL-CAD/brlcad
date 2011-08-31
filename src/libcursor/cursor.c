@@ -32,6 +32,9 @@
 #  else
 #    ifdef HAVE_CURSES_H
 #      include <curses.h>
+#      ifdef __PDCURSES__
+#         include <term.h>
+#      endif
 #    else
 #      ifdef HAVE_TERMCAP_H
 #        include <termcap.h>
@@ -75,8 +78,10 @@ static void	LoadTP(void), LoadTCS(void);
 char		termName[MAX_TERM_LEN] = "UNKNOWN";
 
 /* from termcap/termlib library */
+#ifndef __PDCURSES__
 extern char	*BC, /* Backspace.				*/
     *UP; /* Cursor up one line.			*/
+#endif
 
 /* Individual terminal control strings (TCS).			*/
 char		*CS, /* Change scrolling region.		*/
@@ -208,8 +213,10 @@ LoadTCS(void)
     CL = tgetstr( "cl", &tstr_addr );
     HO = tgetstr( "ho", &tstr_addr );
     CM = tgetstr( "cm", &tstr_addr );
+#ifndef __PDCURSES__
     BC = tgetstr( "bc", &tstr_addr );
     UP = tgetstr( "up", &tstr_addr );
+#endif
     TI = tgetstr( "ti", &tstr_addr );
     DL = tgetstr( "dl", &tstr_addr );
     SR = tgetstr( "sr", &tstr_addr );

@@ -63,27 +63,26 @@ DISTCHECK_IGNORE_ITEM(uce-dirent)
 # it - remove it if it's there. 
 THIRD_PARTY(zlib libz)
 
-# libtermlib Library
-#Only on WIN32 will the combination of the build search tests and
-#libtermlib fail to find a valid term, so set variables accordingly
+# terminal Library
 IF(NOT WIN32)
-	SET(HAVE_TERMLIB 1 CACHE BOOL "Have some termlib" FORCE)
-ELSE(NOT WIN32)
-	SET(BRLCAD_TERMLIB_BUILD "System" CACHE STRING "Disable libtermlib build on WIN32." FORCE)
-	MARK_AS_ADVANCED(BRLCAD_TERMLIB_BUILD)
-	SET(HAVE_TERMLIB 0 CACHE BOOL "Have some termlib" FORCE)
-ENDIF(NOT WIN32)
-MARK_AS_ADVANCED(HAVE_TERMLIB)
-
-IF(HAVE_TERMLIB)
-   THIRD_PARTY(termlib libtermlib)
+	THIRD_PARTY(termlib libtermlib)
 	IF(BRLCAD_TERMLIB_BUILD)
 		SET(HAVE_TERMCAP_H 1 CACHE BOOL "src/other termlib is on" FORCE)
 		MARK_AS_ADVANCED(HAVE_TERMCAP_H)
 	ENDIF(BRLCAD_TERMLIB_BUILD)
-ELSE(HAVE_TERMLIB)
+	DISTCHECK_IGNORE_ITEM(pdcurses_win32a)
+ELSE(NOT WIN32)
+	SET(BRLCAD_TERMLIB_BUILD "ON" CACHE STRING "Using pdcurses for termlib on WIN32." FORCE)
+	MARK_AS_ADVANCED(BRLCAD_TERMLIB_BUILD)
+	ADD_SUBDIRECTORY(pdcurses_win32a)
+	SET(TERMLIB_LIBRARY pdcurses CACHE STRING "Using pdcurses win32a" FORCE)
+	SET(TERMLIB_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/pdcurses_win32a" CACHE STRING "Using pdcurses win32a" FORCE)
+	SET(HAVE_CURSES_H 1 CACHE BOOL "src/other pdcurses is on" FORCE)
+	MARK_AS_ADVANCED(TERMLIB_LIBRARY)
+	MARK_AS_ADVANCED(TERMLIB_INCLUDE_DIR)
+	MARK_AS_ADVANCED(HAVE_CURSES_H)
 	DISTCHECK_IGNORE_ITEM(libtermlib)
-ENDIF(HAVE_TERMLIB)
+ENDIF(NOT WIN32)
 
 # libpng Library - Checks for ZLIB, so need to handle libpng AFTER zlib to set the variables
 # if using a local copy of zlib.  If not using a local copy of zlib, FindZLIB results will 

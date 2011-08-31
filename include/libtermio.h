@@ -25,23 +25,35 @@
  *
  */
 
-void clr_Cbreak( int fd );
-void set_Cbreak( int fd );
-void clr_Raw( int fd );
-void set_Raw( int fd );
-void set_Echo( int fd );
-void clr_Echo( int fd );
-void set_Tabs( int fd );
-void clr_Tabs( int fd );
-void set_HUPCL( int fd );
-void clr_CRNL( int fd );
-unsigned short get_O_Speed( int fd );
-void save_Tty( int fd );
-void reset_Tty( int fd );
-int save_Fil_Stat( int fd );
-int reset_Fil_Stat( int	fd );
-int set_O_NDELAY( int fd );
-void prnt_Tio();	/* misc. types of args */
+#ifndef TERMIO_EXPORT
+#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
+#    ifdef TERMIO_EXPORT_DLL
+#      define TERMIO_EXPORT __declspec(dllexport)
+#    else
+#      define TERMIO_EXPORT __declspec(dllimport)
+#    endif
+#  else
+#    define TERMIO_EXPORT
+#  endif
+#endif
+
+TERMIO_EXPORT extern void clr_Cbreak( int fd );
+TERMIO_EXPORT extern void set_Cbreak( int fd );
+TERMIO_EXPORT extern void clr_Raw( int fd );
+TERMIO_EXPORT extern void set_Raw( int fd );
+TERMIO_EXPORT extern void set_Echo( int fd );
+TERMIO_EXPORT extern void clr_Echo( int fd );
+TERMIO_EXPORT extern void set_Tabs( int fd );
+TERMIO_EXPORT extern void clr_Tabs( int fd );
+TERMIO_EXPORT extern void set_HUPCL( int fd );
+TERMIO_EXPORT extern void clr_CRNL( int fd );
+TERMIO_EXPORT extern unsigned short get_O_Speed( int fd );
+TERMIO_EXPORT extern void save_Tty( int fd );
+TERMIO_EXPORT extern void reset_Tty( int fd );
+TERMIO_EXPORT extern int save_Fil_Stat( int fd );
+TERMIO_EXPORT extern int reset_Fil_Stat( int	fd );
+TERMIO_EXPORT extern int set_O_NDELAY( int fd );
+TERMIO_EXPORT extern void prnt_Tio();	/* misc. types of args */
 /** @} */
 /*
  * Local Variables:

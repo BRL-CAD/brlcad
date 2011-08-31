@@ -1,4 +1,3 @@
-IF(HAVE_TERMLIB)
 	include_directories(
 		${CMAKE_CURRENT_SOURCE_DIR}
 		${TERMLIB_INCLUDE_DIR}
@@ -24,4 +23,3 @@ IF(HAVE_TERMLIB)
 
 	ADD_MAN_PAGE(1 fbed.1)
 	CMAKEFILES(ascii.h cursorbits.h extern.h fb_ik.h popup.h std.h try.h)
-ENDIF(HAVE_TERMLIB)
