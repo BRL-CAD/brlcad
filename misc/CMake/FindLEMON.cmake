@@ -67,8 +67,8 @@
 FIND_PROGRAM(LEMON_EXECUTABLE lemon DOC "path to the lemon executable")
 MARK_AS_ADVANCED(LEMON_EXECUTABLE)
 
-FIND_PROGRAM(COPY_EXECUTABLE NAMES cp copy DOC "path to the copy executable")
-MARK_AS_ADVANCED(COPY_EXECUTABLE)
+FIND_PROGRAM(MOVE_EXECUTABLE NAMES mv move DOC "path to the move executable")
+MARK_AS_ADVANCED(MOVE_EXECUTABLE)
 
 IF(LEMON_EXECUTABLE)
 	get_filename_component(lemon_path ${LEMON_EXECUTABLE} PATH)
@@ -111,18 +111,18 @@ MACRO(LEMON_TARGET Name LemonInput LemonOutput)
 		LIST(APPEND LEMON_TARGET_outputs "${LEMON_${Name}_OUTPUT_HEADER}")
 		LIST(APPEND LEMON_TARGET_outputs "${LEMON_${Name}_LOG}")
 
-		# CMake rename works only on one volume - if we can find cp or copy, use it
+		# CMake rename works only on one volume - if we can find mv or move, use it
 		# Otherwise, fall back on cmake -E rename and hope we're on the same volume
-		IF(COPY_EXECUTABLE)
+		IF(MOVE_EXECUTABLE)
 			ADD_CUSTOM_COMMAND(OUTPUT ${LEMON_TARGET_outputs}
 				COMMAND ${LEMON_EXECUTABLE} ${ARGV1} ${ARGV3}
-				COMMAND ${COPY_EXECUTABLE} ${HEADER_FILE} ${LEMON_${Name}_OUTPUT_HEADER}
-				COMMAND ${COPY_EXECUTABLE} ${SRC_FILE} ${ARGV2}
-				COMMAND ${COPY_EXECUTABLE} ${OUT_FILE} ${LEMON_${Name}_LOG}
+				COMMAND ${MOVE_EXECUTABLE} ${HEADER_FILE} ${LEMON_${Name}_OUTPUT_HEADER}
+				COMMAND ${MOVE_EXECUTABLE} ${SRC_FILE} ${ARGV2}
+				COMMAND ${MOVE_EXECUTABLE} ${OUT_FILE} ${LEMON_${Name}_LOG}
 				DEPENDS ${ARGV1}
 				COMMENT "[LEMON][${Name}] Building parser with ${LEMON_EXECUTABLE}"
 				WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-		ELSE(COPY_EXECUTABLE)
+		ELSE(MOVE_EXECUTABLE)
 			ADD_CUSTOM_COMMAND(OUTPUT ${LEMON_TARGET_outputs}
 				COMMAND ${LEMON_EXECUTABLE} ${ARGV1} ${ARGV3}
 				COMMAND ${CMAKE_COMMAND} -E rename ${HEADER_FILE} ${LEMON_${Name}_OUTPUT_HEADER}
@@ -131,7 +131,7 @@ MACRO(LEMON_TARGET Name LemonInput LemonOutput)
 				DEPENDS ${ARGV1}
 				COMMENT "[LEMON][${Name}] Building parser with ${LEMON_EXECUTABLE}"
 				WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-		ENDIF(COPY_EXECUTABLE)
+		ENDIF(MOVE_EXECUTABLE)
 
 		# define target variables
 		SET(LEMON_${Name}_DEFINED TRUE)
