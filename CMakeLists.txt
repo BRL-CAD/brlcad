@@ -1211,7 +1211,10 @@ BRLCAD_FUNCTION_EXISTS(writev HAVE_WRITEV)
 # to the windows specific config file, not CONFIG_H_FILE - hence,
 # just run the test and it will be handled by configure_file later.
 IF(WIN32)
-	CHECK_C_FILE_RUNS(${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/hypot_test.c	hypot)
+	SET(CMAKE_REQUIRED_LIBRARIES_BAK ${CMAKE_REQUIRED_LIBRARIES})
+	SET(CMAKE_REQUIRED_LIBRARIES msvcrt.lib)
+	CHECK_FUNCTION_EXISTS(hypot hypot)
+	SET(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_BAK})
 ENDIF(WIN32)
 
 
