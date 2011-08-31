@@ -2339,7 +2339,7 @@ package provide Archer 1.0
     set obj [lindex $args 0]
 
     # Check for the existence of obj
-    if {[catch {gedCmd attr show $obj} adata]} {
+    if {![gedCmd exists $obj]} {
 	# Create a new combination
 	eval createCombWrapper $_cmd $args
     } else {
@@ -2381,12 +2381,6 @@ package provide Archer 1.0
 	    }
 
 	    set old [lindex $expandedArgs 0]
-
-	    # Check for the existence of old
-	    #	    if {[catch {gedCmd attr show $old} adata]} {
-	    #		return [eval gedCmd $_cmd $expandedArgs]
-	    #	    }
-
 	    set clist [lindex $expandedArgs 1]
 	}
 	"in" -
@@ -9116,7 +9110,7 @@ proc title_node_handler {node} {
     }
 
     # Check for the existence of _obj
-    if {[catch {gedCmd attr show $_obj} adata]} {
+    if {![gedCmd exists $_obj]} {
 	return
     }
 
@@ -9253,7 +9247,7 @@ proc title_node_handler {node} {
 
     # Create the ledger entries
     foreach obj $_olist {
-	if {[catch {gedCmd attr show $obj} adata]} {
+	if {![gedCmd exists $obj]} {
 	    continue
 	}
 

@@ -2229,7 +2229,7 @@ namespace eval ArcherCore {
 	    set ctext [lindex $clist 0]
 
 	    # Checking for the existence of ctext
-	    if {[catch {$itk_component(ged) attr show $ctext} adata]} {
+	    if {![$itk_component(ged) exists $ctext]} {
 		# ctext doesn't exist
 		set cnode [lindex $clist 1]
 		purgeNodeData $cnode
