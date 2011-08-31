@@ -4144,6 +4144,7 @@ package provide cadwidgets::Ged 1.0
     $help add expand		{{expression} {globs expression against database objects}}
     $help add eye		{{mx my mz} {set eye point to given model coordinates}}
     $help add eye_pos		{{mx my mz} {set eye position to given model coordinates}}
+    $help add exists		{{object} {check for the existence of object}}
     $help add facetize		{{[-m] [-n] [-t] [-T] new_obj old_obj [old_obj2 old_obj3 ...]} {create a new bot object by facetizing the specified objects}}
     $help add form		{{objType} {returns form of objType}}
     $help add fracture		{{} {}}
