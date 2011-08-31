@@ -29,7 +29,8 @@ SET(mged_TCLSCRIPTS
 	edit_solid_int.tcl 
 	editmenu.tcl 
 	editobj.tcl 
-	eobjmenu.tcl 
+	eobjmenu.tcl
+   exists.tcl	
 	expand_comb.tcl 
 	extract.tcl 
 	facetize_all_regions.tcl 
