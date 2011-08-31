@@ -131,7 +131,7 @@
 #define fileno _fileno
 #define fstat _fstat
 #define getpid _getpid
-#cmakedefine hypot _hypot
+#define hypot _hypot
 #define isascii __isascii
 #define pclose _pclose
 #define popen _popen
