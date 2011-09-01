@@ -1,6 +1,7 @@
 set(LIBGED_SIM_SOURCES
     simphysics.cpp
-    simulate.c   
+    simulate.c 
+    simulate.h  
 )
 
 # Only enable simulate if the Bullet physics library includes and libs are
