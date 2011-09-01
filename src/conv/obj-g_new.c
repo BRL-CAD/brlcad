@@ -274,10 +274,6 @@ struct ga_t {
 };
 
 
-int test_face(struct ga_t *ga, struct gfi_t *gfi, size_t face_idx,
-	      fastf_t conv_factor, struct bn_tol *tol, int face_test_type,
-	      int force_retest);
-
 /*
  * C O L L E C T _ G L O B A L _ O B J _ F I L E _ A T T R I B U T E S
  *
@@ -582,39 +578,6 @@ retrieve_coord_index(struct ga_t *ga,   /* obj file global attributes */
 
 
 /*
- * R E T E S T _ G R O U P I N G _ F A C E S
- *
- * Within a given grouping of faces, test all the faces for degenerate
- * conditions such as duplicate vertex indexes or the distance between
- * any pair of vertices of a individual face are equal to or less than
- * the distance tolerance. Test results for each face of the grouping
- * is recorded to be used later. If a face was previously tested, this
- * function will retest the face.  Retesting is useful if a vertex
- * fuse was performed after the last testing of the faces.
- */
-size_t
-retest_grouping_faces(struct ga_t *ga,
-		      struct gfi_t *gfi,
-		      fastf_t conv_factor,  /* conversion factor from obj file units to mm */
-		      int face_test_type,
-		      struct bn_tol *tol)
-{
-    size_t face_idx = 0;
-    size_t failed_face_count = 0;
-
-    /* face_status is populated within test_face function */
-    for (face_idx = 0 ; face_idx < gfi->num_faces ; face_idx++) {
-	/* 1 passed into test_face indicates forced retest */
-	if (test_face(ga, gfi, face_idx, conv_factor, tol, face_test_type, 1)) {
-	    failed_face_count++;
-	}
-    }
-
-    return failed_face_count;
-}
-
-
-/*
  * F I N D _ L A S T _ U N I Q U E _ V E R T E X
  *
  * Returns the number of vertices in a face where the last vertex in
@@ -828,6 +791,39 @@ test_face(struct ga_t *ga,
     gfi->face_status[face_idx] = degenerate_face + 1;
 
     return degenerate_face;
+}
+
+
+/*
+ * R E T E S T _ G R O U P I N G _ F A C E S
+ *
+ * Within a given grouping of faces, test all the faces for degenerate
+ * conditions such as duplicate vertex indexes or the distance between
+ * any pair of vertices of a individual face are equal to or less than
+ * the distance tolerance. Test results for each face of the grouping
+ * is recorded to be used later. If a face was previously tested, this
+ * function will retest the face.  Retesting is useful if a vertex
+ * fuse was performed after the last testing of the faces.
+ */
+size_t
+retest_grouping_faces(struct ga_t *ga,
+		      struct gfi_t *gfi,
+		      fastf_t conv_factor,  /* conversion factor from obj file units to mm */
+		      int face_test_type,
+		      struct bn_tol *tol)
+{
+    size_t face_idx = 0;
+    size_t failed_face_count = 0;
+
+    /* face_status is populated within test_face function */
+    for (face_idx = 0 ; face_idx < gfi->num_faces ; face_idx++) {
+	/* 1 passed into test_face indicates forced retest */
+	if (test_face(ga, gfi, face_idx, conv_factor, tol, face_test_type, 1)) {
+	    failed_face_count++;
+	}
+    }
+
+    return failed_face_count;
 }
 
 
