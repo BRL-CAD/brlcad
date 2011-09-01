@@ -3644,7 +3644,7 @@ main(int argc, char **argv)
 			       timep->tm_hour, timep->tm_min, timep->tm_sec,
 			       gfi->grouping_index + 1, ga.numGroups,
 			       face_type_idx,
-			       gfi->raw_grouping_name->vls_str);
+			       bu_vls_addr(gfi->raw_grouping_name));
 
                         switch (mode_option) {
                             case 'b':
