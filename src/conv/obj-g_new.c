@@ -298,21 +298,17 @@ collect_global_obj_file_attributes(struct ga_t *ga)
     }
 
     /* release unused */
-    bu_log("ONE");
-    count = obj_num_materiallibsets(ga->contents);
-    obj_materiallibs(ga->contents, &lib_arr);
-    bu_free_array(count, (char **)lib_arr, "lib_arr");
+    count = obj_materiallibs(ga->contents, &lib_arr);
+    bu_free_array(count, (char **)lib_arr, "materiallibs");
 
-    bu_log("TWO");
-    count = obj_num_texmaplibsets(ga->contents);
-    obj_texmaplibs(ga->contents, &lib_arr);
-    bu_free_array(count, (char **)lib_arr, "lib_arr");
+    count = obj_texmaplibs(ga->contents, &lib_arr);
+    bu_free_array(count, (char **)lib_arr, "texmaplibs");
 
     count = obj_shadow_objs(ga->contents, &lib_arr);
-    bu_free_array(count, (char **)lib_arr, "lib_arr");
+    bu_free_array(count, (char **)lib_arr, "shadow_objs");
 
     count = obj_trace_objs(ga->contents, &lib_arr);
-    bu_free_array(count, (char **)lib_arr, "lib_arr");
+    bu_free_array(count, (char **)lib_arr, "trace_objs");
 
     ga->numGroups = obj_groups(ga->contents, &ga->str_arr_obj_groups);
     bu_log("\tTotal number of groups in OBJ file; numGroups = (%zu)\n", ga->numGroups);
@@ -3808,21 +3804,14 @@ main(int argc, char **argv)
 	    break;
     }
 
-    for (i = 0; i < ga.numGroups; i++) {
-	bu_free((void*)ga.str_arr_obj_groups[i], "str_arr_obj_groups[i]");
-    }
-
-    for (i = 0; i < ga.numObjects; i++) {
-	bu_free((void*)ga.str_arr_obj_objects[i], "str_arr_obj_objects[i]");
-    }
-
-    for (i = 0; i < ga.numMaterials; i++) {
-	bu_free((void*)ga.str_arr_obj_materials[i], "str_arr_obj_materials[i]");
-    }
-
-    for (i = 0; i < ga.numTexmaps; i++) {
-	bu_free((void*)ga.str_arr_obj_texmaps[i], "str_arr_obj_texmaps[i]");
-    }
+    bu_free_array(ga.numGroups, (char**)ga.str_arr_obj_groups,
+	"str_arr_obj_groups");
+    bu_free_array(ga.numObjects, (char**)ga.str_arr_obj_objects,
+	"str_arr_obj_objects");
+    bu_free_array(ga.numMaterials, (char**)ga.str_arr_obj_materials,
+	"str_arr_obj_materials");
+    bu_free_array(ga.numTexmaps, (char**)ga.str_arr_obj_texmaps,
+	"str_arr_obj_texmaps");
 
     /* running cleanup functions */
     if (debug) {
