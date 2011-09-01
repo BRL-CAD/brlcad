@@ -28,6 +28,7 @@
 
 #include "common.h"
 
+#include <string.h>
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -283,167 +284,261 @@ rt_in_rpp(struct xray *rp,
 
 
 /**
- * Supporting function for R T _ B O U N D _ I N T E R N A L
+ * R T _ T R A V E R S E _ T R E E
  *
- * Called when a combination is detected during db_functree() tree walk 
+ * Traverse the passed tree using rt_db_internals to show the way
+ * This function supports rt_bound_internal and is internal to librt
  *
  * Returns -
- *  0 success
- * -1 failure
- * 
+ * 0 success
+ * -1 failure (tree_min and tree_max may have been altered)
  */
-void
-comb_func(struct db_i *dbip,
-	  struct directory *dp,
-	  genptr_t ptr)
+int
+rt_traverse_tree(struct rt_i *rtip, const union tree *tp, fastf_t *tree_min, fastf_t *tree_max)
 {
-    struct rt_db_internal *intern = NULL;
+    vect_t r_min, r_max;		/* rpp for right side of tree */
 
-    bu_log("rt_bound_internal: comb_func called\n");
+    RT_CK_TREE(tp);
 
-    if (rt_db_get_internal(intern, dp, dbip, ptr, &rt_uniresource) < 0){
-        bu_log("rt_bound_internal: comb_func : rt_db_get_internal('%s') failed\n", dp->d_namep);       
-    }    
-  
+    switch (tp->tr_op) {
+
+	case OP_SOLID:
+	    {
+		const struct soltab *stp;
+
+		stp = tp->tr_a.tu_stp;
+		RT_CK_SOLTAB(stp);
+		if (stp->st_aradius <= 0) {
+		    bu_log("rt_traverse_tree: encountered dead solid '%s'\n",
+			   stp->st_dp->d_namep);
+		    return -1;	/* ERROR */
+		}
+
+		if (stp->st_aradius >= INFINITY) {
+		    VSETALL(tree_min, -INFINITY);
+		    VSETALL(tree_max,  INFINITY);
+		    return 0;
+		}
+		VMOVE(tree_min, stp->st_min);
+		VMOVE(tree_max, stp->st_max);
+		return 0;
+	    }
+
+	default:
+	    bu_log("rt_traverse_tree(x%x): unknown op=x%x\n", tp, (unsigned int)(tp->tr_op));
+	    return -1;
+
+	case OP_XOR:
+	case OP_UNION:
+	    /* BINARY type -- expand to contain both */
+	    if (rt_traverse_tree(rtip, tp->tr_b.tb_left, tree_min, tree_max) < 0 ||
+	    		rt_traverse_tree(rtip, tp->tr_b.tb_right, r_min, r_max) < 0)
+		return -1;
+	    VMIN(tree_min, r_min);
+	    VMAX(tree_max, r_max);
+	    break;
+	case OP_INTERSECT:
+	    /* BINARY type -- find common area only */
+	    if (rt_traverse_tree(rtip, tp->tr_b.tb_left, tree_min, tree_max) < 0 ||
+	    		rt_traverse_tree(rtip, tp->tr_b.tb_right, r_min, r_max) < 0)
+		return -1;
+	    /* min = largest min, max = smallest max */
+	    VMAX(tree_min, r_min);
+	    VMIN(tree_max, r_max);
+	    break;
+	case OP_SUBTRACT:
+	    /* BINARY type -- just use left tree */
+	    if (rt_traverse_tree(rtip, tp->tr_b.tb_left, tree_min, tree_max) < 0 ||
+	    		rt_traverse_tree(rtip, tp->tr_b.tb_right, r_min, r_max) < 0)
+	    	return -1;
+	    /* Discard right rpp */
+	    break;
+
+	/* This case is especially for handling rt_db_internal formats which generally contain a "unloaded"
+	 * tree with tp->tr_op = OP_DB_LEAF
+	 */
+	case OP_DB_LEAF:
+		{
+			if(rtip == NULL){
+				bu_log("rt_traverse_tree: A valid rtip was not passed for calculating bounds of '%s'\n",
+						tp->tr_l.tl_name);
+				return -1;
+			}
+
+			/* Good to go */
+			const struct soltab *stp;
+
+			/* Attempt to get a solid pointer, will fail for combs */
+			stp = rt_find_solid(rtip, tp->tr_l.tl_name);
+			if(stp == NULL){
+
+				/* It was a comb! get an internal format and repeat the whole thing that got us here
+				 * in the 1st place
+				 */
+				struct rt_db_internal intern;
+				struct directory *dp;
+				struct rt_comb_internal *combp;
+
+				/* Get the directory pointer */
+				if ((dp=db_lookup(rtip->rti_dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
+					bu_log("rt_traverse_tree: db_lookup(%s) failed", tp->tr_l.tl_name);
+					return -1;
+				}
+
+				/* Why does recursion work with the internal format ?
+				 * The internal format does have the boolean op for a comb in the tr_a.tu_op field
+				 * in the root node, even though it has no prims at the leaves.
+				 * So recursive calls to load the prim further down the tree, will return the correct bb
+				 * as we are going through the proper switch case in each step down the tree
+				 */
+				if ( !rt_db_lookup_internal(rtip->rti_dbip, tp->tr_l.tl_name, &dp, &intern, LOOKUP_NOISY,
+						&rt_uniresource)){
+					bu_log("rt_traverse_tree: rt_db_lookup_internal(%s) failed to get the internal form",
+							tp->tr_l.tl_name);
+					return -1;
+				}
+
+				/* The passed rt_db_internal should be a comb, prepare a rt_comb_internal */
+				if(intern.idb_minor_type == ID_COMBINATION){
+					combp = (struct rt_comb_internal *)intern.idb_ptr;
+				}
+				else{ /* if its not a comb, then something else is cooking */
+					bu_log("rt_traverse_tree: WARNING : rt_db_lookup_internal(%s) got the internal form of a \
+							primitive when it should not, the bounds may not be correct", tp->tr_l.tl_name);
+					return -1;
+				}
+
+				RT_CK_COMB(combp);
+				/* further down the rabbit hole */
+				if (rt_traverse_tree(rtip, combp->tree, tree_min, tree_max)) {
+				   bu_log("rt_traverse_tree: rt_bound_tree() failed\n");
+				   return -1;
+				}
+			}
+			else{
+				/* Got a solid pointer, get bounds and return */
+				RT_CK_SOLTAB(stp);
+				if (stp->st_aradius <= 0) {
+					bu_log("rt_traverse_tree: encountered dead solid '%s'\n",
+					   stp->st_dp->d_namep);
+					return -1;	/* ERROR */
+				}
+
+				if (stp->st_aradius >= INFINITY) {
+					VSETALL(tree_min, -INFINITY);
+					VSETALL(tree_max,  INFINITY);
+					return 0;
+				}
+
+				VMOVE(tree_min, stp->st_min);
+				VMOVE(tree_max, stp->st_max);
+			}
+
+			return 0;
+		}
+
+	case OP_NOP:
+	    /* Implies that this tree has nothing in it */
+	    break;
+    }
+    return 0;
 }
 
 
-/**
- * Supporting function for R T _ B O U N D _ I N T E R N A L
- *
- * Called when a leaf is detected during db_functree() tree walk 
- *
- * Returns -
- *  0 success
- * -1 failure
- *
- */
-void
-leaf_func(struct db_i *dbip,
-	  struct directory *dp,
-	  genptr_t ptr)
-{
-    struct rt_db_internal *intern = NULL;
 
-    bu_log("rt_bound_internal: leaf_func called\n");
-
-    if (rt_db_get_internal(intern, dp, dbip, ptr, &rt_uniresource) < 0){
-        bu_log("rt_bound_internal: leaf_func : rt_db_get_internal('%s') failed\n", dp->d_namep);        
-    }   
-}
- 
 /**
  * R T _ B O U N D _ I N T E R N A L
  *
  * Calculate the bounding RPP of the internal format passed in 'ip'. 
  * The bounding RPP is returned in rpp_min and rpp_max in mm
+ * FIXME: This function needs to be modified to eliminate the rt_gettree() call and the related
+ * parameters. In that case calling code needs to call another function before calling this function
+ * That function must create a union tree with tr_a.tu_op=OP_SOLID. It can look as follows :
+ * union tree * rt_comb_tree(const struct db_i *dbip, const struct rt_db_internal *ip). The tree is set
+ * in the struct rt_db_internal * ip argument.
+ * Once a suitable tree is set in the ip, then this function can be called with the struct rt_db_internal *
+ * to return the BB properly without getting stuck during tree traversal in rt_bound_tree()
  *
  * Returns -
  *  0 success
- * -1 failure
- * -2 a region/comb was passed so model bounds are 0(will be fixed soon)
+ * -1 failure, the model bounds could not be got
+ *
  */
 int
-rt_bound_internal(struct rt_db_internal *ip, point_t rpp_min, point_t rpp_max)
+rt_bound_internal(struct db_i *dbip, struct directory *dp,
+				  point_t rpp_min, point_t rpp_max)
 {
-    struct db_i *dbip; 
-    struct directory *dp = (struct directory *)NULL; 
     struct rt_i *rtip;
-    struct rt_comb_internal comb;
-    struct rt_comb_internal *combp = &comb;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *combp;
     vect_t tree_min, tree_max;
-   
-    RT_CK_DB_INTERNAL(ip);
-   
-    /* Create an empty db_i */
-    dbip = db_open_inmem();   
-   
-    RT_CK_DBI(dbip);
-    RT_CK_WDB(dbip->dbi_wdbp);
-   
-    /* Insert the passed struct rt_db_internal into the db_i, use a dummy name */
-    if (wdb_put_internal(dbip->dbi_wdbp, "dummy", ip, 1.0) < 0) {
-        bu_log("rt_bound_internal: wdb_put_internal() failed\n");
-        db_close(dbip);
-        return -1;
-    }
-   
-    /* The rt_db_internal pointed to by ip is(annoyingly!) freed by wdb_put_internal(), so look it up */
-    dp = db_lookup(dbip, "dummy", LOOKUP_NOISY);
-    if (!dp) {
-        bu_log("rt_bound_internal: db_lookup('dummy') failed\n");
-        db_close(dbip);
-        return -1;
-    }
-   
-    /* Now get back the rt_db_internal representation of the user passed object */
-    if (rt_db_get_internal(ip, dp, dbip, bn_mat_identity, &rt_uniresource) < 0) {
-        bu_log("rt_bound_internal:  rt_db_get_internal('dummy') failed\n");
-        db_close(dbip);
-        return -1;
-    }
-   
-    /* Get a new rtip for the dbip */
-    rtip = rt_new_rti(dbip);
-   
-    /* Initialize RPP bounds */
-    VSETALL(rpp_min, MAX_FASTF);
-    VREVERSE(rpp_max, rpp_min);
-   
-    /* Call rt_gettree() to get the bounds, this is sufficient for primitives : may not be required soon */
-    if (rt_gettree(rtip, "dummy") < 0){
-        bu_log("rt_bound_internal: rt_gettree('dummy') failed\n");
-        goto cleanup;
-        return -1;
-    }
-    
-    /* For combinations, walk the tree once adding leaves and combinations to the dbip as detected */
-    db_functree(dbip, dp, comb_func, leaf_func, &rt_uniresource, NULL);
+    union tree *tp;
 
-         
-    /* If passed rt_db_internal is a combination(a group or a region) then further calls needed */
-    if(ip->idb_minor_type == ID_COMBINATION){
-        combp = (struct rt_comb_internal *)ip->idb_ptr;       
-    }
-    else{
-        VMOVE(rpp_min, rtip->mdl_min); /* temporary, till db_functree() works */
-        VMOVE(rpp_max, rtip->mdl_max);        
-        goto cleanup;
-        return 0;        
-        
-        /* A primitive was passed, construct a struct rt_comb_internal with a single leaf node */
-        /*RT_COMB_INTERNAL_INIT(combp);   
-        union tree *tp;
-        RT_GET_TREE(tp, &rt_uniresource);
-        tp->tr_op = OP_DB_LEAF;
-        tp->tr_l.tl_name = bu_strdup(dp->d_namep);
-        combp->tree = tp;*/              
-    }
-   
-    RT_CK_COMB(combp);
-    if (rt_bound_tree(combp->tree, tree_min, tree_max)) {
-        bu_log("rt_bound_internal: rt_bound_tree('region') failed\n");
-        goto cleanup;
-        return -1;
-    }
-          
+    /* Initialize RPP bounds */
+	VSETALL(rpp_min, MAX_FASTF);
+	VREVERSE(rpp_max, rpp_min);
+
+	if ((rtip=rt_new_rti(dbip)) == RTI_NULL) {
+		bu_log("rt_bound_internal: rt_new_rti() failure while getting bb for %s\n", dp->d_namep);
+		return -1;
+	}
+
+	/* Call rt_gettree() to get the bounds for primitives, else soltab ptr is null */
+	if (rt_gettree(rtip, dp->d_namep) < 0){
+		bu_log("rt_bound_internal: rt_gettree('%s') failed\n", dp->d_namep);
+		rt_free_rti(rtip);
+		return -1;
+	}
+
+
+	if ( !rt_db_lookup_internal(dbip, dp->d_namep, &dp, &intern, LOOKUP_NOISY, &rt_uniresource)){
+		bu_exit(1,"rt_bound_internal: rt_db_lookup_internal(%s) failed to get the internal form", dp->d_namep);
+		rt_free_rti(rtip);
+		return -1;
+	}
+
+	/* If passed rt_db_internal is a combination(a group or a region) then further calls needed */
+	if(intern.idb_minor_type == ID_COMBINATION){
+		combp = (struct rt_comb_internal *)intern.idb_ptr;
+	}
+	else{
+		/* A primitive was passed, construct a struct rt_comb_internal with a single leaf node */
+		BU_GETSTRUCT(combp, rt_comb_internal);
+		RT_COMB_INTERNAL_INIT(combp);
+		combp->region_flag = 0;
+
+		RT_GET_TREE(tp, &rt_uniresource);
+		RT_TREE_INIT(tp);
+		tp->tr_l.tl_op = OP_SOLID;
+		tp->tr_l.tl_name = "dummy";
+		tp->tr_l.tl_mat = (matp_t)NULL;
+		tp->tr_a.tu_stp = rt_find_solid(rtip, dp->d_namep);
+		combp->tree = tp;
+	}
+
+	RT_CK_COMB(combp);
+	if (rt_traverse_tree(rtip, combp->tree, tree_min, tree_max)) {
+	   bu_log("rt_bound_internal: rt_bound_tree() failed\n");
+	   rt_free_rti(rtip);
+	   return -1;
+	}
+
+
     VMOVE(rpp_min, tree_min);
     VMOVE(rpp_max, tree_max);
-   
+
     /* Check if the model bounds look correct e.g. if they are all 0, then its not correct */
-    if(  (abs(rpp_min[0]) == 0  || rpp_min[0] <= -INFINITY || rpp_min[0] >= INFINITY) &&
-         (abs(rpp_min[1]) == 0  || rpp_min[1] <= -INFINITY || rpp_min[1] >= INFINITY) &&
-         (abs(rpp_min[2]) == 0  || rpp_min[2] <= -INFINITY || rpp_min[2] >= INFINITY) &&
-         (abs(rpp_max[0]) == 0  || rpp_max[0] <= -INFINITY || rpp_max[0] >= INFINITY) &&
-         (abs(rpp_max[1]) == 0  || rpp_max[1] <= -INFINITY || rpp_max[1] >= INFINITY) &&
-         (abs(rpp_max[2]) == 0  || rpp_max[2] <= -INFINITY || rpp_max[2] >= INFINITY)){       
+    if(  (NEAR_ZERO(rpp_min[0], SMALL_FASTF) || rpp_min[0] <= -INFINITY || rpp_min[0] >= INFINITY) &&
+         (NEAR_ZERO(rpp_min[1], SMALL_FASTF) || rpp_min[1] <= -INFINITY || rpp_min[1] >= INFINITY) &&
+         (NEAR_ZERO(rpp_min[2], SMALL_FASTF) || rpp_min[2] <= -INFINITY || rpp_min[2] >= INFINITY) &&
+         (NEAR_ZERO(rpp_max[0], SMALL_FASTF) || rpp_max[0] <= -INFINITY || rpp_max[0] >= INFINITY) &&
+         (NEAR_ZERO(rpp_max[1], SMALL_FASTF) || rpp_max[1] <= -INFINITY || rpp_max[1] >= INFINITY) &&
+         (NEAR_ZERO(rpp_max[2], SMALL_FASTF) || rpp_max[2] <= -INFINITY || rpp_max[2] >= INFINITY)
+      ){
        bu_log("rt_bound_internal: Warning : The returned bounds of the model may not be correct\n");         
-    }     
-   
-    cleanup:
+    }
+
     rt_free_rti(rtip);
-    db_close(dbip);   
-   
     return 0;
 }
 
