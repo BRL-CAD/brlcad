@@ -4,7 +4,6 @@ SET(brlcadinclude_required
 	${CMAKE_CURRENT_BINARY_DIR}/brlcad_config.h
 	bu.h 
 	common.h 
-	config_win_cmake.h 
 	ged.h 
 	magic.h 
 	pstdint.h 
@@ -14,6 +13,9 @@ SET(brlcadinclude_required
 	rtserver.h 
 	tclcad.h
 )
+IF(WIN32)
+	SET(brlcadinclude_required ${brlcadinclude_required} ${CMAKE_CURRENT_BINARY_DIR}/config_win_cmake.h)
+ENDIF(WIN32)
 
 SET(brlcadinclude_wanted
 	analyze.h 
@@ -86,7 +88,7 @@ SET(brlcadnoinst_HEADERS
 SET(brlcadinclude_misc
 	brlcad_config.h.in
 	conf
-	config_win.h
+	config_win_cmake.h.in
 	sed4
 	)
 
