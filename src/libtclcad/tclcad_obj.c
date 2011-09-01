@@ -1983,7 +1983,7 @@ to_constrain_rmode(struct ged *gedp,
 
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = GED_CONSTRAINED_ROTATE_MODE;
+    gdvp->gdv_view->gv_mode = TCLCAD_CONSTRAINED_ROTATE_MODE;
 
     bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_constrain_rot %V %s %%x %%y}; break",
@@ -2048,7 +2048,7 @@ to_constrain_tmode(struct ged *gedp,
 
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = GED_CONSTRAINED_TRANSLATE_MODE;
+    gdvp->gdv_view->gv_mode = TCLCAD_CONSTRAINED_TRANSLATE_MODE;
 
     bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_constrain_trans %V %s %%x %%y}; break",
@@ -4159,8 +4159,8 @@ to_idle_mode(struct ged *gedp,
     bu_vls_free(&bindings);
 
     if (gdvp->gdv_view->gv_grid.ggs_snap &&
-	(gdvp->gdv_view->gv_mode == GED_TRANSLATE_MODE ||
-	 gdvp->gdv_view->gv_mode == GED_CONSTRAINED_TRANSLATE_MODE)) {
+	(gdvp->gdv_view->gv_mode == TCLCAD_TRANSLATE_MODE ||
+	 gdvp->gdv_view->gv_mode == TCLCAD_CONSTRAINED_TRANSLATE_MODE)) {
 	char *av[3];
 
 	gedp->ged_gvp = gdvp->gdv_view;
@@ -4176,7 +4176,7 @@ to_idle_mode(struct ged *gedp,
 	to_refresh_view(gdvp);
     }
 
-    gdvp->gdv_view->gv_mode = GED_IDLE_MODE;
+    gdvp->gdv_view->gv_mode = TCLCAD_IDLE_MODE;
 
     return GED_OK;
 }
@@ -5959,7 +5959,7 @@ to_move_arb_edge_mode(struct ged *gedp,
 
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = GED_MOVE_ARB_EDGE_MODE;
+    gdvp->gdv_view->gv_mode = TCLCAD_MOVE_ARB_EDGE_MODE;
 
     bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_move_arb_edge %V %s %s %%x %%y}",
@@ -6018,7 +6018,7 @@ to_move_arb_face_mode(struct ged *gedp,
 
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = GED_MOVE_ARB_FACE_MODE;
+    gdvp->gdv_view->gv_mode = TCLCAD_MOVE_ARB_FACE_MODE;
 
     bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_move_arb_face %V %s %s %%x %%y}",
@@ -6210,7 +6210,7 @@ to_orotate_mode(struct ged *gedp,
 
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = GED_OROTATE_MODE;
+    gdvp->gdv_view->gv_mode = TCLCAD_OROTATE_MODE;
 
     bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_orotate %V %s %%x %%y}",
@@ -6268,7 +6268,7 @@ to_oscale_mode(struct ged *gedp,
 
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = GED_OSCALE_MODE;
+    gdvp->gdv_view->gv_mode = TCLCAD_OSCALE_MODE;
 
     bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_oscale %V %s %%x %%y}",
@@ -6326,7 +6326,7 @@ to_otranslate_mode(struct ged *gedp,
 
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = GED_OTRANSLATE_MODE;
+    gdvp->gdv_view->gv_mode = TCLCAD_OTRANSLATE_MODE;
 
     bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_otranslate %V %s %%x %%y}",
@@ -6666,7 +6666,7 @@ to_rect_mode(struct ged *gedp,
 
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = gdvp->gdv_dmp->dm_height - y;
-    gdvp->gdv_view->gv_mode = GED_RECTANGLE_MODE;
+    gdvp->gdv_view->gv_mode = TCLCAD_RECTANGLE_MODE;
 
     ac = 4;
     av[0] = "rect";
@@ -6827,7 +6827,7 @@ to_rotate_arb_face_mode(struct ged *gedp,
 
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = GED_ROTATE_ARB_FACE_MODE;
+    gdvp->gdv_view->gv_mode = TCLCAD_ROTATE_ARB_FACE_MODE;
 
     bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_rotate_arb_face %V %s %s %s %%x %%y}",
@@ -6887,7 +6887,7 @@ to_rotate_mode(struct ged *gedp,
 
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = GED_ROTATE_MODE;
+    gdvp->gdv_view->gv_mode = TCLCAD_ROTATE_MODE;
 
     bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_rot %V %%x %%y}",
@@ -7051,7 +7051,7 @@ to_protate_mode(struct ged *gedp,
 
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = GED_PROTATE_MODE;
+    gdvp->gdv_view->gv_mode = TCLCAD_PROTATE_MODE;
 
     bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_protate %V %s %s %%x %%y}",
@@ -7110,7 +7110,7 @@ to_pscale_mode(struct ged *gedp,
 
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = GED_PSCALE_MODE;
+    gdvp->gdv_view->gv_mode = TCLCAD_PSCALE_MODE;
 
     bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_pscale %V %s %s %%x %%y}",
@@ -7169,7 +7169,7 @@ to_ptranslate_mode(struct ged *gedp,
 
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = GED_PTRANSLATE_MODE;
+    gdvp->gdv_view->gv_mode = TCLCAD_PTRANSLATE_MODE;
 
     bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_ptranslate %V %s %s %%x %%y}",
@@ -7228,7 +7228,7 @@ to_scale_mode(struct ged *gedp,
 
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = GED_SCALE_MODE;
+    gdvp->gdv_view->gv_mode = TCLCAD_SCALE_MODE;
 
     bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_scale %V %%x %%y}",
@@ -7457,8 +7457,8 @@ to_set_fb_mode(struct ged *gedp,
 
     if (mode < 0)
 	mode = 0;
-    else if (GED_OBJ_FB_MODE_OVERLAY < mode)
-	mode = GED_OBJ_FB_MODE_OVERLAY;
+    else if (TCLCAD_OBJ_FB_MODE_OVERLAY < mode)
+	mode = TCLCAD_OBJ_FB_MODE_OVERLAY;
 
     gdvp->gdv_fbs.fbs_mode = mode;
     to_refresh_view(gdvp);
@@ -7563,7 +7563,7 @@ to_translate_mode(struct ged *gedp,
 
     gdvp->gdv_view->gv_prevMouseX = x;
     gdvp->gdv_view->gv_prevMouseY = y;
-    gdvp->gdv_view->gv_mode = GED_TRANSLATE_MODE;
+    gdvp->gdv_view->gv_mode = TCLCAD_TRANSLATE_MODE;
 
     bu_vls_init(&bindings);
     bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_trans %V %%x %%y}",
@@ -9165,7 +9165,7 @@ go_refresh(struct ged_obj *gop, struct ged_dm_view *gdvp)
     int restore_zbuffer = 0;
 
     /* Turn off the zbuffer if the framebuffer is active AND the zbuffer is on. */
-    if (gdvp->gdv_fbs.fbs_mode != GED_OBJ_FB_MODE_OFF &&
+    if (gdvp->gdv_fbs.fbs_mode != TCLCAD_OBJ_FB_MODE_OFF &&
 	gdvp->gdv_dmp->dm_zbuffer) {
 	DM_SET_ZBUFFER(gdvp->gdv_dmp, 0);
 	restore_zbuffer = 1;
@@ -9184,7 +9184,7 @@ go_refresh(struct ged_obj *gop, struct ged_dm_view *gdvp)
 void
 go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp)
 {
-    if (gdvp->gdv_fbs.fbs_mode == GED_OBJ_FB_MODE_OVERLAY) {
+    if (gdvp->gdv_fbs.fbs_mode == TCLCAD_OBJ_FB_MODE_OVERLAY) {
 	if (gdvp->gdv_view->gv_rect.grs_draw) {
 	    go_draw(gdvp);
 
@@ -9201,7 +9201,7 @@ go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp)
 		       gdvp->gdv_dmp->dm_width, gdvp->gdv_dmp->dm_height);
 
 	return;
-    } else if (gdvp->gdv_fbs.fbs_mode == GED_OBJ_FB_MODE_INTERLAY) {
+    } else if (gdvp->gdv_fbs.fbs_mode == TCLCAD_OBJ_FB_MODE_INTERLAY) {
 	go_draw(gdvp);
 
 	if (gdvp->gdv_view->gv_rect.grs_draw) {
@@ -9213,7 +9213,7 @@ go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp)
 	    fb_refresh(gdvp->gdv_fbs.fbs_fbp, 0, 0,
 		       gdvp->gdv_dmp->dm_width, gdvp->gdv_dmp->dm_height);
     } else {
-	if (gdvp->gdv_fbs.fbs_mode == GED_OBJ_FB_MODE_UNDERLAY) {
+	if (gdvp->gdv_fbs.fbs_mode == TCLCAD_OBJ_FB_MODE_UNDERLAY) {
 	    if (gdvp->gdv_view->gv_rect.grs_draw) {
 		fb_refresh(gdvp->gdv_fbs.fbs_fbp,
 			   gdvp->gdv_view->gv_rect.grs_pos[X], gdvp->gdv_view->gv_rect.grs_pos[Y],
