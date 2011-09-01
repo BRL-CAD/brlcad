@@ -62,10 +62,10 @@ struct soup_s {
 
 /* assume 4096, seems common enough. a portable way to get to PAGE_SIZE might be
  * better. */
-static const int faces_per_page = 4096 / sizeof(struct face_s);
+HIDDEN const int faces_per_page = 4096 / sizeof(struct face_s);
 
 
-static int
+HIDDEN int
 soup_rm_face(struct soup_s *s, unsigned long int i)
 {
     if(i>=s->nfaces) {
@@ -76,7 +76,7 @@ soup_rm_face(struct soup_s *s, unsigned long int i)
     return s->nfaces--;
 }
 
-static int
+HIDDEN int
 soup_add_face_precomputed(struct soup_s *s, point_t a, point_t b , point_t c, plane_t d, uint32_t foo)
 {
     struct face_s *f;
@@ -107,7 +107,7 @@ soup_add_face_precomputed(struct soup_s *s, point_t a, point_t b , point_t c, pl
     return 0;
 }
 
-static int
+HIDDEN int
 soup_add_face(struct soup_s *s, point_t a, point_t b, point_t c, const struct bn_tol *tol) {
     plane_t p;
 
@@ -121,7 +121,7 @@ soup_add_face(struct soup_s *s, point_t a, point_t b, point_t c, const struct bn
 /* stuff from the moller97 paper */
 
 
-static inline void
+HIDDEN inline void
 fisect2(point_t VTX0,point_t VTX1,point_t VTX2, fastf_t VV0,fastf_t VV1,fastf_t VV2, fastf_t D0,fastf_t D1,fastf_t D2,fastf_t *isect0,fastf_t *isect1, point_t isectpoint0,point_t isectpoint1)
 {
     fastf_t tmp=D0/(D0-D1);
@@ -138,7 +138,7 @@ fisect2(point_t VTX0,point_t VTX1,point_t VTX2, fastf_t VV0,fastf_t VV1,fastf_t 
 }
 
 
-static int
+HIDDEN int
 compute_intervals_isectline(struct face_s *f,
 				       fastf_t VV0,fastf_t VV1,fastf_t VV2,fastf_t D0,fastf_t D1,fastf_t D2,
 				       fastf_t D0D1,fastf_t D0D2,fastf_t *isect0,fastf_t *isect1,
@@ -166,54 +166,66 @@ compute_intervals_isectline(struct face_s *f,
 }
 
 
-#define EDGE_EDGE_TEST(V0,U0,U1)			\
-    Bx=U0[i0]-U1[i0]; 					\
-    By=U0[i1]-U1[i1]; 					\
-    Cx=V0[i0]-U0[i0]; 					\
-    Cy=V0[i1]-U0[i1]; 					\
-    f=Ay*Bx-Ax*By; 					\
-    d=By*Cx-Bx*Cy; 					\
-    if((f>0 && d>=0 && d<=f) || (f<0 && d<=0 && d>=f)) {\
-	e=Ax*Cy-Ay*Cx; 					\
-	if(f>0) { if(e>=0 && e<=f) return 1; }		\
-	else if(e<=0 && e>=f) return 1; }		\
+HIDDEN int
+edge_edge_test(point_t V0,point_t U0,point_t U1, fastf_t Ax, fastf_t Ay, int i0, int i1)
+{
+    fastf_t Bx, By, Cx, Cy, e, d, f;
 
-#define EDGE_AGAINST_TRI_EDGES(V0,V1,U0,U1,U2) \
-{                                              \
-    fastf_t Ax,Ay,Bx,By,Cx,Cy,e,d,f;               \
-    Ax=V1[i0]-V0[i0];                            \
-    Ay=V1[i1]-V0[i1];                            \
-    /* test edge U0,U1 against V0,V1 */          \
-    EDGE_EDGE_TEST(V0,U0,U1);                    \
-    /* test edge U1,U2 against V0,V1 */          \
-    EDGE_EDGE_TEST(V0,U1,U2);                    \
-    /* test edge U2,U1 against V0,V1 */          \
-    EDGE_EDGE_TEST(V0,U2,U0);                    \
+    Bx = U0[i0] - U1[i0];
+    By = U0[i1] - U1[i1];
+    Cx = V0[i0] - U0[i0];
+    Cy = V0[i1] - U0[i1];
+    f = Ay * Bx - Ax * By;
+    d = By * Cx - Bx * Cy;
+    if ((f > 0 && d >= 0 && d <= f) || (f < 0 && d <= 0 && d >= f)) {
+	e = Ax * Cy - Ay * Cx;
+	if (f > 0) {
+	    if (e >= 0 && e <= f)
+		return 1;
+	} else if (e <= 0 && e >= f)
+	    return 1;
+    }
+    return 0;
 }
 
-#define POINT_IN_TRI(V0,U0,U1,U2)           \
-{                                           \
-    fastf_t a,b,c,d0,d1,d2;                     \
-    /* is T1 completly inside T2? */          \
-    /* check if V0 is inside tri(U0,U1,U2) */ \
-    a=U1[i1]-U0[i1];                          \
-    b=-(U1[i0]-U0[i0]);                       \
-    c=-a*U0[i0]-b*U0[i1];                     \
-    d0=a*V0[i0]+b*V0[i1]+c;                   \
-    \
-    a=U2[i1]-U1[i1];                          \
-    b=-(U2[i0]-U1[i0]);                       \
-    c=-a*U1[i0]-b*U1[i1];                     \
-    d1=a*V0[i0]+b*V0[i1]+c;                   \
-    \
-    a=U0[i1]-U2[i1];                          \
-    b=-(U0[i0]-U2[i0]);                       \
-    c=-a*U2[i0]-b*U2[i1];                     \
-    d2=a*V0[i0]+b*V0[i1]+c;                   \
-    if(d0*d1>0.0)                             \
-    {                                         \
-	if(d0*d2>0.0) return 1;                 \
-    }                                         \
+HIDDEN int
+edge_against_tri_edges(point_t V0,point_t V1,point_t U0,point_t U1,point_t U2, int i0, int i1)
+{
+    fastf_t Ax,Ay;
+    Ax=V1[i0]-V0[i0];
+    Ay=V1[i1]-V0[i1];
+    /* test edge U0,U1 against V0,V1 */
+    if(edge_edge_test(V0,U0,U1,Ax,Ay,i0,i1)) return 1;
+    /* test edge U1,U2 against V0,V1 */
+    if(edge_edge_test(V0,U1,U2,Ax,Ay,i0,i1)) return 1;
+    /* test edge U2,U1 against V0,V1 */
+    if(edge_edge_test(V0,U2,U0,Ax,Ay,i0,i1)) return 1;
+    return 0;
+}
+
+HIDDEN int
+point_in_tri(point_t V0,point_t U0,point_t U1,point_t U2, int i0, int i1)
+{
+    fastf_t a,b,c,d0,d1,d2;
+    /* is T1 completly inside T2? */
+    /* check if V0 is inside tri(U0,U1,U2) */
+    a=U1[i1]-U0[i1];
+    b=-(U1[i0]-U0[i0]);
+    c=-a*U0[i0]-b*U0[i1];
+    d0=a*V0[i0]+b*V0[i1]+c;
+
+    a=U2[i1]-U1[i1];
+    b=-(U2[i0]-U1[i0]);
+    c=-a*U1[i0]-b*U1[i1];
+    d1=a*V0[i0]+b*V0[i1]+c;
+
+    a=U0[i1]-U2[i1];
+    b=-(U0[i0]-U2[i0]);
+    c=-a*U2[i0]-b*U2[i1];
+    d2=a*V0[i0]+b*V0[i1]+c;
+    if(d0*d1>0.0)
+	if(d0*d2>0.0) return 1;
+    return 0;
 }
 
 int
@@ -245,18 +257,18 @@ coplanar_tri_tri(vect_t N,vect_t V0,vect_t V1,vect_t V2, vect_t U0,vect_t U1,vec
     }
 
     /* test all edges of triangle 1 against the edges of triangle 2 */
-    EDGE_AGAINST_TRI_EDGES(V0,V1,U0,U1,U2);
-    EDGE_AGAINST_TRI_EDGES(V1,V2,U0,U1,U2);
-    EDGE_AGAINST_TRI_EDGES(V2,V0,U0,U1,U2);
+    if(edge_against_tri_edges(V0,V1,U0,U1,U2,i0,i1))return 1;
+    if(edge_against_tri_edges(V1,V2,U0,U1,U2,i0,i1))return 1;
+    if(edge_against_tri_edges(V2,V0,U0,U1,U2,i0,i1))return 1;
 
     /* finally, test if tri1 is totally contained in tri2 or vice versa */
-    POINT_IN_TRI(V0,U0,U1,U2);
-    POINT_IN_TRI(U0,V0,V1,V2);
+    if(point_in_tri(V0,U0,U1,U2,i0,i1))return 1;
+    if(point_in_tri(U0,V0,V1,V2,i0,i1))return 1;
 
     return 0;
 }
 
-static int
+HIDDEN int
 tri_tri_intersect_with_isectline(struct soup_s *UNUSED(left), struct soup_s *UNUSED(right), struct face_s *lf, struct face_s *rf, int *coplanar, point_t *isectpt, const struct bn_tol *tol)
 {
     vect_t D, isectpointA1={0},isectpointA2={0},isectpointB1={0},isectpointB2={0};
@@ -321,6 +333,20 @@ tri_tri_intersect_with_isectline(struct soup_s *UNUSED(left), struct soup_s *UNU
     /* compute interval for triangle 2 */
     compute_intervals_isectline(rf,up0,up1,up2,du0,du1,du2, du0du1,du0du2,&isect2[0],&isect2[1],isectpointB1,isectpointB2, tol);
 
+#if 0
+    bu_log("Isect: %.0f/%.0f/%.0f|%.0f/%.0f/%.0f|%.0f/%.0f/%.0f %.0f/%.0f/%.0f|%.0f/%.0f/%.0f|%.0f/%.0f/%.0f\tA1:%.0f/%.0f/%.0f A2:%.0f/%.0f/%.0f B1:%.0f/%.0f/%.0f B2:%.0f/%.0f/%.0f ",
+		    V3ARGS(lf->vert[0]),
+		    V3ARGS(lf->vert[1]),
+		    V3ARGS(lf->vert[2]),
+		    V3ARGS(rf->vert[0]),
+		    V3ARGS(rf->vert[1]),
+		    V3ARGS(rf->vert[2]),
+		    V3ARGS(isectpointA1),
+		    V3ARGS(isectpointA2),
+		    V3ARGS(isectpointB1),
+		    V3ARGS(isectpointB2));
+#endif
+
 /* sort so that a<=b */
     smallest1 = smallest2 = 0;
 #define SORT2(a,b,smallest) if(a>b) { fastf_t _c; _c=a; a=b; b=_c; smallest=1; }
@@ -328,11 +354,13 @@ tri_tri_intersect_with_isectline(struct soup_s *UNUSED(left), struct soup_s *UNU
     SORT2(isect2[0],isect2[1],smallest2);
 #undef SORT2
 
-    if(isect1[1]<isect2[0] || isect2[1]<isect1[0])
+    if(isect1[1]<isect2[0] || isect2[1]<isect1[0]){
+	bu_log("noverlap\n");
 	return 0;
+    }
 
-#if 1
-    printf("%d:%d + % 4.2f % 4.2f % 4.2f % 4.2f\t+ % 4.2f/% 4.2f/% 4.2f % 4.2f/% 4.2f/% 4.2f | % 4.2f/% 4.2f/% 4.2f % 4.2f/% 4.2f/% 4.2f\n", 
+#if 0
+    printf("%d:%d + % 4.2f % 4.2f % 4.2f % 4.2f\t+ % 4.2f/% 4.2f/% 4.2f % 4.2f/% 4.2f/% 4.2f | % 4.2f/% 4.2f/% 4.2f % 4.2f/% 4.2f/% 4.2f\n",
 		    smallest1, smallest2, isect1[0], isect1[1], isect2[0], isect2[1],
 		    V3ARGS(isectpointA1), V3ARGS(isectpointA2), V3ARGS(isectpointB1), V3ARGS(isectpointB2));
 #endif
@@ -370,6 +398,7 @@ tri_tri_intersect_with_isectline(struct soup_s *UNUSED(left), struct soup_s *UNU
 	    VMOVE(isectpt[1], isectpointB1)
 	}
     }
+    bu_log("out0:%.0f/%.0f/%.0f out1:%.0f/%.0f/%.0f\n", V3ARGS(isectpt[0]), V3ARGS(isectpt[1]));
     return 1;
 }
 
@@ -379,7 +408,7 @@ tri_tri_intersect_with_isectline(struct soup_s *UNUSED(left), struct soup_s *UNU
 long int splitz = 0;
 long int splitty = 0;
 
-static int
+HIDDEN int
 split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *right, unsigned long int right_face, const struct bn_tol *tol) {
     struct face_s *lf, *rf;
     vect_t isectpt[2];
@@ -396,7 +425,7 @@ split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *righ
     return -1;
 }
 
-static struct soup_s *
+HIDDEN struct soup_s *
 bot2soup(struct rt_bot_internal *bot, const struct bn_tol *tol)
 {
     struct soup_s *s;
@@ -419,7 +448,7 @@ bot2soup(struct rt_bot_internal *bot, const struct bn_tol *tol)
     return s;
 }
 
-static void
+HIDDEN void
 free_soup(struct soup_s *s) {
     if(s == NULL)
 	bu_bomb("null soup");
@@ -429,7 +458,7 @@ free_soup(struct soup_s *s) {
     return;
 }
 
-static union tree *
+HIDDEN union tree *
 invert(union tree *tree)
 {
     struct soup_s *s;
@@ -456,7 +485,7 @@ invert(union tree *tree)
     return tree;
 }
 
-static void
+HIDDEN void
 split_faces(union tree *left_tree, union tree *right_tree, const struct bn_tol *tol)
 {
     struct soup_s *l, *r;
@@ -488,7 +517,7 @@ split_faces(union tree *left_tree, union tree *right_tree, const struct bn_tol *
     }
 }
 
-static void
+HIDDEN void
 classify_faces(union tree *left_tree, union tree *right_tree)
 {
     struct soup_s *l, *r;
@@ -508,7 +537,7 @@ classify_faces(union tree *left_tree, union tree *right_tree)
 	r->faces[i].foo = 0;
 }
 
-static union tree *
+HIDDEN union tree *
 compose(union tree *left_tree, union tree *right_tree, unsigned long int face_status1, unsigned long int face_status2, unsigned long int face_status3)
 {
     struct soup_s *l, *r;
@@ -533,7 +562,7 @@ compose(union tree *left_tree, union tree *right_tree, unsigned long int face_st
     return left_tree;
 }
 
-static union tree *
+HIDDEN union tree *
 evaluate(union tree *tr, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     RT_CK_TREE(tr);
