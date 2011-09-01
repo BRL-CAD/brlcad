@@ -17,12 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/simulate.c
+/** @file libged/simulate/simulate.h
  *
  * The simulate command.
  *
- * Routines related to performing physics on passed objects only
- *
+ * Declares structures for passing simulation parameters and
+ * hold info regarding rigid bodies
  *
  */
 
