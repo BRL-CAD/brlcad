@@ -17,10 +17,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/simphysics.cpp
+/** @file libged/simulate/simphysics.cpp
  *
  *
- * Routines related to performing physics on the passed shape
+ * Routines related to performing physics on the passed regions
  *
  * 
  * 
@@ -34,6 +34,7 @@
 
 #include "db.h"
 #include "vmath.h"
+#include "simulate.h"
 
 #include <btBulletDynamicsCommon.h>
 
@@ -68,15 +69,22 @@ void print_matrices(struct bu_vls *result_str, mat_t t, btScalar *m)
 }
 
 /**
- * C++ wrapper for doing physics using bullet : Doesn't have any significant physics code yet
+ * C++ wrapper for doing physics using bullet
  * 
  */
 extern "C" int
-run_simulation(struct bu_vls *result_str, mat_t t, int argc, const char *argv[])
+run_simulation(struct bu_vls *result_str, struct simulation_params *sim_params)
 {
-	int i = argc; // to eliminate 'unused' warning
+	int i;
 	btScalar m[16];
-	int num_steps = atoi(argv[1]);
+	int num_steps = sim_params->duration;
+	struct rigid_body *current_node;
+
+	/* Show list of objects to be added to the sim */
+	bu_log("The following %d rigid bodies will participate in the simulation : \n", sim_params->num_bodies);
+	for (current_node = sim_params->head_node; current_node != NULL; current_node = current_node->next) {
+		bu_vls_printf(result_str, "Rigid Body : %s\n", current_node->rb_namep);
+	}
 
 	bu_vls_printf(result_str, "Simulation will run for %d steps.\n",num_steps);
 	bu_vls_printf(result_str, "A 1 kg sphere will be dropped from a height of 50 m.\n");
@@ -130,12 +138,12 @@ run_simulation(struct bu_vls *result_str, mat_t t, int argc, const char *argv[])
 
 	//Copy the transform matrix : transpose to convert from column major to row major, y to z and vice versa
 	//Use transform matrix to convert openGL Y axis up to BRL-CAD Z axis up, both are right handed:TODO
-	t[0]  = m[0];  t[1]  = m[4];  t[2]  = m[8];  t[3]  = m[12];
-	t[4]  = m[1];  t[5]  = m[5];  t[6]  = m[9];  t[7]  = m[14];
-	t[8]  = m[2];  t[9]  = m[6];  t[10] = m[10]; t[11] = m[13];
+/*	t[0]  = m[0];  t[1]  = m[4];  t[2]  = m[8];  t[3]  = m[12];
+	t[4]  = m[1];  t[5]  = m[5];  t[6]  = m[9];  t[7]  = m[13];
+	t[8]  = m[2];  t[9]  = m[6];  t[10] = m[10]; t[11] = m[14];
 	t[12] = m[3]; t[13]  = m[7];  t[14] = m[11]; t[15] = m[15];
 
-	print_matrices(result_str, t, m);
+	print_matrices(result_str, t, m);*/
 
 
 	//Cleanup in order of creation : better ways for cleanup is possible
