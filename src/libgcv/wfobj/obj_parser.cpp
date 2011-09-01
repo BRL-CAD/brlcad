@@ -118,11 +118,13 @@ __BEGIN_DECLS
 
 static void createParser(detail::parser_type *parser)
 {
+    /* FIXME: should be using libbu memory management */
     *parser = ParseAlloc(malloc);
 }
 
 static void destroyParser(detail::parser_type *parser)
 {
+    /* FIXME: should be using libbu memory management */
     ParseFree(*parser, free);
 }
 
