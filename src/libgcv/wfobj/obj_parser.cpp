@@ -392,17 +392,9 @@ size_t obj_groups(obj_contents_t contents, const char * const (*val_arr[]))
 	detail::objFileContents *c =
 	    static_cast<detail::objFileContents*>(contents.p);
 
-	/* convert vector to standard array */
-	std::vector<const char*>::iterator groupName = c->groupchar_set.begin();
-
-	const char **groups =
-	    (const char**)malloc(sizeof(char*) * c->groupchar_set.size());
-
-	for (int i = 0; groupName != c->groupchar_set.end(); ++groupName, ++i) {
-	    groups[i] = *groupName;
+	if (val_arr && c->groupchar_set.size()) {
+	    *val_arr = &(c->groupchar_set.front());
 	}
-
-	*val_arr = groups;
 
 	return c->groupchar_set.size();
     } catch(...) {

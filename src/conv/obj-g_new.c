@@ -3822,7 +3822,6 @@ main(int argc, char **argv)
     for (i = 0; i < ga.numGroups; i++) {
 	bu_free((void*)ga.str_arr_obj_groups[i], "str_arr_obj_groups[i]");
     }
-    bu_free((void*)ga.str_arr_obj_groups, "str_arr_obj_groups");
 
     for (i = 0; i < ga.numObjects; i++) {
 	bu_free((void*)ga.str_arr_obj_objects[i], "str_arr_obj_objects[i]");
