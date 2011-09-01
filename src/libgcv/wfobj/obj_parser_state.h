@@ -49,14 +49,6 @@ namespace arl {
 namespace obj_parser {
 namespace detail {
 
-inline char *createCopyOfString(const char *source, const size_t strSize)
-{
-    char *copy = (char*)bu_malloc(sizeof(char) * strSize, "createCopyOfString");
-    bu_strlcpy(copy, source, strSize);
-
-    return copy;
-}
-
 typedef void *parser_type;
 
 template<typename T, std::size_t N>
@@ -418,9 +410,8 @@ void set_working_groupset(basic_parser_extra<PrecisionT, charT, traits,
 
 		extra.contents->group_set.push_back(*key);
 
-		char *groupString;
-		groupString = createCopyOfString(key->c_str(), key->size() + 1); 
-		extra.contents->groupchar_set.push_back(groupString);
+		/* FIXME: this memory needs to be released */
+		extra.contents->groupchar_set.push_back(bu_strdup(key->c_str()));
 
 		extra.parser_state.group_index_map[*key] = new_grpset.back();
 	    }
