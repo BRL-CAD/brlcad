@@ -58,11 +58,11 @@ int loadInput(scanner_t *scanner)
 {
     bu_string *line = scanner->currLine;
     int len = bu_vls_strlen(line);
-    char *lineEnd = line->vls_str + len;
+    char *lineEnd = bu_vls_addr(line) + len;
 
     if (scanner->tokenStart >= lineEnd) {
 	len = getNextLine(line, scanner->in);
-	scanner->tokenStart = line->vls_str;
+	scanner->tokenStart = bu_vls_addr(line);
     }
 
     return len;
@@ -74,7 +74,7 @@ char *copyCurrTokenText(bu_string *tokenString, scanner_t *scanner)
 
     bu_vls_strncpy(tokenString, scanner->tokenStart, tokenLen);
 
-    return tokenString->vls_str;
+    return bu_vls_addr(tokenString);
 }
 
 void setStartCondition(scanner_t *scanner, const CONDTYPE sc)
@@ -98,7 +98,7 @@ void initScanner(scanner_t *scanner, FILE *in)
     scanner->currLine = newString();
     getNextLine(scanner->currLine, scanner->in);
 
-    scanner->tokenStart = scanner->currLine->vls_str;
+    scanner->tokenStart = bu_vls_addr(scanner->currLine);
 }
 
 void freeScanner(scanner_t *scanner)
