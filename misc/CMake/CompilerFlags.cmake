@@ -142,6 +142,7 @@ CHECK_CXX_FLAG(ftemplate-depth-300)
 #     may still output SSE instructions (e.g., for cross-compiling).
 # CHECK_C_FLAG(msse)
 # CHECK_C_FLAG(msse2)
+CHECK_C_FLAG(msse3)
 
 # Check for gnu c99 support
 CHECK_C_FLAG("std=gnu99")
