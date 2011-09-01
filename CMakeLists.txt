@@ -1557,6 +1557,7 @@ TRY_RUN(TIME_RESULT TIME_COMPILED
 	OUTPUT_VARIABLE COMPILEMESSAGES
 	CMAKE_FLAGS "-DLINK_LIBRARIES:STRING=ws2_32.lib")
 ENDIF(NOT MSVC)
+# Let CMake give us the proper newline character(s) for the current platform
 FILE(APPEND ${BRLCAD_BINARY_DIR}/include/conf/HOST "\n")
 
 # USER
@@ -1565,11 +1566,11 @@ TRY_RUN(TIME_RESULT TIME_COMPILED
 	${CMAKE_BINARY_DIR}/CMakeTmp
 	${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c
 	OUTPUT_VARIABLE COMPILEMESSAGES)
+# Let CMake give us the proper newline character(s) for the current platform
 FILE(APPEND ${BRLCAD_BINARY_DIR}/include/conf/USER "\n")
 
 # PATH
-FILE(WRITE ${BRLCAD_BINARY_DIR}/include/conf/PATH "\"${CMAKE_INSTALL_PREFIX}\"")
-FILE(APPEND ${BRLCAD_BINARY_DIR}/include/conf/PATH "\n")
+FILE(WRITE ${BRLCAD_BINARY_DIR}/include/conf/PATH "\"${CMAKE_INSTALL_PREFIX}\"\n")
 
 # COUNT - force CMake to look every time in case of manual removal of COUNT file
 set(countFile "countFile-NOTFOUND" CACHE STRING "Is there a count file?" FORCE)
@@ -1580,16 +1581,13 @@ else()
 	file(READ ${countFile} buildCounter)
 	math(EXPR buildCounter "${buildCounter} + 1")
 endif()
-file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/COUNT "${buildCounter}")
-FILE(APPEND ${BRLCAD_BINARY_DIR}/include/conf/COUNT "\n")
+file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/COUNT "${buildCounter}\n")
 MARK_AS_ADVANCED(countFile)
 
 # DATE
 file(READ ${CONFIG_TIMESTAMP_FILE} DATESTAMP)
 STRING(STRIP ${DATESTAMP} DATESTAMP)
-file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/DATE "\"${DATESTAMP}\"")
-FILE(APPEND ${BRLCAD_BINARY_DIR}/include/conf/DATE "\n")
-
+file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/DATE "\"${DATESTAMP}\"\n")
 
 # Rules for the toplevel documentation files
 SET(toplevel_DOCFILES
