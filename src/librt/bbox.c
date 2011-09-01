@@ -359,6 +359,8 @@ rt_traverse_tree(struct rt_i *rtip, const union tree *tp, fastf_t *tree_min, fas
 	 */
 	case OP_DB_LEAF:
 		{
+			const struct soltab *stp;
+
 			if(rtip == NULL){
 				bu_log("rt_traverse_tree: A valid rtip was not passed for calculating bounds of '%s'\n",
 						tp->tr_l.tl_name);
@@ -366,7 +368,6 @@ rt_traverse_tree(struct rt_i *rtip, const union tree *tp, fastf_t *tree_min, fas
 			}
 
 			/* Good to go */
-			const struct soltab *stp;
 
 			/* Attempt to get a solid pointer, will fail for combs */
 			stp = rt_find_solid(rtip, tp->tr_l.tl_name);
