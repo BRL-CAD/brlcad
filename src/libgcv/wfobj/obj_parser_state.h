@@ -410,7 +410,6 @@ void set_working_groupset(basic_parser_extra<PrecisionT, charT, traits,
 
 		extra.contents->group_set.push_back(*key);
 
-		/* FIXME: this memory needs to be released */
 		extra.contents->groupchar_set.push_back(bu_strdup(key->c_str()));
 
 		extra.parser_state.group_index_map[*key] = new_grpset.back();
@@ -471,8 +470,7 @@ void set_working_object(basic_parser_extra<PrecisionT, charT, traits,
 
 	extra.contents->object_set.push_back(working_string);
 
-	char *objectString = createCopyOfString(working_string.c_str(),
-	    working_string.size() + 1);
+	char *objectString = bu_strdup(working_string.c_str());
 
 	extra.contents->objectchar_set.push_back(objectString);
     }
@@ -511,8 +509,7 @@ void set_working_material(basic_parser_extra<PrecisionT, charT, traits,
 
 	extra.contents->material_set.push_back(working_string);
 
-	char *materialString = createCopyOfString(working_string.c_str(),
-	    working_string.size() + 1);
+	char *materialString = bu_strdup(working_string.c_str());
 
 	extra.contents->materialchar_set.push_back(materialString);
     }
@@ -568,8 +565,7 @@ void set_working_materiallib(basic_parser_extra<PrecisionT, charT, traits,
 
 		string_type &matlib_name = matlib_set.back();
 
-		char *matlibString = createCopyOfString(matlib_name.c_str(),
-		    matlib_name.size() + 1);
+		char *matlibString = bu_strdup(matlib_name.c_str());
 
 		extra.contents->materiallibchar_set.push_back(matlibString);
 
@@ -635,8 +631,7 @@ void set_working_texmap(basic_parser_extra<PrecisionT, charT, traits,
 
 	extra.contents->texmap_set.push_back(working_string);
 
-	char *texmapString = createCopyOfString(working_string.c_str(),
-	    working_string.size() + 1);
+	char *texmapString = bu_strdup(working_string.c_str());
 
 	extra.contents->texmapchar_set.push_back(texmapString);
     }
@@ -690,8 +685,7 @@ void set_working_texmaplib(basic_parser_extra<PrecisionT, charT, traits,
 
 		texmaplib_set.push_back(*key);
 
-		char *texmapString = createCopyOfString(key->c_str(),
-		    key->size() + 1);
+		char *texmapString = bu_strdup(key->c_str());
 
 		extra.contents->texmaplibchar_set.push_back(texmapString);
 
@@ -758,8 +752,7 @@ void set_working_shadow_obj(basic_parser_extra<PrecisionT, charT, traits,
 
 	extra.contents->shadow_obj_set.push_back(working_string);
 
-	char *shadowObjString = createCopyOfString(working_string.c_str(),
-	    working_string.size() + 1);
+	char *shadowObjString = bu_strdup(working_string.c_str());
 
 	extra.contents->shadow_objchar_set.push_back(shadowObjString);
     }
@@ -798,8 +791,7 @@ void set_working_trace_obj(basic_parser_extra<PrecisionT, charT, traits,
 
 	extra.contents->trace_obj_set.push_back(working_string);
 
-	char *traceObjString = createCopyOfString(working_string.c_str(),
-	    working_string.size() + 1);
+	char *traceObjString = bu_strdup(working_string.c_str());
 
 	extra.contents->trace_objchar_set.push_back(traceObjString);
     }
