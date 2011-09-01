@@ -58,6 +58,14 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* the new "exists" command is a beautiful corollary to the unix 'test'
+  command.  make the usage match, remove options that make no sense
+  after you've replaced instances of 'file' with 'object', and add
+  options specific to testing geometry (like whether two objects
+  overlap, whether an object's volume is greater than some value or
+  equal to zero, whether two objects are actually the same object
+  (geometrically), etc).
+
 * rewrite nmg->brep conversion routine
   (src/librt/primitives/brep/brep_brep.cpp) to use a simple 2d
   bounding box in the plane of each nmg face.  even better would be to
