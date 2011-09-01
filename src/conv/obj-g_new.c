@@ -274,15 +274,6 @@ struct ga_t {
 };
 
 
-void free_lib_array(const char * const *array[], size_t size)
-{
-    size_t i;
-    for (i = 0; i < size; i++) {
-	bu_free((void*)(*array)[i], "free_lib_array");
-    }
-}
-
-
 int test_face(struct ga_t *ga, struct gfi_t *gfi, size_t face_idx,
 	      fastf_t conv_factor, struct bn_tol *tol, int face_test_type,
 	      int force_retest);
@@ -313,17 +304,17 @@ collect_global_obj_file_attributes(struct ga_t *ga)
     /* release unused */
     count = obj_num_materiallibsets(ga->contents);
     obj_materiallibs(ga->contents, &lib_arr);
-    free_lib_array(&lib_arr, count);
+    bu_free_array(count, &lib_arr);
 
     count = obj_num_texmaplibsets(ga->contents);
     obj_texmaplibs(ga->contents, &lib_arr);
-    free_lib_array(&lib_arr, count);
+    bu_free_array(count, &lib_arr);
 
     count = obj_shadow_objs(ga->contents, &lib_arr);
-    free_lib_array(&lib_arr, count);
+    bu_free_array(count, &lib_arr);
 
     count = obj_trace_objs(ga->contents, &lib_arr);
-    free_lib_array(&lib_arr, count);
+    bu_free_array(count, &lib_arr);
 
     ga->numGroups = obj_groups(ga->contents, &ga->str_arr_obj_groups);
     bu_log("\tTotal number of groups in OBJ file; numGroups = (%zu)\n", ga->numGroups);
