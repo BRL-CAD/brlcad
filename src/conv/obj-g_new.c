@@ -300,17 +300,17 @@ collect_global_obj_file_attributes(struct ga_t *ga)
     /* release unused */
     count = obj_num_materiallibsets(ga->contents);
     obj_materiallibs(ga->contents, &lib_arr);
-    bu_free_array(count, &lib_arr);
+    bu_free_array(count, (char **)&lib_arr, "lib_arr");
 
     count = obj_num_texmaplibsets(ga->contents);
     obj_texmaplibs(ga->contents, &lib_arr);
-    bu_free_array(count, &lib_arr);
+    bu_free_array(count, (char **)&lib_arr, "lib_arr");
 
     count = obj_shadow_objs(ga->contents, &lib_arr);
-    bu_free_array(count, &lib_arr);
+    bu_free_array(count, (char **)&lib_arr, "lib_arr");
 
     count = obj_trace_objs(ga->contents, &lib_arr);
-    bu_free_array(count, &lib_arr);
+    bu_free_array(count, (char **)&lib_arr, "lib_arr");
 
     ga->numGroups = obj_groups(ga->contents, &ga->str_arr_obj_groups);
     bu_log("\tTotal number of groups in OBJ file; numGroups = (%zu)\n", ga->numGroups);
