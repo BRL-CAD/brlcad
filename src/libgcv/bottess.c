@@ -354,10 +354,8 @@ tri_tri_intersect_with_isectline(struct soup_s *UNUSED(left), struct soup_s *UNU
     SORT2(isect2[0],isect2[1],smallest2);
 #undef SORT2
 
-    if(isect1[1]<isect2[0] || isect2[1]<isect1[0]){
-	bu_log("noverlap\n");
+    if(isect1[1]<isect2[0] || isect2[1]<isect1[0])
 	return 0;
-    }
 
 #if 0
     printf("%d:%d + % 4.2f % 4.2f % 4.2f % 4.2f\t+ % 4.2f/% 4.2f/% 4.2f % 4.2f/% 4.2f/% 4.2f | % 4.2f/% 4.2f/% 4.2f % 4.2f/% 4.2f/% 4.2f\n",
@@ -479,7 +477,7 @@ invert(union tree *tree)
 	VMOVE(f->vert[0], f->vert[1]);
 	VMOVE(f->vert[0], t);
 	/* flip the inverted bit. */
-	f->foo=(f->foo&~INVERTED)|((~(f->foo&INVERTED))&INVERTED);
+	f->foo^=INVERTED;
     }
 
     return tree;
