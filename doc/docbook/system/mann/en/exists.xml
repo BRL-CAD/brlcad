@@ -132,10 +132,10 @@
     </varlistentry>
 
     <varlistentry>
-      <term> <emphasis remap="I">object1</emphasis> <emphasis remap="B" role="bold">bneq</emphasis> <emphasis remap="I">object2</emphasis></term>
+      <term> <emphasis remap="I">object1</emphasis> <emphasis remap="B" role="bold">bne</emphasis> <emphasis remap="I">object2</emphasis></term>
       <listitem>
 	<para>
-	       Returns TRUE if the objects exist and their bounding box volumes are not equal.  *TODO* - eventually, when the right APIs become available, a "-rneq" option will be added for a more-expensive-but-more-accurate raytrace based volumetric comparison as well.
+	       Returns TRUE if the objects exist and their bounding box volumes are not equal.  *TODO* - eventually, when the right APIs become available, a "-rne" option will be added for a more-expensive-but-more-accurate raytrace based volumetric comparison as well.
 	</para>
       </listitem>
     </varlistentry>
