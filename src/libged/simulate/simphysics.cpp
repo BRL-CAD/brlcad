@@ -68,99 +68,227 @@ void print_matrices(struct bu_vls *result_str, mat_t t, btScalar *m)
 
 }
 
+
+/**
+ * Adds rigid bodies to the dynamics world from the BRL-CAD geometry,
+ * will add a ground plane if a region by the name of sim_gp.r is detected
+ * The plane will be static and have the same dimensions as the region
+ *
+ */
+int add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_params *sim_params,
+		btAlignedObjectArray<btCollisionShape*> collision_shapes)
+{
+	struct rigid_body *current_node;
+	fastf_t volume;
+	btScalar mass;
+
+
+
+	for (current_node = sim_params->head_node; current_node != NULL; current_node = current_node->next) {
+
+		// Check if we should add a ground plane
+		if(strcmp(current_node->rb_namep, sim_params->ground_plane_name) == 0){
+			// Add a static ground plane : can be controlled by an option : TODO
+			btCollisionShape* groundShape = new btBoxShape(btVector3(current_node->bb_dims[0]/2,
+																	 current_node->bb_dims[1]/2,
+																	 current_node->bb_dims[2]/2));
+			btDefaultMotionState* groundMotionState = new btDefaultMotionState(
+														btTransform(btQuaternion(0,0,0,1),
+														btVector3(current_node->bb_center[0],
+																  current_node->bb_center[1],
+																  current_node->bb_center[2])));
+			btRigidBody::btRigidBodyConstructionInfo
+					groundRigidBodyCI(0,groundMotionState,groundShape,btVector3(0,0,0));
+			btRigidBody* groundRigidBody = new btRigidBody(groundRigidBodyCI);
+			groundRigidBody->setUserPointer((void *)current_node);
+			dynamicsWorld->addRigidBody(groundRigidBody);
+			collision_shapes.push_back(groundShape);
+
+			bu_vls_printf(sim_params->result_str, "Added static ground plane : %s to simulation with mass %f Kg\n",
+													current_node->rb_namep, 0.f);
+
+		}
+		else{
+			//Nope, its a rigid body
+			btCollisionShape* bb_Shape = new btBoxShape(btVector3(current_node->bb_dims[0]/2,
+																			  current_node->bb_dims[1]/2,
+																			  current_node->bb_dims[2]/2));
+			collision_shapes.push_back(bb_Shape);
+
+			volume = current_node->bb_dims[0] * current_node->bb_dims[1] * current_node->bb_dims[2];
+			mass = volume; // density is 1
+
+			btVector3 bb_Inertia(0,0,0);
+			bb_Shape->calculateLocalInertia(mass, bb_Inertia);
+
+			btDefaultMotionState* bb_MotionState = new btDefaultMotionState(btTransform(btQuaternion(0,0,0,1),
+														btVector3(current_node->bb_center[0],
+																  current_node->bb_center[1],
+																  current_node->bb_center[2])));
+			btRigidBody::btRigidBodyConstructionInfo
+						bb_RigidBodyCI(mass, bb_MotionState, bb_Shape, bb_Inertia);
+			btRigidBody* bb_RigidBody = new btRigidBody(bb_RigidBodyCI);
+			bb_RigidBody->setUserPointer((void *)current_node);
+
+			dynamicsWorld->addRigidBody(bb_RigidBody);
+
+			bu_vls_printf(sim_params->result_str, "Added rigid body : %s to simulation with mass %f Kg\n",
+													current_node->rb_namep, mass);
+
+		}
+
+	}
+
+	return 0;
+}
+
+/**
+ * Steps the dynamics world according to the simulation parameters
+ *
+ */
+int step_physics(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_params *sim_params)
+{
+	int i;
+	bu_vls_printf(sim_params->result_str, "Simulation will run for %d steps.\n", sim_params->duration);
+	bu_vls_printf(sim_params->result_str, "----- Starting simulation -----\n");
+
+	for (i=0 ; i < sim_params->duration ; i++) {
+
+		//time step of 1/60th of a second(same as internal fixedTimeStep, maxSubSteps=10 to cover 1/60th sec.)
+		dynamicsWorld->stepSimulation(1/60.f,10);
+	}
+
+	bu_vls_printf(sim_params->result_str, "----- Simulation Complete -----\n");
+
+	return 0;
+}
+
+
+/**
+ * Get the final transforms and pack off back to libged
+ *
+ */
+int get_transforms(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_params *sim_params)
+{
+	int i;
+	btScalar m[16];
+
+	const int num_bodies = dynamicsWorld->getNumCollisionObjects();
+
+	for(i=0; i < num_bodies; i++){
+
+		//Common properties among all rigid bodies
+		btCollisionObject*	bb_ColObj = dynamicsWorld->getCollisionObjectArray()[i];
+		btRigidBody*		bb_RigidBody   = btRigidBody::upcast(bb_ColObj);
+		//const btCollisionShape* bb_Shape = bb_ColObj->getCollisionShape(); //may be used later
+
+		if( bb_RigidBody && bb_RigidBody->getMotionState()){
+
+			//Get the motion state and the world transform from it
+			btDefaultMotionState* bb_MotionState = (btDefaultMotionState*)bb_RigidBody->getMotionState();
+			bb_MotionState->m_graphicsWorldTrans.getOpenGLMatrix(m);
+			//bu_vls_printf(sim_params->result_str, "Position : %f, %f, %f\n", m[12], m[13], m[14]);
+
+			struct rigid_body *current_node = (struct rigid_body *)bb_RigidBody->getUserPointer();
+
+			if(current_node == NULL){
+				bu_vls_printf(sim_params->result_str, "get_transforms : Could not get the user pointer \
+						(ground plane perhaps)\n");
+				continue;
+
+			}
+
+			//Copy the transform matrix : transpose to convert from column major to row major
+			current_node->t[0]  = m[0]; current_node->t[1]  = m[4]; current_node->t[2]  = m[8];  current_node->t[3]  = m[12];
+			current_node->t[4]  = m[1]; current_node->t[5]  = m[5]; current_node->t[6]  = m[9];  current_node->t[7]  = m[13];
+			current_node->t[8]  = m[2]; current_node->t[9]  = m[6]; current_node->t[10] = m[10]; current_node->t[11] = m[14];
+			current_node->t[12] = m[3]; current_node->t[13] = m[7]; current_node->t[14] = m[11]; current_node->t[15] = m[15];
+
+			print_matrices(sim_params->result_str, current_node->t, m);
+
+		}
+	}
+
+	return 0;
+}
+
+
+/**
+ * Cleanup the physics collision shape, rigid body etc
+ *
+ */
+int cleanup(btDiscreteDynamicsWorld* dynamicsWorld,
+			btAlignedObjectArray<btCollisionShape*> collision_shapes)
+{
+	//remove the rigid bodies from the dynamics world and delete them
+	int i;
+
+	for (i=dynamicsWorld->getNumCollisionObjects()-1; i>=0; i--){
+
+		btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[i];
+		btRigidBody* body = btRigidBody::upcast(obj);
+		if (body && body->getMotionState()){
+			delete body->getMotionState();
+		}
+		dynamicsWorld->removeCollisionObject( obj );
+		delete obj;
+	}
+
+	//delete collision shapes
+	for (i=0; i<collision_shapes.size(); i++)
+	{
+		btCollisionShape* shape = collision_shapes[i];
+		delete shape;
+	}
+
+	//delete dynamics world
+	delete dynamicsWorld;
+
+	return 0;
+}
+
+
 /**
  * C++ wrapper for doing physics using bullet
  * 
  */
 extern "C" int
-run_simulation(struct bu_vls *result_str, struct simulation_params *sim_params)
+run_simulation(struct simulation_params *sim_params)
 {
-	int i;
-	btScalar m[16];
-	int num_steps = sim_params->duration;
-	struct rigid_body *current_node;
+	// Initialize the physics world
+	btDiscreteDynamicsWorld* dynamicsWorld;
 
-	/* Show list of objects to be added to the sim */
-	bu_log("The following %d rigid bodies will participate in the simulation : \n", sim_params->num_bodies);
-	for (current_node = sim_params->head_node; current_node != NULL; current_node = current_node->next) {
-		bu_vls_printf(result_str, "Rigid Body : %s\n", current_node->rb_namep);
-	}
-
-	bu_vls_printf(result_str, "Simulation will run for %d steps.\n",num_steps);
-	bu_vls_printf(result_str, "A 1 kg sphere will be dropped from a height of 50 m.\n");
-	bu_vls_printf(result_str, "Every time step is 1/60th of a second long(can be altered).\n");
+	// Keep the collision shapes, for deletion/cleanup
+	btAlignedObjectArray<btCollisionShape*>	collision_shapes;
 
 	btBroadphaseInterface* broadphase = new btDbvtBroadphase();
-
 	btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
 	btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collisionConfiguration);
-
 	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
 
-	btDiscreteDynamicsWorld* dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher,broadphase,solver,collisionConfiguration);
+	dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher,broadphase,solver,collisionConfiguration);
 
-	dynamicsWorld->setGravity(btVector3(0,-10,0));
+	//Set the gravity direction along -ve Z axis
+	dynamicsWorld->setGravity(btVector3(0, 0, -10));
 
+	//Add the rigid bodies to the world, including the ground plane
+	add_rigid_bodies(dynamicsWorld, sim_params, collision_shapes);
 
-	btCollisionShape* groundShape = new btStaticPlaneShape(btVector3(0,1,0),1);
+	//Step the physics the required number of times
+	step_physics(dynamicsWorld, sim_params);
 
-	btCollisionShape* fallShape = new btSphereShape(1);
+	//Get the world transforms back into the simulation params struct
+	get_transforms(dynamicsWorld, sim_params);
 
+	//Clean and free memory used by physics objects
+	cleanup(dynamicsWorld, collision_shapes);
 
-	btDefaultMotionState* groundMotionState = new btDefaultMotionState(btTransform(btQuaternion(0,0,0,1),btVector3(0,-1,0)));
-	btRigidBody::btRigidBodyConstructionInfo
-			groundRigidBodyCI(0,groundMotionState,groundShape,btVector3(0,0,0));
-	btRigidBody* groundRigidBody = new btRigidBody(groundRigidBodyCI);
-	dynamicsWorld->addRigidBody(groundRigidBody);
-
-
-	btDefaultMotionState* fallMotionState =
-			new btDefaultMotionState(btTransform(btQuaternion(0,0,0,1),btVector3(0,50,0)));
-	btScalar mass = 1;
-	btVector3 fallInertia(0,0,0);
-	fallShape->calculateLocalInertia(mass,fallInertia);
-	btRigidBody::btRigidBodyConstructionInfo fallRigidBodyCI(mass,fallMotionState,fallShape,fallInertia);
-	btRigidBody* fallRigidBody = new btRigidBody(fallRigidBodyCI);
-	dynamicsWorld->addRigidBody(fallRigidBody);
-
-	bu_vls_printf(result_str, "----- Starting simulation -----\n");
-	btTransform trans;
-	for (i=0 ; i<num_steps ; i++) {
-		//time step of 1/60th of a second(same as internal fixedTimeStep, maxSubSteps=10 to cover 1/60th sec.)
-		dynamicsWorld->stepSimulation(1/60.f,10);
-		fallRigidBody->getMotionState()->getWorldTransform(trans);
-		bu_vls_printf(result_str, "Step %3d : Sphere height: %f\n", i, trans.getOrigin().getY());
-
-	}
-
-	bu_vls_printf(result_str, "----- Simulation Complete -----\n");
-	trans.getOpenGLMatrix(m);
-
-	//Copy the transform matrix : transpose to convert from column major to row major, y to z and vice versa
-	//Use transform matrix to convert openGL Y axis up to BRL-CAD Z axis up, both are right handed:TODO
-/*	t[0]  = m[0];  t[1]  = m[4];  t[2]  = m[8];  t[3]  = m[12];
-	t[4]  = m[1];  t[5]  = m[5];  t[6]  = m[9];  t[7]  = m[13];
-	t[8]  = m[2];  t[9]  = m[6];  t[10] = m[10]; t[11] = m[14];
-	t[12] = m[3]; t[13]  = m[7];  t[14] = m[11]; t[15] = m[15];
-
-	print_matrices(result_str, t, m);*/
-
-
-	//Cleanup in order of creation : better ways for cleanup is possible
-	dynamicsWorld->removeRigidBody(fallRigidBody);
-	delete fallRigidBody->getMotionState();
-	delete fallRigidBody;
-
-	dynamicsWorld->removeRigidBody(groundRigidBody);
-	delete groundRigidBody->getMotionState();
-	delete groundRigidBody;
-	delete fallShape;
-	delete groundShape;
-	delete dynamicsWorld;
+	//Clean up stuff in here
 	delete solver;
-	delete collisionConfiguration;
 	delete dispatcher;
+	delete collisionConfiguration;
 	delete broadphase;
+
 
 	return 0;
 }

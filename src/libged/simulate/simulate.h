@@ -29,16 +29,19 @@
 #ifndef SIMULATE_H_
 #define SIMULATE_H_
 
-/* Contains information about a single rigid body constructed from BRL-CAD geometry.
+/* Contains information about a single rigid body constructed from a BRL-CAD region.
  * This structure is the node of a linked list containing the geometry to be added to the sim
  * Only the bb is currently present, but physical properties like elasticity, custom forces
  * will be added later: TODO
  */
 struct rigid_body {
-    char * rb_namep;		     /**< @brief pointer to name string */
-    point_t bbmin, bbmax;		 /**< @brief body bb bounds */
-    mat_t t;					 /**< @brief current transformation matrix */
-    struct rigid_body *next;     /**< @brief link to next body */
+    int index;
+    char *rb_namep;                 /**< @brief pointer to name string */
+    point_t bb_min, bb_max;         /**< @brief body bb bounds */
+    point_t bb_center, bb_dims;     /**< @brief bb center and dimensions */
+    mat_t t;                        /**< @brief current transformation matrix */
+    struct directory *dp;           /**< @brief directory pointer to the related region */
+    struct rigid_body *next;        /**< @brief link to next body */
 };
 
 /* Contains the simulation parameters, such as number of rigid bodies,
@@ -46,10 +49,12 @@ struct rigid_body {
  * which the simulation will be run.
  */
 struct simulation_params {
-    int duration;				  /**< @brief contains either the number of steps or the time */
-    int num_bodies;				  /**< @brief number of rigid bodies participating in the sim */
-    struct ged *gedp;			  /**< @brief handle to the libged object to access geometry info */
-    struct rigid_body *head_node; /**< @brief link to first rigid body node */
+    int duration;                  /**< @brief contains either the number of steps or the time */
+    int num_bodies;                /**< @brief number of rigid bodies participating in the sim */
+    struct bu_vls *result_str;     /**< @brief handle to the libged object to access geometry info */
+    char *sim_comb_name;           /**< @brief name of the group which contains all sim regions*/
+    char *ground_plane_name;       /**< @brief name of the ground plane region */
+    struct rigid_body *head_node;  /**< @brief link to first rigid body node */
 };
 
 
