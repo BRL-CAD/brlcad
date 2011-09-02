@@ -850,7 +850,7 @@ package provide Archer 1.0
 	    set solidName "$lastName\.s"
 	}
 
-	if {![catch {$itk_component(ged) get_type $solidName} ret]} {
+	if { [ $itk_component(ged) exists $solidName ] } {
 	    #$itk_component(ged) attachObservers
 	    $itk_component(ged) units $savedUnits
 	    error "importFg4Sections: $solidName already exists!"
@@ -879,7 +879,7 @@ package provide Archer 1.0
 
 	set gmember $regionName
 	foreach gname $reversedGnames {
-	    if {[catch {$itk_component(ged) get_type $gname} ret]} {
+	    if { ! [ $itk_component(ged) exists $gname ] } {
 		$itk_component(ged) g $gname $gmember
 	    } else {
 		if {[catch {gedCmd get $gname tree} tree]} {

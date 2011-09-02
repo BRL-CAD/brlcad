@@ -883,7 +883,7 @@ proc comb_apply { id } {
 
     # if someone has edited the combination name, take care about
     # overwriting an existing object
-    if {$comb_control($id,dirty_name) && [db_exist $comb_control($id,name)]} {
+    if {$comb_control($id,dirty_name) && [exists $comb_control($id,name)]} {
 	set ret [cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
 		     "Warning!"\
 		     "Warning: about to overwrite $comb_control($id,name)"\
@@ -1188,14 +1188,6 @@ proc comb_shader_gui { id shader_type } {
     grid columnconfigure $top.shader_frame 0 -weight 1
 }
 
-proc db_exist {obj} {
-    set ret [catch {db get $obj}]
-    if {$ret} {
-	return 0
-    } else {
-	return 1
-    }
-}
 
 # mark name as dirty if someone edits it
 proc comb_handle_trace {id name1 name2 op} {
