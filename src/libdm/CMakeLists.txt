@@ -50,9 +50,6 @@ SET(LIBDM_SRCS
 	tcl.c 
 	vers.c
 )
-IF(HAVE_TERMLIB)
-	include_directories(${TERMLIB_INCLUDE_DIR})
-ENDIF(HAVE_TERMLIB)
 
 include_directories(
 	${ZLIB_INCLUDE_DIR}
