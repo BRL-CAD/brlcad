@@ -85,7 +85,6 @@ SET(brlcadnoinst_HEADERS
 )
 
 SET(brlcadinclude_misc
-	brlcad_config.h.in
 	conf
 	config_win.h
 	config_win_cmake.h.in
