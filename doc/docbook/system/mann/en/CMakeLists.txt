@@ -76,7 +76,8 @@ SET(docbook_mann_EN
 	eqn.xml 
 	erase.xml 
 	erase_all.xml 
-	ev.xml 
+	ev.xml
+	exists.xml
 	exit.xml 
 	expand.xml 
 	export_body.xml 

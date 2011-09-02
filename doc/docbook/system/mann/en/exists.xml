@@ -1,0 +1,299 @@
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="exists1">
+
+<refmeta>
+  <refentrytitle>EXISTS</refentrytitle>
+  <manvolnum>nged</manvolnum>
+  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+  <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
+</refmeta>
+
+<refnamediv xml:id="name">
+  <refname>exists</refname>
+  <refpurpose>
+	  The <command>exists</command> command evaluates an expression and return 1 if true, zero if false.
+	  It serves roughly the same purpose for objects in a BRL-CAD database that the UNIX test command
+	  serves for files on a file system, with additional features specific to geometry and minus
+	  some of the filesystem specific options of test.
+  </refpurpose>
+</refnamediv>
+
+<!-- body begins here -->
+<refsynopsisdiv xml:id="synopsis">
+  <cmdsynopsis sepchar=" ">
+    <command>exists</command>    
+    <arg choice="req" rep="norepeat">expression</arg>
+    <arg choice="opt" rep="repeat"><replaceable>expression</replaceable></arg>
+  </cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  
+  <para>
+    <command>exists</command> works in a fashion similar to Unix-style 
+    test commands (internally it is based on NetBSD's test code) but tests 
+    <emphasis remap="I">objects</emphasis> in the current open database rather than 
+    files in a file system.  If an object matching a valid expression or expressions is
+    found 1 is returned, otherwise 0 is returned.  Expressions are formed using
+    <link linkend="primaries">PRIMARIES</link> and
+    <link linkend="operators">OPERATORS</link>.  A simple object name with no primaries
+    or operators will return true if db_lookup succeeds and the object is non-null (TODO).
+  </para>
+</refsection>
+
+<refsection xml:id="primaries"><info><title>PRIMARIES:</title></info>
+  
+  <variablelist remap="TP">
+    <varlistentry>
+      <term><emphasis remap="B" role="bold">-c</emphasis> <emphasis remap="I">object</emphasis></term>
+      <listitem>
+	<para>
+	  Returns TRUE if the object is a combination
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis remap="B" role="bold">-e</emphasis> <emphasis remap="I">object</emphasis></term>
+      <listitem>
+	<para>
+		Returns TRUE if the object exists.  This reports only the results of db_lookup without doing
+		any further testing to check for null objects, and constitutes the most basic existence test available
+		for a database object.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis remap="B" role="bold">-n</emphasis> <emphasis remap="I">object</emphasis></term>
+      <listitem>
+	<para>
+	  Returns TRUE if the object exists and is a NULL database object. **TODO**
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis remap="B" role="bold">-p</emphasis> <emphasis remap="I">object</emphasis></term>
+      <listitem>
+	<para>
+	  Returns TRUE if the object exists and is a geometric primitive.  (Empty geometric primitives and 2D primitives like sketch will pass.)
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis remap="B" role="bold">-v</emphasis> <emphasis remap="I">object</emphasis></term>
+      <listitem>
+	<para>
+	       Returns TRUE if the object exists and has a bounding box with non-zero volume.  (A sketch primitive would not pass this test.)	
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term> <emphasis remap="I">object1</emphasis> <emphasis remap="B" role="bold">=</emphasis> <emphasis remap="I">object2</emphasis></term>
+      <listitem>
+	<para>
+	       Returns TRUE if the objects exist and their serialized binary contents are equal.
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term> <emphasis remap="I">object1</emphasis> <emphasis remap="B" role="bold">!=</emphasis> <emphasis remap="I">object2</emphasis></term>
+      <listitem>
+	<para>
+	       Returns TRUE if the objects exist and their serialized binary contents are not equal.
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term> <emphasis remap="I">object1</emphasis> <emphasis remap="B" role="bold">&lt;</emphasis> <emphasis remap="I">object2</emphasis></term>
+      <listitem>
+	<para>
+	       Returns TRUE if the objects exist and the size of the serialized binary representation of object1 is less than the size of the serialized binary representation of object 2.
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term> <emphasis remap="I">object1</emphasis> <emphasis remap="B" role="bold">&gt;</emphasis> <emphasis remap="I">object2</emphasis></term>
+      <listitem>
+	<para>
+	       Returns TRUE if the objects exist and the size of the serialized binary representation of object1 is greater than the size of the serialized binary representation of object 2.
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term> <emphasis remap="I">object1</emphasis> <emphasis remap="B" role="bold">beq</emphasis> <emphasis remap="I">object2</emphasis></term>
+      <listitem>
+	<para>
+	       Returns TRUE if the objects exist and their bounding box volumes are equal.  *TODO* - eventually, when the right APIs become available, an "-req" option will be added for a more-expensive-but-more-accurate raytrace based volumetric comparison as well.
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term> <emphasis remap="I">object1</emphasis> <emphasis remap="B" role="bold">bneq</emphasis> <emphasis remap="I">object2</emphasis></term>
+      <listitem>
+	<para>
+	       Returns TRUE if the objects exist and their bounding box volumes are not equal.  *TODO* - eventually, when the right APIs become available, a "-rneq" option will be added for a more-expensive-but-more-accurate raytrace based volumetric comparison as well.
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term> <emphasis remap="I">object1</emphasis> <emphasis remap="B" role="bold">bgt</emphasis> <emphasis remap="I">object2</emphasis></term>
+      <listitem>
+	<para>
+	       Returns TRUE if the objects exist and the volume of the bounding box of object1 is greater than the volume of the bounding box for object2.  *TODO* - eventually, when the right APIs become available, an "-rgt" option will be added for a more-expensive-but-more-accurate raytrace based volumetric comparison as well.
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term> <emphasis remap="I">object1</emphasis> <emphasis remap="B" role="bold">bge</emphasis> <emphasis remap="I">object2</emphasis></term>
+      <listitem>
+	<para>
+	       Returns TRUE if the objects exist and the volume of the bounding box of object1 is greater than or equal to the volume of the bounding box for object2.  *TODO* - eventually, when the right APIs become available, an "-rge" option will be added for a more-expensive-but-more-accurate raytrace based volumetric comparison as well.
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term> <emphasis remap="I">object1</emphasis> <emphasis remap="B" role="bold">blt</emphasis> <emphasis remap="I">object2</emphasis></term>
+      <listitem>
+	<para>
+	       Returns TRUE if the objects exist and the volume of the bounding box of object1 is less than the volume of the bounding box for object2.  *TODO* - eventually, when the right APIs become available, an "-rlt" option will be added for a more-expensive-but-more-accurate raytrace based volumetric comparison as well.
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term> <emphasis remap="I">object1</emphasis> <emphasis remap="B" role="bold">ble</emphasis> <emphasis remap="I">object2</emphasis></term>
+      <listitem>
+	<para>
+	       Returns TRUE if the objects exist and the volume of the bounding box of object1 is less than or equal to the volume of the bounding box for object2.  *TODO* - eventually, when the right APIs become available, an "-rle" option will be added for a more-expensive-but-more-accurate raytrace based volumetric comparison as well.
+	</para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+
+</refsection>
+
+<refsection xml:id="operators"><info><title>OPERATORS:</title></info>
+  
+	<para>primaries can be combined with the following operators:</para>
+  
+  <variablelist remap="TP">
+    <varlistentry>
+      <term><emphasis remap="B" role="bold">!</emphasis> <emphasis remap="I">expression</emphasis></term>
+      <listitem>
+	<para>
+		True if <emphasis remap="I">expression</emphasis> is false.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis remap="I">expression</emphasis> <emphasis remap="B" role="bold">-a</emphasis> <emphasis remap="I">expression</emphasis></term>
+      <listitem>
+	<para>
+	  The and operator operates like the logical AND operator - TRUE only if both
+	  expressions are true.  
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis remap="I">expression</emphasis> <emphasis remap="B" role="bold">-o</emphasis> <emphasis remap="I">expression</emphasis></term>
+      <listitem>
+	<para>
+	  The logical OR operator - true if either expression is true.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><emphasis remap="B" role="bold">(</emphasis> <emphasis remap="I">expression</emphasis> <emphasis remap="B" role="bold">)</emphasis></term>
+      <listitem>
+	<para>
+	  Evaluates to true if the expression inside the parenthesies evaluates to true.
+	  Used to establish order of operations.
+	</para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+
+  <para>The <emphasis remap="B" role="bold">-a</emphasis> operator has higher precedence than the <emphasis remap="B" role="bold">-o</emphasis> operator.</para>
+</refsection>
+
+<refsection xml:id="a_note_on_expressions"><info><title>A Note on Expressions</title></info>
+  
+  <para>
+    All primaries and operands must be expressed as separate arguments to exists.
+    In practice, this means that there must be a space between each element in a
+    exists expression.  E.g. !(-c object1.s -a (object1.s -beq object2.s)) must be written as:
+  </para>
+
+  <para>! ( -c object1.s -a ( object1.s -beq object2.s ) )</para>
+
+  <para>
+    While this may seem like a rather verbose way of writing the expression, it greatly
+    simplifies the parsing of the expression and is standard for virtually all
+    <emphasis remap="B" role="bold">test</emphasis> type commands. 
+  </para>
+</refsection>
+
+<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  
+  <para>
+    The following are run from the MGED command prompt:
+  </para>
+  <example><info><title>Example1</title></info>
+    
+    <para>
+      <userinput>exists object1.s</userinput>
+    </para>
+    <para>
+    </para>
+  </example>
+ 
+</refsection>
+
+<refsection xml:id="diagnostics"><info><title>DIAGNOSTICS</title></info>
+  
+  <para>
+    Errors will be returned if parsing of the arguments fails, or one of the primaries's
+    evaluation functions returns an error.
+  </para>
+</refsection>
+
+<info>
+  <author>
+    <personname>BRL-CAD Development Team</personname>
+    <contrib></contrib>
+  </author>
+</info>
+
+<refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+  
+  <para>
+    This software is Copyright (c) 2008-2011 United States Government as
+    represented by the U.S. Army Reexists Laboratory. All rights reserved.
+    Portions Copyright 1990, 1993, 1994 The Regents of the University of California,
+    per copyright and license information from OpenBSD and NetBSD.  For more details
+    see the copyright statements in exists.c and exists.h.
+  </para>
+</refsection>
+
+<refsection xml:id="bugs"><info><title>BUGS</title></info>
+  
+  <para>
+    TODO.
+  </para>
+</refsection>
+
+<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  
+  <para>
+    Reports of bugs or problems should be submitted via electronic
+    mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
+  </para>
+</refsection>
+</refentry>
