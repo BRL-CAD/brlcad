@@ -81,7 +81,6 @@ SET(brlcadnoinst_HEADERS
 	bio.h 
 	conf.h 
 	fbmsg.h 
-	machine.h 
 	sysv.h
 )
 
@@ -90,7 +89,6 @@ SET(brlcadinclude_misc
 	conf
 	config_win.h
 	config_win_cmake.h.in
-	sed4
 	)
 
 INSTALL(FILES ${brlcadinclude_required} DESTINATION include/brlcad)

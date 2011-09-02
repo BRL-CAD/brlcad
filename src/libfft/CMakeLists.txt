@@ -16,17 +16,17 @@ SET(FFT_GEN_SRCS "")
 
 FOREACH(filenum ${FFT_NUMLIST})
   ADD_CUSTOM_COMMAND(
-    OUTPUT rfft${filenum}.c
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/rfft${filenum}.c
     COMMAND fftc ${filenum} > ${CMAKE_CURRENT_BINARY_DIR}/rfft${filenum}.c
     DEPENDS fftc
   )
-  SET(FFT_GEN_SRCS "${FFT_GEN_SRCS};rfft${filenum}.c")
+  SET(FFT_GEN_SRCS "${FFT_GEN_SRCS};${CMAKE_CURRENT_BINARY_DIR}/rfft${filenum}.c")
   ADD_CUSTOM_COMMAND(
-    OUTPUT irfft${filenum}.c
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/irfft${filenum}.c
     COMMAND ifftc ${filenum} > ${CMAKE_CURRENT_BINARY_DIR}/irfft${filenum}.c
     DEPENDS ifftc
   )
-  SET(FFT_GEN_SRCS "${FFT_GEN_SRCS};irfft${filenum}.c")
+  SET(FFT_GEN_SRCS "${FFT_GEN_SRCS};${CMAKE_CURRENT_BINARY_DIR}/irfft${filenum}.c")
 ENDFOREACH(filenum ${FFT_NUMLIST})
 
 SET(LIBFFT_SRCS
