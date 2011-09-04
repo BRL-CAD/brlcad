@@ -42,29 +42,30 @@
  * Prints the 16 by 16 transform matrices for debugging
  *
  */
-void print_matrices(struct bu_vls *result_str, mat_t t, btScalar *m)
+void print_matrices(struct simulation_params *sim_params, char *rb_namep, mat_t t, btScalar *m)
 {
 	int i, j;
 
-	bu_vls_printf(result_str,"------------Transformation matrices(Debug)--------------\n");
+	bu_vls_printf(sim_params->result_str, "------------Transformation matrices(%s)--------------\n",
+			rb_namep);
 
 	for (i=0 ; i<4 ; i++) {
 		for (j=0 ; j<4 ; j++) {
-			bu_vls_printf(result_str,"t[%d]: %f\t", (i*4 + j), t[i*4 + j] );
+			bu_vls_printf(sim_params->result_str, "t[%d]: %f\t", (j*4 + i), t[j*4 + i] );
 		}
-		bu_vls_printf(result_str,"\n");
+		bu_vls_printf(sim_params->result_str, "\n");
 	}
 
-	bu_vls_printf(result_str,"\n");
+	bu_vls_printf(sim_params->result_str, "\n");
 
 	for (i=0 ; i<4 ; i++) {
 		for (j=0 ; j<4 ; j++) {
-			bu_vls_printf(result_str,"m[%d]: %f\t", (j*4 + i), m[j*4 + i] );
+			bu_vls_printf(sim_params->result_str, "m[%d]: %f\t", (j*4 + i), m[j*4 + i] );
 		}
-		bu_vls_printf(result_str,"\n");
+		bu_vls_printf(sim_params->result_str, "\n");
 	}
 
-	bu_vls_printf(result_str,"-------------------------------------------------------\n");
+	bu_vls_printf(sim_params->result_str, "-------------------------------------------------------\n");
 
 }
 
@@ -88,7 +89,7 @@ int add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_p
 
 		// Check if we should add a ground plane
 		if(strcmp(current_node->rb_namep, sim_params->ground_plane_name) == 0){
-			// Add a static ground plane : can be controlled by an option : TODO
+			// Add a static ground plane : should be controlled by an option : TODO
 			btCollisionShape* groundShape = new btBoxShape(btVector3(current_node->bb_dims[0]/2,
 																	 current_node->bb_dims[1]/2,
 																	 current_node->bb_dims[2]/2));
@@ -97,6 +98,11 @@ int add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_p
 														btVector3(current_node->bb_center[0],
 																  current_node->bb_center[1],
 																  current_node->bb_center[2])));
+
+	/*		btCollisionShape* groundShape = new btStaticPlaneShape(btVector3(0,0,1),1);
+			btDefaultMotionState* groundMotionState =
+					new btDefaultMotionState(btTransform(btQuaternion(0,0,0,1),btVector3(0,0,-1)));*/
+
 			btRigidBody::btRigidBodyConstructionInfo
 					groundRigidBodyCI(0,groundMotionState,groundShape,btVector3(0,0,0));
 			btRigidBody* groundRigidBody = new btRigidBody(groundRigidBodyCI);
@@ -198,13 +204,13 @@ int get_transforms(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_par
 
 			}
 
-			//Copy the transform matrix : transpose to convert from column major to row major
-			current_node->t[0]  = m[0]; current_node->t[1]  = m[4]; current_node->t[2]  = m[8];  current_node->t[3]  = m[12];
-			current_node->t[4]  = m[1]; current_node->t[5]  = m[5]; current_node->t[6]  = m[9];  current_node->t[7]  = m[13];
-			current_node->t[8]  = m[2]; current_node->t[9]  = m[6]; current_node->t[10] = m[10]; current_node->t[11] = m[14];
-			current_node->t[12] = m[3]; current_node->t[13] = m[7]; current_node->t[14] = m[11]; current_node->t[15] = m[15];
+			//Copy the transform matrix
+			current_node->m[0] = m[0]; current_node->m[4]  = m[4]; current_node->m[8]  = m[8];  current_node->m[12] = m[12];
+			current_node->m[1] = m[1]; current_node->m[5]  = m[5]; current_node->m[9]  = m[9];  current_node->m[13] = m[13];
+			current_node->m[2] = m[2]; current_node->m[6]  = m[6]; current_node->m[10] = m[10]; current_node->m[14] = m[14];
+			current_node->m[3] = m[3]; current_node->m[7]  = m[7]; current_node->m[11] = m[11]; current_node->m[15] = m[15];
 
-			print_matrices(sim_params->result_str, current_node->t, m);
+			//print_matrices(sim_params, current_node->rb_namep, current_node->m, m);
 
 		}
 	}
@@ -214,7 +220,7 @@ int get_transforms(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_par
 
 
 /**
- * Cleanup the physics collision shape, rigid body etc
+ * Cleanup the physics collision shapes, rigid bodies etc
  *
  */
 int cleanup(btDiscreteDynamicsWorld* dynamicsWorld,

@@ -39,7 +39,7 @@ struct rigid_body {
     char *rb_namep;                 /**< @brief pointer to name string */
     point_t bb_min, bb_max;         /**< @brief body bb bounds */
     point_t bb_center, bb_dims;     /**< @brief bb center and dimensions */
-    mat_t t;                        /**< @brief current transformation matrix */
+    mat_t m;                        /**< @brief transformation matrix from Bullet */
     struct directory *dp;           /**< @brief directory pointer to the related region */
     struct rigid_body *next;        /**< @brief link to next body */
 };
