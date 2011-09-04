@@ -95,6 +95,7 @@ fcheck fakeroot
 
 if test "$1" = "-b" ;then
     fcheck build-essential
+    fcheck make
     fcheck cmake
     fcheck libtool
     fcheck bc

@@ -2,7 +2,7 @@ Source: brlcad
 Section: graphics
 Priority: extra
 Maintainer: Jordi Sayol <g.sayol@yahoo.es>
-Build-Depends: build-essential, fakeroot, debhelper (>= 7.0.0), cmake, bison, flex, libxi-dev, xsltproc, libgl1-mesa-dev, libpango1.0-dev
+Build-Depends: build-essential, fakeroot, debhelper (>= 7.0.0), make (>= 3.8.0), cmake, bison, flex, libxi-dev, xsltproc, libgl1-mesa-dev, libpango1.0-dev
 Standards-Version: 3.9.1
 Homepage: http://brlcad.org/
 Vcs-Svn: https://brlcad.svn.sourceforge.net/svnroot/brlcad/

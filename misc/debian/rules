@@ -29,7 +29,8 @@ build-stamp:
 		  -DCMAKE_BUILD_TYPE=Release \
 		  -DCMAKE_INSTALL_PREFIX=/usr/brlcad \
 		  -DDATA_DIR=share \
-		  -DMAN_DIR=share/man
+		  -DMAN_DIR=share/man \
+		  -DBRLCAD_BUNDLED_LIBS=BUNDLED
 
 	$(MAKE) $(PARALLEL_OPTIONS)
 

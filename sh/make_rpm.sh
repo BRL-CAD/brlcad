@@ -81,6 +81,7 @@ if test "$DNAME" = "fedora" ;then
     fcheck rpm-build
     fcheck fakeroot
     fcheck gcc-c++
+    fcheck make
     fcheck cmake
     fcheck libtool
     fcheck bc
@@ -97,6 +98,7 @@ if test "$DNAME" = "openSUSE" ;then
     fcheck rpm
     fcheck fakeroot
     fcheck gcc-c++
+    fcheck make
     fcheck cmake
     fcheck libtool
     fcheck bc
@@ -147,7 +149,8 @@ cmake -DBRLCAD-ENABLE_OPTIMIZED_BUILD=ON \
       -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_INSTALL_PREFIX=/usr/brlcad \
       -DDATA_DIR=share \
-      -DMAN_DIR=share/man
+      -DMAN_DIR=share/man \
+      -DBRLCAD_BUNDLED_LIBS=BUNDLED
 make -j$NJOBS
 fakeroot make install DESTDIR=`pwd`"/$TMPDIR/tmp"
 
