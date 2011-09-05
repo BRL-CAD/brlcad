@@ -132,6 +132,7 @@ static const struct t_op mop2[] = {
 struct exists_data {
 	char **t_wp;
 	struct t_op const *t_wp_op;
+	struct bu_vls *result;
 };
 
 static int oexpr(enum token, struct exists_data *);
@@ -276,30 +277,34 @@ primary(enum token n, struct exists_data *ed)
                 if ((nn = t_lex(*++(ed->t_wp), ed)) == RPAREN)
                         return 0;       /* missing expression */
                 res = oexpr(nn, ed);
-                /*if (t_lex(*++(ed->t_wp), ed) != RPAREN)
-                        syntax(NULL, "closing paren expected");*/
+                if (t_lex(*++(ed->t_wp), ed) != RPAREN) {
+			bu_vls_printf(ed->result,"closing paren expected");
+			return 1;
+			}
                 return res;
         }
-        if (ed->t_wp_op && ed->t_wp_op->op_type == UNOP) {
-                /* unary expression */
-                if (*++(ed->t_wp) == NULL)
-                        /*syntax(ed->t_wp_op->op_text, "argument expected");*/
-                switch (n) {
-                case OCOMB:
-                        /*return is_comb();*/
-                case OEXIST:
-                        /*return db_lookup();*/
-                case ONULL:
-                        /*return is_null();*/
-                case OPRIM:
-                        /*return is_prim();*/
-                case OBVOL:
-                        /*return has_vol();*/
-                default:
-			return 1;
-                        /* not reached */
-                }
-        }
+	if (ed->t_wp_op && ed->t_wp_op->op_type == UNOP) {
+	    /* unary expression */
+	    if (*++(ed->t_wp) == NULL) {
+		bu_vls_printf(ed->result,"argument expected");
+		return 1;
+	    }
+	    switch (n) {
+		case OCOMB:
+		    /*return is_comb();*/
+		case OEXIST:
+		    /*return db_lookup();*/
+		case ONULL:
+		    /*return is_null();*/
+		case OPRIM:
+		    /*return is_prim();*/
+		case OBVOL:
+		    /*return has_vol();*/
+		default:
+		    return 1;
+		    /* not reached */
+	    }
+	}
 
         if (t_lex(ed->t_wp[1], ed), ed->t_wp_op && ed->t_wp_op->op_type == BINOP) {
                 return binop(ed);
@@ -318,8 +323,10 @@ binop(struct exists_data *ed)
         (void) t_lex(*++(ed->t_wp), ed);
         op = ed->t_wp_op;
 
-        if ((opnd2 = *++(ed->t_wp)) == NULL) return 1;
-                /*syntax(op->op_text, "argument expected");*/
+	if ((opnd2 = *++(ed->t_wp)) == NULL) {
+	    bu_vls_printf(ed->result,"argument expected");
+	    return 1;
+	}
 
         switch (op->op_num) {
         case EXTEQ:
