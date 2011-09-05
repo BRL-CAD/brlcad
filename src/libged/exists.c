@@ -126,9 +126,11 @@ static const struct t_op mop4[] = {
 
 static const struct t_op mop2[] = {
         {"N",   ONNULL,  UNOP},
+	{"a",   BAND,    BBINOP},
         {"c",   OCOMB,   UNOP},
         {"e",   OEXIST,  UNOP},
         {"n",   ONULL,   UNOP},
+	{"o",   BOR,     BBINOP},
         {"p",   OPRIM,   UNOP},
         {"v",   OBVOL,   UNOP},
 };
