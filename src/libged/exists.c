@@ -57,9 +57,10 @@
 
 #include "./ged_private.h"
 
-/* New exists code from test - some rework to do before even initial
- * compilation trials, so commiting incremental stages turned off.*/
-#if 0
+#ifndef __arraycount
+#  define __arraycount(__x)       (sizeof(__x) / sizeof(__x[0]))
+#endif
+
 enum token {
         EOI,
         OEXIST,
@@ -128,15 +129,17 @@ static const struct t_op mop2[] = {
         {"v",   OBVOL,   UNOP},
 };
 
-static char **t_wp;
-static struct t_op const *t_wp_op;
+struct exists_data {
+	char **t_wp;
+	struct t_op const *t_wp_op;
+};
 
-static int oexpr(enum token);
-static int aexpr(enum token);
-static int nexpr(enum token);
-static int primary(enum token);
-static int binop(void);
-static int isoperand(void);
+static int oexpr(enum token, struct exists_data *);
+static int aexpr(enum token, struct exists_data *);
+static int nexpr(enum token, struct exists_data *);
+static int primary(enum token, struct exists_data *);
+static int binop(struct exists_data *);
+static int isoperand(struct exists_data *);
 
 #define VTOC(x) (const unsigned char *)((const struct t_op *)x)->op_text
 
@@ -186,73 +189,73 @@ findop(const char *s)
 
 
 static enum token
-t_lex(char *s)
+t_lex(char *s, struct exists_data *ed)
 {
         struct t_op const *op;
 
         if (s == NULL) {
-                t_wp_op = NULL;
+                ed->t_wp_op = NULL;
                 return EOI;
         }
 
         if ((op = findop(s)) != NULL) {
-                if (!((op->op_type == UNOP && isoperand()) ||
-                    (op->op_num == LPAREN && *(t_wp+1) == 0))) {
-                        t_wp_op = op;
+                if (!((op->op_type == UNOP && isoperand(ed)) ||
+                    (op->op_num == LPAREN && *(ed->t_wp+1) == 0))) {
+                        ed->t_wp_op = op;
                         return op->op_num;
                 }
         }
-        t_wp_op = NULL;
+        ed->t_wp_op = NULL;
         return OPERAND;
 }
 
 
 static int
-oexpr(enum token n)
+oexpr(enum token n, struct exists_data *ed)
 {
         int res;
 
-        res = aexpr(n);
-        if (*t_wp == NULL)
+        res = aexpr(n, ed);
+        if (*(ed->t_wp) == NULL)
                 return res;
-        if (t_lex(*++t_wp) == BOR)
-                return oexpr(t_lex(*++t_wp)) || res;
-        t_wp--;
+        if (t_lex(*++(ed->t_wp), ed) == BOR)
+                return oexpr(t_lex(*++(ed->t_wp), ed), ed) || res;
+        (ed->t_wp)--;
         return res;
 }
 
 static int
-aexpr(enum token n)
+aexpr(enum token n, struct exists_data *ed)
 {
         int res;
 
-        res = nexpr(n);
-        if (*t_wp == NULL)
+        res = nexpr(n, ed);
+        if (*(ed->t_wp) == NULL)
                 return res;
-        if (t_lex(*++t_wp) == BAND)
-                return aexpr(t_lex(*++t_wp)) && res;
-        t_wp--;
+        if (t_lex(*++(ed->t_wp), ed) == BAND)
+                return aexpr(t_lex(*++(ed->t_wp), ed), ed) && res;
+        (ed->t_wp)--;
         return res;
 }
 
 static int
-nexpr(enum token n)
+nexpr(enum token n, struct exists_data *ed)
 {
 
         if (n == UNOT)
-                return !nexpr(t_lex(*++t_wp));
-        return primary(n);
+                return !nexpr(t_lex(*++(ed->t_wp), ed), ed);
+        return primary(n, ed);
 }
 
 static int
-isoperand(void)
+isoperand(struct exists_data *ed)
 {
         struct t_op const *op;
         char *s, *t;
 
-        if ((s  = *(t_wp+1)) == 0)
+        if ((s  = *((ed->t_wp)+1)) == 0)
                 return 1;
-        if ((t = *(t_wp+2)) == 0)
+        if ((t = *((ed->t_wp)+2)) == 0)
                 return 0;
         if ((op = findop(s)) != NULL) 
                 return op->op_type == BINOP && (t[0] != ')' || t[1] != '\0');
@@ -262,7 +265,7 @@ isoperand(void)
 /* The code below starts the part that still needs reworking for the
  * new geometry based tokens/logic */
 static int
-primary(enum token n)
+primary(enum token n, struct exists_data *ed)
 {
         enum token nn;
         int res;
@@ -270,94 +273,95 @@ primary(enum token n)
         if (n == EOI)
                 return 0;               /* missing expression */
         if (n == LPAREN) {
-                if ((nn = t_lex(*++t_wp)) == RPAREN)
+                if ((nn = t_lex(*++(ed->t_wp), ed)) == RPAREN)
                         return 0;       /* missing expression */
-                res = oexpr(nn);
-                if (t_lex(*++t_wp) != RPAREN)
-                        syntax(NULL, "closing paren expected");
+                res = oexpr(nn, ed);
+                /*if (t_lex(*++(ed->t_wp), ed) != RPAREN)
+                        syntax(NULL, "closing paren expected");*/
                 return res;
         }
-        if (t_wp_op && t_wp_op->op_type == UNOP) {
+        if (ed->t_wp_op && ed->t_wp_op->op_type == UNOP) {
                 /* unary expression */
-                if (*++t_wp == NULL)
-                        syntax(t_wp_op->op_text, "argument expected");
+                if (*++(ed->t_wp) == NULL)
+                        /*syntax(ed->t_wp_op->op_text, "argument expected");*/
                 switch (n) {
-                case STREZ:
-                        return strlen(*t_wp) == 0;
-                case STRNZ:
-                        return strlen(*t_wp) != 0;
-                case FILTT:
-                        return isatty((int)getn(*t_wp));
+                case OCOMB:
+                        /*return is_comb();*/
+                case OEXIST:
+                        /*return db_lookup();*/
+                case ONULL:
+                        /*return is_null();*/
+                case OPRIM:
+                        /*return is_prim();*/
+                case OBVOL:
+                        /*return has_vol();*/
                 default:
-                        return filstat(*t_wp, n);
+			return 1;
+                        /* not reached */
                 }
         }
 
-        if (t_lex(t_wp[1]), t_wp_op && t_wp_op->op_type == BINOP) {
-                return binop();
+        if (t_lex(ed->t_wp[1], ed), ed->t_wp_op && ed->t_wp_op->op_type == BINOP) {
+                return binop(ed);
         }
 
-        return strlen(*t_wp) > 0;
+        return strlen(*(ed->t_wp)) > 0;
 }
 
 static int
-binop(void)
+binop(struct exists_data *ed)
 {
         const char *opnd1, *opnd2;
         struct t_op const *op;
 
-        opnd1 = *t_wp;
-        (void) t_lex(*++t_wp);
-        op = t_wp_op;
+        opnd1 = *(ed->t_wp);
+        (void) t_lex(*++(ed->t_wp), ed);
+        op = ed->t_wp_op;
 
-        if ((opnd2 = *++t_wp) == NULL)
-                syntax(op->op_text, "argument expected");
+        if ((opnd2 = *++(ed->t_wp)) == NULL) return 1;
+                /*syntax(op->op_text, "argument expected");*/
 
         switch (op->op_num) {
-        case STREQ:
-                return strcmp(opnd1, opnd2) == 0;
-        case STRNE:
-                return strcmp(opnd1, opnd2) != 0;
-        case STRLT:
-                return strcmp(opnd1, opnd2) < 0;
-        case STRGT:
-                return strcmp(opnd1, opnd2) > 0;
-        case INTEQ:
-                return getn(opnd1) == getn(opnd2);
-        case INTNE:
-                return getn(opnd1) != getn(opnd2);
-        case INTGE:
-                return getn(opnd1) >= getn(opnd2);
-        case INTGT:
-                return getn(opnd1) > getn(opnd2);
-        case INTLE:
-                return getn(opnd1) <= getn(opnd2);
-        case INTLT:
-                return getn(opnd1) < getn(opnd2);
-        case FILNT:
-                return newerf(opnd1, opnd2);
-        case FILOT:
-                return olderf(opnd1, opnd2);
-        case FILEQ:
-                return equalf(opnd1, opnd2);
+        case EXTEQ:
+		/*bu_extern compare*/
+        case EXTNE:
+		/*bu_extern compare*/
+        case EXTLT:
+		/*bu_extern compare*/
+        case EXTGT:
+		/*bu_extern compare*/
+        case BVOLEQ:
+                /*return bbox_vol(opnd1) == bbox_vol(opnd2);*/
+        case BVOLNE:
+                /*return bbox_vol(opnd1) != bbox_vol(opnd2);*/
+        case BVOLGE:
+                /*return bbox_vol(opnd1) >= bbox_vol(opnd2);*/
+        case BVOLGT:
+                /*return bbox_vol(opnd1) > bbox_vol(opnd2);*/
+        case BVOLLE:
+                /*return bbox_vol(opnd1) <= bbox_vol(opnd2);*/
+        case BVOLLT:
+                /*return bbox_vol(opnd1) < bbox_vol(opnd2);*/
         default:
-                abort();
+                return 1;
                 /* NOTREACHED */
         }
 }
 
 
-
-#endif
-
 /**
  * Checks for the existence of a specified object.
  */
 int
-ged_exists(struct ged *gedp, int argc, const char *argv[])
+ged_exists(struct ged *gedp, int argc, const char *argv_orig[])
 {
     struct directory *dp;
     static const char *usage = "object";
+    /*
+    struct exists_data ed;
+    int result;
+    char **argv = bu_dup_argv(argc, argv_orig);
+    */
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -367,16 +371,22 @@ ged_exists(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv_orig[0], usage);
 	return GED_HELP;
     }
-
     if (argc != 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+       bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv_orig[0], usage);
+       return GED_ERROR;
     }
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET);
+/*
+    ed.t_wp = &argv[1];
+    result = !oexpr(t_lex(*(ed.t_wp), &ed),&ed);
+    if (*(ed.t_wp) != NULL && *++(ed.t_wp) != NULL)
+    	result = GED_ERROR;
+*/
+
+    dp = db_lookup(gedp->ged_wdbp->dbip, argv_orig[1], LOOKUP_QUIET);
     if (dp == RT_DIR_NULL)
 	bu_vls_printf(gedp->ged_result_str, "0");
     else
