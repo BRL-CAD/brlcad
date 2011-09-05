@@ -61,11 +61,14 @@
 #  define __arraycount(__x)       (sizeof(__x) / sizeof(__x[0]))
 #endif
 
+/* expression handling logic */
+
 enum token {
         EOI,
         OEXIST,
         OCOMB,
         ONULL,
+        ONNULL,
         OPRIM,
         OBVOL,
         EXTEQ,
@@ -112,7 +115,7 @@ static const struct t_op cop2[] = {
         {"!=",  EXTNE,  BINOP},
 };
 
-static const struct t_op mop3[] = {
+static const struct t_op mop4[] = {
         {"beq", BVOLEQ,  BINOP},
         {"bge", BVOLGE,  BINOP},
         {"bgt", BVOLGT,  BINOP},
@@ -122,6 +125,7 @@ static const struct t_op mop3[] = {
 };
 
 static const struct t_op mop2[] = {
+        {"N",   ONNULL,  UNOP},
         {"c",   OCOMB,   UNOP},
         {"e",   OEXIST,  UNOP},
         {"n",   ONULL,   UNOP},
@@ -133,7 +137,9 @@ struct exists_data {
 	char **t_wp;
 	struct t_op const *t_wp_op;
 	struct bu_vls *result;
+	struct ged *gedp;
 };
+
 
 static int oexpr(enum token, struct exists_data *);
 static int aexpr(enum token, struct exists_data *);
@@ -141,6 +147,9 @@ static int nexpr(enum token, struct exists_data *);
 static int primary(enum token, struct exists_data *);
 static int binop(struct exists_data *);
 static int isoperand(struct exists_data *);
+
+int db_object_exists(struct exists_data *);
+int db_object_exists_and_non_null(struct exists_data *);
 
 #define VTOC(x) (const unsigned char *)((const struct t_op *)x)->op_text
 
@@ -154,13 +163,11 @@ compare1(const void *va, const void *vb)
 }
 
 static int
-compare2(const void *va, const void *vb)
+compare3(const void *va, const void *vb)
 {
-        const unsigned char *a = va;
-        const unsigned char *b = VTOC(vb);
-        int z = a[0] - b[0];
-
-        return z ? z : (a[1] - b[1]);
+        const char *a = va;
+        const char *b = (const char *)VTOC(vb);
+	return strcmp(a, b);
 }
 
 static struct t_op const *
@@ -172,11 +179,11 @@ findop(const char *s)
                 if (s[2] == '\0')
                         return bsearch(s + 1, mop2, __arraycount(mop2),
                             sizeof(*mop2), compare1);
-                else if (s[3] != '\0')
+                else if (s[4] != '\0')
                         return NULL;
                 else
-                        return bsearch(s + 1, mop3, __arraycount(mop3),
-                            sizeof(*mop3), compare2);
+                        return bsearch(s + 1, mop4, __arraycount(mop4),
+                            sizeof(*mop4), compare3);
         } else {
                 if (s[1] == '\0')
                         return bsearch(s, cop, __arraycount(cop), sizeof(*cop),
@@ -285,24 +292,34 @@ primary(enum token n, struct exists_data *ed)
         }
 	if (ed->t_wp_op && ed->t_wp_op->op_type == UNOP) {
 	    /* unary expression */
-	    if (*++(ed->t_wp) == NULL) {
-		bu_vls_printf(ed->result,"argument expected");
-		return 1;
+	    if (n != ONNULL) {
+		if (*++(ed->t_wp) == NULL) {
+		    bu_vls_printf(ed->result,"argument expected");
+		    return 1;
+		}
 	    }
 	    switch (n) {
 		case OCOMB:
+		    bu_log("comb case");
 		    /*return is_comb();*/
 		case OEXIST:
+		    return db_object_exists(ed);
 		    /*return db_lookup();*/
 		case ONULL:
+		    bu_log("null case");
 		    /*return is_null();*/
+		case ONNULL:
+		    /* default case */
+		    return db_object_exists_and_non_null(ed);
 		case OPRIM:
+		    bu_log("primitive case");
 		    /*return is_prim();*/
 		case OBVOL:
+		    bu_log("bounding volume case");
 		    /*return has_vol();*/
 		default:
-		    return 1;
 		    /* not reached */
+		    return 1;
 	    }
 	}
 
@@ -330,29 +347,60 @@ binop(struct exists_data *ed)
 
         switch (op->op_num) {
         case EXTEQ:
-		/*bu_extern compare*/
+	    bu_log("extern eq case");
+	    /*bu_extern compare*/
         case EXTNE:
+	    bu_log("extern neq case");
 		/*bu_extern compare*/
         case EXTLT:
+	    bu_log("extern lt case");
 		/*bu_extern compare*/
         case EXTGT:
+	    bu_log("extern gt case");
 		/*bu_extern compare*/
         case BVOLEQ:
+	    bu_log("vol eq case");
                 /*return bbox_vol(opnd1) == bbox_vol(opnd2);*/
         case BVOLNE:
+	    bu_log("vol neq case");
                 /*return bbox_vol(opnd1) != bbox_vol(opnd2);*/
         case BVOLGE:
+	    bu_log("vol geq case");
                 /*return bbox_vol(opnd1) >= bbox_vol(opnd2);*/
         case BVOLGT:
+	    bu_log("vol gt case");
                 /*return bbox_vol(opnd1) > bbox_vol(opnd2);*/
         case BVOLLE:
+	    bu_log("vol leq case");
                 /*return bbox_vol(opnd1) <= bbox_vol(opnd2);*/
         case BVOLLT:
+	    bu_log("vol lt case");
                 /*return bbox_vol(opnd1) < bbox_vol(opnd2);*/
         default:
                 return 1;
                 /* NOTREACHED */
         }
+}
+
+
+/* test functions */
+int db_object_exists(struct exists_data *ed){
+	struct directory *dp = NULL;
+        dp = db_lookup(ed->gedp->ged_wdbp->dbip, *(ed->t_wp), LOOKUP_QUIET);
+	if (!dp) return 1;
+	return 0;
+}
+
+int db_object_exists_and_non_null(struct exists_data *ed){
+        int result;
+	result = db_object_exists(ed);
+	if (!result) {
+	     /* db_lookup passes: todo - check for null database object */
+	     return result;
+	} else {
+	     /* db_lookup fails - no go */
+	     return result;
+	}
 }
 
 
@@ -362,13 +410,11 @@ binop(struct exists_data *ed)
 int
 ged_exists(struct ged *gedp, int argc, const char *argv_orig[])
 {
-    struct directory *dp;
+/*    struct directory *dp;*/
     static const char *usage = "object";
-    /*
     struct exists_data ed;
     int result;
     char **argv = bu_dup_argv(argc, argv_orig);
-    */
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -381,23 +427,29 @@ ged_exists(struct ged *gedp, int argc, const char *argv_orig[])
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv_orig[0], usage);
 	return GED_HELP;
     }
+    /*
     if (argc != 2) {
        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv_orig[0], usage);
        return GED_ERROR;
     }
+    */
 
-/*
     ed.t_wp = &argv[1];
-    result = !oexpr(t_lex(*(ed.t_wp), &ed),&ed);
+    ed.gedp = gedp;
+    ed.result = gedp->ged_result_str;
+    if(!findop(*(ed.t_wp))) {
+    	ed.t_wp_op = findop("-N");
+	result = !primary(ONNULL, &ed);
+    } else {
+	result = !oexpr(t_lex(*(ed.t_wp), &ed),&ed);
+    }
     if (*(ed.t_wp) != NULL && *++(ed.t_wp) != NULL)
     	result = GED_ERROR;
-*/
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, argv_orig[1], LOOKUP_QUIET);
-    if (dp == RT_DIR_NULL)
-	bu_vls_printf(gedp->ged_result_str, "0");
-    else
+    if (result)
 	bu_vls_printf(gedp->ged_result_str, "1");
+    else
+	bu_vls_printf(gedp->ged_result_str, "0");
 
     return GED_OK;
 }
