@@ -1233,7 +1233,12 @@ ENDIF(WIN32)
 # For Windows, we need some dlls to be redistributed with the
 # installer
 IF(MSVC)
-	INCLUDE(InstallRequiredSystemLibraries)
+    # By default, do not warn when built on machines using only VS Express
+    # From: http://www.cmake.org/pipermail/cmake/2011-May/044166.html
+    IF(NOT DEFINED CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_NO_WARNINGS)
+      SET(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_NO_WARNINGS ON)
+    ENDIF()
+    INCLUDE(InstallRequiredSystemLibraries)
 ENDIF(MSVC)
 
 # Before we finalize, set some specific global linker flags
