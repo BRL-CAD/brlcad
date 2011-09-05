@@ -66,17 +66,17 @@ enum token {
         OCOMB,
         ONULL,
         OPRIM,
-        OVOL,
+        OBVOL,
         EXTEQ,
         EXTNE,
         EXTGT,
         EXTLT,
-        VOLEQ,
-        VOLNE,
-        VOLGE,
-        VOLGT,
-        VOLLE,
-        VOLLT,
+        BVOLEQ,
+        BVOLNE,
+        BVOLGE,
+        BVOLGT,
+        BVOLLE,
+        BVOLLT,
         UNOT,
         BAND,
         BOR,
@@ -112,12 +112,12 @@ static const struct t_op cop2[] = {
 };
 
 static const struct t_op mop3[] = {
-        {"beq", VOLEQ,  BINOP},
-        {"bge", VOLGE,  BINOP},
-        {"bgt", VOLGT,  BINOP},
-        {"ble", VOLLE,  BINOP},
-        {"blt", VOLLT,  BINOP},
-        {"bne", VOLNE,  BINOP},
+        {"beq", BVOLEQ,  BINOP},
+        {"bge", BVOLGE,  BINOP},
+        {"bgt", BVOLGT,  BINOP},
+        {"ble", BVOLLE,  BINOP},
+        {"blt", BVOLLT,  BINOP},
+        {"bne", BVOLNE,  BINOP},
 };
 
 static const struct t_op mop2[] = {
@@ -125,7 +125,7 @@ static const struct t_op mop2[] = {
         {"e",   OEXIST,  UNOP},
         {"n",   ONULL,   UNOP},
         {"p",   OPRIM,   UNOP},
-        {"v",   OVOL,    UNOP},
+        {"v",   OBVOL,   UNOP},
 };
 
 static char **t_wp;
