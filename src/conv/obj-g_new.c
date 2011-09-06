@@ -63,16 +63,8 @@
 #include "obj_parser.h"
 
 static char *usage =
-    "Usage: %s [options] -u units -o type input.obj output.g\n\n"
+    "Usage: %s [options] input.obj output.g\n\n"
 
-    "Required options:\n"
-    "  -u units\tSelect units for the obj file: (m|cm|mm|ft|in).\n"
-    "  -o type\tSelect the type used for bots that aren't closed volumes:\n"
-    "\t\t\tn = plate nocos\n"
-    "\t\t\tp = plate\n"
-    "\t\t\ts = surface\n\n"
-
-    "Other options:\n"
     "  -c\t\tContinue processing on nmg-bomb. Conversion will fall-back to\n"
     "\t\tnative bot mode if a fatal error occurs when using the nmg or\n"
     "\t\tbot via nmg modes.\n"
@@ -92,6 +84,10 @@ static char *usage =
     "\t\t\tb = native bot\n"
     "\t\t\tn = nmg\n"
     "\t\t\tv = bot via nmg (default)\n"
+    "  -o type\tSelect the type used for bots that aren't closed volumes:\n"
+    "\t\t\tn = plate nocos\n"
+    "\t\t\tp = plate\n"
+    "\t\t\ts = surface (default)\n"
     "  -p\t\tCreates a plot/overlay (.pl) file of open edges for bots that\n"
     "\t\taren't closed volumes. <bot_name>.pl will be created in the\n"
     "\t\tcurrent directory and will overwrite any exisiting file with the\n"
@@ -100,6 +96,7 @@ static char *usage =
     "\t\tif they are within this distance of one another. Default is\n"
     "\t\t.0005mm. You should not change this value without setting the\n"
     "\t\traytracer tolerance to match it.\n"
+    "  -u units\tSelect units for the obj file: (m|cm|mm|ft|in). Default is m.\n"
     "  -v\t\tOut verbose user info to stderr. Each occurrance of this option\n"
     "\t\tin the option list increases the verbosity level.\n"
     "  -x flag\tSpecify rt debug flag bits (see raytrace.h).\n"
@@ -3216,7 +3213,7 @@ main(int argc, char **argv)
     int nmg_face_test_type = TEST_NUM_VERT;
     int native_face_test_type = TEST_ALL;
     int nmg_output_mode = OUT_VBOT;
-    int open_bot_output_mode = RT_BOT_PLATE;
+    int open_bot_output_mode = RT_BOT_SURFACE;
     /* default: do not create plot files of open edges for groupings */
     int plot_mode = PLOT_OFF;
     /* default: import face normals if included in obj file */
@@ -3225,7 +3222,6 @@ main(int argc, char **argv)
     char mode_option = 'v';      /* default: import as bot-via-nmg */
     fastf_t conv_factor = 0.0;
     fastf_t bot_thickness = 0.0;
-    int user_defined_units_flag = 0;
     int user_bot_thickness_flag = 0;
     int user_open_bot_output_mode_flag = 0;
     time_t start_time;
@@ -3235,6 +3231,9 @@ main(int argc, char **argv)
     time_t overall_end_time;
     time_t overall_elapsed_time;
     struct tm *timep;
+
+    /* set default conv factor */
+    str2mm("m", &conv_factor);
 
     /* the raytracer tolerance values (rtip->rti_tol) need to match
      * these otherwise raytrace errors will result. the defaults for
@@ -3324,7 +3323,6 @@ main(int argc, char **argv)
 		if (str2mm(bu_optarg, &conv_factor)) {
 		    bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
 		}
-		user_defined_units_flag = 1;
 		break;
 	    case 'g': /* face grouping */
 		switch (bu_optarg[0]) {
@@ -3379,20 +3377,6 @@ main(int argc, char **argv)
     input_file_name = argv[bu_optind];
     bu_optind++;
     brlcad_file_name = argv[bu_optind];
-
-    /* if user did not specify units, abort since units are required */
-    if (!user_defined_units_flag) {
-	bu_log("'units_str' was not specified but is required\n");
-	bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
-    }
-
-    /* if user did not specify bot type of open bots, abort since this is
-     * required
-     */
-    if (!user_open_bot_output_mode_flag) {
-	bu_log("'open_bot_type' was not specified but is required\n");
-	bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
-    }
 
     /* if plate bots were selected as the open bot output type but the
      * user did not specify plate bot thickness, abort since thickness
