@@ -229,7 +229,7 @@ t_lex(char *s, struct exists_data *ed)
 	} else {
 	    ed->t_wp_op = NULL;
 	}
-        return OPERAND;
+	return OPERAND;
 }
 
 
@@ -241,8 +241,10 @@ oexpr(enum token n, struct exists_data *ed)
         res = aexpr(n, ed);
         if (*(ed->t_wp) == NULL)
                 return res;
-        if (t_lex(*++(ed->t_wp), ed) == BOR)
-                return oexpr(t_lex(*++(ed->t_wp), ed), ed) || res;
+	if (t_lex(*++(ed->t_wp), ed) == BOR) {
+	    ed->t_wp_op = NULL;
+	    return oexpr(t_lex(*++(ed->t_wp), ed), ed) || res;
+	}
         (ed->t_wp)--;
         return res;
 }
