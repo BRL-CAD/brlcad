@@ -140,6 +140,7 @@ struct exists_data {
 	struct t_op const *t_wp_op;
 	struct bu_vls *result;
 	struct ged *gedp;
+	int no_op;
 };
 
 
@@ -294,7 +295,7 @@ primary(enum token n, struct exists_data *ed)
         }
 	if (ed->t_wp_op && ed->t_wp_op->op_type == UNOP) {
 	    /* unary expression */
-	    if (n != ONNULL) {
+	    if (!ed->no_op) {
 		if (*++(ed->t_wp) == NULL) {
 		    bu_vls_printf(ed->result,"argument expected");
 		    return 1;
@@ -440,9 +441,11 @@ ged_exists(struct ged *gedp, int argc, const char *argv_orig[])
     ed.gedp = gedp;
     ed.result = gedp->ged_result_str;
     if(!findop(*(ed.t_wp))) {
+        ed.no_op = 1;
     	ed.t_wp_op = findop("-N");
 	result = !primary(ONNULL, &ed);
     } else {
+    	ed.no_op = 0;
 	result = !oexpr(t_lex(*(ed.t_wp), &ed),&ed);
     }
     if (*(ed.t_wp) != NULL && *++(ed.t_wp) != NULL)
