@@ -976,7 +976,7 @@ rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol, struct resourc
 
     RT_PG_CK_MAGIC(ip_pg);
 
-    ip_bot = (struct rt_bot_internal *)bu_malloc(sizeof(struct rt_bot_internal), "BOT internal");
+    BU_GETSTRUCT(ip_bot, rt_bot_internal);
     ip_bot->magic = RT_BOT_INTERNAL_MAGIC;
     ip_bot->mode = RT_BOT_SOLID;
     ip_bot->orientation = RT_BOT_CCW;
