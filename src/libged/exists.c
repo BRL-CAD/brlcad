@@ -143,7 +143,7 @@ static const struct t_op mop2[] = {
 struct exists_data {
 	char **t_wp;
 	struct t_op const *t_wp_op;
-	struct bu_vls *result;
+	struct bu_vls *message;
 	struct ged *gedp;
 	int no_op;
 };
@@ -300,11 +300,12 @@ primary(enum token n, struct exists_data *ed)
         if (n == EOI)
                 return 0;               /* missing expression */
         if (n == LPAREN) {
+		ed->t_wp_op = NULL;
                 if ((nn = t_lex(*++(ed->t_wp), ed)) == RPAREN)
                         return 0;       /* missing expression */
                 res = oexpr(nn, ed);
                 if (t_lex(*++(ed->t_wp), ed) != RPAREN) {
-			bu_vls_printf(ed->result,"closing paren expected");
+			bu_vls_printf(ed->message ,"closing paren expected");
 			return 0;
 			}
                 return res;
@@ -313,7 +314,7 @@ primary(enum token n, struct exists_data *ed)
 	    /* unary expression */
 	    if (!ed->no_op) {
 		if (*++(ed->t_wp) == NULL) {
-		    bu_vls_printf(ed->result,"argument expected");
+		    bu_vls_printf(ed->message ,"argument expected");
 		    return 0;
 		}
 	    }
@@ -360,7 +361,7 @@ binop(struct exists_data *ed)
         op = ed->t_wp_op;
 
 	if ((opnd2 = *++(ed->t_wp)) == NULL) {
-	    bu_vls_printf(ed->result,"argument expected");
+	    bu_vls_printf(ed->message ,"argument expected");
 	    return 0;
 	}
 
@@ -432,6 +433,7 @@ ged_exists(struct ged *gedp, int argc, const char *argv_orig[])
 /*    struct directory *dp;*/
     static const char *usage = "object";
     struct exists_data ed;
+    struct bu_vls message;
     int result;
     char **argv = bu_dup_argv(argc, argv_orig);
 
@@ -456,7 +458,8 @@ ged_exists(struct ged *gedp, int argc, const char *argv_orig[])
     ed.t_wp = &argv[1];
     ed.gedp = gedp;
     ed.t_wp_op = NULL;
-    ed.result = gedp->ged_result_str;
+    bu_vls_init(&message);
+    ed.message = &message;
     result = oexpr(t_lex(*(ed.t_wp), &ed),&ed);
 
     if (result)
@@ -464,6 +467,13 @@ ged_exists(struct ged *gedp, int argc, const char *argv_orig[])
     else
 	bu_vls_printf(gedp->ged_result_str, "0");
 
+    if (bu_vls_strlen(ed.message) > 0) {
+	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(ed.message));
+	bu_vls_free(&message);
+	return GED_ERROR;
+    }
+
+    bu_vls_free(&message);
     if (*(ed.t_wp) != NULL && *++(ed.t_wp) != NULL) {
 	return GED_ERROR;
     } else {
