@@ -204,6 +204,7 @@ t_lex(char *s, struct exists_data *ed)
 {
         struct t_op const *op;
 
+	ed->no_op = 0;
         if (s == NULL) {
                 ed->t_wp_op = NULL;
                 return EOI;
@@ -216,7 +217,13 @@ t_lex(char *s, struct exists_data *ed)
                         return op->op_num;
                 }
         }
-        ed->t_wp_op = NULL;
+	if (strlen(*(ed->t_wp)) > 0 && !op && !ed->t_wp_op) {
+	    ed->t_wp_op = findop("-N");
+	    ed->no_op = 1;
+	    return ed->t_wp_op->op_num;
+	} else {
+	    ed->t_wp_op = NULL;
+	}
         return OPERAND;
 }
 
@@ -243,8 +250,10 @@ aexpr(enum token n, struct exists_data *ed)
         res = nexpr(n, ed);
         if (*(ed->t_wp) == NULL)
                 return res;
-        if (t_lex(*++(ed->t_wp), ed) == BAND)
+        if (t_lex(*++(ed->t_wp), ed) == BAND) {
+		ed->t_wp_op = NULL;
                 return aexpr(t_lex(*++(ed->t_wp), ed), ed) && res;
+	}
         (ed->t_wp)--;
         return res;
 }
@@ -289,7 +298,7 @@ primary(enum token n, struct exists_data *ed)
                 res = oexpr(nn, ed);
                 if (t_lex(*++(ed->t_wp), ed) != RPAREN) {
 			bu_vls_printf(ed->result,"closing paren expected");
-			return 1;
+			return 0;
 			}
                 return res;
         }
@@ -298,7 +307,7 @@ primary(enum token n, struct exists_data *ed)
 	    if (!ed->no_op) {
 		if (*++(ed->t_wp) == NULL) {
 		    bu_vls_printf(ed->result,"argument expected");
-		    return 1;
+		    return 0;
 		}
 	    }
 	    switch (n) {
@@ -322,7 +331,7 @@ primary(enum token n, struct exists_data *ed)
 		    /*return has_vol();*/
 		default:
 		    /* not reached */
-		    return 1;
+		    return 0;
 	    }
 	}
 
@@ -330,7 +339,7 @@ primary(enum token n, struct exists_data *ed)
                 return binop(ed);
         }
 
-        return strlen(*(ed->t_wp)) > 0;
+        return 0;
 }
 
 static int
@@ -345,7 +354,7 @@ binop(struct exists_data *ed)
 
 	if ((opnd2 = *++(ed->t_wp)) == NULL) {
 	    bu_vls_printf(ed->result,"argument expected");
-	    return 1;
+	    return 0;
 	}
 
         switch (op->op_num) {
@@ -380,7 +389,7 @@ binop(struct exists_data *ed)
 	    bu_log("vol lt case");
                 /*return bbox_vol(opnd1) < bbox_vol(opnd2);*/
         default:
-                return 1;
+                return 0;
                 /* NOTREACHED */
         }
 }
@@ -390,14 +399,14 @@ binop(struct exists_data *ed)
 int db_object_exists(struct exists_data *ed){
 	struct directory *dp = NULL;
         dp = db_lookup(ed->gedp->ged_wdbp->dbip, *(ed->t_wp), LOOKUP_QUIET);
-	if (!dp) return 1;
+	if (dp) return 1;
 	return 0;
 }
 
 int db_object_exists_and_non_null(struct exists_data *ed){
         int result;
 	result = db_object_exists(ed);
-	if (!result) {
+	if (result) {
 	     /* db_lookup passes: todo - check for null database object */
 	     return result;
 	} else {
@@ -439,24 +448,20 @@ ged_exists(struct ged *gedp, int argc, const char *argv_orig[])
 
     ed.t_wp = &argv[1];
     ed.gedp = gedp;
+    ed.t_wp_op = NULL;
     ed.result = gedp->ged_result_str;
-    if(!findop(*(ed.t_wp))) {
-        ed.no_op = 1;
-    	ed.t_wp_op = findop("-N");
-	result = !primary(ONNULL, &ed);
-    } else {
-    	ed.no_op = 0;
-	result = !oexpr(t_lex(*(ed.t_wp), &ed),&ed);
-    }
-    if (*(ed.t_wp) != NULL && *++(ed.t_wp) != NULL)
-    	result = GED_ERROR;
+    result = oexpr(t_lex(*(ed.t_wp), &ed),&ed);
 
     if (result)
 	bu_vls_printf(gedp->ged_result_str, "1");
     else
 	bu_vls_printf(gedp->ged_result_str, "0");
 
-    return GED_OK;
+    if (*(ed.t_wp) != NULL && *++(ed.t_wp) != NULL) {
+	return GED_ERROR;
+    } else {
+	return GED_OK;
+    }
 }
 
 
