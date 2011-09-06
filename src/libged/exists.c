@@ -102,6 +102,11 @@ struct t_op {
         short op_num, op_type;
 };
 
+/* The following option structures need
+ * to be kept in sorted order for bsearch -
+ * be sure any new entries are in the right
+ * numerical order per strcmp (or the ASCII
+ * character values, in the single char case.*/
 static const struct t_op cop[] = {
         {"!",   UNOT,   BUNOP},
         {"(",   LPAREN, PAREN},
