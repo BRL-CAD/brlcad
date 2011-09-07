@@ -126,10 +126,12 @@ fisect2(point_t VTX0,point_t VTX1,point_t VTX2, fastf_t VV0,fastf_t VV1,fastf_t 
 {
     fastf_t tmp=D0/(D0-D1);
     fastf_t diff[3];
+
     *isect0=VV0+(VV1-VV0)*tmp;
     VSUB2(diff,VTX1,VTX0);
     VSCALE(diff,diff,tmp);
     VADD2(isectpoint0,diff,VTX0);
+
     tmp=D0/(D0-D2);
     *isect1=VV0+(VV2-VV0)*tmp;
     VSUB2(diff,VTX2,VTX0);
@@ -369,7 +371,6 @@ tri_tri_intersect_with_isectline(struct soup_s *UNUSED(left), struct soup_s *UNU
 	    VMOVE(isectpt[0], isectpointA1)
 	else
 	    VMOVE(isectpt[0], isectpointA2)
-
 	if (isect2[1] < isect1[1])
 	    if (smallest2 == 0)
 		VMOVE(isectpt[1], isectpointB2)
@@ -384,19 +385,19 @@ tri_tri_intersect_with_isectline(struct soup_s *UNUSED(left), struct soup_s *UNU
 	    VMOVE(isectpt[0], isectpointB1)
 	else
 	    VMOVE(isectpt[0], isectpointB2)
-
 	if (isect2[1] > isect1[1])
 	    if (smallest1 == 0)
 		VMOVE(isectpt[1], isectpointA2)
 	    else
 		VMOVE(isectpt[1], isectpointA1)
-	else if (smallest2 == 0) {
+	else if (smallest2 == 0)
 	    VMOVE(isectpt[1], isectpointB2)
-	} else {
+	else
 	    VMOVE(isectpt[1], isectpointB1)
-	}
     }
+    /*
     bu_log("out0:%.0f/%.0f/%.0f out1:%.0f/%.0f/%.0f\n", V3ARGS(isectpt[0]), V3ARGS(isectpt[1]));
+    */
     return 1;
 }
 
@@ -419,6 +420,10 @@ split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *righ
     if(tri_tri_intersect_with_isectline( left, right, lf, rf, &coplanar, (point_t *)isectpt, tol) == 0)
 	return 2;
     splitty++;
+    
+    /* do the actual face split *
+    bu_log("%f,%f,%f %f,%f,%f\n", V3ARGS(isectpt[0]), V3ARGS(isectpt[1]));
+    */
 
     return -1;
 }
@@ -444,6 +449,21 @@ bot2soup(struct rt_bot_internal *bot, const struct bn_tol *tol)
 	soup_add_face(s, bot->vertices+3*bot->faces[i*3+0], bot->vertices+3*bot->faces[i*3+1], bot->vertices+3*bot->faces[i*3+2], tol);
 
     return s;
+}
+
+HIDDEN struct rt_bot_internal *
+soup2bot(struct soup_s *soup, const struct bn_tol *UNUSED(tol))
+{
+    struct rt_bot_internal *rbi;
+
+    rbi = bu_malloc(sizeof(struct rt_bot_internal), "BoT");
+    rbi->num_faces = soup->nfaces;
+
+    if(soup->faces)
+	bu_free(soup->faces, "soup faces");
+    bu_free(soup, "soup");
+
+    return rbi;
 }
 
 HIDDEN void
@@ -636,9 +656,7 @@ long int lsplitty=0;
 union tree *
 gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
-    union tree *ret_tree = NULL;
-
-#if 0
+#if 1
     bu_bomb("No\n");
 #endif
 
@@ -661,9 +679,9 @@ gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 
     evaluate(curtree, tsp->ts_ttol, tsp->ts_tol);
     lsplitz+=splitz;
-    bu_log("%d splits evaluated (%d) (%d %d)\n", splitz, lsplitz, splitty, lsplitty);
     lsplitz+=splitz;
     lsplitty+=splitty;
+    bu_log("%d splits evaluated (%d) (%d %d)\n", splitz, lsplitz, splitty, lsplitty);
     splitz=0;
     splitty=0;
 
@@ -673,7 +691,11 @@ gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     rt_bot_tess(curtree->tr_d.td_r
     */
 
-    return ret_tree;
+    /*	need to figure out how to pack this right (soup2nmg?)
+    curtree->tr_d.td_r = soup2bot((struct soup_s *)curtree->tr_d.td_r, tsp->ts_tol);
+    */
+
+    return curtree;
 }
 
 union tree *
