@@ -47,27 +47,35 @@ ferror(){
 
 # show help
 if test -z $1 ;then
-    echo "Script to create binary deb package, and debian source packages."
+    echo "Script to create Debian binary and source packages."
     echo
     echo "Usage:"
-    echo "  sh/make_deb.sh -b | -s"
+    echo "  sh/make_deb.sh -b | -s [-t]"
     echo
     echo "Options:"
-    echo "  -b       build the binary deb package"
-    echo "  -s *     build the debian source packages"
+    echo "  -b       build the Debian binary package (deb file)"
+    echo "  -s *     build the Debian source package"
+    echo "  -t       as second argument: test for all prerequisites"
     echo
     echo "           * (use with a clean brlcad tree)"
     exit 1
 fi
 
 # too many parameters
-if test $# -gt 1 ;then
+if test $# -gt 2 ;then
     ferror "Too many arguments" "Exiting..."
 fi
 
 # unknown parameter
-if test "$1" != "-s" && test "$1" != "-b" ;then
-    ferror "Unknown argument" "Exiting..."
+if test "$1" != "-s" && test "$1" != "-b" ; then
+    ferror "Unknown first argument '$!'." "Exiting..."
+fi
+# check for test
+TEST=0
+if test $# -eq 2 && test "$2" != "-t" ; then
+    ferror "Unknown second argument '$2'." "Exiting..."
+elif test $# -eq 2 && test "$2" = "-t" ; then
+   TEST=1
 fi
 
 # test if in project root
@@ -75,18 +83,47 @@ if test ! -f misc/debian/control ; then
     ferror "\"make_deb.sh\" should be run from project root directory." "Exiting..."
 fi
 
-# test if in debian like system
+# test if in debian-like system
 if test ! -e /etc/debian_version ; then
     ferror "Refusing to build on a non-debian system." "Exiting..."
 fi
 
 # check needed packages
 E=0
-fcheck(){
+fcheck() {
     T="install ok installed"
     if test `dpkg -s $1 2>/dev/null | grep "$T" | wc -l` -eq 0 ; then
+	# failed to find package $1
 	LLIST=$LLIST" "$1
 	E=1
+    else
+        # success
+        E=0
+	echo "Found package '$1'..."
+        return
+    fi
+
+    # need to check for local, non-package versions
+    # check for binaries
+    echo "Testing for non-package version of $1..."
+    if [ ! -f /usr/bin/$1 ]; then
+	LLIST=$LLIST" "$1
+	E=1
+    else
+        # success
+        E=0
+	echo "Found /usr/bin/$1..."
+        return
+    fi
+    # one last check
+    if [ ! -f /usr/local/bin/$1 ]; then
+	LLIST=$LLIST" "$1
+	E=1
+    else
+        # success
+        E=0
+	echo "Found /usr/local/bin/$1..."
+        return
     fi
 }
 
@@ -111,6 +148,10 @@ fi
 
 if [ $E -eq 1 ]; then
     ferror "Mandatory to install these packages first:" "$LLIST"
+fi
+
+if [ $TEST -eq 1 ]; then
+    ferror "Testing complete--ready to create a Debian package."
 fi
 
 # set variables
