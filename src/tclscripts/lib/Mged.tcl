@@ -18,6 +18,12 @@
 # information.
 #
 ###
+
+#####################################################################
+# DEPRECATED: This widget is deprecated and should no longer be used.
+# Use the Ged widget instead.
+#####################################################################
+
 #
 # Description -
 #	The Mged class inherits from QuadDisplay and contains
@@ -169,6 +175,8 @@ option add *Mged.height 400 widgetDefault
     set db [Database \#auto $dbOrFile]
     set dg [$db Drawable::get_dgname]
     addAll $dg
+
+    puts "DEPRECATION WARNING: The Mged widget should no longer be used.  Use the Ged widget instead."
 
     # sync up the units between the Database and QuadDisplay
     QuadDisplay::units [$db units -s]

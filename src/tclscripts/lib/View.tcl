@@ -18,6 +18,12 @@
 # information.
 #
 ###
+
+#####################################################################
+# DEPRECATED: This widget is deprecated and should no longer be used.
+# Use the Ged widget instead.
+#####################################################################
+
 #
 # Description -
 #	The View class wraps LIBRT's view object.
@@ -115,6 +121,9 @@
 }
 
 ::itcl::body View::constructor {args} {
+
+    puts "DEPRECATION WARNING: The View widget should no longer be used.  Use the Ged widget instead."
+
     # first create view object
     set view [v_open $this\_view]
 

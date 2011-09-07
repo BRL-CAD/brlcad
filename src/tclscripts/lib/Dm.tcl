@@ -18,6 +18,12 @@
 # information.
 #
 ###
+
+#####################################################################
+# DEPRECATED: This widget is deprecated and should no longer be used,
+# use ArcherCore instead.
+#####################################################################
+
 #
 # Description -
 #	The Dm class wraps LIBDM's display manager object.
@@ -132,6 +138,8 @@
 ::itcl::body Dm::constructor {args} {
     global tcl_platform
     global env
+
+    puts "DEPRECATION WARNING: The Dm widget should no longer be used.  Use the Ged widget instead."
 
     catch {set display $env(DISPLAY)}
     if {![info exists display] || $display == ""} {

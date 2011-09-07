@@ -18,6 +18,12 @@
 # information.
 #
 ###
+
+#####################################################################
+# DEPRECATED: This widget is deprecated and should no longer be used.
+# Use the Ged widget instead.
+#####################################################################
+
 #
 # Description -
 #	The QuadDisplay class is comprised of four Display objects. This class
@@ -190,6 +196,8 @@ option add *QuadDisplay.height 400 widgetDefault
 ::itcl::body QuadDisplay::constructor {args} {
     iwidgets::Panedwindow::add upper
     iwidgets::Panedwindow::add lower
+
+    puts "DEPRECATION WARNING: The QuadDisplay widget should no longer be used.  Use the Ged widget instead."
 
     # create two more panedwindows
     itk_component add upw {

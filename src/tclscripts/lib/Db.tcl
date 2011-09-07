@@ -18,6 +18,12 @@
 # information.
 #
 ###
+
+#####################################################################
+# DEPRECATED: This widget is deprecated and should no longer be used.
+# Use the Ged widget instead.
+#####################################################################
+
 #
 # Description -
 #	The Db class wraps LIBRT's database object.
@@ -139,6 +145,9 @@
 }
 
 ::itcl::body Db::constructor {dbOrFile} {
+
+    puts "DEPRECATION WARNING: The Db widget should no longer be used.  Use the Ged widget instead."
+
     if {[catch {$dbOrFile ls}]} {
 	set dbfile $dbOrFile
 	set db [subst $this]_db
