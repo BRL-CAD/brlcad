@@ -329,6 +329,10 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * document the saveview/loadview options.  migrate them to libged if
   they're not already.
 
+* make loadview still load the view if the database doesn't match the
+  currently open database, only load geometry as an option (and then
+  just ignore the db).
+
 * improve rtedge documentation, explain how it computes its "centroid"
   (as it's not exactly the center of bounding box of all objects -- it
   depends on the booleans).
