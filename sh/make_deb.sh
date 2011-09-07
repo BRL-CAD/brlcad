@@ -134,7 +134,7 @@ fi
 # #
 cp -Rf misc/debian/ .
 
-# update debian/chagelog if needed
+# update debian/changelog if needed
 if test -s $CFILE && test `sed -n '1p' $CFILE | grep "brlcad ($BVERSION-$RELEASE" | wc -l` -eq 0 ; then
     L1="brlcad ($BVERSION-$RELEASE) unstable; urgency=low\n\n"
     L2="  **** VERSION ENTRY AUTOMATICALLY ADDED BY \"sh\/make_deb.sh\" SCRIPT ****\n\n"
