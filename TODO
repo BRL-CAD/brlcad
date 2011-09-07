@@ -60,6 +60,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* remove old tclscripts MGED objects in favor of the new 'Ged' widget
+  interface being used by Archer's core.
+
 * the new "exists" command is a beautiful corollary to the unix 'test'
   command.  make the usage match, remove options that make no sense
   after you've replaced instances of 'file' with 'object', and add
