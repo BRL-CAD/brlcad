@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* rtxray crashes if you specify a -o *.bw output file due to
+  assumptions in the rt front-end that all output files are .pix
+
 * raytracing a revolved sketch seems to work fine, but rtarea and gqa
   seem to be crashing on that same revolve.  curiously, the brep
   revolve from the csgbrep proc-db has the same failure as well as the

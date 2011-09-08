@@ -778,6 +778,9 @@ do_frame(int framenumber)
 
 	/* Ordinary case for creating output file */
 	if (outfp == NULL) {
+	    /* FIXME: in the case of rtxray, this is wrong.  it writes
+	     * out a bw image so depth should be just 1, not 3.
+	     */
 	    bif = bu_image_save_open(framename, BU_IMAGE_AUTO_NO_PIX, width, height, 3);
 	    if (bif == NULL && (outfp = fopen(framename, "w+b")) == NULL) {
 		perror(framename);
