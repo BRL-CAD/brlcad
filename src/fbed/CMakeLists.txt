@@ -15,7 +15,6 @@ IF(HAVE_TERMLIB)
 		glob.c 
 		pos_pad.c 
 		prnt.c 
-		sgi_dep.c 
 		squash.c 
 		try.c
 		)
