@@ -1,3 +1,12 @@
+# if this subdir stuff is pushed into the actual subdirs, the autoconf vs cmake
+# verification (sh/cmakecheck.sh) will fail on dist-hook.
+IF(BULLET_FOUND)
+    GED_ADD_CMD(LIBGED_SIM_SOURCES BULLET_INCLUDE_DIR BULLET_LIBRARIES)
+    SET(SIM_SRCS simulate/simphysics.cpp simulate/simulate.c)
+ELSE(BULLET_FOUND)
+    SET(SIM_SRCS "")
+ENDIF(BULLET_FOUND)
+
 set(LIBGED_SOURCES
     3ptarb.c
     adc.c
@@ -261,6 +270,8 @@ set(LIBGED_SOURCES
     xpush.c
     ypr.c
     zap.c
+    zoom/zoom.c
+    ${SIM_SRCS}
 )
 
 # Macro for adding commands to libged.  Use in the command subdirectory as follows:
@@ -320,6 +331,7 @@ SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 19.0.1 SOVERSION 19)
 SET(ged_ignore_files
     ged_private.h
     qray.h
+    simulate/simulate.h
     wdb_qray.h
 )
 CMAKEFILES(${ged_ignore_files})

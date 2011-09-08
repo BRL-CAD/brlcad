@@ -295,8 +295,7 @@ libged_la_LIBADD = \
 	${GED_LIBS}
 
 EXTRA_DIST = \
-	CMakeLists.txt \
-	simulate/CMakeLists.txt
+	CMakeLists.txt
 
 DEPENDS = src/librt src/libwdb src/libanalyze src/libfb
 
