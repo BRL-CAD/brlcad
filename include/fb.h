@@ -50,7 +50,11 @@
 #include "bu.h"
 
 
-/* Library entry points which are macros. */
+/* Library entry points which are macros.
+ *
+ * FIXME: turn these into proper functions so we can appropriately
+ * avoid dereferencing a NULL _ifp or calling an invalid callback.
+ */
 #define fb_gettype(_ifp)		(_ifp->if_type)
 #define fb_getwidth(_ifp)		(_ifp->if_width)
 #define fb_getheight(_ifp)		(_ifp->if_height)
