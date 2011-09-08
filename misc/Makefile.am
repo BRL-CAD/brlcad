@@ -18,54 +18,56 @@ EXTRA_DIST = \
 	$(man_MANS) \
 	$(sample_applications_DATA) \
 	${DATAFILES} \
-	CMake/BRLCAD_CPackOptions.cmake.in \
-	CMake/BRLCAD_CheckFunctions.cmake \
-	CMake/BRLCAD_Dependent_Options.cmake \
-	CMake/BRLCAD_Util.cmake \
-	CMake/CheckCFileRuns.cmake \
-	CMake/CheckPrototypeExists.cmake \
-	CMake/CompilerFlags.cmake \
-	CMake/FindFOP.cmake \
-	CMake/FindGL.cmake \
-	CMake/FindLEX.cmake \
-	CMake/FindOIIO.cmake \
-	CMake/FindOPENNURBS.cmake \
-	CMake/FindOSL.cmake \
-	CMake/FindOpenEXR.cmake \
-	CMake/FindPkgMacros.cmake \
-	CMake/FindREGEX.cmake \
-	CMake/FindSCL.cmake \
-	CMake/FindShellDeps.cmake \
-	CMake/FindTBB.cmake \
-	CMake/FindTCL.cmake \
-	CMake/FindTERMLIB.cmake \
-	CMake/FindTclPackage.cmake \
-	CMake/FindUTAHRLE.cmake \
-	CMake/FindX11.cmake \
-	CMake/FindXSLT.cmake \
-	CMake/FindYACC.cmake \
-	CMake/FindZLIB.cmake \
 	CMake/NSIS.template.in \
 	CMake/ResolveCompilerPaths.cmake \
-	CMake/ThirdParty.cmake \
-	CMake/distcheck_buildsys.cmake.in \
-	CMake/distcheck_success_message.cmake.in \
+	CMake/util_macros.cmake \
+	CMake/CheckCFileRuns.cmake \
+	CMake/FindYACC.cmake \
+	CMake/FindX11.cmake \
+	CMake/FindREGEX.cmake \
+	CMake/FindSCL.cmake \
+	CMake/FindOPENNURBS.cmake \
 	CMake/svncheck.cmake.in \
-	CMake/test_srcs/alloca_header_test.c \
+	CMake/FindLEX.cmake \
+	CMake/distcheck_success_message.cmake.in \
+	CMake/FindGL.cmake \
+	CMake/BRLCAD_Dependent_Options.cmake \
+	CMake/FindOSL.cmake \
+	CMake/distcheck_buildsys.cmake.in \
+	CMake/FindRE2C.cmake \
+	CMake/FindTBB.cmake \
+	CMake/FindUTAHRLE.cmake \
+	CMake/BRLCAD_Util.cmake \
+	CMake/ThirdParty.cmake \
+	CMake/CheckPrototypeExists.cmake \
+	CMake/FindShellDeps.cmake \
+	CMake/BRLCAD_CPackOptions.cmake.in \
+	CMake/ResetCache.cmake \
+	CMake/FindLEMON.cmake \
+	CMake/BRLCAD_CheckFunctions.cmake \
+	CMake/BRLCAD_CompilerFlags.cmake \
+	CMake/FindOIIO.cmake \
+	CMake/ThirdParty_TCL.cmake \
 	CMake/test_srcs/alloca_test.c \
-	CMake/test_srcs/builddelta_end.c.in \
+	CMake/test_srcs/timedelta_start.c.in \
+	CMake/test_srcs/termlib.c.in \
+	CMake/test_srcs/alloca_header_test.c \
 	CMake/test_srcs/builddelta_start.c.in \
-	CMake/test_srcs/ctypes_test.c \
-	CMake/test_srcs/lex_test.l \
 	CMake/test_srcs/print_timestamp.c \
-	CMake/test_srcs/report_hostname.c.in \
+	CMake/test_srcs/time.c.in \
 	CMake/test_srcs/report_username.c.in \
 	CMake/test_srcs/sys_wait_test.c \
-	CMake/test_srcs/termlib.c.in \
-	CMake/test_srcs/time.c.in \
 	CMake/test_srcs/timedelta_end.c.in \
-	CMake/test_srcs/timedelta_start.c.in \
-	CMake/util_macros.cmake \
+	CMake/test_srcs/report_hostname.c.in \
+	CMake/test_srcs/builddelta_end.c.in \
+	CMake/test_srcs/ctypes_test.c \
+	CMake/test_srcs/lex_test.l \
+	CMake/FindOpenEXR.cmake \
+	CMake/CompilerFlags.cmake \
+	CMake/FindPkgMacros.cmake \
+	CMake/FindTCL.cmake \
+	CMake/FindZLIB.cmake \
+	CMake/FindTERMLIB.cmake \
 	CMakeLists.txt \
 	Description.txt \
 	Doxyfile \
