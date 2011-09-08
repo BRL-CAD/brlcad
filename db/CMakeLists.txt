@@ -13,6 +13,7 @@ SET(G_SAMPLE_MODELS
   boolean-ops.asc 
   castle.asc 
   cornell.asc 
+  cornell-kunigami.asc 
   cray.asc 
   crod.asc 
   cube.asc 
@@ -57,4 +58,4 @@ SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${BUILT_MODELS}
 IF(BRLCAD-INSTALL_EXAMPLE_GEOMETRY)
 	BRLCAD_ADDFILE(terra.dsp db)
 ENDIF(BRLCAD-INSTALL_EXAMPLE_GEOMETRY)
-CMAKEFILES(cornell.rt cornell-kunigami.g db.php include)
+CMAKEFILES(cornell.rt db.php include)

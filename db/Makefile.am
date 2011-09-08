@@ -47,6 +47,7 @@ MODELS = \
 	boolean-ops.asc \
 	castle.asc \
 	cornell.asc \
+	cornell-kunigami.asc \
 	cray.asc \
 	crod.asc \
 	cube.asc \
