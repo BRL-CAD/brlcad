@@ -69,6 +69,7 @@ libged_nil_la_SOURCES = \
 	editit.c \
 	edmater.c \
 	erase.c \
+	exists.c \
 	expand.c \
 	eye.c \
 	eye_pos.c \
