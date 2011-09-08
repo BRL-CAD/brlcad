@@ -67,6 +67,7 @@ ADD_CUSTOM_COMMAND(
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_BINARY_DIR}/CMakeTmp/toglstubs/toglDecls.h ${CMAKE_CURRENT_BINARY_DIR}/toglDecls.h
 	COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/STUBSSYNCED
 	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/togl.decls
+	COMMENT "Generating toglStubInit.c and toglDecls.h"
 )
 
 ADD_CUSTOM_TARGET(togl_stubs_gen ALL 
