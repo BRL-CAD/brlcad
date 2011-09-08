@@ -1633,7 +1633,10 @@ else()
 		math(EXPR buildCounter "${buildCounter} + 1")
 	ENDIF(INCREMENT_COUNT_FILE)
 endif()
-file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/COUNT "${buildCounter}\n")
+FILE(WRITE ${BRLCAD_BINARY_DIR}/include/conf/COUNT.tmp "\"${buildCounter}\"\n")
+EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BRLCAD_BINARY_DIR}/include/conf/COUNT.tmp ${BRLCAD_BINARY_DIR}/include/conf/COUNT)
+EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove	${BRLCAD_BINARY_DIR}/include/conf/COUNT.tmp)
+
 # make sure the cache reports this found, to avoid spurious config difference
 find_file(countFile COUNT PATHS ${BRLCAD_BINARY_DIR}/include/conf)
 MARK_AS_ADVANCED(countFile)
