@@ -85,7 +85,7 @@ noinst_HEADERS = \
 	sysv.h
 
 EXTRA_DIST = \
-	config_win_cmake.h \
+	config_win_cmake.h.in \
 	CMakeLists.txt
 
 if ONLY_BENCHMARK
