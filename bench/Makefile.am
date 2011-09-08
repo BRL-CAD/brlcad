@@ -4,7 +4,7 @@
 bin_PROGRAMS = pixcmp
 pixcmp_SOURCES = pixcmp.c
 pixcmp_CFLAGS = ${TCL_CPPFLAGS}
-pixcmp_LDADD = ${BU}
+pixcmp_LDADD = ${BU} ${BU_LIBS}
 
 dist_bin_SCRIPTS = \
 	benchmark
