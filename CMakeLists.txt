@@ -1633,7 +1633,7 @@ else()
 		math(EXPR buildCounter "${buildCounter} + 1")
 	ENDIF(INCREMENT_COUNT_FILE)
 endif()
-FILE(WRITE ${BRLCAD_BINARY_DIR}/include/conf/COUNT.tmp "\"${buildCounter}\"\n")
+file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/COUNT.tmp "${buildCounter}\n")
 EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BRLCAD_BINARY_DIR}/include/conf/COUNT.tmp ${BRLCAD_BINARY_DIR}/include/conf/COUNT)
 EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove	${BRLCAD_BINARY_DIR}/include/conf/COUNT.tmp)
 
