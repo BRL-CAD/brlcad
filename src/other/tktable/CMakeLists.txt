@@ -33,7 +33,9 @@ SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TKTABLE_CFLAGS}")
 
 ADD_CUSTOM_COMMAND(
 		  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h
-		  COMMAND ${TCL_TCLSH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/misc/tkTable_header.tcl ${CMAKE_CURRENT_SOURCE_DIR}/library/tkTable.tcl ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h
+		  COMMAND ${TCL_TCLSH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/misc/tkTable_header.tcl ${CMAKE_CURRENT_SOURCE_DIR}/library/tkTable.tcl ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h.new
+		  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h.new ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h
+		  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h.new
 		  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/library/tkTable.tcl ${CMAKE_CURRENT_SOURCE_DIR}/misc/tkTable_header.tcl ${TCL_TCLSH_EXECUTABLE}
 )
 ADD_CUSTOM_TARGET(tktable_header_gen ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h)
@@ -50,13 +52,17 @@ SET(TKTABLE_SRCS
 	generic/tkTableWin.c
 )
 
-SET(TKTABLE_CFG_H_FILE ${CMAKE_CURRENT_BINARY_DIR}/tktable_cfg.h)
+SET(TKTABLE_CFG_H_FILE ${CMAKE_CURRENT_BINARY_DIR}/tktable_cfg.h.tmp)
 FILE(WRITE ${TKTABLE_CFG_H_FILE} "/**** Variables for Tktable build - replaces -D options ****/\n")
 FILE(APPEND ${TKTABLE_CFG_H_FILE} "#define PACKAGE_NAME \"${TKTABLE_PKGNAME}\"\n")
 FILE(APPEND ${TKTABLE_CFG_H_FILE} "#define PACKAGE_VERSION \"${TKTABLE_PKGVERSION}\"\n")
 FILE(APPEND ${TKTABLE_CFG_H_FILE} "#define TBL_COMMAND \"table\"\n")
 FILE(APPEND ${TKTABLE_CFG_H_FILE} "#define TBL_RUNTIME \"tkTable.tcl\"\n")
 FILE(APPEND ${TKTABLE_CFG_H_FILE} "#define TBL_RUNTIME_DIR \"${CMAKE_INSTALL_PREFIX}/lib/${TKTABLE_PKGNAME}${TKTABLE_PKGVERSION}\"\n")
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/tktable_cfg.h.tmp ${CMAKE_CURRENT_BINARY_DIR}/tktable_cfg.h)
+execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/tktable_cfg.h.tmp)
+
+
 
 add_definitions(
 	-DSTDC_HEADERS=1
