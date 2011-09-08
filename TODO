@@ -60,6 +60,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* pixdiff reports bytes, but reports incorrect (off-by-one) bytes for
+  .bw input files.  cause is due to tool assuming input is rgb triplets
+  (even though output is bytes, wtf?).  should probably report pixels
+  and/or have a -b option for handling byte/bw input.
+
 * remove old tclscripts MGED objects in favor of the new 'Ged' widget
   interface being used by Archer's core.
 
