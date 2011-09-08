@@ -1591,12 +1591,10 @@ EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BRLCAD_BINARY_DI
 EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove	${BRLCAD_BINARY_DIR}/include/conf/PATH.tmp)
 
 # COUNT - force CMake to look every time in case of manual removal of COUNT
-# file.  Note that we only track COUNT if we're not doing a Debug build - 
-# incrementing count implies a re-linking of much of BRL-CAD after running
-# CMake.
+# file.  
 set(countFile "countFile-NOTFOUND" CACHE STRING "Is there a count file?" FORCE)
 find_file(countFile COUNT PATHS ${BRLCAD_BINARY_DIR}/include/conf)
-if(countFile MATCHES "^countFile-NOTFOUND$" OR ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+if(countFile MATCHES "^countFile-NOTFOUND$")
 	set(buildCounter 0)
 else()
 	file(READ ${countFile} buildCounter)
