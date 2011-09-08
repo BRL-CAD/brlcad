@@ -345,6 +345,7 @@ SET(CONFIG_TIME_DAY_FILE "${BRLCAD_BINARY_DIR}/include/conf/CONFIG_TIME_DAY")
 SET(CONFIG_TIME_MONTH_FILE "${BRLCAD_BINARY_DIR}/include/conf/CONFIG_TIME_MONTH")
 SET(CONFIG_TIME_YEAR_FILE "${BRLCAD_BINARY_DIR}/include/conf/CONFIG_TIME_YEAR")
 SET(CONFIG_TIMESTAMP_FILE "${BRLCAD_BINARY_DIR}/include/conf/CONFIG_TIMESTAMP")
+SET(CONFIG_DEBUG_TIMESTAMP_FILE "${BRLCAD_BINARY_DIR}/include/conf/CONFIG_TIMESTAMP_DEBUG")
 FILE(MAKE_DIRECTORY "${BRLCAD_BINARY_DIR}/include")
 FILE(MAKE_DIRECTORY "${BRLCAD_BINARY_DIR}/include/conf")
 configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/time.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/time.c)
@@ -1569,7 +1570,9 @@ TRY_RUN(TIME_RESULT TIME_COMPILED
 	CMAKE_FLAGS "-DLINK_LIBRARIES:STRING=ws2_32.lib")
 ENDIF(NOT MSVC)
 # Let CMake give us the proper newline character(s) for the current platform
-FILE(APPEND ${BRLCAD_BINARY_DIR}/include/conf/HOST "\n")
+FILE(APPEND ${BRLCAD_BINARY_DIR}/include/conf/HOST.tmp "\n")
+EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BRLCAD_BINARY_DIR}/include/conf/HOST.tmp ${BRLCAD_BINARY_DIR}/include/conf/HOST)
+EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove	${BRLCAD_BINARY_DIR}/include/conf/HOST.tmp)
 
 # USER
 configure_file(${BRLCAD_CMAKE_DIR}/test_srcs/report_username.c.in ${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c)
@@ -1578,27 +1581,45 @@ TRY_RUN(TIME_RESULT TIME_COMPILED
 	${CMAKE_BINARY_DIR}/CMakeTmp/report_username.c
 	OUTPUT_VARIABLE COMPILEMESSAGES)
 # Let CMake give us the proper newline character(s) for the current platform
-FILE(APPEND ${BRLCAD_BINARY_DIR}/include/conf/USER "\n")
+FILE(APPEND ${BRLCAD_BINARY_DIR}/include/conf/USER.tmp "\n")
+EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BRLCAD_BINARY_DIR}/include/conf/USER.tmp ${BRLCAD_BINARY_DIR}/include/conf/USER)
+EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove ${BRLCAD_BINARY_DIR}/include/conf/USER.tmp)
 
 # PATH
-FILE(WRITE ${BRLCAD_BINARY_DIR}/include/conf/PATH "\"${CMAKE_INSTALL_PREFIX}\"\n")
+FILE(WRITE ${BRLCAD_BINARY_DIR}/include/conf/PATH.tmp "\"${CMAKE_INSTALL_PREFIX}\"\n")
+EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BRLCAD_BINARY_DIR}/include/conf/PATH.tmp ${BRLCAD_BINARY_DIR}/include/conf/PATH)
+EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove	${BRLCAD_BINARY_DIR}/include/conf/PATH.tmp)
 
-# COUNT - force CMake to look every time in case of manual removal of COUNT file
+# COUNT - force CMake to look every time in case of manual removal of COUNT
+# file.  Note that we only track COUNT if we're not doing a Debug build - 
+# incrementing count implies a re-linking of much of BRL-CAD after running
+# CMake.
 set(countFile "countFile-NOTFOUND" CACHE STRING "Is there a count file?" FORCE)
 find_file(countFile COUNT PATHS ${BRLCAD_BINARY_DIR}/include/conf)
-if(countFile MATCHES "^countFile-NOTFOUND$")
+if(countFile MATCHES "^countFile-NOTFOUND$" OR ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 	set(buildCounter 0)
 else()
 	file(READ ${countFile} buildCounter)
 	math(EXPR buildCounter "${buildCounter} + 1")
 endif()
-file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/COUNT "${buildCounter}\n")
+file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/COUNT.tmp "${buildCounter}\n")
+EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BRLCAD_BINARY_DIR}/include/conf/COUNT.tmp ${BRLCAD_BINARY_DIR}/include/conf/COUNT)
+EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove	${BRLCAD_BINARY_DIR}/include/conf/COUNT.tmp)
 MARK_AS_ADVANCED(countFile)
 
-# DATE
-file(READ ${CONFIG_TIMESTAMP_FILE} DATESTAMP)
+# DATE - note that the format of DATE is simplified for Debug builds, in order
+# to avoid triggering a re-linking every time CMake is run - with Debug
+# formatting, the rebuild will only be triggered when the day changes, instead
+# of the second.
+IF(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+	file(READ ${CONFIG_DEBUG_TIMESTAMP_FILE} DATESTAMP)
+ELSE(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+	file(READ ${CONFIG_TIMESTAMP_FILE} DATESTAMP)
+ENDIF(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 STRING(STRIP ${DATESTAMP} DATESTAMP)
-file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/DATE "\"${DATESTAMP}\"\n")
+file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/DATE.tmp "\"${DATESTAMP}\"\n")
+EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BRLCAD_BINARY_DIR}/include/conf/DATE.tmp ${BRLCAD_BINARY_DIR}/include/conf/DATE)
+EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove	${BRLCAD_BINARY_DIR}/include/conf/DATE.tmp)
 
 # Rules for the toplevel documentation files
 SET(toplevel_DOCFILES

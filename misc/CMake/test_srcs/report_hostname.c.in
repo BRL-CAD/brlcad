@@ -17,7 +17,7 @@ int main(void) {
   #endif
   hostname[chararraysize - 1] = '\0';
   gethostname(hostname, chararraysize - 1);
-  outfp = fopen("${BRLCAD_BINARY_DIR}/include/conf/HOST", "w");
+  outfp = fopen("${BRLCAD_BINARY_DIR}/include/conf/HOST.tmp", "w");
   fprintf(outfp, "\"%s\"", hostname);
   fclose(outfp);
   return 0;
