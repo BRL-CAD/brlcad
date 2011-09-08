@@ -73,6 +73,13 @@
 # *******************************************************************
 # This file contains the top level CMakeLists.txt logic for the
 # BRL-CAD software package.
+
+# First step - stash the initial CMakeCache.txt file, if it exists, for subsequent
+# comparison
+IF(EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt)
+	configure_file(${CMAKE_BINARY_DIR}/CMakeCache.txt ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev COPY_ONLY)
+ENDIF(EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt)
+
 # Minimum required version of CMake
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.3)
 IF(COMMAND CMAKE_POLICY)
@@ -151,18 +158,15 @@ ENDIF(EXISTS ${BRLCAD_SOURCE_DIR}/../BRL-CAD_CONFIG.GLOBAL)
 IF(CMAKE_INSTALL_PREFIX)
 	IF(NOT ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr" AND NOT ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/local")
 		get_filename_component(PATH_NORMALIZED ${CMAKE_INSTALL_PREFIX}/lib ABSOLUTE)
-		SET(CMAKE_SYSTEM_IGNORE_PATH ${PATH_NORMALIZED};${CMAKE_SYSTEM_IGNORE_PATH} CACHE STRING "Added CMAKE_INSTALL_PREFIX to avoid inconsistent search results")
+		SET(CMAKE_SYSTEM_IGNORE_PATH ${PATH_NORMALIZED})
 	ENDIF(NOT ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr" AND NOT ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/local")
 ENDIF(CMAKE_INSTALL_PREFIX)
 IF(BRLCAD_PREFIX)
 	IF(NOT ${BRLCAD_PREFIX} STREQUAL "/usr" AND NOT ${BRLCAD_PREFIX} STREQUAL "/usr/local")
 		get_filename_component(PATH_NORMALIZED ${BRLCAD_PREFIX}/lib ABSOLUTE)
-		SET(CMAKE_SYSTEM_IGNORE_PATH ${PATH_NORMALIZED};${CMAKE_SYSTEM_IGNORE_PATH} CACHE STRING "Added CMAKE_INSTALL_PREFIX to avoid inconsistent search results")
+		SET(CMAKE_SYSTEM_IGNORE_PATH ${PATH_NORMALIZED})
 	ENDIF(NOT ${BRLCAD_PREFIX} STREQUAL "/usr" AND NOT ${BRLCAD_PREFIX} STREQUAL "/usr/local")
 ENDIF(BRLCAD_PREFIX)
-IF(CMAKE_SYSTEM_IGNORE_PATH)
-	LIST(REMOVE_DUPLICATES CMAKE_SYSTEM_IGNORE_PATH)
-ENDIF(CMAKE_SYSTEM_IGNORE_PATH)
 MARK_AS_ADVANCED(CMAKE_SYSTEM_IGNORE_PATH)
 
 #---------------------------------------------------------------------
@@ -361,8 +365,8 @@ IF(TIME_RESULT MATCHES "^0$")
 	FILE(READ ${CONFIG_TIME_YEAR_FILE} CONFIG_YEAR)
 	STRING(STRIP ${CONFIG_YEAR} CONFIG_YEAR)
 	SET(CONFIG_DATE "${CONFIG_YEAR}${CONFIG_MONTH}${CONFIG_DAY}")
-	FILE(READ ${CONFIG_TIMESTAMP_FILE} CONFIG_TS)
-	STRING(STRIP ${CONFIG_TS} CONFIG_TS)
+	#FILE(READ ${CONFIG_TIMESTAMP_FILE} CONFIG_TS)
+	#STRING(STRIP ${CONFIG_TS} CONFIG_TS)
 ELSE(TIME_RESULT MATCHES "^0$")
 	MESSAGE(FATAL_ERROR "Code to determine current date and time failed!\n")
 ENDIF(TIME_RESULT MATCHES "^0$")
@@ -964,7 +968,7 @@ IF(JNI_FOUND AND JAVA_FOUND)
 	BRLCAD_INCLUDE_FILE(jni.h HAVE_JNI_H)
 ENDIF(JNI_FOUND AND JAVA_FOUND)
 IF(NOT HAVE_JNI_H AND NOT HAVE_JAVAVM_JNI_H)
-   SET(BRLCAD-ENABLE_RTSERVER OFF)
+	SET(BRLCAD-ENABLE_RTSERVER OFF CACHE BOOL "RT server disabled due to	unsatisfied Java requirements" FORCE)
    MESSAGE("librtserver build requested, but JNI header not found - disabling")
 	MARK_AS_ADVANCED(BRLCAD-ENABLE_RTSERVER)
 ENDIF(NOT HAVE_JNI_H AND NOT HAVE_JAVAVM_JNI_H)
@@ -1590,18 +1594,53 @@ FILE(WRITE ${BRLCAD_BINARY_DIR}/include/conf/PATH.tmp "\"${CMAKE_INSTALL_PREFIX}
 EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BRLCAD_BINARY_DIR}/include/conf/PATH.tmp ${BRLCAD_BINARY_DIR}/include/conf/PATH)
 EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove	${BRLCAD_BINARY_DIR}/include/conf/PATH.tmp)
 
-# COUNT - force CMake to look every time in case of manual removal of COUNT
-# file.  
+# COUNT - Count how many times the configuration has changed.  Currently
+# we are detecting a configuration change by looking at the previous version
+# of the CMakeCache.txt file and looking for changes between values stored
+# there and settings in the current environment.  This has the disadvantage
+# of not spotting completely new variables in the current enviornment, but
+# the internal CMake variable list is too noisy so at the moment this looks
+# like the best alternative we have.
+
+# CMAKE_PROPERTY VARIABLES looks even more comprehensive than the Cache file, 
+# but it looks like it captures too much for what we want/need.  Some interesting
+# possibilities for debugging though, so leave it in even though we
+# aren't currently trigging COUNT off of it.  TODO - investigate whether we
+# can do something similar to generate a "current" cache file.
+MACRO(WRITE_VARIABLE_LIST)
+	FILE(WRITE ${CMAKE_BINARY_DIR}/CMakeFiles/AllVariables.txt "")
+	GET_CMAKE_PROPERTY(res VARIABLES)
+	FOREACH(var ${res})
+		FILE(APPEND ${CMAKE_BINARY_DIR}/CMakeFiles/AllVariables.txt "${var} \"${${var}}\"\n")
+	ENDFOREACH(var ${res})
+ENDMACRO()
+
+include(${CMAKE_SOURCE_DIR}/misc/CMake/DiffCache.cmake)
+#force CMake to look every time in case of manual removal of COUNT file.  
 set(countFile "countFile-NOTFOUND" CACHE STRING "Is there a count file?" FORCE)
 find_file(countFile COUNT PATHS ${BRLCAD_BINARY_DIR}/include/conf)
 if(countFile MATCHES "^countFile-NOTFOUND$")
 	set(buildCounter 0)
 else()
-	file(READ ${countFile} buildCounter)
-	math(EXPR buildCounter "${buildCounter} + 1")
+	file(READ ${countFile} buildCounter_raw)
+	STRING(STRIP ${buildCounter_raw} buildCounter)
+	IF(EXISTS ${CMAKE_BINARY_DIR}/CMakeFiles/AllVariables.txt)
+		execute_process(COMMAND ${CMAKE_COMMAND} -E rename	${CMAKE_BINARY_DIR}/CMakeFiles/AllVariables.txt	${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/AllVariables.txt.old)
+	ENDIF(EXISTS ${CMAKE_BINARY_DIR}/CMakeFiles/AllVariables.txt)
+	WRITE_VARIABLE_LIST()
+	DIFF_CACHE_FILE()
+	IF(INCREMENT_COUNT_FILE)
+		math(EXPR buildCounter "${buildCounter} + 1")
+	ENDIF(INCREMENT_COUNT_FILE)
 endif()
 file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/COUNT "${buildCounter}\n")
+# make sure the cache reports this found, to avoid spurious config difference
+find_file(countFile COUNT PATHS ${BRLCAD_BINARY_DIR}/include/conf)
 MARK_AS_ADVANCED(countFile)
+IF(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeFiles/AllVariables.txt)
+	WRITE_VARIABLE_LIST()
+ENDIF(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeFiles/AllVariables.txt)
+
 
 # DATE - note that the format of DATE is simplified for Debug builds, in order
 # to avoid triggering a re-linking every time CMake is run - with Debug
