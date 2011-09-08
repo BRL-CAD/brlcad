@@ -77,6 +77,7 @@ mannDOCBOOK_EN = \
 	system/mann/en/erase.xml \
 	system/mann/en/erase_all.xml \
 	system/mann/en/ev.xml \
+	system/mann/en/exists.xml \
 	system/mann/en/exit.xml \
 	system/mann/en/expand.xml \
 	system/mann/en/export_body.xml \
