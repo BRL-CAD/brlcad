@@ -63,7 +63,6 @@ EXTRA_DIST = \
 	treebuild.xml \
 	watcom \
 	win32 \
-	zconf.h.cmakein \
 	zconf.h.in \
 	zlib.3.pdf \
 	zlib.map \
