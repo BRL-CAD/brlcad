@@ -104,6 +104,7 @@ EXTRA_DIST = \
 	TODO \
 	TODO.cmake \
 	autogen.sh \
+	configure.cmake.sh \
 	libtool
 
 DISTCLEANFILES = \
