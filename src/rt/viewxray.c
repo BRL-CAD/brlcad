@@ -202,14 +202,18 @@ view_eol(struct application *ap)
 		}
 	    }
 	} else {
-	    if (rt_g.rtg_parallel) {
-		bu_semaphore_acquire( BU_SEM_SYSCALL );
-	    }
-	    fb_write( fbp, 0, ap->a_y, scanbuf, width );
-	    if (rt_g.rtg_parallel) {
-		bu_semaphore_release( BU_SEM_SYSCALL );
+	    if ( fbp != FBIO_NULL ) {
+		if (rt_g.rtg_parallel) {
+		    bu_semaphore_acquire( BU_SEM_SYSCALL );
+		}
+		fb_write( fbp, 0, ap->a_y, scanbuf, width );
+		if (rt_g.rtg_parallel) {
+		    bu_semaphore_release( BU_SEM_SYSCALL );
+		}
 	    }
 	}
+	if (fbp == FBIO_NULL && outfp == NULL)
+	    bu_log("rtxray: strange, no end of line actions taken.\n");
     }
 }
 
