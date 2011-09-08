@@ -1,3 +1,23 @@
+
+# Macro for adding commands to libged.  Use in the command subdirectory as follows:
+#
+# GED_ADD_CMD(CMD_SRCS CMD_INCLUDES CMD_LIBS)
+#
+# with the last two arguments being optional.
+MACRO(GED_ADD_CMD sources)
+	get_filename_component(currentdir ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+	FOREACH(srcfile ${${sources}})
+		LIST(APPEND cmd_srcs "${currentdir}/${srcfile}")
+	ENDFOREACH(srcfile ${${sources}})
+	SET(LIBGED_CMD_SRCS ${LIBGED_CMD_SRCS} ${cmd_srcs} CACHE INTERNAL "libged cmd srcs" FORCE)
+	IF(${ARGV1})
+		SET(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${${ARGV1}} CACHE INTERNAL "libged cmd includes" FORCE)
+	ENDIF(${ARGV1})
+	IF(${ARGV2})
+		SET(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} ${${ARGV2}} CACHE INTERNAL	"libged cmd libs" FORCE)
+	ENDIF(${ARGV2})
+ENDMACRO(GED_ADD_CMD)
+
 # if this subdir stuff is pushed into the actual subdirs, the autoconf vs cmake
 # verification (sh/cmakecheck.sh) will fail on dist-hook.
 IF(BULLET_FOUND)
@@ -273,25 +293,6 @@ set(LIBGED_SOURCES
     zoom/zoom.c
     ${SIM_SRCS}
 )
-
-# Macro for adding commands to libged.  Use in the command subdirectory as follows:
-#
-# GED_ADD_CMD(CMD_SRCS CMD_INCLUDES CMD_LIBS)
-#
-# with the last two arguments being optional.
-MACRO(GED_ADD_CMD sources)
-	get_filename_component(currentdir ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-	FOREACH(srcfile ${${sources}})
-		LIST(APPEND cmd_srcs "${currentdir}/${srcfile}")
-	ENDFOREACH(srcfile ${${sources}})
-	SET(LIBGED_CMD_SRCS ${LIBGED_CMD_SRCS} ${cmd_srcs} CACHE INTERNAL "libged cmd srcs" FORCE)
-	IF(${ARGV1})
-		SET(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${${ARGV1}} CACHE INTERNAL "libged cmd includes" FORCE)
-	ENDIF(${ARGV1})
-	IF(${ARGV2})
-		SET(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} ${${ARGV2}} CACHE INTERNAL	"libged cmd libs" FORCE)
-	ENDIF(${ARGV2})
-ENDMACRO(GED_ADD_CMD)
 
 # Core logic for adding commands to the libged source/lib/include lists.
 FILE(GLOB GED_DIR_CONTENTS ${CMAKE_CURRENT_SOURCE_DIR} *)
