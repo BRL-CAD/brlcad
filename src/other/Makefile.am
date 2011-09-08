@@ -180,6 +180,7 @@ EXTRA_DIST = \
 	iwidgets.dist \
 	jove.dist \
 	lemon \
+	lemon.dist \
 	libpng.dist \
 	libregex.dist \
 	libtermlib.dist \
@@ -187,6 +188,7 @@ EXTRA_DIST = \
 	libz.dist \
 	openNURBS.dist \
 	re2c \
+	re2c.dist \
 	step.dist \
 	tcl.dist \
 	tk.dist \
@@ -194,8 +196,8 @@ EXTRA_DIST = \
 	tkpng.dist \
 	tktable.dist \
 	togl.dist \
-	URToolkit.dist
-
+	URToolkit.dist \
+	uce-dirent/uce-dirent.h
 
 # FIXME: need to only traverse tcl/tk if configured
 DIST_SUBDIRS = \
