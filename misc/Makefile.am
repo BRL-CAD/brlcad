@@ -71,6 +71,7 @@ EXTRA_DIST = \
 	CMakeLists.txt \
 	Description.txt \
 	Doxyfile \
+	Doxyfile.in \
 	Makefile.defs \
 	archlinux/PKGBUILD \
 	archlinux/brlcad.install \
