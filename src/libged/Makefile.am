@@ -215,8 +215,8 @@ libged_nil_la_SOURCES = \
 	shader.c \
 	shells.c \
 	showmats.c \
-	simulate.c \
-	simphysics.cpp \
+	simulate/simphysics.cpp \
+	simulate/simulate.c \
 	size.c \
 	slew.c \
 	solids_on_ray.c \
@@ -279,6 +279,7 @@ AM_CPPFLAGS = \
 noinst_HEADERS = \
 	ged_private.h \
 	qray.h \
+	simulate/simulate.h \
 	wdb_qray.h
 
 libged_la_SOURCES =
@@ -293,7 +294,8 @@ libged_la_LIBADD = \
 	${GED_LIBS}
 
 EXTRA_DIST = \
-	CMakeLists.txt
+	CMakeLists.txt \
+	simulate/CMakeLists.txt
 
 DEPENDS = src/librt src/libwdb src/libanalyze src/libfb
 
