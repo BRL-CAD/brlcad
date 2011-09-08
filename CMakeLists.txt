@@ -1600,9 +1600,7 @@ else()
 	file(READ ${countFile} buildCounter)
 	math(EXPR buildCounter "${buildCounter} + 1")
 endif()
-file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/COUNT.tmp "${buildCounter}\n")
-EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BRLCAD_BINARY_DIR}/include/conf/COUNT.tmp ${BRLCAD_BINARY_DIR}/include/conf/COUNT)
-EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove	${BRLCAD_BINARY_DIR}/include/conf/COUNT.tmp)
+file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/COUNT "${buildCounter}\n")
 MARK_AS_ADVANCED(countFile)
 
 # DATE - note that the format of DATE is simplified for Debug builds, in order
