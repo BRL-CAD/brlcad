@@ -104,9 +104,12 @@ ENDMACRO()
 # Clear out any CMake-assigned defaults - We're managing
 # our own compile flags, and don't (for example) want NDEBUG
 # if we have debugging flags enabled for a Release build.
+# At the same time, pull in any flags that have been set
+# in the environment.
+
 STRING(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
-SET(CMAKE_C_FLAGS_${BUILD_TYPE} "")
-SET(CMAKE_CXX_FLAGS_${BUILD_TYPE} "")
+SET(CMAKE_C_FLAGS_${BUILD_TYPE} "$ENV{CFLAGS}")
+SET(CMAKE_CXX_FLAGS_${BUILD_TYPE} "$ENV{CXX_FLAGS}")
 
 # try to use -pipe to speed up the compiles
 CHECK_C_FLAG(pipe)
