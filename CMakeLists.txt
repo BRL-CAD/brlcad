@@ -1784,7 +1784,15 @@ CMAKEFILES(${toplevel_ignore_files})
 # 7.  Install to the local install directory.
 # 8.  Run benchmark from the installed directory.
 # 9.  Clean up.
-#
+
+# If we're doing a Make based build, we want the Make command.  Otherwise
+# fall back on cmake --build, with the limitations imposed by that option.
+IF("${CMAKE_GENERATOR}" MATCHES "Make" AND ("${cmake_generator}" MATCHES "Make" OR NOT cmake_generator))
+	set(distcheck_build_cmd "$(MAKE)")
+ELSE()
+	set(distcheck_build_cmd "${CMAKE_COMMAND} -E build")
+ENDIF()
+
 IF(NOT BRLCAD-IS_SUBBUILD)
 	configure_file(${BRLCAD_CMAKE_DIR}/distcheck_buildsys.cmake.in
 		${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_buildsys.cmake @ONLY)
@@ -1794,9 +1802,9 @@ IF(NOT BRLCAD-IS_SUBBUILD)
 		${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_success_message.cmake @ONLY)
 	ADD_CUSTOM_TARGET(distcheck
 		COMMAND ${CMAKE_COMMAND} -E echo "Stage 1:  Check files in Source Repository against files specified in Build Logic"
-		COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_buildsys.cmake
-		COMMAND ${CMAKE_COMMAND} -E echo "Stage 2:  (If SVN is available and source directory is an SVN checkout) Check svn status of source	repository."
-		COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/svncheck.cmake
+		#COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_buildsys.cmake
+		COMMAND ${CMAKE_COMMAND} -E echo "Stage 2:  Check svn status of source repository."
+		#COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/svncheck.cmake
 		COMMAND ${CMAKE_COMMAND} -E echo "Stage 3:  Create source tgz, tbz2 and zip archives from toplevel archive."
 		COMMAND cpack --config ${CMAKE_CURRENT_BINARY_DIR}/CPackSourceConfig.cmake
 		COMMAND ${CMAKE_COMMAND} -E echo "Stage 4:  Expand tgz archive and prepare to build from archive sources."
@@ -1805,7 +1813,7 @@ IF(NOT BRLCAD-IS_SUBBUILD)
 		COMMAND ${CMAKE_COMMAND} -E make_directory _${CPACK_SOURCE_PACKAGE_FILE_NAME}-install
 		COMMAND ${CMAKE_COMMAND} -E chdir _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build	${CMAKE_COMMAND} ../${CPACK_SOURCE_PACKAGE_FILE_NAME}	-DBRLCAD_BUNDLED_LIBS="Bundled" -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/_${CPACK_SOURCE_PACKAGE_FILE_NAME}-install
 		COMMAND ${CMAKE_COMMAND} -E echo "Stage 5:  Compile using source from tgz archive."
-		COMMAND ${CMAKE_COMMAND} --build	_${CPACK_SOURCE_PACKAGE_FILE_NAME}-build
+		COMMAND ${CMAKE_COMMAND} -E chdir _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build ${distcheck_build_cmd}
 		COMMAND ${CMAKE_COMMAND} -E echo "Stage 6:  Run build-directory regression and benchmark testing from tgz archive compilation."
 		COMMAND ${CMAKE_COMMAND} --build _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build --target regress
 		COMMAND TIMEFRAME=1 ${CMAKE_COMMAND} --build	_${CPACK_SOURCE_PACKAGE_FILE_NAME}-build --target benchmark
