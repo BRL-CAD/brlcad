@@ -69,8 +69,10 @@
 #  define __END_DECLS
 #endif
 
-/* Functions local to one file should be declared HIDDEN.  This is
- * sometimes helpful to debuggers.
+/* Functions local to one file IN A LIBRARY should be declared HIDDEN.
+ * Disabling the static classifier is sometimes helpful for debugging.
+ * It can help prevent some compilers from inlining functions that one
+ * might want to set a breakpoint on.
  */
 #if !defined(HIDDEN)
 #  if defined(NDEBUG)
