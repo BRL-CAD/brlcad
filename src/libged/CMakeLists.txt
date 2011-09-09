@@ -25,6 +25,7 @@ IF(BULLET_FOUND)
     SET(SIM_SRCS simulate/simphysics.cpp simulate/simulate.c)
 ELSE(BULLET_FOUND)
     SET(SIM_SRCS "")
+    SET(ged_ignore_files simulate/simphysics.cpp simulate/simulate.c)
 ENDIF(BULLET_FOUND)
 
 set(LIBGED_SOURCES
@@ -330,6 +331,7 @@ BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb librt libfb libbu libanalyze ${
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
 SET(ged_ignore_files
+	 ${ged_ignore_files}
     ged_private.h
     qray.h
     simulate/simulate.h
