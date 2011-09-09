@@ -681,7 +681,7 @@ c_name(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
 int
 f_iname(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
 {
-    return !bu_fnmatch(plan->c_data, DB_FULL_PATH_CUR_DIR(entry)->d_namep, BU_CASEFOLD);
+    return !bu_fnmatch(plan->c_data, DB_FULL_PATH_CUR_DIR(entry)->d_namep, BU_FNMATCH_CASEFOLD);
 }
 
 
