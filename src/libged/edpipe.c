@@ -599,7 +599,7 @@ _ged_scale_pipe(struct ged *gedp, struct rt_pipe_internal *pipeip, const char *a
 
 
 int
-ged_append_pipept(struct ged *gedp, int argc, const char *argv[])
+_ged_append_pipept_common(struct ged *gedp, int argc, const char *argv[], struct wdb_pipept *(*func)(struct rt_pipe_internal *, struct wdb_pipept *, const point_t))
 {
     struct directory *dp;
     static const char *usage = "pipe pt";
@@ -658,7 +658,7 @@ ged_append_pipept(struct ged *gedp, int argc, const char *argv[])
     }
 
     pipeip = (struct rt_pipe_internal *)intern.idb_ptr;
-    if (_ged_add_pipept(pipeip, (struct wdb_pipept *)NULL, ps_pt) == (struct wdb_pipept *)NULL) {
+    if ((*func)(pipeip, (struct wdb_pipept *)NULL, ps_pt) == (struct wdb_pipept *)NULL) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(gedp->ged_result_str, "%s: cannot move point there", argv[0]);
 	return GED_ERROR;
@@ -682,6 +682,12 @@ ged_append_pipept(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
+
+int
+ged_append_pipept(struct ged *gedp, int argc, const char *argv[])
+{
+    return _ged_append_pipept_common(gedp, argc, argv, _ged_add_pipept);
+}
 
 int
 ged_delete_pipept(struct ged *gedp, int argc, const char *argv[])
@@ -957,85 +963,7 @@ ged_move_pipept(struct ged *gedp, int argc, const char *argv[])
 int
 ged_prepend_pipept(struct ged *gedp, int argc, const char *argv[])
 {
-    struct directory *dp;
-    static const char *usage = "pipe pt";
-    struct rt_db_internal intern;
-    struct rt_pipe_internal *pipeip;
-    mat_t mat;
-    point_t ps_pt;
-    char *last;
-
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
-
-    if (argc != 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    if ((last = strrchr(argv[1], '/')) == NULL)
-	last = (char *)argv[1];
-    else
-	++last;
-
-    if (last[0] == '\0') {
-	bu_vls_printf(gedp->ged_result_str, "%s: illegal input - %s", argv[0], argv[1]);
-	return GED_ERROR;
-    }
-
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET)) == RT_DIR_NULL) {
-	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
-	return GED_ERROR;
-    }
-
-    if (sscanf(argv[2], "%lf %lf %lf", &ps_pt[X], &ps_pt[Y], &ps_pt[Z]) != 3) {
-	bu_vls_printf(gedp->ged_result_str, "%s: bad point - %s", argv[0], argv[2]);
-	return GED_ERROR;
-    }
-
-    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == GED_ERROR)
-	return GED_ERROR;
-
-    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
-	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PIPE) {
-	bu_vls_printf(gedp->ged_result_str, "Object not a PIPE");
-	rt_db_free_internal(&intern);
-
-	return GED_ERROR;
-    }
-
-    pipeip = (struct rt_pipe_internal *)intern.idb_ptr;
-    if (_ged_ins_pipept(pipeip, (struct wdb_pipept *)NULL, ps_pt) == (struct wdb_pipept *)NULL) {
-	rt_db_free_internal(&intern);
-	bu_vls_printf(gedp->ged_result_str, "%s: cannot move point there", argv[0]);
-	return GED_ERROR;
-    }
-
-    {
-	mat_t invmat;
-	struct wdb_pipept *curr_ps;
-	point_t curr_pt;
-
-	bn_mat_inv(invmat, mat);
-	for (BU_LIST_FOR(curr_ps, wdb_pipept, &pipeip->pipe_segs_head)) {
-	    MAT4X3PNT(curr_pt, invmat, curr_ps->pp_coord);
-	    VMOVE(curr_ps->pp_coord, curr_pt);
-	}
-
-	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
-    }
-
-    rt_db_free_internal(&intern);
-    return GED_OK;
+    return _ged_append_pipept_common(gedp, argc, argv, _ged_ins_pipept);
 }
 
 
