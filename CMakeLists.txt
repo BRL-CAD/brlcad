@@ -1787,12 +1787,8 @@ CMAKEFILES(${toplevel_ignore_files})
 
 # If we're doing a Make based build, we want the Make command.  Otherwise
 # fall back on cmake --build, with the limitations imposed by that option.
-IF("${CMAKE_GENERATOR}" MATCHES "Make" AND ("${cmake_generator}" MATCHES "Make" OR NOT cmake_generator))
-	set(distcheck_build_cmd "$(MAKE)")
-ELSE()
-	set(distcheck_build_cmd "${CMAKE_COMMAND} -E build")
-ENDIF()
-
+# This really needs to migrate to it's own .cmake file, too complex for a
+# series of COMMAND statements.
 IF(NOT BRLCAD-IS_SUBBUILD)
 	configure_file(${BRLCAD_CMAKE_DIR}/distcheck_buildsys.cmake.in
 		${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_buildsys.cmake @ONLY)
@@ -1800,11 +1796,13 @@ IF(NOT BRLCAD-IS_SUBBUILD)
 		${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/svncheck.cmake @ONLY)
 	configure_file(${BRLCAD_CMAKE_DIR}/distcheck_success_message.cmake.in
 		${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_success_message.cmake @ONLY)
+
+IF("${CMAKE_GENERATOR}" MATCHES "Make" AND ("${cmake_generator}" MATCHES "Make" OR NOT cmake_generator))
 	ADD_CUSTOM_TARGET(distcheck
 		COMMAND ${CMAKE_COMMAND} -E echo "Stage 1:  Check files in Source Repository against files specified in Build Logic"
-		#COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_buildsys.cmake
+		COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_buildsys.cmake
 		COMMAND ${CMAKE_COMMAND} -E echo "Stage 2:  Check svn status of source repository."
-		#COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/svncheck.cmake
+		COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/svncheck.cmake
 		COMMAND ${CMAKE_COMMAND} -E echo "Stage 3:  Create source tgz, tbz2 and zip archives from toplevel archive."
 		COMMAND cpack --config ${CMAKE_CURRENT_BINARY_DIR}/CPackSourceConfig.cmake
 		COMMAND ${CMAKE_COMMAND} -E echo "Stage 4:  Expand tgz archive and prepare to build from archive sources."
@@ -1813,7 +1811,7 @@ IF(NOT BRLCAD-IS_SUBBUILD)
 		COMMAND ${CMAKE_COMMAND} -E make_directory _${CPACK_SOURCE_PACKAGE_FILE_NAME}-install
 		COMMAND ${CMAKE_COMMAND} -E chdir _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build	${CMAKE_COMMAND} ../${CPACK_SOURCE_PACKAGE_FILE_NAME}	-DBRLCAD_BUNDLED_LIBS="Bundled" -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/_${CPACK_SOURCE_PACKAGE_FILE_NAME}-install
 		COMMAND ${CMAKE_COMMAND} -E echo "Stage 5:  Compile using source from tgz archive."
-		COMMAND ${CMAKE_COMMAND} -E chdir _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build ${distcheck_build_cmd}
+		COMMAND ${CMAKE_COMMAND} -E chdir _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build $(MAKE)
 		COMMAND ${CMAKE_COMMAND} -E echo "Stage 6:  Run build-directory regression and benchmark testing from tgz archive compilation."
 		COMMAND ${CMAKE_COMMAND} --build _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build --target regress
 		COMMAND TIMEFRAME=1 ${CMAKE_COMMAND} --build	_${CPACK_SOURCE_PACKAGE_FILE_NAME}-build --target benchmark
@@ -1839,6 +1837,48 @@ IF(NOT BRLCAD-IS_SUBBUILD)
 		COMMAND ${CMAKE_COMMAND} -E remove run-*.log
 		COMMAND ${CMAKE_COMMAND} -E remove ${CPACK_SOURCE_PACKAGE_FILE_NAME}.*
 		)
+ELSE("${CMAKE_GENERATOR}" MATCHES "Make" AND ("${cmake_generator}" MATCHES "Make" OR NOT cmake_generator))
+	ADD_CUSTOM_TARGET(distcheck
+		COMMAND ${CMAKE_COMMAND} -E echo "Stage 1:  Check files in Source Repository against files specified in Build Logic"
+		COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_buildsys.cmake
+		COMMAND ${CMAKE_COMMAND} -E echo "Stage 2:  Check svn status of source repository."
+		COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/svncheck.cmake
+		COMMAND ${CMAKE_COMMAND} -E echo "Stage 3:  Create source tgz, tbz2 and zip archives from toplevel archive."
+		COMMAND cpack --config ${CMAKE_CURRENT_BINARY_DIR}/CPackSourceConfig.cmake
+		COMMAND ${CMAKE_COMMAND} -E echo "Stage 4:  Expand tgz archive and prepare to build from archive sources."
+		COMMAND ${CMAKE_COMMAND} -E tar xvzf ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz
+		COMMAND ${CMAKE_COMMAND} -E make_directory _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build
+		COMMAND ${CMAKE_COMMAND} -E make_directory _${CPACK_SOURCE_PACKAGE_FILE_NAME}-install
+		COMMAND ${CMAKE_COMMAND} -E chdir _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build	${CMAKE_COMMAND} ../${CPACK_SOURCE_PACKAGE_FILE_NAME}	-DBRLCAD_BUNDLED_LIBS="Bundled" -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/_${CPACK_SOURCE_PACKAGE_FILE_NAME}-install
+		COMMAND ${CMAKE_COMMAND} -E echo "Stage 5:  Compile using source from tgz archive."
+		COMMAND ${CMAKE_COMMAND} -E build _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build
+		COMMAND ${CMAKE_COMMAND} -E echo "Stage 6:  Run build-directory regression and benchmark testing from tgz archive compilation."
+		COMMAND ${CMAKE_COMMAND} --build _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build --target regress
+		COMMAND TIMEFRAME=1 ${CMAKE_COMMAND} --build	_${CPACK_SOURCE_PACKAGE_FILE_NAME}-build --target benchmark
+		COMMAND ${CMAKE_COMMAND} -E echo "Stage 7:  Install from tgz build directory."
+		COMMAND ${CMAKE_COMMAND} --build _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build --target install
+		COMMAND ${CMAKE_COMMAND} -E echo "Stage 8:  Clear tgz archive sources	and build directory."
+		COMMAND ${CMAKE_COMMAND} -E remove_directory	${CPACK_SOURCE_PACKAGE_FILE_NAME}
+		COMMAND ${CMAKE_COMMAND} -E remove_directory _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build
+		COMMAND ${CMAKE_COMMAND} -E echo "Stage 9:  Run benchmark testing from tgz archive installed build."
+		COMMAND TIMEFRAME=1 _${CPACK_SOURCE_PACKAGE_FILE_NAME}-install/bin/benchmark	run
+		COMMAND _${CPACK_SOURCE_PACKAGE_FILE_NAME}-install/bin/benchmark	clean
+		COMMAND ${CMAKE_COMMAND} -E echo "Stage 10: Cleanup."
+		COMMAND ${CMAKE_COMMAND} -E remove summary
+		COMMAND ${CMAKE_COMMAND} -E remove run-*.log
+		COMMAND ${CMAKE_COMMAND} -E remove_directory	_${CPACK_SOURCE_PACKAGE_FILE_NAME}-install
+		COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_success_message.cmake
+		)
+	ADD_CUSTOM_TARGET(distclean
+		COMMAND ${CMAKE_COMMAND} -E remove_directory	${CPACK_SOURCE_PACKAGE_FILE_NAME}
+		COMMAND ${CMAKE_COMMAND} -E remove_directory _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build
+		COMMAND ${CMAKE_COMMAND} -E remove_directory	_${CPACK_SOURCE_PACKAGE_FILE_NAME}-install
+		COMMAND ${CMAKE_COMMAND} -E remove summary
+		COMMAND ${CMAKE_COMMAND} -E remove run-*.log
+		COMMAND ${CMAKE_COMMAND} -E remove ${CPACK_SOURCE_PACKAGE_FILE_NAME}.*
+		)
+
+ENDIF("${CMAKE_GENERATOR}" MATCHES "Make" AND ("${cmake_generator}" MATCHES "Make" OR NOT cmake_generator))
 ENDIF(NOT BRLCAD-IS_SUBBUILD)
 
 
