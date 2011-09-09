@@ -6,7 +6,7 @@ include_directories(
 IF(BRLCAD-ENABLE_X11)
   BRLCAD_ADDEXEC(ir-X ir-X.c "libbu ${X11_LIBRARIES}")
   BRLCAD_ADDEXEC(irdisp irdisp.c "libbu ${X11_LIBRARIES}")
-  SET(irprep_X_MANS 
+  SET(irprep_X_MANS
     irdisp.1
     ir-X.1
   )
@@ -20,8 +20,8 @@ BRLCAD_ADDEXEC(shapefact shapefact.c "librt ${M_LIBRARY}")
 
 SET(irprep_MANS
   ${irprep_X_MANS}
-  firpass.1 
-  secpass.1 
+  firpass.1
+  secpass.1
   shapefact.1
   showtherm.1
 )

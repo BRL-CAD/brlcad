@@ -6,16 +6,16 @@ IF(HAVE_TERMLIB)
 		)
 
 	SET(fbed_SOURCES
-		char.c 
-		empty.c 
-		execshell.c 
-		fbed.c 
-		fill_buf.c 
-		getinput.c 
-		glob.c 
-		pos_pad.c 
-		prnt.c 
-		squash.c 
+		char.c
+		empty.c
+		execshell.c
+		fbed.c
+		fill_buf.c
+		getinput.c
+		glob.c
+		pos_pad.c
+		prnt.c
+		squash.c
 		try.c
 		)
 

@@ -1,10 +1,10 @@
 SET(hv3_TCLSCRIPTS
-	combobox.tcl 
-	hv3.tcl 
-	hv3_encodings.tcl 
-	hv3_form.tcl 
-	hv3_request.tcl 
-	hv3_util.tcl 
+	combobox.tcl
+	hv3.tcl
+	hv3_encodings.tcl
+	hv3_form.tcl
+	hv3_request.tcl
+	hv3_util.tcl
 	snit.tcl
 )
 BRLCAD_ADDDATA(hv3_TCLSCRIPTS tclscripts/hv3)
@@ -20,4 +20,3 @@ SET(hv3_ignore_files
 	tkhtml.n
 	)
 CMAKEFILES(${hv3_ignore_files})
-

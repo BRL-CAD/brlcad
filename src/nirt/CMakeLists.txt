@@ -24,11 +24,11 @@ BRLCAD_ADDEXEC(showshot showshot.c libbn)
 ADD_MAN_PAGE(1 showshot.1)
 
 SET(nirt_sfiles
-  sfiles/csv.nrt 
-  sfiles/csv-gap.nrt 
-  sfiles/default.nrt 
-  sfiles/entryexit.nrt 
-  sfiles/gap1.nrt 
+  sfiles/csv.nrt
+  sfiles/csv-gap.nrt
+  sfiles/default.nrt
+  sfiles/entryexit.nrt
+  sfiles/gap1.nrt
   sfiles/gap2.nrt
 )
 BRLCAD_ADDDATA(nirt_sfiles nirt)

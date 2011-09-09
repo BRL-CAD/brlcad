@@ -1,26 +1,26 @@
 
 set(LIBSTEPUTILS_SRCS
-    Str.cc 
-    dirobj.cc 
-    gennode.cc 
-    gennodelist.cc 
-    gennodearray.cc 
-    scl_hash.cc 
-    errordesc.cc 
+    Str.cc
+    dirobj.cc
+    gennode.cc
+    gennodelist.cc
+    gennodearray.cc
+    scl_hash.cc
+    errordesc.cc
     scl_char_str_list.cc
 )
 
 SET(LIBSTEPUTILS_PRIVATE_HDRS
-    dirobj.h 
-    errordesc.h 
-    gennodearray.h 
-    gennode.h 
-    gennodelist.h 
-    scl_char_str_list.h 
-    scldir.h 
-    scl_hash.h 
-    stat.h 
-    Str.h 
+    dirobj.h
+    errordesc.h
+    gennodearray.h
+    gennode.h
+    gennodelist.h
+    scl_char_str_list.h
+    scldir.h
+    scl_hash.h
+    stat.h
+    Str.h
     str_list.h
 )
 

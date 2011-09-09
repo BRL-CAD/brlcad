@@ -4,7 +4,7 @@ IF(WIN32 AND BRLCAD-ENABLE_OPENGL)
 ENDIF(WIN32 AND BRLCAD-ENABLE_OPENGL)
 
 IF(BRLCAD-ENABLE_X11)
-	SET(DM_DEFINES  "${DM_DEFINES} -DDM_X -DIF_X") 
+	SET(DM_DEFINES  "${DM_DEFINES} -DDM_X -DIF_X")
 	SET(dmx11_srcs dm-X.c)
 ENDIF(BRLCAD-ENABLE_X11)
 
@@ -30,24 +30,24 @@ SET(LIBDM_SRCS
 	${dmogl_srcs}
 	${dmrtgl_srcs}
 	${dmtk_srcs}
-	adc.c 
-	axes.c 
-	clip.c 
-	color.c 
-	dm-Null.c 
-	dm-generic.c 
-	dm-plot.c 
-	dm-ps.c 
-	dm_obj.c 
-	focus.c 
-	grid.c 
-	knob.c 
-	labels.c 
-	options.c 
-	query.c 
-	rect.c 
-	scale.c 
-	tcl.c 
+	adc.c
+	axes.c
+	clip.c
+	color.c
+	dm-Null.c
+	dm-generic.c
+	dm-plot.c
+	dm-ps.c
+	dm_obj.c
+	focus.c
+	grid.c
+	knob.c
+	labels.c
+	options.c
+	query.c
+	rect.c
+	scale.c
+	tcl.c
 	vers.c
 )
 

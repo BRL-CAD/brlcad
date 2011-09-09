@@ -30,21 +30,21 @@ set(LIBFB_SOURCES
 	${fbogl_srcs}
 	${fbwgl_srcs}
 	${fbtk_srcs}
-	asize.c 
-	fb_generic.c 
-	fb_log.c 
-	fb_obj.c 
-	fb_paged_io.c 
-	fb_rect.c 
-	fb_util.c 
-	fbserv_obj.c 
-	if_debug.c 
-	if_disk.c 
-	if_mem.c 
-	if_null.c 
-	if_remote.c 
-	if_stack.c 
-	tcl.c 
+	asize.c
+	fb_generic.c
+	fb_log.c
+	fb_obj.c
+	fb_paged_io.c
+	fb_rect.c
+	fb_util.c
+	fbserv_obj.c
+	if_debug.c
+	if_disk.c
+	if_mem.c
+	if_null.c
+	if_remote.c
+	if_stack.c
+	tcl.c
 	vers.c
 )
 
@@ -85,4 +85,3 @@ SET(libfb_ignore_files
 	if_tk.c
 )
 CMAKEFILES(${libfb_ignore_files})
-

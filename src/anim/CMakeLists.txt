@@ -33,12 +33,12 @@ BRLCAD_ADDEXEC(chan_mult chan_mult.c libbu)
 BRLCAD_ADDEXEC(chan_permute chan_permute.c libbu)
 
 set(anim_MANS
-  anim_script.1 
-  anim_sort.1 
-  anim_time.1 
-  anim_track.1 
-  anim_turn.1 
-  chan_mult.1 
+  anim_script.1
+  anim_sort.1
+  anim_time.1
+  anim_track.1
+  anim_turn.1
+  chan_mult.1
   chan_permute.1
 )
 ADD_MAN_PAGES(1 anim_MANS)

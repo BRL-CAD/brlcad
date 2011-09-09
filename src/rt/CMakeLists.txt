@@ -1,8 +1,8 @@
 set(RT_COMMON_SRCS
-        do.c
-        main.c
-        opt.c
-        worker.c
+	do.c
+	main.c
+	opt.c
+	worker.c
 )
 IF(NOT MSVC)
 	SET(RT_COMMON_SRCS ${RT_COMMON_SRCS} heatgraph.c)
@@ -34,78 +34,78 @@ set(rt_SRCS
 )
 
 set(rt_bot_faces_SRCS
-        ${RT_COMMON_SRCS}
-        view_bot_faces.c
+	${RT_COMMON_SRCS}
+	view_bot_faces.c
 )
 
 set(rtarea_SRCS
-        ${RT_COMMON_SRCS}
-        viewarea.c
+	${RT_COMMON_SRCS}
+	viewarea.c
 )
 
 set(rtcell_SRCS
-        ${RT_COMMON_SRCS}
-        viewcell.c
+	${RT_COMMON_SRCS}
+	viewcell.c
 )
 
 set(rtcheck_SRCS
-        ${RT_COMMON_SRCS}
-        viewcheck.c
+	${RT_COMMON_SRCS}
+	viewcheck.c
 )
 
 set(rtedge_SRCS
-        ${RT_COMMON_SRCS}
-        viewedge.c
+	${RT_COMMON_SRCS}
+	viewedge.c
 )
 
 set(rtfrac_SRCS
-        ${RT_COMMON_SRCS}
-        viewfrac.c
+	${RT_COMMON_SRCS}
+	viewfrac.c
 )
 
 set(rtg3_SRCS
-        ${RT_COMMON_SRCS}
-        viewg3.c
+	${RT_COMMON_SRCS}
+	viewg3.c
 )
 
 set(rthide_SRCS
-        ${RT_COMMON_SRCS}
-        viewhide.c
+	${RT_COMMON_SRCS}
+	viewhide.c
 )
 
 set(rtpp_SRCS
-        ${RT_COMMON_SRCS}
-        viewpp.c
+	${RT_COMMON_SRCS}
+	viewpp.c
 )
 
 set(rtrad_SRCS
-        ${RT_COMMON_SRCS}
-        viewrad.c
+	${RT_COMMON_SRCS}
+	viewrad.c
 )
 
 set(rtrange_SRCS
-        ${RT_COMMON_SRCS}
-        viewrange.c
+	${RT_COMMON_SRCS}
+	viewrange.c
 )
 
 set(rtray_SRCS
-        ${RT_COMMON_SRCS}
-        viewray.c
+	${RT_COMMON_SRCS}
+	viewray.c
 )
 
 set(rtsil_SRCS
-        ${RT_COMMON_SRCS}
-        viewsil.c
+	${RT_COMMON_SRCS}
+	viewsil.c
 )
 
 set(rtweight_SRCS
-        ${RT_COMMON_SRCS}
-        viewweight.c
+	${RT_COMMON_SRCS}
+	viewweight.c
 )
 
 set(rtxray_SRCS
-        ${RT_COMMON_SRCS}
-        viewxray.c
+	${RT_COMMON_SRCS}
+	viewxray.c
 )
 
 set(LIBREMRT_SOURCES

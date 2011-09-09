@@ -5,26 +5,26 @@ ADD_LEX_YACC_DEPENDENCY(ExpScanner ExpParser)
 set(EXPRESS_SOURCES
     ${YACC_ExpParser_OUTPUTS}
     ${LEX_ExpScanner_OUTPUTS}
-    symbol.c 
-    type.c 
-    variable.c 
-    expr.c 
-    entity.c 
-    caseitem.c 
-    stmt.c 
-    alg.c 
-    scope.c 
-    schema.c 
-    resolve.c 
-    lexact.c 
-    linklist.c 
-    error.c 
-    dict.c 
-    hash.c 
-    memory.c 
-    object.c 
-    inithook.c 
-    yyvars.c 
+    symbol.c
+    type.c
+    variable.c
+    expr.c
+    entity.c
+    caseitem.c
+    stmt.c
+    alg.c
+    scope.c
+    schema.c
+    resolve.c
+    lexact.c
+    linklist.c
+    error.c
+    dict.c
+    hash.c
+    memory.c
+    object.c
+    inithook.c
+    yyvars.c
     express.c
 )
 

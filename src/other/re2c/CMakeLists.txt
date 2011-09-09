@@ -33,29 +33,29 @@ ELSE(YACC_EXECUTABLE)
 ENDIF(YACC_EXECUTABLE)
 
 SET(re2c_common_SRCS
-	code.cc 
-	dfa.cc 
-	main.cc 
+	code.cc
+	dfa.cc
+	main.cc
 	${YACC_PARSER_SRCS}
-	actions.cc 
+	actions.cc
 	substr.cc
-	translate.cc 
+	translate.cc
 	mbo_getopt.cc
 	)
 
 SET(re2c_HDRS
-	basics.h 
-	dfa.h 
-	globals.h 
-	ins.h 
-	parser.h 
-	re.h 
+	basics.h
+	dfa.h
+	globals.h
+	ins.h
+	parser.h
+	re.h
 	scanner.h
 	substr.h
-	token.h 
-	mbo_getopt.h 
-	code.h 
-	stream_lc.h 
+	token.h
+	mbo_getopt.h
+	code.h
+	stream_lc.h
 	code_names.h
 	)
 
@@ -117,5 +117,3 @@ configure_file(run_tests.sh.in ${CMAKE_CURRENT_BINARY_DIR}/run_tests.sh @ONLY)
 #RE2CFLAGS    = -bi
 
 #CLEANFILES   = parser.cc y.tab.c y.tab.h scanner.cc re2c.1 .version htdocs/manual.html
-
-

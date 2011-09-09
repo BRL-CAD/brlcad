@@ -87,14 +87,14 @@ SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 
 #----------------------------------------------------------------------------
-# The location in which to install Tcl.  Only do this if CMAKE_INSTALL_PREFIX 
+# The location in which to install Tcl.  Only do this if CMAKE_INSTALL_PREFIX
 # hasn't been set already, to try and allow parent builds (if any) some control.
 IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
    IF(NOT WIN32)
       IF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
 			SET(CMAKE_INSTALL_PREFIX "/usr/local/tcldev-${TCL_VERSION}")
 		ELSE ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-         SET(CMAKE_INSTALL_PREFIX "/usr")
+	 SET(CMAKE_INSTALL_PREFIX "/usr")
 		ENDIF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
    ENDIF(NOT WIN32)
    SET(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE STRING "TCL install prefix" FORCE)
@@ -123,9 +123,9 @@ FOREACH(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
    STRING(TOUPPER "${CFG_TYPE}" CFG_TYPE)
    IF(NOT "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}")
       IF(WIN32)
-         SET("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}" ${CMAKE_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all libraries.")
+	 SET("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}" ${CMAKE_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all libraries.")
       ELSE(WIN32)
-         SET("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}" ${CMAKE_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
+	 SET("CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}" ${CMAKE_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
       ENDIF(WIN32)
    ENDIF(NOT "CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE}")
    IF(NOT "CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE}")
@@ -144,8 +144,6 @@ ENDIF(ZLIB_FOUND)
 #-----------------------------------------------------------------------------
 # If compiling on macosx, need to do something with tclConfig.h.in - figure
 # out what
-
-
 
 
 #-----------------------------------------------------------------------------
@@ -239,7 +237,7 @@ SC_TCL_LINK_LIBS()
 
 SC_TCL_64BIT_FLAGS()
 
-# Test endianness 
+# Test endianness
 IF(NOT MSVC)
 	INCLUDE(TestBigEndian)
 	TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
@@ -251,7 +249,7 @@ ENDIF(NOT MSVC)
 # POSIX substitutes
 CONFIG_CHECK_FUNCTION_EXISTS(getcwd HAVE_GETCWD)
 IF(NOT HAVE_GETCWD)
-	add_definitions(-DUSEGETWD=1) 
+	add_definitions(-DUSEGETWD=1)
 ENDIF(NOT HAVE_GETCWD)
 IF(NOT HAVE_GETCWD)
 	CONFIG_CHECK_FUNCTION_EXISTS(getwd HAVE_GETWD)
@@ -351,8 +349,8 @@ SC_TIME_HANDLER()
 # on OSX
 #CHECK_FUNCTION_EXISTS(memmove, HAVE_MEMMOVE)
 #IF(NOT HAVE_MEMMOVE)
-#	add_definitions(-DNO_MEMMOVE=1) 
-#	add_definitions(-DNO_STRING_H=1) 
+#	add_definitions(-DNO_MEMMOVE=1)
+#	add_definitions(-DNO_STRING_H=1)
 #ENDIF(NOT HAVE_MEMMOVE)
 
 
@@ -382,7 +380,7 @@ main ()
 
 union wait x;
 WIFEXITED(x);           /* Generates compiler error if WIFEXITED
-                         * uses an int. */
+			 * uses an int. */
 return 0;
 }
 ")
@@ -521,7 +519,6 @@ CHECK_COMPILER_SUPPORTS_HIDDEN_D()
 CONFIG_CHECK_LIBRARY(DL dl dlopen)
 
 
-
 CONFIG_CHECK_INCLUDE_FILE_USABILITY(sys/modem.h SYS_MODEM_H)
 
 
@@ -609,7 +606,7 @@ SET(TCL_GENERIC_SRCS
 	generic/tclThreadAlloc.c
 	generic/tclThreadJoin.c
 	generic/tclThreadStorage.c
-        generic/tclThreadTest.c
+	generic/tclThreadTest.c
 	generic/tclTimer.c
 	generic/tclTrace.c
 	generic/tclUtf.c
@@ -756,12 +753,12 @@ SET(TCL_DL_SRCS
 	unix/tclLoadDl.c
 	unix/tclLoadDyld.c
    generic/tclLoadNone.c
-  	unix/tclLoadOSF.c
+	unix/tclLoadOSF.c
 	unix/tclLoadShl.c
 )
 
 
-SET(TCL_SRCS ${TCL_GENERIC_SRCS} ${TCL_TOMMATH_SRCS} ${TCL_STUB_SRCS}) 
+SET(TCL_SRCS ${TCL_GENERIC_SRCS} ${TCL_TOMMATH_SRCS} ${TCL_STUB_SRCS})
 IF(WIN32)
 	SET(TCL_SRCS ${TCL_SRCS} ${TCL_WIN_SRCS})
 ELSE(WIN32)
@@ -830,4 +827,3 @@ MARK_AS_ADVANCED(TCL_LIBRARIES TCL_CONF_PREFIX TCL_INCLUDE_DIRS TCL_INCLUDE_PATH
 MARK_AS_ADVANCED(TCL_STUB_LIBRARIES TCL_TCLSH TCL_TCLSH_EXECUTABLE)
 MARK_AS_ADVANCED(TCL_THREADS TCL_TK_CONF_PREFIX TCL_TOMMATH TCL_UNLOAD_DLLS)
 MARK_AS_ADVANCED(TCL_VERSION_MAJOR TCL_VERSION_MINOR TCL_WISH_EXECUTABLE)
-

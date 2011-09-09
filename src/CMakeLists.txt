@@ -27,10 +27,10 @@ ENDIF(MSVC)
 # so go ahead and add them
 
 SET(required_dirs
-	libbu 
-	libbn 
-	libsysv 
-	librt 
+	libbu
+	libbn
+	libsysv
+	librt
 	external
 )
 
@@ -40,55 +40,55 @@ ENDFOREACH(subdir ${required_dirs})
 
 # Directories needed to run benchmarks
 SET(benchmark_dirs
-	libpkg 
-	libfb 
-	libwdb 
-	libgcv 
-	libanalyze 
-	libged 
-	liboptical 
-	liborle 
-	conv 
-	fbserv 
+	libpkg
+	libfb
+	libwdb
+	libgcv
+	libanalyze
+	libged
+	liboptical
+	liborle
+	conv
+	fbserv
 	rt
 )
-# The interaction of MSVC and Boost looks problematic - 
+# The interaction of MSVC and Boost looks problematic -
 # since we're not using libpc at the moment, conditionalize
 IF(NOT MSVC)
 	SET(LIBPC libpc)
 ENDIF(NOT MSVC)
 # anything not included from above
-SET(remaining_dirs 
-	libcursor 
-	libdm 
-	libfft 
+SET(remaining_dirs
+	libcursor
+	libdm
+	libfft
 	libicv
-	libmultispectral 
+	libmultispectral
 	${LIBPC}
-	libtclcad 
-	libtermio 
-	adrt 
-	anim 
-	archer 
-	brlman 
-	burst 
-	bwish 
-	canon 
-	fb 
-	vfont 
-	fbed 
-	gtools 
-	halftone 
-	irprep 
-	lgt 
-	mged 
-	nirt 
-	proc-db 
-	shapes 
-	sig 
-	tab 
-	tclscripts 
-	util 
+	libtclcad
+	libtermio
+	adrt
+	anim
+	archer
+	brlman
+	burst
+	bwish
+	canon
+	fb
+	vfont
+	fbed
+	gtools
+	halftone
+	irprep
+	lgt
+	mged
+	nirt
+	proc-db
+	shapes
+	sig
+	tab
+	tclscripts
+	util
 	vdeck
 )
 

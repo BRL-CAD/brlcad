@@ -13,7 +13,7 @@ IF(SH_EXEC)
 	#URT_EXEC(rleClock "rleClock.c ${CMAKE_CURRENT_BINARY_DIR}/font.c")
 
 	#The font file is supposed to be generated, and the above code will do so, but it appears the makeFont
-	#script has some sort of issue, at least on OSX - font.c has been checked in to the repository.  Go with that for now.	
+	#script has some sort of issue, at least on OSX - font.c has been checked in to the repository.  Go with that for now.
 	URT_EXEC(rleClock "rleClock.c font.c")
 
 ELSE(SH_EXEC)
@@ -21,4 +21,3 @@ ELSE(SH_EXEC)
 	URT_EXEC(rleClock "rleClock.c font.c")
 
 ENDIF(SH_EXEC)
-

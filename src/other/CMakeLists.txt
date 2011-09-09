@@ -22,7 +22,7 @@ FOREACH(ITEM ${dlists})
 ENDFOREACH(ITEM ${dlists})
 
 #---------------------------------------------------------------------------------
-# Optionally Building Local Copies of External Libraries 
+# Optionally Building Local Copies of External Libraries
 #
 # Need to get a bit fancy here - since we want to be able to turn local libs
 # on/off at will, need to be careful about how we handle key variables. Approach
@@ -59,8 +59,8 @@ DISTCHECK_IGNORE_ITEM(osl)
 DISTCHECK_IGNORE_ITEM(uce-dirent)
 
 # zlib Library
-# The autotools build needs this file, but the CMake zlib build doesn't tolerate 
-# it - remove it if it's there. 
+# The autotools build needs this file, but the CMake zlib build doesn't tolerate
+# it - remove it if it's there.
 THIRD_PARTY(zlib libz)
 
 # libtermlib Library
@@ -86,7 +86,7 @@ ELSE(HAVE_TERMLIB)
 ENDIF(HAVE_TERMLIB)
 
 # libpng Library - Checks for ZLIB, so need to handle libpng AFTER zlib to set the variables
-# if using a local copy of zlib.  If not using a local copy of zlib, FindZLIB results will 
+# if using a local copy of zlib.  If not using a local copy of zlib, FindZLIB results will
 # be identical in both cases so there is no danger of harming the libpng setup.  The PNG
 # CMake system needs some options set and some variables translated to fit BRL-CAD's
 # standard assumptions, so handle that here as well.
@@ -102,7 +102,7 @@ MARK_AS_ADVANCED(PNG_MAN_DIR)
 SET(CMAKE_INSTALL_LIBDIR ${LIB_DIR})
 THIRD_PARTY(png libpng)
 IF(BRLCAD_PNG_BUILD)
-	# PNG_LIB_NAME doesn't automatically propagate to toplevel due to scoping of CMake variables - 
+	# PNG_LIB_NAME doesn't automatically propagate to toplevel due to scoping of CMake variables -
 	# use get_directory_property to recover the value and place it in the CACHE
 	get_directory_property(PNG_LIBRARY DIRECTORY libpng DEFINITION PNG_LIB_NAME)
 	SET(PNG_LIBRARY "${PNG_LIBRARY}" CACHE STRING "libpng name for targets" FORCE)
@@ -404,4 +404,3 @@ ENDIF(BRLCAD_ENABLE_JOVE)
 IF(BRLCAD-ENABLE_OSL)
     ADD_SUBDIRECTORY(osl)
 ENDIF(BRLCAD-ENABLE_OSL)
-

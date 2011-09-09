@@ -5,20 +5,20 @@ if(UNIX AND NOT DEFINED CMAKE_BUILD_TYPE)
   if(CMAKE_MAJOR_VERSION EQUAL 2 AND CMAKE_MINOR_VERSION EQUAL 4)
     # workaround CMake 2.4.x bug
     set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
-        "Choose the type of build, options are:
-           None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used)
-           Debug
-           Release
-           RelWithDebInfo
-           MinSizeRel.")
+	"Choose the type of build, options are:
+	   None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used)
+	   Debug
+	   Release
+	   RelWithDebInfo
+	   MinSizeRel.")
   else()
     set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
-        "Choose the type of build, options are:
-           None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used)
-           Debug
-           Release
-           RelWithDebInfo
-           MinSizeRel.")
+	"Choose the type of build, options are:
+	   None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used)
+	   Debug
+	   Release
+	   RelWithDebInfo
+	   MinSizeRel.")
   endif()
 endif()
 
@@ -86,7 +86,7 @@ if(NOT WIN32)
   find_program(uname_executable NAMES uname PATHS /bin /usr/bin /usr/local/bin)
   if(uname_executable)
     exec_program(${uname_executable}
-                 ARGS --machine OUTPUT_VARIABLE uname_output)
+		 ARGS --machine OUTPUT_VARIABLE uname_output)
     if("uname_output" MATCHES "^.*i[1-9]86.*$")
       set(png_asm_tmp "ON")
     else("uname_output" MATCHES "^.*i[1-9]86.*$")
@@ -109,7 +109,7 @@ set(CMAKE_DEBUG_POSTFIX "d")
 
 # Use the prebuilt pnglibconf.h file from the scripts folder
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/scripts/pnglibconf.h.prebuilt
-               ${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.h)
+	       ${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # OUR SOURCES
@@ -284,10 +284,10 @@ endif()
 if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL )
   if(PNG_SHARED)
     install(TARGETS ${PNG_LIB_NAME}
-        ${PNG_EXPORT_RULE}
-        RUNTIME DESTINATION bin
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+	${PNG_EXPORT_RULE}
+	RUNTIME DESTINATION bin
+	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
     # Create a symlink for libpng.dll.a => libpng15.dll.a on Cygwin
 	 if(CYGWIN)
@@ -309,9 +309,9 @@ if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL )
 
   if(PNG_STATIC)
     install(TARGETS ${PNG_LIB_NAME_STATIC}
-        ${PNG_EXPORT_RULE}
-            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+	${PNG_EXPORT_RULE}
+	    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
     if(NOT WIN32 OR CYGWIN)
 		 get_target_property(BUILD_TARGET_LOCATION ${PNG_LIB_NAME_STATIC} LOCATION_${CMAKE_BUILD_TYPE})
 		 get_filename_component(BUILD_TARGET_FILE ${BUILD_TARGET_LOCATION} NAME)
@@ -329,7 +329,7 @@ endif()
 if(NOT SKIP_INSTALL_EXECUTABLES AND NOT SKIP_INSTALL_ALL )
   install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/libpng-config DESTINATION bin)
   install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${PNGLIB_NAME}-config
-          DESTINATION bin)
+	  DESTINATION bin)
 endif()
 if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
   # Install man pages
@@ -340,13 +340,13 @@ if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
   install(FILES png.5                    DESTINATION ${PNG_MAN_DIR}/man5)
   # Install pkg-config files
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libpng.pc
-          DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+	  DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
   install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/libpng-config
-          DESTINATION bin)
+	  DESTINATION bin)
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PNGLIB_NAME}.pc
-          DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+	  DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
   install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${PNGLIB_NAME}-config
-          DESTINATION bin)
+	  DESTINATION bin)
 endif()
 
 # On versions of CMake that support it, create an export file CMake
@@ -368,4 +368,3 @@ endif()
 # to create msvc import lib for mingw compiled shared lib
 # pexports libpng.dll > libpng.def
 # lib /def:libpng.def /machine:x86
-

@@ -7,31 +7,31 @@ include_directories(
 )
 
 SET(LIBRENDER_SRCS
-  load.c 
-  load_g.c 
-  librender/camera.c 
-  librender/component.c 
-  librender/cut.c 
-  librender/depth.c 
-  librender/flat.c 
-  librender/flos.c 
-  librender/grid.c 
-  librender/hit.c 
-  librender/normal.c 
-  librender/path.c 
-  librender/phong.c 
-  librender/render_util.c 
-  librender/spall.c 
-  librender/surfel.c 
-  librender/texture_blend.c 
-  librender/texture_bump.c 
-  librender/texture_camo.c 
-  librender/texture_checker.c 
-  librender/texture_clouds.c 
-  librender/texture_gradient.c 
-  librender/texture_image.c 
-  librender/texture_mix.c 
-  librender/texture_perlin.c 
+  load.c
+  load_g.c
+  librender/camera.c
+  librender/component.c
+  librender/cut.c
+  librender/depth.c
+  librender/flat.c
+  librender/flos.c
+  librender/grid.c
+  librender/hit.c
+  librender/normal.c
+  librender/path.c
+  librender/phong.c
+  librender/render_util.c
+  librender/spall.c
+  librender/surfel.c
+  librender/texture_blend.c
+  librender/texture_bump.c
+  librender/texture_camo.c
+  librender/texture_checker.c
+  librender/texture_clouds.c
+  librender/texture_gradient.c
+  librender/texture_image.c
+  librender/texture_mix.c
+  librender/texture_perlin.c
   librender/texture_stack.c
 )
 IF(BUILD_SHARED_LIBS)
@@ -52,14 +52,14 @@ IF(BUILD_STATIC_LIBS)
 ENDIF(BUILD_STATIC_LIBS)
 
 SET(tie_HDRS
-	adrt.h  
-	adrt_struct.h 
-	librender/camera.h 
-	librender/render.h 
-	librender/render_internal.h 
-	librender/render_util.h 
-	librender/texture.h 
-	librender/texture_internal.h 
+	adrt.h
+	adrt_struct.h
+	librender/camera.h
+	librender/render.h
+	librender/render_internal.h
+	librender/render_util.h
+	librender/texture.h
+	librender/texture_internal.h
 )
 INSTALL(FILES ${tie_HDRS} DESTINATION include/tie)
 CMAKEFILES(${tie_HDRS})
@@ -85,10 +85,10 @@ IF(TOGL_LIBRARIES)
 	GET_FILENAME_COMPONENT(ISSTTCL_LIBNAME ${ISSTTCL_LIBLOCATION} NAME)
 	FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded isst	0.1 [list load [file join $dir .. .. ${LIB_DIR} isst0.1 ${ISSTTCL_LIBNAME}]]")
 	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION lib/isst0.1)
-	FILE(WRITE ${CMAKE_BINARY_DIR}/lib/isst0.1/pkgIndex.tcl "package ifneeded isst 0.1 [list load [file join $dir ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}	${ISSTTCL_LIBNAME}] isst]") 	
+	FILE(WRITE ${CMAKE_BINARY_DIR}/lib/isst0.1/pkgIndex.tcl "package ifneeded isst 0.1 [list load [file join $dir ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}	${ISSTTCL_LIBNAME}] isst]")
 	# TODO - need to make this configure line into a real target ala
 	# BRLCAD_ADDDATA in order for the build dir copy to be updated when it
-   # is changed.	
+   # is changed.
 	IF(WIN32)
 		configure_file(isst.bat ${CMAKE_BINARY_DIR}/bin/isst.bat COPYONLY)
 		INSTALL(PROGRAMS isst.bat DESTINATION bin)

@@ -15,7 +15,7 @@ MACRO(tclIndex_BUILD name targetdir)
 	STRING(REGEX REPLACE "/" "_" targetprefix ${targetdir})
 	ADD_CUSTOM_COMMAND(
 		OUTPUT ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/tclIndex
-		COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ami.tcl ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir} 
+		COMMAND btclsh ${CMAKE_SOURCE_DIR}/src/tclscripts/ami.tcl ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}
 		DEPENDS btclsh ${targetprefix}.sentinel
 		)
 	ADD_CUSTOM_TARGET(${name}_tclIndex ALL DEPENDS ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/tclIndex)
@@ -37,20 +37,20 @@ ADD_SUBDIRECTORY(swidgets)
 ADD_SUBDIRECTORY(util)
 
 SET(tclscripts_TCLSCRIPTS
-	ami.tcl 
-	ampi.tcl 
-	cad_clrpick.tcl 
-	cad_dialog.tcl 
-	chkexterns.tcl 
-	fs_dialog.tk 
-	helpcomm.tcl 
-	helplib.tcl 
-	hoc.tcl 
-	html_library.tcl 
-	libdm.tcl 
+	ami.tcl
+	ampi.tcl
+	cad_clrpick.tcl
+	cad_dialog.tcl
+	chkexterns.tcl
+	fs_dialog.tk
+	helpcomm.tcl
+	helplib.tcl
+	hoc.tcl
+	html_library.tcl
+	libdm.tcl
 	man_browser.tcl
-	menu_override.tcl 
-	mouse.tcl 
+	menu_override.tcl
+	mouse.tcl
 	vmath.tcl
 )
 BRLCAD_ADDDATA(tclscripts_TCLSCRIPTS tclscripts)

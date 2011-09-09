@@ -25,9 +25,8 @@ SET(step_example_data
 INSTALL(FILES ${step_example_data} DESTINATION ${DATA_DIR}/data/example)
 
 
-
 SET(step_datafiles
   pdmnet.exp
-  select.exp 
+  select.exp
 )
 INSTALL(FILES ${step_datafiles} DESTINATION ${DATA_DIR}/data)

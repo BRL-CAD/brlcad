@@ -20,15 +20,15 @@ macro (osl_compile oslsrc objlist headers)
     SET(osofile "${CMAKE_CURRENT_BINARY_DIR}/${oslsrc_we}.oso")
 
     SET( ${objlist} ${${objlist}} ${osofile} )
-    
+
     #message (STATUS "  obj list now ${${objlist}}")
     #message(STATUS "${OSLHOME}/bin/oslc ${oslsrc}")
 
     # Compile the shader with ./oslc
     ADD_CUSTOM_COMMAND ( OUTPUT ${osofile}
-        COMMAND ${OSLHOME}/bin/oslc ${oslsrc}
-        DEPENDS ${${headers}} ${oslsrc} ${CMAKE_CURRENT_SOURCE_DIR}/stdosl.h ${OSLHOME}/bin/oslc
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+	COMMAND ${OSLHOME}/bin/oslc ${oslsrc}
+	DEPENDS ${${headers}} ${oslsrc} ${CMAKE_CURRENT_SOURCE_DIR}/stdosl.h ${OSLHOME}/bin/oslc
+	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endmacro ()
 
 FILE(GLOB shader_headers "*.h")
@@ -44,4 +44,3 @@ add_custom_target (shaders ALL
 
 install (FILES ${shader_headers} ${shader_source} ${shader_objs}
     DESTINATION shaders)
-

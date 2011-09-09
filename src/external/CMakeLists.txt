@@ -9,7 +9,7 @@ if(0)
 #  	Cubit/Makefile.in \
 #  	Cubit/g-sat.cpp
 #  endif
-#  
+#
 #  if BUILD_EF
 #  EF_DIR = EndgameFramework
 #  EF_FILES =
@@ -19,7 +19,7 @@ if(0)
 #  	EndgameFramework/Makefile.am \
 #  	EndgameFramework/Makefile.in
 #  endif
-#  
+#
 #  if WITH_PROE
 #  PROE_DIR = ProEngineer
 #  PROE_FILES =
@@ -37,7 +37,7 @@ if(0)
 #  	ProEngineer/protk.dat.in \
 #  	ProEngineer/usermsg.txt
 #  endif
-#  
+#
 #  if BUILD_UG
 #  UG_DIR = Unigraphics
 #  UG_FILES =
@@ -53,25 +53,26 @@ if(0)
 #  	Unigraphics/ug_misc.c \
 #  	Unigraphics/ug_misc.h
 #  endif
-#  
+#
 #  SUBDIRS = \
 #  	$(CUBIT_DIR) \
 #  	$(EF_DIR) \
 #  	$(PROE_DIR) \
 #  	$(UG_DIR)
-#  
+#
 #  EXTRA_DIST = \
 #  	README \
 #  	$(CUBIT_FILES) \
 #  	$(EF_FILES) \
 #  	$(PROE_FILES) \
 #  	$(UG_FILES)
-#  
+#
 #  DIST_SUBDIRS = \
 #  	Cubit \
 #  	EndgameFramework \
 #  	ProEngineer \
 #  	Unigraphics
-#  
+#
 #  include $(top_srcdir)/misc/Makefile.defs
-endif(0)
+endif
+

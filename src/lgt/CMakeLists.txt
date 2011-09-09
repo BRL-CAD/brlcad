@@ -4,22 +4,22 @@ include_directories(
 )
 
 SET(lgt_SOURCES
-  char.c 
-  do_options.c 
-  error.c 
-  execshell.c 
-  fb.c 
-  glob.c 
-  grid_rotate.c 
-  hmenu.c 
-  ir.c 
-  lgt.c 
-  lgt_db.c 
-  mat_db.c 
-  octree.c 
-  prnt.c 
-  reflect.c 
-  texture.c 
+  char.c
+  do_options.c
+  error.c
+  execshell.c
+  fb.c
+  glob.c
+  grid_rotate.c
+  hmenu.c
+  ir.c
+  lgt.c
+  lgt_db.c
+  mat_db.c
+  octree.c
+  prnt.c
+  reflect.c
+  texture.c
   trie.c
 )
 

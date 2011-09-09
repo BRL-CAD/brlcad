@@ -3,12 +3,12 @@ include_directories(
 )
 
 SET(halftone_SOURCES
-  main.c 
-  sharpen.c 
-  tone_classic.c 
-  tone_floyd.c 
-  tone_folly.c 
-  tone_simple.c 
+  main.c
+  sharpen.c
+  tone_classic.c
+  tone_floyd.c
+  tone_folly.c
+  tone_simple.c
   tonescale.c
 )
 

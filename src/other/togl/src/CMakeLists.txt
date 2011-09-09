@@ -17,7 +17,7 @@ include_directories(
 	)
 
 SET(TOGL_STUB_INIT_TXT "
-/* 
+/*
  * Togl - a Tk OpenGL widget
  *
  * Copyright (C) 1996-2002  Brian Paul and Ben Bederson
@@ -40,7 +40,7 @@ SET(TOGL_DECLS_H_TXT "
 #ifndef ToglDecls_H
 #  define ToglDecls_H
 
-/* 
+/*
  * Togl - a Tk OpenGL widget
  *
  * Copyright (C) 1996-2002  Brian Paul and Ben Bederson
@@ -70,7 +70,7 @@ ADD_CUSTOM_COMMAND(
 	COMMENT "Generating toglStubInit.c and toglDecls.h"
 )
 
-ADD_CUSTOM_TARGET(togl_stubs_gen ALL 
+ADD_CUSTOM_TARGET(togl_stubs_gen ALL
 	DEPENDS ${CMAKE_BINARY_DIR}/CMakeTmp/toglstubs/STUBSDONE
 	DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/STUBSSYNCED
 )
@@ -115,4 +115,3 @@ MARK_AS_ADVANCED(TOGL_STUB_LIBRARIES)
 # Create the pkgIndex.tcl file.
 FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded ${TOGL_PKGNAME} ${TOGL_PKGVERSION} [list load [file join $dir .. libtogl${CMAKE_SHARED_LIBRARY_SUFFIX}] togl]")
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION lib/${TOGL_PKGNAME}${TOGL_PKGVERSION})
-
