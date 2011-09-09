@@ -1,48 +1,12 @@
+/* RFC2822 timestamp and individual day, month and year files */
+
 #include <time.h>
 #include <stdio.h>
 #include <string.h>
 
-/* If we're not doing a release build, we want
- * a timestamp that's not changing out from under
- * us every time we run CMake */
-
-#ifndef DAYSPERWEEK
-#   define DAYSPERWEEK 7
-#endif
-
-#ifndef MONSPERYEAR 
-#   define MONSPERYEAR 12
-#endif
-
-#ifndef TM_YEAR_BASE
-#   define TM_YEAR_BASE 1900
-#endif
-char * brlcad_asctime(const struct tm *timeptr)
-{
-	static char result[16];
-	static const char	*wday_name[7] = {
-		"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
-	};
-	static const char	*mon_name[12] = {
-		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-	};
-	register const char *	wn;
-	register const char *	mn;
-
-	if (timeptr->tm_wday < 0 || timeptr->tm_wday >= DAYSPERWEEK)
-		wn = "???";
-	else	wn = wday_name[timeptr->tm_wday];
-	if (timeptr->tm_mon < 0 || timeptr->tm_mon >= MONSPERYEAR)
-		mn = "???";
-	else	mn = mon_name[timeptr->tm_mon];
-	(void)snprintf(result, sizeof(char[16]), "%.3s %.3s%3d %d\n", wn, mn, timeptr->tm_mday, TM_YEAR_BASE + timeptr->tm_year);
-	return result;
-}
-
 int main(void) {
+  char rfc2822[200];
   FILE *outfpts = NULL;
-  FILE *outfpdts = NULL;
   FILE *outfpday = NULL;
   FILE *outfpmonth = NULL;
   FILE *outfpyear = NULL;
@@ -50,20 +14,18 @@ int main(void) {
   struct tm *currenttime;
   t = time(NULL);
   currenttime = localtime(&t);
+  strftime(rfc2822, sizeof(rfc2822), "%a, %d %b %Y %H:%M:%S %z", currenttime);
   outfpts = fopen("${CONFIG_TIMESTAMP_FILE}", "w");
-  outfpdts = fopen("${CONFIG_DEBUG_TIMESTAMP_FILE}", "w");
   outfpday = fopen("${CONFIG_TIME_DAY_FILE}", "w");
   outfpmonth = fopen("${CONFIG_TIME_MONTH_FILE}", "w");
   outfpyear = fopen("${CONFIG_TIME_YEAR_FILE}", "w");
-  fprintf(outfpts, "%s", asctime(currenttime));
-  fprintf(outfpdts, "%s", brlcad_asctime(currenttime));
+  fprintf(outfpts, "%s", rfc2822);
   if (currenttime->tm_mday < 10) fprintf(outfpday, "0");
   fprintf(outfpday, "%d", currenttime->tm_mday);
   if (currenttime->tm_mon < 10) fprintf(outfpmonth, "0");
   fprintf(outfpmonth, "%d", currenttime->tm_mon + 1);
   fprintf(outfpyear, "%d", currenttime->tm_year + 1900);
   fclose(outfpts);
-  fclose(outfpdts);
   fclose(outfpday);
   fclose(outfpmonth);
   fclose(outfpyear);
