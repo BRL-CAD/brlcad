@@ -3408,7 +3408,7 @@ AC_SUBST(TERMLIB_CPPFLAGS)
 
 dnl *** Boost ***
 dnl Header only Library requiring no build
-BOOST_CPPFLAGS='-I${top_srcdir}/src/other'
+BOOST_CPPFLAGS='-I${top_srcdir}/src/other/boost'
 AC_SUBST(BOOST_CPPFLAGS)
 
 dnl *** libm ***
