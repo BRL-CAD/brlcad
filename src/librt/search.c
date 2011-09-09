@@ -96,24 +96,24 @@
 
 
 /*
- * D B _ F R E E _ F U L L  _ P A T H _ L I S T
+ * D B _ F R E E _ F U L L _ P A T H _ L I S T
  *
  * Free all entries and the list of a db_full_path_list
  */
 void
 db_free_full_path_list(struct db_full_path_list *path_list)
 {
-	struct db_full_path_list *currentpath;
-	if (path_list) {
-		if (!BU_LIST_IS_EMPTY(&(path_list->l))) {
-			while (BU_LIST_WHILE(currentpath, db_full_path_list, &(path_list->l))) {
-				db_free_full_path(currentpath->path);
-				BU_LIST_DEQUEUE((struct bu_list *)currentpath);
-				bu_free(currentpath, "free db_full_path_list entry");
-			}
-		}
-		bu_free(path_list, "free path_list");
+    struct db_full_path_list *currentpath;
+    if (path_list) {
+	if (!BU_LIST_IS_EMPTY(&(path_list->l))) {
+	    while (BU_LIST_WHILE(currentpath, db_full_path_list, &(path_list->l))) {
+		db_free_full_path(currentpath->path);
+		BU_LIST_DEQUEUE((struct bu_list *)currentpath);
+		bu_free(currentpath, "free db_full_path_list entry");
+	    }
 	}
+	bu_free(path_list, "free path_list");
+    }
 }
 
 
@@ -135,7 +135,7 @@ db_fullpath_traverse_subtree(union tree *tp,
 			     struct db_full_path_list *results,
 			     struct db_full_path *dfp,
 			     void (*comb_func) (struct db_i *, struct rt_wdb *, struct db_full_path_list *, struct db_full_path *, genptr_t),
-		             void (*leaf_func) (struct db_i *, struct rt_wdb *, struct db_full_path_list *, struct db_full_path *, genptr_t),
+			     void (*leaf_func) (struct db_i *, struct rt_wdb *, struct db_full_path_list *, struct db_full_path *, genptr_t),
 			     struct resource *resp,
 			     genptr_t client_data)
 {
@@ -784,24 +784,24 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
 	   (plan->attr_data[equalpos] != '=') &&
 	   (plan->attr_data[equalpos] != '>') &&
 	   (plan->attr_data[equalpos] != '<')) {
-    	if ((plan->attr_data[equalpos] == '/') && (plan->attr_data[equalpos + 1] == '=')) {equalpos++;}
-    	if ((plan->attr_data[equalpos] == '/') && (plan->attr_data[equalpos + 1] == '<')) {equalpos++;}
-    	if ((plan->attr_data[equalpos] == '/') && (plan->attr_data[equalpos + 1] == '>')) {equalpos++;}
-    	equalpos++;
+	if ((plan->attr_data[equalpos] == '/') && (plan->attr_data[equalpos + 1] == '=')) {equalpos++;}
+	if ((plan->attr_data[equalpos] == '/') && (plan->attr_data[equalpos + 1] == '<')) {equalpos++;}
+	if ((plan->attr_data[equalpos] == '/') && (plan->attr_data[equalpos + 1] == '>')) {equalpos++;}
+	equalpos++;
     }
 
 
     if (equalpos == strlen(plan->attr_data)) {
 	/*No logical expression given - just copy attribute name*/
-        bu_vls_strcpy(&attribname, plan->attr_data);
+	bu_vls_strcpy(&attribname, plan->attr_data);
     } else {
 	checkval = 1; /*Assume simple equality comparison, then check for other cases and change if found.*/
 	if ((plan->attr_data[equalpos] == '>') && (plan->attr_data[equalpos + 1] != '=')) {checkval = 2;}
 	if ((plan->attr_data[equalpos] == '<') && (plan->attr_data[equalpos + 1] != '=')) {checkval = 3;}
 	if ((plan->attr_data[equalpos] == '=') && (plan->attr_data[equalpos + 1] == '>')) {checkval = 4;}
 	if ((plan->attr_data[equalpos] == '=') && (plan->attr_data[equalpos + 1] == '<')) {checkval = 5;}
-        if ((plan->attr_data[equalpos] == '>') && (plan->attr_data[equalpos + 1] == '=')) {checkval = 4;}
-        if ((plan->attr_data[equalpos] == '<') && (plan->attr_data[equalpos + 1] == '=')) {checkval = 5;}
+	if ((plan->attr_data[equalpos] == '>') && (plan->attr_data[equalpos + 1] == '=')) {checkval = 4;}
+	if ((plan->attr_data[equalpos] == '<') && (plan->attr_data[equalpos + 1] == '=')) {checkval = 5;}
 
 	bu_vls_strncpy(&attribname, plan->attr_data, equalpos);
 	if (checkval < 4) {
@@ -837,13 +837,13 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
 	    if (checkval >= 1) {
 
 		/* String based comparisons */
- 		if ((checkval == 1) && (strcomparison == 1)) {
-    		    if (!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) {
-		    	bu_avs_free(&avs);
-    			bu_vls_free(&attribname);
-    			bu_vls_free(&value);
-    			return 1;
-    		    } else {
+		if ((checkval == 1) && (strcomparison == 1)) {
+		    if (!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) {
+			bu_avs_free(&avs);
+			bu_vls_free(&attribname);
+			bu_vls_free(&value);
+			return 1;
+		    } else {
 			bu_avs_free(&avs);
 			bu_vls_free(&attribname);
 			bu_vls_free(&value);
@@ -851,12 +851,12 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
 		    }
 		}
 		if ((checkval == 2) && (strcomparison == 1)) {
-    		    if (bu_strcmp(bu_vls_addr(&value), avpp->value) < 0) {
-		    	bu_avs_free(&avs);
-    			bu_vls_free(&attribname);
-    			bu_vls_free(&value);
-    			return 1;
-    		    } else {
+		    if (bu_strcmp(bu_vls_addr(&value), avpp->value) < 0) {
+			bu_avs_free(&avs);
+			bu_vls_free(&attribname);
+			bu_vls_free(&value);
+			return 1;
+		    } else {
 			bu_avs_free(&avs);
 			bu_vls_free(&attribname);
 			bu_vls_free(&value);
@@ -864,12 +864,12 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
 		    }
 		}
 		if ((checkval == 3) && (strcomparison == 1)) {
-    		    if (bu_strcmp(bu_vls_addr(&value), avpp->value) > 0) {
-		    	bu_avs_free(&avs);
-    			bu_vls_free(&attribname);
-    			bu_vls_free(&value);
-    			return 1;
-    		    } else {
+		    if (bu_strcmp(bu_vls_addr(&value), avpp->value) > 0) {
+			bu_avs_free(&avs);
+			bu_vls_free(&attribname);
+			bu_vls_free(&value);
+			return 1;
+		    } else {
 			bu_avs_free(&avs);
 			bu_vls_free(&attribname);
 			bu_vls_free(&value);
@@ -877,12 +877,12 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
 		    }
 		}
 		if ((checkval == 4) && (strcomparison == 1)) {
-    		    if ((!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) || (bu_strcmp(bu_vls_addr(&value), avpp->value) < 0)) {
-		    	bu_avs_free(&avs);
-    			bu_vls_free(&attribname);
-    			bu_vls_free(&value);
-    			return 1;
-    		    } else {
+		    if ((!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) || (bu_strcmp(bu_vls_addr(&value), avpp->value) < 0)) {
+			bu_avs_free(&avs);
+			bu_vls_free(&attribname);
+			bu_vls_free(&value);
+			return 1;
+		    } else {
 			bu_avs_free(&avs);
 			bu_vls_free(&attribname);
 			bu_vls_free(&value);
@@ -890,12 +890,12 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
 		    }
 		}
 		if ((checkval == 5) && (strcomparison == 1)) {
-    		    if ((!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) || (bu_strcmp(bu_vls_addr(&value), avpp->value) > 0)) {
-		    	bu_avs_free(&avs);
-    			bu_vls_free(&attribname);
-    			bu_vls_free(&value);
-    			return 1;
-    		    } else {
+		    if ((!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) || (bu_strcmp(bu_vls_addr(&value), avpp->value) > 0)) {
+			bu_avs_free(&avs);
+			bu_vls_free(&attribname);
+			bu_vls_free(&value);
+			return 1;
+		    } else {
 			bu_avs_free(&avs);
 			bu_vls_free(&attribname);
 			bu_vls_free(&value);
@@ -906,12 +906,12 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
 
 		/* Numerical Comparisons */
 		if ((checkval == 1) && (strcomparison == 0)) {
-    		    if (atol(bu_vls_addr(&value)) == atol(avpp->value)) {
-		    	bu_avs_free(&avs);
-    			bu_vls_free(&attribname);
-    			bu_vls_free(&value);
-    			return 1;
-    		    } else {
+		    if (atol(bu_vls_addr(&value)) == atol(avpp->value)) {
+			bu_avs_free(&avs);
+			bu_vls_free(&attribname);
+			bu_vls_free(&value);
+			return 1;
+		    } else {
 			bu_avs_free(&avs);
 			bu_vls_free(&attribname);
 			bu_vls_free(&value);
@@ -919,58 +919,58 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
 		    }
 		}
 		if ((checkval == 2) && (strcomparison == 0)) {
-    		    if (atol(bu_vls_addr(&value)) < atol(avpp->value)) {
-		    	bu_avs_free(&avs);
-    			bu_vls_free(&attribname);
-    			bu_vls_free(&value);
-    			return 1;
-    		    } else {
+		    if (atol(bu_vls_addr(&value)) < atol(avpp->value)) {
+			bu_avs_free(&avs);
+			bu_vls_free(&attribname);
+			bu_vls_free(&value);
+			return 1;
+		    } else {
 			bu_avs_free(&avs);
 			bu_vls_free(&attribname);
 			bu_vls_free(&value);
 			return 0;
 		    }
 		}
-   		if ((checkval == 3) && (strcomparison == 0)) {
-    		    if (atol(bu_vls_addr(&value)) > atol(avpp->value)) {
-		    	bu_avs_free(&avs);
-    			bu_vls_free(&attribname);
-    			bu_vls_free(&value);
-    			return 1;
-    		    } else {
+		if ((checkval == 3) && (strcomparison == 0)) {
+		    if (atol(bu_vls_addr(&value)) > atol(avpp->value)) {
+			bu_avs_free(&avs);
+			bu_vls_free(&attribname);
+			bu_vls_free(&value);
+			return 1;
+		    } else {
 			bu_avs_free(&avs);
 			bu_vls_free(&attribname);
 			bu_vls_free(&value);
 			return 0;
 		    }
 		}
-   		if ((checkval == 4) && (strcomparison == 0)) {
-    		    if (atol(bu_vls_addr(&value)) <= atol(avpp->value)) {
-		    	bu_avs_free(&avs);
-    			bu_vls_free(&attribname);
-    			bu_vls_free(&value);
-    			return 1;
-    		    } else {
+		if ((checkval == 4) && (strcomparison == 0)) {
+		    if (atol(bu_vls_addr(&value)) <= atol(avpp->value)) {
+			bu_avs_free(&avs);
+			bu_vls_free(&attribname);
+			bu_vls_free(&value);
+			return 1;
+		    } else {
 			bu_avs_free(&avs);
 			bu_vls_free(&attribname);
 			bu_vls_free(&value);
 			return 0;
 		    }
 		}
-   		if ((checkval == 5) && (strcomparison == 0)) {
-    		    if (atol(bu_vls_addr(&value)) >= atol(avpp->value)) {
-		    	bu_avs_free(&avs);
-    			bu_vls_free(&attribname);
-    			bu_vls_free(&value);
-    			return 1;
-    		    } else {
+		if ((checkval == 5) && (strcomparison == 0)) {
+		    if (atol(bu_vls_addr(&value)) >= atol(avpp->value)) {
+			bu_avs_free(&avs);
+			bu_vls_free(&attribname);
+			bu_vls_free(&value);
+			return 1;
+		    } else {
 			bu_avs_free(&avs);
 			bu_vls_free(&attribname);
 			bu_vls_free(&value);
 			return 0;
 		    }
 		}
-   		bu_avs_free(&avs);
+		bu_avs_free(&avs);
 		bu_vls_free(&attribname);
 		bu_vls_free(&value);
 		return 0;
@@ -1305,7 +1305,7 @@ c_mindepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db
 /*
  * -nnodes function --
  *
- * True if the object being examined is a COMB and has # nodes.  
+ * True if the object being examined is a COMB and has # nodes.
  * If an expression ># or <# is supplied, true if object
  * has greater than or less than that number of nodes. if >=#
  * or <=# is supplied, true if object has greater than or equal
@@ -1331,27 +1331,27 @@ f_nnodes(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, 
     if (isdigit(plan->node_data[0])) {
 	doequal = 1;
 	node_count_target = (size_t)atoi(plan->node_data);
-    } else { 
-   	if (plan->node_data[0] == '>') dogreaterthan = 1;
-   	if (plan->node_data[0] == '<') dolessthan = 1;
-   	if (plan->node_data[0] == '=') doequal = 1;
-  	if (plan->node_data[0] != '>' && plan->node_data[0] != '<' && plan->node_data[0] != '=') {
+    } else {
+	if (plan->node_data[0] == '>') dogreaterthan = 1;
+	if (plan->node_data[0] == '<') dolessthan = 1;
+	if (plan->node_data[0] == '=') doequal = 1;
+	if (plan->node_data[0] != '>' && plan->node_data[0] != '<' && plan->node_data[0] != '=') {
 	    return 0;
 	}
-   	if (plan->node_data[1] == '=') {
+	if (plan->node_data[1] == '=') {
 	    doequal = 1;
 	    if (isdigit(plan->node_data[2])) {
 		node_count_target = (size_t)atoi((plan->node_data)+2);
 	    } else {
 		return 0;
 	    }
-   	} else {
+	} else {
 	    if (isdigit(plan->node_data[1])) {
 		node_count_target = (size_t)atoi((plan->node_data)+1);
 	    } else {
 		return 0;
 	    }
-   	}
+	}
     }
 
     /* Get the number of nodes for the current object and check
@@ -1472,6 +1472,7 @@ f_print(struct db_plan_t *UNUSED(plan), struct db_full_path *entry, struct db_i 
     return 1;
 }
 
+
 HIDDEN int
 c_print(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *db_search_isoutput)
 {
@@ -1480,6 +1481,7 @@ c_print(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struc
     (*resultplan) = palloc(N_PRINT, f_print);
     return BRLCAD_OK;
 }
+
 
 /*
  * find_create --
@@ -2036,9 +2038,9 @@ db_search_freeplan(void **vplan) {
 
 struct db_full_path_list *
 db_search_full_paths(void *searchplan,        /* search plan */
-	     struct db_full_path_list *pathnames,      /* list of pathnames to traverse */
-	     struct db_i *dbip,
-	     struct rt_wdb *wdbp)
+		     struct db_full_path_list *pathnames,      /* list of pathnames to traverse */
+		     struct db_i *dbip,
+		     struct rt_wdb *wdbp)
 {
     int i;
     struct directory *dp;
@@ -2050,23 +2052,23 @@ db_search_full_paths(void *searchplan,        /* search plan */
     BU_LIST_INIT(&(searchresults->l));
     /* If nothing is passed in, try to get the list of toplevel objects */
     if (BU_LIST_IS_EMPTY(&(pathnames->l))) {
-	    db_full_path_init(&dfp);
-	    for (i = 0; i < RT_DBNHASH; i++) {
-		    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-			    if (dp->d_nref == 0 && !(dp->d_flags & RT_DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
-				    db_string_to_path(&dfp, dbip, dp->d_namep);
-				    BU_GETSTRUCT(new_entry, db_full_path_list);
-				    new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
-				    db_full_path_init(new_entry->path);
-				    db_dup_full_path(new_entry->path, (const struct db_full_path *)&dfp);
-				    BU_LIST_PUSH(&(pathnames->l), &(new_entry->l));
-			    }
-		    }
+	db_full_path_init(&dfp);
+	for (i = 0; i < RT_DBNHASH; i++) {
+	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		if (dp->d_nref == 0 && !(dp->d_flags & RT_DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
+		    db_string_to_path(&dfp, dbip, dp->d_namep);
+		    BU_GETSTRUCT(new_entry, db_full_path_list);
+		    new_entry->path = (struct db_full_path *) bu_malloc(sizeof(struct db_full_path), "new full path");
+		    db_full_path_init(new_entry->path);
+		    db_dup_full_path(new_entry->path, (const struct db_full_path *)&dfp);
+		    BU_LIST_PUSH(&(pathnames->l), &(new_entry->l));
+		}
 	    }
-	    db_free_full_path(&dfp);
+	}
+	db_free_full_path(&dfp);
     }
-    for(BU_LIST_FOR(currentpath, db_full_path_list, &(pathnames->l))){
-	    db_fullpath_traverse(dbip, wdbp, searchresults, currentpath->path, find_execute_plans, find_execute_plans, wdbp->wdb_resp, (struct db_plan_t *)searchplan);
+    for (BU_LIST_FOR(currentpath, db_full_path_list, &(pathnames->l))) {
+	db_fullpath_traverse(dbip, wdbp, searchresults, currentpath->path, find_execute_plans, find_execute_plans, wdbp->wdb_resp, (struct db_plan_t *)searchplan);
     }
     return searchresults;
 }
@@ -2074,20 +2076,20 @@ db_search_full_paths(void *searchplan,        /* search plan */
 
 struct bu_ptbl *
 db_search_unique_objects(void *searchplan,        /* search plan */
-	     struct db_full_path_list *pathnames,      /* list of pathnames to traverse */
-	     struct db_i *dbip,
-	     struct rt_wdb *wdbp)
+			 struct db_full_path_list *pathnames,      /* list of pathnames to traverse */
+			 struct db_i *dbip,
+			 struct rt_wdb *wdbp)
 {
-	struct bu_ptbl *uniq_db_objs = (struct bu_ptbl *) bu_malloc(sizeof(struct bu_ptbl), "new pointer table");
-	struct db_full_path_list *entry = NULL;
-	struct db_full_path_list *search_results = NULL;
-	search_results = db_search_full_paths(searchplan, pathnames, dbip, wdbp);
-	bu_ptbl_init(uniq_db_objs, 8, "initialize ptr table");
-	for(BU_LIST_FOR(entry, db_full_path_list, &(search_results->l))) {
-		bu_ptbl_ins_unique(uniq_db_objs, (long *)entry->path->fp_names[entry->path->fp_len - 1]);
-	}
-	db_free_full_path_list(search_results);
-	return uniq_db_objs;
+    struct bu_ptbl *uniq_db_objs = (struct bu_ptbl *) bu_malloc(sizeof(struct bu_ptbl), "new pointer table");
+    struct db_full_path_list *entry = NULL;
+    struct db_full_path_list *search_results = NULL;
+    search_results = db_search_full_paths(searchplan, pathnames, dbip, wdbp);
+    bu_ptbl_init(uniq_db_objs, 8, "initialize ptr table");
+    for (BU_LIST_FOR(entry, db_full_path_list, &(search_results->l))) {
+	bu_ptbl_ins_unique(uniq_db_objs, (long *)entry->path->fp_names[entry->path->fp_len - 1]);
+    }
+    db_free_full_path_list(search_results);
+    return uniq_db_objs;
 }
 
 
