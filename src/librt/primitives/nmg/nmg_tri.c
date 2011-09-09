@@ -2710,7 +2710,7 @@ nmg_isect_lseg3_eu(struct vertexuse *vu1, struct vertexuse *vu2, struct faceuse 
             VMOVE(q2, eu->eumate_p->vu_p->v_p->vg_p->coord);
             VSUB2(qdir, q2, q1); 
 
-            status = bn_isect_lseg3_lseg3_new(dist, p1, pdir, q1, qdir, tol);
+            status = bn_isect_lseg3_lseg3(dist, p1, pdir, q1, qdir, tol);
 
             if (status == 0) {  /* colinear and overlapping */
                 /* Hit because, can only skip if hit on end point only
@@ -2733,7 +2733,7 @@ nmg_isect_lseg3_eu(struct vertexuse *vu1, struct vertexuse *vu2, struct faceuse 
                     != (vu2->v_p == eu->vu_p->v_p)) ||
                     ((NEAR_EQUAL(dist[0], 1.0, SMALL_FASTF) && NEAR_ZERO(dist[1], SMALL_FASTF))
                     != (vu1->v_p == eu->vu_p->v_p))) {
-                    bu_bomb("nmg_isect_lseg3_eu(): logic error possibly in 'bn_isect_lseg3_lseg3_new'\n");
+                    bu_bomb("nmg_isect_lseg3_eu(): logic error possibly in 'bn_isect_lseg3_lseg3'\n");
                 }
 
                 /* True when either (p1 = q1) or (p2 = q1) or
@@ -3941,7 +3941,7 @@ nmg_classify_pt_loop_new(const struct vertex *line1_pt1_v_ptr, const struct loop
                 line2_pt2 = eu2->eumate_p->vu_p->v_p->vg_p->coord;
                 VSUB2(line2_dir, line2_pt2, line2_pt1);
 
-                status = bn_isect_line3_line3_new(&line1_dist, &line2_dist, 
+                status = bn_isect_line3_line3(&line1_dist, &line2_dist, 
                          line1_pt1, line1_dir, line2_pt1, line2_dir, tol);
 
                 if ( status == 1 ) {
