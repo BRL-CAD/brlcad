@@ -77,12 +77,6 @@
 #   Tom Browder <tbrowder2@users.sourceforge.net>
 #
 ######################################################################
-echo "************************************************************"
-echo "DEPRECATION WARNING: The autotools build logic is deprecated"
-echo "                     and may be removed in a future release"
-echo "                     of BRL-CAD.  Please use the CMake build"
-echo "                     system instead."
-echo "************************************************************"
 
 # set to minimum acceptable version of autoconf
 if [ "x$AUTOCONF_VERSION" = "x" ] ; then
