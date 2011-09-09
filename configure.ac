@@ -1889,7 +1889,7 @@ if test "xyes" = "xyes" ; then
     dnl needs to be increased from the default ANSI minimum of 17.
     BC_COMPILER_RECOGNIZES([-ftemplate-depth-50], [template_depth], [nokeep])
     if test "x$bc_template_depth_works" = "xyes" ; then
-	TEMPLATE_DEPTH="-ftemplate-depth-50"
+	TEMPLATE_DEPTH="-ftemplate-depth-300"
 	AC_SUBST(TEMPLATE_DEPTH)
     fi
 
