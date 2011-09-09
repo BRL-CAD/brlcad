@@ -29,9 +29,9 @@
 
 #include "pcMathVM.h"
 
-#include <boost/spirit/symbols/symbols.hpp>	/* deprecated header */
+#include <boost/spirit/include/classic.hpp>
+#include <boost/spirit/include/phoenix1.hpp>
 
-#include <boost/spirit/phoenix/functions.hpp>	/* deprecated header */
 #include <boost/shared_ptr.hpp>
 
 #include <string>
@@ -41,9 +41,9 @@
  */
 struct addsymbol_impl {
     typedef boost::shared_ptr<MathFunction> FunctionPtr;
-    typedef boost::spirit::symbols<FunctionPtr> FunctionTable;
+    typedef boost::spirit::classic::symbols<FunctionPtr> FunctionTable;
 
-    template<typename T, typename Arg1, typename Arg2 = boost::spirit::nil_t>
+    template<typename T, typename Arg1, typename Arg2 = boost::spirit::classic::nil_t>
     struct result
     {
 	typedef void type;
@@ -68,7 +68,7 @@ struct addsymbol_impl {
 phoenix::function<addsymbol_impl> const addsymbol = addsymbol_impl();
 
 /**
- * Lazy function wrapper for boost::spirit::symbols::find()
+ * Lazy function wrapper for boost::spirit::classic::symbols::find()
  */
 struct findsymbol_impl {
     template <typename T, typename Arg>

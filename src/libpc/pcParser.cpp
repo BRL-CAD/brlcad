@@ -76,10 +76,10 @@ void Parser::parse(struct pc_pc_set *pcs)
 	name.clear();
 	//std::cout<<"Parameter expression Input: "<<(char *) bu_vls_addr(&(par->name))<<std::endl;
 	if (par->ctype == PC_DB_BYEXPR) {
-	    boost::spirit::parse_info<> p_info = \
-		boost::spirit::parse(\
+	    boost::spirit::classic::parse_info<> p_info = \
+		boost::spirit::classic::parse(\
 				     (char *) bu_vls_addr(&(par->data.expression)), \
-				     *var_gram, boost::spirit::space_p);
+				     *var_gram, boost::spirit::classic::space_p);
 	    if (p_info.full) {
 		//vcset.pushVar();
 	    } else {
@@ -102,7 +102,7 @@ void Parser::parse(struct pc_pc_set *pcs)
 	    vcset.addConstraint(con);
 	    bu_free(con->args, "free argument array");
 	}
-	/*boost::spirit::parse((char *) bu_vls_addr(&(con->name)), *con_gram, boost::spirit::space_p);*/
+	/*boost::spirit::classic::parse((char *) bu_vls_addr(&(con->name)), *con_gram, boost::spirit::space_p);*/
         bu_vls_free(&(con->name));
 	BU_LIST_DEQUEUE(&(con->l));
 	bu_free(con, "free constraint");

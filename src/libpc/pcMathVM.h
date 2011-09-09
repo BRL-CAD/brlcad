@@ -33,7 +33,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/iterator/indirect_iterator.hpp>
-#include <boost/spirit/symbols/symbols.hpp>	/* deprecated header */
+#include <boost/spirit/include/classic.hpp>
 
 #include <iostream>
 #include <string>
@@ -106,8 +106,8 @@ struct MathFunction;
 struct MathVM
 {
     Stack stack;
-    boost::spirit::symbols<double> variables;
-    boost::spirit::symbols<boost::shared_ptr<MathFunction> > functions;
+    boost::spirit::classic::symbols<double> variables;
+    boost::spirit::classic::symbols<boost::shared_ptr<MathFunction> > functions;
     void display();
 };
 
@@ -195,7 +195,7 @@ private:
 struct UserFuncExpression;
 struct UserFunction : public MathFunction
 {
-    typedef boost::spirit::symbols<double> symboltable;
+    typedef boost::spirit::classic::symbols<double> symboltable;
     typedef boost::shared_ptr<symboltable> stptr;
 
     /** Create and Copy constructors */
@@ -206,7 +206,7 @@ struct UserFunction : public MathFunction
 
     /** Data access methods */
     UserFunction *asUserFunction();
-    boost::spirit::symbols<double> const & localvariables() const;
+    boost::spirit::classic::symbols<double> const & localvariables() const;
 
     /** Arity return method */
     std::size_t arity() const;
@@ -322,12 +322,12 @@ private:
 struct UserFuncExpression
 {
     UserFuncExpression(std::vector<std::string> const & arnam, \
-		       boost::shared_ptr<boost::spirit::symbols<double> > const & locvar,
+		       boost::shared_ptr<boost::spirit::classic::symbols<double> > const & locvar,
 		       Stack const & s)
     	: argnames(arnam), localvars(locvar), stack(s)
     {}
     std::vector<std::string> argnames;
-    boost::shared_ptr<boost::spirit::symbols<double> > localvars;
+    boost::shared_ptr<boost::spirit::classic::symbols<double> > localvars;
     Stack stack;
 };
 
