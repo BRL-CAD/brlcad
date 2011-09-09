@@ -65,6 +65,7 @@ libged_nil_la_SOURCES = \
 	echo.c \
 	edcodes.c \
 	edcomb.c \
+	edpipe.c \
 	edit.c \
 	editit.c \
 	edmater.c \
