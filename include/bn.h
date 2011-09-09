@@ -775,30 +775,16 @@ BN_EXPORT extern int bn_dist_pt2_lseg2(fastf_t *dist_sq,
 				       const point_t b,
 				       const point_t p,
 				       const struct bn_tol *tol);
-#ifdef TRI_PROTOTYPE
-BN_EXPORT extern int bn_isect_lseg3_lseg3_new(fastf_t *dist,
+BN_EXPORT extern int bn_isect_lseg3_lseg3(fastf_t *dist,
 					      const point_t p, const vect_t pdir,
 					      const point_t q, const vect_t qdir,
 					      const struct bn_tol *tol);
-#endif
-BN_EXPORT extern int bn_isect_lseg3_lseg3(fastf_t *dist,
-					  const point_t p, const vect_t pdir,
-					  const point_t q, const vect_t qdir,
-					  const struct bn_tol *tol);
-#ifdef TRI_PROTOTYPE
-BN_EXPORT extern int bn_isect_line3_line3_new(fastf_t *s, fastf_t *t,
+BN_EXPORT extern int bn_isect_line3_line3(fastf_t *s, fastf_t *t,
 					      const point_t p0,
 					      const vect_t u,
 					      const point_t q0,
 					      const vect_t v,
 					      const struct bn_tol *tol);
-#endif
-BN_EXPORT extern int bn_isect_line3_line3(fastf_t *t, fastf_t *u,
-					  const point_t p,
-					  const vect_t d,
-					  const point_t a,
-					  const vect_t c,
-					  const struct bn_tol *tol);
 BN_EXPORT extern int bn_2line3_colinear(const point_t p1,
 					const vect_t d1,
 					const point_t p2,
