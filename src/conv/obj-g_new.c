@@ -1821,7 +1821,7 @@ create_bot_int_arrays(struct ti_t *ti)
 		if ((res_v = (size_t *)bsearch(&(index_arr_tri_1D[i][j]),
 					       ti->uvi, ti->num_uvi, sizeof(size_t),
 					       (int (*)(const void *a, const void *b))comp_b)) ==
-		    (size_t)NULL)
+		    (size_t *)NULL)
 		{
 		    bu_log("ERROR: FACE_V bsearch returned null, "
 			   "face=(%zu)idx=(%zu)\n", i, j);
@@ -1841,7 +1841,7 @@ create_bot_int_arrays(struct ti_t *ti)
 		if ((res_v = (size_t *)bsearch(&(index_arr_tri_2D[i][j][0]),
 					       ti->uvi, ti->num_uvi, sizeof(size_t),
 					       (int (*)(const void *a, const void *b))comp_b)) ==
-		    (size_t)NULL)
+		    (size_t *)NULL)
 		{
 		    bu_log("ERROR: FACE_TV bsearch returned vertex null, "
 			   "face=(%zu)idx=(%zu)\n", i, j);
@@ -1850,7 +1850,7 @@ create_bot_int_arrays(struct ti_t *ti)
 		    ti->bot_faces[(i*3)+j] = (int)(res_v - ti->uvi);
 		}
 		if ((res_t = (size_t*)bsearch(&(index_arr_tri_2D[i][j][1]), ti->utvi, ti->num_utvi, sizeof(size_t),
-					      (int (*)(const void *a, const void *b))comp_b)) == (size_t)NULL) {
+					      (int (*)(const void *a, const void *b))comp_b)) == (size_t *)NULL) {
 		    bu_log("ERROR: FACE_TV bsearch returned texture null, face=(%zu)idx=(%zu)\n", i, j);
 		    return 1;
 		} else {
@@ -1867,14 +1867,14 @@ create_bot_int_arrays(struct ti_t *ti)
 	for (i = 0 ; i < ti->bot_num_faces ; i++) {
 	    for (j = 0 ; j < 3 ; j++) {
 		if ((res_v = (size_t*)bsearch(&(index_arr_tri_2D[i][j][0]), ti->uvi, ti->num_uvi, sizeof(size_t),
-					      (int (*)(const void *a, const void *b))comp_b)) == (size_t)NULL) {
+					      (int (*)(const void *a, const void *b))comp_b)) == (size_t *)NULL) {
 		    bu_log("ERROR: FACE_NV bsearch returned vertex null, face=(%zu)idx=(%zu)\n", i, j);
 		    return 1;
 		} else {
 		    ti->bot_faces[(i*3)+j] = (int)(res_v - ti->uvi);
 		}
 		if ((res_n = (size_t*)bsearch(&(index_arr_tri_2D[i][j][1]), ti->uvni, ti->num_uvni, sizeof(size_t),
-					      (int (*)(const void *a, const void *b))comp_b)) == (size_t)NULL) {
+					      (int (*)(const void *a, const void *b))comp_b)) == (size_t *)NULL) {
 		    bu_log("ERROR: FACE_NV bsearch returned normal null, face=(%zu)idx=(%zu)\n", i, j);
 		    return 1;
 		} else {
@@ -1891,21 +1891,21 @@ create_bot_int_arrays(struct ti_t *ti)
 	for (i = 0 ; i < ti->bot_num_faces ; i++) {
 	    for (j = 0 ; j < 3 ; j++) {
 		if ((res_v = (size_t*)bsearch(&(index_arr_tri_3D[i][j][0]), ti->uvi, ti->num_uvi, sizeof(size_t),
-					      (int (*)(const void *a, const void *b))comp_b)) == (size_t)NULL) {
+					      (int (*)(const void *a, const void *b))comp_b)) == (size_t *)NULL) {
 		    bu_log("ERROR: FACE_TNV bsearch returned vertex null, face=(%zu)idx=(%zu)\n", i, j);
 		    return 1;
 		} else {
 		    ti->bot_faces[(i*3)+j] = (int)(res_v - ti->uvi);
 		}
 		if ((res_t = (size_t*)bsearch(&(index_arr_tri_3D[i][j][1]), ti->utvi, ti->num_utvi, sizeof(size_t),
-					      (int (*)(const void *a, const void *b))comp_b)) == (size_t)NULL) {
+					      (int (*)(const void *a, const void *b))comp_b)) == (size_t *)NULL) {
 		    bu_log("ERROR: FACE_TNV bsearch returned texture null, face=(%zu)idx=(%zu)\n", i, j);
 		    return 1;
 		} else {
 		    ti->bot_textures[(i*3)+j] = (int)(res_t - ti->utvi);
 		}
 		if ((res_n = (size_t*)bsearch(&(index_arr_tri_3D[i][j][2]), ti->uvni, ti->num_uvni, sizeof(size_t),
-					      (int (*)(const void *a, const void *b))comp_b)) == (size_t)NULL) {
+					      (int (*)(const void *a, const void *b))comp_b)) == (size_t *)NULL) {
 		    bu_log("ERROR: FACE_TNV bsearch returned normal null, face=(%zu)idx=(%zu)\n", i, j);
 		    return 1;
 		} else {
