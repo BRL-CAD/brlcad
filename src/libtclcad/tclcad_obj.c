@@ -276,12 +276,12 @@ HIDDEN int to_more_args_callback(struct ged *gedp,
 				 ged_func_ptr func,
 				 const char *usage,
 				 int maxargs);
-HIDDEN int to_mouse_append_pipept(struct ged *gedp,
-				  int argc,
-				  const char *argv[],
-				  ged_func_ptr func,
-				  const char *usage,
-				  int maxargs);
+HIDDEN int to_mouse_append_pipept_common(struct ged *gedp,
+					 int argc,
+					 const char *argv[],
+					 ged_func_ptr func,
+					 const char *usage,
+					 int maxargs);
 HIDDEN int to_mouse_constrain_rot(struct ged *gedp,
 				  int argc,
 				  const char *argv[],
@@ -336,12 +336,6 @@ HIDDEN int to_mouse_otranslate(struct ged *gedp,
 			       ged_func_ptr func,
 			       const char *usage,
 			       int maxargs);
-HIDDEN int to_mouse_prepend_pipept(struct ged *gedp,
-				   int argc,
-				   const char *argv[],
-				   ged_func_ptr func,
-				   const char *usage,
-				   int maxargs);
 HIDDEN int to_mouse_ray(struct ged *gedp,
 			int argc,
 			const char *argv[],
@@ -859,7 +853,7 @@ static struct to_cmdtab to_cmds[] = {
     {"move_arb_face_mode",	"obj face x y", TO_UNLIMITED, to_move_arb_face_mode, GED_FUNC_PTR_NULL},
     {"move_pipept",	(char *)0, TO_UNLIMITED, to_move_pipept, GED_FUNC_PTR_NULL},
     {"move_pipept_mode",	"obj seg_i x y", TO_UNLIMITED, to_move_pipept_mode, GED_FUNC_PTR_NULL},
-    {"mouse_append_pipept",	"obj x y", TO_UNLIMITED, to_mouse_append_pipept, GED_FUNC_PTR_NULL},
+    {"mouse_append_pipept",	"obj x y", TO_UNLIMITED, to_mouse_append_pipept_common, ged_append_pipept},
     {"mouse_constrain_rot",	"coord x y", TO_UNLIMITED, to_mouse_constrain_rot, GED_FUNC_PTR_NULL},
     {"mouse_constrain_trans",	"coord x y", TO_UNLIMITED, to_mouse_constrain_trans, GED_FUNC_PTR_NULL},
     {"mouse_find_pipept",	"obj x y", TO_UNLIMITED, to_mouse_find_pipept, GED_FUNC_PTR_NULL},
@@ -869,7 +863,7 @@ static struct to_cmdtab to_cmds[] = {
     {"mouse_orotate",	"obj x y", TO_UNLIMITED, to_mouse_orotate, GED_FUNC_PTR_NULL},
     {"mouse_oscale",	"obj x y", TO_UNLIMITED, to_mouse_oscale, GED_FUNC_PTR_NULL},
     {"mouse_otranslate",	"obj x y", TO_UNLIMITED, to_mouse_otranslate, GED_FUNC_PTR_NULL},
-    {"mouse_prepend_pipept",	"obj x y", TO_UNLIMITED, to_mouse_prepend_pipept, GED_FUNC_PTR_NULL},
+    {"mouse_prepend_pipept",	"obj x y", TO_UNLIMITED, to_mouse_append_pipept_common, ged_prepend_pipept},
     {"mouse_ray",	"x y", TO_UNLIMITED, to_mouse_ray, GED_FUNC_PTR_NULL},
     {"mouse_rect",	"x y", TO_UNLIMITED, to_mouse_rect, GED_FUNC_PTR_NULL},
     {"mouse_rot",	"x y", TO_UNLIMITED, to_mouse_rot, GED_FUNC_PTR_NULL},
@@ -4510,15 +4504,15 @@ to_more_args_callback(struct ged *gedp,
 }
 
 HIDDEN int
-to_mouse_append_pipept(struct ged *UNUSED(gedp),
-		       int UNUSED(argc),
-		       const char *UNUSED(argv[]),
-		       ged_func_ptr UNUSED(func),
-		       const char *UNUSED(usage),
-		       int UNUSED(maxargs))
+to_mouse_append_pipept_common(struct ged *gedp,
+			      int argc,
+			      const char *argv[],
+			      ged_func_ptr func,
+			      const char *usage,
+			      int UNUSED(maxargs))
 {
     int ret;
-    char *av[6];
+    char *av[4];
     fastf_t x, y;
     fastf_t inv_width;
     fastf_t inv_height;
@@ -4564,18 +4558,23 @@ to_mouse_append_pipept(struct ged *UNUSED(gedp),
     x = x * inv_width * 2.0 - 1.0;
     y = (y * inv_height * -2.0 + 1.0) * inv_aspect;
     VSET(view, x, y, 0.0);
+
+    gedp->ged_gvp = gdvp->gdv_view;
+    if (gedp->ged_gvp->gv_grid.ggs_snap)
+	ged_snap_to_grid(gedp, &view[X], &view[Y]);
+
     MAT4X3PNT(model, gdvp->gdv_view->gv_view2model, view);
 
     bu_vls_init(&pt_vls);
     bu_vls_printf(&pt_vls, "%lf %lf %lf", model[X], model[Y], model[Z]);
 
     gedp->ged_gvp = gdvp->gdv_view;
-    av[0] = "append_pipept";
+    av[0] = (char *)argv[0];
     av[1] = (char *)argv[2];
     av[2] = bu_vls_addr(&pt_vls);
     av[3] = (char *)0;
 
-    ret = ged_append_pipept(gedp, 3, (const char **)av);
+    ret = (*func)(gedp, 3, (const char **)av);
     bu_vls_free(&pt_vls);
 
     if (ret == GED_OK) {
@@ -5458,85 +5457,6 @@ to_mouse_otranslate(struct ged *gedp,
     bu_vls_free(&tran_x_vls);
     bu_vls_free(&tran_y_vls);
     bu_vls_free(&tran_z_vls);
-
-    if (ret == GED_OK) {
-	av[0] = "draw";
-	av[1] = (char *)argv[2];
-	av[2] = (char *)0;
-	to_edit_redraw(gedp, 2, (const char **)av);
-    }
-
-    return GED_OK;
-}
-
-HIDDEN int
-to_mouse_prepend_pipept(struct ged *UNUSED(gedp),
-			int UNUSED(argc),
-			const char *UNUSED(argv[]),
-			ged_func_ptr UNUSED(func),
-			const char *UNUSED(usage),
-			int UNUSED(maxargs))
-{
-    int ret;
-    char *av[6];
-    fastf_t x, y;
-    fastf_t inv_width;
-    fastf_t inv_height;
-    fastf_t inv_aspect;
-    point_t model;
-    point_t view;
-    struct bu_vls pt_vls;
-    struct ged_dm_view *gdvp;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    /* must be wanting help */
-    if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
-    }
-
-    if (argc != 5) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
-	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
-	    break;
-    }
-
-    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
-    }
-
-    if (sscanf(argv[3], "%lf", &x) != 1 ||
-	sscanf(argv[4], "%lf", &y) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
-    inv_height = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_height;
-    inv_aspect = (fastf_t)gdvp->gdv_dmp->dm_height / (fastf_t)gdvp->gdv_dmp->dm_width;
-    x = x * inv_width * 2.0 - 1.0;
-    y = (y * inv_height * -2.0 + 1.0) * inv_aspect;
-    VSET(view, x, y, 0.0);
-    MAT4X3PNT(model, gdvp->gdv_view->gv_view2model, view);
-
-    bu_vls_init(&pt_vls);
-    bu_vls_printf(&pt_vls, "%lf %lf %lf", model[X], model[Y], model[Z]);
-
-    gedp->ged_gvp = gdvp->gdv_view;
-    av[0] = "prepend_pipept";
-    av[1] = (char *)argv[2];
-    av[2] = bu_vls_addr(&pt_vls);
-    av[3] = (char *)0;
-
-    ret = ged_prepend_pipept(gedp, 3, (const char **)av);
-    bu_vls_free(&pt_vls);
 
     if (ret == GED_OK) {
 	av[0] = "draw";
