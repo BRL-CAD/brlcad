@@ -74,5 +74,5 @@ if(0)
 #  	Unigraphics
 #
 #  include $(top_srcdir)/misc/Makefile.defs
-endif
+endif (0)
 
