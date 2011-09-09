@@ -3140,7 +3140,6 @@ nmg_jeg(struct edge_g_lseg *dest_eg, struct edge_g_lseg *src_eg)
 }
 
 
-#ifdef TRI_PROTOTYPE
 /**
  * n m g _ k e u _ z l
  *
@@ -3223,7 +3222,6 @@ nmg_keu_zl(struct shell *s, const struct bn_tol *tol)
 
     return eu_killed;
 }
-#endif
 
 /*
  * Local Variables:

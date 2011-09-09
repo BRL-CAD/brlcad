@@ -2652,26 +2652,10 @@ nmg_2edgeuse_g_coincident(const struct edgeuse *eu1, const struct edgeuse *eu2, 
     if (bn_distsq_line3_pt3(eg2->e_pt, eg2->e_dir,
 			    eu1->eumate_p->vu_p->v_p->vg_p->coord) > tol->dist_sq) goto trouble;
 
-    /* Perhaps check for ultra-short edges (< 10*tol->dist)? */
-
-    /* Do not use bn_isect_line3_line3() -- it's MUCH too strict */
-
     return 1;
+
  trouble:
-    if (!bn_2line3_colinear(eg1->e_pt, eg1->e_dir, eg2->e_pt, eg2->e_dir,
-			    1e5, tol))
-	return 0;
-
-#ifdef TRI_PROTOTYPE
-    bu_log("nmg_2edgeuse_g_coincident() lines colinear, vertex check fails.\n");
     return 0;
-#else
-    /* XXX debug */
-    nmg_pr_eg(&eg1->l.magic, 0);
-    nmg_pr_eg(&eg2->l.magic, 0);
-    bu_log("nmg_2edgeuse_g_coincident() lines colinear, vertex check fails, calling colinear anyway.\n");
-    return 1;
-#endif
 }
 
 

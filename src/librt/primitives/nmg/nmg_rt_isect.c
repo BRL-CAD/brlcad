@@ -736,9 +736,7 @@ vertex_neighborhood(struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss 
     struct edgeuse *eu;
     vect_t edge_vect;
     int found_faces;
-#ifdef TRI_PROTOTYPE
     vect_t r_dir_unit;
-#endif
 
     NMG_CK_VERTEXUSE(vu_p);
     NMG_CK_VERTEX(vu_p->v_p);
@@ -753,15 +751,10 @@ vertex_neighborhood(struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss 
 	if (t > dimen) dimen = t;
     }
 
-#ifdef TRI_PROTOTYPE
     VMOVE(r_dir_unit, rd->rp->r_dir);
     VUNITIZE(r_dir_unit);
     VJOIN1(North_Pole, vu_p->v_p->vg_p->coord, -dimen, r_dir_unit);
     VJOIN1(South_Pole, vu_p->v_p->vg_p->coord, dimen, r_dir_unit);
-#else
-    VJOIN1(North_Pole, vu_p->v_p->vg_p->coord, -dimen, rd->rp->r_dir);
-    VJOIN1(South_Pole, vu_p->v_p->vg_p->coord, dimen, rd->rp->r_dir);
-#endif
 
     if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
 	VPRINT("\tNorth Pole", North_Pole);
@@ -823,31 +816,19 @@ vertex_neighborhood(struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss 
 		/* Find points on sphere in direction of edges
 		 * (away from vertex along edge)
 		 */
-#ifdef TRI_PROTOTYPE
 		eu = vu->up.eu_p;
 		do {
 		    eu = BU_LIST_PNEXT_CIRC(edgeuse, eu);
 		} while ((eu->vu_p->v_p == vu->v_p) && (eu != vu->up.eu_p));
-#else
-		do
-		    eu = BU_LIST_PNEXT_CIRC(edgeuse, vu->up.eu_p);
-		while (eu->vu_p->v_p == vu->v_p);
-#endif
 		nmg_find_eu_leftvec(leftA, vu->up.eu_p);
 		VSUB2(edge_vect, eu->vu_p->v_p->vg_p->coord, vu->v_p->vg_p->coord);
 		VUNITIZE(edge_vect);
 		VJOIN1(pointA, vu->v_p->vg_p->coord, dimen, edge_vect)
 
-#ifdef TRI_PROTOTYPE
 		eu = vu->up.eu_p;
 		do {
 		    eu = BU_LIST_PPREV_CIRC(edgeuse, eu);
 		} while ((eu->vu_p->v_p == vu->v_p) && (eu != vu->up.eu_p));
-#else
-		do
-		    eu = BU_LIST_PPREV_CIRC(edgeuse, vu->up.eu_p);
-		while (eu->vu_p->v_p == vu->v_p);
-#endif
 
 		nmg_find_eu_leftvec(leftB, eu);
 		VSUB2(edge_vect, eu->vu_p->v_p->vg_p->coord, vu->v_p->vg_p->coord);
@@ -913,11 +894,7 @@ vertex_neighborhood(struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss 
 	/* we've found a vertex floating in space */
 	myhit->outbound_use = myhit->inbound_use = (long *)North_vu;
 	myhit->in_out = HMG_HIT_ANY_ANY;
-#ifdef TRI_PROTOTYPE
 	VREVERSE(myhit->hit.hit_normal, r_dir_unit);
-#else
-	VREVERSE(myhit->hit.hit_normal, rd->rp->r_dir);
-#endif
 	return;
     }
 
@@ -990,12 +967,10 @@ ray_hit_vertex(struct ray_data *rd, struct vertexuse *vu_p, int status)
 {
     struct hitmiss *myhit;
     vect_t v;
-#ifdef TRI_PROTOTYPE
     vect_t r_dir_unit;
 
     VMOVE(r_dir_unit, rd->rp->r_dir);
     VUNITIZE(r_dir_unit);
-#endif
 
     if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 	bu_log("ray_hit_vertex x%x (%g %g %g) status=%d\n",
@@ -1016,12 +991,8 @@ ray_hit_vertex(struct ray_data *rd, struct vertexuse *vu_p, int status)
 
     /* v = vector from ray point to hit vertex */
     VSUB2(v, vu_p->v_p->vg_p->coord, rd->rp->r_pt);
-#ifdef TRI_PROTOTYPE
     /* using the unit vector for ray direction */
     myhit->hit.hit_dist = VDOT(v, r_dir_unit);	  /* distance along ray */
-#else
-    myhit->hit.hit_dist = VDOT(v, rd->rp->r_dir); /* distance along ray */
-#endif
     VMOVE(myhit->hit.hit_point, vu_p->v_p->vg_p->coord);
     myhit->hit.hit_private = (genptr_t) vu_p->v_p;
 
@@ -1212,12 +1183,10 @@ edge_hit_ray_state(struct ray_data *rd, struct edgeuse *eu, struct hitmiss *myhi
     vect_t eu_vec;
     vect_t norm;
     int faces_found;
-#ifdef TRI_PROTOTYPE
     vect_t r_dir_unit;
 
     VMOVE(r_dir_unit, rd->rp->r_dir);
     VUNITIZE(r_dir_unit);
-#endif
 
     if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
 	eu_p = BU_LIST_PNEXT_CIRC(edgeuse, eu);
@@ -1268,11 +1237,7 @@ edge_hit_ray_state(struct ray_data *rd, struct edgeuse *eu, struct hitmiss *myhi
 		goto next_edgeuse;
 	    }
 
-#ifdef TRI_PROTOTYPE
 	    cos_angle = VDOT(edge_left, r_dir_unit);
-#else
-	    cos_angle = VDOT(edge_left, rd->rp->r_dir);
-#endif
 
 	    if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
 		bu_log("left_vect:(%g %g %g) cos_angle:%g\n",
@@ -1311,17 +1276,9 @@ edge_hit_ray_state(struct ray_data *rd, struct edgeuse *eu, struct hitmiss *myhi
 	eu_p = BU_LIST_PNEXT_CIRC(edgeuse, eu);
 	VSUB2(eu_vec, eu->vu_p->v_p->vg_p->coord,
 	      eu_p->vu_p->v_p->vg_p->coord);
-#ifdef TRI_PROTOTYPE
 	VCROSS(edge_left, eu_vec, r_dir_unit);
-#else
-	VCROSS(edge_left, eu_vec, rd->rp->r_dir);
-#endif
 	VCROSS(myhit->inbound_norm, eu_vec, edge_left);
-#ifdef TRI_PROTOTYPE
 	if (VDOT(myhit->inbound_norm, r_dir_unit) > SMALL_FASTF) {
-#else
-	if (VDOT(myhit->inbound_norm, rd->rp->r_dir) > SMALL_FASTF) {
-#endif
 	    VREVERSE(myhit->inbound_norm, myhit->inbound_norm);
 	}
 	VMOVE(myhit->outbound_norm, myhit->inbound_norm);
@@ -1339,11 +1296,7 @@ edge_hit_ray_state(struct ray_data *rd, struct edgeuse *eu, struct hitmiss *myhi
     if (MAGSQ(norm) < VDIVIDE_TOL)
 	bu_bomb("edge_hit_ray_state() null normal!\n");
 
-#ifdef TRI_PROTOTYPE
     cos_angle = VDOT(norm, r_dir_unit);
-#else
-    cos_angle = VDOT(norm, rd->rp->r_dir);
-#endif
 
     if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
 	VPRINT("\ninb face normal", norm);
@@ -1361,11 +1314,7 @@ edge_hit_ray_state(struct ray_data *rd, struct edgeuse *eu, struct hitmiss *myhi
     /* Compute the ray state on the outbound side */
     NMG_GET_FU_NORMAL(norm, outb_fu);
     VMOVE(myhit->outbound_norm, norm);
-#ifdef TRI_PROTOTYPE
     cos_angle = VDOT(norm, r_dir_unit);
-#else
-    cos_angle = VDOT(norm, rd->rp->r_dir);
-#endif
 
     if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
 	VPRINT("\noutb face normal", norm);
@@ -1504,12 +1453,10 @@ isect_ray_lseg(struct ray_data *rd, struct edgeuse *eu_p)
     struct hitmiss *myhit;
     int vhit1, vhit2;
     double dist_along_ray;
-#ifdef TRI_PROTOTYPE
     vect_t r_dir_unit;
 
     VMOVE(r_dir_unit, rd->rp->r_dir);
     VUNITIZE(r_dir_unit);
-#endif
 
     status = bn_isect_line_lseg(&dist_along_ray,
 				rd->rp->r_pt, rd->rp->r_dir,
@@ -1599,11 +1546,7 @@ isect_ray_lseg(struct ray_data *rd, struct edgeuse *eu_p)
 	    /* a hit on an edge */
 	    point_t pt;
 
-#ifdef TRI_PROTOTYPE
 	    VJOIN1(pt, rd->rp->r_pt, dist_along_ray, r_dir_unit);
-#else
-	    VJOIN1(pt, rd->rp->r_pt, dist_along_ray, rd->rp->r_dir);
-#endif
 	    ray_hit_edge(rd, eu_p, dist_along_ray, pt);
 
 	    break;
@@ -1772,9 +1715,7 @@ HIDDEN void
 record_face_hit(struct ray_data *rd, struct hitmiss *myhit, fastf_t *plane_pt, double dist, struct faceuse *fu_p, fastf_t *norm)
 {
     double cos_angle;
-#ifdef TRI_PROTOTYPE
     vect_t r_dir_unit;
-#endif
 
     BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_HIT_MAGIC);
     myhit->outbound_use = (long *)fu_p;
@@ -1791,13 +1732,9 @@ record_face_hit(struct ray_data *rd, struct hitmiss *myhit, fastf_t *plane_pt, d
     /* compute what the ray-state is before and after this
      * encountering this hit point.
      */
-#ifdef TRI_PROTOTYPE
     VMOVE(r_dir_unit, rd->rp->r_dir);
     VUNITIZE(r_dir_unit);
     cos_angle = VDOT(norm, r_dir_unit);
-#else
-    cos_angle = VDOT(norm, rd->rp->r_dir);
-#endif
     if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
 	VPRINT("face Normal", norm);
 	bu_log("cos_angle wrt ray direction: %g\n", cos_angle);
@@ -2290,12 +2227,10 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
     struct hitmiss *myhit;
     struct face *fp;
     struct face_g_plane *fgp;
-#ifdef TRI_PROTOTYPE
     vect_t r_dir_unit;
 
     VMOVE(r_dir_unit, rd->rp->r_dir);
     VUNITIZE(r_dir_unit);
-#endif
 
     if (fu_p->orientation == OT_OPPOSITE) return;
 
@@ -2356,14 +2291,9 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
 		bu_log("missed bounding box\n");
 	    return;
 	}
-#ifdef TRI_PROTOTYPE
         dist *= MAGNITUDE(rd->rp->r_dir);
 	VJOIN1(hit_pt, rd->rp->r_pt, dist, r_dir_unit);
 	if (V3PT_OUT_RPP_TOL(hit_pt, fp->min_pt, fp->max_pt, rd->tol)) {
-#else
-	VJOIN1(hit_pt, rd->rp->r_pt, dist, rd->rp->r_dir);
-	if (!V3PT_IN_RPP(hit_pt, fp->min_pt, fp->max_pt)) {
-#endif
 	    NMG_GET_HITMISS(myhit, rd->ap);
 	    NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
 	    myhit->hit.hit_private = (genptr_t)fu_p->f_p;
@@ -2566,29 +2496,15 @@ guess_class_from_hitlist_max(struct ray_data *rd, int *hari_kari, int in_or_out_
 
 	if (!in_or_out_only) {
 	    /* if we've got a zero distance hit, that clinches it */
-#ifdef TRI_PROTOTYPE
             if (NEAR_ZERO(a_hit->hit.hit_dist, rd->tol->dist)) {
-#else
-	    if (a_hit->hit.hit_dist <= rd->tol->dist &&
-		a_hit->hit.hit_dist >= -rd->tol->dist) {
-#endif
 		if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
 		    bu_log("guess_class_from_hitlist_min() returns NMG_CLASS_AonBshared for 0 dist hit\n");
-
-#ifdef TRI_PROTOTYPE
 		return NMG_CLASS_AonBanti;
-#else
-		return NMG_CLASS_AonBshared;
-#endif
 	    }
 
 	    if (a_hit->hit.hit_dist < -rd->tol->dist)
 		continue;
-#ifdef TRI_PROTOTYPE
 	} else if (a_hit->hit.hit_dist < rd->tol->dist)
-#else
-	} else if (a_hit->hit.hit_dist < -SMALL_FASTF)
-#endif
 	    continue;
 
 	if (a_hit->in_out == HMG_HIT_ANY_ANY)
@@ -2633,11 +2549,7 @@ guess_class_from_hitlist_max(struct ray_data *rd, int *hari_kari, int in_or_out_
 	    case HMG_HIT_ON_IN:
 	    case HMG_HIT_ON_ON:
 	    case HMG_HIT_ON_OUT:
-#ifdef TRI_PROTOTYPE
 		pt_class = NMG_CLASS_AonBanti;
-#else
-		pt_class = NMG_CLASS_AonBshared;
-#endif
 		break;
 	    default:
 		pt_class = NMG_CLASS_Unknown;
@@ -2675,29 +2587,15 @@ guess_class_from_hitlist_min(struct ray_data *rd, int *hari_kari, int in_or_out_
 
 	if (!in_or_out_only) {
 	    /* if we've got a zero distance hit, that clinches it */
-#ifdef TRI_PROTOTYPE
             if (NEAR_ZERO(a_hit->hit.hit_dist, rd->tol->dist)) {
-#else
-	    if (a_hit->hit.hit_dist <= rd->tol->dist &&
-		a_hit->hit.hit_dist >= -rd->tol->dist) {
-#endif
 		if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
 		    bu_log("guess_class_from_hitlist_min() returns NMG_CLASS_AonBshared for 0 dist hit\n");
-
-#ifdef TRI_PROTOTYPE
 		return NMG_CLASS_AonBanti;
-#else
-		return NMG_CLASS_AonBshared;
-#endif
 	    }
 
 	    if (a_hit->hit.hit_dist > rd->tol->dist)
 		continue;
-#ifdef TRI_PROTOTYPE
 	} else if (a_hit->hit.hit_dist > -(rd->tol->dist))
-#else
-	} else if (a_hit->hit.hit_dist > SMALL_FASTF)
-#endif
 	    continue;
 
 	if (a_hit->in_out == HMG_HIT_ANY_ANY)
@@ -2743,11 +2641,7 @@ guess_class_from_hitlist_min(struct ray_data *rd, int *hari_kari, int in_or_out_
 	    case HMG_HIT_ON_ON:
 	    case HMG_HIT_OUT_ON:
 	    case HMG_HIT_IN_ON:
-#ifdef TRI_PROTOTYPE
 		pt_class = NMG_CLASS_AonBanti;
-#else
-		pt_class = NMG_CLASS_AonBshared;
-#endif
 		break;
 	    default:
 		pt_class = NMG_CLASS_Unknown;
@@ -2798,9 +2692,6 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
     int minus_class, plus_class;
     int hari_kari_minus, hari_kari_plus;
 
-#ifndef TRI_PROTOTYPE
-    VUNITIZE(rp->r_dir);
-#endif
     NMG_CK_SHELL(s);
     BN_CK_TOL(tol);
 
@@ -2890,11 +2781,7 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
     minus_class = guess_class_from_hitlist_min(&rd, &hari_kari_minus, in_or_out_only);
     plus_class = guess_class_from_hitlist_max(&rd, &hari_kari_plus, in_or_out_only);
 
-#ifdef TRI_PROTOTYPE
     if (minus_class != plus_class) {
-#else
-    if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT)) {
-#endif
 	bu_log("minus_class = (%s)\n", nmg_class_name(minus_class));
 	bu_log("plus_class = (%s)\n", nmg_class_name(plus_class));
     }

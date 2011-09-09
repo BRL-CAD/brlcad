@@ -2400,7 +2400,6 @@ nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2)
 
     if (vu1->v_p == vu2->v_p) {
 	/* The loops touch, use a different routine */
-#ifdef TRI_PROTOTYPE
         /* The 2nd parameter passed into 'nmg_split_lu_at_vu' is added
          * to the new loopuse created by 'nmg_split_lu_at_vu'. Because
          * of this, the 2nd parameter should be vu2 because when
@@ -2409,9 +2408,6 @@ nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2)
          * was called.
          */
 	lu = nmg_split_lu_at_vu(oldlu, vu2);
-#else
-	lu = nmg_split_lu_at_vu(oldlu, vu1);
-#endif
 	goto out;
     }
 
@@ -3855,11 +3851,7 @@ nmg_lu_reorient(struct loopuse *lu)
     if (lu->orientation == OT_OPPOSITE)
 	HREVERSE(lu_pl, lu_pl);
 
-#ifdef TRI_PROTOTYPE
     if (VDOT(lu_pl, norm) < -SMALL_FASTF)
-#else
-    if (VDOT(lu_pl, norm) < 0.0)
-#endif
 	geom_orient = OT_OPPOSITE;
     else
 	geom_orient = OT_SAME;

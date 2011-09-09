@@ -87,14 +87,12 @@ struct trap {
     struct edgeuse *e_right;
 };
 
-#ifdef TRI_PROTOTYPE
 struct loopuse_tree_node {
     struct bu_list l;
     struct loopuse *lu;
     struct loopuse_tree_node *parent;
     struct bu_list children_hd;
 };
-#endif
 
 /* if there is an edge in this face which connects the points
  * return 1
@@ -121,10 +119,8 @@ static struct pt2d *find_pt2d(struct bu_list *tbl2d, struct vertexuse *vu);
 static FILE *plot_fp;
 
 
-/* This is the ifndef to disable the functions print_2d_eu,
- * print_trap, print_tlist.
- */
-#ifndef TRI_PROTOTYPE
+/* Disable unused functions print_2d_eu, print_trap, and print_tlist. */
+#if 0
 static void
 print_2d_eu(char *s, struct edgeuse *eu, struct bu_list *tbl2d)
 {
@@ -544,22 +540,12 @@ is_convex(struct pt2d *a, struct pt2d *b, struct pt2d *c, const struct bn_tol *t
     if (rt_g.NMG_debug & DEBUG_TRI)
 	bu_log("\tangle == %g tol angle: %g\n", angle, tol->perp);
 
-#ifdef TRI_PROTOTYPE
     /* Since during loopuse triangulation, sometimes it is necessary
      * to allow degenerate triangles (i.e. zero area). Because of
      * this, we need to allow the definition of convex to include 0
      * and 180 degree angles.
      */
     return (angle >= -SMALL_FASTF) && (angle <= (M_PI + SMALL_FASTF));
-#else
-    /* This original code contains a bug since the units of 'angle'
-     * is radians but the units of 'tol->perp' is not. Since changing
-     * any tolerances related to nmg triangulation seem to have both
-     * a negative and positive impact, I decided not to arbitrarily
-     * correct this bug.
-     */
-    return angle > tol->perp && angle <= M_PI-tol->perp;
-#endif
 }
 
 
@@ -572,11 +558,11 @@ is_convex(struct pt2d *a, struct pt2d *b, struct pt2d *c, const struct bn_tol *t
 #define POLY_POINT 7
 
 
-/* This is the ifndef to disable the functions vtype2d,
- * poly_start_vertex, poly_side_vertex, poly_end_vertex,
- * hole_start_vertex, hole_end_vertex, nmg_trap_face.
+/* Disable unused functions vtype2d, poly_start_vertex,
+ * poly_side_vertex, poly_end_vertex, hole_start_vertex,
+ * hole_end_vertex, and nmg_trap_face.
  */
-#ifndef TRI_PROTOTYPE
+#if 0
 /**
  *
  * characterize the edges which meet at this vertex.
@@ -1644,7 +1630,6 @@ pick_pt2d_for_cutjoin(struct bu_list *tbl2d, struct pt2d **p1, struct pt2d **p2,
     NMG_CK_VERTEX(cut_vu2->v_p);
     NMG_CK_VERTEX_G(cut_vu2->v_p->vg_p);
 
-#ifdef TRI_PROTOTYPE
     /* If the 'from' and 'to' cut vertexuse are in the same loopuse,
      * it should be safe to assume the current pt2d records for these
      * vertexuse are correct for the cut. Therefore, do not search for
@@ -1661,7 +1646,6 @@ pick_pt2d_for_cutjoin(struct bu_list *tbl2d, struct pt2d **p1, struct pt2d **p2,
     if ((*p1)->vu_p->up.eu_p->up.lu_p == (*p2)->vu_p->up.eu_p->up.lu_p) {
         return;
     }
-#endif
 
     /* form direction vector for the cut we want to make */
     VSUB2(dir, cut_vu2->v_p->vg_p->coord,
@@ -1935,14 +1919,12 @@ join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const
     if (rt_g.NMG_debug & DEBUG_TRI)
 	bu_log("join_mapped_loops()\n");
 
-#ifdef TRI_PROTOTYPE
     if (((p1->vu_p->up.eu_p->up.lu_p->orientation != OT_OPPOSITE) && 
          (p1->vu_p->up.eu_p->up.lu_p->orientation != OT_SAME)) ||
         ((p2->vu_p->up.eu_p->up.lu_p->orientation != OT_OPPOSITE) && 
          (p2->vu_p->up.eu_p->up.lu_p->orientation != OT_SAME))) {
         bu_bomb("join_mapped_loops(): loopuse orientation is not OT_SAME or OT_OPPOSITE\n");
     }
-#endif
 
     if ((p1->vu_p->up.eu_p->up.lu_p->orientation == OT_OPPOSITE) && 
         (p2->vu_p->up.eu_p->up.lu_p->orientation == OT_OPPOSITE)) {
@@ -1964,25 +1946,18 @@ join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const
 	    bu_log("join_mapped_loops(): Joining two loops that share a vertex at (%g %g %g)\n",
 		   V3ARGS(p1->vu_p->v_p->vg_p->coord));
 	}
-#ifdef TRI_PROTOTYPE
 	vu = nmg_join_2loops(p1->vu_p,  p2->vu_p);
         goto out;
-#else
-	(void)nmg_join_2loops(p1->vu_p,  p2->vu_p);
-	return;
-#endif
     }
 
     pick_pt2d_for_cutjoin(tbl2d, &p1, &p2, tol);
 
-#ifdef TRI_PROTOTYPE
     if (p1->vu_p->up.eu_p->up.lu_p == p2->vu_p->up.eu_p->up.lu_p) {
         bu_bomb("join_mapped_loops(): attempting to join a loopuse to itself\n");
     }
     if (p1->vu_p == p2->vu_p) {
         bu_bomb("join_mapped_loops(): attempting to join a vertexuse to itself\n");
     }
-#endif
 
     vu1 = p1->vu_p;
     vu2 = p2->vu_p;
@@ -2043,11 +2018,7 @@ join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const
     NMG_CK_VERTEXUSE(vu);
 
     if (vu == vu2) {
-#ifdef TRI_PROTOTYPE
         bu_bomb("join_mapped_loops(): vu == vu2\n");
-#else
-	return;
-#endif
     }
     /* since we've just made some new vertexuses
      * we need to map them to the 2D plane.
@@ -2055,9 +2026,7 @@ join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const
      * XXX This should be made more direct and efficient.  For now we
      * just go looking for vertexuses without a mapping.
      */
-#ifdef TRI_PROTOTYPE
 out:
-#endif
     NMG_CK_EDGEUSE(vu->up.eu_p);
     NMG_CK_LOOPUSE(vu->up.eu_p->up.lu_p);
     lu = vu->up.eu_p->up.lu_p;
@@ -2069,10 +2038,10 @@ out:
 }
 
 
-/* This is the ifndef to disable the functions skip_cut,
- * cut_diagonals, cut_unimonotone, nmg_plot_flat_face.
+/* Disable unused functions skip_cut, cut_diagonals, cut_unimonotone,
+ * and nmg_plot_flat_face.
  */
-#ifndef TRI_PROTOTYPE
+#if 0
 /**
  * Check to see if the edge between the top/bottom of the trapezoid
  * already exists.
@@ -2549,11 +2518,6 @@ nmg_plot_flat_face(struct faceuse *fu, struct bu_list *tbl2d)
  */
 
 
-/* This is the ifdef to enable the prototype functions nmg_plot_fu,
- * nmg_isect_lseg3_eu, nmg_triangulate_rm_holes,
- * nmg_triangulate_rm_degen_loopuse, nmg_dump_model.
- */
-#ifdef TRI_PROTOTYPE
 void
 nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *tol)
 {
@@ -3197,18 +3161,8 @@ nmg_dump_model(struct model *m)
     fclose(fp);
     return;
 }
-#endif
-/* This is the endif to enable the prototype functions nmg_plot_fu,
- * nmg_isect_lseg3_eu, nmg_triangulate_rm_holes,
- * nmg_triangulate_rm_degen_loopuse, nmg_dump_model.
- */
 
 
-/* This is the ifdef to enable the prototype version of the function
- * cut_unimonotone and the new prototype functions
- * nmg_tri_kill_accordions and validate_tbl2d.
- */
-#ifdef TRI_PROTOTYPE
 HIDDEN void
 nmg_tri_kill_accordions(struct loopuse *lu, struct bu_list *tbl2d)
 {
@@ -3785,19 +3739,8 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 	}
     }
 }
-#endif
-/* This is the endif to enable the prototype version of the function
- * cut_unimonotone and the new prototype functions
- * nmg_tri_kill_accordions and validate_tbl2d.
- */
 
 
-/* This is the ifdef to enable the prototype functions
- * print_loopuse_tree, nmg_classify_pt_loop_new, 
- * nmg_classify_lu_lu_new, insert_above, insert_node and
- * nmg_build_loopuse_tree.
- */
-#ifdef TRI_PROTOTYPE
 void
 print_loopuse_tree(struct bu_list *head, struct loopuse_tree_node *parent, const struct bn_tol *tol) 
 {
@@ -4308,17 +4251,8 @@ nmg_build_loopuse_tree(struct faceuse *fu, struct loopuse_tree_node **root, cons
         insert_node(lu, &((*root)->children_hd), *root, tol);
     }
 }
-#endif
-/* This is the endif to enable the prototype functions
- * print_loopuse_tree, nmg_classify_pt_loop_new, 
- * nmg_classify_lu_lu_new, insert_above, insert_node and
- * nmg_build_loopuse_tree.
- */
 
-/* This is the ifdef to enable the prototype nmg_triangulate_fu
- * function and disable the original version of this function.
- */
-#ifdef TRI_PROTOTYPE
+
 void
 nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 {
@@ -4533,18 +4467,8 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
     nmg_triangulate_rm_degen_loopuse(fu, tol);
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-#if 1
         /* set the loopuse orientation to OT_SAME */
         nmg_set_lu_orientation(lu, 0);
-#else
-        /* compute and set the loopuse orientation within the loopuse
-         * based on the rotation of vertices within the loopuse and
-         * the faceuse normal. this may have problems with loopuse
-         * which enclose no area, i.e. loopuse with 3 vertices but the
-         * loopuse forms a straight line.
-         */
-	nmg_lu_reorient(lu);
-#endif
     }
 
     if (rt_g.NMG_debug & DEBUG_TRI) {
@@ -4559,11 +4483,9 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
     bu_free((char *)tbl2d, "discard tbl2d");
 }
 
-/* This is the 'else' to enable the prototype nmg_triangulate_fu
- * function and disable the original version of this function.
- */
-#else
 
+/* Disable the old version of function nmg_triangulate_fu */
+#if 0
 void
 nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 {
@@ -4757,8 +4679,8 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
     return;
 }
 #endif
-/* This is the endif to enable the prototype nmg_triangulate_fu
- * function and disable the original version of this function.
+/* This is the endif to disable the old version of function
+ * nmg_triangulate_fu.
  */
 
 

@@ -3922,13 +3922,9 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 	NMG_CK_VERTEX_G(vg);
 
 	VSUB2(diff, vg->coord, vg1->coord);
-#ifdef TRI_PROTOTYPE
-	if (VDOT(diff, dir) < -SMALL_FASTF)
-#else
-	    if (VDOT(diff, dir) < 0.0)
-#endif
-		bu_bomb("nmg_isect_eu_fu: intersection point not on eu\n");
-
+	if (VDOT(diff, dir) < -SMALL_FASTF) {
+	    bu_bomb("nmg_isect_eu_fu: intersection point not on eu\n");
+	}
 	inter_dist[i] = MAGSQ(diff);
     }
 

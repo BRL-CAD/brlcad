@@ -265,14 +265,9 @@ nmg_class_pt_e(struct neighbor *closest, const fastf_t *pt, const struct edgeuse
 	 * to decide things.
 	 */
 	if (closest->p.eu && closest->p.eu->up.lu_p == eu->up.lu_p) {
-#ifdef TRI_PROTOTYPE
 	    if (closest->class == NMG_CLASS_AoutB ||
 		closest->class == NMG_CLASS_AonBshared ||
 		closest->class == NMG_CLASS_AonBanti) {
-#else
-	    if (closest->class == NMG_CLASS_AoutB ||
-		closest->class == NMG_CLASS_AonBshared) {
-#endif
 		if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 		    bu_log("\t\tSkipping, earlier eu from same lu at same dist, is OUT or ON.\n");
 		return;
@@ -292,14 +287,9 @@ nmg_class_pt_e(struct neighbor *closest, const fastf_t *pt, const struct edgeuse
 	     * and when loop A is visited the distances will be exactly
 	     * equal, not giving A a chance to claim its hit.
 	     */
-#ifdef TRI_PROTOTYPE
 	    if (closest->class == NMG_CLASS_AinB ||
 		closest->class == NMG_CLASS_AonBshared ||
 		closest->class == NMG_CLASS_AonBanti) {
-#else
-	    if (closest->class == NMG_CLASS_AinB ||
-		closest->class == NMG_CLASS_AonBshared) {
-#endif
 		if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 		    bu_log("\t\tSkipping, earlier eu from other another lu at same dist, is IN or ON\n");
 		return;
@@ -451,32 +441,22 @@ nmg_class_pt_l(struct neighbor *closest, const fastf_t *pt, const struct loopuse
 	HPRINT("\tplane eqn", peqn);
     }
 
-#ifdef TRI_PROTOTYPE
     if (V3PT_OUT_RPP_TOL(pt, lg->min_pt, lg->max_pt, tol)) {
-#else
-    if (!V3PT_IN_RPP_TOL(pt, lg->min_pt, lg->max_pt, tol)) {
-#endif
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 	    bu_log("\tPoint is outside loop RPP\n");
 	}
-#ifdef TRI_PROTOTYPE
 	closest->class = NMG_CLASS_AoutB;
-#endif
 	return;
     }
     if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
 	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 	    nmg_class_pt_e(closest, pt, eu, tol);
 	    /* If point lies ON edge, we are done */
-#ifdef TRI_PROTOTYPE
 	    if (closest->class == NMG_CLASS_AonBanti) {
                 break;
             } else if (closest->class == NMG_CLASS_AonBshared) {
 		bu_bomb("nmg_class_pt_l(): nmg_class_pt_e returned AonBshared but can only return AonBanti\n");
             }
-#else
-	    if (closest->class == NMG_CLASS_AonBshared) break;
-#endif
 	}
     } else if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 	register struct vertexuse *vu;
@@ -487,11 +467,7 @@ nmg_class_pt_l(struct neighbor *closest, const fastf_t *pt, const struct loopuse
 	    if (lu->orientation == OT_OPPOSITE) {
 		closest->class = NMG_CLASS_AoutB;
 	    } else if (lu->orientation == OT_SAME) {
-#ifdef TRI_PROTOTYPE
 		closest->class = NMG_CLASS_AonBanti;
-#else
-		closest->class = NMG_CLASS_AonBshared;
-#endif
 	    } else {
 		nmg_pr_orient(lu->orientation, "\t");
 		bu_bomb("nmg_class_pt_l: bad orientation for face loopuse\n");
@@ -664,10 +640,8 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
     vect_t projection_dir;
     int try=0;
     struct xray rp;
-#ifdef TRI_PROTOTYPE
     fastf_t model_bb_max_width;
     point_t m_min_pt, m_max_pt; /* nmg model min and max points */
-#endif
 
     m = s->r_p->m_p;
     NMG_CK_MODEL(m);
@@ -710,11 +684,9 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
 		 */
 		class = nmg_class_pt_fu_except(pt, fu, (struct loopuse *)0,
 			(void (*)())NULL, (void (*)())NULL, (char *)NULL, 0, 0, tol);
-#ifdef TRI_PROTOTYPE
 		if (class == NMG_CLASS_AonBshared) {
 		    bu_bomb("nmg_class_pt_s(): function nmg_class_pt_fu_except returned AonBshared when it can only return AonBanti\n");
 		}
-#endif
 		if (class == NMG_CLASS_AonBshared) {
 		    /* Point is ON face, therefore it must be
 		     * ON the shell also.
@@ -722,7 +694,6 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
 		    class = NMG_CLASS_AonBshared;
 		    goto out;
 		}
-#ifdef TRI_PROTOTYPE
 		if (class == NMG_CLASS_AonBanti) {
 		    /* Point is ON face, therefore it must be
 		     * ON the shell also.
@@ -730,9 +701,7 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
 		    class = NMG_CLASS_AonBanti;
 		    goto out;
 		}
-#endif
 
-#ifdef TRI_PROTOTYPE
 		if (class == NMG_CLASS_AinB) {
 		    /* Point is IN face, therefor it must be
 		     * ON the shell also.
@@ -740,15 +709,6 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
 		    class = NMG_CLASS_AonBanti;
 		    goto out;
 		}
-#else
-		if (class == NMG_CLASS_AinB) {
-		    /* Point is IN face, therefor it must be
-		     * ON the shell also.
-		     */
-		    class = NMG_CLASS_AonBshared;
-		    goto out;
-		}
-#endif
 		/* Point is OUTside face, its undecided. */
 	    }
 
@@ -767,10 +727,8 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
     VSUB2(region_diagonal, s->r_p->ra_p->max_pt, s->r_p->ra_p->min_pt);
     region_diameter = MAGNITUDE(region_diagonal);
 
-#ifdef TRI_PROTOTYPE
     nmg_model_bb(m_min_pt, m_max_pt, m);
     model_bb_max_width = bn_dist_pt3_pt3(m_min_pt, m_max_pt);
-#endif
 
     /* Choose an unlikely direction */
     try = 0;
@@ -793,23 +751,17 @@ retry:
 
     VMOVE(rp.r_pt, pt);
 
-#ifdef TRI_PROTOTYPE
     /* give the ray a length which is at least the max
      * length of the nmg model bounding box.
      */
     VSCALE(rp.r_dir, projection_dir, model_bb_max_width * 1.25);
-#else
-    VMOVE(rp.r_dir, projection_dir);
-#endif
 
     /* get NMG ray-tracer to tell us if start point is inside or outside */
     class = nmg_class_ray_vs_shell(&rp, s, in_or_out_only, tol);
 
-#ifdef TRI_PROTOTYPE
     if (class == NMG_CLASS_AonBshared) {
 	bu_bomb("nmg_class_pt_s(): function nmg_class_ray_vs_shell returned AonBshared when it can only return AonBanti\n");
     }
-#endif
     if (class == NMG_CLASS_Unknown) {
 	goto retry;
     }
@@ -927,7 +879,6 @@ class_vu_vs_s(struct vertexuse *vu, struct shell *sB, char **classlist, const st
     }
 
     reason = "of nmg_class_pt_s()";
-#ifdef TRI_PROTOTYPE
     /* 3rd parameter '0' allows return of AonBanti instead of
      * only AinB or AoutB
      */
@@ -936,9 +887,6 @@ class_vu_vs_s(struct vertexuse *vu, struct shell *sB, char **classlist, const st
     if (class == NMG_CLASS_AonBshared) {
 	bu_bomb("class_vu_vs_s(): function nmg_class_pt_s returned AonBshared when it can only return AonBanti\n");
     }
-#else
-    class = nmg_class_pt_s(pt, sB, 1, tol);
-#endif
     if (class == NMG_CLASS_AoutB) {
 	NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], vu->v_p);
 	status = OUTSIDE;
@@ -948,11 +896,9 @@ class_vu_vs_s(struct vertexuse *vu, struct shell *sB, char **classlist, const st
     }  else if (class == NMG_CLASS_AonBshared) {
 	NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared], vu->v_p);
 	status = ON_SURF;
-#ifdef TRI_PROTOTYPE
     }  else if (class == NMG_CLASS_AonBanti) {
 	NMG_INDEX_SET(classlist[NMG_CLASS_AonBanti], vu->v_p);
 	status = ON_SURF;
-#endif
     } else {
 	bu_log("class_vu_vs_s(): class=%s\n", nmg_class_name(class));
 	VPRINT("pt", pt);
@@ -1146,51 +1092,25 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, char **classlist, const struc
 		    reason = "point near EU end classification (both verts ON)";
 		    break;
 	    }
-#ifdef TRI_PROTOTYPE
             /* 3rd parameter of '0' allows a return of AonBanti
              * instead of only AinB or AoutB.
              */
 	    class = nmg_class_pt_s(pt, s, 0, tol);
-#else
-	    class = nmg_class_pt_s(pt, s, 1, tol);
-#endif
 	    try++;
 	}
 
-#ifdef TRI_PROTOTYPE
 	if (class == NMG_CLASS_AonBshared) {
 	    bu_bomb("class_eu_vs_s(): function nmg_class_pt_s returned AonBshared when it can only return AonBanti\n"); 
 	}
-#endif
 	if (class == NMG_CLASS_AoutB) {
 	    NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->e_p);
 	    status = OUTSIDE;
 	}  else if (class == NMG_CLASS_AinB) {
 	    NMG_INDEX_SET(classlist[NMG_CLASS_AinB], eu->e_p);
 	    status = INSIDE;
-#ifdef TRI_PROTOTYPE
 	} else if (class == NMG_CLASS_AonBanti) {
 	    NMG_INDEX_SET(classlist[NMG_CLASS_AonBanti], eu->e_p);
 	    status = ON_SURF;
-#else
-	} else if (class == NMG_CLASS_AonBshared) {
-	    FILE *fp;
-	    nmg_pr_fu_around_eu(eu, tol);
-	    VPRINT("class_eu_vs_s: midpoint of edge", pt);
-	    fp = fopen("shell1.pl", "wb");
-	    if (fp) {
-		nmg_pl_s(fp, s);
-		fclose(fp);
-		bu_log("wrote shell1.pl\n");
-	    }
-	    fp = fopen("shell2.pl", "wb");
-	    if (fp) {
-		nmg_pl_shell(fp, eu->up.lu_p->up.fu_p->s_p, 1);
-		fclose(fp);
-		bu_log("wrote shell2.pl\n");
-	    }
-	    bu_bomb("class_eu_vs_s(): classifier found edge midpoint ON, edge topology should have been shared\n");
-#endif
 	} else {
 	    bu_log("class_eu_vs_s(): class=%s\n", nmg_class_name(class));
 	    nmg_euprint("class_eu_vs_s(): Why wasn't this edge in or out?", eu);
