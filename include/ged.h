@@ -1174,6 +1174,11 @@ GED_EXPORT extern int ged_analyze(struct ged *gedp, int argc, const char *argv[]
 GED_EXPORT extern int ged_annotate(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Append a pipe point.
+ */
+GED_EXPORT extern int ged_append_pipept(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Allow editing of the matrix, etc., along an arc.
  */
 GED_EXPORT extern int ged_arced(struct ged *gedp, int argc, const char *argv[]);
@@ -1422,6 +1427,11 @@ GED_EXPORT extern int ged_decompose(struct ged *gedp, int argc, const char *argv
 GED_EXPORT extern int ged_delay(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Delete the specified pipe point.
+ */
+GED_EXPORT extern int ged_delete_pipept(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Convert a direction vector to az/el.
  */
 GED_EXPORT extern int ged_dir2ae(struct ged *gedp, int argc, const char *argv[]);
@@ -1532,6 +1542,11 @@ GED_EXPORT extern int ged_fb2pix(struct ged *gedp, int argc, const char *argv[])
  * Find combinations that reference object
  */
 GED_EXPORT extern int ged_find(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Find the pipe point nearest the specified point in model coordinates.
+ */
+GED_EXPORT extern int ged_find_pipept_nearest_pt(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * returns form for objects of type "type"
@@ -1791,6 +1806,11 @@ GED_EXPORT extern int ged_move_all(struct ged *gedp, int argc, const char *argv[
 GED_EXPORT extern int ged_move_arb_face(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Move the specified pipe point.
+ */
+GED_EXPORT extern int ged_move_pipept(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Rotate the view. Note - x, y and z are rotations in model coordinates.
  */
 GED_EXPORT extern int ged_mrot(struct ged *gedp, int argc, const char *argv[]);
@@ -1912,6 +1932,11 @@ GED_EXPORT extern int ged_prcolor(struct ged *gedp, int argc, const char *argv[]
  * Prefix the specified objects with the specified prefix
  */
 GED_EXPORT extern int ged_prefix(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Prepend a pipe point.
+ */
+GED_EXPORT extern int ged_prepend_pipept(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Preview a new style RT animation script.

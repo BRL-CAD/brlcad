@@ -86,6 +86,7 @@
 	variable mYmax 0
 	variable mZmin 0
 	variable mZmax 0
+	variable mPrevGeometryObject ""
 
 	method buildUpperPanel {}
 	method buildLowerPanel {}

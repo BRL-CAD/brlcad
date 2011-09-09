@@ -160,6 +160,9 @@ package provide Archer 1.0
 	method pluginUpdateStatusBar {msg}
 
 	method importFg4Sections   {_slist _wlist _delta}
+	method initAppendPipePoint {_obj _button _callback}
+	method initFindPipePoint {_obj _button _callback}
+	method initPrependPipePoint {_obj _button _callback}
 
 	# General
 	method askToRevert {}
@@ -796,6 +799,54 @@ package provide Archer 1.0
 
     set idx [lsearch -exact $::Archer::plugins $plug]
     set ::Archer::plugins [lreplace $::Archer::plugins $idx $idx ""]
+}
+
+
+::itcl::body Archer::initAppendPipePoint {_obj _button _callback} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    # This deselects the selected mouse mode in the primary toolbar
+    set mDefaultBindingMode FIRST_FREE_BINDING_MODE
+
+    # For the moment, the callback being used here is from PipeEditFrame. At some point,
+    # Archer may want to provide the callback in order to do something before passing
+    # things through to PipeEditFrame.
+
+    $itk_component(ged) init_append_pipept $_obj $_button $_callback
+}
+
+
+::itcl::body Archer::initFindPipePoint {_obj _button _callback} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    # This deselects the selected mouse mode in the primary toolbar
+    set mDefaultBindingMode FIRST_FREE_BINDING_MODE
+
+    # For the moment, the callback being used here is from PipeEditFrame. At some point,
+    # Archer may want to provide the callback in order to do something before passing
+    # things through to PipeEditFrame.
+
+    $itk_component(ged) init_find_pipept $_obj $_button $_callback
+}
+
+
+::itcl::body Archer::initPrependPipePoint {_obj _button _callback} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    # This deselects the selected mouse mode in the primary toolbar
+    set mDefaultBindingMode FIRST_FREE_BINDING_MODE
+
+    # For the moment, the callback being used here is from PipeEditFrame. At some point,
+    # Archer may want to provide the callback in order to do something before passing
+    # things through to PipeEditFrame.
+
+    $itk_component(ged) init_prepend_pipept $_obj $_button $_callback
 }
 
 
@@ -6451,14 +6502,20 @@ proc title_node_handler {node} {
 
     set ocenter [vscale [eval gedCmd pane_v2m_point $_dm $vcenter] [gedCmd base2local]]
 
-    if {$GeometryEditFrame::mEditCommand != ""} {
-	gedCmd $GeometryEditFrame::mEditCommand $_obj $GeometryEditFrame::mEditParam1 $ocenter
-    } else {
-	eval gedCmd ocenter $_obj $ocenter
-    }
+    set ret [catch {
+	if {$GeometryEditFrame::mEditCommand != ""} {
+	    gedCmd $GeometryEditFrame::mEditCommand $_obj $GeometryEditFrame::mEditParam1 $ocenter
+	} else {
+	    eval gedCmd ocenter $_obj $ocenter
+	}
+    } msg]
 
     redrawObj $_obj 0
     initEdit 0
+
+    if {$ret} {
+	putString $msg
+    }
 }
 
 
@@ -6922,6 +6979,7 @@ proc title_node_handler {node} {
 
     #     $itk_component(botView) configure \
 	# 	-geometryObject $mSelectedObj \
+	#       -geometryObjectPath $mSelectedObjPath \
 	# 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	# 	-mged $itk_component(ged) \
 	# 	-labelFont $mFontText \
@@ -6938,6 +6996,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initCombEditView {odata} {
     $itk_component(combView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateCombEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -6991,6 +7050,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initEhyEditView {odata} {
     $itk_component(ehyView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7007,6 +7067,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initEllEditView {odata} {
     $itk_component(ellView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7023,6 +7084,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initEpaEditView {odata} {
     $itk_component(epaView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7039,6 +7101,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initEtoEditView {odata} {
     $itk_component(etoView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7055,6 +7118,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initExtrudeEditView {odata} {
     $itk_component(extrudeView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7071,6 +7135,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initGripEditView {odata} {
     $itk_component(gripView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7087,6 +7152,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initHalfEditView {odata} {
     $itk_component(halfView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7103,6 +7169,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initHypEditView {odata} {
     $itk_component(hypView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7304,6 +7371,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initPartEditView {odata} {
     $itk_component(partView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7320,6 +7388,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initPipeEditView {odata} {
     $itk_component(pipeView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7336,6 +7405,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initRhcEditView {odata} {
     $itk_component(rhcView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7352,6 +7422,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initRpcEditView {odata} {
     $itk_component(rpcView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7371,6 +7442,7 @@ proc title_node_handler {node} {
 
     $itk_component(sketchView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7387,6 +7459,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initSphereEditView {odata} {
     $itk_component(sphView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7403,6 +7476,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initSuperellEditView {odata} {
     $itk_component(superellView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7419,6 +7493,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initTgcEditView {odata} {
     $itk_component(tgcView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \
@@ -7435,6 +7510,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::initTorusEditView {odata} {
     $itk_component(torView) configure \
 	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
 	-mged $itk_component(ged) \
 	-labelFont $mFontText \

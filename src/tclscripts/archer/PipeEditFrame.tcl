@@ -41,22 +41,21 @@
 	common PY_COL 5
 	common PZ_COL 6
 
-	common ATTR_STRINGS {{} O I R V V V}
+	common selectPoint 1
+	common movePoint 2
+	common deletePoint 3
+	common appendPoint 4
+	common prependPoint 5
+	common setPointOD 6
+	common setPointID 7
+	common setPointBend 8
+	common setPipeOD 9
+	common setPipeID 10
+	common setPipeBend 11
 
-	# Override what's in GeometryEditFrame
-	method initGeometry {gdata}
-	method updateGeometry {}
-	method createGeometry {_name}
-	method p {obj args}
-    }
-
-    protected {
-	variable mDetail
-	variable mDetailHeadings {{} OD ID Radius pX pY pZ}
-	variable mEditLabels {
+	common mDetailHeadings {{} OD ID Radius pX pY pZ}
+	common mEditLabels {
 	    {Select Point}
-	    {Next Point}
-	    {Previous Point}
 	    {Move Point}
 	    {Delete Point}
 	    {Append Point}
@@ -69,23 +68,16 @@
 	    {Set Pipe Bend}
 	}
 
-	common setA 1
-	common setB 2
-	common setC 3
-	common setABC 4
+	# Override what's in GeometryEditFrame
+	method initGeometry {gdata}
+	method updateGeometry {}
+	method createGeometry {_name}
+	method p {obj args}
+    }
 
-	variable mVx ""
-	variable mVy ""
-	variable mVz ""
-	variable mAx ""
-	variable mAy ""
-	variable mAz ""
-	variable mBx ""
-	variable mBy ""
-	variable mBz ""
-	variable mCx ""
-	variable mCy ""
-	variable mCz ""
+    protected {
+	variable mDetail
+	variable mCurrentPipePoint 1
 
 	# Methods used by the constructor
 	# override methods in GeometryEditFrame
@@ -100,6 +92,11 @@
 	method detailBrowseCommand {_row _col}
 	method handleDetailPopup {_index _X _Y}
 	method handleEnter {_row _col}
+	method pipePointAppendCallback {}
+	method pipePointDeleteCallback {_pindex}
+	method pipePointPrependCallback {}
+	method pipePointSelectCallback {_pindex}
+	method singleSelectCallback {_pindex}
 	method validateDetailEntry {_row _col _newval _clientdata}
     }
 
@@ -170,6 +167,12 @@
     }
 
     GeometryEditFrame::initGeometry $gdata
+
+    if {$itk_option(-geometryObject) != $mPrevGeometryObject} {
+	set mCurrentPipePoint 1
+	set mPrevGeometryObject $itk_option(-geometryObject)
+    }
+    pipePointSelectCallback [expr {$mCurrentPipePoint - 1}]
 }
 
 ::itcl::body PipeEditFrame::updateGeometry {} {
@@ -250,7 +253,7 @@
     if {[llength $args] != 1 || ![string is double $args]} {
 	return "Usage: p sf"
     }
-
+#XXX Need to update this method
     return
 
     switch -- $mEditMode \
@@ -291,7 +294,8 @@
 	    -validate 1 \
 	    -validatecommand [::itcl::code $this validateDetailEntry] \
 	    -tablePopupHandler [::itcl::code $this handleDetailPopup] \
-	    -entercommand [::itcl::code $this handleEnter]
+	    -entercommand [::itcl::code $this handleEnter] \
+	    -singleSelectCallback [::itcl::code $this singleSelectCallback]
     } {}
 #	    -browsecommand [::itcl::code $this detailBrowseCommand %r %c]
 #	    -dataCallback [::itcl::code $this applyData]
@@ -378,23 +382,81 @@
 }
 
 ::itcl::body PipeEditFrame::initEditState {} {
-    set mEditCommand pscale
-    set mEditClass $EDIT_CLASS_SCALE
+#    set mEditCommand pscale
+#    set mEditClass $EDIT_CLASS_SCALE
+#    configure -valueUnits "mm"
+
     set mEditPCommand [::itcl::code $this p]
-    configure -valueUnits "mm"
+    set seg_i [expr {$mCurrentPipePoint - 1}]
 
     switch -- $mEditMode \
-	$setA {
-	    set mEditParam1 a
+	$selectPoint {
+	    set mEditCommand ""
+	    set mEditClass ""
+	    set mEditParam1 ""
+	    $::ArcherCore::application initFindPipePoint $itk_option(-geometryObjectPath) 1 [::itcl::code $this pipePointSelectCallback]
 	} \
-	$setB {
-	    set mEditParam1 b
+	$movePoint {
+	    set mEditCommand move_pipept
+	    set mEditClass $EDIT_CLASS_TRANS
+	    set mEditParam1 $seg_i
 	} \
-	$setC {
-	    set mEditParam1 c
+	$deletePoint {
+	    set mEditCommand ""
+	    set mEditClass ""
+	    set mEditParam1 ""
+	    $::ArcherCore::application initFindPipePoint $itk_option(-geometryObjectPath) 1 [::itcl::code $this pipePointDeleteCallback]
 	} \
-	$setABC {
-	    set mEditParam1 abc
+	$appendPoint {
+	    set mEditCommand ""
+	    set mEditClass ""
+	    set mEditParam1 ""
+	    $::ArcherCore::application initAppendPipePoint $itk_option(-geometryObjectPath) 1 [::itcl::code $this pipePointAppendCallback]
+	    set odata [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
+	    pipePointSelectCallback [expr {int([llength $odata] * 0.125) - 1}]
+	} \
+	$prependPoint {
+	    set mEditCommand ""
+	    set mEditClass ""
+	    set mEditParam1 ""
+	    $::ArcherCore::application initPrependPipePoint $itk_option(-geometryObjectPath) 1  [::itcl::code $this pipePointPrependCallback]
+	    pipePointSelectCallback 0
+	} \
+	$setPointOD {
+	    set mEditCommand pscale
+	    set mEditPCommand [::itcl::code $this p]
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 "o$seg_i"
+	} \
+	$setPointID {
+	    set mEditCommand pscale
+	    set mEditPCommand [::itcl::code $this p]
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 "i$seg_i"
+	} \
+	$setPointBend {
+	    set mEditCommand pscale
+	    set mEditPCommand [::itcl::code $this p]
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 "b$seg_i"
+	} \
+	$setPipeOD {
+	    set mEditCommand pscale
+	    set mEditPCommand [::itcl::code $this p]
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 O
+	} \
+	$setPipeID {
+	    set mEditCommand pscale
+	    set mEditPCommand [::itcl::code $this p]
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 I
+	} \
+	$setPipeBend {
+	    set mEditCommand pscale
+	    set mEditPCommand [::itcl::code $this p]
+	    set mEditClass $EDIT_CLASS_SCALE
+	    set mEditParam1 B
 	}
 
     GeometryEditFrame::initEditState
@@ -424,6 +486,55 @@
     }
 
     updateGeometryIfMod
+}
+
+::itcl::body PipeEditFrame::pipePointAppendCallback {} {
+    if {$itk_option(-mged) == ""} {
+	return
+    }
+
+    set odata [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
+    set mCurrentPipePoint [expr {int([llength $odata] * 0.125)}]
+    initGeometry $odata
+}
+
+::itcl::body PipeEditFrame::pipePointDeleteCallback {_pindex} {
+    if {$itk_option(-mged) == ""} {
+	return
+    }
+
+    eval $itk_option(-mged) delete_pipept $itk_option(-geometryObject) $_pindex
+    eval $itk_option(-mged) redraw $itk_option(-geometryObjectPath)
+    set odata [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
+
+    set seg_i [expr {$mCurrentPipePoint - 1}]
+    if {[catch {$itk_option(-mged) get $itk_option(-geometryObject) I$seg_i}]} {
+	set mCurrentPipePoint $seg_i
+	incr seg_i -1
+    }
+
+    initGeometry $odata
+}
+
+::itcl::body PipeEditFrame::pipePointPrependCallback {} {
+    if {$itk_option(-mged) == ""} {
+	return
+    }
+
+    set odata [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
+    set mCurrentPipePoint 1
+    initGeometry $odata
+}
+
+::itcl::body PipeEditFrame::pipePointSelectCallback {_pindex} {
+    incr _pindex
+    set mCurrentPipePoint $_pindex
+    $itk_component(detailTab) selectSingleRow $_pindex
+}
+
+::itcl::body PipeEditFrame::singleSelectCallback {_pindex} {
+    set mCurrentPipePoint $_pindex
+    initEditState
 }
 
 ::itcl::body PipeEditFrame::validateDetailEntry {_row _col _newval _clientdata} {

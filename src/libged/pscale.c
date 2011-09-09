@@ -143,6 +143,9 @@ ged_pscale(struct ged *gedp, int argc, const char *argv[])
 	case DB5_MINORTYPE_BRLCAD_TOR:
 	    ret = _ged_scale_tor(gedp, (struct rt_tor_internal *)intern.idb_ptr, argv[2], sf, rflag);
 	    break;
+	case DB5_MINORTYPE_BRLCAD_PIPE:
+	    ret = _ged_scale_pipe(gedp, (struct rt_pipe_internal *)intern.idb_ptr, argv[2], sf, rflag);
+	    break;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "%s: Object not yet supported.", argv[0]);
 	    rt_db_free_internal(&intern);

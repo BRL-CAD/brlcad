@@ -94,6 +94,7 @@ set(LIBGED_SOURCES
     edit.c
     editit.c
     edmater.c
+    edpipe.c
     erase.c
     expand.c
     eye.c
