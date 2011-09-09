@@ -1,6 +1,6 @@
 
 SUBDIRS = \
-        sfiles
+	sfiles
 
 bin_PROGRAMS = \
 	nirt \

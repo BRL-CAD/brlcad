@@ -15,7 +15,7 @@ bin_PROGRAMS = \
 	brickwall \
 	clutter \
 	contours \
-        csgbrep \
+	csgbrep \
 	globe \
 	kurt \
 	lens \

@@ -92,7 +92,6 @@ rtscale_SOURCES = \
 	rtscale.c
 
 
-
 rt_SOURCES = \
 	$(COMMON) \
 	scanline.c \

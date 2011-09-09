@@ -4,8 +4,8 @@ wfobj_dir = wfobj
 #WFOBJ = ${wfobj_dir}
 #WFOBJLIB=wvobj/libwfobj_nil.la
 #else
-WFOBJ = 
-WFOBJLIB = 
+WFOBJ =
+WFOBJLIB =
 #endif
 
 SUBDIRS = \
@@ -47,7 +47,7 @@ EXTRA_DIST = \
 CLEANFILES = wfobj/Makefile
 
 libgcv_la_SOURCES =
-libgcv_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS} 
+libgcv_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS}
 libgcv_la_LIBADD = \
 	libgcv_nil.la \
 	${WFOBJLIB} \

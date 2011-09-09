@@ -218,4 +218,3 @@ FAST_OBJECTS = \
 	$(cad_parea_OBJECTS) \
 	$(mged_OBJECTS) \
 	$(bin_PROGRAMS)
-

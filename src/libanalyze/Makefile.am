@@ -17,7 +17,7 @@ libanalyze_la_LIBADD = \
 	${ANALYZE_LIBS}
 
 EXTRA_DIST = \
-        CMakeLists.txt
+	CMakeLists.txt
 
 AM_CFLAGS = ${STRICT_FLAGS}
 

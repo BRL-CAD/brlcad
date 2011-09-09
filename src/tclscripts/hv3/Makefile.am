@@ -22,15 +22,15 @@ tcl_SCRIPTS = \
 documentationdir = $(BRLCAD_DATA)/doc
 
 documentation_DATA = \
-        hv3.man
+	hv3.man
 
 dist_man_MANS = \
-        tkhtml.n
+	tkhtml.n
 
 EXTRA_DIST = \
 	$(tcl_SCRIPTS) \
-        $(documentation_DATA) \
-        $(dist_man_MANS) \
+	$(documentation_DATA) \
+	$(dist_man_MANS) \
 	license.txt \
 	license_snit.txt \
 	demo/index.html \
