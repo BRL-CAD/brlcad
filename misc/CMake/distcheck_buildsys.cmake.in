@@ -109,7 +109,8 @@ IF(PROBLEM_FILES)
 	MESSAGE(FATAL_ERROR "Unaccounted-for source files present.")
 ENDIF(PROBLEM_FILES)
 # TODO - The following lines aren't active yet, and may need more sophisticated logic in the case of multiple
-# distcheck runs to avoid repeated appendings, but should "tweak" CPack based on the distcheck results
+# distcheck runs to avoid repeated appendings, but should "tweak" CPack based on the distcheck results.  May
+# need to remove _CPack_Packages directory, not sure
 FILE(APPEND @CMAKE_BINARY_DIR@/CPackConfig.cmake "SET(CPACK_IGNORE_FILES \"\${CPACK_IGNORE_FILES};${PROBLEM_FILES}\")\n")
 FILE(APPEND @CMAKE_BINARY_DIR@/CPackSourceConfig.cmake "SET(CPACK_IGNORE_FILES \"\${CPACK_IGNORE_FILES};${PROBLEM_FILES}\")\n")
 FILE(APPEND @CMAKE_BINARY_DIR@/CPackConfig.cmake "SET(CPACK_SOURCE_IGNORE_FILES \"\${CPACK_SOURCE_IGNORE_FILES};${PROBLEM_FILES}\")\n")
