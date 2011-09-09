@@ -250,8 +250,6 @@ db_fullpath_traverse(struct db_i *dbip,
 }
 
 
-int typecompare(const void *, const void *);
-
 /* NB: the following table must be sorted lexically. */
 static OPTION options[] = {
     { "!",          N_NOT,          c_not,          O_ZERO },
@@ -298,7 +296,7 @@ palloc(enum db_search_ntype t, int (*f)(struct db_plan_t *, struct db_full_path 
  *
  * True if expression is true.
  */
-int
+HIDDEN int
 f_expr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results)
 {
     struct db_plan_t *p = NULL;
@@ -316,7 +314,7 @@ f_expr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
  * eliminated during phase 2 of find_formplan() --- the '(' node is converted
  * to a N_EXPR node containing the expression and the ')' node is discarded.
  */
-int
+HIDDEN int
 c_openparen(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
     (*resultplan) = (palloc(N_OPENPAREN, (int (*)(struct db_plan_t *, struct db_full_path *, struct db_i *, struct rt_wdb *, struct db_full_path_list *))-1));
@@ -324,7 +322,7 @@ c_openparen(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), s
 }
 
 
-int
+HIDDEN int
 c_closeparen(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
     (*resultplan) = (palloc(N_CLOSEPAREN, (int (*)(struct db_plan_t *, struct db_full_path *, struct db_i *, struct rt_wdb *, struct db_full_path_list *))-1));
@@ -337,7 +335,7 @@ c_closeparen(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), 
  *
  * Negation of a primary; the unary NOT operator.
  */
-int
+HIDDEN int
 f_not(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results)
 {
     struct db_plan_t *p = NULL;
@@ -350,7 +348,7 @@ f_not(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, str
 }
 
 
-int
+HIDDEN int
 c_not(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
     (*resultplan) =  (palloc(N_NOT, f_not));
@@ -358,7 +356,7 @@ c_not(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct 
 }
 
 
-int
+HIDDEN int
 find_execute_nested_plans(struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results, struct db_full_path *entry, genptr_t inputplan) {
     struct db_plan_t *p = NULL;
     struct db_plan_t *plan = (struct db_plan_t *)inputplan;
@@ -379,7 +377,7 @@ find_execute_nested_plans(struct db_i *dbip, struct rt_wdb *wdbp, struct db_full
  * following the tree path back to the root, NOT testing all
  * objects at any level above the current object depth.
  */
-int
+HIDDEN int
 f_above(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results)
 {
     int state = 0;
@@ -396,7 +394,7 @@ f_above(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, s
 }
 
 
-int
+HIDDEN int
 c_above(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
     (*resultplan) =  (palloc(N_ABOVE, f_above));
@@ -411,7 +409,7 @@ c_above(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struc
  * the full path to a given object and with function types allowing
  * a return of an integer state.
  */
-int
+HIDDEN int
 db_fullpath_stateful_traverse_subtree(union tree *tp,
 				      int (*traverse_func) (struct db_i *, struct rt_wdb *, struct db_full_path_list *results, struct db_full_path *,
 							    int (*) (struct db_i *, struct rt_wdb *, struct db_full_path_list *, struct db_full_path *, genptr_t),
@@ -489,7 +487,7 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
  * This walker will hault if either comb_func or leaf_func return
  * a value > 0 and return that value.
  */
-int
+HIDDEN int
 db_fullpath_stateful_traverse(struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results,
 			      struct db_full_path *dfp,
 			      int (*comb_func) (struct db_i *, struct rt_wdb *, struct db_full_path_list *, struct db_full_path *, genptr_t),
@@ -575,7 +573,7 @@ db_fullpath_stateful_traverse(struct db_i *dbip, struct rt_wdb *wdbp, struct db_
  * Conduct the test described by expression on all objects
  * below the current object in the tree.
  */
-int
+HIDDEN int
 f_below(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results)
 {
     struct db_full_path belowpath;
@@ -606,7 +604,7 @@ f_below(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, s
 }
 
 
-int
+HIDDEN int
 c_below(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
     (*resultplan) =  (palloc(N_BELOW, f_below));
@@ -620,7 +618,7 @@ c_below(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struc
  * Alternation of primaries; the OR operator.  The second expression is
  * not evaluated if the first expression is true.
  */
-int
+HIDDEN int
 f_or(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results)
 {
     struct db_plan_t *p = NULL;
@@ -639,7 +637,7 @@ f_or(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, stru
 }
 
 
-int
+HIDDEN int
 c_or(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
     (*resultplan) = (palloc(N_OR, f_or));
@@ -653,14 +651,14 @@ c_or(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct d
  * True if the basename of the filename being examined
  * matches pattern using Pattern Matching Notation S3.14
  */
-int
+HIDDEN int
 f_name(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
 {
     return !bu_fnmatch(plan->c_data, DB_FULL_PATH_CUR_DIR(entry)->d_namep, 0);
 }
 
 
-int
+HIDDEN int
 c_name(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
     struct db_plan_t *new;
@@ -678,14 +676,14 @@ c_name(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
  * True if the basename of the filename being examined
  * matches pattern using case insensitive Pattern Matching Notation S3.14
  */
-int
+HIDDEN int
 f_iname(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
 {
     return !bu_fnmatch(plan->c_data, DB_FULL_PATH_CUR_DIR(entry)->d_namep, BU_FNMATCH_CASEFOLD);
 }
 
 
-int
+HIDDEN int
 c_iname(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
     struct db_plan_t *new;
@@ -704,14 +702,14 @@ c_iname(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pl
  * For -regex, regexp is a case-sensitive (basic) regular expression.
  * For -iregex, regexp is a case-insensitive (basic) regular expression.
  */
-int
+HIDDEN int
 f_regex(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
 {
     return !(regexec(&plan->regexp_data, db_path_to_string(entry), 0, NULL, 0));
 }
 
 
-int
+HIDDEN int
 c_regex_common(enum db_search_ntype type, char *regexp, int icase, struct db_plan_t **resultplan)
 {
     regex_t reg;
@@ -736,17 +734,16 @@ c_regex_common(enum db_search_ntype type, char *regexp, int icase, struct db_pla
 }
 
 
-int
+HIDDEN int
 c_regex(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
     return c_regex_common(N_REGEX, pattern, 0, resultplan);
 }
 
 
-int
+HIDDEN int
 c_iregex(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
-
     return c_regex_common(N_IREGEX, pattern, 1, resultplan);
 }
 
@@ -757,7 +754,7 @@ c_iregex(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_p
  * True if the database object being examined has the attribute
  * supplied to the attr option
  */
-int
+HIDDEN int
 f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
 {
     struct bu_vls attribname;
@@ -777,13 +774,13 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
      * but the value assigned to the attribute must
      * satisfy the logical expression.  In the case
      * where a > or < is used with a string argument
-     * the behavior will follow that of the strcmp 
+     * the behavior will follow that of the strcmp
      * comparison command.  In the case of equality
      * between strings, fnmatch is used to support
      * pattern matching
      */
 
-    while ((equalpos < strlen(plan->attr_data)) && 
+    while ((equalpos < strlen(plan->attr_data)) &&
 	   (plan->attr_data[equalpos] != '=') &&
 	   (plan->attr_data[equalpos] != '>') &&
 	   (plan->attr_data[equalpos] != '<')) {
@@ -813,7 +810,7 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
 	    bu_vls_strncpy(&value, &(plan->attr_data[equalpos+2]), strlen(plan->attr_data) - equalpos - 1);
 	}
     }
-	
+
     /* Now that we have the value, check to see if it is all numbers.  If so,
      * use numerical comparison logic - otherwise use string logic.
      */
@@ -821,7 +818,7 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
     for (i = 0; i < strlen(bu_vls_addr(&value)); i++) {
 	if (!(isdigit(bu_vls_addr(&value)[i]))) strcomparison = 1;
     }
-    
+
     /* Get attributes for object.
      */
 
@@ -838,7 +835,7 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
     for (i = 0; i < (size_t)avs.count; i++, avpp++) {
 	if (!bu_fnmatch(bu_vls_addr(&attribname), avpp->name, 0)) {
 	    if (checkval >= 1) {
-    
+
 		/* String based comparisons */
  		if ((checkval == 1) && (strcomparison == 1)) {
     		    if (!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) {
@@ -851,7 +848,7 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
 			bu_vls_free(&attribname);
 			bu_vls_free(&value);
 			return 0;
-		    }			
+		    }
 		}
 		if ((checkval == 2) && (strcomparison == 1)) {
     		    if (bu_strcmp(bu_vls_addr(&value), avpp->value) < 0) {
@@ -864,7 +861,7 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
 			bu_vls_free(&attribname);
 			bu_vls_free(&value);
 			return 0;
-		    }			
+		    }
 		}
 		if ((checkval == 3) && (strcomparison == 1)) {
     		    if (bu_strcmp(bu_vls_addr(&value), avpp->value) > 0) {
@@ -877,7 +874,7 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
 			bu_vls_free(&attribname);
 			bu_vls_free(&value);
 			return 0;
-		    }			
+		    }
 		}
 		if ((checkval == 4) && (strcomparison == 1)) {
     		    if ((!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) || (bu_strcmp(bu_vls_addr(&value), avpp->value) < 0)) {
@@ -890,7 +887,7 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
 			bu_vls_free(&attribname);
 			bu_vls_free(&value);
 			return 0;
-		    }			
+		    }
 		}
 		if ((checkval == 5) && (strcomparison == 1)) {
     		    if ((!bu_fnmatch(bu_vls_addr(&value), avpp->value, 0)) || (bu_strcmp(bu_vls_addr(&value), avpp->value) > 0)) {
@@ -903,7 +900,7 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
 			bu_vls_free(&attribname);
 			bu_vls_free(&value);
 			return 0;
-		    }			
+		    }
 		}
 
 
@@ -919,7 +916,7 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
 			bu_vls_free(&attribname);
 			bu_vls_free(&value);
 			return 0;
-		    }			
+		    }
 		}
 		if ((checkval == 2) && (strcomparison == 0)) {
     		    if (atol(bu_vls_addr(&value)) < atol(avpp->value)) {
@@ -932,7 +929,7 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
 			bu_vls_free(&attribname);
 			bu_vls_free(&value);
 			return 0;
-		    }			
+		    }
 		}
    		if ((checkval == 3) && (strcomparison == 0)) {
     		    if (atol(bu_vls_addr(&value)) > atol(avpp->value)) {
@@ -945,7 +942,7 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
 			bu_vls_free(&attribname);
 			bu_vls_free(&value);
 			return 0;
-		    }			
+		    }
 		}
    		if ((checkval == 4) && (strcomparison == 0)) {
     		    if (atol(bu_vls_addr(&value)) <= atol(avpp->value)) {
@@ -958,7 +955,7 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
 			bu_vls_free(&attribname);
 			bu_vls_free(&value);
 			return 0;
-		    }			
+		    }
 		}
    		if ((checkval == 5) && (strcomparison == 0)) {
     		    if (atol(bu_vls_addr(&value)) >= atol(avpp->value)) {
@@ -971,7 +968,7 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
 			bu_vls_free(&attribname);
 			bu_vls_free(&value);
 			return 0;
-		    }			
+		    }
 		}
    		bu_avs_free(&avs);
 		bu_vls_free(&attribname);
@@ -992,7 +989,7 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
 }
 
 
-int
+HIDDEN int
 c_attr(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
     struct db_plan_t *new;
@@ -1012,7 +1009,7 @@ c_attr(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
  * are ONLY "standard" attributes
  * associated with an object.
  */
-int
+HIDDEN int
 f_stdattr(struct db_plan_t *UNUSED(plan), struct db_full_path *entry, struct db_i *dbip, struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
 {
     struct bu_attribute_value_set avs;
@@ -1053,7 +1050,7 @@ f_stdattr(struct db_plan_t *UNUSED(plan), struct db_full_path *entry, struct db_
 }
 
 
-int
+HIDDEN int
 c_stdattr(char *UNUSED(pattern), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
     struct db_plan_t *new;
@@ -1071,7 +1068,7 @@ c_stdattr(char *UNUSED(pattern), char ***UNUSED(ignored), int UNUSED(unused), st
  * based on their primitive type (tor, tgc, arb4, etc.) and combinations
  * are matched based on whether they are a combination or region.
  */
-int
+HIDDEN int
 f_type(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *UNUSED(results))
 {
     struct rt_db_internal intern;
@@ -1223,7 +1220,7 @@ f_type(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
 }
 
 
-int
+HIDDEN int
 c_type(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
     struct db_plan_t *new;
@@ -1242,7 +1239,7 @@ c_type(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
  * supplied depth.
  *
  */
-int
+HIDDEN int
 f_maxdepth(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
 {
     struct db_full_path depthtest;
@@ -1258,7 +1255,7 @@ f_maxdepth(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *UNUS
 }
 
 
-int
+HIDDEN int
 c_maxdepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
     struct db_plan_t *new;
@@ -1277,7 +1274,7 @@ c_maxdepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db
  * supplied depth.
  *
  */
-int
+HIDDEN int
 f_mindepth(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
 {
     struct db_full_path depthtest;
@@ -1293,7 +1290,7 @@ f_mindepth(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *UNUS
 }
 
 
-int
+HIDDEN int
 c_mindepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
     struct db_plan_t *new;
@@ -1315,7 +1312,7 @@ c_mindepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db
  * to / less than or equal to # of nodes.
  *
  */
-int
+HIDDEN int
 f_nnodes(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
 {
     int dogreaterthan = 0;
@@ -1356,7 +1353,7 @@ f_nnodes(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, 
 	    }
    	}
     }
-    
+
     /* Get the number of nodes for the current object and check
      * if the value satisfied the logical conditions specified
      * in the argument string.
@@ -1373,7 +1370,7 @@ f_nnodes(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, 
 	rt_db_free_internal(&in);
     } else {
 	return 0;
-    }	
+    }
 
     if (doequal && dogreaterthan) {
 	if (node_count >= node_count_target) {
@@ -1420,7 +1417,7 @@ f_nnodes(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, 
 }
 
 
-int
+HIDDEN int
 c_nnodes(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
     struct db_plan_t *new;
@@ -1439,14 +1436,14 @@ c_nnodes(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_p
  * part of its path. To exclude results of certain directories
  * use the -not option with this option.
  */
-int
+HIDDEN int
 f_path(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
 {
     return !bu_fnmatch(plan->path_data, db_path_to_string(entry), 0);
 }
 
 
-int
+HIDDEN int
 c_path(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput))
 {
     struct db_plan_t *new;
@@ -1463,7 +1460,7 @@ c_path(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
  *
  * Always true, causes the current pathame to be added to the results list.
  */
-int
+HIDDEN int
 f_print(struct db_plan_t *UNUSED(plan), struct db_full_path *entry, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *results)
 {
     struct db_full_path_list *new_entry;
@@ -1475,7 +1472,7 @@ f_print(struct db_plan_t *UNUSED(plan), struct db_full_path *entry, struct db_i 
     return 1;
 }
 
-int
+HIDDEN int
 c_print(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *db_search_isoutput)
 {
     *db_search_isoutput = 1;
@@ -1492,7 +1489,7 @@ c_print(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struc
  * add create/process function pointers to node, so we can skip
  * this switch stuff.
  */
-int
+HIDDEN int
 find_create(char ***argvp, struct db_plan_t **resultplan, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results), int *db_search_isoutput)
 {
     OPTION *p;
@@ -1532,7 +1529,14 @@ find_create(char ***argvp, struct db_plan_t **resultplan, struct db_i *UNUSED(db
 }
 
 
-OPTION *
+HIDDEN int
+typecompare(const void *a, const void *b)
+{
+    return bu_strcmp(((OPTION *)a)->name, ((OPTION *)b)->name);
+}
+
+
+HIDDEN OPTION *
 option(char *name)
 {
     OPTION tmp;
@@ -1542,18 +1546,11 @@ option(char *name)
 }
 
 
-int
-typecompare(const void *a, const void *b)
-{
-    return bu_strcmp(((OPTION *)a)->name, ((OPTION *)b)->name);
-}
-
-
 /*
  * yanknode --
  * destructively removes the top from the plan
  */
-static struct db_plan_t *
+HIDDEN struct db_plan_t *
 yanknode(struct db_plan_t **planp)          /* pointer to top of plan (modified) */
 {
     struct db_plan_t *node;             /* top node removed from the plan */
@@ -1572,7 +1569,7 @@ yanknode(struct db_plan_t **planp)          /* pointer to top of plan (modified)
  * paren_squish.  In comments below, an expression is either a
  * simple node or a N_EXPR node containing a list of simple nodes.
  */
-int
+HIDDEN int
 yankexpr(struct db_plan_t **planp, struct db_plan_t **resultplan)          /* pointer to top of plan (modified) */
 {
     struct db_plan_t *next;     /* temp node holding subexpression results */
@@ -1639,7 +1636,7 @@ yankexpr(struct db_plan_t **planp, struct db_plan_t **resultplan)          /* po
  * paren_squish --
  * replaces "parentheisized" plans in our search plan with "expr" nodes.
  */
-int
+HIDDEN int
 paren_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)                /* plan with () nodes */
 {
     struct db_plan_t *expr;     /* pointer to next expression */
@@ -1682,7 +1679,7 @@ paren_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)             
  * not_squish --
  * compresses "!" expressions in our search plan.
  */
-int
+HIDDEN int
 not_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)          /* plan to process */
 {
     struct db_plan_t *next;     /* next node being processed */
@@ -1747,7 +1744,7 @@ not_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)          /* pl
  * above_squish --
  * compresses "-above" expressions in our search plan.
  */
-int
+HIDDEN int
 above_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)          /* plan to process */
 {
     struct db_plan_t *next;     /* next node being processed */
@@ -1808,7 +1805,7 @@ above_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)          /* 
  * below_squish --
  * compresses "-below" expressions in our search plan.
  */
-int
+HIDDEN int
 below_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)          /* plan to process */
 {
     struct db_plan_t *next;     /* next node being processed */
@@ -1869,7 +1866,7 @@ below_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)          /* 
  * or_squish --
  * compresses -o expressions in our search plan.
  */
-int
+HIDDEN int
 or_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)           /* plan with ors to be squished */
 {
     struct db_plan_t *next;     /* next node being processed */
@@ -1924,11 +1921,6 @@ or_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)           /* pl
 }
 
 
-/*
- * db_search_formplan --
- * process the command line and create a "plan" corresponding to the
- * command arguments.
- */
 void *
 db_search_formplan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp) {
     struct db_plan_t *plan, *tail;
@@ -2018,7 +2010,7 @@ db_search_formplan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp) {
 }
 
 
-void
+HIDDEN void
 find_execute_plans(struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *results, struct db_full_path *dfp, genptr_t inputplan) {
     struct db_plan_t *p;
     struct db_plan_t *plan = (struct db_plan_t *)inputplan;
