@@ -80,6 +80,13 @@ dnl
 dnl Strive to tame the chaos that is so easily achieved.
 dnl
 
+echo "************************************************************"
+echo "DEPRECATION WARNING: The autotools build logic is deprecated"
+echo "                     and may be removed in a future release"
+echo "                     of BRL-CAD.  Please use the CMake build"
+echo "                     system instead."
+echo "************************************************************"
+
 # minimum version of autoconf required.  should coincide with setting
 # in autogen.sh script.
 AC_PREREQ(2.52)
