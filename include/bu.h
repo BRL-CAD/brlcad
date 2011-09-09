@@ -4752,27 +4752,6 @@ BU_EXPORT extern void bu_vls_from_argv(struct bu_vls *vp,
 				       const char *argv[]);
 
 /**
- * Build argv[] array from input buffer, by splitting whitespace
- * separated "words" into null terminated strings.
- *
- * 'lim' indicates the maximum number of elements that can be stored
- * in the argv[] array not including a terminating NULL.
- *
- * The input buffer is altered by this process.  The argv[] array
- * points into the input buffer.  The argv[] array needs to have at
- * least lim+1 pointers allocated for lim items plus a terminating
- * pointer to NULL.  The input buffer should not be freed until argv
- * has been freed or passes out of scope.
- *
- * Returns -
- * 0	no words in input
- * argc	number of words of input, now in argv[]
- */
-BU_EXPORT extern int bu_argv_from_string(char *argv[],
-					 int lim,
-					 char *lp);
-
-/**
  * Write the VLS to the provided file pointer.
  */
 BU_EXPORT extern void bu_vls_fwrite(FILE *fp,
@@ -6048,6 +6027,29 @@ BU_EXPORT extern int bu_fchmod(FILE *fp, unsigned long pmode);
  * Functions related to argv processing.
  *
  */
+
+/**
+ * Build argv[] array from input buffer, by splitting whitespace
+ * separated "words" into null terminated strings.
+ *
+ * 'lim' indicates the maximum number of elements that can be stored
+ * in the argv[] array not including a terminating NULL.
+ *
+ * The 'lp' input buffer is altered by this process.  The argv[] array
+ * points into the input buffer.
+ *
+ * The argv[] array needs to have at least lim+1 pointers allocated
+ * for lim items plus a terminating pointer to NULL.  The input buffer
+ * should not be freed until argv has been freed or passes out of
+ * scope.
+ *
+ * Returns -
+ * 0	no words in input
+ * argc	number of words of input, now in argv[]
+ */
+BU_EXPORT extern size_t bu_argv_from_string(char *argv[],
+					    size_t lim,
+					    char *lp);
 
 /**
  * Deallocate all strings in a given argv array and the array itself

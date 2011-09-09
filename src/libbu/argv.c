@@ -21,25 +21,28 @@
 #include "common.h"
 
 #include <string.h>
+#include <ctype.h>
 
 #include "bu.h"
 
 
-int
-bu_argv_from_string(char *argv[], int lim, char *lp)
+size_t
+bu_argv_from_string(char *argv[], size_t lim, char *lp)
 {
-    int argc = 0; /* number of words seen */
-    int skip = 0;
+    size_t argc = 0; /* number of words seen */
+    size_t skip = 0;
     int quoted = 0;
 
     if (UNLIKELY(!argv)) {
 	/* do this instead of crashing */
 	bu_bomb("bu_argv_from_string received a null argv\n");
     }
+
+    /* argv is expected to be at least lim+1 */
     argv[0] = (char *)NULL;
 
-    if (UNLIKELY(lim <= 0 || !lp)) {
-	/* nothing to do, only return NULL */
+    if (UNLIKELY(lim == 0 || !lp)) {
+	/* nothing to do, only return NULL in argv[0] */
 	return 0;
     }
 
@@ -48,7 +51,7 @@ bu_argv_from_string(char *argv[], int lim, char *lp)
 	lp++;
 
     if (*lp == '\0') {
-	/* no words, only return NULL */
+	/* no words, only return NULL in argv[0] */
 	return 0;
     }
 
