@@ -1292,10 +1292,8 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
     }
 
-#ifdef TRI_PROTOTYPE
     /* kill zero length edgeuse */
     (void)nmg_keu_zl(s, tol);
-#endif
 
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
