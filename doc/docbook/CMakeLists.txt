@@ -2,7 +2,7 @@ SET(srcdir ${CMAKE_CURRENT_SOURCE_DIR})
 configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/fop.xconf.in ${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf)
 configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/log4j.properties ${CMAKE_BINARY_DIR}/doc/docbook/log4j.properties COPYONLY)
 
-SET(XSLTPROC_FLAGS 
+SET(XSLTPROC_FLAGS
 	-nonet
 	-xinclude
 )

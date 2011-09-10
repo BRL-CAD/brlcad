@@ -10,7 +10,7 @@ man1DOCBOOK_EN = \
 	system/man1/en/rtarea.xml \
 	system/man1/en/rtcheck.xml \
 	system/man1/en/rtedge.xml \
-	system/man1/en/tire.xml 
+	system/man1/en/tire.xml
 
 man1DOCBOOK_ENhtmldir = $(BRLCAD_DATA)/html/man1/en
 man1DOCBOOK_ENhtml_DATA = $(BUILTMAN_ENHTML)

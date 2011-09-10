@@ -33,7 +33,7 @@ documentation_DATA = \
 	archer_ack.txt \
 	benchmark.tr \
 	brep.txt \
-        BRL-CAD.bib\
+	BRL-CAD.bib\
 	cvs.txt \
 	description.txt \
 	deprecation.txt \

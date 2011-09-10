@@ -1,5 +1,5 @@
 set(doc_legal
-	bsd.txt 
+	bsd.txt
 	bdl.txt
 	lgpl.txt
 )

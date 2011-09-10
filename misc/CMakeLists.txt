@@ -10,7 +10,7 @@ SET(datarootdir "\${prefix}/share")
 SET(datadir "\${datarootdir}")
 
 ADD_SUBDIRECTORY(pkgconfig)
-# FIXME - need to finish porting enigma to Windows - 
+# FIXME - need to finish porting enigma to Windows -
 # tried adding postgresql crypt function but it doesn't
 # seem to be working.
 IF(NOT WIN32)

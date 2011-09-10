@@ -7,7 +7,7 @@ articlesDOCBOOK_EN = \
 	articles/en/oed.xml \
 	articles/en/pipes.xml \
 	articles/en/projection_shader.xml \
-	articles/en/tire.xml 
+	articles/en/tire.xml
 
 articlesDOCBOOK_EN_IMAGES = \
 	articles/en/images/build_pattern_fig01.png \

@@ -1,27 +1,27 @@
 SET(BENCHMARK_PIX
-  bldg391.pix 
-  m35.pix 
-  moss.pix 
-  sphflake.pix 
-  star.pix 
+  bldg391.pix
+  m35.pix
+  moss.pix
+  sphflake.pix
+  star.pix
   world.pix
 )
 
 SET(OTHER_PIX
-  golf_ball.pix 
-  lgt1.pix 
-  lgt2.pix 
-  lgt3.pix 
-  mworld.pix 
+  golf_ball.pix
+  lgt1.pix
+  lgt2.pix
+  lgt3.pix
+  mworld.pix
   toilet.pix
 )
 
 SET(PIX_LOG
-  bldg391.log 
-  m35.log 
-  moss.log 
-  sphflake.log 
-  star.log 
+  bldg391.log
+  m35.log
+  moss.log
+  sphflake.log
+  star.log
   world.log
 )
 

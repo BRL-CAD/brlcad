@@ -75,4 +75,3 @@ if(0)
 #
 #  include $(top_srcdir)/misc/Makefile.defs
 endif (0)
-
