@@ -3795,8 +3795,11 @@ nmg_classify_pt_loop_new(const struct vertex *line1_pt1_v_ptr, const struct loop
     fastf_t line1_dist = 0.0;
     fastf_t line2_dist = 0.0;
     fastf_t vec2_mag = 0.0;
+#if 0
+    /* to quiet compiler warnings */
     fastf_t line1_mag = 0.0;
     fastf_t line2_mag = 0.0;
+#endif
 
     vect_t  min_pt = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
     vect_t  max_pt = {-MAX_FASTF, -MAX_FASTF, -MAX_FASTF};
@@ -3946,8 +3949,11 @@ nmg_classify_pt_loop_new(const struct vertex *line1_pt1_v_ptr, const struct loop
                            V3ARGS(line2_pt2), lu, line1_dist, line2_dist);
                     VSUB2(line1_dir, line1_pt2, line1_pt1);
                     VSUB2(line2_dir, line2_pt2, line2_pt1);
+#if 0
+		    /* to quiet compiler warnings */
                     line1_mag = MAGNITUDE(line1_dir);
                     line2_mag = MAGNITUDE(line2_dir);
+#endif
 
                     /* test if ray start point is on edgeuse */
                     if (((line1_dist > SMALL_FASTF) && (line2_dist < -SMALL_FASTF)) ||
