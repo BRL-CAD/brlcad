@@ -167,7 +167,7 @@ IF(BRLCAD_PREFIX)
 		SET(CMAKE_SYSTEM_IGNORE_PATH ${PATH_NORMALIZED})
 	ENDIF(NOT ${BRLCAD_PREFIX} STREQUAL "/usr" AND NOT ${BRLCAD_PREFIX} STREQUAL "/usr/local")
 ENDIF(BRLCAD_PREFIX)
-MARK_AS_ADVANCED(CMAKE_SYSTEM_IGNORE_PATH)
+MARK_AS_ADVANCED(CMAKE_SYSTEM_IGNORE_PATH) 
 
 #---------------------------------------------------------------------
 # By default (as of version 2.8.2) CMake does not provide access to
@@ -588,6 +588,14 @@ MARK_AS_ADVANCED(BUILD_SHARED_LIBS)
 # when OFF.
 AUTO_OPTION(BRLCAD_BUILD_STATIC BUILD_STATIC_LIBS "OFF" "ON")
 
+
+# On Mac OS X, it is common to have third party package managers 
+# present for easy software installation (currently we're aware of
+# Fink and MacPorts).  This can seriously complicate find_* results,
+# so provide an option to specify whether or which of the third
+# party setup to use.
+include(${CMAKE_SOURCE_DIR}/misc/CMake/Fink_MacPorts.cmake)
+
 # Turn on librtserver build.
 OPTION(BRLCAD-ENABLE_RTSERVER "Enable the librtserver target." ON)
 
@@ -970,8 +978,7 @@ IF(NOT HAVE_JNI_H AND NOT HAVE_JAVAVM_JNI_H)
 	MARK_AS_ADVANCED(BRLCAD-ENABLE_RTSERVER)
 ENDIF(NOT HAVE_JNI_H AND NOT HAVE_JAVAVM_JNI_H)
 
-# Find X11 if it is enabled (we may need to extend this further
-# to sort out Mac X11 and macports X11 on some machines.)
+# Find X11 if it is enabled
 IF(BRLCAD-ENABLE_X11)
 	INCLUDE(${BRLCAD_CMAKE_DIR}/FindX11.cmake)
    BRLCAD_INCLUDE_FILE(X11/Xlib.h HAVE_X11_XLIB_H)
