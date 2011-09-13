@@ -9,7 +9,7 @@ later). The stylesheets are the same as the concurrent
 stylesheet release except that the templates match on
 elements in the DocBook namespace.
 
-Note, the stylesheets in the directories listed below
+Note the stylesheets in the directories listed below
 have not yet been converted to use the DocBook
 namespace:
 
@@ -94,7 +94,7 @@ now recognize DocBook 5 elements in their native namespace.
 
 How to use these stylesheets
 --------------------------------
-DocBook 5 and later documents hav the DocBook namespace
+DocBook 5 and later documents have the DocBook namespace
 declaration in the root element, along with the version
 attribute:
 
