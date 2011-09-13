@@ -99,42 +99,42 @@ EXTRA_DIST = \
 	${mannINTRO_EN} \
 	${specificationsDOCBOOK_EN} \
 	README \
-	articles/en/Makefile.am \
-	articles/en/images/tire_fig12.svg \
-	articles/en/images/tire_fig13.svg \
-	books/README \
-	books/en/Makefile.am \
-	books/en/tutorial_series_authors.xml \
-	fop.xconf.in \
-	lessons/en/Makefile.am \
-	lessons/es/Makefile.am \
-	log4j.properties \
-	resources \
-	specifications/en/Makefile.am \
-	system/README \
-	system/man1/en/Makefile.am \
-	system/mann/mged_cmd_template.xml \
-	system/man3/en/Makefile.am \
-	system/man5/en/Makefile.am \
-	system/mann/en/Makefile.am \
 	CMakeLists.txt \
 	articles/CMakeLists.txt \
 	articles/en/CMakeLists.txt \
-	specifications/CMakeLists.txt \
-	specifications/en/CMakeLists.txt \
+	articles/en/Makefile.am \
+	articles/en/images/tire_fig12.svg \
+	articles/en/images/tire_fig13.svg \
+	books/CMakeLists.txt \
+	books/README \
+	books/en/CMakeLists.txt \
+	books/en/Makefile.am \
+	books/en/tutorial_series_authors.xml \
+	fop.xconf.in \
 	lessons/CMakeLists.txt \
 	lessons/en/CMakeLists.txt \
+	lessons/en/Makefile.am \
 	lessons/es/CMakeLists.txt \
-	books/CMakeLists.txt \
-	books/en/CMakeLists.txt \
+	lessons/es/Makefile.am \
+	log4j.properties \
+	resources \
+	specifications/CMakeLists.txt \
+	specifications/en/CMakeLists.txt \
+	specifications/en/Makefile.am \
+	system/CMakeLists.txt \
+	system/README \
 	system/man1/CMakeLists.txt \
 	system/man1/en/CMakeLists.txt \
+	system/man1/en/Makefile.am \
+	system/man3/CMakeLists.txt \
+	system/man3/en/CMakeLists.txt \
+	system/man3/en/Makefile.am \
 	system/man5/CMakeLists.txt \
 	system/man5/en/CMakeLists.txt \
-	system/CMakeLists.txt \
+	system/man5/en/Makefile.am \
 	system/mann/CMakeLists.txt \
 	system/mann/en/CMakeLists.txt \
-	system/man3/CMakeLists.txt \
-	system/man3/en/CMakeLists.txt
+	system/mann/en/Makefile.am \
+	system/mann/mged_cmd_template.xml
 
 include $(top_srcdir)/misc/Makefile.defs
