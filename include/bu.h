@@ -2841,8 +2841,21 @@ BU_EXPORT extern int bu_file_writable(const char *path);
 BU_EXPORT extern int bu_file_executable(const char *path);
 
 /**
- * deletes a specified file.  returns truthfully if the specified file
- * was deleted.
+ * Returns truthfully whether the given file path is a directory or
+ * not.  An empty or NULL path name is treated as a non-existent
+ * directory and, as such, will return false.
+ *
+ * @return >0 The given filename is a directory
+ * @return 0 The given filename is  not a directory.
+ */
+BU_EXPORT extern int bu_file_directory(const char *path);
+
+/**
+ * forcibly attempts to delete a specified file.  if the file can be
+ * deleted by relaxing file permissions, they will be changed in order
+ * to delete the file.
+ *
+ * returns truthfully if the specified file was deleted.
  */
 BU_EXPORT extern int bu_file_delete(const char *path);
 
