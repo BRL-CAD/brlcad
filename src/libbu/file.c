@@ -38,6 +38,7 @@
 
 #include "bu.h"
 
+
 #ifndef R_OK
 #  define R_OK 4
 #endif
@@ -225,6 +226,40 @@ int
 bu_file_executable(const char *path)
 {
     return file_access(path, X_OK);
+}
+
+
+int
+bu_file_directory(const char *path)
+{
+    struct stat sb;
+
+    if (UNLIKELY(!path || (path[0] == '\0'))) {
+	return 0;
+    }
+
+    if (stat(path, &sb) == -1) {
+	return 0;
+    }
+
+    return (S_ISDIR(sb.st_mode));
+}
+
+
+int
+bu_file_symbolic(const char *path)
+{
+    struct stat sb;
+
+    if (UNLIKELY(!path || (path[0] == '\0'))) {
+	return 0;
+    }
+
+    if (stat(path, &sb) == -1) {
+	return 0;
+    }
+
+    return (S_ISLNK(sb.st_mode));
 }
 
 
