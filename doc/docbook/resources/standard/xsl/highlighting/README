@@ -2,7 +2,7 @@ To use the syntax higlighting extension with DocBook-XSL 1.74.3+, you must:
 1. Use a processor that works with the extension: Saxon 6 or Xalan-J.
 2. Add the latest version of xslthl-2.X.X.jar to your classpath.
 3. Set the highlight.source parameter to 1.
-4. Import into your customization one of the following stylesheet module:
+4. Import into your customization one of the following stylesheet modules:
   * html/highlight.xsl
   * xhtml/highlight.xsl
   * xhtml-1_1/highlight.xsl
