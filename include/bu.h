@@ -2841,14 +2841,24 @@ BU_EXPORT extern int bu_file_writable(const char *path);
 BU_EXPORT extern int bu_file_executable(const char *path);
 
 /**
- * Returns truthfully whether the given file path is a directory or
- * not.  An empty or NULL path name is treated as a non-existent
- * directory and, as such, will return false.
+ * Returns truthfully whether the given file path is a directory.  An
+ * empty or NULL path name is treated as a non-existent directory and,
+ * as such, will return false.
  *
  * @return >0 The given filename is a directory
- * @return 0 The given filename is  not a directory.
+ * @return 0 The given filename is not a directory.
  */
 BU_EXPORT extern int bu_file_directory(const char *path);
+
+/**
+ * Returns truthfully whether the given file path is a symbolic link.
+ * An empty or NULL path name is treated as a non-existent link and,
+ * as such, will return false.
+ *
+ * @return >0 The given filename is a symbolic link
+ * @return 0 The given filename is not a symbolic link.
+ */
+BU_EXPORT extern int bu_file_symbolic(const char *path);
 
 /**
  * forcibly attempts to delete a specified file.  if the file can be
@@ -2858,7 +2868,6 @@ BU_EXPORT extern int bu_file_directory(const char *path);
  * returns truthfully if the specified file was deleted.
  */
 BU_EXPORT extern int bu_file_delete(const char *path);
-
 
 /** @file libbu/fnmatch.c
  *
