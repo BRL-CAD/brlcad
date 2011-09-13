@@ -49,6 +49,9 @@ ELSE(DOXYGEN_FOUND)
 	ENDIF(BRLCAD-BUILD_DOXYGEN_DOCS)
 ENDIF(DOXYGEN_FOUND)
 
+include_directories(${BRLCAD_SOURCE_DIR}/include)
+BRLCAD_ADDEXEC(comm comm.c libbu)
+
 SET(misc_ignore_files
 	CMake
 	Description.txt
