@@ -196,6 +196,10 @@ _bu_alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
 
     static int failsafe_init = 0;
 
+    const char *nul = "(null)";
+    if (!str)
+	str = nul;
+
     /* bu_bomb hook to recover from memory problems */
     if (UNLIKELY(!failsafe_init)) {
 	failsafe_init = bu_bomb_failsafe_init();
@@ -301,6 +305,10 @@ bu_calloc(size_t nelem, size_t elsize, const char *str)
 void
 bu_free(genptr_t ptr, const char *str)
 {
+    const char *nul = "(null)";
+    if (!str)
+	str = nul;
+
     if (UNLIKELY(bu_debug&BU_DEBUG_MEM_LOG)) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	fprintf(stderr, "%p free          %s\n", ptr, str);
