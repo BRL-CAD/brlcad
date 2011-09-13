@@ -84,3 +84,4 @@ SET(libdm_ignore_files
 	TODO
 	)
 CMAKEFILES(${libdm_ignore_files})
+CMAKEFILES(Makefile.am)

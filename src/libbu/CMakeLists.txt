@@ -119,3 +119,4 @@ set(bu_ignore_files
 	rb_internals.h
 	)
 CMAKEFILES(${bu_ignore_files})
+CMAKEFILES(Makefile.am)

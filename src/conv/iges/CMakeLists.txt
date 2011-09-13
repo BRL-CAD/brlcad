@@ -131,3 +131,4 @@ SET(iges_ignore_files
 	woodie.igs
 	)
 CMAKEFILES(${iges_ignore_files})
+CMAKEFILES(Makefile.am)

@@ -31,7 +31,6 @@ SET(required_dirs
 	libbn
 	libsysv
 	librt
-	external
 )
 
 FOREACH(subdir ${required_dirs})
@@ -120,4 +119,6 @@ IF(NOT WIN32)
 ENDIF(NOT WIN32)
 
 DISTCHECK_IGNORE_ITEM(README)
+DISTCHECK_IGNORE_ITEM(external)
 DISTCHECK_IGNORE_ITEM(other)
+CMAKEFILES(Makefile.am)

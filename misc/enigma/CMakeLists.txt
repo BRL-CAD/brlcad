@@ -26,7 +26,9 @@ SET(enigma_ignore_files
 	ChangeLog
 	INSTALL
 	NEWS
+	README
 	configure.ac
 	crypt.c
+	Makefile.am
 )
 CMAKEFILES(${enigma_ignore_files})

@@ -5,3 +5,5 @@ set(doc_legal
 )
 
 install(FILES ${doc_legal} DESTINATION ${DATA_DIR}/doc/legal)
+
+CMAKEFILES(Makefile.am bsd.txt bdl.txt lgpl.txt)

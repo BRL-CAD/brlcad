@@ -7,3 +7,5 @@ SET(swidgets_TCLSCRIPTS
 BRLCAD_ADDDATA(swidgets_TCLSCRIPTS tclscripts/swidgets)
 pkgIndex_BUILD(swidgets tclscripts/swidgets)
 tclIndex_BUILD(swidgets tclscripts/swidgets)
+
+CMAKEFILES(Makefile.am pkgIndex.tcl tclIndex)

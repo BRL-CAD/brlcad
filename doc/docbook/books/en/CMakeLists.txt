@@ -51,4 +51,4 @@ BRLCAD_ADDDATA(docbook_books_EN_IMAGES html/books/en/images)
 
 DOCBOOK_TO_PDF(book docbook_books_EN pdf/books/en)
 
-CMAKEFILES(tutorial_series_authors.xml)
+CMAKEFILES(Makefile.am tutorial_series_authors.xml)

@@ -339,3 +339,4 @@ SET(ged_ignore_files
     wdb_qray.h
 )
 CMAKEFILES(${ged_ignore_files})
+CMAKEFILES(Makefile.am)

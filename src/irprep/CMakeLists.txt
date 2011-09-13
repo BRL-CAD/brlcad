@@ -28,3 +28,4 @@ SET(irprep_MANS
 #  pictx.1
 ADD_MAN_PAGES(1 irprep_MANS)
 CMAKEFILES(pictx.1 pictx.c)
+CMAKEFILES(Makefile.am)

@@ -213,6 +213,8 @@ SET(conv_ignore_files
 	shp/shapelib/LICENSE.LGPL
 	shp/shapelib/license.html
 	shp/shapelib/shapefil.h
+	shp/README
 	walk_example.c
 	)
 CMAKEFILES(${conv_ignore_files})
+CMAKEFILES(Makefile.am)

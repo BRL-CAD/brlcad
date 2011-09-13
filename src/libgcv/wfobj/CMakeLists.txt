@@ -32,3 +32,4 @@ set(wfobj_ignore_files
 	re2c_utils.h
 	)
 CMAKEFILES(${wfobj_ignore_files})
+CMAKEFILES(Makefile.am)

@@ -45,3 +45,6 @@ FOREACH(pkgfile ${pkgconfig_DATA})
   configure_file(${pkgfile} ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.pc @ONLY)
   INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.pc DESTINATION ${LIB_DIR}/pkgconfig)
 ENDFOREACH(pkgfile ${pkgconfig_DATA})
+
+CMAKEFILES(${pkgconfig_DATA})
+CMAKEFILES(Makefile.am)

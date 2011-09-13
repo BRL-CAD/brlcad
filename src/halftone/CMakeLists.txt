@@ -15,3 +15,4 @@ SET(halftone_SOURCES
 BRLCAD_ADDEXEC(halftone "${halftone_SOURCES}" "librt libfb")
 
 ADD_MAN_PAGE(1 halftone.1)
+CMAKEFILES(Makefile.am)

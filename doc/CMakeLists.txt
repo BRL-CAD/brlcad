@@ -219,4 +219,4 @@ ADD_MAN_PAGES(5 doc_MANS)
 CONFIGURE_FILE(pad_file.xml.in ${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml DESTINATION ${DATA_DIR}/doc)
 
-CMAKEFILES(pad_file.xml.in STARTERS)
+CMAKEFILES(Makefile.am pad_file.xml.in STARTERS)

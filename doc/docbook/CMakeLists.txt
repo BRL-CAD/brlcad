@@ -73,4 +73,4 @@ ADD_SUBDIRECTORY(lessons)
 ADD_SUBDIRECTORY(specifications)
 ADD_SUBDIRECTORY(system)
 
-CMAKEFILES(fop.xconf.in log4j.properties resources)
+CMAKEFILES(Makefile.am README fop.xconf.in log4j.properties resources)

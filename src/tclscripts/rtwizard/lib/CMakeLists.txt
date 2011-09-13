@@ -23,3 +23,5 @@ SET(rtwizard_lib_TCLSCRIPTS
 BRLCAD_ADDDATA(rtwizard_lib_TCLSCRIPTS tclscripts/rtwizard/lib)
 pkgIndex_BUILD(rtwizard_lib tclscripts/rtwizard/lib)
 tclIndex_BUILD(rtwizard_lib tclscripts/rtwizard/lib)
+
+CMAKEFILES(Makefile.am pkgIndex.tcl tclIndex)

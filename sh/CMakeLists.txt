@@ -44,3 +44,4 @@ SET(noinst_SCRIPTS
 )
 CMAKEFILES(${sh_SCRIPTS})
 CMAKEFILES(${noinst_SCRIPTS})
+CMAKEFILES(Makefile.am)

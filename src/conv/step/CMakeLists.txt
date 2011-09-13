@@ -388,3 +388,5 @@ include_directories(
 )
 
 BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "libwdb librt libbu steputils stepcore stepdai stepeditor ${OPENNURBS_LIBRARY}")
+
+CMAKEFILES(Makefile.am)

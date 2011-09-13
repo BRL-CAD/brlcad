@@ -209,3 +209,4 @@ SET(rt_ignore_files
 	viewscat.c
 	)
 CMAKEFILES(${rt_ignore_files})
+CMAKEFILES(Makefile.am)

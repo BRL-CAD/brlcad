@@ -42,3 +42,4 @@ SET(lgt_ignore_files
 	tree.h
 	)
 CMAKEFILES(${lgt_ignore_files})
+CMAKEFILES(Makefile.am)

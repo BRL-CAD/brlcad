@@ -8,3 +8,4 @@ include_directories(
 
 BRLCAD_ADDLIB(libicv "${LIBICV_SOURCES}" libbu)
 SET_TARGET_PROPERTIES(libicv PROPERTIES VERSION 19.0.1 SOVERSION 19)
+CMAKEFILES(Makefile.am)

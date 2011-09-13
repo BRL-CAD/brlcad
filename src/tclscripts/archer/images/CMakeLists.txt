@@ -261,3 +261,4 @@ SET(archer_images
 	)
 
 BRLCAD_ADDDATA(archer_images tclscripts/archer/images)
+CMAKEFILES(Makefile.am)

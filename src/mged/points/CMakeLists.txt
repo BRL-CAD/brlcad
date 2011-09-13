@@ -41,3 +41,4 @@ SET(mged_points_ignore_files
 	process.h
 	)
 CMAKEFILES(${mged_points_ignore_files})
+CMAKEFILES(Makefile.am)

@@ -76,4 +76,5 @@ SET(PictureTypeF_DATA
 	)
 BRLCAD_ADDDATA(PictureTypeF_DATA tclscripts/rtwizard/examples/PictureTypeF)
 
-CMAKEFILES(examples)
+CMAKEFILES(examples pkgIndex.tcl tclIndex)
+CMAKEFILES(Makefile.am)

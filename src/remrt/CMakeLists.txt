@@ -10,3 +10,4 @@ BRLCAD_ADDEXEC(rtsrv rtsrv.c "libremrt liboptical libpkg")
 SET_TARGET_PROPERTIES(rtsrv PROPERTIES COMPILE_DEFINITIONS "RTSRV")
 
 CMAKEFILES(ihost.h protocol.h)
+CMAKEFILES(Makefile.am)

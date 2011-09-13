@@ -56,3 +56,5 @@ SET(tclscripts_TCLSCRIPTS
 BRLCAD_ADDDATA(tclscripts_TCLSCRIPTS tclscripts)
 pkgIndex_BUILD(tclscripts tclscripts)
 tclIndex_BUILD(tclscripts tclscripts)
+
+CMAKEFILES(README Makefile.am pkgIndex.tcl tclIndex)

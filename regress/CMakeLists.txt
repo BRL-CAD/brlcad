@@ -77,6 +77,7 @@ IF(SH_EXEC)
 ENDIF(SH_EXEC)
 
 CMAKEFILES(
+	Makefile.am
 	bots.sh 
 	fastgen.sh 
 	fastgen_dos.fast4 

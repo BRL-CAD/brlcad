@@ -41,3 +41,6 @@ SET(archer_TCLSCRIPTS
 BRLCAD_ADDDATA(archer_TCLSCRIPTS tclscripts/archer)
 pkgIndex_BUILD(archer tclscripts/archer)
 tclIndex_BUILD(archer tclscripts/archer)
+
+CMAKEFILES(pkgIndex.tcl tclIndex)
+CMAKEFILES(Makefile.am)

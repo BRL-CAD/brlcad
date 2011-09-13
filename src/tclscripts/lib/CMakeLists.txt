@@ -26,3 +26,6 @@ SET(lib_TCLSCRIPTS
 BRLCAD_ADDDATA(lib_TCLSCRIPTS tclscripts/lib)
 pkgIndex_BUILD(lib tclscripts/lib)
 tclIndex_BUILD(lib tclscripts/lib)
+
+CMAKEFILES(pkgIndex.tcl tclIndex)
+CMAKEFILES(Makefile.am)

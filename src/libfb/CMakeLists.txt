@@ -85,3 +85,4 @@ SET(libfb_ignore_files
 	if_tk.c
 )
 CMAKEFILES(${libfb_ignore_files})
+CMAKEFILES(Makefile.am)

@@ -58,3 +58,4 @@ set(proc-db_ignore_files
 	vegetation.h
 )
 CMAKEFILES(${proc-db_ignore_files})
+CMAKEFILES(Makefile.am)

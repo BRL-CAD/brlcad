@@ -38,3 +38,4 @@ SET(nirt_ignore_files
 	usrfmt.h
 	)
 CMAKEFILES(${nirt_ignore_files})
+CMAKEFILES(Makefile.am sfiles/Makefile.am)

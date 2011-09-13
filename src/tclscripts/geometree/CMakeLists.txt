@@ -5,3 +5,6 @@ SET(geometree_TCLSCRIPTS
 BRLCAD_ADDDATA(geometree_TCLSCRIPTS tclscripts/geometree)
 pkgIndex_BUILD(geometree tclscripts/geometree)
 tclIndex_BUILD(geometree tclscripts/geometree)
+
+CMAKEFILES(pkgIndex.tcl tclIndex)
+CMAKEFILES(Makefile.am)

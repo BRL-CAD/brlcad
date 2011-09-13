@@ -43,3 +43,4 @@ set(anim_MANS
 )
 ADD_MAN_PAGES(1 anim_MANS)
 CMAKEFILES(cattrack.h)
+CMAKEFILES(Makefile.am)

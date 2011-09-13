@@ -247,6 +247,9 @@ IF(NOT BRLCAD-IS_SUBBUILD)
 	MARK_AS_ADVANCED(CMAKE_EXEC_TARGET_LIST)
 	MARK_AS_ADVANCED(CMAKE_CUSTOM_TARGET_LIST)
 
+   # Need build_files_list to be clear each CMake run	
+	FILE(WRITE ${CMAKE_BINARY_DIR}/build_files_list.txt "")
+
 	# Override and wrap add_library.  While we're at it, avoid doubling up
 	# on the lib prefix for libraries if the target name is lib<target>
 	function(add_library name)
@@ -287,6 +290,7 @@ IF(NOT BRLCAD-IS_SUBBUILD)
 		FILE(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/${name}/cmakepaths.cmake)
 		_add_subdirectory(${name} ${ARGN})
 		FILE(APPEND ${CMAKE_CURRENT_BINARY_DIR}/cmakepaths.cmake	"${name}\n")
+		FILE(APPEND ${CMAKE_BINARY_DIR}/build_files_list.txt ";${CMAKE_CURRENT_SOURCE_DIR}/${name}/CMakeLists.txt")
 	endfunction(add_subdirectory)
 ENDIF(NOT BRLCAD-IS_SUBBUILD)
 
@@ -1754,7 +1758,9 @@ IF(NOT BRLCAD-IS_SUBBUILD)
 	INCLUDE(CPack)
 ENDIF(NOT BRLCAD-IS_SUBBUILD)
 
-# Some files to ignore for distcheck
+# Some files to ignore for distcheck.  For this case
+# only, we add CMakeLists.txt (others are handled
+# by add_subdirectory wrapper
 SET(toplevel_ignore_files
 	${toplevel_DOCFILES}
 	BUGS
@@ -1768,6 +1774,8 @@ SET(toplevel_ignore_files
 	configure.ac
 	configure.cmake.sh
 	m4
+	Makefile.am
+	CMakeLists.txt
 	)
 CMAKEFILES(${toplevel_ignore_files})
 
