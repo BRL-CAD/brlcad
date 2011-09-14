@@ -106,30 +106,32 @@ list(REMOVE_ITEM GROUND_TRUTH ${SVN_FILES})
 
 IF(SVN_FILES_NOT_IN_BUILD)
 	STRING(REGEX REPLACE ";" "\n" SVN_FILES_NOT_IN_BUILD "${SVN_FILES_NOT_IN_BUILD}")
-	MESSAGE(WARNING "Files listed in subversion but not accounted for in build logic: \n${SVN_FILES_NOT_IN_BUILD}\n")
+	MESSAGE("\nFiles listed in subversion but not accounted for in build logic: \n${SVN_FILES_NOT_IN_BUILD}\n")
 ENDIF(SVN_FILES_NOT_IN_BUILD)
 
 IF(BUILD_FILES_NOT_IN_SVN)
 	STRING(REGEX REPLACE ";" "\n" BUILD_FILES_NOT_IN_SVN "${BUILD_FILES_NOT_IN_SVN}")
-	MESSAGE(WARNING "Files present in the build logic but not accounted for in Subversion: \n${BUILD_FILES_NOT_IN_SVN}\n")
+	MESSAGE("\nFiles present in the build logic but not accounted for in Subversion: \n${BUILD_FILES_NOT_IN_SVN}\n")
 ENDIF(BUILD_FILES_NOT_IN_SVN)
 
 IF(SVN_FILES_NOT_IN_BUILD OR BUILD_FILES_NOT_IN_SVN)
 	MESSAGE(FATAL_ERROR "Distcheck cannot proceed until the above errors are corrected.")
 ENDIF(SVN_FILES_NOT_IN_BUILD OR BUILD_FILES_NOT_IN_SVN)
 
-MESSAGE("GROUND_TRUTH: ${GROUND_TRUTH}")
+IF(GROUND_TRUTH)
+	SET(CPACK_EXTRA_IGNORE_FILES ${GROUND_TRUTH})
+	STRING(REGEX REPLACE ";" "\n" GROUND_TRUTH "${GROUND_TRUTH}")
+	MESSAGE("\nFiles unknown to both Subversion and the Build logic (will not be incorporated into dist):\n${GROUND_TRUTH}\n")
+ENDIF(GROUND_TRUTH)
 
-IF(0)
-# TODO - The following lines aren't active yet, and may need more sophisticated logic in the case of multiple
+# TODO - The following lines probably need more sophisticated logic in the case of multiple
 # distcheck runs to avoid repeated appendings, but should "tweak" CPack based on the distcheck results.  May
 # need to remove _CPack_Packages directory, not sure
-FILE(APPEND @CMAKE_BINARY_DIR@/CPackConfig.cmake "SET(CPACK_IGNORE_FILES \"\${CPACK_IGNORE_FILES};${PROBLEM_FILES}\")\n")
-FILE(APPEND @CMAKE_BINARY_DIR@/CPackSourceConfig.cmake "SET(CPACK_IGNORE_FILES \"\${CPACK_IGNORE_FILES};${PROBLEM_FILES}\")\n")
-FILE(APPEND @CMAKE_BINARY_DIR@/CPackConfig.cmake "SET(CPACK_SOURCE_IGNORE_FILES \"\${CPACK_SOURCE_IGNORE_FILES};${PROBLEM_FILES}\")\n")
-FILE(APPEND @CMAKE_BINARY_DIR@/CPackSourceConfig.cmake "SET(CPACK_SOURCE_IGNORE_FILES \"\${CPACK_SOURCE_IGNORE_FILES};${PROBLEM_FILES}\")\n")
+FILE(APPEND @CMAKE_BINARY_DIR@/CPackConfig.cmake "SET(CPACK_IGNORE_FILES \"\${CPACK_IGNORE_FILES};${CPACK_EXTRA_IGNORE_FILES}\")\n")
+FILE(APPEND @CMAKE_BINARY_DIR@/CPackSourceConfig.cmake "SET(CPACK_IGNORE_FILES \"\${CPACK_IGNORE_FILES};${CPACK_EXTRA_IGNORE_FILES}\")\n")
+FILE(APPEND @CMAKE_BINARY_DIR@/CPackConfig.cmake "SET(CPACK_SOURCE_IGNORE_FILES \"\${CPACK_SOURCE_IGNORE_FILES};${CPACK_EXTRA_IGNORE_FILES}\")\n")
+FILE(APPEND @CMAKE_BINARY_DIR@/CPackSourceConfig.cmake "SET(CPACK_SOURCE_IGNORE_FILES \"\${CPACK_SOURCE_IGNORE_FILES};${CPACK_EXTRA_IGNORE_FILES}\")\n")
 
 
 # If we got this far, it worked
-MESSAGE("Checking source archive is in sync with build system: Passed")
-ENDIF(0)
+MESSAGE("Stage 1: Passed")

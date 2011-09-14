@@ -1,3 +1,4 @@
+SET(tkhtml_ignore_files
 AUTHORS
 COPYING
 ChangeLog
@@ -24,3 +25,5 @@ src/tkhtml.tcl
 src/tokenlist.txt
 tclconfig
 CMake
+Makefile.am
+)

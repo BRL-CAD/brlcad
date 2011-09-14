@@ -1,3 +1,5 @@
+SET(libz_ignore_files
+Makefile.am
 ChangeLog
 FAQ
 INDEX
@@ -31,3 +33,4 @@ win32/README-WIN32.txt
 win32/VisualC.txt
 win32/zlib.def
 win32/zlib1.rc
+)

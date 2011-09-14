@@ -1,3 +1,4 @@
+SET(itk_ignore_files
 CMake
 aclocal.m4
 demos
@@ -12,3 +13,4 @@ license.terms
 pkgIndex.tcl.in
 tests
 win
+)

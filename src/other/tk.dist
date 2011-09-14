@@ -1,3 +1,5 @@
+SET(tk_ignore_files
+Makefile.am
 CMake
 ChangeLog
 ChangeLog.2002
@@ -6,6 +8,7 @@ README
 bitmaps
 changes
 compat
+doc
 generic/README
 generic/default.h
 generic/ks_names.h
@@ -48,6 +51,7 @@ generic/ttk/ttkManager.h
 generic/ttk/ttkTheme.h
 generic/ttk/ttkThemeInt.h
 generic/ttk/ttkWidget.h
+library
 license.terms
 macosx
 tests
@@ -70,3 +74,4 @@ unix/tkUnixPort.h
 unix/tkUnixRFont.c
 win
 xlib
+)

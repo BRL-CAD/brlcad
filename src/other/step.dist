@@ -1,3 +1,5 @@
+SET(step_ignore_files
+Makefile.am
 AUTHORS
 CMake
 COPYING
@@ -8,6 +10,9 @@ README
 TODO
 config
 configure.ac
+data
+doc
+include
 m4
 misc
 src
@@ -91,3 +96,4 @@ src/clSchemas
 src/clivfasd
 src/clprobe-ui
 src/test
+)

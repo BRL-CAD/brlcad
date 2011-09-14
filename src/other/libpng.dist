@@ -1,3 +1,4 @@
+SET(libpng_ignore_files
 ANNOUNCE
 CHANGES
 INSTALL
@@ -24,6 +25,5 @@ libpng-manual.txt
 pngvalid.c
 test-pngvalid-full.sh
 test-pngvalid-simple.sh
-projects/visualc6
-projects/xcode
-projects/xcode/libpng.xcodeproj
+Makefile.am
+)

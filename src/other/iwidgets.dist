@@ -1,3 +1,5 @@
+SET(iwidgets_ignore_files
+Makefile.am
 CHANGES
 ChangeLog
 README
@@ -13,3 +15,5 @@ pkgIndex.tcl.in
 tclconfig
 tests
 win
+generic/Makefile.am
+)

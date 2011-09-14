@@ -1,3 +1,5 @@
+SET(re2c_ignore_files
+README
 CHANGELOG
 CMake
 README.in
@@ -30,3 +32,4 @@ token.h
 bootstrap/parser.cc
 bootstrap/parser.hh
 bootstrap/y.tab.h
+)

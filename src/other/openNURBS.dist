@@ -1,3 +1,5 @@
+SET(openNURBS_ignore_files
+Makefile.am
 BRL-CAD_changes.txt
 example_brep
 example_dump
@@ -121,4 +123,4 @@ opennurbs_workspace.h
 opennurbs_x.h
 opennurbs_xform.h
 opennurbs_zlib.h
-
+)

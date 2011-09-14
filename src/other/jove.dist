@@ -1,3 +1,4 @@
+SET(jove_ignore_files
 BUGS
 README
 describe.com
@@ -8,3 +9,4 @@ jove.h
 jove_temp.h
 teach-jove.in
 termcap.h
+)
