@@ -1,0 +1,1954 @@
+<article
+  xmlns="http://docbook.org/ns/docbook"
+  version="5.0"
+>
+
+<!--
+
+  This is produced from the slides in 'tcltk.ppt' on the  BRL-CAD site.
+
+  There were 31 slides from which text and images have been extracted to make
+  DocBook source file.
+
+-->
+
+
+<!-- slide 01 -->
+
+   <info>
+     <title>Introduction to Tcl/Tk</title>
+
+     <author>
+        <personname>
+          <firstname>TraNese</firstname>
+          <surname>Christy</surname>
+        </personname>
+     </author>
+
+     <legalnotice>
+       <para>Approved for public release; distribution is unlimited.</para>
+       <para>Date approved:  ????</para>
+     </legalnotice>
+
+  </info>
+
+<!-- slide 02 -->
+
+  <para>What is Tcl/Tk?</para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>Tool Command Language/ToolKit.</para>
+    </listitem>
+
+    <listitem>
+      <para>Tcl is an embeddable and extensible interpreted language. </para>
+    </listitem>
+
+    <listitem>
+      <para>Tk is a toolkit for building user interfaces.</para>
+    </listitem>
+
+    <listitem>
+      <para>Combined, they provide a programming system for
+      development and use of GUI applications.</para>
+    </listitem>
+
+  </itemizedlist>
+
+<!-- slide 03 -->
+
+  <para>Benefits of Tcl/Tk</para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>Ease of providing applications with a powerful scripting language</para>
+    </listitem>
+
+    <listitem>
+      <para>An excellent "glue language"</para>
+    </listitem>
+
+    <listitem>
+      <para>User convenience</para>
+    </listitem>
+
+    <listitem>
+      <para>Portability</para>
+    </listitem>
+
+  </itemizedlist>
+
+<!-- slide 04 -->
+
+  <para>Tcl/Tk-Based GUI for MGED</para>
+
+   <!-- image4.png -->
+   <!-- tk-based-gui-for-mged.png -->
+
+<figure>
+<title>Tcl/Tk-Based GUI for MGED</title>
+<mediaobject>
+  <imageobject role='html'>
+    <imagedata
+       align='center'
+       width='5.5in' scalefit='1'
+       fileref="./images/tk-based-gui-for-mged.png"
+    /><!-- was: width='100%' -->
+  </imageobject>
+  <imageobject role='fo'>
+    <imagedata
+       align='center'
+       width='5.5in' scalefit='1'
+       fileref="./images/tk-based-gui-for-mged.png"
+    />
+  </imageobject>
+  <textobject>
+    <phrase>a picture</phrase>
+  </textobject>
+</mediaobject>
+</figure>
+
+
+<!-- slide 05 -->
+
+  <para>Tcl Syntax</para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>A command is a list of words.</para>
+    </listitem>
+
+    <listitem>
+      <para>First word on the command line is the command name, any additional words are arguments.</para>
+    </listitem>
+
+    <listitem>
+      <para>command </para>
+    </listitem>
+
+    <listitem>
+      <para>[</para>
+    </listitem>
+
+    <listitem>
+      <para>arg1 ... argn</para>
+    </listitem>
+
+    <listitem>
+      <para>]</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> puts "Hello World"</para>
+    </listitem>
+
+    <listitem>
+      <para>      </para>
+    </listitem>
+
+    <listitem>
+      <para>Hello World</para>
+    </listitem>
+
+    <listitem>
+      <para>Words can be grouped with double quotes (" ") or curly braces ({}).</para>
+    </listitem>
+
+    <listitem>
+      <para>Commands are terminated with a newline or semicolon.</para>
+    </listitem>
+
+  </itemizedlist>
+
+<!-- slide 06 -->
+
+  <para>Variables</para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>Variable names are case-sensitive.</para>
+    </listitem>
+
+    <listitem>
+      <para>Declarations are not necessary.</para>
+    </listitem>
+
+    <listitem>
+      <para>set</para>
+    </listitem>
+
+    <listitem>
+      <para> </para>
+    </listitem>
+
+    <listitem>
+      <para>varName</para>
+    </listitem>
+
+    <listitem>
+      <para> [</para>
+    </listitem>
+
+    <listitem>
+      <para>value</para>
+    </listitem>
+
+    <listitem>
+      <para>]</para>
+    </listitem>
+
+    <listitem>
+      <para>Assigns </para>
+    </listitem>
+
+    <listitem>
+      <para>to the variable </para>
+    </listitem>
+
+    <listitem>
+      <para>varName.</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt; </para>
+    </listitem>
+
+    <listitem>
+      <para>set day Friday</para>
+    </listitem>
+
+    <listitem>
+      <para>Friday</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> set day</para>
+    </listitem>
+
+    <listitem>
+      <para>Friday</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> set day 25</para>
+    </listitem>
+
+    <listitem>
+      <para>25</para>
+    </listitem>
+
+  </itemizedlist>
+
+
+<!-- slide 07 -->
+
+  <para>Lists</para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>An ordered set of strings</para>
+    </listitem>
+
+    <listitem>
+      <para>Specified with curly braces</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> set colors {red yellow green blue}</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>      </para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>red yellow green blue</para>
+    </listitem>
+
+    <listitem>
+      <para>Sometimes created with "list" command</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para> </para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> set colors [list red yellow green blue]</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>        </para>
+    </listitem>
+
+    <listitem>
+      <para> </para>
+    </listitem>
+
+    <listitem>
+      <para>Can extract elements from the list using the "lindex" command</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> lindex {red yellow green blue} 2</para>
+    </listitem>
+
+    <listitem>
+      <para>blue</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+  </itemizedlist>
+
+
+<!-- slide 08 -->
+
+  <para>Arrays</para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>Uses associative arrays</para>
+    </listitem>
+
+    <listitem>
+      <para>Strings used to index the array elements</para>
+    </listitem>
+
+    <listitem>
+      <para> set profit(January) 1500</para>
+    </listitem>
+
+    <listitem>
+      <para>1500</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> set profit(February) -200</para>
+    </listitem>
+
+    <listitem>
+      <para>-200</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para>1500</para>
+    </listitem>
+
+  </itemizedlist>
+
+<!-- slide 09 -->
+
+  <para>Special Characters</para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>Dollar sign $</para>
+    </listitem>
+
+    <listitem>
+      <para>Substitutes the value of the variable</para>
+    </listitem>
+
+    <listitem>
+      <para>Square brackets [ ]</para>
+    </listitem>
+
+    <listitem>
+      <para>Replaces contents with the result of evaluating the command</para>
+    </listitem>
+
+    <listitem>
+      <para>Backslash \</para>
+    </listitem>
+
+    <listitem>
+      <para>Allows special characters such as newlines, [, and $ to be inserted without being treated specially</para>
+    </listitem>
+
+    <listitem>
+      <para>Double quotes " "</para>
+    </listitem>
+
+    <listitem>
+      <para>Allows special characters to be processed normally</para>
+    </listitem>
+
+    <listitem>
+      <para>Curly braces {}</para>
+    </listitem>
+
+    <listitem>
+      <para>Disables special characters</para>
+    </listitem>
+
+    <listitem>
+      <para>Parentheses ()</para>
+    </listitem>
+
+    <listitem>
+      <para>Delimits key values in arrays</para>
+    </listitem>
+
+    <listitem>
+      <para>Hashmark #</para>
+    </listitem>
+
+    <listitem>
+      <para>At the beginning of a line, signifies a comment to follow</para>
+    </listitem>
+
+  </itemizedlist>
+
+
+<!-- slide 10 -->
+
+  <para>Special Character Examples</para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> set name Elvis</para>
+    </listitem>
+
+    <listitem>
+      <para>Elvis</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> puts "Hello name"</para>
+    </listitem>
+
+    <listitem>
+      <para>Hello name</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> puts "Hello $name"</para>
+    </listitem>
+
+    <listitem>
+      <para>Hello Elvis</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> set len [string length $name]</para>
+    </listitem>
+
+    <listitem>
+      <para>5</para>
+    </listitem>
+
+    <listitem>
+      <para>string length $name returns 5</para>
+    </listitem>
+
+    <listitem>
+      <para>len gets the value 5</para>
+    </listitem>
+
+  </itemizedlist>
+
+<!-- slide 11 -->
+
+  <para>Special Character Examples </para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>(cont'd)</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> set price 1.41</para>
+    </listitem>
+
+    <listitem>
+      <para>1.41</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> puts "Gasoline: \$ $price/gallon"</para>
+    </listitem>
+
+    <listitem>
+      <para>Gasoline: $1.41/gallon</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> puts {Gasoline: \$ $price/gallon}</para>
+    </listitem>
+
+    <listitem>
+      <para>Gasoline: \$ $price/gallon</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt; </para>
+    </listitem>
+
+    <listitem>
+      <para>set product 1; #This is a comment</para>
+    </listitem>
+
+    <listitem>
+      <para>1</para>
+    </listitem>
+
+  </itemizedlist>
+
+<!-- slide 12 -->
+
+  <para>Special Character Conflicts</para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>MGED traditional "name globbing" characters conflict with Tcl/Tk usage:</para>
+    </listitem>
+
+    <listitem>
+      <para>MGED follows Unix shell filename patterns.</para>
+    </listitem>
+
+    <listitem>
+      <para>Tcl/Tk has different interpretation of * and [].</para>
+    </listitem>
+
+    <listitem>
+      <para>Users can select which interpretation of special characters:</para>
+    </listitem>
+
+    <listitem>
+      <para>.mgedrc: set MGED variable </para>
+    </listitem>
+
+    <listitem>
+      <para>glob_compat_mode</para>
+    </listitem>
+
+    <listitem>
+      <para>set glob_compat_mode 0 (for Tcl evaluation)</para>
+    </listitem>
+
+    <listitem>
+      <para>set glob_compat_mode 1 (for object name matching)</para>
+    </listitem>
+
+    <listitem>
+      <para>Menu: File-&gt;Preferences-&gt;Special Characters</para>
+    </listitem>
+
+  </itemizedlist>
+
+<!-- slide 13 -->
+
+  <para>   </para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>Special Character Interpretation</para>
+    </listitem>
+
+  </itemizedlist>
+
+  <!-- image5.png -->
+  <!-- special-character-interpretation.png -->
+<figure>
+<title>Special Character Interpretation</title>
+<mediaobject>
+  <imageobject role='html'>
+    <imagedata
+       align='center'
+       width='5.5in' scalefit='1'
+       fileref="./images/special-character-interpretation.png"
+    /><!-- was: width='100%' -->
+  </imageobject>
+  <imageobject role='fo'>
+    <imagedata
+       align='center'
+       width='5.5in' scalefit='1'
+       fileref="./images/special-character-interpretation.png"
+    />
+  </imageobject>
+  <textobject>
+    <phrase>a picture</phrase>
+  </textobject>
+</mediaobject>
+</figure>
+
+
+<!-- slide 14 -->
+
+  <para>Expressions</para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>The</para>
+    </listitem>
+
+    <listitem>
+      <para>command is used to evaluate math expressions.</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> expr 2 + 2</para>
+    </listitem>
+
+    <listitem>
+      <para>4</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> expr (3 + 2) * 4</para>
+    </listitem>
+
+    <listitem>
+      <para>20</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> in ball.s sph 0 0 0 [expr 3 + 4]</para>
+    </listitem>
+
+    <listitem>
+      <para>A sphere is created with a vertex (0,0,0) and a radius of 7.</para>
+    </listitem>
+
+  </itemizedlist>
+
+<!-- slide 15 -->
+
+  <para>Control Flow</para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>if</para>
+    </listitem>
+
+    <listitem>
+      <para> {</para>
+    </listitem>
+
+    <listitem>
+      <para>test</para>
+    </listitem>
+
+    <listitem>
+      <para>} {</para>
+    </listitem>
+
+    <listitem>
+      <para>body1</para>
+    </listitem>
+
+    <listitem>
+      <para>} [</para>
+    </listitem>
+
+    <listitem>
+      <para>else </para>
+    </listitem>
+
+    <listitem>
+      <para>{</para>
+    </listitem>
+
+    <listitem>
+      <para>body2</para>
+    </listitem>
+
+    <listitem>
+      <para>}]</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> set temp 90</para>
+    </listitem>
+
+    <listitem>
+      <para>90</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> if {$temp &gt; 75} {</para>
+    </listitem>
+
+    <listitem>
+      <para>         </para>
+    </listitem>
+
+    <listitem>
+      <para>} else {</para>
+    </listitem>
+
+    <listitem>
+      <para>             </para>
+    </listitem>
+
+    <listitem>
+      <para>puts "It's moderate"</para>
+    </listitem>
+
+    <listitem>
+      <para>         </para>
+    </listitem>
+
+    <listitem>
+      <para>}</para>
+    </listitem>
+
+    <listitem>
+      <para>It's hot</para>
+    </listitem>
+
+  </itemizedlist>
+
+
+<!-- slide 16 -->
+
+  <para>Control Flow (cont'd) </para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>while </para>
+    </listitem>
+
+    <listitem>
+      <para>{</para>
+    </listitem>
+
+    <listitem>
+      <para>test</para>
+    </listitem>
+
+    <listitem>
+      <para>} {</para>
+    </listitem>
+
+    <listitem>
+      <para>body</para>
+    </listitem>
+
+    <listitem>
+      <para>}</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> set time 3</para>
+    </listitem>
+
+    <listitem>
+      <para>3</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> while {$time &gt; 0} {</para>
+    </listitem>
+
+    <listitem>
+      <para>                  </para>
+    </listitem>
+
+    <listitem>
+      <para>puts "Time is $time"</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>        </para>
+    </listitem>
+
+    <listitem>
+      <para>set time [expr $time - 1]</para>
+    </listitem>
+
+    <listitem>
+      <para>             </para>
+    </listitem>
+
+    <listitem>
+      <para>}</para>
+    </listitem>
+
+    <listitem>
+      <para>Time is 3</para>
+    </listitem>
+
+    <listitem>
+      <para>Time is 2</para>
+    </listitem>
+
+    <listitem>
+      <para>Time is 1</para>
+    </listitem>
+
+  </itemizedlist>
+
+<!-- slide 17 -->
+
+  <para>Control Flow (cont'd)</para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>for </para>
+    </listitem>
+
+    <listitem>
+      <para>{</para>
+    </listitem>
+
+    <listitem>
+      <para>init</para>
+    </listitem>
+
+    <listitem>
+      <para>} {</para>
+    </listitem>
+
+    <listitem>
+      <para>test</para>
+    </listitem>
+
+    <listitem>
+      <para>} {</para>
+    </listitem>
+
+    <listitem>
+      <para>reinit</para>
+    </listitem>
+
+    <listitem>
+      <para>} {</para>
+    </listitem>
+
+    <listitem>
+      <para>body</para>
+    </listitem>
+
+    <listitem>
+      <para>}</para>
+    </listitem>
+
+    <listitem>
+      <para> for {set time 3} {$time &gt; 0} {set time [expr $time - 1]} { </para>
+    </listitem>
+
+    <listitem>
+      <para>                  </para>
+    </listitem>
+
+    <listitem>
+      <para>puts "Time is $time"</para>
+    </listitem>
+
+    <listitem>
+      <para>            </para>
+    </listitem>
+
+    <listitem>
+      <para>}</para>
+    </listitem>
+
+    <listitem>
+      <para>Time is 3</para>
+    </listitem>
+
+    <listitem>
+      <para>Time is 2</para>
+    </listitem>
+
+    <listitem>
+      <para>Time is 1</para>
+    </listitem>
+
+  </itemizedlist>
+
+<!-- slide 18 -->
+
+  <para>Control Flow (cont'd)</para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>foreach</para>
+    </listitem>
+
+    <listitem>
+      <para> </para>
+    </listitem>
+
+    <listitem>
+      <para>varList list</para>
+    </listitem>
+
+    <listitem>
+      <para> {</para>
+    </listitem>
+
+    <listitem>
+      <para>body</para>
+    </listitem>
+
+    <listitem>
+      <para>}</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> foreach fruit {apples pears peaches} {</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>puts "I like $fruit"</para>
+    </listitem>
+
+    <listitem>
+      <para>     </para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>}</para>
+    </listitem>
+
+    <listitem>
+      <para>I like apples</para>
+    </listitem>
+
+    <listitem>
+      <para>I like pears</para>
+    </listitem>
+
+    <listitem>
+      <para>I like peaches</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> foreach {key val} {sky blue grass green snow white} {</para>
+    </listitem>
+
+    <listitem>
+      <para>                     </para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>puts "The $key is $val"</para>
+    </listitem>
+
+    <listitem>
+      <para>}</para>
+    </listitem>
+
+    <listitem>
+      <para>The sky is blue</para>
+    </listitem>
+
+    <listitem>
+      <para>The grass is green</para>
+    </listitem>
+
+    <listitem>
+      <para>The snow is white</para>
+    </listitem>
+
+  </itemizedlist>
+
+<!-- slide 19 -->
+
+  <para>MGED Commands</para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>get </para>
+    </listitem>
+
+    <listitem>
+      <para>obj</para>
+    </listitem>
+
+    <listitem>
+      <para> [</para>
+    </listitem>
+
+    <listitem>
+      <para>attr</para>
+    </listitem>
+
+    <listitem>
+      <para>]</para>
+    </listitem>
+
+    <listitem>
+      <para>Returns a list of the object's attributes. If </para>
+    </listitem>
+
+    <listitem>
+      <para>attr</para>
+    </listitem>
+
+    <listitem>
+      <para> is specified, only the value for that attribute is returned.</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> get foo.r</para>
+    </listitem>
+
+    <listitem>
+      <para>comb region yes id 200 los 100 GIFTmater 2 rgb {100 100 100} </para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> get foo.r rgb</para>
+    </listitem>
+
+    <listitem>
+      <para>100 100 100</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> get foo.s</para>
+    </listitem>
+
+    <listitem>
+      <para>ell V {0 0 0} A {4 0 0} B {0 4 0} C {0 0 4}</para>
+    </listitem>
+
+  </itemizedlist>
+
+<!-- slide 20 -->
+
+  <para>MGED Commands (cont'd)</para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>adjust </para>
+    </listitem>
+
+    <listitem>
+      <para>obj attr value</para>
+    </listitem>
+
+    <listitem>
+      <para> [</para>
+    </listitem>
+
+    <listitem>
+      <para>attr value</para>
+    </listitem>
+
+    <listitem>
+      <para>]</para>
+    </listitem>
+
+    <listitem>
+      <para>Modifies the object's attribute(s) by adjusting the value of the attribute(s) to the new value(s).</para>
+    </listitem>
+
+    <listitem>
+      <para>ls</para>
+    </listitem>
+
+    <listitem>
+      <para> [</para>
+    </listitem>
+
+    <listitem>
+      <para>-c -r -s</para>
+    </listitem>
+
+    <listitem>
+      <para>]</para>
+    </listitem>
+
+    <listitem>
+      <para>Without any options, lists every object in the database. </para>
+    </listitem>
+
+    <listitem>
+      <para>With the </para>
+    </listitem>
+
+    <listitem>
+      <para>c</para>
+    </listitem>
+
+    <listitem>
+      <para> option, lists all nonhidden combinations; </para>
+    </listitem>
+
+    <listitem>
+      <para>r</para>
+    </listitem>
+
+    <listitem>
+      <para> option lists all nonhidden regions; and </para>
+    </listitem>
+
+    <listitem>
+      <para>s</para>
+    </listitem>
+
+    <listitem>
+      <para> option lists all nonhidden primitives.</para>
+    </listitem>
+
+  </itemizedlist>
+
+<!-- slide 21 -->
+
+  <para>MGED Examples</para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>Task: Change the color of all regions to blue.</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> foreach region [ls -r] {</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>adjust $region rgb {0 0 255}</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>     </para>
+    </listitem>
+
+    <listitem>
+      <para>}</para>
+    </listitem>
+
+    <listitem>
+      <para>Task:  Print all regions with nonzero air codes.</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> foreach reg [ls -r] {</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>if {[get $reg air] != 0} {</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>puts "$reg"</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>}</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>      </para>
+    </listitem>
+
+    <listitem>
+      <para>}</para>
+    </listitem>
+
+  </itemizedlist>
+
+<!-- slide 22 -->
+
+  <para>MGED Examples (cont'd)</para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>Task: Print all objects with the inherit flag set.</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt; foreach obj [ls -c] {</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>          </para>
+    </listitem>
+
+    <listitem>
+      <para>if {[get $obj inherit] == "yes"} {</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>         </para>
+    </listitem>
+
+    <listitem>
+      <para>puts "$obj"</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>          </para>
+    </listitem>
+
+    <listitem>
+      <para>}</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>      </para>
+    </listitem>
+
+    <listitem>
+      <para>}</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+  </itemizedlist>
+
+<!-- slide 23 -->
+
+  <para>Procedures</para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>proc</para>
+    </listitem>
+
+    <listitem>
+      <para> </para>
+    </listitem>
+
+    <listitem>
+      <para>procName </para>
+    </listitem>
+
+    <listitem>
+      <para>{</para>
+    </listitem>
+
+    <listitem>
+      <para>args</para>
+    </listitem>
+
+    <listitem>
+      <para>} {</para>
+    </listitem>
+
+    <listitem>
+      <para>body</para>
+    </listitem>
+
+    <listitem>
+      <para>}</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> proc add {x y} {</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>set answer [expr $x + $y]</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>return $answer</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>	</para>
+    </listitem>
+
+    <listitem>
+      <para>   </para>
+    </listitem>
+
+    <listitem>
+      <para>}</para>
+    </listitem>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> add 123 456</para>
+    </listitem>
+
+    <listitem>
+      <para>579</para>
+    </listitem>
+
+    <listitem>
+      <para>Create new MGED commands</para>
+    </listitem>
+
+    <listitem>
+      <para>Save in .mgedrc</para>
+    </listitem>
+
+  </itemizedlist>
+
+<!-- slide 24 -->
+
+  <para>Procedure Example</para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>Procedure that generates a PART that encompasses two specified SPHs</para>
+    </listitem>
+
+    <listitem>
+      <para>proc sph-part {sph1 sph2 newname} {</para>
+    </listitem>
+
+    <listitem>
+      <para>    </para>
+    </listitem>
+
+    <listitem>
+      <para>foreach {vx1 vy1 vz1} [lindex [get $sph1 V] 0] {}</para>
+    </listitem>
+
+    <listitem>
+      <para>    </para>
+    </listitem>
+
+    <listitem>
+      <para>foreach {vx2 vy2 vz2} [lindex [get $sph2 V] 0] {}</para>
+    </listitem>
+
+    <listitem>
+      <para>    </para>
+    </listitem>
+
+    <listitem>
+      <para>foreach {ax1 ay1 az1} [lindex [get $sph1 A] 0] {}</para>
+    </listitem>
+
+    <listitem>
+      <para>    </para>
+    </listitem>
+
+    <listitem>
+      <para>foreach {ax2 ay2 az2} [lindex [get $sph2 A] 0] {}</para>
+    </listitem>
+
+    <listitem>
+      <para>    </para>
+    </listitem>
+
+    <listitem>
+      <para>set radius1 [expr sqrt($ax1*$ax1 + $ay1*$ay1 + $az1*$az1)]</para>
+    </listitem>
+
+    <listitem>
+      <para>    </para>
+    </listitem>
+
+    <listitem>
+      <para>set radius2 [expr sqrt($ax2*$ax2 + $ay2*$ay2 + $az2*$az2)] </para>
+    </listitem>
+
+    <listitem>
+      <para>    </para>
+    </listitem>
+
+    <listitem>
+      <para>set hx [expr $vx2-$vx1]</para>
+    </listitem>
+
+    <listitem>
+      <para>    </para>
+    </listitem>
+
+    <listitem>
+      <para>set hy [expr $vy2-$vy1]</para>
+    </listitem>
+
+    <listitem>
+      <para>    </para>
+    </listitem>
+
+    <listitem>
+      <para>set hz [expr $vz2-$vz1]    </para>
+    </listitem>
+
+    <listitem>
+      <para>    </para>
+    </listitem>
+
+    <listitem>
+      <para>in $newname part $vx1 $vy1 $vz1 $hx $hy $hz $radius1 $radius2</para>
+    </listitem>
+
+    <listitem>
+      <para>}</para>
+    </listitem>
+
+  </itemizedlist>
+
+<!-- slide 25 -->
+
+  <para>Procedure Example (cont'd)</para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>mged&gt;</para>
+    </listitem>
+
+    <listitem>
+      <para> sph-part s1.s s2.s part.s</para>
+    </listitem>
+
+  </itemizedlist>
+
+  <!-- image6.png -->
+  <!-- copy-sph-part-left.png -->
+<figure>
+<title>Procedure Example (1)</title>
+<mediaobject>
+  <imageobject role='html'>
+    <imagedata
+       align='center'
+       width='5.5in' scalefit='1'
+       fileref="./images/copy-sph-part-left.png"
+    /><!-- was: width='100%' -->
+  </imageobject>
+  <imageobject role='fo'>
+    <imagedata
+       align='center'
+       width='5.5in' scalefit='1'
+       fileref="./images/copy-sph-part-left.png"
+    />
+  </imageobject>
+  <textobject>
+    <phrase>a picture</phrase>
+  </textobject>
+</mediaobject>
+</figure>
+
+  <!-- image7.png -->
+  <!-- copy-sph-part-right.png -->
+<figure>
+<title>Procedure Example (2)</title>
+<mediaobject>
+  <imageobject role='html'>
+    <imagedata
+       align='center'
+       width='5.5in' scalefit='1'
+       fileref="./images/copy-sph-part-right.png"
+    /><!-- was: width='100%' -->
+  </imageobject>
+  <imageobject role='fo'>
+    <imagedata
+       align='center'
+       width='5.5in' scalefit='1'
+       fileref="./images/copy-sph-part-right.png"
+    />
+  </imageobject>
+  <textobject>
+    <phrase>a picture</phrase>
+  </textobject>
+</mediaobject>
+</figure>
+
+
+<!-- slide 26 -->
+
+  <para>The "source" Command</para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>source <emphasis>fileName</emphasis></para>
+    </listitem>
+
+    <listitem>
+        <para>Reads and executes the file as a Tcl script.</para>
+    </listitem>
+
+    <listitem>
+      <para>Create the file with a text editor.</para>
+    </listitem>
+
+    <listitem>
+      <para>Reload the file with "source" changes are made.</para>
+    </listitem>
+
+    <listitem>
+      <para>The proc or the source command can be placed in .mgedrc.</para>
+    </listitem>
+
+  </itemizedlist>
+
+<!-- slide 27 -->
+
+  <para>MGED Defaults</para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>Create the default .mgedrc from inside MGED:</para>
+    </listitem>
+
+  </itemizedlist>
+
+  <!-- image8.png -->
+  <!-- mged-defaults.png -->
+<figure>
+<title>Mged Defaults</title>
+<mediaobject>
+  <imageobject role='html'>
+    <imagedata
+       align='center'
+       width='5.5in' scalefit='1'
+       fileref="./images/mged-defaults.png"
+    /><!-- was: width='100%' -->
+  </imageobject>
+  <imageobject role='fo'>
+    <imagedata
+       align='center'
+       width='5.5in' scalefit='1'
+       fileref="./images/mged-defaults.png"
+    />
+  </imageobject>
+  <textobject>
+    <phrase>a picture</phrase>
+  </textobject>
+</mediaobject>
+</figure>
+
+
+<!-- slide 28 -->
+
+  <para>MGED Customization</para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>Placed in the file </para>
+    </listitem>
+
+    <listitem>
+      <para>.mgedrc</para>
+    </listitem>
+
+    <listitem>
+      <para>In local directory or home</para>
+    </listitem>
+
+    <listitem>
+      <para>############### MGEDRC_HEADER ###############</para>
+    </listitem>
+
+    <listitem>
+      <para># You can modify the values below. However, if you want</para>
+    </listitem>
+
+    <listitem>
+      <para># to add new lines, add them above the MGEDRC_HEADER.</para>
+    </listitem>
+
+    <listitem>
+      <para># Note - it's not a good idea to set the same variables</para>
+    </listitem>
+
+    <listitem>
+      <para># above the MGEDRC_HEADER that are set below (i.e., the last</para>
+    </listitem>
+
+    <listitem>
+      <para># value set wins).</para>
+    </listitem>
+
+    <listitem>
+      <para>...</para>
+    </listitem>
+
+    <listitem>
+      <para># Determines the maximum number of lines of</para>
+    </listitem>
+
+    <listitem>
+      <para># output displayed in the command window</para>
+    </listitem>
+
+    <listitem>
+      <para>set mged_default(max_text_lines) 1000</para>
+    </listitem>
+
+  </itemizedlist>
+
+<!-- slide 29 -->
+
+  <para>[incr Tcl/Tk]</para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>Object-oriented extension to Tcl.</para>
+    </listitem>
+
+    <listitem>
+      <para>Provides support to build large programs. </para>
+    </listitem>
+
+    <listitem>
+      <para>New applications in BRL-CAD are being written in [incr Tcl/Tk].</para>
+    </listitem>
+
+  </itemizedlist>
+
+<!-- slide 30 -->
+
+  <para>Useful References</para>
+
+  <itemizedlist>
+
+    <listitem>
+      <para>Raines, Paul. <emphasis>Tcl/Tk Pocket Reference</emphasis>. O'Reilly &amp; Associates, Inc., Sebastopol, CA, 1998.</para>
+    </listitem>
+
+    <listitem>
+      <para>Ousterhout, John K. <emphasis>Tcl and the Tk Toolkit</emphasis>. Addison-Wesley, Reading, MA, 1994.</para>
+    </listitem>
+
+    <listitem>
+      <para>Welch, Brent B. <emphasis>Practical Programming in Tcl and Tk, Second Edition</emphasis>. Prentice Hall, Upper Saddle River, NJ, 1997. </para>
+    </listitem>
+
+  </itemizedlist>
+
+</article>
