@@ -103,8 +103,8 @@ EXTRA_DIST = \
 	${presentationsDOCBOOK_EN_IMAGES} \
 	${presentationsDOCBOOK_EN} \
 	${specificationsDOCBOOK_EN} \
-	README \
 	CMakeLists.txt \
+	README \
 	articles/CMakeLists.txt \
 	articles/en/CMakeLists.txt \
 	articles/en/Makefile.am \
