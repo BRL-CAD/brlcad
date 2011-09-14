@@ -8,7 +8,7 @@ The current structure is as follows:
 
 articles/
 	Individual articles on specific topics - oed and tire live here,
-	as well as the articles that made up the appendices of VolIII.
+	as well as the articles that made up the appendices of Vol III.
 
 books/
 	Either compilations of smaller documents into large works, or
@@ -29,9 +29,13 @@ system/
 	Documentation similar to traditional Unix "man" pages - focused
 	documentation on specific parts of BRL-CAD.
 
+presentations/
+	Copies of briefings (slides or slides converted to documents,
+	e.g., "Introduction to Tcl/Tk."
+
 English documents (the only language documentation is written in within
 svn as of Sept. 2008) are in en subdirectories.  Other languages, when
-implemented, will use standard two character sub directories.
+implemented, will use standard two-character sub-directories.
 
 These documents make extensive use of the XInclude modular documentation
 specification, and as a consequence the contents of any one particular
@@ -44,7 +48,7 @@ will incorporate the update as well without requiring redundant editing.
 Caution - the BRL-CAD build logic is not aware of the interlinking of
 various xml files using xinclude.  This means that a change on one document
 may make other output files out of date, and this will not trigger a
-re-build of those file automatically.
+re-build of those files automatically.
 
 Notes:
 
@@ -54,7 +58,6 @@ Notes:
   case of the Apache web server, an .htaccess file in the directory 
   with the line:
 
-  AddDefaultCharset UTF-8
+    AddDefaultCharset UTF-8
 
   should let Apache know to use UTF-8 encoding for these pages.
-
