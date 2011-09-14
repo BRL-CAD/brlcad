@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * converted introductory Tcl/Tk presentation to Docbook - Tom Browder
+* initial support in archer for editing pipe primitives - Bob Parker
 * fixed NURBS raytracing crash due to invalid geometry - Sean Morrison
 * fixed memory leak when saving BoT geometry - Nicholas Reed
 * improved mged object name globbing support - Sean Morrison
