@@ -3,6 +3,14 @@ IF(COMMAND CMAKE_POLICY)
 	CMAKE_POLICY(SET CMP0007 OLD)
 ENDIF(COMMAND CMAKE_POLICY)
 
+MACRO(CHECK_RESULT)
+	IF(FAILED)
+		MESSAGE(FATAL_ERROR "Distcheck failed.")
+	ENDIF(FAILED)
+ENDMACRO()
+
+MESSAGE("Stage 1:  Check files in Source Repository against files specified in Build Logic")
+
 MACRO(SVN_INFO_TO_PATH_LIST SVN_RAW SVN_PATHLIST)
 	SET(SVN_PROCESSING ${${SVN_RAW}})
 	STRING(REGEX REPLACE "Name: [^\r\n]*" "\n" SVN_PROCESSING "${SVN_PROCESSING}")
@@ -23,6 +31,11 @@ MACRO(SVN_INFO_TO_PATH_LIST SVN_RAW SVN_PATHLIST)
 ENDMACRO(SVN_INFO_TO_PATH_LIST)
 
 SET(SVN_TREE_MODIFIED 0)
+SET(ARCHIVES_DISTRIBUTABLE 1)
+
+IF(@CMAKE_SOURCE_DIR@ STREQUAL @CMAKE_BINARY_DIR@)
+	SET(ARCHIVES_DISTRIBUTABLE 0)
+ENDIF(@CMAKE_SOURCE_DIR@ STREQUAL @CMAKE_BINARY_DIR@)
 
 FIND_PROGRAM(SVN_EXEC svn)
 IF(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
@@ -50,6 +63,7 @@ IF(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
 
 	IF(SVN_TREE_MODIFIED)
 		MESSAGE("\n**** NOTE:  Subversion reports modified source files present in the source tree.\n     Distcheck proceeding, but archives will not be suitable for release.\n")
+		SET(ARCHIVES_DISTRIBUTABLE 0)
 		# TODO - mess with tarball naming so they're not releasable
 	ENDIF(SVN_TREE_MODIFIED)
 
@@ -155,6 +169,7 @@ IF(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
 			MESSAGE("\nFiles unknown to both Subversion and the Build logic (will not be incorporated into dist):\n${GROUND_TRUTH}\n")
 		ELSE(${IGNORE_COUNT} LESS 51)
 			MESSAGE("\nMore than 50 files are unknown to both Subversion and the Build logic - archives will not be filtered and are not suitable for distribution.\n")
+			SET(ARCHIVES_DISTRIBUTABLE 0)
 		ENDIF(${IGNORE_COUNT} LESS 51)
 	ENDIF(GROUND_TRUTH)
 ELSE(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
@@ -164,6 +179,7 @@ ELSE(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
 			MESSAGE("\nFiles unknown to the Build logic:\n${GROUND_TRUTH}\n")
 		ELSE(${IGNORE_COUNT} LESS 51)
 			MESSAGE("\nMore than 50 files unknown to the Build logic\nSee @CMAKE_BINARY_DIR@/cpack_ignore_files.txt for the list of ignored files.\n")
+			SET(ARCHIVES_DISTRIBUTABLE 0)
 		ENDIF(${IGNORE_COUNT} LESS 51)
 
 		MESSAGE(FATAL_ERROR "Distcheck without subversion, unknown source files cannot be positivily identified as non-distribution files, haulting.\n")
@@ -186,5 +202,89 @@ IF(${IGNORE_COUNT} LESS 51)
 	FILE(APPEND @CMAKE_BINARY_DIR@/CPackSourceConfig.cmake "SET(CPACK_SOURCE_IGNORE_FILES \"\${CPACK_SOURCE_IGNORE_FILES};${CPACK_EXTRA_IGNORE_FILES}\")\n")
 ENDIF(${IGNORE_COUNT} LESS 51)
 
-# If we got this far, it worked
+# If we got this far, Stage 1 succeeded
 MESSAGE("Stage 1: Passed")
+
+MESSAGE("Stage 2:  Create source tgz, tbz2 and zip archives from toplevel archive.")
+
+EXECUTE_PROCESS(COMMAND @CPACK_EXECUTABLE_NAME@  --config @CMAKE_BINARY_DIR@/CPackSourceConfig.cmake)
+
+MESSAGE("Stage 2: Passed")
+
+MESSAGE("Stage 3:  Expand tgz archive and prepare to build from archive sources.")
+
+EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E tar xzf @CPACK_SOURCE_PACKAGE_FILE_NAME@.tar.gz RESULT_VARIABLE FAILED)
+CHECK_RESULT()
+EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E make_directory _@CPACK_SOURCE_PACKAGE_FILE_NAME@-build RESULT_VARIABLE FAILED)
+CHECK_RESULT()
+EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E make_directory _@CPACK_SOURCE_PACKAGE_FILE_NAME@-install RESULT_VARIABLE FAILED)
+CHECK_RESULT()
+EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E chdir _@CPACK_SOURCE_PACKAGE_FILE_NAME@-build ${CMAKE_COMMAND} ../@CPACK_SOURCE_PACKAGE_FILE_NAME@ -DBRLCAD_BUNDLED_LIBS=Bundled -DCMAKE_INSTALL_PREFIX=@CMAKE_BINARY_DIR@/_@CPACK_SOURCE_PACKAGE_FILE_NAME@-install RESULT_VARIABLE FAILED)
+CHECK_RESULT()
+
+MESSAGE("Stage 3: Passed")
+
+MESSAGE("Stage 4:  Compile using source from tgz archive.")
+SET(cmake_generator @cmake_generator@)
+IF("@CMAKE_GENERATOR@" MATCHES "Make" AND ("${cmake_generator}" MATCHES "Make" OR NOT cmake_generator))
+	EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E chdir _@CPACK_SOURCE_PACKAGE_FILE_NAME@-build $(MAKE) RESULT_VARIABLE FAILED)
+CHECK_RESULT()
+ELSE("@CMAKE_GENERATOR@" MATCHES "Make" AND ("${cmake_generator}" MATCHES "Make" OR NOT cmake_generator))
+	EXECUTE_PROCESS(${CMAKE_COMMAND} -E build _@CPACK_SOURCE_PACKAGE_FILE_NAME@-build RESULT_VARIABLE FAILED)
+CHECK_RESULT()
+ENDIF("@CMAKE_GENERATOR@" MATCHES "Make" AND ("${cmake_generator}" MATCHES "Make" OR NOT cmake_generator))
+
+MESSAGE("Stage 4: Passed")
+
+MESSAGE("Stage 5: Run build-directory regression and benchmark testing from tgz archive compilation.")
+
+EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} --build _@CPACK_SOURCE_PACKAGE_FILE_NAME@-build --target regress RESULT_VARIABLE FAILED)
+CHECK_RESULT()
+EXECUTE_PROCESS(COMMAND TIMEFRAME=1 ${CMAKE_COMMAND} --build _@CPACK_SOURCE_PACKAGE_FILE_NAME@-build --target benchmark RESULT_VARIABLE FAILED)
+CHECK_RESULT()
+
+MESSAGE("Stage 5: Passed")
+
+MESSAGE("Stage 6: Install from tgz build directory.")
+
+EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} --build _@CPACK_SOURCE_PACKAGE_FILE_NAME@-build --target install RESULT_VARIABLE FAILED)
+CHECK_RESULT()
+
+MESSAGE("Stage 6: Passed")
+
+MESSAGE("Stage 7: Clear tgz archive sources and build directory.")
+
+EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove_directory @CPACK_SOURCE_PACKAGE_FILE_NAME@ RESULT_VARIABLE FAILED)
+CHECK_RESULT()
+EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove_directory _@CPACK_SOURCE_PACKAGE_FILE_NAME@-build RESULT_VARIABLE FAILED)
+CHECK_RESULT()
+
+MESSAGE("Stage 7: Passed")
+
+MESSAGE("Stage 8: Run benchmark testing from tgz archive installed build." RESULT_VARIABLE FAILED)
+
+EXECUTE_PROCESS(COMMAND TIMEFRAME=1 _@CPACK_SOURCE_PACKAGE_FILE_NAME@-install/bin/benchmark run RESULT_VARIABLE FAILED)
+CHECK_RESULT()
+EXECUTE_PROCESS(COMMAND _@CPACK_SOURCE_PACKAGE_FILE_NAME@-install/bin/benchmark clean RESULT_VARIABLE FAILED)
+CHECK_RESULT()
+
+MESSAGE("Stage 8: Passed")
+
+
+MESSAGE("Stage 9: Cleanup")
+
+EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove summary RESULT_VARIABLE FAILED)
+CHECK_RESULT()
+EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove run-*.log RESULT_VARIABLE FAILED)
+CHECK_RESULT()
+EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove_directory _@CPACK_SOURCE_PACKAGE_FILE_NAME@-install RESULT_VARIABLE FAILED)
+CHECK_RESULT()
+
+MESSAGE("Stage 9: Passed")
+
+MESSAGE("--- distcheck succeeded ---")
+IF(ARCHIVES_DISTRIBUTABLE)
+	MESSAGE("")
+	MESSAGE("archives ready for distribution")
+ENDIF(ARCHIVES_DISTRIBUTABLE)
+
