@@ -510,7 +510,7 @@ int apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 	struct rt_db_internal intern;
 	struct rigid_body *current_node;
 	mat_t t , m;
-	int rv;
+	/*int rv;*/
 
 	for (current_node = sim_params->head_node; current_node != NULL; current_node = current_node->next) {
 
