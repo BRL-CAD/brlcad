@@ -35,36 +35,36 @@ include $(srcdir)/articles/en/Makefile.am
 include $(srcdir)/books/en/Makefile.am
 include $(srcdir)/lessons/en/Makefile.am
 include $(srcdir)/lessons/es/Makefile.am
+include $(srcdir)/presentations/en/Makefile.am
 include $(srcdir)/specifications/en/Makefile.am
 include $(srcdir)/system/man1/en/Makefile.am
 include $(srcdir)/system/man3/en/Makefile.am
 include $(srcdir)/system/man5/en/Makefile.am
 include $(srcdir)/system/mann/en/Makefile.am
-include $(srcdir)/presentations/en/Makefile.am
 
 if BUILD_DOCS
 
 BUILT_SOURCES = \
 	$(BUILTARTICLES_ENHTML) \
 	$(BUILTARTICLES_ENPDF) \
-	$(BUILTLESSONS_ENHTML) \
-	$(BUILTLESSONS_ENPDF) \
 	$(BUILTBOOKS_ENHTML) \
 	$(BUILTBOOKS_ENPDF) \
-	$(BUILTSPECS_ENHTML) \
-	$(BUILTSPECS_ENPDF) \
-	$(BUILTMAN_ENHTML) \
-	$(BUILTMAN_ENPDF) \
+	$(BUILTLESSONS_ENHTML) \
+	$(BUILTLESSONS_ENPDF) \
+	$(BUILTLESSONS_ESHTML) \
+	$(BUILTLESSONS_ESPDF) \
 	$(BUILTMAN3_ENHTML) \
 	$(BUILTMAN3_ENPDF) \
 	$(BUILTMAN5_ENHTML) \
 	$(BUILTMAN5_ENPDF) \
 	$(BUILTMANN_ENHTML) \
 	$(BUILTMANN_ENPDF) \
-	$(BUILTLESSONS_ESHTML) \
-	$(BUILTLESSONS_ESPDF) \
+	$(BUILTMAN_ENHTML) \
+	$(BUILTMAN_ENPDF) \
 	$(BUILTPRESENTATIONS_ENHTML) \
-	$(BUILTPRESENTATIONS_ENPDF)
+	$(BUILTPRESENTATIONS_ENPDF) \
+	$(BUILTSPECS_ENHTML) \
+	$(BUILTSPECS_ENPDF)
 
 BUILTMAN_EN_SOURCES = \
 	${man1DOCBOOK_EN:xml=1}  \
