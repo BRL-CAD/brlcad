@@ -1682,6 +1682,15 @@ SET(toplevel_DOCFILES
 FILE(COPY ${toplevel_DOCFILES} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR})
 INSTALL(FILES ${toplevel_DOCFILES} DESTINATION ${DATA_DIR})
 
+# We want to ignore an in-source build directory if possible, try to recognize
+# that case and get the appropriate subpath for CPACK
+SET(TEST_BUILD_PATH "${CMAKE_BINARY_DIR}/")
+SET(TEST_SOURCE_PATH "${CMAKE_SOURCE_DIR}/")
+STRING(REGEX REPLACE "${TEST_SOURCE_PATH}" "" CMAKE_BUILD_DIR_TRIMMED "${TEST_BUILD_PATH}")
+IF(NOT ${TEST_BUILD_PATH} STREQUAL ${CMAKE_BUILD_DIR_TRIMMED})
+	MESSAGE("CMAKE_BUILD_DIR_TRIMMED: ${CMAKE_BUILD_DIR_TRIMMED}")
+	SET(CPACK_IGNORE_BUILD_PATH "${CMAKE_BUILD_DIR_TRIMMED}")
+ENDIF(NOT ${TEST_BUILD_PATH} STREQUAL ${CMAKE_BUILD_DIR_TRIMMED})
 
 # CPack is used to produce tgz files, RPMS, etc.  If SUBBUILD is enabled this
 # becomes the responsibility of the parent project.
@@ -1755,7 +1764,7 @@ IF(NOT BRLCAD-IS_SUBBUILD)
 
 	SET(CPACK_SOURCE_GENERATOR TGZ TBZ2 ZIP)
 	SET(CPACK_SOURCE_PACKAGE_FILE_NAME "brlcad-${BRLCAD_VERSION}")
-	SET(CPACK_SOURCE_IGNORE_FILES "\\\\.svn/" "build/" "brlcad-build/")
+	SET(CPACK_SOURCE_IGNORE_FILES "\\\\.svn/" "${CPACK_IGNORE_BUILD_PATH}")
 
 	CONFIGURE_FILE("${BRLCAD_CMAKE_DIR}/BRLCAD_CPackOptions.cmake.in"	"${CMAKE_BINARY_DIR}/BRLCAD_CPackOptions.cmake" @ONLY)
 	SET(CPACK_PROJECT_CONFIG_FILE "${CMAKE_BINARY_DIR}/BRLCAD_CPackOptions.cmake")
@@ -1821,8 +1830,6 @@ IF("${CMAKE_GENERATOR}" MATCHES "Make" AND ("${cmake_generator}" MATCHES "Make" 
 	ADD_CUSTOM_TARGET(distcheck
 		COMMAND ${CMAKE_COMMAND} -E echo "Stage 1:  Check files in Source Repository against files specified in Build Logic"
 		COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_buildsys.cmake
-		COMMAND ${CMAKE_COMMAND} -E echo "Stage 2:  Check svn status of source repository."
-		COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/svncheck.cmake
 		COMMAND ${CMAKE_COMMAND} -E echo "Stage 3:  Create source tgz, tbz2 and zip archives from toplevel archive."
 		COMMAND cpack --config ${CMAKE_CURRENT_BINARY_DIR}/CPackSourceConfig.cmake
 		COMMAND ${CMAKE_COMMAND} -E echo "Stage 4:  Expand tgz archive and prepare to build from archive sources."
