@@ -70,6 +70,7 @@ ENDMACRO(DOCBOOK_TO_PDF targetname_suffix srcfile outfile targetdir)
 ADD_SUBDIRECTORY(articles)
 ADD_SUBDIRECTORY(books)
 ADD_SUBDIRECTORY(lessons)
+ADD_SUBDIRECTORY(presentations)
 ADD_SUBDIRECTORY(specifications)
 ADD_SUBDIRECTORY(system)
 
