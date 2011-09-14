@@ -1828,10 +1828,6 @@ IF(NOT BRLCAD-IS_SUBBUILD)
 	MARK_AS_ADVANCED(CPACK_EXEC)
 	configure_file(${BRLCAD_CMAKE_DIR}/distcheck_buildsys.cmake.in
 		${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_buildsys.cmake @ONLY)
-	configure_file(${BRLCAD_CMAKE_DIR}/svncheck.cmake.in
-		${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/svncheck.cmake @ONLY)
-	configure_file(${BRLCAD_CMAKE_DIR}/distcheck_success_message.cmake.in
-		${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_success_message.cmake @ONLY)
 
 	IF("${CMAKE_GENERATOR}" MATCHES "Make" AND ("${cmake_generator}" MATCHES "Make" OR NOT cmake_generator))
 		ADD_CUSTOM_TARGET(distcheck
@@ -1861,7 +1857,7 @@ IF(NOT BRLCAD-IS_SUBBUILD)
 			COMMAND ${CMAKE_COMMAND} -E remove summary
 			COMMAND ${CMAKE_COMMAND} -E remove run-*.log
 			COMMAND ${CMAKE_COMMAND} -E remove_directory	_${CPACK_SOURCE_PACKAGE_FILE_NAME}-install
-			COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_success_message.cmake
+			COMMAND ${CMAKE_COMMAND} -E echo "--- distcheck succeeded ---"
 			)
 	ELSE("${CMAKE_GENERATOR}" MATCHES "Make" AND ("${cmake_generator}" MATCHES "Make" OR NOT cmake_generator))
 		ADD_CUSTOM_TARGET(distcheck
@@ -1891,7 +1887,7 @@ IF(NOT BRLCAD-IS_SUBBUILD)
 			COMMAND ${CMAKE_COMMAND} -E remove summary
 			COMMAND ${CMAKE_COMMAND} -E remove run-*.log
 			COMMAND ${CMAKE_COMMAND} -E remove_directory	_${CPACK_SOURCE_PACKAGE_FILE_NAME}-install
-			COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_success_message.cmake
+			COMMAND ${CMAKE_COMMAND} -E echo "--- distcheck succeeded ---"
 			)
 	ENDIF("${CMAKE_GENERATOR}" MATCHES "Make" AND ("${cmake_generator}" MATCHES "Make" OR NOT cmake_generator))
 	ADD_CUSTOM_TARGET(distclean
