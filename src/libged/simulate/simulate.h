@@ -29,6 +29,14 @@
 #ifndef SIMULATE_H_
 #define SIMULATE_H_
 
+
+//Copy of the rigid body state tags from btCollisionObject.h
+#define ACTIVE_TAG 1
+#define ISLAND_SLEEPING 2
+#define WANTS_DEACTIVATION 3
+#define DISABLE_DEACTIVATION 4
+#define DISABLE_SIMULATION 5
+
 /* Contains information about a single rigid body constructed from a BRL-CAD region.
  * This structure is the node of a linked list containing the geometry to be added to the sim
  * Only the bb is currently present, but physical properties like elasticity, custom forces
@@ -39,7 +47,10 @@ struct rigid_body {
     char *rb_namep;                 /**< @brief pointer to name string */
     point_t bb_min, bb_max;         /**< @brief body bb bounds */
     point_t bb_center, bb_dims;     /**< @brief bb center and dimensions */
+    point_t btbb_min, btbb_max;     /**< @brief Bullet body bb bounds */
+    point_t btbb_center, btbb_dims; /**< @brief Bullet bb center and dimensions */
     mat_t m;                        /**< @brief transformation matrix from Bullet */
+    int state;						/**< @brief rigid body state from Bullet */
     struct directory *dp;           /**< @brief directory pointer to the related region */
     struct rigid_body *next;        /**< @brief link to next body */
 };

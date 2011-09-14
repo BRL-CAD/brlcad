@@ -178,15 +178,19 @@ int get_transforms(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_par
 {
 	int i;
 	btScalar m[16];
+	btVector3 aabbMin, aabbMax;
+	btTransform	identity;
 
+	identity.setIdentity();
 	const int num_bodies = dynamicsWorld->getNumCollisionObjects();
+
 
 	for(i=0; i < num_bodies; i++){
 
 		//Common properties among all rigid bodies
 		btCollisionObject*	bb_ColObj = dynamicsWorld->getCollisionObjectArray()[i];
 		btRigidBody*		bb_RigidBody   = btRigidBody::upcast(bb_ColObj);
-		//const btCollisionShape* bb_Shape = bb_ColObj->getCollisionShape(); //may be used later
+		const btCollisionShape* bb_Shape = bb_ColObj->getCollisionShape(); //may be used later
 
 		if( bb_RigidBody && bb_RigidBody->getMotionState()){
 
@@ -205,12 +209,39 @@ int get_transforms(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_par
 			}
 
 			//Copy the transform matrix
-			current_node->m[0] = m[0]; current_node->m[4]  = m[4]; current_node->m[8]  = m[8];  current_node->m[12] = m[12];
-			current_node->m[1] = m[1]; current_node->m[5]  = m[5]; current_node->m[9]  = m[9];  current_node->m[13] = m[13];
-			current_node->m[2] = m[2]; current_node->m[6]  = m[6]; current_node->m[10] = m[10]; current_node->m[14] = m[14];
-			current_node->m[3] = m[3]; current_node->m[7]  = m[7]; current_node->m[11] = m[11]; current_node->m[15] = m[15];
+			current_node->m[0] = m[0]; current_node->m[4] = m[4]; current_node->m[8]  = m[8];  current_node->m[12] = m[12];
+			current_node->m[1] = m[1]; current_node->m[5] = m[5]; current_node->m[9]  = m[9];  current_node->m[13] = m[13];
+			current_node->m[2] = m[2]; current_node->m[6] = m[6]; current_node->m[10] = m[10]; current_node->m[14] = m[14];
+			current_node->m[3] = m[3]; current_node->m[7] = m[7]; current_node->m[11] = m[11]; current_node->m[15] = m[15];
 
 			//print_matrices(sim_params, current_node->rb_namep, current_node->m, m);
+
+			//Get the state of the body
+			current_node->state = bb_RigidBody->getActivationState();
+
+			//Get the AABB
+			bb_Shape->getAabb(bb_MotionState->m_graphicsWorldTrans, aabbMin, aabbMax);
+
+		    current_node->btbb_min[0] = aabbMin[0];
+		    current_node->btbb_min[1] = aabbMin[1];
+		    current_node->btbb_min[2] = aabbMin[2];
+
+		    current_node->btbb_max[0] = aabbMax[0];
+		    current_node->btbb_max[1] = aabbMax[1];
+		    current_node->btbb_max[2] = aabbMax[2];
+
+		    // Get BB length, width, height
+			current_node->btbb_dims[0] = current_node->btbb_max[0] - current_node->btbb_min[0];
+			current_node->btbb_dims[1] = current_node->btbb_max[1] - current_node->btbb_min[1];
+			current_node->btbb_dims[2] = current_node->btbb_max[2] - current_node->btbb_min[2];
+
+			bu_vls_printf(sim_params->result_str, "get_transforms: Dimensions of this BB : %f %f %f\n",
+					current_node->btbb_dims[0], current_node->btbb_dims[1], current_node->btbb_dims[2]);
+
+			//Get BB position in 3D space
+			current_node->btbb_center[0] = current_node->btbb_min[0] + current_node->btbb_dims[0]/2;
+			current_node->btbb_center[1] = current_node->btbb_min[1] + current_node->btbb_dims[1]/2;
+			current_node->btbb_center[2] = current_node->btbb_min[2] + current_node->btbb_dims[2]/2;
 
 		}
 	}

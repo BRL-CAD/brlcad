@@ -47,6 +47,7 @@
 /* The C++ simulation function */
 extern int run_simulation(struct simulation_params *sim_params);
 
+
 /**
  * How to use simulate.Blissfully simple interface, more options will be added soon
  */
@@ -64,26 +65,74 @@ print_usage(struct bu_vls *str)
 
 
 /**
- * Duplicates the prim/comb passed in dp as new_name
+ * Prints a 16 by 16 transform matrix for debugging
  *
+ */
+void print_matrix(struct simulation_params *sim_params, char *rb_namep, mat_t t)
+{
+	int i, j;
+
+	bu_vls_printf(sim_params->result_str, "------------Transformation matrix(%s)--------------\n",
+			rb_namep);
+
+	for (i=0 ; i<4 ; i++) {
+		for (j=0 ; j<4 ; j++) {
+			bu_vls_printf(sim_params->result_str, "t[%d]: %f\t", (i*4 + j), t[i*4 + j] );
+		}
+		bu_vls_printf(sim_params->result_str, "\n");
+	}
+
+	bu_vls_printf(sim_params->result_str, "-------------------------------------------------------\n");
+}
+
+
+/**
+ * Prints a struct rigid_body for debugging, more members will be printed later
+ */
+void print_rigid_body(struct rigid_body *rb)
+{
+    bu_log("Rigid Body : \"%s\", state = %d\n", rb->rb_namep, rb->state);
+}
+
+
+/**
+ * Deletes a prim/comb if it exists
+ * TODO : lower to librt
+ */
+int kill(struct ged *gedp, char *name)
+{
+    char *cmd_args[5];
+
+    /* Check if the duplicate already exists, and kill it if so */
+    if (db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET) != RT_DIR_NULL) {
+        bu_log("kill: WARNING \"%s\" exists, deleting it\n", name);
+        cmd_args[0] = "kill";
+        cmd_args[1] = name;
+        cmd_args[2] = (char *)0;
+
+        if(ged_kill(gedp, 2, (const char **)cmd_args) != GED_OK){
+            bu_log("kill: ERROR Could not delete existing \"%s\"\n", name);
+            return GED_ERROR;
+        }
+    }
+
+    return GED_OK;
+}
+
+
+/**
+ * Deletes and duplicates the prim/comb passed in dp as new_name
+ * TODO : lower to librt
  */
 int kill_copy(struct ged *gedp, struct directory *dp, char* new_name)
 {
     char *cmd_args[5];
     int rv;
 
-    /* Check if the duplicate already exists, and kill it if so(it maybe of a different shape) */
-    if (db_lookup(gedp->ged_wdbp->dbip, new_name, LOOKUP_QUIET) != RT_DIR_NULL) {
-        bu_log("kill_copy: WARNING \"%s\" already exists, deleting it\n", new_name);
-        cmd_args[0] = "kill";
-        cmd_args[1] = new_name;
-        cmd_args[2] = (char *)0;
-
-        if(ged_kill(gedp, 2, (const char **)cmd_args) != GED_OK){
-            bu_log("kill_copy: could not delete existing \"%s\"\n", new_name);
-            return GED_ERROR;
-        }
-    }
+    if( kill(gedp, new_name) != GED_OK){
+		bu_log("kill_copy: ERROR Could not delete existing \"%s\"\n", new_name);
+		return GED_ERROR;
+	}
 
     /* Copy the passed prim/comb */
     cmd_args[0] = "copy";
@@ -92,7 +141,7 @@ int kill_copy(struct ged *gedp, struct directory *dp, char* new_name)
     cmd_args[3] = (char *)0;
     rv = ged_copy(gedp, 3, (const char **)cmd_args);
     if (rv != GED_OK){
-        bu_log("kill_copy: could not copy \"%s\" to \"%s\"\n", dp->d_namep,
+        bu_log("kill_copy: ERROR Could not copy \"%s\" to \"%s\"\n", dp->d_namep,
                 new_name);
         return GED_ERROR;
     }
@@ -100,49 +149,31 @@ int kill_copy(struct ged *gedp, struct directory *dp, char* new_name)
     return GED_OK;
 }
 
-/**
- * Deletes and recreates the simulation result group
- *
- */
-int create_sim_comb(struct ged *gedp, struct simulation_params *sim_params)
-{
-    char *cmd_args[5];
-    int rv;
-
-    /* Check if the duplicate already exists, and kill it if so */
-    if (db_lookup(gedp->ged_wdbp->dbip, sim_params->sim_comb_name, LOOKUP_QUIET) != RT_DIR_NULL) {
-        bu_log("create_sim_comb: WARNING \"%s\" already exists, deleting it\n", sim_params->sim_comb_name);
-        cmd_args[0] = "kill";
-        cmd_args[1] = sim_params->sim_comb_name;
-        cmd_args[2] = (char *)0;
-
-        if(ged_kill(gedp, 2, (const char **)cmd_args) != GED_OK){
-            bu_log("create_sim_comb: could not delete existing \"%s\"\n", sim_params->sim_comb_name);
-            return GED_ERROR;
-        }
-    }
-
-    /* Setup the empty simulation result group */
-  	cmd_args[0] = "comb";
-  	cmd_args[1] = sim_params->sim_comb_name;
-  	cmd_args[2] = (char *)0;
-  	rv = ged_comb(gedp, 2, (const char **)cmd_args);
-  	if (rv != GED_OK){
-  		bu_log("create_sim_comb: Could not create simulation result group \"%s\"\n",
-  					sim_params->sim_comb_name);
-  		return GED_ERROR;
-  	}
-
-    return GED_OK;
-}
 
 /**
- * Prints a struct rigid_body for debugging, more members will be printed later
+ * Adds a prim/comb to an existing comb or creates it if not existing
+ * TODO : lower to librt
  */
-void print_rigid_body(struct rigid_body *rb)
+int add_to_comb(struct ged *gedp, char *target, char *add)
 {
-    bu_log("Rigid Body : \"%s\"\n",    rb->rb_namep);
+	char *cmd_args[5];
+	int rv;
+
+	cmd_args[0] = "comb";
+	cmd_args[1] = target;
+	cmd_args[2] = "u";
+	cmd_args[3] = add;
+	cmd_args[4] = (char *)0;
+	rv = ged_comb(gedp, 4, (const char **)cmd_args);
+	if (rv != GED_OK){
+		bu_log("add_to_comb: ERROR Could not add \"%s\" to the combination \"%s\"\n",
+				target, add);
+		return GED_ERROR;
+	}
+
+	return GED_OK;
 }
+
 
 /**
  * Add the list of regions in the model to the rigid bodies list in
@@ -159,13 +190,10 @@ int add_regions(struct ged *gedp, struct simulation_params *sim_params)
     point_t rpp_min, rpp_max;
     int i;
     struct rigid_body *prev_node = NULL, *current_node;
-    char *cmd_args[5];
-    int rv;
 
-    create_sim_comb(gedp, sim_params);
+    /* Kill the existing sim comb */
+    kill(gedp, sim_params->sim_comb_name);
     sim_params->num_bodies = 0;
-
-
 
     /* Walk the directory list duplicating all regions only, skip some regions */
     for (i = 0; i < RT_DBNHASH; i++)
@@ -204,7 +232,7 @@ int add_regions(struct ged *gedp, struct simulation_params *sim_params)
                         rpp_min[0], rpp_min[1], rpp_min[2],
                         rpp_max[0], rpp_max[1], rpp_max[2]);
             else{
-            	bu_vls_printf(gedp->ged_result_str, "add_regions: Could not get the BB\n");
+            	bu_vls_printf(gedp->ged_result_str, "add_regions: ERROR Could not get the BB\n");
                 return GED_ERROR;
             }
 
@@ -240,18 +268,8 @@ int add_regions(struct ged *gedp, struct simulation_params *sim_params)
                 prev_node = prev_node->next;
             }
 
-            /* Setup the simulation result group union-ing the new objects */
-			cmd_args[0] = "comb";
-			cmd_args[1] = sim_params->sim_comb_name;
-			cmd_args[2] = "u";
-			cmd_args[3] = prefixed_name;
-			cmd_args[4] = (char *)0;
-			rv = ged_comb(gedp, 4, (const char **)cmd_args);
-			if (rv != GED_OK){
-				bu_log("add_regions: Could not add \"%s\" to simulation result group \"%s\"\n",
-						prefixed_name, sim_params->sim_comb_name);
-				return GED_ERROR;
-			}
+            /* Add the new region to the simulation result */
+            add_to_comb(gedp, sim_params->sim_comb_name, prefixed_name);
 
             sim_params->num_bodies++;
         }
@@ -269,26 +287,218 @@ int add_regions(struct ged *gedp, struct simulation_params *sim_params)
 
 }
 
+
 /**
- * Prints a 16 by 16 transform matrix for debugging
+ * This function draws the bounding box around a comb as reported by
+ * Bullet
+ * TODO : this should be used with a debugging flag
+ * TODO : this function will soon be lowered to librt
  *
  */
-void print_matrix(struct simulation_params *sim_params, char *rb_namep, mat_t t)
+int insertAABB(struct ged *gedp, struct simulation_params *sim_params,
+								 struct rigid_body *current_node)
 {
-	int i, j;
+	char* cmd_args[28];
+	char buffer[20];
+	int rv;
+	char *prefixed_name, *prefixed_reg_name;
+	char *prefix = "bb_";
+	char *prefix_reg = "bb_reg_";
+	size_t  prefix_len, prefixed_name_len;
+	point_t v;
 
-	bu_vls_printf(sim_params->result_str, "------------Transformation matrix(%s)--------------\n",
-			rb_namep);
+	/* Prepare prefixed bounding box primitive name */
+	prefix_len = strlen(prefix);
+	prefixed_name_len = strlen(prefix)+strlen(current_node->rb_namep)+1;
+	prefixed_name = (char *)bu_malloc(prefixed_name_len, "Adding bb_ prefix");
+	bu_strlcpy(prefixed_name, prefix, prefix_len + 1);
+	bu_strlcat(prefixed_name + prefix_len, current_node->rb_namep,
+			   prefixed_name_len - prefix_len);
 
-	for (i=0 ; i<4 ; i++) {
-		for (j=0 ; j<4 ; j++) {
-			bu_vls_printf(sim_params->result_str, "t[%d]: %f\t", (i*4 + j), t[i*4 + j] );
-		}
-		bu_vls_printf(sim_params->result_str, "\n");
+	/* Prepare prefixed bounding box region name */
+	prefix_len = strlen(prefix_reg);
+	prefixed_name_len = strlen(prefix_reg) + strlen(current_node->rb_namep) + 1;
+	prefixed_reg_name = (char *)bu_malloc(prefixed_name_len, "Adding bb_reg_ prefix");
+	bu_strlcpy(prefixed_reg_name, prefix_reg, prefix_len + 1);
+	bu_strlcat(prefixed_reg_name + prefix_len, current_node->rb_namep,
+			   prefixed_name_len - prefix_len);
+
+	/* Delete existing bb prim and region */
+	rv = kill(gedp, prefixed_name);
+	if (rv != GED_OK){
+		bu_log("insertAABB: ERROR Could not delete existing bounding box arb8 : %s \
+				so NOT attempting to add new bounding box\n", prefixed_name);
+		return GED_ERROR;
 	}
 
-	bu_vls_printf(sim_params->result_str, "-------------------------------------------------------\n");
+	rv = kill(gedp, prefixed_reg_name);
+	if (rv != GED_OK){
+		bu_log("insertAABB: ERROR Could not delete existing bounding box region : %s \
+				so NOT attempting to add new region\n", prefixed_reg_name);
+		return GED_ERROR;
+	}
+
+	/* Setup the simulation result group union-ing the new objects */
+	cmd_args[0] = "in";
+	cmd_args[1] = bu_strdup(prefixed_name);
+	cmd_args[2] = "arb8";
+
+	/* Front face vertices */
+	/* v1 */
+	v[0] = current_node->btbb_center[0] + current_node->btbb_dims[0]/2;
+	v[1] = current_node->btbb_center[1] + current_node->btbb_dims[1]/2;
+	v[2] = current_node->btbb_center[2] - current_node->btbb_dims[2]/2;
+	sprintf(buffer, "%f", v[0]); cmd_args[3] = bu_strdup(buffer);
+	sprintf(buffer, "%f", v[1]); cmd_args[4] = bu_strdup(buffer);
+	sprintf(buffer, "%f", v[2]); cmd_args[5] = bu_strdup(buffer);
+
+	/* v2 */
+	v[0] = current_node->btbb_center[0] + current_node->btbb_dims[0]/2;
+	v[1] = current_node->btbb_center[1] + current_node->btbb_dims[1]/2;
+	v[2] = current_node->btbb_center[2] + current_node->btbb_dims[2]/2;
+	sprintf(buffer, "%f", v[0]); cmd_args[6] = bu_strdup(buffer);
+	sprintf(buffer, "%f", v[1]); cmd_args[7] = bu_strdup(buffer);
+	sprintf(buffer, "%f", v[2]); cmd_args[8] = bu_strdup(buffer);
+
+	/* v3 */
+	v[0] = current_node->btbb_center[0] + current_node->btbb_dims[0]/2;
+	v[1] = current_node->btbb_center[1] - current_node->btbb_dims[1]/2;
+	v[2] = current_node->btbb_center[2] + current_node->btbb_dims[2]/2;
+	sprintf(buffer, "%f", v[0]); cmd_args[9]  = bu_strdup(buffer);
+	sprintf(buffer, "%f", v[1]); cmd_args[10] = bu_strdup(buffer);
+	sprintf(buffer, "%f", v[2]); cmd_args[11] = bu_strdup(buffer);
+
+	/* v4 */
+	v[0] = current_node->btbb_center[0] + current_node->btbb_dims[0]/2;
+	v[1] = current_node->btbb_center[1] - current_node->btbb_dims[1]/2;
+	v[2] = current_node->btbb_center[2] - current_node->btbb_dims[2]/2;
+	sprintf(buffer, "%f", v[0]); cmd_args[12] = bu_strdup(buffer);
+	sprintf(buffer, "%f", v[1]); cmd_args[13] = bu_strdup(buffer);
+	sprintf(buffer, "%f", v[2]); cmd_args[14] = bu_strdup(buffer);
+
+	/* Back face vertices */
+	/* v5 */
+	v[0] = current_node->btbb_center[0] - current_node->btbb_dims[0]/2;
+	v[1] = current_node->btbb_center[1] + current_node->btbb_dims[1]/2;
+	v[2] = current_node->btbb_center[2] - current_node->btbb_dims[2]/2;
+	sprintf(buffer, "%f", v[0]); cmd_args[15] = bu_strdup(buffer);
+	sprintf(buffer, "%f", v[1]); cmd_args[16] = bu_strdup(buffer);
+	sprintf(buffer, "%f", v[2]); cmd_args[17] = bu_strdup(buffer);
+
+	/* v6 */
+	v[0] = current_node->btbb_center[0] - current_node->btbb_dims[0]/2;
+	v[1] = current_node->btbb_center[1] + current_node->btbb_dims[1]/2;
+	v[2] = current_node->btbb_center[2] + current_node->btbb_dims[2]/2;
+	sprintf(buffer, "%f", v[0]); cmd_args[18] = bu_strdup(buffer);
+	sprintf(buffer, "%f", v[1]); cmd_args[19] = bu_strdup(buffer);
+	sprintf(buffer, "%f", v[2]); cmd_args[20] = bu_strdup(buffer);
+
+	/* v7 */
+	v[0] = current_node->btbb_center[0] - current_node->btbb_dims[0]/2;
+	v[1] = current_node->btbb_center[1] - current_node->btbb_dims[1]/2;
+	v[2] = current_node->btbb_center[2] + current_node->btbb_dims[2]/2;
+	sprintf(buffer, "%f", v[0]); cmd_args[21] = bu_strdup(buffer);
+	sprintf(buffer, "%f", v[1]); cmd_args[22] = bu_strdup(buffer);
+	sprintf(buffer, "%f", v[2]); cmd_args[23] = bu_strdup(buffer);
+
+	/* v8 */
+	v[0] = current_node->btbb_center[0] - current_node->btbb_dims[0]/2;
+	v[1] = current_node->btbb_center[1] - current_node->btbb_dims[1]/2;
+	v[2] = current_node->btbb_center[2] - current_node->btbb_dims[2]/2;
+	sprintf(buffer, "%f", v[0]); cmd_args[24] = bu_strdup(buffer);
+	sprintf(buffer, "%f", v[1]); cmd_args[25] = bu_strdup(buffer);
+	sprintf(buffer, "%f", v[2]); cmd_args[26] = bu_strdup(buffer);
+
+	/* Finally make the bb primitive, phew ! */
+	cmd_args[27] = (char *)0;
+	rv = ged_in(gedp, 27, (const char **)cmd_args);
+	if (rv != GED_OK){
+		bu_log("insertAABB: WARNING Could not draw bounding box for \"%s\"\n",
+				current_node->rb_namep);
+	}
+
+	/* Make the region for the bb primitive */
+	add_to_comb(gedp, prefixed_reg_name, prefixed_name);
+
+	/* Adjust the material for region to be almost transparent */
+	cmd_args[0] = "mater";
+	cmd_args[1] = bu_strdup(prefixed_reg_name);
+	cmd_args[2] = "plastic tr 0.9";
+	cmd_args[3] = "210";
+	cmd_args[4] = "0";
+	cmd_args[5] = "100";
+	cmd_args[6] = "0";
+	cmd_args[7] = (char *)0;
+	rv = ged_mater(gedp, 7, (const char **)cmd_args);
+	if (rv != GED_OK){
+		bu_log("insertAABB: WARNING Could not adjust the material for \"%s\"\n",
+				prefixed_reg_name);
+	}
+
+	/* Add the region to the result of the sim so it will be drawn too */
+	add_to_comb(gedp, sim_params->sim_comb_name, prefixed_reg_name);
+
+	return GED_OK;
+
 }
+
+
+/**
+ * This function colors the passed comb. It's for showing the current
+ * state of the object inside the physics engine.
+ * TODO : this should be used with a debugging flag
+ *
+ */
+int apply_color(struct ged *gedp, char* rb_namep, unsigned char r,
+											      unsigned char g,
+											      unsigned char b )
+{
+	struct directory *dp = NULL;
+	struct rt_comb_internal *comb = NULL;
+	struct rt_db_internal intern;
+	struct bu_attribute_value_set avs;
+
+	/* Look up directory pointer for the passed comb name */
+	GED_DB_LOOKUP(gedp, dp, rb_namep, LOOKUP_NOISY, GED_ERROR);
+	GED_CHECK_COMB(gedp, dp, GED_ERROR);
+	GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
+
+	/* Get a comb from the internal format */
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	RT_CK_COMB(comb);
+
+	/* Set the color related members */
+	comb->rgb[0] = r;
+	comb->rgb[1] = g;
+	comb->rgb[2] = b;
+	comb->rgb_valid = 1;
+	comb->inherit = 0;
+
+	/* Get the current attribute set of the comb from the db */
+	bu_avs_init_empty(&avs);
+	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+		bu_vls_printf(gedp->ged_result_str, "apply_transforms: ERROR Cannot get attributes for object %s\n", dp->d_namep);
+		bu_avs_free(&avs);
+		return GED_ERROR;
+	}
+
+	/* Sync the changed attributes with the old ones */
+	db5_standardize_avs(&avs);
+	db5_sync_comb_to_attr(&avs, comb);
+	db5_standardize_avs(&avs);
+
+	/* Put back in db to allow drawing */
+	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
+	if (db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
+		bu_vls_printf(gedp->ged_result_str, "apply_transforms: ERROR failed to update attributes\n");
+		bu_avs_free(&avs);
+		return GED_ERROR;
+	}
+
+	bu_avs_free(&avs);
+	return GED_OK;
+}
+
 
 /**
  * This function takes the transforms present in the current node and applies them
@@ -300,6 +510,7 @@ int apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 	struct rt_db_internal intern;
 	struct rigid_body *current_node;
 	mat_t t , m;
+	int rv;
 
 	for (current_node = sim_params->head_node; current_node != NULL; current_node = current_node->next) {
 
@@ -350,18 +561,49 @@ int apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 
 		/* Write the modified solid to the db so it can be redrawn at the new position & orientation by Mged */
 		if (rt_db_put_internal(current_node->dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-			bu_vls_printf(gedp->ged_result_str, "apply_transforms: Database write error for '%s', aborting\n",
+			bu_vls_printf(gedp->ged_result_str, "apply_transforms: ERROR Database write error for '%s', aborting\n",
 					current_node->dp->d_namep);
 			return GED_ERROR;
 		}
 
-	 /*	bu_vls_printf(gedp->ged_result_str, "t:\n");
-		print_matrix(sim_params, current_node->rb_namep, t);
-		bu_vls_printf(gedp->ged_result_str, "m:\n");
-		print_matrix(sim_params, current_node->rb_namep, current_node->m); */
+		/* Apply the proper shader to match the object state : useful for debugging */
+/*		switch(current_node->state){
+			case ACTIVE_TAG:
+				rv = apply_color(gedp, current_node->rb_namep, 255, 255, 0);
+				break;
+
+			case ISLAND_SLEEPING:
+				rv = apply_color(gedp, current_node->rb_namep, 255, 0, 255);
+				break;
+
+			case WANTS_DEACTIVATION:
+				rv = apply_color(gedp, current_node->rb_namep, 0, 255, 0);
+				break;
+
+			case DISABLE_DEACTIVATION:
+				rv = apply_color(gedp, current_node->rb_namep, 255, 0, 0);
+				break;
+
+			case DISABLE_SIMULATION:
+				rv = apply_color(gedp, current_node->rb_namep, 132, 255, 0);
+				break;
+
+			default:
+				rv = apply_color(gedp, current_node->rb_namep, 0, 135, 233);
+		}
+
+		if (rv != GED_OK){
+			bu_vls_printf(gedp->ged_result_str, "apply_transforms: WARNING Could not set \
+					the state color for %s\n", current_node->rb_namep);
+		}
+*/
+
+		/* This will be enabled by a flag later */
+		/* insertAABB(gedp, sim_params, current_node); */
+
+		 /* print_rigid_body(current_node); */
 
 	}
-
 
     return GED_OK;
 }
@@ -408,7 +650,7 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
     sim_params.ground_plane_name = bu_strdup(ground_plane_name);
     rv = add_regions(gedp, &sim_params);
     if (rv != GED_OK){
-        bu_vls_printf(gedp->ged_result_str, "%s: Error while adding objects\n", argv[0]);
+        bu_vls_printf(gedp->ged_result_str, "%s: ERROR while adding objects\n", argv[0]);
         return GED_ERROR;
     }
 
@@ -416,14 +658,14 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
     /* Run the physics simulation  */
     rv = run_simulation(&sim_params);
     if (rv != GED_OK){
-		bu_vls_printf(gedp->ged_result_str, "%s: Error while running the simulation\n", argv[0]);
+		bu_vls_printf(gedp->ged_result_str, "%s: ERROR while running the simulation\n", argv[0]);
 		return GED_ERROR;
 	}
 
-    /* Apply transforms on the participating objects */
+    /* Apply transforms on the participating objects, also shades objects */
     rv = apply_transforms(gedp, &sim_params);
 	if (rv != GED_OK){
-		bu_vls_printf(gedp->ged_result_str, "%s: Error while applying transforms\n", argv[0]);
+		bu_vls_printf(gedp->ged_result_str, "%s: ERROR while applying transforms\n", argv[0]);
 		return GED_ERROR;
 	}
 
@@ -460,7 +702,7 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
     /* Initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    bu_vls_printf(gedp->ged_result_str, "%s : This command is disabled due to the absence of a physics library",
+    bu_vls_printf(gedp->ged_result_str, "%s : ERROR This command is disabled due to the absence of a physics library",
             argv[0]);
     return GED_ERROR;
 }
