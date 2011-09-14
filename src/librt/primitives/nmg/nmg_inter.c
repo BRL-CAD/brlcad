@@ -2425,6 +2425,8 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
     struct bu_ptbl vert_list1, vert_list2;
     fastf_t *mag1, *mag2;
     int i, j;
+    const fastf_t opsff = (1.0 + SMALL_FASTF); 
+    const fastf_t omsff = (1.0 - SMALL_FASTF); 
 
     NMG_CK_FACEUSE(fu1);
     NMG_CK_FACEUSE(fu2);
@@ -2498,23 +2500,102 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		continue;
 
 	    if (code == 0) {
-		hit_count = 2;
-		if (dist[0] < dist[1]) {
-		    fastf_t tmp;
-
-		    tmp = dist[0];
+		/* When there is only one hit, place the distance in
+		 * dist[0] otherwise use both dist[0] and dist[1].
+		 * In the description below the line p0->p1 is eu1 where
+		 * p0 is the start of eu1 and p1 is the end of eu1.
+		 * The same is done for eu2 with line q0->q1. 
+		 * When eu1 and eu2 are colinear, the value of dist[0]
+		 * returned from function 'bn_isect_lseg3_lseg3' is the
+		 * scaled distance from p0->q0 and dist[1] is the scaled
+		 * distance from p0->q1.
+		 */
+		if ((dist[0] < -SMALL_FASTF && ((dist[1] > SMALL_FASTF) &&
+		   (dist[1] < omsff))) ||
+		   ((dist[1] > SMALL_FASTF) && (dist[1] < omsff) 
+		   && (dist[0] > opsff))) {
+		    /* true when q1 is within p0->p1 */
+		    hit_count = 1;
 		    dist[0] = dist[1];
-		    dist[1] = tmp;
+		    dist[1] = MAX_FASTF; /* sanity */
+		} else if ((dist[0] > SMALL_FASTF) && (dist[0] < omsff) &&
+			   (dist[1] > SMALL_FASTF) && (dist[1] < omsff)) {
+		    /* true when both q0 and q1 is within p0->p1 */
+		    hit_count = 2;
+		    /* dist[0] and dist[1] are already the correct values */
+		} else if (((dist[0] > 0) && (dist[0] < 1) && (dist[1] < 0)) ||
+			   ((dist[0] > 0) && (dist[0] < 1) && (dist[1] > 1))) {
+		    /* true when q0 is within p0->p1 */
+		    hit_count = 1;
+		    dist[1] = MAX_FASTF; /* sanity */
+		    /* dist[0] is already the correct value */
+		} else if (((dist[0] < -SMALL_FASTF) && (dist[1] > opsff)) || 
+			   ((dist[0] > opsff) && (dist[1] < -SMALL_FASTF))) {
+		    /* true when both p0 and p1 is within q0->q1 */
+		    /* eu1 is not cut */
+		    hit_count = 0; /* sanity */
+		    dist[0] = dist[1] = MAX_FASTF; /* sanity */
+		    continue;
+
+		} else if ((ZERO(dist[0]) && ZERO(dist[1] - 1.0)) ||
+			   (ZERO(dist[1]) && ZERO(dist[0] - 1.0))) {
+		    /* true when eu1 and eu2 shared the same vertices */
+		    /* eu1 is not cut */
+		    hit_count = 0; /* sanity */
+		    dist[0] = dist[1] = MAX_FASTF; /* sanity */
+		    continue;
+		} else if (((dist[0] < -SMALL_FASTF) && ZERO(dist[1])) ||
+			   (ZERO(dist[0]) && (dist[1] < -SMALL_FASTF)) ||
+			   (ZERO(dist[0] - 1.0) && (dist[1] > opsff)) ||
+			   (ZERO(dist[1] - 1.0) && (dist[0] > opsff))) {
+		    /* true when eu2 shares one of eu1 vertices and the
+		     * other eu2 vertex is outside p0->p1 (i.e. eu1)
+		     */
+		    /* eu1 is not cut */
+		    hit_count = 0; /* sanity */
+		    dist[0] = dist[1] = MAX_FASTF; /* sanity */
+		    continue;
+		} else if ((ZERO(dist[0]) && (dist[1] > SMALL_FASTF) && 
+			    (dist[1] < omsff)) || 
+			   ((dist[1] > SMALL_FASTF) && 
+			    (dist[1] < omsff) && 
+			    ZERO(dist[0] - 1.0))) {
+		    /* true when q1 is within p0->p1 and q0 = p0 or q0 = p1 */
+		    hit_count = 1;
+		    dist[0] = dist[1];
+		    dist[1] = MAX_FASTF; /* sanity */
+		} else if ((ZERO(dist[1]) && (dist[0] > SMALL_FASTF) && 
+			   (dist[0] < omsff)) || 
+			  ((dist[0] > SMALL_FASTF) && 
+			   (dist[0] < omsff) && 
+			   ZERO(dist[1] - 1.0))) {
+		    /* true when q0 is within p0->p1 and q1 = p0 or q1 = p1 */
+		    hit_count = 1;
+		    dist[1] = MAX_FASTF; /* sanity */
+		    /* dist[0] is already the correct value */
+		} else {
+		    /* should never get here */
+		    bu_log("nmg_isect_two_face2p_jra(): dist[0] = %f dist[1] = %f\n", 
+			    dist[0], dist[1]);
+		    bu_bomb("nmg_isect_two_face2p_jra(): unexpected condition\n");
 		}
-	    } else
-		hit_count = 1;
+	    } else {
+		if (ZERO(dist[0]) || ZERO(dist[0] - 1.0)) {
+		    /* eu1 was hit on a vertex, nothing to cut */
+		    continue;
+	        } else if ((dist[0] < -SMALL_FASTF) || (dist[0] > opsff)) {
+		    bu_bomb("nmg_isect_two_face2p_jra(): dist[0] not within 0-1\n");
+		} else {
+		    hit_count = 1;
+		}
+	    }
 
 	    for (hit_no=0; hit_no < hit_count; hit_no++) {
 		struct edgeuse *new_eu;
 		struct vertex *hitv;
 		struct vertexuse *hit_vu = NULL;
 
-		if (dist[hit_no] < 0.0 || dist[hit_no] > 1.0)
+		if (dist[hit_no] < -SMALL_FASTF || dist[hit_no] > opsff)
 		    continue;
 
 		hitv = (struct vertex *)NULL;
@@ -2539,7 +2620,12 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 
 		if (!hit_vu)
 		    hitv = nmg_find_pt_in_model(nmg_find_model(&fu1->l.magic), hit_pt, &is->tol);
-
+#if 1
+		if (!hit_vu && (code == 0)) {
+		    bu_log("dist[0] = %f dist[1] = %f hit_no = %d\n", dist[0], dist[1], hit_no);
+		    bu_bomb("nmg_isect_two_face2p_jra(): why can we not find a vertexuse\n");
+		}
+#endif
 		if (rt_g.NMG_debug & DEBUG_POLYSECT && hitv)
 		    bu_log("Found vertex (x%x) at hit_pt\n", hitv);
 
