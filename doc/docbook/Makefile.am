@@ -1,4 +1,4 @@
-XSLTPROC_FLAGS=-nonet -xinclude
+XSLTPROC_FLAGS=--nonet --xinclude
 XSL_XHTML_STYLESHEET=$(top_srcdir)/doc/docbook/resources/standard/xsl/xhtml-1_1/docbook.xsl
 XSL_MAN_STYLESHEET=$(top_srcdir)/doc/docbook/resources/standard/xsl/manpages/docbook.xsl
 XSL_FO_STYLESHEET=$(top_srcdir)/doc/docbook/resources/standard/xsl/fo/docbook.xsl
@@ -40,6 +40,7 @@ include $(srcdir)/system/man1/en/Makefile.am
 include $(srcdir)/system/man3/en/Makefile.am
 include $(srcdir)/system/man5/en/Makefile.am
 include $(srcdir)/system/mann/en/Makefile.am
+include $(srcdir)/presentations/en/Makefile.am
 
 if BUILD_DOCS
 
@@ -61,7 +62,9 @@ BUILT_SOURCES = \
 	$(BUILTMANN_ENHTML) \
 	$(BUILTMANN_ENPDF) \
 	$(BUILTLESSONS_ESHTML) \
-	$(BUILTLESSONS_ESPDF)
+	$(BUILTLESSONS_ESPDF) \
+	$(BUILTPRESENTATIONS_ENHTML) \
+	$(BUILTPRESENTATIONS_ENPDF)
 
 BUILTMAN_EN_SOURCES = \
 	${man1DOCBOOK_EN:xml=1}  \
@@ -97,6 +100,8 @@ EXTRA_DIST = \
 	${man5DOCBOOK_EN} \
 	${mannDOCBOOK_EN} \
 	${mannINTRO_EN} \
+	${presentationsDOCBOOK_EN_IMAGES} \
+	${presentationsDOCBOOK_EN} \
 	${specificationsDOCBOOK_EN} \
 	README \
 	CMakeLists.txt \
@@ -117,6 +122,8 @@ EXTRA_DIST = \
 	lessons/es/CMakeLists.txt \
 	lessons/es/Makefile.am \
 	log4j.properties \
+	presentations/CMakeLists.txt \
+	presentations/en/CMakeLists.txt \
 	resources \
 	specifications/CMakeLists.txt \
 	specifications/en/CMakeLists.txt \
