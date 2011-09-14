@@ -1824,6 +1824,8 @@ CMAKEFILES(${toplevel_ignore_files})
 # This really needs to migrate to it's own .cmake file, too complex for a
 # series of COMMAND statements.
 IF(NOT BRLCAD-IS_SUBBUILD)
+	FIND_PROGRAM(CPACK_EXEC cpack)
+	MARK_AS_ADVANCED(CPACK_EXEC)
 	configure_file(${BRLCAD_CMAKE_DIR}/distcheck_buildsys.cmake.in
 		${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_buildsys.cmake @ONLY)
 	configure_file(${BRLCAD_CMAKE_DIR}/svncheck.cmake.in
@@ -1836,7 +1838,7 @@ IF(NOT BRLCAD-IS_SUBBUILD)
 			COMMAND ${CMAKE_COMMAND} -E echo "Stage 1:  Check files in Source Repository against files specified in Build Logic"
 			COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_buildsys.cmake
 			COMMAND ${CMAKE_COMMAND} -E echo "Stage 2:  Create source tgz, tbz2 and zip archives from toplevel archive."
-			COMMAND cpack --config ${CMAKE_CURRENT_BINARY_DIR}/CPackSourceConfig.cmake
+			COMMAND ${CPACK_EXEC} --config ${CMAKE_CURRENT_BINARY_DIR}/CPackSourceConfig.cmake
 			COMMAND ${CMAKE_COMMAND} -E echo "Stage 3:  Expand tgz archive and prepare to build from archive sources."
 			COMMAND ${CMAKE_COMMAND} -E tar xvzf ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz
 			COMMAND ${CMAKE_COMMAND} -E make_directory _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build
@@ -1866,7 +1868,7 @@ IF(NOT BRLCAD-IS_SUBBUILD)
 			COMMAND ${CMAKE_COMMAND} -E echo "Stage 1:  Check files in Source Repository against files specified in Build Logic"
 			COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_buildsys.cmake
 			COMMAND ${CMAKE_COMMAND} -E echo "Stage 2:  Create source tgz, tbz2 and zip archives from toplevel archive."
-			COMMAND cpack --config ${CMAKE_CURRENT_BINARY_DIR}/CPackSourceConfig.cmake
+			COMMAND ${CPACK_EXEC} --config ${CMAKE_CURRENT_BINARY_DIR}/CPackSourceConfig.cmake
 			COMMAND ${CMAKE_COMMAND} -E echo "Stage 3:  Expand tgz archive and prepare to build from archive sources."
 			COMMAND ${CMAKE_COMMAND} -E tar xvzf ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz
 			COMMAND ${CMAKE_COMMAND} -E make_directory _${CPACK_SOURCE_PACKAGE_FILE_NAME}-build
