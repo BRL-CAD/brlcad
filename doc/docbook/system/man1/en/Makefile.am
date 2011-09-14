@@ -13,16 +13,16 @@ man1DOCBOOK_EN = \
 	system/man1/en/tire.xml
 
 man1DOCBOOK_ENhtmldir = $(BRLCAD_DATA)/html/man1/en
-man1DOCBOOK_ENhtml_DATA = $(BUILTMAN_ENHTML)
+man1DOCBOOK_ENhtml_DATA = $(BUILTMAN1_ENHTML)
 
-BUILTMAN_ENHTML = \
+BUILTMAN1_ENHTML = \
 	${man1DOCBOOK_EN:xml=html}
 
 if BUILD_PDF_DOCS
 
-BUILTMAN_ENPDF = ${man1DOCBOOK_EN:xml=pdf}
+BUILTMAN1_ENPDF = ${man1DOCBOOK_EN:xml=pdf}
 
 endif
 
 man1DOCBOOK_ENpdfdir = $(BRLCAD_DATA)/pdf/man1/en
-man1DOCBOOK_ENpdf_DATA = $(BUILTMAN_ENPDF)
+man1DOCBOOK_ENpdf_DATA = $(BUILTMAN1_ENPDF)
