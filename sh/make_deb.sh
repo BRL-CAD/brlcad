@@ -70,6 +70,7 @@ fi
 if test "$1" != "-s" && test "$1" != "-b" ; then
     ferror "Unknown first argument '$!'." "Exiting..."
 fi
+
 # check for test
 TEST=0
 if test $# -eq 2 && test "$2" != "-t" ; then
@@ -92,55 +93,45 @@ fi
 E=0
 fcheck() {
     T="install ok installed"
-    if test `dpkg -s $1 2>/dev/null | grep "$T" | wc -l` -eq 0 ; then
-	# failed to find package $1
-	LLIST=$LLIST" "$1
-	E=1
-    else
+    if test ! `dpkg -s $1 2>/dev/null | grep "$T" | wc -l` -eq 0 ; then
         # success
-        E=0
-	echo "Found package '$1'..."
+        echo "Found package $1..."
         return
     fi
 
     # need to check for local, non-package versions
     # check for binaries
-    echo "Testing for non-package version of $1..."
-    if [ ! -f /usr/bin/$1 ]; then
-	LLIST=$LLIST" "$1
-	E=1
-    else
-        # success
-        E=0
-	echo "Found /usr/bin/$1..."
-        return
+    if test "$2" = "x" ; then
+        if [ -f /usr/bin/$1 ]; then
+            # success
+            echo "Found /usr/bin/$1..."
+            return
+        elif [ -f /usr/local/bin/$1 ]; then
+            # success
+            echo "Found /usr/local/bin/$1..."
+            return
+        fi
     fi
-    # one last check
-    if [ ! -f /usr/local/bin/$1 ]; then
-	LLIST=$LLIST" "$1
-	E=1
-    else
-        # success
-        E=0
-	echo "Found /usr/local/bin/$1..."
-        return
-    fi
+
+    echo "* Missing $1..."
+    LLIST=$LLIST" "$1
+    E=1
 }
 
 fcheck debhelper
-fcheck fakeroot
+fcheck fakeroot x
 
 if test "$1" = "-b" ;then
     fcheck build-essential
-    fcheck make
-    fcheck cmake
-    fcheck libtool
-    fcheck bc
-    fcheck sed
-    fcheck bison
-    fcheck flex
+    fcheck make 
+    fcheck cmake x
+    fcheck libtool x
+    fcheck bc x
+    fcheck sed x
+    fcheck bison x
+    fcheck flex x
     fcheck libxi-dev
-    fcheck xsltproc
+    fcheck xsltproc x
     fcheck libglu1-mesa-dev
     fcheck libpango1.0-dev
     #fcheck fop # allows pdf creation
@@ -151,7 +142,11 @@ if [ $E -eq 1 ]; then
 fi
 
 if [ $TEST -eq 1 ]; then
-    ferror "Testing complete--ready to create a Debian package."
+    echo "=========================================================="
+    echo "Testing complete"
+    echo "Ready to create a Debian package"
+    echo "=========================================================="
+    exit
 fi
 
 # set variables
