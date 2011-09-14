@@ -1683,10 +1683,13 @@ FILE(COPY ${toplevel_DOCFILES} DESTINATION ${CMAKE_BINARY_DIR}/${DATA_DIR})
 INSTALL(FILES ${toplevel_DOCFILES} DESTINATION ${DATA_DIR})
 
 # We want to ignore an in-source build directory if possible, try to recognize
-# that case and get the appropriate subpath for CPACK
-SET(TEST_BUILD_PATH "${CMAKE_BINARY_DIR}/")
-SET(TEST_SOURCE_PATH "${CMAKE_SOURCE_DIR}/")
+# that case and get the appropriate subpath for CPACK.  This isn't workable if
+# the build directory IS the source directory - in such a case the working
+# files of the build are mixed with the sources and an exclusion list is
+# pretty hopeless.
 IF(NOT ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
+	SET(TEST_BUILD_PATH "${CMAKE_BINARY_DIR}/")
+	SET(TEST_SOURCE_PATH "${CMAKE_SOURCE_DIR}/")
 	STRING(REGEX REPLACE "${TEST_SOURCE_PATH}" "" CMAKE_BUILD_DIR_TRIMMED "${TEST_BUILD_PATH}")
 	IF(NOT ${TEST_BUILD_PATH} STREQUAL ${CMAKE_BUILD_DIR_TRIMMED})
 		MESSAGE("CMAKE_BUILD_DIR_TRIMMED: ${CMAKE_BUILD_DIR_TRIMMED}")
