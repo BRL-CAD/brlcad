@@ -2201,6 +2201,8 @@ if test "x$bc_compliant_float" = "xno" || test "x$bc_compliant_double" = "xno" ;
     sleep 5
 fi
 
+AC_DEFINE(HAVE_C99_FORMAT_SPECIFIERS, 1, [Define to 1 if you have the '%zu' printf format specifier.])
+
 AC_C_CONST
 AC_C_INLINE
 AC_C_VOLATILE
