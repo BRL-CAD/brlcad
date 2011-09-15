@@ -1,0 +1,17 @@
+/*
+	
+	This file defines basic default formatting for HTML conforming to Tigris application style. To extend or override these rules for your instance, edit inst.css instead of this file. */
+
+/* colors, backgrounds, borders, link indication */
+/*
+
+This file contains rules that extend or override the standard rules defined in tigris.css
+that need changing as we output loose-DTD html while the original one used a tigris DTD.
+This makes the browser show content in 'quirks' mode, that impacts in this case table 
+ inheritance.
+*/
+
+table {
+	font-size: small;
+}
+
