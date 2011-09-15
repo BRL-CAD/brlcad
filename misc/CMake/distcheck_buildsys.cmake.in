@@ -3,6 +3,18 @@ IF(COMMAND CMAKE_POLICY)
 	CMAKE_POLICY(SET CMP0007 OLD)
 ENDIF(COMMAND CMAKE_POLICY)
 
+SET(CMAKE_BINARY_DIR @CMAKE_BINARY_DIR@)
+
+MACRO(UPDATE_CPACK_CONFIGS)
+	INCLUDE(@CMAKE_BINARY_DIR@/CPackConfig.cmake)
+	SET(CPACK_PROJECT_CONFIG_FILE "@CMAKE_BINARY_DIR@/BRLCAD_CPackOptions.cmake")
+	SET(CPACK_SOURCE_INSTALLED_DIRECTORIES "@CMAKE_SOURCE_DIR@;/")
+	STRING(REGEX REPLACE "\\\\" "\\\\\\\\" CPACK_SOURCE_IGNORE_FILES "${CPACK_SOURCE_IGNORE_FILES}")
+	SET(CPACK_SOURCE_IGNORE_FILES "${CPACK_SOURCE_IGNORE_FILES};${CPACK_EXTRA_IGNORE_FILES}")
+	LIST(REMOVE_DUPLICATES CPACK_SOURCE_IGNORE_FILES)
+	INCLUDE(CPack)
+ENDMACRO(UPDATE_CPACK_CONFIGS)
+
 MACRO(SVN_INFO_TO_PATH_LIST SVN_RAW SVN_PATHLIST)
 	SET(SVN_PROCESSING ${${SVN_RAW}})
 	STRING(REGEX REPLACE "Name: [^\r\n]*" "\n" SVN_PROCESSING "${SVN_PROCESSING}")
@@ -149,7 +161,11 @@ IF(IGNORE_COUNT)
 ENDIF(IGNORE_COUNT)
 IF(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
 	IF(GROUND_TRUTH)
-		SET(CPACK_EXTRA_IGNORE_FILES ${GROUND_TRUTH})
+		# We're ignoring specific files, not patterns, so construct the right entry style for CPack
+		# see http://www.cmake.org/pipermail/cmake/2006-October/011548.html
+		SET(CPACK_EXTRA_IGNORE_FILES "^@CMAKE_SOURCE_DIR@/${GROUND_TRUTH}$")
+		STRING(REGEX REPLACE ";" "$;^@CMAKE_SOURCE_DIR@/" CPACK_EXTRA_IGNORE_FILES "${CPACK_EXTRA_IGNORE_FILES}")
+		STRING(REGEX REPLACE "\^@CMAKE_SOURCE_DIR@/\$" "" CPACK_EXTRA_IGNORE_FILES "${CPACK_EXTRA_IGNORE_FILES}")
 		IF(${IGNORE_COUNT} LESS 51)
 			STRING(REGEX REPLACE ";" "\n" GROUND_TRUTH "${GROUND_TRUTH}")
 			MESSAGE("\nFiles unknown to both Subversion and the Build logic (will not be incorporated into dist):\n${GROUND_TRUTH}\n")
@@ -172,18 +188,10 @@ ELSE(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
 	ENDIF(GROUND_TRUTH)
 ENDIF(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
 
-# TODO - The following lines probably need more sophisticated logic in the case of multiple
-# distcheck runs to avoid repeated appendings, but should "tweak" CPack based on the distcheck results.  May
-# need to remove _CPack_Packages directory, not sure
-#
-# May need to ignore anything matching @CMAKE_BINARY_DIR@, in case of an in-source build, except in the case where
-# @CMAKE_BINARY_DIR@ = @CMAKE_SOURCE_DIR@ - may have to error out in that case, not sure.
-#
+# If the list of files to ignore is at most 50 items in length, go ahead and update the CPack 
+# logic to ignore them
 IF(${IGNORE_COUNT} LESS 51)
-	FILE(APPEND @CMAKE_BINARY_DIR@/CPackConfig.cmake "SET(CPACK_IGNORE_FILES \"\${CPACK_IGNORE_FILES};${CPACK_EXTRA_IGNORE_FILES}\")\n")
-	FILE(APPEND @CMAKE_BINARY_DIR@/CPackSourceConfig.cmake "SET(CPACK_IGNORE_FILES \"\${CPACK_IGNORE_FILES};${CPACK_EXTRA_IGNORE_FILES}\")\n")
-	FILE(APPEND @CMAKE_BINARY_DIR@/CPackConfig.cmake "SET(CPACK_SOURCE_IGNORE_FILES \"\${CPACK_SOURCE_IGNORE_FILES};${CPACK_EXTRA_IGNORE_FILES}\")\n")
-	FILE(APPEND @CMAKE_BINARY_DIR@/CPackSourceConfig.cmake "SET(CPACK_SOURCE_IGNORE_FILES \"\${CPACK_SOURCE_IGNORE_FILES};${CPACK_EXTRA_IGNORE_FILES}\")\n")
+	UPDATE_CPACK_CONFIGS()
 ENDIF(${IGNORE_COUNT} LESS 51)
 
 # If we got this far, it worked
