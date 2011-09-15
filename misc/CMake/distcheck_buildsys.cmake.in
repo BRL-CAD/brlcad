@@ -3,6 +3,7 @@ IF(COMMAND CMAKE_POLICY)
 	CMAKE_POLICY(SET CMP0007 OLD)
 ENDIF(COMMAND CMAKE_POLICY)
 
+SET(NOT_DISTCHECK_READY 0)
 SET(CMAKE_BINARY_DIR @CMAKE_BINARY_DIR@)
 
 MACRO(UPDATE_CPACK_CONFIGS)
@@ -62,7 +63,7 @@ IF(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
 
 	IF(SVN_TREE_MODIFIED)
 		MESSAGE("\n**** NOTE:  Subversion reports modified source files present in the source tree.\n     Distcheck proceeding, but archives will not be suitable for release.\n")
-		# TODO - mess with tarball naming so they're not releasable
+		SET(NOT_DISTCHECK_READY 1)
 	ENDIF(SVN_TREE_MODIFIED)
 
 	MESSAGE(" --- Building file list from Subversion manifests: Done") 
@@ -193,6 +194,15 @@ ENDIF(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
 IF(${IGNORE_COUNT} LESS 51)
 	UPDATE_CPACK_CONFIGS()
 ENDIF(${IGNORE_COUNT} LESS 51)
+
+SET(FINAL_DIST_MESSAGE "--- distcheck succeeded ---")
+IF(NOT_DISTCHECK_READY)
+	SET(FINAL_DIST_MESSAGE "--- distcheck succeeded ---\n*** WARNING - archive files contain modified sources, NOT suitable for distribution! ***")
+ENDIF(NOT_DISTCHECK_READY)
+IF(NOT SVN_EXEC OR NOT EXISTS @CMAKE_SOURCE_DIR@/.svn)
+	SET(FINAL_DIST_MESSAGE "--- distcheck succeeded ---\n*** WARNING - distcheck run without subversion based checks!  Archive files may not be suitable for distribution. ***")
+ENDIF(NOT SVN_EXEC OR NOT EXISTS @CMAKE_SOURCE_DIR@/.svn)
+configure_file(@CMAKE_SOURCE_DIR@/misc/CMake/distcheck_message.in @CMAKE_BINARY_DIR@/CMakeTmp/distcheck_message @ONLY) 
 
 # If we got this far, it worked
 MESSAGE("Stage 1: Passed")
