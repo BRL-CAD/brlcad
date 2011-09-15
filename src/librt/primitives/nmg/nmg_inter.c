@@ -2573,6 +2573,18 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		    hit_count = 1;
 		    dist[1] = MAX_FASTF; /* sanity */
 		    /* dist[0] is already the correct value */
+		} else if ((ZERO(dist[0]) && (dist[1] > opsff)) ||
+			   (ZERO(dist[1]) && (dist[0] > opsff)) ||
+			   (ZERO(dist[0] - 1.0) && (dist[1] < -SMALL_FASTF)) ||
+			  ((dist[0] < -SMALL_FASTF) && ZERO(dist[1] - 1.0))) {
+		    /* true when eu2 shares one of the vertices of eu1 and
+		     * the other vertex in eu2 is on the far side of eu1 
+		     * outside eu1 (i.e. p0->p1).
+		     */
+		    /* eu1 is not cut */
+		    hit_count = 0; /* sanity */
+		    dist[0] = dist[1] = MAX_FASTF; /* sanity */
+		    continue;
 		} else {
 		    /* should never get here */
 		    bu_log("nmg_isect_two_face2p_jra(): dist[0] = %f dist[1] = %f\n", 
