@@ -451,23 +451,6 @@ bot2soup(struct rt_bot_internal *bot, const struct bn_tol *tol)
     return s;
 }
 
-#if 0
-HIDDEN struct rt_bot_internal *
-soup2bot(struct soup_s *soup, const struct bn_tol *UNUSED(tol))
-{
-    struct rt_bot_internal *rbi;
-
-    rbi = bu_malloc(sizeof(struct rt_bot_internal), "BoT");
-    rbi->num_faces = soup->nfaces;
-
-    if(soup->faces)
-	bu_free(soup->faces, "soup faces");
-    bu_free(soup, "soup");
-
-    return rbi;
-}
-#endif
-
 HIDDEN struct nmgregion *
 soup2nmg(struct soup_s *soup, const struct bn_tol *UNUSED(tol))
 {
@@ -709,9 +692,6 @@ union tree *
 gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     union tree *ret_tree;
-#if 1
-    bu_bomb("No\n");
-#endif
 
     splitz=0;
     splitty=0;
@@ -738,11 +718,10 @@ gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     splitz=0;
     splitty=0;
 
-    /*
     curtree->tr_d.td_r = soup2nmg((struct soup_s *)ret_tree->tr_d.td_r->m_p, tsp->ts_tol);
-    */
+    curtree->tr_op = OP_NMG_TESS;
 
-    return NULL/*curtree*/;
+    return curtree;
 }
 
 union tree *
