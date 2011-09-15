@@ -451,6 +451,7 @@ bot2soup(struct rt_bot_internal *bot, const struct bn_tol *tol)
     return s;
 }
 
+#if 0
 HIDDEN struct rt_bot_internal *
 soup2bot(struct soup_s *soup, const struct bn_tol *UNUSED(tol))
 {
@@ -464,6 +465,55 @@ soup2bot(struct soup_s *soup, const struct bn_tol *UNUSED(tol))
     bu_free(soup, "soup");
 
     return rbi;
+}
+#endif
+
+HIDDEN struct nmgregion *
+soup2nmg(struct soup_s *soup, const struct bn_tol *UNUSED(tol))
+{
+    struct nmgregion *r;
+    struct model *m;
+    struct shell *s;
+    unsigned int i;
+    struct vertex *vert[3], **f_vert[3];
+
+    SOUP_CKMAG(soup);
+
+    m = nmg_mmr();
+    r = nmg_mrsv(m);
+    s = BU_LIST_FIRST(shell, &r->s_hd);
+
+    f_vert[0] = &vert[0];
+    f_vert[1] = &vert[1];
+    f_vert[2] = &vert[2];
+
+    for(i=0; i < soup->nfaces; i++) {
+	struct faceuse *fu;
+
+	memset((char *)vert, 0, sizeof(vert));
+	fu = nmg_cmface(s, f_vert, 3);
+#if 0
+	nmg_vertex_gv(vert[0], soup->faces[i].vert[0]);
+	nmg_vertex_gv(vert[1], soup->faces[i].vert[1]);
+	nmg_vertex_gv(vert[2], soup->faces[i].vert[2]);
+	nmg_calc_face_g(fu);
+
+	if(nmg_fu_planeeqn(fu, tol)) {
+	    /*
+	    bu_log("Tiny tri!\n");
+	    */
+	}
+#endif
+
+    }
+
+    /*
+    if(nmg_kill_cracks(s))
+	if(nmg_ks(s))
+	    return NULL;
+    */
+
+    return r;
 }
 
 HIDDEN void
@@ -615,6 +665,8 @@ evaluate(union tree *tr, const struct rt_tess_tol *ttol, const struct bn_tol *to
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
+	    RT_CK_TREE(tr->tr_b.tb_left);
+	    RT_CK_TREE(tr->tr_b.tb_right);
 	    tr->tr_b.tb_left = evaluate(tr->tr_b.tb_left, ttol, tol);
 	    tr->tr_b.tb_right = evaluate(tr->tr_b.tb_right, ttol, tol);
 	    RT_CK_TREE(tr->tr_b.tb_left);
@@ -656,6 +708,7 @@ long int lsplitty=0;
 union tree *
 gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
+    union tree *ret_tree;
 #if 1
     bu_bomb("No\n");
 #endif
@@ -677,7 +730,7 @@ gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     if (curtree->tr_op == OP_NOP)
 	return curtree;
 
-    evaluate(curtree, tsp->ts_ttol, tsp->ts_tol);
+    ret_tree = evaluate(curtree, tsp->ts_ttol, tsp->ts_tol);
     lsplitz+=splitz;
     lsplitz+=splitz;
     lsplitty+=splitty;
@@ -685,17 +738,11 @@ gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     splitz=0;
     splitty=0;
 
-    /* convert it to a BoT or something. Since we seperated vertices, we may
-     * need to cluster them and recompact it. */
     /*
-    rt_bot_tess(curtree->tr_d.td_r
+    curtree->tr_d.td_r = soup2nmg((struct soup_s *)ret_tree->tr_d.td_r->m_p, tsp->ts_tol);
     */
 
-    /*	need to figure out how to pack this right (soup2nmg?)
-    curtree->tr_d.td_r = soup2bot((struct soup_s *)curtree->tr_d.td_r, tsp->ts_tol);
-    */
-
-    return curtree;
+    return NULL/*curtree*/;
 }
 
 union tree *
