@@ -286,6 +286,24 @@ IF(NOT BRLCAD-IS_SUBBUILD)
 		set_property(GLOBAL APPEND PROPERTY CMAKE_CUSTOM_TARGET_LIST ${name})
 	endfunction(add_custom_target)
 
+	# Override and wrap configure_file.  In the case of a configure_file, we'll
+	# check that the file is part of the source tree and not itself a
+	# generated file, but not reject full-path entries since there are quite a
+	# few of them.
+	function(configure_file file)
+		_configure_file(${file} ${ARGN})
+		GET_FILENAME_COMPONENT(ITEM_ABS ${file} ABSOLUTE)
+		SET(TEST_BUILD_PATH "${CMAKE_BINARY_DIR}/")
+		SET(TEST_SOURCE_PATH "${CMAKE_SOURCE_DIR}/")
+		STRING(REGEX REPLACE "^${TEST_BUILD_PATH}" "" BUILD_DIR_TRIMMED "${ITEM_ABS}")
+		IF(${ITEM_ABS} STREQUAL ${BUILD_DIR_TRIMMED})
+			STRING(REGEX REPLACE "^${TEST_SOURCE_PATH}" "" SOURCE_DIR_TRIMMED "${ITEM_ABS}")
+			IF(NOT ${ITEM_ABS} STREQUAL ${SOURCE_DIR_TRIMMED})
+				FILE(APPEND ${CMAKE_BINARY_DIR}/cmakefiles.cmake "${ITEM_ABS}\n")
+			ENDIF(NOT ${ITEM_ABS} STREQUAL ${SOURCE_DIR_TRIMMED})
+		ENDIF(${ITEM_ABS} STREQUAL ${BUILD_DIR_TRIMMED})
+	endfunction(configure_file)
+	
 	# The add_subdirectory wrapper must clear old files holding distcheck lists
 	# to avoid continually growing files over multiple configure runs, as well
 	# as adding directories to distcheck.
@@ -1692,7 +1710,7 @@ IF(NOT ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 	SET(TEST_SOURCE_PATH "${CMAKE_SOURCE_DIR}/")
 	STRING(REGEX REPLACE "${TEST_SOURCE_PATH}" "" CMAKE_BUILD_DIR_TRIMMED "${TEST_BUILD_PATH}")
 	IF(NOT ${TEST_BUILD_PATH} STREQUAL ${CMAKE_BUILD_DIR_TRIMMED})
-		SET(CPACK_IGNORE_BUILD_PATH "^${CMAKE_SOURCE_DIR}/${CMAKE_BUILD_DIR_TRIMMED}$;^${CMAKE_SOURCE_DIR}/${CMAKE_BUILD_DIR_TRIMMED}/")
+		SET(CPACK_IGNORE_BUILD_PATH "${CMAKE_BUILD_DIR_TRIMMED}")
 	ENDIF(NOT ${TEST_BUILD_PATH} STREQUAL ${CMAKE_BUILD_DIR_TRIMMED})
 ENDIF(NOT ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 
