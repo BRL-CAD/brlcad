@@ -14,11 +14,12 @@ SET(OBJ_G_SRCS
 	re2c_utils.c
 	obj_parser.cpp
 	../../conv/obj-g_new.c
+	tri_face.c
 )
 
 configure_file(obj_grammar.h.in ${CMAKE_CURRENT_BINARY_DIR}/obj_grammar.h COPY_ONLY)
 
-BRLCAD_ADDEXEC(obj-g "${OBJ_G_SRCS}" "libbu libbn libwdb")
+BRLCAD_ADDEXEC(obj-g "${OBJ_G_SRCS}" "libbu libbn librt libwdb")
 
 set(wfobj_ignore_files
 	Makefile.sample
@@ -30,6 +31,7 @@ set(wfobj_ignore_files
 	obj_rules.re
 	obj_token_type.h
 	re2c_utils.h
+	tri_face.h
 	)
 CMAKEFILES(${wfobj_ignore_files})
 CMAKEFILES(Makefile.am)
