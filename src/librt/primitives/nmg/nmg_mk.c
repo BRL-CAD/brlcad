@@ -2248,21 +2248,23 @@ nmg_loop_g(struct loop *l, const struct bn_tol *tol)
 	bu_bomb("nmg_loop_g() loopuse has bad child\n");
     }
 
-    /*
-     * For the case of an axis-aligned loop, ensure that a 0-thickness
-     * face is not missed, e.g. by rt_in_rpp(). Thicken the bounding
-     * RPP so that it is 10*dist_tol thicker than the MINMAX
-     * calculations above report.
-     * This ensures enough "surface area" on the thin side of the RPP
-     * that a ray won't miss it.
+    /* Pad the dimension of the loop bounding box which is less than
+     * distance tolerance so that the resulting dimension will be
+     * at least distance tolerance. 
      */
-    thickening = 5 * tol->dist;
-    lg->min_pt[X] -= thickening;
-    lg->min_pt[Y] -= thickening;
-    lg->min_pt[Z] -= thickening;
-    lg->max_pt[X] += thickening;
-    lg->max_pt[Y] += thickening;
-    lg->max_pt[Z] += thickening;
+    thickening = 0.5 * tol->dist;
+    if (NEAR_ZERO(lg->max_pt[X] - lg->min_pt[X], tol->dist)) {
+        lg->min_pt[X] -= thickening;
+        lg->max_pt[X] += thickening;
+    }
+    if (NEAR_ZERO(lg->max_pt[Y] - lg->min_pt[Y], tol->dist)) {
+        lg->min_pt[Y] -= thickening;
+        lg->max_pt[Y] += thickening;
+    }
+    if (NEAR_ZERO(lg->max_pt[Z] - lg->min_pt[Z], tol->dist)) {
+        lg->min_pt[Z] -= thickening;
+        lg->max_pt[Z] += thickening;
+    }
 
     if (rt_g.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_loop_g(l=0x%p, tol=0x%p)\n", l, tol);
