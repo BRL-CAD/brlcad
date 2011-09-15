@@ -128,6 +128,10 @@ bu_free_argv(int argc, char *argv[])
 {
     register int i;
 
+    if (UNLIKELY(!argv || argc <= 0)) {
+	return;
+    }
+
     for (i = 0; i < argc; ++i) {
 	if (argv[i]) {
 	    bu_free((void *)argv[i], "bu_free_argv");
