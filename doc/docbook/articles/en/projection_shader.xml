@@ -1,10 +1,12 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 
-<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+<article xmlns="http://docbook.org/ns/docbook" version="5.0"
+         xmlns:xi="http://www.w3.org/2001/XInclude"
+>
   <info><title>Using the Projection Shader</title>
     
 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
+    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
 
     <legalnotice>
        <para>Approved for public release; distribution is unlimited</para>
@@ -133,7 +135,9 @@
       commercially available PC image editor to make the image square. When
       finished, we saved the image as a .jpg file, with the name
       circuit_back_950.jpg. (Note that it is wise to include the image
-      dimensions [i.e., 950 pixels wide × 950 pixels high] in the file name
+      dimensions [i.e., 950 pixels wide
+        &#x00D7; <!-- multiply symbol -->
+        950 pixels high] in the file name
       because many projection shader tasks rely on them.) To get the image into
       a BRL-CAD-accepted format (see tutorial box that follows), we converted
       the .jpg file to a .png file using an image editor and then the .png file
@@ -157,7 +161,9 @@
     <para>
       The next step is to "prepare" the area on which the image will be
       displayed so that it is ready for the image. For the circuit board, the
-      size of the photograph was 950 pixels × 950 pixels high. To make the
+      size of the photograph was 950 pixels
+        &#x00D7; <!-- multiply symbol -->
+        950 pixels high. To make the
       graphics display window match, we opened the Raytrace Control Panel and
       used the numbers in the Size window box as a reference to determine how much to
       enlarge/shrink the graphics display window (by using the mouse to drag the
@@ -177,7 +183,8 @@
 	is used here simply to report the result of the user scaling the      
 	dimensions of the graphics display area. It is not used to set the    
 	desired dimensions (in this case, 950                                 
-	× 950) of the graphics area by inputting them into the Size field.   
+	  &#x00D7; <!-- multiply symbol -->
+	  950) of the graphics area by inputting them into the Size field.   
 	Any numbers input into this field will only determine the size of the 
 	display area in the next raytrace.
       </para>
