@@ -1,10 +1,12 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 
-<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+<article xmlns="http://docbook.org/ns/docbook" version="5.0"
+         xmlns:xi="http://www.w3.org/2001/XInclude"
+>
   <info><title>Setting Up a .mgedrc File</title>
     
 
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
+    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
 
     <legalnotice>
        <para>Approved for public release; distribution is unlimited</para>
@@ -218,7 +220,9 @@ proc cps {oldprim newprim} {cp $oldprim $newprim; sed $newprim}
 	  <row>
 	    <entry>set mged_default</entry>
 	    <entry>(geom)</entry>
-	    <entry>475 × 250</entry>
+	    <entry>475
+	      &#x00D7; <!-- multiply symbol -->
+	      250</entry>
 	    <entry>+65 +80</entry>
 	  </row>
 	  <row>
@@ -235,7 +239,9 @@ proc cps {oldprim newprim} {cp $oldprim $newprim; sed $newprim}
 
   <para xml:id="mgedrc15">
     As illustrated in Figure D-3, to specify the window size, the user inputs
-    width-by-height dimensions for each window (i.e., 475 × 250). To specify
+    width-by-height dimensions for each window (i.e., 475
+      &#x00D7; <!-- multiply symbol -->
+      250). To specify
     the placement of the windows on the display, the user specifies offset
     distances (i.e., +65 +80) from the edges of the display (as measured in
     pixels). The first number defines the distance for the left/right
