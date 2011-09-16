@@ -44,7 +44,7 @@ English DocBook source files are expected to be ASCII with xhtml
 unicode markup for non-ASCII symbols.  Other language source files
 should be in UTF-8.
 
-The text character code requirements may event be enforced by a
+The text character code requirements may eventually be enforced by a
 pre-commit hook script.
  
 OTHER CONSIDERATIONS
