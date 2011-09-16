@@ -60,6 +60,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* DocBook source: add xsl customizations for figure and table title
+  positions, float centering, etc.; add automatic figure, table, and
+  other similar references; add separate html and fo image sizing and
+  placement; remove unnecessary image markup.
+
 * pixdiff reports bytes, but reports incorrect (off-by-one) bytes for
   .bw input files.  cause is due to tool assuming input is rgb triplets
   (even though output is bytes, wtf?).  should probably report pixels
