@@ -147,7 +147,7 @@ IF(BRLCAD_DATA_ENV)
 	IF(SLEEP_EXEC)
 		EXECUTE_PROCESS(COMMAND ${SLEEP_EXEC} 2)
 	ENDIF(SLEEP_EXEC)
-ENDIF(BRLCAD_ROOT)
+ENDIF(BRLCAD_DATA_ENV)
 
 # Searching the system for packages presents something of a dilemma -
 # in most situations it is Very Bad for a BRL-CAD build to be using
