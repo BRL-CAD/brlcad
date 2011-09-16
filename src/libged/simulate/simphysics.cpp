@@ -35,8 +35,12 @@
 #include "db.h"
 #include "vmath.h"
 #include "simulate.h"
+#include "simcollisionalgo.h"
 
 #include <btBulletDynamicsCommon.h>
+
+
+//--------------------- Printing functions for debugging ------------------------
 
 /**
  * Prints the 16 by 16 transform matrices for debugging
@@ -69,6 +73,103 @@ void print_matrices(struct simulation_params *sim_params, char *rb_namep, mat_t 
 
 }
 
+
+//--------------------- Collision specific code ------------------------
+
+/**
+ * Broadphase filter callback struct : used to show the detected AABB overlaps
+ *
+ */
+struct broadphase_callback : public btOverlapFilterCallback
+{
+	//Return true when pairs need collision
+	virtual bool
+	needBroadphaseCollision(btBroadphaseProxy* proxy0, btBroadphaseProxy* proxy1) const
+	{
+		bool collides = (proxy0->m_collisionFilterGroup & proxy1->m_collisionFilterMask) != 0;
+		collides = collides && (proxy1->m_collisionFilterGroup & proxy0->m_collisionFilterMask);
+
+		//This would prevent collision between proxy0 and proxy1 inspite of
+		//AABB overlap being detected
+		//collides = false;
+		//proxy0->m_clientObject
+
+		//bu_log("broadphase_callback: These 2 objects have overlapping AABBs");
+
+		//add some additional logic here that modified 'collides'
+		return collides;
+	}
+};
+
+
+/**
+ * Narrowphase filter callback : used to show the generated collision points
+ *
+ */
+void nearphase_callback(btBroadphasePair& collisionPair,
+				    btCollisionDispatcher& dispatcher,
+				    btDispatcherInfo& dispatchInfo)
+{
+
+	int i, j, numContacts;
+	int numManifolds = dispatcher.getNumManifolds();
+
+	/* First iterate through the number of manifolds for the whole dynamics world
+	 * A manifold is a set of contact points containing upto 4 points
+	 * There may be multiple manifolds where objects touch
+	 */
+	for (i=0; i<numManifolds; i++){
+
+		//Get the manifold and the objects which created it
+		btPersistentManifold* contactManifold =
+				dispatcher.getManifoldByIndexInternal(i);
+		btCollisionObject* obA = static_cast<btCollisionObject*>(contactManifold->getBody0());
+		btCollisionObject* obB = static_cast<btCollisionObject*>(contactManifold->getBody1());
+
+		//Get the user pointers to struct rigid_body, for printing the body name
+		btRigidBody* rbA   = btRigidBody::upcast(obA);
+		btRigidBody* rbB   = btRigidBody::upcast(obB);
+		struct rigid_body *upA = (struct rigid_body *)rbA->getUserPointer();
+		struct rigid_body *upB = (struct rigid_body *)rbB->getUserPointer();
+
+		//Get the number of points in this manifold
+		numContacts = contactManifold->getNumContacts();
+
+		/*bu_log("nearphase_callback : Manifold %d of %d, contacts : %d\n",
+				i+1,
+				numManifolds,
+				numContacts);*/
+
+		//Iterate over the points for this manifold
+		for (j=0;j<numContacts;j++){
+			btManifoldPoint& pt = contactManifold->getContactPoint(j);
+
+			btVector3 ptA = pt.getPositionWorldOnA();
+			btVector3 ptB = pt.getPositionWorldOnB();
+
+			if(upA == NULL || upB == NULL){
+			//	bu_log("nearphase_callback : contact %d of %d, could not get user pointers\n",
+			//			j+1, numContacts);
+
+			}
+			else{
+			/*	bu_log("nearphase_callback: contact %d of %d, %s(%f, %f, %f) , %s(%f, %f, %f)\n",
+					j+1, numContacts,
+					upA->rb_namep, ptA[0], ptA[1], ptA[2],
+					upB->rb_namep, ptB[0], ptB[1], ptB[2]);*/
+			}
+		}
+
+		//Can un-comment this line, and then all points are removed
+		//contactManifold->clearManifold();
+	}
+
+	// Only dispatch the Bullet collision information if physics should continue
+	dispatcher.defaultNearCallback(collisionPair, dispatcher, dispatchInfo);
+}
+
+
+//--------------------- Physics simulation management --------------------------
 
 /**
  * Adds rigid bodies to the dynamics world from the BRL-CAD geometry,
@@ -155,16 +256,21 @@ int add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_p
 int step_physics(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_params *sim_params)
 {
 	int i;
-	bu_vls_printf(sim_params->result_str, "Simulation will run for %d steps.\n", sim_params->duration);
-	bu_vls_printf(sim_params->result_str, "----- Starting simulation -----\n");
+	bu_log("Simulation will run for %d steps.\n", sim_params->duration);
+	bu_log("----- Starting simulation -----\n");
 
 	for (i=0 ; i < sim_params->duration ; i++) {
 
+		//bu_log("---------------Step : %d -------------\n", i+1);
+
 		//time step of 1/60th of a second(same as internal fixedTimeStep, maxSubSteps=10 to cover 1/60th sec.)
 		dynamicsWorld->stepSimulation(1/60.f,10);
+
+		/* Modify collision points after narrowphase collisions */
+		//narrowphase_collisions(dynamicsWorld);
 	}
 
-	bu_vls_printf(sim_params->result_str, "----- Simulation Complete -----\n");
+	bu_log("----- Simulation Complete -----\n");
 
 	return 0;
 }
@@ -298,9 +404,22 @@ run_simulation(struct simulation_params *sim_params)
 	// Keep the collision shapes, for deletion/cleanup
 	btAlignedObjectArray<btCollisionShape*>	collision_shapes;
 
+	// Setup broadphase collision algo
 	btBroadphaseInterface* broadphase = new btDbvtBroadphase();
+
+	//Rest of the setup towards a dynamics world creation
 	btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
 	btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collisionConfiguration);
+
+	//Register custom rt based nearphase algo for box-box collision,
+	//arbitrary shapes from brlcad are all represented by the box collision shape
+	//in bullet, the movement will not be like a box however, but according to
+	//the collisions detected by rt and therefore should follow any arbitrary shape correctly
+	dispatcher->registerCollisionCreateFunc(
+			BOX_SHAPE_PROXYTYPE,
+			BOX_SHAPE_PROXYTYPE,
+			new btRTCollisionAlgorithm::CreateFunc);
+
 	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
 
 	dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher,broadphase,solver,collisionConfiguration);
@@ -311,16 +430,23 @@ run_simulation(struct simulation_params *sim_params)
 	//Add the rigid bodies to the world, including the ground plane
 	add_rigid_bodies(dynamicsWorld, sim_params, collision_shapes);
 
+	//Add a broadphase callback to hook to the AABB detection algos
+	btOverlapFilterCallback * filterCallback = new broadphase_callback();
+	dynamicsWorld->getPairCache()->setOverlapFilterCallback(filterCallback);
+
+	//Add a nearphase callback to hook to the contact points generation algos
+	dispatcher->setNearCallback((btNearCallback)nearphase_callback);
+
 	//Step the physics the required number of times
 	step_physics(dynamicsWorld, sim_params);
 
-	//Get the world transforms back into the simulation params struct
+	//Get the world transforms & AABBs back into the simulation params struct
 	get_transforms(dynamicsWorld, sim_params);
 
 	//Clean and free memory used by physics objects
 	cleanup(dynamicsWorld, collision_shapes);
 
-	//Clean up stuff in here
+	//Clean up stuff in this function
 	delete solver;
 	delete dispatcher;
 	delete collisionConfiguration;

@@ -22,7 +22,8 @@
  * The simulate command.
  *
  * Routines related to performing physics on passed objects only
- *
+ * TODO : Adds flags to control AABB and object state display
+ * TODO : Finish integrating rt into collision detection
  * 
  */
 
@@ -204,7 +205,7 @@ int add_regions(struct ged *gedp, struct simulation_params *sim_params)
                 continue;
 
             if (strstr(dp->d_namep, prefix)){
-            	bu_vls_printf(gedp->ged_result_str, "add_regions: Skipping \"%s\" due to \"%s\" in name\n",
+            	bu_log("add_regions: Skipping \"%s\" due to \"%s\" in name\n",
                         dp->d_namep, prefix);
                 continue;
             }
@@ -217,22 +218,22 @@ int add_regions(struct ged *gedp, struct simulation_params *sim_params)
             bu_strlcat(prefixed_name + prefix_len, dp->d_namep, prefixed_name_len - prefix_len);
 
             kill_copy(gedp, dp, prefixed_name);
-            bu_vls_printf(gedp->ged_result_str, "add_regions: Copied \"%s\" to \"%s\"\n", dp->d_namep, prefixed_name);
+            bu_log("add_regions: Copied \"%s\" to \"%s\"\n", dp->d_namep, prefixed_name);
 
             /* Get the directory pointer for the object just added */
             if ((ndp=db_lookup(gedp->ged_wdbp->dbip, prefixed_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
-            	bu_vls_printf(gedp->ged_result_str, "add_regions: db_lookup(%s) failed", prefixed_name);
+            	bu_log("add_regions: db_lookup(%s) failed", prefixed_name);
                 return GED_ERROR;
             }
 
             /* Get its BB */
             if(rt_bound_internal(gedp->ged_wdbp->dbip, ndp, rpp_min, rpp_max) == 0)
-            	bu_vls_printf(gedp->ged_result_str, "add_regions: Got the BB for \"%s\" as \
-                        min {%f %f %f} max {%f %f %f}\n", ndp->d_namep,
+            	bu_log("add_regions: Got the BB for \"%s\" as \
+            			min {%f %f %f} max {%f %f %f}\n", ndp->d_namep,
                         rpp_min[0], rpp_min[1], rpp_min[2],
                         rpp_max[0], rpp_max[1], rpp_max[2]);
             else{
-            	bu_vls_printf(gedp->ged_result_str, "add_regions: ERROR Could not get the BB\n");
+            	bu_log("add_regions: ERROR Could not get the BB\n");
                 return GED_ERROR;
             }
 
@@ -250,7 +251,7 @@ int add_regions(struct ged *gedp, struct simulation_params *sim_params)
             current_node->bb_dims[1] = current_node->bb_max[1] - current_node->bb_min[1];
             current_node->bb_dims[2] = current_node->bb_max[2] - current_node->bb_min[2];
 
-            bu_vls_printf(gedp->ged_result_str, "add_regions: Dimensions of this BB : %f %f %f\n",
+            bu_log("add_regions: Dimensions of this BB : %f %f %f\n",
                     current_node->bb_dims[0], current_node->bb_dims[1], current_node->bb_dims[2]);
 
             /* Get BB position in 3D space */
@@ -510,7 +511,7 @@ int apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 	struct rt_db_internal intern;
 	struct rigid_body *current_node;
 	mat_t t , m;
-	/*int rv;*/
+	/* int rv; */
 
 	for (current_node = sim_params->head_node; current_node != NULL; current_node = current_node->next) {
 
@@ -567,7 +568,7 @@ int apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 		}
 
 		/* Apply the proper shader to match the object state : useful for debugging */
-/*		switch(current_node->state){
+	/*	switch(current_node->state){
 			case ACTIVE_TAG:
 				rv = apply_color(gedp, current_node->rb_namep, 255, 255, 0);
 				break;
@@ -596,7 +597,7 @@ int apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 			bu_vls_printf(gedp->ged_result_str, "apply_transforms: WARNING Could not set \
 					the state color for %s\n", current_node->rb_namep);
 		}
-*/
+ */
 
 		/* This will be enabled by a flag later */
 		/* insertAABB(gedp, sim_params, current_node); */
