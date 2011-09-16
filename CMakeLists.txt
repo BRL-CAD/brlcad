@@ -107,6 +107,32 @@ IF(EXISTS ${BRLCAD_SOURCE_DIR}/../BRL-CAD_CONFIG.GLOBAL)
 	INCLUDE(${BRLCAD_SOURCE_DIR}/../BRL-CAD_CONFIG.GLOBAL)
 ENDIF(EXISTS ${BRLCAD_SOURCE_DIR}/../BRL-CAD_CONFIG.GLOBAL)
 
+FIND_PROGRAM(SLEEP_EXEC sleep)
+MARK_AS_ADVANCED(SLEEP_EXEC)
+# Allow the BRLCAD_ROOT environment variable to set CMAKE_INSTALL_PREFIX
+# but be noisy about it.  This is generally not a good idea.
+SET(BRLCAD_ROOT "$ENV{BRLCAD_ROOT}")
+IF(BRLCAD_ROOT)
+	IF(NOT BRLCAD_ROOT_OVERRIDE)
+		IF(${BRLCAD_ROOT} STREQUAL "/usr")
+			MESSAGE(WARNING "\nIt is STRONGLY recommended that you DO NOT install BRL-CAD into /usr as BRL-CAD provides several libraries that may conflict with other libraries (e.g. librt, libbu, libbn) on certain system configurations.\nSince our libraries predate all those that we're known to conflict with and are at the very core of our geometry services and project heritage, we have no plans to change the names of our libraries at this time.\nINSTALLING INTO /usr CAN MAKE A SYSTEM COMPLETELY UNUSABLE.  If you choose to continue installing into /usr, you do so entirely at your own risk.  You have been warned.")
+			MESSAGE(FATAL_ERROR "If you wish to proceed using /usr as your prefix, define BRLCAD_ROOT_OVERRIDE=1 for CMake")
+		ENDIF(${BRLCAD_ROOT} STREQUAL "/usr")
+		MESSAGE(WARNING "\nBRLCAD_ROOT should only be used to override an install directory at runtime.  BRLCAD_ROOT is presently set to \"${BRLCAD_ROOT}\"  It is *highly* recommended that BRLCAD_ROOT be unset and not used.")
+		IF(SLEEP_EXEC)
+			EXECUTE_PROCESS(COMMAND ${SLEEP_EXEC} 2)
+		ENDIF(SLEEP_EXEC)
+		IF(CMAKE_INSTALL_PREFIX AND NOT CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
+			IF(${BRLCAD_ROOT} STREQUAL "${CMAKE_INSTALL_PREFIX}")
+				MESSAGE("BRLCAD_ROOT is not necessary and may cause unexpected behavior")
+			ELSE(${BRLCAD_ROOT} STREQUAL "${CMAKE_INSTALL_PREFIX}")
+				MESSAGE(FATAL_ERROR "BRLCAD_ROOT environment variable conflicts with CMAKE_INSTALL_PREFIX")
+			ENDIF(${BRLCAD_ROOT} STREQUAL "${CMAKE_INSTALL_PREFIX}")
+		ENDIF(CMAKE_INSTALL_PREFIX AND NOT CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
+	ENDIF(NOT BRLCAD_ROOT_OVERRIDE)
+	SET(CMAKE_INSTALL_PREFIX "${BRLCAD_ROOT}")
+ENDIF(BRLCAD_ROOT)
+
 # Searching the system for packages presents something of a dilemma -
 # in most situations it is Very Bad for a BRL-CAD build to be using
 # older versions of libraries in install directories as search results.
