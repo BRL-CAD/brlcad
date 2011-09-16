@@ -95,14 +95,14 @@
     <imagedata
        align='center'
        width='5.5in' scalefit='1'
-       fileref="./images/tk-based-gui-for-mged.png"
+       fileref="../../presentations/en/images/tk-based-gui-for-mged.png"
     /><!-- was: width='100%' -->
   </imageobject>
   <imageobject role='fo'>
     <imagedata
        align='center'
        width='5.5in' scalefit='1'
-       fileref="./images/tk-based-gui-for-mged.png"
+       fileref="../../presentations/en/images/tk-based-gui-for-mged.png"
     />
   </imageobject>
   <textobject>
@@ -660,14 +660,14 @@
     <imagedata
        align='center'
        width='5.5in' scalefit='1'
-       fileref="./images/special-character-interpretation.png"
+       fileref="../../presentations/en/images/special-character-interpretation.png"
     /><!-- was: width='100%' -->
   </imageobject>
   <imageobject role='fo'>
     <imagedata
        align='center'
        width='5.5in' scalefit='1'
-       fileref="./images/special-character-interpretation.png"
+       fileref="../../presentations/en/images/special-character-interpretation.png"
     />
   </imageobject>
   <textobject>
@@ -1743,14 +1743,14 @@
     <imagedata
        align='center'
        width='5.5in' scalefit='1'
-       fileref="./images/copy-sph-part-left.png"
+       fileref="../../presentations/en/images/copy-sph-part-left.png"
     /><!-- was: width='100%' -->
   </imageobject>
   <imageobject role='fo'>
     <imagedata
        align='center'
        width='5.5in' scalefit='1'
-       fileref="./images/copy-sph-part-left.png"
+       fileref="../../presentations/en/images/copy-sph-part-left.png"
     />
   </imageobject>
   <textobject>
@@ -1768,14 +1768,14 @@
     <imagedata
        align='center'
        width='5.5in' scalefit='1'
-       fileref="./images/copy-sph-part-right.png"
+       fileref="../../presentations/en/images/copy-sph-part-right.png"
     /><!-- was: width='100%' -->
   </imageobject>
   <imageobject role='fo'>
     <imagedata
        align='center'
        width='5.5in' scalefit='1'
-       fileref="./images/copy-sph-part-right.png"
+       fileref="../../presentations/en/images/copy-sph-part-right.png"
     />
   </imageobject>
   <textobject>
@@ -1834,14 +1834,14 @@
     <imagedata
        align='center'
        width='5.5in' scalefit='1'
-       fileref="./images/mged-defaults.png"
+       fileref="../../presentations/en/images/mged-defaults.png"
     /><!-- was: width='100%' -->
   </imageobject>
   <imageobject role='fo'>
     <imagedata
        align='center'
        width='5.5in' scalefit='1'
-       fileref="./images/mged-defaults.png"
+       fileref="../../presentations/en/images/mged-defaults.png"
     />
   </imageobject>
   <textobject>
