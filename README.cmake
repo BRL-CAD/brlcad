@@ -72,13 +72,48 @@ source distribution, the build tool CMake is required - see the
 website at http://www.cmake.org for source and binary installers.
 CMake is also available in many Linux and *BSD distributions.
 
+A precaution before you continue--the following environment variables
+may conflict with the standard build configuration:
+
+      BRLCAD_ROOT
+      TCL_LIBRARY
+      TCLLIBPATH
+      TK_LIBRARY
+
 Once CMake is installed, the following steps may be taken for a full
-default install (starting with a source tarball):
+default install (starting with a source tarball). First the
+unpacking and configuration step:
 
   tar -xvzf brlcad-X.Y.Z.tar.gz
   mkdir brlcad-build
   cd brlcad-build
   cmake ../brlcad-X.Y.Z
+
+where "X.Y.Z" is the version number of BRL-CAD (or the svn working
+directory). If the graphical interface available from CMake is
+installed cmake-gui may be substituted for cmake above.  This will
+bring up an interface displaying various configuration options
+available with CMake.  These options may also be set directly via the
+command line, or a configure wrapper script may be substituted for
+cmake above to provide more autotools-line configuration options.
+
+If you did not change any settings before running cmake, at this point
+you may want to view the generated "CmakeCache.txt" file and change
+some of the settings manually, e.g., change from "OFF" to "ON" the
+following
+
+  BRLCAD-BUILD_EXTRADOCS_PDF:BOOL=ON
+  BRLCAD-BUILD_EXTRADOCS_PDF_MAN:BOOL=OFF
+
+You also may want to change the installation prefix:
+
+  BRLCAD_PREFIX:STRING=/usr/local/brlcad-X.Y.Z
+
+If you make any changes manually, you should run cmake again to ensure
+all dependencies are properly set.
+
+Now you are ready to continue with the build and installation steps:
+
   make
   make install
 
