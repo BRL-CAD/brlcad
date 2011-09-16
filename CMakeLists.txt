@@ -1254,6 +1254,8 @@ BRLCAD_FUNCTION_EXISTS(writev HAVE_WRITEV)
 # just run the test and it will be handled by configure_file later.
 include(CheckSymbolExists)
 IF(WIN32)
+	# consider all warnings as errors (MSVC)
+	SET(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS} /WX)
 	CHECK_SYMBOL_EXISTS(hypot "math.h" HAVE_HYPOT)
 	#If we don't have it, need to define it as _hypot in config_win
 	IF(NOT HAVE_HYPOT)
