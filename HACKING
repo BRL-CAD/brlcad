@@ -339,7 +339,8 @@ FILESYSTEM ORGANIZATION
 Included below is a sample (not comprehensive) of how some of the
 sources are organized in the source distribution.  For the directories
 under src/, see the src/README file for more details on subdirectories
-not covered here.
+not covered here.  For the doc/docbook directory see its own README
+for authors and contributors.
 
   bench/
 	The BRL-CAD Benchmark Suite
@@ -347,6 +348,9 @@ not covered here.
 	Example geometry databases
   doc/
 	Documentation
+  doc/docbook
+	Documentation in DocBook xml format, see doc/docbook/README
+	for more details
   include/
 	Public headers
   m4/
