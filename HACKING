@@ -539,6 +539,24 @@ Functions should always specify a return type, including functions
 that return int or void.  ANSI C prototypes should be used to declare
 functions, not K&R function prototypes.
 
+Exact floating point comparisons are unreliable without requiring
+IEEE-compliant floating point math, but BRL-CAD does not require such
+math for portability and performance reasons.  When floating point
+comparisons are necessary, use the NEAR_EQUAL and NEAR_ZERO macros
+with a specified tolerance or the EQUAL and ZERO macros where a
+tolerance is indeterminate (all the macros are available by including
+bn.h, part of libbn).  Examples:
+
+  For known tolerances:
+
+  * instead of "foo == 2.0" use "NEAR_EQUAL(foo,2.0,tol)"
+  * instead of "foo != 0.0" use "foo !NEAR_ZERO(foo,tol)"
+
+  For indeterminate tolerances:
+
+  * instead of "foo == 2.0" use "EQUAL(foo,2.0)"
+  * instead of "foo != 0.0" use "foo !ZERO(foo)"
+
 There are several functions whose functionality are either wrapped or
 implemented in a cross-platform manner by libbu.  This includes
 functions related to memory allocation, command option parsing,
