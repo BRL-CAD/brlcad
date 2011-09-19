@@ -1,4 +1,4 @@
-<!-- Converted by db4-upgrade version 1.0 -->
+d<!-- Converted by db4-upgrade version 1.0 -->
 
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="objg1">
 
@@ -110,8 +110,8 @@
       <listitem>
 	<para>
          Continue processing on nmg-bomb. If this option is set and an
-         nmg-bomb occurs (i.e. fatal error during processing nmg or
-         bot-via-nmg) conversion will fall-back to outputing the
+         nmg-bomb occurs (i.e., fatal error during processing nmg or
+         bot-via-nmg) conversion will fall-back to outputting the
          grouping to 'native-bot' and then continue processing the
          next grouping. If this option is not set and an nmg-bomb
          occurs then all processing will stop and the converter will
@@ -153,7 +153,7 @@
 	<para>
          Output debug information to stderr stream. An extremely large
          amount of information will be output. It is strongly
-         suggested strerr be piped to a file.
+         suggested stderr be redirected to a file.
 	</para>
       </listitem>
     </varlistentry>
@@ -166,7 +166,7 @@
          different levels of verbose output where higher levels
          increase the amount of output information. Each occurrence of
          this option in the parameter list increases the level. A
-         large amount of information will be output so piping stderr
+         large amount of information will be output so redirecting stderr
          to a file is highly recommended. Verbose messages add warning
          and detailed conversion status messages to the default status
          and error messages. Verbose must be enabled for warning
@@ -194,7 +194,7 @@
          'none'. If you are unsure of which grouping to choose,
          perform some trial conversions in the 'native-bot' conversion
          mode using each of the grouping options. I may also be
-         helpful to enable level two verbose messages and pipe stderr
+         helpful to enable level two verbose messages and redirect stderr
          to a log file. At the beginning of the log file will be a
          section called 'OBJ FILE CONTENTS' which lists how many and
          the names of the groupings in the obj file. Note: It is
