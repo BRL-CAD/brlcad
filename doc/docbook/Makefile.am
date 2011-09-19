@@ -30,30 +30,6 @@ XSL_FO_STYLESHEET=$(top_srcdir)/doc/docbook/resources/standard/xsl/fo/docbook.xs
 	@mkdir -p $$(dirname $@)
 	$(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_FO_STYLESHEET) $?
 
-# validate docbook xml
-XML_HEADER    = "\<?xml version=\'1.0\' encoding=\'us-ascii\'?\>"
-XML_TMPFILE   = .tmp
-
-validate: validate_xmllint
-# xmllint XInclude validation
-XMLLINT            = xmllint
-RNG_SCHEMA         = ./resources/docbook-5.0/rng/docbookxi.rng
-XMLLINT_VALID_ARGS = --xinclude --relaxng $(RNG_SCHEMA) --noout --nonet
-validate_xmllint:
-	@list='$(docbook_sources)'; test -n "$(docbook_sources)" || list=; \
-	for s in $$list; do \
-	  dir="$$(dirname $$s)"; \
-	  tmpfil="$$dir/$(XML_TMPFILE)"; \
-          echo "=== processing file '$$s' (see file '$$tmpfil')"; \
-          if [ -f $$tmpfil ] ; then rm -f $$tmpfil ; fi ; \
-          echo "$(XML_HEADER)" > $$tmpfil; \
-          cat $$s >> $$tmpfil; \
-	  echo "$(XMLLINT) $(XMLLINT_VALID_ARGS) $$tmpfil"; \
-	  $(XMLLINT) $(XMLLINT_VALID_ARGS) $$tmpfil; \
-          echo "=== finished processing file '$$s' (see file '$$tmpfil')"; \
-	done
-
-
 include $(srcdir)/articles/en/Makefile.am
 include $(srcdir)/books/en/Makefile.am
 include $(srcdir)/lessons/en/Makefile.am
@@ -65,18 +41,6 @@ include $(srcdir)/system/man3/en/Makefile.am
 include $(srcdir)/system/man5/en/Makefile.am
 include $(srcdir)/system/mann/en/Makefile.am
 
-
-docbook_sources = \
-  $(articlesDOCBOOK_EN) \
-  $(booksDOCBOOK_EN) \
-  $(lessonsDOCBOOK_EN) \
-  $(lessonsDOCBOOK_ES) \
-  $(man1DOCBOOK_EN) \
-  $(man3DOCBOOK_EN) \
-  $(man5DOCBOOK_EN) \
-  $(mannDOCBOOK_EN) \
-  $(presentationsDOCBOOK_EN) \
-  $(specificationsDOCBOOK_EN)
 
 if BUILD_DOCS
 
