@@ -168,7 +168,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   breaking encapsulation.  this should wait until after cmake merge.
 
 * add code regression that makes sure none of our code cheats by
-  including bu/bu.h -- e.g., make sure BU_CPPFLAGS et al are used so
+  including bu/bu.h -- e.g., make sure BU_CPPFLAGS et al. are used so
   new dependencies are obvious and intentional.
 
 * offset surfaces.  provide feature edit operation to create a solid
