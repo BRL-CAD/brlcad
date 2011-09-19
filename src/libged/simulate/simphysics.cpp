@@ -267,7 +267,6 @@ int step_physics(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_param
 		dynamicsWorld->stepSimulation(1/60.f,10);
 
 		/* Modify collision points after narrowphase collisions */
-		//narrowphase_collisions(dynamicsWorld);
 	}
 
 	bu_log("----- Simulation Complete -----\n");

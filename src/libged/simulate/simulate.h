@@ -24,6 +24,9 @@
  * Declares structures for passing simulation parameters and
  * hold info regarding rigid bodies
  *
+ * TODO : Add support for multiple manifolds for complex structures :
+ * 		  may need a more comprehensive structure.
+ *
  */
 
 #ifndef SIMULATE_H_
@@ -43,16 +46,30 @@
  * will be added later: TODO
  */
 struct rigid_body {
-    int index;
+
+	/* Set by libged before taking this step */
+	int index;
     char *rb_namep;                 /**< @brief pointer to name string */
-    point_t bb_min, bb_max;         /**< @brief body bb bounds */
-    point_t bb_center, bb_dims;     /**< @brief bb center and dimensions */
-    point_t btbb_min, btbb_max;     /**< @brief Bullet body bb bounds */
-    point_t btbb_center, btbb_dims; /**< @brief Bullet bb center and dimensions */
-    mat_t m;                        /**< @brief transformation matrix from Bullet */
-    int state;						/**< @brief rigid body state from Bullet */
+    point_t bb_min, bb_max;         /**< @brief body bb bounds in meters */
+    point_t bb_center, bb_dims;     /**< @brief bb center and dimensions in meters*/
     struct directory *dp;           /**< @brief directory pointer to the related region */
+    point_t contact[4];				/**< @brief contact manifold got from rt */
+    point_t num_contacts;			/**< @brief number of points inserted into contact[] */
     struct rigid_body *next;        /**< @brief link to next body */
+    vect_t force;					/**< @brief force to be applied before stepping sim */
+    fastf_t mass;					/**< @brief mass in Kgs of body */
+    fastf_t restitution;			/**< @brief coeff. of restitution(bounciness) of body */
+    fastf_t friction;				/**< @brief coeff. of friction of body */
+
+    /* Set by Bullet at the end of current step */
+    int state;						/**< @brief rigid body state after this step */
+    point_t btbb_min, btbb_max;     /**< @brief body bb bounds after this step in meters*/
+    point_t btbb_center, btbb_dims; /**< @brief Bullet bb center and dimensions */
+    mat_t m;                        /**< @brief transformation matrix after this step */
+
+    /* Can be set by libged or Bullet(checked and inserted into sim) */
+    vect_t linear_velocity;			/**< @brief linear velocity components */
+    vect_t angular_velocity;		/**< @brief angular velocity components */
 };
 
 /* Contains the simulation parameters, such as number of rigid bodies,

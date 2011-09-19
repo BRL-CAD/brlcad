@@ -48,6 +48,28 @@
 /* The C++ simulation function */
 extern int run_simulation(struct simulation_params *sim_params);
 
+/* Physics attributes that are currently checked for in regions */
+#define MAX_SIM_ATTRIBS 6
+
+/* DO NOT CHANGE THE ORDER of attribs in sim_attrib as the code assumes the current order
+ * add new sim attribs at the bottom and increase MAX_SIM_ATTRIBS
+ */
+static const char* sim_attrib[MAX_SIM_ATTRIBS] = {
+    "simulate:mass",
+    "simulate:force",
+    "simulate:linear_velocity",
+    "simulate:angular_velocity",
+    "simulate:restitution",
+    "simulate:friction"
+};
+
+/* Maximum allowed values of scalars and components of vectors
+ * These are to check for correctness of user set values, not imposed by physics
+ */
+static const fastf_t MAX_MASS = 500000;
+static const fastf_t MAX_FORCE_COMP = 100000;
+static const fastf_t MAX_LINEAR_VELOCITY_COMP = 100000;
+static const fastf_t MAX_ANGULAR_VELOCITY_COMP = 100000;
 
 /**
  * How to use simulate.Blissfully simple interface, more options will be added soon
@@ -177,6 +199,76 @@ int add_to_comb(struct ged *gedp, char *target, char *add)
 
 
 /**
+ * Will check and remove empty sim attributes
+ *
+ */
+int remove_empty_attr(void)
+{
+    /*
+	GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+	i = 3;
+	while (i < (size_t)argc) {
+	    if (BU_STR_EQUAL(argv[i], "region")) {
+		dp->d_flags = dp->d_flags & ~(RT_DIR_REGION);
+	    }
+	    (void)bu_avs_remove(&avs, argv[i]);
+	    i++;
+	}
+	if (db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
+	    bu_vls_printf(gedp->ged_result_str,
+			  "Error: failed to update attributes\n");
+	    bu_avs_free(&avs);
+	    return 0;
+	}
+	*/
+	return 0;
+}
+
+
+/**
+ * Parses a string containing 3 floating point components into a vector vect_t
+ * TODO : Check for a better way
+ */
+int parse_vector(vect_t vec, const char *str)
+{
+	char *cp, *start = (char*)str;
+	unsigned int comp = 0;
+
+	VSETALL(vec, 0);
+
+	bu_log("parse_vector: str = \"%s\" , vec = {%f, %f, %f} \n", str, vec[0], vec[1], vec[2]);
+
+	for (cp=(char*)str; *cp; cp++){
+		if(isdigit(*cp))
+			continue;
+		else{
+			*cp = '\0';
+			vec[comp++] = atoi(start);
+			cp++;
+			start = cp;
+			if(comp >= ELEMENTS_PER_VECT)
+				break;
+		}
+
+		bu_log("parse_vector: str = \"%s\" , vec = {%f, %f, %f} comp = %d, start=%s, cp=%s\n",
+				str, vec[0], vec[1], vec[2], comp, start, cp);
+	}
+
+	/* The last component */
+	if(comp < ELEMENTS_PER_VECT){
+		*cp = '\0';
+		vec[comp] = atoi(start);
+	}
+
+	bu_log("parse_vector: str = \"%s\" , vec = (%f, %f, %f) comp = %d, start=%s, cp=%s\n",
+					str, vec[0], vec[1], vec[2], comp, start, cp);
+
+
+	return GED_OK;
+}
+
+
+/**
  * Add the list of regions in the model to the rigid bodies list in
  * simulation parameters. This function will duplicate the existing regions
  * prefixing "sim_" to the new region and putting them all under a new
@@ -189,8 +281,13 @@ int add_regions(struct ged *gedp, struct simulation_params *sim_params)
     char *prefix = "sim_";
     size_t  prefix_len, prefixed_name_len;
     point_t rpp_min, rpp_max;
-    int i;
+    unsigned int i, j;
     struct rigid_body *prev_node = NULL, *current_node;
+    struct bu_attribute_value_set avs;
+    struct bu_attribute_value_pair *avpp;
+    const char *val;
+    fastf_t simulate_mass;
+    vect_t simulate_force;
 
     /* Kill the existing sim comb */
     kill(gedp, sim_params->sim_comb_name);
@@ -220,7 +317,7 @@ int add_regions(struct ged *gedp, struct simulation_params *sim_params)
             kill_copy(gedp, dp, prefixed_name);
             bu_log("add_regions: Copied \"%s\" to \"%s\"\n", dp->d_namep, prefixed_name);
 
-            /* Get the directory pointer for the object just added */
+            /* Get the directory pointer for the duplicate object just added */
             if ((ndp=db_lookup(gedp->ged_wdbp->dbip, prefixed_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
             	bu_log("add_regions: db_lookup(%s) failed", prefixed_name);
                 return GED_ERROR;
@@ -228,14 +325,71 @@ int add_regions(struct ged *gedp, struct simulation_params *sim_params)
 
             /* Get its BB */
             if(rt_bound_internal(gedp->ged_wdbp->dbip, ndp, rpp_min, rpp_max) == 0)
-            	bu_log("add_regions: Got the BB for \"%s\" as \
-            			min {%f %f %f} max {%f %f %f}\n", ndp->d_namep,
+            	bu_log("add_regions: Got the BB for \"%s\" as min {%f %f %f} max {%f %f %f}\n", ndp->d_namep,
                         rpp_min[0], rpp_min[1], rpp_min[2],
                         rpp_max[0], rpp_max[1], rpp_max[2]);
             else{
             	bu_log("add_regions: ERROR Could not get the BB\n");
                 return GED_ERROR;
             }
+
+            /* Get its physics attributes */
+            bu_avs_init_empty(&avs);
+         	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, ndp)) {
+         		bu_vls_printf(gedp->ged_result_str, "add_regions : Cannot get attributes for object %s\n",
+         												ndp->d_namep);
+         		return GED_ERROR;
+         	}
+
+         	/* Sort attribute-value set array by attribute name */
+         	qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr);
+
+         	for (j = 0; j < MAX_SIM_ATTRIBS; j++) {
+         		val = bu_avs_get(&avs, sim_attrib[j]);
+				if (!val || remove_empty_attr()) {
+					/*bu_log("add_regions : Object %s does not have a '%s' attribute, setting to 0\n",
+						  ndp->d_namep, sim_attrib[j]);*/
+				}
+				else{
+					bu_log("add_regions : Object %s has %s = %s\n", ndp->d_namep, sim_attrib[j], val);
+
+					switch(j){
+					/* Mass */
+					case 0:
+						simulate_mass = atoi(val);
+						if(simulate_mass < 0 || simulate_mass > MAX_MASS){
+							bu_log("add_regions : WARNING %s should be between %f and %f, set to %f\n",
+									sim_attrib[j], 0.0, MAX_MASS, 0.0);
+							current_node->mass = 0;
+						}
+						else
+							current_node->mass = simulate_mass;
+						break;
+					/* Custom Force */
+					case 1:
+						parse_vector(simulate_force, val);
+						break;
+					/* Linear Velocity */
+					case 2:
+
+						break;
+					/* Angular Velocity */
+					case 3:
+
+						break;
+
+
+
+					}
+				}
+         	}
+
+         	/* Just list all the attributes */
+         	for (j = 0, avpp = avs.avp; j < avs.count; j++, avpp++) {
+         		bu_log("Attribute : %s {%s} ", avpp->name, avpp->value);
+         	}
+
+         	bu_avs_free(&avs);
 
             /* Add to simulation list */
             current_node = (struct rigid_body *)bu_malloc(sizeof(struct rigid_body), "rigid_body: current_node");
@@ -641,6 +795,9 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
         return GED_ERROR;
     }
     
+
+
+
 
     /* Make a list containing the bb and existing transforms of all the objects in the model
      * which will participate in the simulation
