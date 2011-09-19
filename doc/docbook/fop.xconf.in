@@ -54,44 +54,44 @@ the location of this file.
     <substitutions>
       <substitution>
         <from font-family="Times New Roman" font-style="italic" font-weight="normal"/>
-        <to font-family="FreeSerif" font-style="italic" font-weight="normal"/>
+        <to font-family="STIXGeneral" font-style="italic" font-weight="normal"/>
       </substitution>
       <substitution>
         <from font-family="Times New Roman" font-style="italic" font-weight="bold"/>
-        <to font-family="FreeSerif" font-style="italic" font-weight="bold"/>
+        <to font-family="STIXGeneral" font-style="italic" font-weight="bold"/>
       </substitution>
       <substitution>
         <from font-family="Times New Roman" font-style="normal" font-weight="normal"/>
-        <to font-family="FreeSerif" font-style="normal" font-weight="normal"/>
+        <to font-family="STIXGeneral" font-style="normal" font-weight="normal"/>
       </substitution>
       <substitution>
         <from font-family="Times New Roman" font-style="normal" font-weight="bold"/>
-        <to font-family="FreeSerif" font-style="normal" font-weight="bold"/>
+        <to font-family="STIXGeneral" font-style="normal" font-weight="bold"/>
       </substitution>
 
       <substitution>
         <from font-family="Times New Roman" font-style="italic" font-weight="400"/>
-        <to font-family="FreeSerif" font-style="italic" font-weight="normal"/>
+        <to font-family="STIXGeneral" font-style="italic" font-weight="normal"/>
       </substitution>
       <substitution>
         <from font-family="Times New Roman" font-style="normal" font-weight="400"/>
-        <to font-family="FreeSerif" font-style="normal" font-weight="normal"/>
+        <to font-family="STIXGeneral" font-style="normal" font-weight="normal"/>
       </substitution>
 
       <substitution>
         <from font-family="Serif" font-style="normal" font-weight="400"/>
-        <to font-family="FreeSerif" font-style="normal" font-weight="normal"/>
+        <to font-family="STIXGeneral" font-style="normal" font-weight="normal"/>
       </substitution>
 
       <substitution>
-        <from font-family="FreeMono" font-style="normal" font-weight="400"/>
-        <to font-family="FreeMono" font-style="normal" font-weight="normal"/>
+        <from font-family="Mono" font-style="normal" font-weight="400"/>
+        <to font-family="DejaVuLGCSansMono" font-style="normal" font-weight="normal"/>
       </substitution>
 
       <!-- these are hacks to get serif for svg equations, must be a bug: -->
       <substitution>
         <from font-family="sans-serif"/>
-        <to font-family="FreeSans"/>
+        <to font-family="DejaVuLGCSans"/>
       </substitution>
 
       <substitution>
@@ -101,12 +101,12 @@ the location of this file.
 
       <substitution>
         <from font-family="Helvetica"/>
-        <to font-family="FreeSans"/>
+        <to font-family="DejaVuLGCSans"/>
       </substitution>
 
       <substitution>
         <from font-family="Lucida Sans Unicode"/>
-        <to font-family="FreeSans"/>
+        <to font-family="DejaVuLGCSans"/>
       </substitution>
 
     </substitutions>
@@ -134,43 +134,43 @@ the location of this file.
 
 
         <!-- GNU FreeFonts ============================================== -->
-        <font kerning="yes" embed-url="/usr/share/fonts/truetype/freefont/FreeSerif.ttf">
-          <font-triplet name="FreeSerif" style="normal" weight="normal"/>
+        <font kerning="yes" embed-url="./resources/fonts/truetype/stix-v1.0.0/STIXGeneral-Regular.ttf">
+          <font-triplet name="STIXGeneral" style="normal" weight="normal"/>
         </font>
-        <font kerning="yes" embed-url="/usr/share/fonts/truetype/freefont/FreeSerifBold.ttf">
-          <font-triplet name="FreeSerif" style="normal" weight="bold"/>
+        <font kerning="yes" embed-url="./resources/fonts/truetype/stix-v1.0.0/STIXGeneral-Bold.ttf">
+          <font-triplet name="STIXGeneral" style="normal" weight="bold"/>
         </font>
-        <font kerning="yes" embed-url="/usr/share/fonts/truetype/freefont/FreeSerifItalic.ttf">
-          <font-triplet name="FreeSerif" style="italic" weight="normal"/>
+        <font kerning="yes" embed-url="./resources/fonts/truetype/stix-v1.0.0/STIXGeneral-Italic.ttf">
+          <font-triplet name="STIXGeneral" style="italic" weight="normal"/>
         </font>
-        <font kerning="yes" embed-url="/usr/share/fonts/truetype/freefont/FreeSerifBoldItalic.ttf">
-          <font-triplet name="FreeSerif" style="italic" weight="bold"/>
-        </font>
-
-        <font kerning="yes" embed-url="/usr/share/fonts/truetype/freefont/FreeSans.ttf">
-          <font-triplet name="FreeSans" style="normal" weight="normal"/>
-        </font>
-        <font kerning="yes" embed-url="/usr/share/fonts/truetype/freefont/FreeSansBold.ttf">
-          <font-triplet name="FreeSans" style="normal" weight="bold"/>
-        </font>
-        <font kerning="yes" embed-url="/usr/share/fonts/truetype/freefont/FreeSansOblique.ttf">
-          <font-triplet name="FreeSans" style="oblique" weight="normal"/>
-        </font>
-        <font kerning="yes" embed-url="/usr/share/fonts/truetype/freefont/FreeSansBoldOblique.ttf">
-          <font-triplet name="FreeSans" style="oblique" weight="bold"/>
+        <font kerning="yes" embed-url="./resources/fonts/truetype/stix-v1.0.0/STIXGeneral-BoldItalic.ttf">
+          <font-triplet name="STIXGeneral" style="italic" weight="bold"/>
         </font>
 
-        <font kerning="yes" embed-url="/usr/share/fonts/truetype/freefont/FreeMono.ttf">
-          <font-triplet name="FreeMono" style="normal" weight="normal"/>
+        <font kerning="yes" embed-url="./resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSans.ttf">
+          <font-triplet name="DejaVuLGCSans" style="normal" weight="normal"/>
         </font>
-        <font kerning="yes" embed-url="/usr/share/fonts/truetype/freefont/FreeMonoBold.ttf">
-          <font-triplet name="FreeMono" style="normal" weight="bold"/>
+        <font kerning="yes" embed-url="./resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSans-Bold.ttf">
+          <font-triplet name="DejaVuLGCSans" style="normal" weight="bold"/>
         </font>
-        <font kerning="yes" embed-url="/usr/share/fonts/truetype/freefont/FreeMonoOblique.ttf">
-          <font-triplet name="FreeMono" style="oblique" weight="normal"/>
+        <font kerning="yes" embed-url="./resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSans-Oblique.ttf">
+          <font-triplet name="DejaVuLGCSans" style="oblique" weight="normal"/>
         </font>
-        <font kerning="yes" embed-url="/usr/share/fonts/truetype/freefont/FreeMonoBoldOblique.ttf">
-          <font-triplet name="FreeMono" style="oblique" weight="bold"/>
+        <font kerning="yes" embed-url="./resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSans-BoldOblique.ttf">
+          <font-triplet name="DejaVuLGCSans" style="oblique" weight="bold"/>
+        </font>
+
+        <font kerning="yes" embed-url="./resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSansMono.ttf">
+          <font-triplet name="DejaVuLGCSansMono" style="normal" weight="normal"/>
+        </font>
+        <font kerning="yes" embed-url="./resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSansMono-Bold.ttf">
+          <font-triplet name="DejaVuLGCSansMono" style="normal" weight="bold"/>
+        </font>
+        <font kerning="yes" embed-url="./resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSansMono-Oblique.ttf">
+          <font-triplet name="DejaVuLGCSansMono" style="oblique" weight="normal"/>
+        </font>
+        <font kerning="yes" embed-url="./resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSansMono-BoldOblique.ttf">
+          <font-triplet name="DejaVuLGCSansMono" style="oblique" weight="bold"/>
         </font>
 
         <!-- embedded fonts -->
