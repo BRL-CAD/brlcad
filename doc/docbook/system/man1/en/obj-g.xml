@@ -20,19 +20,19 @@
 <refsynopsisdiv xml:id="objg_synopsis">
   <cmdsynopsis sepchar=" ">
     <command>obj-g</command>    
-    <arg choice="plain" rep="norepeat">-u <replaceable>units_str</replaceable></arg>
-    <arg choice="plain" rep="norepeat">-o <replaceable>open_bot_type</replaceable></arg>
-    <arg choice="opt" rep="norepeat">-h <replaceable>plate_thickness</replaceable></arg>
+    <arg choice="plain" rep="norepeat">-u<replaceable>units_str</replaceable></arg>
+    <arg choice="plain" rep="norepeat">-o<replaceable>open_bot_type</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-h<replaceable>plate_thickness</replaceable></arg>
     <arg choice="opt" rep="norepeat">-c</arg>
     <arg choice="opt" rep="norepeat">-i</arg>
     <arg choice="opt" rep="norepeat">-p</arg>
     <arg choice="opt" rep="norepeat">-d</arg>
     <arg choice="opt" rep="repeat">-v</arg>
-    <arg choice="opt" rep="norepeat">-g <replaceable>grouping_option</replaceable></arg>
-    <arg choice="opt" rep="norepeat">-m <replaceable>mode_option</replaceable></arg>
-    <arg choice="opt" rep="norepeat">-t <replaceable>distance_tolerance</replaceable></arg>
-    <arg choice="opt" rep="norepeat">-x <replaceable>rt_debug_flag</replaceable></arg>
-    <arg choice="opt" rep="norepeat">-X <replaceable>NMG_debug_flag</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-g<replaceable>grouping_option</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-m<replaceable>mode_option</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-t<replaceable>distance_tolerance</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-x<replaceable>rt_debug_flag</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-X<replaceable>NMG_debug_flag</replaceable></arg>
     <arg choice="plain" rep="norepeat"><replaceable>obj_filename</replaceable></arg>
     <arg choice="plain" rep="norepeat"><replaceable>BRL-CAD_g_filename</replaceable></arg>
   </cmdsynopsis>
