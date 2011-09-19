@@ -124,37 +124,11 @@
 
     <listitem>
       <para>First word on the command line is the command name, any additional words are arguments.</para>
-    </listitem>
 
-    <listitem>
-      <para>command </para>
-    </listitem>
+      <para><emphasis>-- command [arg1 ... argn</emphasis></para>
 
-    <listitem>
-      <para>[</para>
-    </listitem>
+      <para>mged&gt; puts "Hello World"</para>
 
-    <listitem>
-      <para>arg1 ... argn</para>
-    </listitem>
-
-    <listitem>
-      <para>]</para>
-    </listitem>
-
-    <listitem>
-      <para>mged&gt;</para>
-    </listitem>
-
-    <listitem>
-      <para> puts "Hello World"</para>
-    </listitem>
-
-    <listitem>
-      <para>      </para>
-    </listitem>
-
-    <listitem>
       <para>Hello World</para>
     </listitem>
 
@@ -183,74 +157,20 @@
     </listitem>
 
     <listitem>
-      <para>set</para>
-    </listitem>
+      <para>set <emphasis>varName [value]</emphasis></para>
 
-    <listitem>
-      <para> </para>
-    </listitem>
+      <para>Assigns <emphasis>value</emphasis> to the variable <emphasis>varName</emphasis>.</para>
 
-    <listitem>
-      <para>varName</para>
-    </listitem>
+      <para>mged&gt; set day Friday</para>
 
-    <listitem>
-      <para> [</para>
-    </listitem>
-
-    <listitem>
-      <para>value</para>
-    </listitem>
-
-    <listitem>
-      <para>]</para>
-    </listitem>
-
-    <listitem>
-      <para>Assigns </para>
-    </listitem>
-
-    <listitem>
-      <para>to the variable </para>
-    </listitem>
-
-    <listitem>
-      <para>varName.</para>
-    </listitem>
-
-    <listitem>
-      <para>mged&gt; </para>
-    </listitem>
-
-    <listitem>
-      <para>set day Friday</para>
-    </listitem>
-
-    <listitem>
       <para>Friday</para>
-    </listitem>
 
-    <listitem>
-      <para>mged&gt;</para>
-    </listitem>
+      <para>mged&gt; set day</para>
 
-    <listitem>
-      <para> set day</para>
-    </listitem>
-
-    <listitem>
       <para>Friday</para>
-    </listitem>
 
-    <listitem>
-      <para>mged&gt;</para>
-    </listitem>
+      <para>mged&gt; set day 25</para>
 
-    <listitem>
-      <para> set day 25</para>
-    </listitem>
-
-    <listitem>
       <para>25</para>
     </listitem>
 
@@ -269,94 +189,26 @@
 
     <listitem>
       <para>Specified with curly braces</para>
-    </listitem>
 
-    <listitem>
-      <para>	</para>
-    </listitem>
+      <para>mged&gt; set colors {red yellow green blue}</para>
 
-    <listitem>
-      <para>	</para>
-    </listitem>
-
-    <listitem>
-      <para>mged&gt;</para>
-    </listitem>
-
-    <listitem>
-      <para> set colors {red yellow green blue}</para>
-    </listitem>
-
-    <listitem>
-      <para>	</para>
-    </listitem>
-
-    <listitem>
-      <para>      </para>
-    </listitem>
-
-    <listitem>
-      <para>	</para>
-    </listitem>
-
-    <listitem>
       <para>red yellow green blue</para>
     </listitem>
 
     <listitem>
       <para>Sometimes created with "list" command</para>
-    </listitem>
 
-    <listitem>
-      <para>	</para>
-    </listitem>
+      <para>mged&gt; set colors [list red yellow green blue]</para>
 
-    <listitem>
-      <para> </para>
-    </listitem>
-
-    <listitem>
-      <para>	</para>
-    </listitem>
-
-    <listitem>
-      <para>mged&gt;</para>
-    </listitem>
-
-    <listitem>
-      <para> set colors [list red yellow green blue]</para>
-    </listitem>
-
-    <listitem>
-      <para>	</para>
-    </listitem>
-
-    <listitem>
-      <para>        </para>
-    </listitem>
-
-    <listitem>
-      <para> </para>
+      <para>red yellow green blue</para>
     </listitem>
 
     <listitem>
       <para>Can extract elements from the list using the "lindex" command</para>
-    </listitem>
 
-    <listitem>
-      <para>mged&gt;</para>
-    </listitem>
+      <para>mged&gt; lindex {red yellow green blue} 2</para>
 
-    <listitem>
-      <para> lindex {red yellow green blue} 2</para>
-    </listitem>
-
-    <listitem>
       <para>blue</para>
-    </listitem>
-
-    <listitem>
-      <para>	</para>
     </listitem>
 
   </itemizedlist>
@@ -370,37 +222,19 @@
 
     <listitem>
       <para>Uses associative arrays</para>
-    </listitem>
 
-    <listitem>
-      <para>Strings used to index the array elements</para>
-    </listitem>
+      <para>-- Strings used to index the array elements</para>
 
-    <listitem>
-      <para> set profit(January) 1500</para>
-    </listitem>
+      <para>mged&gt; set profit(January) 1500</para>
 
-    <listitem>
       <para>1500</para>
-    </listitem>
 
-    <listitem>
-      <para>mged&gt;</para>
-    </listitem>
+      <para>mged&gt; set profit(February) -200</para>
 
-    <listitem>
-      <para> set profit(February) -200</para>
-    </listitem>
-
-    <listitem>
       <para>-200</para>
-    </listitem>
 
-    <listitem>
-      <para>mged&gt;</para>
-    </listitem>
+      <para>mged&gt; set profit(January)</para>
 
-    <listitem>
       <para>1500</para>
     </listitem>
 
@@ -414,58 +248,46 @@
 
     <listitem>
       <para>Dollar sign $</para>
-    </listitem>
 
-    <listitem>
-      <para>Substitutes the value of the variable</para>
+      <para>--Substitutes the value of the variable</para>
     </listitem>
 
     <listitem>
       <para>Square brackets [ ]</para>
-    </listitem>
 
-    <listitem>
-      <para>Replaces contents with the result of evaluating the command</para>
+      <para>-- Replaces contents with the result of evaluating the command</para>
     </listitem>
 
     <listitem>
       <para>Backslash \</para>
-    </listitem>
 
-    <listitem>
-      <para>Allows special characters such as newlines, [, and $ to be inserted without being treated specially</para>
+      <para>-- Allows special characters such as newlines, [, and $ to be
+      inserted without being treated specially</para>
     </listitem>
 
     <listitem>
       <para>Double quotes " "</para>
-    </listitem>
 
-    <listitem>
-      <para>Allows special characters to be processed normally</para>
+      <para>-- Allows special characters to be processed normally</para>
     </listitem>
 
     <listitem>
       <para>Curly braces {}</para>
-    </listitem>
 
-    <listitem>
-      <para>Disables special characters</para>
+      <para>-- Disables special characters</para>
     </listitem>
 
     <listitem>
       <para>Parentheses ()</para>
-    </listitem>
 
-    <listitem>
-      <para>Delimits key values in arrays</para>
+      <para>-- Delimits key values in arrays</para>
     </listitem>
 
     <listitem>
       <para>Hashmark #</para>
-    </listitem>
 
-    <listitem>
-      <para>At the beginning of a line, signifies a comment to follow</para>
+      <para>-- At the beginning of a line, signifies a comment to
+      follow</para>
     </listitem>
 
   </itemizedlist>
@@ -478,11 +300,7 @@
   <itemizedlist>
 
     <listitem>
-      <para>mged&gt;</para>
-    </listitem>
-
-    <listitem>
-      <para> set name Elvis</para>
+      <para>mged&gt; set name Elvis</para>
     </listitem>
 
     <listitem>
@@ -490,11 +308,7 @@
     </listitem>
 
     <listitem>
-      <para>mged&gt;</para>
-    </listitem>
-
-    <listitem>
-      <para> puts "Hello name"</para>
+      <para>mged&gt; puts "Hello name"</para>
     </listitem>
 
     <listitem>
@@ -502,11 +316,7 @@
     </listitem>
 
     <listitem>
-      <para>mged&gt;</para>
-    </listitem>
-
-    <listitem>
-      <para> puts "Hello $name"</para>
+      <para>mged&gt; puts "Hello $name"</para>
     </listitem>
 
     <listitem>
@@ -514,43 +324,27 @@
     </listitem>
 
     <listitem>
-      <para>mged&gt;</para>
-    </listitem>
-
-    <listitem>
-      <para> set len [string length $name]</para>
+      <para>mged&gt; set len [string length $name]</para>
     </listitem>
 
     <listitem>
       <para>5</para>
-    </listitem>
 
-    <listitem>
-      <para>string length $name returns 5</para>
-    </listitem>
+      <para>-- string length $name returns 5</para>
 
-    <listitem>
-      <para>len gets the value 5</para>
+      <para>-- len gets the value 5</para>
     </listitem>
 
   </itemizedlist>
 
 <!-- slide 11 -->
 
-  <para>Special Character Examples </para>
+  <para>Special Character Examples (cont'd)</para>
 
   <itemizedlist>
 
     <listitem>
-      <para>(cont'd)</para>
-    </listitem>
-
-    <listitem>
-      <para>mged&gt;</para>
-    </listitem>
-
-    <listitem>
-      <para> set price 1.41</para>
+      <para>mged&gt; set price 1.41</para>
     </listitem>
 
     <listitem>
@@ -558,11 +352,7 @@
     </listitem>
 
     <listitem>
-      <para>mged&gt;</para>
-    </listitem>
-
-    <listitem>
-      <para> puts "Gasoline: \$ $price/gallon"</para>
+      <para>mged&gt; puts "Gasoline: \$ $price/gallon"</para>
     </listitem>
 
     <listitem>
@@ -570,11 +360,7 @@
     </listitem>
 
     <listitem>
-      <para>mged&gt;</para>
-    </listitem>
-
-    <listitem>
-      <para> puts {Gasoline: \$ $price/gallon}</para>
+      <para>mged&gt; puts {Gasoline: \$ $price/gallon}</para>
     </listitem>
 
     <listitem>
@@ -582,11 +368,7 @@
     </listitem>
 
     <listitem>
-      <para>mged&gt; </para>
-    </listitem>
-
-    <listitem>
-      <para>set product 1; #This is a comment</para>
+      <para>mged&gt; set product 1; #This is a comment</para>
     </listitem>
 
     <listitem>
@@ -602,24 +384,19 @@
   <itemizedlist>
 
     <listitem>
-      <para>MGED traditional "name globbing" characters conflict with Tcl/Tk usage:</para>
+      <para>MGED traditional "name globbing" characters conflict with
+      Tcl/Tk usage:</para>
+
+      <para>-- MGED follows Unix shell filename patterns.</para>
+
+      <para>-- Tcl/Tk has different interpretation of * and [].</para>
     </listitem>
 
     <listitem>
-      <para>MGED follows Unix shell filename patterns.</para>
-    </listitem>
+      <para>Users can select which interpretation of special
+      characters:</para>
 
-    <listitem>
-      <para>Tcl/Tk has different interpretation of * and [].</para>
-    </listitem>
-
-    <listitem>
-      <para>Users can select which interpretation of special characters:</para>
-    </listitem>
-
-    <listitem>
       <para>.mgedrc: set MGED variable </para>
-    </listitem>
 
     <listitem>
       <para>glob_compat_mode</para>
@@ -684,47 +461,21 @@
   <itemizedlist>
 
     <listitem>
-      <para>The</para>
-    </listitem>
+      <para>The <emphasis role="bold">expr</emphasis>command is used
+      to evaluate math expressions.</para>
 
-    <listitem>
-      <para>command is used to evaluate math expressions.</para>
-    </listitem>
+      <para>mged&gt; expr 2 + 2</para>
 
-    <listitem>
-      <para>mged&gt;</para>
-    </listitem>
-
-    <listitem>
-      <para> expr 2 + 2</para>
-    </listitem>
-
-    <listitem>
       <para>4</para>
-    </listitem>
 
-    <listitem>
-      <para>mged&gt;</para>
-    </listitem>
+      <para>mged&gt; expr (3 + 2) * 4</para>
 
-    <listitem>
-      <para> expr (3 + 2) * 4</para>
-    </listitem>
-
-    <listitem>
       <para>20</para>
-    </listitem>
 
-    <listitem>
-      <para>mged&gt;</para>
-    </listitem>
+      <para>mged&gt; in ball.s sph 0 0 0 [expr 3 + 4]</para>
 
-    <listitem>
-      <para> in ball.s sph 0 0 0 [expr 3 + 4]</para>
-    </listitem>
-
-    <listitem>
-      <para>A sphere is created with a vertex (0,0,0) and a radius of 7.</para>
+      <para>-- A sphere is created with a vertex (0,0,0) and a radius
+      of 7.</para>
     </listitem>
 
   </itemizedlist>
@@ -736,90 +487,22 @@
   <itemizedlist>
 
     <listitem>
-      <para>if</para>
-    </listitem>
+      <para>if {test} {body1} [else {body2}]</para>
 
-    <listitem>
-      <para> {</para>
-    </listitem>
+      <para>mged&gt; set temp 90</para>
 
-    <listitem>
-      <para>test</para>
-    </listitem>
-
-    <listitem>
-      <para>} {</para>
-    </listitem>
-
-    <listitem>
-      <para>body1</para>
-    </listitem>
-
-    <listitem>
-      <para>} [</para>
-    </listitem>
-
-    <listitem>
-      <para>else </para>
-    </listitem>
-
-    <listitem>
-      <para>{</para>
-    </listitem>
-
-    <listitem>
-      <para>body2</para>
-    </listitem>
-
-    <listitem>
-      <para>}]</para>
-    </listitem>
-
-    <listitem>
-      <para>mged&gt;</para>
-    </listitem>
-
-    <listitem>
-      <para> set temp 90</para>
-    </listitem>
-
-    <listitem>
       <para>90</para>
-    </listitem>
 
-    <listitem>
-      <para>mged&gt;</para>
-    </listitem>
+      <para>mged&gt; if {$temp &gt; 75} {</para>
 
-    <listitem>
-      <para> if {$temp &gt; 75} {</para>
-    </listitem>
+      <para>puts "It's hot"</para>
 
-    <listitem>
-      <para>         </para>
-    </listitem>
-
-    <listitem>
       <para>} else {</para>
-    </listitem>
 
-    <listitem>
-      <para>             </para>
-    </listitem>
-
-    <listitem>
       <para>puts "It's moderate"</para>
-    </listitem>
 
-    <listitem>
-      <para>         </para>
-    </listitem>
+      <para> }</para>
 
-    <listitem>
-      <para>}</para>
-    </listitem>
-
-    <listitem>
       <para>It's hot</para>
     </listitem>
 
@@ -833,90 +516,24 @@
   <itemizedlist>
 
     <listitem>
-      <para>while </para>
-    </listitem>
+      <para>while {test} {body}</para>
 
-    <listitem>
-      <para>{</para>
-    </listitem>
+      <para>mged&gt; set time 3</para>
 
-    <listitem>
-      <para>test</para>
-    </listitem>
-
-    <listitem>
-      <para>} {</para>
-    </listitem>
-
-    <listitem>
-      <para>body</para>
-    </listitem>
-
-    <listitem>
-      <para>}</para>
-    </listitem>
-
-    <listitem>
-      <para>mged&gt;</para>
-    </listitem>
-
-    <listitem>
-      <para> set time 3</para>
-    </listitem>
-
-    <listitem>
       <para>3</para>
-    </listitem>
 
-    <listitem>
-      <para>mged&gt;</para>
-    </listitem>
+      <para>mged&gt; while {$time &gt; 0} {</para>
 
-    <listitem>
-      <para> while {$time &gt; 0} {</para>
-    </listitem>
-
-    <listitem>
-      <para>                  </para>
-    </listitem>
-
-    <listitem>
       <para>puts "Time is $time"</para>
-    </listitem>
 
-    <listitem>
-      <para>	</para>
-    </listitem>
-
-    <listitem>
-      <para>	</para>
-    </listitem>
-
-    <listitem>
-      <para>        </para>
-    </listitem>
-
-    <listitem>
       <para>set time [expr $time - 1]</para>
-    </listitem>
 
-    <listitem>
-      <para>             </para>
-    </listitem>
-
-    <listitem>
       <para>}</para>
-    </listitem>
 
-    <listitem>
       <para>Time is 3</para>
-    </listitem>
 
-    <listitem>
       <para>Time is 2</para>
-    </listitem>
 
-    <listitem>
       <para>Time is 1</para>
     </listitem>
 
