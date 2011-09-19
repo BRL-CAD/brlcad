@@ -397,6 +397,7 @@
       characters:</para>
 
       <para>.mgedrc: set MGED variable </para>
+    </listitem>
 
     <listitem>
       <para>glob_compat_mode</para>
