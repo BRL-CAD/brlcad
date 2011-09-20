@@ -42,8 +42,6 @@
  *   groups, there will be two copies of the face in the resulting
  *   model.
  */
-#define OLD_TRI 1
-
 #include "common.h"
 
 #include <stdlib.h>
@@ -1265,7 +1263,7 @@ populate_triangle_indexes(struct ga_t *ga,
 			  size_t face_idx,
 			  int texture_mode,  /* PROC_TEX, IGNR_TEX */
 			  int normal_mode,   /* PROC_NORM, IGNR_NORM */
-			  struct bn_tol *UNUSED(tol))
+			  struct bn_tol *tol)
 {
     size_t vert_idx = 0;                 /* index into vertices within for-loop */
     size_t idx = 0;                      /* sub index */
@@ -1285,11 +1283,12 @@ populate_triangle_indexes(struct ga_t *ga,
     tri_arr_1D_t index_arr_tri_1D = NULL;
     tri_arr_2D_t index_arr_tri_2D = NULL;
     tri_arr_3D_t index_arr_tri_3D = NULL;
-#if !OLD_TRI
+
     double *facePoints;
     int *triFaces;
     size_t i, numFacePoints;
-#endif
+    struct faceuse *fu;
+    const int POINTS_PER_FACE = 3;
 
     if (ti->index_arr_tri == (void *)NULL) {
 
@@ -1360,26 +1359,10 @@ populate_triangle_indexes(struct ga_t *ga,
 	    break;
     }
 
-    /* ### TODO:
-     *   Get the actual face VERTICES and pack them into array.
-     *   Pass that array to my function.
-     *   Get back array of local indexes.
-     *   Pass these to retrieve_coord_index() to get global inedexes.
-     *   Stash global indexes just like now.
-     */
-
-    /* compute number of new triangles to create */
-#if OLD_TRI
-    if (gfi->num_vertices_arr[face_idx] > 3) {
-	num_new_tri = gfi->num_vertices_arr[face_idx] - 2;
-    } else {
-	num_new_tri = 1;
-    }
-#else
-    /* collect face vertices */
+    /* copy face vertices into facePoints array */
     numFacePoints = gfi->num_vertices_arr[face_idx];
     facePoints = (double*)bu_malloc(
-	sizeof(double) * ELEMENTS_PER_POINT * numFacePoints, "facePoints");
+	numFacePoints * ELEMENTS_PER_POINT * sizeof(double), "facePoints");
 
     for (i = 0; i < numFacePoints; ++i) {
 	retrieve_coord_index(ga, gfi, face_idx, i, tmp_v, tmp_n, tmp_t, &tmp_w,
@@ -1387,8 +1370,32 @@ populate_triangle_indexes(struct ga_t *ga,
 	VMOVE(&facePoints[i * ELEMENTS_PER_POINT], tmp_v);
     }
 
-    triangulateFace(&triFaces, &num_new_tri, facePoints, numFacePoints, *tol);
-#endif
+    fu = make_faceuse_from_face(facePoints, numFacePoints);
+
+    /* do simple or robust triangulation based on whether face is concave or convex */
+    if (nmg_lu_is_convex(BU_LIST_FIRST(loopuse, &fu->lu_hd), tol)) {
+
+	/* compute number of new triangles to create */
+	if (gfi->num_vertices_arr[face_idx] > 3) {
+	    num_new_tri = gfi->num_vertices_arr[face_idx] - 2;
+	} else {
+	    num_new_tri = 1;
+	}
+
+	/* create triangles that all start at the first face vertex */
+	triFaces = (int*)bu_malloc(num_new_tri * POINTS_PER_FACE * sizeof(int),
+	    "triFaces");
+
+	for (vert_idx = 0; vert_idx < num_new_tri; vert_idx++) {
+	    triFaces[vert_idx * ELEMENTS_PER_POINT + X] = 0;
+	    triFaces[vert_idx * ELEMENTS_PER_POINT + Y] = vert_idx + 1;
+	    triFaces[vert_idx * ELEMENTS_PER_POINT + Z] = vert_idx + 2;
+	}
+    } else {
+	triangulateFace(&triFaces, &num_new_tri, facePoints, numFacePoints, *tol);
+    }
+
+    bu_free(facePoints, "facePoints");
 
     /* if needed, increase size of 'ti->index_arr_tri' array */
     if ((ti->num_tri + num_new_tri) >= ti->max_tri) {
@@ -1413,26 +1420,13 @@ populate_triangle_indexes(struct ga_t *ga,
 	}
     }
 
-    /* find start indexes */
-    retrieve_coord_index(ga, gfi, face_idx, 0, tmp_v, tmp_n, tmp_t, &tmp_w, &svofi, &snofi, &stofi);
-
-    /* populate triangle indexes array, if necessary, triangulate face */
+    /* populate triangle indexes array */
     for (vert_idx = 0; vert_idx < num_new_tri; vert_idx++) {
 	for (idx = 0; idx < 3; idx++) {
-#if OLD_TRI
-	    if (idx == 0) {
-		/* use the same vertex for the start of each triangle */
-		vofi = svofi;
-		nofi = snofi;
-		tofi = stofi;
-	    } else {
-		retrieve_coord_index(ga, gfi, face_idx, vert_idx + idx, tmp_v, tmp_n,
-				     tmp_t, &tmp_w, &vofi, &nofi, &tofi);
-	    }
-#else
-	    retrieve_coord_index(ga, gfi, face_idx, triFaces[vert_idx + idx], tmp_v, tmp_n,
-				 tmp_t, &tmp_w, &vofi, &nofi, &tofi);
-#endif
+
+	    retrieve_coord_index(ga, gfi, face_idx, triFaces[vert_idx * ELEMENTS_PER_POINT + idx], tmp_v,
+		tmp_n, tmp_t, &tmp_w, &vofi, &nofi, &tofi);
+
 	    switch (ti->tri_type) {
 		case FACE_V:
 		    index_arr_tri_1D[ti->num_tri][idx] = vofi;
@@ -1454,6 +1448,9 @@ populate_triangle_indexes(struct ga_t *ga,
 	}
 	ti->num_tri++;
     }
+
+    bu_free(triFaces, "triFaces");
+
     return;
 }
 
