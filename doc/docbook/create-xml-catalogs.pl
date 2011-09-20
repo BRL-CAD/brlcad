@@ -7,31 +7,31 @@ use strict;
 use warnings;
 
 use BRLCAD_DOC;
+use DBPATH;
 
-my $xmlcat = $BRLCAD_DOC::genxmlcat;
-my $fopcat = $BRLCAD_DOC::genfopxmlcat;
-
-# this needs to be adjusted if the package is moved
-my $home   = '.';
+# this absolute path may need to be adjusted if the package is moved
+my $dbhome = $DBPATH::DBHOME;
 
 # Note: no going back to pre-namespace days
-my $dbdir = 'docbook-xsl-ns-1.76.1';
+my $dbdir  = 'resources/standard/xsl';
+my $dbdir2 = 'resources/standard/svg';
+my $brldir = 'resources/brlcad';
 
-my $dbht    = "$vhome/$dbdir/html/chunk.xsl";
-my $dbht2   = "$vhome/$dbdir/html/docbook.xsl";
+my $dbht   = "$dbhome/$dbdir/xhtml-1_1/docbook.xsl";
+my $dbfo   = "$dbhome/$dbdir/fo/docbook.xsl";
+my $dbman  = "$dbhome/$dbdir/manpages/docbook.xsl";
 
-my $xdbht    = "$vhome/$dbdir/xhtml/chunk.xsl";
-my $xdbht2   = "$vhome/$dbdir/xhtml/docbook.xsl";
-
-my $dbfo    = "$vhome/$dbdir/fo/docbook.xsl";
+# the two auto-generated catalog files:
+my $xmlcat = "${brldir}/${BRLCAD_DOC::genxmlcat}";
+my $fopcat = "${brldir}/${BRLCAD_DOC::genfopxmlcat}";
 
 # instead of one-to-one mappings, may use rewrite entries--see p. 51 of
 # Bob Stayton's book
 my $original  = 'http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd';
-my $svgdtd    = "$vhome/doc/docbook_userguide/misc-files/svg10.dtd";
+my $svgdtd    = "$dbhome/$dbdir2/svg10.dtd";
 
 my $original2 = 'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd';
-my $svgdtd2   = "$vhome/doc/docbook_userguide/misc-files/svg11-tiny-flat.dtd";
+my $svgdtd2   = "$dbhome/$dbdir2/svg11-tiny-flat.dtd";
 
 # create xml catalog file
 open my $fp, '>', $xmlcat
@@ -54,7 +54,7 @@ open my $fp, '>', $xmlcat
 
 =cut
 
-DOC::print_autogen_header($fp, $0, 'xmlhdr');
+BRLCAD_DOC::print_autogen_header($fp, $0, 'xmlhdr');
 print $fp <<"FILE1";
 <catalog xmlns='urn:oasis:names:tc:entity:xmlns:xml:catalog'>
 
@@ -66,35 +66,17 @@ print $fp <<"FILE1";
 
   <rewriteSystem
       systemIdStartString='http://www.w3.org/Graphics/SVG/1.1/DTD/'
-      rewritePrefix='file://$vhome/doc/docbook_userguide/misc-files/'
+      rewritePrefix='file://$dbhome/$dbdir2/'
   />
+
   <rewriteURI
       uriStartString='http://www.w3.org/Graphics/SVG/1.1/DTD/'
-      rewritePrefix='file://$vhome/doc/docbook_userguide/misc-files/'
+      rewritePrefix='file://$dbhome/$dbdir2/'
   />
 
-  <uri
-      name='html/chunk.xsl'
-      uri='file://$dbht'
-  />
-  <uri
-      name='html/docbook.xsl'
-      uri='file://$dbht2'
-  />
-
-  <uri
-      name='xhtml/chunk.xsl'
-      uri='file://$xdbht'
-  />
-  <uri
-      name='xhtml/docbook.xsl'
-      uri='file://$xdbht2'
-  />
-
-
-  <uri
-      name='fo/docbook.xsl'
-      uri='file://$dbfo'
+  <rewriteURI
+      uriStartString='/xsl/'
+      rewritePrefix='file://$dbhome/$dbdir/'
   />
 
 
