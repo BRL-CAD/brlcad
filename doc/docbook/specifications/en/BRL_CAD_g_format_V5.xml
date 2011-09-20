@@ -1,8 +1,9 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 
 <article xmlns="http://docbook.org/ns/docbook" version="5.0" class="specification">
-  <info><title>BRL-CAD Database Format</title><subtitle>Version 5 (DRAFT)</subtitle>
-    
+  <info>
+    <title>BRL-CAD Database Format</title>
+    <subtitle>Version 5 (DRAFT)</subtitle>
     
     <authorgroup>
       <author><personname><firstname>Lee</firstname><surname>Butler</surname><othername role="mi">A</othername></personname><affiliation>
@@ -79,10 +80,9 @@
         </affiliation></author>
     </authorgroup>
   </info>
-  
-  
 
-  <section><info><title>Background and Terminology</title></info>
+  <section>
+    <title>Background and Terminology</title>
     
     <para>
       BRL-CAD is a constructive solid geometry (CSG) modeling system. Primitive solid shapes 
@@ -112,7 +112,9 @@
       In a slight abuse of terminology, the DAG is often spoken of as a tree or collection 
       of trees. In this context, the solids are also called <emphasis>leaves</emphasis>. 
     </para>
-    <section><info><title>Format of Data Elements/Database External Format</title></info>
+
+    <section>
+      <title>Format of Data Elements/Database External Format</title>
       
       <para>
 	The external format has several important properties, especially with regard 
@@ -162,7 +164,8 @@
     </section>
   </section>
 
-  <section><info><title>Definition of a Single, Generic Database Object</title></info>
+  <section>
+    <title>Definition of a Single, Generic Database Object</title>
     
     <para>
       The database access library stores <emphasis>objects</emphasis> as a collection 
@@ -175,7 +178,9 @@
       In the case of librt, each database object will contain exactly one combination 
       node or leaf (solid) node. 
     </para>
-    <section><info><title>Object Structure</title></info>
+
+    <section>
+      <title>Object Structure</title>
       
       <para>
 	All objects share certain common properties, which are stored in a standardized 
@@ -262,8 +267,10 @@
 	The on-disk version of each object consists of three distinct parts: Object Header, 
 	Object Interior, and Object Footer. This is called the external format of the object.
       </para>
-      <table frame="all"><info><title>On-Disk BRL-CAD Object Structure</title></info>
-	
+
+      <table frame="all">
+        <title>On-Disk BRL-CAD Object Structure</title>
+
 	<tgroup cols="3" align="center" colsep="1" rowsep="1">
 	  <thead>
 	    <row>
@@ -385,29 +392,33 @@
 	  </tbody>
 	</tgroup>
       </table>
+
       <para>
-	????Need a description that says that an object can now have (1) EITHER an attribute OR a 
+	????Need a description that says that an object can now have (1) EITHER an attribute OR a
 	body, (2) BOTH an attribute and a body, or (3) NEITHER an attribute nor a body.
       </para>
       <para>
-	The routines db_get_external() and db_put_external() are used to move objects in external 
-	format between memory and the database disk file. The routines db_wrap_external() and 
-	db_unwrap_external() are used to wrap and unwrap the (??? Object_Body or Object_Interior ???) 
+	The routines db_get_external() and db_put_external() are used to move objects in external
+	format between memory and the database disk file. The routines db_wrap_external() and
+	db_unwrap_external() are used to wrap and unwrap the (??? Object_Body or Object_Interior ???)
 	(already in external form) in a standardized database object's wrapper.
       </para>
     </section>
 
-    <section><info><title>Flags</title></info>
-      
+    <section>
+      <title>Flags</title>
+
       <para>
-	The Flags element consists of three 8-bit fields: HFlags, AFlags, and BFlags. The HFlags 
-	field is 1 byte containing flag bits that pertain to the noncompressible basic header and 
-	the database object as a whole. The AFlags and BFlags fields are each single bytes containing 
-	flag bits that pertain to the (potentially compressed) attributes and body, respectively, in 
+	The Flags element consists of three 8-bit fields: HFlags, AFlags, and BFlags. The HFlags
+	field is 1 byte containing flag bits that pertain to the noncompressible basic header and
+	the database object as a whole. The AFlags and BFlags fields are each single bytes containing
+	flag bits that pertain to the (potentially compressed) attributes and body, respectively, in
 	the object interior.
       </para>
-      <table frame="all"><info><title>BRL-CAD Flags Structure</title></info>
-	
+
+      <table frame="all">
+        <title>BRL-CAD Flags Structure</title>
+
 	<tgroup cols="26" align="center">
 	  <colspec colname="h1"/>
 	  <colspec colname="h2"/>
@@ -494,19 +505,21 @@
 	</tgroup>
       </table>
 
-      <section><info><title>Wid Flags</title></info>
-	
+      <section>
+        <title>Wid Flags</title>
+
 	<para>
-	  The length of an object or subelement in the database is recorded using an 
-	  unsigned integer. These are variable-width fields based on the magnitude of the 
-	  maximum number needed. The Wid bits specify the size of the unsigned integer 
-	  employed in each instance. There are four 2-bit width (Wid) flags: Object_Wid 
-	  and Name_Wid (stored in HFlags), Attribute_Wid (stored in AFlags), and Body_Wid 
+	  The length of an object or subelement in the database is recorded using an
+	  unsigned integer. These are variable-width fields based on the magnitude of the
+	  maximum number needed. The Wid bits specify the size of the unsigned integer
+	  employed in each instance. There are four 2-bit width (Wid) flags: Object_Wid
+	  and Name_Wid (stored in HFlags), Attribute_Wid (stored in AFlags), and Body_Wid
 	  (stored in BFlags). The Wid fields are interpreted in this manner:
 	</para>
-	
-	<table frame="all"><info><title>Wid Flag Definitions</title></info>
-	  
+
+	<table frame="all">
+          <title>Wid Flag Definitions</title>
+
 	  <tgroup cols="2" align="center">
 	    <thead>
 	      <row>
@@ -534,44 +547,54 @@
 	  </tbody>
 	</tgroup>
       </table>
+
       <para>
-	The Object_Wid flag, at the high end of HFlags, encodes the width of the Object_Length 
-	field. The Name_Wid flag, in bits 3 and 4 of HFlags, encodes the width of the Name_Length 
-	field (when the name element is present; see the N bit, shown later.). Attribute_Wid (or 
-	Body_Wid, as the case may be) encodes the width of the Attribute_Length field (when the 
+	The Object_Wid flag, at the high end of HFlags, encodes the
+	width of the Object_Length field. The Name_Wid flag, in bits 3
+	and 4 of HFlags, encodes the width of the Name_Length field
+	(when the name element is present; see the N bit, shown
+	later.). Attribute_Wid (or Body_Wid, as the case may be)
+	encodes the width of the Attribute_Length field (when the
 	Object_Attributes (or Object_Attributes) element is present.
-	http://ftp.arl.mil/~mike/papers/brlcad5.0/newdb.html - bbitSee the P bit, below.)??????????.
+	http://ftp.arl.mil/~mike/papers/brlcad5.0/newdb.html - bbitSee
+	the P bit, below.)??????????.
       </para>
+
       <para>
-	The rationale for allowing the width of the Object_Length field to be specified independently 
-	of the other widths is to save space on objects in which the values in many of the length 
-	fields nearly overflow the specified field width, so that their sum requires a wider field. 
-	For example, for four 255-byte interior fields, the corresponding length fields need be no 
-	more than 8 bits wide, so the choice Interior_Wid=00 suffices, but their combined length of 
-	1020 bytes would require Object_Wid=01. Because all of the length fields besides Object_Length 
-	must have the same width, the largest of the values stored in these length fields determines 
-	the value of Interior_Wid required. Both Object_Wid and Interior_Wid may vary from object to 
-	object. It is expected that the routines that write an object to the disk will use the 
+	The rationale for allowing the width of the Object_Length field to be specified independently
+	of the other widths is to save space on objects in which the values in many of the length
+	fields nearly overflow the specified field width, so that their sum requires a wider field.
+	For example, for four 255-byte interior fields, the corresponding length fields need be no
+	more than 8 bits wide, so the choice Interior_Wid=00 suffices, but their combined length of
+	1020 bytes would require Object_Wid=01. Because all of the length fields besides Object_Length
+	must have the same width, the largest of the values stored in these length fields determines
+	the value of Interior_Wid required. Both Object_Wid and Interior_Wid may vary from object to
+	object. It is expected that the routines that write an object to the disk will use the
 	narrowest width possible for each object.
       </para>
+
       </section>
 
-      <section><info><title>"r" Bits</title></info>
-	
+      <section>
+        <title>"r" Bits</title>
+
 	<para>
 	  The bits labled as "r" in all three flags are reserved for future design
 	  work assigning additional optional fields in the object.
 	</para>
       </section>
- 
-      <section><info><title>HFlags - the DLI Flag</title></info>
-	
+
+      <section>
+        <title>HFlags - the DLI Flag</title>
+
 	<para>
-	  The DLI flag is a 2-bit flag that indicates whether the object is an Application 
-	  Data Object or a Database Layer Internal Object. The bits are interpreted as follows: 
+	  The DLI flag is a 2-bit flag that indicates whether the object is an Application
+	  Data Object or a Database Layer Internal Object. The bits are interpreted as follows:
 	</para>
-	<table frame="all" pgwide="1"><info><title>DLI Flag Structure</title></info>
-	  
+
+	<table frame="all" pgwide="1">
+          <title>DLI Flag Structure</title>
+
 	  <tgroup cols="2" align="center">
 	    <thead>
 	      <row>
@@ -583,10 +606,10 @@
 	    <row>
 	      <entry>00</entry>
 	      <entry align="left">
-		Application Data Object 
+		Application Data Object
 		<para>
-		  The object contains application-specific data. N must be 1. A and B are 
-		  determined by what the application presents for storage in the object; both 
+		  The object contains application-specific data. N must be 1. A and B are
+		  determined by what the application presents for storage in the object; both
 		  may be 0 (empty Object_Interior).
 		</para>
 	      </entry>
@@ -596,24 +619,24 @@
 	      <entry align="left">
 		Database Layer Internal, Header Object
 		<para>
-		  A Header Object must be the first object encountered in the database. In 
-		  order to support direct concatenation of two existing databases into one new 
-		  database, additional header objects may appear elsewhere in the database The 
-		  header object has no object name, object attributes, or object body (e.g., 
-		  N=0, A=0, B=0). Major_Type=RESERVED, Minor_Type=0. 
+		  A Header Object must be the first object encountered in the database. In
+		  order to support direct concatenation of two existing databases into one new
+		  database, additional header objects may appear elsewhere in the database The
+		  header object has no object name, object attributes, or object body (e.g.,
+		  N=0, A=0, B=0). Major_Type=RESERVED, Minor_Type=0.
 		</para>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>10</entry>
 	      <entry align="left">
-		Database Layer Internal, Free Storage. 
+		Database Layer Internal, Free Storage.
 		<para>
-		  Unused space in the database is kept using a special Free DB Storage object 
-		  that has no object name or object attributes. The object body is null-filled 
-		  and of the proper size for the storage to be represented. Like all other objects, 
-		  the total length of the object will be a multiple of 8 bytes. N=0, A=0, B=1. 
-		  Major_Type=RESERVED, Minor_Type=0. 
+		  Unused space in the database is kept using a special Free DB Storage object
+		  that has no object name or object attributes. The object body is null-filled
+		  and of the proper size for the storage to be represented. Like all other objects,
+		  the total length of the object will be a multiple of 8 bytes. N=0, A=0, B=1.
+		  Major_Type=RESERVED, Minor_Type=0.
 		</para>
 	      </entry>
 	    </row>
@@ -629,35 +652,38 @@
 	  </tbody>
 	</tgroup>
       </table>
+
       <para>
 	The DLI flag is not available to the higher database access layers.
       </para>
       <note>
 	<para>
-	  Implementation note: Before writing a new object into the database in a free area, 
+	  Implementation note: Before writing a new object into the database in a free area,
 	  the library should read the object header from the database and confirm that the space
-	  is indeed free. Similarly, additions to the end should be checked by ensuring that the 
-	  file hasn't been extended. In case the check fails, the database write should fail, the 
-	  user should be notified, and the internal library mode (not the operating system file 
+	  is indeed free. Similarly, additions to the end should be checked by ensuring that the
+	  file hasn't been extended. In case the check fails, the database write should fail, the
+	  user should be notified, and the internal library mode (not the operating system file
 	  access permissions) should be changed over to read-only access so that no further attempts
-	  to write will be issued. These checks will provide protection against two or more users 
-	  trying to modify the same database simultaneously and accidentally stepping on each 
+	  to write will be issued. These checks will provide protection against two or more users
+	  trying to modify the same database simultaneously and accidentally stepping on each
 	  other. In the NFS world, file locking isn't a strong enough assurance.
 	</para>
       </note>
       </section>
- 
-      <section><info><title>HFlags - the N Bit</title></info>
-	
+
+      <section>
+        <title>HFlags - the N Bit</title>
+
 	<para>
-	  The "N" bit indicates whether the Name element (consisting of Name_Length and Object_Name 
-	  fields) is present (1) or absent (0) in the noncompressible basic header immediately following the 
+	  The "N" bit indicates whether the Name element (consisting of Name_Length and Object_Name
+	  fields) is present (1) or absent (0) in the noncompressible basic header immediately following the
 	  Object_Length field. The width of the Name_Length field is specified by the Name_Wid field.
 	</para>
       </section>
-     
-      <section><info><title>AFlags/BFlags - the P Bit</title></info>
-	
+
+      <section>
+        <title>AFlags/BFlags - the P Bit</title>
+
 	<para>
 	  The ``P'' bit indicates whether the Attributes (or, alternatively, Body) element consisting
 	  of Attribute_Length and Attribute_Data (or Body_Length and Body_Data) fields, is present (1)
@@ -665,13 +691,16 @@
 	</para>
       </section>
 
-      <section><info><title>AFlags/BFlags - the ZZZ Flag</title></info>
-	
+      <section>
+        <title>AFlags/BFlags - the ZZZ Flag</title>
+
 	<para>
 	  The 3-bit ``ZZZ'' flag indicates the compression, if any, of the object Attributes (or Body):
 	</para>
-	<table frame="all"><info><title>ZZZ Flag Definitions</title></info>
-	  
+
+	<table frame="all">
+          <title>ZZZ Flag Definitions</title>
+
 	  <tgroup cols="2" align="center">
 	    <thead>
 	      <row>
@@ -718,14 +747,16 @@
       </section>
     </section>
 
-    <section><info><title>Object Type</title></info>
-      
+    <section>
+      <title>Object Type</title>
+
       <para>
-	The Object_Type element is always 16 bits wide, organized into two 8-bit-wide 
+	The Object_Type element is always 16 bits wide, organized into two 8-bit-wide
 	fields: the Major_Type and the Minor_Type.
       </para>
-      <table frame="all"><info><title>Object_Type Element Structure</title></info>
-	
+      <table frame="all">
+        <title>Object_Type Element Structure</title>
+
 	<tgroup cols="16" align="center">
 	  <colspec colname="0"/>
 	  <colspec colname="1"/>
@@ -775,11 +806,12 @@
 	</tgroup>
       </table>
       <para>
-	Each different Major_Type value is assigned to a different class of database objects. 
+	Each different Major_Type value is assigned to a different class of database objects.
 	The following values are defined in this specification:
       </para>
-      <table frame="all"><info><title>Major_Type Values and Meanings</title></info>
-	
+      <table frame="all">
+        <title>Major_Type Values and Meanings</title>
+
 	<tgroup cols="2" align="center">
 	  <thead>
 	    <row>
@@ -828,27 +860,30 @@
 	</tgroup>
       </table>
       <para>
-	The remainder are available for extending the types of objects that may be stored in 
-	the database, allowing BRL-CAD users to extend the database for their own particular 
+	The remainder are available for extending the types of objects that may be stored in
+	the database, allowing BRL-CAD users to extend the database for their own particular
 	purposes far beyond what the "attribute" method permits.
       </para>
 
-      <section><info><title>Major_Type = 0: Reserved</title></info>
-	
+      <section>
+        <title>Major_Type = 0: Reserved</title>
+
 	<para>
-	  Major Type 0 is illegal.  The rationale is to provide the library an opportunity to 
+	  Major Type 0 is illegal.  The rationale is to provide the library an opportunity to
 	  detect incompletely filled in data structures.
 	</para>
       </section>
-      
-      <section><info><title>Major_Type = 1: BRL-CAD Nongeometry Objects</title></info>
-	
+
+      <section>
+        <title>Major_Type = 1: BRL-CAD Nongeometry Objects</title>
+
 	<para>
-	  This class of objects is private to librt, concerning all nongeometric objects needed by 
+	  This class of objects is private to librt, concerning all nongeometric objects needed by
 	  the library. For this Major_Type, the following Minor_Type values are defined:
 	</para>
-	<table frame="all"><info><title>Major_Type = 1:  Minor_Type Values and Meanings</title></info>
-	  
+	<table frame="all">
+          <title>Major_Type = 1:  Minor_Type Values and Meanings</title>
+
 	  <tgroup cols="2" align="center">
 	    <thead>
 	    <row>
@@ -884,15 +919,17 @@
       </para>
       </section>
 
-      <section><info><title>Major_Type = 2: BRL-CAD Geometry Objects</title></info>
-	
+      <section>
+        <title>Major_Type = 2: BRL-CAD Geometry Objects</title>
+
 	<para>
-	  This class of objects is private to librt, concerning all geometric objects needed 
-	  by the library. Typically, there will be one xxx/xxx.c module in librt for each minor type. 
+	  This class of objects is private to librt, concerning all geometric objects needed
+	  by the library. Typically, there will be one xxx/xxx.c module in librt for each minor type.
 	  For this Major_Type, the following Minor_Type values are defined:
 	</para>
-	<table frame="all"><info><title>Major_Type = 2:  Minor_Type Values and Meanings</title></info>
-	  
+	<table frame="all">
+          <title>Major_Type = 2:  Minor_Type Values and Meanings</title>
+
 	  <tgroup cols="2" align="center">
 	    <thead>
 	    <row>
@@ -1077,44 +1114,45 @@
       </para>
       </section>
 
-      <section><info><title>Major_Type = 3: Attribute-Only Objects</title></info>
-	
+      <section>
+        <title>Major_Type = 3: Attribute-Only Objects</title>
+
 	<para>
-	  This type of object stores only attributes in the object interior section; it has no 
+	  This type of object stores only attributes in the object interior section; it has no
 	  object body elements.
 	</para>
 	<para>
-	  For example, if several objects need to have the same shader parameters, it would be 
-	  possible to create one attribute-only object to hold these common attributes and serve as a 
-	  simple form of "macro". Objects that needed to share these attributes could all reference the 
-	  same attribute object. If the attribute object is altered, then all of the objects that 
-	  reference it would be updated together. Without this capability, the user would have to 
+	  For example, if several objects need to have the same shader parameters, it would be
+	  possible to create one attribute-only object to hold these common attributes and serve as a
+	  simple form of "macro". Objects that needed to share these attributes could all reference the
+	  same attribute object. If the attribute object is altered, then all of the objects that
+	  reference it would be updated together. Without this capability, the user would have to
 	  update each element individually to alter the attributes.
 	</para>
 	<para>
-	  Conventions will have to be established regarding which attributes of an attribute-only 
-	  object will be used when a macro reference is performed. For example, rt shaders will 
-	  only be interested in the value of the "oshader=" attribute, while librt's tree-walker 
-	  might also be interested in the "rgb=", "giftmater=", "nsn=", "material=", and "los=" 
-	  attributes (assuming that a convention was developed so that a combination could 
+	  Conventions will have to be established regarding which attributes of an attribute-only
+	  object will be used when a macro reference is performed. For example, rt shaders will
+	  only be interested in the value of the "oshader=" attribute, while librt's tree-walker
+	  might also be interested in the "rgb=", "giftmater=", "nsn=", "material=", and "los="
+	  attributes (assuming that a convention was developed so that a combination could
 	  macro-reference an attribute-only object too).
 	</para>
 	<para>
-	  An attribute-only object may not have an object body; thus, flag bit B must always be 
+	  An attribute-only object may not have an object body; thus, flag bit B must always be
 	  zero for this type of object.
 	</para>
 	<para>
-	  As used by the rt family of applications codes, these attribute-only objects will 
-	  contain "macros" for shaders. The shader name and its parameters shall be encoded as a 
-	  single ASCII string, which is the value of the "oshader=" attribute. An rt shader named 
-	  "macro" (or equivalent) would take a single parameter "obj=", which would specify the 
-	  name of the attribute-only object in the database from which the actual shader and 
+	  As used by the rt family of applications codes, these attribute-only objects will
+	  contain "macros" for shaders. The shader name and its parameters shall be encoded as a
+	  single ASCII string, which is the value of the "oshader=" attribute. An rt shader named
+	  "macro" (or equivalent) would take a single parameter "obj=", which would specify the
+	  name of the attribute-only object in the database from which the actual shader and
 	  shader parameter information would be extracted.
 	</para>
 	<para>
-	  There will be one attribute-only object with a reserved object name of "_GLOBAL" that 
-	  will be used to contain various kinds of states that are global to the entire ".g" database 
-	  and that had previously been found in the database header itself. There will be the 
+	  There will be one attribute-only object with a reserved object name of "_GLOBAL" that
+	  will be used to contain various kinds of states that are global to the entire ".g" database
+	  and that had previously been found in the database header itself. There will be the
 	  following BRL-CAD-specific attributes whose meaning is predefined for the _GLOBAL object:
 	  <itemizedlist>
 	    <listitem>
@@ -1124,95 +1162,100 @@
 	    </listitem>
 	    <listitem>
 	      <para>
-		units = The most recent editing units, specified as an ASCII string with a 
-		floating point conversion factor. For example, the conversion factor for inches 
+		units = The most recent editing units, specified as an ASCII string with a
+		floating point conversion factor. For example, the conversion factor for inches
 		to millimeters would be 25.4.
 	      </para>
 	    </listitem>
 	    <listitem>
 	      <para>
-		regionid_colortable = A string that contains a collection of all the information 
+		regionid_colortable = A string that contains a collection of all the information
 		previously found in "struct material_rec ID_MATERIAL" records. Exact encoding yet
-		to be determined; it's a collection of integer 5-tuples of the form: 
+		to be determined; it's a collection of integer 5-tuples of the form:
 		{low, high, r, g, b}.
 	      </para>
 	    </listitem>
 	  </itemizedlist>
 	</para>
 	<para>
-	  In addition, the "comment=" attribute of the "_GLOBAL" object may be used to store 
-	  human-readable remarks about the database that are not more properly associated with a 
-	  specific database item. These might include remarks about data sources, model evolution, 
-	  security classification, and release restrictions. In the absense of some outboard 
-	  revision-control system, this might also be a place to record modification history, 
+	  In addition, the "comment=" attribute of the "_GLOBAL" object may be used to store
+	  human-readable remarks about the database that are not more properly associated with a
+	  specific database item. These might include remarks about data sources, model evolution,
+	  security classification, and release restrictions. In the absense of some outboard
+	  revision-control system, this might also be a place to record modification history,
 	  although such use is discouraged.
 	</para>
       </section>
 
-      <section><info><title>Bulk Binary Objects (Major_Types 8-31)</title></info>
-	
+      <section>
+        <title>Bulk Binary Objects (Major_Types 8-31)</title>
+
 	<para>
-	  This class of objects contains various "bulk" binary data that might otherwise have 
+	  This class of objects contains various "bulk" binary data that might otherwise have
 	  been placed in auxiliary files.
 	</para>
 	<para>
-	  MGED and standalone commands must be built to store/extract these opaque?? binary 
-	  objects between a ".g" file and stdin/stdout/auxiliary files. A user might want to use 
-	  those same MGED commands to store/extract the binary object body of any object for external 
-	  processing. An easy example to imagine is the importing and exporting of texture maps for 
-	  external processing, but the same commands could be used for importing and exporting 
+	  MGED and standalone commands must be built to store/extract these opaque?? binary
+	  objects between a ".g" file and stdin/stdout/auxiliary files. A user might want to use
+	  those same MGED commands to store/extract the binary object body of any object for external
+	  processing. An easy example to imagine is the importing and exporting of texture maps for
+	  external processing, but the same commands could be used for importing and exporting
 	  solid parameters in their external binary form.
 	</para>
 	<para>
-	  These objects may be referenced in combination nodes, for organizational purposes, but 
-	  they cannot be drawn in MGED or raytraced, and doing so would result in a warning message 
-	  being printed by the tree walker as that arc is traversed. This class may be used by all 
+	  These objects may be referenced in combination nodes, for organizational purposes, but
+	  they cannot be drawn in MGED or raytraced, and doing so would result in a warning message
+	  being printed by the tree walker as that arc is traversed. This class may be used by all
 	  applications and layers.
 	</para>
 	<para>
-	  The data's purpose may be placed in the "purpose=" attribute. (????????Need a 
+	  The data's purpose may be placed in the "purpose=" attribute. (????????Need a
 	  table/registry of presently known values for this attribute.)
 	</para>
 	<para>
-	  Routines that retrieve bulk binary objects should check the minor type and the 
-	  "purpose=" attribute and send a warning message in the event of a mismatch, but 
-	  best-effort processing of the object should continue. This will permit some degree 
-	  of error checking, which should benefit novice users without standing in the way of 
-	  "creatively" reusing one set of data, (e.g., using one array of values as both a height 
-	  field and a bwtexture). This allows common data perversion practices, such as interpreting 
+	  Routines that retrieve bulk binary objects should check the minor type and the
+	  "purpose=" attribute and send a warning message in the event of a mismatch, but
+	  best-effort processing of the object should continue. This will permit some degree
+	  of error checking, which should benefit novice users without standing in the way of
+	  "creatively" reusing one set of data, (e.g., using one array of values as both a height
+	  field and a bwtexture). This allows common data perversion practices, such as interpreting
 	  an array of floats as an array of bytes, to continue.
 	</para>
 	<para>
-	  Each application will need to have its own syntax for the user to specify whether the data 
-	  source is an outboard file or a raw-binary object. For example, the current RT sh_texture 
-	  module uses the keyword file="name" to indicate an outboard file; that might be supplemented 
+	  Each application will need to have its own syntax for the user to specify whether the data
+	  source is an outboard file or a raw-binary object. For example, the current RT sh_texture
+	  module uses the keyword file="name" to indicate an outboard file; that might be supplemented
 	  with an additional obj="name" possibility for retrieving from an inboard raw-binary object.
 	</para>
 
-	<section><info><title>Major_Type = 8: Experimental Binary Objects</title></info>
-	  
+	<section>
+          <title>Major_Type = 8: Experimental Binary Objects</title>
+
 	  <para>
-	    This class of objects contains bulk binary data and is intended for experimental 
-	    use by applications developers. Each time a database containing objects of this type 
-	    is opened, BRL-CAD will issue a user-visible warning. Production software and databases 
-	    should not use these objects. Developers should obtain registered 16-bit object types 
+	    This class of objects contains bulk binary data and is intended for experimental
+	    use by applications developers. Each time a database containing objects of this type
+	    is opened, BRL-CAD will issue a user-visible warning. Production software and databases
+	    should not use these objects. Developers should obtain registered 16-bit object types
 	    from the website in order to avoid collisions with other applications.
 	  </para>
 	</section>
-	<section><info><title>Major_Type = 9: Uniform Array Binary Objects</title></info>
-	  
+
+	<section>
+          <title>Major_Type = 9: Uniform Array Binary Objects</title>
+
 	  <para>
-	    This class of objects contain various "bulk" binary data that might otherwise have 
+	    This class of objects contain various "bulk" binary data that might otherwise have
 	    been placed in an auxiliary file.
 	  </para>
 	  <para>
-	    Point of Discussion?????Has ramifications... we have to implement type advising, so 
-	    that applications that use these data can compare the type provided in the minor 
-	    type code with the type that they're expecting and advise the user (with a warning 
+	    Point of Discussion?????Has ramifications... we have to implement type advising, so
+	    that applications that use these data can compare the type provided in the minor
+	    type code with the type that they're expecting and advise the user (with a warning
 	    message) that there is a potential type mismatch.
 	  </para>
-	  <table frame="all"><info><title>Uniform Array Binary Objects Minor_Type Structure</title></info>
-	    
+	  <table frame="all">
+            <title>Uniform Array Binary Objects Minor_Type Structure</title>
+
 	    <tgroup cols="8" align="center">
 	      <colspec colname="h1"/>
 	      <colspec colname="h2"/>
@@ -1249,11 +1292,12 @@
 	    </tgroup>
 	  </table>
 	  <para>
-	    The 3-bit ``Atom'' flag indicates the fundamental data type of the atomic elements 
+	    The 3-bit ``Atom'' flag indicates the fundamental data type of the atomic elements
 	    in the array according to the following scheme:
 	  </para>
-	  <table frame="all"><info><title>Atom Flag Definitions</title></info>
-	    
+	  <table frame="all">
+            <title>Atom Flag Definitions</title>
+
 	    <tgroup cols="2" align="center">
 	      <thead>
 		<row>
@@ -1298,15 +1342,16 @@
 	    </tgroup>
 	  </table>
 	  <para>
-	    The ``S'' bit indicates whether an integer type is signed (1) or unsigned (0). 
-	    Floats and doubles (i.e., atomic types with the highest atom bit equal to 0) are 
-	    explicitly signed, so they will have the ``S'' bit equal to 1. (The bit patterns 
+	    The ``S'' bit indicates whether an integer type is signed (1) or unsigned (0).
+	    Floats and doubles (i.e., atomic types with the highest atom bit equal to 0) are
+	    explicitly signed, so they will have the ``S'' bit equal to 1. (The bit patterns
 	    corresponding to unsigned floats and doubles are reserved for possible other use.)
 	  </para>
 	  <para>
-	    The 2-bit ``Wid'' flag specifies the length (in atomic elements) of the array elements: 
+	    The 2-bit ``Wid'' flag specifies the length (in atomic elements) of the array elements:
 	  </para>
-	  <table frame="all"><info><title>Wid Flag Definitions</title></info>
+	  <table frame="all">
+            <title>Wid Flag Definitions</title>
 	    
 	    <tgroup cols="2" align="center">
 	      <thead>
@@ -1345,31 +1390,41 @@
 	    might be stored with Minor_Type ``0011 1011'', indicating a quadruple of doubles.
 	  </para>
 	  <para>
-	    The data's purpose (e.g., height field, texture, bump, displacement, etc.) may be 
-	    placed in the "purpose=" attribute. ?????Point of Discussion???(Need a table/registry 
-	    of presently known values for this attribute.)
+	    The data's purpose (e.g., height field, texture, bump,
+	    displacement, etc.) may be placed in the "purpose="
+	    attribute. ????? Point of Discussion ???(Need a
+	    table/registry of presently known values for this
+	    attribute.)
 	  </para>
 	</section>
-	<section><info><title>Major_Type = 10: MIME-Typed Binary Objects</title></info>
+
+	<section>
+          <title>Major_Type = 10: MIME-Typed Binary Objects</title>
 	  
 	  <para>
 	    This class of objects contains data, the format of which is specified in the 
 	    attribute "mime_type". The Minor_Type of these objects should always be zero.
 	  </para>
 	</section>
-	<section><info><title>Major_Type = 16-31: Registered-Type Binary Objects</title></info>
+
+	<section>
+          <title>Major_Type = 16-31: Registered-Type Binary Objects</title>
 	  
 	  <para>
-	    This class of objects contains application-specific bulk binary data and is intended 
-	    for use in production software and databases. Developers can obtain registered 16-bit 
-	    object types from the website to identify these objects. The data's purpose, (e.g. height 
-	    field, texture, bump, displacement, etc.) may be placed in the "purpose=" attribute. 
-	    (Need a table/registry of presently known values for this attribute).
+	    This class of objects contains application-specific bulk
+	    binary data and is intended for use in production software
+	    and databases. Developers can obtain registered 16-bit
+	    object types from the website to identify these
+	    objects. The data's purpose, (e.g., height field, texture,
+	    bump, displacement, etc.) may be placed in the "purpose="
+	    attribute. (Need a table/registry of presently known
+	    values for this attribute).
 	  </para>
 	</section>
       </section>
       
-      <section><info><title>Major_Type = 255: Database Layer Internal Objects</title></info>
+      <section>
+        <title>Major_Type = 255: Database Layer Internal Objects</title>
 	
 	<para>
 	  A Minor_Type of 1 indicates that this is a contiguous block of free storage.
@@ -1381,7 +1436,8 @@
 
     </section>
 
-    <section><info><title>Object Length</title></info>
+    <section>
+      <title>Object Length</title>
       
       <para>
 	The Object Length specifies the number of 8-byte chunks used to store an object. This includes all bytes 
@@ -1389,12 +1445,16 @@
       </para>
     </section>
 
-    <section><info><title>Object Name</title></info>
+    <section>
+      <title>Object Name</title>
       
       <para>
-	The Object_Name element is a string that holds a name unique to that object and drawn from a name space that 
-	is global to the database. The Object_Name element is mandatory for all allocated storage in the database. 
-	Database free-space managment objects are the only objects for which the Object_Name element is optional.
+	The Object_Name element is a string that holds a name unique
+	to that object and drawn from a name space that is global to
+	the database. The Object_Name element is mandatory for all
+	allocated storage in the database. Database free-space
+	managment objects are the only objects for which the
+	Object_Name element is optional.
       </para>
       <para>
 	The name is specified in 8-bit ASCII. There is no support for UNICODE. The name is null-terminated, and the 
@@ -1406,7 +1466,8 @@
       </para>
     </section>
 
-    <section><info><title>Object Attributes</title></info>
+    <section>
+      <title>Object Attributes</title>
       
       <para>
 	An object may optionally have an Object_Attributes element, which stores an association list
@@ -1524,7 +1585,8 @@ aname1 NULL value1 NULL ... anameN NULL valueN NULL NULL
 	end-user-created attributes.
       </para>
     </section>
-    <section><info><title>Object Body</title></info>
+    <section>
+      <title>Object Body</title>
       
       <para>
 	The contents of the Object Body are opaque?? to the databaase layer. The contents of this element are interpreted 
@@ -1532,7 +1594,8 @@ aname1 NULL value1 NULL ... anameN NULL valueN NULL NULL
       </para>
     </section>
 
-    <section><info><title>Padding and Length Rounding</title></info>
+    <section>
+      <title>Padding and Length Rounding</title>
       
       <para>
 	The minimal object is a Free object (with no name) 8 bytes long:
@@ -1624,37 +1687,48 @@ Magic2 (1 byte).
 
 
 
-  <section><info><title>How Objects Are Grouped into a Database</title></info>
+  <section>
+    <title>How Objects Are Grouped into a Database</title>
     
     <para>
       
     </para>
   </section>
-  <section><info><title>Details of BRL-CAD-Specific Nongeometric Database Object Types</title></info>
+
+  <section>
+    <title>Details of BRL-CAD-Specific Nongeometric Database Object Types</title>
     
     <para>
       
     </para>
   </section>
-  <section><info><title>Details of BRL-CAD-Specific Geometric Database Object Types</title></info>
+
+  <section>
+    <title>Details of BRL-CAD-Specific Geometric Database Object Types</title>
     
     <para>
       
     </para>
   </section>
-  <section><info><title>Extensions for Deferred Implementation</title></info>
+
+  <section>
+    <title>Extensions for Deferred Implementation</title>
     
     <para>
       
     </para>
   </section>
-  <section><info><title>Community Feedback on the Proposal</title></info>
+
+  <section>
+    <title>Community Feedback on the Proposal</title>
     
     <para>
       
     </para>
   </section>
-  <section><info><title>Database Library Application Programming Interface (API)</title></info>
+
+  <section>
+    <title>Database Library Application Programming Interface (API)</title>
     
     <para>
       
