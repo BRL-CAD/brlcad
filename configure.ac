@@ -4103,6 +4103,10 @@ dnl sample applications
 SAMPLE_APPLICATIONS_DIR='${BRLCAD_DATA}/sample_applications'
 AC_SUBST(SAMPLE_APPLICATIONS_DIR)
 
+# need an absolute path for DocBook
+dbhome="$PWD/doc/docbook"
+AC_SUBST(dbhome)
+
 # stash the top builddir before configuring subdirectories
 bc_top_builddir="$ac_top_builddir"
 
@@ -4186,6 +4190,7 @@ AC_CONFIG_FILES([
 	db/Makefile
 	db/include/Makefile
 	doc/Makefile
+	doc/docbook/DBPATH.pm
 	doc/docbook/Makefile
 	doc/docbook/fop.xconf
 	doc/html/Makefile
