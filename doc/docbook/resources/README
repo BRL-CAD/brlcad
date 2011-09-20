@@ -1,3 +1,7 @@
-The resources directory holds all of the docbook xsl files
-required for processing - this is needed to ensure a stable,
-correct set of XSL files.
+The resources directory holds all of the docbook xsl files required
+for processing.  This is needed to ensure a stable, correct set of XSL
+files.
+
+The directory also has other xsl stylesheets, svg schema and files,
+fonts, and DocBook validation tools and files.
+ 
