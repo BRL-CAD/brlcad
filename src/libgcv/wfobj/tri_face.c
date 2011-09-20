@@ -92,7 +92,7 @@ attach_face_g_plane(struct face *f)
  * specified in points[]
  */
 struct model*
-make_nmg_from_face(const double points[], int numPoints)
+make_model_from_face(const double points[], int numPoints)
 {
     int i;
     struct model *model;
@@ -125,6 +125,21 @@ make_nmg_from_face(const double points[], int numPoints)
     fu->orientation = OT_SAME;
 
     return model;
+}
+
+
+struct faceuse*
+make_faceuse_from_face(const double points[], int numPoints)
+{
+    struct model *model;
+    struct shell *shell;
+    struct faceuse *fu;
+
+    model = make_model_from_face(points, numPoints);
+    shell = get_first_shell(model);
+    fu = BU_LIST_FIRST(faceuse, &shell->fu_hd);
+
+    return fu;
 }
 
 /* Searches points[] for the specified point. Match is determined using the
@@ -169,8 +184,6 @@ triangulateFace(
     size_t numPoints,
     struct bn_tol tol)
 {
-    struct model *model;
-    struct shell *shell;
     struct faceuse *fu;
     struct loopuse *lu;
     struct edgeuse *eu;
@@ -179,9 +192,7 @@ triangulateFace(
     double *point;
 
     /* get nmg faceuse that represents the face specified by points */
-    model = make_nmg_from_face(points, numPoints);
-    shell = get_first_shell(model);
-    fu = BU_LIST_FIRST(faceuse, &shell->fu_hd);
+    fu = make_faceuse_from_face(points, numPoints);
 
     /* triangulate face */
     nmg_triangulate_fu(fu, &tol);
