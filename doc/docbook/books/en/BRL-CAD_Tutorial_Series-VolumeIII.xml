@@ -1,10 +1,11 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 
-<book xmlns="http://docbook.org/ns/docbook" version="5.0">
+<book xmlns="http://docbook.org/ns/docbook" version="5.0"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+>
   <info><title><application>BRL-CAD</application> Tutorial Series: Volume III - Principles of Effective Modeling</title>
     
-
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="./tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
+    <xi:include href="./tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
 
     <publishername>Army Research Laboratory</publishername>
     <biblioid class="pubsnumber">ARL-SR-119</biblioid>
@@ -458,7 +459,7 @@
 		  
 		    <mediaobject>
 	               <imageobject>
-			   <imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_table_image_1.png" format="PNG"/>
+			   <imagedata fileref="../../books/en/images/tutorial_series_volIII_table_image_1.png" format="PNG"/>
 		       </imageobject>
 		       <caption align="left">
 			  <para>[a] Intersection and union symbols presented here
@@ -3218,83 +3219,84 @@ dbbinary -i u c documentation /home/fred/doc.txt
 
   <appendix label="A"><info><title>Using the Pipe Primitive</title></info>
     
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/pipes.xml" xpointer="pipe_general_use"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/pipes.xml" xpointer="pipe_make_coil"/>
+    <xi:include href="../../articles/en/pipes.xml" xpointer="pipe_general_use"/>
+    <xi:include href="../../articles/en/pipes.xml" xpointer="pipe_make_coil"/>
+
   </appendix>
 
   <appendix label="B"><info><title>Using the Projection Shader</title></info>
     
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/projection_shader.xml" xpointer="projshader_general"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/projection_shader.xml" xpointer="projshader_getimage"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/projection_shader.xml" xpointer="projshader_resize"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/projection_shader.xml" xpointer="projshader_actframe"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/projection_shader.xml" xpointer="projshader_dispimage"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/projection_shader.xml" xpointer="projshader_overlayimage"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/projection_shader.xml" xpointer="projshader_savesettingsfile"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/projection_shader.xml" xpointer="projshader_applysettingsfile"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/projection_shader.xml" xpointer="projshader_render"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/projection_shader.xml" xpointer="projshader_projectfront"/>
+    <xi:include href="../../articles/en/projection_shader.xml" xpointer="projshader_general"/>
+    <xi:include href="../../articles/en/projection_shader.xml" xpointer="projshader_getimage"/>
+    <xi:include href="../../articles/en/projection_shader.xml" xpointer="projshader_resize"/>
+    <xi:include href="../../articles/en/projection_shader.xml" xpointer="projshader_actframe"/>
+    <xi:include href="../../articles/en/projection_shader.xml" xpointer="projshader_dispimage"/>
+    <xi:include href="../../articles/en/projection_shader.xml" xpointer="projshader_overlayimage"/>
+    <xi:include href="../../articles/en/projection_shader.xml" xpointer="projshader_savesettingsfile"/>
+    <xi:include href="../../articles/en/projection_shader.xml" xpointer="projshader_applysettingsfile"/>
+    <xi:include href="../../articles/en/projection_shader.xml" xpointer="projshader_render"/>
+    <xi:include href="../../articles/en/projection_shader.xml" xpointer="projshader_projectfront"/>
   </appendix>
     
   <appendix label="C"><info><title>Using the Extruded Bitmap Primitive</title></info>
     
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/ebm_primitive.xml" xpointer="ebm1"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/ebm_primitive.xml" xpointer="ebm2"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/ebm_primitive.xml" xpointer="ebm3"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/ebm_primitive.xml" xpointer="ebm4"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/ebm_primitive.xml" xpointer="ebm5"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/ebm_primitive.xml" xpointer="ebm6"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/ebm_primitive.xml" xpointer="ebm7"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/ebm_primitive.xml" xpointer="ebm8"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/ebm_primitive.xml" xpointer="ebm9"/>
+    <xi:include href="../../articles/en/ebm_primitive.xml" xpointer="ebm1"/>
+    <xi:include href="../../articles/en/ebm_primitive.xml" xpointer="ebm2"/>
+    <xi:include href="../../articles/en/ebm_primitive.xml" xpointer="ebm3"/>
+    <xi:include href="../../articles/en/ebm_primitive.xml" xpointer="ebm4"/>
+    <xi:include href="../../articles/en/ebm_primitive.xml" xpointer="ebm5"/>
+    <xi:include href="../../articles/en/ebm_primitive.xml" xpointer="ebm6"/>
+    <xi:include href="../../articles/en/ebm_primitive.xml" xpointer="ebm7"/>
+    <xi:include href="../../articles/en/ebm_primitive.xml" xpointer="ebm8"/>
+    <xi:include href="../../articles/en/ebm_primitive.xml" xpointer="ebm9"/>
   </appendix>
 
   <appendix label="D"><info><title>Setting Up a .mgedrc File</title></info>
     
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc1"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc2"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc3"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc4"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc5"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc6"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc7"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc8"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc9"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc10"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc11"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc12"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc13"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc14"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc15"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/mgedrc.xml" xpointer="mgedrc16"/>
+    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc1"/>
+    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc2"/>
+    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc3"/>
+    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc4"/>
+    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc5"/>
+    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc6"/>
+    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc7"/>
+    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc8"/>
+    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc9"/>
+    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc10"/>
+    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc11"/>
+    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc12"/>
+    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc13"/>
+    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc14"/>
+    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc15"/>
+    <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc16"/>
   </appendix>
 
   <appendix label="E"><info><title>Using the Build Pattern Tool</title></info>
     
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_pattern.xml" xpointer="build_pattern_generalinfo"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_pattern.xml" xpointer="build_pattern_names"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_pattern.xml" xpointer="build_pattern_fields"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_pattern.xml" xpointer="build_pattern_stringsub"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_pattern.xml" xpointer="build_pattern_recpatterns"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_pattern.xml" xpointer="build_pattern_spherical"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_pattern.xml" xpointer="build_pattern_cylind"/>
+    <xi:include href="../../articles/en/build_pattern.xml" xpointer="build_pattern_generalinfo"/>
+    <xi:include href="../../articles/en/build_pattern.xml" xpointer="build_pattern_names"/>
+    <xi:include href="../../articles/en/build_pattern.xml" xpointer="build_pattern_fields"/>
+    <xi:include href="../../articles/en/build_pattern.xml" xpointer="build_pattern_stringsub"/>
+    <xi:include href="../../articles/en/build_pattern.xml" xpointer="build_pattern_recpatterns"/>
+    <xi:include href="../../articles/en/build_pattern.xml" xpointer="build_pattern_spherical"/>
+    <xi:include href="../../articles/en/build_pattern.xml" xpointer="build_pattern_cylind"/>
   </appendix>
 
   <appendix label="F"><info><title>Using the build_region Command</title></info>
     
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_region.xml" xpointer="build_region1"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_region.xml" xpointer="build_region2"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_region.xml" xpointer="build_region3"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_region.xml" xpointer="build_region4"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_region.xml" xpointer="build_region5"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_region.xml" xpointer="build_region6"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_region.xml" xpointer="build_region7"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_region.xml" xpointer="build_region8"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_region.xml" xpointer="build_region9"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_region.xml" xpointer="build_region10"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_region.xml" xpointer="build_region11"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_region.xml" xpointer="build_region12"/>
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../articles/en/build_region.xml" xpointer="build_region13"/>
+    <xi:include href="../../articles/en/build_region.xml" xpointer="build_region1"/>
+    <xi:include href="../../articles/en/build_region.xml" xpointer="build_region2"/>
+    <xi:include href="../../articles/en/build_region.xml" xpointer="build_region3"/>
+    <xi:include href="../../articles/en/build_region.xml" xpointer="build_region4"/>
+    <xi:include href="../../articles/en/build_region.xml" xpointer="build_region5"/>
+    <xi:include href="../../articles/en/build_region.xml" xpointer="build_region6"/>
+    <xi:include href="../../articles/en/build_region.xml" xpointer="build_region7"/>
+    <xi:include href="../../articles/en/build_region.xml" xpointer="build_region8"/>
+    <xi:include href="../../articles/en/build_region.xml" xpointer="build_region9"/>
+    <xi:include href="../../articles/en/build_region.xml" xpointer="build_region10"/>
+    <xi:include href="../../articles/en/build_region.xml" xpointer="build_region11"/>
+    <xi:include href="../../articles/en/build_region.xml" xpointer="build_region12"/>
+    <xi:include href="../../articles/en/build_region.xml" xpointer="build_region13"/>
   </appendix>
 
 </book>
