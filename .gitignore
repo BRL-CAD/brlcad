@@ -4,6 +4,7 @@
 /Makefile.in
 /libbu.plg
 /test_basename
+/test_htond
 /test_progname
 /test_timer
 /test_vls
