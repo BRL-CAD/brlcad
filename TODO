@@ -60,7 +60,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
-* DocBook pdf: ensure pdf output has suitable fonts embedded.
+* DocBook pdf: ensure pdf output has suitable fonts embedded; create
+  pretty covers for books and other large docs
+
+* DocBook: create an index for the html collection
 
 * DocBook source: add xsl customizations for figure and table title
   positions, float centering, etc.; add automatic figure, table, and
