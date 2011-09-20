@@ -9,6 +9,10 @@ chomp $top_srcdir;
 
 # user edit this file for local validation tool paths:
 use BRLCAD_DB_VALIDATION;
+my $JAVA     = "$BRLCAD_DB_VALIDATION::JAVA";
+my $MSVJAR   = "$BRLCAD_DB_VALIDATION::MSVJAR";
+my $XMLLINT  = "$BRLCAD_DB_VALIDATION::XMLLINT";
+my $ONVDLJAR = "$BRLCAD_DB_VALIDATION::ONVDLJAR";
 
 # for DocBook (DB) validation
 my $XML_UTF8_HEADER    = "<?xml version='1.0' encoding='UTF-8'?>";
@@ -22,6 +26,10 @@ my $XMLLINT_VALID_ARGS = "--xinclude --relaxng ${RNG_SCHEMA} --noout --nonet";
 # for msv DB validation
 my $MSVCMD     = "$JAVA -Xss1024K -jar ${MSVJAR}";
 
+# for oNVDL validation
+my $ONVDL_XI_ARGS = '-Dorg.apache.xerces.xni.parser.XMLParserConfiguration=org.apache.xerces.parsers.XIncludeParserConfiguration';
+my $NVDL_SCHEMA   = './resources/docbook-5.0/docbookxi.nvdl';
+my $NVDLCMD       = "$JAVA $ONVDL_XI_ARGS -jar ";
 
 my $vlog_asc = 'validate-asc-fail.log';
 my $vlog_utf = 'validate-utf-fail.log';
@@ -45,6 +53,8 @@ my $stop = 0;
 my $ifil = 0;
 my $verb = 0;
 my $warnings = 1; # for MSV
+my $nvdlopts = '';
+
 foreach my $arg (@ARGV) {
   my $arg = shift @ARGV;
   my $val = undef;
@@ -64,8 +74,20 @@ foreach my $arg (@ARGV) {
   elsif ($arg =~ /^[-]{1,2}v/i) {
     $verb = 1;
   }
-  elsif ($arg =~ /^[-]{1,2}n/i) {
+  elsif ($arg =~ /^[-]{1,2}no/i) {
     $warnings = 0;
+  }
+  elsif ($arg =~ /^[-]{1,2}nv/i) {
+    # format: =A,B (comma separated list of one or more oNVDL
+    #   options without hyphens)
+    if ($val =~ s{-}{}g) {
+      print "WARNING:  One or more hyphens found in nvdl options: '$val'...correcting.\n";
+    }
+    my @d = split(' ', $val);
+    foreach my $d (@d) {
+      $nvdlopts .= ' ' if $nvdlopts;
+      $nvdlopts .= '-$d';
+    }
   }
   elsif ($arg =~ /^[-]{1,2}s/i) {
     $stop = 1;
@@ -263,13 +285,9 @@ sub validate_msv {
 } # validate_msv
 
 sub validate_nvdl {
-  die "The 'nvdl' method is not yet supported'.";
-
   my $tmpfil = shift @_;
 
-  die "Tom, fix this!";
-
-  my $cmd = "?";
+  my $cmd = "$NVDLCMD $nvdlopts $tmpfi;";
   print "=== cmd: '$cmd'\n";
   my $msg = qx($cmd);
   if ($msg) {
@@ -312,6 +330,35 @@ Options:
   --verbose       show more info about what's going on
 
   --no-warnings   do not show validation warnings (used for 'msv' only)
+
+  --nvdl=A[,B]    pass on or more options to the 'nvdl' method (do not
+                  add the leading hyphen--it is automatically added):
+
+                  -c
+                      The schema uses RELAX NG Compact Syntax.
+                  -e enc
+                      Uses the encoding enc to read the schema.
+                  -f
+                      Checks that the document is feasibly valid. A
+                      document is feasibly valid if it could be
+                      transformed into a valid document by inserting
+                      any number of attributes and child elements
+                      anywhere in the tree. This is equivalent to
+                      transforming the schema by wrapping every data,
+                      list, element and attribute element in an
+                      optional element and then validating against
+                      the transformed schema. This option may be useful
+                      while a document is still under construction. This
+                      option also disables checking that for every IDREF
+                      there is a corresponding ID.
+                  -i
+                      Disables checking of ID/IDREF/IDREFS. By default,
+                      Jing enforces the constraints imposed by RELAX NG
+                      DTD Compatibility with respect to ID/IDREF/IDREFS.
+                  -t
+                      Prints the time used by oNVDL for loading the
+                      schema and for validation.
+
 
 Notes:
 
