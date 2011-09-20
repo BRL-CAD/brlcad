@@ -37,6 +37,10 @@
 
 void rt_bot_ifree2(struct rt_bot_internal *);
 
+struct gcv_data {
+    void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
+};
+
 /* hijack the top four bits of mode. For these operations, the mode should
  * necessarily be 0x02 */
 #define INSIDE		0x01
@@ -475,27 +479,24 @@ soup2nmg(struct soup_s *soup, const struct bn_tol *UNUSED(tol))
 
 	memset((char *)vert, 0, sizeof(vert));
 	fu = nmg_cmface(s, f_vert, 3);
-#if 0
 	nmg_vertex_gv(vert[0], soup->faces[i].vert[0]);
 	nmg_vertex_gv(vert[1], soup->faces[i].vert[1]);
 	nmg_vertex_gv(vert[2], soup->faces[i].vert[2]);
 	nmg_calc_face_g(fu);
 
 	if(nmg_fu_planeeqn(fu, tol)) {
-	    /*
 	    bu_log("Tiny tri!\n");
-	    */
 	}
-#endif
 
     }
 
-    /*
-    if(nmg_kill_cracks(s))
-	if(nmg_ks(s))
+    if(nmg_kill_cracks(s)) {
+	if(nmg_ks(s)) {
 	    return NULL;
-    */
+	}
+    }
 
+    bu_log("%d faces\n", soup->nfaces);
     return r;
 }
 
@@ -692,6 +693,24 @@ union tree *
 gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     union tree *ret_tree;
+    void (*write_region)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
+
+    if (!tsp || !curtree || !pathp || !client_data) {
+	bu_log("INTERNAL ERROR: gcv_region_end missing parameters\n");
+	return TREE_NULL;
+    }
+
+    write_region = ((struct gcv_data *)client_data)->func;
+    if (!write_region) {
+	bu_log("INTERNAL ERROR: gcv_region_end missing conversion callback function\n");
+	return TREE_NULL;
+    }
+
+    RT_CK_FULL_PATH(pathp);
+    RT_CK_TREE(curtree);
+    RT_CK_TESS_TOL(tsp->ts_ttol);
+    BN_CK_TOL(tsp->ts_tol);
+    NMG_CK_MODEL(*tsp->ts_m);
 
     splitz=0;
     splitty=0;
@@ -721,7 +740,9 @@ gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     curtree->tr_d.td_r = soup2nmg((struct soup_s *)ret_tree->tr_d.td_r->m_p, tsp->ts_tol);
     curtree->tr_op = OP_NMG_TESS;
 
-    return curtree;
+    write_region(curtree->tr_d.td_r, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp->ts_mater.ma_color);
+
+    return NULL;
 }
 
 union tree *
