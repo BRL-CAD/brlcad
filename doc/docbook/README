@@ -104,7 +104,9 @@ developers and DB authors in ensuring the DB files are valid:
 
   * BRLCAD_DB_VALIDATION.pm
       a Perl module defining local tool paths; used by validate.pl;
-      intended for DB authors to edit for their use
+      intended for DB authors to edit for their use; valid tool paths
+      must be entered for each validation tool to be used; see the
+      file for more information on the paths needed
 
   * find-db-files.pl
       a Perl program to create an input file listing all DB source
@@ -126,6 +128,15 @@ external tools that are not presently part of the BRL-CAD package:
     * xmllint
         a program that comes with the libxml2 library (see
         http://xmlsoft.org/)
+
+  For the 'nvdl' validation method:
+
+    * onvdl.jar
+        a Java jar file with the oNVDL validation tool (see 
+        https://sourceforge.net/projects/onvdl/
+
+    * Java
+        a working Java run-time environment
      
 OTHER CONSIDERATIONS
 --------------------
