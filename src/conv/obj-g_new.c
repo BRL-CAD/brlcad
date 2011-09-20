@@ -81,9 +81,9 @@ static char *usage =
     "  -i\t\tIgnore the normals defined in the input file when using native\n"
     "\t\tbot conversion mode.\n"
     "  -m mode\tSelect the conversion mode:\n"
-    "\t\t\tb = native bot\n"
+    "\t\t\tb = native bot (default)\n"
     "\t\t\tn = nmg\n"
-    "\t\t\tv = bot via nmg (default)\n"
+    "\t\t\tv = bot via nmg\n"
     "  -o type\tSelect the type used for bots that aren't closed volumes:\n"
     "\t\t\tn = plate nocos\n"
     "\t\t\tp = plate\n"
@@ -3252,7 +3252,7 @@ main(int argc, char **argv)
     /* default: import face normals if included in obj file */
     int normal_mode = PROC_NORM;
     char grouping_option = 'g';  /* default: group by obj file groups */
-    char mode_option = 'v';      /* default: import as bot-via-nmg */
+    char mode_option = 'b';      /* default: import as native bot */
     fastf_t conv_factor = 0.0;
     fastf_t bot_thickness = 0.0;
     int user_bot_thickness_flag = 0;
