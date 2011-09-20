@@ -72,7 +72,6 @@
 </xsl:message>
 -->
 
-<!--
                 <!-- <xsl:choose> -->
                   <!-- <xsl:when test="$home != . or $nav.context = 'toc'"> -->
 
@@ -117,12 +116,6 @@
                     </xsl:call-template>
                   </a>
                 </xsl:if>
-
-                <!--
-                  </xsl:when>
-                  <xsl:otherwise>&#160;</xsl:otherwise>
-                </xsl:choose>
-                -->
 
               </td>
 
