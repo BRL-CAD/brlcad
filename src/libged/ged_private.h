@@ -351,7 +351,7 @@ extern int _ged_scale_part(struct ged *gedp,
 
 /* defined in edpipe.c */
 extern int _ged_scale_pipe(struct ged *gedp,
-			   struct rt_pipe_internal *pipe,
+			   struct rt_pipe_internal *pipe_internal,
 			   const char *attribute,
 			   fastf_t sf,
 			   int rflag);
