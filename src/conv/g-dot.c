@@ -36,8 +36,18 @@
 #include "bio.h"
 
 /* interface headers */
+#include "brlcad_version.h"
 #include "raytrace.h"
 #include "ged.h"
+
+
+struct output {
+    FILE *outfp;
+    struct bu_ptbl groups;
+    struct bu_ptbl regions;
+    struct bu_ptbl combinations;
+    struct bu_ptbl primitives;
+};
 
 
 static void
@@ -47,9 +57,9 @@ dot_comb(struct db_i *dbip, struct directory *dp, genptr_t out)
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
 
-    FILE *outfp = (FILE *)out;
+    struct output *o = (struct output *)out;
 
-    if (!outfp)
+    if (!o->outfp)
 	return;
 
     if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
@@ -58,9 +68,13 @@ dot_comb(struct db_i *dbip, struct directory *dp, genptr_t out)
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 
     if (comb->region_flag) {
-	fprintf(outfp, "\t\"%s\" [ color=blue ];\n", dp->d_namep);
+	if (bu_ptbl_ins_unique(&(o->regions), (long *)bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep))) == -1) {
+	    fprintf(o->outfp, "\t\"%s\" [ color=blue shape=box3d ];\n", dp->d_namep);
+	}
     } else {
-	fprintf(outfp, "\t\"%s\" [ color=green ];\n", dp->d_namep);
+	if (bu_ptbl_ins_unique(&(o->groups), (long *)bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep))) == -1) {
+	    fprintf(o->outfp, "\t\"%s\" [ color=green ];\n", dp->d_namep);
+	}
     }
 
     /* FIXME: this is yet-another copy of the commonly-used code that
@@ -97,10 +111,10 @@ dot_comb(struct db_i *dbip, struct directory *dp, genptr_t out)
 
 	    switch (rt_tree_array[i].tl_op) {
 		case OP_UNION:
-		    op = 'u';
+		    op = '+';
 		    break;
 		case OP_INTERSECT:
-		    op = '+';
+		    op = 'x';
 		    break;
 		case OP_SUBTRACT:
 		    op = '-';
@@ -110,7 +124,7 @@ dot_comb(struct db_i *dbip, struct directory *dp, genptr_t out)
 		    break;
 	    }
 
-	    fprintf(outfp, "\t\"%s\" -> \"%s\" [ label=%c ]\n", dp->d_namep, rt_tree_array[i].tl_tree->tr_l.tl_name, op);
+	    fprintf(o->outfp, "\t\"%s\" -> \"%s\" [ label=\"%c\" ];\n", dp->d_namep, rt_tree_array[i].tl_tree->tr_l.tl_name, op);
 	    db_free_tree(rt_tree_array[i].tl_tree, &rt_uniresource);
 	}
 	bu_vls_free(&vls);
@@ -126,25 +140,47 @@ dot_comb(struct db_i *dbip, struct directory *dp, genptr_t out)
 static void
 dot_leaf(struct db_i *UNUSED(dbip), struct directory *dp, genptr_t out)
 {
-    FILE *outfp = (FILE *)out;
-    if (!outfp)
+    struct output *o = (struct output *)out;
+
+    if (!o->outfp)
 	return;
 
-    fprintf(outfp, "\t\"%s\" [ color=red ];\n", dp->d_namep);
+    if (bu_ptbl_ins_unique(&(o->primitives), (long *)bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep))) == -1) {
+	fprintf(o->outfp, "\t\"%s\" [ color=red shape=box rank=min ];\n", dp->d_namep);
+    }
 
     /* TODO: add { rank=same; prim1 prim2 ... } */
 }
 
 
 static void
-dot_header(FILE *outfp)
+dot_header(FILE *outfp, const char *label)
 {
+    struct bu_vls vp = BU_VLS_INIT_ZERO;
+
     if (!outfp)
 	bu_exit(1, "INTERNAL ERROR: unable to write out .dot header\n");
 
-    fprintf(outfp, "\ndigraph DAG {\n");
-    fprintf(outfp, "\tnode [ style = filled ];\n");
-    fprintf(outfp, "\tnode [ shape = box ];\n");
+    fprintf(outfp, "\n"
+	    "/*\n"
+	    " * BRL-CAD version %s DOT export\n"
+	    " */\n", brlcad_version());
+    fprintf(outfp, "\ndigraph \"BRL-CAD\" {\n");
+
+    fprintf(outfp, "\tBEFORE: [%s]\n", bu_vls_addr(&vp));
+    bu_vls_printf(&vp, "test1");
+    fprintf(outfp, "\tBEFORE: [%s]\n", bu_vls_addr(&vp));
+    fprintf(outfp, "\tlabel=%s;\n", bu_vls_encode(&vp, label));
+    bu_vls_printf(&vp, "test2");
+    fprintf(outfp, "\tBEFORE: [%s]\n", bu_vls_addr(&vp));
+    fprintf(outfp, "\tAFTER: [%s]\n", bu_vls_decode(&vp, bu_vls_addr(&vp)));
+    bu_vls_printf(&vp, "test3");
+    fprintf(outfp, "\tAFTER: [%s]\n", bu_vls_addr(&vp));
+    bu_vls_free(&vp);
+
+    fprintf(outfp, "\tgraph [ rankdir=LR ];\n");
+    fprintf(outfp, "\tnode [ style=filled ];\n");
+    fprintf(outfp, "\tnode [ shape=box ];\n"); /* try Mrecord */
 }
 
 
@@ -185,6 +221,9 @@ main(int ac, char *av[])
 
     char **objs = NULL;
     struct ged *gp = NULL;
+
+    /* tracks which objects are already output */
+    struct output o = {NULL, BU_PTBL_INIT_ZERO, BU_PTBL_INIT_ZERO, BU_PTBL_INIT_ZERO, BU_PTBL_INIT_ZERO};
 
     while ((c = bu_getopt(ac, av, "o:")) != -1) {
 	switch (c) {
@@ -280,7 +319,22 @@ main(int ac, char *av[])
     }
 
     /* write out header */
-    dot_header(out);
+    {
+	struct bu_vls vp = BU_VLS_INIT_ZERO;
+	const char *title[2] = {"title", NULL};
+
+	ged_title(gp, 1, title);
+	bu_vls_printf(&vp, "%V\\n", gp->ged_result_str);
+	if (!(av[0][0] == '-' && av[0][1] == '\0')) {
+	    char *base = bu_basename(av[0]);
+	    bu_vls_printf(&vp, "%s ", base);
+	    bu_free(base, "free basename");
+	}
+	bu_vls_printf(&vp, "BRL-CAD Geometry Database");
+	dot_header(out, bu_vls_addr(&vp));
+
+	bu_vls_free(&vp);
+    }
 
     /* anything else is assumed to be an object, get a list */
     if (ac > 1) {
@@ -304,13 +358,14 @@ main(int ac, char *av[])
 
     /* write out each object */
     c = 0;
+    o.outfp = out;
     while (objs[c]) {
 	struct directory *dp = NULL;
 
 	dp = db_lookup(gp->ged_wdbp->dbip, objs[c], 1);
 	if (dp) {
 	    bu_log("Exporting object [%s]\n", objs[c]);
-	    db_functree(gp->ged_wdbp->dbip, dp, dot_comb, dot_leaf, NULL, out);
+	    db_functree(gp->ged_wdbp->dbip, dp, dot_comb, dot_leaf, NULL, &o);
 	} else {
 	    bu_log("ERROR: Unable to locate [%s] within input database, skipping.\n", objs[c]);
 	}
@@ -322,6 +377,11 @@ main(int ac, char *av[])
     dot_footer(out);
 
     /* clean up */
+
+    bu_ptbl_free(&o.primitives);
+    bu_ptbl_free(&o.combinations);
+    bu_ptbl_free(&o.regions);
+    bu_ptbl_free(&o.groups);
 
     ged_close(gp);
 
