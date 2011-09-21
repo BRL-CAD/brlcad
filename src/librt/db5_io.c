@@ -1110,6 +1110,7 @@ rt_db_get_internal5(
     RT_DB_INTERNAL_INIT(ip);
     if (resp) {
 	RT_CK_RESOURCE(resp);
+    }
 
     BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
 
