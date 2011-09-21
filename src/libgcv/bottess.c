@@ -414,7 +414,7 @@ long int splitty = 0;
 HIDDEN int
 split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *right, unsigned long int right_face, const struct bn_tol *tol) {
     struct face_s *lf, *rf;
-    vect_t isectpt[2];
+    vect_t isectpt[2] = {{0,0,0},{0,0,0}};
     int coplanar;
 
     lf = left->faces+left_face;
@@ -425,9 +425,9 @@ split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *righ
 	return 2;
     splitty++;
     
-    /* do the actual face split *
+
+    /* do the actual face split */
     bu_log("%f,%f,%f %f,%f,%f\n", V3ARGS(isectpt[0]), V3ARGS(isectpt[1]));
-    */
 
     return -1;
 }
@@ -484,17 +484,13 @@ soup2nmg(struct soup_s *soup, const struct bn_tol *UNUSED(tol))
 	nmg_vertex_gv(vert[2], soup->faces[i].vert[2]);
 	nmg_calc_face_g(fu);
 
-	if(nmg_fu_planeeqn(fu, tol)) {
+	if(nmg_fu_planeeqn(fu, tol))
 	    bu_log("Tiny tri!\n");
-	}
-
     }
 
-    if(nmg_kill_cracks(s)) {
-	if(nmg_ks(s)) {
+    if(nmg_kill_cracks(s))
+	if(nmg_ks(s))
 	    return NULL;
-	}
-    }
 
     bu_log("%d faces\n", soup->nfaces);
     return r;
