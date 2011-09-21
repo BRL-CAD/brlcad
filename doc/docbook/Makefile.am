@@ -1,34 +1,50 @@
 XSLTPROC_FLAGS=--nonet --xinclude
-XSL_XHTML_STYLESHEET=$(top_srcdir)/doc/docbook/resources/standard/xsl/xhtml-1_1/docbook.xsl
-XSL_MAN_STYLESHEET=$(top_srcdir)/doc/docbook/resources/standard/xsl/manpages/docbook.xsl
-XSL_FO_STYLESHEET=$(top_srcdir)/doc/docbook/resources/standard/xsl/fo/docbook.xsl
 
-.xml.html:
+XSL_XHTML_STYLESHEET=$(top_srcdir)/doc/docbook/resources/brlcad/brlcad-xhtml-stylesheet.xsl
+XSL_MAN_STYLESHEET=$(top_srcdir)/doc/docbook/resources/brlcad/brlcad-man-stylesheet.xsl
+XSL_FO_STYLESHEET=$(top_srcdir)/doc/docbook/resources/brlcad/brlcad-fo-stylesheet.xsl
+
+# two xml catalog files
+XML_CATALOG=$(top_srcdir)/doc/docbook/resources/brlcad/brlcad-xml-catalog-autogen.xml
+FOP_XML_CATALOG=$(top_srcdir)/doc/docbook/resources/brlcad/CatalogManage.properties
+# both files as dependencies
+XML_CATALOGS=$(FOP_XML_CATALOG) $(XML_CATALOG_FILE)
+
+# the xml catalog generator creates the two catalog files
+GEN_XML_CATALOGS=$(top_srcdir)/doc/docbook/create-xml-catalogs.pl
+
+# the xml catalog location must be known by xsltproc
+XSLTPROC_ENV_VARS = XML_CATALOG_FILES=$(XML_CATALOG) XML_DEBUG_CATALOG=1
+
+$(XML_CATALOGS): $(GEN_XML_CATALOGS) BRLCAD_DOC.pm
+	perl $(GEN_XML_CATALOGS)
+
+.xml.html: $(XML_CATALOGS)
 	@mkdir -p $$(dirname $@)
-	$(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_XHTML_STYLESHEET) $?
+	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_XHTML_STYLESHEET) $?
 
-.xml.1:
-	$(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
+.xml.1:  $(XML_CATALOGS)
+	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
-.xml.3:
-	$(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
+.xml.3:  $(XML_CATALOGS)
+	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
-.xml.5:
-	$(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
+.xml.5:  $(XML_CATALOGS)
+	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
-.xml.nged:
-	$(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
+.xml.nged:  $(XML_CATALOGS)
+	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
 .fo.pdf: .xml.fo
 	$(APACHEFOP) -c fop.xconf $? -pdf $@
 
-.xml.fo:
+.xml.fo:  $(XML_CATALOGS)
 	@mkdir -p $$(dirname $@)
-	$(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_FO_STYLESHEET) $?
+	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_FO_STYLESHEET) $?
 
 include $(srcdir)/articles/en/Makefile.am
 include $(srcdir)/books/en/Makefile.am
@@ -40,6 +56,7 @@ include $(srcdir)/system/man1/en/Makefile.am
 include $(srcdir)/system/man3/en/Makefile.am
 include $(srcdir)/system/man5/en/Makefile.am
 include $(srcdir)/system/mann/en/Makefile.am
+
 
 
 if BUILD_DOCS
@@ -116,6 +133,7 @@ EXTRA_DIST = \
 	books/en/Makefile.am \
 	books/en/tutorial_series_authors.xml \
 	fop.xconf.in \
+	DBPATH.pm.in \
 	lessons/CMakeLists.txt \
 	lessons/en/CMakeLists.txt \
 	lessons/en/Makefile.am \
