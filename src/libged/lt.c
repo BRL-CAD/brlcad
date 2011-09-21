@@ -98,6 +98,7 @@ list_children(struct ged *gedp, struct directory *dp)
 	    bu_vls_printf(gedp->ged_result_str, "{%c %s} ", op, rt_tree_array[i].tl_tree->tr_l.tl_name);
 	    db_free_tree(rt_tree_array[i].tl_tree, &rt_uniresource);
 	}
+	bu_vls_free(&vls);
 
 	if (rt_tree_array)
 	    bu_free((char *)rt_tree_array, "printnode: rt_tree_array");
