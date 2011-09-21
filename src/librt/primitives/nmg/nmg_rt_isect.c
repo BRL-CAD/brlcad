@@ -2701,9 +2701,7 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
     }
 
     RT_APPLICATION_INIT(&ap);
-
     ap.a_resource = &rt_uniresource;
-    rt_uniresource.re_magic = RESOURCE_MAGIC;
 
     if (!BU_LIST_IS_INITIALIZED(&rt_uniresource.re_nmgfree))
 	BU_LIST_INIT(&rt_uniresource.re_nmgfree);

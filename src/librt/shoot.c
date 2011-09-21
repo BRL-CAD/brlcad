@@ -931,11 +931,10 @@ rt_shootray(register struct application *ap)
     /* FIXME: resolve the rt_uniresource initialization dilemma, wrap
      * in a function so we can call rt_init_resource().
      */
-    if (ap->a_resource) {
-	RT_CK_RESOURCE(ap->a_resource);
-    } else {
+    if (!ap->a_resource) {
 	ap->a_resource = &rt_uniresource;
     }
+    RT_CK_RESOURCE(ap->a_resource);
 #endif
     if (ap->a_resource == RESOURCE_NULL) {
 	ap->a_resource = &rt_uniresource;
@@ -1872,7 +1871,9 @@ rt_add_res_stats(register struct rt_i *rtip, register struct resource *resp)
 {
     RT_CK_RTI(rtip);
 
-    if (resp == RESOURCE_NULL) resp = &rt_uniresource;
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
     RT_CK_RESOURCE(resp);
 
     rtip->rti_nrays += resp->re_nshootray;

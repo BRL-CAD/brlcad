@@ -128,11 +128,10 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
     } else {
 	ap->a_ray.magic = RT_RAY_MAGIC;
     }
-    if (ap->a_resource) {
-	RT_CK_RESOURCE(ap->a_resource);
-    } else {
+    if (!ap->a_resource) {
 	ap->a_resource = &rt_uniresource;
     }
+    RT_CK_RESOURCE(ap->a_resource);
     ss.ap = ap;
     rtip = ap->a_rt_i;
     RT_CK_RTI(rtip);

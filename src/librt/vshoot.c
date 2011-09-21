@@ -138,9 +138,8 @@ rt_vshootray(struct application *ap)
 #define BACKING_DIST (-2.0)		/* mm to look behind start point */
     rtip = ap->a_rt_i;
     RT_AP_CHECK(ap);
-    if (ap->a_resource == RESOURCE_NULL) {
+    if (!ap->a_resource) {
 	ap->a_resource = &rt_uniresource;
-	rt_uniresource.re_magic = RESOURCE_MAGIC;
     }
     RT_CK_RESOURCE(ap->a_resource);
 

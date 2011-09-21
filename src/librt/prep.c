@@ -273,7 +273,9 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 
     /* If a resource structure has been provided for us, use it. */
     resp = (struct resource *)BU_PTBL_GET(&rtip->rti_resources, 0);
-    if (!resp) resp = &rt_uniresource;
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
     RT_CK_RESOURCE(resp);
 
     /* Build array of region pointers indexed by reg_bit.  Optimize
