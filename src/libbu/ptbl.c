@@ -147,13 +147,13 @@ bu_ptbl_ins_unique(struct bu_ptbl *b, long int *p)
 int
 bu_ptbl_rm(struct bu_ptbl *b, const long int *p)
 {
-    register int end;
+    register int end, j, k, l;
     register long **pp;
     int ndel = 0;
 
     BU_CK_PTBL(b);
 
-    end = b->end, j, k, l;
+    end = b->end;
     pp = b->buffer;
 
     for (l = b->end-1; l >= 0; --l) {
