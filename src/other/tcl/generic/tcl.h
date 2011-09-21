@@ -508,7 +508,7 @@ typedef void (Tcl_ThreadCreateProc) _ANSI_ARGS_((ClientData clientData));
 /*
  * Threading function return types used for abstracting away platform
  * differences when writing a Tcl_ThreadCreateProc. See the NewThread function
- * in generic/tclThreadTest.c for it's usage.
+ * in generic/tclThreadTest.c for its usage.
  */
 
 #if defined __WIN32__
