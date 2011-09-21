@@ -4124,15 +4124,16 @@ insert_above(struct loopuse *lu, struct loopuse_tree_node *node, const struct bn
 }
 
 void
-insert_node(struct loopuse *lu, struct bu_list *head, struct loopuse_tree_node *parent, const struct bn_tol *tol)
+insert_node(struct loopuse *lu, struct bu_list *head,
+            struct loopuse_tree_node *parent, const struct bn_tol *tol)
 {
     /* when 'insert_node' is first called, the level must be '0' */
     int found = 0;
     int result1 = 0; /* AinB */
     int result2 = 0; /* BinA */
     int result_tmp = 0;
-    struct loopuse_tree_node *node;
-    struct loopuse_tree_node *new_node;
+    struct loopuse_tree_node *node = 0;
+    struct loopuse_tree_node *new_node = 0;
     int orientation_tmp_a, orientation_tmp_b;
 
     NMG_CK_LOOPUSE(lu);
