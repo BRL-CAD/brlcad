@@ -63,7 +63,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * DocBook pdf: ensure pdf output has suitable fonts embedded; create
   pretty covers for books and other large docs
 
-* DocBook: create an index for the html collection
+* DocBook: create an index for the html and pdf collection
 
 * DocBook source: add xsl customizations for figure and table title
   positions, float centering, etc.; add automatic figure, table, and
