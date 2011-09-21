@@ -268,7 +268,7 @@ rt_comb_export5(
     /* check inputs */
     RT_CK_DB_INTERNAL(ip);
     if (dbip) RT_CK_DBI(dbip);
-    RT_CK_RESOURCE(resp);
+    if (resp) RT_CK_RESOURCE(resp);
 
     /* validate it's a comb */
     if (ip->idb_type != ID_COMBINATION) bu_bomb("rt_comb_export5() type not ID_COMBINATION");
