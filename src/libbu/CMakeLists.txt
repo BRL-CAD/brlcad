@@ -105,6 +105,9 @@ ENDIF(MSVC)
 add_executable(test_progname test_progname.c)
 target_link_libraries(test_progname libbu)
 
+add_executable(test_quote test_quote.c)
+target_link_libraries(test_quote libbu)
+
 add_executable(test_vls test_vls.c)
 target_link_libraries(test_vls libbu)
 

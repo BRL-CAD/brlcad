@@ -6,6 +6,7 @@ noinst_PROGRAMS = \
 	test_basename \
 	test_htond \
 	test_progname \
+	test_quote \
 	test_timer \
 	test_vls
 
@@ -110,6 +111,11 @@ test_basename_LDADD = \
 
 test_progname_SOURCES = test_progname.c
 test_progname_LDADD = \
+	libbu.la \
+	${BU_LIBS}
+
+test_quote_SOURCES = test_quote.c
+test_quote_LDADD = \
 	libbu.la \
 	${BU_LIBS}
 
