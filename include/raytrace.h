@@ -3781,7 +3781,6 @@ RT_EXPORT extern int nmg_demote_eu(struct edgeuse *eu);
 /*	MODIFY routines */
 RT_EXPORT extern void nmg_movevu(struct vertexuse *vu,
 				 struct vertex *v);
-#define nmg_moveeu(a, b) nmg_je(a, b)
 RT_EXPORT extern void nmg_je(struct edgeuse *eudst,
 			     struct edgeuse *eusrc);
 RT_EXPORT extern void nmg_unglueedge(struct edgeuse *eu);

@@ -273,7 +273,7 @@ nmg_to_winged_edge(r)
 		    if (eu2 == eu1 || eu2 == eu1->eumate_p)
 			bu_log("nmg_to_winged_edge: couldn't find second radial face for eu %p in shell %p\n", eu1, s);
 		    else
-			nmg_moveeu(eu1, eu2);
+			nmg_je(eu1, eu2);
 		}
 	    }
 	}
