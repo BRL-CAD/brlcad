@@ -67,6 +67,7 @@ bin_PROGRAMS = \
 	euclid_unformat \
 	fast4-g \
 	g-acad \
+	g-dot \
 	g-dxf \
 	g-egg \
 	g-euclid \
@@ -215,6 +216,10 @@ g5_g4_LDADD = ${WDB}
 g_acad_SOURCES = g-acad.c
 g_acad_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
 g_acad_LDADD = ${WDB}
+
+g_dot_SOURCES = g-dot.c
+g_dot_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
+g_dot_LDADD = ${GED}
 
 g_dxf_SOURCES = dxf/g-dxf.c
 g_dxf_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}

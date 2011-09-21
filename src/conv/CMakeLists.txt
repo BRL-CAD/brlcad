@@ -66,6 +66,8 @@ BRLCAD_ADDEXEC(euclid_unformat euclid/euclid_unformat.c "libbn libbu libsysv")
 
 BRLCAD_ADDEXEC(euclid-g euclid/euclid-g.c libwdb)
 
+BRLCAD_ADDEXEC(g-dot g-dot.c "libged libbu")
+
 BRLCAD_ADDEXEC(g-dxf dxf/g-dxf.c "librt libgcv libbu")
 
 BRLCAD_ADDEXEC(g-egg g-egg.c "libwdb libgcv")
