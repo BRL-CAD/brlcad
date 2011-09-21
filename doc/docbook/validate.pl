@@ -1,6 +1,10 @@
 #!/usr/bin/env perl
 
+use strict;
+use warnings;
+
 use File::Basename;
+use Data::Dumper;
 
 my $top_srcdir = qx(pwd);
 chomp $top_srcdir;
@@ -24,13 +28,15 @@ my $RNG_SCHEMA         = './resources/docbook-5.0/rng/docbookxi.rng';
 my $XMLLINT_VALID_ARGS = "--xinclude --relaxng ${RNG_SCHEMA} --noout --nonet";
 
 # for msv DB validation
-my $MSVCMD     = "$JAVA -Xss1024K -jar ${MSVJAR}";
+my $MSVCMD        = "$JAVA -Xss1024K -jar ${MSVJAR}";
 
 # for oNVDL validation
 my $ONVDL_XI_ARGS = '-Dorg.apache.xerces.xni.parser.XMLParserConfiguration=org.apache.xerces.parsers.XIncludeParserConfiguration';
 my $NVDL_SCHEMA   = './resources/docbook-5.0/docbookxi.nvdl';
-my $NVDLCMD       = "$JAVA $ONVDL_XI_ARGS -jar ";
+my $NVDLCMD       = "$JAVA $ONVDL_XI_ARGS -jar $ONVDLJAR";
 
+my $ascii = 'ascii';
+my $utf8  = 'utf8';
 
 my $javawarned = 0;
 my $vlog_asc = 'validate-asc-fail.log';
@@ -59,13 +65,14 @@ my %meth
      'java'    => {           var => '$JAVA',     fil => $JAVA},
     );
 
-my $enc  = undef;
-my $meth = 'msv';
-my $stop = 0;
-my $ifil = 0;
-my $verb = 0;
+my $enc      = undef;
+my $meth     = 'msv';
+my $stop     = 0;
+my $ifil     = 0;
+my $verbose  = 0;
 my $warnings = 1; # for MSV
 my $nvdlopts = '';
+my $debug    = 0;
 
 foreach my $arg (@ARGV) {
   my $arg = shift @ARGV;
@@ -87,7 +94,7 @@ foreach my $arg (@ARGV) {
     check_methods(); # exits
   }
   elsif ($arg =~ /^[-]{1,2}v/i) {
-    $verb = 1;
+    $verbose = 1;
   }
   elsif ($arg =~ /^[-]{1,2}no/i) {
     $warnings = 0;
@@ -153,7 +160,7 @@ if (defined $enc) {
     ++$errors;
   }
   else {
-    $enc = ($enc =~ /asc/i) ? 'ascii' : 'utf8';
+    $enc = ($enc =~ /asc/i) ? $ascii : $utf8;
   }
 }
 
@@ -188,30 +195,34 @@ while (defined(my $line = <$fp>)) {
       next;
     }
     # is the encoding determinate?
-    my $tenc = 'ascii';
+    my $tenc = $ascii;
     my $lang = undef;
     $f =~ m{(?: \A | [/\\]{1}) ([a-z]{2}) [/\\]{1} }xmsi;
     if ($1) {
       $lang = lc $1;
+      print "NOTE:  Lang is '$lang'.\n"
+	if $verbose;
       # we have a possible language couplet
       if ($lang eq 'en') {
-        $tenc = 'ascii';
+        $tenc = $ascii;
       }
       else {
-        $tenc = 'utf8';
+        $tenc = $utf8;
       }
     }
     elsif (defined $enc) {
       $tenc = $enc;
     }
 
-    $dbfils{$f}{$tenc} = 1;
-    if ($tenc eq 'ascii') {
+    $dbfils{$f} = $tenc;
+    if ($tenc eq $ascii) {
       push @dbfils_asc, $f;
     }
     else {
       push @dbfils_utf, $f;
     }
+
+    $lang = 'UNKNOWN!' if !defined $lang;
     print "DB file '$f' language code '$lang', using encoding '$tenc'.\n"
 	if $verbose;
 
@@ -219,15 +230,21 @@ while (defined(my $line = <$fp>)) {
 }
 close $fp;
 
+#print Dumper(\%dbfils);
+#die "debug exit";
+
 my $enc_prev = '';
 my ($hdr, $vlog, $typ);
+
 
 foreach my $f (@dbfils_asc, @dbfils_utf) {
   my $enc = $dbfils{$f};
 
+  print "DEBUG: enc ='$enc'; enc_prev = '$enc_prev'\n"
+     if $debug;
   # set encoding-specific variables
-  if ($enc ne $enc_prev) {
-    if ($enc eq 'ascii') {
+  if (!$enc_prev || ($enc ne $enc_prev)) {
+    if ($enc eq $ascii) {
       $hdr  = $XML_ASCII_HEADER;
       $vlog = $vlog_asc;
       $typ = 'ASCII';
@@ -291,7 +308,7 @@ sub validate_xmllint {
 sub validate_msv {
   my $tmpfil = shift @_;
 
-  my $warn = $$warnings ? '-warning' : '';
+  my $warn = $warnings ? '-warning' : '';
   my $cmd = "$MSVCMD $warn $RNG_SCHEMA $tmpfil";
   print "=== cmd: '$cmd'\n";
   my $msg = qx($cmd);
@@ -305,7 +322,7 @@ sub validate_msv {
 sub validate_nvdl {
   my $tmpfil = shift @_;
 
-  my $cmd = "$NVDLCMD $nvdlopts $tmpfi;";
+  my $cmd = "$NVDLCMD $nvdlopts $NVDL_SCHEMA $tmpfil;";
   print "=== cmd: '$cmd'\n";
   my $msg = qx($cmd);
   if ($msg) {
@@ -322,14 +339,14 @@ $usage
 
 Options:
 
-  --encoding=E    where E is one of 'ascii' or 'utf8' [default: auto]
+  --encoding=E    where E is one of '$ascii' or '$utf8' [default: auto]
 
                   If the file path contains a two-letter language
                   code bounded by path separators or a relative
                   path starting with the language code, the '/en/'
                   (or '\\en\\' or ' en/' or ' en\\') files will use
-                  'ascii' and all others will use 'utf8'.  The
-                  default is 'ascii' otherwise.
+                  '$ascii' and all others will use '$utf8'.  The
+                  default is '$ascii' otherwise.
 
   --method=M      where M is one of 'msv, 'xmllint', or 'nvdl'
                   [default: msv]
