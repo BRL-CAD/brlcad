@@ -55,7 +55,9 @@ db_traverse_subtree(union tree *tp,
     RT_CK_DB_TRAVERSE( dtp );
     RT_CHECK_DBI( dtp->dbip );
     RT_CK_TREE( tp );
-    RT_CK_RESOURCE( dtp->resp );
+    if (dtp->resp) {
+	RT_CK_RESOURCE( dtp->resp );
+    }
 
     switch ( tp->tr_op )  {
 
@@ -95,6 +97,9 @@ db_preorder_traverse( struct directory *dp,
     register size_t i;
     RT_CK_DB_TRAVERSE(dtp);
     RT_CK_DBI(dtp->dbip);
+    if (dtp->resp) {
+	RT_CK_RESOURCE( dtp->resp );
+    }
 
     if (RT_G_DEBUG & DEBUG_DB)
 	bu_log("db_preorder_traverse(%s) x%x, x%x, comb_enter=x%x, comb_exit=x%x, leaf=x%x, client_data=x%x\n",
@@ -168,7 +173,9 @@ db_functree_subtree(struct db_i *dbip,
 
     RT_CHECK_DBI( dbip );
     RT_CK_TREE( tp );
-    RT_CK_RESOURCE( resp );
+    if (resp) {
+	RT_CK_RESOURCE( resp );
+    }
 
     switch ( tp->tr_op )  {
 
@@ -212,6 +219,9 @@ db_functree(struct db_i *dbip,
     register size_t		i;
 
     RT_CK_DBI(dbip);
+    if (resp) {
+	RT_CK_RESOURCE(resp);
+    }
 
     if ((!dp) || (!comb_func && !leaf_func)) {
 	return; /* nothing to do */
