@@ -227,41 +227,23 @@ int remove_empty_attr(void)
 
 /**
  * Parses a string containing 3 floating point components into a vector vect_t
- * TODO : Check for a better way
+ *
  */
 int parse_vector(vect_t vec, const char *str)
 {
-	char *cp, *start = (char*)str;
-	unsigned int comp = 0;
-
+	char argv[ELEMENTS_PER_VECT];
+	char *end;
 	VSETALL(vec, 0);
 
-	bu_log("parse_vector: str = \"%s\" , vec = {%f, %f, %f} \n", str, vec[0], vec[1], vec[2]);
+	if(strlen(str)){
+		bu_argv_from_string((char **)&argv, ELEMENTS_PER_VECT, (char *)str);
 
-	for (cp=(char*)str; *cp; cp++){
-		if(isdigit(*cp))
-			continue;
-		else{
-			*cp = '\0';
-			vec[comp++] = atoi(start);
-			cp++;
-			start = cp;
-			if(comp >= ELEMENTS_PER_VECT)
-				break;
-		}
-
-		bu_log("parse_vector: str = \"%s\" , vec = {%f, %f, %f} comp = %d, start=%s, cp=%s\n",
-				str, vec[0], vec[1], vec[2], comp, start, cp);
+		vec[0] = strtod(&argv[0], &end);
+		vec[1] = strtod(&argv[1], &end);
+		vec[2] = strtod(&argv[2], &end);
 	}
 
-	/* The last component */
-	if(comp < ELEMENTS_PER_VECT){
-		*cp = '\0';
-		vec[comp] = atoi(start);
-	}
-
-	bu_log("parse_vector: str = \"%s\" , vec = (%f, %f, %f) comp = %d, start=%s, cp=%s\n",
-					str, vec[0], vec[1], vec[2], comp, start, cp);
+	/* bu_log("parse_vector: str = \"%s\" , vec = (%f, %f, %f)\n",	str, vec[0], vec[1], vec[2]); */
 
 
 	return GED_OK;
