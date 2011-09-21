@@ -31,6 +31,8 @@ my $ONVDL_XI_ARGS = '-Dorg.apache.xerces.xni.parser.XMLParserConfiguration=org.a
 my $NVDL_SCHEMA   = './resources/docbook-5.0/docbookxi.nvdl';
 my $NVDLCMD       = "$JAVA $ONVDL_XI_ARGS -jar ";
 
+
+my $javawarned = 0;
 my $vlog_asc = 'validate-asc-fail.log';
 my $vlog_utf = 'validate-utf-fail.log';
 my $vfil     = 'db-file-list.txt';
@@ -46,6 +48,16 @@ Use option '--help' or '-h' for more details.
 HERE
   exit;
 }
+
+
+# check that the paths are defined for the desired method
+my %meth
+  = (
+     'xmllint' => {java => 0, var => '$XMLLINT',  fil => $XMLLINT},
+     'msv'     => {java => 1, var => '$MSVJAR',   fil => $MSVJAR},
+     'nvdl'    => {java => 1, var => '$ONVDLJAR', fil => $ONVDLJAR},
+     'java'    => {           var => '$JAVA',     fil => $JAVA},
+    );
 
 my $enc  = undef;
 my $meth = 'msv';
@@ -70,6 +82,9 @@ foreach my $arg (@ARGV) {
   }
   elsif ($arg =~ /^[-]{1,2}g/i) {
     ; # ignore
+  }
+  elsif ($arg =~ /^[-]{1,2}c/i) {
+    check_methods(); # exits
   }
   elsif ($arg =~ /^[-]{1,2}v/i) {
     $verb = 1;
@@ -141,6 +156,9 @@ if (defined $enc) {
     $enc = ($enc =~ /asc/i) ? 'ascii' : 'utf8';
   }
 }
+
+# check method
+$errors += check_method($meth);
 
 die "ERROR exit.\n"
   if $errors;
@@ -359,6 +377,7 @@ Options:
                       Prints the time used by oNVDL for loading the
                       schema and for validation.
 
+  --check         check to see what methods have requirements met
 
 Notes:
 
@@ -376,3 +395,60 @@ after the '#' symbol are ignored.
 HERE
   exit;
 } # help
+
+sub check_method {
+  my $meth = shift @_;
+
+  my $metherrors = 0;
+  my $errors     = 0;
+
+  my $java = exists $meth{$meth}{java} ? $meth{$meth}{java} : 0;
+  my $var  = $meth{$meth}{var};
+  my $fil  = $meth{$meth}{fil};
+  if ($java && !$javawarned) {
+    if (!defined $JAVA) {
+      print "ERROR:  Variable '\$JAVA' not defined.\n";
+      ++$metherrors;
+      ++$javawarned;
+    }
+    elsif (!-f $JAVA) {
+      print "ERROR:  File '$JAVA' (variable '\$JAVA') not found.\n";
+      ++$javawarned;
+      ++$metherrors;
+    }
+  }
+
+  if (!defined $fil) {
+    print "ERROR:  Variable '$var' not defined.\n";
+    ++$metherrors;
+  }
+  elsif (!-f $fil) {
+    print "ERROR:  File '$fil' (variable '$var') not found.\n";
+    ++$metherrors;
+  }
+
+  if ($metherrors) {
+    print "ERROR:  Tool requirements for method '$meth' not met.\n";
+    ++$errors;
+  }
+
+  return $errors;
+
+} # check_method
+
+sub check_methods {
+  my $errors = 0;
+  foreach my $meth (keys %meth) {
+    my $err = check_method($meth);
+    if (!$err) {
+      print "Method '$meth' has a tool defined and in place.\n";
+    }
+    else {
+      ++$errors;
+    }
+  }
+  if ($errors) {
+    print "One or more methods are not available.\n";
+  }
+  exit;
+} # check_methods
