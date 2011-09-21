@@ -39,8 +39,6 @@ my $ascii = 'ascii';
 my $utf8  = 'utf8';
 
 my $javawarned = 0;
-my $vlog_asc = 'validate-asc-fail.log';
-my $vlog_utf = 'validate-utf-fail.log';
 my $vfil     = 'db-file-list.txt';
 my $sfil     = 'find-db-files.pl';
 
@@ -75,7 +73,6 @@ my $nvdlopts = '';
 my $debug    = 0;
 
 foreach my $arg (@ARGV) {
-  my $arg = shift @ARGV;
   my $val = undef;
   my $idx = index $arg, '=';
 
@@ -126,9 +123,6 @@ foreach my $arg (@ARGV) {
     $meth = ($meth =~ /xml/i) ? 'xmllint'
           : ($meth =~ /msv/i) ? 'msv' : 'nvdl';
   }
-  elsif ($arg =~ /^[-]{1,2}sto/i) {
-    $stop = 1;
-  }
   elsif (!$ifil) {
     $ifil = $arg;
   }
@@ -136,6 +130,9 @@ foreach my $arg (@ARGV) {
     die "ERROR:  Unknown argument '$arg'.\n"
   }
 }
+
+#print "args = @ARGV\n";
+#die "debug exit: \$stop = $stop";
 
 # error checks
 my $errors = 0;
@@ -234,7 +231,7 @@ close $fp;
 #die "debug exit";
 
 my $enc_prev = '';
-my ($hdr, $vlog, $typ);
+my ($hdr, $typ);
 
 
 foreach my $f (@dbfils_asc, @dbfils_utf) {
@@ -246,20 +243,16 @@ foreach my $f (@dbfils_asc, @dbfils_utf) {
   if (!$enc_prev || ($enc ne $enc_prev)) {
     if ($enc eq $ascii) {
       $hdr  = $XML_ASCII_HEADER;
-      $vlog = $vlog_asc;
       $typ = 'ASCII';
-      unlink $vlog if -f $vlog;
     }
     else {
       $hdr  = $XML_UTF8_HEADER;
-      $vlog = $vlog_utf;
       $typ = 'UTF8';
-      unlink $vlog if -f $vlog;
     }
   }
   $enc_prev = $enc;
 
-  qx(echo "=== $typ VALIDATION ===" >> $vlog );
+  print "=== $typ VALIDATION ===\n";
 
   my $dir = dirname($f);
   my $fil = basename($f);
@@ -270,26 +263,30 @@ foreach my $f (@dbfils_asc, @dbfils_utf) {
   print "=== processing file '$f' (see file '$tmpfil')\n"
     if $verbose;
 
+  my $exit_status = 0;
   if ($meth eq 'msv') {
-    validate_msv($tmpfil);
+    $exit_status = validate_msv($tmpfil);
   }
   elsif ($meth eq 'xmllint') {
-    validate_xmllint($tmpfil);
+    $exit_status = validate_xmllint($tmpfil);
   }
   else {
-    validate_nvdl($tmpfil);
+    $exit_status = validate_nvdl($tmpfil);
   }
-
+  if ($exit_status) {
+    print "=== INVALID: '$f'\n";
+    if ($stop) {
+      die "=== stopping after validation failure: '$f'\n";
+    }
+  }
+  else {
+    print "=== VALID: '$f'\n";
+  }
   print "=== finished processing file '$f' (see file '$tmpfil')\n"
     if $verbose;
-
 }
 
 print "Normal end.\n";
-print "See ASCII validation log file '$vlog_asc'.\n"
-  if -f $vlog_asc;
-print "See UTF-8 validation log file '$vlog_utf'.\n"
-  if -f $vlog_utf;
 
 #### SUBROUTINES ####
 sub validate_xmllint {
@@ -297,12 +294,19 @@ sub validate_xmllint {
 
   my $cmd = "$XMLLINT $XMLLINT_VALID_ARGS $tmpfil";
   print "=== cmd: '$cmd'\n";
-  my $msg = qx($cmd);
-  if ($msg) {
-    chomp $msg;
-    print "msg: '$msg'\n";
+
+  system($cmd);
+
+  my $exit_status = $?;
+  if ($exit_status == -1) {
+    print "failed to execute: $!\n";
+    print "cmd = '$cmd'\n";
+    return 1;
   }
 
+  $exit_status >>= 8;
+
+  return $exit_status;
 } # validate_xmllint
 
 sub validate_msv {
@@ -311,11 +315,19 @@ sub validate_msv {
   my $warn = $warnings ? '-warning' : '';
   my $cmd = "$MSVCMD $warn $RNG_SCHEMA $tmpfil";
   print "=== cmd: '$cmd'\n";
-  my $msg = qx($cmd);
-  if ($msg) {
-    chomp $msg;
-    print "msg: '$msg'\n";
+
+  system($cmd);
+
+  my $exit_status = $?;
+  if ($exit_status == -1) {
+    print "failed to execute: $!\n";
+    print "cmd = '$cmd'\n";
+    return 1;
   }
+
+  $exit_status >>= 8;
+
+  return $exit_status;
 
 } # validate_msv
 
@@ -324,11 +336,19 @@ sub validate_nvdl {
 
   my $cmd = "$NVDLCMD $nvdlopts $NVDL_SCHEMA $tmpfil;";
   print "=== cmd: '$cmd'\n";
-  my $msg = qx($cmd);
-  if ($msg) {
-    chomp $msg;
-    print "msg: '$msg'\n";
+
+  system($cmd);
+
+  my $exit_status = $?;
+  if ($exit_status == -1) {
+    print "failed to execute: $!\n";
+    print "cmd = '$cmd'\n";
+    return 1;
   }
+
+  $exit_status >>= 8;
+
+  return $exit_status;
 
 } # validate_nvdl
 
@@ -336,6 +356,10 @@ sub validate_nvdl {
 sub help {
   print <<"HERE";
 $usage
+
+Uses one of three methods to validate a DocBook xml source file.
+Input is a list of source files to validate.  Output is to stdout
+and stderr which may be redirected to one or two files.
 
 Options:
 
@@ -371,8 +395,10 @@ Options:
 
                   -c
                       The schema uses RELAX NG Compact Syntax.
+
                   -e enc
                       Uses the encoding enc to read the schema.
+
                   -f
                       Checks that the document is feasibly valid. A
                       document is feasibly valid if it could be
@@ -386,10 +412,12 @@ Options:
                       while a document is still under construction. This
                       option also disables checking that for every IDREF
                       there is a corresponding ID.
+
                   -i
                       Disables checking of ID/IDREF/IDREFS. By default,
                       Jing enforces the constraints imposed by RELAX NG
                       DTD Compatibility with respect to ID/IDREF/IDREFS.
+
                   -t
                       Prints the time used by oNVDL for loading the
                       schema and for validation.
