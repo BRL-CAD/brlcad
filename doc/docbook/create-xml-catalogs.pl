@@ -6,7 +6,10 @@
 use strict;
 use warnings;
 
-use BRLCAD_DOC;
+use BRLCAD_DOC (
+		'$genxmlcat',
+		'$genfopxmlcat',
+	       );
 use DBPATH;
 
 # this absolute path may need to be adjusted if the package is moved
@@ -22,8 +25,8 @@ my $dbfo   = "$dbhome/$dbdir/fo/docbook.xsl";
 my $dbman  = "$dbhome/$dbdir/manpages/docbook.xsl";
 
 # the two auto-generated catalog files:
-my $xmlcat = "${brldir}/${BRLCAD_DOC::genxmlcat}";
-my $fopcat = "${brldir}/${BRLCAD_DOC::genfopxmlcat}";
+my $xmlcat = "${brldir}/${genxmlcat}";
+my $fopcat = "${brldir}/${genfopxmlcat}";
 
 # instead of one-to-one mappings, may use rewrite entries--see p. 51 of
 # Bob Stayton's book

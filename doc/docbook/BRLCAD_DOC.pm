@@ -2,18 +2,104 @@ package BRLCAD_DOC;
 
 # used for common code for BRL-CAD perl doc utilities
 
+BEGIN {
+  use Exporter;
+  our @ISA = qw(Exporter);
+  our ($VERSION, @EXPORT, @EXPORT_OK, %EXPORT_TAGS, @EXPORT_FAIL);
+
+  $VERSION = '2011-09-21';
+
+  # Note that exported variables must have their proper leading symbol.
+  my @export_ok_all
+    = (
+       # functions
+       'print_autogen_header',
+       'print_xhtml_header',
+       'print_xml_header',
+      );
+
+  my @export_ok
+    = (
+       # variables
+       '$XML_ASCII_HEADER',
+       '$XML_UTF8_HEADER',
+       '$ascii',
+       '$genfopxmlcat',
+       '$genxmlcat',
+       '$utf8',
+      );
+
+  @EXPORT_OK
+    = (
+       @export_ok_all,
+       @export_ok,
+      );
+
+  %EXPORT_TAGS
+    = (
+       'all' => [@export_ok_all],
+      );
+
+} # BEGIN
+
+# === global vars for export =============
+
 # output files
 our $genxmlcat     = 'brlcad-xml-catalog-autogen.xml';
 
 # special name for the fop file:
 our $genfopxmlcat  = 'CatalogManager.properties';
 
+our $ascii            = 'ASCII';
+our $utf8             = 'UTF-8';
+our $XML_ASCII_HEADER = "<?xml version='1.0' encoding='ASCII'?>";
+our $XML_UTF8_HEADER  = "<?xml version='1.0' encoding='UTF-8'?>";
+
+# === local vars =========================
+
+# === functions ==========================
+sub print_xml_header {
+  my $fp     = shift @_;
+  my $utf    = shift @_;
+
+  $utf = 0 if !defined $utf;
+
+  if (!$utf) {
+    print $fp $XML_ASCII_HEADER, "\n";
+  }
+  else {
+    print $fp $XML_UTF8_HEADER, "\n";
+  }
+
+} # print_xml_header
+
+sub print_xhtml_header {
+  my $fp     = shift @_;
+  my $utf    = shift @_;
+
+  $utf = 0 if !defined $utf;
+
+  if (!$utf) {
+    print $fp $XML_ASCII_HEADER, "\n";
+  }
+  else {
+    print $fp $XML_UTF8_HEADER, "\n";
+  }
+
+  print $fp <<"HERE";
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+HERE
+
+} # print_xhtml_header
+
 sub print_autogen_header {
   my $fp     = shift @_;
   my $prog   = shift @_;
   my $xmlhdr = shift @_;
   if (defined $xmlhdr) {
-    print $fp "<?xml version='1.0' encoding='ASCII'?>\n";
+    print_xml_header($fp);
   }
   print $fp <<"HERE";
 <!--

@@ -6,6 +6,13 @@ use warnings;
 use File::Basename;
 use Data::Dumper;
 
+use BRLCAD_DOC (
+		'$XML_ASCII_HEADER',
+		'$XML_UTF8_HEADER',
+		'$ascii',
+		'$utf8',
+	       );
+
 my $top_srcdir = qx(pwd);
 chomp $top_srcdir;
 
@@ -13,14 +20,12 @@ chomp $top_srcdir;
 
 # user edit this file for local validation tool paths:
 use BRLCAD_DB_VALIDATION;
-my $JAVA     = "$BRLCAD_DB_VALIDATION::JAVA";
-my $MSVJAR   = "$BRLCAD_DB_VALIDATION::MSVJAR";
-my $XMLLINT  = "$BRLCAD_DB_VALIDATION::XMLLINT";
-my $ONVDLJAR = "$BRLCAD_DB_VALIDATION::ONVDLJAR";
+my $JAVA     = $BRLCAD_DB_VALIDATION::JAVA;
+my $MSVJAR   = $BRLCAD_DB_VALIDATION::MSVJAR;
+my $XMLLINT  = $BRLCAD_DB_VALIDATION::XMLLINT;
+my $ONVDLJAR = $BRLCAD_DB_VALIDATION::ONVDLJAR;
 
 # for DocBook (DB) validation
-my $XML_UTF8_HEADER    = "<?xml version='1.0' encoding='UTF-8'?>";
-my $XML_ASCII_HEADER   = "<?xml version='1.0' encoding='ASCII'?>";
 my $XML_TMPFILE        = '.tmp';
 my $RNG_SCHEMA         = './resources/docbook-5.0/rng/docbookxi.rng';
 
@@ -34,9 +39,6 @@ my $MSVCMD        = "$JAVA -Xss1024K -jar ${MSVJAR}";
 my $ONVDL_XI_ARGS = '-Dorg.apache.xerces.xni.parser.XMLParserConfiguration=org.apache.xerces.parsers.XIncludeParserConfiguration';
 my $NVDL_SCHEMA   = './resources/docbook-5.0/docbookxi.nvdl';
 my $NVDLCMD       = "$JAVA $ONVDL_XI_ARGS -jar $ONVDLJAR";
-
-my $ascii = 'ascii';
-my $utf8  = 'utf8';
 
 my $javawarned = 0;
 my $vfil     = 'db-file-list.txt';
@@ -391,7 +393,7 @@ Options:
 
   --no-warnings   do not show validation warnings (used for 'msv' only)
 
-  --nvdl=A[,B]    pass on or more options to the 'nvdl' method (do not
+  --nvdl=A[,B]    pass one or more options to the 'nvdl' method (do not
                   add the leading hyphen--it is automatically added):
 
                   -c

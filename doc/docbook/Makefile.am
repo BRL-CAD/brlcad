@@ -46,6 +46,14 @@ $(XML_CATALOGS): $(GEN_XML_CATALOGS) BRLCAD_DOC.pm
 	@mkdir -p $$(dirname $@)
 	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_FO_STYLESHEET) $?
 
+# new index product
+indexDOCBOOK_EN = \
+	index.xml
+
+indexDOCBOOK_ENhtmldir = $(BRLCAD_DATA)/html
+indexDOCBOOK_ENhtml_DATA = \
+	$(BUILTINDEX_ENHTML)
+
 include $(srcdir)/articles/en/Makefile.am
 include $(srcdir)/books/en/Makefile.am
 include $(srcdir)/lessons/en/Makefile.am
@@ -66,6 +74,7 @@ BUILT_SOURCES = \
 	$(BUILTARTICLES_ENPDF) \
 	$(BUILTBOOKS_ENHTML) \
 	$(BUILTBOOKS_ENPDF) \
+	$(BUILTINDEX_ENHTML) \
 	$(BUILTLESSONS_ENHTML) \
 	$(BUILTLESSONS_ENPDF) \
 	$(BUILTLESSONS_ESHTML) \
@@ -121,6 +130,7 @@ EXTRA_DIST = \
 	${presentationsDOCBOOK_EN} \
 	${specificationsDOCBOOK_EN} \
 	CMakeLists.txt \
+	DBPATH.pm.in \
 	README \
 	articles/CMakeLists.txt \
 	articles/en/CMakeLists.txt \
@@ -132,8 +142,10 @@ EXTRA_DIST = \
 	books/en/CMakeLists.txt \
 	books/en/Makefile.am \
 	books/en/tutorial_series_authors.xml \
+	create-index.pl \
+	create-xml-catalogs.pl \
+	find-db-files.pl \
 	fop.xconf.in \
-	DBPATH.pm.in \
 	lessons/CMakeLists.txt \
 	lessons/en/CMakeLists.txt \
 	lessons/en/Makefile.am \
@@ -160,6 +172,7 @@ EXTRA_DIST = \
 	system/mann/CMakeLists.txt \
 	system/mann/en/CMakeLists.txt \
 	system/mann/en/Makefile.am \
-	system/mann/mged_cmd_template.xml
+	system/mann/mged_cmd_template.xml \
+	validate.pl
 
 include $(top_srcdir)/misc/Makefile.defs

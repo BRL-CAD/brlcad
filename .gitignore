@@ -1,1 +1,5 @@
-/fontconfig
+/fop.xconf
+/Makefile
+/Makefile.in
+/DBPATH.pm
+/index.html
