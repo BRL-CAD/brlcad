@@ -983,6 +983,10 @@ rt_db_external5_to_internal5(
     RT_CK_DB_INTERNAL(ip);
     RT_CK_DBI(dbip);
 
+    /* needed for call into functab */
+    if (resp == RESOURCE_NULL)
+	resp = &rt_uniresource;
+
     BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
 
     if (db5_get_raw_internal_ptr(&raw, ep->ext_buf) == NULL) {
