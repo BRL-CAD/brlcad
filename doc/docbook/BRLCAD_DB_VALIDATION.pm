@@ -10,4 +10,4 @@ our $MSVJAR = '/opt/oracle/msv-20090415/msv.jar';
 our $JAVA = '/opt/sun/jre1.6.0_21/bin/java';
 
 # path to oNVDL jar file
-our $ONVDLJAR = 'opt/oNVDL/bin/onvdl.jar';
+our $ONVDLJAR = '/opt/oNVDL/bin/onvdl.jar';
