@@ -45,6 +45,7 @@ ged_get_autoview(struct ged *gedp, int argc, const char *argv[])
     vect_t minus, plus;
     vect_t center;
     vect_t radial;
+    fastf_t size;
     int pflag = 0;
     int c;
 
@@ -120,9 +121,11 @@ ged_get_autoview(struct ged *gedp, int argc, const char *argv[])
 	VSETALL(radial, 1.0);
 
     VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_base2local);
-    radial[X] *= gedp->ged_wdbp->dbip->dbi_base2local;
-
-    bu_vls_printf(gedp->ged_result_str, "center {%g %g %g} size %g", V3ARGS(center), radial[X] * 2.0);
+    VSCALE(radial, radial, gedp->ged_wdbp->dbip->dbi_base2local * 2.0);
+    size = radial[X];
+    V_MAX(size, radial[Y]);
+    V_MAX(size, radial[Z]);
+    bu_vls_printf(gedp->ged_result_str, "center {%g %g %g} size %g", V3ARGS(center), size);
 
     return GED_OK;
 }
