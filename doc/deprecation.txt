@@ -790,3 +790,6 @@ s/RT_INIT_([A-Z_]*)/RT_\1_INIT/g
 s/BU_LIST_MAGIC_OK/BU_LIST_MAGIC_EQUAL/g
 s/BU_LIST_MAGIC_WRONG/!BU_LIST_MAGIC_EQUAL/g
         renamed and consolidated to be consistent with libbn [7.20]
+
+s/nmg_moveeu/nmg_je/g
+	function has been renamed
