@@ -252,7 +252,7 @@ foreach my $f (@dbfils_asc, @dbfils_utf) {
   }
   $enc_prev = $enc;
 
-  print "=== $typ VALIDATION ===\n";
+  print "=== $typ VALIDATION (method: $meth) ===\n";
 
   my $dir = dirname($f);
   my $fil = basename($f);
@@ -260,8 +260,7 @@ foreach my $f (@dbfils_asc, @dbfils_utf) {
   unlink $tmpfil if -f $tmpfil;
   qx(echo "$hdr" > $tmpfil);
   qx(cat $f >> $tmpfil);
-  print "=== processing file '$f' (see file '$tmpfil')\n"
-    if $verbose;
+  print "=== processing file '$f' (see file '$tmpfil')\n";
 
   my $exit_status = 0;
   if ($meth eq 'msv') {
@@ -276,14 +275,16 @@ foreach my $f (@dbfils_asc, @dbfils_utf) {
   if ($exit_status) {
     print "=== INVALID: '$f'\n";
     if ($stop) {
-      die "=== stopping after validation failure: '$f'\n";
+      print "=== stopping after validation failure: '$f'\n";
+      print "=== finished processing file '$f' (see file '$tmpfil')\n";
+      exit;
     }
   }
   else {
     print "=== VALID: '$f'\n";
   }
-  print "=== finished processing file '$f' (see file '$tmpfil')\n"
-    if $verbose;
+
+  print "=== finished processing file '$f' (see file '$tmpfil')\n";
 }
 
 print "Normal end.\n";
