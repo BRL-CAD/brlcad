@@ -128,10 +128,10 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
     } else {
 	ap->a_ray.magic = RT_RAY_MAGIC;
     }
-    if (ap->a_resource == RESOURCE_NULL) {
+    if (ap->a_resource) {
+	RT_CK_RESOURCE(ap->a_resource);
+    } else {
 	ap->a_resource = &rt_uniresource;
-	rt_uniresource.re_magic = RESOURCE_MAGIC;
-	if (RT_G_DEBUG)bu_log("rt_shootray_bundle:  defaulting a_resource to &rt_uniresource\n");
     }
     ss.ap = ap;
     rtip = ap->a_rt_i;
