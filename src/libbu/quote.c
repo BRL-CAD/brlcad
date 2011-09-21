@@ -30,13 +30,18 @@ static const char DQUOTE = '"';
 static const char ESCAPE = '\\';
 
 
-void
+const char *
 bu_vls_encode(struct bu_vls *vp, const char *str)
 {
+    static const char *empty = "";
+    int skip = 0;
+
     if (UNLIKELY(!str))
-	return;
+	return empty;
 
     BU_CK_VLS(vp);
+
+    skip = bu_vls_strlen(vp);
 
     if (strchr(str, SPACE) == NULL) {
 	/* no spaces, just watch for quotes */
@@ -57,21 +62,28 @@ bu_vls_encode(struct bu_vls *vp, const char *str)
 	}
 	bu_vls_putc(vp, DQUOTE);
     }
+
+    return bu_vls_addr(vp) + skip;
 }
 
 
-void
+const char *
 bu_vls_decode(struct bu_vls *vp, const char *str)
 {
+    static const char *empty = "";
+
+    int skip = 0;
     int dquote = 0;
     int escape = 0;
 
     struct bu_vls quotebuf;
 
     if (UNLIKELY(!str))
-	return;
+	return empty;
 
     BU_CK_VLS(vp);
+
+    skip = bu_vls_strlen(vp);
 
     bu_vls_init(&quotebuf);
 
@@ -124,6 +136,8 @@ bu_vls_decode(struct bu_vls *vp, const char *str)
     }
 
     bu_vls_free(&quotebuf);
+
+    return bu_vls_addr(vp) + skip;
 }
 
 

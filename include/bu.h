@@ -4892,7 +4892,8 @@ BU_EXPORT extern void bu_vls_prepend(struct bu_vls *vp,
 
 /**
  * given an input string, wrap the string in double quotes if there is
- * a space.  escape any existing double quotes.
+ * a space and append it to the provided bu_vls.  escape any existing
+ * double quotes.
  *
  * TODO: consider a specifiable quote character and octal encoding
  * instead of double quote wrapping.  perhaps specifiable encode type:
@@ -4903,8 +4904,11 @@ BU_EXPORT extern void bu_vls_prepend(struct bu_vls *vp,
  * the behavior of this routine is subject to change but should remain
  * a reversible operation when used in conjunction with
  * bu_vls_decode().
+ *
+ * returns a pointer to the encoded string (i.e., the substring held
+ * within the bu_vls)
  */
-BU_EXPORT extern void bu_vls_encode(struct bu_vls *vp, const char *str);
+BU_EXPORT extern const char *bu_vls_encode(struct bu_vls *vp, const char *str);
 
 
 /**
@@ -4913,8 +4917,11 @@ BU_EXPORT extern void bu_vls_encode(struct bu_vls *vp, const char *str);
  *
  * the behavior of this routine is subject to change but should remain
  * the reverse operation of bu_vls_encode().
+ *
+ * returns a pointer to the decoded string (i.e., the substring held
+ * within the bu_vls)
  */
-BU_EXPORT extern void bu_vls_decode(struct bu_vls *vp, const char *str);
+BU_EXPORT extern const char *bu_vls_decode(struct bu_vls *vp, const char *str);
 
 
 /** @} */
