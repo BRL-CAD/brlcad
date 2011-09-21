@@ -58,7 +58,6 @@ print $fp "$_\n" for @fils;
 print "Normal end.  See DB file list '$vfil'.\n";
 
 #### SUBROUTINES ####
-
 sub findsub {
   my $f = $File::Find::name;
   if ($f =~ m{\.xml \z}xmsi) {
@@ -66,5 +65,6 @@ sub findsub {
     return if $ff =~ m{\A \.}xmsi;
     push @fils, $f;
   }
-}
+} # findsub
+
 
