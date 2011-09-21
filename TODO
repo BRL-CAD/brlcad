@@ -1184,6 +1184,18 @@ ODDITIES
 THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 --------------------------------------------------
 
+* change convention of using 'u', '+', and '-' for unions,
+  intersections, and subtractions respectively to symbols that
+  unambiguously describe the underlying CSG operation.
+
+  '+', 'x', and '-' are the dominant ASCII option or (better) using
+  unicode logic symbols for U and upside-down U.
+
+  Union/Disjunction: + ∨ v u (logical OR)
+  Intersection/Conjunction: x ∧ ^ . & n (logical AND)
+  Subtraction/Difference: - (logical AND NOT)
+  Negation/Complement: ! ¬ (logical NOT)
+
 * remove the bspline primitive
 
 * remove the poly primitive
