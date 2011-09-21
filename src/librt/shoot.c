@@ -927,6 +927,16 @@ rt_shootray(register struct application *ap)
     } else {
 	ap->a_ray.magic = RT_RAY_MAGIC;
     }
+#if 0
+    /* FIXME: resolve the rt_uniresource initialization dilemma, wrap
+     * in a function so we can call rt_init_resource().
+     */
+    if (ap->a_resource) {
+	RT_CK_RESOURCE(ap->a_resource);
+    } else {
+	ap->a_resource = &rt_uniresource;
+    }
+#endif
     if (ap->a_resource == RESOURCE_NULL) {
 	ap->a_resource = &rt_uniresource;
 	if (RT_G_DEBUG)bu_log("rt_shootray:  defaulting a_resource to &rt_uniresource\n");
