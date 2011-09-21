@@ -6,16 +6,14 @@
   version="1.0"
 >
 
-  <!-- the base stylesheet (resolved by this name in the xml catalog file) -->
-  <xsl:import href="fo/docbook.xsl"/>
+  <!-- the base stylesheet (resolved by this name
+       in the xml catalog file) -->
+  <xsl:import href="/xsl/manpages/docbook.xsl"/>
 
-  <!-- use "cover" and "back" instead -->
-  <xsl:import href="91_value-um-fo-covers-autogen.xsl"/>
-
-  <xsl:import href="70_value-fonts.xsl"/>
+  <xsl:import href="brlcad-fonts.xsl"/>
 
   <!-- common param inputs, etc. -->
-  <xsl:import href="61_value-um-common.xsl"/>
+  <xsl:import href="brlcad-common.xsl"/>
 
   <!-- these are used in place of stringparam inputs to xsltproc -->
   <!-- pdf bookmarks -->

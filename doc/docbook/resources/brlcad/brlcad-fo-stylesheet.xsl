@@ -8,7 +8,7 @@
 
   <!-- the base stylesheet (resolved by this name
        in the xml catalog file) -->
-  <xsl:import href="fo/docbook.xsl"/>
+  <xsl:import href="/xsl/fo/docbook.xsl"/>
 
   <xsl:import href="brlcad-fonts.xsl"/>
 
