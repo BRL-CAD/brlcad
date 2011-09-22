@@ -199,33 +199,6 @@ int add_to_comb(struct ged *gedp, char *target, char *add)
 
 
 /**
- * Will check and remove empty sim attributes
- *
- */
-int remove_empty_attr(void)
-{
-    /*
-	GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-	i = 3;
-	while (i < (size_t)argc) {
-	    if (BU_STR_EQUAL(argv[i], "region")) {
-		dp->d_flags = dp->d_flags & ~(RT_DIR_REGION);
-	    }
-	    (void)bu_avs_remove(&avs, argv[i]);
-	    i++;
-	}
-	if (db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
-	    bu_vls_printf(gedp->ged_result_str,
-			  "Error: failed to update attributes\n");
-	    bu_avs_free(&avs);
-	    return 0;
-	}
-	*/
-	return 0;
-}
-
-
-/**
  * Parses a string containing 3 floating point components into a vector vect_t
  *
  */
@@ -251,6 +224,111 @@ int parse_vector(vect_t vec, const char *str)
 
 
 /**
+ * Adds physics attributes to a node of the rigid_body list to be dispatched to physics
+ *
+ */
+int add_physics_attributes(struct ged *gedp, struct rigid_body *current_node, struct directory *ndp)
+{
+	unsigned int i;
+	struct bu_attribute_value_set avs;
+	struct bu_attribute_value_pair *avpp;
+	const char *val, *val_cpy;
+	fastf_t simulate_mass;
+	vect_t  simulate_force, simulate_linear_velocity, simulate_angular_velocity;
+
+	bu_avs_init_empty(&avs);
+	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, ndp)) {
+		bu_vls_printf(gedp->ged_result_str, "add_regions : ERROR : Cannot get attributes for object %s\n",
+												ndp->d_namep);
+		return GED_ERROR;
+	}
+
+	/* Set sim attributes to default values */
+	current_node->mass = 0;
+	VSETALL(current_node->force, 0);
+	VSETALL(current_node->force_position, 0);
+	VSETALL(current_node->linear_velocity, 0);
+	VSETALL(current_node->angular_velocity, 0);
+
+	/* Sort attribute-value set array by attribute name */
+	qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr);
+
+	for (i = 0; i < MAX_SIM_ATTRIBS; i++) {
+		val = bu_avs_get(&avs, sim_attrib[i]);
+		if (val) {
+			bu_log("add_regions : Object %s has %s = %s\n", ndp->d_namep, sim_attrib[i], val);
+			val_cpy = bu_strdup(val);
+
+			switch(i){
+			/* Mass */
+			case 0:
+				simulate_mass = atoi(val_cpy);
+				if(simulate_mass < 0 || simulate_mass > MAX_MASS){
+					bu_log("add_regions : WARNING %s should be between %f and %f, set to %f\n",
+							sim_attrib[i], 0.0, MAX_MASS, 0.0);
+					current_node->mass = 0;
+				}
+				else
+					current_node->mass = simulate_mass;
+				break;
+			/* Custom Force */
+			case 1:
+				parse_vector(simulate_force, val_cpy);
+				if(abs(simulate_force[0]) > MAX_FORCE_COMP ||
+				   abs(simulate_force[1]) > MAX_FORCE_COMP ||
+				   abs(simulate_force[2]) > MAX_FORCE_COMP){
+					bu_log("add_regions : WARNING %s should be between %f and %f, set to %f\n",
+							sim_attrib[i], 0.0, MAX_FORCE_COMP, 0.0);
+					VSETALL(current_node->force, 0);
+				}
+				else
+					VMOVE(current_node->force, simulate_force);
+				break;
+			/* Linear Velocity */
+			case 2:
+				parse_vector(simulate_linear_velocity, val_cpy);
+				if(abs(simulate_linear_velocity[0]) > MAX_LINEAR_VELOCITY_COMP ||
+				   abs(simulate_linear_velocity[1]) > MAX_LINEAR_VELOCITY_COMP ||
+				   abs(simulate_linear_velocity[2]) > MAX_LINEAR_VELOCITY_COMP){
+					bu_log("add_regions : WARNING %s should be between %f and %f, set to %f\n",
+							sim_attrib[i], 0.0, MAX_LINEAR_VELOCITY_COMP, 0.0);
+					VSETALL(current_node->linear_velocity, 0);
+				}
+				else
+					VMOVE(current_node->linear_velocity, simulate_linear_velocity);
+				break;
+			/* Angular Velocity */
+			case 3:
+				parse_vector(simulate_angular_velocity, val_cpy);
+				if(abs(simulate_angular_velocity[0]) > MAX_ANGULAR_VELOCITY_COMP ||
+				   abs(simulate_angular_velocity[1]) > MAX_ANGULAR_VELOCITY_COMP ||
+				   abs(simulate_angular_velocity[2]) > MAX_ANGULAR_VELOCITY_COMP){
+					bu_log("add_regions : WARNING %s should be between %f and %f, set to %f\n",
+							sim_attrib[i], 0.0, MAX_ANGULAR_VELOCITY_COMP, 0.0);
+					VSETALL(current_node->angular_velocity, 0);
+				}
+				else
+					VMOVE(current_node->angular_velocity, simulate_angular_velocity);
+				break;
+			default:
+				bu_log("add_regions : WARNING : simulation attribute %s not recognized!\n",
+						sim_attrib[i]);
+			} /* switch */
+		} /* if */
+	} /* for */
+
+	/* Just list all the attributes */
+	for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
+		bu_log("Attribute : %s {%s} ", avpp->name, avpp->value);
+	}
+
+	bu_avs_free(&avs);
+
+	return GED_OK;
+
+}
+
+/**
  * Add the list of regions in the model to the rigid bodies list in
  * simulation parameters. This function will duplicate the existing regions
  * prefixing "sim_" to the new region and putting them all under a new
@@ -263,13 +341,9 @@ int add_regions(struct ged *gedp, struct simulation_params *sim_params)
     char *prefix = "sim_";
     size_t  prefix_len, prefixed_name_len;
     point_t rpp_min, rpp_max;
-    unsigned int i, j;
+    unsigned int i;
     struct rigid_body *prev_node = NULL, *current_node;
-    struct bu_attribute_value_set avs;
-    struct bu_attribute_value_pair *avpp;
-    const char *val, *val_cpy;
-    fastf_t simulate_mass;
-    vect_t simulate_force, simulate_linear_velocity, simulate_angular_velocity;
+
 
     /* Kill the existing sim comb */
     kill(gedp, sim_params->sim_comb_name);
@@ -315,99 +389,6 @@ int add_regions(struct ged *gedp, struct simulation_params *sim_params)
                 return GED_ERROR;
             }
 
-            /* Get its physics attributes */
-            bu_avs_init_empty(&avs);
-         	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, ndp)) {
-         		bu_vls_printf(gedp->ged_result_str, "add_regions : ERROR : Cannot get attributes for object %s\n",
-         												ndp->d_namep);
-         		return GED_ERROR;
-         	}
-
-         	/* Set sim attributes to default values */
-         	current_node->mass = 0;
-         	VSETALL(current_node->force, 0);
-         	VSETALL(current_node->force_position, 0);
-         	VSETALL(current_node->linear_velocity, 0);
-         	VSETALL(current_node->angular_velocity, 0);
-
-         	/* Sort attribute-value set array by attribute name */
-         	qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr);
-
-         	for (j = 0; j < MAX_SIM_ATTRIBS; j++) {
-         		val = bu_avs_get(&avs, sim_attrib[j]);
-				if (!val || remove_empty_attr()) {
-					/*bu_log("add_regions : Object %s does not have a '%s' attribute, setting to 0\n",
-						  ndp->d_namep, sim_attrib[j]);*/
-				}
-				else{
-					bu_log("add_regions : Object %s has %s = %s\n", ndp->d_namep, sim_attrib[j], val);
-					val_cpy = bu_strdup(val);
-
-					switch(j){
-					/* Mass */
-					case 0:
-						simulate_mass = atoi(val_cpy);
-						if(simulate_mass < 0 || simulate_mass > MAX_MASS){
-							bu_log("add_regions : WARNING %s should be between %f and %f, set to %f\n",
-									sim_attrib[j], 0.0, MAX_MASS, 0.0);
-							current_node->mass = 0;
-						}
-						else
-							current_node->mass = simulate_mass;
-						break;
-					/* Custom Force */
-					case 1:
-						parse_vector(simulate_force, val_cpy);
-						if(abs(simulate_force[0]) > MAX_FORCE_COMP ||
-						   abs(simulate_force[1]) > MAX_FORCE_COMP ||
-						   abs(simulate_force[2]) > MAX_FORCE_COMP){
-							bu_log("add_regions : WARNING %s should be between %f and %f, set to %f\n",
-									sim_attrib[j], 0.0, MAX_FORCE_COMP, 0.0);
-							VSETALL(current_node->force, 0);
-						}
-						else
-							VMOVE(current_node->force, simulate_force);
-						break;
-					/* Linear Velocity */
-					case 2:
-						parse_vector(simulate_linear_velocity, val_cpy);
-						if(abs(simulate_linear_velocity[0]) > MAX_LINEAR_VELOCITY_COMP ||
-						   abs(simulate_linear_velocity[1]) > MAX_LINEAR_VELOCITY_COMP ||
-						   abs(simulate_linear_velocity[2]) > MAX_LINEAR_VELOCITY_COMP){
-							bu_log("add_regions : WARNING %s should be between %f and %f, set to %f\n",
-									sim_attrib[j], 0.0, MAX_LINEAR_VELOCITY_COMP, 0.0);
-							VSETALL(current_node->linear_velocity, 0);
-						}
-						else
-							VMOVE(current_node->linear_velocity, simulate_linear_velocity);
-						break;
-					/* Angular Velocity */
-					case 3:
-						parse_vector(simulate_angular_velocity, val_cpy);
-						if(abs(simulate_angular_velocity[0]) > MAX_ANGULAR_VELOCITY_COMP ||
-						   abs(simulate_angular_velocity[1]) > MAX_ANGULAR_VELOCITY_COMP ||
-						   abs(simulate_angular_velocity[2]) > MAX_ANGULAR_VELOCITY_COMP){
-							bu_log("add_regions : WARNING %s should be between %f and %f, set to %f\n",
-									sim_attrib[j], 0.0, MAX_ANGULAR_VELOCITY_COMP, 0.0);
-							VSETALL(current_node->angular_velocity, 0);
-						}
-						else
-							VMOVE(current_node->angular_velocity, simulate_angular_velocity);
-						break;
-					default:
-						bu_log("add_regions : WARNING : simulation attribute %s not recognized!\n",
-								sim_attrib[j]);
-					}
-				}
-         	}
-
-         	/* Just list all the attributes */
-         	for (j = 0, avpp = avs.avp; j < avs.count; j++, avpp++) {
-         		bu_log("Attribute : %s {%s} ", avpp->name, avpp->value);
-         	}
-
-         	bu_avs_free(&avs);
-
             /* Add to simulation list */
             current_node = (struct rigid_body *)bu_malloc(sizeof(struct rigid_body), "rigid_body: current_node");
             current_node->index = sim_params->num_bodies;
@@ -429,6 +410,9 @@ int add_regions(struct ged *gedp, struct simulation_params *sim_params)
             current_node->bb_center[0] = current_node->bb_min[0] + current_node->bb_dims[0]/2;
             current_node->bb_center[1] = current_node->bb_min[1] + current_node->bb_dims[1]/2;
             current_node->bb_center[2] = current_node->bb_min[2] + current_node->bb_dims[2]/2;
+
+            /* Get its physics attributes */
+            add_physics_attributes(gedp, current_node, ndp);
 
             /* Setup the linked list */
             if(prev_node == NULL){ /* first node */
