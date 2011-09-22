@@ -112,6 +112,7 @@ static struct db_tree_state tree_state;	/* includes tol & model */
 
 static int regions_tried = 0;
 static int regions_converted = 0;
+static int bomb_cnt = 0;
 
 static int bot_dump = 0;
 static int eval_all = 0;
@@ -812,9 +813,12 @@ out:
     /* Now we need to close each group set */
     fprintf(fp_out, "\t]\n}\n");
 
-    if (verbose) {
-	bu_log("Total of %d regions converted of %d regions attempted\n",
-		regions_converted, regions_tried);
+    bu_log("\nTotal of %d regions converted of %d regions attempted.\n",
+	regions_converted, regions_tried);
+
+    if (regions_converted != regions_tried) {
+	bu_log("Of the %d which failed conversion, %d of these failed due to conversion error.\n",
+	    regions_tried - regions_converted, bomb_cnt);
     }
 
     fclose(fp_out);
@@ -1314,8 +1318,8 @@ do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 		regions_converted, regions_tried);
     }
 
-    regions_tried++;
     if (pmp->num_bots > 0) {
+	regions_tried++;
 	name = db_path_to_string(pathp);
 	bu_log("Attempting %s\n", name);
 	bu_free(name, "db_path_to_string");
@@ -1324,7 +1328,6 @@ do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	regions_converted++;
 	return (union tree *)NULL;
     } else {
-	regions_converted++;
 	return nmg_region_end(tsp, pathp, curtree, client_data);
     }
 }
@@ -1351,8 +1354,8 @@ do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 		regions_converted, regions_tried);
     }
 
-    regions_tried++;
     if (pmp->num_bots > 0) {
+	regions_tried++;
 	name = db_path_to_string(pathp);
 	bu_log("Attempting %s\n", name);
 	bu_free(name, "db_path_to_string");
@@ -1378,8 +1381,9 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* catch */
 	char *name = db_path_to_string(pathp);
 
-	/* Error, bail out */
-	bu_log("conversion of %s FAILED!\n", name);
+	bu_log("Conversion of %s FAILED due to error!!!\n", name);
+
+	bomb_cnt++;
 
 	/* Sometimes the NMG library adds debugging bits when
 	 * it detects an internal error, before before bombing out.
@@ -1389,22 +1393,8 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
 
-	/* Release the tree memory & input regions */
-	db_free_tree(curtree, &rt_uniresource);	/* Does an nmg_kr() */
-
-	/* Get rid of (m)any other intermediate structures */
-	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC) {
-	    nmg_km(*tsp->ts_m);
-	} else {
-	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
-	}
-
 	bu_free(name, "db_path_to_string");
-	/* Now, make a new, clean model structure for next pass. */
-	*tsp->ts_m = nmg_mm();
-    }
-
-    BU_UNSETJUMP; /* Relinquish the protection */
+    } BU_UNSETJUMP; /* Relinquish the protection */
 
     return ret_tree;
 }
@@ -1437,7 +1427,6 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     bu_log("Attempting %s\n", name);
 
     regions_tried++;
-
     ret_tree = process_boolean(curtree, tsp, pathp);
 
     if (ret_tree) {
@@ -1447,20 +1436,20 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     }
 
     bu_free(name, "db_path_to_string");
-    regions_converted++;
     if (r != (struct nmgregion *)NULL) {
 	struct shell *s;
 	int empty_region = 0;
-	int empty_model = 0;
 
-	/* Kill cracks */
+	/* kill zero length edgeuse and cracks */
 	s = BU_LIST_FIRST(shell, &r->s_hd);
 	while (BU_LIST_NOT_HEAD(&s->l, &r->s_hd)) {
 	    struct shell *next_s;
-
 	    next_s = BU_LIST_PNEXT(shell, &s->l);
+	    (void)nmg_keu_zl(s, tsp->ts_tol); /* kill zero length edgeuse */
 	    if (nmg_kill_cracks(s)) {
+		/* true when shell is empty */
 		if (nmg_ks(s)) {
+		    /* true when nmg region is empty */
 		    empty_region = 1;
 		    break;
 		}
@@ -1468,31 +1457,28 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	    s = next_s;
 	}
 
-	/* kill zero length edgeuses */
 	if (!empty_region) {
-	    empty_model = nmg_kill_zero_length_edgeuses(*tsp->ts_m);
-	}
-
-	if (!empty_region && !empty_model) {
 	    /* Write the nmgregion to the output file */
 	    nmg_2_vrml(tsp, pathp, r->m_p);
+	    regions_converted++;
+	} else {
+	    bu_log("WARNING: Nothing left after Boolean evaluation of %s (due to cleanup)\n",
+		db_path_to_string(pathp));
 	}
 
-	/* NMG region is no longer necessary */
-	if (!empty_model) {
-	    nmg_kr(r);
-	}
     } else {
-	bu_log("WARNING: Nothing left after Boolean evaluation of %s\n",
+	bu_log("WARNING: Nothing left after Boolean evaluation of %s (due to error or null result)\n",
 		db_path_to_string(pathp));
     }
+
+    NMG_CK_MODEL(*tsp->ts_m);
 
     /*  Dispose of original tree, so that all associated dynamic
      *  memory is released now, not at the end of all regions.
      *  A return of TREE_NULL from this routine signals an error,
      *  so we need to cons up an OP_NOP node to return.
      */
-    db_free_tree(curtree, &rt_uniresource); /* Does an nmg_kr() */
+    db_free_tree(curtree, &rt_uniresource); /* does a nmg_kr (i.e. kill nmg region) */
 
     BU_GETUNION(curtree, tree);
     RT_TREE_INIT(curtree);
