@@ -3,6 +3,9 @@
 <book xmlns="http://docbook.org/ns/docbook" version="5.0">
   
   <info>
+    <title><application>BRL-CAD</application> Tutorial Series: Volume IV - Converting Geometry Between BRL-CAD
+and Other Formats</title>
+
     <author><personname><firstname>John </firstname><othername>R. </othername><surname>Anderson</surname></personname></author>
     <author><personname><firstname>Eric </firstname><othername>W. </othername><surname>Edwards</surname></personname></author>
     <productnumber>ARL-SR-122</productnumber>
