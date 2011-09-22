@@ -1850,8 +1850,7 @@ to_bounds(struct ged *gedp,
 	  const char *usage,
 	  int UNUSED(maxargs))
 {
-    vect_t clipmin;
-    vect_t clipmax;
+    fastf_t bounds[6];
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -1892,15 +1891,12 @@ to_bounds(struct ged *gedp,
 
     /* set window bounds */
     if (sscanf(argv[2], "%lf %lf %lf %lf %lf %lf",
-	       &clipmin[X], &clipmax[X],
-	       &clipmin[Y], &clipmax[Y],
-	       &clipmin[Z], &clipmax[Z]) != 6) {
+	       &bounds[0], &bounds[1],
+	       &bounds[2], &bounds[3],
+	       &bounds[4], &bounds[5]) != 6) {
 	bu_vls_printf(gedp->ged_result_str, "%s: invalid bounds - %s", argv[0], argv[2]);
 	return GED_ERROR;
     }
-
-    VMOVE(gdvp->gdv_dmp->dm_clipmin, clipmin);
-    VMOVE(gdvp->gdv_dmp->dm_clipmax, clipmax);
 
     /*
      * Since dm_bound doesn't appear to be used anywhere, I'm going to
@@ -1911,6 +1907,8 @@ to_bounds(struct ged *gedp,
 	gdvp->gdv_dmp->dm_bound = 1.0;
     else
 	gdvp->gdv_dmp->dm_bound = GED_MAX / gdvp->gdv_dmp->dm_clipmax[2];
+
+    DM_SET_WIN_BOUNDS(gdvp->gdv_dmp, bounds);
 
     return GED_OK;
 }

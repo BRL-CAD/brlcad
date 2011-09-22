@@ -453,7 +453,7 @@ DM_EXPORT extern const char *dm_version(void);
     HIDDEN int _dmtype##_setTransparency(struct dm *dmp, int transparency_on); \
     HIDDEN int _dmtype##_setDepthMask(struct dm *dmp, int depthMask_on); \
     HIDDEN int _dmtype##_setZBuffer(struct dm *dmp, int zbuffer_on); \
-    HIDDEN int _dmtype##_setWinBounds(struct dm *dmp, int *w); \
+    HIDDEN int _dmtype##_setWinBounds(struct dm *dmp, fastf_t *w); \
     HIDDEN int _dmtype##_debug(struct dm *dmp, int lvl); \
     HIDDEN int _dmtype##_beginDList(struct dm *dmp, unsigned int list); \
     HIDDEN int _dmtype##_endDList(struct dm *dmp); \

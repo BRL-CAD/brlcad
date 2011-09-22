@@ -460,6 +460,7 @@ package provide Archer 1.0
 	method applyPreferencesIfDiff {}
 	method applyViewAxesPreferences {}
 	method applyViewAxesPreferencesIfDiff {}
+	method cancelPreferences {}
 	method doPreferences {}
 	method readPreferences {}
 	method readPreferencesInit {}
@@ -579,6 +580,11 @@ package provide Archer 1.0
 
     ::update
     Load ""
+
+    if {!$mViewOnly} {
+	pushZClipSettings
+    }
+
 
     bind [namespace tail $this] <Configure> [::itcl::code $this handleConfigure]
 }
@@ -3307,53 +3313,67 @@ proc title_node_handler {node} {
 
     set parent $itk_component(displayF)
 
-    itk_component add zclipL {
-	::ttk::label $parent.zclipL \
-	    -text "Viewing Cube:"
+    itk_component add frontZClipL {
+	::ttk::label $parent.frontZClipL \
+	    -anchor se \
+	    -text "ZClip, Front:"
+    } {}
+    itk_component add frontZClipS {
+	::scale $parent.frontZClipS \
+	    -showvalue 1 \
+	    -orient horizontal \
+	    -from 1.0 \
+	    -to 100.0 \
+	    -resolution 0.01 \
+	    -variable [::itcl::scope mZClipFrontPref] \
+	    -command [::itcl::code $this updateZClipPlanes]
+    }
+
+    itk_component add backZClipL {
+	::ttk::label $parent.backZClipL \
+	    -anchor se \
+	    -text "ZClip, Back:"
+    } {}
+    itk_component add backZClipS {
+	::scale $parent.backZClipS \
+	    -showvalue 1 \
+	    -orient horizontal \
+	    -from 1.0 \
+	    -to 100.0 \
+	    -resolution 0.01 \
+	    -variable [::itcl::scope mZClipBackPref] \
+	    -command [::itcl::code $this updateZClipPlanes]
+    }
+
+    itk_component add zclipMaxL {
+	::ttk::label $parent.zclipMaxL \
+	    -anchor e \
+	    -text "ZClip Max:"
+    } {}
+    itk_component add zclipMaxE {
+	::ttk::entry $parent.zclipMaxE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mZClipMaxPref] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble %P]
+    } {}
+    itk_component add zclipMaxB {
+	::ttk::button $parent.zclipMaxB \
+	    -text "Compute ZClip Max" \
+	    -command [::itcl::code $this calculateZClipMax]
     } {}
 
     set i 0
-    set mZClipMode $i
-    itk_component add smallZClipRB {
-	::ttk::radiobutton $parent.smallZClipRB \
-	    -text "Small (Default)" \
-	    -value $i \
-	    -variable [::itcl::scope mZClipModePref]
-    } {}
-
+    grid $itk_component(frontZClipL) -column 0 -row $i -sticky nsew
+    grid $itk_component(frontZClipS) -column 1 -row $i -sticky ew
     incr i
-    itk_component add mediumZClipRB {
-	::ttk::radiobutton $parent.mediumZClipRB \
-	    -text "Medium" \
-	    -value $i \
-	    -variable [::itcl::scope mZClipModePref]
-    } {}
-
+    grid $itk_component(backZClipL) -column 0 -row $i -sticky nsew
+    grid $itk_component(backZClipS) -column 1 -row $i -sticky ew
     incr i
-    itk_component add largeZClipRB {
-	::ttk::radiobutton $parent.largeZClipRB \
-	    -text "Large" \
-	    -value $i \
-	    -variable [::itcl::scope mZClipModePref]
-    } {}
-
+    grid $itk_component(zclipMaxL) -column 0 -row $i -pady 8 -sticky e
+    grid $itk_component(zclipMaxE) -column 1 -row $i -pady 8 -padx 2 -sticky ew
     incr i
-    itk_component add infiniteZClipRB {
-	::ttk::radiobutton $parent.infiniteZClipRB \
-	    -text "Infinite" \
-	    -value $i \
-	    -variable [::itcl::scope mZClipModePref]
-    } {}
-
-    set i 0
-    grid $itk_component(zclipL) -column 0 -row $i -sticky w
-    grid $itk_component(smallZClipRB) -column 1 -row $i -sticky w
-    incr i
-    grid $itk_component(mediumZClipRB) -column 1 -row $i -sticky w
-    incr i
-    grid $itk_component(largeZClipRB) -column 1 -row $i -sticky w
-    incr i
-    grid $itk_component(infiniteZClipRB) -column 1 -row $i -sticky w
+    grid $itk_component(zclipMaxB) -column 0 -columnspan 2 -row $i -sticky ns
 
     incr i
     grid rowconfigure $parent $i -weight 1
@@ -4188,9 +4208,11 @@ proc title_node_handler {node} {
 	-borderwidth 1 \
 	-pady 0 \
 	-command [::itcl::code $this applyPreferencesIfDiff]
+    set b2_cmd [$itk_component(preferencesDialog) buttoncget 2 -command]
     $itk_component(preferencesDialog) buttonconfigure 2 \
 	-borderwidth 1 \
-	-pady 0
+	-pady 0 \
+	-command "[::itcl::code $this cancelPreferences]; $b2_cmd"
 
     grid [$itk_component(preferencesDialog) component bbox] -sticky e
 
@@ -7963,8 +7985,12 @@ proc title_node_handler {node} {
 
 
 ::itcl::body Archer::applyDisplayPreferencesIfDiff {} {
-    if {$mZClipModePref != $mZClipMode} {
-	set mZClipMode $mZClipModePref
+    if {$mZClipMaxPref != $mZClipMax ||
+	$mZClipBackPref != $mZClipBack ||
+	$mZClipFrontPref != $mZClipFront} {
+	set mZClipMax $mZClipMaxPref
+	set mZClipBack $mZClipBackPref
+	set mZClipFront $mZClipFrontPref
 	updateDisplaySettings
     }
 }
@@ -8512,10 +8538,21 @@ proc title_node_handler {node} {
 }
 
 
+::itcl::body Archer::cancelPreferences {} {
+
+    # Handling special case for zclip prefences (i.e. put zclip planes back where they were)
+    if {$mZClipMaxPref != $mZClipMax ||
+	$mZClipBackPref != $mZClipBack ||
+	$mZClipFrontPref != $mZClipFront} {
+	set mZClipMaxPref $mZClipMax
+	set mZClipBackPref $mZClipBack
+	set mZClipFrontPref $mZClipFront
+	updateDisplaySettings
+    }
+}
+
 ::itcl::body Archer::doPreferences {} {
     # update preference variables
-    set mZClipModePref $mZClipMode
-
     set mBackgroundColorPref $mBackgroundColor
     set mBindingModePref $mBindingMode
     set mEnableBigEPref $mEnableBigE
@@ -8568,6 +8605,10 @@ proc title_node_handler {node} {
     set mModelAxesTickMajorLengthPref $mModelAxesTickMajorLength
     set mModelAxesTickColorPref $mModelAxesTickColor
     set mModelAxesTickMajorColorPref $mModelAxesTickMajorColor
+
+    set mZClipMaxPref $mZClipMax
+    set mZClipBackPref $mZClipBack
+    set mZClipFrontPref $mZClipFront
 
     $itk_component(preferencesDialog) center [namespace tail $this]
     ::update
@@ -8711,7 +8752,9 @@ proc title_node_handler {node} {
     puts $_pfile "set mModelAxesTickMajorColor \"$mModelAxesTickMajorColor\""
 
     puts $_pfile "set mLastSelectedDir \"$mLastSelectedDir\""
-    puts $_pfile "set mZClipMode $mZClipMode"
+    puts $_pfile "set mZClipMax $mZClipMax"
+    puts $_pfile "set mZClipBack $mZClipBack"
+    puts $_pfile "set mZClipFront $mZClipFront"
 
     puts $_pfile "set mHPaneFraction1 $mHPaneFraction1"
     puts $_pfile "set mHPaneFraction2 $mHPaneFraction2"

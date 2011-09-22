@@ -463,7 +463,6 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
     glPushMatrix();
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(0.0, 0.0, -1.0);
     glPushMatrix();
     glLoadIdentity();
     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->face_flag = 1;	/* faceplate matrix is on top of stack */
@@ -573,7 +572,6 @@ wgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	glPushMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glTranslatef(0.0, 0.0, -1.0);
 	glPushMatrix();
 	glLoadIdentity();
 	((struct wgl_vars *)dmp1->dm_vars.priv_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
@@ -640,7 +638,6 @@ wgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	glPushMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glTranslatef(0.0, 0.0, -1.0);
 	glPushMatrix();
 	glLoadIdentity();
 	((struct wgl_vars *)dmp2->dm_vars.priv_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
@@ -885,21 +882,7 @@ wgl_loadMatrix(struct dm *dmp, mat_t mat, int which_eye)
 	    break;
     }
 
-    if (!dmp->dm_zclip) {
-	mat_t       nozclip;
-
-	MAT_IDN(nozclip);
-	nozclip[10] = 1.0e-20;
-	bn_mat_mul(newm, nozclip, mat);
-	mptr = newm;
-    } else {
-	mat_t       nozclip;
-
-	MAT_IDN(nozclip);
-	nozclip[10] = dmp->dm_bound;
-	bn_mat_mul(newm, nozclip, mat);
-	mptr = newm;
-    }
+    mptr = mat;
 
     gtmat[0] = *(mptr++);
     gtmat[4] = *(mptr++);
@@ -923,8 +906,7 @@ wgl_loadMatrix(struct dm *dmp, mat_t mat, int which_eye)
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(0.0, 0.0, -1.0);
-    glMultMatrixf(gtmat);
+    glLoadMatrixf(gtmat);
 
     return TCL_OK;
 }
@@ -1457,10 +1439,19 @@ wgl_debug(struct dm *dmp, int lvl)
 
 
 HIDDEN int
-wgl_setWinBounds(struct dm *dmp, int w[6])
+wgl_setWinBounds(struct dm *dmp, fastf_t w[6])
 {
+    GLint mm;
+
     if (dmp->dm_debugLevel)
 	bu_log("wgl_setWinBounds()\n");
+
+    if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
+			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
+	bu_log("ogl_setWinBounds: Couldn't make context current\n");
+	return TCL_ERROR;
+    }
 
     dmp->dm_clipmin[0] = w[0];
     dmp->dm_clipmin[1] = w[2];
@@ -1469,10 +1460,13 @@ wgl_setWinBounds(struct dm *dmp, int w[6])
     dmp->dm_clipmax[1] = w[3];
     dmp->dm_clipmax[2] = w[5];
 
-    if (dmp->dm_clipmax[2] <= GED_MAX)
-	dmp->dm_bound = 1.0;
-    else
-	dmp->dm_bound = GED_MAX / dmp->dm_clipmax[2];
+    glGetIntegerv(GL_MATRIX_MODE, &mm);
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glLoadIdentity();
+    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+    glPushMatrix();
+    glMatrixMode(mm);
 
     return TCL_OK;
 }
@@ -1876,8 +1870,6 @@ wgl_configureWin_guts(struct dm *dmp,
 HIDDEN void
 wgl_reshape(struct dm *dmp, int width, int height)
 {
-    GLint mm;
-
     dmp->dm_height = height;
     dmp->dm_width = width;
     dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
@@ -1894,13 +1886,6 @@ wgl_reshape(struct dm *dmp, int width, int height)
 		 ((struct wgl_vars *)dmp->dm_vars.priv_vars)->b,
 		 0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    /*CJXX this might cause problems in perspective mode? */
-    glGetIntegerv(GL_MATRIX_MODE, &mm);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0);
-    glMatrixMode(mm);
 }
 
 

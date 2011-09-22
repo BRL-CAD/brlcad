@@ -480,7 +480,7 @@ ps_debug(struct dm *dmp, int lvl)
 
 
 HIDDEN int
-ps_setWinBounds(struct dm *dmp, int *w)
+ps_setWinBounds(struct dm *dmp, fastf_t *w)
 {
     /* Compute the clipping bounds */
     dmp->dm_clipmin[0] = w[0] / 2048.;

@@ -2309,6 +2309,14 @@ refresh(void)
 	 */
 	curr_dm_list = p;
 	if (mapped && dirty) {
+	    int restore_zbuffer = 0;
+
+	    if (mged_variables->mv_fb &&
+		dmp->dm_zbuffer) {
+		restore_zbuffer = 1;
+		DM_SET_ZBUFFER(dmp, 0);
+	    }
+
 	    dirty = 0;
 	    do_time = 1;
 	    VMOVE(geometry_default_color, color_scheme->cs_geo_def);
@@ -2413,6 +2421,9 @@ refresh(void)
 	    }
 
 	    DM_DRAW_END(dmp);
+
+	    if (restore_zbuffer)
+		DM_SET_ZBUFFER(dmp, 0);
 	}
     }
 

@@ -1361,7 +1361,7 @@ X_debug(struct dm *dmp, int lvl)
 
 
 HIDDEN int
-X_setWinBounds(struct dm *dmp, int *w)
+X_setWinBounds(struct dm *dmp, fastf_t *w)
 {
     if (dmp->dm_debugLevel)
 	bu_log("X_setWinBounds()\n");

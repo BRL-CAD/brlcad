@@ -104,7 +104,7 @@ extern struct _color_scheme default_color_scheme;
 int mged_default_dlist = 0;   /* This variable is available via Tcl for controlling use of display lists */
 struct dm_list head_dm_list;  /* list of active display managers */
 struct dm_list *curr_dm_list = (struct dm_list *)NULL;
-static int windowbounds[6] = { XMIN, XMAX, YMIN, YMAX, (int)GED_MIN, (int)GED_MAX };
+static fastf_t windowbounds[6] = { XMIN, XMAX, YMIN, YMAX, (int)GED_MIN, (int)GED_MAX };
 
 struct w_dm which_dm[] = {
     { DM_TYPE_PLOT, "plot", Plot_dm_init },  /* DM_PLOT_INDEX defined in mged_dm.h */

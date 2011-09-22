@@ -345,8 +345,12 @@ namespace eval ArcherCore {
 	variable mSeparateCommandWindowPref ""
 	variable mSepCmdPrefix "sepcmd_"
 
-	variable mZClipMode 0
-	variable mZClipModePref ""
+	variable mZClipBack 100.0
+	variable mZClipBackPref 100.0
+	variable mZClipFront 100.0
+	variable mZClipFrontPref 100.0
+	variable mZClipMax 1000
+	variable mZClipMaxPref 1000
 
 	variable mBindingMode Default
 	variable mBindingModePref ""
@@ -516,6 +520,9 @@ namespace eval ArcherCore {
 	method launchRtApp {_app _size}
 
 	method updateDisplaySettings {}
+	method updateZClipPlanes {_unused}
+	method calculateZClipMax {}
+	method pushZClipSettings {}
 
 	variable mImgDir ""
 	variable mCenterX ""
@@ -3272,10 +3279,7 @@ namespace eval ArcherCore {
 ::itcl::body ArcherCore::doLighting {} {
     SetWaitCursor $this
 
-    if {$mZClipMode != $ZCLIP_NONE} {
-	gedCmd zclip_all $mLighting
-    }
-
+    gedCmd zclip_all $mLighting
     gedCmd zbuffer_all $mLighting
     gedCmd light_all $mLighting
 
@@ -4398,6 +4402,51 @@ namespace eval ArcherCore {
     return 0
 }
 
+::itcl::body ArcherCore::getTkColor {r g b} {
+    return [format \#%.2x%.2x%.2x $r $g $b]
+}
+
+::itcl::body ArcherCore::getRgbColor {tkColor} {
+    set rgb [winfo rgb $itk_interior $tkColor]
+    return [list \
+		[expr {[lindex $rgb 0] / 256}] \
+		[expr {[lindex $rgb 1] / 256}] \
+		[expr {[lindex $rgb 2] / 256}]]
+}
+
+::itcl::body ArcherCore::setSave {} {
+    if {$mDbNoCopy || $mDbReadOnly} {
+	return
+    }
+
+    set mNeedSave 1
+    updateSaveMode
+}
+
+::itcl::body ArcherCore::getLastSelectedDir {} {
+    return $mLastSelectedDir
+}
+
+::itcl::body ArcherCore::refreshDisplay {} {
+    if {$mCurrentPaneName == ""} {
+	set pane $mActivePaneName
+    } else {
+	set pane $mCurrentPaneName
+    }
+    set mCurrentPaneName ""
+
+#    $itk_component(ged) pane_refresh $pane
+    $itk_component(ged) refresh_all
+}
+
+::itcl::body ArcherCore::putString {_str} {
+    $itk_component(cmd) putstring $_str
+}
+
+::itcl::body ArcherCore::setStatusString {_str} {
+    set mStatusStr $_str
+}
+
 ::itcl::body ArcherCore::colorMenuStatusCB {_w} {
     if {$mDoStatus} {
 	# entry might not support -label (i.e. tearoffs)
@@ -4809,50 +4858,38 @@ namespace eval ArcherCore {
     }
 }
 
-::itcl::body ArcherCore::refreshDisplay {} {
-    if {$mCurrentPaneName == ""} {
-	set pane $mActivePaneName
-    } else {
-	set pane $mCurrentPaneName
-    }
-    set mCurrentPaneName ""
+::itcl::body ArcherCore::pushZClipSettings {} {
+    set mZClipMaxPref $mZClipMax
+    set mZClipBackPref $mZClipBack
+    set mZClipFrontPref $mZClipFront
+    updateDisplaySettings
+}
 
-#    $itk_component(ged) pane_refresh $pane
+::itcl::body ArcherCore::updateDisplaySettings {} {
+    updateZClipPlanes 0
+}
+
+::itcl::body ArcherCore::updateZClipPlanes {_unused} {
+    set near [expr {0.01 * $mZClipFrontPref * $mZClipMaxPref}]
+    set far [expr {0.01 * $mZClipBackPref * $mZClipMaxPref}]
+    $itk_component(ged) bounds_all "-1.0 1.0 -1.0 1.0 -$near $far"
     $itk_component(ged) refresh_all
 }
 
-::itcl::body ArcherCore::putString {_str} {
-    $itk_component(cmd) putstring $_str
+::itcl::body ArcherCore::calculateZClipMax {} {
+    set size [$itk_component(ged) size]
+    set autoview_l [$itk_component(ged) get_autoview]
+    set asize [lindex $autoview_l end]
+
+    set max [expr {($asize / $size) * 0.5}]
+    set maxSq [expr {$max * $max}]
+
+    # set mZClipMaxPref to the length of the diagonal
+    set mZClipMaxPref [expr {sqrt($maxSq + $maxSq)}]
+
+    updateZClipPlanes 0
 }
 
-::itcl::body ArcherCore::setStatusString {_str} {
-    set mStatusStr $_str
-}
-
-::itcl::body ArcherCore::getTkColor {r g b} {
-    return [format \#%.2x%.2x%.2x $r $g $b]
-}
-
-::itcl::body ArcherCore::getRgbColor {tkColor} {
-    set rgb [winfo rgb $itk_interior $tkColor]
-    return [list \
-		[expr {[lindex $rgb 0] / 256}] \
-		[expr {[lindex $rgb 1] / 256}] \
-		[expr {[lindex $rgb 2] / 256}]]
-}
-
-::itcl::body ArcherCore::setSave {} {
-    if {$mDbNoCopy || $mDbReadOnly} {
-	return
-    }
-
-    set mNeedSave 1
-    updateSaveMode
-}
-
-::itcl::body ArcherCore::getLastSelectedDir {} {
-    return $mLastSelectedDir
-}
 
 ##################################### ArcherCore Commands #####################################
 ::itcl::body ArcherCore::3ptarb {args} {
@@ -5632,25 +5669,6 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::zap {args} {
     eval gedWrapper clear 0 0 0 1 $args
-}
-
-::itcl::body ArcherCore::updateDisplaySettings {} {
-    switch -- $mZClipMode \
-	$ZCLIP_SMALL_CUBE { \
-				$itk_component(ged) zclip_all 1; \
-				$itk_component(ged) bounds_all {-4096 4095 -4096 4095 -4096 4095}; \
-			    } \
-	$ZCLIP_MEDIUM_CUBE { \
-				 $itk_component(ged) zclip_all 1; \
-				 $itk_component(ged) bounds_all {-8192 8191 -8192 8191 -8192 8191}; \
-			     } \
-	$ZCLIP_LARGE_CUBE { \
-				$itk_component(ged) zclip_all 1; \
-				$itk_component(ged) bounds_all {-16384 16363 -16384 16363 -16384 16363}; \
-			    } \
-	$ZCLIP_NONE { \
-			  $itk_component(ged) zclip_all 0; \
-		      }
 }
 
 

@@ -2229,7 +2229,7 @@ rtgl_debug(struct dm *dmp, int lvl)
 
 
 HIDDEN int
-rtgl_setWinBounds(struct dm *dmp, int *w)
+rtgl_setWinBounds(struct dm *dmp, fastf_t *w)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_setWinBounds()\n");
