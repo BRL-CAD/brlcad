@@ -9617,7 +9617,6 @@ go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp)
 	go_draw(gdvp);
 
 	if (gdvp->gdv_view->gv_rect.grs_draw) {
-	    go_draw(gdvp);
 	    fb_refresh(gdvp->gdv_fbs.fbs_fbp,
 		       gdvp->gdv_view->gv_rect.grs_pos[X], gdvp->gdv_view->gv_rect.grs_pos[Y],
 		       gdvp->gdv_view->gv_rect.grs_dim[X], gdvp->gdv_view->gv_rect.grs_dim[Y]);
