@@ -844,7 +844,6 @@ wgl_loadMatrix(struct dm *dmp, mat_t mat, int which_eye)
 {
     fastf_t *mptr;
     GLfloat gtmat[16];
-    mat_t	newm;
 
     if (dmp->dm_debugLevel) {
 	struct bu_vls tmp_vls;
@@ -1446,9 +1445,8 @@ wgl_setWinBounds(struct dm *dmp, fastf_t w[6])
     if (dmp->dm_debugLevel)
 	bu_log("wgl_setWinBounds()\n");
 
-    if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
+    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
+			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("ogl_setWinBounds: Couldn't make context current\n");
 	return TCL_ERROR;
     }
