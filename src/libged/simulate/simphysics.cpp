@@ -181,50 +181,43 @@ int add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_p
 		btAlignedObjectArray<btCollisionShape*> collision_shapes)
 {
 	struct rigid_body *current_node;
-	fastf_t volume;
+	btVector3 v1, v2;
 	btScalar mass;
-
-
 
 	for (current_node = sim_params->head_node; current_node != NULL; current_node = current_node->next) {
 
-		// Check if we should add a ground plane
-		if(strcmp(current_node->rb_namep, sim_params->ground_plane_name) == 0){
-			// Add a static ground plane : should be controlled by an option : TODO
-			btCollisionShape* groundShape = new btBoxShape(btVector3(current_node->bb_dims[0]/2,
+		// Check if the rigid body is static or dynamic(mass=0 or not)
+		mass = current_node->mass;
+		if(ZERO(mass)){
+			//Static body
+			btCollisionShape* bb_Shape = new btBoxShape(btVector3(current_node->bb_dims[0]/2,
 																	 current_node->bb_dims[1]/2,
 																	 current_node->bb_dims[2]/2));
-			btDefaultMotionState* groundMotionState = new btDefaultMotionState(
+			btDefaultMotionState* bb_MotionState = new btDefaultMotionState(
 														btTransform(btQuaternion(0,0,0,1),
 														btVector3(current_node->bb_center[0],
 																  current_node->bb_center[1],
 																  current_node->bb_center[2])));
 
-	/*		btCollisionShape* groundShape = new btStaticPlaneShape(btVector3(0,0,1),1);
-			btDefaultMotionState* groundMotionState =
-					new btDefaultMotionState(btTransform(btQuaternion(0,0,0,1),btVector3(0,0,-1)));*/
-
 			btRigidBody::btRigidBodyConstructionInfo
-					groundRigidBodyCI(0,groundMotionState,groundShape,btVector3(0,0,0));
-			btRigidBody* groundRigidBody = new btRigidBody(groundRigidBodyCI);
-			groundRigidBody->setUserPointer((void *)current_node);
-			dynamicsWorld->addRigidBody(groundRigidBody);
-			collision_shapes.push_back(groundShape);
+			bb_RigidBodyCI(0, bb_MotionState, bb_Shape, btVector3(0,0,0));
+			btRigidBody* bb_RigidBody = new btRigidBody(bb_RigidBodyCI);
+			bb_RigidBody->setUserPointer((void *)current_node);
+			dynamicsWorld->addRigidBody(bb_RigidBody);
+			collision_shapes.push_back(bb_Shape);
 
-			bu_vls_printf(sim_params->result_str, "Added static ground plane : %s to simulation with mass %f Kg\n",
+			bu_vls_printf(sim_params->result_str, "Added static body : %s to simulation with mass %f Kg\n",
 													current_node->rb_namep, 0.f);
 
 		}
-		else{
-			//Nope, its a rigid body
+		else if(mass > 0){
+			//Dynamic Body
 			btCollisionShape* bb_Shape = new btBoxShape(btVector3(current_node->bb_dims[0]/2,
 																			  current_node->bb_dims[1]/2,
 																			  current_node->bb_dims[2]/2));
 			collision_shapes.push_back(bb_Shape);
 
-			volume = current_node->bb_dims[0] * current_node->bb_dims[1] * current_node->bb_dims[2];
-			mass = volume; // density is 1
-
+			/* Set the mass from user parameters */
 			btVector3 bb_Inertia(0,0,0);
 			bb_Shape->calculateLocalInertia(mass, bb_Inertia);
 
@@ -237,12 +230,49 @@ int add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_p
 			btRigidBody* bb_RigidBody = new btRigidBody(bb_RigidBodyCI);
 			bb_RigidBody->setUserPointer((void *)current_node);
 
+			/* Add various other simulation properties from user parameters*/
+			/* Custom Force : will become a torque if force_position is non-zero in body relative co-ords*/
+			v1[0] = current_node->force[0];
+			v1[1] = current_node->force[1];
+			v1[2] = current_node->force[2];
+			v1[0] = current_node->force_position[0];
+			v1[1] = current_node->force_position[1];
+			v1[2] = current_node->force_position[2];
+			switch(current_node->persist_force){
+				case PERSIST_FORCE_ONCE:
+					bb_RigidBody->applyForce(v1, v2);
+					current_node->persist_force = PERSIST_FORCE_IGNORE;
+					break;
+
+				case PERSIST_FORCE_ALWAYS:
+					bb_RigidBody->applyForce(v1, v2);
+					break;
+
+				case PERSIST_FORCE_IGNORE:
+					break;
+			}
+
+			/* Linear Velocity */
+			v1[0] = current_node->linear_velocity[0];
+			v1[1] = current_node->linear_velocity[1];
+			v1[2] = current_node->linear_velocity[2];
+			bb_RigidBody->setLinearVelocity(v1);
+
+			/* Angular Velocity */
+			v1[0] = current_node->angular_velocity[0];
+			v1[1] = current_node->angular_velocity[1];
+			v1[2] = current_node->angular_velocity[2];
+			bb_RigidBody->setAngularVelocity(v1);
+
 			dynamicsWorld->addRigidBody(bb_RigidBody);
 
-			bu_vls_printf(sim_params->result_str, "Added rigid body : %s to simulation with mass %f Kg\n",
+			bu_vls_printf(sim_params->result_str, "Added rigid body %s to simulation with mass %f Kg\n",
 													current_node->rb_namep, mass);
 
 		}
+		else
+			bu_vls_printf(sim_params->result_str, "Negative mass of %f Kg detected for %s,\
+			exotic forms of matter are not yet supported. Object ignored.\n", mass, current_node->rb_namep);
 
 	}
 
@@ -250,24 +280,15 @@ int add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_p
 }
 
 /**
- * Steps the dynamics world according to the simulation parameters
+ * Step the dynamics world according to the simulation parameters just once
  *
  */
-int step_physics(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_params *sim_params)
+int step_physics(btDiscreteDynamicsWorld* dynamicsWorld)
 {
-	int i;
-	bu_log("Simulation will run for %d steps.\n", sim_params->duration);
 	bu_log("----- Starting simulation -----\n");
 
-	for (i=0 ; i < sim_params->duration ; i++) {
-
-		//bu_log("---------------Step : %d -------------\n", i+1);
-
-		//time step of 1/60th of a second(same as internal fixedTimeStep, maxSubSteps=10 to cover 1/60th sec.)
-		dynamicsWorld->stepSimulation(1/60.f,10);
-
-		/* Modify collision points after narrowphase collisions */
-	}
+	//time step of 1/60th of a second(same as internal fixedTimeStep, maxSubSteps=10 to cover 1/60th sec.)
+	dynamicsWorld->stepSimulation(1/60.f,10);
 
 	bu_log("----- Simulation Complete -----\n");
 
@@ -288,6 +309,7 @@ int get_transforms(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_par
 
 	identity.setIdentity();
 	const int num_bodies = dynamicsWorld->getNumCollisionObjects();
+	btVector3 v;
 
 
 	for(i=0; i < num_bodies; i++){
@@ -307,8 +329,7 @@ int get_transforms(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_par
 			struct rigid_body *current_node = (struct rigid_body *)bb_RigidBody->getUserPointer();
 
 			if(current_node == NULL){
-				bu_vls_printf(sim_params->result_str, "get_transforms : Could not get the user pointer \
-						(ground plane perhaps)\n");
+				bu_vls_printf(sim_params->result_str, "get_transforms : Could not get the user pointer\n");
 				continue;
 
 			}
@@ -347,6 +368,19 @@ int get_transforms(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_par
 			current_node->btbb_center[0] = current_node->btbb_min[0] + current_node->btbb_dims[0]/2;
 			current_node->btbb_center[1] = current_node->btbb_min[1] + current_node->btbb_dims[1]/2;
 			current_node->btbb_center[2] = current_node->btbb_min[2] + current_node->btbb_dims[2]/2;
+
+			/* Get the other sim parameters which should be persisted */
+			/* Linear Velocity */
+			v = bb_RigidBody->getLinearVelocity();
+			current_node->linear_velocity[0] = v[0];
+			current_node->linear_velocity[1] = v[1];
+			current_node->linear_velocity[2] = v[2];
+
+			/* Angular Velocity */
+			v = bb_RigidBody->getAngularVelocity();
+			current_node->angular_velocity[0] = v[0];
+			current_node->angular_velocity[1] = v[1];
+			current_node->angular_velocity[2] = v[2];
 
 		}
 	}
@@ -437,7 +471,7 @@ run_simulation(struct simulation_params *sim_params)
 	dispatcher->setNearCallback((btNearCallback)nearphase_callback);
 
 	//Step the physics the required number of times
-	step_physics(dynamicsWorld, sim_params);
+	step_physics(dynamicsWorld);
 
 	//Get the world transforms & AABBs back into the simulation params struct
 	get_transforms(dynamicsWorld, sim_params);

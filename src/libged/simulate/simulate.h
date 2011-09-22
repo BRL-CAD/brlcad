@@ -40,6 +40,11 @@
 #define DISABLE_DEACTIVATION 4
 #define DISABLE_SIMULATION 5
 
+//Force persistence over multiple steps
+#define PERSIST_FORCE_ONCE	 	1
+#define PERSIST_FORCE_ALWAYS	2
+#define PERSIST_FORCE_IGNORE	3
+
 /* Contains information about a single rigid body constructed from a BRL-CAD region.
  * This structure is the node of a linked list containing the geometry to be added to the sim
  * Only the bb is currently present, but physical properties like elasticity, custom forces
@@ -57,7 +62,9 @@ struct rigid_body {
     point_t num_contacts;			/**< @brief number of points inserted into contact[] */
     struct rigid_body *next;        /**< @brief link to next body */
     vect_t force;					/**< @brief force to be applied before stepping sim */
-    fastf_t mass;					/**< @brief mass in Kgs of body */
+    vect_t force_position;			/**< @brief apply at this body rel. pos.: non-zero means torque */
+    int persist_force;				/**< @brief the above force should be applied on all time steps */
+    fastf_t mass;					/**< @brief mass in Kg of body */
     fastf_t restitution;			/**< @brief coeff. of restitution(bounciness) of body */
     fastf_t friction;				/**< @brief coeff. of friction of body */
 
@@ -72,12 +79,10 @@ struct rigid_body {
     vect_t angular_velocity;		/**< @brief angular velocity components */
 };
 
-/* Contains the simulation parameters, such as number of rigid bodies,
- * the head node of the linked list containing the bodies and time/steps for
- * which the simulation will be run.
+/* Contains the simulation parameters, such as number of rigid bodies and
+ * the head node of the linked list containing the bodies.
  */
 struct simulation_params {
-    int duration;                  /**< @brief contains either the number of steps or the time */
     int num_bodies;                /**< @brief number of rigid bodies participating in the sim */
     struct bu_vls *result_str;     /**< @brief handle to the libged object to access geometry info */
     char *sim_comb_name;           /**< @brief name of the group which contains all sim regions*/

@@ -323,6 +323,13 @@ int add_regions(struct ged *gedp, struct simulation_params *sim_params)
          		return GED_ERROR;
          	}
 
+         	/* Set sim attributes to default values */
+         	current_node->mass = 0;
+         	VSETALL(current_node->force, 0);
+         	VSETALL(current_node->force_position, 0);
+         	VSETALL(current_node->linear_velocity, 0);
+         	VSETALL(current_node->angular_velocity, 0);
+
          	/* Sort attribute-value set array by attribute name */
          	qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr);
 
@@ -368,7 +375,7 @@ int add_regions(struct ged *gedp, struct simulation_params *sim_params)
 						   abs(simulate_linear_velocity[1]) > MAX_LINEAR_VELOCITY_COMP ||
 						   abs(simulate_linear_velocity[2]) > MAX_LINEAR_VELOCITY_COMP){
 							bu_log("add_regions : WARNING %s should be between %f and %f, set to %f\n",
-									sim_attrib[j], 0.0, MAX_FORCE_COMP, 0.0);
+									sim_attrib[j], 0.0, MAX_LINEAR_VELOCITY_COMP, 0.0);
 							VSETALL(current_node->linear_velocity, 0);
 						}
 						else
@@ -381,7 +388,7 @@ int add_regions(struct ged *gedp, struct simulation_params *sim_params)
 						   abs(simulate_angular_velocity[1]) > MAX_ANGULAR_VELOCITY_COMP ||
 						   abs(simulate_angular_velocity[2]) > MAX_ANGULAR_VELOCITY_COMP){
 							bu_log("add_regions : WARNING %s should be between %f and %f, set to %f\n",
-									sim_attrib[j], 0.0, MAX_FORCE_COMP, 0.0);
+									sim_attrib[j], 0.0, MAX_ANGULAR_VELOCITY_COMP, 0.0);
 							VSETALL(current_node->angular_velocity, 0);
 						}
 						else
@@ -782,7 +789,7 @@ int apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 int
 ged_simulate(struct ged *gedp, int argc, const char *argv[])
 {
-    int rv;
+    int rv, duration, i;
     struct simulation_params sim_params;
     static const char *sim_comb_name = "sim.c";
     static const char *ground_plane_name = "sim_gp.r";
@@ -804,15 +811,11 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
         bu_vls_printf(gedp->ged_result_str, "Usage: %s <steps>", argv[0]);
         return GED_ERROR;
     }
-    
-
-
-
 
     /* Make a list containing the bb and existing transforms of all the objects in the model
      * which will participate in the simulation
      */
-    sim_params.duration  = atoi(argv[1]);
+    duration = atoi(argv[1]);
     sim_params.result_str = gedp->ged_result_str;
     sim_params.sim_comb_name = bu_strdup(sim_comb_name);
     sim_params.ground_plane_name = bu_strdup(ground_plane_name);
@@ -823,19 +826,26 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    /* Run the physics simulation  */
-    rv = run_simulation(&sim_params);
-    if (rv != GED_OK){
-		bu_vls_printf(gedp->ged_result_str, "%s: ERROR while running the simulation\n", argv[0]);
-		return GED_ERROR;
-	}
+    /* Run the physics simulation for duration number of times */
+    for(i=0; i<duration; i++){
 
-    /* Apply transforms on the participating objects, also shades objects */
-    rv = apply_transforms(gedp, &sim_params);
-	if (rv != GED_OK){
-		bu_vls_printf(gedp->ged_result_str, "%s: ERROR while applying transforms\n", argv[0]);
-		return GED_ERROR;
-	}
+    	/* This call will run physics for 1 step and put the resultant vel/forces into sim_params */
+    	rv = run_simulation(&sim_params);
+		if (rv != GED_OK){
+			bu_vls_printf(gedp->ged_result_str, "%s: ERROR while running the simulation\n", argv[0]);
+			return GED_ERROR;
+		}
+
+		/* Apply transforms on the participating objects, also shades objects */
+		rv = apply_transforms(gedp, &sim_params);
+		if (rv != GED_OK){
+			bu_vls_printf(gedp->ged_result_str, "%s: ERROR while applying transforms\n", argv[0]);
+			return GED_ERROR;
+		}
+
+		/* Now that gedp has the latest object positions, rt can be used to detect overlaps */
+
+    }
 
 	/* Free memory in rigid_body list */
 	for (current_node = sim_params.head_node; current_node != NULL; ) {
