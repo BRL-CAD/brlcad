@@ -1,12 +1,19 @@
+# Include directories needed by libgcv users
+SET(GCV_INCLUDE_DIRS
+	${BRLCAD_BINARY_DIR}/include
+	${BRLCAD_SOURCE_DIR}/include
+	${BU_INCLUDE_DIRS}
+	${RT_INCLUDE_DIRS}
+	)
+LIST(REMOVE_DUPLICATES GCV_INCLUDE_DIRS)
+SET(GCV_INCLUDE_DIRS ${GCV_INCLUDE_DIRS} CACHE STRING "Include directories for libgcv" FORCE)
+MARK_AS_ADVANCED(GCV_INCLUDE_DIRS)
+include_directories(${GCV_INCLUDE_DIRS})
+
 set(LIBGCV_SOURCES
     bottess.c
     region_end.c
     region_end_mc.c
-)
-
-include_directories(
-    ${REGEX_INCLUDE_DIR}
-    ${TCL_INCLUDE_DIRS}
 )
 
 BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt libbu")

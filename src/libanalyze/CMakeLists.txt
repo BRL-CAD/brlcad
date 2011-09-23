@@ -1,10 +1,17 @@
+# Include directories needed by libanalyze users
+SET(ANALYZE_INCLUDE_DIRS
+	${BRLCAD_BINARY_DIR}/include
+	${BRLCAD_SOURCE_DIR}/include
+	${BU_INCLUDE_DIRS}
+	)
+LIST(REMOVE_DUPLICATES ANALYZE_INCLUDE_DIRS)
+SET(ANALYZE_INCLUDE_DIRS ${ANALYZE_INCLUDE_DIRS} CACHE STRING "Include directories for libanalyze" FORCE)
+MARK_AS_ADVANCED(ANALYZE_INCLUDE_DIRS)
+include_directories(${ANALYZE_INCLUDE_DIRS})
+
 set(LIBANALYZE_SOURCES
     density.c
     overlaps.c
-)
-
-include_directories(
-    ${TCL_INCLUDE_DIRS}
 )
 
 BRLCAD_ADDLIB(libanalyze "${LIBANALYZE_SOURCES}" libbu)
