@@ -3279,7 +3279,9 @@ namespace eval ArcherCore {
 ::itcl::body ArcherCore::doLighting {} {
     SetWaitCursor $this
 
-    gedCmd zclip_all $mLighting
+    # Leave this off for now.
+    gedCmd zclip_all 0
+
     gedCmd zbuffer_all $mLighting
     gedCmd light_all $mLighting
 
