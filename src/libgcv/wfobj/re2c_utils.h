@@ -54,8 +54,8 @@
  *  - Your scanning function needs to return int (the token id). To return the
  *    token id, you must use RETURN(id) rather than simply return id.
  *
- *  - A scanner_t* that you have initialized with initScanner(scanner_t*, FILE*)
- *    (and that you can deconstruct with freeScanner(scanner_t*)) must be
+ *  - A scanner_t* that you have initialized with scannerInit(scanner_t*, FILE*)
+ *    (and that you can deconstruct with scannerFree(scanner_t*)) must be
  *    available inside your scan function.
  *
  *  - You need to wrap the re2c comment block between the macros
@@ -94,54 +94,51 @@ enum YYCONDTYPE { INITIAL };
 #define CONDTYPE enum YYCONDTYPE
 #endif
 
-typedef struct bu_vls bu_string;
-
 typedef struct {
     void *extra; /* user data - user must free */
     FILE *in;    /* user must close */
-    bu_string *currLine;
-    bu_string *tokenText;
+    struct bu_vls *currLine;
+    struct bu_vls *tokenText;
     char *tokenStart;
     char *marker;
     char **cursor_p;
     CONDTYPE startCondition;
 } scanner_t;
 
-void initScanner(scanner_t *scanner, FILE *in);
-void freeScanner(scanner_t *scanner);
+/* HELPERS */
+/* condition support */
+void
+scannerSetStartCondition(scanner_t *scanner, const CONDTYPE sc);
 
-#define YYMARKER re2c_scanner->marker
-
-/* support for (f)lex "start conditions" */
-#define BEGIN(sc) setStartCondition(re2c_scanner, sc)
-#define YYGETCONDITION() getStartCondition(re2c_scanner)
-
-void setStartCondition(scanner_t *scanner, const CONDTYPE sc);
-CONDTYPE getStartCondition(scanner_t *scanner);
-
+CONDTYPE
+scannerGetStartCondition(scanner_t *scanner);
 
 /* text processing support */
-bu_string *newString();
-int getNextLine(bu_string *buf, FILE *in);
-int loadInput(scanner_t *scanner);
+#define YYMARKER _re2c_scanner->marker
+
+int
+scannerLoadInput(scanner_t *scanner);
+#define UPDATE_START _re2c_scanner->tokenStart = *_re2c_scanner->cursor_p;
+
+char*
+scannerCopyCurrTokenText(struct bu_vls *tokenString, scanner_t *scanner);
+#define FREE_TOKEN_TEXT bu_vls_vlsfree(_re2c_token_string);
 
 
+/* USER FUNCTIONS */
+void
+scannerInit(scanner_t *scanner, FILE *in);
+
+void
+scannerFree(scanner_t *scanner);
+
+/* USER MACROS */
 /* support for (f)lex token string */
-#define FREE_TOKEN_TEXT bu_vls_vlsfree(tokenString);
-#define yytext (copyCurrTokenText(tokenString, re2c_scanner))
+#define yytext (scannerCopyCurrTokenText(_re2c_token_string, _re2c_scanner))
 
-char *copyCurrTokenText(bu_string *tokenString, scanner_t *scanner);
-
-
-/* update/save stream position */
-#define UPDATE_START re2c_scanner->tokenStart = *re2c_scanner->cursor_p;
-
-
-/* use inside action to skip curr token and continue scanning */
-#define IGNORE_TOKEN \
-    UPDATE_START; \
-    continue;
-
+/* support for (f)lex "start conditions" */
+#define BEGIN(sc) scannerSetStartCondition(_re2c_scanner, sc)
+#define YYGETCONDITION() scannerGetStartCondition(_re2c_scanner)
 
 /* use inside action to return tokenID to caller */
 #define RETURN(tokenID) \
@@ -149,21 +146,26 @@ char *copyCurrTokenText(bu_string *tokenString, scanner_t *scanner);
     UPDATE_START; \
     return tokenID;
 
+/* use inside action to skip curr token and continue scanning */
+#define IGNORE_TOKEN \
+    UPDATE_START; \
+    continue;
 
 #define BEGIN_RE2C(scanner, yycursor) \
-    /* define the stuff used by helper macros */ \
-    scanner_t *re2c_scanner = scanner; \
-    bu_string *tokenString; \
+    /* define names used by helper macros */ \
+    scanner_t *_re2c_scanner = scanner; \
+    struct bu_vls *_re2c_token_string; \
     char *yycursor; \
 \
-    if (loadInput(re2c_scanner) < 0) { \
+    if (scannerLoadInput(_re2c_scanner) < 0) { \
 	return YYEOF; \
     } \
 \
-    yycursor = re2c_scanner->tokenStart; \
-    re2c_scanner->cursor_p = &yycursor; \
+    yycursor = _re2c_scanner->tokenStart; \
+    _re2c_scanner->cursor_p = &yycursor; \
 \
-    tokenString = newString(); \
+    BU_GETSTRUCT(_re2c_token_string, bu_vls); \
+    bu_vls_init(_re2c_token_string); \
 \
     /* create implicit label */ \
     while (1) {

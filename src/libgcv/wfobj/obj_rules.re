@@ -75,7 +75,7 @@ void obj_parser_set_extra(yyscan_t scanner, void *extra)
 
 void obj_parser_lex_destroy(yyscan_t scanner)
 {
-    freeScanner(scanner);
+    scannerFree(scanner);
 }
 
 int obj_parser_lex(YYSTYPE *yylval, yyscan_t scanner)

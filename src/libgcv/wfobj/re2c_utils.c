@@ -26,18 +26,11 @@
 #include "re2c_utils.h"
 #include "bu.h"
 
-bu_string *newString()
-{
-    struct bu_vls *string = NULL;
-
-    BU_GETSTRUCT(string, bu_vls);
-
-    bu_vls_init(string);
-
-    return string;
-}
-
-int getNextLine(bu_string *buf, FILE *in)
+/* helper to copy next line of in into buf
+ * returns length of copied line
+ */
+HIDDEN int
+scannerGetNextLine(struct bu_vls *buf, FILE *in)
 {
     int len;
 
@@ -54,21 +47,31 @@ int getNextLine(bu_string *buf, FILE *in)
     return len + 1;
 }
 
-int loadInput(scanner_t *scanner)
+/* If scanner's input buffer is exhausted, it is refilled.
+ * returns new length of input buffer
+ */
+int
+scannerLoadInput(scanner_t *scanner)
 {
-    bu_string *line = scanner->currLine;
-    int len = bu_vls_strlen(line);
-    char *lineEnd = bu_vls_addr(line) + len;
+    int lineLen;
+    char *lineEnd;
+    struct bu_vls *line;
+
+    line = scanner->currLine;
+    lineLen = bu_vls_strlen(line);
+    lineEnd = bu_vls_addr(line) + lineLen;
 
     if (scanner->tokenStart >= lineEnd) {
-	len = getNextLine(line, scanner->in);
+	lineLen = scannerGetNextLine(line, scanner->in);
 	scanner->tokenStart = bu_vls_addr(line);
     }
 
-    return len;
+    return lineLen;
 }
 
-char *copyCurrTokenText(bu_string *tokenString, scanner_t *scanner)
+/* copy scanner's internal string for current token to tokenString */
+char*
+scannerCopyCurrTokenText(struct bu_vls *tokenString, scanner_t *scanner)
 {
     int tokenLen = *scanner->cursor_p - scanner->tokenStart;
 
@@ -77,31 +80,42 @@ char *copyCurrTokenText(bu_string *tokenString, scanner_t *scanner)
     return bu_vls_addr(tokenString);
 }
 
-void setStartCondition(scanner_t *scanner, const CONDTYPE sc)
+/* set scanner's start condition to sc */
+void
+scannerSetStartCondition(scanner_t *scanner, const CONDTYPE sc)
 {
     scanner->startCondition = sc;
 }
 
-CONDTYPE getStartCondition(scanner_t *scanner)
+/* get scanner's current start condition */
+CONDTYPE
+scannerGetStartCondition(scanner_t *scanner)
 {
     return scanner->startCondition;
 }
 
-void initScanner(scanner_t *scanner, FILE *in)
+/* initialize scanner that reads from file in */
+void
+scannerInit(scanner_t *scanner, FILE *in)
 {
-    setStartCondition(scanner, INITIAL);
+    scannerSetStartCondition(scanner, INITIAL);
 
-    scanner->tokenText = newString();
+    BU_GETSTRUCT(scanner->tokenText, bu_vls);
+    bu_vls_init(scanner->tokenText);
 
     scanner->in = in;
 
-    scanner->currLine = newString();
-    getNextLine(scanner->currLine, scanner->in);
+    BU_GETSTRUCT(scanner->currLine, bu_vls);
+    bu_vls_init(scanner->currLine);
+
+    scannerGetNextLine(scanner->currLine, scanner->in);
 
     scanner->tokenStart = bu_vls_addr(scanner->currLine);
 }
 
-void freeScanner(scanner_t *scanner)
+/* free all resources associated with scanner */
+void
+scannerFree(scanner_t *scanner)
 {
     bu_vls_vlsfree(scanner->currLine);
     bu_vls_vlsfree(scanner->tokenText);
@@ -112,7 +126,7 @@ void freeScanner(scanner_t *scanner)
     scanner->marker = NULL;
     scanner->cursor_p = NULL;
 
-    bu_free(scanner, "freeScanner scanner_t");
+    bu_free(scanner, "scannerFree scanner_t");
 }
 
 /*

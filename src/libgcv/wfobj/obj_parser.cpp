@@ -135,12 +135,12 @@ static void createScanner(yyscan_t *scanner)
 
 static void destroyScanner(yyscan_t *scanner)
 {
-    freeScanner(*scanner);
+    scannerFree(*scanner);
 }
 
 static void setScannerIn(yyscan_t scanner, FILE *in)
 {
-    initScanner(scanner, in);
+    scannerInit(scanner, in);
 }
 
 static void setScannerExtra(yyscan_t scanner, detail::objCombinedState *extra)

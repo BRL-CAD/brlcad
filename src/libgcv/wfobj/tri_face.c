@@ -19,12 +19,13 @@
  */
 /** @file tri_face.c
  *
- * Implements triangulateFace routine for triangulating convex/concave planar N-gons.
- * Uses nmg for triangulation, but accepts and returns simple arrays.
+ * Implements triangulateFace routine for triangulating convex/concave planar
+ * N-gons. Uses nmg for triangulation, but accepts and returns simple arrays.
  *
  */
 
 #include "bu.h"
+#include "common.h"
 #include "nmg.h"
 #include "raytrace.h"
 
@@ -32,7 +33,7 @@ static const int VERTICES_PER_FACE = 3;
 
 /* nmg access routines */
 
-struct shell*
+HIDDEN struct shell*
 get_first_shell(struct model *model)
 {
     struct nmgregion *region;
@@ -44,7 +45,7 @@ get_first_shell(struct model *model)
     return shell;
 }
 
-struct model*
+HIDDEN struct model*
 get_faceuse_model(struct faceuse *fu)
 {
     return fu->s_p->r_p->m_p;
@@ -52,7 +53,7 @@ get_faceuse_model(struct faceuse *fu)
 
 /* nmg construction routines */
 
-struct vertex_g*
+HIDDEN struct vertex_g*
 make_nmg_vertex_g(double x, double y, double z, long index)
 {
     struct vertex_g *vg;
@@ -66,7 +67,7 @@ make_nmg_vertex_g(double x, double y, double z, long index)
     return vg;
 }
 
-struct vertex*
+HIDDEN struct vertex*
 make_nmg_vertex(double x, double y, double z, long index)
 {
     struct vertex *v;
@@ -81,7 +82,7 @@ make_nmg_vertex(double x, double y, double z, long index)
     return v;
 }
 
-void
+HIDDEN void
 attach_face_g_plane(struct face *f)
 {
     struct face_g_plane *plane;
@@ -99,7 +100,7 @@ attach_face_g_plane(struct face *f)
 /* builds an nmg model containing a single faceuse which represents the face
  * specified in points[]
  */
-struct model*
+HIDDEN struct model*
 make_model_from_face(const double points[], int numPoints)
 {
     int i;
@@ -158,7 +159,7 @@ make_faceuse_from_face(const double points[], int numPoints)
  * If match is found, returns the point number (starting at 0) of the match.
  * Otherwise returns -1.
  */
-int
+HIDDEN int
 getPointReference(
     const double point[],
     const double points[],
