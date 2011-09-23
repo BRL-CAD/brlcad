@@ -456,7 +456,7 @@ bot2soup(struct rt_bot_internal *bot, const struct bn_tol *tol)
 }
 
 HIDDEN struct nmgregion *
-soup2nmg(struct soup_s *soup, const struct bn_tol *UNUSED(tol))
+soup2nmg(struct soup_s *soup, const struct bn_tol *tol)
 {
     struct nmgregion *r;
     struct model *m;
