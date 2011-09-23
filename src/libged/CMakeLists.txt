@@ -325,6 +325,7 @@ include_directories(
     ${ZLIB_INCLUDE_DIR}
     ${REGEX_INCLUDE_DIR}
     ${TCL_INCLUDE_DIRS}
+	 ${OPENNURBS_INCLUDE_DIR}
 	 ${LIBGED_CMD_INCLUDE_DIRS}
 )
 
