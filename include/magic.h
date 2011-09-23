@@ -221,11 +221,11 @@
  * B U _ C K M A G _ T C L
  *
  * Macros to check and validate a structure pointer, given that the
- * first entry in the structure is a magic number.
+ * first entry in the structure is a magic number. ((void)(1?0:((_ptr), void(), 0)))
  */
 #ifdef NO_BOMBING_MACROS
-#  define BU_CKMAG(_ptr, _magic, _str) ((void)0)
-#  define BU_CKMAG_TCL(_interp, _ptr, _magic, _str) ((void)0)
+#  define BU_CKMAG(_ptr, _magic, _str) IGNORE((_ptr))
+#  define BU_CKMAG_TCL(_interp, _ptr, _magic, _str) IGNORE((_interp)); IGNORE((_ptr))
 #else
 #  define BU_CKMAG(_ptr, _magic, _str) { \
 	uintptr_t _ptrval = (uintptr_t)(_ptr); \
