@@ -253,13 +253,11 @@ rt_epa_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
  * stp->st_specific for use by epa_shot().
  */
 int
-rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
+rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *UNUSED(rtip))
 {
     struct rt_epa_internal *xip;
     struct epa_specific *epa;
-#ifndef NO_MAGIC_CHECKING
-    const struct bn_tol *tol = &rtip->rti_tol;
-#endif
+
     fastf_t magsq_h;
     fastf_t mag_a, mag_h;
     fastf_t f, r1, r2;
@@ -267,10 +265,8 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     mat_t Rinv;
     mat_t S;
 
-#ifndef NO_MAGIC_CHECKING
     RT_CK_DB_INTERNAL(ip);
-    BN_CK_TOL(tol);
-#endif
+
     xip = (struct rt_epa_internal *)ip->idb_ptr;
     RT_EPA_CK_MAGIC(xip);
 

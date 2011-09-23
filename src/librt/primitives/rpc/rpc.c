@@ -263,13 +263,11 @@ rt_rpc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
  * stp->st_specific for use by rpc_shot().
  */
 int
-rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
+rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *UNUSED(rtip))
 {
     struct rt_rpc_internal *xip;
     struct rpc_specific *rpc;
-#ifndef NO_BOMBING_MACROS
-    const struct bn_tol *tol = &rtip->rti_tol;  /* only used to check a if tolerance is valid */
-#endif
+
     fastf_t magsq_b, magsq_h, magsq_r;
     fastf_t mag_b, mag_h, mag_r;
     fastf_t f;
@@ -279,7 +277,7 @@ rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     vect_t invsq;	/* [ 1/(|H|**2), 1/(|R|**2), 1/(|B|**2) ] */
 
     RT_CK_DB_INTERNAL(ip);
-    BN_CK_TOL(tol);
+
     xip = (struct rt_rpc_internal *)ip->idb_ptr;
     RT_RPC_CK_MAGIC(xip);
 
@@ -400,7 +398,6 @@ rt_rpc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     vect_t xlated;		/* translated vector */
     struct hit hits[3];	/* 2 potential hit points */
     struct hit *hitp;	/* pointer to hit point */
-/*?????	const struct bn_tol *tol = &rtip->rti_tol; ?????*/
 
     hitp = &hits[0];
 

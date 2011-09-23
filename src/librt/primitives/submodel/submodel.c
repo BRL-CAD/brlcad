@@ -863,7 +863,7 @@ rt_submodel_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
  * The name is added by the caller, in the usual place.
  */
 int
-rt_submodel_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_submodel_export4(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
     struct rt_submodel_internal *sip;
     union record *rec;
@@ -875,9 +875,6 @@ rt_submodel_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
     if (ip->idb_type != ID_SUBMODEL) return -1;
     sip = (struct rt_submodel_internal *)ip->idb_ptr;
     RT_SUBMODEL_CK_MAGIC(sip);
-
-    /* Ignores scale factor */
-    BU_ASSERT(ZERO(local2mm - 1.0));
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record)*DB_SS_NGRAN;
@@ -954,7 +951,7 @@ rt_submodel_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
  * The name is added by the caller, in the usual place.
  */
 int
-rt_submodel_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_submodel_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UNUSED(local2mm), const struct db_i *dbip)
 {
     struct rt_submodel_internal *sip;
     struct bu_vls str;
@@ -966,10 +963,7 @@ rt_submodel_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     sip = (struct rt_submodel_internal *)ip->idb_ptr;
     RT_SUBMODEL_CK_MAGIC(sip);
 
-    /* Ignores scale factor */
-    BU_ASSERT(ZERO(local2mm - 1.0));
     BU_CK_EXTERNAL(ep);
-
     bu_vls_init(&str);
     bu_vls_struct_print(&str, rt_submodel_parse, (char *)sip);
     ep->ext_nbytes = bu_vls_strlen(&str);
