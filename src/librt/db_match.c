@@ -94,15 +94,12 @@ db_regexp_match_all(struct bu_vls *dest, struct db_i *dbip, const char *pattern)
 
 
 HIDDEN void
-db_count_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t dummy1, genptr_t dummy2, genptr_t dummy3)
+db_count_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t UNUSED(dummy1), genptr_t UNUSED(dummy2), genptr_t UNUSED(dummy3))
 {
-    struct directory	*dp;
+    struct directory *dp;
 
     if (comb) RT_CK_COMB(comb);
     RT_CK_TREE( comb_leaf );
-    BU_ASSERT(dummy1 == NULL);
-    BU_ASSERT(dummy2 == NULL);
-    BU_ASSERT(dummy3 == NULL);
 
     if ( (dp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) != RT_DIR_NULL )
 	++dp->d_nref;
