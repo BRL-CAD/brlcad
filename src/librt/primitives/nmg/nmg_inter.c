@@ -2477,14 +2477,15 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 	VSUB2(vt1_3d, vg1b->coord, vg1a->coord);
 
 	for (j=0; j<BU_PTBL_END(&eu2_list); j++) {
-	    struct edgeuse *eu2;
-	    struct vertex_g *vg2a, *vg2b;
-	    int code;
-	    vect_t vt2_3d;
-	    fastf_t dist[2];
-	    point_t hit_pt;
-	    int hit_no;
-	    int hit_count;
+	    struct edgeuse *eu2 = NULL;
+	    struct vertex_g *vg2a = NULL;
+	    struct vertex_g *vg2b = NULL;
+	    int code = 0;
+	    vect_t vt2_3d = VINIT_ZERO;
+	    fastf_t dist[2] = V2INIT_ZERO;
+	    point_t hit_pt = VINIT_ZERO;
+	    int hit_no = 0;
+	    int hit_count = 0;
 
 	    eu2 = (struct edgeuse *)BU_PTBL_GET(&eu2_list, j);
 	    NMG_CK_EDGEUSE(eu2);
@@ -5709,17 +5710,19 @@ nmg_isect_coplanar_edges(struct nmg_inter_struct *is, struct bu_ptbl *eu1_list, 
 	VSCALE(vt1, vt1, 1.0/len_vt1);
 
 	for (j=0; j<BU_PTBL_END(eu2_list); j++) {
-	    struct edgeuse *eu2;
-	    struct vertex_g *vg2a, *vg2b;
-	    int code;
-	    vect_t vt2;
-	    double len_vt2;
-	    fastf_t dist[2];
-	    point_t hit_pt;
-	    int hit_no;
-	    int hit_count;
-	    struct vertex *hitv;
-	    struct vertexuse *hit_vu;
+	    struct edgeuse *eu2 = NULL;
+	    struct vertex_g *vg2a = NULL;
+	    struct vertex_g *vg2b = NULL;
+	    int code = 0;
+	    vect_t vt2 = VINIT_ZERO;
+	    double len_vt2 = 0.0;
+	    fastf_t dist[2] = V2INIT_ZERO;
+	    point_t hit_pt = VINIT_ZERO;
+	    int hit_no = 0;
+	    int hit_count = 0;
+
+	    struct vertex *hitv = NULL;
+	    struct vertexuse *hit_vu = NULL;
 
 	    eu2 = (struct edgeuse *)BU_PTBL_GET(eu2_list, j);
 	    NMG_CK_EDGEUSE(eu2);
