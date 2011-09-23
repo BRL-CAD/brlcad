@@ -1,4 +1,4 @@
-/*                     O B J - G _ N E W . C
+/*                     O B J - G . C
  * BRL-CAD
  *
  * Copyright (c) 2010-2011 United States Government as represented by
@@ -22,7 +22,7 @@
  * This is a program to convert a WaveFront Object file to a BRL-CAD
  * database file.
  *
- * Example usage: obj-g -u m -o s input.obj output.g
+ * Example usage: obj-g -u mm input.obj output.g
  *
  * Recommended Improvements (not already listed in function comments):
  * - Support obj file texture vertices and materials
@@ -97,6 +97,8 @@ static char *usage =
     "\t\t.0005mm. You should not change this value without setting the\n"
     "\t\traytracer tolerance to match it.\n"
     "  -u units\tSelect units for the obj file: (m|cm|mm|ft|in). Default is m.\n"
+    "\t\tYou can also provide a custom conversion factor from file units\n"
+    "\t\tto mm.\n"
     "  -v\t\tOut verbose user info to stderr. Each occurrance of this option\n"
     "\t\tin the option list increases the verbosity level.\n"
     "  -x flag\tSpecify rt debug flag bits (see raytrace.h).\n"
