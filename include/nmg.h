@@ -36,9 +36,6 @@
 #include "vmath.h"
 #include "bu.h"
 
-#ifndef NULL
-#  define NULL 0
-#endif
 
 #define NMG_EXTERN(type_and_name, args) RT_EXTERN(type_and_name, args)
 
