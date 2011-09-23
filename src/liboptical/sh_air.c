@@ -458,21 +458,14 @@ emist_render(struct application *ap, const struct partition *pp, struct shadewor
  * once for each hit point to be shaded.
  */
 int
-emist_fbm_render(struct application *ap, const struct partition *pp, struct shadework *UNUSED(swp), genptr_t dp)
+emist_fbm_render(struct application *ap, const struct partition *pp, struct shadework *UNUSED(swp), genptr_t UNUSED(dp))
 {
-#ifndef NO_MAGIC_CHECKING
-    register struct air_specific *air_sp =
-	(struct air_specific *)dp;
-#endif
     point_t in_pt, out_pt;
     vect_t dist_v;
     double dist, delta;
 
-#ifndef NO_MAGIC_CHECKING
     RT_AP_CHECK(ap);
     RT_CHECK_PT(pp);
-    CK_AIR_SP(air_sp);
-#endif
 
     /* compute hit point & length of ray */
     if (pp->pt_inhit->hit_dist < 0.0) {

@@ -254,7 +254,7 @@ light_pt_set(register const struct bu_structparse *sdp, register const char *nam
  * away.
  */
 HIDDEN int
-light_render(struct application *ap, const struct partition *UNUSED(pp), struct shadework *swp, genptr_t dp)
+light_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
 {
     register struct light_specific *lsp = (struct light_specific *)dp;
     register fastf_t f;
@@ -278,11 +278,6 @@ light_render(struct application *ap, const struct partition *UNUSED(pp), struct 
     if (swp->sw_temperature > 0) {
 	rt_spect_black_body(swp->msw_color, swp->sw_temperature, 5);
 	bn_tabdata_scale(swp->msw_color, swp->msw_color, f);
-	if (rdebug & RDEBUG_LIGHT) {
-	    bu_log("light %s xy=%d, %d temp=%g\n",
-		   pp->pt_regionp->reg_name, ap->a_x, ap->a_y,
-		   swp->sw_temperature);
-	}
     } else {
 	bn_tabdata_scale(swp->msw_color, lsp->lt_spectrum, f);
     }
@@ -291,6 +286,13 @@ light_render(struct application *ap, const struct partition *UNUSED(pp), struct 
 	VSCALE(swp->sw_color, lsp->lt_color, f);
     }
 #endif
+
+    if (rdebug & RDEBUG_LIGHT) {
+	bu_log("light %s xy=%d, %d temp=%g\n",
+	       pp->pt_regionp->reg_name, ap->a_x, ap->a_y,
+	       swp->sw_temperature);
+    }
+
     return 1;
 }
 
