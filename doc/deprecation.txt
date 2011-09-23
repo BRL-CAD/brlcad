@@ -48,6 +48,10 @@ new names should be listed for reference.
 7.20
 ----
 
+liborle 
+        remove liborle and the tools using it, fb-orle, orle-fb, orle-pix and
+	pix-orle
+
 tclscripts/lib
         Mged, Database, Db, Dm, Drawable, Display, QuadDisplay, View -> Ged [deprecated 7.20]
 
