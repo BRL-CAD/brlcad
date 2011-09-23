@@ -210,7 +210,7 @@ typedef ptrdiff_t ssize_t;
 #ifndef UNUSED
 #  if GCC_PREREQ(2, 5)
      /* GCC-style */
-#    define UNUSED(parameter) (parameter) __attribute__((unused))
+#    define UNUSED(parameter) UNUSED_ ## parameter __attribute__((unused))
 #  else
      /* MSVC/C++ */
 #    ifdef __cplusplus
@@ -232,6 +232,23 @@ typedef ptrdiff_t ssize_t;
 #  define UNUSED(parameter) (parameter)
 #  warning "UNUSED was previously defined.  Parameter declaration behavior is unknown, see common.h"
 #endif
+
+/**
+ * IGNORE provides a common mechanism for innocuously ignoring a
+ * parameter that is sometimes used and sometimes not.  It should
+ * "practically" result in nothing of concern happening.  It's
+ * commonly used by macros that disable functionality based on
+ * compilation settings (e.g., BU_ASSERT()) and shouldn't normally
+ * need to be used directly by code.
+ *
+ * We can't use (void)(sizeof((parameter)) because MSVC2010 will
+ * reportedly report a warning about the value being unused.
+ * (Consequently calls into question (void)(parameter) but untested.)
+ *
+ * Possible alternative:
+ * ((void)(1 ? 0 : sizeof((parameter)) - sizeof((parameter))))
+ */
+#define IGNORE(parameter) (void)(parameter)
 
 /**
  * LIKELY provides a common mechanism for providing branch prediction
