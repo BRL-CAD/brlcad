@@ -1,10 +1,17 @@
-set(LIBORLE_SOURCES
-    rle.c
-)
+#Include directories needed by liborle users
+SET(ORLE_INCLUDE_DIRS
+	${BRLCAD_BINARY_DIR}/include
+	${BRLCAD_SOURCE_DIR}/include
+	)
+LIST(REMOVE_DUPLICATES ORLE_INCLUDE_DIRS)
+SET(ORLE_INCLUDE_DIRS ${ORLE_INCLUDE_DIRS} CACHE STRING "Include directories for liborle" FORCE)
+MARK_AS_ADVANCED(ORLE_INCLUDE_DIRS)
+include_directories(${ORLE_INCLUDE_DIRS})
 
-include_directories(
-    ${UTAHRLE_INCLUDE_DIR}
-)
+# local includes
+include_directories(${UTAHRLE_INCLUDE_DIR})
+
+set(LIBORLE_SOURCES rle.c)
 
 BRLCAD_ADDLIB(liborle "${LIBORLE_SOURCES}" "NONE")
 SET_TARGET_PROPERTIES(liborle PROPERTIES VERSION 19.0.1 SOVERSION 19)

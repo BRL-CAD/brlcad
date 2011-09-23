@@ -1,3 +1,24 @@
+SET(STEP_INCLUDE_DIRS
+	${BU_INCLUDE_DIRS}
+	${RT_INCLUDE_DIRS}
+	${WDB_INCLUDE_DIRS}
+	)
+LIST(REMOVE_DUPLICATES STEP_INCLUDE_DIRS)
+include_directories(${STEP_INCLUDE_DIRS})
+
+# local includes
+include_directories(
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${BRLCAD_SOURCE_DIR}/src/other/step/include
+	${BRLCAD_SOURCE_DIR}/src/other/step/src/clstepcore
+	${BRLCAD_SOURCE_DIR}/src/other/step/src/cleditor
+	${BRLCAD_SOURCE_DIR}/src/other/step/src/clutils
+	${BRLCAD_SOURCE_DIR}/src/other/step/src/cldai
+	${BRLCAD_SOURCE_DIR}/src/other/step/src/test
+	${CMAKE_BINARY_DIR}/src/other/step/include
+	${TNT_INCLUDE_DIR}
+	)
+
 SET(fedex_srcs
 	SdaiAll.cc
 	SdaiCONFIG_CONTROL_DESIGN.cc
@@ -371,21 +392,6 @@ CMAKEFILES(${stepg_HDRS})
 
 # FIXME: The fedex files are supposed to be generated, but the SCL stuff isn't
 # quite up to the job yet
-
-include_directories(
-	${CMAKE_CURRENT_SOURCE_DIR}
-	${BRLCAD_SOURCE_DIR}/src/other/step/include
-	${BRLCAD_SOURCE_DIR}/src/other/step/src/clstepcore
-	${BRLCAD_SOURCE_DIR}/src/other/step/src/cleditor
-	${BRLCAD_SOURCE_DIR}/src/other/step/src/clutils
-	${BRLCAD_SOURCE_DIR}/src/other/step/src/cldai
-	${BRLCAD_SOURCE_DIR}/src/other/step/src/test
-	${CMAKE_BINARY_DIR}/src/other/step/include
-	${OPENNURBS_INCLUDE_DIR}
-	${TNT_INCLUDE_DIR}
-	${ZLIB_INCLUDE_DIR}
-	${TCL_INCLUDE_DIRS}
-)
 
 BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "libwdb librt libbu steputils stepcore stepdai stepeditor ${OPENNURBS_LIBRARY}")
 

@@ -1,5 +1,17 @@
-set(LIBOPTICAL_SOURCES
+# Include directories needed by liboptical users
+SET(OPTICAL_INCLUDE_DIRS
+	${BRLCAD_BINARY_DIR}/include
+	${BRLCAD_SOURCE_DIR}/include
+	${BU_INCLUDE_DIRS}
+	${BN_INCLUDE_DIRS}
+	${RT_INCLUDE_DIRS}
+	)
+LIST(REMOVE_DUPLICATES OPTICAL_INCLUDE_DIRS)
+SET(OPTICAL_INCLUDE_DIRS ${OPTICAL_INCLUDE_DIRS} CACHE STRING "Include directories for liboptical" FORCE)
+MARK_AS_ADVANCED(OPTICAL_INCLUDE_DIRS)
+include_directories(${OPTICAL_INCLUDE_DIRS})
 
+set(LIBOPTICAL_SOURCES
 	init.c
 	material.c
 	photonmap.c
@@ -37,12 +49,6 @@ set(LIBOPTICAL_SOURCES
 	turb.c
 	vers.c
 	wray.c
-)
-
-include_directories(
-    ${PNG_INCLUDE_DIR}
-    ${ZLIB_INCLUDE_DIR}
-    ${TCL_INCLUDE_DIRS}
 )
 
 IF(BRLCAD-ENABLE_OSL)
