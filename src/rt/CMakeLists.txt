@@ -1,3 +1,14 @@
+SET(RTBIN_INCLUDE_DIRS
+	${BRLCAD_BINARY_DIR}/include
+	${BRLCAD_SOURCE_DIR}/include
+	${OPTICAL_INCLUDE_DIRS}
+	${FB_INCLUDE_DIRS}
+	${RT_INCLUDE_DIRS}
+	${CMAKE_CURRENT_SOURCE_DIR}
+	)
+LIST(REMOVE_DUPLICATES RTBIN_INCLUDE_DIRS)
+include_directories(${RTBIN_INCLUDE_DIRS})
+
 set(RT_COMMON_SRCS
 	do.c
 	main.c
@@ -119,13 +130,6 @@ set(LIBREMRT_SOURCES
 IF(NOT MSVC)
     SET(LIBREMRT_SOURCES ${LIBREMRT_SOURCES} heatgraph.c)
 ENDIF(NOT MSVC)
-
-include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${PNG_INCLUDE_DIR}
-    ${ZLIB_INCLUDE_DIR}
-    ${TCL_INCLUDE_DIRS}
-)
 
 add_executable(rtexample "${rtexample_SRCS}")
 target_link_libraries(rtexample librt libfb liboptical)

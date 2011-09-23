@@ -1,6 +1,9 @@
-include_directories(
-  ${TCL_INCLUDE_DIRS}
-)
+SET(ANIM_INCLUDE_DIRS
+	${BU_INCLUDE_DIRS}
+	${BN_INCLUDE_DIRS}
+	)
+LIST(REMOVE_DUPLICATES ANIM_INCLUDE_DIRS)
+include_directories(${ANIM_INCLUDE_DIRS})
 
 BRLCAD_ADDEXEC(anim_cascade anim_cascade.c "libbn libbu")
 
