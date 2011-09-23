@@ -32,6 +32,8 @@
 
 #include <iostream>
 
+#include "bu.h"
+#include "raytrace.h"
 #include "db.h"
 #include "vmath.h"
 #include "simulate.h"
@@ -181,7 +183,7 @@ int add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_p
 		btAlignedObjectArray<btCollisionShape*> collision_shapes)
 {
 	struct rigid_body *current_node;
-	btVector3 v1, v2;
+	btVector3 v1, v2, v3;
 	btScalar mass;
 
 	for (current_node = sim_params->head_node; current_node != NULL; current_node = current_node->next) {
@@ -206,7 +208,7 @@ int add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_p
 			dynamicsWorld->addRigidBody(bb_RigidBody);
 			collision_shapes.push_back(bb_Shape);
 
-			bu_vls_printf(sim_params->result_str, "Added static body : %s to simulation with mass %f Kg\n",
+			bu_log("Added static body : %s to simulation with mass %f Kg\n",
 													current_node->rb_namep, 0.f);
 
 		}
@@ -250,6 +252,8 @@ int add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_p
 
 				case PERSIST_FORCE_IGNORE:
 					break;
+				default:
+					;
 			}
 
 			/* Linear Velocity */
@@ -266,12 +270,15 @@ int add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_p
 
 			dynamicsWorld->addRigidBody(bb_RigidBody);
 
-			bu_vls_printf(sim_params->result_str, "Added rigid body %s to simulation with mass %f Kg\n",
-													current_node->rb_namep, mass);
+			v1 = bb_RigidBody->getLinearVelocity();
+			v2 = bb_RigidBody->getAngularVelocity();
+
+			bu_log("Added rigid body %s to simulation with mass %f Kg, lv(%f,%f,%f), av(%f,%f,%f)\n",
+					current_node->rb_namep, mass, v1[0], v1[1], v1[2], v2[0], v2[1], v2[2]);
 
 		}
 		else
-			bu_vls_printf(sim_params->result_str, "Negative mass of %f Kg detected for %s,\
+			bu_log("Negative mass of %f Kg detected for %s,\
 			exotic forms of matter are not yet supported. Object ignored.\n", mass, current_node->rb_namep);
 
 	}
@@ -279,20 +286,110 @@ int add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_p
 	return 0;
 }
 
+
+/**
+ * This function takes the transforms present in the current node and applies them
+ * in 3 steps : translate to origin, apply the rotation, then translate to final
+ * position with respect to origin(as obtained from physics)
+ */
+int apply_transforms(struct simulation_params *sim_params)
+{
+	struct rt_db_internal intern;
+	struct rigid_body *current_node;
+	struct db_i *dbip = sim_params->dbip;
+	mat_t t, m;
+	struct directory *dp;
+
+	for (current_node = sim_params->head_node; current_node != NULL; current_node = current_node->next) {
+
+		dp = current_node->dp;
+
+		/* Get the internal representation of the object */
+		if ( !rt_db_lookup_internal(dbip, dp->d_namep, &dp, &intern, LOOKUP_NOISY, &rt_uniresource)){
+			bu_log("apply_transforms: rt_db_lookup_internal(%s) failed to get the internal form",
+					dp->d_namep);
+			return SIM_ERROR;
+		}
+
+
+		/* Translate to origin without any rotation, before applying rotation */
+		MAT_IDN(m);
+		m[12] = - (current_node->bb_center[0]);
+		m[13] = - (current_node->bb_center[1]);
+		m[14] = - (current_node->bb_center[2]);
+		MAT_TRANSPOSE(t, m);
+		if (rt_matrix_transform(&intern, t, &intern, 0, dbip, &rt_uniresource) < 0){
+			bu_log("apply_transforms: ERROR rt_matrix_transform(%s) failed while \
+					translating to origin!\n",
+					current_node->dp->d_namep);
+			return SIM_ERROR;
+		}
+
+		/* Apply rotation with no translation*/
+		MAT_COPY(m, current_node->m);
+		m[12] = 0;
+		m[13] = 0;
+		m[14] = 0;
+		MAT_TRANSPOSE(t, m);
+		if (rt_matrix_transform(&intern, t, &intern, 0, dbip, &rt_uniresource) < 0){
+			bu_log("apply_transforms: ERROR rt_matrix_transform(%s) failed while \
+					applying rotation\n",
+					current_node->dp->d_namep);
+			return SIM_ERROR;
+		}
+
+		/* Translate again without any rotation, to apply final position */
+		MAT_IDN(m);
+		m[12] = current_node->m[12];
+		m[13] = current_node->m[13];
+		m[14] = current_node->m[14];
+		MAT_TRANSPOSE(t, m);
+		if (rt_matrix_transform(&intern, t, &intern, 0, dbip, &rt_uniresource) < 0){
+			bu_log("apply_transforms: ERROR rt_matrix_transform(%s) failed while \
+					translating to final position\n",
+					current_node->dp->d_namep);
+			return SIM_ERROR;
+		}
+
+		/* Write the modified solid to the db so it can be redrawn at the new position & orientation by Mged */
+		if (rt_db_put_internal(current_node->dp, dbip, &intern, &rt_uniresource) < 0) {
+			bu_log("apply_transforms: ERROR Database write error for '%s', aborting\n",
+					current_node->dp->d_namep);
+			return SIM_ERROR;
+		}
+
+	}
+
+    return SIM_OK;
+}
+
+
 /**
  * Step the dynamics world according to the simulation parameters just once
  *
  */
-int step_physics(btDiscreteDynamicsWorld* dynamicsWorld)
+int step_physics(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_params *sim_params)
 {
+	int rv, i;
+
 	bu_log("----- Starting simulation -----\n");
 
-	//time step of 1/60th of a second(same as internal fixedTimeStep, maxSubSteps=10 to cover 1/60th sec.)
-	dynamicsWorld->stepSimulation(1/60.f,10);
+	for (i=0 ; i < sim_params->duration ; i++) {
+
+		//time step of 1/60th of a second(same as internal fixedTimeStep, maxSubSteps=10 to cover 1/60th sec.)
+		dynamicsWorld->stepSimulation(1/60.f,10);
+
+		/* Apply transforms on the participating objects, also shades objects */
+		rv = apply_transforms(sim_params);
+		if (rv != SIM_OK){
+			bu_log("step_physics: ERROR while applying transforms\n");
+			return SIM_ERROR;
+		}
+	}
 
 	bu_log("----- Simulation Complete -----\n");
 
-	return 0;
+	return SIM_OK;
 }
 
 
@@ -330,8 +427,7 @@ int get_transforms(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_par
 
 			if(current_node == NULL){
 				bu_vls_printf(sim_params->result_str, "get_transforms : Could not get the user pointer\n");
-				continue;
-
+				return SIM_ERROR;
 			}
 
 			//Copy the transform matrix
@@ -361,7 +457,7 @@ int get_transforms(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_par
 			current_node->btbb_dims[1] = current_node->btbb_max[1] - current_node->btbb_min[1];
 			current_node->btbb_dims[2] = current_node->btbb_max[2] - current_node->btbb_min[2];
 
-			bu_vls_printf(sim_params->result_str, "get_transforms: Dimensions of this BB : %f %f %f\n",
+			bu_log("get_transforms: Dimensions of this BB : %f %f %f\n",
 					current_node->btbb_dims[0], current_node->btbb_dims[1], current_node->btbb_dims[2]);
 
 			//Get BB position in 3D space
@@ -385,7 +481,7 @@ int get_transforms(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_par
 		}
 	}
 
-	return 0;
+	return SIM_OK;
 }
 
 
@@ -420,7 +516,7 @@ int cleanup(btDiscreteDynamicsWorld* dynamicsWorld,
 	//delete dynamics world
 	delete dynamicsWorld;
 
-	return 0;
+	return SIM_OK;
 }
 
 
@@ -471,7 +567,7 @@ run_simulation(struct simulation_params *sim_params)
 	dispatcher->setNearCallback((btNearCallback)nearphase_callback);
 
 	//Step the physics the required number of times
-	step_physics(dynamicsWorld);
+	step_physics(dynamicsWorld, sim_params);
 
 	//Get the world transforms & AABBs back into the simulation params struct
 	get_transforms(dynamicsWorld, sim_params);

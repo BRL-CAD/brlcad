@@ -45,6 +45,10 @@
 #define PERSIST_FORCE_ALWAYS	2
 #define PERSIST_FORCE_IGNORE	3
 
+//Force persistence over multiple steps
+#define SIM_ERROR	0
+#define SIM_OK	 	1
+
 /* Contains information about a single rigid body constructed from a BRL-CAD region.
  * This structure is the node of a linked list containing the geometry to be added to the sim
  * Only the bb is currently present, but physical properties like elasticity, custom forces
@@ -84,7 +88,9 @@ struct rigid_body {
  */
 struct simulation_params {
     int num_bodies;                /**< @brief number of rigid bodies participating in the sim */
+    int duration;
     struct bu_vls *result_str;     /**< @brief handle to the libged object to access geometry info */
+    struct db_i *dbip;
     char *sim_comb_name;           /**< @brief name of the group which contains all sim regions*/
     char *ground_plane_name;       /**< @brief name of the ground plane region */
     struct rigid_body *head_node;  /**< @brief link to first rigid body node */

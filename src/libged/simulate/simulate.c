@@ -657,115 +657,6 @@ int apply_color(struct ged *gedp, char* rb_namep, unsigned char r,
 
 
 /**
- * This function takes the transforms present in the current node and applies them
- * in 3 steps : translate to origin, apply the rotation, then translate to final
- * position with respect to origin(as obtained from physics)
- */
-int apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
-{
-	struct rt_db_internal intern;
-	struct rigid_body *current_node;
-	mat_t t , m;
-	/* int rv; */
-
-	for (current_node = sim_params->head_node; current_node != NULL; current_node = current_node->next) {
-
-		if(strcmp(current_node->rb_namep, sim_params->ground_plane_name) == 0)
-			continue;
-
-		/* Get the internal representation of the object */
-		GED_DB_GET_INTERNAL(gedp, &intern, current_node->dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
-
-		/* Translate to origin without any rotation, before applying rotation */
-		MAT_IDN(m);
-		m[12] = - (current_node->bb_center[0]);
-		m[13] = - (current_node->bb_center[1]);
-		m[14] = - (current_node->bb_center[2]);
-		MAT_TRANSPOSE(t, m);
-		if (rt_matrix_transform(&intern, t, &intern, 0, gedp->ged_wdbp->dbip, &rt_uniresource) < 0){
-			bu_vls_printf(gedp->ged_result_str, "apply_transforms: ERROR rt_matrix_transform(%s) failed while \
-					translating to origin!\n",
-					current_node->dp->d_namep);
-			return GED_ERROR;
-		}
-
-		/* Apply rotation with no translation*/
-		MAT_COPY(m, current_node->m);
-		m[12] = 0;
-		m[13] = 0;
-		m[14] = 0;
-		MAT_TRANSPOSE(t, m);
-		if (rt_matrix_transform(&intern, t, &intern, 0, gedp->ged_wdbp->dbip, &rt_uniresource) < 0){
-			bu_vls_printf(gedp->ged_result_str, "apply_transforms: ERROR rt_matrix_transform(%s) failed while \
-					applying rotation\n",
-					current_node->dp->d_namep);
-			return GED_ERROR;
-		}
-
-		/* Translate again without any rotation, to apply final position */
-		MAT_IDN(m);
-		m[12] = current_node->m[12];
-		m[13] = current_node->m[13];
-		m[14] = current_node->m[14];
-		MAT_TRANSPOSE(t, m);
-		if (rt_matrix_transform(&intern, t, &intern, 0, gedp->ged_wdbp->dbip, &rt_uniresource) < 0){
-			bu_vls_printf(gedp->ged_result_str, "apply_transforms: ERROR rt_matrix_transform(%s) failed while \
-					translating to final position\n",
-					current_node->dp->d_namep);
-			return GED_ERROR;
-		}
-
-		/* Write the modified solid to the db so it can be redrawn at the new position & orientation by Mged */
-		if (rt_db_put_internal(current_node->dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-			bu_vls_printf(gedp->ged_result_str, "apply_transforms: ERROR Database write error for '%s', aborting\n",
-					current_node->dp->d_namep);
-			return GED_ERROR;
-		}
-
-		/* Apply the proper shader to match the object state : useful for debugging */
-	/*	switch(current_node->state){
-			case ACTIVE_TAG:
-				rv = apply_color(gedp, current_node->rb_namep, 255, 255, 0);
-				break;
-
-			case ISLAND_SLEEPING:
-				rv = apply_color(gedp, current_node->rb_namep, 255, 0, 255);
-				break;
-
-			case WANTS_DEACTIVATION:
-				rv = apply_color(gedp, current_node->rb_namep, 0, 255, 0);
-				break;
-
-			case DISABLE_DEACTIVATION:
-				rv = apply_color(gedp, current_node->rb_namep, 255, 0, 0);
-				break;
-
-			case DISABLE_SIMULATION:
-				rv = apply_color(gedp, current_node->rb_namep, 132, 255, 0);
-				break;
-
-			default:
-				rv = apply_color(gedp, current_node->rb_namep, 0, 135, 233);
-		}
-
-		if (rv != GED_OK){
-			bu_vls_printf(gedp->ged_result_str, "apply_transforms: WARNING Could not set \
-					the state color for %s\n", current_node->rb_namep);
-		}
- */
-
-		/* This will be enabled by a flag later */
-		/* insertAABB(gedp, sim_params, current_node); */
-
-		 /* print_rigid_body(current_node); */
-
-	}
-
-    return GED_OK;
-}
-
-
-/**
  * The libged physics simulation function :
  * Check flags, adds regions to simulation parameters, runs the simulation
  * applies the transforms, frees memory
@@ -773,7 +664,7 @@ int apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 int
 ged_simulate(struct ged *gedp, int argc, const char *argv[])
 {
-    int rv, duration, i;
+    int rv;
     struct simulation_params sim_params;
     static const char *sim_comb_name = "sim.c";
     static const char *ground_plane_name = "sim_gp.r";
@@ -799,7 +690,8 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
     /* Make a list containing the bb and existing transforms of all the objects in the model
      * which will participate in the simulation
      */
-    duration = atoi(argv[1]);
+    sim_params.duration = atoi(argv[1]);
+    sim_params.dbip = gedp->ged_wdbp->dbip;
     sim_params.result_str = gedp->ged_result_str;
     sim_params.sim_comb_name = bu_strdup(sim_comb_name);
     sim_params.ground_plane_name = bu_strdup(ground_plane_name);
@@ -809,27 +701,12 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
         return GED_ERROR;
     }
 
-
-    /* Run the physics simulation for duration number of times */
-    for(i=0; i<duration; i++){
-
-    	/* This call will run physics for 1 step and put the resultant vel/forces into sim_params */
-    	rv = run_simulation(&sim_params);
-		if (rv != GED_OK){
-			bu_vls_printf(gedp->ged_result_str, "%s: ERROR while running the simulation\n", argv[0]);
-			return GED_ERROR;
-		}
-
-		/* Apply transforms on the participating objects, also shades objects */
-		rv = apply_transforms(gedp, &sim_params);
-		if (rv != GED_OK){
-			bu_vls_printf(gedp->ged_result_str, "%s: ERROR while applying transforms\n", argv[0]);
-			return GED_ERROR;
-		}
-
-		/* Now that gedp has the latest object positions, rt can be used to detect overlaps */
-
-    }
+    /* This call will run physics for 1 step and put the resultant vel/forces into sim_params */
+	rv = run_simulation(&sim_params);
+	if (rv != GED_OK){
+		bu_vls_printf(gedp->ged_result_str, "%s: ERROR while running the simulation\n", argv[0]);
+		return GED_ERROR;
+	}
 
 	/* Free memory in rigid_body list */
 	for (current_node = sim_params.head_node; current_node != NULL; ) {
