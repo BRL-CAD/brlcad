@@ -87,6 +87,8 @@ main(int argc, char **argv)
 	bu_exit(12, NULL);
     }
 
+    bu_log("DEPRECATED: fb-orle is no longer being maintained.  Use fb-rle instead.\n");
+
     /* Read color map, see if it's linear */
     cmflag = 1;		/* Need to save colormap */
     if (fb_rmap(fbp, &cmap) == -1) {
