@@ -1,11 +1,22 @@
+# Include directories needed by librt users
 SET(RT_INCLUDE_DIRS
+	${BRLCAD_BINARY_DIR}/include
+	${BRLCAD_SOURCE_DIR}/include
+	${BU_INCLUDE_DIRS}
+	${BN_INCLUDE_DIRS}
+	${OPENNURBS_INCLUDE_DIR}
+	)
+LIST(REMOVE_DUPLICATES RT_INCLUDE_DIRS)
+SET(RT_INCLUDE_DIRS ${RT_INCLUDE_DIRS} CACHE STRING "Include directories for librt" FORCE)
+MARK_AS_ADVANCED(RT_INCLUDE_DIRS)
+include_directories(${RT_INCLUDE_DIRS})
+
+# locally used but not needed by users of the library
+include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${REGEX_INCLUDE_DIR}
 	${TNT_INCLUDE_DIR}
-	${OPENNURBS_INCLUDE_DIR}
-	${BU_INCLUDE_DIRS}
-	CACHE STRING "Include directories for librt" FORCE)
-include_directories(${RT_INCLUDE_DIRS})
+)
 
 set(LIBRT_SOURCES
     attributes.c

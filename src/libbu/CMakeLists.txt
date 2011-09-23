@@ -1,10 +1,18 @@
+# Include directories needed by libbu users
 SET(BU_INCLUDE_DIRS
+	${BRLCAD_BINARY_DIR}/include
+	${BRLCAD_SOURCE_DIR}/include
+	${TCL_INCLUDE_DIRS}
+	CACHE STRING "Include direcctories for libbu" FORCE)
+MARK_AS_ADVANCED(BU_INCLUDE_DIRS)
+include_directories(${BU_INCLUDE_DIRS})
+
+# locally used but not needed by users of the library
+include_directories(
 	${CMAKE_SOURCE_DIR}/src/other/uce-dirent
 	${PNG_INCLUDE_DIR}
 	${ZLIB_INCLUDE_DIR}
-	${TCL_INCLUDE_DIRS}
-	CACHE STRING "Include direcctories for libbu" FORCE)
-include_directories(${BU_INCLUDE_DIRS})
+	)
 
 set(LIBBU_SOURCES
     argv.c

@@ -1,6 +1,13 @@
-include_directories(
+# Include directories needed by libbn users
+SET(BN_INCLUDE_DIRS
+	${BRLCAD_BINARY_DIR}/include
+	${BRLCAD_SOURCE_DIR}/include
 	${BU_INCLUDE_DIRS}
-)
+	)
+LIST(REMOVE_DUPLICATES BN_INCLUDE_DIRS)
+SET(BN_INCLUDE_DIRS ${BN_INCLUDE_DIRS} CACHE STRING "Include direcctories for libbn" FORCE)
+MARK_AS_ADVANCED(BN_INCLUDE_DIRS)
+include_directories(${BN_INCLUDE_DIRS})
 
 set(LIBBN_SOURCES
     anim.c

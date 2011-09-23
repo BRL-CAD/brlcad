@@ -1,6 +1,13 @@
-include_directories(
-    ${TCL_INCLUDE_DIRS}
-)
+# Include directories needed by libpkg users
+SET(PKG_INCLUDE_DIRS
+	${BRLCAD_BINARY_DIR}/include
+	${BRLCAD_SOURCE_DIR}/include
+	${BU_INCLUDE_DIRS}
+	)
+LIST(REMOVE_DUPLICATES PKG_INCLUDE_DIRS)
+SET(PKG_INCLUDE_DIRS ${PKG_INCLUDE_DIRS} CACHE STRING "Include directories for libpkg" FORCE)
+MARK_AS_ADVANCED(PKG_INCLUDE_DIRS)
+include_directories(${PKG_INCLUDE_DIRS})
 
 set(LIBPKG_SOURCES
     pkg.c

@@ -1,3 +1,17 @@
+# Include directories needed by libwdb users
+SET(WDB_INCLUDE_DIRS
+	${BRLCAD_BINARY_DIR}/include
+	${BRLCAD_SOURCE_DIR}/include
+	${BU_INCLUDE_DIRS}
+	${BN_INCLUDE_DIRS}
+	${RT_INCLUDE_DIRS}
+	${SYSV_INCLUDE_DIRS}
+	)
+LIST(REMOVE_DUPLICATES WDB_INCLUDE_DIRS)
+SET(WDB_INCLUDE_DIRS ${WDB_INCLUDE_DIRS} CACHE STRING "Include directories for libwdb" FORCE)
+MARK_AS_ADVANCED(WDB_INCLUDE_DIRS)
+include_directories(${WDB_INCLUDE_DIRS})
+
 set(LIBWDB_SOURCES
     arbn.c
     ars.c
@@ -21,13 +35,6 @@ set(LIBWDB_SOURCES
     units.c
     vol.c
     wdb.c
-)
-
-include_directories(
-    ${REGEX_INCLUDE_DIR}
-    ${ZLIB_INCLUDE_DIR}
-    ${OPENNURBS_INCLUDE_DIR}
-    ${TCL_INCLUDE_DIRS}
 )
 
 if(MSVC)
