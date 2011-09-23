@@ -30,7 +30,7 @@
 
 static const int VERTICES_PER_FACE = 3;
 
-/* nmg construction routines */
+/* nmg access routines */
 
 struct shell*
 get_first_shell(struct model *model)
@@ -43,6 +43,14 @@ get_first_shell(struct model *model)
 
     return shell;
 }
+
+struct model*
+get_faceuse_model(struct faceuse *fu)
+{
+    return fu->s_p->r_p->m_p;
+}
+
+/* nmg construction routines */
 
 struct vertex_g*
 make_nmg_vertex_g(double x, double y, double z, long index)
@@ -117,6 +125,7 @@ make_model_from_face(const double points[], int numPoints)
     /* add face from verts */
     shell = get_first_shell(model);
     nmg_cface(shell, verts, numPoints);
+    bu_free(verts, "verts");
 
     /* add geometry to face */
     fu = BU_LIST_FIRST(faceuse, &shell->fu_hd);
@@ -126,7 +135,6 @@ make_model_from_face(const double points[], int numPoints)
 
     return model;
 }
-
 
 struct faceuse*
 make_faceuse_from_face(const double points[], int numPoints)
@@ -141,6 +149,8 @@ make_faceuse_from_face(const double points[], int numPoints)
 
     return fu;
 }
+
+/* triangulation routines */
 
 /* Searches points[] for the specified point. Match is determined using the
  * specified distance tolerance.
@@ -170,7 +180,7 @@ getPointReference(
 }
 
 /* points is the specification of face points. It should contain consecutive
- * three-cordinate vertices that specify a planar N-gon in CCW order.
+ * three-cordinate vertices that specify a planar N-gon in CCW/CW order.
  *
  * faces will specify numFaces triangle faces with three consecutive vertex
  * references per face. Vertex reference v refers to the three consecutive
@@ -184,6 +194,7 @@ triangulateFace(
     size_t numPoints,
     struct bn_tol tol)
 {
+    struct model *model;
     struct faceuse *fu;
     struct loopuse *lu;
     struct edgeuse *eu;
@@ -215,6 +226,9 @@ triangulateFace(
 	    (*faces)[i++] = ref;
 	}
     }
+
+    model = get_faceuse_model(fu);
+    nmg_km(model);
 }
 
 

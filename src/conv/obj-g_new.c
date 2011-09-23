@@ -1396,6 +1396,7 @@ populate_triangle_indexes(struct ga_t *ga,
     }
 
     bu_free(facePoints, "facePoints");
+    nmg_km(fu->s_p->r_p->m_p);
 
     /* if needed, increase size of 'ti->index_arr_tri' array */
     if ((ti->num_tri + num_new_tri) >= ti->max_tri) {
