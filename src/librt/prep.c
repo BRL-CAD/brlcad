@@ -1436,7 +1436,7 @@ HIDDEN union tree *
 unprep_leaf(struct db_tree_state *tsp,
 	    const struct db_full_path *pathp,
 	    struct rt_db_internal *ip,
-	    genptr_t UNUSED(client_data))
+	    genptr_t client_data)
 {
     register struct soltab *stp;
     struct directory *dp;
