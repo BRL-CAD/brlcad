@@ -3489,7 +3489,7 @@ cd_release(int UNUSED(argc), char **UNUSED(argv))
  *	Usage: frames [-v]
  */
 int
-cd_frames( int UNUSED(argc), char **UNUSED(argv) )
+cd_frames( int argc, char **UNUSED(argv) )
 {
     struct frame *fr;
 

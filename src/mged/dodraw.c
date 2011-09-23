@@ -330,7 +330,7 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
  * This routine must be prepared to run in parallel.
  */
 HIDDEN union tree *
-mged_wireframe_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *UNUSED(curtree), genptr_t UNUSED(client_data))
+mged_wireframe_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *curtree, genptr_t UNUSED(client_data))
 {
     return curtree;
 }
