@@ -8466,7 +8466,7 @@ HIDDEN int
 to_autoview_func(struct ged *gedp,
 		 int argc,
 		 const char *argv[],
-		 ged_func_ptr UNUSED(func),
+		 ged_func_ptr func,
 		 const char *UNUSED(usage),
 		 int UNUSED(maxargs))
 {
@@ -8579,7 +8579,7 @@ HIDDEN int
 to_more_args_func(struct ged *gedp,
 		  int argc,
 		  const char *argv[],
-		  ged_func_ptr UNUSED(func),
+		  ged_func_ptr func,
 		  const char *UNUSED(usage),
 		  int UNUSED(maxargs))
 {
@@ -8671,7 +8671,7 @@ HIDDEN int
 to_pass_through_func(struct ged *gedp,
 		     int argc,
 		     const char *argv[],
-		     ged_func_ptr UNUSED(func),
+		     ged_func_ptr func,
 		     const char *UNUSED(usage),
 		     int UNUSED(maxargs))
 {
@@ -8682,7 +8682,7 @@ HIDDEN int
 to_pass_through_and_refresh_func(struct ged *gedp,
 				 int argc,
 				 const char *argv[],
-				 ged_func_ptr UNUSED(func),
+				 ged_func_ptr func,
 				 const char *UNUSED(usage),
 				 int UNUSED(maxargs))
 {
