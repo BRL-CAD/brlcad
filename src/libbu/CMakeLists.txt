@@ -1,9 +1,10 @@
-include_directories(
+SET(BU_INCLUDE_DIRS
 	${CMAKE_SOURCE_DIR}/src/other/uce-dirent
 	${PNG_INCLUDE_DIR}
 	${ZLIB_INCLUDE_DIR}
 	${TCL_INCLUDE_DIRS}
-)
+	CACHE STRING "Include direcctories for libbu" FORCE)
+include_directories(${BU_INCLUDE_DIRS})
 
 set(LIBBU_SOURCES
     argv.c

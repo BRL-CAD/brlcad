@@ -1,3 +1,12 @@
+SET(RT_INCLUDE_DIRS
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${REGEX_INCLUDE_DIR}
+	${TNT_INCLUDE_DIR}
+	${OPENNURBS_INCLUDE_DIR}
+	${BU_INCLUDE_DIRS}
+	CACHE STRING "Include directories for librt" FORCE)
+include_directories(${RT_INCLUDE_DIRS})
+
 set(LIBRT_SOURCES
     attributes.c
     bbox.c
@@ -254,15 +263,6 @@ if(MSVC)
 else(MSVC)
     set(LIBRT_SOURCES ${LIBRT_SOURCES}    timer42.c)
 endif(MSVC)
-
-include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${REGEX_INCLUDE_DIR}
-    ${ZLIB_INCLUDE_DIR}
-    ${OPENNURBS_INCLUDE_DIR}
-    ${TCL_INCLUDE_DIRS}
-    ${TNT_INCLUDE_DIR}
-)
 
 if(MSVC)
     add_definitions(

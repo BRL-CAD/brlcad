@@ -1,5 +1,5 @@
 include_directories(
-    ${TCL_INCLUDE_DIRS}
+	${BU_INCLUDE_DIRS}
 )
 
 set(LIBBN_SOURCES
