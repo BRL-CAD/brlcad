@@ -13,7 +13,7 @@ SET(OBJ_G_SRCS
 	${CMAKE_CURRENT_BINARY_DIR}/obj_rules.cpp
 	re2c_utils.c
 	obj_parser.cpp
-	../../conv/obj-g_new.c
+	../../conv/obj-g.c
 	tri_face.c
 )
 

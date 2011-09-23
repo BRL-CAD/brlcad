@@ -110,7 +110,11 @@ BRLCAD_ADDEXEC(g-acad g-acad.c "librt libbu")
 
 BRLCAD_ADDEXEC(g-obj g-obj.c "librt libbu")
 
-BRLCAD_ADDEXEC(obj-g_old obj-g.c "librt libbu")
+# TODO - Until wfobj functionality is available as a libgcv API,
+# obj-g build logic is living in src/libgcv/wfobj. Once an API 
+# for libgcv is devised that exposes the wfobj functionality move 
+# obj-g build logic back here
+#BRLCAD_ADDEXEC(obj-g ${OBJ_G_SRCS} "libbu libbn librt libwdb libgcv")
 
 BRLCAD_ADDEXEC(patch-g patch/patch-g.c "libwdb librt libbu ${M_LIBRARY}")
 
@@ -206,7 +210,6 @@ SET(conv_ignore_files
 	dbclean.sh
 	dxf/dxf.h
 	intaval-g.py
-	obj-g_new.c
 	off
 	patch/patch-g.h
 	patch/pull_comp.sh
