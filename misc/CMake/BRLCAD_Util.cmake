@@ -187,6 +187,19 @@ MACRO(BRLCAD_ADDLIB libname srcs libs)
   CPP_WARNINGS(srcslist)
 ENDMACRO(BRLCAD_ADDLIB libname srcs libs)
 
+# Wrapper to handle include directories specific to libraries.  Removes
+# duplicates and makes sure the <LIB>_INCLUDE_DIRS is in the cache
+# immediately, so it can be used by other libraries.  These are not
+# intended as toplevel user settable options so mark as advanced.
+MACRO(BRLCAD_INCLUDE_DIRS DIR_LIST)
+	STRING(REGEX REPLACE "_INCLUDE_DIRS" "" LIB_UPPER "${DIR_LIST}")
+	STRING(TOLOWER ${LIB_UPPER} LIB_LOWER)
+	LIST(REMOVE_DUPLICATES ${DIR_LIST})
+	SET(${DIR_LIST} ${${DIR_LIST}} CACHE STRING "Include directories for lib${LIBLOWER}" FORCE)
+	MARK_AS_ADVANCED(${DIR_LIST})
+	include_directories(${${DIR_LIST}})
+ENDMACRO(BRLCAD_INCLUDE_DIRS)
+
 # We attempt here to strike a balance between competing needs.  Ideally, any error messages
 # returned as a consequence of using data while running programs should point the developer
 # back to the version controlled source code, not a copy in the build directory.  However,

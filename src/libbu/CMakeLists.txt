@@ -3,9 +3,8 @@ SET(BU_INCLUDE_DIRS
 	${BRLCAD_BINARY_DIR}/include
 	${BRLCAD_SOURCE_DIR}/include
 	${TCL_INCLUDE_DIRS}
-	CACHE STRING "Include direcctories for libbu" FORCE)
-MARK_AS_ADVANCED(BU_INCLUDE_DIRS)
-include_directories(${BU_INCLUDE_DIRS})
+	)
+BRLCAD_INCLUDE_DIRS(BU_INCLUDE_DIRS)
 
 # locally used but not needed by users of the library
 include_directories(
