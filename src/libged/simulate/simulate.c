@@ -263,6 +263,9 @@ int add_regions(struct ged *gedp, struct simulation_params *sim_params)
         	current_node->m[13] = current_node->bb_center[1];
         	current_node->m[14] = current_node->bb_center[2];
 
+        	VSETALL(current_node->linear_velocity, 0.0f);
+        	VSETALL(current_node->angular_velocity, 0.0f);
+
             /* Setup the linked list */
             if(prev_node == NULL){ /* first node */
                 prev_node = current_node;

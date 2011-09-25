@@ -83,6 +83,7 @@ int add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_p
 	fastf_t volume;
 	btScalar mass;
 	btScalar m[16];
+	btVector3 v;
 
 
 
@@ -115,6 +116,7 @@ int add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_p
 					groundRigidBodyCI(0,groundMotionState,groundShape,btVector3(0,0,0));
 			btRigidBody* groundRigidBody = new btRigidBody(groundRigidBodyCI);
 			groundRigidBody->setUserPointer((void *)current_node);
+
 			dynamicsWorld->addRigidBody(groundRigidBody);
 			collision_shapes.push_back(groundShape);
 
@@ -151,6 +153,13 @@ int add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_p
 			btRigidBody* bb_RigidBody = new btRigidBody(bb_RigidBodyCI);
 			bb_RigidBody->setUserPointer((void *)current_node);
 
+
+			VMOVE(v, current_node->linear_velocity);
+			bb_RigidBody->setLinearVelocity(v);
+
+			VMOVE(v, current_node->angular_velocity);
+			bb_RigidBody->setAngularVelocity(v);
+
 			dynamicsWorld->addRigidBody(bb_RigidBody);
 
 			bu_vls_printf(sim_params->result_str, "Added new rigid body : %s to simulation with mass %f Kg\n",
@@ -169,18 +178,13 @@ int add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_p
  */
 int step_physics(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_params *sim_params)
 {
-	int i;
 	bu_vls_printf(sim_params->result_str, "Simulation will run for %d steps.\n", sim_params->duration);
 	bu_vls_printf(sim_params->result_str, "----- Starting simulation -----\n");
 
-	for (i=0 ; i < sim_params->duration ; i++) {
-
-		//time step of 1/60th of a second(same as internal fixedTimeStep, maxSubSteps=10 to cover 1/60th sec.)
-		dynamicsWorld->stepSimulation(1/60.f,10);
-	}
+	//time step of 1/60th of a second(same as internal fixedTimeStep, maxSubSteps=10 to cover 1/60th sec.)
+	dynamicsWorld->stepSimulation(1/60.f,10);
 
 	bu_vls_printf(sim_params->result_str, "----- Simulation Complete -----\n");
-
 	return 0;
 }
 
@@ -193,7 +197,7 @@ int get_transforms(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_par
 {
 	int i;
 	btScalar m[16];
-	btVector3 aabbMin, aabbMax;
+	btVector3 aabbMin, aabbMax, v;
 	btTransform	identity;
 
 	identity.setIdentity();
@@ -239,18 +243,18 @@ int get_transforms(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_par
 
 		    // Get BB length, width, height
 			VSUB2(current_node->btbb_dims, current_node->btbb_max, current_node->btbb_min);
-		/*	current_node->btbb_dims[0] = current_node->btbb_max[0] - current_node->btbb_min[0];
-			current_node->btbb_dims[1] = current_node->btbb_max[1] - current_node->btbb_min[1];
-			current_node->btbb_dims[2] = current_node->btbb_max[2] - current_node->btbb_min[2];*/
 
 			bu_vls_printf(sim_params->result_str, "get_transforms: Dimensions of this BB : %f %f %f\n",
 					current_node->btbb_dims[0], current_node->btbb_dims[1], current_node->btbb_dims[2]);
 
 			//Get BB position in 3D space
 			VCOMB2(current_node->btbb_center, 1, current_node->btbb_min, 0.5, current_node->btbb_dims)
-		/*	current_node->btbb_center[0] = current_node->btbb_min[0] + current_node->btbb_dims[0]/2;
-			current_node->btbb_center[1] = current_node->btbb_min[1] + current_node->btbb_dims[1]/2;
-			current_node->btbb_center[2] = current_node->btbb_min[2] + current_node->btbb_dims[2]/2;*/
+
+			v = bb_RigidBody->getLinearVelocity();
+			VMOVE(current_node->linear_velocity, v);
+
+			v = bb_RigidBody->getAngularVelocity();
+			VMOVE(current_node->angular_velocity, v);
 
 		}
 	}
@@ -301,39 +305,44 @@ int cleanup(btDiscreteDynamicsWorld* dynamicsWorld,
 extern "C" int
 run_simulation(struct simulation_params *sim_params)
 {
-	// Initialize the physics world
-	btDiscreteDynamicsWorld* dynamicsWorld;
+	int i;
 
-	// Keep the collision shapes, for deletion/cleanup
-	btAlignedObjectArray<btCollisionShape*>	collision_shapes;
+	for (i=0 ; i < sim_params->duration ; i++) {
 
-	btBroadphaseInterface* broadphase = new btDbvtBroadphase();
-	btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
-	btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collisionConfiguration);
-	btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
+		// Initialize the physics world
+		btDiscreteDynamicsWorld* dynamicsWorld;
 
-	dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher,broadphase,solver,collisionConfiguration);
+		// Keep the collision shapes, for deletion/cleanup
+		btAlignedObjectArray<btCollisionShape*>	collision_shapes;
 
-	//Set the gravity direction along -ve Z axis
-	dynamicsWorld->setGravity(btVector3(0, 0, -10));
+		btBroadphaseInterface* broadphase = new btDbvtBroadphase();
+		btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
+		btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collisionConfiguration);
+		btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
 
-	//Add the rigid bodies to the world, including the ground plane
-	add_rigid_bodies(dynamicsWorld, sim_params, collision_shapes);
+		dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher,broadphase,solver,collisionConfiguration);
 
-	//Step the physics the required number of times
-	step_physics(dynamicsWorld, sim_params);
+		//Set the gravity direction along -ve Z axis
+		dynamicsWorld->setGravity(btVector3(0, 0, -10));
 
-	//Get the world transforms back into the simulation params struct
-	get_transforms(dynamicsWorld, sim_params);
+		//Add the rigid bodies to the world, including the ground plane
+		add_rigid_bodies(dynamicsWorld, sim_params, collision_shapes);
 
-	//Clean and free memory used by physics objects
-	cleanup(dynamicsWorld, collision_shapes);
+		//Step the physics the required number of times
+		step_physics(dynamicsWorld, sim_params);
 
-	//Clean up stuff in here
-	delete solver;
-	delete dispatcher;
-	delete collisionConfiguration;
-	delete broadphase;
+		//Get the world transforms back into the simulation params struct
+		get_transforms(dynamicsWorld, sim_params);
+
+		//Clean and free memory used by physics objects
+		cleanup(dynamicsWorld, collision_shapes);
+
+		//Clean up stuff in here
+		delete solver;
+		delete dispatcher;
+		delete collisionConfiguration;
+		delete broadphase;
+	}
 
 
 	return 0;

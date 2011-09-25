@@ -53,6 +53,11 @@ struct rigid_body {
     int state;						/**< @brief rigid body state from Bullet */
     struct directory *dp;           /**< @brief directory pointer to the related region */
     struct rigid_body *next;        /**< @brief link to next body */
+
+    /* Can be set by libged or Bullet(checked and inserted into sim) */
+    vect_t linear_velocity; 		/**< @brief linear velocity components */
+    vect_t angular_velocity; 		/**< @brief angular velocity components */
+
 };
 
 /* Contains the simulation parameters, such as number of rigid bodies,
