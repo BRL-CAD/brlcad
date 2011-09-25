@@ -22,8 +22,7 @@
  * The simulate command.
  *
  * Routines related to performing physics on passed objects only
- * TODO : Adds flags to control AABB and object state display
- * TODO : Finish integrating rt into collision detection
+ *
  * 
  */
 
@@ -48,28 +47,6 @@
 /* The C++ simulation function */
 extern int run_simulation(struct simulation_params *sim_params);
 
-/* Physics attributes that are currently checked for in regions */
-#define MAX_SIM_ATTRIBS 6
-
-/* DO NOT CHANGE THE ORDER of attribs in sim_attrib as the code assumes the current order
- * add new sim attribs at the bottom and increase MAX_SIM_ATTRIBS
- */
-static const char* sim_attrib[MAX_SIM_ATTRIBS] = {
-    "simulate:mass",
-    "simulate:force",
-    "simulate:linear_velocity",
-    "simulate:angular_velocity",
-    "simulate:restitution",
-    "simulate:friction"
-};
-
-/* Maximum allowed values of scalars and components of vectors
- * These are to check for correctness of user set values, not imposed by physics
- */
-static const fastf_t MAX_MASS = 500000;
-static const fastf_t MAX_FORCE_COMP = 100000;
-static const fastf_t MAX_LINEAR_VELOCITY_COMP = 100000;
-static const fastf_t MAX_ANGULAR_VELOCITY_COMP = 100000;
 
 /**
  * How to use simulate.Blissfully simple interface, more options will be added soon
@@ -199,136 +176,6 @@ int add_to_comb(struct ged *gedp, char *target, char *add)
 
 
 /**
- * Parses a string containing 3 floating point components into a vector vect_t
- *
- */
-int parse_vector(vect_t vec, const char *str)
-{
-	char *argv[ELEMENTS_PER_VECT];
-	char *end;
-	VSETALL(vec, 0);
-
-	if(strlen(str)){
-		bu_argv_from_string((char **)argv, ELEMENTS_PER_VECT, (char *)str);
-
-		vec[0] = strtod(argv[0], &end);
-		vec[1] = strtod(argv[1], &end);
-		vec[2] = strtod(argv[2], &end);
-	}
-
-	/*bu_log("parse_vector: str = \"%s\" , vec = (%f, %f, %f)\n",	str, vec[0], vec[1], vec[2]);*/
-
-
-	return GED_OK;
-}
-
-
-/**
- * Adds physics attributes to a node of the rigid_body list to be dispatched to physics
- *
- */
-int add_physics_attributes(struct ged *gedp, struct rigid_body *current_node, struct directory *ndp)
-{
-	unsigned int i;
-	struct bu_attribute_value_set avs;
-	struct bu_attribute_value_pair *avpp;
-	const char *val, *val_cpy;
-	fastf_t simulate_mass;
-	vect_t  simulate_force, simulate_linear_velocity, simulate_angular_velocity;
-
-	bu_avs_init_empty(&avs);
-	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, ndp)) {
-		bu_vls_printf(gedp->ged_result_str, "add_regions : ERROR : Cannot get attributes for object %s\n",
-												ndp->d_namep);
-		return GED_ERROR;
-	}
-
-	/* Set sim attributes to default values */
-	current_node->mass = 0;
-	VSETALL(current_node->force, 0);
-	VSETALL(current_node->force_position, 0);
-	VSETALL(current_node->linear_velocity, 0);
-	VSETALL(current_node->angular_velocity, 0);
-
-	/* Sort attribute-value set array by attribute name */
-	qsort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), _ged_cmpattr);
-
-	for (i = 0; i < MAX_SIM_ATTRIBS; i++) {
-		val = bu_avs_get(&avs, sim_attrib[i]);
-		if (val) {
-			bu_log("add_regions : Object %s has %s = %s\n", ndp->d_namep, sim_attrib[i], val);
-			val_cpy = bu_strdup(val);
-
-			switch(i){
-			/* Mass */
-			case 0:
-				simulate_mass = atoi(val_cpy);
-				if(simulate_mass < 0 || simulate_mass > MAX_MASS){
-					bu_log("add_regions : WARNING %s should be between %f and %f, set to %f\n",
-							sim_attrib[i], 0.0, MAX_MASS, 0.0);
-					current_node->mass = 0;
-				}
-				else
-					current_node->mass = simulate_mass;
-				break;
-			/* Custom Force */
-			case 1:
-				parse_vector(simulate_force, val_cpy);
-				if(abs(simulate_force[0]) > MAX_FORCE_COMP ||
-				   abs(simulate_force[1]) > MAX_FORCE_COMP ||
-				   abs(simulate_force[2]) > MAX_FORCE_COMP){
-					bu_log("add_regions : WARNING %s should be between %f and %f, set to %f\n",
-							sim_attrib[i], 0.0, MAX_FORCE_COMP, 0.0);
-					VSETALL(current_node->force, 0);
-				}
-				else
-					VMOVE(current_node->force, simulate_force);
-				break;
-			/* Linear Velocity */
-			case 2:
-				parse_vector(simulate_linear_velocity, val_cpy);
-				if(abs(simulate_linear_velocity[0]) > MAX_LINEAR_VELOCITY_COMP ||
-				   abs(simulate_linear_velocity[1]) > MAX_LINEAR_VELOCITY_COMP ||
-				   abs(simulate_linear_velocity[2]) > MAX_LINEAR_VELOCITY_COMP){
-					bu_log("add_regions : WARNING %s should be between %f and %f, set to %f\n",
-							sim_attrib[i], 0.0, MAX_LINEAR_VELOCITY_COMP, 0.0);
-					VSETALL(current_node->linear_velocity, 0);
-				}
-				else
-					VMOVE(current_node->linear_velocity, simulate_linear_velocity);
-				break;
-			/* Angular Velocity */
-			case 3:
-				parse_vector(simulate_angular_velocity, val_cpy);
-				if(abs(simulate_angular_velocity[0]) > MAX_ANGULAR_VELOCITY_COMP ||
-				   abs(simulate_angular_velocity[1]) > MAX_ANGULAR_VELOCITY_COMP ||
-				   abs(simulate_angular_velocity[2]) > MAX_ANGULAR_VELOCITY_COMP){
-					bu_log("add_regions : WARNING %s should be between %f and %f, set to %f\n",
-							sim_attrib[i], 0.0, MAX_ANGULAR_VELOCITY_COMP, 0.0);
-					VSETALL(current_node->angular_velocity, 0);
-				}
-				else
-					VMOVE(current_node->angular_velocity, simulate_angular_velocity);
-				break;
-			default:
-				bu_log("add_regions : WARNING : simulation attribute %s not recognized!\n",
-						sim_attrib[i]);
-			} /* switch */
-		} /* if */
-	} /* for */
-
-	/* Just list all the attributes */
-	for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
-		bu_log("Attribute : %s {%s} ", avpp->name, avpp->value);
-	}
-
-	bu_avs_free(&avs);
-
-	return GED_OK;
-
-}
-
-/**
  * Add the list of regions in the model to the rigid bodies list in
  * simulation parameters. This function will duplicate the existing regions
  * prefixing "sim_" to the new region and putting them all under a new
@@ -341,9 +188,8 @@ int add_regions(struct ged *gedp, struct simulation_params *sim_params)
     char *prefix = "sim_";
     size_t  prefix_len, prefixed_name_len;
     point_t rpp_min, rpp_max;
-    unsigned int i;
+    int i;
     struct rigid_body *prev_node = NULL, *current_node;
-
 
     /* Kill the existing sim comb */
     kill(gedp, sim_params->sim_comb_name);
@@ -358,7 +204,7 @@ int add_regions(struct ged *gedp, struct simulation_params *sim_params)
                 continue;
 
             if (strstr(dp->d_namep, prefix)){
-            	bu_log("add_regions: Skipping \"%s\" due to \"%s\" in name\n",
+            	bu_vls_printf(gedp->ged_result_str, "add_regions: Skipping \"%s\" due to \"%s\" in name\n",
                         dp->d_namep, prefix);
                 continue;
             }
@@ -371,21 +217,22 @@ int add_regions(struct ged *gedp, struct simulation_params *sim_params)
             bu_strlcat(prefixed_name + prefix_len, dp->d_namep, prefixed_name_len - prefix_len);
 
             kill_copy(gedp, dp, prefixed_name);
-            bu_log("add_regions: Copied \"%s\" to \"%s\"\n", dp->d_namep, prefixed_name);
+            bu_vls_printf(gedp->ged_result_str, "add_regions: Copied \"%s\" to \"%s\"\n", dp->d_namep, prefixed_name);
 
-            /* Get the directory pointer for the duplicate object just added */
+            /* Get the directory pointer for the object just added */
             if ((ndp=db_lookup(gedp->ged_wdbp->dbip, prefixed_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
-            	bu_log("add_regions: db_lookup(%s) failed", prefixed_name);
+            	bu_vls_printf(gedp->ged_result_str, "add_regions: db_lookup(%s) failed", prefixed_name);
                 return GED_ERROR;
             }
 
             /* Get its BB */
             if(rt_bound_internal(gedp->ged_wdbp->dbip, ndp, rpp_min, rpp_max) == 0)
-            	bu_log("add_regions: Got the BB for \"%s\" as min {%f %f %f} max {%f %f %f}\n", ndp->d_namep,
+            	bu_vls_printf(gedp->ged_result_str, "add_regions: Got the BB for \"%s\" as \
+                        min {%f %f %f} max {%f %f %f}\n", ndp->d_namep,
                         rpp_min[0], rpp_min[1], rpp_min[2],
                         rpp_max[0], rpp_max[1], rpp_max[2]);
             else{
-            	bu_log("add_regions: ERROR Could not get the BB\n");
+            	bu_vls_printf(gedp->ged_result_str, "add_regions: ERROR Could not get the BB\n");
                 return GED_ERROR;
             }
 
@@ -403,7 +250,7 @@ int add_regions(struct ged *gedp, struct simulation_params *sim_params)
             current_node->bb_dims[1] = current_node->bb_max[1] - current_node->bb_min[1];
             current_node->bb_dims[2] = current_node->bb_max[2] - current_node->bb_min[2];
 
-            bu_log("add_regions: Dimensions of this BB : %f %f %f\n",
+            bu_vls_printf(gedp->ged_result_str, "add_regions: Dimensions of this BB : %f %f %f\n",
                     current_node->bb_dims[0], current_node->bb_dims[1], current_node->bb_dims[2]);
 
             /* Get BB position in 3D space */
@@ -411,8 +258,10 @@ int add_regions(struct ged *gedp, struct simulation_params *sim_params)
             current_node->bb_center[1] = current_node->bb_min[1] + current_node->bb_dims[1]/2;
             current_node->bb_center[2] = current_node->bb_min[2] + current_node->bb_dims[2]/2;
 
-            /* Get its physics attributes */
-            add_physics_attributes(gedp, current_node, ndp);
+        	MAT_IDN(current_node->m);
+        	current_node->m[12] = current_node->bb_center[0];
+        	current_node->m[13] = current_node->bb_center[1];
+        	current_node->m[14] = current_node->bb_center[2];
 
             /* Setup the linked list */
             if(prev_node == NULL){ /* first node */
@@ -657,6 +506,115 @@ int apply_color(struct ged *gedp, char* rb_namep, unsigned char r,
 
 
 /**
+ * This function takes the transforms present in the current node and applies them
+ * in 3 steps : translate to origin, apply the rotation, then translate to final
+ * position with respect to origin(as obtained from physics)
+ */
+int apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
+{
+	struct rt_db_internal intern;
+	struct rigid_body *current_node;
+	mat_t t , m;
+	/*int rv;*/
+
+	for (current_node = sim_params->head_node; current_node != NULL; current_node = current_node->next) {
+
+		if(strcmp(current_node->rb_namep, sim_params->ground_plane_name) == 0)
+			continue;
+
+		/* Get the internal representation of the object */
+		GED_DB_GET_INTERNAL(gedp, &intern, current_node->dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+
+		/* Translate to origin without any rotation, before applying rotation */
+		MAT_IDN(m);
+		m[12] = - (current_node->bb_center[0]);
+		m[13] = - (current_node->bb_center[1]);
+		m[14] = - (current_node->bb_center[2]);
+		MAT_TRANSPOSE(t, m);
+		if (rt_matrix_transform(&intern, t, &intern, 0, gedp->ged_wdbp->dbip, &rt_uniresource) < 0){
+			bu_vls_printf(gedp->ged_result_str, "apply_transforms: ERROR rt_matrix_transform(%s) failed while \
+					translating to origin!\n",
+					current_node->dp->d_namep);
+			return GED_ERROR;
+		}
+
+		/* Apply rotation with no translation*/
+		MAT_COPY(m, current_node->m);
+		m[12] = 0;
+		m[13] = 0;
+		m[14] = 0;
+		MAT_TRANSPOSE(t, m);
+		if (rt_matrix_transform(&intern, t, &intern, 0, gedp->ged_wdbp->dbip, &rt_uniresource) < 0){
+			bu_vls_printf(gedp->ged_result_str, "apply_transforms: ERROR rt_matrix_transform(%s) failed while \
+					applying rotation\n",
+					current_node->dp->d_namep);
+			return GED_ERROR;
+		}
+
+		/* Translate again without any rotation, to apply final position */
+		MAT_IDN(m);
+		m[12] = current_node->m[12];
+		m[13] = current_node->m[13];
+		m[14] = current_node->m[14];
+		MAT_TRANSPOSE(t, m);
+		if (rt_matrix_transform(&intern, t, &intern, 0, gedp->ged_wdbp->dbip, &rt_uniresource) < 0){
+			bu_vls_printf(gedp->ged_result_str, "apply_transforms: ERROR rt_matrix_transform(%s) failed while \
+					translating to final position\n",
+					current_node->dp->d_namep);
+			return GED_ERROR;
+		}
+
+		/* Write the modified solid to the db so it can be redrawn at the new position & orientation by Mged */
+		if (rt_db_put_internal(current_node->dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+			bu_vls_printf(gedp->ged_result_str, "apply_transforms: ERROR Database write error for '%s', aborting\n",
+					current_node->dp->d_namep);
+			return GED_ERROR;
+		}
+
+		/* Apply the proper shader to match the object state : useful for debugging */
+/*		switch(current_node->state){
+			case ACTIVE_TAG:
+				rv = apply_color(gedp, current_node->rb_namep, 255, 255, 0);
+				break;
+
+			case ISLAND_SLEEPING:
+				rv = apply_color(gedp, current_node->rb_namep, 255, 0, 255);
+				break;
+
+			case WANTS_DEACTIVATION:
+				rv = apply_color(gedp, current_node->rb_namep, 0, 255, 0);
+				break;
+
+			case DISABLE_DEACTIVATION:
+				rv = apply_color(gedp, current_node->rb_namep, 255, 0, 0);
+				break;
+
+			case DISABLE_SIMULATION:
+				rv = apply_color(gedp, current_node->rb_namep, 132, 255, 0);
+				break;
+
+			default:
+				rv = apply_color(gedp, current_node->rb_namep, 0, 135, 233);
+		}
+
+		if (rv != GED_OK){
+			bu_vls_printf(gedp->ged_result_str, "apply_transforms: WARNING Could not set \
+					the state color for %s\n", current_node->rb_namep);
+		}
+*/
+
+		/* This will be enabled by a flag later */
+		/* insertAABB(gedp, sim_params, current_node); */
+
+		 /* print_rigid_body(current_node); */
+
+	}
+
+    return GED_OK;
+}
+
+
+/**
  * The libged physics simulation function :
  * Check flags, adds regions to simulation parameters, runs the simulation
  * applies the transforms, frees memory
@@ -686,12 +644,12 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
         bu_vls_printf(gedp->ged_result_str, "Usage: %s <steps>", argv[0]);
         return GED_ERROR;
     }
+    
 
     /* Make a list containing the bb and existing transforms of all the objects in the model
      * which will participate in the simulation
      */
-    sim_params.duration = atoi(argv[1]);
-    sim_params.dbip = gedp->ged_wdbp->dbip;
+    sim_params.duration  = atoi(argv[1]);
     sim_params.result_str = gedp->ged_result_str;
     sim_params.sim_comb_name = bu_strdup(sim_comb_name);
     sim_params.ground_plane_name = bu_strdup(ground_plane_name);
@@ -701,10 +659,18 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
         return GED_ERROR;
     }
 
-    /* This call will run physics for 1 step and put the resultant vel/forces into sim_params */
-	rv = run_simulation(&sim_params);
-	if (rv != GED_OK){
+
+    /* Run the physics simulation  */
+    rv = run_simulation(&sim_params);
+    if (rv != GED_OK){
 		bu_vls_printf(gedp->ged_result_str, "%s: ERROR while running the simulation\n", argv[0]);
+		return GED_ERROR;
+	}
+
+    /* Apply transforms on the participating objects, also shades objects */
+    rv = apply_transforms(gedp, &sim_params);
+	if (rv != GED_OK){
+		bu_vls_printf(gedp->ged_result_str, "%s: ERROR while applying transforms\n", argv[0]);
 		return GED_ERROR;
 	}
 
