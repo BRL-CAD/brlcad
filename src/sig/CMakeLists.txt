@@ -1,6 +1,9 @@
-include_directories(
-  ${TCL_INCLUDE_DIRS}
-)
+SET(SIG_INCLUDE_DIRS
+	${BU_INCLUDE_DIRS}
+	${FFT_INCLUDE_DIRS}
+	)
+LIST(REMOVE_DUPLICATES SIG_INCLUDE_DIRS)
+include_directories(${SIG_INCLUDE_DIRS})
 
 BRLCAD_ADDEXEC(a-d a-d.c libbu)
 BRLCAD_ADDEXEC(bw-d bw-d.c libbu)

@@ -1,21 +1,29 @@
+SET(MGED_INCLUDE_DIRS
+	${TCLCAD_INCLUDE_DIRS}
+	${GED_INCLUDE_DIRS}
+	${WDB_INCLUDE_DIRS}
+	${DM_INCLUDE_DIRS}
+	${BU_INCLUDE_DIRS}
+	${TERMIO_INCLUDE_DIRS}
+	${CMAKE_CURRENT_SOURCE_DIR}
+	)
+LIST(REMOVE_DUPLICATES MGED_INCLUDE_DIRS)
+include_directories(${MGED_INCLUDE_DIRS})
+
+# Until we figure out how to properly use package require,
+# we need the internal Tcl headers
+include_directories(
+  ${CMAKE_SOURCE_DIR}/src/other/tcl/generic
+  ${CMAKE_SOURCE_DIR}/src/other/tcl/unix
+  ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itcl/generic
+  ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itk/generic
+)
+
 IF(LEX_EXECUTABLE AND YACC_EXECUTABLE)
 	ADD_SUBDIRECTORY(points)
 	SET(MGED_EXTRA_LIBS libpoints)
 ENDIF(LEX_EXECUTABLE AND YACC_EXECUTABLE)
 
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${PNG_INCLUDE_DIR}
-  ${X11_INCLUDE_DIR}
-  ${OPENGL_INCLUDE_DIR_GL}
-  ${OPENGL_INCLUDE_DIR_GLX}
-  ${TCL_INCLUDE_DIRS}
-  ${CMAKE_SOURCE_DIR}/src/other/tcl/generic
-  ${CMAKE_SOURCE_DIR}/src/other/tcl/unix
-  ${TK_INCLUDE_PATH}
-  ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itcl/generic
-  ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itk/generic
-)
 
 # process.h in points dir makes Windows unhappy,
 # and the TERMLIB_INCLUDE_DIR isn't set there

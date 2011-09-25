@@ -1,7 +1,14 @@
-include_directories(
-  ${TCL_INCLUDE_DIRS}
-  ${BRLCAD_SOURCE_DIR}/src/gtools/beset
-)
+SET(GTOOLS_INCLUDE_DIRS
+	${BU_INCLUDE_DIRS}
+	${RT_INCLUDE_DIRS}
+	${WDB_INCLUDE_DIRS}
+	${TCLCAD_INCLUDE_DIRS}
+	${GED_INCLUDE_DIRS}
+	${PKG_INCLUDE_DIRS}
+	${BRLCAD_SOURCE_DIR}/src/gtools/beset
+	)
+LIST(REMOVE_DUPLICATES GTOOLS_INCLUDE_DIRS)
+include_directories(${GTOOLS_INCLUDE_DIRS})
 
 SET(beset_SRCS
   beset/beset.c

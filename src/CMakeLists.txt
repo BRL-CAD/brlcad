@@ -1,12 +1,8 @@
 # Minimal directories required for any BRL-CAD functionality
 
-# Define some common definitions and includes here that are used
-# in all BRL-CAD builds
+# Define some common definitions here that are used
+# in most BRL-CAD directories 
 
-include_directories(
-	${BRLCAD_BINARY_DIR}/include
-	${BRLCAD_SOURCE_DIR}/include
-	)
 add_definitions(
 	-DHAVE_CONFIG_H
 	-DBRLCADBUILD=1

@@ -1,10 +1,19 @@
+SET(BWISH_INCLUDE_DIRS
+	${BU_INCLUDE_DIRS}
+	${TERMIO_INCLUDE_DIRS}
+	${GED_INCLUDE_DIRS}
+	${DM_INCLUDE_DIRS}
+	${TCLCAD_INCLUDE_DIRS}
+	)
+LIST(REMOVE_DUPLICATES BWISH_INCLUDE_DIRS)
+include_directories(${BWISH_INCLUDE_DIRS})
+
+# Until we figure out how to package require instead
+# of using the interal C api, we need the internal
+# Tcl headers
 include_directories(
-  ${PNG_INCLUDE_DIR}
-  ${X11_INCLUDE_DIR}
-  ${TCL_INCLUDE_DIRS}
   ${CMAKE_SOURCE_DIR}/src/other/tcl/generic
   ${CMAKE_SOURCE_DIR}/src/other/tcl/unix
-  ${TK_INCLUDE_PATH}
   ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itcl/generic
   ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itk/generic
 )

@@ -1,6 +1,14 @@
+# Include directories needed by libvfont users
+SET(VFONT_INCLUDE_DIRS
+	${BRLCAD_BINARY_DIR}/include
+	${BRLCAD_SOURCE_DIR}/include
+	${BU_INCLUDE_DIRS}
+	)
+LIST(REMOVE_DUPLICATES VFONT_INCLUDE_DIRS)
+BRLCAD_INCLUDE_DIRS(VFONT_INCLUDE_DIRS)
+
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${TCL_INCLUDE_DIRS}
 )
 
 BRLCAD_ADDLIB(libvfont getfont.c libbu)

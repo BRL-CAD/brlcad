@@ -1,6 +1,10 @@
+SET(ADRT_INCLUDE_DIRS
+	${GCV_INCLUDE_DIRS}
+	)
+LIST(REMOVE_DUPLICATES ADRT_INCLUDE_DIRS)
+include_directories(${ADRT_INCLUDE_DIRS})
+
 include_directories(
-  ${TCL_INCLUDE_DIRS}
-  ${OPENGL_INCLUDE_DIR_GL}
   ${BRLCAD_SOURCE_DIR}/src/adrt
   ${BRLCAD_SOURCE_DIR}/src/adrt/libcommon
   ${BRLCAD_SOURCE_DIR}/src/adrt/librender
