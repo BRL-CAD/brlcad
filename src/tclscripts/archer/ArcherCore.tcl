@@ -103,7 +103,7 @@ namespace eval ArcherCore {
 	method rsyncTree {_pnode}
 	method syncTree {}
 	method mouseRay {_dm _x _y}
-	method shootRay {_start _op _target _prep _no_bool _onehit}
+	method shootRay {_start _op _target _prep _no_bool _onehit _bot_dflag}
 	method addMouseRayCallback {_callback}
 	method deleteMouseRayCallback {_callback}
 	method setDefaultBindingMode {_mode}
@@ -523,6 +523,8 @@ namespace eval ArcherCore {
 	method updateZClipPlanes {_unused}
 	method calculateZClipMax {}
 	method pushZClipSettings {}
+
+	method shootRay_doit {_start _op _target _prep _no_bool _onehit _bot_dflag _objects}
 
 	variable mImgDir ""
 	variable mCenterX ""
@@ -2278,7 +2280,7 @@ namespace eval ArcherCore {
     set vZ [expr {[lindex $bounds 4] / -2048.0}]
     set start [$_dm v2mPoint [lindex $view 0] [lindex $view 1] $vZ]
 
-    set partitions [shootRay $start "at" $target 1 1 0]
+    set partitions [shootRay $start "at" $target 1 1 1 0]
     set partition [lindex $partitions 0]
 
     if {[llength $mMouseRayCallbacks] == 0} {
@@ -2295,14 +2297,11 @@ namespace eval ArcherCore {
     }
 }
 
-::itcl::body ArcherCore::shootRay {_start _op _target _prep _no_bool _onehit} {
-    eval $itk_component(ged) rt_gettrees ray -i -u [gedCmd who]
-    ray prep $_prep
-    ray no_bool $_no_bool
-    ray onehit $_onehit
-
-    return [ray shootray $_start $_op $_target]
+::itcl::body ArcherCore::shootRay {_start _op _target _prep _no_bool _onehit _bot_dflag} {
+    objects [gedCmd who]
+    shootRay_doit $_start $_op $_target $_prep $_no_bool $_onehit $_bot_dflag $objects
 }
+
 
 ::itcl::body ArcherCore::addMouseRayCallback {_callback} {
     lappend mMouseRayCallbacks $_callback
@@ -4860,13 +4859,6 @@ namespace eval ArcherCore {
     }
 }
 
-::itcl::body ArcherCore::pushZClipSettings {} {
-    set mZClipMaxPref $mZClipMax
-    set mZClipBackPref $mZClipBack
-    set mZClipFrontPref $mZClipFront
-    updateDisplaySettings
-}
-
 ::itcl::body ArcherCore::updateDisplaySettings {} {
     updateZClipPlanes 0
 }
@@ -4890,6 +4882,23 @@ namespace eval ArcherCore {
     set mZClipMaxPref [expr {sqrt($maxSq + $maxSq)}]
 
     updateZClipPlanes 0
+}
+
+::itcl::body ArcherCore::pushZClipSettings {} {
+    set mZClipMaxPref $mZClipMax
+    set mZClipBackPref $mZClipBack
+    set mZClipFrontPref $mZClipFront
+    updateDisplaySettings
+}
+
+::itcl::body ArcherCore::shootRay_doit {_start _op _target _prep _no_bool _onehit _bot_dflag _objects} {
+    eval $itk_component(ged) rt_gettrees ray -i -u $_objects
+    ray prep $_prep
+    ray set no_bool $_no_bool
+    ray set onehit $_onehit
+    ray set bot_reverse_normal_disabled $_bot_dflag
+
+    return [ray shootray $_start $_op $_target]
 }
 
 

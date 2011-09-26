@@ -166,6 +166,8 @@ package provide Archer 1.0
 
 	# General
 	method askToRevert {}
+	method bot_flip_check      {_logfile args}
+	method bot_flip_check_all  {_logfile}
 	method fbclear {}
 	method raytracePlus {}
 
@@ -513,7 +515,7 @@ package provide Archer 1.0
     if {$Archer::extraMgedCommands != ""} {
 	eval lappend mArcherCoreCommands $Archer::extraMgedCommands
     }
-    lappend mArcherCoreCommands importFg4Sections
+    lappend mArcherCoreCommands importFg4Sections bot_flip_check bot_flip_check_all
 
     if {!$mViewOnly} {
 	updatePrimaryToolbar
@@ -1038,6 +1040,216 @@ package provide Archer 1.0
     }
 
     return 0
+}
+
+
+::itcl::body Archer::bot_flip_check {_logfile args} {
+    SetWaitCursor $this
+
+    if {[catch {open $_logfile "w"} fd]} {
+	return "bot_flip_check: not able to open logfile - \"$_logfile\""
+    }
+
+    set skip_count 0
+    set no_flip_count 0
+    set flip_count 0
+    set miss_count 0
+
+    set skip_string ""
+    set no_flip_string ""
+    set flip_string ""
+    set miss_string ""
+
+    set nitems [llength $args]
+    set icount 0
+    set last_percent 0
+
+    foreach item $args {
+	incr icount
+
+	if {$item == ""} {
+	    continue
+	}
+
+	if {[catch {$itk_component(ged) get_type $item} gtype]} {
+	    incr skip_count
+	    append skip_string "$gtype\n"
+	    continue
+	}
+
+	if {$gtype != "bot"} {
+	    incr skip_count
+	    append skip_string "$item is not a bot\n"
+	    continue
+	}
+
+	if {[$itk_component(ged) get $item mode] != "volume"} {
+	    incr skip_count
+	    append skip_string "$item is not a volume mode bot\n"
+	    continue
+	}
+
+	set rpp [$itk_component(ged) bb -q -e $item]
+	set min [lindex $rpp 1]
+	set max [lindex $rpp 3]
+	set target [expr {[vscale [vadd2 $min $max] 0.5]}]
+
+	set diff [vsub2 $max $min]
+	set start [vsub2 $target $diff]
+
+	set udir [vunitize $diff]
+
+	# Turn off orientation
+	set save_orient [$itk_component(ged) get $item orient]
+	if {$save_orient != "no"} {
+	    $itk_component(ged) adjust $item orient no
+	}
+
+	set partitions [shootRay_doit $start "at" $target 1 1 1 1 $item]
+	if {$partitions == ""} {
+	    incr miss_count
+	    append miss_string "$item "
+
+	    if {$save_orient != "no"} {
+		$itk_component(ged) adjust $item orient $save_orient
+	    }
+
+	    continue
+	}
+
+	# Set orientation back to original setting
+	if {$save_orient != "no"} {
+	    $itk_component(ged) adjust $item orient $save_orient
+	}
+
+	set partition [lindex $partitions 0]
+	if {[catch {bu_get_value_by_keyword in $partition} in]} {
+	    incr miss_count
+	    append miss_string "$item "
+	    continue
+	}
+
+	if {[catch {bu_get_value_by_keyword normal $in} hit_normal]} {
+	    incr miss_count
+	    append miss_string "$item "
+	    continue
+	}
+
+	if {[catch {bu_get_value_by_keyword point $in} ipoint]} {
+	    incr miss_count
+	    append miss_string "$item "
+	    continue
+	}
+
+	set hit_normal [vunitize $hit_normal]
+	set vec [vscale $hit_normal 100]
+	set cosa [vdot $udir $hit_normal]
+
+	if {[vnear_zero $cosa 0.00001]} {
+	    incr miss_count
+	    append miss_string "$item "
+	    continue
+	}
+
+	if {$cosa > 0} {
+	    incr flip_count
+	    append flip_string "$item "
+	    $itk_component(ged) bot_flip $item
+	} else {
+	    incr no_flip_count
+	    append no_flip_string "$item "
+	}
+
+	set percent [format "%.2f" [expr {$icount / double($nitems)}]]
+	if {$percent > $last_percent} {
+	    set last_percent $percent
+	    pluginUpdateProgressBar $percent
+	}
+    }
+
+    puts $fd "************************ ITEMS SKIPPED ************************ "
+    if {$skip_count} {
+	puts $fd $skip_string
+    } else {
+	puts $fd "None"
+    }
+    puts $fd ""
+    puts $fd ""
+    puts $fd "************************ ITEMS MISSED ************************ "
+    if {$miss_count} {
+	puts $fd $miss_string
+    } else {
+	puts $fd "None"
+    }
+    puts $fd ""
+    puts $fd ""
+    puts $fd "************************ ITEMS NOT FLIPPED ************************ "
+    if {$no_flip_count} {
+	puts $fd $no_flip_string
+    } else {
+	puts $fd "None"
+    }
+    puts $fd ""
+    puts $fd ""
+    puts $fd "************************ ITEMS FLIPPED ************************ "
+    if {$flip_count} {
+	puts $fd $flip_string
+    } else {
+	puts $fd "None"
+    }
+    puts $fd ""
+    puts $fd ""
+    puts $fd ""
+    puts $fd "************************ SUMMARY ************************ "
+    putString "************************ SUMMARY ************************ "
+
+    if {$skip_count == 1} {
+	puts $fd "$skip_count item skipped"
+	putString "$skip_count item skipped"
+    } else {
+	puts $fd "$skip_count items skipped"
+	putString "$skip_count items skipped"
+    }
+
+    if {$miss_count == 1} {
+        puts $fd "$miss_count item missed"
+        putString "$miss_count item missed"
+    } else {
+	puts $fd "$miss_count items missed"
+	putString "$miss_count items missed"
+    }
+
+    if {$no_flip_count == 1} {
+	puts $fd "$no_flip_count item NOT flipped"
+	putString "$no_flip_count item NOT flipped"
+    } else {
+	puts $fd "$no_flip_count items NOT flipped"
+	putString "$no_flip_count items NOT flipped"
+    }
+
+    if {$flip_count == 1} {
+	puts $fd "$flip_count item flipped"
+	putString "$flip_count item flipped"
+    } else {
+	puts $fd "$flip_count items flipped"
+	putString "$flip_count items flipped"
+    }
+
+    close $fd
+    SetNormalCursor $this
+    pluginUpdateProgressBar 0
+
+    if {$flip_count} {
+	setSave
+    }
+
+    return
+}
+
+
+::itcl::body Archer::bot_flip_check_all {_logfile} {
+    set blist [split [search . -type bot] "\n "]
+    eval bot_flip_check $_logfile $blist
 }
 
 
@@ -7857,7 +8069,7 @@ proc title_node_handler {node} {
 	    -fill blue
     }
 
-    ::update
+    ::update idletasks
 }
 
 
@@ -7875,7 +8087,7 @@ proc title_node_handler {node} {
 
 ::itcl::body Archer::pluginUpdateStatusBar {msg} {
     set mStatusStr $msg
-    ::update
+    ::update idletasks
 }
 
 
