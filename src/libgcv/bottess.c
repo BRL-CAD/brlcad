@@ -339,20 +339,6 @@ tri_tri_intersect_with_isectline(struct soup_s *UNUSED(left), struct soup_s *UNU
     /* compute interval for triangle 2 */
     compute_intervals_isectline(rf,up0,up1,up2,du0,du1,du2, du0du1,du0du2,&isect2[0],&isect2[1],isectpointB1,isectpointB2, tol);
 
-#if 0
-    bu_log("Isect: %.0f/%.0f/%.0f|%.0f/%.0f/%.0f|%.0f/%.0f/%.0f %.0f/%.0f/%.0f|%.0f/%.0f/%.0f|%.0f/%.0f/%.0f\tA1:%.0f/%.0f/%.0f A2:%.0f/%.0f/%.0f B1:%.0f/%.0f/%.0f B2:%.0f/%.0f/%.0f ",
-		    V3ARGS(lf->vert[0]),
-		    V3ARGS(lf->vert[1]),
-		    V3ARGS(lf->vert[2]),
-		    V3ARGS(rf->vert[0]),
-		    V3ARGS(rf->vert[1]),
-		    V3ARGS(rf->vert[2]),
-		    V3ARGS(isectpointA1),
-		    V3ARGS(isectpointA2),
-		    V3ARGS(isectpointB1),
-		    V3ARGS(isectpointB2));
-#endif
-
 /* sort so that a<=b */
     smallest1 = smallest2 = 0;
 #define SORT2(a,b,smallest) if(a>b) { fastf_t _c; _c=a; a=b; b=_c; smallest=1; }
@@ -363,11 +349,6 @@ tri_tri_intersect_with_isectline(struct soup_s *UNUSED(left), struct soup_s *UNU
     if(isect1[1]<isect2[0] || isect2[1]<isect1[0])
 	return 0;
 
-#if 0
-    printf("%d:%d + % 4.2f % 4.2f % 4.2f % 4.2f\t+ % 4.2f/% 4.2f/% 4.2f % 4.2f/% 4.2f/% 4.2f | % 4.2f/% 4.2f/% 4.2f % 4.2f/% 4.2f/% 4.2f\n",
-		    smallest1, smallest2, isect1[0], isect1[1], isect2[0], isect2[1],
-		    V3ARGS(isectpointA1), V3ARGS(isectpointA2), V3ARGS(isectpointB1), V3ARGS(isectpointB2));
-#endif
     /* at this point, we know that the triangles intersect */
 
     if (isect2[0] < isect1[0]) {
@@ -415,13 +396,23 @@ HIDDEN int
 split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], const struct bn_tol *tol)
 {
     struct face_s *f = s->faces+fid;
-    int isv[2] = {0, 0};
+    int i, j, isv[2] = {-1, -1}, pep[2][3] = {{-1,-1,-1},{-1,-1,-1}};
 
-    if( VNEAR_EQUAL(f->vert[0], isectpt[0], tol->dist) || VNEAR_EQUAL(f->vert[1], isectpt[0], tol->dist) || VNEAR_EQUAL(f->vert[2], isectpt[0], tol->dist)) isv[0] = 1;
-    if( VNEAR_EQUAL(f->vert[0], isectpt[1], tol->dist) || VNEAR_EQUAL(f->vert[1], isectpt[1], tol->dist) || VNEAR_EQUAL(f->vert[2], isectpt[1], tol->dist)) isv[1] = 1;
+
+    for(i=0;i<2;i++) for(j=0;j<3;j++) if( VNEAR_EQUAL(f->vert[j], isectpt[i], tol->dist) ) isv[i] = j;
+    /* isv now contains matching vertices for intersect points, as indices. */
+
     /* test if both ends of the intersect line are on vertices */
     if(isv[0] && isv[1])
 	return 1;
+
+    if(isv[0] == -1) {
+	pep[0][0]=0;
+    }
+
+    if(isv[1] == -1) {
+	pep[1][0]=0;
+    }
 
     return 0;
 }
