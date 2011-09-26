@@ -16,7 +16,7 @@ EXTRA_DIST = \
 	g-xxx_facets.c \
 	g4-g5.c \
 	g5-g4.c \
-	obj-g_new.c \
+	obj-g.c \
 	patch/pull_comp.sh \
 	patch/pull_solidsub.sh \
 	patch/rpatch.f \
@@ -89,7 +89,6 @@ bin_PROGRAMS = \
 	nmg-bot \
 	nmg-rib \
 	nmg-sgp \
-	obj-g \
 	off-g \
 	patch-g \
 	pix2asc \
@@ -320,10 +319,6 @@ off_g_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
 off_g_LDADD = \
 	${WDB} \
 	${WDB_LIBS}
-
-obj_g_SOURCES = obj-g.c
-obj_g_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
-obj_g_LDADD = ${WDB}
 
 patch_g_SOURCES = patch/patch-g.c
 patch_g_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
