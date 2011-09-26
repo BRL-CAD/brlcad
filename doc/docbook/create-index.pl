@@ -6,6 +6,9 @@ use warnings;
 use File::Basename;
 use Data::Dumper;
 
+use XML::XPath;
+use XML::XPath::XMLParser;
+
 use BRLCAD_DOC ('print_xml_header', 'print_xhtml_header');
 
 # global vars
@@ -26,13 +29,9 @@ HERE
 my $verbose  = 0;
 my $debug    = 0;
 my $ifil     = 0;
-my $ofil     = undef;
-
-my $typ      = 'html';
-my $html     = 1;
+my $ofil     = 'index.html';
 
 foreach my $arg (@ARGV) {
-  my $arg = shift @ARGV;
   my $val = undef;
   my $idx = index $arg, '=';
 
@@ -50,6 +49,9 @@ foreach my $arg (@ARGV) {
   elsif ($arg =~ /^[-]{1,2}v/i) {
     $verbose = 1;
   }
+  elsif ($arg =~ /^[-]{1,2}d/i) {
+    $debug = 1;
+  }
   elsif (!$ifil) {
     $ifil = $arg;
   }
@@ -58,7 +60,7 @@ foreach my $arg (@ARGV) {
   }
 }
 
-$ofil = ($typ eq 'html') ? 'index.html' : 'index.xml';
+#print "DEBUG: args = '@ARGV'\n"; die "debug exit";
 
 # error checks
 my $errors = 0;
@@ -94,6 +96,12 @@ my %dir
      6 => { dir => 'system', name => '',},
      );
 
+# some files are not for normal viewing
+my %ignore
+  = (
+     'tutorial_series_authors.xml' => 1,
+    );
+
 while (defined(my $line = <$fp>)) {
   # eliminate any comments
   my  $idx = index $line, '#';
@@ -114,6 +122,10 @@ while (defined(my $line = <$fp>)) {
 
     # need the dir and basename
     my $fil  = basename($f);
+
+    # some files should be ignored
+    next if exists $ignore{$fil};
+
     my $dirs = dirname($f);
 
     # break the dir down into parts
@@ -161,36 +173,19 @@ open $fp, '>', $ofil
 
 write_headers($fp);
 
-if ($html) {
-  print $fp "  <h>BRL-CAD Documents</h>\n";
-  print $fp "\n";
-}
+print $fp "  <h1>BRL-CAD Documentation</h1>\n";
+print $fp "\n";
 
 foreach my $dir (@dirs) {
   my $name = shift @names;
   my %sdir = %{$db{$dir}{subdirs}};
 
-  if ($html) {
-    print $fp "  <h2>$name</h2\n";
-  }
-  else {
-    print $fp "  <section>\n";
-    print $fp "    <title>$name</title>\n";
-  }
+  # a section chunk (table)
+
+  print $fp "  <h2>$name</h2>\n";
   print $fp "\n";
 
-  # choose list type:
-  my $listtyp;
-  if ($html) {
-    $listtyp = 'ol';  # a numbered list
-    #$listtyp = 'ul'; # an unordered list
-  }
-  else {
-    $listtyp = 'orderedlist';  # a numbered list
-    #$listtyp = 'itemizedlist'; # an unordered list
-  }
-
-  print $fp "    <$listtyp>\n";
+  print $fp "   <table width='100%' align='left'>\n";
   print $fp "\n";
 
   my @sdirs = (sort keys %sdir);
@@ -212,54 +207,81 @@ foreach my $dir (@dirs) {
 	print "WARNING: DB xml file '$f' not found!\n";
 	next;
       }
+
+      # file name without extension
+      my $fname = $fil;
+      $fname  =~ s{\.xml \z}{}xmsi;
+
       # here we can try to find the title from inside the file
+      my $xp = XML::XPath->new(filename => $f);
 
-      # for now just use the file name
-      if ($html) {
-	# file name without extension
-	my $fname = $fil;
-	$fname  =~ s{\.xml \z}{}xmsi;
+      # find all titles
+      my $nodeset = $xp->find('//title'); # || $xp->find('TITLE');
 
-	# for links
-	# need the html extension
-	my $fhtm = $f;
-	$fhtm =~ s{\.xml \z}{\.html}xmsi;
-	# and pdf
-	my $fpdf = $f;
-	$fpdf =~ s{\.xml \z}{\.pdf}xmsi;
-	$fpdf = "../pdf/${fpdf}";
-
-	my $lang = get_lang($f);
-	$lang = '' if (!defined $lang || !$lang);
-	print $fp "      <li>\n";
-
-	print $fp "         $fname <a href='$fhtm'>(html)</a> <a href='$fpdf'>(pdf)</a> $lang\n";
-
-	print $fp "      </li>\n";
+      my $title = 0;
+      foreach my $node ($nodeset->get_nodelist) {
+	$title = XML::XPath::XMLParser::as_string($node);
+	if (0 && $debug) {
+	  print "DEBUG: Found first title: '$title'\n";
+	  print "  file: $fil\n";
+	}
+	last;
       }
-      else {
-	print $fp "      <listitem>\n";
-	print $fp "        <para>\n";
 
-	print $fp "          <olink targetdoc='$f'></olink>\n";
+      # manipulate title
+      if ($title) {
+	if ($debug) {
+	  print "==== DEBUG: Found first title: '$title'\n";
+	  print "  file: $fil\n";
+	}
+	# strip bounding element tags
+	$title =~ s{<[/]?title>}{}gi;
+	if ($debug) {
+	  print "  stripped: '$title'\n";
+	}
 
-	print $fp "        </para>\n";
-	print $fp "      </listitem>\n";
+	if ($title =~ m{\s* description \s*}xmsi) {
+	  # a man page--use the file name
+	  $title = $fname;
+	  if ($debug) {
+	    print "  a man page: '$title'\n";
+	  }
+	}
       }
+
+      # use the file name if nothing else
+      $title = $fname
+	if !$title;
+
+      # for links
+      # need the html extension
+      my $fhtm = $f;
+      $fhtm =~ s{\.xml \z}{\.html}xmsi;
+      # and pdf
+      my $fpdf = $f;
+      $fpdf =~ s{\.xml \z}{\.pdf}xmsi;
+      $fpdf = "../pdf/${fpdf}";
+
+      my $lang = get_lang($f);
+      $lang = '' if (!defined $lang || !$lang);
+
+      # an entry
+      #print $fp "      <li>\n";
+      print $fp "      <tr>\n";
+
+      # four cells
+      print $fp "      <td width='50%'>$title</td>\n";
+      print $fp "      <td width='10%'><a href='$fhtm'>(html)</a></td>\n";
+      print $fp "      <td width='10%'><a href='$fpdf'>(pdf)</a></td>\n";
+      print $fp "      <td>$lang</td>\n";
+
+      print $fp "      </tr>\n";
     }
   }
 
-  # end of list
-  print $fp "    </$listtyp>\n"; # a numbered list
+  # end of table
+  print $fp "    </table>\n"; # a numbered list
   print $fp "\n";
-
-  if ($html) {
-  }
-  else {
-    # end of section
-    print $fp "  </section>\n";
-    print $fp "\n";
-  }
 
 }
 
@@ -272,46 +294,33 @@ print "Normal end.  See output file '$ofil'.\n";
 sub write_headers {
   my $fp = shift @_;
 
-  if ($html) {
-    print_xhtml_header($fp);
-  }
-  else {
-    print_xml_header($fp);
+  print_xhtml_header($fp, 'utf');
 
     print $fp <<"HERE";
-<article xmlns='http://docbook.org/ns/docbook' version='5.0'>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <title>BRL-CAD Documentation</title>
+
+<!--
+  <link rel="stylesheet" type="text/css" href="css/std_props.css" />
+-->
+
+</head>
+<body>
+
 HERE
-  }
 
 } # write_headers
 
 sub write_enders {
   my $fp = shift @_;
 
-  if ($html) {
-    print $fp <<"HERE";
+  print $fp <<"HERE";
+</body>
 </html>
 HERE
-  }
-  else {
-    print $fp <<"HERE";
-</article>
-HERE
-  }
 
 } # write_enders
-
-=pod
-
-
-Generates a DocBook xml (DB) source file ($ofil) listing the
-files found in the input file organized by directory.  Input
-is a list of source files to include.  Output is to file
-'$ofil' which should then be processed by the document
-build system in the usual manner.
-
-=cut
 
 sub help {
   print <<"HERE";

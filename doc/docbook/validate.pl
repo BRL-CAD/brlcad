@@ -133,8 +133,7 @@ foreach my $arg (@ARGV) {
   }
 }
 
-#print "args = @ARGV\n";
-#die "debug exit: \$stop = $stop";
+#print "args = @ARGV\n"; die "debug exit: \$stop = $stop";
 
 # error checks
 my $errors = 0;
