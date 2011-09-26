@@ -305,9 +305,9 @@ int cleanup(btDiscreteDynamicsWorld* dynamicsWorld,
 extern "C" int
 run_simulation(struct simulation_params *sim_params)
 {
-	int i;
+	//int i;
 
-	for (i=0 ; i < sim_params->duration ; i++) {
+	//for (i=0 ; i < sim_params->duration ; i++) {
 
 		// Initialize the physics world
 		btDiscreteDynamicsWorld* dynamicsWorld;
@@ -342,7 +342,7 @@ run_simulation(struct simulation_params *sim_params)
 		delete dispatcher;
 		delete collisionConfiguration;
 		delete broadphase;
-	}
+	//}
 
 
 	return 0;
