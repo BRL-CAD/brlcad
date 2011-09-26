@@ -58,6 +58,7 @@ static int rt_tcl_rt_no_bool(ClientData clientData, Tcl_Interp *interp, int argc
 static int rt_tcl_rt_check(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
 static int rt_tcl_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
 static int rt_tcl_rt_cutter(ClientData clientData, Tcl_Interp *interp, int argc, const char *const*argv);
+static int rt_tcl_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, const char *const*argv);
 
 
 /************************************************************************
@@ -79,6 +80,7 @@ static struct dbcmdstruct rt_tcl_rt_cmds[] = {
     {"check",		rt_tcl_rt_check},
     {"prep",		rt_tcl_rt_prep},
     {"cutter",		rt_tcl_rt_cutter},
+    {"set",		rt_tcl_rt_set},
     {(char *)0,		(int (*)())0}
 };
 
@@ -569,6 +571,91 @@ rt_tcl_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *
 							   ((double)rtip->rti_cut_totobj) /
 							   rtip->rti_ncut_by_type[CUT_BOXNODE]);
 
+    Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
+    bu_vls_free(&str);
+    return TCL_OK;
+}
+
+
+/**
+ * R T _ T C L _ R T _ S E T
+ *
+ * Set/get the rt object's settable variables.
+ *
+ * This replaces onehit and no_bool.
+ *
+ * Usage -
+ * procname set
+ * procname set vname
+ * procname set vname val
+ */
+int
+rt_tcl_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv)
+{
+    struct application *ap = (struct application *)clientData;
+    struct rt_i *rtip;
+    struct bu_vls str;
+    int val;
+    const char *usage = "[vname [val]]";
+
+    bu_vls_init(&str);
+
+    if (argc < 2 || argc > 4) {
+	bu_vls_printf(&str, "%s %s: %s", argv[0], argv[1], usage);
+	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
+	bu_vls_free(&str);
+
+	return TCL_ERROR;
+    }
+
+    RT_CK_AP_TCL(interp, ap);
+    rtip = ap->a_rt_i;
+    RT_CK_RTI_TCL(interp, rtip);
+
+    /* Return a list of the settable variables and their values */
+    if (argc == 2) {
+	bu_vls_printf(&str, "{onehit %d} ", ap->a_onehit);
+	bu_vls_printf(&str, "{no_bool %d} ", ap->a_no_booleans);
+	bu_vls_printf(&str, "{bot_reverse_normal_disabled %d}", ap->a_bot_reverse_normal_disabled);
+	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
+	bu_vls_free(&str);
+
+	return TCL_OK;
+    }
+
+    if (argc == 4 && sscanf(argv[3], "%d", &val) != 1) {
+	bu_vls_printf(&str, "%s %s: bad val - %s, must be an integer", argv[0], argv[1], argv[3]);
+	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
+	bu_vls_free(&str);
+
+	return TCL_ERROR;
+    }
+
+    if (argv[2][0] == 'o' && !strncmp(argv[2], "onehit", 6)) {
+	if (argc == 3)
+	    val = ap->a_onehit;
+	else
+	    ap->a_onehit = val;
+    } else if (argv[2][0] == 'n' && !strncmp(argv[2], "no_bool", 7)) {
+	if (argc == 3)
+	    val = ap->a_no_booleans;
+	else
+	    ap->a_no_booleans = val;
+    } else if (argv[2][0] == 'b' && !strncmp(argv[2], "bot_reverse_normal_disabled", 27)) {
+	if (argc == 3)
+	    val = ap->a_bot_reverse_normal_disabled;
+	else
+	    ap->a_bot_reverse_normal_disabled = val;
+    } else {
+	bu_vls_printf(&str, "%s %s: bad val - %s, must be one of the following: onehit, no_bool, or bot_reverse_normal_disabled",
+		      argv[0], argv[1], argv[2]);
+	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
+	bu_vls_free(&str);
+
+	return TCL_ERROR;
+    }
+
+    bu_vls_printf(&str, "%d", val);
     Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
     bu_vls_free(&str);
     return TCL_OK;
