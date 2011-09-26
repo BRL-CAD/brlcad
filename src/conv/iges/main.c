@@ -200,7 +200,7 @@ main(int argc, char *argv [])
     vertex_root = NULL;
     name_root = NULL;
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.005;
+    tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;

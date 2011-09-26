@@ -380,7 +380,7 @@ wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
 
     /* Provide the same default tolerance that librt/prep.c does */
     wdbp->wdb_tol.magic = BN_TOL_MAGIC;
-    wdbp->wdb_tol.dist = 0.005;
+    wdbp->wdb_tol.dist = 0.0005;
     wdbp->wdb_tol.dist_sq = wdbp->wdb_tol.dist * wdbp->wdb_tol.dist;
     wdbp->wdb_tol.perp = 1e-6;
     wdbp->wdb_tol.para = 1 - wdbp->wdb_tol.perp;

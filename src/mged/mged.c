@@ -1337,7 +1337,7 @@ main(int argc, char *argv[])
 
     /* These values match old GED.  Use 'tol' command to change them. */
     mged_tol.magic = BN_TOL_MAGIC;
-    mged_tol.dist = 0.005;
+    mged_tol.dist = 0.0005;
     mged_tol.dist_sq = mged_tol.dist * mged_tol.dist;
     mged_tol.perp = 1e-6;
     mged_tol.para = 1 - mged_tol.perp;

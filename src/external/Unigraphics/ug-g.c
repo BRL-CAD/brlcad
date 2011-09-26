@@ -112,7 +112,7 @@ static int prim_no=0;			/* count of BRL-CAD primitive objects, used to build nam
 
 static int ident=1000;			/* ident number for BRL-CAD regions */
 
-static double tol_dist=0.005;	/* (mm) minimum distance between two distinct vertices */
+static double tol_dist=0.0005;	/* (mm) minimum distance between two distinct vertices */
 static double tol_dist_sq;
 static double surf_tol=3.175;	/* (mm) allowable surface tesselation tolerance (default is 1/8 inch) */
 static double ang_tol=0.0;
@@ -5744,7 +5744,7 @@ main(int ac, char *av[])
     tol.magic = BN_TOL_MAGIC;
     tol.dist = surf_tol;
     tol.dist_sq = tol.dist * tol.dist;
-    tol.perp = 0.00001;
+    tol.perp = 1e-6;
     tol.para = 1.0 - tol.perp;
 
     if (i+1 > ac) {

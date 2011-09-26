@@ -183,7 +183,7 @@ XGLUE(rt_bot_prep_pieces_, TRI_TYPE)(struct bot_specific *bot,
 	    }
 	} else {
 	    /* Prevent the RPP from being 0 thickness */
-	    los = tol->dist;	/* typ 0.005mm */
+	    los = tol->dist;	/* typ 0.0005mm */
 	    if (los < SMALL_FASTF)
 		los = SMALL_FASTF;
 	}

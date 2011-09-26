@@ -264,7 +264,7 @@ load_g (struct tie_s *tie, const char *db, int argc, const char **argv, struct a
     tol.magic = BN_TOL_MAGIC;
     tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
-    tol.perp = 1e-5;
+    tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
     tie_check_degenerate = 0;

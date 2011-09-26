@@ -839,7 +839,7 @@ pl_pt_lu(struct fpi *fpi, const struct loopuse *lu, struct edge_info *ei)
     nmg_pl_lu(fp, lu, b, 255, 255, 255);
 
     tmp_tol.magic = BN_TOL_MAGIC;
-    tmp_tol.dist = 0.005;
+    tmp_tol.dist = 0.0005;
     tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
     tmp_tol.perp = 1e-6;
     tmp_tol.para = 1 - tmp_tol.perp;

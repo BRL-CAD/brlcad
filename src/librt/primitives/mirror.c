@@ -101,7 +101,7 @@ rt_mirror(struct db_i *dbip,
 {
     int id;
     int err;
-    static fastf_t tol_dist_sq = 0.005 * 0.005;
+    static fastf_t tol_dist_sq = 0.0005 * 0.0005;
     plane_t plane;
 
     RT_CK_DBI(dbip);

@@ -177,7 +177,7 @@ tris_are_planar_quad(struct rt_bot_internal *bot, size_t faceidx, int vidx[4])
     }
 
     /* if the normals are out of tolerance, simply give up */
-    if (!VNEAR_EQUAL(N1, N2, 0.005)) {
+    if (!VNEAR_EQUAL(N1, N2, 0.0005)) {
 	if (debug&DEBUG_QUAD)
 	    fprintf(stderr, "normals don't match  %g %g %g   %g %g %g\n",
 		    V3ARGS(N1), V3ARGS(N2));

@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2011-07-XX  Release 7.20.4                                     ---
 ----------------------------------------------------------------------
 
+* tightened default polygonal mesh export tolerance - Sean Morrison
 * converted introductory Tcl/Tk presentation to Docbook - Tom Browder
 * initial support in archer for editing pipe primitives - Bob Parker
 * fixed NURBS raytracing crash due to invalid geometry - Sean Morrison

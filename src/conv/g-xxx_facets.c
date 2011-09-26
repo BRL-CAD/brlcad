@@ -51,7 +51,7 @@ extern double nmg_eue_dist;		/* from nmg_plot.c */
 
 static char	usage[] = "\
 Usage: %s [-v][-xX lvl][-a abs_tess_tol (default: 0.0)][-r rel_tess_tol (default: 0.01)]\n\
-  [-n norm_tess_tol (default: 0.0)][-D dist_calc_tol (default: 0.005)]\n\
+  [-n norm_tess_tol (default: 0.0)][-D dist_calc_tol (default: 0.0005)]\n\
    -o output_file_name brlcad_db.g object(s)\n";
 
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
@@ -97,7 +97,7 @@ main(int argc, char **argv)
     tol.magic = BN_TOL_MAGIC;
     tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
-    tol.perp = 1e-5;
+    tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
     /* init resources we might need */

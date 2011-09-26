@@ -612,7 +612,7 @@ main( int argc, char *argv[] )
     int id;
     int c;
 
-    local_tol = 0.005;
+    local_tol = 0.0005;
     local_tol_sq = local_tol * local_tol;
     ident = 1000;
 

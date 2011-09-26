@@ -1843,7 +1843,7 @@ rt_dist_line3_line3(fastf_t *dist, const fastf_t *p1, const fastf_t *d1, const f
     if (tol->dist > 0.0)
 	tol_dist = tol->dist;
     else
-	tol_dist = 0.005;
+	tol_dist = 0.0005;
 
     if (tol->dist_sq > 0.0)
 	tol_dist_sq = tol->dist_sq;
@@ -5189,7 +5189,7 @@ nmg_pr_inter(const struct vertex *new_v, const struct bu_ptbl *int_faces)
     BU_CK_PTBL(int_faces);
 
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.005;
+    tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;

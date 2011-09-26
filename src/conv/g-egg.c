@@ -213,7 +213,7 @@ main(int argc, char *argv[])
     gcvwriter.tol.magic = BN_TOL_MAGIC;
     gcvwriter.tol.dist = 0.0005;
     gcvwriter.tol.dist_sq = gcvwriter.tol.dist * gcvwriter.tol.dist;
-    gcvwriter.tol.perp = 1e-5;
+    gcvwriter.tol.perp = 1e-6;
     gcvwriter.tol.para = 1 - gcvwriter.tol.perp;
 
     gcvwriter.tot_polygons = 0;
