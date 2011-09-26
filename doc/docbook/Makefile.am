@@ -3,6 +3,10 @@ XSLTPROC_FLAGS=--nonet --xinclude
 XSL_XHTML_STYLESHEET=$(top_srcdir)/doc/docbook/resources/brlcad/brlcad-xhtml-stylesheet.xsl
 XSL_MAN_STYLESHEET=$(top_srcdir)/doc/docbook/resources/brlcad/brlcad-man-stylesheet.xsl
 XSL_FO_STYLESHEET=$(top_srcdir)/doc/docbook/resources/brlcad/brlcad-fo-stylesheet.xsl
+# for covers
+#XSL_FO_COVERS_STYLESHEET=$(top_srcdir)/doc/docbook/resources/brlcad/brlcad-fo-stylesheet-covers.xsl
+# location during initial testing
+XSL_FO_COVERS_STYLESHEET=$(top_srcdir)/doc/docbook/brlcad-fo-stylesheet-covers.xsl
 
 # two xml catalog files
 XML_CATALOG=$(top_srcdir)/doc/docbook/resources/brlcad/brlcad-xml-catalog-autogen.xml
@@ -57,13 +61,15 @@ $(XML_CATALOGS): $(GEN_XML_CATALOGS) BRLCAD_DOC.pm
 	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_FO_STYLESHEET) $?
 
 # special for pdf books with covers
-.PHONY: cover
+.PHONY: cover covers
 # the cover alone for testing
-cover:  books/en/BRL-CAD_Tutorial_Series-VolumeI.xml $(FO_COVER_DEPS)
+cover:  covers
+covers:  dummy.xml $(FO_COVER_DEPS)
 	perl create-book-covers.pl $<
-	@mkdir -p $$(dirname $@)
-	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o cover.pdf \
-          $(XSL_FO_STYLESHEET) VolumeI-cover-fo.xsl $<
+	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o covers.fo \
+          $(XSL_FO_COVERS_STYLESHEET) $<
+	$(APACHEFOP) -c fop.xconf covers.fo -pdf covers.pdf
+
 
 # the books with covers
 #books/en/BRL-CAD_Tutorial_Series-VolumeI.fo : books/en/BRL-CAD_Tutorial_Series-VolumeI.xml $(FO_COVER_DEPS)
