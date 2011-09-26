@@ -19,6 +19,47 @@ include_directories(
 	${TNT_INCLUDE_DIR}
 	)
 
+#SET(SCHEMA_FILE ${BRLCAD_SOURCE_DIR}/src/other/step/data/ap203/203wseds.exp)
+
+# read the schema name from a line like 'SCHEMA AUTOMOTIVE_DESIGN;'
+#file(STRINGS ${SCHEMA_FILE} SCHEMA_STATEMENT LIMIT_COUNT 1 REGEX "SCHEMA .*")
+#string(REGEX REPLACE "^SCHEMA \(.*\)\;$" "\\1" SCHEMA_N ${SCHEMA_STATEMENT} )
+#string(TOUPPER ${SCHEMA_N} SCHEMA_NAME) #fedex_plus always uses upper case for file names
+
+#SET(SCHEMA_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/${SCHEMA_NAME})
+#MAKE_DIRECTORY(${SCHEMA_OUT_DIR})
+#include_directories(${SCHEMA_OUT_DIR})
+
+#SET(FEDEX_OUTPUT 
+#	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.cc
+#	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.h
+#	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.init.cc
+#	${SCHEMA_OUT_DIR}/SdaiAll.cc
+#	${SCHEMA_OUT_DIR}/Sdaiclasses.h 
+#	${SCHEMA_OUT_DIR}/compstructs.cc 
+#	${SCHEMA_OUT_DIR}/schema.cc
+#	${SCHEMA_OUT_DIR}/schema.h
+#	)
+
+#ADD_CUSTOM_COMMAND(OUTPUT ${FEDEX_OUTPUT}
+#	COMMAND ${FEDEX_PLUS_EXEC} ARGS ${SCHEMA_FILE}
+#	DEPENDS ${SCHEMA_FILE}
+#	WORKING_DIRECTORY ${SCHEMA_OUT_DIR}
+#	COMMENT "Generating C++ code to express ${SCHEMA_NAME}..."
+#	VERBATIM)
+
+#SET(fedex_srcs
+#	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.cc
+#	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.init.cc
+#	${SCHEMA_OUT_DIR}/SdaiAll.cc
+#	${SCHEMA_OUT_DIR}/compstructs.cc 
+#	${SCHEMA_OUT_DIR}/schema.cc
+#)
+
+# Replace this with above if using fedex_plus to generate these
+# files from the EXPRESS schema.  Be sure to remove these files
+# from the source tree before trying to build with generated
+# files.
 SET(fedex_srcs
 	SdaiAll.cc
 	SdaiCONFIG_CONTROL_DESIGN.cc
