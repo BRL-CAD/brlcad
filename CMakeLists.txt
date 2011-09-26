@@ -229,9 +229,9 @@ MARK_AS_ADVANCED(CMAKE_SYSTEM_IGNORE_PATH)
 # of the parent build as well, and disables the mechanism for ensuring
 # that the timing code runs at the correct points during the build.
 
-# We also need to provide bookkeeping logic here for the distribution 
-# verification or "distcheck" routines that will validate the state 
-# of the source tree against that expected and accounted for in the 
+# We also need to provide bookkeeping logic here for the distribution
+# verification or "distcheck" routines that will validate the state
+# of the source tree against that expected and accounted for in the
 # build files.  The global coverage needed for the purpose results in
 # the add_library/add_executable command override mechanism having
 # to serve two purposes at once; since we only override these functions
@@ -465,8 +465,8 @@ IF(CMAKE_BUILD_TYPE MATCHES "NONE")
 ENDIF(CMAKE_BUILD_TYPE MATCHES "NONE")
 
 #---------------------------------------------------------------------
-# The location in which to install BRLCAD.  Only do this if 
-# CMAKE_INSTALL_PREFIX hasn't been set already, to try and allow 
+# The location in which to install BRLCAD.  Only do this if
+# CMAKE_INSTALL_PREFIX hasn't been set already, to try and allow
 # parent builds (if any) some control.
 IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
 	IF(NOT WIN32)
@@ -628,7 +628,7 @@ FILE(APPEND ${CONFIG_H_FILE} "#define BRLCAD_ROOT \"${CMAKE_INSTALL_PREFIX}\"\n"
 FILE(APPEND ${CONFIG_H_FILE} "#define PACKAGE_VERSION \"${BRLCAD_VERSION}\"\n")
 FILE(APPEND ${CONFIG_H_FILE} "#define VERSION \"${BRLCAD_VERSION}\"\n")
 
-# A variety of debugging messages in the code key off of the DEBUG 
+# A variety of debugging messages in the code key off of the DEBUG
 # definition - unlike the build flags, this is turned on and off based
 # on the build type.  A "Release" build with debugging compiler flags
 # will still not print debugging messages conditionalized on DEBUG.
@@ -978,8 +978,8 @@ ADD_SUBDIRECTORY(src/other)
 # Requires that CompilerFlags.cmake already be loaded
 INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_CompilerFlags.cmake)
 
-# If doing a debug build, set _FORTIFY_SOURCE to 2. Provides 
-# compile-time best-practice error checking on certain libc 
+# If doing a debug build, set _FORTIFY_SOURCE to 2. Provides
+# compile-time best-practice error checking on certain libc
 # functions (e.g., memcpy), and provides run-time checks on buffer
 # lengths and memory regions.
 IF(${BRLCAD_DEBUG_BUILD} STREQUAL "ON")
@@ -1109,8 +1109,8 @@ BRLCAD_CHECK_LIBRARY(GEN gen basename)
 
 # Bullet physics library
 FIND_PACKAGE(Bullet)
-IF(BULLET_FOUND)   
-    FILE(APPEND ${CONFIG_H_FILE} "#define HAVE_BULLET 1\n")   
+IF(BULLET_FOUND)
+    FILE(APPEND ${CONFIG_H_FILE} "#define HAVE_BULLET 1\n")
 ENDIF(BULLET_FOUND)
 MARK_AS_ADVANCED(BULLET_INCLUDE_DIR)
 
@@ -1141,9 +1141,9 @@ MARK_AS_ADVANCED(BULLET_INCLUDE_DIR)
 # utime.h, utmpx.h, wordexp.h
 
 # Because libtclcad, bwish and mged include Tcl headers, we need to define
-# STDC_HEADERS here - the Tcl headers do need the definition.  Just 
+# STDC_HEADERS here - the Tcl headers do need the definition.  Just
 # define it - we require C89, so the test itself is not needed.
-FILE(APPEND ${CONFIG_H_FILE} "#define STDC_HEADERS 1\n")   
+FILE(APPEND ${CONFIG_H_FILE} "#define STDC_HEADERS 1\n")
 
 # AC_HEADER_SYS_WAIT
 BRLCAD_HEADER_SYS_WAIT()
@@ -1679,7 +1679,7 @@ EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove	${BRLCAD_BINARY_DIR}/include/
 # the internal CMake variable list is too noisy so at the moment this looks
 # like the best alternative we have.
 
-# CMAKE_PROPERTY VARIABLES looks even more comprehensive than the Cache file, 
+# CMAKE_PROPERTY VARIABLES looks even more comprehensive than the Cache file,
 # but it looks like it captures too much for what we want/need.  Some interesting
 # possibilities for debugging though, so leave it in even though we
 # aren't currently trigging COUNT off of it.  TODO - investigate whether we
@@ -1693,7 +1693,7 @@ MACRO(WRITE_VARIABLE_LIST)
 ENDMACRO()
 
 include(${CMAKE_SOURCE_DIR}/misc/CMake/DiffCache.cmake)
-#force CMake to look every time in case of manual removal of COUNT file.  
+#force CMake to look every time in case of manual removal of COUNT file.
 set(countFile "countFile-NOTFOUND" CACHE STRING "Is there a count file?" FORCE)
 find_file(countFile COUNT PATHS ${BRLCAD_BINARY_DIR}/include/conf)
 if(countFile MATCHES "^countFile-NOTFOUND$")
