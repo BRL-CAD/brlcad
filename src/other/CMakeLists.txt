@@ -1,16 +1,38 @@
-include_directories(
-	${BRLCAD_BINARY_DIR}/include
-	${BRLCAD_SOURCE_DIR}/include
-	)
-
-#-----------------------------------------------------------------------------
-# Load some CMake macros to handle the special case of third party libraries.
-INCLUDE(${BRLCAD_CMAKE_DIR}/ThirdParty.cmake)
+#---------------------------------------------------------------------------------
+# Local Copies of External Libraries
+#
+# BRL-CAD depends on a variety of external libraries and tools - rather than
+# fail if those requirements are not satisfied, we build local copies at need.
+#
+# There are three overall approaches to the handling of these dependencies:
+#
+# 1.  Auto  - detect system libraries and use them if suitable, otherwise
+#     build and use the local copy.  This is the default approach.
+#
+# 2.  Bundled - regardless of system conditions, build and use all bundled
+#     libraries.
+#
+# 3.  System - fail to build if the system libraries do not satisfy
+#     requirements.  This is primarily useful for distributions that want
+#     to ensure packages are using external libraries.
+#
+# In addition to the broad toplevel control, individual libraries can also
+# be overridden - for example, if the toplevel setting is for Bundled libs,
+# it is still possible to request a system library in individual cases.
+#
+#---------------------------------------------------------------------------------
 
 # Quiet all warnings in this directory
 IF(BRLCAD-DISABLE_SRC_OTHER_WARN)
 	add_definitions(-w)
 ENDIF(BRLCAD-DISABLE_SRC_OTHER_WARN)
+
+# Ideally we wouldn't need this, but in a few cases we're using BRL-CAD's
+# include dirs. 
+include_directories(
+	${BRLCAD_BINARY_DIR}/include
+	${BRLCAD_SOURCE_DIR}/include
+	)
 
 # Most third party items have a list calling out files for distcheck - these
 # are stored in files in the dlists directory.  Ignore that directory for
@@ -21,22 +43,15 @@ FOREACH(ITEM ${dlists})
 	DISTCHECK_IGNORE_ITEM(${dlist})
 ENDFOREACH(ITEM ${dlists})
 
-#---------------------------------------------------------------------------------
-# Optionally Building Local Copies of External Libraries
-#
-# Need to get a bit fancy here - since we want to be able to turn local libs
-# on/off at will, need to be careful about how we handle key variables. Approach
-# is to stash values in BRLCAD_* prefixed versions, then restore them after
-# the various Find*.cmake commands do their thing.  If NOT doing local build,
-# then the BRLCAD_* and standard variables will be the same.  It remains to be
-# seen if there will be enough consistency for a macro - the variables that
-# need to be overridden will vary depending on the particular tests made by each
-# subdirectory's CMake logic.
-#---------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------
+# Load some CMake macros to handle the special case of third party libraries.
+INCLUDE(${BRLCAD_CMAKE_DIR}/ThirdParty.cmake)
 
-# libregex library -  needed by tools, so do this one first.
+
+# libregex library -  often needed by tools, so do this one first.
 THIRD_PARTY(regex libregex)
 BRLCAD_INCLUDE_FILE(regex.h HAVE_REGEX_H)
+#-----------------------------------------------------------------------------
 
 #---------------------------------------------------------------------------------
 # Local Copies of Tools
@@ -44,6 +59,9 @@ BRLCAD_INCLUDE_FILE(regex.h HAVE_REGEX_H)
 THIRD_PARTY_EXECUTABLE(re2c re2c)
 THIRD_PARTY_EXECUTABLE(lemon lemon)
 
+#---------------------------------------------------------------------------------
+# Third Party Sources
+#---------------------------------------------------------------------------------
 # Ignore the boost subdir - it's only used for the boost headers and is not
 # compiled
 DISTCHECK_IGNORE_ITEM(boost)

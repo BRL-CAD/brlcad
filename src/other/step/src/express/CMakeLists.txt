@@ -1,5 +1,5 @@
 YACC_TARGET(ExpParser expparse.y ${CMAKE_CURRENT_BINARY_DIR}/expparse.c)
-LEX_TARGET(ExpScanner expscan.l ${CMAKE_CURRENT_BINARY_DIR}/expscan.c COMPILE_FLAGS "-l")
+LEX_TARGET(ExpScanner expscan.l ${CMAKE_CURRENT_BINARY_DIR}/expscan.c)
 ADD_LEX_YACC_DEPENDENCY(ExpScanner ExpParser)
 
 set(EXPRESS_SOURCES
