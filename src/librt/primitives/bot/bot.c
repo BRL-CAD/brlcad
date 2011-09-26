@@ -52,20 +52,24 @@
 
 #define BOT_MIN_DN 1.0e-9
 
-#define BOT_UNORIENTED_NORM(_hitp, _out) { \
-	if (_out) {	/* this is an exit */ \
-		if ((_hitp)->hit_vpriv[X] < 0.0) { \
-			VREVERSE((_hitp)->hit_normal, trip->tri_N); \
-		} else { \
-			VMOVE((_hitp)->hit_normal, trip->tri_N); \
-		} \
-	} else {	/* this is an entrance */ \
-		if ((_hitp)->hit_vpriv[X] > 0.0) { \
-			VREVERSE((_hitp)->hit_normal, trip->tri_N); \
-		} else { \
-			VMOVE((_hitp)->hit_normal, trip->tri_N); \
-		} \
-	} \
+#define BOT_UNORIENTED_NORM(_ap, _hitp, _out) {			    \
+	if (!(_ap)->a_bot_reverse_normal_disabled) {		    \
+	    if (_out) {	/* this is an exit */			    \
+		if ((_hitp)->hit_vpriv[X] < 0.0) {		    \
+		    VREVERSE((_hitp)->hit_normal, trip->tri_N);	    \
+		} else {					    \
+		    VMOVE((_hitp)->hit_normal, trip->tri_N);	    \
+		}						    \
+	    } else {	/* this is an entrance */		    \
+		if ((_hitp)->hit_vpriv[X] > 0.0) {		    \
+		    VREVERSE((_hitp)->hit_normal, trip->tri_N);	    \
+		} else {					    \
+		    VMOVE((_hitp)->hit_normal, trip->tri_N);	    \
+		}						    \
+	    }							    \
+	} else {						    \
+	    VMOVE((_hitp)->hit_normal, trip->tri_N);		    \
+	}							    \
 }
 
 

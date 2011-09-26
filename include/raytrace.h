@@ -1655,6 +1655,7 @@ struct application {
     char **		attrs;		/**< @brief  null terminated list of attributes
 					 * This list should be the same as passed to
 					 * rt_gettrees_and_attrs() */
+    int			a_bot_reverse_normal_disabled;	/**< @brief  1= no bot normals get reversed in BOT_UNORIENTED_NORM */
     /* THESE ELEMENTS ARE USED BY THE PROGRAM "rt" AND MAY BE USED BY */
     /* THE LIBRARY AT SOME FUTURE DATE */
     /* AT THIS TIME THEY MAY BE LEFT ZERO */
