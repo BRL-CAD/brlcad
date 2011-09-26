@@ -13,6 +13,16 @@ XML_CATALOGS=$(FOP_XML_CATALOG) $(XML_CATALOG_FILE)
 # the xml catalog generator creates the two catalog files
 GEN_XML_CATALOGS=$(top_srcdir)/doc/docbook/create-xml-catalogs.pl
 
+# the covers generator uses the covers template to create a cover fo
+# xsl for a book
+GEN_FO_COVER=$(top_srcdir)/doc/docbook/create-book-covers.pl
+# Perl doc module is a cover dep
+DOC_MODULE=$(top_srcdir)/doc/docbook/BRLCAD_DOC.pm
+# the template
+FO_COVER_TEMPLATE=$(top_srcdir)/doc/docbook/book-covers-fo-template.xsl
+# the dependencies
+FO_COVER_DEPS=$(GEN_FO_COVER) $(FO_COVER_TEMPLATE) $(DOC_MODULE) $(XML_CATALOGS)
+
 # the xml catalog location must be known by xsltproc
 XSLTPROC_ENV_VARS = XML_CATALOG_FILES=$(XML_CATALOG) XML_DEBUG_CATALOG=1
 
@@ -21,22 +31,22 @@ $(XML_CATALOGS): $(GEN_XML_CATALOGS) BRLCAD_DOC.pm
 
 .xml.html: $(XML_CATALOGS)
 	@mkdir -p $$(dirname $@)
-	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_XHTML_STYLESHEET) $?
+	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_XHTML_STYLESHEET) $<
 
 .xml.1:  $(XML_CATALOGS)
-	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
+	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $<
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
 .xml.3:  $(XML_CATALOGS)
-	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
+	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $<
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
 .xml.5:  $(XML_CATALOGS)
-	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
+	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $<
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
 .xml.nged:  $(XML_CATALOGS)
-	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
+	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $<
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
 .fo.pdf: .xml.fo
@@ -46,13 +56,32 @@ $(XML_CATALOGS): $(GEN_XML_CATALOGS) BRLCAD_DOC.pm
 	@mkdir -p $$(dirname $@)
 	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_FO_STYLESHEET) $?
 
+# special for pdf books with covers
+.PHONY: cover
+# the cover alone for testing
+cover:  books/en/BRL-CAD_Tutorial_Series-VolumeI.xml $(FO_COVER_DEPS)
+	perl create-book-covers.pl $<
+	@mkdir -p $$(dirname $@)
+	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o cover.pdf \
+          $(XSL_FO_STYLESHEET) VolumeI-cover-fo.xsl $<
+
+# the books with covers
+#books/en/BRL-CAD_Tutorial_Series-VolumeI.fo : books/en/BRL-CAD_Tutorial_Series-VolumeI.xml $(FO_COVER_DEPS)
+#	perl create-book-covers.pl $<
+#	@mkdir -p $$(dirname $@)
+#	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ \
+#          $(XSL_FO_STYLESHEET) VolumeI-cover-fo.xsl $?
+
 # new index product
 indexDOCBOOK_EN = \
-	index.xml
+	index.html
 
-indexDOCBOOK_ENhtmldir = $(BRLCAD_DATA)/html
+indexDOCBOOK_ENhtmldir = $(BRLCAD_DATA)
 indexDOCBOOK_ENhtml_DATA = \
 	$(BUILTINDEX_ENHTML)
+
+BUILTINDEX_ENHTML = \
+	${indexDOCBOOK_EN}
 
 include $(srcdir)/articles/en/Makefile.am
 include $(srcdir)/books/en/Makefile.am
