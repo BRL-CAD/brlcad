@@ -412,6 +412,21 @@ long int splitz = 0;
 long int splitty = 0;
 
 HIDDEN int
+split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], const struct bn_tol *tol)
+{
+    struct face_s *f = s->faces+fid;
+    int isv[2] = {0, 0};
+
+    if( VNEAR_EQUAL(f->vert[0], isectpt[0], tol->dist) || VNEAR_EQUAL(f->vert[1], isectpt[0], tol->dist) || VNEAR_EQUAL(f->vert[2], isectpt[0], tol->dist)) isv[0] = 1;
+    if( VNEAR_EQUAL(f->vert[0], isectpt[1], tol->dist) || VNEAR_EQUAL(f->vert[1], isectpt[1], tol->dist) || VNEAR_EQUAL(f->vert[2], isectpt[1], tol->dist)) isv[1] = 1;
+    /* test if both ends of the intersect line are on vertices */
+    if(isv[0] && isv[1])
+	return 1;
+
+    return 0;
+}
+
+HIDDEN int
 split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *right, unsigned long int right_face, const struct bn_tol *tol) {
     struct face_s *lf, *rf;
     vect_t isectpt[2] = {{0,0,0},{0,0,0}};
@@ -423,11 +438,14 @@ split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *righ
     splitz++;
     if(tri_tri_intersect_with_isectline( left, right, lf, rf, &coplanar, (point_t *)isectpt, tol) == 0)
 	return 2;
+
+    if(VNEAR_EQUAL(isectpt[0], isectpt[1], tol->dist))
+	return 2;
+
     splitty++;
     
-
-    /* do the actual face split */
-    bu_log("%f,%f,%f %f,%f,%f\n", V3ARGS(isectpt[0]), V3ARGS(isectpt[1]));
+    split_face_single(left, left_face, isectpt, tol);
+    split_face_single(right, right_face, isectpt, tol);
 
     return -1;
 }
