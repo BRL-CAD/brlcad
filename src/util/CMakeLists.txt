@@ -15,6 +15,7 @@ include_directories(${UTIL_INCLUDE_DIRS})
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${UTAHRLE_INCLUDE_DIR}
+  ${PNG_INCLUDE_DIR}
 )
 
 IF(MSVC)

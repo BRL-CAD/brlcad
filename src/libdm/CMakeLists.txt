@@ -13,6 +13,11 @@ SET(DM_INCLUDE_DIRS
 	)
 BRLCAD_INCLUDE_DIRS(DM_INCLUDE_DIRS)
 
+# local includes
+include_directories(
+	${PNG_INCLUDE_DIR}
+	)
+
 IF(WIN32 AND BRLCAD-ENABLE_OPENGL)
 	SET(DM_DEFINES "${DM_DEFINES} -DDM_WGL -DIF_WGL")
 	SET(dmw32_srcs dm-wgl.c)

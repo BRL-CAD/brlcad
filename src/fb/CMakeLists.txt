@@ -12,6 +12,8 @@ include_directories(${FBBIN_INCLUDE_DIRS})
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${UTAHRLE_INCLUDE_DIR}
+  ${PNG_INCLUDE_DIR}
+  ${ZLIB_INCLUDE_DIR}
 )
 IF(MSVC)
 		  add_definitions(

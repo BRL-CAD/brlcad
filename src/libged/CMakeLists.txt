@@ -335,6 +335,7 @@ BRLCAD_INCLUDE_DIRS(GED_INCLUDE_DIRS)
 
 # includes from plugins
 include_directories(
+	${PNG_INCLUDE_DIR}
 	${LIBGED_CMD_INCLUDE_DIRS}
 	)
 

@@ -13,6 +13,7 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/src/other/tcl/unix
   ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itcl/generic
   ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itk/generic
+  ${PNG_INCLUDE_DIR}
 )
 
 IF(WIN32 AND BRLCAD-ENABLE_OPENGL)
