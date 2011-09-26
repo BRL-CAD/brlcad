@@ -82,6 +82,16 @@ print $fp <<"FILE1";
       rewritePrefix='file://$dbhome/$dbdir/'
   />
 
+  <rewriteURI
+      uriStartString='/brlcad/'
+      rewritePrefix='file://$dbhome/$brldir/'
+  />
+
+  <rewriteURI
+      uriStartString='/doc/'
+      rewritePrefix='file://$dbhome/'
+  />
+
 
 </catalog>
 FILE1
