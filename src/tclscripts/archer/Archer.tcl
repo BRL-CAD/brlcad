@@ -331,6 +331,7 @@ package provide Archer 1.0
 	method fbModeToggle {}
 	method fbToggle {}
 	method rtEndCallback {_aborted}
+	method getRayBotNormalCos {_start _target _bot}
 
 	#XXX Need to split up menuStatusCB into one method per menu
 	method menuStatusCB {_w}
@@ -1094,10 +1095,8 @@ package provide Archer 1.0
 	set max [lindex $rpp 3]
 	set target [expr {[vscale [vadd2 $min $max] 0.5]}]
 
-	set diff [vsub2 $max $min]
-	set start [vsub2 $target $diff]
-
-	set udir [vunitize $diff]
+	set diag [vsub2 $max $min]
+	set start [vsub2 $target $diag]
 
 	# Turn off orientation
 	set save_orient [$itk_component(ged) get $item orient]
@@ -1105,50 +1104,80 @@ package provide Archer 1.0
 	    $itk_component(ged) adjust $item orient no
 	}
 
-	set partitions [shootRay_doit $start "at" $target 1 1 1 1 $item]
-	if {$partitions == ""} {
-	    incr miss_count
-	    append miss_string "$item "
+	set cosa [getRayBotNormalCos $start $target $item]
+	if {$cosa == ""} {
+	    # Try firing another ray. This time use points from the first triangle.
+	    
+	    if {[catch {$itk_component(ged) get $item V} bot_vertices]} {
+		incr skip_count
+		append skip_string "$item: unable to get vertices\n"
 
-	    if {$save_orient != "no"} {
-		$itk_component(ged) adjust $item orient $save_orient
+		# Set orientation back to original setting
+		if {$save_orient != "no"} {
+		    $itk_component(ged) adjust $item orient $save_orient
+		}
+
+		continue
 	    }
 
-	    continue
+	    if {[catch {$itk_component(ged) get $item F} bot_faces] ||
+		[llength $bot_faces] < 1} {
+		incr skip_count
+		append skip_string "$item: unable to get faces\n"
+
+		# Set orientation back to original setting
+		if {$save_orient != "no"} {
+		    $itk_component(ged) adjust $item orient $save_orient
+		}
+
+		continue
+	    }
+
+	    set face [lindex $bot_faces 0]
+	    set v0 [lindex $bot_vertices [lindex $face 0]]
+	    set v1 [lindex $bot_vertices [lindex $face 1]]
+	    set v2 [lindex $bot_vertices [lindex $face 2]]
+
+	    if {$v0 == "" || $v1 == "" || $v2 == ""} {
+		incr skip_count
+		append skip_string "$item: unable to get vertices\n"
+
+		# Set orientation back to original setting
+		if {$save_orient != "no"} {
+		    $itk_component(ged) adjust $item orient $save_orient
+		}
+
+		continue
+	    }
+
+	    set oneThird [expr {1 / 3.0}]
+	    set target [vscale [vadd3 $v0 $v1 $v2] $oneThird]
+
+	    set v1m0 [vsub2 $v1 $v0]
+	    set v2m0 [vsub2 $v2 $v0]
+	    set n [vunitize [vcross $v1m0 $v2m0]]
+	    set diag_len [vmagnitude $diag]
+	    set start [vsub2 $target [vscale $n $diag_len]]
+
+	    set cosa [getRayBotNormalCos $start $target $item]
+	    if {$cosa == ""} {
+		# This should not happen
+
+		incr skip_count
+		append skip_string "$item: unable to get faces\n"
+
+		# Set orientation back to original setting
+		if {$save_orient != "no"} {
+		    $itk_component(ged) adjust $item orient $save_orient
+		}
+
+		continue
+	    }
 	}
 
 	# Set orientation back to original setting
 	if {$save_orient != "no"} {
 	    $itk_component(ged) adjust $item orient $save_orient
-	}
-
-	set partition [lindex $partitions 0]
-	if {[catch {bu_get_value_by_keyword in $partition} in]} {
-	    incr miss_count
-	    append miss_string "$item "
-	    continue
-	}
-
-	if {[catch {bu_get_value_by_keyword normal $in} hit_normal]} {
-	    incr miss_count
-	    append miss_string "$item "
-	    continue
-	}
-
-	if {[catch {bu_get_value_by_keyword point $in} ipoint]} {
-	    incr miss_count
-	    append miss_string "$item "
-	    continue
-	}
-
-	set hit_normal [vunitize $hit_normal]
-	set vec [vscale $hit_normal 100]
-	set cosa [vdot $udir $hit_normal]
-
-	if {[vnear_zero $cosa 0.00001]} {
-	    incr miss_count
-	    append miss_string "$item "
-	    continue
 	}
 
 	if {$cosa > 0} {
@@ -4911,6 +4940,40 @@ proc title_node_handler {node} {
     $itk_component(primaryToolbar) itemconfigure raytrace \
 	-image $mImage_rt \
 	-command [::itcl::code $this raytracePlus]
+}
+
+
+##
+# At this point _bot is expected to be the name of an existing, unoriented
+# volume mode bot. This method fires a ray at the bot and determines if it
+# needs flipping and returns either an empty string that indicates no determination
+# could be made or the cosine of the angle between the ray and the bot's normal.
+#
+::itcl::body Archer::getRayBotNormalCos {_start _target _bot} {
+    set miss_flag 0
+    set partitions [shootRay_doit $_start "at" $_target 1 1 1 1 $_bot]
+
+    if {$partitions == ""} {
+	return ""
+    }
+
+    set partition [lindex $partitions 0]
+    if {[catch {bu_get_value_by_keyword in $partition} in] ||
+	[catch {bu_get_value_by_keyword normal $in} hit_normal]} {
+	return ""
+    }
+
+    set diff [vsub2 $_target $_start]
+    set raydir [vunitize $diff]
+
+    set hit_normal [vunitize $hit_normal]
+    set cosa [vdot $raydir $hit_normal]
+
+    if {[vnear_zero $cosa 0.00001]} {
+	return ""
+    }
+
+    return $cosa
 }
 
 
