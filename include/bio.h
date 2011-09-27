@@ -42,8 +42,10 @@
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #  define NOMINMAX
-#  define _BIO_IGNORE(x) IGNORE(x)
-#  undef IGNORE
+#  ifdef IGNORE
+#    define _BIO_IGNORE(x) IGNORE(x)
+#    undef IGNORE
+#  endif
 #  include <windows.h>
 #  include <io.h>
 
@@ -53,10 +55,12 @@
 #  undef IN
 #  undef OUT
 /* In case windows.h squashed our ignore, reinstate it - see common.h */
-#  ifdef IGNORE
-#    undef IGNORE
+#  ifdef _BIO_IGNORE
+#    ifdef IGNORE
+#      undef IGNORE
+#    endif
+#    define IGNORE(x) _BIO_IGNORE(x)
 #  endif
-#  define IGNORE(x) _BIO_IGNORE(x)
 #else
 #  include <unistd.h>
 #endif
