@@ -248,7 +248,13 @@ typedef ptrdiff_t ssize_t;
  * Possible alternative:
  * ((void)(1 ? 0 : sizeof((parameter)) - sizeof((parameter))))
  */
-#define IGNORE(parameter) (void)(parameter)
+#ifndef IGNORE
+#  define IGNORE(parameter) (void)(parameter)
+#else
+#  undef IGNORE
+#  define IGNORE(parameter) (void)(parameter)
+#  warning "IGNORE was previously defined.  Parameter declaration behavior is unknown, see common.h"
+#endif
 
 /**
  * LIKELY provides a common mechanism for providing branch prediction
