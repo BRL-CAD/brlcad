@@ -109,11 +109,45 @@ struct bn_tol {
     double perp;		/**< @brief nearly 0 */
     double para;		/**< @brief nearly 1 */
 };
+
+/**
+ * asserts the validity of a bn_tol struct.
+ */
 #define BN_CK_TOL(_p)	BU_CKMAG(_p, BN_TOL_MAGIC, "bn_tol")
 
+/**
+ * initializes a bn_tol struct to zero without allocating any memory.
+ */
+#define BN_TOL_INIT(_p) { \
+	(_p)->magic = BN_TOL_MAGIC; \
+	(_p)->dist = 0.0; \
+	(_p)->dist_sq = 0.0; \
+	(_p)->perp = 0.0; \
+	(_p)->para = 1.0; \
+    }
+
+/**
+ * macro suitable for declaration statement zero-initialization of a
+ * bn_tol struct.
+ */
+#define BN_TOL_INIT_ZERO { BN_TOL_MAGIC, 0.0, 0.0, 0.0, 1.0 }
+
+/**
+ * returns truthfully whether a bn_tol struct has been initialized.
+ */
+#define BN_TOL_IS_INITIALIZED(_p) (((struct bn_tol *)(_p) != (struct bn_tol *)0) && LIKELY((_p)->magic == BN_TOL_MAGIC))
+
+/**
+ * returns truthfully whether a given dot-product of two unspecified
+ * vectors are within a specified parallel tolerance.
+ */
 #define BN_VECT_ARE_PARALLEL(_dot, _tol)				\
     (((_dot) <= -SMALL_FASTF) ? (NEAR_EQUAL((_dot), -1.0, (_tol)->perp)) : (NEAR_EQUAL((_dot), 1.0, (_tol)->perp)))
 
+/**
+ * returns truthfully whether a given dot-product of two unspecified
+ * vectors are within a specified perpendicularity tolerance.
+ */
 #define BN_VECT_ARE_PERP(_dot, _tol)					\
     (((_dot) < 0) ? ((-(_dot))<=(_tol)->perp) : ((_dot) <= (_tol)->perp))
 
