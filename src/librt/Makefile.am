@@ -245,6 +245,7 @@ librt_nil_la_SOURCES = \
 	spectrum.c \
 	tcl.c \
 	timer42.c \
+	tol.c \
 	transform.c \
 	tree.c \
 	vers.c \

@@ -225,6 +225,7 @@ set(LIBRT_SOURCES
     shoot.c
     spectrum.c
     tcl.c
+    tol.c
     transform.c
     tree.c
     vers.c
