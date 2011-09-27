@@ -42,6 +42,7 @@
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #  define NOMINMAX
+#  undef IGNORE
 #  include <windows.h>
 #  include <io.h>
 
@@ -50,6 +51,9 @@
 #   undef small /* defined as part of the Microsoft Interface Definition Language (MIDL) */
 #   undef IN
 #   undef OUT
+/* In case windows.h squashed our ignore, reinstate it - see common.h */
+#   undef IGNORE
+#   define IGNORE(parameter) (void)(parameter)
 
 #else
 #  include <unistd.h>
