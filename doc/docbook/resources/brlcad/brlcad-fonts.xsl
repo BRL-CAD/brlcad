@@ -21,17 +21,12 @@
 -->
 
   <!-- ============= Fonts ==================== -->
-  <!--
-  <xsl:param name="body.font.family">LinLib</xsl:param>
-  <xsl:param name="title.font.family">LinLibSans</xsl:param>
-  <xsl:param name="monospace.font.family">LibMono</xsl:param>
-  <xsl:param name="symbol.font.family">LinLib</xsl:param>
-  -->
 
-  <xsl:param name="body.font.family">FreeSerif</xsl:param>
-  <xsl:param name="title.font.family">FreeSans</xsl:param>
-  <xsl:param name="monospace.font.family">FreeMono</xsl:param>
-  <xsl:param name="symbol.font.family">FreeSerif</xsl:param>
+  <xsl:param name="body.font.family">STIXGeneral</xsl:param>
+  <xsl:param name="symbol.font.family">STIXGeneral</xsl:param>
+
+  <xsl:param name="title.font.family">DejaVuLGCSans</xsl:param>
+  <xsl:param name="monospace.font.family">DejaVuLGCSansMono</xsl:param>
 
   <xsl:param name="body.font.master">11.0</xsl:param>
 

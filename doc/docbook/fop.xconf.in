@@ -11,6 +11,8 @@ the location of this file.
 -->
 <fop version="1.0">
 
+  <strict-configuration>true</strict-configuration>
+  <strict-validation>true</strict-validation>
   <use-cache>0</use-cache>
 
   <!-- 
@@ -96,7 +98,7 @@ the location of this file.
 
       <substitution>
         <from font-family="SansSerif"/>
-        <to font-family="FreeSans"/>
+        <to font-family="DejaVuLGCSans"/>
       </substitution>
 
       <substitution>
@@ -133,7 +135,7 @@ the location of this file.
       <fonts>
 
 
-        <!-- GNU FreeFonts ============================================== -->
+        <!-- free fonts ============================================== -->
         <font kerning="yes" embed-url="./resources/fonts/truetype/stix-v1.0.0/STIXGeneral-Regular.ttf">
           <font-triplet name="STIXGeneral" style="normal" weight="normal"/>
         </font>

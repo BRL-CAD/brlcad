@@ -35,10 +35,22 @@ my $ofil = "book-covers-fo-autogen.xsl";
 
 my %name
   = (
-     'BRL-CAD_Tutorial_Series-VolumeI' => 1,
-     'BRL-CAD_Tutorial_Series-VolumeII' => 1,
-     'BRL-CAD_Tutorial_Series-VolumeIII' => 1,
-     'BRL-CAD_Tutorial_Series-VolumeIV' => 1,
+     'BRL-CAD_Tutorial_Series-VolumeI' => {
+					   title_1 => 'BRL-CAD Tutorial Series:',
+					   title_2 => 'Volume I - An Overview of BRL-CAD',
+					  },
+     'BRL-CAD_Tutorial_Series-VolumeII' => {
+					   title_1 => 'BRL-CAD Tutorial Series:',
+					   title_2 => 'Volume II - Introduction to MGED',
+					   },
+     'BRL-CAD_Tutorial_Series-VolumeIII' => {
+					   title_1 => 'BRL-CAD Tutorial Series:',
+					   title_2 => 'Volume III - Principles of Effective Modeling',
+					    },
+     'BRL-CAD_Tutorial_Series-VolumeIV' => {
+					   title_1 => 'BRL-CAD Tutorial Series:',
+					   title_2 => 'Volume IV - Converting Geometry Between BRL-CAD and Other Formats',
+					   },
      'dummy' => 1,
     );
 
@@ -46,6 +58,8 @@ if (!exists $name{$nam}) {
   die "Unknown file for cover '$typ'.";
 }
 
+my $title_1 = $name{$nam}{title_1};
+my $title_2 = $name{$nam}{title_2};
 
 # the covers' template source:
 my $cvr = 'book-covers-fo-template.xsl';
@@ -71,36 +85,29 @@ else {
   die "Unable to continue";
 }
 
-my $need_value_logo_group = 1;
-my $need_draft            = $draft;
-my $need_title            = 1;
+my $need_brlcad_logo_group = 0;
+my $need_draft             = $draft;
+my $need_title             = 1;
 
 while (defined(my $line = <$fpi>)) {
+
   if ($need_draft
-      && $line =~ m{\A \s* \<\?mantech \s+ insert\-draft\-overlay \s* \?\>}xms) {
+      && $line =~ m{\A \s* \<\?brlcad \s+ insert\-draft\-overlay \s* \?\>}xms) {
     BRLCAD_DOC::print_draft_overlay($fp);
     $need_draft = 0;
     next;
   }
 
-  if ($need_value_logo_group
-      && $line =~ m{\A \s* \<\?mantech \s+ insert\-value\-logo\-group \s* \?\>}xms) {
-    BRLCAD_DOC::print_value_logo_group($fp);
-    $need_value_logo_group = 0;
+  if ($need_brlcad_logo_group
+      && $line =~ m{\A \s* \<\?brlcad \s+ insert\-brlcad\-logo\-group \s* \?\>}xms) {
+    BRLCAD_DOC::print_brlcad_logo_group($fp);
+    $need_brlcad_logo_group = 0;
     next;
   }
 
   if ($need_title
-      && $line =~ m{\A \s* \<\?mantech \s+ insert\-title \s* \?\>}xms) {
-    if ($typ eq 'um') {
-      BRLCAD_DOC::print_um_title($fp);
-    }
-    elsif ($typ eq 'am') {
-      BRLCAD_DOC::print_am_title($fp);
-    }
-    else {
-      BRLCAD_DOC::print_faq_title($fp);
-    }
+      && $line =~ m{\A \s* \<\?brlcad \s+ insert\-title \s* \?\>}xms) {
+    BRLCAD_DOC::print_book_title($fp, $title_1, $title_2);
     $need_title = 0;
     next;
   }

@@ -1,6 +1,8 @@
 package BRLCAD_DOC;
 
 # used for common code for BRL-CAD perl doc utilities
+use strict;
+use warnings;
 
 BEGIN {
   use Exporter;
@@ -16,6 +18,7 @@ BEGIN {
        'print_autogen_header',
        'print_xhtml_header',
        'print_xml_header',
+       'print_book_title',
       );
 
   my @export_ok
@@ -49,6 +52,8 @@ our $genxmlcat     = 'brlcad-xml-catalog-autogen.xml';
 
 # special name for the fop file:
 our $genfopxmlcat  = 'CatalogManager.properties';
+
+my $title_border = '4pt double black';
 
 our $ascii            = 'ASCII';
 our $utf8             = 'UTF-8';
@@ -139,13 +144,20 @@ sub strip_lines {
 
 } # strip_lines
 
-sub print_um_title {
-  my $fp = shift @_;
+sub print_book_title {
+  my $fp      = shift @_;
+  my $title_1 = shift @_;
+  my $title_2 = shift @_;
+
+  $title_1 = '' if !defined $title_1;
+  $title_2 = '' if !defined $title_2;
+
+
 #  my $top = '6.50in';
 #  my $top = '5.90in';
 #  my $top = '5.60in'; # with reduced scale BRL-CAD logo group
   my $top = '5.20in'; # with reduced scale BRL-CAD logo group
-  print $fp <<HERE;
+  print $fp <<"HERE";
       <!-- USERS MANUAL ==================================== -->
       <fo:block-container text-align='center'>
          <fo:block-container
@@ -153,7 +165,7 @@ sub print_um_title {
             border='$title_border'
             padding-after='-7pt'
             font-family="LinLib"
-            font-size="{\$brl-cadsize}"
+            font-size="{\$brlcadsize}"
             font-weight="bold"
             left='1.0in'
             text-align="center"
@@ -161,12 +173,15 @@ sub print_um_title {
             width='6.5in'
           >
            <fo:block>
-             USER'S MANUAL
+             $title_1
+           </fo:block>
+           <fo:block>
+             $title_2
            </fo:block>
          </fo:block-container>
       </fo:block-container>
 HERE
-} # print_um_title
+} # print_book_title
 
 sub print_draft_overlay {
   my $fp  = shift @_;

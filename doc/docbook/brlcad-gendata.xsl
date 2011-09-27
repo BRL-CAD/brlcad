@@ -9,6 +9,12 @@
   version="1.0"
 >
 
+  <!-- version control data -->
+  <xsl:param name="brlcad.vcs">Subversion</xsl:param>
+  <xsl:param name="brlcad.revision">r4321</xsl:param>
+  <xsl:param name="brlcad.pdf.gendate">2011-09-06</xsl:param>
+
+
   <!-- set default page citation style for xref from "[12]" to "12" -->
   <!-- from Bob Stayton's book -->
   <xsl:param name="local.l10n.xml" select="document('')" />

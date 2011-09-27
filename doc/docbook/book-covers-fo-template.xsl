@@ -24,14 +24,15 @@
 
     <fo:flow flow-name="xsl-region-body">
 
-      <?brl-cad insert-draft-overlay ?>
+      <?brlcad insert-draft-overlay ?>
 
       <!-- BRL-CAD LOGO ====================================================== -->
       <!-- this is the BRL-CAD Logo; point size is for the 'BRL-CAD', the rest
       of the container has inherited sizes scaled as a proportion of that size
       so as to meet the company logo rules -->
       <!-- final position on the page should have the top at 0.35in -->
-      <fo:block-container font-size="{$mtlogosize}"
+
+      <fo:block-container font-size="{$logosize}"
          line-height='50.0%'
          text-align="right"
          font-family='Bembo'
@@ -40,11 +41,8 @@
          top='0.40in'
          >
         <fo:block color='red'>
-          BRL-CAD
-        </fo:block>
-        <fo:block font-size='36.0%' last-line-end-indent='{$mtlogosize} * -0.10'>
           <!-- reg mark looks like 0.4 size of normal 'n' -->
-          International Corporation<fo:inline font-size='29.8%'
+          BRL-CAD<fo:inline font-size='29.8%'
              baseline-shift='1.0%'>&#xAE;</fo:inline><!-- &lt;= R => C &#xA9; -->
         </fo:block>
       </fo:block-container>
@@ -59,10 +57,10 @@
         </fo:block>
       </fo:block-container>
 
-      <?brl-cad insert-value-logo-group ?>
+      <?brlcad insert-value-logo-group ?>
 
       <!-- DOCUMENT TITLE ================================================== -->
-      <?brl-cad insert-title ?>
+      <?brlcad insert-title ?>
 
       <!-- GENERATION AND REVISION DATE ==================================== -->
       <fo:block-container
@@ -90,7 +88,7 @@
         </fo:block>
       </fo:block-container>
 
-      <!-- BOTTOM COPYRIGHT ================================ -->
+      <!-- BOTTOM DISCLAIMER ================================ -->
       <fo:block-container absolute-position="absolute" top="10.25in" left="0.5in"
           right="0.5in" bottom="1in" text-align="center" font-family="serif">
         <fo:block>Approved for public release; distribution is unlimited.</fo:block>

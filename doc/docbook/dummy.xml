@@ -3,6 +3,14 @@
   <title>Dummy Doc</title>
   </info>
 
-<para>A dummy doc for testing pdf covers.</para>
+  <para>A dummy doc for testing pdf covers.</para>
+
+<!--
+<chapter>
+  <title>A test Chapter</title>
+  <para>A dummy doc for testing pdf covers.</para>
+
+</chapter>
+-->
 
 </article>
