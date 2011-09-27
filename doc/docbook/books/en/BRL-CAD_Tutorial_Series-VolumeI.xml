@@ -1,80 +1,80 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 
-<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+<book xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title><application>BRL-CAD</application> Tutorial Series: Volume I - An Overview of BRL-CAD</title>
     
   </info>
 
     
 
-  <section xml:id="whatisbrlcad"><info><title>What is BRL-CAD?</title></info>
-    
+  <chapter xml:id="whatisbrlcad"><info><title>What is BRL-CAD?</title></info>
+
     <para>
-	Since the late 1950s, computers have been used to assist with the design 
-	and study of combat vehicle systems. The result has been a reduction in the 
-	amount of time and money required to take a system from the drawing board to 
+	Since the late 1950s, computers have been used to assist with the design
+	and study of combat vehicle systems. The result has been a reduction in the
+	amount of time and money required to take a system from the drawing board to
 	full-scale production as well as increased efficiency in testing and evaluation.
     </para>
     <para>
-	In 1979, the U.S. Army Ballistic Research Laboratory (BRL) (now the U.S. Army 
-	Research Laboratory [ARL]) expressed a need for tools that could assist with the 
-	computer simulation and engineering analysis of combat vehicle systems and environments. 
-	When no existing computer-aided design (CAD) package was found to be adequate for this 
-	purpose, BRL software developers began assembling a suite of utilities capable of 
-	interactively displaying, editing, and interrogating geometric models. This suite 
+	In 1979, the U.S. Army Ballistic Research Laboratory (BRL) (now the U.S. Army
+	Research Laboratory [ARL]) expressed a need for tools that could assist with the
+	computer simulation and engineering analysis of combat vehicle systems and environments.
+	When no existing computer-aided design (CAD) package was found to be adequate for this
+	purpose, BRL software developers began assembling a suite of utilities capable of
+	interactively displaying, editing, and interrogating geometric models. This suite
 	became known as BRL-CAD.
     </para>
     <para>
-	Now comprising almost a million lines of C code, BRL-CAD has become a powerful 
-	constructive solid geometry (CSG) modeling package that has been licensed at over 
-	2,000 sites throughout the world. It contains a large collection of tools, utilities, 
-	and libraries including an interactive geometry editor, raytracing and generic framebuffer 
-	libraries, a network-distributed image-processing and signal-processing capability, and a 
-	customizable embedded scripting language. In addition, BRL-CAD simultaneously supports 
-	dual interaction methods, one using a command line and one using a graphical user 
+	Now comprising almost a million lines of C code, BRL-CAD has become a powerful
+	constructive solid geometry (CSG) modeling package that has been licensed at over
+	2,000 sites throughout the world. It contains a large collection of tools, utilities,
+	and libraries including an interactive geometry editor, raytracing and generic framebuffer
+	libraries, a network-distributed image-processing and signal-processing capability, and a
+	customizable embedded scripting language. In addition, BRL-CAD simultaneously supports
+	dual interaction methods, one using a command line and one using a graphical user
 	interface (GUI).
     </para>
     <para>
-	A particular strength of the package lies in its ability to build and analyze realistic 
-	models of complex objects using a relatively small set of "primitive shapes." To do 
-	this, the shapes are manipulated by employing the basic Boolean operations of union, 
-	subtraction, and intersection. Another strength of the package is the speed of its 
-	raytracer, which is one of the fastest in existence. Finally, BRL-CAD users can accurately 
-	model objects on scales ranging from the subatomic through the galactic and get "all the 
+	A particular strength of the package lies in its ability to build and analyze realistic
+	models of complex objects using a relatively small set of "primitive shapes." To do
+	this, the shapes are manipulated by employing the basic Boolean operations of union,
+	subtraction, and intersection. Another strength of the package is the speed of its
+	raytracer, which is one of the fastest in existence. Finally, BRL-CAD users can accurately
+	model objects on scales ranging from the subatomic through the galactic and get "all the
 	details, all the time."
     </para>
-  </section> 
+  </chapter>
 
-  <section xml:id="whycsg"><info><title>Why CSG Modeling?</title></info>
-    
+  <chapter xml:id="whycsg"><info><title>Why CSG Modeling?</title></info>
+
     <para>
-	Although BRL-CAD has been used for a wide variety of engineering and graphics 
-	applications, the package's primary purpose continues to be the support of (1) ballistic 
-	and (2) electromagnetic analyses. Accordingly, developers have found CSG modeling to be 
-	the best approach in terms of model accuracy, storage efficiency, precision, and speed 
+	Although BRL-CAD has been used for a wide variety of engineering and graphics
+	applications, the package's primary purpose continues to be the support of (1) ballistic
+	and (2) electromagnetic analyses. Accordingly, developers have found CSG modeling to be
+	the best approach in terms of model accuracy, storage efficiency, precision, and speed
 	of computational analysis.
     </para>
     <para>
-	While polygonal and boundary representation (B-rep) modeling often focuses on just 
-	the surfaces of objects, CSG modeling focuses on the entire volume and content of objects. 
-	This gives BRL-CAD the capability to be "more than skin deep" and build objects with 
-	real-world materials, densities, and thicknesses so that analysts can study physical 
-	phenomena such as ballistic penetration and thermal, radiative, neutron, and other 
+	While polygonal and boundary representation (B-rep) modeling often focuses on just
+	the surfaces of objects, CSG modeling focuses on the entire volume and content of objects.
+	This gives BRL-CAD the capability to be "more than skin deep" and build objects with
+	real-world materials, densities, and thicknesses so that analysts can study physical
+	phenomena such as ballistic penetration and thermal, radiative, neutron, and other
 	types of transport.
     </para>
-  </section>
-  <section xml:id="packagecontent"><info><title>Package Content</title></info>
-     
+  </chapter>
+  <chapter xml:id="packagecontent"><info><title>Package Content</title></info>
+
      <para>
-	In keeping with the UNIX philosophy of developing independent tools to perform single, 
-	specific tasks and then linking the tools together in a package, BRL-CAD is basically a 
-	collection of libraries, tools, and utilities that work together to create, raytrace, 
-	and interrogate geometry and manipulate files and data. The basic data flow structure 
+	In keeping with the UNIX philosophy of developing independent tools to perform single,
+	specific tasks and then linking the tools together in a package, BRL-CAD is basically a
+	collection of libraries, tools, and utilities that work together to create, raytrace,
+	and interrogate geometry and manipulate files and data. The basic data flow structure
 	of the package is illustrated below.
      </para>
 
       <figure><info><title>BRL-CAD Data Flow Structure</title></info>
-	
+
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align="center" fileref="../../books/en/images/tutorial_series_volI_fig01.png" format="PNG"/>
@@ -82,17 +82,17 @@
 	</mediaobject>
       </figure>
 
-   </section>
+   </chapter>
 
-  <section xml:id="libraries"><info><title>Libraries</title></info>
-    
+  <chapter xml:id="libraries"><info><title>Libraries</title></info>
+
     <para>
-	The BRL-CAD libraries (designated by the prefix "lib") are designed primarily for the 
-	geometric modeler who also wants to tinker with software and, perhaps, design custom tools. 
-	Each library fits into one of three categories: (1) creating and/or editing geometry, 
-	(2) raytracing geometry, or (3) image handling. The following is a list of the major BRL-CAD 
-	libraries and descriptions of their functions.    
- 
+	The BRL-CAD libraries (designated by the prefix "lib") are designed primarily for the
+	geometric modeler who also wants to tinker with software and, perhaps, design custom tools.
+	Each library fits into one of three categories: (1) creating and/or editing geometry,
+	(2) raytracing geometry, or (3) image handling. The following is a list of the major BRL-CAD
+	libraries and descriptions of their functions.
+
       <itemizedlist>
 	<listitem>
 	  <para>
@@ -146,10 +146,10 @@
 	</listitem>
       </itemizedlist>
     </para>
-  </section>
+  </chapter>
 
-  <section xml:id="toolsutilities"><info><title>Tools and Utilities</title></info>
-    
+  <chapter xml:id="toolsutilities"><info><title>Tools and Utilities</title></info>
+
     <para>
       The application side of BRL-CAD also offers a number of tools and utilities. They primarily concern (1) geometric conversion, (2) geometric interrogation, (3) image format conversion, and (4) command-line-oriented image manipulation. The following is a list of the major BRL-CAD tools and utilities.
       <itemizedlist>
@@ -172,7 +172,7 @@
 			nirt - a package for firing rays interactively and getting information about what the rays run into.
 		  </para>
 		</listitem>
-		<listitem>	
+		<listitem>
 		  <para>
 			remrt - a network-distributed raytracing package.
 		  </para>
@@ -242,22 +242,22 @@
 	</listitem>
       </itemizedlist>
      </para>
-  </section>
- 
-  <section xml:id="benchmarkingimages"><info><title>Benchmark Testing</title></info>
-    
+  </chapter>
+
+  <chapter xml:id="benchmarkingimages"><info><title>Benchmark Testing</title></info>
+
 	<para>
-	   As changes are implemented in BRL-CAD, ARL developers run a standard set of 
-	   computationally intensive image files (shown in Figure 2) on a common machine 
-	   in order to benchmark and compare raytrace performance. In addition, these images 
-	   are provided with each source distribution of the package so that users can also 
+	   As changes are implemented in BRL-CAD, ARL developers run a standard set of
+	   computationally intensive image files (shown in Figure 2) on a common machine
+	   in order to benchmark and compare raytrace performance. In addition, these images
+	   are provided with each source distribution of the package so that users can also
 	   test performance on their machines, if desired.
 	</para>
 	<para>
 	   To run the benchmark images, run the script run.sh in the "bench" directory of the source directory tree.
 	</para>
      <table frame="none" pgwide="1"><info><title>Standard Benchmark Images</title></info>
-		
+
         <tgroup cols="3" align="center">
           <tbody>
             <row>
@@ -284,15 +284,16 @@
         </tgroup>
       </table>
 
-  </section> 
-  <section xml:id="acknowledgements"><info><title>Acknowledgements</title></info>
-    
+  </chapter>
+
+  <chapter xml:id="acknowledgements"><info><title>Acknowledgements</title></info>
+
 	<para>
 	The authors would like to thank the members of the Advanced Computer Systems Team, who reviewed this document in a timely manner and made many helpful suggestions to improve its accuracy and presentation. At the time this document was prepared team members included John Anderson, TraNese Christy, Bob Parker, Ron Bowers, and Sean Morrison.
 	</para>
 	<para>
 	In addition, the authors would like to especially acknowledge Mike Muuss, a team member and the original architect of BRL-CAD, who passed away in the fall of 2000. Without his vision, this work would not have been possible. Therefore, the BRL-CAD Tutorial Series is dedicated to his memory.
 	</para>
-  </section>
+  </chapter>
  
-</article>
+</book>
