@@ -2423,7 +2423,7 @@ refresh(void)
 	    DM_DRAW_END(dmp);
 
 	    if (restore_zbuffer)
-		DM_SET_ZBUFFER(dmp, 0);
+		DM_SET_ZBUFFER(dmp, 1);
 	}
     }
 
