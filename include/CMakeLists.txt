@@ -65,6 +65,7 @@ SET(brlcadinclude_wanted
 	spectrum.h
 	spm.h
 	tie.h
+        tol.h
 	vectfont.h
 	vector_fpu.h
 	vector_x86.h
