@@ -21,6 +21,7 @@
  *  of ISST.
  *
  */
+#include "common.h"
 
 #include <stdio.h>
 
