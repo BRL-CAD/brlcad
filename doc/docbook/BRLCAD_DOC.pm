@@ -4,6 +4,8 @@ package BRLCAD_DOC;
 use strict;
 use warnings;
 
+use DBPATH;
+
 BEGIN {
   use Exporter;
   our @ISA = qw(Exporter);
@@ -15,10 +17,12 @@ BEGIN {
   my @export_ok_all
     = (
        # functions
+       'get_svn_status',
        'print_autogen_header',
        'print_xhtml_header',
        'print_xml_header',
        'print_book_title',
+       'print_brlcad_logo_group',
       );
 
   my @export_ok
@@ -53,7 +57,19 @@ our $genxmlcat     = 'brlcad-xml-catalog-autogen.xml';
 # special name for the fop file:
 our $genfopxmlcat  = 'CatalogManager.properties';
 
-my $title_border = '4pt double black';
+#my $title_border = '4pt double black';
+my $title_border = 'none';
+
+my $brlcad_logo_top           = '2.0in'; # inches
+
+my $brlcad_title_top          = '4in';
+my $brlcad_title_font         = 'STIXGeneral'; # 'DejaVuLGCSans';
+my $brlcad_title_font_size    = '0.4in';
+
+my $brlcad_revision_top       = '8in';
+my $brlcad_revision_font      = 'STIXGeneral'; # 'DejaVuLGCSans';
+my $brlcad_revision_font_size = '12pt';
+
 
 our $ascii            = 'ASCII';
 our $utf8             = 'UTF-8';
@@ -145,42 +161,60 @@ sub strip_lines {
 } # strip_lines
 
 sub print_book_title {
-  my $fp      = shift @_;
-  my $title_1 = shift @_;
-  my $title_2 = shift @_;
+  my $fp       = shift @_;
+  my $revision = shift @_;
+  my @titles   = @_;
 
-  $title_1 = '' if !defined $title_1;
-  $title_2 = '' if !defined $title_2;
+  my $top = $brlcad_title_top;
 
-
-#  my $top = '6.50in';
-#  my $top = '5.90in';
-#  my $top = '5.60in'; # with reduced scale BRL-CAD logo group
-  my $top = '5.20in'; # with reduced scale BRL-CAD logo group
   print $fp <<"HERE";
-      <!-- USERS MANUAL ==================================== -->
+      <!-- BRL-CAD BOOK ==================================== -->
       <fo:block-container text-align='center'>
          <fo:block-container
             absolute-position="absolute"
             border='$title_border'
             padding-after='-7pt'
-            font-family="LinLib"
-            font-size="{\$brlcadsize}"
+            font-family="$brlcad_title_font"
+            font-size="$brlcad_title_font_size"
             font-weight="bold"
             left='1.0in'
             text-align="center"
             top="$top"
             width='6.5in'
           >
-           <fo:block>
-             $title_1
-           </fo:block>
-           <fo:block>
-             $title_2
-           </fo:block>
+HERE
+
+  foreach my $t (@titles) {
+    print $fp "           <fo:block>\n";
+    print $fp "             $t\n";
+    print $fp "           </fo:block>\n";
+  }
+
+  print $fp <<"HERE2";
          </fo:block-container>
       </fo:block-container>
-HERE
+HERE2
+
+  # and the revision info
+  print $fp <<"HERE3";
+      <fo:block-container text-align='center'>
+        <fo:block-container
+            absolute-position="absolute"
+            font-family="$brlcad_title_font"
+            font-size="$brlcad_revision_font_size"
+            font-weight="normal"
+            left='1.0in'
+            text-align="center"
+            top="$brlcad_revision_top"
+            width='6.5in'
+        >
+          <fo:block>
+             subversion revision number: $revision
+          </fo:block>
+        </fo:block-container>
+      </fo:block-container>
+HERE3
+
 } # print_book_title
 
 sub print_draft_overlay {
@@ -309,6 +343,122 @@ sub strip_fo_bookmark {
   # now replace the old array with the new
   @{$aref} = @arr;
 } # strip_fo_bookmark
+
+sub get_svn_status {
+  my $f = shift @_;
+  my @msgs = qx(svn status -v $f);
+
+=pod
+
+  an up-to-date versioned file:
+                 46918    46773 tbrowder2    books/en/BRL-CAD_Tutorial_Series-VolumeIII.xml
+  a locally-modified versioned file:
+    M            46919    46919 tbrowder2    dummy.xml
+
+=cut
+
+  my %codes = ();
+  my ($working_rev, $last_commit_rev, $last_commit_author, $path);
+
+  my $has_codes = 0;
+  if (@msgs) {
+    foreach my $line (@msgs) {
+      my @d = split(' ', $line);
+      next if !defined $d[0];
+
+      # status codes are in the first 9 columns
+      chomp $line;
+      for (my $i = 0; $i < 9; ++$i) {
+	my $c = substr $line, $i, 1;
+        if ($c ne ' ') {
+	  $codes{$c} = 1;
+	  $has_codes = 1;
+	}
+      }
+      $line = substr $line, 9;
+      @d = split(' ', $line);
+      $working_rev        = shift @d;
+      $last_commit_rev    = shift @d;
+      $last_commit_author = shift @_;
+      $path = join('', @d);
+      if ($path ne $f) {
+	print "WARNING:  svn path '$path' not equal file '$f'\n";
+      }
+      last;
+    }
+  }
+  return ($working_rev, $has_codes);
+} # get_svn_status
+
+sub print_brlcad_logo_group {
+  my $fp      = shift @_;
+  my $version = shift @_;
+
+  # set the original width of the group container
+  my $width = '6'; # inches
+  # amount to scale it
+  my $scale = 0.6;
+  # new width
+  my $nwidth = $scale * $width;
+
+  # need to convert transform distances to fop's millipoints
+  my $dx  = 0.5 * (8.5 - $nwidth); # inches
+  $dx    *=   72; # points
+  $dx    *= 1000; # millipoints
+
+  # top of group container
+  my $top  = $brlcad_logo_top; # inches
+
+  # original: scale(0.5, 0.5)
+  print $fp <<"HERE";
+      <!-- fox:transform='scale(0.5, 0.5)' -->
+
+      <!-- BRL-CAD LOGO GROUP ============================================================ -->
+<fo:block-container
+  absolute-position="absolute"
+  text-align="center"
+  width='6in'
+  top='$top'
+  fox:transform='translate($dx, 0) scale($scale)'
+>
+
+      <!-- note that distances are from the top of the containing block-container -->
+      <!-- BRL-CAD LOGO ============================================================ -->
+      <!-- originally 2.75in from top absolute -->
+      <fo:block-container
+         text-align="center">
+HERE
+
+  if (1) {
+    # svg
+    print $fp <<"HERE2a";
+        <fo:block>
+          <fo:instream-foreign-object content-width='5in' content-height='auto' text-align='center'>
+            <xi:include href="$DBPATH::COVER_IMAGES_DIR/brlcad-logo-red.svg" parse='xml'>
+              <xi:fallback parse="text">
+                FIXME:  MISSING XINCLUDE CONTENT
+              </xi:fallback>
+            </xi:include>
+          </fo:instream-foreign-object>
+        </fo:block>
+HERE2a
+
+  }
+  else {
+    # png
+    print $fp <<"HERE2b";
+        <fo:block text-align="center">
+          <fo:external-graphic src="url(./brlcad_new_logo_1024x512.svg)" width="100%" height="auto" content-width="scale-to-fit" content-height="scale-to-fit" text-align="center"/>
+        </fo:block>
+HERE2b
+  }
+
+  print $fp <<"HERE3";
+      </fo:block-container>
+
+</fo:block-container>
+HERE3
+} # print_brlcad_logo_group
 
 #======================
 1;
