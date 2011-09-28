@@ -23,18 +23,21 @@ lessons/
 resources/
 	The DocBook xsl files are contained within the "standard"
 	subdirectory.  Custom files will be organized under this
-	directory in the future. Also include are various directories
-	and files associated with DB validation, fonts, etc.
+	directory in the future. Also included are various directories
+	and files associated with DB validation, fonts, hyphenation,
+	BRL-CAD common files and images, etc.
 
 system/
 	Documentation similar to traditional Unix "man" pages - focused
 	documentation on specific parts of BRL-CAD.  There is a template
         for authors of mged command man pages at:
+
           ./system/mann/mged_cmd_template.xml
 
 presentations/
 	Copies of briefings (slides or slides converted to documents,
 	e.g., "Introduction to Tcl/Tk."
+
 
 LANGUAGE CONSIDERATIONS
 -----------------------
@@ -56,8 +59,13 @@ English DocBook source files are expected to be ASCII with xhtml
 unicode markup for non-ASCII symbols.  Other language source files
 should be in UTF-8.
 
+Notes on equation generation in svg, lists of common symbols and their
+unicode DB symbols, and other notes on DB authoring tips are found in
+the file 'README.DB_authors_notes'.
+
 The text character code requirements may eventually be enforced by a
 pre-commit hook script.
+
 
 DOCBOOK PROCESSING
 ------------------
@@ -70,17 +78,20 @@ Currently there are three products generated from DB source:
 
   * pdf documents
 
-There are some external tools required in order to produce those documents:
+There are some external tools required in order to produce those
+documents:
 
   For man pages and html documents:
 
-    * xsltproc - a program that comes with libxslt (see http://xmlsoft.org/XSLT/)
+    * xsltproc
+        a program that comes with libxslt (see http://xmlsoft.org/XSLT/)
 
   For pdf documents:
 
     * fop
         a program provide by the Apache Software Foundation; note that
-        version 1.0 is recommended (see
+        a minimum of version 1.0 is required to use the hyphenation
+        binaries provided in thre resources sub-directory (see
         http://xmlgraphics.apache.org/fop/)
 
     * Java
@@ -90,7 +101,6 @@ There are some external tools required in order to produce those documents:
 
     * xmllint
         a program that comes with libxml2 (see http://xmlsoft.org/)
-
 
   
 VALIDATION
@@ -137,17 +147,19 @@ external tools that are not presently part of the BRL-CAD package:
 
     * Java
         a working Java run-time environment
+
      
 OTHER CONSIDERATIONS
 --------------------
 
-These documents make extensive use of the XInclude modular documentation
-specification, and as a consequence the contents of any one particular
-"document" may be scattered over many other documents.  This design
-direction is intended to allow re-use of standard definitions and
-descriptions in multiple documents serving multiple purposes.  When
-a definition is updated for one document, re-generation of other documents
-will incorporate the update as well without requiring redundant editing. 
+These documents make extensive use of the XInclude modular
+documentation specification. Consequently, the contents of any one
+particular "document" may be scattered over many other documents.
+This design direction is intended to allow re-use of standard
+definitions and descriptions in multiple documents serving multiple
+purposes.  When a definition is updated for one document,
+re-generation of other documents will incorporate the update as well
+without requiring redundant editing.
 
 Caution - the BRL-CAD build logic is not aware of the interlinking of
 various xml files using xinclude.  This means that a change on one document
