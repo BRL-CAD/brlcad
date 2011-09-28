@@ -100,8 +100,12 @@ covers.pdf: covers.fo
 
 
 # the books with covers
-enbooksxml = $(wildcard books/en/BRL-CAD_Tutorial_Series-Volume*.xml)
-enbooks = $(patsubst %.xml,%.fo, $(enbooksxml))
+enbooks = \
+	docbook/books/en/BRL-CAD_Tutorial_Series-VolumeI.fo \
+	docbook/books/en/BRL-CAD_Tutorial_Series-VolumeII.fo \
+	docbook/books/en/BRL-CAD_Tutorial_Series-VolumeIII.fo \
+	docbook/books/en/BRL-CAD_Tutorial_Series-VolumeIV.fo
+
 $(enbooks): %.fo: %.xml $(FO_COVER_DEPS)
 	perl create-book-covers.pl $<
 	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ \
