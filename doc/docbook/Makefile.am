@@ -4,9 +4,7 @@ XSL_XHTML_STYLESHEET=$(top_srcdir)/doc/docbook/resources/brlcad/brlcad-xhtml-sty
 XSL_MAN_STYLESHEET=$(top_srcdir)/doc/docbook/resources/brlcad/brlcad-man-stylesheet.xsl
 XSL_FO_STYLESHEET=$(top_srcdir)/doc/docbook/resources/brlcad/brlcad-fo-stylesheet.xsl
 # for covers
-#XSL_FO_COVERS_STYLESHEET=$(top_srcdir)/doc/docbook/resources/brlcad/brlcad-fo-stylesheet-covers.xsl
-# location during initial testing
-XSL_FO_COVERS_STYLESHEET=$(top_srcdir)/doc/docbook/brlcad-fo-stylesheet-covers.xsl
+XSL_FO_COVERS_STYLESHEET=$(top_srcdir)/doc/docbook/resources/brlcad/brlcad-fo-stylesheet-covers.xsl
 
 # redefine APACHEFOP--better error checking
 APACHEFOP = FOP_OPTS="-Djava.awt.headless=true -Dxml.catalog.files=$(XML_CATALOG)" /usr/local/src/fop-1.0/fop
@@ -34,7 +32,7 @@ GEN_FO_COVER=$(top_srcdir)/doc/docbook/create-book-covers.pl
 # Perl doc module is a cover dep
 DOC_MODULE=$(top_srcdir)/doc/docbook/BRLCAD_DOC.pm
 # the template
-FO_COVER_TEMPLATE=$(top_srcdir)/doc/docbook/book-covers-fo-template.xsl
+FO_COVER_TEMPLATE=$(top_srcdir)/doc/docbook/resources/brlcad/book-covers-fo-template.xsl
 # the dependencies
 FO_COVER_DEPS=$(GEN_FO_COVER) $(FO_COVER_TEMPLATE) $(DOC_MODULE) $(XML_CATALOGS)
 
