@@ -19,6 +19,7 @@ BEGIN {
        # functions
        'get_svn_status',
        'print_autogen_header',
+       'print_color_file',
        'print_xhtml_header',
        'print_xml_header',
        'print_book_title',
@@ -159,6 +160,27 @@ sub strip_lines {
   @{$aref} = @arr;
 
 } # strip_lines
+
+sub print_color_file {
+  my $fp    = shift @_;
+  my $color = shift @_;
+
+  print $fp <<"HERE";
+<xsl:stylesheet
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  xmlns:fo="http://www.w3.org/1999/XSL/Format"
+  xmlns:xi="http://www.w3.org/2001/XInclude"
+  xmlns:d="http://docbook.org/ns/docbook"
+  exclude-result-prefixes="d"
+  version="1.0"
+>
+
+  <xsl:param name="brlcad.cover.color">$color</xsl:param>
+
+</xsl:stylesheet>
+HERE
+
+} # print_color_file
 
 sub print_book_title {
   my $fp       = shift @_;
@@ -379,7 +401,7 @@ sub get_svn_status {
       @d = split(' ', $line);
       $working_rev        = shift @d;
       $last_commit_rev    = shift @d;
-      $last_commit_author = shift @_;
+      $last_commit_author = shift @d;
       $path = join('', @d);
       if ($path ne $f) {
 	print "WARNING:  svn path '$path' not equal file '$f'\n";
@@ -391,8 +413,8 @@ sub get_svn_status {
 } # get_svn_status
 
 sub print_brlcad_logo_group {
-  my $fp      = shift @_;
-  my $version = shift @_;
+  my $fp    = shift @_;
+  my $color = shift @_;
 
   # set the original width of the group container
   my $width = '6'; # inches
@@ -434,7 +456,7 @@ HERE
     print $fp <<"HERE2a";
         <fo:block>
           <fo:instream-foreign-object content-width='5in' content-height='auto' text-align='center'>
-            <xi:include href="$DBPATH::COVER_IMAGES_DIR/brlcad-logo-red.svg" parse='xml'>
+            <xi:include href="$DBPATH::COVER_IMAGES_DIR/brlcad-logo-${color}.svg" parse='xml'>
               <xi:fallback parse="text">
                 FIXME:  MISSING XINCLUDE CONTENT
               </xi:fallback>
