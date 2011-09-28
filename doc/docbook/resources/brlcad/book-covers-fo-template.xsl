@@ -9,6 +9,7 @@
 <!-- use prog 'create-book-covers.pl' -->
 
 <xsl:include href="brlcad-gendata.xsl"/>
+<xsl:include href="brlcad-colors-autogen.xsl"/>
 
 <!-- ==================================================================== -->
 <xsl:template name="front.cover">
@@ -57,7 +58,7 @@
            <fo:leader leader-length="8.5in"
              leader-pattern="rule"
              alignment-baseline="middle"
-             rule-thickness="2pt" color="red"/>
+             rule-thickness="2pt" color="{$brlcad.cover.color}"/>
         </fo:block>
       </fo:block-container>
 
@@ -72,7 +73,7 @@
            <fo:leader leader-length="8.5in"
              leader-pattern="rule"
              alignment-baseline="middle"
-             rule-thickness="2pt" color="red"/>
+             rule-thickness="2pt" color="{$brlcad.cover.color}"/>
         </fo:block>
       </fo:block-container>
 
@@ -104,7 +105,7 @@
            <fo:leader leader-length="8.5in"
              leader-pattern="rule"
              alignment-baseline="middle"
-             rule-thickness="2pt" color="red"/>
+             rule-thickness="2pt" color="{$brlcad.cover.color}"/>
         </fo:block>
       </fo:block-container>
 
@@ -114,7 +115,7 @@
            <fo:leader leader-length="8.5in"
              leader-pattern="rule"
              alignment-baseline="middle"
-             rule-thickness="2pt" color="red"/>
+             rule-thickness="2pt" color="{$brlcad.cover.color}"/>
         </fo:block>
       </fo:block-container>
 
