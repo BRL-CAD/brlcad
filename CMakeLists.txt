@@ -768,6 +768,12 @@ MARK_AS_ADVANCED(BRLCAD_ENABLE_JOVE)
 
 find_program(APACHE_FOP fop DOC "path to the exec script for Apache FOP")
 MARK_AS_ADVANCED(APACHE_FOP)
+# We care about the FOP version, unfortunately - fine out what we've got.
+IF(APACHE_FOP)
+	EXECUTE_PROCESS(COMMAND ${APACHE_FOP} -v OUTPUT_VARIABLE APACHE_FOP_INFO ERROR_QUIET)
+	STRING(REGEX REPLACE "FOP Version ([0-9\\.]*)" "\\1" APACHE_FOP_VERSION "${APACHE_FOP_INFO}")
+ENDIF(APACHE_FOP)
+
 find_program(XSLTPROC_EXEC xsltproc DOC "path to the xsltproc executable")
 MARK_AS_ADVANCED(XSLTPROC_EXEC)
 include(CMakeDependentOption)
