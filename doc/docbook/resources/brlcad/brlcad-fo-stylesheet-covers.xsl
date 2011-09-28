@@ -18,9 +18,6 @@
   <!-- common param inputs, etc. -->
   <xsl:import href="/brlcad/brlcad-common.xsl"/>
 
-  <!-- colors -->
-  <xsl:import href="/brlcad/brlcad-cover-colors-autogen.xsl"/>
-
   <!-- these are used in place of stringparam inputs to xsltproc -->
   <!-- pdf bookmarks -->
   <xsl:param name="fop1.extensions">1</xsl:param>
