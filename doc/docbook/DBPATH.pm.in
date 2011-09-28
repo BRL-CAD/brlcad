@@ -3,4 +3,11 @@ package DBPATH;
 # we need an absolute path for xml catalogs
 our $DBHOME = '@dbhome@';
 
+# also need an absolute path for pdf book cover images because
+# catalogs aren't working right with fop at the moment
+our $COVER_IMAGES_DIR ='@cover_images_dir@';
+
+# mandatory true return value for Perl modules
+1;
+
 1;
