@@ -1,7 +1,2 @@
-/fop.xconf
-/Makefile
-/Makefile.in
-/DBPATH.pm
-/index.html
-/book-covers-fo-autogen.xsl
-
+/*autogen*
+/CatalogManager.properties
