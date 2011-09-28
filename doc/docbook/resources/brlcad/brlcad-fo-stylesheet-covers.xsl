@@ -11,12 +11,15 @@
   <xsl:import href="/xsl/fo/docbook.xsl"/>
 
   <!-- use "cover" and "back" instead -->
-  <xsl:import href="/doc/book-covers-fo-autogen.xsl"/>
+  <xsl:import href="/brlcad/book-covers-fo-autogen.xsl"/>
 
   <xsl:import href="/brlcad/brlcad-fonts.xsl"/>
 
   <!-- common param inputs, etc. -->
   <xsl:import href="/brlcad/brlcad-common.xsl"/>
+
+  <!-- colors -->
+  <xsl:import href="/brlcad/brlcad-cover-colors-autogen.xsl"/>
 
   <!-- these are used in place of stringparam inputs to xsltproc -->
   <!-- pdf bookmarks -->
