@@ -4103,9 +4103,12 @@ dnl sample applications
 SAMPLE_APPLICATIONS_DIR='${BRLCAD_DATA}/sample_applications'
 AC_SUBST(SAMPLE_APPLICATIONS_DIR)
 
-# need an absolute path for DocBook
+# some absolute paths for for DocBook
 dbhome="$PWD/doc/docbook"
 AC_SUBST(dbhome)
+# this path is for fop when xml catologs doesn't work
+cover_images_dir="$PWD/doc/docbook/resources/brlcad/images"
+AC_SUBST(cover_images_dir)
 
 # stash the top builddir before configuring subdirectories
 bc_top_builddir="$ac_top_builddir"
