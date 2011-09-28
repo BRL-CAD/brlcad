@@ -467,6 +467,9 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
     glLoadIdentity();
     ((struct wgl_vars *)dmp->dm_vars.priv_vars)->face_flag = 1;	/* faceplate matrix is on top of stack */
 
+    wgl_setZBuffer(dmp, dmp->dm_zbuffer);
+    wgl_setLight(dmp, dmp->dm_light);
+
     if (!wglMakeCurrent((HDC)NULL, (HGLRC)NULL)) {
 	LPVOID buf;
 

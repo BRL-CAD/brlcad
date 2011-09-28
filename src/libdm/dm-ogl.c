@@ -1005,6 +1005,9 @@ Done:
     glLoadIdentity();
     privvars->face_flag = 1;	/* faceplate matrix is on top of stack */
 
+    ogl_setZBuffer(dmp, dmp->dm_zbuffer);
+    ogl_setLight(dmp, dmp->dm_light);
+
     return dmp;
 }
 
