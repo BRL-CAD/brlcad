@@ -32,6 +32,10 @@
       so as to meet the company logo rules -->
       <!-- final position on the page should have the top at 0.35in -->
 
+      <!-- &#xAE => R ; C => &#xA9; -->
+      <!-- reg mark looks like 0.4 size of normal 'n' -->
+
+<!--
       <fo:block-container font-size="{$logosize}"
          line-height='50.0%'
          text-align="right"
@@ -41,11 +45,11 @@
          top='0.40in'
          >
         <fo:block color='red'>
-          <!-- reg mark looks like 0.4 size of normal 'n' -->
           BRL-CAD<fo:inline font-size='29.8%'
-             baseline-shift='1.0%'>&#xAE;</fo:inline><!-- &lt;= R => C &#xA9; -->
+             baseline-shift='1.0%'>&#xAE;</fo:inline>
         </fo:block>
       </fo:block-container>
+-->
 
       <!-- TOP RULE ================================ -->
       <fo:block-container  top="1in" absolute-position="absolute">
@@ -57,26 +61,10 @@
         </fo:block>
       </fo:block-container>
 
-      <?brlcad insert-value-logo-group ?>
+      <?brlcad insert-brlcad-logo-group ?>
 
       <!-- DOCUMENT TITLE ================================================== -->
       <?brlcad insert-title ?>
-
-      <!-- GENERATION AND REVISION DATE ==================================== -->
-      <fo:block-container
-         top="7.6in"
-         text-align="center" absolute-position="absolute" font-family="LinLib"
-         font-size='8'
-        >
-
-         <fo:block>
-           VALUE <xsl:value-of select="$brlcad.vcs"/>
-               Revision: <xsl:value-of select="$brlcad.revision"/>
-         </fo:block>
-         <fo:block>
-           PDF Generation Date <xsl:value-of select="$brlcad.pdf.gendate"/>
-         </fo:block>
-      </fo:block-container>
 
       <!-- BOTTOM  RULE ================================ -->
       <fo:block-container top="10in" absolute-position="absolute">
