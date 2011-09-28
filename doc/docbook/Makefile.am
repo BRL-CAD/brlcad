@@ -112,8 +112,8 @@ $(enbooks): %.fo: %.xml $(FO_COVER_DEPS)
           $(XSL_FO_COVERS_STYLESHEET) $<
 
 # new index product
-indexDOCBOOK_EN = \
-	index.html
+#indexDOCBOOK_EN = \
+#	index.html
 
 indexDOCBOOK_ENhtmldir = $(BRLCAD_DATA)
 indexDOCBOOK_ENhtml_DATA = \
