@@ -126,7 +126,11 @@ soup_add_face(struct soup_s *s, point_t a, point_t b, point_t c, const struct bn
 
 
 HIDDEN void
-fisect2(point_t VTX0,point_t VTX1,point_t VTX2, fastf_t VV0,fastf_t VV1,fastf_t VV2, fastf_t D0,fastf_t D1,fastf_t D2,fastf_t *isect0,fastf_t *isect1, point_t isectpoint0,point_t isectpoint1)
+fisect2(
+	point_t VTX0,point_t VTX1,point_t VTX2,
+	fastf_t VV0,fastf_t VV1,fastf_t VV2,
+	fastf_t D0,fastf_t D1,fastf_t D2,
+	fastf_t *isect0,fastf_t *isect1, point_t isectpoint0,point_t isectpoint1)
 {
     fastf_t tmp=D0/(D0-D1);
     fastf_t diff[3];
@@ -396,24 +400,62 @@ HIDDEN int
 split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], const struct bn_tol *tol)
 {
     struct face_s *f = s->faces+fid;
-    int i, j, isv[2] = {-1, -1}, pep[2][3] = {{-1,-1,-1},{-1,-1,-1}};
+    int i, j, isv[2] = {0, 0};
 
+#define VERT_INT 0x10
+#define LINE_INT 0x20
+#define FACE_INT 0x40
+#define ALL_INT  (VERT_INT|LINE_INT|FACE_INT)
+#define SWAP_INT { int _tmpi; point_t _tmpp; VMOVE(_tmpp, isectpt[0]); VMOVE(isectpt[0], isectpt[1]); VMOVE(isectpt[1], _tmpp); _tmpi = isv[0]; isv[0]=isv[1]; isv[1]=_tmpi; }
 
-    for(i=0;i<2;i++) for(j=0;j<3;j++) if( VNEAR_EQUAL(f->vert[j], isectpt[i], tol->dist) ) isv[i] = j;
+    /****** START hoistable ******/
+    /*** test if intersect is on a vert ***/
+    for(i=0;i<2;i++) for(j=0;j<3;j++) if( VNEAR_EQUAL(f->vert[j], isectpt[i], tol->dist) ) isv[i] = VERT_INT|j;
     /* isv now contains matching vertices for intersect points, as indices. */
+    /*** test if intersect is on a line ***/
+    for(i=0;i<2;i++) for(j=0;j<3;j++) {
+	if(isv[i] != 0) {
+	    /* do the line test */
+	    /* if(point_is_on_line_seg) isv = LINE_INT|j; break; */
+	}
+    }
+    if(isv[0]|LINE_INT && isv[1]|VERT_INT) SWAP_INT;
+    /*** test if intersect is middle of face ***/
+    for(i=0;i<2;i++) {
+	/* test for face in plane */
+	if(isv[i] == 0) {
+	}
+    }
+    if((isv[0]|ALL_INT) == 0 || (isv[1]|ALL_INT) == 0) {
+	bu_log("Uhhhh, whu?\n");
+	return -1;
+    }
+    if((isv[0]|ALL_INT) > (isv[1]|ALL_INT)) SWAP_INT;
+    /****** END hoistable ******/
+
+    bu_log("Breaking: %x %x\n", isv[0]|ALL_INT, isv[1]|ALL_INT);
 
     /* test if both ends of the intersect line are on vertices */
-    if(isv[0] && isv[1])
+    if(isv[0] >= 0 && isv[1] >= 0)
 	return 1;
 
-    if(isv[0] == -1) {
-	pep[0][0]=0;
+    if(isv[0]|VERT_INT && isv[1]|LINE_INT) {
+	bu_log("Splitting into 2 %x %x\n", isv[0]|ALL_INT, isv[1]|ALL_INT);
+	/* split into 2 and return */
+	return 2;
     }
 
-    if(isv[1] == -1) {
-	pep[1][0]=0;
-    }
+    /* if VERT+VERT, abort */
+    /* if VERT+LINE, break into 2 */
+    /* if LINE+LINE, break into 3, figure out which side has two verts and cut * that */
+    /* if VERT+FACE, break into 3, intersect is one line, other two to the * opposing verts */
+    /* if LINE+FACE, break into 3 */
+    /* if FACE+FACE, break into 3 */
 
+#undef VERT_INT
+#undef LINE_INT
+#undef ALL_INT
+#undef FACE_INT
     return 0;
 }
 
@@ -434,7 +476,7 @@ split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *righ
 	return 2;
 
     splitty++;
-    
+
     split_face_single(left, left_face, isectpt, tol);
     split_face_single(right, right_face, isectpt, tol);
 
