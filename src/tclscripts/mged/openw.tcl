@@ -2291,6 +2291,8 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     update_mged_vars $id
     set mged_gui($id,qray_effects) [qray effects]
 
+    mged_apply_local $id "dm set zbuffer $mged_default(zbuffer)"
+
     # reset current_cmd_list so that its cur_hist gets updated
     cmd_win set $save_id
 
