@@ -94,7 +94,7 @@ documents:
         binaries provided in thre resources sub-directory (see
         http://xmlgraphics.apache.org/fop/).  Also, version 1.0 has
         some new font support features and we recommend using that
-        version for DB processing.
+        version (or later) for DB processing.
 
     * Java
         a working Java run-time environment
