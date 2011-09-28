@@ -8,12 +8,12 @@
 
   <!-- the base stylesheet (resolved by this name
        in the xml catalog file) -->
-  <xsl:import href="../standard/xsl/manpages/docbook.xsl"/>
+  <xsl:import href="/xsl/manpages/docbook.xsl"/>
 
-  <xsl:import href="brlcad-fonts.xsl"/>
+  <xsl:import href="/brlcad/brlcad-fonts.xsl"/>
 
   <!-- common param inputs, etc. -->
-  <xsl:import href="brlcad-common.xsl"/>
+  <xsl:import href="/brlcad/brlcad-common.xsl"/>
 
   <!-- these are used in place of stringparam inputs to xsltproc -->
   <!-- pdf bookmarks -->

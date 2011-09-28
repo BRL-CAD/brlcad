@@ -7,18 +7,11 @@
 
   <!-- the base stylesheet (resolved by this name
        in the xml catalog file) -->
-  <xsl:import href="../standard/xsl/xhtml-1_1/docbook.xsl"/>
+  <xsl:import href="/xsl/xhtml-1_1/docbook.xsl"/>
 
   <!-- common param inputs, etc. -->
-  <xsl:import href="brlcad-common.xsl"/>
+  <xsl:import href="/brlcad/brlcad-common.xsl"/>
 
-  <!-- these are used in place of stringparam inputs to xsltproc -->
-  <xsl:param name="use.id.as.filename">1</xsl:param>
-
-  <!--
-  <xsl:param name="html.stylesheet">70_value.css</xsl:param>
-  <xsl:param name="chunker.output.indent">yes</xsl:param>
-  -->
 
 <!-- ==================================================================== -->
 
