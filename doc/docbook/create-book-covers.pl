@@ -11,6 +11,42 @@ my $vhome = '.';
 
 use BRLCAD_DOC (':all');
 
+# shadow colors from http://brlcad.org/~sean/images/color_palette.png
+# Sean suggest using one of them (as yet unnamed)
+
+# cc6666
+# cc9966
+# 669966
+# 6699cc
+
+my %color
+  = (
+     'green' => 'green',
+     'limegreen' => 'limegreen',
+     'red' => 'red',
+     'blue' => 'blue',
+
+     # in hex
+     'cc6666' => '#cc6666',
+     'cc9966' => '#cc9966',
+     '669966' => '#669966',
+     '6699cc' => '#6699cc',
+    );
+
+#my $color = 'limegreen';
+#my $color = 'red';
+#my $color = 'green';
+#my $color = 'blue';
+
+#my $color = 'cc6666';
+#my $color = 'cc9966';
+#my $color = '669966';
+my $color = '6699cc';
+
+die "ERROR:  Color selected ($color) not known in color has \%color.\n"
+  if !exists $color{$color};
+my $color_code = $color{$color};
+
 die "Enter book DB xml source file name.\n" if !@ARGV;
 
 my $ifil      = shift @ARGV;
@@ -43,7 +79,8 @@ $nam =~ s{\.xml \z}{}xmsi;
 $nam =~ s{\A books/en/}{}xmsi;
 
 my $brldir = './resources/brlcad';
-my $ofil = "${brldir}/book-covers-fo-autogen.xsl";
+my $ofil  = "${brldir}/book-covers-fo-autogen.xsl";
+my $ofil2 = "${brldir}/brlcad-colors-autogen.xsl";
 
 my %name
   = (
@@ -107,8 +144,12 @@ if ($has_codes) {
 
 open my $fp, '>', $ofil
   or die "$ofil: $!";
+open my $fp2, '>', $ofil2
+  or die "$ofil2: $!";
 
-print "DEBUG: output file = '$ofil'\n"
+print "DEBUG: output file  = '$ofil'\n"
+  if $debug;
+print "DEBUG: output file2 = '$ofil2'\n"
   if $debug;
 
 
@@ -117,12 +158,16 @@ my $line = <$fpi>;
 if ($line =~ m{\A \s* \<\?xml}xms) {
   print $fp $line;
   BRLCAD_DOC::print_autogen_header($fp, $0);
+  BRLCAD_DOC::print_autogen_header($fp2, $0);
 }
 else {
   print "Unexpected first line:\n";
   print $line;
   die "Unable to continue";
 }
+
+print_color_file($fp2, $color_code);
+close $fp2;
 
 my $need_brlcad_logo_group = 1;
 my $need_draft             = $draft;
@@ -139,7 +184,7 @@ while (defined(my $line = <$fpi>)) {
 
   if ($need_brlcad_logo_group
       && $line =~ m{\A \s* \<\?brlcad \s+ insert\-brlcad\-logo\-group \s* \?\>}xms) {
-    BRLCAD_DOC::print_brlcad_logo_group($fp);
+    BRLCAD_DOC::print_brlcad_logo_group($fp, $color);
     $need_brlcad_logo_group = 0;
     next;
   }
