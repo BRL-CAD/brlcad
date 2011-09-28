@@ -42,7 +42,8 @@ $nam = 'books/en/BRL-CAD_Tutorial_Series-VolumeI.xml'
 $nam =~ s{\.xml \z}{}xmsi;
 $nam =~ s{\A books/en/}{}xmsi;
 
-my $ofil = "book-covers-fo-autogen.xsl";
+my $brldir = './resources/brlcad';
+my $ofil = "${brldir}/book-covers-fo-autogen.xsl";
 
 my %name
   = (
@@ -80,7 +81,7 @@ if (!exists $name{$nam}) {
 
 my @titles = @{$name{$nam}};
 # the covers' template source:
-my $cvr = 'book-covers-fo-template.xsl';
+my $cvr = "${brldir}/book-covers-fo-template.xsl";
 
 open my $fpi, '<', $cvr
   or die "$cvr: $!";

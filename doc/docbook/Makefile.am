@@ -8,11 +8,22 @@ XSL_FO_STYLESHEET=$(top_srcdir)/doc/docbook/resources/brlcad/brlcad-fo-styleshee
 # location during initial testing
 XSL_FO_COVERS_STYLESHEET=$(top_srcdir)/doc/docbook/brlcad-fo-stylesheet-covers.xsl
 
+# redefine APACHEFOP--better error checking
+APACHEFOP = FOP_OPTS="-Djava.awt.headless=true -Dxml.catalog.files=$(XML_CATALOG)" /usr/local/src/fop-1.0/fop
+# fop hyphenation path (fop version >= 1.0)
+# need v2 hphenation
+FOP_HYPH=$(top_srcdir)/doc/docbook/resources/offo-hyphenation-binary-v2.0/fop-hyph.jar
+
+# fop hyphenation path (fop version < 1.0)
+#FOP_HYPH=$(top_srcdir)/doc/docbook/resources/offo-hyphenation-fop-stable-binary-v1.2/fop-hyph.jar
+
+FOP_ENV_VARS = FOP_HYPHENATION_PATH=$(FOP_HYPH) CLASSPATH=$(top_srcdir)/doc/docbook
+
 # two xml catalog files
 XML_CATALOG=$(top_srcdir)/doc/docbook/resources/brlcad/brlcad-xml-catalog-autogen.xml
 FOP_XML_CATALOG=$(top_srcdir)/doc/docbook/resources/brlcad/CatalogManage.properties
 # both files as dependencies
-XML_CATALOGS=$(FOP_XML_CATALOG) $(XML_CATALOG_FILE)
+XML_CATALOGS=$(FOP_XML_CATALOG) $(XML_CATALOG)
 
 # the xml catalog generator creates the two catalog files
 GEN_XML_CATALOGS=$(top_srcdir)/doc/docbook/create-xml-catalogs.pl
@@ -54,7 +65,7 @@ $(XML_CATALOGS): $(GEN_XML_CATALOGS) BRLCAD_DOC.pm
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
 .fo.pdf: .xml.fo
-	$(APACHEFOP) -c fop.xconf $? -pdf $@
+	$(FOP_ENV_VARS) $(APACHEFOP) -c fop.xconf $? -pdf $@
 
 .xml.fo:  $(XML_CATALOGS)
 	@mkdir -p $$(dirname $@)
@@ -63,20 +74,38 @@ $(XML_CATALOGS): $(GEN_XML_CATALOGS) BRLCAD_DOC.pm
 # special for pdf books with covers
 .PHONY: cover covers
 # the cover alone for testing
+fo_out  = covers.fo
+pdf_out = covers.pdf
+
+
 cover:  covers
-covers:  dummy.xml $(FO_COVER_DEPS)
+covers: covers.pdf
+#verbose = --verbose
+#fobdebug = -d
+covers.fo:  dummy.xml $(FO_COVER_DEPS)
 	perl create-book-covers.pl $<
-	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o covers.fo \
+	@echo ============ making fo... =============
+	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) $(verbose) -o $(fo_out) \
           $(XSL_FO_COVERS_STYLESHEET) $<
-	$(APACHEFOP) -c fop.xconf covers.fo -pdf covers.pdf
+	@echo Indenting fo output file \"$(fo_out)\".
+	mv $(fo_out) t.fo
+	xmllint --format t.fo > $(fo_out)
+	-rm t.fo
+	@echo See fo output file \"$(fo_out)\".
+
+covers.pdf: covers.fo
+	@echo ============ making pdf... =============
+	$(FOP_ENV_VARS) $(APACHEFOP) $(fopdebug) -c fop.xconf -fo $(fo_out) -pdf $(pdf_out)
+	@echo ============ finished making $(pdf_out) =============
 
 
 # the books with covers
-#books/en/BRL-CAD_Tutorial_Series-VolumeI.fo : books/en/BRL-CAD_Tutorial_Series-VolumeI.xml $(FO_COVER_DEPS)
-#	perl create-book-covers.pl $<
-#	@mkdir -p $$(dirname $@)
-#	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ \
-#          $(XSL_FO_STYLESHEET) VolumeI-cover-fo.xsl $?
+enbooksxml = $(wildcard books/en/BRL-CAD_Tutorial_Series-Volume*.xml)
+enbooks = $(patsubst %.xml,%.fo, $(enbooksxml))
+$(enbooks): %.fo: %.xml $(FO_COVER_DEPS)
+	perl create-book-covers.pl $<
+	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ \
+          $(XSL_FO_COVERS_STYLESHEET) $<
 
 # new index product
 indexDOCBOOK_EN = \
