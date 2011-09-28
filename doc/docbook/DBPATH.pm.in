@@ -9,5 +9,3 @@ our $COVER_IMAGES_DIR ='@cover_images_dir@';
 
 # mandatory true return value for Perl modules
 1;
-
-1;
