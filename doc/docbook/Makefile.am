@@ -63,11 +63,11 @@ $(XML_CATALOGS): $(GEN_XML_CATALOGS) BRLCAD_DOC.pm
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
 .fo.pdf: .xml.fo
-	$(FOP_ENV_VARS) $(APACHEFOP) -c fop.xconf $? -pdf $@
+	$(FOP_ENV_VARS) $(APACHEFOP) -c fop.xconf $< -pdf $@
 
 .xml.fo:  $(XML_CATALOGS)
 	@mkdir -p $$(dirname $@)
-	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_FO_STYLESHEET) $?
+	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_FO_STYLESHEET) $<
 
 # special for pdf books with covers
 .PHONY: cover covers
