@@ -1,3 +1,6 @@
+DOCBOOK CHARACTERS AND SYMBOLS
+------------------------------
+
 Some special characters for DB inline equations:
 
  LE  &#x2264;   less than or equal to
@@ -43,6 +46,9 @@ Other symbols:
 Note that the space character should butt against the adjacent
 characters.
 
+SVG EQUATIONS
+-------------
+
 To include fancier equations, do the following:
 
 Use LibreOffice Math to write the equation.  Save the file as X.mml
@@ -73,8 +79,9 @@ Use SVGMath to convert the file to a graphic:
 
   math2svg -s -o X.svg X.mml
 
-Or you can use the bash script "make-svg.sh" which creates the svg
-file in the text subdirectory and uses xmllint to format it ready for
+Or you can use the bash script "make-svg.sh" (requires editing to suit
+user preferences and paths) which creates the svg file in a
+user-defined subdirectory and uses xmllint to format it ready for
 further editing either with Inkscape or by hand.
 
 Use Inkscape to view the svg file and edit it if necessary.  Be sure
@@ -104,14 +111,47 @@ Include the svg file in the desired place in DocBook source like this:
 </informalfigure>
 </equation>
 
-2011-04-13
 
-Note there are font problems for pdf with complex equations--I'm
-querying the fop mailing list for ideas.
+SVG AND PDF FONT PROBLEMS
+-------------------------
 
-2011-07-24
+Note there can be font problems for pdf with complex equations.  Querying the
+fop mailing list sheds light on the situation:
 
-Marks for itemized list:
+<quote>
+from: Vincent Hennebert vhennebert@gmail.com via xmlgraphics.apache.org 
+sender-time: Sent at 05:07 (GMT+01:00). Current time there: 2:23 PM.
+reply-to: fop-users@xmlgraphics.apache.org
+to: fop-users@xmlgraphics.apache.org
+date: Tue, Apr 19, 2011 at 05:07
+subject: Re: Missing Font for SVG to PDF Output
+mailing list: <fop-users.xmlgraphics.apache.org>; mailed by xmlgraphics.apache.org
+...
+
+Make sure that the family name you declare in fop.xconf matches the
+name under which the font is known on the system.
+
+Let's take the font "Linux Libertine" an example. Java would know this
+font under that name. Since Batik uses the Java font system, it will
+also use that name and pass it on to FOP. So you must have a
+font-triplet in your fop.xconf that matches that name:
+
+   <font embed-url="libertine.ttf">
+     <font-triplet name="Linux Libertine" style="normal" weight="normal"/>
+   </font>
+
+If you use something else, FOP will find no match for "LinuxLibertine"
+and will fall back to a default font.
+
+You can use the
+java.awt.GraphicsEnvironment.getAvailableFontFamilyNames method to
+know under which names Java registers the fonts on your system. Of
+course, be sure to also use those names in the SVG file.
+</quote>
+
+
+MARKS FOR ITEMIZED LIST
+-----------------------
 
 For better looking list markers use the 'override' attribute for the
 <listitem>,
@@ -121,7 +161,7 @@ e.g.,
   ...
   <listitem override='smallcircle'> <!-- a small white circle -->
 
-Other list symbols defined in the stylesheets:
+Other list symbols defined in the brlcad stylesheets:
 
   <xsl:choose>
     <xsl:when test="$itemsymbol='none'"></xsl:when>
