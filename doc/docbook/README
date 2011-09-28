@@ -102,11 +102,27 @@ documents:
     * xmllint
         a program that comes with libxml2 (see http://xmlsoft.org/)
 
-  
+  For creating and editing svg equations:
+
+    * LibreOffice
+        a free office suite whose text editor can be used to create
+        and edit equations and export them to MathML (mml) files (see
+        http://www.libreoffice.org/)
+
+    * Inkscape
+        a powerful and free vector drawing editor (see
+        http://inkscape.org)
+
+    * math2svg 
+        a program (from the SVGMath suite) to convert MathML xml
+        format to SVG xml format (see
+        http://http://grigoriev.ru/svgmath/ and
+        http://sourceforge.net/projects/svgmath/)
+
 VALIDATION
 ----------
 
-In the directory there is a set of experimental tools to assist
+In this directory there is a set of experimental tools to assist
 developers and DB authors in ensuring the DB files are valid:
 
   * validate.pl
