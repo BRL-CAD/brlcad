@@ -7,7 +7,7 @@
 
   <!-- the base stylesheet (resolved by this name
        in the xml catalog file) -->
-  <xsl:import href="/xsl/xhtml-1_1/docbook.xsl"/>
+  <xsl:import href="../standard/xsl/xhtml-1_1/docbook.xsl"/>
 
   <!-- common param inputs, etc. -->
   <xsl:import href="brlcad-common.xsl"/>
