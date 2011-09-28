@@ -92,7 +92,9 @@ documents:
         a program provide by the Apache Software Foundation; note that
         a minimum of version 1.0 is required to use the hyphenation
         binaries provided in thre resources sub-directory (see
-        http://xmlgraphics.apache.org/fop/)
+        http://xmlgraphics.apache.org/fop/).  Also, version 1.0 has
+        some new font support features and we recommend using that
+        version for DB processing.
 
     * Java
         a working Java run-time environment
