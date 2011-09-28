@@ -102,8 +102,8 @@ close $fp;
 open $fp, '>', $fopcat
   or die "$fopcat: $!";
 print $fp <<"FILE2";
-catalogs=catalog.xml;./$xmlcat
-relative-catalogs=false
+catalogs=catalog.xml;./$genxmlcat
+relative-catalogs=true
 static-catalog=yes
 catalog-class-name=org.apache.xml.resolver.Resolver
 verbosity=4
