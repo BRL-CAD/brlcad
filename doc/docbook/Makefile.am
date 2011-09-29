@@ -36,7 +36,7 @@ DOC_MODULE=$(top_srcdir)/doc/docbook/BRLCAD_DOC.pm
 # the template
 FO_COVER_TEMPLATE=$(top_srcdir)/doc/docbook/resources/brlcad/book-covers-fo-template.xsl
 # the dependencies
-FO_COVER_DEPS=$(GEN_FO_COVER) $(FO_COVER_TEMPLATE) $(DOC_MODULE) $(XML_CATALOGS)
+FO_COVER_DEPS=$(GEN_FO_COVER) $(FO_COVER_TEMPLATE) $(DOC_MODULE)
 
 # the xml catalog location must be known by xsltproc
 XSLTPROC_ENV_VARS = XML_CATALOG_FILES=$(XML_CATALOG) XML_DEBUG_CATALOG=1
@@ -120,20 +120,26 @@ covers.pdf: covers.fo
 	$(FOP_ENV_VARS) $(APACHEFOP) $(fopdebug) -c fop.xconf -fo $(fo_out) -pdf $(pdf_out)
 	@echo ============ finished making $(pdf_out) =============
 
+# we cannot get good covers at the moment if the make -j option is
+# used so use the special target to prevent it from taking effect
+.NOTPARALLEL:
 
 # the books with covers
 enbooks = \
-	books/en/BRL-CAD_Tutorial_Series-VolumeI.fo \
-	books/en/BRL-CAD_Tutorial_Series-VolumeII.fo \
-	books/en/BRL-CAD_Tutorial_Series-VolumeIII.fo \
-	books/en/BRL-CAD_Tutorial_Series-VolumeIV.fo
+	books/en/BRL-CAD_Tutorial_Series-VolumeI.pdf \
+	books/en/BRL-CAD_Tutorial_Series-VolumeII.pdf \
+	books/en/BRL-CAD_Tutorial_Series-VolumeIII.pdf \
+	books/en/BRL-CAD_Tutorial_Series-VolumeIV.pdf
 
 # books need special cover stylesheets, and one for each book due to
 # customized colors
-$(enbooks): %.fo: %.xml $(FO_COVER_DEPS)
+fo_book = tmp.fo
+$(enbooks): %.pdf: %.xml $(FO_COVER_DEPS)
 	perl create-book-covers.pl $<
-	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ \
+	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $(fo_book) \
           $(XSL_FO_COVERS_STYLESHEET) $<
+	$(FOP_ENV_VARS) $(APACHEFOP) $(fopdebug) -c fop.xconf -fo $(fo_book) -pdf $@ \
+	  && if test -f $(fo_book) ; then rm $(fo_book) ; fi
 
 # new index product
 #indexDOCBOOK_EN = \
