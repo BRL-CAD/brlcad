@@ -972,7 +972,10 @@ INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_CheckFunctions.cmake)
 # ***      Check for Compiler Characteristics - Stage 3 of 9      ***
 # *******************************************************************
 
-INCLUDE(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
+# at this stage only the gcc compiler is supported
+IF(NOT MSVC)
+	INCLUDE(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
+ENDIF(NOT MSVC)
 
 # The src/other subdirectory does not share (at least, not universally)
 # certain definitions common to all other directories in BRL-CAD.  Also,
@@ -982,7 +985,9 @@ INCLUDE(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
 ADD_SUBDIRECTORY(src/other)
 
 # Requires that CompilerFlags.cmake already be loaded
-INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_CompilerFlags.cmake)
+IF(NOT MSVC)
+	INCLUDE(${BRLCAD_CMAKE_DIR}/BRLCAD_CompilerFlags.cmake)
+ENDIF(NOT MSVC)
 
 # If doing a debug build, set _FORTIFY_SOURCE to 2. Provides
 # compile-time best-practice error checking on certain libc
