@@ -1455,6 +1455,9 @@ unprep_leaf(struct db_tree_state *tsp,
     RT_CK_RESOURCE(tsp->ts_resp);
     dp = DB_FULL_PATH_CUR_DIR(pathp);
 
+    if (!dp)
+	return NULL;
+
     /* Determine if this matrix is an identity matrix */
 
     if (!bn_mat_is_equal(tsp->ts_mat, bn_mat_identity, &rtip->rti_tol)) {
@@ -1609,6 +1612,9 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 	 * the way
 	 */
 	obj_name = DB_FULL_PATH_CUR_DIR(path)->d_namep;
+	if (!obj_name)
+	    return 1;
+
 	if (db_walk_tree(rtip->rti_dbip, 1, (const char **)&obj_name, 1, tree_state,
 			 unprep_reg_start, unprep_reg_end, unprep_leaf,
 			 (genptr_t)objs)) {

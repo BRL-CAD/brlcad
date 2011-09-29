@@ -181,6 +181,9 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     rp->reg_los = tsp->ts_los;
 
     dp = (struct directory *)DB_FULL_PATH_CUR_DIR(pathp);
+    if (!dp)
+	return TREE_NULL;
+
     bu_avs_init_empty(&avs); 
     if (!db5_get_attributes(tsp->ts_dbip, &avs, dp)) {
 	bu_avs_init_empty(&(rp->attr_values));
@@ -467,6 +470,8 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
     RT_CK_RTI(rtip);
     RT_CK_RESOURCE(tsp->ts_resp);
     dp = DB_FULL_PATH_CUR_DIR(pathp);
+    if (!dp)
+	return TREE_NULL;
 
     /* Determine if this matrix is an identity matrix */
 

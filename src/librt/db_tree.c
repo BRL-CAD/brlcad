@@ -908,6 +908,10 @@ db_follow_path(
 	dp = new_path->fp_names[j];
 	RT_CK_DIR(dp);
 
+	if (!comb_dp) {
+	    goto fail;
+	}
+
 	if ((comb_dp->d_flags & RT_DIR_COMB) == 0) {
 	    bu_log("db_follow_path() %s isn't combination\n", comb_dp->d_namep);
 	    goto fail;
@@ -1176,7 +1180,7 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
      * Load the entire object into contiguous memory.  Note that this
      * code depends on the d_flags being set properly.
      */
-    if (dp->d_addr == RT_DIR_PHONY_ADDR) return TREE_NULL;
+    if (!dp || dp->d_addr == RT_DIR_PHONY_ADDR) return TREE_NULL;
 
     if (dp->d_flags & RT_DIR_COMB) {
 	struct rt_comb_internal *comb;

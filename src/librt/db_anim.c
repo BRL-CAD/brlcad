@@ -66,6 +66,8 @@ db_add_anim(struct db_i *dbip, register struct animate *anp, int root)
 	headp = &(dbip->dbi_anroot);
     } else {
 	dp = DB_FULL_PATH_CUR_DIR(&anp->an_path);
+	if (!dp)
+	    return 1;
 	if ( RT_G_DEBUG&DEBUG_ANIM )
 	    bu_log("db_add_anim(x%x) arc %s\n", anp,
 		   dp->d_namep);
