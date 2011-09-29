@@ -86,14 +86,19 @@ documents:
     * xsltproc
         a program that comes with libxslt (see http://xmlsoft.org/XSLT/)
 
+    * saxon-he
+        an Open Source java xslt processor (capable of using XSLT 2.0
+        and the new DB XSLT 2.0 stylesheets [not yet used or provided
+        with BRL-CAD]) (see http://saxon.sourceforge.net/)
+
   For pdf documents:
 
     * fop
-        a program provide by the Apache Software Foundation; note that
-        a minimum of version 1.0 is required to use the hyphenation
-        binaries provided in thre resources sub-directory (see
-        http://xmlgraphics.apache.org/fop/).  Also, version 1.0 has
-        some new font support features and we recommend using that
+        a java program provide by the Apache Software Foundation; note
+        that a minimum of version 1.0 is required to use the
+        hyphenation binaries provided in thre resources sub-directory
+        (see http://xmlgraphics.apache.org/fop/).  Also, version 1.0
+        has some new font support features and we recommend using that
         version (or later) for DB processing.
 
     * Java
@@ -127,6 +132,10 @@ documents:
 
         Note that the output sometimes needs further editing either
         manually or by inkscape.
+
+See this link for help in installing fop 1.0 and saxon-he on Ubuntu:
+
+  http://johnbokma.com/mexit/2011/07/04/
 
 VALIDATION
 ----------
