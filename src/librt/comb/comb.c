@@ -398,10 +398,13 @@ rt_comb_export5(
 	bu_avs_remove(avsp, "rgb");
 
     /* optical shader string goes in an attribute */
-    if (bu_vls_strlen(&comb->shader) > 0)
+    if (bu_vls_strlen(&comb->shader) > 0) {
 	bu_avs_add_vls(avsp, "shader", &comb->shader);
-    else
+	bu_avs_add_vls(avsp, "oshader", &comb->shader);
+    } else {
 	bu_avs_remove(avsp, "shader");
+	bu_avs_remove(avsp, "oshader");
+    }
 
     /* GIFT compatability */
     if (comb->region_id != 0) {
