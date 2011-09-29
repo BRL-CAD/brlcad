@@ -89,7 +89,7 @@ the location of this file.
 
       <substitution>
         <from font-family="Mono" font-style="italic" font-weight="700"/>
-        <to font-family="DejaVuLGCSansMonoBoldOblique" font-style="bold" font-weight="bold"/>
+        <to font-family="DejaVuLGCSansMono" font-style="oblique" font-weight="bold"/>
       </substitution>
 
       <substitution>
@@ -99,7 +99,7 @@ the location of this file.
 
       <substitution>
         <from font-family="Mono" font-style="italic" font-weight="400"/>
-        <to font-family="DejaVuLGCSansMonoOblique" font-style="italic" font-weight="normal"/>
+        <to font-family="DejaVuLGCSansMono" font-style="oblique" font-weight="normal"/>
       </substitution>
 
       <!-- these are hacks to get serif for svg equations, must be a bug: -->
@@ -148,16 +148,20 @@ the location of this file.
 
 
         <!-- free fonts ============================================== -->
-        <font kerning="yes" embed-url="./resources/fonts/truetype/stix-v1.0.0/STIXGeneral-Regular.ttf">
+        <font kerning="yes" 
+          embed-url="./resources/fonts/truetype/stix-v1.0.0/STIXGeneral-Regular.ttf">
           <font-triplet name="STIXGeneral" style="normal" weight="normal"/>
         </font>
-        <font kerning="yes" embed-url="./resources/fonts/truetype/stix-v1.0.0/STIXGeneral-Bold.ttf">
+        <font kerning="yes" 
+          embed-url="./resources/fonts/truetype/stix-v1.0.0/STIXGeneral-Bold.ttf">
           <font-triplet name="STIXGeneral" style="normal" weight="bold"/>
         </font>
-        <font kerning="yes" embed-url="./resources/fonts/truetype/stix-v1.0.0/STIXGeneral-Italic.ttf">
+        <font kerning="yes" 
+          embed-url="./resources/fonts/truetype/stix-v1.0.0/STIXGeneral-Italic.ttf">
           <font-triplet name="STIXGeneral" style="italic" weight="normal"/>
         </font>
-        <font kerning="yes" embed-url="./resources/fonts/truetype/stix-v1.0.0/STIXGeneral-BoldItalic.ttf">
+        <font kerning="yes" 
+          embed-url="./resources/fonts/truetype/stix-v1.0.0/STIXGeneral-BoldItalic.ttf">
           <font-triplet name="STIXGeneral" style="italic" weight="bold"/>
         </font>
 
@@ -169,6 +173,11 @@ the location of this file.
         <font kerning="yes" 
           embed-url="./resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSans-Bold.ttf">
           <font-triplet name="DejaVuLGCSans" style="normal" weight="bold"/>
+        </font>
+
+        <font kerning="yes" 
+          embed-url="./resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSans-Bold.ttf">
+          <font-triplet name="DejaVuLGCSans" style="normal" weight="700"/>
         </font>
 
         <font kerning="yes" 
@@ -189,6 +198,11 @@ the location of this file.
         <font kerning="yes" 
           embed-url="./resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSansMono-Bold.ttf">
           <font-triplet name="DejaVuLGCSansMono" style="normal" weight="bold"/>
+        </font>
+
+        <font kerning="yes" 
+          embed-url="./resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSansMono-Bold.ttf">
+          <font-triplet name="DejaVuLGCSansMono" style="normal" weight="700"/>
         </font>
 
         <font kerning="yes" 
