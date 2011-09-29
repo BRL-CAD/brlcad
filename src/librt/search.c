@@ -202,6 +202,8 @@ db_fullpath_traverse(struct db_i *dbip,
     RT_CK_DBI(dbip);
 
     dp = DB_FULL_PATH_CUR_DIR(dfp);
+    if (!dp)
+	return;
 
     if (dp->d_flags & RT_DIR_COMB) {
 	/* entering region */
@@ -502,6 +504,8 @@ db_fullpath_stateful_traverse(struct db_i *dbip, struct rt_wdb *wdbp, struct db_
     RT_CK_DBI(dbip);
 
     dp = DB_FULL_PATH_CUR_DIR(dfp);
+    if (!dp)
+	return 0;
 
     if (dp->d_flags & RT_DIR_COMB) {
 	/* entering region */
@@ -579,13 +583,18 @@ f_below(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, s
     struct db_full_path belowpath;
     struct rt_db_internal in;
     struct rt_comb_internal *comb;
+    struct directory *dp;
     int state = 0;
 
     db_full_path_init(&belowpath);
     db_dup_full_path(&belowpath, entry);
 
-    if (DB_FULL_PATH_CUR_DIR(entry)->d_flags & RT_DIR_COMB) {
-	if (rt_db_get_internal5(&in, DB_FULL_PATH_CUR_DIR(entry), dbip, NULL, wdbp->wdb_resp) < 0)
+    dp = DB_FULL_PATH_CUR_DIR(entry);
+    if (!dp)
+	return 0;
+
+    if (dp->d_flags & RT_DIR_COMB) {
+	if (rt_db_get_internal5(&in, dp, dbip, NULL, wdbp->wdb_resp) < 0)
 	    return 0;
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
@@ -654,7 +663,11 @@ c_or(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struct d
 HIDDEN int
 f_name(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
 {
-    return !bu_fnmatch(plan->c_data, DB_FULL_PATH_CUR_DIR(entry)->d_namep, 0);
+    struct directory *dp;
+    dp = DB_FULL_PATH_CUR_DIR(entry);
+    if (!dp)
+	return 0;
+    return !bu_fnmatch(plan->c_data, dp->d_namep, 0);
 }
 
 
@@ -679,7 +692,11 @@ c_name(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
 HIDDEN int
 f_iname(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
 {
-    return !bu_fnmatch(plan->c_data, DB_FULL_PATH_CUR_DIR(entry)->d_namep, BU_FNMATCH_CASEFOLD);
+    struct directory *dp;
+    dp = DB_FULL_PATH_CUR_DIR(entry);
+    if (!dp)
+	return 0;
+    return !bu_fnmatch(plan->c_data, dp->d_namep, BU_FNMATCH_CASEFOLD);
 }
 
 
@@ -765,6 +782,8 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
     int checkval = 0;
     int strcomparison = 0;
     size_t i;
+    struct directory *dp;
+
     bu_vls_init(&attribname);
     bu_vls_init(&value);
 
@@ -822,8 +841,12 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
     /* Get attributes for object.
      */
 
+    dp = DB_FULL_PATH_CUR_DIR(entry);
+    if (!dp)
+	return 0;
+
     bu_avs_init_empty(&avs);
-    db5_get_attributes(dbip, &avs, DB_FULL_PATH_CUR_DIR(entry));
+    db5_get_attributes(dbip, &avs, dp);
     avpp = avs.avp;
 
     /* Check all attributes for a match to the requested
@@ -1012,11 +1035,13 @@ c_attr(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
 HIDDEN int
 f_stdattr(struct db_plan_t *UNUSED(plan), struct db_full_path *entry, struct db_i *dbip, struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
 {
-    struct bu_attribute_value_set avs;
     struct bu_attribute_value_pair *avpp;
-    size_t i;
+    struct bu_attribute_value_set avs;
+    struct directory *dp;
     int found_nonstd_attr = 0;
     int found_attr = 0;
+    size_t i;
+    
 
     /* Get attributes for object and check all of
      * them to see if there is not a match to the
@@ -1024,8 +1049,12 @@ f_stdattr(struct db_plan_t *UNUSED(plan), struct db_full_path *entry, struct db_
      * failure, otherwise success.
      */
 
+    dp = DB_FULL_PATH_CUR_DIR(entry);
+    if (!dp)
+	return 0;
+
     bu_avs_init_empty(&avs);
-    db5_get_attributes(dbip, &avs, DB_FULL_PATH_CUR_DIR(entry));
+    db5_get_attributes(dbip, &avs, dp);
     avpp = avs.avp;
     for (i = 0; i < (size_t)avs.count; i++, avpp++) {
 	found_attr = 1;
@@ -1072,10 +1101,15 @@ HIDDEN int
 f_type(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *UNUSED(results))
 {
     struct rt_db_internal intern;
+    struct directory  *dp;
     int type_match = 0;
     int type;
 
-    rt_db_get_internal(&intern, DB_FULL_PATH_CUR_DIR(entry), dbip, (fastf_t *)NULL, &rt_uniresource);
+    dp = DB_FULL_PATH_CUR_DIR(entry);
+    if (!dp)
+	return 0;
+
+    rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) return 0;
 
@@ -1198,7 +1232,7 @@ f_type(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
 	    type_match = (!bu_fnmatch(plan->type_data, "bot", 0));
 	    break;
 	case DB5_MINORTYPE_BRLCAD_COMBINATION:
-	    if (DB_FULL_PATH_CUR_DIR(entry)->d_flags & RT_DIR_REGION) {
+	    if (dp->d_flags & RT_DIR_REGION) {
 		if ((!bu_fnmatch(plan->type_data, "r", 0)) || (!bu_fnmatch(plan->type_data, "reg", 0))  || (!bu_fnmatch(plan->type_data, "region", 0))) {
 		    type_match = 1;
 		}
@@ -1320,6 +1354,7 @@ f_nnodes(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, 
     int doequal = 0;
     size_t node_count_target = 0;
     size_t node_count = 0;
+    struct directory *dp;
     struct rt_db_internal in;
     struct rt_comb_internal *comb;
 
@@ -1359,8 +1394,12 @@ f_nnodes(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, 
      * in the argument string.
      */
 
-    if (DB_FULL_PATH_CUR_DIR(entry)->d_flags & RT_DIR_COMB) {
-	rt_db_get_internal5(&in, DB_FULL_PATH_CUR_DIR(entry), dbip, (fastf_t *)NULL, &rt_uniresource);
+    dp = DB_FULL_PATH_CUR_DIR(entry);
+    if (!dp)
+	return 0;
+
+    if (dp->d_flags & RT_DIR_COMB) {
+	rt_db_get_internal5(&in, dp, dbip, (fastf_t *)NULL, &rt_uniresource);
 	comb = (struct rt_comb_internal *)in.idb_ptr;
 	if (comb->tree == NULL) {
 	    node_count = 0;
