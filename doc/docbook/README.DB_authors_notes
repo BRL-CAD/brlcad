@@ -193,4 +193,13 @@ Other list symbols defined in the brlcad stylesheets:
     <xsl:otherwise>&#x25CF;</xsl:otherwise><!-- bullet -->
 
 
+EPS AND OTHER GRAPHICS
+----------------------
 
+eps and pdf are not handled well in fop currently.
+
+Use png or tiff for html and svg for fop.
+
+Use scribus (http://www.scribus.net) to convert eps to svg.
+
+Use gimp (http://www.gimp.org) to scale or edit png images.
