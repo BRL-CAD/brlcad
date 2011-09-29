@@ -443,8 +443,10 @@ int main(int argc, char** argv) {
     }
 
     /* use accumulated layer information to build mged hierarchy */
+    char *toplevel = bu_basename(outFileName);
     BuildHierarchy(outfp, dump);
-    mk_lcomb(outfp, outFileName, &all_regions, 0, NULL, NULL, NULL, 0);
+    mk_lcomb(outfp, toplevel, &all_regions, 0, NULL, NULL, NULL, 0);
+    bu_free(toplevel, "bu_basename toplevel");
     wdb_close(outfp);
 
     model.Destroy();
