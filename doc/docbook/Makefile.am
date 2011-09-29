@@ -122,28 +122,18 @@ covers.pdf: covers.fo
 
 
 # the books with covers
-enbooksfo = \
+enbooks = \
 	books/en/BRL-CAD_Tutorial_Series-VolumeI.fo \
 	books/en/BRL-CAD_Tutorial_Series-VolumeII.fo \
 	books/en/BRL-CAD_Tutorial_Series-VolumeIII.fo \
 	books/en/BRL-CAD_Tutorial_Series-VolumeIV.fo
 
-enbooks = \
-	books/en/BRL-CAD_Tutorial_Series-VolumeI.pdf \
-	books/en/BRL-CAD_Tutorial_Series-VolumeII.pdf \
-	books/en/BRL-CAD_Tutorial_Series-VolumeIII.pdf \
-	books/en/BRL-CAD_Tutorial_Series-VolumeIV.pdf
-
-# we must run create-book-covers.pl for fo AND pdf because we change
-# files for each book for xsltproc and fop
-$(enbooksfo): %.fo: %.xml $(FO_COVER_DEPS)
+# books need special cover stylesheets, and one for each book due to
+# customized colors
+$(enbooks): %.fo: %.xml $(FO_COVER_DEPS)
 	perl create-book-covers.pl $<
 	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ \
           $(XSL_FO_COVERS_STYLESHEET) $<
-
-$(enbooks): %.pdf: %.fo $(FO_COVER_DEPS)
-	perl create-book-covers.pl $<
-	$(FOP_ENV_VARS) $(APACHEFOP) $(fopdebug) -c fop.xconf -fo $< -pdf $@
 
 # new index product
 #indexDOCBOOK_EN = \
@@ -231,9 +221,12 @@ EXTRA_DIST = \
 	${presentationsDOCBOOK_EN_IMAGES} \
 	${presentationsDOCBOOK_EN} \
 	${specificationsDOCBOOK_EN} \
+	BRLCAD_DB_VALIDATION.pm \
+	BRLCAD_DOC.pm \
 	CMakeLists.txt \
 	DBPATH.pm.in \
 	README \
+	README.DB_authors_notes \
 	articles/CMakeLists.txt \
 	articles/en/CMakeLists.txt \
 	articles/en/Makefile.am \
@@ -244,6 +237,7 @@ EXTRA_DIST = \
 	books/en/CMakeLists.txt \
 	books/en/Makefile.am \
 	books/en/tutorial_series_authors.xml \
+	create-book-covers.pl \
 	create-index.pl \
 	create-xml-catalogs.pl \
 	find-db-files.pl \
