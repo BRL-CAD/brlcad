@@ -7,7 +7,9 @@ XSL_FO_STYLESHEET=$(top_srcdir)/doc/docbook/resources/brlcad/brlcad-fo-styleshee
 XSL_FO_COVERS_STYLESHEET=$(top_srcdir)/doc/docbook/resources/brlcad/brlcad-fo-stylesheet-covers.xsl
 
 # redefine APACHEFOP--better error checking
-APACHEFOP = FOP_OPTS="-Djava.awt.headless=true -Dxml.catalog.files=$(XML_CATALOG)" /usr/local/src/fop-1.0/fop
+FOP_OPTS = "-Djava.awt.headless=true -Dxml.catalog.files=$(XML_CATALOG)"
+APACHEFOP = FOP_OPTS=$(FOP_OPTS) /usr/local/src/fop-1.0/fop
+
 # fop hyphenation path (fop version >= 1.0)
 # need v2 hphenation
 FOP_HYPH=$(top_srcdir)/doc/docbook/resources/offo-hyphenation-binary-v2.0/fop-hyph.jar
@@ -63,18 +65,40 @@ $(XML_CATALOGS): $(GEN_XML_CATALOGS) BRLCAD_DOC.pm
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
 .fo.pdf: .xml.fo
-	$(FOP_ENV_VARS) $(APACHEFOP) -c fop.xconf $< -pdf $@
+	$(FOP_ENV_VARS) $(APACHEFOP) -c fop.xconf -fo $< -pdf $@
 
 .xml.fo:  $(XML_CATALOGS)
 	@mkdir -p $$(dirname $@)
 	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_FO_STYLESHEET) $<
 
 # special for pdf books with covers
-.PHONY: cover covers
+.PHONY: cover covers clean-covers clean-fonts
+
 # the cover alone for testing
 fo_out  = covers.fo
 pdf_out = covers.pdf
 
+# a target to help test font problems
+clean-fonts:
+	-rm articles/en/oed.pdf
+	-rm system/man1/en/gqa.pdf
+	-rm system/mann/en/db.pdf
+	-rm system/mann/en/em.pdf
+	-rm system/mann/en/gui.pdf
+	-rm system/mann/en/lm.pdf
+	-rm system/mann/en/t.pdf
+	-rm system/mann/en/title.pdf
+
+# a target to test all enbook covers
+clean-covers:
+	-rm books/en/BRL-CAD_Tutorial_Series-VolumeI.fo
+	-rm books/en/BRL-CAD_Tutorial_Series-VolumeII.fo
+	-rm books/en/BRL-CAD_Tutorial_Series-VolumeIII.fo
+	-rm books/en/BRL-CAD_Tutorial_Series-VolumeIV.fo
+	-rm books/en/BRL-CAD_Tutorial_Series-VolumeI.pdf
+	-rm books/en/BRL-CAD_Tutorial_Series-VolumeII.pdf
+	-rm books/en/BRL-CAD_Tutorial_Series-VolumeIII.pdf
+	-rm books/en/BRL-CAD_Tutorial_Series-VolumeIV.pdf
 
 cover:  covers
 covers: covers.pdf
@@ -98,16 +122,28 @@ covers.pdf: covers.fo
 
 
 # the books with covers
-enbooks = \
-	docbook/books/en/BRL-CAD_Tutorial_Series-VolumeI.fo \
-	docbook/books/en/BRL-CAD_Tutorial_Series-VolumeII.fo \
-	docbook/books/en/BRL-CAD_Tutorial_Series-VolumeIII.fo \
-	docbook/books/en/BRL-CAD_Tutorial_Series-VolumeIV.fo
+enbooksfo = \
+	books/en/BRL-CAD_Tutorial_Series-VolumeI.fo \
+	books/en/BRL-CAD_Tutorial_Series-VolumeII.fo \
+	books/en/BRL-CAD_Tutorial_Series-VolumeIII.fo \
+	books/en/BRL-CAD_Tutorial_Series-VolumeIV.fo
 
-$(enbooks): %.fo: %.xml $(FO_COVER_DEPS)
+enbooks = \
+	books/en/BRL-CAD_Tutorial_Series-VolumeI.pdf \
+	books/en/BRL-CAD_Tutorial_Series-VolumeII.pdf \
+	books/en/BRL-CAD_Tutorial_Series-VolumeIII.pdf \
+	books/en/BRL-CAD_Tutorial_Series-VolumeIV.pdf
+
+# we must run create-book-covers.pl for fo AND pdf because we change
+# files for each book for xsltproc and fop
+$(enbooksfo): %.fo: %.xml $(FO_COVER_DEPS)
 	perl create-book-covers.pl $<
 	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ \
           $(XSL_FO_COVERS_STYLESHEET) $<
+
+$(enbooks): %.pdf: %.fo $(FO_COVER_DEPS)
+	perl create-book-covers.pl $<
+	$(FOP_ENV_VARS) $(APACHEFOP) $(fopdebug) -c fop.xconf -fo $< -pdf $@
 
 # new index product
 #indexDOCBOOK_EN = \
