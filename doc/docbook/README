@@ -99,6 +99,10 @@ documents:
     * Java
         a working Java run-time environment
 
+    * scribus
+        an Open Source page layout program; use to convert eps to svg
+        (see http://www.scribus.net)
+
   For checking the well-formedness of any xml document:
 
     * xmllint
