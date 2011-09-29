@@ -38,14 +38,11 @@ my %color
 #my $color = 'green';
 #my $color = 'blue';
 
-#my $color = 'cc6666';
-#my $color = 'cc9966';
-#my $color = '669966';
-my $color = '6699cc';
-
-die "ERROR:  Color selected ($color) not known in color has \%color.\n"
-  if !exists $color{$color};
-my $color_code = $color{$color};
+# shadow colors
+#my $color = 'cc9966'; # brown
+#my $color = 'cc6666'; # red
+#my $color = '669966'; # green
+#my $color = '6699cc'; # blue
 
 die "Enter book DB xml source file name.\n" if !@ARGV;
 
@@ -76,48 +73,69 @@ $nam = 'books/en/BRL-CAD_Tutorial_Series-VolumeI.xml'
 
 # trim extra stuff to leave a unique name
 $nam =~ s{\.xml \z}{}xmsi;
+$nam =~ s{\.fo \z}{}xmsi;
+
 $nam =~ s{\A books/en/}{}xmsi;
 
 my $brldir = './resources/brlcad';
 my $ofil  = "${brldir}/book-covers-fo-autogen.xsl";
 my $ofil2 = "${brldir}/brlcad-colors-autogen.xsl";
 
+# colors are hard-wired by title
 my %name
   = (
      'BRL-CAD_Tutorial_Series-VolumeI'
-     => [ 'Tutorial Series',
-	 'Volume I',
-	 'An Overview of BRL-CAD',
-	],
+     => {
+	 titles => [ 'Tutorial Series',
+		     'Volume I',
+		     'An Overview of BRL-CAD',
+		   ],
+	 color => 'cc9966',
+	},
 
      'BRL-CAD_Tutorial_Series-VolumeII'
-     => [
-	 'Tutorial Series',
-	 'Volume II',
-	 'Introduction to MGED',
-	],
+     => {
+	 titles => [
+		    'Tutorial Series',
+		    'Volume II',
+		    'Introduction to MGED',
+		   ],
+	 color => 'cc6666',
+	},
 
      'BRL-CAD_Tutorial_Series-VolumeIII'
-     => [
-	 'Tutorial Series',
-	 'Volume III',
-	 'Principles of Effective Modeling',
-	],
+     => {
+	 titles => [
+		    'Tutorial Series',
+		    'Volume III',
+		    'Principles of Effective Modeling',
+		   ],
+	 color => '669966',
+	},
 
      'BRL-CAD_Tutorial_Series-VolumeIV'
-     => [
-	 'Tutorial Series:',
-	 'Volume IV',
-	 'Converting Geometry Between BRL-CAD and Other Formats',
-	],
+     => {
+	 titles => [
+		    'Tutorial Series',
+		    'Volume IV',
+		    'Converting Geometry Between BRL-CAD and Other Formats',
+		   ],
+	 color => '6699cc',
+	},
     );
 
 if (!exists $name{$nam}) {
   die "Unknown file for cover '$ifil'.";
 }
 
-my @titles = @{$name{$nam}};
-# the covers' template source:
+my $color = $name{$nam}{color};
+die "ERROR:  Color selected ($color) not known in color has \%color.\n"
+  if !exists $color{$color};
+my $color_code = $color{$color};
+
+my @titles = @{$name{$nam}{titles}};
+
+# the covers template source:
 my $cvr = "${brldir}/book-covers-fo-template.xsl";
 
 open my $fpi, '<', $cvr
@@ -189,6 +207,7 @@ while (defined(my $line = <$fpi>)) {
     next;
   }
 
+  # at the moment titles are in black
   if ($need_title
       && $line =~ m{\A \s* \<\?brlcad \s+ insert\-title \s* \?\>}xms) {
     BRLCAD_DOC::print_book_title($fp, $last_rev, @titles);
