@@ -64,8 +64,13 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * killall command reports db_lookup failures if the target object
   doesn't exist (maybe we only care about refs).  should keep quiet.
 
+* DocBook pdf covers: Modify the process to allow parallel builds
+  (requires some unique intermediate xsl files named per the DB xml
+  source file).
+
 * DocBook pdf: ensure pdf output has suitable fonts embedded; create
-  pretty covers for books and other large docs
+  pretty covers for books (cannot be done as a single pdf product for
+  other doc types).
 
 * DocBook: create a DB index.xml to generate a doc listing (with
   hot links) for the html and pdf collection
