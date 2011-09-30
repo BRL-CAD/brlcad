@@ -679,6 +679,7 @@ package provide cadwidgets::Ged 1.0
 	variable mRay "ray"
 	variable mRayCurrWho ""
 	variable mRayLastWho ""
+	variable mRayNeedGettrees 1
 
 	method init_button_no_op_prot {{_button 1}}
 	method measure_line_erase {}
@@ -1007,6 +1008,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::blast {args} {
+    set mRayNeedGettrees 1
     eval $mGed blast $args
 }
 
@@ -1051,6 +1053,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::bot_split {args} {
+    set mRayNeedGettrees 1
     eval $mGed bot_split $args
 }
 
@@ -1217,6 +1220,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::draw {args} {
+    set mRayNeedGettrees 1
     eval $mGed draw $args
 }
 
@@ -1229,6 +1233,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::E {args} {
+    set mRayNeedGettrees 1
     eval $mGed E $args
 }
 
@@ -1249,6 +1254,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::edcomb {args} {
+    set mRayNeedGettrees 1
     eval $mGed edcomb $args
 }
 
@@ -1261,10 +1267,12 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::erase {args} {
+    set mRayNeedGettrees 1
     eval $mGed erase $args
 }
 
 ::itcl::body cadwidgets::Ged::ev {args} {
+    set mRayNeedGettrees 1
     eval $mGed ev $args
 }
 
@@ -1317,6 +1325,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::g {args} {
+    set mRayNeedGettrees 1
     eval $mGed g $args
 }
 
@@ -1419,18 +1428,22 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::kill {args} {
+    set mRayNeedGettrees 1
     eval $mGed kill $args
 }
 
 ::itcl::body cadwidgets::Ged::killall {args} {
+    set mRayNeedGettrees 1
     eval $mGed killall $args
 }
 
 ::itcl::body cadwidgets::Ged::killrefs {args} {
+    set mRayNeedGettrees 1
     eval $mGed killrefs $args
 }
 
 ::itcl::body cadwidgets::Ged::killtree {args} {
+    set mRayNeedGettrees 1
     eval $mGed killtree $args
 }
 
@@ -1489,6 +1502,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::make {args} {
+    set mRayNeedGettrees 1
     eval $mGed make $args
 }
 
@@ -1634,10 +1648,12 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::mv {args} {
+    set mRayNeedGettrees 1
     eval $mGed mv $args
 }
 
 ::itcl::body cadwidgets::Ged::mvall {args} {
+    set mRayNeedGettrees 1
     eval $mGed mvall $args
 }
 
@@ -1659,6 +1675,7 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::open {args} {
     catch {rename $mRay ""}
+    set mRayNeedGettrees 1
     set $mGedFile [eval $mGed open $args]
 }
 
@@ -3685,12 +3702,14 @@ package provide cadwidgets::Ged 1.0
 
     set result ""
     catch {
-	if {$mRayCurrWho != $mRayLastWho} {
+	if {$mRayCurrWho != $mRayLastWho || $mRayNeedGettrees} {
+	    set mRayCurrWho [$mGed who]
 	    eval $mGed rt_gettrees $mRay -i -u $mRayCurrWho
 	    $mRay prep $_prep
 	    $mRay no_bool $_no_bool
 	    $mRay onehit $_onehit
 	    set mRayLastWho $mRayCurrWho
+	    set mRayNeedGettrees 0
 	}
 
 	set result [$mRay shootray $_start $_op $_target]
