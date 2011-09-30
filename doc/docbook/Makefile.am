@@ -44,30 +44,30 @@ XSLTPROC_ENV_VARS = XML_CATALOG_FILES=$(XML_CATALOG) XML_DEBUG_CATALOG=1
 $(XML_CATALOGS): $(GEN_XML_CATALOGS) BRLCAD_DOC.pm
 	perl $(GEN_XML_CATALOGS)
 
-.xml.html: $(XML_CATALOGS)
+.xml.html:
 	@mkdir -p $$(dirname $@)
 	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_XHTML_STYLESHEET) $<
 
-.xml.1:  $(XML_CATALOGS)
+.xml.1:
 	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $<
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
-.xml.3:  $(XML_CATALOGS)
+.xml.3:
 	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $<
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
-.xml.5:  $(XML_CATALOGS)
+.xml.5:
 	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $<
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
-.xml.nged:  $(XML_CATALOGS)
+.xml.nged:
 	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $<
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
-.fo.pdf: .xml.fo
+.fo.pdf:
 	$(FOP_ENV_VARS) $(APACHEFOP) -c fop.xconf -fo $< -pdf $@
 
-.xml.fo:  $(XML_CATALOGS)
+.xml.fo:
 	@mkdir -p $$(dirname $@)
 	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_FO_STYLESHEET) $<
 
