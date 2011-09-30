@@ -442,7 +442,7 @@ Engineering Company, 2002):</para>
       
       <para>DXF is Autodesk Inc.'s proprietary data specification that has been developed to support links with AutoCAD, the company's popular CAD software. The format, which has been implemented in many CAD systems (particularly those that work on PCs), is simple and relatively limited; however, it has become a well-established means of exchanging engineering drawings.</para>
 
-      <para>The DXF format allows for the specification of the units used in the DXF file; however, not all DXF files include this information. Thus, if units information is not found in the DXF file, millimeters (which is also the default and underlying unit of measure in BRL-CAD) is the assumed unit of measure. Of course, if millimeters is not the right choice for a particular user or application, the <option>s</option> (scale) option can be used. This option and the other available options for the <command>dxf-g</command> converter are discussed in the text that follows.</para>
+      <para>The DXF format allows for the specification of the units used in the DXF file; however, not all DXF files include this information. Thus, if units information is not found in the DXF file, millimeters (which is also the default and underlying unit of measure in BRL-CAD) is the assumed unit of measure. Of course, if millimeters is not the right choice for a particular user or application, the <option>-s</option> (scale) option can be used. This option and the other available options for the <command>dxf-g</command> converter are discussed in the text that follows.</para>
       <para>When using this converter, polygons and meshes are converted to BOT primitives. Each layer becomes a region. Lines, circles, and arcs become n-manifold geometry (NMG) objects, and points become spheres.</para>
       <table><info><title>NMG Primitive</title></info>
 	
@@ -460,19 +460,19 @@ Engineering Company, 2002):</para>
       <para>The options for the command are as follows:</para>
       <itemizedlist>
 	<listitem>
-	  <para><option>c</option> - specifies that only the first color encountered for a layer in the DXF file is used; additional colors for the same layer are ignored.</para>
+	  <para><option>-c</option> - specifies that only the first color encountered for a layer in the DXF file is used; additional colors for the same layer are ignored.</para>
 	</listitem>
 	<listitem>
-	  <para><option>d</option> - debug; produces core dump on failure.</para>
+	  <para><option>-d</option> - debug; produces core dump on failure.</para>
 	</listitem>
 	<listitem>
-	  <para><option>s</option> - applies the specified scale factor to the DXF data (takes an argument).</para>
+	  <para><option>-s</option> - applies the specified scale factor to the DXF data (takes an argument).</para>
 	</listitem>
 	<listitem>
-	  <para><option>t</option> - sets tolerance distance (in millimeters) (default is 0.005) (takes an argument).</para>
+	  <para><option>-t</option> - sets tolerance distance (in millimeters) (default is 0.005) (takes an argument).</para>
 	</listitem>
 	<listitem>
-	  <para><option>v</option> - verbose; prints out progress information.</para>
+	  <para><option>-v</option> - verbose; prints out progress information.</para>
 	</listitem>
       </itemizedlist>
       <para>For more information on the DXF file format and import possibilities, see the on-line documentation on the Autodesk web site at <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://adeskftp.autodesk.com/ prodsupp/downloads/dxf.pdf">http://adeskftp.autodesk.com/ prodsupp/downloads/dxf.pdf</link> (Autodesk, 2003).</para>
@@ -513,13 +513,13 @@ Engineering Company, 2002):</para>
       <para>The options for the command are as follows:</para>
       <itemizedlist>
 	<listitem>
-	  <para><option>i starting_ident</option> - sets the starting ident number (default is 1000).</para>
+	  <para><option>-i starting_ident</option> - sets the starting ident number (default is 1000).</para>
 	</listitem>
 	<listitem>
-	  <para><option>n part_name_mapping</option> - sets the mapping from input names to output names.</para>
+	  <para><option>-n part_name_mapping</option> - sets the mapping from input names to output names.</para>
 	</listitem>
 	<listitem>
-	  <para><option>t tolerance_distance</option> - sets distance calculation tolerance (in millimeters) (default is 0.005).</para>
+	  <para><option>-t tolerance_distance</option> - sets distance calculation tolerance (in millimeters) (default is 0.005).</para>
 	</listitem>
       </itemizedlist>
       <para>For more information on the Elysium file format and import possibilities, see the Elysium web site at <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.elysiuminc.com">http://www.elysiuminc.com</link> (Elysium, 2003).</para>
@@ -535,25 +535,25 @@ Engineering Company, 2002):</para>
       <para>The options for the command are as follows:</para>
       <itemizedlist>
 	<listitem>
-	  <para><option>v</option> - verbose; prints out progress information.</para>
+	  <para><option>-v</option> - verbose; prints out progress information.</para>
 	</listitem>
 	<listitem>
-	  <para><option>i <filename>input_euclid_db</filename></option> - sets input file name (default is <filename>stdin</filename>).</para>
+	  <para><option>-i <filename>input_euclid_db</filename></option> - sets input file name (default is <filename>stdin</filename>).</para>
 	</listitem>
 	<listitem>
-	  <para><option>o <filename>output_brlcad_db</filename></option> - sets output file name (default is <filename>stdout</filename>).</para>
+	  <para><option>-o <filename>output_brlcad_db</filename></option> - sets output file name (default is <filename>stdout</filename>).</para>
 	</listitem>
 	<listitem>
-	  <para><option>d tolerance_distance</option> - sets distance calculation tolerance (in millimeters) (default is 0.005).</para>
+	  <para><option>-d tolerance_distance</option> - sets distance calculation tolerance (in millimeters) (default is 0.005).</para>
 	</listitem>
 	<listitem>
-	  <para><option>n</option> - produces NMG primitives (default is BOT primitives).</para>
+	  <para><option>-n</option> - produces NMG primitives (default is BOT primitives).</para>
 	</listitem>
 	<listitem>
-	  <para><option>x lvl</option> - sets librt debug flag (see <filename>raytrace.h</filename> in the binary distribution for definitions of DEBUG_xxx).</para>
+	  <para><option>-x lvl</option> - sets librt debug flag (see <filename>raytrace.h</filename> in the binary distribution for definitions of DEBUG_xxx).</para>
 	</listitem>
 	<listitem>
-	  <para><option>X lvl</option> - sets NMG library debug flag (see <filename>nmg.h</filename> in the binary distribution for definitions of DEBUG_xxx).</para>
+	  <para><option>-X lvl</option> - sets NMG library debug flag (see <filename>nmg.h</filename> in the binary distribution for definitions of DEBUG_xxx).</para>
 	</listitem>
       </itemizedlist>
       <para>For more information about the EUCLID file format and import possibilities, see the MDTVISION web site at <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://support.mdtvision.com">http://support.mdtvision.com</link> (MDTVISION, 2003).</para>
@@ -583,28 +583,28 @@ Engineering Company, 2002):</para>
 	<para>The options for the command are as follows:</para>
 	<itemizedlist>
 	  <listitem>
-	    <para><option>d</option> - prints verbose debugging output.</para>
+	    <para><option>-d</option> - prints verbose debugging output.</para>
 	  </listitem>
 	  <listitem>
-	    <para><option>q</option> - prints nothing except errors.</para>
+	    <para><option>-q</option> - prints nothing except errors.</para>
 	  </listitem>
 	  <listitem>
-	    <para><option>w</option> - prints warnings about creating default names.</para>
+	    <para><option>-w</option> - prints warnings about creating default names.</para>
 	  </listitem>
 	  <listitem>
-	    <para><option><filename>plot_file_name</filename></option> - creates a UNIX plot file of all CTRI and CQUAD elements processed.</para>
+	    <para><option>-o <filename>plot_file_name</filename></option> - creates a UNIX plot file of all CTRI and CQUAD elements processed.</para>
 	  </listitem>
 	  <listitem>
-	    <para><option>c component_list</option> - processes only the listed region ids; may be a list (e.g., 3001,4082,5347) or a range (e.g., 2314-3527).</para>
+	    <para><option>-c component_list</option> - processes only the listed region ids; may be a list (e.g., 3001,4082,5347) or a range (e.g., 2314-3527).</para>
 	  </listitem>
 	  <listitem>
-	    <para><option>m <filename>muves_file_name</filename></option> - creates a MUVES warnings file containing CHGCOMP and CBACKING elements.</para>
+	    <para><option>-m <filename>muves_file_name</filename></option> - creates a MUVES warnings file containing CHGCOMP and CBACKING elements.</para>
 	  </listitem>
 	  <listitem>
-	    <para><option>b lvl</option> - sets libbu debug flag (see <filename>bu.h</filename> in the binary distribution for definitions of BU_DEBUG_xxx).</para>
+	    <para><option>-b lvl</option> - sets libbu debug flag (see <filename>bu.h</filename> in the binary distribution for definitions of BU_DEBUG_xxx).</para>
 	  </listitem>
 	  <listitem>
-	    <para><option>x lvl</option> - sets librt debug flag (see <filename>raytrace.h</filename> in the binary distribution for definitions of DEBUG_xxx).</para>
+	    <para><option>-x lvl</option> - sets librt debug flag (see <filename>raytrace.h</filename> in the binary distribution for definitions of DEBUG_xxx).</para>
 	  </listitem>
 	</itemizedlist>
       </section>
@@ -615,55 +615,55 @@ Engineering Company, 2002):</para>
 	<para>The options for the command are as follows:</para>
 	<itemizedlist>
 	  <listitem>
-	    <para><option>f <filename>fastgen.rp</filename></option> - specifies preprocessed FASTGEN file (default is <filename>stdin</filename>).</para>
+	    <para><option>-f <filename>fastgen.rp</filename></option> - specifies preprocessed FASTGEN file (default is <filename>stdin</filename>).</para>
 	  </listitem>
 	  <listitem>
-	    <para><option>a</option> - processes phantom armor.</para>
+	    <para><option>-a</option> - processes phantom armor.</para>
 	  </listitem>
 	  <listitem>
-	    <para><option>n</option> - processes volume mode as plate mode.</para>
+	    <para><option>-n</option> - processes volume mode as plate mode.</para>
 	  </listitem>
 	  <listitem>
-	    <para><option>u #</option> - specifies the number of union operations per region (default is five).</para>
+	    <para><option>-u #</option> - specifies the number of union operations per region (default is five).</para>
 	  </listitem>
 	  <listitem>
-	    <para><option>c "x y z"</option> - specifies the object's center (in inches) (for some surface normal calculations).</para>
+	    <para><option>-c "x y z"</option> - specifies the object's center (in inches) (for some surface normal calculations).</para>
 	  </listitem>
 	  <listitem>
-	    <para><option>t title</option> - specifies optional title (default is ``Untitled MGED database'').</para>
+	    <para><option>-t title</option> - specifies optional title (default is ``Untitled MGED database'').</para>
 	  </listitem>
 	  <listitem>
-	    <para><option>o object_name</option> - specifies optional top-level name (default is "all").</para>
+	    <para><option>-o object_name</option> - specifies optional top-level name (default is "all").</para>
 	  </listitem>
 	  <listitem>
-	    <para><option>p</option> - writes volume and plate mode components as BOTs.</para>
+	    <para><option>-p</option> - writes volume and plate mode components as BOTs.</para>
 	  </listitem>
 	  <listitem>
-	    <para><option>6</option> - processes plate mode triangles as ARB6 solids (overrides p option for triangles).</para>
+	    <para><option>-6</option> - processes plate mode triangles as ARB6 solids (overrides p option for triangles).</para>
 	  </listitem>
 	  <listitem>
-	    <para><option>i <filename>group.file</filename></option> - specifies group labels source file.</para>
+	    <para><option>-i <filename>group.file</filename></option> - specifies group labels source file.</para>
 	  </listitem>
 	  <listitem>
-	    <para><option>m <filename>mat.file</filename></option> - specifies materials information source file.</para>
+	    <para><option>-m <filename>mat.file</filename></option> - specifies materials information source file.</para>
 	  </listitem>
 	  <listitem>
-	    <para><option>r</option> - reverses normals for plate mode triangles.</para>
+	    <para><option>-r</option> - reverses normals for plate mode triangles.</para>
 	  </listitem>
 	  <listitem>
-	    <para><option>d lvl</option> - sets debug level.</para>
+	    <para><option>-d lvl</option> - sets debug level.</para>
 	  </listitem>
 	  <listitem>
-	    <para><option>x lvl</option> - sets librt debug flag (see <filename>raytrace.h</filename> in the binary distribution for definitions of DEBUG_xxx).</para>
+	    <para><option>-x lvl</option> - sets librt debug flag (see <filename>raytrace.h</filename> in the binary distribution for definitions of DEBUG_xxx).</para>
 	  </listitem>
 	  <listitem>
-	    <para><option>X lvl</option> - sets librt NMG debug flag (see <filename>nmg.h</filename> in the binary distribution for definitions of DEBUG_xxx).</para>
+	    <para><option>-X lvl</option> - sets librt NMG debug flag (see <filename>nmg.h</filename> in the binary distribution for definitions of DEBUG_xxx).</para>
 	  </listitem>
 	  <listitem>
-	    <para><option>T tolerance_distance</option> - sets distance tolerance (in inches).</para>
+	    <para><option>-T tolerance_distance</option> - sets distance tolerance (in inches).</para>
 	  </listitem>
 	  <listitem>
-	    <para><option>A parallel_tolerance</option> - sets parallel tolerance (sine).</para>
+	    <para><option>-A parallel_tolerance</option> - sets parallel tolerance (sine).</para>
 	  </listitem>
 	</itemizedlist>
 	<para>For more information about the FASTGEN file formats and import possibilities, see the SURVIAC web site at <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.bahdayton.com/surviac/fastgen.htm"><uri>http://www.bahdayton.com/surviac/fastgen.htm</uri></link> (SURVIAC, 2003).</para>
@@ -678,31 +678,31 @@ Engineering Company, 2002):</para>
       <para>The options available for this command are as follows:</para>
       <itemizedlist>
 	<listitem>
-	  <para><option>n</option> - combines all the rational B-spline surfaces in the file into one BRL-CAD spline primitive.</para>
+	  <para><option>-n</option> - combines all the rational B-spline surfaces in the file into one BRL-CAD spline primitive.</para>
 	</listitem>
 	<listitem>
-	  <para><option>d</option> - converts drawings in the IGES file to 2-D BRL-CAD NMG primitives.</para>
+	  <para><option>-d</option> - converts drawings in the IGES file to 2-D BRL-CAD NMG primitives.</para>
 	</listitem>
 	<listitem>
-	  <para><option>3</option> - same as the <option>d</option> option, but the final projection to 2-D is not performed. This can produce 3-D drawings in some cases.</para>
+	  <para><option>-3</option> - same as the <option>-d</option> option, but the final projection to 2-D is not performed. This can produce 3-D drawings in some cases.</para>
 	</listitem>
 	<listitem>
-	  <para><option>t</option> - converts all trimmed surfaces in the IGES file to a single BRL-CAD NMG primitive.</para>
+	  <para><option>-t</option> - converts all trimmed surfaces in the IGES file to a single BRL-CAD NMG primitive.</para>
 	</listitem>
 	<listitem>
-	  <para><option>N primitive_name</option> - specifies a name for single primitive created using the <option>t</option> or <option>n</option> options.</para>
+	  <para><option>-N primitive_name</option> - specifies a name for single primitive created using the <option>-t</option> or <option>-n</option> options.</para>
 	</listitem>
 	<listitem>
-	  <para><option>p</option> - converts all BREP entities to BRL-CAD NMG primitives rather than the default BOT primitives.</para>
+	  <para><option>-p</option> - converts all BREP entities to BRL-CAD NMG primitives rather than the default BOT primitives.</para>
 	</listitem>
 	<listitem>
-	  <para><option>x lvl</option> - sets librt debug flag (see <filename>raytrace.h</filename> in the binary distribution for definitions of DEBUG_xxx).</para>
+	  <para><option>-x lvl</option> - sets librt debug flag (see <filename>raytrace.h</filename> in the binary distribution for definitions of DEBUG_xxx).</para>
 	</listitem>
 	<listitem>
-	  <para><option>X lvl</option> - sets librt NMG debug flag (see <filename>nmg.h</filename> in the binary distribution for definitions of DEBUG_xxx).</para>
+	  <para><option>-X lvl</option> - sets librt NMG debug flag (see <filename>nmg.h</filename> in the binary distribution for definitions of DEBUG_xxx).</para>
 	</listitem>
       </itemizedlist>
-      <para>The <option>n</option>, <option>d</option>, <option>t</option>, and <option>3</option> options are mutually exclusive. If none of these four options is provided, the default action is to convert only IGES solid model entities (CSG and planar face BREP) to BRL-CAD.</para>
+      <para>The <option>-n</option>, <option>-d</option>, <option>-t</option>, and <option>-3</option> options are mutually exclusive. If none of these four options is provided, the default action is to convert only IGES solid model entities (CSG and planar face BREP) to BRL-CAD.</para>
       <para>For more information about the IGES file format and import possibilities, see the National Institute of Standards and Technology (NIST) web site at <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.nist.gov/iges"><uri>http://www.nist.gov/iges</uri></link> (NIST, 2003).</para>
     </section>
     <section><info><title>Converting From Jack</title></info>
@@ -713,10 +713,10 @@ Engineering Company, 2002):</para>
       <para>The options for this command are:</para>
       <itemizedlist>
 	<listitem>
-	  <para><option>r region_name</option> - specifies a name for the BRL-CAD region created. If this option is not specified, the input file name will be used to construct a region name.</para>
+	  <para><option>-r region_name</option> - specifies a name for the BRL-CAD region created. If this option is not specified, the input file name will be used to construct a region name.</para>
 	</listitem>
 	<listitem>
-	  <para><option>g group_name</option> - specifies the name of a combination to create to hold the BRL-CAD region created. If this option is not specified, the combination will not be created.</para>
+	  <para><option>-g group_name</option> - specifies the name of a combination to create to hold the BRL-CAD region created. If this option is not specified, the combination will not be created.</para>
 	</listitem>
       </itemizedlist>
       <para>For more information on the Jack file format and import possibilities, see the EDS web page at <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.eds.com/products/plm/efactory/jack/"><uri>http://www.eds.com/products/plm/efactory/jack/</uri></link> (EDS, 2003a).</para>
@@ -733,25 +733,25 @@ Engineering Company, 2002):</para>
       <para>The options for the command are as follows:</para>
       <itemizedlist>
 	<listitem>
-	  <para><option>i <filename>NASTRAN_input_file</filename></option> - sets input NASTRAN file (default is <filename>stdin</filename>).</para>
+	  <para><option>-i <filename>NASTRAN_input_file</filename></option> - sets input NASTRAN file (default is <filename>stdin</filename>).</para>
 	</listitem>
 	<listitem>
-	  <para><option>o <filename>output.g</filename></option> - sets output file name (default is "nastran.g").</para>
+	  <para><option>-o <filename>output.g</filename></option> - sets output file name (default is "nastran.g").</para>
 	</listitem>
 	<listitem>
-	  <para><option>n</option> - produces NMG primitives (default is BOT primitives).</para>
+	  <para><option>-n</option> - produces NMG primitives (default is BOT primitives).</para>
 	</listitem>
 	<listitem>
-	  <para><option>x lvl</option> - sets librt debug flag (see <filename>raytrace.h</filename> in the binary distribution for definitions of DEBUG_xxx).</para>
+	  <para><option>-x lvl</option> - sets librt debug flag (see <filename>raytrace.h</filename> in the binary distribution for definitions of DEBUG_xxx).</para>
 	</listitem>
 	<listitem>
-	  <para><option>X lvl</option> - sets NMG library debug flag (see <filename>nmg.h</filename> in the binary distribution for definitions of DEBUG_xxx).</para>
+	  <para><option>-X lvl</option> - sets NMG library debug flag (see <filename>nmg.h</filename> in the binary distribution for definitions of DEBUG_xxx).</para>
 	</listitem>
 	<listitem>
-	  <para><option>t tolerance_distance</option> - sets distance calculation tolerance (in millimeters) (default is 0.005).</para>
+	  <para><option>-t tolerance_distance</option> - sets distance calculation tolerance (in millimeters) (default is 0.005).</para>
 	</listitem>
 	<listitem>
-	  <para><option>m</option> - sets input units to millimeters (default is inches).</para>
+	  <para><option>-m</option> - sets input units to millimeters (default is inches).</para>
 	</listitem>
       </itemizedlist>
       <para>For more on the NASTRAN file format and import possibilities, see the <orgname>MSC</orgname> web site at <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.mscsoftware.com"><uri>http://www.mscsoftware.com</uri></link> (MSC.Software Corporation, 2003) and the <orgname>EDS</orgname> web site at <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.eds.com/products/plm/nastran/"><uri>http://www.eds.com/products/plm/nastran/</uri></link> (EDS, 2003b).</para>
@@ -818,31 +818,31 @@ Engineering Company, 2002):</para>
       <para>The options for this command are as follows:</para>
       <itemizedlist>
 	<listitem>
-	  <para><option>b</option> - designates that the input STL file is in binary format (the default is ASCII).</para>
+	  <para><option>-b</option> - designates that the input STL file is in binary format (the default is ASCII).</para>
 	</listitem>
 	<listitem>
-	  <para><option>c units</option> - specifies the units used in the STL file. Choices include ``cm,'' ``m,'' ``in,'' ``ft,'' and many others (the default is millimeters).</para>
+	  <para><option>-c units</option> - specifies the units used in the STL file. Choices include ``cm,'' ``m,'' ``in,'' ``ft,'' and many others (the default is millimeters).</para>
 	</listitem>
 	<listitem>
-	  <para><option>N name</option> - specifies a name for the resulting BRL-CAD region. If more than one region is produced, unique region names will be constructed by adding a suffix consisting of an underscore and an integer.</para>
+	  <para><option>-N name</option> - specifies a name for the resulting BRL-CAD region. If more than one region is produced, unique region names will be constructed by adding a suffix consisting of an underscore and an integer.</para>
 	</listitem>
 	<listitem>
-	  <para><option>d</option> - designates that additional debugging information be printed during the conversion.</para>
+	  <para><option>-d</option> - designates that additional debugging information be printed during the conversion.</para>
 	</listitem>
 	<listitem>
-	  <para><option>i ident</option> - specifies the ident number assigned to the first region created during the conversion. Additional regions will be assigned sequential ident numbers.</para>
+	  <para><option>-i ident</option> - specifies the ident number assigned to the first region created during the conversion. Additional regions will be assigned sequential ident numbers.</para>
 	</listitem>
 	<listitem>
-	  <para><option>I ident</option> - specifies the ident number to assign to all the BRL-CAD regions created during this conversion. (This option and the <option>i ident</option> option are mutually exclusive.)</para>
+	  <para><option>-I ident</option> - specifies the ident number to assign to all the BRL-CAD regions created during this conversion. (This option and the <option>-i ident</option> option are mutually exclusive.)</para>
 	</listitem>
 	<listitem>
-	  <para><option>m material_code</option> - specifies the integer material code to be assigned to each BRL-CAD region created during this conversion.</para>
+	  <para><option>-m material_code</option> - specifies the integer material code to be assigned to each BRL-CAD region created during this conversion.</para>
 	</listitem>
 	<listitem>
-	  <para><option>t tolerance_distance</option> - specifies the minimum distance (in millimeters) allowed between distinct vertices. Vertices closer than this minimum will be considered to be the same vertex (the default value is 0.005 mm).</para>
+	  <para><option>-t tolerance_distance</option> - specifies the minimum distance (in millimeters) allowed between distinct vertices. Vertices closer than this minimum will be considered to be the same vertex (the default value is 0.005 mm).</para>
 	</listitem>
 	<listitem>
-	  <para><option>x librt_debug_flag</option> - specifies a flag for the raytracing library that will result in additional debug log messages (see <filename>librt/debug.h</filename> in the binary distribution for details).</para>
+	  <para><option>-x librt_debug_flag</option> - specifies a flag for the raytracing library that will result in additional debug log messages (see <filename>librt/debug.h</filename> in the binary distribution for details).</para>
 	</listitem>
       </itemizedlist>
       <para>For more information on the STL file format and import possibilities, see the <orgname>3D Systems</orgname> web site at <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.3dsystems.com"><uri>http://www.3dsystems.com</uri></link> (3D Systems, 2003).</para>
@@ -855,25 +855,25 @@ Engineering Company, 2002):</para>
       <para>The options for the command are as follows:</para>
       <itemizedlist>
 	<listitem>
-	  <para><option>v</option> - verbose; prints out progress information.</para>
+	  <para><option>-v</option> - verbose; prints out progress information.</para>
 	</listitem>
 	<listitem>
-	  <para><option>n</option> - produces NMG primitives (default is BOT primitives).</para>
+	  <para><option>-n</option> - produces NMG primitives (default is BOT primitives).</para>
 	</listitem>
 	<listitem>
-	  <para><option>i <filename>input.tkl</filename></option> - specifies the input TANKILL file (default is <filename>stdin</filename>).</para>
+	  <para><option>-i <filename>input.tkl</filename></option> - specifies the input TANKILL file (default is <filename>stdin</filename>).</para>
 	</listitem>
 	<listitem>
-	  <para><option>o <filename>output.g</filename></option> - specifies the output BRL-CAD file (default is <filename>tankill.g</filename>).</para>
+	  <para><option>-o <filename>output.g</filename></option> - specifies the output BRL-CAD file (default is <filename>tankill.g</filename>).</para>
 	</listitem>
 	<listitem>
-	  <para><option>k</option> - keeps components with id = 1001 (normally skipped).</para>
+	  <para><option>-k</option> - keeps components with id = 1001 (normally skipped).</para>
 	</listitem>
 	<listitem>
-	  <para><option>x lvl</option> - sets librt debug flag (see <filename>raytrace.h</filename> in the binary distribution for definitions of DEBUG_xxx).</para>
+	  <para><option>-x lvl</option> - sets librt debug flag (see <filename>raytrace.h</filename> in the binary distribution for definitions of DEBUG_xxx).</para>
 	</listitem>
 	<listitem>
-	  <para><option>X lvl</option> - sets NMG library debug flag (see <filename>nmg.h</filename> in the binary distribution for definitions of DEBUG_xxx).</para>
+	  <para><option>-X lvl</option> - sets NMG library debug flag (see <filename>nmg.h</filename> in the binary distribution for definitions of DEBUG_xxx).</para>
 	</listitem>
       </itemizedlist>
       <para>For more information on the TANKILL file format and import possibilities, contact the <orgname>Advantage Business Group</orgname> at <address><othername>the Barbician</othername> <street>East Street</street> <city>Farnham, Surrey</city> <postcode>GU9 7TB</postcode></address> or visit the web site at <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.advantage-business.co.uk"><uri>http://www.advantage-business.co.uk</uri></link> (Advantage Business Group, 2003).</para>
@@ -886,45 +886,45 @@ Engineering Company, 2002):</para>
       <para>Because the Unigraphics-to-BRL-CAD converter, ug-g, was written using the Unigraphics UG/Open API library, users must have a Unigraphics UG/Open execute or development license in order to run it. This converter is compiled for SGI Irix machines running on MIPS processors; however, users can compile it for other platforms by obtaining the BRL-CAD source distribution and a UG/Open development license from Unigraphics.</para>
       <para>This converter creates a BRL-CAD region consisting of a single BOT primitive for each Unigraphics part and a combination for each Unigraphics assembly. Each instance of a Unigraphics part is converted independently, so there are no transformation matrices created in the resulting BRL-CAD model. The BRL-CAD regions are given the same name as the parts are assigned in the Unigraphics model, unless a part-name mapping file is provided. Region names are made unique, if necessary, by adding a suffix consisting of a dot and an integer number.</para>
       <para>The syntax for this converter is as follows:</para>
-      <para><command>ug-g</command> [<option>options</option>] <option>o</option> <filename>output.g</filename> <filename>UG_part_file</filename> [<option>subpart1</option> <option>subpart2</option> ...]</para>
+      <para><command>ug-g</command> [<option>options</option>] <option>-o</option> <filename>output.g</filename> <filename>UG_part_file</filename> [<option>subpart1</option> <option>subpart2</option> ...]</para>
       <para>where the <filename>UG_part_file</filename> is a Unigraphics part file. If subparts are listed on the command line, only those named parts in the specified part file will be converted.</para>
       <para>The available options are as follows:</para>
       <itemizedlist>
 	<listitem>
-	  <para><option>d level</option> - specifies a debug level for additional log messages. Currently, any nonzero value here provides additional logging.</para>
+	  <para><option>-d level</option> - specifies a debug level for additional log messages. Currently, any nonzero value here provides additional logging.</para>
 	</listitem>
 	<listitem>
-	 <para><option>i initial_ident</option> - specifies the ident number for the first region created by the conversion. Subsequent regions are assigned sequential ident numbers.</para>
+	 <para><option>-i initial_ident</option> - specifies the ident number for the first region created by the conversion. Subsequent regions are assigned sequential ident numbers.</para>
 	</listitem>
 	<listitem>
-	 <para><option>n <filename>part_name_file</filename></option> - specifies a file containing a mapping of Unigraphics part and/or assembly names to BRL-CAD object names. If this file is provided, it will be used to create object names in the BRL-CAD model. The format of this file is simply a line per part, with the Unigraphics part/assembly name followed by the desired BRL- CAD object name, separated by white space. Note that the usual restrictions for BRL-CAD object names apply (e.g., no spaces, no special symbols, etc.) For a detailed discussion of recommended naming schemes and restrictions, see section 4 of Volume III (Butler et al., 2003).</para>
+	 <para><option>-n <filename>part_name_file</filename></option> - specifies a file containing a mapping of Unigraphics part and/or assembly names to BRL-CAD object names. If this file is provided, it will be used to create object names in the BRL-CAD model. The format of this file is simply a line per part, with the Unigraphics part/assembly name followed by the desired BRL- CAD object name, separated by white space. Note that the usual restrictions for BRL-CAD object names apply (e.g., no spaces, no special symbols, etc.) For a detailed discussion of recommended naming schemes and restrictions, see section 4 of Volume III (Butler et al., 2003).</para>
 	</listitem>
 	<listitem>
-	  <para><option>R refset_name</option> - specifies a desired reference set (which Unigraphics uses to provide additional control over assembly components), overriding the reference set specified in the Unigraphics model.</para>
+	  <para><option>-R refset_name</option> - specifies a desired reference set (which Unigraphics uses to provide additional control over assembly components), overriding the reference set specified in the Unigraphics model.</para>
 	</listitem>
 	<listitem>
-	  <para><option>f</option> - facetizes all the geometry. If this option is not specified, the converter will attempt to create CSG equivalent geometry wherever possible. (Note that this option is experimental.)</para>
+	  <para><option>-f</option> - facetizes all the geometry. If this option is not specified, the converter will attempt to create CSG equivalent geometry wherever possible. (Note that this option is experimental.)</para>
 	</listitem>
 	<listitem>
-	  <para><option>s</option> - lists all features that were attempted to convert to CSG. (This option and the <option>f</option> option are mutually exclusive.)</para>
+	  <para><option>-s</option> - lists all features that were attempted to convert to CSG. (This option and the <option>-f</option> option are mutually exclusive.)</para>
 	</listitem>
 	<listitem>
-	  <para><option>u</option> - extracts surface normals from the Unigraphics model. Using this option will result in a BRL-CAD model that is significantly larger than when not using it, but raytraced objects will appear much smoother.</para>
+	  <para><option>-u</option> - extracts surface normals from the Unigraphics model. Using this option will result in a BRL-CAD model that is significantly larger than when not using it, but raytraced objects will appear much smoother.</para>
 	</listitem>
 	<listitem>
-	  <para><option>o <filename>output.g</filename></option> - specifies the name of the file to receive the BRL-CAD model.</para>
+	  <para><option>-o <filename>output.g</filename></option> - specifies the name of the file to receive the BRL-CAD model.</para>
 	</listitem>
 	<listitem>
-	  <para><option>t tolerance_distance</option> - specifies the minimum distance (in millimeters) allowed between distinct vertices. Vertices closer than this minimum will be considered to be the same vertex (the default value is 0.005 mm).</para>
+	  <para><option>-t tolerance_distance</option> - specifies the minimum distance (in millimeters) allowed between distinct vertices. Vertices closer than this minimum will be considered to be the same vertex (the default value is 0.005 mm).</para>
 	</listitem>
 	<listitem>
-	  <para><option>a surface_normal_tolerance</option> - specifies a surface normal error tolerance (in degrees) for the facetization process. By default, the surface normal is not considered during facetization.</para>
+	  <para><option>-a surface_normal_tolerance</option> - specifies a surface normal error tolerance (in degrees) for the facetization process. By default, the surface normal is not considered during facetization.</para>
 	</listitem>
 	<listitem>
-	  <para><option>c min_chamfer</option> - specifies that any chamfer with dimensions less than the provided minimum (in millimeters) will be ignored. By default, no features are ignored.</para>
+	  <para><option>-c min_chamfer</option> - specifies that any chamfer with dimensions less than the provided minimum (in millimeters) will be ignored. By default, no features are ignored.</para>
 	</listitem>
 	<listitem>
-	  <para><option>r min_round</option> - specifies that any round (or fillet) with a radius less than the specified minimum (in millimeters) will be ignored. By default, no features are ignored.</para>
+	  <para><option>-r min_round</option> - specifies that any round (or fillet) with a radius less than the specified minimum (in millimeters) will be ignored. By default, no features are ignored.</para>
 	</listitem>
       </itemizedlist>
       <para>For more information on the Unigraphics file format and conversion potential, see the <orgname>EDS</orgname> web site at <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.eds.com/products/plm/unigraphics_nx/"><uri>http://www.eds.com/products/plm/unigraphics_nx/</uri></link> (EDS, 2003c).</para>
@@ -938,16 +938,16 @@ Engineering Company, 2002):</para>
       <para>The options for the command are as follows:</para>
       <itemizedlist>
 	<listitem>
-	  <para><option>c <filename>coord_file_name</filename></option> - sets the input vertex coordinates file name (required).</para>
+	  <para><option>-c <filename>coord_file_name</filename></option> - sets the input vertex coordinates file name (required).</para>
 	</listitem>
 	<listitem>
-	  <para><option>e <filename>elements_file_name</filename></option> - sets the input faces file name (required).</para>
+	  <para><option>-e <filename>elements_file_name</filename></option> - sets the input faces file name (required).</para>
 	</listitem>
 	<listitem>
-	  <para><option>o <filename>output_file_name</filename></option> - sets the output BRL-CAD database name (default is <filename>viewpoint.g</filename>).</para>
+	  <para><option>-o <filename>output_file_name</filename></option> - sets the output BRL-CAD database name (default is <filename>viewpoint.g</filename>).</para>
 	</listitem>
 	<listitem>
-	  <para><option>t tolerance_distance</option> - sets distance calculation tolerance (in millimeters) (default is 0.005).</para>
+	  <para><option>-t tolerance_distance</option> - sets distance calculation tolerance (in millimeters) (default is 0.005).</para>
 	</listitem>
       </itemizedlist>
     </section>
@@ -1037,31 +1037,31 @@ Engineering Company, 2002):</para>
       <para>The options for the g-acad command are as follows:</para>
       <itemizedlist>
 	<listitem>
-	  <para><option>i</option> - designates that the output be in inches (the default is millimeters).</para>
+	  <para><option>-i</option> - designates that the output be in inches (the default is millimeters).</para>
 	</listitem>
 	<listitem>
-	  <para><option>x lvl</option> - sets librt debug flag (see <filename>raytrace.h</filename> in the binary distribution for definitions of DEBUG_xxx).</para>
+	  <para><option>-x lvl</option> - sets librt debug flag (see <filename>raytrace.h</filename> in the binary distribution for definitions of DEBUG_xxx).</para>
 	</listitem>
 	<listitem>
-	  <para><option>X lvl</option> - sets the NMG library debug flag (see <filename>nmg.h</filename> in the binary distribution for definitions of DEBUG_xxx).</para>
+	  <para><option>-X lvl</option> - sets the NMG library debug flag (see <filename>nmg.h</filename> in the binary distribution for definitions of DEBUG_xxx).</para>
 	</listitem>
 	<listitem>
-	  <para><option>e <filename>error_file</filename></option> - sends error messages to specified file (default is standard error [<filename>stderr</filename>]).</para>
+	  <para><option>-e <filename>error_file</filename></option> - sends error messages to specified file (default is standard error [<filename>stderr</filename>]).</para>
 	</listitem>
 	<listitem>
-	  <para><option>v</option> - verbose; prints out progress information.</para>
+	  <para><option>-v</option> - verbose; prints out progress information.</para>
 	</listitem>
 	<listitem>
-	  <para><option>D tolerance_distance</option> - sets distance calculation tolerance (in millimeters) (default is 0.005).</para>
+	  <para><option>-D tolerance_distance</option> - sets distance calculation tolerance (in millimeters) (default is 0.005).</para>
 	</listitem>
 	<listitem>
-	  <para><option>r rel_tess_tol</option> - sets relative tessellation tolerance (normally 0.0 to 1.0) (default is 0.1).</para>
+	  <para><option>-r rel_tess_tol</option> - sets relative tessellation tolerance (normally 0.0 to 1.0) (default is 0.1).</para>
 	</listitem>
 	<listitem>
-	  <para><option>a abs_tess_tol</option> - sets absolute tessellation tolerance to specified value (in millimeters) (overrides <option>r</option> option).</para>
+	  <para><option>-a abs_tess_tol</option> - sets absolute tessellation tolerance to specified value (in millimeters) (overrides <option>-r</option> option).</para>
 	</listitem>
 	<listitem>
-	  <para><option>n norm_tess_tol</option> - sets surface normal tessellation tolerance (angle in radians) (overrides <option>r</option> option).</para>
+	  <para><option>-n norm_tess_tol</option> - sets surface normal tessellation tolerance (angle in radians) (overrides <option>-r</option> option).</para>
 	</listitem>
       </itemizedlist>
       <para>For more information on the ACAD file format and conversion potential, contact <orgname>Lockheed Martin</orgname> Tactical Aircraft Systems at <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.lockheedmartin.com"><uri>http://www.lockheedmartin.com</uri></link> (<orgname>Lockheed Martin</orgname>, 2003).</para>
@@ -1073,16 +1073,16 @@ Engineering Company, 2002):</para>
       <para>The options for the g-dxf command are as follows:</para>
       <itemizedlist>
 	<listitem>
-	  <para><option>i</option> - requests the output DXF file to be in inches (default is millimeters).</para>
+	  <para><option>-i</option> - requests the output DXF file to be in inches (default is millimeters).</para>
 	</listitem>
 	<listitem>
-	  <para><option>o <filename>output.dxf</filename></option> - specifies the file to receive the DXF output (default is stdout).</para>
+	  <para><option>-o <filename>output.dxf</filename></option> - specifies the file to receive the DXF output (default is stdout).</para>
 	</listitem>
 	<listitem>
-	  <para><option>p</option> - requests that the output DXF file consist of POLYFACE MESH entities (the default is 3DFACE entities).</para>
+	  <para><option>-p</option> - requests that the output DXF file consist of POLYFACE MESH entities (the default is 3DFACE entities).</para>
 	</listitem>
       </itemizedlist>
-      <para>The command also accepts the <option>v</option>, <option>r</option>, <option>a</option>, <option>n</option>, <option>x</option>, and <option>X</option> options, which have been discussed in the import converters portion of this document (<xref linkend="sec_convert_to_brlcad"/>).</para>
+      <para>The command also accepts the <option>-v</option>, <option>-r</option>, <option>-a</option>, <option>-n</option>, <option>-x</option>, and <option>-X</option> options, which have been discussed in the import converters portion of this document (<xref linkend="sec_convert_to_brlcad"/>).</para>
       <para>For more information on the DXF file format and export possibilities, see the on-line documentation on the Autodesk web site at <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.autodesk.com"><uri>http://www.autodesk.com</uri></link> (<orgname>Autodesk, Inc.</orgname>, 2003).</para>
     </section>
     <section><info><title>Converting to EUCLID Format</title></info>
@@ -1092,10 +1092,10 @@ Engineering Company, 2002):</para>
       <para>The options for the <command>g-euclid</command> command are as follows:</para>
       <itemizedlist>
 	<listitem>
-	  <para><option>u units</option> - sets the output units (the default is millimeters).</para>
+	  <para><option>-u units</option> - sets the output units (the default is millimeters).</para>
 	</listitem>
 	<listitem>
-	  <para><option>o <filename>output_file_name</filename></option> - sets the output file name (the default is <filename>stdout</filename>).</para>
+	  <para><option>-o <filename>output_file_name</filename></option> - sets the output file name (the default is <filename>stdout</filename>).</para>
 	</listitem>
       </itemizedlist>
       <para>For more information about the EUCLID file format and export possibilities, see the <orgname>MDTVISION</orgname> web site at <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://support.mdtvision.com"><uri>http://support.mdtvision.com</uri></link> (MDTVISION, 2003).</para>
@@ -1107,29 +1107,29 @@ Engineering Company, 2002):</para>
       <para>The options for the g-iges  command are as follows:</para>
       <itemizedlist>
 	<listitem>
-	  <para><option>o <filename>output_name</filename></option> - indicates the name of the resulting IGES file. If the m option is specified, then this is the name of a directory where resulting IGES files will be placed (the directory must already exist). (The default is <filename>stdout</filename>.)</para>
+	  <para><option>-o <filename>output_name</filename></option> - indicates the name of the resulting IGES file. If the m option is specified, then this is the name of a directory where resulting IGES files will be placed (the directory must already exist). (The default is <filename>stdout</filename>.)</para>
 	</listitem>
 	<listitem>
-	  <para><option>f</option> - designates that the resulting IGES file will be entirely facetted BREP entities. The <option>f</option> and <option>t</option> options (the next option discussed) are mutually exclusive.</para>
+	  <para><option>-f</option> - designates that the resulting IGES file will be entirely facetted BREP entities. The <option>-f</option> and <option>-t</option> options (the next option discussed) are mutually exclusive.</para>
 	</listitem>
 	<listitem>
-	  <para>t<option/> - designates that the resulting IGES file will be entirely trimmed NURB entities similar to the <option>f</option> option, but each facet is represented as a trimmed NURB. The <option>f</option> and <option>t</option> options are mutually exclusive.</para>
+	  <para>t<option/> - designates that the resulting IGES file will be entirely trimmed NURB entities similar to the <option>-f</option> option, but each facet is represented as a trimmed NURB. The <option>-f</option> and <option>-t</option> options are mutually exclusive.</para>
 	</listitem>
 	<listitem>
-	  <para><option>m</option> - Each region in the specified objects is output in an individual IGES file and placed in the directory specified with the <option>o</option> option. This option implies the <option>t</option> option.</para>
+	  <para><option>-m</option> - Each region in the specified objects is output in an individual IGES file and placed in the directory specified with the <option>-o</option> option. This option implies the <option>-t</option> option.</para>
 	</listitem>
 	<listitem>
-	  <para><option>s</option> - Used in conjunction with the <option>f</option> or <option>t</option> options to indicate that the facets should all be expressed as planar NURB surfaces rather than the default simple planar surface.</para>
+	  <para><option>-s</option> - Used in conjunction with the <option>-f</option> or <option>-t</option> options to indicate that the facets should all be expressed as planar NURB surfaces rather than the default simple planar surface.</para>
 	</listitem>
       </itemizedlist>
-      <para>With the <option>t</option> and <option>f</option> options, the converter will employ Boolean evaluation of each region. If neither option is specified, then a CSG IGES file will be produced. The command also accepts the previously mentioned <option>v</option>, <option>r</option>, <option>a</option>, <option>n</option>, <option>x</option>, and <option>X</option> options.</para>
+      <para>With the <option>-t</option> and <option>-f</option> options, the converter will employ Boolean evaluation of each region. If neither option is specified, then a CSG IGES file will be produced. The command also accepts the previously mentioned <option>-v</option>, <option>-r</option>, <option>-a</option>, <option>-n</option>, <option>-x</option>, and <option>-X</option> options.</para>
       <table><info><title>Package-Preferred IGES Converter Options</title></info>
 	
 	<tgroup cols="2">
 	  <tbody>
 	    <row>
 	      <entry><mediaobject><imageobject><imagedata fileref="test_img.eps" format="EPS" scale="10"/></imageobject></mediaobject></entry>
-	      <entry>Note that different CAD packages seem to ``prefer'' certain options for the IGES converter. In particular, Pro/E works well with IGES files that use the <option>m</option> option, and Unigraphics works well with IGES files that use the <option>s</option> option.</entry>
+	      <entry>Note that different CAD packages seem to ``prefer'' certain options for the IGES converter. In particular, Pro/E works well with IGES files that use the <option>-m</option> option, and Unigraphics works well with IGES files that use the <option>-s</option> option.</entry>
 	    </row>
 	  </tbody>
 	</tgroup>
@@ -1143,10 +1143,10 @@ Engineering Company, 2002):</para>
       <para>The options for the jack-g command are as follows:</para>
       <itemizedlist>
 	<listitem>
-	  <para><option>r region_name</option> - specifies the name of the region to create in the BRL-CAD output (by default, this name is constructed from the input filename).</para>
+	  <para><option>-r region_name</option> - specifies the name of the region to create in the BRL-CAD output (by default, this name is constructed from the input filename).</para>
 	</listitem>
 	<listitem>
-	  <para><option>g combination_name</option> - specifies the name of a combination to be created to hold the region produced. If not specified, no combination will be created.</para>
+	  <para><option>-g combination_name</option> - specifies the name of a combination to be created to hold the region produced. If not specified, no combination will be created.</para>
 	</listitem>
       </itemizedlist>
       <para>For more information about the Jack file format and export possibilities, see the EDS web page at <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.eds.com/products/plm/efactory/jack"><uri>http://www.eds.com/products/plm/efactory/jack/</uri></link> (EDS, 2003a).</para>
@@ -1158,22 +1158,22 @@ Engineering Company, 2002):</para>
       <para>The options for the <command>g-stl</command> command are as follows:</para>
       <itemizedlist>
 	<listitem>
-	 <para><option>o <filename>output_name</filename></option> - specifies the name of the file to receive the STL format output. This option is mutually exclusive with the m option. (The default is <filename>stdout</filename>.)</para>
+	 <para><option>-o <filename>output_name</filename></option> - specifies the name of the file to receive the STL format output. This option is mutually exclusive with the m option. (The default is <filename>stdout</filename>.)</para>
 	</listitem>
 	<listitem>
-	  <para><option>m <filename>directory_name</filename></option> - specifies the name of an existing directory where output STL files will be placed. This option is mutually exclusive with the <option>o</option> option. When this option is exercised, each region in the specified object(s) is output in a separate file written to the specified directory. The file names will be based on the BRL-CAD database path to the region, with ``/'' characters replaced by ``@'' and ``.'' characters replaced by ``_''.</para>
+	  <para><option>-m <filename>directory_name</filename></option> - specifies the name of an existing directory where output STL files will be placed. This option is mutually exclusive with the <option>-o</option> option. When this option is exercised, each region in the specified object(s) is output in a separate file written to the specified directory. The file names will be based on the BRL-CAD database path to the region, with ``/'' characters replaced by ``@'' and ``.'' characters replaced by ``_''.</para>
 	</listitem>
 	<listitem>
-	  <para><option>b</option> - produces binary format STL files. The combination of this option and the <option>o</option> option produces a binary STL file containing one solid object representing all the regions in the specified object(s). (The default output format is ASCII.)</para>
+	  <para><option>-b</option> - produces binary format STL files. The combination of this option and the <option>-o</option> option produces a binary STL file containing one solid object representing all the regions in the specified object(s). (The default output format is ASCII.)</para>
 	</listitem>
 	<listitem>
-	  <para><option>D calculation_tolerance</option> - sets the distance calculation tolerance (in millimeters) (the default is 0.005).</para>
+	  <para><option>-D calculation_tolerance</option> - sets the distance calculation tolerance (in millimeters) (the default is 0.005).</para>
 	</listitem>
 	<listitem>
-	  <para><option>i</option> - produces an STL file in units of inches (the default is millimeters).</para>
+	  <para><option>-i</option> - produces an STL file in units of inches (the default is millimeters).</para>
 	</listitem>
       </itemizedlist>
-      <para>The command also accepts the previously mentioned <option>v</option>, <option>r</option>, <option>a</option>, <option>n</option>, <option>x</option>, and <option>X</option> options.</para>
+      <para>The command also accepts the previously mentioned <option>-v</option>, <option>-r</option>, <option>-a</option>, <option>-n</option>, <option>-x</option>, and <option>-X</option> options.</para>
       <para>For more information on the STL file format and export possibilities, see the 3D Systems web site at <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.3dsystems.com"><uri>http://www.3dsystems.com</uri></link> (3D Systems, 2003).</para>
     </section>
     <section><info><title>Converting to TANKILL Format</title></info>
@@ -1184,16 +1184,16 @@ Engineering Company, 2002):</para>
       <para>The options for the <command>g-tankill</command> command are as follows:</para>
       <itemizedlist>
 	<listitem>
-	  <para><option>i <filename>idents_file</filename></option> - specifies that the ident numbers in the output file should be assigned sequentially as BRL-CAD regions are encountered (rather than using the ident numbers assigned in the BRL-CAD file). A mapping of the assigned ident numbers and the BRL-CAD regions is written to the specified idents_file.</para>
+	  <para><option>-i <filename>idents_file</filename></option> - specifies that the ident numbers in the output file should be assigned sequentially as BRL-CAD regions are encountered (rather than using the ident numbers assigned in the BRL-CAD file). A mapping of the assigned ident numbers and the BRL-CAD regions is written to the specified idents_file.</para>
 	</listitem>
 	<listitem>
-	  <para><option>s surroundings_code</option> - specifies the surroundings code, which is a code TANKILL uses to indicate the type of volume that surrounds an object (the default is 1000).</para>
+	  <para><option>-s surroundings_code</option> - specifies the surroundings code, which is a code TANKILL uses to indicate the type of volume that surrounds an object (the default is 1000).</para>
 	</listitem>
 	<listitem>
-	  <para><option>o <filename>output_name</filename></option> -  specifies the name of a file to receive the output (default it <filename>stdout</filename>).</para>
+	  <para><option>-o <filename>output_name</filename></option> -  specifies the name of a file to receive the output (default it <filename>stdout</filename>).</para>
 	</listitem>
       </itemizedlist>
-      <para>The command also accepts the previously mentioned <option>v</option>, <option>r</option>, <option>a</option>, <option>n</option>, <option>x</option>, and <option>X</option> options.</para>
+      <para>The command also accepts the previously mentioned <option>-v</option>, <option>-r</option>, <option>-a</option>, <option>-n</option>, <option>-x</option>, and <option>-X</option> options.</para>
       <para>For more information on the TANKILL file format and export possibilities, contact the Advantage Business Group at the Barbician, East Street, Farnham, Surrey GU9 7TB or visit the web site at <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.advantage-business.co.uk"><uri>http://www.advantage-business.co.uk</uri></link> (Advantage Business Group, 2003)</para>
     </section>
     <section><info><title>Converting to VRML Format</title></info>
@@ -1204,16 +1204,16 @@ Engineering Company, 2002):</para>
       <para>The options for the command are as follows:</para>
       <itemizedlist>
 	<listitem>
-	  <para><option>d tolerance_distance</option> - sets distance calculation tolerance in millimeters (the default is 0.005).</para>
+	  <para><option>-d tolerance_distance</option> - sets distance calculation tolerance in millimeters (the default is 0.005).</para>
 	</listitem>
 	<listitem>
-	  <para><option>u units</option> - sets the desired output units (the default is millimeters).</para>
+	  <para><option>-u units</option> - sets the desired output units (the default is millimeters).</para>
 	</listitem>
 	<listitem>
-	  <para><option>o <filename>output_file_name</filename> - sets output file name (the default is <filename>stdout</filename>).</option></para>
+	  <para><option>-o <filename>output_file_name</filename> - sets output file name (the default is <filename>stdout</filename>).</option></para>
 	</listitem>
       </itemizedlist>
-      <para>The command also accepts the previously mentioned <option>v</option>, <option>r</option>, <option>a</option>, <option>n</option>, <option>x</option>, and <option>X</option> options.</para>
+      <para>The command also accepts the previously mentioned <option>-v</option>, <option>-r</option>, <option>-a</option>, <option>-n</option>, <option>-x</option>, and <option>-X</option> options.</para>
       <para>For more information on VRML, see the Web3D Consortium web site at <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.web3d.org /fs_technicalinfo.htm"><uri>http://www.web3d.org /fs_technicalinfo.htm</uri></link> (Web3D Consortium, 2003b).</para>
       <table><info><title>The Web3D Consortium</title></info>
 	
@@ -1235,22 +1235,22 @@ Engineering Company, 2002):</para>
       <para>The options for the command are as follows:</para>
       <itemizedlist>
 	<listitem>
-	  <para><option>m</option> - includes "usemtl" statements in the output (encoded aircode, los, and material number).</para>
+	  <para><option>-m</option> - includes "usemtl" statements in the output (encoded aircode, los, and material number).</para>
 	</listitem>
 	<listitem>
-	  <para><option>i</option> - sets the output units to inches (the default is millimeters).</para>
+	  <para><option>-i</option> - sets the output units to inches (the default is millimeters).</para>
 	</listitem>
 	<listitem>
-	  <para><option>d tolerance_distance</option> - sets distance calculation tolerance in millimeters (the default is 0.005).</para>
+	  <para><option>-d tolerance_distance</option> - sets distance calculation tolerance in millimeters (the default is 0.005).</para>
 	</listitem>
 	<listitem>
-	  <para><option>u</option> - includes vertexuse normals in the output.</para>
+	  <para><option>-u</option> - includes vertexuse normals in the output.</para>
 	</listitem>
 	<listitem>
-	  <para><option>o <filename>output.obj</filename></option> - specifies the output file name (default is <filename>stdout</filename>).</para>
+	  <para><option>-o <filename>output.obj</filename></option> - specifies the output file name (default is <filename>stdout</filename>).</para>
 	</listitem>
       </itemizedlist>
-      <para>The command also accepts the previously mentioned <option>v</option>, <option>r</option>, <option>a</option>, <option>n</option>, <option>x</option>, and <option>X</option> options.</para>
+      <para>The command also accepts the previously mentioned <option>-v</option>, <option>-r</option>, <option>-a</option>, <option>-n</option>, <option>-x</option>, and <option>-X</option> options.</para>
       <para>For more information on the Wavefront file format and export possibilities, see the Alias web site at <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.alias.com/eng/index.shtml"><uri>http://www.alias.com/eng/index.shtml</uri></link> (Alias, 2003).</para>
     </section>
     <section><info><title>Converting to X3D Format</title></info>
@@ -1261,16 +1261,16 @@ Engineering Company, 2002):</para>
       <para>The options for the command are as follows:</para>
       <itemizedlist>
 	<listitem>
-	  <para><option>d tolerance_distance</option> - sets distance calculation tolerance in millimeters (the default is 0.005).</para>
+	  <para><option>-d tolerance_distance</option> - sets distance calculation tolerance in millimeters (the default is 0.005).</para>
 	</listitem>
 	<listitem>
-	  <para><option>u units</option> - sets the desired output units (the default is millimeters).</para>
+	  <para><option>-u units</option> - sets the desired output units (the default is millimeters).</para>
 	</listitem>
 	<listitem>
-	  <para><option>o <filename>output_file_name</filename></option> - sets output file name (the default is <filename>stdout</filename>).</para>
+	  <para><option>-o <filename>output_file_name</filename></option> - sets output file name (the default is <filename>stdout</filename>).</para>
 	</listitem>
       </itemizedlist>
-      <para>The command also accepts the previously mentioned <option>v</option>, <option>r</option>, <option>a</option>, <option>n</option>, <option>x</option>, and <option>X</option> options.</para>
+      <para>The command also accepts the previously mentioned <option>-v</option>, <option>-r</option>, <option>-a</option>, <option>-n</option>, <option>-x</option>, and <option>-X</option> options.</para>
       <para>For more information on the X3D file format and export possibilities, see the Web3D Consortium web site at <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.web3d.org/technicalinfo/specifications/ISO_IEC_19775"><uri>http://www.web3d.org/technicalinfo/specifications/ISO_IEC_19775</uri></link> (Web3D Consortium, 2003a).</para>
     </section>
   </chapter>
