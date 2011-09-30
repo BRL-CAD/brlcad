@@ -599,10 +599,9 @@ int apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 			return GED_ERROR;
 		}
 
-		/* Update the new bb center */
-		/*current_node->bb_center[0] = m[12];
-		current_node->bb_center[1] = m[13];
-		current_node->bb_center[2] = m[14];*/
+		insertAABB(gedp, sim_params, current_node);
+
+
 	}
 
     return GED_OK;
