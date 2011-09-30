@@ -23,11 +23,13 @@ SET(documentation_DATA
 	anim.txt
 	archer_ack.txt
 	benchmark.tr
+	bison_to_lemon.txt
 	brep.txt
 	BRL-CAD.bib
 	cvs.txt
 	description.txt
 	deprecation.txt
+	flex_to_re2c.txt
 	ged.tr
 	history.txt
 	hypot.txt

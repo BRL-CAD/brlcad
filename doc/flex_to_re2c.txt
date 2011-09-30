@@ -1,0 +1,160 @@
+Notes on converting a Flex app to an re2c app.
+
+=========
+ Running
+=========
+Flex is typically run like this:
+$ flex -o foo.c foo.l
+
+re2c is typically run like this:
+$ re2c -Fc -o foo.c foo.y
+
+The '-Fc' options add support for some flex features.
+
+===============
+ Trivial Stuff
+===============
+ regular expressions
+---------------------
+re2c regular expressions aren't quite as nice as in flex. You have to quote standalone literals ('\n' not \n, but [\n\t ] is okay), and there aren't any character classes like [[:digit:]] available.
+
+ re2c Doesn't Generate a Scanner Function
+------------------------------------------
+re2c doesn't produce an equivalent to yylex(). You have to write the scanner
+function yourself, and embed the re2c syntax inside it.
+
+===================
+ Non-Trivial Stuff
+===================
+
+ re2c Doesn't Have an Equivlant to 'yytext'
+--------------------------------------------
+One way to simulate yytext is to define it as a macro that calls a function which returns the token text:
+
+    #define yytext ((char*)get_yytext(...))
+
+ Handling Unrecognized Characters by Echoing or Ignoring
+---------------------------------------------------------
+Some apps may avoid backtracking by using an echo action (return yytext[0])
+for unrecognized characters, or by simply ignoring unrecognized characters.
+
+If you want to ignore a token, you have to explicitly restart scanning in the token's action block. If you leave the action block empty, execution continues to the next pattern's action, which isn't generally what you want.
+
+One thing you can do is put a label before the re2c stuff and goto it whenever a token is ignored:
+
+    #define IGNORE_TOKEN continue; /* implicit goto */
+
+
+    scan(char *cursor) {
+	...
+
+	while (1) { /* implicit label */
+
+    /*!re2c
+    re2c:define:YYCURSOR = cursor;
+	...
+
+    "//".* { IGNORE_TOKEN }
+
+	}
+    }
+
+You could also call the scanning function recursively, though there's no
+obvious reason to prefer this approach:
+
+    scan(char *cursor) {
+	...
+    /*!re2c
+    re2c:define:YYCURSOR = cursor;
+	...
+    "//".* { return scan(cursor); /* ignore this token, return next one */ }
+	...
+    }
+
+ re2c Condition Support
+------------------------
+The '-c' flag to re2c gives some support for start conditions, but you have to do quite a bit more work than in flex.
+
+- Exclusive Versus Inclusive -
+In flex, %s is used to specify /inclusive/ start symbols. Inclusive start
+symbols implicitly include unmarked rules. %x is used to specify
+/exclusive/ start symbols, which include only marked rules, thus:
+
+    /* given these symbols... */
+    %s S1 S2
+    %x X1
+
+    /* ...this... */
+    <S1>/rule1/
+    <X1>/rule2/
+        /rule3/
+
+    /* ...is equivalent to this */
+
+    /* marked rules are as declared */
+    <S1>/rule1/
+    <X1>/rule2/
+
+    /* unmarked rules have initial AND inclusive states */
+    <INITIAL,S1,S2>/rule3/
+
+re2c does not allow unmakred rules if start conditions are used! Each rule has
+only the marked conditions and no others. Thus, if your flex app uses
+inclusive (%s) symbols, you will need to explicitly mark any unmarked rules
+with the inclusive symbols.
+
+Here's a flex example that uses start conditions:
+
+    /* declare COMMENT condition (INITIAL condition defined automatically) */
+    %x COMMENT
+
+    %%
+
+    "/*" { BEGIN(COMMENT); }
+
+    /* rules that apply in comment mode */
+    <COMMENT> {
+    .
+    \n
+    "*/" { BEGIN(INITIAL); }
+    }
+
+The equivalent in re2c:
+
+    /* Start conditions are declared together in enum.
+     *
+     * re2c prefixes these names with "yyc" by default; change this by setting
+     * re2c:condenumprefix = "";
+     */
+    enum YYCONDTYPE {
+	INITIAL,
+	COMMENT
+    };
+
+    /* re2c uses YYSETCONDITION instead of BEGIN; you can change this by setting
+     * re2c:define:YYSETCONDITION = BEGIN;
+     */
+
+    /* Define BEGIN(enum YYCONDTYPE) to set current state (which should be
+     * initialized to INITIAL).
+     * This might be a function that sets a global, or a macro that sets a
+     * local parameter, etc.
+     */
+
+    /* Define YYGETCONDITION() to get current state.
+     * This will be a function or macro that returns the state as set by
+     * BEGIN.
+     */
+
+    /* If '-c' is used, ALL rules must be proceeded by a condition.
+     * Ordinary rules need to be prefixed with the INITIAL condition.
+     */
+    <INITIAL>"/*" { BEGIN(COMMENT); }
+
+    /* This also means that you can't create a condition block. Each individual
+     * rule that applies in a specific condition must be proceeded with the
+     * condition.
+     */
+    <COMMENT>.
+    <COMMENT>\n
+    <COMMENT>"*/" { BEGIN(INITIAL); }
