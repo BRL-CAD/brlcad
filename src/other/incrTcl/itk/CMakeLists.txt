@@ -186,7 +186,7 @@ add_definitions(-DPACKAGE_BUGREPORT="")
 ADD_TCL_CFLAG(STDC_HEADERS)
 
 IF(WIN32)
-	add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP -Ot -Oi -fp:strict -Gs -GS -GL -MD)
+	add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP -Ot -Oi -fp:strict -Gs -GS -GL)
 	add_definitions(-Dinline=__inline -DBUILD_itk)
 ENDIF(WIN32)
 
