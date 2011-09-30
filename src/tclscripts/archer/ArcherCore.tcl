@@ -61,17 +61,23 @@ namespace eval ArcherCore {
 	common VIEW_SCALE_MODE 2
 	common VIEW_CENTER_MODE 3
 	common COMP_PICK_MODE 4
-	common COMP_ERASE_MODE 5
-	common COMP_SELECT_MODE 6
-	common MEASURE_MODE 7
-	common OBJECT_ROTATE_MODE 8
-	common OBJECT_TRANSLATE_MODE 9
-	common OBJECT_SCALE_MODE 10
-	common OBJECT_CENTER_MODE 11
-	common FIRST_FREE_BINDING_MODE 12
+	common COMP_SELECT_MODE 5
+	common MEASURE_MODE 6
+	common OBJECT_ROTATE_MODE 7
+	common OBJECT_TRANSLATE_MODE 8
+	common OBJECT_SCALE_MODE 9
+	common OBJECT_CENTER_MODE 10
+	common FIRST_FREE_BINDING_MODE 11
 
 	common OBJ_EDIT_VIEW_MODE 0
 	common OBJ_ATTR_VIEW_MODE 1
+
+	common COMP_PICK_TREE_SELECT_MODE 0
+	common COMP_PICK_NAME_MODE 1
+	common COMP_PICK_ERASE_MODE 2
+	common COMP_PICK_BOT_FLIP_MODE 3
+	common COMP_PICK_BOT_SPLIT_MODE 4
+	common COMP_PICK_BOT_SYNC_MODE 5
 
 	common SystemWindowFont
 	common SystemWindowText
@@ -102,7 +108,6 @@ namespace eval ArcherCore {
 	method rebuildTree {}
 	method rsyncTree {_pnode}
 	method syncTree {}
-	method mouseRay {_dm _x _y}
 	method shootRay {_start _op _target _prep _no_bool _onehit _bot_dflag}
 	method addMouseRayCallback {_callback}
 	method deleteMouseRayCallback {_callback}
@@ -344,6 +349,8 @@ namespace eval ArcherCore {
 	variable mSeparateCommandWindow 0
 	variable mSeparateCommandWindowPref ""
 	variable mSepCmdPrefix "sepcmd_"
+
+	variable mCompPickMode $COMP_PICK_TREE_SELECT_MODE
 
 	variable mZClipBack 100.0
 	variable mZClipBackPref 100.0
@@ -780,15 +787,11 @@ namespace eval ArcherCore {
 	method endViewTranslate {_pane}
 
 	method initViewCenterMode {}
-
-	method initCompErase {}
 	method initCompPick {}
-
 	method initCompSelect {}
 	method compSelectCallback {_mstring}
 
 	method mrayCallback_cvo {_pane _start _target _partitions}
-	method mrayCallback_erase {_pane _start _target _partitions}
 	method mrayCallback_pick {_pane _start _target _partitions}
 
 	method initViewMeasure {}
@@ -1464,9 +1467,6 @@ namespace eval ArcherCore {
 	$itk_component(primaryToolbar) itemconfigure cpick \
 	    -image [image create photo \
 			-file [file join $dir component_pick.png]]
-	$itk_component(primaryToolbar) itemconfigure cerase \
-	    -image [image create photo \
-			-file [file join $dir component_erase.png]]
 	$itk_component(primaryToolbar) itemconfigure cselect \
 	    -image [image create photo \
 			-file [file join $dir component_select.png]]
@@ -2272,31 +2272,6 @@ namespace eval ArcherCore {
     updateTreeDrawLists
 }
 
-::itcl::body ArcherCore::mouseRay {_dm _x _y} {
-    set target [$_dm screen2model $_x $_y]
-    set view [$_dm screen2view $_x $_y]
-
-    set bounds [$_dm bounds]
-    set vZ [expr {[lindex $bounds 4] / -2048.0}]
-    set start [$_dm v2mPoint [lindex $view 0] [lindex $view 1] $vZ]
-
-    set partitions [shootRay $start "at" $target 1 1 1 0]
-    set partition [lindex $partitions 0]
-
-    if {[llength $mMouseRayCallbacks] == 0} {
-	if {$partition == {}} {
-	    tk_messageBox -message "Nothing hit"
-	} else {
-	    set region [bu_get_value_by_keyword "region" $partition]
-	    tk_messageBox -message [gedCmd l $region]
-	}
-    } else {
-	foreach callback $mMouseRayCallbacks {
-	    catch {$callback $start $target $partitions}
-	}
-    }
-}
-
 ::itcl::body ArcherCore::shootRay {_start _op _target _prep _no_bool _onehit _bot_dflag} {
     objects [gedCmd who]
     shootRay_doit $_start $_op $_target $_prep $_no_bool $_onehit $_bot_dflag $objects
@@ -2333,10 +2308,6 @@ namespace eval ArcherCore {
 	} \
 	$VIEW_CENTER_MODE { \
 		initViewCenterMode \
-		set ret 1
-	} \
-	$COMP_ERASE_MODE { \
-		initCompErase \
 		set ret 1
 	} \
 	$COMP_PICK_MODE { \
@@ -2509,13 +2480,6 @@ namespace eval ArcherCore {
 	-value $COMP_PICK_MODE \
 	-command [::itcl::code $this initCompPick] \
 	-state disabled
-    $itk_component(primaryToolbar) add radiobutton cerase \
-	-balloonstr "Component Erase" \
-	-helpstr "Component Erase" \
-	-variable [::itcl::scope mDefaultBindingMode] \
-	-value $COMP_ERASE_MODE \
-	-command [::itcl::code $this initCompErase] \
-	-state disabled
     $itk_component(primaryToolbar) add radiobutton cselect \
 	-balloonstr "Component Select Mode" \
 	-helpstr "Component Select Mode" \
@@ -2536,7 +2500,6 @@ namespace eval ArcherCore {
     $itk_component(primaryToolbar) itemconfigure scale -state disabled
     $itk_component(primaryToolbar) itemconfigure center -state disabled
     $itk_component(primaryToolbar) itemconfigure cpick -state disabled
-    $itk_component(primaryToolbar) itemconfigure cerase -state disabled
     $itk_component(primaryToolbar) itemconfigure cselect -state disabled
     $itk_component(primaryToolbar) itemconfigure measure -state disabled
 
@@ -2610,15 +2573,6 @@ namespace eval ArcherCore {
     $itk_component(ged) rect lwidth 0
 }
 
-::itcl::body ArcherCore::initCompErase {} {
-    $itk_component(ged) clear_mouse_ray_callback_list
-    $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_erase]
-    $itk_component(ged) init_comp_pick 1
-    $itk_component(ged) init_button_no_op 2
-
-    $itk_component(ged) rect lwidth 0
-}
-
 ::itcl::body ArcherCore::initCompPick {} {
     $itk_component(ged) clear_mouse_ray_callback_list
     $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_pick]
@@ -2667,34 +2621,6 @@ namespace eval ArcherCore {
     $itk_component(ged) pane_center $_pane $point
 }
 
-::itcl::body ArcherCore::mrayCallback_erase {_pane _start _target _partitions} {
-    if {$_partitions == ""} {
-	return
-    }
-
-    set partition [lindex $_partitions 0]
-
-    if {[catch {bu_get_value_by_keyword in $partition} in]} {
-	putString "Partition does not contain an \"in\""
-	putString "$in"
-	return
-    }
-
-    if {[catch {bu_get_value_by_keyword path $in} path]} {
-	putString "Partition does not contain an \"in\" path"
-	putString "[subst $[subst pt_$i]]"
-	return
-    }
-
-    gedCmd erase $path
-    if {!$mEnableListView} {
-	getTreeNode $path 1
-    }
-    updateTreeDrawLists
-    putString "erase $path"
-    set mStatusStr "erase $path"
-}
-
 ::itcl::body ArcherCore::mrayCallback_pick {_pane _start _target _partitions} {
     set partition [lindex $_partitions 0]
     if {$partition == {}} {
@@ -2704,7 +2630,32 @@ namespace eval ArcherCore {
 	set in [bu_get_value_by_keyword "in" $partition]
 	set path [bu_get_value_by_keyword "path" $in]
 	set path [regsub {^/} $path {}]
-	selectTreePath $path
+	set last [lindex [split $path /] end]
+	switch -- $mCompPickMode \
+	    $COMP_PICK_TREE_SELECT_MODE { \
+		selectTreePath $path
+	    } \
+	    $COMP_PICK_NAME_MODE { \
+		putString "Hit $path"
+	    } \
+	    $COMP_PICK_ERASE_MODE { \
+		gedCmd erase $path
+		if {!$mEnableListView} {
+		    getTreeNode $path 1
+		}
+		updateTreeDrawLists
+		putString "erase $path"
+		set mStatusStr "erase $path"
+	    } \
+	    $COMP_PICK_BOT_FLIP_MODE { \
+		catch {bot_flip $last}
+	    } \
+	    $COMP_PICK_BOT_SPLIT_MODE { \
+		catch {bot_split $last}
+	    } \
+	    $COMP_PICK_BOT_SYNC_MODE { \
+		catch {bot_sync $last}
+	    }
     }
 }
 
@@ -2729,7 +2680,6 @@ namespace eval ArcherCore {
 	$itk_component(primaryToolbar) itemconfigure scale -state normal
 	$itk_component(primaryToolbar) itemconfigure center -state normal
 	$itk_component(primaryToolbar) itemconfigure cpick -state normal
-	$itk_component(primaryToolbar) itemconfigure cerase -state normal
 	$itk_component(primaryToolbar) itemconfigure cselect -state normal
 	$itk_component(primaryToolbar) itemconfigure measure -state normal
     }
@@ -2748,7 +2698,6 @@ namespace eval ArcherCore {
 	$itk_component(primaryToolbar) itemconfigure scale -state disabled
 	$itk_component(primaryToolbar) itemconfigure center -state disabled
 	$itk_component(primaryToolbar) itemconfigure cpick -state disabled
-	$itk_component(primaryToolbar) itemconfigure cerase -state disabled
 	$itk_component(primaryToolbar) itemconfigure cselect -state disabled
 	$itk_component(primaryToolbar) itemconfigure measure -state disabled
     }

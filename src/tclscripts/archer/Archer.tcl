@@ -4775,6 +4775,7 @@ proc title_node_handler {node} {
     bind $itk_component(${_prefix}stdviewsmenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
     bind $itk_component(${_prefix}modesmenu) <<MenuSelect>> [::itcl::code $this modesMenuStatusCB %W]
     bind $itk_component(${_prefix}activepanemenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
+    bind $itk_component(${_prefix}comppickmenu) <<MenuSelect>> [::itcl::code $this modesMenuStatusCB %W]
     bind $itk_component(${_prefix}helpmenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
 
     bind $itk_component(${_prefix}raytracemenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
@@ -5156,6 +5157,24 @@ proc title_node_handler {node} {
 	    }
 	    "Lighting" {
 		set mStatusStr "Toggle lighting on/off "
+	    }
+	    "Tree Select" {
+		set mStatusStr "Select the picked component in the hierarchy tree."
+	    }
+	    "Get Name" {
+		set mStatusStr "Get the name of the picked component."
+	    }
+	    "Erase" {
+		set mStatusStr "Erase the picked component."
+	    }
+	    "Bot Flip" {
+		set mStatusStr "Flip the picked component if it's a bot."
+	    }
+	    "Bot Split" {
+		set mStatusStr "Split the picked component if it's a bot."
+	    }
+	    "Bot Sync" {
+		set mStatusStr "Sync the picked component if it's a bot."
 	    }
 	    default {
 		set mStatusStr ""
@@ -6015,6 +6034,20 @@ proc title_node_handler {node} {
 		radiobutton lr -label "Lower Right" \
 		    -helpstr "Set active pane to lower right"
 	    }
+	    cascade comppick -label "Comp Pick Mode" -menu {
+		radiobutton tselect -label "Tree Select" \
+		    -helpstr "Select the picked component in the hierarchy tree."
+		radiobutton gname -label "Get Name" \
+		    -helpstr "Get the name of the picked component."
+		radiobutton cerase -label "Erase" \
+		    -helpstr "Erase the picked component."
+		radiobutton bflip -label "Bot Flip" \
+		    -helpstr "Flip the picked component if it's a bot."
+		radiobutton bsplit -label "Bot Split" \
+		    -helpstr "Split the picked component if it's a bot."
+		radiobutton bsync -label "Bot Sync" \
+		    -helpstr "Sync the picked component if it's a bot."
+	    }
 	    checkbutton quad -label "Quad View" \
 		-helpstr "Toggle between single and quad display."
 	    separator sep1
@@ -6061,6 +6094,26 @@ proc title_node_handler {node} {
 	-value $i \
 	-variable [::itcl::scope mActivePane] \
 	-command [::itcl::code $this setActivePane lr]
+
+    $itk_component(menubar) menuconfigure .modes.comppick.tselect \
+	-value $COMP_PICK_TREE_SELECT_MODE \
+	-variable [::itcl::scope mCompPickMode]
+    $itk_component(menubar) menuconfigure .modes.comppick.gname \
+	-value $COMP_PICK_TREE_SELECT_MODE \
+	-variable [::itcl::scope mCompPickMode]
+    $itk_component(menubar) menuconfigure .modes.comppick.cerase \
+	-value $COMP_PICK_ERASE_MODE \
+	-variable [::itcl::scope mCompPickMode]
+    $itk_component(menubar) menuconfigure .modes.comppick.bflip \
+	-value $COMP_PICK_BOT_FLIP_MODE \
+	-variable [::itcl::scope mCompPickMode]
+    $itk_component(menubar) menuconfigure .modes.comppick.bsplit \
+	-value $COMP_PICK_BOT_SPLIT_MODE \
+	-variable [::itcl::scope mCompPickMode]
+    $itk_component(menubar) menuconfigure .modes.comppick.bsync \
+	-value $COMP_PICK_BOT_SYNC_MODE \
+	-variable [::itcl::scope mCompPickMode]
+
     $itk_component(menubar) menuconfigure .modes.quad \
 	-command [::itcl::code $this doMultiPane] \
 	-offvalue 0 \
@@ -6243,10 +6296,45 @@ proc title_node_handler {node} {
 	-variable [::itcl::scope mActivePane] \
 	-command [::itcl::code $this setActivePane lr]
 
+    itk_component add ${_prefix}comppickmenu {
+	menu $itk_component(${_prefix}modesmenu).${_prefix}comppickmenu \
+	    -tearoff 0
+    } {
+	keep -background
+    }
+
+    $itk_component(${_prefix}comppickmenu) add radiobutton \
+	-label "Tree Select" \
+	-value $COMP_PICK_TREE_SELECT_MODE \
+	-variable [::itcl::scope mCompPickMode]
+    $itk_component(${_prefix}comppickmenu) add radiobutton \
+	-label "Get Name" \
+	-value $COMP_PICK_NAME_MODE \
+	-variable [::itcl::scope mCompPickMode]
+    $itk_component(${_prefix}comppickmenu) add radiobutton \
+	-label "Delete" \
+	-value $COMP_PICK_ERASE_MODE \
+	-variable [::itcl::scope mCompPickMode]
+    $itk_component(${_prefix}comppickmenu) add radiobutton \
+	-label "Bot Flip" \
+	-value $COMP_PICK_BOT_FLIP_MODE \
+	-variable [::itcl::scope mCompPickMode]
+    $itk_component(${_prefix}comppickmenu) add radiobutton \
+	-label "Bot Split" \
+	-value $COMP_PICK_BOT_SPLIT_MODE \
+	-variable [::itcl::scope mCompPickMode]
+    $itk_component(${_prefix}comppickmenu) add radiobutton \
+	-label "Bot Sync" \
+	-value $COMP_PICK_BOT_SYNC_MODE \
+	-variable [::itcl::scope mCompPickMode]
+
     $itk_component(${_prefix}modesmenu) add cascade \
 	-label "Active Pane" \
 	-menu $itk_component(${_prefix}activepanemenu) \
 	-state disabled
+    $itk_component(${_prefix}modesmenu) add cascade \
+	-label "Comp Pick Mode" \
+	-menu $itk_component(${_prefix}comppickmenu)
     $itk_component(${_prefix}modesmenu) add checkbutton \
 	-label "Quad View" \
 	-offvalue 0 \
