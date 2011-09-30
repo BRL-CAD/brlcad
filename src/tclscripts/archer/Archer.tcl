@@ -173,35 +173,20 @@ package provide Archer 1.0
 
 	# ArcherCore Override Section
 	method cmd                 {args}
-	method 3ptarb              {args}
 	method attr                {args}
-	method bo                  {args}
-	method bot                 {args}
-	method bot_condense        {args}
-	method bot_decimate        {args}
-	method bot_face_fuse       {args}
-	method bot_merge           {args}
-	method bot_smooth          {args}
-	method bot_split           {args}
-	method bot_vertex_fuse     {args}
 	method c                   {args}
 	method clone               {args}
-	method color               {args}
 	method comb                {args}
 	method combmem             {args}
 	method cp                  {args}
 	method cpi                 {args}
 	method copyeval            {args}
 	method copymat             {args}
-	method dbconcat            {args}
-	method decompose           {args}
 	method edcodes             {args}
 	method edcolor             {args}
 	method edmater             {args}
 	method facetize            {args}
-	method fracture            {args}
 	method g                   {args}
-	method human               {args}
 	method i                   {args}
 	method in                  {args}
 	method inside              {args}
@@ -210,13 +195,9 @@ package provide Archer 1.0
 	method killrefs            {args}
 	method killtree            {args}
 	method make                {args}
-	method make_bb             {args}
-	method make_pnts           {args}
 	method mirror              {args}
 	method mv                  {args}
 	method mvall               {args}
-	method nmg_collapse        {args}
-	method nmg_simplify        {args}
 	method p                   {args}
 	method p_protate           {args}
 	method p_pscale            {args}
@@ -224,24 +205,14 @@ package provide Archer 1.0
 	method p_move_arb_edge     {args}
 	method p_move_arb_face     {args}
 	method p_rotate_arb_face   {args}
-	method prefix              {args}
-	method push                {args}
-	method put                 {args}
 	method putmat              {args}
 	method Load                {_target}
 	method r                   {args}
-	method rcodes              {args}
-	method rfarb               {args}
 	method rm                  {args}
-	method rmater              {args}
 	method saveDb              {}
-	method shells              {args}
-	method tire                {args}
 	method title               {args}
-	method track               {args}
 	method units               {args}
 	method vmake               {args}
-	method zap                 {args}
 	method initImages          {}
 	method initFbImages        {}
 	method setDefaultBindingMode {_mode}
@@ -1291,11 +1262,6 @@ package provide Archer 1.0
 }
 
 
-::itcl::body Archer::3ptarb {args} {
-    eval ArcherCore::gedWrapper 3ptarb 0 0 1 1 $args
-}
-
-
 ::itcl::body Archer::attr {args} {
     set len [llength $args]
 
@@ -1342,51 +1308,6 @@ package provide Archer 1.0
 }
 
 
-::itcl::body Archer::bo {args} {
-    eval ArcherCore::gedWrapper bo 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::bot {args} {
-    eval ArcherCore::gedWrapper bot 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::bot_condense {args} {
-    eval ArcherCore::gedWrapper bot_condense 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::bot_decimate {args} {
-    eval ArcherCore::gedWrapper bot_decimate 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::bot_face_fuse {args} {
-    eval ArcherCore::gedWrapper bot_face_fuse 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::bot_merge {args} {
-    eval ArcherCore::gedWrapper bot_merge 1 0 1 1 $args
-}
-
-
-::itcl::body Archer::bot_smooth {args} {
-    eval ArcherCore::gedWrapper bot_smooth 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::bot_split {args} {
-    eval ArcherCore::gedWrapper bot_split 0 0 1 2 $args
-}
-
-
-::itcl::body Archer::bot_vertex_fuse {args} {
-    eval ArcherCore::gedWrapper bot_vertex_fuse 0 0 1 1 $args
-}
-
-
 #
 # Create a combination.
 #
@@ -1424,11 +1345,6 @@ package provide Archer 1.0
     SetNormalCursor $this
 
     return $ret
-}
-
-
-::itcl::body Archer::color {args} {
-    eval ArcherCore::gedWrapper color 0 0 1 1 $args
 }
 
 
@@ -1479,16 +1395,6 @@ package provide Archer 1.0
 
 ::itcl::body Archer::copymat {args} {
     eval gedWrapper2 copymat 1 0 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::dbconcat {args} {
-    eval ArcherCore::gedWrapper dbconcat 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::decompose {args} {
-    eval ArcherCore::gedWrapper decompose 0 0 1 1 $args
 }
 
 
@@ -1632,21 +1538,11 @@ package provide Archer 1.0
 }
 
 
-::itcl::body Archer::fracture {args} {
-    eval ArcherCore::gedWrapper fracture 0 0 1 1 $args
-}
-
-
 #
 # Create a group or modify an existing one.
 #
 ::itcl::body Archer::g {args} {
     eval combWrapper g 2 $args
-}
-
-
-::itcl::body Archer::human {args} {
-    eval ArcherCore::gedWrapper human 0 0 1 1 $args
 }
 
 
@@ -1736,16 +1632,6 @@ package provide Archer 1.0
 }
 
 
-::itcl::body Archer::make_bb {args} {
-    eval ArcherCore::gedWrapper make_bb 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::make_pnts {args} {
-    eval ArcherCore::gedWrapper make_pnts 0 0 1 1 $args
-}
-
-
 ::itcl::body Archer::mirror {args} {
     eval createWrapper mirror $args
 }
@@ -1758,16 +1644,6 @@ package provide Archer 1.0
 
 ::itcl::body Archer::mvall {args} {
     eval moveWrapper mvall $args
-}
-
-
-::itcl::body Archer::nmg_collapse {args} {
-    eval ArcherCore::gedWrapper nmg_collapse 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::nmg_simplify {args} {
-    eval ArcherCore::gedWrapper nmg_simplify 0 0 1 1 $args
 }
 
 
@@ -1872,21 +1748,6 @@ package provide Archer 1.0
 ::itcl::body Archer::p_rotate_arb_face {args} {
     catch {eval gedCmd rotate_arb_face $args} ret
     return $ret
-}
-
-
-::itcl::body Archer::prefix {args} {
-    eval ArcherCore::gedWrapper prefix 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::push {args} {
-    eval ArcherCore::gedWrapper push 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::put {args} {
-    eval ArcherCore::gedWrapper put 0 0 1 1 $args
 }
 
 
@@ -2020,27 +1881,8 @@ package provide Archer 1.0
 }
 
 
-# XXX libged's rcodes needs to return the objects affected
-# The affected objects would be added to the ledger.
-::itcl::body Archer::rcodes {args} {
-    eval ArcherCore::gedWrapper rcodes 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::rfarb {args} {
-    eval ArcherCore::gedWrapper rfarb 0 0 1 1 $args
-}
-
-
 ::itcl::body Archer::rm {args} {
     eval removeCombMemberWrapper rm $args
-}
-
-
-# XXX libged's rmater needs to return the objects affected
-# The affected objects would be added to the ledger.
-::itcl::body Archer::rmater {args} {
-    eval ArcherCore::gedWrapper rmater 0 0 1 1 $args
 }
 
 
@@ -2061,25 +1903,8 @@ package provide Archer 1.0
 }
 
 
-::itcl::body Archer::shells {args} {
-    eval ArcherCore::gedWrapper shells 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::tire {args} {
-    eval ArcherCore::gedWrapper tire 0 0 1 1 $args
-}
-
-
 ::itcl::body Archer::title {args} {
     return [eval globalWrapper title $args]
-}
-
-
-# XXX libged's track needs to return the objects affected
-# The affected objects would be added to the ledger.
-::itcl::body Archer::track {args} {
-    eval ArcherCore::gedWrapper track 0 0 1 0 $args
 }
 
 
@@ -2111,10 +1936,6 @@ package provide Archer 1.0
 ::itcl::body Archer::vmake {args} {
     eval createWrapper make $args
     #    eval ArcherCore::gedWrapper vmake 0 0 1 1 $args
-}
-
-::itcl::body Archer::zap {args} {
-    eval ArcherCore::gedWrapper zap 0 0 0 1 $args
 }
 
 

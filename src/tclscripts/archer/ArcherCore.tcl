@@ -712,6 +712,8 @@ namespace eval ArcherCore {
 	method primaryToolbarAdd        {_type _name {args ""}}
 	method primaryToolbarRemove     {_index}
 
+	method bot_split2 {_bot}
+
 	# tree commands
 	method updateTreeDrawLists        {{_cflag 0}}
 	method fillTree          {_pnode _ctext _flat {_allow_multiple 0}}
@@ -1982,6 +1984,35 @@ namespace eval ArcherCore {
     eval $itk_component(primaryToolbar) delete $index
 }
 
+##
+# This method operates on one bot. It splits the bot if
+# necessary and puts the pieces in a new group.
+#
+::itcl::body ArcherCore::bot_split2 {_bot} {
+    set new_bots [gedCmd bot_split $_bot]
+
+    set blist [lindex $new_bots 0]
+    set bname [lindex $blist 0]
+    set bots [lindex $blist 1]
+    if {[llength $bots] == 0} {
+	putString "$bname does not require a split"
+	return ""
+    }
+
+    set backup "$bname.bak"
+    if {[gedCmd exists $backup]} {
+	gedCmd make_name -s 0
+	set backup [gedCmd make_name $backup]
+    }
+
+    gedCmd mv $bname $backup
+    eval gedCmd g $bname $bots
+    gedCmd erase $bname
+
+    return $bname
+}
+
+
 # ------------------------------------------------------------
 #                    WINDOW COMMANDS
 # ------------------------------------------------------------
@@ -2630,13 +2661,14 @@ namespace eval ArcherCore {
 	set in [bu_get_value_by_keyword "in" $partition]
 	set path [bu_get_value_by_keyword "path" $in]
 	set path [regsub {^/} $path {}]
-	set last [lindex [split $path /] end]
+	set pathlist [split $path /]
+	set last [lindex $pathlist end]
 	switch -- $mCompPickMode \
 	    $COMP_PICK_TREE_SELECT_MODE { \
 		selectTreePath $path
 	    } \
 	    $COMP_PICK_NAME_MODE { \
-		putString "Hit $path"
+		putString "Hit $path, last - $last"
 	    } \
 	    $COMP_PICK_ERASE_MODE { \
 		gedCmd erase $path
@@ -2650,8 +2682,20 @@ namespace eval ArcherCore {
 	    $COMP_PICK_BOT_FLIP_MODE { \
 		catch {bot_flip $last}
 	    } \
-	    $COMP_PICK_BOT_SPLIT_MODE { \
-		catch {bot_split $last}
+	    $COMP_PICK_BOT_SPLIT_MODE {
+		set how [gedCmd how $path]
+		if {![catch {bot_split2 $last} bgroup]} {
+		    set dirname [file dirname $path]
+		    if {$dirname != "."} {
+			set drawitem $dirname
+		    } else {
+			set drawitem $bgroup
+		    }
+		    gedCmd draw -m$how $drawitem
+
+		    syncTree
+		    setSave
+		}
 	    } \
 	    $COMP_PICK_BOT_SYNC_MODE { \
 		catch {bot_sync $last}
