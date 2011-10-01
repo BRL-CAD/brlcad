@@ -41,12 +41,13 @@
 
 struct sim_contact {
 	vect_t ptA, ptB;
-	vect_t normalB;
+	vect_t normalWorldOnB;
 };
 
 struct sim_manifold {
 	int num_contacts;
 	struct sim_contact rb_contacts[MAX_CONTACTS_PER_MANIFOLD];
+	struct sim_manifold *next;
 };
 
 /* Contains information about a single rigid body constructed from a BRL-CAD region.

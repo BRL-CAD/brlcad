@@ -99,33 +99,57 @@ void btRTCollisionAlgorithm::processCollision (
 	//------------------- DEBUG ---------------------------
 
     //Get the user pointers to struct rigid_body, for printing the body name
-	struct rigid_body *upA = (struct rigid_body *)col0->getUserPointer();
-	struct rigid_body *upB = (struct rigid_body *)col1->getUserPointer();
+	struct rigid_body *rbA = (struct rigid_body *)col0->getUserPointer();
+	struct rigid_body *rbB = (struct rigid_body *)col1->getUserPointer();
 
-	if(upA != NULL && upB != NULL){
+	if(rbA != NULL && rbB != NULL){
 
 		btPersistentManifold* contactManifold = resultOut->getPersistentManifold();
 
-		bu_log("processCollision(box/box): %s & %s \n", upA->rb_namep, upB->rb_namep);
+		struct sim_manifold *current_manifold =
+			(struct sim_manifold *)bu_malloc(sizeof(struct sim_manifold), "sim_manifold: current_manifold");
+		current_manifold->next = NULL;
+
+		if(rbB->first_manifold == NULL){
+			rbB->first_manifold = current_manifold;
+		}
+		else{
+			//Go upto the last manifold, keeping a ptr 1 node behind
+			struct sim_manifold *p1 = rbB->first_manifold, *p2;
+			while(p1 != NULL){
+				p2 = p1;
+				p1 = p1->next;
+			}
+
+			p2->next = current_manifold;
+			//print_manifold_list(rb->first_manifold);
+		}
+		rbB->num_manifolds++;
+
+		bu_log("processCollision(box/box): %s & %s \n", rbA->rb_namep, rbB->rb_namep);
 
 		//Get the number of points in this manifold
-		int numContacts = contactManifold->getNumContacts();
-		int j;
+		current_manifold->num_contacts = contactManifold->getNumContacts();
+		int i;
 
-		bu_log("processCollision : Manifold contacts : %d\n", numContacts);
+		bu_log("processCollision : Manifold contacts : %d\n", current_manifold->num_contacts);
 
 		//Iterate over the points for this manifold
-		for (j=0;j<numContacts;j++){
-			btManifoldPoint& pt = contactManifold->getContactPoint(j);
+		for (i=0; i<current_manifold->num_contacts; i++){
+			btManifoldPoint& pt = contactManifold->getContactPoint(i);
 
 			btVector3 ptA = pt.getPositionWorldOnA();
 			btVector3 ptB = pt.getPositionWorldOnB();
 
+			VMOVE(ptA, current_manifold->rb_contacts[i].ptA);
+			VMOVE(ptB, current_manifold->rb_contacts[i].ptB);
+			VMOVE(pt.m_normalWorldOnB, current_manifold->rb_contacts[i].normalWorldOnB);
+
 			bu_log("processCollision: contact %d of %d, %s(%f, %f, %f) , %s(%f, %f, %f) \
 					n(%f, %f, %f)\n",
-					j+1, numContacts,
-					upA->rb_namep, ptA[0], ptA[1], ptA[2],
-					upB->rb_namep, ptB[0], ptB[1], ptB[2],
+					i+1, current_manifold->num_contacts,
+					rbA->rb_namep, ptA[0], ptA[1], ptA[2],
+					rbB->rb_namep, ptB[0], ptB[1], ptB[2],
 					pt.m_normalWorldOnB[0], pt.m_normalWorldOnB[1], pt.m_normalWorldOnB[2]);
 
 		}

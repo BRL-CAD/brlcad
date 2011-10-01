@@ -91,7 +91,32 @@ void print_matrix(struct simulation_params *sim_params, char *rb_namep, mat_t t)
  */
 void print_rigid_body(struct rigid_body *rb)
 {
-    bu_log("Rigid Body : \"%s\", state = %d\n", rb->rb_namep, rb->state);
+    bu_log("print_rigid_body : \"%s\", state = %d\n", rb->rb_namep, rb->state);
+}
+
+
+void print_manifold_list(struct rigid_body *rb)
+{
+    struct sim_manifold *current_manifold;
+    int i;
+
+	for (current_manifold = rb->first_manifold; current_manifold != NULL;
+			current_manifold = current_manifold->next) {
+		for (i=0; i<current_manifold->num_contacts; i++) {
+			bu_log("print_manifold_list: contact %d of %d, (%f, %f, %f) , (%f, %f, %f) \
+					n(%f, %f, %f)\n",
+					i+1, current_manifold->num_contacts,
+					current_manifold->rb_contacts[i].ptA[0],
+					current_manifold->rb_contacts[i].ptA[1],
+					current_manifold->rb_contacts[i].ptA[2],
+					current_manifold->rb_contacts[i].ptB[0],
+					current_manifold->rb_contacts[i].ptB[1],
+					current_manifold->rb_contacts[i].ptB[2],
+					current_manifold->rb_contacts[i].normalWorldOnB[0],
+					current_manifold->rb_contacts[i].normalWorldOnB[1],
+					current_manifold->rb_contacts[i].normalWorldOnB[2]);
+		}
+	}
 }
 
 
@@ -179,6 +204,9 @@ int add_physics_attribs(struct rigid_body *current_node)
 {
 	VSETALL(current_node->linear_velocity, 0.0f);
 	VSETALL(current_node->angular_velocity, 0.0f);
+
+	current_node->num_manifolds = 0;
+	current_node->first_manifold = NULL;
 	return GED_OK;
 }
 
@@ -601,7 +629,30 @@ int apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 
 		insertAABB(gedp, sim_params, current_node);
 
+		print_manifold_list(current_node);
 
+
+	}
+
+    return GED_OK;
+}
+
+
+int free_manifold_lists(struct simulation_params *sim_params)
+{
+	/* Free memory in manifold list */
+    struct sim_manifold *current_manifold, *next_manifold;
+    struct rigid_body *current_node;
+
+    for (current_node = sim_params->head_node; current_node != NULL;
+    		current_node = current_node->next) {
+
+		for (current_manifold = current_node->first_manifold; current_manifold != NULL; ) {
+			next_manifold = current_manifold->next;
+			bu_free(current_manifold, "simulate : current_manifold");
+			current_manifold = next_manifold;
+			current_node->num_manifolds--;
+		}
 	}
 
     return GED_OK;
@@ -677,6 +728,8 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 			bu_vls_printf(gedp->ged_result_str, "%s: ERROR while applying transforms\n", argv[0]);
 			return GED_ERROR;
 		}
+
+		free_manifold_lists(&sim_params);
     }
 
 
