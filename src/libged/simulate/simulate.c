@@ -656,6 +656,8 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 
     for (i=0 ; i < sim_params.duration ; i++) {
 
+    	bu_log("%s: ------------------------- Iteration %d -----------------------\n", argv[0], i);
+
     	rv = get_bb(gedp, &sim_params);
     	if (rv != GED_OK){
     		bu_vls_printf(gedp->ged_result_str, "%s: ERROR while getting bounding boxes\n", argv[0]);

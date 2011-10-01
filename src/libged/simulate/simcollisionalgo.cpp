@@ -79,8 +79,6 @@ void btRTCollisionAlgorithm::processCollision (
 	btBoxShape* box0 = (btBoxShape*)col0->getCollisionShape();
 	btBoxShape* box1 = (btBoxShape*)col1->getCollisionShape();
 
-
-
 	/// report a contact. internally this will be kept persistent, and contact reduction is done
 	resultOut->setPersistentManifold(m_manifoldPtr);
 #ifndef USE_PERSISTENT_CONTACTS
@@ -95,6 +93,43 @@ void btRTCollisionAlgorithm::processCollision (
 	//This part will get replaced with a call to rt
 	btBoxBoxDetector detector(box0,box1);
 	detector.getClosestPoints(input,*resultOut,dispatchInfo.m_debugDraw);
+
+
+
+	//------------------- DEBUG ---------------------------
+
+    //Get the user pointers to struct rigid_body, for printing the body name
+	struct rigid_body *upA = (struct rigid_body *)col0->getUserPointer();
+	struct rigid_body *upB = (struct rigid_body *)col1->getUserPointer();
+
+	if(upA != NULL && upB != NULL){
+
+		btPersistentManifold* contactManifold = resultOut->getPersistentManifold();
+
+		bu_log("processCollision(box/box): %s & %s \n", upA->rb_namep, upB->rb_namep);
+
+		//Get the number of points in this manifold
+		int numContacts = contactManifold->getNumContacts();
+		int j;
+
+		bu_log("processCollision : Manifold contacts : %d\n", numContacts);
+
+		//Iterate over the points for this manifold
+		for (j=0;j<numContacts;j++){
+			btManifoldPoint& pt = contactManifold->getContactPoint(j);
+
+			btVector3 ptA = pt.getPositionWorldOnA();
+			btVector3 ptB = pt.getPositionWorldOnB();
+
+			bu_log("processCollision: contact %d of %d, %s(%f, %f, %f) , %s(%f, %f, %f)\n",
+					j+1, numContacts,
+					upA->rb_namep, ptA[0], ptA[1], ptA[2],
+					upB->rb_namep, ptB[0], ptB[1], ptB[2]);
+		}
+	}
+
+
+	//------------------------------------------------------
 
 #ifdef USE_PERSISTENT_CONTACTS
 	//  refreshContactPoints is only necessary when using persistent contact points. otherwise all points are newly added
