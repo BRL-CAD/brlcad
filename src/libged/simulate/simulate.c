@@ -656,7 +656,7 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 
     for (i=0 ; i < sim_params.duration ; i++) {
 
-    	bu_log("%s: ------------------------- Iteration %d -----------------------\n", argv[0], i);
+    	bu_log("%s: ------------------------- Iteration %d -----------------------\n", argv[0], i+1);
 
     	rv = get_bb(gedp, &sim_params);
     	if (rv != GED_OK){
@@ -685,6 +685,7 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 		next_node = current_node->next;
 		bu_free(current_node, "simulate : current_node");
 		current_node = next_node;
+		sim_params.num_bodies--;
 	}
 
 

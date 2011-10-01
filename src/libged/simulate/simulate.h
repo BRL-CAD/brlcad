@@ -37,6 +37,18 @@
 #define DISABLE_DEACTIVATION 4
 #define DISABLE_SIMULATION 5
 
+#define MAX_CONTACTS_PER_MANIFOLD 4
+
+struct sim_contact {
+	vect_t ptA, ptB;
+	vect_t normalB;
+};
+
+struct sim_manifold {
+	int num_contacts;
+	struct sim_contact rb_contacts[MAX_CONTACTS_PER_MANIFOLD];
+};
+
 /* Contains information about a single rigid body constructed from a BRL-CAD region.
  * This structure is the node of a linked list containing the geometry to be added to the sim
  * Only the bb is currently present, but physical properties like elasticity, custom forces
@@ -58,6 +70,9 @@ struct rigid_body {
     vect_t linear_velocity; 		/**< @brief linear velocity components */
     vect_t angular_velocity; 		/**< @brief angular velocity components */
 
+    /* Manifolds in which this body participates and is body B, only body B has manifold info*/
+    int num_manifolds;
+    struct sim_manifold *first_manifold;
 };
 
 /* Contains the simulation parameters, such as number of rigid bodies,
@@ -72,6 +87,8 @@ struct simulation_params {
     char *ground_plane_name;       /**< @brief name of the ground plane region */
     struct rigid_body *head_node;  /**< @brief link to first rigid body node */
 };
+
+
 
 
 #endif /* SIMULATE_H_ */

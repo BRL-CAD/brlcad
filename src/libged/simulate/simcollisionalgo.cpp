@@ -121,10 +121,13 @@ void btRTCollisionAlgorithm::processCollision (
 			btVector3 ptA = pt.getPositionWorldOnA();
 			btVector3 ptB = pt.getPositionWorldOnB();
 
-			bu_log("processCollision: contact %d of %d, %s(%f, %f, %f) , %s(%f, %f, %f)\n",
+			bu_log("processCollision: contact %d of %d, %s(%f, %f, %f) , %s(%f, %f, %f) \
+					n(%f, %f, %f)\n",
 					j+1, numContacts,
 					upA->rb_namep, ptA[0], ptA[1], ptA[2],
-					upB->rb_namep, ptB[0], ptB[1], ptB[2]);
+					upB->rb_namep, ptB[0], ptB[1], ptB[2],
+					pt.m_normalWorldOnB[0], pt.m_normalWorldOnB[1], pt.m_normalWorldOnB[2]);
+
 		}
 	}
 
