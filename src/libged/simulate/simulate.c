@@ -737,7 +737,7 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 			return GED_ERROR;
 		}
 
-		/*free_manifold_lists(&sim_params);*/
+		free_manifold_lists(&sim_params);
     }
 
 
