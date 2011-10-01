@@ -100,11 +100,12 @@ void print_manifold_list(struct rigid_body *rb)
     struct sim_manifold *current_manifold;
     int i;
 
+    bu_log("print_manifold_list: %s\n", rb->rb_namep);
+
 	for (current_manifold = rb->first_manifold; current_manifold != NULL;
 			current_manifold = current_manifold->next) {
 		for (i=0; i<current_manifold->num_contacts; i++) {
-			bu_log("print_manifold_list: contact %d of %d, (%f, %f, %f) , (%f, %f, %f) \
-					n(%f, %f, %f)\n",
+			bu_log("contact %d of %d, (%f, %f, %f):(%f, %f, %f), n(%f, %f, %f)\n",
 					i+1, current_manifold->num_contacts,
 					current_manifold->rb_contacts[i].ptA[0],
 					current_manifold->rb_contacts[i].ptA[1],
@@ -207,6 +208,7 @@ int add_physics_attribs(struct rigid_body *current_node)
 
 	current_node->num_manifolds = 0;
 	current_node->first_manifold = NULL;
+
 	return GED_OK;
 }
 
@@ -570,8 +572,8 @@ int apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 
 	for (current_node = sim_params->head_node; current_node != NULL; current_node = current_node->next) {
 
-		if(strcmp(current_node->rb_namep, sim_params->ground_plane_name) == 0)
-			continue;
+		/*if(strcmp(current_node->rb_namep, sim_params->ground_plane_name) == 0)
+			continue;*/
 
 		/* Get the internal representation of the object */
 		GED_DB_GET_INTERNAL(gedp, &intern, current_node->dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
@@ -648,11 +650,15 @@ int free_manifold_lists(struct simulation_params *sim_params)
     		current_node = current_node->next) {
 
 		for (current_manifold = current_node->first_manifold; current_manifold != NULL; ) {
+
 			next_manifold = current_manifold->next;
 			bu_free(current_manifold, "simulate : current_manifold");
 			current_manifold = next_manifold;
 			current_node->num_manifolds--;
 		}
+
+		current_node->num_manifolds = 0;
+		current_node->first_manifold = NULL;
 	}
 
     return GED_OK;
@@ -715,6 +721,8 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
     		return GED_ERROR;
     	}
 
+    	/* */
+
     	/* Run the physics simulation  */
 		rv = run_simulation(&sim_params);
 		if (rv != GED_OK){
@@ -729,7 +737,7 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 			return GED_ERROR;
 		}
 
-		free_manifold_lists(&sim_params);
+		/*free_manifold_lists(&sim_params);*/
     }
 
 
