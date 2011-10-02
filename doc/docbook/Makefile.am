@@ -2,9 +2,8 @@ XSLTPROC_FLAGS=--nonet --xinclude
 
 XSL_XHTML_STYLESHEET=$(top_srcdir)/doc/docbook/resources/brlcad/brlcad-xhtml-stylesheet.xsl
 XSL_MAN_STYLESHEET=$(top_srcdir)/doc/docbook/resources/brlcad/brlcad-man-stylesheet.xsl
+# not used for docs without covers:
 XSL_FO_STYLESHEET=$(top_srcdir)/doc/docbook/resources/brlcad/brlcad-fo-stylesheet.xsl
-# for covers
-XSL_FO_COVERS_STYLESHEET=$(top_srcdir)/doc/docbook/resources/brlcad/brlcad-fo-stylesheet-covers.xsl
 
 # redefine APACHEFOP--better error checking
 FOP_OPTS = "-Djava.awt.headless=true -Dxml.catalog.files=$(XML_CATALOG)"
@@ -73,8 +72,8 @@ $(XML_CATALOGS): $(GEN_XML_CATALOGS) BRLCAD_DOC.pm
 	if test ! -f $(XML_CATALOG) ; then ./create-xml-catalogs.pl ; fi
 	$(FOP_ENV_VARS) $(APACHEFOP) -c fop.xconf -fo $< -pdf $@
 
+# this rule must not be applied to books
 .xml.fo:
-	if test ! -f $(XML_CATALOG) ; then ./create-xml-catalogs.pl ; fi
 	@mkdir -p $$(dirname $@)
 	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_FO_STYLESHEET) $<
 
@@ -127,10 +126,6 @@ covers.pdf: covers.fo
 	$(FOP_ENV_VARS) $(APACHEFOP) $(fopdebug) -c fop.xconf -fo $(fo_out) -pdf $(pdf_out)
 	@echo ============ finished making $(pdf_out) =============
 
-# we cannot get good covers at the moment if the make -j option is
-# used so use the special target to prevent it from taking effect
-.NOTPARALLEL:
-
 # the books with covers
 enbooks = \
 	books/en/BRL-CAD_Tutorial_Series-VolumeI.pdf \
@@ -140,13 +135,72 @@ enbooks = \
 
 # books need special cover stylesheets, and one for each book due to
 # customized colors
-fo_book = tmp.fo
-$(enbooks): %.pdf: %.xml $(FO_COVER_DEPS) $(XML_CATALOG)
-	perl create-book-covers.pl $<
-	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $(fo_book) \
-          $(XSL_FO_COVERS_STYLESHEET) $<
-	$(FOP_ENV_VARS) $(APACHEFOP) $(fopdebug) -c fop.xconf -fo $(fo_book) -pdf $@ \
-	  && if test -f $(fo_book) ; then rm $(fo_book) ; fi
+
+foss=doc/docbook/resources/brlcad/brlcad-fo-stylesheet-covers
+covers_ss_v1=$(top_srcdir)/$(foss)-v1.xsl
+covers_ss_v2=$(top_srcdir)/$(foss)-v2.xsl
+covers_ss_v3=$(top_srcdir)/$(foss)-v3.xsl
+covers_ss_v4=$(top_srcdir)/$(foss)-v4.xsl
+
+# the actual cover ss
+autofoss=doc/docbook/resources/brlcad/book-covers-fo-autogen
+autogen_covers_ss_v1=$(top_srcdir)/$(autofoss)-v1.xsl
+autogen_covers_ss_v2=$(top_srcdir)/$(autofoss)-v2.xsl
+autogen_covers_ss_v3=$(top_srcdir)/$(autofoss)-v3.xsl
+autogen_covers_ss_v4=$(top_srcdir)/$(autofoss)-v4.xsl
+
+booksen1 = books/en/BRL-CAD_Tutorial_Series-VolumeI
+booksen2 = books/en/BRL-CAD_Tutorial_Series-VolumeII
+booksen3 = books/en/BRL-CAD_Tutorial_Series-VolumeIII
+booksen4 = books/en/BRL-CAD_Tutorial_Series-VolumeIV
+
+$(autogen_covers_ss_v1): $(booksen1).xml $(FOP_COVER_DEPS)
+	./create-book-covers.pl $<
+
+$(autogen_covers_ss_v2): $(booksen2).xml $(FOP_COVER_DEPS)
+	./create-book-covers.pl $<
+
+$(autogen_covers_ss_v3): $(booksen3).xml $(FOP_COVER_DEPS)
+	./create-book-covers.pl $<
+
+$(autogen_covers_ss_v4): $(booksen4).xml $(FOP_COVER_DEPS)
+	./create-book-covers.pl $<
+
+# en book fo
+$(booksen1).fo : $(booksen1).xml $(FO_COVER_DEPS) $(XML_CATALOG) $(autogen_covers_ss_v1)
+	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ \
+          $(covers_ss_v1) $<
+
+$(booksen2).fo : $(booksen2).xml $(FO_COVER_DEPS) $(XML_CATALOG) $(autogen_covers_ss_v2)
+	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ \
+          $(covers_ss_v2) $<
+
+$(booksen3).fo : $(booksen3).xml $(FO_COVER_DEPS) $(XML_CATALOG) $(autogen_covers_ss_v3)
+	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ \
+          $(covers_ss_v3) $<
+
+$(booksen4).fo : $(booksen4).xml $(FO_COVER_DEPS) $(XML_CATALOG) $(autogen_covers_ss_v4)
+	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ \
+          $(covers_ss_v4) $<
+
+# en book pdf
+#	  && if test -f $< ; then rm $< ; fi
+$(booksen1).pdf : $(booksen1).fo $(XML_CATALOG)
+	$(FOP_ENV_VARS) $(APACHEFOP) $(fopdebug) -c fop.xconf -fo $< -pdf $@ \
+	  && if test -f $< ; then rm $< ; fi
+
+$(booksen2).pdf : $(booksen2).fo $(XML_CATALOG)
+	$(FOP_ENV_VARS) $(APACHEFOP) $(fopdebug) -c fop.xconf -fo $< -pdf $@ \
+	  && if test -f $< ; then rm $< ; fi
+
+$(booksen3).pdf : $(booksen3).fo $(XML_CATALOG)
+	$(FOP_ENV_VARS) $(APACHEFOP) $(fopdebug) -c fop.xconf -fo $< -pdf $@ \
+	  && if test -f $< ; then rm $< ; fi
+
+$(booksen4).pdf : $(booksen4).fo $(XML_CATALOG)
+	$(FOP_ENV_VARS) $(APACHEFOP) $(fopdebug) -c fop.xconf -fo $< -pdf $@ \
+	  && if test -f $< ; then rm $< ; fi
+
 
 # new index product
 #indexDOCBOOK_EN = \
