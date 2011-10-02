@@ -62,7 +62,7 @@ struct rigid_body {
     point_t bb_center, bb_dims;     /**< @brief bb center and dimensions */
     point_t btbb_min, btbb_max;     /**< @brief Bullet body bb bounds */
     point_t btbb_center, btbb_dims; /**< @brief Bullet bb center and dimensions */
-    mat_t m;                        /**< @brief transformation matrix from Bullet */
+    mat_t m, m_prev;                        /**< @brief transformation matrix from Bullet */
     int state;						/**< @brief rigid body state from Bullet */
     struct directory *dp;           /**< @brief directory pointer to the related region */
     struct rigid_body *next;        /**< @brief link to next body */
@@ -72,8 +72,8 @@ struct rigid_body {
     vect_t angular_velocity; 		/**< @brief angular velocity components */
 
     /* Manifolds in which this body participates and is body B, only body B has manifold info*/
-    int num_manifolds;
-    struct sim_manifold *first_manifold;
+    int num_manifolds;				/**< @brief angular velocity components */
+    struct sim_manifold *first_manifold; /**< @brief angular velocity components */
 };
 
 /* Contains the simulation parameters, such as number of rigid bodies,
