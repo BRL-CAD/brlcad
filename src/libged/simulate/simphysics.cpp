@@ -43,30 +43,32 @@
  * Prints the 16 by 16 transform matrices for debugging
  *
  */
-void print_matrices(struct simulation_params *sim_params, char *rb_namep, mat_t t, btScalar *m)
+void print_matrices(char *rb_namep, mat_t t, btScalar *m)
 {
     int i, j;
+    char buffer[800];
 
-    bu_vls_printf(sim_params->result_str, "------------Transformation matrices(%s)--------------\n",
+    sprintf(buffer, "------------Phy : Transformation matrices(%s)--------------\n",
             rb_namep);
 
     for (i=0 ; i<4 ; i++) {
         for (j=0 ; j<4 ; j++) {
-            bu_vls_printf(sim_params->result_str, "t[%d]: %f\t", (j*4 + i), t[j*4 + i] );
+        	sprintf(buffer, "%st[%d]: %f\t", buffer, (j*4 + i), t[j*4 + i] );
         }
-        bu_vls_printf(sim_params->result_str, "\n");
+        sprintf(buffer, "%s\n", buffer);
     }
 
-    bu_vls_printf(sim_params->result_str, "\n");
+    sprintf(buffer, "%s\n", buffer);
 
     for (i=0 ; i<4 ; i++) {
         for (j=0 ; j<4 ; j++) {
-            bu_vls_printf(sim_params->result_str, "m[%d]: %f\t", (j*4 + i), m[j*4 + i] );
+            sprintf(buffer, "%sm[%d]: %f\t", buffer, (j*4 + i), m[j*4 + i] );
         }
-        bu_vls_printf(sim_params->result_str, "\n");
+        sprintf(buffer, "%s\n", buffer);
     }
 
-    bu_vls_printf(sim_params->result_str, "-------------------------------------------------------\n");
+    sprintf(buffer, "%s-------------------------------------------------------\n", buffer);
+    bu_log(buffer);
 
 }
 
@@ -231,7 +233,7 @@ int get_transforms(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_par
             //Copy the transform matrix
             MAT_COPY(current_node->m, m);
 
-            //print_matrices(sim_params, current_node->rb_namep, current_node->m, m);
+            print_matrices(current_node->rb_namep, current_node->m, m);
 
             //Get the state of the body
             current_node->state = bb_RigidBody->getActivationState();

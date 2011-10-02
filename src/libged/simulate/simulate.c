@@ -68,21 +68,23 @@ print_usage(struct bu_vls *str)
  * Prints a 16 by 16 transform matrix for debugging
  *
  */
-void print_matrix(struct simulation_params *sim_params, char *rb_namep, mat_t t)
+void print_matrix(char *rb_namep, mat_t t)
 {
 	int i, j;
+	char buffer[500];
 
-	bu_vls_printf(sim_params->result_str, "------------Transformation matrix(%s)--------------\n",
+	sprintf(buffer, "------------Transformation matrix(%s)--------------\n",
 			rb_namep);
 
 	for (i=0 ; i<4 ; i++) {
 		for (j=0 ; j<4 ; j++) {
-			bu_vls_printf(sim_params->result_str, "t[%d]: %f\t", (i*4 + j), t[i*4 + j] );
+			sprintf(buffer, "%st[%d]: %f\t", buffer, (i*4 + j), t[i*4 + j] );
 		}
-		bu_vls_printf(sim_params->result_str, "\n");
+		sprintf(buffer, "%s\n", buffer);
 	}
 
-	bu_vls_printf(sim_params->result_str, "-------------------------------------------------------\n");
+	sprintf(buffer, "%s-------------------------------------------------------\n", buffer);
+	bu_log(buffer);
 }
 
 
@@ -578,7 +580,7 @@ int apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 		/* Get the internal representation of the object */
 		GED_DB_GET_INTERNAL(gedp, &intern, current_node->dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
 
-		print_matrix(sim_params, current_node->dp->d_namep, current_node->m);
+		print_matrix(current_node->dp->d_namep, current_node->m);
 
 		/* Translate to origin without any rotation, before applying rotation */
 		MAT_IDN(m);
@@ -613,7 +615,7 @@ int apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 		m[14] = current_node->m[14];
 		MAT_TRANSPOSE(t, m);
 
-		print_matrix(sim_params, current_node->dp->d_namep, t);
+		print_matrix(current_node->dp->d_namep, t);
 
 		if (rt_matrix_transform(&intern, t, &intern, 0, gedp->ged_wdbp->dbip, &rt_uniresource) < 0){
 			bu_vls_printf(gedp->ged_result_str, "apply_transforms: ERROR rt_matrix_transform(%s) failed while \
