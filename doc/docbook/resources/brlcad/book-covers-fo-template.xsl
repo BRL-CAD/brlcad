@@ -9,7 +9,10 @@
 <!-- use prog 'create-book-covers.pl' -->
 
 <xsl:include href="brlcad-gendata.xsl"/>
+<!-- original
 <xsl:include href="brlcad-colors-autogen.xsl"/>
+-->
+<?brlcad insert-color-file-name ?>
 
 <!-- ==================================================================== -->
 <xsl:template name="front.cover">
