@@ -583,11 +583,11 @@ int apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 		/* Get the internal representation of the object */
 		GED_DB_GET_INTERNAL(gedp, &intern, current_node->dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
 
-		bu_log("Got this matrix for current iteration :");
-		print_matrix(current_node->dp->d_namep, current_node->m);
+		/*bu_log("Got this matrix for current iteration :");
+		print_matrix(current_node->dp->d_namep, current_node->m); */
 
-		bu_log("Previous iteration matrix:");
-		print_matrix(current_node->dp->d_namep, current_node->m_prev);
+		/*bu_log("Previous iteration matrix:");
+		print_matrix(current_node->dp->d_namep, current_node->m_prev); */
 
 		/* Translate to origin without any rotation, before applying rotation */
 		MAT_IDN(m);
@@ -602,8 +602,8 @@ int apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 			return GED_ERROR;
 		}
 
-		bu_log("Translating back : %f, %f, %f", m[12], m[13], m[14]);
-		print_matrix(current_node->dp->d_namep, t);
+		/*bu_log("Translating back : %f, %f, %f", m[12], m[13], m[14]);
+		print_matrix(current_node->dp->d_namep, t); */
 
 		/* Apply inverse rotation with no translation to undo previous iteration's rotation */
 		MAT_COPY(m, current_node->m_prev);
@@ -618,8 +618,8 @@ int apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 			return GED_ERROR;
 		}
 
-		bu_log("Rotating back :");
-		print_matrix(current_node->dp->d_namep, t);
+		/*bu_log("Rotating back :");
+		print_matrix(current_node->dp->d_namep, t);*/
 
 		/*---------------------- Now apply current transformation -------------------------*/
 
@@ -636,8 +636,8 @@ int apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 			return GED_ERROR;
 		}
 
-		bu_log("Rotating forward :");
-		print_matrix(current_node->dp->d_namep, t);
+		/*bu_log("Rotating forward :");
+		print_matrix(current_node->dp->d_namep, t);*/
 
 
 		/* Translate again without any rotation, to apply final position */
@@ -647,8 +647,8 @@ int apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 		m[14] = current_node->m[14];
 		MAT_TRANSPOSE(t, m);
 
-		bu_log("Translating forward by %f, %f, %f", m[12], m[13], m[14]);
-		print_matrix(current_node->dp->d_namep, t);
+		/*bu_log("Translating forward by %f, %f, %f", m[12], m[13], m[14]);
+		print_matrix(current_node->dp->d_namep, t);*/
 
 		if (rt_matrix_transform(&intern, t, &intern, 0, gedp->ged_wdbp->dbip, &rt_uniresource) < 0){
 			bu_vls_printf(gedp->ged_result_str, "apply_transforms: ERROR rt_matrix_transform(%s) failed while \
@@ -657,18 +657,12 @@ int apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 			return GED_ERROR;
 		}
 
-
-
 		/* Write the modified solid to the db so it can be redrawn at the new position & orientation by Mged */
 		if (rt_db_put_internal(current_node->dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 			bu_vls_printf(gedp->ged_result_str, "apply_transforms: ERROR Database write error for '%s', aborting\n",
 					current_node->dp->d_namep);
 			return GED_ERROR;
 		}
-
-		/*current_node->bb_center[0] = m[12];
-		current_node->bb_center[1] = m[13];
-		current_node->bb_center[2] = m[14];*/
 
 		/* Store this world transformation to undo it before next world transformation */
 		MAT_COPY(current_node->m_prev, current_node->m);
@@ -772,7 +766,7 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 
 
     	/* Generate manifolds using rt */
-    	//generate_manifolds(sim_params);
+    	/* generate_manifolds(sim_params); */
 
     	/* Run the physics simulation  */
 		rv = run_simulation(&sim_params);

@@ -98,7 +98,7 @@ void btRTCollisionAlgorithm::processCollision (
 
 	//------------------- DEBUG ---------------------------
 
-/*    //Get the user pointers to struct rigid_body, for printing the body name
+    //Get the user pointers to struct rigid_body, for printing the body name
 	struct rigid_body *rbA = (struct rigid_body *)col0->getUserPointer();
 	struct rigid_body *rbB = (struct rigid_body *)col1->getUserPointer();
 
@@ -154,7 +154,7 @@ void btRTCollisionAlgorithm::processCollision (
 
 		}
 	}
-*/
+
 
 	//------------------------------------------------------
 
