@@ -74,12 +74,31 @@ $nam = 'books/en/BRL-CAD_Tutorial_Series-VolumeI.xml'
 # trim extra stuff to leave a unique name
 $nam =~ s{\.xml \z}{}xmsi;
 $nam =~ s{\.fo \z}{}xmsi;
-
 $nam =~ s{\A books/en/}{}xmsi;
 
 my $brldir = './resources/brlcad';
-my $ofil  = "${brldir}/book-covers-fo-autogen.xsl";
-my $ofil2 = "${brldir}/brlcad-colors-autogen.xsl";
+
+# output files must be unique
+# need vN for volume number
+my $vol = $nam;
+$vol =~ s{\A BRL-CAD_Tutorial_Series-Volume}{}xms;
+if ($vol eq 'I') {
+  $vol = 'v1';
+}
+elsif ($vol eq 'II') {
+  $vol = 'v2';
+}
+elsif ($vol eq 'III') {
+  $vol = 'v3';
+}
+elsif ($vol eq 'IV') {
+  $vol = 'v4';
+}
+else {
+  die "Unknown name text '$vol'";
+}
+my $ofil  = "${brldir}/book-covers-fo-autogen-${vol}.xsl";
+my $ofil2 = "${brldir}/brlcad-colors-autogen-${vol}.xsl";
 
 # colors are hard-wired by title
 my %name
@@ -187,11 +206,19 @@ else {
 print_color_file($fp2, $color_code);
 close $fp2;
 
-my $need_brlcad_logo_group = 1;
+my $need_color_file_name   = 1;
 my $need_draft             = $draft;
+my $need_brlcad_logo_group = 1;
 my $need_title             = 1;
 
 while (defined(my $line = <$fpi>)) {
+
+  if ($need_color_file_name
+      && $line =~ m{\A \s* \<\?brlcad \s+ insert\-color\-file\-name \s* \?\>}xms) {
+    BRLCAD_DOC::print_insert_color_file_name($fp, $vol);
+    $need_color_file_name = 0;
+    next;
+  }
 
   if ($need_draft
       && $line =~ m{\A \s* \<\?brlcad \s+ insert\-draft\-overlay \s* \?\>}xms) {
@@ -217,3 +244,6 @@ while (defined(my $line = <$fpi>)) {
 
   print $fp $line;
 }
+
+close $fpi;
+close $fp;
