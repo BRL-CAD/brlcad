@@ -46,6 +46,8 @@ struct sim_contact {
 
 struct sim_manifold {
 	int num_contacts;
+	int indexA, indexB;
+	char *nameA, *nameB;
 	struct sim_contact rb_contacts[MAX_CONTACTS_PER_MANIFOLD];
 	struct sim_manifold *next;
 };

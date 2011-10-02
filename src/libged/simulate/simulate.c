@@ -97,6 +97,9 @@ void print_rigid_body(struct rigid_body *rb)
 }
 
 
+/**
+ * Prints the list of contacts in each manifold of a rigid body
+ */
 void print_manifold_list(struct rigid_body *rb)
 {
     struct sim_manifold *current_manifold;
@@ -120,6 +123,38 @@ void print_manifold_list(struct rigid_body *rb)
 					current_manifold->rb_contacts[i].normalWorldOnB[2]);
 		}
 	}
+}
+
+
+/**
+ * Prints the args of a command to be executed using libged
+ */
+void print_command(char* cmd_args[], int num_args)
+{
+	int i;
+	char buffer[200] = "";
+	for (i=0; i<num_args; i++) {
+		sprintf(buffer, "%s %s", buffer, cmd_args[i]);
+	}
+
+	bu_log(buffer);
+}
+
+/**
+ * Used to prefix a name, requires memory to be freed by caller
+ */
+char* prefix_name(char *prefix, char *original){
+	/* Prepare prefixed bounding box primitive name */
+	size_t  prefix_len, prefixed_name_len;
+	char *prefixed_name;
+
+	prefix_len = strlen(prefix);
+	prefixed_name_len = strlen(prefix)+strlen(original) + 1;
+	prefixed_name = (char *)bu_malloc(prefixed_name_len, "Adding prefix");
+	bu_strlcpy(prefixed_name, prefix, prefix_len + 1);
+	bu_strlcat(prefixed_name + prefix_len, original,
+			   prefixed_name_len - prefix_len);
+	return prefixed_name;
 }
 
 
@@ -351,6 +386,7 @@ int get_bb(struct ged *gedp, struct simulation_params *sim_params)
 	return GED_OK;
 }
 
+
 /**
  * This function draws the bounding box around a comb as reported by
  * Bullet
@@ -358,33 +394,22 @@ int get_bb(struct ged *gedp, struct simulation_params *sim_params)
  * TODO : this function will soon be lowered to librt
  *
  */
-int insertAABB(struct ged *gedp, struct simulation_params *sim_params,
+int insert_AABB(struct ged *gedp, struct simulation_params *sim_params,
 								 struct rigid_body *current_node)
 {
 	char* cmd_args[28];
 	char buffer[20];
 	int rv;
-	char *prefixed_name, *prefixed_reg_name;
 	char *prefix = "bb_";
 	char *prefix_reg = "bb_reg_";
-	size_t  prefix_len, prefixed_name_len;
+	char *prefixed_name, *prefixed_reg_name;
 	point_t v;
 
 	/* Prepare prefixed bounding box primitive name */
-	prefix_len = strlen(prefix);
-	prefixed_name_len = strlen(prefix)+strlen(current_node->rb_namep)+1;
-	prefixed_name = (char *)bu_malloc(prefixed_name_len, "Adding bb_ prefix");
-	bu_strlcpy(prefixed_name, prefix, prefix_len + 1);
-	bu_strlcat(prefixed_name + prefix_len, current_node->rb_namep,
-			   prefixed_name_len - prefix_len);
+	prefixed_name = prefix_name(prefix, current_node->rb_namep);
 
 	/* Prepare prefixed bounding box region name */
-	prefix_len = strlen(prefix_reg);
-	prefixed_name_len = strlen(prefix_reg) + strlen(current_node->rb_namep) + 1;
-	prefixed_reg_name = (char *)bu_malloc(prefixed_name_len, "Adding bb_reg_ prefix");
-	bu_strlcpy(prefixed_reg_name, prefix_reg, prefix_len + 1);
-	bu_strlcat(prefixed_reg_name + prefix_len, current_node->rb_namep,
-			   prefixed_name_len - prefix_len);
+	prefixed_reg_name = prefix_name(prefix_reg, current_node->rb_namep);
 
 	/* Delete existing bb prim and region */
 	rv = kill(gedp, prefixed_name);
@@ -500,6 +525,183 @@ int insertAABB(struct ged *gedp, struct simulation_params *sim_params,
 
 	/* Add the region to the result of the sim so it will be drawn too */
 	add_to_comb(gedp, sim_params->sim_comb_name, prefixed_reg_name);
+
+	bu_free(prefixed_name, "simulate : prefixed_name");
+	bu_free(prefixed_reg_name, "simulate : prefixed_reg_name");
+
+	return GED_OK;
+
+}
+
+
+/**
+ * This function inserts a manifold comb as reported by
+ * Bullet
+ * TODO : this should be used with a debugging flag
+ * TODO : this function will be lowered to librt
+ *
+ */
+int insert_manifolds(struct ged *gedp, struct simulation_params *sim_params,
+								 struct rigid_body *rb)
+{
+	char* cmd_args[28];
+	char buffer[20];
+	int rv, num_args;
+	char *prefixed_name, *prefixed_reg_name;
+	char *prefix = "mf_";
+	char *prefix_reg = "mf_reg_";
+
+	struct sim_manifold *current_manifold;
+	int i;
+
+	for (current_manifold = rb->first_manifold; current_manifold != NULL;
+			current_manifold = current_manifold->next) {
+
+		/* Prepare prefixed bounding box primitive name */
+		prefixed_name = prefix_name(prefix, rb->rb_namep);
+
+		/* Prepare prefixed bounding box region name */
+		prefixed_reg_name = prefix_name(prefix_reg, rb->rb_namep);
+
+		/* Delete existing bb prim and region */
+		rv = kill(gedp, prefixed_name);
+		if (rv != GED_OK){
+			bu_log("insert_manifolds: ERROR Could not delete existing bounding box arb8 : %s \
+					so NOT attempting to add new bounding box\n", prefixed_name);
+			return GED_ERROR;
+		}
+
+		rv = kill(gedp, prefixed_reg_name);
+		if (rv != GED_OK){
+			bu_log("insert_manifolds: ERROR Could not delete existing bounding box region : %s \
+					so NOT attempting to add new region\n", prefixed_reg_name);
+			return GED_ERROR;
+		}
+
+		/* Setup the simulation result group union-ing the new objects */
+		cmd_args[0] = "in";
+		cmd_args[1] = bu_strdup(prefixed_name);
+		cmd_args[2] = (char *)0;
+		num_args = 2;
+
+		switch(current_manifold->num_contacts){
+		case 1:
+			bu_log("1 contact got, no manifold drawn");
+			break;
+
+		case 2:
+			cmd_args[2] = "arb4";
+			sprintf(buffer, "%f", current_manifold->rb_contacts[0].ptA[0]);
+			cmd_args[3] = bu_strdup(buffer);
+			sprintf(buffer, "%f", current_manifold->rb_contacts[0].ptA[1]);
+			cmd_args[4] = bu_strdup(buffer);
+			sprintf(buffer, "%f", current_manifold->rb_contacts[0].ptA[2]);
+			cmd_args[5] = bu_strdup(buffer);
+
+			sprintf(buffer, "%f", current_manifold->rb_contacts[1].ptA[0]);
+			cmd_args[6] = bu_strdup(buffer);
+			sprintf(buffer, "%f", current_manifold->rb_contacts[1].ptA[1]);
+			cmd_args[7] = bu_strdup(buffer);
+			sprintf(buffer, "%f", current_manifold->rb_contacts[1].ptA[2]);
+			cmd_args[8] = bu_strdup(buffer);
+
+			sprintf(buffer, "%f", current_manifold->rb_contacts[1].ptB[0]);
+			cmd_args[9] = bu_strdup(buffer);
+			sprintf(buffer, "%f", current_manifold->rb_contacts[1].ptB[1]);
+			cmd_args[10] = bu_strdup(buffer);
+			sprintf(buffer, "%f", current_manifold->rb_contacts[1].ptB[2]);
+			cmd_args[11] = bu_strdup(buffer);
+
+			sprintf(buffer, "%f", current_manifold->rb_contacts[0].ptB[0]);
+			cmd_args[12] = bu_strdup(buffer);
+			sprintf(buffer, "%f", current_manifold->rb_contacts[0].ptB[1]);
+			cmd_args[13] = bu_strdup(buffer);
+			sprintf(buffer, "%f", current_manifold->rb_contacts[0].ptB[2]);
+			cmd_args[14] = bu_strdup(buffer);
+
+			cmd_args[15] = (char *)0;
+			num_args = 15;
+			break;
+
+		case 3:
+			bu_log("3 contacts got, no manifold drawn");
+			break;
+
+		case 4:
+			cmd_args[2] = "arb8";
+			for (i=0; i<4; i++) {
+				sprintf(buffer, "%f", current_manifold->rb_contacts[i].ptA[0]);
+				cmd_args[3+i*3] = bu_strdup(buffer);
+				sprintf(buffer, "%f", current_manifold->rb_contacts[i].ptA[1]);
+				cmd_args[4+i*3] = bu_strdup(buffer);
+				sprintf(buffer, "%f", current_manifold->rb_contacts[i].ptA[2]);
+				cmd_args[5+i*3] = bu_strdup(buffer);
+
+				sprintf(buffer, "%f", current_manifold->rb_contacts[i].ptB[0]);
+				cmd_args[15+i*3] = bu_strdup(buffer);
+				sprintf(buffer, "%f", current_manifold->rb_contacts[i].ptB[1]);
+				cmd_args[16+i*3] = bu_strdup(buffer);
+				sprintf(buffer, "%f", current_manifold->rb_contacts[i].ptB[2]);
+				cmd_args[17+i*3] = bu_strdup(buffer);
+
+				/* current_manifold->rb_contacts[i].ptA[0],
+				current_manifold->rb_contacts[i].ptA[1],
+				current_manifold->rb_contacts[i].ptA[2],
+				current_manifold->rb_contacts[i].ptB[0],
+				current_manifold->rb_contacts[i].ptB[1],
+				current_manifold->rb_contacts[i].ptB[2],
+				current_manifold->rb_contacts[i].normalWorldOnB[0],
+				current_manifold->rb_contacts[i].normalWorldOnB[1],
+				current_manifold->rb_contacts[i].normalWorldOnB[2]);*/
+			}
+			cmd_args[27] = (char *)0;
+			num_args = 27;
+			break;
+
+		default:
+			bu_log("%d contacts got, no manifold drawn", current_manifold->num_contacts);
+			cmd_args[2] = (char *)0;
+			num_args = 2;
+		}
+
+		print_command(cmd_args, num_args);
+
+		/* Finally make the manifold primitive, if proper command generated */
+		if(num_args > 2){
+			rv = ged_in(gedp, num_args, (const char **)cmd_args);
+			if (rv != GED_OK){
+				bu_log("insert_manifolds: WARNING Could not draw manifold for \"%s\"\n",
+						rb->rb_namep);
+			}
+
+			/* Make the region for the bb primitive */
+			add_to_comb(gedp, prefixed_reg_name, prefixed_name);
+
+			/* Adjust the material for region to be almost transparent */
+			cmd_args[0] = "mater";
+			cmd_args[1] = bu_strdup(prefixed_reg_name);
+			cmd_args[2] = "plastic tr 0.9";
+			cmd_args[3] = "210";
+			cmd_args[4] = "0";
+			cmd_args[5] = "100";
+			cmd_args[6] = "0";
+			cmd_args[7] = (char *)0;
+			rv = ged_mater(gedp, 7, (const char **)cmd_args);
+			if (rv != GED_OK){
+				bu_log("insert_manifolds: WARNING Could not adjust the material for \"%s\"\n",
+						prefixed_reg_name);
+			}
+
+			/* Add the region to the result of the sim so it will be drawn too */
+			add_to_comb(gedp, sim_params->sim_comb_name, prefixed_reg_name);
+		}
+
+		bu_free(prefixed_name, "simulate : prefixed_name");
+		bu_free(prefixed_reg_name, "simulate : prefixed_reg_name");
+
+	}//end for-manifold
+
+
 
 	return GED_OK;
 
@@ -667,9 +869,11 @@ int apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 		/* Store this world transformation to undo it before next world transformation */
 		MAT_COPY(current_node->m_prev, current_node->m);
 
-		insertAABB(gedp, sim_params, current_node);
+		insert_AABB(gedp, sim_params, current_node);
 
 		print_manifold_list(current_node);
+
+		insert_manifolds(gedp, sim_params, current_node);
 
 
 	}

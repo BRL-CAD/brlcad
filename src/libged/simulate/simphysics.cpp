@@ -233,7 +233,7 @@ int get_transforms(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_par
             //Copy the transform matrix
             MAT_COPY(current_node->m, m);
 
-            print_matrices(current_node->rb_namep, current_node->m, m);
+            //print_matrices(current_node->rb_namep, current_node->m, m);
 
             //Get the state of the body
             current_node->state = bb_RigidBody->getActivationState();

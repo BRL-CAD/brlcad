@@ -146,8 +146,8 @@ void btRTCollisionAlgorithm::processCollision (
 			VMOVE(current_manifold->rb_contacts[i].ptB, ptB);
 			VMOVE(current_manifold->rb_contacts[i].normalWorldOnB, pt.m_normalWorldOnB);
 
-			bu_log("contact %d of %d, %s(%f, %f, %f) , %s(%f, %f, %f), n(%f, %f, %f)\n",
-					i+1, num_contacts,
+			bu_log("%d, %s(%f, %f, %f) , %s(%f, %f, %f), n(%f, %f, %f)\n",
+					i+1,
 					rbA->rb_namep, ptA[0], ptA[1], ptA[2],
 					rbB->rb_namep, ptB[0], ptB[1], ptB[2],
 					pt.m_normalWorldOnB[0], pt.m_normalWorldOnB[1], pt.m_normalWorldOnB[2]);
