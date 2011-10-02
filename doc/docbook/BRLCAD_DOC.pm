@@ -20,6 +20,7 @@ BEGIN {
        'get_svn_status',
        'print_autogen_header',
        'print_color_file',
+       'print_insert_color_file_name',
        'print_xhtml_header',
        'print_xml_header',
        'print_book_title',
@@ -130,6 +131,16 @@ sub print_autogen_header {
  -->
 HERE
 } # print_autogen_header
+
+sub print_insert_color_file_name {
+  my $fp  = shift @_;
+  my $vol = shift @_;
+
+  print $fp <<"HERE";
+<xsl:include href="brlcad-colors-autogen-${vol}.xsl"/>
+HERE
+
+} # print_insert_color_file_name
 
 sub strip_lines {
   # used to customize and insert data into title pages
