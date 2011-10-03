@@ -1900,7 +1900,7 @@ qualifier(A) ::= TOK_DOT TOK_IDENTIFIER(B).
     A.expr->e.op2->symbol = *B;
     SYMBOL_destroy(B);
 }
-qualifier(A) ::= TOK_BACKSLASH TOK_IDENTIFIER(B).
+qualifier(A) ::= TOK_BACKSLASH TOK_IDENTIFIER(B). [TOK_NOT]
 {
     A.expr = A.first = BIN_EXPcreate(OP_GROUP, (Expression)0, (Expression)0);
     A.expr->e.op2 = EXPcreate(Type_Identifier);
