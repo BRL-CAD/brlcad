@@ -84,12 +84,20 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 	headRblp = rt_bot_split(bot);
 
 	{
-	    int ac = 2;
-	    const char *av[3];
+	    int ac = 3;
+	    const char *av[4];
 	    struct rt_db_internal bot_intern;
 	    struct rt_bot_list *rblp;
 
 	    av[0] = "make_name";
+	    av[1] = "-s";
+	    av[2] = "0";
+	    av[3] = (char *)0;
+
+	    /* Set make_name's count to 0 */
+	    ged_make_name(gedp, ac, av);
+
+	    ac = 2;
 	    av[2] = (char *)0;
 
 	    bu_vls_init(&new_bots);
