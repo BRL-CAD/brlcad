@@ -275,12 +275,16 @@ CLEANFILES = \
 	$(BUILTMAN_EN_SOURCES) \
 	$(BUILT_SOURCES)
 
+# source and dest dir for BRLCAD html css stylesheets
+cssBRLCADdir   = $(BRLCAD_DATA)/html/css
+cssBRLCAD_DATA = css/brlcad.css
 
 EXTRA_DIST = \
 	${articlesDOCBOOK_EN_IMAGES} \
 	${articlesDOCBOOK_EN} \
 	${booksDOCBOOK_EN_IMAGES} \
 	${booksDOCBOOK_EN} \
+	${cssBRLCAD_DATA} \
 	${lessonsDOCBOOK_EN_IMAGES} \
 	${lessonsDOCBOOK_EN} \
 	${lessonsDOCBOOK_ES_IMAGES} \
