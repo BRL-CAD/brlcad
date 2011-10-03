@@ -71,20 +71,21 @@ print_usage(struct bu_vls *str)
 void print_matrix(char *rb_namep, mat_t t)
 {
 	int i, j;
-	char buffer[500];
+	struct bu_vls buffer = BU_VLS_INIT_ZERO;
 
-	sprintf(buffer, "------------Transformation matrix(%s)--------------\n",
-			rb_namep);
+	bu_vls_sprintf(&buffer, "------------Transformation matrix(%s)--------------\n",
+		       rb_namep);
 
 	for (i=0 ; i<4 ; i++) {
 		for (j=0 ; j<4 ; j++) {
-			sprintf(buffer, "%st[%d]: %f\t", buffer, (i*4 + j), t[i*4 + j] );
+			bu_vls_sprintf(&buffer, "t[%d]: %f\t", (i*4 + j), t[i*4 + j] );
 		}
-		sprintf(buffer, "%s\n", buffer);
+		bu_vls_strcat(&buffer, "\n");
 	}
 
-	sprintf(buffer, "%s-------------------------------------------------------\n", buffer);
-	bu_log(buffer);
+	bu_vls_strcat(&buffer, "-------------------------------------------------------\n");
+	bu_log("%V", &buffer);
+	bu_vls_free(&buffer);
 }
 
 
@@ -699,7 +700,7 @@ int insert_manifolds(struct ged *gedp, struct simulation_params *sim_params,
 		bu_free(prefixed_name, "simulate : prefixed_name");
 		bu_free(prefixed_reg_name, "simulate : prefixed_reg_name");
 
-	}//end for-manifold
+	} /* end for-manifold */
 
 
 
