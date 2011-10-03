@@ -12,6 +12,8 @@
   <!-- common param inputs, etc. -->
   <xsl:import href="/brlcad/brlcad-common.xsl"/>
 
+  <!-- the BRL-CAD css base for all html -->
+  <xsl:param name="html.stylesheet">../../css/brlcad.css</xsl:param>
 
 <!-- ==================================================================== -->
 
