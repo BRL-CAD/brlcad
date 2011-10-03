@@ -210,11 +210,10 @@ A TEMPLATE FOR A FORMAL FIGURE AND INCLUDED IMAGES
 
 To better control images for html and pdf, use different attributes
 according to role in the DB source.  Following is a template that
-gives the basic attribute to do that.  Note the filerefs are the same,
-but, in this case, the image widths are specified differently: the pdf
-(fo) image's desired width on the page is specifed while the html's is
-expressed as a percent of the actual image width.  Many times those
-two setting alone will tame unruly images
+gives the basic attributes to do that.  Note the filerefs are the
+same, but, in this case, the image widths are specified differently.
+It sometimes it takes a bit of trial and error to get the right
+attributes and values.  See Reference 2, p. 290, for much more detail.
 
   <!-- ************************************ -->
   <figure>
@@ -223,14 +222,14 @@ two setting alone will tame unruly images
       <imageobject role='html'>
         <imagedata
            align="center"
-           width='100%' scalefit='1'
+           contwidthwidth='4.5in' scalefit='1'
            fileref="./images/vbox/"
          />
       </imageobject>
       <imageobject role='fo'>
         <imagedata
            align="center"
-           width='6in' scalefit='1'
+           width='4.5in' scalefit='1'
            fileref="./images/vbox/"
          />
       </imageobject>
@@ -240,3 +239,13 @@ two setting alone will tame unruly images
     </mediaobject>
   </figure>
 
+
+REFERENCES
+----------
+
+1. Norman Walsh, "DocBook 5: The Definitive Guide," May 2010, O'Reilly
+   Media, Inc., Sebastopol, CA, ISBN: 978-0-596-80502-9.
+
+2. Bob Stayton, "DocBook XSL: The Complete Guide," Fourth Edition,
+   September 2007, Sagehill Enterprises, Santa Cruz, CA, ISBN:
+   978-0-9741521-3-4.
