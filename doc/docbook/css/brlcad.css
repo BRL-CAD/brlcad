@@ -1,0 +1,138 @@
+/*
+
+  CSS stylesheet used to affect BRL-CAD's html output.
+
+*/
+
+div.table p.title {
+    text-align: -moz-center;
+    text-align: center;
+}
+
+table {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+div.figure p.title {
+    text-align: -moz-center;
+    text-align: center;
+}
+
+div.equation p.title {
+    text-align: -moz-center;
+    text-align: center;
+}
+
+span.smallfont {
+  font-size: 8pt;
+}
+
+span.phrase-border {
+    /* for firefox */
+    text-align: -moz-center;
+    /* for explorer */
+    /* text-align: center; */
+
+  width: 100% ;
+  padding: 2px 500px 2px 1em ; /* top right bottom left */
+  background-color: #e0e0e0 ;
+  border: 1px solid #000077 ;
+}
+
+div.qandaset td p {
+ margin-top:    0.2em;
+ margin-bottom: 0.2em;
+}
+
+div.itemizedlist {
+        /* margin-left: 1em; */
+}
+
+div.itemizedlist li {
+        /* padding-left: 1em; */
+  margin-top: -0.5em;
+}
+
+div.orderedlist {
+        margin-left: 1em;
+}
+
+div.orderedlist li {
+        /* padding-left: 1em; */
+}
+
+div.mediaobject {
+/*
+margin-left: auto;
+margin-right: auto;
+width: 8.5in;
+*/
+}
+
+/*
+pre.programlisting {
+  background-color: #99ccff ;
+  border: 1px solid #006600 ;
+}
+*/
+
+div.caption p {
+  font-weight: bold;
+}
+
+/* copied from BRL-CAD web site: */
+div.legalnotice {
+  font-size: 80%;
+}
+
+div.note {
+  border-left: solid #d5dee3 20px;
+  border-right: solid #d5dee3 20px;
+  margin-left: 5%;
+  margin-right: 10%;
+  padding: 5px;
+}
+
+div.note p {
+  margin-top: 0px;
+  margin-bottom: 4px;
+}
+
+div.informalexample {
+  background-color: #d5dee3;
+  border-top-width: 2px;
+  border-top-style: double;
+  border-top-color: #d3d3d3;
+  border-bottom-width: 2px;
+  border-bottom-style: double;
+  border-bottom-color: #d3d3d3;
+  padding: 4px;
+  margin: 0em;
+  margin-left: 2em;
+}
+
+pre.programlisting,
+pre.synopsis,
+pre.screen {
+  whitespace: pre;
+  font-family: monospace;
+  background-color: #d5dee3;
+  border-top-width: 1px;
+  border-top-style: single;
+  border-top-color: #d3d3d3;
+  border-bottom-width: 1px;
+  border-bottom-style: single;
+  border-bottom-color: #d3d3d3;
+  padding: 4px;
+  margin: 0em;
+}
+
+div.informalexample pre {
+  whitespace: pre;
+  font-family: monospace;
+  border-top-width: 0px;
+  border-bottom-width: 0px;
+  padding: 0px;
+}
+/* end of BRL-CAD copy */
