@@ -140,9 +140,26 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
-	    <imagedata align="center" fileref="../../lessons/en/images/mged01_terminal.png" format="PNG"/>
+	  <imageobject role="html">
+	    <imagedata
+               align="center"
+               contentwidth="3.9in"
+               scalefit="1"
+               fileref="../../lessons/en/images/mged01_terminal.png"
+               format="PNG"
+             />
 	  </imageobject>
+	  <imageobject role="fo">
+	    <imagedata
+               align="center"
+               width="3.9in"
+               scalefit="1"
+               fileref="../../lessons/en/images/mged01_terminal.png"
+               format="PNG"
+             />
+	  </imageobject>
+
+
 	  <caption>
 	    <para>
 	      Terminal Window
