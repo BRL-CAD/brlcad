@@ -4641,6 +4641,7 @@ rt_bot_sync(struct rt_bot_internal *bot)
     return 0;
 }
 
+
 void
 rt_bot_split_func(struct tri_pts *tpp,
 		  struct tri_pts *headTpp,
@@ -4649,16 +4650,25 @@ rt_bot_split_func(struct tri_pts *tpp,
     struct tri_pts *neighbor_tpp;
 
     for (BU_LIST_FOR(neighbor_tpp, tri_pts, &headTpp->l)) {
-	if (tpp->a == neighbor_tpp->a ||
-	    tpp->a == neighbor_tpp->b ||
-	    tpp->a == neighbor_tpp->c ||
-	    tpp->b == neighbor_tpp->a ||
-	    tpp->b == neighbor_tpp->b ||
-	    tpp->b == neighbor_tpp->c ||
-	    tpp->c == neighbor_tpp->a ||
-	    tpp->c == neighbor_tpp->b ||
-	    tpp->c == neighbor_tpp->c) {
-	    /* Found a shared pt of a neighboring triangle */
+	if ((tpp->a == neighbor_tpp->a && tpp->b == neighbor_tpp->b) ||
+	    (tpp->a == neighbor_tpp->b && tpp->b == neighbor_tpp->a) ||
+	    (tpp->a == neighbor_tpp->b && tpp->b == neighbor_tpp->c) ||
+	    (tpp->a == neighbor_tpp->c && tpp->b == neighbor_tpp->b) ||
+	    (tpp->a == neighbor_tpp->a && tpp->b == neighbor_tpp->c) ||
+	    (tpp->a == neighbor_tpp->c && tpp->b == neighbor_tpp->a) ||
+	    (tpp->a == neighbor_tpp->a && tpp->c == neighbor_tpp->b) ||
+	    (tpp->a == neighbor_tpp->b && tpp->c == neighbor_tpp->a) ||
+	    (tpp->a == neighbor_tpp->b && tpp->c == neighbor_tpp->c) ||
+	    (tpp->a == neighbor_tpp->c && tpp->c == neighbor_tpp->b) ||
+	    (tpp->a == neighbor_tpp->a && tpp->c == neighbor_tpp->c) ||
+	    (tpp->a == neighbor_tpp->c && tpp->c == neighbor_tpp->a) ||
+	    (tpp->b == neighbor_tpp->a && tpp->c == neighbor_tpp->b) ||
+	    (tpp->b == neighbor_tpp->b && tpp->c == neighbor_tpp->a) ||
+	    (tpp->b == neighbor_tpp->b && tpp->c == neighbor_tpp->c) ||
+	    (tpp->b == neighbor_tpp->c && tpp->c == neighbor_tpp->b) ||
+	    (tpp->b == neighbor_tpp->a && tpp->c == neighbor_tpp->c) ||
+	    (tpp->b == neighbor_tpp->c && tpp->c == neighbor_tpp->a)) {
+	    /* Found a shared edge of a neighboring triangle */
 
 	    BU_LIST_DEQUEUE(&neighbor_tpp->l);
 	    BU_LIST_APPEND(&usedTpp->l, &neighbor_tpp->l);
