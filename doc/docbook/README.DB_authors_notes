@@ -203,3 +203,40 @@ Use png or tiff for html and svg for fop.
 Use scribus (http://www.scribus.net) to convert eps to svg.
 
 Use gimp (http://www.gimp.org) to scale or edit png images.
+
+
+A TEMPLATE FOR A FORMAL FIGURE AND INCLUDED IMAGES
+--------------------------------------------------
+
+To better control images for html and pdf, use different attributes
+according to role in the DB source.  Following is a template that
+gives the basic attribute to do that.  Note the filerefs are the same,
+but, in this case, the image widths are specified differently: the pdf
+(fo) image's desired width on the page is specifed while the html's is
+expressed as a percent of the actual image width.  Many times those
+two setting alone will tame unruly images
+
+  <!-- ************************************ -->
+  <figure>
+    <title>???</title>
+    <mediaobject>
+      <imageobject role='html'>
+        <imagedata
+           align="center"
+           width='6in' scalefit='1'
+           fileref="./images/vbox/"
+         />
+      </imageobject>
+      <imageobject role='fo'>
+        <imagedata
+           align="center"
+           width='100%' scalefit='1'
+           fileref="./images/vbox/"
+         />
+      </imageobject>
+      <textobject>
+        <phrase>a picture</phrase>
+      </textobject>
+    </mediaobject>
+  </figure>
+
