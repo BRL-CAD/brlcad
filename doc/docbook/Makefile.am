@@ -43,33 +43,37 @@ XSLTPROC_ENV_VARS = XML_CATALOG_FILES=$(XML_CATALOG) XML_DEBUG_CATALOG=1
 $(XML_CATALOGS): $(GEN_XML_CATALOGS) BRLCAD_DOC.pm
 	perl $(GEN_XML_CATALOGS)
 
+XSLTPROC_DEPS=$(XML_CATALOGS) $(XSL_FO_STYLESHEET) $(XSL_XHTML_STYLESHEET) $(XSL_MAN_STYLESHEET)
+
+# define extra dependencies for some double suffix rules:
+.html:  resources/brlcad/brlcad-xhtml-stylesheet.xsl $(XSLTPROC_DEPS)
+.1:     resources/brlcad/brlcad-xhtml-stylesheet.xsl $(XSLTPROC_DEPS)
+.3:     resources/brlcad/brlcad-xhtml-stylesheet.xsl $(XSLTPROC_DEPS)
+.5:     resources/brlcad/brlcad-xhtml-stylesheet.xsl $(XSLTPROC_DEPS)
+.nged:  resources/brlcad/brlcad-xhtml-stylesheet.xsl $(XSLTPROC_DEPS)
+.fo:    $(XSLTPROC_DEPS)
+
 .xml.html:
-	if test ! -f $(XML_CATALOG) ; then ./create-xml-catalogs.pl ; fi
 	@mkdir -p $$(dirname $@)
 	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_XHTML_STYLESHEET) $<
 
 .xml.1:
-	if test ! -f $(XML_CATALOG) ; then ./create-xml-catalogs.pl ; fi
 	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $<
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
 .xml.3:
-	if test ! -f $(XML_CATALOG) ; then ./create-xml-catalogs.pl ; fi
 	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $<
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
 .xml.5:
-	if test ! -f $(XML_CATALOG) ; then ./create-xml-catalogs.pl ; fi
 	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $<
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
 .xml.nged:
-	if test ! -f $(XML_CATALOG) ; then ./create-xml-catalogs.pl ; fi
 	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $<
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
 .fo.pdf:
-	if test ! -f $(XML_CATALOG) ; then ./create-xml-catalogs.pl ; fi
 	$(FOP_ENV_VARS) $(APACHEFOP) -c fop.xconf -fo $< -pdf $@
 
 # this rule must not be applied to books
@@ -185,6 +189,7 @@ $(booksen4).fo : $(booksen4).xml $(FO_COVER_DEPS) $(XML_CATALOG) $(autogen_cover
 
 # en book pdf
 #	  && if test -f $< ; then rm $< ; fi
+# for fo debugging, comment out the lines that remove the fo files
 $(booksen1).pdf : $(booksen1).fo $(XML_CATALOG)
 	$(FOP_ENV_VARS) $(APACHEFOP) $(fopdebug) -c fop.xconf -fo $< -pdf $@ \
 	  && if test -f $< ; then rm $< ; fi
