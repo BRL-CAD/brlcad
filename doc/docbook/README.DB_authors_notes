@@ -223,14 +223,14 @@ two setting alone will tame unruly images
       <imageobject role='html'>
         <imagedata
            align="center"
-           width='6in' scalefit='1'
+           width='100%' scalefit='1'
            fileref="./images/vbox/"
          />
       </imageobject>
       <imageobject role='fo'>
         <imagedata
            align="center"
-           width='100%' scalefit='1'
+           width='6in' scalefit='1'
            fileref="./images/vbox/"
          />
       </imageobject>
