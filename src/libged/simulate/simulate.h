@@ -1,7 +1,7 @@
-/*                         S I M U L A T E . H
+/*                       S I M U L A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,8 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/simulate/simulate.h
- *
+/*
  * The simulate command.
  *
  * Declares structures for passing simulation parameters and
@@ -40,22 +39,26 @@
 #define MAX_CONTACTS_PER_MANIFOLD 4
 
 struct sim_contact {
-	vect_t ptA, ptB;
-	vect_t normalWorldOnB;
+    vect_t ptA, ptB;
+    vect_t normalWorldOnB;
 };
+
 
 struct sim_manifold {
-	int num_contacts;
-	int indexA, indexB;
-	char *nameA, *nameB;
-	struct sim_contact rb_contacts[MAX_CONTACTS_PER_MANIFOLD];
-	struct sim_manifold *next;
+    int num_contacts;
+    int indexA, indexB;
+    char *nameA, *nameB;
+    struct sim_contact rb_contacts[MAX_CONTACTS_PER_MANIFOLD];
+    struct sim_manifold *next;
 };
 
-/* Contains information about a single rigid body constructed from a BRL-CAD region.
- * This structure is the node of a linked list containing the geometry to be added to the sim
- * Only the bb is currently present, but physical properties like elasticity, custom forces
- * will be added later: TODO
+
+/* Contains information about a single rigid body constructed from a
+ * BRL-CAD region.  This structure is the node of a linked list
+ * containing the geometry to be added to the sim.
+ *
+ * TODO: Only the bb is currently present, but physical properties
+ * like elasticity, custom forces will be added later.
  */
 struct rigid_body {
     int index;
@@ -64,23 +67,24 @@ struct rigid_body {
     point_t bb_center, bb_dims;     /**< @brief bb center and dimensions */
     point_t btbb_min, btbb_max;     /**< @brief Bullet body bb bounds */
     point_t btbb_center, btbb_dims; /**< @brief Bullet bb center and dimensions */
-    mat_t m, m_prev;                        /**< @brief transformation matrix from Bullet */
-    int state;						/**< @brief rigid body state from Bullet */
+    mat_t m, m_prev;                /**< @brief transformation matrix from Bullet */
+    int state;			    /**< @brief rigid body state from Bullet */
     struct directory *dp;           /**< @brief directory pointer to the related region */
     struct rigid_body *next;        /**< @brief link to next body */
 
     /* Can be set by libged or Bullet(checked and inserted into sim) */
-    vect_t linear_velocity; 		/**< @brief linear velocity components */
-    vect_t angular_velocity; 		/**< @brief angular velocity components */
+    vect_t linear_velocity; 	    /**< @brief linear velocity components */
+    vect_t angular_velocity; 	    /**< @brief angular velocity components */
 
     /* Manifolds in which this body participates and is body B, only body B has manifold info*/
-    int num_manifolds;				/**< @brief angular velocity components */
+    int num_manifolds;			 /**< @brief angular velocity components */
     struct sim_manifold *first_manifold; /**< @brief angular velocity components */
 };
 
+
 /* Contains the simulation parameters, such as number of rigid bodies,
- * the head node of the linked list containing the bodies and time/steps for
- * which the simulation will be run.
+ * the head node of the linked list containing the bodies and
+ * time/steps for which the simulation will be run.
  */
 struct simulation_params {
     int duration;                  /**< @brief contains either the number of steps or the time */
@@ -90,8 +94,6 @@ struct simulation_params {
     char *ground_plane_name;       /**< @brief name of the ground plane region */
     struct rigid_body *head_node;  /**< @brief link to first rigid body node */
 };
-
-
 
 
 #endif /* SIMULATE_H_ */

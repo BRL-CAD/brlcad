@@ -1,7 +1,7 @@
 /*                         S I M U L A T E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2011 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,13 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/simulate/simulate.c
- *
+/*
  * The simulate command.
  *
  * Routines related to performing physics on passed objects only
  *
- * 
  */
 
 #include "common.h"
@@ -68,7 +66,8 @@ print_usage(struct bu_vls *str)
  * Prints a 16 by 16 transform matrix for debugging
  *
  */
-void print_matrix(char *rb_namep, mat_t t)
+void
+print_matrix(char *rb_namep, mat_t t)
 {
     int i, j;
     struct bu_vls buffer = BU_VLS_INIT_ZERO;
@@ -92,7 +91,8 @@ void print_matrix(char *rb_namep, mat_t t)
 /**
  * Prints a struct rigid_body for debugging, more members will be printed later
  */
-void print_rigid_body(struct rigid_body *rb)
+void
+print_rigid_body(struct rigid_body *rb)
 {
     bu_log("print_rigid_body : \"%s\", state = %d\n", rb->rb_namep, rb->state);
 }
@@ -101,7 +101,8 @@ void print_rigid_body(struct rigid_body *rb)
 /**
  * Prints the list of contacts in each manifold of a rigid body
  */
-void print_manifold_list(struct rigid_body *rb)
+void
+print_manifold_list(struct rigid_body *rb)
 {
     struct sim_manifold *current_manifold;
     int i;
@@ -130,7 +131,8 @@ void print_manifold_list(struct rigid_body *rb)
 /**
  * Prints the args of a command to be executed using libged
  */
-void print_command(char* cmd_args[], int num_args)
+void
+print_command(char* cmd_args[], int num_args)
 {
     int i;
     char buffer[200] = "";
@@ -145,7 +147,9 @@ void print_command(char* cmd_args[], int num_args)
 /**
  * Used to prefix a name, requires memory to be freed by caller
  */
-char* prefix_name(char *prefix, char *original) {
+char*
+prefix_name(char *prefix, char *original)
+{
     /* Prepare prefixed bounding box primitive name */
     size_t prefix_len, prefixed_name_len;
     char *prefixed_name;
@@ -161,10 +165,12 @@ char* prefix_name(char *prefix, char *original) {
 
 
 /**
- * Deletes a prim/comb if it exists
- * TODO : lower to librt
+ * Deletes a prim/comb if it exists.
+ *
+ * TODO: lower to librt
  */
-int kill(struct ged *gedp, char *name)
+int
+kill(struct ged *gedp, char *name)
 {
     char *cmd_args[5];
 
@@ -186,10 +192,12 @@ int kill(struct ged *gedp, char *name)
 
 
 /**
- * Deletes and duplicates the prim/comb passed in dp as new_name
+ * Deletes and duplicates the prim/comb passed in dp as new_name.
+ *
  * TODO : lower to librt
  */
-int kill_copy(struct ged *gedp, struct directory *dp, char* new_name)
+int
+kill_copy(struct ged *gedp, struct directory *dp, char* new_name)
 {
     char *cmd_args[5];
     int rv;
@@ -216,10 +224,12 @@ int kill_copy(struct ged *gedp, struct directory *dp, char* new_name)
 
 
 /**
- * Adds a prim/comb to an existing comb or creates it if not existing
- * TODO : lower to librt
+ * Adds a prim/comb to an existing comb or creates it if not existing.
+ *
+ * TODO: lower to librt
  */
-int add_to_comb(struct ged *gedp, char *target, char *add)
+int
+add_to_comb(struct ged *gedp, char *target, char *add)
 {
     char *cmd_args[5];
     int rv;
@@ -240,7 +250,8 @@ int add_to_comb(struct ged *gedp, char *target, char *add)
 }
 
 
-int add_physics_attribs(struct rigid_body *current_node)
+int
+add_physics_attribs(struct rigid_body *current_node)
 {
 
     VSETALL(current_node->linear_velocity, 0.0f);
@@ -255,11 +266,13 @@ int add_physics_attribs(struct rigid_body *current_node)
 
 /**
  * Add the list of regions in the model to the rigid bodies list in
- * simulation parameters. This function will duplicate the existing regions
- * prefixing "sim_" to the new region and putting them all under a new
- * comb "sim.c". It will skip over any existing regions with "sim_" in the name
+ * simulation parameters. This function will duplicate the existing
+ * regions prefixing "sim_" to the new region and putting them all
+ * under a new comb "sim.c". It will skip over any existing regions
+ * with "sim_" in the name
  */
-int add_regions(struct ged *gedp, struct simulation_params *sim_params)
+int
+add_regions(struct ged *gedp, struct simulation_params *sim_params)
 {
     struct directory *dp, *ndp;
     char *prefixed_name;
@@ -341,7 +354,8 @@ int add_regions(struct ged *gedp, struct simulation_params *sim_params)
 }
 
 
-int get_bb(struct ged *gedp, struct simulation_params *sim_params)
+int
+get_bb(struct ged *gedp, struct simulation_params *sim_params)
 {
     struct rigid_body *current_node;
     point_t rpp_min, rpp_max;
@@ -390,13 +404,13 @@ int get_bb(struct ged *gedp, struct simulation_params *sim_params)
 
 /**
  * This function draws the bounding box around a comb as reported by
- * Bullet
- * TODO : this should be used with a debugging flag
- * TODO : this function will soon be lowered to librt
+ * Bullet.
  *
+ * TODO: this should be used with a debugging flag
+ * TODO: this function will soon be lowered to librt
  */
-int insert_AABB(struct ged *gedp, struct simulation_params *sim_params,
-		struct rigid_body *current_node)
+int
+insert_AABB(struct ged *gedp, struct simulation_params *sim_params, struct rigid_body *current_node)
 {
     char* cmd_args[28];
     char buffer[20];
@@ -536,14 +550,13 @@ int insert_AABB(struct ged *gedp, struct simulation_params *sim_params,
 
 
 /**
- * This function inserts a manifold comb as reported by
- * Bullet
- * TODO : this should be used with a debugging flag
- * TODO : this function will be lowered to librt
+ * This function inserts a manifold comb as reported by Bullet.
  *
+ * TODO: this should be used with a debugging flag
+ * TODO: this function will be lowered to librt
  */
-int insert_manifolds(struct ged *gedp, struct simulation_params *sim_params,
-		     struct rigid_body *rb)
+int
+insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct rigid_body *rb)
 {
     char* cmd_args[28];
     char buffer[20];
@@ -711,12 +724,15 @@ int insert_manifolds(struct ged *gedp, struct simulation_params *sim_params,
 /**
  * This function colors the passed comb. It's for showing the current
  * state of the object inside the physics engine.
- * TODO : this should be used with a debugging flag
  *
+ * TODO : this should be used with a debugging flag
  */
-int apply_color(struct ged *gedp, char* rb_namep, unsigned char r,
-		unsigned char g,
-		unsigned char b)
+int
+apply_color(struct ged *gedp,
+	    char* rb_namep,
+	    unsigned char r,
+	    unsigned char g,
+	    unsigned char b)
 {
     struct directory *dp = NULL;
     struct rt_comb_internal *comb = NULL;
@@ -766,11 +782,13 @@ int apply_color(struct ged *gedp, char* rb_namep, unsigned char r,
 
 
 /**
- * This function takes the transforms present in the current node and applies them
- * in 3 steps : translate to origin, apply the rotation, then translate to final
- * position with respect to origin(as obtained from physics)
+ * This function takes the transforms present in the current node and
+ * applies them in 3 steps : translate to origin, apply the rotation,
+ * then translate to final position with respect to origin(as obtained
+ * from physics)
  */
-int apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
+int
+apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 {
     struct rt_db_internal intern;
     struct rigid_body *current_node;
@@ -883,11 +901,11 @@ int apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 
 
 /**
- * Frees the list of manifolds as generated by Bullet: this list is used
- * to compare with rt generated manifold for accuracy
- *
+ * Frees the list of manifolds as generated by Bullet.  This list is
+ * used to compare with rt generated manifold for accuracy
  */
-int free_manifold_lists(struct simulation_params *sim_params)
+int
+free_manifold_lists(struct simulation_params *sim_params)
 {
     /* Free memory in manifold list */
     struct sim_manifold *current_manifold, *next_manifold;
@@ -913,9 +931,10 @@ int free_manifold_lists(struct simulation_params *sim_params)
 
 
 /**
- * The libged physics simulation function :
- * Check flags, adds regions to simulation parameters, runs the simulation
- * applies the transforms, frees memory
+ * The libged physics simulation function.
+ *
+ * Check flags, adds regions to simulation parameters, runs the
+ * simulation applies the transforms, frees memory
  */
 int
 ged_simulate(struct ged *gedp, int argc, const char *argv[])
@@ -942,7 +961,6 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
         bu_vls_printf(gedp->ged_result_str, "Usage: %s <steps>", argv[0]);
         return GED_ERROR;
     }
-    
 
     /* Make a list containing the bb and existing transforms of all the objects in the model
      * which will participate in the simulation
@@ -1001,7 +1019,7 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 
 
     bu_vls_printf(gedp->ged_result_str, "%s: The simulation result is in group : %s\n", argv[0], sim_comb_name);
-                                                     
+
     /* Draw the result : inserting it in argv[1] will cause it to be automatically drawn in the cmd_wrapper */
     argv[1] = sim_comb_name;
     argv[2] = (char *)0;
