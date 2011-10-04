@@ -149,69 +149,69 @@ the location of this file.
 
         <!-- free fonts ============================================== -->
         <font kerning="yes" 
-          embed-url="./resources/fonts/truetype/stix-v1.0.0/STIXGeneral-Regular.ttf">
+          embed-url="@srcdir@/resources/fonts/truetype/stix-v1.0.0/STIXGeneral-Regular.ttf">
           <font-triplet name="STIXGeneral" style="normal" weight="normal"/>
         </font>
         <font kerning="yes" 
-          embed-url="./resources/fonts/truetype/stix-v1.0.0/STIXGeneral-Bold.ttf">
+          embed-url="@srcdir@/resources/fonts/truetype/stix-v1.0.0/STIXGeneral-Bold.ttf">
           <font-triplet name="STIXGeneral" style="normal" weight="bold"/>
         </font>
         <font kerning="yes" 
-          embed-url="./resources/fonts/truetype/stix-v1.0.0/STIXGeneral-Italic.ttf">
+          embed-url="@srcdir@/resources/fonts/truetype/stix-v1.0.0/STIXGeneral-Italic.ttf">
           <font-triplet name="STIXGeneral" style="italic" weight="normal"/>
         </font>
         <font kerning="yes" 
-          embed-url="./resources/fonts/truetype/stix-v1.0.0/STIXGeneral-BoldItalic.ttf">
+          embed-url="@srcdir@/resources/fonts/truetype/stix-v1.0.0/STIXGeneral-BoldItalic.ttf">
           <font-triplet name="STIXGeneral" style="italic" weight="bold"/>
         </font>
 
         <font kerning="yes" 
-          embed-url="./resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSans.ttf">
+          embed-url="@srcdir@/resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSans.ttf">
           <font-triplet name="DejaVuLGCSans" style="normal" weight="normal"/>
         </font>
 
         <font kerning="yes" 
-          embed-url="./resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSans-Bold.ttf">
+          embed-url="@srcdir@/resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSans-Bold.ttf">
           <font-triplet name="DejaVuLGCSans" style="normal" weight="bold"/>
         </font>
 
         <font kerning="yes" 
-          embed-url="./resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSans-Bold.ttf">
+          embed-url="@srcdir@/resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSans-Bold.ttf">
           <font-triplet name="DejaVuLGCSans" style="normal" weight="700"/>
         </font>
 
         <font kerning="yes" 
-          embed-url="./resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSans-Oblique.ttf">
+          embed-url="@srcdir@/resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSans-Oblique.ttf">
           <font-triplet name="DejaVuLGCSans" style="oblique" weight="normal"/>
         </font>
 
         <font kerning="yes" 
-          embed-url="./resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSans-BoldOblique.ttf">
+          embed-url="@srcdir@/resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSans-BoldOblique.ttf">
           <font-triplet name="DejaVuLGCSans" style="oblique" weight="bold"/>
         </font>
 
         <font kerning="yes" 
-          embed-url="./resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSansMono.ttf">
+          embed-url="@srcdir@/resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSansMono.ttf">
           <font-triplet name="DejaVuLGCSansMono" style="normal" weight="normal"/>
         </font>
 
         <font kerning="yes" 
-          embed-url="./resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSansMono-Bold.ttf">
+          embed-url="@srcdir@/resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSansMono-Bold.ttf">
           <font-triplet name="DejaVuLGCSansMono" style="normal" weight="bold"/>
         </font>
 
         <font kerning="yes" 
-          embed-url="./resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSansMono-Bold.ttf">
+          embed-url="@srcdir@/resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSansMono-Bold.ttf">
           <font-triplet name="DejaVuLGCSansMono" style="normal" weight="700"/>
         </font>
 
         <font kerning="yes" 
-          embed-url="./resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSansMono-Oblique.ttf">
+          embed-url="@srcdir@/resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSansMono-Oblique.ttf">
           <font-triplet name="DejaVuLGCSansMono" style="oblique" weight="normal"/>
         </font>
 
         <font kerning="yes" 
-          embed-url="./resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSansMono-BoldOblique.ttf">
+          embed-url="@srcdir@/resources/fonts/truetype/dejavu-lgc-fonts-ttf-2.33/ttf/DejaVuLGCSansMono-BoldOblique.ttf">
           <font-triplet name="DejaVuLGCSansMono" style="oblique" weight="bold"/>
         </font>
 
