@@ -9,6 +9,7 @@ SET(XSL_XHTML_STYLESHEET "${CMAKE_SOURCE_DIR}/doc/docbook/resources/brlcad/brlca
 SET(XSL_MAN_STYLESHEET "${CMAKE_SOURCE_DIR}/doc/docbook/resources/brlcad/brlcad-man-stylesheet.xsl")
 # The brlcad/brlcad-fo-stylesheet.xsl stylesheet is for docs with covers
 SET(XSL_FO_STYLESHEET "${CMAKE_SOURCE_DIR}/doc/docbook/resources/standard/xsl/fo/docbook.xsl")
+#SET(XSL_FO_STYLESHEET "${CMAKE_SOURCE_DIR}/doc/docbook/resources/brlcad/brlcad-fo-stylesheet.xsl")
 
 MACRO(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir)
 	FOREACH(filename ${${xml_files}})
@@ -55,7 +56,7 @@ ENDMACRO(DOCBOOK_TO_MAN targetname_suffix srcfile outfile targetdir)
 IF(APACHE_FOP_VERSION VERSION_LESS 1.0)
 	#SET(FOP_HYPH ${CMAKE_CURRENT_SOURCE_DIR}/resources/offo-hyphenation-binary-v1.2/fop-hyph.jar)
 ELSE(APACHE_FOP_VERSION VERSION_LESS 1.0)
-	SET(FOP_HYPH ${CMAKE_CURRENT_SOURCE_DIR}/resources/offo-hyphenation-binary-v2.0/fop-hyph.jar)
+	SET(FOP_HYPH ${CMAKE_SOURCE_DIR}/doc/docbook/resources/offo-hyphenation-binary-v2.0/fop-hyph.jar)
 ENDIF(APACHE_FOP_VERSION VERSION_LESS 1.0)
 
 SET(FOP_OPTS "-Djava.awt.headless=true -Dxml.catalog.files=${CMAKE_CURRENT_BINARY_DIR}/brlcad-xml-catalog.xml")
@@ -80,7 +81,8 @@ MACRO(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir)
 			ADD_CUSTOM_COMMAND(
 				OUTPUT ${outfile}
 				COMMAND 
-				FOP_HYPHENATION_PATH=${FOP_HYP}
+				FOP_HYPHENATION_PATH=${FOP_HYPH}
+				CLASSPATH=${CMAKE_SOURCE_DIR}/doc/docbook
 				FOP_OPTS=\"-Djava.awt.headless=true	-Dxml.catalog.files=${CMAKE_BINARY_DIR}/doc/docbook/brlcad-xml-catalog.xml\"
 				${APACHE_FOP} -c ${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf ${tmp_fo_file} -pdf ${outfile}
 				DEPENDS ${tmp_fo_file}
