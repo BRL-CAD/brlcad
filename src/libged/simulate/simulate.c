@@ -104,30 +104,21 @@ print_rigid_body(struct rigid_body *rb)
 void
 print_manifold_list(struct rigid_body *rb)
 {
-  struct sim_manifold *current_manifold;
-  int i;
+    struct sim_manifold *current_manifold;
+    int i;
 
-  bu_log("print_manifold_list: %s\n", rb->rb_namep);
+    bu_log("print_manifold_list: %s\n", rb->rb_namep);
 
-  for (current_manifold = rb->first_manifold; current_manifold != NULL;
-       current_manifold = current_manifold->next) {
-    bu_log("Manifold between %s and %s(%d contacts):\n", current_manifold->rbA->rb_namep,
-	   current_manifold->rbB->rb_namep,
-	   current_manifold->num_contacts);
-    for (i=0; i<current_manifold->num_contacts; i++) {
-      bu_log("%d, (%f, %f, %f):(%f, %f, %f), n(%f, %f, %f)\n",
-	     i+1,
-	     current_manifold->rb_contacts[i].ptA[0],
-	     current_manifold->rb_contacts[i].ptA[1],
-	     current_manifold->rb_contacts[i].ptA[2],
-	     current_manifold->rb_contacts[i].ptB[0],
-	     current_manifold->rb_contacts[i].ptB[1],
-	     current_manifold->rb_contacts[i].ptB[2],
-	     current_manifold->rb_contacts[i].normalWorldOnB[0],
-	     current_manifold->rb_contacts[i].normalWorldOnB[1],
-	     current_manifold->rb_contacts[i].normalWorldOnB[2]);
+    for (current_manifold = rb->first_manifold; current_manifold != NULL;
+	 current_manifold = current_manifold->next) {
+	for (i=0; i<current_manifold->num_contacts; i++) {
+	    bu_log("contact %d of %d, (%f, %f, %f):(%f, %f, %f), n(%f, %f, %f)\n",
+		   i+1, current_manifold->num_contacts,
+		   V3ARGS(current_manifold->rb_contacts[i].ptA),
+		   V3ARGS(current_manifold->rb_contacts[i].ptB),
+		   V3ARGS(current_manifold->rb_contacts[i].normalWorldOnB));
+	}
     }
-  }
 }
 
 
@@ -360,48 +351,44 @@ add_regions(struct ged *gedp, struct simulation_params *sim_params)
 int
 get_bb(struct ged *gedp, struct simulation_params *sim_params)
 {
-  struct rigid_body *current_node;
-  point_t rpp_min, rpp_max;
+    struct rigid_body *current_node;
+    point_t rpp_min, rpp_max;
 
-  /* Free memory in rigid_body list */
-  for (current_node = sim_params->head_node; current_node != NULL; current_node = current_node->next) {
+    /* Free memory in rigid_body list */
+    for (current_node = sim_params->head_node; current_node != NULL; current_node = current_node->next) {
 
-    /* Get its BB */
-    if (rt_bound_internal(gedp->ged_wdbp->dbip, current_node->dp, rpp_min, rpp_max) == 0)
-      bu_log("get_bb: Got the BB for \"%s\" as \
-		    min {%f %f %f} max {%f %f %f}\n", current_node->dp->d_namep,
-	     rpp_min[0], rpp_min[1], rpp_min[2],
-	     rpp_max[0], rpp_max[1], rpp_max[2]);
-    else{
-      bu_log("get_bb: ERROR Could not get the BB\n");
-      return GED_ERROR;
+	/* Get its BB */
+	if (rt_bound_internal(gedp->ged_wdbp->dbip, current_node->dp, rpp_min, rpp_max) == 0) {
+	    bu_log("get_bb: Got the BB for \"%s\" as \
+					min {%f %f %f} max {%f %f %f}\n", current_node->dp->d_namep,
+		   V3ARGS(rpp_min),
+		   V3ARGS(rpp_max));
+	} else {
+	    bu_log("get_bb: ERROR Could not get the BB\n");
+	    return GED_ERROR;
+	}
+
+	VMOVE(current_node->bb_min, rpp_min);
+	VMOVE(current_node->bb_max, rpp_max);
+
+	/* Get BB length, width, height */
+	VSUB2(current_node->bb_dims, current_node->bb_max, current_node->bb_min);
+
+	bu_log("get_bb: Dimensions of this BB : %f %f %f\n", V3ARGS(current_node->bb_dims));
+
+	/* Get BB position in 3D space */
+	VSCALE(current_node->bb_center, current_node->bb_dims, 0.5);
+	VADD2(current_node->bb_center, current_node->bb_center, current_node->bb_min)
+
+	    MAT_IDN(current_node->m);
+	current_node->m[12] = current_node->bb_center[0];
+	current_node->m[13] = current_node->bb_center[1];
+	current_node->m[14] = current_node->bb_center[2];
+
+	MAT_COPY(current_node->m_prev, current_node->m);
     }
 
-    VMOVE(current_node->bb_min, rpp_min);
-    VMOVE(current_node->bb_max, rpp_max);
-
-    /* Get BB length, width, height */
-    current_node->bb_dims[0] = current_node->bb_max[0] - current_node->bb_min[0];
-    current_node->bb_dims[1] = current_node->bb_max[1] - current_node->bb_min[1];
-    current_node->bb_dims[2] = current_node->bb_max[2] - current_node->bb_min[2];
-
-    bu_log("get_bb: Dimensions of this BB : %f %f %f\n",
-	   current_node->bb_dims[0], current_node->bb_dims[1], current_node->bb_dims[2]);
-
-    /* Get BB position in 3D space */
-    current_node->bb_center[0] = current_node->bb_min[0] + current_node->bb_dims[0]/2;
-    current_node->bb_center[1] = current_node->bb_min[1] + current_node->bb_dims[1]/2;
-    current_node->bb_center[2] = current_node->bb_min[2] + current_node->bb_dims[2]/2;
-
-    MAT_IDN(current_node->m);
-    current_node->m[12] = current_node->bb_center[0];
-    current_node->m[13] = current_node->bb_center[1];
-    current_node->m[14] = current_node->bb_center[2];
-
-    MAT_COPY(current_node->m_prev, current_node->m);
-  }
-
-  return GED_OK;
+    return GED_OK;
 }
 
 
