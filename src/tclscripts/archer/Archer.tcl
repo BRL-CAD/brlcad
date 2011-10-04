@@ -166,8 +166,11 @@ package provide Archer 1.0
 
 	# General
 	method askToRevert {}
-	method bot_flip_check      {_logfile args}
-	method bot_flip_check_all  {_logfile}
+	method bot_fix_all {}
+	method bot_flip_check      {args}
+	method bot_flip_check_all  {}
+	method bot_split_all {}
+	method bot_sync_all {}
 	method fbclear {}
 	method raytracePlus {}
 
@@ -487,7 +490,8 @@ package provide Archer 1.0
     if {$Archer::extraMgedCommands != ""} {
 	eval lappend mArcherCoreCommands $Archer::extraMgedCommands
     }
-    lappend mArcherCoreCommands importFg4Sections bot_flip_check bot_flip_check_all
+    lappend mArcherCoreCommands importFg4Sections bot_flip_check \
+	bot_flip_check_all bot_split_all bot_sync_all bot_fix_all
 
     if {!$mViewOnly} {
 	updatePrimaryToolbar
@@ -1015,12 +1019,16 @@ package provide Archer 1.0
 }
 
 
-::itcl::body Archer::bot_flip_check {_logfile args} {
-    SetWaitCursor $this
+::itcl::body Archer::bot_fix_all {} {
+    set ret_string ""
+    append ret_string "[bot_split_all]\n\n"
+    append ret_string "[bot_sync_all]\n\n"
+    append ret_string "[bot_flip_check_all]"
+}
 
-    if {[catch {open $_logfile "w"} fd]} {
-	return "bot_flip_check: not able to open logfile - \"$_logfile\""
-    }
+
+::itcl::body Archer::bot_flip_check {args} {
+    SetWaitCursor $this
 
     set skip_count 0
     set no_flip_count 0
@@ -1028,6 +1036,7 @@ package provide Archer 1.0
     set miss_count 0
 
     set skip_string ""
+    set not_bot_string ""
     set no_flip_string ""
     set flip_string ""
     set miss_string ""
@@ -1035,6 +1044,8 @@ package provide Archer 1.0
     set nitems [llength $args]
     set icount 0
     set last_percent 0
+
+    putString "Flipping bots ..."
 
     foreach item $args {
 	incr icount
@@ -1051,13 +1062,13 @@ package provide Archer 1.0
 
 	if {$gtype != "bot"} {
 	    incr skip_count
-	    append skip_string "$item is not a bot\n"
+	    append not_bot_string "$item "
 	    continue
 	}
 
 	if {[$itk_component(ged) get $item mode] != "volume"} {
 	    incr skip_count
-	    append skip_string "$item is not a volume mode bot\n"
+	    append not_bot_string "$item "
 	    continue
 	}
 
@@ -1167,75 +1178,68 @@ package provide Archer 1.0
 	}
     }
 
-    puts $fd "************************ ITEMS SKIPPED ************************ "
+    set ret_string "************************ ITEMS SKIPPED ************************\n"
     if {$skip_count} {
-	puts $fd $skip_string
+	append ret_string "$skip_string\n"
+	if {$not_bot_string != ""} {
+	    append ret_string "The following are not volume mode bots:\n$not_bot_string\n"
+	}
     } else {
-	puts $fd "None"
+	append ret_string "None\n"
     }
-    puts $fd ""
-    puts $fd ""
-    puts $fd "************************ ITEMS MISSED ************************ "
+    append ret_string "\n"
+    append ret_string "\n"
+    append ret_string "************************ ITEMS MISSED ************************\n"
     if {$miss_count} {
-	puts $fd $miss_string
+	append ret_string "$miss_string\n"
     } else {
-	puts $fd "None"
+	append ret_string "None\n"
     }
-    puts $fd ""
-    puts $fd ""
-    puts $fd "************************ ITEMS NOT FLIPPED ************************ "
+    append ret_string "\n"
+    append ret_string "\n"
+    append ret_string "************************ ITEMS NOT FLIPPED ************************\n"
     if {$no_flip_count} {
-	puts $fd $no_flip_string
+	append ret_string "$no_flip_string\n"
     } else {
-	puts $fd "None"
+	append ret_string "None\n"
     }
-    puts $fd ""
-    puts $fd ""
-    puts $fd "************************ ITEMS FLIPPED ************************ "
+    append ret_string "\n"
+    append ret_string "\n"
+    append ret_string "************************ ITEMS FLIPPED ************************\n"
     if {$flip_count} {
-	puts $fd $flip_string
+	append ret_string "$flip_string\n"
     } else {
-	puts $fd "None"
+	append ret_string "None"
     }
-    puts $fd ""
-    puts $fd ""
-    puts $fd ""
-    puts $fd "************************ SUMMARY ************************ "
-    putString "************************ SUMMARY ************************ "
+    append ret_string "\n"
+    append ret_string "\n"
+    append ret_string "\n"
+    append ret_string "************************ SUMMARY ************************\n"
 
     if {$skip_count == 1} {
-	puts $fd "$skip_count item skipped"
-	putString "$skip_count item skipped"
+	append ret_string "$skip_count item skipped\n"
     } else {
-	puts $fd "$skip_count items skipped"
-	putString "$skip_count items skipped"
+	append ret_string "$skip_count items skipped\n"
     }
 
     if {$miss_count == 1} {
-        puts $fd "$miss_count item missed"
-        putString "$miss_count item missed"
+        append ret_string "$miss_count item missed\n"
     } else {
-	puts $fd "$miss_count items missed"
-	putString "$miss_count items missed"
+	append ret_string "$miss_count items missed\n"
     }
 
     if {$no_flip_count == 1} {
-	puts $fd "$no_flip_count item NOT flipped"
-	putString "$no_flip_count item NOT flipped"
+	append ret_string "$no_flip_count item NOT flipped\n"
     } else {
-	puts $fd "$no_flip_count items NOT flipped"
-	putString "$no_flip_count items NOT flipped"
+	append ret_string "$no_flip_count items NOT flipped\n"
     }
 
     if {$flip_count == 1} {
-	puts $fd "$flip_count item flipped"
-	putString "$flip_count item flipped"
+	append ret_string "$flip_count item flipped\n"
     } else {
-	puts $fd "$flip_count items flipped"
-	putString "$flip_count items flipped"
+	append ret_string "$flip_count items flipped\n"
     }
 
-    close $fd
     SetNormalCursor $this
     pluginUpdateProgressBar 0
 
@@ -1243,13 +1247,98 @@ package provide Archer 1.0
 	setSave
     }
 
-    return
+    return $ret_string
 }
 
 
-::itcl::body Archer::bot_flip_check_all {_logfile} {
+::itcl::body Archer::bot_flip_check_all {} {
     set blist [split [search . -type bot] "\n "]
-    eval bot_flip_check $_logfile $blist
+    eval bot_flip_check $blist
+}
+
+
+::itcl::body Archer::bot_split_all {} {
+    SetWaitCursor $this
+
+    set ret_string "The following bots have been split:\n"
+    set blist [split [search . -type bot] "\n "]
+    set nitems [llength $blist]
+    set icount 0
+    set last_percent 0
+    set split_count 0
+    set split_bots {}
+
+    putString "Splitting bots ..."
+
+    foreach bot $blist {
+	incr icount
+
+	if {$bot == ""} {
+	    continue
+	}
+
+	if {![catch {bot_split2 $bot} bnames] && $bnames != ""} {
+	    incr split_count
+	    append ret_string "[lindex $bnames 0] "
+	    lappend split_bots [lindex $bnames 1]
+	}
+
+	set percent [format "%.2f" [expr {$icount / double($nitems)}]]
+	if {$percent > $last_percent} {
+	    set last_percent $percent
+	    pluginUpdateProgressBar $percent
+	}
+    }
+
+    pluginUpdateProgressBar 0
+    SetNormalCursor $this
+
+    if {$split_count} {
+	gedCmd make_name -s 0
+	set gname [gedCmd make_name bot_split_backup]
+	eval gedCmd g $gname $split_bots
+
+	syncTree
+	setSave
+    }
+
+    return $ret_string
+}
+
+
+::itcl::body Archer::bot_sync_all {} {
+    SetWaitCursor $this
+
+    set blist [split [search . -type bot] "\n "]
+    set nitems [llength $blist]
+    set icount 0
+    set last_percent 0
+
+    putString "Syncing bots ..."
+    set ret_string "The following bots have been synced:\n"
+
+    foreach bot $blist {
+	incr icount
+
+	if {$bot == ""} {
+	    continue
+	}
+	append ret_string "$bot "
+	catch {gedCmd bot_sync $bot}
+
+	set percent [format "%.2f" [expr {$icount / double($nitems)}]]
+	if {$percent > $last_percent} {
+	    set last_percent $percent
+	    pluginUpdateProgressBar $percent
+	}
+    }
+
+    pluginUpdateProgressBar 0
+    SetNormalCursor $this
+
+    setSave
+
+    return $ret_string
 }
 
 
