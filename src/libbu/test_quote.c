@@ -35,9 +35,9 @@ test_quote(const char *str)
     const char *dequoted = NULL;
 
     if (BU_STR_EQUAL(str, dequoted) && !BU_STR_EQUAL(str, bu_vls_addr(&quoted))) {
-        printf("%24s -> %28s [PASS]\n", str, bu_vls_addr(&quoted));
+	printf("%24s -> %28s [PASS]\n", str, bu_vls_addr(&quoted));
     } else {
-        printf("%24s -> %28s [FAIL]  (should be: %s)\n", str, bu_vls_addr(&quoted), str);
+	printf("%24s -> %28s [FAIL]  (should be: %s)\n", str, bu_vls_addr(&quoted), str);
     }
 
     bu_vls_free(&quoted);

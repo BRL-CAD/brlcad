@@ -137,7 +137,7 @@ png_save(int fd, unsigned char *rgb, int width, int height, int depth)
     }
 
     if (depth == 4) {
-    	png_color_type = PNG_COLOR_TYPE_RGBA;
+	png_color_type = PNG_COLOR_TYPE_RGBA;
     }
 
     png_init_io(png_ptr, fh);

@@ -141,7 +141,7 @@ bu_crashreport(const char *filename)
 	    while (bu_fgets(buffer, CR_BUFSIZE, popenfp)) {
 		size_t ret;
 		size_t len;
-		
+
 		len = strlen(buffer);
 		if ((len == 0)
 		    || ((len == 1) && (buffer[0] == '\n')))

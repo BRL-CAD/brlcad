@@ -398,7 +398,7 @@ bu_realloc(register genptr_t ptr, size_t siz, const char *str)
      * needs to be large enough to hold this value.
      */
     if (UNLIKELY(siz < MINSIZE)) {
-        siz = MINSIZE;
+	siz = MINSIZE;
     }
 
     if (UNLIKELY(bu_debug&BU_DEBUG_MEM_CHECK)) {

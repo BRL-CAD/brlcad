@@ -29,7 +29,7 @@ bu_simd_level()
 # ifdef __i386__
     asm volatile("pushl %%ebx;cpuid;popl %%ebx;":"=c"(c),"=d"(d):"a"(0x1));
 # else
-    int b=0; 
+    int b=0;
     asm volatile("cpuid":"=b"(b),"=c"(c),"=d"(d):"a"(0x1));
 # endif
     if(c & 0x100000)

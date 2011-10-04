@@ -154,7 +154,7 @@ bu_fchmod(FILE *fp,
 	char filepath[MAXPATHLEN+1];
 	int fd = fileno(fp);
 	HANDLE h = (HANDLE)_get_osfhandle(fd);
-        GetFileNameFromHandle(h, filepath);
+	GetFileNameFromHandle(h, filepath);
 	return chmod(filepath, pmode);
     }
 #endif

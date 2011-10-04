@@ -42,11 +42,11 @@ bu_basename(const char *str)
 	    str = p;
 
     len = strlen(str);
-    
+
     /* Remove trailing separators */
     while (len > 1 && str[len - 1] == BU_DIR_SEPARATOR)
 	len--;
-    
+
     /* Create a new string */
     base_str = bu_calloc(len + 2, sizeof(char), "bu_basename alloc");
     if (len > 0) {

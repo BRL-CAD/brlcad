@@ -56,9 +56,9 @@ automatic_test(const char *input)
 	res = bu_basename(buf_input);
 
     if (BU_STR_EQUAL(res, ans))
-        printf("%24s -> %24s [PASSED]\n", input, res);
-    else 
-        printf("%24s -> %24s (should be: %s) [FAIL]\n", input, res, ans);
+	printf("%24s -> %24s [PASSED]\n", input, res);
+    else
+	printf("%24s -> %24s (should be: %s) [FAIL]\n", input, res, ans);
 
     bu_free(res, NULL);
 }

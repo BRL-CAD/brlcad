@@ -1356,7 +1356,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		{
 		    register size_t i = sdp->sp_count;
 		    register int *dp = (int *)loc;
-		    
+
 		    bu_vls_printf(vls, "%s%s=%d", " ", sdp->sp_name, *dp++);
 
 		    while (--i > 0) {
