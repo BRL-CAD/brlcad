@@ -1406,27 +1406,14 @@ namespace eval ArcherCore {
 	return
     }
 
-    set dlist [gedCmd who]
-    foreach pelement [split $obj /] {
-	set new_dlist {}
-	set dlen [llength $dlist]
-	foreach ditem $dlist {
-	    if {[lsearch [split $ditem /] $pelement] != -1} {
-		set renderData [gedCmd how -b $ditem]
-		set renderMode [lindex $renderData 0]
-		set renderTrans [lindex $renderData 1]
-		render $ditem $renderMode $renderTrans 0 $wflag
-	    } else {
-		lappend new_dlist $ditem
-	    }
-	}
-
-	if {$new_dlist == {}} {
-	    break
-	}
-
-	set dlist $new_dlist
+    set rdata [gedCmd how -b $obj]
+    if {$rdata == -1} {
+	return
     }
+
+    set rmode [lindex $rdata 0]
+    set rtrans [lindex $rdata 1]
+    gedCmd draw -m$rmode -x$rtrans $obj
 }
 
 ::itcl::body ArcherCore::initImages {} {
@@ -2671,18 +2658,15 @@ namespace eval ArcherCore {
 	    } \
 	    $COMP_PICK_ERASE_MODE { \
 		gedCmd erase $path
-		if {!$mEnableListView} {
-		    getTreeNode $path 1
-		}
 		updateTreeDrawLists
 		putString "erase $path"
 		set mStatusStr "erase $path"
 	    } \
 	    $COMP_PICK_BOT_FLIP_MODE { \
-		catch {bot_flip $last}
+		catch {bot_flip $path}
 		redrawObj $path
 	    } \
-	    $COMP_PICK_BOT_SPLIT_MODE {
+	    $COMP_PICK_BOT_SPLIT_MODE { \
 		set how [gedCmd how $path]
 		if {![catch {bot_split2 $last} bgroup]} {
 		    set dirname [file dirname $path]
@@ -2698,7 +2682,7 @@ namespace eval ArcherCore {
 		}
 	    } \
 	    $COMP_PICK_BOT_SYNC_MODE { \
-		catch {bot_sync $last}
+		catch {bot_sync $path}
 		redrawObj $path
 	    }
     }
