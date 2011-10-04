@@ -66,9 +66,16 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 
     for (i=1; i < argc; ++i) {
 	struct rt_bot_list *headRblp;
+	char *cp = strrchr(argv[i], '/');
 
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_QUIET)) == RT_DIR_NULL) {
-	    bu_vls_printf(&error_str, "%s: db_lookup(%s) error\n", argv[0], argv[i]);
+	/* Skip past any path elements */
+	if (!cp)
+	    cp = (char *)argv[i];
+	else
+	    ++cp;
+
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, cp, LOOKUP_QUIET)) == RT_DIR_NULL) {
+	    bu_vls_printf(&error_str, "%s: db_lookup(%s) error\n", argv[0], cp);
 	    continue;
 	}
 
@@ -76,7 +83,7 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 
 	if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	    rt_db_free_internal(&intern);
-	    bu_vls_printf(&error_str, "%s: %s is not a BOT solid!\n", argv[0], argv[i]);
+	    bu_vls_printf(&error_str, "%s: %s is not a BOT solid!\n", argv[0], cp);
 	    continue;
 	}
 
@@ -103,7 +110,7 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_init(&new_bots);
 	    for (BU_LIST_FOR(rblp, rt_bot_list, &headRblp->l)) {
 		/* Get a unique name based on the original name */
-		av[1] = argv[i];
+		av[1] = cp;
 		ged_make_name(gedp, ac, av);
 
 		/* Create the bot */
@@ -131,7 +138,7 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    /* Save the name of the original bot and the new bots as a sublist */
-	    bu_vls_printf(&bot_result_list, "{%s {%V}} ", argv[i], &new_bots);
+	    bu_vls_printf(&bot_result_list, "{%s {%V}} ", cp, &new_bots);
 
 	    bu_vls_trunc(gedp->ged_result_str, 0);
 	    bu_vls_trunc(&new_bots, 0);
