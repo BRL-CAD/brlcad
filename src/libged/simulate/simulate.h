@@ -39,16 +39,18 @@
 #define MAX_CONTACTS_PER_MANIFOLD 4
 
 struct sim_contact {
-  vect_t ptA, ptB;
-  vect_t normalWorldOnB;
+    vect_t ptA;
+    vect_t ptB;
+    vect_t normalWorldOnB;
 };
 
 
 struct sim_manifold {
-  int num_contacts;
-  struct rigid_body *rbA, *rbB;
-  struct sim_contact rb_contacts[MAX_CONTACTS_PER_MANIFOLD];
-  struct sim_manifold *next;
+    int num_contacts;
+    char *nameB;
+    struct rigid_body *rbA, *rbB;
+    struct sim_contact rb_contacts[MAX_CONTACTS_PER_MANIFOLD];
+    struct sim_manifold *next;
 };
 
 
@@ -60,24 +62,29 @@ struct sim_manifold {
  * like elasticity, custom forces will be added later.
  */
 struct rigid_body {
-  int index;
-  char *rb_namep;                 /**< @brief pointer to name string */
-  point_t bb_min, bb_max;         /**< @brief body bb bounds */
-  point_t bb_center, bb_dims;     /**< @brief bb center and dimensions */
-  point_t btbb_min, btbb_max;     /**< @brief Bullet body bb bounds */
-  point_t btbb_center, btbb_dims; /**< @brief Bullet bb center and dimensions */
-  mat_t m, m_prev;                /**< @brief transformation matrix from Bullet */
-  int state;			    /**< @brief rigid body state from Bullet */
-  struct directory *dp;           /**< @brief directory pointer to the related region */
-  struct rigid_body *next;        /**< @brief link to next body */
+    int index;
+    char *rb_namep;                 /**< @brief pointer to name string */
+    point_t bb_min;                 /**< @brief body min bb bounds */
+    point_t bb_max;                 /**< @brief body max bb bounds */
+    point_t bb_center;              /**< @brief bb center */
+    point_t bb_dims;                /**< @brief bb dimensions */
+    point_t btbb_min;               /**< @brief Bullet body min bb bounds */
+    point_t btbb_max;               /**< @brief Bullet body max bb bounds */
+    point_t btbb_center;            /**< @brief Bullet bb center */
+    point_t btbb_dims;              /**< @brief Bullet bb dimensions */
+    mat_t m;                        /**< @brief transformation matrix from Bullet */
+    mat_t m_prev;                   /**< @brief previous transformation matrix from Bullet */
+    int state;                      /**< @brief rigid body state from Bullet */
+    struct directory *dp;           /**< @brief directory pointer to the related region */
+    struct rigid_body *next;        /**< @brief link to next body */
 
-  /* Can be set by libged or Bullet(checked and inserted into sim) */
-  vect_t linear_velocity; 	    /**< @brief linear velocity components */
-  vect_t angular_velocity; 	    /**< @brief angular velocity components */
+    /* Can be set by libged or Bullet(checked and inserted into sim) */
+    vect_t linear_velocity;         /**< @brief linear velocity components */
+    vect_t angular_velocity;        /**< @brief angular velocity components */
 
-  /* Manifolds in which this body participates and is body B, only body B has manifold info*/
-  int num_manifolds;			 /**< @brief angular velocity components */
-  struct sim_manifold *first_manifold; /**< @brief angular velocity components */
+    /* Manifolds in which this body participates and is body B, only body B has manifold info*/
+    int num_manifolds;			 /**< @brief angular velocity components */
+    struct sim_manifold *first_manifold; /**< @brief angular velocity components */
 };
 
 
@@ -86,12 +93,12 @@ struct rigid_body {
  * time/steps for which the simulation will be run.
  */
 struct simulation_params {
-  int duration;                  /**< @brief contains either the number of steps or the time */
-  int num_bodies;                /**< @brief number of rigid bodies participating in the sim */
-  struct bu_vls *result_str;     /**< @brief handle to the libged object to access geometry info */
-  char *sim_comb_name;           /**< @brief name of the group which contains all sim regions*/
-  char *ground_plane_name;       /**< @brief name of the ground plane region */
-  struct rigid_body *head_node;  /**< @brief link to first rigid body node */
+    int duration;                  /**< @brief contains either the number of steps or the time */
+    int num_bodies;                /**< @brief number of rigid bodies participating in the sim */
+    struct bu_vls *result_str;     /**< @brief handle to the libged object to access geometry info */
+    char *sim_comb_name;           /**< @brief name of the group which contains all sim regions*/
+    char *ground_plane_name;       /**< @brief name of the ground plane region */
+    struct rigid_body *head_node;  /**< @brief link to first rigid body node */
 };
 
 
