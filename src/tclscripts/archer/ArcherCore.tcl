@@ -2680,6 +2680,7 @@ namespace eval ArcherCore {
 	    } \
 	    $COMP_PICK_BOT_FLIP_MODE { \
 		catch {bot_flip $last}
+		redrawObj $path
 	    } \
 	    $COMP_PICK_BOT_SPLIT_MODE {
 		set how [gedCmd how $path]
@@ -2698,6 +2699,7 @@ namespace eval ArcherCore {
 	    } \
 	    $COMP_PICK_BOT_SYNC_MODE { \
 		catch {bot_sync $last}
+		redrawObj $path
 	    }
     }
 }
@@ -4912,7 +4914,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::bb {args} {
-    eval gedWrapper bb 0 0 1 1 $args
+    eval gedWrapper bb 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::bev {args} {
@@ -4972,7 +4974,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::c {args} {
-    eval gedWrapper c 0 1 1 1 $args
+    eval gedWrapper c 0 1 1 2 $args
 }
 
 ::itcl::body ArcherCore::cd {args} {
@@ -4984,7 +4986,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::clone {args} {
-    eval gedWrapper clone 0 0 1 1 $args
+    eval gedWrapper clone 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::closedb {args} {
@@ -5000,7 +5002,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::comb {args} {
-    eval gedWrapper comb 0 1 1 1 $args
+    eval gedWrapper comb 0 1 1 2 $args
 }
 
 ::itcl::body ArcherCore::comb_color {args} {
@@ -5012,11 +5014,11 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::copy {args} {
-    eval gedWrapper cp 0 0 1 1 $args
+    eval gedWrapper cp 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::copyeval {args} {
-    eval gedWrapper copyeval 0 0 1 1 $args
+    eval gedWrapper copyeval 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::copymat {args} {
@@ -5024,15 +5026,15 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::cp {args} {
-    eval gedWrapper cp 0 0 1 1 $args
+    eval gedWrapper cp 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::cpi {args} {
-    eval gedWrapper cpi 0 0 1 1 $args
+    eval gedWrapper cpi 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::dbconcat {args} {
-    eval gedWrapper dbconcat 0 0 1 1 $args
+    eval gedWrapper dbconcat 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::dbExpand {args} {
@@ -5114,7 +5116,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::delete {args} {
-    eval gedWrapper kill 1 0 1 1 $args
+    eval gedWrapper kill 1 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::draw {args} {
@@ -5174,7 +5176,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::edcomb {args} {
-    eval gedWrapper edcomb 0 0 1 1 $args
+    eval gedWrapper edcomb 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::edit {args} {
@@ -5230,11 +5232,11 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::facetize {args} {
-    eval gedWrapper facetize 0 0 1 1 $args
+    eval gedWrapper facetize 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::fracture {args} {
-    eval gedWrapper fracture 0 1 1 1 $args
+    eval gedWrapper fracture 0 1 1 2 $args
 }
 
 ::itcl::body ArcherCore::g {args} {
@@ -5242,15 +5244,15 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::group {args} {
-    eval gedWrapper g 0 1 1 1 $args
+    eval gedWrapper g 0 1 1 2 $args
 }
 
 ::itcl::body ArcherCore::hide {args} {
-    eval gedWrapper hide 0 0 1 1 $args
+    eval gedWrapper hide 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::human {args} {
-    eval gedWrapper human 0 0 1 1 $args
+    eval gedWrapper human 0 0 1 2 $args
 }
 
 
@@ -5263,11 +5265,11 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::in {args} {
-    eval gedWrapper in 0 0 1 1 $args
+    eval gedWrapper in 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::inside {args} {
-    eval gedWrapper inside 0 0 1 1 $args
+    eval gedWrapper inside 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::item {args} {
@@ -5275,19 +5277,19 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::kill {args} {
-    eval gedWrapper kill 1 0 1 1 $args
+    eval gedWrapper kill 1 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::killall {args} {
-    eval gedWrapper killall 1 0 1 1 $args
+    eval gedWrapper killall 1 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::killrefs {args} {
-    eval gedWrapper killrefs 1 0 1 1 $args
+    eval gedWrapper killrefs 1 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::killtree {args} {
-    eval gedWrapper killtree 1 0 1 1 $args
+    eval gedWrapper killtree 1 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::ls {args} {
@@ -5295,7 +5297,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::make {args} {
-    eval gedWrapper make 0 0 1 1 $args
+    eval gedWrapper make 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::make_bb {args} {
@@ -5328,7 +5330,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::mirror {args} {
-    eval gedWrapper mirror 0 0 1 1 $args
+    eval gedWrapper mirror 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::move {args} {
@@ -5344,19 +5346,19 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::mv {args} {
-    eval gedWrapper mv 0 0 1 1 $args
+    eval gedWrapper mv 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::mvall {args} {
-    eval gedWrapper mvall 0 0 1 1 $args
+    eval gedWrapper mvall 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::nmg_collapse {args} {
-    eval gedWrapper nmg_collapse 0 0 1 1 $args
+    eval gedWrapper nmg_collapse 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::nmg_simplify {args} {
-    eval gedWrapper nmg_simplify 0 0 1 1 $args
+    eval gedWrapper nmg_simplify 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::ocenter {args} {
@@ -5494,7 +5496,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::put {args} {
-    eval gedWrapper put 0 0 1 1 $args
+    eval gedWrapper put 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::put_comb {args} {
@@ -5518,7 +5520,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::r {args} {
-    eval gedWrapper r 0 1 1 1 $args
+    eval gedWrapper r 0 1 1 2 $args
 }
 
 ::itcl::body ArcherCore::rcodes {args} {
@@ -5526,7 +5528,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::red {args} {
-    eval gedWrapper red 0 0 1 1 $args
+    eval gedWrapper red 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::rfarb {args} {
@@ -5534,7 +5536,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::rm {args} {
-    eval gedWrapper rm 0 0 1 1 $args
+    eval gedWrapper rm 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::rmater {args} {
@@ -5583,7 +5585,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::tire {args} {
-    eval gedWrapper tire 0 0 1 1 $args
+    eval gedWrapper tire 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::title {args} {
@@ -5604,7 +5606,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::unhide {args} {
-    eval gedWrapper unhide 0 0 1 1 $args
+    eval gedWrapper unhide 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::units {args} {
@@ -5655,7 +5657,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::vmake {args} {
-    eval gedWrapper vmake 0 0 1 1 $args
+    eval gedWrapper vmake 0 0 1 2 $args
 }
 
 ::itcl::body ArcherCore::wmater {args} {

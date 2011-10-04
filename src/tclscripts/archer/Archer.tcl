@@ -122,14 +122,6 @@ package provide Archer 1.0
 
     public {
 	# Public Class Variables
-	common LEDGER_ENTRY_OUT_OF_SYNC_ATTR "Ledger_Entry_Out_Of_Sync"
-	common LEDGER_ENTRY_TYPE_ATTR "Ledger_Entry_Type"
-	common LEDGER_ENTRY_MOVE_COMMAND "Ledger_Entry_Move_Command"
-	common LEDGER_CREATE "Create"
-	common LEDGER_DESTROY "Destroy"
-	common LEDGER_MODIFY "Modify"
-	common LEDGER_RENAME "Rename"
-
 	common plugins ""
 	common pluginMajorTypeCore "Core"
    	common pluginMajorTypeCommand "Command"
@@ -176,31 +168,6 @@ package provide Archer 1.0
 
 	# ArcherCore Override Section
 	method cmd                 {args}
-	method attr                {args}
-	method c                   {args}
-	method clone               {args}
-	method comb                {args}
-	method combmem             {args}
-	method cp                  {args}
-	method cpi                 {args}
-	method copyeval            {args}
-	method copymat             {args}
-	method edcodes             {args}
-	method edcolor             {args}
-	method edmater             {args}
-	method facetize            {args}
-	method g                   {args}
-	method i                   {args}
-	method in                  {args}
-	method inside              {args}
-	method kill                {args}
-	method killall             {args}
-	method killrefs            {args}
-	method killtree            {args}
-	method make                {args}
-	method mirror              {args}
-	method mv                  {args}
-	method mvall               {args}
 	method p                   {args}
 	method p_protate           {args}
 	method p_pscale            {args}
@@ -208,42 +175,19 @@ package provide Archer 1.0
 	method p_move_arb_edge     {args}
 	method p_move_arb_face     {args}
 	method p_rotate_arb_face   {args}
-	method putmat              {args}
 	method Load                {_target}
-	method r                   {args}
-	method rm                  {args}
 	method saveDb              {}
-	method title               {args}
 	method units               {args}
-	method vmake               {args}
 	method initImages          {}
 	method initFbImages        {}
 	method setDefaultBindingMode {_mode}
 
 	# Object Edit Management
-	method checkpoint {_obj _type}
-	method checkpoint_olist {_olist _type}
-	method clearTargetLedger {}
-	method createTargetLedger {}
-	method global_undo {}
-	method global_undo_callback {_gname}
-	method ledger_cleanup {}
-	method object_checkpoint {}
-	method object_undo {}
-	method object_update {_obj {_rflag 1}}
 	method revert {}
-	method selection_checkpoint {_obj}
-	method updateObjSave {}
     }
 
     protected {
 	variable mPrefFile ""
-	variable mNeedObjSave 0
-	variable mNeedGlobalUndo 0
-	variable mNeedObjUndo 0
-	variable mNeedCheckpoint 0
-	variable mLedger ""
-	variable mLedgerGID 0
 
 	variable mArcherVersion "0.9.2"
 	variable mActiveEditDialogs {}
@@ -258,24 +202,11 @@ package provide Archer 1.0
 	# ArcherCore Override Section
 	method buildCommandView {}
 	method dblClick {_tags}
-	method addCombMemberWrapper {_cmd _cflag args}
-	method createCombWrapper {_cmd args}
-	method removeCombMemberWrapper {_cmd args}
-	method combWrapper {_cmd _minArgs args}
-	method createWrapper {_cmd args}
-	method gedWrapper {_cmd _eflag _hflag _sflag _tflag args}
-	method gedWrapper2 {_cmd _oindex _pindex _eflag _hflag _sflag _tflag args}
-	method globalWrapper {_cmd args}
-	method killWrapper {_cmd args}
-	method moveWrapper {_cmd args}
 	method handleTreeSelect {}
 	method initDefaultBindings {{_comp ""}}
 	method initGed {}
 	method setActivePane {_pane}
-	method updateCheckpointMode {}
 	method updateSaveMode {}
-	method updateUndoMode {{_oflag 1}}
-	method updateUndoState {}
 
 	# Miscellaneous Section
 	method buildAboutDialog {}
@@ -536,9 +467,7 @@ package provide Archer 1.0
 	setTreeView
 	updateCreationButtons 0
 	updateRaytraceButtons 0
-	updateCheckpointMode
 	updateSaveMode
-	updateUndoMode
     } else {
 	backgroundColor $mBackgroundColor
     }
@@ -573,10 +502,6 @@ package provide Archer 1.0
 # ------------------------------------------------------------
 ::itcl::body Archer::destructor {} {
     writePreferences
-
-    if {$mLedger != ""} {
-	catch {rename $mLedger ""}
-    }
 }
 
 
@@ -1351,397 +1276,10 @@ package provide Archer 1.0
 }
 
 
-::itcl::body Archer::attr {args} {
-    set len [llength $args]
-
-    set cmd [lindex $args 0]
-    switch -- $cmd {
-	"append" -
-	"set" {
-	    if {$len < 4} {
-		return [eval gedWrapper2 attr 1 0 0 0 0 0 $args]
-	    }
-
-	    foreach kv [lrange $args 2 end] {
-		set k [lindex $kv 0]
-		set ki [lsearch $mTreeAttrColumns $k]
-		if {$ki != -1} {
-		    # We're affecting an attribute that's being displayed
-		    return [eval gedWrapper2 attr 1 0 0 0 1 2 $args]
-		}
-	    }
-
-	    return [eval gedWrapper2 attr 1 0 0 0 1 0 $args]
-	}
-	"rm" {
-	    if {$len < 3} {
-		return [eval gedWrapper2 attr 1 0 0 0 0 0 $args]
-	    }
-
-	    foreach kv [lrange $args 2 end] {
-		set k [lindex $kv 0]
-		set ki [lsearch $mTreeAttrColumns $k]
-		if {$ki != -1} {
-		    # We're affecting an attribute that's being displayed
-		    return [eval gedWrapper2 attr 1 0 0 0 1 2 $args]
-		}
-	    }
-
-	    return [eval gedWrapper2 attr 1 0 0 0 1 0 $args]
-	}
-	"get" -
-	"show" {
-	    return [eval gedWrapper2 attr 1 0 0 0 0 0 $args]
-	}
-    }
-}
-
-
-#
-# Create a combination.
-#
-::itcl::body Archer::c {args} {
-    #    eval combWrapper c 2 $args
-    putString "Momentarily disabled. Fix me!"
-}
-
-
-::itcl::body Archer::clone {args} {
-    #    eval createWrapper clone $args
-
-    # Returns a help message.
-    if {[llength $args] == 0} {
-	return [gedCmd clone]
-    }
-
-    # Clone will return the clist info. Consequently,
-    # clist is set after invoking clone below.
-    SetWaitCursor $this
-
-    if {[catch {eval gedCmd clone $args} ret]} {
-	SetNormalCursor $this
-	return $ret
-    }
-
-    set clist [lindex $ret 1]
-    set ret [lindex $ret 0]
-
-    # Checkpoint the created object
-    checkpoint_olist $clist $LEDGER_CREATE
-
-    syncTree
-    updateUndoState
-    SetNormalCursor $this
-
-    return $ret
-}
-
-
-#
-# Create a combination or modify an existing one.
-#
-::itcl::body Archer::comb {args} {
-    eval combWrapper comb 3 $args
-}
-
-
-::itcl::body Archer::combmem {args} {
-    SetWaitCursor $this
-
-    set len [llength $args]
-
-    if {[catch {eval gedCmd combmem $args} ret] ||
-	$len < 2} {
-	SetNormalCursor $this
-	return $ret
-    }
-
-    # Checkpoint the created object
-    checkpoint_olist [lindex $args 0] $LEDGER_MODIFY
-
-    syncTree
-    updateUndoState
-    SetNormalCursor $this
-
-    return $ret
-}
-
-
-::itcl::body Archer::cp {args} {
-    eval createWrapper cp $args
-}
-
-
-::itcl::body Archer::cpi {args} {
-    eval createWrapper cpi $args
-}
-
-
-::itcl::body Archer::copyeval {args} {
-    eval createWrapper copyeval $args
-}
-
-
-::itcl::body Archer::copymat {args} {
-    eval gedWrapper2 copymat 1 0 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::edcodes {args} {
-    # Returns a help message
-    if {[llength $args] == 0} {
-	return [gedCmd edcodes]
-    }
-
-    set optionsAndArgs [eval dbExpand $args]
-    set options [lindex $optionsAndArgs 0]
-    set expandedArgs [lindex $optionsAndArgs 1]
-
-    # Returns a help message
-    if {[llength $expandedArgs] == 0} {
-	return [gedCmd edcodes]
-    }
-
-    switch [lindex $options 0] {
-	"-n" {
-	    return [eval gedCmd edcodes $options $expandedArgs]
-	}
-	default {
-	    set olist [gedCmd edcodes -n $expandedArgs]
-	}
-    }
-
-    if {[llength $olist] == 0} {
-	return
-    }
-
-    SetWaitCursor $this
-    set lnames [checkpoint_olist $olist $LEDGER_MODIFY]
-
-    if {[catch {eval gedCmd edcodes $options $expandedArgs} ret]} {
-	ledger_cleanup
-	SetNormalCursor $this
-	return $ret
-    }
-
-    set fflag 0
-    set gflag 0
-    set oflag 0
-    set new_olist {}
-
-    foreach oname $olist lname $lnames {
-	if {$oname == $mSelectedObj} {
-	    # Found selected object
-	    set fflag 1
-	}
-
-	# Compare region ids
-	set o_val [gedCmd get $oname id]
-	set l_val [$mLedger get $lname id]
-	if {$o_val != $l_val} {
-	    set gflag 1
-
-	    if {$oname == $mSelectedObj} {
-		set oflag 1
-	    }
-
-	    $mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
-	    lappend new_olist $lname
-	    continue
-	}
-
-	# Compare air
-	set o_val [gedCmd get $oname air]
-	set l_val [$mLedger get $lname air]
-	if {$o_val != $l_val} {
-	    set gflag 1
-
-	    if {$oname == $mSelectedObj} {
-		set oflag 1
-	    }
-
-	    $mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
-	    lappend new_olist $lname
-	    continue
-	}
-
-	# Compare gift material
-	set o_val [gedCmd get $oname GIFTmater]
-	set l_val [$mLedger get $lname GIFTmater]
-	if {$o_val != $l_val} {
-	    set gflag 1
-
-	    if {$oname == $mSelectedObj} {
-		set oflag 1
-	    }
-
-	    $mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
-	    lappend new_olist $lname
-	    continue
-	}
-
-	# Compare los
-	set o_val [gedCmd get $oname los]
-	set l_val [$mLedger get $lname los]
-	if {$o_val != $l_val} {
-	    set gflag 1
-
-	    if {$oname == $mSelectedObj} {
-		set oflag 1
-	    }
-
-	    $mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
-	    lappend new_olist $lname
-	    continue
-	}
-
-	# No mods found
-	$mLedger kill $lname
-    }
-
-    if {$oflag} {
-	# Checkpoint again in case the user starts interacting via the mouse
-	checkpoint $mSelectedObj $LEDGER_MODIFY
-    }
-
-    updateUndoState
-
-    SetNormalCursor $this
-    #    eval ArcherCore::gedWrapper edcodes 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::edcolor {args} {
-    return [eval globalWrapper edcolor $args]
-}
-
-
-# Needs an edWrapper to create checkpoints for each object
-::itcl::body Archer::edmater {args} {
-    eval ArcherCore::gedWrapper edmater 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::facetize {args} {
-    eval createWrapper facetize $args
-}
-
-
-#
-# Create a group or modify an existing one.
-#
-::itcl::body Archer::g {args} {
-    eval combWrapper g 2 $args
-}
-
-
-::itcl::body Archer::i {args} {
-    eval gedWrapper2 i 1 0 0 0 1 1 $args
-}
-
-
-::itcl::body Archer::in {args} {
-    eval createWrapper in $args
-}
-
-
-::itcl::body Archer::inside {args} {
-    eval createWrapper inside $args
-}
-
-
-::itcl::body Archer::kill {args} {
-    eval killWrapper kill $args
-}
-
-
-::itcl::body Archer::killall {args} {
-    eval killWrapper killall $args
-}
-
-
-::itcl::body Archer::killrefs {args} {
-    #    eval ArcherCore::gedWrapper killrefs 0 0 1 1 $args
-
-    # Returns a help message
-    if {[llength $args] == 0} {
-	return [gedCmd killrefs]
-    }
-
-    set optionsAndArgs [eval dbExpand $args]
-    set options [lindex $optionsAndArgs 0]
-    set expandedArgs [lindex $optionsAndArgs 1]
-
-    # Returns a help message
-    if {[llength $expandedArgs] == 0} {
-	return [gedCmd killrefs]
-    }
-
-    switch [lindex $options 0] {
-	"-n" {
-	    return [eval gedCmd killrefs $options $expandedArgs]
-	}
-	default {
-	    set olist [gedCmd killrefs -n $expandedArgs]
-	}
-    }
-
-    if {[llength $olist] == 0} {
-	return
-    }
-
-    SetWaitCursor $this
-    set lnames [checkpoint_olist $olist $LEDGER_MODIFY]
-
-    if {[catch {eval gedCmd killrefs $options $expandedArgs} ret]} {
-	ledger_cleanup
-	SetNormalCursor $this
-	return $ret
-    }
-
-    foreach lname $lnames {
-	$mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
-    }
-
-    syncTree
-
-    checkpoint_olist $olist $LEDGER_MODIFY
-    updateUndoState
-    SetNormalCursor $this
-}
-
-
-::itcl::body Archer::killtree {args} {
-    eval killWrapper killtree $args
-}
-
-
-::itcl::body Archer::make {args} {
-    eval createWrapper make $args
-}
-
-
-::itcl::body Archer::mirror {args} {
-    eval createWrapper mirror $args
-}
-
-
-::itcl::body Archer::mv {args} {
-    eval moveWrapper mv $args
-}
-
-
-::itcl::body Archer::mvall {args} {
-    eval moveWrapper mvall $args
-}
-
-
 ::itcl::body Archer::p {args} {
     if {$mSelectedObj == ""} {
 	return
     }
-
-    checkpoint $mSelectedObj $LEDGER_MODIFY
 
     set ret ""
 
@@ -1792,12 +1330,10 @@ package provide Archer 1.0
     }
 
     if {!$err} {
-	updateObjSave
+	set mNeedSave 1
+	updateSaveMode
 	redrawObj $mSelectedObjPath
 	initEdit 0
-
-	# Checkpoint again in case the user starts interacting via the mouse
-	checkpoint $mSelectedObj $LEDGER_MODIFY
     }
 
     return $ret
@@ -1840,11 +1376,6 @@ package provide Archer 1.0
 }
 
 
-::itcl::body Archer::putmat {args} {
-    eval gedWrapper2 putmat 0 0 0 0 1 1 $args
-}
-
-
 ::itcl::body Archer::Load {_target} {
     SetWaitCursor $this
     if {$mNeedSave} {
@@ -1853,14 +1384,6 @@ package provide Archer 1.0
 
     set mNeedSave 0
     updateSaveMode
-
-    set mNeedCheckpoint 0
-    updateCheckpointMode
-
-    set mNeedGlobalUndo 0
-    set mNeedObjSave 0
-    set mNeedObjUndo 0
-    updateUndoMode
 
     # Get rid of any existing edit dialogs
     foreach ed $mActiveEditDialogs {
@@ -1889,10 +1412,6 @@ package provide Archer 1.0
 	set mTargetCopy ""
     } else {
 	createTargetCopy
-    }
-
-    if {!$mViewOnly} {
-	createTargetLedger
     }
 
     # Load MGED database
@@ -1928,7 +1447,6 @@ package provide Archer 1.0
 	updateWizardMenu
 	updateUtilityMenu
 	deleteTargetOldCopy
-	#	createTargetLedger
 
 	updateCreationButtons 1
 	#	updateRaytraceButtons 1
@@ -1962,44 +1480,14 @@ package provide Archer 1.0
 }
 
 
-#
-# Create a region or modify an existing one.
-#
-::itcl::body Archer::r {args} {
-    eval combWrapper r 3 $args
-}
-
-
-::itcl::body Archer::rm {args} {
-    eval removeCombMemberWrapper rm $args
-}
-
-
 ::itcl::body Archer::saveDb {} {
     ArcherCore::saveDb
-    #    clearTargetLedger
-    createTargetLedger
-
-    set mNeedCheckpoint 0
-    updateCheckpointMode
-
-    set mNeedGlobalUndo 0
-    set mNeedObjSave 0
-    set mNeedObjUndo 0
-    updateUndoMode
-
-    checkpoint $mSelectedObj $LEDGER_MODIFY
-}
-
-
-::itcl::body Archer::title {args} {
-    return [eval globalWrapper title $args]
 }
 
 
 ::itcl::body Archer::units {args} {
     set b2l_1 [gedCmd base2local]
-    set ret [eval globalWrapper units $args]
+    set ret [eval ArcherCore::units $args]
     set mDbUnits [gedCmd units -s]
     set b2l_2 [gedCmd base2local]
 
@@ -2019,12 +1507,6 @@ package provide Archer 1.0
     }
 
     return $ret
-}
-
-
-::itcl::body Archer::vmake {args} {
-    eval createWrapper make $args
-    #    eval ArcherCore::gedWrapper vmake 0 0 1 1 $args
 }
 
 
@@ -2318,640 +1800,6 @@ package provide Archer 1.0
 }
 
 
-::itcl::body Archer::addCombMemberWrapper {_cmd _cflag args} {
-    # Returns a help message.
-    set alen [llength $args]
-    if {$alen == 0} {
-	return [gedCmd $_cmd]
-    }
-
-    set cname [lindex $args 0]
-    set mlist {}
-
-    # Set the list of members (i.e. mlist)
-    switch -- $_cmd {
-	"g" {
-	    set mlist [lrange $args 1 end]
-	}
-	"comb" -
-	"r" {
-	    if {$alen < 3 || [expr {$alen % 2}] == 0} {
-		return [gedCmd $_cmd]
-	    }
-
-	    foreach {op oname} [lrange $args 1 end] {
-		lappend mlist $oname
-	    }
-	}
-	default {
-	    return "addCombMemberWrapper: $_cmd not recognized."
-	}
-    }
-
-    SetWaitCursor $this
-    checkpoint $cname $LEDGER_MODIFY
-
-    if {[catch {eval gedCmd $_cmd $args} ret]} {
-	SetNormalCursor $this
-	return $ret
-    }
-
-    # Delete any toplevel nodes of newly added members
-    foreach member $mlist {
-	if {[info exists mText2Node($member)]} {
-	    foreach sublist $mText2Node($member) {
-		set pnode [lindex $sublist 1]
-
-		if {$pnode == {}} {
-		    set cnode [lindex $sublist 0]
-
-		    # Before deleting cnode we need to delete any
-		    # use of cnode and its descendents in the data
-		    # variables that are used to interact with the
-		    # tree viewer.
-		    purgeNodeData $cnode
-
-		    $itk_component(newtree) delete $cnode
-		}
-	    }
-	}
-    }
-
-    if {$_cflag} {
-	SetNormalCursor $this
-	return
-    }
-
-    # Add new members to parent node(s) if the parent nodes have been previously opened.
-    set cnode ""
-    if {[info exists mText2Node($cname)]} {
-	foreach sublist $mText2Node($cname) {
-	    set cnode [lindex $sublist 0]
-
-	    if {[treeNodeHasBeenOpened $cnode]} {
-		foreach member $mlist {
-		    fillTree $cnode $member $mEnableListView
-		}
-	    }
-	}
-    }
-
-    object_update $cname
-
-    if {$cnode != ""} {
-	set path ""
-	foreach pnode [lreverse [findTreeParentNodes $cnode]] {
-	    append path "/" $mNode2Text($pnode)
-	}
-
-	if {$path != ""} {
-	    append path "/"
-	}
-
-	append path $cname
-	selectTreePath $path
-    }
-
-    SetNormalCursor $this
-}
-
-
-::itcl::body Archer::createCombWrapper {_cmd args} {
-
-    eval addCombMemberWrapper $_cmd 1 $args
-
-    SetWaitCursor $this
-    set cname [lindex $args 0]
-
-    updateTreeTopWithName $cname
-
-    $itk_component(ged) draw $cname
-    selectTreePath $cname
-
-    checkpoint $cname $LEDGER_CREATE
-    set mNeedSave 1
-    updateSaveMode
-
-    SetNormalCursor $this
-}
-
-
-::itcl::body Archer::removeCombMemberWrapper {_cmd args} {
-    # Returns a help message.
-    set alen [llength $args]
-    if {$alen == 0} {
-	return [gedCmd $_cmd]
-    }
-
-    set cname [lindex $args 0]
-    set mlist {}
-
-    # Set the list of members (i.e. mlist)
-    switch -- $_cmd {
-	"rm" {
-	    # remove duplicates
-	    set mlist [lsort -unique [lrange $args 1 end]]
-	    set args [eval list $cname $mlist]
-	}
-	default {
-	    return "removeCombMemberWrapper: $_cmd not recognized."
-	}
-    }
-
-    SetWaitCursor $this
-    checkpoint $cname $LEDGER_MODIFY
-
-    if {[catch {eval gedCmd $_cmd $args} ret]} {
-	SetNormalCursor $this
-	return $ret
-    }
-
-    # Delete members from parent nodes
-    set cnode ""
-    if {[info exists mText2Node($cname)]} {
-	foreach sublist $mText2Node($cname) {
-	    set cnode [lindex $sublist 0]
-
-	    if {[info exists mPNode2CList($cnode)]} {
-		foreach clist $mPNode2CList($cnode) {
-		    set mname [lindex $clist 0] 
-
-		    if {$mname == $TREE_PLACEHOLDER_TAG} {
-			foreach member $mlist {
-			    # If member is a top level object, add it to the tree top
-			    if {[gedCmd dbfind $member] == ""} {
-				fillTree {} $member $mEnableListView
-			    }
-			}
-		    } else {
-			foreach member $mlist {
-			    if {$mname == $member} {
-				set mnode [lindex $clist 1]
-
-				# Before deleting mnode we need to delete any
-				# use of mnode and its descendents in the data
-				# variables that are used to interact with the
-				# tree viewer.
-				purgeNodeData $mnode
-
-				$itk_component(newtree) delete $mnode
-
-				# If mname is a top level object, add it to the tree top
-				if {[gedCmd dbfind $member] == ""} {
-				    fillTree {} $member $mEnableListView
-
-				    if {$member == $mSelectedObj} {
-					selectTreePath $member
-				    }
-				} elseif {$member == $mSelectedObj} {
-				    selectTreePath [getTreePath $cnode]
-				}
-			    }
-			}
-		    }
-		}
-	    }
-	}
-    }
-
-    object_update $cname
-
-    if {$cnode != ""} {
-	set path ""
-	foreach pnode [lreverse [findTreeParentNodes $cnode]] {
-	    append path "/" $mNode2Text($pnode)
-	}
-
-	if {$path != ""} {
-	    append path "/"
-	}
-
-	append path $cname
-	selectTreePath $path
-    }
-
-    updateTreeDrawLists
-    SetNormalCursor $this
-}
-
-
-#
-# Create a combination or modify an existing one.
-#
-::itcl::body Archer::combWrapper {_cmd _minArgs args} {
-    set alen [llength $args]
-    if {$alen < $_minArgs} {
-	return [gedCmd $_cmd]
-    }
-
-    set obj [lindex $args 0]
-
-    # Check for the existence of obj
-    if {![gedCmd exists $obj]} {
-	# Create a new combination
-	eval createCombWrapper $_cmd $args
-    } else {
-	# Modifying an existing combination
-	eval addCombMemberWrapper $_cmd 0 $args
-    }
-}
-
-
-::itcl::body Archer::createWrapper {_cmd args} {
-    # Set the list of created objects (i.e. clist)
-    switch -- $_cmd {
-	"facetize" {
-	    set optionsAndArgs [eval dbExpand $args]
-	    set options [lindex $optionsAndArgs 0]
-	    set expandedArgs [lindex $optionsAndArgs 1]
-
-	    # Returns a help message.
-	    if {[llength $expandedArgs] < 2} {
-		return [gedCmd $_cmd]
-	    }
-
-	    set clist [lindex $expandedArgs 0]
-	}
-	"copyeval" -
-	"cp" -
-	"cpi" -
-	"mirror" {
-	    # Returns a help message.
-	    if {[llength $args] < 2} {
-		return [gedCmd $_cmd]
-	    }
-
-	    set options [lrange $args 0 end-2]
-	    set expandedArgs [lrange $args end-1 end]
-
-	    if {[llength $expandedArgs] != 2} {
-		return [gedCmd $_cmd]
-	    }
-
-	    set old [lindex $expandedArgs 0]
-	    set clist [lindex $expandedArgs 1]
-	}
-	"in" -
-	"inside" {
-	    set options {}
-	    set expandedArgs $args
-
-	    if {$_cmd == "in"} {
-		set clist [lindex $expandedArgs 0]
-	    } else {
-		set clist [lindex $expandedArgs 1]
-	    }
-	}
-	"make" -
-	"vmake" {
-	    # Returns a help message.
-	    if {[llength $args] < 2} {
-		return [gedCmd $_cmd]
-	    }
-
-	    set options [lrange $args 0 end-2]
-	    set expandedArgs [lrange $args end-1 end]
-
-	    if {[llength $expandedArgs] != 2} {
-		return [gedCmd $_cmd]
-	    }
-
-	    set clist [lindex $expandedArgs 0]
-	}
-	default {
-	    return "createWrapper: $_cmd not recognized."
-	}
-    }
-
-    SetWaitCursor $this
-
-    if {[catch {eval gedCmd $_cmd $options $expandedArgs} ret]} {
-	SetNormalCursor $this
-	return $ret
-    }
-
-    if {$_cmd == "in" || $_cmd == "inside"} {
-	set clist $ret
-    }
-
-    set name $clist
-    updateTreeTopWithName $name
-
-    $itk_component(ged) draw $name
-    selectTreePath $name
-
-    checkpoint $name $LEDGER_CREATE
-    set mNeedSave 1
-    updateSaveMode
-
-    SetNormalCursor $this
-
-    return $ret
-}
-
-
-::itcl::body Archer::gedWrapper {cmd eflag hflag sflag tflag args} {
-    eval gedWrapper2 $cmd 0 -1 $eflag $hflag $sflag $tflag $args
-}
-
-
-::itcl::body Archer::gedWrapper2 {cmd oindex pindex eflag hflag sflag tflag args} {
-    SetWaitCursor $this
-
-    if {$eflag} {
-	set optionsAndArgs [eval dbExpand $args]
-	set options [lindex $optionsAndArgs 0]
-	set expandedArgs [lindex $optionsAndArgs 1]
-    } else {
-	set options {}
-	set expandedArgs $args
-    }
-
-    set obj [lindex $expandedArgs $oindex]
-    if {$pindex >= 0} {
-	set l [split $obj /]
-	set len [llength $l]
-
-	if {$pindex < $len} {
-	    set obj [lindex $l $pindex]
-	}
-    }
-
-    # Must be wanting help
-    if {$obj == ""} {
-	catch {eval gedCmd $cmd $options $expandedArgs} ret
-	SetNormalCursor $this
-
-	return $ret
-    }
-
-    if {$sflag} {
-	checkpoint $obj $LEDGER_MODIFY
-    }
-
-    if {[catch {eval gedCmd $cmd $options $expandedArgs} ret]} {
-	# This will remove the last ledger entry for obj
-	if {$sflag} {
-	    ledger_cleanup
-	}
-
-	SetNormalCursor $this
-	error $ret
-    }
-
-    if {$sflag} {
-	object_update $obj
-    }
-
-    gedCmd configure -primitiveLabels {}
-    switch -- $tflag {
-	0 {
-	    # Do nothing
-	}
-	1 {
-	    catch {updateTreeDrawLists}
-	}
-	default {
-	    catch {syncTree}
-	}
-    }
-    SetNormalCursor $this
-
-    return $ret
-}
-
-
-::itcl::body Archer::globalWrapper {_cmd args} {
-    # Simply return the current value
-    if {$_cmd != "edcolor" && $args == {}} {
-	return [gedCmd $_cmd]
-    }
-
-    if {$_cmd == "units" && [llength $args] == 1} {
-	set arg0 [lindex $args 0]
-	if {$arg0 == "-s" || $arg0 == "-t"} {
-	    return [gedCmd units $arg0]
-	}
-    }
-
-    set old_units [gedCmd units -s]
-    set lname [checkpoint _GLOBAL $LEDGER_MODIFY]
-
-    if {[catch {eval gedCmd $_cmd $args} ret]} {
-	return $ret
-    }
-
-    set new_units [gedCmd units -s]
-
-    # Nothing else to do
-    if {$_cmd == "units" && $old_units == $new_units} {
-	ledger_cleanup
-	return ""
-    }
-
-    if {$lname == ""} {
-	return "No ledger entry found for _GLOBAL."
-    } else {
-	# Assumed to have mods after the command invocation above
-	$mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
-	$mLedger attr set $lname UNITS $old_units
-    }
-
-    set lname [checkpoint _GLOBAL $LEDGER_MODIFY]
-    if {$lname == ""} {
-	return "No ledger entry found for _GLOBAL."
-    } else {
-	$mLedger attr set $lname UNITS $new_units
-    }
-
-    set mNeedSave 1
-    updateSaveMode
-
-    gedCmd refresh
-    return $ret
-}
-
-
-::itcl::body Archer::killWrapper {_cmd args} {
-    # Returns a help message.
-    if {[llength $args] == 0} {
-	return [gedCmd $_cmd]
-    }
-
-    set optionsAndArgs [eval dbExpand $args]
-    set options [lindex $optionsAndArgs 0]
-    set expandedArgs [lindex $optionsAndArgs 1]
-
-    # Returns a help message.
-    if {[llength $expandedArgs] == 0} {
-	return [gedCmd $_cmd]
-    }
-
-    SetWaitCursor $this
-
-    # Get the list of killed and modified objects.
-    if {[lsearch $options -a] != -1} {
-	set alist [eval gedCmd $_cmd -a -n $expandedArgs]
-    } else {
-	set alist [eval gedCmd $_cmd -n $expandedArgs]
-    }
-
-    # The first sublist is for killed objects. The second is for modified objects.
-    set klist [lindex $alist 0]
-    set mlist [lindex $alist 1]
-
-    # Remove duplicates from both klist and mlist
-    set klist [lsort -unique $klist]
-    set mlist [lsort -unique $mlist]
-
-    # If an item is in both sublists, remove it from mlist.
-    foreach item $klist {
-	set l [lsearch -all -sorted $mlist $item]
-	set l [lsort -decreasing $l]
-	foreach i $l {
-	    # Delete the item (i.e. it no longer exists)
-	    set mlist [lreplace $mlist $i $i]
-	}
-    }
-
-    set nindex [lsearch $options "-n"]
-    if {$nindex == 0 || $nindex == 1} {
-	SetNormalCursor $this
-	return [list $klist $mlist]
-    }
-
-    if {[llength $klist] == 0} {
-	SetNormalCursor $this
-	return
-    }
-
-    # Need to checkpoint before they're gone
-    checkpoint_olist $klist $LEDGER_DESTROY
-
-    set mlen [llength $mlist]
-    if {$mlen} {
-	# Decrement the GID so that the modified
-	# objects below have the same GID.
-	incr mLedgerGID -1
-
-	# Also need to checkpoint the objects that used to reference
-	# the soon-to-be killed objects.
-	set lnames [checkpoint_olist $mlist $LEDGER_MODIFY]
-    }
-
-    if {[catch {eval gedCmd $_cmd $options $expandedArgs} ret]} {
-	ledger_cleanup
-	SetNormalCursor $this
-	return $ret
-    }
-
-    if {$mlen} {
-	foreach lname $lnames {
-	    $mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
-	}
-    }
-
-    syncTree
-
-    if {[lsearch $klist $mSelectedObj] != -1} {
-	set mSelectedObj ""
-	set mSelectedObjPath ""
-	set mSelectedObjType ""
-    } elseif {[lsearch $mlist $mSelectedObj] != -1} {
-	checkpoint $mSelectedObj $LEDGER_MODIFY
-    }
-
-    updateUndoState
-    SetNormalCursor $this
-
-    return $ret
-}
-
-
-::itcl::body Archer::moveWrapper {_cmd args} {
-    set alen [llength $args]
-
-    # Returns a help message.
-    if {$alen == 0} {
-	return [gedCmd $_cmd]
-    }
-
-    set fi [lsearch $args "-f"]
-    set ni [lsearch $args "-n"]
-
-    if {$fi != -1 || $ni != -1} {
-	# Must be using the -n option. If not, an error message
-	# containing the usage string will be returned.
-	return [eval gedCmd $_cmd $args]
-    }
-
-    # Get the list of potentially modified objects.
-    if {$_cmd == "mvall"} {
-	set mlist [lsort -dictionary -unique [eval gedCmd $_cmd -n $args]]
-    } else {
-	set mlist {}
-    }
-
-    set mlen [llength $mlist]
-
-    set old_name [lindex $args 0]
-    set new_name [lindex $args 1]
-
-    SetWaitCursor $this
-
-    # Checkpoint the objects that used to reference
-    # the soon-to-be renamed objects.
-    if {$mlen} {
-	set lnames [checkpoint_olist $mlist $LEDGER_MODIFY]
-    } else {
-	set lnames {}
-    }
-
-    if {[catch {eval gedCmd $_cmd $args} ret]} {
-	ledger_cleanup
-	SetNormalCursor $this
-	return $ret
-    }
-
-    # Flag these as having mods
-    foreach lname $lnames {
-	$mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
-    }
-
-    # Decrement the GID so that the renamed
-    # object below has the same GID as the
-    # modified objects above.
-    if {$mlen} {
-	incr mLedgerGID -1
-    }
-
-    # Checkpoint the renamed object
-    set lnew_name [checkpoint $new_name $LEDGER_RENAME]
-
-    # Flag the renamed object as having mods
-    $mLedger attr set $lnew_name $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
-
-    # Save the command for moving things back
-    $mLedger attr set $lnew_name $LEDGER_ENTRY_MOVE_COMMAND "$_cmd $new_name $old_name"
-
-    syncTree
-
-    if {$old_name == $mSelectedObj} {
-	set mSelectedObj $new_name
-	checkpoint $mSelectedObj $LEDGER_MODIFY
-	regsub {([^/]+)$} $mSelectedObjPath $new_name mSelectedObjPath
-    } elseif {[lsearch -sorted $mlist $mSelectedObj] != -1} {
-	checkpoint $mSelectedObj $LEDGER_MODIFY
-    }
-
-    initEdit 0
-    selectTreePath $mSelectedObjPath
-
-    updateUndoState
-    SetNormalCursor $this
-}
-
-
 ::itcl::body Archer::handleTreeSelect {} {
     ::ArcherCore::handleTreeSelect
 
@@ -2960,20 +1808,19 @@ package provide Archer 1.0
 	    initObjAttrView
 	} else {
 	    if {!$mRestoringTree} {
-		selection_checkpoint $mSelectedObj
 		initObjEditView
 		switch -- $mDefaultBindingMode \
 		    $OBJECT_ROTATE_MODE { \
-					      beginObjRotate
+			beginObjRotate
 		    } \
 		    $OBJECT_SCALE_MODE { \
-					     beginObjScale
+			beginObjScale
 		    } \
 		    $OBJECT_TRANSLATE_MODE { \
-						 beginObjTranslate
+			beginObjTranslate
 		    } \
 		    $OBJECT_CENTER_MODE { \
-					      beginObjCenter
+			beginObjCenter
 		    }
 	    }
 	}
@@ -3031,21 +1878,6 @@ package provide Archer 1.0
 }
 
 
-::itcl::body Archer::updateCheckpointMode {} {
-    if {$mViewOnly} {
-	return
-    }
-
-    if {!$mDbNoCopy && !$mDbReadOnly && $mNeedCheckpoint} {
-	$itk_component(primaryToolbar) itemconfigure checkpoint \
-	    -state normal
-    } else {
-	$itk_component(primaryToolbar) itemconfigure checkpoint \
-	    -state disabled
-    }
-}
-
-
 ::itcl::body Archer::updateSaveMode {} {
     ArcherCore::updateSaveMode
 
@@ -3100,77 +1932,6 @@ package provide Archer 1.0
     }
 }
 
-
-::itcl::body Archer::updateUndoMode {{_oflag 1}} {
-    if {$mViewOnly} {
-	return
-    }
-
-    if {!$mDbNoCopy && !$mDbReadOnly && $mNeedGlobalUndo} {
-	$itk_component(primaryToolbar) itemconfigure global_undo \
-	    -state normal
-
-	if {$_oflag} {
-	    if {$mNeedObjUndo} {
-		$itk_component(primaryToolbar) itemconfigure object_undo \
-		    -state normal
-	    } else {
-		$itk_component(primaryToolbar) itemconfigure object_undo \
-		    -state disabled
-	    }
-	}
-    } else {
-	$itk_component(primaryToolbar) itemconfigure global_undo \
-	    -state disabled
-
-	if {$_oflag} {
-	    $itk_component(primaryToolbar) itemconfigure object_undo \
-		-state disabled
-	}
-    }
-}
-
-
-::itcl::body Archer::updateUndoState {} {
-    if {$mViewOnly} {
-	return
-    }
-
-    set l [$mLedger ls -A $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1]
-    set len [llength $l]
-    if {$len == 0} {
-	set mNeedSave 0
-	set mNeedGlobalUndo 0
-	set mNeedObjUndo 0
-    } else {
-	set mNeedSave 1
-	set mNeedGlobalUndo 1
-
-	# Get all ledger entries related to mSelectedObj
-	set l [$mLedger expand *_*_$mSelectedObj]
-	set len [llength $l]
-
-	if {$len} {
-	    set l [lsort -dictionary $l]
-	    set le [lindex $l end]
-
-	    if {$len > 1} {
-		set mNeedObjUndo 1
-	    } else {
-		if {[$mLedger attr get $le $LEDGER_ENTRY_OUT_OF_SYNC_ATTR]} {
-		    set mNeedObjUndo 1
-		} else {
-		    set mNeedObjUndo 0
-		}
-	    }
-	} else {
-	    set mNeedObjUndo 0
-	}
-    }
-
-    updateUndoMode 1
-    updateSaveMode
-}
 
 
 ################################### Miscellaneous Section ###################################
@@ -6740,7 +5501,8 @@ proc title_node_handler {node} {
 
 
 ::itcl::body Archer::endObjCenter {_obj} {
-    updateObjSave
+    set mNeedSave 1
+    updateSaveMode
     initEdit 0
 
     set center [$itk_component(ged) ocenter $_obj]
@@ -6750,7 +5512,8 @@ proc title_node_handler {node} {
 
 ::itcl::body Archer::endObjRotate {dname obj} {
     $itk_component(ged) pane_idle_mode $dname
-    updateObjSave
+    set mNeedSave 1
+    updateSaveMode
     initEdit 0
 
     #XXX Need code to track overall transformation
@@ -6762,7 +5525,8 @@ proc title_node_handler {node} {
 
 ::itcl::body Archer::endObjScale {dname obj} {
     $itk_component(ged) pane_idle_mode $dname
-    updateObjSave
+    set mNeedSave 1
+    updateSaveMode
     initEdit 0
 
     #XXX Need code to track overall transformation
@@ -7854,7 +6618,8 @@ proc title_node_handler {node} {
 
 
 ::itcl::body Archer::updateObjEditView {} {
-    updateObjSave
+    set mNeedSave 1
+    updateSaveMode
     redrawObj $mSelectedObjPath
 }
 
@@ -9240,9 +8005,6 @@ proc title_node_handler {node} {
     selectTreePath $name
     #    updateTreeDrawLists
 
-    # Checkpoint the created object
-    checkpoint $name $LEDGER_CREATE
-
     set mNeedSave 1
     updateSaveMode
 }
@@ -9496,638 +8258,14 @@ proc title_node_handler {node} {
 
 ################################### Begin Object Edit Management ###################################
 
-::itcl::body Archer::checkpoint {_obj _type} {
-    if {$_obj == "" || $mLedger == ""} {
-	return
-    }
-
-    # Check for the existence of _obj
-    if {![gedCmd exists $_obj]} {
-	return
-    }
-
-    # Get all ledger entries related to _obj
-    set l [$mLedger expand *_*_$_obj]
-    set len [llength $l]
-
-    # Find next oid (object ID - a counter for object entries) for _obj
-    if {$len == 0} {
-	set oid 0
-    } else {
-	set l [lsort -dictionary $l]
-	set le [lindex $l end]
-	regexp {([0-9]+)_([0-9]+)_(.+)} $le all gid oid gname
-
-	set oosync [$mLedger attr get $le $LEDGER_ENTRY_OUT_OF_SYNC_ATTR]
-
-	# No need to checkpoint again (i.e. no mods since last checkpoint)
-	if {!$oosync} {
-	    if {$_obj == $mSelectedObj && $len > 1} {
-		set mNeedGlobalUndo 1
-		set mNeedObjUndo 1
-	    } else {
-		set mNeedObjUndo 0
-
-		# Check for other entries having mods
-		set l [$mLedger ls -A $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1]
-		set len [llength $l]
-
-		if {$len == 0} {
-		    set mNeedGlobalUndo 0
-		} else {
-		    set mNeedGlobalUndo 1
-		}
-	    }
-
-	    if {$_obj == $mSelectedObj} {
-		set oflag 1
-		set mNeedCheckpoint 0
-		updateCheckpointMode
-	    } else {
-		set oflag 0
-	    }
-
-	    updateUndoMode $oflag
-
-	    if {$gid < $mLedgerGID} {
-		incr mLedgerGID
-		set lname $mLedgerGID\_$oid\_$_obj
-		$mLedger mv $le $lname
-		$mLedger attr set $lname $LEDGER_ENTRY_TYPE_ATTR $_type
-		return $lname
-	    }
-
-	    return $le
-	}
-
-	incr oid
-    }
-
-    incr mLedgerGID
-
-    # Create the ledger entry
-    set lname $mLedgerGID\_$oid\_$_obj
-    gedCmd cp $_obj $mLedger\:$lname
-
-    # Set the attributes
-    $mLedger attr set $lname $LEDGER_ENTRY_TYPE_ATTR $_type
-    switch $_type \
-	$LEDGER_CREATE - \
-	$LEDGER_DESTROY - \
-	$LEDGER_RENAME {
-	    $mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
-	} \
-	$LEDGER_MODIFY - \
-	default {
-	    $mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 0
-	}
-
-    set l [$mLedger ls -A $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1]
-    set len [llength $l]
-    if {$len == 0} {
-	set mNeedGlobalUndo 0
-	set mNeedObjUndo 0
-
-	set mNeedCheckpoint 0
-	updateCheckpointMode
-
-	set oflag 1
-    } else {
-	set mNeedGlobalUndo 1
-
-	if {$_obj == $mSelectedObj} {
-	    if {$oid == 0} {
-		set mNeedObjUndo 0
-	    } else {
-		set mNeedObjUndo 1
-	    }
-
-	    set oflag 1
-
-	    set mNeedCheckpoint 0
-	    updateCheckpointMode
-	} else {
-	    set oflag 0
-	}
-    }
-
-    updateUndoMode $oflag
-
-    return $lname
-}
-
-
-##
-# This method creates ledger entries for each object in _olist
-# using the same global ID and an object ID of zero.
-#
-# Note - this method is not currently being used. Before using this
-#        method the undo methods will need to accomodate multiple
-#        entries having the same global ID.
-#
-::itcl::body Archer::checkpoint_olist {_olist _type} {
-    set olen [llength $_olist]
-    if {$olen == 0 || $mLedger == ""} {
-	return
-    }
-
-    incr mLedgerGID
-    set oid 0
-    set ouflag 0
-    set foundSelectedObj 0
-    set lnames {}
-
-    # Create the ledger entries
-    foreach obj $_olist {
-	if {![gedCmd exists $obj]} {
-	    continue
-	}
-
-	if {$obj == $mSelectedObj} {
-	    set foundSelectedObj 1
-
-	    # Get all ledger entries related to mSelectedObj
-	    set l [$mLedger expand *_*_$mSelectedObj]
-	    set len [llength $l]
-
-	    if {$len} {
-		set l [lsort -dictionary $l]
-		set le [lindex $l end]
-
-		if {![$mLedger attr get $le $LEDGER_ENTRY_OUT_OF_SYNC_ATTR]} {
-		    $mLedger kill $le
-
-		    if {$len > 1} {
-			set ouflag 1
-		    }
-		}
-	    }
-	}
-
-	# Create the ledger entry
-	set lname $mLedgerGID\_$oid\_$obj
-	lappend lnames $lname
-	gedCmd cp $obj $mLedger\:$lname
-
-	# Set the attributes
-	$mLedger attr set $lname $LEDGER_ENTRY_TYPE_ATTR $_type
-	switch $_type \
-	    $LEDGER_CREATE - \
-	    $LEDGER_DESTROY - \
-	    $LEDGER_RENAME {
-		$mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
-	    } \
-	    $LEDGER_MODIFY - \
-	    default {
-		$mLedger attr set $lname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 0
-	    }
-    }
-
-    set l [$mLedger ls -A $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1]
-    set len [llength $l]
-    if {$len == 0} {
-	set mNeedGlobalUndo 0
-	set mNeedObjUndo 0
-
-	set mNeedCheckpoint 0
-	updateCheckpointMode
-
-	set oflag 1
-    } else {
-	set mNeedGlobalUndo 1
-
-	if {$foundSelectedObj} {
-
-	    if {$ouflag} {
-		set mNeedObjUndo 1
-	    } else {
-		set mNeedObjUndo 0
-	    }
-
-	    set oflag 1
-
-	    set mNeedCheckpoint 0
-	    updateCheckpointMode
-	} else {
-	    set oflag 0
-	}
-    }
-
-    updateUndoMode $oflag
-    return $lnames
-}
-
-
-::itcl::body Archer::clearTargetLedger {} {
-    set mLedgerGID 0
-    set alist [$mLedger expand *]
-    eval $mLedger kill $alist
-}
-
-
-::itcl::body Archer::createTargetLedger {} {
-    # This belongs in the openDb and newDb
-    # Delete previous ledger
-    if {$mLedger != ""} {
-	catch {rename $mLedger ""}
-    }
-
-    set mLedgerGID 0
-    set mLedger "ledger"
-    go_open $mLedger inmem 0
-}
-
-
-::itcl::body Archer::global_undo {} {
-    if {$mLedger == ""} {
-	return
-    }
-
-    # Removes unnecessary entries
-    ledger_cleanup
-
-    # Get last ledger entry
-    set l [$mLedger expand *_*_*]
-    set len [llength $l]
-
-    if {$len == 0} {
-	set mNeedCheckpoint 0
-	set mNeedGlobalUndo 0
-	set mNeedObjUndo 0
-	set mNeedSave 0
-	set mLedgerGID 0
-
-	tk_messageBox -message "global_undo: should not get here. Must be a programming error."
-	
-	updateCheckpointMode
-	updateSaveMode
-	updateUndoMode
-
-	return
-    }
-
-    set l [lsort -dictionary $l]
-    set le [lindex $l end]
-    regexp {([0-9]+)_([0-9]+)_(.+)} $le all gid oid gname
-    set mLedgerGID $gid
-    incr mLedgerGID -1
-
-    set cflag 0
-    set gnames {}
-
-    # Undo each object associated with this transaction
-    foreach lentry [$mLedger expand $gid\_$oid\_*] {
-	regexp {([0-9]+)_([0-9]+)_(.+)} $lentry all gid oid gname
-
-	set type [$mLedger attr get $lentry $LEDGER_ENTRY_TYPE_ATTR]
-	switch $type \
-	    $LEDGER_CREATE {
-		gedCmd kill $gname
-
-		if {$gname == $mSelectedObj} {
-		    initDbAttrView $mTarget
-		}
-
-		set mSelectedObj ""
-		set mSelectedObjPath ""
-		set mSelectedObjType ""
-		set cflag 1
-	    } \
-	    $LEDGER_RENAME {
-		if {![catch {$mLedger attr get $lentry $LEDGER_ENTRY_MOVE_COMMAND} move_cmd]} {
-		    eval gedCmd $move_cmd
-
-		    set curr_name [lindex $move_cmd 1]
-		    set gname [lindex $move_cmd 2]
-		    if {$curr_name == $mSelectedObj} {
-			set mSelectedObj $gname
-			regsub {([^/]+)$} $mSelectedObjPath $gname mSelectedObjPath
-		    }
-		} else {
-		    putString "No old name found for $lentry"
-		    continue
-		}
-	    } \
-	    $LEDGER_DESTROY - \
-	    $LEDGER_MODIFY - \
-	    default {
-		# Adjust the corresponding object according to the ledger entry
-		gedCmd cp -f $mLedger\:$lentry $gname
-		gedCmd attr rm $gname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR
-		gedCmd attr rm $gname $LEDGER_ENTRY_TYPE_ATTR
-	    }
-
-	#	if {$gname == "_GLOBAL"} {
-	#	    global_undo_callback
-	#	}
-	global_undo_callback $gname
-
-	# Remove the ledger entry
-	$mLedger kill $lentry
-
-	lappend gnames $gname
-    }
-
-    if {!$cflag} {
-	foreach gname $gnames {
-	    if {$gname != "_GLOBAL"} {
-		if {$gname == $mSelectedObj} {
-		    set mNeedObjSave 0
-		    redrawObj $mSelectedObjPath
-		    initEdit 0
-
-		    # Make sure the selected object has atleast one checkpoint
-		    checkpoint $mSelectedObj $LEDGER_MODIFY
-		} else {
-		    # Possibly draw the updated object
-		    regsub {[0-9]+_[0-9]+_} $lentry "" stripped_lentry
-		    foreach item [gedCmd report 0] {
-			regexp {/([^/]+$)} $item all last
-
-			if {$last == $stripped_lentry} {
-			    redrawObj $item
-			}
-		    }
-		}
-	    }
-	}
-    }
-
-    syncTree
-
-    set l [$mLedger ls -A $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1]
-    set len [llength $l]
-    if {$len == 0} {
-	set mNeedCheckpoint 0
-	set mNeedGlobalUndo 0
-	set mNeedObjUndo 0
-	set mNeedSave 0
-
-	updateCheckpointMode
-	updateSaveMode
-	updateUndoMode
-    }
-}
-
-
-::itcl::body Archer::global_undo_callback {_gname} {
-    gedCmd refresh_all
-}
-
-
-::itcl::body Archer::ledger_cleanup {} {
-    if {$mLedger == ""} {
-	return
-    }
-
-    foreach le [$mLedger ls -A $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 0] {
-	regsub {/$|/R$} $le "" le
-	$mLedger kill $le
-    }
-}
-
-
-::itcl::body Archer::object_checkpoint {} {
-    checkpoint $mSelectedObj $LEDGER_MODIFY
-}
-
-
-::itcl::body Archer::object_undo {} {
-    if {$mSelectedObj == "" || $mLedger == ""} {
-	return
-    }
-
-    # Removes unnecessary entries
-    ledger_cleanup
-
-    # Get all ledger entries related to mSelectedObj
-    set l [$mLedger expand *_*_$mSelectedObj]
-    set len [llength $l]
-
-    if {$len == 0} {
-	set mNeedCheckpoint 0
-	set mNeedObjUndo 0
-	set mNeedSave 0
-
-	set l [$mLedger ls -A $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1]
-	set len [llength $l]
-	if {$len == 0} {
-	    set mNeedGlobalUndo 0
-	    set mLedgerGID 0
-	}
-
-	tk_messageBox -message "object_undo: should not get here. Must be a programming error."
-
-	updateCheckpointMode
-	updateSaveMode
-	updateUndoMode
-
-	return
-    }
-
-    # Find last ledger entry corresponding to mSelectedObj
-    set l [lsort -dictionary $l]
-    set le [lindex $l end]
-
-    if {![$mLedger attr get $le $LEDGER_ENTRY_OUT_OF_SYNC_ATTR]} {
-	# No mods yet
-	return
-    }
-
-    regexp {([0-9]+)_([0-9]+)_(.+)} $le all gid oid gname
-
-    # Also decrement mLedgerGID if the entry is the last one
-    if {$gid == $mLedgerGID} {
-	incr mLedgerGID -1
-    }
-
-    set cflag 0
-
-    # Undo each object associated with this transaction
-    foreach lentry [$mLedger expand $gid\_$oid\_*] {
-	regexp {([0-9]+)_([0-9]+)_(.+)} $lentry all gid oid gname
-
-	# Undo it (Note - the destroy transaction will never show up here)
-	set type [$mLedger attr get $lentry $LEDGER_ENTRY_TYPE_ATTR]
-	switch $type \
-	    $LEDGER_CREATE {
-		gedCmd kill $gname
-		set mSelectedObj ""
-		set mSelectedObjPath ""
-		set mSelectedObjType ""
-		set cflag 1
-	    } \
-	    $LEDGER_RENAME {
-		if {![catch {$mLedger attr get $lentry $LEDGER_ENTRY_MOVE_COMMAND} move_cmd]} {
-		    eval gedCmd $move_cmd
-
-		    set curr_name [lindex $move_cmd 1]
-		    set gname [lindex $move_cmd 2]
-		    if {$curr_name == $mSelectedObj} {
-			set mSelectedObj $gname
-			regsub {([^/]+)$} $mSelectedObjPath $gname mSelectedObjPath
-		    }
-		} else {
-		    putString "No old name found for $lentry"
-		    continue
-		}
-	    } \
-	    $LEDGER_DESTROY - \
-	    $LEDGER_MODIFY - \
-	    default {
-		# Adjust the corresponding object according to the ledger entry
-		gedCmd cp -f $mLedger\:$lentry $gname
-		gedCmd attr rm $gname $LEDGER_ENTRY_OUT_OF_SYNC_ATTR
-		gedCmd attr rm $gname $LEDGER_ENTRY_TYPE_ATTR
-	    }
-
-
-	# Remove the ledger entry
-	$mLedger kill $lentry
-    }
-
-    set mNeedObjSave 0
-
-    if {!$cflag} {
-	redrawObj $mSelectedObjPath
-	initEdit 0
-    } else {
-	initDbAttrView $mTarget
-    }
-
-    set mNeedCheckpoint 0
-    updateUndoState
-
-    syncTree
-
-    # Make sure the selected object has atleast one checkpoint
-    checkpoint $mSelectedObj $LEDGER_MODIFY
-
-    updateCheckpointMode
-    updateSaveMode
-    updateUndoMode
-}
-
-
-::itcl::body Archer::object_update {_obj {_rflag 1}} {
-    set l [$mLedger expand *_*_$_obj]
-    set l [lsort -dictionary $l]
-    set le [lindex $l end]
-
-    set tflag 0
-
-    if {$le == ""} {
-	putString "No ledger entry found for $_obj."
-    } else {
-	# Assumed to have mods after the command invocation above
-	$mLedger attr set $le $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
-
-	set mNeedSave 1
-	set mNeedGlobalUndo 1
-
-	if {$_obj == $mSelectedObj} {
-	    # Checkpoint again in case the user starts interacting via the mouse
-	    checkpoint $_obj $LEDGER_MODIFY
-	} else {
-	    updateUndoMode 0
-	}
-
-	updateSaveMode
-
-	if {$_rflag} {
-	    # Possibly draw the updated object
-	    set ditem ""
-	    foreach item [gedCmd report 0] {
-		set l [split $item /]
-		set i [lsearch -exact $l $_obj]
-		if {$i != -1} {
-		    for {set j 1} {$j <= $i} {incr j} {
-			if {$j == 1} {
-			    append ditem [lindex $l $j]
-			} else {
-			    append ditem / [lindex $l $j]
-			}
-		    }
-		    break
-		}
-	    }
-
-	    if {$ditem != ""} {
-		set tflag 1
-		redrawObj $ditem
-	    }
-	}
-    }
-
-    if {$tflag} {
-	updateTreeDrawLists
-    }
-}
-
-
 ::itcl::body Archer::revert {} {
     set mNeedSave 0
     Load $mTarget
 
-    set mLedgerGID 0
-
-    set mNeedCheckpoint 0
-    updateCheckpointMode
-
-    set mNeedGlobalUndo 0
-    set mNeedObjSave 0
-    set mNeedObjUndo 0
     set mNeedSave 0
-
     updateSaveMode
-    updateUndoMode
 }
 
-
-::itcl::body Archer::selection_checkpoint {_obj} {
-    if {$_obj == "" || $mLedger == ""} {
-	return
-    }
-
-    # Get all ledger entries related to _obj
-    set l [$mLedger expand *_*_$_obj]
-    set len [llength $l]
-
-    checkpoint $_obj $LEDGER_MODIFY
-}
-
-
-::itcl::body Archer::updateObjSave {} {
-    if {$mSelectedObj == "" || $mLedger == ""} {
-	return
-    }
-
-    # Get all ledger entries related to mSelectedObj
-    set l [$mLedger expand *_*_$mSelectedObj]
-    set len [llength $l]
-
-    if {$len == 0} {
-	# Should never get here
-	tk_messageBox -message "updateObjSave: no ledger entry found for $mSelectedObj"
-	return
-    } else {
-	# Find last ledger entry corresponding to mSelectedObj
-	set l [lsort -dictionary $l]
-	set le [lindex $l end]
-    }
-
-    $mLedger attr set $le $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
-
-    set mNeedCheckpoint 1
-    set mNeedGlobalUndo 1
-    set mNeedObjSave 1
-    set mNeedObjUndo 1
-    set mNeedSave 1
-
-    updateCheckpointMode
-    updateSaveMode
-    updateUndoMode
-}
 
 
 ################################### End Object Edit Management ###################################
