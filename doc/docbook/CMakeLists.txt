@@ -5,8 +5,9 @@ configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/log4j.properties ${CMAKE_BINARY_D
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-xml-catalog.xml.in ${CMAKE_CURRENT_BINARY_DIR}/brlcad-xml-catalog.xml)
 
 SET(XSLTPROC_FLAGS -nonet -xinclude)
-SET(XSL_XHTML_STYLESHEET "${CMAKE_SOURCE_DIR}/doc/docbook/resources/standard/xsl/xhtml-1_1/docbook.xsl")
-SET(XSL_MAN_STYLESHEET "${CMAKE_SOURCE_DIR}/doc/docbook/resources/standard/xsl/manpages/docbook.xsl")
+SET(XSL_XHTML_STYLESHEET "${CMAKE_SOURCE_DIR}/doc/docbook/resources/brlcad/brlcad-xhtml-stylesheet.xsl")
+SET(XSL_MAN_STYLESHEET "${CMAKE_SOURCE_DIR}/doc/docbook/resources/brlcad/brlcad-man-stylesheet.xsl")
+# The brlcad/brlcad-fo-stylesheet.xsl stylesheet is for docs with covers
 SET(XSL_FO_STYLESHEET "${CMAKE_SOURCE_DIR}/doc/docbook/resources/standard/xsl/fo/docbook.xsl")
 
 MACRO(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir)
@@ -17,7 +18,7 @@ MACRO(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir)
 		ADD_CUSTOM_COMMAND(
 			OUTPUT ${outfile}
 			COMMAND
-			XML_CATALOG_FILES="${CMAKE_CURRENT_BINARY_DIR}/brlcad-xml-catalog.xml"
+			XML_CATALOG_FILES=${CMAKE_BINARY_DIR}/doc/docbook/brlcad-xml-catalog.xml
 			XML_DEBUG_CATALOG=1
 			${XSLTPROC_EXEC} ${XSLTPROC_FLAGS} -o ${outfile} 
 			${XSL_XHTML_STYLESHEET} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
@@ -37,7 +38,7 @@ MACRO(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir)
 		ADD_CUSTOM_COMMAND(
 			OUTPUT ${outfile}
 			COMMAND 
-			XML_CATALOG_FILES="${CMAKE_CURRENT_BINARY_DIR}/brlcad-xml-catalog.xml"
+			XML_CATALOG_FILES=${CMAKE_BINARY_DIR}/doc/docbook/brlcad-xml-catalog.xml
 			XML_DEBUG_CATALOG=1
 			${XSLTPROC_EXEC} ${XSLTPROC_FLAGS} -o ${outfile} 
 			${XSL_MAN_STYLESHEET} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
@@ -48,6 +49,14 @@ MACRO(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir)
 	ENDFOREACH(filename ${${xml_files}})
 	CMAKEFILES(${${xml_files}})
 ENDMACRO(DOCBOOK_TO_MAN targetname_suffix srcfile outfile targetdir)
+
+# fop hyphenation path (fop version >= 1.0)
+# need v2 hphenation
+IF(APACHE_FOP_VERSION VERSION_LESS 1.0)
+	#SET(FOP_HYPH ${CMAKE_CURRENT_SOURCE_DIR}/resources/offo-hyphenation-binary-v1.2/fop-hyph.jar)
+ELSE(APACHE_FOP_VERSION VERSION_LESS 1.0)
+	SET(FOP_HYPH ${CMAKE_CURRENT_SOURCE_DIR}/resources/offo-hyphenation-binary-v2.0/fop-hyph.jar)
+ENDIF(APACHE_FOP_VERSION VERSION_LESS 1.0)
 
 SET(FOP_OPTS "-Djava.awt.headless=true -Dxml.catalog.files=${CMAKE_CURRENT_BINARY_DIR}/brlcad-xml-catalog.xml")
 
@@ -61,12 +70,19 @@ MACRO(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir)
 			FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir})
 			ADD_CUSTOM_COMMAND(
 				OUTPUT ${tmp_fo_file}
-				COMMAND ${XSLTPROC_EXEC} ${XSLTPROC_FLAGS} -o ${tmp_fo_file} ${XSL_FO_STYLESHEET} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
+				COMMAND
+				XML_CATALOG_FILES=${CMAKE_BINARY_DIR}/doc/docbook/brlcad-xml-catalog.xml
+				XML_DEBUG_CATALOG=1
+				${XSLTPROC_EXEC} ${XSLTPROC_FLAGS} -o ${tmp_fo_file} 
+				${XSL_FO_STYLESHEET} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
 				DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
 				)
 			ADD_CUSTOM_COMMAND(
 				OUTPUT ${outfile}
-				COMMAND ${FOP_OPTS} ${APACHE_FOP} -c ${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf ${tmp_fo_file} -pdf ${outfile}
+				COMMAND 
+				FOP_HYPHENATION_PATH=${FOP_HYP}
+				FOP_OPTS="${FOP_OPTS}"
+				${APACHE_FOP} -c ${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf ${tmp_fo_file} -pdf ${outfile}
 				DEPENDS ${tmp_fo_file}
 				)
 			ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
