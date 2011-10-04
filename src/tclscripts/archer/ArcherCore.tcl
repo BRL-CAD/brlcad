@@ -1995,7 +1995,6 @@ namespace eval ArcherCore {
     set bname [lindex $blist 0]
     set bots [lindex $blist 1]
     if {[llength $bots] == 0} {
-	putString "$bname does not require a split"
 	return ""
     }
 
@@ -2009,7 +2008,7 @@ namespace eval ArcherCore {
     eval gedCmd g $bname $bots
     gedCmd erase $bname
 
-    return $bname
+    return [list $bname $backup]
 }
 
 
