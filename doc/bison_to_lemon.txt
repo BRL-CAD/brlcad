@@ -30,13 +30,16 @@ Lemon's foo.h is not equivalent to Bison's foo.tab.h; it only contains token def
     /* lemon */
     expr ::= MINUS expr. [NOT] { ... }
 
-- Lemon has different syntax for specifying the type of non-terminals:
-    /* bison */
-    %type <case_item> case_action case_otherwise
+- Lemon has different syntax for specifying the type of non-terminals.
+  Assuming a union type is used for non-terminals, and it has a member
+  'symbol' of type 'struct symbol':
 
-    /* lemon */
-    %type case_action { case_item }
-    %type case_otherwise { case_item }
+    /* bison allows multiple declarations using the member name */
+    %type <symbol> function_id procedure_id
+
+    /* lemon requires one-at-a-time declaration using the type name */
+    %type function_id { struct symbol }
+    %type procedure_id { struct symbol }
 
  Lemon has Slightly Stricter Rules on Grammar Definition
 ---------------------------------------------------------

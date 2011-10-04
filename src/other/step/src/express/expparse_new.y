@@ -176,134 +176,175 @@
 #define ERROR(code)	ERRORreport(code, yylineno)
 
     /* structured types for parse node decorations */
+    struct type_either {
+        Type	 type;
+        TypeBody body;
+    };
 
+    struct type_flags {
+        unsigned optional: 1;
+        unsigned unique: 1;
+        unsigned fixed: 1;
+        unsigned var: 1;		/* when formal is "VAR" */
+    };
+
+    struct entity_body {
+        Linked_List	attributes;
+        Linked_List	unique;
+        Linked_List	where;
+    };
+
+    struct subsuper_decl {
+        Expression	subtypes;
+        Linked_List	supertypes;
+        Boolean		abstract;
+    };
+
+    struct subtypes {
+        Expression	subtypes;
+        Boolean		abstract;
+    };
+
+    struct upper_lower {
+        Expression	lower_limit;
+        Expression	upper_limit;
+    };
+
+    struct qualifier {
+        Expression	expr;	/* overall expression for qualifier */
+        Expression	first;	/* first [syntactic] qualifier (if more */
+				/* than one is contained in this */
+				/* [semantic] qualifier - used for */
+				/* group_ref + attr_ref - see rule for */
+				/* qualifier) */
+    };
 }
 
 %type case_action	{ Case_Item }
 %type case_otherwise	{ Case_Item }
-%type entity_body	{ Entity_Body }
+%type entity_body	{ struct entity_body }
 
-%type aggregate_init_element	{ expression }
-%type aggregate_initializer	{ expression }
-%type assignable		{ expression }
-%type attribute_decl		{ expression }
-%type by_expression		{ expression }
-%type constant			{ expression }
-%type expression		{ expression }
-%type function_call		{ expression }
-%type general_ref		{ expression }
-%type group_ref			{ expression }
-%type identifier		{ expression }
-%type initializer		{ expression }
-%type interval			{ expression }
-%type literal			{ expression }
-%type local_initializer		{ expression }
-%type precision_spec		{ expression }
-%type query_expression		{ expression }
-%type simple_expression		{ expression }
-%type unary_expression		{ expression }
-%type supertype_expression	{ expression }
-%type until_control		{ expression }
-%type while_control		{ expression }
+%type aggregate_init_element	{ Expression }
+%type aggregate_initializer	{ Expression }
+%type assignable		{ Expression }
+%type attribute_decl		{ Expression }
+%type by_expression		{ Expression }
+%type constant			{ Expression }
+%type expression		{ Expression }
+%type function_call		{ Expression }
+%type general_ref		{ Expression }
+%type group_ref			{ Expression }
+%type identifier		{ Expression }
+%type initializer		{ Expression }
+%type interval			{ Expression }
+%type literal			{ Expression }
+%type local_initializer		{ Expression }
+%type precision_spec		{ Expression }
+%type query_expression		{ Expression }
+%type simple_expression		{ Expression }
+%type unary_expression		{ Expression }
+%type supertype_expression	{ Expression }
+%type until_control		{ Expression }
+%type while_control		{ Expression }
 
-%type function_header	{ iVal }
-%type rule_header	{ iVal }
-%type procedure_header	{ iVal }
+%type function_header	{ Integer }
+%type rule_header	{ Integer }
+%type procedure_header	{ Integer }
 
-%type action_body			{ list }
-%type actual_parameters			{ list }
-%type aggregate_init_body		{ list }
-%type explicit_attr_list		{ list }
-%type case_action_list			{ list }
-%type case_block			{ list }
-%type case_labels			{ list }
-%type where_clause_list			{ list }
-%type derive_decl			{ list }
-%type explicit_attribute		{ list }
-%type expression_list			{ list }
-%type formal_parameter			{ list }
-%type formal_parameter_list		{ list }
-%type formal_parameter_rep		{ list }
-%type id_list				{ list }
-%type defined_type_list			{ list }
-%type nested_id_list			{ list }
+%type action_body			{ Linked_List }
+%type actual_parameters			{ Linked_List }
+%type aggregate_init_body		{ Linked_List }
+%type explicit_attr_list		{ Linked_List }
+%type case_action_list			{ Linked_List }
+%type case_block			{ Linked_List }
+%type case_labels			{ Linked_List }
+%type where_clause_list			{ Linked_List }
+%type derive_decl			{ Linked_List }
+%type explicit_attribute		{ Linked_List }
+%type expression_list			{ Linked_List }
+%type formal_parameter			{ Linked_List }
+%type formal_parameter_list		{ Linked_List }
+%type formal_parameter_rep		{ Linked_List }
+%type id_list				{ Linked_List }
+%type defined_type_list			{ Linked_List }
+%type nested_id_list			{ Linked_List }
 /*repeat_control_list*/
-%type statement_rep			{ list }
-%type subtype_decl			{ list }
-%type where_rule			{ list }
-%type where_rule_OPT			{ list }
-%type supertype_expression_list		{ list }
-%type labelled_attrib_list_list		{ list }
-%type labelled_attrib_list		{ list }
-%type inverse_attr_list			{ list }
+%type statement_rep			{ Linked_List }
+%type subtype_decl			{ Linked_List }
+%type where_rule			{ Linked_List }
+%type where_rule_OPT			{ Linked_List }
+%type supertype_expression_list		{ Linked_List }
+%type labelled_attrib_list_list		{ Linked_List }
+%type labelled_attrib_list		{ Linked_List }
+%type inverse_attr_list			{ Linked_List }
 
-%type inverse_clause			{ list }
-%type attribute_decl_list		{ list }
-%type derived_attribute_rep		{ list }
-%type unique_clause			{ list }
-%type rule_formal_parameter_list	{ list }
-%type qualified_attr_list		{ list }
+%type inverse_clause			{ Linked_List }
+%type attribute_decl_list		{ Linked_List }
+%type derived_attribute_rep		{ Linked_List }
+%type unique_clause			{ Linked_List }
+%type rule_formal_parameter_list	{ Linked_List }
+%type qualified_attr_list		{ Linked_List }
 /* remove labelled_attrib_list if this works */
 
-%type rel_op	{ op_code }
+%type rel_op	{ Op_Code }
 
-%type optional_or_unique	{ type_flags }
-%type optional_fixed		{ type_flags }
-%type optional	{ type_flags }
-%type var	{ type_flags }
-%type unique	{ type_flags }
+%type optional_or_unique	{ struct type_flags }
+%type optional_fixed		{ struct type_flags }
+%type optional			{ struct type_flags }
+%type var			{ struct type_flags }
+%type unique			{ struct type_flags }
 
-%type qualified_attr	{ qualified_attr }
+%type qualified_attr	{ Qualified_Attr }
 
-%type qualifier	{ qualifier }
+%type qualifier	{ struct qualifier }
 
-%type alias_statement		{ statement }
-%type assignment_statement	{ statement }
-%type case_statement		{ statement }
-%type compound_statement	{ statement }
-%type escape_statement		{ statement }
-%type if_statement		{ statement }
-%type proc_call_statement	{ statement }
-%type repeat_statement		{ statement }
-%type return_statement		{ statement }
-%type skip_statement		{ statement }
-%type statement			{ statement }
+%type alias_statement		{ Statement }
+%type assignment_statement	{ Statement }
+%type case_statement		{ Statement }
+%type compound_statement	{ Statement }
+%type escape_statement		{ Statement }
+%type if_statement		{ Statement }
+%type proc_call_statement	{ Statement }
+%type repeat_statement		{ Statement }
+%type return_statement		{ Statement }
+%type skip_statement		{ Statement }
+%type statement			{ Statement }
 
-%type subsuper_decl	{ subsuper_decl }
+%type subsuper_decl	{ struct subsuper_decl }
 
-%type supertype_decl	{ subtypes }
-%type supertype_factor	{ subtypes }
+%type supertype_decl	{ struct subtypes }
+%type supertype_factor	{ struct subtypes }
 
-%type function_id	{ symbol }
-%type procedure_id	{ symbol }
+%type function_id	{ Symbol }
+%type procedure_id	{ Symbol }
 
-%type attribute_type	{ type }
-%type defined_type	{ type }
-%type parameter_type	{ type }
-%type generic_type	{ type }
+%type attribute_type	{ Type }
+%type defined_type	{ Type }
+%type parameter_type	{ Type }
+%type generic_type	{ Type }
 
-%type basic_type		{ typebody }
-%type select_type		{ typebody }
-%type aggregate_type		{ typebody }
-%type aggregation_type		{ typebody }
-%type array_type		{ typebody }
-%type bag_type			{ typebody }
-%type conformant_aggregation	{ typebody }
-%type list_type			{ typebody }
-%type set_type			{ typebody }
+%type basic_type		{ TypeBody }
+%type select_type		{ TypeBody }
+%type aggregate_type		{ TypeBody }
+%type aggregation_type		{ TypeBody }
+%type array_type		{ TypeBody }
+%type bag_type			{ TypeBody }
+%type conformant_aggregation	{ TypeBody }
+%type list_type			{ TypeBody }
+%type set_type			{ TypeBody }
 
-%type set_or_bag_of_entity	{ type_either }
-%type type			{ type_either }
+%type set_or_bag_of_entity	{ struct type_either }
+%type type			{ struct type_either }
 
-%type cardinality_op	{ upper_lower }
-%type index_spec	{ upper_lower }
-%type limit_spec	{ upper_lower }
+%type cardinality_op	{ struct upper_lower }
+%type index_spec	{ struct upper_lower }
+%type limit_spec	{ struct upper_lower }
 
-%type inverse_attr		{ variable }
-%type derived_attribute		{ variable }
-%type rule_formal_parameter	{ variable }
+%type inverse_attr		{ Variable }
+%type derived_attribute		{ Variable }
+%type rule_formal_parameter	{ Variable }
 
-%type where_clause	{ where }
+%type where_clause	{ Where }
 
 
 %left	TOK_EQUAL		TOK_GREATER_EQUAL	TOK_GREATER_THAN
@@ -364,48 +405,13 @@ typedef union YYSTYPE {
     Variable		variable;
     Where		where;
 
-    struct type_either {
-        Type	 type;
-        TypeBody body;
-    } type_either;	/* either one of these can be returned */
-
-    struct {
-        unsigned optional: 1;
-        unsigned unique: 1;
-        unsigned fixed: 1;
-        unsigned var: 1;		/* when formal is "VAR" */
-    } type_flags;
-
-    struct {
-        Linked_List	attributes;
-        Linked_List	unique;
-        Linked_List	where;
-    } entity_body;
-
-    struct {
-        Expression	subtypes;
-        Linked_List	supertypes;
-        Boolean		abstract;
-    } subsuper_decl;
-
-    struct {
-        Expression	subtypes;
-        Boolean		abstract;
-    } subtypes;
-
-    struct {
-        Expression	lower_limit;
-        Expression	upper_limit;
-    } upper_lower;
-
-    struct {
-        Expression	expr;	/* overall expression for qualifier */
-        Expression	first;	/* first [syntactic] qualifier (if more */
-        /* than one is contained in this */
-        /* [semantic] qualifier - used for */
-        /* group_ref + attr_ref - see rule for */
-        /* qualifier) */
-    } qualifier;
+    struct type_either   type_either;
+    struct type_flags    type_flags;
+    struct entity_body   entity_body;
+    struct subsuper_decl subsuper_decl;
+    struct subtypes      subtypes;
+    struct upper_lower   upper_lower;
+    struct qualifier     qualifier;
 } YYSTYPE;
 }
 
