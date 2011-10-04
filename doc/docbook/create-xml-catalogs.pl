@@ -16,8 +16,8 @@ use DBPATH;
 my $dbhome = $DBPATH::DBHOME;
 
 # Note: no going back to pre-namespace days
-my $dbdir  = 'resources/standard/xsl';
-my $dbdir2 = 'resources/standard/svg';
+my $dbdir  = 'resources/other/standard/xsl';
+my $dbdir2 = 'resources/other/standard/svg';
 my $brldir = 'resources/brlcad';
 
 my $dbht   = "$dbhome/$dbdir/xhtml-1_1/docbook.xsl";
