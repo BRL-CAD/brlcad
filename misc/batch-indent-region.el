@@ -55,6 +55,7 @@ Emacs. For example, invoke:
 	(error "`batch-indent-region' is to be used only with -batch"))
 
     (while command-line-args-left
+	(setq c-basic-offset: 4)
 	(setq c-auto-align-backslashes nil)
 	(setq c-label-minimum-indentation 0)
 	(setq file (car command-line-args-left))
