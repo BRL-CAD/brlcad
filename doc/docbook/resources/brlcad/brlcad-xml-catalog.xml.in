@@ -1,0 +1,37 @@
+<?xml version='1.0' encoding='ASCII'?>
+
+<catalog xmlns='urn:oasis:names:tc:entity:xmlns:xml:catalog'>
+
+  <!-- use local versions of some DTDs -->
+  <system
+      systemId='http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'
+      uri='file://@BRLCAD_BINARY_DIR@/doc/docbook/resources/standard/svg/svg11-tiny-flat.dtd'
+  />
+
+  <rewriteSystem
+      systemIdStartString='http://www.w3.org/Graphics/SVG/1.1/DTD/'
+      rewritePrefix='file://@BRLCAD_BINARY_DIR@/doc/docbook/resources/standard/svg/'
+  />
+
+  <rewriteURI
+      uriStartString='http://www.w3.org/Graphics/SVG/1.1/DTD/'
+      rewritePrefix='file://@BRLCAD_BINARY_DIR@/doc/docbook/resources/standard/svg/'
+  />
+
+  <rewriteURI
+      uriStartString='/xsl/'
+      rewritePrefix='file://@BRLCAD_BINARY_DIR@/doc/docbook/resources/standard/xsl/'
+  />
+
+  <rewriteURI
+      uriStartString='/brlcad/'
+      rewritePrefix='file://@BRLCAD_BINARY_DIR@/doc/docbook/resources/brlcad/'
+  />
+
+  <rewriteURI
+      uriStartString='/doc/'
+      rewritePrefix='file://@BRLCAD_BINARY_DIR@/doc/docbook/'
+  />
+
+
+</catalog>

@@ -2,10 +2,9 @@ SET(srcdir ${CMAKE_CURRENT_SOURCE_DIR})
 configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/fop.xconf.in ${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf)
 configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/log4j.properties ${CMAKE_BINARY_DIR}/doc/docbook/log4j.properties COPYONLY)
 
-SET(XSLTPROC_FLAGS
-	-nonet
-	-xinclude
-)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-xml-catalog.xml.in ${CMAKE_CURRENT_BINARY_DIR}/brlcad-xml-catalog.xml)
+
+SET(XSLTPROC_FLAGS -nonet -xinclude)
 SET(XSL_XHTML_STYLESHEET "${CMAKE_SOURCE_DIR}/doc/docbook/resources/standard/xsl/xhtml-1_1/docbook.xsl")
 SET(XSL_MAN_STYLESHEET "${CMAKE_SOURCE_DIR}/doc/docbook/resources/standard/xsl/manpages/docbook.xsl")
 SET(XSL_FO_STYLESHEET "${CMAKE_SOURCE_DIR}/doc/docbook/resources/standard/xsl/fo/docbook.xsl")
@@ -17,7 +16,11 @@ MACRO(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir)
 		SET(targetname ${filename_root}_${targetname_suffix}_html)
 		ADD_CUSTOM_COMMAND(
 			OUTPUT ${outfile}
-			COMMAND ${XSLTPROC_EXEC} ${XSLTPROC_FLAGS} -o ${outfile} ${XSL_XHTML_STYLESHEET} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
+			COMMAND
+			XML_CATALOG_FILES="${CMAKE_CURRENT_BINARY_DIR}/brlcad-xml-catalog.xml"
+			XML_DEBUG_CATALOG=1
+			${XSLTPROC_EXEC} ${XSLTPROC_FLAGS} -o ${outfile} 
+			${XSL_XHTML_STYLESHEET} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
 			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
 			)
 		ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
@@ -33,7 +36,11 @@ MACRO(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir)
 		SET(targetname ${filename_root}_${targetname_suffix}_man${mannum})
 		ADD_CUSTOM_COMMAND(
 			OUTPUT ${outfile}
-			COMMAND ${XSLTPROC_EXEC} ${XSLTPROC_FLAGS} -o ${outfile} ${XSL_MAN_STYLESHEET} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
+			COMMAND 
+			XML_CATALOG_FILES="${CMAKE_CURRENT_BINARY_DIR}/brlcad-xml-catalog.xml"
+			XML_DEBUG_CATALOG=1
+			${XSLTPROC_EXEC} ${XSLTPROC_FLAGS} -o ${outfile} 
+			${XSL_MAN_STYLESHEET} ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
 			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename}
 			)
 		ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
@@ -41,6 +48,8 @@ MACRO(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir)
 	ENDFOREACH(filename ${${xml_files}})
 	CMAKEFILES(${${xml_files}})
 ENDMACRO(DOCBOOK_TO_MAN targetname_suffix srcfile outfile targetdir)
+
+SET(FOP_OPTS "-Djava.awt.headless=true -Dxml.catalog.files=${CMAKE_CURRENT_BINARY_DIR}/brlcad-xml-catalog.xml")
 
 MACRO(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir)
 	IF(BRLCAD_EXTRADOCS_PDF)
@@ -57,7 +66,7 @@ MACRO(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir)
 				)
 			ADD_CUSTOM_COMMAND(
 				OUTPUT ${outfile}
-				COMMAND ${APACHE_FOP} -c ${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf ${tmp_fo_file} -pdf ${outfile}
+				COMMAND ${FOP_OPTS} ${APACHE_FOP} -c ${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf ${tmp_fo_file} -pdf ${outfile}
 				DEPENDS ${tmp_fo_file}
 				)
 			ADD_CUSTOM_TARGET(${targetname} ALL DEPENDS ${outfile})
