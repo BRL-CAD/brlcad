@@ -40,10 +40,10 @@
 
 
 btRTCollisionAlgorithm::btRTCollisionAlgorithm(
-    btPersistentManifold* mf,
-    const btCollisionAlgorithmConstructionInfo& ci,
-    btCollisionObject* obj0,
-    btCollisionObject* obj1)
+					       btPersistentManifold* mf,
+					       const btCollisionAlgorithmConstructionInfo& ci,
+					       btCollisionObject* obj0,
+					       btCollisionObject* obj1)
     : btActivatingCollisionAlgorithm(ci, obj0, obj1),
       m_ownManifold(false),
       m_manifoldPtr(mf)
@@ -66,10 +66,10 @@ btRTCollisionAlgorithm::~btRTCollisionAlgorithm()
 
 void
 btRTCollisionAlgorithm::processCollision (
-    btCollisionObject* body0,
-    btCollisionObject* body1,
-    const btDispatcherInfo& dispatchInfo,
-    btManifoldResult* resultOut)
+					  btCollisionObject* body0,
+					  btCollisionObject* body1,
+					  const btDispatcherInfo& dispatchInfo,
+					  btManifoldResult* resultOut)
 {
     if (!m_manifoldPtr)
 	return;
@@ -108,6 +108,8 @@ btRTCollisionAlgorithm::processCollision (
 	struct sim_manifold *current_manifold =
 	    (struct sim_manifold *)bu_malloc(sizeof(struct sim_manifold), "sim_manifold: current_manifold");
 	current_manifold->next = NULL;
+	current_manifold->rbA = rbA;
+	current_manifold->rbB = rbB;
 
 	if (rbB->first_manifold == NULL) {
 	    rbB->first_manifold = current_manifold;
