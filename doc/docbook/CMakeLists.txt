@@ -81,7 +81,7 @@ MACRO(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir)
 				OUTPUT ${outfile}
 				COMMAND 
 				FOP_HYPHENATION_PATH=${FOP_HYP}
-				FOP_OPTS="${FOP_OPTS}"
+				FOP_OPTS=\"-Djava.awt.headless=true	-Dxml.catalog.files=${CMAKE_BINARY_DIR}/doc/docbook/brlcad-xml-catalog.xml\"
 				${APACHE_FOP} -c ${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf ${tmp_fo_file} -pdf ${outfile}
 				DEPENDS ${tmp_fo_file}
 				)
