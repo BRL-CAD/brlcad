@@ -667,7 +667,7 @@ package provide Archer 1.0
 		    ".tcl" -
 		    ".itk" -
 		    ".itcl" {
-			uplevel \#0 source $filename
+			uplevel \#0 source \"$filename\"
 	    	    }
 	            default {
 		        # silently ignore
