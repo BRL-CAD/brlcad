@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2011-07-XX  Release 7.20.4                                     ---
 ----------------------------------------------------------------------
 
+* added archer BoT split/flip/sync surface cleanup panel - Bob Parker
 * added new g-dot exporter for hierarchy visualization - Sean Morrison
 * improved g-vrml successful exporting and reporting - Richard Weiss
 * added -b BoT dump and -e evaluation option to g-vrml - Richard Weiss
