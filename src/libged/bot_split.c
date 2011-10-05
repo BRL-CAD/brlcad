@@ -65,19 +65,17 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
     }
 
     for (i=1; i < argc; ++i) {
+	struct rt_bot_list *headRblp;
+	char *cp = strrchr(argv[i], '/');
+
 	/* Skip past any path elements */
-	char *obj = bu_basename(argv[i]);
-	struct rt_bot_list *headRblp = NULL;
+	if (!cp)
+	    cp = (char *)argv[i];
+	else
+	    ++cp;
 
-	if (BU_STR_EQUAL(obj, ".")) {
-	    /* malformed path, lookup using exactly what was provided */
-	    bu_free(obj, "free bu_basename");
-	    obj = bu_strdup(argv[i]);
-	}
-
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, obj, LOOKUP_QUIET)) == RT_DIR_NULL) {
-	    bu_vls_printf(&error_str, "%s: db_lookup(%s) error\n", argv[0], obj);
-	    bu_free(obj, "free obj");
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, cp, LOOKUP_QUIET)) == RT_DIR_NULL) {
+	    bu_vls_printf(&error_str, "%s: db_lookup(%s) error\n", argv[0], cp);
 	    continue;
 	}
 
@@ -85,8 +83,7 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 
 	if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	    rt_db_free_internal(&intern);
-	    bu_vls_printf(&error_str, "%s: %s is not a BOT solid!\n", argv[0], obj);
-	    bu_free(obj, "free obj");
+	    bu_vls_printf(&error_str, "%s: %s is not a BOT solid!\n", argv[0], cp);
 	    continue;
 	}
 
@@ -113,7 +110,7 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_init(&new_bots);
 	    for (BU_LIST_FOR(rblp, rt_bot_list, &headRblp->l)) {
 		/* Get a unique name based on the original name */
-		av[1] = obj;
+		av[1] = cp;
 		ged_make_name(gedp, ac, av);
 
 		/* Create the bot */
@@ -141,7 +138,7 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    /* Save the name of the original bot and the new bots as a sublist */
-	    bu_vls_printf(&bot_result_list, "{%s {%V}} ", obj, &new_bots);
+	    bu_vls_printf(&bot_result_list, "{%s {%V}} ", cp, &new_bots);
 
 	    bu_vls_trunc(gedp->ged_result_str, 0);
 	    bu_vls_trunc(&new_bots, 0);
@@ -149,7 +146,6 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 
 	rt_bot_list_free(headRblp, 0);
 	rt_db_free_internal(&intern);
-	bu_free(obj, "free obj");
     }
 
     bu_vls_trunc(gedp->ged_result_str, 0);
