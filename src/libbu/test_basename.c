@@ -78,8 +78,11 @@ main(int ac, char *av[])
     automatic_test("usr");
     automatic_test("/usr/some long/file");
     automatic_test("/usr/some file");
+    automatic_test("C:/usr/some\\ drivepath");
     automatic_test("/a test file");
     automatic_test("another file");
+    automatic_test("C:\\Temp");
+    automatic_test("C:/Temp");
     automatic_test("/");
     automatic_test("/////");
     automatic_test(".");
