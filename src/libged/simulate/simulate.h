@@ -28,6 +28,9 @@
 #ifndef SIMULATE_H_
 #define SIMULATE_H_
 
+/* interface headers */
+#include "vmath.h"
+
 
 //Copy of the rigid body state tags from btCollisionObject.h
 #define ACTIVE_TAG 1
