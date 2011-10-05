@@ -159,10 +159,14 @@ package provide Archer 1.0
 	# General
 	method askToRevert {}
 	method bot_fix_all {}
+	method bot_fix_all_wrapper {}
 	method bot_flip_check      {args}
 	method bot_flip_check_all  {}
+	method bot_flip_check_all_wrapper  {}
 	method bot_split_all {}
+	method bot_split_all_wrapper {}
 	method bot_sync_all {}
+	method bot_sync_all_wrapper {}
 	method fbclear {}
 	method raytracePlus {}
 
@@ -192,6 +196,7 @@ package provide Archer 1.0
 	variable mArcherVersion "0.9.2"
 	variable mActiveEditDialogs {}
 	variable wizardXmlCallbacks ""
+	variable mBotFixAllFlag 0
 
 	# plugin list
 	variable mWizardClass ""
@@ -297,6 +302,7 @@ package provide Archer 1.0
 	method buildHypEditView {}
 	method buildObjAttrView {}
 	method buildObjEditView {}
+	method buildObjToolView {}
 	method buildObjViewToolbar {}
 	method buildPartEditView {}
 	method buildPipeEditView {}
@@ -328,6 +334,7 @@ package provide Archer 1.0
 	method initNoWizard {_parent _msg}
 	method initObjAttrView {}
 	method initObjEditView {}
+	method initObjToolView {}
 	method initObjWizard {_obj _wizardLoaded}
 	method initPartEditView {_odata}
 	method initPipeEditView {_odata}
@@ -442,6 +449,7 @@ package provide Archer 1.0
 	buildObjViewToolbar
 	buildObjAttrView
 	buildObjEditView
+	buildObjToolView
 
 	# set initial toggle variables
 	set mVPaneToggle3 $mVPaneFraction3
@@ -945,12 +953,23 @@ package provide Archer 1.0
 
 
 ::itcl::body Archer::bot_fix_all {} {
+    set mBotFixAllFlag 1
+
     set ret_string ""
     append ret_string "[bot_split_all]\n\n"
     append ret_string "[bot_sync_all]\n\n"
     append ret_string "[bot_flip_check_all]"
+
+    set mBotFixAllFlag 0
+    redrawWho
+
+    return $ret_string
 }
 
+
+::itcl::body Archer::bot_fix_all_wrapper {} {
+    putString [bot_fix_all]
+}
 
 ::itcl::body Archer::bot_flip_check {args} {
     SetWaitCursor $this
@@ -1178,7 +1197,18 @@ package provide Archer 1.0
 
 ::itcl::body Archer::bot_flip_check_all {} {
     set blist [split [search . -type bot] "\n "]
-    eval bot_flip_check $blist
+    set ret [eval bot_flip_check $blist]
+
+    if {!$mBotFixAllFlag} {
+	redrawWho
+    }
+
+    return $ret
+}
+
+
+::itcl::body Archer::bot_flip_check_all_wrapper {} {
+    putString [bot_flip_check_all]
 }
 
 
@@ -1227,7 +1257,16 @@ package provide Archer 1.0
 	setSave
     }
 
+    if {!$mBotFixAllFlag} {
+	redrawWho
+    }
+
     return $ret_string
+}
+
+
+::itcl::body Archer::bot_split_all_wrapper {} {
+    putString [bot_split_all]
 }
 
 
@@ -1262,8 +1301,17 @@ package provide Archer 1.0
     SetNormalCursor $this
 
     setSave
+    if {!$mBotFixAllFlag} {
+	redrawWho
+    }
+
 
     return $ret_string
+}
+
+
+::itcl::body Archer::bot_sync_all_wrapper {} {
+    putString [bot_sync_all]
 }
 
 
@@ -1654,7 +1702,10 @@ package provide Archer 1.0
 			-file [file join $mImgDir option_text.png]]
 	$itk_component(objViewToolbar) itemconfigure objEditView \
 	    -image [image create photo \
-			-file [file join $mImgDir option_tree.png]]
+			-file [file join $mImgDir option_edit.png]]
+	$itk_component(objViewToolbar) itemconfigure objToolView \
+	    -image [image create photo \
+			-file [file join $mImgDir tools.png]]
     }
 
     initFbImages
@@ -3830,22 +3881,22 @@ proc title_node_handler {node} {
 		set mStatusStr "Toggle lighting on/off "
 	    }
 	    "Tree Select" {
-		set mStatusStr "Select the picked component in the hierarchy tree."
+		set mStatusStr "Select the picked object in the hierarchy tree."
 	    }
-	    "Get Name" {
-		set mStatusStr "Get the name of the picked component."
+	    "Get Object Name" {
+		set mStatusStr "Get the name of the picked object."
 	    }
-	    "Erase" {
-		set mStatusStr "Erase the picked component."
+	    "Erase Object" {
+		set mStatusStr "Erase the picked object."
 	    }
 	    "Bot Flip" {
-		set mStatusStr "Flip the picked component if it's a bot."
+		set mStatusStr "Flip the picked object if it's a bot."
 	    }
 	    "Bot Split" {
-		set mStatusStr "Split the picked component if it's a bot."
+		set mStatusStr "Split the picked object if it's a bot."
 	    }
 	    "Bot Sync" {
-		set mStatusStr "Sync the picked component if it's a bot."
+		set mStatusStr "Sync the picked object if it's a bot."
 	    }
 	    default {
 		set mStatusStr ""
@@ -4707,17 +4758,17 @@ proc title_node_handler {node} {
 	    }
 	    cascade comppick -label "Comp Pick Mode" -menu {
 		radiobutton tselect -label "Tree Select" \
-		    -helpstr "Select the picked component in the hierarchy tree."
-		radiobutton gname -label "Get Name" \
-		    -helpstr "Get the name of the picked component."
-		radiobutton cerase -label "Erase" \
-		    -helpstr "Erase the picked component."
-		radiobutton bflip -label "Bot Flip" \
-		    -helpstr "Flip the picked component if it's a bot."
+		    -helpstr "Select the picked object in the hierarchy tree."
+		radiobutton gname -label "Get Object Name" \
+		    -helpstr "Get the name of the picked object."
+		radiobutton cerase -label "Erase Object" \
+		    -helpstr "Erase the picked object."
 		radiobutton bsplit -label "Bot Split" \
-		    -helpstr "Split the picked component if it's a bot."
+		    -helpstr "Split the picked object if it's a bot."
 		radiobutton bsync -label "Bot Sync" \
-		    -helpstr "Sync the picked component if it's a bot."
+		    -helpstr "Sync the picked object if it's a bot."
+		radiobutton bflip -label "Bot Flip" \
+		    -helpstr "Flip the picked object if it's a bot."
 	    }
 	    checkbutton quad -label "Quad View" \
 		-helpstr "Toggle between single and quad display."
@@ -4767,22 +4818,28 @@ proc title_node_handler {node} {
 	-command [::itcl::code $this setActivePane lr]
 
     $itk_component(menubar) menuconfigure .modes.comppick.tselect \
+	-command [::itcl::code $this initCompPick] \
 	-value $COMP_PICK_TREE_SELECT_MODE \
 	-variable [::itcl::scope mCompPickMode]
     $itk_component(menubar) menuconfigure .modes.comppick.gname \
-	-value $COMP_PICK_TREE_SELECT_MODE \
+	-command [::itcl::code $this initCompPick] \
+	-value $COMP_PICK_NAME_MODE \
 	-variable [::itcl::scope mCompPickMode]
     $itk_component(menubar) menuconfigure .modes.comppick.cerase \
+	-command [::itcl::code $this initCompPick] \
 	-value $COMP_PICK_ERASE_MODE \
 	-variable [::itcl::scope mCompPickMode]
-    $itk_component(menubar) menuconfigure .modes.comppick.bflip \
-	-value $COMP_PICK_BOT_FLIP_MODE \
-	-variable [::itcl::scope mCompPickMode]
     $itk_component(menubar) menuconfigure .modes.comppick.bsplit \
+	-command [::itcl::code $this initCompPick] \
 	-value $COMP_PICK_BOT_SPLIT_MODE \
 	-variable [::itcl::scope mCompPickMode]
     $itk_component(menubar) menuconfigure .modes.comppick.bsync \
+	-command [::itcl::code $this initCompPick] \
 	-value $COMP_PICK_BOT_SYNC_MODE \
+	-variable [::itcl::scope mCompPickMode]
+    $itk_component(menubar) menuconfigure .modes.comppick.bflip \
+	-command [::itcl::code $this initCompPick] \
+	-value $COMP_PICK_BOT_FLIP_MODE \
 	-variable [::itcl::scope mCompPickMode]
 
     $itk_component(menubar) menuconfigure .modes.quad \
@@ -4975,28 +5032,34 @@ proc title_node_handler {node} {
     }
 
     $itk_component(${_prefix}comppickmenu) add radiobutton \
+	-command [::itcl::code $this initCompPick] \
 	-label "Tree Select" \
 	-value $COMP_PICK_TREE_SELECT_MODE \
 	-variable [::itcl::scope mCompPickMode]
     $itk_component(${_prefix}comppickmenu) add radiobutton \
-	-label "Get Name" \
+	-command [::itcl::code $this initCompPick] \
+	-label "Get Object Name" \
 	-value $COMP_PICK_NAME_MODE \
 	-variable [::itcl::scope mCompPickMode]
     $itk_component(${_prefix}comppickmenu) add radiobutton \
-	-label "Delete" \
+	-command [::itcl::code $this initCompPick] \
+	-label "Erase Object" \
 	-value $COMP_PICK_ERASE_MODE \
 	-variable [::itcl::scope mCompPickMode]
     $itk_component(${_prefix}comppickmenu) add radiobutton \
-	-label "Bot Flip" \
-	-value $COMP_PICK_BOT_FLIP_MODE \
-	-variable [::itcl::scope mCompPickMode]
-    $itk_component(${_prefix}comppickmenu) add radiobutton \
+	-command [::itcl::code $this initCompPick] \
 	-label "Bot Split" \
 	-value $COMP_PICK_BOT_SPLIT_MODE \
 	-variable [::itcl::scope mCompPickMode]
     $itk_component(${_prefix}comppickmenu) add radiobutton \
+	-command [::itcl::code $this initCompPick] \
 	-label "Bot Sync" \
 	-value $COMP_PICK_BOT_SYNC_MODE \
+	-variable [::itcl::scope mCompPickMode]
+    $itk_component(${_prefix}comppickmenu) add radiobutton \
+	-command [::itcl::code $this initCompPick] \
+	-label "Bot Flip" \
+	-value $COMP_PICK_BOT_FLIP_MODE \
 	-variable [::itcl::scope mCompPickMode]
 
     $itk_component(${_prefix}modesmenu) add cascade \
@@ -5823,6 +5886,127 @@ proc title_node_handler {node} {
 }
 
 
+::itcl::body Archer::buildObjToolView {} {
+    set parent [$itk_component(vpane) childsite attrView]
+    itk_component add objToolView {
+	::ttk::frame $parent.objtoolview \
+	    -borderwidth 1 \
+	    -relief sunken
+    } {}
+
+    set parent $itk_component(objToolView)
+    itk_component add compPickF {
+	::ttk::labelframe $parent.compPickF \
+	    -text "Comp Pick Modes" \
+	    -labelanchor n
+    } {}
+
+    set parent $itk_component(compPickF)
+    itk_component add compPickTreeSelectRB {
+	::ttk::radiobutton $parent.compPickTreeSelectRB \
+	    -command [::itcl::code $this initCompPick] \
+	    -text "Tree Select" \
+	    -value $COMP_PICK_TREE_SELECT_MODE \
+	    -variable [::itcl::scope mCompPickMode]
+    } {}
+
+    itk_component add compPickNameRB {
+	::ttk::radiobutton $parent.compPickNameRB \
+	    -command [::itcl::code $this initCompPick] \
+	    -text "Get Object Name" \
+	    -value $COMP_PICK_NAME_MODE \
+	    -variable [::itcl::scope mCompPickMode]
+    } {}
+
+    itk_component add compPickEraseRB {
+	::ttk::radiobutton $parent.compPickEraseRB \
+	    -command [::itcl::code $this initCompPick] \
+	    -text "Erase Object" \
+	    -value $COMP_PICK_ERASE_MODE \
+	    -variable [::itcl::scope mCompPickMode]
+    } {}
+
+    itk_component add compPickBotSplitRB {
+	::ttk::radiobutton $parent.compPickBotSplitRB \
+	    -command [::itcl::code $this initCompPick] \
+	    -text "Bot Split" \
+	    -value $COMP_PICK_BOT_SPLIT_MODE \
+	    -variable [::itcl::scope mCompPickMode]
+    } {}
+
+    itk_component add compPickBotSyncRB {
+	::ttk::radiobutton $parent.compPickBotSyncRB \
+	    -command [::itcl::code $this initCompPick] \
+	    -text "Bot Sync" \
+	    -value $COMP_PICK_BOT_SYNC_MODE \
+	    -variable [::itcl::scope mCompPickMode]
+    } {}
+
+    itk_component add compPickBotFlipRB {
+	::ttk::radiobutton $parent.compPickBotFlipRB \
+	    -command [::itcl::code $this initCompPick] \
+	    -text "Bot Flip" \
+	    -value $COMP_PICK_BOT_FLIP_MODE \
+	    -variable [::itcl::scope mCompPickMode]
+    } {}
+
+    grid $itk_component(compPickTreeSelectRB) -sticky w
+    grid $itk_component(compPickNameRB) -sticky w
+    grid $itk_component(compPickEraseRB) -sticky w
+    grid $itk_component(compPickBotSplitRB) -sticky w
+    grid $itk_component(compPickBotSyncRB) -sticky w
+    grid $itk_component(compPickBotFlipRB) -sticky w
+
+
+    set parent $itk_component(objToolView)
+    itk_component add botToolsF {
+	::ttk::labelframe $parent.botToolsF \
+	    -text "Bot Tools" \
+	    -labelanchor n
+    } {}
+
+    set parent $itk_component(botToolsF)
+    itk_component add botSplitAllB {
+	::ttk::button $parent.botSplitAllB \
+	    -text "Split All Bots" \
+	    -command [::itcl::code $this bot_split_all_wrapper]
+    } {}
+
+    itk_component add botSyncAllB {
+	::ttk::button $parent.botSyncAllB \
+	    -text "Sync All Bots" \
+	    -command [::itcl::code $this bot_sync_all_wrapper]
+    } {}
+
+    itk_component add botFlipCheckAllB {
+	::ttk::button $parent.botFlipCheckAllB \
+	    -text "Flip Check All Bots" \
+	    -command [::itcl::code $this bot_flip_check_all_wrapper]
+    } {}
+
+    itk_component add botFixAllB {
+	::ttk::button $parent.botFixAllB \
+	    -text "Fix All Bots" \
+	    -command [::itcl::code $this bot_fix_all_wrapper]
+    } {}
+
+    grid $itk_component(botSplitAllB) -sticky ew
+    grid $itk_component(botSyncAllB) -sticky ew
+    grid $itk_component(botFlipCheckAllB) -sticky ew
+    grid $itk_component(botFixAllB) -sticky ew
+    grid columnconfigure $itk_component(botToolsF) 0 -weight 1
+
+
+    set i 0
+    grid $itk_component(compPickF) -row $i -pady 4 -sticky ew
+    incr i
+    grid $itk_component(botToolsF) -row $i -pady 4 -sticky ew
+    incr i
+    grid rowconfigure $itk_component(objToolView) $i -weight 1
+    grid columnconfigure $itk_component(objToolView) 0 -weight 1
+}
+
+
 ::itcl::body Archer::buildObjViewToolbar {} {
     set parent [$itk_component(vpane) childsite attrView]
     itk_component add objViewToolbar {
@@ -5851,6 +6035,13 @@ proc title_node_handler {node} {
 	-variable [::itcl::scope mObjViewMode] \
 	-value $OBJ_ATTR_VIEW_MODE \
 	-command [::itcl::code $this initObjAttrView]
+
+    $itk_component(objViewToolbar) add radiobutton objToolView \
+	-helpstr "Tool view mode" \
+	-balloonstr "Tool view mode" \
+	-variable [::itcl::scope mObjViewMode] \
+	-value $OBJ_TOOL_VIEW_MODE \
+	-command [::itcl::code $this initObjToolView]
 }
 
 
@@ -6272,6 +6463,7 @@ proc title_node_handler {node} {
     catch {pack forget $itk_component(objViewToolbar)}
     catch {pack forget $itk_component(objAttrView)}
     catch {pack forget $itk_component(objEditView)}
+    catch {pack forget $itk_component(objToolView)}
     catch {pack forget $itk_component(noWizard)}
     set mNoWizardActive 0
 
@@ -6322,6 +6514,7 @@ proc title_node_handler {node} {
     catch {pack forget $itk_component(objViewToolbar)}
     catch {pack forget $itk_component(objAttrView)}
     catch {pack forget $itk_component(objEditView)}
+    catch {pack forget $itk_component(objToolView)}
     catch {pack forget $itk_component(noWizard)}
     set mNoWizardActive 0
 
@@ -6360,6 +6553,35 @@ proc title_node_handler {node} {
 	    initObjWizard $mSelectedObj 1
 	}
     }
+}
+
+
+::itcl::body Archer::initObjToolView {} {
+    if {$mSelectedObj == ""} {
+	return
+    }
+
+    set mPrevObjViewMode $mObjViewMode
+
+    catch {pack forget $itk_component(dbAttrView)}
+    catch {pack forget $itk_component(objViewToolbar)}
+    catch {pack forget $itk_component(objAttrView)}
+    catch {pack forget $itk_component(objEditView)}
+    catch {pack forget $itk_component(objToolView)}
+    catch {pack forget $itk_component(noWizard)}
+    set mNoWizardActive 0
+
+    # delete the previous wizard instance
+    if {$mWizardClass != ""} {
+	::destroy $itk_component($mWizardClass)
+	::destroy $itk_component(wizardUpdate)
+	set mWizardClass ""
+	set mWizardTop ""
+	set mWizardState ""
+    }
+
+    pack $itk_component(objViewToolbar) -expand no -fill both -anchor n
+    pack $itk_component(objToolView) -expand yes -fill both -anchor n
 }
 
 
