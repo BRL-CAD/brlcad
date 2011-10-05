@@ -399,11 +399,16 @@ rt_comb_export5(
 
     /* optical shader string goes in an attribute */
     if (bu_vls_strlen(&comb->shader) > 0) {
-	bu_avs_add_vls(avsp, "shader", &comb->shader);
+	/* NOTE: still writing out an 'oshader' attribute in addition
+	 * to a 'shader' attribute so that older versions of BRL-CAD
+	 * will find the shader information correctly.
+	 */
 	bu_avs_add_vls(avsp, "oshader", &comb->shader);
+	bu_avs_add_vls(avsp, "shader", &comb->shader);
     } else {
-	bu_avs_remove(avsp, "shader");
+	/* see NOTE above */
 	bu_avs_remove(avsp, "oshader");
+	bu_avs_remove(avsp, "shader");
     }
 
     /* GIFT compatability */
