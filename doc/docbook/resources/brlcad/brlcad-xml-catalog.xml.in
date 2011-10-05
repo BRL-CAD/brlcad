@@ -5,22 +5,22 @@
   <!-- use local versions of some DTDs -->
   <system
       systemId='http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'
-      uri='file://@BRLCAD_SOURCE_DIR@/doc/docbook/resources/standard/svg/svg11-tiny-flat.dtd'
+      uri='file://@BRLCAD_SOURCE_DIR@/doc/docbook/resources/other/standard/svg/svg11-tiny-flat.dtd'
   />
 
   <rewriteSystem
       systemIdStartString='http://www.w3.org/Graphics/SVG/1.1/DTD/'
-      rewritePrefix='file://@BRLCAD_SOURCE_DIR@/doc/docbook/resources/standard/svg/'
+      rewritePrefix='file://@BRLCAD_SOURCE_DIR@/doc/docbook/resources/other/standard/svg/'
   />
 
   <rewriteURI
       uriStartString='http://www.w3.org/Graphics/SVG/1.1/DTD/'
-      rewritePrefix='file://@BRLCAD_SOURCE_DIR@/doc/docbook/resources/standard/svg/'
+      rewritePrefix='file://@BRLCAD_SOURCE_DIR@/doc/docbook/resources/other/standard/svg/'
   />
 
   <rewriteURI
       uriStartString='/xsl/'
-      rewritePrefix='file://@BRLCAD_SOURCE_DIR@/doc/docbook/resources/standard/xsl/'
+      rewritePrefix='file://@BRLCAD_SOURCE_DIR@/doc/docbook/resources/other/standard/xsl/'
   />
 
   <rewriteURI

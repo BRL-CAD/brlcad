@@ -8,7 +8,7 @@ SET(XSLTPROC_FLAGS -nonet -xinclude)
 SET(XSL_XHTML_STYLESHEET "${CMAKE_SOURCE_DIR}/doc/docbook/resources/brlcad/brlcad-xhtml-stylesheet.xsl")
 SET(XSL_MAN_STYLESHEET "${CMAKE_SOURCE_DIR}/doc/docbook/resources/brlcad/brlcad-man-stylesheet.xsl")
 # The brlcad/brlcad-fo-stylesheet.xsl stylesheet is for docs with covers
-SET(XSL_FO_STYLESHEET "${CMAKE_SOURCE_DIR}/doc/docbook/resources/standard/xsl/fo/docbook.xsl")
+SET(XSL_FO_STYLESHEET "${CMAKE_SOURCE_DIR}/doc/docbook/resources/other/standard/xsl/fo/docbook.xsl")
 #SET(XSL_FO_STYLESHEET "${CMAKE_SOURCE_DIR}/doc/docbook/resources/brlcad/brlcad-fo-stylesheet.xsl")
 
 MACRO(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir)
@@ -54,9 +54,9 @@ ENDMACRO(DOCBOOK_TO_MAN targetname_suffix srcfile outfile targetdir)
 # fop hyphenation path (fop version >= 1.0)
 # need v2 hphenation
 IF(APACHE_FOP_VERSION VERSION_LESS 1.0)
-	#SET(FOP_HYPH ${CMAKE_CURRENT_SOURCE_DIR}/resources/offo-hyphenation-binary-v1.2/fop-hyph.jar)
+	#SET(FOP_HYPH ${CMAKE_CURRENT_SOURCE_DIR}/resources/other/offo-old/binary/fop-hyph.jar)
 ELSE(APACHE_FOP_VERSION VERSION_LESS 1.0)
-	SET(FOP_HYPH ${CMAKE_SOURCE_DIR}/doc/docbook/resources/offo-hyphenation-binary-v2.0/fop-hyph.jar)
+	SET(FOP_HYPH ${CMAKE_SOURCE_DIR}/doc/docbook/resources/other/offo/binary/fop-hyph.jar)
 ENDIF(APACHE_FOP_VERSION VERSION_LESS 1.0)
 
 SET(FOP_OPTS "-Djava.awt.headless=true -Dxml.catalog.files=${CMAKE_CURRENT_BINARY_DIR}/brlcad-xml-catalog.xml")
