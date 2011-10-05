@@ -426,11 +426,9 @@ run_simulation(struct simulation_params *sim_params)
     //arbitrary shapes from brlcad are all represented by the box collision shape
     //in bullet, the movement will not be like a box however, but according to
     //the collisions detected by rt and therefore should follow any arbitrary shape correctly
-    dispatcher->registerCollisionCreateFunc(
-					    BOX_SHAPE_PROXYTYPE,
+    dispatcher->registerCollisionCreateFunc(BOX_SHAPE_PROXYTYPE,
 					    BOX_SHAPE_PROXYTYPE,
 					    new btRTCollisionAlgorithm::CreateFunc);
-
 
     btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
 

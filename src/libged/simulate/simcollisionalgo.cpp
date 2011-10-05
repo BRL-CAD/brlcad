@@ -39,8 +39,7 @@
 #define USE_PERSISTENT_CONTACTS 1
 
 
-btRTCollisionAlgorithm::btRTCollisionAlgorithm(
-					       btPersistentManifold* mf,
+btRTCollisionAlgorithm::btRTCollisionAlgorithm(btPersistentManifold* mf,
 					       const btCollisionAlgorithmConstructionInfo& ci,
 					       btCollisionObject* obj0,
 					       btCollisionObject* obj1)
@@ -65,11 +64,10 @@ btRTCollisionAlgorithm::~btRTCollisionAlgorithm()
 
 
 void
-btRTCollisionAlgorithm::processCollision (
-					  btCollisionObject* body0,
-					  btCollisionObject* body1,
-					  const btDispatcherInfo& dispatchInfo,
-					  btManifoldResult* resultOut)
+btRTCollisionAlgorithm::processCollision(btCollisionObject* body0,
+					 btCollisionObject* body1,
+					 const btDispatcherInfo& dispatchInfo,
+					 btManifoldResult* resultOut)
 {
     if (!m_manifoldPtr)
 	return;
