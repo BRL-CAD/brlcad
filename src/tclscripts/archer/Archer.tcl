@@ -1857,7 +1857,7 @@ package provide Archer 1.0
     if {!$mViewOnly} {
 	if {$mObjViewMode == $OBJ_ATTR_VIEW_MODE} {
 	    initObjAttrView
-	} else {
+	} elseif {$mObjViewMode == $OBJ_EDIT_VIEW_MODE} {
 	    if {!$mRestoringTree} {
 		initObjEditView
 		switch -- $mDefaultBindingMode \
