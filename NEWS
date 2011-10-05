@@ -10,6 +10,13 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
+--- 2011-XX-XX  Release 7.XX.X                                     ---
+----------------------------------------------------------------------
+
+* ported the obj-g geometry importer to Windows - Nicholas Reed
+
+
+----------------------------------------------------------------------
 --- 2011-07-XX  Release 7.20.4                                     ---
 ----------------------------------------------------------------------
 
