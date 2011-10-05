@@ -71,13 +71,14 @@ namespace eval ArcherCore {
 
 	common OBJ_EDIT_VIEW_MODE 0
 	common OBJ_ATTR_VIEW_MODE 1
+	common OBJ_TOOL_VIEW_MODE 2
 
 	common COMP_PICK_TREE_SELECT_MODE 0
 	common COMP_PICK_NAME_MODE 1
 	common COMP_PICK_ERASE_MODE 2
-	common COMP_PICK_BOT_FLIP_MODE 3
-	common COMP_PICK_BOT_SPLIT_MODE 4
-	common COMP_PICK_BOT_SYNC_MODE 5
+	common COMP_PICK_BOT_SPLIT_MODE 3
+	common COMP_PICK_BOT_SYNC_MODE 4
+	common COMP_PICK_BOT_FLIP_MODE 5
 
 	common SystemWindowFont
 	common SystemWindowText
@@ -506,6 +507,7 @@ namespace eval ArcherCore {
 	method buildCanvasMenubar {}
 
 	method redrawObj {_obj {_wflag 1}}
+	method redrawWho {}
 
 	method colorMenuStatusCB {_w}
 	method menuStatusCB {_w}
@@ -1414,6 +1416,15 @@ namespace eval ArcherCore {
     set rmode [lindex $rdata 0]
     set rtrans [lindex $rdata 1]
     gedCmd draw -m$rmode -x$rtrans $obj
+}
+
+::itcl::body ArcherCore::redrawWho {} {
+    foreach obj [gedCmd who] {
+	set rdata [gedCmd how -b $obj]
+	set rmode [lindex $rdata 0]
+	set rtrans [lindex $rdata 1]
+	gedCmd draw -m$rmode -x$rtrans $obj
+    }
 }
 
 ::itcl::body ArcherCore::initImages {} {
@@ -2591,6 +2602,8 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::initCompPick {} {
+    set mDefaultBindingMode $COMP_PICK_MODE
+
     $itk_component(ged) clear_mouse_ray_callback_list
     $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_pick]
     $itk_component(ged) init_comp_pick 1
