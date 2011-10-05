@@ -73,6 +73,8 @@ main(int ac, char *av[])
     printf("Performing pre-defined tests:\n");
     automatic_test("/usr/dir/file");
     automatic_test("/usr/dir/");
+    automatic_test("/usr\\/dir");
+    automatic_test("/usr/.");
     automatic_test("/usr/");
     automatic_test("/usr");
     automatic_test("usr");
