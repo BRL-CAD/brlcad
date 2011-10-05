@@ -709,12 +709,12 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 
 		/* Add the region to the result of the sim so it will be drawn too */
 		add_to_comb(gedp, sim_params->sim_comb_name, prefixed_reg_name);
-	    }// if-num_args
+	    } /* if-num_args */
 
 	    bu_free(prefixed_name, "simulate : prefixed_name");
 	    bu_free(prefixed_reg_name, "simulate : prefixed_reg_name");
 
-	}//if-num_contacts
+	} /* if-num_contacts */
 
     } /* end for-manifold */
 

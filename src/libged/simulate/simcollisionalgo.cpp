@@ -27,13 +27,14 @@
 
 #ifdef HAVE_BULLET
 
-#include "simcollisionalgo.h"
+/* system headers */
+#include <BulletCollision/CollisionDispatch/btCollisionDispatcher.h>
+#include <BulletCollision/CollisionShapes/btBoxShape.h>
+#include <BulletCollision/CollisionDispatch/btCollisionObject.h>
+#include <BulletCollision/CollisionDispatch/btBoxBoxDetector.h>
 
-
-#include "BulletCollision/CollisionDispatch/btCollisionDispatcher.h"
-#include "BulletCollision/CollisionShapes/btBoxShape.h"
-#include "BulletCollision/CollisionDispatch/btCollisionObject.h"
-#include "BulletCollision/CollisionDispatch/btBoxBoxDetector.h"
+/* private headers */
+#include "./simcollisionalgo.h"
 
 
 #define USE_PERSISTENT_CONTACTS 1

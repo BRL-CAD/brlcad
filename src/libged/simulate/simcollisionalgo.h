@@ -31,19 +31,21 @@
 
 #ifdef HAVE_BULLET
 
+/* system headers */
 #include <iostream>
+#include <btBulletDynamicsCommon.h>
+#include <BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h>
+#include <BulletCollision/BroadphaseCollision/btBroadphaseProxy.h>
+#include <BulletCollision/BroadphaseCollision/btDispatcher.h>
+#include <BulletCollision/CollisionDispatch/btCollisionCreateFunc.h>
 
+/* public headers */
 #include "db.h"
 #include "vmath.h"
-#include "simulate.h"
 
-#include <btBulletDynamicsCommon.h>
+/* private headers */
+#include "./simulate.h"
 
-
-#include "BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h"
-#include "BulletCollision/BroadphaseCollision/btBroadphaseProxy.h"
-#include "BulletCollision/BroadphaseCollision/btDispatcher.h"
-#include "BulletCollision/CollisionDispatch/btCollisionCreateFunc.h"
 
 class btPersistentManifold;
 

@@ -25,14 +25,18 @@
 
 #ifdef HAVE_BULLET
 
+/* system headers */
 #include <iostream>
+#include <btBulletDynamicsCommon.h>
 
+/* public headers */
 #include "db.h"
 #include "vmath.h"
-#include "simulate.h"
 
-#include <btBulletDynamicsCommon.h>
-#include "simcollisionalgo.h"
+/* private headers */
+#include "./simulate.h"
+#include "./simcollisionalgo.h"
+
 
 /**
  * Prints the 16 by 16 transform matrices for debugging
