@@ -33,10 +33,7 @@ bu_basename(const char *str)
     size_t len;
 
     if (UNLIKELY(!str)) {
-	base_str = bu_malloc(2, "bu_basename empty");;
-	base_str[0] = '.';
-	base_str[1] = '\0';
-	return base_str;
+	return bu_strdup(".");
     }
 
     /* skip the filesystem disk/drive name if we're on a DOS-capable
