@@ -180,7 +180,7 @@ test_regex(char *name, int style)
 	    if (is_number(bu_vls_addr(&testresult)) == 1) {
 		iterators[i-1] = 1;
 	    } else {
-		if  (contains_number(bu_vls_addr(&testresult)) == 1) {
+		if (contains_number(bu_vls_addr(&testresult)) == 1) {
 		    iterators[i-1] = 2;
 		}
 	    }

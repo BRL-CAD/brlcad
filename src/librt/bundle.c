@@ -38,60 +38,64 @@
 #include "raytrace.h"
 
 
-extern void	rt_plot_cell(const union cutter *cutp, struct rt_shootray_status *ssp, struct bu_list *waiting_segs_hd, struct rt_i *rtip);
+extern void rt_plot_cell(const union cutter *cutp, struct rt_shootray_status *ssp, struct bu_list *waiting_segs_hd, struct rt_i *rtip);
 
 /*
- *			R T _ F I N D _ N U G R I D
+ * R T _ F I N D _ N U G R I D
  *
- *  Along the given axis, find which NUgrid cell this value lies in.
- *  Use method of binary subdivision.
+ * Along the given axis, find which NUgrid cell this value lies in.
+ * Use method of binary subdivision.
  */
-extern int	rt_find_nugrid(struct nugridnode *nugnp, int axis, fastf_t val);
+extern int rt_find_nugrid(struct nugridnode *nugnp, int axis, fastf_t val);
 
 
 /*
- *			R T _ A D V A N C E _ T O _ N E X T _ C E L L
+ * R T _ A D V A N C E _ T O _ N E X T _ C E L L
  */
 extern const union cutter *rt_advance_to_next_cell(register struct rt_shootray_status *ssp);
 
 /*
- * Static hit/miss function declarations used as default a_hit()/a_miss() single
- * ray hit functions by rt_shootrays(). Along with updating some bundle hit/miss
- * counters these functions differ from their general user defined counterparts
- * by dettaching the ray hit partition list and segment list and attaching it to
- * a partition bundle. Users can define there own functions but should remember to
- * hi-jack the partition and segment list or the single ray handling funtion will
- * return memory allocated to these list prior to the bundle b_hit() routine.
+ * Static hit/miss function declarations used as default
+ * a_hit()/a_miss() single ray hit functions by rt_shootrays(). Along
+ * with updating some bundle hit/miss counters these functions differ
+ * from their general user defined counterparts by dettaching the ray
+ * hit partition list and segment list and attaching it to a partition
+ * bundle. Users can define there own functions but should remember to
+ * hi-jack the partition and segment list or the single ray handling
+ * funtion will return memory allocated to these list prior to the
+ * bundle b_hit() routine.
  */
 static int bundle_hit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
 static int bundle_miss(register struct application *ap);
 
 /*
- *			R T _ S H O O T R A Y _ B U N D L E
+ * R T _ S H O O T R A Y _ B U N D L E
  *
- *  Note that the direction vector r_dir
- *  must have unit length;  this is mandatory, and is not ordinarily checked,
- *  in the name of efficiency.
+ * Note that the direction vector r_dir must have unit length; this is
+ * mandatory, and is not ordinarily checked, in the name of
+ * efficiency.
  *
- *  Input:  Pointer to an application structure, with these mandatory fields:
+ * Input: Pointer to an application structure, with these mandatory
+ * fields:
+ *
  *	a_ray.r_pt	Starting point of ray to be fired
  *	a_ray.r_dir	UNIT VECTOR with direction to fire in (dir cosines)
  *	a_hit		Routine to call when something is hit
  *	a_miss		Routine to call when ray misses everything
  *
- *  Calls user's a_miss() or a_hit() routine as appropriate.
- *  Passes a_hit() routine list of partitions, with only hit_dist
- *  fields valid.  Normal computation deferred to user code,
- *  to avoid needless computation here.
+ * Calls user's a_miss() or a_hit() routine as appropriate.  Passes
+ * a_hit() routine list of partitions, with only hit_dist fields
+ * valid.  Normal computation deferred to user code, to avoid needless
+ * computation here.
  *
- *  Formal Return: whatever the application function returns (an int).
+ * Formal Return: whatever the application function returns (an int).
  *
- *  NOTE:  The appliction functions may call rt_shootray() recursively.
- *	Thus, none of the local variables may be static.
+ * NOTE: The appliction functions may call rt_shootray() recursively.
+ * Thus, none of the local variables may be static.
  *
- *  To prevent having to lock the statistics variables in a PARALLEL
- *  environment, all the statistics variables have been moved into
- *  the 'resource' structure, which is allocated per-CPU.
+ * To prevent having to lock the statistics variables in a PARALLEL
+ * environment, all the statistics variables have been moved into the
+ * 'resource' structure, which is allocated per-CPU.
  */
 
 /* XXX maybe parameter with NORM, UV, CURVE bits? */
@@ -101,21 +105,21 @@ RT_EXPORT extern int rt_shootray_bundle(register struct application *ap, struct 
 int
 rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays)
 {
-    struct rt_shootray_status	ss;
-    struct seg		new_segs;	/* from solid intersections */
-    struct seg		waiting_segs;	/* awaiting rt_boolweave() */
-    struct seg		finished_segs;	/* processed by rt_boolweave() */
-    fastf_t			last_bool_start;
-    struct bu_bitv		*solidbits;	/* bits for all solids shot so far */
-    struct bu_ptbl		*regionbits;	/* table of all involved regions */
-    char			*status;
-    auto struct partition	InitialPart;	/* Head of Initial Partitions */
-    auto struct partition	FinalPart;	/* Head of Final Partitions */
-    struct soltab		**stpp;
+    struct rt_shootray_status ss;
+    struct seg new_segs;	/* from solid intersections */
+    struct seg waiting_segs;	/* awaiting rt_boolweave() */
+    struct seg finished_segs;	/* processed by rt_boolweave() */
+    fastf_t last_bool_start;
+    struct bu_bitv *solidbits;	/* bits for all solids shot so far */
+    struct bu_ptbl *regionbits;	/* table of all involved regions */
+    char *status;
+    auto struct partition InitialPart;	/* Head of Initial Partitions */
+    auto struct partition FinalPart;	/* Head of Final Partitions */
+    struct soltab **stpp;
     register const union cutter *cutp;
-    struct resource		*resp;
-    struct rt_i		*rtip;
-    const int		debug_shoot = RT_G_DEBUG & DEBUG_SHOOT;
+    struct resource *resp;
+    struct rt_i *rtip;
+    const int debug_shoot = RT_G_DEBUG & DEBUG_SHOOT;
 
     RT_AP_CHECK(ap);
     if (ap->a_magic) {
@@ -180,11 +184,11 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 	/* XXX This shouldn't happen any more */
 	bu_log("rt_shootray_bundle() resp=%p uninitialized, fixing it\n", (void *)resp);
 	/*
-	 *  We've been handed a mostly un-initialized resource struct,
-	 *  with only a magic number and a cpu number filled in.
-	 *  Init it and add it to the table.
-	 *  This is how application-provided resource structures
-	 *  are remembered for later cleanup by the library.
+	 * We've been handed a mostly un-initialized resource struct,
+	 * with only a magic number and a cpu number filled in.
+	 * Init it and add it to the table.
+	 * This is how application-provided resource structures
+	 * are remembered for later cleanup by the library.
 	 */
 	rt_init_resource(resp, resp->re_cpu, rtip);
 
@@ -256,8 +260,8 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
     }
 
     /*
-     *  If ray does not enter the model RPP, skip on.
-     *  If ray ends exactly at the model RPP, trace it.
+     * If ray does not enter the model RPP, skip on.
+     * If ray ends exactly at the model RPP, trace it.
      */
     if (!rt_in_rpp(&ap->a_ray, ss.inv_dir, rtip->mdl_min, rtip->mdl_max)  ||
 	ap->a_ray.r_max < 0.0) {
@@ -271,26 +275,24 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
     }
 
     /*
-     *  The interesting part of the ray starts at distance 0.
-     *  If the ray enters the model at a negative distance,
-     *  (ie, the ray starts within the model RPP),
-     *  we only look at little bit behind (BACKING_DIST) to see if we are
-     *  just coming out of something, but never further back than
-     *  the intersection with the model RPP.
-     *  If the ray enters the model at a positive distance,
-     *  we always start there.
-     *  It is vital that we never pick a start point outside the
-     *  model RPP, or the space partitioning tree will pick the
-     *  wrong box and the ray will miss it.
+     * The interesting part of the ray starts at distance 0.  If the
+     * ray enters the model at a negative distance, (ie, the ray
+     * starts within the model RPP), we only look at little bit behind
+     * (BACKING_DIST) to see if we are just coming out of something,
+     * but never further back than the intersection with the model
+     * RPP.  If the ray enters the model at a positive distance, we
+     * always start there.  It is vital that we never pick a start
+     * point outside the model RPP, or the space partitioning tree
+     * will pick the wrong box and the ray will miss it.
      *
-     *  BACKING_DIST should probably be determined by floating point
-     *  noise factor due to model RPP size -vs- number of bits of
-     *  floating point mantissa significance, rather than a constant,
-     *  but that is too hideous to think about here.
-     *  Also note that applications that really depend on knowing
-     *  what region they are leaving from should probably back their
-     *  own start-point up, rather than depending on it here, but
-     *  it isn't much trouble here.
+     * BACKING_DIST should probably be determined by floating point
+     * noise factor due to model RPP size -vs- number of bits of
+     * floating point mantissa significance, rather than a constant,
+     * but that is too hideous to think about here.  Also note that
+     * applications that really depend on knowing what region they are
+     * leaving from should probably back their own start-point up,
+     * rather than depending on it here, but it isn't much trouble
+     * here.
      */
     ss.box_start = ss.model_start = ap->a_ray.r_min;
     ss.box_end = ss.model_end = ap->a_ray.r_max;
@@ -322,11 +324,11 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
     ss.dist_corr = 0.0;
 
     /*
-     *  While the ray remains inside model space,
-     *  push from box to box until ray emerges from
-     *  model space again (or first hit is found, if user is impatient).
-     *  It is vitally important to always stay within the model RPP, or
-     *  the space partitoning tree will pick wrong boxes & miss them.
+     * While the ray remains inside model space, push from box to box
+     * until ray emerges from model space again (or first hit is
+     * found, if user is impatient).  It is vitally important to
+     * always stay within the model RPP, or the space partitoning tree
+     * will pick wrong boxes & miss them.
      */
     while ((cutp = rt_advance_to_next_cell(&ss)) != CUTTER_NULL) {
 	if (debug_shoot) {
@@ -412,24 +414,27 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 	    rt_plot_cell(cutp, &ss, &(waiting_segs.l), rtip);
 
 	/*
-	 *  If a_onehit == 0 and a_ray_length <= 0, then the ray
-	 *  is traced to +infinity.
+	 * If a_onehit == 0 and a_ray_length <= 0, then the ray
+	 * is traced to +infinity.
 	 *
-	 *  If a_onehit != 0, then it indicates how many hit points
-	 *  (which are greater than the ray start point of 0.0)
-	 *  the application requires, ie, partitions with inhit >= 0.
-	 *  (If negative, indicates number of non-air hits needed).
-	 *  If this box yielded additional segments,
-	 *  immediately weave them into the partition list,
-	 *  and perform final boolean evaluation.
-	 *  If this results in the required number of final
-	 *  partitions, then cease ray-tracing and hand the
-	 *  partitions over to the application.
-	 *  All partitions will have valid in and out distances.
-	 *  a_ray_length is treated similarly to a_onehit.
+	 * If a_onehit != 0, then it indicates how many hit points
+	 * (which are greater than the ray start point of 0.0) the
+	 * application requires, ie, partitions with inhit >= 0.  (If
+	 * negative, indicates number of non-air hits needed).
+	 *
+	 * If this box yielded additional segments, immediately weave
+	 * them into the partition list, and perform final boolean
+	 * evaluation.
+	 *
+	 * If this results in the required number of final partitions,
+	 * then cease ray-tracing and hand the partitions over to the
+	 * application.
+	 *
+	 * All partitions will have valid in and out distances.
+	 * a_ray_length is treated similarly to a_onehit.
 	 */
 	if (ap->a_onehit != 0 && BU_LIST_NON_EMPTY(&(waiting_segs.l))) {
-	    int	done;
+	    int done;
 
 	    /* Weave these segments into partition list */
 	    rt_boolweave(&finished_segs, &waiting_segs, &InitialPart, ap);
@@ -451,8 +456,8 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
     }
 
     /*
-     *  Ray has finally left known space --
-     *  Weave any remaining segments into the partition list.
+     * Ray has finally left known space -- Weave any remaining
+     * segments into the partition list.
      */
 weave:
     if (RT_G_DEBUG&DEBUG_ADVANCE)
@@ -473,8 +478,8 @@ weave:
     }
 
     /*
-     *  All intersections of the ray with the model have
-     *  been computed.  Evaluate the boolean trees over each partition.
+     * All intersections of the ray with the model have been computed.
+     * Evaluate the boolean trees over each partition.
      */
     (void)rt_boolfinal(&InitialPart, &FinalPart, BACKING_DIST,
 		       INFINITY,
@@ -492,30 +497,30 @@ weave:
     }
 
     /*
-     *  Ray/model intersections exist.  Pass the list to the
-     *  user's a_hit() routine.  Note that only the hit_dist
-     *  elements of pt_inhit and pt_outhit have been computed yet.
-     *  To compute both hit_point and hit_normal, use the
+     * Ray/model intersections exist.  Pass the list to the user's
+     * a_hit() routine.  Note that only the hit_dist elements of
+     * pt_inhit and pt_outhit have been computed yet.  To compute both
+     * hit_point and hit_normal, use the
      *
-     *  	RT_HIT_NORMAL(NULL, hitp, stp, rayp, 0)
+     * RT_HIT_NORMAL(NULL, hitp, stp, rayp, 0)
      *
-     *  macro.  To compute just hit_point, use
+     * macro.  To compute just hit_point, use
      *
-     *  VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
+     * VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
      */
 hitit:
     if (debug_shoot) rt_pr_partitions(rtip, &FinalPart, "a_hit()");
 
     /*
-     *  Before recursing, release storage for unused Initial partitions.
-     *  finished_segs can not be released yet, because FinalPart
-     *  partitions will point to hits in those segments.
+     * Before recursing, release storage for unused Initial
+     * partitions.  finished_segs can not be released yet, because
+     * FinalPart partitions will point to hits in those segments.
      */
     RT_FREE_PT_LIST(&InitialPart, resp);
 
     /*
-     *  finished_segs is only used by special hit routines
-     *  which don't follow the traditional solid modeling paradigm.
+     * finished_segs is only used by special hit routines which don't
+     * follow the traditional solid modeling paradigm.
      */
     if (RT_G_DEBUG&DEBUG_ALLHITS) rt_pr_partitions(rtip, &FinalPart, "Parition list passed to a_hit() routine");
     if (ap->a_hit)
@@ -531,14 +536,14 @@ hitit:
      * Processing of this ray is complete.
      */
 out:
-    /*  Return dynamic resources to their freelists.  */
+    /* Return dynamic resources to their freelists.  */
     BU_CK_BITV(solidbits);
     BU_LIST_APPEND(&resp->re_solid_bitv, &solidbits->l);
     BU_CK_PTBL(regionbits);
     BU_LIST_APPEND(&resp->re_region_ptbl, &regionbits->l);
 
     /*
-     *  Record essential statistics in per-processor data structure.
+     * Record essential statistics in per-processor data structure.
      */
     resp->re_nshootray++;
 
@@ -557,24 +562,28 @@ out:
 
 
 /*
- *			R T _ S H O O T R A Y S
+ * R T _ S H O O T R A Y S
  *
- *  Function for shooting a bundle of rays. Iteratively walks list of rays
- *  contained in the application bundles xrays field 'b_rays' passing each
- *  single ray to r_shootray().
+ * Function for shooting a bundle of rays. Iteratively walks list of
+ * rays contained in the application bundles xrays field 'b_rays'
+ * passing each single ray to r_shootray().
  *
- *  Input:
- *  	bundle		Pointer to an application_bundle structure.
- *			b_ap	Members in this single ray application structure should be set
- *	 				in a similar fashion as when used with rt_shootray() with the
- *	 				exception of a_hit() and a_miss(). Default implementaions of
- *	 				these routines are provided that simple update hit/miss counters
- *	 				and attach the hit partitions and segments to the
- *	 				partition_bundle structure. Users can still override this default
- *	 				functionality but have to make sure to move the partition and
- *	 				segment list to the new partition_bundle structure.
- *			b_hit() Routine to call when something is hit by the ray bundle.
- *			b_miss() Routine to call when ray bundle misses everything.
+ * Input:
+ *
+ * bundle -  Pointer to an application_bundle structure.
+ *
+ * b_ap - Members in this single ray application structure should be
+ * set in a similar fashion as when used with rt_shootray() with the
+ * exception of a_hit() and a_miss(). Default implementaions of these
+ * routines are provided that simple update hit/miss counters and
+ * attach the hit partitions and segments to the partition_bundle
+ * structure. Users can still override this default functionality but
+ * have to make sure to move the partition and segment list to the new
+ * partition_bundle structure.
+ *
+ * b_hit() Routine to call when something is hit by the ray bundle.
+ *
+ * b_miss() Routine to call when ray bundle misses everything.
  *
  */
 int rt_shootrays(struct application_bundle *bundle)
@@ -583,12 +592,12 @@ int rt_shootrays(struct application_bundle *bundle)
     genptr_t a_uptr_backup = NULL;
     struct xray a_ray;
     int (*a_hit)(struct application *, struct partition *, struct seg *);
-    int	(*a_miss)(struct application *);
+    int (*a_miss)(struct application *);
 
     struct application *ray_ap = NULL;
     int hit;
-    struct rt_i	*	rt_i = bundle->b_ap.a_rt_i;		/**< @brief  this librt instance */
-    struct resource *	resource = bundle->b_ap.a_resource;	/**< @brief  dynamic memory resources */
+    struct rt_i * rt_i = bundle->b_ap.a_rt_i;		/**< @brief this librt instance */
+    struct resource * resource = bundle->b_ap.a_resource;	/**< @brief dynamic memory resources */
     struct xrays *r;
     struct partition_list *pl;
 
@@ -667,11 +676,9 @@ int rt_shootrays(struct application_bundle *bundle)
 
 
 /*
- *			B U N D L E _ H I T
- *
- *  'static' local hit function that simply adds hit partition to a ray bundle structure
- *  passed in through ap->a_uptr and updates hit/miss stats.
- *
+ * 'static' local hit function that simply adds hit partition to a ray
+ * bundle structure passed in through ap->a_uptr and updates hit/miss
+ * stats.
  */
 static int
 bundle_hit(register struct application *ap, struct partition *PartHeadp, struct seg *segp)
@@ -714,10 +721,7 @@ bundle_hit(register struct application *ap, struct partition *PartHeadp, struct 
 
 
 /*
- *			B U N D L E _ M I S S
- *
- *  'static' local hit function that simply miss stats for bundled rays.
- *
+ * 'static' local hit function that simply miss stats for bundled rays.
  */
 static int
 bundle_miss(register struct application *ap)

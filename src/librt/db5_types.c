@@ -538,7 +538,7 @@ db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_v
 	    bu_log("WARNING: [%s] has invalid region_id value [%s]\nregion_id remains at %d\n", name, bu_vls_addr(&newval), comb->region_id);
 	}
     } else {
-	/* remove region_id  */
+	/* remove region_id */
 	comb->region_id = 0;
     }
 
@@ -641,7 +641,7 @@ db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_v
 
 
 void
-db5_sync_comb_to_attr( struct bu_attribute_value_set *avs, const struct rt_comb_internal *comb)
+db5_sync_comb_to_attr(struct bu_attribute_value_set *avs, const struct rt_comb_internal *comb)
 {
     struct bu_vls newval;
 

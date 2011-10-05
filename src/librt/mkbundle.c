@@ -37,8 +37,6 @@
 
 
 /**
- * R T _ R A Y B U N D L E _ M A K E R
- *
  * Make a bundle of rays around a main ray, with a circular exterior,
  * and spiral filling of the interior.  The outer periphery is sampled
  * with rays_per_ring additional rays, preferably at least 3.
@@ -57,18 +55,18 @@ RT_EXPORT extern int rt_raybundle_maker(struct xray *rp, double radius, const fa
 int
 rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fastf_t *bvec, int rays_per_ring, int nring)
 {
-    register struct xray	*rayp = rp+1;
-    int	ring;
-    double	fraction = 1.0;
-    double	theta;
-    double	delta;
-    double	radial_scale;
-    int	count = 0;
+    register struct xray *rayp = rp+1;
+    int ring;
+    double fraction = 1.0;
+    double theta;
+    double delta;
+    double radial_scale;
+    int count = 0;
 
     rp[0].index = count++;
     rp[0].magic =RT_RAY_MAGIC;
 
-    for ( ring=0; ring < nring; ring++ )  {
+    for (ring=0; ring < nring; ring++) {
 	register int i;
 
 	theta = 0;
@@ -76,13 +74,13 @@ rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fa
 	fraction = ((double)(ring+1)) / nring;
 	theta = delta * fraction;	/* spiral skew */
 	radial_scale = radius * fraction;
-	for ( i=0; i < rays_per_ring; i++ )  {
-	    register double	ct, st;
+	for (i=0; i < rays_per_ring; i++) {
+	    register double ct, st;
 	    /* pt = V + cos(theta) * A + sin(theta) * B */
 	    ct = cos(theta) * radial_scale;
 	    st = sin(theta) * radial_scale;
-	    VJOIN2( rayp->r_pt, rp[0].r_pt, ct, avec, st, bvec );
-	    VMOVE( rayp->r_dir, rp[0].r_dir );
+	    VJOIN2(rayp->r_pt, rp[0].r_pt, ct, avec, st, bvec);
+	    VMOVE(rayp->r_dir, rp[0].r_dir);
 	    rayp->index = count++;
 	    rayp->magic = RT_RAY_MAGIC;
 	    theta += delta;
@@ -92,14 +90,13 @@ rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fa
     return count;
 }
 
+
 /**
- * R T _ G E N _ C I R C U L A R _ G R I D
- *
- * Make a bundle of rays around a main ray using a uniform rectangular grid pattern with a circular extent.
- * The radius, gridsize is given in mm.
+ * Make a bundle of rays around a main ray using a uniform rectangular
+ * grid pattern with a circular extent.  The radius, gridsize is given
+ * in mm.
  *
  * rp[0].r_dir must have unit length.
- *
  */
 int
 rt_gen_circular_grid(struct xrays *rays, const struct xray *center_ray, fastf_t radius, const fastf_t *up_vector, fastf_t gridsize)
@@ -109,28 +106,27 @@ rt_gen_circular_grid(struct xrays *rays, const struct xray *center_ray, fastf_t 
     vect_t bvec;
     vect_t uvec;
 
-    VMOVE(dir,center_ray->r_dir);
+    VMOVE(dir, center_ray->r_dir);
     VMOVE(uvec, up_vector);
     VUNITIZE(uvec);
-    VSCALE(bvec,uvec,radius);
+    VSCALE(bvec, uvec, radius);
 
     VCROSS(avec, dir, up_vector);
     VUNITIZE(avec);
-    VSCALE(avec,avec,radius);
+    VSCALE(avec, avec, radius);
 
-    return rt_gen_elliptical_grid(rays,center_ray,avec,bvec,gridsize);
+    return rt_gen_elliptical_grid(rays, center_ray, avec, bvec, gridsize);
 }
 
+
 /**
- * R T _ G E N _ E L L I P T I C A L _ G R I D
- *
- * Make a bundle of rays around a main ray using a uniform rectangular grid pattern with an elliptical extent.
+ * Make a bundle of rays around a main ray using a uniform rectangular
+ * grid pattern with an elliptical extent.
  *
  * avec and bvec a.  The gridsize is
  * given in mm.
  *
  * rp[0].r_dir must have unit length.
- *
  */
 int
 rt_gen_elliptical_grid(struct xrays *rays, const struct xray *center_ray, const fastf_t *avec, const fastf_t *bvec, fastf_t gridsize)
@@ -144,75 +140,76 @@ rt_gen_elliptical_grid(struct xrays *rays, const struct xray *center_ray, const 
 
     fastf_t a = MAGNITUDE(avec);
     fastf_t b = MAGNITUDE(bvec);
-    fastf_t x,y;
+    fastf_t x, y;
 
     int acpr = a / gridsize;
     int bcpr = b / gridsize;
 
-    VMOVE(a_dir,avec);
+    VMOVE(a_dir, avec);
     VUNITIZE(a_dir);
 
-    VMOVE(b_dir,bvec);
+    VMOVE(b_dir, bvec);
     VUNITIZE(b_dir);
 
-    VMOVE(C,center_ray->r_pt);
-    VMOVE(dir,center_ray->r_dir);
+    VMOVE(C, center_ray->r_pt);
+    VMOVE(dir, center_ray->r_dir);
     /* make sure avec perpendicular to bvec perpendicular to ray direction */
-    BU_ASSERT(NEAR_ZERO(VDOT(avec,bvec), VUNITIZE_TOL));
-    BU_ASSERT(NEAR_ZERO(VDOT(avec,dir), VUNITIZE_TOL));
+    BU_ASSERT(NEAR_ZERO(VDOT(avec, bvec), VUNITIZE_TOL));
+    BU_ASSERT(NEAR_ZERO(VDOT(avec, dir), VUNITIZE_TOL));
 
-    for ( y=gridsize * (-bcpr); y <= b; y=y+gridsize ) {
-	for ( x= gridsize * (-acpr); x <= a; x=x+gridsize ) {
+    for (y=gridsize * (-bcpr); y <= b; y=y+gridsize) {
+	for (x= gridsize * (-acpr); x <= a; x=x+gridsize) {
 	    if (((x*x)/(a*a) + (y*y)/(b*b)) < 1) {
-		xrayp = (struct xrays *)bu_calloc( sizeof( struct xrays ),
-						   1,
-						   "bundled ray" );
-		VJOIN2( xrayp->ray.r_pt, C, x, a_dir, y, b_dir );
-		VMOVE( xrayp->ray.r_dir, dir );
+		xrayp = (struct xrays *)bu_calloc(sizeof(struct xrays),
+						  1,
+						  "bundled ray");
+		VJOIN2(xrayp->ray.r_pt, C, x, a_dir, y, b_dir);
+		VMOVE(xrayp->ray.r_dir, dir);
 		xrayp->ray.index = count++;
 		xrayp->ray.magic = RT_RAY_MAGIC;
-		BU_LIST_APPEND(&rays->l,&xrayp->l);
+		BU_LIST_APPEND(&rays->l, &xrayp->l);
 	    }
 	}
     }
     return count;
 }
 
+
 /*
- *  Test driver.
+ * Test driver.
  */
 
 #if 0
 main()
 {
-    FILE	*fp = fopen("bundle.pl", "wb");
-    int	rays_per_ring=5;
-    int	nring=3;
+    FILE *fp = fopen("bundle.pl", "wb");
+    int rays_per_ring=5;
+    int nring=3;
     fastf_t bundle_radius=1000.0;
-    int	i;
+    int i;
     vect_t avec, bvec;
     struct xray *rp;
     vect_t dir;
 
 
-    VSET( dir, 0, 0, -1 );
+    VSET(dir, 0, 0, -1);
     /* create orthogonal rays for basis of bundle */
-    bn_vec_ortho( avec, dir );
-    VCROSS( bvec, dir, avec );
-    VUNITIZE( bvec );
+    bn_vec_ortho(avec, dir);
+    VCROSS(bvec, dir, avec);
+    VUNITIZE(bvec);
 
-    rp = (struct xray *)bu_calloc( sizeof( struct xray ),
-				   (rays_per_ring * nring) + 1,
-				   "ray bundle" );
-    VSET( rp[0].r_pt, 0, 0, 2000);
-    VMOVE( rp[0].r_dir, dir );
-    rt_raybundle_maker( rp, bundle_radius, avec, bvec, rays_per_ring, nring );
+    rp = (struct xray *)bu_calloc(sizeof(struct xray),
+				  (rays_per_ring * nring) + 1,
+				  "ray bundle");
+    VSET(rp[0].r_pt, 0, 0, 2000);
+    VMOVE(rp[0].r_dir, dir);
+    rt_raybundle_maker(rp, bundle_radius, avec, bvec, rays_per_ring, nring);
 
 
-    for ( i=0; i <= rays_per_ring * nring; i++ )  {
-	point_t	tip;
-	VJOIN1( tip, rp[i].r_pt, 3500, rp[i].r_dir );
-	pdv_3line( fp, rp[i].r_pt, tip );
+    for (i=0; i <= rays_per_ring * nring; i++) {
+	point_t tip;
+	VJOIN1(tip, rp[i].r_pt, 3500, rp[i].r_dir);
+	pdv_3line(fp, rp[i].r_pt, tip);
     }
     fclose(fp);
 }

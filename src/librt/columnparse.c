@@ -43,11 +43,13 @@ struct attr_obj {
     char **attr_vals;
 };
 
+
 struct col_properties {
     int col_cnt;
     int *col_sizes;
     char **col_attrnames;
 };
+
 
 static void
 parse_line(struct bu_vls *line, struct col_properties *cp)
@@ -68,6 +70,7 @@ parse_line(struct bu_vls *line, struct col_properties *cp)
 	bu_log("column %d contents:  %s\n", currentcol, bu_vls_addr(&workingstring));
     }
 }
+
 
 static void
 find_columns(char *name, struct col_properties *cp)
@@ -96,15 +99,15 @@ find_columns(char *name, struct col_properties *cp)
     ret=regexec(&compiled_regex, bu_vls_addr(&workingstring1), components+1, result_locations, 0);
 
     bu_vls_init(&testresult);
-    bu_vls_trunc(&testresult,0);
+    bu_vls_trunc(&testresult, 0);
     bu_vls_strncpy(&testresult, bu_vls_addr(&workingstring1)+result_locations[1].rm_so, result_locations[1].rm_eo - result_locations[1].rm_so);
     cp->col_sizes[0] = bu_vls_strlen(&testresult);
-    bu_log("stringlength:%d\n",cp->col_sizes[0]);
+    bu_log("stringlength:%d\n", cp->col_sizes[0]);
     bu_vls_trimspace(&testresult);
     cp->col_attrnames[0] = bu_vls_addr(&testresult);
-    bu_log("trimmed name:%s\n",cp->col_attrnames[0]);
+    bu_log("trimmed name:%s\n", cp->col_attrnames[0]);
 
-    bu_vls_trunc(&workingstring2,0);
+    bu_vls_trunc(&workingstring2, 0);
     bu_vls_strncpy(&workingstring2, bu_vls_addr(&workingstring1)+result_locations[2].rm_so, result_locations[2].rm_eo - result_locations[2].rm_so);
 
     while ((0 < bu_vls_strlen(&workingstring2)) && (ret != REG_NOMATCH)) {
@@ -113,17 +116,17 @@ find_columns(char *name, struct col_properties *cp)
 	ret=regexec(&compiled_regex, bu_vls_addr(&workingstring1), components+1, result_locations, 0);
 	bu_vls_trunc(&testresult, 0);
 	bu_vls_strncpy(&testresult, bu_vls_addr(&workingstring1)+result_locations[1].rm_so, result_locations[1].rm_eo - result_locations[1].rm_so);
-	bu_log("\n%s\n",bu_vls_addr(&testresult));
+	bu_log("\n%s\n", bu_vls_addr(&testresult));
 
-	bu_vls_trunc(&workingstring2,0);
+	bu_vls_trunc(&workingstring2, 0);
 	bu_vls_strncpy(&workingstring2, bu_vls_addr(&workingstring1)+result_locations[2].rm_so, result_locations[2].rm_eo - result_locations[2].rm_so);
 
 	cp->col_cnt = cp->col_cnt + 1;
 	cp->col_sizes[cp->col_cnt] = bu_vls_strlen(&testresult);
 	bu_vls_trimspace(&testresult);
 	cp->col_attrnames[cp->col_cnt] = bu_vls_addr(&testresult);
-	bu_log("stringlength:%d\n",cp->col_sizes[cp->col_cnt]);
-	bu_log("trimmed name:%s\n",cp->col_attrnames[cp->col_cnt]);
+	bu_log("stringlength:%d\n", cp->col_sizes[cp->col_cnt]);
+	bu_log("trimmed name:%s\n", cp->col_attrnames[cp->col_cnt]);
     }
 
     bu_log("columns found: %d\n", cp->col_cnt);
@@ -132,6 +135,7 @@ find_columns(char *name, struct col_properties *cp)
 
     bu_free(result_locations, "free regex results");
 }
+
 
 int
 main()
@@ -145,7 +149,7 @@ main()
     cp->col_attrnames = (char **)bu_malloc(sizeof(char *) * 11, "initial array of attribute names");
     cp->col_cnt = 0;
 
-    fp = fopen("./test.txt","r");
+    fp = fopen("./test.txt", "r");
     bu_vls_gets(&currentline, fp);
     find_columns(bu_vls_addr(&currentline), cp);
 
@@ -154,14 +158,15 @@ main()
     bu_vls_trunc(&currentline, 0);
 
     while (!(bu_vls_gets(&currentline, fp) < 0)) {
-       /*printf("line:  %s\n\n", bu_vls_addr(&currentline));*/
-       parse_line(&currentline, cp);
-       bu_vls_trunc(&currentline, 0);
+	/*printf("line:  %s\n\n", bu_vls_addr(&currentline));*/
+	parse_line(&currentline, cp);
+	bu_vls_trunc(&currentline, 0);
     }
 
     fclose(fp);
     return 1;
 }
+
 
 /** @} */
 /*

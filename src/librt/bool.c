@@ -969,6 +969,7 @@ rt_fastgen_plate_vol_overlap(struct region **fr1, struct region **fr2, struct pa
     }
 }
 
+
 /**
  * R T _ D E F A U L T _ M U L T I O V E R L A P
  *
@@ -1201,6 +1202,7 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 	}
     }
 }
+
 
 /**
  * R T _ S I L E N T _ L O G O V E R L A P
@@ -1689,7 +1691,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
     char *reason = (char *)NULL;
     fastf_t diff;
 
-#define HITS_TODO	(hits_needed - hits_avail)
+#define HITS_TODO (hits_needed - hits_avail)
 
     RT_CK_PT_HD(InputHdp);
     RT_CK_PT_HD(FinalHdp);
@@ -2036,8 +2038,8 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 	    if (lastpp != FinalHdp &&
 		lastregion == lastpp->pt_regionp &&
 		NEAR_EQUAL(newpp->pt_inhit->hit_dist,
-			  lastpp->pt_outhit->hit_dist,
-			  ap->a_rt_i->rti_tol.dist) &&
+			   lastpp->pt_outhit->hit_dist,
+			   ap->a_rt_i->rti_tol.dist) &&
 		(ap->a_rt_i->rti_save_overlaps == 0 ||
 		 rt_overlap_tables_equal(
 		     lastpp->pt_overlap_reg,
@@ -2063,7 +2065,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 
 		FREE_PT(newpp, ap->a_resource);
 		newpp = lastpp;
-	    }  else  {
+	    } else {
 		APPEND_PT(newpp, lastpp);
 		if (!(ap->a_onehit < 0 && newpp->pt_regionp->reg_aircode != 0))
 		    hits_avail += 2;
@@ -2312,6 +2314,7 @@ rt_rebuild_overlaps(struct partition *PartHdp, struct application *ap, int rebui
 
     bu_ptbl_free(&open_parts);
 }
+
 
 /*
  * Local Variables:
