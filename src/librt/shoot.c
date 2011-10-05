@@ -97,7 +97,7 @@ rt_res_pieces_init(struct resource *resp, struct rt_i *rtip)
 	  }
 
 /**
- * R T _ R E S _ P I E C E S _ C L E A N
+ *
  */
 void
 rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
@@ -128,13 +128,17 @@ rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
 
 	    /*
 	     * Skip uninitialized structures.
-	     * Doing this until we figure out why all "struct rt_piecestate" array
-	     * members are NOT getting initialized in rt_res_pieces_init() above.
-	     * Initial glance looks like tree.c/rt_gettrees_muves() can be called
-	     * in such a way as to assign stp->st_piecestate_num multiple times,
-	     * each time with a different value. This value is an index into the
-	     * resp->re_pieces array. When this happens, it causes all but the
-	     * last referenced "struct rt_piecestate" member to be initialized.
+	     *
+	     * Doing this until we figure out why all "struct
+	     * rt_piecestate" array members are NOT getting
+	     * initialized in rt_res_pieces_init() above.  Initial
+	     * glance looks like tree.c/rt_gettrees_muves() can be
+	     * called in such a way as to assign
+	     * stp->st_piecestate_num multiple times, each time with a
+	     * different value. This value is an index into the
+	     * resp->re_pieces array. When this happens, it causes all
+	     * but the last referenced "struct rt_piecestate" member
+	     * to be initialized.
 	     */
 	    if (psp->magic == 0)
 		continue;
@@ -154,8 +158,6 @@ rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
 
 
 /**
- * R T _ F I N D _ N U G R I D
- *
  * Along the given axis, find which NUgrid cell this value lies in.
  * Use method of binary subdivision.
  */
@@ -195,7 +197,7 @@ again:
 
 
 /**
- * R T _ A D V A N C E _ T O _ N E X T _ C E L L
+ *
  */
 const union cutter *
 rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
@@ -657,8 +659,6 @@ escaped_from_model:
 
 
 /**
- * R T _ F I N D _ B A C K I N G _ D I S T
- *
  * This routine traces a ray from its start point to model exit
  * through the space partitioning tree.  The objective is to find all
  * primitives that use "pieces" and also have a bounding box that
@@ -868,8 +868,6 @@ rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, str
 
 
 /**
- * R T _ S H O O T R A Y
- *
  * Note that the direction vector r_dir must have unit length; this is
  * mandatory, and is not ordinarily checked, in the name of
  * efficiency.
@@ -1615,8 +1613,6 @@ out:
 
 
 /**
- * R T _ C E L L _ N _ O N _ R A Y
- *
  * Return pointer to cell 'n' along a given ray.  Used for debugging
  * of how space partitioning interacts with shootray.  Intended to
  * mirror the operation of rt_shootray().  The first cell is 0.
@@ -1857,8 +1853,6 @@ rt_zero_res_stats(struct resource *resp)
 
 
 /**
- * R T _ A D D _ R E S _ S T A T S
- *
  * To be called only in non-parallel mode, to tally up the statistics
  * from the resource structure(s) into the rt instance structure.
  *

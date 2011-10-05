@@ -42,8 +42,6 @@
 
 
 /**
- * D B _ D U P _ D B _ T R E E _ S T A T E
- *
  * Duplicate the contents of a db_tree_state structure, including a
  * private copy of the ts_mater field(s) and the attribute/value set.
  */
@@ -78,8 +76,6 @@ db_dup_db_tree_state(struct db_tree_state *otsp, const struct db_tree_state *its
 
 
 /**
- * D B _ F R E E _ D B _ T R E E _ S T A T E
- *
  * Release dynamic fields inside the structure, but not the structure
  * itself.
  */
@@ -101,8 +97,6 @@ db_free_db_tree_state(struct db_tree_state *tsp)
 
 
 /**
- * D B _ I N I T _ D B _ T R E E _ S T A T E
- *
  * In most cases, you don't want to use this routine, you want to
  * struct copy mged_initial_tree_state or rt_initial_tree_state, and
  * then set ts_dbip in your copy.
@@ -126,7 +120,7 @@ db_init_db_tree_state(struct db_tree_state *tsp, struct db_i *dbip, struct resou
 
 
 /**
- * D B _ N E W _ C O M B I N E D _ T R E E _ S T A T E
+ *
  */
 struct combined_tree_state *
 db_new_combined_tree_state(const struct db_tree_state *tsp, const struct db_full_path *pathp)
@@ -147,7 +141,7 @@ db_new_combined_tree_state(const struct db_tree_state *tsp, const struct db_full
 
 
 /**
- * D B _ D U P _ C O M B I N E D _ T R E E _ S T A T E
+ *
  */
 struct combined_tree_state *
 db_dup_combined_tree_state(const struct combined_tree_state *old_ctsp)
@@ -165,7 +159,7 @@ db_dup_combined_tree_state(const struct combined_tree_state *old_ctsp)
 
 
 /**
- * D B _ F R E E _ C O M B I N E D _ T R E E _ S T A T E
+ *
  */
 void
 db_free_combined_tree_state(struct combined_tree_state *ctsp)
@@ -179,7 +173,7 @@ db_free_combined_tree_state(struct combined_tree_state *ctsp)
 
 
 /**
- * D B _ P R _ T R E E _ S T A T E
+ *
  */
 void
 db_pr_tree_state(const struct db_tree_state *tsp)
@@ -213,7 +207,7 @@ db_pr_tree_state(const struct db_tree_state *tsp)
 
 
 /**
- * D B _ P R _ C O M B I N E D _ T R E E _ S T A T E
+ *
  */
 void
 db_pr_combined_tree_state(const struct combined_tree_state *ctsp)
@@ -230,8 +224,6 @@ db_pr_combined_tree_state(const struct combined_tree_state *ctsp)
 
 
 /**
- * D B _ A P P L Y _ S T A T E _ F R O M _ C O M B
- *
  * Handle inheritance of material property found in combination
  * record.  Color and the material property have separate inheritance
  * interlocks.
@@ -347,8 +339,6 @@ db_apply_state_from_comb(struct db_tree_state *tsp, const struct db_full_path *p
 
 
 /**
- * D B _ A P P L Y _ S T A T E _ F R O M _ M E M B
- *
  * Updates state via *tsp, pushes member's directory entry on *pathp.
  * (Caller is responsible for popping it).
  *
@@ -399,8 +389,6 @@ db_apply_state_from_memb(struct db_tree_state *tsp, struct db_full_path *pathp, 
 
 
 /**
- * D B _ A P P L Y _ S T A T E _ F R O M _ O N E _ M E M B E R
- *
  * Returns -
  * -1 found member, failed to apply state
  * 0 unable to find member 'cp'
@@ -454,8 +442,6 @@ db_apply_state_from_one_member(
 
 
 /**
- * D B _ F I N D _ N A M E D _ L E A F
- *
  * The search stops on the first match.
  *
  * Returns -
@@ -493,8 +479,6 @@ db_find_named_leaf(union tree *tp, const char *cp)
 
 
 /**
- * D B _ F I N D _ N A M E D _ L E A F S _ P A R E N T
- *
  * The search stops on the first match.
  *
  * Returns -
@@ -548,7 +532,7 @@ db_find_named_leafs_parent(int *side, union tree *tp, const char *cp)
 
 
 /**
- * D B _ T R E E _ D E L _ L H S
+ *
  */
 void
 db_tree_del_lhs(union tree *tp, struct resource *resp)
@@ -597,7 +581,7 @@ db_tree_del_lhs(union tree *tp, struct resource *resp)
 
 
 /**
- * D B _ T R E E _ D E L _ R H S
+ *
  */
 void
 db_tree_del_rhs(union tree *tp, struct resource *resp)
@@ -646,16 +630,13 @@ db_tree_del_rhs(union tree *tp, struct resource *resp)
 
 
 /**
- * D B _ T R E E _ D E L _ D B L E A F
- *
- * Given a name presumably referenced in a OP_DB_LEAF node,
- * delete that node, and the operation node that references it.
- * Not that this may not produce an equivalant tree,
- * for example when rewriting (A - subtree) as (subtree),
- * but that will be up to the caller/user to adjust.
- * This routine gets rid of exactly two nodes in the tree: leaf, and op.
- * Use some other routine if you wish to kill the entire rhs
- * below "-" and "intersect" nodes.
+ * Given a name presumably referenced in a OP_DB_LEAF node, delete
+ * that node, and the operation node that references it.  Not that
+ * this may not produce an equivalant tree, for example when rewriting
+ * (A - subtree) as (subtree), but that will be up to the caller/user
+ * to adjust.  This routine gets rid of exactly two nodes in the tree:
+ * leaf, and op.  Use some other routine if you wish to kill the
+ * entire rhs below "-" and "intersect" nodes.
  *
  * The two nodes deleted will have their memory freed.
  *
@@ -718,9 +699,8 @@ db_tree_del_dbleaf(union tree **tp, const char *cp, struct resource *resp, int n
 
 
 /**
- * D B _ T R E E _ M U L _ D B L E A F
- *
- * Multiply on the left every matrix found in a DB_LEAF node in a tree.
+ * Multiply on the left every matrix found in a DB_LEAF node in a
+ * tree.
  */
 void
 db_tree_mul_dbleaf(union tree *tp, const mat_t mat)
@@ -756,8 +736,6 @@ db_tree_mul_dbleaf(union tree *tp, const mat_t mat)
 
 
 /**
- * D B _ T R E E _ F U N C L E A F
- *
  * This routine traverses a combination (union tree) in LNR order and
  * calls the provided function for each OP_DB_LEAF node.  Note that
  * this routine does not go outside this one combination!!!!
@@ -801,8 +779,6 @@ db_tree_funcleaf(
 
 
 /**
- * D B _ F O L L O W _ P A T H
- *
  * Starting with possible prior partial path and corresponding
  * accumulated state, follow the path given by "new_path", updating
  * *tsp and *total_path with full state information along the way.  In
@@ -979,8 +955,6 @@ fail:
 
 
 /**
- * D B _ F O L L O W _ P A T H _ F O R _ S T A T E
- *
  * Follow the slash-separated path given by "cp", and update *tsp and
  * *total_path with full state information along the way.
  *
@@ -1013,8 +987,6 @@ db_follow_path_for_state(struct db_tree_state *tsp, struct db_full_path *total_p
 
 
 /**
- * D B _ D E T E C T _ C Y C L E
- *
  * Helper routine to detect cyclic references
  */
 HIDDEN int
@@ -1036,8 +1008,6 @@ _db_detect_cycle(struct db_full_path *pathp, union tree *tp)
 
 
 /**
- * D B _ R E C U R S E _ S U B T R E E
- *
  * Helper routine for db_recurse()
  */
 HIDDEN void
@@ -1140,8 +1110,6 @@ out:
 
 
 /**
- * D B _ R E C U R S E
- *
  * Recurse down the tree, finding all the leaves (or finding just all
  * the regions).
  *
@@ -1365,7 +1333,7 @@ out:
 
 
 /**
- * D B _ D U P _ S U B T R E E
+ *
  */
 union tree *
 db_dup_subtree(const union tree *tp, struct resource *resp)
@@ -1433,7 +1401,7 @@ db_dup_subtree(const union tree *tp, struct resource *resp)
 
 
 /**
- * D B _ C K _ T R E E
+ *
  */
 void
 db_ck_tree(const union tree *tp)
@@ -1477,10 +1445,8 @@ db_ck_tree(const union tree *tp)
 
 
 /**
- * D B _ F R E E _ T R E E
- *
- * Release all storage associated with node 'tp', including
- * children nodes.
+ * Release all storage associated with node 'tp', including children
+ * nodes.
  */
 void
 db_free_tree(union tree *tp, struct resource *resp)
@@ -1589,8 +1555,7 @@ db_free_tree(union tree *tp, struct resource *resp)
 }
 
 
-/** D B _ L E F T _ H V Y _ N O D E
- *
+/**
  * Re-balance this node to make it left heavy.  Unions operators will
  * be moved to left side.  when finished "tp" MUST still point to top
  * node od this subtree.
@@ -1618,8 +1583,6 @@ db_left_hvy_node(union tree *tp)
 
 
 /**
- * D B _ N O N _ U N I O N _ P U S H
- *
  * If there are non-union operations in the tree, above the region
  * nodes, then rewrite the tree so that the entire tree top is nothing
  * but union operations, and any non-union operations are clustered
@@ -1834,8 +1797,6 @@ db_non_union_push(union tree *tp, struct resource *resp)
 
 
 /**
- * D B _ C O U N T _ T R E E _ N O D E S
- *
  * Return a count of the number of "union tree" nodes below "tp",
  * including tp.
  */
@@ -1876,8 +1837,6 @@ db_count_tree_nodes(const union tree *tp, int count)
 
 
 /**
- * D B _ I S _ T R E E _ A L L _ U N I O N S
- *
  * Returns -
  * 1 if this tree contains nothing but union operations.
  * 0 if at least one subtraction or intersection op exists.
@@ -1918,7 +1877,7 @@ db_is_tree_all_unions(const union tree *tp)
 
 
 /**
- * D B _ C O U N T _ S U B T R E E _ R E G I O N S
+ *
  */
 int
 db_count_subtree_regions(const union tree *tp)
@@ -1957,7 +1916,7 @@ db_count_subtree_regions(const union tree *tp)
 
 
 /**
- * D B _ T A L L Y _ S U B T R E E _ R E G I O N S
+ *
  */
 int
 db_tally_subtree_regions(
@@ -2069,7 +2028,7 @@ struct db_walk_parallel_state {
 
 
 /**
- * D B _ W A L K _ S U B T R E E
+ *
  */
 HIDDEN void
 _db_walk_subtree(
@@ -2164,8 +2123,6 @@ _db_walk_subtree(
 
 
 /**
- * D B _ W A L K _ D I S P A T C H E R
- *
  * This routine handles the PARALLEL portion of db_walk_tree().  There
  * will be at least one, and possibly more, instances of this routine
  * running simultaneously.
@@ -2247,8 +2204,6 @@ _db_walk_dispatcher(int cpu, genptr_t arg)
 
 
 /**
- * D B _ W A L K _ T R E E
- *
  * This is the top interface to the "tree walker."
  *
  * Parameters:
@@ -2501,8 +2456,6 @@ db_walk_tree(struct db_i *dbip,
 
 
 /**
- * D B _ P A T H _ T O _ M A T
- *
  * Returns -
  * 1 OK, path matrix written into 'mat'.
  * 0 FAIL
@@ -2541,8 +2494,6 @@ db_path_to_mat(
 
 
 /**
- * D B _ A P P L Y _ A N I M S
- *
  * 'arc' may be a null pointer, signifying an identity matrix.
  * 'materp' may be a null pointer, signifying that the region has
  * already been finalized above this point in the tree.
@@ -2607,8 +2558,6 @@ db_apply_anims(struct db_full_path *pathp, struct directory *dp, mat_t stack, ma
 
 
 /**
- * D B _ R E G I O N _ M A T
- *
  * Given the name of a region, return the matrix which maps model
  * coordinates into "region" coordinates.
  *
@@ -2648,8 +2597,6 @@ db_region_mat(
 
 
 /**
- * D B _ S H A D E R _ M A T
- *
  * XXX given that this routine depends on rtip, it should be called
  * XXX rt_shader_mat().
  *
@@ -2854,8 +2801,6 @@ tree_list_append(struct bu_vls *vls, const char *str)
 
 
 /**
- * D B _ T R E E _ L I S T
- *
  * Fills a bu_vls with a representation of the given tree appropriate
  * for processing by Tcl scripts.
  *
@@ -2951,11 +2896,8 @@ db_tree_list(struct bu_vls *vls, const union tree *tp)
 
 
 /**
- * D B _ T R E E _ P A R S E
- *
  * Take a TCL-style string description of a binary tree, as produced
- * by db_tree_list(), and reconstruct the in-memory form of
- * that tree.
+ * by db_tree_list(), and reconstruct the in-memory form of that tree.
  */
 union tree *
 db_tree_parse(struct bu_vls *vls, const char *str, struct resource *resp)

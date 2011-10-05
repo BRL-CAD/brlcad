@@ -21,11 +21,10 @@
 /** @{ */
 /** @file librt/timerunix.c
  *
- * To provide timing information for RT.
- * This version for any non-BSD UNIX system, including
- * System III, Vr1, Vr2.
- * Version 6 & 7 should also be able to use this (untested).
- * The time() and times() sys-calls are used for all timing.
+ * To provide timing information for RT.  This version for any non-BSD
+ * UNIX system, including System III, Vr1, Vr2.  Version 6 & 7 should
+ * also be able to use this (untested).  The time() and times()
+ * sys-calls are used for all timing.
  *
  */
 
@@ -55,8 +54,8 @@
 static time_t time0;
 static struct tms tms0;
 
-/*
- * R T _ P R E P _ T I M E R
+/**
+ *
  */
 void
 rt_prep_timer(void)
@@ -66,14 +65,11 @@ rt_prep_timer(void)
 }
 
 
-/*
- * R T _ G E T _ T I M E R
- *
+/**
  * Reports on the passage of time, since rt_prep_timer() was called.
- * Explicit return is number of CPU seconds.
- * String return is descriptive.
- * If "elapsed" pointer is non-null, number of elapsed seconds are returned.
- * Times returned will never be zero.
+ * Explicit return is number of CPU seconds.  String return is
+ * descriptive.  If "elapsed" pointer is non-null, number of elapsed
+ * seconds are returned.  Times returned will never be zero.
  */
 double
 rt_get_timer(struct bu_vls *vp, double *elapsed)
@@ -119,9 +115,7 @@ rt_get_timer(struct bu_vls *vp, double *elapsed)
 }
 
 
-/*
- * R T _ R E A D _ T I M E R
- *
+/**
  * Compatability routine
  */
 double

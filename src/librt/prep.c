@@ -49,8 +49,6 @@ HIDDEN void rt_solid_bitfinder(register union tree *treep, struct region *regp, 
 /* XXX Need rt_init_rtg(), rt_clean_rtg() */
 
 /**
- * R T _ N E W _ R T I
- *
  * Given a db_i database instance, create an rt_i instance.  If caller
  * just called db_open, they need to do a db_close(), because we have
  * cloned our own instance of the db_i.
@@ -147,8 +145,6 @@ rt_new_rti(struct db_i *dbip)
 
 
 /**
- * R T _ F R E E _ R T I
- *
  * Release all the dynamic storage acquired by rt_dirbuild() and any
  * subsequent ray-tracing operations.
  *
@@ -193,8 +189,6 @@ rt_free_rti(struct rt_i *rtip)
 
 
 /**
- * R T _ P R E P _ P A R A L L E L
- *
  * This routine should be called just before the first call to
  * rt_shootray().  It should only be called ONCE per execution, unless
  * rt_clean() is called inbetween.
@@ -439,8 +433,6 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 
 
 /**
- * R T _ P R E P
- *
  * Compatability stub.  Only uses 1 CPU.
  */
 void
@@ -452,8 +444,6 @@ rt_prep(register struct rt_i *rtip)
 
 
 /**
- * R T _ P L O T _ A L L _ B B O X E S
- *
  * Plot the bounding boxes of all the active solids.  Color may be set
  * in advance by the caller.
  */
@@ -476,7 +466,7 @@ rt_plot_all_bboxes(FILE *fp, struct rt_i *rtip)
 
 
 /**
- * R T _ P L O T _ A L L _ S O L I D S
+ *
  */
 void
 rt_plot_all_solids(
@@ -504,8 +494,6 @@ rt_plot_all_solids(
 
 
 /**
- * R T _ V L I S T _ S O L I D
- *
  * "Draw" a solid with the same kind of wireframes that MGED would
  * display, appending vectors to an already initialized vlist head.
  *
@@ -545,8 +533,6 @@ rt_vlist_solid(
 
 
 /**
- * R T _ P L O T _ S O L I D
- *
  * Plot a solid with the same kind of wireframes that MGED would
  * display, in UNIX-plot form, on the indicated file descriptor.  The
  * caller is responsible for calling pdv_3space().
@@ -598,8 +584,6 @@ rt_plot_solid(
 
 
 /**
- * R T _ I N I T _ R E S O U R C E
- *
  * initialize memory resources.  This routine should initialize all
  * the same resources that rt_clean_resource() releases.
  *
@@ -686,8 +670,6 @@ rt_init_resource(struct resource *resp,
 
 
 /**
- * R T _ C L E A N _ R E S O U R C E _ B A S I C
- *
  * This method contains all the code that was formerly in
  * rt_clean_resource, except for the call to rt_init_resource().
  */
@@ -789,8 +771,6 @@ rt_clean_resource_basic(struct rt_i *rtip, struct resource *resp)
 
 
 /**
- * R T _ C L E A N _ R E S O U R C E _ C O M P L E T E
- *
  * This method performs the basic resource clean, and also frees all
  * the directory entry blocks. The resource structure is not
  * re-initialized.
@@ -818,8 +798,6 @@ rt_clean_resource_complete(struct rt_i *rtip, struct resource *resp)
 
 
 /**
- * R T _ C L E A N _ R E S O U R C E
- *
  * Deallocate the per-cpu "private" memory resources:
  *
  * segment freelist
@@ -885,8 +863,6 @@ rt_get_solidbitv(size_t nbits, struct resource *resp)
 
 
 /**
- * R T _ C L E A N
- *
  * Release all the dynamic storage associated with a particular rt_i
  * structure, except for the database instance information (dir, etc)
  * and the rti_resources ptbl.
@@ -1052,8 +1028,6 @@ rt_clean(register struct rt_i *rtip)
 
 
 /**
- * R T _ D E L _ R E G T R E E
- *
  * Remove a region from the linked list.  Used to remove a particular
  * region from the active database, presumably after some useful
  * information has been extracted (eg, a light being converted to
@@ -1085,8 +1059,6 @@ rt_del_regtree(struct rt_i *rtip, register struct region *delregp, struct resour
 
 
 /**
- * S O L I D _ B I T F I N D E R
- *
  * Used to walk the boolean tree, setting bits for all the solids in
  * the tree to the provided bit vector.  Should be called AFTER the
  * region bits have been assigned.
@@ -1140,8 +1112,6 @@ rt_solid_bitfinder(register union tree *treep, struct region *regp, struct resou
 
 
 /**
- * R T _ C K
- *
  * Check as many of the in-memory data structures as is practical.
  * Useful for detecting memory corruption, and inappropriate sharing
  * between different LIBRT instances.
@@ -1171,8 +1141,6 @@ rt_ck(register struct rt_i *rtip)
 
 
 /**
- * R T _ L O A D _ A T T R S
- *
  * Loads a new set of attribute values (corresponding to the provided
  * list of attribute names) for each region structure in the provided
  * rtip.
@@ -1238,8 +1206,6 @@ int rt_load_attrs(struct rt_i *rtip, char **attrs)
 
 
 /**
- * R T _ F I N D _ P A T H
- *
  * Routine called by "rt_find_paths". Used for recursing through a
  * tree to find a path to the specified "end". The resulting path is
  * returned in "curr_path".
@@ -1304,8 +1270,6 @@ rt_find_path(struct db_i *dbip,
 
 
 /**
- * R T _ F I N D _ P A T H S
- *
  * Routine to find all the paths from the "start" to the "end".  The
  * resulting paths are returned in "paths"
  */
@@ -1352,8 +1316,6 @@ rt_find_paths(struct db_i *dbip,
 
 
 /**
- * O B J _ I N _ P A T H
- *
  * This routine searches the provided path (in the form of a string)
  * for the specified object name.
  *
@@ -1520,8 +1482,6 @@ unprep_leaf(struct db_tree_state *tsp,
 
 
 /**
- * R T _ U N P R E P
- *
  * This routine "unpreps" the list of object names that appears in the
  * "unprepped" list of the "objs" structure.
  */
@@ -1712,8 +1672,6 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 
 
 /**
- * R T _ R E P R E P
- *
  * This routine "re-preps" the list of objects specified in the
  *"unprepped" list of the "objs" structure. This structure must
  *previously have been passed to "rt_unprep"

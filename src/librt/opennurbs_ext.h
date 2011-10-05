@@ -32,12 +32,13 @@
 #include <iostream>
 #include "vmath.h"
 
-/* These definitions were added to opennurbs_curve.h - they are
- * extensions of openNURBS, so add them here instead.  At some
- * point a more coherent structure should probably be set up for
- * organization of openNURBS extensions, since there may be more
- * to come, but at least try to keep as many as possible out of
- * the external openNURBS tree - simplifies syncing.
+/**
+ * These definitions were added to opennurbs_curve.h - they are
+ * extensions of openNURBS, so add them here instead.  At some point a
+ * more coherent structure should probably be set up for organization
+ * of openNURBS extensions, since there may be more to come, but at
+ * least try to keep as many as possible out of the external openNURBS
+ * tree - simplifies syncing.
  */
 class ON_Ray {
 public:
@@ -51,11 +52,11 @@ public:
 	m_dir = r.m_dir;
 	return *this;
     }
-  
+
     ON_3dPoint PointAt(double t) const {
 	return m_origin + m_dir * t;
     }
-  
+
     double DistanceTo(const ON_3dPoint& pt, double* out_t = NULL) const {
 	ON_3dVector w = pt - m_origin;
 	double c1 = w * m_dir;
@@ -90,6 +91,7 @@ bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);
 /* subdivision size factors */
 #define BREP_SURF_SUB_FACTOR 1
 #define BREP_TRIM_SUB_FACTOR 1
+
 /**
  * The EDGE_MISS_TOLERANCE setting is critical in a couple of ways -
  * too small and the allowed uncertainty region near edges will be
@@ -166,7 +168,7 @@ public:
      *       |                 |
      *      min----------------*
      *                 u
-     */ 
+     */
     void GetBBox(double* min, double* max) const;
 
     /** Surface Information */
@@ -197,7 +199,7 @@ public:
 
     int isTrimmed(const ON_2dPoint& uv, fastf_t &trimdist) const;
     bool doTrimming() const;
-		    		    
+
 private:
     BANode<BA>* closer(const ON_3dPoint& pt, BANode<BA>* left, BANode<BA>* right);
     fastf_t m_slope;
@@ -455,10 +457,10 @@ BANode<BA>::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Int
 			    {m_u.Mid(), m_v.Mid()}}; // include the estimate
 	ON_3dPoint corners[5];
 	const ON_Surface* surf = m_face->SurfaceOf();
-    			
+
 	u = m_u;
 	v = m_v;
-    			
+
 	// ??? should we pass these in from SurfaceTree::curveBBox() to avoid this recalculation?
 	if (!surf->EvPoint(uvs[0][0], uvs[0][1], corners[0]) ||
 	    !surf->EvPoint(uvs[1][0], uvs[1][1], corners[1]) ||
@@ -467,7 +469,7 @@ BANode<BA>::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Int
 	    throw new std::exception(); // FIXME
 	}
 	corners[4] = BANode<BA>::m_estimate;
-    			
+
 	// find the point on the curve closest to pt
 	size_t mini = 0;
 	double mindist = pt.DistanceTo(corners[mini]);
@@ -476,7 +478,7 @@ BANode<BA>::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Int
 	    tmpdist = pt.DistanceTo(corners[i]);
 	    TRACE("\t" << mindist << " < " << tmpdist);
 	    if (tmpdist < mindist) {
-		mini = i;	    
+		mini = i;
 		mindist = tmpdist;
 	    }
 	}
@@ -765,16 +767,16 @@ public:
 
     // Return all leaves below this node that are leaf nodes
     void getLeaves(std::list<BVNode<BV>*>& out_leaves);
-		
+
     // Functions to add and remove child nodes from this node.
     void addChild(const BV& child);
     void addChild(BVNode<BV>* child);
     void removeChild(const BV& child);
     void removeChild(BVNode<BV>* child);
-		
+
     // Report the depth of this node in the hierarchy
     int depth();
-		
+
     // Get 2 points defining a bounding box
     //
     //                _  max  _
@@ -786,9 +788,9 @@ public:
     //     |          _  |+   _        |
     //     |  _   -      |       -  _  |
     //     *  _          |          _  *
-    //            -   _  |  _   -      
+    //            -   _  |  _   -
     //                  min
-    // 
+    //
     void GetBBox(double* min, double* max);
 
     // Surface Information
@@ -799,7 +801,7 @@ public:
     // Trimming Flags
     bool m_checkTrim;
     bool m_trimmed;
-		
+
     // Point used for closeness testing - usually
     // based on evaluation of the curve/surface at
     // the center of the parametric domain
@@ -824,7 +826,7 @@ public:
     int getLeavesBoundingPoint(const ON_3dPoint& pt, std::list<BVNode<BV> *>& out);
     int isTrimmed(const ON_2dPoint& uv, BRNode* closest, fastf_t &closesttrim);
     bool doTrimming() const;
-		
+
     void getTrimsAbove(const ON_2dPoint& uv, std::list<BRNode*>& out_leaves);
     void BuildBBox();
     bool prepTrims();
@@ -1089,10 +1091,10 @@ BVNode<BV>::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Int
 			    {m_u.Mid(), m_v.Mid()}}; // include the estimate
 	ON_3dPoint corners[5];
 	const ON_Surface* surf = m_face->SurfaceOf();
-		
+
 	u = m_u;
 	v = m_v;
-		
+
 	// ??? pass these in from SurfaceTree::surfaceBBox() to avoid this recalculation?
 	if (!surf->EvPoint(uvs[0][0], uvs[0][1], corners[0]) ||
 	    !surf->EvPoint(uvs[1][0], uvs[1][1], corners[1]) ||
@@ -1101,7 +1103,7 @@ BVNode<BV>::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Int
 	    throw new std::exception(); // FIXME
 	}
 	corners[4] = BVNode<BV>::m_estimate;
-		
+
 	// find the point on the surface closest to pt
 	size_t mini = 0;
 	double mindist = pt.DistanceTo(corners[mini]);
@@ -1116,7 +1118,7 @@ BVNode<BV>::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Int
 	}
 	TRACE("Closest: " << mindist << "; " << PT2(uvs[mini]));
 	return ON_2dPoint(uvs[mini][0], uvs[mini][1]);
-		
+
     } else {
 	if (m_children.size() > 0) {
 	    BBNode* closestNode = m_children[0];
@@ -1163,7 +1165,7 @@ BVNode<BV>::isTrimmed(const ON_2dPoint& uv, BRNode* closest, fastf_t &closesttri
 {
     BRNode* br;
     std::list<BRNode*> trims;
-	    
+
     closesttrim = -1.0;
     if (m_checkTrim) {
 	getTrimsAbove(uv, trims);
@@ -1200,7 +1202,7 @@ BVNode<BV>::isTrimmed(const ON_2dPoint& uv, BRNode* closest, fastf_t &closesttri
 				vclosest = br;
 			    }
 			}
-				
+
 		    }
 		    continue;
 		}
@@ -1282,7 +1284,7 @@ BVNode<BV>::getTrimsAbove(const ON_2dPoint& uv, std::list<BRNode*>& out_leaves)
 	dist = 0.000001; //0.03*DIST_PT_PT(bmin, bmax);
 	if ((uv[X] > bmin[X]-dist) && (uv[X] < bmax[X]+dist))
 	    out_leaves.push_back(br);
-    }	    
+    }
 }
 
 
@@ -1451,8 +1453,6 @@ private:
 
 
 /**
- * g e t _ c l o s e s t _ p o i n t
- *
  * approach:
  *
  * - get an estimate using the surface tree (if non-null, create
@@ -1475,29 +1475,29 @@ bool get_closest_point(ON_2dPoint& outpt,
 
 
 /**
- * p u l l b a c k _ c u r v e
- *
  * Pull an arbitrary model-space *curve* onto the given *surface* as a
  * curve within the surface's domain when, for each point c = C(t) on
- * the curve and the closest point s = S(u, v) on the surface, we have:
- * distance(c, s) <= *tolerance*.
+ * the curve and the closest point s = S(u, v) on the surface, we
+ * have: distance(c, s) <= *tolerance*.
  *
  * The resulting 2-dimensional curve will be approximated using the
  * following process:
  *
  * 1. Adaptively sample the 3d curve in the domain of the surface
- * (ensure tolerance constraint). Sampling terminates when the
- * following flatness criterion is met:
- * given two parameters on the curve t1 and t2 (which map to points p1 and p2 on the curve)
- * let m be a parameter randomly chosen near the middle of the interval [t1, t2]
- *                                                              ____
- * then the curve between t1 and t2 is flat if distance(C(m), p1p2) < flatness
+ *    (ensure tolerance constraint). Sampling terminates when the
+ *    following flatness criterion is met:
+ *
+ * given two parameters on the curve t1 and t2 (which map to points p1
+ * and p2 on the curve) let m be a parameter randomly chosen near the
+ * middle of the interval [t1, t2] ____ then the curve between t1 and
+ * t2 is flat if distance(C(m), p1p2) < flatness
  *
  * 2. Use the sampled points to perform a global interpolation using
  *    universal knot generation to build a B-Spline curve.
  *
- * 3. If the curve is a line or an arc (determined with openNURBS routines),
- *    return the appropriate ON_Curve subclass (otherwise, return an ON_NurbsCurve).
+ * 3. If the curve is a line or an arc (determined with openNURBS
+ *    routines), return the appropriate ON_Curve subclass (otherwise,
+ *    return an ON_NurbsCurve).
  */
 extern ON_Curve* pullback_curve(ON_BrepFace* face,
 				const ON_Curve* curve,

@@ -95,9 +95,7 @@
 #include "./search.h"
 
 
-/*
- * D B _ F R E E _ F U L L _ P A T H _ L I S T
- *
+/**
  * Free all entries and the list of a db_full_path_list
  */
 void
@@ -117,11 +115,9 @@ db_free_full_path_list(struct db_full_path_list *path_list)
 }
 
 
-/*
- * D B _ F U L L P A T H _ T R A V E R S E _ S U B T R E E
- *
- * A generic traversal function maintaining awareness of
- * the full path to a given object.
+/**
+ * A generic traversal function maintaining awareness of the full path
+ * to a given object.
  */
 void
 db_fullpath_traverse_subtree(union tree *tp,
@@ -174,12 +170,10 @@ db_fullpath_traverse_subtree(union tree *tp,
 }
 
 
-/*
- * D B _ F U L L P A T H _ T R A V E R S E
- *
- * This subroutine is called for a no-frills tree-walk,
- * with the provided subroutines being called when entering and
- * exiting combinations and at leaf (solid) nodes.
+/**
+ * This subroutine is called for a no-frills tree-walk, with the
+ * provided subroutines being called when entering and exiting
+ * combinations and at leaf (solid) nodes.
  *
  * This routine is recursive, so no variables may be declared static.
  *
@@ -474,12 +468,10 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
 }
 
 
-/*
- * D B _ F U L L P A T H _ S T A T E F U L _ T R A V E R S E
- *
- * This subroutine is called for a no-frills tree-walk,
- * with the provided subroutines being called when entering and
- * exiting combinations and at leaf (solid) nodes.
+/**
+ * This subroutine is called for a no-frills tree-walk, with the
+ * provided subroutines being called when entering and exiting
+ * combinations and at leaf (solid) nodes.
  *
  * This routine is recursive, so no variables may be declared static.
  *
@@ -788,15 +780,13 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
     bu_vls_init(&value);
 
 
-    /* Check for unescaped >, < or = characters.  If
-     * present, the attribute must not only be present
-     * but the value assigned to the attribute must
-     * satisfy the logical expression.  In the case
-     * where a > or < is used with a string argument
-     * the behavior will follow that of the strcmp
-     * comparison command.  In the case of equality
-     * between strings, fnmatch is used to support
-     * pattern matching
+    /* Check for unescaped >, < or = characters.  If present, the
+     * attribute must not only be present but the value assigned to
+     * the attribute must satisfy the logical expression.  In the case
+     * where a > or < is used with a string argument the behavior will
+     * follow that of the strcmp comparison command.  In the case of
+     * equality between strings, fnmatch is used to support pattern
+     * matching
      */
 
     while ((equalpos < strlen(plan->attr_data)) &&
@@ -830,8 +820,9 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
 	}
     }
 
-    /* Now that we have the value, check to see if it is all numbers.  If so,
-     * use numerical comparison logic - otherwise use string logic.
+    /* Now that we have the value, check to see if it is all numbers.
+     * If so, use numerical comparison logic - otherwise use string
+     * logic.
      */
 
     for (i = 0; i < strlen(bu_vls_addr(&value)); i++) {
@@ -849,10 +840,10 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
     db5_get_attributes(dbip, &avs, dp);
     avpp = avs.avp;
 
-    /* Check all attributes for a match to the requested
-     * attribute.  If an expression was supplied, check the
-     * value of any matches to the attribute name in the
-     * logical expression before returning success
+    /* Check all attributes for a match to the requested attribute.
+     * If an expression was supplied, check the value of any matches
+     * to the attribute name in the logical expression before
+     * returning success
      */
 
     for (i = 0; i < (size_t)avs.count; i++, avpp++) {
@@ -1041,12 +1032,11 @@ f_stdattr(struct db_plan_t *UNUSED(plan), struct db_full_path *entry, struct db_
     int found_nonstd_attr = 0;
     int found_attr = 0;
     size_t i;
-    
 
-    /* Get attributes for object and check all of
-     * them to see if there is not a match to the
-     * standard attributes.  If any is found return
-     * failure, otherwise success.
+
+    /* Get attributes for object and check all of them to see if there
+     * is not a match to the standard attributes.  If any is found
+     * return failure, otherwise success.
      */
 
     dp = DB_FULL_PATH_CUR_DIR(entry);
@@ -1094,14 +1084,15 @@ c_stdattr(char *UNUSED(pattern), char ***UNUSED(ignored), int UNUSED(unused), st
  * -type function --
  *
  * Search based on the type of the object - primitives are matched
- * based on their primitive type (tor, tgc, arb4, etc.) and combinations
- * are matched based on whether they are a combination or region.
+ * based on their primitive type (tor, tgc, arb4, etc.) and
+ * combinations are matched based on whether they are a combination or
+ * region.
  */
 HIDDEN int
 f_type(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, struct rt_wdb *wdbp, struct db_full_path_list *UNUSED(results))
 {
     struct rt_db_internal intern;
-    struct directory  *dp;
+    struct directory *dp;
     int type_match = 0;
     int type;
 
@@ -1113,10 +1104,9 @@ f_type(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) return 0;
 
-    /* Eventually this whole switch statement needs to go away
-     * in favor of a function to query the primitive's short name
-     * and use that for the comparison - will be MUCH shorter and
-     * simpler.
+    /* Eventually this whole switch statement needs to go away in
+     * favor of a function to query the primitive's short name and use
+     * that for the comparison - will be MUCH shorter and simpler.
      */
     switch (intern.idb_minor_type) {
 	case DB5_MINORTYPE_BRLCAD_TOR:
@@ -1269,8 +1259,8 @@ c_type(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
 /*
  * -maxdepth function --
  *
- * True if the object being examined is at depth <= the
- * supplied depth.
+ * True if the object being examined is at depth <= the supplied
+ * depth.
  *
  */
 HIDDEN int
@@ -1304,8 +1294,8 @@ c_maxdepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db
 /*
  * -mindepth function --
  *
- * True if the object being examined is at depth >= the
- * supplied depth.
+ * True if the object being examined is at depth >= the supplied
+ * depth.
  *
  */
 HIDDEN int
@@ -1339,11 +1329,11 @@ c_mindepth(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db
 /*
  * -nnodes function --
  *
- * True if the object being examined is a COMB and has # nodes.
- * If an expression ># or <# is supplied, true if object
- * has greater than or less than that number of nodes. if >=#
- * or <=# is supplied, true if object has greater than or equal
- * to / less than or equal to # of nodes.
+ * True if the object being examined is a COMB and has # nodes.  If an
+ * expression ># or <# is supplied, true if object has greater than or
+ * less than that number of nodes. if >=# or <=# is supplied, true if
+ * object has greater than or equal to / less than or equal to # of
+ * nodes.
  *
  */
 HIDDEN int
@@ -1359,8 +1349,8 @@ f_nnodes(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, 
     struct rt_comb_internal *comb;
 
 
-    /* Check for >, < and = in the first and second
-     * character positions.
+    /* Check for >, < and = in the first and second character
+     * positions.
      */
 
     if (isdigit(plan->node_data[0])) {
@@ -1389,9 +1379,9 @@ f_nnodes(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, 
 	}
     }
 
-    /* Get the number of nodes for the current object and check
-     * if the value satisfied the logical conditions specified
-     * in the argument string.
+    /* Get the number of nodes for the current object and check if the
+     * value satisfied the logical conditions specified in the
+     * argument string.
      */
 
     dp = DB_FULL_PATH_CUR_DIR(entry);
@@ -1471,9 +1461,9 @@ c_nnodes(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_p
 /*
  * -path function --
  *
- * True if the object being examined shares the pattern as
- * part of its path. To exclude results of certain directories
- * use the -not option with this option.
+ * True if the object being examined shares the pattern as part of its
+ * path. To exclude results of certain directories use the -not option
+ * with this option.
  */
 HIDDEN int
 f_path(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *UNUSED(results))
@@ -1497,7 +1487,8 @@ c_path(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
 /*
  * -print functions --
  *
- * Always true, causes the current pathame to be added to the results list.
+ * Always true, causes the current pathame to be added to the results
+ * list.
  */
 HIDDEN int
 f_print(struct db_plan_t *UNUSED(plan), struct db_full_path *entry, struct db_i *UNUSED(dbip), struct rt_wdb *UNUSED(wdbp), struct db_full_path_list *results)
@@ -1523,11 +1514,9 @@ c_print(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struc
 
 
 /*
- * find_create --
  * create a node corresponding to a command line argument.
  *
- * TODO:
- * add create/process function pointers to node, so we can skip
+ * TODO: add create/process function pointers to node, so we can skip
  * this switch stuff.
  */
 HIDDEN int
@@ -1588,7 +1577,6 @@ option(char *name)
 
 
 /*
- * yanknode --
  * destructively removes the top from the plan
  */
 HIDDEN struct db_plan_t *
@@ -1605,15 +1593,14 @@ yanknode(struct db_plan_t **planp)          /* pointer to top of plan (modified)
 
 
 /*
- * yankexpr --
  * Removes one expression from the plan.  This is used mainly by
- * paren_squish.  In comments below, an expression is either a
- * simple node or a N_EXPR node containing a list of simple nodes.
+ * paren_squish.  In comments below, an expression is either a simple
+ * node or a N_EXPR node containing a list of simple nodes.
  */
 HIDDEN int
 yankexpr(struct db_plan_t **planp, struct db_plan_t **resultplan)          /* pointer to top of plan (modified) */
 {
-    struct db_plan_t *next;     /* temp node holding subexpression results */
+    struct db_plan_t *next;     	/* temp node holding subexpression results */
     struct db_plan_t *node;             /* pointer to returned node or expression */
     struct db_plan_t *tail;             /* pointer to tail of subplan */
     struct db_plan_t *subplan;          /* pointer to head of () expression */
@@ -1639,11 +1626,10 @@ yankexpr(struct db_plan_t **planp, struct db_plan_t **resultplan)          /* po
 		return BRLCAD_ERROR;
 	    }
 	    /*
-	     * If we find a closing ')' we store the collected
-	     * subplan in our '(' node and convert the node to
-	     * a N_EXPR.  The ')' we found is ignored.  Otherwise,
-	     * we just continue to add whatever we get to our
-	     * subplan.
+	     * If we find a closing ')' we store the collected subplan
+	     * in our '(' node and convert the node to a N_EXPR.  The
+	     * ')' we found is ignored.  Otherwise, we just continue
+	     * to add whatever we get to our subplan.
 	     */
 	    if (next->type == N_CLOSEPAREN) {
 		if (subplan == NULL) {
@@ -1674,15 +1660,15 @@ yankexpr(struct db_plan_t **planp, struct db_plan_t **resultplan)          /* po
 
 
 /*
- * paren_squish --
- * replaces "parentheisized" plans in our search plan with "expr" nodes.
+ * replaces "parentheisized" plans in our search plan with "expr"
+ * nodes.
  */
 HIDDEN int
 paren_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)                /* plan with () nodes */
 {
     struct db_plan_t *expr;     /* pointer to next expression */
     struct db_plan_t *tail;     /* pointer to tail of result plan */
-    struct db_plan_t *result;           /* pointer to head of result plan */
+    struct db_plan_t *result;   /* pointer to head of result plan */
 
     result = tail = NULL;
 
@@ -1717,7 +1703,6 @@ paren_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)             
 
 
 /*
- * not_squish --
  * compresses "!" expressions in our search plan.
  */
 HIDDEN int
@@ -1726,21 +1711,21 @@ not_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)          /* pl
     struct db_plan_t *next;     /* next node being processed */
     struct db_plan_t *node;     /* temporary node used in N_NOT processing */
     struct db_plan_t *tail;     /* pointer to tail of result plan */
-    struct db_plan_t *result;           /* pointer to head of result plan */
+    struct db_plan_t *result;   /* pointer to head of result plan */
 
     tail = result = next = NULL;
 
     while ((next = yanknode(&plan)) != NULL) {
 	/*
-	 * if we encounter a (expression) then look for nots in
-	 * the expr subplan.
+	 * if we encounter a (expression) then look for nots in the
+	 * expr subplan.
 	 */
 	if (next->type == N_EXPR)
 	    if (not_squish(next->p_data[0], &(next->p_data[0])) != BRLCAD_OK) return BRLCAD_ERROR;
 
 	/*
-	 * if we encounter a not, then snag the next node and place
-	 * it in the not's subplan.  As an optimization we compress
+	 * if we encounter a not, then snag the next node and place it
+	 * in the not's subplan.  As an optimization we compress
 	 * several not's to zero or one not.
 	 */
 	if (next->type == N_NOT) {
@@ -1782,7 +1767,6 @@ not_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)          /* pl
 
 
 /*
- * above_squish --
  * compresses "-above" expressions in our search plan.
  */
 HIDDEN int
@@ -1791,14 +1775,14 @@ above_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)          /* 
     struct db_plan_t *next;     /* next node being processed */
     struct db_plan_t *node;     /* temporary node used in N_NOT processing */
     struct db_plan_t *tail;     /* pointer to tail of result plan */
-    struct db_plan_t *result;           /* pointer to head of result plan */
+    struct db_plan_t *result;   /* pointer to head of result plan */
 
     tail = result = next = NULL;
 
     while ((next = yanknode(&plan)) != NULL) {
 	/*
-	 * if we encounter a (expression) then look for aboves in
-	 * the expr subplan.
+	 * if we encounter a (expression) then look for aboves in the
+	 * expr subplan.
 	 */
 	if (next->type == N_EXPR)
 	    if (above_squish(next->ab_data[0], &(next->ab_data[0])) != BRLCAD_OK) return BRLCAD_ERROR;
@@ -1843,7 +1827,6 @@ above_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)          /* 
 
 
 /*
- * below_squish --
  * compresses "-below" expressions in our search plan.
  */
 HIDDEN int
@@ -1852,7 +1835,7 @@ below_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)          /* 
     struct db_plan_t *next;     /* next node being processed */
     struct db_plan_t *node;     /* temporary node used in N_NOT processing */
     struct db_plan_t *tail;     /* pointer to tail of result plan */
-    struct db_plan_t *result;           /* pointer to head of result plan */
+    struct db_plan_t *result;   /* pointer to head of result plan */
 
     tail = result = next = NULL;
 
@@ -1865,8 +1848,8 @@ below_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)          /* 
 	    if (below_squish(next->bl_data[0], &(next->bl_data[0])) != BRLCAD_OK) return BRLCAD_ERROR;
 
 	/*
-	 * if we encounter a not, then snag the next node and place
-	 * it in the not's subplan.
+	 * if we encounter a not, then snag the next node and place it
+	 * in the not's subplan.
 	 */
 	if (next->type == N_BELOW) {
 
@@ -1904,7 +1887,6 @@ below_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)          /* 
 
 
 /*
- * or_squish --
  * compresses -o expressions in our search plan.
  */
 HIDDEN int
@@ -1912,7 +1894,7 @@ or_squish(struct db_plan_t *plan, struct db_plan_t **resultplan)           /* pl
 {
     struct db_plan_t *next;     /* next node being processed */
     struct db_plan_t *tail;     /* pointer to tail of result plan */
-    struct db_plan_t *result;           /* pointer to head of result plan */
+    struct db_plan_t *result;   /* pointer to head of result plan */
 
     tail = result = next = NULL;
 
@@ -1970,10 +1952,10 @@ db_search_formplan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp) {
     int db_search_isoutput = 0;
 
     /*
-     * for each argument in the command line, determine what kind of node
-     * it is, create the appropriate node type and add the new plan node
-     * to the end of the existing plan.  The resulting plan is a linked
-     * list of plan nodes.  For example, the string:
+     * for each argument in the command line, determine what kind of
+     * node it is, create the appropriate node type and add the new
+     * plan node to the end of the existing plan.  The resulting plan
+     * is a linked list of plan nodes.  For example, the string:
      *
      * % find . -name foo -newer bar -print
      *
@@ -1998,9 +1980,9 @@ db_search_formplan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp) {
     }
 
     /*
-     * if the user didn't specify one of -print, -ok or -exec, then -print
-     * is assumed so we bracket the current expression with parens, if
-     * necessary, and add a -print node on the end.
+     * if the user didn't specify one of -print, -ok or -exec, then
+     * -print is assumed so we bracket the current expression with
+     * parens, if necessary, and add a -print node on the end.
      */
     if (!db_search_isoutput) {
 	if (plan == NULL) {
@@ -2020,10 +2002,11 @@ db_search_formplan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp) {
     }
 
     /*
-     * the command line has been completely processed into a search plan
-     * except for the (,), !, and -o operators.  Rearrange the plan so
-     * that the portions of the plan which are affected by the operators
-     * are moved into operator nodes themselves.  For example:
+     * the command line has been completely processed into a search
+     * plan except for the (,), !, and -o operators.  Rearrange the
+     * plan so that the portions of the plan which are affected by the
+     * operators are moved into operator nodes themselves.  For
+     * example:
      *
      * [!]--> [-name foo]--> [-print]
      *
@@ -2043,8 +2026,8 @@ db_search_formplan(char **argv, struct db_i *dbip, struct rt_wdb *wdbp) {
      */
 
     if (paren_squish(plan, &plan) != BRLCAD_OK) return NULL;              /* ()'s */
-    if (above_squish(plan, &plan) != BRLCAD_OK) return NULL;                /* above's */
-    if (below_squish(plan, &plan) != BRLCAD_OK) return NULL;                /* below's */
+    if (above_squish(plan, &plan) != BRLCAD_OK) return NULL;              /* above's */
+    if (below_squish(plan, &plan) != BRLCAD_OK) return NULL;              /* below's */
     if (not_squish(plan, &plan) != BRLCAD_OK) return NULL;                /* !'s */
     if (or_squish(plan, &plan) != BRLCAD_OK) return NULL;                 /* -o's */
     return (void *)plan;
@@ -2113,6 +2096,9 @@ db_search_full_paths(void *searchplan,        /* search plan */
 }
 
 
+/**
+ *
+ */
 struct bu_ptbl *
 db_search_unique_objects(void *searchplan,        /* search plan */
 			 struct db_full_path_list *pathnames,      /* list of pathnames to traverse */

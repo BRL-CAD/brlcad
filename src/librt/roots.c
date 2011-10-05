@@ -42,8 +42,6 @@ static const bn_poly_t bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
 
 
 /**
- * R T _ P O L Y _ E V A L _ W _ 2 D E R I V A T I V E S
- *
  * Evaluates p(Z), p'(Z), and p''(Z) for any Z (real or complex).
  * Given an equation of the form:
  *
@@ -89,8 +87,6 @@ rt_poly_eval_w_2derivatives(register bn_complex_t *cZ, register bn_poly_t *eqn, 
 
 
 /**
- * R T _ P O L Y _ F I N D R O O T
- *
  * Calculates one root of a polynomial (p(Z)) using Laguerre's
  * method.  This is an iterative technique which has very good global
  * convergence properties.  The formulas for this method are
@@ -131,10 +127,10 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
 	bn_cx_scal(&T, (double)(eqn->dgr*n));
 	bn_cx_sub(&cH, &T);
 
-	/* Calculate the next iteration for Laguerre's method.
-	 * Test to see whether addition or subtraction gives the
-	 * larger denominator for the next 'Z', and use the
-	 * appropriate value in the formula.
+	/* Calculate the next iteration for Laguerre's method.  Test
+	 * to see whether addition or subtraction gives the larger
+	 * denominator for the next 'Z', and use the appropriate value
+	 * in the formula.
 	 */
 	bn_cx_sqrt(&cH, &cH);
 	p1_H = p1;
@@ -149,11 +145,11 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
 	    bn_cx_sub(nxZ, &p0);
 	}
 
-	/* Use proportional convergence test to allow very small
-	 * roots and avoid wasting time on large roots.
-	 * The original version used bn_cx_ampl(), which requires
-	 * a square root.  Using bn_cx_amplsq() saves lots of cycles,
-	 * but changes loop termination conditions somewhat.
+	/* Use proportional convergence test to allow very small roots
+	 * and avoid wasting time on large roots.  The original
+	 * version used bn_cx_ampl(), which requires a square root.
+	 * Using bn_cx_amplsq() saves lots of cycles, but changes loop
+	 * termination conditions somewhat.
 	 *
 	 * diff is |p0|**2.  nxZ = Z - p0.
 	 *
@@ -188,8 +184,6 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
 
 
 /**
- * R T _ P O L Y _ C H E C K R O O T S
- *
  * Evaluates p(Z) for any Z (real or complex).  In this case, test all
  * "nroots" entries of roots[] to ensure that they are roots (zeros)
  * of this polynomial.
@@ -246,8 +240,6 @@ rt_poly_checkroots(register bn_poly_t *eqn, bn_complex_t *roots, register int nr
 
 
 /**
- * R T _ P O L Y _ D E F L A T E
- *
  * Deflates a polynomial by a given root.
  */
 void
@@ -282,8 +274,6 @@ rt_poly_deflate(register bn_poly_t *oldP, register bn_complex_t *root)
 
 
 /**
- * R T _ P O L Y _ R O O T S
- *
  * WARNING: The polynomial given as input is destroyed by this
  * routine.  The caller must save it if it is important!
  *

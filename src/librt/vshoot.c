@@ -75,8 +75,6 @@ vshot_stub(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struc
 
 
 /**
- * R T _ S H O O T R A Y
- *
  * Given a ray, shoot it at all the relevant parts of the model,
  * (building the HeadSeg chain), and then call rt_boolregions() to
  * build and evaluate the partition chain.  If the ray actually hit
@@ -125,7 +123,7 @@ rt_vshootray(struct application *ap)
     char *status;
     auto struct partition InitialPart;	/* Head of Initial Partitions */
     auto struct partition FinalPart;	/* Head of Final Partitions */
-    int nrays = 1;	/* for now */
+    int nrays = 1;			/* for now */
     int vlen;
     int id;
     int i;
@@ -273,13 +271,13 @@ rt_vshootray(struct application *ap)
 #if 0
 	    /* FIXME: need to use waiting_segs/finished_segs here in
 	     * conjunction with rt_boolweave()
-	    {
-		register struct seg *seg3 = seg2;
-		while (seg3->seg_next != RT_SEG_NULL)
-		    seg3 = seg3->seg_next;
-		seg3->seg_next = HeadSeg;
-		HeadSeg = seg2;
-	    }
+	     {
+	     register struct seg *seg3 = seg2;
+	     while (seg3->seg_next != RT_SEG_NULL)
+	     seg3 = seg3->seg_next;
+	     seg3->seg_next = HeadSeg;
+	     HeadSeg = seg2;
+	     }
 	    */
 #endif
 	}

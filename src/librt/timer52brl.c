@@ -21,9 +21,9 @@
 /** @{ */
 /** @file librt/timer52brl.c
  *
- * To provide timing information for RT.
- * This version for System V, Release TWO, under 4.2 BSD,
- * using Doug Gwyn's System-V-under-4.2 emulation.
+ * To provide timing information for RT.  This version for System V,
+ * Release TWO, under 4.2 BSD, using Doug Gwyn's System-V-under-4.2
+ * emulation.
  *
  */
 
@@ -43,8 +43,8 @@ static struct rusage ru0;	/* Resource utilization at the start */
 static void prusage();
 static void tvadd();
 
-/*
- * P R E P _ T I M E R
+/**
+ *
  */
 void
 rt_prep_timer()
@@ -66,8 +66,7 @@ tvsub(tdiff, t1, t0)
 }
 
 
-/*
- * R E A D _ T I M E R
+/**
  *
  */
 double

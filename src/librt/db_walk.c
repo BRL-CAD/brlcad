@@ -36,11 +36,8 @@
 #include "raytrace.h"
 
 
-/*
- * D B _ T R A V E R S E _ S U B T R E E
- *
+/**
  * A generic traversal function.
- *
  */
 void
 db_traverse_subtree(union tree *tp,
@@ -201,14 +198,11 @@ db_functree_subtree(struct db_i *dbip,
 
 
 /**
- * D B _ F U N C T R E E
- *
- * This subroutine is called for a no-frills tree-walk,
- * with the provided subroutines being called at every combination
- * and leaf (solid) node, respectively.
+ * This subroutine is called for a no-frills tree-walk, with the
+ * provided subroutines being called at every combination and leaf
+ * (solid) node, respectively.
  *
  * This routine is recursive, so no variables may be declared static.
- *
  */
 void
 db_functree(struct db_i *dbip,

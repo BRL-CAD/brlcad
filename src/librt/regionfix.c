@@ -41,8 +41,6 @@
 
 
 /**
- * R T_ R E G I O N F I X
- *
  * Apply any deltas to reg_regionid values to allow old applications
  * that use the reg_regionid number to distinguish between different
  * instances of the same prototype region.

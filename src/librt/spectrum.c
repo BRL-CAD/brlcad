@@ -44,9 +44,8 @@
 #include "raytrace.h"
 #include "spectrum.h"
 
+
 /**
- * R T _ C I E _ X Y Z
- *
  * This is the data for the CIE_XYZ curves take from Judd and Wyszecki
  * (1975), table 2.6, these are for the 1931 standard observer with a
  * 2-degree visual field.  From Roy Hall, pg 228.
@@ -97,8 +96,6 @@ static const double rt_CIE_XYZ[81][4] = {
 
 
 /**
- * R T _ S P E C T _ M A K E _ C I E _ X Y Z
- *
  * Given as input a spectral sampling distribution, generate the 3
  * curves to match the human eye's response in CIE color parameters X,
  * Y, and Z.  XYZ space can be readily converted to RGB with a 3x3
@@ -174,8 +171,6 @@ rt_spect_make_CIE_XYZ(struct bn_tabdata **x, struct bn_tabdata **y, struct bn_ta
 
 
 /**
- * R T _ S P E C T _ R E F L E C T A N C E _ R G B
- *
  * Given reflectance data (in range 0..1) in terms of RGB color,
  * convert that to a spectral reflectance curve.
  *
@@ -232,8 +227,6 @@ rt_spect_reflectance_rgb(struct bn_tabdata *curve, const float *rgb)
     (PLANCK_C1/(_w*_w*_w*_w*_w*(exp(PLANCK_C2/(_w*_tempK))-1)))
 
 /**
- * R T _ S P E C T _ B L A C K _ B O D Y
- *
  * Integrate Planck's Radiation Formula for a black body radiator
  * across the given spectrum.  Returns radiant emittance in W/cm**2
  * for each wavelength interval.
@@ -290,8 +283,6 @@ rt_spect_black_body(struct bn_tabdata *data, double temp, unsigned int n)
 
 
 /**
- * R T _ S P E C T _ B L A C K _ B O D Y _ F A S T
- *
  * Returns radiant emittance for each spectral interval in the given
  * spectrum in units of watts/cm**2.  Integrate each wavelength
  * interval of spectral radiant emittance, by fitting with a rectangle
@@ -326,8 +317,6 @@ rt_spect_black_body_fast(struct bn_tabdata *data, double temp)
 
 
 /**
- * R T _ S P E C T _ B L A C K _ B O D Y _ P O I N T S
- *
  * Returns point-sampled values of spectral radiant emittance, in
  * units of watts/cm**2/um, straight from Planck's black-body
  * radiation formula.

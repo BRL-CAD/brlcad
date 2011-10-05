@@ -50,8 +50,8 @@ static void tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
 static void psecs(long int l, struct bu_vls *vp);
 
 
-/*
- * R T _ P R E P _ T I M E R
+/**
+ *
  */
 void
 rt_prep_timer(void)
@@ -62,14 +62,11 @@ rt_prep_timer(void)
 }
 
 
-/*
- * R T _ G E T _ T I M E R
- *
+/**
  * Reports on the passage of time, since rt_prep_timer() was called.
- * Explicit return is number of CPU seconds.
- * String return is descriptive.
- * If "elapsed" pointer is non-null, number of elapsed seconds are returned.
- * Times returned will never be zero.
+ * Explicit return is number of CPU seconds.  String return is
+ * descriptive.  If "elapsed" pointer is non-null, number of elapsed
+ * seconds are returned.  Times returned will never be zero.
  */
 double
 rt_get_timer(struct bu_vls *vp, double *elapsed)
@@ -230,9 +227,7 @@ psecs(long int l, struct bu_vls *vp)
 }
 
 
-/*
- * R T _ R E A D _ T I M E R
- *
+/**
  * Compatability routine
  */
 double
