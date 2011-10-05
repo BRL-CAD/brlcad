@@ -94,6 +94,11 @@ MACRO(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir)
 ENDMACRO(DOCBOOK_TO_PDF targetname_suffix srcfile outfile targetdir)
 
 
+# For the html files, we need brlcad.css
+file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${DATA_DIR}/html/css)
+configure_file(css/brlcad.css ${CMAKE_BINARY_DIR}/${DATA_DIR}/html/css/brlcad.css)
+install(FILES css/brlcad.css DESTINATION ${DATA_DIR}/html/css)
+
 ADD_SUBDIRECTORY(articles)
 ADD_SUBDIRECTORY(books)
 ADD_SUBDIRECTORY(lessons)
