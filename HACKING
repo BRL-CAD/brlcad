@@ -688,7 +688,7 @@ Variable names should start with a lowercase letter.
   double LocalVariable; /* bad (looks like class or constructor) */
   double _localVar;     /* bad (looks like member variable)      */
 
-Variables are not to be "decorated" to show their type (i.e. do not
+Variables are not to be "decorated" to show their type (i.e., do not
 use Hungarian notation or variations thereof) with a slight exception
 for pointers on occasion.  The name should use a concise, meaningful
 name that is not cryptic (typing a descriptive name is preferred over
