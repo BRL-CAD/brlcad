@@ -3659,7 +3659,10 @@ BU_EXPORT extern char *bu_dirname(const char *cp);
 
 /**
  * Given a string containing slashes such as a pathname, return a
- * pointer to the first character after the last slash.
+ * pointer to the first character after the last slash.  The function
+ * always recognizes paths separated by a '/' as well as whatever the
+ * native platform directory separator may be.  The path separator
+ * cannot be used within a file or directory name, even if escaped.
  *
  * It is the caller's responsibility to bu_free() the pointer returned
  * from this routine. Examples of strings returned:

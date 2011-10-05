@@ -22,29 +22,45 @@
 
 #include "bu.h"
 #include <string.h>
+#include <ctype.h>
+
 
 char *
 bu_basename(const char *str)
 {
-    register const char	*p = str;
+    const char *p;
     char *base_str;
-    int len;
+    size_t len;
 
     if (UNLIKELY(!str)) {
-	base_str = bu_malloc(MAXPATHLEN, "bu_basename empty");;
+	base_str = bu_malloc(2, "bu_basename empty");;
 	base_str[0] = '.';
+	base_str[1] = '\0';
 	return base_str;
     }
 
-    /* Skip leading separators */
-    while (*p != '\0')
-	if (*p++ == BU_DIR_SEPARATOR && *p != BU_DIR_SEPARATOR && *p != '\0')
-	    str = p;
+    /* skip the filesystem disk/drive name if we're on a DOS-capable
+     * platform that uses '\' for paths, e.g., C:\ -> \
+     */
+    if (BU_DIR_SEPARATOR == '\\' && isalpha(str[0]) && str[1] == ':') {
+	str += 2;
+    }
+
+    /* Skip leading separators, e.g., ///foo/bar -> foo/bar */
+    for (p = str; *p != '\0'; p++) {
+	/* check native separator as well as / so we can use this
+	 * routine for geometry paths too.
+	 */
+	if ((p[0] == BU_DIR_SEPARATOR && p[1] != BU_DIR_SEPARATOR && p[1] != '\0')
+	    || (p[0] == '/' && p[1] != '/' && p[1] != '\0')) {
+	    str = p+1;
+	}
+    }
 
     len = strlen(str);
 
     /* Remove trailing separators */
-    while (len > 1 && str[len - 1] == BU_DIR_SEPARATOR)
+    while (len > 1 && (str[len - 1] == BU_DIR_SEPARATOR || str[len - 1] == '/'))
 	len--;
 
     /* Create a new string */
