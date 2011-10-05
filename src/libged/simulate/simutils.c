@@ -325,16 +325,6 @@ apply_material(struct ged *gedp,
 }
 
 
-char*
-prefix_name(char *prefix, char *name)
-{
-	struct bu_vls buffer_vls = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&buffer_vls, "%s%s", prefix, name);
-
-	return bu_vls_addr(&buffer_vls);
-}
-
-
 int
 apply_color(struct ged *gedp,
 	    char* name,
@@ -398,13 +388,16 @@ insert_AABB(struct ged *gedp, struct simulation_params *sim_params, struct rigid
     char *prefix = "bb_";
     char *prefix_reg = "bb_reg_";
     char *prefixed_name, *prefixed_reg_name;
+    struct bu_vls buffer1 = BU_VLS_INIT_ZERO, buffer2 = BU_VLS_INIT_ZERO;
     point_t v;
 
     /* Prepare prefixed bounding box primitive name */
-    prefixed_name = prefix_name(prefix, current_node->rb_namep);
+    bu_vls_sprintf(&buffer1, "%s%s", prefix, current_node->rb_namep);
+   	prefixed_name = bu_vls_addr(&buffer1);
 
     /* Prepare prefixed bounding box region name */
-    prefixed_reg_name = prefix_name(prefix_reg, current_node->rb_namep);
+    bu_vls_sprintf(&buffer2, "%s%s", prefix_reg, current_node->rb_namep);
+  	prefixed_reg_name = bu_vls_addr(&buffer2);
 
     /* Delete existing bb prim and region */
     rv = kill(gedp, prefixed_name);
@@ -423,7 +416,7 @@ insert_AABB(struct ged *gedp, struct simulation_params *sim_params, struct rigid
 
     /* Setup the simulation result group union-ing the new objects */
     cmd_args[0] = "in";
-    cmd_args[1] = bu_strdup(prefixed_name);
+    cmd_args[1] = prefixed_name;
     cmd_args[2] = "arb8";
 
     /* Front face vertices */
@@ -510,8 +503,8 @@ insert_AABB(struct ged *gedp, struct simulation_params *sim_params, struct rigid
     /* Add the region to the result of the sim so it will be drawn too */
     add_to_comb(gedp, sim_params->sim_comb_name, prefixed_reg_name);
 
-    bu_free(prefixed_name, "simulate : prefixed_name");
-    bu_free(prefixed_reg_name, "simulate : prefixed_reg_name");
+    bu_vls_free(&buffer1);
+    bu_vls_free(&buffer2);
 
     return GED_OK;
 
@@ -528,7 +521,10 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
     char *prefix = "mf_";
     char *prefix_reg = "mf_reg_";
     char *prefix_normal = "normal_";
-    struct bu_vls buffer_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls buffer1 = BU_VLS_INIT_ZERO,
+    			  buffer2 = BU_VLS_INIT_ZERO,
+    			  buffer3 = BU_VLS_INIT_ZERO,
+    			  buffer4 = BU_VLS_INIT_ZERO;
     char *name;
     vect_t scaled_normal;
     point_t from, to;
@@ -542,18 +538,21 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 	if(current_manifold->num_contacts > 0){
 
 	    /* Prepare prefixed bounding box primitive name */
-	    bu_vls_sprintf(&buffer_vls, "%s_%s", current_manifold->rbA->rb_namep,
+	    bu_vls_sprintf(&buffer1, "%s_%s", current_manifold->rbA->rb_namep,
 			   current_manifold->rbB->rb_namep);
-	    name = bu_vls_addr(&buffer_vls);
+	    name = bu_vls_addr(&buffer1);
 
 	    /* Prepare the manifold shape name */
-	    prefixed_name = prefix_name(prefix, name);
+	    bu_vls_sprintf(&buffer2, "%s%s", prefix, name);
+	    prefixed_name = bu_vls_addr(&buffer2);
 
 	    /* Prepare prefixed manifold region name */
-	    prefixed_reg_name = prefix_name(prefix_reg, name);
+	    bu_vls_sprintf(&buffer3, "%s%s", prefix_reg, name);
+	    prefixed_reg_name = bu_vls_addr(&buffer3);
 
 	    /* Prepare prefixed manifold region name */
-	    prefixed_normal_name = prefix_name(prefix_normal, name);
+	    bu_vls_sprintf(&buffer4, "%s%s", prefix_normal, name);
+	    prefixed_normal_name = bu_vls_addr(&buffer4);
 
 	    /* Delete existing manifold prim and region */
 	    rv = kill(gedp, prefixed_name);
@@ -660,6 +659,7 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 		    bu_log("%d contacts got, no manifold drawn", current_manifold->num_contacts);
 		    cmd_args[2] = (char *)0;
 		    num_args = 2;
+		    break;
 	    }
 
 	    print_command(cmd_args, num_args);
@@ -694,12 +694,14 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 
 	    }/*  if-num_args */
 
-	    bu_free(prefixed_name, "simulate : prefixed_name");
-	    bu_free(prefixed_reg_name, "simulate : prefixed_reg_name");
-
 	}/* if-num_contacts */
 
     } /* end for-manifold */
+
+    bu_vls_free(&buffer1);
+    bu_vls_free(&buffer2);
+    bu_vls_free(&buffer3);
+    bu_vls_free(&buffer4);
 
 
     return GED_OK;

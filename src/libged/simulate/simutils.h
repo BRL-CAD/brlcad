@@ -78,13 +78,6 @@ print_command(char* cmd_args[], int num_args);
 
 
 /**
- * Prefixes name with prefix and returns the combined string
- */
-char*
-prefix_name(char *prefix, char *name);
-
-
-/**
  * Deletes a prim/comb if it exists.
  *
  * TODO: lower to librt

@@ -81,7 +81,6 @@ add_regions(struct ged *gedp, struct simulation_params *sim_params)
     struct directory *dp, *ndp;
     char *prefixed_name;
     char *prefix = "sim_";
-    size_t prefix_len, prefixed_name_len;
     int i;
     struct rigid_body *prev_node = NULL, *current_node;
     struct bu_vls dp_name_vls = BU_VLS_INIT_ZERO;
