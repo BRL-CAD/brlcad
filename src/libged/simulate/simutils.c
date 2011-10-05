@@ -115,23 +115,6 @@ print_command(char* cmd_args[], int num_args)
 }
 
 
-char*
-prefix_name(char *prefix, char *original)
-{
-    /* Prepare prefixed bounding box primitive name */
-    size_t prefix_len, prefixed_name_len;
-    char *prefixed_name;
-
-    prefix_len = strlen(prefix);
-    prefixed_name_len = strlen(prefix)+strlen(original) + 1;
-    prefixed_name = (char *)bu_malloc(prefixed_name_len, "Adding prefix");
-    bu_strlcpy(prefixed_name, prefix, prefix_len + 1);
-    bu_strlcat(prefixed_name + prefix_len, original,
-	       prefixed_name_len - prefix_len);
-    return prefixed_name;
-}
-
-
 int
 kill(struct ged *gedp, char *name)
 {
@@ -339,6 +322,16 @@ apply_material(struct ged *gedp,
     }
 
     return GED_OK;
+}
+
+
+char*
+prefix_name(char *prefix, char *name)
+{
+	struct bu_vls buffer_vls = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&buffer_vls, "%s%s", prefix, name);
+
+	return bu_vls_addr(&buffer_vls);
 }
 
 

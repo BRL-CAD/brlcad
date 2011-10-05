@@ -78,12 +78,10 @@ print_command(char* cmd_args[], int num_args);
 
 
 /**
- * Used to prefix a name, requires memory to be freed by caller
- * TODO: Get rid of this, replace all calls to this with bu_vls
- * and prefix using bu functions
+ * Prefixes name with prefix and returns the combined string
  */
 char*
-prefix_name(char *prefix, char *original);
+prefix_name(char *prefix, char *name);
 
 
 /**

@@ -84,6 +84,8 @@ add_regions(struct ged *gedp, struct simulation_params *sim_params)
     size_t prefix_len, prefixed_name_len;
     int i;
     struct rigid_body *prev_node = NULL, *current_node;
+    struct bu_vls dp_name_vls = BU_VLS_INIT_ZERO;
+
 
     /* Kill the existing sim comb */
     kill(gedp, sim_params->sim_comb_name);
@@ -104,11 +106,8 @@ add_regions(struct ged *gedp, struct simulation_params *sim_params)
 	    }
 
 	    /* Duplicate the region */
-	    prefix_len = strlen(prefix);
-	    prefixed_name_len = strlen(prefix)+strlen(dp->d_namep)+1;
-	    prefixed_name = (char *)bu_malloc(prefixed_name_len, "Adding sim_ prefix");
-	    bu_strlcpy(prefixed_name, prefix, prefix_len + 1);
-	    bu_strlcat(prefixed_name + prefix_len, dp->d_namep, prefixed_name_len - prefix_len);
+	    bu_vls_sprintf(&dp_name_vls, "%s%s", prefix, dp->d_namep);
+	    prefixed_name = bu_vls_addr(&dp_name_vls);
 
 	    kill_copy(gedp, dp, prefixed_name);
 	    bu_vls_printf(gedp->ged_result_str, "add_regions: Copied \"%s\" to \"%s\"\n", dp->d_namep, prefixed_name);
