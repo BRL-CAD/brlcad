@@ -32,7 +32,6 @@ noinst_PROGRAMS = \
 
 # make sure example and temporary code compiles, but don't include it in librt
 librt_xxx_la_SOURCES = \
-	parse.c \
 	primitives/nmg/nmg_junk.c \
 	primitives/xxx/xxx.c
 

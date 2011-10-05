@@ -241,7 +241,6 @@ set(librt_ignored_files
     librt_private.h
     namegen.c
     opennurbs_ext.h
-    parse.c
     pmalloc.c
     prcomb.c
     primitives/bot/btg.h
