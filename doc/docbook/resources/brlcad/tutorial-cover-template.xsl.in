@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+                xmlns:fo="http://www.w3.org/1999/XSL/Format"
+                xmlns:xi="http://www.w3.org/2001/XInclude"
+                xmlns:fox="http://xmlgraphics.apache.org/fop/extensions"
+                version="1.0"
+>
+
+<!-- use prog 'create-book-covers.pl' -->
+
+<xsl:include href="/brlcad/brlcad-gendata.xsl"/>
+<!-- original
+<xsl:include href="brlcad-colors-autogen.xsl"/>
+-->
+<xsl:param name="brlcad.cover.color">#@COVER_COLOR@</xsl:param>
+
+<!-- ==================================================================== -->
+<xsl:template name="front.cover">
+
+  <xsl:variable name='logosize'>40pt</xsl:variable>
+  <xsl:variable name='brlcadsize'>40pt</xsl:variable><!-- started with 40pt -->
+
+  <fo:page-sequence master-reference="front-cover">
+
+    <!--
+      force-page-count="no-force">
+    -->
+
+    <fo:flow flow-name="xsl-region-body">
+
+      <?brlcad insert-draft-overlay ?>
+
+      <!-- BRL-CAD LOGO ====================================================== -->
+      <!-- this is the BRL-CAD Logo; point size is for the 'BRL-CAD', the rest
+      of the container has inherited sizes scaled as a proportion of that size
+      so as to meet the company logo rules -->
+      <!-- final position on the page should have the top at 0.35in -->
+
+      <!-- &#xAE => R ; C => &#xA9; -->
+      <!-- reg mark looks like 0.4 size of normal 'n' -->
+
+<!--
+      <fo:block-container font-size="{$logosize}"
+         line-height='50.0%'
+         text-align="right"
+         font-family='Bembo'
+         absolute-position='fixed'
+         right='0.50in'
+         top='0.40in'
+         >
+        <fo:block color='red'>
+          BRL-CAD<fo:inline font-size='29.8%'
+             baseline-shift='1.0%'>&#xAE;</fo:inline>
+        </fo:block>
+      </fo:block-container>
+-->
+
+      <!-- TOP RULE ================================ -->
+      <fo:block-container  top="1in" absolute-position="absolute">
+        <fo:block text-align='center'>
+           <fo:leader leader-length="8.5in"
+             leader-pattern="rule"
+             alignment-baseline="middle"
+             rule-thickness="2pt" color="{$brlcad.cover.color}"/>
+        </fo:block>
+      </fo:block-container>
+
+      <!-- fox:transform='scale(0.5, 0.5)' -->
+
+      <!-- BRL-CAD LOGO GROUP ============================================================ -->
+<fo:block-container
+  absolute-position="absolute"
+  text-align="center"
+  width='6in'
+  top='2.0in'
+  fox:transform='translate(176400, 0) scale(0.6)'
+>
+
+      <!-- note that distances are from the top of the containing block-container -->
+      <!-- BRL-CAD LOGO ============================================================ -->
+      <!-- originally 2.75in from top absolute -->
+      <fo:block-container
+         text-align="center">
+        <fo:block>
+          <fo:instream-foreign-object content-width='5in' content-height='auto' text-align='center'>
+            <xi:include href="@BRLCAD_SOURCE_DIR@/doc/docbook/resources/brlcad/images/brlcad-logo-@COVER_COLOR@.svg" parse='xml'>
+              <xi:fallback parse="text">
+                FIXME:  MISSING XINCLUDE CONTENT
+              </xi:fallback>
+            </xi:include>
+          </fo:instream-foreign-object>
+        </fo:block>
+      </fo:block-container>
+
+</fo:block-container>
+
+      <!-- DOCUMENT TITLE ================================================== -->
+      <fo:block-container text-align='center'>
+         <fo:block-container
+            absolute-position="absolute"
+            border='none'
+            padding-after='-7pt'
+            font-family="STIXGeneral"
+            font-size="0.4in"
+            font-weight="bold"
+            left='1.0in'
+            text-align="center"
+            top="4in"
+            width='6.5in'
+          >
+           <fo:block>
+             Tutorial Series
+           </fo:block>
+           <fo:block>
+             Volume @CURRENT_VOLUME@
+           </fo:block>
+           <fo:block>
+             @CURRENT_TITLE@
+           </fo:block>
+         </fo:block-container>
+      </fo:block-container>
+      <fo:block-container text-align='center'>
+        <fo:block-container
+            absolute-position="absolute"
+            font-family="STIXGeneral"
+            font-size="12pt"
+            font-weight="normal"
+            left='1.0in'
+            text-align="center"
+            top="8in"
+            width='6.5in'
+        >
+          <fo:block>
+	    BRL-CAD Version @BRLCAD_VERSION@
+          </fo:block>
+        </fo:block-container>
+      </fo:block-container>
+
+
+      <!-- BOTTOM  RULE ================================ -->
+      <fo:block-container top="10in" absolute-position="absolute">
+        <fo:block text-align='center'>
+           <fo:leader leader-length="8.5in"
+             leader-pattern="rule"
+             alignment-baseline="middle"
+             rule-thickness="2pt" color="{$brlcad.cover.color}"/>
+        </fo:block>
+      </fo:block-container>
+
+      <!-- BOTTOM DISCLAIMER ================================ -->
+      <fo:block-container absolute-position="absolute" top="10.25in" left="0.5in"
+          right="0.5in" bottom="1in" text-align="center" font-family="serif">
+        <fo:block>Approved for public release; distribution is unlimited.</fo:block>
+      </fo:block-container>
+
+
+    </fo:flow>
+  </fo:page-sequence>
+</xsl:template>
+
+
+
+<!-- ==================================================================== -->
+<xsl:template name="back.cover">
+
+  <fo:page-sequence master-reference="back-cover"
+    initial-page-number="auto-even"
+    >
+
+    <fo:flow flow-name="xsl-region-body">
+
+      <!-- TOP RULE ================================ -->
+      <fo:block-container  top="1in" absolute-position="absolute">
+        <fo:block text-align='center'>
+           <fo:leader leader-length="8.5in"
+             leader-pattern="rule"
+             alignment-baseline="middle"
+             rule-thickness="2pt" color="{$brlcad.cover.color}"/>
+        </fo:block>
+      </fo:block-container>
+
+      <!-- BOTTOM  RULE ================================ -->
+      <fo:block-container top="10in" absolute-position="absolute">
+        <fo:block text-align='center'>
+           <fo:leader leader-length="8.5in"
+             leader-pattern="rule"
+             alignment-baseline="middle"
+             rule-thickness="2pt" color="{$brlcad.cover.color}"/>
+        </fo:block>
+      </fo:block-container>
+
+    </fo:flow>
+  </fo:page-sequence>
+</xsl:template>
+
+<!-- ==================================================================== -->
+  <!-- page sequence is defined as follows: -->
+  <xsl:template name="user.pagemasters">
+
+    <fo:simple-page-master master-name="front-cover" page-width="{$page.width}"
+      page-height="{$page.height}" margin-top="0pt" margin-bottom="0pt"
+      margin-left="0pt" margin-right="0pt">
+
+      <fo:region-body margin="0in"/>
+
+      <!--
+      <fo:region-before extent="1in" background-color='lightblue'/>
+      <fo:region-after extent="1in" background-color='lightblue'/>
+      <fo:region-start extent="1in" background-color='lightgreen'/>
+      <fo:region-end extent="1in" background-color='lightgreen'/>
+      -->
+
+    </fo:simple-page-master>
+
+    <fo:simple-page-master master-name="back-cover" page-width="{$page.width}"
+      page-height="{$page.height}" margin-top="0pt" margin-bottom="0pt"
+      margin-left="0pt" margin-right="0pt">
+
+      <fo:region-body margin="0in"/>
+
+    </fo:simple-page-master>
+
+  </xsl:template>
+
+
+
+</xsl:stylesheet>
