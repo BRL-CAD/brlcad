@@ -83,7 +83,7 @@ print_manifold_list(struct rigid_body *rb)
 
     bu_log("print_manifold_list: %s\n", rb->rb_namep);
 
-    for (current_manifold = rb->first_manifold; current_manifold != NULL;
+    for (current_manifold = rb->bt_manifold; current_manifold != NULL;
 	 current_manifold = current_manifold->next) {
 
     	bu_log("--Manifold between %s & %s has %d contacts--\n",
@@ -517,61 +517,54 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
     char* cmd_args[28];
     char buffer[20];
     int rv, num_args;
-    char *prefixed_name, *prefixed_reg_name, *prefixed_normal_name;
     char *prefix = "mf_";
     char *prefix_reg = "mf_reg_";
     char *prefix_normal = "normal_";
-    struct bu_vls buffer1 = BU_VLS_INIT_ZERO,
-    			  buffer2 = BU_VLS_INIT_ZERO,
-    			  buffer3 = BU_VLS_INIT_ZERO,
-    			  buffer4 = BU_VLS_INIT_ZERO;
-    char *name;
+    struct bu_vls name = BU_VLS_INIT_ZERO,
+    			  prefixed_name = BU_VLS_INIT_ZERO,
+    			  prefixed_reg_name = BU_VLS_INIT_ZERO,
+    			  prefixed_normal_name = BU_VLS_INIT_ZERO;
     vect_t scaled_normal;
     point_t from, to;
     struct sim_manifold *current_manifold;
     int i;
 
-    for (current_manifold = rb->first_manifold; current_manifold != NULL;
+    for (current_manifold = rb->bt_manifold; current_manifold != NULL;
 	 current_manifold = current_manifold->next) {
 
 
 	if(current_manifold->num_contacts > 0){
 
 	    /* Prepare prefixed bounding box primitive name */
-	    bu_vls_sprintf(&buffer1, "%s_%s", current_manifold->rbA->rb_namep,
-			   current_manifold->rbB->rb_namep);
-	    name = bu_vls_addr(&buffer1);
+	    bu_vls_sprintf(&name, "%s_%s", current_manifold->rbA->rb_namep, current_manifold->rbB->rb_namep);
 
 	    /* Prepare the manifold shape name */
-	    bu_vls_sprintf(&buffer2, "%s%s", prefix, name);
-	    prefixed_name = bu_vls_addr(&buffer2);
+	    bu_vls_sprintf(&prefixed_name, "%s%s", prefix, bu_vls_addr(&name));
 
 	    /* Prepare prefixed manifold region name */
-	    bu_vls_sprintf(&buffer3, "%s%s", prefix_reg, name);
-	    prefixed_reg_name = bu_vls_addr(&buffer3);
+	    bu_vls_sprintf(&prefixed_reg_name, "%s%s", prefix_reg, bu_vls_addr(&name));
 
 	    /* Prepare prefixed manifold region name */
-	    bu_vls_sprintf(&buffer4, "%s%s", prefix_normal, name);
-	    prefixed_normal_name = bu_vls_addr(&buffer4);
+	    bu_vls_sprintf(&prefixed_normal_name, "%s%s", prefix_normal, bu_vls_addr(&name));
 
 	    /* Delete existing manifold prim and region */
-	    rv = kill(gedp, prefixed_name);
+	    rv = kill(gedp, bu_vls_addr(&prefixed_name));
 	    if (rv != GED_OK) {
 		bu_log("insert_manifolds: ERROR Could not delete existing bounding box arb8 : %s \
-					so NOT attempting to add new bounding box\n", prefixed_name);
+					so NOT attempting to add new bounding box\n", bu_vls_addr(&prefixed_name));
 		return GED_ERROR;
 	    }
 
-	    rv = kill(gedp, prefixed_reg_name);
+	    rv = kill(gedp, bu_vls_addr(&prefixed_reg_name));
 	    if (rv != GED_OK) {
 		bu_log("insert_manifolds: ERROR Could not delete existing bounding box region : %s \
-					so NOT attempting to add new region\n", prefixed_reg_name);
+					so NOT attempting to add new region\n", bu_vls_addr(&prefixed_reg_name));
 		return GED_ERROR;
 	    }
 
 	    /* Setup the simulation result group union-ing the new objects */
 	    cmd_args[0] = "in";
-	    cmd_args[1] = bu_strdup(prefixed_name);
+	    cmd_args[1] = bu_vls_addr(&prefixed_name);
 	    cmd_args[2] = (char *)0;
 	    num_args = 2;
 
@@ -672,13 +665,13 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 		}
 
 		/* Make the region for the manifold primitive */
-		add_to_comb(gedp, prefixed_reg_name, prefixed_name);
+		add_to_comb(gedp, bu_vls_addr(&prefixed_reg_name), bu_vls_addr(&prefixed_name));
 
 		/* Adjust the material for region to be visible */
-		apply_material(gedp, prefixed_reg_name, "plastic tr 0.9", 210, 210, 0);
+		apply_material(gedp, bu_vls_addr(&prefixed_reg_name), "plastic tr 0.9", 210, 210, 0);
 
 		/* Add the region to the result of the sim so it will be drawn too */
-		add_to_comb(gedp, sim_params->sim_comb_name, prefixed_reg_name);
+		add_to_comb(gedp, sim_params->sim_comb_name, bu_vls_addr(&prefixed_reg_name));
 
 		/* Finally draw the normal */
 		VSCALE(scaled_normal, current_manifold->rb_contacts[0].normalWorldOnB, NORMAL_SCALE_FACTOR);
@@ -689,8 +682,8 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 		       V3ARGS(to),
 		       V3ARGS(scaled_normal));
 
-		arrow(gedp, prefixed_normal_name, from, to);
-		add_to_comb(gedp, sim_params->sim_comb_name, prefixed_normal_name);
+		arrow(gedp, bu_vls_addr(&prefixed_normal_name), from, to);
+		add_to_comb(gedp, sim_params->sim_comb_name, bu_vls_addr(&prefixed_normal_name));
 
 	    }/*  if-num_args */
 
@@ -698,10 +691,10 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 
     } /* end for-manifold */
 
-    bu_vls_free(&buffer1);
-    bu_vls_free(&buffer2);
-    bu_vls_free(&buffer3);
-    bu_vls_free(&buffer4);
+    bu_vls_free(&name);
+    bu_vls_free(&prefixed_name);
+    bu_vls_free(&prefixed_reg_name);
+    bu_vls_free(&prefixed_normal_name);
 
 
     return GED_OK;

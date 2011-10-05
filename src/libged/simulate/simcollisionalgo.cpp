@@ -110,20 +110,20 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* body0,
 	current_manifold->rbA = rbA;
 	current_manifold->rbB = rbB;
 
-	if (rbB->first_manifold == NULL) {
-	    rbB->first_manifold = current_manifold;
+	if (rbB->bt_manifold == NULL) {
+	    rbB->bt_manifold = current_manifold;
 	} else{
 	    //Go upto the last manifold, keeping a ptr 1 node behind
-	    struct sim_manifold *p1 = rbB->first_manifold, *p2;
+	    struct sim_manifold *p1 = rbB->bt_manifold, *p2;
 	    while (p1 != NULL) {
 		p2 = p1;
 		p1 = p1->next;
 	    }
 
 	    p2->next = current_manifold;
-	    //print_manifold_list(rb->first_manifold);
+	    //print_manifold_list(rb->bt_manifold);
 	}
-	rbB->num_manifolds++;
+	rbB->num_bt_manifolds++;
 
 	bu_log("processCollision(box/box): %s & %s \n", rbA->rb_namep, rbB->rb_namep);
 
