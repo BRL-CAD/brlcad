@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2011-XX-XX  Release 7.XX.X                                     ---
 ----------------------------------------------------------------------
 
+* reid command now takes optional -n "incr by" value - Erik Greenwald
 * reid command now returns the last region ID set - Erik Greenwald
 * improved performance of boolean evaluations - Richard Weiss
 * improved boolean evaluation converting to polygons - Richard Weiss

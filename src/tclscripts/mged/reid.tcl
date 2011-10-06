@@ -27,6 +27,8 @@
 proc  reid { args } {
 
     set extern_commands [list db get_regions attr]
+    set incrval 1
+
     foreach cmd $extern_commands {
 	catch {auto_load $cmd} val
 	if {[expr [string compare [info command $cmd] $cmd] != 0]} {
@@ -35,13 +37,25 @@ proc  reid { args } {
 	}
     }
 
-    if { [llength $args] != 2 } {
-	puts "Usage: reid assembly regionID"
+    if { [llength $args] != 2 && [llength $args] != 4} {
+	puts "Usage: reid \[-n <num>\] assembly regionID"
 	return
     }
 
-    set name [lindex $args 0]
-    set regionid [lindex $args 1]
+    # much better arg parsing is needed.
+    if { [llength $args] == 4} {
+	if { [lindex $args 0] != "-n" } {
+	    puts "Usage: reid \[-n <num>\] assembly regionID"
+	    return
+	} else {
+	    set incrval [lindex $args 1]
+	    set name [lindex $args 2]
+	    set regionid [lindex $args 3]
+	}
+    } else {
+	set name [lindex $args 0]
+	set regionid [lindex $args 1]
+    }
 
     set objData [db get $name]
     if { [lindex $objData 0] != "comb" } {
@@ -51,9 +65,9 @@ proc  reid { args } {
     set regions [get_regions $name]
     foreach region $regions {
 	attr set $region region_id $regionid
-	incr regionid
+	incr regionid $incrval
     }
-    return [expr $regionid - 1 ]
+    return [expr $regionid - $incrval ]
 }
 
 # Local Variables:
