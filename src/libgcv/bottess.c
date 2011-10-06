@@ -35,7 +35,6 @@
 #include "nmg.h"
 #include "gcv.h"
 
-void rt_bot_ifree2(struct rt_bot_internal *);
 
 struct gcv_data {
     void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
@@ -674,6 +673,7 @@ evaluate(union tree *tr, const struct rt_tess_tol *ttol, const struct bn_tol *to
 	     * in as nmgregion. :/ Also, only doing the first shell of the first
 	     * model. Primitives should only provide a single shell, right? */
 	    {
+		struct rt_db_internal ip;
 		struct nmgregion *nmgr = BU_LIST_FIRST(nmgregion, &tr->tr_d.td_r->m_p->r_hd);
 		/* the bot temporary format may be unnecessary if we can walk
 		 * the nmg shells and generate soup from them directly. */
@@ -687,10 +687,13 @@ evaluate(union tree *tr, const struct rt_tess_tol *ttol, const struct bn_tol *to
 		tr->tr_d.td_r->m_p = (struct model *)bot2soup(bot, tol);
 		SOUP_CKMAG((struct soup_s *)tr->tr_d.td_r->m_p);
 
-		/* rt_bot_ifree2 doesn't have an RT_EXPORT line, so is unavailable on windows. Just leak instead. */
-#ifndef _WIN32
-		rt_bot_ifree2(bot);
-#endif
+		/* fill in a db_internal with our new bot so we can free it */
+		RT_DB_INTERNAL_INIT(&ip);
+		ip.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+		ip.idb_minor_type = ID_BOT;
+		ip.idb_meth = &rt_functab[ID_BOT];
+		ip.idb_ptr = bot;
+		ip.idb_meth->ft_ifree(&ip);
 	    }
 	    return tr;
 	case OP_UNION:
