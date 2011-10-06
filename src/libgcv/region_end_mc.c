@@ -74,8 +74,8 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     BU_LIST_INIT(&vhead);
 
     /*
-    if (curtree->tr_op == OP_NOP)
-	return 0;
+      if (curtree->tr_op == OP_NOP)
+      return 0;
     */
 
 
@@ -111,11 +111,11 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     }
 
     /*
-    bu_log("Target is shot, %d triangles seen.\n", count);
+      bu_log("Target is shot, %d triangles seen.\n", count);
 
-    bu_log("Fusing\n"); fflush(stdout);
-    nmg_model_fuse(m, tsp->ts_tol);
-    bu_log("Done\n"); fflush(stdout);
+      bu_log("Fusing\n"); fflush(stdout);
+      nmg_model_fuse(m, tsp->ts_tol);
+      bu_log("Done\n"); fflush(stdout);
     */
 
     /* Kill cracks */
@@ -130,7 +130,7 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 	    }
 	}
 	/*
-	nmg_shell_coplanar_face_merge(s, tsp->ts_tol, 42);
+	  nmg_shell_coplanar_face_merge(s, tsp->ts_tol, 42);
 	*/
 	s = next_s;
     }
