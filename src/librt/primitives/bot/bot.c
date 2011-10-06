@@ -1305,8 +1305,8 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 }
 
 
-void
-rt_bot_ifree2(struct rt_bot_internal *bot_ip)
+HIDDEN void
+bot_ifree2(struct rt_bot_internal *bot_ip)
 {
     RT_BOT_CK_MAGIC(bot_ip);
     bot_ip->magic = 0;			/* sanity */
@@ -1363,7 +1363,7 @@ rt_bot_ifree(struct rt_db_internal *ip)
     RT_CK_DB_INTERNAL(ip);
 
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
-    rt_bot_ifree2(bot_ip);
+    bot_ifree2(bot_ip);
     ip->idb_ptr = NULL; /* sanity */
 }
 
@@ -4831,7 +4831,7 @@ rt_bot_list_free(struct rt_bot_list *headRblp, int fbflag)
 	BU_LIST_DEQUEUE(&rblp->l);
 
 	if (fbflag)
-	    rt_bot_ifree2(rblp->bot);
+	    bot_ifree2(rblp->bot);
 
 	bu_free(rblp, "rt_bot_list_free: rblp");
     }
