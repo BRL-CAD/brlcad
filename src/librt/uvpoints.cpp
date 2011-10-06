@@ -22,6 +22,8 @@
  * is not the final form of this code, just testing.
  */
 
+#include "common.h"
+
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -34,7 +36,6 @@
 
 #define POOL_SIZE 1024
 
-using namespace std;
 
 /* Number of subdivisions to perform */
 /*#define MAX_TREE_DEPTH 6*/
@@ -89,22 +90,22 @@ MemoryManager QuadMemoryManager;
 
 class UVKey {
 public:
-    UVKey(string newkey);
-    const string& getKey() const;
+    UVKey(std::string newkey);
+    const std::string& getKey() const;
 private:
-    string key;
+    std::string key;
 };
 
 
-UVKey::UVKey(string newkey)
+UVKey::UVKey(std::string newkey)
 {
     key.assign(newkey);
 }
 
 
-const string& UVKey::getKey() const
+const std::string& UVKey::getKey() const
 {
-    const string& keyref = key;
+    const std::string& keyref = key;
     return keyref;
 }
 
@@ -147,13 +148,13 @@ public:
 class QuadNode {
 public:
     void SubDivide(int MAX_TREE_DEPTH);
-    set<UVKey, UVKeyComp> *keys;
-    void AppendKeys(set <UVKey, UVKeyComp> *keys, int MAX_TREE_DEPTH);
+    std::set<UVKey, UVKeyComp> *keys;
+    void AppendKeys(std::set <UVKey, UVKeyComp> *keys, int MAX_TREE_DEPTH);
     size_t PU[9];
     size_t PV[9];
     int depth;
     QuadNode *Children[4];
-    inline void* operator new(size_t size)
+    inline void* operator new(size_t)
     {
 	return QuadMemoryManager.allocate(sizeof(QuadNode));
     }
@@ -164,7 +165,7 @@ public:
 };
 
 
-int ints_to_key(string *cppstr, int left, int right, int MAX_TREE_DEPTH)
+void ints_to_key(std::string *cppstr, int left, int right, int MAX_TREE_DEPTH)
 {
     char formatstring[20];
     char maxkeystr[20];
@@ -179,19 +180,22 @@ int ints_to_key(string *cppstr, int left, int right, int MAX_TREE_DEPTH)
 }
 
 
-void QuadNode::AppendKeys(set <UVKey, UVKeyComp> *keys, int MAX_TREE_DEPTH)
+void QuadNode::AppendKeys(std::set<UVKey, UVKeyComp> *newkeys, int MAX_TREE_DEPTH)
 {
     UVKey *point;
-    set<UVKey, UVKeyComp>::iterator item;
-    string keystring;
-    int i;
+    std::set<UVKey, UVKeyComp>::iterator item;
+    std::string keystring;
+
     for(int i = 0; i < 9; i++) {
 	counting++;
 	ints_to_key(&keystring, PU[i], PV[i], MAX_TREE_DEPTH);
-	item = keys->find(keystring);
-	if(item == keys->end()) {
+	item = newkeys->find(keystring);
+	if(item == newkeys->end()) {
 	    point = new UVKey(keystring);
-	    keys->insert(*point);
+	    /* FIXME: newkeys was keys, but shadows member data.
+	     * which were we inserting into here?
+	     */
+	    newkeys->insert(*point);
 	} else {
 	    rejected++;
 	}
@@ -231,7 +235,6 @@ void QuadNode::AppendKeys(set <UVKey, UVKeyComp> *keys, int MAX_TREE_DEPTH)
 
 void QuadNode::SubDivide(int MAX_TREE_DEPTH)
 {
-    int i;
     /* Quadrant 0 */
     Children[0] = new QuadNode();
     Children[0]->depth = depth + 1;
@@ -402,19 +405,16 @@ void QuadNode::SubDivide(int MAX_TREE_DEPTH)
  */
 class UVKeyQuadTree {
 public:
-    UVKeyQuadTree(set<UVKey, UVKeyComp> *keys, int MAX_TREE_DEPTH);
+    UVKeyQuadTree(std::set<UVKey, UVKeyComp> *keys, int MAX_TREE_DEPTH);
     QuadNode *root;
 };
 
 
-UVKeyQuadTree::UVKeyQuadTree(set<UVKey, UVKeyComp> *keys, int MAX_TREE_DEPTH)
+UVKeyQuadTree::UVKeyQuadTree(std::set<UVKey, UVKeyComp> *keys, int MAX_TREE_DEPTH)
 {
     UVKey *point;
-    set<UVKey, UVKeyComp>::iterator item;
-    int Ucoord;
-    int Vcoord;
-    string keynum;
-    int i;
+    std::set<UVKey, UVKeyComp>::iterator item;
+    std::string keynum;
 
     root = new QuadNode();
     root->depth = 0;
@@ -439,7 +439,7 @@ UVKeyQuadTree::UVKeyQuadTree(set<UVKey, UVKeyComp> *keys, int MAX_TREE_DEPTH)
     root->PV[8] = 3*pow(2, MAX_TREE_DEPTH + 1)/4;
     for(int i = 0; i < 9; i++) {
 	counting++;
-	cout << root->PU[i] << ", " << root->PV[i] << "\n";
+	std::cout << root->PU[i] << ", " << root->PV[i] << "\n";
 	ints_to_key(&keynum, root->PU[i], root->PV[i], MAX_TREE_DEPTH);
 	item = keys->find(keynum);
 	if(item == keys->end()) {
@@ -464,12 +464,12 @@ int main(int argc, char **argv)
     t0 = time(NULL);
     t1 = time(NULL);
     matsize = pow(2, MAX_TREE_DEPTH + 1) + 1;
-    vector<vector<int> > matitems (matsize , vector<int> (matsize));
+    std::vector<std::vector<int> > matitems (matsize , std::vector<int> (matsize));
     int k = 0;
 
-    cout << "Max tree depth: " << MAX_TREE_DEPTH << "\n";
+    std::cout << "Max tree depth: " << MAX_TREE_DEPTH << "\n";
     if (MAX_TREE_DEPTH < 3) {
-	cout << "Matrix: \n";
+	std::cout << "Matrix: \n";
 	for (int i = 0; i < matsize; i++) {
 	    for (int j = 0; j < matsize; j++)
 		matitems[i][j] = k++;
@@ -477,15 +477,15 @@ int main(int argc, char **argv)
 
 	for (int i = matsize - 1; i >= 0; i--) {
 	    for (int j = 0; j < matsize; j++)
-		cout<< setw (MAX_TREE_DEPTH) << setfill('0') << j << ", " << setw (MAX_TREE_DEPTH) << setfill('0') << i <<' ';
-	    cout<<'\n';
+		std::cout<< std::setw (MAX_TREE_DEPTH) << std::setfill('0') << j << ", " << std::setw (MAX_TREE_DEPTH) << std::setfill('0') << i <<' ';
+	    std::cout<<'\n';
 	}
-	cout<<'\n';
+	std::cout<<'\n';
     }
 
 
-    set <UVKey, UVKeyComp> keys;
-    set<UVKey, UVKeyComp>::iterator keyiterator;
+    std::set <UVKey, UVKeyComp> keys;
+    std::set<UVKey, UVKeyComp>::iterator keyiterator;
     UVKeyQuadTree *testtree = new UVKeyQuadTree(&keys, MAX_TREE_DEPTH);
     testtree->root->SubDivide(MAX_TREE_DEPTH);
     t1 = time(NULL);
@@ -493,16 +493,16 @@ int main(int argc, char **argv)
     printf("subdivide: %d sec\n", tdiff);
     t0 = time(NULL);
 
-    ofstream keyfile;
+    std::ofstream keyfile;
     keyfile.open("keys.txt");
     for(keyiterator = keys.begin(); keyiterator != keys.end(); keyiterator++) {
 	keyfile << keyiterator->getKey()  << "\n";
     }
     keyfile.close();
 
-    cout << "Total checked: " << counting << "\n";
-    cout << "Rejected from Set: " << rejected << "\n";
-    cout << "Set Contains " << keys.size() << " items\n";
+    std::cout << "Total checked: " << counting << "\n";
+    std::cout << "Rejected from Set: " << rejected << "\n";
+    std::cout << "Set Contains " << keys.size() << " items\n";
 }
 
 
