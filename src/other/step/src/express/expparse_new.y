@@ -1,11 +1,14 @@
 /** Lemon grammar for Express parser, based on SCL's expparse.y.  */
 %include {
+#include <assert.h>
 
 /* TODO: yyerrstatus is a holdover from bison. It either needs to be used or
  * removed.
  */
 int yyerrstatus;
 #define yyerrok /* (yyerrstatus = 0) */
+
+int yylval;
 
     static char rcsid[] = "$Id: expparse.y,v 1.23 1997/11/14 17:09:04 libes Exp $";
 
@@ -247,6 +250,7 @@ int yyerrstatus;
 %type local_initializer		{ Expression }
 %type precision_spec		{ Expression }
 %type query_expression		{ Expression }
+%type query_start		{ Expression }
 %type simple_expression		{ Expression }
 %type unary_expression		{ Expression }
 %type supertype_expression	{ Expression }
@@ -256,7 +260,10 @@ int yyerrstatus;
 %type function_header	{ Integer }
 %type fh_lineno		{ Integer }
 %type rule_header	{ Integer }
+%type rh_start		{ Integer }
+%type rh_get_line	{ Integer }
 %type procedure_header	{ Integer }
+%type ph_get_line	{ Integer }
 
 %type action_body			{ Linked_List }
 %type actual_parameters			{ Linked_List }
@@ -1293,9 +1300,9 @@ fh_push_scope ::= TOK_IDENTIFIER(A).
     Function f = ALGcreate(OBJ_FUNCTION);
     tag_count = 0;
     if (print_objects_while_running & OBJ_FUNCTION_BITS) {
-        fprintf(stdout, "parse: %s (function)\n", A->name);
+        fprintf(stdout, "parse: %s (function)\n", A.symbol->name);
     }
-    PUSH_SCOPE(f, A, OBJ_FUNCTION);
+    PUSH_SCOPE(f, A.symbol, OBJ_FUNCTION);
 }
 
 fh_plist ::= formal_parameter_list(A).
@@ -1309,11 +1316,11 @@ fh_plist ::= formal_parameter_list(A).
 
 function_id(A) ::= TOK_IDENTIFIER(B).
 {
-    A = B;
+    A = B.symbol;
 }
 function_id(A) ::= TOK_BUILTIN_FUNCTION(B).
 {
-    A = B;
+    A = B.symbol;
 
 }
 
@@ -1401,7 +1408,7 @@ generic_type(A) ::= TOK_GENERIC TOK_COLON TOK_IDENTIFIER(B).
 
     SCOPEadd_super(A);
 
-    if (g->tag = TYPEcreate_user_defined_tag(A, CURRENT_SCOPE, B)) {
+    if (g->tag = TYPEcreate_user_defined_tag(A, CURRENT_SCOPE, B.symbol)) {
         SCOPEadd_super(g->tag);
     }
 }
@@ -1409,7 +1416,7 @@ generic_type(A) ::= TOK_GENERIC TOK_COLON TOK_IDENTIFIER(B).
 id_list(A) ::= TOK_IDENTIFIER(B).
 {
     A = LISTcreate();
-    LISTadd_last(A, (Generic)B);
+    LISTadd_last(A, (Generic)B.symbol);
 
 }
 id_list(A) ::= id_list(B) TOK_COMMA TOK_IDENTIFIER(C).
@@ -1417,7 +1424,7 @@ id_list(A) ::= id_list(B) TOK_COMMA TOK_IDENTIFIER(C).
     yyerrok;
 
     A = B;
-    LISTadd_last(A, (Generic)C);
+    LISTadd_last(A, (Generic)C.symbol);
 }
 
 identifier(A) ::= TOK_SELF.
@@ -1431,8 +1438,8 @@ identifier(A) ::= TOK_QUESTION_MARK.
 identifier(A) ::= TOK_IDENTIFIER(B).
 {
     A = EXPcreate(Type_Identifier);
-    A->symbol = *(B);
-    SYMBOL_destroy(B);
+    A->symbol = *(B.symbol);
+    SYMBOL_destroy(B.symbol);
 }
 
 if_statement(A) ::= TOK_IF expression(B) TOK_THEN statement_rep(C) TOK_END_IF
@@ -1448,13 +1455,13 @@ if_statement(A) ::= TOK_IF expression(B) TOK_THEN statement_rep(C) TOK_ELSE
 
 include_directive ::= TOK_INCLUDE TOK_STRING_LITERAL(A) semicolon.
 {
-    SCANinclude_file(A);
+    SCANinclude_file(A.string);
 }
 
 increment_control ::= TOK_IDENTIFIER(A) TOK_ASSIGNMENT expression(B) TOK_TO
 		      expression(C) by_expression(D).
 {
-    Increment i = INCR_CTLcreate(A, B, C, D);
+    Increment i = INCR_CTLcreate(A.symbol, B, C, D);
 
     /* scope doesn't really have/need a name, I suppose */
     /* naming it by the iterator variable is fine */
@@ -1502,7 +1509,7 @@ reference_clause ::= TOK_REFERENCE TOK_FROM TOK_IDENTIFIER(A) semicolon.
         LISTcreate();
     }
 
-    LISTadd(CURRENT_SCHEMA->ref_schemas, (Generic)A);
+    LISTadd(CURRENT_SCHEMA->ref_schemas, (Generic)A.symbol);
 }
 reference_clause(A) ::= reference_head(B) parened_rename_list semicolon.
 {
@@ -1511,7 +1518,7 @@ reference_clause(A) ::= reference_head(B) parened_rename_list semicolon.
 
 reference_head ::= TOK_REFERENCE TOK_FROM TOK_IDENTIFIER(A).
 {
-    interface_schema = A;
+    interface_schema = A.symbol;
     interface_func = SCHEMAadd_reference;
 }
 
@@ -1521,7 +1528,7 @@ use_clause ::= TOK_USE TOK_FROM TOK_IDENTIFIER(A) semicolon.
         CURRENT_SCHEMA->use_schemas = LISTcreate();
     }
 
-    LISTadd(CURRENT_SCHEMA->use_schemas, (Generic)A);
+    LISTadd(CURRENT_SCHEMA->use_schemas, (Generic)A.symbol);
 }
 use_clause(A) ::= use_head(B) parened_rename_list semicolon.
 {
@@ -1530,7 +1537,7 @@ use_clause(A) ::= use_head(B) parened_rename_list semicolon.
 
 use_head ::= TOK_USE TOK_FROM TOK_IDENTIFIER(A).
 {
-    interface_schema = A;
+    interface_schema = A.symbol;
     interface_func = SCHEMAadd_use;
 }
 
@@ -1614,7 +1621,8 @@ inverse_attr(A) ::= TOK_IDENTIFIER(B) TOK_COLON set_or_bag_of_entity(C)
 {
     Expression e = EXPcreate(Type_Attribute);
 
-    e->symbol = *B; SYMBOL_destroy(B);
+    e->symbol = *B.symbol;
+    SYMBOL_destroy(B.symbol);
 
     if (C.type) {
         A = VARcreate(e, C.type);
@@ -1625,7 +1633,7 @@ inverse_attr(A) ::= TOK_IDENTIFIER(B) TOK_COLON set_or_bag_of_entity(C)
     }
 
     A->flags.attribute = True;
-    A->inverse_symbol = D;
+    A->inverse_symbol = D.symbol;
 }
 
 inverse_clause(A) ::= /*NULL*/.
@@ -1661,49 +1669,48 @@ list_type(A) ::= TOK_LIST TOK_OF unique(B) attribute_type(C).
 
 literal(A) ::= TOK_INTEGER_LITERAL(B).
 {
-    if (B == 0) {
+    if (B.iVal == 0) {
         A = LITERAL_ZERO;
-    } else if (B == 1) {
+    } else if (B.iVal == 1) {
 	A = LITERAL_ONE;
     } else {
 	A = EXPcreate_simple(Type_Integer);
-	/*SUPPRESS 112*/
-	A->u.integer = (int)B;
+	A->u.integer = (int)B.iVal;
 	resolved_all(A);
     }
 }
 literal(A) ::= TOK_REAL_LITERAL(B).
 {
-    if (B == 0.0) {
+    if (B.rVal == 0.0) {
 	A = LITERAL_ZERO;
     } else {
 	A = EXPcreate_simple(Type_Real);
-	A->u.real = B;
+	A->u.real = B.rVal;
 	resolved_all(A);
     }
 }
 literal(A) ::= TOK_STRING_LITERAL(B).
 {
     A = EXPcreate_simple(Type_String);
-    A->symbol.name = B;
+    A->symbol.name = B.string;
     resolved_all(A);
 }
 literal(A) ::= TOK_STRING_LITERAL_ENCODED(B).
 {
     A = EXPcreate_simple(Type_String_Encoded);
-    A->symbol.name = B;
+    A->symbol.name = B.string;
     resolved_all(A);
 }
 literal(A) ::= TOK_LOGICAL_LITERAL(B).
 {
     A = EXPcreate_simple(Type_Logical);
-    A->u.logical = B;
+    A->u.logical = B.logical;
     resolved_all(A);
 }
 literal(A) ::= TOK_BINARY_LITERAL(B).
 {
     A = EXPcreate_simple(Type_Binary);
-    A->symbol.name = B;
+    A->symbol.name = B.binary;
     resolved_all(A);
 }
 literal(A) ::= constant(B).
@@ -1758,9 +1765,9 @@ local_decl ::= TOK_LOCAL local_body TOK_END_LOCAL semicolon.
 
 defined_type(A) ::= TOK_IDENTIFIER(B).
 {
-    A = TYPEcreate_name(B);
+    A = TYPEcreate_name(B.symbol);
     SCOPEadd_super(A);
-    SYMBOL_destroy(B);
+    SYMBOL_destroy(B.symbol);
 }
 
 defined_type_list(A) ::= defined_type(B).
@@ -1871,48 +1878,47 @@ ph_push_scope ::= TOK_IDENTIFIER(A).
     tag_count = 0;
 
     if (print_objects_while_running & OBJ_PROCEDURE_BITS) {
-	fprintf(stdout, "parse: %s (procedure)\n", A->name);
+	fprintf(stdout, "parse: %s (procedure)\n", A.symbol->name);
     }
 
-    PUSH_SCOPE(p, A, OBJ_PROCEDURE);
+    PUSH_SCOPE(p, A.symbol, OBJ_PROCEDURE);
 }
 
 ph_get_line(A) ::= /* subroutine */.
 {
     A = SCANtell();
-    /* A should have type iVal */
 }
 
 procedure_id(A) ::= TOK_IDENTIFIER(B).
 {
-    A = B;
+    A = B.symbol;
 }
-procedure_id(A) ::= TOK_BUILTIN_PROCEDURE.
+procedure_id(A) ::= TOK_BUILTIN_PROCEDURE(B).
 {
-    A = B;
+    A = B.symbol;
 }
 
 group_ref(A) ::= TOK_BACKSLASH TOK_IDENTIFIER(B).
 {
     A = BIN_EXPcreate(OP_GROUP, (Expression)0, (Expression)0);
     A->e.op2 = EXPcreate(Type_Identifier);
-    A->e.op2->symbol = *B;
-    SYMBOL_destroy(B);
+    A->e.op2->symbol = *B.symbol;
+    SYMBOL_destroy(B.symbol);
 }
 
 qualifier(A) ::= TOK_DOT TOK_IDENTIFIER(B).
 {
     A.expr = A.first = BIN_EXPcreate(OP_DOT, (Expression)0, (Expression)0);
     A.expr->e.op2 = EXPcreate(Type_Identifier);
-    A.expr->e.op2->symbol = *B;
-    SYMBOL_destroy(B);
+    A.expr->e.op2->symbol = *B.symbol;
+    SYMBOL_destroy(B.symbol);
 }
 qualifier(A) ::= TOK_BACKSLASH TOK_IDENTIFIER(B). [TOK_NOT]
 {
     A.expr = A.first = BIN_EXPcreate(OP_GROUP, (Expression)0, (Expression)0);
     A.expr->e.op2 = EXPcreate(Type_Identifier);
-    A.expr->e.op2->symbol = *B;
-    SYMBOL_destroy(B);
+    A.expr->e.op2->symbol = *B.symbol;
+    SYMBOL_destroy(B.symbol);
 }
 qualifier(A) ::= TOK_LEFT_BRACKET simple_expression(B) TOK_RIGHT_BRACKET.
 {
@@ -1936,12 +1942,11 @@ query_expression(A) ::= query_start(B) expression(C) TOK_RIGHT_PAREN.
     POP_SCOPE();
 }
 
-/* A should have type 'expression' */
 query_start(A) ::= TOK_QUERY TOK_LEFT_PAREN TOK_IDENTIFIER(B) TOK_ALL_IN
 		   expression(C) TOK_SUCH_THAT.
 {
-    A = QUERYcreate(B, C);
-    SYMBOL_destroy(B);
+    A = QUERYcreate(B.symbol, C);
+    SYMBOL_destroy(B.symbol);
     PUSH_SCOPE(A->u.query->scope, (Symbol *)0, OBJ_QUERY);
 }
 
@@ -2009,11 +2014,12 @@ right_curl ::= TOK_RIGHT_CURL.
     yyerrok;
 }
 
-rule_decl ::= rule_header action_body where_rule TOK_END_RULE semicolon.
+rule_decl ::= rule_header(A) action_body(B) where_rule(C) TOK_END_RULE
+	      semicolon.
 {
-    RULEput_body(CURRENT_SCOPE, $2);
-    RULEput_where(CURRENT_SCOPE, $3);
-    ALGput_full_text(CURRENT_SCOPE, $1, SCANtell());
+    RULEput_body(CURRENT_SCOPE, B);
+    RULEput_where(CURRENT_SCOPE, C);
+    ALGput_full_text(CURRENT_SCOPE, A, SCANtell());
     POP_SCOPE();
 }
 
@@ -2024,18 +2030,18 @@ rule_formal_parameter(A) ::= TOK_IDENTIFIER(B).
 
     /* it's true that we know it will be an entity_ type later */
     TypeBody tb = TYPEBODYcreate(set_);
-    tb->base = TYPEcreate_name(B);
+    tb->base = TYPEcreate_name(B.symbol);
     SCOPEadd_super(tb->base);
     t = TYPEcreate_from_body_anonymously(tb);
     SCOPEadd_super(t);
-    e = EXPcreate_from_symbol(t, B);
+    e = EXPcreate_from_symbol(t, B.symbol);
     A = VARcreate(e, t);
     A->flags.attribute = True;
     A->flags.parameter = True;
 
     /* link it in to the current scope's dict */
-    DICTdefine(CURRENT_SCOPE->symbol_table, B->name, (Generic)A, B,
-	OBJ_VARIABLE);
+    DICTdefine(CURRENT_SCOPE->symbol_table, B.symbol->name, (Generic)A,
+	B.symbol, OBJ_VARIABLE);
 }
 
 rule_formal_parameter_list(A) ::= rule_formal_parameter(B).
@@ -2064,10 +2070,10 @@ rh_start(A) ::= TOK_RULE rh_get_line(B) TOK_IDENTIFIER(C) TOK_FOR
     Rule r = ALGcreate(OBJ_RULE);
 
     if (print_objects_while_running & OBJ_RULE_BITS) {
-	fprintf(stdout, "parse: %s (rule)\n", C->name);
+	fprintf(stdout, "parse: %s (rule)\n", C.symbol->name);
     }
 
-    PUSH_SCOPE(r, C, OBJ_RULE);
+    PUSH_SCOPE(r, C.symbol, OBJ_RULE);
 
     A = B;
 }
@@ -2097,10 +2103,10 @@ schema_decl(A) ::= include_directive(B).
 
 schema_header ::= TOK_SCHEMA TOK_IDENTIFIER(A) semicolon.
 {
-    Schema schema = DICTlookup(CURRENT_SCOPE->symbol_table, A->name);
+    Schema schema = DICTlookup(CURRENT_SCOPE->symbol_table, A.symbol->name);
 
     if (print_objects_while_running & OBJ_SCHEMA_BITS) {
-	fprintf(stdout, "parse: %s (schema)\n", A->name);
+	fprintf(stdout, "parse: %s (schema)\n", A.symbol->name);
     }
 
     if (EXPRESSignore_duplicate_schemas && schema) {
@@ -2109,7 +2115,7 @@ schema_header ::= TOK_SCHEMA TOK_IDENTIFIER(A) semicolon.
     } else {
 	schema = SCHEMAcreate();
 	LISTadd_last(PARSEnew_schemas, (Generic)schema);
-	PUSH_SCOPE(schema, A, OBJ_SCHEMA);
+	PUSH_SCOPE(schema, A.symbol, OBJ_SCHEMA);
     }
 }
 
@@ -2323,16 +2329,12 @@ type_item_body ::= type(A).
     CURRENT_SCOPE->u.type->body = A.body;
 }
 
-type_item(A) ::= ti_start(B) type_item_body semicolon.
-{
-    A = B;
-}
+type_item ::= ti_start type_item_body semicolon.
 
-ti_start(A) ::= TOK_IDENTIFIER(B) TOK_EQUAL.
+ti_start ::= TOK_IDENTIFIER(A) TOK_EQUAL.
 {
-    Type t = TYPEcreate_name(A);
-    PUSH_SCOPE(t, B, OBJ_TYPE);
-    A = B;
+    Type t = TYPEcreate_name(A.symbol);
+    PUSH_SCOPE(t, A.symbol, OBJ_TYPE);
 }
 
 type_decl(A) ::= td_start(B) TOK_END_TYPE semicolon.
@@ -2415,14 +2417,14 @@ unique(A) ::= TOK_UNIQUE.
 qualified_attr(A) ::= TOK_IDENTIFIER(B).
 {
     A = QUAL_ATTR_new();
-    A->attribute = B;
+    A->attribute = B.symbol;
 }
 qualified_attr(A) ::= TOK_SELF TOK_BACKSLASH TOK_IDENTIFIER(B) TOK_DOT
 		      TOK_IDENTIFIER(C).
 {
     A = QUAL_ATTR_new();
-    A->entity = B;
-    A->attribute = C;
+    A->entity = B.symbol;
+    A->attribute = C.symbol;
 }
 
 qualified_attr_list(A) ::= qualified_attr(B).
@@ -2444,7 +2446,7 @@ labelled_attrib_list(A) ::= qualified_attr_list(B) semicolon.
 labelled_attrib_list(A) ::= TOK_IDENTIFIER(B) TOK_COLON qualified_attr_list(C)
 			    semicolon.
 {
-    LISTadd_first(C, (Generic)B); 
+    LISTadd_first(C, (Generic)B.symbol); 
     A = C;
 }
 
@@ -2465,7 +2467,7 @@ unique_clause(A) ::= /* unique clause is always optional */.
 {
     A = 0;
 }
-unique_clause(A) ::= TOK_UNIQUE labelled_attrib_list_list.
+unique_clause(A) ::= TOK_UNIQUE labelled_attrib_list_list(B).
 {
     A = B;
 }
@@ -2488,14 +2490,15 @@ where_clause(A) ::= expression(B) semicolon.
 where_clause(A) ::= TOK_IDENTIFIER(B) TOK_COLON expression(C) semicolon.
 {
     A = WHERE_new();
-    A->label = B;
+    A->label = B.symbol;
     A->expr = C;
 
     if (!CURRENT_SCOPE->symbol_table) {
 	CURRENT_SCOPE->symbol_table = DICTcreate(25);
     }
 
-    DICTdefine(CURRENT_SCOPE->symbol_table, B->name, (Generic)A, B, OBJ_WHERE);
+    DICTdefine(CURRENT_SCOPE->symbol_table, B.symbol->name, (Generic)A,
+	B.symbol, OBJ_WHERE);
 }
 
 where_clause_list(A) ::= where_clause(B).
@@ -2594,5 +2597,10 @@ char CONST *t;	/* token or 0 to indicate no more tokens */
 	ERRORreport_with_symbol(ERROR_syntax_expecting, &sym, buf, tokens,
 	    CURRENT_SCOPE_TYPE_PRINTABLE, CURRENT_SCOPE_NAME);
     }
+}
+
+int yyparse()
+{
+    /* stub */
 }
 }
