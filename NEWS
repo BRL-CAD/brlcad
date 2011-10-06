@@ -100,6 +100,7 @@ Windows) from the same build logic.  This eliminates the need to
 manually update multiple build systems and improves BRL-CAD
 cross-platform maintainability.
 
+* fixed mged/archer graphics window glitches on Windows - Bob Parker
 * improved 'attr' command to work with read-only .g files - Cliff Yapp
 * cross-platform 64-bit ISST (cmake-only) - Cliff Yapp, Erik Greenwald
 * fixed mged zoom out mouse binding on Linux/*BSD - Cliff Yapp
