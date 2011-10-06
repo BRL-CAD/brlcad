@@ -53,6 +53,7 @@ proc  reid { args } {
 	attr set $region region_id $regionid
 	incr regionid
     }
+    return [expr $regionid - 1 ]
 }
 
 # Local Variables:
