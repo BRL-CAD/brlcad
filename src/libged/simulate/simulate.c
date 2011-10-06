@@ -449,7 +449,7 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	/* Generate manifolds using rt */
-	generate_manifolds(&sim_params);
+	generate_manifolds(gedp, &sim_params);
 
 	free_manifold_lists(&sim_params);
 

@@ -57,7 +57,7 @@
  * in a grid of finer granularity and to increase performance.
  */
 int
-generate_manifolds(struct simulation_params *sim_params);
+generate_manifolds(struct ged *gedp, struct simulation_params *sim_params);
 
 
 

@@ -380,7 +380,7 @@ apply_color(struct ged *gedp,
 
 
 int
-make_rpp(struct ged *gedp, vect_t max, vect_t min, char* name)
+make_rpp(struct ged *gedp, vect_t min, vect_t max, char* name)
 {
 	int rv;
 	char buffer_str[MAX_FLOATING_POINT_STRLEN];
