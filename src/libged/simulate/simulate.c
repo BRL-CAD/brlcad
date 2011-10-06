@@ -45,6 +45,7 @@
 #include "../ged_private.h"
 #include "simulate.h"
 #include "simutils.h"
+#include "simrt.h"
 
 
 /* The C++ simulation function */
@@ -433,9 +434,6 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 	/* Recreate sim.c to clear AABBs and manifold regions from previous iteration */
 	recreate_sim_comb(gedp, &sim_params);
 
-	/* Generate manifolds using rt */
-	/* generate_manifolds(sim_params); */
-
 	/* Run the physics simulation */
 	rv = run_simulation(&sim_params);
 	if (rv != GED_OK) {
@@ -449,6 +447,9 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "%s: ERROR while applying transforms\n", argv[0]);
 	    return GED_ERROR;
 	}
+
+	/* Generate manifolds using rt */
+	generate_manifolds(&sim_params);
 
 	free_manifold_lists(&sim_params);
 

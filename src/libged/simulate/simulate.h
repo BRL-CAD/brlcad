@@ -67,12 +67,12 @@ struct sim_manifold {
 struct rigid_body {
     int index;
     char *rb_namep;                 /**< @brief pointer to name string */
-    point_t bb_min;                 /**< @brief body min bb bounds */
-    point_t bb_max;                 /**< @brief body max bb bounds */
+    point_t bb_min;                 /**< @brief body min bb bounds, only calculated 1st time */
+    point_t bb_max;                 /**< @brief body max bb bounds, only calculated 1st time */
     point_t bb_center;              /**< @brief bb center */
     point_t bb_dims;                /**< @brief bb dimensions */
-    point_t btbb_min;               /**< @brief Bullet body min bb bounds */
-    point_t btbb_max;               /**< @brief Bullet body max bb bounds */
+    point_t btbb_min;               /**< @brief Bullet body min bb bounds, updated after each iter. */
+    point_t btbb_max;               /**< @brief Bullet body max bb bounds, updated after each iter. */
     point_t btbb_center;            /**< @brief Bullet bb center */
     point_t btbb_dims;              /**< @brief Bullet bb dimensions */
     mat_t m;                        /**< @brief transformation matrix from Bullet */
