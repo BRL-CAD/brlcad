@@ -3633,11 +3633,22 @@ BU_EXPORT extern int bu_mem_barriercheck();
  */
 
 /**
- * Given a filesystem pathname, return a pointer to a dynamic string
- * which is the parent directory of that file/directory.
+ * Given a string containing a hierarchical path, return a dynamic
+ * string to the parent path.
+ *
+ * This function is similar if not identical to most dirname() BSD
+ * system function implementations; but that system function cannot be
+ * used due to significantly inconsistent behavior across platforms.
+ *
+ * This function always recognizes paths separated by a '/' (i.e.,
+ * geometry paths) as well as whatever the native platform directory
+ * separator may be.  It is assumed that all file and directory names
+ * in the path will not contain a path separator, even if escaped.
  *
  * It is the caller's responsibility to bu_free() the pointer returned
- * from this routine.  Examples of strings returned:
+ * from this routine.
+ *
+ * Examples of strings returned:
  *
  *	/usr/dir/file	/usr/dir
  * @n	/usr/dir/	/usr
@@ -3658,14 +3669,22 @@ BU_EXPORT extern int bu_mem_barriercheck();
 BU_EXPORT extern char *bu_dirname(const char *cp);
 
 /**
- * Given a string containing slashes such as a pathname, return a
- * pointer to the first character after the last slash.  The function
- * always recognizes paths separated by a '/' as well as whatever the
- * native platform directory separator may be.  The path separator
- * cannot be used within a file or directory name, even if escaped.
+ * Given a string containing a hierarchical path, return a dynamic
+ * string to the portion after the last path separator.
+ *
+ * This function is similar if not identical to most basename() BSD
+ * system function implementations; but that system function cannot be
+ * used due to significantly inconsistent behavior across platforms.
+ *
+ * This function always recognizes paths separated by a '/' (i.e.,
+ * geometry paths) as well as whatever the native platform directory
+ * separator may be.  It is assumed that all file and directory names
+ * in the path will not contain a path separator, even if escaped.
  *
  * It is the caller's responsibility to bu_free() the pointer returned
- * from this routine. Examples of strings returned:
+ * from this routine.
+ *
+ * Examples of strings returned:
  *
  *	/usr/dir/file	file
  * @n	/usr/dir/	dir
