@@ -1,6 +1,12 @@
 /** Lemon grammar for Express parser, based on SCL's expparse.y.  */
 %include {
 
+/* TODO: yyerrstatus is a holdover from bison. It either needs to be used or
+ * removed.
+ */
+int yyerrstatus;
+#define yyerrok /* (yyerrstatus = 0) */
+
     static char rcsid[] = "$Id: expparse.y,v 1.23 1997/11/14 17:09:04 libes Exp $";
 
     /*
@@ -248,6 +254,7 @@
 %type while_control		{ Expression }
 
 %type function_header	{ Integer }
+%type fh_lineno		{ Integer }
 %type rule_header	{ Integer }
 %type procedure_header	{ Integer }
 
@@ -294,7 +301,7 @@
 %type var			{ struct type_flags }
 %type unique			{ struct type_flags }
 
-%type qualified_attr	{ Qualified_Attr }
+%type qualified_attr	{ Qualified_Attr* }
 
 %type qualifier	{ struct qualifier }
 
@@ -315,8 +322,8 @@
 %type supertype_decl	{ struct subtypes }
 %type supertype_factor	{ struct subtypes }
 
-%type function_id	{ Symbol }
-%type procedure_id	{ Symbol }
+%type function_id	{ Symbol* }
+%type procedure_id	{ Symbol* }
 
 %type attribute_type	{ Type }
 %type defined_type	{ Type }
@@ -533,7 +540,7 @@ aggregate_type(A) ::= TOK_AGGREGATE TOK_OF parameter_type(B).
 aggregate_type(A) ::= TOK_AGGREGATE TOK_COLON TOK_IDENTIFIER(B) TOK_OF
 		       parameter_type(C).
 {
-    Type t = TYPEcreate_user_defined_tag(C, CURRENT_SCOPE, B);
+    Type t = TYPEcreate_user_defined_tag(C, CURRENT_SCOPE, B.symbol);
 
     if (t) {
         SCOPEadd_super(t);
@@ -564,27 +571,21 @@ alias_statement(A) ::= TOK_ALIAS TOK_IDENTIFIER(B) TOK_FOR general_ref(C)
 			semicolon alias_push_scope statement_rep(D)
 			TOK_END_ALIAS semicolon.
 {
-    Expression e = EXPcreate_from_symbol(Type_Attribute, B);
+    Expression e = EXPcreate_from_symbol(Type_Attribute, B.symbol);
     Variable v = VARcreate(e, Type_Unknown);
 
     v->initializer = C; 
 
-    DICTdefine(CURRENT_SCOPE->symbol_table, B->name, (Generic)v, B,
-	OBJ_VARIABLE);
+    DICTdefine(CURRENT_SCOPE->symbol_table, B.symbol->name, (Generic)v,
+	    B.symbol, OBJ_VARIABLE);
     A = ALIAScreate(CURRENT_SCOPE, v, D);
 
     POP_SCOPE();
 }
 
-alias_push_scope ::= /* subroutne */.
+alias_push_scope ::= /* subroutine */.
 {
     struct Scope_ *s = SCOPEcreate_tiny(OBJ_ALIAS);
-
-    /* scope doesn't really have/need a name */
-    /* I suppose that naming it by the alias is fine */
-
-    /*SUPPRESS 622*/
-
     PUSH_SCOPE(s, (Symbol *)0, OBJ_ALIAS);
 }
 
@@ -904,13 +905,13 @@ entity_decl ::= entity_header subsuper_decl(A) semicolon entity_body(B)
 
 entity_header ::= TOK_ENTITY TOK_IDENTIFIER(A).
 {
-    Entity e = ENTITYcreate(A);
+    Entity e = ENTITYcreate(A.symbol);
 
     if (print_objects_while_running & OBJ_ENTITY_BITS) {
-        fprintf(stdout, "parse: %s (entity)\n", A->name);
+        fprintf(stdout, "parse: %s (entity)\n", A.symbol->name);
     }
 
-    PUSH_SCOPE(e, A, OBJ_ENTITY);
+    PUSH_SCOPE(e, A.symbol, OBJ_ENTITY);
 }
 
 enumeration_type ::= TOK_ENUMERATION TOK_OF nested_id_list(A).
@@ -953,8 +954,8 @@ escape_statement(A) ::= TOK_ESCAPE semicolon.
 attribute_decl(A) ::= TOK_IDENTIFIER(B).
 {
     A = EXPcreate(Type_Attribute);
-    A->symbol = *B;
-    SYMBOL_destroy(B);
+    A->symbol = *B.symbol;
+    SYMBOL_destroy(B.symbol);
 }
 attribute_decl(A) ::= TOK_SELF TOK_BACKSLASH TOK_IDENTIFIER(B) TOK_DOT
 		      TOK_IDENTIFIER(C).
@@ -963,12 +964,12 @@ attribute_decl(A) ::= TOK_SELF TOK_BACKSLASH TOK_IDENTIFIER(B) TOK_DOT
     A->e.op1 = EXPcreate(Type_Expression);
     A->e.op1->e.op_code = OP_GROUP;
     A->e.op1->e.op1 = EXPcreate(Type_Self);
-    A->e.op1->e.op2 = EXPcreate_from_symbol(Type_Entity, B);
-    SYMBOL_destroy(B);
+    A->e.op1->e.op2 = EXPcreate_from_symbol(Type_Entity, B.symbol);
+    SYMBOL_destroy(B.symbol);
 
     A->e.op_code = OP_DOT;
-    A->e.op2 = EXPcreate_from_symbol(Type_Attribute, C);
-    SYMBOL_destroy(C);
+    A->e.op2 = EXPcreate_from_symbol(Type_Attribute, C.symbol);
+    SYMBOL_destroy(C.symbol);
 }
 
 attribute_decl_list(A) ::= attribute_decl(B).
