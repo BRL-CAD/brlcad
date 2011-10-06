@@ -44,6 +44,7 @@ changes made.  See document footer for additional details.
 * added object path and keep options to conversion.sh - Tom Browder
 * 'keep' command includes sketch when keeping revolve - Sean Morrison
 * fixed mged 'mater' command inheritance setting bug - Richard Weiss
+* fixed mged crash removing comb members during edit - Richard Weiss
 * modified archer startup to not require html documentation files
         - Cliff Yapp, Brandon Hinesley
 * improved mged/archer/bwish run-time path behavior on Windows
