@@ -380,6 +380,39 @@ apply_color(struct ged *gedp,
 
 
 int
+make_rpp(struct ged *gedp, vect_t max, vect_t min, char* name)
+{
+	int rv;
+	char buffer_str[MAX_FLOATING_POINT_STRLEN];
+	char* cmd_args[28];
+
+	cmd_args[0] = "in";
+	cmd_args[1] = name;
+	cmd_args[2] = "rpp";
+
+	sprintf(buffer_str, "%f", min[0]); cmd_args[3] = bu_strdup(buffer_str);
+	sprintf(buffer_str, "%f", max[0]); cmd_args[4] = bu_strdup(buffer_str);
+
+	sprintf(buffer_str, "%f", min[1]); cmd_args[5] = bu_strdup(buffer_str);
+	sprintf(buffer_str, "%f", max[1]); cmd_args[6] = bu_strdup(buffer_str);
+
+	sprintf(buffer_str, "%f", min[2]); cmd_args[7] = bu_strdup(buffer_str);
+	sprintf(buffer_str, "%f", max[2]); cmd_args[8] = bu_strdup(buffer_str);
+
+
+	cmd_args[9] = (char *)0;
+
+	rv = ged_in(gedp, 9, (const char **)cmd_args);
+	if (rv != GED_OK) {
+		bu_log("make_rpp: WARNING Could not insert RPP %s (%f, %f, %f):(%f, %f, %f)\n",
+		   name, V3ARGS(min), V3ARGS(max));
+		return GED_ERROR;
+	}
+
+	return GED_OK;
+}
+
+int
 insert_AABB(struct ged *gedp, struct simulation_params *sim_params, struct rigid_body *current_node)
 {
     char* cmd_args[28];

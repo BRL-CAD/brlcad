@@ -41,6 +41,15 @@
 /* Private Headers */
 #include "../ged_private.h"
 #include "simulate.h"
+#include "simutils.h"
+
+
+/* Rays will be at least this far apart when shot through the overlap regions
+ * This is also the contact threshold for Bullet (0.04 cm if units are in meters)
+ * Overlaps regions smaller than this will have only a single plane of rays slicing the
+ * region in half, generating manifolds in a plane.
+ */
+#define GRID_GRANULARITY 0.04
 
 
 /**

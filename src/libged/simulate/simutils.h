@@ -166,6 +166,15 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 #endif /* SIMUTILS_H_ */
 
 
+/**
+ * This function creates and inserts a RPP
+ * Used to show AABB overlap volume
+ *
+ * TODO: this function will be lowered to librt
+ */
+int
+make_rpp(struct ged *gedp, vect_t max, vect_t min, char* name);
+
 /*
  * Local Variables:
  * tab-width: 8

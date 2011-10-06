@@ -29,9 +29,46 @@
 
 
 int
+get_overlap(struct rigid_body *rbA, struct rigid_body *rbB)
+{
+	bu_log("Calculating overlap between BB of A %s(%f, %f, %f):(%f,%f,%f) \
+			and B %s(%f, %f, %f):(%f,%f,%f)",
+			rbA->rb_namep,
+			V3ARGS(rbA->btbb_min), V3ARGS(rbA->btbb_max),
+			rbB->rb_namep,
+			V3ARGS(rbB->btbb_min), V3ARGS(rbB->btbb_max)
+		  );
+	return GED_OK;
+}
+
+
+int
 generate_manifolds(struct simulation_params *sim_params)
 {
 	/* Shoot lasers */
+
+	struct sim_manifold *current_manifold;
+	struct rigid_body *rb;
+	/*vect_t overlap_max, overlap_min;*/
+
+
+	for (rb = sim_params->head_node; rb != NULL; rb = rb->next) {
+
+		for (current_manifold = rb->bt_manifold; current_manifold != NULL;
+		 current_manifold = current_manifold->next) {
+
+
+			get_overlap(current_manifold->rbA, current_manifold->rbB);
+
+			/* make_rpp(gedp, overlap_max, overlap_min, overlap_name); */
+
+
+		}
+
+
+	}
+
+
 	return GED_OK;
 }
 
