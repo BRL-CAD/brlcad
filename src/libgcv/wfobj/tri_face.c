@@ -24,8 +24,9 @@
  *
  */
 
-#include "bu.h"
 #include "common.h"
+
+#include "bu.h"
 #include "nmg.h"
 #include "raytrace.h"
 
