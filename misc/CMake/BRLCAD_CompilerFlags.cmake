@@ -1,9 +1,12 @@
 # -fast provokes a stack corruption in the shadow computations because
 # of strict aliasing getting enabled.  we _require_
 # -fno-strict-aliasing until someone changes how lists are managed.
+# -fast-math results in non-IEEE floating point math among a handful
+# of other optimizations that cause substantial error in ray tracing
+# and tessellation (and probably more).
+
 IF(${BRLCAD_OPTIMIZED_BUILD} STREQUAL "ON")
 	CHECK_C_FLAG_GATHER(O3 OPTIMIZE_FLAGS)
-	#CHECK_C_FLAG_GATHER(ffast-math OPTIMIZE_FLAGS)
 	CHECK_C_FLAG_GATHER(fstrength-reduce OPTIMIZE_FLAGS)
 	CHECK_C_FLAG_GATHER(fexpensive-optimizations OPTIMIZE_FLAGS)
 	CHECK_C_FLAG_GATHER(finline-functions OPTIMIZE_FLAGS)
