@@ -23,6 +23,7 @@ changes made.  See document footer for additional details.
 --- 2011-07-XX  Release 7.20.4                                     ---
 ----------------------------------------------------------------------
 
+* support for loading archer plugins with spaces in name - Bob Parker
 * added 'exists' object detection command to mged/archer - Cliff Yapp
 * added archer BoT split/flip/sync surface cleanup panel - Bob Parker
 * added new g-dot exporter for hierarchy visualization - Sean Morrison
