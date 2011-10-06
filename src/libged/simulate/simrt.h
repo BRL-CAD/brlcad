@@ -51,11 +51,6 @@
  */
 #define GRID_GRANULARITY 0.04
 
-typedef struct attributes {
-    int attrib_use;
-    int attrib_cnt;
-    char **attrib;
-} attr_table;
 
 /**
  * Shoots rays within the AABB overlap regions only to allow more rays to be shot

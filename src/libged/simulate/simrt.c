@@ -78,7 +78,7 @@ if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(
 	point_t pt;
 
 	/* will contain normal vector where ray enters geometry */
-	 vect_t inormal;
+	vect_t inormal;
 
 	/* will contain normal vector where ray exits geometry */
 	vect_t onormal;
@@ -189,9 +189,26 @@ if_miss(struct application *UNUSED(ap))
  *
  */
 int
-if_overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *InputHdp)
+if_overlap(struct application *ap, struct partition *pp, struct region *reg1,
+		struct region *reg2, struct partition *InputHdp)
 {
-	bu_log("OVERLAP");
+	bu_log("if_overlap: OVERLAP between %s and %s", reg1->reg_name, reg2->reg_name);
+	fastf_t in_dist;
+	fastf_t out_dist;
+	point_t in_point;
+	point_t out_point;
+
+	in_dist = pp->pt_inhit->hit_dist;
+	out_dist = pp->pt_outhit->hit_dist;
+	VJOIN1(in_point, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
+	   ap->a_ray.r_dir);
+	VJOIN1(out_point, ap->a_ray.r_pt, pp->pt_outhit->hit_dist,
+	   ap->a_ray.r_dir);
+
+	bu_log("if_overlap: Entering at (%f,%f,%f) at distance of %f", V3ARGS(in_point), in_dist);
+	bu_log("if_overlap: Exiting  at (%f,%f,%f) at distance of %f", V3ARGS(out_point), out_dist);
+
+
     return rt_defoverlap (ap, pp, reg1, reg2, InputHdp);
 }
 
@@ -208,8 +225,6 @@ generate_manifolds(struct ged *gedp, struct simulation_params *sim_params)
 	/* Raytrace related stuff */
 	struct rt_i *rtip;
 	struct application ap;
-	struct resource res_tab;
-	attr_table a_tab;
 
 	/* Add all sim objects to raytrace instance */
 	/* Make a new rt_i instance from the existing db_i sructure */
@@ -238,21 +253,19 @@ generate_manifolds(struct ged *gedp, struct simulation_params *sim_params)
 			V3ARGS(rtip->mdl_min), V3ARGS(rtip->mdl_max));
 
     /* Initialize the table of resource structures */
-    rt_init_resource(&res_tab, 0, rtip);
+    /* rt_init_resource(&res_tab, 0, rtip); */
 
 	/* initialization of the application structure */
 	RT_APPLICATION_INIT(&ap);
 	ap.a_hit = if_hit;        /* branch to if_hit routine */
 	ap.a_miss = if_miss;      /* branch to if_miss routine */
 	ap.a_overlap = if_overlap;/* branch to if_overlap routine */
-	ap.a_logoverlap = rt_silent_logoverlap;
+	/*ap.a_logoverlap = rt_silent_logoverlap;*/
 	ap.a_onehit = 0;          /* continue through shotline after hit */
-	ap.a_resource = &res_tab;
 	ap.a_purpose = "Manifold ray";
 	ap.a_rt_i = rtip;         /* rt_i pointer */
 	ap.a_zero1 = 0;           /* sanity check, sayth raytrace.h */
 	ap.a_zero2 = 0;           /* sanity check, sayth raytrace.h */
-	ap.a_uptr = (genptr_t)a_tab.attrib;
 
 	/* Set the ray start point and direction rt_shootray() uses these
 	 * two to determine what ray to fire.  In this case we simply
