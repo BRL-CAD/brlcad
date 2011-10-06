@@ -38,6 +38,7 @@ changes made.  See document footer for additional details.
 * fixed memory leak when saving BoT geometry - Nicholas Reed
 * improved mged object name globbing support - Sean Morrison
 * improved bounding box for rpc, epa, ehy, hyp primitives - Cliff Yapp
+* improved handling of degenerate face facetization - Richard Weiss
 * add support for .png file output in rtwizard - Cliff Yapp
 * improved rtwizard's invocation of rt - Cliff Yapp
 * added object path and keep options to conversion.sh - Tom Browder
