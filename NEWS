@@ -58,6 +58,7 @@ changes made.  See document footer for additional details.
 * fixed infinite loop bug plotting NURBS wireframes - Sean Morrison
 * added ringworld proc-db - Erik Greenwald
 * fixed mged Manual page item in help menu - Brandon Hinesley
+* improved 'attr' command to work with read-only .g files - Cliff Yapp
 
 
 ----------------------------------------------------------------------
