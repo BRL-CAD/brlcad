@@ -83,20 +83,20 @@ print_manifold_list(struct rigid_body *rb)
 
     bu_log("print_manifold_list: %s\n", rb->rb_namep);
 
-    for (current_manifold = rb->bt_manifold; current_manifold != NULL;
+    for (current_manifold = rb->head_manifold; current_manifold != NULL;
 	 current_manifold = current_manifold->next) {
 
     	bu_log("--Manifold between %s & %s has %d contacts--\n",
 	       current_manifold->rbA->rb_namep,
 	       current_manifold->rbB->rb_namep,
-	       current_manifold->num_contacts);
+	       current_manifold->num_bt_contacts);
 
-    	for (i=0; i<current_manifold->num_contacts; i++) {
+    	for (i=0; i<current_manifold->num_bt_contacts; i++) {
 	    bu_log("%d, (%f, %f, %f):(%f, %f, %f), n(%f, %f, %f)\n",
 		   i+1,
-		   V3ARGS(current_manifold->rb_contacts[i].ptA),
-		   V3ARGS(current_manifold->rb_contacts[i].ptB),
-		   V3ARGS(current_manifold->rb_contacts[i].normalWorldOnB));
+		   V3ARGS(current_manifold->bt_contacts[i].ptA),
+		   V3ARGS(current_manifold->bt_contacts[i].ptB),
+		   V3ARGS(current_manifold->bt_contacts[i].normalWorldOnB));
     	}
     }
 }
@@ -562,11 +562,11 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
     struct sim_manifold *current_manifold;
     int i;
 
-    for (current_manifold = rb->bt_manifold; current_manifold != NULL;
+    for (current_manifold = rb->head_manifold; current_manifold != NULL;
 	 current_manifold = current_manifold->next) {
 
 
-	if(current_manifold->num_contacts > 0){
+	if(current_manifold->num_bt_contacts > 0){
 
 	    /* Prepare prefixed bounding box primitive name */
 	    bu_vls_sprintf(&name, "%s_%s", current_manifold->rbA->rb_namep, current_manifold->rbB->rb_namep);
@@ -601,46 +601,46 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 	    cmd_args[2] = (char *)0;
 	    num_args = 2;
 
-	    switch(current_manifold->num_contacts) {
+	    switch(current_manifold->num_bt_contacts) {
 		case 1:
 		    bu_log("1 contact got, no manifold drawn");
 		    break;
 
 		case 2:
 		    cmd_args[2] = "arb4";
-		    sprintf(buffer, "%f", current_manifold->rb_contacts[0].ptA[0]);
+		    sprintf(buffer, "%f", current_manifold->bt_contacts[0].ptA[0]);
 		    cmd_args[3] = bu_strdup(buffer);
-		    sprintf(buffer, "%f", current_manifold->rb_contacts[0].ptA[1]);
+		    sprintf(buffer, "%f", current_manifold->bt_contacts[0].ptA[1]);
 		    cmd_args[4] = bu_strdup(buffer);
-		    sprintf(buffer, "%f", current_manifold->rb_contacts[0].ptA[2]);
+		    sprintf(buffer, "%f", current_manifold->bt_contacts[0].ptA[2]);
 		    cmd_args[5] = bu_strdup(buffer);
 
-		    sprintf(buffer, "%f", current_manifold->rb_contacts[1].ptA[0]);
+		    sprintf(buffer, "%f", current_manifold->bt_contacts[1].ptA[0]);
 		    cmd_args[6] = bu_strdup(buffer);
-		    sprintf(buffer, "%f", current_manifold->rb_contacts[1].ptA[1]);
+		    sprintf(buffer, "%f", current_manifold->bt_contacts[1].ptA[1]);
 		    cmd_args[7] = bu_strdup(buffer);
-		    sprintf(buffer, "%f", current_manifold->rb_contacts[1].ptA[2]);
+		    sprintf(buffer, "%f", current_manifold->bt_contacts[1].ptA[2]);
 		    cmd_args[8] = bu_strdup(buffer);
 
-		    sprintf(buffer, "%f", current_manifold->rb_contacts[1].ptB[0]);
+		    sprintf(buffer, "%f", current_manifold->bt_contacts[1].ptB[0]);
 		    cmd_args[9] = bu_strdup(buffer);
-		    sprintf(buffer, "%f", current_manifold->rb_contacts[1].ptB[1]);
+		    sprintf(buffer, "%f", current_manifold->bt_contacts[1].ptB[1]);
 		    cmd_args[10] = bu_strdup(buffer);
-		    sprintf(buffer, "%f", current_manifold->rb_contacts[1].ptB[2]);
+		    sprintf(buffer, "%f", current_manifold->bt_contacts[1].ptB[2]);
 		    cmd_args[11] = bu_strdup(buffer);
 
-		    sprintf(buffer, "%f", current_manifold->rb_contacts[0].ptB[0]);
+		    sprintf(buffer, "%f", current_manifold->bt_contacts[0].ptB[0]);
 		    cmd_args[12] = bu_strdup(buffer);
-		    sprintf(buffer, "%f", current_manifold->rb_contacts[0].ptB[1]);
+		    sprintf(buffer, "%f", current_manifold->bt_contacts[0].ptB[1]);
 		    cmd_args[13] = bu_strdup(buffer);
-		    sprintf(buffer, "%f", current_manifold->rb_contacts[0].ptB[2]);
+		    sprintf(buffer, "%f", current_manifold->bt_contacts[0].ptB[2]);
 		    cmd_args[14] = bu_strdup(buffer);
 
 		    cmd_args[15] = (char *)0;
 		    num_args = 15;
 
-		    VADD2SCALE(from, current_manifold->rb_contacts[0].ptA,
-			       current_manifold->rb_contacts[1].ptB, 0.5);
+		    VADD2SCALE(from, current_manifold->bt_contacts[0].ptA,
+			       current_manifold->bt_contacts[1].ptB, 0.5);
 		    break;
 
 		case 3:
@@ -650,39 +650,39 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 		case 4:
 		    cmd_args[2] = "arb8";
 		    for (i=0; i<4; i++) {
-			sprintf(buffer, "%f", current_manifold->rb_contacts[i].ptA[0]);
+			sprintf(buffer, "%f", current_manifold->bt_contacts[i].ptA[0]);
 			cmd_args[3+i*3] = bu_strdup(buffer);
-			sprintf(buffer, "%f", current_manifold->rb_contacts[i].ptA[1]);
+			sprintf(buffer, "%f", current_manifold->bt_contacts[i].ptA[1]);
 			cmd_args[4+i*3] = bu_strdup(buffer);
-			sprintf(buffer, "%f", current_manifold->rb_contacts[i].ptA[2]);
+			sprintf(buffer, "%f", current_manifold->bt_contacts[i].ptA[2]);
 			cmd_args[5+i*3] = bu_strdup(buffer);
 
-			sprintf(buffer, "%f", current_manifold->rb_contacts[i].ptB[0]);
+			sprintf(buffer, "%f", current_manifold->bt_contacts[i].ptB[0]);
 			cmd_args[15+i*3] = bu_strdup(buffer);
-			sprintf(buffer, "%f", current_manifold->rb_contacts[i].ptB[1]);
+			sprintf(buffer, "%f", current_manifold->bt_contacts[i].ptB[1]);
 			cmd_args[16+i*3] = bu_strdup(buffer);
-			sprintf(buffer, "%f", current_manifold->rb_contacts[i].ptB[2]);
+			sprintf(buffer, "%f", current_manifold->bt_contacts[i].ptB[2]);
 			cmd_args[17+i*3] = bu_strdup(buffer);
 
-			/* current_manifold->rb_contacts[i].ptA[0],
-			   current_manifold->rb_contacts[i].ptA[1],
-			   current_manifold->rb_contacts[i].ptA[2],
-			   current_manifold->rb_contacts[i].ptB[0],
-			   current_manifold->rb_contacts[i].ptB[1],
-			   current_manifold->rb_contacts[i].ptB[2],
-			   current_manifold->rb_contacts[i].normalWorldOnB[0],
-			   current_manifold->rb_contacts[i].normalWorldOnB[1],
-			   current cmd_argsrent_manifold->rb_contacts[i].normalWorldOnB[2]);*/
+			/* current_manifold->bt_contacts[i].ptA[0],
+			   current_manifold->bt_contacts[i].ptA[1],
+			   current_manifold->bt_contacts[i].ptA[2],
+			   current_manifold->bt_contacts[i].ptB[0],
+			   current_manifold->bt_contacts[i].ptB[1],
+			   current_manifold->bt_contacts[i].ptB[2],
+			   current_manifold->bt_contacts[i].normalWorldOnB[0],
+			   current_manifold->bt_contacts[i].normalWorldOnB[1],
+			   current cmd_argsrent_manifold->bt_contacts[i].normalWorldOnB[2]);*/
 		    }
 		    cmd_args[27] = (char *)0;
 		    num_args = 27;
 
-		    VADD2SCALE(from, current_manifold->rb_contacts[0].ptA,
-			       current_manifold->rb_contacts[2].ptB, 0.5);
+		    VADD2SCALE(from, current_manifold->bt_contacts[0].ptA,
+			       current_manifold->bt_contacts[2].ptB, 0.5);
 		    break;
 
 		default:
-		    bu_log("%d contacts got, no manifold drawn", current_manifold->num_contacts);
+		    bu_log("%d contacts got, no manifold drawn", current_manifold->num_bt_contacts);
 		    cmd_args[2] = (char *)0;
 		    num_args = 2;
 		    break;
@@ -707,11 +707,11 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 		add_to_comb(gedp, sim_params->sim_comb_name, bu_vls_addr(&prefixed_reg_name));
 
 		/* Finally draw the normal */
-		VSCALE(scaled_normal, current_manifold->rb_contacts[0].normalWorldOnB, NORMAL_SCALE_FACTOR);
+		VSCALE(scaled_normal, current_manifold->bt_contacts[0].normalWorldOnB, NORMAL_SCALE_FACTOR);
 		VADD2(to, scaled_normal, from);
 
 		bu_log("insert_manifolds: line (%f,%f,%f)-> (%f,%f,%f)-> (%f,%f,%f) \n",
-		       V3ARGS(current_manifold->rb_contacts[0].normalWorldOnB),
+		       V3ARGS(current_manifold->bt_contacts[0].normalWorldOnB),
 		       V3ARGS(to),
 		       V3ARGS(scaled_normal));
 
@@ -720,7 +720,7 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 
 	    }/*  if-num_args */
 
-	}/* if-num_contacts */
+	}/* if-num_bt_contacts */
 
     } /* end for-manifold */
 

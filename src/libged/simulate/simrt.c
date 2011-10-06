@@ -66,11 +66,13 @@ generate_manifolds(struct ged *gedp, struct simulation_params *sim_params)
 	char *prefix_overlap = "overlap_";
 	struct bu_vls overlap_name = BU_VLS_INIT_ZERO;
 
+	/* Add all sim objects to raytrace instance */
+
 
 	/* Check all rigid bodies for overlaps using their manifold lists */
 	for (rb = sim_params->head_node; rb != NULL; rb = rb->next) {
 
-		for (current_manifold = rb->bt_manifold; current_manifold != NULL;
+		for (current_manifold = rb->head_manifold; current_manifold != NULL;
 		 current_manifold = current_manifold->next) {
 
 			/* Get the overlap region */
@@ -84,9 +86,8 @@ generate_manifolds(struct ged *gedp, struct simulation_params *sim_params)
 					current_manifold->rbA->rb_namep,
 					current_manifold->rbB->rb_namep);
 
-			/* Make the overlpa volume RPP */
+			/* Make the overlap volume RPP */
 			make_rpp(gedp, overlap_min, overlap_max, bu_vls_addr(&overlap_name));
-			applycolor(gedp, bu_vls_addr(&overlap_name), 0, 210, 0);
 
 			/* Add the region to the result of the sim so it will be drawn too */
 			add_to_comb(gedp, sim_params->sim_comb_name, bu_vls_addr(&overlap_name));

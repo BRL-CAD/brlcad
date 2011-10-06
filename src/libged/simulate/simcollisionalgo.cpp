@@ -110,26 +110,26 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* body0,
 	current_manifold->rbA = rbA;
 	current_manifold->rbB = rbB;
 
-	if (rbB->bt_manifold == NULL) {
-	    rbB->bt_manifold = current_manifold;
+	if (rbB->head_manifold == NULL) {
+	    rbB->head_manifold = current_manifold;
 	} else{
 	    //Go upto the last manifold, keeping a ptr 1 node behind
-	    struct sim_manifold *p1 = rbB->bt_manifold, *p2;
+	    struct sim_manifold *p1 = rbB->head_manifold, *p2;
 	    while (p1 != NULL) {
 		p2 = p1;
 		p1 = p1->next;
 	    }
 
 	    p2->next = current_manifold;
-	    //print_manifold_list(rb->bt_manifold);
+	    //print_manifold_list(rb->head_manifold);
 	}
-	rbB->num_bt_manifolds++;
+	rbB->num_manifolds++;
 
 	bu_log("processCollision(box/box): %s & %s \n", rbA->rb_namep, rbB->rb_namep);
 
 	//Get the number of points in this manifold
 	int num_contacts = contactManifold->getNumContacts();
-	current_manifold->num_contacts = num_contacts;
+	current_manifold->num_bt_contacts = num_contacts;
 	int i;
 
 	bu_log("processCollision : Manifold contacts : %d\n", num_contacts);
@@ -141,9 +141,9 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* body0,
 	    btVector3 ptA = pt.getPositionWorldOnA();
 	    btVector3 ptB = pt.getPositionWorldOnB();
 
-	    VMOVE(current_manifold->rb_contacts[i].ptA, ptA);
-	    VMOVE(current_manifold->rb_contacts[i].ptB, ptB);
-	    VMOVE(current_manifold->rb_contacts[i].normalWorldOnB, pt.m_normalWorldOnB);
+	    VMOVE(current_manifold->bt_contacts[i].ptA, ptA);
+	    VMOVE(current_manifold->bt_contacts[i].ptB, ptB);
+	    VMOVE(current_manifold->bt_contacts[i].normalWorldOnB, pt.m_normalWorldOnB);
 
 	    bu_log("%d, %s(%f, %f, %f) , %s(%f, %f, %f), n(%f, %f, %f)\n",
 		   i+1,
