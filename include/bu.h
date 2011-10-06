@@ -3666,7 +3666,7 @@ BU_EXPORT extern int bu_mem_barriercheck();
  * This routine will return "." if other valid results are not available
  * but should never return NULL.
  */
-BU_EXPORT extern char *bu_dirname(const char *cp);
+BU_EXPORT extern char *bu_dirname(const char *path);
 
 /**
  * Given a string containing a hierarchical path, return a dynamic
@@ -3698,7 +3698,7 @@ BU_EXPORT extern char *bu_dirname(const char *cp);
  * @n	a/		a
  * @n	///		/
  */
-BU_EXPORT extern char *bu_basename(const char *cp);
+BU_EXPORT extern char *bu_basename(const char *path);
 
 /** @} */
 
