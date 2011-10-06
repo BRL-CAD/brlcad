@@ -32,6 +32,8 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
+* test new edit command
+
 * hook marching cubes into libged facetize
 
 * fix osX link line to stop mixing X libs (causes segfault on GL stuff)
