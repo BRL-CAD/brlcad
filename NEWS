@@ -104,6 +104,7 @@ cross-platform maintainability.
 * improved 'attr' command to work with read-only .g files - Cliff Yapp
 * cross-platform 64-bit ISST (cmake-only) - Cliff Yapp, Erik Greenwald
 * fixed mged zoom out mouse binding on Linux/*BSD - Cliff Yapp
+* improved step-g importer ellipse and conic support - Keith Bowman
 * improved multiple path handling for search command - Cliff Yapp
 * fixed segment splitting tessellation conversion bug - Richard Weiss
 * fixed crash during facetization of large models - Richard Weiss
