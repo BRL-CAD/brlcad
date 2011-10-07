@@ -1,0 +1,294 @@
+
+<!-- Builtin startup document for hv3.  -->
+
+<html>
+  <head>
+    <style>
+
+      /* This bit of the stylesheet configures the layout: div.heading at
+       * the top, div.sidebar on the left and div.content takes up the rest
+       * of the page. */
+
+      body { 
+        margin: 10px 2ex;
+        background-color: #d9d9d9;
+        background-color: lightsteelblue;
+      }
+
+      .heading,.links,.content {
+        margin: 10px 0;
+      }
+      .heading,.content {
+        padding: 10px 2ex;
+      }
+
+      .heading {
+          font-size:300% ; 
+          text-align: center; 
+          background: white;
+          /* border: 2px solid black ; */
+      }
+
+      .content {
+          background: white;
+          /* border: solid 2px black; */
+          position: absolute;
+          left: 27ex;
+          right: 2ex;
+      }
+
+      .content :link    { color: blue; }
+      .content :visited { color: purple; }
+      .content :link, .content :visited { text-decoration: none }
+      .content :link:hover, .content :visited:hover { 
+           text-decoration: underline 
+      }
+
+      .links {
+        background: white;
+        position: absolute;
+        width: 24ex;
+        left: 2ex;
+        padding: 0;
+      }
+      .linksborder {
+        /* border: solid 2px black; */
+        padding-bottom: 1px;
+        margin: 0;
+      }
+
+      .links h3 {
+        margin: 0;
+        padding-left: 1ex;
+        padding-top: 1ex;
+      }
+      .links h3:after {
+        content: ":";
+      }
+      .links ul {
+        padding: 0;
+        margin: 0;
+      }
+      .links li {
+        display: block;
+        padding: 0;
+        margin: 0;
+      }
+      .links li a {
+        display: block;
+        line-height: 1.5;
+        text-decoration: none;
+        margin: 1px;
+        padding-left: 3ex;
+
+        font-weight: bold;
+        border: 1px solid black;
+        border-left: none;
+        border-right: none;
+
+        font-size: 90%;
+        color: black;
+      }
+      .links li a:hover {
+        background-color: #d9d9d9;
+        background-color: lightsteelblue;
+      }
+ 
+      div.warning {
+        margin: 5px 20px;
+        padding: 5px;
+        border: solid 2px red;
+      }
+      span.warning {
+        color: red;
+        display: block;
+        font-weight: bold;
+        text-align: center;
+      }
+
+      h1, h3 {color : purple}
+
+    </style>
+  </head>
+  <body onload="document.getElementById('warning').style.display='block';">
+
+    <h1 class="heading">
+      Html Viewer 3
+    </h1>
+
+    <div class="links">
+      <div class="linksborder">
+
+      <div class="linkset">
+      <h3>Tcl</h3>
+        <ul>
+          <li> <a href="http://www.tcl.tk">Tcl site</a>
+          <li> <a href="http://mini.net/tcl/">Tcl wiki</a>
+          <li> <a href="http://www.activestate.com/">ActiveState</a>
+          <li> <a href="http://www.evolane.com/">Evolane (eTcl)</a>
+          <li> <a href="http://groups.google.com/group/comp.lang.tcl">comp.lang.tcl</a>
+          <li> <a href="http://www.tclscripting.com/">tclscripting.com</a>
+        </ul>
+      </div>
+
+      <div class="linkset">
+        <h3>WWW</h3>
+        <ul>
+          <li><a href="http://www.w3.org">W3 Consortium</a> 
+          <li><a href="http://www.w3.org/TR/CSS1">CSS 1.0</a>
+          <li><a href="http://www.w3.org/TR/CSS21/">CSS 2.1</a>
+          <li><a href="http://www.w3.org/TR/html4/">HTML 4.01</a>
+          <li><a href="http://www.w3.org/DOM/">W3 DOM Pages</a>
+          <li><a href="http://www.whatwg.org/specs/web-apps/current-work/">
+            Web Apps 1.0</a>
+          <li><a href="http://www.webstandards.org/files/acid2/test.html">
+            Acid 2 Test</a>
+        </ul>
+      </div>
+
+      <div class="linkset">
+        <h3>Tkhtml</h3>
+        <ul>
+          <li> <a href="http://tkhtml.tcl.tk">tkhtml.tcl.tk</a>
+          <li> <a href="http://groups.google.com/group/tkhtml3">Google Group</a>
+          <li> <a href="http://freshmeat.net/hv3">Hv3 @ freshmeat.net</a>
+        </ul>
+      </div>
+
+      <div class="linkset">
+        <h3>Friends</h3>
+        <ul>
+          <li><a href="http://www.sqlite.org">Sqlite</a>
+          <li><a href="http://www.purl.org/net/oakley/tcl/combobox/index.html">
+             Combobox</a>
+
+          <li><a href="http://www.pps.jussieu.fr/~jch/software/polipo/">
+             Polipo</a>
+
+          <li><a href="http://www.adaptive-enterprises.com.au/~d/software/see/">
+            SEE</a>
+
+          <li><a href="http://e-lusion.com/design/greyscale">Icons</a>
+        </ul>
+      </div>
+
+      </div>
+    </div>
+
+    <div class=content>
+
+    <h1>Release Notes - Alpha 14</h1>
+
+    <div id="warning" class=warning style="display:none">
+      <span class=warning>WARNING</span>
+      The <b>very experimental</b> javascript is enabled.  Interpret that
+      statement however you will. To disable, uncheck the "View-&gt;Enable
+      ECMAScript" menu option.
+    </div>
+
+    <p> Congratulations on successfully running Hv3 - the minimalist browser
+	designed to test Tkhtml3. The following release notes apply to the 14th
+        alpha release of both Hv3 and Tkhtml3. Please report bugs in Hv3 or
+        Tkhtml3 here:
+    </p>
+    <a href="http://tkhtml.tcl.tk/cvstrac/timeline">
+        http://tkhtml.tcl.tk/cvstrac/timeline
+    </a>
+
+    <p>
+        Click "Ticket" near the top right hand corner to access the bug
+	report form. It is not only fun, but a moral obligation to report 
+        bugs!
+</p>
+
+    <h3>1. The -statefile option</h3>
+      <p>It is possible to configure Hv3 to use persistent storage for the
+         following application state data:
+         <ul><li>Http cookies.
+             <li>The list of visited URIs (used for auto-completion in the
+                 location bar and for coloring visited hyperlinks).
+         </ul>
+      <p>To configure hv3 to use a "state-file", add a -statefile option
+         to the command line used to start Hv3. For example, if using a
+         self-contained binary from http://tkhtml.tcl.tk, something like:
+<pre>
+  hv3-linux-x86 -statefile /home/user/hv3state.db
+</pre>
+
+      <p>The state-file is actually an SQLite database. This means that 
+         multiple instances of hv3 running concurrently share cookies
+         and the list of visited URIs (if they are configured to use the
+         same state-file).
+
+      <p>By default, if no -statefile option is specified, Hv3 stores
+	 everything in memory. In this case all cookie and visited URI data is
+         discarded on exit.
+
+    <h3>2. Use hv3_polipo!</h3>
+      <p>It is best to use Hv3 in concert with hv3_polipo, a lightweight
+         web proxy. If you obtained a pre-built package from tkhtml.tcl.tk
+	 then this <i>should</i> happen automatically. Otherwise, check
+	 the website for instructions for obtaining it. Using hv3_polipo has
+         the following advantages: 
+	 <ul><li>DNS lookups are performed asynchronously in an external
+                 process. This means the Hv3 GUI doesn't freeze while waiting
+                 for a response from the DNS server.
+	     <li>The generated network traffic uses HTTP 1.1 features
+		 (i.e. pipelining) to significantly improve performance.
+                 Without hv3_polipo Hv3 generates HTTP 1.0 network traffic.
+         </ul>
+      <p>To test if hv3_polipo is in use, select the Debug-&gt;Polipo menu
+	 option. If the log window that pops up contains (amongst other things)
+	 a line like "ERROR: No hv3_polipo binary found.", then hv3_polipo is
+	 not in use. If it contains a line similar to "INFO:  Polipo
+         (re)started successfully.", then it is.
+
+    <h3>3. Cookies Policy</h3>
+      <p>You should be aware that Hv3 unconditionally accepts all cookies.
+         Eventually there will be an interface to configure this.
+
+    <h3>4. HTTPS URIs</h3>
+      <p>Hv3 can load https:// URIs if the Tcl "tls" package is installed.
+         The pre-built packages above all contain this.
+
+    <h1>Credits</h1>
+      <p>
+	As well as the bits created by me, Dan Kennedy, and Tcl/Tk itself,
+	Hv3 uses software components developed by some very talented
+	individuals. Most have been slightly modified and may have had bugs
+        introduced, so don't blame them. Much gratitude to everyone involved
+        in the creation of the following components:
+      </p>
+    <ul>
+
+      <li>Tcl combobox widget by Bryan Oakley.
+           <a href="http://www.purl.org/net/oakley/tcl/combobox/index.html">
+             http://www.purl.org/net/oakley/tcl/combobox/index.html</a>.
+
+      <li>The polipo http proxy by Juliusz Chroboczek.
+           <a href="http://www.pps.jussieu.fr/~jch/software/polipo/">
+             http://www.pps.jussieu.fr/~jch/software/polipo/</a>.
+
+      <li>The "Simple ECMAScript Engine" by David Leonard".
+         <a href="http://www.adaptive-enterprises.com.au/~d/software/see/">
+         http://www.adaptive-enterprises.com.au/~d/software/see/
+         </a>
+
+      <li>Icons created by Ian Main.
+           <a href="http://e-lusion.com/design/greyscale">
+             http://e-lusion.com/design/greyscale</a>.
+	   Used under the terms of the "Creative Commons Attribution 2.0
+           Australia" license.  
+
+      <li>SQLite, and embedded database system created by D. Richard Hipp.
+           <a href="http://www.sqlite.org">http://www.sqlite.org</a>.
+
+      <li>TLS, a Tcl binding to openssh.
+
+      <li>The Tk Img package, extending Tcl/Tk to read most image formats used
+          on the web.
+
+    </div>
+  </body>
+</html>
+
