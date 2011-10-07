@@ -195,32 +195,25 @@ line(struct ged *gedp, char* name, point_t from, point_t to,
     char *cmd_args[20];
     int rv;
     char buffer_str[MAX_FLOATING_POINT_STRLEN];
-    char *prefix_arrow_line = "arrow_line_";
-    char *prefix_arrow_head = "arrow_head_";
-    struct bu_vls arrow_line_vls = BU_VLS_INIT_ZERO, arrow_head_vls = BU_VLS_INIT_ZERO;
-    char *prefixed_arrow_line, *prefixed_arrow_head;
+    char *suffix_reg = "_reg";
+    struct bu_vls reg_vls = BU_VLS_INIT_ZERO;
     vect_t v;
 
     /* Arrow line primitive name */
-    bu_vls_sprintf(&arrow_line_vls, "%s%s", prefix_arrow_line, name);
-    prefixed_arrow_line = bu_vls_addr(&arrow_line_vls);
+    bu_vls_sprintf(&reg_vls, "%s%s", name, suffix_reg);
 
-    /* Arrow line primitive name */
-    bu_vls_sprintf(&arrow_head_vls, "%s%s", prefix_arrow_head, name);
-    prefixed_arrow_head = bu_vls_addr(&arrow_head_vls);
-
-    if (kill(gedp, prefixed_arrow_line) != GED_OK) {
-	bu_log("line: ERROR Could not delete existing \"%s\"\n", prefixed_arrow_line);
+    if (kill(gedp, name) != GED_OK) {
+	bu_log("line: ERROR Could not delete existing \"%s\"\n", name);
 	return GED_ERROR;
     }
 
-    if (kill(gedp, prefixed_arrow_head) != GED_OK) {
-	bu_log("line: ERROR Could not delete existing \"%s\"\n", prefixed_arrow_head);
+    if (kill(gedp, bu_vls_addr(&reg_vls)) != GED_OK) {
+	bu_log("line: ERROR Could not delete existing \"%s\"\n", bu_vls_addr(&reg_vls));
 	return GED_ERROR;
     }
 
     cmd_args[0] = "in";
-    cmd_args[1] = prefixed_arrow_line;
+    cmd_args[1] = name;
     cmd_args[2] = "bot";
     cmd_args[3] = "3";
     cmd_args[4] = "1";
@@ -249,46 +242,13 @@ line(struct ged *gedp, char* name, point_t from, point_t to,
 
     rv = ged_in(gedp, 19, (const char **)cmd_args);
     if (rv != GED_OK) {
-	bu_log("line: ERROR Could not draw arrow line \"%s\" (%f,%f,%f)-(%f,%f,%f) \n",
-	       prefixed_arrow_line, V3ARGS(from), V3ARGS(to));
+	bu_log("line: ERROR Could not draw line \"%s\" (%f,%f,%f)-(%f,%f,%f) \n",
+	       name, V3ARGS(from), V3ARGS(to));
 	return GED_ERROR;
     }
 
-    add_to_comb(gedp, name, prefixed_arrow_line);
-
-    VSUB2(v, to, from);
-    VUNITIZE(v);
-    VSCALE(v, v, 0.1);
-    bu_log("line: Unit vector (%f,%f,%f)\n", V3ARGS(v));
-
-    cmd_args[0] = "in";
-    cmd_args[1] = prefixed_arrow_head;
-    cmd_args[2] = "trc";
-
-    sprintf(buffer_str, "%f", to[0]); cmd_args[3] = bu_strdup(buffer_str);
-    sprintf(buffer_str, "%f", to[1]); cmd_args[4] = bu_strdup(buffer_str);
-    sprintf(buffer_str, "%f", to[2]); cmd_args[5] = bu_strdup(buffer_str);
-
-    sprintf(buffer_str, "%f", v[0]); cmd_args[6] = bu_strdup(buffer_str);
-    sprintf(buffer_str, "%f", v[1]); cmd_args[7] = bu_strdup(buffer_str);
-    sprintf(buffer_str, "%f", v[2]); cmd_args[8] = bu_strdup(buffer_str);
-
-
-    sprintf(buffer_str, "%f", ARROW_BASE_RADIUS); cmd_args[9] = bu_strdup(buffer_str);
-    sprintf(buffer_str, "%f", ARROW_TIP_RADIUS);  cmd_args[10] = bu_strdup(buffer_str);
-
-    cmd_args[11] = (char *)0;
-
-    print_command(cmd_args, 11);
-
-    rv = ged_in(gedp, 11, (const char **)cmd_args);
-    if (rv != GED_OK) {
-	bu_log("line: ERROR Could not draw arrow head \"%s\" (%f,%f,%f)-(%f,%f,%f) \n",
-	       prefixed_arrow_head, V3ARGS(from), V3ARGS(to));
-	return GED_ERROR;
-    }
-
-    add_to_comb(gedp, name, prefixed_arrow_head);
+    add_to_comb(gedp, bu_vls_addr(&reg_vls), name);
+    apply_material(gedp, bu_vls_addr(&reg_vls), "plastic tr 0.9", r, g, b);
 
     return GED_OK;
 }

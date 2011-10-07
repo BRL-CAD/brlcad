@@ -51,9 +51,48 @@
  */
 #define GRID_GRANULARITY 0.04
 
+/*
+ * This structure is a single node of a circularly linked list
+ * of overlap regions: similar to the one in nirt/usrfrmt.h
+ */
+struct overlap {
+    struct application *ap;
+    struct partition *pp;
+    struct region *reg1;
+    struct region *reg2;
+    fastf_t in_dist;
+    fastf_t out_dist;
+    point_t in_point;
+    point_t out_point;
+    struct overlap *forw;
+    struct overlap *backw;
+};
+
+
+/*
+ * This structure is a single node of a circularly linked list
+ * of hit regions, similar to struct hit from raytrace.h
+ */
+struct hit_reg {
+    struct application *ap;
+    struct partition *pp;
+    const char *reg_name;
+    struct soltab *in_stp;
+    struct soltab *out_stp;
+    fastf_t in_dist;
+    fastf_t out_dist;
+    point_t in_point;
+    point_t out_point;
+    vect_t in_normal;
+    vect_t out_normal;
+    struct curvature cur;
+    int	hit_surfno;			/**< @brief solid-specific surface indicator */
+    struct hit_reg *forw;
+    struct hit_reg *backw;
+};
 
 /**
- * Shoots rays within the AABB overlap regions only to allow more rays to be shot
+ * Shoots rays within the AABB overlap regions only, to allow more rays to be shot
  * in a grid of finer granularity and to increase performance.
  */
 int
