@@ -258,7 +258,7 @@ IF(NOT HAVE_REALPATH)
    ADD_TCL_CFLAG(NO_REALPATH)
 ENDIF(NOT HAVE_REALPATH)
 
-SC_TCL_GETADDRINFO()
+SC_TCL_IPV6()
 
 # Thread safe tests - need to go over macros and
 # get the right logic going here
