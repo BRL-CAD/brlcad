@@ -2,11 +2,8 @@
 %include {
 #include <assert.h>
 
-/* TODO: yyerrstatus is a holdover from bison. It either needs to be used or
- * removed.
- */
-int yyerrstatus;
-#define yyerrok /* (yyerrstatus = 0) */
+int yyerrstatus = 0;
+#define yyerrok (yyerrstatus = 0)
 
 int yylval;
 
@@ -227,43 +224,43 @@ int yylval;
 				/* group_ref + attr_ref - see rule for */
 				/* qualifier) */
     };
-}
+} /* include */
 
-%type case_action	{ Case_Item }
-%type case_otherwise	{ Case_Item }
-%type entity_body	{ struct entity_body }
+%type case_action			{ Case_Item }
+%type case_otherwise			{ Case_Item }
+%type entity_body			{ struct entity_body }
 
-%type aggregate_init_element	{ Expression }
-%type aggregate_initializer	{ Expression }
-%type assignable		{ Expression }
-%type attribute_decl		{ Expression }
-%type by_expression		{ Expression }
-%type constant			{ Expression }
-%type expression		{ Expression }
-%type function_call		{ Expression }
-%type general_ref		{ Expression }
-%type group_ref			{ Expression }
-%type identifier		{ Expression }
-%type initializer		{ Expression }
-%type interval			{ Expression }
-%type literal			{ Expression }
-%type local_initializer		{ Expression }
-%type precision_spec		{ Expression }
-%type query_expression		{ Expression }
-%type query_start		{ Expression }
-%type simple_expression		{ Expression }
-%type unary_expression		{ Expression }
-%type supertype_expression	{ Expression }
-%type until_control		{ Expression }
-%type while_control		{ Expression }
+%type aggregate_init_element		{ Expression }
+%type aggregate_initializer		{ Expression }
+%type assignable			{ Expression }
+%type attribute_decl			{ Expression }
+%type by_expression			{ Expression }
+%type constant				{ Expression }
+%type expression			{ Expression }
+%type function_call			{ Expression }
+%type general_ref			{ Expression }
+%type group_ref				{ Expression }
+%type identifier			{ Expression }
+%type initializer			{ Expression }
+%type interval				{ Expression }
+%type literal				{ Expression }
+%type local_initializer			{ Expression }
+%type precision_spec			{ Expression }
+%type query_expression			{ Expression }
+%type query_start			{ Expression }
+%type simple_expression			{ Expression }
+%type unary_expression			{ Expression }
+%type supertype_expression		{ Expression }
+%type until_control			{ Expression }
+%type while_control			{ Expression }
 
-%type function_header	{ Integer }
-%type fh_lineno		{ Integer }
-%type rule_header	{ Integer }
-%type rh_start		{ Integer }
-%type rh_get_line	{ Integer }
-%type procedure_header	{ Integer }
-%type ph_get_line	{ Integer }
+%type function_header			{ Integer }
+%type fh_lineno				{ Integer }
+%type rule_header			{ Integer }
+%type rh_start				{ Integer }
+%type rh_get_line			{ Integer }
+%type procedure_header			{ Integer }
+%type ph_get_line			{ Integer }
 
 %type action_body			{ Linked_List }
 %type actual_parameters			{ Linked_List }
@@ -300,7 +297,7 @@ int yylval;
 %type qualified_attr_list		{ Linked_List }
 /* remove labelled_attrib_list if this works */
 
-%type rel_op	{ Op_Code }
+%type rel_op			{ Op_Code }
 
 %type optional_or_unique	{ struct type_flags }
 %type optional_fixed		{ struct type_flags }
@@ -308,9 +305,9 @@ int yylval;
 %type var			{ struct type_flags }
 %type unique			{ struct type_flags }
 
-%type qualified_attr	{ Qualified_Attr* }
+%type qualified_attr		{ Qualified_Attr* }
 
-%type qualifier	{ struct qualifier }
+%type qualifier			{ struct qualifier }
 
 %type alias_statement		{ Statement }
 %type assignment_statement	{ Statement }
@@ -324,18 +321,18 @@ int yylval;
 %type skip_statement		{ Statement }
 %type statement			{ Statement }
 
-%type subsuper_decl	{ struct subsuper_decl }
+%type subsuper_decl		{ struct subsuper_decl }
 
-%type supertype_decl	{ struct subtypes }
-%type supertype_factor	{ struct subtypes }
+%type supertype_decl		{ struct subtypes }
+%type supertype_factor		{ struct subtypes }
 
-%type function_id	{ Symbol* }
-%type procedure_id	{ Symbol* }
+%type function_id		{ Symbol* }
+%type procedure_id		{ Symbol* }
 
-%type attribute_type	{ Type }
-%type defined_type	{ Type }
-%type parameter_type	{ Type }
-%type generic_type	{ Type }
+%type attribute_type		{ Type }
+%type defined_type		{ Type }
+%type parameter_type		{ Type }
+%type generic_type		{ Type }
 
 %type basic_type		{ TypeBody }
 %type select_type		{ TypeBody }
@@ -350,51 +347,47 @@ int yylval;
 %type set_or_bag_of_entity	{ struct type_either }
 %type type			{ struct type_either }
 
-%type cardinality_op	{ struct upper_lower }
-%type index_spec	{ struct upper_lower }
-%type limit_spec	{ struct upper_lower }
+%type cardinality_op		{ struct upper_lower }
+%type index_spec		{ struct upper_lower }
+%type limit_spec		{ struct upper_lower }
 
 %type inverse_attr		{ Variable }
 %type derived_attribute		{ Variable }
 %type rule_formal_parameter	{ Variable }
 
-%type where_clause	{ Where }
+%type where_clause		{ Where }
 
 
-%left	TOK_EQUAL		TOK_GREATER_EQUAL	TOK_GREATER_THAN
-TOK_IN			TOK_INST_EQUAL		TOK_INST_NOT_EQUAL
-TOK_LESS_EQUAL		TOK_LESS_THAN		TOK_LIKE
-TOK_NOT_EQUAL.
+%left	TOK_EQUAL
+	TOK_GREATER_EQUAL
+	TOK_GREATER_THAN
+	TOK_IN
+	TOK_INST_EQUAL
+	TOK_INST_NOT_EQUAL
+	TOK_LESS_EQUAL
+	TOK_LESS_THAN
+	TOK_LIKE TOK_NOT_EQUAL.  
 
-%left	TOK_MINUS		TOK_PLUS
-TOK_OR			TOK_XOR.
+%left	TOK_MINUS
+	TOK_PLUS
+	TOK_OR
+	TOK_XOR.
 
-%left	TOK_DIV			TOK_MOD			TOK_REAL_DIV
-TOK_TIMES
-TOK_AND			TOK_ANDOR
-TOK_CONCAT_OP. /*direction doesn't really matter, just priority */
+%left	TOK_DIV
+	TOK_MOD
+	TOK_REAL_DIV
+	TOK_TIMES
+	TOK_AND
+	TOK_ANDOR
+	TOK_CONCAT_OP.
 
-%right	TOK_EXP.
+%right TOK_EXP.
 
-%left	TOK_NOT.
+%left TOK_NOT.
 
-
-%nonassoc
-TOK_DOT
-TOK_BACKSLASH
-TOK_LEFT_BRACKET.
-
-/*
-   >> not valid lemon syntax, but helpful in casting things later
-%token <string>		TOK_STRING_LITERAL	TOK_STRING_LITERAL_ENCODED
-%token <symbol>		TOK_BUILTIN_FUNCTION	TOK_BUILTIN_PROCEDURE
-TOK_IDENTIFIER		TOK_SELF
-%token <iVal>		TOK_INTEGER_LITERAL
-%token <rVal>		TOK_REAL_LITERAL
-%token <logical>	TOK_LOGICAL_LITERAL
-%token <binary>		TOK_BINARY_LITERAL
-%token <string>		TOK_SEMICOLON
-*/
+%nonassoc	TOK_DOT
+		TOK_BACKSLASH
+		TOK_LEFT_BRACKET.
 
 %start_symbol express_file
 
@@ -429,7 +422,7 @@ typedef union YYSTYPE {
 } YYSTYPE;
 }
 
-%token_type {YYSTYPE}
+%token_type { YYSTYPE }
 
 action_body(A) ::= action_body_item_rep statement_rep(B).
 {
@@ -698,7 +691,7 @@ basic_type(A) ::= TOK_STRING precision_spec(B) optional_fixed(C).
     A->flags.fixed = C.fixed;
 }
 
-block_list ::= /*NULL*/.
+block_list ::= /* NULL */.
 block_list(A) ::= block_list(B) block_member.
 {
     A = B;
@@ -1187,7 +1180,7 @@ expression_list(A) ::= expression_list(B) TOK_COMMA expression(C).
     LISTadd_last(A, (Generic)C);
 }
 
-var(A) ::= /*NULL*/.
+var(A) ::= /* NULL */.
 {
     A.var = 1;
 }
@@ -1204,9 +1197,8 @@ formal_parameter(A) ::= var(B) id_list(C) TOK_COLON parameter_type(D).
 
     A = C;
     LISTdo_links(A, param)
-    tmp = (Symbol *)param->data;
+    tmp = (Symbol*)param->data;
 
-    /*e = EXPcreate_from_symbol(D,tmp);*/
     e = EXPcreate_from_symbol(Type_Attribute, tmp);
     v = VARcreate(e, D);
     v->flags.optional = B.var;
@@ -1216,9 +1208,6 @@ formal_parameter(A) ::= var(B) id_list(C) TOK_COLON parameter_type(D).
     /* link it in to the current scope's dict */
     DICTdefine(CURRENT_SCOPE->symbol_table,
     tmp->name, (Generic)v, tmp, OBJ_VARIABLE);
-
-    /* see explanation of this in TYPEresolve func */
-    /* D->refcount++; */
 
     LISTod;
 }
@@ -1504,9 +1493,7 @@ parened_rename_list ::= TOK_LEFT_PAREN rename_list TOK_RIGHT_PAREN.
 reference_clause ::= TOK_REFERENCE TOK_FROM TOK_IDENTIFIER(A) semicolon.
 {
     if (!CURRENT_SCHEMA->ref_schemas) {
-        CURRENT_SCHEMA->ref_schemas
-        =
-        LISTcreate();
+        CURRENT_SCHEMA->ref_schemas = LISTcreate();
     }
 
     LISTadd(CURRENT_SCHEMA->ref_schemas, (Generic)A.symbol);
@@ -2535,6 +2522,10 @@ while_control(A) ::= TOK_WHILE expression(B).
     A = B;
 }
 
+%syntax_error {
+    yyerrstatus++;
+}
+
 %include {
 static void
 yyerror(string)
@@ -2557,7 +2548,8 @@ char *string;
 
     sym.line = yylineno;
     sym.filename = current_filename;
-    ERRORreport_with_symbol(ERROR_syntax, &sym, buf, CURRENT_SCOPE_TYPE_PRINTABLE, CURRENT_SCOPE_NAME);
+    ERRORreport_with_symbol(ERROR_syntax, &sym, buf,
+	CURRENT_SCOPE_TYPE_PRINTABLE, CURRENT_SCOPE_NAME);
 }
 
 static void
@@ -2597,10 +2589,5 @@ char CONST *t;	/* token or 0 to indicate no more tokens */
 	ERRORreport_with_symbol(ERROR_syntax_expecting, &sym, buf, tokens,
 	    CURRENT_SCOPE_TYPE_PRINTABLE, CURRENT_SCOPE_NAME);
     }
-}
-
-int yyparse()
-{
-    /* stub */
 }
 }

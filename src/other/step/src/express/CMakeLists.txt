@@ -55,7 +55,7 @@ set(NEW_EXPRESS_SOURCES
     object.c
     inithook.c
     yyvars.c
-    express.c
+    express_new.c
 )
 
 SET(FEDEX_SOURCES
@@ -87,9 +87,8 @@ add_definitions(
 )
 
 SCL_ADDLIB(express "${EXPRESS_SOURCES}" "")
-
 SCL_ADDEXEC(fedex "${FEDEX_SOURCES}" express)
+SCL_ADDEXEC(symlink "${SYMLINK_SOURCES}" express)
+
 SCL_ADDLIB(newexpress "${NEW_EXPRESS_SOURCES}" "")
 SCL_ADDEXEC(fedex_new "${NEW_FEDEX_SOURCES}" newexpress)
-
-SCL_ADDEXEC(symlink "${SYMLINK_SOURCES}" express)

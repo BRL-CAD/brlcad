@@ -49,3 +49,5 @@ SCL_ADDEXEC(fedex_os "${fedex_os_SOURCES}" "libexppp express")
 SCL_ADDEXEC(fedex_idl "${fedex_idl_SOURCES}" "libexppp express")
 
 SCL_ADDEXEC(fedex_plus "${fedex_plus_SOURCES}" "libexppp express")
+
+SCL_ADDEXEC(fedex_plus_new "${fedex_plus_SOURCES}" "libexppp newexpress")
