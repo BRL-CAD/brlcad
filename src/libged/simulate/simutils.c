@@ -193,11 +193,10 @@ line(struct ged *gedp, char* name, point_t from, point_t to,
 	    unsigned char b)
 {
     char *cmd_args[20];
-    int rv;
+    int rv, i;
     char buffer_str[MAX_FLOATING_POINT_STRLEN];
     char *suffix_reg = "_reg";
     struct bu_vls reg_vls = BU_VLS_INIT_ZERO;
-    vect_t v;
 
     /* Arrow line primitive name */
     bu_vls_sprintf(&reg_vls, "%s%s", name, suffix_reg);
@@ -247,6 +246,10 @@ line(struct ged *gedp, char* name, point_t from, point_t to,
 	return GED_ERROR;
     }
 
+    for(i=7; i<16; i++){
+		bu_free(cmd_args[i], "line: free cmd_args");
+	}
+
     add_to_comb(gedp, bu_vls_addr(&reg_vls), name);
     apply_material(gedp, bu_vls_addr(&reg_vls), "plastic tr 0.9", r, g, b);
 
@@ -258,7 +261,7 @@ int
 arrow(struct ged *gedp, char* name, point_t from, point_t to)
 {
     char *cmd_args[20];
-    int rv;
+    int rv, i;
     char buffer_str[MAX_FLOATING_POINT_STRLEN];
     char *prefix_arrow_line = "arrow_line_";
     char *prefix_arrow_head = "arrow_head_";
@@ -319,6 +322,10 @@ arrow(struct ged *gedp, char* name, point_t from, point_t to)
 	return GED_ERROR;
     }
 
+    for(i=7; i<16; i++){
+   		bu_free(cmd_args[i], "arrow: free cmd_args");
+   	}
+
     add_to_comb(gedp, name, prefixed_arrow_line);
 
     VSUB2(v, to, from);
@@ -352,6 +359,10 @@ arrow(struct ged *gedp, char* name, point_t from, point_t to)
 	       prefixed_arrow_head, V3ARGS(from), V3ARGS(to));
 	return GED_ERROR;
     }
+
+    for(i=3; i<9; i++){
+		bu_free(cmd_args[i], "arrow: free cmd_args");
+	}
 
     add_to_comb(gedp, name, prefixed_arrow_head);
 
@@ -388,6 +399,10 @@ apply_material(struct ged *gedp,
 	       material, r, g, b, comb);
 	return GED_ERROR;
     }
+
+    bu_free(cmd_args[3], "apply_material: free cmd_args");
+    bu_free(cmd_args[4], "apply_material: free cmd_args");
+    bu_free(cmd_args[5], "apply_material: free cmd_args");
 
     return GED_OK;
 }
@@ -450,7 +465,7 @@ apply_color(struct ged *gedp,
 int
 make_rpp(struct ged *gedp, vect_t min, vect_t max, char* name)
 {
-	int rv;
+	int rv, i;
 	char buffer_str[MAX_FLOATING_POINT_STRLEN];
 	char* cmd_args[28];
 
@@ -477,15 +492,20 @@ make_rpp(struct ged *gedp, vect_t min, vect_t max, char* name)
 		return GED_ERROR;
 	}
 
+	for(i=3; i<9; i++){
+		bu_free(cmd_args[i], "make_rpp: free cmd_args");
+	}
+
 	return GED_OK;
 }
+
 
 int
 insert_AABB(struct ged *gedp, struct simulation_params *sim_params, struct rigid_body *current_node)
 {
     char* cmd_args[28];
     char buffer[MAX_FLOATING_POINT_STRLEN];
-    int rv;
+    int rv, i;
     char *prefix = "bb_";
     char *prefix_reg = "bb_reg_";
     char *prefixed_name, *prefixed_reg_name;
@@ -600,12 +620,15 @@ insert_AABB(struct ged *gedp, struct simulation_params *sim_params, struct rigid
     /* Adjust the material for region to be almost transparent */
     apply_material(gedp, prefixed_reg_name, "plastic tr 0.9", 210, 0, 100);
 
-
     /* Add the region to the result of the sim so it will be drawn too */
     add_to_comb(gedp, sim_params->sim_comb_name, prefixed_reg_name);
 
     bu_vls_free(&buffer1);
     bu_vls_free(&buffer2);
+
+    for(i=3; i<27; i++){
+		bu_free(cmd_args[i], "insert_AABB: free cmd_args");
+	}
 
     return GED_OK;
 
@@ -760,31 +783,35 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 
 	    /* Finally make the manifold primitive, if proper command generated */
 	    if (num_args > 2) {
-		rv = ged_in(gedp, num_args, (const char **)cmd_args);
-		if (rv != GED_OK) {
-		    bu_log("insert_manifolds: WARNING Could not draw manifold for \"%s\"\n", rb->rb_namep);
-		}
+	    	rv = ged_in(gedp, num_args, (const char **)cmd_args);
+	    	if (rv != GED_OK) {
+	    		bu_log("insert_manifolds: WARNING Could not draw manifold for \"%s\"\n", rb->rb_namep);
+	    	}
 
-		/* Make the region for the manifold primitive */
-		add_to_comb(gedp, bu_vls_addr(&prefixed_reg_name), bu_vls_addr(&prefixed_name));
+	    	for(i=3; i<num_args; i++){
+				bu_free(cmd_args[i], "insert_manifolds: free cmd_args");
+			}
 
-		/* Adjust the material for region to be visible */
-		apply_material(gedp, bu_vls_addr(&prefixed_reg_name), "plastic tr 0.9", 210, 210, 0);
+			/* Make the region for the manifold primitive */
+			add_to_comb(gedp, bu_vls_addr(&prefixed_reg_name), bu_vls_addr(&prefixed_name));
 
-		/* Add the region to the result of the sim so it will be drawn too */
-		add_to_comb(gedp, sim_params->sim_comb_name, bu_vls_addr(&prefixed_reg_name));
+			/* Adjust the material for region to be visible */
+			apply_material(gedp, bu_vls_addr(&prefixed_reg_name), "plastic tr 0.9", 210, 210, 0);
 
-		/* Finally draw the normal */
-		VSCALE(scaled_normal, current_manifold->bt_contacts[0].normalWorldOnB, NORMAL_SCALE_FACTOR);
-		VADD2(to, scaled_normal, from);
+			/* Add the region to the result of the sim so it will be drawn too */
+			add_to_comb(gedp, sim_params->sim_comb_name, bu_vls_addr(&prefixed_reg_name));
 
-		bu_log("insert_manifolds: line (%f,%f,%f)-> (%f,%f,%f)-> (%f,%f,%f) \n",
-		       V3ARGS(current_manifold->bt_contacts[0].normalWorldOnB),
-		       V3ARGS(to),
-		       V3ARGS(scaled_normal));
+			/* Finally draw the normal */
+			VSCALE(scaled_normal, current_manifold->bt_contacts[0].normalWorldOnB, NORMAL_SCALE_FACTOR);
+			VADD2(to, scaled_normal, from);
 
-		arrow(gedp, bu_vls_addr(&prefixed_normal_name), from, to);
-		add_to_comb(gedp, sim_params->sim_comb_name, bu_vls_addr(&prefixed_normal_name));
+			bu_log("insert_manifolds: line (%f,%f,%f)-> (%f,%f,%f)-> (%f,%f,%f) \n",
+				   V3ARGS(current_manifold->bt_contacts[0].normalWorldOnB),
+				   V3ARGS(to),
+				   V3ARGS(scaled_normal));
+
+			arrow(gedp, bu_vls_addr(&prefixed_normal_name), from, to);
+			add_to_comb(gedp, sim_params->sim_comb_name, bu_vls_addr(&prefixed_normal_name));
 
 	    }/*  if-num_args */
 

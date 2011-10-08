@@ -125,14 +125,14 @@ if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(
 	/* will contain normal vector where ray exits geometry */
 	vect_t onormal;
 
-	new_hit_regp = (struct hit_reg *) bu_malloc(sizeof(struct hit_reg), "new_hit_regp");
-	if(new_hit_regp){
+	/* iterate over each partition until we get back to the head.
+	 * each partition corresponds to a specific homogeneous region of
+	 * material.
+	 */
+	for (pp=part_headp->pt_forw; pp != part_headp; pp = pp->pt_forw) {
 
-		/* iterate over each partition until we get back to the head.
-		 * each partition corresponds to a specific homogeneous region of
-		 * material.
-		 */
-		for (pp=part_headp->pt_forw; pp != part_headp; pp = pp->pt_forw) {
+		new_hit_regp = (struct hit_reg *) bu_malloc(sizeof(struct hit_reg), "new_hit_regp");
+		if(new_hit_regp){
 
 			/* print the name of the region we hit as well as the name of
 			 * the primitives encountered on entry and exit.

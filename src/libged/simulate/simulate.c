@@ -450,12 +450,12 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 		}
 
 		/* Generate manifolds using rt */
-/*		rv = generate_manifolds(gedp, &sim_params);
+		rv = generate_manifolds(gedp, &sim_params);
 		if (rv != GED_OK) {
 			bu_vls_printf(gedp->ged_result_str, "%s: ERROR while calculating manifolds\n", argv[0]);
 			return GED_ERROR;
 		}
-*/
+
 		free_manifold_lists(&sim_params);
 
 	}
