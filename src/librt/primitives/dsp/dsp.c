@@ -1804,7 +1804,7 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 {
     point_t A, B, C, D, P;
     int x, y;
-    double ab_first[2], ab_second[2];
+    double ab_first[2] = {0.0,0.0}, ab_second[2] = {0.0,0.0};
     struct hit hits[4];	/* list of hits that are valid */
     struct hit *hitp;
     int hitf = 0;	/* bit flags for valid hits in hits */
