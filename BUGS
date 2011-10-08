@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* report that running "attach X" and trying to draw something causes
+  mged -c to crash.  verified in quick testing.
+
 * src/librt/primitives/bot/g_bot_include.c:rt_bot_bbox() routine isn't
   calculating the bbox correctly
 
