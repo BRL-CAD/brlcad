@@ -1242,7 +1242,7 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
 {
     ON_3dVector N;
     bool hit = false;
-    double t;
+    double t = 0.0;
     ON_2dPoint ouv(uv[0], uv[1]);
     int found = BREP_INTERSECT_ROOT_DIVERGED;
     bool converged = false;
