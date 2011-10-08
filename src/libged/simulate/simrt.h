@@ -51,6 +51,7 @@
  */
 #define GRID_GRANULARITY 0.04
 
+
 /*
  * This structure is a single node of a circularly linked list
  * of overlap regions: similar to the one in nirt/usrfrmt.h
@@ -99,7 +100,61 @@ int
 generate_manifolds(struct ged *gedp, struct simulation_params *sim_params);
 
 
+/**
+ * Cleanup the hit list and overlap list: private to simrt
+ */
+int
+cleanup_lists(void);
 
+
+/**
+ * Gets the exact overlap volume between 2 AABBs
+ */
+int
+get_overlap(struct rigid_body *rbA, struct rigid_body *rbB, vect_t overlap_min,
+															vect_t overlap_max);
+
+
+/**
+ * Handles hits, records then in a global list
+ * TODO : Stop the ray after it's left the overlap region which is being currently
+ * queried.
+ */
+int
+if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(segs));
+
+
+/**
+ * Handles misses while shooting manifold rays,
+ * not interested in misses.
+ */
+int
+if_miss(struct application *UNUSED(ap));
+
+
+/**
+ * Handles overlaps while shooting manifold rays,
+ * records the overlap regions in a global list
+ *
+ */
+int
+if_overlap(struct application *ap, struct partition *pp, struct region *reg1,
+		struct region *reg2, struct partition *InputHdp);
+
+
+/**
+ * Shoots a ray at the simulation geometry and fills up the hit &
+ * overlap global list
+ */
+int
+shoot_ray(struct rt_i *rtip, point_t pt, point_t dir);
+
+
+/**
+ * Initializes the simulation scene for raytracing
+ */
+int
+init_raytrace(struct simulation_params *sim_params, struct rt_i *rtip);
 
 
 

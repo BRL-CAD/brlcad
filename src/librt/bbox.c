@@ -517,6 +517,7 @@ rt_bound_internal(struct db_i *dbip, struct directory *dp,
     RT_CK_COMB(combp);
     if (rt_traverse_tree(rtip, combp->tree, tree_min, tree_max)) {
 	bu_log("rt_bound_internal: rt_bound_tree() failed\n");
+	rt_db_free_internal(&intern);
 	rt_free_rti(rtip);
 	return -1;
     }
@@ -536,6 +537,7 @@ rt_bound_internal(struct db_i *dbip, struct directory *dp,
 	bu_log("rt_bound_internal: Warning : The returned bounds of the model may not be correct\n");         
     }
 
+    rt_db_free_internal(&intern);
     rt_free_rti(rtip);
     return 0;
 }

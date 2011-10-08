@@ -28,7 +28,9 @@
 #include "simrt.h"
 
 /*
- * Global lists filled up while raytracing
+ * Global lists filled up while raytracing : remove these as in the forward
+ * progression of a ray, the y needs to be increased gradually, no need to
+ * record other info
  */
 struct overlap overlap_list;
 struct hit_reg hit_list;
@@ -37,15 +39,17 @@ struct hit_reg hit_list;
 int
 cleanup_lists(void)
 {
-	struct overlap *ovp;
-	struct hit_reg *hrp;
+	struct overlap *ovp, *ovp_free;
+	struct hit_reg *hrp, *hrp_free;
 
 	/* Free all nodes of overlap circularly linked list */
 	if (overlap_list.forw != &overlap_list) {
 		ovp = overlap_list.forw;
 		while (ovp != &overlap_list) {
-			bu_free(ovp, "overlap_list");
+			ovp_free = ovp;
 			ovp = ovp->forw;
+			bu_free(ovp_free, "cleanup_lists:free overlap_list");
+
 		}
 	}
 
@@ -53,14 +57,14 @@ cleanup_lists(void)
 	if (hit_list.forw != &hit_list) {
 		hrp = hit_list.forw;
 		while (hrp != &hit_list) {
-			bu_free(hrp, "hit_list");
+			hrp_free = hrp;
 			hrp = hrp->forw;
+			bu_free(hrp_free, "cleanup_lists:hit_list");
 		}
 	}
 
 	return GED_OK;
 }
-
 
 
 int
@@ -91,11 +95,7 @@ get_overlap(struct rigid_body *rbA, struct rigid_body *rbB, vect_t overlap_min, 
 	return GED_OK;
 }
 
-/*
- * Handles hits, records then in a global list
- * TODO : Stop the ray after it's left the overlap region which is being currently
- * queried.
- */
+
 int
 if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(segs))
 {
@@ -125,13 +125,8 @@ if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(
 	/* will contain normal vector where ray exits geometry */
 	vect_t onormal;
 
-	new_hit_regp = (struct hit_reg *) bu_malloc(sizeof(struct hit_reg), "new_ovlp");
+	new_hit_regp = (struct hit_reg *) bu_malloc(sizeof(struct hit_reg), "new_hit_regp");
 	if(new_hit_regp){
-
-		/* iterate over each partition until we get back to the head.
-		 * each partition corresponds to a specific homogeneous region of
-		 * material.
-		 */
 
 		/* iterate over each partition until we get back to the head.
 		 * each partition corresponds to a specific homogeneous region of
@@ -241,11 +236,6 @@ if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(
 }
 
 
-/**
- *
- * Handles misses while shooting manifold rays,
- * not interested in misses.
- */
 int
 if_miss(struct application *UNUSED(ap))
 {
@@ -254,12 +244,6 @@ if_miss(struct application *UNUSED(ap))
 }
 
 
-/**
- *
- * Handles overlaps while shooting manifold rays,
- * records the overlap regions in a global list
- *
- */
 int
 if_overlap(struct application *ap, struct partition *pp, struct region *reg1,
 		struct region *reg2, struct partition *InputHdp)
@@ -298,10 +282,7 @@ if_overlap(struct application *ap, struct partition *pp, struct region *reg1,
     return rt_defoverlap (ap, pp, reg1, reg2, InputHdp);
 }
 
-/*
- * Shoots a ray at the simulation geometry and fills up the hit &
- * overlap global list
- */
+
 int
 shoot_ray(struct rt_i *rtip, point_t pt, point_t dir)
 {
@@ -345,9 +326,6 @@ shoot_ray(struct rt_i *rtip, point_t pt, point_t dir)
 }
 
 
-/*
- * Initialize the simulation scene for raytracing
- */
 int
 init_raytrace(struct simulation_params *sim_params, struct rt_i *rtip)
 {

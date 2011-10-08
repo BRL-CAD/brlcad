@@ -296,6 +296,7 @@ cleanup(btDiscreteDynamicsWorld* dynamicsWorld,
 	btCollisionShape* shape = collision_shapes[i];
 	delete shape;
     }
+    collision_shapes.clear();
 
     //delete dynamics world
     delete dynamicsWorld;
@@ -461,6 +462,7 @@ run_simulation(struct simulation_params *sim_params)
     cleanup(dynamicsWorld, collision_shapes);
 
     //Clean up stuff in here
+    delete filterCallback;
     delete solver;
     delete dispatcher;
     delete collisionConfiguration;
