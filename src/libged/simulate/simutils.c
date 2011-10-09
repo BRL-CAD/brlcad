@@ -103,11 +103,11 @@ print_manifold_list(struct rigid_body *rb)
 
 
 void
-print_command(char* cmd_args[], int num_args)
+print_command(char* cmd_args[], int argc)
 {
     int i;
     char buffer[500] = "";
-    for (i=0; i<num_args; i++) {
+    for (i=0; i<argc; i++) {
     	sprintf(buffer, "%s %s", buffer, cmd_args[i]);
     }
 
@@ -119,18 +119,21 @@ int
 kill(struct ged *gedp, char *name)
 {
     char *cmd_args[5];
+    int argc = 2;
 
     /* Check if the duplicate already exists, and kill it if so */
     if (db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET) != RT_DIR_NULL) {
     	bu_log("kill: WARNING \"%s\" exists, deleting it\n", name);
-    	cmd_args[0] = "kill";
-    	cmd_args[1] = name;
+    	cmd_args[0] = bu_strdup("kill");
+    	cmd_args[1] = bu_strdup(name);
     	cmd_args[2] = (char *)0;
 
-    	if (ged_kill(gedp, 2, (const char **)cmd_args) != GED_OK) {
+    	if (ged_kill(gedp, argc, (const char **)cmd_args) != GED_OK) {
 	    bu_log("kill: ERROR Could not delete existing \"%s\"\n", name);
 	    return GED_ERROR;
     	}
+
+    	bu_free_array(argc, cmd_args, "kill: free cmd_args");
     }
 
     return GED_OK;
@@ -141,7 +144,7 @@ int
 kill_copy(struct ged *gedp, struct directory *dp, char* new_name)
 {
     char *cmd_args[5];
-    int rv;
+    int rv, argc = 3;
 
     if (kill(gedp, new_name) != GED_OK) {
     	bu_log("kill_copy: ERROR Could not delete existing \"%s\"\n", new_name);
@@ -149,9 +152,9 @@ kill_copy(struct ged *gedp, struct directory *dp, char* new_name)
     }
 
     /* Copy the passed prim/comb */
-    cmd_args[0] = "copy";
-    cmd_args[1] = dp->d_namep;
-    cmd_args[2] = new_name;
+    cmd_args[0] = bu_strdup("copy");
+    cmd_args[1] = bu_strdup(dp->d_namep);
+    cmd_args[2] = bu_strdup(new_name);
     cmd_args[3] = (char *)0;
     rv = ged_copy(gedp, 3, (const char **)cmd_args);
     if (rv != GED_OK) {
@@ -159,6 +162,8 @@ kill_copy(struct ged *gedp, struct directory *dp, char* new_name)
 	       new_name);
     	return GED_ERROR;
     }
+
+    bu_free_array(argc, cmd_args, "kill_copy: free cmd_args");
 
     return GED_OK;
 }
@@ -168,12 +173,12 @@ int
 add_to_comb(struct ged *gedp, char *target, char *add)
 {
     char *cmd_args[5];
-    int rv;
+    int rv, argc = 4;
 
-    cmd_args[0] = "comb";
-    cmd_args[1] = target;
-    cmd_args[2] = "u";
-    cmd_args[3] = add;
+    cmd_args[0] = bu_strdup("comb");
+    cmd_args[1] = bu_strdup(target);
+    cmd_args[2] = bu_strdup("u");
+    cmd_args[3] = bu_strdup(add);
     cmd_args[4] = (char *)0;
     rv = ged_comb(gedp, 4, (const char **)cmd_args);
     if (rv != GED_OK) {
@@ -181,6 +186,8 @@ add_to_comb(struct ged *gedp, char *target, char *add)
 	       add, target);
         return GED_ERROR;
     }
+
+    bu_free_array(argc, cmd_args, "add_to_comb: free cmd_args");
 
     return GED_OK;
 }
@@ -193,7 +200,7 @@ line(struct ged *gedp, char* name, point_t from, point_t to,
 	    unsigned char b)
 {
     char *cmd_args[20];
-    int rv, i;
+    int rv, i, argc = 19;
     char buffer_str[MAX_FLOATING_POINT_STRLEN];
     char *suffix_reg = "_reg";
     struct bu_vls reg_vls = BU_VLS_INIT_ZERO;
@@ -211,13 +218,13 @@ line(struct ged *gedp, char* name, point_t from, point_t to,
 	return GED_ERROR;
     }
 
-    cmd_args[0] = "in";
-    cmd_args[1] = name;
-    cmd_args[2] = "bot";
-    cmd_args[3] = "3";
-    cmd_args[4] = "1";
-    cmd_args[5] = "1";
-    cmd_args[6] = "1";
+    cmd_args[0] = bu_strdup("in");
+    cmd_args[1] = bu_strdup(name);
+    cmd_args[2] = bu_strdup("bot");
+    cmd_args[3] = bu_strdup("3");
+    cmd_args[4] = bu_strdup("1");
+    cmd_args[5] = bu_strdup("1");
+    cmd_args[6] = bu_strdup("1");
 
     sprintf(buffer_str, "%f", from[0]); cmd_args[7] = bu_strdup(buffer_str);
     sprintf(buffer_str, "%f", from[1]); cmd_args[8] = bu_strdup(buffer_str);
@@ -231,24 +238,22 @@ line(struct ged *gedp, char* name, point_t from, point_t to,
     sprintf(buffer_str, "%f", from[1]); cmd_args[14] = bu_strdup(buffer_str);
     sprintf(buffer_str, "%f", from[2]); cmd_args[15] = bu_strdup(buffer_str);
 
-    cmd_args[16] = "0";
-    cmd_args[17] = "1";
-    cmd_args[18] = "2";
+    cmd_args[16] = bu_strdup("0");
+    cmd_args[17] = bu_strdup("1");
+    cmd_args[18] = bu_strdup("2");
 
     cmd_args[19] = (char *)0;
 
     print_command(cmd_args, 19);
 
-    rv = ged_in(gedp, 19, (const char **)cmd_args);
+    rv = ged_in(gedp, argc, (const char **)cmd_args);
     if (rv != GED_OK) {
 	bu_log("line: ERROR Could not draw line \"%s\" (%f,%f,%f)-(%f,%f,%f) \n",
 	       name, V3ARGS(from), V3ARGS(to));
 	return GED_ERROR;
     }
 
-    for(i=7; i<16; i++){
-		bu_free(cmd_args[i], "line: free cmd_args");
-	}
+    bu_free_array(argc, cmd_args, "line: free cmd_args");
 
     add_to_comb(gedp, bu_vls_addr(&reg_vls), name);
     apply_material(gedp, bu_vls_addr(&reg_vls), "plastic tr 0.9", r, g, b);
@@ -261,7 +266,7 @@ int
 arrow(struct ged *gedp, char* name, point_t from, point_t to)
 {
     char *cmd_args[20];
-    int rv, i;
+    int rv, i, argc = 19;
     char buffer_str[MAX_FLOATING_POINT_STRLEN];
     char *prefix_arrow_line = "arrow_line_";
     char *prefix_arrow_head = "arrow_head_";
@@ -287,13 +292,13 @@ arrow(struct ged *gedp, char* name, point_t from, point_t to)
 	return GED_ERROR;
     }
 
-    cmd_args[0] = "in";
-    cmd_args[1] = prefixed_arrow_line;
-    cmd_args[2] = "bot";
-    cmd_args[3] = "3";
-    cmd_args[4] = "1";
-    cmd_args[5] = "1";
-    cmd_args[6] = "1";
+    cmd_args[0] = bu_strdup("in");
+    cmd_args[1] = bu_strdup(prefixed_arrow_line);
+    cmd_args[2] = bu_strdup("bot");
+    cmd_args[3] = bu_strdup("3");
+    cmd_args[4] = bu_strdup("1");
+    cmd_args[5] = bu_strdup("1");
+    cmd_args[6] = bu_strdup("1");
 
     sprintf(buffer_str, "%f", from[0]); cmd_args[7] = bu_strdup(buffer_str);
     sprintf(buffer_str, "%f", from[1]); cmd_args[8] = bu_strdup(buffer_str);
@@ -307,24 +312,22 @@ arrow(struct ged *gedp, char* name, point_t from, point_t to)
     sprintf(buffer_str, "%f", from[1]); cmd_args[14] = bu_strdup(buffer_str);
     sprintf(buffer_str, "%f", from[2]); cmd_args[15] = bu_strdup(buffer_str);
 
-    cmd_args[16] = "0";
-    cmd_args[17] = "1";
-    cmd_args[18] = "2";
+    cmd_args[16] = bu_strdup("0");
+    cmd_args[17] = bu_strdup("1");
+    cmd_args[18] = bu_strdup("2");
 
     cmd_args[19] = (char *)0;
 
     print_command(cmd_args, 19);
 
-    rv = ged_in(gedp, 19, (const char **)cmd_args);
+    rv = ged_in(gedp, argc, (const char **)cmd_args);
     if (rv != GED_OK) {
 	bu_log("line: ERROR Could not draw arrow line \"%s\" (%f,%f,%f)-(%f,%f,%f) \n",
 	       prefixed_arrow_line, V3ARGS(from), V3ARGS(to));
 	return GED_ERROR;
     }
 
-    for(i=7; i<16; i++){
-   		bu_free(cmd_args[i], "arrow: free cmd_args");
-   	}
+    bu_free_array(argc, cmd_args, "arrow: free cmd_args");
 
     add_to_comb(gedp, name, prefixed_arrow_line);
 
@@ -333,9 +336,10 @@ arrow(struct ged *gedp, char* name, point_t from, point_t to)
     VSCALE(v, v, 0.1);
     bu_log("line: Unit vector (%f,%f,%f)\n", V3ARGS(v));
 
-    cmd_args[0] = "in";
-    cmd_args[1] = prefixed_arrow_head;
-    cmd_args[2] = "trc";
+    argc = 11;
+    cmd_args[0] = bu_strdup("in");
+    cmd_args[1] = bu_strdup(prefixed_arrow_head);
+    cmd_args[2] = bu_strdup("trc");
 
     sprintf(buffer_str, "%f", to[0]); cmd_args[3] = bu_strdup(buffer_str);
     sprintf(buffer_str, "%f", to[1]); cmd_args[4] = bu_strdup(buffer_str);
@@ -353,16 +357,14 @@ arrow(struct ged *gedp, char* name, point_t from, point_t to)
 
     print_command(cmd_args, 11);
 
-    rv = ged_in(gedp, 11, (const char **)cmd_args);
+    rv = ged_in(gedp, argc, (const char **)cmd_args);
     if (rv != GED_OK) {
 	bu_log("line: ERROR Could not draw arrow head \"%s\" (%f,%f,%f)-(%f,%f,%f) \n",
 	       prefixed_arrow_head, V3ARGS(from), V3ARGS(to));
 	return GED_ERROR;
     }
 
-    for(i=3; i<9; i++){
-		bu_free(cmd_args[i], "arrow: free cmd_args");
-	}
+    bu_free_array(argc, cmd_args, "apply_material: free cmd_args");
 
     add_to_comb(gedp, name, prefixed_arrow_head);
 
@@ -378,31 +380,29 @@ apply_material(struct ged *gedp,
 	       unsigned char g,
 	       unsigned char b)
 {
-    int rv;
+    int rv, argc = 7;
     char buffer_str[MAX_FLOATING_POINT_STRLEN];
     char* cmd_args[28];
 
-    cmd_args[0] = "mater";
-    cmd_args[1] = comb;
-    cmd_args[2] = material;
+    cmd_args[0] = bu_strdup("mater");
+    cmd_args[1] = bu_strdup(comb);
+    cmd_args[2] = bu_strdup(material);
 
     sprintf(buffer_str, "%d", r); cmd_args[3] = bu_strdup(buffer_str);
     sprintf(buffer_str, "%d", g); cmd_args[4] = bu_strdup(buffer_str);
     sprintf(buffer_str, "%d", b); cmd_args[5] = bu_strdup(buffer_str);
 
-    cmd_args[6] = "0";
+    cmd_args[6] = bu_strdup("0");
     cmd_args[7] = (char *)0;
 
-    rv = ged_mater(gedp, 7, (const char **)cmd_args);
+    rv = ged_mater(gedp, argc, (const char **)cmd_args);
     if (rv != GED_OK) {
 	bu_log("apply_material: WARNING Could not adjust the material to %s(%d, %d, %d) for \"%s\"\n",
 	       material, r, g, b, comb);
 	return GED_ERROR;
     }
 
-    bu_free(cmd_args[3], "apply_material: free cmd_args");
-    bu_free(cmd_args[4], "apply_material: free cmd_args");
-    bu_free(cmd_args[5], "apply_material: free cmd_args");
+    bu_free_array(argc, cmd_args, "apply_material: free cmd_args");
 
     return GED_OK;
 }
@@ -465,13 +465,13 @@ apply_color(struct ged *gedp,
 int
 make_rpp(struct ged *gedp, vect_t min, vect_t max, char* name)
 {
-	int rv, i;
+	int rv, argc = 9;
 	char buffer_str[MAX_FLOATING_POINT_STRLEN];
 	char* cmd_args[28];
 
-	cmd_args[0] = "in";
-	cmd_args[1] = name;
-	cmd_args[2] = "rpp";
+	cmd_args[0] = bu_strdup("in");
+	cmd_args[1] = bu_strdup(name);
+	cmd_args[2] = bu_strdup("rpp");
 
 	sprintf(buffer_str, "%f", min[0]); cmd_args[3] = bu_strdup(buffer_str);
 	sprintf(buffer_str, "%f", max[0]); cmd_args[4] = bu_strdup(buffer_str);
@@ -492,9 +492,9 @@ make_rpp(struct ged *gedp, vect_t min, vect_t max, char* name)
 		return GED_ERROR;
 	}
 
-	for(i=3; i<9; i++){
-		bu_free(cmd_args[i], "make_rpp: free cmd_args");
-	}
+	bu_free_array(argc, cmd_args, "make_rpp: free cmd_args");
+
+
 
 	return GED_OK;
 }
@@ -505,7 +505,7 @@ insert_AABB(struct ged *gedp, struct simulation_params *sim_params, struct rigid
 {
     char* cmd_args[28];
     char buffer[MAX_FLOATING_POINT_STRLEN];
-    int rv, i;
+    int rv, i, argc = 27;
     char *prefix = "bb_";
     char *prefix_reg = "bb_reg_";
     char *prefixed_name, *prefixed_reg_name;
@@ -536,9 +536,9 @@ insert_AABB(struct ged *gedp, struct simulation_params *sim_params, struct rigid
     }
 
     /* Setup the simulation result group union-ing the new objects */
-    cmd_args[0] = "in";
-    cmd_args[1] = prefixed_name;
-    cmd_args[2] = "arb8";
+    cmd_args[0] = bu_strdup("in");
+    cmd_args[1] = bu_strdup(prefixed_name);
+    cmd_args[2] = bu_strdup("arb8");
 
     /* Front face vertices */
     /* v1 */
@@ -608,11 +608,13 @@ insert_AABB(struct ged *gedp, struct simulation_params *sim_params, struct rigid
 
     /* Finally make the bb primitive, phew ! */
     cmd_args[27] = (char *)0;
-    rv = ged_in(gedp, 27, (const char **)cmd_args);
+    rv = ged_in(gedp, argc, (const char **)cmd_args);
     if (rv != GED_OK) {
 	bu_log("insertAABB: WARNING Could not draw bounding box for \"%s\"\n",
 	       current_node->rb_namep);
     }
+
+    bu_free_array(argc, cmd_args, "make_rpp: free cmd_args");
 
     /* Make the region for the bb primitive */
     add_to_comb(gedp, prefixed_reg_name, prefixed_name);
@@ -626,10 +628,6 @@ insert_AABB(struct ged *gedp, struct simulation_params *sim_params, struct rigid
     bu_vls_free(&buffer1);
     bu_vls_free(&buffer2);
 
-    for(i=3; i<27; i++){
-		bu_free(cmd_args[i], "insert_AABB: free cmd_args");
-	}
-
     return GED_OK;
 
 }
@@ -640,7 +638,7 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 {
     char* cmd_args[28];
     char buffer[20];
-    int rv, num_args;
+    int rv, argc;
     char *prefix = "mf_";
     char *prefix_reg = "mf_reg_";
     char *prefix_normal = "normal_";
@@ -687,10 +685,10 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 	    }
 
 	    /* Setup the simulation result group union-ing the new objects */
-	    cmd_args[0] = "in";
-	    cmd_args[1] = bu_vls_addr(&prefixed_name);
+	    cmd_args[0] = bu_strdup("in");
+	    cmd_args[1] = bu_strdup(bu_vls_addr(&prefixed_name));
 	    cmd_args[2] = (char *)0;
-	    num_args = 2;
+	    argc = 2;
 
 	    switch(current_manifold->num_bt_contacts) {
 		case 1:
@@ -698,7 +696,7 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 		    break;
 
 		case 2:
-		    cmd_args[2] = "arb4";
+		    cmd_args[2] = bu_strdup("arb4");
 		    sprintf(buffer, "%f", current_manifold->bt_contacts[0].ptA[0]);
 		    cmd_args[3] = bu_strdup(buffer);
 		    sprintf(buffer, "%f", current_manifold->bt_contacts[0].ptA[1]);
@@ -728,7 +726,7 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 		    cmd_args[14] = bu_strdup(buffer);
 
 		    cmd_args[15] = (char *)0;
-		    num_args = 15;
+		    argc = 15;
 
 		    VADD2SCALE(from, current_manifold->bt_contacts[0].ptA,
 			       current_manifold->bt_contacts[1].ptB, 0.5);
@@ -739,7 +737,7 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 		    break;
 
 		case 4:
-		    cmd_args[2] = "arb8";
+		    cmd_args[2] = bu_strdup("arb8");
 		    for (i=0; i<4; i++) {
 			sprintf(buffer, "%f", current_manifold->bt_contacts[i].ptA[0]);
 			cmd_args[3+i*3] = bu_strdup(buffer);
@@ -766,7 +764,7 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 			   current cmd_argsrent_manifold->bt_contacts[i].normalWorldOnB[2]);*/
 		    }
 		    cmd_args[27] = (char *)0;
-		    num_args = 27;
+		    argc = 27;
 
 		    VADD2SCALE(from, current_manifold->bt_contacts[0].ptA,
 			       current_manifold->bt_contacts[2].ptB, 0.5);
@@ -775,22 +773,20 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 		default:
 		    bu_log("%d contacts got, no manifold drawn", current_manifold->num_bt_contacts);
 		    cmd_args[2] = (char *)0;
-		    num_args = 2;
+		    argc = 2;
 		    break;
 	    }
 
-	    print_command(cmd_args, num_args);
+	    print_command(cmd_args, argc);
 
 	    /* Finally make the manifold primitive, if proper command generated */
-	    if (num_args > 2) {
-	    	rv = ged_in(gedp, num_args, (const char **)cmd_args);
+	    if (argc > 2) {
+	    	rv = ged_in(gedp, argc, (const char **)cmd_args);
 	    	if (rv != GED_OK) {
 	    		bu_log("insert_manifolds: WARNING Could not draw manifold for \"%s\"\n", rb->rb_namep);
 	    	}
 
-	    	for(i=3; i<num_args; i++){
-				bu_free(cmd_args[i], "insert_manifolds: free cmd_args");
-			}
+	    	bu_free_array(argc, cmd_args, "insert_manifolds: free cmd_args");
 
 			/* Make the region for the manifold primitive */
 			add_to_comb(gedp, bu_vls_addr(&prefixed_reg_name), bu_vls_addr(&prefixed_name));
@@ -813,7 +809,7 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 			arrow(gedp, bu_vls_addr(&prefixed_normal_name), from, to);
 			add_to_comb(gedp, sim_params->sim_comb_name, bu_vls_addr(&prefixed_normal_name));
 
-	    }/*  if-num_args */
+	    }/*  if-argc */
 
 	}/* if-num_bt_contacts */
 
