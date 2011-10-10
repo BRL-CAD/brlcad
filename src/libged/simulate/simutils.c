@@ -200,7 +200,7 @@ line(struct ged *gedp, char* name, point_t from, point_t to,
 	    unsigned char b)
 {
     char *cmd_args[20];
-    int rv, i, argc = 19;
+    int rv, argc = 19;
     char buffer_str[MAX_FLOATING_POINT_STRLEN];
     char *suffix_reg = "_reg";
     struct bu_vls reg_vls = BU_VLS_INIT_ZERO;
@@ -257,6 +257,7 @@ line(struct ged *gedp, char* name, point_t from, point_t to,
 
     add_to_comb(gedp, bu_vls_addr(&reg_vls), name);
     apply_material(gedp, bu_vls_addr(&reg_vls), "plastic tr 0.9", r, g, b);
+    apply_color(gedp, bu_vls_addr(&reg_vls), r, g, b);
 
     return GED_OK;
 }
@@ -266,7 +267,7 @@ int
 arrow(struct ged *gedp, char* name, point_t from, point_t to)
 {
     char *cmd_args[20];
-    int rv, i, argc = 19;
+    int rv, argc = 19;
     char buffer_str[MAX_FLOATING_POINT_STRLEN];
     char *prefix_arrow_line = "arrow_line_";
     char *prefix_arrow_head = "arrow_head_";
@@ -469,6 +470,11 @@ make_rpp(struct ged *gedp, vect_t min, vect_t max, char* name)
 	char buffer_str[MAX_FLOATING_POINT_STRLEN];
 	char* cmd_args[28];
 
+	if (kill(gedp, name) != GED_OK) {
+		bu_log("line: ERROR Could not delete existing \"%s\"\n", name);
+		return GED_ERROR;
+	}
+
 	cmd_args[0] = bu_strdup("in");
 	cmd_args[1] = bu_strdup(name);
 	cmd_args[2] = bu_strdup("rpp");
@@ -485,7 +491,7 @@ make_rpp(struct ged *gedp, vect_t min, vect_t max, char* name)
 
 	cmd_args[9] = (char *)0;
 
-	rv = ged_in(gedp, 9, (const char **)cmd_args);
+	rv = ged_in(gedp, argc, (const char **)cmd_args);
 	if (rv != GED_OK) {
 		bu_log("make_rpp: WARNING Could not insert RPP %s (%f, %f, %f):(%f, %f, %f)\n",
 		   name, V3ARGS(min), V3ARGS(max));
@@ -505,7 +511,7 @@ insert_AABB(struct ged *gedp, struct simulation_params *sim_params, struct rigid
 {
     char* cmd_args[28];
     char buffer[MAX_FLOATING_POINT_STRLEN];
-    int rv, i, argc = 27;
+    int rv, argc = 27;
     char *prefix = "bb_";
     char *prefix_reg = "bb_reg_";
     char *prefixed_name, *prefixed_reg_name;

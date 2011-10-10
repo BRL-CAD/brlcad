@@ -104,6 +104,12 @@ add_regions(struct ged *gedp, struct simulation_params *sim_params)
 		continue;
 	    }
 
+	    if (BU_STR_EMPTY(dp->d_namep)) {
+		bu_vls_printf(gedp->ged_result_str, "add_regions: Skipping \"%s\" due to empty name\n",
+				  dp->d_namep);
+		continue;
+		}
+
 	    /* Duplicate the region */
 	    bu_vls_sprintf(&dp_name_vls, "%s%s", prefix, dp->d_namep);
 
@@ -145,6 +151,12 @@ add_regions(struct ged *gedp, struct simulation_params *sim_params)
 	}
 
     bu_vls_free(&dp_name_vls);
+
+    if(sim_params->num_bodies == 0){
+    	bu_vls_printf(gedp->ged_result_str, "add_regions: ERROR No objects were added\n");
+    	return GED_ERROR;
+    }
+
 
 
     /* Show list of objects to be added to the sim : keep for debugging as of now */

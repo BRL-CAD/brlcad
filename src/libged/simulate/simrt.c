@@ -63,6 +63,12 @@ cleanup_lists(void)
 		}
 	}
 
+	overlap_list.forw = overlap_list.backw = &overlap_list;
+	hit_list.forw = hit_list.backw = &hit_list;
+
+	overlap_list.index = 0;
+	hit_list.index = 0;
+
 	return GED_OK;
 }
 
@@ -143,7 +149,10 @@ if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(
 				   pp->pt_outseg->seg_stp->st_name );
 
 			/* Insert solid data into list node */
-			new_hit_regp->reg_name = pp->pt_regionp->reg_name;
+			if(pp->pt_regionp->reg_name[0] == '/')
+				new_hit_regp->reg_name = (pp->pt_regionp->reg_name) + 1;
+			else
+				new_hit_regp->reg_name = pp->pt_regionp->reg_name;
 			new_hit_regp->in_stp   = pp->pt_inseg->seg_stp;
 			new_hit_regp->out_stp  = pp->pt_outseg->seg_stp;
 
@@ -228,6 +237,7 @@ if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(
 			new_hit_regp->backw = &hit_list;
 			new_hit_regp->forw->backw = new_hit_regp;
 			hit_list.forw = new_hit_regp;
+			new_hit_regp->index = (new_hit_regp->forw->index) + 1;
 
 		}
 	}
@@ -270,7 +280,13 @@ if_overlap(struct application *ap, struct partition *pp, struct region *reg1,
 		new_ovlp->backw = &overlap_list;
 		new_ovlp->forw->backw = new_ovlp;
 		overlap_list.forw = new_ovlp;
+		new_ovlp->index = (new_ovlp->forw->index) + 1;
 
+		if(new_ovlp->reg1->reg_name[0] == '/')
+			new_ovlp->reg1->reg_name++;
+
+		if(new_ovlp->reg2->reg_name[0] == '/')
+					new_ovlp->reg2->reg_name++;
 	}
 
 	bu_log("if_overlap: Entering at (%f,%f,%f) at distance of %f",
@@ -352,9 +368,118 @@ init_raytrace(struct simulation_params *sim_params, struct rt_i *rtip)
 	overlap_list.forw = overlap_list.backw = &overlap_list;
 	hit_list.forw = hit_list.backw = &hit_list;
 
+	overlap_list.index = 0;
+	hit_list.index = 0;
+
 	return GED_OK;
 }
 
+
+/**
+ * Traverse the hit list and overlap list, drawing the ray segments
+ */
+int
+traverse_lists(struct ged *gedp, struct simulation_params *sim_params,
+		point_t pt, point_t dir)
+{
+	struct overlap *ovp;
+	struct hit_reg *hrp;
+	struct bu_vls reg_vls = BU_VLS_INIT_ZERO;
+
+	/* quellage */
+	bu_log("Starting from : (%f,%f,%f), towards(%f,%f,%f)", V3ARGS(pt),  V3ARGS(dir));
+
+	/* Draw all the hit regions */
+	if (overlap_list.forw != &overlap_list) {
+
+		ovp = overlap_list.forw;
+		while (ovp != &overlap_list) {
+
+			bu_vls_sprintf(&reg_vls, "ray_overlap_%s_%s_%d_%f_%f_%f_%f_%f_%f",
+					ovp->reg1->reg_name,
+					ovp->reg2->reg_name,
+					ovp->index,
+					V3ARGS(pt), V3ARGS(dir));
+			line(gedp, bu_vls_addr(&reg_vls),
+					ovp->in_point,
+					ovp->out_point,
+					0, 210, 0);
+
+			add_to_comb(gedp, sim_params->sim_comb_name, bu_vls_addr(&reg_vls));
+			ovp = ovp->forw;
+		}
+	}
+
+	/* Draw all the overlap regions */
+	if (hit_list.forw != &hit_list) {
+
+		hrp = hit_list.forw;
+
+		while (hrp != &hit_list) {
+			bu_vls_sprintf(&reg_vls, "ray_hit_%s_%d_%f_%f_%f_%f_%f_%f",
+				hrp->reg_name,
+				hrp->index,
+				V3ARGS(pt), V3ARGS(dir));
+			line(gedp, bu_vls_addr(&reg_vls),
+					hrp->in_point,
+					hrp->out_point,
+					0, 210, 0);
+
+			add_to_comb(gedp, sim_params->sim_comb_name, bu_vls_addr(&reg_vls));
+			hrp = hrp->forw;
+		}
+	}
+
+	 bu_vls_free(&reg_vls);
+
+	return GED_OK;
+}
+
+
+int
+shoot_x_rays(
+		struct ged *gedp,
+		struct sim_manifold *current_manifold,
+		struct simulation_params *sim_params,
+		struct rt_i *rtip,
+		vect_t overlap_min, vect_t overlap_max)
+{
+	point_t r_pt, r_dir;
+	fastf_t startz, starty, y, z;
+
+	/* Set direction as straight down X-axis */
+	VSET(r_dir, -1.0, 0.0, 0.0);
+
+	startz = overlap_min[Z];
+	starty = overlap_min[Y];
+
+	bu_log("Querying overlap between %s & %s",
+			current_manifold->rbA->rb_namep,
+			current_manifold->rbB->rb_namep);
+
+	for(z=startz; z<=overlap_max[Z]; z += TOL){
+		for(y=starty; y<=overlap_max[Y]; y += TOL){
+
+			/* Shooting towards lower x, so start from max x outside of overlap box */
+			VSET(r_pt, overlap_max[X], y, z);
+
+
+			shoot_ray(rtip, r_pt, r_dir);
+
+			/* Traverse the hit list and overlap list, drawing the ray segments */
+			traverse_lists(gedp, sim_params, r_pt, r_dir);
+
+			/* line(gedp, "ray_test", in_pt, out_pt, 0, 210, 0); */
+
+			/* Cleanup the overlap and hit lists and free memory */
+			cleanup_lists();
+
+		}
+
+	}
+
+	return GED_OK;
+}
 
 int
 generate_manifolds(struct ged *gedp, struct simulation_params *sim_params)
@@ -367,7 +492,6 @@ generate_manifolds(struct ged *gedp, struct simulation_params *sim_params)
 
 	/* Raytrace related stuff */
 	struct rt_i *rtip;
-	point_t r_pt, r_dir;
 
 	/* Make a new rt_i instance from the existing db_i structure */
 	if ((rtip=rt_new_rti(gedp->ged_wdbp->dbip)) == RTI_NULL) {
@@ -377,18 +501,6 @@ generate_manifolds(struct ged *gedp, struct simulation_params *sim_params)
 	rtip->useair = 1;
 
 	init_raytrace(sim_params, rtip);
-
-	VSET(r_pt, 1.0, 1.0, 0.0);
-	VSET(r_dir, -1.0, 0.0, 0.0);
-
-	shoot_ray(rtip, r_pt, r_dir);
-
-
-	/* Traverse the hit list and overlap list */
-	/* line(gedp, "ray_test", in_pt, out_pt, 0, 210, 0); */
-
-	/* Cleanup the overlap and hit lists and free memory */
-	cleanup_lists();
 
 
 	/* Check all rigid bodies for overlaps using their manifold lists */
@@ -403,7 +515,7 @@ generate_manifolds(struct ged *gedp, struct simulation_params *sim_params)
 					overlap_max);
 
 			/* Prepare the overlap prim name */
-			bu_vls_sprintf(&overlap_name, "%s_%s_%s",
+			bu_vls_sprintf(&overlap_name, "%s%s_%s",
 					prefix_overlap,
 					current_manifold->rbA->rb_namep,
 					current_manifold->rbB->rb_namep);
@@ -415,6 +527,13 @@ generate_manifolds(struct ged *gedp, struct simulation_params *sim_params)
 			add_to_comb(gedp, sim_params->sim_comb_name, bu_vls_addr(&overlap_name));
 
 			/* Shoot rays right here as the pair of rigid_body ptrs are known, ignore volumes already shot */
+			shoot_x_rays(gedp, current_manifold, sim_params, rtip, overlap_min, overlap_max);
+
+			/* Shoot rays right here as the pair of rigid_body ptrs are known, ignore volumes already shot */
+			/* shoot_y_rays(); */
+
+			/* Shoot rays right here as the pair of rigid_body ptrs are known, ignore volumes already shot */
+			/* shoot_z_rays(); */
 
 			/* Note down this volume as already covered, so no need to shoot rays through it again */
 

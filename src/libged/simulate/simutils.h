@@ -105,6 +105,16 @@ add_to_comb(struct ged *gedp, char *target, char *add);
 
 
 /**
+ * Draw a line from,to and color it
+ */
+int
+line(struct ged *gedp, char* name, point_t from, point_t to,
+		unsigned char r,
+	    unsigned char g,
+	    unsigned char b);
+
+
+/**
  * Draws an arrow from, to using the BOT primitive & TRC
  * Used to draw manifold normals
  * TODO: surely there is a simpler way!

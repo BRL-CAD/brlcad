@@ -49,7 +49,7 @@
  * Overlaps regions smaller than this will have only a single plane of rays slicing the
  * region in half, generating manifolds in a plane.
  */
-#define GRID_GRANULARITY 0.04
+#define TOL 0.1
 
 
 /*
@@ -57,7 +57,8 @@
  * of overlap regions: similar to the one in nirt/usrfrmt.h
  */
 struct overlap {
-    struct application *ap;
+    int index;
+	struct application *ap;
     struct partition *pp;
     struct region *reg1;
     struct region *reg2;
@@ -75,7 +76,8 @@ struct overlap {
  * of hit regions, similar to struct hit from raytrace.h
  */
 struct hit_reg {
-    struct application *ap;
+    int index;
+	struct application *ap;
     struct partition *pp;
     const char *reg_name;
     struct soltab *in_stp;
