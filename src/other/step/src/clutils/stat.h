@@ -36,7 +36,7 @@ extern "C" {
 #endif
 
 #define KERNEL
-#include "//usr/include/sys/stat.h"
+#include <sys/stat.h>
 #undef KERNEL
 
 /* just in case standard header didn't */
