@@ -77,8 +77,10 @@ bu_dirname(const char *cp)
 	ret[1] = '\0';		/* ret == BU_DIR_SEPARATOR */
     else if (slash2 == ret)
 	ret[1] = '\0';		/* ret == "/" */
-    else
+    else if (slash != NULL)
 	*slash = '\0';
+    else
+	*slash2 = '\0';
 
     return ret;
 }
