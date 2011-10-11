@@ -39,6 +39,11 @@ ENDIF(NOT LIB_DIR)
 
 add_definitions(-BUILD_sqlite)
 
+IF(MSVC)
+	add_definitions(-DSQLITE_MAX_TRIGGER_DEPTH=100)
+	add_definitions(-DSQLITE_ENABLE_COLUMN_METADATA)
+ENDIF(MSVC)
+
 add_definitions(-D_REENTRANT=1)
 
 add_definitions(-DSQLITE_THREADSAFE=1)
@@ -54,16 +59,9 @@ IF(HAVE_DLOPEN)
 	SET(SQLITE_LIBS ${SQLITE_LIBS} ${DL_LIBRARY})
 ENDIF(HAVE_DLOPEN)
 
-add_library(libsqlite3 SHARED sqlite3.c)
-target_link_libraries(libsqlite3 ${SQLITE_LIBS})
-set_target_properties(libsqlite3 PROPERTIES PREFIX "")
-install(TARGETS libsqlite3 DESTINATION ${LIB_DIR})
-
-add_executable(sqlite3 shell.c)
-target_link_libraries(sqlite3 libsqlite3 ${SQLITE_LIBS})
+add_executable(sqlite3 shell.c sqlite3.c)
+target_link_libraries(sqlite3 ${SQLITE_LIBS})
 install(TARGETS sqlite3 DESTINATION bin)
-
-SET(SQLITE3_LIBRARIES libsqlite3 CACHE STRING "sqlite lib")
 
 # Tcl bindings
 ADD_SUBDIRECTORY(tcl)
