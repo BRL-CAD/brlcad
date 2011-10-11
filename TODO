@@ -63,6 +63,12 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* add an increment option to reid to increment with something other
+  than 1 at a time.
+
+* add a conflict-detection option to reid in case there are
+  already-used region numbers being numbered.
+
 * rerun conversion.sh and compare to previous run
 
 * killall command reports db_lookup failures if the target object
