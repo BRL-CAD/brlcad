@@ -19,9 +19,24 @@ Lemon's foo.h is not equivalent to Bison's foo.tab.h; it only contains token def
  Trivial Stuff
 ===============
 - Lemon doesn't have an equivalent to "%%" because it doesn't have sections.
-- Lemon requires 'assert' to be defined (e.g. by including assert.h).
 - %include { ... } instead of %{ ... %} for text to be pasted at the top of
   the output.
+- Lemon requires 'assert' to be defined (e.g. by including assert.h), thus
+  the first thing in a lemon input file might be:
+
+    %include {
+    #include <assert.h>
+    /* ... */
+    }
+
+- Lemon doesn't provide a default action. Bison's default is { $$ = $1; }.
+
+    /* bison */
+    a : b;
+
+    /* lemon */
+    a(A) ::= b(B). { A = B; }
+
 - Lemon calls the code in %syntax_error instead of yyerror() on a syntax error.
 - Lemon has different syntax for changing precedence:
     /* bison */
@@ -32,12 +47,12 @@ Lemon's foo.h is not equivalent to Bison's foo.tab.h; it only contains token def
 
 - Lemon has different syntax for specifying the type of non-terminals.
   Assuming a union type is used for non-terminals, and it has a member
-  'symbol' of type 'struct symbol':
+  'sym' of type 'struct symbol':
 
-    /* bison allows multiple declarations using the member name */
-    %type <symbol> function_id procedure_id
+    /* bison allows multiple declarations using the MEMBER name */
+    %type <sym> function_id procedure_id
 
-    /* lemon requires one-at-a-time declaration using the type name */
+    /* lemon requires one-at-a-time declaration using the TYPE name */
     %type function_id { struct symbol }
     %type procedure_id { struct symbol }
 
@@ -47,56 +62,84 @@ The most obvious restriction is that Lemon doesn't allow the start symbol to be 
 
     /* bison */
     statement_list
-	: '\n'
-	| statement_list statement '\n'
+	: /* empty */
+	| statement_list statement
     ;
 
     /* lemon */
-    start_symbol :: statement_list.
+    start_symbol ::= statement_list.
 
-    statement_list ::= EOL.
-    statement_list ::= statement EOL.
+    statement_list ::= /* empty */
+    statement_list ::= statement_list statement.
 
 ===================
  Non-Trivial Stuff
 ===================
 
- Lemon Handles Errors a Bit Differently
-----------------------------------------
-Lemon will not attempt error recovery unless you define a non-terminal symbol named "error" in your grammar.
+ Lemon Handles Errors Differently
+----------------------------------
+- Error Recovery -
 
-Assuming this symbol is defined, Lemon calls any code defined with %syntax_error whereas Bison would call yyerror().
+Lemon's error recovery behavior depends on whether or not the preprocessing symbols YYNOERRORECOVERY or YYERRORSYMBOL are defined. YYERRORSYMBOL is defined by lemon when you include the special non-terminal 'error' on the RHS of a grammar rule. YYNOERRORRECOVERY must be defined manually (e.g. in a %include directive in the input file).
 
+If YYERRORSYMBOL is defined, then YYNOERRORRECOVER MUST NOT be defined. The different possible behaviors are summarized in the following table:
+
+		      | YYNOERRORRECOVERY | Normal       | YYERRORSYMBOL
+		      +--------------------------------------------------
+	     Strategy | ignore input	  | ignore input | pop tokens
+  %syntax_error called| every error	  | first error  | first error
+%parse_failure on Fail| no		  | yes		 | yes
+ Parser Resets on Fail| no		  | yes		 | yes
+
+Strategy:
+	The normal strategy is to ignore input tokens util valid input is
+	found and parsing can continue. However, if YYERRORSYMBOL is defined,
+	the parser pops tokens from the stack until the special non-terminal
+	'error' can be shifted onto the stack and parsing can continue.
+
+%syntax_error called:
+	Normally, the code defined using the %syntax_error directive is called
+	on the first syntax error encountered in the normal state. It is not
+	called for subsequent syntax errors encountered during recovery, but
+	may be called again for a syntax error encountered after recovery.
+	However, if YYNOERRORRECOVERY is defined, the %syntax_error code is
+	called for every syntax error.
+
+%parse_failure on Fail:
+	Code defined using the %parse_failure directive is called when recovery
+	fails, unless YYNOERRORRECOVERY is defined.
+
+Parser Resets on Fail:
+	When parsing fails the parser resets itself for new input unless
+	YYNOERRORRECOVERY is defined.
+
+Unlike Bison, Lemon does not allow the use of macros (such as yyerrok) to further control the recovery process.
+
+- Entering the Error State -
 In Bison you can manually signal a context-sensitive syntax error with the YYERROR macro, and Bison will behave as if it had detected a syntax error!
 
-There is no way to make Lemon think it detected a syntax error without a
-significant hack. The only thing you can do is record the error and wait until
-Lemon finishes parsing or faults on an error that it /can/ detect.
+There is no way to make Lemon think it detected a syntax error without a significant hack. The only thing you can do is record the error and wait until Lemon finishes parsing or faults on an error that it /can/ detect.
 
-Lemon calls any code defined with %parse_failed after error recovery fails and the parser resets to the start state.
-
-When parsing fails, Bison returns an error number less than zero. The Lemon
-Parse() function returns void, so if you want to tell the caller about an error,
-you have to store an error code somewhere in the optional fourth argument to
-Lemon's Parse() function.
+- Returning Error Status -
+When parsing fails, Bison returns an error number less than zero. The Lemon Parse() function returns void, so if you want to tell the caller about an error, you have to store an error code somewhere in the optional fourth argument to Lemon's Parse() function.
 
  Lemon and Bison Assign IDs to Tokens Differently
 --------------------------------------------------
-Bison allows you to use character-literals as tokens, like '\n':
+Both Bison and Lemon use 0 as their EOF token.
 
-    statement_list
+Bison enumerates non-character literal tokens starting at 258 so that the ID of character literal tokens (like '\n') can simply be their ASCII value.
+
+Lemon enumerates tokens starting at 1, and doesn't allow the use of character literals as tokens.
+
+    /* bison (lexer returns '\n') */
+    statement
 	: '\n'
-	| statement_list statement '\n'
+	| expression '\n'
     ;
 
-Bison enumerates non-character-literal tokens starting at 258 so that the ID of literal tokens like '\n' can simply be their ASCII value.
-
-Lemon enumerates tokens starting at 1, and doesn't allow the use of character literals as tokens. The lemon equivalent of the above would be:
-
-    statement_list ::= EOL.
-    statement_list ::= statement_list statement EOL.
-
-The lexer would return EOL to Lemon rather than '\n'.
+    /* lemon (lexer returns EOL) */
+    statement ::= EOL.
+    statement ::= expression EOL.
 
  The Lemon Parser Doesn't Reduce Immediately
 ---------------------------------------------
@@ -117,9 +160,6 @@ The lemon ParseTrace function is useful if you want to examine lemon's behavior.
     expression(A) ::= expression(B) PLUS expression(C). { A = B + C; }
 
 WARNING: Converting from bison to lemon syntax is tedious and error-prone.
-
-Remember that lemon doesn't provide a default action. Bison's default is
-{ $$ = $1; }.
 
  Lemon Makes All Terminals the Same Type
 -----------------------------------------
@@ -174,8 +214,7 @@ Lemon considers all tokens to be of the same type which is typically a struct/un
 
 Lemon Doesn't Support Mid-Rule Actions
 ---------------------------------------
-Bison allows you to put actions anywhere in the rhs component list, where they
-become unnamed components. Lemon does not support this feature.
+Bison allows you to put actions anywhere in the rhs component list, where they become unnamed components. Lemon does not support this feature.
 
     /* bison */
     alias_statement
@@ -213,7 +252,6 @@ become unnamed components. Lemon does not support this feature.
 
     alias_push_scope ::= /* subroutine */.
     {
-	/* this action is unnamed component $6 */
 	struct Scope_ *s = SCOPEcreate_tiny(OBJ_ALIAS);
 	PUSH_SCOPE(s,(Symbol*)0, OBJ_ALIAS);
     }
