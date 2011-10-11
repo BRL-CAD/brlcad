@@ -352,7 +352,7 @@ tri_tri_intersect_with_isectline(struct soup_s *UNUSED(left), struct soup_s *UNU
     /* compute interval for triangle 2 */
     compute_intervals_isectline(rf, up0, up1, up2, du0, du1, du2, du0du1, du0du2, &isect2[0], &isect2[1], isectpointB1, isectpointB2, tol);
 
-/* sort so that a<=b */
+    /* sort so that a<=b */
     smallest1 = smallest2 = 0;
 #define SORT2(a, b, smallest) if(a>b) { fastf_t _c; _c=a; a=b; b=_c; smallest=1; }
     SORT2(isect1[0], isect1[1], smallest1);
@@ -367,35 +367,32 @@ tri_tri_intersect_with_isectline(struct soup_s *UNUSED(left), struct soup_s *UNU
     if (isect2[0] < isect1[0]) {
 	if (smallest1 == 0)
 	    VMOVE(isectpt[0], isectpointA1)
-	    else
-		VMOVE(isectpt[0], isectpointA2)
-		    if (isect2[1] < isect1[1])
-			if (smallest2 == 0)
-			    VMOVE(isectpt[1], isectpointB2)
-			    else
-				VMOVE(isectpt[1], isectpointB1)
-				else if (smallest1 == 0)
-				    VMOVE(isectpt[1], isectpointA2)
-				    else
-					VMOVE(isectpt[1], isectpointA1)
-					    } else {
+	else
+	    VMOVE(isectpt[0], isectpointA2)
+		if (isect2[1] < isect1[1])
+		    if (smallest2 == 0)
+			VMOVE(isectpt[1], isectpointB2)
+		    else
+			VMOVE(isectpt[1], isectpointB1)
+		else if (smallest1 == 0)
+		    VMOVE(isectpt[1], isectpointA2)
+		else
+		    VMOVE(isectpt[1], isectpointA1)
+    } else {
 	if (smallest2 == 0)
 	    VMOVE(isectpt[0], isectpointB1)
-	    else
-		VMOVE(isectpt[0], isectpointB2)
-		    if (isect2[1] > isect1[1])
-			if (smallest1 == 0)
-			    VMOVE(isectpt[1], isectpointA2)
-			    else
-				VMOVE(isectpt[1], isectpointA1)
-				else if (smallest2 == 0)
-				    VMOVE(isectpt[1], isectpointB2)
-				    else
-					VMOVE(isectpt[1], isectpointB1)
-					    }
-    /*
-      bu_log("out0:%.0f/%.0f/%.0f out1:%.0f/%.0f/%.0f\n", V3ARGS(isectpt[0]), V3ARGS(isectpt[1]));
-    */
+	else
+	    VMOVE(isectpt[0], isectpointB2)
+		if (isect2[1] > isect1[1])
+		    if (smallest1 == 0)
+			VMOVE(isectpt[1], isectpointA2)
+		    else
+			VMOVE(isectpt[1], isectpointA1)
+		else if (smallest2 == 0)
+		    VMOVE(isectpt[1], isectpointB2)
+		else
+		    VMOVE(isectpt[1], isectpointB1)
+    }
     return 1;
 }
 
@@ -555,7 +552,6 @@ soup2nmg(struct soup_s *soup, const struct bn_tol *tol)
 	if(nmg_ks(s))
 	    return NULL;
 
-    bu_log("%d faces\n", soup->nfaces);
     return r;
 }
 
@@ -803,7 +799,6 @@ gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     lsplitz+=splitz;
     lsplitz+=splitz;
     lsplitty+=splitty;
-    bu_log("%d splits evaluated (%d) (%d %d)\n", splitz, lsplitz, splitty, lsplitty);
     splitz=0;
     splitty=0;
 
