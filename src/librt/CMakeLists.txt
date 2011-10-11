@@ -258,7 +258,6 @@ set(librt_ignored_files
     primitives/xxx/xxx.h
     search.h
     timer-nt.c
-    timer52brl.c
     timerhep.c
     timerunix.c
     uvpoints.cpp
