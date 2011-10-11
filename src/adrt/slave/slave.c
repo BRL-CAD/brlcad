@@ -39,7 +39,7 @@
 #  include <getopt.h>
 #endif
 
-#include "libtie/tie.h"
+#include "tie.h"
 #include "adrt.h"
 #include "camera.h"
 #include "adrt.h"
