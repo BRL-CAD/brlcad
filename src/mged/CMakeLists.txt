@@ -163,7 +163,6 @@ set(mged_ignore_files
 	dm-tk.c
 	dm-wgl.c
 	fbserv.h
-	fbserv_win32.c
 	htmlLibraryUi.h
 	joints.h
 	menu.h
