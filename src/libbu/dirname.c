@@ -73,14 +73,14 @@ bu_dirname(const char *cp)
     }
 
     /* Remove trailing slash, unless it's at front */
-    if (slash == ret)
-	ret[1] = '\0';		/* ret == BU_DIR_SEPARATOR */
-    else if (slash2 == ret)
-	ret[1] = '\0';		/* ret == "/" */
-    else if (slash != NULL)
-	*slash = '\0';
-    else
-	*slash2 = '\0';
+    if (slash == ret || slash2 == ret) {
+	ret[1] = '\0';		/* ret == BU_DIR_SEPARATOR || "/" */
+    } else {
+	if (slash != NULL)
+	    *slash = '\0';
+	if (slash2 != NULL)
+	    *slash2 = '\0';
+    }
 
     return ret;
 }
