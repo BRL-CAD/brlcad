@@ -1230,18 +1230,26 @@ announcements though the announcements almost always require
 modification and customization tailored to the particular forum and
 audience.  Always notify the following when a release is made:
 
-      14.1) BRL-CAD Website
+      14.1) BRL-CAD Website  (authorized can submit)
          http://brlcad.org/d/node/add/story
 
-      14.2) BRL-CAD NEWS Mailing List
+      14.2) BRL-CAD NEWS Mailing List  (anyone can submit, posting moderated)
          brlcad-news@lists.sourceforge.net
 
-      14.3) BRL-CAD Sourceforge NEWS
+      14.3) BRL-CAD Sourceforge NEWS  (authorized can submit)
          https://sourceforge.net/news/submit.php?group_id=105292
 
       14.4) Freshmeat  (anyone can submit update)
          http://freshmeat.net/projects/BRL-CAD/
-	 short summary without news details (sentence format)
+         short summary without news details (sentence format)
+
+      14.5) BRL-CAD on Facebook  (authorized can submit)
+         http://www.facebook.com/pages/BRL-CAD/387112738872
+         short summary without news details (sentence format)
+
+      14.6) BRL-CAD on Twitter  (authorized can submit)
+         http://twitter.com/#!/BRL_CAD
+         short summary without news details (whatever fits)
 
 If appropriate, notify and/or update the following information outlets
 with the details of the new release:
