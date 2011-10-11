@@ -37,6 +37,8 @@ IF(NOT LIB_DIR)
 	ENDIF(NOT WIN32)
 ENDIF(NOT LIB_DIR)
 
+add_definitions(-BUILD_sqlite)
+
 add_definitions(-D_REENTRANT=1)
 
 add_definitions(-DSQLITE_THREADSAFE=1)
