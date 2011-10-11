@@ -51,9 +51,9 @@ IF(TCL_SRC_PREFIX AND TCL_BIN_PREFIX AND ITCL_SRC_PREFIX AND ITCL_BIN_PREFIX AND
    SET(TCL_INCLUDE_DIRS ${TCL_SRC_PREFIX}/generic ${TCL_SRC_PREFIX}/libtommath)
    SET(ITCL_INCLUDE_DIRS ${ITCL_SRC_PREFIX}/generic)
    SET(TK_INCLUDE_PATH ${TK_SRC_PREFIX}/generic ${TK_SRC_PREFIX}/bitmaps)
-	IF(WIN32)
+   IF(WIN32)
       SET(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} ${TCL_SRC_PREFIX}/win)
-		SET(TK_INCLUDE_PATH ${TK_INCLUDE_PATH} ${TK_SRC_PREFIX}/xlib ${TK_SRC_PREFIX}/win)
+      SET(TK_INCLUDE_PATH ${TK_INCLUDE_PATH} ${TK_SRC_PREFIX}/xlib ${TK_SRC_PREFIX}/win)
    ELSE(WIN32)
       SET(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} ${TCL_SRC_PREFIX}/unix)
    ENDIF(WIN32)
@@ -91,10 +91,11 @@ SET(BUILD_SHARED_LIBS ON)
 SET(BUILD_STATIC_LIBS ON)
 
 # version numbers
-SET(ITK_MAJOR_VERSION 3)
-SET(ITK_MINOR_VERSION 4)
+SET(ITK_VERSION_MAJOR 3)
+SET(ITK_VERSION_MINOR 4)
+SET(ITK_PATCH_LEVEL "0")
 
-SET(ITK_VERSION "${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION}")
+SET(ITK_VERSION "${ITK_VERSION_MAJOR}.${ITK_VERSION_MINOR}")
 
 #---------------------------------------------------------------------
 # The following logic is what allows binaries to run successfully in
@@ -125,9 +126,9 @@ SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
    IF(NOT WIN32)
       IF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-	 SET(CMAKE_INSTALL_PREFIX "/usr/local/tcldev-${TCL_VERSION}")
+    SET(CMAKE_INSTALL_PREFIX "/usr/local/tcldev-${TCL_VERSION}")
       ELSE ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-	 SET(CMAKE_INSTALL_PREFIX "/usr")
+    SET(CMAKE_INSTALL_PREFIX "/usr")
       ENDIF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
    ENDIF(NOT WIN32)
    SET(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE STRING "TCL install prefix" FORCE)
@@ -151,345 +152,48 @@ IF(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
    SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all executables.")
 ENDIF(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 
-
-#-----------------------------------------------------------------------------
-# Check if the compiler supports pipe - if so, use it
-INCLUDE(CheckCCompilerFlag)
-CHECK_C_COMPILER_FLAG(-pipe PIPE_COMPILER_FLAG)
-IF(PIPE_COMPILER_FLAG)
-	SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pipe")
-ENDIF(PIPE_COMPILER_FLAG)
-
-#-----------------------------------------------------------------------------
-# Set CMake module path
-SET(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake;${CMAKE_MODULE_PATH}")
-
-#-----------------------------------------------------------------------------
-# Tcl/Tk's normal build system uses autotools macros, referred to as the
-# TEA system.  An attempt to duplicate the required functionality from
-# TEA is found in tcl.cmake
-INCLUDE(${ITK_SOURCE_DIR}/CMake/CheckSystemFunctionality.cmake)
-INCLUDE(${ITK_SOURCE_DIR}/CMake/tcl.cmake)
-
 #----------------------------------------------------------------------------
 # First, get some standard options out of the way - things that are constant
 # between various platforms or pertain to specific OS definitions
 add_definitions(-DPACKAGE_NAME="itk")
 add_definitions(-DPACKAGE_TARNAME="itk")
-add_definitions(-DPACKAGE_VERSION="${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION}")
+add_definitions(-DPACKAGE_VERSION="${ITK_PATCH_LEVEL}")
 add_definitions(-DPACKAGE_BUGREPORT="")
+add_definitions(-DSTDC_HEADERS=1)
 
-#----------------------------------------------------------------------------
-
-# First, get some standard options out of the way - things that are constant
-# between various platforms or pertain to specific OS definitions
-ADD_TCL_CFLAG(STDC_HEADERS)
-
-IF(WIN32)
-	add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP -Ot -Oi -fp:strict -Gs -GS -GL)
-	add_definitions(-Dinline=__inline -DBUILD_itk)
-ENDIF(WIN32)
-
-INCLUDE(CheckLibraryExists)
-INCLUDE(ResolveCompilerPaths)
-IF(NOT WIN32)
-   CHECK_LIBRARY_EXISTS(m cos "" HAVE_M_LIBRARY)
-   IF(HAVE_M_LIBRARY)
-      RESOLVE_LIBRARIES(M_LIBRARY "-lm")
-   ENDIF(HAVE_M_LIBRARY)
-ENDIF(NOT WIN32)
-
-
-#----------------------------------------------------------------------------
-SC_MISSING_POSIX_HEADERS()
-
-SC_ENABLE_THREADS()
-
-SC_TCL_CFG_ENCODING()
-
-SC_TCL_LINK_LIBS()
-
-# TODO - look over SC_ENABLE_SHARED, SC_CONFIG_CFLAGS and SC_ENABLE_SYMBOLS
-# need to decide how much of that logic is needed
-
-SC_TCL_64BIT_FLAGS()
-
-# Test endianness
-IF(NOT MSVC)
-   INCLUDE(TestBigEndian)
-   TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
-   IF(WORDS_BIGENDIAN)
-      ADD_TCL_CFLAG(WORDS_BIGENDIAN)
-   ENDIF(WORDS_BIGENDIAN)
-ENDIF(NOT MSVC)
-
-# POSIX substitutes
-CONFIG_CHECK_FUNCTION_EXISTS(getcwd HAVE_GETCWD)
-IF(NOT HAVE_GETCWD)
-   add_definitions(-DUSEGETWD=1)
-ENDIF(NOT HAVE_GETCWD)
-IF(NOT HAVE_GETCWD)
-   CONFIG_CHECK_FUNCTION_EXISTS(getwd HAVE_GETWD)
-   IF(NOT HAVE_GETWD)
-      ADD_TCL_CFLAG(NO_GETWD)
-   ENDIF(NOT HAVE_GETWD)
-ENDIF(NOT HAVE_GETCWD)
-CONFIG_CHECK_FUNCTION_EXISTS(opendir HAVE_OPENDIR)
-IF(NOT HAVE_OPENDIR)
-   SET(COMPAT_SRCS ${COMPAT_SRCS} compat/opendir.c)
-   ADD_TCL_CFLAG(USE_DIRENT2_H)
-ENDIF(NOT HAVE_OPENDIR)
-CONFIG_CHECK_FUNCTION_EXISTS(strtol HAVE_STRTOL)
-IF(NOT HAVE_STRTOL)
-   SET(COMPAT_SRCS ${COMPAT_SRCS} compat/strtol.c)
-ENDIF(NOT HAVE_STRTOL)
-CONFIG_CHECK_FUNCTION_EXISTS(waitpid HAVE_WAITPID)
-IF(NOT HAVE_WAITPID)
-   SET(COMPAT_SRCS ${COMPAT_SRCS} compat/waitpid.c)
-ENDIF(NOT HAVE_WAITPID)
-CONFIG_CHECK_FUNCTION_EXISTS(strerror HAVE_STRERROR)
-IF(NOT HAVE_STRERROR)
-   ADD_TCL_CFLAG(NO_STRERROR)
-ENDIF(NOT HAVE_STRERROR)
-CHECK_FUNCTION_EXISTS(wait3 HAVE_WAIT3)
-IF(NOT HAVE_WAIT3)
-   ADD_TCL_CFLAG(NO_WAIT3)
-ENDIF(NOT HAVE_WAIT3)
-CONFIG_CHECK_FUNCTION_EXISTS(uname HAVE_UNAME)
-IF(NOT HAVE_UNAME)
-   ADD_TCL_CFLAG(NO_UNAME)
-ENDIF(NOT HAVE_UNAME)
-# Check for early Darwin version here - realpath
-# is not threadsafe prior to Darwin 7
-CHECK_FUNCTION_EXISTS(realpath HAVE_REALPATH)
-IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$" AND TCL_THREADS AND HAVE_REALPATH)
-   STRING(REGEX REPLACE "\\..*" "" CMAKE_SYSTEM_MAJOR_VERSION ${CMAKE_SYSTEM_VERSION})
-   IF (${CMAKE_SYSTEM_MAJOR_VERSION} LESS 7)
-      MESSAGE("realpath is not threadsafe in Darwin versions prior to 7, disabling")
-      SET(HAVE_REALPATH)
-   ENDIF (${CMAKE_SYSTEM_MAJOR_VERSION} LESS 7)
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$" AND TCL_THREADS AND HAVE_REALPATH)
-IF(NOT HAVE_REALPATH)
-   ADD_TCL_CFLAG(NO_REALPATH)
-ENDIF(NOT HAVE_REALPATH)
-
-SC_TCL_IPV6()
-
-# Thread safe tests - need to go over macros and
-# get the right logic going here
-IF(TCL_THREADS)
-
-   SC_TCL_GETPWUID_R()
-
-   SC_TCL_GETPWNAM_R()
-
-   SC_TCL_GETGRGID_R()
-
-   SC_TCL_GETGRNAM_R()
-
-   IF(NOT HAVE_GETHOSTBYNAME)
-      CHECK_LIBRARY(GHBN lnsl gethostbyname)
-      SET(HAVE_GETHOSTBYNAME ${GHBN})
-   ENDIF(NOT HAVE_GETHOSTBYNAME)
-
-   SC_TCL_GETHOSTBYADDR_R()
-   SC_TCL_GETHOSTBYNAME_R()
-
-   IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
-      STRING(REGEX REPLACE "\\..*" "" CMAKE_SYSTEM_MAJOR_VERSION ${CMAKE_SYSTEM_VERSION})
-      IF (${CMAKE_SYSTEM_MAJOR_VERSION} GREATER 5)
-	 ADD_TCL_CFLAG(HAVE_MTSAFE_GETHOSTBYNAME)
-	 ADD_TCL_CFLAG(HAVE_MTSAFE_GETHOSTBYADDR)
-      ENDIF (${CMAKE_SYSTEM_MAJOR_VERSION} GREATER 5)
-   ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
-
-   IF(${CMAKE_SYSTEM_NAME} MATCHES "^HP-UX$")
-      STRING(REGEX REPLACE "\\..*" "" CMAKE_SYSTEM_MAJOR_VERSION ${CMAKE_SYSTEM_VERSION})
-      IF (${CMAKE_SYSTEM_MAJOR_VERSION} GREATER 10)
-	 ADD_TCL_CFLAG(HAVE_MTSAFE_GETHOSTBYNAME)
-	 ADD_TCL_CFLAG(HAVE_MTSAFE_GETHOSTBYADDR)
-      ENDIF (${CMAKE_SYSTEM_MAJOR_VERSION} GREATER 10)
-   ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^HP-UX$")
-
-ENDIF(TCL_THREADS)
-
-# Determine which interface to use to talk to the serial port.
-SC_SERIAL_PORT()
-
-# Do we need the sys/select.h check these days?
-
-
-# Handle time
-SC_TIME_HANDLER()
-
-# memove check - need to revisit this, not finding memmove
-# on OSX
-#CHECK_FUNCTION_EXISTS(memmove, HAVE_MEMMOVE)
-#IF(NOT HAVE_MEMMOVE)
-#  add_definitions(-DNO_MEMMOVE=1)
-#  add_definitions(-DNO_STRING_H=1)
-#ENDIF(NOT HAVE_MEMMOVE)
-
-# Test for bad functions
-SC_TCL_CHECK_BROKEN_FUNC(
-   strstr "
-   extern int strstr();
-   exit(strstr(\"\\\0test\", \"test\") ? 1 : 0);"
-)
-
-
-SC_TCL_CHECK_BROKEN_FUNC(
-   strtoul "
-   extern int strtoul();
-   char *term, *string = \"0\";
-   exit(strtoul(string,&term,0) != 0 || term != string+1);"
-)
-
-
-# Check for types - TODO: still need to define substitutes if these
-# are not found
-CONFIG_CHECK_TYPE_SIZE(mode_t MODE)
-CONFIG_CHECK_TYPE_SIZE(pid_t PID)
-CONFIG_CHECK_TYPE_SIZE(size_t SIZE)
-CONFIG_CHECK_TYPE_SIZE(uid_t UID)
-CONFIG_CHECK_TYPE_SIZE(blkcnt_t BLKCNT)
-CONFIG_CHECK_TYPE_SIZE(intptr_t INTPTR)
-CONFIG_CHECK_TYPE_SIZE(uintptr_t UINTPTR)
-
-
-SC_ENABLE_LANGINFO()
-
-IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
-   CONFIG_CHECK_FUNCTION_EXISTS(getattrlist HAVE_GETATTRLIST)
-   CONFIG_CHECK_INCLUDE_FILE(copyfile.h HAVE_COPYFILE_H)
-   CONFIG_CHECK_FUNCTION_EXISTS(copyfile HAVE_COPYFILE)
-   IF(${COREFOUNDATION_FRAMEWORK})
-      CONFIG_CHECK_INCLUDE_FILE(libkern/OSAtomic.h HAVE_LIBKERN_OSATOMIC_H)
-      CONFIG_CHECK_FUNCTION_EXISTS(OSSpinLockLock HAVE_OSSPINLOCKLOCK)
-      CONFIG_CHECK_FUNCTION_EXISTS(pthread_atfork HAVE_PTHREAD_ATFORK)
-   ENDIF(${COREFOUNDATION_FRAMEWORK})
-   ADD_TCL_CFLAG(USE_VFORK)
-   add_definitions(-DTCL_DEFAULT_ENCODING="utf-8")
-   ADD_TCL_CFLAG(TCL_LOAD_FROM_MEMORY)
-   ADD_TCL_CFLAG(TCL_WIDE_CLICKS)
-   CONFIG_CHECK_INCLUDE_FILE_USABILITY(AvailabilityMacros.h HAVE_AVAILABILITYMACROS_H)
-   IF(HAVE_AVAILABILITYMACROS_H)
-      SET(WEAK_IMPORT_SRCS "
-#ifdef __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__
-#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1020
-#error __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1020
-#endif
-#elif MAC_OS_X_VERSION_MIN_REQUIRED < 1020
-#error MAC_OS_X_VERSION_MIN_REQUIRED < 1020
-#endif
-int rand(void) __attribute__((weak_import));
-int main() {
-rand();
-return 0;
-}
-      ")
-      CHECK_C_SOURCE_COMPILES("${WEAK_IMPORT_SRCS}" WEAK_IMPORT_WORKING)
-      IF(WEAK_IMPORT_WORKING)
-	 ADD_TCL_CFLAG(HAVE_WEAK_IMPORT)
-      ENDIF(WEAK_IMPORT_WORKING)
-      SET(SUSV3_SRCS "
-#ifdef __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__
-#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1050
-#error __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1050
-#endif
-#elif MAC_OS_X_VERSION_MIN_REQUIRED < 1050
-#error MAC_OS_X_VERSION_MIN_REQUIRED < 1050
-#endif
-#define _DARWIN_C_SOURCE 1
-#include <sys/cdefs.h>
-
-int main () {return 0;}
-      ")
-      CHECK_C_SOURCE_COMPILES("${SUSV3_SRCS}" SUSV3_WORKING)
-      IF(SUSV3_WORKING)
-	 ADD_TCL_CFLAG(_DARWIN_C_SOURCE)
-      ENDIF(SUSV3_WORKING)
-
-   ENDIF(HAVE_AVAILABILITYMACROS_H)
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
-
-# Check for support of fts functions (readdir replacement)
-SET(FTS_SRCS "
-#include <sys/param.h>
-#include <sys/stat.h>
-#include <fts.h>
-
-int main () {
-char*const p[2] = {\"/\", NULL};
-FTS *f = fts_open(p, FTS_PHYSICAL|FTS_NOCHDIR|FTS_NOSTAT, NULL);
-FTSENT *e = fts_read(f); fts_close(f);
-return 0;
-}
-")
-CHECK_C_SOURCE_COMPILES("${FTS_SRCS}" FTS_WORKING)
-IF(FTS_WORKING)
-   ADD_TCL_CFLAG(HAVE_FTS)
-ENDIF(FTS_WORKING)
-
-OPTION(TCL_UNLOAD_DLLS "Allow unloading of shared libraries?" ON)
-IF(TCL_UNLOAD_DLLS)
-   ADD_TCL_CFLAG(TCL_UNLOAD_DLLS)
-ENDIF(TCL_UNLOAD_DLLS)
-
-# TODO - Need to set up check for timezone info
-
-# TODO - Dtrace
-
+# We're building Itk
+add_definitions(-DBUILD_itk)
 
 #--------------------------------------------------------------------
-#  Does the C stack grow upwards or downwards? Or cross-compiling?
+# We need to enable the threading macros found in tcl.h and tclInt.h.
+# The use of the threading features is determined by the core the
+# extension is loaded into, but we need to compile with these macros
+# turned on.
 #--------------------------------------------------------------------
-SET(C_STACK_SRC "
-int StackGrowsUp(int *parent) {
-int here;
-return (&here < parent);
-}
-int main (int argc, char *argv[]) {
-int foo;
-return StackGrowsUp(&foo);
-}
-")
-CHECK_C_SOURCE_RUNS("${C_STACK_SRC}" STACK_GROWS_UP)
-IF(STACK_GROWS_UP)
-   ADD_TCL_CFLAG(TCL_STACK_GROWS_UP)
-ENDIF(STACK_GROWS_UP)
+add_definitions(-DTCL_THREADS=1)
 
-CONFIG_CHECK_INCLUDE_FILE(sys/types.h HAVE_SYS_TYPES_H)
-CONFIG_CHECK_INCLUDE_FILE(sys/stat.h HAVE_SYS_STAT_H)
-CONFIG_CHECK_INCLUDE_FILE(sys/fstatfs.h HAVE_SYS_FSTATFS_H)
+MACRO(TCL_CHECK_INCLUDE_FILE filename var)
+   CHECK_INCLUDE_FILE(${filename} ${var})
+   IF(${var})
+      add_definitions(-D${var}=1)
+   ENDIF(${var})
+ENDMACRO(TCL_CHECK_INCLUDE_FILE)
+
+TCL_CHECK_INCLUDE_FILE(sys/types.h HAVE_SYS_TYPES_H)
+TCL_CHECK_INCLUDE_FILE(sys/stat.h HAVE_SYS_STAT_H)
+TCL_CHECK_INCLUDE_FILE(sys/fstatfs.h HAVE_SYS_FSTATFS_H)
 IF(NOT HAVE_SYS_FSTATFS_H)
    add_definitions(-DNO_FSTATFS=1)
 ENDIF(NOT HAVE_SYS_FSTATFS_H)
-CONFIG_CHECK_INCLUDE_FILE(memory.h HAVE_MEMORY_H)
-CONFIG_CHECK_INCLUDE_FILE(strings.h HAVE_STRINGS_H)
-CONFIG_CHECK_INCLUDE_FILE(inttypes.h HAVE_INTTYPES_H)
-CONFIG_CHECK_INCLUDE_FILE(stdint.h HAVE_STDINT_H)
-CONFIG_CHECK_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
+TCL_CHECK_INCLUDE_FILE(memory.h HAVE_MEMORY_H)
+TCL_CHECK_INCLUDE_FILE(strings.h HAVE_STRINGS_H)
+TCL_CHECK_INCLUDE_FILE(inttypes.h HAVE_INTTYPES_H)
+TCL_CHECK_INCLUDE_FILE(stdint.h HAVE_STDINT_H)
+TCL_CHECK_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
 
-
-CHECK_COMPILER_SUPPORTS_HIDDEN_D()
-
-CONFIG_CHECK_LIBRARY(DL dl dlopen)
-
-
-CONFIG_CHECK_INCLUDE_FILE_USABILITY(sys/modem.h SYS_MODEM_H)
-
-
-CHECK_FD_SET_IN_TYPES_D()
-
-CONFIG_CHECK_FUNCTION_EXISTS(chflags HAVE_CHFLAGS)
-
-IF(COMPAT_SRCS)
-   ADD_TCL_CFLAG(USE_COMPAT)
-ENDIF(COMPAT_SRCS)
-
-
-find_package(X11)
+IF(TK_GRAPHICS_SYSTEM STREQUAL "x11")
+   find_package(X11)
+ENDIF(TK_GRAPHICS_SYSTEM STREQUAL "x11")
 
 SET(ITK_GENERIC_SRCS
 	generic/itkStubInit.c
@@ -532,7 +236,7 @@ ELSE(WIN32)
 	add_library(itk ${ITK_GENERIC_SRCS})
 	target_link_libraries(itk ${TCL_LIBRARIES} ${ITCL_LIBRARY})
 ENDIF(WIN32)
-SET_TARGET_PROPERTIES(itk PROPERTIES VERSION ${ITK_VERSION} SOVERSION ${ITK_MAJOR_VERSION})
+SET_TARGET_PROPERTIES(itk PROPERTIES VERSION ${ITK_VERSION} SOVERSION ${ITK_VERSION_MAJOR})
 SET_TARGET_PROPERTIES(itk PROPERTIES PREFIX "lib")
 install(TARGETS itk DESTINATION ${LIB_DIR})
 
@@ -545,10 +249,10 @@ install(TARGETS itkstub DESTINATION ${LIB_DIR})
 
 GET_TARGET_PROPERTY(ITK_LIBLOCATION itk LOCATION_${CMAKE_BUILD_TYPE})
 GET_FILENAME_COMPONENT(ITK_LIBNAME ${ITK_LIBLOCATION} NAME)
-FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded Itk ${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION} [list load [file join $dir .. .. ${LIB_DIR} ${ITK_LIBNAME}] Itk]")
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION lib/itk${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION})
+FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded Itk ${ITK_VERSION_MAJOR}.${ITK_VERSION_MINOR} [list load [file join $dir .. .. ${LIB_DIR} ${ITK_LIBNAME}] Itk]")
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION lib/itk${ITK_VERSION_MAJOR}.${ITK_VERSION_MINOR})
 
-FILE(WRITE ${CMAKE_BINARY_DIR}/lib/itk${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION}/pkgIndex.tcl "package ifneeded Itk ${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION} [list load [file join $dir ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} ${ITK_LIBNAME}] Itk]")
+FILE(WRITE ${CMAKE_BINARY_DIR}/lib/itk${ITK_VERSION_MAJOR}.${ITK_VERSION_MINOR}/pkgIndex.tcl "package ifneeded Itk ${ITK_VERSION_MAJOR}.${ITK_VERSION_MINOR} [list load [file join $dir ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} ${ITK_LIBNAME}] Itk]")
 
 
 SET(ITK_LIBRARY_FILES
@@ -558,11 +262,11 @@ SET(ITK_LIBRARY_FILES
 	library/itk.tcl
 	library/tclIndex
 )
-install(FILES ${ITK_LIBRARY_FILES} DESTINATION lib/itk${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION})
+install(FILES ${ITK_LIBRARY_FILES} DESTINATION lib/itk${ITK_VERSION_MAJOR}.${ITK_VERSION_MINOR})
 
 FOREACH(file ${ITK_LIBRARY_FILES})
    get_filename_component(filename ${file} NAME)
-	configure_file(${file} ${CMAKE_BINARY_DIR}/lib/itk${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION}/${filename} COPYONLY)
+	configure_file(${file} ${CMAKE_BINARY_DIR}/lib/itk${ITK_VERSION_MAJOR}.${ITK_VERSION_MINOR}/${filename} COPYONLY)
 ENDFOREACH(file ${ITK_LIBRARY_FILES})
 
 SET(ITK_HDRS
