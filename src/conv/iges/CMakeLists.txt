@@ -126,7 +126,6 @@ SET(iges_ignore_files
 	n_iges.cpp
 	n_iges.hpp
 	n_main.cpp
-	spl.c
 	treecheck.c
 	wing128.igs
 	woodie.igs
