@@ -284,7 +284,7 @@ BC_ARG_ENABLE([build_urt], [urt-build], [Build the included Utah Raster Toolkit]
 BC_ARG_ENABLE([build_opennurbs], [opennurbs-build], [Build the included openNURBS library], [auto])
 
 # force enable/disable building of NIST STEP Class Libraries
-BC_ARG_ENABLE([build_step], [step-build], [Build the included STEP Class Libraries], [auto])
+BC_ARG_ENABLE([build_step], [step-build], [Build the included STEP Class Libraries], [no])
 
 # force enable/disable building of termlib
 BC_ARG_ENABLE([build_termlib], [termlib-build], [Build the included termlib library], [auto])
@@ -662,9 +662,6 @@ if test "x$set_everything" != "x" ; then
 	fi
 	if test "x$bc_build_opennurbs_set" = "xno" ; then
 		bc_build_opennurbs="$set_everything"
-	fi
-	if test "x$bc_build_step" = "xno" ; then
-		bc_build_step="$set_everything"
 	fi
 	if test "x$bc_build_termlib_set" = "xno" ; then
 		bc_build_termlib="$set_everything"
