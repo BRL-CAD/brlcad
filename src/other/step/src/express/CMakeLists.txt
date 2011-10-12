@@ -34,7 +34,7 @@ set(EXPRESS_SOURCES
 
 set(NEW_EXPRESS_SOURCES
     ${LEMON_NewExpParser_OUTPUTS}
-    ${LEX_ExpScanner_OUTPUTS}
+    ${LEX_NewExpScanner_OUTPUTS}
     symbol.c
     type.c
     variable.c
