@@ -171,7 +171,7 @@ dist_tcl_DATA = \
 	open.png \
 	openf.gif \
 	option_text.png \
-	option_tree.png \
+	option_edit.png \
 	other.png \
 	other_intersect.png \
 	other_subtract.png \
