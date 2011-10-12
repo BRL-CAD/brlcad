@@ -465,7 +465,6 @@ PARSERrun(char *filename,FILE *fp)
 
 	yyerrstatus = 0;
 	while ((tokenID = yylex()) > 0) {
-	    printf("tokenID = %d\n", tokenID);
 	    Parse(parser, tokenID, yylval);
 	}
 
