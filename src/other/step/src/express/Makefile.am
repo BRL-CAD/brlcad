@@ -69,8 +69,7 @@ EXTRA_DIST = \
 	$(BUILT_SOURCES) \
 	README \
 	Changes \
-	CMakeLists.txt \
-	expparse_new.y
+	CMakeLists.txt
 
 DISTCLEANFILES = $(BUILT_SOURCES)
 
