@@ -37,7 +37,7 @@ IF(NOT LIB_DIR)
 	ENDIF(NOT WIN32)
 ENDIF(NOT LIB_DIR)
 
-add_definitions(-BUILD_sqlite)
+add_definitions(-DBUILD_sqlite)
 
 IF(MSVC)
 	add_definitions(-DSQLITE_MAX_TRIGGER_DEPTH=100)
