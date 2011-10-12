@@ -26,7 +26,7 @@
 
 #include "bu.h"
 #include "bio.h"
-#include "obj_grammar.h"
+#include "obj_grammar_decls.h"
 #include "obj_parser_state.h"
 #include "obj_rules.h"
 #include "re2c_utils.h"

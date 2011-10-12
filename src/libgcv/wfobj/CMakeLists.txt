@@ -17,13 +17,13 @@ SET(OBJ_G_SRCS
 	tri_face.c
 )
 
-configure_file(obj_grammar.h.in ${CMAKE_CURRENT_BINARY_DIR}/obj_grammar.h COPY_ONLY)
+configure_file(obj_grammar_decls.h.in ${CMAKE_CURRENT_BINARY_DIR}/obj_grammar_decls.h COPY_ONLY)
 
 BRLCAD_ADDEXEC(obj-g "${OBJ_G_SRCS}" "libbu libbn librt libwdb")
 
 set(wfobj_ignore_files
 	Makefile.sample
-	obj_grammar.h.in
+	obj_grammar_decls.h.in
 	obj_grammar.yy
 	obj_parser.h
 	obj_parser_state.h

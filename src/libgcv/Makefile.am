@@ -33,7 +33,7 @@ EXTRA_DIST = \
 	wfobj/Makefile.am \
 	wfobj/Makefile.in \
 	wfobj/Makefile.sample \
-	wfobj/obj_grammar.h.in \
+	wfobj/obj_grammar_decls.h.in \
 	wfobj/obj_grammar.yy \
 	wfobj/obj_parser.cpp \
 	wfobj/obj_parser.h \
