@@ -69,31 +69,19 @@ typedef struct Scan_Buffer {
 /* global variables */
 /********************/
 
-#ifdef LEX_ACTIONS_C
-# define GLOBAL
-# define INITIALLY(value) = value
-#else
-# define GLOBAL extern
-# define INITIALLY(value)
-#endif /* LEX_ACTIONS_C */
+extern Scan_Buffer	SCAN_buffers[SCAN_NESTING_DEPTH];
+extern int		SCAN_current_buffer;
+extern char*		SCANcurrent;
 
-GLOBAL Scan_Buffer	SCAN_buffers[SCAN_NESTING_DEPTH];
-GLOBAL int		SCAN_current_buffer	INITIALLY(0);
-GLOBAL char*		SCANcurrent;
-
-GLOBAL Error		ERROR_include_file		INITIALLY(ERROR_none);
-GLOBAL Error		ERROR_unmatched_close_comment	INITIALLY(ERROR_none);
-GLOBAL Error		ERROR_unmatched_open_comment	INITIALLY(ERROR_none);
-GLOBAL Error		ERROR_unterminated_string	INITIALLY(ERROR_none);
-GLOBAL Error		ERROR_encoded_string_bad_digit	INITIALLY(ERROR_none);
-GLOBAL Error		ERROR_encoded_string_bad_count	INITIALLY(ERROR_none);
-GLOBAL Error		ERROR_bad_identifier		INITIALLY(ERROR_none);
-GLOBAL Error		ERROR_unexpected_character	INITIALLY(ERROR_none);
-GLOBAL Error		ERROR_nonascii_char;
-
-
-#undef GLOBAL
-#undef INITIALLY
+extern Error		ERROR_include_file;
+extern Error		ERROR_unmatched_close_comment;
+extern Error		ERROR_unmatched_open_comment;
+extern Error		ERROR_unterminated_string;
+extern Error		ERROR_encoded_string_bad_digit;
+extern Error		ERROR_encoded_string_bad_count;
+extern Error		ERROR_bad_identifier;
+extern Error		ERROR_unexpected_character;
+extern Error		ERROR_nonascii_char;
 
 /******************************/
 /* macro function definitions */
