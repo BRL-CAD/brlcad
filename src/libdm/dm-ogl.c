@@ -415,6 +415,8 @@ ogl_configureWin_guts(struct dm *dmp, int force)
 HIDDEN void
 ogl_reshape(struct dm *dmp, int width, int height)
 {
+    GLint mm;
+
     dmp->dm_height = height;
     dmp->dm_width = width;
     dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
@@ -431,6 +433,12 @@ ogl_reshape(struct dm *dmp, int width, int height)
 		 ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b,
 		 0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glGetIntegerv(GL_MATRIX_MODE, &mm);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
+    glMatrixMode(mm);
 }
 
 
