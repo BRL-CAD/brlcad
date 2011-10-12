@@ -6,6 +6,8 @@
 use strict;
 use warnings;
 
+use File::Path;
+use File::Copy;
 use BRLCAD_DOC (
 		'$genxmlcat',
 		'$genfopxmlcat',
@@ -36,8 +38,12 @@ my $svgdtd    = "$dbhome/$dbdir2/svg10.dtd";
 my $original2 = 'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd';
 my $svgdtd2   = "$dbhome/$dbdir2/svg11-tiny-flat.dtd";
 
+if (! -d ${brldir}) {
+  mkpath($brldir) or die "Failed to create $brldir: $!\n";
+}
+
 # create xml catalog file
-open my $fp, '>', $xmlcat
+open my $fp, ">", $xmlcat
   or die "$xmlcat: $!";
 
 # Note that the following dtd is removed to eliminate problems with
