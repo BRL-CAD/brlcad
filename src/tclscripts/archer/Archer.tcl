@@ -1101,16 +1101,21 @@ package provide Archer 1.0
 	    }
 	}
 
-	# Set orientation back to original setting
-	if {$save_orient != "no"} {
-	    $itk_component(ged) adjust $item orient $save_orient
-	}
-
 	if {$cosa > 0} {
+	    # Set orientation to rh
+	    if {$save_orient != "no"} {
+		$itk_component(ged) adjust $item orient rh
+	    }
+
 	    incr flip_count
 	    append flip_string "$item "
 	    $itk_component(ged) bot_flip $item
 	} else {
+	    # Set orientation back to original setting
+	    if {$save_orient != "no"} {
+		$itk_component(ged) adjust $item orient $save_orient
+	    }
+
 	    incr no_flip_count
 	    append no_flip_string "$item "
 	}
