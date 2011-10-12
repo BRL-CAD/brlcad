@@ -4684,13 +4684,13 @@ typedef void (GLAPIENTRY * PFNGLNAMEDSTRINGARBPROC) (GLenum type, GLint namelen,
 #define GL_WAIT_FAILED 0x911D
 #define GL_TIMEOUT_IGNORED 0xFFFFFFFFFFFFFFFF
 
-typedef GLenum (GLAPIENTRY * PFNGLCLIENTWAITSYNCPROC) (GLsync GLsync,GLbitfield flags,GLuint64 timeout);
-typedef void (GLAPIENTRY * PFNGLDELETESYNCPROC) (GLsync GLsync);
+typedef GLenum (GLAPIENTRY * PFNGLCLIENTWAITSYNCPROC) (GLsync sync,GLbitfield flags,GLuint64 timeout);
+typedef void (GLAPIENTRY * PFNGLDELETESYNCPROC) (GLsync sync);
 typedef GLsync (GLAPIENTRY * PFNGLFENCESYNCPROC) (GLenum condition,GLbitfield flags);
 typedef void (GLAPIENTRY * PFNGLGETINTEGER64VPROC) (GLenum pname, GLint64* params);
-typedef void (GLAPIENTRY * PFNGLGETSYNCIVPROC) (GLsync GLsync,GLenum pname,GLsizei bufSize,GLsizei* length, GLint *values);
-typedef GLboolean (GLAPIENTRY * PFNGLISSYNCPROC) (GLsync GLsync);
-typedef void (GLAPIENTRY * PFNGLWAITSYNCPROC) (GLsync GLsync,GLbitfield flags,GLuint64 timeout);
+typedef void (GLAPIENTRY * PFNGLGETSYNCIVPROC) (GLsync sync,GLenum pname,GLsizei bufSize,GLsizei* length, GLint *values);
+typedef GLboolean (GLAPIENTRY * PFNGLISSYNCPROC) (GLsync sync);
+typedef void (GLAPIENTRY * PFNGLWAITSYNCPROC) (GLsync sync,GLbitfield flags,GLuint64 timeout);
 
 #define glClientWaitSync GLEW_GET_FUN(__glewClientWaitSync)
 #define glDeleteSync GLEW_GET_FUN(__glewDeleteSync)
