@@ -20,9 +20,10 @@ src/express/Changes
 src/express/README
 src/express/conf.h
 src/express/expparse.y
-src/express/expscan.l
+src/express/expscan.re
 src/express/exptoks.h
 src/express/stack.h
+src/express/token_type.h
 src/express/y.tok.h
 src/exppp/README
 src/fedex_plus/classes.h

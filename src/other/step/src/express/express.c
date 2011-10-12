@@ -444,8 +444,13 @@ static
 Express
 PARSERrun(char *filename,FILE *fp)
 {
-	extern int yyparse();
 	extern void SCAN_lex_init PROTO((char *,FILE *));
+	extern int yylval;
+	extern int yyerrstatus;
+	int tokenID;
+
+	/* FIXME: should be using bu_malloc */
+	void *parser = ParseAlloc(malloc);
 
 	if (print_objects_while_running & OBJ_PASS_BITS) {
 		fprintf(stdout,"parse (pass 0)\n",EXPRESSpass);
@@ -457,12 +462,25 @@ PARSERrun(char *filename,FILE *fp)
 
 	yyin = fp;
 	SCAN_lex_init(filename,fp);
-	if (yyparse() != 0) {
+
+	yyerrstatus = 0;
+	while ((tokenID = yylex()) > 0) {
+	    printf("tokenID = %d\n", tokenID);
+	    Parse(parser, tokenID, yylval);
+	}
+
+	/* want 0 on success, 1 on invalid input, 2 on memory exhaustion */
+	if (yyerrstatus != 0) {
+		fprintf(stderr, ">> Bailing! (yyerrstatus = %d)\n", yyerrstatus);
 		ERRORreport(ERROR_bail_out);
 		/* free model and model->u.express */
 		return 0;
 	}
 	EXPRESSpass = 1;
+
+	/* FIXME: should be using bu_free */
+	ParseFree(parser, free);
+
 	return yyexpresult;
 }
 
@@ -848,78 +866,4 @@ EXPRESSresolve(Express model)
 	if (is_resolvable(schema)) resolved_all(schema);
     }
 }
-
-#if 0
-void
-EXPRESSdump_schema(Schema schema)
-{
-    Linked_List list,list2,ref;
-    Dictionary dict;
-    DictionaryEntry de;
-    
-    printf("SCHEMA %s\n", SCHEMAget_name(schema));
-    list = SCOPEget_types(schema);
-    printf("  Types:\n");
-    LISTdo(list, s, Symbol *)
-	printf("    %s\n", SYMBOLget_name(s));
-    LISTod;
-    list = SCOPEget_entities(schema);
-    printf("  Entities:\n");
-    LISTdo(list, s, Symbol)
-	printf("    %s\n", SYMBOLget_name(s));
-    LISTod;
-
-/* N14 Dump USE and REFERENCE lists */
-    list = SCOPEget_uses(schema);
-    printf("  Use:\n");
-    LISTdo(list, use, Linked_List)
-        printf("   Schema: %s\n", SYMBOLget_name(LISTget_first(use)));
-        list2 = LISTget_second(use);
-        LISTdo(list2, use_exp, Expression);
-            printf("   %s AS %s\n",
-                SYMBOLget_name(BIN_EXPget_first_operand(use_exp)),
-                SYMBOLget_name(BIN_EXPget_second_operand(use_exp)));
-        LISTod;
-    LISTod;
-    
-    dict = SCOPEget_references(schema);
-    printf("  Reference:\n");
-    DICTdo_init(dict,&de);
-    while (ref = (Linked_List)DICTdo(&de))
-      {
-	  printf("    %s\n", SYMBOLget_name(LISTget_first(ref)));
-          list2 = LISTget_second(ref);
-	  LISTdo(list2, ref_exp, Expression);
-            printf("   %s AS %s\n",
-                SYMBOLget_name(BIN_EXPget_first_operand(ref_exp)),
-                SYMBOLget_name(BIN_EXPget_second_operand(ref_exp)));
-          LISTod;
-      }
-    
-    printf("END_SCHEMA\n");
-
-/* N14 Nested schemas obsolete
-    list = SCOPEget_schemata(schema);
-    LISTdo(list, s, Schema)
-	EXPRESSdump_schema(s);
-    LISTod; */
-
-}
-
-/*
-** Procedure:	EXPRESSdump_model
-** Parameters:	Express model	- Express model to dump
-** Returns:	void
-** Description:	Dumps an Express model to stderr.
-*/
-
-/*ARGUSED*/
-void
-EXPRESSdump_model(Express model)
-{
-/* should make dump_model and dump_modelS! - DEL */
-/*    EXPRESSdump_schema(model->schema);*/
-}
-
-#endif /*0*/
 

@@ -108,7 +108,7 @@ static char rcsid[] = "$Id: expscan.l,v 1.12 1997/05/29 20:17:34 sauderd Exp $";
 #include "express/error.h"
 #include "express/lexact.h"
 #include "express/express.h"
-#include "expparse_new.h"
+#include "expparse.h"
 
 extern void	yyerror();
 extern int	yylineno;

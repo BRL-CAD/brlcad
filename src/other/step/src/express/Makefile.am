@@ -11,7 +11,7 @@ bin_PROGRAMS = \
 	symlink
 
 SRCS = \
-	expscan.l \
+	expscan.re \
 	expparse.y \
 	symbol.c \
 	type.c \
