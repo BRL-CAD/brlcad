@@ -19,7 +19,7 @@ FOP_HYPH=$(top_srcdir)/doc/docbook/resources/other/offo/binary/fop-hyph.jar
 FOP_ENV_VARS = FOP_HYPHENATION_PATH=$(FOP_HYPH) CLASSPATH=$(top_srcdir)/doc/docbook
 
 # two xml catalog files
-XML_CATALOG=$(top_srcdir)/doc/docbook/resources/brlcad/brlcad-xml-catalog-autogen.xml
+XML_CATALOG=resources/brlcad/brlcad-xml-catalog-autogen.xml
 FOP_XML_CATALOG=$(top_srcdir)/doc/docbook/resources/brlcad/CatalogManage.properties
 # both files as dependencies
 XML_CATALOGS=$(FOP_XML_CATALOG) $(XML_CATALOG)
@@ -41,7 +41,7 @@ FO_COVER_DEPS=$(GEN_FO_COVER) $(FO_COVER_TEMPLATE) $(DOC_MODULE)
 XSLTPROC_ENV_VARS = XML_CATALOG_FILES=$(XML_CATALOG) XML_DEBUG_CATALOG=1
 
 $(XML_CATALOG): $(GEN_XML_CATALOGS) BRLCAD_DOC.pm
-	perl $(GEN_XML_CATALOGS)
+	perl -I $(top_srcdir)/doc/docbook $(GEN_XML_CATALOGS)
 
 XSLTPROC_DEPS=$(XML_CATALOGS) $(XSL_FO_STYLESHEET) $(XSL_XHTML_STYLESHEET) $(XSL_MAN_STYLESHEET)
 
@@ -54,29 +54,28 @@ XSLTPROC_DEPS=$(XML_CATALOGS) $(XSL_FO_STYLESHEET) $(XSL_XHTML_STYLESHEET) $(XSL
 .fo:    $(XSLTPROC_DEPS)
 
 # the xml_catalog dependency doesn't seem to work--hard wire it then
-# if test ! -f $(XML_CATALOG) ; then perl $(GEN_XML_CATALOGS) ; fi
 .xml.html:
-	if test ! -f $(XML_CATALOG) ; then perl $(GEN_XML_CATALOGS) ; fi
+	if test ! -f $(XML_CATALOG) ; then perl -I $(top_srcdir)/doc/docbook $(GEN_XML_CATALOGS) ; fi
 	@mkdir -p $$(dirname $@)
 	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_XHTML_STYLESHEET) $<
 
 .xml.1:
-	if test ! -f $(XML_CATALOG) ; then perl $(GEN_XML_CATALOGS) ; fi
+	if test ! -f $(XML_CATALOG) ; then perl -I $(top_srcdir)/doc/docbook $(GEN_XML_CATALOGS) ; fi
 	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $<
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
 .xml.3:
-	if test ! -f $(XML_CATALOG) ; then perl $(GEN_XML_CATALOGS) ; fi
+	if test ! -f $(XML_CATALOG) ; then perl -I $(top_srcdir)/doc/docbook $(GEN_XML_CATALOGS) ; fi
 	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $<
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
 .xml.5:
-	if test ! -f $(XML_CATALOG) ; then perl $(GEN_XML_CATALOGS) ; fi
+	if test ! -f $(XML_CATALOG) ; then perl -I $(top_srcdir)/doc/docbook $(GEN_XML_CATALOGS) ; fi
 	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $<
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
 .xml.nged:
-	if test ! -f $(XML_CATALOG) ; then perl $(GEN_XML_CATALOGS) ; fi
+	if test ! -f $(XML_CATALOG) ; then perl -I $(top_srcdir)/doc/docbook $(GEN_XML_CATALOGS) ; fi
 	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $<
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
@@ -85,7 +84,7 @@ XSLTPROC_DEPS=$(XML_CATALOGS) $(XSL_FO_STYLESHEET) $(XSL_XHTML_STYLESHEET) $(XSL
 
 # this rule must not be applied to books
 .xml.fo:
-	if test ! -f $(XML_CATALOG) ; then perl $(GEN_XML_CATALOGS) ; fi
+	if test ! -f $(XML_CATALOG) ; then perl -I $(top_srcdir)/doc/docbook $(GEN_XML_CATALOGS) ; fi
 	@mkdir -p $$(dirname $@)
 	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_FO_STYLESHEET) $<
 
@@ -123,7 +122,7 @@ covers: covers.pdf
 #verbose = --verbose
 #fobdebug = -d
 covers.fo:  dummy.xml $(FO_COVER_DEPS) $(XML_CATALOG)
-	perl create-book-covers.pl $<
+	perl -I $(top_srcdir)/doc/docbook create-book-covers.pl $<
 	@echo ============ making fo... =============
 	$(XSLTPROC_ENV_VARS) $(XSLTPROC) $(XSLTPROC_FLAGS) $(verbose) -o $(fo_out) \
           $(XSL_FO_COVERS_STYLESHEET) $<
