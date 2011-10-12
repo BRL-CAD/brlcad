@@ -113,7 +113,8 @@ MACRO(LEMON_TARGET Name LemonInput LemonOutput)
 
 		# CMake rename works only on one volume - if we can find mv or move, use it
 		# Otherwise, fall back on cmake -E rename and hope we're on the same volume
-		# Don't try moving files if the binary and source dirs are the same.
+		# Don't try moving files if the binary and source dirs are the same unless
+		# we need the cpp/hpp suffixes.
 		IF(${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
 			IF("${ARGV1}" MATCHES "yy$")
 				ADD_CUSTOM_COMMAND(OUTPUT ${LEMON_TARGET_outputs}
