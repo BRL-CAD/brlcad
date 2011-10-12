@@ -1,0 +1,200 @@
+/*                   E C O S Y S T E M . D O T
+ * BRL-CAD
+ *
+ * Copyright (c) 2011 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * Redistribution and use in source (Docbook format) and 'compiled'
+ * forms (PDF, PostScript, HTML, RTF, etc), with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code (Docbook format) must retain the
+ * above copyright notice, this list of conditions and the following
+ * disclaimer.
+ *
+ * 2. Redistributions in compiled form (transformed to other DTDs,
+ * converted to PDF, PostScript, HTML, RTF, and other formats) must
+ * reproduce the above copyright notice, this list of conditions and
+ * the following disclaimer in the documentation and/or other
+ * materials provided with the distribution.
+ *
+ * 3. The name of the author may not be used to endorse or promote
+ * products derived from this documentation without specific prior
+ * written permission.
+ *
+ * THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+ * USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+digraph BRLCADDeps{
+	//overlap=scale
+	rankdir=LR;	
+	label="BRL-CAD Open Source Ecosystem\nClifford Yapp October 2011";
+
+	{
+	     node [shape=plaintext, fontsize=12];
+	     "BRL-CAD Applications" -> "BRL-CAD Libraries" -> "3rd Party Resources" -> "System Requirements";
+	};
+	
+	
+	// Libraries
+
+	tcltk [color = "blue", style = bold, shape = box, label = "Tcl/Tk"];
+	tkhtml [color = "blue", style = bold, shape = box, label = "Tcl/Tk html viewer"];
+	tkpng [color = "blue", style = bold, shape = box, label = "tkpng"];
+	tktable [color = "blue", style = bold, shape = box, label = "tktable"];
+	togl [color = "blue", style = bold, shape = box, label = "Tk OpenGL widget (togl)"];
+	incrTcl [color = "blue", style = bold, shape = box, label = "IncrTcl"];
+	
+
+	boost [color = "blue", style = bold, shape = box, label = "Boost"];
+	libpng [color = "blue", style = bold, shape = box, label = "libpng"];
+	libregex [color = "blue", style = bold, shape = box, label = "libregex"];
+	libtermlib [color = "blue", style = bold, shape = box, label = "libtermlib"];
+	libutahrle [color = "blue", style = bold, shape = box, label = "libutahrle"];
+	opennurbs [color = "blue", style = bold, shape = box, label = "openNURBS"];
+	scl [color = "blue", style = bold, shape = box, label = "NIST Step Class Libraries"];
+	tnt [color = "blue", style = bold, shape = box, label = "NIST Template Numerical Toolkit"];
+	xsl [color = "blue", style = bold, shape = box, label = "Docbook XSL resources"];
+	zlib [color = "blue", style = bold, shape = box, label = "zlib"];
+
+	// Tools
+	//re2clemon [color = "orange", style = bold, shape = box, label = "re2c + lemon"];
+	re2c [color = "orange", style = bold, shape = box, label = "re2c"];
+	lemon [color = "orange", style = bold, shape = box, label = "lemon"];
+	//{ rank = same; "3rd Party Resources"; tcltk; tkhtml; tkpng; tktable; togl; incrTcl; boost; libpng; libregex; libtermlib; libutahrle; opennurbs; scl; tnt; xsl; zlib; re2clemon; }
+	{ rank = same; "3rd Party Resources"; tcltk; tkhtml; tkpng; tktable; togl; incrTcl; boost; libpng; libregex; libtermlib; libutahrle; opennurbs; scl; tnt; xsl; zlib; re2c; lemon; }
+	// GSoC
+	osl [color = "purple", style = bold, shape = box, label = "Open Shader Language (GSoC)"];
+	oiio [color = "purple", style = bold, shape = box, label = "OpenImageIO (GSoC)"];
+	openexr [color = "purple", style = bold, shape = box, label = "OpenEXR (GSoC)"];
+	qt [color = "purple", style = bold, shape = box, label = "Qt Graphics Toolkit (GSoC)"];
+	ogre3d [color = "purple", style = bold, shape = box, label = "OGRE graphics engine (GSoC)"];
+	bullet [color = "purple", style = bold, shape = box, label = "Bullet Physics Library (ESASoC)"];
+
+	{ rank = same; "3rd Party Resources"; bullet; osl; oiio; openexr; qt; ogre3d; }
+
+	// GeomCore only
+	subversion [color = "purple", style = bold, shape = box, label = "Subversion version control libraries"];
+	//apr [color = "purple", style = bold, shape = box, label = "Apache Portable Runtime"];
+	//uuid [color = "purple", style = bold, shape = box, label = "Universally Unique Identifiers (OSSP uuid)"];
+	sqlite [color = "purple", style = bold, shape = box, label = "SQLite"];
+	
+	{ rank = same; "3rd Party Resources"; subversion; sqlite; }
+	
+	// System (not bundled)
+	X11 [color = "red", style = bold, shape = box, label = "X11"];
+	autotools [color = "red", style = bold, shape = box, label = "GNU Autotools"];
+	cmake [color = "red", style = bold, shape = box, label = "CMake"];
+	fop [color = "red", style = bold, shape = box, label = "Apache FOP (Docbook->pdf)"];
+	lex [color = "red", style = bold, shape = box, label = "Lex (flex)"];
+	make [color = "red", style = bold, shape = box, label = "Make"];
+	mesa [color = "red", style = bold, shape = box, label = "Mesa 3D library"];
+	unixtools [color = "red", style = bold, shape = box, label = "Unix tools (sed, grep, awk, etc.)"];
+	xsltproc [color = "red", style = bold, shape = box, label = "XSLT processor (xsltproc)"];
+	yacc [color = "red", style = bold, shape = box, label = "Yacc (GNU Bison/byacc)"];
+	crun [color = "red", style = bold, shape = box, label = "C/C++ Runtime"];
+	
+	{ rank = same; "System Requirements"; X11; autotools; cmake; crun; fop; lex; make; mesa; unixtools; xsltproc; yacc; }
+
+	// BRL-CAD components
+	libbu [color = "green", style = bold, shape = box, label = "BRL-CAD Utility Library (libbu)"];
+	libpc [color = "green", style = bold, shape = box, label = "Parametric Constraint Library (libpc)"];
+	librt [color = "green", style = bold, shape = box, label = "Raytracing Library (librt)"];
+	libdm [color = "green", style = bold, shape = box, label = "Display Manager (libdm)"];
+	libfb [color = "green", style = bold, shape = box, label = "Framebuffer (libfb)"];
+	libged [color = "green", style = bold, shape = box, label = "Geometry Editing Library (libged)"];
+	libtclcad [color = "green", style = bold, shape = box, label = "Tcl CAD library (libtclcad)"];
+	libtermio [color = "green", style = bold, shape = box, label = "Terminal IO library (libtermio)"];
+
+	{ rank = same; "BRL-CAD Libraries"; libbu; libpc; librt; libdm; libged; libtclcad; libtermio; }	
+
+	// BRL-CAD Application Categories
+	geomedit [color = "green", style = bold, shape = box, label = "Geometry Editing"];
+	geomconv [color = "green", style = bold, shape = box, label = "Geometry Conversion"];
+	datautil [color = "green", style = bold, shape = box, label = "Data Utilities"];
+	imageproc [color = "green", style = bold, shape = box, label = "Image Processing"];
+	experimental [color = "green", style = bold, shape = box, label = "Experimental Work"];
+
+	{ rank = same; "BRL-CAD Applications"; geomedit; geomconv; datautil; imageproc; experimental; }	
+	
+
+	/* Relationships */
+
+	libbu -> libpng;
+	libbu -> zlib;
+
+	libpc -> boost;
+	libpc -> opennurbs;
+	
+	librt -> libregex;
+	librt -> tnt;
+	librt -> opennurbs;
+	
+	libdm -> tcltk;
+	libdm -> libpng;
+
+	libfb -> tcltk;
+	
+	libged -> libregex;
+	libged -> libpng;
+	
+	libtclcad -> tcltk;
+	libtclcad -> incrTcl;
+	libtclcad -> libpng;
+
+	libtermio -> libtermlib;
+	
+	experimental -> osl;
+	experimental -> oiio;
+	experimental -> openexr;
+	experimental -> qt;
+	experimental -> ogre3d;
+	experimental -> sqlite;
+	experimental -> subversion;
+	experimental -> bullet;
+
+	geomedit -> libbu;
+	geomedit -> libpc;
+	geomedit -> librt;
+	geomedit -> libdm;
+	geomedit -> libged;
+	geomedit -> libtclcad;
+	geomedit -> libtermio;
+	geomedit -> tkhtml;
+	geomedit -> tkpng;
+	geomedit -> tktable;
+	geomedit -> togl;
+	geomedit -> incrTcl;
+	geomedit -> xsl;
+	geomconv -> libbu;
+	geomconv -> librt;
+	geomconv -> libtclcad;
+	geomconv -> libged;
+	geomconv -> scl;
+	geomconv -> boost;
+	geomconv -> lemon;
+	geomconv -> re2c;
+
+	datautil -> libbu;
+	datautil -> libfb;
+	datautil -> libpng;
+	datautil -> libutahrle;
+
+	imageproc -> libbu;
+	imageproc -> libutahrle;
+	imageproc -> zlib;
+	
+
+}	
