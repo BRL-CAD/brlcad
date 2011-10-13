@@ -12,13 +12,6 @@ package require Tk
 tk scaling 1.33333
 package require Tkhtml 3.0
 
-# If possible, load package "Img". Without it the script can still run,
-# but won't be able to load many image formats.
-#
-if {[catch { package require Img } errmsg]} {
-  puts stderr "WARNING: $errmsg (most image types will fail to load)"
-}
-
 source [sourcefile hv3_browser.tcl]
 
 namespace eval ::hv3 {
@@ -597,14 +590,27 @@ proc gui_build {widget_array} {
   # main window is reduced.
   pack .toolbar -fill x -side top 
   pack .status -fill x -side bottom
+  ::ttk::frame .treeframe -borderwidth 1
   set mann_list [mann_pages en]
-  ttk::treeview .tree
-  .tree heading #0 -text "Manual Pages"
+  ::ttk::treeview .treeframe.tree
+  .treeframe.tree heading #0 -text "Manual Pages"
+  .treeframe.tree column #0 -width 130
   foreach manFile $mann_list {
-     .tree insert {} end -text "$manFile"
+     .treeframe.tree insert {} end -text "$manFile"
   }
-  bind .tree <<TreeviewSelect>> {gui_current goto file:///[file join [bu_brlcad_data html] mann/en/[.tree item [.tree focus] -text].html]}
-  pack .tree -fill y -side left
+  bind .treeframe.tree <<TreeviewSelect>> {gui_current goto file:///[file join [bu_brlcad_data html] mann/en/[.treeframe.tree item [.treeframe.tree focus] -text].html]}
+  bind .treeframe.tree <Control-f> {gui_current Find}
+  bind .treeframe.tree <Control-F> {gui_current Find}
+
+  ::ttk::scrollbar .treeframe.treevscroll -orient vertical
+  .treeframe.tree configure -yscrollcommand ".treeframe.treevscroll set"
+  .treeframe.treevscroll configure -command ".treeframe.tree yview"
+
+  grid .treeframe.tree .treeframe.treevscroll -sticky nsew
+  grid columnconfigure .treeframe 0 -weight 1
+  grid rowconfigure .treeframe 0 -weight 1
+
+  pack .treeframe -fill both -side left
   pack .notebook -fill both -expand true
 }
 
