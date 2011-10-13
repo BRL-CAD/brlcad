@@ -88,11 +88,11 @@ MARK_AS_ADVANCED(LEMON_TEMPLATE)
 #============================================================
 #
 MACRO(LEMON_TARGET Name LemonInput LemonOutput)
-	SET(LEMON_TARGET_outputs "${LemonOutput}")
 	IF(NOT ${ARGC} EQUAL 3 AND NOT ${ARGC} EQUAL 4)
 		MESSAGE(SEND_ERROR "Usage")
 	ELSE()
-		# lemon generates files in source dir, so we need to move them
+		# lemon generates files in the same directory as the input file
+		# so we need to copy the input file to the build dir.
 		IF("${ARGV1}" MATCHES "yy$")
 			STRING(REGEX REPLACE "yy$" "c" SRC_FILE "${ARGV1}")
 			STRING(REGEX REPLACE "yy$" "h" HEADER_FILE "${ARGV1}")
@@ -108,56 +108,37 @@ MACRO(LEMON_TARGET Name LemonInput LemonOutput)
 		ENDIF("${ARGV1}" MATCHES "yy$")
 		STRING(REGEX REPLACE "^(.*)(\\.[^.]*)$" "\\1${_hfileext}" LEMON_${Name}_OUTPUT_HEADER "${ARGV2}")
 		STRING(REGEX REPLACE "^(.*)(\\.[^.]*)$" "\\1.out" LEMON_${Name}_LOG "${ARGV2}")
+		SET(LEMON_TARGET_outputs "${LemonOutput}")
 		LIST(APPEND LEMON_TARGET_outputs "${LEMON_${Name}_OUTPUT_HEADER}")
 		LIST(APPEND LEMON_TARGET_outputs "${LEMON_${Name}_LOG}")
+		IF(NOT ${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
+			GET_FILENAME_COMPONENT(INPUTFILE ${ARGV1} NAME)
+			LIST(APPEND LEMON_TARGET_outputs "${CMAKE_CURRENT_BINARY_DIR}/${INPUTFILE}")
+		ENDIF(NOT ${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
 
-		# CMake rename works only on one volume - if we can find mv or move, use it
-		# Otherwise, fall back on cmake -E rename and hope we're on the same volume
-		# Don't try moving files if the binary and source dirs are the same unless
-		# we need the cpp/hpp suffixes.
-		IF(${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
-			IF("${ARGV1}" MATCHES "yy$")
-				ADD_CUSTOM_COMMAND(OUTPUT ${LEMON_TARGET_outputs}
-					COMMAND ${LEMON_EXECUTABLE} ${ARGV1} ${ARGV3}
-					COMMAND ${CMAKE_COMMAND} -E rename ${HEADER_FILE} ${LEMON_${Name}_OUTPUT_HEADER}
-					COMMAND ${CMAKE_COMMAND} -E rename ${SRC_FILE} ${ARGV2}
-					DEPENDS ${ARGV1}
-					COMMENT "[LEMON][${Name}] Building parser with ${LEMON_EXECUTABLE}"
-					WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-			ELSE("${ARGV1}" MATCHES "yy$")
-				ADD_CUSTOM_COMMAND(OUTPUT ${LEMON_TARGET_outputs}
-					COMMAND ${LEMON_EXECUTABLE} ${ARGV1} ${ARGV3}
-					DEPENDS ${ARGV1}
-					COMMENT "[LEMON][${Name}] Building parser with ${LEMON_EXECUTABLE}"
-					WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-			ENDIF("${ARGV1}" MATCHES "yy$")
-		ELSE(${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
-			IF(MOVE_EXECUTABLE)
-				ADD_CUSTOM_COMMAND(OUTPUT ${LEMON_TARGET_outputs}
-					COMMAND ${LEMON_EXECUTABLE} ${ARGV1} ${ARGV3}
-					COMMAND ${MOVE_EXECUTABLE} ${HEADER_FILE} ${LEMON_${Name}_OUTPUT_HEADER}
-					COMMAND ${MOVE_EXECUTABLE} ${SRC_FILE} ${ARGV2}
-					COMMAND ${MOVE_EXECUTABLE} ${OUT_FILE} ${LEMON_${Name}_LOG}
-					DEPENDS ${ARGV1}
-					COMMENT "[LEMON][${Name}] Building parser with ${LEMON_EXECUTABLE}"
-					WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-			ELSE(MOVE_EXECUTABLE)
-				ADD_CUSTOM_COMMAND(OUTPUT ${LEMON_TARGET_outputs}
-					COMMAND ${LEMON_EXECUTABLE} ${ARGV1} ${ARGV3}
-					COMMAND ${CMAKE_COMMAND} -E rename ${HEADER_FILE} ${LEMON_${Name}_OUTPUT_HEADER}
-					COMMAND ${CMAKE_COMMAND} -E rename ${SRC_FILE} ${ARGV2}
-					COMMAND ${CMAKE_COMMAND} -E rename ${OUT_FILE} ${LEMON_${Name}_LOG}
-					DEPENDS ${ARGV1}
-					COMMENT "[LEMON][${Name}] Building parser with ${LEMON_EXECUTABLE}"
-					WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-			ENDIF(MOVE_EXECUTABLE)
-		ENDIF(${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
+		# If we've got "yy" files, indicating C++ code, rename outputs accordingly
+		GET_FILENAME_COMPONENT(INPUTFILE ${ARGV1} NAME)
+		IF("${ARGV1}" MATCHES "yy$")
+			ADD_CUSTOM_COMMAND(OUTPUT ${LEMON_TARGET_outputs}
+				COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/${ARGV1} ${CMAKE_CURRENT_BINARY_DIR}/${INPUTFILE}
+				COMMAND ${LEMON_EXECUTABLE} ${INPUTFILE} ${ARGV3}
+				COMMAND ${CMAKE_COMMAND} -E rename ${HEADER_FILE} ${LEMON_${Name}_OUTPUT_HEADER}
+				COMMAND ${CMAKE_COMMAND} -E rename ${SRC_FILE} ${ARGV2}
+				DEPENDS ${ARGV1}
+				COMMENT "[LEMON][${Name}] Building parser with ${LEMON_EXECUTABLE}")
+		ELSE("${ARGV1}" MATCHES "yy$")
+			ADD_CUSTOM_COMMAND(OUTPUT ${LEMON_TARGET_outputs}
+				COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/${ARGV1} ${CMAKE_CURRENT_BINARY_DIR}/${INPUTFILE}
+				COMMAND ${LEMON_EXECUTABLE} ${INPUTFILE} ${ARGV3}
+				DEPENDS ${ARGV1}
+				COMMENT "[LEMON][${Name}] Building parser with ${LEMON_EXECUTABLE}")
+		ENDIF("${ARGV1}" MATCHES "yy$")
 
 		# define target variables
 		SET(LEMON_${Name}_DEFINED TRUE)
 		SET(LEMON_${Name}_INPUT ${ARGV1})
 		SET(LEMON_${Name}_OUTPUTS ${LEMON_TARGET_outputs})
-		SET(LEMON_${Name}_COMPILE_FLAGS ${LEMON_TARGET_cmdopt})
+		SET(LEMON_${Name}_COMPILE_FLAGS ${ARGV3})
 		SET(LEMON_${Name}_OUTPUT_SOURCE "${LemonOutput}")
 	ENDIF(NOT ${ARGC} EQUAL 3 AND NOT ${ARGC} EQUAL 4)
 ENDMACRO(LEMON_TARGET)
