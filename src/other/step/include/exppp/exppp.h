@@ -1,3 +1,5 @@
+#ifndef EXPPP_H
+#define EXPPP_H
 extern int exppp_nesting_indent;	/* default nesting indent */
 extern int exppp_continuation_indent;	/* default nesting indent for */
 					/* continuation lines */
@@ -55,3 +57,4 @@ int TYPEto_buffer(Type t,char *buffer,int length);
 int TYPEhead_to_buffer(Type t,char *buffer,int length);
 int TYPEbody_to_buffer(Type t,char *buffer,int length);
 int WHEREto_buffer(Linked_List w,char *buffer,int length);
+#endif
