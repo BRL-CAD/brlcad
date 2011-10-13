@@ -124,7 +124,6 @@ fi
 
 AMFILES="`find ${TOPSRC} -type f -name Makefile.am -exec grep -n -I -e '_CPPFLAGS[[:space:]]*=' {} /dev/null \; | grep -v 'AM_CPPFLAGS' | grep -v 'BREP_CPPFLAGS' | grep -v 'DM_RTGL_CPPFLAGS' | awk '{print $1}'`"
 
-FOUND=
 for file in $AMFILES ; do
     echo "Target-specific CPPFLAGS found in $file"
 done
