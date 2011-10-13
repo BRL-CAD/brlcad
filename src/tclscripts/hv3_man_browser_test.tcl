@@ -336,8 +336,8 @@ snit::type ::hv3::config {
           pack forget .toolbar
         } else {
           . configure -menu .m
-          pack .status -after .notebook -fill x -side bottom
-          pack .toolbar -before .notebook -fill x -side top
+          pack .status -after .middle.notebook -fill x -side bottom
+          pack .toolbar -before .middle.notebook -fill x -side top
         }
       }
       -guifont {
@@ -363,7 +363,7 @@ snit::type ::hv3::config {
         }
       }
       default {
-        $self configurebrowser [.notebook current]
+        $self configurebrowser [.middle.notebook current]
       } 
     }
   }
@@ -422,11 +422,6 @@ snit::type ::hv3::file_menu {
       "Open File..."  [list gui_openfile $::hv3::G(notebook)]           o  \
       "Open Tab"      [list $::hv3::G(notebook) add]                    t  \
       "Open Location" [list gui_openlocation $::hv3::G(location_entry)] l  \
-      "-----"         ""                                                "" \
-      "Bookmark This Page" [list ::hv3::gui_bookmark]                   b  \
-      "-----"         ""                                                "" \
-      "Downloads..."  [list ::hv3::the_download_manager show]           "" \
-      "Bookmarks..."  [list gui_current goto home://bookmarks/]         "" \
       "-----"         ""                                                "" \
       "Close Tab"     [list $::hv3::G(notebook) close]                  "" \
       "Exit"          exit                                              q  \
@@ -530,7 +525,8 @@ proc gui_build {widget_array} {
   ::hv3::toolbutton .toolbar.b.stop    -text {Stop} -tooltip    "Stop"
   ::hv3::toolbutton .toolbar.b.forward -text {Forward} -tooltip "Go Forward"
 
-  ::hv3::toolbutton .toolbar.b.new -text {New Tab} -command [list .notebook add]
+  ::ttk::panedwindow .middle -orient horizontal
+  ::hv3::toolbutton .toolbar.b.new -text {New Tab} -command [list .middle.notebook add]
   ::hv3::toolbutton .toolbar.b.home -text Home -command [list \
       gui_current goto $::hv3::homeuri
   ]
@@ -539,7 +535,7 @@ proc gui_build {widget_array} {
 
   # Create the middle bit - the browser window
   #
-  ::hv3::tabset .notebook              \
+  ::hv3::tabset .middle.notebook              \
       -newcmd    gui_new                 \
       -switchcmd gui_switch
 
@@ -558,7 +554,7 @@ proc gui_build {widget_array} {
   set G(forward_button) .toolbar.b.forward
   set G(home_button)    .toolbar.b.home
   set G(location_entry) .toolbar.entry
-  set G(notebook)       .notebook
+  set G(notebook)       .middle.notebook
   set G(status_label)   .status
 
   # The G(status_mode) variable takes one of the following values:
@@ -590,28 +586,31 @@ proc gui_build {widget_array} {
   # main window is reduced.
   pack .toolbar -fill x -side top 
   pack .status -fill x -side bottom
-  ::ttk::frame .treeframe -borderwidth 1
+  
+ 
+ ::ttk::frame .middle.treeframe -borderwidth 1
   set mann_list [mann_pages en]
-  ::ttk::treeview .treeframe.tree
-  .treeframe.tree heading #0 -text "Manual Pages"
-  .treeframe.tree column #0 -width 130
+  ::ttk::treeview .middle.treeframe.tree
+  .middle.treeframe.tree heading #0 -text "Manual Pages"
+  .middle.treeframe.tree column #0 -width 130
   foreach manFile $mann_list {
-     .treeframe.tree insert {} end -text "$manFile"
+     .middle.treeframe.tree insert {} end -text "$manFile"
   }
-  bind .treeframe.tree <<TreeviewSelect>> {gui_current goto file:///[file join [bu_brlcad_data html] mann/en/[.treeframe.tree item [.treeframe.tree focus] -text].html]}
-  bind .treeframe.tree <Control-f> {gui_current Find}
-  bind .treeframe.tree <Control-F> {gui_current Find}
+  bind .middle.treeframe.tree <<TreeviewSelect>> {gui_current goto file:///[file join [bu_brlcad_data html] mann/en/[.middle.treeframe.tree item [.middle.treeframe.tree focus] -text].html]}
+  bind .middle.treeframe.tree <Control-f> {gui_current Find}
+  bind .middle.treeframe.tree <Control-F> {gui_current Find}
 
-  ::ttk::scrollbar .treeframe.treevscroll -orient vertical
-  .treeframe.tree configure -yscrollcommand ".treeframe.treevscroll set"
-  .treeframe.treevscroll configure -command ".treeframe.tree yview"
+  ::ttk::scrollbar .middle.treeframe.treevscroll -orient vertical
+  .middle.treeframe.tree configure -yscrollcommand ".middle.treeframe.treevscroll set"
+  .middle.treeframe.treevscroll configure -command ".middle.treeframe.tree yview"
 
-  grid .treeframe.tree .treeframe.treevscroll -sticky nsew
-  grid columnconfigure .treeframe 0 -weight 1
-  grid rowconfigure .treeframe 0 -weight 1
+  grid .middle.treeframe.tree .middle.treeframe.treevscroll -sticky nsew
+  grid columnconfigure .middle.treeframe 0 -weight 1
+  grid rowconfigure .middle.treeframe 0 -weight 1
 
-  pack .treeframe -fill both -side left
-  pack .notebook -fill both -expand true
+  .middle add .middle.treeframe 
+  .middle add .middle.notebook
+  pack .middle -fill both -expand true
 }
 
 proc goto_gui_location {browser entry args} {
@@ -671,7 +670,7 @@ proc gui_menu {widget_array} {
 #--------------------------------------------------------------------------
 
 proc gui_current {args} {
-  eval [linsert $args 0 [.notebook current]]
+  eval [linsert $args 0 [.middle.notebook current]]
 }
 
 proc gui_firefox_remote {} {
@@ -687,7 +686,7 @@ proc gui_switch {new} {
   # tab is updated, the history menu is not updated (only the data
   # structures in the corresponding ::hv3::history object).
   #
-  foreach browser [.notebook tabs] {
+  foreach browser [.middle.notebook tabs] {
     $browser configure -backbutton    ""
     $browser configure -stopbutton    ""
     $browser configure -forwardbutton ""
@@ -696,7 +695,7 @@ proc gui_switch {new} {
 
   # Configure the new current tab to control the history controls.
   #
-  set new [.notebook current]
+  set new [.middle.notebook current]
   $new configure -backbutton    $G(back_button)
   $new configure -stopbutton    $G(stop_button)
   $new configure -forwardbutton $G(forward_button)
@@ -716,7 +715,7 @@ proc gui_switch {new} {
 
   # Set the top-level window title to the title of the new current tab.
   #
-  wm title . [.notebook get_title $new]
+  wm title . [.middle.notebook get_title $new]
 
   # Focus on the root HTML widget of the new tab.
   #
@@ -755,10 +754,10 @@ proc gui_new {path args} {
 }
 
 proc gui_settitle {browser var args} {
-  if {[.notebook current] eq $browser} {
+  if {[.middle.notebook current] eq $browser} {
     wm title . [set $var]
   }
-  .notebook set_title $browser [set $var]
+  .middle.notebook set_title $browser [set $var]
 }
 
 # This procedure is invoked when the user selects the File->Open menu
@@ -788,7 +787,7 @@ proc gui_log_window {notebook} {
 proc gui_report_bug {} {
   upvar ::hv3::G G
   set uri [[[$G(notebook) current] hv3] uri get]
-  .notebook add "home://bug/[::hv3::format_query [encoding system] $uri]"
+  .middle.notebook add "home://bug/[::hv3::format_query [encoding system] $uri]"
 
   set cookie "tkhtml_captcha=[expr [clock seconds]+86399]; Path=/; Version=1"
   ::hv3::the_cookie_manager SetCookie http://tkhtml.tcl.tk/ $cookie
@@ -895,7 +894,7 @@ proc gui_subwindow {{uri ""}} {
 #
 rename exit tcl_exit
 proc exit {args} {
-  destroy .notebook
+  destroy .middle.notebook
   catch {destroy .prop.hv3}
   catch {::tkhtml::htmlalloc}
   eval [concat tcl_exit $args]
