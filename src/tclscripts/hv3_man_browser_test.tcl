@@ -199,6 +199,10 @@ snit::type ::hv3::config {
 
   method populate_menu {path} {
 
+   set cmd [list gui_current Find]
+   set acc (Ctrl-F)
+   $path add command -label {Find in page...} -command $cmd -accelerator $acc
+
     # Add the 'Gui Font (size)' menu
     ::hv3::menu ${path}.guifont
     $self PopulateRadioMenu ${path}.guifont -guifont [list \
