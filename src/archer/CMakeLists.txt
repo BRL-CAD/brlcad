@@ -1,8 +1,10 @@
 IF(WIN32)
-	configure_file(archer.bat ${CMAKE_BINARY_DIR}/bin/archer.bat COPYONLY)
+	FILE(COPY archer.bat DESTINATION ${CMAKE_BINARY_DIR}/bin/archer.bat)
+	FILE(COPY archer DESTINATION ${CMAKE_BINARY_DIR}/bin/archer)
 	INSTALL(PROGRAMS archer.bat DESTINATION bin)
+ELSE(WIN32)
+	EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/archer ${CMAKE_BINARY_DIR}/bin/archer)
 ENDIF(WIN32)
-configure_file(archer ${CMAKE_BINARY_DIR}/bin/archer COPYONLY)
 INSTALL(PROGRAMS archer DESTINATION bin)
 
 BRLCAD_ADDFILE(plugins/Core/README plugins/archer/Core)
