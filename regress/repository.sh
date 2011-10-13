@@ -98,6 +98,7 @@ fi
 
 
 # make sure every configure option is documented
+echo "running option documentation check..."
 FOUND=
 for i in `grep ARG_ENABLE ${TOPSRC}/configure.ac | sed 's/[^,]*,\([^,]*\).*/\1/' | awk '{print $1}' | sed 's/\[\(.*\)\]/\1/g'` ; do
     if test "x`grep "enable-$i" ${TOPSRC}/INSTALL`" = "x" ; then
@@ -106,9 +107,9 @@ for i in `grep ARG_ENABLE ${TOPSRC}/configure.ac | sed 's/[^,]*,\([^,]*\).*/\1/'
     fi
 done
 if test "x$FOUND" = "x" ; then
-    echo "--> configure documentation check succeeded"
+    echo "-> option documentation check succeeded"
 else
-    echo "--> configure documentation check FAILED (non-fatal)"
+    echo "-> option documentation check FAILED (non-fatal)"
     FAILED="`expr $FAILED + 1`"
 fi
 
@@ -122,10 +123,16 @@ if test ! -f "${TOPSRC}/Makefile.am" ; then
     exit 1
 fi
 
-AMFILES="`find ${TOPSRC} -type f -name Makefile.am -exec grep -n -I -e '_CPPFLAGS[[:space:]]*=' {} /dev/null \; | grep -v 'AM_CPPFLAGS' | grep -v 'BREP_CPPFLAGS' | grep -v 'DM_RTGL_CPPFLAGS' | awk '{print $1}'`"
+AMFILES="`find ${TOPSRC} -type f -name Makefile.am -exec grep -n -I -e '_CPPFLAGS[[:space:]]*=' {} /dev/null \; | grep -v 'AM_CPPFLAGS' | grep -v 'BREP_CPPFLAGS' | awk '{print $1}'`"
 
+FOUND=
 for file in $AMFILES ; do
+    if test "x`echo \"$file\" | sed 's/.*#.*//g'`" = "x" ; then
+	# skip commented lines
+	continue
+    fi
     echo "Target-specific CPPFLAGS found in $file"
+    FOUND=1
 done
 if test "x$FOUND" = "x" ; then
     echo "-> cppflags check succeeded"
