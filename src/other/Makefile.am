@@ -174,6 +174,7 @@ endif
 EXTRA_DIST = \
 	boost \
 	togl \
+	hv3 \
 	CMakeLists.txt \
 	itcl.dist \
 	itk.dist \
