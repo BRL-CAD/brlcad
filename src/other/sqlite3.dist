@@ -1,0 +1,14 @@
+SET(sqlite3_ignore_files
+sqlite3.c
+sqlite3.h
+shell.c
+sqlite3.1
+sqlite3ext.h
+CMake/ResolveCompilerPaths.cmake
+tcl/tclsqlite3.c
+tcl/CMake/ac_std_funcs.cmake
+tcl/CMake/tcl.cmake
+tcl/CMake/CheckPrototypeExists.cmake
+tcl/CMake/CheckCFileRuns.cmake
+tcl/CMake/ResolveCompilerPaths.cmake
+)
