@@ -403,7 +403,7 @@ long int splitz = 0;
 long int splitty = 0;
 
 HIDDEN int
-split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], const struct bn_tol *tol)
+split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], struct face_s *UNUSED(opp_face), const struct bn_tol *tol)
 {
     struct face_s *f = s->faces+fid;
     int i, j, isv[2] = {0, 0};
@@ -412,48 +412,67 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], c
 #define LINE_INT 0x20
 #define FACE_INT 0x40
 #define ALL_INT  (VERT_INT|LINE_INT|FACE_INT)
-#define SWAP_INT { int _tmpi; point_t _tmpp; VMOVE(_tmpp, isectpt[0]); VMOVE(isectpt[0], isectpt[1]); VMOVE(isectpt[1], _tmpp); _tmpi = isv[0]; isv[0]=isv[1]; isv[1]=_tmpi; }
 
     /****** START hoistable ******/
-    /*** test if intersect is on a vert ***/
-    for(i=0;i<2;i++) for(j=0;j<3;j++) if(VNEAR_EQUAL(f->vert[j], isectpt[i], tol->dist)) isv[i] = VERT_INT|j;
-    /* isv now contains matching vertices for intersect points, as indices. */
-    /*** test if intersect is on a line ***/
     for(i=0;i<2;i++) for(j=0;j<3;j++) {
 	    if(isv[i] != 0) {
-		/* do the line test */
-		/* if(point_is_on_line_seg) isv = LINE_INT|j; break; */
+		fastf_t dist;
+
+		switch( bn_isect_pt_lseg( &dist, (fastf_t *)&f->vert[j], (fastf_t *)&f->vert[j==2?0:j+1], (fastf_t *)&isectpt[i], tol) ) {
+		    case -2: case -1: continue;
+		    case 1: isv[i] = VERT_INT|j; bu_log("Boom\n");break;
+		    case 2: isv[i] = VERT_INT|(j==2?0:j+1); bu_log("Bam\n");break;
+		    case 3: isv[i] = LINE_INT|j; bu_log("uNF\n");break;
+		    default: bu_log("Whu?\n"); break;
+		}
 	    }
 	}
-    if(isv[0]|LINE_INT && isv[1]|VERT_INT) SWAP_INT;
+
     /*** test if intersect is middle of face ***/
     for(i=0;i<2;i++) {
 	/* test for face in plane */
 	if(isv[i] == 0) {
 	}
     }
-    if((isv[0]|ALL_INT) == 0 || (isv[1]|ALL_INT) == 0) {
-	bu_log("Uhhhh, whu?\n");
+
+    if(isv[0] == 0 || isv[1] == 0)
 	return -1;
+
+    if((isv[0]|ALL_INT) > (isv[1]|ALL_INT)) {
+	int tmpi;
+	point_t tmpp;
+	bu_log("SWAP!\n");
+	VMOVE(tmpp, isectpt[0]);
+	VMOVE(isectpt[0], isectpt[1]);
+	VMOVE(isectpt[1], tmpp);
+	tmpi = isv[0];
+	isv[0]=isv[1];
+	isv[1]=tmpi;
     }
-    if((isv[0]|ALL_INT) > (isv[1]|ALL_INT)) SWAP_INT;
+
     /****** END hoistable ******/
 
-    bu_log("Breaking: %x %x\n", isv[0]|ALL_INT, isv[1]|ALL_INT);
-
     /* test if both ends of the intersect line are on vertices */
+    /* if VERT+VERT, abort */
+    bu_log("%x %x\n", isv[0], isv[1]);
     if(isv[0] >= 0 && isv[1] >= 0)
 	return 1;
 
+    /* if VERT+LINE, break into 2 */
     if(isv[0]|VERT_INT && isv[1]|LINE_INT) {
 	bu_log("Splitting into 2 %x %x\n", isv[0]|ALL_INT, isv[1]|ALL_INT);
 	/* split into 2 and return */
 	return 2;
     }
 
-    /* if VERT+VERT, abort */
-    /* if VERT+LINE, break into 2 */
     /* if LINE+LINE, break into 3, figure out which side has two verts and cut * that */
+    if(isv[0]|LINE_INT && isv[1]|LINE_INT) {
+	bu_log("Splitting into 3 %x %x\n", isv[0]|ALL_INT, isv[1]|ALL_INT);
+	/* split into 3 and return */
+	return 3;
+    }
+    bu_log("derp?\n");
+
     /* if VERT+FACE, break into 3, intersect is one line, other two to the * opposing verts */
     /* if LINE+FACE, break into 3 */
     /* if FACE+FACE, break into 3 */
@@ -484,8 +503,8 @@ split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *righ
 
     splitty++;
 
-    split_face_single(left, left_face, isectpt, tol);
-    split_face_single(right, right_face, isectpt, tol);
+    split_face_single(left, left_face, isectpt, &right->faces[right_face], tol);
+    split_face_single(right, right_face, isectpt, &left->faces[left_face], tol);
 
     return -1;
 }
