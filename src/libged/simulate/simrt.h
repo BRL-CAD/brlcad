@@ -49,7 +49,7 @@
  * Overlaps regions smaller than this will have only a single plane of rays slicing the
  * region in half, generating manifolds in a plane.
  */
-#define TOL 0.1
+#define TOL 0.04
 
 
 /*
@@ -93,6 +93,33 @@ struct hit_reg {
     struct hit_reg *forw;
     struct hit_reg *backw;
 };
+
+
+struct rayshot_results{
+	/* Results of shooting rays towards -ve x-axis : xr means x rays */
+	fastf_t xr_min_x_x, xr_min_x_y, xr_min_x_z;  /* the min X found while shooting x rays & rltd y,z*/
+	fastf_t xr_max_x_x, xr_max_x_y, xr_max_x_z;  /* the max X found while shooting x rays & rltd y,z*/
+	fastf_t xr_min_y, xr_min_y_z; /* the min y where overlap was found & the z co-ord for it*/
+	fastf_t xr_max_y, xr_max_y_z; /* the max y where overlap was still found */
+	fastf_t xr_min_z, xr_min_z_y; /* the min z where overlap was found & the y co-ord for it*/
+	fastf_t xr_max_z, xr_max_z_y; /* the max z where overlap was still found */
+
+	/* Results of shooting rays down y axis */
+
+
+
+	/* Results of shooting rays down z axis */
+
+};
+
+
+/**
+ * Creates the contact pairs from the raytracing results
+ *
+ */
+int
+create_contact_pairs(struct sim_manifold *mf);
+
 
 /**
  * Shoots rays within the AABB overlap regions only, to allow more rays to be shot
@@ -150,6 +177,18 @@ if_overlap(struct application *ap, struct partition *pp, struct region *reg1,
  */
 int
 shoot_ray(struct rt_i *rtip, point_t pt, point_t dir);
+
+
+/**
+ * Shoots a grid of rays towards negative x axis
+ */
+int
+shoot_x_rays(
+		struct ged *gedp,
+		struct sim_manifold *current_manifold,
+		struct simulation_params *sim_params,
+		struct rt_i *rtip,
+		vect_t overlap_min, vect_t overlap_max);
 
 
 /**
