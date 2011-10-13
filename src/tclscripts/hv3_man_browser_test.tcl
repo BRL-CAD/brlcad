@@ -926,8 +926,8 @@ proc main {args} {
         set enablejavascript 1
       }
       default {
-        set uri [::tkhtml::uri file:///[pwd]/]
-        lappend docs [$uri resolve $val]
+        set uri [::tkhtml::uri file:///[file join [bu_brlcad_data html] mann en Introduction.html] ]
+        lappend docs [$uri resolve $val.html]
         $uri destroy
       }
     }
