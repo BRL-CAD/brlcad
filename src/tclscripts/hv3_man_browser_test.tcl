@@ -337,8 +337,8 @@ snit::type ::hv3::config {
           pack forget .toolbar
         } else {
           . configure -menu .m
-          pack .status -after .middle.notebook -fill x -side bottom
-          pack .toolbar -before .middle.notebook -fill x -side top
+          pack .status -after .middle -fill x -side bottom
+          pack .toolbar -before .middle -fill x -side top
         }
       }
       -guifont {
