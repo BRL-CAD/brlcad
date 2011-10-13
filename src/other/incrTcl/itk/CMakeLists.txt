@@ -221,7 +221,7 @@ include_directories(
 	${TK_INCLUDE_PATH}
 	${ITCL_INCLUDE_DIRS}
 	${ITK_INCLUDE_DIRS}
-	${X11_INCLUDE_DIR}
+	${TK_X11_INCLUDE_DIRS}
 	${CMAKE_BINARY_DIR}/include
 	${CMAKE_SOURCE_DIR}/include
 )
