@@ -11,6 +11,7 @@ proc sourcefile {file} [string map              \
 package require Tk
 tk scaling 1.33333
 package require Tkhtml 3.0
+package require tkpng
 
 source [sourcefile hv3_browser.tcl]
 
