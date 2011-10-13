@@ -470,6 +470,25 @@ proc ::hv3::gui_bookmark {} {
 }
 
 
+# get a list of the mann pages
+proc mann_pages {lang_type} {
+   set disabledByDefault [list Introduction]
+   set mann_list []
+   set manFiles [glob -nocomplain -directory [file join [bu_brlcad_data html] mann/$lang_type] *.html ]
+   foreach manFile $manFiles {
+      set rootName [file rootname [file tail $manFile]]
+      set isDisabled [expr [lsearch -sorted -exact \
+                                    $disabledByDefault $rootName] != -1]
+      if {!$isDisabled} {
+      	lappend mann_list $rootName
+      }
+   }
+   set mann_list [lsort $mann_list]
+   return $mann_list
+}
+   
+
+
 #--------------------------------------------------------------------------
 # The following functions are all called during startup to construct the
 # static components of the web browser gui:
@@ -572,11 +591,13 @@ proc gui_build {widget_array} {
   # main window is reduced.
   pack .toolbar -fill x -side top 
   pack .status -fill x -side bottom
+  set mann_list [mann_pages en]
   ttk::treeview .tree
   .tree heading #0 -text "Manual Pages"
-  set mann_list [.tree insert {} end -text "mann"]
-  set curr_entry [.tree insert $mann_list end -text "search"]
-  bind .tree <<TreeviewSelect>> {gui_current goto file:///[file join [bu_brlcad_data html] mann/en/search.html]}
+  foreach manFile $mann_list {
+     .tree insert {} end -text "$manFile"
+  }
+  bind .tree <<TreeviewSelect>> {gui_current goto file:///[file join [bu_brlcad_data html] mann/en/[.tree item [.tree focus] -text].html]}
   pack .tree -fill y -side left
   pack .notebook -fill both -expand true
 }
@@ -903,9 +924,9 @@ proc main {args} {
 
   ::hv3::dbinit
 
-  if {[llength $docs] == 0} {set docs [list file:///[file join [bu_brlcad_data html] mann/en/Introduction.html]]}
+  if {[llength $docs] == 0} {set docs [list file:///[file join [bu_brlcad_data html] mann/en/Introduction.html]] }
   set ::hv3::newuri [lindex $docs 0]
-  set ::hv3::homeuri file:///[file join [bu_brlcad_data html] mann/en/Introduction.html]]
+  set ::hv3::homeuri file:///[file join [bu_brlcad_data html] mann/en/Introduction.html ]
 
   # Build the GUI
   gui_build     ::hv3::G
