@@ -1,6 +1,3 @@
-namespace eval hv3 { set {version($Id$)} 1 }
-
-catch {memory init on}
 
 proc sourcefile {file} [string map              \
   [list %HV3_DIR% [bu_brlcad_root lib/hv3]] \
@@ -12,6 +9,253 @@ package require Tk
 tk scaling 1.33333
 package require Tkhtml 3.0
 package require tkpng
+package provide ManBrowser 1.1
+
+::itcl::class ::ManBrowser {
+    inherit iwidgets::Dialog
+
+    public {
+        variable path
+        variable parentName
+        variable disabledPages
+        variable enabledPages
+
+        method setPageNames     {}
+        method loadPage         {pageName}
+        method select           {pageName}
+    }
+
+    # List of pages loaded into ToC listbox
+    private common pages
+
+    constructor {args} {}
+}
+
+# ------------------------------------------------------------
+#                      OPTIONS
+# ------------------------------------------------------------
+
+##
+# Path to HTML manual pages
+#
+::itcl::configbody ManBrowser::path {
+    if {![info exists path] || ![file isdirectory $path]} {
+        set path [file join [bu_brlcad_data "html"] mann en]
+    }
+}
+
+##
+# Used in window title string
+#
+::itcl::configbody ManBrowser::parentName {
+    if {![info exists parentName] || ![string is print -strict $parentName]} {
+        set parentName BRLCAD
+    }
+    configure -title "[string trim $parentName] Manual Page Browser"
+}
+
+##
+# Page names in disabledByDefault and those added to this list are *always*
+# disabled.
+::itcl::configbody ManBrowser::disabledPages {
+    set disabledByDefault [list Introduction]
+
+    if {![info exists disabledPages] || ![string is list $disabledPages]} {
+        set disabledPages $disabledByDefault
+    } else {
+        lappend disabledPages $disabledByDefault
+    }
+    set disabledPages [lsort $disabledPages]
+
+    # Reset pages list
+    if {[info exists pages($this)] && $pages($this) != {}} {
+        setPageNames
+    }
+}
+
+##
+# All pages are enabled by default. If this list is defined, page names added
+# to it are the only ones that may be enabled.
+::itcl::configbody ManBrowser::enabledPages {
+    if {![info exists enabledPages] || ![string is list $enabledPages]} {
+        set enabledPages [list]
+    }
+    set enabledPages [lsort $enabledPages]
+
+    # Reset pages list
+    if {[info exists pages($this)] && $pages($this) != {}} {
+        setPageNames
+    }
+}
+
+# ------------------------------------------------------------
+#                      OPERATIONS
+# ------------------------------------------------------------
+
+##
+# Loads a list of enabled commands into ToC, after comparing pages found in
+# 'path' with those listed in 'disabledPages' and 'enabledPages'.
+::itcl::body ManBrowser::setPageNames {} {
+   if {[file exists $path]} {
+    set manFiles [glob -nocomplain -directory $path *.html ]
+
+    set pages($this) [list]
+    foreach manFile $manFiles {
+        set rootName [file rootname [file tail $manFile]]
+
+        # If the page exists in disabledPages, disable it 
+        set isDisabled [expr [lsearch -sorted -exact \
+                              $disabledPages $rootName] != -1]
+
+        # If enabledPages is defined and the page exists, enable it
+        if {$enabledPages != {}} {
+            set isEnabled [expr [lsearch -sorted -exact \
+                                 $enabledPages $rootName] != -1]
+        } else {
+            set isEnabled 1
+        }
+
+        # Obviously, if the page is both disabled/enabled, it will be disabled
+        if {!$isDisabled && $isEnabled} {
+            lappend pages($this) $rootName
+        }
+    }
+    set pages($this) [lsort $pages($this)]
+  }
+}
+
+
+##
+# Loads pages selected graphically or through the command line into HTML browser
+#
+::itcl::body ManBrowser::loadPage {pageName} {
+    # Get page
+    if {[file exists [file join $path $pageName.html]]} {
+       gui_current goto file:///[file join $path $pageName.html]      
+    }
+}
+
+# Selects page in ToC & loads into HTML browser; used for command line calls
+#
+::itcl::body ManBrowser::select {pageName} {
+    # Select the requested man page 
+    set idx [lsearch -sorted -exact $pages($this) $pageName]
+
+    if {$idx != -1} {
+        set result True
+        set toc $itk_component(toc_listbox)
+
+        # Deselect previous selection
+        $toc selection clear 0 [$toc index end]
+
+        # Select pageName in table of contents
+        $toc selection set $idx
+        $toc activate $idx
+        $toc see $idx
+
+        loadPage $pageName
+    } else {
+        set result False
+    }
+
+    return $result
+}
+
+# ------------------------------------------------------------
+#                      CONSTRUCTOR
+# ------------------------------------------------------------
+::itcl::body ManBrowser::constructor {args} {
+    eval itk_initialize $args
+
+    # Trigger configbody defaults if user didn't pass them
+    set opts {{path} {parentName} {disabledPages} {enabledPages}}
+    foreach o $opts {
+        if {![info exists $o]} {eval itk_initialize {-$o {}}}
+    }
+
+    setPageNames
+
+    $this hide 1
+    $this hide 2
+    $this hide 3
+    $this configure \
+        -modality none \
+        -thickness 2 \
+        -buttonboxpady 0
+    $this buttonconfigure 0 \
+        -defaultring yes \
+        -defaultringpad 3 \
+        -borderwidth 1 \
+        -pady 0
+
+    # ITCL can be nasty
+    set win [$this component bbox component OK component hull]
+    after idle "$win configure -relief flat"
+
+    set parent [$this childsite]
+
+    # Table of Contents
+    itk_component add toc {
+        ::tk::frame $parent.toc
+    } {}
+
+    set toc $itk_component(toc)
+
+    itk_component add toc_scrollbar {
+        ::ttk::scrollbar $toc.toc_scrollbar
+    } {}
+
+    itk_component add toc_listbox {
+        ::tk::listbox $toc.toc_listbox -bd 2 \
+                                       -width 16 \
+                                       -exportselection false \
+                                       -yscroll "$toc.toc_scrollbar set" \
+                                       -listvariable [scope pages($this)]
+    } {}
+
+    $toc.toc_scrollbar configure -command "$toc.toc_listbox yview"
+
+    grid $toc.toc_listbox $toc.toc_scrollbar -sticky nsew -in $toc
+
+    grid columnconfigure $toc 0 -weight 1
+    grid rowconfigure $toc 0 -weight 1
+
+    pack $toc -side left -expand no -fill y
+
+    # Main HTML window
+    itk_component add browser {
+        ::tk::frame $parent.browser
+    } {}
+    set sfcsman $itk_component(browser)
+    pack $sfcsman -expand yes -fill both
+
+    # HTML widget
+    set manhtmlviewer [::hv3::hv3 $sfcsman.htmlview]
+    set manhtml [$manhtmlviewer html]
+
+    grid $manhtmlviewer -sticky nsew -in $sfcsman
+
+    grid columnconfigure $sfcsman 0 -weight 1
+    grid rowconfigure $sfcsman 0 -weight 1
+
+    pack $itk_component(browser) -side left -expand yes -fill both
+
+    # Load Introduction.html if it's there, otherwise load first page
+    if {[file exists [file join $path introduction.html]]} {
+        loadPage Introduction
+    } else {
+        loadPage [lindex $pages($this) 0]
+    }
+
+    bind $toc.toc_listbox <<ListboxSelect>> {
+        set mb [itcl_info objects -class ManBrowser]
+        $mb loadPage [%W get [%W curselection]]
+    }
+
+    configure -height 600 -width 800
+    return $this
+}
+
 
 source [sourcefile hv3_browser.tcl]
 
@@ -420,11 +664,11 @@ snit::type ::hv3::file_menu {
 
   constructor {} {
     set MENU [list \
-      "Open File..."  [list gui_openfile $::hv3::G(notebook)]           o  \
-      "Open Tab"      [list $::hv3::G(notebook) add]                    t  \
-      "Open Location" [list gui_openlocation $::hv3::G(location_entry)] l  \
+      "Open File..."  [list gui_openfile $::hv3::MGEDHelp(notebook)]           o  \
+      "Open Tab"      [list $::hv3::MGEDHelp(notebook) add]                    t  \
+      "Open Location" [list gui_openlocation $::hv3::MGEDHelp(location_entry)] l  \
       "-----"         ""                                                "" \
-      "Close Tab"     [list $::hv3::G(notebook) close]                  "" \
+      "Close Tab"     [list $::hv3::MGEDHelp(notebook) close]                  "" \
       "Exit"          exit                                              q  \
     ]
   }
@@ -444,7 +688,7 @@ snit::type ::hv3::file_menu {
       }
     }
 
-    if {[llength [$::hv3::G(notebook) tabs]] < 2} {
+    if {[llength [$::hv3::MGEDHelp(notebook) tabs]] < 2} {
       $path entryconfigure "Close Tab" -state disabled
     }
   }
@@ -628,12 +872,12 @@ proc gui_openlocation {location_entry} {
 proc gui_populate_menu {eMenu menu_widget} {
   switch -- [string tolower $eMenu] {
     file {
-      set cmd [list $::hv3::G(file_menu) populate_menu $menu_widget]
+      set cmd [list $::hv3::MGEDHelp(file_menu) populate_menu $menu_widget]
       $menu_widget configure -postcommand $cmd
     }
 
     options {
-      $::hv3::G(config) populate_menu $menu_widget
+      $::hv3::MGEDHelp(config) populate_menu $menu_widget
     }
 
     default {
@@ -680,7 +924,7 @@ proc gui_firefox_remote {} {
 }
 
 proc gui_switch {new} {
-  upvar #0 ::hv3::G G
+  upvar #0 ::hv3::MGEDHelp G
 
   # Loop through *all* tabs and detach them from the history
   # related controls. This is so that when the state of a background
@@ -707,7 +951,7 @@ proc gui_switch {new} {
   #
   set gotocmd [list goto_gui_location $new $G(location_entry)]
   $G(location_entry) configure -command $gotocmd
-  gui_status_leave ::hv3::G
+  gui_status_leave ::hv3::MGEDHelp
 
   # Configure the new current tab with the contents of the drop-down
   # config menu (i.e. font-size, are images enabled etc.).
@@ -725,7 +969,7 @@ proc gui_switch {new} {
 
 proc gui_new {path args} {
   set new [::hv3::browser $path]
-  $::hv3::G(config) configurebrowser $new
+  $::hv3::MGEDHelp(config) configurebrowser $new
 
   set var [$new titlevar]
   trace add variable $var write [list gui_settitle $new $var]
@@ -786,7 +1030,7 @@ proc gui_log_window {notebook} {
 }
 
 proc gui_report_bug {} {
-  upvar ::hv3::G G
+  upvar ::hv3::MGEDHelp G
   set uri [[[$G(notebook) current] hv3] uri get]
   .middle.notebook add "home://bug/[::hv3::format_query [encoding system] $uri]"
 
@@ -795,7 +1039,7 @@ proc gui_report_bug {} {
 }
 
 proc gui_escape {} {
-  upvar ::hv3::G G
+  upvar ::hv3::MGEDHelp G
   gui_current escape
   $G(location_entry) escape
   focus [[gui_current hv3] html]
@@ -806,7 +1050,7 @@ proc gui_status_enter {widget_array} {
   upvar $widget_array G
   after cancel [list gui_set_memstatus $widget_array]
   gui_status_help $widget_array
-  $G(status_label) configure -textvar ::hv3::G(status_help)
+  $G(status_label) configure -textvar ::hv3::MGEDHelp(status_help)
 }
 proc gui_status_help {widget_array} {
   upvar $widget_array G
@@ -941,14 +1185,10 @@ proc main {args} {
   set ::hv3::homeuri file:///[file join [bu_brlcad_data html] mann/en/Introduction.html ]
 
   # Build the GUI
-  gui_build     ::hv3::G
-  gui_menu      ::hv3::G
+  gui_build     ::hv3::MGEDHelp
+  gui_menu      ::hv3::MGEDHelp
 
-  if {[info exists enablejavascript]} {
-    $::hv3::G(config) configure -enablejavascript 1
-  }
-
-  ::hv3::downloadmanager ::hv3::the_download_manager
+  array set ::hv3::G [array get ::hv3::MGEDHelp]
 
   # After the event loop has run to create the GUI, run [main2]
   # to load the startup document. It's better if the GUI is created first,
@@ -957,7 +1197,7 @@ proc main {args} {
 }
 proc main2 {docs} {
   foreach doc $docs {
-    set tab [$::hv3::G(notebook) add $doc]
+    set tab [$::hv3::MGEDHelp(notebook) add $doc]
   }
   focus $tab
 }
@@ -971,13 +1211,13 @@ proc ::hv3::usage {} {
 set ::hv3::statefile ":memory:"
 
 # Remote scaling interface:
-proc hv3_zoom      {newval} { $::hv3::G(config) set_zoom $newval }
-proc hv3_fontscale {newval} { $::hv3::G(config) set_fontscale $newval }
+proc hv3_zoom      {newval} { $::hv3::MGEDHelp(config) set_zoom $newval }
+proc hv3_fontscale {newval} { $::hv3::MGEDHelp(config) set_fontscale $newval }
 proc hv3_forcewidth {forcewidth width} { 
   [[gui_current hv3] html] configure -forcewidth $forcewidth -width $width
 }
 
-proc hv3_guifont {newval} { $::hv3::G(config) set_guifont $newval }
+proc hv3_guifont {newval} { $::hv3::MGEDHelp(config) set_guifont $newval }
 
 proc hv3_html {args} { 
   set html [[gui_current hv3] html]
