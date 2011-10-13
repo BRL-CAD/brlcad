@@ -202,6 +202,8 @@ snit::type ::hv3::config {
    set cmd [list gui_current Find]
    set acc (Ctrl-F)
    $path add command -label {Find in page...} -command $cmd -accelerator $acc
+   bind Hv3HotKeys <Control-f>  [list gui_current Find]
+   bind Hv3HotKeys <Control-F>  [list gui_current Find]
 
     # Add the 'Gui Font (size)' menu
     ::hv3::menu ${path}.guifont
