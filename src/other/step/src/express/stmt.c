@@ -40,8 +40,22 @@ static char rcsid[] = "$Id: stmt.c,v 1.3 1997/01/21 19:19:51 dar Exp $";
  * 
  */
 
-#define STATEMENT_C
 #include "express/stmt.h"
+
+struct freelist_head STMT_fl;
+
+struct freelist_head ALIAS_fl;
+struct freelist_head ASSIGN_fl;
+struct freelist_head CASE_fl;
+struct freelist_head COMP_STMT_fl;
+struct freelist_head COND_fl;
+struct freelist_head LOOP_fl;
+struct freelist_head PCALL_fl;
+struct freelist_head RET_fl;
+struct freelist_head INCR_fl;
+
+Statement STATEMENT_ESCAPE = STATEMENT_NULL;
+Statement STATEMENT_SKIP = STATEMENT_NULL;
 
 Statement 
 STMTcreate(int type)

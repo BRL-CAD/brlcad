@@ -82,6 +82,7 @@ Error		ERROR_bad_identifier		= ERROR_none;
 Error		ERROR_unexpected_character	= ERROR_none;
 Error		ERROR_nonascii_char;
 
+
 extern int		yylineno;
 extern FILE*		yyin;
 

@@ -39,10 +39,6 @@
  *
  */
 
-/*************/
-/* constants */
-/*************/
-
 /*****************/
 /* packages used */
 /*****************/
@@ -60,10 +56,6 @@ typedef struct Scope_ *Procedure;
 typedef struct Scope_ *Function;
 typedef struct Scope_ *Rule;
 typedef struct Where_ *Where;
-
-/****************/
-/* modules used */
-/****************/
 
 /***************************/
 /* hidden type definitions */
@@ -106,10 +98,6 @@ struct Rule_ {
 	Linked_List parameters;
 	Linked_List body;
 	struct FullText text;
-/*
-	Linked_List where;
-	moved to Scope - DEL 22-Jul-1993
-*/
 };
 
 /* define a where clause */
@@ -122,19 +110,11 @@ struct Where_ {
 /* global variables */
 /********************/
 
-#ifdef ALGORITHM_C
-#include "defstart.h"
-#else
-#include "decstart.h"
-#endif /* ALGORITHM_C */
-
-GLOBAL struct freelist_head ALG_fl;
-GLOBAL struct freelist_head FUNC_fl;
-GLOBAL struct freelist_head RULE_fl;
-GLOBAL struct freelist_head PROC_fl;
-GLOBAL struct freelist_head WHERE_fl;
-
-#include "de_end.h"
+extern struct freelist_head ALG_fl;
+extern struct freelist_head FUNC_fl;
+extern struct freelist_head RULE_fl;
+extern struct freelist_head PROC_fl;
+extern struct freelist_head WHERE_fl;
 
 /******************************/
 /* macro function definitions */
@@ -181,13 +161,6 @@ GLOBAL struct freelist_head WHERE_fl;
 #define WHEREget_label(w)	((w)->label)
 #define WHEREget_expression(w)	((w)->expr)
 
-#if 0
-extern void		ALGput_parameters PROTO((Algorithm, Linked_List ));
-extern void		ALGput_body PROTO((Algorithm, Linked_List ));
-extern void		FUNCput_return_type PROTO((Algorithm, Type));
-extern void		RULEput_where_clause PROTO((Algorithm,Linked_List));
-#endif
-
 /***********************/
 /* function prototypes */
 /***********************/
@@ -195,12 +168,5 @@ extern void		RULEput_where_clause PROTO((Algorithm,Linked_List));
 extern Scope		ALGcreate PROTO((char));
 extern void		ALGinitialize PROTO((void));
 extern void		ALGput_full_text PROTO((Scope, int, int));
-
-/********************/
-/* inline functions */
-/********************/
-
-#if supports_inline_functions || defined(ALGORITHM_C)
-#endif /* supports_inline_functions || defined(ALGORITHM_C) */
 
 #endif /* ALGORITHM_H */

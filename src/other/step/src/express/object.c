@@ -21,9 +21,10 @@ static char rcsid[] = "$Id: object.c,v 1.7 1997/01/21 19:19:51 dar Exp $";
  * prettied up interface to print_objects_when_running
  */
 
-#define OBJECT_C
 #include <stdlib.h>
 #include "express/object.h"
+
+struct Object *OBJ;
 
 /*ARGSUSED*/
 Symbol *

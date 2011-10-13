@@ -75,18 +75,10 @@ struct Linked_List_ {
 /* global variables */
 /********************/
 
-#ifdef LINKED_LIST_C
-#include "defstart.h"
-#else
-#include "decstart.h"
-#endif /*LINKED_LIST_C*/
-
-GLOBAL Error	ERROR_empty_list	INITIALLY(ERROR_none);
-GLOBAL struct freelist_head LINK_fl;
-GLOBAL struct freelist_head LIST_fl;
-GLOBAL Linked_List LINK__l;		/* for LISTcreate_with macro - ugh */
-
-#include "de_end.h"
+extern Error ERROR_empty_list;
+extern struct freelist_head LINK_fl;
+extern struct freelist_head LIST_fl;
+extern Linked_List LINK__l;  /* for LISTcreate_with macro - ugh */
 
 /******************************/
 /* macro function definitions */   
@@ -153,24 +145,5 @@ extern Generic	LISTget_second PROTO((Linked_List));
 extern Generic  LISTget_nth PROTO((Linked_List,int));
 extern void	LISTfree PROTO((Linked_List));
 extern int	LISTget_length PROTO((Linked_List));
-
-/*******************************/
-/* inline function definitions */
-/*******************************/
-
-#if supports_inline_functions || defined(LINKED_LIST_C)
-
-static_inline
-Boolean
-LISTempty(Linked_List list)
-{
-    if (!list) return True;
-    if ( list->mark->next == list->mark ) {
-	return True;
-    }
-    return False;
-}
-
-#endif /* supports_inline_functions || defined(LINKED_LIST_C) */
 
 #endif /*LINKED_LIST_H*/

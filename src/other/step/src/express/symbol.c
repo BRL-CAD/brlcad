@@ -34,8 +34,9 @@ static char rcsid[] = "$Id: symbol.c,v 1.6 1997/01/21 19:19:51 dar Exp $";
  * Initial revision
  */
 
-#define	SYMBOL_C
 #include "express/symbol.h"
+
+struct freelist_head SYMBOL_fl;
 
 /*
 ** Procedure:	SYMBOLinitialize

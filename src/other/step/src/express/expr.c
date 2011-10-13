@@ -70,9 +70,26 @@ static char rcsid[] = "$Id: expr.c,v 1.6 1997/01/21 19:19:51 dar Exp $";
  * 
  */
 
-#define EXPRESSION_C
 #include "express/expr.h"
 #include "express/resolve.h"
+
+struct EXPop_entry EXPop_table[OP_LAST];
+
+Expression  LITERAL_E = EXPRESSION_NULL;
+Expression  LITERAL_INFINITY = EXPRESSION_NULL;
+Expression  LITERAL_PI = EXPRESSION_NULL;
+Expression  LITERAL_ZERO = EXPRESSION_NULL;
+Expression  LITERAL_ONE;
+
+Error ERROR_bad_qualification = ERROR_none;
+Error ERROR_integer_expression_expected = ERROR_none;
+Error ERROR_implicit_downcast = ERROR_none;
+Error ERROR_ambig_implicit_downcast = ERROR_none;
+
+struct freelist_head EXP_fl;
+struct freelist_head OP_fl;
+struct freelist_head QUERY_fl;
+struct freelist_head QUAL_ATTR_fl;
 
 void EXPop_init();
 static Error ERROR_internal_unrecognized_op_in_EXPresolve;
@@ -83,6 +100,15 @@ static Error ERROR_indexing_illegal;
 static Error ERROR_enum_no_such_item;
 static Error ERROR_group_ref_no_such_entity;
 static Error ERROR_group_ref_unexpected_type;
+
+static inline
+int
+OPget_number_of_operands(Op_Code op)
+{
+	if ((op == OP_NEGATE) || (op == OP_NOT)) return 1;
+	else if (op == OP_SUBCOMPONENT) return 3;
+	else return 2;
+}
 
 Expression 
 EXPcreate(Type type)

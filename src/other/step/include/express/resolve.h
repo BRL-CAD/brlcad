@@ -46,28 +46,17 @@
 /* global variables */
 /********************/
 
-#ifdef RESOLVE_C
-# define GLOBAL
-# define INITIALLY(value) = value
-#else
-# define GLOBAL extern
-# define INITIALLY(value)
-#endif /*RESOLVE_C*/
+extern int print_objects_while_running;
 
-GLOBAL int	print_objects_while_running	INITIALLY(0);
-
-GLOBAL Error	ERROR_undefined_attribute	INITIALLY(ERROR_none);
-GLOBAL Error	ERROR_undefined_type		INITIALLY(ERROR_none);
-GLOBAL Error	ERROR_undefined_schema		INITIALLY(ERROR_none);
-GLOBAL Error	ERROR_unknown_attr_in_entity	INITIALLY(ERROR_none);
-GLOBAL Error	ERROR_unknown_subtype		INITIALLY(ERROR_none);
-GLOBAL Error	ERROR_unknown_supertype		INITIALLY(ERROR_none);
-GLOBAL Error	ERROR_circular_reference	INITIALLY(ERROR_none);
-GLOBAL Error	ERROR_ambiguous_attribute	INITIALLY(ERROR_none);
-GLOBAL Error	ERROR_ambiguous_group		INITIALLY(ERROR_none);
-
-#undef GLOBAL
-#undef INITIALLY
+extern Error ERROR_undefined_attribute;
+extern Error ERROR_undefined_type;
+extern Error ERROR_undefined_schema;
+extern Error ERROR_unknown_attr_in_entity;
+extern Error ERROR_unknown_subtype;
+extern Error ERROR_unknown_supertype;
+extern Error ERROR_circular_reference;
+extern Error ERROR_ambiguous_attribute;
+extern Error ERROR_ambiguous_group;
 
 /* macros */
 

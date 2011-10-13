@@ -83,100 +83,16 @@ static char rcsid[] = "$Id: variable.c,v 1.7 1997/01/21 19:19:51 dar Exp $";
  * 
  */
 
-#define VARIABLE_C
 #include <stdlib.h>
 #include "express/variable.h"
 #include "express/object.h"
+
+struct freelist_head VAR_fl;
 
 /*
 ** Procedure:	VAR_create/free/copy/equal
 ** Description:	These are the low-level defining functions for Class_Variable
 */
-
-#if 0
-void
-VAR_create(Generic dummy)
-{
-    struct Variable*	var = (struct Variable*)dummy;
-
-    var->type = TYPE_NULL;
-    var->initializer = EXPRESSION_NULL;
-    var->reference = EXPRESSION_NULL;
-/*OLD    var->ref_class = REF_DYNAMIC;*/
-    var->flags = 0;
-    var->inverse = EXPRESSION_NULL;
-}
-
-void
-VAR_free(Generic dummy)
-{
-    struct Variable*	var = (struct Variable*)dummy;
-    Error		experrc;
-
-    OBJfree(var->type, &experrc);
-    OBJfree(var->initializer, &experrc);
-}
-
-void
-VAR_copy(Generic dummy1, Generic dummy2)
-{
-    struct Variable*	dest = (struct Variable*)dummy1;
-    struct Variable*	source = (struct Variable*)dummy2;
-
-    dest->type = OBJreference(source->type);
-    dest->initializer = OBJreference(source->initializer);
-    dest->reference = source->reference;
-/*    dest->ref_class = source->ref_class;*/
-    dest->offset = source->offset;
-    dest->flags = source->flags;
-}
-
-Boolean
-VAR_equal(Generic dummy1, Generic dummy2)
-{
-    struct Variable*	var1 = (struct Variable*)dummy1;
-    struct Variable*	var2 = (struct Variable*)dummy2;
-    Error		experrc;
-
-    return (OBJequal(var1->type, var2->type, &experrc) /* &&
-Deep compare or not even necessary? - DEL
-	    (var1->ref_class == var2->ref_class)*/);
-}
-
-void
-VAR_print(Generic dummy)
-{
-	struct Variable*	var = (struct Variable*)dummy;
-
-	if (print_none(var_print)) return;
-
-	if (print_some(var_print,type)) {
-		iprint("type:\n");
-		OBJprint(var->type);
-	}
-	if (print_some(var_print,initializer)) {
-		iprint("initializer:\n");
-		OBJprint(var->initializer);
-	}
-	if (print_some(var_print,reference)) {
-		iprint("reference:\n");
-		OBJprint(var->reference);
-	}
-	if (print_some(var_print,offset)) {
-		iprint("offset: %d\n",var->offset);
-	}
-	if (print_some(var_print,flags)) {
-		iprint("optional: %s  pass-by-reference %s\n",
-			BOOLprint((var->flags & VAR_OPT_MASK)!=0),
-			BOOLprint((var->flags & VAR_VAR_MASK)!=0));
-	}
-	if (print_some(var_print,inverse)) {
-		iprint("inverse:\n");
-		OBJprint(var->inverse);
-	}
-}
-
-#endif /*0*/
 
 Symbol *
 VAR_get_symbol(Generic v)

@@ -82,37 +82,29 @@ typedef struct Error_Warning_ {
 /* global variables */
 /********************/
 
-#ifdef ERROR_C
-#include "defstart.h"
-#else
-#include "decstart.h"
-#endif /* ERROR_C */
-
-GLOBAL Boolean	__ERROR_buffer_errors		INITIALLY(False);
-GLOBAL char *current_filename			INITIALLY("stdin");
+extern Boolean __ERROR_buffer_errors;
+extern char *current_filename;
 
 /* flag to remember whether non-warning errors have occurred */
-GLOBAL Boolean	ERRORoccurred			INITIALLY(False);
+extern Boolean ERRORoccurred;
 
 
-GLOBAL Error	experrc				INITIALLY(ERROR_none);
-GLOBAL Error	ERROR_subordinate_failed	INITIALLY(ERROR_none);
-GLOBAL Error	ERROR_syntax_expecting		INITIALLY(ERROR_none);
+extern Error experrc;
+extern Error ERROR_subordinate_failed;
+extern Error ERROR_syntax_expecting;
 
 /* all of these are 1 if true, 0 if false switches */
 /* for debugging fedex */
-GLOBAL int	ERRORdebugging			INITIALLY(0);
+extern int ERRORdebugging;
 /* for debugging malloc during resolution */
-GLOBAL int	malloc_debug_resolve		INITIALLY(0);
+extern int malloc_debug_resolve;
 /* for debugging yacc/lex */
-GLOBAL int	debug				INITIALLY(0);
+extern int debug;
 
-GLOBAL struct Linked_List_ *ERRORwarnings;
-GLOBAL struct freelist_head ERROR_OPT_fl;
+extern struct Linked_List_ *ERRORwarnings;
+extern struct freelist_head ERROR_OPT_fl;
 
-GLOBAL void (*ERRORusage_function) PROTO((void));
-
-#include "de_end.h"
+extern void (*ERRORusage_function)(void);
 
 /******************************/
 /* macro function definitions */
@@ -125,8 +117,6 @@ GLOBAL void (*ERRORusage_function) PROTO((void));
 /********************/
 /* Inline functions */
 /********************/
-
-#if supports_inline_functions || defined(ERROR_C)
 
 static_inline
 void
@@ -177,8 +167,6 @@ ERRORflush_messages(void)
 	ERROR_start_message_buffer();
     }
 }
-
-#endif /*supports_inline_functions || defined(ERROR_C)*/
 
 /***********************/
 /* function prototypes */

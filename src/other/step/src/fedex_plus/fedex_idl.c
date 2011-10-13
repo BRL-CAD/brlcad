@@ -6,6 +6,17 @@
 
 #define SCHEMA_FILE_PREFIX	"Sdai"
 
+static inline
+Boolean
+LISTempty(Linked_List list)
+{
+    if (!list) return True;
+    if ( list->mark->next == list->mark ) {
+	return True;
+    }
+    return False;
+}
+
 int multiple_inheritance = 0;
 
 char ** aggrNameList = 0;

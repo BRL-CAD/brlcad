@@ -38,10 +38,15 @@ static char rcsid[] = "$Id: alg.c,v 1.5 1997/01/21 19:19:51 dar Exp $";
  * prettied up interface to print_objects_when_running
  */
 
-#define ALGORITHM_C
 #include "express/alg.h"
 #include "express/object.h"
 #include "express/schema.h"
+
+struct freelist_head ALG_fl;
+struct freelist_head FUNC_fl;
+struct freelist_head RULE_fl;
+struct freelist_head PROC_fl;
+struct freelist_head WHERE_fl;
 
 Scope
 ALGcreate(char type)

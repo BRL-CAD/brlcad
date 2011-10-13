@@ -107,17 +107,6 @@ struct Scope_ {
 	Linked_List where;		/* optional where clause */
 };
 
-/********************/
-/* global variables */
-/********************/
-
-#ifdef SCOPE_C
-#include "defstart.h"
-#else
-#include "decstart.h"
-#endif /* SCOPE_C */
-#include "de_end.h"
-
 /******************************/
 /* macro function definitions */
 /******************************/
@@ -163,11 +152,4 @@ extern Linked_List	SCOPEget_algorithms PROTO((Scope));
 extern Linked_List	SCOPEget_constants PROTO((Scope));
 #endif
 
-/********************/
-/* inline functions */
-/********************/
-
-#if supports_inline_functions || defined(SCOPE_C)
-
-#endif /* supports_inline_functions || defined(SCOPE_C) */
 #endif /* SCOPE_H */

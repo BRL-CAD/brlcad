@@ -55,12 +55,23 @@ static char rcsid[] = "$Id: resolve.c,v 1.14 1997/01/21 19:19:51 dar Exp $";
  *
  */
 
-#define RESOLVE_C
 #include <stdlib.h>
 #include "express/resolve.h"
 #include "stack.h"
 #include "express/schema.h"
 #include "express/express.h"
+
+int print_objects_while_running = 0;
+
+Error ERROR_undefined_attribute = ERROR_none;
+Error ERROR_undefined_type = ERROR_none;
+Error ERROR_undefined_schema = ERROR_none;
+Error ERROR_unknown_attr_in_entity = ERROR_none;
+Error ERROR_unknown_subtype = ERROR_none;
+Error ERROR_unknown_supertype = ERROR_none;
+Error ERROR_circular_reference = ERROR_none;
+Error ERROR_ambiguous_attribute = ERROR_none;
+Error ERROR_ambiguous_group = ERROR_none;
 
 static void ENTITYresolve_subtypes PROTO((Schema));
 static void ENTITYresolve_supertypes PROTO((Entity));

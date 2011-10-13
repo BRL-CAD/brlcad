@@ -122,8 +122,45 @@ static char rcsid[] = "$Id: type.c,v 1.12 1997/01/21 19:19:51 dar Exp $";
  * 
  */
 
-#define TYPE_C
 #include "express/type.h"
+
+/* Very commonly-used read-only types */
+/* non-constant versions probably aren't necessary? */
+Type Type_Bad;
+Type Type_Unknown;
+Type Type_Dont_Care;
+Type Type_Runtime; /* indicates that this object can't be */
+    /* calculated now but must be deferred */
+    /* til (the mythical) runtime */
+Type Type_Binary;
+Type Type_Boolean;
+Type Type_Enumeration;
+Type Type_Expression;
+Type Type_Aggregate;
+Type Type_Integer;
+Type Type_Integer;
+Type Type_Number;
+Type Type_Real;
+Type Type_String;
+Type Type_String_Encoded;
+Type Type_Logical;
+Type Type_Set;
+Type Type_Attribute;
+Type Type_Entity;
+Type Type_Funcall;
+Type Type_Generic;
+Type Type_Identifier;
+Type Type_Oneof;
+Type Type_Query;
+Type Type_Self;
+Type Type_Set_Of_String;
+Type Type_Set_Of_Generic;
+Type Type_Bag_Of_Generic;
+
+struct freelist_head TYPEHEAD_fl;
+struct freelist_head TYPEBODY_fl;
+
+Error ERROR_corrupted_type = ERROR_none;
 
 static Error ERROR_undefined_tag;
 

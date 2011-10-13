@@ -30,6 +30,17 @@ static char rcsid[] ="$Id: classes.c,v 3.0.1.11 1997/09/18 21:14:46 sauderd Exp 
 
 char *FundamentalType(const Type t,int report_reftypes);
 
+static inline
+Boolean
+LISTempty(Linked_List list)
+{
+    if (!list) return True;
+    if ( list->mark->next == list->mark ) {
+	return True;
+    }
+    return False;
+}
+
 int multiple_inheritance = 1;
 int print_logging = 0;
 int corba_binding = 0;

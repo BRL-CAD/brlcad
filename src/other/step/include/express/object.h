@@ -83,15 +83,7 @@ struct Object {
 /* global variables */
 /********************/
 
-#ifdef OBJECT_C
-#include "defstart.h"
-#else
-#include "decstart.h"
-#endif /*OBJECT_C */
-
-GLOBAL struct Object *OBJ;
-
-#include "de_end.h"
+extern struct Object *OBJ;
 
 /******************************/
 /* macro function definitions */
@@ -116,15 +108,5 @@ GLOBAL struct Object *OBJ;
 extern void	OBJinitialize PROTO((void));
 extern void	OBJcreate PROTO((char,struct Symbol_ *(*)(Generic),char *,int));
 extern Symbol *	UNK_get_symbol PROTO((Generic x));
-#if 0
-extern void	OBJcreate(char,struct Symbol *(*)(Generic),char *,int);
-#endif
-
-/********************/
-/* inline functions */
-/********************/
-
-#if supports_inline_functions || defined(OBJECT_C)
-#endif /* supports_inline_functions || defined(OBJECT_C) */
 
 #endif /*OBJECT_H*/

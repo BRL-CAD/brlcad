@@ -110,17 +110,8 @@ struct Entity_ {
 /* global variables */
 /********************/
 
-#ifdef ENTITY_C
-#include "defstart.h"
-#else
-#include "decstart.h"
-#endif    /*  ENTITY_C  */
-
-GLOBAL struct freelist_head ENTITY_fl;
-
-GLOBAL int	ENTITY_MARK	INITIALLY(0);
-
-#include "de_end.h"
+extern struct freelist_head ENTITY_fl;
+extern int ENTITY_MARK;
 
 /******************************/
 /* macro function definitions */
@@ -172,25 +163,4 @@ extern void		ENTITYadd_instance PROTO((Entity, Generic));
 extern int		ENTITYget_initial_offset PROTO((Entity));
 extern int		ENTITYdeclares_variable PROTO((Entity, struct Variable_ *));
 
-#if 0
-extern void		ENTITYdelete_instance PROTO((Entity, Generic));
-extern Boolean		ENTITYhas_subtype PROTO((Entity, Entity));
-extern Entity		ENTITYget_supertype PROTO((Entity,String));
-extern Entity		ENTITYget_subtype PROTO((Entity,String));
-extern Boolean		ENTITYhas_immediate_subtype PROTO((Entity, Entity));
-extern Expression	ENTITYget_subtype_expression PROTO((Entity));
-extern int		ENTITYget_attribute_offset PROTO((Entity, Variable));
-extern int		ENTITYget_named_attribute_offset PROTO((Entity, String));
-extern Linked_List	ENTITYget_uniqueness_list PROTO((Entity));
-extern Linked_List	ENTITYget_constraints PROTO((Entity));
-extern Linked_List	ENTITYget_instances PROTO((Entity));
-#endif /*0*/
-
-/********************/
-/* inline functions */
-/********************/
-
-#if supports_inline_functions || defined(ENTITY_C)
-#endif /* supports_inline_functions || defined(ENTITY_C) */
-	
 #endif    /*  ENTITY_H  */

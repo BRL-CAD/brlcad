@@ -104,15 +104,7 @@ struct Variable_ {
 /* global variables */
 /********************/
 
-#ifdef VARIABLE_C
-#include "defstart.h"
-#else
-#include "decstart.h"
-#endif    /*  VARIABLE_C  */
-
-GLOBAL struct freelist_head VAR_fl;
-
-#include "de_end.h"
+extern struct freelist_head VAR_fl;
 
 /******************************/
 /* macro function definitions */
@@ -143,30 +135,5 @@ GLOBAL struct freelist_head VAR_fl;
 extern Variable VARcreate PROTO((Expression, Type));
 extern void VARinitialize PROTO((void));
 extern char *VARget_simple_name PROTO((Variable));
-
-#if 0
-extern void		VARput_type PROTO((Variable *, Type));
-extern void		VARput_initializer PROTO((Variable *, Expression));
-extern void		VARput_derived PROTO((Variable *, Boolean));
-extern void		VARput_optional PROTO((Variable *, Boolean));
-extern void		VARput_variable PROTO((Variable *, Boolean));
-extern void		VARput_reference PROTO((Variable *,Expression));
-/*Mextern void		VARput_offset PROTO((Variable *, int));*/
-extern void		VARput_inverse PROTO((Variable *,Symbol *));
-/*M extern Type		VARget_type PROTO((Variable *));*/
-/*Mextern Boolean		VARget_derived PROTO((Variable *));*/
-extern Boolean		VARget_optional PROTO((Variable *));
-extern Boolean		VARget_variable PROTO((Variable *));
-extern Expression	VARget_reference PROTO((Variable *));
-/*Mextern int		VARget_offset PROTO((Variable *));*/
-#endif /*0*/
-
-/********************/
-/* inline functions */
-/********************/
-
-#if supports_inline_functions || defined(VARIABLE_C)
-
-#endif /* supports_inline_functions || defined(VARIABLE_C) */
 
 #endif    /*  VARIABLE_H  */

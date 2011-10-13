@@ -21,8 +21,12 @@ static char rcsid[] = "$Id: linklist.c,v 1.3 1997/01/21 19:19:51 dar Exp $";
  * prettied up interface to print_objects_when_running
  */
 
-#define LINKED_LIST_C
 #include "express/linklist.h"
+
+Error ERROR_empty_list = ERROR_none;
+struct freelist_head LINK_fl;
+struct freelist_head LIST_fl;
+Linked_List LINK__l;  /* for LISTcreate_with macro - ugh */
 
 void
 LISTinitialize(void)
