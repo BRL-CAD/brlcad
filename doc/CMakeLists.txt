@@ -209,6 +209,7 @@ SET(documentation_DATA
 	sun.txt
 	tube.txt
 	tool_categories.txt
+	ecosystem.dot
 )
 BRLCAD_ADDDATA(documentation_DATA doc)
 

@@ -39,6 +39,17 @@ SET(docbook_books_EN_IMAGES
 	images/tutorial_series_volIII_fig29.png
 	images/tutorial_series_volIII_fig30.png
 	images/tutorial_series_volIII_table_image_1.png
+	images/v4-image001.jpg
+	images/v4-image002.jpg
+	images/v4-image003.gif
+	images/v4-image004.jpg
+	images/v4-image005.jpg
+	images/v4-image006.jpg
+	images/v4-image007.jpg
+	images/v4-image008.gif
+	images/v4-image009.jpg
+	images/v4-image010.jpg
+	images/v4-image011.jpg
 )
 BRLCAD_ADDDATA(docbook_books_EN_IMAGES html/books/en/images)
 
