@@ -724,7 +724,7 @@ namespace eval ::hv3::forms::entrycontrol {
     set state [$myWidget cget -state]
     $myWidget configure -state normal
     set contents ""
-    $myWidget delete 0.0 end
+    catch { $myWidget delete 0.0 end }
     foreach child [$myNode children] {
       append contents [$child text -pre]
     }

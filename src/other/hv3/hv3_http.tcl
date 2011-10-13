@@ -581,7 +581,7 @@ snit::widget ::hv3::protocol_gui {
 
   method populate {} {
     set yview [lindex [${win}.text yview] 0]
-    ${win}.text delete 0.0 end
+    catch { ${win}.text delete 0.0 end }
 
     set n 0
     foreach uri $myDoneList {
