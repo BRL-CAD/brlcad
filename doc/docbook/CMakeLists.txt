@@ -18,6 +18,7 @@ MACRO(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir)
 		SET(targetname ${filename_root}_${targetname_suffix}_html)
 		ADD_CUSTOM_COMMAND(
 			OUTPUT ${outfile}
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/
 			COMMAND
 			XML_CATALOG_FILES=${CMAKE_BINARY_DIR}/doc/docbook/brlcad-xml-catalog.xml
 			XML_DEBUG_CATALOG=1
@@ -38,6 +39,7 @@ MACRO(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir)
 		SET(targetname ${filename_root}_${targetname_suffix}_man${mannum})
 		ADD_CUSTOM_COMMAND(
 			OUTPUT ${outfile}
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/
 			COMMAND 
 			XML_CATALOG_FILES=${CMAKE_BINARY_DIR}/doc/docbook/brlcad-xml-catalog.xml
 			XML_DEBUG_CATALOG=1
@@ -80,6 +82,7 @@ MACRO(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir)
 				)
 			ADD_CUSTOM_COMMAND(
 				OUTPUT ${outfile}
+			   COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}/
 				COMMAND 
 				FOP_HYPHENATION_PATH=${FOP_HYPH}
 				CLASSPATH=${CMAKE_SOURCE_DIR}/doc/docbook
