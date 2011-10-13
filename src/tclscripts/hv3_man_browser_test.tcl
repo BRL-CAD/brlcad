@@ -3,16 +3,10 @@ namespace eval hv3 { set {version($Id$)} 1 }
 catch {memory init on}
 
 proc sourcefile {file} [string map              \
-  [list %HV3_DIR% [file dirname [info script]]] \
+  [list %HV3_DIR% [bu_brlcad_root lib/hv3]] \
 { 
   return [file join {%HV3_DIR%} $file] 
 }]
-
-# Before doing anything else, set up profiling if it is requested.
-# Profiling is only used if the "-profile" option was passed on
-# the command line.
-source [sourcefile hv3_profile.tcl]
-::hv3::profile::init $argv
 
 package require Tk
 tk scaling 1.33333
@@ -582,7 +576,7 @@ proc gui_build {widget_array} {
   .tree heading #0 -text "Manual Pages"
   set mann_list [.tree insert {} end -text "mann"]
   set curr_entry [.tree insert $mann_list end -text "search"]
-  bind .tree <<TreeviewSelect>> {gui_current goto file:///home/user/brlcad/brlcad/build/share/brlcad/7.20.3/html/mann/en/search.html}
+  bind .tree <<TreeviewSelect>> {gui_current goto file:///[file join [bu_brlcad_data html] mann/en/search.html]}
   pack .tree -fill y -side left
   pack .notebook -fill both -expand true
 }
@@ -909,9 +903,9 @@ proc main {args} {
 
   ::hv3::dbinit
 
-  if {[llength $docs] == 0} {set docs [list file:///home/user/brlcad/brlcad/build/share/brlcad/7.20.3/html/mann/en/Introduction.html]}
+  if {[llength $docs] == 0} {set docs [list file:///[file join [bu_brlcad_data html] mann/en/Introduction.html]]}
   set ::hv3::newuri [lindex $docs 0]
-  set ::hv3::homeuri file:///home/user/brlcad/brlcad/build/share/brlcad/7.20.3/html/mann/en/Introduction.html
+  set ::hv3::homeuri file:///[file join [bu_brlcad_data html] mann/en/Introduction.html]]
 
   # Build the GUI
   gui_build     ::hv3::G
