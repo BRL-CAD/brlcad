@@ -197,6 +197,14 @@ int
 init_raytrace(struct simulation_params *sim_params, struct rt_i *rtip);
 
 
+/**
+ * Initializes the rayshot results structure, called before analyzing
+ * each manifold through rays shot in x, y & z directions
+ */
+int
+init_rayshot_results(void);
+
+
 #endif /* SIMRT_H_ */
 
 /*

@@ -405,6 +405,19 @@ init_raytrace(struct simulation_params *sim_params, struct rt_i *rtip)
 }
 
 
+int
+init_rayshot_results(void)
+{
+	 /* Initialize the result structure */
+	rt_result.xr_min_y = MAX_FASTF;
+	rt_result.xr_max_y = -MAX_FASTF;
+	rt_result.xr_min_x_x  = MAX_FASTF;
+	rt_result.xr_max_x_x  = -MAX_FASTF;
+
+	return GED_OK;
+}
+
+
 /**
  * Traverse the hit list and overlap list, drawing the ray segments
  */
@@ -424,11 +437,6 @@ traverse_lists(struct ged *gedp, struct simulation_params *sim_params,
      */
     if (overlap_list.forw != &overlap_list) {
 
-	/* Initialize the result structure : todo move to separate function*/
-	rt_result.xr_min_y = MAX_FASTF;
-	rt_result.xr_max_y = -MAX_FASTF;
-	rt_result.xr_min_x_x  = MAX_FASTF;
-	rt_result.xr_max_x_x  = -MAX_FASTF;
 
 	ovp = overlap_list.forw;
 	while (ovp != &overlap_list) {
@@ -640,6 +648,9 @@ generate_manifolds(struct ged *gedp, struct simulation_params *sim_params)
 
 	    /* Add the region to the result of the sim so it will be drawn too */
 	    add_to_comb(gedp, sim_params->sim_comb_name, bu_vls_addr(&overlap_name));
+
+	    /* Initialize the rayshot results structure, has to be done for each manifold  */
+	    init_rayshot_results();
 
 	    /* Shoot rays right here as the pair of rigid_body ptrs are known,
 	     * todo: ignore volumes already shot
