@@ -86,18 +86,18 @@ print_manifold_list(struct rigid_body *rb)
     for (current_manifold = rb->head_manifold; current_manifold != NULL;
 	 current_manifold = current_manifold->next) {
 
-    	bu_log("--Manifold between %s & %s has %d contacts--\n",
+	bu_log("--Manifold between %s & %s has %d contacts--\n",
 	       current_manifold->rbA->rb_namep,
 	       current_manifold->rbB->rb_namep,
 	       current_manifold->num_bt_contacts);
 
-    	for (i=0; i<current_manifold->num_bt_contacts; i++) {
+	for (i=0; i<current_manifold->num_bt_contacts; i++) {
 	    bu_log("%d, (%f, %f, %f):(%f, %f, %f), n(%f, %f, %f)\n",
 		   i+1,
 		   V3ARGS(current_manifold->bt_contacts[i].ptA),
 		   V3ARGS(current_manifold->bt_contacts[i].ptB),
 		   V3ARGS(current_manifold->bt_contacts[i].normalWorldOnB));
-    	}
+	}
     }
 }
 
@@ -108,7 +108,7 @@ print_command(char* cmd_args[], int argc)
     int i;
     char buffer[500] = "";
     for (i=0; i<argc; i++) {
-    	sprintf(buffer, "%s %s", buffer, cmd_args[i]);
+	sprintf(buffer, "%s %s", buffer, cmd_args[i]);
     }
 
     bu_log(buffer);
@@ -123,17 +123,17 @@ kill(struct ged *gedp, char *name)
 
     /* Check if the duplicate already exists, and kill it if so */
     if (db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET) != RT_DIR_NULL) {
-    	bu_log("kill: WARNING \"%s\" exists, deleting it\n", name);
-    	cmd_args[0] = bu_strdup("kill");
-    	cmd_args[1] = bu_strdup(name);
-    	cmd_args[2] = (char *)0;
+	bu_log("kill: WARNING \"%s\" exists, deleting it\n", name);
+	cmd_args[0] = bu_strdup("kill");
+	cmd_args[1] = bu_strdup(name);
+	cmd_args[2] = (char *)0;
 
-    	if (ged_kill(gedp, argc, (const char **)cmd_args) != GED_OK) {
+	if (ged_kill(gedp, argc, (const char **)cmd_args) != GED_OK) {
 	    bu_log("kill: ERROR Could not delete existing \"%s\"\n", name);
 	    return GED_ERROR;
-    	}
+	}
 
-    	bu_free_array(argc, cmd_args, "kill: free cmd_args");
+	bu_free_array(argc, cmd_args, "kill: free cmd_args");
     }
 
     return GED_OK;
@@ -147,8 +147,8 @@ kill_copy(struct ged *gedp, struct directory *dp, char* new_name)
     int rv, argc = 3;
 
     if (kill(gedp, new_name) != GED_OK) {
-    	bu_log("kill_copy: ERROR Could not delete existing \"%s\"\n", new_name);
-    	return GED_ERROR;
+	bu_log("kill_copy: ERROR Could not delete existing \"%s\"\n", new_name);
+	return GED_ERROR;
     }
 
     /* Copy the passed prim/comb */
@@ -158,9 +158,9 @@ kill_copy(struct ged *gedp, struct directory *dp, char* new_name)
     cmd_args[3] = (char *)0;
     rv = ged_copy(gedp, 3, (const char **)cmd_args);
     if (rv != GED_OK) {
-    	bu_log("kill_copy: ERROR Could not copy \"%s\" to \"%s\"\n", dp->d_namep,
+	bu_log("kill_copy: ERROR Could not copy \"%s\" to \"%s\"\n", dp->d_namep,
 	       new_name);
-    	return GED_ERROR;
+	return GED_ERROR;
     }
 
     bu_free_array(argc, cmd_args, "kill_copy: free cmd_args");
@@ -182,9 +182,9 @@ add_to_comb(struct ged *gedp, char *target, char *add)
     cmd_args[4] = (char *)0;
     rv = ged_comb(gedp, 4, (const char **)cmd_args);
     if (rv != GED_OK) {
-        bu_log("add_to_comb: ERROR Could not add \"%s\" to the combination \"%s\"\n",
+	bu_log("add_to_comb: ERROR Could not add \"%s\" to the combination \"%s\"\n",
 	       add, target);
-        return GED_ERROR;
+	return GED_ERROR;
     }
 
     bu_free_array(argc, cmd_args, "add_to_comb: free cmd_args");
@@ -195,9 +195,9 @@ add_to_comb(struct ged *gedp, char *target, char *add)
 
 int
 line(struct ged *gedp, char* name, point_t from, point_t to,
-		unsigned char r,
-	    unsigned char g,
-	    unsigned char b)
+     unsigned char r,
+     unsigned char g,
+     unsigned char b)
 {
     char *cmd_args[20];
     int rv, argc = 19;
@@ -466,43 +466,42 @@ apply_color(struct ged *gedp,
 int
 make_rpp(struct ged *gedp, vect_t min, vect_t max, char* name)
 {
-	int rv, argc = 9;
-	char buffer_str[MAX_FLOATING_POINT_STRLEN];
-	char* cmd_args[28];
+    int rv, argc = 9;
+    char buffer_str[MAX_FLOATING_POINT_STRLEN];
+    char* cmd_args[28];
 
-	if (kill(gedp, name) != GED_OK) {
-		bu_log("line: ERROR Could not delete existing \"%s\"\n", name);
-		return GED_ERROR;
-	}
+    if (kill(gedp, name) != GED_OK) {
+	bu_log("line: ERROR Could not delete existing \"%s\"\n", name);
+	return GED_ERROR;
+    }
 
-	cmd_args[0] = bu_strdup("in");
-	cmd_args[1] = bu_strdup(name);
-	cmd_args[2] = bu_strdup("rpp");
+    cmd_args[0] = bu_strdup("in");
+    cmd_args[1] = bu_strdup(name);
+    cmd_args[2] = bu_strdup("rpp");
 
-	sprintf(buffer_str, "%f", min[0]); cmd_args[3] = bu_strdup(buffer_str);
-	sprintf(buffer_str, "%f", max[0]); cmd_args[4] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", min[0]); cmd_args[3] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", max[0]); cmd_args[4] = bu_strdup(buffer_str);
 
-	sprintf(buffer_str, "%f", min[1]); cmd_args[5] = bu_strdup(buffer_str);
-	sprintf(buffer_str, "%f", max[1]); cmd_args[6] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", min[1]); cmd_args[5] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", max[1]); cmd_args[6] = bu_strdup(buffer_str);
 
-	sprintf(buffer_str, "%f", min[2]); cmd_args[7] = bu_strdup(buffer_str);
-	sprintf(buffer_str, "%f", max[2]); cmd_args[8] = bu_strdup(buffer_str);
-
-
-	cmd_args[9] = (char *)0;
-
-	rv = ged_in(gedp, argc, (const char **)cmd_args);
-	if (rv != GED_OK) {
-		bu_log("make_rpp: WARNING Could not insert RPP %s (%f, %f, %f):(%f, %f, %f)\n",
-		   name, V3ARGS(min), V3ARGS(max));
-		return GED_ERROR;
-	}
-
-	bu_free_array(argc, cmd_args, "make_rpp: free cmd_args");
+    sprintf(buffer_str, "%f", min[2]); cmd_args[7] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", max[2]); cmd_args[8] = bu_strdup(buffer_str);
 
 
+    cmd_args[9] = (char *)0;
 
-	return GED_OK;
+    rv = ged_in(gedp, argc, (const char **)cmd_args);
+    if (rv != GED_OK) {
+	bu_log("make_rpp: WARNING Could not insert RPP %s (%f, %f, %f):(%f, %f, %f)\n",
+	       name, V3ARGS(min), V3ARGS(max));
+	return GED_ERROR;
+    }
+
+    bu_free_array(argc, cmd_args, "make_rpp: free cmd_args");
+
+
+    return GED_OK;
 }
 
 
@@ -520,11 +519,11 @@ insert_AABB(struct ged *gedp, struct simulation_params *sim_params, struct rigid
 
     /* Prepare prefixed bounding box primitive name */
     bu_vls_sprintf(&buffer1, "%s%s", prefix, current_node->rb_namep);
-   	prefixed_name = bu_vls_addr(&buffer1);
+    prefixed_name = bu_vls_addr(&buffer1);
 
     /* Prepare prefixed bounding box region name */
     bu_vls_sprintf(&buffer2, "%s%s", prefix_reg, current_node->rb_namep);
-  	prefixed_reg_name = bu_vls_addr(&buffer2);
+    prefixed_reg_name = bu_vls_addr(&buffer2);
 
     /* Delete existing bb prim and region */
     rv = kill(gedp, prefixed_name);
@@ -649,9 +648,9 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
     char *prefix_reg = "mf_reg_";
     char *prefix_normal = "normal_";
     struct bu_vls name = BU_VLS_INIT_ZERO,
-    			  prefixed_name = BU_VLS_INIT_ZERO,
-    			  prefixed_reg_name = BU_VLS_INIT_ZERO,
-    			  prefixed_normal_name = BU_VLS_INIT_ZERO;
+	prefixed_name = BU_VLS_INIT_ZERO,
+	prefixed_reg_name = BU_VLS_INIT_ZERO,
+	prefixed_normal_name = BU_VLS_INIT_ZERO;
     vect_t scaled_normal;
     point_t from, to;
     struct sim_manifold *current_manifold;
@@ -787,33 +786,33 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 
 	    /* Finally make the manifold primitive, if proper command generated */
 	    if (argc > 2) {
-	    	rv = ged_in(gedp, argc, (const char **)cmd_args);
-	    	if (rv != GED_OK) {
-	    		bu_log("insert_manifolds: WARNING Could not draw manifold for \"%s\"\n", rb->rb_namep);
-	    	}
+		rv = ged_in(gedp, argc, (const char **)cmd_args);
+		if (rv != GED_OK) {
+		    bu_log("insert_manifolds: WARNING Could not draw manifold for \"%s\"\n", rb->rb_namep);
+		}
 
-	    	bu_free_array(argc, cmd_args, "insert_manifolds: free cmd_args");
+		bu_free_array(argc, cmd_args, "insert_manifolds: free cmd_args");
 
-			/* Make the region for the manifold primitive */
-			add_to_comb(gedp, bu_vls_addr(&prefixed_reg_name), bu_vls_addr(&prefixed_name));
+		/* Make the region for the manifold primitive */
+		add_to_comb(gedp, bu_vls_addr(&prefixed_reg_name), bu_vls_addr(&prefixed_name));
 
-			/* Adjust the material for region to be visible */
-			apply_material(gedp, bu_vls_addr(&prefixed_reg_name), "plastic tr 0.9", 210, 210, 0);
+		/* Adjust the material for region to be visible */
+		apply_material(gedp, bu_vls_addr(&prefixed_reg_name), "plastic tr 0.9", 210, 210, 0);
 
-			/* Add the region to the result of the sim so it will be drawn too */
-			add_to_comb(gedp, sim_params->sim_comb_name, bu_vls_addr(&prefixed_reg_name));
+		/* Add the region to the result of the sim so it will be drawn too */
+		add_to_comb(gedp, sim_params->sim_comb_name, bu_vls_addr(&prefixed_reg_name));
 
-			/* Finally draw the normal */
-			VSCALE(scaled_normal, current_manifold->bt_contacts[0].normalWorldOnB, NORMAL_SCALE_FACTOR);
-			VADD2(to, scaled_normal, from);
+		/* Finally draw the normal */
+		VSCALE(scaled_normal, current_manifold->bt_contacts[0].normalWorldOnB, NORMAL_SCALE_FACTOR);
+		VADD2(to, scaled_normal, from);
 
-			bu_log("insert_manifolds: line (%f,%f,%f)-> (%f,%f,%f)-> (%f,%f,%f) \n",
-				   V3ARGS(current_manifold->bt_contacts[0].normalWorldOnB),
-				   V3ARGS(to),
-				   V3ARGS(scaled_normal));
+		bu_log("insert_manifolds: line (%f,%f,%f)-> (%f,%f,%f)-> (%f,%f,%f) \n",
+		       V3ARGS(current_manifold->bt_contacts[0].normalWorldOnB),
+		       V3ARGS(to),
+		       V3ARGS(scaled_normal));
 
-			arrow(gedp, bu_vls_addr(&prefixed_normal_name), from, to);
-			add_to_comb(gedp, sim_params->sim_comb_name, bu_vls_addr(&prefixed_normal_name));
+		arrow(gedp, bu_vls_addr(&prefixed_normal_name), from, to);
+		add_to_comb(gedp, sim_params->sim_comb_name, bu_vls_addr(&prefixed_normal_name));
 
 	    }/*  if-argc */
 

@@ -106,16 +106,16 @@ add_regions(struct ged *gedp, struct simulation_params *sim_params)
 
 	    if (BU_STR_EMPTY(dp->d_namep)) {
 		bu_vls_printf(gedp->ged_result_str, "add_regions: Skipping \"%s\" due to empty name\n",
-				  dp->d_namep);
+			      dp->d_namep);
 		continue;
-		}
+	    }
 
 	    /* Duplicate the region */
 	    bu_vls_sprintf(&dp_name_vls, "%s%s", prefix, dp->d_namep);
 
 	    kill_copy(gedp, dp, bu_vls_addr(&dp_name_vls));
 	    bu_vls_printf(gedp->ged_result_str, "add_regions: Copied \"%s\" to \"%s\"\n", dp->d_namep,
-	    		bu_vls_addr(&dp_name_vls));
+			  bu_vls_addr(&dp_name_vls));
 
 	    /* Get the directory pointer for the object just added */
 	    if ((ndp=db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&dp_name_vls), LOOKUP_QUIET)) == RT_DIR_NULL) {
@@ -153,10 +153,9 @@ add_regions(struct ged *gedp, struct simulation_params *sim_params)
     bu_vls_free(&dp_name_vls);
 
     if(sim_params->num_bodies == 0){
-    	bu_vls_printf(gedp->ged_result_str, "add_regions: ERROR No objects were added\n");
-    	return GED_ERROR;
+	bu_vls_printf(gedp->ged_result_str, "add_regions: ERROR No objects were added\n");
+	return GED_ERROR;
     }
-
 
 
     /* Show list of objects to be added to the sim : keep for debugging as of now */
@@ -205,7 +204,7 @@ get_bb(struct ged *gedp, struct simulation_params *sim_params)
 	VSCALE(current_node->bb_center, current_node->bb_dims, 0.5);
 	VADD2(current_node->bb_center, current_node->bb_center, current_node->bb_min)
 
-		MAT_IDN(current_node->m);
+	    MAT_IDN(current_node->m);
 	current_node->m[12] = current_node->bb_center[0];
 	current_node->m[13] = current_node->bb_center[1];
 	current_node->m[14] = current_node->bb_center[2];
@@ -442,35 +441,35 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 
     for (i=0 ; i < sim_params.duration ; i++) {
 
-		bu_log("%s: ------------------------- Iteration %d -----------------------\n", argv[0], i+1);
+	bu_log("%s: ------------------------- Iteration %d -----------------------\n", argv[0], i+1);
 
-		/* Recreate sim.c to clear AABBs and manifold regions from previous iteration */
-		recreate_sim_comb(gedp, &sim_params);
+	/* Recreate sim.c to clear AABBs and manifold regions from previous iteration */
+	recreate_sim_comb(gedp, &sim_params);
 
-		/* Run the physics simulation */
-		rv = run_simulation(&sim_params);
-		if (rv != GED_OK) {
-			bu_vls_printf(gedp->ged_result_str, "%s: ERROR while running the simulation\n", argv[0]);
-			return GED_ERROR;
-		}
-
-		/* Apply transforms on the participating objects, also shades objects */
-		rv = apply_transforms(gedp, &sim_params);
-		if (rv != GED_OK) {
-			bu_vls_printf(gedp->ged_result_str, "%s: ERROR while applying transforms\n", argv[0]);
-			return GED_ERROR;
-		}
-
-		/* Generate manifolds using rt */
-		rv = generate_manifolds(gedp, &sim_params);
-		if (rv != GED_OK) {
-			bu_vls_printf(gedp->ged_result_str, "%s: ERROR while calculating manifolds\n", argv[0]);
-			return GED_ERROR;
-		}
-
-		free_manifold_lists(&sim_params);
-
+	/* Run the physics simulation */
+	rv = run_simulation(&sim_params);
+	if (rv != GED_OK) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: ERROR while running the simulation\n", argv[0]);
+	    return GED_ERROR;
 	}
+
+	/* Apply transforms on the participating objects, also shades objects */
+	rv = apply_transforms(gedp, &sim_params);
+	if (rv != GED_OK) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: ERROR while applying transforms\n", argv[0]);
+	    return GED_ERROR;
+	}
+
+	/* Generate manifolds using rt */
+	rv = generate_manifolds(gedp, &sim_params);
+	if (rv != GED_OK) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: ERROR while calculating manifolds\n", argv[0]);
+	    return GED_ERROR;
+	}
+
+	free_manifold_lists(&sim_params);
+
+    }
 
 
     /* Free memory in rigid_body list */

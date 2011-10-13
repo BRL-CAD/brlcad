@@ -109,9 +109,9 @@ add_to_comb(struct ged *gedp, char *target, char *add);
  */
 int
 line(struct ged *gedp, char* name, point_t from, point_t to,
-		unsigned char r,
-	    unsigned char g,
-	    unsigned char b);
+     unsigned char r,
+     unsigned char g,
+     unsigned char b);
 
 
 /**
@@ -159,8 +159,8 @@ apply_color(struct ged *gedp,
  */
 int
 insert_AABB(struct ged *gedp,
-			struct simulation_params *sim_params,
-			struct rigid_body *current_node);
+	    struct simulation_params *sim_params,
+	    struct rigid_body *current_node);
 
 
 /**

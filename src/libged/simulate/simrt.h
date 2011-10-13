@@ -58,7 +58,7 @@
  */
 struct overlap {
     int index;
-	struct application *ap;
+    struct application *ap;
     struct partition *pp;
     struct region *reg1;
     struct region *reg2;
@@ -77,7 +77,7 @@ struct overlap {
  */
 struct hit_reg {
     int index;
-	struct application *ap;
+    struct application *ap;
     struct partition *pp;
     const char *reg_name;
     struct soltab *in_stp;
@@ -96,19 +96,18 @@ struct hit_reg {
 
 
 struct rayshot_results{
-	/* Results of shooting rays towards -ve x-axis : xr means x rays */
-	fastf_t xr_min_x_x, xr_min_x_y, xr_min_x_z;  /* the min X found while shooting x rays & rltd y,z*/
-	fastf_t xr_max_x_x, xr_max_x_y, xr_max_x_z;  /* the max X found while shooting x rays & rltd y,z*/
-	fastf_t xr_min_y, xr_min_y_z; /* the min y where overlap was found & the z co-ord for it*/
-	fastf_t xr_max_y, xr_max_y_z; /* the max y where overlap was still found */
-	fastf_t xr_min_z, xr_min_z_y; /* the min z where overlap was found & the y co-ord for it*/
-	fastf_t xr_max_z, xr_max_z_y; /* the max z where overlap was still found */
+    /* Results of shooting rays towards -ve x-axis : xr means x rays */
+    fastf_t xr_min_x_x, xr_min_x_y, xr_min_x_z;  /* the min X found while shooting x rays & rltd y,z*/
+    fastf_t xr_max_x_x, xr_max_x_y, xr_max_x_z;  /* the max X found while shooting x rays & rltd y,z*/
+    fastf_t xr_min_y, xr_min_y_z; /* the min y where overlap was found & the z co-ord for it*/
+    fastf_t xr_max_y, xr_max_y_z; /* the max y where overlap was still found */
+    fastf_t xr_min_z, xr_min_z_y; /* the min z where overlap was found & the y co-ord for it*/
+    fastf_t xr_max_z, xr_max_z_y; /* the max z where overlap was still found */
 
-	/* Results of shooting rays down y axis */
+    /* Results of shooting rays down y axis */
 
 
-
-	/* Results of shooting rays down z axis */
+    /* Results of shooting rays down z axis */
 
 };
 
@@ -141,7 +140,7 @@ cleanup_lists(void);
  */
 int
 get_overlap(struct rigid_body *rbA, struct rigid_body *rbB, vect_t overlap_min,
-															vect_t overlap_max);
+	    vect_t overlap_max);
 
 
 /**
@@ -168,7 +167,7 @@ if_miss(struct application *UNUSED(ap));
  */
 int
 if_overlap(struct application *ap, struct partition *pp, struct region *reg1,
-		struct region *reg2, struct partition *InputHdp);
+	   struct region *reg2, struct partition *InputHdp);
 
 
 /**
@@ -180,15 +179,15 @@ shoot_ray(struct rt_i *rtip, point_t pt, point_t dir);
 
 
 /**
- * Shoots a grid of rays towards negative x axis
+ * Shoots a grid of rays down x axis
  */
 int
 shoot_x_rays(
-		struct ged *gedp,
-		struct sim_manifold *current_manifold,
-		struct simulation_params *sim_params,
-		struct rt_i *rtip,
-		vect_t overlap_min, vect_t overlap_max);
+	     struct ged *gedp,
+	     struct sim_manifold *current_manifold,
+	     struct simulation_params *sim_params,
+	     struct rt_i *rtip,
+	     vect_t overlap_min, vect_t overlap_max);
 
 
 /**
@@ -196,11 +195,6 @@ shoot_x_rays(
  */
 int
 init_raytrace(struct simulation_params *sim_params, struct rt_i *rtip);
-
-
-
-
-
 
 
 #endif /* SIMRT_H_ */
