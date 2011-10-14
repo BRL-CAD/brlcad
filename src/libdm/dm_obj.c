@@ -2863,11 +2863,6 @@ dmo_closeFb(struct dm_obj *dmop)
     fb_flush(dmop->dmo_fbs.fbs_fbp);
     fb_close_existing(dmop->dmo_fbs.fbs_fbp);
 
-    /* free framebuffer memory */
-    if (dmop->dmo_fbs.fbs_fbp->if_pbase != PIXEL_NULL)
-	free((void *)dmop->dmo_fbs.fbs_fbp->if_pbase);
-    free((void *)dmop->dmo_fbs.fbs_fbp->if_name);
-    free((void *)dmop->dmo_fbs.fbs_fbp);
     dmop->dmo_fbs.fbs_fbp = FBIO_NULL;
 
     return TCL_OK;
