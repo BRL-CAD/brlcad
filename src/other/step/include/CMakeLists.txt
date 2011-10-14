@@ -2,9 +2,6 @@ SET(express_HDRS
   express/alg.h
   express/basic.h
   express/caseitem.h
-  express/de_end.h
-  express/decstart.h
-  express/defstart.h
   express/dict.h
   express/entity.h
   express/error.h

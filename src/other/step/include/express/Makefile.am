@@ -5,9 +5,6 @@ expressinclude_HEADERS = \
 	alg.h \
 	basic.h \
 	caseitem.h \
-	de_end.h \
-	decstart.h \
-	defstart.h \
 	dict.h \
 	entity.h \
 	error.h \
