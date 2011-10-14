@@ -2281,13 +2281,13 @@ proc title_node_handler {node} {
 
     set parent $itk_component(displayF)
 
-    itk_component add frontZClipL {
-	::ttk::label $parent.frontZClipL \
+    itk_component add zclipFrontL {
+	::ttk::label $parent.zclipFrontL \
 	    -anchor se \
-	    -text "ZClip, Front:"
+	    -text "ZClip Percent (Front):"
     } {}
-    itk_component add frontZClipS {
-	::scale $parent.frontZClipS \
+    itk_component add zclipFrontS {
+	::scale $parent.zclipFrontS \
 	    -showvalue 1 \
 	    -orient horizontal \
 	    -from 1.0 \
@@ -2297,13 +2297,13 @@ proc title_node_handler {node} {
 	    -command [::itcl::code $this updateZClipPlanes]
     }
 
-    itk_component add backZClipL {
-	::ttk::label $parent.backZClipL \
+    itk_component add zclipBackL {
+	::ttk::label $parent.zclipBackL \
 	    -anchor se \
-	    -text "ZClip, Back:"
+	    -text "ZClip Percent (Back):"
     } {}
-    itk_component add backZClipS {
-	::scale $parent.backZClipS \
+    itk_component add zclipBackS {
+	::scale $parent.zclipBackS \
 	    -showvalue 1 \
 	    -orient horizontal \
 	    -from 1.0 \
@@ -2313,35 +2313,68 @@ proc title_node_handler {node} {
 	    -command [::itcl::code $this updateZClipPlanes]
     }
 
-    itk_component add zclipMaxL {
-	::ttk::label $parent.zclipMaxL \
+    itk_component add zclipBackMaxL {
+	::ttk::label $parent.zclipBackMaxL \
 	    -anchor e \
-	    -text "ZClip Max:"
+	    -text "ZClip Max (Back):"
     } {}
-    itk_component add zclipMaxE {
-	::ttk::entry $parent.zclipMaxE \
+    itk_component add zclipBackMaxF {
+	::ttk::frame $parent.zclipBackMaxF
+    } {}
+    itk_component add zclipBackMaxE {
+	::ttk::entry $itk_component(zclipBackMaxF).zclipBackMaxE \
 	    -width 12 \
-	    -textvariable [::itcl::scope mZClipMaxPref] \
+	    -textvariable [::itcl::scope mZClipBackMaxPref] \
 	    -validate key \
 	    -validatecommand [::itcl::code $this validateDouble %P]
     } {}
-    itk_component add zclipMaxB {
-	::ttk::button $parent.zclipMaxB \
-	    -text "Compute ZClip Max" \
-	    -command [::itcl::code $this calculateZClipMax]
+    itk_component add zclipBackMaxB {
+	::ttk::button $itk_component(zclipBackMaxF).zclipBackMaxB \
+	    -width -1 \
+	    -text "Compute" \
+	    -command [::itcl::code $this calculateZClipBackMax]
     } {}
+    grid $itk_component(zclipBackMaxE) -column 0 -row 0 -sticky nsew
+    grid $itk_component(zclipBackMaxB) -column 1 -row 0 -sticky nse
+    grid columnconfigure $itk_component(zclipBackMaxF) 0 -weight 1
+
+    itk_component add zclipFrontMaxL {
+	::ttk::label $parent.zclipFrontMaxL \
+	    -anchor e \
+	    -text "ZClip Max (Front):"
+    } {}
+    itk_component add zclipFrontMaxF {
+	::ttk::frame $parent.zclipFrontMaxF
+    } {}
+    itk_component add zclipFrontMaxE {
+	::ttk::entry $itk_component(zclipFrontMaxF).zclipFrontMaxE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mZClipFrontMaxPref] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble %P]
+    } {}
+    itk_component add zclipFrontMaxB {
+	::ttk::button $itk_component(zclipFrontMaxF).zclipFrontMaxB \
+	    -width -1 \
+	    -text "Compute" \
+	    -command [::itcl::code $this calculateZClipFrontMax]
+    } {}
+    grid $itk_component(zclipFrontMaxE) -column 0 -row 0 -sticky nsew
+    grid $itk_component(zclipFrontMaxB) -column 1 -row 0 -sticky nse
+    grid columnconfigure $itk_component(zclipFrontMaxF) 0 -weight 1
 
     set i 0
-    grid $itk_component(frontZClipL) -column 0 -row $i -sticky nsew
-    grid $itk_component(frontZClipS) -column 1 -row $i -sticky ew
+    grid $itk_component(zclipBackL) -column 0 -row $i -sticky se
+    grid $itk_component(zclipBackS) -column 1 -row $i -sticky ew
     incr i
-    grid $itk_component(backZClipL) -column 0 -row $i -sticky nsew
-    grid $itk_component(backZClipS) -column 1 -row $i -sticky ew
+    grid $itk_component(zclipBackMaxL) -column 0 -row $i -sticky e
+    grid $itk_component(zclipBackMaxF) -column 1 -row $i -sticky ew
     incr i
-    grid $itk_component(zclipMaxL) -column 0 -row $i -pady 8 -sticky e
-    grid $itk_component(zclipMaxE) -column 1 -row $i -pady 8 -padx 2 -sticky ew
+    grid $itk_component(zclipFrontL) -column 0 -row $i -sticky se
+    grid $itk_component(zclipFrontS) -column 1 -row $i -sticky ew
     incr i
-    grid $itk_component(zclipMaxB) -column 0 -columnspan 2 -row $i -sticky ns
+    grid $itk_component(zclipFrontMaxL) -column 0 -row $i -sticky e
+    grid $itk_component(zclipFrontMaxF) -column 1 -row $i -sticky ew
 
     incr i
     grid rowconfigure $parent $i -weight 1
@@ -7250,10 +7283,12 @@ proc title_node_handler {node} {
 
 
 ::itcl::body Archer::applyDisplayPreferencesIfDiff {} {
-    if {$mZClipMaxPref != $mZClipMax ||
+    if {$mZClipBackMaxPref != $mZClipBackMax ||
+	$mZClipFrontMaxPref != $mZClipFrontMax ||
 	$mZClipBackPref != $mZClipBack ||
 	$mZClipFrontPref != $mZClipFront} {
-	set mZClipMax $mZClipMaxPref
+	set mZClipBackMax $mZClipBackMaxPref
+	set mZClipFrontMax $mZClipFrontMaxPref
 	set mZClipBack $mZClipBackPref
 	set mZClipFront $mZClipFrontPref
 	updateDisplaySettings
@@ -7806,10 +7841,12 @@ proc title_node_handler {node} {
 ::itcl::body Archer::cancelPreferences {} {
 
     # Handling special case for zclip prefences (i.e. put zclip planes back where they were)
-    if {$mZClipMaxPref != $mZClipMax ||
+    if {$mZClipBackMaxPref != $mZClipBackMax ||
+	$mZClipFrontMaxPref != $mZClipFrontMax ||
 	$mZClipBackPref != $mZClipBack ||
 	$mZClipFrontPref != $mZClipFront} {
-	set mZClipMaxPref $mZClipMax
+	set mZClipBackMaxPref $mZClipBackMax
+	set mZClipFrontMaxPref $mZClipFrontMax
 	set mZClipBackPref $mZClipBack
 	set mZClipFrontPref $mZClipFront
 	updateDisplaySettings
@@ -7871,7 +7908,8 @@ proc title_node_handler {node} {
     set mModelAxesTickColorPref $mModelAxesTickColor
     set mModelAxesTickMajorColorPref $mModelAxesTickMajorColor
 
-    set mZClipMaxPref $mZClipMax
+    set mZClipBackMaxPref $mZClipBackMax
+    set mZClipFrontMaxPref $mZClipFrontMax
     set mZClipBackPref $mZClipBack
     set mZClipFrontPref $mZClipFront
 
@@ -8017,7 +8055,8 @@ proc title_node_handler {node} {
     puts $_pfile "set mModelAxesTickMajorColor \"$mModelAxesTickMajorColor\""
 
     puts $_pfile "set mLastSelectedDir \"$mLastSelectedDir\""
-    puts $_pfile "set mZClipMax $mZClipMax"
+    puts $_pfile "set mZClipBackMax $mZClipBackMax"
+    puts $_pfile "set mZClipFrontMax $mZClipFrontMax"
     puts $_pfile "set mZClipBack $mZClipBack"
     puts $_pfile "set mZClipFront $mZClipFront"
 

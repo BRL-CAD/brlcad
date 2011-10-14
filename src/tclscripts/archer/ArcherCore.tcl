@@ -357,8 +357,10 @@ namespace eval ArcherCore {
 	variable mZClipBackPref 100.0
 	variable mZClipFront 100.0
 	variable mZClipFrontPref 100.0
-	variable mZClipMax 1000
-	variable mZClipMaxPref 1000
+	variable mZClipBackMax 1000
+	variable mZClipBackMaxPref 1000
+	variable mZClipFrontMax 1000
+	variable mZClipFrontMaxPref 1000
 
 	variable mBindingMode Default
 	variable mBindingModePref ""
@@ -531,6 +533,8 @@ namespace eval ArcherCore {
 	method updateDisplaySettings {}
 	method updateZClipPlanes {_unused}
 	method calculateZClipMax {}
+	method calculateZClipBackMax {}
+	method calculateZClipFrontMax {}
 	method pushZClipSettings {}
 
 	method shootRay_doit {_start _op _target _prep _no_bool _onehit _bot_dflag _objects}
@@ -4855,8 +4859,8 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::updateZClipPlanes {_unused} {
-    set near [expr {0.01 * $mZClipFrontPref * $mZClipMaxPref}]
-    set far [expr {0.01 * $mZClipBackPref * $mZClipMaxPref}]
+    set near [expr {0.01 * $mZClipFrontPref * $mZClipFrontMaxPref}]
+    set far [expr {0.01 * $mZClipBackPref * $mZClipBackMaxPref}]
     $itk_component(ged) bounds_all "-1.0 1.0 -1.0 1.0 -$near $far"
     $itk_component(ged) refresh_all
 }
@@ -4869,14 +4873,23 @@ namespace eval ArcherCore {
     set max [expr {($asize / $size) * 0.5}]
     set maxSq [expr {$max * $max}]
 
-    # set mZClipMaxPref to the length of the diagonal
-    set mZClipMaxPref [expr {sqrt($maxSq + $maxSq)}]
+    # return the length of the diagonal
+    return [expr {sqrt($maxSq + $maxSq)}]
+}
 
+::itcl::body ArcherCore::calculateZClipBackMax {} {
+    set mZClipBackMaxPref [calculateZClipMax]
+    updateZClipPlanes 0
+}
+
+::itcl::body ArcherCore::calculateZClipFrontMax {} {
+    set mZClipFrontMaxPref [calculateZClipMax]
     updateZClipPlanes 0
 }
 
 ::itcl::body ArcherCore::pushZClipSettings {} {
-    set mZClipMaxPref $mZClipMax
+    set mZClipMaxBackPref $mZClipBackMax
+    set mZClipMaxFrontPref $mZClipFrontMax
     set mZClipBackPref $mZClipBack
     set mZClipFrontPref $mZClipFront
     updateDisplaySettings
