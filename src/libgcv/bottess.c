@@ -415,34 +415,35 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 
     /****** START hoistable ******/
     for(i=0;i<2;i++) for(j=0;j<3;j++) {
-	    if(isv[i] == 0) {
-		fastf_t dist;
-
-		switch( bn_isect_pt_lseg( &dist, (fastf_t *)&f->vert[j], (fastf_t *)&f->vert[j==2?0:j+1], (fastf_t *)&isectpt[i], tol) ) {
-		    case -2: case -1: continue;
-		    case 1: isv[i] = VERT_INT|j; break;
-		    case 2: isv[i] = VERT_INT|(j==2?0:j+1); break;
-		    case 3: isv[i] = LINE_INT|j; break;
-		    default: bu_log("Whu?\n"); break;
-		}
-	    }
-	}
-
-    /*** test if intersect is middle of face ***/
-    for(i=0;i<2;i++) {
-	/* test for face in plane */
 	if(isv[i] == 0) {
+	    fastf_t dist;
+
+	    switch( bn_isect_pt_lseg( &dist, (fastf_t *)&f->vert[j], (fastf_t *)&f->vert[j==2?0:j+1], (fastf_t *)&isectpt[i], tol) ) {
+		case -2: case -1: continue;
+		case 1: isv[i] = VERT_INT|j; break;
+		case 2: isv[i] = VERT_INT|(j==2?0:j+1); break;
+		case 3: isv[i] = LINE_INT|j; break;
+		default: bu_log("Whu?\n"); break;
+	    }
 	}
     }
 
+    /*** test if intersect is middle of face ***/
+    for(i=0;i<2;i++)
+	/* test for face in plane */
+	if(isv[i] == 0)	/* assume that the isectpt is necessarily on the vert, line or
+			   face... if it's not seen on the vert or line, it must be face.
+			   This should probably be a real check. */
+	    isv[i] = FACE_INT;
+
     if(isv[0] == 0 || isv[1] == 0) {
-	    /*
-	    bu_log("Something real bad %x %x\n", isv[0], isv[1]);
-	    */
+	/*
+	   bu_log("Something real bad %x %x\n", isv[0], isv[1]);
+	   */
 	return -1;
     }
 
-    if((isv[0]|ALL_INT) > (isv[1]|ALL_INT)) {
+    if((isv[0]&ALL_INT) > (isv[1]&ALL_INT)) {
 	int tmpi;
 	point_t tmpp;
 	VMOVE(tmpp, isectpt[0]);
@@ -462,25 +463,41 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 
     /* if VERT+LINE, break into 2 */
     if(isv[0]&VERT_INT && isv[1]&LINE_INT) {
-	bu_log("Splitting into 2 %x %x\n", isv[0]&ALL_INT, isv[1]&ALL_INT);
+	bu_log("Splitting into 2 %x %x (LINE/VERT)\n", isv[0], isv[1]);
 	return 2;
     }
 
     /* if LINE+LINE, break into 3, figure out which side has two verts and cut * that */
     if(isv[0]&LINE_INT && isv[1]&LINE_INT) {
-	bu_log("Splitting into 3 %x %x\n", isv[0]&ALL_INT, isv[1]&ALL_INT);
+	bu_log("Splitting into 3 %x %x (LINE/LINE)\n", isv[0], isv[1]);
 	return 3;
     }
-    bu_log("derp?\n");
 
     /* if VERT+FACE, break into 3, intersect is one line, other two to the * opposing verts */
-    /* if LINE+FACE, break into 3 */
-    /* if FACE+FACE, break into 3 */
+    if(isv[0]&VERT_INT ) {
+	bu_log("Splitting i nto 3: Vert+face? %x %x\n", isv[0], isv[1]);
+	return 3;
+    }
 
+    /* if LINE+FACE, break into 3 */
+    if(isv[0]&LINE_INT ) {
+	/* test if face extends to vert? could be 2 at that point... */
+	bu_log("Splitting into 3?: Line+face? %x %x\n", isv[0], isv[1]);
+	return 3;
+    }
+
+    /* if FACE+FACE, break into 3 */
+    if(isv[0]&FACE_INT ) {
+	/* extend intersect line to triangle edges, could be 2 or 3? */
+	bu_log("Splitting into 3?: face+face? %x %x\n", isv[0], isv[1]);
+	return 3;
+    }
 #undef VERT_INT
 #undef LINE_INT
 #undef ALL_INT
 #undef FACE_INT
+    bu_log("derp?\n");
+
     return 0;
 }
 
