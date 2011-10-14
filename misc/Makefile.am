@@ -27,7 +27,6 @@ EXTRA_DIST = \
 	CMake/FindREGEX.cmake \
 	CMake/FindSCL.cmake \
 	CMake/FindOPENNURBS.cmake \
-	CMake/svncheck.cmake.in \
 	CMake/FindLEX.cmake \
 	CMake/distcheck_success_message.cmake.in \
 	CMake/FindGL.cmake \
