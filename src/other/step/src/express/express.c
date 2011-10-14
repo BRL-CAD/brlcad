@@ -79,6 +79,7 @@ static char rcsid[] = "";
 #include "express/resolve.h"
 #include "stack.h"
 #include "express/scope.h"
+#include "token_type.h"
 
 Linked_List EXPRESS_path;
 int EXPRESSpass;
@@ -589,7 +590,7 @@ Express
 PARSERrun(char *filename,FILE *fp)
 {
 	extern void SCAN_lex_init PROTO((char *,FILE *));
-	extern int yylval;
+	extern YYSTYPE yylval;
 	extern int yyerrstatus;
 	int tokenID;
 
