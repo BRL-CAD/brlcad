@@ -38,6 +38,7 @@ documentation_DATA = \
 	cvs.txt \
 	description.txt \
 	deprecation.txt \
+	ecosystem.dot \
 	flex_to_re2c.txt \
 	ged.tr \
 	history.txt \
