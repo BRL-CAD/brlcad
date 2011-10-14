@@ -181,6 +181,18 @@ int yylval;
 #define SCOPEadd_super(ths) ths->superscope = scope->this_;
 
 #define ERROR(code)	ERRORreport(code, yylineno)
+
+void parserInitState()
+{
+    scope = scopes;
+    /* no need to define scope->this */
+    scope->this_ = yyexpresult;
+    scope->pscope = scope;
+    scope->type = OBJ_EXPRESS;
+    yyexpresult->symbol.name = yyexpresult->u.express->filename;
+    yyexpresult->symbol.filename = yyexpresult->u.express->filename;
+    yyexpresult->symbol.line = 1;
+}
 } /* include */
 
 %type case_action			{ Case_Item }
@@ -934,16 +946,6 @@ explicit_attribute ::= attribute_decl_list(A) TOK_COLON optional(B)
 }
 
 express_file ::= schema_decl_list.
-{
-    scope = scopes;
-    /* no need to define scope->this */
-    scope->this_ = yyexpresult;
-    scope->pscope = scope;
-    scope->type = OBJ_EXPRESS;
-    yyexpresult->symbol.name = yyexpresult->u.express->filename;
-    yyexpresult->symbol.filename = yyexpresult->u.express->filename;
-    yyexpresult->symbol.line = 1;
-}
 
 schema_decl_list(A) ::= schema_decl(B).
 {

@@ -607,6 +607,7 @@ PARSERrun(char *filename,FILE *fp)
 
 	yyin = fp;
 	SCAN_lex_init(filename,fp);
+	parserInitState();
 
 	yyerrstatus = 0;
 	while ((tokenID = yylex()) > 0) {
