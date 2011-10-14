@@ -63,6 +63,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+
+* group public library headers into subdirs, e.g. include/bu/bu.h, so
+  it's clear when you're using headers from another library and
+  breaking encapsulation.
+
 * add an increment option to reid to increment with something other
   than 1 at a time.
 
@@ -159,9 +164,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * implement support for the other file entity types to libbu
 
-* remove all of the MSVC sections in the CMakeLists.txt files.
-  perform proper library/function/flag tests where necessary.
-
 * implement http network transfer tool for crash reports and benchmark
   analyses (via libfetch)
 
@@ -185,10 +187,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   libged decoupled from libdm/libfb.
 
 * migrate / update screengrab command in libged (libfb/libdm dep)
-
-* group public library headers into subdirs, e.g. include/bu/bu.h, so
-  it's clear when you're using headers from another library and
-  breaking encapsulation.  this should wait until after cmake merge.
 
 * add code regression that makes sure none of our code cheats by
   including bu/bu.h -- e.g., make sure BU_CPPFLAGS et al. are used so
@@ -1190,6 +1188,24 @@ ARCHER
   wrong BRL-CAD logo image, says archer is trademarked,
   acknowledgements is out of date (should remove or just put AUTHORS
   file).
+
+
+CMAKE
+-----
+
+* remove all of the MSVC sections in the CMakeLists.txt files.
+  perform proper library/function/flag tests where necessary.
+
+* write/update INSTALL with ALL cmake options documented (make sure
+  there are equivalent cmake options for all configure options or
+  document the ones not included (e.g., proe options))
+
+* ensure primary cmake option parity with summary option listing
+
+* move cmake documentation files into place
+
+* investigate ignoring .hidden directories/files from dist packing so
+  that internal build directories can be used instead of external ones
 
 
 ODDITIES
