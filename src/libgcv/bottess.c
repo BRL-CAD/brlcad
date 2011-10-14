@@ -415,14 +415,14 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 
     /****** START hoistable ******/
     for(i=0;i<2;i++) for(j=0;j<3;j++) {
-	    if(isv[i] != 0) {
+	    if(isv[i] == 0) {
 		fastf_t dist;
 
 		switch( bn_isect_pt_lseg( &dist, (fastf_t *)&f->vert[j], (fastf_t *)&f->vert[j==2?0:j+1], (fastf_t *)&isectpt[i], tol) ) {
 		    case -2: case -1: continue;
-		    case 1: isv[i] = VERT_INT|j; bu_log("Boom\n");break;
-		    case 2: isv[i] = VERT_INT|(j==2?0:j+1); bu_log("Bam\n");break;
-		    case 3: isv[i] = LINE_INT|j; bu_log("uNF\n");break;
+		    case 1: isv[i] = VERT_INT|j; break;
+		    case 2: isv[i] = VERT_INT|(j==2?0:j+1); break;
+		    case 3: isv[i] = LINE_INT|j; break;
 		    default: bu_log("Whu?\n"); break;
 		}
 	    }
@@ -435,13 +435,16 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 	}
     }
 
-    if(isv[0] == 0 || isv[1] == 0)
+    if(isv[0] == 0 || isv[1] == 0) {
+	    /*
+	    bu_log("Something real bad %x %x\n", isv[0], isv[1]);
+	    */
 	return -1;
+    }
 
     if((isv[0]|ALL_INT) > (isv[1]|ALL_INT)) {
 	int tmpi;
 	point_t tmpp;
-	bu_log("SWAP!\n");
 	VMOVE(tmpp, isectpt[0]);
 	VMOVE(isectpt[0], isectpt[1]);
 	VMOVE(isectpt[1], tmpp);
@@ -454,21 +457,18 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 
     /* test if both ends of the intersect line are on vertices */
     /* if VERT+VERT, abort */
-    bu_log("%x %x\n", isv[0], isv[1]);
-    if(isv[0] >= 0 && isv[1] >= 0)
+    if((isv[0]&VERT_INT) && (isv[1]&VERT_INT))
 	return 1;
 
     /* if VERT+LINE, break into 2 */
-    if(isv[0]|VERT_INT && isv[1]|LINE_INT) {
-	bu_log("Splitting into 2 %x %x\n", isv[0]|ALL_INT, isv[1]|ALL_INT);
-	/* split into 2 and return */
+    if(isv[0]&VERT_INT && isv[1]&LINE_INT) {
+	bu_log("Splitting into 2 %x %x\n", isv[0]&ALL_INT, isv[1]&ALL_INT);
 	return 2;
     }
 
     /* if LINE+LINE, break into 3, figure out which side has two verts and cut * that */
-    if(isv[0]|LINE_INT && isv[1]|LINE_INT) {
-	bu_log("Splitting into 3 %x %x\n", isv[0]|ALL_INT, isv[1]|ALL_INT);
-	/* split into 3 and return */
+    if(isv[0]&LINE_INT && isv[1]&LINE_INT) {
+	bu_log("Splitting into 3 %x %x\n", isv[0]&ALL_INT, isv[1]&ALL_INT);
 	return 3;
     }
     bu_log("derp?\n");
@@ -647,27 +647,6 @@ split_faces(union tree *left_tree, union tree *right_tree, const struct bn_tol *
 }
 
 
-HIDDEN void
-classify_faces(union tree *left_tree, union tree *right_tree)
-{
-    struct soup_s *l, *r;
-    unsigned long int i;
-
-    RT_CK_TREE(left_tree);
-    RT_CK_TREE(right_tree);
-    l = (struct soup_s *)left_tree->tr_d.td_r->m_p;
-    r = (struct soup_s *)right_tree->tr_d.td_r->m_p;
-    SOUP_CKMAG(l);
-    SOUP_CKMAG(r);
-    /* walk the two trees, marking each face as being inside or outside.
-     * O(n)? n^2? */
-    for(i=0;i<l->nfaces;i++)
-	l->faces[i].foo = 0;
-    for(i=0;i<r->nfaces;i++)
-	r->faces[i].foo = 0;
-}
-
-
 HIDDEN union tree *
 compose(union tree *left_tree, union tree *right_tree, unsigned long int face_status1, unsigned long int face_status2, unsigned long int face_status3)
 {
@@ -742,11 +721,6 @@ evaluate(union tree *tr, const struct rt_tess_tol *ttol, const struct bn_tol *to
 	    SOUP_CKMAG(tr->tr_b.tb_left->tr_d.td_r->m_p);
 	    SOUP_CKMAG(tr->tr_b.tb_right->tr_d.td_r->m_p);
 	    split_faces(tr->tr_b.tb_left, tr->tr_b.tb_right, tol);
-	    RT_CK_TREE(tr->tr_b.tb_left);
-	    RT_CK_TREE(tr->tr_b.tb_right);
-	    SOUP_CKMAG(tr->tr_b.tb_left->tr_d.td_r->m_p);
-	    SOUP_CKMAG(tr->tr_b.tb_right->tr_d.td_r->m_p);
-	    classify_faces(tr->tr_b.tb_left, tr->tr_b.tb_right);
 	    RT_CK_TREE(tr->tr_b.tb_left);
 	    RT_CK_TREE(tr->tr_b.tb_right);
 	    SOUP_CKMAG(tr->tr_b.tb_left->tr_d.td_r->m_p);
