@@ -619,7 +619,14 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * material objects (non-geometric attribute-only objects) for v5
   geometry files.  instead of material attribute value becomes
   material object name.  material object encompasses hierarchical
-  material traits.
+  material traits.  some traits potentially of interest:
+    - density
+    - young modulus
+    - yield strength (in different dirs, e.g., rolling & transversal)
+    - ultimate tensile strength (also in different dirs)
+    - Poisson's ratio
+    - cost per ton?
+    - ...
 
 * parametric material properties.  support the ability to define
   material properties based on parametric values such as distance from
