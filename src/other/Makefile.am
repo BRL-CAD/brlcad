@@ -206,6 +206,7 @@ EXTRA_DIST = \
 	osl/shaders/gen_color.osl \
 	re2c \
 	re2c.dist \
+	step \
 	step.dist \
 	tcl.dist \
 	tk.dist \
@@ -228,7 +229,6 @@ DIST_SUBDIRS = \
 	libutahrle \
 	libz \
 	openNURBS \
-	step \
 	tcl \
 	tk \
 	tkpng \
