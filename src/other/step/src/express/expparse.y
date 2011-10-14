@@ -2374,7 +2374,7 @@ labelled_attrib_list_list(A) ::= labelled_attrib_list(B).
 labelled_attrib_list_list(A) ::= labelled_attrib_list_list(B)
 				 labelled_attrib_list(C).
 {
-    LISTadd_last(A, (Generic)C);
+    LISTadd_last(B, (Generic)C);
     A = B;
 }
 
