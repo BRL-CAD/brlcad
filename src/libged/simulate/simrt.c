@@ -548,8 +548,8 @@ shoot_x_rays(
 		startz = overlap_min[Z] + diff[Z]*0.5;
 
 		/* The overlap region is too thin for generating 4 contacts points, 2 will do */
-		for(z=startz; z<=overlap_max[Z]; z += TOL){
-			for(y=starty; y<=overlap_max[Y]; y += TOL){
+		for(z=startz; z<(overlap_max[Z]+TOL); z += TOL){
+			for(y=starty; y<(overlap_max[Y]+TOL); y += TOL){
 
 				/* Shooting towards lower x, so start from max x outside of overlap box */
 				VSET(r_pt, overlap_min[X], y, z);
@@ -570,6 +570,9 @@ shoot_x_rays(
 				cleanup_lists();
 
 			}
+
+			bu_log("Last y ray fired from z=%f, y=%f , overlap_max[Z]=%f, overlap_max[Y]=%f",
+					z, y, overlap_max[Z], overlap_max[Y]);
 		}
     }
 
