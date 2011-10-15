@@ -117,7 +117,7 @@ line(struct ged *gedp, char* name, point_t from, point_t to,
 /**
  * Draws an arrow from, to using the BOT primitive & TRC
  * Used to draw manifold normals
- * TODO: surely there is a simpler way!
+ * TODO: find a simpler way
  */
 int
 arrow(struct ged *gedp, char* name, point_t from, point_t to);
@@ -167,7 +167,7 @@ insert_AABB(struct ged *gedp,
  * This function inserts a manifold comb as reported by Bullet.
  *
  * TODO: this should be used with a debugging flag
- * TODO: this function will be lowered to librt
+ * TODO: this function should be lowered to librt
  */
 int
 insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct rigid_body *rb);
@@ -180,7 +180,7 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
  * This function creates and inserts a RPP
  * Used to show AABB overlap volume
  *
- * TODO: this function will be lowered to librt
+ * TODO: this function should be lowered to librt
  */
 int
 make_rpp(struct ged *gedp, vect_t max, vect_t min, char* name);

@@ -154,6 +154,9 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* body0,
 	}
     }
 
+    /* Now add the rt contact pairs */
+
+
 
     //------------------------------------------------------
 

@@ -45,6 +45,7 @@ struct sim_contact {
     vect_t ptA;
     vect_t ptB;
     vect_t normalWorldOnB;
+    fastf_t depth;
 };
 
 

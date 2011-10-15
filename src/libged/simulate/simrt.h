@@ -95,14 +95,18 @@ struct hit_reg {
 };
 
 
+/**
+ * This structure contains the results of analyzing an overlap volume(among 2
+ * regions), through shooting rays
+ */
 struct rayshot_results{
     /* Results of shooting rays towards -ve x-axis : xr means x rays */
-    fastf_t xr_min_x_x, xr_min_x_y, xr_min_x_z;  /* the min X found while shooting x rays & rltd y,z*/
-    fastf_t xr_max_x_x, xr_max_x_y, xr_max_x_z;  /* the max X found while shooting x rays & rltd y,z*/
-    fastf_t xr_min_y, xr_min_y_z; /* the min y where overlap was found & the z co-ord for it*/
-    fastf_t xr_max_y, xr_max_y_z; /* the max y where overlap was still found */
-    fastf_t xr_min_z, xr_min_z_y; /* the min z where overlap was found & the y co-ord for it*/
-    fastf_t xr_max_z, xr_max_z_y; /* the max z where overlap was still found */
+	point_t xr_min_x;  /* the min X found while shooting x rays & rltd y,z*/
+	point_t xr_max_x;  /* the max X found while shooting x rays & rltd y,z*/
+	point_t xr_min_y_in, xr_min_y_out;  /* the min y where overlap was found & the z co-ord for it*/
+	point_t xr_max_y_in, xr_max_y_out;  /* the max y where overlap was still found */
+	point_t xr_min_z_in;  /* the min z where overlap was found & the y co-ord for it*/
+	point_t xr_max_z_in;  /* the max z where overlap was still found */
 
     /* Results of shooting rays down y axis */
 
@@ -117,7 +121,7 @@ struct rayshot_results{
  *
  */
 int
-create_contact_pairs(struct sim_manifold *mf);
+create_contact_pairs(struct sim_manifold *mf, vect_t overlap_min, vect_t overlap_max);
 
 
 /**
@@ -188,6 +192,15 @@ shoot_x_rays(
 	     struct simulation_params *sim_params,
 	     struct rt_i *rtip,
 	     vect_t overlap_min, vect_t overlap_max);
+
+
+/**
+ * Traverse the hit list and overlap list, drawing the ray segments
+ * for x-rays
+ */
+int
+traverse_xray_lists(struct ged *gedp, struct simulation_params *sim_params,
+	       point_t pt, point_t dir);
 
 
 /**
