@@ -75,8 +75,8 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* body0,
 
     btCollisionObject* col0 = body0;
     btCollisionObject* col1 = body1;
-  /*  btBoxShape* box0 = (btBoxShape*)col0->getCollisionShape();
-    btBoxShape* box1 = (btBoxShape*)col1->getCollisionShape();*/
+    btBoxShape* box0 = (btBoxShape*)col0->getCollisionShape();
+    btBoxShape* box1 = (btBoxShape*)col1->getCollisionShape();
 
     //quellage
     bu_log("%d", dispatchInfo.m_stepCount);
@@ -93,8 +93,8 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* body0,
     input.m_transformB = body1->getWorldTransform();
 
     //This part will get replaced with a call to rt
-   // btBoxBoxDetector detector(box0, box1);
-   // detector.getClosestPoints(input, *resultOut, dispatchInfo.m_debugDraw);
+   //btBoxBoxDetector detector(box0, box1);
+   //detector.getClosestPoints(input, *resultOut, dispatchInfo.m_debugDraw);
 
 
     //------------------- DEBUG ---------------------------

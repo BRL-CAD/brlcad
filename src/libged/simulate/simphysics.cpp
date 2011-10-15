@@ -407,6 +407,64 @@ nearphase_callback(btBroadphasePair& collisionPair,
 
 
 /**
+ * Called whenever a contact pair is added to a manifold
+ */
+bool contact_added(
+    btManifoldPoint& pt,
+    const btCollisionObject* col0,
+    int partId0,
+    int index0,
+    const btCollisionObject* col1,
+    int partId1,
+    int index1)
+{
+	//Get the user pointers to struct rigid_body, for printing the body name
+	struct rigid_body *rbA = (struct rigid_body *)col0->getUserPointer();
+	struct rigid_body *rbB = (struct rigid_body *)col1->getUserPointer();
+
+	btVector3 ptA = pt.getPositionWorldOnA();
+	btVector3 ptB = pt.getPositionWorldOnB();
+
+	bu_log("Contact added between %s(%f, %f, %f):%d,%d  &  %s(%f, %f, %f):%d,%d!",
+			rbA->rb_namep, V3ARGS(ptA), partId0, index0,
+			rbB->rb_namep, V3ARGS(ptB), partId1, index1);
+
+	return true;
+}
+
+
+/**
+ * Called whenever a contact pair is finished processing by the constraint
+ * solver
+ */
+bool contact_processed(btManifoldPoint& pt, void* col0, void* col1)
+{
+	//Get the user pointers to struct rigid_body, for printing the body name
+	struct rigid_body *rbA = (struct rigid_body *)((btCollisionObject*)col0)->getUserPointer();
+	struct rigid_body *rbB = (struct rigid_body *)((btCollisionObject*)col1)->getUserPointer();
+
+	btVector3 ptA = pt.getPositionWorldOnA();
+	btVector3 ptB = pt.getPositionWorldOnB();
+
+	bu_log("Contact processed between %s(%f, %f, %f) & %s(%f, %f, %f)!",
+			rbA->rb_namep, V3ARGS(ptA),
+			rbB->rb_namep, V3ARGS(ptB));
+
+
+	return true;
+}
+
+
+/**
+ * Called when a contact pair's lifetime has expired and it's deleted
+ */
+bool contact_destroyed(void* userPersistentData)
+{
+	bu_log("CONTACT DESTROYED! %s", (char*)userPersistentData);
+	return true;
+}
+
+/**
  * C++ wrapper for doing physics using bullet
  *
  */
@@ -451,6 +509,11 @@ run_simulation(struct simulation_params *sim_params)
 
     //Add a nearphase callback to hook to the contact points generation algos
     dispatcher->setNearCallback((btNearCallback)nearphase_callback);
+
+    //Investigating the contact pairs used between 2 rigid bodies
+    gContactAddedCallback     = contact_added;
+    gContactProcessedCallback = contact_processed;
+    gContactDestroyedCallback = contact_destroyed;
 
     //Step the physics the required number of times
     step_physics(dynamicsWorld, sim_params);
