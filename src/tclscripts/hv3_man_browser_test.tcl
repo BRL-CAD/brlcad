@@ -1,3 +1,36 @@
+#!/bin/sh
+#
+# Customized version of hv3_main.tcl for Archer man pages
+#
+#\
+HV3MAN_HOME=`dirname $0`/..
+#\
+export HV3MAN_HOME
+# restart using bwish \
+WISH="bwish"
+#\
+for ish in bwish bwish_d ; do
+# see if we're installed \
+    if test -f ${HV3MAN_HOME}/bin/$ish ; then
+#\
+        WISH="${HV3MAN_HOME}/bin/$ish"
+#\
+        break;
+#\
+    fi
+# see if we're not installed yet \
+    if test -f ${HV3MAN_HOME}/bwish/$ish ; then
+#\
+        WISH="${HV3MAN_HOME}/bwish/$ish"
+#\
+        break;
+#\
+    fi
+#\
+done
+#\
+exec $WISH $0 $@
+
 
 proc sourcefile {file} [string map              \
   [list %HV3_DIR% [bu_brlcad_root lib/hv3]] \
