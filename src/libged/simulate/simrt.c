@@ -594,7 +594,7 @@ create_contact_pairs(struct sim_manifold *mf, vect_t overlap_min, vect_t overlap
 
 
     /* Determine if an arb4 needs to be generated using x/y/z diff. */
-    mf->num_contacts = 2;
+    mf->num_contacts = 4;
 
     VMOVE(mf->contacts[0].ptA, rt_result.xr_min_y_in);
     VMOVE(mf->contacts[1].ptA, rt_result.xr_min_y_out);
@@ -672,7 +672,7 @@ free_rt_manifold_lists(struct simulation_params *sim_params)
 int
 generate_manifolds(struct ged *gedp, struct simulation_params *sim_params)
 {
-    struct sim_manifold *bt_mf, *rt_mf;
+    struct sim_manifold *bt_mf, *rt_mf, *p1, *p2;
     struct rigid_body *rb;
     vect_t overlap_min, overlap_max;
     char *prefix_overlap = "overlap_";
@@ -726,10 +726,27 @@ generate_manifolds(struct ged *gedp, struct simulation_params *sim_params)
 			/* Allocate memory for a new RT manifold */
 			rt_mf = (struct sim_manifold *)
 									bu_malloc(sizeof(struct sim_manifold), "sim_manifold: rt_mf");
-		    rt_mf->rbA = bt_mf->rbA;
+			rt_mf->rbA = bt_mf->rbA;
 			rt_mf->rbB = bt_mf->rbB;
 			rt_mf->num_contacts = 0;
 			rt_mf->next = NULL;
+
+			/* Setup the new manifold in the linked list of manifolds for this rigid body */
+			if (rb->head_rt_manifold == NULL) {
+				rb->head_rt_manifold = rt_mf;
+			} else{
+				//Go upto the last manifold, keeping a ptr 1 node behind
+				p1 = rb->head_bt_manifold;
+				while (p1 != NULL) {
+					p2 = p1;
+					p1 = p1->next;
+				}
+
+				p2->next = rt_mf;
+				//print_manifold_list(rb->head_manifold);
+			}
+			rb->num_rt_manifolds++;
+
 
 			/* Shoot rays right here as the pair of rigid_body ptrs are known,
 			 * TODO: ignore volumes already shot
