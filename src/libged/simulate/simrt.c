@@ -584,8 +584,8 @@ shoot_x_rays(
 int
 create_contact_pairs(struct sim_manifold *mf, vect_t overlap_min, vect_t overlap_max)
 {
-    vect_t a, b, c;
-    int i;
+    vect_t /*a, b,*/ c;
+    /* int i; */
 
 
 	/* Prepare the overlap prim name */
@@ -596,7 +596,7 @@ create_contact_pairs(struct sim_manifold *mf, vect_t overlap_min, vect_t overlap
     /* Determine if an arb4 needs to be generated using x/y/z diff. */
     mf->num_contacts = 4;
 
-    VMOVE(mf->contacts[0].ptA, rt_result.xr_min_y_in);
+ /*   VMOVE(mf->contacts[0].ptA, rt_result.xr_min_y_in);
     VMOVE(mf->contacts[1].ptA, rt_result.xr_min_y_out);
 
     VMOVE(mf->contacts[1].ptB, rt_result.xr_max_y_in);
@@ -609,33 +609,38 @@ create_contact_pairs(struct sim_manifold *mf, vect_t overlap_min, vect_t overlap
     }
 
     VSUB2(a, mf->contacts[1].ptB, mf->contacts[1].ptA);
-    VSUB2(b, mf->contacts[0].ptA, mf->contacts[1].ptB);
+    VSUB2(b, mf->contacts[0].ptA, mf->contacts[1].ptB);*/
 
     /* Get the normals */
-    VCROSS(c, a, b);
+  /*  VCROSS(c, a, b);
     VUNITIZE(c);
     bu_log("create_contact_pairs : Normal got as %f,%f, %f",
-    	  V3ARGS(c));
+    	  V3ARGS(c));*/
 
-    VMOVE(mf->contacts[0].normalWorldOnB, c);
-    VMOVE(mf->contacts[1].normalWorldOnB, c);
+    VSET(mf->contacts[0].normalWorldOnB, 0, 0, -1.0000);
+    VSET(mf->contacts[1].normalWorldOnB, 0, 0, -1.0000);
+    VSET(mf->contacts[2].normalWorldOnB, 0, 0, -1.0000);
+    VSET(mf->contacts[3].normalWorldOnB, 0, 0, -1.0000);
+
 
     /* Get penetration depth */
     VSUB2(c, overlap_max, overlap_min);
-    mf->contacts[0].depth = c[Z];
-    mf->contacts[1].depth = c[Z];
-    bu_log("create_contact_pairs : Penetration depth set to %f", c[Z]);
+    mf->contacts[0].depth = c[Z]*0.5;
+    mf->contacts[1].depth = c[Z]*0.5;
+    mf->contacts[2].depth = c[Z]*0.5;
+    mf->contacts[3].depth = c[Z]*0.5;
+    bu_log("create_contact_pairs : Penetration depth set to %f", mf->contacts[0].depth );
 
-  /*  VSET(mf->contacts[0].ptA, 0.000000, 0.000000, -0.001389);
+  /*VSET(mf->contacts[0].ptA, 0.000000, 0.000000, -0.001389);
 	VSET(mf->contacts[1].ptA, 1.000000, 0.000000, -0.001389);
 
 	VSET(mf->contacts[1].ptB, 0.000000, 0.960000, -0.001389);
 	VSET(mf->contacts[0].ptB, 1.000000, 0.960000, -0.001389);*/
 
-	VSET(mf->contacts[0].ptB, 1.000000, 1.000000, 0.000000);
-	VSET(mf->contacts[1].ptB, 1.000000, 0.000000, 0.000000);
-	VSET(mf->contacts[2].ptB, 0.000000, 0.000000, 0.000000);
-	VSET(mf->contacts[3].ptB, 0.000000, 1.000000, 0.000000);
+	VSET(mf->contacts[0].ptB, 1.000000, 1.000000, mf->contacts[0].depth);
+	VSET(mf->contacts[1].ptB, 1.000000, 0.000000, mf->contacts[1].depth);
+	VSET(mf->contacts[2].ptB, 0.000000, 0.000000, mf->contacts[2].depth);
+	VSET(mf->contacts[3].ptB, 0.000000, 1.000000, mf->contacts[3].depth);
 
 
 

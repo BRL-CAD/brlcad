@@ -168,6 +168,14 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* body0,
 		for (rt_mf = rbB->head_rt_manifold; rt_mf != NULL;
 			 rt_mf = rt_mf->next) {
 
+			bu_log("processCollision : Scanning rbB = %s, comparing \
+					%s & %s  - %s & %s\n",
+					rbB->rb_namep,
+					rt_mf->rbA->rb_namep,
+					rbA->rb_namep,
+					rt_mf->rbB->rb_namep,
+					rbB->rb_namep);
+
 		   //Find the manifold in rbB's list which connects rbB and rbA
 		   if( bu_strcmp(rt_mf->rbA->rb_namep, rbA->rb_namep) &&
 				   bu_strcmp(rt_mf->rbB->rb_namep, rbB->rb_namep) ){
