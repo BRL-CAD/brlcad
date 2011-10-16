@@ -177,8 +177,8 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* body0,
 					rbB->rb_namep);
 
 		   //Find the manifold in rbB's list which connects rbB and rbA
-		   if( bu_strcmp(rt_mf->rbA->rb_namep, rbA->rb_namep) &&
-				   bu_strcmp(rt_mf->rbB->rb_namep, rbB->rb_namep) ){
+		   if( bu_strcmp(rt_mf->rbA->rb_namep, rbA->rb_namep) == 0 &&
+				   bu_strcmp(rt_mf->rbB->rb_namep, rbB->rb_namep) == 0 ){
 
 			   // Now add the RT contact pairs
 			   for (i=0; i<rt_mf->num_contacts; i++){
