@@ -93,6 +93,8 @@ add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld,
 
     for (current_node = sim_params->head_node; current_node != NULL; current_node = current_node->next) {
 
+    	current_node->iter = sim_params->iter;
+
 	// Check if we should add a ground plane
 	if (strcmp(current_node->rb_namep, sim_params->ground_plane_name) == 0) {
 	    // Add a static ground plane : should be controlled by an option : TODO

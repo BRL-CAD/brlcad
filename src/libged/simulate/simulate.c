@@ -62,8 +62,11 @@ add_physics_attribs(struct rigid_body *current_node)
     VSETALL(current_node->linear_velocity, 0.0f);
     VSETALL(current_node->angular_velocity, 0.0f);
 
-    current_node->num_manifolds = 0;
-    current_node->head_manifold = NULL;
+    current_node->num_bt_manifolds = 0;
+    current_node->head_bt_manifold = NULL;
+
+    current_node->num_rt_manifolds = 0;
+    current_node->head_rt_manifold = NULL;
 
     return GED_OK;
 }
@@ -340,7 +343,7 @@ apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
  * used to compare with rt generated manifold for accuracy
  */
 int
-free_manifold_lists(struct simulation_params *sim_params)
+free_bt_manifold_lists(struct simulation_params *sim_params)
 {
     /* Free memory in manifold list */
     struct sim_manifold *current_manifold, *next_manifold;
@@ -349,16 +352,16 @@ free_manifold_lists(struct simulation_params *sim_params)
     for (current_node = sim_params->head_node; current_node != NULL;
 	 current_node = current_node->next) {
 
-	for (current_manifold = current_node->head_manifold; current_manifold != NULL;) {
+	for (current_manifold = current_node->head_bt_manifold; current_manifold != NULL;) {
 
 	    next_manifold = current_manifold->next;
-	    bu_free(current_manifold, "simulate : current_manifold");
+	    bu_free(current_manifold, "simulate : head_bt_manifold");
 	    current_manifold = next_manifold;
-	    current_node->num_manifolds--;
+	    current_node->num_bt_manifolds--;
 	}
 
-	current_node->num_manifolds = 0;
-	current_node->head_manifold = NULL;
+	current_node->num_bt_manifolds = 0;
+	current_node->head_bt_manifold = NULL;
     }
 
     return GED_OK;
@@ -447,6 +450,7 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 	recreate_sim_comb(gedp, &sim_params);
 
 	/* Run the physics simulation */
+	sim_params.iter = i;
 	rv = run_simulation(&sim_params);
 	if (rv != GED_OK) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: ERROR while running the simulation\n", argv[0]);
@@ -467,7 +471,7 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
-	free_manifold_lists(&sim_params);
+	free_bt_manifold_lists(&sim_params);
 
     }
 

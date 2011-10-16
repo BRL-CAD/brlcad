@@ -51,11 +51,8 @@ struct sim_contact {
 
 struct sim_manifold {
     struct rigid_body *rbA, *rbB;
-    int num_bt_contacts;
-    struct sim_contact bt_contacts[MAX_CONTACTS_PER_MANIFOLD];
-
-    int num_rt_contacts;
-    struct sim_contact rt_contacts[MAX_CONTACTS_PER_MANIFOLD];
+    int num_contacts;
+    struct sim_contact contacts[MAX_CONTACTS_PER_MANIFOLD];
 
     struct sim_manifold *next;
 };
@@ -90,8 +87,15 @@ struct rigid_body {
     vect_t angular_velocity;        /**< @brief angular velocity components */
 
     /* Manifold generated, where this body is B, only body B has manifold info */
-    int num_manifolds;			 	   /**< @brief number of manifolds for this body */
-    struct sim_manifold *head_manifold;/**< @brief head of the manifolds linked list */
+    int num_bt_manifolds;			 	   /**< @brief number of manifolds for this body */
+    struct sim_manifold *head_bt_manifold;/**< @brief head of the manifolds linked list */
+
+    /* Manifold generated, where this body is B, only body B has manifold info */
+    int num_rt_manifolds;			 	   /**< @brief number of manifolds for this body */
+    struct sim_manifold *head_rt_manifold;/**< @brief head of the manifolds linked list */
+
+    /* Debugging */
+    int iter;
 };
 
 
@@ -106,6 +110,9 @@ struct simulation_params {
     char *sim_comb_name;           /**< @brief name of the group which contains all sim regions*/
     char *ground_plane_name;       /**< @brief name of the ground plane region */
     struct rigid_body *head_node;  /**< @brief link to first rigid body node */
+
+    /* Debugging */
+    int iter;
 };
 
 

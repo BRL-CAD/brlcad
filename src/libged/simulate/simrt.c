@@ -593,24 +593,23 @@ create_contact_pairs(struct sim_manifold *mf, vect_t overlap_min, vect_t overlap
 	   mf->rbA->rb_namep, mf->rbB->rb_namep);
 
 
-
     /* Determine if an arb4 needs to be generated using x/y/z diff. */
-    mf->num_rt_contacts = 2;
+    mf->num_contacts = 2;
 
-    VMOVE(mf->rt_contacts[0].ptA, rt_result.xr_min_y_in);
-    VMOVE(mf->rt_contacts[1].ptA, rt_result.xr_min_y_out);
+    VMOVE(mf->contacts[0].ptA, rt_result.xr_min_y_in);
+    VMOVE(mf->contacts[1].ptA, rt_result.xr_min_y_out);
 
-    VMOVE(mf->rt_contacts[1].ptB, rt_result.xr_max_y_in);
-    VMOVE(mf->rt_contacts[0].ptB, rt_result.xr_max_y_out);
+    VMOVE(mf->contacts[1].ptB, rt_result.xr_max_y_in);
+    VMOVE(mf->contacts[0].ptB, rt_result.xr_max_y_out);
 
-    for(i=0; i< mf->num_rt_contacts; i++){
+    for(i=0; i< mf->num_contacts; i++){
     	bu_log("create_contact_pairs : %d, %s(%f, %f, %f) -- %s(%f, %f, %f)",
-      	  i, mf->rbA->rb_namep, V3ARGS(mf->rt_contacts[i].ptA),
-      	  	 mf->rbB->rb_namep, V3ARGS(mf->rt_contacts[i].ptB));
+      	  i, mf->rbA->rb_namep, V3ARGS(mf->contacts[i].ptA),
+      	  	 mf->rbB->rb_namep, V3ARGS(mf->contacts[i].ptB));
     }
 
-    VSUB2(a, mf->rt_contacts[1].ptB, mf->rt_contacts[1].ptA);
-    VSUB2(b, mf->rt_contacts[0].ptA, mf->rt_contacts[1].ptB);
+    VSUB2(a, mf->contacts[1].ptB, mf->contacts[1].ptA);
+    VSUB2(b, mf->contacts[0].ptA, mf->contacts[1].ptB);
 
     /* Get the normals */
     VCROSS(c, a, b);
@@ -618,14 +617,25 @@ create_contact_pairs(struct sim_manifold *mf, vect_t overlap_min, vect_t overlap
     bu_log("create_contact_pairs : Normal got as %f,%f, %f",
     	  V3ARGS(c));
 
-    VMOVE(mf->rt_contacts[0].normalWorldOnB, c);
-    VMOVE(mf->rt_contacts[1].normalWorldOnB, c);
+    VMOVE(mf->contacts[0].normalWorldOnB, c);
+    VMOVE(mf->contacts[1].normalWorldOnB, c);
 
     /* Get penetration depth */
     VSUB2(c, overlap_max, overlap_min);
-    mf->rt_contacts[0].depth = c[Z];
-    mf->rt_contacts[1].depth = c[Z];
+    mf->contacts[0].depth = c[Z];
+    mf->contacts[1].depth = c[Z];
     bu_log("create_contact_pairs : Penetration depth set to %f", c[Z]);
+
+  /*  VSET(mf->contacts[0].ptA, 0.000000, 0.000000, -0.001389);
+	VSET(mf->contacts[1].ptA, 1.000000, 0.000000, -0.001389);
+
+	VSET(mf->contacts[1].ptB, 0.000000, 0.960000, -0.001389);
+	VSET(mf->contacts[0].ptB, 1.000000, 0.960000, -0.001389);*/
+
+	VSET(mf->contacts[0].ptB, 1.000000, 1.000000, 0.000000);
+	VSET(mf->contacts[1].ptB, 1.000000, 0.000000, 0.000000);
+	VSET(mf->contacts[2].ptB, 0.000000, 0.000000, 0.000000);
+	VSET(mf->contacts[3].ptB, 0.000000, 1.000000, 0.000000);
 
 
 
@@ -634,13 +644,42 @@ create_contact_pairs(struct sim_manifold *mf, vect_t overlap_min, vect_t overlap
 
 
 int
+free_rt_manifold_lists(struct simulation_params *sim_params)
+{
+    /* Free memory in manifold list */
+    struct sim_manifold *current_manifold, *next_manifold;
+    struct rigid_body *current_node;
+
+    for (current_node = sim_params->head_node; current_node != NULL;
+    		current_node = current_node->next) {
+
+		for (current_manifold = current_node->head_rt_manifold; current_manifold != NULL;) {
+
+			next_manifold = current_manifold->next;
+			bu_free(current_manifold, "simulate : head_rt_manifold");
+			current_manifold = next_manifold;
+			current_node->num_rt_manifolds--;
+		}
+
+		current_node->num_rt_manifolds = 0;
+		current_node->head_rt_manifold = NULL;
+    }
+
+    return GED_OK;
+}
+
+
+int
 generate_manifolds(struct ged *gedp, struct simulation_params *sim_params)
 {
-    struct sim_manifold *current_manifold;
+    struct sim_manifold *bt_mf, *rt_mf;
     struct rigid_body *rb;
     vect_t overlap_min, overlap_max;
     char *prefix_overlap = "overlap_";
     struct bu_vls overlap_name = BU_VLS_INIT_ZERO;
+
+    /* Free all the manifolds generated in the previous iteration */
+    free_rt_manifold_lists(sim_params);
 
     /* Raytrace related stuff */
     struct rt_i *rtip;
@@ -652,55 +691,64 @@ generate_manifolds(struct ged *gedp, struct simulation_params *sim_params)
     }
     rtip->useair = 1;
 
+    /* Initialize the raytrace */
     init_raytrace(sim_params, rtip);
 
 
-    /* Check all rigid bodies for overlaps using their manifold lists */
+    /* Check all rigid bodies for overlaps using their BT manifold list */
     for (rb = sim_params->head_node; rb != NULL; rb = rb->next) {
 
     	bu_log("generate_manifolds: Analyzing manifolds of %s", rb->rb_namep);
 
-	for (current_manifold = rb->head_manifold; current_manifold != NULL;
-	     current_manifold = current_manifold->next) {
+		for (bt_mf = rb->head_bt_manifold; bt_mf != NULL;
+			 bt_mf = bt_mf->next) {
 
-	    /* Get the overlap region */
-	    get_overlap(current_manifold->rbA, current_manifold->rbB,
-			overlap_min,
-			overlap_max);
+			/* Get the overlap region */
+			get_overlap(bt_mf->rbA, bt_mf->rbB,
+				overlap_min,
+				overlap_max);
 
-	    /* Prepare the overlap prim name */
-	    bu_vls_sprintf(&overlap_name, "%s%s_%s",
-			   prefix_overlap,
-			   current_manifold->rbA->rb_namep,
-			   current_manifold->rbB->rb_namep);
+			/* Prepare the overlap prim name */
+			bu_vls_sprintf(&overlap_name, "%s%s_%s",
+				   prefix_overlap,
+				   bt_mf->rbA->rb_namep,
+				   bt_mf->rbB->rb_namep);
 
-	    /* Make the overlap volume RPP */
-	    make_rpp(gedp, overlap_min, overlap_max, bu_vls_addr(&overlap_name));
+			/* Make the overlap volume RPP */
+			make_rpp(gedp, overlap_min, overlap_max, bu_vls_addr(&overlap_name));
 
-	    /* Add the region to the result of the sim so it will be drawn too */
-	    add_to_comb(gedp, sim_params->sim_comb_name, bu_vls_addr(&overlap_name));
+			/* Add the region to the result of the sim so it will be drawn too */
+			add_to_comb(gedp, sim_params->sim_comb_name, bu_vls_addr(&overlap_name));
 
-	    /* Initialize the rayshot results structure, has to be done for each manifold  */
-	    init_rayshot_results();
+			/* Initialize the rayshot results structure, has to be done for each manifold  */
+			init_rayshot_results();
 
-	    /* Shoot rays right here as the pair of rigid_body ptrs are known,
-	     * todo: ignore volumes already shot
-	     */
-	    shoot_x_rays(gedp, current_manifold, sim_params, rtip, overlap_min, overlap_max);
+			/* Allocate memory for a new RT manifold */
+			rt_mf = (struct sim_manifold *)
+									bu_malloc(sizeof(struct sim_manifold), "sim_manifold: rt_mf");
+		    rt_mf->rbA = bt_mf->rbA;
+			rt_mf->rbB = bt_mf->rbB;
+			rt_mf->num_contacts = 0;
+			rt_mf->next = NULL;
 
-
-	    /* shoot_y_rays(); */
-
-
-	    /* shoot_z_rays(); */
-
-	    /* Note down this volume as already covered, so no need to shoot rays through it again */
-
-	    /* Create the contact pairs and normals */
-	    create_contact_pairs(current_manifold, overlap_min, overlap_max);
+			/* Shoot rays right here as the pair of rigid_body ptrs are known,
+			 * TODO: ignore volumes already shot
+			 */
+			shoot_x_rays(gedp, rt_mf, sim_params, rtip, overlap_min, overlap_max);
 
 
-	}
+			/* shoot_y_rays(); */
+
+
+			/* shoot_z_rays(); */
+
+
+
+			/* Create the contact pairs and normals */
+			create_contact_pairs(rt_mf, overlap_min, overlap_max);
+
+
+		}
     }
 
 

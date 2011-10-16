@@ -75,8 +75,8 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* body0,
 
     btCollisionObject* col0 = body0;
     btCollisionObject* col1 = body1;
-    btBoxShape* box0 = (btBoxShape*)col0->getCollisionShape();
-    btBoxShape* box1 = (btBoxShape*)col1->getCollisionShape();
+ /*   btBoxShape* box0 = (btBoxShape*)col0->getCollisionShape();
+    btBoxShape* box1 = (btBoxShape*)col1->getCollisionShape();*/
 
     //quellage
     bu_log("%d", dispatchInfo.m_stepCount);
@@ -93,15 +93,14 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* body0,
     input.m_transformB = body1->getWorldTransform();
 
     //This part will get replaced with a call to rt
-   //btBoxBoxDetector detector(box0, box1);
-   //detector.getClosestPoints(input, *resultOut, dispatchInfo.m_debugDraw);
+  //  btBoxBoxDetector detector(box0, box1);
+   // detector.getClosestPoints(input, *resultOut, dispatchInfo.m_debugDraw);
 
 
     //------------------- DEBUG ---------------------------
 
     int i;
-    int num_contacts;
-    struct sim_manifold *current_manifold;
+    struct sim_manifold *bt_mf, *rt_mf;
 
     //Get the user pointers to struct rigid_body, for printing the body name
     struct rigid_body *rbA = (struct rigid_body *)col0->getUserPointer();
@@ -109,89 +108,108 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* body0,
 
     if (rbA != NULL && rbB != NULL) {
 
-		btPersistentManifold* contactManifold = resultOut->getPersistentManifold();
 
-		current_manifold =
-			(struct sim_manifold *)bu_malloc(sizeof(struct sim_manifold), "sim_manifold: current_manifold");
-		current_manifold->next = NULL;
-		current_manifold->rbA = rbA;
-		current_manifold->rbB = rbB;
+    	//Iterate over the points for the BT manifold----------------------------------
+
+    	btPersistentManifold* contactManifold = resultOut->getPersistentManifold();
+
+		bt_mf =	(struct sim_manifold *)bu_malloc(sizeof(struct sim_manifold),
+														"sim_manifold: bt_mf");
+		bt_mf->next = NULL;
+		bt_mf->rbA = rbA;
+		bt_mf->rbB = rbB;
 
 		//Add manifold to rbB
-		if (rbB->head_manifold == NULL) {
-			rbB->head_manifold = current_manifold;
+		if (rbB->head_bt_manifold == NULL) {
+			rbB->head_bt_manifold = bt_mf;
 		} else{
 			//Go upto the last manifold, keeping a ptr 1 node behind
-			struct sim_manifold *p1 = rbB->head_manifold, *p2;
+			struct sim_manifold *p1 = rbB->head_bt_manifold, *p2;
 			while (p1 != NULL) {
 			p2 = p1;
 			p1 = p1->next;
 			}
 
-			p2->next = current_manifold;
+			p2->next = bt_mf;
 			//print_manifold_list(rb->head_manifold);
 		}
-		rbB->num_manifolds++;
+		rbB->num_bt_manifolds++;
 
 		bu_log("processCollision(box/box): %s & %s \n", rbA->rb_namep, rbB->rb_namep);
 
 		//Get the number of points in this manifold
-		num_contacts = contactManifold->getNumContacts();
-		current_manifold->num_bt_contacts = num_contacts;
+		bt_mf->num_contacts = contactManifold->getNumContacts();
+
+		bu_log("processCollision : Manifold contacts : %d\n", bt_mf->num_contacts);
 
 
-		bu_log("processCollision : Manifold contacts : %d\n", num_contacts);
-
-		//Iterate over the points for this manifold
-		for (i=0; i<num_contacts; i++) {
+		for (i=0; i<bt_mf->num_contacts; i++) {
 			btManifoldPoint& pt = contactManifold->getContactPoint(i);
 
 			btVector3 ptA = pt.getPositionWorldOnA();
 			btVector3 ptB = pt.getPositionWorldOnB();
 
-			VMOVE(current_manifold->bt_contacts[i].ptA, ptA);
-			VMOVE(current_manifold->bt_contacts[i].ptB, ptB);
-			VMOVE(current_manifold->bt_contacts[i].normalWorldOnB, pt.m_normalWorldOnB);
+			VMOVE(bt_mf->contacts[i].ptA, ptA);
+			VMOVE(bt_mf->contacts[i].ptB, ptB);
+			VMOVE(bt_mf->contacts[i].normalWorldOnB, pt.m_normalWorldOnB);
 
-			bu_log("%d, %s(%f, %f, %f) , %s(%f, %f, %f), n(%f, %f, %f)\n",
+			bu_log("processCollision: Got BT contact %d, %s(%f, %f, %f) , \
+					%s(%f, %f, %f), n(%f, %f, %f)\n",
 			   i+1,
 			   rbA->rb_namep, ptA[0], ptA[1], ptA[2],
 			   rbB->rb_namep, ptB[0], ptB[1], ptB[2],
 			   pt.m_normalWorldOnB[0], pt.m_normalWorldOnB[1], pt.m_normalWorldOnB[2]);
 
 		}
-    }
 
 
-   //Scan all manifolds of rbB looking for a rbA-rbB manifold
-   for (current_manifold = rbB->head_manifold; current_manifold != NULL;
-   	     current_manifold = current_manifold->next) {
+	    //Scan all RT manifolds of rbB looking for a rbA-rbB manifold----------------------
 
-	   //Find the manifold in rbB's list which connects rbB and rbA
-	   if( bu_strcmp(current_manifold->rbA->rb_namep, rbA->rb_namep) &&
-			   bu_strcmp(current_manifold->rbB->rb_namep, rbB->rb_namep) ){
+		for (rt_mf = rbB->head_rt_manifold; rt_mf != NULL;
+			 rt_mf = rt_mf->next) {
 
-		   // Now add the rt contact pairs
-		   for (i=0; i<current_manifold->num_rt_contacts; i++){
+		   //Find the manifold in rbB's list which connects rbB and rbA
+		   if( bu_strcmp(rt_mf->rbA->rb_namep, rbA->rb_namep) &&
+				   bu_strcmp(rt_mf->rbB->rb_namep, rbB->rb_namep) ){
 
-			   btVector3 ptB, normalWorldOnB;
-			   VMOVE(ptB, current_manifold->rt_contacts[i].ptB);
-			   VMOVE(normalWorldOnB, current_manifold->rt_contacts[i].normalWorldOnB);
+			   // Now add the RT contact pairs
+			   for (i=0; i<rt_mf->num_contacts; i++){
 
-			   //Negative depth for penetration
-			   resultOut->addContactPoint(ptB, normalWorldOnB,
-					   -(current_manifold->rt_contacts[i].depth));
-		   }
+				   btVector3 ptA, ptB;
+				   btVector3 normalWorldOnB(0.000000,0.000000, -1.000000);
+				   rt_mf->contacts[i].depth = rbA->iter * 0.02f;
 
-	   }
+				   VMOVE(ptA, rt_mf->contacts[i].ptA);
+				   VMOVE(ptB, rt_mf->contacts[i].ptB);
+				   VMOVE(normalWorldOnB, rt_mf->contacts[i].normalWorldOnB);
 
-   }
+				   //Positive depth for penetration
+				   resultOut->addContactPoint(normalWorldOnB, ptB, rt_mf->contacts[i].depth);
+
+				   bu_log("processCollision: Added RT contact %d, %s(%f, %f, %f) , \
+						   %s(%f, %f, %f), n(%f, %f, %f), %f\n",
+							   i+1,
+							rt_mf->rbA->rb_namep, V3ARGS(ptA),
+							rt_mf->rbB->rb_namep, V3ARGS(ptB),
+							V3ARGS(normalWorldOnB),
+							(rt_mf->contacts[i].depth));
+			   }
+
+		   }//end- if( bu_strcmp...
+
+	   }//end- for (rt_mf = rbB->head_rt_manifold...
+
+    } //end-if
+
+
+
 
 
     //------------------------------------------------------
 
 #ifdef USE_PERSISTENT_CONTACTS
-    //  refreshContactPoints is only necessary when using persistent contact points. otherwise all points are newly added
+    // refreshContactPoints is only necessary when using persistent contact points.
+    // otherwise all points are newly added
     if (m_ownManifold) {
 	resultOut->refreshContactPoints();
     }
