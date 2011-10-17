@@ -181,9 +181,9 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* body0,
 					rt_mf->rbB->rb_namep,
 					rbB->rb_namep);
 
-		   //Find the manifold in rbB's list which connects rbB and rbA
-		   if( bu_strcmp(rt_mf->rbA->rb_namep, rbA->rb_namep) == 0 &&
-				   bu_strcmp(rt_mf->rbB->rb_namep, rbB->rb_namep) == 0 ){
+		    //Find the manifold in rbB's list which connects rbB and rbA
+		    if( BU_STR_EQUAL(rt_mf->rbA->rb_namep, rbA->rb_namep) &&
+		    		BU_STR_EQUAL(rt_mf->rbB->rb_namep, rbB->rb_namep) ){
 
 			   // Now add the RT contact pairs
 			   for (i=0; i<rt_mf->num_contacts; i++){
@@ -211,9 +211,10 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* body0,
 		   }//end- if( bu_strcmp...
 
 	   }//end- for (rt_mf = rbB->head_rt_manifold...
-
-    } //end-if
 #endif //DEBUG_MF
+
+    } //end- if (rbA != NULL && rbB...
+
 
 
 
