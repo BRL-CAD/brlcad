@@ -555,16 +555,28 @@ bot2soup(struct rt_bot_internal *bot, const struct bn_tol *tol)
 
 
 HIDDEN struct nmgregion *
-soup2nmg(struct soup_s *soup, const struct bn_tol *tol)
+soup2nmg(struct soup_s *soup, const struct bn_tol *UNUSED(tol))
 {
-    struct nmgregion *r;
+    unsigned int i;
+    struct nmgregion *r = NULL;
+#if 0
     struct model *m;
     struct shell *s;
-    unsigned int i;
     struct vertex *vert[3], **f_vert[3];
+#endif
 
     SOUP_CKMAG(soup);
 
+    for(i=0; i < soup->nfaces; i++) {
+	bu_log("  facet normal %f %f %f\n", V3ARGS(soup->faces[i].plane));
+	bu_log("    outer loop\n");
+	bu_log("      vertex %f %f %f\n", V3ARGS(soup->faces[i].vert[0]));
+	bu_log("      vertex %f %f %f\n", V3ARGS(soup->faces[i].vert[1]));
+	bu_log("      vertex %f %f %f\n", V3ARGS(soup->faces[i].vert[2]));
+	bu_log("    endloop\n");
+	bu_log("  endfacet\n");
+    }
+#if 0
     m = nmg_mmr();
     r = nmg_mrsv(m);
     s = BU_LIST_FIRST(shell, &r->s_hd);
@@ -590,6 +602,7 @@ soup2nmg(struct soup_s *soup, const struct bn_tol *tol)
     if(nmg_kill_cracks(s))
 	if(nmg_ks(s))
 	    return NULL;
+#endif
 
     return r;
 }
@@ -812,17 +825,23 @@ gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     if (curtree->tr_op == OP_NOP)
 	return curtree;
 
+    bu_log("solid %s\n", db_path_to_string(pathp));
     ret_tree = evaluate(curtree, tsp->ts_ttol, tsp->ts_tol);
+    soup2nmg((struct soup_s *)ret_tree->tr_d.td_r->m_p, tsp->ts_tol);
+    bu_log("endsolid %s\n", db_path_to_string(pathp));
+
     lsplitz+=splitz;
     lsplitz+=splitz;
     lsplitty+=splitty;
     splitz=0;
     splitty=0;
 
+#if 0
     curtree->tr_d.td_r = soup2nmg((struct soup_s *)ret_tree->tr_d.td_r->m_p, tsp->ts_tol);
     curtree->tr_op = OP_NMG_TESS;
 
     write_region(curtree->tr_d.td_r, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp->ts_mater.ma_color);
+#endif
 
     return NULL;
 }
