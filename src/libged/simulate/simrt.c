@@ -726,7 +726,7 @@ generate_manifolds(struct ged *gedp, struct simulation_params *sim_params)
 			add_to_comb(gedp, sim_params->sim_comb_name, bu_vls_addr(&overlap_name));
 
 			/* Initialize the rayshot results structure, has to be done for each manifold  */
-			init_rayshot_results();
+			/*init_rayshot_results();*/
 
 			/* Allocate memory for a new RT manifold */
 			rt_mf = (struct sim_manifold *)
@@ -740,7 +740,7 @@ generate_manifolds(struct ged *gedp, struct simulation_params *sim_params)
 			if (rb->head_rt_manifold == NULL) {
 				rb->head_rt_manifold = rt_mf;
 			} else{
-				//Go upto the last manifold, keeping a ptr 1 node behind
+				/* Go upto the last manifold, keeping a ptr 1 node behind */
 				p1 = rb->head_bt_manifold;
 				while (p1 != NULL) {
 					p2 = p1;
@@ -748,7 +748,6 @@ generate_manifolds(struct ged *gedp, struct simulation_params *sim_params)
 				}
 
 				p2->next = rt_mf;
-				//print_manifold_list(rb->head_manifold);
 			}
 			rb->num_rt_manifolds++;
 
@@ -756,7 +755,7 @@ generate_manifolds(struct ged *gedp, struct simulation_params *sim_params)
 			/* Shoot rays right here as the pair of rigid_body ptrs are known,
 			 * TODO: ignore volumes already shot
 			 */
-			shoot_x_rays(gedp, rt_mf, sim_params, rtip, overlap_min, overlap_max);
+			/*shoot_x_rays(gedp, rt_mf, sim_params, rtip, overlap_min, overlap_max);*/
 
 
 			/* shoot_y_rays(); */

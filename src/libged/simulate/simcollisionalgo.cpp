@@ -39,6 +39,8 @@
 
 #define USE_PERSISTENT_CONTACTS 1
 
+#define DEBUG_MF 1
+
 
 btRTCollisionAlgorithm::btRTCollisionAlgorithm(btPersistentManifold* mf,
 					       const btCollisionAlgorithmConstructionInfo& ci,
@@ -75,8 +77,10 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* body0,
 
     btCollisionObject* col0 = body0;
     btCollisionObject* col1 = body1;
- /*   btBoxShape* box0 = (btBoxShape*)col0->getCollisionShape();
-    btBoxShape* box1 = (btBoxShape*)col1->getCollisionShape();*/
+#ifndef DEBUG_MF
+    btBoxShape* box0 = (btBoxShape*)col0->getCollisionShape();
+    btBoxShape* box1 = (btBoxShape*)col1->getCollisionShape();
+#endif //DEBUG_MF
 
     //quellage
     bu_log("%d", dispatchInfo.m_stepCount);
@@ -92,10 +96,11 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* body0,
     input.m_transformA = body0->getWorldTransform();
     input.m_transformB = body1->getWorldTransform();
 
+#ifndef DEBUG_MF
     //This part will get replaced with a call to rt
-  //  btBoxBoxDetector detector(box0, box1);
-   // detector.getClosestPoints(input, *resultOut, dispatchInfo.m_debugDraw);
-
+    btBoxBoxDetector detector(box0, box1);
+    detector.getClosestPoints(input, *resultOut, dispatchInfo.m_debugDraw);
+#endif //DEBUG_MF
 
     //------------------- DEBUG ---------------------------
 
@@ -164,7 +169,7 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* body0,
 
 
 	    //Scan all RT manifolds of rbB looking for a rbA-rbB manifold----------------------
-
+#ifdef DEBUG_MF
 		for (rt_mf = rbB->head_rt_manifold; rt_mf != NULL;
 			 rt_mf = rt_mf->next) {
 
@@ -208,7 +213,7 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* body0,
 	   }//end- for (rt_mf = rbB->head_rt_manifold...
 
     } //end-if
-
+#endif //DEBUG_MF
 
 
 
