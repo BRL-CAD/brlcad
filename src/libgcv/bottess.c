@@ -68,7 +68,7 @@ struct soup_s {
 
 /* assume 4096, seems common enough. a portable way to get to PAGE_SIZE might be
  * better. */
-HIDDEN const int faces_per_page = 4096 / sizeof(struct face_s);
+HIDDEN const int faces_per_page = 4 * 4096 / sizeof(struct face_s);
 
 
 HIDDEN int
@@ -463,9 +463,30 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 
     /* if VERT+LINE, break into 2 */
     if(isv[0]&VERT_INT && isv[1]&LINE_INT) {
-	bu_log("Splitting into 2 %x %x (LINE/VERT)\n", isv[0], isv[1]);
+	point_t t[3];
+
+	switch(isv[0]&~ALL_INT) {
+	    case 0:
+		soup_add_face_precomputed(s, t[0], t[1], isectpt[1], f->plane, 0);
+		soup_add_face_precomputed(s, t[0], isectpt[1], t[2], f->plane, 0);
+		break;
+	    case 1:
+		soup_add_face_precomputed(s, t[1], t[2], isectpt[1], f->plane, 0);
+		soup_add_face_precomputed(s, t[1], isectpt[1], t[0], f->plane, 0);
+		break;
+	    case 2:
+		soup_add_face_precomputed(s, t[2], t[0], isectpt[1], f->plane, 0);
+		soup_add_face_precomputed(s, t[2], isectpt[1], t[1], f->plane, 0);
+		break;
+	    default:
+		bu_bomb("Uh, bad isv\n");
+	}
+
+	soup_rm_face(s, fid);
+
 	return 2;
     }
+    return 0;
 
     /* if LINE+LINE, break into 3, figure out which side has two verts and cut * that */
     if(isv[0]&LINE_INT && isv[1]&LINE_INT) {
@@ -496,34 +517,33 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 #undef LINE_INT
 #undef ALL_INT
 #undef FACE_INT
+    /* this should never be reached */
     bu_log("derp?\n");
 
     return 0;
 }
 
 
+/* returns 0 to continue, 1 if the left face was split, 2 if the right face was
+ * split */
 HIDDEN int
 split_face(struct soup_s *left, unsigned long int left_face, struct soup_s *right, unsigned long int right_face, const struct bn_tol *tol) {
     struct face_s *lf, *rf;
     vect_t isectpt[2] = {{0, 0, 0}, {0, 0, 0}};
-    int coplanar;
+    int coplanar, r = 0;
 
     lf = left->faces+left_face;
     rf = right->faces+right_face;
 
     splitz++;
-    if(tri_tri_intersect_with_isectline(left, right, lf, rf, &coplanar, (point_t *)isectpt, tol) == 0)
-	return 2;
+    if(tri_tri_intersect_with_isectline(left, right, lf, rf, &coplanar, (point_t *)isectpt, tol) != 0 && !VNEAR_EQUAL(isectpt[0], isectpt[1], tol->dist)) {
+	splitty++;
 
-    if(VNEAR_EQUAL(isectpt[0], isectpt[1], tol->dist))
-	return 2;
+	if(split_face_single(left, left_face, isectpt, &right->faces[right_face], tol) > 1) r|=0x1;
+	if(split_face_single(right, right_face, isectpt, &left->faces[left_face], tol) > 1) r|=0x2;
+    }
 
-    splitty++;
-
-    split_face_single(left, left_face, isectpt, &right->faces[right_face], tol);
-    split_face_single(right, right_face, isectpt, &left->faces[left_face], tol);
-
-    return -1;
+    return r;
 }
 
 
@@ -650,6 +670,8 @@ split_faces(union tree *left_tree, union tree *right_tree, const struct bn_tol *
      * space partitioning (binning? octree? kd?). */
     for(i=0;i<l->nfaces;i++) {
 	struct face_s *lf = l->faces+i, *rf = NULL;
+	int ret;
+
 	for(j=0;j<r->nfaces;j++) {
 	    rf = r->faces+j;
 	    /* quick bounding box test */
@@ -658,7 +680,9 @@ split_faces(union tree *left_tree, union tree *right_tree, const struct bn_tol *
 	       lf->min[Z]>rf->max[Z] || lf->max[Z]>lf->max[Z])
 		continue;
 	    /* two possibly overlapping faces found */
-	    split_face(l, i, r, j, tol);
+	    ret = split_face(l, i, r, j, tol);
+	    if(ret&0x1) i--;
+	    if(ret&0x2) j--;
 	}
     }
 }
