@@ -463,27 +463,10 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 
     /* if VERT+LINE, break into 2 */
     if(isv[0]&VERT_INT && isv[1]&LINE_INT) {
-	point_t t[3];
-
-	switch(isv[0]&~ALL_INT) {
-	    case 0:
-		soup_add_face_precomputed(s, t[0], t[1], isectpt[1], f->plane, 0);
-		soup_add_face_precomputed(s, t[0], isectpt[1], t[2], f->plane, 0);
-		break;
-	    case 1:
-		soup_add_face_precomputed(s, t[1], t[2], isectpt[1], f->plane, 0);
-		soup_add_face_precomputed(s, t[1], isectpt[1], t[0], f->plane, 0);
-		break;
-	    case 2:
-		soup_add_face_precomputed(s, t[2], t[0], isectpt[1], f->plane, 0);
-		soup_add_face_precomputed(s, t[2], isectpt[1], t[1], f->plane, 0);
-		break;
-	    default:
-		bu_bomb("Uh, bad isv\n");
-	}
-
+	int k = isv[0]&~ALL_INT;
+	soup_add_face_precomputed(s, f->vert[k], f->vert[k==2?0:k+1], isectpt[1], f->plane, 0);
+	soup_add_face_precomputed(s, f->vert[k], isectpt[1], f->vert[k==0?2:k-1], f->plane, 0);
 	soup_rm_face(s, fid);
-
 	return 2;
     }
     return 0;
