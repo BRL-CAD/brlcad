@@ -403,7 +403,7 @@ long int splitz = 0;
 long int splitty = 0;
 
 HIDDEN int
-split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], struct face_s *UNUSED(opp_face), const struct bn_tol *tol)
+split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], struct face_s *opp_face, const struct bn_tol *tol)
 {
     struct face_s *f = s->faces+fid;
     int i, j, isv[2] = {0, 0};
@@ -463,12 +463,20 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 
     /* if VERT+LINE, break into 2 */
     if(isv[0]&VERT_INT && isv[1]&LINE_INT) {
-	int k = isv[0]&~ALL_INT;
-	soup_add_face_precomputed(s, f->vert[k], isectpt[1], f->vert[k==2?0:k+1], f->plane, 0);
-	soup_add_face_precomputed(s, f->vert[k], f->vert[k==0?2:k-1], isectpt[1], f->plane, 0);
+	int k = isv[0]&~ALL_INT, meh;
+	vect_t muh;
+
+	VSUB2(muh, isectpt[1], f->vert[k==2?0:k+11]);
+	meh = VDOT(opp_face->plane, muh) > 0;
+	soup_add_face_precomputed(s, f->vert[k], isectpt[1], f->vert[k==2?0:k+1], f->plane, meh == 1 ? OUTSIDE : INSIDE);
+	soup_add_face_precomputed(s, f->vert[k], f->vert[k==0?2:k-1], isectpt[1], f->plane, meh == 1 ? INSIDE : OUTSIDE);
+
 	soup_rm_face(s, fid);
 	return 2;
     }
+    /*
+    printf("Blorg: %x %x\n", isv[0]>>4, isv[1]>>4);
+    */
     return 0;
 
     /* if LINE+LINE, break into 3, figure out which side has two verts and cut * that */
