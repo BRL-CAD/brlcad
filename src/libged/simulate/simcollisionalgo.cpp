@@ -188,9 +188,7 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* body0,
 			   // Now add the RT contact pairs
 			   for (i=0; i<rt_mf->num_contacts; i++){
 
-				   btVector3 ptA, ptB;
-				   btVector3 normalWorldOnB(0.000000,0.000000, -1.000000);
-				   rt_mf->contacts[i].depth = rbA->iter * 0.02f;
+				   btVector3 ptA, ptB, normalWorldOnB;
 
 				   VMOVE(ptA, rt_mf->contacts[i].ptA);
 				   VMOVE(ptB, rt_mf->contacts[i].ptB);
@@ -205,7 +203,7 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* body0,
 							rt_mf->rbA->rb_namep, V3ARGS(ptA),
 							rt_mf->rbB->rb_namep, V3ARGS(ptB),
 							V3ARGS(normalWorldOnB),
-							(rt_mf->contacts[i].depth));
+							rt_mf->contacts[i].depth);
 			   }
 
 		   }//end- if( bu_strcmp...

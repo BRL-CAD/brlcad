@@ -617,25 +617,19 @@ create_contact_pairs(struct sim_manifold *mf, vect_t overlap_min, vect_t overlap
     bu_log("create_contact_pairs : Normal got as %f,%f, %f",
     	  V3ARGS(c));*/
 
-    VSET(mf->contacts[0].normalWorldOnB, 0, 0, -1.0000);
-    VSET(mf->contacts[1].normalWorldOnB, 0, 0, -1.0000);
-    VSET(mf->contacts[2].normalWorldOnB, 0, 0, -1.0000);
-    VSET(mf->contacts[3].normalWorldOnB, 0, 0, -1.0000);
+    VSET(mf->contacts[0].normalWorldOnB, 0, 0, 1.0000);
+    VSET(mf->contacts[1].normalWorldOnB, 0, 0, 1.0000);
+    VSET(mf->contacts[2].normalWorldOnB, 0, 0, 1.0000);
+    VSET(mf->contacts[3].normalWorldOnB, 0, 0, 1.0000);
 
 
     /* Get penetration depth */
     VSUB2(c, overlap_max, overlap_min);
-    mf->contacts[0].depth = c[Z]*0.5;
-    mf->contacts[1].depth = c[Z]*0.5;
-    mf->contacts[2].depth = c[Z]*0.5;
-    mf->contacts[3].depth = c[Z]*0.5;
+    mf->contacts[0].depth = c[Z];
+    mf->contacts[1].depth = c[Z];
+    mf->contacts[2].depth = c[Z];
+    mf->contacts[3].depth = c[Z];
     bu_log("create_contact_pairs : Penetration depth set to %f", mf->contacts[0].depth );
-
-  /*VSET(mf->contacts[0].ptA, 0.000000, 0.000000, -0.001389);
-	VSET(mf->contacts[1].ptA, 1.000000, 0.000000, -0.001389);
-
-	VSET(mf->contacts[1].ptB, 0.000000, 0.960000, -0.001389);
-	VSET(mf->contacts[0].ptB, 1.000000, 0.960000, -0.001389);*/
 
 	VSET(mf->contacts[0].ptB, 1.000000, 1.000000, mf->contacts[0].depth);
 	VSET(mf->contacts[1].ptB, 1.000000, 0.000000, mf->contacts[1].depth);
