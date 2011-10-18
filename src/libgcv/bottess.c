@@ -406,7 +406,7 @@ HIDDEN int
 split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], struct face_s *opp_face, const struct bn_tol *tol)
 {
     struct face_s *f = s->faces+fid;
-    int i, j, isv[2] = {0, 0};
+    int a, i, j, isv[2] = {0, 0};
 
 #define VERT_INT 0x10
 #define LINE_INT 0x20
@@ -461,55 +461,93 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
     if((isv[0]&VERT_INT) && (isv[1]&VERT_INT))
 	return 1;
 
+    a = isv[0]&~ALL_INT;
+    if( a != 0 && a != 1 && a != 2) {
+	bu_log("Bad a value: %d\n", a);
+	bu_bomb("Exploding\n");
+    }
     /* if VERT+LINE, break into 2 */
     if(isv[0]&VERT_INT && isv[1]&LINE_INT) {
-	int k = isv[0]&~ALL_INT, meh;
 	vect_t muh;
+	int meh;
 
-	VSUB2(muh, isectpt[1], f->vert[k==2?0:k+11]);
+	VSUB2(muh, isectpt[1], f->vert[a==2?0:a+11]);
 	meh = VDOT(opp_face->plane, muh) > 0;
-	soup_add_face_precomputed(s, f->vert[k], isectpt[1], f->vert[k==2?0:k+1], f->plane, meh == 1 ? OUTSIDE : INSIDE);
-	soup_add_face_precomputed(s, f->vert[k], f->vert[k==0?2:k-1], isectpt[1], f->plane, meh == 1 ? INSIDE : OUTSIDE);
+	soup_add_face_precomputed(s, f->vert[a], isectpt[1], f->vert[a==2?0:a+1], f->plane, meh == 1 ? OUTSIDE : INSIDE);
+	soup_add_face_precomputed(s, f->vert[a], f->vert[a==0?2:a-1], isectpt[1], f->plane, meh == 1 ? INSIDE : OUTSIDE);
 
 	soup_rm_face(s, fid);
 	return 2;
     }
-    /*
-    printf("Blorg: %x %x\n", isv[0]>>4, isv[1]>>4);
-    */
-    return 0;
 
     /* if LINE+LINE, break into 3, figure out which side has two verts and cut * that */
     if(isv[0]&LINE_INT && isv[1]&LINE_INT) {
+	/*
 	bu_log("Splitting into 3 %x %x (LINE/LINE)\n", isv[0], isv[1]);
-	return 3;
+	*/
+	return 1;
     }
 
     /* if VERT+FACE, break into 3, intersect is one line, other two to the * opposing verts */
     if(isv[0]&VERT_INT ) {
-	bu_log("Splitting i nto 3: Vert+face? %x %x\n", isv[0], isv[1]);
+	soup_add_face_precomputed(s, f->vert[0], f->vert[1], isectpt[1], f->plane, 0);
+	soup_add_face_precomputed(s, f->vert[1], f->vert[2], isectpt[1], f->plane, 0);
+	soup_add_face_precomputed(s, f->vert[2], f->vert[0], isectpt[1], f->plane, 0);
+	soup_rm_face(s, fid);
 	return 3;
     }
 
-    /* if LINE+FACE, break into 3 */
+    /* if LINE+FACE, break into 4 */
     if(isv[0]&LINE_INT ) {
-	/* test if face extends to vert? could be 2 at that point... */
-	bu_log("Splitting into 3?: Line+face? %x %x\n", isv[0], isv[1]);
-	return 3;
+	switch(a) {
+	    case 0:
+		soup_add_face_precomputed(s, f->vert[0], isectpt[0], isectpt[1], f->plane, 0);
+		soup_add_face_precomputed(s, f->vert[1], isectpt[1], isectpt[0], f->plane, 0);
+		soup_add_face_precomputed(s, f->vert[1], f->vert[2], isectpt[1], f->plane, 0);
+		soup_add_face_precomputed(s, f->vert[0], isectpt[1], f->vert[2], f->plane, 0);
+		break;
+	    case 1:
+		soup_add_face_precomputed(s, f->vert[1], isectpt[0], isectpt[1], f->plane, 0);
+		soup_add_face_precomputed(s, f->vert[2], isectpt[1], isectpt[0], f->plane, 0);
+		soup_add_face_precomputed(s, f->vert[2], f->vert[0], isectpt[1], f->plane, 0);
+		soup_add_face_precomputed(s, f->vert[1], isectpt[1], f->vert[0], f->plane, 0);
+		break;
+	    case 2:
+		soup_add_face_precomputed(s, f->vert[2], isectpt[0], isectpt[1], f->plane, 0);
+		soup_add_face_precomputed(s, f->vert[0], isectpt[1], isectpt[0], f->plane, 0);
+		soup_add_face_precomputed(s, f->vert[0], f->vert[1], isectpt[1], f->plane, 0);
+		soup_add_face_precomputed(s, f->vert[2], isectpt[1], f->vert[1], f->plane, 0);
+		break;
+	}
+	soup_rm_face(s, fid);
+	return 4;
     }
 
     /* if FACE+FACE, break into 3 */
     if(isv[0]&FACE_INT ) {
 	/* extend intersect line to triangle edges, could be 2 or 3? */
-	bu_log("Splitting into 3?: face+face? %x %x\n", isv[0], isv[1]);
-	return 3;
+
+	/* make sure isectpt[0] is closest to vert[0] */
+	if(DIST_PT_PT_SQ(f->vert[0], isectpt[0]) < DIST_PT_PT_SQ(f->vert[0], isectpt[1])) {
+	    point_t tmp;
+	    VMOVE(tmp, isectpt[1]);
+	    VMOVE(isectpt[1], isectpt[0]);
+	    VMOVE(isectpt[0], tmp);
+	}
+
+	soup_add_face_precomputed(s, f->vert[0], isectpt[0], f->vert[2], f->plane, 0);
+	soup_add_face_precomputed(s, f->vert[0], f->vert[1], isectpt[0], f->plane, 0);
+	soup_add_face_precomputed(s, f->vert[1], isectpt[1], isectpt[0], f->plane, 0);
+	soup_add_face_precomputed(s, f->vert[2], isectpt[0], isectpt[1], f->plane, 0);
+	soup_add_face_precomputed(s, f->vert[1], f->vert[2], isectpt[1], f->plane, 0);
+	return 5;
     }
 #undef VERT_INT
 #undef LINE_INT
 #undef ALL_INT
 #undef FACE_INT
     /* this should never be reached */
-    bu_log("derp?\n");
+    printf("derp?\n");
 
     return 0;
 }
@@ -574,6 +612,7 @@ soup2nmg(struct soup_s *soup, const struct bn_tol *UNUSED(tol))
 #endif
 
     SOUP_CKMAG(soup);
+    printf("%ld faces\n", soup->nfaces);
 
     for(i=0; i < soup->nfaces; i++) {
 	bu_log("  facet normal %f %f %f\n", V3ARGS(soup->faces[i].plane));
@@ -703,14 +742,20 @@ compose(union tree *left_tree, union tree *right_tree, unsigned long int face_st
     l = (struct soup_s *)left_tree->tr_d.td_r->m_p;
     r = (struct soup_s *)right_tree->tr_d.td_r->m_p;
 
+    /* group component stuff? 
+     * obj1, vert, ind, col, facestatus1, facestatus2
+     * obj2, vert, ind, col, facestatus3, facestatus3 ??
+     */
+
     /* remove unnecessary faces and compose a single new internal */
-    for(i=l->nfaces;i<=0;i--)
+    for(i=l->nfaces;i>=0;i--)
 	if(l->faces[i].foo != face_status1)
 	    soup_rm_face(l, i);
-    for(i=r->nfaces;i<=0;i--)
+    for(i=r->nfaces;i>=0;i--)
 	if(r->faces[i].foo != face_status3)
 	    soup_rm_face(l, i);
-    face_status1=face_status2=face_status3;
+    for(i=0;i<(int)r->nfaces;i++)
+	soup_add_face_precomputed(l, V3ARGS(r->faces[i].vert), r->faces[i].plane, r->faces[i].foo);
 
     free_soup(r);
     bu_free(right_tree, "union tree");
