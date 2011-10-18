@@ -23,6 +23,7 @@
 # some given region ID number.
 #
 
+
 proc  reid { args } {
 
     set extern_commands [list db get_regions attr]
@@ -35,12 +36,13 @@ proc  reid { args } {
 	}
     }
 
-    # much better arg parsing is needed.
+    set argc [llength $args]
+    if { ($argc != 2 && $argc != 4) || ($argc == 4 && [lindex $args 0] != "-n") } {
+	puts "Usage: reid \[-n <num>\] assembly regionID"
+	return
+    }
+
     if { [llength $args] == 4} {
-	if { [lindex $args 0] != "-n" } {
-	    puts "Usage: reid \[-n <num>\] assembly regionID"
-	    return
-	}
 	set incrval [lindex $args 1]
 	set name [lindex $args 2]
 	set regionid [lindex $args 3]
@@ -48,9 +50,6 @@ proc  reid { args } {
 	set incrval 1
 	set name [lindex $args 0]
 	set regionid [lindex $args 1]
-    } else {
-	puts "Usage: reid \[-n <num>\] assembly regionID"
-	return
     }
 
     set objData [db get $name]
