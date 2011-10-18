@@ -1,4 +1,4 @@
-#                       R E M A T . T C L
+#                       R E L O S . T C L
 # BRL-CAD
 #
 # Copyright (c) 2005-2011 United States Government as represented by
