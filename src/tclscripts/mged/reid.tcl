@@ -23,11 +23,9 @@
 # some given region ID number.
 #
 
-
 proc  reid { args } {
 
     set extern_commands [list db get_regions attr]
-    set incrval 1
 
     foreach cmd $extern_commands {
 	catch {auto_load $cmd} val
@@ -37,28 +35,27 @@ proc  reid { args } {
 	}
     }
 
-    if { [llength $args] != 2 && [llength $args] != 4} {
-	puts "Usage: reid \[-n <num>\] assembly regionID"
-	return
-    }
-
     # much better arg parsing is needed.
     if { [llength $args] == 4} {
 	if { [lindex $args 0] != "-n" } {
 	    puts "Usage: reid \[-n <num>\] assembly regionID"
 	    return
-	} else {
-	    set incrval [lindex $args 1]
-	    set name [lindex $args 2]
-	    set regionid [lindex $args 3]
 	}
-    } else {
+	set incrval [lindex $args 1]
+	set name [lindex $args 2]
+	set regionid [lindex $args 3]
+    } elseif { [llength $args] == 2} {
+	set incrval 1
 	set name [lindex $args 0]
 	set regionid [lindex $args 1]
+    } else {
+	puts "Usage: reid \[-n <num>\] assembly regionID"
+	return
     }
 
     set objData [db get $name]
     if { [lindex $objData 0] != "comb" } {
+	puts "Not a combination."
 	return
     }
 
