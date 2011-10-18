@@ -23,7 +23,6 @@
 # material ID number.
 #
 
-
 proc remat { args } {
     # make sure the mged commands we need actually exist
     set extern_commands [list db get_regions attr]
@@ -45,6 +44,7 @@ proc remat { args } {
 
     set objData [db get $name]
     if { [lindex $objData 0] != "comb" } {
+	puts "Not a combination."
 	return
     }
 
