@@ -222,7 +222,7 @@ fi
 
 # init the venerable automake only _once_ or incur the wrath of
 # several automake bugs (like "aclocal-" and install detection)
-AM_INIT_AUTOMAKE([1.6 dist-zip dist-bzip2])
+AM_INIT_AUTOMAKE([1.8 dist-zip dist-bzip2 tar-ustar])
 
 # disables the build system dependency tracking by default for the
 # automake and autoconf template files.

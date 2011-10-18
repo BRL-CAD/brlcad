@@ -34,7 +34,7 @@
 #
 ###
 
-AUTOMAKE_OPTIONS = 1.6 dist-zip dist-bzip2
+AUTOMAKE_OPTIONS = 1.8 dist-zip dist-bzip2
 ACLOCAL_AMFLAGS = -I m4
 DISTCHECK_CONFIGURE_FLAGS = --enable-all
 
