@@ -642,7 +642,7 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 {
     char* cmd_args[28];
     char buffer[20];
-    int i, rv, argc;
+    int i, j, rv, argc;
     char *prefix = "mf_";
     char *prefix_reg = "mf_reg_";
     char *prefix_normal = "normal_";
@@ -739,20 +739,20 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 
 		case 4:
 		    cmd_args[2] = bu_strdup("arb8");
-		    for (i=0; i<4; i++) {
-			sprintf(buffer, "%f", rb->bt_manifold[i].contacts[i].ptA[0]);
-			cmd_args[3+i*3] = bu_strdup(buffer);
-			sprintf(buffer, "%f", rb->bt_manifold[i].contacts[i].ptA[1]);
-			cmd_args[4+i*3] = bu_strdup(buffer);
-			sprintf(buffer, "%f", rb->bt_manifold[i].contacts[i].ptA[2]);
-			cmd_args[5+i*3] = bu_strdup(buffer);
+		    for (j=0; j<4; j++) {
+			sprintf(buffer, "%f", rb->bt_manifold[i].contacts[j].ptA[0]);
+			cmd_args[3+j*3] = bu_strdup(buffer);
+			sprintf(buffer, "%f", rb->bt_manifold[i].contacts[j].ptA[1]);
+			cmd_args[4+j*3] = bu_strdup(buffer);
+			sprintf(buffer, "%f", rb->bt_manifold[i].contacts[j].ptA[2]);
+			cmd_args[5+j*3] = bu_strdup(buffer);
 
-			sprintf(buffer, "%f", rb->bt_manifold[i].contacts[i].ptB[0]);
-			cmd_args[15+i*3] = bu_strdup(buffer);
-			sprintf(buffer, "%f", rb->bt_manifold[i].contacts[i].ptB[1]);
-			cmd_args[16+i*3] = bu_strdup(buffer);
-			sprintf(buffer, "%f", rb->bt_manifold[i].contacts[i].ptB[2]);
-			cmd_args[17+i*3] = bu_strdup(buffer);
+			sprintf(buffer, "%f", rb->bt_manifold[i].contacts[j].ptB[0]);
+			cmd_args[15+j*3] = bu_strdup(buffer);
+			sprintf(buffer, "%f", rb->bt_manifold[i].contacts[j].ptB[1]);
+			cmd_args[16+j*3] = bu_strdup(buffer);
+			sprintf(buffer, "%f", rb->bt_manifold[i].contacts[j].ptB[2]);
+			cmd_args[17+j*3] = bu_strdup(buffer);
 
 		    }
 		    cmd_args[27] = (char *)0;
