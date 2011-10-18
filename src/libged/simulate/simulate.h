@@ -28,8 +28,16 @@
 #ifndef SIMULATE_H_
 #define SIMULATE_H_
 
+#if defined __cplusplus
+
+    /* If the functions in this header have C linkage, this
+     * will specify linkage for all C++ language compilers */
+    extern "C" {
+#endif
+
 /* interface headers */
 #include "vmath.h"
+#include "../ged_private.h"
 
 
 //Copy of the rigid body state tags from btCollisionObject.h
@@ -111,10 +119,15 @@ struct simulation_params {
     char *ground_plane_name;       /**< @brief name of the ground plane region */
     struct rigid_body *head_node;  /**< @brief link to first rigid body node */
 
+    struct ged *gedp;			   /**< @brief pass the gfx context to allow lines to be drawn by rt */
+
     /* Debugging */
     int iter;
 };
 
+#if defined __cplusplus
+    }   /* matches the linkage specification at the beginning. */
+#endif
 
 #endif /* SIMULATE_H_ */
 

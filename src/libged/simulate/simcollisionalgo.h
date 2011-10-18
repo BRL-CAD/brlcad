@@ -46,7 +46,6 @@
 /* private headers */
 #include "./simulate.h"
 
-
 class btPersistentManifold;
 
 ///Raytrace based collision detection

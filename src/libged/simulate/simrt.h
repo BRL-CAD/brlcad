@@ -27,6 +27,13 @@
 #ifndef SIMRT_H_
 #define SIMRT_H_
 
+#if defined __cplusplus
+
+    /* If the functions in this header have C linkage, this
+     * will specify linkage for all C++ language compilers */
+    extern "C" {
+#endif
+
 /* System Headers */
 #include <stdlib.h>
 #include <ctype.h>
@@ -234,6 +241,10 @@ init_raytrace(struct simulation_params *sim_params, struct rt_i *rtip);
  */
 int
 init_rayshot_results(void);
+
+#if defined __cplusplus
+    }   /* matches the linkage specification at the beginning. */
+#endif
 
 
 #endif /* SIMRT_H_ */

@@ -26,6 +26,13 @@
 #ifndef SIMUTILS_H_
 #define SIMUTILS_H_
 
+#if defined __cplusplus
+
+    /* If the functions in this header have C linkage, this
+     * will specify linkage for all C++ language compilers */
+    extern "C" {
+#endif
+
 /* System Headers */
 #include <stdlib.h>
 #include <ctype.h>
@@ -173,9 +180,6 @@ int
 insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct rigid_body *rb);
 
 
-#endif /* SIMUTILS_H_ */
-
-
 /**
  * This function creates and inserts a RPP
  * Used to show AABB overlap volume
@@ -184,6 +188,14 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
  */
 int
 make_rpp(struct ged *gedp, vect_t max, vect_t min, char* name);
+
+
+#if defined __cplusplus
+    }   /* matches the linkage specification at the beginning. */
+#endif
+
+
+#endif /* SIMUTILS_H_ */
 
 /*
  * Local Variables:

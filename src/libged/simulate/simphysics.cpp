@@ -29,14 +29,19 @@
 #include <iostream>
 #include <btBulletDynamicsCommon.h>
 
-/* public headers */
-#include "db.h"
-#include "vmath.h"
+extern "C" {
 
-/* private headers */
-#include "./simulate.h"
-#include "./simcollisionalgo.h"
+	/* public headers */
+	#include "db.h"
 
+	/* private headers */
+	#include "simulate.h"
+	#include "simcollisionalgo.h"
+	#include "simrt.h"
+}
+
+
+struct simulation_params *sim_params;
 
 /**
  * Prints the 16 by 16 transform matrices for debugging
@@ -81,8 +86,7 @@ print_matrices(char *rb_namep, mat_t t, btScalar *m)
  */
 int
 add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld,
-		 struct simulation_params *sim_params,
-		 btAlignedObjectArray<btCollisionShape*> collision_shapes)
+				 btAlignedObjectArray<btCollisionShape*> collision_shapes)
 {
     struct rigid_body *current_node;
     fastf_t volume;
@@ -183,7 +187,7 @@ add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld,
  *
  */
 int
-step_physics(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_params *sim_params)
+step_physics(btDiscreteDynamicsWorld* dynamicsWorld)
 {
     bu_vls_printf(sim_params->result_str, "Simulation will run for %d steps.\n", sim_params->duration);
     bu_vls_printf(sim_params->result_str, "----- Starting simulation -----\n");
@@ -201,7 +205,7 @@ step_physics(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_params *s
  *
  */
 int
-get_transforms(btDiscreteDynamicsWorld* dynamicsWorld, struct simulation_params *sim_params)
+get_transforms(btDiscreteDynamicsWorld* dynamicsWorld)
 {
     int i;
     btScalar m[16];
@@ -351,7 +355,7 @@ nearphase_callback(btBroadphasePair& collisionPair,
 		   btDispatcherInfo& dispatchInfo)
 {
 
-    int i, j, numContacts;
+    int i, j, numContacts, rv;
     int numManifolds = dispatcher.getNumManifolds();
 
     /* First iterate through the number of manifolds for the whole dynamics world
@@ -397,6 +401,12 @@ nearphase_callback(btBroadphasePair& collisionPair,
 		       upA->rb_namep, ptA[0], ptA[1], ptA[2],
 		       upB->rb_namep, ptB[0], ptB[1], ptB[2]);
 	    }
+	}
+
+	/* Generate manifolds using rt */
+	rv = generate_manifolds(sim_params->gedp, sim_params);
+	if (rv != GED_OK) {
+	    bu_log("nearphase_callback: ERROR while calculating manifolds\n");
 	}
 
 	//Can un-comment this line, and then all points are removed
@@ -471,9 +481,11 @@ bool contact_destroyed(void* userPersistentData)
  *
  */
 extern "C" int
-run_simulation(struct simulation_params *sim_params)
+run_simulation(struct simulation_params *sp)
 {
     //int i;
+
+	sim_params = sp;
 
     //for (i=0 ; i < sim_params->duration ; i++) {
 
@@ -503,7 +515,7 @@ run_simulation(struct simulation_params *sim_params)
     dynamicsWorld->setGravity(btVector3(0, 0, -10));
 
     //Add the rigid bodies to the world, including the ground plane
-    add_rigid_bodies(dynamicsWorld, sim_params, collision_shapes);
+    add_rigid_bodies(dynamicsWorld, collision_shapes);
 
     //Add a broadphase callback to hook to the AABB detection algos
     btOverlapFilterCallback * filterCallback = new broadphase_callback();
@@ -518,10 +530,10 @@ run_simulation(struct simulation_params *sim_params)
     gContactDestroyedCallback = contact_destroyed;
 
     //Step the physics the required number of times
-    step_physics(dynamicsWorld, sim_params);
+    step_physics(dynamicsWorld);
 
     //Get the world transforms back into the simulation params struct
-    get_transforms(dynamicsWorld, sim_params);
+    get_transforms(dynamicsWorld);
 
     //Clean and free memory used by physics objects
     cleanup(dynamicsWorld, collision_shapes);

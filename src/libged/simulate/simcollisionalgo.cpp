@@ -39,7 +39,7 @@
 
 #define USE_PERSISTENT_CONTACTS 1
 
-#define DEBUG_MF 1
+//#define DEBUG_MF 1
 
 
 btRTCollisionAlgorithm::btRTCollisionAlgorithm(btPersistentManifold* mf,
@@ -105,7 +105,7 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* body0,
     //------------------- DEBUG ---------------------------
 
     int i;
-    struct sim_manifold *bt_mf, *rt_mf;
+    struct sim_manifold *bt_mf;
 
     //Get the user pointers to struct rigid_body, for printing the body name
     struct rigid_body *rbA = (struct rigid_body *)col0->getUserPointer();
@@ -170,6 +170,8 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* body0,
 
 	    //Scan all RT manifolds of rbB looking for a rbA-rbB manifold----------------------
 #ifdef DEBUG_MF
+		struct sim_manifold *rt_mf;
+
 		for (rt_mf = rbB->head_rt_manifold; rt_mf != NULL;
 			 rt_mf = rt_mf->next) {
 
