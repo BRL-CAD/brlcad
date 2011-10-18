@@ -365,7 +365,7 @@ shoot_ray(struct rt_i *rtip, point_t pt, point_t dir)
 
 
 int
-init_raytrace(struct simulation_params *sim_params, struct rt_i *rtip)
+init_raytrace(struct simulation_params *sim_params)
 {
     struct rigid_body *rb;
 
@@ -373,7 +373,7 @@ init_raytrace(struct simulation_params *sim_params, struct rt_i *rtip)
 
     /* Add all the sim objects to the rt_i */
     for (rb = sim_params->head_node; rb != NULL; rb = rb->next) {
-	if (rt_gettree(rtip, rb->rb_namep) < 0)
+	if (rt_gettree(sim_params->rtip, rb->rb_namep) < 0)
 	    bu_log("generate_manifolds: Failed to load geometry for [%s]\n", rb->rb_namep);
 	else
 	    bu_log("generate_manifolds: Added [%s] to raytracer\n", rb->rb_namep);
@@ -382,10 +382,10 @@ init_raytrace(struct simulation_params *sim_params, struct rt_i *rtip)
     /* This next call causes some values to be pre-computed, sets up space
      * partitioning, computes bounding volumes, etc.
      */
-    rt_prep_parallel(rtip, 1);
+    rt_prep_parallel(sim_params->rtip, 1);
 
     bu_log("Simulation objects bounding box (%f, %f, %f):(%f,%f,%f)",
-	   V3ARGS(rtip->mdl_min), V3ARGS(rtip->mdl_max));
+	   V3ARGS(sim_params->rtip->mdl_min), V3ARGS(sim_params->rtip->mdl_max));
 
     overlap_list.forw = overlap_list.backw = &overlap_list;
     hit_list.forw = hit_list.backw = &hit_list;
@@ -415,7 +415,7 @@ init_rayshot_results(void)
  * Traverse the hit list and overlap list, drawing the ray segments
  */
 int
-traverse_xray_lists(struct ged *gedp, struct simulation_params *sim_params,
+traverse_xray_lists(struct simulation_params *sim_params,
 	       point_t pt, point_t dir)
 {
     struct overlap *ovp;
@@ -439,12 +439,12 @@ traverse_xray_lists(struct ged *gedp, struct simulation_params *sim_params,
 			   ovp->reg2->reg_name,
 			   ovp->index,
 			   V3ARGS(pt), V3ARGS(dir));
-	    line(gedp, bu_vls_addr(&reg_vls),
+	     line(sim_params->gedp, bu_vls_addr(&reg_vls),
 		 ovp->in_point,
 		 ovp->out_point,
 		 0, 210, 0);
 
-	    add_to_comb(gedp, sim_params->sim_comb_name, bu_vls_addr(&reg_vls));
+	    add_to_comb(sim_params->gedp, sim_params->sim_comb_name, bu_vls_addr(&reg_vls));
 
 
 	    /* Fill up the result structure */
@@ -517,12 +517,10 @@ traverse_xray_lists(struct ged *gedp, struct simulation_params *sim_params,
 
 
 int
-shoot_x_rays(
-	     struct ged *gedp,
-	     struct sim_manifold *current_manifold,
-	     struct simulation_params *sim_params,
-	     struct rt_i *rtip,
-	     vect_t overlap_min, vect_t overlap_max)
+shoot_x_rays(struct sim_manifold *current_manifold,
+	     	 struct simulation_params *sim_params,
+	     	 vect_t overlap_min,
+	     	 vect_t overlap_max)
 {
     point_t r_pt, r_dir;
     fastf_t startz, starty, y, z;
@@ -557,12 +555,12 @@ shoot_x_rays(
 				bu_log("*****shoot_x_rays : From : (%f,%f,%f) >>> towards(%f,%f,%f)*******",
 					   V3ARGS(r_pt),  V3ARGS(r_dir));
 
-				shoot_ray(rtip, r_pt, r_dir);
+				shoot_ray(sim_params->rtip, r_pt, r_dir);
 
 				/* Traverse the hit list and overlap list, drawing the ray segments
 				 * for the current ray
 				 */
-				traverse_xray_lists(gedp, sim_params, r_pt, r_dir);
+				traverse_xray_lists(sim_params, r_pt, r_dir);
 
 				print_rayshot_results();
 
@@ -643,128 +641,55 @@ create_contact_pairs(struct sim_manifold *mf, vect_t overlap_min, vect_t overlap
 
 
 int
-free_rt_manifold_lists(struct simulation_params *sim_params)
+generate_manifolds(struct simulation_params *sim_params,
+				   struct rigid_body *rbA,
+				   struct rigid_body *rbB)
 {
-    /* Free memory in manifold list */
-    struct sim_manifold *current_manifold, *next_manifold;
-    struct rigid_body *current_node;
+    /* The manifold between rbA & rbB will be stored in B */
+	struct sim_manifold *rt_mf = &(rbB->rt_manifold);
 
-    for (current_node = sim_params->head_node; current_node != NULL;
-    		current_node = current_node->next) {
-
-		for (current_manifold = current_node->head_rt_manifold; current_manifold != NULL;) {
-
-			next_manifold = current_manifold->next;
-			bu_free(current_manifold, "simulate : head_rt_manifold");
-			current_manifold = next_manifold;
-			current_node->num_rt_manifolds--;
-		}
-
-		current_node->num_rt_manifolds = 0;
-		current_node->head_rt_manifold = NULL;
-    }
-
-    return GED_OK;
-}
-
-
-int
-generate_manifolds(struct ged *gedp, struct simulation_params *sim_params)
-{
-    struct sim_manifold *bt_mf, *rt_mf, *p1, *p2;
-    struct rigid_body *rb;
     vect_t overlap_min, overlap_max;
     char *prefix_overlap = "overlap_";
     struct bu_vls overlap_name = BU_VLS_INIT_ZERO;
 
-    /* Free all the manifolds generated in the previous iteration */
-    free_rt_manifold_lists(sim_params);
+    /* Setup the manifold participant pointers */
+    rt_mf->rbA = rbA;
+    rt_mf->rbB = rbB;
 
-    /* Raytrace related stuff */
-    struct rt_i *rtip;
+	/* Get the overlap region */
+	get_overlap(rbA, rbB, overlap_min, overlap_max);
 
-    /* Make a new rt_i instance from the existing db_i structure */
-    if ((rtip=rt_new_rti(gedp->ged_wdbp->dbip)) == RTI_NULL) {
-	bu_log("generate_manifolds: rt_new_rti failed while getting new rt instance\n");
-	return GED_ERROR;
-    }
-    rtip->useair = 1;
+	/* Prepare the overlap prim name */
+	bu_vls_sprintf(&overlap_name, "%s%s_%s",
+		   prefix_overlap,
+		   rbA->rb_namep,
+		   rbB->rb_namep);
 
-    /* Initialize the raytrace */
-    init_raytrace(sim_params, rtip);
+	/* Make the overlap volume RPP */
+	make_rpp(sim_params->gedp, overlap_min, overlap_max, bu_vls_addr(&overlap_name));
 
+	/* Add the region to the result of the sim so it will be drawn too */
+	add_to_comb(sim_params->gedp, sim_params->sim_comb_name, bu_vls_addr(&overlap_name));
 
-    /* Check all rigid bodies for overlaps using their BT manifold list */
-    for (rb = sim_params->head_node; rb != NULL; rb = rb->next) {
-
-    	bu_log("generate_manifolds: Analyzing manifolds of %s", rb->rb_namep);
-
-		for (bt_mf = rb->head_bt_manifold; bt_mf != NULL;
-			 bt_mf = bt_mf->next) {
-
-			/* Get the overlap region */
-			get_overlap(bt_mf->rbA, bt_mf->rbB,
-				overlap_min,
-				overlap_max);
-
-			/* Prepare the overlap prim name */
-			bu_vls_sprintf(&overlap_name, "%s%s_%s",
-				   prefix_overlap,
-				   bt_mf->rbA->rb_namep,
-				   bt_mf->rbB->rb_namep);
-
-			/* Make the overlap volume RPP */
-			make_rpp(gedp, overlap_min, overlap_max, bu_vls_addr(&overlap_name));
-
-			/* Add the region to the result of the sim so it will be drawn too */
-			add_to_comb(gedp, sim_params->sim_comb_name, bu_vls_addr(&overlap_name));
-
-			/* Initialize the rayshot results structure, has to be done for each manifold  */
-			/*init_rayshot_results();*/
-
-			/* Allocate memory for a new RT manifold */
-			rt_mf = (struct sim_manifold *)
-									bu_malloc(sizeof(struct sim_manifold), "sim_manifold: rt_mf");
-			rt_mf->rbA = bt_mf->rbA;
-			rt_mf->rbB = bt_mf->rbB;
-			rt_mf->num_contacts = 0;
-			rt_mf->next = NULL;
-
-			/* Setup the new manifold in the linked list of manifolds for this rigid body */
-			if (rb->head_rt_manifold == NULL) {
-				rb->head_rt_manifold = rt_mf;
-			} else{
-				/* Go upto the last manifold, keeping a ptr 1 node behind */
-				p1 = rb->head_bt_manifold;
-				while (p1 != NULL) {
-					p2 = p1;
-					p1 = p1->next;
-				}
-
-				p2->next = rt_mf;
-			}
-			rb->num_rt_manifolds++;
+	/* Initialize the rayshot results structure, has to be done for each manifold  */
+	/*init_rayshot_results();*/
 
 
-			/* Shoot rays right here as the pair of rigid_body ptrs are known,
-			 * TODO: ignore volumes already shot
-			 */
-			/*shoot_x_rays(gedp, rt_mf, sim_params, rtip, overlap_min, overlap_max);*/
+	/* Shoot rays right here as the pair of rigid_body ptrs are known,
+	 * TODO: ignore volumes already shot
+	 */
+	/*shoot_x_rays(rt_mf, sim_params, overlap_min, overlap_max);*/
 
 
-			/* shoot_y_rays(); */
+	/* shoot_y_rays(); */
 
 
-			/* shoot_z_rays(); */
+	/* shoot_z_rays(); */
 
 
 
-			/* Create the contact pairs and normals */
-			create_contact_pairs(rt_mf, overlap_min, overlap_max);
-
-
-		}
-    }
+	/* Create the contact pairs and normals */
+	create_contact_pairs(rt_mf, overlap_min, overlap_max);
 
 
     return GED_OK;

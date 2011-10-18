@@ -29,16 +29,14 @@
 #include <iostream>
 #include <btBulletDynamicsCommon.h>
 
-extern "C" {
+/* public headers */
+#include "db.h"
 
-	/* public headers */
-	#include "db.h"
+/* private headers */
+#include "simulate.h"
+#include "simcollisionalgo.h"
+#include "simrt.h"
 
-	/* private headers */
-	#include "simulate.h"
-	#include "simcollisionalgo.h"
-	#include "simrt.h"
-}
 
 
 struct simulation_params *sim_params;
@@ -201,7 +199,7 @@ step_physics(btDiscreteDynamicsWorld* dynamicsWorld)
 
 
 /**
- * Get the final transforms and pack off back to libged
+ * Get the final transforms, AABBs and pack off back to libged
  *
  */
 int
@@ -247,7 +245,7 @@ get_transforms(btDiscreteDynamicsWorld* dynamicsWorld)
 	    //Get the state of the body
 	    current_node->state = bb_RigidBody->getActivationState();
 
-	    //Get the AABB
+	    //Get the AABB of those bodies, which do not overlap
 	    bb_Shape->getAabb(bb_MotionState->m_graphicsWorldTrans, aabbMin, aabbMax);
 
 	    VMOVE(current_node->btbb_min, aabbMin);
@@ -314,39 +312,54 @@ cleanup(btDiscreteDynamicsWorld* dynamicsWorld,
 //--------------------- Collision specific code ------------------------
 
 /**
- * Broadphase filter callback struct : used to show the detected AABB overlaps
+ * Broadphase filter callback struct : used to get the AABBs of ONLY
+ * overlapping bodies, rest are got in get_transforms()
  *
  */
 struct broadphase_callback : public btOverlapFilterCallback
 {
     //Return true when pairs need collision
     virtual bool
-    needBroadphaseCollision(btBroadphaseProxy* proxy0, btBroadphaseProxy* proxy1) const {
-	bool collides = (proxy0->m_collisionFilterGroup & proxy1->m_collisionFilterMask) != 0;
-	collides = collides && (proxy1->m_collisionFilterGroup & proxy0->m_collisionFilterMask);
+    needBroadphaseCollision(btBroadphaseProxy* proxy0, btBroadphaseProxy* proxy1) const
+    {
+		bool collides = (proxy0->m_collisionFilterGroup & proxy1->m_collisionFilterMask) != 0;
+		collides = collides && (proxy1->m_collisionFilterGroup & proxy0->m_collisionFilterMask);
 
-	//This would prevent collision between proxy0 and proxy1 inspite of
-	//AABB overlap being detected
-	//collides = false;
-	btRigidBody* box0 = (btRigidBody*)proxy0->m_clientObject;
-	btRigidBody* box1 = (btRigidBody*)proxy1->m_clientObject;
-	if (box0 != NULL && box0 != NULL) {
-	    struct rigid_body *upA = (struct rigid_body *)box0->getUserPointer();
-	    struct rigid_body *upB = (struct rigid_body *)box1->getUserPointer();
+		btVector3 aabbMin, aabbMax;
 
-	    if (upA != NULL && upB != NULL)
-		bu_log("broadphase_callback: %s & %s has overlapping AABBs",
-		       upA->rb_namep, upB->rb_namep);
-	}
+		//This would prevent collision between proxy0 and proxy1 inspite of
+		//AABB overlap being detected
+		//collides = false;
+		btRigidBody* boxA = (btRigidBody*)proxy0->m_clientObject;
+		btRigidBody* boxB = (btRigidBody*)proxy1->m_clientObject;
 
-	//add some additional logic here that modifies 'collides'
-	return collides;
+		if (boxA != NULL && boxB != NULL) {
+
+			struct rigid_body *rbA = (struct rigid_body *)boxA->getUserPointer();
+			struct rigid_body *rbB = (struct rigid_body *)boxB->getUserPointer();
+
+			bu_log("broadphase_callback: %s & %s has overlapping AABBs",
+				   rbA->rb_namep, rbB->rb_namep);
+
+			//Get the AABB for body A : will happen multiple times if there are multiple overlaps
+			boxA->getAabb(aabbMin, aabbMax);
+			VMOVE(rbA->btbb_min, aabbMin);
+			VMOVE(rbA->btbb_max, aabbMax);
+
+			//Get the AABB for body B : will happen multiple times if there are multiple overlaps
+			boxB->getAabb(aabbMin, aabbMax);
+			VMOVE(rbB->btbb_min, aabbMin);
+			VMOVE(rbB->btbb_max, aabbMax);
+		}
+
+		//add some additional logic here that modifies 'collides'
+		return collides;
     }
 };
 
 
 /**
- * Narrowphase filter callback : used to show the generated collision points
+ * Narrowphase filter callback : used to create the contact pairs using RT
  *
  */
 void
@@ -355,63 +368,26 @@ nearphase_callback(btBroadphasePair& collisionPair,
 		   btDispatcherInfo& dispatchInfo)
 {
 
-    int i, j, numContacts, rv;
-    int numManifolds = dispatcher.getNumManifolds();
+    int rv;
 
-    /* First iterate through the number of manifolds for the whole dynamics world
-     * A manifold is a set of contact points containing upto 4 points
-     * There may be multiple manifolds where objects touch
-     */
-    for (i=0; i<numManifolds; i++) {
+    btRigidBody* box0 = (btRigidBody*)(collisionPair.m_pProxy0->m_clientObject);
+    btRigidBody* box1 = (btRigidBody*)(collisionPair.m_pProxy1->m_clientObject);
+    if (box0 != NULL && box0 != NULL) {
 
-	//Get the manifold and the objects which created it
-	btPersistentManifold* contactManifold =
-	    dispatcher.getManifoldByIndexInternal(i);
-	btCollisionObject* obA = static_cast<btCollisionObject*>(contactManifold->getBody0());
-	btCollisionObject* obB = static_cast<btCollisionObject*>(contactManifold->getBody1());
+    	struct rigid_body *rbA = (struct rigid_body *)box0->getUserPointer();
+    	struct rigid_body *rbB = (struct rigid_body *)box1->getUserPointer();
 
-	//Get the user pointers to struct rigid_body, for printing the body name
-	btRigidBody* rbA = btRigidBody::upcast(obA);
-	btRigidBody* rbB = btRigidBody::upcast(obB);
-	struct rigid_body *upA = (struct rigid_body *)rbA->getUserPointer();
-	struct rigid_body *upB = (struct rigid_body *)rbB->getUserPointer();
+		bu_log("nearphase_callback : Creating manifold between %s & %s\n",
+				 rbA->rb_namep, rbB->rb_namep);
 
-	//Get the number of points in this manifold
-	numContacts = contactManifold->getNumContacts();
-
-	bu_log("nearphase_callback : Manifold %d of %d, contacts : %d\n",
-	       i+1,
-	       numManifolds,
-	       numContacts);
-
-	//Iterate over the points for this manifold
-	for (j=0;j<numContacts;j++) {
-	    btManifoldPoint& pt = contactManifold->getContactPoint(j);
-
-	    btVector3 ptA = pt.getPositionWorldOnA();
-	    btVector3 ptB = pt.getPositionWorldOnB();
-
-	    if (upA == NULL || upB == NULL) {
-		bu_log("nearphase_callback : contact %d of %d, could not get user pointers\n",
-		       j+1, numContacts);
-
-	    } else{
-		bu_log("nearphase_callback: contact %d of %d, %s(%f, %f, %f) , %s(%f, %f, %f)\n",
-		       j+1, numContacts,
-		       upA->rb_namep, ptA[0], ptA[1], ptA[2],
-		       upB->rb_namep, ptB[0], ptB[1], ptB[2]);
-	    }
-	}
-
-	/* Generate manifolds using rt */
-	rv = generate_manifolds(sim_params->gedp, sim_params);
-	if (rv != GED_OK) {
-	    bu_log("nearphase_callback: ERROR while calculating manifolds\n");
-	}
-
-	//Can un-comment this line, and then all points are removed
-	//contactManifold->clearManifold();
+		/* Generate manifolds using rt */
+		rv = generate_manifolds(sim_params, rbA, rbB);
+		if (rv != GED_OK) {
+			bu_log("nearphase_callback: ERROR while creating manifold between %s & %s\n",
+					rbA->rb_namep, rbB->rb_namep);
+		}
     }
+
 
     // Only dispatch the Bullet collision information if physics should continue
     dispatcher.defaultNearCallback(collisionPair, dispatcher, dispatchInfo);
@@ -487,9 +463,20 @@ run_simulation(struct simulation_params *sp)
 
 	sim_params = sp;
 
-    //for (i=0 ; i < sim_params->duration ; i++) {
+	//for (i=0 ; i < sim_params->duration ; i++) {
 
-    // Initialize the physics world
+    //Make a new rt_i instance from the existing db_i structure
+    if ((sim_params->rtip=rt_new_rti(sim_params->gedp->ged_wdbp->dbip)) == RTI_NULL) {
+    	bu_log("run_simulation: rt_new_rti failed while getting new rt instance\n");
+    	return 1;
+    }
+    sim_params->rtip->useair = 1;
+
+    //Initialize the raytrace world
+    init_raytrace(sim_params);
+
+
+    //Initialize the physics world
     btDiscreteDynamicsWorld* dynamicsWorld;
 
     // Keep the collision shapes, for deletion/cleanup
@@ -544,6 +531,10 @@ run_simulation(struct simulation_params *sp)
     delete dispatcher;
     delete collisionConfiguration;
     delete broadphase;
+
+    //Free the raytrace instance
+    rt_free_rti(sim_params->rtip);
+
     //}
 
 
