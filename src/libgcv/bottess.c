@@ -499,26 +499,10 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 
     /* if LINE+FACE, break into 4 */
     if(isv[0]&LINE_INT ) {
-	switch(a) {
-	    case 0:
-		soup_add_face_precomputed(s, f->vert[0], isectpt[0], isectpt[1], f->plane, 0);
-		soup_add_face_precomputed(s, f->vert[1], isectpt[1], isectpt[0], f->plane, 0);
-		soup_add_face_precomputed(s, f->vert[1], f->vert[2], isectpt[1], f->plane, 0);
-		soup_add_face_precomputed(s, f->vert[0], isectpt[1], f->vert[2], f->plane, 0);
-		break;
-	    case 1:
-		soup_add_face_precomputed(s, f->vert[1], isectpt[0], isectpt[1], f->plane, 0);
-		soup_add_face_precomputed(s, f->vert[2], isectpt[1], isectpt[0], f->plane, 0);
-		soup_add_face_precomputed(s, f->vert[2], f->vert[0], isectpt[1], f->plane, 0);
-		soup_add_face_precomputed(s, f->vert[1], isectpt[1], f->vert[0], f->plane, 0);
-		break;
-	    case 2:
-		soup_add_face_precomputed(s, f->vert[2], isectpt[0], isectpt[1], f->plane, 0);
-		soup_add_face_precomputed(s, f->vert[0], isectpt[1], isectpt[0], f->plane, 0);
-		soup_add_face_precomputed(s, f->vert[0], f->vert[1], isectpt[1], f->plane, 0);
-		soup_add_face_precomputed(s, f->vert[2], isectpt[1], f->vert[1], f->plane, 0);
-		break;
-	}
+	soup_add_face_precomputed(s, f->vert[a], isectpt[0], isectpt[1], f->plane, 0);
+	soup_add_face_precomputed(s, f->vert[a==2?0:a+1], isectpt[1], isectpt[0], f->plane, 0);
+	soup_add_face_precomputed(s, f->vert[a==2?0:a+1], f->vert[a==0?2:a-1], isectpt[1], f->plane, 0);
+	soup_add_face_precomputed(s, f->vert[a], isectpt[1], f->vert[a==0?2:a-1], f->plane, 0);
 	soup_rm_face(s, fid);
 	return 4;
     }
@@ -732,7 +716,7 @@ split_faces(union tree *left_tree, union tree *right_tree, const struct bn_tol *
 
 
 HIDDEN union tree *
-compose(union tree *left_tree, union tree *right_tree, unsigned long int face_status1, unsigned long int face_status2, unsigned long int face_status3)
+compose(union tree *left_tree, union tree *right_tree, unsigned long int face_status1, unsigned long int UNUSED(face_status2), unsigned long int face_status3)
 {
     struct soup_s *l, *r;
     int i;
