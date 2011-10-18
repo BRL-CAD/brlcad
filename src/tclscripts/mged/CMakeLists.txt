@@ -65,6 +65,7 @@ SET(mged_TCLSCRIPTS
 	ray.tcl
 	raypick.tcl
 	reid.tcl
+        relos.tcl
 	remap_mater.tcl
 	remat.tcl
 	rt.tcl
