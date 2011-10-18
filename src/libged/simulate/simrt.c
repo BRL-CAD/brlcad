@@ -629,10 +629,10 @@ create_contact_pairs(struct sim_manifold *mf, vect_t overlap_min, vect_t overlap
     mf->contacts[3].depth = c[Z];
     bu_log("create_contact_pairs : Penetration depth set to %f", mf->contacts[0].depth );
 
-	VSET(mf->contacts[0].ptB, 1.000000, 1.000000, mf->contacts[0].depth);
-	VSET(mf->contacts[1].ptB, 1.000000, 0.000000, mf->contacts[1].depth);
-	VSET(mf->contacts[2].ptB, 0.000000, 0.000000, mf->contacts[2].depth);
-	VSET(mf->contacts[3].ptB, 0.000000, 1.000000, mf->contacts[3].depth);
+	VSET(mf->contacts[0].ptB, 1.000000, 1.000000, overlap_min[Z]);
+	VSET(mf->contacts[1].ptB, 1.000000, 0.000000, overlap_min[Z]);
+	VSET(mf->contacts[2].ptB, 0.000000, 0.000000, overlap_min[Z]);
+	VSET(mf->contacts[3].ptB, 0.000000, 1.000000, overlap_min[Z]);
 
 
 

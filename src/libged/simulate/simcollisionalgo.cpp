@@ -39,7 +39,7 @@
 
 #define USE_PERSISTENT_CONTACTS 1
 
-#define DEBUG_MF 1
+//#define DEBUG_MF 1
 
 
 btRTCollisionAlgorithm::btRTCollisionAlgorithm(btPersistentManifold* mf,
