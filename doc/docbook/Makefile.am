@@ -43,6 +43,9 @@ XSLTPROC_ENV_VARS = XML_CATALOG_FILES=$(XML_CATALOG) XML_DEBUG_CATALOG=1
 $(XML_CATALOG): $(GEN_XML_CATALOGS) BRLCAD_DOC.pm
 	perl -I $(top_srcdir)/doc/docbook $(GEN_XML_CATALOGS)
 
+$(FOP_XML_CATALOG): $(GEN_XML_CATALOGS) BRLCAD_DOC.pm
+	perl -I $(top_srcdir)/doc/docbook $(GEN_XML_CATALOGS)
+
 XSLTPROC_DEPS=$(XML_CATALOGS) $(XSL_FO_STYLESHEET) $(XSL_XHTML_STYLESHEET) $(XSL_MAN_STYLESHEET)
 
 # define extra dependencies for some double suffix rules:
