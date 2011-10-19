@@ -68,7 +68,7 @@ struct soup_s {
 
 /* assume 4096, seems common enough. a portable way to get to PAGE_SIZE might be
  * better. */
-HIDDEN const int faces_per_page = 4 * 4096 / sizeof(struct face_s);
+HIDDEN const int faces_per_page = 4096 / sizeof(struct face_s);
 
 
 HIDDEN int
@@ -512,7 +512,7 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 	/* extend intersect line to triangle edges, could be 2 or 3? */
 
 	/* make sure isectpt[0] is closest to vert[0] */
-	if(DIST_PT_PT_SQ(f->vert[0], isectpt[0]) < DIST_PT_PT_SQ(f->vert[0], isectpt[1])) {
+	if(DIST_PT_PT_SQ(f->vert[0], isectpt[0]) > DIST_PT_PT_SQ(f->vert[0], isectpt[1])) {
 	    point_t tmp;
 	    VMOVE(tmp, isectpt[1]);
 	    VMOVE(isectpt[1], isectpt[0]);
