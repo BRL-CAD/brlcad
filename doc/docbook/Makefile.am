@@ -20,10 +20,9 @@ FOP_ENV_VARS = FOP_HYPHENATION_PATH=$(FOP_HYPH) CLASSPATH=$(top_srcdir)/doc/docb
 
 # two xml catalog files
 XML_CATALOG=resources/brlcad/brlcad-xml-catalog-autogen.xml
-# FOP_XML_CATALOG=$(top_srcdir)/doc/docbook/resources/brlcad/CatalogManager.properties
+FOP_XML_CATALOG=$(top_srcdir)/doc/docbook/resources/brlcad/CatalogManager.properties
 # both files as dependencies
-XML_CATALOGS=
-# $(FOP_XML_CATALOG) $(XML_CATALOG)
+XML_CATALOGS= $(FOP_XML_CATALOG) $(XML_CATALOG)
 
 # the xml catalog generator creates the two catalog files
 GEN_XML_CATALOGS=$(top_srcdir)/doc/docbook/create-xml-catalogs.pl
