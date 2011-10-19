@@ -18,7 +18,7 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* test multiple blank lines in red, report of crash
+* ship it!
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
@@ -61,6 +61,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* Mac OS X mouse input binding problem seems to be back with rotations
+  stalling during interactive use.
 
 * group public library headers into subdirs, e.g. include/bu/bu.h, so
   it's clear when you're using headers from another library and
