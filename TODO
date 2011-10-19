@@ -18,8 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* make sure 'rtcheck' run within mged works
-
 * test multiple blank lines in red, report of crash
 
 
