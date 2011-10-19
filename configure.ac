@@ -272,7 +272,7 @@ BC_ARG_ENABLE([build_64bit], [64bit-build], [Enable 64-bit compilation mode], [a
 BC_ARG_ENABLE([build_regex], [regex-build], [Build the included regular expression library], [auto])
 
 # force enable/disable building of libpng
-BC_ARG_ENABLE([build_png], [png-build], [Build the included Portable Network Graphics library], [auto])
+BC_ARG_ENABLE([build_png], [png-build], [Build the included Portable Network Graphics library], [no])
 
 # force enable/disable building of zlib
 BC_ARG_ENABLE([build_zlib], [zlib-build], [Build the included zlib compression library], [auto])
@@ -650,9 +650,6 @@ if test "x$set_everything" != "x" ; then
 	fi
 	if test "x$bc_build_regex_set" = "xno" ; then
 		bc_build_regex="$set_everything"
-	fi
-	if test "x$bc_build_png_set" = "xno" ; then
-		bc_build_png="$set_everything"
 	fi
 	if test "x$bc_build_zlib_set" = "xno" ; then
 		bc_build_zlib="$set_everything"
