@@ -19,9 +19,12 @@
 #
 ###
 #
-# Description - This is an Itcl/Itk implementation of an Accordian widget.
-#
-
+# Description - This is an Itcl/Itk implementation of an Accordian widget. The
+#   behavior is similar to tabs in that it displays/hides data depending on
+#   which button/tab is pressed. However this widget is better suited to applications
+#   where there is limited horizontal real estate (i.e. vertical situations).
+#   This widget has two modes: single selection and multiple selection, which is
+#   different from tabs which operate only in a single selection mode.
 
 ::itcl::class cadwidgets::Accordian {
     inherit ::itk::Widget
@@ -35,6 +38,7 @@
 	method delete {_first {_last ""}}
 	method insert {_index args}
 	method itemChildsite {_index}
+	method togglePanel {_index}
     }
 
     protected {
@@ -232,6 +236,23 @@
     set item [lindex $mItemList $i]
     set name "$ACC_PREFIX[regsub -all { } $item "_"]\CS"
     return $itk_component($name)
+}
+
+
+::itcl::body cadwidgets::Accordian::togglePanel {_index} {
+    set i [getIndex $_index]
+
+    if {$i == -1} {
+	error "Bad index - $_index"
+    }
+
+    set len [llength $mItemList]
+    if {$i >= $len} {
+	error "Bad index - $_index"
+    }
+
+    set item [lindex $mItemList $i]
+    toggleDisplay $item
 }
 
 
