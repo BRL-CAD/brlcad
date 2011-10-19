@@ -80,6 +80,7 @@ static char rcsid[] = "";
 #include "stack.h"
 #include "express/scope.h"
 #include "token_type.h"
+#include "expparse.h"
 
 Linked_List EXPRESS_path;
 int EXPRESSpass;
@@ -582,6 +583,133 @@ EXPRESSparse(Express model,FILE *fp, char *filename)
 
 	PARSEnew_schemas = LISTcreate();
 	PARSERrun(filename,model->u.express->file = fp);
+}
+
+void printToken(int tokenID)
+{
+    switch (tokenID) {
+	case TOK_EQUAL: puts("TOK_EQUAL"); break;
+	case TOK_GREATER_EQUAL: puts("TOK_GREATER_EQUAL"); break;
+	case TOK_GREATER_THAN: puts("TOK_GREATER_THAN"); break;
+	case TOK_IN: puts("TOK_IN"); break;
+	case TOK_INST_EQUAL: puts("TOK_INST_EQUAL"); break;
+	case TOK_INST_NOT_EQUAL: puts("TOK_INST_NOT_EQUAL"); break;
+	case TOK_LESS_EQUAL: puts("TOK_LESS_EQUAL"); break;
+	case TOK_LESS_THAN: puts("TOK_LESS_THAN"); break;
+	case TOK_LIKE: puts("TOK_LIKE"); break;
+	case TOK_NOT_EQUAL: puts("TOK_NOT_EQUAL"); break;
+	case TOK_MINUS: puts("TOK_MINUS"); break;
+	case TOK_PLUS: puts("TOK_PLUS"); break;
+	case TOK_OR: puts("TOK_OR"); break;
+	case TOK_XOR: puts("TOK_XOR"); break;
+	case TOK_DIV: puts("TOK_DIV"); break;
+	case TOK_MOD: puts("TOK_MOD"); break;
+	case TOK_REAL_DIV: puts("TOK_REAL_DIV"); break;
+	case TOK_TIMES: puts("TOK_TIMES"); break;
+	case TOK_AND: puts("TOK_AND"); break;
+	case TOK_ANDOR: puts("TOK_ANDOR"); break;
+	case TOK_CONCAT_OP: puts("TOK_CONCAT_OP"); break;
+	case TOK_EXP: puts("TOK_EXP"); break;
+	case TOK_NOT: puts("TOK_NOT"); break;
+	case TOK_DOT: puts("TOK_DOT"); break;
+	case TOK_BACKSLASH: puts("TOK_BACKSLASH"); break;
+	case TOK_LEFT_BRACKET: puts("TOK_LEFT_BRACKET"); break;
+	case TOK_LEFT_PAREN: puts("TOK_LEFT_PAREN"); break;
+	case TOK_RIGHT_PAREN: puts("TOK_RIGHT_PAREN"); break;
+	case TOK_RIGHT_BRACKET: puts("TOK_RIGHT_BRACKET"); break;
+	case TOK_COLON: puts("TOK_COLON"); break;
+	case TOK_COMMA: puts("TOK_COMMA"); break;
+	case TOK_AGGREGATE: puts("TOK_AGGREGATE"); break;
+	case TOK_OF: puts("TOK_OF"); break;
+	case TOK_IDENTIFIER: puts("TOK_IDENTIFIER"); break;
+	case TOK_ALIAS: puts("TOK_ALIAS"); break;
+	case TOK_FOR: puts("TOK_FOR"); break;
+	case TOK_END_ALIAS: puts("TOK_END_ALIAS"); break;
+	case TOK_ARRAY: puts("TOK_ARRAY"); break;
+	case TOK_ASSIGNMENT: puts("TOK_ASSIGNMENT"); break;
+	case TOK_BAG: puts("TOK_BAG"); break;
+	case TOK_BOOLEAN: puts("TOK_BOOLEAN"); break;
+	case TOK_INTEGER: puts("TOK_INTEGER"); break;
+	case TOK_REAL: puts("TOK_REAL"); break;
+	case TOK_NUMBER: puts("TOK_NUMBER"); break;
+	case TOK_LOGICAL: puts("TOK_LOGICAL"); break;
+	case TOK_BINARY: puts("TOK_BINARY"); break;
+	case TOK_STRING: puts("TOK_STRING"); break;
+	case TOK_BY: puts("TOK_BY"); break;
+	case TOK_LEFT_CURL: puts("TOK_LEFT_CURL"); break;
+	case TOK_RIGHT_CURL: puts("TOK_RIGHT_CURL"); break;
+	case TOK_OTHERWISE: puts("TOK_OTHERWISE"); break;
+	case TOK_CASE: puts("TOK_CASE"); break;
+	case TOK_END_CASE: puts("TOK_END_CASE"); break;
+	case TOK_BEGIN: puts("TOK_BEGIN"); break;
+	case TOK_END: puts("TOK_END"); break;
+	case TOK_PI: puts("TOK_PI"); break;
+	case TOK_E: puts("TOK_E"); break;
+	case TOK_CONSTANT: puts("TOK_CONSTANT"); break;
+	case TOK_END_CONSTANT: puts("TOK_END_CONSTANT"); break;
+	case TOK_DERIVE: puts("TOK_DERIVE"); break;
+	case TOK_END_ENTITY: puts("TOK_END_ENTITY"); break;
+	case TOK_ENTITY: puts("TOK_ENTITY"); break;
+	case TOK_ENUMERATION: puts("TOK_ENUMERATION"); break;
+	case TOK_ESCAPE: puts("TOK_ESCAPE"); break;
+	case TOK_SELF: puts("TOK_SELF"); break;
+	case TOK_OPTIONAL: puts("TOK_OPTIONAL"); break;
+	case TOK_VAR: puts("TOK_VAR"); break;
+	case TOK_END_FUNCTION: puts("TOK_END_FUNCTION"); break;
+	case TOK_FUNCTION: puts("TOK_FUNCTION"); break;
+	case TOK_BUILTIN_FUNCTION: puts("TOK_BUILTIN_FUNCTION"); break;
+	case TOK_LIST: puts("TOK_LIST"); break;
+	case TOK_SET: puts("TOK_SET"); break;
+	case TOK_GENERIC: puts("TOK_GENERIC"); break;
+	case TOK_QUESTION_MARK: puts("TOK_QUESTION_MARK"); break;
+	case TOK_IF: puts("TOK_IF"); break;
+	case TOK_THEN: puts("TOK_THEN"); break;
+	case TOK_END_IF: puts("TOK_END_IF"); break;
+	case TOK_ELSE: puts("TOK_ELSE"); break;
+	case TOK_INCLUDE: puts("TOK_INCLUDE"); break;
+	case TOK_STRING_LITERAL: puts("TOK_STRING_LITERAL"); break;
+	case TOK_TO: puts("TOK_TO"); break;
+	case TOK_AS: puts("TOK_AS"); break;
+	case TOK_REFERENCE: puts("TOK_REFERENCE"); break;
+	case TOK_FROM: puts("TOK_FROM"); break;
+	case TOK_USE: puts("TOK_USE"); break;
+	case TOK_INVERSE: puts("TOK_INVERSE"); break;
+	case TOK_INTEGER_LITERAL: puts("TOK_INTEGER_LITERAL"); break;
+	case TOK_REAL_LITERAL: puts("TOK_REAL_LITERAL"); break;
+	case TOK_STRING_LITERAL_ENCODED: puts("TOK_STRING_LITERAL_ENCODED"); break;
+	case TOK_LOGICAL_LITERAL: puts("TOK_LOGICAL_LITERAL"); break;
+	case TOK_BINARY_LITERAL: puts("TOK_BINARY_LITERAL"); break;
+	case TOK_LOCAL: puts("TOK_LOCAL"); break;
+	case TOK_END_LOCAL: puts("TOK_END_LOCAL"); break;
+	case TOK_ONEOF: puts("TOK_ONEOF"); break;
+	case TOK_UNIQUE: puts("TOK_UNIQUE"); break;
+	case TOK_FIXED: puts("TOK_FIXED"); break;
+	case TOK_END_PROCEDURE: puts("TOK_END_PROCEDURE"); break;
+	case TOK_PROCEDURE: puts("TOK_PROCEDURE"); break;
+	case TOK_BUILTIN_PROCEDURE: puts("TOK_BUILTIN_PROCEDURE"); break;
+	case TOK_QUERY: puts("TOK_QUERY"); break;
+	case TOK_ALL_IN: puts("TOK_ALL_IN"); break;
+	case TOK_SUCH_THAT: puts("TOK_SUCH_THAT"); break;
+	case TOK_REPEAT: puts("TOK_REPEAT"); break;
+	case TOK_END_REPEAT: puts("TOK_END_REPEAT"); break;
+	case TOK_RETURN: puts("TOK_RETURN"); break;
+	case TOK_END_RULE: puts("TOK_END_RULE"); break;
+	case TOK_RULE: puts("TOK_RULE"); break;
+	case TOK_END_SCHEMA: puts("TOK_END_SCHEMA"); break;
+	case TOK_SCHEMA: puts("TOK_SCHEMA"); break;
+	case TOK_SELECT: puts("TOK_SELECT"); break;
+	case TOK_SEMICOLON: puts("TOK_SEMICOLON"); break;
+	case TOK_SKIP: puts("TOK_SKIP"); break;
+	case TOK_SUBTYPE: puts("TOK_SUBTYPE"); break;
+	case TOK_ABSTRACT: puts("TOK_ABSTRACT"); break;
+	case TOK_SUPERTYPE: puts("TOK_SUPERTYPE"); break;
+	case TOK_END_TYPE: puts("TOK_END_TYPE"); break;
+	case TOK_TYPE: puts("TOK_TYPE"); break;
+	case TOK_UNTIL: puts("TOK_UNTIL"); break;
+	case TOK_WHERE: puts("TOK_WHERE"); break;
+	case TOK_WHILE: puts("TOK_WHILE"); break;
+	default: printf("UNRECOGNIZED (%d)\n", tokenID);
+    }
 }
 
 static
