@@ -20,9 +20,10 @@ FOP_ENV_VARS = FOP_HYPHENATION_PATH=$(FOP_HYPH) CLASSPATH=$(top_srcdir)/doc/docb
 
 # two xml catalog files
 XML_CATALOG=resources/brlcad/brlcad-xml-catalog-autogen.xml
-FOP_XML_CATALOG=$(top_srcdir)/doc/docbook/resources/brlcad/CatalogManager.properties
+# FOP_XML_CATALOG=$(top_srcdir)/doc/docbook/resources/brlcad/CatalogManager.properties
 # both files as dependencies
-XML_CATALOGS=$(FOP_XML_CATALOG) $(XML_CATALOG)
+XML_CATALOGS=
+# $(FOP_XML_CATALOG) $(XML_CATALOG)
 
 # the xml catalog generator creates the two catalog files
 GEN_XML_CATALOGS=$(top_srcdir)/doc/docbook/create-xml-catalogs.pl
@@ -333,7 +334,25 @@ EXTRA_DIST = \
 	log4j.properties \
 	presentations/CMakeLists.txt \
 	presentations/en/CMakeLists.txt \
-	resources \
+	resources/README \
+	resources/brlcad/book-covers-fo-template.xsl \
+	resources/brlcad/brlcad-common.xsl \
+	resources/brlcad/brlcad-fo-stylesheet-covers-v1.xsl \
+	resources/brlcad/brlcad-fo-stylesheet-covers-v2.xsl \
+	resources/brlcad/brlcad-fo-stylesheet-covers-v3.xsl \
+	resources/brlcad/brlcad-fo-stylesheet-covers-v4.xsl \
+	resources/brlcad/brlcad-fo-stylesheet.xsl \
+	resources/brlcad/brlcad-fonts.xsl \
+	resources/brlcad/brlcad-gendata.xsl \
+	resources/brlcad/brlcad-man-stylesheet.xsl \
+	resources/brlcad/brlcad-xhtml-header-navigation.xsl \
+	resources/brlcad/brlcad-xhtml-stylesheet.xsl \
+	resources/brlcad/brlcad-xml-catalog.xml.in \
+	resources/brlcad/center-table-print.xsl \
+	resources/brlcad/images \
+	resources/brlcad/tutorial-cover-template.xsl.in \
+	resources/brlcad/tutorial-template.xsl.in \
+	resources/other \
 	specifications/CMakeLists.txt \
 	specifications/en/CMakeLists.txt \
 	specifications/en/Makefile.am \
