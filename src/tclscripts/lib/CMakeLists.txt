@@ -1,4 +1,5 @@
 SET(lib_TCLSCRIPTS
+	Accordian.tcl
 	CellPlot.tcl
 	ColorEntry.tcl
 	ComboBox.tcl
