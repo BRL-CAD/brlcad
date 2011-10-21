@@ -38,7 +38,9 @@
 #include "simrt.h"
 
 
-
+/* This is kept global because it has to accessed by callbacks, though there may be
+ * a way to overcome this by inserting the pointer in the user world-info ptr of Bullet
+ */
 struct simulation_params *sim_params;
 
 /**
@@ -86,16 +88,16 @@ pre_tick_callback(btDynamicsWorld *dynamicsWorld, btScalar timeStep)
 {
     bu_log("The world will soon tick by %f seconds\n", (float)timeStep);
 
-	int i;
+    int i;
 
     for (i=dynamicsWorld->getNumCollisionObjects()-1; i>=0; i--) {
 
-		btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[i];
-		btRigidBody* body = btRigidBody::upcast(obj);
+	btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[i];
+	btRigidBody* body = btRigidBody::upcast(obj);
 
-		btVector3 gravity(0,0, 10.0);
-		body->applyCentralForce(gravity);
-	}
+	btVector3 gravity(0,0, 10.0);
+	body->applyCentralForce(gravity);
+    }
 }
 
 
@@ -122,7 +124,7 @@ post_tick_callback(btDynamicsWorld *dynamicsWorld, btScalar timeStep)
  */
 int
 add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld,
-				 btAlignedObjectArray<btCollisionShape*> collision_shapes)
+		 btAlignedObjectArray<btCollisionShape*> collision_shapes)
 {
     struct rigid_body *current_node;
     fastf_t volume;
@@ -133,7 +135,7 @@ add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld,
 
     for (current_node = sim_params->head_node; current_node != NULL; current_node = current_node->next) {
 
-    	current_node->iter = sim_params->iter;
+	current_node->iter = sim_params->iter;
 
 	// Check if we should add a ground plane
 	if (strcmp(current_node->rb_namep, sim_params->ground_plane_name) == 0) {
@@ -232,30 +234,30 @@ step_physics(btDiscreteDynamicsWorld* dynamicsWorld)
 {
     int i;
 
-	bu_vls_printf(sim_params->result_str, "Simulation will run for %d steps.\n", sim_params->duration);
+    bu_vls_printf(sim_params->result_str, "Simulation will run for %d steps.\n", sim_params->duration);
     bu_vls_printf(sim_params->result_str, "----- Starting simulation -----\n");
 
     for (i=0 ; i < sim_params->duration ; i++) {
-    	bu_log("------------------------- Iteration %d -----------------------\n", i+1);
+	bu_log("------------------------- Iteration %d -----------------------\n", i+1);
 
-    	//time step of 1/60th of a second(same as internal fixedTimeStep, maxSubSteps=10 to cover 1/60th sec.)
-    	dynamicsWorld->stepSimulation(1/60.f, 10);
+	//time step of 1/60th of a second(same as internal fixedTimeStep, maxSubSteps=10 to cover 1/60th sec.)
+	dynamicsWorld->stepSimulation(1/60.f, 10);
 
 
- /*   	for (j=dynamicsWorld->getNumCollisionObjects()-1; j>=0; j--) {
+	/*   	for (j=dynamicsWorld->getNumCollisionObjects()-1; j>=0; j--) {
 
-			btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[j];
-			btRigidBody* body = btRigidBody::upcast(obj);
+		btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[j];
+		btRigidBody* body = btRigidBody::upcast(obj);
 
-			btVector3 gravity(0,0, 10.1);
-			body->applyCentralForce(gravity);
+		btVector3 gravity(0,0, 10.1);
+		body->applyCentralForce(gravity);
 
-			//struct rigid_body *rbA = (struct rigid_body *)boxA->getUserPointer();
-			//if( BU_STR_EQUAL(rt_mf->rbA->rb_namep, rbA->rb_namep)
+		//struct rigid_body *rbA = (struct rigid_body *)boxA->getUserPointer();
+		//if( BU_STR_EQUAL(rt_mf->rbA->rb_namep, rbA->rb_namep)
 		}
 
-*/
-	}
+	*/
+    }
 
     bu_log("----- Simulation Complete -----\n");
     return 0;
@@ -386,37 +388,37 @@ struct broadphase_callback : public btOverlapFilterCallback
     virtual bool
     needBroadphaseCollision(btBroadphaseProxy* proxy0, btBroadphaseProxy* proxy1) const
     {
-		bool collides = (proxy0->m_collisionFilterGroup & proxy1->m_collisionFilterMask) != 0;
-		collides = collides && (proxy1->m_collisionFilterGroup & proxy0->m_collisionFilterMask);
+	bool collides = (proxy0->m_collisionFilterGroup & proxy1->m_collisionFilterMask) != 0;
+	collides = collides && (proxy1->m_collisionFilterGroup & proxy0->m_collisionFilterMask);
 
-		btVector3 aabbMin, aabbMax;
+	btVector3 aabbMin, aabbMax;
 
-		//This would prevent collision between proxy0 and proxy1 inspite of
-		//AABB overlap being detected
-		btRigidBody* boxA = (btRigidBody*)proxy0->m_clientObject;
-		btRigidBody* boxB = (btRigidBody*)proxy1->m_clientObject;
+	//This would prevent collision between proxy0 and proxy1 inspite of
+	//AABB overlap being detected
+	btRigidBody* boxA = (btRigidBody*)proxy0->m_clientObject;
+	btRigidBody* boxB = (btRigidBody*)proxy1->m_clientObject;
 
-		if (boxA != NULL && boxB != NULL) {
+	if (boxA != NULL && boxB != NULL) {
 
-			struct rigid_body *rbA = (struct rigid_body *)boxA->getUserPointer();
-			struct rigid_body *rbB = (struct rigid_body *)boxB->getUserPointer();
+	    struct rigid_body *rbA = (struct rigid_body *)boxA->getUserPointer();
+	    struct rigid_body *rbB = (struct rigid_body *)boxB->getUserPointer();
 
-			bu_log("broadphase_callback: %s & %s has overlapping AABBs",
-				   rbA->rb_namep, rbB->rb_namep);
+	    bu_log("broadphase_callback: %s & %s has overlapping AABBs",
+		   rbA->rb_namep, rbB->rb_namep);
 
-			//Get the AABB for body A : will happen multiple times if there are multiple overlaps
-			boxA->getAabb(aabbMin, aabbMax);
-			VMOVE(rbA->btbb_min, aabbMin);
-			VMOVE(rbA->btbb_max, aabbMax);
+	    //Get the AABB for body A : will happen multiple times if there are multiple overlaps
+	    boxA->getAabb(aabbMin, aabbMax);
+	    VMOVE(rbA->btbb_min, aabbMin);
+	    VMOVE(rbA->btbb_max, aabbMax);
 
-			//Get the AABB for body B : will happen multiple times if there are multiple overlaps
-			boxB->getAabb(aabbMin, aabbMax);
-			VMOVE(rbB->btbb_min, aabbMin);
-			VMOVE(rbB->btbb_max, aabbMax);
-		}
+	    //Get the AABB for body B : will happen multiple times if there are multiple overlaps
+	    boxB->getAabb(aabbMin, aabbMax);
+	    VMOVE(rbB->btbb_min, aabbMin);
+	    VMOVE(rbB->btbb_max, aabbMax);
+	}
 
-		//add some additional logic here that modifies 'collides'
-		return collides;
+	//add some additional logic here that modifies 'collides'
+	return collides;
     }
 };
 
@@ -431,21 +433,21 @@ nearphase_callback(btBroadphasePair& collisionPair,
 		   btDispatcherInfo& dispatchInfo)
 {
 
-	btRigidBody* boxA = (btRigidBody*)(collisionPair.m_pProxy0->m_clientObject);
-	btRigidBody* boxB = (btRigidBody*)(collisionPair.m_pProxy1->m_clientObject);
+    btRigidBody* boxA = (btRigidBody*)(collisionPair.m_pProxy0->m_clientObject);
+    btRigidBody* boxB = (btRigidBody*)(collisionPair.m_pProxy1->m_clientObject);
 
 
-	struct rigid_body *rbA = (struct rigid_body *)boxA->getUserPointer();
-	struct rigid_body *rbB = (struct rigid_body *)boxB->getUserPointer();
+    struct rigid_body *rbA = (struct rigid_body *)boxA->getUserPointer();
+    struct rigid_body *rbB = (struct rigid_body *)boxB->getUserPointer();
 
-	bu_log("nearphase_callback : Generating force for %s & %s\n",
-			rbA->rb_namep,
-			rbB->rb_namep);
+    bu_log("nearphase_callback : Generating force for %s & %s\n",
+	   rbA->rb_namep,
+	   rbB->rb_namep);
 
-	generate_force(sim_params, rbA, rbB);
+    generate_force(sim_params, rbA, rbB);
 
-	// Only dispatch the Bullet collision information if physics should continue
-	dispatcher.defaultNearCallback(collisionPair, dispatcher, dispatchInfo);
+    // Only dispatch the Bullet collision information if physics should continue
+    dispatcher.defaultNearCallback(collisionPair, dispatcher, dispatchInfo);
 }
 
 
@@ -453,26 +455,26 @@ nearphase_callback(btBroadphasePair& collisionPair,
  * Called whenever a contact pair is added to a manifold
  */
 bool contact_added(
-    btManifoldPoint& pt,
-    const btCollisionObject* col0,
-    int partId0,
-    int index0,
-    const btCollisionObject* col1,
-    int partId1,
-    int index1)
+		   btManifoldPoint& pt,
+		   const btCollisionObject* col0,
+		   int partId0,
+		   int index0,
+		   const btCollisionObject* col1,
+		   int partId1,
+		   int index1)
 {
-	//Get the user pointers to struct rigid_body, for printing the body name
-	struct rigid_body *rbA = (struct rigid_body *)col0->getUserPointer();
-	struct rigid_body *rbB = (struct rigid_body *)col1->getUserPointer();
+    //Get the user pointers to struct rigid_body, for printing the body name
+    struct rigid_body *rbA = (struct rigid_body *)col0->getUserPointer();
+    struct rigid_body *rbB = (struct rigid_body *)col1->getUserPointer();
 
-	btVector3 ptA = pt.getPositionWorldOnA();
-	btVector3 ptB = pt.getPositionWorldOnB();
+    btVector3 ptA = pt.getPositionWorldOnA();
+    btVector3 ptB = pt.getPositionWorldOnB();
 
-	bu_log("Contact added between %s(%f, %f, %f):%d,%d  &  %s(%f, %f, %f):%d,%d!",
-			rbA->rb_namep, V3ARGS(ptA), partId0, index0,
-			rbB->rb_namep, V3ARGS(ptB), partId1, index1);
+    bu_log("Contact added between %s(%f, %f, %f):%d,%d  &  %s(%f, %f, %f):%d,%d!",
+	   rbA->rb_namep, V3ARGS(ptA), partId0, index0,
+	   rbB->rb_namep, V3ARGS(ptB), partId1, index1);
 
-	return true;
+    return true;
 }
 
 
@@ -482,19 +484,19 @@ bool contact_added(
  */
 bool contact_processed(btManifoldPoint& pt, void* col0, void* col1)
 {
-	//Get the user pointers to struct rigid_body, for printing the body name
-	struct rigid_body *rbA = (struct rigid_body *)((btCollisionObject*)col0)->getUserPointer();
-	struct rigid_body *rbB = (struct rigid_body *)((btCollisionObject*)col1)->getUserPointer();
+    //Get the user pointers to struct rigid_body, for printing the body name
+    struct rigid_body *rbA = (struct rigid_body *)((btCollisionObject*)col0)->getUserPointer();
+    struct rigid_body *rbB = (struct rigid_body *)((btCollisionObject*)col1)->getUserPointer();
 
-	btVector3 ptA = pt.getPositionWorldOnA();
-	btVector3 ptB = pt.getPositionWorldOnB();
+    btVector3 ptA = pt.getPositionWorldOnA();
+    btVector3 ptB = pt.getPositionWorldOnB();
 
-	bu_log("Contact processed between %s(%f, %f, %f) & %s(%f, %f, %f)!",
-			rbA->rb_namep, V3ARGS(ptA),
-			rbB->rb_namep, V3ARGS(ptB));
+    bu_log("Contact processed between %s(%f, %f, %f) & %s(%f, %f, %f)!",
+	   rbA->rb_namep, V3ARGS(ptA),
+	   rbB->rb_namep, V3ARGS(ptB));
 
 
-	return true;
+    return true;
 }
 
 
@@ -503,8 +505,8 @@ bool contact_processed(btManifoldPoint& pt, void* col0, void* col1)
  */
 bool contact_destroyed(void* userPersistentData)
 {
-	bu_log("CONTACT DESTROYED! %s", (char*)userPersistentData);
-	return true;
+    bu_log("CONTACT DESTROYED! %s", (char*)userPersistentData);
+    return true;
 }
 
 /**
@@ -516,14 +518,14 @@ run_simulation(struct simulation_params *sp)
 {
     //int i;
 
-	sim_params = sp;
+    sim_params = sp;
 
-	//for (i=0 ; i < sim_params->duration ; i++) {
+    //for (i=0 ; i < sim_params->duration ; i++) {
 
     //Make a new rt_i instance from the existing db_i structure
     if ((sim_params->rtip=rt_new_rti(sim_params->gedp->ged_wdbp->dbip)) == RTI_NULL) {
-    	bu_log("run_simulation: rt_new_rti failed while getting new rt instance\n");
-    	return 1;
+	bu_log("run_simulation: rt_new_rti failed while getting new rt instance\n");
+	return 1;
     }
     sim_params->rtip->useair = 1;
 

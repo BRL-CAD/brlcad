@@ -413,24 +413,22 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-	/* Recreate sim.c to clear AABBs and manifold regions from previous iteration */
-	recreate_sim_comb(gedp, &sim_params);
+    /* Recreate sim.c to clear AABBs and manifold regions from previous iteration */
+    recreate_sim_comb(gedp, &sim_params);
 
-	/* Run the physics simulation */
-	rv = run_simulation(&sim_params);
-	if (rv != GED_OK) {
-	    bu_vls_printf(gedp->ged_result_str, "%s: ERROR while running the simulation\n", argv[0]);
-	    return GED_ERROR;
-	}
+    /* Run the physics simulation */
+    rv = run_simulation(&sim_params);
+    if (rv != GED_OK) {
+	bu_vls_printf(gedp->ged_result_str, "%s: ERROR while running the simulation\n", argv[0]);
+	return GED_ERROR;
+    }
 
-	/* Apply transforms on the participating objects, also shades objects */
-	rv = apply_transforms(gedp, &sim_params);
-	if (rv != GED_OK) {
-	    bu_vls_printf(gedp->ged_result_str, "%s: ERROR while applying transforms\n", argv[0]);
-	    return GED_ERROR;
-	}
-
-
+    /* Apply transforms on the participating objects, also shades objects */
+    rv = apply_transforms(gedp, &sim_params);
+    if (rv != GED_OK) {
+	bu_vls_printf(gedp->ged_result_str, "%s: ERROR while applying transforms\n", argv[0]);
+	return GED_ERROR;
+    }
 
 
     /* Free memory in rigid_body list */

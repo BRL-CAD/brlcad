@@ -40,7 +40,6 @@
 //#define USE_PERSISTENT_CONTACTS 1
 
 
-
 btRTCollisionAlgorithm::btRTCollisionAlgorithm(btPersistentManifold* mf,
 					       const btCollisionAlgorithmConstructionInfo& ci,
 					       btCollisionObject* obj0,
@@ -78,7 +77,6 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* body0,
     //btCollisionObject* col1 = body1;
 
 
-
     //quellage
     bu_log("%d", dispatchInfo.m_stepCount);
 
@@ -98,11 +96,6 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* body0,
     //detector.getClosestPoints(input, *resultOut, dispatchInfo.m_debugDraw);
 
     //------------------- DEBUG ---------------------------
-
-
-
-
-
 
 
     //------------------------------------------------------

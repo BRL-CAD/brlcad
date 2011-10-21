@@ -85,7 +85,7 @@ print_manifold_list(struct rigid_body *rb)
     for (i=0; i<rb->num_bt_manifolds; i++) {
 
 	bu_log("--Manifold %d between %s & %s has %d contacts--\n",
-		   i+1,
+	       i+1,
 	       rb->bt_manifold[i].rbA->rb_namep,
 	       rb->bt_manifold[i].rbB->rb_namep,
 	       rb->bt_manifold[i].num_contacts);
@@ -492,13 +492,13 @@ make_rpp(struct ged *gedp, vect_t min, vect_t max, char* name)
 
     rv = ged_in(gedp, argc, (const char **)cmd_args);
     if (rv != GED_OK) {
-    	 if (kill(gedp, name) != GED_OK) {
-    		bu_log("line: ERROR Could not delete existing \"%s\"\n", name);
-    		return GED_ERROR;
-    	 }
-    	 bu_log("make_rpp: WARNING Could not insert RPP %s (%f, %f, %f):(%f, %f, %f)\n",
+	if (kill(gedp, name) != GED_OK) {
+	    bu_log("line: ERROR Could not delete existing \"%s\"\n", name);
+	    return GED_ERROR;
+	}
+	bu_log("make_rpp: WARNING Could not insert RPP %s (%f, %f, %f):(%f, %f, %f)\n",
 	       name, V3ARGS(min), V3ARGS(max));
-    	 return GED_ERROR;
+	return GED_ERROR;
     }
 
     bu_free_array(argc, cmd_args, "make_rpp: free cmd_args");
