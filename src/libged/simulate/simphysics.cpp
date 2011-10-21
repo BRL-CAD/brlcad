@@ -77,6 +77,44 @@ print_matrices(char *rb_namep, mat_t t, btScalar *m)
 
 
 /**
+ * This function is called just before the simulation step and is used
+ * to apply the resultant force on a body due to contacts
+ *
+ */
+void
+pre_tick_callback(btDynamicsWorld *dynamicsWorld, btScalar timeStep)
+{
+    bu_log("The world will soon tick by %f seconds\n", (float)timeStep);
+
+	int i;
+
+    for (i=dynamicsWorld->getNumCollisionObjects()-1; i>=0; i--) {
+
+		btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[i];
+		btRigidBody* body = btRigidBody::upcast(obj);
+
+		btVector3 gravity(0,0, 10.0);
+		body->applyCentralForce(gravity);
+	}
+}
+
+
+/**
+ * This is called after the simulation step and will be used to check if
+ * the forces were applied correctly and possibly force objects into position
+ * before the next step.
+ */
+void
+post_tick_callback(btDynamicsWorld *dynamicsWorld, btScalar timeStep)
+{
+    bu_log("The world just ticked by %f seconds\n", (float)timeStep);
+    btVector3 g = dynamicsWorld->getGravity();
+    bu_log("The gravity was %f,%f,%f\n", V3ARGS(g));
+
+}
+
+
+/**
  * Adds rigid bodies to the dynamics world from the BRL-CAD geometry,
  * will add a ground plane if a region by the name of sim_gp.r is detected
  * The plane will be static and have the same dimensions as the region
@@ -176,6 +214,11 @@ add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld,
 
     }
 
+    //Setup the tick callbacks where the forces calculated using the contact manifolds
+    //will be actually applied
+    dynamicsWorld->setInternalTickCallback(pre_tick_callback, 0, true);
+    dynamicsWorld->setInternalTickCallback(post_tick_callback);
+
     return 0;
 }
 
@@ -187,13 +230,34 @@ add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld,
 int
 step_physics(btDiscreteDynamicsWorld* dynamicsWorld)
 {
-    bu_vls_printf(sim_params->result_str, "Simulation will run for %d steps.\n", sim_params->duration);
+    int i;
+
+	bu_vls_printf(sim_params->result_str, "Simulation will run for %d steps.\n", sim_params->duration);
     bu_vls_printf(sim_params->result_str, "----- Starting simulation -----\n");
 
-    //time step of 1/60th of a second(same as internal fixedTimeStep, maxSubSteps=10 to cover 1/60th sec.)
-    dynamicsWorld->stepSimulation(1/60.f, 10);
+    for (i=0 ; i < sim_params->duration ; i++) {
+    	bu_log("------------------------- Iteration %d -----------------------\n", i+1);
 
-    bu_vls_printf(sim_params->result_str, "----- Simulation Complete -----\n");
+    	//time step of 1/60th of a second(same as internal fixedTimeStep, maxSubSteps=10 to cover 1/60th sec.)
+    	dynamicsWorld->stepSimulation(1/60.f, 10);
+
+
+ /*   	for (j=dynamicsWorld->getNumCollisionObjects()-1; j>=0; j--) {
+
+			btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[j];
+			btRigidBody* body = btRigidBody::upcast(obj);
+
+			btVector3 gravity(0,0, 10.1);
+			body->applyCentralForce(gravity);
+
+			//struct rigid_body *rbA = (struct rigid_body *)boxA->getUserPointer();
+			//if( BU_STR_EQUAL(rt_mf->rbA->rb_namep, rbA->rb_namep)
+		}
+
+*/
+	}
+
+    bu_log("----- Simulation Complete -----\n");
     return 0;
 }
 
@@ -329,7 +393,6 @@ struct broadphase_callback : public btOverlapFilterCallback
 
 		//This would prevent collision between proxy0 and proxy1 inspite of
 		//AABB overlap being detected
-		//collides = false;
 		btRigidBody* boxA = (btRigidBody*)proxy0->m_clientObject;
 		btRigidBody* boxB = (btRigidBody*)proxy1->m_clientObject;
 
@@ -368,29 +431,21 @@ nearphase_callback(btBroadphasePair& collisionPair,
 		   btDispatcherInfo& dispatchInfo)
 {
 
-    int rv;
-
-    btRigidBody* box0 = (btRigidBody*)(collisionPair.m_pProxy0->m_clientObject);
-    btRigidBody* box1 = (btRigidBody*)(collisionPair.m_pProxy1->m_clientObject);
-    if (box0 != NULL && box0 != NULL) {
-
-    	struct rigid_body *rbA = (struct rigid_body *)box0->getUserPointer();
-    	struct rigid_body *rbB = (struct rigid_body *)box1->getUserPointer();
-
-		bu_log("nearphase_callback : Creating manifold between %s & %s\n",
-				 rbA->rb_namep, rbB->rb_namep);
-
-		/* Generate manifolds using rt */
-		rv = generate_manifolds(sim_params, rbA, rbB);
-		if (rv != GED_OK) {
-			bu_log("nearphase_callback: ERROR while creating manifold between %s & %s\n",
-					rbA->rb_namep, rbB->rb_namep);
-		}
-    }
+	btRigidBody* boxA = (btRigidBody*)(collisionPair.m_pProxy0->m_clientObject);
+	btRigidBody* boxB = (btRigidBody*)(collisionPair.m_pProxy1->m_clientObject);
 
 
-    // Only dispatch the Bullet collision information if physics should continue
-    dispatcher.defaultNearCallback(collisionPair, dispatcher, dispatchInfo);
+	struct rigid_body *rbA = (struct rigid_body *)boxA->getUserPointer();
+	struct rigid_body *rbB = (struct rigid_body *)boxB->getUserPointer();
+
+	bu_log("nearphase_callback : Generating force for %s & %s\n",
+			rbA->rb_namep,
+			rbB->rb_namep);
+
+	generate_force(sim_params, rbA, rbB);
+
+	// Only dispatch the Bullet collision information if physics should continue
+	dispatcher.defaultNearCallback(collisionPair, dispatcher, dispatchInfo);
 }
 
 

@@ -146,7 +146,7 @@ create_contact_pairs(struct sim_manifold *mf, vect_t overlap_min, vect_t overlap
  * as well, to prevent memory leaks, before a new set manifolds are created.
  */
 int
-generate_manifolds(struct simulation_params *sim_params,
+generate_force(struct simulation_params *sim_params,
 				   struct rigid_body *rbA,
 				   struct rigid_body *rbB);
 

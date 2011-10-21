@@ -413,15 +413,10 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    for (i=0 ; i < sim_params.duration ; i++) {
-
-	bu_log("%s: ------------------------- Iteration %d -----------------------\n", argv[0], i+1);
-
 	/* Recreate sim.c to clear AABBs and manifold regions from previous iteration */
 	recreate_sim_comb(gedp, &sim_params);
 
 	/* Run the physics simulation */
-	sim_params.iter = i;
 	rv = run_simulation(&sim_params);
 	if (rv != GED_OK) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: ERROR while running the simulation\n", argv[0]);
@@ -435,7 +430,7 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
-    }
+
 
 
     /* Free memory in rigid_body list */
