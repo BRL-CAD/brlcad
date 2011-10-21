@@ -4511,7 +4511,7 @@ rt_bot_sync_func(struct rt_bot_internal *bot,
 {
     struct tri_edges *neighbor_tep;
     struct tri_edges **stack = (struct tri_edges **)bu_calloc(bot->num_faces, sizeof(struct tri_edges *), "rt_bot_sync_func: stack");
-    register int si = -1;
+    register size_t si = 0;
     register int not_done = 1;
 
     while (not_done) {
@@ -4594,7 +4594,7 @@ rt_bot_sync_func(struct rt_bot_internal *bot,
 	    }
 	}
 
-	if (si < 0)
+	if (si < 1)
 	    not_done = 0;
 	else
 	    tep = stack[si--];
@@ -4668,7 +4668,7 @@ rt_bot_split_func(struct rt_bot_internal *bot,
 {
     struct tri_pts *neighbor_tpp;
     struct tri_pts **stack = (struct tri_pts **)bu_calloc(bot->num_faces, sizeof(struct tri_pts *), "rt_bot_split_func: stack");
-    register int si = -1;
+    register size_t si = 0;
     register int not_done = 1;
 
     while (not_done) {
@@ -4703,7 +4703,7 @@ rt_bot_split_func(struct rt_bot_internal *bot,
 	    }
 	}
 
-	if (si < 0)
+	if (si < 1)
 	    not_done = 0;
 	else
 	    tpp = stack[si--];
