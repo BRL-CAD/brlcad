@@ -6,115 +6,459 @@
 
 #include "express/expbasic.h"
 #include "express/dict.h"
+#include "express/linklist.h"
 #include "express/symbol.h"
 
 #include "express/expprint.h"
 #include "expparse.h"
 
 static void
-printStart(const char *structName)
+printIndent(int indent)
 {
+    int i;
+    for (i = 0; i < indent; i++) {
+	printf("    ");
+    }
+}
+
+static void
+printStart(const char *structName, int indent)
+{
+    printIndent(indent);
     printf("%s {\n", structName);
 }
 
 static void
-printEnd()
+printEnd(int indent)
 {
+    printIndent(indent);
     printf("}\n");
 }
 
+/* basic types */
+
 static void
-printSymbol(Symbol *structp)
+printChar(const char *name, char c, int indent)
 {
-    printStart("Symbol");
-
-    printf("name = %s\n", structp->name);
-    printf("filename = %s\n", structp->name);
-    printf("line = %hd\n", structp->line);
-    printf("resolved = %c\n", structp->resolved);
-
-    printEnd();
+    printIndent(indent);
+    printf("%s = %c\n", name, c);
 }
 
 static void
-printElement(Element structp)
+printString(const char *name, char *str, int indent)
 {
-    printStart("Element");
+    printIndent(indent);
+    printf("%s = %s\n", name, str);
+}
 
-    printf("key = %s\n", structp->key);;
-    printf("data = %s\n", structp->data);;
+printInt(const char *name, int n, int indent)
+{
+    printIndent(indent);
+    printf("%s = %d\n", name, n);
+}
 
-    if (structp->next != NULL) {
-	printElement(structp->next);
+static void
+printShort(const char *name, short s, int indent)
+{
+    printIndent(indent);
+    printf("%s = %hd\n", name, s);
+}
+
+static void
+printLong(const char *name, long l, int indent)
+{
+    printIndent(indent);
+    printf("%s = %ld\n", name, l);
+}
+
+/* express types */
+
+static void
+printSymbol(const char *name, Symbol *s, int indent)
+{
+    printStart(name, indent++);
+
+    printString("name", s->name, indent);
+    printString("filename", s->filename, indent);
+    printShort("line", s->line, indent);
+    /* printChar("resolved", s->resolved, indent); */
+    printChar("resolved", '?', indent);
+
+    printEnd(--indent);
+}
+
+static void
+printElement(const char *name, Element e, int indent)
+{
+    printStart(name, indent++);
+
+    printString("key", e->key, indent);
+    /* printString("data", e->data, indent); */
+    printString("data", "???", indent);
+
+    if (e->next != NULL) {
+	printElement("next", e->next, indent);
     }
 
-    printSymbol(structp->symbol);
-    printf("type = %c\n", structp->type);
+    printSymbol("symbol", e->symbol, indent);
+    printChar("type", e->type, indent);
 
-    printEnd();
+    printEnd(--indent);
 }
 
 static void
-printDictionary(Dictionary structp)
+printDictionary(const char *name, Dictionary d, int indent)
 {
     int i, j, numSegs, numKeys;
     Segment seg;
+    char entryString[64] = {0};
 
-    printStart("Dictionary");
+    printStart(name, indent++);
 
-    printf("p = %hd\n", structp->p);
-    printf("maxp = %hd\n", structp->maxp);
-    printf("KeyCount = %ld\n", structp->KeyCount);
-    printf("SegmentCount = %hd\n", structp->SegmentCount);
-    printf("MinLoadFactor = %hd\n", structp->MinLoadFactor);
-    printf("MaxLoadFactor = %hd\n", structp->MaxLoadFactor);
+    printShort("p", d->p, indent);
+    printShort("maxp", d->maxp, indent);
+    printLong("KeyCount", d->KeyCount, indent);
+    printShort("SegmentCount", d->SegmentCount, indent);
+    printShort("MinLoadFactor", d->MinLoadFactor, indent);
+    printShort("MaxLoadFactor", d->MaxLoadFactor, indent);
 
-    numSegs = structp->SegmentCount;
-    numKeys = structp->KeyCount;
+    numSegs = d->SegmentCount;
+    numKeys = d->KeyCount;
 
     for (i = 0; i < numSegs; i++) {
-	seg = structp->Directory[i];
+	seg = d->Directory[i];
 
 	for (j = 0; j < SEGMENT_SIZE; j++) {
 	    if (seg[j] != NULL) {
-		printElement(seg[j]);
+		sprintf(entryString, "Directory[%d][%d]", i, j);
+		printElement(entryString, seg[j], indent);
 	    }
 	}
     }
 
-    printEnd();
+    printEnd(--indent);
+}
+
+printOpCode(const char *name, Op_Code o, int indent)
+{
+    printStart(name, indent++);
+
+    switch (o) {
+	case OP_AND: printf("OP_AND"); break;
+	case OP_ANDOR: printf("OP_ANDOR"); break;
+	case OP_ARRAY_ELEMENT: printf("OP_ARRAY_ELEMENT"); break;
+	case OP_CONCAT: printf("OP_CONCAT"); break;
+	case OP_DIV: printf("OP_DIV"); break;
+	case OP_DOT: printf("OP_DOT"); break;
+	case OP_EQUAL: printf("OP_EQUAL"); break;
+	case OP_EXP: printf("OP_EXP"); break;
+	case OP_GREATER_EQUAL: printf("OP_GREATER_EQUAL"); break;
+	case OP_GREATER_THAN: printf("OP_GREATER_THAN"); break;
+	case OP_GROUP: printf("OP_GROUP,"); break;
+	case OP_IN: printf("OP_IN"); break;
+	case OP_INST_EQUAL: printf("OP_INST_EQUAL"); break;
+	case OP_INST_NOT_EQUAL: printf("OP_INST_NOT_EQUAL"); break;
+	case OP_LESS_EQUAL: printf("OP_LESS_EQUAL"); break;
+	case OP_LESS_THAN: printf("OP_LESS_THAN"); break;
+	case OP_LIKE: printf("OP_LIKE"); break;
+	case OP_MINUS: printf("OP_MINUS"); break;
+	case OP_MOD: printf("OP_MOD"); break;
+	case OP_NEGATE: printf("OP_NEGATE"); break;
+	case OP_NOT: printf("OP_NOT"); break;
+	case OP_NOT_EQUAL: printf("OP_NOT_EQUAL"); break;
+	case OP_OR: printf("OP_OR"); break;
+	case OP_PLUS: printf("OP_PLUS"); break;
+	case OP_REAL_DIV: printf("OP_REAL_DIV"); break;
+	case OP_SUBCOMPONENT: printf("OP_SUBCOMPONENT"); break;
+	case OP_TIMES: printf("OP_TIMES"); break;
+	case OP_XOR: printf("OP_XOR"); break;
+	case OP_UNKNOWN: printf("OP_UNKNOWN"); break;
+	case OP_LAST: printf("OP_LAST"); break;
+    }
+
+    printEnd(--indent);
+}
+
+static void printExpression(const char *name, Expression e, int indent);
+
+printSubexpression(const char *name, struct Op_Subexpression *e, int indent)
+{
+    printStart(name, indent++);
+
+    printOpCode("op_code", e->op_code, indent);
+    printExpression("op1", e->op1, indent);
+    printExpression("op2", e->op1, indent);
+    printExpression("op3", e->op1, indent);
+
+    printEnd(--indent);
+}
+
+static void
+printExpression(const char *name, Expression e, int indent)
+{
+    printStart(name, indent++);
+
+    printSymbol("symbol", &e->symbol, indent);
+    printScope("type", e->type, indent);
+    printScope("return_type", e->return_type, indent);
+
+    if (&e->e != NULL) {
+	printSubexpression("e", &e->e, indent);
+    }
+
+    /* printUnion("expr_union", e->u, indent); */
+
+    printEnd(--indent);
+#if 0
+    struct Expression_ {
+	Symbol symbol;		/* contains things like funcall names */
+				/* string names, binary values, */
+				/* enumeration names */
+	Type type;
+	Type return_type;	/* type of value returned by expression */
+		/* The difference between 'type' and 'return_type' is */
+		/* illustrated by "func(a)".  Here, 'type' is Type_Function */
+		/* while 'return_type'  might be Type_Integer (assuming func */
+		/* returns an integer). */
+	struct Op_Subexpression e;
+	union expr_union u;
+}
+
+union expr_union {
+	int integer;
+	float real;
+/*	char *string;		find string name in symbol in Expression */
+	char *attribute;	/* inverse .... for 'attr' */
+	char *binary;
+	int logical;
+	Boolean boolean;
+	struct Query_ *query;
+	struct Funcall funcall;
+
+	/* if etype == aggregate, list of expressions */
+	/* if etype == funcall, 1st element of list is funcall or entity */
+	/*	remaining elements are parameters */
+	Linked_List list;	/* aggregates (bags, lists, sets, arrays) */
+				/* or lists for oneof expressions */
+	Expression expression;	/* derived value in derive attrs, or*/
+				/* initializer in local vars, or */
+				/* enumeration tags */
+				/* or oneof value */
+	struct Scope_ *entity;	/* used by subtype exp, group expr */
+				/* and self expr, some funcall's and any */
+				/* expr that results in an entity */
+	Variable variable;	/* attribute reference */
+};
+#endif
+}
+
+static void
+printStatement(Statement structp, int indent)
+{
+}
+
+static void
+printProcedure(const char *name, struct Procedure_ *p, int indent)
+{
+    Expression e;
+    Statement s;
+
+    printStart(name, indent);
+    indent++;
+
+    printInt("pcount", p->pcount, indent);
+    printInt("tag_count", p->tag_count, indent);
+
+    printString("parameters", "", indent);
+    LISTdo(p->parameters, e, Expression);
+	printExpression("", e, indent + 1);
+    LISTod;
+
+    printString("body", "", indent);
+    LISTdo(p->body, s, Statement);
+	printStatement(s, indent + 1);
+    LISTod;
+
+#if 0
+struct Procedure_ {
+	Linked_List parameters;
+	Linked_List body;
+	struct FullText text;
+	int builtin;	/* builtin if true */
+};
+#endif
+
+    indent--;
+    printEnd(indent);
+}
+
+static void
+printFunction(struct Function_ *structp)
+{
+#if 0
+struct Function_ {
+	int pcount;	/* # of parameters */
+	int tag_count;	/* # of different parameter/return value tags */
+	Linked_List parameters;
+	Linked_List body;
+	Type return_type;
+	struct FullText text;
+	int builtin;	/* builtin if true */
+};
+#endif
+}
+
+static void
+printRule(struct Rule_ *structp)
+{
+#if 0
+struct Rule_ {
+	Linked_List parameters;
+	Linked_List body;
+	struct FullText text;
+};
+#endif
+}
+
+static void
+printEntity(struct Entity_ *structp)
+{
+#if 0
+struct Entity_ {
+	Linked_List	supertype_symbols; /* linked list of original symbols*/
+				/* as generated by parser */
+	Linked_List	supertypes;	/* linked list of supertypes (as entities) */
+	Linked_List	subtypes;	/* simple list of subtypes */
+			/* useful for simple lookups */
+	Expression	subtype_expression;	/* DAG of subtypes, with complete */
+			/* information including, OR, AND, and ONEOF */
+	Linked_List	attributes;	/* explicit attributes */
+	int		inheritance;	/* total number of attributes */
+					/* inherited from supertypes */
+	int		attribute_count;
+	Linked_List	unique;	/* list of identifiers that are unique */
+	Linked_List	instances;	/* hook for applications */
+	int		mark;	/* usual hack - prevent traversing sub/super */
+				/* graph twice */
+	Boolean		abstract;/* is this an abstract supertype? */
+	Type		type;	/* type pointing back to ourself */
+				/* Useful to have when evaluating */
+				/* expressions involving entities */
+};
+#endif
+}
+
+static void
+printSchema(struct Schema_ *structp)
+{
+#if 0
+struct Schema_ {
+	Linked_List rules;
+	Linked_List reflist;
+	Linked_List uselist;
+	/* dictionarys into which are entered renames for each specific */
+	/* object specified in a rename clause (even if it uses the same */
+	/* name */
+	Dictionary refdict;
+	Dictionary usedict;
+	/* lists of schemas that are fully ref/use'd */
+	/* entries can be 0 if schemas weren't found during RENAMEresolve */
+	Linked_List use_schemas;
+	Linked_List ref_schemas;
+};
+#endif
+}
+
+static void
+printIncrement(struct Increment_ *structp)
+{
+#if 0
+/* this is an element in the optional Loop scope */
+struct Increment_ {
+    Expression init;
+    Expression end;
+    Expression increment;
+};
+#endif
+}
+
+static void
+printExpress(const char *name, struct Express_ *e, int indent)
+{
+    printStart(name, indent);
+    indent++;
+
+    printInt("file", e->file, indent);
+    printString("filename", e->filename, indent);
+    printString("basename", e->basename, indent);
+
+    indent--;
+    printEnd(indent);
+}
+
+static void
+printTypeHead(TypeHead t, int indent)
+{
 }
 
 void
-expprintExpress(Express structp)
+printScope(struct Scope_ *s, int indent)
 {
-    printStart("Express");
+    printStart("Scope", indent);
+    indent++;
 
-    printSymbol(&structp->symbol);
-    printf("type = %c\n", structp->type);
-    printf("search_id = %d\n", structp->search_id);
-    printDictionary(structp->symbol_table);
+    printSymbol("symbol", &s->symbol, indent);
+    printChar("type", s->type, indent);
+    printInt("search_id", s->search_id, indent);
+    printDictionary("symbol_table", s->symbol_table, indent);
 
-    if (structp->superscope != NULL) {
-	expprintExpress(structp->superscope);
+    if (s->superscope != NULL) {
+	printString("superscope", "", indent);
+	expprintExpress(s->superscope);
     }
 
-#if 0
-    switch(structp->type) {
+    switch(s->type) {
 	case OBJ_PROCEDURE:
-	    printProcedure();
+	    printProcedure("u.proc", s->u.proc, indent);
+	    break;
 	case OBJ_FUNCTION:
+	    printString("u.func", "", indent);
+	    printFunction(s->u.func);
+	    break;
 	case OBJ_RULE:
+	    printString("u.rule", "", indent);
+	    printRule(s->u.rule);
+	    break;
 	case OBJ_ENTITY:
+	    printString("u.entity", "", indent);
+	    printEntity(s->u.entity);
+	    break;
 	case OBJ_SCHEMA:
+	    printString("u.schema", "", indent);
+	    printSchema(s->u.schema);
+	    break;
 	case OBJ_EXPRESS:
+	    printExpress("u.express", s->u.express, indent);
+	    break;
 	case OBJ_INCREMENT:
+	    printString("u.incr", "", indent);
+	    printIncrement(s->u.incr);
+	    break;
 	case OBJ_TYPE:
+	    printString("u.type", "", indent);
+	    printTypeHead(s->u.type, indent + 1);
     }
-#endif
 
-    printEnd();
+    indent--;
+    printEnd(indent);
+} /* printExpress */
+
+void
+expprintExpress(Express s)
+{
+    printScope(s, 0);
 }
+
 
 #if 0
 /* struct definitions temporarily included for reference purposes */
@@ -152,86 +496,6 @@ typedef struct Hash_Table_ {
 } *Hash_Table;
 typedef struct Hash_Table_	*Dictionary;
 
-struct Procedure_ {
-	int pcount;	/* # of parameters */
-	int tag_count;	/* # of different parameter tags */
-	Linked_List parameters;
-	Linked_List body;
-	struct FullText text;
-	int builtin;	/* builtin if true */
-};
-
-struct Function_ {
-	int pcount;	/* # of parameters */
-	int tag_count;	/* # of different parameter/return value tags */
-	Linked_List parameters;
-	Linked_List body;
-	Type return_type;
-	struct FullText text;
-	int builtin;	/* builtin if true */
-};
-
-struct Rule_ {
-	Linked_List parameters;
-	Linked_List body;
-	struct FullText text;
-};
-
-struct Entity_ {
-	Linked_List	supertype_symbols; /* linked list of original symbols*/
-				/* as generated by parser */
-	Linked_List	supertypes;	/* linked list of supertypes (as entities) */
-	Linked_List	subtypes;	/* simple list of subtypes */
-			/* useful for simple lookups */
-	Expression	subtype_expression;	/* DAG of subtypes, with complete */
-			/* information including, OR, AND, and ONEOF */
-	Linked_List	attributes;	/* explicit attributes */
-	int		inheritance;	/* total number of attributes */
-					/* inherited from supertypes */
-	int		attribute_count;
-	Linked_List	unique;	/* list of identifiers that are unique */
-	Linked_List	instances;	/* hook for applications */
-	int		mark;	/* usual hack - prevent traversing sub/super */
-				/* graph twice */
-	Boolean		abstract;/* is this an abstract supertype? */
-	Type		type;	/* type pointing back to ourself */
-				/* Useful to have when evaluating */
-				/* expressions involving entities */
-};
-
-struct Schema_ {
-	Linked_List rules;
-	Linked_List reflist;
-	Linked_List uselist;
-	/* dictionarys into which are entered renames for each specific */
-	/* object specified in a rename clause (even if it uses the same */
-	/* name */
-	Dictionary refdict;
-	Dictionary usedict;
-	/* lists of schemas that are fully ref/use'd */
-	/* entries can be 0 if schemas weren't found during RENAMEresolve */
-	Linked_List use_schemas;
-	Linked_List ref_schemas;
-};
-
-struct Express_ {
-	FILE *file;
-	char *filename;
-	char *basename;	/* name of file but without directory or .exp suffix */
-};
-
-/* this is an element in the optional Loop scope */
-struct Increment_ {
-    Expression init;
-    Expression end;
-    Expression increment;
-};
-
-struct TypeHead_ {
-	Type head;			/* if we are a defined type */
-					/* this is who we point to */
-	struct TypeBody_ *body;		/* true type, ignoring defined types */
-};
 
 typedef struct Linked_List_ *Linked_List;
 
