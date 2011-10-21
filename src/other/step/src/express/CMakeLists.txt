@@ -29,6 +29,7 @@ set(EXPRESS_SOURCES
     inithook.c
     yyvars.c
     express.c
+    expprint.c
 )
 
 SET(FEDEX_SOURCES

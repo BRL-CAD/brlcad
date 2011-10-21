@@ -33,7 +33,8 @@ SRCS = \
 	object.c \
 	inithook.c \
 	yyvars.c \
-	express.c
+	express.c \
+	expprint.c
 
 fedex_SOURCES = fedex.c 
 fedex_LDADD = libexpress.la
