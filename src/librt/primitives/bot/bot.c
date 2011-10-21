@@ -4510,82 +4510,97 @@ rt_bot_sync_func(struct rt_bot_internal *bot,
 		 struct tri_edges *usedTep)
 {
     struct tri_edges *neighbor_tep;
+    struct tri_edges **stack = (struct tri_edges **)bu_calloc(bot->num_faces, sizeof(struct tri_edges *), "rt_bot_sync_func: stack");
+    register int si = -1;
+    register int not_done = 1;
 
-    for (BU_LIST_FOR(neighbor_tep, tri_edges, &headTep->l)) {
-	if ((tep->edge_1[0] == neighbor_tep->edge_1[0] &&
-	     tep->edge_1[1] == neighbor_tep->edge_1[1]) ||
-	    (tep->edge_1[0] == neighbor_tep->edge_2[0] &&
-	     tep->edge_1[1] == neighbor_tep->edge_2[1]) ||
-	    (tep->edge_1[0] == neighbor_tep->edge_3[0] &&
-	     tep->edge_1[1] == neighbor_tep->edge_3[1]) ||
-	    (tep->edge_2[0] == neighbor_tep->edge_1[0] &&
-	     tep->edge_2[1] == neighbor_tep->edge_1[1]) ||
-	    (tep->edge_2[0] == neighbor_tep->edge_2[0] &&
-	     tep->edge_2[1] == neighbor_tep->edge_2[1]) ||
-	    (tep->edge_2[0] == neighbor_tep->edge_3[0] &&
-	     tep->edge_2[1] == neighbor_tep->edge_3[1]) ||
-	    (tep->edge_3[0] == neighbor_tep->edge_1[0] &&
-	     tep->edge_3[1] == neighbor_tep->edge_1[1]) ||
-	    (tep->edge_3[0] == neighbor_tep->edge_2[0] &&
-	     tep->edge_3[1] == neighbor_tep->edge_2[1]) ||
-	    (tep->edge_3[0] == neighbor_tep->edge_3[0] &&
-	     tep->edge_3[1] == neighbor_tep->edge_3[1])) {
-	    /* Found a shared edge of a neighboring triangle whose
-	     * orientation needs to be reversed.
-	     */
-	    size_t tmp_index;
+    while (not_done) {
+    begin:
+	for (BU_LIST_FOR(neighbor_tep, tri_edges, &headTep->l)) {
+	    if ((tep->edge_1[0] == neighbor_tep->edge_1[0] &&
+		 tep->edge_1[1] == neighbor_tep->edge_1[1]) ||
+		(tep->edge_1[0] == neighbor_tep->edge_2[0] &&
+		 tep->edge_1[1] == neighbor_tep->edge_2[1]) ||
+		(tep->edge_1[0] == neighbor_tep->edge_3[0] &&
+		 tep->edge_1[1] == neighbor_tep->edge_3[1]) ||
+		(tep->edge_2[0] == neighbor_tep->edge_1[0] &&
+		 tep->edge_2[1] == neighbor_tep->edge_1[1]) ||
+		(tep->edge_2[0] == neighbor_tep->edge_2[0] &&
+		 tep->edge_2[1] == neighbor_tep->edge_2[1]) ||
+		(tep->edge_2[0] == neighbor_tep->edge_3[0] &&
+		 tep->edge_2[1] == neighbor_tep->edge_3[1]) ||
+		(tep->edge_3[0] == neighbor_tep->edge_1[0] &&
+		 tep->edge_3[1] == neighbor_tep->edge_1[1]) ||
+		(tep->edge_3[0] == neighbor_tep->edge_2[0] &&
+		 tep->edge_3[1] == neighbor_tep->edge_2[1]) ||
+		(tep->edge_3[0] == neighbor_tep->edge_3[0] &&
+		 tep->edge_3[1] == neighbor_tep->edge_3[1])) {
+		/* Found a shared edge of a neighboring triangle whose
+		 * orientation needs to be reversed.
+		 */
+		size_t tmp_index;
 
-	    BU_LIST_DEQUEUE(&neighbor_tep->l);
-	    BU_LIST_APPEND(&usedTep->l, &neighbor_tep->l);
+		BU_LIST_DEQUEUE(&neighbor_tep->l);
+		BU_LIST_APPEND(&usedTep->l, &neighbor_tep->l);
 
-	    /* Swap any two vertex references. Here we're swapping
-	     * 1 and 2. */
-	    tmp_index = bot->faces[neighbor_tep->tri*3+1];
-	    bot->faces[neighbor_tep->tri*3+1] = bot->faces[neighbor_tep->tri*3+2];
-	    bot->faces[neighbor_tep->tri*3+2] = tmp_index;
+		/* Swap any two vertex references. Here we're swapping
+		 * 1 and 2. */
+		tmp_index = bot->faces[neighbor_tep->tri*3+1];
+		bot->faces[neighbor_tep->tri*3+1] = bot->faces[neighbor_tep->tri*3+2];
+		bot->faces[neighbor_tep->tri*3+2] = tmp_index;
 
-	    /* Also need to reverse the edges in neighbor_tep */
-	    tmp_index = neighbor_tep->edge_1[0];
-	    neighbor_tep->edge_1[0] = neighbor_tep->edge_1[1];
-	    neighbor_tep->edge_1[1] = tmp_index;
-	    tmp_index = neighbor_tep->edge_2[0];
-	    neighbor_tep->edge_2[0] = neighbor_tep->edge_2[1];
-	    neighbor_tep->edge_2[1] = tmp_index;
-	    tmp_index = neighbor_tep->edge_3[0];
-	    neighbor_tep->edge_3[0] = neighbor_tep->edge_3[1];
-	    neighbor_tep->edge_3[1] = tmp_index;
+		/* Also need to reverse the edges in neighbor_tep */
+		tmp_index = neighbor_tep->edge_1[0];
+		neighbor_tep->edge_1[0] = neighbor_tep->edge_1[1];
+		neighbor_tep->edge_1[1] = tmp_index;
+		tmp_index = neighbor_tep->edge_2[0];
+		neighbor_tep->edge_2[0] = neighbor_tep->edge_2[1];
+		neighbor_tep->edge_2[1] = tmp_index;
+		tmp_index = neighbor_tep->edge_3[0];
+		neighbor_tep->edge_3[0] = neighbor_tep->edge_3[1];
+		neighbor_tep->edge_3[1] = tmp_index;
 
-	    rt_bot_sync_func(bot, neighbor_tep, headTep, usedTep);
-	    neighbor_tep = headTep;
-	} else if ((tep->edge_1[0] == neighbor_tep->edge_1[1] &&
-		    tep->edge_1[1] == neighbor_tep->edge_1[0]) ||
-		   (tep->edge_1[0] == neighbor_tep->edge_2[1] &&
-		    tep->edge_1[1] == neighbor_tep->edge_2[0]) ||
-		   (tep->edge_1[0] == neighbor_tep->edge_3[1] &&
-		    tep->edge_1[1] == neighbor_tep->edge_3[0]) ||
-		   (tep->edge_2[0] == neighbor_tep->edge_1[1] &&
-		    tep->edge_2[1] == neighbor_tep->edge_1[0]) ||
-		   (tep->edge_2[0] == neighbor_tep->edge_2[1] &&
-		    tep->edge_2[1] == neighbor_tep->edge_2[0]) ||
-		   (tep->edge_2[0] == neighbor_tep->edge_3[1] &&
-		    tep->edge_2[1] == neighbor_tep->edge_3[0]) ||
-		   (tep->edge_3[0] == neighbor_tep->edge_1[1] &&
-		    tep->edge_3[1] == neighbor_tep->edge_1[0]) ||
-		   (tep->edge_3[0] == neighbor_tep->edge_2[1] &&
-		    tep->edge_3[1] == neighbor_tep->edge_2[0]) ||
-		   (tep->edge_3[0] == neighbor_tep->edge_3[1] &&
-		    tep->edge_3[1] == neighbor_tep->edge_3[0])) {
-	    /* Found a shared edge of a neighboring triangle whose
-	     * orientation is fine.
-	     */
+		stack[++si] = tep;
+		tep = neighbor_tep;
+		goto begin;
+	    } else if ((tep->edge_1[0] == neighbor_tep->edge_1[1] &&
+			tep->edge_1[1] == neighbor_tep->edge_1[0]) ||
+		       (tep->edge_1[0] == neighbor_tep->edge_2[1] &&
+			tep->edge_1[1] == neighbor_tep->edge_2[0]) ||
+		       (tep->edge_1[0] == neighbor_tep->edge_3[1] &&
+			tep->edge_1[1] == neighbor_tep->edge_3[0]) ||
+		       (tep->edge_2[0] == neighbor_tep->edge_1[1] &&
+			tep->edge_2[1] == neighbor_tep->edge_1[0]) ||
+		       (tep->edge_2[0] == neighbor_tep->edge_2[1] &&
+			tep->edge_2[1] == neighbor_tep->edge_2[0]) ||
+		       (tep->edge_2[0] == neighbor_tep->edge_3[1] &&
+			tep->edge_2[1] == neighbor_tep->edge_3[0]) ||
+		       (tep->edge_3[0] == neighbor_tep->edge_1[1] &&
+			tep->edge_3[1] == neighbor_tep->edge_1[0]) ||
+		       (tep->edge_3[0] == neighbor_tep->edge_2[1] &&
+			tep->edge_3[1] == neighbor_tep->edge_2[0]) ||
+		       (tep->edge_3[0] == neighbor_tep->edge_3[1] &&
+			tep->edge_3[1] == neighbor_tep->edge_3[0])) {
+		/* Found a shared edge of a neighboring triangle whose
+		 * orientation is fine.
+		 */
 
-	    BU_LIST_DEQUEUE(&neighbor_tep->l);
-	    BU_LIST_APPEND(&usedTep->l, &neighbor_tep->l);
+		BU_LIST_DEQUEUE(&neighbor_tep->l);
+		BU_LIST_APPEND(&usedTep->l, &neighbor_tep->l);
 
-	    rt_bot_sync_func(bot, neighbor_tep, headTep, usedTep);
-	    neighbor_tep = headTep;
+		stack[++si] = tep;
+		tep = neighbor_tep;
+		goto begin;
+	    }
 	}
+
+	if (si < 0)
+	    not_done = 0;
+	else
+	    tep = stack[si--];
     }
+
+    bu_free((genptr_t)stack, "rt_bot_sync_func: stack");
 }
 
 
@@ -4596,6 +4611,7 @@ rt_bot_sync(struct rt_bot_internal *bot)
     struct tri_edges headTep;
     struct tri_edges usedTep;
     struct tri_edges *tep;
+    struct tri_edges *alltep;
     size_t pt_A, pt_B, pt_C;
 
     RT_BOT_CK_MAGIC(bot);
@@ -4607,9 +4623,11 @@ rt_bot_sync(struct rt_bot_internal *bot)
     BU_LIST_INIT(&headTep.l);
     BU_LIST_INIT(&usedTep.l);
 
+    alltep = (struct tri_edges *)bu_calloc(bot->num_faces, sizeof(struct tri_edges), "rt_bot_sync: alltep");
+
     /* Initialize tep list */
     for (i = 0; i < bot->num_faces; ++i) {
-	tep = (struct tri_edges *)bu_calloc(1, sizeof(struct tri_edges), "rt_bot_sync: tep");
+	tep = &alltep[i];
 	BU_LIST_APPEND(&headTep.l, &tep->l);
 
 	pt_A = bot->faces[i*3+0];
@@ -4634,49 +4652,64 @@ rt_bot_sync(struct rt_bot_internal *bot)
 
     while (BU_LIST_WHILE(tep, tri_edges, &usedTep.l)) {
 	BU_LIST_DEQUEUE(&tep->l);
-	bu_free(tep, "rt_bot_sync: tep");
-	tep = NULL; /* sanity */
     }
+
+    bu_free((genptr_t)alltep, "rt_bot_sync: alltep");
 
     return 0;
 }
 
 
 void
-rt_bot_split_func(struct tri_pts *tpp,
+rt_bot_split_func(struct rt_bot_internal *bot,
+		  struct tri_pts *tpp,
 		  struct tri_pts *headTpp,
 		  struct tri_pts *usedTpp)
 {
     struct tri_pts *neighbor_tpp;
+    struct tri_pts **stack = (struct tri_pts **)bu_calloc(bot->num_faces, sizeof(struct tri_pts *), "rt_bot_split_func: stack");
+    register int si = -1;
+    register int not_done = 1;
 
-    for (BU_LIST_FOR(neighbor_tpp, tri_pts, &headTpp->l)) {
-	if ((tpp->a == neighbor_tpp->a && tpp->b == neighbor_tpp->b) ||
-	    (tpp->a == neighbor_tpp->b && tpp->b == neighbor_tpp->a) ||
-	    (tpp->a == neighbor_tpp->b && tpp->b == neighbor_tpp->c) ||
-	    (tpp->a == neighbor_tpp->c && tpp->b == neighbor_tpp->b) ||
-	    (tpp->a == neighbor_tpp->a && tpp->b == neighbor_tpp->c) ||
-	    (tpp->a == neighbor_tpp->c && tpp->b == neighbor_tpp->a) ||
-	    (tpp->a == neighbor_tpp->a && tpp->c == neighbor_tpp->b) ||
-	    (tpp->a == neighbor_tpp->b && tpp->c == neighbor_tpp->a) ||
-	    (tpp->a == neighbor_tpp->b && tpp->c == neighbor_tpp->c) ||
-	    (tpp->a == neighbor_tpp->c && tpp->c == neighbor_tpp->b) ||
-	    (tpp->a == neighbor_tpp->a && tpp->c == neighbor_tpp->c) ||
-	    (tpp->a == neighbor_tpp->c && tpp->c == neighbor_tpp->a) ||
-	    (tpp->b == neighbor_tpp->a && tpp->c == neighbor_tpp->b) ||
-	    (tpp->b == neighbor_tpp->b && tpp->c == neighbor_tpp->a) ||
-	    (tpp->b == neighbor_tpp->b && tpp->c == neighbor_tpp->c) ||
-	    (tpp->b == neighbor_tpp->c && tpp->c == neighbor_tpp->b) ||
-	    (tpp->b == neighbor_tpp->a && tpp->c == neighbor_tpp->c) ||
-	    (tpp->b == neighbor_tpp->c && tpp->c == neighbor_tpp->a)) {
-	    /* Found a shared edge of a neighboring triangle */
+    while (not_done) {
+    begin:
+	for (BU_LIST_FOR(neighbor_tpp, tri_pts, &headTpp->l)) {
+	    if ((tpp->a == neighbor_tpp->a && tpp->b == neighbor_tpp->b) ||
+		(tpp->a == neighbor_tpp->b && tpp->b == neighbor_tpp->a) ||
+		(tpp->a == neighbor_tpp->b && tpp->b == neighbor_tpp->c) ||
+		(tpp->a == neighbor_tpp->c && tpp->b == neighbor_tpp->b) ||
+		(tpp->a == neighbor_tpp->a && tpp->b == neighbor_tpp->c) ||
+		(tpp->a == neighbor_tpp->c && tpp->b == neighbor_tpp->a) ||
+		(tpp->a == neighbor_tpp->a && tpp->c == neighbor_tpp->b) ||
+		(tpp->a == neighbor_tpp->b && tpp->c == neighbor_tpp->a) ||
+		(tpp->a == neighbor_tpp->b && tpp->c == neighbor_tpp->c) ||
+		(tpp->a == neighbor_tpp->c && tpp->c == neighbor_tpp->b) ||
+		(tpp->a == neighbor_tpp->a && tpp->c == neighbor_tpp->c) ||
+		(tpp->a == neighbor_tpp->c && tpp->c == neighbor_tpp->a) ||
+		(tpp->b == neighbor_tpp->a && tpp->c == neighbor_tpp->b) ||
+		(tpp->b == neighbor_tpp->b && tpp->c == neighbor_tpp->a) ||
+		(tpp->b == neighbor_tpp->b && tpp->c == neighbor_tpp->c) ||
+		(tpp->b == neighbor_tpp->c && tpp->c == neighbor_tpp->b) ||
+		(tpp->b == neighbor_tpp->a && tpp->c == neighbor_tpp->c) ||
+		(tpp->b == neighbor_tpp->c && tpp->c == neighbor_tpp->a)) {
+		/* Found a shared edge of a neighboring triangle */
 
-	    BU_LIST_DEQUEUE(&neighbor_tpp->l);
-	    BU_LIST_APPEND(&usedTpp->l, &neighbor_tpp->l);
+		BU_LIST_DEQUEUE(&neighbor_tpp->l);
+		BU_LIST_APPEND(&usedTpp->l, &neighbor_tpp->l);
 
-	    rt_bot_split_func(neighbor_tpp, headTpp, usedTpp);
-	    neighbor_tpp = headTpp;
+		stack[++si] = tpp;
+		tpp = neighbor_tpp;
+		goto begin;
+	    }
 	}
+
+	if (si < 0)
+	    not_done = 0;
+	else
+	    tpp = stack[si--];
     }
+
+    bu_free((genptr_t)stack, "rt_bot_split_func: stack");
 }
 
 #define REMAP_BOT_VERTS(_oldbot,_newbot,_vmap,_vcount,_ovi,_i) { \
@@ -4762,6 +4795,7 @@ rt_bot_split(struct rt_bot_internal *bot)
     struct tri_pts headTp;
     struct tri_pts usedTp;
     struct tri_pts *tpp;
+    struct tri_pts *alltpp;
     struct rt_bot_list *headRblp = (struct rt_bot_list *)0;
     struct rt_bot_list *rblp;
 
@@ -4777,9 +4811,11 @@ rt_bot_split(struct rt_bot_internal *bot)
     BU_LIST_INIT(&headTp.l);
     BU_LIST_INIT(&usedTp.l);
 
+    alltpp = (struct tri_pts *)bu_calloc(bot->num_faces, sizeof(struct tri_pts), "rt_bot_split: alltpp");
+
     /* Initialize tpp list */
     for (i = 0; i < bot->num_faces; ++i) {
-	tpp = (struct tri_pts *)bu_calloc(1, sizeof(struct tri_pts), "rt_bot_split: tpp");
+	tpp = &alltpp[i];
 	BU_LIST_APPEND(&headTp.l, &tpp->l);
 
 	tpp->tri = i;
@@ -4793,7 +4829,7 @@ rt_bot_split(struct rt_bot_internal *bot)
 	BU_LIST_DEQUEUE(&tpp->l);
 	BU_LIST_APPEND(&usedTp.l, &tpp->l);
 
-	rt_bot_split_func(tpp, &headTp, &usedTp);
+	rt_bot_split_func(bot, tpp, &headTp, &usedTp);
 
 	if (first) {
 	    first = 0;
@@ -4813,10 +4849,10 @@ rt_bot_split(struct rt_bot_internal *bot)
 
 	while (BU_LIST_WHILE(tpp, tri_pts, &usedTp.l)) {
 	    BU_LIST_DEQUEUE(&tpp->l);
-	    bu_free(tpp, "rt_bot_split: tpp");
-	    tpp = NULL; /* sanity */
 	}
     }
+
+    bu_free((genptr_t)alltpp, "rt_bot_split: alltpp");
 
     return headRblp;
 }
