@@ -138,46 +138,28 @@ typedef struct _option {
     int flags;
 } OPTION;
 
-
-void brace_subst(char *, char **, char *, int);
-int find_create(char ***, struct db_plan_t **, struct db_i *, struct rt_wdb *, struct db_full_path_list *, int *);
-void find_execute(struct db_plan_t *, struct db_full_path *, struct db_i *, struct rt_wdb *, struct db_full_path_list *, int);
-int find_formplan(char **, struct db_plan_t **, struct db_i *, struct rt_wdb *, struct db_full_path_list *);
-int above_squish(struct db_plan_t *, struct db_plan_t **);
-int below_squish(struct db_plan_t *, struct db_plan_t **);
-int not_squish(struct db_plan_t *, struct db_plan_t **);
-OPTION *option(char *);
-int or_squish(struct db_plan_t *, struct db_plan_t **);
-int paren_squish(struct db_plan_t *, struct db_plan_t **);
-struct stat;
-void printlong(char *, char *, struct stat *);
-int queryuser(char **);
-void show_path(int);
-
-int c_attr(char *, char ***, int, struct db_plan_t **, int *);
-/*struct db_plan_t *c_exec(char *, char ***, int);*/
-int c_iname(char *, char ***, int, struct db_plan_t **, int *);
-/*struct db_plan_t *c_ls(char *, char ***, int);*/
-int c_maxdepth(char *, char ***, int, struct db_plan_t **, int *);
-int c_mindepth(char *, char ***, int, struct db_plan_t **, int *);
-int c_name(char *, char ***, int, struct db_plan_t **, int *);
-int c_nnodes(char *, char ***, int, struct db_plan_t **, int *);
-int c_regex(char *, char ***, int, struct db_plan_t **, int *);
-int c_iregex(char *, char ***, int, struct db_plan_t **, int *);
-int c_path(char *, char ***, int, struct db_plan_t **, int *);
-int c_print(char *, char ***, int, struct db_plan_t **, int *);
-int c_print0(char *, char ***, int, struct db_plan_t **, int *);
-/*struct db_plan_t *c_prune(char *, char ***, int);*/
-int c_stdattr(char *, char ***, int, struct db_plan_t **, int *);
-int c_type(char *, char ***, int, struct db_plan_t **, int *);
-int c_openparen(char *, char ***, int, struct db_plan_t **, int *);
-int c_closeparen(char *, char ***, int, struct db_plan_t **, int *);
-int c_not(char *, char ***, int, struct db_plan_t **, int *);
-int c_or(char *, char ***, int, struct db_plan_t **, int *);
-int c_above(char *, char ***, int, struct db_plan_t **, int *);
-int c_below(char *, char ***, int, struct db_plan_t **, int *);
-
 extern int isdepth, isoutput;
+
+
+static int c_attr(char *, char ***, int, struct db_plan_t **, int *);
+static int c_iname(char *, char ***, int, struct db_plan_t **, int *);
+static int c_maxdepth(char *, char ***, int, struct db_plan_t **, int *);
+static int c_mindepth(char *, char ***, int, struct db_plan_t **, int *);
+static int c_name(char *, char ***, int, struct db_plan_t **, int *);
+static int c_nnodes(char *, char ***, int, struct db_plan_t **, int *);
+static int c_regex(char *, char ***, int, struct db_plan_t **, int *);
+static int c_iregex(char *, char ***, int, struct db_plan_t **, int *);
+static int c_path(char *, char ***, int, struct db_plan_t **, int *);
+static int c_print(char *, char ***, int, struct db_plan_t **, int *);
+static int c_stdattr(char *, char ***, int, struct db_plan_t **, int *);
+static int c_type(char *, char ***, int, struct db_plan_t **, int *);
+static int c_openparen(char *, char ***, int, struct db_plan_t **, int *);
+static int c_closeparen(char *, char ***, int, struct db_plan_t **, int *);
+static int c_not(char *, char ***, int, struct db_plan_t **, int *);
+static int c_or(char *, char ***, int, struct db_plan_t **, int *);
+static int c_above(char *, char ***, int, struct db_plan_t **, int *);
+static int c_below(char *, char ***, int, struct db_plan_t **, int *);
+
 
 /*
  * Local Variables:

@@ -95,6 +95,35 @@
 #include "./search.h"
 
 
+/* NB: the following table must be sorted lexically. */
+static OPTION options[] = {
+    { "!",          N_NOT,          c_not,          O_ZERO },
+    { "(",          N_OPENPAREN,    c_openparen,    O_ZERO },
+    { ")",          N_CLOSEPAREN,   c_closeparen,   O_ZERO },
+    { "-a",         N_AND,          NULL,           O_NONE },
+    { "-ab",        N_ABOVE,        c_above,        O_ZERO },
+    { "-above",     N_ABOVE,        c_above,        O_ZERO },
+    { "-and",       N_AND,          NULL,           O_NONE },
+    { "-attr",	    N_ATTR,	    c_attr,	    O_ARGV },
+    { "-bl",        N_BELOW,        c_below,        O_ZERO },
+    { "-below",     N_BELOW,        c_below,        O_ZERO },
+    { "-iname",     N_INAME,        c_iname,        O_ARGV },
+    { "-iregex",    N_IREGEX,       c_iregex,       O_ARGV },
+    { "-maxdepth",  N_MAXDEPTH,     c_maxdepth,     O_ARGV },
+    { "-mindepth",  N_MINDEPTH,     c_mindepth,     O_ARGV },
+    { "-name",      N_NAME,         c_name,         O_ARGV },
+    { "-nnodes",    N_NNODES,       c_nnodes,       O_ARGV },
+    { "-not",       N_NOT,          c_not,          O_ZERO },
+    { "-o",         N_OR,           c_or,	    O_ZERO },
+    { "-or", 	    N_OR, 	    c_or, 	    O_ZERO },
+    { "-path",      N_PATH,         c_path,         O_ARGV },
+    { "-print",     N_PRINT,        c_print,        O_ZERO },
+    { "-regex",     N_REGEX,        c_regex,        O_ARGV },
+    { "-stdattr",   N_STDATTR,      c_stdattr,      O_ZERO },
+    { "-type",      N_TYPE,         c_type,	    O_ARGV },
+};
+
+
 /**
  * Free all entries and the list of a db_full_path_list
  */
@@ -244,35 +273,6 @@ db_fullpath_traverse(struct db_i *dbip,
 	    leaf_func(dbip, wdbp, results, dfp, client_data);
     }
 }
-
-
-/* NB: the following table must be sorted lexically. */
-static OPTION options[] = {
-    { "!",          N_NOT,          c_not,          O_ZERO },
-    { "(",          N_OPENPAREN,    c_openparen,    O_ZERO },
-    { ")",          N_CLOSEPAREN,   c_closeparen,   O_ZERO },
-    { "-a",         N_AND,          NULL,           O_NONE },
-    { "-ab",        N_ABOVE,        c_above,        O_ZERO },
-    { "-above",     N_ABOVE,        c_above,        O_ZERO },
-    { "-and",       N_AND,          NULL,           O_NONE },
-    { "-attr",	    N_ATTR,	    c_attr,	    O_ARGV },
-    { "-bl",        N_BELOW,        c_below,        O_ZERO },
-    { "-below",     N_BELOW,        c_below,        O_ZERO },
-    { "-iname",     N_INAME,        c_iname,        O_ARGV },
-    { "-iregex",    N_IREGEX,       c_iregex,       O_ARGV },
-    { "-maxdepth",  N_MAXDEPTH,     c_maxdepth,     O_ARGV },
-    { "-mindepth",  N_MINDEPTH,     c_mindepth,     O_ARGV },
-    { "-name",      N_NAME,         c_name,         O_ARGV },
-    { "-nnodes",    N_NNODES,       c_nnodes,       O_ARGV },
-    { "-not",       N_NOT,          c_not,          O_ZERO },
-    { "-o",         N_OR,           c_or,	    O_ZERO },
-    { "-or", 	    N_OR, 	    c_or, 	    O_ZERO },
-    { "-path",      N_PATH,         c_path,         O_ARGV },
-    { "-print",     N_PRINT,        c_print,        O_ZERO },
-    { "-regex",     N_REGEX,        c_regex,        O_ARGV },
-    { "-stdattr",   N_STDATTR,      c_stdattr,      O_ZERO },
-    { "-type",      N_TYPE,         c_type,	    O_ARGV },
-};
 
 
 static struct db_plan_t *
@@ -1513,6 +1513,23 @@ c_print(char *UNUSED(ignore), char ***UNUSED(ignored), int UNUSED(unused), struc
 }
 
 
+HIDDEN int
+typecompare(const void *a, const void *b)
+{
+    return bu_strcmp(((OPTION *)a)->name, ((OPTION *)b)->name);
+}
+
+
+HIDDEN OPTION *
+option(char *name)
+{
+    OPTION tmp;
+
+    tmp.name = name;
+    return ((OPTION *)bsearch(&tmp, options, sizeof(options)/sizeof(OPTION), sizeof(OPTION), typecompare));
+}
+
+
 /*
  * create a node corresponding to a command line argument.
  *
@@ -1556,23 +1573,6 @@ find_create(char ***argvp, struct db_plan_t **resultplan, struct db_i *UNUSED(db
     *argvp = argv;
     (*resultplan) = new;
     return BRLCAD_OK;
-}
-
-
-HIDDEN int
-typecompare(const void *a, const void *b)
-{
-    return bu_strcmp(((OPTION *)a)->name, ((OPTION *)b)->name);
-}
-
-
-HIDDEN OPTION *
-option(char *name)
-{
-    OPTION tmp;
-
-    tmp.name = name;
-    return ((OPTION *)bsearch(&tmp, options, sizeof(options)/sizeof(OPTION), sizeof(OPTION), typecompare));
 }
 
 
