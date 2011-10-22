@@ -248,6 +248,7 @@ dist_tcl_DATA = \
 	tgc_labeled.png \
 	tgc_subtract.png \
 	tgc_union.png \
+	tools.png \
 	tor.png \
 	tor_intersect.png \
 	tor_labeled.png \
