@@ -61,6 +61,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* struct rt_bot_internal should be using "size_t *" instead of "int *"
+  for the faces and face_normals members
+
+* fix the "(type)(size_t)val" hacks (using ints like ptrs, etc)
+
 * Mac OS X mouse input binding problem seems to be back with rotations
   stalling during interactive use.
 
@@ -761,8 +766,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   objects, allow deletion/undeletion/hiding/unhiding, provide some
   general means to manipulate the packed and unpacked .g file data for
   performing low-level modifications
-
-* fix the "(type)(size_t)val" hacks (using ints like ptrs, etc)
 
 * fix rt parallel crash
   (true ; while [ $? -eq 0 ] ; do rt -o /dev/null moss.g all.g ; done)
