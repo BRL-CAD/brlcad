@@ -615,6 +615,7 @@ PARSERrun(char *filename,FILE *fp)
 	while ((tokenID = yylex()) > 0) {
 	    Parse(parser, tokenID, yylval);
 	}
+	Parse(parser, 0, NULL);
 
 	/* want 0 on success, 1 on invalid input, 2 on memory exhaustion */
 	if (yyerrstatus != 0) {
