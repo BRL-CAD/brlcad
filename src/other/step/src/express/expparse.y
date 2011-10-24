@@ -817,8 +817,7 @@ entity_body(A) ::= explicit_attr_list(B) derive_decl(C) inverse_clause(D)
     LISTadd_last(A.attributes, (Generic)C);
 
     if (D != LIST_NULL) {
-	LISTadd_last(A.attributes,
-        (Generic)D);
+	LISTadd_last(A.attributes, (Generic)D);
     }
 
     A.unique = E;
@@ -831,9 +830,9 @@ entity_decl ::= entity_header subsuper_decl(A) semicolon entity_body(B)
     CURRENT_SCOPE->u.entity->subtype_expression = A.subtypes;
     CURRENT_SCOPE->u.entity->supertype_symbols = A.supertypes;
     LISTdo (B.attributes, l, Linked_List)
-    LISTdo (l, a, Variable)
-    ENTITYadd_attribute(CURRENT_SCOPE, a);
-    LISTod;
+	LISTdo (l, a, Variable)
+	    ENTITYadd_attribute(CURRENT_SCOPE, a);
+	LISTod;
     LISTod;
     CURRENT_SCOPE->u.entity->abstract = A.abstract;
     CURRENT_SCOPE->u.entity->unique = B.unique;
@@ -846,7 +845,7 @@ entity_header ::= TOK_ENTITY TOK_IDENTIFIER(A).
     Entity e = ENTITYcreate(A.symbol);
 
     if (print_objects_while_running & OBJ_ENTITY_BITS) {
-        fprintf(stdout, "parse: %s (entity)\n", A.symbol->name);
+	fprintf(stdout, "parse: %s (entity)\n", A.symbol->name);
     }
 
     PUSH_SCOPE(e, A.symbol, OBJ_ENTITY);
@@ -932,17 +931,19 @@ optional(A) ::= TOK_OPTIONAL.
     A.optional = 1;
 }
 
-explicit_attribute ::= attribute_decl_list(A) TOK_COLON optional(B)
-		       attribute_type(C) semicolon.
+explicit_attribute(A) ::= attribute_decl_list(B) TOK_COLON optional(C)
+		       attribute_type(D) semicolon.
 {
     Variable v;
 
-    LISTdo_links (A, attr)
-    v = VARcreate((Expression)attr->data, C);
-    v->flags.optional = B.optional;
-    v->flags.attribute = True;
-    attr->data = (Generic)v;
+    LISTdo_links (B, attr)
+	v = VARcreate((Expression)attr->data, D);
+	v->flags.optional = C.optional;
+	v->flags.attribute = True;
+	attr->data = (Generic)v;
     LISTod;
+
+    A = B;
 }
 
 express_file ::= schema_decl_list.
