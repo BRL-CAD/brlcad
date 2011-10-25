@@ -324,9 +324,9 @@ apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 
 	insert_AABB(gedp, sim_params, current_node);
 
-	print_manifold_list(current_node);
+	//print_manifold_list(current_node);
 
-	insert_manifolds(gedp, sim_params, current_node);
+	//insert_manifolds(gedp, sim_params, current_node);
 
 	current_node->num_bt_manifolds = 0;
 	current_node->num_rt_manifolds = 0;

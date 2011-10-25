@@ -328,6 +328,7 @@ arrow(struct ged *gedp, char* name, point_t from, point_t to)
     }
 
     bu_free_array(argc, cmd_args, "arrow: free cmd_args");
+    bu_vls_free(&arrow_line_vls);
 
     add_to_comb(gedp, name, prefixed_arrow_line);
 
@@ -365,6 +366,7 @@ arrow(struct ged *gedp, char* name, point_t from, point_t to)
     }
 
     bu_free_array(argc, cmd_args, "apply_material: free cmd_args");
+    bu_vls_free(&arrow_head_vls);
 
     add_to_comb(gedp, name, prefixed_arrow_head);
 

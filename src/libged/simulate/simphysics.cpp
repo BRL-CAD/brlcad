@@ -92,11 +92,11 @@ pre_tick_callback(btDynamicsWorld *dynamicsWorld, btScalar timeStep)
 
     for (i=dynamicsWorld->getNumCollisionObjects()-1; i>=0; i--) {
 
-	btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[i];
-	btRigidBody* body = btRigidBody::upcast(obj);
+	//btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[i];
+	//btRigidBody* body = btRigidBody::upcast(obj);
 
-	btVector3 gravity(0,0, 10.0);
-	body->applyCentralForce(gravity);
+	//btVector3 gravity(0,0, 10.0);
+	//body->applyCentralForce(gravity);
     }
 }
 
@@ -444,10 +444,16 @@ nearphase_callback(btBroadphasePair& collisionPair,
 	   rbA->rb_namep,
 	   rbB->rb_namep);
 
-    generate_force(sim_params, rbA, rbB);
+    /* Generate manifolds using rt */
+    rv = generate_forces(sim_params, rbA, rbB);
+    if (rv != GED_OK) {
+	bu_log("nearphase_callback: ERROR while creating forces between %s & %s\n",
+	       rbA->rb_namep, rbB->rb_namep);
+    }
+}
 
-    // Only dispatch the Bullet collision information if physics should continue
-    dispatcher.defaultNearCallback(collisionPair, dispatcher, dispatchInfo);
+// Only dispatch the Bullet collision information if physics should continue
+dispatcher.defaultNearCallback(collisionPair, dispatcher, dispatchInfo);
 }
 
 
