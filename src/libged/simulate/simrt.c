@@ -571,53 +571,53 @@ shoot_x_rays(struct sim_manifold *current_manifold,
 
     startz = overlap_min[Z] - TOL;
 
-    /* Is it thinner than TOLerance ? */
-    /*if(diff[Z] < TOL){*/
+    /* If it's thinner than TOLerance, shoot rays only in a single plane in
+     * the middle of the overlap region, this is done by starting in the middle
+     */
+    if(diff[Z] < TOL){
+		startz += diff[Z]*0.5;
+    }
 
-    /* Yep , so shoot rays only in a single plane in the middle of the overlap region*/
-    startz += diff[Z]*0.5;
+	/* Shoot rays vertically and across the yz plane */
+	for(z=startz; z<overlap_max[Z]; ){
 
-    /* The overlap region is too thin for generating 4 contacts points, 2 will do */
-    for(z=startz; z<overlap_max[Z]; ){
+		z += TOL;
+		if(z > overlap_max[Z])
+			z = overlap_max[Z];
 
-	z += TOL;
-	if(z > overlap_max[Z])
-	    z = overlap_max[Z];
+		starty = overlap_min[Y] - TOL;
 
-	starty = overlap_min[Y] - TOL;
+		for(y=starty; y<overlap_max[Y]; ){
 
-	for(y=starty; y<overlap_max[Y]; ){
+			y += TOL;
+			if(y > overlap_max[Y])
+				y = overlap_max[Y];
 
-	    y += TOL;
-	    if(y > overlap_max[Y])
-		y = overlap_max[Y];
+			/* Shooting towards lower x, so start from max x outside of overlap box */
+			VSET(r_pt, overlap_min[X], y, z);
 
-	    /* Shooting towards lower x, so start from max x outside of overlap box */
-	    VSET(r_pt, overlap_min[X], y, z);
+			bu_log("*****shoot_x_rays : From : (%f,%f,%f) >>> towards(%f,%f,%f)*******",
+			   V3ARGS(r_pt),  V3ARGS(r_dir));
 
-	    bu_log("*****shoot_x_rays : From : (%f,%f,%f) >>> towards(%f,%f,%f)*******",
-		   V3ARGS(r_pt),  V3ARGS(r_dir));
+			shoot_ray(sim_params->rtip, r_pt, r_dir);
 
-	    shoot_ray(sim_params->rtip, r_pt, r_dir);
+			/* Traverse the hit list and overlap list, drawing the ray segments
+			 * for the current ray
+			 */
+			traverse_xray_lists(sim_params, r_pt, r_dir);
 
-	    /* Traverse the hit list and overlap list, drawing the ray segments
-	     * for the current ray
-	     */
-	    traverse_xray_lists(sim_params, r_pt, r_dir);
+			/* print_rayshot_results(); */
 
-	    /* print_rayshot_results(); */
+			/* Cleanup the overlap and hit lists and free memory */
+			cleanup_lists();
 
-	    /* Cleanup the overlap and hit lists and free memory */
-	    cleanup_lists();
+			bu_log("Last y ray fired from y = %f, overlap_max[Y]=%f", y, overlap_max[Y]);
 
-	    bu_log("Last y ray fired from y = %f, overlap_max[Y]=%f", y, overlap_max[Y]);
+		}
 
-	}
-
-	bu_log("Last z ray fired from z = %f, overlap_max[Z]=%f", z, overlap_max[Z]);
+		bu_log("Last z ray fired from z = %f, overlap_max[Z]=%f", z, overlap_max[Z]);
 
     }
-    /*}*/
 
 
     return GED_OK;

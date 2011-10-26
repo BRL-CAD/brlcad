@@ -227,45 +227,6 @@ add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld,
 
 
 /**
- * Steps the dynamics world according to the simulation parameters
- *
- */
-int
-step_physics(btDiscreteDynamicsWorld* dynamicsWorld)
-{
-    int i;
-
-    bu_vls_printf(sim_params->result_str, "Simulation will run for %d steps.\n", sim_params->duration);
-    bu_vls_printf(sim_params->result_str, "----- Starting simulation -----\n");
-
-    for (i=0 ; i < sim_params->duration ; i++) {
-		bu_log("------------------------- Iteration %d -----------------------\n", i+1);
-
-		//time step of 1/60th of a second(same as internal fixedTimeStep, maxSubSteps=10 to cover 1/60th sec.)
-		dynamicsWorld->stepSimulation(1/60.f, 10);
-
-
-		/*   	for (j=dynamicsWorld->getNumCollisionObjects()-1; j>=0; j--) {
-
-			btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[j];
-			btRigidBody* body = btRigidBody::upcast(obj);
-
-			btVector3 gravity(0,0, 10.1);
-			body->applyCentralForce(gravity);
-
-			//struct rigid_body *rbA = (struct rigid_body *)boxA->getUserPointer();
-			//if( BU_STR_EQUAL(rt_mf->rbA->rb_namep, rbA->rb_namep)
-			}
-
-		*/
-    }
-
-    bu_log("----- Simulation Complete -----\n");
-    return 0;
-}
-
-
-/**
  * Get the final transforms, AABBs and pack off back to libged
  *
  */
@@ -336,6 +297,48 @@ get_transforms(btDiscreteDynamicsWorld* dynamicsWorld)
 	}
     }
 
+    return 0;
+}
+
+
+/**
+ * Steps the dynamics world according to the simulation parameters
+ *
+ */
+int
+step_physics(btDiscreteDynamicsWorld* dynamicsWorld)
+{
+    int i;
+
+    bu_vls_printf(sim_params->result_str, "Simulation will run for %d steps.\n", sim_params->duration);
+    bu_vls_printf(sim_params->result_str, "----- Starting simulation -----\n");
+
+    for (i=0 ; i < sim_params->duration ; i++) {
+		bu_log("------------------------- Iteration %d -----------------------\n", i+1);
+
+		//time step of 1/60th of a second(same as internal fixedTimeStep, maxSubSteps=10 to cover 1/60th sec.)
+		dynamicsWorld->stepSimulation(1/60.f, 10);
+
+
+		/*   	for (j=dynamicsWorld->getNumCollisionObjects()-1; j>=0; j--) {
+
+			btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[j];
+			btRigidBody* body = btRigidBody::upcast(obj);
+
+			btVector3 gravity(0,0, 10.1);
+			body->applyCentralForce(gravity);
+
+			//struct rigid_body *rbA = (struct rigid_body *)boxA->getUserPointer();
+			//if( BU_STR_EQUAL(rt_mf->rbA->rb_namep, rbA->rb_namep)
+			}
+
+		*/
+
+		  //Get the world transforms back into the simulation params struct
+		  get_transforms(dynamicsWorld);
+    }
+
+    bu_log("----- Simulation Complete -----\n");
     return 0;
 }
 
@@ -585,9 +588,6 @@ run_simulation(struct simulation_params *sp)
 
     //Step the physics the required number of times
     step_physics(dynamicsWorld);
-
-    //Get the world transforms back into the simulation params struct
-    get_transforms(dynamicsWorld);
 
     //Clean and free memory used by physics objects
     cleanup(dynamicsWorld, collision_shapes);

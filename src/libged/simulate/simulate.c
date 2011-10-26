@@ -326,7 +326,7 @@ apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 
 	/* print_manifold_list(current_node); */
 
-	/* insert_manifolds(gedp, sim_params, current_node); */
+	insert_manifolds(gedp, sim_params, current_node);
 
 	current_node->num_bt_manifolds = 0;
 	current_node->num_rt_manifolds = 0;
