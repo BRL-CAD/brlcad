@@ -4275,8 +4275,6 @@ to_light(struct ged *gedp,
 
     if (light < 0)
 	light = 0;
-    else if (1 < light)
-	light = 1;
 
     DM_SET_LIGHT(gdvp->gdv_dmp, light);
     to_refresh_view(gdvp);
