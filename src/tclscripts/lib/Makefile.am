@@ -3,11 +3,11 @@ this_dir = tclscripts/lib
 tcldir = $(BRLCAD_DATA)/$(this_dir)
 
 scripties = \
+	Accordian.tcl \
 	CellPlot.tcl \
 	ColorEntry.tcl \
 	ComboBox.tcl \
 	Command.tcl \
-	cursor.tcl \
 	Database.tcl \
 	Db.tcl \
 	Display.tcl \
@@ -25,7 +25,8 @@ scripties = \
 	TableView.tcl \
 	TkTable.tcl \
 	View.tcl \
-	ViewAxesControl.tcl
+	ViewAxesControl.tcl \
+	cursor.tcl
 
 BUILT_SOURCES = \
 	pkgIndex.tcl \
