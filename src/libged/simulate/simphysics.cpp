@@ -434,8 +434,12 @@ nearphase_callback(btBroadphasePair& collisionPair,
 		   btDispatcherInfo& dispatchInfo)
 {
 
-    btRigidBody* boxA = (btRigidBody*)(collisionPair.m_pProxy0->m_clientObject);
+    int rv;
+
+	btRigidBody* boxA = (btRigidBody*)(collisionPair.m_pProxy0->m_clientObject);
     btRigidBody* boxB = (btRigidBody*)(collisionPair.m_pProxy1->m_clientObject);
+
+
 
 
     struct rigid_body *rbA = (struct rigid_body *)boxA->getUserPointer();
@@ -451,10 +455,9 @@ nearphase_callback(btBroadphasePair& collisionPair,
 	bu_log("nearphase_callback: ERROR while creating forces between %s & %s\n",
 	       rbA->rb_namep, rbB->rb_namep);
     }
-}
 
-// Only dispatch the Bullet collision information if physics should continue
-dispatcher.defaultNearCallback(collisionPair, dispatcher, dispatchInfo);
+    // Only dispatch the Bullet collision information if physics should continue
+    dispatcher.defaultNearCallback(collisionPair, dispatcher, dispatchInfo);
 }
 
 

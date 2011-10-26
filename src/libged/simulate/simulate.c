@@ -369,7 +369,7 @@ int recreate_sim_comb(struct ged *gedp, struct simulation_params *sim_params)
 int
 ged_simulate(struct ged *gedp, int argc, const char *argv[])
 {
-    int rv, i;
+    int rv;
     struct simulation_params sim_params;
     static const char *sim_comb_name = "sim.c";
     static const char *ground_plane_name = "sim_gp.r";
