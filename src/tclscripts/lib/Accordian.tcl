@@ -1,7 +1,7 @@
 #                      A C C O R D I A N . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2011 United States Government as represented by
+# Copyright (c) 2011 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@
 #   where there is limited horizontal real estate (i.e. vertical situations).
 #   This widget has two modes: single selection and multiple selection, which is
 #   different from tabs which operate only in a single selection mode.
+
 
 ::itcl::class cadwidgets::Accordian {
     inherit ::itk::Widget
@@ -358,3 +359,12 @@
     }
 }
 
+
+# Local Variables:
+# tab-width: 8
+# mode: Tcl
+# c-basic-offset: 4
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8
