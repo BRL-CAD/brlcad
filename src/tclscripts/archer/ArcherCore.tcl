@@ -80,6 +80,11 @@ namespace eval ArcherCore {
 	common COMP_PICK_BOT_SYNC_MODE 4
 	common COMP_PICK_BOT_FLIP_MODE 5
 
+	common LIGHT_MODE_FRONT 1
+	common LIGHT_MODE_FRONT_AND_BACK 2
+	common LIGHT_MODE_FRONT_AND_BACK_DARK 3
+	common LIGHT_MODE_FRONT_AND_BACK_LIGHT 4
+
 	common SystemWindowFont
 	common SystemWindowText
 	common SystemWindow
@@ -290,7 +295,9 @@ namespace eval ArcherCore {
 	variable mTargetCopy ""
 	variable mTargetOldCopy ""
 	variable mDisplayType
-	variable mLighting 2
+	variable mLightingMode 1
+	variable mLightingModePref ""
+	variable mLighting 1
 	variable mRenderMode -1
 	variable mActivePane
 	variable mActivePaneName
@@ -3277,7 +3284,12 @@ namespace eval ArcherCore {
     gedCmd zclip_all 0
 
     gedCmd zbuffer_all $mLighting
-    gedCmd light_all $mLighting
+
+    if {$mLighting} {
+	gedCmd light_all $mLightingMode
+    } else {
+	gedCmd light_all $mLighting
+    }
 
     SetNormalCursor $this
 }

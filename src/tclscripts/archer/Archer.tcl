@@ -2363,6 +2363,50 @@ proc title_node_handler {node} {
     grid $itk_component(zclipFrontMaxB) -column 1 -row 0 -sticky nse
     grid columnconfigure $itk_component(zclipFrontMaxF) 0 -weight 1
 
+    itk_component add lightModeL {
+	::ttk::label $parent.lightModeL \
+	    -anchor e \
+	    -text "Light Mode:"
+    } {}
+    itk_component add lightModeF {
+	::ttk::frame $parent.lightModeF \
+	    -relief sunken \
+	    -borderwidth 1
+    } {}
+    itk_component add lightModeFrontRB {
+	::ttk::radiobutton $itk_component(lightModeF).lightModeFrontRB \
+	    -text "Front" \
+	    -value $LIGHT_MODE_FRONT \
+	    -variable [::itcl::scope mLightingModePref]
+    } {}
+    itk_component add lightModeFrontBackRB {
+	::ttk::radiobutton $itk_component(lightModeF).lightModeFrontBackRB \
+	    -text "Front and Back" \
+	    -value $LIGHT_MODE_FRONT_AND_BACK \
+	    -variable [::itcl::scope mLightingModePref]
+    } {}
+    itk_component add lightModeFrontBackDarkRB {
+	::ttk::radiobutton $itk_component(lightModeF).lightModeFrontBackDarkRB \
+	    -text "Front and Back (Dark Back)" \
+	    -value $LIGHT_MODE_FRONT_AND_BACK_DARK \
+	    -variable [::itcl::scope mLightingModePref]
+    } {}
+    itk_component add lightModeFrontBackLightRB {
+	::ttk::radiobutton $itk_component(lightModeF).lightModeFrontBackLightRB \
+	    -text "Front and Back (Light Back)" \
+	    -value $LIGHT_MODE_FRONT_AND_BACK_LIGHT \
+	    -variable [::itcl::scope mLightingModePref]
+    } {}
+    set i 0
+    grid $itk_component(lightModeFrontRB) -row $i -sticky nsew
+    incr i
+    grid $itk_component(lightModeFrontBackRB) -row $i -sticky nsew
+    incr i
+    grid $itk_component(lightModeFrontBackDarkRB) -row $i -sticky nsew
+    incr i
+    grid $itk_component(lightModeFrontBackLightRB) -row $i -sticky nsew
+    grid columnconfigure $itk_component(lightModeF) 0 -weight 1
+
     set i 0
     grid $itk_component(zclipBackL) -column 0 -row $i -sticky se
     grid $itk_component(zclipBackS) -column 1 -row $i -sticky ew
@@ -2375,6 +2419,9 @@ proc title_node_handler {node} {
     incr i
     grid $itk_component(zclipFrontMaxL) -column 0 -row $i -sticky e
     grid $itk_component(zclipFrontMaxF) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(lightModeL) -column 0 -row $i -sticky ne
+    grid $itk_component(lightModeF) -column 1 -row $i -sticky ew
 
     incr i
     grid rowconfigure $parent $i -weight 1
@@ -4924,7 +4971,7 @@ proc title_node_handler {node} {
 	-state disabled
     $itk_component(menubar) menuconfigure .modes.light \
 	-offvalue 0 \
-	-onvalue 2 \
+	-onvalue 1 \
 	-variable [::itcl::scope mLighting] \
 	-command [::itcl::code $this doLighting] \
 	-state disabled
@@ -5160,7 +5207,7 @@ proc title_node_handler {node} {
     $itk_component(${_prefix}modesmenu) add checkbutton \
 	-label "Lighting" \
 	-offvalue 0 \
-	-onvalue 2 \
+	-onvalue 1 \
 	-variable [::itcl::scope mLighting] \
 	-command [::itcl::code $this doLighting] \
 	-state disabled
@@ -7279,6 +7326,7 @@ proc title_node_handler {node} {
 
 ::itcl::body Archer::applyDisplayPreferences {} {
     updateDisplaySettings
+    doLighting
 }
 
 
@@ -7292,6 +7340,11 @@ proc title_node_handler {node} {
 	set mZClipBack $mZClipBackPref
 	set mZClipFront $mZClipFrontPref
 	updateDisplaySettings
+    }
+
+    if {$mLightingModePref != $mLightingMode} {
+	set mLightingMode $mLightingModePref
+	doLighting
     }
 }
 
@@ -7912,6 +7965,7 @@ proc title_node_handler {node} {
     set mZClipFrontMaxPref $mZClipFrontMax
     set mZClipBackPref $mZClipBack
     set mZClipFrontPref $mZClipFront
+    set mLightingModePref $mLightingMode
 
     $itk_component(preferencesDialog) center [namespace tail $this]
     ::update
@@ -8059,6 +8113,7 @@ proc title_node_handler {node} {
     puts $_pfile "set mZClipFrontMax $mZClipFrontMax"
     puts $_pfile "set mZClipBack $mZClipBack"
     puts $_pfile "set mZClipFront $mZClipFront"
+    puts $_pfile "set mLightingMode $mLightingMode"
 
     puts $_pfile "set mHPaneFraction1 $mHPaneFraction1"
     puts $_pfile "set mHPaneFraction2 $mHPaneFraction2"
