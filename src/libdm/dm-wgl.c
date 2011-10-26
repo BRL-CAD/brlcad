@@ -83,7 +83,8 @@ static float wireColor[4];
 static float ambientColor[4];
 static float specularColor[4];
 static float diffuseColor[4];
-static float backColor[] = {1.0f, 1.0f, 0.0f, 1.0f}; /* yellow */
+static float backDiffuseColorDark[4];
+static float backDiffuseColorLight[4];
 
 void
 wgl_fogHint(struct dm *dmp, int fastfog)
@@ -135,6 +136,11 @@ wgl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
 	    diffuseColor[1] = wireColor[1] * 0.6;
 	    diffuseColor[2] = wireColor[2] * 0.6;
 	    diffuseColor[3] = wireColor[3];
+
+	    backDiffuseColorDark[0] = wireColor[0] * 0.9;
+	    backDiffuseColorDark[1] = wireColor[1] * 0.9;
+	    backDiffuseColorDark[2] = wireColor[2] * 0.9;
+	    backDiffuseColorDark[3] = wireColor[3];
 
 #if 1
 	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientColor);
@@ -1132,12 +1138,21 @@ wgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 			glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientColor);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
+			glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuseColor);
 
-			if (1 < dmp->dm_light) {
-			    glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuseColor);
-			    glMaterialfv(GL_BACK, GL_DIFFUSE, backColor);
-			} else
-			    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseColor);
+			switch (dmp->dm_light) {
+			case 1:
+			    break;
+			case 2:
+			    glMaterialfv(GL_BACK, GL_DIFFUSE, diffuseColor);
+			    break;
+			case 3:
+			    glMaterialfv(GL_BACK, GL_DIFFUSE, backDiffuseColorDark);
+			    break;
+			default:
+			    glMaterialfv(GL_BACK, GL_DIFFUSE, backDiffuseColorLight);
+			    break;
+			}
 
 			if (dmp->dm_transparency)
 			    glEnable(GL_BLEND);
@@ -1925,6 +1940,11 @@ wgl_setLight(struct dm *dmp, int lighting_on)
 	glDisable(GL_LIGHTING);
     } else {
 	/* Turn it on */
+
+	if (1 < dmp->dm_light)
+	    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+	else
+	    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, amb_three);
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
