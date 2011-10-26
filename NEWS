@@ -27,6 +27,7 @@ changes made.  See document footer for additional details.
 --- 2011-07-XX  Release 7.20.4                                     ---
 ----------------------------------------------------------------------
 
+* improved nirt support for non-UNIX-style text files - Sean Morrison
 * added new relos thickness reassignment command to mged - Carl Moore
 * support for loading archer plugins with spaces in name - Bob Parker
 * added 'exists' object detection command to mged/archer - Cliff Yapp
