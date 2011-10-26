@@ -605,7 +605,7 @@ shoot_x_rays(struct sim_manifold *current_manifold,
 	     */
 	    traverse_xray_lists(sim_params, r_pt, r_dir);
 
-	    //print_rayshot_results();
+	    /* print_rayshot_results(); */
 
 	    /* Cleanup the overlap and hit lists and free memory */
 	    cleanup_lists();

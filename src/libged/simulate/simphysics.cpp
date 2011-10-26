@@ -43,6 +43,7 @@
  */
 struct simulation_params *sim_params;
 
+
 /**
  * Prints the 16 by 16 transform matrices for debugging
  *
@@ -238,25 +239,25 @@ step_physics(btDiscreteDynamicsWorld* dynamicsWorld)
     bu_vls_printf(sim_params->result_str, "----- Starting simulation -----\n");
 
     for (i=0 ; i < sim_params->duration ; i++) {
-	bu_log("------------------------- Iteration %d -----------------------\n", i+1);
+		bu_log("------------------------- Iteration %d -----------------------\n", i+1);
 
-	//time step of 1/60th of a second(same as internal fixedTimeStep, maxSubSteps=10 to cover 1/60th sec.)
-	dynamicsWorld->stepSimulation(1/60.f, 10);
+		//time step of 1/60th of a second(same as internal fixedTimeStep, maxSubSteps=10 to cover 1/60th sec.)
+		dynamicsWorld->stepSimulation(1/60.f, 10);
 
 
-	/*   	for (j=dynamicsWorld->getNumCollisionObjects()-1; j>=0; j--) {
+		/*   	for (j=dynamicsWorld->getNumCollisionObjects()-1; j>=0; j--) {
 
-		btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[j];
-		btRigidBody* body = btRigidBody::upcast(obj);
+			btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[j];
+			btRigidBody* body = btRigidBody::upcast(obj);
 
-		btVector3 gravity(0,0, 10.1);
-		body->applyCentralForce(gravity);
+			btVector3 gravity(0,0, 10.1);
+			body->applyCentralForce(gravity);
 
-		//struct rigid_body *rbA = (struct rigid_body *)boxA->getUserPointer();
-		//if( BU_STR_EQUAL(rt_mf->rbA->rb_namep, rbA->rb_namep)
-		}
+			//struct rigid_body *rbA = (struct rigid_body *)boxA->getUserPointer();
+			//if( BU_STR_EQUAL(rt_mf->rbA->rb_namep, rbA->rb_namep)
+			}
 
-	*/
+		*/
     }
 
     bu_log("----- Simulation Complete -----\n");
