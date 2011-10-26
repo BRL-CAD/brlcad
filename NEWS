@@ -13,8 +13,6 @@ changes made.  See document footer for additional details.
 --- 2011-XX-XX  Release 7.XX.X                                     ---
 ----------------------------------------------------------------------
 
-* reid command now takes optional -n "incr by" value - Erik Greenwald
-* reid command now returns the last region ID set - Erik Greenwald
 * improved performance of boolean evaluations - Richard Weiss
 * improved boolean evaluation converting to polygons - Richard Weiss
 * ported the obj-g geometry importer to Windows - Nicholas Reed
@@ -27,6 +25,8 @@ changes made.  See document footer for additional details.
 --- 2011-07-XX  Release 7.20.4                                     ---
 ----------------------------------------------------------------------
 
+* reid command now takes optional -n "incr by" value - Erik Greenwald
+* reid command now returns the last region ID set - Erik Greenwald
 * improved nirt support for non-UNIX-style text files - Sean Morrison
 * added new relos thickness reassignment command to mged - Carl Moore
 * support for loading archer plugins with spaces in name - Bob Parker
