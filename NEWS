@@ -25,6 +25,7 @@ changes made.  See document footer for additional details.
 --- 2011-07-XX  Release 7.20.4                                     ---
 ----------------------------------------------------------------------
 
+* added lighting model visualization options for archer - Bob Parker
 * reid command now takes optional -n "incr by" value - Erik Greenwald
 * reid command now returns the last region ID set - Erik Greenwald
 * improved nirt support for non-UNIX-style text files - Sean Morrison
