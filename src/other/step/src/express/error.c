@@ -132,7 +132,7 @@ ERRORinitialize(void)
     ERROR_syntax_expecting =
 	ERRORcreate("%s, expecting %s in %s %s",SEVERITY_EXIT);
 
-	ERROR_string_base = (char *)malloc(ERROR_MAX_SPACE);
+	ERROR_string_base = (char *)calloc(1, ERROR_MAX_SPACE);
 	ERROR_start_message_buffer();
 
 
