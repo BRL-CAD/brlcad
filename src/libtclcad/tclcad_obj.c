@@ -9272,8 +9272,8 @@ go_draw(struct ged_dm_view *gdvp)
 
     mat = gdvp->gdv_view->gv_model2view;
 
-    if (0 < gdvp->gdv_view->gv_perspective) {
-#if 1
+#if 0
+    if (SMALL_FASTF < gdvp->gdv_view->gv_perspective) {
 	point_t l, h;
 
 	VSET(l, -1.0, -1.0, -1.0);
@@ -9290,29 +9290,18 @@ go_draw(struct ged_dm_view *gdvp)
 	    ged_deering_persp_mat(perspective_mat, l, h, gdvp->gdv_view->gv_eye_pos);
 	}
 #else
-	/*
-	 * There are two strategies that could be used:
-	 *
-	 * 1) Assume a standard head location w.r.t. the screen, and
-	 * fix the perspective angle.
-	 *
-	 * 2) Based upon the perspective angle, compute where the head
-	 * should be to achieve that field of view.
-	 *
-	 * Try strategy #2 for now.
-	 */
+    /* Things start to get washed out in shaded mode for values less than 40 */
+    if (40 <= gdvp->gdv_view->gv_perspective) {
 	fastf_t to_eye_scr;	/* screen space dist to eye */
-	point_t l, h, eye;
+	point_t eye;
 
 	/* Determine where eye should be */
 	to_eye_scr = 1 / tan(gdvp->gdv_view->gv_perspective * bn_degtorad * 0.5);
 
-	VSET(l, -1.0, -1.0, -1.0);
-	VSET(h, 1.0, 1.0, 200.0);
 	VSET(eye, 0.0, 0.0, to_eye_scr);
 
 	/* Non-stereo case */
-	ged_mike_persp_mat(perspective_mat, gdvp->gdv_view->gv_eye_pos);
+	ged_mike_persp_mat(perspective_mat, eye);
 #endif
 
 	bn_mat_mul(new, perspective_mat, mat);
