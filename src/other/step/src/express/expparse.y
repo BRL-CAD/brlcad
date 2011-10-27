@@ -2455,6 +2455,10 @@ while_control(A) ::= TOK_WHILE expression(B).
     yyerrstatus++;
 }
 
+%stack_overflow {
+    fprintf(stderr, "Express parser experienced stack overflow.\n");
+}
+
 %include {
 static void
 yyerror(string)
