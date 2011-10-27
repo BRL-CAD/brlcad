@@ -522,7 +522,8 @@ SCANread(void)
 	if (!(done = SCANtext_ready)) {
 	    if (SCAN_current_buffer == 0) {
 		done = True;
-		fclose(SCANbuffer.file); /* close yyin (I think) */
+		fclose(SCANbuffer.file); /* close yyin */
+		SCANbuffer.file = yyin = NULL;
 	    } else {
 		SCANpop_buffer();
 	    }
