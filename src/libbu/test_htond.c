@@ -120,7 +120,6 @@ main(int argc, char **argv)
     if (ret != 8)
 	perror("fwrite");
 
-/* ntohd((char *)after, buf, NUM);	*//* bulk conversion */
     for (i=0; i<NUM; i++) {
 	ntohd((unsigned char *)&after[i], (unsigned char *)&buf[i*8], 1);	/* incremental */
 	/* Floating point compare */
